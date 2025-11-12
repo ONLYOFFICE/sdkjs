@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -40,11 +40,11 @@
 {
 // Import
 	var AscBrowser = AscCommon.AscBrowser;
-	var locktype_None = AscCommon.locktype_None;
-	var locktype_Mine = AscCommon.locktype_Mine;
-	var locktype_Other = AscCommon.locktype_Other;
-	var locktype_Other2 = AscCommon.locktype_Other2;
-	var locktype_Other3 = AscCommon.locktype_Other3;
+	var locktype_None = AscCommon.c_oAscLockTypes.kLockTypeNone;
+	var locktype_Mine = AscCommon.c_oAscLockTypes.kLockTypeMine;
+	var locktype_Other = AscCommon.c_oAscLockTypes.kLockTypeOther;
+	var locktype_Other2 = AscCommon.c_oAscLockTypes.kLockTypeOther2;
+	var locktype_Other3 = AscCommon.c_oAscLockTypes.kLockTypeOther3;
 	var contentchanges_Add = AscCommon.contentchanges_Add;
 	var CColor = AscCommon.CColor;
 	var g_oCellAddressUtils = AscCommon.g_oCellAddressUtils;
@@ -53,6 +53,12 @@
 	var availableIdeographLanguages = window['Asc'].availableIdeographLanguages;
 	var availableBidiLanguages = window['Asc'].availableBidiLanguages;
 	const fontslot_ASCII    = 0x01;
+
+	let scriptDirectory = "";
+	if (document.currentScript) {
+		scriptDirectory = document.currentScript.src;
+		scriptDirectory = scriptDirectory.substring(0,scriptDirectory.replace(/[?#].*/,"").lastIndexOf("/") + 1);
+	}
 
 	Number.isInteger = Number.isInteger || function(value) {
 		return typeof value === 'number' && Number.isFinite(value) && !(value % 1);
@@ -180,105 +186,6 @@
 		return (v - v % 1)   ||   (!isFinite(v) || v === 0 ? v : v < 0 ? -0 : 0);
 	};
 
-	// https://tc39.github.io/ecma262/#sec-array.prototype.includes
-	if (!Array.prototype.includes) {
-		Object.defineProperty(Array.prototype, 'includes', {
-			value: function(searchElement, fromIndex) {
-
-				if (this == null) {
-					throw new TypeError('"this" is null or not defined');
-				}
-
-				// 1. Let O be ? ToObject(this value).
-				var o = Object(this);
-
-				// 2. Let len be ? ToLength(? Get(O, "length")).
-				var len = o.length >>> 0;
-
-				// 3. If len is 0, return false.
-				if (len === 0) {
-					return false;
-				}
-
-				// 4. Let n be ? ToInteger(fromIndex).
-				//    (If fromIndex is undefined, this step produces the value 0.)
-				var n = fromIndex | 0;
-
-				// 5. If n ≥ 0, then
-				//  a. Let k be n.
-				// 6. Else n < 0,
-				//  a. Let k be len + n.
-				//  b. If k < 0, let k be 0.
-				var k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
-
-				function sameValueZero(x, y) {
-					return x === y || (typeof x === 'number' && typeof y === 'number' && isNaN(x) && isNaN(y));
-				}
-
-				// 7. Repeat, while k < len
-				while (k < len) {
-					// a. Let elementK be the result of ? Get(O, ! ToString(k)).
-					// b. If SameValueZero(searchElement, elementK) is true, return true.
-					if (sameValueZero(o[k], searchElement)) {
-						return true;
-					}
-					// c. Increase k by 1.
-					k++;
-				}
-
-				// 8. Return false
-				return false;
-			}
-		});
-	}
-
-	// https://tc39.github.io/ecma262/#sec-array.prototype.find
-	if (!Array.prototype.find) {
-		Object.defineProperty(Array.prototype, 'find', {
-			value: function(predicate) {
-				// 1. Let O be ? ToObject(this value).
-				if (this == null) {
-					throw new TypeError('"this" is null or not defined');
-				}
-
-				var o = Object(this);
-
-				// 2. Let len be ? ToLength(? Get(O, "length")).
-				var len = o.length >>> 0;
-
-				// 3. If IsCallable(predicate) is false, throw a TypeError exception.
-				if (typeof predicate !== 'function') {
-					throw new TypeError('predicate must be a function');
-				}
-
-				// 4. If thisArg was supplied, let T be thisArg; else let T be undefined.
-				var thisArg = arguments[1];
-
-				// 5. Let k be 0.
-				var k = 0;
-
-				// 6. Repeat, while k < len
-				while (k < len) {
-					// a. Let Pk be ! ToString(k).
-					// b. Let kValue be ? Get(O, Pk).
-					// c. Let testResult be ToBoolean(? Call(predicate, T, « kValue, k, O »)).
-					// d. If testResult is true, return kValue.
-					var kValue = o[k];
-					if (predicate.call(thisArg, kValue, k, o)) {
-						return kValue;
-					}
-					// e. Increase k by 1.
-					k++;
-				}
-
-				// 7. Return undefined.
-				return undefined;
-			},
-			configurable: true,
-			writable: true
-		});
-	}
-
 	if (typeof require === 'function' && !window['XRegExp'])
 	{
 		window['XRegExp'] = require('xregexp');
@@ -287,28 +194,14 @@
 	var oZipImages = null;
 	var sDownloadServiceLocalUrl = "../../../../downloadas";
 	var sUploadServiceLocalUrl = "../../../../upload";
-	var sUploadServiceLocalUrlOld = "../../../../uploadold";
 	var sSaveFileLocalUrl = "../../../../savefile";
 	var sDownloadFileLocalUrl = "../../../../downloadfile";
 	var nMaxRequestLength = 5242880;//5mb <requestLimits maxAllowedContentLength="30000000" /> default 30mb
 
 	function decimalNumberConversion(number, base) {
-		if (typeof number !== 'number') {
-			return;
-		}
-		var result = [];
-		while (number > 0) {
-			var remainder = number % base;
-			if (remainder === 0) {
-				result.unshift(0);
-
-			} else {
-				result.unshift(remainder);
-				number = number - remainder;
-			}
-			number /= base;
-		}
-		return result;
+		return number.toString(base).split("").map(function (digit) {
+			return parseInt(digit, base);
+		});
 	}
 
 	function getSockJs()
@@ -481,6 +374,17 @@
 			for (var i in this.urls) {
 				if (0 == i.indexOf(this.mediaPrefix + filename + '.') && this.mediaPrefix + imageLocal !== i) {
 					res.push(this.urls[i]);
+				}
+			}
+			return res;
+		},
+		getImagesWithOtherExtension: function(imageLocal) {
+			var res = [];
+			var filename = GetFileName(imageLocal);
+			var prefix = this.mediaPrefix + filename + '.';
+			for (var i in this.urls) {
+				if (0 == i.indexOf(prefix) && !i.endsWith(imageLocal)) {
+					res.push(i.substring(this.mediaPrefix.length));
 				}
 			}
 			return res;
@@ -821,8 +725,14 @@
 	}
 
 	function isPdfFormatFile(stream) {
-		let part = AscCommon.UTF8ArrayToString(stream, 0, 4096);//MIN_SIZE_BUFFER
-		return -1 !== part.indexOf("%PDF-");
+		//x2t MIN_SIZE_BUFFER = 4096
+		for (let i = 0; i < 4096 && i < stream.length; ++i) {
+			//match "%PDF-"
+			if (0x25 === stream[i] && 0x50 === stream[i + 1] && 0x44 === stream[i + 2] && 0x46 === stream[i + 3] && 0x2D === stream[i + 4]) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	function isDjvuFormatFile(stream) {
@@ -872,7 +782,7 @@
 	}
 	function getEditorByBinSignature(stream, Signature) {
 		if (stream.length > 4) {
-			let signature = AscCommon.UTF8ArrayToString(stream, 0, 4);
+			let signature = typeof stream === 'string' ? stream.slice(0, 4) : AscCommon.UTF8ArrayToString(stream, 0, 4);
 			switch(signature) {
 				case "DOCY":
 					return AscCommon.c_oEditorId.Word;
@@ -880,6 +790,8 @@
 					return AscCommon.c_oEditorId.Spreadsheet;
 				case "PPTY":
 					return AscCommon.c_oEditorId.Presentation;
+				case "VSDY":
+					return AscCommon.c_oEditorId.Visio;
 			}
 		}
 		return null;
@@ -898,27 +810,37 @@
 		let contentTypes = contentTypesBytes ? AscCommon.UTF8ArrayToString(contentTypesBytes, 0, contentTypesBytes.length) : "";
 		jsZlib.close();
 
-		if (-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml") ||
+		let isWord = -1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.template.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-word.document.macroEnabled.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-word.template.macroEnabledTemplate.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.oform") ||
-			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.docxf")) {
-			return AscCommon.c_oEditorId.Word;
-		} else if (-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.docxf");
+		let isExcel = -1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.spreadsheetml.template.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-excel.sheet.macroEnabled.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-excel.template.macroEnabled.main+xml") ||
-			-1 !== contentTypes.indexOf("application/vnd.ms-excel.sheet.binary.macroEnabled.main")) {
-			return AscCommon.c_oEditorId.Spreadsheet;
-		} else if (-1 !== contentTypes.indexOf(
-				"application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.ms-excel.sheet.binary.macroEnabled.main");
+		let isSlide = -1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.presentationml.slideshow.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.presentationml.template.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.presentation.macroEnabled.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.slideshow.macroEnabled.main+xml") ||
-			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.template.macroEnabled.main+xml")) {
+			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.template.macroEnabled.main+xml");
+		let isVisio = -1 !== contentTypes.indexOf("application/vnd.ms-visio.drawing.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.ms-visio.stencil.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.ms-visio.template.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.ms-visio.drawing.macroEnabled.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.ms-visio.stencil.macroEnabled.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.ms-visio.template.macroEnabled.main+xml");
+		if (isWord) {
+			return AscCommon.c_oEditorId.Word;
+		} else if (isExcel) {
+			return AscCommon.c_oEditorId.Spreadsheet;
+		} else if (isSlide) {
 			return AscCommon.c_oEditorId.Presentation;
+		} else if (isVisio) {
+			return AscCommon.c_oEditorId.Visio;
 		} else {
 			return null;
 		}
@@ -1035,21 +957,26 @@
 	function sendCommand(editor, fCallback, rdata, dataContainer)
 	{
 		//json не должен превышать размера 2097152, иначе при его чтении будет exception
-		var docConnectionId = editor.CoAuthoringApi.getDocId();
-		if (docConnectionId && docConnectionId !== rdata["id"])
-		{
-			//на случай если поменялся documentId в Version History
-			rdata['docconnectionid'] = docConnectionId;
-		}
 		if (null == rdata["savetype"])
 		{
 			editor.CoAuthoringApi.openDocument(rdata);
 			return;
 		}
 		rdata["userconnectionid"] = editor.CoAuthoringApi.getUserConnectionId();
+		let url = sDownloadServiceLocalUrl + '/' + rdata["id"];
+		url += '?cmd=' + encodeURIComponent(JSON.stringify(rdata));
+		if (editor.documentShardKey) {
+			url += '&' + Asc.c_sShardKeyName + '=' + encodeURIComponent(editor.documentShardKey);
+		}
+		if (editor.documentWopiSrc) {
+			url += '&' + Asc.c_sWopiSrcName + '=' + encodeURIComponent(editor.documentWopiSrc);
+		}
+		if (editor.documentUserSessionId) {
+			url += '&' + Asc.c_sUserSessionIdName + '=' + encodeURIComponent(editor.documentUserSessionId);
+		}
 		asc_ajax({
 			type:        'POST',
-			url:         sDownloadServiceLocalUrl + '/' + rdata["id"] + '?cmd=' + encodeURIComponent(JSON.stringify(rdata)),
+			url:         url,
 			data:        dataContainer.part || dataContainer.data,
 			contentType: "application/octet-stream",
 			error:       function (httpRequest, statusText, status)
@@ -1069,12 +996,23 @@
 		});
 	}
 
-	function sendSaveFile(docId, userId, title, jwt, data, fError, fsuccess)
+	function sendSaveFile(docId, userId, title, jwt, shardKey, wopiSrc, userSessionId, data, fError, fsuccess)
 	{
-		var cmd = {'id': docId, "userid": userId, "tokenSession": jwt, 'outputpath': title};
+		let cmd = {'id': docId, "userid": userId, "tokenSession": jwt, 'outputpath': title};
+		let url =sSaveFileLocalUrl + '/' + docId;
+		url += '?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+		if (shardKey) {
+			url += '&' + Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey);
+		}
+		if (wopiSrc) {
+			url += '&' + Asc.c_sWopiSrcName + '=' + encodeURIComponent(wopiSrc);
+		}
+		if (userSessionId) {
+			url += '&' + Asc.c_sUserSessionIdName + '=' + encodeURIComponent(userSessionId);
+		}
 		asc_ajax({
 			type:        'POST',
-			url:         sSaveFileLocalUrl + '/' + docId + '?cmd=' + encodeURIComponent(JSON.stringify(cmd)),
+			url:         url,
 			data:        data,
 			contentType: "application/octet-stream",
 			error:       fError,
@@ -1118,6 +1056,8 @@
 			case c_oAscServerError.ConvertNEED_PARAMS :
 			case c_oAscServerError.ConvertUnknownFormat :
 			case c_oAscServerError.ConvertReadFile :
+			case c_oAscServerError.ConvertTemporaty :
+			case c_oAscServerError.ConvertDetect :
 			case c_oAscServerError.Convert :
 				nRes =
 					AscCommon.c_oAscAdvancedOptionsAction.Save === nAction ? Asc.c_oAscError.ID.ConvertationSaveError :
@@ -1161,6 +1101,9 @@
 				break;
 			case c_oAscServerError.ChangeDocInfo :
 				nRes = Asc.c_oAscError.ID.AccessDeny;
+				break;
+			case c_oAscServerError.ForcedViewMode :
+				nRes = Asc.c_oAscError.ID.ForcedViewMode;
 				break;
 			case c_oAscServerError.Storage :
 			case c_oAscServerError.StorageFileNoFound :
@@ -1215,7 +1158,12 @@
 	function getFullImageSrc2(src)
 	{
 		if (window["NATIVE_EDITOR_ENJINE"])
+		{
+			let localUrl = g_oDocumentUrls.getImageUrl(src);
+			if (localUrl && localUrl.startsWith("blob:"))
+				return localUrl;
 			return src;
+		}
 
 		var start = src.slice(0, 6);
 		if (0 === start.indexOf('theme') && editor.ThemeLoader)
@@ -1349,13 +1297,9 @@
 
 	var UTF8Decoder = typeof TextDecoder !== "undefined" ? new TextDecoder("utf8") : undefined;
 	function UTF8ArrayToString(u8Array, idx, maxBytesToRead) {
-		var endIdx = idx + maxBytesToRead;
-		var endPtr = idx;
-		while (u8Array[endPtr] && !(endPtr >= endIdx)) {
-			++endPtr;
-		}
-		if (endPtr - idx > 16 && u8Array.subarray && UTF8Decoder) {
-			return UTF8Decoder.decode(u8Array.subarray(idx, endPtr));
+		var endPtr = idx + maxBytesToRead;
+		if (endPtr - idx > 16 && UTF8Decoder) {
+			return UTF8Decoder.decode(new Uint8Array(u8Array.buffer, u8Array.byteOffset + idx, endPtr - idx));
 		} else {
 			var str = "";
 			while (idx < endPtr) {
@@ -1518,7 +1462,10 @@
 		"num": "#NUM!",
 		"na": "#N\/A",
 		"getdata": "#GETTING_DATA",
-		"uf": "#UNSUPPORTED_FUNCTION!"
+		"uf": "#UNSUPPORTED_FUNCTION!",
+		"calc": "#CALC!",
+		"spill": "#SPILL!",
+		"busy": "#BUSY!",
 	};
 	var cErrorLocal = {};
 	let cCellFunctionLocal = {};
@@ -1545,28 +1492,59 @@
 
 	function build_rx_table_cur()
 	{
-		var loc_all                          = cStrucTableLocalColumns['a'],
+		let loc_all                          = cStrucTableLocalColumns['a'],
 			loc_headers                      = cStrucTableLocalColumns['h'],
 			loc_data                         = cStrucTableLocalColumns['d'],
 			loc_totals                       = cStrucTableLocalColumns['t'],
 			loc_this_row                     = cStrucTableLocalColumns['tr'],
 			structured_tables_headata        = new XRegExp('(?:\\[\\#' + loc_headers + '\\]\\' + FormulaSeparators.functionArgumentSeparator + '\\[\\#' + loc_data + '\\])'),
 			structured_tables_datals         = new XRegExp('(?:\\[\\#' + loc_data + '\\]\\' + FormulaSeparators.functionArgumentSeparator + '\\[\\#' + loc_totals + '\\])'),
-			structured_tables_userColumn     = new XRegExp('(?:\'\\[|\'\\]|[^[\\]])+'),
-			structured_tables_reservedColumn = new XRegExp('\\#(?:' + loc_all + '|' + loc_headers + '|' + loc_totals + '|' + loc_data + '|' + loc_this_row + ')|@');
+			structured_tables_userColumn     = new XRegExp('\\s*\\[{0,1}(?:\'\\[|\'\\]|[^[\\]])+\\]{0,1}\\s*'),
+			structured_tables_reservedColumn = new XRegExp('\\#(?:' + loc_all + '|' + loc_headers + '|' + loc_totals + '|' + loc_data + /*'|' + loc_this_row + */')'),
+			structured_tables_thisRow        = new XRegExp('(?:\\#(?:' + loc_this_row +')|(?:\\@))');
 
-		return XRegExp.build('^(?<tableName>{{tableName}})\\[(?<columnName>{{columnName}})?\\]', {
+
+		//Table4[[#Data];[#Totals]]
+		//Table1[[#Headers],[#Data],[Column1]]
+		//Table4[[#Headers];[Column1]:[Column2]]
+		//Table1[[#Data],[#Totals],[Column1]]
+		//Table4[[#Totals];[Column1]:[Column2]]
+
+		//Table1[[#All];[Column1]:[Column2]]
+
+		//Table1[[#Data],[#Totals]]
+		//Table1[[#Headers],[#Data]]
+
+		//Table1[[#Headers],[#Data],[Column1]:[Column2]]
+
+		// @ === [#This Row],
+		// Table[@]
+		// Table[@Column1]
+		// Table[@Column1:[Column2]] === Table[@[Column1]:[Column2]]
+
+		let argsSeparator = FormulaSeparators.functionArgumentSeparator;
+		return XRegExp.build('^(?<tableName>{{tableName}})\\[(?<columnName1>{{columnName}})?\\]', {
 			"tableName":  new XRegExp("^(:?[" + str_namedRanges + "][" + str_namedRanges + "\\d.]*)"),
-			"columnName": XRegExp.build('(?<reservedColumn>{{reservedColumn}})|(?<oneColumn>{{userColumn}})|(?<columnRange>{{userColumnRange}})|(?<hdtcc>{{hdtcc}})', {
+			"columnName": XRegExp.build('(?<hdtcc>{{hdtcc}})|(?<reservedColumn>{{reservedColumn}}|{{thisRow}})|(?<columnRange>{{userColumnRange}})|(?<oneColumn>{{userColumn}})', {
 				"userColumn":      structured_tables_userColumn,
 				"reservedColumn":  structured_tables_reservedColumn,
+				"thisRow": structured_tables_thisRow,
 				"userColumnRange": XRegExp.build('\\[(?<colStart>{{uc}})\\]\\:\\[(?<colEnd>{{uc}})\\]', {
 					"uc": structured_tables_userColumn
 				}),
-				"hdtcc":           XRegExp.build('(?<hdt>\\[{{rc}}\\]|{{hd}}|{{dt}})(?:\\' + FormulaSeparators.functionArgumentSeparator + '(?:\\[(?<hdtcstart>{{uc}})\\])(?:\\:(?:\\[(?<hdtcend>{{uc}})\\]))?)?', {
+				//fixed: added [{{rc}}\\]' + argsSeparator + '\\[{{rc}}\\] for:
+				//Table1[[#Data],[#Totals]]
+				//Table1[[#Headers],[#Data]]
+
+				// '(?<hdt>\\[{{rc}}\\]' + argsSeparator + '\\[{{rc}}\\]|\\[{{rc}}\\]|{{hd}}|{{dt}})(?:\\' + argsSeparator + '(?:\\[(?<hdtcstart>{{uc}})\\])(?:\\:(?:\\[(?<hdtcend>{{uc}})\\]))?)?'
+
+				// last used: '(?<hdt>(?:\\[{{rc}}\\])?(?:\@)?)(?:(?:\\'+argsSeparator+')?(?:\\\[?(?<hdtcstart>{{uc}})\\\]?)(?:\\:(?:\\[(?<hdtcend>{{uc}})\\]))?)?'
+				"hdtcc":           XRegExp.build('(?<hdt>(?:\\[{{rc}}\\]' + argsSeparator + '\\[{{rc}}\\]|\\[{{rc}}\\]|{{hd}}|{{dt}})|(?:\\[{{tr}}\\])|\@)(?:(?:\\' + argsSeparator + ')?(?:\\[(?<hdtcstart>{{uc}})\\])(?:\\:(?:\\[(?<hdtcend>{{uc}})\\]))?)?'
+					, {
 					"rc": structured_tables_reservedColumn,
 					"hd": structured_tables_headata,
 					"dt": structured_tables_datals,
+					"tr": structured_tables_thisRow,
 					"uc": structured_tables_userColumn
 				})
 			})
@@ -1593,7 +1571,10 @@
 			"num":     "#NUM!",
 			"na":      "#N\/A",
 			"getdata": "#GETTING_DATA",
-			"uf":      "#UNSUPPORTED_FUNCTION!"
+			"uf":      "#UNSUPPORTED_FUNCTION!",
+			"calc":    "#CALC!",
+			"spill":   "#SPILL!",
+			"busy":    "#BUSY!"
 		};
 		cErrorLocal['nil'] = local['nil'];
 		cErrorLocal['div'] = local['div'];
@@ -1604,6 +1585,9 @@
 		cErrorLocal['na'] = local['na'];
 		cErrorLocal['getdata'] = local['getdata'];
 		cErrorLocal['uf'] = local['uf'];
+		cErrorLocal['calc'] = local['calc'];
+		cErrorLocal['spill'] = local['spill'];
+		cErrorLocal['busy'] = local['busy'];
 
 		return new RegExp("^(" + cErrorLocal["nil"] + "|" +
 			cErrorLocal["div"] + "|" +
@@ -1613,7 +1597,10 @@
 			cErrorLocal["num"] + "|" +
 			cErrorLocal["na"] + "|" +
 			cErrorLocal["getdata"] + "|" +
-			cErrorLocal["uf"] + ")", "i");
+			cErrorLocal["uf"] + "|" +
+			cErrorLocal["calc"] + "|" +
+			cErrorLocal["spill"] + "|" +
+			cErrorLocal["busy"] + ")", "i")
 	}
 
 	function build_rx_cell_func(local)
@@ -1633,18 +1620,18 @@
 			"type": "type",
 			"width": "width"
 		};
-		cCellFunctionLocal['address'] = local['address'];
-		cCellFunctionLocal['col'] = local['col'];
-		cCellFunctionLocal['color'] = local['color'];
-		cCellFunctionLocal['contents'] = local['contents'];
-		cCellFunctionLocal['filename'] = local['filename'];
-		cCellFunctionLocal['format'] = local['format'];
-		cCellFunctionLocal['parentheses'] = local['parentheses'];
-		cCellFunctionLocal['prefix'] = local['prefix'];
-		cCellFunctionLocal['protect'] = local['protect'];
-		cCellFunctionLocal['row'] = local['row'];
-		cCellFunctionLocal['type'] = local['type'];
-		cCellFunctionLocal['width'] = local['width'];
+		cCellFunctionLocal['address'] = local['address'] && local['address'].toLowerCase();
+		cCellFunctionLocal['col'] =  local['col'] && local['col'].toLowerCase();
+		cCellFunctionLocal['color'] = local['color'] && local['color'].toLowerCase();
+		cCellFunctionLocal['contents'] = local['contents'] && local['contents'].toLowerCase();
+		cCellFunctionLocal['filename'] = local['filename'] && local['filename'].toLowerCase();
+		cCellFunctionLocal['format'] = local['format'] && local['format'].toLowerCase();
+		cCellFunctionLocal['parentheses'] = local['parentheses'] && local['parentheses'].toLowerCase();
+		cCellFunctionLocal['prefix'] = local['prefix'] && local['prefix'].toLowerCase();
+		cCellFunctionLocal['protect'] = local['protect'] && local['protect'].toLowerCase();
+		cCellFunctionLocal['row'] =  local['row'] && local['row'].toLowerCase();
+		cCellFunctionLocal['type'] = local['type'] && local['type'].toLowerCase();
+		cCellFunctionLocal['width'] = local['width'] && local['width'].toLowerCase();
 
 		return new RegExp("^(" + cCellFunctionLocal["address"] + "|" +
 			cCellFunctionLocal["col"] + "|" +
@@ -1697,6 +1684,8 @@
 		ConvertPASSWORD:          -91,
 		ConvertICU:               -92,
 		ConvertLIMITS:            -93,
+		ConvertTemporaty:         -94,
+		ConvertDetect:            -95,
 		ConvertDeadLetter:        -99,
 
 		Upload:              -100,
@@ -1713,13 +1702,15 @@
 		VKeyKeyExpire:       -122,
 		VKeyUserCountExceed: -123,
 
-		Password: -180
+		Password: -180,
+
+		ForcedViewMode: -200
 	};
 
 	//todo get from server config
 	var c_oAscImageUploadProp = {//Не все браузеры позволяют получить информацию о файле до загрузки(например ie9), меняя параметры здесь надо поменять аналогичные параметры в web.common
 		MaxFileSize:      25000000, //25 mb
-		SupportedFormats: ["jpg", "jpeg", "jpe", "png", "gif", "bmp", "svg"]
+		SupportedFormats: ["jpg", "jpeg", "jpe", "png", "gif", "bmp", "svg", "tiff", "tif"]
 	};
 
 	var c_oAscDocumentUploadProp = {
@@ -1729,7 +1720,7 @@
 
 	var c_oAscSpreadsheetUploadProp = {
 		MaxFileSize:      104857600, //100 mb
-		SupportedFormats: ["xlsx", "xlsm", "xls", "ods", "csv", "xltx", "xltm", "xlt", "fods", "ots"]
+		SupportedFormats: ["xlsx", "xlsm", "xls", "ods", "csv", "xltx", "xltm", "xlsb", "xlt", "fods", "ots"]
 	};
 
 	var c_oAscTextUploadProp = {
@@ -1883,6 +1874,9 @@
 			case c_oAscFileType.XLTM:
 				return 'xltm';
 				break;
+			case c_oAscFileType.XLSB:
+				return 'xlsb';
+				break;
 			case c_oAscFileType.FODS:
 				return 'fods';
 				break;
@@ -1923,7 +1917,24 @@
 			case c_oAscFileType.OTP:
 				return 'otp';
 				break;
-
+			case c_oAscFileType.VSDX:
+				return 'vsdx';
+				break;
+			case c_oAscFileType.VSSX:
+				return 'vssx';
+				break;
+			case c_oAscFileType.VSTX:
+				return 'vstx';
+				break;
+			case c_oAscFileType.VSDM:
+				return 'vsdm';
+				break;
+			case c_oAscFileType.VSSM:
+				return 'vssm';
+				break;
+			case c_oAscFileType.VSTM:
+				return 'vstm';
+				break;
 			case c_oAscFileType.IMG:
 				return 'zip';
 				break;
@@ -1968,6 +1979,154 @@
 				break;
 		}
 		return '';
+	}
+
+	function getFormatByExtention(ext)
+	{
+		switch (ext.toLowerCase()) {
+			case 'docx':
+				return c_oAscFileType.DOCX;
+			case 'doc':
+			case 'wps':
+				return c_oAscFileType.DOC;
+			case 'odt':
+				return c_oAscFileType.ODT;
+			case 'rtf':
+				return c_oAscFileType.RTF;
+			case 'txt':
+			case 'xml':
+			case 'xslt':
+				return c_oAscFileType.TXT;
+			case 'htm':
+			case 'html':
+				return c_oAscFileType.HTML;
+			case 'mht':
+			case 'mhtml':
+				return c_oAscFileType.MHT;
+			case 'epub':
+				return c_oAscFileType.MHT;
+			case 'fb2':
+				return c_oAscFileType.FB2;
+			case 'mobi':
+				return c_oAscFileType.MOBI;
+			case 'docm':
+				return c_oAscFileType.DOCM;
+			case 'dotx':
+				return c_oAscFileType.DOTX;
+			case 'dotm':
+				return c_oAscFileType.DOTM;
+			case 'fodt':
+				return c_oAscFileType.FODT;
+			case 'ott':
+				return c_oAscFileType.OTT;
+			case 'oform':
+				return c_oAscFileType.OFORM;
+			case 'docxf':
+				return c_oAscFileType.DOCXF;
+
+			case 'pptx':
+				return c_oAscFileType.PPTX;
+			case 'ppt':
+			case 'dps':
+				return c_oAscFileType.PPT;
+			case 'odp':
+				return c_oAscFileType.ODP;
+			case 'ppsx':
+				return c_oAscFileType.PPSX;
+			case 'pptm':
+				return c_oAscFileType.PPTM;
+			case 'ppsm':
+				return c_oAscFileType.PPSM;
+			case 'potx':
+				return c_oAscFileType.POTX;
+			case 'potm':
+				return c_oAscFileType.POTM;
+			case 'fodp':
+				return c_oAscFileType.FODP;
+			case 'otp':
+				return c_oAscFileType.OTP;
+			case 'vsdx':
+				return c_oAscFileType.VSDX;
+			case 'vssx':
+				return c_oAscFileType.VSSX;
+			case 'vstx':
+				return c_oAscFileType.VSTX;
+			case 'vsdm':
+				return c_oAscFileType.VSDM;
+			case 'vssm':
+				return c_oAscFileType.VSSM;
+			case 'vstm':
+				return c_oAscFileType.VSTM;
+			case 'xlsx':
+				return c_oAscFileType.XLSX;
+			case 'xls':
+			case 'et':
+				return c_oAscFileType.XLS;
+			case 'ods':
+				return c_oAscFileType.ODS;
+			case 'csv':
+				return c_oAscFileType.CSV;
+			case 'xlsm':
+				return c_oAscFileType.XLSM;
+			case 'xltx':
+				return c_oAscFileType.XLTX;
+			case 'xltm':
+				return c_oAscFileType.XLTM;
+			case 'xltb':
+				return c_oAscFileType.XLSB;
+			case 'fods':
+				return c_oAscFileType.FODS;
+			case 'ots':
+				return c_oAscFileType.OTS;
+
+			case 'jpeg':
+			case 'jpe':
+			case 'jpg':
+				return c_oAscFileType.JPG;
+			case 'tif':
+			case 'tiff':
+				return c_oAscFileType.TIFF;
+			case 'tga':
+				return c_oAscFileType.TGA;
+			case 'gif':
+				return c_oAscFileType.GIF;
+			case 'png':
+				return c_oAscFileType.PNG;
+			case 'emf':
+				return c_oAscFileType.EMF;
+			case 'wmf':
+				return c_oAscFileType.WMF;
+			case 'bmp':
+				return c_oAscFileType.BMP;
+			case 'cr2':
+				return c_oAscFileType.CR2;
+			case 'pcx':
+				return c_oAscFileType.PCX;
+			case 'ras':
+				return c_oAscFileType.RAS;
+			case 'psd':
+				return c_oAscFileType.PSD;
+			case 'ico':
+				return c_oAscFileType.ICO;
+
+			case 'pdf':
+				return c_oAscFileType.PDF;
+			case 'pdfa':
+				return c_oAscFileType.PDFA;
+			case 'djvu':
+				return c_oAscFileType.DJVU;
+			case 'xps':
+				return c_oAscFileType.XPS;
+			case 'doct':
+				return c_oAscFileType.DOCY;
+			case 'xlst':
+				return c_oAscFileType.XLSY;
+			case 'pptt':
+				return c_oAscFileType.PPTY;
+			case 'vsdt':
+				return c_oAscFileType.VSDY;
+		}
+		return c_oAscFileType.UNKNOWN;
 	}
 
 	function InitOnMessage(callback)
@@ -2015,7 +2174,7 @@
 
 							if (data["subType"] === "connector")
 							{
-								window.g_asc_plugins.externalConnectorMessage(data["data"]);
+								window.g_asc_plugins.externalConnectorMessage(data["data"], event.origin);
 								return;
 							}
 
@@ -2089,53 +2248,48 @@
 				}
 				else
 				{
+					if (e.canceled == true)
+					{
+						if (Asc.editor.isPdfEditor())
+							callback(e);
+					}
+					else
 					callback(Asc.c_oAscError.ID.Unknown);
 				}
 			});
+
+			if (Asc.editor.isPdfEditor()) {
+				let oViewer = Asc.editor.getDocumentRenderer();
+				let oDoc = oViewer.doc;
+				let oActionsQueue = oDoc.GetActionsQueue();
+
+				function cancelFileDialog() {
+					AscCommon.global_mouseEvent.UnLockMouse();
+					oActionsQueue.Continue();
+				}
+
+				if (oActionsQueue.IsInProgress()) {
+					Asc.editor.sendEvent("asc_onOpenFilePdfForm", fileName.click.bind(fileName), cancelFileDialog);
+				}
+				else 
 			fileName.click();
+		}
+		else
+				fileName.click();
 		}
 		else
 		{
 			return false;
 		}
 	}
-	function ShowImageFileDialog(documentId, documentUserId, jwt, callback, callbackOld)
+	function ShowImageFileDialog(documentId, documentUserId, jwt, shardKey, wopiSrc, userSessionId, callback, callbackOld)
 	{
 		if (false === _ShowFileDialog(getAcceptByArray(c_oAscImageUploadProp.SupportedFormats), true, true, ValidateUploadImage, callback)) {
-			//todo remove this compatibility
-			var frameWindow = GetUploadIFrame();
-			var url = sUploadServiceLocalUrlOld + '/' + documentId;
-			if (jwt)
-			{
-				url += '?token=' + encodeURIComponent(jwt);
-			}
-			var content = '<html><head></head><body><form action="' + url + '" method="POST" enctype="multipart/form-data"><input id="apiiuFile" name="apiiuFile" type="file" accept="image/*" size="1"><input id="apiiuSubmit" name="apiiuSubmit" type="submit" style="display:none;"></form></body></html>';
-			frameWindow.document.open();
-			frameWindow.document.write(content);
-			frameWindow.document.close();
-
-			var fileName = frameWindow.document.getElementById("apiiuFile");
-			var fileSubmit = frameWindow.document.getElementById("apiiuSubmit");
-
-			fileName.onchange = function (e)
-			{
-				if (e && e.target && e.target.files)
-				{
-					var nError = ValidateUploadImage(e.target.files);
-					if (c_oAscServerError.NoError != nError)
-					{
-						callbackOld(mapAscServerErrorToAscError(nError));
-						return;
-					}
-				}
-				callbackOld(Asc.c_oAscError.ID.No);
-				fileSubmit.click();
-			};
-			fileName.click();
+			callback(Asc.c_oAscError.ID.Unknown);
 		}
 	}
-	function ShowDocumentFileDialog(callback) {
-		if (false === _ShowFileDialog(getAcceptByArray(c_oAscDocumentUploadProp.SupportedFormats), false, false, ValidateUploadDocument, callback)) {
+	function ShowDocumentFileDialog(callback, isAllowMultiple) {
+		if (false === _ShowFileDialog(getAcceptByArray(c_oAscDocumentUploadProp.SupportedFormats), false, !!isAllowMultiple, ValidateUploadDocument, callback)) {
 			callback(Asc.c_oAscError.ID.Unknown);
 		}
 	}
@@ -2249,13 +2403,15 @@
 	}
 
 	function DownloadOriginalFile(documentId, url, urlPathInToken, token, fError, fSuccess) {
+		let data = JSON.stringify({
+			"url": url,
+			"token": token
+		});
 		asc_ajax({
 			url: sDownloadFileLocalUrl + '/' + documentId,
+			type: "POST",
 			responseType: "arraybuffer",
-			headers: {
-				'Authorization': 'Bearer ' + token,
-				'x-url': encodeURI(url)
-			},
+			data: data,
 			success: function(resp) {
 				fSuccess(AscCommon.initStreamFromResponse(resp));
 			},
@@ -2314,12 +2470,24 @@
 		callback(nError, [file], obj);
 	}
 
-	function UploadImageFiles(files, documentId, documentUserId, jwt, callback)
+	function UploadImageFiles(files, documentId, documentUserId, jwt, shardKey, wopiSrc, userSessionId, callback)
 	{
 		if (files.length > 0)
 		{
-			var url = sUploadServiceLocalUrl + '/' + documentId;
-
+			let url = sUploadServiceLocalUrl + '/' + documentId;
+			let queryParams = [];
+			if (shardKey) {
+				queryParams.push(Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey));
+			}
+			if (wopiSrc) {
+				queryParams.push(Asc.c_sWopiSrcName + '=' + encodeURIComponent(wopiSrc));
+			}
+			if (userSessionId) {
+				queryParams.push(Asc.c_sUserSessionIdName + '=' + encodeURIComponent(userSessionId));
+			}
+			if (queryParams.length > 0) {
+				url += '?' + queryParams.join('&');
+			}
 			var aFiles = [];
 			for(var i = files.length - 1;  i > - 1; --i){
                 aFiles.push(files[i]);
@@ -2346,8 +2514,6 @@
                         else{
                             file = aFiles.pop();
                             var xhr = new XMLHttpRequest();
-
-                            url = sUploadServiceLocalUrl + '/' + documentId;
 
                             xhr.open('POST', url, true);
                             xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
@@ -2380,12 +2546,24 @@
 		}
 	}
 
-    function UploadImageUrls(files, documentId, documentUserId, jwt, callback)
+    function UploadImageUrls(files, documentId, documentUserId, jwt, shardKey, wopiSrc, userSessionId, callback)
     {
         if (files.length > 0)
         {
-            var url = sUploadServiceLocalUrl + '/' + documentId;
-
+            let url = sUploadServiceLocalUrl + '/' + documentId;
+			let queryParams = [];
+			if (shardKey) {
+				queryParams.push(Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey));
+			}
+			if (wopiSrc) {
+				queryParams.push(Asc.c_sWopiSrcName + '=' + encodeURIComponent(wopiSrc));
+			}
+			if (userSessionId) {
+				queryParams.push(Asc.c_sUserSessionIdName + '=' + encodeURIComponent(userSessionId));
+			}
+			if (queryParams.length > 0) {
+				url += '?' + queryParams.join('&');
+			}
             var aFiles = [];
             for(var i = files.length - 1;  i > - 1; --i){
                 aFiles.push(files[i]);
@@ -2417,8 +2595,6 @@
 						{
                             file = aFiles.pop();
                             var xhr = new XMLHttpRequest();
-
-                            url = sUploadServiceLocalUrl + '/' + documentId;
 
                             xhr.open('POST', url, true);
                             xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
@@ -2526,31 +2702,14 @@
 					if (AscCommon.AscBrowser.isSafari)
 						return true;
 					
-					if (event.dataTransfer.items)
-					{
-						for (var j = 0, length2 = event.dataTransfer.items.length; j < length2; j++)
-						{
-							var item = event.dataTransfer.items[j];
-							if (item.type && item.kind && "file" == item.kind.toLowerCase())
-							{
-								bRes = false;
-								for (var k = 0,
-										 length3 = c_oAscImageUploadProp.SupportedFormats.length; k < length3; k++)
-								{
-									if (-1 != item.type.indexOf(c_oAscImageUploadProp.SupportedFormats[k]))
-									{
-										bRes = true;
-										break;
-									}
-								}
-								if (false == bRes)
-									break;
-							}
-						}
-					}
-					else
-						bRes = true;
-					break;
+  					if (event.dataTransfer.items)
+  					{
+ 						// Allow drop if at least one item looks like an image file (strictly validated on drop)
+ 						bRes = Array.prototype.some.call(event.dataTransfer.items, isValidImageDragItem);
+ 					}
+ 					else
+ 						bRes = true;
+ 					break;
 				}
 				else if (type == "text" || type == "text/plain" || type == "text/html")
 				{
@@ -2560,6 +2719,25 @@
 			}
 		}
 		return bRes;
+	}
+
+	/**
+	 * Validate drag item as an image file in dragover phase.
+	 * Prefer MIME check (image/*) when available; allow empty type and validate on drop.
+	 * @param {DataTransferItem} item Drag item to validate
+	 * @returns {boolean} True if item can be treated as an image candidate during dragover
+	 */
+	function isValidImageDragItem(item) {
+		if (!item || !item.kind || item.kind.toLowerCase() !== "file") {
+			return false;
+		}
+		const mime = item.type ? item.type.toLowerCase().trim() : "";
+		if (mime) {
+			// If browser provides MIME, accept only images
+			return mime.indexOf("image/") === 0;
+		}
+		// No MIME available (common in some environments): allow and validate strictly on drop
+		return true;
 	}
 
 	function GetUploadIFrame()
@@ -2592,11 +2770,66 @@
 		input.setAttribute('type', 'file');
 		input.setAttribute('accept', accept);
 		input.setAttribute('style', 'position:absolute;left:-2px;top:-2px;width:1px;height:1px;z-index:-1000;cursor:pointer;');
+		
 		if (allowMultiple) {
 			input.setAttribute('multiple', true);
 		}
-		input.onchange = onchange;
 		document.body.appendChild(input);
+
+		function addDialogClosedListener(input, callback) {
+			var id = null;
+			var active = false;
+			var wrapper = function() {
+				if (active) {
+					active = false;
+					callback(input);
+
+					// remove handlers
+					window.removeEventListener('focus', onFocus);
+					window.removeEventListener('blur', onBlur);
+				}
+			};
+			var cleanup = function() {
+				clearTimeout(id);
+			};
+			var shedule = function(delay) {
+				id = setTimeout(wrapper, delay);
+			};
+			var onFocus = function() {
+				cleanup();
+				shedule(1000);
+			};
+			var onBlur = function() {
+				cleanup();
+			};
+			var onClick = function() {
+				window.addEventListener('focus', onFocus);
+				window.addEventListener('blur', onBlur);
+
+				cleanup();
+				active = true;
+			};
+			var onChange = function() {
+				cleanup();
+				shedule(0);
+			};
+			input.addEventListener('click', onClick);
+			input.addEventListener('change', onChange);
+		}
+
+		addDialogClosedListener(input, checkCanceled);
+
+		function checkCanceled(input) {
+			let e = {};
+			if (input.files.length === 0) {
+				e.canceled = true;
+			}
+			else {
+				e.target = input;
+			}
+			onchange(e);
+		}
+	
 		return input;
 	}
 
@@ -2622,8 +2855,12 @@
 	var g_oCodeRightBrace = 125; // Code of }
 
 	/*Functions that checks of an element in formula*/
-	var str_namedRanges       = "A-Za-z\u005F\u0080-\u0081\u0083\u0085-\u0087\u0089-\u008A\u008C-\u0091\u0093-\u0094\u0096-\u0097\u0099-\u009A\u009C-\u009F\u00A1-\u00A5\u00A7-\u00A8\u00AA\u00AD\u00AF-\u00BA\u00BC-\u02B8\u02BB-\u02C1\u02C7\u02C9-\u02CB\u02CD\u02D0-\u02D1\u02D8-\u02DB\u02DD\u02E0-\u02E4\u02EE\u0370-\u0373\u0376-\u0377\u037A-\u037D\u0386\u0388-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u048A-\u0523\u0531-\u0556\u0559\u0561-\u0587\u05D0-\u05EA\u05F0-\u05F2\u0621-\u064A\u066E-\u066F\u0671-\u06D3\u06D5\u06E5-\u06E6\u06EE-\u06EF\u06FA-\u06FC\u06FF\u0710\u0712-\u072F\u074D-\u07A5\u07B1\u07CA-\u07EA\u07F4-\u07F5\u07FA\u0904-\u0939\u093D\u0950\u0958-\u0961\u0971-\u0972\u097B-\u097F\u0985-\u098C\u098F-\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BD\u09CE\u09DC-\u09DD\u09DF-\u09E1\u09F0-\u09F1\u0A05-\u0A0A\u0A0F-\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32-\u0A33\u0A35-\u0A36\u0A38-\u0A39\u0A59-\u0A5C\u0A5E\u0A72-\u0A74\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2-\u0AB3\u0AB5-\u0AB9\u0ABD\u0AD0\u0AE0-\u0AE1\u0B05-\u0B0C\u0B0F-\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32-\u0B33\u0B35-\u0B39\u0B3D\u0B5C-\u0B5D\u0B5F-\u0B61\u0B71\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99-\u0B9A\u0B9C\u0B9E-\u0B9F\u0BA3-\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BD0\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C33\u0C35-\u0C39\u0C3D\u0C58-\u0C59\u0C60-\u0C61\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBD\u0CDE\u0CE0-\u0CE1\u0D05-\u0D0C\u0D0E-\u0D10\u0D12-\u0D28\u0D2A-\u0D39\u0D3D\u0D60-\u0D61\u0D7A-\u0D7F\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0E01-\u0E3A\u0E40-\u0E4E\u0E81-\u0E82\u0E84\u0E87-\u0E88\u0E8A\u0E8D\u0E94-\u0E97\u0E99-\u0E9F\u0EA1-\u0EA3\u0EA5\u0EA7\u0EAA-\u0EAB\u0EAD-\u0EB0\u0EB2-\u0EB3\u0EBD\u0EC0-\u0EC4\u0EC6\u0EDC-\u0EDD\u0F00\u0F40-\u0F47\u0F49-\u0F6C\u0F88-\u0F8B\u1000-\u102A\u103F\u1050-\u1055\u105A-\u105D\u1061\u1065-\u1066\u106E-\u1070\u1075-\u1081\u108E\u10A0-\u10C5\u10D0-\u10FA\u10FC\u1100-\u1159\u115F-\u11A2\u11A8-\u11F9\u1200-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u1380-\u138F\u13A0-\u13F4\u1401-\u166C\u166F-\u1676\u1681-\u169A\u16A0-\u16EA\u16EE-\u16F0\u1700-\u170C\u170E-\u1711\u1720-\u1731\u1740-\u1751\u1760-\u176C\u176E-\u1770\u1780-\u17B3\u17D7\u17DC\u1820-\u1877\u1880-\u18A8\u18AA\u1900-\u191C\u1950-\u196D\u1970-\u1974\u1980-\u19A9\u19C1-\u19C7\u1A00-\u1A16\u1B05-\u1B33\u1B45-\u1B4B\u1B83-\u1BA0\u1BAE-\u1BAF\u1C00-\u1C23\u1C4D-\u1C4F\u1C5A-\u1C7D\u1D00-\u1DBF\u1E00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u200e\u2010\u2013-\u2016\u2018\u201C-\u201D\u2020-\u2021\u2025-\u2027\u2030\u2032-\u2033\u2035\u203B\u2071\u2074\u207F\u2081-\u2084\u2090-\u2094\u2102-\u2103\u2105\u2107\u2109-\u2113\u2115-\u2116\u2119-\u211D\u2121-\u2122\u2124\u2126\u2128\u212A-\u212D\u212F-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2153-\u2154\u215B-\u215E\u2160-\u2188\u2190-\u2199\u21D2\u21D4\u2200\u2202-\u2203\u2207-\u2208\u220B\u220F\u2211\u2215\u221A\u221D-\u2220\u2223\u2225\u2227-\u222C\u222E\u2234-\u2237\u223C-\u223D\u2248\u224C\u2252\u2260-\u2261\u2264-\u2267\u226A-\u226B\u226E-\u226F\u2282-\u2283\u2286-\u2287\u2295\u2299\u22A5\u22BF\u2312\u2460-\u24B5\u24D0-\u24E9\u2500-\u254B\u2550-\u2574\u2581-\u258F\u2592-\u2595\u25A0-\u25A1\u25A3-\u25A9\u25B2-\u25B3\u25B6-\u25B7\u25BC-\u25BD\u25C0-\u25C1\u25C6-\u25C8\u25CB\u25CE-\u25D1\u25E2-\u25E5\u25EF\u2605-\u2606\u2609\u260E-\u260F\u261C\u261E\u2640\u2642\u2660-\u2661\u2663-\u2665\u2667-\u266A\u266C-\u266D\u266F\u2C00-\u2C2E\u2C30-\u2C5E\u2C60-\u2C6F\u2C71-\u2C7D\u2C80-\u2CE4\u2D00-\u2D25\u2D30-\u2D65\u2D6F\u2D80-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u3000-\u3003\u3005-\u3017\u301D-\u301F\u3021-\u3029\u3031-\u3035\u3038-\u303C\u3041-\u3096\u309B-\u309F\u30A1-\u30FF\u3105-\u312D\u3131-\u318E\u31A0-\u31B7\u31F0-\u321C\u3220-\u3229\u3231-\u3232\u3239\u3260-\u327B\u327F\u32A3-\u32A8\u3303\u330D\u3314\u3318\u3322-\u3323\u3326-\u3327\u332B\u3336\u333B\u3349-\u334A\u334D\u3351\u3357\u337B-\u337E\u3380-\u3384\u3388-\u33CA\u33CD-\u33D3\u33D5-\u33D6\u33D8\u33DB-\u33DD\u3400-\u4DB5\u4E00-\u9FC3\uA000-\uA48C\uA500-\uA60C\uA610-\uA61F\uA62A-\uA62B\uA640-\uA65F\uA662-\uA66E\uA680-\uA697\uA722-\uA787\uA78B-\uA78C\uA7FB-\uA801\uA803-\uA805\uA807-\uA80A\uA80C-\uA822\uA840-\uA873\uA882-\uA8B3\uA90A-\uA925\uA930-\uA946\uAA00-\uAA28\uAA40-\uAA42\uAA44-\uAA4B\uAC00-\uD7A3\uE000-\uF848\uF900-\uFA2D\uFA30-\uFA6A\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D\uFB1F-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40-\uFB41\uFB43-\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE30-\uFE31\uFE33-\uFE44\uFE49-\uFE52\uFE54-\uFE57\uFE59-\uFE66\uFE68-\uFE6B\uFE70-\uFE74\uFE76-\uFEFC\uFF01-\uFF5E\uFF61-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC\uFFE0-\uFFE6",
-		str_namedSheetsRange  = "\u0001-\u0026\u0028-\u0029\u002B-\u002D\u003B-\u003E\u0040\u005E\u0060\u007B-\u007F\u0082\u0084\u008B\u0092\u0095\u0098\u009B\u00A0\u00A6\u00A9\u00AB-\u00AC\u00AE\u00BB\u0378-\u0379\u037E-\u0383\u0387\u038B\u038D\u03A2\u0524-\u0530\u0557-\u0558\u055A-\u0560\u0588-\u0590\u05BE\u05C0\u05C3\u05C6\u05C8-\u05CF\u05EB-\u05EF\u05F3-\u05FF\u0604-\u0605\u0609-\u060A\u060C-\u060D\u061B-\u061E\u0620\u065F\u066A-\u066D\u06D4\u0700-\u070E\u074B-\u074C\u07B2-\u07BF\u07F7-\u07F9\u07FB-\u0900\u093A-\u093B\u094E-\u094F\u0955-\u0957\u0964-\u0965\u0970\u0973-\u097A\u0980\u0984\u098D-\u098E\u0991-\u0992\u09A9\u09B1\u09B3-\u09B5\u09BA-\u09BB\u09C5-\u09C6\u09C9-\u09CA\u09CF-\u09D6\u09D8-\u09DB\u09DE\u09E4-\u09E5\u09FB-\u0A00\u0A04\u0A0B-\u0A0E\u0A11-\u0A12\u0A29\u0A31\u0A34\u0A37\u0A3A-\u0A3B\u0A3D\u0A43-\u0A46\u0A49-\u0A4A\u0A4E-\u0A50\u0A52-\u0A58\u0A5D\u0A5F-\u0A65\u0A76-\u0A80\u0A84\u0A8E\u0A92\u0AA9\u0AB1\u0AB4\u0ABA-\u0ABB\u0AC6\u0ACA\u0ACE-\u0ACF\u0AD1-\u0ADF\u0AE4-\u0AE5\u0AF0\u0AF2-\u0B00\u0B04\u0B0D-\u0B0E\u0B11-\u0B12\u0B29\u0B31\u0B34\u0B3A-\u0B3B\u0B45-\u0B46\u0B49-\u0B4A\u0B4E-\u0B55\u0B58-\u0B5B\u0B5E\u0B64-\u0B65\u0B72-\u0B81\u0B84\u0B8B-\u0B8D\u0B91\u0B96-\u0B98\u0B9B\u0B9D\u0BA0-\u0BA2\u0BA5-\u0BA7\u0BAB-\u0BAD\u0BBA-\u0BBD\u0BC3-\u0BC5\u0BC9\u0BCE-\u0BCF\u0BD1-\u0BD6\u0BD8-\u0BE5\u0BFB-\u0C00\u0C04\u0C0D\u0C11\u0C29\u0C34\u0C3A-\u0C3C\u0C45\u0C49\u0C4E-\u0C54\u0C57\u0C5A-\u0C5F\u0C64-\u0C65\u0C70-\u0C77\u0C80-\u0C81\u0C84\u0C8D\u0C91\u0CA9\u0CB4\u0CBA-\u0CBB\u0CC5\u0CC9\u0CCE-\u0CD4\u0CD7-\u0CDD\u0CDF\u0CE4-\u0CE5\u0CF0\u0CF3-\u0D01\u0D04\u0D0D\u0D11\u0D29\u0D3A-\u0D3C\u0D45\u0D49\u0D4E-\u0D56\u0D58-\u0D5F\u0D64-\u0D65\u0D76-\u0D78\u0D80-\u0D81\u0D84\u0D97-\u0D99\u0DB2\u0DBC\u0DBE-\u0DBF\u0DC7-\u0DC9\u0DCB-\u0DCE\u0DD5\u0DD7\u0DE0-\u0DF1\u0DF4-\u0E00\u0E3B-\u0E3E\u0E4F\u0E5A-\u0E80\u0E83\u0E85-\u0E86\u0E89\u0E8B-\u0E8C\u0E8E-\u0E93\u0E98\u0EA0\u0EA4\u0EA6\u0EA8-\u0EA9\u0EAC\u0EBA\u0EBE-\u0EBF\u0EC5\u0EC7\u0ECE-\u0ECF\u0EDA-\u0EDB\u0EDE-\u0EFF\u0F04-\u0F12\u0F3A-\u0F3D\u0F48\u0F6D-\u0F70\u0F85\u0F8C-\u0F8F\u0F98\u0FBD\u0FCD\u0FD0-\u0FFF\u104A-\u104F\u109A-\u109D\u10C6-\u10CF\u10FB\u10FD-\u10FF\u115A-\u115E\u11A3-\u11A7\u11FA-\u11FF\u1249\u124E-\u124F\u1257\u1259\u125E-\u125F\u1289\u128E-\u128F\u12B1\u12B6-\u12B7\u12BF\u12C1\u12C6-\u12C7\u12D7\u1311\u1316-\u1317\u135B-\u135E\u1361-\u1368\u137D-\u137F\u139A-\u139F\u13F5-\u1400\u166D-\u166E\u1677-\u167F\u169B-\u169F\u16EB-\u16ED\u16F1-\u16FF\u170D\u1715-\u171F\u1735-\u173F\u1754-\u175F\u176D\u1771\u1774-\u177F\u17D4-\u17D6\u17D8-\u17DA\u17DE-\u17DF\u17EA-\u17EF\u17FA-\u180A\u180F\u181A-\u181F\u1878-\u187F\u18AB-\u18FF\u191D-\u191F\u192C-\u192F\u193C-\u193F\u1941-\u1945\u196E-\u196F\u1975-\u197F\u19AA-\u19AF\u19CA-\u19CF\u19DA-\u19DF\u1A1C-\u1AFF\u1B4C-\u1B4F\u1B5A-\u1B60\u1B7D-\u1B7F\u1BAB-\u1BAD\u1BBA-\u1BFF\u1C38-\u1C3F\u1C4A-\u1C4C\u1C7E-\u1CFF\u1DE7-\u1DFD\u1F16-\u1F17\u1F1E-\u1F1F\u1F46-\u1F47\u1F4E-\u1F4F\u1F58\u1F5A\u1F5C\u1F5E\u1F7E-\u1F7F\u1FB5\u1FC5\u1FD4-\u1FD5\u1FDC\u1FF0-\u1FF1\u1FF5\u1FFF\u200e\u2011-\u2012\u2017\u2019-\u201B\u201E-\u201F\u2022-\u2024\u2031\u2034\u2036-\u203A\u203C-\u2043\u2045-\u2051\u2053-\u205E\u2065-\u2069\u2072-\u2073\u207D-\u207E\u208D-\u208F\u2095-\u209F\u20B6-\u20CF\u20F1-\u20FF\u2150-\u2152\u2189-\u218F\u2329-\u232A\u23E8-\u23FF\u2427-\u243F\u244B-\u245F\u269E-\u269F\u26BD-\u26BF\u26C4-\u2700\u2705\u270A-\u270B\u2728\u274C\u274E\u2753-\u2755\u2757\u275F-\u2760\u2768-\u2775\u2795-\u2797\u27B0\u27BF\u27C5-\u27C6\u27CB\u27CD-\u27CF\u27E6-\u27EF\u2983-\u2998\u29D8-\u29DB\u29FC-\u29FD\u2B4D-\u2B4F\u2B55-\u2BFF\u2C2F\u2C5F\u2C70\u2C7E-\u2C7F\u2CEB-\u2CFC\u2CFE-\u2CFF\u2D26-\u2D2F\u2D66-\u2D6E\u2D70-\u2D7F\u2D97-\u2D9F\u2DA7\u2DAF\u2DB7\u2DBF\u2DC7\u2DCF\u2DD7\u2DDF\u2E00-\u2E2E\u2E30-\u2E7F\u2E9A\u2EF4-\u2EFF\u2FD6-\u2FEF\u2FFC-\u2FFF\u3018-\u301C\u3030\u303D\u3040\u3097-\u3098\u30A0\u3100-\u3104\u312E-\u3130\u318F\u31B8-\u31BF\u31E4-\u31EF\u321F\u3244-\u324F\u32FF\u4DB6-\u4DBF\u9FC4-\u9FFF\uA48D-\uA48F\uA4C7-\uA4FF\uA60D-\uA60F\uA62C-\uA63F\uA660-\uA661\uA673-\uA67B\uA67E\uA698-\uA6FF\uA78D-\uA7FA\uA82C-\uA83F\uA874-\uA87F\uA8C5-\uA8CF\uA8DA-\uA8FF\uA92F\uA954-\uA9FF\uAA37-\uAA3F\uAA4E-\uAA4F\uAA5A-\uABFF\uD7A4-\uD7FF\uFA2E-\uFA2F\uFA6B-\uFA6F\uFADA-\uFAFF\uFB07-\uFB12\uFB18-\uFB1C\uFB37\uFB3D\uFB3F\uFB42\uFB45\uFBB2-\uFBD2\uFD3E-\uFD4F\uFD90-\uFD91\uFDC8-\uFDEF\uFDFE-\uFDFF\uFE10-\uFE1F\uFE27-\uFE2F\uFE32\uFE45-\uFE48\uFE53\uFE58\uFE67\uFE6C-\uFE6F\uFE75\uFEFD-\uFEFE\uFF00\uFF5F-\uFF60\uFFBF-\uFFC1\uFFC8-\uFFC9\uFFD0-\uFFD1\uFFD8-\uFFD9\uFFDD-\uFFDF\uFFE7\uFFEF-\uFFF8\uFFFE-\uFFFF",
+
+	//var str_namedRanges       = "\\p{L}\\p{M}*",
+	var str_namedRanges       = "A-Za-z\u005F\u0080-\u0081\u0083\u0085-\u0087\u0089-\u008A\u008C-\u0091\u0093-\u0094\u0096-\u0097\u0099-\u009A\u009C-\u009F\u00A1-\u00A5\u00A7-\u00A8\u00AA\u00AD\u00AF-\u00BA\u00BC-\u02B8\u02BB-\u02C1\u02C7\u02C9-\u02CB\u02CD\u02D0-\u02D1\u02D8-\u02DB\u02DD\u02E0-\u02E4\u02EE\u0370-\u0373\u0376-\u0377\u037A-\u037D\u0386\u0388-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u048A-\u0523\u0531-\u0556\u0559\u0561-\u0587\u05D0-\u05EA\u05F0-\u05F2\u0621-\u064A\u066E-\u066F\u0671-\u06D3\u06D5\u06E5-\u06E6\u06EE-\u06EF\u06FA-\u06FC\u06FF\u0710\u0712-\u072F\u074D-\u07A5\u07B1\u07CA-\u07EA\u07F4-\u07F5\u07FA\u0904-\u0939\u093D\u0950\u0958-\u0961\u0971-\u0972\u097B-\u097F\u0985-\u098C\u098F-\u0990\u0993-\u09A8\u09AA-\u09C0\u09B2\u09B6-\u09B9\u09BD\u09CE\u09DC-\u09DD\u09DF-\u09E1\u09F0-\u09F1\u0A05-\u0A0A\u0A0F-\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32-\u0A33\u0A35-\u0A36\u0A38-\u0A39\u0A59-\u0A5C\u0A5E\u0A72-\u0A74\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2-\u0AB3\u0AB5-\u0AB9\u0ABD\u0AD0\u0AE0-\u0AE1\u0B05-\u0B0C\u0B0F-\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32-\u0B33\u0B35-\u0B39\u0B3D\u0B5C-\u0B5D\u0B5F-\u0B61\u0B71\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99-\u0B9A\u0B9C\u0B9E-\u0B9F\u0BA3-\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BD0\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C33\u0C35-\u0C39\u0C3D\u0C58-\u0C59\u0C60-\u0C61\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBD\u0CDE\u0CE0-\u0CE1\u0D05-\u0D0C\u0D0E-\u0D10\u0D12-\u0D28\u0D2A-\u0D39\u0D3D\u0D60-\u0D61\u0D7A-\u0D7F\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0E01-\u0E3A\u0E40-\u0E4E\u0E81-\u0E82\u0E84\u0E87-\u0E88\u0E8A\u0E8D\u0E94-\u0E97\u0E99-\u0E9F\u0EA1-\u0EA3\u0EA5\u0EA7\u0EAA-\u0EAB\u0EAD-\u0EB0\u0EB2-\u0EB3\u0EBD\u0EC0-\u0EC4\u0EC6\u0EDC-\u0EDD\u0F00\u0F40-\u0F47\u0F49-\u0F6C\u0F88-\u0F8B\u1000-\u102A\u103F\u1050-\u1055\u105A-\u105D\u1061\u1065-\u1066\u106E-\u1070\u1075-\u1081\u108E\u10A0-\u10C5\u10D0-\u10FA\u10FC\u1100-\u1159\u115F-\u11A2\u11A8-\u11F9\u1200-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u1380-\u138F\u13A0-\u13F4\u1401-\u166C\u166F-\u1676\u1681-\u169A\u16A0-\u16EA\u16EE-\u16F0\u1700-\u170C\u170E-\u1711\u1720-\u1731\u1740-\u1751\u1760-\u176C\u176E-\u1770\u1780-\u17B3\u17D7\u17DC\u1820-\u1877\u1880-\u18A8\u18AA\u1900-\u191C\u1950-\u196D\u1970-\u1974\u1980-\u19A9\u19C1-\u19C7\u1A00-\u1A16\u1B05-\u1B33\u1B45-\u1B4B\u1B83-\u1BA0\u1BAE-\u1BAF\u1C00-\u1C23\u1C4D-\u1C4F\u1C5A-\u1C7D\u1D00-\u1DBF\u1E00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u200e\u2010\u2013-\u2016\u2018\u201C-\u201D\u2020-\u2021\u2025-\u2027\u2030\u2032-\u2033\u2035\u203B\u2071\u2074\u207F\u2081-\u2084\u2090-\u2094\u2102-\u2103\u2105\u2107\u2109-\u2113\u2115-\u2116\u2119-\u211D\u2121-\u2122\u2124\u2126\u2128\u212A-\u212D\u212F-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2153-\u2154\u215B-\u215E\u2160-\u2188\u2190-\u2199\u21D2\u21D4\u2200\u2202-\u2203\u2207-\u2208\u220B\u220F\u2211\u2215\u221A\u221D-\u2220\u2223\u2225\u2227-\u222C\u222E\u2234-\u2237\u223C-\u223D\u2248\u224C\u2252\u2260-\u2261\u2264-\u2267\u226A-\u226B\u226E-\u226F\u2282-\u2283\u2286-\u2287\u2295\u2299\u22A5\u22BF\u2312\u2460-\u24B5\u24D0-\u24E9\u2500-\u254B\u2550-\u2574\u2581-\u258F\u2592-\u2595\u25A0-\u25A1\u25A3-\u25A9\u25B2-\u25B3\u25B6-\u25B7\u25BC-\u25BD\u25C0-\u25C1\u25C6-\u25C8\u25CB\u25CE-\u25D1\u25E2-\u25E5\u25EF\u2605-\u2606\u2609\u260E-\u260F\u261C\u261E\u2640\u2642\u2660-\u2661\u2663-\u2665\u2667-\u266A\u266C-\u266D\u266F\u2C00-\u2C2E\u2C30-\u2C5E\u2C60-\u2C6F\u2C71-\u2C7D\u2C80-\u2CE4\u2D00-\u2D25\u2D30-\u2D65\u2D6F\u2D80-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u3000-\u3003\u3005-\u3017\u301D-\u301F\u3021-\u3029\u3031-\u3035\u3038-\u303C\u3041-\u3096\u309B-\u309F\u30A1-\u30FF\u3105-\u312D\u3131-\u318E\u31A0-\u31B7\u31F0-\u321C\u3220-\u3229\u3231-\u3232\u3239\u3260-\u327B\u327F\u32A3-\u32A8\u3303\u330D\u3314\u3318\u3322-\u3323\u3326-\u3327\u332B\u3336\u333B\u3349-\u334A\u334D\u3351\u3357\u337B-\u337E\u3380-\u3384\u3388-\u33CA\u33CD-\u33D3\u33D5-\u33D6\u33D8\u33DB-\u33DD\u3400-\u4DB5\u4E00-\u9FC3\uA000-\uA48C\uA500-\uA60C\uA610-\uA61F\uA62A-\uA62B\uA640-\uA65F\uA662-\uA66E\uA680-\uA697\uA722-\uA787\uA78B-\uA78C\uA7FB-\uA801\uA803-\uA805\uA807-\uA80A\uA80C-\uA822\uA840-\uA873\uA882-\uA8B3\uA90A-\uA925\uA930-\uA946\uAA00-\uAA28\uAA40-\uAA42\uAA44-\uAA4B\uAC00-\uD7A3\uE000-\uF848\uF900-\uFA2D\uFA30-\uFA6A\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D\uFB1F-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40-\uFB41\uFB43-\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE30-\uFE31\uFE33-\uFE44\uFE49-\uFE52\uFE54-\uFE57\uFE59-\uFE66\uFE68-\uFE6B\uFE70-\uFE74\uFE76-\uFEFC\uFF01-\uFF5E\uFF61-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC\uFFE0-\uFFE6";
+	str_namedRanges          += "\\p{M}";
+	
+	var	str_namedSheetsRange  = "\u0001-\u0026\u0028-\u0029\u002B-\u002D\u003B-\u003E\u0040\u005E\u0060\u007B-\u007F\u0082\u0084\u008B\u0092\u0095\u0098\u009B\u00A0\u00A6\u00A9\u00AB-\u00AC\u00AE\u00BB\u0378-\u0379\u037E-\u0383\u0387\u038B\u038D\u03A2\u0524-\u0530\u0557-\u0558\u055A-\u0560\u0588-\u0590\u05BE\u05C0\u05C3\u05C6\u05C8-\u05CF\u05EB-\u05EF\u05F3-\u05FF\u0604-\u0605\u0609-\u060A\u060C-\u060D\u061B-\u061E\u0620\u065F\u066A-\u066D\u06D4\u0700-\u070E\u074B-\u074C\u07B2-\u07BF\u07F7-\u07F9\u07FB-\u0900\u093A-\u093B\u094E-\u094F\u0955-\u0957\u0964-\u0965\u0970\u0973-\u097A\u0980\u0984\u098D-\u098E\u0991-\u0992\u09A9\u09B1\u09B3-\u09B5\u09BA-\u09BB\u09C5-\u09C6\u09C9-\u09CA\u09CF-\u09D6\u09D8-\u09DB\u09DE\u09E4-\u09E5\u09FB-\u0A00\u0A04\u0A0B-\u0A0E\u0A11-\u0A12\u0A29\u0A31\u0A34\u0A37\u0A3A-\u0A3B\u0A3D\u0A43-\u0A46\u0A49-\u0A4A\u0A4E-\u0A50\u0A52-\u0A58\u0A5D\u0A5F-\u0A65\u0A76-\u0A80\u0A84\u0A8E\u0A92\u0AA9\u0AB1\u0AB4\u0ABA-\u0ABB\u0AC6\u0ACA\u0ACE-\u0ACF\u0AD1-\u0ADF\u0AE4-\u0AE5\u0AF0\u0AF2-\u0B00\u0B04\u0B0D-\u0B0E\u0B11-\u0B12\u0B29\u0B31\u0B34\u0B3A-\u0B3B\u0B45-\u0B46\u0B49-\u0B4A\u0B4E-\u0B55\u0B58-\u0B5B\u0B5E\u0B64-\u0B65\u0B72-\u0B81\u0B84\u0B8B-\u0B8D\u0B91\u0B96-\u0B98\u0B9B\u0B9D\u0BA0-\u0BA2\u0BA5-\u0BA7\u0BAB-\u0BAD\u0BBA-\u0BBD\u0BC3-\u0BC5\u0BC9\u0BCE-\u0BCF\u0BD1-\u0BD6\u0BD8-\u0BE5\u0BFB-\u0C00\u0C04\u0C0D\u0C11\u0C29\u0C34\u0C3A-\u0C3C\u0C45\u0C49\u0C4E-\u0C54\u0C57\u0C5A-\u0C5F\u0C64-\u0C65\u0C70-\u0C77\u0C80-\u0C81\u0C84\u0C8D\u0C91\u0CA9\u0CB4\u0CBA-\u0CBB\u0CC5\u0CC9\u0CCE-\u0CD4\u0CD7-\u0CDD\u0CDF\u0CE4-\u0CE5\u0CF0\u0CF3-\u0D01\u0D04\u0D0D\u0D11\u0D29\u0D3A-\u0D3C\u0D45\u0D49\u0D4E-\u0D56\u0D58-\u0D5F\u0D64-\u0D65\u0D76-\u0D78\u0D80-\u0D81\u0D84\u0D97-\u0D99\u0DB2\u0DBC\u0DBE-\u0DBF\u0DC7-\u0DC9\u0DCB-\u0DCE\u0DD5\u0DD7\u0DE0-\u0DF1\u0DF4-\u0E00\u0E3B-\u0E3E\u0E4F\u0E5A-\u0E80\u0E83\u0E85-\u0E86\u0E89\u0E8B-\u0E8C\u0E8E-\u0E93\u0E98\u0EA0\u0EA4\u0EA6\u0EA8-\u0EA9\u0EAC\u0EBA\u0EBE-\u0EBF\u0EC5\u0EC7\u0ECE-\u0ECF\u0EDA-\u0EDB\u0EDE-\u0EFF\u0F04-\u0F12\u0F3A-\u0F3D\u0F48\u0F6D-\u0F70\u0F85\u0F8C-\u0F8F\u0F98\u0FBD\u0FCD\u0FD0-\u0FFF\u104A-\u104F\u109A-\u109D\u10C6-\u10CF\u10FB\u10FD-\u10FF\u115A-\u115E\u11A3-\u11A7\u11FA-\u11FF\u1249\u124E-\u124F\u1257\u1259\u125E-\u125F\u1289\u128E-\u128F\u12B1\u12B6-\u12B7\u12BF\u12C1\u12C6-\u12C7\u12D7\u1311\u1316-\u1317\u135B-\u135E\u1361-\u1368\u137D-\u137F\u139A-\u139F\u13F5-\u1400\u166D-\u166E\u1677-\u167F\u169B-\u169F\u16EB-\u16ED\u16F1-\u16FF\u170D\u1715-\u171F\u1735-\u173F\u1754-\u175F\u176D\u1771\u1774-\u177F\u17D4-\u17D6\u17D8-\u17DA\u17DE-\u17DF\u17EA-\u17EF\u17FA-\u180A\u180F\u181A-\u181F\u1878-\u187F\u18AB-\u18FF\u191D-\u191F\u192C-\u192F\u193C-\u193F\u1941-\u1945\u196E-\u196F\u1975-\u197F\u19AA-\u19AF\u19CA-\u19CF\u19DA-\u19DF\u1A1C-\u1AFF\u1B4C-\u1B4F\u1B5A-\u1B60\u1B7D-\u1B7F\u1BAB-\u1BAD\u1BBA-\u1BFF\u1C38-\u1C3F\u1C4A-\u1C4C\u1C7E-\u1CFF\u1DE7-\u1DFD\u1F16-\u1F17\u1F1E-\u1F1F\u1F46-\u1F47\u1F4E-\u1F4F\u1F58\u1F5A\u1F5C\u1F5E\u1F7E-\u1F7F\u1FB5\u1FC5\u1FD4-\u1FD5\u1FDC\u1FF0-\u1FF1\u1FF5\u1FFF\u200e\u2011-\u2012\u2017\u2019-\u201B\u201E-\u201F\u2022-\u2024\u2031\u2034\u2036-\u203A\u203C-\u2043\u2045-\u2051\u2053-\u205E\u2065-\u2069\u2072-\u2073\u207D-\u207E\u208D-\u208F\u2095-\u209F\u20B6-\u20CF\u20F1-\u20FF\u2150-\u2152\u2189-\u218F\u2329-\u232A\u23E8-\u23FF\u2427-\u243F\u244B-\u245F\u269E-\u269F\u26BD-\u26BF\u26C4-\u2700\u2705\u270A-\u270B\u2728\u274C\u274E\u2753-\u2755\u2757\u275F-\u2760\u2768-\u2775\u2795-\u2797\u27B0\u27BF\u27C5-\u27C6\u27CB\u27CD-\u27CF\u27E6-\u27EF\u2983-\u2998\u29D8-\u29DB\u29FC-\u29FD\u2B4D-\u2B4F\u2B55-\u2BFF\u2C2F\u2C5F\u2C70\u2C7E-\u2C7F\u2CEB-\u2CFC\u2CFE-\u2CFF\u2D26-\u2D2F\u2D66-\u2D6E\u2D70-\u2D7F\u2D97-\u2D9F\u2DA7\u2DAF\u2DB7\u2DBF\u2DC7\u2DCF\u2DD7\u2DDF\u2E00-\u2E2E\u2E30-\u2E7F\u2E9A\u2EF4-\u2EFF\u2FD6-\u2FEF\u2FFC-\u2FFF\u3018-\u301C\u3030\u303D\u3040\u3097-\u3098\u30A0\u3100-\u3104\u312E-\u3130\u318F\u31B8-\u31BF\u31E4-\u31EF\u321F\u3244-\u324F\u32FF\u4DB6-\u4DBF\u9FC4-\u9FFF\uA48D-\uA48F\uA4C7-\uA4FF\uA60D-\uA60F\uA62C-\uA63F\uA660-\uA661\uA673-\uA67B\uA67E\uA698-\uA6FF\uA78D-\uA7FA\uA82C-\uA83F\uA874-\uA87F\uA8C5-\uA8CF\uA8DA-\uA8FF\uA92F\uA954-\uA9FF\uAA37-\uAA3F\uAA4E-\uAA4F\uAA5A-\uABFF\uD7A4-\uD7FF\uFA2E-\uFA2F\uFA6B-\uFA6F\uFADA-\uFAFF\uFB07-\uFB12\uFB18-\uFB1C\uFB37\uFB3D\uFB3F\uFB42\uFB45\uFBB2-\uFBD2\uFD3E-\uFD4F\uFD90-\uFD91\uFDC8-\uFDEF\uFDFE-\uFDFF\uFE10-\uFE1F\uFE27-\uFE2F\uFE32\uFE45-\uFE48\uFE53\uFE58\uFE67\uFE6C-\uFE6F\uFE75\uFEFD-\uFEFE\uFF00\uFF5F-\uFF60\uFFBF-\uFFC1\uFFC8-\uFFC9\uFFD0-\uFFD1\uFFD8-\uFFD9\uFFDD-\uFFDF\uFFE7\uFFEF-\uFFF8\uFFFE-\uFFFF",
 		rx_operators          = /^ *[-+*\/^&%<=>:] */,
 		rg                    = new XRegExp("^((?:_xlfn.)?[\\p{L}\\d._]+ *)[-+*/^&%<=>:;\\(\\)]"),
 		//TODO для правки ввода формулы SUM(A1:B1.) - меняю rgRange/rgRangeR1C1 ,
@@ -2677,7 +2914,7 @@
 		hostnameRe            = /^(((https?)|(ftps?)):\/\/)?([\-\wа-яё]*:?[\-\wа-яё]*@)?(([\-\wа-яё]+\.)+[\wа-яё\-]{2,}(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`'~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?)/i,
 		localRe               = /^(((https?)|(ftps?)):\/\/)([\-\wа-яё]*:?[\-\wа-яё]*@)?(([\-\wа-яё]+)(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`'~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?)/i,
 		fileRe                = /^((file):\/\/)[^'`"%^{}<>].*/i,//reserved symbols from word 2010
-		rx_allowedProtocols      = /(^((https?|ftps?|file|tessa|smb):\/\/)|(mailto:)).*/i,
+		rx_allowedProtocols      = /(^((https?|ftps?|file|tessa|joplin|smb):\/\/)|(mailto:)).*/i,
 
 		rx_table              = build_rx_table(null),
 		rx_table_local        = build_rx_table(null);
@@ -2687,45 +2924,128 @@
 		//var regExpExceptExternalLink = /('?[a-zA-Z0-9\s\[\]\.]{1,99})?'?!?\$?[a-zA-Z]{1,3}\$?[0-9]{1,7}(:\$?[a-zA-Z]{1,3}\$?[0-9]{1,7})?/;
 
 		//'path/[name]Sheet1'!A1
-		var path, name, startLink, i;
-		if (url && url[0] === "'"/*url.match(/('[^\[]*\[[^\]]+\]([^'])+'!)/g)*/) {
-			for (i = url.length - 1; i >= 0; i--) {
-				if (url[i] === "!" && url[i - 1] === "'") {
-					startLink = true;
-					i--;
-					continue;
+		let path, name, startLink, i, exclamationMarkIndex;
+		if (url && url.indexOf("[") !== -1) {
+			//todo check on other separators, exm -> SUM(A2 '[new.xlsx]Sheet1'!A1 '[new.xlsx]Sheet1'!A2)
+			for (let j = 0; j < url.length; j++) {
+				if (!exclamationMarkIndex && url[j] === "!") {
+					exclamationMarkIndex = j;
 				}
-				if (startLink) {
-					if (name) {
-						if (url[i] === "[" && (url[i - 1] === "/" || url[i - 1] === "/\/" ||  url[i - 1] === "\\" || (url[i - 1] === "'") && i === 1)) {
-							break;
+				
+				if (url[j] === FormulaSeparators.functionArgumentSeparator || url[j] === FormulaSeparators.functionArgumentSeparatorDef || url[j] === ";")  {
+					url = url.substring(0, j);
+					break;
+				}
+			}
+
+
+			if (url && url[0] === "'"/*url.match(/('[^\[]*\[[^\]]+\]([^'])+'!)/g)*/) {
+				for (i = exclamationMarkIndex ? exclamationMarkIndex : url.length - 1; i >= 0; i--) {
+					if (url[i] === "!" && url[i - 1] === "'") {
+						startLink = true;
+						i--;
+						continue;
+					}
+					if (startLink) {
+						if (name) {
+							if (url[i] === "[" && (url[i - 1] === "/" || url[i - 1] === "/\/" ||  url[i - 1] === "\\" || (url[i - 1] === "'") && i === 1)) {
+								break;
+							} else {
+								name.end--;
+							}
 						} else {
-							name.end--;
-						}
-					} else {
-						if("]" === url[i]) {
-							name = {start: i, end: i};
+							if("]" === url[i]) {
+								name = {start: i, end: i};
+							}
 						}
 					}
 				}
-			}
-			if (name) {
-				var fullname = url.substring(0, name.start + 1);
-				path = url.substring(1, name.end - 1);
-				name = url.substring(name.end, name.start);
-				return {name: name, path: path, fullname: fullname};
-			}
-		} else if (url && url[0] === "[") { // [name]Sheet1!A1
-			for (i = 1; i < url.length; i++) {
-				if (url[i] === "]") {
-					return {name: url.substring(1, i), path: "", fullname:  url.substring(0, i + 1)};
+				if (name) {
+					var fullname = url.substring(0, name.start + 1);
+					path = url.substring(1, name.end - 1);
+					name = url.substring(name.end, name.start);
+					return {name: name, path: path, fullname: fullname};
 				}
-			}
-		} else if (true) { //https://s3.amazonaws.com/nct-files/xlsx/[ExternalLinksDestination.xlsx]Sheet1!A1:A2
+			} else if (url && url[0] === "[") { // [name]Sheet1!A1
+				for (i = 1; i < url.length; i++) {
+					if (url[i] === "]") {
+						return {name: url.substring(1, i), path: "", fullname:  url.substring(0, i + 1)};
+					}
+				}
+			} else if (true) { //https://s3.amazonaws.com/nct-files/xlsx/[ExternalLinksDestination.xlsx]Sheet1!A1:A2
 
+			}
 		}
 
 		return null;
+	}
+
+	function isExternalShortLink (string) {
+		// short links that ms writes as [externalLink] + "!" + "Defname"
+		// strings come in "!"+"Defname" format only after external
+		if (string[0] !== "!") {
+			return null;
+		}
+
+		let secondPartOfString = string.slice(1);
+		let defname = XRegExp.exec(secondPartOfString, rx_name);
+
+		if (defname && defname["name"]) {
+			defname = defname["name"];
+		}
+
+		if (!defname || !AscCommon.rx_defName.test(defname)) {
+			return null;
+		}
+
+		return {
+			externalLink: "",
+			defname: defname,
+			fullString: "!" + defname,
+		}
+	}
+
+	function isExternalShortLinkLocal (string) {
+		// short links that user writes as "'externalLinkWithoutBrackets'" + "!" + "Defname"  -  "'DefTest.xlsx'!_s1"
+		// we split the string into two parts, where the separator is an exclamation point
+		if (!string) {
+			return null;
+		}
+
+		let shortLinkReg = /[\<\>\?\[\]\\\/\|\*\+\"\:\']/;	// reg contains special characters that are not allowed in the shortLink
+
+		let linkInQuotes;
+		let exclamationMarkIndex = string.indexOf("!");
+		let externalLink = exclamationMarkIndex !== -1 ? string.substring(0, exclamationMarkIndex) : null;
+		let secondPartOfString = exclamationMarkIndex !== -1 ? string.substring(exclamationMarkIndex + 1) : null;
+
+		let defname = null;
+		if (secondPartOfString && !parserHelp.isArea(secondPartOfString, 0) && !parserHelp.isRef(secondPartOfString, 0)) {
+			defname = XRegExp.exec(secondPartOfString, rx_name);
+			if (defname && defname["name"]) {
+				defname = defname["name"];
+			}
+		}
+
+		if (externalLink && externalLink[0] === "'" && externalLink[externalLink.length - 1] === "'") {
+			externalLink = externalLink.substring(1, externalLink.length - 1);
+			linkInQuotes = true;
+		}
+
+		if (!externalLink || !defname || shortLinkReg.test(externalLink) || !AscCommon.rx_defName.test(defname)) {
+			return null;
+		}
+
+		// external link without quotes is parsed using a regular parser for the name
+		if (!linkInQuotes && !rx_test_ws_name.test(externalLink)) {
+			return null;
+		}
+
+		return {
+			externalLink: externalLink,
+			defname: defname,
+			fullString: linkInQuotes ? ("'" + externalLink + "'" + "!" + defname) : (externalLink + "!" + defname)
+		}
 	}
 
 	function isValidFileUrl(url) {
@@ -3127,7 +3447,32 @@
 
 		return false;
 	};
-	parserHelper.prototype.is3DRef = function (formula, start_pos, support_digital_start)
+	/**
+	 * Checks if the provided formula is a 3D reference.
+	 *
+	 * A 3D reference in the context of formulas typically indicates a range of cells 
+	 * that can span multiple sheets in an Excel workbook. This function analyzes 
+	 * the formula to determine if it conforms to the format of a 3D reference.
+	 *
+	 * The function processes the formula starting from the specified position, 
+	 * handling external links, short links, and various formats of references.
+	 *
+	 * @param {string} formula - The formula to be checked for 3D reference.
+	 * @param {number} start_pos - The starting position in the formula for analysis.
+	 * @param {boolean} support_digital_start - Indicates whether the function 
+	 *     supports digital start references (e.g., "1Sheet").
+	 * @param {boolean} local - the flag that indicate is local context used or not, that may be used during 
+	 *     the analysis of the formula.
+	 * @returns {[boolean, (string|null), (string|null), (string|null), (number|Object|null), (string|null)]} 
+	 * Returns an array containing:
+	 * - A boolean indicating if the formula is a 3D reference.
+	 * - The name of the starting sheet or null if not applicable.
+	 * - The name of the ending sheet or null if not applicable.
+	 * - The external link if applicable, or null.
+	 * - The length of the external link if not applicable, or shortLink info object if it exists.
+	 * - The supposed defname or null.
+	 */
+	parserHelper.prototype.is3DRef = function (formula, start_pos, support_digital_start, local)
 	{
 		if (this instanceof parserHelper)
 		{
@@ -3148,19 +3493,45 @@
 			//необходимо вычленить имя файла и путь к нему, затем проверить путь
 			//если путь указан, то ссылка должна быть в одинарных кавычках, если указан просто название файла в [] - в мс это означает, что данный файл открыт, при его закрытии путь проставляется
 			//пока не реализовываем с открытыми файлами, работаем только с путями
+			//также ссылки типа [] + ! + Defname должны обрабатываться аналогично как [] + SheetName + ! + Defname
 			external = parseExternalLink(subSTR);
 			if (external) {
+				if (external.name && (external.name.indexOf("[") !== -1)) {
+					// if the link/path to the file inside brackets contains '[' then we return an error
+					return [false, null, null, external, externalLength];
+				}
+
 				externalLength = external.fullname.length;
 				subSTR = formula.substring(start_pos + externalLength);
-				if (-1 !== subSTR.indexOf("'")) {
-					externalLength += 1;
+				const posQuote =  subSTR.indexOf("'");
+				if (-1 !== posQuote) {
+					externalLength -= 1;
+					subSTR = "'" + subSTR;
 				}
-				subSTR = subSTR.replace("'", "");
+
 				external = external.path + external.name;
 			}
 		}
 
-		var match  = XRegExp.exec(subSTR, rx_ref3D_quoted) || XRegExp.exec(subSTR, rx_ref3D_non_quoted);
+		/* current file check */
+		let currentFileName = window["Asc"]["editor"].DocInfo && window["Asc"]["editor"].DocInfo.get_Title();
+
+		/* shortlink return obj {fullstring, externalLink, defname} */
+		let shortLink = isExternalShortLink(subSTR) || (local && !external && isExternalShortLinkLocal(subSTR));
+
+		if (shortLink) {
+			if ((shortLink.externalLink && shortLink.externalLink === currentFileName) || external === "0") {
+				external = null;
+				shortLink.currentFile = true;
+			}
+
+			this.pCurrPos += shortLink.fullString.length + externalLength;
+			this.operand_str = shortLink.defname;
+			return [true, null, null, external, shortLink];
+		}
+
+		let match = XRegExp.exec(subSTR, rx_ref3D_quoted) || XRegExp.exec(subSTR, rx_ref3D_non_quoted);
+		
 		if(!match && support_digital_start) {
 			match = XRegExp.exec(subSTR, rx_ref3D_non_quoted_2);
 		}
@@ -3169,9 +3540,17 @@
 		{
 			this.pCurrPos += match[0].length + externalLength;
 			this.operand_str = match[1];
-			return [true, match["name_from"] ? match["name_from"].replace(/''/g, "'") : null, match["name_to"] ? match["name_to"].replace(/''/g, "'") : null, external];
+
+			let currentFileDefname;
+			if (external && external === currentFileName) {
+				let exclamationMarkIndex = subSTR.lastIndexOf("!");
+				let defname = exclamationMarkIndex !== -1 ? subSTR.slice(exclamationMarkIndex + 1) : null;
+				currentFileDefname = defname ? defname : null;
+			}
+
+			return [true, match["name_from"] ? match["name_from"].replace(/''/g, "'") : null, match["name_to"] ? match["name_to"].replace(/''/g, "'") : null, external, null, currentFileDefname];
 		}
-		return [false, null, null];
+		return [false, null, null, external, externalLength];
 	};
 	parserHelper.prototype.isNextPtg = function (formula, start_pos, digitDelim)
 	{
@@ -3399,6 +3778,15 @@
 		}
 		return false;
 	};
+	parserHelper.prototype.isDefName = function(formula, start_pos) {
+		var _isArea = this.isArea(formula, start_pos);
+		var _isRef = !_isArea && this.isRef(formula, start_pos);
+		var _isName = !_isRef && !_isArea && this.isName(formula, start_pos);
+		if (_isName) {
+			return {defname: this.operand_str};
+		}
+		return false;
+	};
 	parserHelper.prototype.isName3D = function (formula, start_pos)
 	{
 		if (this instanceof parserHelper)
@@ -3407,12 +3795,17 @@
 		}
 
 		var _is3DRef = this.is3DRef(formula, start_pos);
-		if(_is3DRef && _is3DRef[0] && _is3DRef[1] && _is3DRef[1].length)
+		if(_is3DRef && _is3DRef[0])
 		{
-			var _startPos = this.pCurrPos;
-			var _isArea = this.isArea(formula, _startPos);
-			var _isRef = !_isArea && this.isRef(formula, _startPos);
-			return !_isRef && !_isArea && this.isName(formula, _startPos);
+			let _isName = false;
+			if (_is3DRef[1] && _is3DRef[1].length) {
+				_isName = this.isDefName(formula, this.pCurrPos);
+			} else {
+				_isName = _is3DRef[4];
+			}
+			if (_isName) {
+				return {defName: _isName.defname, sheet: _is3DRef[1], external: _is3DRef[3]};
+			}
 		}
 
 		return false;
@@ -3503,23 +3896,112 @@
 			return true;
 		}
 	};
-	parserHelper.prototype.isTable = function (formula, start_pos, local)
+	parserHelper.prototype.isTable = function (formula, start_pos, local, parserFormula)
 	{
 		if (this instanceof parserHelper)
 		{
 			this._reset();
 		}
+		let subSTR = formula.substring(start_pos);
+		/*
+			short notation can be used inside table cells
+			short entry - an entry without table name, but with the same syntax 
+		*/
+		let tableIntersection;
+		if (local && subSTR[0] === "[" && parserFormula.parent && parserFormula.ws && parserFormula.ws.TableParts) {
+			let col = parserFormula.parent.nCol;
+			let row = parserFormula.parent.nRow;
+			// go through each existing table and check intersection by col row
+			for (let i = 0; i < parserFormula.ws.TableParts.length; i++) {
+				let table = parserFormula.ws.TableParts[i];
+				let tableRef = table.Ref;
+				if (!tableRef.contains(col, row)) {
+					continue;
+				}
+				tableIntersection = table;
+				break;
+			}
 
-		var subSTR = formula.substring(start_pos),
-			match  = XRegExp.exec(subSTR, local ? rx_table_local : rx_table);
+			if (tableIntersection) {
+				// add the table name to the beginning of the line for correct checking further  
+				subSTR = tableIntersection.DisplayName + subSTR;
+			}
+		}
 
-		if (match != null && match["tableName"])
-		{
-			this.operand_str = match[0];
-			this.pCurrPos += match[0].length;
+		const match = XRegExp.exec(subSTR, local ? rx_table_local : rx_table);
+
+		if (match != null && match["tableName"]) {
+			let colNameToInsert = match["columnName1"] ? match["columnName1"] : "";
+			this.operand_str = tableIntersection ? "[" + colNameToInsert + "]" : match[0];
+			this.pCurrPos += tableIntersection ? colNameToInsert.length + 2 : match[0].length;
 			return match;
 		}
 
+		return false;
+	};
+	parserHelper.prototype.isPivot = function (formula, start_pos, local, opt_namesList)
+	{
+		if (this instanceof parserHelper)
+		{
+			this._reset();
+		}
+		const subSTR = formula.substring(start_pos);
+		const fullPatterns = [];
+		for (let i = 0; i < opt_namesList[0].length; i += 1) {
+			for (let j = 0; j < opt_namesList[1].length; j += 1) {
+				fullPatterns.push('^(' + XRegExp.escape(opt_namesList[0][i]) + ')\\s*\\[\\s*(' + XRegExp.escape(opt_namesList[1][j]) + ')\\s*\\]');
+			}
+		}
+		const fullRegs = fullPatterns.map(function(pattern) {
+			return new RegExp(pattern, 'i');
+		});
+		for (let i = 0; i < fullRegs.length; i += 1) {
+			const match = fullRegs[i].exec(subSTR);
+			if (match !== null) {
+				this.operand_str = match[0];
+				this.pCurrPos += match[0].length;
+				return [match[1], match[2]];
+			}
+		}
+		const shortPatterns = opt_namesList[1].map(function(name) {
+			return '^(' + XRegExp.escape(name) + ')(?:\\W|$)';
+		});
+		const shortRegs = shortPatterns.map(function(pattern) {
+			return new RegExp(pattern, 'i');
+		});
+		for (let i = 0; i < shortRegs.length; i += 1) {
+			const match = shortRegs[i].exec(subSTR);
+			if (match !== null) {
+				this.operand_str = match[1];
+				this.pCurrPos += match[1].length;
+				return [null, match[2] ? match[2] : match[1]];
+			}
+		}
+		return false;
+	};
+	parserHelper.prototype.isPivotRaw = function (formula, start_pos, local)
+	{
+		if (this instanceof parserHelper)
+		{
+			this._reset();
+		}
+		const subSTR = formula.substring(start_pos);
+		const reg = XRegExp.build('(?x) ^({{fieldName}})\\[({{itemName}})\\]', {
+			'fieldName': XRegExp.build('{{simple}}|{{quotes}}', {
+				'simple': '[\\p{L}_][\\p{L}\\p{N}_]*',
+				'quotes': "\\'.+?\\'(?!\\')",
+			}),
+			'itemName': XRegExp.build('{{simple}}|{{quotes}}', {
+				'simple': '[\\p{L}\\p{N}_]+',
+				'quotes': "\\'.+?\\'(?!\\')",
+			})
+		});
+		const match = reg.exec(subSTR);
+		if (match !== null && match[1] && match[2]) {
+			this.operand_str = match[0];
+			this.pCurrPos += match[0].length;
+			return [match[1], match[2]];
+		}
 		return false;
 	};
 // Парсим ссылку на диапазон в листе
@@ -3536,7 +4018,7 @@
 			if (this.isArea(formula, indexStartRange) || this.isRef(formula, indexStartRange))
 			{
 				if (this.operand_str.length == formula.substring(indexStartRange).length)
-					return {sheet: sheetName, sheet2: is3DRefResult[2], range: this.operand_str};
+					return {sheet: sheetName, sheet2: is3DRefResult[2], range: this.operand_str, external: is3DRefResult[3]};
 				else
 					return null;
 			}
@@ -3562,8 +4044,11 @@
 		}
 	};
 // Возвращает экранируемое название листа
-	parserHelper.prototype.getEscapeSheetName = function (sheet)
+	parserHelper.prototype.getEscapeSheetName = function (sheet, shortLink)
 	{
+		if (shortLink) {
+			return rx_test_ws_name.test(sheet) ? sheet : sheet.replace(/'/g, "''");
+		}
 		return rx_test_ws_name.test(sheet) ? sheet : "'" + sheet.replace(/'/g, "''") + "'";
 	};
 	/**
@@ -3579,8 +4064,9 @@
 	 */
 	parserHelper.prototype.checkDataRange = function (model, wb, dialogType, dataRange, fullCheck, isRows, subType)
 	{
-		var result, range, sheetModel, checkChangeRange;
-		if (Asc.c_oAscSelectionDialogType.Chart === dialogType)
+		let result, range, sheetModel, checkChangeRange;
+		let cDialogType = Asc.c_oAscSelectionDialogType;
+		if (cDialogType.Chart === dialogType)
 		{
 			if(dataRange)
 			{
@@ -3590,7 +4076,7 @@
 				}
 			}
 		}
-		else if(Asc.c_oAscSelectionDialogType.PivotTableData === dialogType || Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType || Asc.c_oAscSelectionDialogType.ImportXml === dialogType)
+		else if(cDialogType.PivotTableData === dialogType || cDialogType.PivotTableReport === dialogType || cDialogType.ImportXml === dialogType)
 		{
 			result = parserHelp.parse3DRef(dataRange);
 			if (result)
@@ -3600,7 +4086,7 @@
 				{
 					range = AscCommonExcel.g_oRangeCache.getAscRange(result.range);
 				}
-			} else if (Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType || Asc.c_oAscSelectionDialogType.ImportXml === dialogType) {
+			} else if (cDialogType.PivotTableReport === dialogType || cDialogType.ImportXml === dialogType) {
 				range = AscCommonExcel.g_oRangeCache.getAscRange(dataRange);
 			}
 			if (!range) {
@@ -3610,7 +4096,7 @@
 				range = parserHelp.isTable(dataRange, 0, true);
 			}
 		}
-		else if(Asc.c_oAscSelectionDialogType.PrintTitles === dialogType)
+		else if(cDialogType.PrintTitles === dialogType)
 		{
 			if(dataRange === "")
 			{
@@ -3621,7 +4107,7 @@
 				range = AscCommonExcel.g_oRangeCache.getAscRange(dataRange);
 			}
 		}
-		else if (Asc.c_oAscSelectionDialogType.DataValidation === dialogType)
+		else if (cDialogType.DataValidation === dialogType)
 		{
 			if (dataRange === null || dataRange === "") {
 				return Asc.c_oAscError.ID.DataValidateMustEnterValue;
@@ -3640,21 +4126,28 @@
 		else
 		{
 			range = AscCommonExcel.g_oRangeCache.getAscRange(dataRange);
+			if (!range && model && cDialogType.FormatTable === dialogType && AscCommon.rx_defName.test(dataRange)) {
+				let aRanges = AscCommonExcel.getRangeByName(dataRange, model.getActiveWs());
+				if (aRanges && aRanges.length === 1) {
+					range = aRanges[0] && aRanges[0].bbox;
+				}
+			}
 		}
 
-		if (!range && Asc.c_oAscSelectionDialogType.DataValidation !== dialogType && Asc.c_oAscSelectionDialogType.ConditionalFormattingRule !== dialogType)
+		if (!range && cDialogType.DataValidation !== dialogType && cDialogType.ConditionalFormattingRule !== dialogType && cDialogType.GoalSeek_Cell !== dialogType &&
+			cDialogType.GoalSeek_ChangingCell !== dialogType)
 		{
 			return Asc.c_oAscError.ID.DataRangeError;
 		}
 
 		if (fullCheck)
 		{
-			if (Asc.c_oAscSelectionDialogType.Chart === dialogType)
+			if (cDialogType.Chart === dialogType)
 			{
 				var oDataRefs = new AscFormat.CChartDataRefs(null);
 				return oDataRefs.checkDataRange(dataRange, isRows, subType);
 			}
-			else if (Asc.c_oAscSelectionDialogType.FormatTable === dialogType)
+			else if (cDialogType.FormatTable === dialogType)
 			{
 				// ToDo убрать эту проверку, заменить на более грамотную после правки функции _searchFilters
 				if (true === wb.getWorksheet().model.autoFilters.isRangeIntersectionTableOrFilter(range)) {
@@ -3665,26 +4158,26 @@
 					return Asc.c_oAscError.ID.LargeRangeWarning;
 				}
 			}
-			else if (Asc.c_oAscSelectionDialogType.FormatTableChangeRange === dialogType)
+			else if (cDialogType.FormatTableChangeRange === dialogType)
 			{
 				// ToDo убрать эту проверку, заменить на более грамотную после правки функции _searchFilters
 				checkChangeRange = wb.getWorksheet().af_checkChangeRange(range);
 				if (null !== checkChangeRange)
 					return checkChangeRange;
 			}
-			else if(Asc.c_oAscSelectionDialogType.CustomSort === dialogType)
+			else if(cDialogType.CustomSort === dialogType)
 			{
 				checkChangeRange = wb.getWorksheet().checkCustomSortRange(range, isRows);
 				if (null !== checkChangeRange)
 					return checkChangeRange;
 			}
-			else if (Asc.c_oAscSelectionDialogType.PivotTableData === dialogType)
+			else if (cDialogType.PivotTableData === dialogType)
 			{
 				if (!Asc.CT_pivotTableDefinition.prototype.isValidDataRef(dataRange)) {
 					return Asc.c_oAscError.ID.PivotLabledColumns;
 				}
 			}
-			else if (Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType || Asc.c_oAscSelectionDialogType.ImportXml === dialogType)
+			else if (cDialogType.PivotTableReport === dialogType || cDialogType.ImportXml === dialogType)
 			{
 				var location = Asc.CT_pivotTableDefinition.prototype.parseDataRef(dataRange);
 				if (location) {
@@ -3692,7 +4185,7 @@
 					if (!sheetModel) {
 						sheetModel = model.getActiveWs();
 					}
-					if (Asc.c_oAscSelectionDialogType.ImportXml === dialogType) {
+					if (cDialogType.ImportXml === dialogType) {
 						return sheetModel.checkImportXmlLocationForError([location.bbox]);
 					} else {
 						var newRange = new Asc.Range(location.bbox.c1, location.bbox.r1, location.bbox.c1 + AscCommonExcel.NEW_PIVOT_LAST_COL_OFFSET, location.bbox.r1 + AscCommonExcel.NEW_PIVOT_LAST_ROW_OFFSET);
@@ -3702,7 +4195,7 @@
 					return Asc.c_oAscError.ID.DataRangeError;
 				}
 			}
-			else if (Asc.c_oAscSelectionDialogType.DataValidation === dialogType)
+			else if (cDialogType.DataValidation === dialogType)
 			{
 				var dataValidaionTest = AscCommonExcel.CDataValidation.prototype.isValidDataRef(model.getActiveWs(), dataRange, subType);
 				if (null !== dataValidaionTest)
@@ -3710,7 +4203,7 @@
 					return dataValidaionTest;
 				}
 			}
-			else if (Asc.c_oAscSelectionDialogType.ConditionalFormattingRule === dialogType)
+			else if (cDialogType.ConditionalFormattingRule === dialogType)
 			{
 
 				if (dataRange === null || dataRange === "")
@@ -3737,7 +4230,37 @@
 					}
 				}
 			}
+			else if (cDialogType.GoalSeek_Cell === dialogType || cDialogType.GoalSeek_ChangingCell === dialogType)
+			{
+				result = parserHelp.parse3DRef(dataRange);
+				if (result)
+				{
+					sheetModel = model.getWorksheetByName(result.sheet);
+					if (sheetModel)
+					{
+						range = AscCommonExcel.g_oRangeCache.getAscRange(result.range);
+					}
+				}
+
+				if (!sheetModel) {
+					sheetModel = model.getActiveWs();
+				}
+				return AscCommonExcel.CGoalSeek.prototype.isValidDataRef(sheetModel, range, dialogType);
+			} else if (cDialogType.Solver_ObjectiveCell) {
+				result = parserHelp.parse3DRef(dataRange);
+				if (result) {
+					sheetModel = model.getWorksheetByName(result.sheet);
+					if (sheetModel) {
+						range = AscCommonExcel.g_oRangeCache.getAscRange(result.range);
+					}
+				}
+				if (!sheetModel) {
+					sheetModel = model.getActiveWs();
+				}
+				return AscCommonExcel.CSolver.prototype.isValidDataRef(sheetModel, range, dialogType);
+			}
 		}
+
 		return Asc.c_oAscError.ID.No;
 	};
 	parserHelper.prototype.setDigitSeparator = function (sep)
@@ -3842,6 +4365,19 @@
 			}
 		}
 		return null;
+	};
+	parserHelper.prototype.escapeTableCharacters = function (string, doEscape) {
+		if (!string) {
+			return "";
+		}
+		
+		// make escape for the special character inside the string
+		if (doEscape) {
+			return string.replace(/(['#@\[\]])/g, "'$1");
+		}
+
+		// return only the character from the capture group(without escaping)
+		return string.replace(/'(['#@\[\]])/g, "$1");
 	};
 
 	var parserHelp = new parserHelper();
@@ -3993,10 +4529,18 @@
 
 		this.m_nOFormLoadCounter = 0;
 		this.m_nOFormEditCounter = 0;
+		
+		this.m_nPdfNewFormCounter = 0;
+		this.m_nPdfRedactCounter = 0;
+
+		this.m_nTurnOffCounter = 0;
 	}
 
 	CIdCounter.prototype.Get_NewId = function ()
 	{
+		if (!AscCommon.g_oTableId.IsOn())
+			return ("off_" + (++this.m_nTurnOffCounter));
+		
 		if (true === this.m_bLoad || null === this.m_sUserId)
 		{
 			this.m_nIdCounterLoad++;
@@ -4016,6 +4560,10 @@
 	{
 		this.m_bLoad = bValue;
 	};
+	CIdCounter.prototype.IsLoad = function()
+	{
+		return this.m_bLoad;
+	};
 	CIdCounter.prototype.Clear = function ()
 	{
 		this.m_sUserId = null;
@@ -4025,6 +4573,9 @@
 
 		this.m_nOFormLoadCounter = 0;
 		this.m_nOFormEditCounter = 0;
+
+		this.m_nPdfNewFormCounter = 0;
+		this.m_nPdfRedactCounter = 0;
 	};
 	CIdCounter.prototype.GetNewIdForOForm = function()
 	{
@@ -4032,6 +4583,17 @@
 			return ("_oform_" + (++this.m_nOFormLoadCounter));
 		else
 			return ("" + this.m_sUserId + "_oform_" + (++this.m_nOFormEditCounter));
+	};
+	CIdCounter.prototype.GetNewIdForPdfForm = function()
+	{
+		return ++this.m_nPdfNewFormCounter;
+	};
+	CIdCounter.prototype.GetNewIdForPdfRedact = function()
+	{
+		if (true === this.m_bLoad || null === this.m_sUserId)
+			return ("_redact_" + (++this.m_nPdfRedactCounter));
+		else
+			return ("" + this.m_sUserId + "_redact_" + (++this.m_nPdfRedactCounter));
 	};
 
 	function CLock()
@@ -4052,7 +4614,7 @@
 		this.Type = NewType;
 
 		var oApi = editor;
-		var oLogicDocument = oApi.WordControl.m_oLogicDocument;
+		var oLogicDocument = oApi && oApi.WordControl && oApi.WordControl.m_oLogicDocument;
 		if (false != Redraw && oLogicDocument)
 		{
 			// TODO: переделать перерисовку тут
@@ -4092,6 +4654,11 @@
 				oLogicDocument.TrackRevisionsManager.ClearSelectedChanges();
 				oLogicDocument.Document_UpdateInterfaceState(false);
 			}
+		}
+		let oCustomProperties = oApi && oApi.getCustomProperties && oApi.getCustomProperties();
+		if(oCustomProperties && oCustomProperties.Lock === this)
+		{
+			oApi.sendEvent("asc_onCustomPropertiesLocked", this.Is_Locked());
 		}
 	};
 	CLock.prototype.Check = function (Id)
@@ -4161,13 +4728,17 @@
 	{
 		this.m_aChanges.length = 0;
 	};
-	CContentChanges.prototype.Check = function (Type, Pos)
+	CContentChanges.prototype.GetPos = function(pos)
+	{
+		return this.Check(AscCommon.contentchanges_Remove, pos, true);
+	};
+	CContentChanges.prototype.Check = function (Type, Pos, checkPos)
 	{
 		var CurPos = Pos;
 		var Count = this.m_aChanges.length;
 		for (var Index = 0; Index < Count; Index++)
 		{
-			var NewPos = this.m_aChanges[Index].Check_Changes(Type, CurPos);
+			var NewPos = this.m_aChanges[Index].Check_Changes(Type, CurPos, checkPos);
 			if (false === NewPos)
 				return false;
 
@@ -4220,20 +4791,23 @@
 		this.m_pData.Binary.Pos = Binary_Pos;
 		this.m_pData.Binary.Len = Binary_Len;
 	};
-	CContentChangesElement.prototype.Check_Changes = function (Type, Pos)
+	CContentChangesElement.prototype.Check_Changes = function (Type, Pos, checkPos)
 	{
 		var CurPos = Pos;
-		if (contentchanges_Add === Type)
+		if (AscCommon.contentchanges_Add === Type)
 		{
 			for (var Index = 0; Index < this.m_nCount; Index++)
 			{
 				if (false !== this.m_aPositions[Index])
 				{
 					if (CurPos <= this.m_aPositions[Index])
-						this.m_aPositions[Index]++;
+					{
+						if (!checkPos)
+							this.m_aPositions[Index]++;
+					}
 					else
 					{
-						if (contentchanges_Add === this.m_nType)
+						if (AscCommon.contentchanges_Add === this.m_nType)
 							CurPos++;
 						else //if ( contentchanges_Remove === this.m_nType )
 							CurPos--;
@@ -4245,29 +4819,35 @@
 		{
 			for (var Index = 0; Index < this.m_nCount; Index++)
 			{
-				if (false !== this.m_aPositions[Index])
+				if (false === this.m_aPositions[Index])
+					continue;
+				
+				if (CurPos < this.m_aPositions[Index])
 				{
-					if (CurPos < this.m_aPositions[Index])
+					if (!checkPos)
 						this.m_aPositions[Index]--;
-					else if (CurPos > this.m_aPositions[Index])
+				}
+				else if (CurPos > this.m_aPositions[Index])
+				{
+					if (AscCommon.contentchanges_Add === this.m_nType)
+						CurPos++;
+					else //if ( contentchanges_Remove === this.m_nType )
+						CurPos--;
+				}
+				else //if ( CurPos === this.m_aPositions[Index] )
+				{
+					if (AscCommon.contentchanges_Remove === this.m_nType)
 					{
-						if (contentchanges_Add === this.m_nType)
-							CurPos++;
-						else //if ( contentchanges_Remove === this.m_nType )
-							CurPos--;
-					}
-					else //if ( CurPos === this.m_aPositions[Index] )
-					{
-						if (AscCommon.contentchanges_Remove === this.m_nType)
-						{
-							// Отмечаем, что действия совпали
+						// Мы попали в позицию, удаленную другим пользователем
+						// Если наше действие удаляем тоже самое место, то помечаем, что удалять ничего не нужно
+						if (!checkPos)
 							this.m_aPositions[Index] = false;
-							return false;
-						}
-						else
-						{
-							CurPos++;
-						}
+						
+						return false;
+					}
+					else
+					{
+						CurPos++;
 					}
 				}
 			}
@@ -4439,13 +5019,186 @@
 		return ((num - 1) % nLastTrueSymbol) + 1;
 	}
 
+	function getANDConjunctionLang(nLang)
+	{
+		const sLang = languages[nLang];
+		switch (sLang)
+		{
+			case "tr-TR":
+				return "ve";
+			case 'fr-FR':
+				return "et";
+			case 'de-DE':
+				return "und";
+			case 'es-ES':
+				return "con";
+			case 'nl-NL':
+				return "en";
+			case 'sv-SE':
+			case 'sk-SK':
+				return "";
+			case 'pt-BR':
+			case 'pt-PT':
+			case 'it-IT':
+				return "e";
+			case 'el-GR':
+				return "και";
+			case "sr-Cyrl-RS":
+			case 'pl-PL':
+			case "sr-Latn-RS":
+				return "i";
+			case 'cs-CZ':
+				return "a";
+			case 'ru-RU':
+				return "и";
+			case "eu-ES":
+				return "koma";
+			case "hy-AM":
+			case "gl-ES":
+			case 'ko-KR':
+			case 'vi-VN':
+			case 'zh-CN':
+			case 'ja-JP':
+			case 'en-GB':
+			case "ms-MY":
+			case 'bg-BG':
+			case 'lv-LV':
+			case 'az-Latn-AZ':
+			case "si-LK":
+			case "ar-SA":
+			case 'en-US':
+			case "zh-TW":
+			case 'uk-UA':
+			default:
+				return "and";
+		}
+	}
+
 	function getAlphaBetForOrdinalText(language)
 	{
 		var alphaBet = {};
 		switch (language)
 		{
+			case "sr-Cyrl-RS": {
+				alphaBet = {
+					"нула"      : "нулти",
+					"један"     : "први",
+					"два"       : "други",
+					"три"       : "трећи",
+					"четири"    : "четврти",
+					"пет"       : "пети",
+					"шест"      : "шести",
+					"седам"     : "седми",
+					"осам"      : "осми",
+					"девет"     : "девети",
+					"десет"     : "десети",
+					"једанаест" : "једанаести",
+					"дванаест"  : "дванаести",
+					"тринаест"  : "тринаести",
+					"четрнаест" : "четрнаести",
+					"петнаест"  : "петнаести",
+					"шеснаест"  : "шеснаести",
+					"седамнаест": "седамнаести",
+					"осамнаест" : "осамнаести",
+					"деветнаест": "деветнаести",
+					"двадесет"  : "двадесети",
+					"тридесет"  : "тридесети",
+					"четрдесет" : "четрдесети",
+					"педесет"   : "педесети",
+					"шездесет"  : "шездесети",
+					"седамдесет": "седамдесети",
+					"осамдесет" : "осамдесети",
+					"деведесет" : "деведесети",
+					"сто"       : "стоти",
+					"двјесто"   : "двјестоти",
+					"тристо"    : "тристоти",
+					"четиристо" : "четиристоти",
+					"петсто"    : "петстоти",
+					"шесто"     : "шестстоти",
+					"седамсто"  : "седамстоти",
+					"осамсто"   : "осамстоти",
+					"деветсто"  : "деветстоти",
+					"тисућу"    : "тисућити",
+					"тисуће"    : "тисућити",
+					"тисућа"    : "тисућити"
+				};
+				break;
+			}
+			case "sr-Latn-RS": {
+				alphaBet = {
+					"nula"      : "nulti",
+					"jedan"     : "prvi",
+					"dva"       : "drugi",
+					"tri"       : "treći",
+					"četiri"    : "četvrti",
+					"pet"       : "peti",
+					"šest"      : "šesti",
+					"sedam"     : "sedmi",
+					"osam"      : "osmi",
+					"devet"     : "deveti",
+					"deset"     : "deseti",
+					"jedanaest" : "jedanaesti",
+					"dvanaest"  : "dvanaesti",
+					"trinaest"  : "trinaesti",
+					"četrnaest" : "četrnaesti",
+					"petnaest"  : "petnaesti",
+					"šesnaest"  : "šesnaesti",
+					"sedamnaest": "sedamnaesti",
+					"osamnaest" : "osamnaesti",
+					"devetnaest": "devetnaesti",
+					"dvadeset"  : "dvadeseti",
+					"trideset"  : "trideseti",
+					"četrdeset" : "četrdeseti",
+					"pedeset"   : "pedeseti",
+					"šezdeset"  : "šezdeseti",
+					"sedamdeset": "sedamdeseti",
+					"osamdeset" : "osamdeseti",
+					"devedeset" : "devedeseti",
+					"sto"       : "stoti",
+					"dvjesto"   : "dvjestoti",
+					"tristo"    : "tristoti",
+					"četiristo" : "četiristoti",
+					"petsto"    : "petstoti",
+					"šesto"     : "šeststoti",
+					"sedamsto"  : "sedamstoti",
+					"osamsto"   : "osamstoti",
+					"devetsto"  : "devetstoti",
+					"tisuću"    : "tisućiti",
+					"tisuće"    : "tisućiti",
+					"tisuća"    : "tisućiti"
+
+				};
+				break;
+			}
+			case "tr-TR": {
+				alphaBet = {
+					"sıfır" : "sıfırıncı",
+					"bir"   : "birinci",
+					"iki"   : "ikinci",
+					"üç"    : "üçüncü",
+					"dört"  : "dördüncü",
+					"beş"   : "beşinci",
+					"altı"  : "altıncı",
+					"yedi"  : "yedinci",
+					"sekiz" : "sekizinci",
+					"dokuz" : "dokuzuncu",
+					"on"    : "onuncu",
+					"yirmi" : "yirminci",
+					"otuz"  : "otuzuncu",
+					"kırk"  : "kırkıncı",
+					"elli"  : "ellinci",
+					"altmış": "altmışıncı",
+					"yetmiş": "yetmişinci",
+					"seksen": "sekseninci",
+					"doksan": "doksanıncı",
+					"yüz"   : "yüzüncü",
+					"bin"   : "bininci"
+				};
+				break;
+			}
 			case "bg-BG":
 				alphaBet = {
+					0: ['нулевят'],
 					1:
 						{
 						'един': 'първият',
@@ -4474,6 +5227,7 @@
 				break;
 			case "cs-CZ":
 				alphaBet = {
+					'nula': 'nultý',
 					'jedna': 'první',
 					'dva': 'druhý',
 					'tři': 'třetí',
@@ -4516,6 +5270,7 @@
 				break;
 			case "de-DE":
 				alphaBet = {
+					'null': 'nullte',
 					'eins': 'erste',
 					'zwei': 'zweite',
 					'drei': 'dritte',
@@ -4539,6 +5294,7 @@
 				break;
 			case "el-GR":
 				alphaBet = {
+					0: ['μηδενικό'],
 					1: [
 						'πρώτο',
 						'δεύτερο',
@@ -4607,6 +5363,7 @@
 				break;
 			case "es-ES":
 				alphaBet = {
+					'cero': 'cero',
 					'uno': 'primero',
 					'dos': 'segundo',
 					'tres': 'tercero',
@@ -4654,6 +5411,7 @@
 				break;
 			case "it-IT":
 				alphaBet = {
+					'zero': 'zero',
 					'uno': 'primo',
 					'due': 'secondo',
 					'tre': 'terzo',
@@ -4668,6 +5426,7 @@
 				break;
 			case "lv-LV":
 				alphaBet = {
+					'nulle': 'nultais',
 					'viens': 'pirmais',
 					'divi': 'otrais',
 					'trīs': 'trešais',
@@ -4708,6 +5467,7 @@
 					},
 					'numbers':
 					{
+						'zero': 'zerowy',
 						'jeden': 'pierwszy',
 						'dwa': 'drugi',
 						'trzy': 'trzeci',
@@ -4796,6 +5556,7 @@
 			case "pt-BR":
 			case "pt-PT":
 				alphaBet = {
+					'zero': 'zero',
 					'um': 'primeiro',
 					'dois': 'segundo',
 					'três': 'terceiro',
@@ -4840,6 +5601,7 @@
 				alphaBet = {
 					'numbers':
 					{
+						'ноль': 'нулевой',
 						'один': 'первый',
 						'два': 'второй',
 						'три': 'третий',
@@ -4928,6 +5690,7 @@
 				break;
 			case "sk-SK":
 				alphaBet = {
+					'nula': 'nultý',
 					'jeden': 'prvý',
 					'dva': 'druhý',
 					'tri': 'tretí',
@@ -4992,6 +5755,7 @@
 				break;
 			case "sv-SE":
 				alphaBet = {
+					'noll': 'nollte',
 					'ett': 'första',
 					'två': 'andra',
 					'tre': 'tredje',
@@ -5010,6 +5774,7 @@
 				alphaBet = {
 					'numbers':
 					{
+						"нуль": "нульовий",
 						"один": "перший",
 						"два": "другий",
 						"три": "третій",
@@ -5101,6 +5866,12 @@
 			case 'ko-KR':
 			case 'az-Latn-AZ':
 			case 'en-US':
+			case 'si-LK':
+			case 'ar-SA':
+			case 'gl-ES':
+			case 'hy-AM':
+			case 'ms-MY':
+			case 'zh-TW':
 			case 'vi-VN':
 			case 'en-GB':
 			default:
@@ -5128,8 +5899,79 @@
 		var alphaBet = {};
 		switch (language)
 		{
+			case "eu-ES":
+				alphaBet = {
+					0  : ["zero"],
+					1  : [
+						"bat",
+						"bi",
+						"hiru",
+						"lau",
+						"bost",
+						"sei",
+						"zazpi",
+						"zortzi",
+						"bederatzi",
+						"hamar",
+						"hamaika",
+						"hamabi",
+						"hamairu",
+						"hamalau",
+						"hamabost",
+						"hamasei",
+						"hamazazpi",
+						"hemezortzi",
+						"hemeretzi"
+					],
+					10 : [
+						"hogei",
+						"berrogei",
+						"hirurogei",
+						"laurogei"
+					],
+					100: [
+						"ehun",
+						"berrehun",
+						"hirurehun",
+						"laurehun",
+						"bostehun",
+						"seiehun",
+						"zazpiehun",
+						"zortziehun",
+						"bederatziehun"
+					]
+				};
+				break;
+			case "tr-TR":
+				alphaBet = {
+					0 : ["sıfır"],
+					1 : [
+						"bir",
+						"iki",
+						"üç",
+						"dört",
+						"beş",
+						"altı",
+						"yedi",
+						"sekiz",
+						"dokuz"
+					],
+					10: [
+						"on",
+						"yirmi",
+						"otuz",
+						"kırk",
+						"elli",
+						"altmış",
+						"yetmiş",
+						"seksen",
+						"doksan"
+					]
+				};
+				break;
 			case"bg-BG":
 				alphaBet = {
+					0: ['нула'],
 					1: [
 						'един',
 						'два',
@@ -5183,8 +6025,121 @@
 					]
 				};
 				break;
+			case "sr-Cyrl-RS":
+				alphaBet = {
+					0: ["нула"],
+					1: [
+						"један",
+						"два",
+						"три",
+						"четири",
+						"пет",
+						"шест",
+						"седам",
+						"осам",
+						"девет",
+						"десет",
+						"једанаест",
+						"дванаест",
+						"тринаест",
+						"четрнаест",
+						"петнаест",
+						"шеснаест",
+						"седамнаест",
+						"осамнаест",
+						"деветнаест"
+					],
+					10: [
+						"двадесет",
+						"тридесет",
+						"четрдесет",
+						"педесет",
+						"шездесет",
+						"седамдесет",
+						"осамдесет",
+						"деведесет"
+					],
+					100: [
+						"сто",
+						"двјесто",
+						"тристо",
+						"четиристо",
+						"петсто",
+						"шесто",
+						"седамсто",
+						"осамсто",
+						"деветсто"
+					],
+					"thousand": [
+						"тисућу",
+						"тисуће",
+						"тисућа"
+					],
+					'thousandType': [
+						"један",
+						"двије"
+					]
+				};
+				break;
+			case "sr-Latn-RS":
+				alphaBet = {
+					0: ["nula"],
+					1: [
+						"jedan",
+						"dva",
+						"tri",
+						"četiri",
+						"pet",
+						"šest",
+						"sedam",
+						"osam",
+						"devet",
+						"deset",
+						"jedanaest",
+						"dvanaest",
+						"trinaest",
+						"četrnaest",
+						"petnaest",
+						"šesnaest",
+						"sedamnaest",
+						"osamnaest",
+						"devetnaest"
+					],
+					10: [
+						"dvadeset",
+						"trideset",
+						"četrdeset",
+						"pedeset",
+						"šezdeset",
+						"sedamdeset",
+						"osamdeset",
+						"devedeset"
+					],
+					100: [
+						"sto",
+						"dvjesto",
+						"tristo",
+						"četiristo",
+						"petsto",
+						"šesto",
+						"sedamsto",
+						"osamsto",
+						"devetsto"
+					],
+					"thousand": [
+						"tisuću",
+						"tisuće",
+						"tisuća"
+					],
+					'thousandType': [
+						"jedan",
+						"dvije"
+					]
+				};
+				break;
 			case"cs-CZ":
 				alphaBet = {
+					0: ['nula'],
 					1: [
 						'jedna',
 						'dva',
@@ -5240,6 +6195,7 @@
 				break;
 			case"de-DE":
 				alphaBet = {
+					0: ['null'],
 					1: [
 						'eins',
 						'zwei',
@@ -5275,6 +6231,7 @@
 				break;
 			case"el-GR":
 				alphaBet = {
+					0: ['μηδέν'],
 					1: [
 						'ένα',
 						'δύο',
@@ -5330,6 +6287,7 @@
 				break;
 			case"es-ES":
 				alphaBet = {
+					0: ['cero'],
 					1: [
 						'uno',
 						'dos',
@@ -5382,6 +6340,7 @@
 				break;
 			case"fr-FR":
 				alphaBet = {
+					0: ['zéro'],
 					1: [
 						'un',
 						'deux',
@@ -5417,6 +6376,7 @@
 				break;
 			case"it-IT":
 				alphaBet = {
+					0: ['zero'],
 					1: [
 						'uno',
 						'due',
@@ -5452,6 +6412,7 @@
 				break;
 			case"lv-LV":
 				alphaBet = {
+					0: ['nulle'],
 					1: [
 						'viens',
 						'divi',
@@ -5507,6 +6468,7 @@
 				break;
 			case"nl-NL":
 				alphaBet = {
+					0: ['nul'],
 					1: [
 						'één',
 						'twee',
@@ -5542,6 +6504,7 @@
 				break;
 			case"pl-PL":
 				alphaBet = {
+					0: ['zero'],
 					1: [
 						'jeden',
 						'dwa',
@@ -5598,6 +6561,7 @@
 			case"pt-BR":
 			case"pt-PT":
 				alphaBet = {
+					0: ['zero'],
 					1: [
 						'um',
 						'dois',
@@ -5644,6 +6608,7 @@
 				break;
 			case"ru-RU":
 				alphaBet = {
+					0: ['ноль'],
 					1: [
 						'один',
 						'два',
@@ -5699,6 +6664,7 @@
 				break;
 			case"sk-SK":
 				alphaBet = {
+					0: ['nula'],
 					1: [
 						'jeden',
 						'dva',
@@ -5734,6 +6700,7 @@
 				break;
 			case"sv-SE":
 				alphaBet = {
+					0: ['noll'],
 					1: [
 						'ett',
 						'två',
@@ -5769,6 +6736,7 @@
 				break;
 			case"uk-UA":
 				alphaBet = {
+					0: ['нуль'],
 					1: [
 						"один",
 						"два",
@@ -5823,6 +6791,12 @@
 				};
 				break;
 			case 'en-US':
+			case 'si-LK':
+			case 'ar-SA':
+			case 'gl-ES':
+			case 'hy-AM':
+			case 'ms-MY':
+			case 'zh-TW':
 			case 'az-Latn-AZ':
 			case 'en-GB':
 			case 'ja-JP':
@@ -5831,6 +6805,7 @@
 			case 'ko-KR':
 			default:
 				alphaBet = {
+					0: ['zero'],
 					1: [
 						'one',
 						'two',
@@ -5877,8 +6852,15 @@
 			return array.join(' ');
 		}
 
+		if (nValue === 0)
+		{
+			return {arrAnswer: [alphaBet[0][0]], getConcatStringByRule: getConcatStringByRule};
+		}
+
 		switch (lang)
 		{
+			case 'sr-Latn-RS':
+			case 'sr-Cyrl-RS':
 			case 'ru-RU':
 			case 'uk-UA':
 			case 'cs-CZ':
@@ -5997,7 +6979,7 @@
 					return resArr;
 				};
 
-				if (lang === 'uk-UA' || lang === 'cs-CZ' || lang === 'pl-PL' || lang === 'el-GR' || lang === 'lv-LV')
+				if (lang === 'uk-UA' || lang === 'cs-CZ' || lang === 'pl-PL' || lang === 'el-GR' || lang === 'lv-LV' || lang === 'sr-Latn-RS' || lang === 'sr-Cyrl-RS')
 				{
 					arrAnswer = cardinalSplittingCyrillicMim(nValue, true);
 				} else if (lang === 'ru-RU')
@@ -6502,6 +7484,74 @@
 				};
 				break;
 			}
+			case "eu-ES":
+			{
+				const letterNumberLessThen100EU = function (nNum)
+				{
+					var resArr = [];
+					if (nNum < 100 && nNum > 0)
+					{
+						const nDegree1 = nNum % 20;
+						const nDegree10 = Math.floor(nNum / 20);
+						if (nDegree10 && nDegree1)
+						{
+							resArr.push(alphaBet[10][nDegree10 - 1] + "ta", alphaBet[1][nDegree1 - 1]);
+						}
+						else if (nDegree10)
+						{
+							resArr.push(alphaBet[10][nDegree10 - 1]);
+						}
+						else
+						{
+							resArr.push(alphaBet[1][nDegree1 - 1]);
+						}
+					}
+
+					return resArr;
+				};
+				const cardinalSplittingEU = function (nNum, bNotPushEta)
+				{
+					const resArr = [];
+					if (nNum < 1000000 && nNum > 0)
+					{
+						const oGroups = {};
+						oGroups[1000] = Math.floor(nNum / 1000);
+						nNum %= 1000;
+						oGroups[100] = Math.floor(nNum / 100);
+						nNum %= 100;
+						oGroups[1] = nNum;
+						if (oGroups[1000])
+						{
+							if (oGroups[1000] >= 100)
+							{
+								resArr.push.apply(resArr, cardinalSplittingEU(oGroups[1000], true));
+							}
+							else if (oGroups[1000] !== 1)
+							{
+								resArr.push.apply(resArr, letterNumberLessThen100EU(oGroups[1000]));
+							}
+							resArr.push("mila");
+						}
+
+						if (oGroups[100])
+						{
+							resArr.push(alphaBet[100][oGroups[100] - 1]);
+						}
+
+						if (oGroups[1])
+						{
+							if ((oGroups[100] || oGroups[1000]) && !bNotPushEta)
+							{
+								resArr.push("eta");
+							}
+							resArr.push.apply(resArr, letterNumberLessThen100EU(oGroups[1]));
+						}
+					}
+					return resArr;
+				}
+				arrAnswer = cardinalSplittingEU(nValue);
+				break;
+			}
 			case 'it-IT':
 			{
 				var letterNumberLessThen100IT = function(num)
@@ -6783,7 +7833,77 @@
 
 				break;
 			}
+			case 'tr-TR':
+				const letterNumberLessThen100TR = function (nNum)
+				{
+					const resArr = [];
+					if (nNum < 100 && nNum > 0)
+					{
+						const nDegree1 = nNum % 10;
+						const nDegree10 = Math.floor(nNum / 10);
+
+						if (nDegree10)
+						{
+							resArr.push(alphaBet[10][nDegree10 - 1]);
+						}
+						if (nDegree1)
+						{
+							resArr.push(alphaBet[1][nDegree1 - 1]);
+						}
+					}
+					return resArr;
+				}
+				const cardinalSplittingTR = function (nNum)
+				{
+					const resArr = [];
+					if (nNum < 1000000 && nNum > 0)
+					{
+						const oGroups = {};
+						oGroups[1000] = Math.floor(nNum / 1000);
+						nNum = nNum % 1000;
+						oGroups[100] = Math.floor(nNum / 100);
+						nNum = nNum % 100;
+						oGroups[1] = nNum;
+						if (oGroups[1000])
+						{
+							if (oGroups[1000] >= 100)
+							{
+								resArr.push.apply(resArr, cardinalSplittingTR(oGroups[1000]));
+							}
+							else if (oGroups[1000] !== 1)
+							{
+								resArr.push.apply(resArr, letterNumberLessThen100TR(oGroups[1000]));
+							}
+							resArr.push("bin");
+						}
+						if (oGroups[100])
+						{
+							if (oGroups[100] !== 1)
+							{
+								resArr.push.apply(resArr, letterNumberLessThen100TR(oGroups[100]));
+							}
+							resArr.push("yüz");
+						}
+						if (oGroups[1])
+						{
+							resArr.push.apply(resArr, letterNumberLessThen100TR(oGroups[1]));
+						}
+					}
+					return resArr;
+				}
+				arrAnswer = cardinalSplittingTR(nValue);
+				getConcatStringByRule = function (array)
+				{
+					return array.join("");
+				}
+				break;
 			case 'en-US':
+			case 'gl-ES':
+			case 'si-LK':
+			case 'ar-SA':
+			case 'hy-AM':
+			case 'ms-MY':
+			case 'zh-TW':
 			case 'az-Latn-AZ':
 			case 'en-GB':
 			case 'ja-JP':
@@ -6880,6 +8000,10 @@
 		var addFirstDegreeSymbol = true;
 		if (nFormat === Asc.c_oAscNumberingFormat.KoreanCounting)
 		{
+			if (nValue === 0)
+			{
+				return String.fromCharCode(0xC601);
+			}
 			addFirstDegreeSymbol = false;
 			var digits = [
 				String.fromCharCode(0xC77C),
@@ -6900,6 +8024,10 @@
 			];
 		} else if (nFormat === Asc.c_oAscNumberingFormat.JapaneseLegal)
 		{
+			if (nValue === 0)
+			{
+				return String.fromCharCode(0x3007);
+			}
 			digits = [
 				String.fromCharCode(0x58F1),
 				String.fromCharCode(0x5F10),
@@ -6919,6 +8047,10 @@
 			];
 		} else if (nFormat === Asc.c_oAscNumberingFormat.JapaneseCounting)
 		{
+			if (nValue === 0)
+			{
+				return String.fromCharCode(0x3007);
+			}
 			addFirstDegreeSymbol = false;
 			digits = [
 				String.fromCharCode(0x4E00),
@@ -7070,6 +8202,10 @@
 
 	function IntToAiueo(nValue)
 	{
+		if (nValue === 0)
+		{
+			return '0';
+		}
 		var sResult = '';
 		var count = 1, numberOfLetters = 46;
 		nValue = repeatNumberingLvl(nValue, 46);
@@ -7097,34 +8233,47 @@
 			++count;
 			nValue -= numberOfLetters;
 		}
-		if (nValue >= 1 && nValue <= 5)
+		if (nValue === 0)
+		{
+			letter = 0x0030;
+		}
+		else if (nValue >= 1 && nValue <= 5)
 		{
 			letter = 0x30A2 + (nValue - 1) * 2;
-		} else if (nValue >= 6 && nValue <= 17)
+		}
+		else if (nValue >= 6 && nValue <= 17)
 		{
 			letter = 0x30AB + (nValue - 6) * 2;
-		} else if (nValue >= 18 && nValue <= 21)
+		}
+		else if (nValue >= 18 && nValue <= 21)
 		{
 			letter = 0x30C4 + (nValue - 18) * 2;
-		} else if (nValue >= 22 && nValue <= 26)
+		}
+		else if (nValue >= 22 && nValue <= 26)
 		{
 			letter = 0x30CB + nValue - 22;
-		} else if (nValue >= 27 && nValue <= 31)
+		}
+		else if (nValue >= 27 && nValue <= 31)
 		{
 			letter = 0x30D2 + (nValue - 27) * 3;
-		} else if (nValue >= 32 && nValue <= 35)
+		}
+		else if (nValue >= 32 && nValue <= 35)
 		{
 			letter = 0x30DF + nValue - 32;
-		} else if (nValue >= 36 && nValue <= 38)
+		}
+		else if (nValue >= 36 && nValue <= 38)
 		{
 			letter = 0x30E4 + nValue - 36;
-		} else if (nValue >= 39 && nValue <= 43)
+		}
+		else if (nValue >= 39 && nValue <= 43)
 		{
 			letter = 0x30E9 + nValue - 39;
-		} else if (nValue === 44)
+		}
+		else if (nValue === 44)
 		{
 			letter = 0x30EF + nValue - 44;
-		} else if (nValue >= 45 && nValue <= 46)
+		}
+		else if (nValue >= 45 && nValue <= 46)
 		{
 			letter = 0x30F2 + nValue - 45;
 		}
@@ -7170,6 +8319,10 @@
 			charArr = [0x002A, 0x2020, 0x2021, 0x00A7]
 		} else if(nFormat === Asc.c_oAscNumberingFormat.Chosung)
 		{
+			if (nValue === 0)
+			{
+				return '0';
+			}
 			nValue = repeatNumberingLvl(nValue, 14);
 			charArr = [
 				0x3131, 0x3134, 0x3137, 0x3139,
@@ -7179,6 +8332,10 @@
 			]
 		} else if (nFormat === Asc.c_oAscNumberingFormat.Ganada)
 		{
+			if (nValue === 0)
+			{
+				return '0';
+			}
 			nValue = repeatNumberingLvl(nValue, 14);
 			charArr = [
 				0xAC00, 0xB098, 0xB2E4, 0xB77C,
@@ -7338,12 +8495,16 @@
 				0x7533, 0x9149, 0x620C, 0x4EA5
 			];
 
-		sResult += nValue <= digits.length ? String.fromCharCode(digits[nValue - 1]) : nValue;
+		sResult += (nValue >= 1 && nValue <= digits.length) ? String.fromCharCode(digits[nValue - 1]) : nValue;
 		return sResult;
 	}
 
 	function IntToIdeographZodiacTraditional(nValue)
 	{
+		if (nValue === 0)
+		{
+			return '0';
+		}
 		var sResult = '';
 		var digits = [
 			0x7532, 0x5B50, 0x4E59, 0x4E11, 0x4E19, 0x5BC5,
@@ -7379,6 +8540,10 @@
 
 	function IntToIroha(nValue, nFormat)
 	{
+		if (nValue === 0)
+		{
+			return '0';
+		}
 		var sResult = '';
 		var digits = [];
 		if (nFormat === Asc.c_oAscNumberingFormat.Iroha)
@@ -7490,7 +8655,11 @@
 			1000  : String.fromCharCode(0x5343),
 			10000 : String.fromCharCode(0x4E07)
 		};
-		if (nValue < 1000000)
+		if (nValue === 0)
+		{
+			sResult += arrChinese[0];
+		}
+		else if (nValue < 1000000)
 		{
 			var nRemValue = nValue;
 
@@ -7615,7 +8784,11 @@
 			1000  : String.fromCharCode(0x4EDF),
 			10000 : String.fromCharCode(0x842C)
 		};
-		if (nValue < 1000000)
+		if (nValue === 0)
+		{
+			sResult += arrChinese[0];
+		}
+		else if (nValue < 1000000)
 		{
 			var nRemValue = nValue;
 
@@ -7795,7 +8968,11 @@
 			'拾'
 		];
 
-		if (nValue < 10000)
+		if (nValue === 0)
+		{
+			sResult = String.fromCharCode(0x96F6);
+		}
+		else if (nValue < 10000)
 		{
 			sResult = IdeographLegalTraditionalSplitting(digits, degrees, nValue).join('');
 		} else {
@@ -7884,7 +9061,7 @@
 			String.fromCharCode(0x4E5D)
 		];
 		var conv = decimalNumberConversion(nValue, digits.length);
-		if(nValue >= digits.length * 10)
+		if(nValue >= digits.length * 10 || nValue === 0)
 		{
 			digits[0] = String.fromCharCode(0x25CB);
 			sResult = conv.map(function (num)
@@ -8019,6 +9196,10 @@
 		switch (textLang)
 		{
 			case 'de-DE':
+			case 'eu-ES':
+			case 'tr-TR':
+			case 'sr-Cyrl-RS':
+			case 'sr-Latn-RS':
 			case 'pl-PL':
 			case 'cs-CZ':
 			{
@@ -8035,7 +9216,7 @@
 				if (nValue === 1)
 				{
 					sResult += 'er';
-				} else {
+				} else if (nValue !== 0) {
 					sResult += 'e';
 				}
 				break;
@@ -8082,6 +9263,12 @@
 			}
 			case 'bg-BG':
 			case 'en-GB':
+			case 'gl-ES':
+			case 'si-LK':
+			case 'ar-SA':
+			case 'hy-AM':
+			case 'ms-MY':
+			case 'zh-TW':
 			case 'en-US':
 			case 'zh-CN':
 			case 'uk-UA':
@@ -8207,8 +9394,11 @@
 			'百',
 			'十'
 		];
-
-		if (nValue < 100000)
+		if (nValue === 0)
+		{
+			return String.fromCharCode(0x96F6);
+		}
+		else if (nValue < 100000)
 		{
 			sResult = taiwaneseCountingSplitting(digits, degrees, nValue).join('');
 		} else if (nValue >= 100000 && nValue < 1000000)
@@ -8221,7 +9411,11 @@
 	function IntToKoreanLegal(nValue, nFormat)
 	{
 		var sResult = '';
-		if (nValue < 100)
+		if (nValue === 0)
+		{
+			return '0';
+		}
+		else if (nValue < 100)
 		{
 			var answer = [];
 			var digits = {
@@ -8263,13 +9457,58 @@
 		return sResult;
 	}
 
+	function getCardinalTextToSentenceCase(sText, sLang)
+	{
+		switch (sLang)
+		{
+			case "tr-TR":
+				if (sText[0] === "i")
+				{
+					return "İ" + sText.slice(1, sText.length);
+				}
+				return sText.sentenceCase();
+			default:
+				return sText.sentenceCase();
+		}
+	}
+
 	function IntToOrdinalText(nValue, nLang)
 	{
 		var textLang = languages[nLang];
-		var ordinalText = getCardinalTextFromValue(textLang, nValue);
 		var alphaBet = getAlphaBetForOrdinalText(textLang);
+		if (nValue === 0)
+		{
+			if (alphaBet[0] && alphaBet[0][0])
+			{
+				return getCardinalTextToSentenceCase(alphaBet[0][0], textLang);
+			}
+		}
+		var ordinalText = getCardinalTextFromValue(textLang, nValue);
 		switch (textLang)
 		{
+			case 'eu-ES':
+			{
+				const arrOfDigits = ordinalText.arrAnswer;
+				if (nValue === 1)
+				{
+					arrOfDigits[arrOfDigits.length - 1] = "lehenengo";
+				}
+				else if (arrOfDigits[arrOfDigits.length - 1])
+				{
+					arrOfDigits[arrOfDigits.length - 1] = arrOfDigits[arrOfDigits.length - 1] + "garren";
+				}
+				break;
+			}
+			case 'tr-TR':
+			{
+				const arrOfDigits = ordinalText.arrAnswer;
+				const sLastWord = arrOfDigits[arrOfDigits.length - 1];
+				if (alphaBet[sLastWord])
+				{
+					arrOfDigits[arrOfDigits.length - 1] = alphaBet[sLastWord];
+				}
+				break;
+			}
 			case 'de-DE':
 			{
 				var arrOfDigits = ordinalText.arrAnswer;
@@ -8411,7 +9650,7 @@
 					{
 						switchingValue[switchingValue.length - 1] = lastWord.slice(0, lastWord.length - 1);
 					}
-					if (switchingValue[switchingValue.length - 1] !== 'premier')
+					if (lastWord !== 'premier' && lastWord !== 'zéro')
 					{
 						switchingValue[switchingValue.length - 1] += 'ième';
 					}
@@ -8526,6 +9765,28 @@
 						arrOfDigits[arrOfDigits.length - 1] = lastWord.slice(0, lastWord.length - 1);
 					}
 					arrOfDigits[arrOfDigits.length - 1] += 'ais';
+				}
+				break;
+			}
+			case 'sr-Cyrl-RS':
+			case 'sr-Latn-RS':
+			{
+				const arrOfDigits = ordinalText.arrAnswer;
+				const sLastWord = arrOfDigits[arrOfDigits.length - 1];
+				if (sLastWord)
+				{
+					const reminder100 = nValue % 100;
+					const degree10 = Math.floor(reminder100 / 10);
+					const degree1 = reminder100 % 10;
+					if (degree10 && degree1 && reminder100 >= 20)
+					{
+						arrOfDigits[arrOfDigits.length - 1] = alphaBet[arrOfDigits[arrOfDigits.length - 1]];
+						arrOfDigits[arrOfDigits.length - 2] = alphaBet[arrOfDigits[arrOfDigits.length - 2]];
+					}
+					else
+					{
+						arrOfDigits[arrOfDigits.length - 1] = alphaBet[arrOfDigits[arrOfDigits.length - 1]];
+					}
 				}
 				break;
 			}
@@ -8694,6 +9955,12 @@
 			case 'ko-KR':
 			case 'az-Latn-AZ':
 			case 'en-US':
+			case 'si-LK':
+			case 'ar-SA':
+			case 'gl-ES':
+			case 'zh-TW':
+			case 'ms-MY':
+			case 'hy-AM':
 			case 'vi-VN':
 			case 'en-GB':
 			default:
@@ -8718,7 +9985,7 @@
 				break;
 			}
 		}
-		return ordinalText.getConcatStringByRule(ordinalText.arrAnswer).sentenceCase();
+		return getCardinalTextToSentenceCase(ordinalText.getConcatStringByRule(ordinalText.arrAnswer), textLang);
 	}
 
 	var splitHindiCounting = function(alphaBet, degrees, num)
@@ -8747,6 +10014,10 @@
 
 	function IntToHindiCounting(nValue)
 	{
+		if (nValue === 0)
+		{
+			return "शून्य";
+		}
 		var alphaBet = [
 			"एक","दो","तीन","चार","पांच","छह","सात","आठ","नौ","दस","ग्यारह",
 			"बारह","तेरह","चौदह","पंद्रह","सोलह","सत्रह","अठारह","उन्नीस","बीस",
@@ -8820,7 +10091,7 @@
 
 	function splitThaiCounting(num, digits)
 	{
-		if (num >= 1000000000)
+		if (num >= 1000000000 || num === 0)
 		{
 			return ['ศูนย์'];
 		}
@@ -8873,6 +10144,43 @@
 			resArr = resArr.concat(thaiCountingLess100(groups[1], digits, groups[100] || groups[1000] || groups[10000] || groups[100000] || groups[1000000]));
 		}
 		return resArr;
+	}
+
+	function NumberToDollarText(nValue, nLang, bIsSkipFractValue)
+	{
+		const nIntValue = Math.floor(nValue);
+		const oCardinalText = getCardinalTextFromValue(languages[nLang], nIntValue);
+		const sIntResult = oCardinalText.getConcatStringByRule(oCardinalText.arrAnswer);
+		if (!bIsSkipFractValue)
+		{
+			const nFractValue = Math.round(nValue * 100) % 100;
+			const sFractValue = nFractValue.toString();
+			const sDollarValue = sFractValue.length === 1 ? "0" + sFractValue : sFractValue;
+			const sFractResult = sDollarValue + "/100";
+
+			const sAndConjunction = getANDConjunctionLang(nLang);
+			return sIntResult + (sAndConjunction.length ? " " + sAndConjunction + " " : " ") + sFractResult;
+		}
+		return sIntResult;
+	}
+
+	function NumberToBahtText(nValue, isSkipFractValue)
+	{
+		const nIntValue = Math.floor(nValue);
+		const nFractValue = Math.round(nValue * 100) % 100;
+		const sIntValue = IntToNumberFormat(nIntValue, Asc.c_oAscNumberingFormat.ThaiCounting);
+
+		if (isSkipFractValue)
+		{
+			return sIntValue;
+		}
+		if (nFractValue)
+		{
+			const sFractValue = IntToNumberFormat(nFractValue, Asc.c_oAscNumberingFormat.ThaiCounting);
+			return sIntValue + "บาท" + sFractValue + "สตางค์";
+		}
+
+		return sIntValue + "บาทถ้วน";
 	}
 
 	function IntToThaiCounting(nValue)
@@ -8950,9 +10258,38 @@
 
 	function IntToVietnameseCounting(nValue)
 	{
+		if (nValue === 0)
+		{
+			return 'không';
+		}
 		var digits = ['một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín', 'mười'];
 
 		return vietnameseCounting(nValue, digits).join(' ');
+	}
+
+	function IntToCustomTurkish(nValue, bLowerCase)
+	{
+		let arrLetters;
+		if (bLowerCase)
+		{
+			arrLetters = [0x0061, 0x0062, 0x0063, 0x00e7, 0x0064, 0x0065, 0x0066, 0x0067, 0x011f, 0x0068, 0x0131, 0x0069, 0x006a,
+				0x006b, 0x006c, 0x006d, 0x006e, 0x006f, 0x00f6, 0x0070, 0x0072, 0x0073, 0x015f, 0x0074, 0x0075, 0x00fc, 0x0076,
+				0x0079, 0x007a];
+		}
+		else
+		{
+			arrLetters = [0x0041, 0x0042, 0x0043, 0x00c7, 0x0044, 0x0045, 0x0046, 0x0047, 0x011e, 0x0048, 0x0049, 0x0130, 0x004a,
+				0x004b, 0x004c, 0x004d, 0x004e, 0x004f, 0x00d6, 0x0050, 0x0052, 0x0053, 0x015e, 0x0054, 0x0055, 0x00dc, 0x0056,
+				0x0059, 0x005a];
+		}
+		nValue = repeatNumberingLvl(nValue, 870);
+		const nNum = nValue - 1;
+
+		const nAlphabetLength = arrLetters.length;
+		const nOst   = nNum % nAlphabetLength;
+		const nCount = ((nNum - nOst) / nAlphabetLength) + 1;
+
+		return String.fromCharCode(arrLetters[nOst]).repeat(nCount);
 	}
 
 	function IntToCustomGreece(nValue) {
@@ -8979,17 +10316,80 @@
 
 		return sResult.join('');
 	}
+	
+	function IsLessMinimumNumberingFormat(nFormat, nValue)
+	{
+		switch (nFormat)
+		{
+			case Asc.c_oAscNumberingFormat.Decimal:
+			case Asc.c_oAscNumberingFormat.CustomDecimalFourZero:
+			case Asc.c_oAscNumberingFormat.CustomDecimalThreeZero:
+			case Asc.c_oAscNumberingFormat.CustomDecimalTwoZero:
+			case Asc.c_oAscNumberingFormat.DecimalZero:
+			case Asc.c_oAscNumberingFormat.DecimalEnclosedCircleChinese:
+			case Asc.c_oAscNumberingFormat.DecimalEnclosedCircle:
+			case Asc.c_oAscNumberingFormat.Aiueo:
+			case Asc.c_oAscNumberingFormat.AiueoFullWidth:
+			case Asc.c_oAscNumberingFormat.Chosung:
+			case Asc.c_oAscNumberingFormat.Ganada:
+			case Asc.c_oAscNumberingFormat.DecimalEnclosedFullstop:
+			case Asc.c_oAscNumberingFormat.DecimalEnclosedParen:
+			case Asc.c_oAscNumberingFormat.DecimalFullWidth:
+			case Asc.c_oAscNumberingFormat.DecimalFullWidth2:
+			case Asc.c_oAscNumberingFormat.DecimalHalfWidth:
+			case Asc.c_oAscNumberingFormat.Hex:
+			case Asc.c_oAscNumberingFormat.HindiNumbers:
+			case Asc.c_oAscNumberingFormat.IdeographDigital:
+			case Asc.c_oAscNumberingFormat.JapaneseDigitalTenThousand:
+			case Asc.c_oAscNumberingFormat.IdeographEnclosedCircle:
+			case Asc.c_oAscNumberingFormat.IdeographTraditional:
+			case Asc.c_oAscNumberingFormat.IdeographZodiac:
+			case Asc.c_oAscNumberingFormat.IdeographZodiacTraditional:
+			case Asc.c_oAscNumberingFormat.Iroha:
+			case Asc.c_oAscNumberingFormat.IrohaFullWidth:
+			case Asc.c_oAscNumberingFormat.ChineseCounting:
+			case Asc.c_oAscNumberingFormat.ChineseCountingThousand:
+			case Asc.c_oAscNumberingFormat.ChineseLegalSimplified:
+			case Asc.c_oAscNumberingFormat.IdeographLegalTraditional:
+			case Asc.c_oAscNumberingFormat.JapaneseLegal:
+			case Asc.c_oAscNumberingFormat.KoreanCounting:
+			case Asc.c_oAscNumberingFormat.JapaneseCounting:
+			case Asc.c_oAscNumberingFormat.KoreanDigital:
+			case Asc.c_oAscNumberingFormat.ThaiNumbers:
+			case Asc.c_oAscNumberingFormat.KoreanDigital2:
+			case Asc.c_oAscNumberingFormat.TaiwaneseDigital:
+			case Asc.c_oAscNumberingFormat.None:
+			case Asc.c_oAscNumberingFormat.NumberInDash:
+			case Asc.c_oAscNumberingFormat.TaiwaneseCounting:
+			case Asc.c_oAscNumberingFormat.CardinalText:
+			case Asc.c_oAscNumberingFormat.Custom:
+			case Asc.c_oAscNumberingFormat.Ordinal:
+			case Asc.c_oAscNumberingFormat.TaiwaneseCountingThousand:
+			case Asc.c_oAscNumberingFormat.KoreanLegal:
+			case Asc.c_oAscNumberingFormat.OrdinalText:
+			case Asc.c_oAscNumberingFormat.HindiCounting:
+			case Asc.c_oAscNumberingFormat.ThaiCounting:
+			case Asc.c_oAscNumberingFormat.DollarText:
+			case Asc.c_oAscNumberingFormat.BahtText:
+			case Asc.c_oAscNumberingFormat.VietnameseCounting:
+				return nValue < 0;
+			default:
+				return nValue < 1;
+		}
+	}
 
 	/**
 	 * Переводим числовое значение в строку с заданным форматом нумерации
 	 * @param nValue {number}
 	 * @param nFormat {Asc.c_oAscNumberingFormat}
-	 * @param [oLang] {AscCommonWord.CLang}
+	 * @param [oPr] {Object}
 	 * @returns {string}
 	 */
-	function IntToNumberFormat(nValue, nFormat, oLang)
+	function IntToNumberFormat(nValue, nFormat, oPr)
 	{
+		oPr = oPr || {};
 		var nLang;
+		const oLang = oPr.lang;
 		if (oLang)
 		{
 			nLang = oLang.Val;
@@ -9002,6 +10402,10 @@
 			}
 		}
 		var sResult = "";
+		if (IsLessMinimumNumberingFormat(nFormat, nValue))
+		{
+			return sResult;
+		}
 
 		switch (nFormat)
 		{
@@ -9054,7 +10458,7 @@
 
 			case Asc.c_oAscNumberingFormat.DecimalEnclosedCircleChinese:
 			{
-				if (nValue <= 10)
+				if (nValue >= 1 && nValue <= 10)
 				{
 					sResult = String.fromCharCode(0x2460 + nValue - 1);
 				}
@@ -9067,7 +10471,7 @@
 
 			case Asc.c_oAscNumberingFormat.DecimalEnclosedCircle:
 			{
-				if (nValue <= 20)
+				if (nValue >= 1 && nValue <= 20)
 				{
 					sResult = String.fromCharCode(0x2460 + nValue - 1);
 				}
@@ -9138,11 +10542,11 @@
 			case Asc.c_oAscNumberingFormat.DecimalFullWidth2:
 			case Asc.c_oAscNumberingFormat.DecimalHalfWidth:
 			{
-				var zeroInHex = nFormat === Asc.c_oAscNumberingFormat.DecimalFullWidth ? 0xFF10 : 0x0030;
+				var zero = (nFormat === Asc.c_oAscNumberingFormat.DecimalFullWidth || nFormat === Asc.c_oAscNumberingFormat.DecimalFullWidth2) ? 0xFF10 : 0x0030;
 				var strValue = String(nValue);
 				for(var i = 0; i < strValue.length; i++)
 				{
-					sResult += String.fromCharCode(zeroInHex + parseInt(strValue[i]));
+					sResult += String.fromCharCode(zero + parseInt(strValue[i]));
 				}
 				break;
 			}
@@ -9155,7 +10559,11 @@
 
 			case Asc.c_oAscNumberingFormat.Hex:
 			{
-				if (nValue <= 0xFFFF)
+				if (nValue === 0)
+				{
+					sResult = '0';
+				}
+				else if (nValue <= 0xFFFF)
 				{
 					sResult = (nValue+0x10000).toString(16).substr(-4).toUpperCase();
 					sResult = sResult.replace(/^0+/, '');
@@ -9185,7 +10593,7 @@
 
 			case Asc.c_oAscNumberingFormat.IdeographEnclosedCircle:
 			{
-				sResult += nValue <= 10 ? String.fromCharCode(0x3220 + nValue - 1) : nValue;
+				sResult += (nValue >= 1 && nValue <= 10) ? String.fromCharCode(0x3220 + nValue - 1) : nValue;
 				break;
 			}
 
@@ -9258,7 +10666,7 @@
 				break;
 			case Asc.c_oAscNumberingFormat.CardinalText:
 				var cardinalText = getCardinalTextFromValue(languages[nLang], nValue);
-				sResult = cardinalText.getConcatStringByRule(cardinalText.arrAnswer).sentenceCase();
+				sResult = getCardinalTextToSentenceCase(cardinalText.getConcatStringByRule(cardinalText.arrAnswer), languages[nLang]);
 				break;
 
 			case Asc.c_oAscNumberingFormat.Custom:
@@ -9287,16 +10695,39 @@
 				sResult = IntToThaiCounting(nValue, nFormat);
 				break;
 			case Asc.c_oAscNumberingFormat.DollarText:
-				sResult += nValue;
+				if (oPr.isFromField)
+				{
+					sResult = NumberToDollarText(nValue, nLang, oPr.isSkipFractPart);
+				}
+				else
+				{
+					sResult += nValue;
+				}
 				break;
 			case Asc.c_oAscNumberingFormat.BahtText:
-				sResult += nValue;
+				if (oPr.isFromField)
+				{
+					sResult = NumberToBahtText(nValue, oPr.isSkipFractPart);
+				}
+				else
+				{
+					sResult += nValue;
+				}
 				break;
 			case Asc.c_oAscNumberingFormat.VietnameseCounting:
 				sResult = IntToVietnameseCounting(nValue);
 				break;
 			case Asc.c_oAscNumberingFormat.CustomGreece:
 				sResult = IntToCustomGreece(nValue);
+				break;
+			case Asc.c_oAscNumberingFormat.CustomUpperTurkish:
+				sResult = IntToCustomTurkish(nValue);
+				break;
+			case Asc.c_oAscNumberingFormat.CustomLowerTurkish:
+				sResult = IntToCustomTurkish(nValue, true);
+				break;
+			default:
+				break;
 		}
 
 		return sResult;
@@ -9457,8 +10888,12 @@
 	
 	function ExecuteNoHistory(f, oLogicDocument, oThis, args)
 	{
+		// TODO: Заменить на нормальное обращение Asc.editor.getLogicDocument
+		if (!oLogicDocument && editor && editor.WordControl)
+			oLogicDocument = editor.WordControl.m_oLogicDocument;
+		
+		
 		// TODO: Надо перевести все редакторы на StartNoHistoryMode/EndNoHistoryMode
-
 		let oState = null, isTableId = false;
 		if (oLogicDocument && oLogicDocument.IsDocumentEditor && oLogicDocument.IsDocumentEditor())
 		{
@@ -9468,7 +10903,7 @@
 		{
 			AscCommon.History.TurnOff && AscCommon.History.TurnOff();
 
-			if (AscCommon.g_oTableId && !AscCommon.g_oTableId.IsOn())
+			if (AscCommon.g_oTableId && AscCommon.g_oTableId.IsOn())
 			{
 				AscCommon.g_oTableId.TurnOff();
 				isTableId = true;
@@ -9491,12 +10926,96 @@
 		return result;
 	}
 	
+	function executeNoRevisions(f, logicDocument, t, args)
+	{
+		if (!logicDocument
+			|| !logicDocument.IsDocumentEditor
+			|| !logicDocument.IsDocumentEditor()
+			|| !logicDocument.IsTrackRevisions())
+			return f.apply(t, args);
+		
+		let localFlag = logicDocument.GetLocalTrackRevisions();
+		logicDocument.SetLocalTrackRevisions(false);
+		let result = f.apply(t, args);
+		logicDocument.SetLocalTrackRevisions(localFlag);
+		return result;
+	}
+	
+	function executeNoPreDelete(f, logicDocument, t, args)
+	{
+		if (!logicDocument
+			|| !logicDocument.IsDocumentEditor
+			|| !logicDocument.IsDocumentEditor())
+			return f.apply(t, args);
+		
+		let preventPreDelete = logicDocument.PreventPreDelete;
+		logicDocument.PreventPreDelete = true;
+		let result = f.apply(t, args);
+		logicDocument.PreventPreDelete = preventPreDelete;
+		return result;
+	}
+	
+	function ExecuteEditorAction(actionPr, f, logicDocument, t, args)
+	{
+		if (!logicDocument
+			|| !logicDocument.IsDocumentEditor
+			|| !logicDocument.IsDocumentEditor())
+			return f.apply(t, args);
+		
+		let description = actionPr && actionPr.description ? actionPr.description : AscDFH.historydescription_Unknown;
+		let flags       = actionPr && actionPr.flags ? actionPr.flags : AscWord.ACTION_FLAGS.UPDATEALL_RECALCULATE;
+		
+		logicDocument.StartAction(description, null, flags);
+		let result = f.apply(t, args);
+		logicDocument.FinalizeAction();
+		
+		return result;
+	}
+	
 	function AddAndExecuteChange(change)
 	{
 		AscCommon.History.Add(change);
 		change.Redo();
 	}
 
+	function mockLogicDoc(doc){
+		doc.Get_PageLimits = function(PageAbs) {
+			return {X: 0, Y: 0, XLimit: Page_Width, YLimit: Page_Height};
+		};
+		doc.Get_PageFields = function (PageAbs, isInHdrFtr) {
+			return {X: 0, Y: 0, XLimit: 2000, YLimit: 2000};
+		};
+
+		doc.IsTrackRevisions = function() {
+			return false;
+		};
+
+		doc.IsDocumentEditor = function() {
+			return false;
+		};
+		doc.Spelling = {
+			AddParagraphToCheck: function(Para) {}
+		};
+
+		doc.IsSplitPageBreakAndParaMark = function () {
+			return false;
+		};
+		doc.IsDoNotExpandShiftReturn = function () {
+			return false;
+		};
+
+		doc.GetApi = function() {
+			return Asc.editor;
+		};
+
+		doc.GetDrawingDocument = function() {
+			return Asc.editor.getDrawingDocument();
+		};
+
+		doc.SearchEngine = {
+			Selection: []
+		};
+	}
 	/**
 	 * Функция сравнивает две строки (они могут быть не заданы)
 	 * @param s1 {?string}
@@ -9529,7 +11048,7 @@
 		for (var oIterator = sWord.getUnicodeIterator(); oIterator.check(); oIterator.next())
 		{
 			var nCharCode = oIterator.value();
-			if (IsHangul(nCharCode) || IsCJKIdeographs(nCharCode))
+			if (IsHangul(nCharCode) || IsCJKIdeographs(nCharCode) || IsComplexScript(nCharCode))
 				return false;
 
 			if (0x73 === nCharCode)
@@ -9569,8 +11088,8 @@
 	}
 
 	var g_oUserColorById = {}, g_oUserNextColorIndex = 0;
-
-	function getUserColorById(userId, userName, isDark, isNumericValue)
+	
+	function _getUserColorById(userId, userName, isDark, isNumericValue)
 	{
 		if ((!userId || "" === userId) && (!userName || "" === userName))
 			return new CColor(0, 0, 0, 255);
@@ -9595,8 +11114,19 @@
 		if (!res)
 			return new CColor(0, 0, 0, 255);
 
-		var oColor = true === isDark ? res.Dark : res.Light;
-		return true === isNumericValue ? ((oColor.r << 16) & 0xFF0000) | ((oColor.g << 8) & 0xFF00) | (oColor.b & 0xFF) : oColor;
+		return true === isDark ? res.Dark : res.Light;
+	}
+	function setUserColorById(userId, light, dark)
+	{
+		g_oUserColorById[userId] = {
+			Light : new CColor(light.r, light.g, light.b, 255),
+			Dark : new CColor(dark.r, dark.g, dark.b, 255),
+		};
+	}
+	function getUserColorById(userId, userName, isDark, isNumericValue)
+	{
+		let color = _getUserColorById(userId, userName, isDark);
+		return true === isNumericValue ? ((color.r << 16) & 0xFF0000) | ((color.g << 8) & 0xFF00) | (color.b & 0xFF) : color;
 	}
 
 	function isNullOrEmptyString(str)
@@ -9993,7 +11523,7 @@
 
 	function loadScript(url, onSuccess, onError)
 	{
-		if (window["NATIVE_EDITOR_ENJINE"] === true || window["Native"] !== undefined)
+		if (window["NATIVE_EDITOR_ENJINE"] === true || window["native"] !== undefined)
 		{
 			onSuccess();
 			return;
@@ -10047,7 +11577,11 @@
 		}
 		else
 		{
-			loadScript('./../../../../sdkjs/' + sdkName + '/sdk-all.js', onSuccess, onError);
+			if (scriptDirectory) {
+				loadScript(scriptDirectory + 'sdk-all.js', onSuccess, onError);
+			} else {
+				loadScript('./../../../../sdkjs/' + sdkName + '/sdk-all.js', onSuccess, onError);
+			}
 		}
 	}
 
@@ -10055,33 +11589,8 @@
 		loadScript('../../../../sdkjs/common/Charts/ChartStyles.js', onSuccess, onError);
 	}
 
-	function loadSmartArtBinary(fOnSuccess, fOnError) {
-		if (window["NATIVE_EDITOR_ENJINE"]) {
-			return;
-		}
-		loadFileContent('../../../../sdkjs/common/SmartArts/SmartArts.bin', function (httpRequest) {
-			if (httpRequest && httpRequest.response) {
-				const arrStream = AscCommon.initStreamFromResponse(httpRequest);
-
-				AscCommon.g_oBinarySmartArts = {
-					shifts: {},
-					stream: arrStream
-				}
-
-				const oFileStream = new AscCommon.FileStream(arrStream, arrStream.length);
-				oFileStream.GetUChar();
-				const nLength = oFileStream.GetULong();
-				while (nLength + 4 > oFileStream.cur) {
-					const nType = oFileStream.GetUChar();
-					const nPosition = oFileStream.GetULong();
-					AscCommon.g_oBinarySmartArts.shifts[nType] = nPosition;
-				}
-				fOnSuccess && fOnSuccess();
-			} else {
-				fOnError(httpRequest);
-			}
-
-		}, 'arraybuffer');
+	function loadPathBoolean(onSuccess, onError) {
+		loadScript('../../../../sdkjs/common/Drawings/Format/path-boolean-min.js', onSuccess, onError);
 	}
 
 	function getAltGr(e)
@@ -10099,7 +11608,7 @@
 		for(var i = 0; i <  AscCommon.g_oUserColorScheme.length; ++i)
 		{
 			var tmp = AscCommon.g_oUserColorScheme[i];
-			if(tmp && tmp.name === sName)
+			if(tmp && tmp.get_name() === sName)
 			{
 				return getColorSchemeByIdx(i);
 			}
@@ -10260,10 +11769,19 @@
 
 	function isEastAsianScript(value)
 	{
+		// CJK Symbols and Punctuation (3000–303F)
+		// Hiragana (3040-309F)
+		// Katakana (30A0–30FF)
 		// Bopomofo (3100–312F)
+		// Hangul Compatibility Jamo (3130–318F)
+		// Kanbun (3190–319F)
 		// Bopomofo Extended (31A0–31BF)
-		// CJK Unified Ideographs (4E00–9FEA)
+		// CJK Strokes (31C0–31EF)
+		// Katakana Phonetic Extensions (31F0–31FF)
+		// Enclosed CJK Letters and Months (3200-32FF)
+		// CJK Compatibility (3300-33FF)
 		// CJK Unified Ideographs Extension A (3400–4DB5)
+		// CJK Unified Ideographs (4E00–9FEA)
 		// CJK Unified Ideographs Extension B (20000–2A6D6)
 		// CJK Unified Ideographs Extension C (2A700–2B734)
 		// CJK Unified Ideographs Extension D (2B740–2B81D)
@@ -10273,20 +11791,14 @@
 		// CJK Compatibility Ideographs Supplement (2F800–2FA1F)
 		// Kangxi Radicals (2F00–2FDF)
 		// CJK Radicals Supplement (2E80–2EFF)
-		// CJK Strokes (31C0–31EF)
 		// Ideographic Description Characters (2FF0–2FFF)
 		// Hangul Jamo (1100–11FF)
 		// Hangul Jamo Extended-A (A960–A97F)
 		// Hangul Jamo Extended-B (D7B0–D7FF)
-		// Hangul Compatibility Jamo (3130–318F)
 		// Halfwidth and Fullwidth Forms (FF00–FFEF)
 		// Hangul Syllables (AC00–D7AF)
-		// Hiragana (3040–309F)
 		// Kana Extended-A (1B100–1B12F)
 		// Kana Supplement (1B000–1B0FF)
-		// Kanbun (3190–319F)
-		// Katakana (30A0–30FF)
-		// Katakana Phonetic Extensions (31F0–31FF)
 		// Lisu (A4D0–A4FF)
 		// Miao (16F00–16F9F)
 		// Nushu (1B170–1B2FF)
@@ -10294,11 +11806,9 @@
 		// Tangut Components (18800–18AFF)
 		// Yi Syllables (A000–A48F)
 		// Yi Radicals (A490–A4CF)
-
-		return ((0x3100 <= value && value <= 0x312F)
-			|| (0x31A0 <= value && value <= 0x31BF)
+		
+		return ((0x3000 <= value && value <= 0x4DB5)
 			|| (0x4E00 <= value && value <= 0x9FEA)
-			|| (0x3400 <= value && value <= 0x4DB5)
 			|| (0x20000 <= value && value <= 0x2A6D6)
 			|| (0x2A700 <= value && value <= 0x2B734)
 			|| (0x2B740 <= value && value <= 0x2B81D)
@@ -10308,20 +11818,14 @@
 			|| (0x2F800 <= value && value <= 0x2FA1F)
 			|| (0x2F00 <= value && value <= 0x2FDF)
 			|| (0x2E80 <= value && value <= 0x2EFF)
-			|| (0x31C0 <= value && value <= 0x31EF)
 			|| (0x2FF0 <= value && value <= 0x2FFF)
 			|| (0x1100 <= value && value <= 0x11FF)
 			|| (0xA960 <= value && value <= 0xA97F)
 			|| (0xD7B0 <= value && value <= 0xD7FF)
-			|| (0x3130 <= value && value <= 0x318F)
 			|| (0xFF00 <= value && value <= 0xFFEF)
 			|| (0xAC00 <= value && value <= 0xD7AF)
-			|| (0x3040 <= value && value <= 0x309F)
 			|| (0x1B100 <= value && value <= 0x1B12F)
 			|| (0x1B000 <= value && value <= 0x1B0FF)
-			|| (0x3190 <= value && value <= 0x319F)
-			|| (0x30A0 <= value && value <= 0x30FF)
-			|| (0x31F0 <= value && value <= 0x31FF)
 			|| (0xA4D0 <= value && value <= 0xA4FF)
 			|| (0x16F00 <= value && value <= 0x16F9F)
 			|| (0x1B170 <= value && value <= 0x1B2FF)
@@ -10431,6 +11935,13 @@
 			|| (0x202A <= nCharCode && nCharCode <= 0x202F)
 			|| (0x2670 <= nCharCode && nCharCode <= 0x2671)
 			|| (0xFB1D <= nCharCode && nCharCode <= 0xFB4F));
+	}
+	
+	function IsGeorgianScript(charCode)
+	{
+		return ((0x10A0 <= charCode && charCode <= 0x10FF)
+			|| (0x2D00 <= charCode && charCode <= 0x2D2F)
+			|| (0x1C90 <= charCode && charCode <= 0x1CBF));
 	}
 
 	var g_oIdCounter = new CIdCounter();
@@ -10687,32 +12198,34 @@
 		this.CustomCounter = 0;
 		this.CustomActions = {};
 	}
-	CShortcuts.prototype.Add = function(nType, nCode, isCtrl, isShift, isAlt)
-	{
-		this.List[this.private_GetIndex(nCode, isCtrl, isShift, isAlt)] = nType;
+	CShortcuts.GetShortcutIndex = function(nCode, isCtrl, isShift, isAlt, isCommand) {
+		return ((nCode << 16) | (isCtrl ? 8 : 0) | (isShift ? 4 : 0) | (isAlt ? 2 : 0) | (isCommand ? 1 : 0));
 	};
-	CShortcuts.prototype.Get = function(nCode, isCtrl, isShift, isAlt)
+	CShortcuts.prototype.Add = function(nType, nCode, isCtrl, isShift, isAlt, isCommand)
 	{
-		var nType = this.List[this.private_GetIndex(nCode, isCtrl, isShift, isAlt)];
+		this.List[CShortcuts.GetShortcutIndex(nCode, isCtrl, isShift, isAlt, isCommand)] = nType;
+	};
+	CShortcuts.prototype.Get = function(nCode, isCtrl, isShift, isAlt, isCommand)
+	{
+		var nType = this.List[CShortcuts.GetShortcutIndex(nCode, isCtrl, isShift, isAlt, isCommand)];
 		return (undefined !== nType ? nType : 0);
 	};
-	CShortcuts.prototype.private_GetIndex = function(nCode, isCtrl, isShift, isAlt)
-	{
-		return ((nCode << 8) | (isCtrl ? 4 : 0) | (isShift ? 2 : 0) | (isAlt ? 1 : 0));
-	}
+	CShortcuts.prototype.GetShortcutObject = function(nIndex) {
+		return {KeyCode : nIndex >>> 16, CtrlKey : !!(nIndex & 8), ShiftKey : !!(nIndex & 4), AltKey : !!(nIndex & 2), MacCmdKey : !!(nIndex & 1)};
+	};
 	CShortcuts.prototype.CheckType = function(nType)
 	{
 		for (var nIndex in this.List)
 		{
 			if (this.List[nIndex] === nType)
-				return {KeyCode : nIndex >>> 8, CtrlKey : !!(nIndex & 4), ShiftKey : !!(nIndex & 2), AltKey : !!(nIndex & 1)};
+				return this.GetShortcutObject(nIndex);
 		}
 
 		return null;
 	};
-	CShortcuts.prototype.Remove = function(nCode, isCtrl, isShift, isAlt)
+	CShortcuts.prototype.Remove = function(nCode, isCtrl, isShift, isAlt, isCommand)
 	{
-		delete this.List[this.private_GetIndex(nCode, isCtrl, isShift, isAlt)];
+		delete this.List[CShortcuts.GetShortcutIndex(nCode, isCtrl, isShift, isAlt, isCommand)];
 	};
 	CShortcuts.prototype.RemoveByType = function(nType)
 	{
@@ -10740,6 +12253,33 @@
 		this.CustomActions[nType] = new CCustomShortcutActionSymbol(nCharCode, sFont);
 		return nType;
 	};
+	CShortcuts.prototype.Reset = function()
+	{
+		this.List = {};
+	};
+	CShortcuts.prototype.ApplyFromStorage = function(oAscShortcut)
+	{
+		const arrKeyCodes = [oAscShortcut.keyCode];
+		const arrAddKeyCodes = Asc.c_oAscKeyCodeAnalogues[oAscShortcut.keyCode];
+		if (arrAddKeyCodes)
+		{
+			arrKeyCodes.push.apply(arrKeyCodes, arrAddKeyCodes);
+		}
+		if (oAscShortcut.isHidden)
+		{
+			for (let i = 0; i < arrKeyCodes.length; i += 1)
+			{
+				this.Remove(arrKeyCodes[i], oAscShortcut.ctrlKey, oAscShortcut.shiftKey, oAscShortcut.altKey, oAscShortcut.commandKey);
+			}
+		}
+		else
+		{
+			for (let i = 0; i < arrKeyCodes.length; i += 1)
+			{
+				this.Add(oAscShortcut.type, arrKeyCodes[i], oAscShortcut.ctrlKey, oAscShortcut.shiftKey, oAscShortcut.altKey, oAscShortcut.commandKey);
+			}
+		}
+	};
 
 	function CCustomShortcutActionSymbol(nCharCode, sFont)
 	{
@@ -10766,7 +12306,7 @@
         this.isChangesHandled = false;
 
         this.cryptoMode = 0; // start crypto mode
-		this.isChartEditor = false;
+		this.isFrameEditor = false;
 
         this.isExistDecryptedChanges = false; // был ли хоть один запрос на расшифровку данных (были ли чужие изменения)
 
@@ -10800,7 +12340,7 @@
             if (!window["AscDesktopEditor"])
                 return false;
 
-            if (this.isChartEditor)
+            if (this.isFrameEditor)
             	return false;
 
             if (2 == this.cryptoMode)
@@ -11012,7 +12552,7 @@
 						obj.options.callback(Asc.c_oAscError.ID.No, data);
 					else
 					{
-						AscCommon.UploadImageUrls(data, obj.options.api.documentId, obj.options.api.documentUserId, obj.options.api.CoAuthoringApi.get_jwt(), function(urls)
+						AscCommon.UploadImageUrls(data, obj.options.api.documentId, obj.options.api.documentUserId, obj.options.api.CoAuthoringApi.get_jwt(), obj.options.api.documentShardKey, obj.options.api.documentWopiSrc, obj.options.api.documentUserSessionId, function(urls)
                         {
                             obj.options.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
 
@@ -12366,6 +13906,11 @@
 	{
 		this.started = true;
 		this.endCallback = fEndCallback;
+		let drawingDocument = Asc.editor.getDrawingDocument();
+		if (drawingDocument)
+		{
+			drawingDocument.LockCursorType("eyedropper");
+		}
 	};
 	CEyedropper.prototype.cancel = function()
 	{
@@ -12378,6 +13923,12 @@
 		this.api.sendEvent("asc_onHideEyedropper");
 		this.clearColor();
 		this.clearImageData();
+
+		let drawingDocument = Asc.editor.getDrawingDocument();
+		if (drawingDocument)
+		{
+			drawingDocument.UnlockCursorType();
+		}
 	};
 	CEyedropper.prototype.clearImageData = function()
 	{
@@ -12526,90 +14077,123 @@
 		}
 	}
 	
+	/**
+	 * @param {string} text
+	 * @param {Asc.asc_CTextOptions} options
+	 * @param {boolean} bTrimSpaces - Whether to trim spaces when using space delimiter
+	 * @returns {Array<Array<string>>} Matrix of parsed CSV values
+	 */
 	function parseText(text, options, bTrimSpaces) {
-		var delimiterChar;
-		if (options.asc_getDelimiterChar()) {
-			delimiterChar = options.asc_getDelimiterChar();
-		} else {
-			switch (options.asc_getDelimiter()) {
-				case AscCommon.c_oAscCsvDelimiter.None:
-					delimiterChar = undefined;
-					break;
-				case AscCommon.c_oAscCsvDelimiter.Tab:
-					delimiterChar = "\t";
-					break;
-				case AscCommon.c_oAscCsvDelimiter.Semicolon:
-					delimiterChar = ";";
-					break;
-				case AscCommon.c_oAscCsvDelimiter.Colon:
-					delimiterChar = ":";
-					break;
-				case AscCommon.c_oAscCsvDelimiter.Comma:
-					delimiterChar = ",";
-					break;
-				case AscCommon.c_oAscCsvDelimiter.Space:
-					delimiterChar = " ";
-					break;
-			}
-		}
-
-		var textQualifier = options.asc_getTextQualifier();
-		var matrix = [];
-		//var rows = text.match(/[^\r\n]+/g);
-		var rows = text.split(/\r?\n/);
-		for (var i = 0; i < rows.length; ++i) {
-			var row = rows[i];
-			if(" " === delimiterChar && bTrimSpaces) {
-				var addSpace = false;
-				if(row[0] === delimiterChar) {
-					addSpace = true;
-				}
-				row = addSpace ? delimiterChar + row.trim() : row.trim();
-			}
-			//todo quotes
-			if (textQualifier) {
-				if (!row.length) {
-					matrix.push(row.split(delimiterChar));
-					continue;
-				}
-
-				var _text = "";
-				var startQualifier = false;
-				for (var j = 0; j < row.length; j++) {
-					if (!startQualifier && row[j] === textQualifier && (!row[j - 1] || (row[j - 1] && row[j - 1] === delimiterChar))) {
-						startQualifier = !startQualifier;
-						continue;
-					} else if (startQualifier && row[j] === textQualifier) {
-						startQualifier = !startQualifier;
-
-						if (j === row.length - 1) {
-							if (!matrix[i]) {
-								matrix[i] = [];
-							}
-							matrix[i].push(_text);
-						}
-
+		let delimiterMap = {};
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.None] = undefined;
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Tab] = "\t";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Semicolon] = ";";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Colon] = ":";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Comma] = ",";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Space] = " ";
+		const delimiterChar = options.asc_getDelimiterChar() || delimiterMap[options.asc_getDelimiter()];
+		const textQualifier = options.asc_getTextQualifier();
+		const hasQualifier = !!textQualifier;
+		
+		if (!text.length) return [[]];
+		
+		let rows = delimiterChar === '\n' ? [text] : text.split(/\r\n|\r|\n/);
+		if (rows.length > 1 && rows[rows.length - 1] === '') rows.pop();
+		
+		const isSpace = delimiterChar === " ";
+		// Note: Using charCodeAt instead of codePointAt for performance.
+		// CSV delimiters are always basic ASCII chars (comma=44, semicolon=59, tab=9, etc.)
+		const delimiterCode = delimiterChar ? delimiterChar.charCodeAt(0) : 0;
+		const qualifierCode = hasQualifier ? textQualifier.charCodeAt(0) : 0;
+		
+		/**
+		 * Trim and normalize a row when space is the delimiter and trimming is enabled.
+		 * Preserves a single leading space delimiter when present to avoid data loss.
+		 * @param {string} row
+		 * @returns {string}
+		 */
+		const processSpaceRow = function(row) {
+			if (!isSpace || !bTrimSpaces) return row;
+			const hasLeadingSpace = row.length > 0 && row.charCodeAt(0) === delimiterCode;
+			row = row.trim();
+			return hasLeadingSpace ? delimiterChar + row : row;
+		};
+		
+		/**
+		 * Parse a logical CSV record that may span multiple pre-split rows.
+		 * @param {string} row - Row to parse
+		 * @param {number} startIndex - Index in rows array to start parsing from
+		 * @returns {{fields: Array<string>, curIndex: number}}
+		 */
+		const parseRowWithQualifiers = function(row, startIndex) {
+			const fields = [];
+			let idx = startIndex;
+			let rowLength = row.length;
+			let textParts = [];
+			let insideQualifier = false;
+			let j = 0;
+			
+			while (true) {
+				if (j >= rowLength) {
+					if (insideQualifier && idx + 1 < rows.length) {
+						// Continue to next line, adding normalized newline
+						textParts.push('\n');
+						idx++;
+						row = rows[idx] || "";
+						row = processSpaceRow(row);
+						rowLength = row.length;
+						j = 0;
 						continue;
 					}
-					
-					if (!startQualifier && row[j] === delimiterChar) {
-						if (!matrix[i]) {
-							matrix[i] = [];
-						}
-						matrix[i].push(_text);
-						_text = "";
-					} else {
-						_text += row[j];
-						if (j === row.length - 1) {
-							if (!matrix[i]) {
-								matrix[i] = [];
-							}
-							matrix[i].push(_text);
+					// End of record
+					fields.push(textParts.join(''));
+					return { fields: fields, curIndex: idx };
+				}
+
+				const charCode = row.charCodeAt(j);
+				if (charCode === qualifierCode) {
+					if (!insideQualifier && (j === 0 || row.charCodeAt(j - 1) === delimiterCode)) {
+						insideQualifier = true;
+						j++;
+						continue;
+					} else if (insideQualifier) {
+						if (j + 1 < rowLength && row.charCodeAt(j + 1) === qualifierCode) {
+							textParts.push(textQualifier);
+							j += 2;
+							continue;
+						} else {
+							insideQualifier = false;
+							j++;
+							continue;
 						}
 					}
 				}
+				
+				if (!insideQualifier && charCode === delimiterCode) {
+					fields.push(textParts.join(''));
+					textParts = [];
+				} else {
+					textParts.push(row[j]);
+				}
+				j++;
+			}
+		};
+		
+		const matrix = [];
+		for (let i = 0; i < rows.length; i++) {
+			let row = processSpaceRow(rows[i]);
+			
+			if (!row.length) {
+				matrix.push([""]);
+				continue;
+			}
+			
+			if (hasQualifier) {
+				const res = parseRowWithQualifiers(row, i);
+				matrix.push(res.fields);
+				i = res.curIndex;
 			} else {
-				matrix.push(row.split(delimiterChar));	
+				matrix.push(delimiterChar === undefined ? [row] : row.split(delimiterChar));
 			}
 		}
 		return matrix;
@@ -12978,7 +14562,30 @@
 			return;
 		}
 
-		var rect = element.getBoundingClientRect();
+		
+		var rect;
+		if (!AscBrowser.isIE)
+			rect = AscCommon.UI.getBoundingClientRect(element);
+		else {
+			function getCanvasBoundingClientRect(canvas) {
+				const offsetLeft	= canvas.offsetLeft;
+				const offsetTop		= canvas.offsetTop;
+				const offsetWidth	= canvas.offsetWidth;
+				const offsetHeight	= canvas.offsetHeight;
+			
+				return {
+					top:	offsetTop,
+					right:	offsetLeft + offsetWidth,
+					bottom:	offsetTop + offsetHeight,
+					left:	offsetLeft,
+					width:	offsetWidth,
+					height:	offsetHeight,
+				};
+			}
+
+			rect = getCanvasBoundingClientRect(element);
+		}
+
 		var isCorrectRect = (rect.width === 0 && rect.height === 0) ? false : true;
 		if (is_wait_correction || !isCorrectRect)
 		{
@@ -13397,6 +15004,25 @@
 			this["guid"] = sOlePluginGuid;
 		}
 	}
+	CPluginCtxMenuInfo.prototype.setHdrFtr = function(isHeader) {
+		if (isHeader) {
+			delete this["footer"];
+			this["header"] = true;
+		} else {
+			delete this["header"];
+			this["footer"] = true;
+		}
+	};
+	CPluginCtxMenuInfo.prototype.setHdrFtrArea = function(isHeader) {
+		if (isHeader) {
+			delete this["footerArea"];
+			this["headerArea"] = true;
+		} else {
+			delete this["headerArea"];
+			this["footerArea"] = true;
+		}
+	};
+	
 
 
 	function deg2rad(deg)
@@ -13408,8 +15034,465 @@
 	{
 		return rad * 180.0 / Math.PI;
 	}
+
+	function trimMinMaxValue(value, min, max) {
+		if (value < min)
+			return min;
+		if (value > max)
+			return max;
+		return value;
+	}
+
+	function getArrayRandomElement(aArray) {
+		return aArray[Math.random() * aArray.length | 0];
+	}
+
+	function consoleLog(val) {
+		// console.log(val);
+		const showMessages = false;
+
+		if (!showMessages) {
+			return;
+		}
+
+		// see v8 arguments leak - performance loss
+		// console.log.apply(console, arguments);
+
+		for (let i = 0; i < arguments.length; i++) {
+			console.log(arguments[i]);
+		}
+	}
+
+
+	const LRI = '\u2066'; // LEFT-TO-RIGHT ISOLATE
+	const RLI = '\u2067'; // RIGHT-TO-LEFT ISOLATE
+	const PDI = '\u2069'; // POP DIRECTIONAL ISOLATE
+
+	function getLTRString(str) {
+		if (str.startsWith(LRI) && str.endsWith(PDI)) {
+			return str;
+		}
+
+		if (str.startsWith(RLI)) {
+			str = str.slice(1);
+		}
+		if (str.startsWith(LRI)) {
+			str = str.slice(1);
+		}
+		if (str.endsWith(PDI)) {
+			str = str.slice(0, -1);
+		}
+
+		return LRI + str + PDI;
+	}
+
+	function getRTLString(str) {
+		if (str.startsWith(RLI) && str.endsWith(PDI)) {
+			return str;
+		}
+
+		if (str.startsWith(LRI)) {
+			str = str.slice(1);
+		}
+		if (str.startsWith(RLI)) {
+			str = str.slice(1);
+		}
+		if (str.endsWith(PDI)) {
+			str = str.slice(0, -1);
+		}
+
+		return RLI + str + PDI;
+	}
+
+	function stripDirectionMarks(str) {
+		while (
+			str.startsWith('\u200E') ||
+			str.startsWith('\u200F') ||
+			str.startsWith(LRI) ||
+			str.startsWith(RLI)
+			) {
+			str = str.slice(1);
+		}
+
+		while (
+			str.endsWith('\u200E') ||
+			str.endsWith('\u200F') ||
+			str.endsWith(PDI)
+			) {
+			str = str.slice(0, -1);
+		}
+
+		return str;
+	}
+
+	function getCharStrongDir(char) {
+		let type = AscBidi.getType(char);
+		if (type & AscBidi.FLAG.STRONG) {
+			if (type & AscBidi.FLAG.RTL) {
+				return AscBidi.DIRECTION_FLAG.RTL;
+			} else {
+				return AscBidi.DIRECTION_FLAG.LTR;
+			}
+		}
+		return null;
+	}
+
+	function applyElementDirection(element) {
+		if (!element)
+			return;
+		const text = element.value || '';
+		let dir = 'ltr';
+		for (let iter = text.getUnicodeIterator(); iter.check(); iter.next()) {
+			let charDir = AscCommon.getCharStrongDir(iter.value());
+			if (charDir === AscBidi.DIRECTION_FLAG.RTL) {
+				dir = 'rtl';
+				break;
+			}
+		}
+		element.dir = dir;
+	}
+
+
+	function getFirstStrongDirection(text) {
+		if(!text) return null;
+		for (let iter = text.getUnicodeIterator(); iter.check(); iter.next()) {
+			let cp = iter.value();
+			let dir = getCharStrongDir(cp);
+			if (dir !== null) {
+				return dir;
+			}
+		}
+		return null;
+	}
+
+	function getGradientPoints(min_x, min_y, max_x, max_y, _angle, scale) {
+		let points = { x0 : 0, y0 : 0, x1 : 0, y1 : 0 };
+
+		let fAE = AscFormat.fApproxEqual;
+		if (fAE(min_x, max_x) && fAE(min_y, max_y)) {
+			points.x0 = min_x;
+			points.y0 = min_y;
+			points.x1 = min_x;
+			points.y1 = min_y;
+			return points;
+		}
+
+		if (fAE(min_x, max_x)) {
+			points.x0 = min_x;
+			points.y0 = min_y;
+			points.x1 = min_x;
+			points.y1 = max_y;
+			return points;
+		}
+
+		if (fAE(min_y, max_y)) {
+			points.x0 = min_x;
+			points.y0 = min_y;
+			points.x1 = max_x;
+			points.y1 = min_y;
+			return points;
+		}
+
+		let angle = _angle / 60000;
+		while (angle < 0)
+			angle += 360;
+		while (angle >= 360)
+			angle -= 360;
+
+		if (Math.abs(angle) < 1) {
+			points.x0 = min_x;
+			points.y0 = min_y;
+			points.x1 = max_x;
+			points.y1 = min_y;
+
+			return points;
+		}
+		else if (Math.abs(angle - 90) < 1) {
+			points.x0 = min_x;
+			points.y0 = min_y;
+			points.x1 = min_x;
+			points.y1 = max_y;
+
+			return points;
+		}
+		else if (Math.abs(angle - 180) < 1) {
+			points.x0 = max_x;
+			points.y0 = min_y;
+			points.x1 = min_x;
+			points.y1 = min_y;
+
+			return points;
+		}
+		else if (Math.abs(angle - 270) < 1) {
+			points.x0 = min_x;
+			points.y0 = max_y;
+			points.x1 = min_x;
+			points.y1 = min_y;
+
+			return points;
+		}
+
+		let grad_a = AscCommon.deg2rad(angle);
+		if (!scale) {
+			if (angle > 0 && angle < 90) {
+				let p = this.getNormalPoint(min_x, min_y, grad_a, max_x, max_y);
+
+				points.x0 = min_x;
+				points.y0 = min_y;
+				points.x1 = p.X;
+				points.y1 = p.Y;
+
+				return points;
+			}
+			if (angle > 90 && angle < 180) {
+				let p = this.getNormalPoint(max_x, min_y, grad_a, min_x, max_y);
+
+				points.x0 = max_x;
+				points.y0 = min_y;
+				points.x1 = p.X;
+				points.y1 = p.Y;
+
+				return points;
+			}
+			if (angle > 180 && angle < 270) {
+				let p = this.getNormalPoint(max_x, max_y, grad_a, min_x, min_y);
+
+				points.x0 = max_x;
+				points.y0 = max_y;
+				points.x1 = p.X;
+				points.y1 = p.Y;
+
+				return points;
+			}
+			if (angle > 270 && angle < 360) {
+				let p = this.getNormalPoint(min_x, max_y, grad_a, max_x, min_y);
+
+				points.x0 = min_x;
+				points.y0 = max_y;
+				points.x1 = p.X;
+				points.y1 = p.Y;
+
+				return points;
+			}
+			// никогда сюда не зайдем
+			return points;
+		}
+
+		// scale == true
+		let _grad_45 = (Math.PI / 2) - Math.atan2(max_y - min_y, max_x - min_x);
+		let _grad_90_45 = (Math.PI / 2) - _grad_45;
+		if (angle > 0 && angle < 90) {
+			if (angle <= 45)
+			{
+				grad_a = (_grad_45 * angle / 45);
+			}
+			else
+			{
+				grad_a = _grad_45 + _grad_90_45 * (angle - 45) / 45;
+			}
+
+			let p = this.getNormalPoint(min_x, min_y, grad_a, max_x, max_y);
+
+			points.x0 = min_x;
+			points.y0 = min_y;
+			points.x1 = p.X;
+			points.y1 = p.Y;
+
+			return points;
+		}
+		if (angle > 90 && angle < 180) {
+			if (angle <= 135) {
+				grad_a = Math.PI / 2 + _grad_90_45 * (angle - 90) / 45;
+			}
+			else {
+				grad_a = Math.PI / 2 + _grad_90_45 + _grad_45 * (angle - 135) / 45;
+			}
+
+			let p = this.getNormalPoint(max_x, min_y, grad_a, min_x, max_y);
+
+			points.x0 = max_x;
+			points.y0 = min_y;
+			points.x1 = p.X;
+			points.y1 = p.Y;
+
+			return points;
+		}
+		if (angle > 180 && angle < 270) {
+			if (angle <= 225)
+			{
+				grad_a = Math.PI + _grad_45 * (angle - 180) / 45;
+			}
+			else
+			{
+				grad_a = Math.PI + _grad_45 + _grad_90_45 * (angle - 225) / 45;
+			}
+
+			let p = this.getNormalPoint(max_x, max_y, grad_a, min_x, min_y);
+
+			points.x0 = max_x;
+			points.y0 = max_y;
+			points.x1 = p.X;
+			points.y1 = p.Y;
+
+			return points;
+		}
+		if (angle > 270 && angle < 360) {
+			if (angle <= 315)
+			{
+				grad_a = 3 * Math.PI / 2 + _grad_90_45 * (angle - 270) / 45;
+			}
+			else
+			{
+				grad_a = 3 * Math.PI / 2 + _grad_90_45 + _grad_45 * (angle - 315) / 45;
+			}
+
+			let p = this.getNormalPoint(min_x, max_y, grad_a, max_x, min_y);
+
+			points.x0 = min_x;
+			points.y0 = max_y;
+			points.x1 = p.X;
+			points.y1 = p.Y;
+
+			return points;
+		}
+		// никогда сюда не зайдем
+		return points;
+	}
+
+	function getNormalPoint(x0, y0, angle, x1, y1) {
+		// точка - пересечение прямой, проходящей через точку (x0, y0) под углом angle и
+		// перпендикуляра к первой прямой, проведенной из точки (x1, y1)
+		let ex1 = Math.cos(angle);
+		let ey1 = Math.sin(angle);
+
+		let ex2 = -ey1;
+		let ey2 = ex1;
+
+		let a = ex1 / ey1;
+		let b = ex2 / ey2;
+
+		let x = ((a * b * y1 - a * b * y0) - (a * x1 - b * x0)) / (b - a);
+		let y = (x - x0) / a + y0;
+
+		return { X : x, Y : y };
+	}
+	function CTree() {
+	}
+
+	CTree.prototype = {
+		constructor: CTree,
+		getChildren: function () {
+			return [];
+		},
+		fillObject: function (oCopy, oIdMap) {},
+		traverse: function (fCallback, bReverseOrder) {
+			if (fCallback(this)) {
+				return true;
+			}
+			let aChildren = this.getChildren();
+			if(bReverseOrder === undefined || bReverseOrder === true) {
+				for (let nChild = aChildren.length - 1; nChild > -1; --nChild) {
+					let oChild = aChildren[nChild];
+					if (oChild && oChild.traverse) {
+						if (oChild.traverse(fCallback, bReverseOrder)) {
+							return true;
+						}
+					}
+				}
+			}
+			else {
+				for (let nChild = 0; nChild < aChildren.length; ++nChild) {
+					let oChild = aChildren[nChild];
+					if (oChild && oChild.traverse) {
+						if (oChild.traverse(fCallback, bReverseOrder)) {
+							return true;
+						}
+					}
+				}
+			}
+			return false;
+		},
+		isEqual: function (oOther) {
+			if (!oOther) {
+				return false;
+			}
+			if (this.getObjectType() !== oOther.getObjectType()) {
+				return false;
+			}
+			var aThisChildren = this.getChildren();
+			var aOtherChildren = oOther.getChildren();
+			if (aThisChildren.length !== aOtherChildren.length) {
+				return false;
+			}
+			for (var nChild = 0; nChild < aThisChildren.length; ++nChild) {
+				var oThisChild = aThisChildren[nChild];
+				var oOtherChild = aOtherChildren[nChild];
+				if (oThisChild !== this.checkEqualChild(oThisChild, oOtherChild)) {
+					return false;
+				}
+			}
+			return true;
+		},
+		checkEqualChild: function (oThisChild, oOtherChild) {
+			if (AscCommon.isRealObject(oThisChild) && oThisChild.isEqual) {
+				if (!oThisChild.isEqual(oOtherChild)) {
+					return undefined;
+				}
+			} else {
+				if (oThisChild !== oOtherChild) {
+					return undefined;
+				}
+			}
+			return oThisChild;
+		},
+		preorderTraverse : function(nextLayerCallback, backtrackCallback, context) {
+			var stack = [];
+			var nodes = this.getChildren();
+			var i = 0;
+
+			while (i <= nodes.length) {
+				if (i === nodes.length) {
+					// backtrack
+					if (stack.length !== 0) {
+						let state = stack.pop();
+						nodes = state.nodes;
+						i = state.index + 1;
+						if (backtrackCallback) {
+							backtrackCallback();
+						}
+					} else {
+						break;
+					}
+				} else {
+					var node = nodes[i];
+
+					// Call the callback for the current node
+					if (nextLayerCallback) {
+						nextLayerCallback(context, node);
+					}
+
+					if (node.children && node.children.length > 0) {
+						// Save current state and go deeper
+						stack.push({ nodes: nodes, index: i });
+						nodes = node.children;
+						i = 0;
+					} else {
+						// Leaf node, move to next sibling
+						i++;
+					}
+				}
+			}
+		}
+	};
+
+	function clampNumber(value, min, max)
+	{
+		return value < min ? min : value > max ? max : value;
+	}
+
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
+	window["AscCommon"].consoleLog = consoleLog;
 	window["AscCommon"].getSockJs = getSockJs;
 	window["AscCommon"].getSocketIO = getSocketIO;
 	window["AscCommon"].getBaseUrl = getBaseUrl;
@@ -13423,6 +15506,7 @@
 	window["AscCommon"].openFileCommand = openFileCommand;
 	window["AscCommon"].sendCommand = sendCommand;
 	window["AscCommon"].sendSaveFile = sendSaveFile;
+	window["AscCommon"].c_oAscServerError = c_oAscServerError;
 	window["AscCommon"].mapAscServerErrorToAscError = mapAscServerErrorToAscError;
 	window["AscCommon"].joinUrls = joinUrls;
 	window["AscCommon"].getFullImageSrc2 = getFullImageSrc2;
@@ -13439,6 +15523,7 @@
 	window["AscCommon"]['GetFileExtension'] = window["AscCommon"].GetFileExtension = GetFileExtension;
 	window["AscCommon"].changeFileExtention = changeFileExtention;
 	window["AscCommon"].getExtentionByFormat = getExtentionByFormat;
+	window["AscCommon"].getFormatByExtention = getFormatByExtention;
 	window["AscCommon"].InitOnMessage = InitOnMessage;
 	window["AscCommon"].ShowImageFileDialog = ShowImageFileDialog;
 	window["AscCommon"].ShowDocumentFileDialog = ShowDocumentFileDialog;
@@ -13455,6 +15540,7 @@
 	window["AscCommon"].getUrlType = getUrlType;
 	window["AscCommon"].prepareUrl = prepareUrl;
 	window["AscCommon"].getUserColorById = getUserColorById;
+	window["AscCommon"].setUserColorById = setUserColorById;
 	window["AscCommon"].isNullOrEmptyString = isNullOrEmptyString;
 	window["AscCommon"].unleakString = unleakString;
 	window["AscCommon"].readValAttr = readValAttr;
@@ -13468,12 +15554,22 @@
 	window["AscCommon"].checkOOXMLSignature = checkOOXMLSignature;
 	window["AscCommon"].checkNativeViewerSignature = checkNativeViewerSignature;
 	window["AscCommon"].getEditorBySignature = getEditorBySignature;
+	window["AscCommon"].getLTRString = getLTRString;
+	window["AscCommon"].getRTLString = getRTLString;
+	window["AscCommon"].stripDirectionMarks = stripDirectionMarks;
+	window["AscCommon"].getCharStrongDir = getCharStrongDir;
+	window["AscCommon"].applyElementDirection = applyElementDirection;
+	window["AscCommon"].getFirstStrongDirection = getFirstStrongDirection;
+	window["AscCommon"].getGradientPoints = getGradientPoints;
+	window["AscCommon"].getNormalPoint = getNormalPoint;
+	window["AscCommon"].clampNumber = clampNumber;
 
 	window["AscCommon"].DocumentUrls = DocumentUrls;
 	window["AscCommon"].OpenFileResult = OpenFileResult;
 	window["AscCommon"].CLock = CLock;
 	window["AscCommon"].CContentChanges = CContentChanges;
 	window["AscCommon"].CContentChangesElement = CContentChangesElement;
+	window["AscCommon"].CTree = CTree;
 
 	window["AscCommon"].CorrectMMToTwips = CorrectMMToTwips;
 	window["AscCommon"].TwipsToMM = TwipsToMM;
@@ -13495,15 +15591,19 @@
 	window["AscCommon"].CorrectFontSize = CorrectFontSize;
 	window["AscCommon"].IsAscFontSupport = IsAscFontSupport;
 	window["AscCommon"].ExecuteNoHistory = ExecuteNoHistory;
+	window["AscCommon"].executeNoRevisions = executeNoRevisions;
+	window["AscCommon"].executeNoPreDelete = executeNoPreDelete;
+	window["AscCommon"].ExecuteEditorAction = ExecuteEditorAction;
 	window["AscCommon"].AddAndExecuteChange = AddAndExecuteChange;
 	window["AscCommon"].CompareStrings = CompareStrings;
 	window["AscCommon"].IsSupportAscFeature = IsSupportAscFeature;
 	window["AscCommon"].IsSupportOFormFeature = IsSupportOFormFeature;
+	window["AscCommon"].mockLogicDoc = mockLogicDoc;
 
 	window["AscCommon"].loadSdk = loadSdk;
     window["AscCommon"].loadScript = loadScript;
     window["AscCommon"].loadChartStyles = loadChartStyles;
-	window["AscCommon"].loadSmartArtBinary = loadSmartArtBinary;
+    window["AscCommon"].loadPathBoolean = loadPathBoolean;
 	window["AscCommon"].getAltGr = getAltGr;
 	window["AscCommon"].getColorSchemeByName = getColorSchemeByName;
 	window["AscCommon"].getColorSchemeByIdx = getColorSchemeByIdx;
@@ -13513,6 +15613,7 @@
 	window["AscCommon"].isEastAsianScript = isEastAsianScript;
 	window["AscCommon"].IsEastAsianFont = IsEastAsianFont;
 	window["AscCommon"].IsComplexScript = IsComplexScript;
+	window["AscCommon"].IsGeorgianScript = IsGeorgianScript;
 	window["AscCommon"].CMathTrack = CMathTrack;
 	window["AscCommon"].CPolygon = CPolygon;
 	window['AscCommon'].CDrawingCollaborativeTargetBase = CDrawingCollaborativeTargetBase;
@@ -13520,6 +15621,7 @@
 	window["AscCommon"].g_oDocumentUrls = g_oDocumentUrls;
 	window["AscCommon"].FormulaTablePartInfo = FormulaTablePartInfo;
 	window["AscCommon"].cBoolLocal = cBoolLocal;
+	window["AscCommon"].cBoolOrigin = cBoolOrigin;
 	window["AscCommon"].cErrorOrigin = cErrorOrigin;
 	window["AscCommon"].cErrorLocal = cErrorLocal;
 	window["AscCommon"].cCellFunctionLocal = cCellFunctionLocal;
@@ -13617,7 +15719,7 @@
 		word = word.replaceAll("\"", "&#34;");
 		word = word.replaceAll("\'", "&#39;");
 		return word;
-	}
+	};
 	window["AscCommon"].CFormatPainter = CFormatPainter;
 	window["AscCommon"].CFormattingPasteDataBase = CFormattingPasteDataBase;
 	window["AscCommon"].CTextFormattingPasteData = CTextFormattingPasteData;
@@ -13628,9 +15730,13 @@
 	window['AscCommon'].deg2rad = deg2rad;
 	window['AscCommon'].rad2deg = rad2deg;
 	window["AscCommon"].c_oAscImageUploadProp = c_oAscImageUploadProp;
+	window["AscCommon"].trimMinMaxValue = trimMinMaxValue;
+	window["AscCommon"].cStrucTableReservedWords = cStrucTableReservedWords;
+	window["AscCommon"].getArrayRandomElement = getArrayRandomElement;
+	window["AscCommon"].rx_error = rx_error;
 })(window);
 
-window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)
+window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo, csv_data)
 {
     if (window.isNativeOpenPassword)
 	{
@@ -13660,7 +15766,14 @@ window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)
     }
 
     window.checkPasswordFromPlugin = false;
-    _editor._onNeedParams(undefined, (_code == 90 || _code == 91) ? true : undefined);
+	let data = undefined;
+	if (csv_data && window["AscDesktopEditor"])
+	{
+		var bufferArray = window["AscDesktopEditor"]["GetOpenedFile"](csv_data);
+		if (bufferArray)
+			data = new Uint8Array(bufferArray);
+	}
+    _editor._onNeedParams(data, (_code == 90 || _code == 91) ? true : undefined);
 };
 
 window["asc_IsNeedBuildCryptedFile"] = function()
@@ -13833,6 +15946,9 @@ window["buildCryptoFile_End"] = function(url, error, hash, password)
 				case AscCommon.c_oEditorId.Spreadsheet:
 					ext = ".xlsx";
 					break;
+				case AscCommon.c_oEditorId.Visio:
+					ext = ".vsdx";
+					break;
 				default:
 					break;
 			}
@@ -13845,7 +15961,7 @@ window["buildCryptoFile_End"] = function(url, error, hash, password)
 					ext = ".docxf";
 			}
 
-			AscCommon.sendSaveFile(_editor.documentId, _editor.documentUserId, "output" + ext, _editor.asc_getSessionToken(), fileData, function(err) {
+			AscCommon.sendSaveFile(_editor.documentId, _editor.documentUserId, "output" + ext, _editor.asc_getSessionToken(), _editor.documentShardKey, _editor.documentWopiSrc, _editor.documentUserSessionId, fileData, function(err) {
 
                 _editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Save);
                 _editor.sendEvent("asc_onError", Asc.c_oAscError.ID.ConvertationSaveError, Asc.c_oAscError.Level.Critical);

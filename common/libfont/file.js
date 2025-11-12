@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -137,6 +137,14 @@
 		glyphstateMiss : 2  	// символ не отрисовался
 	};
 
+	function get_raster_bounds_safe(rasterBitmap)
+	{
+		if (!rasterBitmap)
+			return {dist_l: 0, dist_t: 0, dist_r: 0, dist_b: 0};
+
+		return get_raster_bounds(rasterBitmap.data, rasterBitmap.width, rasterBitmap.rows, rasterBitmap.pitch);
+	}
+
 	function get_raster_bounds(data, width, height, stride)
 	{
 		var ret = {dist_l: 0, dist_t: 0, dist_r: 0, dist_b: 0};
@@ -266,7 +274,7 @@
 			this.TempImage = document.createElement("canvas");
 			this.TempImage.width = w;
 			this.TempImage.height = h;
-			var ctxD = this.TempImage.getContext("2d");
+			var ctxD = AscCommon.AscBrowser.getContext2D(this.TempImage);
 			var pixDst = null;
 
 			if (this.m_oCanvas != null)
@@ -367,7 +375,7 @@
 			this.m_oCanvas.width = (width == 0) ? 1 : width;
 			this.m_oCanvas.height = (height == 0) ? 1 : height;
 
-			this.m_oContext = this.m_oCanvas.getContext('2d');
+			this.m_oContext = AscCommon.AscBrowser.getContext2D(this.m_oCanvas);
 			this.m_oContext.globalCompositeOperation = "source-in";
 		}
 	};
@@ -1196,7 +1204,7 @@
 					if (rasterInfo)
 					{
 						var rasterBitmap = AscFonts.FT_Get_Glyph_Render_Buffer(this.m_pFace, rasterInfo, false);
-						oSizes.oBBox.rasterDistances = get_raster_bounds(rasterBitmap.data, rasterBitmap.width, rasterBitmap.rows, rasterBitmap.pitch);
+						oSizes.oBBox.rasterDistances = get_raster_bounds_safe(rasterBitmap);
 					}
 				}
 				return oSizes;

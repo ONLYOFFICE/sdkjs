@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -36,7 +36,7 @@ $(function ()
 {
 	const logicDocument = AscTest.CreateLogicDocument()
 	
-	function SetupDocument()
+	function setupDocument()
 	{
 		AscTest.ClearDocument();
 		let sectPr = AscTest.GetFinalSection();
@@ -45,11 +45,15 @@ $(function ()
 	}
 	
 	
-	QUnit.module("Test various situations with breaking table on pages");
+	QUnit.module("Test various situations with breaking table on pages", {
+		beforeEach : function()
+		{
+			setupDocument();
+		}
+	});
 	
 	QUnit.test("Test page break because of bottom border width", function (assert)
 	{
-		SetupDocument();
 		let table = AscTest.CreateTable(4, 3);
 		logicDocument.PushToContent(table);
 		
@@ -79,6 +83,64 @@ $(function ()
 		assert.ok(true, "Increase the thickness of the bottom border of the second row");
 		assert.strictEqual(table.GetPagesCount(), 2, "Should be 2 pages");
 		assert.strictEqual(table.GetPage(1).GetFirstRow(), 2, "Check that page breaks on the 3-th row");
+	});
+	
+	QUnit.test("Test page break of a float table in a special case (bug 57159)", function (assert)
+	{
+		// Таблица имеет прилегание по вертикали к параграфу с некоторым смещением и не убирается целиком на странице
+		let table = AscTest.CreateTable(8, 3);
+		logicDocument.AddToContent(0, table);
+		AscTest.RemoveTableBorders(table);
+		
+		table.SetInline(false);
+		table.SetPositionH(Asc.c_oAscHAnchor.Page, false, 0);
+		table.SetPositionV(Asc.c_oAscVAnchor.Text, false, 0);
+		
+		for (let iRow = 0, nRows = table.GetRowsCount(); iRow < nRows; ++iRow)
+		{
+			table.GetRow(iRow).SetHeight(50, Asc.linerule_AtLeast);
+		}
+		
+		AscTest.Recalculate();
+		assert.strictEqual(table.GetPagesCount(), 1, "Should be 1 page");
+		
+		table.SetPositionV(Asc.c_oAscVAnchor.Text, false, 605);
+		AscTest.Recalculate();
+		assert.strictEqual(table.GetPagesCount(), 2, "Should be 1 page");
+		assert.strictEqual(table.GetPage(1).GetFirstRow(), 3, "Check that page breaks on the 4-th row");
+		
+		table.SetPositionV(Asc.c_oAscVAnchor.Text, false, 505);
+		AscTest.Recalculate();
+		assert.strictEqual(table.GetPagesCount(), 2, "Should be 1 page");
+		assert.strictEqual(table.GetPage(1).GetFirstRow(), 5, "Check that page breaks on the 4-th row");
+	});
+	
+	QUnit.test("Page break before table and table breaks on the second page (bug 75532)", function (assert)
+	{
+		let paragraph = AscTest.CreateParagraph();
+		paragraph.Add(new AscWord.CRunBreak(AscWord.break_Page));
+		logicDocument.AddToContent(0, paragraph);
+
+		let table = AscTest.CreateTable(2, 2);
+		AscTest.RemoveTableBorders(table);
+		AscTest.RemoveTableMargins(table);
+		logicDocument.AddToContent(1, table);
+		AscTest.MergeTableCells(table, 0, 0, 0, 1);
+		
+		let cellContent = table.GetRow(0).GetCell(1).GetContent();
+		paragraph = cellContent.GetElement(0);
+		paragraph.SetParagraphSpacing({After : 80, Before : 0, LineRule : linerule_Auto, Line : 1});
+		paragraph = AscTest.CreateParagraph();
+		paragraph.SetParagraphSpacing({After : 700, Before : 0, LineRule : linerule_Auto, Line : 1});
+		cellContent.AddToContent(1, paragraph);
+		
+		AscTest.Recalculate();
+		assert.strictEqual(table.IsEmptyPage(0), true, "First page should be empty");
+		assert.strictEqual(table.GetPagesCount(), 3, "Check page count");
+		assert.strictEqual(table.GetPage(1).GetFirstRow(), 0, "Check first row for page 1");
+		assert.strictEqual(table.GetPage(1).GetLastRow(), 0, "Check last row for page 1");
+		assert.strictEqual(table.GetPage(2).GetFirstRow(), 0, "Check first row for page 2");
+		assert.strictEqual(table.GetPage(2).GetLastRow(), 1, "Check last row for page 2");
 	});
 	
 });

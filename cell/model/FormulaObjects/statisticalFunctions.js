@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -39,6 +39,8 @@
 function (window, undefined) {
 	var cDate = Asc.cDate;
 	var fSortAscending = AscCommon.fSortAscending;
+	var gc_nMaxRow0 = AscCommon.gc_nMaxRow0;
+	var gc_nMaxCol0 = AscCommon.gc_nMaxCol0;
 
 	var cElementType = AscCommonExcel.cElementType;
 	var cErrorType = AscCommonExcel.cErrorType;
@@ -59,6 +61,7 @@ function (window, undefined) {
 
 	var _func = AscCommonExcel._func;
 	var matching = AscCommonExcel.matching;
+	var getMatchingFunction = AscCommonExcel.getMatchingFunction;
 
 	var maxGammaArgument = 171.624376956302;
 
@@ -318,8 +321,8 @@ function (window, undefined) {
 		return getLogGammaHelper(fZ + 2) - Math.log(fZ + 1) - Math.log(fZ);
 	}
 
-	function getPercentile(values, alpha) {
-		values.sort(fSortAscending);
+	function getPercentile(values, alpha, isSorted) {
+		values = isSorted ? values : values.sort(fSortAscending);
 
 		var nSize = values.length;
 		if (nSize === 0) {
@@ -339,8 +342,8 @@ function (window, undefined) {
 		}
 	}
 
-	function getPercentileExclusive(values, alpha) {
-		values.sort(fSortAscending);
+	function getPercentileExclusive(values, alpha, isSorted) {
+		values = isSorted ? values : values.sort(fSortAscending);
 
 		var nSize1 = values.length + 1;
 		if (nSize1 == 1) {
@@ -379,7 +382,7 @@ function (window, undefined) {
 					if (bInclusive) {
 						fRes = 0;
 					} else {
-						fRes = 1 / ( nSize + 1 );
+						fRes = 1 / (nSize + 1);
 					}
 				} else {
 					var fRes, nOldCount = 0, fOldVal = tA[0], i;
@@ -402,12 +405,12 @@ function (window, undefined) {
 						if (nOldCount === 0) {
 							fRes = 0;
 						} else {
-							var fFract = ( fNum - tA[nOldCount - 1] ) / ( tA[nOldCount] - tA[nOldCount - 1] );
+							var fFract = (fNum - tA[nOldCount - 1]) / (tA[nOldCount] - tA[nOldCount - 1]);
 
 							if (bInclusive) {
-								fRes = ( nOldCount - 1 + fFract ) / (nSize - 1);
+								fRes = (nOldCount - 1 + fFract) / (nSize - 1);
 							} else {
-								fRes = (nOldCount + fFract ) / ( nSize + 1 );
+								fRes = (nOldCount + fFract) / (nSize + 1);
 							}
 						}
 					}
@@ -967,21 +970,21 @@ function (window, undefined) {
 		var res = null;
 		switch (nType) {
 			case 1: {
-				res = 0.5 * getBetaDist(fDF / ( fDF + T * T ), fDF / 2, 0.5);
+				res = 0.5 * getBetaDist(fDF / (fDF + T * T), fDF / 2, 0.5);
 				break;
 			}
 			case 2: {
-				res = getBetaDist(fDF / ( fDF + T * T ), fDF / 2, 0.5);
+				res = getBetaDist(fDF / (fDF + T * T), fDF / 2, 0.5);
 				break;
 			}
 			case 3: {
-				res = Math.pow(1 + ( T * T / fDF ), -( fDF + 1 ) / 2) / ( Math.sqrt(fDF) * getBeta(0.5, fDF / 2.0) );
+				res = Math.pow(1 + (T * T / fDF), -(fDF + 1) / 2) / (Math.sqrt(fDF) * getBeta(0.5, fDF / 2.0));
 				break;
 			}
 			case 4: {
-				var X = fDF / ( T * T + fDF );
+				var X = fDF / (T * T + fDF);
 				var R = 0.5 * getBetaDist(X, 0.5 * fDF, 0.5);
-				res = ( T < 0 ? R : 1 - R );
+				res = (T < 0 ? R : 1 - R);
 				break;
 			}
 		}
@@ -1295,9 +1298,9 @@ function (window, undefined) {
 					}
 				} else {
 					if (bAscending) {
-						res = ( fFirstPos + fLastPos ) / 2.0;
+						res = (fFirstPos + fLastPos) / 2.0;
 					} else {
-						res = nSize + 1.0 - ( fFirstPos + fLastPos ) / 2.0;
+						res = nSize + 1.0 - (fFirstPos + fLastPos) / 2.0;
 					}
 				}
 			}
@@ -1334,9 +1337,9 @@ function (window, undefined) {
 
 		var standDev;
 		if (bSkewp) {
-			standDev = Math.sqrt(sumSQRDeltaX / ( xLength ));
+			standDev = Math.sqrt(sumSQRDeltaX / (xLength));
 		} else {
-			standDev = Math.sqrt(sumSQRDeltaX / ( xLength - 1 ));
+			standDev = Math.sqrt(sumSQRDeltaX / (xLength - 1));
 		}
 
 		for (i = 0; i < x.length; i++) {
@@ -1410,15 +1413,15 @@ function (window, undefined) {
 		return cloneMatrix;
 	}
 
-	function CheckMatrix(_bLOG, pMatX, pMatY) {
-		var nCX = 0;
-		var nCY = 0;
-		var nRX = 0;
-		var nRY = 0;
-		var M = 0;
-		var N = 0;
-		var nCase;
-		var i, j;
+	function CheckMatrix(_bLOG, pMatX, pMatY, error) {
+		let nCase;
+		let i, j;
+		let nCX = 0,
+			nCY = 0,
+			nRX = 0,
+			nRY = 0,
+			M = 0,
+			N = 0;
 
 		if (!pMatY || !pMatY[0]) {
 			return false;
@@ -1426,8 +1429,12 @@ function (window, undefined) {
 
 		nRY = pMatY.length;
 		nCY = pMatY[0].length;
-		var nCountY = nCY * nRY;
-		var _pMatY = [];
+
+		let nCountY = nCY * nRY;
+		let _pMatY = [];
+		let pMatOriginalY = [];
+		let pMatOriginalX = [];
+
 		for (i = 0; i < pMatY.length; i++) {
 			for (j = 0; j < pMatY[i].length; j++) {
 				if (!pMatY[i][j]) {
@@ -1438,22 +1445,22 @@ function (window, undefined) {
 						_pMatY[j] = [];
 					}
 					_pMatY[j][i] = pMatY[i][j].getValue();
-					//pMatY[i][j] = pMatY[i][j].getValue();
 				}
 			}
 		}
 
+		pMatOriginalY = _pMatY.slice();
+
 		if (_bLOG) {
-			var pNewY = [];
+			let pNewY = [];
 
 			for (i = 0; i < pMatY.length; i++) {
 				for (j = 0; j < pMatY[i].length; j++) {
-					var fVal = pMatY[i][j];
+					let fVal = pMatY[i][j];
 					if (fVal <= 0.0) {
 						//PushIllegalArgument();
 						return false;
 					} else {
-						//pNewY[i][j] = Math.log(fVal);
 						if (!pNewY[j]) {
 							pNewY[j] = [];
 						}
@@ -1464,12 +1471,12 @@ function (window, undefined) {
 			_pMatY = pNewY;
 		}
 
-		var _pMatX;
+		let _pMatX;
 		if (pMatX) {
 			_pMatX = [];
 			nRX = pMatX.length;
 			nCX = pMatX[0].length;
-			var nCountX = nCX * nRX;
+			let nCountX = nCX * nRX;
 			for (i = 0; i < pMatX.length; i++) {
 				for (j = 0; j < pMatX[i].length; j++) {
 					if (!pMatX[i][j]) {
@@ -1480,7 +1487,6 @@ function (window, undefined) {
 							_pMatX[j] = [];
 						}
 						_pMatX[j][i] = pMatX[i][j].getValue();
-						//pMatX[i][j] = pMatX[i][j].getValue();
 					}
 				}
 			}
@@ -1491,10 +1497,16 @@ function (window, undefined) {
 				N = nCountY;
 			} else if (nCY !== 1 && nRY !== 1) {
 				//PushIllegalArgument();
+				if (Array.isArray(error)) {
+					error.push(new cError(cErrorType.bad_reference));
+				}
 				return false;
 			} else if (nCY === 1) {
 				if (nRX !== nRY) {
 					//PushIllegalArgument();
+					if (Array.isArray(error)) {
+						error.push(new cError(cErrorType.bad_reference));
+					}
 					return false;
 				} else {
 					nCase = 2;              // Y is column
@@ -1503,6 +1515,9 @@ function (window, undefined) {
 				}
 			} else if (nCX !== nCY) {
 				//PushIllegalArgument();
+				if (Array.isArray(error)) {
+					error.push(new cError(cErrorType.bad_reference));
+				}
 				return false;
 			} else {
 				nCase = 3;                  // Y is row
@@ -1514,7 +1529,7 @@ function (window, undefined) {
 			nCX = nCY;
 			nRX = nRY;
 
-			var num = 1;
+			let num = 1;
 			for (i = 0; i < nRY; i++) {
 				for (j = 0; j < nCY; j++) {
 					if (!_pMatX[j]) {
@@ -1530,13 +1545,18 @@ function (window, undefined) {
 			M = 1;
 		}
 
-		return {nCase: nCase, nCX: nCX, nCY: nCY, nRX: nRX, nRY: nRY, M: M, N: N, pMatX: _pMatX, pMatY: _pMatY};
+		return {nCase: nCase, nCX: nCX, nCY: nCY, nRX: nRX, nRY: nRY, M: M, N: N, pMatX: _pMatX, pMatY: _pMatY, pMatOriginalX: _pMatX, pMatOriginalY: pMatOriginalY};
 	}
 
 	function lcl_GetMeanOverAll(pMat, nN) {
-		var fSum = 0.0;
-		for (var i = 0; i < pMat.length; i++) {
-			for (var j = 0; j < pMat[i].length; j++) {
+		let fSum = 0.0;
+		for (let i = 0; i < pMat.length; i++) {
+			for (let j = 0; j < pMat[i].length; j++) {
+				// if at least one value in the matrix is ​​not a number, return undefined
+				if (typeof(pMat[i][j]) !== "number") {
+					return
+				}
+
 				fSum += pMat[i][j];
 			}
 		}
@@ -1566,7 +1586,7 @@ function (window, undefined) {
 			for (var k = 0; k < nR; k++) {
 				fSum += pX[i][k];// GetDouble(Column,Row)
 			}
-			 putDouble( pResMat, i, fSum/nR, i);
+			putDouble(pResMat, i, fSum / nR, i);
 		}
 	}
 
@@ -1599,7 +1619,7 @@ function (window, undefined) {
 	}
 
 	function lcl_GetSign(fValue) {
-		return (fValue >= 0.0 ? 1.0 : -1.0 );
+		return (fValue >= 0.0 ? 1.0 : -1.0);
 	}
 
 	function lcl_TGetColumnSumProduct(pMatA, nRa, pMatB, nRb, nC, nN) {
@@ -1614,7 +1634,6 @@ function (window, undefined) {
 	function lcl_TCalculateQRdecomposition(pMatA, pVecR, nK, nN) {
 
 
-		
 		var fSum;
 		// ScMatrix matrices are zero based, index access (column,row)
 		for (var row = 0; row < nK; row++) {
@@ -1698,20 +1717,35 @@ function (window, undefined) {
 	}
 
 	function lcl_CalculateRowMeans(pX, pResMat, nC, nR) {
-		for (var k = 0; k < nR; k++) {
-			var fSum = 0.0;
-			for (var i = 0; i < nC; i++) {
+		for (let k = 0; k < nR; k++) {
+			let fSum = 0.0;
+			for (let i = 0; i < nC; i++) {
 				fSum += pX[i][k];
 			}
 			// GetDouble(Column,Row)
-			pResMat[k][0] = fSum / nC;
+			if (pResMat.length === 1 && pResMat[0].length > 1) {
+				// single row
+				pResMat[0][k] = fSum / nC;
+			} else if (pResMat.length > 1 && pResMat[0].length === 1) {
+				// single col
+				pResMat[k][0] = fSum / nC;
+			}
+
 		}
 	}
 
 	function lcl_CalculateRowsDelta(pMat, pRowMeans, nC, nR) {
-		for (var k = 0; k < nR; k++) {
-			for (var i = 0; i < nC; i++) {
-				pMat[i][k] = approxSub(pMat[i][k], pRowMeans[k][0]);
+		for (let k = 0; k < nR; k++) {
+			for (let i = 0; i < nC; i++) {
+				// pMat[i][k] = approxSub(pMat[i][k], pRowMeans[k][0]);
+
+				if (pRowMeans.length === 1 && pRowMeans[0].length > 1) {
+					// single row
+					pMat[i][k] = approxSub(pMat[i][k], pRowMeans[0][k]);
+				} else if (pRowMeans.length > 1 && pRowMeans[0].length === 1) {
+					// single col
+					pMat[i][k] = approxSub(pMat[i][k], pRowMeans[k][0]);
+				}
 			}
 		}
 	}
@@ -1791,7 +1825,7 @@ function (window, undefined) {
 		if (arg[2] && arg[2].type !== cElementType.empty) {
 			types.push(cElementType.array);
 		}
-		var oArguments = t._prepareArguments(arg, arguments[1], true,types);
+		var oArguments = t._prepareArguments(arg, arguments[1], true, types);
 		var argClone = oArguments.args;
 
 		var argError;
@@ -1826,29 +1860,37 @@ function (window, undefined) {
 	}
 
 	function CalculateTrendGrowth(pMatY, pMatX, pMatNewX, bConstant, _bGrowth) {
-		var getMatrixParams = CheckMatrix(_bGrowth, pMatX, pMatY);
-		if (!getMatrixParams) {
+		let error = [];
+		let getMatrixParams = CheckMatrix(_bGrowth, pMatX, pMatY, error);
+		if (error.length > 0) {
+			return error[0];
+		} else if (!getMatrixParams) {
 			return;
 		}
 
+		const identicalValuesTrend = 1;
 		// 1 = simple; 2 = multiple with Y as column; 3 = multiple with Y as row
-		var nCase = getMatrixParams.nCase;
-		var nCX = getMatrixParams.nCX, nCY = getMatrixParams.nCY; // number of columns
-		var nRX = getMatrixParams.nRX, nRY = getMatrixParams.nRY; //number of rows
-		var K = getMatrixParams.M, N = getMatrixParams.N; // K=number of variables X, N=number of data samples
+		let nCase = getMatrixParams.nCase;
+		let nCX = getMatrixParams.nCX, nCY = getMatrixParams.nCY; // number of columns
+		let nRX = getMatrixParams.nRX, nRY = getMatrixParams.nRY; //number of rows
+		let K = getMatrixParams.M, N = getMatrixParams.N; // K=number of variables X, N=number of data samples
 		pMatX = getMatrixParams.pMatX;
 		pMatY = getMatrixParams.pMatY;
 
 		// Enough data samples?
-		if ((bConstant && (N < K + 1)) || (!bConstant && (N < K)) || (N < 1) || (K < 1)) {
+		// if ((bConstant && (N < K + 1)) || (!bConstant && (N < K)) || (N < 1) || (K < 1)) {
+		// 	return;
+		// }
+
+		if ((!bConstant && (N < K)) || (N < 1) || (K < 1)) {
 			return;
 		}
 
-		var i, j;
+		let i, j;
 
 		// Set default pMatNewX if necessary
-		var nCXN, nRXN;
-		var nCountXN;
+		let nCXN, nRXN;
+		let nCountXN;
 		if (!pMatNewX) {
 			nCXN = nCX;
 			nRXN = nRX;
@@ -1873,7 +1915,7 @@ function (window, undefined) {
 			}
 		}
 
-		var pResMat; // size depends on nCase
+		let pResMat; // size depends on nCase
 		if (nCase === 1) {
 			pResMat = GetNewMat(nCXN, nRXN);
 		} else {
@@ -1890,10 +1932,10 @@ function (window, undefined) {
 
 		// Uses sum(x-MeanX)^2 and not [sum x^2]-N * MeanX^2 in case bConstant.
 		// Clone constant matrices, so that Mat = Mat - Mean is possible.
-		var fMeanY = 0.0;
+		let fMeanY = 0.0;
 		if (bConstant) {
-			var pCopyX = matrixClone(pMatX);
-			var pCopyY = matrixClone(pMatY);
+			let pCopyX = matrixClone(pMatX);
+			let pCopyY = matrixClone(pMatY);
 			if (!pCopyX || !pCopyY) {
 				//PushError(FormulaError::MatrixSize);
 				return;
@@ -1902,6 +1944,9 @@ function (window, undefined) {
 			pMatY = pCopyY;
 			// DeltaY is possible here; DeltaX depends on nCase, so later
 			fMeanY = lcl_GetMeanOverAll(pMatY, N);
+			if (fMeanY === undefined) {	// explicit check for undefined is necessary since the number can be 0
+				return
+			}
 			for (i = 0; i < pMatY.length; i++) {
 				for (j = 0; j < pMatY[i].length; j++) {
 					pMatY[i][j] = approxSub(pMatY[i][j], fMeanY);
@@ -1909,26 +1954,30 @@ function (window, undefined) {
 			}
 		}
 
-		var aVecR, pMeans, pSlopes, bIsSingular, col, fIntercept, row;
+		let aVecR, pMeans, pSlopes, bIsSingular, col, fIntercept, row;
 		if (nCase === 1) {
 			// calculate simple regression
-			var fMeanX = 0.0;
+			let fMeanX = 0.0;
 			if (bConstant) {   // Mat = Mat - Mean
 				fMeanX = lcl_GetMeanOverAll(pMatX, N);
+				if (fMeanX === undefined) {	// explicit check for undefined is necessary since the number can be 0
+					return
+				}
 				for (i = 0; i < pMatX.length; i++) {
 					for (j = 0; j < pMatX[i].length; j++) {
 						pMatX[i][j] = approxSub(pMatX[i][j], fMeanX);
 					}
 				}
 			}
-			var fSumXY = lcl_GetSumProduct(pMatX, pMatY, N);
-			var fSumX2 = lcl_GetSumProduct(pMatX, pMatX, N);
+			let fSumXY = lcl_GetSumProduct(pMatX, pMatY, N);
+			let fSumX2 = lcl_GetSumProduct(pMatX, pMatX, N);
 			if (fSumX2 === 0.0) {
 				//PushNoValue(); // all x-values are identical
-				return;
+				// return;
+				fSumX2 = identicalValuesTrend;
 			}
-			var fSlope = fSumXY / fSumX2;
-			var fHelp;
+			let fSlope = fSumXY / fSumX2;
+			let fHelp;
 			if (bConstant) {
 				fIntercept = fMeanY - fSlope * fMeanX;
 				for (i = 0; i < pResMat.length; i++) {
@@ -2102,27 +2151,39 @@ function (window, undefined) {
 	}
 
 	function CalculateRGPRKP(pMatY, pMatX, bConstant, bStats, _bRKP) {
-		var getMatrixParams = CheckMatrix(_bRKP, pMatX, pMatY);
-		if (!getMatrixParams) {
+		let error = [];
+		let getMatrixParams = CheckMatrix(_bRKP, pMatX, pMatY, error);
+
+		if (error.length > 0) {
+			return error[0];
+		} else if (!getMatrixParams) {
 			return;
 		}
 
+		const identicalValuesTrend = 1;
 		// 1 = simple; 2 = multiple with Y as column; 3 = multiple with Y as row
-		var nCase = getMatrixParams.nCase;
-		var nCX = getMatrixParams.nCX, nCY = getMatrixParams.nCY; // number of columns
-		var nRX = getMatrixParams.nRX, nRY = getMatrixParams.nRY; //number of rows
-		var K = getMatrixParams.M, N = getMatrixParams.N; // K=number of variables X, N=number of data samples
+		let nCase = getMatrixParams.nCase;
+		let nCX = getMatrixParams.nCX, nCY = getMatrixParams.nCY; // number of columns
+		let nRX = getMatrixParams.nRX, nRY = getMatrixParams.nRY; //number of rows
+		let K = getMatrixParams.M, N = getMatrixParams.N; // K=number of variables X, N=number of data samples
 		pMatX = getMatrixParams.pMatX;
 		pMatY = getMatrixParams.pMatY;
-		var i, j;
+		let pMatOriginalX = getMatrixParams.pMatOriginalX;
+		let pMatOriginalY = getMatrixParams.pMatOriginalY;
+		let i, j;
 
 		// Enough data samples?
-		if ((bConstant && (N < K + 1)) || (!bConstant && (N < K)) || (N < 1) || (K < 1)) {
+		// if ((bConstant && (N < K + 1)) || (!bConstant && (N < K)) || (N < 1) || (K < 1)) {
+		// 	//PushIllegalParameter();
+		// 	return;
+		// }
+
+		if ((!bConstant && (N < K)) || (N < 1) || (K < 1)) {
 			//PushIllegalParameter();
 			return;
 		}
 
-		var pResMat;
+		let pResMat;
 		if (bStats) {
 			pResMat = GetNewMat(K + 1, 5);
 		} else {
@@ -2147,10 +2208,10 @@ function (window, undefined) {
 
 		// Uses sum(x-MeanX)^2 and not [sum x^2]-N * MeanX^2 in case bConstant.
 		// Clone constant matrices, so that Mat = Mat - Mean is possible.
-		var fMeanY = 0.0;
+		let fMeanY = 0.0;
 		if (bConstant) {
-			var pNewX = matrixClone(pMatX);
-			var pNewY = matrixClone(pMatY);
+			let pNewX = matrixClone(pMatX);
+			let pNewY = matrixClone(pMatY);
 			if (!pNewX || !pNewY) {
 				//PushError(FormulaError::MatrixSize);
 				return;
@@ -2159,6 +2220,9 @@ function (window, undefined) {
 			pMatY = pNewY;
 			// DeltaY is possible here; DeltaX depends on nCase, so later
 			fMeanY = lcl_GetMeanOverAll(pMatY, N);
+			if (fMeanY === undefined) {	// explicit check for undefined is necessary since the number can be 0
+				return
+			}
 			for (i = 0; i < pMatY.length; i++) {
 				for (j = 0; j < pMatY[i].length; j++) {
 					pMatY[i][j] = approxSub(pMatY[i][j], fMeanY);
@@ -2167,26 +2231,31 @@ function (window, undefined) {
 		}
 
 
-		var fIntercept, fSSreg, fDegreesFreedom, fSSresid, fFstatistic, fRMSE, fSigmaSlope, fSigmaIntercept, fR2;
-		var aVecR, pMeans, pMatZ, pSlopes, bIsSingular, row, col, fPart;
+		let fIntercept, fSSreg, fDegreesFreedom, fSSresid, fFstatistic, fRMSE, fSigmaSlope, fSigmaIntercept, fR2;
+		let aVecR, pMeans, pMatZ, pSlopes, bIsSingular, row, col, fPart;
 		if (nCase === 1) {
 			// calculate simple regression
-			var fMeanX = 0.0;
+			let fMeanX = 0.0;
 			if (bConstant) {   // Mat = Mat - Mean
 				fMeanX = lcl_GetMeanOverAll(pMatX, N);
+				if (fMeanX === undefined) {	// explicit check for undefined is necessary since the number can be 0
+					return
+				}
 				for (i = 0; i < pMatX.length; i++) {
 					for (j = 0; j < pMatX[i].length; j++) {
 						pMatX[i][j] = approxSub(pMatX[i][j], fMeanX);
 					}
 				}
 			}
-			var fSumXY = lcl_GetSumProduct(pMatX, pMatY, N);
-			var fSumX2 = lcl_GetSumProduct(pMatX, pMatX, N);
+			let fSumXY = lcl_GetSumProduct(pMatX, pMatY, N),
+				fSumX2 = lcl_GetSumProduct(pMatX, pMatX, N);
+
 			if (fSumX2 === 0.0) {
 				//PushNoValue(); // all x-values are identical
-				return;
+				// return;
+				fSumX2 = identicalValuesTrend;
 			}
-			var fSlope = fSumXY / fSumX2;
+			let fSlope = fSumXY / fSumX2;
 			fIntercept = 0.0;
 
 			if (bConstant) {
@@ -2781,7 +2850,7 @@ function (window, undefined) {
 				return new cError(cErrorType.not_available);
 			}
 
-			this.bEDS = ( rSmplInPrd === 0 );
+			this.bEDS = (rSmplInPrd === 0);
 			this.bAdditive = /*( eETSType == etsAdd || eETSType == etsPIAdd || eETSType == etsStatAdd )*/true;
 
 			this.mnCount = rMatX.length;
@@ -2888,7 +2957,7 @@ function (window, undefined) {
 							if (nCounter % 2) {
 								maRange[i - 1].Y = aTmp[nCounter / 2];
 							} else {
-								maRange[i - 1].Y = ( aTmp[nCounter / 2] + aTmp[nCounter / 2 - 1] ) / 2.0;
+								maRange[i - 1].Y = (aTmp[nCounter / 2] + aTmp[nCounter / 2 - 1]) / 2.0;
 							}
 
 							break;
@@ -2941,8 +3010,8 @@ function (window, undefined) {
 					var fDist;
 					if (this.mnMonthDay) {
 						var aDate1 = cDate.prototype.getDateFromExcel(maRange[i].X);
-						fDist = 12 * ( aDate1.getUTCFullYear() - aDate.getUTCFullYear() ) +
-							( aDate1.getMonth() - aDate.getMonth() );
+						fDist = 12 * (aDate1.getUTCFullYear() - aDate.getUTCFullYear()) +
+							(aDate1.getMonth() - aDate.getMonth());
 						aDate = aDate1;
 					} else {
 						fDist = maRange[i].X - maRange[i - 1].X;
@@ -2950,10 +3019,10 @@ function (window, undefined) {
 
 					if (fDist > this.mfStepSize) {
 						// gap, insert missing data points
-						var fYGap = ( maRange[i].Y + maRange[i - 1].Y ) / 2.0;
+						var fYGap = (maRange[i].Y + maRange[i - 1].Y) / 2.0;
 						for (var fXGap = maRange[i - 1].X + this.mfStepSize; fXGap < maRange[i].X;
 							 fXGap += this.mfStepSize) {
-							var newAddElem = {X: fXGap, Y: ( bDataCompletion ? fYGap : 0.0 )};
+							var newAddElem = {X: fXGap, Y: (bDataCompletion ? fYGap : 0.0)};
 							maRange.splice(i, 1, newAddElem);
 							i++;
 							this.mnCount++;
@@ -3013,7 +3082,7 @@ function (window, undefined) {
 
 	ScETSForecastCalculation.prototype.prefillTrendData = function () {
 		if (this.bEDS) {
-			this.mpTrend[0] = ( this.maRange[this.mnCount - 1].Y - this.maRange[0].Y ) / ( this.mnCount - 1 );
+			this.mpTrend[0] = (this.maRange[this.mnCount - 1].Y - this.maRange[0].Y) / (this.mnCount - 1);
 		} else {
 			// we need at least 2 periods in the data range
 			if (this.mnCount < 2 * this.mnSmplInPrd) {
@@ -3024,7 +3093,7 @@ function (window, undefined) {
 			for (var i = 0; i < this.mnSmplInPrd; i++) {
 				fSum += this.maRange[i + this.mnSmplInPrd].Y - this.maRange[i].Y;
 			}
-			var fTrend = fSum / ( this.mnSmplInPrd * this.mnSmplInPrd );
+			var fTrend = fSum / (this.mnSmplInPrd * this.mnSmplInPrd);
 
 			this.mpTrend[0] = fTrend;
 		}
@@ -3062,11 +3131,11 @@ function (window, undefined) {
 				for (var i = 0; i < nPeriods; i++) {
 					// adjust average value for position within period
 					if (this.bAdditive) {
-						fI += ( this.maRange[i * this.mnSmplInPrd + j].Y -
-							( aPeriodAverage[i] + ( j - 0.5 * ( this.mnSmplInPrd - 1 ) ) * this.mpTrend[0] ) );
+						fI += (this.maRange[i * this.mnSmplInPrd + j].Y -
+							(aPeriodAverage[i] + (j - 0.5 * (this.mnSmplInPrd - 1)) * this.mpTrend[0]));
 					} else {
-						fI += ( this.maRange[i * this.mnSmplInPrd + j].Y /
-							( aPeriodAverage[i] + ( j - 0.5 * ( this.mnSmplInPrd - 1 ) ) * this.mpTrend[0] ) );
+						fI += (this.maRange[i * this.mnSmplInPrd + j].Y /
+							(aPeriodAverage[i] + (j - 0.5 * (this.mnSmplInPrd - 1)) * this.mpTrend[0]));
 					}
 				}
 				this.mpPerIdx[j] = fI / nPeriods;
@@ -3110,7 +3179,7 @@ function (window, undefined) {
 			var fError = this.mpForecast[i] - this.maRange[i].Y;
 			fSumAbsErr += Math.abs(fError);
 			fSumErrSq += fError * fError;
-			fSumAbsPercErr += Math.abs(fError) / ( Math.abs(this.mpForecast[i]) + Math.abs(this.maRange[i].Y) );
+			fSumAbsPercErr += Math.abs(fError) / (Math.abs(this.mpForecast[i]) + Math.abs(this.maRange[i].Y));
 		}
 
 		for (var i = 2; i < this.mnCount; i++) {
@@ -3119,7 +3188,7 @@ function (window, undefined) {
 
 		var nCalcCount = this.mnCount - 1;
 		this.mfMAE = fSumAbsErr / nCalcCount;
-		this.mfMASE = fSumAbsErr / ( nCalcCount * fSumDivisor / ( nCalcCount - 1 ) );
+		this.mfMASE = fSumAbsErr / (nCalcCount * fSumDivisor / (nCalcCount - 1));
 		this.mfMSE = fSumErrSq / nCalcCount;
 		this.mfRMSE = Math.sqrt(this.mfMSE);
 		this.mfSMAPE = fSumAbsPercErr * 2.0 / nCalcCount;
@@ -3134,12 +3203,12 @@ function (window, undefined) {
 		for (var nPeriodLen = parseInt(this.mnCount / 2); nPeriodLen >= 1; nPeriodLen--) {
 			var fMeanError = 0.0;
 			var nPeriods = parseInt(this.mnCount / nPeriodLen);
-			var nStart = parseInt(this.mnCount - ( nPeriods * nPeriodLen ) + 1);
-			for (var i = nStart; i < ( this.mnCount - nPeriodLen ); i++) {
-				fMeanError += Math.abs(( maRange[i].Y - maRange[i - 1].Y ) -
-					( maRange[nPeriodLen + i].Y - maRange[nPeriodLen + i - 1].Y ));
+			var nStart = parseInt(this.mnCount - (nPeriods * nPeriodLen) + 1);
+			for (var i = nStart; i < (this.mnCount - nPeriodLen); i++) {
+				fMeanError += Math.abs((maRange[i].Y - maRange[i - 1].Y) -
+					(maRange[nPeriodLen + i].Y - maRange[nPeriodLen + i - 1].Y));
 			}
-			fMeanError /= ( nPeriods - 1 ) * nPeriodLen - 1;
+			fMeanError /= (nPeriods - 1) * nPeriodLen - 1;
 
 			if (fMeanError <= fBestME || fMeanError === 0.0) {
 				nBestVal = nPeriodLen;
@@ -3192,15 +3261,15 @@ function (window, undefined) {
 			return;
 		}
 
-		while (( f2 - f1 ) > this.cfMinABCResolution) {
+		while ((f2 - f1) > this.cfMinABCResolution) {
 			if (fE2 > fE0) {
 				f2 = f1;
 				fE2 = this.mfMSE;
-				f1 = ( f0 + f1 ) / 2;
+				f1 = (f0 + f1) / 2;
 			} else {
 				f0 = f1;
 				fE0 = this.mfMSE;
-				f1 = ( f1 + f2 ) / 2;
+				f1 = (f1 + f2) / 2;
 			}
 			this.mfAlpha = f1;
 			if (this.bEDS) {
@@ -3259,15 +3328,15 @@ function (window, undefined) {
 			this.refill();
 			return;
 		}
-		while (( f2 - f1 ) > this.cfMinABCResolution) {
+		while ((f2 - f1) > this.cfMinABCResolution) {
 			if (fE2 > fE0) {
 				f2 = f1;
 				fE2 = this.mfMSE;
-				f1 = ( f0 + f1 ) / 2;
+				f1 = (f0 + f1) / 2;
 			} else {
 				f0 = f1;
 				fE0 = this.mfMSE;
-				f1 = ( f1 + f2 ) / 2;
+				f1 = (f1 + f2) / 2;
 			}
 			this.mfBeta = f1;
 			this.CalcGamma();
@@ -3308,15 +3377,15 @@ function (window, undefined) {
 			this.refill();
 			return;
 		}
-		while (( f2 - f1 ) > this.cfMinABCResolution) {
+		while ((f2 - f1) > this.cfMinABCResolution) {
 			if (fE2 > fE0) {
 				f2 = f1;
 				fE2 = this.mfMSE;
-				f1 = ( f0 + f1 ) / 2;
+				f1 = (f0 + f1) / 2;
 			} else {
 				f0 = f1;
 				fE0 = this.mfMSE;
-				f1 = ( f1 + f2 ) / 2;
+				f1 = (f1 + f2) / 2;
 			}
 			this.mfGamma = f1;
 			this.refill();
@@ -3341,33 +3410,33 @@ function (window, undefined) {
 		// forecast 1 step ahead
 		for (var i = 1; i < this.mnCount; i++) {
 			if (this.bEDS) {
-				this.mpBase[i] = this.mfAlpha * this.maRange[i].Y + ( 1 - this.mfAlpha ) *
-					( this.mpBase[i - 1] + this.mpTrend[i - 1] );
+				this.mpBase[i] = this.mfAlpha * this.maRange[i].Y + (1 - this.mfAlpha) *
+					(this.mpBase[i - 1] + this.mpTrend[i - 1]);
 				this.mpTrend[i] =
-					this.mfGamma * ( this.mpBase[i] - this.mpBase[i - 1] ) + ( 1 - this.mfGamma ) * this.mpTrend[i - 1];
+					this.mfGamma * (this.mpBase[i] - this.mpBase[i - 1]) + (1 - this.mfGamma) * this.mpTrend[i - 1];
 				this.mpForecast[i] = this.mpBase[i - 1] + this.mpTrend[i - 1];
 			} else {
 				var nIdx;
 				if (this.bAdditive) {
-					nIdx = ( i > this.mnSmplInPrd ? i - this.mnSmplInPrd : i );
-					this.mpBase[i] = this.mfAlpha * ( this.maRange[i].Y - this.mpPerIdx[nIdx] ) + ( 1 - this.mfAlpha ) *
-						( this.mpBase[i - 1] + this.mpTrend[i - 1] );
-					this.mpPerIdx[i] = this.mfBeta * ( this.maRange[i].Y - this.mpBase[i] ) + ( 1 - this.mfBeta ) *
+					nIdx = (i > this.mnSmplInPrd ? i - this.mnSmplInPrd : i);
+					this.mpBase[i] = this.mfAlpha * (this.maRange[i].Y - this.mpPerIdx[nIdx]) + (1 - this.mfAlpha) *
+						(this.mpBase[i - 1] + this.mpTrend[i - 1]);
+					this.mpPerIdx[i] = this.mfBeta * (this.maRange[i].Y - this.mpBase[i]) + (1 - this.mfBeta) *
 						this.mpPerIdx[nIdx];
 				} else {
-					nIdx = ( i >= this.mnSmplInPrd ? i - this.mnSmplInPrd : i );
-					this.mpBase[i] = this.mfAlpha * ( this.maRange[i].Y / this.mpPerIdx[nIdx] ) + ( 1 - this.mfAlpha ) *
-						( this.mpBase[i - 1] + this.mpTrend[i - 1] );
-					this.mpPerIdx[i] = this.mfBeta * ( this.maRange[i].Y / this.mpBase[i] ) + ( 1 - this.mfBeta ) *
+					nIdx = (i >= this.mnSmplInPrd ? i - this.mnSmplInPrd : i);
+					this.mpBase[i] = this.mfAlpha * (this.maRange[i].Y / this.mpPerIdx[nIdx]) + (1 - this.mfAlpha) *
+						(this.mpBase[i - 1] + this.mpTrend[i - 1]);
+					this.mpPerIdx[i] = this.mfBeta * (this.maRange[i].Y / this.mpBase[i]) + (1 - this.mfBeta) *
 						this.mpPerIdx[this.nIdx];
 				}
 				this.mpTrend[i] =
-					this.mfGamma * ( this.mpBase[i] - this.mpBase[i - 1] ) + ( 1 - this.mfGamma ) * this.mpTrend[i - 1];
+					this.mfGamma * (this.mpBase[i] - this.mpBase[i - 1]) + (1 - this.mfGamma) * this.mpTrend[i - 1];
 
 				if (this.bAdditive) {
 					this.mpForecast[i] = this.mpBase[i - 1] + this.mpTrend[i - 1] + this.mpPerIdx[nIdx];
 				} else {
-					this.mpForecast[i] = ( this.mpBase[i - 1] + this.mpTrend[i - 1] ) * this.mpPerIdx[nIdx];
+					this.mpForecast[i] = (this.mpBase[i - 1] + this.mpTrend[i - 1]) * this.mpPerIdx[nIdx];
 				}
 			}
 		}
@@ -3392,12 +3461,12 @@ function (window, undefined) {
 				fMonthLength = 31.0;
 				break;
 			case  2 :
-				fMonthLength = ( aDate.isLeapYear() ? 29.0 : 28.0 );
+				fMonthLength = (aDate.isLeapYear() ? 29.0 : 28.0);
 				break;
 			default :
 				fMonthLength = 30.0;
 		}
-		return ( 12.0 * nYear + nMonth + ( aDate.getDate() - this.mnMonthDay ) / fMonthLength );
+		return (12.0 * nYear + nMonth + (aDate.getDate() - this.mnMonthDay) / fMonthLength);
 	};
 
 
@@ -3407,42 +3476,43 @@ function (window, undefined) {
 		}
 
 		if (fTarget <= this.maRange[this.mnCount - 1].X) {
-			var n = ( fTarget - this.maRange[0].X ) / this.mfStepSize;
+			var n = (fTarget - this.maRange[0].X) / this.mfStepSize;
 			var fInterpolate = Math.fmod(fTarget - this.maRange[0].X, this.mfStepSize);
-			rForecast = this.maRange[n].Y;
+			// rForecast = this.maRange[n].Y;
+			rForecast = this.maRange[n] ? this.maRange[n].Y : 0;
 
 			if (fInterpolate >= this.cfMinABCResolution) {
 				var fInterpolateFactor = fInterpolate / this.mfStepSize;
 				var fFc_1 = this.mpForecast[n + 1];
-				rForecast = rForecast + fInterpolateFactor * ( fFc_1 - rForecast );
+				rForecast = rForecast + fInterpolateFactor * (fFc_1 - rForecast);
 			}
 		} else {
-			var n = Math.round(( fTarget - this.maRange[this.mnCount - 1].X ) / this.mfStepSize);
+			var n = Math.round((fTarget - this.maRange[this.mnCount - 1].X) / this.mfStepSize);
 			var fInterpolate = parseInt(Math.fmod(fTarget - this.maRange[this.mnCount - 1].X, this.mfStepSize));
 
 			if (this.bEDS) {
 				rForecast = this.mpBase[this.mnCount - 1] + n * this.mpTrend[this.mnCount - 1];
 			} else if (this.bAdditive) {
 				rForecast = this.mpBase[this.mnCount - 1] + n * this.mpTrend[this.mnCount - 1] +
-					this.mpPerIdx[this.mnCount - 1 - this.mnSmplInPrd + ( n % this.mnSmplInPrd )];
+					this.mpPerIdx[this.mnCount - 1 - this.mnSmplInPrd + (n % this.mnSmplInPrd)];
 			} else {
-				rForecast = ( this.mpBase[this.mnCount - 1] + n * this.mpTrend[this.mnCount - 1] ) *
-					this.mpPerIdx[this.mnCount - 1 - this.mnSmplInPrd + ( n % this.mnSmplInPrd )];
+				rForecast = (this.mpBase[this.mnCount - 1] + n * this.mpTrend[this.mnCount - 1]) *
+					this.mpPerIdx[this.mnCount - 1 - this.mnSmplInPrd + (n % this.mnSmplInPrd)];
 			}
 
 			if (fInterpolate >= this.cfMinABCResolution) {
 				var fInterpolateFactor = fInterpolate / this.mfStepSize;
 				var fFc_1;
 				if (this.bEDS) {
-					fFc_1 = this.mpBase[this.mnCount - 1] + ( n + 1 ) * this.mpTrend[this.mnCount - 1];
+					fFc_1 = this.mpBase[this.mnCount - 1] + (n + 1) * this.mpTrend[this.mnCount - 1];
 				} else if (this.bAdditive) {
-					fFc_1 = this.mpBase[this.mnCount - 1] + ( n + 1 ) * this.mpTrend[this.mnCount - 1] +
-						this.mpPerIdx[this.mnCount - 1 - this.mnSmplInPrd + ( ( n + 1 ) % this.mnSmplInPrd )];
+					fFc_1 = this.mpBase[this.mnCount - 1] + (n + 1) * this.mpTrend[this.mnCount - 1] +
+						this.mpPerIdx[this.mnCount - 1 - this.mnSmplInPrd + ((n + 1) % this.mnSmplInPrd)];
 				} else {
-					fFc_1 = ( this.mpBase[this.mnCount - 1] + ( n + 1 ) * this.mpTrend[this.mnCount - 1] ) *
-						this.mpPerIdx[this.mnCount - 1 - this.mnSmplInPrd + ( ( n + 1 ) % this.mnSmplInPrd )];
+					fFc_1 = (this.mpBase[this.mnCount - 1] + (n + 1) * this.mpTrend[this.mnCount - 1]) *
+						this.mpPerIdx[this.mnCount - 1 - this.mnSmplInPrd + ((n + 1) % this.mnSmplInPrd)];
 				}
-				rForecast = rForecast + fInterpolateFactor * ( fFc_1 - rForecast );
+				rForecast = rForecast + fInterpolateFactor * (fFc_1 - rForecast);
 			}
 		}
 		return rForecast;
@@ -3546,7 +3616,7 @@ function (window, undefined) {
 			fMaxTarget -= this.maRange[this.mnCount - 1].X;
 		}
 
-		var nSize = ( fMaxTarget / this.mfStepSize );
+		var nSize = (fMaxTarget / this.mfStepSize);
 		if (Math.fmod(fMaxTarget, this.mfStepSize) !== 0.0) {
 			nSize++;
 		}
@@ -3569,11 +3639,11 @@ function (window, undefined) {
 					aPredictions[0] = [];
 				}
 				aPredictions[0][k] = xScenRange[0];
-				xScenBase[0] = this.mfAlpha * ( xScenRange[0] - this.mpPerIdx[this.mnCount - this.mnSmplInPrd] ) +
-					( 1 - this.mfAlpha ) * ( this.mpBase[this.mnCount - 1] + this.mpTrend[this.mnCount - 1] );
-				xScenTrend[0] = this.mfGamma * ( xScenBase[0] - this.mpBase[this.mnCount - 1] ) + ( 1 - this.mfGamma ) *
+				xScenBase[0] = this.mfAlpha * (xScenRange[0] - this.mpPerIdx[this.mnCount - this.mnSmplInPrd]) +
+					(1 - this.mfAlpha) * (this.mpBase[this.mnCount - 1] + this.mpTrend[this.mnCount - 1]);
+				xScenTrend[0] = this.mfGamma * (xScenBase[0] - this.mpBase[this.mnCount - 1]) + (1 - this.mfGamma) *
 					this.mpTrend[this.mnCount - 1];
-				xScenPerIdx[0] = this.mfBeta * ( xScenRange[0] - xScenBase[0] ) + ( 1 - this.mfBeta ) *
+				xScenPerIdx[0] = this.mfBeta * (xScenRange[0] - xScenBase[0]) + (1 - this.mfBeta) *
 					this.mpPerIdx[this.mnCount - this.mnSmplInPrd];
 				for (var i = 1; i < nSize; i++) {
 					var fPerIdx;
@@ -3588,26 +3658,26 @@ function (window, undefined) {
 						aPredictions[i] = [];
 					}
 					aPredictions[i][k] = xScenRange[i];
-					xScenBase[i] = this.mfAlpha * ( xScenRange[i] - fPerIdx ) + ( 1 - this.mfAlpha ) *
-						( xScenBase[i - 1] + xScenTrend[i - 1] );
+					xScenBase[i] = this.mfAlpha * (xScenRange[i] - fPerIdx) + (1 - this.mfAlpha) *
+						(xScenBase[i - 1] + xScenTrend[i - 1]);
 					xScenTrend[i] =
-						this.mfGamma * ( xScenBase[i] - xScenBase[i - 1] ) + ( 1 - this.mfGamma ) * xScenTrend[i - 1];
-					xScenPerIdx[i] = this.mfBeta * ( xScenRange[i] - xScenBase[i] ) + ( 1 - this.mfBeta ) * fPerIdx;
+						this.mfGamma * (xScenBase[i] - xScenBase[i - 1]) + (1 - this.mfGamma) * xScenTrend[i - 1];
+					xScenPerIdx[i] = this.mfBeta * (xScenRange[i] - xScenBase[i]) + (1 - this.mfBeta) * fPerIdx;
 				}
 			} else {
 				// calculation based on multiplicative model
-				xScenRange[0] = ( this.mpBase[this.mnCount - 1] + this.mpTrend[this.mnCount - 1] ) *
+				xScenRange[0] = (this.mpBase[this.mnCount - 1] + this.mpTrend[this.mnCount - 1]) *
 					this.mpPerIdx[this.mnCount - this.mnSmplInPrd] + this.randDev();
 
 				if (!aPredictions[0]) {
 					aPredictions[0] = [];
 				}
 				aPredictions[0][k] = xScenRange[0];
-				xScenBase[0] = this.mfAlpha * ( xScenRange[0] / this.mpPerIdx[this.mnCount - this.mnSmplInPrd] ) +
-					( 1 - this.mfAlpha ) * ( this.mpBase[this.mnCount - 1] + this.mpTrend[this.mnCount - 1] );
-				xScenTrend[0] = this.mfGamma * ( xScenBase[0] - this.mpBase[this.mnCount - 1] ) + ( 1 - this.mfGamma ) *
+				xScenBase[0] = this.mfAlpha * (xScenRange[0] / this.mpPerIdx[this.mnCount - this.mnSmplInPrd]) +
+					(1 - this.mfAlpha) * (this.mpBase[this.mnCount - 1] + this.mpTrend[this.mnCount - 1]);
+				xScenTrend[0] = this.mfGamma * (xScenBase[0] - this.mpBase[this.mnCount - 1]) + (1 - this.mfGamma) *
 					this.mpTrend[this.mnCount - 1];
-				xScenPerIdx[0] = this.mfBeta * ( xScenRange[0] / xScenBase[0] ) + ( 1 - this.mfBeta ) *
+				xScenPerIdx[0] = this.mfBeta * (xScenRange[0] / xScenBase[0]) + (1 - this.mfBeta) *
 					this.mpPerIdx[this.mnCount - this.mnSmplInPrd];
 				for (var i = 1; i < nSize; i++) {
 					var fPerIdx;
@@ -3616,17 +3686,17 @@ function (window, undefined) {
 					} else {
 						fPerIdx = xScenPerIdx[i - this.mnSmplInPrd];
 					}
-					xScenRange[i] = ( xScenBase[i - 1] + xScenTrend[i - 1] ) * fPerIdx + this.randDev();
+					xScenRange[i] = (xScenBase[i - 1] + xScenTrend[i - 1]) * fPerIdx + this.randDev();
 
 					if (!aPredictions[i]) {
 						aPredictions[i] = [];
 					}
 					aPredictions[i][k] = xScenRange[i];
-					xScenBase[i] = this.mfAlpha * ( xScenRange[i] / fPerIdx ) + ( 1 - this.mfAlpha ) *
-						( xScenBase[i - 1] + xScenTrend[i - 1] );
+					xScenBase[i] = this.mfAlpha * (xScenRange[i] / fPerIdx) + (1 - this.mfAlpha) *
+						(xScenBase[i - 1] + xScenTrend[i - 1]);
 					xScenTrend[i] =
-						this.mfGamma * ( xScenBase[i] - xScenBase[i - 1] ) + ( 1 - this.mfGamma ) * xScenTrend[i - 1];
-					xScenPerIdx[i] = this.mfBeta * ( xScenRange[i] / xScenBase[i] ) + ( 1 - this.mfBeta ) * fPerIdx;
+						this.mfGamma * (xScenBase[i] - xScenBase[i - 1]) + (1 - this.mfGamma) * xScenTrend[i - 1];
+					xScenPerIdx[i] = this.mfBeta * (xScenRange[i] / xScenBase[i]) + (1 - this.mfBeta) * fPerIdx;
 				}
 			}
 		}
@@ -3634,7 +3704,7 @@ function (window, undefined) {
 		// create array of Percentile values;
 		var xPercentile = [];
 		for (var i = 0; i < nSize; i++) {
-			xPercentile[i] = getPercentile(aPredictions[i], ( 1 + fPILevel ) / 2) - getPercentile(aPredictions[i], 0.5);
+			xPercentile[i] = getPercentile(aPredictions[i], (1 + fPILevel) / 2) - getPercentile(aPredictions[i], 0.5);
 		}
 
 		for (var i = 0; i < nR; i++) {
@@ -3645,13 +3715,13 @@ function (window, undefined) {
 				} else {
 					fTarget = rTMat[j][i].value - this.maRange[this.mnCount - 1].X;
 				}
-				var nSteps = ( fTarget / this.mfStepSize ) - 1;
+				var nSteps = (fTarget / this.mfStepSize) - 1;
 				var fFactor = Math.fmod(fTarget, this.mfStepSize);
 				var fPI = xPercentile[nSteps];
 				if (fFactor != 0.0) {
 					// interpolate
 					var fPI1 = xPercentile[nSteps + 1];
-					fPI = fPI + fFactor * ( fPI1 - fPI );
+					fPI = fPI + fFactor * (fPI1 - fPI);
 				}
 				if (!rPIMat) {
 					rPIMat = [];
@@ -3692,19 +3762,19 @@ function (window, undefined) {
 			fMaxTarget -= this.maRange[this.mnCount - 1].X;
 		}
 
-		var nSize = ( fMaxTarget / this.mfStepSize );
+		var nSize = (fMaxTarget / this.mfStepSize);
 		if (Math.fmod(fMaxTarget, this.mfStepSize) !== 0.0) {
 			nSize++;
 		}
 
-		var z = gaussinv(( 1.0 + fPILevel ) / 2.0);
+		var z = gaussinv((1.0 + fPILevel) / 2.0);
 		var o = 1 - fPILevel;
 		//std::vector< double > c( nSize );
 		var c = [];
 		for (var i = 0; i < nSize; i++) {
-			c[i] = Math.sqrt(1 + ( fPILevel / Math.pow(1 + o, 3.0) ) *
-				( ( 1 + 4 * o + 5 * o * o ) + 2 * ( i ) * fPILevel * ( 1 + 3 * o ) + 2 * ( i * i ) * fPILevel *
-					fPILevel ));
+			c[i] = Math.sqrt(1 + (fPILevel / Math.pow(1 + o, 3.0)) *
+				((1 + 4 * o + 5 * o * o) + 2 * (i) * fPILevel * (1 + 3 * o) + 2 * (i * i) * fPILevel *
+					fPILevel));
 		}
 
 
@@ -3716,13 +3786,13 @@ function (window, undefined) {
 				} else {
 					fTarget = rTMat[j][i] - this.maRange[this.mnCount - 1].X;
 				}
-				var nSteps = ( fTarget / this.mfStepSize ) - 1;
+				var nSteps = (fTarget / this.mfStepSize) - 1;
 				var fFactor = Math.fmod(fTarget, this.mfStepSize);
 				var fPI = z * this.mfRMSE * c[nSteps] / c[0];
 				if (fFactor !== 0.0) {
 					// interpolate
 					var fPI1 = z * this.mfRMSE * c[nSteps + 1] / c[0];
-					fPI = fPI + fFactor * ( fPI1 - fPI );
+					fPI = fPI + fFactor * (fPI1 - fPI);
 				}
 
 				if (!rPIMat) {
@@ -3988,13 +4058,14 @@ function (window, undefined) {
 	cAVERAGEIF.prototype.argumentsMin = 2;
 	cAVERAGEIF.prototype.argumentsMax = 3;
 	cAVERAGEIF.prototype.arrayIndexes = {0: 1, 2: 1};
+	cAVERAGEIF.prototype.exactTypes = {0: 1, 2: 1};
 	cAVERAGEIF.prototype.argumentsType = [argType.reference, argType.any, argType.reference];
 	cAVERAGEIF.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : arg[0], _sum = 0, _count = 0, matchingInfo, ws;
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : arg[0], _sum = 0, _count = 0, matchingInfo, ws;
 		if ((cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type && cElementType.cellsRange !==
-				arg0.type) ||
+			arg0.type && cElementType.cellsRange3D !== arg0.type) ||
 			(cElementType.cell !== arg2.type && cElementType.cell3D !== arg2.type && cElementType.cellsRange !==
-				arg2.type)) {
+				arg2.type && cElementType.cellsRange3D !== arg2.type)) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
@@ -4010,24 +4081,48 @@ function (window, undefined) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		var r = arg0.getRange();
-		var r2 = arg2.getRange();
+		let r = arg0.getRange(), r2 = arg2.getRange();
+
 		ws = arg0.getWS();
 		matchingInfo = AscCommonExcel.matchingValue(arg1);
-		if (cElementType.cellsRange === arg0.type) {
-			arg0.foreach2(function (v, cell) {
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+			arg0.foreach2(function (v, cell, row, col) {
 				if (matching(v, matchingInfo)) {
-					var offset = cell.getOffset3(r.bbox.c1 + 1, r.bbox.r1 + 1);
-					r2.setOffset(offset);
+					let val;
+					if ((r2.bbox.r1 === 0 && r2.bbox.r2 === gc_nMaxRow0) || 
+						(r2.bbox.c1 === 0 && r2.bbox.c2 === gc_nMaxCol0)) {
+						let targetRow = row;
+						let targetCol = col;
+						
+						if (r2.bbox.r1 === 0 && r2.bbox.r2 === gc_nMaxRow0) {
+							targetCol = r2.bbox.c1 + (col - r.bbox.c1);
+							if (targetCol < r2.bbox.c1 || targetCol > r2.bbox.c2) {
+								return;
+							}
+						}
+						
+						if (r2.bbox.c1 === 0 && r2.bbox.c2 === gc_nMaxCol0) {
+							targetRow = r2.bbox.r1 + (row - r.bbox.r1);
+							if (targetRow < r2.bbox.r1 || targetRow > r2.bbox.r2) {
+								return;
+							}
+						}
+						
+						ws._getCellNoEmpty(targetRow, targetCol, function (cell) {
+							val = checkTypeCell(cell);
+						});
+					} else {
+						let offset = new AscCommon.CellBase(row - r.bbox.r1, col - r.bbox.c1);
+						r2.setOffset(offset);
 
-					var val;
-					ws._getCellNoEmpty(r2.bbox.r1, r2.bbox.c1, function (cell) {
-						val = checkTypeCell(cell);
-					});
+						ws._getCellNoEmpty(r2.bbox.r1, r2.bbox.c1, function (cell) {
+							val = checkTypeCell(cell);
+						});
 
-					offset.col *= -1;
-					offset.row *= -1;
-					r2.setOffset(offset);
+						offset.col *= -1;
+						offset.row *= -1;
+						r2.setOffset(offset);
+					}
 
 					if (cElementType.number === val.type) {
 						_sum += val.getValue();
@@ -4037,10 +4132,7 @@ function (window, undefined) {
 			})
 		} else {
 			if (matching(arg0.getValue(), matchingInfo)) {
-				var val;
-				ws._getCellNoEmpty(r.bbox.r1, r2.bbox.c1, function (cell) {
-					val = checkTypeCell(cell);
-				});
+				let val = arg2.getFirstElement ? arg2.getFirstElement() : arg2.getValue();
 				if (cElementType.number === val.type) {
 					_sum += val.getValue();
 					_count++;
@@ -4067,8 +4159,13 @@ function (window, undefined) {
 	cAVERAGEIFS.prototype.constructor = cAVERAGEIFS;
 	cAVERAGEIFS.prototype.name = 'AVERAGEIFS';
 	cAVERAGEIFS.prototype.argumentsMin = 3;
-	//TODO все нечетные - на вход должны приходить как array/area
 	cAVERAGEIFS.prototype.arrayIndexes = {0: 1, 1: 1, 3: 1, 5: 1, 7: 1, 9: 1};
+	cAVERAGEIFS.prototype.getArrayIndex = function (index) {
+		if (index === 0) {
+			return 1;
+		}
+		return index % 2 !== 0 ? 1 : undefined;
+	};
 	cAVERAGEIFS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.area_to_ref;
 	cAVERAGEIFS.prototype.argumentsType = [argType.reference, [argType.reference, argType.any]];
 	cAVERAGEIFS.prototype.Calculate = function (arg) {
@@ -4085,7 +4182,7 @@ function (window, undefined) {
 			arg2 = arg[k + 1];
 
 			if (cElementType.cell !== arg1.type && cElementType.cell3D !== arg1.type && cElementType.cellsRange !==
-					arg1.type && cElementType.cellsRange3D !== arg1.type) {
+				arg1.type && cElementType.cellsRange3D !== arg1.type) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 
@@ -4917,7 +5014,7 @@ function (window, undefined) {
 			}
 			for (i = 0; i < x.length; i++) {
 
-				if (!( x[i] instanceof cNumber && y[i] instanceof cNumber )) {
+				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
 					continue;
 				}
 
@@ -4931,7 +5028,7 @@ function (window, undefined) {
 
 			for (i = 0; i < x.length; i++) {
 
-				if (!( x[i] instanceof cNumber && y[i] instanceof cNumber )) {
+				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
 					continue;
 				}
 
@@ -5017,7 +5114,7 @@ function (window, undefined) {
 				}
 			} else if (cElementType.array === _arg.type) {
 				_arg.foreach(function (elem) {
-					if (cElementType.number === elem.tocNumber().type) {
+					if (cElementType.number === elem.type) {
 						count++;
 					}
 				})
@@ -5134,12 +5231,15 @@ function (window, undefined) {
 	cCOUNTIFS.prototype.argumentsMin = 2;
 	cCOUNTIFS.prototype.argumentsMax = 254;
 	cCOUNTIFS.prototype.numFormat = AscCommonExcel.cNumFormatNone;
-	//TODO все четные - на вход должны приходить как array/area
 	cCOUNTIFS.prototype.arrayIndexes = {0: 1, 2: 1, 4: 1, 6: 1, 8: 1};
+	cCOUNTIFS.prototype.getArrayIndex = function (index) {
+		return index % 2 === 0 ? 1 : undefined;
+	};
 	cCOUNTIFS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.area_to_ref;
 	cCOUNTIFS.prototype.argumentsType = [[argType.reference, argType.any]];
 	cCOUNTIFS.prototype.Calculate = function (arg) {
 		let i, j, arg0, arg1, matchingInfo, arg0Matrix, arg1Matrix, _count = 0, argBaseDimension, argNextDimension;
+		let resArrayLength = 0;
 		for (let k = 0; k < arg.length; k += 2) {
 			arg0 = arg[k];
 			arg1 = arg[k + 1];
@@ -5155,9 +5255,12 @@ function (window, undefined) {
 				arg1 = arg1.getElementRowCol(0, 0);
 			}
 
-			arg1 = arg1.tocString();
-			if (cElementType.string !== arg1.type) {
-				return new cError(cErrorType.wrong_value_type);
+			if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+				arg1 = arg1.getValue();
+			}
+
+			if (arg1.type === cElementType.empty) {
+				arg1 = arg1.tocNumber();
 			}
 
 			argNextDimension = arg0.getDimensions();
@@ -5166,11 +5269,7 @@ function (window, undefined) {
 			if (arg1.value === "") {
 				arg1Matrix = arg0.getMatrix();
 			} else {
-				if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-					arg1Matrix = g_oFormulaRangesCache.get(arg0);
-				} else {
-					arg1Matrix = arg0.getMatrixNoEmpty ? arg0.getMatrixNoEmpty() : arg0.getMatrix();
-				}
+				arg1Matrix = arg0.getMatrixNoEmpty ? arg0.getMatrixNoEmpty() : arg0.getMatrix();
 			}
 			if (cElementType.cellsRange3D === arg0.type) {
 				arg1Matrix = arg1Matrix[0];
@@ -5178,24 +5277,27 @@ function (window, undefined) {
 			if (!arg0Matrix) {
 				arg0Matrix = matrixClone(arg1Matrix);
 				argBaseDimension = argNextDimension;
+				resArrayLength = arg0Matrix.length;
 			}
 			if (argNextDimension.row !== argBaseDimension.row || argNextDimension.col !== argBaseDimension.col) {
 				return new cError(cErrorType.wrong_value_type);
 			}
+			resArrayLength = resArrayLength > arg1Matrix.length ? arg1Matrix.length : resArrayLength;
 			for (i = 0; i < arg1Matrix.length; ++i) {
 				if (!arg1Matrix[i]) {
-					arg0Matrix[i] = null;
+					if (arg0Matrix[i]) {
+						arg0Matrix[i] = null;
+					}
 					continue;
 				}
 				for (j = 0; j < arg1Matrix[i].length; ++j) {
-					if (arg0Matrix[i] && arg0Matrix[i][j] && !matching(arg1Matrix[i][j], matchingInfo, true, true)) {
+					if (arg0Matrix[i] && arg0Matrix[i][j] && arg1Matrix[i] && arg1Matrix[i][j] && !matching(arg1Matrix[i][j], matchingInfo, true, true)) {
 						arg0Matrix[i][j] = null;
 					}
 				}
 			}
 		}
-
-		for (i = 0; i < arg0Matrix.length; ++i) {
+		for (i = 0; i < resArrayLength; ++i) {
 			if (!arg0Matrix[i]) {
 				continue;
 			}
@@ -5232,7 +5334,7 @@ function (window, undefined) {
 			var s1 = 0, _x = 0, _y = 0, xLength = 0, i;
 			for (i = 0; i < x.length; i++) {
 
-				if (!( x[i] instanceof cNumber && y[i] instanceof cNumber )) {
+				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
 					continue;
 				}
 
@@ -5250,7 +5352,7 @@ function (window, undefined) {
 
 			for (i = 0; i < x.length; i++) {
 
-				if (!( x[i] instanceof cNumber && y[i] instanceof cNumber )) {
+				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
 					continue;
 				}
 
@@ -5354,7 +5456,7 @@ function (window, undefined) {
 			}
 			for (i = 0; i < x.length; i++) {
 
-				if (!( x[i] instanceof cNumber && y[i] instanceof cNumber )) {
+				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
 					continue;
 				}
 
@@ -5368,7 +5470,7 @@ function (window, undefined) {
 
 			for (i = 0; i < x.length; i++) {
 
-				if (!( x[i] instanceof cNumber && y[i] instanceof cNumber )) {
+				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
 					continue;
 				}
 
@@ -5449,7 +5551,7 @@ function (window, undefined) {
 			}
 			for (i = 0; i < x.length; i++) {
 
-				if (!( x[i] instanceof cNumber && y[i] instanceof cNumber )) {
+				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
 					continue;
 				}
 
@@ -5467,7 +5569,7 @@ function (window, undefined) {
 
 			for (i = 0; i < x.length; i++) {
 
-				if (!( x[i] instanceof cNumber && y[i] instanceof cNumber )) {
+				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
 					continue;
 				}
 
@@ -5789,8 +5891,8 @@ function (window, undefined) {
 			if (bCum) {
 				res = 1 - getFDist(fF, fF1, fF2);
 			} else {
-				res = Math.pow(fF1 / fF2, fF1 / 2) * Math.pow(fF, ( fF1 / 2 ) - 1) /
-					( Math.pow(( 1 + ( fF * fF1 / fF2 ) ), ( fF1 + fF2 ) / 2) * getBeta(fF1 / 2, fF2 / 2) );
+				res = Math.pow(fF1 / fF2, fF1 / 2) * Math.pow(fF, (fF1 / 2) - 1) /
+					(Math.pow((1 + (fF * fF1 / fF2)), (fF1 + fF2) / 2) * getBeta(fF1 / 2, fF2 / 2));
 			}
 
 			return null !== res && !isNaN(res) ? new cNumber(res) : new cError(cErrorType.wrong_value_type);
@@ -6048,7 +6150,7 @@ function (window, undefined) {
 		var arg0 = arg[0];
 
 		function fisherInv(x) {
-			return ( Math.exp(2 * x) - 1 ) / ( Math.exp(2 * x) + 1 );
+			return (Math.exp(2 * x) - 1) / (Math.exp(2 * x) + 1);
 		}
 
 		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
@@ -6088,20 +6190,20 @@ function (window, undefined) {
 	cFORECAST.prototype.argumentsMin = 3;
 	cFORECAST.prototype.argumentsMax = 3;
 	cFORECAST.prototype.arrayIndexes = {1: 1, 2: 1};
+	cFORECAST.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cFORECAST.prototype.argumentsType = [argType.number, argType.array, argType.array];
 	cFORECAST.prototype.Calculate = function (arg) {
 
 		function forecast(fx, y, x) {
 
-			var fSumDeltaXDeltaY = 0, fSumSqrDeltaX = 0, _x = 0, _y = 0, xLength = 0, i;
-
+			let fSumDeltaXDeltaY = 0, fSumSqrDeltaX = 0, _x = 0, _y = 0, xLength = 0, i;
 			if (x.length !== y.length) {
 				return new cError(cErrorType.not_available);
 			}
 
 			for (i = 0; i < x.length; i++) {
 
-				if (!( x[i] instanceof cNumber && y[i] instanceof cNumber )) {
+				if (!(x[i].type === cElementType.number && y[i].type === cElementType.number)) {
 					continue;
 				}
 
@@ -6115,56 +6217,58 @@ function (window, undefined) {
 
 			for (i = 0; i < x.length; i++) {
 
-				if (!( x[i] instanceof cNumber && y[i] instanceof cNumber )) {
+				if (!(x[i].type === cElementType.number && y[i].type === cElementType.number)) {
 					continue;
 				}
 
-				var fValX = x[i].getValue();
-				var fValY = y[i].getValue();
+				let fValX = x[i].getValue();
+				let fValY = y[i].getValue();
 
-				fSumDeltaXDeltaY += ( fValX - _x ) * ( fValY - _y );
-				fSumSqrDeltaX += ( fValX - _x ) * ( fValX - _x );
+				fSumDeltaXDeltaY += (fValX - _x) * (fValY - _y);
+				fSumSqrDeltaX += (fValX - _x) * (fValX - _x);
 
 			}
 
 			if (fSumDeltaXDeltaY == 0) {
 				return new cError(cErrorType.division_by_zero);
 			} else {
-				return new cNumber(_y + fSumDeltaXDeltaY / fSumSqrDeltaX * ( fx.getValue() - _x ));
+				return new cNumber(_y + fSumDeltaXDeltaY / fSumSqrDeltaX * (fx.getValue() - _x));
 			}
 
 		}
 
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2], arr0 = [], arr1 = [];
-
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2], arr0 = [], arr1 = [];
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
-		} else if (arg0 instanceof cArray) {
+		} else if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElement(0);
 		}
-		arg0 = arg0.tocNumber();
 
-		if (arg0 instanceof cError) {
+		arg0 = arg0.tocNumber();
+		if (arg0.type === cElementType.error) {
 			return arg0;
 		}
 
-
-		if (arg1 instanceof cArea) {
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
 			arr0 = arg1.getValue();
-		} else if (arg1 instanceof cArray) {
+		} else if (arg1.type === cElementType.array) {
 			arg1.foreach(function (elem) {
 				arr0.push(elem);
 			});
+		} else if (arg1.type === cElementType.error) {
+			return arg1;
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		if (arg2 instanceof cArea) {
+		if (arg2.type === cElementType.cellsRange || arg2.type === cElementType.cellsRange3D) {
 			arr1 = arg2.getValue();
-		} else if (arg2 instanceof cArray) {
+		} else if (arg2.type === cElementType.array) {
 			arg2.foreach(function (elem) {
 				arr1.push(elem);
 			});
+		} else if (arg2.type === cElementType.error) {
+			return arg2;
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
@@ -6185,33 +6289,46 @@ function (window, undefined) {
 	cFORECAST_ETS.prototype.name = 'FORECAST.ETS';
 	cFORECAST_ETS.prototype.argumentsMin = 3;
 	cFORECAST_ETS.prototype.argumentsMax = 6;
+	cFORECAST_ETS.prototype.arrayIndexes = {1: 1, 2: 1};
+	cFORECAST_ETS.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cFORECAST_ETS.prototype.argumentsType = [argType.number, argType.reference, argType.reference, argType.number, argType.number, argType.number];
 	cFORECAST_ETS.prototype.Calculate = function (arg) {
 
-		//результаты данной фукнции соответсвуют результатам LO, но отличаются от MS!!!
-		var oArguments = this._prepareArguments(arg, arguments[1], true,
+		// The results of this function correspond to the results of LO, but differ from MS!!!
+		let oArguments = this._prepareArguments(arg, arguments[1], true,
 			[null, cElementType.array, cElementType.array]);
-		var argClone = oArguments.args;
+		let argClone = oArguments.args;
+
+		if (!argClone[0]) {
+			return new cError(cErrorType.not_numeric);
+		}
+
+		if (argClone[0].type && argClone[0].type !== cElementType.number) {
+			argClone[0] = argClone[0].tocNumber();
+		}
 
 		argClone[3] = argClone[3] ? argClone[3].tocNumber() : new cNumber(1);
 		argClone[4] = argClone[4] ? argClone[4].tocNumber() : new cNumber(1);
 		argClone[5] = argClone[5] ? argClone[5].tocNumber() : new cNumber(1);
 
-
-		argClone[0] = argClone[0].getMatrix();
-
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		var pTMat = argClone[0];
-		var pMatY = argClone[1];
-		var pMatX = argClone[2];
-		var nSmplInPrd = argClone[3].getValue();
-		var bDataCompletion = argClone[4].getValue();
-		var nAggregation = argClone[5].getValue();
+		/* if the first argument is not an array or range, then convert it to a standard two-dimensional array with one value */ 
+		argClone[0] = argClone[0].getMatrix ? argClone[0].getMatrix() : argClone[0].toArray();
 
+		let pTMat = argClone[0],
+			pMatY = argClone[1],
+			pMatX = argClone[2],
+			nSmplInPrd = argClone[3].getValue(),
+			bDataCompletion = argClone[4].getValue(),
+			nAggregation = argClone[5].getValue();
+
+		if (pMatY.length === 0 || pMatX.length === 0) {
+			return new cError(cErrorType.division_by_zero);
+		}
 		if (nAggregation < 1 || nAggregation > 7) {
 			return new cError(cErrorType.not_numeric);
 		}
@@ -6219,8 +6336,8 @@ function (window, undefined) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var aETSCalc = new ScETSForecastCalculation(pMatX.length);
-		var isError = aETSCalc.PreprocessDataRange(pMatX, pMatY, nSmplInPrd, bDataCompletion, nAggregation, pTMat);
+		let aETSCalc = new ScETSForecastCalculation(pMatX.length);
+		let isError = aETSCalc.PreprocessDataRange(pMatX, pMatY, nSmplInPrd, bDataCompletion, nAggregation, pTMat);
 		if (!isError) {
 			///*,( eETSType != etsStatAdd && eETSType != etsStatMult ? pTMat : nullptr ),eETSType )
 			return new cError(cErrorType.wrong_value_type);
@@ -6229,8 +6346,21 @@ function (window, undefined) {
 		}
 
 
-		var pFcMat = aETSCalc.GetForecastRange(pTMat);
+		// todo bug 36721:
+		// The prediction result differs from ms - due to different smoothing coefficients (alpha, beta, gamma)
+		// Error values ​​are interpreted differently in MS, and because of this, the values ​​of the smoothing coefficients do not match, which at the end affects the result
+		// Although the selection and comparison method is the same as in LO and as in the main formula, but the result is still different.
+		// Most likely ms has behavior that is not specified in the documentation when calculating the forecast since the ETS(AAA) method produces a different result
+		// Note:in the current solution, if there are less than 7 values ​​in the range, then the coefficients are omitted (equal to 0) and the function is performed in EDS mode
+		// By manually substituting coefficients to match the values ​​of the FORECAST.ETS formula and the Holt-Winters model, it was found
+		// that ms does not calculate the smallest forecast error MAE, MSE, RMSE, but (supposedly) uses some other method of analysis and selection of smoothing coefficients
+		// for example, for short-term forecasts one coefficients and calculation model can be used, and for long-term ones completely different.
+		// An alternative to this approach is dynamic change smoothing parameters.
+		// In methods of evolution and simplex planning adaptation parameters are constantly changing at every step.
+		// For each the smoothing parameter generates several values.
+		// https://otexts.com/fpp2/holt-winters.html
 
+		let pFcMat = aETSCalc.GetForecastRange(pTMat);
 
 		return pFcMat && pFcMat[0] ? new cNumber(pFcMat[0][0]) : new cError(cErrorType.not_numeric);
 	};
@@ -6247,35 +6377,49 @@ function (window, undefined) {
 	cFORECAST_ETS_CONFINT.prototype.name = 'FORECAST.ETS.CONFINT';
 	cFORECAST_ETS_CONFINT.prototype.argumentsMin = 3;
 	cFORECAST_ETS_CONFINT.prototype.argumentsMax = 7;
+	cFORECAST_ETS_CONFINT.prototype.arrayIndexes = {1: 1, 2: 1};
+	cFORECAST_ETS_CONFINT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cFORECAST_ETS_CONFINT.prototype.argumentsType = [argType.number, argType.reference, argType.reference, argType.number, argType.number,
 		argType.number, argType.number];
 	cFORECAST_ETS_CONFINT.prototype.Calculate = function (arg) {
-
 		//результаты данной фукнции соответсвуют результатам LO, но отличаются от MS!!!
-		var oArguments = this._prepareArguments(arg, arguments[1], true,
+
+		let oArguments = this._prepareArguments(arg, arguments[1], true,
 			[null, cElementType.array, cElementType.array]);
-		var argClone = oArguments.args;
+		let argClone = oArguments.args;
+
+		if (!argClone[0]) {
+			return new cError(cErrorType.not_numeric);
+		}
+
+		if (argClone[0].type && argClone[0].type !== cElementType.number) {
+			argClone[0] = argClone[0].tocNumber();
+		}
 
 		argClone[3] = argClone[3] ? argClone[3].tocNumber() : new cNumber(0.95);
 		argClone[4] = argClone[4] ? argClone[4].tocNumber() : new cNumber(1);
 		argClone[5] = argClone[5] ? argClone[5].tocNumber() : new cNumber(1);
 		argClone[6] = argClone[6] ? argClone[6].tocNumber() : new cNumber(1);
 
-
-		argClone[0] = argClone[0].getMatrix();
-
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		var pTMat = argClone[0];
-		var pMatY = argClone[1];
-		var pMatX = argClone[2];
-		var fPILevel = argClone[3].getValue();
-		var nSmplInPrd = argClone[4].getValue();
-		var bDataCompletion = argClone[5].getValue();
-		var nAggregation = argClone[6].getValue();
+		/* if the first argument is not an array or range, then convert it to a standard two-dimensional array with one value */ 
+		argClone[0] = argClone[0].getMatrix ? argClone[0].getMatrix() : argClone[0].toArray();
+
+		let pTMat = argClone[0],
+			pMatY = argClone[1],
+			pMatX = argClone[2],
+			fPILevel = argClone[3].getValue(),
+			nSmplInPrd = argClone[4].getValue(),
+			bDataCompletion = argClone[5].getValue(),
+			nAggregation = argClone[6].getValue();
+
+		if (pMatY.length === 0 || pMatX.length === 0) {
+			return new cError(cErrorType.division_by_zero);
+		}
 
 		if (fPILevel < 0 || fPILevel > 1) {
 			return new cError(cErrorType.not_numeric);
@@ -6287,8 +6431,8 @@ function (window, undefined) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var aETSCalc = new ScETSForecastCalculation(pMatX.length);
-		var isError = aETSCalc.PreprocessDataRange(pMatX, pMatY, nSmplInPrd, bDataCompletion, nAggregation, pTMat);
+		let aETSCalc = new ScETSForecastCalculation(pMatX.length);
+		let isError = aETSCalc.PreprocessDataRange(pMatX, pMatY, nSmplInPrd, bDataCompletion, nAggregation, pTMat);
 		if (!isError) {
 			///*,( eETSType != etsStatAdd && eETSType != etsStatMult ? pTMat : nullptr ),eETSType )
 			return new cError(cErrorType.wrong_value_type);
@@ -6299,7 +6443,7 @@ function (window, undefined) {
 		/*SCSIZE nC, nR;
 		 pTMat->GetDimensions( nC, nR );
 		 ScMatrixRef pPIMat = GetNewMat( nC, nR );*/
-		var pPIMat = null;
+		let pPIMat = null;
 		if (nSmplInPrd === 0) {
 			pPIMat = aETSCalc.GetEDSPredictionIntervals(pTMat, fPILevel);
 		} else {
@@ -6326,6 +6470,7 @@ function (window, undefined) {
 	cFORECAST_ETS_SEASONALITY.prototype.argumentsMin = 2;
 	cFORECAST_ETS_SEASONALITY.prototype.argumentsMax = 4;
 	cFORECAST_ETS_SEASONALITY.prototype.arrayIndexes = {0: 1, 1: 1};
+	cFORECAST_ETS_SEASONALITY.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cFORECAST_ETS_SEASONALITY.prototype.argumentsType = [argType.reference, argType.reference, argType.number, argType.number];
 	cFORECAST_ETS_SEASONALITY.prototype.Calculate = function (arg) {
 
@@ -6380,13 +6525,14 @@ function (window, undefined) {
 	cFORECAST_ETS_STAT.prototype.name = 'FORECAST.ETS.STAT';
 	cFORECAST_ETS_STAT.prototype.argumentsMin = 3;
 	cFORECAST_ETS_STAT.prototype.argumentsMax = 6;
+	cFORECAST_ETS_STAT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cFORECAST_ETS_STAT.prototype.argumentsType = [argType.reference, argType.reference, argType.number, argType.number,
 		argType.number, argType.number];
 	cFORECAST_ETS_STAT.prototype.Calculate = function (arg) {
 
-		//результаты данной фукнции соответсвуют результатам LO, но отличаются от MS!!!
-		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, cElementType.array]);
-		var argClone = oArguments.args;
+		// The results of this function correspond to the results of LO, but differ from MS!!!
+		let oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, cElementType.array]);
+		let argClone = oArguments.args;
 
 		argClone[3] = argClone[3] ? argClone[3].tocNumber() : new cNumber(1);
 		argClone[4] = argClone[4] ? argClone[4].tocNumber() : new cNumber(1);
@@ -6394,17 +6540,17 @@ function (window, undefined) {
 
 		argClone[2] = convertToMatrix(argClone[2]);
 
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		var pMatY = argClone[0];
-		var pMatX = argClone[1];
-		var pTypeMat = argClone[2];
-		var nSmplInPrd = argClone[3].getValue();
-		var bDataCompletion = argClone[4].getValue();
-		var nAggregation = argClone[5].getValue();
+		let pMatY = argClone[0],
+			pMatX = argClone[1],
+			pTypeMat = argClone[2],
+			nSmplInPrd = argClone[3].getValue(),
+			bDataCompletion = argClone[4].getValue(),
+			nAggregation = argClone[5].getValue();
 
 		if (nAggregation < 1 || nAggregation > 7) {
 			return new cError(cErrorType.not_numeric);
@@ -6413,16 +6559,19 @@ function (window, undefined) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var aETSCalc = new ScETSForecastCalculation(pMatX.length);
-		var isError = aETSCalc.PreprocessDataRange(pMatX, pMatY, nSmplInPrd, bDataCompletion, nAggregation);
+		let aETSCalc = new ScETSForecastCalculation(pMatX.length);
+		let isError = aETSCalc.PreprocessDataRange(pMatX, pMatY, nSmplInPrd, bDataCompletion, nAggregation);
 		if (!isError) {
 			return new cError(cErrorType.wrong_value_type);
 		} else if (isError && cElementType.error === isError.type) {
 			return isError;
 		}
 
-		var pFcMat = aETSCalc.GetStatisticValue(pTypeMat);
-		var res = null;
+		// todo bug 36416:
+		// Same problem as in bug 36721 - differences in error analysis and, as a result, different calculations of smoothing coefficients that affect the final result 
+
+		let pFcMat = aETSCalc.GetStatisticValue(pTypeMat);
+		let res = null;
 		if (!pFcMat) {
 			return new cError(cErrorType.wrong_value_type);
 		} else {
@@ -6771,7 +6920,6 @@ function (window, undefined) {
 	cGAMMALN.prototype.Calculate = function (arg) {
 
 
-
 		/*
 		 from OpenOffice Source.
 		 end
@@ -6892,8 +7040,8 @@ function (window, undefined) {
 				if (x[i] instanceof cNumber) {
 					_x *= x[i].getValue();
 					xLength++;
-				} else if (( x[i] instanceof cString || x[i] instanceof cBool ) &&
-					( _tx = x[i].tocNumber()) instanceof cNumber) {
+				} else if ((x[i] instanceof cString || x[i] instanceof cBool) &&
+					(_tx = x[i].tocNumber()) instanceof cNumber) {
 					_x *= _tx.getValue();
 					xLength++;
 				}
@@ -6958,21 +7106,23 @@ function (window, undefined) {
 	cGROWTH.prototype.argumentsType = [argType.reference, argType.reference, argType.reference, argType.logical];
 	cGROWTH.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cGROWTH.prototype.Calculate = function (arg) {
-		var prepeareArgs = prepeareGrowthTrendCalculation(this, arg);
+		let prepeareArgs = prepeareGrowthTrendCalculation(this, arg);
 		if (cElementType.error === prepeareArgs.type) {
 			return prepeareArgs;
 		}
-		var pMatY = prepeareArgs.pMatY;
-		var pMatX = prepeareArgs.pMatX;
-		var pMatNewX = prepeareArgs.pMatNewX;
-		var bConstant = prepeareArgs.bConstant;
-		var mat = CalculateTrendGrowth(pMatY, pMatX, pMatNewX, bConstant, true);
+
+		let pMatY = prepeareArgs.pMatY,
+			pMatX = prepeareArgs.pMatX,
+			pMatNewX = prepeareArgs.pMatNewX,
+			bConstant = prepeareArgs.bConstant;
+			
+		let	mat = CalculateTrendGrowth(pMatY, pMatX, pMatNewX, bConstant, true);
 
 		if (mat && mat[0] && mat[0][0] !== undefined) {
-			var tMatrix = [], res = new cArray();
+			let tMatrix = [], res = new cArray();
 
-			for (var i = 0; i < mat.length; i++) {
-				for (var j = 0; j < mat[i].length; j++) {
+			for (let i = 0; i < mat.length; i++) {
+				for (let j = 0; j < mat[i].length; j++) {
 					if (!tMatrix[j]) {
 						tMatrix[j] = [];
 					}
@@ -6982,6 +7132,8 @@ function (window, undefined) {
 
 			res.fillFromArray(tMatrix);
 			return res;
+		} else if (mat && mat.type && mat.type === cElementType.error) {
+			return mat;
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
@@ -7014,8 +7166,8 @@ function (window, undefined) {
 					}
 					_x += 1 / x[i].getValue();
 					xLength++;
-				} else if (( x[i] instanceof cString || x[i] instanceof cBool ) &&
-					( _tx = x[i].tocNumber()) instanceof cNumber) {
+				} else if ((x[i] instanceof cString || x[i] instanceof cBool) &&
+					(_tx = x[i].tocNumber()) instanceof cNumber) {
 					if (_tx.getValue() == 0) {
 						return new cError(cErrorType.not_numeric);
 					}
@@ -7217,16 +7369,16 @@ function (window, undefined) {
 	cINTERCEPT.prototype.name = 'INTERCEPT';
 	cINTERCEPT.prototype.argumentsMin = 2;
 	cINTERCEPT.prototype.argumentsMax = 2;
+	cINTERCEPT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cINTERCEPT.prototype.arrayIndexes = {0: 1, 1: 1};
 	cINTERCEPT.prototype.argumentsType = [argType.array, argType.array];
 	cINTERCEPT.prototype.Calculate = function (arg) {
-
 		function intercept(y, x) {
 
 			var fSumDeltaXDeltaY = 0, fSumSqrDeltaX = 0, _x = 0, _y = 0, xLength = 0, i;
 			for (i = 0; i < x.length; i++) {
 
-				if (!( x[i] instanceof cNumber && y[i] instanceof cNumber )) {
+				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
 					continue;
 				}
 
@@ -7240,15 +7392,15 @@ function (window, undefined) {
 
 			for (i = 0; i < x.length; i++) {
 
-				if (!( x[i] instanceof cNumber && y[i] instanceof cNumber )) {
+				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
 					continue;
 				}
 
 				var fValX = x[i].getValue();
 				var fValY = y[i].getValue();
 
-				fSumDeltaXDeltaY += ( fValX - _x ) * ( fValY - _y );
-				fSumSqrDeltaX += ( fValX - _x ) * ( fValX - _x );
+				fSumDeltaXDeltaY += (fValX - _x) * (fValY - _y);
+				fSumSqrDeltaX += (fValX - _x) * (fValX - _x);
 
 			}
 
@@ -7324,7 +7476,7 @@ function (window, undefined) {
 
 			}
 
-			var standDev = Math.sqrt(sumSQRDeltaX / ( xLength - 1 ));
+			var standDev = Math.sqrt(sumSQRDeltaX / (xLength - 1));
 
 			for (i = 0; i < x.length; i++) {
 
@@ -7461,34 +7613,33 @@ function (window, undefined) {
 	cLINEST.prototype.arrayIndexes = {0: 1, 1: 1};
 	cLINEST.prototype.argumentsType = [argType.reference, argType.reference, argType.logical, argType.logical];
 	cLINEST.prototype.Calculate = function (arg) {
-
 		arg[0] = tryNumberToArray(arg[0]);
 		if (arg[1]) {
 			arg[1] = tryNumberToArray(arg[1]);
 		}
 
-		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, cElementType.array]);
-		var argClone = oArguments.args;
+		let oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, cElementType.array]);
+		let argClone = oArguments.args;
 
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		var pMatY = argClone[0];
-		var pMatX = argClone[1];
-		var bConstant = getBoolValue(argClone[2], true);
-		var bStats = getBoolValue(argClone[3], false);
+		let pMatY = argClone[0];
+		let pMatX = argClone[1];
+		let bConstant = getBoolValue(argClone[2], true);
+		let bStats = getBoolValue(argClone[3], false);
 
-		//возвращает матрицу [col][row]
-		var mat = CalculateRGPRKP(pMatY, pMatX, bConstant, bStats);
+		//return matrix [col][row]
+		let mat = CalculateRGPRKP(pMatY, pMatX, bConstant, bStats);
 
 		//TODO далее функцию необходимо отптимизировать и сразу формировать итоговую матрицу без промежуточного транспонирования
 		if (mat && mat[0] && mat[0][0] !== undefined) {
-			var tMatrix = [], res = new cArray();
+			let tMatrix = [], res = new cArray();
 
-			for (var i = 0; i < mat.length; i++) {
-				for (var j = 0; j < mat[i].length; j++) {
+			for (let i = 0; i < mat.length; i++) {
+				for (let j = 0; j < mat[i].length; j++) {
 					if (!tMatrix[j]) {
 						tMatrix[j] = [];
 					}
@@ -7502,6 +7653,8 @@ function (window, undefined) {
 
 			res.fillFromArray(tMatrix);
 			return res;
+		} else if (mat && mat.type && mat.type === cElementType.error) {
+			return mat;
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
@@ -7529,28 +7682,29 @@ function (window, undefined) {
 			arg[1] = tryNumberToArray(arg[1]);
 		}
 
-		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, cElementType.array]);
-		var argClone = oArguments.args;
+		const oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, cElementType.array]);
+		let argClone = oArguments.args;
 
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		var pMatY = argClone[0];
-		var pMatX = argClone[1];
-		var bConstant = getBoolValue(argClone[2], true);
-		var bStats = getBoolValue(argClone[3], false);
+		let pMatY = argClone[0],
+			pMatX = argClone[1],
+			bConstant = getBoolValue(argClone[2], true),
+			bStats = getBoolValue(argClone[3], false),
+			res = new cArray(),
+			tMatrix = [];
 
-		//возвращает матрицу [col][row]
-		var mat = CalculateRGPRKP(pMatY, pMatX, bConstant, bStats, true);
+
+		//return matrix [col][row]
+		let mat = CalculateRGPRKP(pMatY, pMatX, bConstant, bStats, true);
 
 		//TODO далее функцию необходимо отптимизировать и сразу формировать итоговую матрицу без промежуточного транспонирования
-		if (mat && mat[0] && mat[0][0] !== undefined) {
-			var tMatrix = [], res = new cArray();
-
-			for (var i = 0; i < mat.length; i++) {
-				for (var j = 0; j < mat[i].length; j++) {
+		if (mat && mat[0] && mat[0][0] !== undefined) {	
+			for (let i = 0; i < mat.length; i++) {
+				for (let j = 0; j < mat[i].length; j++) {
 					if (!tMatrix[j]) {
 						tMatrix[j] = [];
 					}
@@ -7564,6 +7718,8 @@ function (window, undefined) {
 
 			res.fillFromArray(tMatrix);
 			return res;
+		} else if (mat && mat.type && mat.type === cElementType.error) {
+			return mat;
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
@@ -7591,7 +7747,7 @@ function (window, undefined) {
 			if (sigma <= 0 || x <= 0 || x >= 1) {
 				return new cError(cErrorType.not_numeric);
 			} else {
-				return new cNumber(Math.exp(mue + sigma * ( gaussinv(x) )));
+				return new cNumber(Math.exp(mue + sigma * (gaussinv(x))));
 			}
 		}
 
@@ -7954,7 +8110,7 @@ function (window, undefined) {
 				}
 			}
 		}
-		return ( max === Number.NEGATIVE_INFINITY ? new cNumber(0) : new cNumber(max) )
+		return (max === Number.NEGATIVE_INFINITY ? new cNumber(0) : new cNumber(max))
 	};
 
 	/**
@@ -7970,8 +8126,13 @@ function (window, undefined) {
 	cMAXIFS.prototype.name = 'MAXIFS';
 	cMAXIFS.prototype.argumentsMin = 3;
 	cMAXIFS.prototype.isXLFN = true;
-	//TODO все нечетные массивы
 	cMAXIFS.prototype.arrayIndexes = {0: 1, 1: 1, 3: 1, 5: 1, 7: 1, 9: 1};
+	cMAXIFS.prototype.getArrayIndex = function (index) {
+		if (index === 0) {
+			return 1;
+		}
+		return index % 2 !== 0 ? 1 : undefined;
+	};
 	cMAXIFS.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
@@ -8032,7 +8193,7 @@ function (window, undefined) {
 					if (arg0Matrix[i][j] && !AscCommonExcel.matching(arg1Matrix[i][j], matchingInfo)) {
 						//MS считает в данном случае, что значение 0 (из диапазона условий) соответсвует условию = ""
 						if (!(null === matchingInfo.op && "" === matchingInfo.val.value && 0 ===
-								arg1Matrix[i][j].value)) {
+							arg1Matrix[i][j].value)) {
 							arg0Matrix[i][j] = null;
 						}
 					}
@@ -8077,8 +8238,13 @@ function (window, undefined) {
 	cMINIFS.prototype.name = 'MINIFS';
 	cMINIFS.prototype.argumentsMin = 3;
 	cMINIFS.prototype.isXLFN = true;
-	//TODO все нечетные массивы
 	cMINIFS.prototype.arrayIndexes = {0: 1, 1: 1, 3: 1, 5: 1, 7: 1, 9: 1};
+	cMINIFS.prototype.getArrayIndex = function (index) {
+		if (index === 0) {
+			return 1;
+		}
+		return index % 2 !== 0 ? 1 : undefined;
+	};
 	cMINIFS.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
@@ -8139,7 +8305,7 @@ function (window, undefined) {
 					if (arg0Matrix[i][j] && !AscCommonExcel.matching(arg1Matrix[i][j], matchingInfo)) {
 						//MS считает в данном случае, что значение 0 (из диапазона условий) соответсвует условию = ""
 						if (!(null === matchingInfo.op && "" === matchingInfo.val.value && 0 ===
-								arg1Matrix[i][j].value)) {
+							arg1Matrix[i][j].value)) {
 							arg0Matrix[i][j] = null;
 						}
 					}
@@ -8326,7 +8492,7 @@ function (window, undefined) {
 				}
 			}
 		}
-		return ( min === Number.POSITIVE_INFINITY ? new cNumber(0) : new cNumber(min) );
+		return (min === Number.POSITIVE_INFINITY ? new cNumber(0) : new cNumber(min));
 	};
 
 	/**
@@ -8409,7 +8575,7 @@ function (window, undefined) {
 				}
 			}
 		}
-		return ( min === Number.POSITIVE_INFINITY ? new cNumber(0) : new cNumber(min) );
+		return (min === Number.POSITIVE_INFINITY ? new cNumber(0) : new cNumber(min));
 	};
 
 	/**
@@ -8471,7 +8637,7 @@ function (window, undefined) {
 				}
 			}
 		}
-		
+
 		let arr0 = [];
 
 		for (let j = 0; j < arg.length; j++) {
@@ -8536,11 +8702,11 @@ function (window, undefined) {
 					maxEntry = Math.max(maxEntry, index);
 				}
 
-				if(maxEntry === 1) {
+				if (maxEntry === 1) {
 					return new cError(cErrorType.not_available);
 				} else {
 					elemMap.forEach(function (_val, _key) {
-						if(!(_val < maxEntry)) {
+						if (!(_val < maxEntry)) {
 							res.addRow();
 							res.addElement(new cNumber(_key));
 						}
@@ -8699,7 +8865,7 @@ function (window, undefined) {
 	cNORMDIST.prototype.name = 'NORMDIST';
 	cNORMDIST.prototype.argumentsMin = 4;
 	cNORMDIST.prototype.argumentsMax = 4;
-	cNORMDIST.prototype.argumentsType = [argType.number];
+	cNORMDIST.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.logical];
 	cNORMDIST.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2], arg3 = arg[3];
@@ -9020,7 +9186,7 @@ function (window, undefined) {
 			}
 			for (i = 0; i < x.length; i++) {
 
-				if (!( x[i] instanceof cNumber && y[i] instanceof cNumber )) {
+				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
 					continue;
 				}
 
@@ -9034,7 +9200,7 @@ function (window, undefined) {
 
 			for (i = 0; i < x.length; i++) {
 
-				if (!( x[i] instanceof cNumber && y[i] instanceof cNumber )) {
+				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
 					continue;
 				}
 
@@ -9887,7 +10053,7 @@ function (window, undefined) {
 			}
 			for (i = 0; i < x.length; i++) {
 
-				if (!( x[i] instanceof cNumber && y[i] instanceof cNumber )) {
+				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
 					continue;
 				}
 
@@ -9901,7 +10067,7 @@ function (window, undefined) {
 
 			for (i = 0; i < x.length; i++) {
 
-				if (!( x[i] instanceof cNumber && y[i] instanceof cNumber )) {
+				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
 					continue;
 				}
 
@@ -10070,7 +10236,7 @@ function (window, undefined) {
 			}
 			for (i = 0; i < x.length; i++) {
 
-				if (!( x[i] instanceof cNumber && y[i] instanceof cNumber )) {
+				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
 					continue;
 				}
 
@@ -10084,7 +10250,7 @@ function (window, undefined) {
 
 			for (i = 0; i < x.length; i++) {
 
-				if (!( x[i] instanceof cNumber && y[i] instanceof cNumber )) {
+				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
 					continue;
 				}
 
@@ -10144,8 +10310,6 @@ function (window, undefined) {
 	cSMALL.prototype.argumentsType = [argType.number, argType.number];
 	cSMALL.prototype.Calculate = function (arg) {
 
-		var retArr = new cArray();
-
 		function frequency(A, k) {
 
 			var tA = [];
@@ -10181,20 +10345,37 @@ function (window, undefined) {
 			retArr.addElement(frequency(arg0, e));
 		}
 
-		var arg0 = arg[0], arg1 = arg[1];
-		if (arg0 instanceof cArea || arg0 instanceof cArray) {
+		let arg0 = arg[0], arg1 = arg[1], retArr = new cArray();
+		if ((arg0.type !== cElementType.array && arg0.type !== cElementType.cellsRange && arg0.type !== cElementType.cellsRange3D) &&
+			(arg1.type !== cElementType.array && arg1.type !== cElementType.cellsRange && arg1.type !== cElementType.cellsRange3D)) {
+			/* value to value */
+			arg0 = arg0.tocNumber();
+			arg1 = arg1.tocNumber();
+
+			if (arg0.type === cElementType.error) {
+				return arg0;
+			}
+			if (arg1.type === cElementType.error) {
+				return arg1;
+			}
+			if (arg1.getValue() !== 1) {
+				return new cError(cErrorType.not_numeric);
+			}
+
+			return arg0;
+		}
+
+		if (cElementType.cellsRange === arg0.type || cElementType.array === arg0.type) {
 			arg0 = arg0.getMatrix(this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg);
-		} else if (arg0 instanceof cArea3D) {
+		} else if (cElementType.cellsRange3D === arg0.type) {
 			arg0 = arg0.getMatrix(this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg)[0];
 		} else {
 			return new cError(cErrorType.not_numeric);
 		}
 
-
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			arg1 = arg1.cross(arguments[1]);
-		} else if (arg1 instanceof cArray) {
-//        arg1 = arg1.getElement( 0 );
+		} else if (cElementType.array === arg0.type) {
 			arg1.foreach(actionArray);
 			return retArr;
 		}
@@ -10456,11 +10637,11 @@ function (window, undefined) {
 				_arrVal.forEach(function (elem) {
 					if (cElementType.number === elem.type) {
 						arr0.push(elem);
-					} else if ( cElementType.error === elem.type && !error ) {
+					} else if (cElementType.error === elem.type && !error) {
 						error = elem;
 					}
 				});
-				if(error) {
+				if (error) {
 					return error;
 				}
 			} else if (cElementType.cell === element.type || cElementType.cell3D === element.type) {
@@ -10468,7 +10649,7 @@ function (window, undefined) {
 					var a = element.getValue();
 					if (cElementType.number === a.type) {
 						arr0.push(a);
-					} else if(cElementType.error === a.type) {
+					} else if (cElementType.error === a.type) {
 						return a;
 					}
 				}
@@ -10476,11 +10657,11 @@ function (window, undefined) {
 				element.foreach(function (elem) {
 					if (cElementType.number === elem.type) {
 						arr0.push(elem);
-					}  else if ( cElementType.error === elem.type && !error ) {
+					} else if (cElementType.error === elem.type && !error) {
 						error = elem;
 					}
 				});
-				if(error) {
+				if (error) {
 					return error;
 				}
 			} else if (cElementType.number === element.type || cElementType.bool === element.type) {
@@ -10623,7 +10804,7 @@ function (window, undefined) {
 			}
 			for (i = 0; i < x.length; i++) {
 
-				if (!( x[i] instanceof cNumber && y[i] instanceof cNumber )) {
+				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
 					continue;
 				}
 
@@ -10637,7 +10818,7 @@ function (window, undefined) {
 
 			for (i = 0; i < x.length; i++) {
 
-				if (!( x[i] instanceof cNumber && y[i] instanceof cNumber )) {
+				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
 					continue;
 				}
 
@@ -10995,22 +11176,22 @@ function (window, undefined) {
 	cTREND.prototype.argumentsType = [argType.reference, argType.reference, argType.reference, argType.logical];
 	cTREND.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cTREND.prototype.Calculate = function (arg) {
-		var prepeareArgs = prepeareGrowthTrendCalculation(this, arg);
+		let prepeareArgs = prepeareGrowthTrendCalculation(this, arg);
 		if (cElementType.error === prepeareArgs.type) {
 			return prepeareArgs;
 		}
-		var pMatY = prepeareArgs.pMatY;
-		var pMatX = prepeareArgs.pMatX;
-		var pMatNewX = prepeareArgs.pMatNewX;
-		var bConstant = prepeareArgs.bConstant;
+		let pMatY = prepeareArgs.pMatY,
+			pMatX = prepeareArgs.pMatX,
+			pMatNewX = prepeareArgs.pMatNewX,
+			bConstant = prepeareArgs.bConstant;
 
-		var mat = CalculateTrendGrowth(pMatY, pMatX, pMatNewX, bConstant);
+		let mat = CalculateTrendGrowth(pMatY, pMatX, pMatNewX, bConstant);
 
 		if (mat && mat[0] && mat[0][0] !== undefined) {
-			var tMatrix = [], res = new cArray();
+			let tMatrix = [], res = new cArray();
 
-			for (var i = 0; i < mat.length; i++) {
-				for (var j = 0; j < mat[i].length; j++) {
+			for (let i = 0; i < mat.length; i++) {
+				for (let j = 0; j < mat[i].length; j++) {
 					if (!tMatrix[j]) {
 						tMatrix[j] = [];
 					}
@@ -11020,7 +11201,9 @@ function (window, undefined) {
 
 			res.fillFromArray(tMatrix);
 			return res;
-		} else {
+		} else if (mat && mat.type && mat.type === cElementType.error) {
+			return mat;
+		}  else {
 			return new cError(cErrorType.wrong_value_type);
 		}
 	};
@@ -11230,11 +11413,11 @@ function (window, undefined) {
 				_arrVal.forEach(function (elem) {
 					if (cElementType.number === elem.type) {
 						arr0.push(elem);
-					} else if ( cElementType.error === elem.type && !error ) {
+					} else if (cElementType.error === elem.type && !error) {
 						error = elem;
 					}
 				});
-				if(error) {
+				if (error) {
 					return error;
 				}
 			} else if (cElementType.cell === element.type || cElementType.cell3D === element.type) {
@@ -11242,7 +11425,7 @@ function (window, undefined) {
 					var a = element.getValue();
 					if (cElementType.number === a.type) {
 						arr0.push(a);
-					} else if(cElementType.error === a.type) {
+					} else if (cElementType.error === a.type) {
 						return a;
 					}
 				}
@@ -11250,11 +11433,11 @@ function (window, undefined) {
 				element.foreach(function (elem) {
 					if (cElementType.number === elem.type) {
 						arr0.push(elem);
-					}  else if ( cElementType.error === elem.type && !error ) {
+					} else if (cElementType.error === elem.type && !error) {
 						error = elem;
 					}
 				});
-				if(error) {
+				if (error) {
 					return error;
 				}
 			} else if (cElementType.number === element.type || cElementType.bool === element.type) {
@@ -11416,11 +11599,11 @@ function (window, undefined) {
 				_arrVal.forEach(function (elem) {
 					if (cElementType.number === elem.type) {
 						arr0.push(elem);
-					} else if ( cElementType.error === elem.type && !error ) {
+					} else if (cElementType.error === elem.type && !error) {
 						error = elem;
 					}
 				});
-				if(error) {
+				if (error) {
 					return error;
 				}
 			} else if (cElementType.cell === element.type || cElementType.cell3D === element.type) {
@@ -11428,7 +11611,7 @@ function (window, undefined) {
 					var a = element.getValue();
 					if (cElementType.number === a.type) {
 						arr0.push(a);
-					} else if(cElementType.error === a.type) {
+					} else if (cElementType.error === a.type) {
 						return a;
 					}
 				}
@@ -11436,11 +11619,11 @@ function (window, undefined) {
 				element.foreach(function (elem) {
 					if (cElementType.number === elem.type) {
 						arr0.push(elem);
-					}  else if ( cElementType.error === elem.type && !error ) {
+					} else if (cElementType.error === elem.type && !error) {
 						error = elem;
 					}
 				});
-				if(error) {
+				if (error) {
 					return error;
 				}
 			} else if (cElementType.number === element.type || cElementType.bool === element.type) {
@@ -11523,11 +11706,11 @@ function (window, undefined) {
 				_arrVal.forEach(function (elem) {
 					if (cElementType.number === elem.type) {
 						arr0.push(elem);
-					} else if ( cElementType.error === elem.type && !error ) {
+					} else if (cElementType.error === elem.type && !error) {
 						error = elem;
 					}
 				});
-				if(error) {
+				if (error) {
 					return error;
 				}
 			} else if (cElementType.cell === element.type || cElementType.cell3D === element.type) {
@@ -11535,7 +11718,7 @@ function (window, undefined) {
 					var a = element.getValue();
 					if (cElementType.number === a.type) {
 						arr0.push(a);
-					} else if(cElementType.error === a.type) {
+					} else if (cElementType.error === a.type) {
 						return a;
 					}
 				}
@@ -11543,11 +11726,11 @@ function (window, undefined) {
 				element.foreach(function (elem) {
 					if (cElementType.number === elem.type) {
 						arr0.push(elem);
-					}  else if ( cElementType.error === elem.type && !error ) {
+					} else if (cElementType.error === elem.type && !error) {
 						error = elem;
 					}
 				});
-				if(error) {
+				if (error) {
 					return error;
 				}
 			} else if (cElementType.number === element.type || cElementType.bool === element.type) {
@@ -11842,6 +12025,7 @@ function (window, undefined) {
 		this.cacheRanges = {};
 		this.cacheId = {};
 	}
+
 	FormulaRangesCache.prototype.get = function (area) {
 		let range = area.getRange();
 		let wsId = range.getWorksheet().getId();
@@ -11879,8 +12063,40 @@ function (window, undefined) {
 		this.cacheId = {};
 		this.cacheRanges = {};
 	}
-
 	CountIfCache.prototype.constructor = CountIfCache;
+	/**
+	 * Extracts and categorizes all values from a range into a universal array structure
+	 * @private
+	 * @param {cArea} range - The range object to extract values from
+	 * @returns {Object.<cElementType, Array|number>} Object where keys are cElementType constants and values are arrays of cell values or count for empty cells
+	 */
+	CountIfCache.prototype._getUniversalArrayFromRange = function(range) {
+		const res = {};
+		const bbox = range.getBBox0();
+		let emptyCount = (bbox.c2 - bbox.c1 + 1) * (bbox.r2 - bbox.r1 + 1);
+		range.foreach2(function(cell) {
+			const type = cell.type;
+			if (type !== cElementType.empty) {
+				if (!res[type]) {
+					res[type] = [];
+				}
+				let value = cell;
+				if (type === cElementType.error) {
+					value = cell.errorType;
+				} else if (type === cElementType.string) {
+					value = value.value.toLowerCase();
+				} else {
+					value = value.value;
+				}
+				res[type].push(value);
+			}
+		});
+		for (let i in res) {
+			emptyCount -= res[i].length;
+		}
+		res[cElementType.empty] = emptyCount;
+		return res;
+	};
 	CountIfCache.prototype.calculate = function (arg, _arg1) {
 		let arg0 = arg[0], arg1 = arg[1];
 
@@ -11888,31 +12104,60 @@ function (window, undefined) {
 			return arg0;
 		}
 		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
-			cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type && cElementType.array !== arg0.type) {
+			cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type) {
 			return new cError(cErrorType.wrong_value_type);
+		}
+		const t = this;
+		function calculateOne(rangeOrCell, condition) {
+			if (cElementType.cell === rangeOrCell.type || cElementType.cell3D === rangeOrCell.type) {
+				const arr = {};
+				const value = arg0.getValue();
+				if (value.type === cElementType.empty) {
+					arr[value.type] = 1;
+				} else if (value.type === cElementType.error) {
+					arr[value.type] = [value.errorType];
+				} else {
+					arr[value.type] = [value.value];
+				}
+				return t._calculate(arr, condition);
+			}
+			else if (cElementType.cellsRange === rangeOrCell.type || cElementType.cellsRange3D === rangeOrCell.type) {
+				return t._get(rangeOrCell, condition);
+			} else {
+				return new cError(cErrorType.wrong_value_type);
+			}
 		}
 
 		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
-			arg1 = arg1.cross(_arg1);
+			const matrix = arg1.getMatrix();
+			const result = new cArray();
+			for (let row = 0; row < matrix.length; row += 1) {
+				result.addRow();
+				for (let col = 0; col < matrix[row].length; col += 1) {
+					const condition = matrix[row][col];
+					const calculateResult = calculateOne(arg0, condition);
+					result.addElementInRow(calculateResult, row);
+				}
+			}
+			return result;
 		} else if (cElementType.array === arg1.type) {
-			arg1 = arg1.getElementRowCol(0, 0);
+			const dimensions = arg1.getDimensions();
+			const colCount = dimensions.col;
+			const rowCount = dimensions.row;
+			const result = new cArray();
+			for (let row = 0; row < rowCount; row += 1) {
+				result.addRow();
+				for (let col = 0; col < colCount; col += 1) {
+					const condition = arg1.getElementRowCol(row, col);
+					const calculateResult = calculateOne(arg0, condition);
+					result.addElementInRow(calculateResult, row);
+				}
+			}
+			return result;
 		} else if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
 			arg1 = arg1.getValue();
 		}
-
-		if (cElementType.array === arg0.type) {
-			let arr = [];
-			arg0.foreach(function(_val) {
-				arr.push(_val);
-			});
-			return this._calculate(arr, arg1);
-		} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
-			return this._calculate([arg0.getValue()], arg1);
-		} else if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-			return this._get(arg0, arg1);
-		} else {
-			return new cError(cErrorType.wrong_value_type);
-		}
+		return calculateOne(arg0, arg1);
 	};
 	CountIfCache.prototype._get = function (range, arg1) {
 		let res, wsId = range.getWS().getId(),
@@ -11920,16 +12165,7 @@ function (window, undefined) {
 			valueForSearching = arg1.getValue();
 
 		if (!cacheElem) {
-			cacheElem = {elements: [], results: {}};
-
-			if (cElementType.cellsRange3D === range.type) {
-				cacheElem.elements = range.getValue();
-			} else {
-				range.foreach2(function (cell) {
-					cacheElem.elements.push(cell);
-				});
-			}
-
+			cacheElem = {elements: this._getUniversalArrayFromRange(range), results: {}};
 			this.cacheId[sRangeName] = cacheElem;
 			let cacheRange = this.cacheRanges[wsId];
 			if (!cacheRange) {
@@ -11947,35 +12183,43 @@ function (window, undefined) {
 		return res;
 	};
 	CountIfCache.prototype._calculate = function (arr, arg1) {
-
-		let checkEmptyValue = function(res, tempVal, tempMatchingInfo) {
-			//TODO нужно протестировать на различных вариантах
-			//когда в ячейке пустое значение - сравниваем его только с пустым значением
-			//при matchingInfo отличным от пустого значения в данном случае возвращаем false
-
-			//ms excel при несовпадении типов возвращает всегда отрицательное значение
-			//в нашем случае сравниваемая величина(в tempMatchingInfo) не всегда приводится к нужному типу(например, error, empty)
-			//TODO рассмотреть добавление подобной правки, проверить все варианты + расскоментировать тесты
-			/*if ((tempVal.type === cElementType.string || tempVal.type === cElementType.number) && tempMatchingInfo.val && tempMatchingInfo.val.type !== tempVal.type) {
-				return false;
-			}*/
-
-			tempVal = undefined !== tempVal.value ? tempVal.value : tempVal;
-			let matchingValue = tempMatchingInfo.val && tempMatchingInfo.val.value.toString ? tempMatchingInfo.val.value.toString() : null;
-			if(tempVal === "" && matchingValue && "" !== matchingValue.replace(/\*|\?/g, '')) {
-				return false;
-			}
-			return res;
-		};
-
 		let _count = 0;
-		let val;
 		let matchingInfo = AscCommonExcel.matchingValue(arg1);
-
-		for (let i = 0; i < arr.length; i++) {
-			_count += checkEmptyValue(matching(arr[i], matchingInfo, true, true), arr[i], matchingInfo);
+		let type = matchingInfo.val.type;
+		let searchValue = matchingInfo.val;
+		if (type === cElementType.string) {
+			searchValue = searchValue.toString().toLowerCase();
+		} else {
+			searchValue = searchValue.value;
 		}
-
+		if (type === cElementType.string) {
+			const checkErr = new cError(matchingInfo.val.value.toUpperCase());
+			if (checkErr.errorType !== -1) {
+				type = cElementType.error;
+				searchValue = checkErr.errorType;
+			}
+		}
+		if (matchingInfo.op === "<>") {
+			for (let i in arr) {
+				if (i !== String(type)) {
+					_count += arr[i].length ? arr[i].length : arr[i];
+				}
+			}
+		}
+		const typedArr = arr[type];
+		if (searchValue === "" && matchingInfo.op !== "<>") {
+			if (arr[cElementType.empty]) {
+				return new cNumber(arr[cElementType.empty]);
+			}
+			return new cNumber(0);
+		}
+		const isWildcard = type === cElementType.string && (searchValue.indexOf('*') !== -1 || searchValue.indexOf('?') !== -1);
+		const matchingFunction = getMatchingFunction(type, matchingInfo.op, isWildcard);
+		if (typedArr) {
+			for (let i = 0; i < typedArr.length; i += 1) {
+				_count += matchingFunction(typedArr[i], searchValue);
+			}
+		}
 		return new cNumber(_count);
 	};
 	CountIfCache.prototype.remove = function (cell) {
@@ -12005,6 +12249,8 @@ function (window, undefined) {
 	window['AscCommonExcel'].gauss = gauss;
 	window['AscCommonExcel'].gaussinv = gaussinv;
 	window['AscCommonExcel'].getPercentile = getPercentile;
+	window['AscCommonExcel'].getMedian = getMedian;
+	window['AscCommonExcel'].getPercentileExclusive = getPercentileExclusive;
 
 	window['AscCommonExcel'].cAVERAGE = cAVERAGE;
 	window['AscCommonExcel'].cCOUNT = cCOUNT;

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -40,6 +40,7 @@ function (window, undefined) {
 var AscBrowser = {
     userAgent : "",
     isIE : false,
+	isWindows : false,
     isMacOs : false,
     isSafariMacOs : false,
     isAppleDevices : false,
@@ -61,7 +62,11 @@ var AscBrowser = {
     isNeedEmulateUpload : false,
     chromeVersion : 70,
     iosVersion : 13,
-    isAndroidNativeApp : false
+    isAndroidNativeApp : false,
+	safariVersion : 17004001,
+	isTelegramWebView : false,
+	maxTouchPoints : 0,
+	willReadFrequently : false
 };
 
 // user agent lower case
@@ -73,6 +78,8 @@ AscBrowser.isIE =  (AscBrowser.userAgent.indexOf("msie") > -1 ||
                     AscBrowser.userAgent.indexOf("edge") > -1);
 
 AscBrowser.isIeEdge = (AscBrowser.userAgent.indexOf("edge/") > -1);
+
+AscBrowser.isWindows = (AscBrowser.userAgent.indexOf("windows") > -1);
 
 AscBrowser.isIE9 =  (AscBrowser.userAgent.indexOf("msie9") > -1 || AscBrowser.userAgent.indexOf("msie 9") > -1);
 AscBrowser.isIE10 =  (AscBrowser.userAgent.indexOf("msie10") > -1 || AscBrowser.userAgent.indexOf("msie 10") > -1);
@@ -94,6 +101,28 @@ AscBrowser.isSafari = !AscBrowser.isIE && !AscBrowser.isChrome && (AscBrowser.us
 
 // macOs safari detect
 AscBrowser.isSafariMacOs = (AscBrowser.isSafari && AscBrowser.isMacOs);
+
+if (AscBrowser.isSafari)
+{
+	let testVersion =  AscBrowser.userAgent.indexOf("version/");
+	if (-1 !== testVersion)
+	{
+		let last = AscBrowser.userAgent.indexOf(" ", testVersion);
+		let ver = AscBrowser.userAgent.substring(testVersion + 8, last);
+		let arrVer = ver.split(".");
+		try
+		{
+			while (3 > arrVer.length)
+				arrVer.push("0");
+
+			AscBrowser.safariVersion = 1000000 * parseInt(arrVer[0]) +  1000 * parseInt(arrVer[1]) + parseInt(arrVer[2]);
+		}
+		catch (err)
+		{
+			AscBrowser.safariVersion = 17004001;
+		}
+	}
+}
 
 // apple devices detect
 AscBrowser.isAppleDevices = (AscBrowser.userAgent.indexOf("ipad") > -1 ||
@@ -117,6 +146,8 @@ if (AscBrowser.isAppleDevices)
 	}
 	AscBrowser.iosVersion = iosversion;
 }
+
+if (navigator.maxTouchPoints) AscBrowser.maxTouchPoints = navigator.maxTouchPoints;
 
 // android devices detect
 AscBrowser.isAndroid = (AscBrowser.userAgent.indexOf("android") > -1);
@@ -150,6 +181,8 @@ AscBrowser.isEmulateDevicePixelRatio = (AscBrowser.userAgent.indexOf("emulatedev
 AscBrowser.isNeedEmulateUpload = (AscBrowser.userAgent.indexOf("needemulateupload") > -1);
 
 AscBrowser.isAndroidNativeApp = (AscBrowser.userAgent.indexOf("ascandroidwebview") > -1);
+
+AscBrowser.isTelegramWebView = (typeof TelegramWebviewProxy === "object") ? true : false;
 
 AscBrowser.zoom = 1;
 
@@ -187,6 +220,13 @@ AscBrowser.checkZoom = function()
     AscCommon.correctApplicationScale(zoomValue);
 };
 
+AscBrowser.isOffsetUsedZoom = function()
+{
+	if (AscCommon.AscBrowser.isChrome && 128 <= AscCommon.AscBrowser.chromeVersion)
+		return (AscBrowser.zoom === 1) ? false : true;
+	return false;
+};
+
 AscBrowser.checkZoom();
 
 AscBrowser.convertToRetinaValue = function(value, isScale)
@@ -197,7 +237,76 @@ AscBrowser.convertToRetinaValue = function(value, isScale)
 		return ((value / AscBrowser.retinaPixelRatio) + 0.5) >> 0;
 };
 
+var UI = {
+	getBoundingClientRect : function(element)
+	{
+		let rect = element.getBoundingClientRect();
+		if (!AscBrowser.isOffsetUsedZoom())
+			return rect;
+
+		let koef = AscCommon.AscBrowser.zoom;
+		let newRect = {}
+		if (undefined !== rect.x)      newRect.x      = rect.x * koef;
+		if (undefined !== rect.y)      newRect.y      = rect.y * koef;
+		if (undefined !== rect.width)  newRect.width  = rect.width * koef;
+		if (undefined !== rect.height) newRect.height = rect.height * koef;
+
+		if (undefined !== rect.left)   newRect.left   = rect.left * koef;
+		if (undefined !== rect.top)    newRect.top    = rect.top * koef;
+		if (undefined !== rect.right)  newRect.right  = rect.right * koef;
+		if (undefined !== rect.bottom) newRect.bottom = rect.bottom * koef;
+		return newRect;
+	},
+
+	getOffsetLeft : function(element) {
+		if (!AscBrowser.isOffsetUsedZoom())
+			return element.offsetLeft;
+		return element.offsetLeft * AscBrowser.zoom;
+	},
+
+	getOffsetTop : function(element) {
+		if (!AscBrowser.isOffsetUsedZoom())
+			return element.offsetTop;
+		return element.offsetTop * AscBrowser.zoom;
+	}
+};
+
+if (AscBrowser.isChrome)
+{
+	try
+	{
+		let canvas = document.createElement("canvas");
+		let ctxGL = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+
+		if (ctxGL)
+		{
+			let debugInfo = ctxGL.getExtension('WEBGL_debug_renderer_info');
+			if (debugInfo)
+			{
+				let renderer = ctxGL.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+				if (renderer)
+				{
+					renderer = renderer.toLowerCase();
+					if (-1 !== renderer.indexOf("qualcomm") && -1 !== renderer.indexOf("adreno"))
+						AscBrowser.willReadFrequently = true;
+				}
+			}
+		}
+	}
+	catch (e)
+	{
+	}
+}
+
+AscBrowser.getContext2D = function(canvas)
+{
+	if (AscBrowser.willReadFrequently)
+		return canvas.getContext('2d', { willReadFrequently: true });
+	return canvas.getContext('2d');
+};
+
     //--------------------------------------------------------export----------------------------------------------------
     window['AscCommon'] = window['AscCommon'] || {};
     window['AscCommon'].AscBrowser = AscBrowser;
+	window['AscCommon'].UI = UI;
 })(window);

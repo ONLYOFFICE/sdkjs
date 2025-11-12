@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -522,7 +522,19 @@ CShape.prototype.recalculateText = function()
         if (this.recalcInfo.recalculateTransformText) {
             this.recalculateTransformText();
         }
+		
+		this.checkFormShiftView();
     }, this, []);
+};
+
+CShape.prototype.checkFormShiftView = function()
+{
+	if (!this.bWordShape)
+		return;
+	
+	let docContent = this.getDocContent();
+	if (docContent)
+		docContent.ShiftViewToFirstLine();
 };
 
 CShape.prototype.recalculateWrapPolygon = function()
@@ -604,10 +616,43 @@ CShape.prototype.recalculateContent = function()
     if(content)
     {
         var body_pr = this.getBodyPr();
-        var oRecalcObj = this.recalculateDocContent(content, body_pr);
-        this.contentHeight = oRecalcObj.contentH;
-        this.contentWidth = oRecalcObj.w;
-        return oRecalcObj;
+
+        var oRecalcObject = this.recalculateDocContent(content, body_pr);
+
+        this.contentWidth = oRecalcObject.w;
+        this.contentHeight = oRecalcObject.contentH;
+        if(this.recalcInfo.recalcTitle)
+        {
+            this.recalcInfo.bRecalculatedTitle = true;
+            this.recalcInfo.recalcTitle = null;
+
+
+            var oTextWarpContent = this.checkTextWarp(content, body_pr, oRecalcObject.textRectW + oRecalcObject.correctW, oRecalcObject.textRectH + oRecalcObject.correctH, true, false);
+            this.txWarpStructParamarks = oTextWarpContent.oTxWarpStructParamarksNoTransform;
+            this.txWarpStruct = oTextWarpContent.oTxWarpStructNoTransform;
+
+            this.txWarpStructParamarksNoTransform = oTextWarpContent.oTxWarpStructParamarksNoTransform;
+            this.txWarpStructNoTransform = oTextWarpContent.oTxWarpStructNoTransform;
+        }
+        else
+        {
+            var oTextWarpContent = this.checkTextWarp(content, body_pr, oRecalcObject.textRectW + oRecalcObject.correctW, oRecalcObject.textRectH + oRecalcObject.correctH, true, true);
+            this.txWarpStructParamarks = oTextWarpContent.oTxWarpStructParamarks;
+            this.txWarpStruct = oTextWarpContent.oTxWarpStruct;
+
+            this.txWarpStructParamarksNoTransform = oTextWarpContent.oTxWarpStructParamarksNoTransform;
+            this.txWarpStructNoTransform = oTextWarpContent.oTxWarpStructNoTransform;
+        }
+        return oRecalcObject;
+    }
+    else{
+        this.txWarpStructParamarks = null;
+        this.txWarpStruct = null;
+
+        this.txWarpStructParamarksNoTransform = null;
+        this.txWarpStructNoTransform = null;
+
+        this.recalcInfo.warpGeometry = null;
     }
     return null;
 };
@@ -793,11 +838,11 @@ CShape.prototype.Refresh_RecalcData2 = function()
     }
 };
 
-CShape.prototype.Get_StartPage_Absolute = function()
+CShape.prototype.GetAbsoluteStartPage = function()
 {
     return 0;
 };
-CShape.prototype.Get_AbsolutePage = function(CurPage)
+CShape.prototype.GetAbsolutePage = function(CurPage)
 {
     var oDrawing = this.GetParaDrawing();
     if(oDrawing)
@@ -806,7 +851,7 @@ CShape.prototype.Get_AbsolutePage = function(CurPage)
     }
     return 0;
 };
-CShape.prototype.Get_AbsoluteColumn = function(CurPage)
+CShape.prototype.GetAbsoluteColumn = function(CurPage)
 {
     return 0;
 };
@@ -904,7 +949,7 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex, bNoTextSelect
 	}
 };
 
-CShape.prototype.Get_StartPage_Relative = function()
+CShape.prototype.GetRelativeStartPage = function()
 {
     return 0;
 };
@@ -987,20 +1032,42 @@ CShape.prototype.checkPosTransformText = function()
 {
     if(AscFormat.isRealNumber(this.posX) && AscFormat.isRealNumber(this.posY))
     {
+        let parentTransform = null;
+        let parent = (this.parent || this.group);
+        if(parent && parent.Get_ParentParagraph)
+        {
+            let paragraph = parent.Get_ParentParagraph();
+            if(paragraph)
+            {
+                parentTransform = paragraph.Get_ParentTextTransform();
+            }
+        }
         this.transformText = this.localTransformText.CreateDublicate();
         global_MatrixTransformer.TranslateAppend(this.transformText, this.posX, this.posY);
+        if (parentTransform)
+        {
+            global_MatrixTransformer.MultiplyAppend(this.transformText, parentTransform);
+        }
         this.invertTransformText = global_MatrixTransformer.Invert(this.transformText);
 
         if(this.localTransformTextWordArt)
         {
             this.transformTextWordArt = this.localTransformTextWordArt.CreateDublicate();
             global_MatrixTransformer.TranslateAppend(this.transformTextWordArt, this.posX, this.posY);
+            if (parentTransform)
+            {
+                global_MatrixTransformer.MultiplyAppend(this.transformTextWordArt, parentTransform);
+            }
             this.invertTransformTextWordArt = global_MatrixTransformer.Invert(this.transformTextWordArt);
         }
         if(this.localTransformText2)
         {
             this.transformText2 = this.localTransformText2.CreateDublicate();
             global_MatrixTransformer.TranslateAppend(this.transformText2, this.posX, this.posY);
+            if (parentTransform)
+            {
+                global_MatrixTransformer.MultiplyAppend(this.transformText2, parentTransform);
+            }
             this.invertTransformText2 = global_MatrixTransformer.Invert(this.transformText2);
         }
     }
@@ -1194,13 +1261,13 @@ CShape.prototype.setStartPage = function(pageIndex, bNoResetSelectPage, bCheckCo
 						{
 							return true;
 						}
-						else if (para_FieldChar === oItem.Type && oItem.IsSeparate())
+						else if (para_FieldChar === oItem.Type && oItem.IsEnd())
 						{
 							var oComplexField = oItem.GetComplexField();
 							if (oComplexField)
 							{
 								var oInstruction = oComplexField.GetInstruction();
-								if (oInstruction && (fieldtype_NUMPAGES === oInstruction.GetType() || fieldtype_PAGE === oInstruction.GetType()))
+								if (oInstruction && (AscWord.fieldtype_NUMPAGES === oInstruction.GetType() || AscWord.fieldtype_PAGE === oInstruction.GetType()))
 								{
 									return true;
 								}

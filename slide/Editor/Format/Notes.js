@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -173,6 +173,39 @@
         return GetNotesWidth();
     };
 
+	CNotes.prototype.createBodyShape = function () {
+		const oSp = new AscFormat.CShape();
+		oSp.setBDeleted(false);
+
+		const oNvSpPr = new AscFormat.UniNvPr();
+
+		const oCNvPr = oNvSpPr.cNvPr;
+		oCNvPr.setId(3);
+		oCNvPr.setName('Notes Placeholder 2');
+
+		const oPh = new AscFormat.Ph();
+		oPh.setType(AscFormat.phType_body);
+		oPh.setIdx(1 + "");
+
+		oNvSpPr.nvPr.setPh(oPh);
+		oSp.setNvSpPr(oNvSpPr);
+		oSp.setLockValue(AscFormat.LOCKS_MASKS.noGrp, true);
+		oSp.setSpPr(new AscFormat.CSpPr());
+		oSp.spPr.setParent(oSp);
+		oSp.createTextBody();
+
+		const oBodyPr = new AscFormat.CBodyPr();
+		oSp.txBody.setBodyPr(oBodyPr);
+
+		const oTxLstStyle = new AscFormat.TextListStyle();
+		oSp.txBody.setLstStyle(oTxLstStyle);
+
+		oSp.setParent(this);
+		this.addToSpTreeToPos(1, oSp);
+
+		return oSp;
+	};
+
     CNotes.prototype.getBodyShape = function(){
         var aSpTree = this.cSld.spTree;
         for(var i = 0; i < aSpTree.length; ++i){
@@ -330,6 +363,23 @@
     CNotes.prototype.Refresh_ContentChanges = function()
     {
     };
+    CNotes.prototype.getColorMap = function()
+    {
+        if(this.Master)
+        {
+            if(this.Master.clrMap)
+            {
+                return this.Master.clrMap;
+            }
+        }
+        return AscFormat.GetDefaultColorMap();
+    };
+    CNotes.prototype.IsUseInDocument = function() {
+        if(this.slide){
+            return this.slide.IsUseInDocument();
+        }
+        return false;
+    };
 
     function CreateNotes(){
         var oN = new CNotes();
@@ -393,6 +443,15 @@
         oSp.txBody.setBodyPr(oBodyPr);
         oTxLstStyle = new AscFormat.TextListStyle();
         oSp.txBody.setLstStyle(oTxLstStyle);
+        const oContent = oSp.getDocContent();
+        if(oContent) {
+            oContent.ClearContent(true);
+            const oParagraph = oContent.Content[0];
+            const oFld = new AscCommonWord.CPresentationField(oParagraph);
+            oFld.SetGuid(AscCommon.CreateGUID());
+            oFld.SetFieldType("slidenum");
+            oParagraph.Internal_Content_Add(0, oFld);
+        }
         oSp.setParent(oN);
         oN.addToSpTreeToPos(2, oSp);
         return oN;

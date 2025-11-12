@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -46,6 +46,8 @@
 		this.CheckedFont     = Asc.c_oAscSdtCheckBoxDefaults.CheckedFont;
 		this.UncheckedFont   = Asc.c_oAscSdtCheckBoxDefaults.UncheckedFont;
 		this.GroupKey        = undefined;
+		this.ChoiceName      = undefined;
+		this.Label           = undefined;
 	}
 	CSdtCheckBoxPr.prototype.Copy = function()
 	{
@@ -158,6 +160,25 @@
 	{
 		this.GroupKey = sKey;
 	};
+	CSdtCheckBoxPr.prototype.SetChoiceName = function(name)
+	{
+		this.ChoiceName = name;
+	};
+	CSdtCheckBoxPr.prototype.GetChoiceName = function(returnRaw)
+	{
+		if (returnRaw)
+			return this.ChoiceName;
+		
+		return this.ChoiceName ? this.ChoiceName : "";
+	};
+	CSdtCheckBoxPr.prototype.SetLabel = function(text)
+	{
+		this.Label = text;
+	};
+	CSdtCheckBoxPr.prototype.GetLabel = function()
+	{
+		return this.Label ? this.Label : "";
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'].CSdtCheckBoxPr    = CSdtCheckBoxPr;
 	window['AscCommon']['CSdtCheckBoxPr'] = CSdtCheckBoxPr;
@@ -177,5 +198,9 @@
 	CSdtCheckBoxPr.prototype['put_UncheckedFont']   = CSdtCheckBoxPr.prototype.SetUncheckedFont;
 	CSdtCheckBoxPr.prototype['get_GroupKey']        = CSdtCheckBoxPr.prototype.GetGroupKey;
 	CSdtCheckBoxPr.prototype['put_GroupKey']        = CSdtCheckBoxPr.prototype.SetGroupKey;
-
+	CSdtCheckBoxPr.prototype['get_ChoiceName']      = CSdtCheckBoxPr.prototype.GetChoiceName;
+	CSdtCheckBoxPr.prototype['put_ChoiceName']      = CSdtCheckBoxPr.prototype.SetChoiceName;
+	CSdtCheckBoxPr.prototype['get_Label']           = CSdtCheckBoxPr.prototype.GetLabel;
+	CSdtCheckBoxPr.prototype['put_Label']           = CSdtCheckBoxPr.prototype.SetLabel;
+	
 })(window);

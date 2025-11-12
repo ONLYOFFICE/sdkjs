@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -77,13 +77,9 @@
 	};
 	CRunContinuationSeparator.prototype.UpdateWidth = function(PRS)
 	{
-		var oPara    = PRS.Paragraph;
-		var nCurPage = PRS.Page;
+		let contentFrame = PRS.Paragraph.GetPageContentFrame(PRS.Page);
 
-		oPara.Parent.Update_ContentIndexing();
-		var oLimits = oPara.Parent.Get_PageContentStartPos2(oPara.PageNum, oPara.ColumnNum, nCurPage, oPara.Index);
-
-		var nWidth = (Math.max(oLimits.XLimit - PRS.X, 50) * AscWord.TEXTWIDTH_DIVIDER) | 0;
+		var nWidth = (Math.max(contentFrame.XLimit - PRS.X, 50) * AscWord.TEXTWIDTH_DIVIDER) | 0;
 
 		this.Width        = nWidth;
 		this.WidthVisible = nWidth;

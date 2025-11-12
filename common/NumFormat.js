@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -89,6 +89,7 @@ var gc_nMaxMantissa = Math.pow(10, gc_nMaxDigCount);
 var gc_aTimeFormats = ['[$-F400]h:mm:ss AM/PM', 'h:mm;@', 'h:mm AM/PM;@', 'h:mm:ss;@', 'h:mm:ss AM/PM;@', 'mm:ss.0;@',
 	'[h]:mm:ss;@'];
 var gc_aFractionFormats = ['# ?/?', '# ??/??', '# ???/???', '# ?/2', '# ?/4', '# ?/8', '# ??/16', '# ?/10', '# ??/100'];
+const dBNum1Numbers = ['\u3007','\u4E00','\u4E8C','\u4E09','\u56DB','\u4E94','\u516D','\u4E03','\u516B','\u4E5D'];
 var gc_aJapanEras = [
 	["M", "明", "明治", 1868],
 	["T", "大", "大正", 1912],
@@ -206,7 +207,8 @@ var NumFormatType =
 {
 	Excel: 1,
 	WordFieldDate: 2,
-	WordFieldNumeric: 3
+	WordFieldNumeric: 3,
+	PDFFormDate: 4
 };
 
 function getNumberParts(x)
@@ -406,8 +408,8 @@ function FormatObjBracket(sData)
                             case "S":
                             case "s": this.dataObj = new FormatObjDateVal(numFormat_Second, nCount, true);break;
 							case "G":
-                            case "g": this.dataObj = new FormatObjDateVal(numFormat_Gannen, nCount, true);break;
-                            case "e": this.dataObj = new FormatObjDateVal(numFormat_JapanYearsGannen, nCount, true);break;
+							case "g": this.dataObj = new FormatObjDateVal(numFormat_Gannen, nCount, true);break;
+							case "e": this.dataObj = new FormatObjDateVal(numFormat_JapanYearsGannen, nCount, true);break;
                             case "a": this.dataObj = new FormatObjDateVal(numFormat_DayOfWeek, nCount, true);break;
                         }
                     }
@@ -790,8 +792,9 @@ function NumFormat(bAddMinusIfNes)
 	this.ComporationOperator = null;
 	this.LCID = null;
 	this.CurrencyString = null;
+	this.DBNum = 0;
 	this.bCurrentEraYear = false;
-    
+
 	this.bGeneralChart = false;//если в формате только один текст(например в chart "Основной")
     this.bAddMinusIfNes = bAddMinusIfNes;//когда не задано форматирование для отрицательных чисел иногда надо вставлять минус
 }
@@ -876,32 +879,53 @@ NumFormat.prototype =
     },
     _ReadAmPm : function(next)
     {
-        var sAm = next;
-        var sPm  = "";
-        var bAm = true;
+		if ("A" === next || "a" === next) {
+			let ampm = "AM/PM";
+			if (ampm.substring(1) === this._GetText(ampm.length - 1).toUpperCase()) {
+				this._addToFormat2(new FormatObj(numFormat_AmPm));
+				this.bTimePeriod = true;
+				this.bDateTime = true;
+				this._skip(ampm.length - 1);
+				return true;
+			}
+		}
+		if ("上" === next) {
+			let ampm = "上午/下午";
+			if (ampm.substring(1) === this._GetText(ampm.length - 1).toUpperCase()) {
+				this._addToFormat2(new FormatObj(numFormat_AmPm));
+				this.bTimePeriod = true;
+				this.bDateTime = true;
+				this._skip(ampm.length - 1);
+				return true;
+			}
+		}
+		return false;
+    },
+	_ReadAmPmPDF : function(next)
+    {
+		let bAmPm = true;
+		let nttCount = 1;
         while(true)
         {
             next = this._readChar();
             if(this.EOF == next)
                 break;
-            else if("/" == next)
+            else if ("t" == next)
             {
-                bAm = false;
-            }
-            else if("A" == next || "a" == next || "P" == next || "p" == next || "M" == next || "m" == next)
-            {
-                if(true == bAm)
-                    sAm += next;
-                else
-                    sPm += next;
+				nttCount++;
             }
             else
             {
-                this._skip(-1);
-                break;
+				// если больше двух tt не добавляем am/pm
+				if (nttCount > 2) {
+					bAmPm = false;
+				}
+
+				this._skip(-1);
+				break;
             }
         }
-        if("" != sAm && "" != sPm)
+        if(bAmPm == true)
         {
             this._addToFormat2(new FormatObj(numFormat_AmPm));
             this.bTimePeriod = true;
@@ -1028,6 +1052,10 @@ NumFormat.prototype =
                 this._addToFormat(numFormat_General);
                 this._skip(sGeneral.length - 1);
             }
+			else if (this._ReadAmPm(next))
+			{
+
+			}
             else if("E" == next || "e" == next || era == next)
             {
 				var nextChar = this._readNextChar();
@@ -1094,9 +1122,7 @@ NumFormat.prototype =
 			{
 				this._addToFormat2(new FormatObjDateVal(numFormat_DayOfWeek, 1, false));
 			}
-            else if ("A" == next || "a" == next) {
-                this._ReadAmPm(next);
-            } else {
+            else {
                 bNoFormat = true;
                 this._addToFormat(numFormat_Text, next);
             }
@@ -1114,6 +1140,10 @@ NumFormat.prototype =
 				break;
 			else if("\'" == next)
 				this._ReadText("\'");
+			else if (this._ReadAmPm(next))
+			{
+
+			}
 			else if("Y" == next || "y" == next)
 			{
 				this._addToFormat2(new FormatObjDateVal(numFormat_Year, 1, false));
@@ -1146,11 +1176,50 @@ NumFormat.prototype =
 			{
 				this._addToFormat2(new FormatObjDateVal(numFormat_DayOfWeek, 1, false));
 			}
-			else if ("A" == next || "a" == next) {
-				this._ReadAmPm(next);
-			}
 			else {
 					this._addToFormat(numFormat_Text, next);
+			}
+        }
+        return true;
+    },
+	_parseFormatPDFDateTime : function()
+    {
+        while(true)
+        {
+            var next = this._readChar();
+			if(this.EOF == next)
+				break;
+			else if("\'" == next)
+				this._ReadText("\'");
+			else if ("y" == next)
+			{
+				this._addToFormat2(new FormatObjDateVal(numFormat_Year, 1, false));
+			}
+			else if ("m" == next)
+			{
+				this._addToFormat2(new FormatObjDateVal(numFormat_Month, 1, false));
+			}
+			else if ("M" == next)
+			{
+				this._addToFormat2(new FormatObjDateVal(numFormat_Minute, 1, false));
+			}
+			else if ("d" == next)
+			{
+				this._addToFormat2(new FormatObjDateVal(numFormat_Day, 1, false));
+			}
+			else if ("h" == next || "H" == next)
+			{
+				this._addToFormat2(new FormatObjDateVal(numFormat_Hour, 1, false));
+			}
+			else if ("s" == next)
+			{
+				this._addToFormat2(new FormatObjDateVal(numFormat_Second, 1, false));
+			}
+			else if ("t" == next) {
+				this._ReadAmPmPDF(next);
+			}
+			else {
+				this._addToFormat(numFormat_Text, next);
 			}
         }
         return true;
@@ -1406,16 +1475,23 @@ NumFormat.prototype =
             {
                 //Разрешаем конфликты numFormat_MonthMinute
                 var bRightCond = false;
-                //ищем вперед первый элемент с типом datetime 
-                for(var j = i + 1; j < nFormatLength; ++j)
+                if (item.bElapsed)
                 {
-                    var subItem = this.aRawFormat[j];
-                    if(numFormat_Year == subItem.type || numFormat_Month == subItem.type || numFormat_Day == subItem.type || numFormat_MonthMinute == subItem.type ||
-                    numFormat_Hour == subItem.type || numFormat_Minute == subItem.type || numFormat_Second == subItem.type || numFormat_Milliseconds == subItem.type)
+                    bRightCond = true;
+                }
+                else
+                {
+                    //ищем вперед первый элемент с типом datetime 
+                    for(var j = i + 1; j < nFormatLength; ++j)
                     {
-                        if(numFormat_Second == subItem.type)
-                            bRightCond = true;
-                        break;
+                        var subItem = this.aRawFormat[j];
+                        if(numFormat_Year == subItem.type || numFormat_Month == subItem.type || numFormat_Day == subItem.type || numFormat_MonthMinute == subItem.type ||
+                        numFormat_Hour == subItem.type || numFormat_Minute == subItem.type || numFormat_Second == subItem.type || numFormat_Milliseconds == subItem.type)
+                        {
+                            if(numFormat_Second == subItem.type)
+                                bRightCond = true;
+                            break;
+                        }
                     }
                 }
                 var bLeftCond = false;
@@ -1508,6 +1584,38 @@ NumFormat.prototype =
             }
         }
         return true;
+    },
+	_prepareFormatDatePDF : function()
+    {
+		var nFormatLength = this.aRawFormat.length;
+        //Группируем несколько элемнтов подряд в один спецсимвол
+        for(var i = 0; i < nFormatLength; ++i)
+        {
+            var item = this.aRawFormat[i];
+            if(numFormat_Year == item.type || numFormat_Month == item.type || numFormat_Day == item.type)
+            {
+                //Удаляем итемы у которых val > 4 (для года удаляем если "yyy")
+				if(item.val === 3 && numFormat_Year == item.type)
+                {
+                    this.aRawFormat.splice(i, 1);
+					nFormatLength -= 1;
+                }
+                if(item.val > 4)
+                {
+                    this.aRawFormat.splice(i, 1);
+					nFormatLength -= 1;
+                }
+            }
+			else if(numFormat_Hour == item.type || numFormat_Minute == item.type || numFormat_Second == item.type)
+            {
+				//Удаляем итемы у которых val > 2
+                if(item.val > 2)
+                {
+                    this.aRawFormat.splice(i, 1);
+					nFormatLength -= 1;
+                }
+            }
+        }
     },
 	_calsScientific : function(nDecLen, nRealExp)
 	{
@@ -1661,12 +1769,30 @@ NumFormat.prototype =
         }
         return res;
     },
+	_parseNumberForPDFDate : function(number) {
+		let oDateTmp = new Date();
+		oDateTmp.setTime(number * (86400 * 1000));
+	 
+		return {
+			date: {
+				d:			oDateTmp.getDate(),
+				dayWeek:	oDateTmp.getDay(),
+				hour:		oDateTmp.getHours(),
+				min:		oDateTmp.getMinutes(),
+				month:		oDateTmp.getMonth(),
+				ms:			0,
+				//ms:			oDateTmp.getMilliseconds(),
+				sec:		oDateTmp.getSeconds(),
+				year:		oDateTmp.getFullYear()
+			}
+		}
+	},
 	parseDate : function(number)
 	{
         var d = {val: 0, coeff: 1}, h = {val: 0, coeff: 24},
             min = {val: 0, coeff: 60}, s = {val: 0, coeff: 60}, ms = {val: 0, coeff: 1000};
         //number is negative in case of bDate1904
-        var numberAbs = Math.abs(number);
+        var numberAbs = this.formatType == AscCommon.NumFormatType.PDFFormDate ? number : Math.abs(number);
         var tmp = numberAbs;
         var ttimes = [d, h, min, s, ms];
         for(var i = 0; i < 4; i++)
@@ -1694,14 +1820,14 @@ NumFormat.prototype =
 		}
 		else
 		{
-			if(numberAbs === 60)
+			if (60 <= numberAbs && numberAbs < 61)
 			{
 				day = 29;
 				month = 1;
 				year = 1900;
 				dayWeek = 3;
 			}
-			else if(numberAbs === 0)
+			else if (0 <= numberAbs && numberAbs < 1)
 			{
 				//TODO необходимо использовать cDate везде
 				stDate = new Asc.cDate(Date.UTC(1899,11,31,0,0,0));
@@ -1710,10 +1836,11 @@ NumFormat.prototype =
 				month = stDate.getUTCMonth();
 				year = stDate.getUTCFullYear();
 			}
-			else if(numberAbs < 60)
+			else if(numberAbs < 60 && number > 0)
 			{
 				stDate = new Date(Date.UTC(1899,11,31,0,0,0));
 				if(d.val)
+				// setUTCDate doesn't consider the transition from 1899 to 1900 when adding d.val
 					stDate.setUTCDate( stDate.getUTCDate() + d.val );
 				day = stDate.getUTCDate();
 				dayWeek = ( stDate.getUTCDay() > 0) ? stDate.getUTCDay() - 1 : 6;
@@ -1894,6 +2021,29 @@ NumFormat.prototype =
         }
         return aRes;
     },
+	_replaceDBNumDigit: function (val) {
+		//todo DBNum 1-4
+		if (1 !== this.DBNum) {
+			return val;
+		}
+		let locale = Asc.g_oLcidIdToNameMap[this.LCID];
+		if (!locale) {
+			return val;
+		}
+		locale = locale.substring(0, 2);
+		if ('zh' === locale || 'ja' === locale || 'ko' === locale) {
+			let dBNumVal = '';
+			for (let j = 0; j < val.length; ++j) {
+				if ('0' <= val[j] && val[j] <= '9') {
+					dBNumVal += dBNum1Numbers[val[j] - '0'];
+				} else {
+					dBNumVal += val[j];
+				}
+			}
+			val = dBNumVal;
+		}
+		return val;
+	},
     _AddDigItem : function(res, oCurText, item)
     {
         if(numFormat_Text == item.type)
@@ -1966,6 +2116,8 @@ NumFormat.prototype =
         //string -> tokens
 		if (NumFormatType.WordFieldDate === formatType) {
 			this.valid = this._parseFormatWordDateTime();
+		} else if (NumFormatType.PDFFormDate === formatType) {
+			this.valid = this._parseFormatPDFDateTime();
 		} else if (NumFormatType.WordFieldNumeric === formatType) {
 			this.valid = this._parseFormatWordNumeric("#");
 		} else {
@@ -1973,6 +2125,7 @@ NumFormat.prototype =
 		}
         if (true == this.valid) {
             //prepare tokens
+            // this.valid = formatType != NumFormatType.PDFFormDate ? this._prepareFormat() : this._prepareFormatPDF();
             this.valid = this._prepareFormat();
             if (this.valid) {
                 //additional prepare
@@ -1983,54 +2136,59 @@ NumFormat.prototype =
                     if (numFormat_Text == item.type) {
                         sText += item.val;
                     } else if (numFormat_Bracket == item.type) {
-                        if (null != item.CurrencyString) {
-							this.bCurrency = true;
-							this.CurrencyString = item.CurrencyString;
-                            sText += item.CurrencyString;
-                        }
-						if (null != item.Lid) {
-							this.bSystemDateTime = -1;
-							if (item.Lid == "x-sysdate" || item.Lid == "x-systime")
-							{
-								this.LCID = cultureInfo.LCID;
-								switch(item.Lid)
+						let dbnum = item.val.match(/DBNum(\d)/);
+						if (dbnum) {
+							this.DBNum = parseInt(dbnum[1]);
+						} else {
+							if (null != item.CurrencyString) {
+								this.bCurrency = true;
+								this.CurrencyString = item.CurrencyString;
+								sText += item.CurrencyString;
+							}
+							if (null != item.Lid) {
+								this.bSystemDateTime = -1;
+								if (item.Lid == "x-sysdate" || item.Lid == "x-systime")
 								{
-									case("x-sysdate"):
+									this.LCID = cultureInfo.LCID;
+									switch(item.Lid)
 									{
-										this.bSystemDateTime = 0;
-										break;
+										case("x-sysdate"):
+										{
+											this.bSystemDateTime = 0;
+											break;
+										}
+										case("x-systime"):
+										{
+											this.bSystemDateTime = 1;
+											break;
+										}
+										
 									}
-									case("x-systime"):
-									{
-										this.bSystemDateTime = 1;
-										break;
-									}
-									
 								}
-							}
-							var el = item.Lid.toLowerCase().split('-');
-							el = this.checkUpperAndLowerLoceles(el);
-							var defaultSecondPart = gc_oDefaultLocales[el[0]];
-							if (item.formatsSecondPart != null && item.formatsSecondPart != "")
-								item.Lid = item.Lid + "," + item.formatsSecondPart;
-							if(defaultSecondPart != null && defaultSecondPart.length > 0) {
-								if(el[0] != null && el[1] != null) 
-									this.LCID = Asc.g_oLcidNameToIdMap[el[0] + "-" + el[1]];
-								if(defaultSecondPart != null && defaultSecondPart.length > 0
-									&& (this.LCID == null || this.LCID == 0))
-									this.LCID = Asc.g_oLcidNameToIdMap[defaultSecondPart];
-							}
-							if(this.LCID != null && this.LCID != 0) {
-								if (item.currentEra != null)
-									this.bCurrentEraYear = item.currentEra;
-							}
-							//Excel sometimes add 0x10000(0x442 and 0x10442)
-							else if(gc_aIsForEra.indexOf(parseInt(item.Lid, 16)) != -1) {
-								this.bCurrentEraYear = true;
-								this.LCID = parseInt(item.Lid, 16) & 0xFFFF;
-							} else {
-								this.bCurrentEraYear = false;
-								this.LCID = parseInt(item.Lid, 16) & 0xFFFF;
+								var el = item.Lid.toLowerCase().split('-');
+								el = this.checkUpperAndLowerLoceles(el);
+								var defaultSecondPart = gc_oDefaultLocales[el[0]];
+								if (item.formatsSecondPart != null && item.formatsSecondPart != "")
+									item.Lid = item.Lid + "," + item.formatsSecondPart;
+								if(defaultSecondPart != null && defaultSecondPart.length > 0) {
+									if(el[0] != null && el[1] != null) 
+										this.LCID = Asc.g_oLcidNameToIdMap[el[0] + "-" + el[1]];
+									if(defaultSecondPart != null && defaultSecondPart.length > 0
+										&& (this.LCID == null || this.LCID == 0))
+										this.LCID = Asc.g_oLcidNameToIdMap[defaultSecondPart];
+								}
+								if(this.LCID != null && this.LCID != 0) {
+									if (item.currentEra != null)
+										this.bCurrentEraYear = item.currentEra;
+								}
+								//Excel sometimes add 0x10000(0x442 and 0x10442)
+								else if(gc_aIsForEra.indexOf(parseInt(item.Lid, 16)) != -1) {
+									this.bCurrentEraYear = true;
+									this.LCID = parseInt(item.Lid, 16) & 0xFFFF;
+								} else {
+									this.bCurrentEraYear = false;
+									this.LCID = parseInt(item.Lid, 16) & 0xFFFF;
+								}
 							}
 						}
                     }
@@ -2193,7 +2351,7 @@ NumFormat.prototype =
         {
             if(true === this.bDateTime)
             {
-                if(this.isInvalidDateValue(number))
+                if(this.isInvalidDateValue(number) && this.formatType != AscCommon.NumFormatType.PDFFormDate)
                 {
                     var oNewFont = new AscCommonExcel.Font();
 					oNewFont.repeat = true;
@@ -2201,7 +2359,12 @@ NumFormat.prototype =
                     return res;
                 }
             }
-            var oParsedNumber = this._parseNumber(number, this.aDecFormat, this.aFracFormat.length, nValType);
+            var oParsedNumber;
+			if (this.formatType == AscCommon.NumFormatType.PDFFormDate)
+				oParsedNumber = this._parseNumberForPDFDate(number);
+			else
+				oParsedNumber = this._parseNumber(number, this.aDecFormat, this.aFracFormat.length, nValType);
+
             if (true == this.isGeneral() || (true == oParsedNumber.bDigit && true == this.bTextFormat) || (false == oParsedNumber.bDigit && false == this.bTextFormat) || (bChart && this.bGeneralChart))
             {
                 return this._applyGeneralFormat(number, nValType, dDigitsCount, bChart, cultureInfo);
@@ -2234,6 +2397,31 @@ NumFormat.prototype =
             var nReadState = FormatStates.Decimal;
             var nFormatLength = this.aRawFormat.length;
 			var aCopyRowFormat = this.aRawFormat;
+			let isArabic = (lcid_ar === cultureInfoLCID.LCID
+				|| lcid_arSY === cultureInfoLCID.LCID
+				|| lcid_arSA === cultureInfoLCID.LCID
+				|| lcid_arAE === cultureInfoLCID.LCID
+				|| lcid_arBH === cultureInfoLCID.LCID
+				|| lcid_arDZ === cultureInfoLCID.LCID
+				|| lcid_arEG === cultureInfoLCID.LCID
+				|| lcid_arIQ === cultureInfoLCID.LCID
+				|| lcid_arJO === cultureInfoLCID.LCID
+				|| lcid_arKW === cultureInfoLCID.LCID
+				|| lcid_arQA === cultureInfoLCID.LCID
+			);
+			
+			let _t = this;
+			function checkRLM(prev)
+			{
+				if (!isArabic)
+					return;
+				
+				if (undefined === prev
+					|| prev < 0
+					|| (numFormat_TimeSeparator !== _t.aRawFormat[prev].type
+						&& (numFormat_Text !== _t.aRawFormat[prev].type || ":" !== _t.aRawFormat[prev].val)))
+					oCurText.text += "‏";
+			}
 			
 			if (this.bSystemDateTime != null && this.bSystemDateTime != -1)
 			{
@@ -2296,7 +2484,11 @@ NumFormat.prototype =
                 }
                 else if(numFormat_Text == item.type)
                 {
-                    oCurText.text += item.val;
+					if(',' === item.val && isArabic) {
+						oCurText.text += "،";
+					} else {
+						oCurText.text += item.val;
+					}
                 }
                 else if(numFormat_TextPlaceholder == item.type)
                 {
@@ -2433,6 +2625,7 @@ NumFormat.prototype =
 					}
 					else
 					{
+						checkRLM();
 						oCurText.text += 'a'.repeat(item.val);
 					}
 				}
@@ -2447,20 +2640,27 @@ NumFormat.prototype =
 						}
 					}
 					else if (item.val > 0) {
-                    	if (item.val <= 2) {
-                      		oCurText.text += (oParsedNumber.date.year+'').substring(2);
-                    	} else {
-                			oCurText.text += oParsedNumber.date.year;
-                    	}
-                  	}
+					  checkRLM();
+						if (item.val <= 2) {
+							oCurText.text += (oParsedNumber.date.year.toString().slice(-2));
+						} else {
+							if (oParsedNumber.date.year.toString().length < 4)
+								oCurText.text += '0' + oParsedNumber.date.year;
+							else
+								oCurText.text += oParsedNumber.date.year;
+						}
+					}
                 }
                 else if(numFormat_Month == item.type)
                 {
                     var m = oParsedNumber.date.month;
-                    if(item.val == 1)
-                        oCurText.text += m + 1;
-                    else if(item.val == 2)
-                        oCurText.text += this._ZeroPad(m + 1);
+					if (item.val === 1) {
+						checkRLM();
+						oCurText.text += m + 1;
+					} else if (item.val === 2) {
+						checkRLM();
+						oCurText.text += this._ZeroPad(m + 1);
+					}
                     else if (item.val == 3) {
                         if (this.bDay && cultureInfoLCID.AbbreviatedMonthGenitiveNames.length > 0)
                             oCurText.text += cultureInfoLCID.AbbreviatedMonthGenitiveNames[m];
@@ -2481,10 +2681,13 @@ NumFormat.prototype =
                 }
                 else if(numFormat_Day == item.type)
                 {
-                    if(item.val == 1)
-                        oCurText.text += oParsedNumber.date.d;
-                    else if(item.val == 2)
-                        oCurText.text += this._ZeroPad(oParsedNumber.date.d);
+                    if(item.val == 1) {
+						checkRLM();
+						oCurText.text += oParsedNumber.date.d;
+					} else if(item.val === 2) {
+						checkRLM();
+						oCurText.text += this._ZeroPad(oParsedNumber.date.d);
+					}
                     else if(item.val == 3)
                         oCurText.text += cultureInfoLCID.AbbreviatedDayNames[oParsedNumber.date.dayWeek];
                     else if(item.val > 0)
@@ -2498,21 +2701,27 @@ NumFormat.prototype =
                         h = oParsedNumber.date.countDay*24 + oParsedNumber.date.hour;
                     if(this.bTimePeriod === true)
                         h = h%12||12;
-
-                    if(item.val == 1)
-                        oCurText.text += h;
-                    else if(item.val > 0)
-                        oCurText.text += this._ZeroPad(h);
+					
+					if (item.val > 0) {
+						checkRLM(i - 1);
+						if (item.val === 1)
+							oCurText.text += h;
+						else
+							oCurText.text += this._ZeroPad(h);
+					}
                 }
                 else if(numFormat_Minute == item.type)
                 {
                     var min = oParsedNumber.date.min;
                     if(item.bElapsed === true)
                         min = oParsedNumber.date.countDay*24*60 + oParsedNumber.date.hour*60 + oParsedNumber.date.min;
-                    if(item.val == 1)
-                        oCurText.text += min;
-                    else if(item.val > 0)
-                        oCurText.text += this._ZeroPad(min);
+					if (item.val > 0) {
+						checkRLM(i - 1);
+						if (item.val === 1)
+							oCurText.text += min;
+						else
+							oCurText.text += this._ZeroPad(min);
+					}
                 }
                 else if(numFormat_Second == item.type)
                 {
@@ -2521,11 +2730,14 @@ NumFormat.prototype =
                         s = oParsedNumber.date.sec + Math.round(oParsedNumber.date.ms/1000);
                     if(item.bElapsed === true)
                         s = oParsedNumber.date.countDay*24*60*60 + oParsedNumber.date.hour*60*60 + oParsedNumber.date.min*60 + s;
-
-                    if(item.val == 1)
-                        oCurText.text += s;
-                    else if(item.val > 0)
-                        oCurText.text += this._ZeroPad(s);
+	
+					if (item.val > 0) {
+						checkRLM(i - 1);
+						if (item.val === 1)
+							oCurText.text += s;
+						else
+							oCurText.text += this._ZeroPad(s);
+					}
                 }
                 else if (numFormat_AmPm == item.type) {
                     if (cultureInfoLCID.AMDesignator.length > 0 && cultureInfoLCID.PMDesignator.length > 0)
@@ -2550,6 +2762,7 @@ NumFormat.prototype =
                     else if (dMs < 100)
                         nExponent = -1;
                     var aMilSec = this._FormatNumber(dMs, nExponent, item.format.concat(), FormatStates.Frac, cultureInfo);
+					checkRLM(i - 1);
                     for (var k = 0; k < aMilSec.length; k++)
                         this._AddDigItem(res, oCurText, aMilSec[k]);
                 }
@@ -2598,8 +2811,10 @@ NumFormat.prototype =
 		var nLen = 0;
 		for(var i = 0; i < res.length; ++i){
 			var elem = res[i];
-			if(elem.text)
+			if (elem.text) {
+				elem.text = this._replaceDBNumDigit(elem.text);
 				nLen += elem.text.length;
+			}
 		}
 		if(nLen > Asc.c_oAscMaxColumnWidth){
 			var oNewFont = new AscCommonExcel.Font();
@@ -2609,7 +2824,7 @@ NumFormat.prototype =
         return res;
     },
 	shiftFormat : function(output, nShift, useLocaleFormat) {
-		if (this.bDateTime || this.bSlash || this.bTextFormat || (nShift < 0 && 0 == this.aFracFormat.length))
+		if (this.bDateTime || this.bSlash || this.bTextFormat)
 			return false;
 		output.format = this.toString(nShift, useLocaleFormat);
 		return true;
@@ -2726,6 +2941,10 @@ NumFormat.prototype =
 				case NumComporationOperators.lessorequal: res += "[<=" + this.ComporationOperator.operatorValue +"]";break;
 				case NumComporationOperators.notequal: res += "[<>" + this.ComporationOperator.operatorValue +"]";break;
 			}
+		}
+		if (this.DBNum > 0)
+		{
+			res += '[DBNum' + this.DBNum + ']';
 		}
 
         var nFormatLength = this.aRawFormat.length;    
@@ -2875,13 +3094,25 @@ NumFormat.prototype =
             }
             else if(numFormat_Minute == item.type)
             {
+                if (item.bElapsed) {
+                    res += "[";
+                }
                 for(var j = 0; j < item.val; ++j)
                     res += minute;
+                if (item.bElapsed) {
+                    res += "]";
+                }
             }
             else if(numFormat_Second == item.type)
             {
+                if (item.bElapsed) {
+                    res += "[";
+                }
                 for(var j = 0; j < item.val; ++j)
                     res += second;
+                if (item.bElapsed) {
+                    res += "]";
+                }
             }
 			else if(numFormat_Gannen == item.type)
 			{
@@ -3057,26 +3288,45 @@ CellFormat.prototype =
 {
 	isTextFormat : function()
 	{
-		if(null != this.oPositiveFormat)
+		if (this.oPositiveFormat  != null) {
 			return this.oPositiveFormat.bTextFormat;
-		else if(null != this.aComporationFormats && this.aComporationFormats.length > 0)
+		} else if (this.aComporationFormats != null && this.aComporationFormats.length > 0) {
 			return this.aComporationFormats[0].bTextFormat;
+		}
 		return false;
 	},
 	isGeneralFormat : function()
 	{
-		if(null != this.oPositiveFormat)
+		if (this.oPositiveFormat != null) {
 			return this.oPositiveFormat.isGeneral();
-		else if(null != this.aComporationFormats && this.aComporationFormats.length > 0)
+		} else if (this.aComporationFormats != null  && this.aComporationFormats.length > 0) {
 			return this.aComporationFormats[0].isGeneral();
+		}
 		return false;
 	},
 	isDateTimeFormat : function()
 	{
-		if(null != this.oPositiveFormat)
+		if (this.oPositiveFormat != null) {
 			return this.oPositiveFormat.bDateTime;
-		else if(null != this.aComporationFormats && this.aComporationFormats.length > 0)
+		} else if (this.aComporationFormats != null && this.aComporationFormats.length > 0) {
 			return this.aComporationFormats[0].bDateTime;
+		}
+		return false;
+	},
+	isTimeFormat : function() {
+		if (this.oPositiveFormat != null) {
+			return this.oPositiveFormat.bTime;
+		} else if (this.aComporationFormats != null && this.aComporationFormats.length > 0) {
+			return this.aComporationFormats[0].bTime;
+		}
+		return false;
+	},
+	isDateFormat : function() {
+		if ( this.oPositiveFormat != null) {
+			return this.oPositiveFormat.bDate;
+		} else if (this.aComporationFormats != null && this.aComporationFormats.length > 0) {
+			return this.aComporationFormats[0].bDate;
+		}
 		return false;
 	},
 	getTextFormat: function () {
@@ -3109,31 +3359,63 @@ CellFormat.prototype =
 		}
 		else
 		{
-			//ищем совпадение
-			for (let i = 0; i < this.aComporationFormats.length && i < 2; ++i)
+			//todo only 4 formats allowed in aComporationFormats
+			// Handle text values - use text format if available
+			if(typeof dNumber === 'string')
 			{
-				let oCurFormat = this.aComporationFormats[i];
-				let oOperationValue, operator;
-				if (null != oCurFormat.ComporationOperator) {
-					operator = oCurFormat.ComporationOperator.operator;
-					oOperationValue = oCurFormat.ComporationOperator.operatorValue;
-				} else {
-					oOperationValue = 0;
-					operator = 0 === i ? NumComporationOperators.greater : NumComporationOperators.less;
+				// Look for text format (usually at index 3)
+				for (let i = 0; i < this.aComporationFormats.length; ++i) {
+					let oCurFormat = this.aComporationFormats[i];
+					if (null == oCurFormat.ComporationOperator && oCurFormat.bTextFormat) {
+						oRes = oCurFormat;
+						break;
+					}
 				}
-				let isMatch = (operator === NumComporationOperators.equal && dNumber === oOperationValue) ||
-					(operator === NumComporationOperators.greater && dNumber > oOperationValue) ||
-					(operator === NumComporationOperators.less && dNumber < oOperationValue) ||
-					(operator === NumComporationOperators.greaterorequal && dNumber >= oOperationValue) ||
-					(operator === NumComporationOperators.lessorequal && dNumber <= oOperationValue) ||
-					(operator === NumComporationOperators.notequal && dNumber !== oOperationValue);
-				if (isMatch) {
-					oRes = oCurFormat;
-					break;
+				if (null == oRes && this.aComporationFormats.length > 3 && this.aComporationFormats[3]) {
+					oRes = this.aComporationFormats[3];
 				}
 			}
-			if (null == oRes && null != this.aComporationFormats.length > 2)
-				oRes = this.aComporationFormats[2];
+			else
+			{
+				// Process all conditional formats in order
+				for (let i = 0; i < this.aComporationFormats.length; ++i)
+				{
+					let oCurFormat = this.aComporationFormats[i];
+					let oOperationValue, operator;
+					
+					// Skip text format
+					if (null == oCurFormat.ComporationOperator && oCurFormat.bTextFormat) {
+						continue;
+					}
+					
+					if (null != oCurFormat.ComporationOperator) {
+						operator = oCurFormat.ComporationOperator.operator;
+						oOperationValue = oCurFormat.ComporationOperator.operatorValue;
+					} else if(0 === i) {
+						oOperationValue = 0;
+						operator = NumComporationOperators.greater;
+					} else if(1 === i && this.aComporationFormats.length > 2 && !this.aComporationFormats[2].bTextFormat) {
+						oOperationValue = 0;
+						operator = NumComporationOperators.less;
+					} else if(!oCurFormat.bTextFormat) {
+						//fallback
+						oRes = oCurFormat;
+					} else {
+						break;
+					}
+					
+					let isMatch = (operator === NumComporationOperators.equal && dNumber === oOperationValue) ||
+						(operator === NumComporationOperators.greater && dNumber > oOperationValue) ||
+						(operator === NumComporationOperators.less && dNumber < oOperationValue) ||
+						(operator === NumComporationOperators.greaterorequal && dNumber >= oOperationValue) ||
+						(operator === NumComporationOperators.lessorequal && dNumber <= oOperationValue) ||
+						(operator === NumComporationOperators.notequal && dNumber !== oOperationValue);
+					if (isMatch) {
+						oRes = oCurFormat;
+						break;
+					}
+				}
+			}
 		}
 		return oRes;
 	},
@@ -4098,7 +4380,14 @@ FormatParser.prototype =
                                 prev.date = true;
                         }
                         if (i + 1 < length) {
-                            var next = match[i + 1];
+                            let next = match[i + 1]
+                            // processing the option when the date is given as the format "October 11, 2008"
+                            if (i === 0 && i + 2 < length) {
+                                let afterNext = match[i + 2];
+                                if (oDataTypes.digit == afterNext.type && false == afterNext.time) {
+                                    afterNext.date = true;
+                                }
+                            }
                             if (oDataTypes.digit == next.type && false == next.time)
                                 next.date = true;
                         }
@@ -4113,10 +4402,11 @@ FormatParser.prototype =
         if(!bError){
             var aDate = [];
             var nMonthIndex = null;
-            var sMonthFormat = null;
+			var sMonthFormat = null;
             var aTime = [];
             var am = false;
             var pm = false;
+
             for (var i = 0, length = match.length; i < length; i++) {
                 var elem = match[i];
                 if (elem.date) {
@@ -4144,7 +4434,7 @@ FormatParser.prototype =
                     bError = true;//случай "1-2-3 10"
             }
             var nDateLength = aDate.length;
-            if (nDateLength > 0 && !(2 <= nDateLength && nDateLength <= 3 && (null == nMonthIndex || (3 == nDateLength && 1 == nMonthIndex) || 2 == nDateLength)))
+            if (nDateLength > 0 && !(2 <= nDateLength && nDateLength <= 3 && (null == nMonthIndex || (3 == nDateLength && 1 == nMonthIndex) || 2 == nDateLength || (3 == nDateLength && 0 == nMonthIndex))))
                 bError = true;
             var nTimeLength = aTime.length;
             if (nTimeLength > 3)
@@ -4182,12 +4472,18 @@ FormatParser.prototype =
                                         bError = true;
                                 }
                             }
-                        }
-                        else {
-                            res.sDateFormat = "d-mmm-yy";
-                            res.d = aDate[0];
-                            res.m = aDate[1];
-                            res.y = aDate[2];
+                        } else {
+                            if (nMonthIndex == 0) {
+                                res.sDateFormat = "dd-mmm-yy";
+                                res.m = aDate[0];
+                                res.d = aDate[1];
+                                res.y = aDate[2];
+                            } else {
+                                res.sDateFormat = "d-mmm-yy";
+                                res.d = aDate[0];
+                                res.m = aDate[1];
+                                res.y = aDate[2];
+                            }
                         }
                     }
                     else {
@@ -4275,6 +4571,194 @@ FormatParser.prototype =
         }
 		return res;
     },
+	_parseDateFromArrayPDF: function (match, oDataTypes, cultureInfo, oFormat)
+	{
+        var res = null;
+        var bError = false;
+        //в первый проход разделяем date и time с помощью delimiter
+        for (var i = 0, length = match.length; i < length; i++) {
+            var elem = match[i];
+            if (elem.type == oDataTypes.delimiter) {
+                bError = true;
+                if(i - 1 >= 0 && i + 1 < length){
+                    var prev = match[i - 1];
+                    var next = match[i + 1];
+                    if(prev.type != oDataTypes.delimiter && next.type != oDataTypes.delimite){
+                        if (cultureInfo.TimeSeparator == elem.val || (":" == elem.val && cultureInfo.DateSeparator != elem.val)) {
+                            if(false == prev.date && false == next.date){
+                                bError = false;
+                                prev.time = true;
+                                next.time = true;
+                            }
+                        }
+                        else{
+                            if(false == prev.time && false == next.time){
+                                bError = false;
+                                prev.date = true;
+                                next.date = true;
+                            }
+                        }
+                    }
+                }
+                else if (i - 1 >= 0 && i + 1 == length) {
+                    //случай "10:"
+                    var prev = match[i - 1];
+                    if (prev.type != oDataTypes.delimiter) {
+                        if (cultureInfo.TimeSeparator == elem.val || (":" == elem.val && cultureInfo.DateSeparator != elem.val)) {
+                            if (false == prev.date) {
+                                bError = false;
+                                prev.time = true;
+                            }
+                        }
+                    }
+                }
+                if(bError)
+                    break;
+            }
+        }
+        if(!bError){
+            //разделяем date и time с помощью Am/Pm и имена месяцев
+            for (var i = 0, length = match.length; i < length; i++) {
+                var elem = match[i];
+                if (elem.type == oDataTypes.letter){
+                    var valLower = elem.val.toLowerCase();
+                    if (elem.am || elem.pm) {
+                        if (i - 1 >= 0) {
+                            var prev = match[i - 1];
+                            if (oDataTypes.digit == prev.type && false == prev.date) {
+                                prev.time = true;
+                            }
+                        }
+                        //AmPm должна быть последней записью
+                        if (i + 1 != length) {
+                            bError = true;
+                        }
+                    }
+                    else if (null != elem.month) {
+                        if (i - 1 >= 0) {
+                            var prev = match[i - 1];
+                            if (oDataTypes.digit == prev.type && false == prev.time)
+                                prev.date = true;
+                        }
+                        if (i + 1 < length) {
+                            var next = match[i + 1];
+                            if (oDataTypes.digit == next.type && false == next.time)
+                                next.date = true;
+                        }
+                    }
+                    else
+                        bError = true;
+                }
+                if(bError)
+                    break;
+            }
+        }
+        if(!bError){
+            var aDate = [];
+            var nMonthIndex = null;
+			var sMonthFormat = null;
+			var monthDone = false;
+            var aTime = [];
+            var am = false;
+            var pm = false;
+
+			var nIndexD = Math.max(cultureInfo.ShortDatePattern.indexOf("0"), cultureInfo.ShortDatePattern.indexOf("1"));
+			var nIndexM = Math.max(cultureInfo.ShortDatePattern.indexOf("2"), cultureInfo.ShortDatePattern.indexOf("3"));
+            var nIndexY = Math.max(cultureInfo.ShortDatePattern.indexOf("4"), cultureInfo.ShortDatePattern.indexOf("5"));
+
+            for (var i = 0, length = match.length; i < length; i++) {
+                var elem = match[i];
+                if (elem.date || (elem.time == false && elem.type == oDataTypes.digit)) {
+                    if (elem.type == oDataTypes.digit)
+                        aDate.push(elem.val);
+                    else if (elem.type == oDataTypes.letter && null != elem.month) {
+                        if (aDate.length >= 3)
+							continue;
+							
+						nMonthIndex = aDate.length;
+                        sMonthFormat = elem.month.format;
+                        aDate.push(elem.month.val);
+						monthDone = true;
+                    }
+                    else
+                        bError = true;
+                }
+                else if (elem.time) {
+                    if (elem.type == oDataTypes.digit)
+                        aTime.push(elem.val);
+                    else if (elem.type == oDataTypes.letter && (elem.am || elem.pm)) {
+                        am = elem.am;
+                        pm = elem.pm;
+                    }
+                    else
+                        bError = true;
+                }
+            }
+			if (aDate.length > 3)
+				aDate.length = 3;
+
+            var nDateLength = aDate.length;
+            var nTimeLength = aTime.length;
+            if (nTimeLength > 3)
+                aTime.length = 3;
+            if(!bError){
+                res = { d: null, m: null, y: null, h: null, min: null, s: null, am: am, pm: pm, sDateFormat: null };
+                if (nDateLength > 0) {
+                    if (null != nMonthIndex) {
+                        res.m = aDate[nMonthIndex];
+
+						if (nIndexD != -1) {
+							if (nIndexD != nMonthIndex) {
+								res.d = aDate[nIndexD];
+							}
+							else {
+								if (aDate[0] <= 31) {
+									res.d = aDate[0];
+									res.y = aDate[2];
+								}
+								else {
+									res.d = aDate[2];
+									res.y = aDate[0];
+								}
+							}
+						}
+						
+						if (nIndexY != -1 && res.y == null) {
+							if (nIndexY != nMonthIndex) {
+								res.y = aDate[nIndexY];
+							}
+							else {
+								res.d = aDate[0];
+								res.y = aDate[2];
+							}
+						}
+                    }
+                    else {
+                        res.m = aDate[nIndexM];
+						res.d = aDate[nIndexD];
+						res.y = aDate[nIndexY];
+                    }
+                    if(null != res.y)
+                    {
+                        if(res.y < 30)
+                            res.y = 2000 + res.y;
+                        else if(res.y < 100)
+                            res.y = 1900 + res.y;
+                    }
+                }
+                if(nTimeLength > 0){
+                    res.h = aTime[0];
+                    if(nTimeLength > 1)
+                        res.min = aTime[1];
+                    if(nTimeLength > 2)
+                        res.s = aTime[2];
+                }
+                if(bError)
+                    res = null;
+            }
+        }
+		return res;
+    },
     strcmp: function (s1, s2, index1, length, index2) {
         if (null == index2)
             index2 = 0;
@@ -4285,10 +4769,11 @@ FormatParser.prototype =
                 break;
             }
         }
-        return bRes;
+        return length === 0 ? false: bRes;
     },
 	parseDate: function (value, cultureInfo, oTypeCalendar)
 	{
+		//todo "11: AM" should fail
 		var res = null;
 		var match = [];
 		var sCurValue = null;
@@ -4305,7 +4790,7 @@ FormatParser.prototype =
 		    var oDataType = null;
 		    if("0" <= sChar && sChar <= "9")
 		        oDataType = oDataTypes.digit;
-		    else if(" " == sChar)
+		    else if(" " == sChar || "," == sChar)
 		        oDataType = oDataTypes.space;
 		    else if ("/" == sChar || "-" == sChar || ":" == sChar || cultureInfo.DateSeparator == sChar || cultureInfo.TimeSeparator == sChar)
 		        oDataType = oDataTypes.delimiter;
@@ -4361,7 +4846,7 @@ FormatParser.prototype =
 		        }
 		        else if (!bMonth) {
 		            bMonth = true;
-		            var aArraysToCheck = [{ arr: cultureInfo.AbbreviatedMonthNames, format: "mmm" }, { arr: cultureInfo.MonthNames, format: "mmmm" }];
+					let aArraysToCheck = [{ arr: cultureInfo.MonthNames, format: "mmmm" }, { arr: cultureInfo.AbbreviatedMonthNames, format: "mmm" }];
 		            var bFound = false;
 		            for (var index in aArraysToCheck) {
 		                var aArrayTemp = aArraysToCheck[index];
@@ -4425,6 +4910,7 @@ FormatParser.prototype =
 				
 				var bDate = false;
 				var bTime = false;
+				var bSeconds = false;
 				var nDay;
 				var nMounth;
 				var nYear;
@@ -4490,8 +4976,11 @@ FormatParser.prototype =
 					if(null != s)
 					{
 						nSecond = s - 0;
-						if(nSecond > 59)
+						if (0 <= nSecond && nSecond < 60) {
+							bSeconds = true;
+						} else {
 							bValidDate = false;
+						}
 					}
 				}
 				if(true == bValidDate && (true == bDate || true == bTime))
@@ -4509,26 +4998,276 @@ FormatParser.prototype =
 					}
 					if(dValue >= 0)
 					{
-						var sFormat;
-						if(true == bDate && true == bTime)
-						{
-							sFormat = sDateFormat + " h:mm:ss";
+						var sFormat = "";
+						if (bDate) {
+							if (bTime && nHour > 23) {
+								sFormat = AscCommon.g_cGeneralFormat;
+							} else {
+								sFormat += sDateFormat;
+								if (bTime) {
+									sFormat += " h:mm";
+								}
+							}
+						} else {
+							if (dValue > 1) {
+								sFormat += "[h]:mm";
+							} else {
+								sFormat += "h:mm";
+							}
+							if (bSeconds || dValue > 1) {
+								sFormat += ":ss";
+							}
 							if (am || pm)
 								sFormat += " AM/PM";
 						}
-						else if(true == bDate)
-							sFormat = sDateFormat;
-						else
-						{
-							if(dValue > 1)
-								sFormat = "[h]:mm:ss";
-							else if (am || pm)
-								sFormat = "h:mm:ss AM/PM";
-							else
-								sFormat = "h:mm:ss";
-						}
 						res = {format: sFormat, value: dValue, bDateTime: true, bDate: bDate, bTime: bTime, bPercent: false, bCurrency: false};
 					}
+				}
+            }
+        }
+		return res;
+	},
+	parseDatePDF: function (value, cultureInfo, oFormat)
+	{
+		let res = null;
+		let match = [];
+		let sCurValue = null;
+		let oCurDataType = null;
+		let oPrevType = null;
+		let bAmPm = false;
+		let bMonth = false;
+		let bError = false;
+		let oDataTypes = {letter: {id: 0, min: 2, max: 9}, digit: {id: 1, min: 1, max: 4}, delimiter: {id: 2, min: 1, max: 1}, space: {id: 3, min: null, max: null}};
+		let valueLower = value.toLowerCase();
+		for(var i = 0, length = value.length; i < length; i++)
+		{
+		    var sChar = value[i];
+		    var oDataType = null;
+		    if("0" <= sChar && sChar <= "9")
+		        oDataType = oDataTypes.digit;
+		    else if(" " == sChar)
+		        oDataType = oDataTypes.space;
+		    else if ("." == sChar || "/" == sChar || "-" == sChar || ":" == sChar || "," == sChar || cultureInfo.DateSeparator == sChar || cultureInfo.TimeSeparator == sChar)
+		        oDataType = oDataTypes.delimiter;
+		    else
+		        oDataType = oDataTypes.letter;
+			    
+			// после разделителя может быть опять месяц
+			if (oDataType == oDataTypes.delimiter)
+				bMonth = false;
+
+		    if(null != oDataType)
+		    {
+		        if(null == oCurDataType)
+		            sCurValue = sChar;
+		        else
+		        {
+		            if(oCurDataType == oDataType)
+		            {
+		                if(null == oCurDataType.max || sCurValue.length < oCurDataType.max)
+		                    sCurValue += sChar;
+		                else
+		                    bError = true;
+		            }
+		            else
+		            {
+		                if (null == oCurDataType.min || sCurValue.length >= oCurDataType.min) {
+		                    if (oDataTypes.space != oCurDataType) {
+		                        var oNewElem = { val: sCurValue, type: oCurDataType, month: null, am: false, pm: false, date: false, time: false };
+		                        if (oDataTypes.digit == oCurDataType)
+		                            oNewElem.val = oNewElem.val - 0;
+								if (oNewElem.val < 100 && sCurValue.length == 4)
+									bError = true; // год до ста лет, пример: 0001 год
+		                        
+								match.push(oNewElem);
+		                    }
+		                    sCurValue = sChar;
+		                    oPrevType = oCurDataType;
+		                }
+		                else
+		                    bError = true;
+		            }
+		        }
+		        oCurDataType = oDataType;
+		    }
+		    else
+		        bError = true;
+		    if(oDataTypes.letter == oDataType){
+		        var oNewElem = { val: sCurValue, type: oCurDataType, month: null, am: false, pm: false, date: false, time: false };
+		        var bAm = false;
+		        var bPm = false;
+		        if (!bAmPm && ((bAm = this.strcmp(valueLower, "am", i, 2)) || (bPm = this.strcmp(valueLower, "pm", i, 2)))) {
+		            bAmPm = true;
+		            oNewElem.am = bAm;
+		            oNewElem.pm = bPm;
+		            oNewElem.time = true;
+		            match.push(oNewElem);
+		            i += 2 - 1;
+		            if (oPrevType != oDataTypes.space)
+		                bError = true;
+		        }
+		        else if (!bMonth) {
+		            bMonth = true;
+		            var aArraysToCheck = [{ arr: cultureInfo.MonthNames, format: "mmmm" }, { arr: cultureInfo.AbbreviatedMonthNames, format: "mmm" }];
+		            var bFound = false;
+		            for (var index in aArraysToCheck) {
+		                var aArrayTemp = aArraysToCheck[index];
+		                for (var j = 0, length2 = aArrayTemp.arr.length; j < length2; j++) {
+		                    var sCmpVal = aArrayTemp.arr[j].toLowerCase();
+		                    var sCmpValCrop = sCmpVal.replace(/\./g, "");
+		                    var bCrop = false;
+		                    if (this.strcmp(valueLower, sCmpVal, i, sCmpVal.length) || (bCrop = (sCmpVal != sCmpValCrop && this.strcmp(valueLower, sCmpValCrop, i, sCmpValCrop.length)))) {
+		                        bFound = true;
+		                        oNewElem.month = { val: j + 1, format: aArrayTemp.format };
+		                        oNewElem.date = true;
+		                        if (bCrop)
+		                            i += sCmpValCrop.length - 1;
+		                        else
+		                            i += sCmpVal.length - 1;
+		                        break;
+		                    }
+		                }
+		                if (bFound)
+		                    break;
+		            }
+		            //ничего кроме имени месяца больше быть не может
+		            if (bFound)
+		                match.push(oNewElem);
+		            else
+		                bError = true;
+		        }
+		        else
+		            bError = true;
+		        oCurDataType = null;
+		        sCurValue = null;
+		    }
+			if (bError)
+			{
+				match = null;
+				break;
+			}
+		}
+		if (null != match && null != sCurValue) {
+		    if (oDataTypes.space != oCurDataType) {
+		        var oNewElem = { val: sCurValue, type: oCurDataType, month: null, am: false, pm: false, date: false, time: false };
+		        if (oDataTypes.digit == oCurDataType)
+		            oNewElem.val = oNewElem.val - 0;
+
+		        match.push(oNewElem);
+		    }
+		}
+		if(null != match && match.length > 0)
+		{
+		    var oParsedDate = this._parseDateFromArrayPDF(match, oDataTypes, cultureInfo, oFormat);
+			if(null != oParsedDate)
+			{
+				var d = oParsedDate.d;
+				var m = oParsedDate.m;
+				var y = oParsedDate.y;
+				var h = oParsedDate.h;
+				var min = oParsedDate.min;
+				var s = oParsedDate.s;
+				var am = oParsedDate.am;
+				var pm = oParsedDate.pm;
+				var sDateFormat = oParsedDate.sDateFormat;
+				
+				var bDate = false;
+				var bTime = false;
+				var nDay;
+				var nMounth;
+				var nYear;
+				if(AscCommon.bDate1904)
+				{
+					nDay = 1;
+					nMounth = 0;
+					nYear = 1904;
+				}
+				else
+				{
+					nDay = 31;
+					nMounth = 11;
+					nYear = 1899;
+				}
+				var nHour = 0;
+				var nMinute = 0;
+				var nSecond = 0;
+				var dValue = 0;
+				var bValidDate = true;
+				if(null != m)
+				{
+					bDate = true;
+					var oNowDate;
+					if(null != d)
+						nDay = d - 0;
+					else
+						nDay = 1;
+					nMounth = m - 1;
+					if(null != y)
+						nYear = y - 0;
+					else
+                    {
+                        oNowDate = new Date();
+						nYear = oNowDate.getFullYear();
+                    }
+					
+					//проверяем дату на валидность
+					bValidDate = this.isValidDatePDF(nYear, nMounth, nDay);
+				}
+				if(null != h)
+				{
+					bTime = true;
+					nHour = h - 0;
+					if (am || pm)
+					{
+						if(nHour <= 23)
+						{
+							//переводим 24
+							nHour = nHour % 12;
+							if(pm)
+								nHour += 12;
+						}
+						else
+							bValidDate = false;
+					}
+					if(null != min)
+					{
+						nMinute = min - 0;
+						if(nMinute > 59)
+							bValidDate = false;
+					}
+					if(null != s)
+					{
+						nSecond = s - 0;
+						if(nSecond > 59)
+							bValidDate = false;
+					}
+				}
+				if(true == bValidDate && (true == bDate || true == bTime))
+				{
+					var oDateTmp = new Date();
+					oDateTmp.setFullYear(nYear, nMounth, nDay);
+					oDateTmp.setHours(nHour, nMinute, nSecond);
+					dValue = oDateTmp.getTime() / (86400 * 1000);
+
+					var sFormat;
+					if(true == bDate && true == bTime)
+					{
+						sFormat = sDateFormat + " h:mm:ss";
+						if (am || pm)
+							sFormat += " AM/PM";
+					}
+					else if(true == bDate)
+						sFormat = sDateFormat;
+					else
+					{
+						if(dValue > 1)
+							sFormat = "[h]:mm:ss";
+						else if (am || pm)
+							sFormat = "h:mm:ss AM/PM";
+						else
+							sFormat = "h:mm:ss";
+					}
+					res = {format: sFormat, value: dValue, bDateTime: true, bDate: bDate, bTime: bTime, bPercent: false, bCurrency: false};
 				}
             }
         }
@@ -4547,6 +5286,16 @@ FormatParser.prototype =
 			else if(1900 == nYear && 1 == nMounth && 29 == nDay)
 				return true;
 		}
+		return false;
+	},
+	isValidDatePDF : function(nYear, nMounth, nDay)
+	{
+		if(nMounth < 0 || nMounth > 11)
+			return false;
+		else if(this.isValidDay(nYear, nMounth, nDay))
+			return true;
+		else if(1900 == nYear && 1 == nMounth && 29 == nDay)
+			return true;
 		return false;
 	},
 	isValidDay : function(nYear, nMounth, nDay){
@@ -5094,10 +5843,14 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 				res.push(getCurrencyFormat(cultureInfo, info.decimalPlaces, hasCurrency, true, currencySymbol));
 			} else if (Asc.c_oAscNumFormatType.Date === info.type) {
 				//todo locale dependence
-				if (info.symbol == g_oDefaultCultureInfo.LCID) {
+				if (info.symbol === g_oDefaultCultureInfo.LCID) {
 					res.push(getShortDateFormat(cultureInfo));
 					res.push('[$-F800]' + cultureInfo.LongDatePattern);
 				}
+				if (c_oAscDateFormatExcel[info.symbol]) {
+					res = res.concat(c_oAscDateFormatExcel[info.symbol]);
+				}
+				//todo remove (backward compat)
 				res.push(getShortDateFormat2(1, 1, 0, cultureInfo) + ';@');
 				res.push(getShortDateFormat2(2, 2, 0, cultureInfo) + ';@');
 				res.push(getShortDateFormat2(1, 1, 2, cultureInfo) + ';@');
@@ -5139,11 +5892,17 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 					res.push("[$-411]"+LocaleFormatSymbol['g']+"e." + getShortDateFormat2(0, 1, 0, cultureInfo) + "." + getShortDateFormat2(1, 0, 0, cultureInfo) + ";@")
 				}
 			} else if (Asc.c_oAscNumFormatType.Time === info.type) {
-				if (AscCommon.is12HourTimeFormat(cultureInfo)) {
-					res = ['[$-F400]h:mm:ss AM/PM', 'h:mm;@', 'h:mm AM/PM;@', 'h:mm:ss;@', 'h:mm:ss AM/PM;@', 'mm:ss.0;@', '[h]:mm:ss;@'];
-				} else {
-					res = ['[$-F400]h:mm:ss', 'h:mm;@', 'h:mm AM/PM;@', 'h:mm:ss;@', 'h:mm:ss AM/PM;@', 'mm:ss.0;@', '[h]:mm:ss;@'];
+				if (info.symbol === g_oDefaultCultureInfo.LCID) {
+					if (AscCommon.is12HourTimeFormat(cultureInfo)) {
+						res.push('[$-F400]h:mm:ss AM/PM');
+					} else {
+						res.push('[$-F400]h:mm:ss');
+					}
 				}
+				if (c_oAscTimeFormatExcel[info.symbol]) {
+					res = res.concat(c_oAscTimeFormatExcel[info.symbol]);
+				}
+				res = res.concat(['h:mm;@', 'h:mm AM/PM;@', 'h:mm:ss;@', 'h:mm:ss AM/PM;@', 'mm:ss.0;@', '[h]:mm:ss;@']);
 			} else if (Asc.c_oAscNumFormatType.Percent === info.type) {
 				format = '0';
 				if (info.decimalPlaces > 0) {
@@ -5211,8 +5970,142 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 		}
 		return res;
 	}
-	function getFormatByStandardId(id) {
-		var res = null;
+	function getFormatByCulturalStandardId(id, opt_cultureInfo) {
+		var cultureInfo = opt_cultureInfo ? opt_cultureInfo : g_oDefaultCultureInfo;
+		let formats;
+		let localeStart = cultureInfo.Name.substring(0, 2);
+		let LCID = cultureInfo.LCID;
+		if ('zh' === localeStart) {
+			if (4 === LCID || 2052 === LCID || 4100 === LCID || 30724 === LCID) {
+				// zh
+				// zh-Hans
+				// zh-CN
+				// zh-SG
+				formats = {
+					27: 'yyyy"年"m"月"',
+					28: 'm"月"d"日"',
+					29: 'm"月"d"日"',
+					30: 'm-d-yy',
+					31: 'yyyy"年"m"月"d"日"',
+					32: 'h"时"mm"分"',
+					33: 'h"时"mm"分"ss"秒"',
+					34: '上午/下午h"时"mm"分"',
+					35: '上午/下午h"时"mm"分"ss"秒"',
+					36: 'yyyy"年"m"月"',
+					50: 'yyyy"年"m"月"',
+					51: 'm"月"d"日"',
+					52: 'yyyy"年"m"月"',
+					53: 'm"月"d"日"',
+					54: 'm"月"d"日"',
+					55: '上午/下午h"时"mm"分"',
+					56: '上午/下午h"时"mm"分"ss"秒"',
+					57: 'yyyy"年"m"月"',
+					58: 'm"月"d"日"'
+				}
+			} else {
+				// zh-Hant
+				// zh-TW
+				// zh-HK
+				// zh-MO
+				formats = {
+					27: '[$-404]e/m/d',
+					28: '[$-404]e"年"m"月"d"日"',
+					29: '[$-404]e"年"m"月"d"日"',
+					30: 'm/d/yy',
+					31: 'yyyy"年"m"月"d"日"',
+					32: 'hh"時"mm"分"',
+					33: 'hh"時"mm"分"ss"秒"',
+					34: '上午/下午hh"時"mm"分"',
+					35: '上午/下午hh"時"mm"分"ss"秒"',
+					36: '[$-404]e/m/d',
+					50: '[$-404]e/m/d',
+					51: '[$-404]e"年"m"月"d"日"',
+					52: '上午/下午hh"時"mm"分"',
+					53: '上午/下午hh"時"mm"分"ss"秒"',
+					54: '上午/下午hh"時"mm"分"',
+					55: '上午/下午hh"時"mm"分"ss"秒"',
+					56: '[$-404]e/m/d',
+					57: '[$-404]e"年"m"月"d"日"',
+					58: '[$-404]e"年"m"月"d"日"'
+				}
+			}
+		} else if ('ja' === localeStart) {
+			//"ja-jp"
+			formats = {
+				27: '[$-411]ge.m.d',
+				28: '[$-411]ggge"年"m"月"d"日"',
+				29: '[$-411]ggge"年"m"月"d"日"',
+				30: 'm/d/yy',
+				31: 'yyyy"年"m"月"d"日"',
+				32: 'h"時"mm"分"',
+				33: 'h"時"mm"分"ss"秒"',
+				34: 'yyyy"年"m"月"',
+				35: 'm"月"d"日"',
+				36: '[$-411]ge.m.d',
+				50: '[$-411]ge.m.d',
+				51: '[$-411]ggge"年"m"月"d"日"',
+				52: 'yyyy"年"m"月"',
+				53: 'm"月"d"日"',
+				54: '[$-411]ggge"年"m"月"d"日"',
+				55: 'yyyy"年"m"月"',
+				56: 'm"月"d"日"',
+				57: '[$-411]ge.m.d',
+				58: '[$-411]ggge"年"m"月"d"日"'
+			}
+		} else if ('ko' === localeStart) {
+			//"ko-kr"
+			formats = {
+				27: 'yyyy"年" mm"月" dd"日"',
+				28: 'mm-dd',
+				29: 'mm-dd',
+				30: 'mm-dd-yy',
+				31: 'yyyy"년" mm"월" dd"일"',
+				32: 'h"시" mm"분"',
+				33: 'h"시" mm"분" ss"초"',
+				34: 'yyyy-mm-dd',
+				35: 'yyyy-mm-dd',
+				36: 'yyyy"年" mm"月" dd"日"',
+				50: 'yyyy"年" mm"月" dd"日"',
+				51: 'mm-dd',
+				52: 'yyyy-mm-dd',
+				53: 'yyyy-mm-dd',
+				54: 'mm-dd',
+				55: 'yyyy-mm-dd',
+				56: 'yyyy-mm-dd',
+				57: 'yyyy"年" mm"月" dd"日"',
+				58: 'mm-dd'
+			}
+		} else if ('th' === localeStart) {
+			//"th-th"
+			formats = {
+				59: 't0',
+					60: 't0.00',
+					61: 't#,##0',
+					62: 't#,##0.00',
+					67: 't0%',
+					68: 't0.00%',
+					69: 't# ?/?',
+					70: 't# ??/??',
+					71: 'ว/ด/ปปปป',
+					72: 'ว-ดดด-ปป',
+					73: 'ว-ดดด',
+					74: 'ดดด-ปป',
+					75: 'ช:นน',
+					76: 'ช:นน:ทท',
+					77: 'ว/ด/ปปปป ช:นน',
+					78: 'นน:ทท',
+					79: '[ช]:นน:ทท',
+					80: '80 นน:ทท.0',
+					81: 'd/m/bb'
+			}
+		}
+		return formats && formats[id] || null;
+	}
+	function getFormatByStandardId(id, opt_cultureInfo) {
+		var res = getFormatByCulturalStandardId(id, opt_cultureInfo);
+		if (res) {
+			return res;
+		}
 		if (59 <= id && id <= 78) {
 			if (69 <= id && id <= 71) {
 				id += 1;
@@ -5327,7 +6220,9 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 		return cultureInfo.UseAMPM > 0;
 	}
 
+	//Excel uses DateSeparator with 2 letters only in date patterns
 var g_aCultureInfos = {
+	1: {LCID: 1, Name: "ar", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "ر.س.‏", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], AbbreviatedDayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], MonthNames: ["محرم", "صفر", "ربيع الأول", "ربيع الثاني", "جمادى الأولى", "جمادى الثانية", "رجب", "شعبان", "رمضان", "شوال", "ذو القعدة", "ذو الحجة", ""], AbbreviatedMonthNames: ["محرم", "صفر", "ربيع الأول", "ربيع الثاني", "جمادى الأولى", "جمادى الثانية", "رجب", "شعبان", "رمضان", "شوال", "ذو القعدة", "ذو الحجة", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ص", PMDesignator: "م", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "134", LongDatePattern: "dd/mmmm/yyyy"},
 	4: {LCID: 4, Name: "zh-Hans", CurrencyPositivePattern: 0, CurrencyNegativePattern: 2, CurrencySymbol: "¥", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"], AbbreviatedDayNames: ["周日", "周一", "周二", "周三", "周四", "周五", "周六"], MonthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月", ""], AbbreviatedMonthNames: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "上午", PMDesignator: "下午", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "520", LongDatePattern: "yyyy\"年\"m\"月\"d\"日\""},
 	5: {LCID: 5, Name: "cs", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "Kč", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["neděle", "pondělí", "úterý", "středa", "čtvrtek", "pátek", "sobota"], AbbreviatedDayNames: ["ne", "po", "út", "st", "čt", "pá", "so"], MonthNames: ["leden", "únor", "březen", "duben", "květen", "červen", "červenec", "srpen", "září", "říjen", "listopad", "prosinec", ""], AbbreviatedMonthNames: ["led", "úno", "bře", "dub", "kvě", "čvn", "čvc", "srp", "zář", "říj", "lis", "pro", ""], MonthGenitiveNames: ["ledna", "února", "března", "dubna", "května", "června", "července", "srpna", "září", "října", "listopadu", "prosince", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "dop.", PMDesignator: "odp.", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\ d\\.\\ mmmm\\ yyyy"},
 	6: {LCID: 6, Name: "da", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "kr.", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["søndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag"], AbbreviatedDayNames: ["sø", "ma", "ti", "on", "to", "fr", "lø"], MonthNames: ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december", ""], AbbreviatedMonthNames: ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: "-", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "d\\.\\ mmmm\\ yyyy"},
@@ -5337,7 +6232,7 @@ var g_aCultureInfos = {
 	10: {LCID: 10, Name: "es", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["do.", "lu.", "ma.", "mi.", "ju.", "vi.", "sá."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ d\" de \"mmmm\" de \"yyyy"},
 	11: {LCID: 11, Name: "fi", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["sunnuntai", "maanantai", "tiistai", "keskiviikko", "torstai", "perjantai", "lauantai"], AbbreviatedDayNames: ["su", "ma", "ti", "ke", "to", "pe", "la"], MonthNames: ["tammikuu", "helmikuu", "maaliskuu", "huhtikuu", "toukokuu", "kesäkuu", "heinäkuu", "elokuu", "syyskuu", "lokakuu", "marraskuu", "joulukuu", ""], AbbreviatedMonthNames: ["tammi", "helmi", "maalis", "huhti", "touko", "kesä", "heinä", "elo", "syys", "loka", "marras", "joulu", ""], MonthGenitiveNames: ["tammikuuta", "helmikuuta", "maaliskuuta", "huhtikuuta", "toukokuuta", "kesäkuuta", "heinäkuuta", "elokuuta", "syyskuuta", "lokakuuta", "marraskuuta", "joulukuuta", ""], AbbreviatedMonthGenitiveNames: ["tammik.", "helmik.", "maalisk.", "huhtik.", "toukok.", "kesäk.", "heinäk.", "elok.", "syysk.", "lokak.", "marrask.", "jouluk.", ""], AMDesignator: "ap.", PMDesignator: "ip.", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ".", ShortDatePattern: "025", LongDatePattern: "dddd\\ d\\.\\ mmmm\\ yyyy"},
 	12: {LCID: 12, Name: "fr", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\ d\\ mmmm\\ yyyy"},
-	14: {LCID: 14, Name: "hu", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "Ft", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["vasárnap", "hétfő", "kedd", "szerda", "csütörtök", "péntek", "szombat"], AbbreviatedDayNames: ["V", "H", "K", "Sze", "Cs", "P", "Szo"], MonthNames: ["január", "február", "március", "április", "május", "június", "július", "augusztus", "szeptember", "október", "november", "december", ""], AbbreviatedMonthNames: ["jan.", "febr.", "márc.", "ápr.", "máj.", "jún.", "júl.", "aug.", "szept.", "okt.", "nov.", "dec.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "de.", PMDesignator: "du.", UseAMPM: 0, DateSeparator: ". ", TimeSeparator: ":", ShortDatePattern: "531", LongDatePattern: "yyyy\\.\\ mmmm\\ d\\.\\,\\ dddd"},
+	14: {LCID: 14, Name: "hu", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "Ft", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["vasárnap", "hétfő", "kedd", "szerda", "csütörtök", "péntek", "szombat"], AbbreviatedDayNames: ["V", "H", "K", "Sze", "Cs", "P", "Szo"], MonthNames: ["január", "február", "március", "április", "május", "június", "július", "augusztus", "szeptember", "október", "november", "december", ""], AbbreviatedMonthNames: ["jan.", "febr.", "márc.", "ápr.", "máj.", "jún.", "júl.", "aug.", "szept.", "okt.", "nov.", "dec.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "de.", PMDesignator: "du.", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "531", LongDatePattern: "yyyy\\.\\ mmmm\\ d\\.\\,\\ dddd"},
 	16: {LCID: 16, Name: "it", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"], AbbreviatedDayNames: ["dom", "lun", "mar", "mer", "gio", "ven", "sab"], MonthNames: ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre", ""], AbbreviatedMonthNames: ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\ d\\ mmmm\\ yyyy"},
 	17: {LCID: 17, Name: "ja", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "¥", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"], AbbreviatedDayNames: ["日", "月", "火", "水", "木", "金", "土"], MonthNames: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月", ""], AbbreviatedMonthNames: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "午前", PMDesignator: "午後", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "531", LongDatePattern: "yyyy\"年\"m\"月\"d\"日\""},
 	18: {LCID: 18, Name: "ko", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "₩", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"], AbbreviatedDayNames: ["일", "월", "화", "수", "목", "금", "토"], MonthNames: ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월", ""], AbbreviatedMonthNames: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "오전", PMDesignator: "오후", UseAMPM: 1, DateSeparator: "-", TimeSeparator: ":", ShortDatePattern: "531", LongDatePattern: "yyyy\"년\"\\ m\"월\"\\ d\"일\"\\ dddd"},
@@ -5346,14 +6241,16 @@ var g_aCultureInfos = {
 	25: {LCID: 25, Name: "ru", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "₽", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота"], AbbreviatedDayNames: ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"], MonthNames: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь", ""], AbbreviatedMonthNames: ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек", ""], MonthGenitiveNames: ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря", ""], AbbreviatedMonthGenitiveNames: ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек", ""], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "d\\ mmmm\\ yyyy\\ \"г.\""},
 	29: {LCID: 29, Name: "sv", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "kr", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["söndag", "måndag", "tisdag", "onsdag", "torsdag", "fredag", "lördag"], AbbreviatedDayNames: ["sön", "mån", "tis", "ons", "tor", "fre", "lör"], MonthNames: ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december", ""], AbbreviatedMonthNames: ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: "-", TimeSeparator: ":", ShortDatePattern: "531", LongDatePattern: "\"den \"d\\ mmmm\\ yyyy"},
 	31: {LCID: 31, Name: "tr", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "₺", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"], AbbreviatedDayNames: ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"], MonthNames: ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık", ""], AbbreviatedMonthNames: ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ÖÖ", PMDesignator: "ÖS", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "035", LongDatePattern: "d\\ mmmm\\ yyyy\\ dddd"},
+	33: {LCID: 33, Name: "id", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "Rp", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"], AbbreviatedDayNames: ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"], MonthNames: ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ dd\\ mmmm\\ yyyy"},
 	34: {LCID: 34, Name: "uk", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "₴", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["неділя", "понеділок", "вівторок", "середа", "четвер", "п'ятниця", "субота"], AbbreviatedDayNames: ["Нд", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"], MonthNames: ["січень", "лютий", "березень", "квітень", "травень", "червень", "липень", "серпень", "вересень", "жовтень", "листопад", "грудень", ""], AbbreviatedMonthNames: ["Січ", "Лют", "Бер", "Кві", "Тра", "Чер", "Лип", "Сер", "Вер", "Жов", "Лис", "Гру", ""], MonthGenitiveNames: ["січня", "лютого", "березня", "квітня", "травня", "червня", "липня", "серпня", "вересня", "жовтня", "листопада", "грудня", ""], AbbreviatedMonthGenitiveNames: ["січ", "лют", "бер", "кві", "тра", "чер", "лип", "сер", "вер", "жов", "лис", "гру", ""], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "d\\ mmmm\\ yyyy\" р.\""},
-	36: {LCID: 36, Name: "sl", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["nedelja", "ponedeljek", "torek", "sreda", "četrtek", "petek", "sobota"], AbbreviatedDayNames: ["ned.", "pon.", "tor.", "sre.", "čet.", "pet.", "sob."], MonthNames: ["januar", "februar", "marec", "april", "maj", "junij", "julij", "avgust", "september", "oktober", "november", "december", ""], AbbreviatedMonthNames: ["jan.", "feb.", "mar.", "apr.", "maj", "jun.", "jul.", "avg.", "sep.", "okt.", "nov.", "dec.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "dop.", PMDesignator: "pop.", UseAMPM: 0, DateSeparator: ". ", TimeSeparator: ":", ShortDatePattern: "035", LongDatePattern: "dddd\\,\\ dd\\.\\ mmmm\\ yyyy"},
+	36: {LCID: 36, Name: "sl", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["nedelja", "ponedeljek", "torek", "sreda", "četrtek", "petek", "sobota"], AbbreviatedDayNames: ["ned.", "pon.", "tor.", "sre.", "čet.", "pet.", "sob."], MonthNames: ["januar", "februar", "marec", "april", "maj", "junij", "julij", "avgust", "september", "oktober", "november", "december", ""], AbbreviatedMonthNames: ["jan.", "feb.", "mar.", "apr.", "maj", "jun.", "jul.", "avg.", "sep.", "okt.", "nov.", "dec.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "dop.", PMDesignator: "pop.", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "035", LongDatePattern: "dddd\\,\\ dd\\.\\ mmmm\\ yyyy"},
 	38: {LCID: 38, Name: "lv", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["svētdiena", "pirmdiena", "otrdiena", "trešdiena", "ceturtdiena", "piektdiena", "sestdiena"], AbbreviatedDayNames: ["svētd.", "pirmd.", "otrd.", "trešd.", "ceturtd.", "piektd.", "sestd."], MonthNames: ["janvāris", "februāris", "marts", "aprīlis", "maijs", "jūnijs", "jūlijs", "augusts", "septembris", "oktobris", "novembris", "decembris", ""], AbbreviatedMonthNames: ["janv.", "febr.", "marts", "apr.", "maijs", "jūn.", "jūl.", "aug.", "sept.", "okt.", "nov.", "dec.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "priekšp.", PMDesignator: "pēcp.", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ yyyy\\.\\ \"gada\"\\ d\\.\\ mmmm"},
 	39: {LCID: 39, Name: "lt", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["sekmadienis", "pirmadienis", "antradienis", "trečiadienis", "ketvirtadienis", "penktadienis", "šeštadienis"], AbbreviatedDayNames: ["sk", "pr", "an", "tr", "kt", "pn", "št"], MonthNames: ["sausis", "vasaris", "kovas", "balandis", "gegužė", "birželis", "liepa", "rugpjūtis", "rugsėjis", "spalis", "lapkritis", "gruodis", ""], AbbreviatedMonthNames: ["saus.", "vas.", "kov.", "bal.", "geg.", "birž.", "liep.", "rugp.", "rugs.", "spal.", "lapkr.", "gruod.", ""], MonthGenitiveNames: ["sausio", "vasario", "kovo", "balandžio", "gegužės", "birželio", "liepos", "rugpjūčio", "rugsėjo", "spalio", "lapkričio", "gruodžio", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "priešpiet", PMDesignator: "popiet", UseAMPM: 0, DateSeparator: "-", TimeSeparator: ":", ShortDatePattern: "531", LongDatePattern: "yyyy\\ \"m\"\\.\\ mmmm\\ d\\ \"d\"\\.\\,\\ dddd"},
 	42: {LCID: 42, Name: "vi", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "₫", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"], AbbreviatedDayNames: ["CN", "T2", "T3", "T4", "T5", "T6", "T7"], MonthNames: ["Tháng Giêng", "Tháng Hai", "Tháng Ba", "Tháng Tư", "Tháng Năm", "Tháng Sáu", "Tháng Bảy", "Tháng Tám", "Tháng Chín", "Tháng Mười", "Tháng Mười Một", "Tháng Mười Hai", ""], AbbreviatedMonthNames: ["Thg1", "Thg2", "Thg3", "Thg4", "Thg5", "Thg6", "Thg7", "Thg8", "Thg9", "Thg10", "Thg11", "Thg12", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "SA", PMDesignator: "CH", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dd\\ mmmm\\ yyyy"},
 	44: {LCID: 44, Name: "az", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "₼", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["bazar", "bazar ertəsi", "çərşənbə axşamı", "çərşənbə", "cümə axşamı", "cümə", "şənbə"], AbbreviatedDayNames: ["B.", "B.E.", "Ç.A.", "Ç.", "C.A.", "C.", "Ş."], MonthNames: ["Yanvar", "Fevral", "Mart", "Aprel", "May", "İyun", "İyul", "Avqust", "Sentyabr", "Oktyabr", "Noyabr", "Dekabr", ""], AbbreviatedMonthNames: ["yan", "fev", "mar", "apr", "may", "iyn", "iyl", "avq", "sen", "okt", "noy", "dek", ""], MonthGenitiveNames: ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avqust", "sentyabr", "oktyabr", "noyabr", "dekabr", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "d\\ mmmm\\ yyyy\\,\\ dddd"},
 	63: {LCID: 63, Name: "kk", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "₸", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["жексенбі", "дүйсенбі", "сейсенбі", "сәрсенбі", "бейсенбі", "жұма", "сенбі"], AbbreviatedDayNames: ["жс", "дс", "сс", "ср", "бс", "жм", "сб"], MonthNames: ["Қаңтар", "Ақпан", "Наурыз", "Сәуір", "Мамыр", "Маусым", "Шілде", "Тамыз", "Қыркүйек", "Қазан", "Қараша", "Желтоқсан", ""], AbbreviatedMonthNames: ["қаң.", "ақп.", "нау.", "сәу.", "мам.", "мау.", "шіл.", "там.", "қыр.", "қаз.", "қар.", "жел.", ""], MonthGenitiveNames: ["қаңтар", "ақпан", "наурыз", "сәуір", "мамыр", "маусым", "шілде", "тамыз", "қыркүйек", "қазан", "қараша", "желтоқсан", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "yyyy\\ \"ж\"\\.\\ d\\ mmmm\\,\\ dddd"},
 	80: {LCID: 80, Name: "mn", CurrencyPositivePattern: 2, CurrencyNegativePattern: 9, CurrencySymbol: "₮", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["ням", "даваа", "мягмар", "лхагва", "пүрэв", "баасан", "бямба"], AbbreviatedDayNames: ["Ня", "Да", "Мя", "Лх", "Пү", "Ба", "Бя"], MonthNames: ["Нэгдүгээр сар", "Хоёрдугаар сар", "Гуравдугаар сар", "Дөрөвдүгээр сар", "Тавдугаар сар", "Зургаадугаар сар", "Долоодугаар сар", "Наймдугаар сар", "Есдүгээр сар", "Аравдугаар сар", "Арван нэгдүгээр сар", "Арван хоёрдугаар сар", ""], AbbreviatedMonthNames: ["1-р сар", "2-р сар", "3-р сар", "4-р сар", "5-р сар", "6-р сар", "7-р сар", "8-р сар", "9-р сар", "10-р сар", "11-р сар", "12-р сар", ""], MonthGenitiveNames: ["нэгдүгээр сар", "хоёрдугаар сар", "гуравдугаар сар", "дөрөвдүгээр сар", "тавдугаар сар", "зургаадугаар сар", "долоодугаар сар", "наймдугаар сар", "есдүгээр сар", "аравдугаар сар", "арван нэгдүгээр сар", "арван хоёрдугаар сар", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ү.ө.", PMDesignator: "ү.х.", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "531", LongDatePattern: "yyyy\\.mm\\.dd\\,\\ dddd"},
+	1025: {LCID: 1025, Name: "ar-SA", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "ر.س.‏", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], AbbreviatedDayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], MonthNames: ["محرم", "صفر", "ربيع الأول", "ربيع الثاني", "جمادى الأولى", "جمادى الثانية", "رجب", "شعبان", "رمضان", "شوال", "ذو القعدة", "ذو الحجة", ""], AbbreviatedMonthNames: ["محرم", "صفر", "ربيع الأول", "ربيع الثاني", "جمادى الأولى", "جمادى الثانية", "رجب", "شعبان", "رمضان", "شوال", "ذو القعدة", "ذو الحجة", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ص", PMDesignator: "م", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "134", LongDatePattern: "dd/mmmm/yyyy"},
 	1026: {LCID: 1026, Name: "bg-BG", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "лв.", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["неделя", "понеделник", "вторник", "сряда", "четвъртък", "петък", "събота"], AbbreviatedDayNames: ["нед", "пон", "вт", "ср", "четв", "пет", "съб"], MonthNames: ["януари", "февруари", "март", "април", "май", "юни", "юли", "август", "септември", "октомври", "ноември", "декември", ""], AbbreviatedMonthNames: ["яну", "фев", "мар", "апр", "май", "юни", "юли", "авг", "сеп", "окт", "ное", "дек", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dd\\ mmmm\\ yyyy\\ \"г.\""},
 	1028: {LCID: 1028, Name: "zh-TW", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "NT$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"], AbbreviatedDayNames: ["週日", "週一", "週二", "週三", "週四", "週五", "週六"], MonthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月", ""], AbbreviatedMonthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "上午", PMDesignator: "下午", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "520", LongDatePattern: "yyyy\"年\"m\"月\"d\"日\""},
 	1029: {LCID: 1029, Name: "cs-CZ", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "Kč", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["neděle", "pondělí", "úterý", "středa", "čtvrtek", "pátek", "sobota"], AbbreviatedDayNames: ["ne", "po", "út", "st", "čt", "pá", "so"], MonthNames: ["leden", "únor", "březen", "duben", "květen", "červen", "červenec", "srpen", "září", "říjen", "listopad", "prosinec", ""], AbbreviatedMonthNames: ["led", "úno", "bře", "dub", "kvě", "čvn", "čvc", "srp", "zář", "říj", "lis", "pro", ""], MonthGenitiveNames: ["ledna", "února", "března", "dubna", "května", "června", "července", "srpna", "září", "října", "listopadu", "prosince", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "dop.", PMDesignator: "odp.", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\ d\\.\\ mmmm\\ yyyy"},
@@ -5363,7 +6260,7 @@ var g_aCultureInfos = {
 	1033: {LCID: 1033, Name: "en-US", CurrencyPositivePattern: 0, CurrencyNegativePattern: 0, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "205", LongDatePattern: "dddd\\,\\ mmmm\\ d\\,\\ yyyy"},
 	1035: {LCID: 1035, Name: "fi-FI", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["sunnuntai", "maanantai", "tiistai", "keskiviikko", "torstai", "perjantai", "lauantai"], AbbreviatedDayNames: ["su", "ma", "ti", "ke", "to", "pe", "la"], MonthNames: ["tammikuu", "helmikuu", "maaliskuu", "huhtikuu", "toukokuu", "kesäkuu", "heinäkuu", "elokuu", "syyskuu", "lokakuu", "marraskuu", "joulukuu", ""], AbbreviatedMonthNames: ["tammi", "helmi", "maalis", "huhti", "touko", "kesä", "heinä", "elo", "syys", "loka", "marras", "joulu", ""], MonthGenitiveNames: ["tammikuuta", "helmikuuta", "maaliskuuta", "huhtikuuta", "toukokuuta", "kesäkuuta", "heinäkuuta", "elokuuta", "syyskuuta", "lokakuuta", "marraskuuta", "joulukuuta", ""], AbbreviatedMonthGenitiveNames: ["tammik.", "helmik.", "maalisk.", "huhtik.", "toukok.", "kesäk.", "heinäk.", "elok.", "syysk.", "lokak.", "marrask.", "jouluk.", ""], AMDesignator: "ap.", PMDesignator: "ip.", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ".", ShortDatePattern: "025", LongDatePattern: "dddd\\ d\\.\\ mmmm\\ yyyy"},
 	1036: {LCID: 1036, Name: "fr-FR", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\ d\\ mmmm\\ yyyy"},
-	1038: {LCID: 1038, Name: "hu-HU", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "Ft", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["vasárnap", "hétfő", "kedd", "szerda", "csütörtök", "péntek", "szombat"], AbbreviatedDayNames: ["V", "H", "K", "Sze", "Cs", "P", "Szo"], MonthNames: ["január", "február", "március", "április", "május", "június", "július", "augusztus", "szeptember", "október", "november", "december", ""], AbbreviatedMonthNames: ["jan.", "febr.", "márc.", "ápr.", "máj.", "jún.", "júl.", "aug.", "szept.", "okt.", "nov.", "dec.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "de.", PMDesignator: "du.", UseAMPM: 0, DateSeparator: ". ", TimeSeparator: ":", ShortDatePattern: "531", LongDatePattern: "yyyy\\.\\ mmmm\\ d\\.\\,\\ dddd"},
+	1038: {LCID: 1038, Name: "hu-HU", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "Ft", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["vasárnap", "hétfő", "kedd", "szerda", "csütörtök", "péntek", "szombat"], AbbreviatedDayNames: ["V", "H", "K", "Sze", "Cs", "P", "Szo"], MonthNames: ["január", "február", "március", "április", "május", "június", "július", "augusztus", "szeptember", "október", "november", "december", ""], AbbreviatedMonthNames: ["jan.", "febr.", "márc.", "ápr.", "máj.", "jún.", "júl.", "aug.", "szept.", "okt.", "nov.", "dec.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "de.", PMDesignator: "du.", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "531", LongDatePattern: "yyyy\\.\\ mmmm\\ d\\.\\,\\ dddd"},
 	1040: {LCID: 1040, Name: "it-IT", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"], AbbreviatedDayNames: ["dom", "lun", "mar", "mer", "gio", "ven", "sab"], MonthNames: ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre", ""], AbbreviatedMonthNames: ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\ d\\ mmmm\\ yyyy"},
 	1041: {LCID: 1041, Name: "ja-JP", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "¥", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"], AbbreviatedDayNames: ["日", "月", "火", "水", "木", "金", "土"], MonthNames: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月", ""], AbbreviatedMonthNames: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "午前", PMDesignator: "午後", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "531", LongDatePattern: "yyyy\"年\"m\"月\"d\"日\""},
 	1042: {LCID: 1042, Name: "ko-KR", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "₩", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"], AbbreviatedDayNames: ["일", "월", "화", "수", "목", "금", "토"], MonthNames: ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월", ""], AbbreviatedMonthNames: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "오전", PMDesignator: "오후", UseAMPM: 1, DateSeparator: "-", TimeSeparator: ":", ShortDatePattern: "531", LongDatePattern: "yyyy\"년\"\\ m\"월\"\\ d\"일\"\\ dddd"},
@@ -5371,18 +6268,20 @@ var g_aCultureInfos = {
 	1045: {LCID: 1045, Name: "pl-PL", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "zł", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["niedziela", "poniedziałek", "wtorek", "środa", "czwartek", "piątek", "sobota"], AbbreviatedDayNames: ["niedz.", "pon.", "wt.", "śr.", "czw.", "pt.", "sob."], MonthNames: ["styczeń", "luty", "marzec", "kwiecień", "maj", "czerwiec", "lipiec", "sierpień", "wrzesień", "październik", "listopad", "grudzień", ""], AbbreviatedMonthNames: ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru", ""], MonthGenitiveNames: ["stycznia", "lutego", "marca", "kwietnia", "maja", "czerwca", "lipca", "sierpnia", "września", "października", "listopada", "grudnia", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ d\\ mmmm\\ yyyy"},
 	1046: {LCID: 1046, Name: "pt-BR", CurrencyPositivePattern: 2, CurrencyNegativePattern: 9, CurrencySymbol: "R$", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"], AbbreviatedDayNames: ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"], MonthNames: ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro", ""], AbbreviatedMonthNames: ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ d\" de \"mmmm\" de \"yyyy"},
 	1049: {LCID: 1049, Name: "ru-RU", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "₽", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота"], AbbreviatedDayNames: ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"], MonthNames: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь", ""], AbbreviatedMonthNames: ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек", ""], MonthGenitiveNames: ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря", ""], AbbreviatedMonthGenitiveNames: ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек", ""], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "d\\ mmmm\\ yyyy\\ \"г.\""},
-	1050: {LCID: 1050, Name: "hr-HR", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "kn", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["nedjelja", "ponedjeljak", "utorak", "srijeda", "četvrtak", "petak", "subota"], AbbreviatedDayNames: ["ned", "pon", "uto", "sri", "čet", "pet", "sub"], MonthNames: ["siječanj", "veljača", "ožujak", "travanj", "svibanj", "lipanj", "srpanj", "kolovoz", "rujan", "listopad", "studeni", "prosinac", ""], AbbreviatedMonthNames: ["sij", "vlj", "ožu", "tra", "svi", "lip", "srp", "kol", "ruj", "lis", "stu", "pro", ""], MonthGenitiveNames: ["siječnja", "veljače", "ožujka", "travnja", "svibnja", "lipnja", "srpnja", "kolovoza", "rujna", "listopada", "studenog", "prosinca", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "d\\.\\ mmmm\\ yyyy\\."},
-	1051: {LCID: 1051, Name: "sk-SK", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["nedeľa", "pondelok", "utorok", "streda", "štvrtok", "piatok", "sobota"], AbbreviatedDayNames: ["ne", "po", "ut", "st", "št", "pi", "so"], MonthNames: ["január", "február", "marec", "apríl", "máj", "jún", "júl", "august", "september", "október", "november", "december", ""], AbbreviatedMonthNames: ["jan", "feb", "mar", "apr", "máj", "jún", "júl", "aug", "sep", "okt", "nov", "dec", ""], MonthGenitiveNames: ["januára", "februára", "marca", "apríla", "mája", "júna", "júla", "augusta", "septembra", "októbra", "novembra", "decembra", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: ". ", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\ d\\.\\ mmmm\\ yyyy"},
+	1050: {LCID: 1050, Name: "hr-HR", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["nedjelja", "ponedjeljak", "utorak", "srijeda", "četvrtak", "petak", "subota"], AbbreviatedDayNames: ["ned", "pon", "uto", "sri", "čet", "pet", "sub"], MonthNames: ["siječanj", "veljača", "ožujak", "travanj", "svibanj", "lipanj", "srpanj", "kolovoz", "rujan", "listopad", "studeni", "prosinac", ""], AbbreviatedMonthNames: ["sij", "vlj", "ožu", "tra", "svi", "lip", "srp", "kol", "ruj", "lis", "stu", "pro", ""], MonthGenitiveNames: ["siječnja", "veljače", "ožujka", "travnja", "svibnja", "lipnja", "srpnja", "kolovoza", "rujna", "listopada", "studenog", "prosinca", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "d\\.\\ mmmm\\ yyyy\\."},
+	1051: {LCID: 1051, Name: "sk-SK", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["nedeľa", "pondelok", "utorok", "streda", "štvrtok", "piatok", "sobota"], AbbreviatedDayNames: ["ne", "po", "ut", "st", "št", "pi", "so"], MonthNames: ["január", "február", "marec", "apríl", "máj", "jún", "júl", "august", "september", "október", "november", "december", ""], AbbreviatedMonthNames: ["jan", "feb", "mar", "apr", "máj", "jún", "júl", "aug", "sep", "okt", "nov", "dec", ""], MonthGenitiveNames: ["januára", "februára", "marca", "apríla", "mája", "júna", "júla", "augusta", "septembra", "októbra", "novembra", "decembra", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\ d\\.\\ mmmm\\ yyyy"},
 	1053: {LCID: 1053, Name: "sv-SE", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "kr", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["söndag", "måndag", "tisdag", "onsdag", "torsdag", "fredag", "lördag"], AbbreviatedDayNames: ["sön", "mån", "tis", "ons", "tor", "fre", "lör"], MonthNames: ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december", ""], AbbreviatedMonthNames: ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: "-", TimeSeparator: ":", ShortDatePattern: "531", LongDatePattern: "\"den \"d\\ mmmm\\ yyyy"},
 	1055: {LCID: 1055, Name: "tr-TR", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "₺", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"], AbbreviatedDayNames: ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"], MonthNames: ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık", ""], AbbreviatedMonthNames: ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ÖÖ", PMDesignator: "ÖS", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "035", LongDatePattern: "d\\ mmmm\\ yyyy\\ dddd"},
+	1057: {LCID: 1057, Name: "id-ID", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "Rp", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"], AbbreviatedDayNames: ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"], MonthNames: ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ dd\\ mmmm\\ yyyy"},
 	1058: {LCID: 1058, Name: "uk-UA", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "₴", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["неділя", "понеділок", "вівторок", "середа", "четвер", "п'ятниця", "субота"], AbbreviatedDayNames: ["Нд", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"], MonthNames: ["січень", "лютий", "березень", "квітень", "травень", "червень", "липень", "серпень", "вересень", "жовтень", "листопад", "грудень", ""], AbbreviatedMonthNames: ["Січ", "Лют", "Бер", "Кві", "Тра", "Чер", "Лип", "Сер", "Вер", "Жов", "Лис", "Гру", ""], MonthGenitiveNames: ["січня", "лютого", "березня", "квітня", "травня", "червня", "липня", "серпня", "вересня", "жовтня", "листопада", "грудня", ""], AbbreviatedMonthGenitiveNames: ["січ", "лют", "бер", "кві", "тра", "чер", "лип", "сер", "вер", "жов", "лис", "гру", ""], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "d\\ mmmm\\ yyyy\" р.\""},
-	1060: {LCID: 1060, Name: "sl-SI", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["nedelja", "ponedeljek", "torek", "sreda", "četrtek", "petek", "sobota"], AbbreviatedDayNames: ["ned.", "pon.", "tor.", "sre.", "čet.", "pet.", "sob."], MonthNames: ["januar", "februar", "marec", "april", "maj", "junij", "julij", "avgust", "september", "oktober", "november", "december", ""], AbbreviatedMonthNames: ["jan.", "feb.", "mar.", "apr.", "maj", "jun.", "jul.", "avg.", "sep.", "okt.", "nov.", "dec.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "dop.", PMDesignator: "pop.", UseAMPM: 0, DateSeparator: ". ", TimeSeparator: ":", ShortDatePattern: "035", LongDatePattern: "dddd\\,\\ dd\\.\\ mmmm\\ yyyy"},
+	1060: {LCID: 1060, Name: "sl-SI", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["nedelja", "ponedeljek", "torek", "sreda", "četrtek", "petek", "sobota"], AbbreviatedDayNames: ["ned.", "pon.", "tor.", "sre.", "čet.", "pet.", "sob."], MonthNames: ["januar", "februar", "marec", "april", "maj", "junij", "julij", "avgust", "september", "oktober", "november", "december", ""], AbbreviatedMonthNames: ["jan.", "feb.", "mar.", "apr.", "maj", "jun.", "jul.", "avg.", "sep.", "okt.", "nov.", "dec.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "dop.", PMDesignator: "pop.", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "035", LongDatePattern: "dddd\\,\\ dd\\.\\ mmmm\\ yyyy"},
 	1062: {LCID: 1062, Name: "lv-LV", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["svētdiena", "pirmdiena", "otrdiena", "trešdiena", "ceturtdiena", "piektdiena", "sestdiena"], AbbreviatedDayNames: ["svētd.", "pirmd.", "otrd.", "trešd.", "ceturtd.", "piektd.", "sestd."], MonthNames: ["janvāris", "februāris", "marts", "aprīlis", "maijs", "jūnijs", "jūlijs", "augusts", "septembris", "oktobris", "novembris", "decembris", ""], AbbreviatedMonthNames: ["janv.", "febr.", "marts", "apr.", "maijs", "jūn.", "jūl.", "aug.", "sept.", "okt.", "nov.", "dec.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "priekšp.", PMDesignator: "pēcp.", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ yyyy\\.\\ \"gada\"\\ d\\.\\ mmmm"},
 	1063: {LCID: 1063, Name: "lt-LT", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["sekmadienis", "pirmadienis", "antradienis", "trečiadienis", "ketvirtadienis", "penktadienis", "šeštadienis"], AbbreviatedDayNames: ["sk", "pr", "an", "tr", "kt", "pn", "št"], MonthNames: ["sausis", "vasaris", "kovas", "balandis", "gegužė", "birželis", "liepa", "rugpjūtis", "rugsėjis", "spalis", "lapkritis", "gruodis", ""], AbbreviatedMonthNames: ["saus.", "vas.", "kov.", "bal.", "geg.", "birž.", "liep.", "rugp.", "rugs.", "spal.", "lapkr.", "gruod.", ""], MonthGenitiveNames: ["sausio", "vasario", "kovo", "balandžio", "gegužės", "birželio", "liepos", "rugpjūčio", "rugsėjo", "spalio", "lapkričio", "gruodžio", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "priešpiet", PMDesignator: "popiet", UseAMPM: 0, DateSeparator: "-", TimeSeparator: ":", ShortDatePattern: "531", LongDatePattern: "yyyy\\ \"m\"\\.\\ mmmm\\ d\\ \"d\"\\.\\,\\ dddd"},
 	1066: {LCID: 1066, Name: "vi-VN", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "₫", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"], AbbreviatedDayNames: ["CN", "T2", "T3", "T4", "T5", "T6", "T7"], MonthNames: ["Tháng Giêng", "Tháng Hai", "Tháng Ba", "Tháng Tư", "Tháng Năm", "Tháng Sáu", "Tháng Bảy", "Tháng Tám", "Tháng Chín", "Tháng Mười", "Tháng Mười Một", "Tháng Mười Hai", ""], AbbreviatedMonthNames: ["Thg1", "Thg2", "Thg3", "Thg4", "Thg5", "Thg6", "Thg7", "Thg8", "Thg9", "Thg10", "Thg11", "Thg12", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "SA", PMDesignator: "CH", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dd\\ mmmm\\ yyyy"},
 	1068: {LCID: 1068, Name: "az-Latn-AZ", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "₼", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["bazar", "bazar ertəsi", "çərşənbə axşamı", "çərşənbə", "cümə axşamı", "cümə", "şənbə"], AbbreviatedDayNames: ["B.", "B.E.", "Ç.A.", "Ç.", "C.A.", "C.", "Ş."], MonthNames: ["Yanvar", "Fevral", "Mart", "Aprel", "May", "İyun", "İyul", "Avqust", "Sentyabr", "Oktyabr", "Noyabr", "Dekabr", ""], AbbreviatedMonthNames: ["yan", "fev", "mar", "apr", "may", "iyn", "iyl", "avq", "sen", "okt", "noy", "dek", ""], MonthGenitiveNames: ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avqust", "sentyabr", "oktyabr", "noyabr", "dekabr", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "d\\ mmmm\\ yyyy\\,\\ dddd"},
 	1087: {LCID: 1087, Name: "kk-KZ", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "₸", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["жексенбі", "дүйсенбі", "сейсенбі", "сәрсенбі", "бейсенбі", "жұма", "сенбі"], AbbreviatedDayNames: ["жс", "дс", "сс", "ср", "бс", "жм", "сб"], MonthNames: ["Қаңтар", "Ақпан", "Наурыз", "Сәуір", "Мамыр", "Маусым", "Шілде", "Тамыз", "Қыркүйек", "Қазан", "Қараша", "Желтоқсан", ""], AbbreviatedMonthNames: ["қаң.", "ақп.", "нау.", "сәу.", "мам.", "мау.", "шіл.", "там.", "қыр.", "қаз.", "қар.", "жел.", ""], MonthGenitiveNames: ["қаңтар", "ақпан", "наурыз", "сәуір", "мамыр", "маусым", "шілде", "тамыз", "қыркүйек", "қазан", "қараша", "желтоқсан", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "yyyy\\ \"ж\"\\.\\ d\\ mmmm\\,\\ dddd"},
 	1104: {LCID: 1104, Name: "mn-MN", CurrencyPositivePattern: 2, CurrencyNegativePattern: 9, CurrencySymbol: "₮", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["ням", "даваа", "мягмар", "лхагва", "пүрэв", "баасан", "бямба"], AbbreviatedDayNames: ["Ня", "Да", "Мя", "Лх", "Пү", "Ба", "Бя"], MonthNames: ["Нэгдүгээр сар", "Хоёрдугаар сар", "Гуравдугаар сар", "Дөрөвдүгээр сар", "Тавдугаар сар", "Зургаадугаар сар", "Долоодугаар сар", "Наймдугаар сар", "Есдүгээр сар", "Аравдугаар сар", "Арван нэгдүгээр сар", "Арван хоёрдугаар сар", ""], AbbreviatedMonthNames: ["1-р сар", "2-р сар", "3-р сар", "4-р сар", "5-р сар", "6-р сар", "7-р сар", "8-р сар", "9-р сар", "10-р сар", "11-р сар", "12-р сар", ""], MonthGenitiveNames: ["нэгдүгээр сар", "хоёрдугаар сар", "гуравдугаар сар", "дөрөвдүгээр сар", "тавдугаар сар", "зургаадугаар сар", "долоодугаар сар", "наймдугаар сар", "есдүгээр сар", "аравдугаар сар", "арван нэгдүгээр сар", "арван хоёрдугаар сар", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ү.ө.", PMDesignator: "ү.х.", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "531", LongDatePattern: "yyyy\\.mm\\.dd\\,\\ dddd"},
+	2049: {LCID: 2049, Name: "ar-IQ", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "د.ع.‏", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], AbbreviatedDayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], MonthNames: ["كانون الثاني", "شباط", "آذار", "نيسان", "أيار", "حزيران", "تموز", "آب", "أيلول", "تشرين الأول", "تشرين الثاني", "كانون الأول", ""], AbbreviatedMonthNames: ["كانون الثاني", "شباط", "آذار", "نيسان", "أيار", "حزيران", "تموز", "آب", "أيلول", "تشرين الأول", "تشرين الثاني", "كانون الأول", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ص", PMDesignator: "م", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dd\\ mmmm\\,\\ yyyy"},
 	2052: {LCID: 2052, Name: "zh-CN", CurrencyPositivePattern: 0, CurrencyNegativePattern: 2, CurrencySymbol: "¥", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"], AbbreviatedDayNames: ["周日", "周一", "周二", "周三", "周四", "周五", "周六"], MonthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月", ""], AbbreviatedMonthNames: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "上午", PMDesignator: "下午", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "520", LongDatePattern: "yyyy\"年\"m\"月\"d\"日\""},
 	2055: {LCID: 2055, Name: "de-CH", CurrencyPositivePattern: 2, CurrencyNegativePattern: 2, CurrencySymbol: "CHF", NumberDecimalSeparator: ".", NumberGroupSeparator: "’", NumberGroupSizes: [3], DayNames: ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"], AbbreviatedDayNames: ["So.", "Mo.", "Di.", "Mi.", "Do.", "Fr.", "Sa."], MonthNames: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: ["Jan.", "Feb.", "März", "Apr.", "Mai", "Juni", "Juli", "Aug.", "Sept.", "Okt.", "Nov.", "Dez.", ""], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ d\\.\\ mmmm\\ yyyy"},
 	2057: {LCID: 2057, Name: "en-GB", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "£", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dd\\ mmmm\\ yyyy"},
@@ -5394,18 +6293,21 @@ var g_aCultureInfos = {
 	2077: {LCID: 2077, Name: "sv-FI", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["söndag", "måndag", "tisdag", "onsdag", "torsdag", "fredag", "lördag"], AbbreviatedDayNames: ["sön", "mån", "tis", "ons", "tors", "fre", "lör"], MonthNames: ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december", ""], AbbreviatedMonthNames: ["jan.", "feb.", "mars", "apr.", "maj", "juni", "juli", "aug.", "sep.", "okt.", "nov.", "dec.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "fm", PMDesignator: "em", UseAMPM: 0, DateSeparator: "-", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\ d\\ mmmm\\ yyyy"},
 	2092: {LCID: 2092, Name: "az-Cyrl-AZ", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "₼", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["базар", "базар ертәси", "чәршәнбә ахшамы", "чәршәнбә", "ҹүмә ахшамы", "ҹүмә", "шәнбә"], AbbreviatedDayNames: ["Б", "Бе", "Ча", "Ч", "Ҹа", "Ҹ", "Ш"], MonthNames: ["jанвар", "феврал", "март", "апрел", "мај", "ијун", "ијул", "август", "сентјабр", "октјабр", "нојабр", "декабр", ""], AbbreviatedMonthNames: ["Јан", "Фев", "Мар", "Апр", "Мај", "Ијун", "Ијул", "Авг", "Сен", "Окт", "Ноя", "Дек", ""], MonthGenitiveNames: ["јанвар", "феврал", "март", "апрел", "мај", "ијун", "ијул", "август", "сентјабр", "октјабр", "нојабр", "декабр", ""], AbbreviatedMonthGenitiveNames: ["Јан", "Фев", "Мар", "Апр", "мая", "ијун", "ијул", "Авг", "Сен", "Окт", "Ноя", "Дек", ""], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "d\\ mmmm\\ yyyy"},
 	2128: {LCID: 2128, Name: "mn-Mong-CN", CurrencyPositivePattern: 0, CurrencyNegativePattern: 2, CurrencySymbol: "¥", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3, 0], DayNames: ["ᠭᠠᠷᠠᠭ ᠤᠨ ᠡᠳᠦᠷ", "ᠭᠠᠷᠠᠭ ᠤᠨ ᠨᠢᠭᠡᠨ", "ᠭᠠᠷᠠᠭ ᠤᠨ ᠬᠣᠶᠠᠷ", "ᠭᠠᠷᠠᠭ ᠤᠨ ᠭᠤᠷᠪᠠᠨ", "ᠭᠠᠷᠠᠭ ᠤᠨ ᠳᠥᠷᠪᠡᠨ", "ᠭᠠᠷᠠᠭ ᠤᠨ ᠲᠠᠪᠤᠨ", "ᠭᠠᠷᠠᠭ ᠤᠨ ᠵᠢᠷᠭᠤᠭᠠᠨ"], AbbreviatedDayNames: ["ᠭᠠᠷᠠᠭ ᠤᠨ ᠡᠳᠦᠷ", "ᠭᠠᠷᠠᠭ ᠤᠨ ᠨᠢᠭᠡᠨ", "ᠭᠠᠷᠠᠭ ᠤᠨ ᠬᠣᠶᠠᠷ", "ᠭᠠᠷᠠᠭ ᠤᠨ ᠭᠤᠷᠪᠠᠨ", "ᠭᠠᠷᠠᠭ ᠤᠨ ᠳᠥᠷᠪᠡᠨ", "ᠭᠠᠷᠠᠭ ᠤᠨ ᠲᠠᠪᠤᠨ", "ᠭᠠᠷᠠᠭ ᠤᠨ ᠵᠢᠷᠭᠤᠭᠠᠨ"], MonthNames: ["ᠨᠢᠭᠡᠳᠦᠭᠡᠷ ᠰᠠᠷ᠎ᠠ", "ᠬᠤᠶ᠋ᠠᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠭᠤᠷᠪᠠᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠲᠦᠷᠪᠡᠳᠦᠭᠡᠷ ᠰᠠᠷ᠎ᠠ", "ᠲᠠᠪᠤᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠵᠢᠷᠭᠤᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠲᠤᠯᠤᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠨᠠᠢᠮᠠᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠶᠢᠰᠦᠳᠦᠭᠡᠷ ᠰᠠᠷ᠎ᠠ", "ᠠᠷᠪᠠᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠠᠷᠪᠠᠨ ᠨᠢᠭᠡᠳᠦᠭᠡᠷ ᠰᠠᠷ᠎ᠠ", "ᠠᠷᠪᠠᠨ ᠬᠤᠶ᠋ᠠᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", ""], AbbreviatedMonthNames: ["ᠨᠢᠭᠡᠳᠦᠭᠡᠷ ᠰᠠᠷ᠎ᠠ", "ᠬᠤᠶ᠋ᠠᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠭᠤᠷᠪᠠᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠲᠦᠷᠪᠡᠳᠦᠭᠡᠷ ᠰᠠᠷ᠎ᠠ", "ᠲᠠᠪᠤᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠵᠢᠷᠭᠤᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠲᠤᠯᠤᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠨᠠᠢᠮᠠᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠶᠢᠰᠦᠳᠦᠭᠡᠷ ᠰᠠᠷ᠎ᠠ", "ᠠᠷᠪᠠᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠠᠷᠪᠠᠨ ᠨᠢᠭᠡᠳᠦᠭᠡᠷ ᠰᠠᠷ᠎ᠠ", "ᠠᠷᠪᠠᠨ ᠬᠤᠶ᠋ᠠᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "520", LongDatePattern: "yyyy\\ᠣ\\ᠨ\\ mmmm\\ d\\ᠡ\\ᠳ\\ᠦ\\ᠷ\\᠂\\ dddd"},
+	3073: {LCID: 3073, Name: "ar-EG", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "ج.م.‏", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], AbbreviatedDayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], MonthNames: ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر", ""], AbbreviatedMonthNames: ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ص", PMDesignator: "م", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dd\\ mmmm\\,\\ yyyy"},
 	3076: {LCID: 3076, Name: "zh-HK", CurrencyPositivePattern: 0, CurrencyNegativePattern: 0, CurrencySymbol: "HK$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"], AbbreviatedDayNames: ["週日", "週一", "週二", "週三", "週四", "週五", "週六"], MonthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月", ""], AbbreviatedMonthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "上午", PMDesignator: "下午", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "yyyy\"年\"m\"月\"d\"日\""},
 	3079: {LCID: 3079, Name: "de-AT", CurrencyPositivePattern: 2, CurrencyNegativePattern: 9, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"], AbbreviatedDayNames: ["So.", "Mo.", "Di.", "Mi.", "Do.", "Fr.", "Sa."], MonthNames: ["Jänner", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember", ""], AbbreviatedMonthNames: ["Jän", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: ["Jän.", "Feb.", "März", "Apr.", "Mai", "Juni", "Juli", "Aug.", "Sep.", "Okt.", "Nov.", "Dez.", ""], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ d\\.\\ mmmm\\ yyyy"},
 	3081: {LCID: 3081, Name: "en-AU", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "035", LongDatePattern: "dddd\\,\\ d\\ mmmm\\ yyyy"},
 	3082: {LCID: 3082, Name: "es-ES", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["do.", "lu.", "ma.", "mi.", "ju.", "vi.", "sá."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ d\" de \"mmmm\" de \"yyyy"},
 	3084: {LCID: 3084, Name: "fr-CA", CurrencyPositivePattern: 3, CurrencyNegativePattern: 15, CurrencySymbol: "$", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: "-", TimeSeparator: ":", ShortDatePattern: "531", LongDatePattern: "d\\ mmmm\\ yyyy"},
 	3152: {LCID: 3152, Name: "mn-Mong-MN", CurrencyPositivePattern: 0, CurrencyNegativePattern: 2, CurrencySymbol: "₮", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3, 0], DayNames: ["ᠨᠢᠮ᠎ᠠ", "ᠳᠠᠸᠠ", "ᠮᠢᠭᠮᠠᠷ", "ᡀᠠᠭᠪᠠ", "ᠫᠦᠷᠪᠦ", "ᠪᠠᠰᠠᠩ", "ᠪᠢᠮᠪᠠ"], AbbreviatedDayNames: ["ᠨᠢᠮ᠎ᠠ", "ᠳᠠᠸᠠ", "ᠮᠢᠭᠮᠠᠷ", "ᡀᠠᠭᠪᠠ", "ᠫᠦᠷᠪᠦ", "ᠪᠠᠰᠠᠩ", "ᠪᠢᠮᠪᠠ"], MonthNames: ["ᠨᠢᠭᠡᠳᠦᠭᠡᠷ ᠰᠠᠷ᠎ᠠ", "ᠬᠤᠶ᠋ᠠᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠭᠤᠷᠪᠠᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠲᠦᠷᠪᠡᠳᠦᠭᠡᠷ ᠰᠠᠷ᠎ᠠ", "ᠲᠠᠪᠤᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠵᠢᠷᠭᠤᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠲᠤᠯᠤᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠨᠠᠢᠮᠠᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠶᠢᠰᠦᠳᠦᠭᠡᠷ ᠰᠠᠷ᠎ᠠ", "ᠠᠷᠪᠠᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠠᠷᠪᠠᠨ ᠨᠢᠭᠡᠳᠦᠭᠡᠷ ᠰᠠᠷ᠎ᠠ", "ᠠᠷᠪᠠᠨ ᠬᠤᠶ᠋ᠠᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", ""], AbbreviatedMonthNames: ["ᠨᠢᠭᠡᠳᠦᠭᠡᠷ ᠰᠠᠷ᠎ᠠ", "ᠬᠤᠶ᠋ᠠᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠭᠤᠷᠪᠠᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠲᠦᠷᠪᠡᠳᠦᠭᠡᠷ ᠰᠠᠷ᠎ᠠ", "ᠲᠠᠪᠤᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠵᠢᠷᠭᠤᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠲᠤᠯᠤᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠨᠠᠢᠮᠠᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠶᠢᠰᠦᠳᠦᠭᠡᠷ ᠰᠠᠷ᠎ᠠ", "ᠠᠷᠪᠠᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", "ᠠᠷᠪᠠᠨ ᠨᠢᠭᠡᠳᠦᠭᠡᠷ ᠰᠠᠷ᠎ᠠ", "ᠠᠷᠪᠠᠨ ᠬᠤᠶ᠋ᠠᠳᠤᠭᠠᠷ ᠰᠠᠷ᠎ᠠ", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "520", LongDatePattern: "yyyy\\ᠣ\\ᠨ\\ mmmm\\ d\\ᠡ\\ᠳ\\ᠦ\\ᠷ\\᠂\\ dddd"},
+	4097: {LCID: 4097, Name: "ar-LY", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "د.ل.‏", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], AbbreviatedDayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], MonthNames: ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر", ""], AbbreviatedMonthNames: ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ص", PMDesignator: "م", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dd\\ mmmm\\,\\ yyyy"},
 	4100: {LCID: 4100, Name: "zh-SG", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"], AbbreviatedDayNames: ["周日", "周一", "周二", "周三", "周四", "周五", "周六"], MonthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月", ""], AbbreviatedMonthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "上午", PMDesignator: "下午", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "yyyy\"年\"m\"月\"d\"日\""},
 	4103: {LCID: 4103, Name: "de-LU", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"], AbbreviatedDayNames: ["So.", "Mo.", "Di.", "Mi.", "Do.", "Fr.", "Sa."], MonthNames: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: ["Jan.", "Feb.", "März", "Apr.", "Mai", "Juni", "Juli", "Aug.", "Sept.", "Okt.", "Nov.", "Dez.", ""], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ d\\.\\ mmmm\\ yyyy"},
 	4105: {LCID: 4105, Name: "en-CA", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 1, DateSeparator: "-", TimeSeparator: ":", ShortDatePattern: "531", LongDatePattern: "mmmm\\ d\\,\\ yyyy"},
 	4106: {LCID: 4106, Name: "es-GT", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "Q", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "035", LongDatePattern: "dddd\\,\\ d\\ \"de\"\\ mmmm\\ \"de\"\\ yyyy"},
 	4108: {LCID: 4108, Name: "fr-CH", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "CHF", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ d\\ mmmm\\ yyyy"},
-	4122: {LCID: 4122, Name: "hr-BA", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "KM", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["nedjelja", "ponedjeljak", "utorak", "srijeda", "četvrtak", "petak", "subota"], AbbreviatedDayNames: ["ned", "pon", "uto", "sri", "čet", "pet", "sub"], MonthNames: ["siječanj", "veljača", "ožujak", "travanj", "svibanj", "lipanj", "srpanj", "kolovoz", "rujan", "listopad", "studeni", "prosinac", ""], AbbreviatedMonthNames: ["sij", "velj", "ožu", "tra", "svi", "lip", "srp", "kol", "ruj", "lis", "stu", "pro", ""], MonthGenitiveNames: ["siječnja", "veljače", "ožujka", "travnja", "svibnja", "lipnja", "srpnja", "kolovoza", "rujna", "listopada", "studenoga", "prosinca", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: ". ", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\,\\ d\\.\\ mmmm\\ yyyy\\."},
+	4122: {LCID: 4122, Name: "hr-BA", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "KM", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["nedjelja", "ponedjeljak", "utorak", "srijeda", "četvrtak", "petak", "subota"], AbbreviatedDayNames: ["ned", "pon", "uto", "sri", "čet", "pet", "sub"], MonthNames: ["siječanj", "veljača", "ožujak", "travanj", "svibanj", "lipanj", "srpanj", "kolovoz", "rujan", "listopad", "studeni", "prosinac", ""], AbbreviatedMonthNames: ["sij", "velj", "ožu", "tra", "svi", "lip", "srp", "kol", "ruj", "lis", "stu", "pro", ""], MonthGenitiveNames: ["siječnja", "veljače", "ožujka", "travnja", "svibnja", "lipnja", "srpnja", "kolovoza", "rujna", "listopada", "studenoga", "prosinca", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\,\\ d\\.\\ mmmm\\ yyyy\\."},
+	5121: {LCID: 5121, Name: "ar-DZ", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "د.ج.‏", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], AbbreviatedDayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], MonthNames: ["جانفييه", "فيفرييه", "مارس", "أفريل", "مي", "جوان", "جوييه", "أوت", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر", ""], AbbreviatedMonthNames: ["جانفييه", "فيفرييه", "مارس", "أفريل", "مي", "جوان", "جوييه", "أوت", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ص", PMDesignator: "م", UseAMPM: 0, DateSeparator: "-", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dd\\ mmmm\\,\\ yyyy"},
 	5124: {LCID: 5124, Name: "zh-MO", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "MOP", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"], AbbreviatedDayNames: ["週日", "週一", "週二", "週三", "週四", "週五", "週六"], MonthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月", ""], AbbreviatedMonthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "上午", PMDesignator: "下午", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "yyyy\"年\"m\"月\"d\"日\""},
 	5127: {LCID: 5127, Name: "de-LI", CurrencyPositivePattern: 2, CurrencyNegativePattern: 9, CurrencySymbol: "CHF", NumberDecimalSeparator: ".", NumberGroupSeparator: "’", NumberGroupSizes: [3], DayNames: ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"], AbbreviatedDayNames: ["So.", "Mo.", "Di.", "Mi.", "Do.", "Fr.", "Sa."], MonthNames: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: ["Jan.", "Feb.", "März", "Apr.", "Mai", "Juni", "Juli", "Aug.", "Sept.", "Okt.", "Nov.", "Dez.", ""], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ d\\.\\ mmmm\\ yyyy"},
 	5129: {LCID: 5129, Name: "en-NZ", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "am", PMDesignator: "pm", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "035", LongDatePattern: "dddd\\,\\ d\\ mmmm\\ yyyy"},
@@ -5414,33 +6316,45 @@ var g_aCultureInfos = {
 	6153: {LCID: 6153, Name: "en-IE", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "€", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "am", PMDesignator: "pm", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\ d\\ mmmm\\ yyyy"},
 	6154: {LCID: 6154, Name: "es-PA", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "B/.", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "315", LongDatePattern: "dddd\\,\\ d\\ \"de\"\\ mmmm\\ \"de\"\\ yyyy"},
 	6156: {LCID: 6156, Name: "fr-MC", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\ d\\ mmmm\\ yyyy"},
+	7169: {LCID: 7169, Name: "ar-TN", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "د.ت.‏", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], AbbreviatedDayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], MonthNames: ["جانفييه", "فيفرييه", "مارس", "أفريل", "مي", "جوان", "جوييه", "أوت", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر", ""], AbbreviatedMonthNames: ["جانفييه", "فيفرييه", "مارس", "أفريل", "مي", "جوان", "جوييه", "أوت", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ص", PMDesignator: "م", UseAMPM: 0, DateSeparator: "-", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dd\\ mmmm\\,\\ yyyy"},
 	7177: {LCID: 7177, Name: "en-ZA", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "R", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "am", PMDesignator: "pm", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "531", LongDatePattern: "dddd\\,\\ dd\\ mmmm\\ yyyy"},
 	7178: {LCID: 7178, Name: "es-DO", CurrencyPositivePattern: 0, CurrencyNegativePattern: 0, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\,\\ d\\ \"de\"\\ mmmm\\ \"de\"\\ yyyy"},
 	7180: {LCID: 7180, Name: "fr-029", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "EC$", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre", ""], AbbreviatedMonthNames: ["Janv.", "Févr.", "Mars", "Avr.", "Mai", "Juin", "Juil.", "Août", "Sept.", "Oct.", "Nov.", "Déc.", ""], MonthGenitiveNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthGenitiveNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\ d\\ mmmm\\ yyyy"},
+	8193: {LCID: 8193, Name: "ar-OM", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "ر.ع.‏", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], AbbreviatedDayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], MonthNames: ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر", ""], AbbreviatedMonthNames: ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ص", PMDesignator: "م", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dd\\ mmmm\\,\\ yyyy"},
 	8201: {LCID: 8201, Name: "en-JM", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "am", PMDesignator: "pm", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\,\\ d\\ mmmm\\ yyyy"},
 	8202: {LCID: 8202, Name: "es-VE", CurrencyPositivePattern: 0, CurrencyNegativePattern: 2, CurrencySymbol: "Bs.S", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sept.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\,\\ d\\ \"de\"\\ mmmm\\ \"de\"\\ yyyy"},
 	8204: {LCID: 8204, Name: "fr-RE", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\ d\\ mmmm\\ yyyy"},
+	9217: {LCID: 9217, Name: "ar-YE", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "ر.ي.‏", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], AbbreviatedDayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], MonthNames: ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر", ""], AbbreviatedMonthNames: ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ص", PMDesignator: "م", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dd\\ mmmm\\,\\ yyyy"},
 	9225: {LCID: 9225, Name: "en-029", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "EC$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ dd\\ mmmm\\ yyyy"},
 	9226: {LCID: 9226, Name: "es-CO", CurrencyPositivePattern: 2, CurrencyNegativePattern: 9, CurrencySymbol: "$", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sept.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], AMDesignator: "a. m.", PMDesignator: "p. m.", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "035", LongDatePattern: "dddd\\,\\ d\\ \"de\"\\ mmmm\\ \"de\"\\ yyyy"},
 	9228: {LCID: 9228, Name: "fr-CD", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "FC", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\ d\\ mmmm\\ yyyy"},
+	9242: {LCID: 9242, Name: "sr-Latn-RS", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "RSD", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["nedelja", "ponedeljak", "utorak", "sreda", "četvrtak", "petak", "subota"], AbbreviatedDayNames: ["ned", "pon", "uto", "sre", "čet", "pet", "sub"], MonthNames: ["januar", "februar", "mart", "april", "maj", "jun", "jul", "avgust", "septembar", "oktobar", "novembar", "decembar", ""], AbbreviatedMonthNames: ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "avg", "sep", "okt", "nov", "dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "pre podne", PMDesignator: "po podne", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\,\\ dd\\.\\ mmmm\\ yyyy\\."},
+	10241: {LCID: 10241, Name: "ar-SY", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "ل.س.‏", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], AbbreviatedDayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], MonthNames: ["كانون الثاني", "شباط", "آذار", "نيسان", "أيار", "حزيران", "تموز", "آب", "أيلول", "تشرين الأول", "تشرين الثاني", "كانون الأول", ""], AbbreviatedMonthNames: ["كانون الثاني", "شباط", "آذار", "نيسان", "أيار", "حزيران", "تموز", "آب", "أيلول", "تشرين الأول", "تشرين الثاني", "كانون الأول", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ص", PMDesignator: "م", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dd\\ mmmm\\,\\ yyyy"},
 	10249: {LCID: 10249, Name: "en-BZ", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "am", PMDesignator: "pm", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ dd\\ mmmm\\ yyyy"},
 	10250: {LCID: 10250, Name: "es-PE", CurrencyPositivePattern: 2, CurrencyNegativePattern: 9, CurrencySymbol: "S/", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Setiembre", "Octubre", "Noviembre", "Diciembre", ""], AbbreviatedMonthNames: ["Ene.", "Feb.", "Mar.", "Abr.", "May.", "Jun.", "Jul.", "Ago.", "Set.", "Oct.", "Nov.", "Dic.", ""], MonthGenitiveNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "setiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthGenitiveNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "set.", "oct.", "nov.", "dic.", ""], AMDesignator: "a. m.", PMDesignator: "p. m.", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "035", LongDatePattern: "dddd\\,\\ d\\ \"de\"\\ mmmm\\ \"de\"\\ yyyy"},
 	10252: {LCID: 10252, Name: "fr-SN", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "CFA", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\ d\\ mmmm\\ yyyy"},
+	10266: {LCID: 10266, Name: "sr-Cyrl-RS", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "дин.", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["недеља", "понедељак", "уторак", "среда", "четвртак", "петак", "субота"], AbbreviatedDayNames: ["нед.", "пон.", "ут.", "ср.", "чет.", "пет.", "суб."], MonthNames: ["јануар", "фебруар", "март", "април", "мај", "јун", "јул", "август", "септембар", "октобар", "новембар", "децембар", ""], AbbreviatedMonthNames: ["јан.", "феб.", "март", "апр.", "мај", "јун", "јул", "авг.", "септ.", "окт.", "нов.", "дец.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "d\\.\\ mmmm\\ yyyy\\."},
+	11265: {LCID: 11265, Name: "ar-JO", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "د.ا.‏", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], AbbreviatedDayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], MonthNames: ["كانون الثاني", "شباط", "آذار", "نيسان", "أيار", "حزيران", "تموز", "آب", "أيلول", "تشرين الأول", "تشرين الثاني", "كانون الأول", ""], AbbreviatedMonthNames: ["كانون الثاني", "شباط", "آذار", "نيسان", "أيار", "حزيران", "تموز", "آب", "أيلول", "تشرين الأول", "تشرين الثاني", "كانون الأول", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ص", PMDesignator: "م", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dd\\ mmmm\\,\\ yyyy"},
 	11273: {LCID: 11273, Name: "en-TT", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "am", PMDesignator: "pm", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ d\\ mmmm\\ yyyy"},
 	11274: {LCID: 11274, Name: "es-AR", CurrencyPositivePattern: 2, CurrencyNegativePattern: 9, CurrencySymbol: "$", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\,\\ d\\ \"de\"\\ mmmm\\ \"de\"\\ yyyy"},
 	11276: {LCID: 11276, Name: "fr-CM", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "FCFA", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "mat.", PMDesignator: "soir", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\ d\\ mmmm\\ yyyy"},
+	12289: {LCID: 12289, Name: "ar-LB", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "ل.ل.‏", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], AbbreviatedDayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], MonthNames: ["كانون الثاني", "شباط", "آذار", "نيسان", "أيار", "حزيران", "تموز", "آب", "أيلول", "تشرين الأول", "تشرين الثاني", "كانون الأول", ""], AbbreviatedMonthNames: ["كانون الثاني", "شباط", "آذار", "نيسان", "أيار", "حزيران", "تموز", "آب", "أيلول", "تشرين الأول", "تشرين الثاني", "كانون الأول", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ص", PMDesignator: "م", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dd\\ mmmm\\,\\ yyyy"},
 	12297: {LCID: 12297, Name: "en-ZW", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "US$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "am", PMDesignator: "pm", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\,\\ dd\\ mmmm\\ yyyy"},
 	12298: {LCID: 12298, Name: "es-EC", CurrencyPositivePattern: 0, CurrencyNegativePattern: 2, CurrencySymbol: "$", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\,\\ d\\ \"de\"\\ mmmm\\ \"de\"\\ yyyy"},
 	12300: {LCID: 12300, Name: "fr-CI", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "CFA", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\ d\\ mmmm\\ yyyy"},
+	13313: {LCID: 13313, Name: "ar-KW", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "د.ك.‏", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], AbbreviatedDayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], MonthNames: ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر", ""], AbbreviatedMonthNames: ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ص", PMDesignator: "م", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dd\\ mmmm\\,\\ yyyy"},
 	13321: {LCID: 13321, Name: "en-PH", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "₱", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "am", PMDesignator: "pm", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ d\\ mmmm\\ yyyy"},
 	13322: {LCID: 13322, Name: "es-CL", CurrencyPositivePattern: 0, CurrencyNegativePattern: 2, CurrencySymbol: "$", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sept.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], AMDesignator: "a. m.", PMDesignator: "p. m.", UseAMPM: 0, DateSeparator: "-", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ d\\ \"de\"\\ mmmm\\ \"de\"\\ yyyy"},
 	13324: {LCID: 13324, Name: "fr-ML", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "CFA", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\ d\\ mmmm\\ yyyy"},
+	14337: {LCID: 14337, Name: "ar-AE", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "د.إ.‏", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], AbbreviatedDayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], MonthNames: ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر", ""], AbbreviatedMonthNames: ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ص", PMDesignator: "م", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dd\\ mmmm\\,\\ yyyy"},
 	14345: {LCID: 14345, Name: "en-ID", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "Rp", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dd\\ mmmm\\ yyyy"},
 	14346: {LCID: 14346, Name: "es-UY", CurrencyPositivePattern: 2, CurrencyNegativePattern: 9, CurrencySymbol: "$", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Setiembre", "Octubre", "Noviembre", "Diciembre", ""], AbbreviatedMonthNames: ["Ene.", "Feb.", "Mar.", "Abr.", "May.", "Jun.", "Jul.", "Ago.", "Set.", "Oct.", "Nov.", "Dic.", ""], MonthGenitiveNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "setiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthGenitiveNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "set.", "oct.", "nov.", "dic.", ""], AMDesignator: "a. m.", PMDesignator: "p. m.", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\,\\ d\\ \"de\"\\ mmmm\\ \"de\"\\ yyyy"},
 	14348: {LCID: 14348, Name: "fr-MA", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "DH", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["jan.", "fév.", "mar.", "avr.", "mai", "jui.", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\ d\\ mmmm\\ yyyy"},
+	15361: {LCID: 15361, Name: "ar-BH", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "د.ب.‏", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], AbbreviatedDayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], MonthNames: ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر", ""], AbbreviatedMonthNames: ["يناير", "فبراير", "مارس", "ابريل", "مايو", "يونيو", "يوليو", "اغسطس", "سبتمبر", "اكتوبر", "نوفمبر", "ديسمبر", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ص", PMDesignator: "م", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dd\\ mmmm\\,\\ yyyy"},
 	15369: {LCID: 15369, Name: "en-HK", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "am", PMDesignator: "pm", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\,\\ d\\ mmmm\\ yyyy"},
 	15370: {LCID: 15370, Name: "es-PY", CurrencyPositivePattern: 2, CurrencyNegativePattern: 12, CurrencySymbol: "₲", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sept.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\,\\ d\\ \"de\"\\ mmmm\\ \"de\"\\ yyyy"},
 	15372: {LCID: 15372, Name: "fr-HT", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "G", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\ d\\ mmmm\\ yyyy"},
+	16385: {LCID: 16385, Name: "ar-QA", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "ر.ق.‏", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], AbbreviatedDayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], MonthNames: ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر", ""], AbbreviatedMonthNames: ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ص", PMDesignator: "م", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dd\\ mmmm\\,\\ yyyy"},
 	16393: {LCID: 16393, Name: "en-IN", CurrencyPositivePattern: 2, CurrencyNegativePattern: 12, CurrencySymbol: "₹", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3, 2], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: "-", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dd\\ mmmm\\ yyyy"},
 	16394: {LCID: 16394, Name: "es-BO", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "Bs", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a. m.", PMDesignator: "p. m.", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\,\\ d\\ \"de\"\\ mmmm\\ \"de\"\\ yyyy"},
 	17417: {LCID: 17417, Name: "en-MY", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "RM", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\,\\ d\\ mmmm\\,\\ yyyy"},
@@ -5452,6 +6366,8 @@ var g_aCultureInfos = {
 	21514: {LCID: 21514, Name: "es-US", CurrencyPositivePattern: 0, CurrencyNegativePattern: 0, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "205", LongDatePattern: "dddd\\,\\ mmmm\\ dd\\,\\ yyyy"},
 	22538: {LCID: 22538, Name: "es-419", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "XDR", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a.m.", PMDesignator: "p.m.", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\,\\ d\\ \"de\"\\ mmmm\\ \"de\"\\ yyyy"},
 	23562: {LCID: 23562, Name: "es-CU", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "a.m.", PMDesignator: "p.m.", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\,\\ d\\ \"de\"\\ mmmm\\ \"de\"\\ yyyy"},
+	27674: {LCID: 27674, Name: "sr-Cyrl", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "дин.", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["недеља", "понедељак", "уторак", "среда", "четвртак", "петак", "субота"], AbbreviatedDayNames: ["нед.", "пон.", "ут.", "ср.", "чет.", "пет.", "суб."], MonthNames: ["јануар", "фебруар", "март", "април", "мај", "јун", "јул", "август", "септембар", "октобар", "новембар", "децембар", ""], AbbreviatedMonthNames: ["јан.", "феб.", "март", "апр.", "мај", "јун", "јул", "авг.", "септ.", "окт.", "нов.", "дец.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "d\\.\\ mmmm\\ yyyy\\."},
+	28698: {LCID: 28698, Name: "sr-Latn", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "RSD", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["nedelja", "ponedeljak", "utorak", "sreda", "četvrtak", "petak", "subota"], AbbreviatedDayNames: ["ned", "pon", "uto", "sre", "čet", "pet", "sub"], MonthNames: ["januar", "februar", "mart", "april", "maj", "jun", "jul", "avgust", "septembar", "oktobar", "novembar", "decembar", ""], AbbreviatedMonthNames: ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "avg", "sep", "okt", "nov", "dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "pre podne", PMDesignator: "po podne", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\,\\ dd\\.\\ mmmm\\ yyyy\\."},
 	29740: {LCID: 29740, Name: "az-Cyrl", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "₼", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["базар", "базар ертәси", "чәршәнбә ахшамы", "чәршәнбә", "ҹүмә ахшамы", "ҹүмә", "шәнбә"], AbbreviatedDayNames: ["Б", "Бе", "Ча", "Ч", "Ҹа", "Ҹ", "Ш"], MonthNames: ["jанвар", "феврал", "март", "апрел", "мај", "ијун", "ијул", "август", "сентјабр", "октјабр", "нојабр", "декабр", ""], AbbreviatedMonthNames: ["Јан", "Фев", "Мар", "Апр", "Мај", "Ијун", "Ијул", "Авг", "Сен", "Окт", "Ноя", "Дек", ""], MonthGenitiveNames: ["јанвар", "феврал", "март", "апрел", "мај", "ијун", "ијул", "август", "сентјабр", "октјабр", "нојабр", "декабр", ""], AbbreviatedMonthGenitiveNames: ["Јан", "Фев", "Мар", "Апр", "мая", "ијун", "ијул", "Авг", "Сен", "Окт", "Ноя", "Дек", ""], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "d\\ mmmm\\ yyyy"},
 	30724: {LCID: 30724, Name: "zh", CurrencyPositivePattern: 0, CurrencyNegativePattern: 2, CurrencySymbol: "¥", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"], AbbreviatedDayNames: ["周日", "周一", "周二", "周三", "周四", "周五", "周六"], MonthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月", ""], AbbreviatedMonthNames: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "上午", PMDesignator: "下午", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "520", LongDatePattern: "yyyy\"年\"m\"月\"d\"日\""},
 	30764: {LCID: 30764, Name: "az-Latn", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "₼", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["bazar", "bazar ertəsi", "çərşənbə axşamı", "çərşənbə", "cümə axşamı", "cümə", "şənbə"], AbbreviatedDayNames: ["B.", "B.E.", "Ç.A.", "Ç.", "C.A.", "C.", "Ş."], MonthNames: ["Yanvar", "Fevral", "Mart", "Aprel", "May", "İyun", "İyul", "Avqust", "Sentyabr", "Oktyabr", "Noyabr", "Dekabr", ""], AbbreviatedMonthNames: ["yan", "fev", "mar", "apr", "may", "iyn", "iyl", "avq", "sen", "okt", "noy", "dek", ""], MonthGenitiveNames: ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avqust", "sentyabr", "oktyabr", "noyabr", "dekabr", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "d\\ mmmm\\ yyyy\\,\\ dddd"},
@@ -5478,7 +6394,4164 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 		"XXX", "YER", "YUM", "ZAR", "ZMK", "ZMW", "ZWD", "ZWL", "ZWN", "ZWR"
 	];
 
-    //---------------------------------------------------------export---------------------------------------------------
+	let c_oAscDateFormatExcel = {
+		"1025": [
+			"[$-1170000]B2dd/mm/yyyy;@",
+			"[$-1170000]B2dd/mm/yy;@",
+			"[$-1170000]B2yyyy-mm-dd;@",
+			"[$-2170000]B2dd/mm/yyyy;@",
+			"[$-2170000]B2dd/mm/yy;@",
+			"[$-2170000]B2yyyy-mm-dd;@",
+			"[$-1170401]B2dd mmmm, yyyy;@",
+			"[$-1170401]B2dddd, dd mmmm, yyyy;@"
+		],
+		"1026": [
+			"dd.m.yyyy \"г.\";@",
+			"d.m.yyyy \"г.\";@",
+			"dd.mm.yyyy \"г.\";@",
+			"yyyy-mm-dd;@",
+			"[$-402]dd mmmm yyyy \"г.\";@",
+			"[$-402]dddd, dd mmmm yyyy \"г.\";@"
+		],
+		"1027": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"yyyy-mm-dd;@",
+			"[$-403]dddd, d mmmm\" de \"yyyy;@",
+			"[$-403]d mmmm\" de \"yyyy;@",
+			"[$-403]mmmm\" de \"yyyy;@"
+		],
+		"1028": [
+			"yyyy-mm-dd;@",
+			"yyyy\"年\"m\"月\"d\"日\";@",
+			"m\"月\"d\"日\";@",
+			"[DBNum1][$-404]yyyy\"年\"m\"月\"d\"日\";@",
+			"[DBNum1][$-404]m\"月\"d\"日\";@",
+			"[$-404]aaaa;@",
+			"[$-404]aaa;@",
+			"yyyy/m/d;@",
+			"yyyy/m/d h:mm;@",
+			"[$-409]yyyy/m/d h:mm AM/PM;@",
+			"m/d;@",
+			"m/d/yy;@",
+			"mm/dd/yy;@",
+			"[$-409]d-mmm;@",
+			"[$-409]d-mmm-yy;@",
+			"[$-409]mmmmm;@",
+			"[$-409]mmmmm-yy;@"
+		],
+		"1029": [
+			"yyyy-mm-dd;@",
+			"d/m;@",
+			"d/m/yy;@",
+			"dd/mm/yy;@",
+			"[$-405]d-mmm.;@",
+			"[$-405]d/mmm/yy;@",
+			"[$-405]dd-mmm-yy;@",
+			"[$-405]mmm-yy;@",
+			"[$-405]mmmm yy;@",
+			"[$-405]d. mmmm yyyy;@",
+			"[$-409]d/m/yy h:mm AM/PM;@",
+			"d/m/yy h:mm;@",
+			"[$-405]mmmmm;@",
+			"[$-405]mmmmm-yy;@",
+			"d/m/yyyy;@",
+			"[$-405]d-mmm-yyyy;@"
+		],
+		"1030": [
+			"dd-mm-yy;@",
+			"[$-406]d. mmmm yyyy;@",
+			"yyyy-mm-dd;@",
+			"yyyy.mm.dd;@",
+			"yy-mm-dd;@",
+			"[$-406]mmmm yyyy;@",
+			"d.m.yy;@",
+			"d/m yyyy;@",
+			"dd-mm-yy hh:mm;@",
+			"dd-mm-yy hh:mm:ss;@",
+			"yyyy-mm-dd hh:mm;@",
+			"[$-406]mmmm yy;@",
+			"dd.mm.yyyy;@",
+			"d.m.yyyy;@",
+			"dd.mm.yy;@",
+			"dd/mm yyyy;@",
+			"dd/mm yy;@",
+			"d/m yy;@",
+			"[$-406]mmmmm;@",
+			"[$-406]mmmmm-yy;@"
+		],
+		"1031": [
+			"yyyy-mm-dd;@",
+			"d.m;@",
+			"d.m.yy;@",
+			"dd.mm.yy;@",
+			"[$-407]d. mmm.;@",
+			"[$-407]d. mmm. yy;@",
+			"[$-407]d. mmm yy;@",
+			"[$-407]mmm. yy;@",
+			"[$-407]mmmm yy;@",
+			"[$-407]d. mmmm yyyy;@",
+			"[$-409]d/m/yy h:mm AM/PM;@",
+			"d.m.yy h:mm;@",
+			"[$-407]mmmmm;@",
+			"[$-407]mmmmm yy;@",
+			"d.m.yyyy;@",
+			"[$-407]d. mmm. yyyy;@"
+		],
+		"1032": [
+			"yyyy-mm-dd;@",
+			"d/m;@",
+			"d/m/yy;@",
+			"dd/mm/yy;@",
+			"d/m/yyyy;@",
+			"[$-408]d-mmm;@",
+			"[$-408]d-mmm-yy;@",
+			"[$-408]dd-mmm-yy;@",
+			"[$-408]mmm-yy;@",
+			"[$-408]d mmmm yyyy;@",
+			"[$-408]d/m/yy h:mm AM/PM;@",
+			"d/m/yy h:mm;@",
+			"[$-408]mmmmm;@",
+			"[$-408]mmmmm-yy;@",
+			"[$-408]d-mmm-yyyy;@"
+		],
+		"1033": [
+			"yyyy-mm-dd;@",
+			"m/d;@",
+			"m/d/yy;@",
+			"mm/dd/yy;@",
+			"[$-409]d-mmm;@",
+			"[$-409]d-mmm-yy;@",
+			"[$-409]dd-mmm-yy;@",
+			"[$-409]mmm-yy;@",
+			"[$-409]mmmm-yy;@",
+			"[$-409]mmmm d, yyyy;@",
+			"[$-409]m/d/yy h:mm AM/PM;@",
+			"m/d/yy h:mm;@",
+			"[$-409]mmmmm;@",
+			"[$-409]mmmmm-yy;@",
+			"m/d/yyyy;@",
+			"[$-409]d-mmm-yyyy;@"
+		],
+		"1034": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"d/mm/yy;@",
+			"d/m/yy;@",
+			"dd-mm-yy;@",
+			"dd.mm.yy;@",
+			"yyyy-mm-dd;@",
+			"[$-40A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-40A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-40A]d\" de \"mmmm\" de \"yyyy;@"
+		],
+		"1035": [
+			"d.m.;@",
+			"d.m.yy;@",
+			"d.m.yyyy;@",
+			"[$-40B]d. mmmmt\\a;@",
+			"[$-40B]d. mmmmt\\a yy;@",
+			"[$-40B]d. mmmmt\\a yyyy;@",
+			"[$-40B]mmmm yy;@",
+			"[$-40B]mmmm yyyy;@",
+			"[$-40B]d. mmmmt\\a yyyy h:mm;@",
+			"d.m.yyyy h:mm;@",
+			"d.m.yy h:mm;@",
+			"[$-40B]mmmmm;@",
+			"[$-40B]mmmmm yy;@",
+			"yyyy-mm-dd;@",
+			"yyyy-mm-dd hh:mm;@"
+		],
+		"1036": [
+			"yyyy-mm-dd;@",
+			"d/m;@",
+			"d/m/yy;@",
+			"dd/mm/yy;@",
+			"[$-40C]d-mmm;@",
+			"[$-40C]d-mmm-yy;@",
+			"[$-40C]dd-mmm-yy;@",
+			"[$-40C]mmm-yy;@",
+			"[$-40C]mmmm-yy;@",
+			"[$-40C]d mmmm yyyy;@",
+			"[$-409]d/m/yy h:mm AM/PM;@",
+			"d/m/yy h:mm;@",
+			"[$-40C]mmmmm;@",
+			"[$-40C]mmmmm-yy;@",
+			"m/d/yyyy;@",
+			"[$-40C]d-mmm-yyyy;@"
+		],
+		"1037": [
+			"yyyy-mm-dd;@",
+			"[$-1010000]d/m/yy;@",
+			"[$-1010000]d/m/yyyy;@",
+			"[$-1010000]d.m.yy;@",
+			"[$-1010000]d.m.yyyy;@",
+			"[$-1010000]m/d/yyyy;@",
+			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010409]d/m/yyyy h:mm;@",
+			"[$-101040D]d mmm yy;@",
+			"[$-101040D]d mmmm yyyy;@",
+			"[$-1010409]d mmm yy;@",
+			"[$-1010409]d mmmm yyyy;@"
+		],
+		"1038": [
+			"m. d.;@",
+			"yyyy/ m/ d.;@",
+			"yyyy/mm/dd;@",
+			"[$-40E]yyyy/ mmm/ d.;@",
+			"[$-40E]yy/ mmmm d.;@",
+			"[$-40E]mmmm d.;@",
+			"[$-40E]yyyy/ mmm.;@",
+			"[$-40E]yyyy/ mmmm;@",
+			"[$-40E]yyyy/ mmmm d.;@",
+			"[$-40E]yyyy/ m/ d. h:mm AM/PM;@",
+			"yyyy/ m/ d. h:mm;@",
+			"[$-40E]mmm/ d.;@",
+			"yyyy-mm-dd;@",
+			"yyyy mm dd;@",
+			"yyyy.mm.dd;@",
+			"[$-40E]mmmmm.;@",
+			"[$-40E]yy-mmmmm.;@",
+			"[$-40E]yy/ mmmm;@"
+		],
+		"1039": [
+			"d.m.yyyy;@",
+			"dd.mm.yy;@",
+			"d. m. yyyy.;@",
+			"d. m. \"'\"yy.;@",
+			"yyyy-mm-dd;@",
+			"yy mm dd;@",
+			"[$-40F]d. mmmm yyyy;@",
+			"[$-40F]dd. mmmm yyyy;@"
+		],
+		"1040": [
+			"yyyy-mm-dd;@",
+			"d/m;@",
+			"d/m/yy;@",
+			"dd/mm/yy;@",
+			"[$-410]d-mmm;@",
+			"[$-410]d-mmm-yy;@",
+			"[$-410]dd-mmm-yy;@",
+			"[$-410]mmm-yy;@",
+			"[$-410]mmmm-yy;@",
+			"[$-410]d mmmm yyyy;@",
+			"[$-409]d/m/yy h.mm AM/PM;@",
+			"d/m/yy h.mm;@",
+			"[$-410]mmmmm;@",
+			"[$-410]mmmmm-yy;@",
+			"d/m/yyyy;@",
+			"[$-410]d-mmm-yyyy;@"
+		],
+		"1042": [
+			"yyyy-mm-dd;@",
+			"yyyy\"년\" m\"월\" d\"일\";@",
+			"yy\"年\" m\"月\" d\"日\";@",
+			"yyyy\"년\" m\"월\";@",
+			"m\"월\" d\"일\";@",
+			"yy\"-\"m\"-\"d;@",
+			"yy\"-\"m\"-\"d h:mm;@",
+			"[$-412]yy\"-\"m\"-\"d AM/PM h:mm;@",
+			"[$-409]yy\"-\"m\"-\"d h:mm AM/PM;@",
+			"yy\"/\"m\"/\"d;@",
+			"yyyy\"-\"m\"-\"d;@",
+			"yyyy\"/\"m\"/\"d;@",
+			"m\"/\"d;@",
+			"m\"/\"d\"/\"yy;@",
+			"mm\"/\"dd\"/\"yy;@",
+			"[$-409]d\"-\"mmm;@",
+			"[$-409]d\"-\"mmm\"-\"yy;@",
+			"[$-409]mmm\"-\"yy;@",
+			"[$-409]mmmm\"-\"yy;@",
+			"[$-409]mmmmm;@",
+			"[$-409]mmmmm-yy;@"
+		],
+		"1043": [
+			"yyyy-mm-dd;@",
+			"d-m;@",
+			"d-mm-yy;@",
+			"dd-mm-yy;@",
+			"[$-413]d-mmm;@",
+			"[$-413]d-mmm-yy;@",
+			"[$-413]dd-mmm-yy;@",
+			"[$-413]mmm-yy;@",
+			"[$-413]mmmm-yy;@",
+			"[$-413]d mmmm yyyy;@",
+			"[$-409]d-mm-yy h:mm AM/PM;@",
+			"d-mm-yy h:mm;@",
+			"[$-413]mmmmm;@",
+			"[$-413]mmmmm-yy;@",
+			"m/d/yyyy;@",
+			"[$-413]d-mmm-yyyy;@"
+		],
+		"1044": [
+			"d/m/;@",
+			"d/m/yy;@",
+			"d/m/yyyy;@",
+			"dd/mm/yy;@",
+			"dd/mm/yyyy;@",
+			"[$-414]d/ mmm.;@",
+			"[$-414]d/ mmmm;@",
+			"[$-414]d/ mmm. yyyy;@",
+			"[$-414]d/ mmmm yyyy;@",
+			"[$-414]mmm. yy;@",
+			"[$-414]mmmm yy;@",
+			"[$-414]mmmm yyyy;@",
+			"yyyy-mm-dd;@",
+			"dd/mm/yy h:mm;@",
+			"[$-409]m/d/yy h:mm AM/PM;@",
+			"m/d/yy h:mm;@"
+		],
+		"1045": [
+			"d-mm;@",
+			"yyyy-mm-dd;@",
+			"yy-mm-dd;@",
+			"[$-415]d mmm;@",
+			"[$-415]d mmm yy;@",
+			"[$-415]dd mmm yy;@",
+			"[$-415]mmm yy;@",
+			"[$-415]mmmm yy;@",
+			"[$-415]d mmmm yyyy;@",
+			"[$-409]dd-mm-yy h:mm AM/PM;@",
+			"dd-mm-yy h:mm;@",
+			"[$-415]mmmmm;@",
+			"[$-415]mmmmm.yy;@",
+			"d-m-yyyy;@",
+			"[$-415]d-mmm-yyyy;@"
+		],
+		"1046": [
+			"yyyy-mm-dd;@",
+			"d/m;@",
+			"d/m/yy;@",
+			"dd/mm/yy;@",
+			"[$-416]d-mmm;@",
+			"[$-416]d-mmm-yy;@",
+			"[$-416]dd-mmm-yy;@",
+			"[$-416]mmm-yy;@",
+			"[$-416]mmmm-yy;@",
+			"[$-416]d;@",
+			"mmmm, yyyy;@",
+			"[$-409]d/m/yy h:mm AM/PM;@",
+			"d/m/yy h:mm;@"
+		],
+		"1047": [
+			"yyyy-mm-dd;@",
+			"[$-10417]dd-mm-yyyy;@",
+			"[$-10417]dd-mm-yy;@",
+			"[$-10417]dddd, \"ils’\" d. mmmm, yyyy;@",
+			"[$-10417]dddd, \"ils\" d mmmm yyyy;@",
+			"[$-10417]d mmmm yyyy;@"
+		],
+		"1048": [
+			"yyyy-mm-dd;@",
+			"d/m;@",
+			"d/m/yy;@",
+			"dd/mm/yy;@",
+			"[$-418]d-mmm;@",
+			"[$-418]d-mmm-yy;@",
+			"[$-418]dd-mmm-yy;@",
+			"[$-418]mmm-yy;@",
+			"[$-418]mmmm-yy;@",
+			"[$-418]d mmmm yyyy;@",
+			"[$-409]d/m/yy h:mm AM/PM;@",
+			"d/m/yy h:mm;@",
+			"[$-418]mmmmm;@",
+			"[$-418]mmmmm-yy;@",
+			"d/m/yyyy;@",
+			"[$-418]d-mmm-yyyy;@"
+		],
+		"1049": [
+			"yyyy-mm-dd;@",
+			"d/m;@",
+			"d/m/yy;@",
+			"dd/mm/yy;@",
+			"[$-419]d mmm;@",
+			"[$-419]d mmm yy;@",
+			"[$-419]dd mmm yy;@",
+			"[$-F419]yyyy, mmmm;@",
+			"[$-419]mmmm yyyy;@",
+			"[$-FC19]dd mmmm yyyy г.;@",
+			"[$-409]dd/mm/yy h:mm AM/PM;@",
+			"dd/mm/yy h:mm;@",
+			"[$-419]mmmm;@",
+			"[$-FC19]yyyy, dd mmmm;@",
+			"d/m/yyyy;@",
+			"[$-419]d-mmm-yyyy;@"
+		],
+		"1050": [
+			"yyyy-mm-dd;@",
+			"d.m.;@",
+			"d.m.yy.;@",
+			"dd.mm.yy.;@",
+			"[$-41A]d-mmm;@",
+			"[$-41A]d-mmm-yy;@",
+			"[$-41A]dd-mmm-yy;@",
+			"[$-41A]mmm-yy;@",
+			"[$-41A]mmmm-yy;@",
+			"[$-41A]d. mmmm yyyy.;@",
+			"[$-409]d.m.yy. h:mm AM/PM;@",
+			"d.m.yy. h:mm;@",
+			"[$-41A]mmmmm;@",
+			"[$-41A]mmmmm-yy.;@",
+			"d.m.yyyy.;@",
+			"[$-41A]d-mmm-yyyy.;@"
+		],
+		"1051": [
+			"yyyy-mm-dd;@",
+			"d/m;@",
+			"d/m/yy;@",
+			"dd/mm/yy;@",
+			"[$-41B]d-mmm.;@",
+			"[$-41B]d/mmm/yy;@",
+			"[$-41B]dd-mmm-yy;@",
+			"[$-41B]mmm-yy;@",
+			"[$-41B]mmmm yy;@",
+			"[$-41B]d. mmmm yyyy;@",
+			"[$-409]d/m/yy h:mm AM/PM;@",
+			"d/m/yy h:mm;@",
+			"[$-41B]mmmmm;@",
+			"[$-41B]mmmmm-yy;@",
+			"d/m/yyyy;@",
+			"[$-41B]d/mmm/yyyy;@"
+		],
+		"1052": [
+			"yyyy-mm-dd;@",
+			"dddd, d mmmm yyyy;@",
+			"d.m.yyyy;@"
+		],
+		"1053": [
+			"yyyy-mm-dd;@",
+			"yyyy-mm-dd hh:mm;@",
+			"yy-mm-dd;@",
+			"yy-mm-dd hh:mm;@",
+			"d/m yyyy;@",
+			"d/m -yy;@",
+			"d/m yy;@",
+			"d/m/yy;@",
+			"[$-41D]\"den \" d mmmm yyyy;@",
+			"[$-41D]d mmmm yyyy;@",
+			"[$-41D]d mmmm -yy;@",
+			"[$-41D]mmmmm;@",
+			"[$-41D]mmmmm-yy;@",
+			"yyyy mm dd;@",
+			"[$-41D]mmmm;@",
+			"[$-41D]dd-mmm;@",
+			"[$-41D]mmmm yyyy;@",
+			"[$-41D]mmmm -yy;@",
+			"[$-41D]mmm-yy;@",
+			"yyyy;@"
+		],
+		"1054": [
+			"[$-1070000]d/m/yy;@",
+			"[$-1070000]d/mm/yyyy;@",
+			"[$-1070000]d/mm/yyyy h:mm \"น.\";@",
+			"[$-1070409]d/mm/yyyy h:mm AM/PM;@",
+			"[$-D070000]d/m/yy;@",
+			"[$-D070000]d/mm/yyyy;@",
+			"[$-D070000]d/mm/yyyy h:mm \"น.\";@",
+			"[$-D07041E]d mmm yy;@",
+			"[$-D07041E]d mmmm yyyy;@",
+			"[$-107041E]d mmm yy;@",
+			"[$-107041E]d mmmm yyyy;@"
+		],
+		"1055": [
+			"yyyy-mm-dd;@",
+			"d/m;@",
+			"d/m/yy;@",
+			"dd/mm/yy;@",
+			"[$-41F]d mmmm;@",
+			"[$-41F]d mmmm yy;@",
+			"[$-41F]dd mmmm yy;@",
+			"dd/mm/yyyy;@",
+			"[$-41F]mmmm yy;@",
+			"[$-41F]d mmmm yyyy;@",
+			"d/m/yy h:mm;@",
+			"[$-41F]d mmmm yyyy h:mm;@",
+			"[$-41F]mmmmm;@",
+			"[$-41F]mmmmm yy;@",
+			"m/d/yyyy;@",
+			"[$-41F]d mmm yyyy;@"
+		],
+		"1056": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"yyyy-mm-dd;@",
+			"m/d/yyyy;@",
+			"m/d/yy;@",
+			"mm/dd/yy;@",
+			"mm/dd/yyyy;@",
+			"[$-420]dd mmmm, yyyy;@",
+			"[$-420]dddd, dd mmmm, yyyy;@",
+			"[$-420]dddd, mmmm dd, yyyy;@",
+			"[$-420]mmmm dd, yyyy;@",
+			"[$-420]dd/mmmm/yyyy;@"
+		],
+		"1057": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"yyyy-mm-dd;@",
+			"[$-421]dd mmmm yyyy;@"
+		],
+		"1060": [
+			"d.m.yyyy;@",
+			"d.m.yy;@",
+			"d. m. yyyy;@",
+			"dd.mm.yyyy;@",
+			"d. m. yy;@",
+			"dd.mm.yy;@",
+			"dd. mm. yy;@",
+			"yyyy-mm-dd;@",
+			"[$-424]d. mmmm yyyy;@",
+			"[$-424]dd. mmmm yyyy;@",
+			"[$-424]dddd, d. mmmm yyyy;@"
+		],
+		"1061": [
+			"d.mm.yyyy;@",
+			"dd.mm.yyyy;@",
+			"dd.mm.yy;@",
+			"yyyy-mm-dd;@",
+			"[$-425]d. mmmm yyyy\". a.\";@",
+			"[$-425]dd. mmmm yyyy\". a.\";@",
+			"[$-425]dddd, d. mmmm yyyy;@"
+		],
+		"1062": [
+			"yyyy.mm.dd.;@",
+			"yy.mm.dd.;@",
+			"yyyy-mm-dd;@",
+			"[$-426]dddd, yyyy\". gada \"d. mmmm;@"
+		],
+		"1064": [
+			"yyyy-mm-dd;@",
+			"[$-10428]dd.mm.yyyy;@",
+			"[$-10428]dd.mm.yy;@",
+			"[$-10428]d.m.yy;@",
+			"[$-10428]dd-mm-yyyy;@",
+			"[$-10428]dd/mm/yy;@",
+			"[$-10428]d mmmm yyyy\" с.\";@",
+			"[$-10428]dd mmmm yyyy\" с.\";@",
+			"[$-10428]dddd, dd mmmm yyyy;@"
+		],
+		"1065": [
+			"yyyy-mm-dd;@",
+			"[$-1010000]dd/m/yyyy;@",
+			"[$-1010429]dd/m/yyyy hh:mm AM/PM;@",
+			"[$-1010409]d/m/yyyy hh:mm AM/PM;@",
+			"[$-3010000]d/mm/yyyy;@",
+			"[$-3010429]d/mm/yyyy h:mm AM/PM;@"
+		],
+		"1066": [
+			"yyyy-mm-dd;@",
+			"[$-1010000]d/m/yy;@",
+			"[$-1010000]d/m/yyyy;@",
+			"[$-101042A]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-101042A]d mmm yy;@",
+			"[$-101042A]d mmmm yyyy;@",
+			"[$-101040C]d mmm yy;@",
+			"[$-101040C]d mmmm yyyy;@",
+			"[$-1010409]d mmm yy;@",
+			"[$-1010409]d mmmm yyyy;@"
+		],
+		"1067": [
+			"dd.mm.yyyy;@",
+			"dd.mm.yy;@",
+			"d/mm/yyyy;@",
+			"dd/mm/yyyy;@",
+			"[$-42B]d/mmm/yyyy;@",
+			"[$-42B]dd/mmm/yyyy;@",
+			"yyyy-mm-dd;@",
+			"[$-42B]d mmmm, yyyy;@",
+			"[$-42B]dddd, d mmmm yyyy;@",
+			"[$-42B]dddd, dd mmmm yyyy;@",
+			"[$-42B]dd mmmm yyyy;@",
+			"[$-42B]d-mmm-yyyy;@",
+			"[$-42B]dd-mmm-yyyy;@",
+			"[$-42B]ddd, d-mmmm-yyyy;@",
+			"[$-42B]ddd, dd-mmmm-yyyy;@"
+		],
+		"1068": [
+			"dd.mm.yyyy;@",
+			"dd.mm.yy;@",
+			"d.m.yy;@",
+			"dd/mm/yy;@",
+			"yyyy-mm-dd;@",
+			"[$-42C]d mmmm yyyy;@",
+			"[$-42C]dd mmmm yyyy;@"
+		],
+		"1069": [
+			"yyyy-mm-dd;@",
+			"m/d;@",
+			"yy/m/d;@",
+			"yy/mm/dd;@",
+			"[$-42D]mmm-d;@",
+			"[$-42D]yy-mmm-d;@",
+			"[$-42D]yy-mmm-dd;@",
+			"[$-42D]yy-mmm;@",
+			"[$-42D]yy-mmmm;@",
+			"[$-42D]yyyy\"(e)ko\" mmmm\"ren\" d\"(a)\";@",
+			"[$-42D]yy/mm/dd/ h:mm AM/PM;@",
+			"yy/m/d/ h:mm;@",
+			"[$-42D]mmmmm;@",
+			"[$-42D]yy-mmmmm;@",
+			"yyyy/m/d;@",
+			"[$-42D]yyyy-mmm-d;@",
+			"yyyy.mm.dd;@",
+			"[$-42D]yyyy\"(e)ko\" mmmm\"ren\" d\"(a)\";@",
+			"[$-42D]yyyy\"(e)ko\" mmmm\"k\" d\"(a)\";@",
+			"[$-42D]yyyy\"(e)ko\" mmmm;@"
+		],
+		"1070": [
+			"yyyy-mm-dd;@",
+			"[$-1042E]d.m.yyyy;@",
+			"[$-1042E]d.m.yy;@",
+			"[$-1042E]dddd, d. mmmm yyyy;@",
+			"[$-1042E]d. mmmm yyyy;@"
+		],
+		"1071": [
+			"dd.mm.yyyy;@",
+			"dd.mm.yy;@",
+			"yyyy-mm-dd;@",
+			"[$-42F]dddd, dd mmmm yyyy;@"
+		],
+		"1072": [
+			"[$-10430]yyyy-mm-dd;@",
+			"[$-10430]yyyy mmm d;@",
+			"[$-10430]yyyy mmmm d, dddd;@",
+			"[$-10430]yyyy mmmm d;@"
+		],
+		"1073": [
+			"[$-10431]yyyy-mm-dd;@",
+			"[$-10431]yyyy mmm d;@",
+			"[$-10431]yyyy mmmm d, dddd;@",
+			"[$-10431]yyyy mmmm d;@"
+		],
+		"1074": [
+			"[$-10432]yyyy-mm-dd;@",
+			"[$-10432]yyyy mmm d;@",
+			"[$-10432]dd mmmm yyyy;@",
+			"[$-10432]yyyy mmmm d, dddd;@",
+			"[$-10432]yyyy mmmm d;@"
+		],
+		"1075": [
+			"[$-10433]yyyy-mm-dd;@",
+			"[$-10433]yyyy mmm d;@",
+			"[$-10433]yyyy mmmm d, dddd;@",
+			"[$-10433]yyyy mmmm d;@"
+		],
+		"1076": [
+			"[$-10434]yyyy-mm-dd;@",
+			"[$-10434]yyyy mmm d;@",
+			"[$-10434]yyyy mmmm d, dddd;@",
+			"[$-10434]yyyy mmmm d;@"
+		],
+		"1077": [
+			"yyyy-mm-dd;@",
+			"[$-10435]m/d/yyyy;@",
+			"[$-10435]m/d/yy;@",
+			"[$-10435]mmm d, yyyy;@",
+			"[$-10435]dddd, mmmm d, yyyy;@",
+			"[$-10435]mmmm d, yyyy;@"
+		],
+		"1078": [
+			"yyyy/mm/dd;@",
+			"yy/mm/dd;@",
+			"yyyy-mm-dd;@",
+			"[$-436]dd mmmm yyyy;@"
+		],
+		"1079": [
+			"dd.mm.yyyy;@",
+			"dd.mm.yy;@",
+			"d.m.yy;@",
+			"dd/mm/yy;@",
+			"yyyy-mm-dd;@",
+			"[$-437]dddd, d mmmm, yyyy \"წელი\";@"
+		],
+		"1080": [
+			"dd-mm-yyyy;@",
+			"dd-mm-yy;@",
+			"yyyy-mm-dd;@",
+			"[$-438]d. mmmm yyyy;@"
+		],
+		"1081": [
+			"yyyy-mm-dd;@",
+			"[$-4010000]d/m/yy;@",
+			"[$-4010000]d/m/yyyy;@",
+			"[$-4010439]d/m/yyyy h:mm AM/PM;@",
+			"[$-4010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010000]d/m/yy;@",
+			"[$-1010000]d/m/yyyy;@",
+			"[$-1010439]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010439]d mmm yy;@",
+			"[$-1010439]d mmmm yyyy;@",
+			"[$-4010439]d mmm yy;@",
+			"[$-4010439]d mmmm yyyy;@",
+			"[$-1010409]d mmm yy;@",
+			"[$-1010409]d mmmm yyyy;@"
+		],
+		"1082": [
+			"yyyy-mm-dd;@",
+			"[$-1043A]dd/mm/yyyy;@",
+			"[$-1043A]dd mmm yyyy;@",
+			"[$-1043A]dddd, d \"ta\"’ mmmm yyyy;@",
+			"[$-1043A]d \"ta\"’ mmmm yyyy;@"
+		],
+		"1083": [
+			"[$-1043B]yyyy-mm-dd;@",
+			"[$-1043B]yyyy mmm d;@",
+			"[$-1043B]dddd, mmmm d\". b. \"yyyy;@",
+			"[$-1043B]yyyy mmmm d, dddd;@",
+			"[$-1043B]yyyy mmmm d;@"
+		],
+		"1085": [
+			"yyyy-mm-dd;@",
+			"[$-1043D]dd/mm/yyyy;@",
+			"[$-1043D]dd/mm/yy;@",
+			"[$-1043D]dטן mmm yyyy;@",
+			"[$-1043D]dddd, dטן mmmm yyyy;@",
+			"[$-1043D]dטן mmmm yyyy;@"
+		],
+		"1086": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"yyyy-mm-dd;@",
+			"[$-43E]dd mmmm yyyy;@"
+		],
+		"1087": [
+			"dd.mm.yyyy;@",
+			"dd.mm.yy;@",
+			"d.m.yy;@",
+			"dd/mm/yy;@",
+			"yyyy-mm-dd;@",
+			"[$-43F]d mmmm yyyy \"ж.\";@",
+			"[$-43F]dd mmmm yyyy \"ж.\";@"
+		],
+		"1088": [
+			"yyyy-mm-dd;@",
+			"dd.mm.yy;@",
+			"[$-440]d\"-\"mmmm yyyy\"-ж.\";@"
+		],
+		"1089": [
+			"m/d/yyyy;@",
+			"m/d/yy;@",
+			"mm/dd/yy;@",
+			"mm/dd/yyyy;@",
+			"yy/mm/dd;@",
+			"yyyy-mm-dd;@",
+			"[$-441]dd-mmm-yy;@",
+			"[$-441]dddd, mmmm dd, yyyy;@",
+			"[$-441]mmmm dd, yyyy;@",
+			"[$-441]dddd, dd mmmm, yyyy;@",
+			"[$-441]dd mmmm, yyyy;@"
+		],
+		"1090": [
+			"yyyy-mm-dd;@",
+			"[$-10442]dd.mm.yy \"ý.\";@",
+			"[$-10442]dd.mm.yyyy;@",
+			"[$-10442]yyyy\"-nji ýylyň \"d\"-nji \"mmmm;@",
+			"[$-10442]d mmmm yyyy dddd;@"
+		],
+		"1091": [
+			"dd/mm yyyy;@",
+			"dd.mm.yy;@",
+			"d.m.yy;@",
+			"dd/mm/yy;@",
+			"yyyy-mm-dd;@",
+			"[$-443]yyyy \"yil\" d-mmmm;@",
+			"[$-443]d mmmm yyyy;@",
+			"[$-443]dd mmmm yyyy;@"
+		],
+		"1092": [
+			"dd.mm.yyyy;@",
+			"dd.mm.yy;@",
+			"d.m.yy;@",
+			"dd/mm/yy;@",
+			"yyyy-mm-dd;@",
+			"[$-444]d mmmm yyyy;@",
+			"[$-444]dd mmmm yyyy;@"
+		],
+		"1093": [
+			"dd-mm-yyyy;@",
+			"dd-mm-yy;@",
+			"d-m-yy;@",
+			"d.m.yy;@",
+			"yyyy-mm-dd;@",
+			"[$-445]dd mmmm yyyy;@",
+			"[$-445]d mmmm yyyy;@",
+			"[$-5000445]dd-mm-yyyy;@",
+			"[$-5000445]dd-mm-yy;@",
+			"[$-5000445]d-m-yy;@",
+			"[$-5000445]d.m.yy;@",
+			"[$-5000445]yyyy-mm-dd;@",
+			"[$-5000445]dd mmmm yyyy;@",
+			"[$-5000445]d mmmm yyyy;@"
+		],
+		"1094": [
+			"dd-mm-yy;@",
+			"d-m-yy;@",
+			"d.m.yy;@",
+			"dd-mm-yyyy;@",
+			"yyyy-mm-dd;@",
+			"[$-446]dd mmmm yyyy dddd;@",
+			"[$-446]d mmmm yyyy;@",
+			"[$-6000446]dd-mm-yy;@",
+			"[$-6000446]d-m-yy;@",
+			"[$-6000446]d.m.yy;@",
+			"[$-6000446]dd-mm-yyyy;@",
+			"[$-6000446]yyyy-mm-dd;@",
+			"[$-6000446]dd mmmm yyyy dddd;@",
+			"[$-6000446]d mmmm yyyy;@"
+		],
+		"1095": [
+			"dd-mm-yy;@",
+			"d-m-yy;@",
+			"d.m.yy;@",
+			"dd-mm-yyyy;@",
+			"yyyy-mm-dd;@",
+			"[$-447]dd mmmm yyyy;@",
+			"[$-447]d mmmm yyyy;@",
+			"[$-7000447]dd-mm-yy;@",
+			"[$-7000447]d-m-yy;@",
+			"[$-7000447]d.m.yy;@",
+			"[$-7000447]dd-mm-yyyy;@",
+			"[$-7000447]yyyy-mm-dd;@",
+			"[$-7000447]dd mmmm yyyy;@",
+			"[$-7000447]d mmmm yyyy;@"
+		],
+		"1096": [
+			"[$-10448]dd-mm-yy;@",
+			"[$-10448]d-m-yy;@",
+			"[$-10448]d.m.yy;@",
+			"[$-10448]dd-mm-yyyy;@",
+			"[$-10448]yyyy-mm-dd;@",
+			"[$-10448]dd mmmm yyyy;@",
+			"[$-10448]d mmmm yyyy;@",
+			"[$-10448]dddd, mmmm d, yyyy;@"
+		],
+		"1097": [
+			"dd-mm-yyyy;@",
+			"dd-mm-yy;@",
+			"d-m-yy;@",
+			"d.m.yy;@",
+			"yyyy-mm-dd;@",
+			"[$-449]dd mmmm yyyy;@",
+			"[$-449]d mmmm yyyy;@",
+			"[$-9000449]dd-mm-yyyy;@",
+			"[$-9000449]dd-mm-yy;@",
+			"[$-9000449]d-m-yy;@",
+			"[$-9000449]d.m.yy;@",
+			"[$-9000449]yyyy-mm-dd;@",
+			"[$-9000449]dd mmmm yyyy;@",
+			"[$-9000449]d mmmm yyyy;@"
+		],
+		"1098": [
+			"dd-mm-yy;@",
+			"d-m-yy;@",
+			"d.m.yy;@",
+			"dd-mm-yyyy;@",
+			"yyyy-mm-dd;@",
+			"[$-44A]dd mmmm yyyy;@",
+			"[$-44A]d mmmm yyyy;@",
+			"[$-A00044A]dd-mm-yy;@",
+			"[$-A00044A]d-m-yy;@",
+			"[$-A00044A]d.m.yy;@",
+			"[$-A00044A]dd-mm-yyyy;@",
+			"[$-A00044A]yyyy-mm-dd;@",
+			"[$-A00044A]dd mmmm yyyy;@",
+			"[$-A00044A]d mmmm yyyy;@"
+		],
+		"1099": [
+			"dd-mm-yy;@",
+			"d-m-yy;@",
+			"d.m.yy;@",
+			"dd-mm-yyyy;@",
+			"yyyy-mm-dd;@",
+			"[$-44B]dd mmmm yyyy;@",
+			"[$-44B]d mmmm yyyy;@"
+		],
+		"1100": [
+			"dd-mm-yyyy;@",
+			"dd-mm-yy;@",
+			"d-m-yy;@",
+			"d.m.yy;@",
+			"yyyy-mm-dd;@",
+			"[$-44C]dd mmmm yyyy;@",
+			"[$-44C]d mmmm yyyy;@",
+			"[$-C00044C]dd-mm-yyyy;@",
+			"[$-C00044C]dd-mm-yy;@",
+			"[$-C00044C]d-m-yy;@",
+			"[$-C00044C]d.m.yy;@",
+			"[$-C00044C]yyyy-mm-dd;@",
+			"[$-C00044C]dd mmmm yyyy;@",
+			"[$-C00044C]d mmmm yyyy;@"
+		],
+		"1101": [
+			"yyyy-mm-dd;@",
+			"[$-1044D]dd-mm-yyyy;@",
+			"[$-1044D]yyyy,mmmm dd, dddd;@"
+		],
+		"1102": [
+			"dd-mm-yyyy;@",
+			"dd-mm-yy;@",
+			"d-m-yy;@",
+			"d.m.yy;@",
+			"yyyy-mm-dd;@",
+			"[$-44E]dd mmmm yyyy;@",
+			"[$-44E]d mmmm yyyy;@"
+		],
+		"1103": [
+			"dd-mm-yyyy;@",
+			"dd-mm-yy;@",
+			"d-m-yy;@",
+			"d.m.yy;@",
+			"yyyy-mm-dd;@",
+			"[$-44F]dd mmmm yyyy dddd;@",
+			"[$-44F]d mmmm yyyy;@"
+		],
+		"1104": [
+			"yyyy-mm-dd;@",
+			"yy.mm.dd;@",
+			"[$-450]yyyy \"оны\" mmmm d;@"
+		],
+		"1105": [
+			"[$-10451]yyyy/m/d;@",
+			"[$-10451]yyyy-m-d;@",
+			"[$-10451]yyyy.m.d;@",
+			"[$-10451]yyyy.mm.dd;@",
+			"[$-10451]yyyy-mm-dd;@",
+			"[$-10451]yyyy/mm/dd;@",
+			"[$-10451]yy-m-d;@",
+			"[$-10451]yy/m/d;@",
+			"[$-10451]yy.m.d;@",
+			"[$-10451]yyyy\"ལོའི་ཟླ\" m\"ཚེས\" d;@",
+			"[$-10451]yyyy\"ལོའི་ཟླ\" m\"ཚེས\" d dddd;@",
+			"[$-10451]yyyyལོའི་ཟླ mmm d;@",
+			"[$-10451]yyyyལོའི་ཟླ mmm d dddd;@"
+		],
+		"1106": [
+			"yyyy-mm-dd;@",
+			"[$-10452]dd/mm/yyyy;@",
+			"[$-10452]dd/mm/yy;@",
+			"[$-10452]d mmm yyyy;@",
+			"[$-10452]dddd, d mmmm yyyy;@",
+			"[$-10452]d mmmm yyyy;@"
+		],
+		"1107": [
+			"[$-10453]dd/mm/yy;@",
+			"[$-10453]yyyy-mm-dd;@",
+			"[$-10453]d mmmm yyyy;@",
+			"[$-10453]ddd d mmmm yyyy;@",
+			"[$-10453]dddd d mmmm yyyy;@"
+		],
+		"1108": [
+			"yyyy-mm-dd;@",
+			"[$-10454]d/m/yyyy;@",
+			"[$-10454]d mmm yyyy;@",
+			"[$-10454]dddd ທີ d mmmm gg yyyy;@",
+			"[$-10454]d mmmm yyyy;@"
+		],
+		"1109": [
+			"yyyy-mm-dd;@",
+			"[$-10455]dd-mm-yyyy;@",
+			"[$-10455]dd-mm-yy;@",
+			"[$-10455]yyyy၊ mmm d;@",
+			"[$-10455]yyyy၊ mmmm d၊ dddd;@",
+			"[$-10455]yyyy၊ d mmmm;@"
+		],
+		"1110": [
+			"yyyy-mm-dd;@",
+			"dd/mm/yy;@",
+			"d/mm/yy;@",
+			"d/m/yy;@",
+			"dd-mm-yy;@",
+			"dd.mm.yy;@",
+			"dd/mm/yyyy;@",
+			"[$-456]dddd, dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-456]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-456]d\" de \"mmmm\" de \"yyyy;@"
+		],
+		"1111": [
+			"dd-mm-yyyy;@",
+			"dd-mm-yy;@",
+			"d-m-yy;@",
+			"d.m.yy;@",
+			"yyyy-mm-dd;@",
+			"[$-457]dd mmmm yyyy;@",
+			"[$-457]d mmmm yyyy;@"
+		],
+		"1112": [
+			"yyyy-mm-dd;@",
+			"[$-10458]d/m/yyyy;@",
+			"[$-10458]d/m/yy;@",
+			"[$-10458]mmm d, yyyy;@",
+			"[$-10458]mmmm d, yyyy, dddd;@",
+			"[$-10458]mmmm d, yyyy;@"
+		],
+		"1113": [
+			"yyyy-mm-dd;@",
+			"[$-10459]d/m/yyyy;@",
+			"[$-10459]d/m/yy;@",
+			"[$-10459]d mmm yyyy;@",
+			"[$-10459]dddd, d mmmm yyyy;@",
+			"[$-10459]d mmmm yyyy;@"
+		],
+		"1114": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"yyyy-mm-dd;@",
+			"[$-45A]dd mmmm, yyyy;@",
+			"[$-45A]dddd, dd mmmm, yyyy;@"
+		],
+		"1115": [
+			"[$-1045B]yyyy-mm-dd;@",
+			"[$-1045B]yyyy mmm d;@",
+			"[$-1045B]yyyy mmmm d, dddd;@",
+			"[$-1045B]yyyy mmmm d;@"
+		],
+		"1116": [
+			"[$-1045C]m/d/yyyy;@",
+			"[$-1045C]m/d/yy;@",
+			"[$-1045C]mm/dd/yy;@",
+			"[$-1045C]mm/dd/yyyy;@",
+			"[$-1045C]yy/mm/dd;@",
+			"[$-1045C]yyyy-mm-dd;@",
+			"[$-1045C]dd-mmm-yy;@",
+			"[$-1045C]dddd, mmmm dd,yyyy;@",
+			"[$-1045C]mmmm dd,yyyy;@",
+			"[$-1045C]dddd, dd mmmm, yyyy;@",
+			"[$-1045C]dd mmmm, yyyy;@"
+		],
+		"1117": [
+			"[$-1045D]d/m/yyyy;@",
+			"[$-1045D]d/m/yy;@",
+			"[$-1045D]dd/mm/yy;@",
+			"[$-1045D]yy/mm/dd;@",
+			"[$-1045D]yyyy-mm-dd;@",
+			"[$-1045D]dd-mmm-yy;@",
+			"[$-1045D]dddd,mmmm dd,yyyy;@",
+			"[$-1045D]mmmm dd,yyyy;@",
+			"[$-1045D]dddd, dd mmmm, yyyy;@",
+			"[$-1045D]dd mmmm, yyyy;@"
+		],
+		"1118": [
+			"yyyy-mm-dd;@",
+			"[$-1045E]dd/mm/yyyy;@",
+			"[$-1045E]d mmm yyyy;@",
+			"[$-1045E]yyyy mmmm d, dddd;@",
+			"[$-1045E]d mmmm yyyy;@"
+		],
+		"1119": [
+			"yyyy-mm-dd;@",
+			"[$-1045F]d/m/yyyy;@",
+			"[$-1045F]dd/mm/yyyy;@",
+			"[$-1045F]dddd، d mmmm yyyy;@",
+			"[$-1045F]d mmmm yyyy;@"
+		],
+		"1120": [
+			"yyyy-mm-dd;@",
+			"[$-10460]m/d/yyyy;@",
+			"[$-10460]m/d/yy;@",
+			"[$-10460]mmm d, yyyy;@",
+			"[$-10460]dddd, mmmm d, yyyy;@",
+			"[$-10460]mmmm d, yyyy;@"
+		],
+		"1121": [
+			"[$-10461]m/d/yyyy;@",
+			"[$-10461]m/d/yy;@",
+			"[$-10461]mm/dd/yy;@",
+			"[$-10461]mm/dd/yyyy;@",
+			"[$-10461]yy/mm/dd;@",
+			"[$-10461]yyyy-mm-dd;@",
+			"[$-10461]dd-mmm-yy;@",
+			"[$-10461]dddd, mmmm dd, yyyy;@",
+			"[$-10461]mmmm dd, yyyy;@",
+			"[$-10461]dddd, dd mmmm, yyyy;@",
+			"[$-10461]dd mmmm, yyyy;@"
+		],
+		"1122": [
+			"yyyy-mm-dd;@",
+			"[$-10462]dd-mm-yyyy;@",
+			"[$-10462]dd-mm-yy;@",
+			"[$-10462]d mmm yyyy;@",
+			"[$-10462]dddd d mmmm yyyy;@",
+			"[$-10462]d mmmm yyyy;@"
+		],
+		"1123": [
+			"[$-160463]yyyy/m/d;@",
+			"[$-160463]yyyy-mm-dd;@",
+			"[$-160463]d mmmm yyyy;@",
+			"[$-160463]dddd d mmmm yyyy;@"
+		],
+		"1124": [
+			"yyyy-mm-dd;@",
+			"[$-10464]m/d/yyyy;@",
+			"[$-10464]m/d/yy;@",
+			"[$-10464]mmm d, yyyy;@",
+			"[$-10464]dddd, mmmm d, yyyy;@",
+			"[$-10464]mmmm d, yyyy;@"
+		],
+		"1125": [
+			"yyyy-mm-dd;@",
+			"[$-1010000]dd/mm/yy;@",
+			"[$-1010000]dd/mm/yyyy;@",
+			"[$-1010000]dd mm yyyy;@",
+			"[$-1010465]dd mmm yyyy;@",
+			"[$-1010465]dd mmmm yyyy;@",
+			"[$-1010465]ddd, dd mmmm yyyy;@",
+			"[$-1010465]ddd, dd mmm yyyy;@",
+			"[$-1010465]dddd, dd mmm yyyy;@",
+			"[$-1010465]dddd, dd mmmm yyyy;@"
+		],
+		"1126": [
+			"yyyy-mm-dd;@",
+			"[$-10466]d/m/yyyy;@",
+			"[$-10466]d mmm yyyy;@",
+			"[$-10466]dddd, mmmm dd, yyyy;@",
+			"[$-10466]mmmm dd, yyyy;@"
+		],
+		"1127": [
+			"yyyy-mm-dd;@",
+			"[$-10467]d/m/yyyy;@",
+			"[$-10467]d mmm, yyyy;@",
+			"[$-10467]dddd d mmmm yyyy;@",
+			"[$-10467]d mmmm yyyy;@"
+		],
+		"1128": [
+			"yyyy-mm-dd;@",
+			"[$-10468]d/m/yyyy;@",
+			"[$-10468]d/m/yy;@",
+			"[$-10468]d mmm, yyyy;@",
+			"[$-10468]dddd d mmmm, yyyy;@",
+			"[$-10468]d mmmm, yyyy;@"
+		],
+		"1129": [
+			"yyyy-mm-dd;@",
+			"[$-10469]d/m/yyyy;@",
+			"[$-10469]d mmm yyyy;@",
+			"[$-10469]dddd, mmmm dd, yyyy;@",
+			"[$-10469]mmmm dd, yyyy;@"
+		],
+		"1130": [
+			"yyyy-mm-dd;@",
+			"[$-1046A]d/m/yyyy;@",
+			"[$-1046A]d mm yyyy;@",
+			"[$-1046A]dddd, d mmm yyyy;@",
+			"[$-1046A]d mmm yyyy;@"
+		],
+		"1131": [
+			"[$-1046B]dd/mm/yyyy;@",
+			"[$-1046B]dd/mm/yy;@",
+			"[$-1046B]d/m/yy;@",
+			"[$-1046B]dd-mm-yy;@",
+			"[$-1046B]yyyy-mm-dd;@",
+			"[$-1046B]dddd, dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-1046B]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-1046B]d\" de \"mmmm\" de \"yyyy;@"
+		],
+		"1132": [
+			"[$-1046C]yyyy-mm-dd;@",
+			"[$-1046C]yyyy mmm d;@",
+			"[$-1046C]yyyy mmmm d, dddd;@",
+			"[$-1046C]yyyy mmmm d;@"
+		],
+		"1133": [
+			"[$-1046D]dd.mm.yy;@",
+			"[$-1046D]yyyy-mm-dd;@",
+			"[$-1046D]d mmmm yyyy \"й\";@",
+			"[$-1046D]dddd mmmm yyyy \"й\";@"
+		],
+		"1134": [
+			"yyyy-mm-dd;@",
+			"[$-1046E]dd.mm.yy;@",
+			"[$-1046E]dd/mm/yy;@",
+			"[$-1046E]dd-mm-yy;@",
+			"[$-1046E]d. mmmm yyyy;@",
+			"[$-1046E]dd. mmmmyyyy;@",
+			"[$-1046E]dddd, d. mmmm yyyy;@",
+			"[$-1046E]dddd, dd. mmmm yyyy;@",
+			"[$-1046E]dddd,\" den \"d. mmmm yyyy;@",
+			"[$-1046E]dddd,\" den \"dd. mmmm yyyy;@"
+		],
+		"1135": [
+			"[$-1046F]dd-mm-yyyy;@",
+			"[$-1046F]dd-mm-yy;@",
+			"[$-1046F]yyyy-mm-dd;@",
+			"[$-1046F]yyyy mm dd;@",
+			"[$-1046F]mmmm d\".-at, \"yyyy;@",
+			"[$-1046F]d. mmmm yyyy;@",
+			"[$-1046F]dd. mmmm yyyy;@",
+			"[$-1046F]dddd dd mmmm yyyy;@"
+		],
+		"1136": [
+			"yyyy-mm-dd;@",
+			"[$-10470]d/m/yyyy;@",
+			"[$-10470]d/m/yy;@",
+			"[$-10470]d mmm yyyy;@",
+			"[$-10470]dddd, d mmmm yyyy;@",
+			"[$-10470]d mmmm yyyy;@"
+		],
+		"1137": [
+			"yyyy-mm-dd;@",
+			"[$-10471]d/m/yyyy;@",
+			"[$-10471]mmm d, yyyy;@",
+			"[$-10471]dddd, mmmm dd, yyyy;@",
+			"[$-10471]mmmm dd, yyyy;@"
+		],
+		"1138": [
+			"yyyy-mm-dd;@",
+			"[$-10472]dd/mm/yyyy;@",
+			"[$-10472]dd/mm/yy;@",
+			"[$-10472]dd-mmm-yyyy;@",
+			"[$-10472]dddd, mmmm d, yyyy;@",
+			"[$-10472]dd mmmm yyyy;@"
+		],
+		"1139": [
+			"yyyy-mm-dd;@",
+			"[$-10473]d/m/yyyy;@",
+			"[$-10473]dd/mm/yyyy;@",
+			"[$-10473]dd/mm/yy;@",
+			"[$-10473]dd-mmm-yyyy;@",
+			"[$-10473]dddd \"፣\" mmmm d \"መዓልቲ\" yyyy;@",
+			"[$-10473]dddd\\፣ dd mmmm መዓልቲ yyyy gg;@",
+			"[$-10473]dd mmmm yyyy;@"
+		],
+		"1140": [
+			"yyyy-mm-dd;@",
+			"[$-10474]dd/mm/yyyy;@",
+			"[$-10474]dd/mm/yy;@",
+			"[$-10474]dd-mm-yyyy;@",
+			"[$-10474]dd-mm-yy;@",
+			"[$-10474]dddd, dd mmmm, yyyy;@",
+			"[$-10474]dddd, d mmmm, yyyy;@",
+			"[$-10474]dd/mmmm/yyyy;@",
+			"[$-10474]d/mmmm/yyyy;@",
+			"[$-10474]dd mmmm, yyyy;@",
+			"[$-10474]d mmmm, yyyy;@"
+		],
+		"1141": [
+			"yyyy-mm-dd;@",
+			"[$-10475]d/m/yyyy;@",
+			"[$-10475]d/m/yy;@",
+			"[$-10475]d mmm yyyy;@",
+			"[$-10475]dddd, d mmmm yyyy;@",
+			"[$-10475]d mmmm yyyy;@"
+		],
+		"1142": [
+			"yyyy-mm-dd;@",
+			"[$-10476]d m yyyy gg;@",
+			"[$-10476]\"die\" d mmm yyyy gg;@",
+			"[$-10476]dddd, \"die\" d mmmm yyyy gg;@",
+			"[$-10476]\"die\" d mmmm yyyy gg;@"
+		],
+		"1143": [
+			"yyyy-mm-dd;@",
+			"[$-10477]dd/mm/yyyy;@",
+			"[$-10477]dd/mm/yy;@",
+			"[$-10477]dd-mmm-yyyy;@",
+			"[$-10477]dddd, mmmm dd, yyyy;@",
+			"[$-10477]dd mmmm yyyy;@"
+		],
+		"1144": [
+			"[$-10478]yyyy/m/d;@",
+			"[$-10478]yyyy-m-d;@",
+			"[$-10478]yyyy.m.d;@",
+			"[$-10478]yyyy.mm.dd;@",
+			"[$-10478]yyyy-mm-dd;@",
+			"[$-10478]yyyy/mm/dd;@",
+			"[$-10478]yyyy\"ꈎ\" m\"ꆪ\" d\"ꑍ\";@",
+			"[$-10478]dddd, yyyy\"ꈎ\" m\"ꆪ\" d\"ꑍ\";@",
+			"[$-10478]yyyy\"ꈎ\" m\"ꆪ\" d\"ꑍ\", dddd;@",
+			"[$-10478]yyyyꈎ mmm dꑍ;@",
+			"[$-10478]dddd, yyyyꈎ mmm dꑍ;@"
+		],
+		"1145": [
+			"yyyy-mm-dd;@",
+			"[$-10479]d-m-yyyy;@",
+			"[$-10479]d mmm yyyy;@",
+			"[$-10479]d mmm yy;@",
+			"[$-10479]dddd d mmmm yyyy;@",
+			"[$-10479]d mmmm yyyy;@"
+		],
+		"1146": [
+			"[$-1047A]dd-mm-yyyy;@",
+			"[$-1047A]dd-mm-yy;@",
+			"[$-1047A]dd/mm/yy;@",
+			"[$-1047A]d/m/yy;@",
+			"[$-1047A]yyyy-mm-dd;@",
+			"[$-1047A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-1047A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-1047A]d\" de \"mmmm\" de \"yyyy;@"
+		],
+		"1148": [
+			"[$-1047C]m/d/yyyy;@",
+			"[$-1047C]m/d/yy;@",
+			"[$-1047C]mm/dd/yy;@",
+			"[$-1047C]mm/dd/yyyy;@",
+			"[$-1047C]yy/mm/dd;@",
+			"[$-1047C]yyyy-mm-dd;@",
+			"[$-1047C]dd-mmm-yy;@",
+			"[$-1047C]dddd, mmmm dd, yyyy;@",
+			"[$-1047C]mmmm dd, yyyy;@",
+			"[$-1047C]dddd, dd mmmm, yyyy;@",
+			"[$-1047C]dd mmmm, yyyy;@"
+		],
+		"1150": [
+			"yyyy-mm-dd;@",
+			"[$-1047E]dd/mm/yyyy;@",
+			"[$-1047E]d mmm yyyy;@",
+			"[$-1047E]dddd d mmmm yyyy;@",
+			"[$-1047E]d mmmm yyyy;@"
+		],
+		"1152": [
+			"[$-10480]yyyy-m-d;@",
+			"[$-10480]yyyy.m.d;@",
+			"[$-10480]yyyy-mm-dd;@",
+			"[$-10480]yyyy.mm.dd;@",
+			"[$-10480]yyyy-\"يىل\" d-mmmm;@",
+			"[$-10480]yyyy-\"يىل\" d-mmmm dddd;@",
+			"[$-10480]yyyy-\"يىلى\" mmm\"نىڭ\" d\"-كۈنى\";@",
+			"[$-10480]yyyy-\"يىلى\" mmm\"نىڭ\" d\"-كۈنى\" dddd;@",
+			"[$-10480]yyyy-m-d dddd;@"
+		],
+		"1153": [
+			"yyyy-mm-dd;@",
+			"[$-10481]dd-mm-yyyy;@",
+			"[$-10481]d mmm yyyy;@",
+			"[$-10481]dddd, d mmmm yyyy;@",
+			"[$-10481]d mmmm yyyy;@"
+		],
+		"1154": [
+			"yyyy-mm-dd;@",
+			"[$-10482]d/mm/yyyy;@",
+			"[$-10482]d/mm/yy;@",
+			"[$-10482]d mmm yyyy;@",
+			"[$-10482]dddd d mmmm\" de \"yyyy;@",
+			"[$-10482]dddd d mmmm \"de\" yyyy;@",
+			"[$-10482]d mmmm \"de\" yyyy;@"
+		],
+		"1155": [
+			"yyyy-mm-dd;@",
+			"[$-10483]dd/mm/yyyy;@",
+			"[$-10483]dd/mm/yy;@",
+			"[$-10483]dddd d mmmm yyyy;@",
+			"[$-10483]d mmm yy;@",
+			"[$-10483]d mmmm yyyy;@"
+		],
+		"1156": [
+			"[$-10484]dd/mm/yyyy;@",
+			"[$-10484]dd/mm/yy;@",
+			"[$-10484]dd.mm.yy;@",
+			"[$-10484]dd-mm-yy;@",
+			"[$-10484]yyyy-mm-dd;@",
+			"[$-10484]dddd d mmmm yyyy;@",
+			"[$-10484]d mmm yy;@",
+			"[$-10484]d mmmm yyyy;@"
+		],
+		"1157": [
+			"[$-10485]dd.mm.yyyy;@",
+			"[$-10485]d.m.yyyy;@",
+			"[$-10485]yyyy-mm-dd;@",
+			"[$-10485]yyyy mm d;@",
+			"[$-10485]dd yyyy mm d;@",
+			"[$-10485]dddd, yyyy \"с.\" mmmm d \"күнэ\";@",
+			"[$-10485]yyyy \"с.\" mmmm d \"күнэ\";@",
+			"[$-10485]dddd, mmmm d \"күнэ\" yyyy \"с.\";@"
+		],
+		"1158": [
+			"yyyy-mm-dd;@",
+			"[$-10486]dd/mm/yyyy;@",
+			"[$-10486]d/mm/yyyy;@",
+			"[$-10486]dddd, dd\" rech \"mmmm\" rech \"yyyy;@",
+			"[$-10486]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-10486]d\" de \"mmmm\" de \"yyyy;@"
+		],
+		"1159": [
+			"[$-10487]yyyy-mm-dd;@",
+			"[$-10487]yyyy mmm d;@",
+			"[$-10487]yyyy mmmm d, dddd;@",
+			"[$-10487]yyyy mmmm d;@"
+		],
+		"1160": [
+			"yyyy-mm-dd;@",
+			"[$-10488]dd-mm-yyyy;@",
+			"[$-10488]d mmm, yyyy;@",
+			"[$-10488]dddd, d mmm, yyyy;@",
+			"[$-10488]d mmmm, yyyy;@"
+		],
+		"1164": [
+			"[$-16048C]yyyy/m/d;@",
+			"[$-16048C]yyyy-mm-dd;@",
+			"[$-16048C]dddd, d mmmm yyyy;@",
+			"[$-16048C]d mmmm yyyy;@"
+		],
+		"1169": [
+			"yyyy-mm-dd;@",
+			"[$-10491]dd/mm/yyyy;@",
+			"[$-10491]d mmm yyyy;@",
+			"[$-10491]dd mmmm yyyy;@",
+			"[$-10491]dddd, d\"mh\" mmmm yyyy;@",
+			"[$-10491]d\"mh\" mmmm yyyy;@"
+		],
+		"2049": [
+			"yyyy-mm-dd;@",
+			"[$-1010000]d/m/yyyy;@",
+			"[$-1010000]yyyy/mm/dd;@",
+			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-2010000]d/mm/yyyy;@",
+			"[$-2010000]yyyy/mm/dd;@",
+			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+		],
+		"2052": [
+			"yyyy-mm-dd;@",
+			"[DBNum1][$-804]yyyy\"年\"m\"月\"d\"日\";@",
+			"[DBNum1][$-804]yyyy\"年\"m\"月\";@",
+			"[DBNum1][$-804]m\"月\"d\"日\";@",
+			"yyyy\"年\"m\"月\"d\"日\";@",
+			"yyyy\"年\"m\"月\";@",
+			"m\"月\"d\"日\";@",
+			"[$-804]aaaa;@",
+			"[$-804]aaa;@",
+			"yyyy/m/d;@",
+			"[$-409]yyyy/m/d h:mm AM/PM;@",
+			"yyyy/m/d h:mm;@",
+			"yy/m/d;@",
+			"m/d;@",
+			"m/d/yy;@",
+			"mm/dd/yy;@",
+			"[$-409]d-mmm;@",
+			"[$-409]d-mmm-yy;@",
+			"[$-409]dd-mmm-yy;@",
+			"[$-409]mmm-yy;@",
+			"[$-409]mmmm-yy;@",
+			"[$-409]mmmmm;@",
+			"[$-409]mmmmm-yy;@"
+		],
+		"2055": [
+			"dd.mm.yyyy;@",
+			"dd.mm.yy;@",
+			"d.mm.yy;@",
+			"dd. m. yy;@",
+			"d.m.yy;@",
+			"dd.mm.yyyy;@",
+			"yyyy-mm-dd;@",
+			"[$-807]dddd, d. mmmm yyyy;@",
+			"[$-807]d. mmmm yyyy;@",
+			"[$-807]d. mmm yy;@"
+		],
+		"2057": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"d/m/yy;@",
+			"d.m.yy;@",
+			"yyyy-mm-dd;@",
+			"[$-809]dd mmmm yyyy;@",
+			"[$-809]d mmmm yyyy;@"
+		],
+		"2058": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"d/mm/yy;@",
+			"d/m/yy;@",
+			"dd-mm-yy;@",
+			"yyyy-mm-dd;@",
+			"[$-80A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-80A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-80A]d\" de \"mmmm\" de \"yyyy;@"
+		],
+		"2060": [
+			"d/mm/yyyy;@",
+			"d/mm/yy;@",
+			"dd.mm.yy;@",
+			"yy/mm/dd;@",
+			"dd-mm-yy;@",
+			"dd/mm/yyyy;@",
+			"yyyy-mm-dd;@",
+			"[$-80C]dddd d mmmm yyyy;@",
+			"[$-80C]d mmmm yyyy;@",
+			"[$-80C]dd-mmm-yy;@"
+		],
+		"2064": [
+			"dd.mm.yyyy;@",
+			"dd.mm.yy;@",
+			"dd. mm. yy;@",
+			"d/m/yy;@",
+			"dd.m.yy;@",
+			"yyyy-mm-dd;@",
+			"[$-810]dddd, d. mmmm yyyy;@",
+			"[$-810]d-mmm-yy;@",
+			"[$-810]d mmmm yyyy;@"
+		],
+		"2067": [
+			"d/mm/yyyy;@",
+			"d/mm/yy;@",
+			"dd-mm-yy;@",
+			"dd.mm.yy;@",
+			"yyyy-mm-dd;@",
+			"[$-813]dddd d mmmm yyyy;@",
+			"[$-813]dd-mmm-yy;@",
+			"[$-813]d mmmm yyyy;@",
+			"[$-813]dd mmm yy;@"
+		],
+		"2068": [
+			"dd.mm.yyyy;@",
+			"dd.mm.yy;@",
+			"d.m.yy;@",
+			"yyyy-mm-dd;@",
+			"[$-814]d. mmmm yyyy;@",
+			"[$-814]dd. mmmm yyyy;@"
+		],
+		"2070": [
+			"yyyy-mm-dd;@",
+			"dd-mm-yyyy;@",
+			"d/m/yy;@",
+			"dd/mm/yy;@",
+			"[$-816]d/mmm;@",
+			"[$-816]d-mmm-yy;@",
+			"[$-816]dd-mmm-yy;@",
+			"[$-816]mmm/yy;@",
+			"[$-816]mmmm yy;@",
+			"[$-816]d \"de\" mmmm \"de\" yyyy;@",
+			"[$-409]d/m/yy h:mm AM/PM;@",
+			"d/m/yy h:mm;@",
+			"[$-816]mmmmm;@",
+			"[$-816]mmmmm-yy;@",
+			"d/m/yyyy;@",
+			"[$-816]d-mmm-yyyy;@"
+		],
+		"2072": [
+			"yyyy-mm-dd;@",
+			"[$-10818]dd.mm.yyyy;@",
+			"[$-10818]d mmm yyyy;@",
+			"[$-10818]dddd, d mmmm yyyy;@",
+			"[$-10818]d mmmm yyyy;@"
+		],
+		"2073": [
+			"yyyy-mm-dd;@",
+			"[$-10819]dd.mm.yyyy;@",
+			"[$-10819]d mmm yyyy \"г\".;@",
+			"[$]dddd, d mmmm yyyy \"г\".;@",
+			"[$]d mmmm yyyy \"г\".;@"
+		],
+		"2074": [
+			"d.m.yyyy;@",
+			"d.m.yy;@",
+			"d. m. yyyy;@",
+			"dd.mm.yyyy;@",
+			"d. m. yy;@",
+			"dd.mm.yy;@",
+			"dd. mm. yy;@",
+			"yyyy-mm-dd;@",
+			"[$-81A]d. mmmm yyyy;@",
+			"[$-81A]dd. mmmm yyyy;@",
+			"[$-81A]dddd, d. mmmm yyyy;@"
+		],
+		"2077": [
+			"d.m.yyyy;@",
+			"dd.mm.yyyy;@",
+			"d.m.yy;@",
+			"yyyy-mm-dd;@",
+			"[$-81D]\"den \"d mmmm yyyy;@"
+		],
+		"2092": [
+			"dd.mm.yyyy;@",
+			"dd.mm.yy;@",
+			"d.m.yy;@",
+			"dd/mm/yy;@",
+			"yyyy-mm-dd;@",
+			"[$-82C]d mmmm yyyy;@",
+			"[$-82C]dd mmmm yyyy;@"
+		],
+		"2094": [
+			"[$-1082E]d. m. yyyy;@",
+			"[$-1082E]d. m. yy;@",
+			"[$-1082E]dd.mm.yyyy;@",
+			"[$-1082E]dd.mm.yy;@",
+			"[$-1082E]yyyy-mm-dd;@",
+			"[$-1082E]dddd, d. mmmm yyyy;@",
+			"[$-1082E]d. mmmm yyyy;@"
+		],
+		"2098": [
+			"[$-10832]yyyy-mm-dd;@",
+			"[$-10832]yyyy mmm d;@",
+			"[$-10832]yyyy mmmm d, dddd;@",
+			"[$-10832]yyyy mmmm d;@"
+		],
+		"2107": [
+			"[$-1083B]yyyy-mm-dd;@",
+			"[$-1083B]yy-mm-dd;@",
+			"[$-1083B]dddd, mmmm d\". b. \"yyyy;@",
+			"[$-1083B]mmmm d\". b. \"yyyy;@"
+		],
+		"2108": [
+			"yyyy-mm-dd;@",
+			"[$-1083C]dd/mm/yyyy;@",
+			"[$-1083C]d mmm yyyy;@",
+			"[$-1083C]dddd d mmmm yyyy;@",
+			"[$-1083C]d mmmm yyyy;@"
+		],
+		"2110": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"yyyy-mm-dd;@",
+			"[$-83E]dd mmmm yyyy;@"
+		],
+		"2115": [
+			"dd.mm.yyyy;@",
+			"dd.mm.yy;@",
+			"dd/mm yyyy;@",
+			"d.m.yy;@",
+			"dd/mm/yy;@",
+			"yyyy-mm-dd;@",
+			"[$-843]yyyy \"йил\" d-mmmm;@",
+			"[$-843]d mmmm yyyy;@",
+			"[$-843]dd mmmm yyyy;@"
+		],
+		"2117": [
+			"dd-mm-yyyy;@",
+			"dd-mm-yy;@",
+			"d-m-yy;@",
+			"d.m.yy;@",
+			"yyyy-mm-dd;@",
+			"[$-845]dd mmmm yyyy;@",
+			"[$-845]d mmmm yyyy;@",
+			"[$-5000845]dd-mm-yyyy;@",
+			"[$-5000845]dd-mm-yy;@",
+			"[$-5000845]d-m-yy;@",
+			"[$-5000845]d.m.yy;@",
+			"[$-5000845]yyyy-mm-dd;@",
+			"[$-5000845]d/m/yyyy;@",
+			"[$-5000845]dd mmmm yyyy;@",
+			"[$-5000845]d mmmm yyyy;@",
+			"[$-5000845]d mmmm, yyyy;@",
+			"[$-5000845]dddd, d mmmm, yyyy;@"
+		],
+		"2118": [
+			"[$-10846]dd-mm-yy;@",
+			"[$-10846]d-m-yy;@",
+			"[$-10846]d.m.yy;@",
+			"[$-10846]dd-mm-yyyy;@",
+			"[$-10846]yyyy-mm-dd;@",
+			"[$-10846]dd mmmm yyyy dddd;@",
+			"[$-10846]d mmmm yyyy;@"
+		],
+		"2128": [
+			"[$-10850]yyyy/m/d;@",
+			"[$-10850]yyyy-m-d;@",
+			"[$-10850]yyyy.m.d;@",
+			"[$-10850]yyyy.mm.dd;@",
+			"[$-10850]yyyy-mm-dd;@",
+			"[$-10850]yyyy/mm/dd;@",
+			"[$-10850]yy-m-d;@",
+			"[$-10850]yy/m/d;@",
+			"[$-10850]yy.m.d;@",
+			"[$-10850]yy/mm/dd;@",
+			"[$-10850]yyyyᠣᠨ mmmm dᠡᠳᠦᠷ᠂ dddd;@",
+			"[$-10850]yyyyᠣᠨ mmmm dᠡᠳᠦᠷ;@"
+		],
+		"2137": [
+			"[$-10859]dd/mm/yyyy;@",
+			"[$-10859]dd/mm/yy;@",
+			"[$-10859]yyyy-mm-dd;@",
+			"[$-10859]dddd, dd mmmm, yyyy;@",
+			"[$-10859]dd mmmm yyyy;@"
+		],
+		"2141": [
+			"[$-1085D]d/mm/yyyy;@",
+			"[$-1085D]d/m/yy;@",
+			"[$-1085D]dd/mm/yyyy;@",
+			"[$-1085D]yy-mm-dd;@",
+			"[$-1085D]yyyy-mm-dd;@",
+			"[$-1085D]dd-mmm-yy;@",
+			"[$-1085D]dddd, dd mmmm, yyyy;@",
+			"[$-1085D]ddd, mmmm dd,yyyy;@",
+			"[$-1085D]mmmm dd,yyyy;@",
+			"[$-1085D]dd mmmm, yyyy;@"
+		],
+		"2143": [
+			"[$-1085F]dd-mm-yyyy;@",
+			"[$-1085F]dd-mm-yy;@",
+			"[$-1085F]yyyy-mm-dd;@",
+			"[$-1085F]dd mmmm, yyyy;@",
+			"[$-1085F]dddd, dd mmmm, yyyy;@"
+		],
+		"2144": [
+			"yyyy-mm-dd;@",
+			"[$-10860]d/m/yyyy;@",
+			"[$-10860]d/m/yy;@",
+			"[$-10860]d mmm yyyy;@",
+			"[$-10860]dddd, d mmmm yyyy;@",
+			"[$-10860]d mmmm yyyy;@"
+		],
+		"2145": [
+			"yyyy-mm-dd;@",
+			"[$-10861]yyyy/m/d;@",
+			"[$-10861]yy/m/d;@",
+			"[$-10861]yyyy mmm d;@",
+			"[$-10861]yyyy mmmm d, dddd;@",
+			"[$-10861]yyyy mmmm d;@"
+		],
+		"2151": [
+			"[$-10867]dd/mm/yyyy;@",
+			"[$-10867]dd/mm/yy;@",
+			"[$-10867]dd.mm.yy;@",
+			"[$-10867]dd-mm-yy;@",
+			"[$-10867]yyyy-mm-dd;@",
+			"[$-10867]dddd d mmmm yyyy;@",
+			"[$-10867]d mmm yy;@",
+			"[$-10867]d mmmm yyyy;@"
+		],
+		"2155": [
+			"[$-1086B]dd/mm/yyyy;@",
+			"[$-1086B]dd/mm/yy;@",
+			"[$-1086B]d/m/yy;@",
+			"[$-1086B]dd-mm-yy;@",
+			"[$-1086B]yyyy-mm-dd;@",
+			"[$-1086B]dddd, dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-1086B]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-1086B]d\" de \"mmmm\" de \"yyyy;@"
+		],
+		"2163": [
+			"yyyy-mm-dd;@",
+			"[$-10873]dd/mm/yyyy;@",
+			"[$-10873]dd/mm/yy;@",
+			"[$-10873]dd-mmm-yyyy;@",
+			"[$-10873]dddd\\፣ dd mmmm መዓልቲ yyyy gg;@",
+			"[$-10873]dd mmmm yyyy;@"
+		],
+		"3073": [
+			"yyyy-mm-dd;@",
+			"[$-1010000]d/m/yyyy;@",
+			"[$-1010000]yyyy/mm/dd;@",
+			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-2010000]d/mm/yyyy;@",
+			"[$-2010000]yyyy/mm/dd;@",
+			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+		],
+		"3076": [
+			"d/m/yyyy;@",
+			"d/m/yy;@",
+			"dd/mm/yy;@",
+			"yy/m/d;@",
+			"yy/mm/dd;@",
+			"yyyy/m/d;@",
+			"yyyy/mm/dd;@",
+			"yyyy-mm-dd;@",
+			"[$-C04]dddd, d mmmm, yyyy;@",
+			"[$-C04]d mmmm, yyyy;@",
+			"[$-C04]dddd yyyy mm dd;@",
+			"yyyy mm dd;@"
+		],
+		"3079": [
+			"dd.mm.yyyy;@",
+			"dd.mm.yy;@",
+			"dd.m.yyyy;@",
+			"yyyy-mm-dd;@",
+			"[$-C07]dddd, dd. mmmm yyyy;@",
+			"[$-C07]d.mmmm yyyy;@",
+			"[$-C07]d.mmmyyyy;@",
+			"[$-C07]d mmm yyyy;@"
+		],
+		"3081": [
+			"d/mm/yyyy;@",
+			"d/mm/yy;@",
+			"d/m/yy;@",
+			"d/m/yyyy;@",
+			"dd/mm/yy;@",
+			"dd/mm/yyyy;@",
+			"[$-C09]dd-mmm-yy;@",
+			"[$-C09]dd-mmmm-yyyy;@",
+			"yyyy-mm-dd;@",
+			"yy/mm/dd;@",
+			"yyyy/mm/dd;@",
+			"[$-C09]dddd, d mmmm yyyy;@",
+			"[$-C09]d mmmm yyyy;@"
+		],
+		"3082": [
+			"yyyy-mm-dd;@",
+			"d-m;@",
+			"d-m-yy;@",
+			"dd-mm-yy;@",
+			"[$-C0A]d-mmm;@",
+			"[$-C0A]d-mmm-yy;@",
+			"[$-C0A]dd-mmm-yy;@",
+			"[$-C0A]mmm-yy;@",
+			"[$-C0A]mmmm-yy;@",
+			"[$-C0A]d \"de\" mmmm \"de\" yyyy;@",
+			"[$-409]d-m-yy h:mm AM/PM;@",
+			"d-m-yy h:mm;@",
+			"[$-C0A]mmmmm;@",
+			"[$-C0A]mmmmm-yy;@",
+			"d-m-yyyy;@",
+			"[$-C0A]d-mmm-yyyy;@"
+		],
+		"3084": [
+			"yyyy-mm-dd;@",
+			"yy-mm-dd;@",
+			"dd-mm-yy;@",
+			"yy mm dd;@",
+			"dd/mm/yy;@",
+			"[$-C0C]d mmmm, yyyy;@",
+			"[$-C0C]d mmm yyyy;@"
+		],
+		"3098": [
+			"d.m.yyyy;@",
+			"d.m.yy;@",
+			"d. m. yyyy;@",
+			"dd.mm.yyyy;@",
+			"d. m. yy;@",
+			"dd.mm.yy;@",
+			"dd. mm. yy;@",
+			"yyyy-mm-dd;@",
+			"[$-C1A]d. mmmm yyyy;@",
+			"[$-C1A]dd. mmmm yyyy;@",
+			"[$-C1A]dddd, d. mmmm yyyy;@"
+		],
+		"3131": [
+			"[$-10C3B]d.m.yyyy;@",
+			"[$-10C3B]dd.mm.yyyy;@",
+			"[$-10C3B]d.m.yy;@",
+			"[$-10C3B]yyyy-mm-dd;@",
+			"[$-10C3B]dddd\", \"mmmm d\". b. \"yyyy;@",
+			"[$-10C3B]mmmm d\". b. \"yyyy;@"
+		],
+		"3152": [
+			"[$-10C50]yyyy/m/d;@",
+			"[$-10C50]yyyy-m-d;@",
+			"[$-10C50]yyyy.m.d;@",
+			"[$-10C50]yyyy.mm.dd;@",
+			"[$-10C50]yyyy-mm-dd;@",
+			"[$-10C50]yyyy/mm/dd;@",
+			"[$-10C50]yy-m-d;@",
+			"[$-10C50]yy/m/d;@",
+			"[$-10C50]yy.m.d;@",
+			"[$-10C50]yy/mm/dd;@",
+			"[$-10C50]yyyyᠣᠨ mmmm dᠡᠳᠦᠷ᠂ dddd;@",
+			"[$-10C50]yyyyᠣᠨ mmmm dᠡᠳᠦᠷ;@"
+		],
+		"3179": [
+			"[$-10C6B]dd/mm/yyyy;@",
+			"[$-10C6B]dd/mm/yy;@",
+			"[$-10C6B]d/m/yy;@",
+			"[$-10C6B]dd-mm-yy;@",
+			"[$-10C6B]yyyy-mm-dd;@",
+			"[$-10C6B]dddd, d mmmm, yyyy;@"
+		],
+		"4097": [
+			"yyyy-mm-dd;@",
+			"[$-1010000]d/m/yyyy;@",
+			"[$-1010000]yyyy/mm/dd;@",
+			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-2010000]d/mm/yyyy;@",
+			"[$-2010000]yyyy/mm/dd;@",
+			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+		],
+		"4100": [
+			"d/m/yyyy;@",
+			"d/m/yy;@",
+			"dd/mm/yy;@",
+			"yy/m/d;@",
+			"yy/mm/dd;@",
+			"yyyy/m/d;@",
+			"yyyy/mm/dd;@",
+			"yyyy-mm-dd;@",
+			"[$-1004]dddd, d mmmm, yyyy;@",
+			"[$-1004]d mmmm, yyyy;@",
+			"[$-1004]dddd yyyy mm dd;@",
+			"yyyy mm dd;@"
+		],
+		"4103": [
+			"dd.mm.yyyy;@",
+			"dd.mm.yy;@",
+			"d.mm.yy;@",
+			"d.m.yy;@",
+			"d.m.yyyy;@",
+			"yyyy-mm-dd;@",
+			"[$-1007]dddd, d. mmmm yyyy;@",
+			"[$-1007]d. mmmm yyyy;@",
+			"[$-1007]d. mmm yyyy;@"
+		],
+		"4105": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"d/m/yy;@",
+			"yyyy-mm-dd;@",
+			"yy-mm-dd;@",
+			"m/dd/yy;@",
+			"[$-1009]mmmm d, yyyy;@",
+			"[$-1009]d-mmm-yy;@"
+		],
+		"4106": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"d/mm/yyyy;@",
+			"d/m/yy;@",
+			"dd-mm-yy;@",
+			"yyyy-mm-dd;@",
+			"[$-100A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-100A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-100A]d\" de \"mmmm\" de \"yyyy;@"
+		],
+		"4108": [
+			"dd.mm.yyyy;@",
+			"dd.mm.yy;@",
+			"dd. m. yy;@",
+			"d.m.yy;@",
+			"yyyy-mm-dd;@",
+			"[$-100C]dddd, d. mmmm yyyy;@",
+			"[$-100C]d. mmmm yyyy;@",
+			"[$-100C]d mmm yy;@"
+		],
+		"4122": [
+			"yyyy-mm-dd;@",
+			"[$-1101A]d. m. yyyy.;@",
+			"[$-1101A]d. m. yy.;@",
+			"[$-1101A]d. mmm yyyy.;@",
+			"[$-1101A]dddd, d. mmmm yyyy.;@",
+			"[$-1101A]d. mmmm yyyy.;@"
+		],
+		"4155": [
+			"[$-1103B]dd.mm.yyyy;@",
+			"[$-1103B]dd.mm.yy;@",
+			"[$-1103B]d.m.yy;@",
+			"[$-1103B]yyyy-mm-dd;@",
+			"[$-1103B]dddd, mmmm d\". b. \"yyyy;@",
+			"[$-1103B]mmmm d\". b. \"yyyy;@"
+		],
+		"4191": [
+			"yyyy-mm-dd;@",
+			"dd-mm;@",
+			"dd-mm-yyyy;@",
+			"dd.mmm.yyyy;@",
+			"[$-105F]d-mmm;@",
+			"[$-105F]d-mmm-yy;@",
+			"[$-105F]dd-mmm-yy;@",
+			"[$-105F]mmm-yy;@",
+			"[$-105F]mmmm-yy;@",
+			"[$-105F]dd mmmm, yyyy;@",
+			"[$-105F]dd-mm-yy h:mm;@",
+			"dd-mm-yy h:mm;@",
+			"[$-105F]mmmmm;@",
+			"[$-105F]mmmmm, yyyy;@",
+			"yyyy-mm-dd;@",
+			"[$-105F]dd.mmm.yyyy;@"
+		],
+		"5121": [
+			"yyyy-mm-dd;@",
+			"[$-1010000]d/m/yyyy;@",
+			"[$-1010000]yyyy/mm/dd;@",
+			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-2010000]d/mm/yyyy;@",
+			"[$-2010000]yyyy/mm/dd;@",
+			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+		],
+		"5124": [
+			"d/m/yyyy;@",
+			"d/m/yy;@",
+			"dd/mm/yy;@",
+			"yy/m/d;@",
+			"yy/mm/dd;@",
+			"yyyy/m/d;@",
+			"yyyy/mm/dd;@",
+			"yyyy-mm-dd;@",
+			"[$-1404]dddd, d mmmm, yyyy;@",
+			"[$-1404]d mmmm, yyyy;@",
+			"[$-1404]dddd yyyy mm dd;@",
+			"yyyy mm dd;@"
+		],
+		"5127": [
+			"dd.mm.yyyy;@",
+			"dd.mm.yy;@",
+			"d.mm.yy;@",
+			"dd. m. yy;@",
+			"d.m.yy;@",
+			"dd.mm.yyyy;@",
+			"yyyy-mm-dd;@",
+			"[$-1407]dddd, d. mmmm yyyy;@",
+			"[$-1407]d. mmmm yyyy;@",
+			"[$-1407]d. mmm yy;@"
+		],
+		"5129": [
+			"d/mm/yyyy;@",
+			"d/mm/yy;@",
+			"dd/mm/yy;@",
+			"d.mm.yy;@",
+			"yyyy-mm-dd;@",
+			"[$-1409]dddd, d mmmm yyyy;@",
+			"[$-1409]d mmmm yyyy;@"
+		],
+		"5130": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"d/m/yy;@",
+			"dd-mm-yy;@",
+			"yyyy-mm-dd;@",
+			"[$-140A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-140A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-140A]d\" de \"mmmm\" de \"yyyy;@"
+		],
+		"5132": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"dd.mm.yy;@",
+			"dd-mm-yy;@",
+			"yyyy-mm-dd;@",
+			"[$-140C]dddd d mmmm yyyy;@",
+			"[$-140C]d mmm yy;@",
+			"[$-140C]d mmmm yyyy;@"
+		],
+		"5146": [
+			"yyyy-mm-dd;@",
+			"[$-1141A]d. m. yyyy.;@",
+			"[$-1141A]d. mmm yyyy.;@",
+			"[$-1141A]dddd, d. mmmm yyyy.;@",
+			"[$-1141A]d. mmmm yyyy.;@"
+		],
+		"5179": [
+			"[$-1143B]yyyy-mm-dd;@",
+			"[$-1143B]yy-mm-dd;@",
+			"[$-1143B]dddd, mmmm d\". b. \"yyyy;@",
+			"[$-1143B]mmmm d\". b. \"yyyy;@"
+		],
+		"6145": [
+			"yyyy-mm-dd;@",
+			"[$-1010000]d/m/yyyy;@",
+			"[$-1010000]yyyy/mm/dd;@",
+			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-2010000]d/mm/yyyy;@",
+			"[$-2010000]yyyy/mm/dd;@",
+			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+		],
+		"6153": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"d/m/yy;@",
+			"d.m.yy;@",
+			"yyyy-mm-dd;@",
+			"[$-1809]dd mmmm yyyy;@",
+			"[$-1809]d mmmm yyyy;@"
+		],
+		"6154": [
+			"mm/dd/yyyy;@",
+			"mm/dd/yy;@",
+			"d/m/yy;@",
+			"dd/mm/yy;@",
+			"dd-mm-yy;@",
+			"yyyy-mm-dd;@",
+			"[$-180A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-180A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-180A]d\" de \"mmmm\" de \"yyyy;@"
+		],
+		"6156": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"dd.mm.yy;@",
+			"dd-mm-yy;@",
+			"yyyy-mm-dd;@",
+			"[$-180C]dddd d mmmm yyyy;@",
+			"[$-180C]d mmm yy;@",
+			"[$-180C]d mmmm yyyy;@"
+		],
+		"6170": [
+			"yyyy-mm-dd;@",
+			"[$-1181A]d.m.yyyy.;@",
+			"[$-1181A]d.m.yy.;@",
+			"[$-1181A]dd.mm.yyyy.;@",
+			"[$-1181A]d. mmmm yyyy.;@",
+			"[$-1181A]dddd, dd. mmmm yyyy.;@",
+			"[$-1181A]dd. mmmm yyyy.;@"
+		],
+		"6203": [
+			"[$-1183B]dd.mm.yyyy;@",
+			"[$-1183B]dd.mm.yy;@",
+			"[$-1183B]d.m.yy;@",
+			"[$-1183B]yyyy-mm-dd;@",
+			"[$-1183B]dddd, mmmm d\". b. \"yyyy;@",
+			"[$-1183B]mmmm d\". b. \"yyyy;@"
+		],
+		"7169": [
+			"yyyy-mm-dd;@",
+			"[$-1010000]d/m/yyyy;@",
+			"[$-1010000]yyyy/mm/dd;@",
+			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-2010000]d/mm/yyyy;@",
+			"[$-2010000]yyyy/mm/dd;@",
+			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+		],
+		"7177": [
+			"yyyy/mm/dd;@",
+			"yy/mm/dd;@",
+			"yyyy-mm-dd;@",
+			"[$-1C09]dd mmmm yyyy;@"
+		],
+		"7178": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"mm/dd/yyyy;@",
+			"d/m/yy;@",
+			"dd-mm-yy;@",
+			"yyyy-mm-dd;@",
+			"[$-1C0A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-1C0A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-1C0A]d\" de \"mmmm\" de \"yyyy;@"
+		],
+		"7180": [
+			"yyyy-mm-dd;@",
+			"[$-11C0C]dd/mm/yyyy;@",
+			"[$-11C0C]d mmm yyyy;@",
+			"[$-11C0C]dddd d mmmm yyyy;@",
+			"[$-11C0C]d mmmm yyyy;@"
+		],
+		"7194": [
+			"d.m.yyyy;@",
+			"d.m.yy;@",
+			"d. m. yyyy;@",
+			"dd.mm.yyyy;@",
+			"d. m. yy;@",
+			"dd.mm.yy;@",
+			"dd. mm. yy;@",
+			"yyyy-mm-dd;@",
+			"[$-1C1A]d. mmmm yyyy;@",
+			"[$-1C1A]dd. mmmm yyyy;@",
+			"[$-1C1A]dddd, d. mmmm yyyy;@"
+		],
+		"7227": [
+			"[$-11C3B]yyyy-mm-dd;@",
+			"[$-11C3B]yy-mm-dd;@",
+			"[$-11C3B]dddd, mmmm d\". b. \"yyyy;@",
+			"[$-11C3B]mmmm d\". b. \"yyyy;@"
+		],
+		"8193": [
+			"yyyy-mm-dd;@",
+			"[$-1010000]d/m/yyyy;@",
+			"[$-1010000]yyyy/mm/dd;@",
+			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-2010000]d/mm/yyyy;@",
+			"[$-2010000]yyyy/mm/dd;@",
+			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+		],
+		"8201": [
+			"dd/mm/yyyy;@",
+			"yyyy-mm-dd;@",
+			"[$-2009]dddd, mmmm dd, yyyy;@",
+			"[$-2009]mmmm dd, yyyy;@",
+			"[$-2009]dddd, dd mmmm, yyyy;@",
+			"[$-2009]dd mmmm, yyyy;@"
+		],
+		"8202": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"d/m/yy;@",
+			"dd-mm-yy;@",
+			"yyyy-mm-dd;@",
+			"[$-200A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-200A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-200A]d\" de \"mmmm\" de \"yyyy;@"
+		],
+		"8204": [
+			"yyyy-mm-dd;@",
+			"[$-1200C]dd/mm/yyyy;@",
+			"[$-1200C]d mmm yyyy;@",
+			"[$-1200C]dddd d mmmm yyyy;@",
+			"[$-1200C]d mmmm yyyy;@"
+		],
+		"8218": [
+			"[$-1201A]d.m.yyyy;@",
+			"[$-1201A]d.m.yy;@",
+			"[$-1201A]d. m. yyyy;@",
+			"[$-1201A]dd.mm.yyyy;@",
+			"[$-1201A]d. m. yy;@",
+			"[$-1201A]dd.mm.yy;@",
+			"[$-1201A]dd. mm. yy;@",
+			"[$-1201A]yyyy-mm-dd;@",
+			"[$-1201A]d. mmmm yyyy;@",
+			"[$-1201A]dd. mmmm yyyy;@",
+			"[$-1201A]dddd, d. mmmm yyyy;@"
+		],
+		"8251": [
+			"[$-1203B]d.m.yyyy;@",
+			"[$-1203B]dd.mm.yyyy;@",
+			"[$-1203B]d.m.yy;@",
+			"[$-1203B]yyyy-mm-dd;@",
+			"[$-1203B]mmmm d\". p. \"yyyy;@",
+			"[$-1203B]dddd, mmmm d\". p. \"yyyy;@"
+		],
+		"9217": [
+			"yyyy-mm-dd;@",
+			"[$-1010000]d/m/yyyy;@",
+			"[$-1010000]yyyy/mm/dd;@",
+			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-2010000]d/mm/yyyy;@",
+			"[$-2010000]yyyy/mm/dd;@",
+			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+		],
+		"9225": [
+			"mm/dd/yyyy;@",
+			"mm/dd/yy;@",
+			"yyyy-mm-dd;@",
+			"[$-2409]dddd, mmmm dd, yyyy;@",
+			"[$-2409]mmmm dd, yyyy;@",
+			"[$-2409]dddd, dd mmmm, yyyy;@",
+			"[$-2409]dd mmmm, yyyy;@"
+		],
+		"9226": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"d/mm/yyyy;@",
+			"d/m/yy;@",
+			"dd-mm-yy;@",
+			"yyyy-mm-dd;@",
+			"[$-240A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-240A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-240A]d\" de \"mmmm\" de \"yyyy;@"
+		],
+		"9228": [
+			"yyyy-mm-dd;@",
+			"[$-1240C]dd/mm/yyyy;@",
+			"[$-1240C]d mmm yyyy;@",
+			"[$-1240C]dddd d mmmm yyyy;@",
+			"[$-1240C]d mmmm yyyy;@"
+		],
+		"9242": [
+			"d.m.yyyy;@",
+			"d.m.yy;@",
+			"d. m. yyyy;@",
+			"dd.mm.yyyy;@",
+			"d. m. yy;@",
+			"dd.mm.yy;@",
+			"dd. mm. yy;@",
+			"yyyy-mm-dd;@",
+			"[$-241A]d. mmmm yyyy;@",
+			"[$-241A]dd. mmmm yyyy;@",
+			"[$-241A]dddd, d. mmmm yyyy;@"
+		],
+		"9275": [
+			"[$-1243B]d.m.yyyy;@",
+			"[$-1243B]dd.mm.yyyy;@",
+			"[$-1243B]d.m.yy;@",
+			"[$-1243B]yyyy-mm-dd;@",
+			"[$-1243B]mmmm d\". p. \"yyyy;@",
+			"[$-1243B]dddd, mmmm d. yyyy;@"
+		],
+		"10241": [
+			"yyyy-mm-dd;@",
+			"[$-1010000]d/m/yyyy;@",
+			"[$-1010000]yyyy/mm/dd;@",
+			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-2010000]d/mm/yyyy;@",
+			"[$-2010000]yyyy/mm/dd;@",
+			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+		],
+		"10249": [
+			"dd/mm/yyyy;@",
+			"yyyy-mm-dd;@",
+			"[$-2809]dddd, dd mmmm yyyy;@"
+		],
+		"10250": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"d/m/yy;@",
+			"dd-mm-yy;@",
+			"yyyy-mm-dd;@",
+			"[$-280A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-280A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-280A]d\" de \"mmmm\" de \"yyyy;@"
+		],
+		"10252": [
+			"yyyy-mm-dd;@",
+			"[$-1280C]dd/mm/yyyy;@",
+			"[$-1280C]d mmm yyyy;@",
+			"[$-1280C]dddd d mmmm yyyy;@",
+			"[$-1280C]d mmmm yyyy;@"
+		],
+		"10266": [
+			"d.m.yyyy.;@",
+			"d.m.yy.;@",
+			"d. m. yyyy.;@",
+			"dd.mm.yyyy.;@",
+			"d. m. yy.;@",
+			"dd.mm.yy.;@",
+			"dd. mm. yy.;@",
+			"yyyy-mm-dd;@",
+			"[$-281A]d. mmmm yyyy.;@",
+			"[$-281A]dd. mmmm yyyy.;@",
+			"[$-281A]dddd, d. mmmm yyyy.;@"
+		],
+		"11265": [
+			"yyyy-mm-dd;@",
+			"[$-1010000]d/m/yyyy;@",
+			"[$-1010000]yyyy/mm/dd;@",
+			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-2010000]d/mm/yyyy;@",
+			"[$-2010000]yyyy/mm/dd;@",
+			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+		],
+		"11273": [
+			"dd/mm/yyyy;@",
+			"yyyy-mm-dd;@",
+			"[$-2C09]dddd, dd mmmm yyyy;@"
+		],
+		"11274": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"d/m/yy;@",
+			"dd-mm-yy;@",
+			"yyyy-mm-dd;@",
+			"[$-2C0A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-2C0A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-2C0A]d\" de \"mmmm\" de \"yyyy;@"
+		],
+		"11276": [
+			"yyyy-mm-dd;@",
+			"[$-12C0C]dd/mm/yyyy;@",
+			"[$-12C0C]d mmm yyyy;@",
+			"[$-12C0C]dddd d mmmm yyyy;@",
+			"[$-12C0C]d mmmm yyyy;@"
+		],
+		"12289": [
+			"yyyy-mm-dd;@",
+			"[$-1010000]d/m/yyyy;@",
+			"[$-1010000]yyyy/mm/dd;@",
+			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-2010000]d/mm/yyyy;@",
+			"[$-2010000]yyyy/mm/dd;@",
+			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+		],
+		"12297": [
+			"m/d/yyyy;@",
+			"m/d/yy;@",
+			"mm/dd/yy;@",
+			"mm/dd/yyyy;@",
+			"yyyy-mm-dd;@",
+			"yy/mm/dd;@",
+			"[$-3009]dd-mmm-yy;@",
+			"[$-3009]dddd, mmmm dd, yyyy;@",
+			"[$-3009]mmmm dd, yyyy;@",
+			"[$-3009]dddd, dd mmmm, yyyy;@",
+			"[$-3009]dd mmmm, yyyy;@"
+		],
+		"12298": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"d/m/yy;@",
+			"dd-mm-yy;@",
+			"yyyy-mm-dd;@",
+			"[$-300A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-300A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-300A]d\" de \"mmmm\" de \"yyyy;@"
+		],
+		"12300": [
+			"yyyy-mm-dd;@",
+			"[$-1300C]dd/mm/yyyy;@",
+			"[$-1300C]d mmm yyyy;@",
+			"[$-1300C]dddd d mmmm yyyy;@",
+			"[$-1300C]d mmmm yyyy;@"
+		],
+		"13313": [
+			"yyyy-mm-dd;@",
+			"[$-1010000]d/m/yyyy;@",
+			"[$-1010000]yyyy/mm/dd;@",
+			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-2010000]d/mm/yyyy;@",
+			"[$-2010000]yyyy/mm/dd;@",
+			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+		],
+		"13321": [
+			"m/d/yyyy;@",
+			"m/d/yy;@",
+			"mm/dd/yy;@",
+			"mm/dd/yyyy;@",
+			"yyyy-mm-dd;@",
+			"yy/mm/dd;@",
+			"[$-3409]dd-mmm-yy;@",
+			"[$-3409]dddd, mmmm dd, yyyy;@",
+			"[$-3409]mmmm dd, yyyy;@",
+			"[$-3409]dddd, dd mmmm, yyyy;@",
+			"[$-3409]dd mmmm, yyyy;@"
+		],
+		"13322": [
+			"dd-mm-yyyy;@",
+			"dd-mm-yy;@",
+			"dd/mm/yy;@",
+			"d/m/yy;@",
+			"yyyy-mm-dd;@",
+			"[$-340A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-340A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-340A]d\" de \"mmmm\" de \"yyyy;@"
+		],
+		"13324": [
+			"yyyy-mm-dd;@",
+			"[$-1340C]dd/mm/yyyy;@",
+			"[$-1340C]d mmm yyyy;@",
+			"[$-1340C]dddd d mmmm yyyy;@",
+			"[$-1340C]d mmmm yyyy;@"
+		],
+		"14337": [
+			"yyyy-mm-dd;@",
+			"[$-1010000]d/m/yyyy;@",
+			"[$-1010000]yyyy/mm/dd;@",
+			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-2010000]d/mm/yyyy;@",
+			"[$-2010000]yyyy/mm/dd;@",
+			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+		],
+		"14345": [
+			"yyyy-mm-dd;@",
+			"[$-13809]dd/mm/yyyy;@",
+			"[$-13809]dd/mm/yy;@",
+			"[$-13809]d mmm yyyy;@",
+			"[$-13809]dddd, dd mmmm yyyy;@",
+			"[$-13809]dd mmmm yyyy;@"
+		],
+		"14346": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"d/m/yy;@",
+			"dd-mm-yy;@",
+			"yyyy-mm-dd;@",
+			"[$-380A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-380A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-380A]d\" de \"mmmm\" de \"yyyy;@"
+		],
+		"14348": [
+			"yyyy-mm-dd;@",
+			"[$-1380C]dd/mm/yyyy;@",
+			"[$-1380C]d mmm yyyy;@",
+			"[$-1380C]dddd d mmmm yyyy;@",
+			"[$-1380C]d mmmm yyyy;@"
+		],
+		"15361": [
+			"yyyy-mm-dd;@",
+			"[$-1010000]d/m/yyyy;@",
+			"[$-1010000]yyyy/mm/dd;@",
+			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-2010000]d/mm/yyyy;@",
+			"[$-2010000]yyyy/mm/dd;@",
+			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+		],
+		"15369": [
+			"yyyy-mm-dd;@",
+			"[$-13C09]d/m/yyyy;@",
+			"[$-13C09]d mmm yyyy;@",
+			"[$-13C09]dddd, d mmmm yyyy;@",
+			"[$-13C09]d mmmm yyyy;@"
+		],
+		"15370": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"d/m/yy;@",
+			"dd-mm-yy;@",
+			"yyyy-mm-dd;@",
+			"[$-3C0A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-3C0A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-3C0A]d\" de \"mmmm\" de \"yyyy;@"
+		],
+		"15372": [
+			"yyyy-mm-dd;@",
+			"[$-13C0C]dd/mm/yyyy;@",
+			"[$-13C0C]d mmm yyyy;@",
+			"[$-13C0C]dddd d mmmm yyyy;@",
+			"[$-13C0C]d mmmm yyyy;@"
+		],
+		"16385": [
+			"yyyy-mm-dd;@",
+			"[$-1010000]d/m/yyyy;@",
+			"[$-1010000]yyyy/mm/dd;@",
+			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-2010000]d/mm/yyyy;@",
+			"[$-2010000]yyyy/mm/dd;@",
+			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+		],
+		"16393": [
+			"[$-14009]dd-mm-yyyy;@",
+			"[$-14009]dd-mm-yy;@",
+			"[$-14009]d-m-yy;@",
+			"[$-14009]d.m.yy;@",
+			"[$-14009]yyyy-mm-dd;@",
+			"[$-14009]dd mmmm yyyy;@",
+			"[$-14009]d mmmm yyyy;@",
+			"[$-14009]dddd, d mmmm, yyyy;@"
+		],
+		"16394": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"d/m/yy;@",
+			"dd-mm-yy;@",
+			"yyyy-mm-dd;@",
+			"[$-400A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-400A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-400A]d\" de \"mmmm\" de \"yyyy;@"
+		],
+		"17417": [
+			"[$-14409]d/m/yyyy;@",
+			"[$-14409]d/m/yy;@",
+			"[$-14409]dd/mm/yyyy;@",
+			"[$-14409]dd/mm/yy;@",
+			"[$-14409]yyyy-mm-dd;@",
+			"[$-14409]dddd, d mmmm, yyyy;@",
+			"[$-14409]d mmmm, yyyy;@"
+		],
+		"17418": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"mm-dd-yyyy;@",
+			"yyyy-mm-dd;@",
+			"[$-440A]dddd, dd\" de \"mmmm\" de \"yyyy;@"
+		],
+		"18441": [
+			"yyyy-mm-dd;@",
+			"[$-14809]d/m/yyyy;@",
+			"[$-14809]d/m/yy;@",
+			"[$-14809]d mmm yyyy;@",
+			"[$-14809]dddd, d mmmm yyyy;@",
+			"[$-14809]d mmmm yyyy;@"
+		],
+		"18442": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"mm-dd-yyyy;@",
+			"yyyy-mm-dd;@",
+			"[$-480A]dddd, dd\" de \"mmmm\" de \"yyyy;@"
+		],
+		"19466": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"mm-dd-yyyy;@",
+			"yyyy-mm-dd;@",
+			"[$-4C0A]dddd, dd\" de \"mmmm\" de \"yyyy;@"
+		],
+		"20490": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"mm-dd-yyyy;@",
+			"yyyy-mm-dd;@",
+			"[$-500A]dddd, dd\" de \"mmmm\" de \"yyyy;@"
+		],
+		"21514": [
+			"[$-1540A]m/d/yyyy;@",
+			"[$-1540A]m/d/yy;@",
+			"[$-1540A]mm/dd/yy;@",
+			"[$-1540A]mm/dd/yyyy;@",
+			"[$-1540A]yy/mm/dd;@",
+			"[$-1540A]yyyy-mm-dd;@",
+			"[$-1540A]dd-mmm-yy;@",
+			"[$-1540A]dddd, mmmm dd, yyyy;@",
+			"[$-1540A]mmmm dd, yyyy;@",
+			"[$-1540A]dddd, dd mmmm, yyyy;@",
+			"[$-1540A]dd mmmm, yyyy;@"
+		],
+		"22538": [
+			"dd/mm/yyyy;@",
+			"dd/mm/yy;@",
+			"d/mm/yy;@",
+			"d/m/yy;@",
+			"dd-mm-yy;@",
+			"yyyy-mm-dd;@",
+			"[$-580A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-580A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-580A]d\" de \"mmmm\" de \"yyyy;@"
+		],
+		"64546": [
+			"dd.mm.yyyy;@",
+			"dd.mm.yy;@",
+			"yyyy-mm-dd;@",
+			"[$-FC22]d mmmm yyyy\" р.\";@"
+		],
+		"64547": [
+			"dd.mm.yyyy;@",
+			"dd.mm.yy;@",
+			"yyyy-mm-dd;@",
+			"[$-FC23]d mmmm yyyy;@"
+		],
+		"64551": [
+			"yyyy-mm-dd;@",
+			"yyyy.mm.dd;@",
+			"[$-FC27]yyyy \"m.\" mmmm d \"d.\";@",
+			"[$-427]yyyy \"m.\" mmmm d \"d.\";@"
+		]
+	};
+
+	let c_oAscTimeFormatExcel = {
+		"1025": [
+			"[$-1000000]h:mm:ss;@",
+			"[$-1000401]h:mm AM/PM;@",
+			"[$-1000409]h:mm AM/PM;@",
+			"[$-2000000]h:mm:ss;@",
+			"[$-2000401]h:mm AM/PM;@",
+			"[$-2000409]h:mm AM/PM;@"
+		],
+		"1026": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@"
+		],
+		"1027": [
+			"h:mm:ss;@",
+			"h:mm;@"
+		],
+		"1028": [
+			"h:mm;@",
+			"[$-409]h:mm AM/PM;@",
+			"h:mm:ss;@",
+			"[$-409]h:mm:ss AM/PM;@",
+			"[$-409]yyyy/m/d h:mm AM/PM;@",
+			"yyyy/m/d h:mm;@",
+			"h\"時\"mm\"分\";@",
+			"h\"時\"mm\"分\"ss\"秒\";@",
+			"上午/下午h\"時\"mm\"分\";@",
+			"上午/下午h\"時\"mm\"分\"ss\"秒\";@"
+		],
+		"1029": [
+			"h:mm;@",
+			"[$-409]h:mm AM/PM;@",
+			"h:mm:ss;@",
+			"[$-409]h:mm:ss AM/PM;@",
+			"mm:ss.0;@",
+			"[h]:mm:ss;@",
+			"[$-409]d/m/yy h:mm AM/PM;@",
+			"d/m/yy h:mm;@"
+		],
+		"1030": [
+			"hh:mm;@",
+			"hh:mm:ss;@",
+			"[$-409]hh:mm AM/PM;@",
+			"[$-409]hh:mm:ss AM/PM;@",
+			"dd-mm-yy hh:mm;@",
+			"mm-dd-yy hh:mm:ss;@",
+			"dd-mm-yy hh:mm:ss;@",
+			"yyyy-mm-dd hh:mm;@"
+		],
+		"1031": [
+			"h:mm;@",
+			"[$-409]h:mm AM/PM;@",
+			"h:mm:ss;@",
+			"[$-409]h:mm:ss AM/PM;@",
+			"mm:ss.0;@",
+			"[h]:mm:ss;@",
+			"[$-409]d/m/yy h:mm AM/PM;@",
+			"d.m.yy h:mm;@"
+		],
+		"1032": [
+			"h:mm;@",
+			"[$-408]h:mm AM/PM;@",
+			"h:mm:ss;@",
+			"[$-408]h:mm:ss AM/PM;@",
+			"mm:ss.0;@",
+			"[h]:mm:ss;@",
+			"[$-408]d/m/yy h:mm AM/PM;@",
+			"d/m/yy h:mm;@"
+		],
+		"1033": [
+			"h:mm;@",
+			"[$-409]h:mm AM/PM;@",
+			"h:mm:ss;@",
+			"[$-409]h:mm:ss AM/PM;@",
+			"mm:ss.0;@",
+			"[h]:mm:ss;@",
+			"[$-409]m/d/yy h:mm AM/PM;@",
+			"m/d/yy h:mm;@"
+		],
+		"1034": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@",
+			"hh:mm;@",
+			"hh\"H\"mm\"'\";@"
+		],
+		"1035": [
+			"h:mm;@",
+			"[$-409]h:mm AM/PM;@",
+			"h:mm:ss;@",
+			"[$-409]h:mm:ss AM/PM;@",
+			"mm:ss.0;@",
+			"[h]:mm:ss;@",
+			"[$-409]d.m.yyyy h:mm AM/PM;@",
+			"d.m.yyyy h:mm;@"
+		],
+		"1036": [
+			"h:mm;@",
+			"[$-409]h:mm AM/PM;@",
+			"h:mm:ss;@",
+			"[$-409]h:mm:ss AM/PM;@",
+			"mm:ss.0;@",
+			"[h]:mm:ss;@",
+			"[$-409]d/m/yy h:mm AM/PM;@",
+			"d/m/yy h:mm;@"
+		],
+		"1037": [
+			"[$-1000000]h:mm;@",
+			"[$-1000409]h:mm AM/PM;@",
+			"[$-1000000]h:mm:ss;@",
+			"[$-1000409]h:mm:ss AM/PM;@",
+			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010409]d/m/yyyy h:mm;@"
+		],
+		"1038": [
+			"h:mm;@",
+			"[$-40E]h:mm AM/PM;@",
+			"h:mm:ss;@",
+			"[$-40E]h:mm:ss AM/PM;@",
+			"mm:ss.0;@",
+			"[h]:mm:ss;@",
+			"[$-40E]yyyy. m. d. h:mm AM/PM;@",
+			"yyyy. m. d. h:mm;@",
+			"[$-40E]h \"óra\" m \"perc\" AM/PM;@",
+			"h \"óra\" m \"perc\";@",
+			"[$-40E]h \"óra\" m \"perckor\" AM/PM;@"
+		],
+		"1039": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@",
+			"hh:mm;@"
+		],
+		"1040": [
+			"h:mm;@",
+			"[$-409]h:mm AM/PM;@",
+			"h:mm:ss;@",
+			"[$-409]h:mm:ss AM/PM;@",
+			"mm:ss.0;@",
+			"[h]:mm:ss;@",
+			"[$-409]d/m/yy h:mm AM/PM;@",
+			"d/m/yy h:mm;@"
+		],
+		"1042": [
+			"h:mm;@",
+			"h:mm:ss;@",
+			"[$-412]AM/PM h:mm;@",
+			"[$-412]AM/PM h:mm:ss;@",
+			"[$-409]h:mm AM/PM;@",
+			"[$-409]h:mm:ss AM/PM;@",
+			"yyyy\"-\"m\"-\"d h:mm;@",
+			"[$-412]yyyy\"-\"m\"-\"d AM/PM h:mm;@",
+			"[$-409]yyyy\"-\"m\"-\"d h:mm AM/PM;@",
+			"h\"시\" mm\"분\";@",
+			"h\"시\" mm\"분\" ss\"초\";@",
+			"[$-412]AM/PM h\"시\" mm\"분\";@",
+			"[$-412]AM/PM h\"시\" mm\"분\" ss\"초\";@"
+		],
+		"1043": [
+			"h:mm;@",
+			"[$-409]h:mm AM/PM;@",
+			"h:mm:ss;@",
+			"[$-409]h:mm:ss AM/PM;@",
+			"mm:ss.0;@",
+			"[h]:mm:ss;@",
+			"[$-409]d-mm-yy h:mm AM/PM;@",
+			"d-mm-yy h:mm;@"
+		],
+		"1044": [
+			"hh:mm;@",
+			"[$-409]h:mm AM/PM;@",
+			"hh:mm:ss;@",
+			"[$-409]h:mm:ss AM/PM;@",
+			"kl 'hh.mm;@",
+			"[h]:mm:ss;@",
+			"[$-409]m/d/yy h:mm AM/PM;@",
+			"m/d/yy hh:mm;@"
+		],
+		"1045": [
+			"h:mm;@",
+			"[$-409]h:mm AM/PM;@",
+			"h:mm:ss;@",
+			"[$-409]h:mm:ss AM/PM;@",
+			"mm:ss.0;@",
+			"[h]:mm:ss;@",
+			"[$-409]yy-mm-dd h:mm AM/PM;@",
+			"yy-mm-dd h:mm;@"
+		],
+		"1046": [
+			"h:mm;@",
+			"[$-409]h:mm AM/PM;@",
+			"h:mm:ss;@",
+			"[$-409]h:mm:ss AM/PM;@",
+			"mm:ss.0;@",
+			"[h]:mm:ss;@",
+			"[$-409]d/m/yy h:mm AM/PM;@",
+			"d/m/yy h:mm;@"
+		],
+		"1047": [
+			"[$-10417]hh:mm:ss;@",
+			"[$-10417]hh:mm;@"
+		],
+		"1048": [
+			"h:mm;@",
+			"[$-409]h:mm AM/PM;@",
+			"h:mm:ss;@",
+			"[$-409]h:mm:ss AM/PM;@",
+			"mm:ss.0;@",
+			"[h]:mm:ss;@",
+			"[$-409]d/m/yy h:mm AM/PM;@",
+			"d/m/yy h:mm;@"
+		],
+		"1049": [
+			"h:mm;@",
+			"[$-409]h:mm AM/PM;@",
+			"h:mm:ss;@",
+			"[$-409]h:mm:ss AM/PM;@",
+			"mm:ss.0;@",
+			"[h]:mm:ss;@",
+			"[$-409]dd/mm/yy h:mm AM/PM;@",
+			"dd/mm/yy h:mm;@"
+		],
+		"1050": [
+			"h:mm;@",
+			"[$-409]h:mm AM/PM;@",
+			"h:mm:ss;@",
+			"[$-409]h:mm:ss AM/PM;@",
+			"mm:ss.0;@",
+			"[h]:mm:ss;@",
+			"[$-409]d.m.yy. h:mm AM/PM;@",
+			"d.m.yy. h:mm;@"
+		],
+		"1051": [
+			"h:mm;@",
+			"[$-409]h:mm AM/PM;@",
+			"h:mm:ss;@",
+			"[$-409]h:mm:ss AM/PM;@",
+			"mm:ss.0;@",
+			"[h]:mm:ss;@",
+			"[$-409]d/m/yy h:mm AM/PM;@",
+			"d/m/yy h:mm;@"
+		],
+		"1052": [
+			"[$-41C]hh:mm:ss.Pd/md;@",
+			"hh:mm:ss;@"
+		],
+		"1053": [
+			"hh:mm;@",
+			"hh:mm:ss;@",
+			"\"kl \"hh:mm;@",
+			"\"kl \"hh:mm:ss;@",
+			"[$-409]yyyy-mm-dd h:mm AM/PM;@",
+			"[h]:mm:ss;@",
+			"yyyy-mm-dd hh:mm;@",
+			"[$-409]yyyy-mm-dd h:mm AM/PM;@"
+		],
+		"1054": [
+			"[$-D000000]h:mm:ss AM/PM;@",
+			"[$-D000000]h:mm:ss;@",
+			"[$-D000000]h:mm \"น.\";@",
+			"[$-D000409]h:mm AM/PM;@",
+			"[$-1000000]h:mm:ss AM/PM;@",
+			"[$-1000000]h:mm:ss;@",
+			"[$-1000000]h:mm \"น.\";@",
+			"[$-1000409]h:mm AM/PM;@"
+		],
+		"1055": [
+			"hh:mm;@",
+			"hh:mm:ss;@",
+			"mm:ss.0;@",
+			"d/m/yy hh:mm;@",
+			"dd/mm/yy hh:mm;@",
+			"d/m/yyyy hh:mm;@",
+			"m/d/yy hh:mm;@"
+		],
+		"1056": [
+			"[$-409]h:mm:ss AM/PM;@",
+			"[$-409]hh:mm:ss AM/PM;@",
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"1057": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"1060": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"1061": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"1062": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"1064": [
+			"[$-10428]hh:mm:ss;@",
+			"[$-10428]h:mm:ss;@",
+			"[$-10428]hh:mm;@",
+			"[$-10428]h:mm;@"
+		],
+		"1065": [
+			"[$-1000000]hh:mm:ss;@",
+			"[$-1000429]hh:mm AM/PM;@",
+			"[$-1000409]h:mm AM/PM;@",
+			"[$-3000000]h:mm:ss;@",
+			"[$-3000429]h:mm AM/PM;@",
+			"[$-3000409]h:mm AM/PM;@"
+		],
+		"1066": [
+			"[$-1000000]h:mm;@",
+			"[$-100042A]h:mm:ss AM/PM;@",
+			"[$-1000409]h:mm:ss AM/PM;@",
+			"[$-1000000]h:mm:ss;@"
+		],
+		"1067": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@",
+			"[$-409]h:mm:ss AM/PM;@",
+			"[$-409]hh:mm:ss AM/PM;@"
+		],
+		"1068": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"1069": [
+			"h:mm;@",
+			"[$-409]h:mm AM/PM;@",
+			"h:mm:ss;@",
+			"[$-409]h:mm:ss AM/PM;@",
+			"mm:ss.0;@",
+			"[h]:mm:ss;@",
+			"[$-409]yy/mm/dd h:mm AM/PM;@",
+			"yy/mm/dd h:mm;@"
+		],
+		"1070": [
+			"[$-1042E]h:mm:ss;@",
+			"[$-1042E]h:mm \"hodź\".;@"
+		],
+		"1071": [
+			"hh:mm:ss;@"
+		],
+		"1072": [
+			"[$-10430]hh:mm:ss;@",
+			"[$-10430]hh:mm;@"
+		],
+		"1073": [
+			"[$-10431]hh:mm:ss;@",
+			"[$-10431]hh:mm;@"
+		],
+		"1074": [
+			"[$-10432]hh:mm:ss;@",
+			"[$-10432]hh:mm;@"
+		],
+		"1075": [
+			"[$-10433]hh:mm:ss;@",
+			"[$-10433]hh:mm;@"
+		],
+		"1076": [
+			"[$-10434]hh:mm:ss;@",
+			"[$-10434]hh:mm;@"
+		],
+		"1077": [
+			"[$-10435]hh:mm:ss;@",
+			"[$-10435]hh:mm;@"
+		],
+		"1078": [
+			"[$-409]hh:mm:ss AM/PM;@",
+			"[$-409]h:mm:ss AM/PM;@"
+		],
+		"1079": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"1080": [
+			"hh.mm.ss;@",
+			"hh:mm:ss;@"
+		],
+		"1081": [
+			"[$-1000000]h:mm;@",
+			"[$-4000000]h:mm;@",
+			"[$-1000439]h:mm AM/PM;@",
+			"[$-4000439]h:mm AM/PM;@",
+			"[$-1000409]h:mm AM/PM;@",
+			"[$-1000439]h:mm:ss AM/PM;@",
+			"[$-4000439]h:mm:ss AM/PM;@",
+			"[$-1000409]h:mm:ss AM/PM;@"
+		],
+		"1082": [
+			"[$-1043A]hh:mm:ss;@",
+			"[$-1043A]hh:mm;@"
+		],
+		"1083": [
+			"[$-1043B]hh:mm:ss;@",
+			"[$-1043B]hh:mm;@"
+		],
+		"1085": [
+			"[$-1043D]hh:mm:ss;@",
+			"[$-1043D]hh:mm;@"
+		],
+		"1086": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"1087": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"1088": [
+			"h:mm:ss;@"
+		],
+		"1089": [
+			"[$-409]h:mm:ss AM/PM;@",
+			"[$-409]hh:mm:ss AM/PM;@",
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"1090": [
+			"[$-10442]hh:mm:ss;@",
+			"[$-10442]h:mm:ss;@",
+			"[$-10442]hh:mm;@",
+			"[$-10442]h:mm;@"
+		],
+		"1091": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@"
+		],
+		"1092": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"1093": [
+			"[$-10445]hh.mm.ss;@",
+			"[$-10445]h.mm.ss;@",
+			"[$-10409]AM/PM hh.mm.ss;@",
+			"[$-10409]AM/PM h.mm.ss;@",
+			"[$-10445]hh.mm;@",
+			"[$-10445]h.mm;@",
+			"[$-10409]AM/PM hh.mm;@",
+			"[$-10409]AM/PM h.mm;@"
+		],
+		"1094": [
+			"[$-446]AM/PM hh:mm:ss;@",
+			"[$-446]AM/PM h:mm:ss;@",
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"1095": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@",
+			"[$-447]AM/PM hh:mm:ss;@",
+			"[$-447]AM/PM h:mm:ss;@"
+		],
+		"1096": [
+			"[$-10448]hh:mm:ss;@",
+			"[$-10448]h:mm:ss;@",
+			"[$-10409]AM/PM hh:mm:ss;@",
+			"[$-10409]AM/PM h:mm:ss;@",
+			"[$-10448]hh:mm;@",
+			"[$-10448]h:mm;@",
+			"[$-10409]AM/PM hh:mm;@",
+			"[$-10409]AM/PM h:mm;@"
+		],
+		"1097": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@",
+			"[$-449]hh:mm:ss AM/PM;@",
+			"[$-449]h:mm:ss AM/PM;@"
+		],
+		"1098": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@",
+			"[$-44A]AM/PM hh:mm:ss;@",
+			"[$-44A]AM/PM h:mm:ss;@"
+		],
+		"1099": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@",
+			"[$-44B]AM/PM hh:mm:ss;@",
+			"[$-44B]AM/PM h:mm:ss;@"
+		],
+		"1100": [
+			"[$-10409]h:mm:ss AM/PM;@",
+			"[$-1044C]hh:mm:ss;@",
+			"[$-10409]h:mm AM/PM;@",
+			"[$-1044C]hh:mm;@"
+		],
+		"1101": [
+			"[$-1044D]AM/PM h:mm:ss;@",
+			"[$-1044D]AM/PM hh:mm:ss;@",
+			"[$-1044D]h:mm:ss;@",
+			"[$-1044D]AM/PM h:mm;@",
+			"[$-1044D]AM/PM hh:mm;@",
+			"[$-1044D]h:mm;@"
+		],
+		"1102": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@",
+			"[$-44E]hh:mm:ss AM/PM;@",
+			"[$-44E]h:mm:ss AM/PM;@"
+		],
+		"1103": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@",
+			"[$-44F]hh:mm:ss AM/PM;@",
+			"[$-44F]h:mm:ss AM/PM;@"
+		],
+		"1104": [
+			"h:mm:ss;@"
+		],
+		"1105": [
+			"[$-10451]hh:mm:ss;@",
+			"[$-10451]hh:mm;@"
+		],
+		"1106": [
+			"[$-10452]hh:mm:ss;@",
+			"[$-10452]hh:mm;@"
+		],
+		"1107": [
+			"[$-10453]hh:mm:ss;@",
+			"[$-10453]h:mm;@"
+		],
+		"1108": [
+			"[$-10454]h:mm:ss;@",
+			"[$-10454]hh:mm:ss;@",
+			"[$-10454]h:mm;@",
+			"[$-10454]hh:mm;@"
+		],
+		"1109": [
+			"[$-10455]hh:mm:ss;@",
+			"[$-10455]h:mm;@",
+			"[$-10455]hh:mm;@"
+		],
+		"1110": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@",
+			"hh:mm;@",
+			"[$-456]hh:mm:ss AM/PM;@"
+		],
+		"1111": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@",
+			"[$-457]hh:mm:ss AM/PM;@",
+			"[$-457]h:mm:ss AM/PM;@"
+		],
+		"1112": [
+			"[$-10458]h:mm:ss AM/PM;@",
+			"[$-10458]hh:mm:ss;@",
+			"[$-10458]h:mm AM/PM;@",
+			"[$-10458]hh:mm;@"
+		],
+		"1113": [
+			"[$-10409]AM/PM h:mm:ss;@",
+			"[$-10459]hh:mm:ss;@",
+			"[$-10409]AM/PM h:mm;@",
+			"[$-10459]hh:mm;@"
+		],
+		"1114": [
+			"[$-45A]hh:mm:ss AM/PM;@",
+			"hh:mm:ss;@"
+		],
+		"1115": [
+			"[$-1045B]hh.mm.ss;@",
+			"[$-1045B]hh.mm;@"
+		],
+		"1116": [
+			"[$-10409]h:mm:ss AM/PM;@",
+			"[$-10409]hh:mm:ss AM/PM;@",
+			"[$-1045C]h:mm:ss;@",
+			"[$-1045C]hh:mm:ss;@",
+			"[$-10409]h:mm AM/PM;@",
+			"[$-10409]hh:mm AM/PM;@",
+			"[$-1045C]h:mm;@",
+			"[$-1045C]hh:mm;@"
+		],
+		"1117": [
+			"[$-10409]h:mm:ss AM/PM;@",
+			"[$-10409]hh:mm:ss AM/PM;@",
+			"[$-1045D]h:mm:ss;@",
+			"[$-1045D]hh:mm:ss;@",
+			"[$-10409]h:mm AM/PM;@",
+			"[$-10409]hh:mm AM/PM;@",
+			"[$-1045D]h:mm;@",
+			"[$-1045D]hh:mm;@"
+		],
+		"1118": [
+			"[$-1045E]h:mm:ss AM/PM;@",
+			"[$-1045E]hh:mm:ss;@",
+			"[$-1045E]h:mm AM/PM;@",
+			"[$-1045E]hh:mm;@"
+		],
+		"1119": [
+			"[$-1045F]hh:mm:ss;@",
+			"[$-1045F]hh:mm;@"
+		],
+		"1120": [
+			"[$-10409]h:mm:ss AM/PM;@",
+			"[$-10460]hh:mm:ss;@",
+			"[$-10409]h:mm AM/PM;@",
+			"[$-10460]hh:mm;@"
+		],
+		"1121": [
+			"[$-10461]h:mm:ss AM/PM;@",
+			"[$-10461]hh:mm:ss AM/PM;@",
+			"[$-10461]h:mm:ss;@",
+			"[$-10461]hh:mm:ss;@",
+			"[$-10461]h:mm AM/PM;@",
+			"[$-10461]hh:mm AM/PM;@",
+			"[$-10461]h:mm;@",
+			"[$-10461]hh:mm;@"
+		],
+		"1122": [
+			"[$-10462]hh:mm:ss;@",
+			"[$-10462]hh:mm;@"
+		],
+		"1123": [
+			"[$-160463]h:mm:ss;@",
+			"[$-160463]hh:mm:ss;@",
+			"[$-160463]h:mm;@",
+			"[$-160463]hh:mm;@"
+		],
+		"1124": [
+			"[$-10409]h:mm:ss AM/PM;@",
+			"[$-10464]hh:mm:ss;@",
+			"[$-10409]h:mm AM/PM;@",
+			"[$-10464]hh:mm;@"
+		],
+		"1125": [
+			"hh:mm;@",
+			"hh:mm:ss;@",
+			"hh:mm;@",
+			"[$-465]hh:mm AM/PM;@",
+			"hh:mm:ss;@",
+			"[$-465]hh:mm:ss AM/PM;@"
+		],
+		"1126": [
+			"[$-10466]hh:mm:ss;@",
+			"[$-10466]hh:mm;@"
+		],
+		"1127": [
+			"[$-10467]hh:mm:ss;@",
+			"[$-10467]hh:mm;@"
+		],
+		"1128": [
+			"[$-10468]hh:mm:ss;@",
+			"[$-10468]hh:mm;@"
+		],
+		"1129": [
+			"[$-10469]hh:mm:ss;@",
+			"[$-10469]hh:mm;@"
+		],
+		"1130": [
+			"[$-1046A]h:m:s;@",
+			"[$-1046A]hh:mm:ss;@",
+			"[$-1046A]h:m;@",
+			"[$-1046A]hh:mm;@"
+		],
+		"1131": [
+			"[$-1046B]hh:mm:ss AM/PM;@",
+			"[$-1046B]h:mm:ss AM/PM;@",
+			"[$-1046B]h:mm:ss;@",
+			"[$-1046B]hh:mm:ss;@",
+			"[$-1046B]hh:mm AM/PM;@",
+			"[$-1046B]h:mm AM/PM;@",
+			"[$-1046B]h:mm;@",
+			"[$-1046B]hh:mm;@"
+		],
+		"1132": [
+			"[$-1046C]hh:mm:ss;@",
+			"[$-1046C]hh:mm;@"
+		],
+		"1133": [
+			"[$-1046D]h:mm:ss;@",
+			"[$-1046D]h:mm;@"
+		],
+		"1134": [
+			"[$-1046E]hh:mm:ss;@",
+			"[$-1046E]h:mm:ss\" Auer\";@",
+			"[$-1046E]hh:mm:ss\" Auer\";@",
+			"[$-1046E]hh:mm;@",
+			"[$-1046E]h:mm;@",
+			"[$-1046E]h.mm;@",
+			"[$-1046E]h.mm\" Auer\";@"
+		],
+		"1135": [
+			"[$-1046F]hh:mm:ss;@",
+			"[$-1046F]h:mm:ss;@",
+			"[$-1046F]hh:mm;@",
+			"[$-1046F]h:mm;@"
+		],
+		"1136": [
+			"[$-10470]hh:mm:ss;@",
+			"[$-10470]hh:mm;@"
+		],
+		"1137": [
+			"[$-10409]h:mm:ss AM/PM;@",
+			"[$-10471]hh:mm:ss;@",
+			"[$-10409]h:mm AM/PM;@",
+			"[$-10471]hh:mm;@"
+		],
+		"1138": [
+			"[$-10472]h:mm:ss AM/PM;@",
+			"[$-10472]hh:mm:ss;@",
+			"[$-10472]h:mm AM/PM;@",
+			"[$-10472]hh:mm;@"
+		],
+		"1139": [
+			"[$-10473]h:mm:ss AM/PM;@",
+			"[$-10473]hh:mm:ss;@",
+			"[$-10473]h:mm AM/PM;@",
+			"[$-10473]hh:mm;@"
+		],
+		"1140": [
+			"[$-10474]hh:mm:ss;@",
+			"[$-10474]h:mm:ss;@",
+			"[$-10474]hh:mm:ss AM/PM;@",
+			"[$-10474]hh:mm;@",
+			"[$-10474]h:mm;@",
+			"[$-10474]hh:mm AM/PM;@"
+		],
+		"1141": [
+			"[$-10409]h:mm:ss AM/PM;@",
+			"[$-10475]hh:mm:ss;@",
+			"[$-10409]h:mm AM/PM;@",
+			"[$-10475]hh:mm;@"
+		],
+		"1142": [
+			"[$-10476]hh:mm:ss;@",
+			"[$-10476]hh:mm;@"
+		],
+		"1143": [
+			"[$-10477]h:mm:ss AM/PM;@",
+			"[$-10477]hh:mm:ss;@",
+			"[$-10477]h:mm AM/PM;@",
+			"[$-10477]hh:mm;@"
+		],
+		"1144": [
+			"[$-10478]AM/PM h:mm:ss;@",
+			"[$-10478]h:mm:ss;@",
+			"[$-10478]hh:mm:ss;@",
+			"[$-10478]AM/PM h:mm;@",
+			"[$-10478]h:mm;@",
+			"[$-10478]hh:mm;@"
+		],
+		"1145": [
+			"[$-10479]h:mm:ss;@",
+			"[$-10479]hh:mm:ss;@",
+			"[$-10479]h:mm;@",
+			"[$-10479]hh:mm;@"
+		],
+		"1146": [
+			"[$-1047A]h:mm:ss;@",
+			"[$-1047A]hh:mm:ss;@",
+			"[$-1047A]h:mm;@",
+			"[$-1047A]hh:mm;@"
+		],
+		"1148": [
+			"[$-10409]h:mm:ss AM/PM;@",
+			"[$-10409]hh:mm:ss AM/PM;@",
+			"[$-1047C]hh:mm:ss;@",
+			"[$-1047C]h:mm:ss;@",
+			"[$-10409]h:mm AM/PM;@",
+			"[$-10409]hh:mm AM/PM;@",
+			"[$-1047C]hh:mm;@",
+			"[$-1047C]h:mm;@"
+		],
+		"1150": [
+			"[$-1047E]hh:mm:ss;@",
+			"[$-1047E]hh:mm;@"
+		],
+		"1152": [
+			"[$-10480]h:mm:ss;@",
+			"[$-10480]hh:mm:ss;@",
+			"[$-10480]AM/PM h:mm:ss;@",
+			"[$-10480]AM/PM hh:mm:ss;@",
+			"[$-10480]h:mm;@",
+			"[$-10480]hh:mm;@",
+			"[$-10480]AM/PM h:mm;@",
+			"[$-10480]AM/PM hh:mm;@"
+		],
+		"1153": [
+			"[$-10409]h:mm:ss AM/PM;@",
+			"[$-10481]hh:mm:ss;@",
+			"[$-10409]h:mm AM/PM;@",
+			"[$-10481]hh:mm;@"
+		],
+		"1154": [
+			"[$-10482]h\"h\"mm:ss;@",
+			"[$-10482]hh\"h\"mm ss \"seg\".;@",
+			"[$-10482]h\"h\"mm;@",
+			"[$-10482]hh\"h\"mm;@"
+		],
+		"1155": [
+			"[$-10483]h:mm:ss;@",
+			"[$-10483]hh:mm:ss;@",
+			"[$-10483]hh:mm;@",
+			"[$-10483]h:mm;@",
+			"[$-10483]hh.mm;@"
+		],
+		"1156": [
+			"[$-10484]hh:mm:ss;@",
+			"[$-10484]h:mm:ss;@",
+			"[$-10484]hh:mm;@",
+			"[$-10484]h:mm;@",
+			"[$-10484]hh.mm;@",
+			"[$-10484]hh\" h \"mm;@",
+			"[$-10484]hh\"h\"mm;@"
+		],
+		"1157": [
+			"[$-10485]hh:mm:ss;@",
+			"[$-10485]hh:mm;@"
+		],
+		"1158": [
+			"[$-10486]h:mm:ss AM/PM;@",
+			"[$-10486]hh:mm:ss;@",
+			"[$-10486]h:mm AM/PM;@",
+			"[$-10486]hh:mm;@"
+		],
+		"1159": [
+			"[$-10487]hh:mm:ss;@",
+			"[$-10487]hh:mm;@"
+		],
+		"1160": [
+			"[$-10488]hh:mm:ss;@",
+			"[$-10488]hh:mm;@"
+		],
+		"1164": [
+			"[$-16048C]h:mm:ss;@",
+			"[$-16048C]hh:mm:ss;@",
+			"[$-16048C]h:mm;@",
+			"[$-16048C]hh:mm;@"
+		],
+		"1169": [
+			"[$-10491]hh:mm:ss;@",
+			"[$-10491]hh:mm;@"
+		],
+		"2049": [
+			"[$-1000000]h:mm:ss;@",
+			"[$-1000401]h:mm AM/PM;@",
+			"[$-1000409]h:mm AM/PM;@",
+			"[$-2000000]h:mm:ss;@",
+			"[$-2000401]h:mm AM/PM;@",
+			"[$-2000409]h:mm AM/PM;@"
+		],
+		"2052": [
+			"h:mm;@",
+			"[$-409]h:mm AM/PM;@",
+			"h:mm:ss;@",
+			"[$-409]h:mm:ss AM/PM;@",
+			"h\"时\"mm\"分\";@",
+			"h\"时\"mm\"分\"ss\"秒\";@",
+			"上午/下午h\"时\"mm\"分\";@",
+			"上午/下午h\"时\"mm\"分\"ss\"秒\";@",
+			"[DBNum1][$-804]h\"时\"mm\"分\";@",
+			"[DBNum1][$-804]上午/下午h\"时\"mm\"分\";@"
+		],
+		"2055": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@",
+			"h.mm\" h\";@",
+			"hh.mm\" h\";@",
+			"h.mm\" Uhr\";@"
+		],
+		"2057": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@",
+			"[$-409]hh:mm:ss AM/PM;@",
+			"[$-409]h:mm:ss AM/PM;@"
+		],
+		"2058": [
+			"[$-80A]hh:mm:ss AM/PM;@",
+			"[$-80A]h:mm:ss AM/PM;@",
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"2060": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@",
+			"h.mm;@",
+			"h\" h \"mm;@",
+			"h\" h \"m\" min \"s\" s \";@"
+		],
+		"2064": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@",
+			"h.mm\" h\";@"
+		],
+		"2067": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@",
+			"h.mm\" u.\";@",
+			"h:mm;@"
+		],
+		"2068": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@",
+			"\"kl \"hh.mm;@",
+			"hh.mm.ss;@"
+		],
+		"2070": [
+			"h:mm;@",
+			"[$-409]h:mm AM/PM;@",
+			"h:mm:ss;@",
+			"[$-409]h:mm:ss AM/PM;@",
+			"mm:ss.0;@",
+			"[h]:mm:ss;@",
+			"[$-409]d/m/yy h:mm AM/PM;@",
+			"d/m/yy h:mm;@"
+		],
+		"2072": [
+			"[$-10818]hh:mm:ss;@",
+			"[$-10818]hh:mm;@"
+		],
+		"2073": [
+			"[$-10819]hh:mm:ss;@",
+			"[$-10819]hh:mm;@"
+		],
+		"2074": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"2077": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@",
+			"\"kl \"h:mm;@"
+		],
+		"2092": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"2094": [
+			"[$-1082E]hh:mm:ss;@",
+			"[$-1082E]h:mm:ss\" góź.\";@",
+			"[$-1082E]\"zeger \"h:mm:ss;@",
+			"[$-1082E]hh:mm;@",
+			"[$-1082E]h:mm;@",
+			"[$-1082E]h:mm\" góź.\";@",
+			"[$-1082E]\"zeger \"h:mm;@"
+		],
+		"2098": [
+			"[$-10832]hh:mm:ss;@",
+			"[$-10832]hh:mm;@"
+		],
+		"2107": [
+			"[$-1083B]hh:mm:ss;@",
+			"[$-1083B]h:mm:ss;@",
+			"[$-1083B]hh:mm;@",
+			"[$-1083B]h:mm;@"
+		],
+		"2108": [
+			"[$-1083C]hh:mm:ss;@",
+			"[$-1083C]hh:mm;@"
+		],
+		"2110": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"2115": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@"
+		],
+		"2117": [
+			"[$-10409]h:mm:ss AM/PM;@",
+			"[$-10845]hh:mm:ss;@",
+			"[$-10409]h:mm AM/PM;@",
+			"[$-10845]hh:mm;@"
+		],
+		"2118": [
+			"[$-10409]h.mm.ss AM/PM;@",
+			"[$-10409]hh:mm:ss AM/PM;@",
+			"[$-10846]h:mm:ss;@",
+			"[$-10846]hh:mm:ss;@",
+			"[$-10409]h.mm AM/PM;@",
+			"[$-10409]hh:mm AM/PM;@",
+			"[$-10846]h:mm;@",
+			"[$-10846]hh:mm;@"
+		],
+		"2128": [
+			"[$-10850]h:mm:ss;@",
+			"[$-10850]h:mm;@"
+		],
+		"2137": [
+			"[$-10409]h:mm:ss AM/PM;@",
+			"[$-10409]hh:mm:ss AM/PM;@",
+			"[$-10859]h:mm:ss;@",
+			"[$-10859]hh:mm:ss;@",
+			"[$-10409]h:mm AM/PM;@",
+			"[$-10409]hh:mm AM/PM;@",
+			"[$-10859]h:mm;@",
+			"[$-10859]hh:mm;@"
+		],
+		"2141": [
+			"[$-10409]h:mm:ss AM/PM;@",
+			"[$-10409]hh:mm:ss AM/PM;@",
+			"[$-1085D]hh:mm:ss;@",
+			"[$-1085D]h:mm:ss;@",
+			"[$-10409]h:mm AM/PM;@",
+			"[$-10409]hh:mm AM/PM;@",
+			"[$-1085D]hh:mm;@",
+			"[$-1085D]h:mm;@"
+		],
+		"2143": [
+			"[$-1085F]h:mm:ss;@",
+			"[$-1085F]hh:mm:ss;@",
+			"[$-1085F]h:mm;@",
+			"[$-1085F]hh:mm;@"
+		],
+		"2144": [
+			"[$-10409]AM/PM h:mm:ss;@",
+			"[$-10860]hh:mm:ss;@",
+			"[$-10409]AM/PM h:mm;@",
+			"[$-10860]hh:mm;@"
+		],
+		"2145": [
+			"[$-10861]h:mm:ss AM/PM;@",
+			"[$-10861]hh:mm:ss;@",
+			"[$-10861]h:mm AM/PM;@",
+			"[$-10861]hh:mm;@"
+		],
+		"2151": [
+			"[$-10867]hh:mm:ss;@",
+			"[$-10867]h:mm:ss;@",
+			"[$-10867]hh:mm;@",
+			"[$-10867]h:mm;@",
+			"[$-10867]hh.mm;@",
+			"[$-10867]hh\" h \"mm;@"
+		],
+		"2155": [
+			"[$-1086B]h:mm:ss;@",
+			"[$-1086B]hh:mm:ss;@",
+			"[$-1086B]h:mm;@",
+			"[$-1086B]hh:mm;@"
+		],
+		"2163": [
+			"[$-10873]h:mm:ss AM/PM;@",
+			"[$-10873]hh:mm:ss;@",
+			"[$-10873]h:mm AM/PM;@",
+			"[$-10873]hh:mm;@"
+		],
+		"3073": [
+			"[$-1000000]h:mm:ss;@",
+			"[$-1000401]h:mm AM/PM;@",
+			"[$-1000409]h:mm AM/PM;@",
+			"[$-2000000]h:mm:ss;@",
+			"[$-2000401]h:mm AM/PM;@",
+			"[$-2000409]h:mm AM/PM;@"
+		],
+		"3076": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"3079": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@",
+			"hh:mm;@",
+			"hh:mm\" Uhr\";@"
+		],
+		"3081": [
+			"[$-409]h:mm:ss AM/PM;@",
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"3082": [
+			"h:mm;@",
+			"[$-409]h:mm AM/PM;@",
+			"h:mm:ss;@",
+			"[$-409]h:mm:ss AM/PM;@",
+			"mm:ss.0;@",
+			"[h]:mm:ss;@",
+			"[$-409]d-m-yy h:mm AM/PM;@",
+			"d-m-yy h:mm;@"
+		],
+		"3084": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@",
+			"h\" h \"mm;@",
+			"h:mm;@"
+		],
+		"3098": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"3131": [
+			"[$-10C3B]h:mm:ss;@",
+			"[$-10C3B]hh:mm:ss;@",
+			"[$-10C3B]h:mm;@",
+			"[$-10C3B]hh:mm;@"
+		],
+		"3152": [
+			"[$-10C50]h:mm:ss;@",
+			"[$-10C50]h:mm;@"
+		],
+		"3179": [
+			"[$-10C6B]hh:mm:ss AM/PM;@",
+			"[$-10C6B]hh:mm:ss;@",
+			"[$-10C6B]hh:mm AM/PM;@",
+			"[$-10C6B]hh:mm;@"
+		],
+		"4097": [
+			"[$-1000000]h:mm:ss;@",
+			"[$-1000401]h:mm AM/PM;@",
+			"[$-1000409]h:mm AM/PM;@",
+			"[$-2000000]h:mm:ss;@",
+			"[$-2000401]h:mm AM/PM;@",
+			"[$-2000409]h:mm AM/PM;@"
+		],
+		"4100": [
+			"[$-409]AM/PM h:mm:ss;@",
+			"[$-409]AM/PM hh:mm:ss;@",
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"4103": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@",
+			"h.mm;@",
+			"h.mm\" Uhr \";@"
+		],
+		"4105": [
+			"[$-409]h:mm:ss AM/PM;@",
+			"[$-409]hh:mm:ss AM/PM;@",
+			"hh:mm:ss;@",
+			"h:mm:ss;@"
+		],
+		"4106": [
+			"[$-100A]hh:mm:ss AM/PM;@",
+			"[$-100A]h:mm:ss AM/PM;@",
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"4108": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@",
+			"hh.mm\" h\";@"
+		],
+		"4122": [
+			"[$-1101A]hh:mm:ss;@",
+			"[$-1101A]hh:mm;@"
+		],
+		"4155": [
+			"[$-1103B]hh:mm:ss;@",
+			"[$-1103B]h:mm:ss;@",
+			"[$-1103B]hh.mm.ss;@",
+			"[$-1103B]hh:mm;@",
+			"[$-1103B]h:mm;@",
+			"[$-1103B]hh.mm;@"
+		],
+		"4191": [
+			"h:mm;@",
+			"[$-105F]h:mm;@",
+			"h:mm:ss;@",
+			"[$-105F]h:mm:ss;@",
+			"mm:ss.0;@",
+			"[h]:mm:ss;@",
+			"[$-105F]dd-mm-yy h:mm;@",
+			"dd-mm-yy h:mm;@"
+		],
+		"5121": [
+			"[$-1000000]h:mm:ss;@",
+			"[$-1000401]h:mm AM/PM;@",
+			"[$-1000409]h:mm AM/PM;@",
+			"[$-2000000]h:mm:ss;@",
+			"[$-2000401]h:mm AM/PM;@",
+			"[$-2000409]h:mm AM/PM;@"
+		],
+		"5124": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"5127": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@",
+			"h.mm\" h\";@",
+			"hh.mm\" h\";@",
+			"h.mm\" Uhr\";@"
+		],
+		"5129": [
+			"[$-1409]h:mm:ss AM/PM;@",
+			"[$-1409]hh:mm:ss AM/PM;@",
+			"hh:mm:ss;@",
+			"h:mm:ss;@"
+		],
+		"5130": [
+			"[$-140A]hh:mm:ss AM/PM;@",
+			"[$-140A]h:mm:ss AM/PM;@",
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"5132": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@",
+			"hh.mm;@",
+			"hh\" h \"mm;@"
+		],
+		"5146": [
+			"[$-1141A]hh:mm:ss;@",
+			"[$-1141A]hh:mm;@"
+		],
+		"5179": [
+			"[$-1143B]hh:mm:ss;@",
+			"[$-1143B]h:mm:ss;@",
+			"[$-1143B]hh:mm;@",
+			"[$-1143B]h:mm;@"
+		],
+		"6145": [
+			"[$-1000000]h:mm:ss;@",
+			"[$-1000401]h:mm AM/PM;@",
+			"[$-1000409]h:mm AM/PM;@",
+			"[$-2000000]h:mm:ss;@",
+			"[$-2000401]h:mm AM/PM;@",
+			"[$-2000409]h:mm AM/PM;@"
+		],
+		"6153": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@"
+		],
+		"6154": [
+			"[$-180A]hh:mm:ss AM/PM;@",
+			"[$-180A]h:mm:ss AM/PM;@",
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"6156": [
+			"hh:mm:ss;@",
+			"h:mm:ss;@",
+			"hh.mm;@",
+			"hh\" h \"mm;@"
+		],
+		"6170": [
+			"[$-1181A]hh:mm:ss;@",
+			"[$-1181A]hh:mm;@"
+		],
+		"6203": [
+			"[$-1183B]hh:mm:ss;@",
+			"[$-1183B]h:mm:ss;@",
+			"[$-1183B]hh:mm;@",
+			"[$-1183B]h:mm;@"
+		],
+		"7169": [
+			"[$-1000000]h:mm:ss;@",
+			"[$-1000401]h:mm AM/PM;@",
+			"[$-1000409]h:mm AM/PM;@",
+			"[$-2000000]h:mm:ss;@",
+			"[$-2000401]h:mm AM/PM;@",
+			"[$-2000409]h:mm AM/PM;@"
+		],
+		"7177": [
+			"[$-409]hh:mm:ss AM/PM;@",
+			"hh:mm:ss;@"
+		],
+		"7178": [
+			"[$-1C0A]hh:mm:ss AM/PM;@",
+			"[$-1C0A]h:mm:ss AM/PM;@",
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"7180": [
+			"[$-11C0C]hh:mm:ss;@",
+			"[$-11C0C]h:mm:ss;@",
+			"[$-11C0C]hh:mm;@",
+			"[$-11C0C]h:mm;@"
+		],
+		"7194": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"7227": [
+			"[$-11C3B]hh:mm:ss;@",
+			"[$-11C3B]h:mm:ss;@",
+			"[$-11C3B]hh:mm;@",
+			"[$-11C3B]h:mm;@"
+		],
+		"8193": [
+			"[$-1000000]h:mm:ss;@",
+			"[$-1000401]h:mm AM/PM;@",
+			"[$-1000409]h:mm AM/PM;@",
+			"[$-2000000]h:mm:ss;@",
+			"[$-2000401]h:mm AM/PM;@",
+			"[$-2000409]h:mm AM/PM;@"
+		],
+		"8201": [
+			"[$-409]hh:mm:ss AM/PM;@",
+			"[$-409]h:mm:ss AM/PM;@",
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"8202": [
+			"[$-200A]hh:mm:ss AM/PM;@",
+			"[$-200A]h:mm:ss AM/PM;@",
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"8204": [
+			"[$-1200C]hh:mm:ss;@",
+			"[$-1200C]hh:mm;@"
+		],
+		"8218": [
+			"[$-1201A]h:mm:ss;@",
+			"[$-1201A]hh:mm:ss;@",
+			"[$-1201A]h:mm;@",
+			"[$-1201A]hh:mm;@"
+		],
+		"8251": [
+			"[$-1203B]h:mm:ss;@",
+			"[$-1203B]hh:mm:ss;@",
+			"[$-1203B]h:mm;@",
+			"[$-1203B]hh:mm;@"
+		],
+		"9217": [
+			"[$-1000000]h:mm:ss;@",
+			"[$-1000401]h:mm AM/PM;@",
+			"[$-1000409]h:mm AM/PM;@",
+			"[$-2000000]h:mm:ss;@",
+			"[$-2000401]h:mm AM/PM;@",
+			"[$-2000409]h:mm AM/PM;@"
+		],
+		"9225": [
+			"[$-409]h:mm:ss AM/PM;@",
+			"[$-409]hh:mm:ss AM/PM;@",
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"9226": [
+			"[$-240A]hh:mm:ss AM/PM;@",
+			"[$-240A]h:mm:ss AM/PM;@",
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"9228": [
+			"[$-1240C]hh:mm:ss;@",
+			"[$-1240C]hh:mm;@"
+		],
+		"9242": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"9275": [
+			"[$-1243B]h:mm:ss;@",
+			"[$-1243B]hh:mm:ss;@",
+			"[$-1243B]h:mm;@",
+			"[$-1243B]hh:mm;@"
+		],
+		"10241": [
+			"[$-1000000]h:mm:ss;@",
+			"[$-1000401]h:mm AM/PM;@",
+			"[$-1000409]h:mm AM/PM;@",
+			"[$-2000000]h:mm:ss;@",
+			"[$-2000401]h:mm AM/PM;@",
+			"[$-2000409]h:mm AM/PM;@"
+		],
+		"10249": [
+			"[$-409]hh:mm:ss AM/PM;@",
+			"hh:mm:ss;@"
+		],
+		"10250": [
+			"[$-280A]hh:mm:ss AM/PM;@",
+			"[$-280A]h:mm:ss AM/PM;@",
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"10252": [
+			"[$-1280C]hh:mm:ss;@",
+			"[$-1280C]hh:mm;@"
+		],
+		"10266": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"11265": [
+			"[$-1000000]h:mm:ss;@",
+			"[$-1000401]h:mm AM/PM;@",
+			"[$-1000409]h:mm AM/PM;@",
+			"[$-2000000]h:mm:ss;@",
+			"[$-2000401]h:mm AM/PM;@",
+			"[$-2000409]h:mm AM/PM;@"
+		],
+		"11273": [
+			"[$-409]hh:mm:ss AM/PM;@",
+			"hh:mm:ss;@"
+		],
+		"11274": [
+			"[$-2C0A]hh:mm:ss AM/PM;@",
+			"[$-2C0A]h:mm:ss AM/PM;@",
+			"hh:mm:ss;@",
+			"h:mm:ss;@"
+		],
+		"11276": [
+			"[$-12C0C]hh:mm:ss;@",
+			"[$-12C0C]hh:mm;@"
+		],
+		"12289": [
+			"[$-1000000]h:mm:ss;@",
+			"[$-1000401]h:mm AM/PM;@",
+			"[$-1000409]h:mm AM/PM;@",
+			"[$-2000000]h:mm:ss;@",
+			"[$-2000401]h:mm AM/PM;@",
+			"[$-2000409]h:mm AM/PM;@"
+		],
+		"12297": [
+			"[$-409]h:mm:ss AM/PM;@",
+			"[$-409]hh:mm:ss AM/PM;@",
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"12298": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"12300": [
+			"[$-1300C]hh:mm:ss;@",
+			"[$-1300C]hh:mm;@"
+		],
+		"13313": [
+			"[$-1000000]h:mm:ss;@",
+			"[$-1000401]h:mm AM/PM;@",
+			"[$-1000409]h:mm AM/PM;@",
+			"[$-2000000]h:mm:ss;@",
+			"[$-2000401]h:mm AM/PM;@",
+			"[$-2000409]h:mm AM/PM;@"
+		],
+		"13321": [
+			"[$-409]h:mm:ss AM/PM;@",
+			"[$-409]hh:mm:ss AM/PM;@",
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"13322": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"13324": [
+			"[$-1340C]hh:mm:ss;@",
+			"[$-1340C]hh:mm;@"
+		],
+		"14337": [
+			"[$-1000000]h:mm:ss;@",
+			"[$-1000401]h:mm AM/PM;@",
+			"[$-1000409]h:mm AM/PM;@",
+			"[$-2000000]h:mm:ss;@",
+			"[$-2000401]h:mm AM/PM;@",
+			"[$-2000409]h:mm AM/PM;@"
+		],
+		"14345": [
+			"[$-13809]hh:mm:ss;@",
+			"[$-13809]h:mm:ss;@",
+			"[$-13809]hh:mm;@",
+			"[$-13809]h:mm;@"
+		],
+		"14346": [
+			"[$-380A]hh:mm:ss AM/PM;@",
+			"[$-380A]h:mm:ss AM/PM;@",
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"14348": [
+			"[$-1380C]hh:mm:ss;@",
+			"[$-1380C]hh:mm;@"
+		],
+		"15361": [
+			"[$-1000000]h:mm:ss;@",
+			"[$-1000401]h:mm AM/PM;@",
+			"[$-1000409]h:mm AM/PM;@",
+			"[$-2000000]h:mm:ss;@",
+			"[$-2000401]h:mm AM/PM;@",
+			"[$-2000409]h:mm AM/PM;@"
+		],
+		"15369": [
+			"[$-10409]h:mm:ss AM/PM;@",
+			"[$-13C09]hh:mm:ss;@",
+			"[$-10409]h:mm AM/PM;@",
+			"[$-13C09]hh:mm;@"
+		],
+		"15370": [
+			"[$-3C0A]hh:mm:ss AM/PM;@",
+			"[$-3C0A]h:mm:ss AM/PM;@",
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"15372": [
+			"[$-13C0C]hh:mm:ss;@",
+			"[$-13C0C]hh:mm;@"
+		],
+		"16385": [
+			"[$-1000000]h:mm:ss;@",
+			"[$-1000401]h:mm AM/PM;@",
+			"[$-1000409]h:mm AM/PM;@",
+			"[$-2000000]h:mm:ss;@",
+			"[$-2000401]h:mm AM/PM;@",
+			"[$-2000409]h:mm AM/PM;@"
+		],
+		"16393": [
+			"[$-14009]hh:mm:ss;@",
+			"[$-14009]h:mm:ss;@",
+			"[$-10409]h.mm.ss AM/PM;@",
+			"[$-10409]hh:mm:ss AM/PM;@",
+			"[$-14009]hh:mm;@",
+			"[$-14009]h:mm;@",
+			"[$-10409]hh:mm AM/PM;@"
+		],
+		"16394": [
+			"[$-400A]hh:mm:ss AM/PM;@",
+			"[$-400A]h:mm:ss AM/PM;@",
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"17417": [
+			"[$-10409]h:mm:ss AM/PM;@",
+			"[$-10409]hh:mm:ss AM/PM;@",
+			"[$-14409]h:mm:ss;@",
+			"[$-14409]hh:mm:ss;@",
+			"[$-10409]h:mm AM/PM;@",
+			"[$-10409]hh:mm AM/PM;@",
+			"[$-14409]h:mm;@",
+			"[$-14409]hh:mm;@"
+		],
+		"17418": [
+			"[$-440A]hh:mm:ss AM/PM;@",
+			"hh:mm:ss;@"
+		],
+		"18441": [
+			"[$-10409]h:mm:ss AM/PM;@",
+			"[$-14809]hh:mm:ss;@",
+			"[$-10409]h:mm AM/PM;@",
+			"[$-14809]hh:mm;@"
+		],
+		"18442": [
+			"[$-480A]hh:mm:ss AM/PM;@",
+			"hh:mm:ss;@"
+		],
+		"19466": [
+			"[$-4C0A]hh:mm:ss AM/PM;@",
+			"hh:mm:ss;@"
+		],
+		"20490": [
+			"[$-500A]hh:mm:ss AM/PM;@",
+			"hh:mm:ss;@"
+		],
+		"21514": [
+			"[$-10409]h:mm:ss AM/PM;@",
+			"[$-10409]hh:mm:ss AM/PM;@",
+			"[$-1540A]h:mm:ss;@",
+			"[$-1540A]hh:mm:ss;@",
+			"[$-10409]h:mm AM/PM;@",
+			"[$-10409]hh:mm AM/PM;@",
+			"[$-1540A]h:mm;@",
+			"[$-1540A]hh:mm;@"
+		],
+		"22538": [
+			"[$-580A]hh:mm:ss AM/PM;@",
+			"[$-580A]h:mm:ss AM/PM;@",
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"64546": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"64547": [
+			"h:mm:ss;@",
+			"hh:mm:ss;@"
+		],
+		"64551": [
+			"hh:mm:ss;@",
+			"hh:mm;@"
+		]
+	};
+
+	//---------------------------------------------------------export---------------------------------------------------
     window['AscCommon'] = window['AscCommon'] || {};
     window['AscCommon'].isNumber = isNumber;
     window["AscCommon"].NumFormat = NumFormat;

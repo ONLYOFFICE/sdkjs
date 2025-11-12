@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -83,7 +83,7 @@
 		window['AscFonts'].onSuccess = onSuccess;
 		window['AscFonts'].onError = onError;
 
-		if (window["NATIVE_EDITOR_ENJINE"] === true || window["IS_NATIVE_EDITOR"] === true || window["Native"] !== undefined)
+		if (window["NATIVE_EDITOR_ENJINE"] === true || window["IS_NATIVE_EDITOR"] === true || window["native"] !== undefined)
 		{
 			window['AscFonts'].onSuccess && window['AscFonts'].onSuccess.call(window['AscFonts'].api);
 			return;
@@ -100,10 +100,6 @@
 					useWasm = true;
 			}
 		}
-
-		// отключаем wasm для мобильных
-		if (useWasm && (AscCommon.AscBrowser.isAppleDevices || AscCommon.AscBrowser.isAndroid))
-			useWasm = false;
 
 		var engine_name_ext = useWasm ? ".js" : "_ie.js";
 		var _onSuccess = function(){
@@ -144,9 +140,9 @@
 
 	function CPointer()
 	{
-		this.obj    = null;
-		this.data   = null;
-		this.pos    = 0;
+		this.obj  = null; // TODO: remove
+		this.data = null;
+		this.pos  = 0;
 	}
 
 	function FT_Memory()
@@ -159,8 +155,7 @@
 		this.Alloc = function(size)
 		{
 			var p = new CPointer();
-			p.obj = this.ctx.createImageData(1, ((size + 3) >> 2));
-			p.data = p.obj.data;
+			p.data = new Uint8Array(size);
 			p.pos = 0;
 			return p;
 		};
@@ -171,9 +166,7 @@
 		};
 		this.CreateStream = function(size)
 		{
-			var _size = ((size + 3) >> 2);
-			var obj = this.ctx.createImageData(1, _size);
-			return new FontStream(obj.data, _size);
+			return new FontStream(new Uint8Array(size), size);
 		};
 	}
 

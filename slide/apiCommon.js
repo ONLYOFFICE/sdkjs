@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -97,6 +97,10 @@ CAscSlideTransition.prototype.createDuplicate = function(v)
 };
 CAscSlideTransition.prototype.makeDuplicate = function(_slideT)
 {
+    this.fillObject(_slideT);
+};
+CAscSlideTransition.prototype.fillObject = function(_slideT)
+{
     if (!_slideT)
         return;
 
@@ -108,6 +112,13 @@ CAscSlideTransition.prototype.makeDuplicate = function(_slideT)
     _slideT.SlideAdvanceAfter          = this.SlideAdvanceAfter;
     _slideT.SlideAdvanceDuration       = this.SlideAdvanceDuration;
     _slideT.ShowLoop                   = this.ShowLoop;
+};
+
+CAscSlideTransition.prototype.createDuplicate = function()
+{
+    let oCopy = new CAscSlideTransition();
+    this.fillObject(oCopy);
+    return oCopy;
 };
 CAscSlideTransition.prototype.setUndefinedOptions = function()
 {
@@ -124,25 +135,99 @@ CAscSlideTransition.prototype.setDefaultParams = function()
 {
     this.TransitionType     = c_oAscSlideTransitionTypes.None;
     this.TransitionOption   = -1;
-    this.TransitionDuration = 2000;
+    this.TransitionDuration = 500;
 
     this.SlideAdvanceOnMouseClick   = true;
     this.SlideAdvanceAfter          = false;
     this.SlideAdvanceDuration       = 10000;
     this.ShowLoop                   = true;
 };
-CAscSlideTransition.prototype.setDefaultParams = function()
+CAscSlideTransition.prototype.getTypeAndOption = function()
 {
-    this.TransitionType     = c_oAscSlideTransitionTypes.None;
-    this.TransitionOption   = -1;
-    this.TransitionDuration = 2000;
-
-    this.SlideAdvanceOnMouseClick   = true;
-    this.SlideAdvanceAfter          = false;
-    this.SlideAdvanceDuration       = 10000;
-    this.ShowLoop                   = true;
+    let oResult = {Type: null, Option: null};
+    if(this.TransitionType === c_oAscSlideTransitionTypes.Random)
+    {
+        let aTypes = [
+            Asc.c_oAscSlideTransitionTypes.Fade,
+            Asc.c_oAscSlideTransitionTypes.Push,
+            Asc.c_oAscSlideTransitionTypes.Wipe,
+            Asc.c_oAscSlideTransitionTypes.Split,
+            Asc.c_oAscSlideTransitionTypes.UnCover,
+            Asc.c_oAscSlideTransitionTypes.Cover,
+            Asc.c_oAscSlideTransitionTypes.Clock,
+            Asc.c_oAscSlideTransitionTypes.Zoom,
+            Asc.c_oAscSlideTransitionTypes.Morph
+        ];
+        let nType = AscCommon.getArrayRandomElement(aTypes);
+        let nOption = null;
+        switch (nType) {
+            case Asc.c_oAscSlideTransitionTypes.Fade: {
+                nOption = AscCommon.getArrayRandomElement([
+                    c_oAscSlideTransitionParams.Fade_Smoothly,
+                    c_oAscSlideTransitionParams.Fade_Through_Black
+                ]);
+                break;
+            }
+            case Asc.c_oAscSlideTransitionTypes.Push:
+            case Asc.c_oAscSlideTransitionTypes.Wipe:
+            case Asc.c_oAscSlideTransitionTypes.UnCover:
+            case Asc.c_oAscSlideTransitionTypes.Cover: {
+                nOption = AscCommon.getArrayRandomElement([
+                    c_oAscSlideTransitionParams.Param_Left,
+                    c_oAscSlideTransitionParams.Param_Top,
+                    c_oAscSlideTransitionParams.Param_Right,
+                    c_oAscSlideTransitionParams.Param_Bottom,
+                    c_oAscSlideTransitionParams.Param_TopLeft,
+                    c_oAscSlideTransitionParams.Param_TopRight,
+                    c_oAscSlideTransitionParams.Param_BottomLeft,
+                    c_oAscSlideTransitionParams.Param_BottomRight
+                ]);
+                break;
+            }
+            case Asc.c_oAscSlideTransitionTypes.Split: {
+                nOption = AscCommon.getArrayRandomElement([
+                    c_oAscSlideTransitionParams.Split_VerticalIn,
+                    c_oAscSlideTransitionParams.Split_VerticalOut,
+                    c_oAscSlideTransitionParams.Split_HorizontalIn,
+                    c_oAscSlideTransitionParams.Split_HorizontalIn
+                ]);
+                break;
+            }
+            case Asc.c_oAscSlideTransitionTypes.Clock: {
+                nOption = AscCommon.getArrayRandomElement([
+                    c_oAscSlideTransitionParams.Clock_Clockwise,
+                    c_oAscSlideTransitionParams.Clock_Counterclockwise,
+                    c_oAscSlideTransitionParams.Clock_Wedge
+                ]);
+                break;
+            }
+            case Asc.c_oAscSlideTransitionTypes.Zoom: {
+                nOption = AscCommon.getArrayRandomElement([
+                    c_oAscSlideTransitionParams.Zoom_In,
+                    c_oAscSlideTransitionParams.Zoom_Out,
+                    c_oAscSlideTransitionParams.Zoom_AndRotate
+                ]);
+                break;
+            }
+            case Asc.c_oAscSlideTransitionTypes.Morph: {
+                nOption = AscCommon.getArrayRandomElement([
+                    c_oAscSlideTransitionParams.Morph_Objects,
+                    c_oAscSlideTransitionParams.Morph_Words,
+                    c_oAscSlideTransitionParams.Morph_Letters
+                ]);
+                break;
+            }
+        }
+        oResult.Type = nType;
+        oResult.Option = nOption;
+    }
+    else
+    {
+        oResult.Type = this.TransitionType;
+        oResult.Option = this.TransitionOption;
+    }
+    return oResult;
 };
-
 
 CAscSlideTransition.prototype.Write_ToBinary = function(w)
 {
@@ -403,6 +488,10 @@ CAscSlideTransition.prototype.parseXmlParameters = function (_type, _paramNames,
                     this.TransitionOption = c_oAscSlideTransitionParams.Morph_Letters;
                 }
             }
+        }
+        else if("p:random" === _type)
+        {
+            this.TransitionType = c_oAscSlideTransitionTypes.Random;
         }
         else if ("p:none" !== _type)
         {
@@ -726,6 +815,11 @@ CAscSlideTransition.prototype.fillXmlParams = function (aAttrNames, aAttrValues)
             }
             break;
         }
+        case c_oAscSlideTransitionTypes.Random:
+        {
+            sNodeName = "p:random";
+            break;
+        }
         default:
             break;
     }
@@ -832,7 +926,10 @@ CAscDateTime.prototype['get_DateTimeExamples'] = CAscDateTime.prototype.get_Date
         for(var key in oMap) {
             if(oMap.hasOwnProperty(key)) {
                 oParaField.FieldType = key;
-                oMap[key] = oParaField.private_GetString();
+                 let sVal = oParaField.private_GetString();
+                 if(sVal) {
+                     oMap[key] = sVal;
+                 }
             }
         }
     }, this, []);
@@ -926,7 +1023,7 @@ CAscHFProps.prototype['updateView'] = CAscHFProps.prototype.updateView = functio
                     if(b <= oCanvas.height && b + nLineWidth >= oCanvas.height) {
                         b = oCanvas.height - nLineWidth - 1;
                     }
-                    nPhType = oSp.getPhType();
+                    nPhType = oSp.getPlaceholderType();
                     oContext.beginPath();
                     if(nPhType === AscFormat.phType_dt ||
                     nPhType === AscFormat.phType_ftr ||

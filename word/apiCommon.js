@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -209,7 +209,7 @@
 		this.Value = v;
 	};
 
-	window['Asc']['CTablePositionH'] = CTablePositionH;
+	window['Asc']['CTablePositionH'] = window['Asc'].CTablePositionH = CTablePositionH;
 	CTablePositionH.prototype['get_RelativeFrom'] = CTablePositionH.prototype.get_RelativeFrom;
 	CTablePositionH.prototype['put_RelativeFrom'] = CTablePositionH.prototype.put_RelativeFrom;
 	CTablePositionH.prototype['get_UseAlign'] = CTablePositionH.prototype.get_UseAlign;
@@ -218,7 +218,7 @@
 	CTablePositionH.prototype['put_Align'] = CTablePositionH.prototype.put_Align;
 	CTablePositionH.prototype['get_Value'] = CTablePositionH.prototype.get_Value;
 	CTablePositionH.prototype['put_Value'] = CTablePositionH.prototype.put_Value;
-	window['Asc']['CTablePositionV'] = CTablePositionV;
+	window['Asc']['CTablePositionV'] = window['Asc'].CTablePositionV = CTablePositionV;
 	CTablePositionV.prototype['get_RelativeFrom'] = CTablePositionV.prototype.get_RelativeFrom;
 	CTablePositionV.prototype['put_RelativeFrom'] = CTablePositionV.prototype.put_RelativeFrom;
 	CTablePositionV.prototype['get_UseAlign'] = CTablePositionV.prototype.get_UseAlign;
@@ -1776,6 +1776,7 @@
 		this.Suff    = Asc.c_oAscNumberingSuff.Tab;
 		this.Align   = AscCommon.align_Left;
 		this.PStyle  = undefined;
+		this.IsLgl   = undefined;
 	}
 	CAscNumberingLvl.prototype.checkTextPr = function ()
 	{
@@ -1982,6 +1983,14 @@
 	{
 		return this.Suff;
 	};
+	CAscNumberingLvl.prototype.get_IsLgl = function()
+	{
+		return this.IsLgl;
+	};
+	CAscNumberingLvl.prototype.put_IsLgl = function(v)
+	{
+		this.IsLgl = v;
+	};
 	window['Asc']['CAscNumberingLvl']                 = window['Asc'].CAscNumberingLvl = CAscNumberingLvl;
 	CAscNumberingLvl.prototype['get_LvlNum']          = CAscNumberingLvl.prototype.get_LvlNum;
 	CAscNumberingLvl.prototype['get_Format']          = CAscNumberingLvl.prototype.get_Format;
@@ -2018,6 +2027,8 @@
 	CAscNumberingLvl.prototype['put_NumberPosition']  = CAscNumberingLvl.prototype.put_NumberPosition;
 	CAscNumberingLvl.prototype['put_StopTab']         = CAscNumberingLvl.prototype.put_StopTab;
 	CAscNumberingLvl.prototype['get_StopTab']         = CAscNumberingLvl.prototype.get_StopTab;
+	CAscNumberingLvl.prototype['get_IsLgl']           = CAscNumberingLvl.prototype.get_IsLgl;
+	CAscNumberingLvl.prototype['put_IsLgl']           = CAscNumberingLvl.prototype.put_IsLgl;
 
 	function CAscWatermarkProperties()
 	{
@@ -2026,10 +2037,14 @@
 		this.Text = null;
 		this.TextPr = null;
 		this.Opacity = null;
-		this.IsDiagonal = null;
+		this.Angle = 0;
+		this.BackgroundColor = null;
+		this.Outline = null;
 
 		this.ImageUrl = null;
 		this.Scale = null;
+		this.ImageW = null;
+		this.ImageH = null;
 
 		this.DivId = null;
 		this.Api = null;
@@ -2066,10 +2081,45 @@
 		return this.Opacity;
 	};
 	CAscWatermarkProperties.prototype['put_IsDiagonal'] = CAscWatermarkProperties.prototype.put_IsDiagonal = function (v) {
-		this.IsDiagonal = v;
+		if(v) {
+			this.Angle = 45;
+		}
+		else {
+			this.Angle = 0;
+		}
 	};
 	CAscWatermarkProperties.prototype['get_IsDiagonal'] = CAscWatermarkProperties.prototype.get_IsDiagonal = function () {
-		return this.IsDiagonal;
+		if(AscFormat.fApproxEqual(this.Angle, 0)) {
+			return false;
+		}
+		return true;
+	};
+	CAscWatermarkProperties.prototype['get_Angle'] = CAscWatermarkProperties.prototype.get_Angle = function () {
+		return this.Angle;
+	};
+	CAscWatermarkProperties.prototype['put_Angle'] = CAscWatermarkProperties.prototype.put_Angle = function (v) {
+		if(!AscFormat.isRealNumber(v)) {
+			return;
+		}
+		let dValue = v;
+		while (dValue < 0) {
+			dValue += 360;
+		}
+		while (dValue >= 360) {
+			dValue -= 360;
+		}
+		this.Angle = dValue;
+	};
+	CAscWatermarkProperties.prototype.getXfrmRot = function () {
+		if(this.Angle > 0) {
+			return Math.PI * (360 - this.Angle) / 180;
+		}
+		return 0;
+	};
+	CAscWatermarkProperties.prototype.setXfrmRot = function (dRot) {
+		if(AscFormat.isRealNumber(dRot) && dRot > 0) {
+			this.Angle = (360 - 180 * (dRot / Math.PI)) + 0.5 >> 0;
+		}
 	};
 
 	CAscWatermarkProperties.prototype['put_ImageUrl'] = CAscWatermarkProperties.prototype.put_ImageUrl = function (sUrl, token) {
@@ -2101,7 +2151,30 @@
 		this.Scale = v;
 	};
 	CAscWatermarkProperties.prototype['get_Scale'] = CAscWatermarkProperties.prototype.get_Scale = function () {
-		return this.Scale;
+		return this.Scale || 1.0;
+	};
+	CAscWatermarkProperties.prototype['put_ImageSize'] = CAscWatermarkProperties.prototype.put_ImageSize = function (w, h) {
+		this.ImageW = w;
+		this.ImageH = h;
+		this.Scale = -1;
+	};
+	CAscWatermarkProperties.prototype['get_ImageWidth'] = CAscWatermarkProperties.prototype.get_ImageWidth = function () {
+		return this.ImageW;
+	};
+	CAscWatermarkProperties.prototype['get_ImageHeight'] = CAscWatermarkProperties.prototype.get_ImageHeight = function () {
+		return this.ImageH;
+	};
+	CAscWatermarkProperties.prototype['put_BackgroundColor'] = CAscWatermarkProperties.prototype.put_BackgroundColor = function (v) {
+		this.BackgroundColor = v;
+	};
+	CAscWatermarkProperties.prototype['get_BackgroundColor'] = CAscWatermarkProperties.prototype.get_BackgroundColor = function () {
+		return this.BackgroundColor;
+	};
+	CAscWatermarkProperties.prototype['put_Outline'] = CAscWatermarkProperties.prototype.put_Outline = function (v) {
+		this.Outline = v;
+	};
+	CAscWatermarkProperties.prototype['get_Outline'] = CAscWatermarkProperties.prototype.get_Outline = function () {
+		return this.Outline;
 	};
 	CAscWatermarkProperties.prototype['put_DivId'] = CAscWatermarkProperties.prototype.put_DivId = function (v) {
 		this.DivId = v;
@@ -2116,7 +2189,7 @@
 		}
 		var t = this.Api;
 		var _this = this;
-		AscCommon.ShowImageFileDialog(t.documentId, t.documentUserId, t.CoAuthoringApi.get_jwt(), function(error, files)
+		AscCommon.ShowImageFileDialog(t.documentId, t.documentUserId, t.CoAuthoringApi.get_jwt(), t.documentShardKey, t.documentWopiSrc, t.documentUserSessionId, function(error, files)
 			{
 				if (Asc.c_oAscError.ID.No !== error)
 				{
@@ -2125,7 +2198,7 @@
 				else
 				{
 					t.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
-					AscCommon.UploadImageFiles(files, t.documentId, t.documentUserId, t.CoAuthoringApi.get_jwt(), function(error, urls)
+					AscCommon.UploadImageFiles(files, t.documentId, t.documentUserId, t.CoAuthoringApi.get_jwt(), t.documentShardKey, t.documentWopiSrc, t.documentUserSessionId, function(error, urls)
 					{
 						if (Asc.c_oAscError.ID.No !== error)
 						{
@@ -2289,7 +2362,7 @@
 		{
 			return false;
 		}
-		if(this.IsDiagonal !== oPr.IsDiagonal)
+		if(!AscFormat.fApproxEqual(this.Angle, oPr.Angle))
 		{
 			return false;
 		}

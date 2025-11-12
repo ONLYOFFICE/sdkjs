@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -39,6 +39,7 @@
 AscDFH.changesFactory[AscDFH.historyitem_MathContent_AddItem]      = CChangesMathContentAddItem;
 AscDFH.changesFactory[AscDFH.historyitem_MathContent_RemoveItem]   = CChangesMathContentRemoveItem;
 AscDFH.changesFactory[AscDFH.historyitem_MathContent_ArgSize]      = CChangesMathContentArgSize;
+AscDFH.changesFactory[AscDFH.historyitem_MathContent_TextPr]       = CChangesMathContentTextPr;
 AscDFH.changesFactory[AscDFH.historyitem_MathPara_Jc]              = CChangesMathParaJc;
 AscDFH.changesFactory[AscDFH.historyitem_MathBase_AddItems]        = CChangesMathBaseAddItems;
 AscDFH.changesFactory[AscDFH.historyitem_MathBase_RemoveItems]     = CChangesMathBaseRemoveItems;
@@ -57,7 +58,7 @@ AscDFH.changesFactory[AscDFH.historyitem_MathBase_RFontsCS]        = CChangesMat
 AscDFH.changesFactory[AscDFH.historyitem_MathBase_RFontsEastAsia]  = CChangesMathBaseRFontsEastAsia;
 AscDFH.changesFactory[AscDFH.historyitem_MathBase_RFontsHint]      = CChangesMathBaseRFontsHint;
 AscDFH.changesFactory[AscDFH.historyitem_MathBase_HighLight]       = CChangesMathBaseHighLight;
-AscDFH.changesFactory[AscDFH.historyitem_MathBase_ReviewType]      = CChangesMathBaseReviewType;
+AscDFH.changesFactory[AscDFH.historyitem_MathBase_ReviewInfo]      = CChangesMathBaseReviewInfo;
 AscDFH.changesFactory[AscDFH.historyitem_MathBase_TextFill]        = CChangesMathBaseTextFill;
 AscDFH.changesFactory[AscDFH.historyitem_MathBase_TextOutline]     = CChangesMathBaseTextOutline;
 AscDFH.changesFactory[AscDFH.historyitem_MathBase_HighlightColor]  = CChangesMathBaseHighlightColor;
@@ -130,7 +131,7 @@ AscDFH.changesRelationMap[AscDFH.historyitem_MathBase_RFontsCS]        = [AscDFH
 AscDFH.changesRelationMap[AscDFH.historyitem_MathBase_RFontsEastAsia]  = [AscDFH.historyitem_MathBase_RFontsEastAsia];
 AscDFH.changesRelationMap[AscDFH.historyitem_MathBase_RFontsHint]      = [AscDFH.historyitem_MathBase_RFontsHint];
 AscDFH.changesRelationMap[AscDFH.historyitem_MathBase_HighLight]       = [AscDFH.historyitem_MathBase_HighLight];
-AscDFH.changesRelationMap[AscDFH.historyitem_MathBase_ReviewType]      = [AscDFH.historyitem_MathBase_ReviewType];
+AscDFH.changesRelationMap[AscDFH.historyitem_MathBase_ReviewInfo]      = [AscDFH.historyitem_MathBase_ReviewInfo];
 AscDFH.changesRelationMap[AscDFH.historyitem_MathBase_TextFill]        = [AscDFH.historyitem_MathBase_TextFill];
 AscDFH.changesRelationMap[AscDFH.historyitem_MathBase_TextOutline]     = [AscDFH.historyitem_MathBase_TextOutline];
 AscDFH.changesRelationMap[AscDFH.historyitem_MathBase_HighlightColor]  = [AscDFH.historyitem_MathBase_HighlightColor];
@@ -208,22 +209,24 @@ CChangesMathContentAddItem.prototype.Undo = function()
 };
 CChangesMathContentAddItem.prototype.Redo = function()
 {
-	var oMathContent = this.Class;
-
-	var Array_start = oMathContent.Content.slice(0, this.Pos);
-	var Array_end   = oMathContent.Content.slice(this.Pos);
-
-	oMathContent.Content = Array_start.concat(this.Items, Array_end);
-	oMathContent.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
-
+	let mathContent = this.Class;
+	
+	var Array_start = mathContent.Content.slice(0, this.Pos);
+	var Array_end   = mathContent.Content.slice(this.Pos);
+	
+	mathContent.Content = Array_start.concat(this.Items, Array_end);
+	mathContent.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
+	
 	for (var nIndex = 0; nIndex < this.Items.length; ++nIndex)
 	{
-		this.Items[nIndex].Set_ParaMath(oMathContent.ParaMath);
+		let item = this.Items[nIndex];
+		item.Set_ParaMath(mathContent.ParaMath);
+		item.SetParent(mathContent);
 
-		if (this.Items[nIndex].SetParagraph)
-			this.Items[nIndex].SetParagraph(oMathContent.Paragraph);
-
-		this.Items[nIndex].Recalc_RunsCompiledPr();
+		if (item.SetParagraph)
+			item.SetParagraph(mathContent.Paragraph);
+		
+		item.Recalc_RunsCompiledPr();
 	}
 };
 CChangesMathContentAddItem.prototype.private_WriteItem = function(Writer, Item)
@@ -282,22 +285,24 @@ CChangesMathContentRemoveItem.prototype.constructor = CChangesMathContentRemoveI
 CChangesMathContentRemoveItem.prototype.Type = AscDFH.historyitem_MathContent_RemoveItem;
 CChangesMathContentRemoveItem.prototype.Undo = function()
 {
-	var oMathContent = this.Class;
-
-	var Array_start = oMathContent.Content.slice(0, this.Pos);
-	var Array_end   = oMathContent.Content.slice(this.Pos);
-
-	oMathContent.Content = Array_start.concat(this.Items, Array_end);
-	oMathContent.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
-
+	let mathContent = this.Class;
+	
+	var Array_start = mathContent.Content.slice(0, this.Pos);
+	var Array_end   = mathContent.Content.slice(this.Pos);
+	
+	mathContent.Content = Array_start.concat(this.Items, Array_end);
+	mathContent.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
+	
 	for (var nIndex = 0; nIndex < this.Items.length; ++nIndex)
 	{
-		this.Items[nIndex].Set_ParaMath(oMathContent.ParaMath);
-
-		if (this.Items[nIndex].SetParagraph)
-			this.Items[nIndex].SetParagraph(oMathContent.Paragraph);
-
-		this.Items[nIndex].Recalc_RunsCompiledPr();
+		let item = this.Items[nIndex];
+		item.Set_ParaMath(mathContent.ParaMath);
+		item.SetParent(mathContent);
+		
+		if (item.SetParagraph)
+			item.SetParagraph(mathContent.Paragraph);
+		
+		item.Recalc_RunsCompiledPr();
 	}
 };
 CChangesMathContentRemoveItem.prototype.Redo = function()
@@ -340,6 +345,255 @@ CChangesMathContentRemoveItem.prototype.CreateReverseChange = function()
 {
 	return this.private_CreateReverseChange(CChangesMathContentAddItem);
 };
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseObjectProperty}
+ */
+function CChangesMathContentTextPr(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseObjectProperty.call(this, Class, Old, New, Color);
+}
+CChangesMathContentTextPr.prototype = Object.create(AscDFH.CChangesBaseObjectProperty.prototype);
+CChangesMathContentTextPr.prototype.constructor = CChangesMathContentTextPr;
+CChangesMathContentTextPr.prototype.Type = AscDFH.historyitem_MathContent_TextPr;
+CChangesMathContentTextPr.prototype.private_CreateObject = function()
+{
+	return new CTextPr();
+};
+CChangesMathContentTextPr.prototype.private_IsCreateEmptyObject = function()
+{
+	return true;
+};
+CChangesMathContentTextPr.prototype.private_SetValue = function(Value)
+{
+	var oCMathContent = this.Class;
+	oCMathContent.CtrPrp = Value;
+};
+CChangesMathContentTextPr.prototype.Load = function(Color)
+{
+	this.Redo();
+};
+CChangesMathContentTextPr.prototype.Merge = function(oChange)
+{
+	if (this.Class !== oChange.Class)
+		return true;
+
+	if (this.Type === oChange.Type)
+		return false;
+
+	if (!this.New)
+		this.New = new CTextPr();
+
+	switch (oChange.Type)
+	{
+		case AscDFH.historyitem_ParaRun_Bold:
+		{
+			this.New.Bold = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_Italic:
+		{
+			this.New.Italic = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_Strikeout:
+		{
+			this.New.Strikeout = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_Underline:
+		{
+			this.New.Underline = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_FontSize:
+		{
+			this.New.FontSize = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_Color:
+		{
+			this.New.Color = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_VertAlign:
+		{
+			this.New.VertAlign = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_HighLight:
+		{
+			this.New.HighLight = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_HighlightColor:
+		{
+			this.New.HighlightColor = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_RStyle:
+		{
+			this.New.RStyle = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_Spacing:
+		{
+			this.New.Spacing = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_DStrikeout:
+		{
+			this.New.DStrikeout = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_Caps:
+		{
+			this.New.Caps = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_SmallCaps:
+		{
+			this.New.SmallCaps = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_Position:
+		{
+			this.New.Position = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_RFonts:
+		{
+			this.New.RFonts = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_Lang:
+		{
+			this.New.Lang = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_RFonts_Ascii:
+		{
+			if (!this.New.RFonts)
+				this.New.RFonts = new CRFonts();
+
+			this.New.RFonts.Ascii = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_RFonts_HAnsi:
+		{
+			if (!this.New.RFonts)
+				this.New.RFonts = new CRFonts();
+
+			this.New.RFonts.HAnsi = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_RFonts_CS:
+		{
+			if (!this.New.RFonts)
+				this.New.RFonts = new CRFonts();
+
+			this.New.RFonts.CS = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_RFonts_EastAsia:
+		{
+			if (!this.New.RFonts)
+				this.New.RFonts = new CRFonts();
+
+			this.New.RFonts.EastAsia = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_RFonts_Hint:
+		{
+			if (!this.New.RFonts)
+				this.New.RFonts = new CRFonts();
+
+			this.New.RFonts.Hint = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_Lang_Bidi:
+		{
+			if (!this.New.Lang)
+				this.New.Lang = new CLang();
+
+			this.New.Lang.Bidi = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_Lang_EastAsia:
+		{
+			if (!this.New.Lang)
+				this.New.Lang = new CLang();
+
+			this.New.Lang.EastAsia = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_Lang_Val:
+		{
+			if (!this.New.Lang)
+				this.New.Lang = new CLang();
+
+			this.New.Lang.Val = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_Unifill:
+		{
+			this.New.Unifill = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_Shd:
+		{
+			this.New.Shd = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_PrChange:
+		{
+			this.New.PrChange   = oChange.New.PrChange;
+			this.New.ReviewInfo = oChange.New.ReviewInfo;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_TextFill:
+		{
+			this.New.TextFill = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_TextOutline:
+		{
+			this.New.TextOutline = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_PrReviewInfo:
+		{
+			this.New.ReviewInfo = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_BoldCS:
+		{
+			this.New.BoldCS = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_ItalicCS:
+		{
+			this.New.ItalicCS = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_FontSizeCS:
+		{
+			this.New.FontSizeCS = oChange.New;
+			break;
+		}
+		case AscDFH.historyitem_ParaRun_Ligatures:
+		{
+			this.New.Ligatures = oChange.New;
+			break
+		}
+	}
+
+	return true;
+};
+
+
+
 /**
  * Изменение настроек ArgSize в классе CMathContent
  * @constructor
@@ -950,76 +1204,22 @@ CChangesMathBaseHighlightColor.prototype.ReadFromBinary = function(Reader)
 };
 /**
  * @constructor
- * @extends {AscDFH.CChangesBaseProperty}
+ * @extends {AscDFH.CChangesBaseObjectProperty}
  */
-function CChangesMathBaseReviewType(Class, Old, New)
+function CChangesMathBaseReviewInfo(Class, Old, New)
 {
-	AscDFH.CChangesBaseProperty.call(this, Class, Old, New);
+	AscDFH.CChangesBaseObjectProperty.call(this, Class, Old, New);
 }
-CChangesMathBaseReviewType.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
-CChangesMathBaseReviewType.prototype.constructor = CChangesMathBaseReviewType;
-CChangesMathBaseReviewType.prototype.Type = AscDFH.historyitem_MathBase_ReviewType;
-CChangesMathBaseReviewType.prototype.private_SetValue = function(Value)
+CChangesMathBaseReviewInfo.prototype = Object.create(AscDFH.CChangesBaseObjectProperty.prototype);
+CChangesMathBaseReviewInfo.prototype.constructor = CChangesMathBaseReviewInfo;
+CChangesMathBaseReviewInfo.prototype.Type = AscDFH.historyitem_MathBase_ReviewInfo;
+CChangesMathBaseReviewInfo.prototype.private_CreateObject = function()
 {
-	this.Class.raw_SetReviewType(Value.Type, Value.Info);
+	return new AscWord.ReviewInfo();
 };
-CChangesMathBaseReviewType.prototype.WriteToBinary = function(Writer)
+CChangesMathBaseReviewInfo.prototype.private_SetValue = function(Value)
 {
-	// Long : Flags
-	// 1-bit : New.Info is undefined?
-	// 2-bit : Old.Info is undefined?
-	// Long : New.Type
-	// CReviewInfo: New.Info (1-bit is zero)
-	// Long : Old.Type
-	// CReviewInfo: Old.Info (1-bit is zero)
-
-	var nFlags = 0;
-	if (undefined === this.New.Info)
-		nFlags |= 1;
-	if (undefined === this.Old.Info)
-		nFlags |= 2;
-
-	Writer.WriteLong(nFlags);
-	Writer.WriteLong(this.New.Type);
-	if (undefined !== this.New.Info)
-		this.New.Info.Write_ToBinary(Writer);
-	Writer.WriteLong(this.Old.Type);
-	if (undefined !== this.Old.Info)
-		this.Old.Info.Write_ToBinary(Writer);
-};
-CChangesMathBaseReviewType.prototype.ReadFromBinary = function(Reader)
-{
-	// Long : Flags
-	// 1-bit : New.Info is undefined?
-	// 2-bit : Old.Info is undefined?
-	// Long : New.Type
-	// CReviewInfo: New.Info (1-bit is zero)
-	// Long : Old.Type
-	// CReviewInfo: Old.Info (1-bit is zero)
-
-	var nFlags = Reader.GetLong();
-
-	this.New = {
-		Type : Reader.GetLong(),
-		Info : undefined
-	};
-
-	if (!(nFlags & 1))
-	{
-		this.New.Info = new CReviewInfo();
-		this.New.Info.Read_FromBinary(Reader);
-	}
-
-	this.Old = {
-		Type : Reader.GetLong(),
-		Info : undefined
-	};
-
-	if (!(nFlags & 2))
-	{
-		this.Old.Info = new CReviewInfo();
-		this.Old.Info.Read_FromBinary(Reader);
-	}
+	this.Class.raw_SetReviewInfo(Value);
 };
 /**
  * @constructor

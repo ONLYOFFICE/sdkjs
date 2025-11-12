@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -123,7 +123,7 @@
     };
     CDrawingDocContent.prototype.GetSummaryHeight = function(){
         var fSummHeight = 0;
-        var nColumnsCount = this.Get_ColumnsCount();
+        var nColumnsCount = this.GetColumnCount();
         for(var i = 0; i < this.Pages.length; ++i){
             var oPage = this.Pages[i];
             var fPageHeight = 0;
@@ -163,7 +163,51 @@
         return dHeight;
     };
 
-    CDrawingDocContent.prototype.Get_ColumnsCount = function(){
+    // function to find the maximum width of the text inside the rect, as each line contains different widths  
+    CDrawingDocContent.prototype.GetSummaryWidth =function () {
+        // width of single line label 
+        let width = 20000;
+        if (!this.Content || !Array.isArray(this.Content )) {
+            return width;
+        }
+        const lines = this.Content[0].Lines;
+        if (lines && Array.isArray(lines)) {
+            for (let i = 0; i < lines.length; i++) {
+                const newWidth = lines[i] && lines[i].Ranges && Array.isArray(lines[i].Ranges) && lines[i].Ranges.length > 0 ? lines[i].Ranges[0].W : null;
+                if (newWidth !== null && (i === 0 || width < newWidth)) {
+                    width = newWidth;
+                }
+            }
+        }
+
+        return width;
+    };
+
+    // function to find the width of the unfolded 2d array, simply add width of each line
+    CDrawingDocContent.prototype.getUnfoldedWidth = function (nLines) {
+        // width of single line label 
+        if (!this.Content || !Array.isArray(this.Content )) {
+            return 20000;
+        }
+        let width = 0;
+        const boxError = 0.1;
+        const lines = this.Content[0].Lines;
+        if (lines && Array.isArray(lines)) {
+            for (let i = 0; i < nLines; i++) {
+                if (lines.length < i) {
+                    break;
+                }
+                const newWidth = lines[i] && lines[i].Ranges && Array.isArray(lines[i].Ranges) && lines[i].Ranges.length > 0 ? lines[i].Ranges[0].W : null;
+                if (newWidth !== null) {
+                    width += newWidth;
+                }
+            }
+        }
+        
+        return width + boxError;
+    };
+
+    CDrawingDocContent.prototype.GetColumnCount = function(){
         var nColumnCount = 1;
         if(this.Parent.getBodyPr){
             var oBodyPr = this.Parent.getBodyPr();
@@ -171,15 +215,16 @@
         }
         return nColumnCount;
     };
-
-    CDrawingDocContent.prototype.Get_PageContentStartPos2 = function(StartPageIndex, StartColumnIndex, ElementPageIndex, ElementIndex){
-        var ColumnsCount = this.Get_ColumnsCount();
-        var nColumnIndex    = (StartColumnIndex + ElementPageIndex) - ((StartColumnIndex + ElementPageIndex) / ColumnsCount | 0) * ColumnsCount;
-        return this.Get_PageContentStartPos3(nColumnIndex);
-    };
-
-
-    CDrawingDocContent.prototype.Get_PageContentStartPos3 = function(nColumnIndex){
+	
+	CDrawingDocContent.prototype.GetPageContentFrame = function(page, sectPr){
+		return this._GetColumnContentFrame(0);
+	};
+	
+	CDrawingDocContent.prototype.GetColumnContentFrame = function(page, column, sectPr){
+		return this._GetColumnContentFrame(column);
+	};
+	
+    CDrawingDocContent.prototype._GetColumnContentFrame = function(nColumnIndex){
 
         var X = this.X;
         var Y = this.Y;
@@ -187,7 +232,7 @@
         var YLimit = this.YLimit;
         var ColumnSpaceBefore = 0;
         var ColumnSpaceAfter = 0;
-        var nNumCol = this.Get_ColumnsCount();
+        var nNumCol = this.GetColumnCount();
         var oBodyPr = this.Parent.getBodyPr && this.Parent.getBodyPr();
         if(nNumCol > 1 && oBodyPr)
         {
@@ -217,8 +262,9 @@
 
 
     CDrawingDocContent.prototype.RecalculateContent = function(fWidth, fHeight, nStartPage){
+		this.Recalculated = true;
         this.CalculateAllFields();
-        if(this.Get_ColumnsCount() === 1){
+        if(this.GetColumnCount() === 1){
             CDocumentContent.prototype.RecalculateContent.call(this, fWidth, fHeight, nStartPage);
         }
         else{
@@ -235,7 +281,7 @@
                     ++nItCount;
                 }
                 var fNeedHeight = fHigh;
-                if(this.Get_ColumnsCount() > 1){
+                if(this.GetColumnCount() > 1){
                     while((fHigh - fLow) > 0.1){
                         var fCheckHeight = fLow +  (fHigh - fLow)/2;
                         this.Start_Recalculate(fWidth, fCheckHeight);
@@ -266,17 +312,17 @@
 
     CDrawingDocContent.prototype.Recalculate_PageDrawing   = function()
     {
-        var nColumnsCount = this.Get_ColumnsCount();
+        var nColumnsCount = this.GetColumnCount();
         var nPageIndex = this.FullRecalc.PageIndex;
         this.Pages.length = nPageIndex + 1;
         if(0 === this.FullRecalc.ColumnIndex && true === this.FullRecalc.Start)
         {
-            var oPage      = new CDocumentPage();
+            var oPage      = new AscWord.DocumentPage();
             oPage.Pos = this.FullRecalc.StartIndex;
-            oPage.Sections[0] = new CDocumentPageSection();
+            oPage.Sections[0] = new AscWord.DocumentPageSection();
             for (var i = 0; i < nColumnsCount; ++i)
             {
-                oPage.Sections[0].Columns[i] = new CDocumentPageColumn();
+                oPage.Sections[0].Columns[i] = new AscWord.DocumentPageColumn();
             }
             this.Pages[nPageIndex] = oPage;
         }
@@ -289,13 +335,13 @@
         var nColumnIndex        = this.FullRecalc.ColumnIndex;
         var nStartIndex         = this.FullRecalc.StartIndex;
 
-        var oStartPos = this.Get_PageContentStartPos3(nColumnIndex);
+        var oStartPos = this._GetColumnContentFrame(nColumnIndex);
         var X = oStartPos.X;
         var Y = oStartPos.Y;
         var XLimit = oStartPos.XLimit;
         var YLimit = oStartPos.YLimit;
 
-        var nColumnsCount = this.Get_ColumnsCount();
+        var nColumnsCount = this.GetColumnCount();
 
         var aContent = this.Content;
         var nCount = aContent.length;
@@ -468,10 +514,7 @@
             var oSection = this.Pages[0].Sections[0];
             if(oSection){
 
-                if (pGraphics.Start_Command)
-                {
-                    pGraphics.Start_Command(AscFormat.DRAW_COMMAND_CONTENT);
-                }
+                pGraphics.Start_Command(AscFormat.DRAW_COMMAND_CONTENT);
 
                 for (var ColumnIndex = 0, ColumnsCount = oSection.Columns.length; ColumnIndex < ColumnsCount; ++ColumnIndex)
                 {
@@ -503,10 +546,7 @@
                      }*/
                 }
 
-                if (pGraphics.End_Command)
-                {
-                    pGraphics.End_Command();
-                }
+                pGraphics.End_Command();
             }
 
             else{
@@ -539,12 +579,14 @@
         return false;
     };
 
-    CDrawingDocContent.prototype.DrawSelectionOnPage = function(PageIndex){
+    CDrawingDocContent.prototype.DrawSelectionOnPage = function(PageIndex, clipInfo){
         var CurPage = PageIndex;
         if (CurPage < 0 || CurPage >= this.Pages.length)
             return;
         var Pos_start = this.Pages[CurPage].Pos;
         var Pos_end   = this.Pages[CurPage].EndPos;
+		
+		clipInfo = this.IntersectClip(clipInfo, PageIndex);
 
         if (true === this.Selection.Use)
         {
@@ -567,7 +609,7 @@
                     for (var Index = Start; Index <= End; Index++)
                     {
                         var ElementPageIndex = this.private_GetElementPageIndex(Index, CurPage, 0, 1);
-                        this.Content[Index].DrawSelectionOnPage(ElementPageIndex);
+                        this.Content[Index].DrawSelectionOnPage(ElementPageIndex, clipInfo);
                     }
                 }
                 else{
@@ -592,7 +634,7 @@
                         for (var Index = Start; Index <= End; ++Index)
                         {
                             var ElementPage = this.private_GetElementPageIndex(Index, 0, ColumnIndex, ColumnsCount);
-                            this.Content[Index].DrawSelectionOnPage(ElementPage);
+                            this.Content[Index].DrawSelectionOnPage(ElementPage, clipInfo);
                         }
 
                     }
@@ -602,17 +644,14 @@
         }
     };
 
-    CDrawingDocContent.prototype.Internal_GetContentPosByXY = function(X, Y, PageNum, ColumnsInfo)
+    CDrawingDocContent.prototype.Internal_GetContentPosByXY = function(X, Y, PageNum)
     {
-        if (!ColumnsInfo)
-            ColumnsInfo = {Column : 0, ColumnsCount : 1};
-
         if (undefined === PageNum || null === PageNum)
             PageNum = this.CurPage;
         // Теперь проверим пустые параграфы с окончанием секций
         var SectCount = this.Pages[PageNum].EndSectionParas.length;
         if(this.Pages[PageNum].Sections.length === 0){
-            return CDocumentContent.prototype.Internal_GetContentPosByXY.call(this, X, Y, PageNum, ColumnsInfo);
+            return CDocumentContent.prototype.Internal_GetContentPosByXY.call(this, X, Y, PageNum);
         }
         for (var Index = 0; Index < SectCount; ++Index)
         {
@@ -620,12 +659,7 @@
             var Bounds = Item.Pages[0].Bounds;
 
             if (Y < Bounds.Bottom && Y > Bounds.Top && X > Bounds.Left && X < Bounds.Right)
-            {
-                var Element              = this.Content[Item.Index];
-                ColumnsInfo.Column       = Element.Get_StartColumn();
-                ColumnsInfo.ColumnsCount = Element.Get_ColumnsCount();
                 return Item.Index;
-            }
         }
 
         // Сначала мы определим секцию и колонку, в которую попали
@@ -650,9 +684,6 @@
         // TODO: Разобраться с ситуацией, когда пустые колонки стоят не только в конце
         while (ColumnIndex > 0 && true === PageSection.Columns[ColumnIndex].Empty)
             ColumnIndex--;
-
-        ColumnsInfo.Column       = ColumnIndex;
-        ColumnsInfo.ColumnsCount = ColumnsCount;
 
         var Column   = PageSection.Columns[ColumnIndex];
         var StartPos = Column.Pos;
@@ -795,7 +826,8 @@
                 var oShape = this.Parent.parent;
                 var contentPoints = oShape.getSmartArtPointContent();
                 if (contentPoints && contentPoints.length !== 0) {
-                    var isPhldr = contentPoints.every(function (point) {
+                    var isPhldr = contentPoints.every(function (node) {
+												const point = node.point;
                         return point && point.prSet && point.prSet.phldr;
                     });
                     if (isPhldr) {
@@ -806,6 +838,41 @@
         }
         return CDocumentContent.prototype.Is_Empty.call(this);
     };
+	CDrawingDocContent.prototype.Shift = function(pageIndex, dx, dy, keepClip) {
+		if (!this.IsRecalculated() || pageIndex !== 0)
+			return;
+		
+		this.Pages[0].Shift(dx, dy);
+		
+		if (this.ClipInfo[0] && true !== keepClip)
+			this.ClipInfo[0].shift(dx, dy);
+		
+		if (this.GetColumnCount() > 1) {
+			let pageSection = this.Pages[0].Sections[0];
+			if (!pageSection)
+				return;
+			
+			for (let columnIndex = 0, columnCount = pageSection.Columns.length; columnIndex < columnCount; ++columnIndex) {
+				let pageColumn = pageSection.Columns[columnIndex];
+				
+				let startPos = pageColumn.Pos;
+				let endPos   = pageColumn.EndPos;
+				for (let pos = startPos; pos <= endPos; ++pos) {
+					let element          = this.Content[pos];
+					let elementPageIndex = element.GetElementPageIndex(0, columnIndex, columnCount);
+					element.Shift(elementPageIndex, dx, dy);
+				}
+			}
+		} else {
+			let startPos = this.Pages[pageIndex].Pos;
+			let endPos   = this.Pages[pageIndex].EndPos;
+			for (let pos = startPos; pos <= endPos; ++pos) {
+				let element          = this.Content[pos];
+				let elementPageIndex = element.GetElementPageIndex(0, 0, 1);
+				element.Shift(elementPageIndex, dx, dy);
+			}
+		}
+	};
 
     CDrawingDocContent.prototype.isDocumentContentInSmartArtShape = function () {
         return this.Parent && this.Parent.parent && this.Parent.parent.isObjectInSmartArt && this.Parent.parent.isObjectInSmartArt();
@@ -820,6 +887,33 @@
 			oField.Refresh_RecalcData2();
 		}
 	};
+
+    CDrawingDocContent.prototype.getDrawingDocument = function() {
+        if(this.Parent && this.Parent.getDrawingDocument) {
+            return this.Parent.getDrawingDocument();
+        }
+        return null;
+    };
+    CDrawingDocContent.prototype.GetLogicDocument = function() {
+        if(Asc.editor.private_GetLogicDocument)
+            return Asc.editor.private_GetLogicDocument();
+        return null;
+    };
+		CDrawingDocContent.prototype.Remove = function (Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord) {
+			const res = CDocumentContent.prototype.Remove.call(this, Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord);
+			const oShape = this.Is_DrawingShape(true);
+			if (oShape) {
+				oShape.onRemoveContent();
+			}
+			return res;
+		}
+		CDrawingDocContent.prototype.getCharContentLength = function () {
+			let nContentLength = 0;
+			this.CheckRunContent(function (oRun) {
+				nContentLength += oRun.Content.length;
+			});
+			return nContentLength;
+		};
     // TODO: сделать по-нормальному!!!
     function CDocument_prototype_private_GetElementPageIndexByXY(ElementPos, X, Y, PageIndex)
     {
@@ -844,8 +938,8 @@
     	if (!PageSection)
     		return 0;
 
-    	var ElementStartPage   = Element.Get_StartPage_Relative();
-    	var ElementStartColumn = Element.Get_StartColumn();
+    	var ElementStartPage   = Element.GetRelativeStartPage();
+    	var ElementStartColumn = Element.GetStartColumn();
     	var ElementPagesCount  = Element.Get_PagesCount();
 
     	var ColumnsCount = PageSection.Columns.length;
@@ -854,7 +948,7 @@
 
     	if (PageIndex === ElementStartPage)
     	{
-    		StartColumn = Element.Get_StartColumn();
+    		StartColumn = Element.GetStartColumn();
     		EndColumn   = Math.min(ElementStartColumn + ElementPagesCount - 1, ColumnsCount - 1);
     	}
     	else

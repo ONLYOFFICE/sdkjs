@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -132,10 +132,6 @@ CWrapPolygon.prototype =
     {
         this.Id = reader.GetString2();
         this.wordGraphicObject = AscFormat.readObject(reader);
-    },
-
-    Load_LinkData: function(data)
-    {
     },
 
     getIntersection: function(y)
@@ -787,6 +783,7 @@ CWrapPolygon.prototype =
     {
     }
 };
+CWrapPolygon.prototype.constructor = CWrapPolygon;
 
 
 function CPolygonPoint()

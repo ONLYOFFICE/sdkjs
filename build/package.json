@@ -4,7 +4,8 @@
   "homepage": "https://www.onlyoffice.com",
   "private": true,
   "dependencies": {
-    "google-closure-compiler": "^20230228.0.0",
+    "glob": "^8.1.0",
+    "google-closure-compiler": "^20240317.0.0",
     "grunt": "^1.6.1",
     "grunt-contrib-clean": "^2.0.0",
     "grunt-contrib-copy": "^1.0.0"

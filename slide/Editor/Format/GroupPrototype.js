@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -40,7 +40,6 @@ CGroupShape.prototype.addToRecalculate = CShape.prototype.addToRecalculate;
 CGroupShape.prototype.handleUpdateTheme = CShape.prototype.handleUpdateTheme;
 CGroupShape.prototype.getSlideIndex = CShape.prototype.getSlideIndex;
 
-CGroupShape.prototype.IsUseInDocument = CShape.prototype.IsUseInDocument;
 CGroupShape.prototype.getEditorType = function()
 {
     return 0;
@@ -110,8 +109,6 @@ CGroupShape.prototype.recalcBounds = function()
 {
     this.recalcInfo.recalculateBounds = true;
 };
-
-CGroupShape.prototype.getDrawingObjectsController =  CShape.prototype.getDrawingObjectsController;
 
 CGroupShape.prototype.addToRecalculate = CShape.prototype.addToRecalculate;
 CGroupShape.prototype.convertPixToMM = CShape.prototype.convertPixToMM;

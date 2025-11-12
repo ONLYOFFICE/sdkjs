@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -53,6 +53,7 @@
 		this.m_oLogicDocument = this.m_oApi.WordControl && this.m_oApi.WordControl.m_oLogicDocument;
 		this.m_oDrawingDocument = this.m_oLogicDocument && this.m_oLogicDocument.DrawingDocument;
 		this.m_oLang = this.m_oApi.asc_GetPossibleNumberingLanguage();
+		this.m_oCurrentPara = null;
 
 		this.m_oPrimaryTextColor = new AscCommonWord.CDocumentColor(0, 0, 0);
 		// для словесного текста используем цвет контрастнее
@@ -132,6 +133,14 @@
 
 		return nXPositionOfLine;
 	}
+	
+	CBulletPreviewDrawerBase.prototype.isRtl = function()
+	{
+		if (!this.m_oCurrentPara)
+			this.m_oCurrentPara = this.m_oLogicDocument ? this.m_oLogicDocument.GetCurrentParagraph(true) : null;
+		
+		return this.m_oCurrentPara ? this.m_oCurrentPara.isRtlDirection() : false;
+	};
 
 	CBulletPreviewDrawerBase.prototype.getFontSizeByLineHeight = function (nLineHeight)
 	{
@@ -197,9 +206,7 @@
 		if (!oCanvas)
 		{
 			oCanvas = document.createElement('canvas');
-			oCanvas.style.cssText = "padding:0;margin:0;user-select:none;";
-			oCanvas.style.width = nWidth_px + "px";
-			oCanvas.style.height = nHeight_px + "px";
+			oCanvas.style.cssText = "padding:0;margin:0;user-select:none;width:100%;height:100%;";
 			if (nWidth_px > 0 && nHeight_px > 0)
 			{
 				oDivElement.appendChild(oCanvas);
@@ -233,7 +240,10 @@
 
 		if (this.m_oApi && this.m_oApi.isDarkMode)
 		{
-			oGraphics.darkModeOverride3();
+			if(this.m_oApi.getEditorId() === AscCommon.c_oEditorId.Word)
+			{
+				oGraphics.setDarkMode();
+			}
 		}
 
 		oGraphics.b_color1(this.m_oBackgroundColor.r, this.m_oBackgroundColor.g, this.m_oBackgroundColor.b, 255);
@@ -255,7 +265,12 @@
 		oParaRun.Set_Pr(oTextPr);
 		oParaRun.AddText(sText);
 		oParagraph.AddToContent(0, oParaRun);
-
+		
+		if (this.isRtl())
+			oParagraph.SetParagraphBidi(true);
+		
+		oParagraph.SetParagraphAlign(AscCommon.align_Left);
+		
 		return oParagraph;
 	}
 
@@ -270,7 +285,7 @@
 
 		let oParagraph = this.getParagraphWithText(sText, oTextPr);
 		if (!oParagraph) return null;
-
+		
 		oParagraph.Reset(0, 0, 1000, 1000, 0, 0, 1);
 		oParagraph.Recalculate_Page(0);
 		oParagraph.LineNumbersInfo = null;
@@ -279,57 +294,76 @@
 		const nBaseLineOffset = oParagraph.Lines[0].Y;
 		const nYOffset = nY - ((nBaseLineOffset * AscCommon.g_dKoef_mm_to_pix) >> 0);
 		let nXOffset = nX;
-
-		if (nAlign === AscCommon.align_Right) {
-			nXOffset -= nNumberingTextWidth;
-		} else if (nAlign === AscCommon.align_Center) {
-			nXOffset -= (nNumberingTextWidth >> 1);
+		
+		let isRtl = this.isRtl();
+		if (isRtl)
+		{
+			if (nAlign === AscCommon.align_Left)
+				nXOffset -= nNumberingTextWidth;
+			else if (nAlign === AscCommon.align_Center)
+				nXOffset -= (nNumberingTextWidth >> 1);
 		}
-
+		else
+		{
+			if (nAlign === AscCommon.align_Right)
+				nXOffset -= nNumberingTextWidth;
+			else if (nAlign === AscCommon.align_Center)
+				nXOffset -= (nNumberingTextWidth >> 1);
+		}
+		
+		let cleanX = nXOffset - 1;
 		let nBackTextWidth = 0;
 		if (nNumberingTextWidth !== 0)
 		{
 			nBackTextWidth = nNumberingTextWidth + 4; // 4 - чтобы линия никогда не была 'совсем рядом'
+			if (isRtl)
+				cleanX -= 4;
+			
 			if (nSuff === Asc.c_oAscNumberingSuff.Space ||
 				nSuff === Asc.c_oAscNumberingSuff.None)
 			{
 				nBackTextWidth += 4;
+				if (isRtl)
+					cleanX -= 4;
 			}
 		}
-
-		this.cleanParagraphField(oGraphics, (nXOffset - 1) * AscCommon.g_dKoef_pix_to_mm, (nY - nLineHeight) * AscCommon.g_dKoef_pix_to_mm, (nBackTextWidth + 1) * AscCommon.g_dKoef_pix_to_mm, (nLineHeight + (nLineHeight >> 1)) * AscCommon.g_dKoef_pix_to_mm);
+		
+		this.cleanParagraphField(oGraphics, cleanX * AscCommon.g_dKoef_pix_to_mm, (nY - nLineHeight) * AscCommon.g_dKoef_pix_to_mm, (nBackTextWidth + 2) * AscCommon.g_dKoef_pix_to_mm, (nLineHeight + (nLineHeight >> 1)) * AscCommon.g_dKoef_pix_to_mm);
 		this.drawParagraph(oGraphics, oParagraph, nXOffset, nYOffset);
 
 		// рисуем текст вместо черты текста
-		this.drawStyleText(oGraphics, oParagraphTextOptions, nXOffset + nBackTextWidth, nY, nLineHeight, oTextPr);
+		this.drawStyleText(oGraphics, oParagraphTextOptions, isRtl ? nXOffset : nXOffset + nBackTextWidth, nY, nLineHeight, oTextPr);
 	};
 
-	CBulletPreviewDrawerBase.prototype.drawStyleText = function (oGraphics, oParagraphTextOptions, nXEndPositionOfNumbering, nY, nLineHeight, oNumberingTextPr)
+	CBulletPreviewDrawerBase.prototype.drawStyleText = function (oGraphics, oParagraphTextOptions, numberingXEnd, nY, nLineHeight, oNumberingTextPr)
 	{
-		if (oParagraphTextOptions)
-		{
-			const sParagraphText = oParagraphTextOptions.addingText;
-			const oHeadingTextPr = new AscCommonWord.CTextPr();
-			oHeadingTextPr.RFonts.SetAll("Arial");
-			oHeadingTextPr.FontSize = oHeadingTextPr.FontSizeCS = oNumberingTextPr.FontSize * 0.8;
-			oHeadingTextPr.Color = oParagraphTextOptions.color.Copy();
+		if (!oParagraphTextOptions)
+			return;
+		
+		const isRtl = this.isRtl();
+		
+		const sParagraphText = oParagraphTextOptions.addingText;
+		const oHeadingTextPr = new AscCommonWord.CTextPr();
+		oHeadingTextPr.RFonts.SetAll("Arial");
+		oHeadingTextPr.FontSize = oHeadingTextPr.FontSizeCS = oNumberingTextPr.FontSize * 0.8;
+		oHeadingTextPr.Color = oParagraphTextOptions.color.Copy();
 
-			const oParagraph = this.getParagraphWithText(sParagraphText, oHeadingTextPr);
-			if (!oParagraph) return;
+		const oParagraph = this.getParagraphWithText(sParagraphText, oHeadingTextPr);
+		if (!oParagraph)
+			return;
+		
+		oParagraph.Reset(0, 0, 1000, 1000, 0, 0, 1);
+		oParagraph.Recalculate_Page(0);
+		oParagraph.LineNumbersInfo = null;
+		
+		const nParagraphTextWidth = oParagraph.getRange(0, 0).W * AscCommon.g_dKoef_mm_to_pix;
+		const nBaseLineOffset = oParagraph.Lines[0].Y;
 
-			oParagraph.Reset(0, 0, 1000, 1000, 0, 0, 1);
-			oParagraph.Recalculate_Page(0);
-			oParagraph.LineNumbersInfo = null;
+		const nYOffset = nY - ((nBaseLineOffset * AscCommon.g_dKoef_mm_to_pix) >> 0);
+		const nTextXOffset = isRtl ? Math.min(numberingXEnd, oParagraphTextOptions.startPositionX) - nParagraphTextWidth : Math.max(numberingXEnd, oParagraphTextOptions.startPositionX);
 
-			const nParagraphTextWidth = oParagraph.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
-			const nBaseLineOffset = oParagraph.Lines[0].Y;
-
-			const nYOffset = nY - ((nBaseLineOffset * AscCommon.g_dKoef_mm_to_pix) >> 0);
-			const nTextXOffset = Math.max(nXEndPositionOfNumbering, oParagraphTextOptions.startPositionX);
-
-			this.cleanParagraphField(oGraphics, nTextXOffset * AscCommon.g_dKoef_pix_to_mm, (nY - nLineHeight) * AscCommon.g_dKoef_pix_to_mm, (nParagraphTextWidth + 2) * AscCommon.g_dKoef_pix_to_mm, (nLineHeight + (nLineHeight >> 1)) * AscCommon.g_dKoef_pix_to_mm);
-			this.drawParagraph(oGraphics, oParagraph, nTextXOffset, nYOffset);
-		}
+		this.cleanParagraphField(oGraphics, nTextXOffset * AscCommon.g_dKoef_pix_to_mm, (nY - nLineHeight) * AscCommon.g_dKoef_pix_to_mm, (nParagraphTextWidth + 2) * AscCommon.g_dKoef_pix_to_mm, (nLineHeight + (nLineHeight >> 1)) * AscCommon.g_dKoef_pix_to_mm);
+		this.drawParagraph(oGraphics, oParagraph, nTextXOffset, nYOffset);
 	}
 
 	CBulletPreviewDrawerBase.prototype.cleanParagraphField = function (oGraphics, nX, nY, nWidth, nHeight)
@@ -413,7 +447,7 @@
 		const arrFonts = [];
 		for (let sFamilyName in oFontsDict)
 		{
-			arrFonts.push(new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(sFamilyName), 0, "", 0, null));
+			arrFonts.push(new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(sFamilyName)));
 		}
 		AscFonts.FontPickerByCharacter.extendFonts(arrFonts);
 
@@ -434,7 +468,18 @@
 		const oThis = this;
 		this.checkFonts(function ()
 		{
-			oThis.draw();
+
+			if (oThis.m_oLogicDocument && oThis.m_oLogicDocument.IsDocumentEditor())
+			{
+				const bIsOldTrackRevisions = oThis.m_oLogicDocument.GetLocalTrackRevisions();
+				oThis.m_oLogicDocument.SetTrackRevisions(false);
+				oThis.draw();
+				oThis.m_oLogicDocument.SetTrackRevisions(bIsOldTrackRevisions);
+			}
+			else
+			{
+				oThis.draw();
+			}
 		});
 	};
 
@@ -474,7 +519,7 @@
 		const oLvl = arrLvls[0];
 		const nHeight_px = oCanvas.clientHeight;
 		const nWidth_px = oCanvas.clientWidth;
-		const drawingContent = oLvl.GetDrawingContent([oLvl], 0, undefined, this.m_oLang);
+		const drawingContent = oLvl.GetDrawingContent([oLvl], 0, undefined, this.m_oLang, false);
 		if (typeof drawingContent !== "string")
 		{
 			const oImage = drawingContent.image;
@@ -505,7 +550,7 @@
 
 	CBulletPreviewDrawer.prototype.getInformationWithFitFontSize = function (oLvl, nMaxWidth, nMaxHeight, nMinFontSize, nMaxFontSize)
 	{
-		const sText = oLvl.GetDrawingContent([oLvl], 0, undefined, this.m_oLang);
+		const sText = oLvl.GetDrawingContent([oLvl], 0, undefined, this.m_oLang, oLvl.IsLegalStyle());
 		if (typeof sText !== "string") return;
 		const oNewShape = new AscFormat.CShape();
 		oNewShape.createTextBody();
@@ -598,12 +643,11 @@
 	CBulletPreviewDrawer.prototype.getXYForCenterPosition = function (oLvl, nWidth, nHeight)
 	{
 		// Здесь будем считать позицию отрисовки
-		const sText = oLvl.GetDrawingContent([oLvl], 0, undefined, this.m_oLang);
+		const sText = oLvl.GetDrawingContent([oLvl], 0, undefined, this.m_oLang, oLvl.IsLegalStyle());
 		if (typeof sText !== 'string') return;
 		const oTextPr = oLvl.GetTextPr().Copy();
 		const oSumInformation = this.getWidthHeightGlyphs(sText, oTextPr);
-
-		const nX = (nWidth >> 1) - Math.round((oSumInformation.Width / 2 + oSumInformation.rasterOffsetX) * AscCommon.g_dKoef_mm_to_pix);
+		const nX = (nWidth >> 1) - (this.isRtl() ? -1 : 1) * Math.round((oSumInformation.Width / 2 + oSumInformation.rasterOffsetX) * AscCommon.g_dKoef_mm_to_pix);
 		const nY = (nHeight >> 1) + Math.round((oSumInformation.Height / 2 + (oSumInformation.Ascent - oSumInformation.Height + oSumInformation.rasterOffsetY)) * AscCommon.g_dKoef_mm_to_pix);
 		return {nX: nX, nY: nY, nLineHeight: oSumInformation.Height};
 	};
@@ -635,6 +679,8 @@
 		const nOffset = (nHeight_px - (nLineWidth * nCountOfLines + nLineDistance * nCountOfLines)) >> 1;
 
 		const nTextBaseOffsetX = nOffset + Math.floor(2.25 * AscCommon.g_dKoef_mm_to_pix);
+		
+		const isRtl = this.isRtl();
 
 		let nY = nOffset + 11;
 		for (let j = 0; j < nCountOfLines; j += 1)
@@ -644,12 +690,12 @@
 			const nWidthmm = Math.round((nWidth_px - nOffsetBase)) * AscCommon.g_dKoef_pix_to_mm;
 			const nWidthLinemm = 2 * AscCommon.g_dKoef_pix_to_mm;
 
-			oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nYmm, nTextBaseXmm, nWidthmm, nWidthLinemm);
-			const nTextYx =  nTextBaseOffsetX - Math.floor(3.25 * AscCommon.g_dKoef_mm_to_pix);
+			oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nYmm, isRtl ? nOffset * AscCommon.g_dKoef_pix_to_mm : nTextBaseXmm, nWidthmm, nWidthLinemm);
+			const nTextYx = isRtl ? nWidth_px - nTextBaseOffsetX + Math.floor(3.25 * AscCommon.g_dKoef_mm_to_pix) : nTextBaseOffsetX - Math.floor(3.25 * AscCommon.g_dKoef_mm_to_pix);
 			const nTextYy = nY + (nLineWidth * 2.5);
 			const nLineHeight = nLineDistance - 4;
 			oTextPr.FontSize = this.getFontSizeByLineHeight(nLineHeight);
-			const drawingContent = oLvl.GetDrawingContent([oLvl], 0, j + 1, this.m_oLang);
+			const drawingContent = oLvl.GetDrawingContent([oLvl], 0, j + 1, this.m_oLang, oLvl.IsLegalStyle());
 			if (typeof drawingContent !== "string")
 			{
 				this.drawImageBulletsWithLine(drawingContent, nTextYx, nTextYy, nLineHeight, oGraphics);
@@ -670,7 +716,7 @@
 		const oGraphics = this.getGraphics(oCanvas);
 
 		const oLvl = arrLvls[0];
-		const sText = oLvl.GetDrawingContent([oLvl], 0, undefined, this.m_oLang);
+		const sText = oLvl.GetDrawingContent([oLvl], 0, undefined, this.m_oLang, false);
 		if (typeof sText !== 'string') return;
 		const nHeight_px = oCanvas.clientHeight;
 		const nWidth_px = oCanvas.clientWidth;
@@ -731,6 +777,7 @@
 		const nOffset = (nHeight_px - (nLineWidth * nCountOfLines + nLineDistance * nCountOfLines)) >> 1;
 		let nY = nOffset + 11;
 		const nCorrectAddedOffsetX = this.getMultiLvlAddedOffsetX(arrLvls);
+		const isRtl = this.isRtl();
 		for (let i = 0; i < nCountOfLines; i += 1)
 		{
 			const oLvl = arrLvls[i];
@@ -739,14 +786,17 @@
 			oTextPr.FontSize = this.getFontSizeByLineHeight(nLineHeight);
 			const nNumberPosition = oLvl.GetNumberPosition() + nCorrectAddedOffsetX;
 			const nFirstLineIndent = this.getFirstLineIndent(oLvl) + nCorrectAddedOffsetX;
-			const nTextYx =  nOffsetBase + nNumberPosition * this.m_nMultiLvlIndentCoefficient;
+			//const nTextYx =  nOffsetBase + nNumberPosition * this.m_nMultiLvlIndentCoefficient;
 			const nTextYy = nY + (nLineWidth * 2.5);
-			const nXPositionOfLine = nOffsetBase + (nFirstLineIndent * this.m_nMultiLvlIndentCoefficient) << 0;
+			
+			const horlineX = isRtl ? nOffsetBase : nOffsetBase + (nFirstLineIndent * this.m_nMultiLvlIndentCoefficient) << 0;
+			const horlineR = isRtl ? nWidth_px - (nOffsetBase + (nFirstLineIndent * this.m_nMultiLvlIndentCoefficient) << 0) : nWidth_px - nOffsetBase;
 
-			oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nXPositionOfLine * AscCommon.g_dKoef_pix_to_mm, (nWidth_px - nOffsetBase) * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
-
-			const drawingContent = oLvl.GetDrawingContent(arrLvls, i, 1, this.m_oLang);
-			const oParagraphTextOptions = this.getHeadingTextInformation(oLvl, nXPositionOfLine, nTextYy);
+			oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, horlineX * AscCommon.g_dKoef_pix_to_mm, horlineR * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
+			const nTextYx = isRtl ? nWidth_px - nOffsetBase - nNumberPosition * this.m_nMultiLvlIndentCoefficient : nOffsetBase + nNumberPosition * this.m_nMultiLvlIndentCoefficient;
+			
+			const drawingContent = oLvl.GetDrawingContent(arrLvls, i, 1, this.m_oLang, false);
+			const oParagraphTextOptions = this.getHeadingTextInformation(oLvl, isRtl ? horlineR : horlineX, nTextYy);
 			if (typeof drawingContent !== 'string')
 			{
 				this.drawImageBulletsWithLine(drawingContent, nTextYx, nTextYy, nLineHeight, oGraphics, oParagraphTextOptions, oTextPr);
@@ -862,12 +912,13 @@
 			const nY = (nHeight_px >> 1) - (nLineWidth >> 1);
 			const nLineHeight = (nHeight_px >> 1);
 			const nScaleCoefficient = this.getScaleCoefficientForMultiLevel(this.m_arrNumberingLvl, nWidth_px - nOffsetBase * 6);
+			const isRtl = this.isRtl();
 
-			for (let i = 0; i < nAmountOfPreview; i += 1)
+			for (let i = 0; i < nAmountOfPreview; ++i)
 			{
 				const oLvl = this.m_arrNumberingLvl[i];
 				oLvl.Jc = AscCommon.align_Left;
-				const drawingContent = oLvl.GetDrawingContent(this.m_arrNumberingLvl, i, 1, this.m_oLang);
+				const drawingContent = oLvl.GetDrawingContent(this.m_arrNumberingLvl, i, 1, this.m_oLang, oLvl.IsLegalStyle());
 				sDivId = this.m_arrId[i];
 				oCanvas = this.getCanvas(sDivId);
 				if (!oCanvas) return;
@@ -878,11 +929,14 @@
 				oTextPr.FontSize = oTextPr.FontSizeCS = this.getFontSizeByLineHeight(nLineHeight);
 
 				const nNumberPosition = oLvl.GetNumberPosition();
-				const nXLinePosition = nOffsetBase + (this.getFirstLineIndent(oLvl) * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient) << 0;
-				const nTextYx = nOffsetBase + nNumberPosition * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient;
+				const nTextYx = isRtl ? nWidth_px - (nOffsetBase + nNumberPosition * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient): nOffsetBase + nNumberPosition * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient;
 				const nTextYy = nY + (nLineWidth << 1);
-				oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nXLinePosition * AscCommon.g_dKoef_pix_to_mm, (nWidth_px - nOffsetBase) * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
-				const oParagraphTextOptions = this.getHeadingTextInformation(oLvl, nXLinePosition, nTextYy);
+				
+				const horlineX = isRtl ? nOffsetBase : nOffsetBase + nNumberPosition * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient;
+				const horlineR = isRtl ? nWidth_px - (nOffsetBase + nNumberPosition * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient) : nWidth_px - nOffsetBase;
+				
+				oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, horlineX * AscCommon.g_dKoef_pix_to_mm, horlineR * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
+				const oParagraphTextOptions = this.getHeadingTextInformation(oLvl, isRtl ? horlineR : horlineX, nTextYy);
 				if (typeof drawingContent === "string")
 				{
 					this.drawTextWithLvlInformation(drawingContent, oLvl, nTextYx, nTextYy, (nHeight_px >> 1), oGraphics, oParagraphTextOptions);
@@ -926,7 +980,7 @@
 			AscCommon.stopEvent(e);
 			const nOffsetBase = 10;
 			const nLineWidth = 4;
-			const nHeight = parseInt(this.style.height, 10);
+			const nHeight = oThis.m_oCanvas.clientHeight;
 			const nLineDistance = Math.floor(((nHeight - (nOffsetBase << 1)) - nLineWidth * 10) / 9);
 			const nOffset = (nHeight - (nLineWidth * 10 + nLineDistance * 9)) >> 1;
 			const nCurrentLvl = oThis.m_nCurrentLvl;
@@ -937,7 +991,7 @@
 				nYPos = e.clientY;
 			}
 			nYPos = (nYPos * AscCommon.AscBrowser.zoom);
-			const oClientRect = this.getBoundingClientRect();
+			const oClientRect = AscCommon.UI.getBoundingClientRect(this);
 
 			if (AscFormat.isRealNumber(oClientRect.y))
 			{
@@ -974,11 +1028,10 @@
 	};
 	CBulletPreviewDrawerAdvancedOptions.prototype.getNumberingValue = function (nNumberIndex, nDrawingLvl, oLvl)
 	{
-		if (nDrawingLvl <= this.m_nCalcNumberingLvl && this.m_arrCalcNumberingInfo && this.m_arrCalcNumberingInfo[nDrawingLvl])
+		if (nDrawingLvl <= this.m_nCalcNumberingLvl && this.m_arrCalcNumberingInfo && AscFormat.isRealNumber(this.m_arrCalcNumberingInfo[nDrawingLvl]) && AscFormat.isRealNumber(this.m_nSourceStart))
 		{
 			const nCalcValue = this.m_arrCalcNumberingInfo[nDrawingLvl];
-			const nStart = oLvl.GetStart();
-			return nCalcValue - nStart + nNumberIndex;
+			return nCalcValue - this.m_nSourceStart + nNumberIndex;
 		}
 		return nNumberIndex;
 	};
@@ -1000,6 +1053,8 @@
 		const nCurrentLvl = this.m_nCurrentLvl;
 
 		oGraphics.p_color(this.m_oSecondaryLineTextColor.r, this.m_oSecondaryLineTextColor.g, this.m_oSecondaryLineTextColor.b, 255);
+		
+		const isRtl = this.isRtl();
 
 		let nY = nOffset + 2;
 		for (let i = 0; i < this.m_arrNumberingLvl.length; i += 1)
@@ -1008,29 +1063,37 @@
 			const oTextPr = oLvl.GetTextPr();
 			oTextPr.FontSize = this.getFontSizeByLineHeight(nLineDistance);
 			const nNumberPosition = oLvl.GetNumberPosition();
-			const nTextYx = (nOffsetBase + nNumberPosition * AscCommon.g_dKoef_mm_to_pix * this.m_nScaleIndentsCoefficient) >> 0;
+			let nTextYx = (nOffsetBase + nNumberPosition * AscCommon.g_dKoef_mm_to_pix * this.m_nScaleIndentsCoefficient) >> 0;
 			const nIndentSize = (nOffsetBase + oLvl.GetIndentSize() * AscCommon.g_dKoef_mm_to_pix * this.m_nScaleIndentsCoefficient) >> 0;
 			const nTextYy = nY + nLineWidth;
 			const nOffsetText = nOffsetBase + (this.getFirstLineIndent(oLvl) * AscCommon.g_dKoef_mm_to_pix * this.m_nScaleIndentsCoefficient) >> 0;
+			
+			if (isRtl)
+				nTextYx = nWidth_px - nTextYx;
+			
+			const posX0 = isRtl ? nOffsetBase : nOffsetText;
+			const posR0 = isRtl ? nWidth_px - nOffsetText : nWidth_px - nOffsetBase;
+			const posX1 = isRtl ? nOffsetBase : nIndentSize;
+			const posR1 = isRtl ? nWidth_px - nIndentSize : nWidth_px - nOffsetBase;
 
 			if (i === nCurrentLvl)
 			{
 				oGraphics.p_color(this.m_oPrimaryTextColor.r, this.m_oPrimaryTextColor.g, this.m_oPrimaryTextColor.b, 255);
 
-				oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nOffsetText * AscCommon.g_dKoef_pix_to_mm, (nWidth_px - nOffsetBase) * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
+				oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, posX0 * AscCommon.g_dKoef_pix_to_mm, posR0 * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
 				nY += (nLineWidth + nLineDistance);
-				oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nIndentSize * AscCommon.g_dKoef_pix_to_mm, (nWidth_px - nOffsetBase) * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
+				oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, posX1 * AscCommon.g_dKoef_pix_to_mm, posR1 * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
 
 				oGraphics.p_color(this.m_oSecondaryLineTextColor.r, this.m_oSecondaryLineTextColor.g, this.m_oSecondaryLineTextColor.b, 255);
 			}
 			else
 			{
-				oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nOffsetText * AscCommon.g_dKoef_pix_to_mm, (nWidth_px - nOffsetBase) * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
+				oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, posX0 * AscCommon.g_dKoef_pix_to_mm, posR0 * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
 			}
 
 			const oParagraphTextOptions = this.getHeadingTextInformation(oLvl, nOffsetText, nTextYy);
 			let nNumberIndex = this.getNumberingValue(1, i, oLvl);
-			const drawingContent = oLvl.GetDrawingContent(this.m_arrNumberingLvl, i, nNumberIndex, this.m_oLang);
+			const drawingContent = oLvl.GetDrawingContent(this.m_arrNumberingLvl, i, nNumberIndex, this.m_oLang, oLvl.IsLegalStyle());
 			if (typeof drawingContent === "string")
 			{
 				this.drawTextWithLvlInformation(drawingContent, oLvl, nTextYx,  nTextYy, nLineDistance, oGraphics, oParagraphTextOptions);
@@ -1045,8 +1108,11 @@
 
 			nY += (nLineWidth + nLineDistance);
 		}
-		this.cleanParagraphField(oGraphics, (nWidth_px - nOffsetBase) * AscCommon.g_dKoef_pix_to_mm, 0, nWidth_px * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm);
-
+		
+		if (isRtl)
+			this.cleanParagraphField(oGraphics, 0, 0, (nOffsetBase - 1) * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm);
+		else
+			this.cleanParagraphField(oGraphics, (nWidth_px - nOffsetBase + 1) * AscCommon.g_dKoef_pix_to_mm, 0, nOffsetBase * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm);
 	};
 	CBulletPreviewDrawerAdvancedOptions.prototype.getScaleCoefficientForSingleLevel = function (nWorkspaceWidth)
 	{
@@ -1069,7 +1135,7 @@
 	};
 	CBulletPreviewDrawerAdvancedOptions.prototype.initNumberingInfo = function ()
 	{
-		var oParagraph = this.m_oLogicDocument.GetCurrentParagraph(true);
+		const oParagraph = this.m_oLogicDocument.GetCurrentParagraph(true);
 		if (!oParagraph)
 			return;
 
@@ -1078,6 +1144,12 @@
 		{
 			this.m_arrCalcNumberingInfo = oNumbering.GetCalculatedNumInfo();
 			this.m_nCalcNumberingLvl = oNumbering.GetCalculatedNumberingLvl();
+			const oNum = this.m_oLogicDocument.GetNumbering().GetNum(oNumbering.GetCalculatedNumId());
+			if (oNum)
+			{
+				const oLvl = oNum.GetLvl(this.m_nCalcNumberingLvl);
+				this.m_nSourceStart = oLvl ? oLvl.GetStart() : null;
+			}
 		}
 	};
 	CBulletPreviewDrawerAdvancedOptions.prototype.drawSingleLvlAdvancedOptions = function ()
@@ -1087,6 +1159,7 @@
 		const oGraphics = this.m_oGraphics;
 		const nHeight_px = oCanvas.clientHeight;
 		const nWidth_px = oCanvas.clientWidth;
+		const isRtl = this.isRtl();
 
 		const nOffsetBase = 10;
 		const nLineWidth = 4;
@@ -1099,7 +1172,7 @@
 		let nMaxTextWidth = 0;
 		for (let i = 0; i < 3; i += 1)
 		{
-			const drawingContent = oCurrentLvl.GetDrawingContent(this.m_arrNumberingLvl, nCurrentLvl, i + 1, this.m_oLang);
+			const drawingContent = oCurrentLvl.GetDrawingContent(this.m_arrNumberingLvl, nCurrentLvl, i + 1, this.m_oLang, oCurrentLvl.IsLegalStyle());
 			if (typeof drawingContent === 'string')
 			{
 				const nTextWidth = this.getLvlTextWidth(drawingContent, oTextPr);
@@ -1152,8 +1225,10 @@
 			nTabSize = nOffsetBase + ((nRawTabSize * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient) << 0);
 		}
 
-		oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nLeftOffset2 * AscCommon.g_dKoef_pix_to_mm, nRightOffset2 * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm); nY += nYDist;
-		oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nLeftOffset2 * AscCommon.g_dKoef_pix_to_mm, nRightOffset2 * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm); nY += nYDist;
+		oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nLeftOffset2 * AscCommon.g_dKoef_pix_to_mm, nRightOffset2 * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
+		nY += nYDist;
+		oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nLeftOffset2 * AscCommon.g_dKoef_pix_to_mm, nRightOffset2 * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
+		nY += nYDist;
 
 		oGraphics.p_color(this.m_oPrimaryTextColor.r, this.m_oPrimaryTextColor.g, this.m_oPrimaryTextColor.b, 255);
 		let nTextYx = nNumberPosition;
@@ -1183,22 +1258,33 @@
 		{
 			nOffsetTextX = this.getFirstLineIndent(oCurrentLvl, nTextYx * AscCommon.g_dKoef_pix_to_mm, nIndentSize * AscCommon.g_dKoef_pix_to_mm, AscFormat.isRealNumber(nTabSize) ? nTabSize * AscCommon.g_dKoef_pix_to_mm : null);
 		}
+		
+		if (isRtl)
+			nTextYx = nWidth_px - nTextYx;
+		
+		const posX0 = isRtl ? nOffsetBase : nOffsetTextX * AscCommon.g_dKoef_mm_to_pix;
+		const posR0 = isRtl ? nWidth_px - nOffsetTextX * AscCommon.g_dKoef_mm_to_pix : nWidth_px - nOffsetBase;
+		const posX1 = isRtl ? nOffsetBase : nIndentSize;
+		const posR1 = isRtl ? nWidth_px - nIndentSize : nWidth_px - nOffsetBase;
 
 		for (let i = 0; i < 3; i += 1)
 		{
-			oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nOffsetTextX, nRightOffset * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm); nY += nYDist;
-			oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nIndentSize * AscCommon.g_dKoef_pix_to_mm, nRightOffset * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm); nY += nYDist;
+			oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, posX0 * AscCommon.g_dKoef_pix_to_mm, posR0 * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
+			nY += nYDist;
+			oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, posX1 * AscCommon.g_dKoef_pix_to_mm, posR1 * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
+			nY += nYDist;
 		}
 
 		oGraphics.p_color(this.m_oSecondaryLineTextColor.r, this.m_oSecondaryLineTextColor.g, this.m_oSecondaryLineTextColor.b, 255);
 
-		oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nLeftOffset2 * AscCommon.g_dKoef_pix_to_mm, nRightOffset2 * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm); nY += nYDist;
+		oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nLeftOffset2 * AscCommon.g_dKoef_pix_to_mm, nRightOffset2 * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
+		nY += nYDist;
 		oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nLeftOffset2 * AscCommon.g_dKoef_pix_to_mm, nRightOffset2 * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
 
 		for (let i = 0; i < arrTextYy.length; i += 1)
 		{
 			const nNumberIndex = this.getNumberingValue(i + 1, nCurrentLvl, oCurrentLvl);
-			const drawingContent = oCurrentLvl.GetDrawingContent(this.m_arrNumberingLvl, nCurrentLvl, nNumberIndex, this.m_oLang);
+			const drawingContent = oCurrentLvl.GetDrawingContent(this.m_arrNumberingLvl, nCurrentLvl, nNumberIndex, this.m_oLang, oCurrentLvl.IsLegalStyle());
 			const nTextYy = arrTextYy[i];
 			if (typeof drawingContent === "string")
 			{
@@ -1212,7 +1298,10 @@
 				}
 			}
 		}
-		this.cleanParagraphField(oGraphics, nRightOffset2 * AscCommon.g_dKoef_pix_to_mm, 0, nWidth_px * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm);
+		if (isRtl)
+			this.cleanParagraphField(oGraphics, 0, 0, (nOffsetBase - 1) * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm);
+		else
+			this.cleanParagraphField(oGraphics, (nWidth_px - nOffsetBase + 1) * AscCommon.g_dKoef_pix_to_mm, 0, nOffsetBase * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm);
 	};
 	CBulletPreviewDrawerAdvancedOptions.prototype.draw = function ()
 	{

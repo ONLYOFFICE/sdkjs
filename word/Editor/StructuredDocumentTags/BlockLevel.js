@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -56,6 +56,8 @@ function CBlockLevelSdt(oLogicDocument, oParent)
 
 	this.SkipSpecialLock = false;
 	this.Current         = false;
+	
+	this.Sections = [];
 }
 
 CBlockLevelSdt.prototype = Object.create(CDocumentContentElementBase.prototype);
@@ -114,6 +116,15 @@ CBlockLevelSdt.prototype.GetContent = function()
 {
 	return this.Content;
 };
+/**
+ * Функция для выставления класса содержимого колонтитула (используется в совместке)
+ * @param {CDocumentContent} oDocumentContent
+ */
+CBlockLevelSdt.prototype.SetDocumentContent = function(oDocumentContent)
+{
+	this.Content = oDocumentContent;
+	oDocumentContent.SetParent(this);
+};
 CBlockLevelSdt.prototype.Is_Inline = function()
 {
 	return true;
@@ -122,7 +133,7 @@ CBlockLevelSdt.prototype.IsInline = function()
 {
 	return true;
 };
-CBlockLevelSdt.prototype.Reset = function(X, Y, XLimit, YLimit, PageAbs, ColumnAbs, ColumnsCount)
+CBlockLevelSdt.prototype.Reset = function(X, Y, XLimit, YLimit, PageAbs, ColumnAbs, ColumnsCount, sectionAbs, sectPr)
 {
 	this.Content.Reset(X, Y, XLimit, YLimit);
 	this.Content.Set_StartPage(0);
@@ -134,6 +145,8 @@ CBlockLevelSdt.prototype.Reset = function(X, Y, XLimit, YLimit, PageAbs, ColumnA
 	this.PageNum      = PageAbs;
 	this.ColumnNum    = ColumnAbs ? ColumnAbs : 0;
 	this.ColumnsCount = ColumnsCount ? ColumnsCount : 1;
+	this.SectionNum   = sectionAbs ? sectionAbs : 0;
+	this.ResetSection(X, Y, XLimit, YLimit, PageAbs, sectionAbs, sectPr);
 };
 CBlockLevelSdt.prototype.Recalculate_Page = function(CurPage)
 {
@@ -141,17 +154,24 @@ CBlockLevelSdt.prototype.Recalculate_Page = function(CurPage)
 
 	this.Content.RecalcInfo = this.Parent.RecalcInfo;
 
-	var RecalcResult = this.Content.Recalculate_Page(CurPage, true);
+	let recalcResult = this.Content.Recalculate_Page(CurPage, true);
+	
+	this.Sections[this.Sections.length - 1].endPage = this.Content.GetPagesCount() - 1;
 
-	if (recalcresult2_End === RecalcResult && window['AscCommon'].g_specialPasteHelper && window['AscCommon'].g_specialPasteHelper.showButtonIdParagraph === this.GetId())
+	if (recalcresult2_End === recalcResult && window['AscCommon'].g_specialPasteHelper && window['AscCommon'].g_specialPasteHelper.showButtonIdParagraph === this.GetId())
 		window['AscCommon'].g_specialPasteHelper.SpecialPasteButtonById_Show();
 
-	if (recalcresult2_End === RecalcResult)
-		return recalcresult_NextElement;
-	else if (recalcresult2_NextPage === RecalcResult)
-		return recalcresult_NextPage;
-	else if (recalcresult2_CurPage === RecalcResult)
-		return recalcresult_CurPage;
+	switch (recalcResult)
+	{
+		case recalcresult2_End: return recalcresult_NextElement;
+		case recalcresult2_NextPage: return recalcresult_NextPage;
+		case recalcresult2_CurPage: return recalcresult_CurPage;
+		case recalcresult2_NextSection: return recalcresult_NextSection;
+		case recalcresult2_NextSection_Cur: return recalcresult_NextSection_Cur;
+	}
+	
+	// This should never happen
+	return recalcresult_NextElement;
 };
 CBlockLevelSdt.prototype.Get_PageBounds = function(CurPage)
 {
@@ -183,51 +203,84 @@ CBlockLevelSdt.prototype.Write_ToBinary2 = function(Writer)
 };
 CBlockLevelSdt.prototype.Read_FromBinary2 = function(Reader)
 {
-	this.LogicDocument = editor.WordControl.m_oLogicDocument;
-
 	// String : Id
 	// String : Content id
-	this.Id          = Reader.GetString2();
-	this.Content     = this.LogicDocument.Get_TableId().Get_ById(Reader.GetString2());
+	this.Id      = Reader.GetString2();
+	this.Content = AscCommon.g_oTableId.Get_ById(Reader.GetString2());
+	
+	this.Content.SetParent(this);
 };
 CBlockLevelSdt.prototype.Draw = function(CurPage, oGraphics)
 {
-	if (this.LogicDocument.GetSdtGlobalShowHighlight() && undefined === oGraphics.RENDERER_PDF_FLAG)
+	let logicDocument = this.GetLogicDocument();
+	
+	let shdColor = this.getShdColor();
+	if (logicDocument && !shdColor && (logicDocument.GetSdtGlobalShowHighlight() && !oGraphics.isPdf()))
+		shdColor = AscWord.CDocumentColorA.fromObjectRgb(logicDocument.GetSdtGlobalColor());
+	
+	if (shdColor)
 	{
-		var oBounds = this.GetContentBounds(CurPage);
-		var oColor  = this.LogicDocument.GetSdtGlobalColor();
-
-		oGraphics.b_color1(oColor.r, oColor.g, oColor.b, 255);
-		oGraphics.rect(oBounds.Left, oBounds.Top, oBounds.Right - oBounds.Left, oBounds.Bottom - oBounds.Top);
+		let pageBounds = this.GetContentBounds(CurPage);
+		oGraphics.b_color1(shdColor.r, shdColor.g, shdColor.b, shdColor.a);
+		oGraphics.rect(pageBounds.Left, pageBounds.Top, pageBounds.Right - pageBounds.Left, pageBounds.Bottom - pageBounds.Top);
 		oGraphics.df();
 	}
-
-	var isPlaceHolder = this.IsPlaceHolder();
-	var nTextAlpha;
-	if (isPlaceHolder && oGraphics.setTextGlobalAlpha)
+	
+	let borderColor = this.getBorderColor();
+	if (borderColor)
 	{
-		nTextAlpha = oGraphics.getTextGlobalAlpha();
+		let pageBounds = this.GetContentBounds(CurPage);
+		oGraphics.p_color(borderColor.r, borderColor.g, borderColor.b, borderColor.a);
+		oGraphics.drawPolygonByRects([[{
+			X    : pageBounds.Left,
+			Y    : pageBounds.Top,
+			W    : pageBounds.Right - pageBounds.Left,
+			H    : pageBounds.Bottom - pageBounds.Top,
+			Page : 0
+		}]], 0, 0);
+	}
+
+	let placeholderAlpha = this.IsPlaceHolder() && this.IsForm();
+	let textAlpha;
+	if (placeholderAlpha)
+	{
+		textAlpha = oGraphics.getTextGlobalAlpha();
 		oGraphics.setTextGlobalAlpha(0.5);
 	}
 
 	this.Content.Draw(CurPage, oGraphics);
 
-	if (isPlaceHolder && oGraphics.setTextGlobalAlpha)
-		oGraphics.setTextGlobalAlpha(nTextAlpha);
+	if (placeholderAlpha)
+		oGraphics.setTextGlobalAlpha(textAlpha);
 
-	if (AscCommon.locktype_None !== this.Lock.Get_Type())
+	if (AscCommon.c_oAscLockTypes.kLockTypeNone !== this.Lock.Get_Type())
 	{
 		var oBounds = this.GetContentBounds(CurPage);
 		oGraphics.DrawLockObjectRect(this.Lock.Get_Type(), oBounds.Left, oBounds.Top, oBounds.Right - oBounds.Left, oBounds.Bottom - oBounds.Top);
 	}
 };
-CBlockLevelSdt.prototype.Get_CurrentPage_Absolute = function()
+CBlockLevelSdt.prototype.GetAbsoluteCurrentPage = function()
 {
-	return this.Content.Get_CurrentPage_Absolute();
+	return this.Content.GetAbsoluteCurrentPage();
 };
-CBlockLevelSdt.prototype.Get_CurrentPage_Relative = function()
+CBlockLevelSdt.prototype.GetRelativeCurrentPage = function()
 {
-	return this.Content.Get_CurrentPage_Relative();
+	return this.Content.GetRelativeCurrentPage();
+};
+CBlockLevelSdt.prototype.IsFirstOnDocumentPage = function(curPage)
+{
+	if (0 === curPage || undefined === curPage)
+	{
+		if (null !== this.Get_DocumentPrev())
+			return false;
+		
+		if (!this.Parent || !this.Parent.IsFirstOnDocumentPage)
+			return true;
+		
+		return this.Parent.IsFirstOnDocumentPage(this.GetRelativePage(0));
+	}
+	
+	return this.GetAbsolutePage(curPage) !== this.GetAbsolutePage(curPage - 1);
 };
 CBlockLevelSdt.prototype.IsInText = function(X, Y, CurPage)
 {
@@ -244,17 +297,18 @@ CBlockLevelSdt.prototype.IsTableBorder = function(X, Y, CurPage)
 CBlockLevelSdt.prototype.UpdateCursorType = function(X, Y, CurPage)
 {
 	var oBounds = this.GetContentBounds(CurPage);
-	if (true === this.Lock.Is_Locked() && X < oBounds.Right && X > oBounds.Left && Y > oBounds.Top && Y < oBounds.Bottom)
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && true === this.Lock.Is_Locked() && X < oBounds.Right && X > oBounds.Left && Y > oBounds.Top && Y < oBounds.Bottom)
 	{
 		var MMData              = new AscCommon.CMouseMoveData();
-		var Coords              = this.LogicDocument.DrawingDocument.ConvertCoordsToCursorWR(oBounds.Left, oBounds.Top, this.Get_AbsolutePage(CurPage), this.Get_ParentTextTransform());
+		var Coords              = logicDocument.DrawingDocument.ConvertCoordsToCursorWR(oBounds.Left, oBounds.Top, this.GetAbsolutePage(CurPage), this.Get_ParentTextTransform());
 		MMData.X_abs            = Coords.X - 5;
 		MMData.Y_abs            = Coords.Y;
 		MMData.Type             = Asc.c_oAscMouseMoveDataTypes.LockedObject;
 		MMData.UserId           = this.Lock.Get_UserId();
 		MMData.HaveChanges      = this.Lock.Have_Changes();
 		MMData.LockedObjectType = c_oAscMouseMoveLockedObjectType.Common;
-		this.LogicDocument.Api.sync_MouseMoveCallback(MMData);
+		logicDocument.Api.sync_MouseMoveCallback(MMData);
 	}
 
 	this.DrawContentControlsTrack(AscCommon.ContentControlTrack.Hover, X, Y, CurPage);
@@ -319,7 +373,7 @@ CBlockLevelSdt.prototype.SelectAll = function(nDirection)
 };
 CBlockLevelSdt.prototype.GetCalculatedTextPr = function()
 {
-	return this.Content.GetCalculatedTextPr();
+	return this.Content.GetCalculatedTextPr(true);
 };
 CBlockLevelSdt.prototype.GetCalculatedParaPr = function()
 {
@@ -333,9 +387,9 @@ CBlockLevelSdt.prototype.GetDirectTextPr = function()
 {
 	return this.Content.GetDirectTextPr();
 };
-CBlockLevelSdt.prototype.DrawSelectionOnPage = function(CurPage)
+CBlockLevelSdt.prototype.DrawSelectionOnPage = function(CurPage, clipInfo)
 {
-	this.Content.DrawSelectionOnPage(CurPage);
+	this.Content.DrawSelectionOnPage(CurPage, clipInfo);
 };
 CBlockLevelSdt.prototype.GetSelectionBounds = function()
 {
@@ -372,7 +426,8 @@ CBlockLevelSdt.prototype.MoveCursorLeft = function(AddToSelect, Word)
 	}
 
 	var bResult = this.Content.MoveCursorLeft(AddToSelect, Word);
-	if (!bResult && this.LogicDocument.IsFillingFormMode())
+	let logicDocument = this.GetLogicDocument();
+	if (!bResult && logicDocument && logicDocument.IsFillingFormMode())
 		return true;
 
 	return bResult;
@@ -392,7 +447,8 @@ CBlockLevelSdt.prototype.MoveCursorRight = function(AddToSelect, Word)
 	}
 
 	var bResult = this.Content.MoveCursorRight(AddToSelect, Word, false);
-	if (!bResult && this.LogicDocument.IsFillingFormMode())
+	let logicDocument = this.GetLogicDocument();
+	if (!bResult && logicDocument && logicDocument.IsFillingFormMode())
 		return true;
 
 	return bResult;
@@ -502,10 +558,10 @@ CBlockLevelSdt.prototype.GetNumberingInfo = function(oNumberingEngine)
 {
 	return this.Content.GetNumberingInfo(oNumberingEngine);
 };
-CBlockLevelSdt.prototype.AddInlineImage = function(W, H, Img, Chart, bFlow)
+CBlockLevelSdt.prototype.AddInlineImage = function(W, H, Img, GraphicObject, bFlow)
 {
 	this.private_ReplacePlaceHolderWithContent();
-	this.Content.AddInlineImage(W, H, Img, Chart, bFlow);
+	this.Content.AddInlineImage(W, H, Img, GraphicObject, bFlow);
 };
 CBlockLevelSdt.prototype.AddImages = function(aImages)
 {
@@ -536,13 +592,17 @@ CBlockLevelSdt.prototype.Remove = function(nCount, isRemoveWholeElement, bRemove
 {
 	if (this.IsPlaceHolder())
 	{
-		let logicDocument = this.GetLogicDocument();
+		let logicDocument  = this.GetLogicDocument();
+		let isRemoveOnDrag = logicDocument ? logicDocument.DragAndDropAction : false;
 		
-		if (!this.CanBeDeleted() && !bOnAddText)
+		if (!this.CanBeDeleted() && (!bOnAddText || isRemoveOnDrag))
 			return true;
 		
 		if (bOnAddText || !(logicDocument && logicDocument.IsDocumentEditor() && logicDocument.IsFillingFormMode()))
 			this.private_ReplacePlaceHolderWithContent();
+		
+		if (isRemoveOnDrag)
+			return false;
 		
 		return !!bOnAddText;
 	}
@@ -566,7 +626,14 @@ CBlockLevelSdt.prototype.Remove = function(nCount, isRemoveWholeElement, bRemove
 };
 CBlockLevelSdt.prototype.Is_Empty = function()
 {
-	return this.Content.Is_Empty();
+	if (!this.Content.Is_Empty())
+		return false;
+	
+	let p = this.Content.GetElement(0);
+	if (!p)
+		return true;
+	
+	return (p.IsParagraph() && !p.Get_SectionPr());
 };
 CBlockLevelSdt.prototype.Add = function(oParaItem)
 {
@@ -593,12 +660,15 @@ CBlockLevelSdt.prototype.Add = function(oParaItem)
 	{
 		this.Content.AddToParagraph(oParaItem);
 	}
-
+	
 	if (isRemoveWrapper)
 		this.RemoveContentControlWrapper();
 };
 CBlockLevelSdt.prototype.PreDelete = function()
 {
+	if (this.isPreventedPreDelete())
+		return;
+	
 	if (this.IsPlaceHolder())
 		return;
 
@@ -622,6 +692,10 @@ CBlockLevelSdt.prototype.StartSelectionFromCurPos = function()
 CBlockLevelSdt.prototype.SetParagraphPr = function(oParaPr)
 {
 	return this.Content.SetParagraphPr(oParaPr);
+};
+CBlockLevelSdt.prototype.SetParagraphBidi = function(bidi)
+{
+	return this.Content.SetParagraphBidi(bidi);
 };
 CBlockLevelSdt.prototype.SetParagraphAlign = function(Align)
 {
@@ -716,6 +790,10 @@ CBlockLevelSdt.prototype.GetSelectedText = function(bClearText, oPr)
 		return "";
 
 	return this.Content.GetSelectedText(bClearText, oPr);
+};
+CBlockLevelSdt.prototype.GetText = function(pr)
+{
+	return this.Content.GetText(pr);
 };
 CBlockLevelSdt.prototype.GetCurrentParagraph = function(bIgnoreSelection, arrSelectedParagraphs, oPr)
 {
@@ -814,8 +892,9 @@ CBlockLevelSdt.prototype.DistributeTableCells = function(isHorizontally)
 };
 CBlockLevelSdt.prototype.Document_UpdateInterfaceState = function()
 {
-	if (!this.IsBuiltInTableOfContents())
-		this.LogicDocument.Api.sync_ContentControlCallback(this.GetContentControlPr());
+	let logicDocument = this.GetLogicDocument();
+	if (!this.IsBuiltInTableOfContents() && logicDocument)
+		logicDocument.Api.sync_ContentControlCallback(this.GetContentControlPr());
 
 	this.Content.Document_UpdateInterfaceState();
 };
@@ -926,32 +1005,26 @@ CBlockLevelSdt.prototype.GetBoundingRect = function()
 		Transform : this.Get_ParentTextTransform()
 	};
 };
-CBlockLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurPage, isCheckHit)
+CBlockLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurPage, isCheckHit, padding)
 {
-	if (!this.IsRecalculated() || !this.LogicDocument)
-		return;
+	let logicDocument = this.GetLogicDocument();
+	if (!this.IsRecalculated() || !logicDocument)
+		return false;
 
-	var oLogicDocument   = this.LogicDocument;
-	var oDrawingDocument = oLogicDocument.GetDrawingDocument();
+	var oDrawingDocument = logicDocument.GetDrawingDocument();
 	var arrRects = [];
 
 	// TODO: Нужно отрисовать рамку формулы, но для этого нужно чтобы селект плейсхолдера был не целиком на параграф,
 	//       а только на формулу
 	if (this.IsContentControlEquation() && !this.IsPlaceHolder())
-	{
-		oDrawingDocument.OnDrawContentControl(null, nType);
-		return;
-	}
-
+		return false;
+	
 	if (this.IsHideContentControlTrack())
-	{
-		oDrawingDocument.OnDrawContentControl(null, nType);
-		return;
-	}
-
+		return false;
+	
 	var oHdrFtr     = this.IsHdrFtr(true);
 	var nHdrFtrPage = oHdrFtr ? oHdrFtr.GetContent().GetAbsolutePage(0) : null;
-	let isFullWidth = oLogicDocument.IsFillingFormMode();
+	let isFullWidth = logicDocument.IsFillingFormMode();
 
 	for (var nPageIndex = 0, nPagesCount = this.GetPagesCount(); nPageIndex < nPagesCount; ++nPageIndex)
 	{
@@ -964,9 +1037,9 @@ CBlockLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurPa
 			let contentBounds = this.Content.GetContentBounds(nPageIndex);
 			let pageBounds    = this.Content.GetPageBounds(nPageIndex);
 			if (isFullWidth)
-				arrRects.push({X : pageBounds.Left, Y : contentBounds.Top, R : pageBounds.Right, B : contentBounds.Bottom, Page : nPageAbs});
+				arrRects.push({X : pageBounds.Left, Y : contentBounds.Top, R : pageBounds.Right, B : contentBounds.Bottom, Page : nPageAbs, PageRel : nPageIndex});
 			else
-				arrRects.push({X : contentBounds.Left, Y : contentBounds.Top, R : contentBounds.Right, B : contentBounds.Bottom, Page : nPageAbs});
+				arrRects.push({X : contentBounds.Left, Y : contentBounds.Top, R : contentBounds.Right, B : contentBounds.Bottom, Page : nPageAbs, PageRel : nPageIndex});
 		}
 	}
 
@@ -986,7 +1059,7 @@ CBlockLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurPa
 		}
 
 		if (false !== isCheckHit && !isHit)
-			return;
+			return false;
 
 		var sHelpText = "";
 		if (AscCommon.ContentControlTrack.Hover === nType && this.IsForm() && (sHelpText = this.GetFormPr().HelpText))
@@ -997,11 +1070,42 @@ CBlockLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurPa
 			oMMData.Y_abs = oCoords.Y;
 			oMMData.Type  = Asc.c_oAscMouseMoveDataTypes.Form;
 			oMMData.Text  = sHelpText;
-			oLogicDocument.GetApi().sync_MouseMoveCallback(oMMData);
+			logicDocument.GetApi().sync_MouseMoveCallback(oMMData);
 		}
 	}
-
-	oDrawingDocument.OnDrawContentControl(this, nType, arrRects);
+	
+	if (padding)
+	{
+		let checkBounds = logicDocument.IsDocumentEditor();
+		
+		for (let i = 0; i < arrRects.length; ++i)
+		{
+			arrRects[i].X -= padding;
+			arrRects[i].Y -= padding;
+			arrRects[i].R += padding;
+			arrRects[i].B += padding;
+			
+			if (checkBounds)
+			{
+				let pageAbs = arrRects[i].Page;
+				let pageRel = arrRects[i].PageRel;
+				let sectionAbs = this.GetAbsoluteSection(pageRel);
+				let documentPage = logicDocument.GetPage(pageAbs);
+				let pageSectionIndex = documentPage ? documentPage.GetSectionIndexByAbsoluteIndex(sectionAbs) : -1;
+				let pageSection = documentPage ? documentPage.GetSection(pageSectionIndex) : null;
+				if (pageSection)
+				{
+					arrRects[i].Y = pageSection.CorrectY(arrRects[i].Y);
+					arrRects[i].B = pageSection.CorrectY(arrRects[i].B);
+				}
+			}
+		}
+	}
+	if (AscCommon.ContentControlTrack.Hover === nType)
+		logicDocument.HoverCC.addCC(this);
+	
+	oDrawingDocument.addContentControlTrack(this, nType, arrRects);
+	return true;
 };
 CBlockLevelSdt.prototype.AddContentControl = function(nContentControlType)
 {
@@ -1152,11 +1256,13 @@ CBlockLevelSdt.prototype.Is_DrawingShape = function(bRetShape)
 };
 CBlockLevelSdt.prototype.Get_Numbering = function()
 {
-	return this.LogicDocument.Get_Numbering();
+	let logicDocument = this.GetLogicDocument();
+	return logicDocument ? logicDocument.Get_Numbering() : AscWord.DEFAULT_NUMBERING;
 };
 CBlockLevelSdt.prototype.Get_Styles = function()
 {
-	return this.LogicDocument.Get_Styles();
+	let logicDocument = this.GetLogicDocument();
+	return logicDocument ? logicDocument.Get_Styles() : AscWord.DEFAULT_STYLES;
 };
 CBlockLevelSdt.prototype.Get_TableStyleForPara = function()
 {
@@ -1239,7 +1345,7 @@ CBlockLevelSdt.prototype.Refresh_RecalcData2 = function(CurPage)
 	if (!this.Parent)
 		return;
 
-	this.Parent.Refresh_RecalcData2(this.Index, this.private_GetRelativePageIndex(CurPage));
+	this.Parent.Refresh_RecalcData2(this.Index, this.GetRelativePage(CurPage));
 };
 CBlockLevelSdt.prototype.Refresh_RecalcData = function(Data)
 {
@@ -1252,23 +1358,6 @@ CBlockLevelSdt.prototype.IsInTable = function(bReturnTopTable)
 {
 	return this.Parent.IsInTable(bReturnTopTable);
 };
-CBlockLevelSdt.prototype.Get_PageContentStartPos = function(CurPage)
-{
-	var StartPage   = this.Get_AbsolutePage(0);
-	var StartColumn = this.Get_AbsoluteColumn(0);
-
-	if (this.Parent instanceof CDocumentContent)
-	{
-		StartPage   = this.Parent.Get_AbsolutePage(0) - StartPage;
-		StartColumn = this.Parent.StartColumn;
-
-		// Такого не должно быть, но на всякий случай
-		if (StartPage < 0)
-			StartPage = 0;
-	}
-
-	return this.Parent.Get_PageContentStartPos2(StartPage, StartColumn, CurPage, this.Index);
-};
 CBlockLevelSdt.prototype.CheckTableCoincidence = function(Table)
 {
 	return this.Parent.CheckTableCoincidence(Table);
@@ -1277,7 +1366,7 @@ CBlockLevelSdt.prototype.CheckRange = function(X0, Y0, X1, Y1, _Y0, _Y1, X_lf, X
 {
 	if (true === Inner)
 	{
-		var PageRel = this.Get_AbsolutePage(CurPage) - this.Get_AbsolutePage(0) + this.Get_StartPage_Relative();
+		var PageRel = this.GetAbsolutePage(CurPage) - this.GetAbsolutePage(0) + this.GetRelativeStartPage();
 		return this.Parent.CheckRange(X0, Y0, X1, Y1, _Y0, _Y1, X_lf, X_rf, PageRel, Inner, bMathWrap);
 	}
 	else
@@ -1309,16 +1398,6 @@ CBlockLevelSdt.prototype.GetAllSeqFieldsByType = function(sType, aFields)
 CBlockLevelSdt.prototype.Get_ParentTextTransform = function()
 {
 	return this.Parent.Get_ParentTextTransform();
-};
-CBlockLevelSdt.prototype.Get_SectPr = function()
-{
-	if (this.Parent && this.Parent.Get_SectPr)
-	{
-		this.Parent.Update_ContentIndexing();
-		return this.Parent.Get_SectPr(this.Index);
-	}
-
-	return null;
 };
 CBlockLevelSdt.prototype.GetMargins = function()
 {
@@ -1356,29 +1435,41 @@ CBlockLevelSdt.prototype.RemoveContentControlWrapper = function()
 	var nParentCurPos            = this.Parent.CurPos.ContentPos;
 	var nParentSelectionStartPos = this.Parent.Selection.StartPos;
 	var nParentSelectionEndPos   = this.Parent.Selection.EndPos;
-
+	
+	let contentPos     = this.Content.CurPos.ContentPos;
+	let selectionStart = this.Content.Selection.StartPos;
+	let selectionEnd   = this.Content.Selection.EndPos;
+	
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsDocumentEditor())
+		logicDocument.PreventPreDelete = true;
+	else
+		logicDocument = null;
+	
 	this.Parent.Remove_FromContent(nElementPos, 1);
 	for (var nIndex = 0, nCount = this.Content.Content.length; nIndex < nCount; ++nIndex)
 	{
 		this.Parent.Add_ToContent(nElementPos + nIndex, this.Content.Content[nIndex]);
 	}
-
+	this.Content.RemoveFromContent(0, this.Content.Content.length, false);
+	
+	if (logicDocument)
+		logicDocument.PreventPreDelete = false;
+	
 	if (nParentCurPos === nElementPos)
-		this.Parent.CurPos.ContentPos = nParentCurPos + this.Content.CurPos.ContentPos;
+		this.Parent.CurPos.ContentPos = nParentCurPos + contentPos;
 	else if (nParentCurPos > nElementPos)
 		this.Parent.CurPos.ContentPos = nParentCurPos + nCount - 1;
 
 	if (nParentSelectionStartPos === nElementPos)
-		this.Parent.Selection.StartPos = nParentSelectionStartPos + this.Content.Selection.StartPos;
+		this.Parent.Selection.StartPos = nParentSelectionStartPos + selectionStart;
 	else if (nParentSelectionStartPos > nElementPos)
 		this.Parent.Selection.StartPos = nParentSelectionStartPos + nCount - 1;
 
 	if (nParentSelectionEndPos === nElementPos)
-		this.Parent.Selection.EndPos = nParentSelectionEndPos + this.Content.Selection.EndPos;
+		this.Parent.Selection.EndPos = nParentSelectionEndPos + selectionEnd;
 	else if (nParentSelectionEndPos > nElementPos)
 		this.Parent.Selection.EndPos = nParentSelectionEndPos + nCount - 1;
-
-	this.Content.RemoveFromContent(0, this.Content.Content.length, false);
 };
 CBlockLevelSdt.prototype.IsTableFirstRowOnNewPage = function()
 {
@@ -1447,6 +1538,15 @@ CBlockLevelSdt.prototype.SetPr = function(oPr)
 
 	if (undefined !== oPr.Color)
 		this.SetColor(oPr.Color);
+
+	if (undefined !== oPr.DataBinding)
+		this.setDataBinding(oPr.DataBinding);
+	
+	if (oPr.BorderColor)
+		this.setBorderColor(oPr.BorderColor.Copy());
+	
+	if (oPr.ShdColor)
+		this.setShdColor(oPr.ShdColor.Copy());
 };
 /**
  * Выставляем настройки текста по умолчанию для данного контрола
@@ -1544,6 +1644,46 @@ CBlockLevelSdt.prototype.SetColor = function(oColor)
 		this.Pr.Color = oColor;
 	}
 };
+CBlockLevelSdt.prototype.GetInnerText = function()
+{
+	return this.Content.GetText({ParaSeparator : '\r\n'});
+};
+CBlockLevelSdt.prototype.SetInnerText = function(text)
+{
+	let firstParagraph = this.GetFirstParagraph();
+	
+	let textPr = firstParagraph.GetFirstRunPr();
+	let endPr  = firstParagraph.GetParaEndPr();
+	let paraPr = firstParagraph.GetDirectParaPr();
+	
+	this.Content.ClearContent(false);
+	let para = new AscWord.Paragraph();
+	let run  = new AscWord.Run();
+	run.AddText(text);
+	run.SetPr(textPr.Copy());
+	para.SetDirectParaPr(paraPr);
+	para.SetParaEndPr(endPr);
+	para.AddToContent(0, run);
+	this.Content.AddToContent(0, para);
+};
+CBlockLevelSdt.prototype.canFillWithComplexDataBindingContent = function()
+{
+	let oParent = this.Parent;
+	if (oParent instanceof CDocumentContent)
+		oParent = oParent.Parent
+	
+	// if parent element is rich text content control - skip
+	return !(oParent instanceof CBlockLevelSdt && oParent.GetSpecificType() === Asc.c_oAscContentControlSpecificType.None);
+};
+CBlockLevelSdt.prototype.fillContentWithDataBinding = function(content)
+{
+	this.Content.RemoveFromContent(0, this.Content.Content.length);
+	this.Content.AddContent(content);
+};
+CBlockLevelSdt.prototype.GetDataBinding = function ()
+{
+	return this.Pr.DataBinding;
+};
 CBlockLevelSdt.prototype.GetColor = function()
 {
 	return this.Pr.Color;
@@ -1605,7 +1745,7 @@ CBlockLevelSdt.prototype.GetSearchElementId = function(bNext, bCurrent)
 //----------------------------------------------------------------------------------------------------------------------
 CBlockLevelSdt.prototype.ClearContentControl = function()
 {
-	var oParagraph = new Paragraph(this.LogicDocument.Get_DrawingDocument(), this.Content);
+	var oParagraph = new AscWord.Paragraph(this.Content);
 	oParagraph.Correct_Content();
 
 	oParagraph.SelectAll();
@@ -1689,7 +1829,7 @@ CBlockLevelSdt.prototype.private_ReplacePlaceHolderWithContent = function(isSkip
 
 	this.Content.RemoveFromContent(0, this.Content.GetElementsCount(), false);
 
-	var oParagraph = new Paragraph(this.LogicDocument ? this.LogicDocument.GetDrawingDocument() : null, this.Content, false);
+	var oParagraph = new AscWord.Paragraph(this.Content, false);
 	oParagraph.Correct_Content();
 
 	oParagraph.SelectAll();
@@ -1733,13 +1873,13 @@ CBlockLevelSdt.prototype.private_FillPlaceholderContent = function()
 {
 	this.Content.RemoveFromContent(0, this.Content.GetElementsCount(), false);
 
-	var oLogicDocument = this.GetLogicDocument() ? this.GetLogicDocument() : editor.WordControl.m_oLogicDocument;
-	var oDocPart       = oLogicDocument.GetGlossaryDocument().GetDocPartByName(this.GetPlaceholder());
-	if (oDocPart)
+	let logicDocument = this.GetLogicDocument();
+	let docPart       = logicDocument ? logicDocument.GetGlossaryDocument().GetDocPartByName(this.GetPlaceholder()) : null;
+	if (docPart)
 	{
 		if (this.IsContentControlEquation())
 		{
-			var oFirstParagraph = oDocPart.GetFirstParagraph();
+			var oFirstParagraph = docPart.GetFirstParagraph();
 
 			var oNewParagraph = oFirstParagraph.Copy();
 			oNewParagraph.RemoveFromContent(0, oNewParagraph.GetElementsCount());
@@ -1754,15 +1894,34 @@ CBlockLevelSdt.prototype.private_FillPlaceholderContent = function()
 		}
 		else
 		{
-			for (var nIndex = 0, nCount = oDocPart.GetElementsCount(); nIndex < nCount; ++nIndex)
+			for (var nIndex = 0, nCount = docPart.GetElementsCount(); nIndex < nCount; ++nIndex)
 			{
-				this.Content.AddToContent(0, oDocPart.GetElement(nIndex).Copy());
+				this.Content.AddToContent(nIndex, docPart.GetElement(nIndex).Copy());
+			}
+			
+			// Change the color of the paragraph end mark for default placeholders
+			if (logicDocument.GetGlossaryDocument().IsDefaultDocPart(docPart)
+				&& 1 === this.Content.GetElementsCount()
+				&& this.Content.GetElement(0).IsParagraph()
+				&& !this.IsForm())
+			{
+				let para = this.Content.GetElement(0);
+				let run  = para.GetElement(0);
+				if (run && run.GetRStyle())
+					para.TextPr.SetRStyle(run.GetRStyle());
+			}
+			
+			// TODO: Need to handle numbering in placeholders
+			let allParagraph = this.Content.GetAllParagraphs();
+			for (let i = 0; i < allParagraph.length; ++i)
+			{
+				allParagraph[i].RemoveNumPr();
 			}
 		}
 	}
 	else
 	{
-		var oParagraph = new Paragraph(this.LogicDocument ? this.LogicDocument.GetDrawingDocument() : null, this.Content, false);
+		var oParagraph = new AscWord.Paragraph(this.Content, false);
 		oParagraph.Correct_Content();
 
 		oParagraph.SelectAll();
@@ -1908,9 +2067,9 @@ CBlockLevelSdt.prototype.ToggleCheckBox = function(isChecked)
 	if (undefined !== isChecked && this.Pr.CheckBox.Checked === isChecked)
 		return;
 
-	let oLogicDocument = this.GetLogicDocument();
-	if (oLogicDocument && oLogicDocument.IsDocumentEditor())
-		oLogicDocument.OnChangeForm(this);
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsDocumentEditor())
+		logicDocument.OnChangeForm(this);
 
 	if (undefined === isChecked && this.IsRadioButton() && true === this.Pr.CheckBox.Checked)
 		return;
@@ -1929,7 +2088,8 @@ CBlockLevelSdt.prototype.private_UpdateCheckBoxContent = function()
 	var isChecked = this.Pr.CheckBox.Checked;
 
 	var oRun;
-	if (this.LogicDocument && this.LogicDocument.IsTrackRevisions())
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsTrackRevisions())
 	{
 		var oFirstParagraph = this.GetFirstParagraph();
 		var oFirstRun       = oFirstParagraph ? oFirstParagraph.GetFirstRun() : null;
@@ -1944,7 +2104,7 @@ CBlockLevelSdt.prototype.private_UpdateCheckBoxContent = function()
 		var oDocContent = this.Content;
 		if (oDocContent.Content.length <= 0 || !oDocContent.Content[0].IsParagraph())
 		{
-			oFirstParagraph = new Paragraph(this.LogicDocument.GetDrawingDocument(), oDocContent);
+			oFirstParagraph = new AscWord.Paragraph(oDocContent);
 			oDocContent.AddToContent(0, oFirstParagraph);
 		}
 		else
@@ -2045,14 +2205,15 @@ CBlockLevelSdt.prototype.private_UpdatePictureContent = function(_nW, _nH)
 
 	if (!oDrawing)
 	{
-		var oDrawingObjects = this.LogicDocument ? this.LogicDocument.DrawingObjects : null;
+		let logicDocument = this.GetLogicDocument();
+		var oDrawingObjects = logicDocument ? logicDocument.DrawingObjects : null;
 		if (!oDrawingObjects)
 			return;
 
 		var nW = _nW ? _nW : 50;
 		var nH = _nH ? _nH : 50;
 
-		oDrawing   = new ParaDrawing(nW, nH, null, oDrawingObjects, this.LogicDocument, null);
+		oDrawing   = new ParaDrawing(nW, nH, null, oDrawingObjects, logicDocument, null);
 		var oImage = oDrawingObjects.createImage(AscCommon.g_sWordPlaceholderImage, 0, 0, nW, nH);
 		oImage.setParent(oDrawing);
 		oDrawing.Set_GraphicObject(oImage);
@@ -2089,14 +2250,6 @@ CBlockLevelSdt.prototype.SelectPicture = function()
 	return true;
 };
 /**
- * Проверяем является ли данный контейнер специальным для поля со списком
- * @returns {boolean}
- */
-CBlockLevelSdt.prototype.IsComboBox = function()
-{
-	return (undefined !== this.Pr.ComboBox);
-};
-/**
  * @param oPr {AscWord.CSdtComboBoxPr}
  */
 CBlockLevelSdt.prototype.SetComboBoxPr = function(oPr)
@@ -2113,14 +2266,6 @@ CBlockLevelSdt.prototype.SetComboBoxPr = function(oPr)
 CBlockLevelSdt.prototype.GetComboBoxPr = function()
 {
 	return this.Pr.ComboBox;
-};
-/**
- * Проверяем является ли данный контейнер специальным для выпадающего списка
- * @returns {boolean}
- */
-CBlockLevelSdt.prototype.IsDropDownList = function()
-{
-	return (undefined !== this.Pr.DropDown);
 };
 /**
  * @param oPr {AscWord.CSdtComboBoxPr}
@@ -2182,8 +2327,9 @@ CBlockLevelSdt.prototype.SelectListItem = function(sValue)
 		return;
 
 	var sText = oList.GetTextByValue(sValue);
-
-	if (this.LogicDocument && this.LogicDocument.IsTrackRevisions())
+	
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsTrackRevisions())
 	{
 		if (!sText && this.IsPlaceHolder())
 		{
@@ -2234,7 +2380,7 @@ CBlockLevelSdt.prototype.SelectListItem = function(sValue)
 				}
 				else
 				{
-					oParagraph = new Paragraph(this.LogicDocument.GetDrawingDocument(), this.Content);
+					oParagraph = new AscWord.Paragraph(this.Content);
 					this.Content.AddToParagraph(this.Content.length, oParagraph);
 				}
 
@@ -2276,14 +2422,6 @@ CBlockLevelSdt.prototype.private_UpdateListContent = function()
 		return null;
 
 	return oRun;
-};
-/**
- * Проверяем является ли данный контейнер специальным для даты
- * @returns {boolean}
- */
-CBlockLevelSdt.prototype.IsDatePicker = function()
-{
-	return (undefined !== this.Pr.Date);
 };
 /**
  * @param oPr {AscWord.CSdtDatePickerPr}
@@ -2332,7 +2470,8 @@ CBlockLevelSdt.prototype.private_UpdateDatePickerContent = function()
 	var oRun;
 	var sText = this.Pr.Date.ToString();
 
-	if (this.LogicDocument && this.LogicDocument.IsTrackRevisions())
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsTrackRevisions())
 	{
 		if (!sText && this.IsPlaceHolder())
 			return;
@@ -2380,7 +2519,7 @@ CBlockLevelSdt.prototype.private_UpdateDatePickerContent = function()
 				}
 				else
 				{
-					oParagraph = new Paragraph(this.LogicDocument.GetDrawingDocument(), this.Content);
+					oParagraph = new AscWord.Paragraph(this.Content);
 					this.Content.AddToParagraph(this.Content.length, oParagraph);
 				}
 
@@ -2414,8 +2553,9 @@ CBlockLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType, bChec
 	{
 		return AscCommon.CollaborativeEditing.Add_CheckLock(false);
 	}
-
-	var isCheckContentControlLock = this.LogicDocument ? this.LogicDocument.IsCheckContentControlsLock() : true;
+	
+	let logicDocument = this.GetLogicDocument();
+	var isCheckContentControlLock = logicDocument ? logicDocument.IsCheckContentControlsLock() : true;
 
 	if (AscCommon.changestype_Paragraph_TextProperties === CheckType
 		|| ((AscCommon.changestype_Drawing_Props === CheckType || AscCommon.changestype_Image_Properties === CheckType)
@@ -2456,9 +2596,9 @@ CBlockLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType, bChec
 		var bSelectedOnlyThis = false;
 		// Если это происходит на добавлении текста, тогда проверяем, что выделен только данный элемент
 
-		if (AscCommon.changestype_Remove !== CheckType && AscCommon.changestype_Delete !== CheckType)
+		if (logicDocument && AscCommon.changestype_Remove !== CheckType && AscCommon.changestype_Delete !== CheckType)
 		{
-			var oInfo = this.LogicDocument.GetSelectedElementsInfo();
+			var oInfo = logicDocument.GetSelectedElementsInfo();
 			bSelectedOnlyThis = oInfo.GetBlockLevelSdt() === this ? true : false;
 		}
 
@@ -2488,7 +2628,8 @@ CBlockLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType, bChec
 };
 CBlockLevelSdt.prototype.CheckContentControlEditingLock = function()
 {
-	var isCheckContentControlLock = this.LogicDocument ? this.LogicDocument.IsCheckContentControlsLock() : true;
+	let logicDocument = this.GetLogicDocument();
+	var isCheckContentControlLock = logicDocument ? logicDocument.IsCheckContentControlsLock() : true;
 	if (!isCheckContentControlLock)
 		return;
 
@@ -2669,8 +2810,45 @@ CBlockLevelSdt.prototype.OnContentChange = function()
 	if (this.Parent && this.Parent.OnContentChange)
 		this.Parent.OnContentChange();
 };
+CBlockLevelSdt.prototype.RemoveThisFromParent = function(updatePosition)
+{
+	let docContent = this.Parent;
+	if (!docContent)
+		return;
+	
+	let posInParent = this.GetIndex();
+	
+	let curPos = docContent.CurPos.ContentPos;
+	docContent.RemoveFromContent(posInParent, 1);
+	
+	if (updatePosition)
+	{
+		if (posInParent === curPos)
+		{
+			if (posInParent >= docContent.GetElementsCount())
+			{
+				docContent.MoveCursorToEndPos();
+			}
+			else
+			{
+				docContent.CurPos.ContentPos = Math.max(0, Math.min(docContent.GetElementsCount() - 1, posInParent));
+				docContent.Content[docContent.CurPos.ContentPos].MoveCursorToStartPos();
+			}
+		}
+		else if (posInParent < curPos)
+		{
+			docContent.CurPos.ContentPos = Math.max(0, Math.min(docContent.GetElementsCount() - 1, curPos - 1));
+		}
+	}
+};
+CBlockLevelSdt.prototype.GetAllSectPrParagraphs = function(paragraphs)
+{
+	return this.Content.GetAllSectPrParagraphs(paragraphs);
+};
+
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CBlockLevelSdt = CBlockLevelSdt;
 window['AscCommonWord'].type_BlockLevelSdt = type_BlockLevelSdt;
 window["AscWord"].CBlockLevelSdt = CBlockLevelSdt;
+window["AscWord"].BlockLevelSdt = CBlockLevelSdt;

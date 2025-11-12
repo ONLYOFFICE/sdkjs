@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -38,7 +38,7 @@ var global_MatrixTransformer = AscCommon.global_MatrixTransformer;
 
 CTable.prototype.ReDraw = function()
 {
-    this.Parent.OnContentReDraw( this.Get_StartPage_Absolute(), this.Get_StartPage_Absolute() + this.Pages.length - 1 );
+    this.Parent.OnContentReDraw( this.GetAbsoluteStartPage(), this.GetAbsoluteStartPage() + this.Pages.length - 1 );
 };
 CTable.prototype.Draw = function(CurPage, pGraphics, isDrawContent)
 {
@@ -119,7 +119,7 @@ CTable.prototype.private_DrawTableBackgroundAndOuterBorder = function(pGraphics,
     var Y_bottom = this.Pages[PNum].Bounds.Top;
 
     var LockType = this.Lock.Get_Type();
-    if ( AscCommon.locktype_None != LockType )
+    if (AscCommon.c_oAscLockTypes.kLockTypeNone != LockType && pGraphics.isSupportEditFeatures())
     {
         pGraphics.DrawLockObjectRect(this.Lock.Get_Type(), this.Pages[PNum].Bounds.Left, this.Pages[PNum].Bounds.Top, this.Pages[PNum].Bounds.Right - this.Pages[PNum].Bounds.Left, this.Pages[PNum].Bounds.Bottom - this.Pages[PNum].Bounds.Top );
     }
@@ -145,21 +145,15 @@ CTable.prototype.private_DrawTableBackgroundAndOuterBorder = function(pGraphics,
     var bHeader = false;
     if(this.bPresentation)
     {
-        var Row         = this.Content[0];
-        var CellSpacing = Row.Get_CellSpacing();
-        var CellsCount  = Row.Get_CellsCount();
-        var X_left_new  = Page.X + Row.Get_CellInfo(0).X_grid_start;
-        var X_right_new = Page.X + Row.Get_CellInfo(CellsCount - 1).X_grid_end;
-        pGraphics.SaveGrState();
-        pGraphics.SetIntegerGrid(false);
-        var ShapeDrawer = new AscCommon.CShapeDrawer();
-        TableShd.Unifill && TableShd.Unifill.check(this.Get_Theme(), this.Get_ColorMap());
-        var Transform = this.Parent.transform.CreateDublicate();
-        global_MatrixTransformer.TranslateAppend(Transform, Math.min(X_left_new, X_right_new), Math.min(Y_top, Y_bottom));
-        pGraphics.transform3(Transform, false);
-        ShapeDrawer.fromShape2(new AscFormat.ObjectToDraw(TableShd.Unifill, null, Math.abs(X_right_new - X_left_new), Math.abs(this.Pages[0].Bounds.Bottom - Y_top), null, Transform), pGraphics, null);
-        ShapeDrawer.draw(null);
-        pGraphics.RestoreGrState();
+        let Row         = this.Content[0];
+        let CellsCount  = Row.Get_CellsCount();
+        let X_left_new  = Page.X + Row.Get_CellInfo(0).X_grid_start;
+        let X_right_new = Page.X + Row.Get_CellInfo(CellsCount - 1).X_grid_end;
+		let XCell = Math.min(X_left_new, X_right_new);
+		let YCell = Math.min(Y_top, Y_bottom);
+		let WCell = Math.abs(X_right_new - X_left_new);
+		let HCell = Math.abs(this.Pages[0].Bounds.Bottom - Y_top);
+		this.private_DrawCellBackgroundPresentation(pGraphics, XCell, YCell, WCell, HCell, TableShd.Unifill, this.Get_Theme(), this.Get_ColorMap());
     }
 
 	var arrFrames = Asc.c_oAscShdNil !== TableShd.Value ? this.private_GetTableCellsBackgroundFrames(CurPage, Row_start, Row_last) : [];
@@ -422,6 +416,23 @@ CTable.prototype.private_DrawRowOuterBorder = function(pGraphics, TableBorders, 
 		}
 	}
 };
+CTable.prototype.private_DrawCellBackgroundPresentation = function (pGraphics, X, Y, W, H, Unifill, Theme, ColorMap)
+{
+	if(Unifill && Unifill.fill)
+	{
+		let ShapeDrawer = new AscCommon.CShapeDrawer();
+		Unifill.check(Theme, ColorMap);
+		let Transform = this.Parent.transform;
+		let CellMatrix = new AscCommon.CMatrix();
+		global_MatrixTransformer.TranslateAppend(CellMatrix, X, Y);
+		global_MatrixTransformer.MultiplyAppend(CellMatrix, Transform);
+		pGraphics.SaveGrState();
+		pGraphics.transform3(CellMatrix, false);
+		ShapeDrawer.fromShape2(new AscFormat.ObjectToDraw(Unifill, null, W, H, null, CellMatrix), pGraphics, null);
+		ShapeDrawer.draw(null);
+		pGraphics.RestoreGrState();
+	}
+};
 CTable.prototype.private_DrawCellsBackground = function(pGraphics, PNum, Row_start, Row_last)
 {
     var CurPage = PNum;
@@ -430,11 +441,6 @@ CTable.prototype.private_DrawCellsBackground = function(pGraphics, PNum, Row_sta
     // Рисуем заливку всех ячеек на странице
     var Theme = this.Get_Theme();
     var ColorMap = this.Get_ColorMap();
-    if(this.bPresentation)
-    {
-        pGraphics.SaveGrState();
-        pGraphics.SetIntegerGrid(false);
-    }
     if ( this.HeaderInfo.Count > 0 && PNum > this.HeaderInfo.PageIndex && true === this.HeaderInfo.Pages[PNum].Draw )
     {
         var HeaderPage = this.HeaderInfo.Pages[PNum];
@@ -485,34 +491,11 @@ CTable.prototype.private_DrawCellsBackground = function(pGraphics, PNum, Row_sta
                 }
                 else
                 {
-                    if(CellShd.Unifill && CellShd.Unifill.fill)
-                    {
-                        //if(CellShd.Unifill.fill.type === FILL_TYPE_SOLID)
-                        //{
-                        //    var Alpha, RGBA = CellShd.Get_Color3(Theme, ColorMap);
-                        //    if(AscFormat.isRealNumber(CellShd.Unifill.transparent))
-                        //    {
-                        //        Alpha = CellShd.Unifill.transparent;
-                        //    }
-                        //    else
-                        //    {
-                        //        Alpha = 255;
-                        //    }
-                        //    pGraphics.b_color1( RGBA.R, RGBA.G, RGBA.B, Alpha );
-                        //    pGraphics.TableRect(Math.min(X_cell_start, X_cell_end), Math.min(Y, Y + RealHeight), Math.abs(X_cell_end - X_cell_start), Math.abs(RealHeight));
-                        //}
-                        //else TODO: Сделать нормальную отрисовку.
-                        {
-                            var ShapeDrawer = new AscCommon.CShapeDrawer();
-                            CellShd.Unifill.check(Theme, ColorMap);
-                            var Transform = this.Parent.transform.CreateDublicate();
-                            global_MatrixTransformer.TranslateAppend(Transform, Math.min(X_cell_start, X_cell_end), Math.min(Y, Y + RealHeight));
-
-                            pGraphics.transform3(Transform, false);
-                            ShapeDrawer.fromShape2(new AscFormat.ObjectToDraw(CellShd.Unifill, null, Math.abs(X_cell_end - X_cell_start), Math.abs(RealHeight), null, Transform), pGraphics, null);
-                            ShapeDrawer.draw(null);
-                        }
-                    }
+					let XCell = Math.min(X_cell_start, X_cell_end);
+					let YCell = Math.min(Y, Y + RealHeight);
+					let WCell = Math.abs(X_cell_end - X_cell_start);
+					let HCell = Math.abs(RealHeight);
+					this.private_DrawCellBackgroundPresentation(pGraphics, XCell, YCell, WCell, HCell, CellShd.Unifill, Theme, ColorMap);
                 }
             }
         }
@@ -594,51 +577,22 @@ CTable.prototype.private_DrawCellsBackground = function(pGraphics, PNum, Row_sta
 				}
                 else
                 {
-                    if(CellShd.Unifill && CellShd.Unifill.fill)
-                    {
-                        //if(CellShd.Unifill.fill.type === FILL_TYPE_SOLID)
-                        //{
-                        //    var Alpha, RGBA = CellShd.Get_Color3(Theme, ColorMap);
-                        //    if(AscFormat.isRealNumber(CellShd.Unifill.transparent))
-                        //    {
-                        //        Alpha = CellShd.Unifill.transparent;
-                        //    }
-                        //    else
-                        //    {
-                        //        Alpha = 255;
-                        //    }
-                        //    pGraphics.b_color1( RGBA.R, RGBA.G, RGBA.B, Alpha );
-                        //    pGraphics.TableRect(Math.min(X_cell_start, X_cell_end), Math.min(Y, Y + RealHeight), Math.abs(X_cell_end - X_cell_start), Math.abs(RealHeight));
-                        //}
-                        //else TODO: Сделать нормальную отрисовку.
-                        {
-                            var ShapeDrawer = new AscCommon.CShapeDrawer();
-                            CellShd.Unifill.check(Theme, ColorMap);
-                            var Transform = this.Parent.transform.CreateDublicate();
-                            global_MatrixTransformer.TranslateAppend(Transform, Math.min(X_cell_start, X_cell_end), Math.min(Y, Y + RealHeight));
-                            pGraphics.transform3(Transform, false);
-                            ShapeDrawer.fromShape2(new AscFormat.ObjectToDraw(CellShd.Unifill, null, Math.abs(X_cell_end - X_cell_start), Math.abs(RealHeight), null, Transform), pGraphics, null);
-                            ShapeDrawer.draw(null);
-                        }
-                    }
+					let XCell = Math.min(X_cell_start, X_cell_end);
+					let YCell = Math.min(Y, Y + RealHeight);
+					let WCell = Math.abs(X_cell_end - X_cell_start);
+					let HCell = Math.abs(RealHeight);
+					this.private_DrawCellBackgroundPresentation(pGraphics, XCell, YCell, WCell, HCell, CellShd.Unifill, Theme, ColorMap);
                 }
             }
         }
-    }
-
-    if(this.bPresentation)
-    {
-        pGraphics.RestoreGrState();
     }
 };
 CTable.prototype.private_DrawCellsContent = function(pGraphics, PNum, Row_start, Row_last)
 {
     if ( this.HeaderInfo.Count > 0 && PNum > this.HeaderInfo.PageIndex && true === this.HeaderInfo.Pages[PNum].Draw )
     {
-        if(pGraphics.Start_Command)
-        {
-            pGraphics.Start_Command(AscFormat.DRAW_COMMAND_TABLE_ROW);
-        }
+        pGraphics.Start_Command(AscFormat.DRAW_COMMAND_TABLE_ROW);
+
         var HeaderPage = this.HeaderInfo.Pages[PNum];
         for ( var CurRow = 0; CurRow < this.HeaderInfo.Count; CurRow++ )
         {
@@ -657,10 +611,8 @@ CTable.prototype.private_DrawCellsContent = function(pGraphics, PNum, Row_start,
                 Cell.Content_Draw(PNum, pGraphics);
             }
         }
-        if(pGraphics.End_Command)
-        {
-            pGraphics.End_Command();
-        }
+
+		pGraphics.End_Command();
     }
 
     // Рисуем содержимое всех ячеек. Его рисуем в нормальном порядке, потому что некоторые элементы
@@ -670,10 +622,8 @@ CTable.prototype.private_DrawCellsContent = function(pGraphics, PNum, Row_start,
         var Row = this.Content[CurRow];
         var CellsCount = Row.Get_CellsCount();
 
-        if(pGraphics.Start_Command)
-        {
-            pGraphics.Start_Command(AscFormat.DRAW_COMMAND_TABLE_ROW);
-        }
+        pGraphics.Start_Command(AscFormat.DRAW_COMMAND_TABLE_ROW);
+
         for ( var CurCell = 0; CurCell < CellsCount; CurCell++ )
         {
             var Cell = Row.Get_Cell( CurCell );
@@ -703,10 +653,7 @@ CTable.prototype.private_DrawCellsContent = function(pGraphics, PNum, Row_start,
             Cell.Content_Draw(PNum, pGraphics);
         }
 
-        if(pGraphics.End_Command)
-        {
-            pGraphics.End_Command();
-        }
+        pGraphics.End_Command();
     }
 };
 CTable.prototype.private_DrawCellsBorders = function(pGraphics, PNum, Row_start, Row_last)

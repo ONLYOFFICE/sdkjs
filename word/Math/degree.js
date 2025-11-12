@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -35,36 +35,48 @@
 // Import
 var g_oTextMeasurer = AscCommon.g_oTextMeasurer;
 
-function CMathDegreePr()
+function CMathDegreePr(ctrPr)
 {
-    this.type = DEGREE_SUPERSCRIPT;
+	this.type	= DEGREE_SUPERSCRIPT;
+	this.ctrPr	= new CMathCtrlPr(ctrPr);
 }
-
+CMathDegreePr.prototype.GetRPr = function ()
+{
+	return this.ctrPr.GetRPr();
+}
 CMathDegreePr.prototype.Set_FromObject = function(Obj)
 {
     if (DEGREE_SUPERSCRIPT === Obj.type || DEGREE_SUBSCRIPT === Obj.type)
         this.type = Obj.type;
     else
         this.type = DEGREE_SUPERSCRIPT;
-};
 
+	this.ctrPr.SetRPr(Obj.ctrPrp);
+};
 CMathDegreePr.prototype.Copy = function()
 {
     var NewPr = new CMathDegreePr();
     NewPr.type = this.type;
+	NewPr.ctrPr   = this.ctrPr;
     return NewPr;
 };
-
 CMathDegreePr.prototype.Write_ToBinary = function(Writer)
 {
     // Long : type
     Writer.WriteLong(this.type);
-};
 
+	Writer.WriteBool(true);
+	this.ctrPr.Write_ToBinary(Writer);
+};
 CMathDegreePr.prototype.Read_FromBinary = function(Reader)
 {
     // Long : type
     this.type = Reader.GetLong(Reader);
+
+	if (Reader.GetBool())
+	{
+		this.ctrPr.Read_FromBinary(Reader);
+	}
 };
 
 /**
@@ -78,18 +90,18 @@ function CDegreeBase(props, bInside)
 {
 	CMathBase.call(this, bInside);
 
-    this.upBase = 0; // отступ сверху для основания
-    this.upIter = 0; // отступ сверху для итератора
+	this.upBase = 0; // отступ сверху для основания
+	this.upIter = 0; // отступ сверху для итератора
 
-    this.Pr = new CMathDegreePr();
+	this.Pr = new CMathDegreePr(this.CtrPrp);
 
-    this.baseContent = null;
-    this.iterContent = null;
+	this.baseContent = null;
+	this.iterContent = null;
 
-    this.bNaryInline = false;
+	this.bNaryInline = false;
 
-    if(props !== null && typeof(props) !== "undefined")
-        this.init(props);
+	if(props !== null && typeof(props) !== "undefined")
+		this.init(props);
 }
 CDegreeBase.prototype = Object.create(CMathBase.prototype);
 CDegreeBase.prototype.constructor = CDegreeBase;
@@ -541,57 +553,43 @@ CDegree.prototype.Can_ModifyArgSize = function()
 {
     return this.CurPos == 1 && false === this.Is_SelectInside(); // находимся в итераторе
 };
-CDegree.prototype.GetTextOfElement = function(isLaTeX) {
-	var strTemp = "";
-	var strTypeOfScript = this.Pr.type === 1 ? '^' : '_';
-	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX);
-	var strIterator = this.getIterator().GetMultipleContentForGetText(isLaTeX);
+CDegree.prototype.GetTextOfElement = function(oMathText)
+{
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
-	if (isLaTeX)
-    {
-		switch (strBase) {
-			case 'cos':
-			case 'sin':
-			case 'tan':
-			case 'sec':
-			case 'cot':
-			case 'csc':
-			case 'arcsin':
-			case 'arccos':
-			case 'arctan':
-			case 'arcsec':
-			case 'arccot':
-			case 'arccsc':
-			case 'sinh':
-			case 'cosh':
-			case 'tanh':
-			case 'coth':
-			case 'sech':
-			case 'csch':
-			case 'srcsinh':
-			case 'arctanh':
-			case 'arcsech':
-			case 'arccosh':
-			case 'arccoth':
-			case 'arccsch':
-			case 'log':
-			case 'lim':
-			case 'ln':
-			case 'max':
-			case 'min':
-			case 'exp': strBase = '\\'+ strBase; break;
-			default: break;
-		}
-        
-		strTemp = strBase.trim() + strTypeOfScript + strIterator;
-	}
-    else
-    {
-		strTemp = strBase + strTypeOfScript + strIterator + " ";
-	}
-	return strTemp;
+	let oBase           = this.getBase();
+	let oIterator       = this.getIterator();
+
+	if (oMathText.IsLaTeX())
+		oMathText.SetNotWrap();
+
+	oMathText.Add(oBase, true, oMathText.IsLaTeX() ? 1 : undefined);
+	oMathText.AddText(new AscMath.MathText(this.Pr.type === 1 ? "^" : "_", this));
+	oMathText.SetGlobalStyle(this);
+	oMathText.Add(oIterator, true, oMathText.IsLaTeX() ? 1 : undefined);
+
+	return oMathText;
 };
+CDegree.fromMathMLContentMarkup = function (reader, base, sub, type)
+{
+	let text		= reader.GetText();
+	let props		= new CMathDegreePr();
 
+	props.type		= type;
+	props.content	= [
+		AscWord.ParaMath.createContentFromText(sub ? sub : text),
+		AscWord.ParaMath.createContentFromText(base)
+	];
+
+	let textOfBase = props.content[0].GetTextOfElement().GetText();
+	if (AscMath.MathLiterals.nary.SearchU(textOfBase))
+	{
+		let nary = new AscMath.Nary.fromMathMLSubSup(props, false, false);
+		return nary;
+	}
+
+	return new AscMath.Degree(props);
+};
 /**
  *
  * @param iterUp
@@ -692,12 +690,16 @@ CIterators.prototype.setPosition = function(pos, PosInfo)
     pos.x += this.size.width;
 };
 
-function CMathDegreeSubSupPr()
+function CMathDegreeSubSupPr(ctrPr)
 {
-    this.type   = DEGREE_SubSup;
-    this.alnScr = false;// не выровнены, итераторы идут в соответствии с наклоном буквы/мат. объекта
+	this.type	= DEGREE_SubSup;
+	this.alnScr	= false;// не выровнены, итераторы идут в соответствии с наклоном буквы/мат. объекта
+	this.ctrPr	= new CMathCtrlPr(ctrPr);
 }
-
+CMathDegreeSubSupPr.prototype.GetRPr = function ()
+{
+	return this.ctrPr.GetRPr();
+}
 CMathDegreeSubSupPr.prototype.Set_FromObject = function(Obj)
 {
     if (true === Obj.alnScr || 1 === Obj.alnScr)
@@ -707,18 +709,19 @@ CMathDegreeSubSupPr.prototype.Set_FromObject = function(Obj)
 
     if (DEGREE_SubSup === Obj.type || DEGREE_PreSubSup === Obj.type)
         this.type = Obj.type;
-};
 
+	this.ctrPr.SetRPr(Obj.ctrPrp);
+};
 CMathDegreeSubSupPr.prototype.Copy = function()
 {
     var NewPr = new CMathDegreeSubSupPr();
 
     NewPr.type   = this.type;
     NewPr.alnScr = this.alnScr;
+    NewPr.ctrPr = this.ctrPr;
 
     return NewPr;
 };
-
 CMathDegreeSubSupPr.prototype.Write_ToBinary = function(Writer)
 {
     // Long : type
@@ -726,8 +729,10 @@ CMathDegreeSubSupPr.prototype.Write_ToBinary = function(Writer)
 
     Writer.WriteLong(this.type);
     Writer.WriteBool(this.alnScr);
-};
 
+	Writer.WriteBool(true);
+	this.ctrPr.Write_ToBinary(Writer);
+};
 CMathDegreeSubSupPr.prototype.Read_FromBinary = function(Reader)
 {
     // Long : type
@@ -735,6 +740,11 @@ CMathDegreeSubSupPr.prototype.Read_FromBinary = function(Reader)
 
     this.type   = Reader.GetLong();
     this.alnScr = Reader.GetBool();
+
+	if (Reader.GetBool())
+	{
+		this.ctrPr.Read_FromBinary(Reader);
+	}
 };
 
 /**
@@ -748,15 +758,15 @@ function CDegreeSubSupBase(props, bInside)
 {
 	CMathBase.call(this, bInside);
 
-    this.bNaryInline = false;
+	this.bNaryInline = false;
 
-    this.Pr = new CMathDegreeSubSupPr();
+	this.Pr = new CMathDegreeSubSupPr(this.CtrPrp);
 
-    this.baseContent = null;
-    this.iters       = new CIterators(null, null);
+	this.baseContent = null;
+	this.iters       = new CIterators(null, null);
 
-    if(props !== null && typeof(props) !== "undefined")
-        this.init(props);
+	if(props !== null && typeof(props) !== "undefined")
+		this.init(props);
 }
 CDegreeSubSupBase.prototype = Object.create(CMathBase.prototype);
 CDegreeSubSupBase.prototype.constructor = CDegreeSubSupBase;
@@ -1245,39 +1255,52 @@ CDegreeSubSup.prototype.Can_ModifyArgSize = function()
 {
     return this.CurPos !== 0 && false === this.Is_SelectInside(); // находимся в итераторе
 };
-CDegreeSubSup.prototype.GetTextOfElement = function(isLaTeX)
+CDegreeSubSup.prototype.GetTextOfElement = function(oMathText)
 {
-	let strTemp = "";
-	let Base = this.getBase().GetMultipleContentForGetText(isLaTeX);
-	let strLower = this.getLowerIterator().GetMultipleContentForGetText(isLaTeX);
-	let strUpper = this.getUpperIterator().GetMultipleContentForGetText(isLaTeX);
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
-	let isPreScript = this.Pr.type === -1;
-	
-    if (isLaTeX)
-    {
-		if(strLower.length === 0 || strLower === '⬚')
-			strLower = '{}'
-		if(strUpper.length === 0 || strUpper === '⬚')
-			strUpper = '{}'
+	let oBase					= this.getBase();
+	let oLowerIterator			= this.getLowerIterator();
+	let oUpperIterator			= this.getUpperIterator();
+	let isPreScript				= this.Pr.type === -1;
 
-		if (true === isPreScript)
-			strTemp = '{' + '_' + strLower + '^' + strUpper + '}' + Base;
-        else
-			strTemp = Base + '_' + strLower + '^' + strUpper;
+	if (isPreScript)
+	{
+		let oPosLowerIterator	= oMathText.Add(oLowerIterator, true);
+		let oPosUpperIterator	= oMathText.Add(oUpperIterator, true);
+		let oPosBase			= oMathText.Add(oBase, true, false);
+
+		if (oMathText.IsLaTeX())
+		{
+			oMathText.AddBefore(oPosLowerIterator,	new AscMath.MathText( "{_" , oBase));
+			oMathText.AddAfter(oPosLowerIterator,	new AscMath.MathText( "^" , oBase));
+			oMathText.AddAfter(oPosUpperIterator,	new AscMath.MathText( "}" , oBase));
+		}
+		else
+		{
+			oMathText.AddBefore(oPosLowerIterator,	new AscMath.MathText( "(_" , oBase));
+			oMathText.AddAfter(oPosLowerIterator,	new AscMath.MathText( "^" , oBase));
+			oMathText.AddAfter(oPosUpperIterator,	new AscMath.MathText( ")" , oBase));
+		}
 	}
-    else
-    {
+	else
+	{
+		if (oMathText.IsLaTeX())
+			oMathText.SetNotWrap();
 
-		if (true === isPreScript)
-			strTemp = '(' + '_' + strLower + '^' + strUpper + ')' + Base;
-        else {
-            strTemp = Base + '_' + strLower + '^' + strUpper;
-        }
+		oMathText.Add(oBase, true, 1);
+		oMathText.AddText(new AscMath.MathText("_", oLowerIterator));
 
-        strTemp += " ";
+		oMathText.SetGlobalStyle(oLowerIterator);
+		oMathText.Add(oLowerIterator, true, oMathText.IsLaTeX() ? 1 : undefined);
+
+		oMathText.AddText(new AscMath.MathText("^", oUpperIterator));
+
+		oMathText.SetGlobalStyle(oUpperIterator);
+		oMathText.Add(oUpperIterator, true, oMathText.IsLaTeX() ? 1 : undefined);
 	}
-	return strTemp;
+
+	return oMathText;
 };
 
 /**
@@ -1311,3 +1334,6 @@ window['AscCommonWord'].CDegree = CDegree;
 window["CMathMenuScript"] = CMathMenuScript;
 CMathMenuScript.prototype["get_ScriptType"] = CMathMenuScript.prototype.get_ScriptType;
 CMathMenuScript.prototype["put_ScriptType"] = CMathMenuScript.prototype.put_ScriptType;
+
+AscMath.Degree = CDegree;
+AscMath.DegreeSubSup = CDegreeSubSup;

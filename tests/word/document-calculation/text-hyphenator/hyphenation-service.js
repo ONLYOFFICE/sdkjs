@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -67,8 +67,8 @@ const AscHyphenation = {};
 			return [1];
 		else if ("abbbb" === checkString)
 			return [1];
-		else if ("aaabbb" === checkString)
-			return [3];
+		else if ("aaaaabbb" === checkString)
+			return [5];
 		else if ("testtest" === checkString)
 			return [4];
 		else if ("aabbbcccdddd" === checkString)

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -40,8 +40,7 @@
 
     // Import
     var isRealObject = AscCommon.isRealObject;
-    var History = AscCommon.History;
-
+    
 //-----------------------------
 
     AscDFH.changesFactory[AscDFH.historyitem_TextBodySetParent] = AscDFH.CChangesDrawingsObject;
@@ -169,7 +168,7 @@
         return null;
     };
     CTextBody.prototype.setBodyPr = function(pr) {
-        History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_TextBodySetBodyPr, this.bodyPr, pr));
+        AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_TextBodySetBodyPr, this.bodyPr, pr));
         this.bodyPr = pr;
         var oParent = this.parent;
         if(oParent) {
@@ -190,11 +189,11 @@
         }
     };
     CTextBody.prototype.setContent = function(pr) {
-        History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_TextBodySetContent, this.content, pr));
+        AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_TextBodySetContent, this.content, pr));
         this.content = pr;
     };
     CTextBody.prototype.setLstStyle = function(lstStyle) {
-        History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_TextBodySetLstStyle, this.lstStyle, lstStyle));
+        AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_TextBodySetLstStyle, this.lstStyle, lstStyle));
         this.lstStyle = lstStyle;
     };
     CTextBody.prototype.recalculate = function() {
@@ -233,6 +232,11 @@
             if(Data.Type === AscDFH.historyitem_TextBodySetBodyPr) {
                 this.recalcInfo.recalculateBodyPr = true;
             }
+            if(Data.Type === AscDFH.historyitem_TextBodySetLstStyle) {
+                if(this.content) {
+                    this.content.Recalc_AllParagraphs_CompiledPr();
+                }
+            }
         }
     };
     CTextBody.prototype.isEmpty = function() {
@@ -243,16 +247,16 @@
             this.parent.OnContentReDraw();
         }
     };
-    CTextBody.prototype.Get_StartPage_Absolute = function() {
+    CTextBody.prototype.GetAbsoluteStartPage = function() {
         return 0;//TODO;
     };
-    CTextBody.prototype.Get_AbsolutePage = function(CurPage) {
-        if(this.parent && this.parent.Get_AbsolutePage) {
-            return this.parent.Get_AbsolutePage();
+    CTextBody.prototype.GetAbsolutePage = function(CurPage) {
+        if(this.parent && this.parent.GetAbsolutePage) {
+            return this.parent.GetAbsolutePage(CurPage);
         }
         return 0;//TODO;
     };
-    CTextBody.prototype.Get_AbsoluteColumn = function(CurPage) {
+    CTextBody.prototype.GetAbsoluteColumn = function(CurPage) {
         return 0;//TODO;
     };
     CTextBody.prototype.Get_TextBackGroundColor = function() {
@@ -273,7 +277,10 @@
 
         return false;
     };
-    CTextBody.prototype.Get_PageContentStartPos = function(pageNum) {
+    CTextBody.prototype.GetPageContentFrame = function(page, sectPr){
+        return {X: 0, Y: 0, XLimit: this.contentWidth, YLimit: 20000};
+    };
+    CTextBody.prototype.GetColumnContentFrame = function(page, column, sectPr){
         return {X: 0, Y: 0, XLimit: this.contentWidth, YLimit: 20000};
     };
     CTextBody.prototype.Get_Numbering = function() {
@@ -318,8 +325,8 @@
     };
     CTextBody.prototype.draw = function(graphics) {
         if((!this.content || this.content.Is_Empty()) && !AscCommon.IsShapeToImageConverter && this.parent.isEmptyPlaceholder() && !this.checkCurrentPlaceholder()) {
-            if(graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true && this.content2 && !graphics.RENDERER_PDF_FLAG) {
-                if(graphics.IsNoSupportTextDraw) {
+            if(/*AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN || */graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true && this.content2 && !graphics.isPdf()) {
+                if(!graphics.isSupportTextDraw()) {
                     let _w2 = this.content2.XLimit;
                     let _h2 = this.content2.GetSummaryHeight();
                     graphics.rect(this.content2.X, this.content2.Y, _w2, _h2);
@@ -331,10 +338,18 @@
             }
         }
         else if(this.content) {
-            if(graphics.IsNoSupportTextDraw) {
+            if(!graphics.isSupportTextDraw()) {
                 let bEmpty = this.content.IsEmpty();
-                let _w = bEmpty ? 0.1 : this.content.XLimit;
-                let _h = this.content.GetSummaryHeight();
+								let _w;
+								let _h;
+								if (this.parent && this.parent.isControl()) {
+									const oBounds = this.content.GetContentBounds(this.GetAbsoluteStartPage());
+									_w = bEmpty ? 0.1 : oBounds.Right - oBounds.Left;
+									_h = oBounds.Bottom - oBounds.Top;
+								} else {
+									_w = bEmpty ? 0.1 : this.content.XLimit;
+									_h = this.content.GetSummaryHeight();
+								}
                 graphics.rect(this.content.X, this.content.Y, _w, _h);
 				return;
             }
@@ -453,15 +468,19 @@
     };
     CTextBody.prototype.checkContentFit = function(sText) {
         var oContent = this.content;
-        if(!oContent.Is_Empty()) {
-            var oFirstPara = oContent.Content[0];
-            oFirstPara.Content = [oFirstPara.Content[oFirstPara.Content.length - 1]];
-        }
-        AscFormat.AddToContentFromString(oContent, sText);
+        this.replaceContentFitText(sText);
         AscFormat.CShape.prototype.recalculateContent.call(this.parent);
         var oFirstParagraph = oContent.Content[0];
         return oFirstParagraph.Lines.length === 1;
     };
+	CTextBody.prototype.replaceContentFitText = function (sText) {
+		var oContent = this.content;
+		if(!oContent.Is_Empty()) {
+			var oFirstPara = oContent.Content[0];
+			oFirstPara.Content = [oFirstPara.Content[oFirstPara.Content.length - 1]];
+		}
+		AscFormat.AddToContentFromString(oContent, sText);
+	};
     CTextBody.prototype.recalculateOneString = function(sText) {
         if(this.checkContentFit(sText)) {
             this.bFit = true;
@@ -542,7 +561,7 @@
         return max_width;
     };
     CTextBody.prototype.getMaxContentWidth = function(maxWidth, bLeft) {
-        this.content.Reset(0, 0, maxWidth - 0.01, 20000);
+        this.content.Reset(0, 0, maxWidth, 20000);
         if(bLeft) {
             this.content.SetApplyToAll(true);
             this.content.SetParagraphAlign(AscCommon.align_Left);
@@ -557,7 +576,7 @@
                     max_width = paragraph_lines[j].Ranges[0].W;
             }
         }
-        return max_width + 0.01;
+        return Math.max(max_width, 0.01);
     };
     CTextBody.prototype.GetPrevElementEndInfo = function(CurElement) {
         return null;
@@ -595,6 +614,12 @@
         }
         oParagraph.Set_DocumentIndex(0); //TODO: ?
         return oParagraph.Pr;
+    };
+    CTextBody.prototype.getDrawingDocument = function() {
+        return Asc.editor.getDrawingDocument();
+    };
+    CTextBody.prototype.GetParent = function() {
+        return this.parent;
     };
 
     function GetContentOneStringSizes(oContent) {

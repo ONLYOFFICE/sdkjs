@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -35,18 +35,19 @@
 (function(window)
 {
 	const ComplexFormType = {
-		Custom    : 0,
-		Telephone : 1,
-		Email     : 2,
+		Custom          : 0,
+		Telephone       : 1,
+		Email           : 2,
+		LabeledCheckBox : 3
 	};
 
 	/**
 	 *
 	 * @constructor
 	 */
-	function CSdtComplexFormPr()
+	function CSdtComplexFormPr(type)
 	{
-		this.Type = ComplexFormType.Custom;
+		this.Type = undefined !== type ? type : ComplexFormType.Custom;
 	}
 	CSdtComplexFormPr.prototype.Copy = function()
 	{
@@ -63,21 +64,34 @@
 	{
 		return this.Type;
 	};
-	CSdtComplexFormPr.prototype.WriteToBinary = function(oWriter)
+	CSdtComplexFormPr.prototype.Write_ToBinary = function(writer)
 	{
-		oWriter.WriteLong(this.Type);
+		this.WriteToBinary(writer);
 	};
-	CSdtComplexFormPr.prototype.ReadFromBinary = function(oReader)
+	CSdtComplexFormPr.prototype.Read_FromBinary = function(reader)
 	{
-		this.Type = oReader.GetLong();
+		this.ReadFromBinary(reader);
+	};
+	CSdtComplexFormPr.prototype.WriteToBinary = function(writer)
+	{
+		writer.WriteLong(this.Type);
+	};
+	CSdtComplexFormPr.prototype.ReadFromBinary = function(reader)
+	{
+		this.Type = reader.GetLong();
+	};
+	CSdtComplexFormPr.prototype.IsLabeledCheckBox = function()
+	{
+		return this.Type === ComplexFormType.LabeledCheckBox;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CSdtComplexFormPr = CSdtComplexFormPr
 
 	let exportPrototype          = window['Asc']['ComplexFormType'] = window['Asc'].ComplexFormType = ComplexFormType;
-	exportPrototype['Custom']    = exportPrototype.Custom;
-	exportPrototype['Telephone'] = exportPrototype.Telephone;
-	exportPrototype['Email']     = exportPrototype.Email;
+	exportPrototype['Custom']          = exportPrototype.Custom;
+	exportPrototype['Telephone']       = exportPrototype.Telephone;
+	exportPrototype['Email']           = exportPrototype.Email;
+	exportPrototype['LabeledCheckBox'] = exportPrototype.LabeledCheckBox;
 
 })(window);

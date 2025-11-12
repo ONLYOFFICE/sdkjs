@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -42,6 +42,7 @@ var AscCommon;
 var AscCommonWord;
 var AscCommonExcel;
 var AscCommonSlide;
+var AscVisio;
 var AscBuilder;
 var AscWord;
 var AscMath;
@@ -49,6 +50,9 @@ var AscJsonConverter;
 var AscCrypto;
 var AscOForm;
 var AscHyphenation;
+var AscGeometry;
+var AscPDF;
+var AscBidi;
 
 function jq(){}
 function DE(){}
@@ -85,3 +89,6 @@ WebAssembly.Memory;
 function grow(){}
 
 var VBArray;
+
+var CreateEmbedObject;
+var FreeEmbedObject;

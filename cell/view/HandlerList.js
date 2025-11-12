@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -63,7 +63,9 @@
 			}
 			if (t === "array") {
 				for (i = 0; i < h.length; i += 1) {
-					if (asc_typeOf(h[i]) === "function") {h[i].apply(this, a);}
+					if (asc_typeOf(h[i]) === "function") {
+						h[i].apply(this, a);
+					}
 				}
 				return true;
 			}
@@ -78,7 +80,9 @@
 				t = asc_typeOf(old);
 				if (t !== "array") {
 					h = th[eventName] = [];
-					if (t === "function") {h.push(old);}
+					if (t === "function") {
+						h.push(old);
+					}
 				}
 				h.push(eventHandler);
 			}

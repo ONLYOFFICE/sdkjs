@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -57,6 +57,8 @@ function CDocumentContentElementBase(oParent)
 	this.PageNum      = 0;
 	this.ColumnNum    = 0;
 	this.ColumnsCount = 0;
+	this.SectionNum   = 0;
+	this.Sections     = [];
 	this.UseXLimit    = true;
 	this.UseYLimit    = true;
 }
@@ -133,6 +135,16 @@ CDocumentContentElementBase.prototype.GetPrevDocumentElement = function()
 
 	return oPrev;
 };
+CDocumentContentElementBase.prototype.GetNextParagraphInDocument = function()
+{
+	let next = this.GetNextDocumentElement();
+	return next ? next.GetFirstParagraph() : null;
+};
+CDocumentContentElementBase.prototype.GetPrevParagraphInDocument = function()
+{
+	let prev = this.GetPrevDocumentElement();
+	return prev ? prev.GetLastParagraph() : null;
+};
 CDocumentContentElementBase.prototype.GetParent = function()
 {
 	return this.Parent;
@@ -157,15 +169,84 @@ CDocumentContentElementBase.prototype.Get_Id = function()
 {
 	return this.GetId();
 };
-CDocumentContentElementBase.prototype.Reset = function(X, Y, XLimit, YLimit, PageAbs, ColumnAbs, ColumnsCount)
+CDocumentContentElementBase.prototype.Reset = function(X, Y, XLimit, YLimit, pageAbs, ColumnAbs, ColumnsCount, sectionAbs, sectPr)
 {
 	this.X            = X;
 	this.Y            = Y;
 	this.XLimit       = XLimit;
 	this.YLimit       = YLimit;
-	this.PageNum      = PageAbs;
+	this.PageNum      = pageAbs;
 	this.ColumnNum    = ColumnAbs ? ColumnAbs : 0;
 	this.ColumnsCount = ColumnsCount ? ColumnsCount : 1;
+	this.SectionNum   = sectionAbs;
+	this.ResetSection(X, Y, XLimit, YLimit, pageAbs, sectionAbs, sectPr);
+};
+CDocumentContentElementBase.prototype.ResetSection = function(X, Y, XLimit, YLimit, pageAbs, sectionAbs, sectPr)
+{
+	if (undefined === sectionAbs || undefined === sectPr)
+	{
+		sectPr     = null;
+		sectionAbs = this.SectionNum;
+	}
+	
+	if (sectionAbs < this.SectionNum)
+	{
+		// This should never happen
+		this.SectionNum = sectionAbs;
+	}
+	
+	this.Sections.length = sectionAbs - this.SectionNum;
+	
+	let startPage = this.Sections.length ? this.Sections[this.Sections.length - 1].endPage + 1 : 0;
+	let startColumn = this.Sections.length ? 0 : this.GetStartColumn();
+	let columnCount = sectPr ? sectPr.GetColumnCount() : (this.Sections.length ? 1 : this.GetColumnCount());
+	this.Sections.push(new AscWord.DocumentElementSection(X, Y, XLimit, YLimit, pageAbs, startPage, startPage, sectPr, startColumn, columnCount, this.Sections.length));
+};
+CDocumentContentElementBase.prototype.GetElementSectionByPage = function(curPage)
+{
+	if (!this.Sections.length)
+		return null;
+	else if (1 === this.Sections.length)
+		return this.Sections[0];
+	
+	for (let i = 0; i < this.Sections.length; ++i)
+	{
+		if (this.Sections[i].GetEndPage() >= curPage)
+			return this.Sections[i];
+	}
+	return this.Sections[this.Sections.length - 1];
+};
+CDocumentContentElementBase.prototype.GetElementSectionBySectionNumber = function(sectionNumber)
+{
+	let sectNum = Math.max(0, Math.min(this.Sections.length - 1, sectionNumber - this.SectionNum));
+	return this.Sections[sectNum];
+};
+CDocumentContentElementBase.prototype.GetPageContentFrame = function(curPage)
+{
+	let section = this.GetElementSectionByPage(curPage);
+	if (0 === curPage || !section)
+	{
+		return {
+			X : this.X,
+			Y : this.Y,
+			XLimit : this.XLimit,
+			YLimit : this.YLimit
+		}
+	}
+	else if (curPage === section.GetStartPage())
+	{
+		return section.GetContentFrame();
+	}
+	
+	let columnCount = section.GetColumnCount();
+	let startColumn = section === this.Sections[0] ? this.ColumnNum : 0;
+	
+	curPage -= section.GetStartPage();
+	
+	let column = (startColumn + curPage) - ((startColumn + curPage) / columnCount | 0) * columnCount;
+	let page   = section.GetParentStartPage() + ((startColumn + curPage) / columnCount | 0);
+	
+	return this.Parent.GetColumnContentFrame(page, column, section.GetSectPr());
 };
 CDocumentContentElementBase.prototype.SetUseXLimit = function(isUse)
 {
@@ -201,6 +282,59 @@ CDocumentContentElementBase.prototype.IsEmptyPage = function(nCurPage)
 };
 CDocumentContentElementBase.prototype.Reset_RecalculateCache = function()
 {
+};
+/**
+ * @param iPage {number} relative page index
+ * @returns {recalcresult}
+ */
+CDocumentContentElementBase.prototype.RecalculateKeepNext = function(iPage)
+{
+	if (!(this.Parent instanceof CDocument))
+		return recalcresult_NextElement;
+	
+	// Такая настройка срабатывает в единственном случае:
+	// У предыдущего параграфа выставлена данная настройка, а текущий параграф сразу начинается с новой страницы
+	// ( при этом у него не выставлен флаг "начать с новой страницы", иначе будет зацикливание здесь ).
+	if (1 === iPage && this.IsEmptyPage(0))
+	{
+		// Если у предыдущего параграфа стоит настройка "не отрывать от следующего".
+		// И сам параграф не разбит на несколько страниц и не начинается с новой страницы,
+		// тогда мы должны пересчитать предыдущую страницу, с учетом того, что предыдущий параграф
+		// надо начать с новой страницы.
+		let curr = this.Get_DocumentPrev();
+		while (curr && curr.IsParagraph() && !curr.Get_SectionPr())
+		{
+			let currKeepNext = curr.Get_CompiledPr2(false).ParaPr.KeepNext;
+			if (!currKeepNext || curr.getPageCount() > 1 || !curr.IsInline() || curr.Check_PageBreak())
+				break;
+			
+			let prev = curr.Get_DocumentPrev();
+			if (!prev || (prev.IsParagraph() && prev.Get_SectionPr()))
+				break;
+			
+			if (!prev.IsParagraph() || !prev.Get_CompiledPr2(false).ParaPr.KeepNext)
+			{
+				if (this.Parent.RecalcInfo.Can_RecalcObject())
+				{
+					this.Parent.RecalcInfo.Set_KeepNext(curr, this);
+					return recalcresult_PrevPage | recalcresultflags_Column;
+				}
+				
+				break;
+			}
+			
+			curr = prev;
+		}
+	}
+	
+	if (this.Parent.RecalcInfo.Check_KeepNextEnd(this))
+	{
+		// Дошли до сюда, значит уже пересчитали данную ситуацию.
+		// Делаем Reset здесь, потому что Reset надо делать в том же месте, гды мы запросили пересчет заново.
+		this.Parent.RecalcInfo.Reset();
+	}
+	
+	return recalcresult_NextElement;
 };
 CDocumentContentElementBase.prototype.Write_ToBinary2 = function(Writer)
 {
@@ -294,7 +428,7 @@ CDocumentContentElementBase.prototype.GetDirectTextPr = function()
 {
 	return new CTextPr();
 };
-CDocumentContentElementBase.prototype.DrawSelectionOnPage = function(CurPage)
+CDocumentContentElementBase.prototype.DrawSelectionOnPage = function(CurPage, clipInfo)
 {
 };
 CDocumentContentElementBase.prototype.StopSelection = function()
@@ -450,7 +584,7 @@ CDocumentContentElementBase.prototype.SetContentPosition = function(DocPos, Dept
 CDocumentContentElementBase.prototype.GetNumberingInfo = function(oNumberingEngine)
 {
 };
-CDocumentContentElementBase.prototype.AddInlineImage = function(W, H, Img, Chart, bFlow)
+CDocumentContentElementBase.prototype.AddInlineImage = function(W, H, Img, GraphicObject, bFlow)
 {
 };
 CDocumentContentElementBase.prototype.AddImages = function(aImages)
@@ -785,113 +919,166 @@ CDocumentContentElementBase.prototype.GetDocumentPositionFromObject = function(a
 
 	return arrPos;
 };
-CDocumentContentElementBase.prototype.Get_Index = function()
+/**
+ * Получаем массив всех конент контролов, внутри которых лежит данный класс
+ * @returns {Array}
+ */
+CDocumentContentElementBase.prototype.GetParentContentControls = function()
 {
-	return this.GetIndex();
+	let docPos = this.GetDocumentPositionFromObject();
+	
+	let contentControls = [];
+	for (let pos = 0, len = docPos.length; pos < len; ++pos)
+	{
+		if (docPos[pos].Class instanceof AscWord.CInlineLevelSdt)
+			contentControls.push(docPos[pos].Class);
+		else if (docPos[pos].Class instanceof AscWord.CDocumentContent && docPos[pos].Class.Parent instanceof AscWord.CBlockLevelSdt)
+			contentControls.push(docPos[pos].Class.Parent);
+	}
+	
+	return contentControls;
+};
+/**
+ * @returns {boolean}
+ */
+CDocumentContentElementBase.prototype.IsInPlaceholder = function()
+{
+	let contentControls = this.GetParentContentControls();
+	for (let index = 0, count = contentControls.length; index < count; ++index)
+	{
+		if (contentControls[index].IsPlaceHolder())
+			return true;
+	}
+	
+	return false;
 };
 CDocumentContentElementBase.prototype.GetOutlineParagraphs = function(arrOutline, oPr)
 {
 };
 //----------------------------------------------------------------------------------------------------------------------
-// Функции для работы с номерами страниц
+// Функции для работы с номерами страниц/колонок/секций
 //----------------------------------------------------------------------------------------------------------------------
-CDocumentContentElementBase.prototype.Get_StartPage_Absolute = function()
+CDocumentContentElementBase.prototype.GetAbsoluteStartPage = function()
 {
-	return this.Get_AbsolutePage(0);
+	return this.GetAbsolutePage(0);
 };
-CDocumentContentElementBase.prototype.Get_StartPage_Relative = function()
+CDocumentContentElementBase.prototype.GetRelativeStartPage = function()
 {
 	return this.PageNum;
-};
-CDocumentContentElementBase.prototype.Get_StartColumn = function()
-{
-	return this.ColumnNum;
-};
-CDocumentContentElementBase.prototype.Get_ColumnsCount = function()
-{
-	return this.ColumnsCount;
 };
 CDocumentContentElementBase.prototype.GetStartColumn = function()
 {
 	return this.ColumnNum;
 };
-CDocumentContentElementBase.prototype.GetColumnsCount = function()
+CDocumentContentElementBase.prototype.GetStartSection = function()
+{
+	return this.SectionNum;
+};
+CDocumentContentElementBase.prototype.GetElementPageIndex = function(page, column, columnCount, sectionIndex)
+{
+	if (undefined === this.SectionNum || this.Sections.length <= 1)
+	{
+		let startPage = this.GetRelativeStartPage();
+		return column - this.GetStartColumn() + (page - startPage) * columnCount;
+	}
+	else
+	{
+		if (undefined === sectionIndex)
+			sectionIndex = this.SectionNum;
+		
+		let section = this.Sections[sectionIndex - this.SectionNum];
+		if (!section)
+			return 0;
+		
+		let parentStartPage = section.GetParentStartPage();
+		let startPage       = section.GetStartPage();
+		let columnCount     = section.GetColumnCount();
+		let startColumn     = section.GetStartColumn();
+		
+		return column - startColumn + (page - parentStartPage) * columnCount + startPage;
+	}
+};
+CDocumentContentElementBase.prototype.GetElementPageIndexByXY = function(x, y, page)
+{
+};
+CDocumentContentElementBase.prototype.GetColumnCount = function()
 {
 	return this.ColumnsCount;
 };
-CDocumentContentElementBase.prototype.private_GetRelativePageIndex = function(CurPage)
+CDocumentContentElementBase.prototype.GetAbsoluteSection = function(curPage)
 {
-	if (!this.ColumnsCount || 0 === this.ColumnsCount)
-		return this.PageNum + CurPage;
-
-	return this.PageNum + ((this.ColumnNum + CurPage) / this.ColumnsCount | 0);
+	if (this.Parent instanceof AscWord.Document)
+	{
+		let elementSection = this.GetElementSectionByPage(curPage);
+		if (!elementSection)
+			return 0;
+		
+		return this.SectionNum + elementSection.GetIndex();
+	}
+	
+	if (!this.Parent || !this.Parent.GetAbsoluteSection)
+		return 0;
+	
+	return this.Parent.GetAbsoluteSection(this.GetRelativePage(curPage));
 };
-CDocumentContentElementBase.prototype.private_GetAbsolutePageIndex = function(CurPage)
+CDocumentContentElementBase.prototype.GetRelativePage = function(curPage)
 {
-	return this.Parent.Get_AbsolutePage(this.private_GetRelativePageIndex(CurPage));
-};
-CDocumentContentElementBase.prototype.Get_AbsolutePage = function(CurPage)
-{
-	return this.private_GetAbsolutePageIndex(CurPage);
-};
-CDocumentContentElementBase.prototype.Get_AbsoluteColumn = function(CurPage)
-{
-	if (this.Parent instanceof CDocument)
-		return this.private_GetColumnIndex(CurPage);
-
-	return this.Parent.Get_AbsoluteColumn(this.private_GetRelativePageIndex(CurPage));
-};
-CDocumentContentElementBase.prototype.private_GetColumnIndex = function(CurPage)
-{
-	return (this.ColumnNum + CurPage) - (((this.ColumnNum + CurPage) / this.ColumnsCount | 0) * this.ColumnsCount);
-};
-CDocumentContentElementBase.prototype.Get_CurrentPage_Absolute = function()
-{
-	return this.private_GetAbsolutePageIndex(0);
-};
-CDocumentContentElementBase.prototype.Get_CurrentPage_Relative = function()
-{
-	return this.private_GetRelativePageIndex(0);
-};
-CDocumentContentElementBase.prototype.GetCurrentPageAbsolute = function()
-{
-	return this.Get_CurrentPage_Absolute();
+	if (undefined === this.SectionNum || this.Sections.length <= 1)
+	{
+		if (!this.ColumnsCount || 0 === this.ColumnsCount)
+			return this.PageNum + curPage;
+		
+		return this.PageNum + ((this.ColumnNum + curPage) / this.ColumnsCount | 0);
+	}
+	else
+	{
+		let elementSection = this.GetElementSectionByPage(curPage);
+		if (!elementSection)
+			return 0;
+		
+		let parentStartPage = elementSection.GetParentStartPage();
+		let columnCount     = elementSection.GetColumnCount();
+		let startColumn     = elementSection.GetStartColumn();
+		let startPage       = elementSection.GetStartPage();
+		
+		return parentStartPage + ((startColumn + curPage - startPage) / columnCount | 0);
+	}
 };
 CDocumentContentElementBase.prototype.GetAbsolutePage = function(CurPage)
 {
-	return this.private_GetAbsolutePageIndex(CurPage);
+	return this.Parent.GetAbsolutePage(this.GetRelativePage(CurPage));
 };
-CDocumentContentElementBase.prototype.GetAbsoluteColumn = function(CurPage)
+CDocumentContentElementBase.prototype.GetAbsoluteColumn = function(curPage)
 {
-	return this.Get_AbsoluteColumn(CurPage);
+	if (this.Parent instanceof AscWord.Document)
+	{
+		let elementSection = this.GetElementSectionByPage(curPage);
+		if (!elementSection)
+			return 0;
+		
+		let columnCount = elementSection.GetColumnCount();
+		let startColumn = elementSection.GetStartColumn();
+		let startPage   = elementSection.GetStartPage();
+		
+		return (startColumn + curPage - startPage) - (((startColumn + curPage - startPage) / columnCount | 0) * columnCount);
+	}
+
+	return this.Parent.GetAbsoluteColumn(this.GetRelativePage(curPage));
 };
-/**
- * Получаем начальный номер страницы данного элемента относительно родительского класса
- * @returns {number}
- */
-CDocumentContentElementBase.prototype.GetStartPageRelative = function()
+CDocumentContentElementBase.prototype.GetAbsoluteCurrentPage = function()
 {
-	return this.PageNum;
+	return this.GetAbsolutePage(0);
 };
-/**
- * Получаем номер страницы, относительно родительского класса
- * @param {number} nCurPage
- * @returns {number}
- */
-CDocumentContentElementBase.prototype.GetRelativePage = function(nCurPage)
+CDocumentContentElementBase.prototype.GetRelativeCurrentPage = function()
 {
-	return this.private_GetRelativePageIndex(nCurPage);
-};
-/**
- * Получаем обсолютный начальный номер страницы данного элемента
- * @returns {number}
- */
-CDocumentContentElementBase.prototype.GetStartPageAbsolute = function()
-{
-	return this.private_GetAbsolutePageIndex(0);
+	return this.GetRelativePage(0);
 };
 //----------------------------------------------------------------------------------------------------------------------
 CDocumentContentElementBase.prototype.GetPagesCount = function()
+{
+	return this.Get_PagesCount();
+};
+CDocumentContentElementBase.prototype.getPageCount = function()
 {
 	return this.Get_PagesCount();
 };
@@ -906,6 +1093,15 @@ CDocumentContentElementBase.prototype.GetIndex = function()
 		this.Index = -1;
 
 	return this.Index;
+};
+CDocumentContentElementBase.prototype.GetTopIndex = function()
+{
+	let docPos = this.GetDocumentPositionFromObject();
+	return (docPos && docPos.length > 0 ? docPos[0].Position : -1);
+};
+CDocumentContentElementBase.prototype.getPageBounds = function(iPage)
+{
+	return this.Get_PageBounds(iPage);
 };
 CDocumentContentElementBase.prototype.GetPageBounds = function(CurPage)
 {
@@ -937,7 +1133,7 @@ CDocumentContentElementBase.prototype.SetSelectionState2 = function(State)
 };
 CDocumentContentElementBase.prototype.GetReviewInfo = function()
 {
-	return new CReviewInfo();
+	return new AscWord.ReviewInfo();
 };
 CDocumentContentElementBase.prototype.SetReviewTypeWithInfo = function(nType, oInfo)
 {
@@ -1069,7 +1265,7 @@ CDocumentContentElementBase.prototype.GetOutlineParagraphs = function(arrOutline
 /**
  * Вплоть до заданного параграфа ищем последнюю похожую нумерацию
  * @param oContinueEngine {CDocumentNumberingContinueEngine}
- * @returns {CNumPr | null}
+ * @returns {AscWord.NumPr | null}
  */
 CDocumentContentElementBase.prototype.GetSimilarNumbering = function(oContinueEngine)
 {
@@ -1225,7 +1421,39 @@ CDocumentContentElementBase.prototype.RecalculateEndInfo = function() {};
  */
 CDocumentContentElementBase.prototype.GetLogicDocument = function()
 {
+	if (!this.LogicDocument && this.Parent && this.Parent.GetLogicDocument)
+		this.LogicDocument = this.Parent.GetLogicDocument();
+	
 	return this.LogicDocument;
+};
+/**
+ * @returns {?CDrawingDocument}
+ */
+CDocumentContentElementBase.prototype.getDrawingDocument = function()
+{
+	return Asc.editor.getDrawingDocument();
+};
+/**
+ * @returns {?AscWord.CDocumentSpellChecker}
+ */
+CDocumentContentElementBase.prototype.getSpelling = function()
+{
+	let oLogicDocument = this.GetLogicDocument();
+	if(oLogicDocument)
+	{
+		return oLogicDocument.Spelling;
+	}
+	return null;
+};
+/**
+ * @returns {boolean}
+ */
+CDocumentContentElementBase.prototype.IsSpellingUse = function()
+{
+	let oSpelling = this.getSpelling();
+	if(!oSpelling)
+		return false;
+	return oSpelling.Use;
 };
 /**
  * Получаем настройки рамки для данного элемента
@@ -1257,6 +1485,94 @@ CDocumentContentElementBase.prototype.OnContentChange = function()
 {
 	if (this.Parent && this.Parent.OnContentChange)
 		this.Parent.OnContentChange();
+};
+/**
+ * Get the scale coefficient for the current element depending on the current section and the document layout
+ * @returns {number}
+ */
+CDocumentContentElementBase.prototype.getLayoutScaleCoefficient = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor() || !this.Get_SectPr)
+		return 1;
+	
+	let layout = logicDocument.Layout;
+	logicDocument.Layout = logicDocument.Layouts.Print;
+	
+	let sectPr = this.Get_SectPr();
+	logicDocument.Layout = layout;
+	
+	if (!sectPr)
+		return 1;
+	
+	return logicDocument.GetDocumentLayout().GetScaleBySection(sectPr);
+};
+CDocumentContentElementBase.prototype.updateTrackRevisions = function()
+{
+	AscWord.checkElementInRevision && AscWord.checkElementInRevision(this);
+};
+CDocumentContentElementBase.prototype.isPreventedPreDelete = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	return !logicDocument || !logicDocument.IsDocumentEditor() || logicDocument.isPreventedPreDelete();
+};
+CDocumentContentElementBase.prototype.isWholeElementInPermRange = function()
+{
+	// TODO: В таблицах GetNextDocumentElement/GetPrevDocumentElement не работает, надо проверить не баг ли это
+	//       по логике оба варианта должны выдавать одинаковый результат
+	
+	// let prevPara = this.GetPrevParagraphInDocument();
+	// let nextPara = this.GetNextParagraphInDocument();
+	//
+	// let startRanges = prevPara ? prevPara.GetEndInfo().GetPermRanges() : [];
+	// let endRanges   = nextPara ? nextPara.GetEndInfoByPage(-1).GetPermRanges() : [];
+	
+	let startPara = this.GetFirstParagraph();
+	let endPara   = this.GetLastParagraph();
+	
+	if (!startPara
+		|| !endPara
+		|| !startPara.IsRecalculated()
+		|| !endPara.IsRecalculated())
+		return false;
+	
+	let startInfo = startPara.GetEndInfoByPage(-1);
+	let endInfo   = endPara.GetEndInfo();
+	
+	let startRanges = startInfo ? startInfo.GetPermRanges() : [];
+	let endRanges   = endInfo ? endInfo.GetPermRanges() : [];
+	
+	return AscWord.PermRangesManager.isInPermRange(startRanges, endRanges);
+};
+CDocumentContentElementBase.prototype.GetAllSectPrParagraphs = function(paragraphs)
+{
+	return paragraphs ? paragraphs : [];
+};
+CDocumentContentElementBase.prototype.GetParentTables = function()
+{
+	let tables = [];
+	
+	let docPos = this.GetDocumentPositionFromObject();
+	for (let i = 0, count = docPos.length; i < count; ++i)
+	{
+		if (docPos[i].Class instanceof AscWord.Table)
+			tables.push(docPos[i].Class);
+	}
+	return tables;
+};
+/**
+ * Отличие данной функции от Get_SectionPr в том, что здесь возвращаются настройки секции, к которой
+ * принадлежит данный элемент, а там конкретно настройки секции, которые лежат в данном параграфе (если это параграф).
+ * @returns {null|AscWord.SectPr}
+ */
+CDocumentContentElementBase.prototype.Get_SectPr = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return null;
+	
+	let sectPr = logicDocument.GetSections().GetSectPrByElement(this);
+	return logicDocument.Layout.CheckSectPr(sectPr);
 };
 
 //--------------------------------------------------------export--------------------------------------------------------

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -68,7 +68,7 @@ CChartSpace.prototype.hitInPath = CShape.prototype.hitInPath;
 CChartSpace.prototype.check_bounds = CShape.prototype.check_bounds;
 CChartSpace.prototype.Get_Theme = CShape.prototype.Get_Theme;
 CChartSpace.prototype.Get_ColorMap = CShape.prototype.Get_ColorMap;
-CChartSpace.prototype.Get_AbsolutePage = CShape.prototype.Get_AbsolutePage;
+CChartSpace.prototype.GetAbsolutePage = CShape.prototype.GetAbsolutePage;
 
 CChartSpace.prototype.handleUpdateFill = function()
 {
@@ -183,12 +183,6 @@ CChartSpace.prototype.handleUpdatePosition = function()
 CChartSpace.prototype.handleUpdateFlip = function()
 {
     this.handleUpdateExtents();
-};
-CChartSpace.prototype.handleUpdateChart = function()
-{
-    this.recalcChart();
-    this.setRecalculateInfo();
-    this.addToRecalculate();
 };
 CChartSpace.prototype.handleUpdateStyle = function()
 {
@@ -522,8 +516,6 @@ CChartSpace.prototype.updateTransformMatrix  = function()
     this.checkShapeChildTransform(oParentTransform);
 };
 CChartSpace.prototype.getArrayWrapIntervals = CShape.prototype.getArrayWrapIntervals;
-CChartSpace.prototype.IsUseInDocument = CShape.prototype.IsUseInDocument;
-CChartSpace.prototype.getDrawingObjectsController = CShape.prototype.getDrawingObjectsController;
 //CChartSpace.prototype.Refresh_RecalcData = function(data)
 //{
 //    this.addToRecalculate();

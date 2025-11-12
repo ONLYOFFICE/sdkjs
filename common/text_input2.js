@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -49,6 +49,23 @@
 	// baseEditorsApi.prototype.onKeyUp = function(e)
 	///
 
+	window['AscCommon'] = window['AscCommon'] || {};
+	window['AscCommon'].inputMethodAddInitEvent = function(callback)
+	{
+		AscCommon.g_inputContext_create_events = AscCommon.g_inputContext_create_events || [];
+		AscCommon.g_inputContext_create_events.push(callback);
+	};
+	window['AscCommon'].inputMethodCheckInitEvents = function()
+	{
+		if (!AscCommon.g_inputContext_create_events)
+			return;
+
+		for (let i = 0, len = AscCommon.g_inputContext_create_events.length; i < len; i++)
+			AscCommon.g_inputContext_create_events[i]();
+
+		delete AscCommon.g_inputContext_create_events;
+	};
+
 	var InputTextElementType = {
 		TextArea           : 0,
 		ContentEditableDiv : 1
@@ -95,6 +112,7 @@
 		this.nativeFocusElementNoRemoveOnElementFocus = false;
 		this.InterfaceEnableKeyEvents = true;
 		this.isNoClearOnFocus = false;
+		this.isGlobalDisableFocus = false;
 
 		this.ReadOnlyCounter = 0;
 
@@ -104,11 +122,20 @@
 
 		// параметры для показа/скрытия виртуальной клавиатуры.
 		this.isHardCheckKeyboard = AscCommon.AscBrowser.isSailfish;
+
 		this.virtualKeyboardClickTimeout = -1;
-		this.virtualKeyboardClickPrevent = false;
+		this.virtualKeyboardReadOnly_ShowKeyboard = AscCommon.AscBrowser.isAndroid && AscCommon.AscBrowser.isMozilla;
 
 		// для сброса текста при фокусе
 		this.checkClearTextOnFocusTimerId = -1;
+
+		this.isDisableKeyboard = false;
+
+		this.moveAccurateInfo = {
+			id : -1,
+			x : 0,
+			y : 0
+		};
 	}
 
 	var CTextInputPrototype = CTextInput2.prototype;
@@ -165,7 +192,15 @@
 				case 36: 	// home
 				case 27:	// escape
 				{
-					window.g_asc_plugins.onPluginEvent2("onKeyDown", { "keyCode" : e.keyCode }, this.isInputHelpers);
+					window.g_asc_plugins.onPluginEvent2("onKeyDown", {
+						"keyCode" : e.keyCode,
+						"key" : e.key,
+						"code" : e.code,
+						"altKey" : e.altKey,
+						"ctrlKey" : e.ctrlKey,
+						"metaKey" : e.metaKey,
+						"shiftKey" : e.shiftKey
+					}, this.isInputHelpers);
 
 					AscCommon.stopEvent(e);
 					return false;
@@ -173,6 +208,18 @@
 				default:
 					break;
 			}
+		}
+		else
+		{
+			window.g_asc_plugins.onPluginEvent("onKeyDown", {
+				"keyCode" : e.keyCode,
+				"key" : e.key,
+				"code" : e.code,
+				"altKey" : e.altKey,
+				"ctrlKey" : e.ctrlKey,
+				"metaKey" : e.metaKey,
+				"shiftKey" : e.shiftKey
+			});
 		}
 
 		if (null != this.nativeFocusElement)
@@ -266,9 +313,11 @@
 		if (!isSpaceAsText)
 			ret = this.Api.onKeyDown(e);
 
+		let isSpecialClearInComposition = true;
 		switch (e.keyCode)
 		{
 			case 8:		// backspace
+				isSpecialClearInComposition = false;
 			case 9:		// tab
 			case 13:	// enter
 			case 37:	// left
@@ -281,7 +330,8 @@
 			case 36: 	// home
 			case 46:	// delete
 			{
-				this.clear();
+				if (!this.IsComposition || isSpecialClearInComposition)
+					this.clear();
 			}
 			default:
 				break;
@@ -533,6 +583,8 @@
 
 		if (!isAsync)
 		{
+			window.LOCK_DRAW = true;
+
 			if (this.IsComposition)
 			{
 				this.compositeReplace(codes);
@@ -797,7 +849,7 @@
 		this.clearAreaValue();
 
 		if (isFromFocus !== true)
-			focusHtmlElement(this.HtmlArea);
+			focusHtmlElement(this.getFocusElement());
 
 		if (window.g_asc_plugins)
 			window.g_asc_plugins.onPluginEvent("onInputHelperClear");
@@ -835,7 +887,7 @@
 	};
 	CTextInputPrototype.setReadOnlyWrapper = function(val)
 	{
-		this.HtmlArea.readOnly = this.Api.isViewMode ? true : val;
+		this.HtmlArea.readOnly = this.isDisableKeyboard ? true : val;
 	};
 	CTextInputPrototype.setInterfaceEnableKeyEvents = function(value)
 	{
@@ -849,7 +901,8 @@
 					return;
 			}
 
-			focusHtmlElement(this.HtmlArea);
+			if (!this.isGlobalDisableFocus)
+				focusHtmlElement(this.getFocusElement());
 		}
 	};
 	CTextInputPrototype.externalEndCompositeInput = function()
@@ -912,7 +965,11 @@
 		{
 			_style = ("left:-" + (this.HtmlAreaWidth >> 1) + "px;top:" + (-this.HtmlAreaOffset) + "px;");
 			_style += "color:transparent;caret-color:transparent;background:transparent;";
-			_style += AscCommon.AscBrowser.isAppleDevices ? "font-size:0px;" : "font-size:8px;";
+
+			if (this.Api.isUseOldMobileVersion())
+				_style += (AscCommon.AscBrowser.isAppleDevices && !AscCommon.AscBrowser.isTelegramWebView && (AscCommon.AscBrowser.maxTouchPoints > 0)) ? "font-size:0px;" : "font-size:8px;";
+			else
+				_style += "font-size:8px;";
 		}
 		else
 		{
@@ -985,6 +1042,8 @@
 		}
 
 		this.Api.Input_UpdatePos();
+
+		this.checkViewMode();
 	};
 	CTextInputPrototype.appendInputToCanvas = function(parent_id)
 	{
@@ -1018,7 +1077,7 @@
 
 		if (AscCommon.AscBrowser.isChrome)
 		{
-			var rectObject = _elemSrc.getBoundingClientRect();
+			var rectObject = AscCommon.UI.getBoundingClientRect(_elemSrc);
 			this.FixedPosCheckElementX = rectObject.left;
 			this.FixedPosCheckElementY = rectObject.top;
 		}
@@ -1040,7 +1099,7 @@
 			_elem.style.height = _elemSrc.style.height;
 		}
 
-		if (this.Api.isMobileVersion)
+		if (this.Api.isUseOldMobileVersion())
 		{
 			var _elem1 = document.getElementById("area_id_parent");
 			var _elem2 = document.getElementById("area_id");
@@ -1049,7 +1108,17 @@
 
 
 			_elem1.style.left = "0px";
-			_elem1.style.top = "-1000px";
+			let topStyle = "-1000px";
+
+			if (AscCommon.AscBrowser.isTelegramWebView)
+			{
+				if (!AscCommon.AscBrowser.isAndroid && !AscCommon.AscBrowser.isAppleDevices)
+					topStyle = "0px";
+				else if (AscCommon.AscBrowser.isAppleDevices && navigator.maxTouchPoints === 0)
+					topStyle = "0px";
+			}
+
+			_elem1.style.top = topStyle;
 			_elem1.style.right = "0px";
 			_elem1.style.bottom = "-100px";
 			_elem1.style.width = "auto";
@@ -1077,13 +1146,31 @@
 	{
 		if (this.Api.asc_IsFocus() && !AscCommon.g_clipboardBase.IsFocus() && !AscCommon.g_clipboardBase.IsWorking())
 		{
-			if (document.activeElement != this.HtmlArea)
-				focusHtmlElement(this.HtmlArea);
+			if (document.activeElement != this.getFocusElement())
+				focusHtmlElement(this.getFocusElement());
 		}
+	};
+	CTextInputPrototype.moveAccurate = function(x, y)
+	{
+		if (!this.moveAccurateFunc)
+		{
+			this.moveAccurateFunc = function() {
+				let ctx = AscCommon.g_inputContext;
+				ctx.move(ctx.moveAccurateInfo.x, ctx.moveAccurateInfo.y);
+				ctx.moveAccurateInfo.id = -1;
+			};
+		}
+
+		if (-1 !== this.moveAccurateInfo.id)
+			clearTimeout(this.moveAccurateInfo.id);
+
+		this.moveAccurateInfo.x = x;
+		this.moveAccurateInfo.y = y;
+		this.moveAccurateInfo.id = setTimeout(this.moveAccurateFunc, 20);
 	};
 	CTextInputPrototype.move = function(x, y)
 	{
-		if (this.Api.isMobileVersion)
+		if (this.Api.isUseOldMobileVersion())
 			return;
 
 		var oTarget = document.getElementById(this.TargetId);
@@ -1095,6 +1182,13 @@
 
 		if (AscCommon.AscBrowser.isSafari && AscCommon.AscBrowser.isMobile)
 			xPos = -100;
+
+		if (this.Api.editorId === AscCommon.c_oEditorId.Presentation)
+		{
+			let offset = this.Api.getTextInputOffset();
+			xPos += offset.X;
+			yPos += offset.Y;
+		}
 
 		this.HtmlDiv.style.left = xPos + this.FixedPosCheckElementX + "px";
 		this.HtmlDiv.style.top  = yPos + this.FixedPosCheckElementY + this.TargetOffsetY + this.HtmlAreaOffset + "px";
@@ -1116,7 +1210,9 @@
 		if (AscCommon.AscBrowser.isAndroid)
 		{
 			this.setReadOnlyWrapper(true);
-			this.virtualKeyboardClickPrevent = true;
+
+			if (this.virtualKeyboardReadOnly_ShowKeyboard)
+				return;
 
 			this.virtualKeyboardClickTimeout = setTimeout(function ()
 			{
@@ -1132,6 +1228,9 @@
 
 		if (AscCommon.AscBrowser.isAndroid)
 		{
+			if (this.virtualKeyboardReadOnly_ShowKeyboard)
+				return;
+
 			if (-1 != this.virtualKeyboardClickTimeout)
 			{
 				clearTimeout(this.virtualKeyboardClickTimeout);
@@ -1139,7 +1238,6 @@
 			}
 
 			this.setReadOnlyWrapper(false);
-			this.virtualKeyboardClickPrevent = false;
 		}
 	};
 	CTextInputPrototype.preventVirtualKeyboard_Hard = function()
@@ -1149,6 +1247,58 @@
 	CTextInputPrototype.enableVirtualKeyboard_Hard = function()
 	{
 		this.setReadOnlyWrapper(false);
+	};
+
+	CTextInputPrototype.showKeyboard = function()
+	{
+		if (this.virtualKeyboardReadOnly_ShowKeyboard)
+		{
+			if (this.HtmlArea.readOnly === true)
+			{
+				this.setReadOnlyWrapper(false);
+			}
+		}
+
+		if (!this.Api.asc_IsFocus())
+			this.Api.asc_enableKeyEvents(true);
+		else
+			focusHtmlElement(this.getFocusElement());
+	}
+
+	CTextInputPrototype.checkViewMode = function()
+	{
+		let oldDisableKeyboard = this.isDisableKeyboard;
+		this.isDisableKeyboard = this.Api.isViewMode;
+
+		if (!this.isDisableKeyboard)
+		{
+			switch (this.Api.editorId)
+			{
+				case AscCommon.c_oEditorId.Word:
+				{
+					// use canEnterText instead this
+					break;
+				}
+				case AscCommon.c_oEditorId.Presentation:
+				case AscCommon.c_oEditorId.Spreadsheet:
+				{
+					if (this.Api.isRestrictionView() && !this.Api.isRestrictionForms())
+						this.isDisableKeyboard = true;
+					break;
+				}
+				default:
+					break;
+			}
+		}
+
+		if (oldDisableKeyboard !== this.isDisableKeyboard)
+		{
+			this.setReadOnlyWrapper(false);
+		}
+	};
+	CTextInputPrototype.getFocusElement = function()
+	{
+		return this.Api.getFocusElement();
 	};
 
 	function _getAttirbute(_elem, _attr, _depth)
@@ -1203,6 +1353,8 @@
 		window['AscCommon'].g_clipboardBase.Init(api);
 		window['AscCommon'].g_clipboardBase.inputContext = window['AscCommon'].g_inputContext;
 
+		window['AscCommon'].inputMethodCheckInitEvents();
+
 		if (window['AscCommon'].TextBoxInputMode === true)
 		{
 			window['AscCommon'].g_inputContext.systemInputEnable(true);
@@ -1243,7 +1395,7 @@
 				return;
 			}
 
-			if (t.nativeFocusElement && (t.nativeFocusElement.id == t.HtmlArea.id))
+			if (t.nativeFocusElement && (t.nativeFocusElement.id == t.getFocusElement().id))
 			{
 				t.Api.asc_enableKeyEvents(true, true);
 
@@ -1319,14 +1471,14 @@
 
 			var _elem = t.nativeFocusElement;
 			t.nativeFocusElementNoRemoveOnElementFocus = true; // ie focus async
-			AscCommon.AscBrowser.isMozilla ? setTimeout(function(){ focusHtmlElement(t.HtmlArea); }, 0) : focusHtmlElement(t.HtmlArea);
+			AscCommon.AscBrowser.isMozilla ? setTimeout(function(){ focusHtmlElement(t.getFocusElement()); }, 0) : focusHtmlElement(t.getFocusElement());
 			t.nativeFocusElement = _elem;
 			t.Api.asc_enableKeyEvents(true, true);
 		}, true);
 
 		// send focus
 		if (!api.isMobileVersion && !api.isEmbedVersion)
-			focusHtmlElement(window['AscCommon'].g_inputContext.HtmlArea);
+			focusHtmlElement(api.getFocusElement());
 	};
 
 	function focusHtmlElement(element)
@@ -1349,4 +1501,46 @@
 		window['AscCommon'].g_inputContext.debugInputEnable(true);
 		window['AscCommon'].g_inputContext.show();
 	};
+
+	window['AscCommon'].StartIntervalDrawText = function (isStart) {
+		if (isStart) {
+			window.renderIntervalId = setInterval(function(){
+
+				window.LOCK_DRAW = false;
+
+				if (undefined !== window.TEXT_DRAW_INSTANCE)
+					window.TEXT_DRAW_INSTANCE._renderText(window.TEXT_DRAW_INSTANCE_POS);
+
+				window.TEXT_DRAW_INSTANCE = undefined;
+				window.TEXT_DRAW_INSTANCE_POS = 0;
+
+			}, 20);
+		} else {
+			clearInterval(window.renderIntervalId);
+		}
+	};
+
+	/*
+	UNCOMMENT FOR DETECT FOCUS INITIALIZER
+	{
+		focusHtmlElement = function(element)
+		{
+			window.disableFocusDebugger = true;
+			element.focus();
+			delete window.disableFocusDebugger;
+		}
+
+		const originalFocus = HTMLElement.prototype.focus;
+
+		HTMLElement.prototype.focus = function(...args)
+		{
+			if (!window.disableFocusDebugger)
+				debugger;
+
+			console.log("FOCUS:", this);
+			originalFocus.apply(this, args);
+		};
+	}
+	*/
+
 })(window);

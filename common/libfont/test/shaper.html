@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script type="text/javascript" src="./../../../vendor/xregexp-all-min.js"></script>
+
+    <script type="text/javascript" src="./header.js"></script>
+    <script type="text/javascript" src="./../../device_scale.js"></script>
+    <script type="text/javascript" src="./../../browser.js"></script>
+    <script type="text/javascript" src="./../../stringserialize.js"></script>
+	<script type="text/javascript" src="./../engine.js"></script>
+    <script type="text/javascript" src="./../loader.js"></script>
+
+	<script type="text/javascript" src="./../common.js"></script>
+    <script type="text/javascript" src="./../map.js"></script>
+    <script type="text/javascript" src="./../rasterheap.js"></script>
+    <script type="text/javascript" src="./../glyphstring.js"></script>
+    <script type="text/javascript" src="./../character.js"></script>
+	<script type="text/javascript" src="./../file.js"></script>
+    <script type="text/javascript" src="./../manager.js"></script>
+    
+    <script type="text/javascript" src="./../../AllFonts.js"></script>
+    <script type="text/javascript" src="./../../Drawings/Externals.js"></script>
+    <script type="text/javascript" src="./../../GlobalLoaders.js"></script>
+    <script type="text/javascript" src="./../../SerializeCommonWordExcel.js"></script>
+
+    <script type="text/javascript" src="./../../commonDefines.js"></script>
+    <script type="text/javascript" src="./../../Drawings/GraphicsBase.js"></script>
+    <script type="text/javascript" src="./../../Drawings/Metafile.js"></script>
+    <script type="text/javascript" src="./../../../word/Drawing/Graphics.js"></script>
+
+    <script type="text/javascript" src="./shaper.js"></script>
+
+</head>
+
+<body style="overflow: hidden;margin: 0;padding: 0;width: 100%; height: 100%;">
+
+    <textarea id="id_textarea" style="position:absolute; background: #AAAAAA;left: 30px;right: 30px; top: 30px; height: 100px;font-size: 40pt; font-family: Arial">TEST TEXT</textarea>
+    <canvas id="id_canvas" style="border: 1px solid black; position: absolute; background: #FFFFFF;left: 30px;right: 30px; top: 160px; width: calc(100% - 60px); height: 100px;"></canvas>
+
+    <div style="position: absolute; left: 30px;right: 30px; top: 290px; height: 40px;">
+        <label>Font</label>
+        <select name="Fonts" id="id_fonts"></select>
+    </div>
+
+    <div style="position: absolute; left: 30px;right: 30px; top: 330px; height: 40px;">
+        <label>Script</label>
+        <select name="Script" id="id_script"></select>
+        <button id="id_script_auto">auto</button>
+    </div>
+
+    <div style="position: absolute; left: 30px;right: 30px; top: 370px; height: 40px;">
+        <label>Direction</label>
+        <select name="Direction" id="id_direction"></select>
+        <button id="id_direction_auto">auto</button>
+    </div>
+
+    <div style="position: absolute; left: 30px;right: 30px; top: 410px; height: 40px;">
+        <label>Ligatures:    </label>
+        <input type="checkbox" id="id_lig_standard">Standard</input>
+        <input type="checkbox" id="id_lig_cont">Contextual</input>
+        <input type="checkbox" id="id_lig_hist">Historical</input>
+        <input type="checkbox" id="id_lig_disc">Discretionary</input>
+    </div>
+
+    <div style="position: absolute; left: 30px;right: 30px; top: 450px; height: 40px;">
+        <label>Kerning:    </label>
+        <input type="checkbox" id="id_kerning"></input>
+    </div>
+
+    <div style="position: absolute; left: 30px;right: 30px; top: 490px; height: 40px;">
+        <button id="id_draw">GO</button>
+    </div>
+
+</body>
+
+</html>

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -308,6 +308,7 @@ XYAdjustmentTrack.prototype.trackEnd = function()
 
     }
 };
+XYAdjustmentTrack.prototype.checkDrawingPartWithHistory = function () {};
 
 function PolarAdjustmentTrack(originalShape, adjIndex, bTextWarp)
 {
@@ -527,6 +528,7 @@ function PolarAdjustmentTrack(originalShape, adjIndex, bTextWarp)
 
         }
     };
+	this.checkDrawingPartWithHistory = function () {};
 }
 PolarAdjustmentTrack.prototype.getBounds = XYAdjustmentTrack.prototype.getBounds;
 

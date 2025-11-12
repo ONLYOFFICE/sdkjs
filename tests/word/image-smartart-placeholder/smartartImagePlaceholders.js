@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -197,10 +197,18 @@ $(function () {
 	}
 
 	AscTest.CreateLogicDocument();
-	AscCommon.loadSmartArtBinary(function ()
+	AscCommon.g_oBinarySmartArts.checkLoadDrawing().then(function ()
+	{
+		const arrPromises = [];
+		for (let sSmartArtType in Asc.c_oAscSmartArtTypes)
+		{
+			arrPromises.push(AscCommon.g_oBinarySmartArts.checkLoadData(Asc.c_oAscSmartArtTypes[sSmartArtType]));
+		}
+		return Promise.all(arrPromises);
+	}).then(function ()
 	{
 		startTests();
-	}, function () {});
+	});
 
 	QUnit.module("Test truth smart art image placeholders");
 

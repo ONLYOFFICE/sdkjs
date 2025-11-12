@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -94,11 +94,10 @@
 		g.m_oFontManager = AscCommon.g_fontManager;
 		g.transform(1, 0, 0, 1, 0, 0);
 
-		if (AscCommon.AscBrowser.isCustomScalingAbove2())
-			g.IsRetina = true;
-
 		g.IsNoDrawingEmptyPlaceholderText = true;
 		g.IsNoDrawingEmptyPlaceholder = true;
+		g.isPrintMode = true;
+		g.isSupportEditFeatures = function() { return false; };
 
 		return g;
 	};
@@ -130,7 +129,7 @@
 		{
 			case AscCommon.c_oEditorId.Word:
 			{
-				let isPdf = this.api.isDocumentRenderer();
+				let isPdf = this.api.isPdfEditor();
 				if (!isPdf)
 				{
 					if (this.api.WordControl.m_oDrawingDocument.IsFreezePage(this.page))
@@ -161,7 +160,9 @@
 				}
 				else
 				{
-					let file = this.api.WordControl.m_oDrawingDocument.m_oDocumentRenderer.file;
+					let viewer = this.api.WordControl.m_oDrawingDocument.m_oDocumentRenderer;
+					let file = viewer.file;
+					
 					if (!file)
 						return;
 
@@ -185,11 +186,12 @@
 						h = height;
 					}
 
-					this.pageImage = file.getPage(this.page, w, h, undefined, 0xFFFFFF);
+					this.pageImage = viewer.GetPrintPage(this.page, w, h);
 				}
 
 				break;
 			}
+			case AscCommon.c_oEditorId.Visio:
 			case AscCommon.c_oEditorId.Presentation:
 			{
 				let w_mm = this.api.WordControl.m_oLogicDocument.GetWidthMM();

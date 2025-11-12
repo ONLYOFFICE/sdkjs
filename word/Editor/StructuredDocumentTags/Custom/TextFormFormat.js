@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -67,6 +67,9 @@
 	};
 	CTextFormFormat.prototype.IsEqual = function(format)
 	{
+		if (!format)
+			return false;
+		
 		return (this.BaseFormat === format.BaseFormat
 			&& (FormatType.RegExp !== this.BaseFormat || format.RegExp === this.RegExp)
 			&& (FormatType.Mask !== this.BaseFormat || format.Mask.Get() === this.Mask.Get()));

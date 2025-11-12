@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -133,8 +133,8 @@
 		}
 		s.Seek2(_end_pos);
 	};
-	CT_NamedSheetViews.prototype.hasColorFilter = function(){
-		return this.namedSheetView.some(function(namedSheetView) {
+	CT_NamedSheetViews.prototype.hasColorFilter = function () {
+		return this.namedSheetView.some(function (namedSheetView) {
 			return namedSheetView.hasColorFilter();
 		});
 	}
@@ -268,8 +268,8 @@
 	CT_NamedSheetView.prototype.setWS = function (ws) {
 		this.ws = ws;
 	};
-	CT_NamedSheetView.prototype.hasColorFilter = function(){
-		return this.nsvFilters.some(function(nsvFilter) {
+	CT_NamedSheetView.prototype.hasColorFilter = function () {
+		return this.nsvFilters.some(function (nsvFilter) {
 			return nsvFilter.hasColorFilter();
 		});
 	}
@@ -286,7 +286,7 @@
 				return;
 			}
 
-			api._isLockedNamedSheetView([t], function(success) {
+			api._isLockedNamedSheetView([t], function (success) {
 				if (!success) {
 					t.ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedEditView, c_oAscError.Level.NoCritical);
 					return;
@@ -333,8 +333,7 @@
 
 		var baseName, counter;
 		if (!name) {
-			//TODO перевод
-			name = "View";
+			name = AscCommon.translateManager.getValue("View");
 
 			baseName = name;
 			counter = 1;
@@ -413,7 +412,7 @@
 		writer.WriteLong(this.nsvFilters ? this.nsvFilters.length : 0);
 
 		if (this.nsvFilters) {
-			for(var i = 0, length = this.nsvFilters.length; i < length; ++i) {
+			for (var i = 0, length = this.nsvFilters.length; i < length; ++i) {
 				this.nsvFilters[i].Write_ToBinary2(writer);
 			}
 		}
@@ -524,7 +523,7 @@
 
 		var i, length;
 		if (this.columnsFilter) {
-			for(i = 0, length = this.columnsFilter.length; i < length; ++i) {
+			for (i = 0, length = this.columnsFilter.length; i < length; ++i) {
 				this.columnsFilter[i].Write_ToBinary2(writer);
 			}
 		}
@@ -532,7 +531,7 @@
 		writer.WriteLong(this.sortRules ? this.sortRules.length : 0);
 
 		if (this.sortRules) {
-			for(i = 0, length = this.sortRules.length; i < length; ++i) {
+			for (i = 0, length = this.sortRules.length; i < length; ++i) {
 				this.sortRules[i].Write_ToBinary2(writer);
 			}
 		}
@@ -672,7 +671,7 @@
 		}
 	};
 
-	CT_NsvFilter.prototype.isApplyAutoFilter = function (obj) {
+	CT_NsvFilter.prototype.isApplyAutoFilter = function () {
 		var res = null
 		if (this.columnsFilter && this.columnsFilter.length) {
 			for (var i = 0; i < this.columnsFilter.length; i++) {
@@ -704,13 +703,13 @@
 
 		return res;
 	};
-	CT_NsvFilter.prototype.deleteFilterColumn = function(index) {
+	CT_NsvFilter.prototype.deleteFilterColumn = function (index) {
 		if (this.columnsFilter && this.columnsFilter[index]) {
 			this.columnsFilter.splice(index, 1)
 		}
 	};
-	CT_NsvFilter.prototype.hasColorFilter = function(){
-		return this.columnsFilter.some(function(columnsFilter) {
+	CT_NsvFilter.prototype.hasColorFilter = function () {
+		return this.columnsFilter.some(function (columnsFilter) {
 			return columnsFilter.hasColorFilter();
 		});
 	}
@@ -822,16 +821,18 @@
 		s.Seek2(_end_pos);
 	};
 	CT_ColumnFilter.prototype.Write_ToBinary2 = function (writer) {
-		if(null != this.dxf) {
+		if (null != this.dxf) {
 			var dxf = this.dxf;
 			writer.WriteBool(true);
 			var oBinaryStylesTableWriter = new AscCommonExcel.BinaryStylesTableWriter(writer);
-			oBinaryStylesTableWriter.bs.WriteItem(0, function(){oBinaryStylesTableWriter.WriteDxf(dxf);});
-		}else {
+			oBinaryStylesTableWriter.bs.WriteItem(0, function () {
+				oBinaryStylesTableWriter.WriteDxf(dxf);
+			});
+		} else {
 			writer.WriteBool(false);
 		}
 
-		if(null != this.filter) {
+		if (null != this.filter) {
 			writer.WriteBool(true);
 			this.filter.Write_ToBinary2(writer);
 		} else {
@@ -871,7 +872,7 @@
 
 		return res;
 	};
-	CT_ColumnFilter.prototype.hasColorFilter = function(){
+	CT_ColumnFilter.prototype.hasColorFilter = function () {
 		return null !== this.filter && this.filter.isColorFilter();
 	};
 
@@ -1061,23 +1062,25 @@
 		s.Seek2(_end_pos);
 	};
 	CT_SortRule.prototype.Write_ToBinary2 = function (writer) {
-		if(null != this.dxf) {
+		if (null != this.dxf) {
 			var dxf = this.dxf;
 			writer.WriteBool(true);
 			var oBinaryStylesTableWriter = new AscCommonExcel.BinaryStylesTableWriter(writer);
-			oBinaryStylesTableWriter.bs.WriteItem(0, function(){oBinaryStylesTableWriter.WriteDxf(dxf);});
-		}else {
+			oBinaryStylesTableWriter.bs.WriteItem(0, function () {
+				oBinaryStylesTableWriter.WriteDxf(dxf);
+			});
+		} else {
 			writer.WriteBool(false);
 		}
 
-		if(null != this.sortCondition) {
+		if (null != this.sortCondition) {
 			writer.WriteBool(true);
 			this.sortCondition.Write_ToBinary2(writer);
 		} else {
 			writer.WriteBool(false);
 		}
 
-		if(null != this.richSortCondition) {
+		if (null != this.richSortCondition) {
 			writer.WriteBool(true);
 			this.richSortCondition.Write_ToBinary2(writer);
 		} else {

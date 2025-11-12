@@ -1132,4 +1132,5 @@
     window["AscCommon"].ParameterBuffer = ParameterBuffer;
     window["AscCommon"].DeltaCollector = DeltaCollector;
     window["AscCommon"].AttachedOperation = AttachedOperation;
+    window["AscCommon"].UPDATE_FOREST_TYPE = UPDATE_FOREST_TYPE;
 })(window);

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -79,7 +79,7 @@ CCacheManager.prototype.Lock = function (_w, _h, _drDocument)
 	if (_drDocument)
 	{
 		var backColor = _drDocument.m_oWordControl.m_oApi.getPageBackgroundColor();
-		backgroundColor = "#" + backColor[0].toString(16) + backColor[1].toString(16) + backColor[2].toString(16);
+		backgroundColor = "#" + backColor.R.toString(16) + backColor.G.toString(16) + backColor.B.toString(16);
 	}
 
 	for (var i = 0; i < this.arrayCount; ++i)
@@ -108,7 +108,7 @@ CCacheManager.prototype.Lock = function (_w, _h, _drDocument)
 	this.arrayImages[index].image = document.createElement('canvas');
 	this.arrayImages[index].image.width = _w;
 	this.arrayImages[index].image.height = _h;
-	this.arrayImages[index].image.ctx = this.arrayImages[index].image.getContext('2d');
+	this.arrayImages[index].image.ctx = AscCommon.AscBrowser.getContext2D(this.arrayImages[index].image);
 	this.arrayImages[index].image.ctx.globalAlpha = 1.0;
 	this.arrayImages[index].image.ctx.setTransform(1, 0, 0, 1, 0, 0);
 	this.arrayImages[index].image.ctx.fillStyle = backgroundColor;

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -45,6 +45,26 @@
 	const AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE    = 0x00000010;
 	const AUTOCORRECT_FLAGS_NUMBERING                = 0x00000020;
 	const AUTOCORRECT_FLAGS_DOUBLE_SPACE_WITH_PERIOD = 0x00000040;
+	
+	const ALLOWED_SYMBOLS_DOUBLE_SPACE_TO_PERIOD = {
+		0x0022 : 1, // "
+		0x0023 : 1, // #
+		0x0024 : 1, // $
+		0x0025 : 1, // %
+		0x0027 : 1, // '
+		0x0028 : 1, // (
+		0x0029 : 1, // )
+		0x0040 : 1, // @
+		0x005B : 1, // [
+		0x005D : 1, // ]
+		0x007D : 1, // {
+		0x007B : 1, // }
+		
+		0x2018 : 1, // ‘
+		0x2019 : 1, // ’
+		0x201C : 1, // “
+		0x201D : 1  // ”
+	};
 
 	/**
 	 * Класс для выполнения автозамены
@@ -87,7 +107,7 @@
 			return;
 
 		let oDocument = this.Paragraph.GetLogicDocument();
-		if (!oDocument || !(oDocument instanceof CDocument) && !(oDocument instanceof CPresentation))
+		if (!oDocument || (!oDocument.IsDocumentEditor() && !oDocument.IsPresentationEditor()))
 			return;
 
 		this.Document = oDocument;
@@ -119,8 +139,6 @@
 		if (!this.IsValid() || !this.Flags)
 			return this.Result;
 
-		// Чтобы позиция ContentPos была актуальна, отключаем корректировку содержимого параграфа на время выполнения
-		// автозамены. Все изменения должны происходить ТОЛЬКО внтури ранов
 		this.Paragraph.TurnOffCorrectContent();
 
 		this.private_CheckAsYouType();
@@ -180,6 +198,15 @@
 	};
 	CRunAutoCorrect.prototype.private_UpdatePos = function()
 	{
+		this.ContentPos = this.Paragraph.GetPosByElement(this.Run);
+		if (!this.ContentPos)
+		{
+			this.RunItem = null;
+			return;
+		}
+		
+		this.ContentPos.Update(this.Pos, this.ContentPos.GetDepth() + 1);
+		
 		let oRun = this.Run;
 		if (oRun.GetElement(this.Pos) === this.RunItem)
 		{
@@ -206,6 +233,7 @@
 		let oRunElementsBefore = new CParagraphRunElements(this.ContentPos, g_nMaxElements, [para_Text], false);
 		oRunElementsBefore.SetBreakOnBadType(true);
 		oRunElementsBefore.SetBreakOnDifferentClass(true);
+		oRunElementsBefore.SetBreakOnMath(true);
 		oRunElementsBefore.SetSaveContentPositions(true);
 
 		this.Paragraph.GetPrevRunElements(oRunElementsBefore);
@@ -233,6 +261,7 @@
 		let oRunElementsBefore = new CParagraphRunElements(this.ContentPos, 1, [para_Text], false);
 		oRunElementsBefore.SetBreakOnBadType(true);
 		oRunElementsBefore.SetBreakOnDifferentClass(true);
+		oRunElementsBefore.SetBreakOnMath(true);
 		this.Paragraph.GetPrevRunElements(oRunElementsBefore);
 
 		this.AsYouType = false;
@@ -246,10 +275,11 @@
 	CRunAutoCorrect.prototype.private_ProcessAutoCorrect = function(nType, pFunc)
 	{
 		if (this.Flags & nType && pFunc.call(this))
+		{
 			this.Result |= nType;
-
-		this.private_UpdatePos();
-
+			this.private_UpdatePos();
+		}
+		
 		return this.IsValid();
 	};
 	/**
@@ -270,6 +300,7 @@
 			return false;
 
 		var oRunElementsBefore = new CParagraphRunElements(oContentPos, 2, null, false);
+		oRunElementsBefore.SetBreakOnMath(true);
 		oRunElementsBefore.SetSaveContentPositions(true);
 		oParagraph.GetPrevRunElements(oRunElementsBefore);
 		var arrElements = oRunElementsBefore.GetElements();
@@ -297,11 +328,7 @@
 	CRunAutoCorrect.prototype.private_CheckPrevSymbolForDoubleSpaceWithDot = function(oItem)
 	{
 		return (oItem.IsText()
-			&& (!oItem.IsPunctuation()
-				|| 0x23 === oItem.Value
-				|| 0x24 === oItem.Value
-				|| 0x25 === oItem.Value
-				|| 0x40 === oItem.Value));
+			&& (!oItem.IsPunctuation() || ALLOWED_SYMBOLS_DOUBLE_SPACE_TO_PERIOD[oItem.Value]));
 	};
 	/**
 	 * Производим автозамену для французской пунктуации
@@ -323,6 +350,7 @@
 			return false;
 
 		var oRunElementsBefore = new CParagraphRunElements(oContentPos, 3, null, false);
+		oRunElementsBefore.SetBreakOnMath(true);
 		oRunElementsBefore.SetSaveContentPositions(true);
 		oParagraph.GetPrevRunElements(oRunElementsBefore);
 		var arrElements = oRunElementsBefore.GetElements();
@@ -382,6 +410,7 @@
 		var isDoubleQuote = 34 === oRunItem.Value;
 
 		var oRunElementsBefore = new CParagraphRunElements(oContentPos, 1, null, false);
+		oRunElementsBefore.SetBreakOnMath(true);
 		oParagraph.GetPrevRunElements(oRunElementsBefore);
 		var arrElements = oRunElementsBefore.GetElements();
 		if (arrElements.length > 0)
@@ -547,6 +576,7 @@
 			return false;
 
 		var oRunElementsBefore = new CParagraphRunElements(oContentPos, 1, null, false);
+		oRunElementsBefore.SetBreakOnMath(true);
 		oRunElementsBefore.SetSaveContentPositions(true);
 		oParagraph.GetPrevRunElements(oRunElementsBefore);
 		var arrElements = oRunElementsBefore.GetElements();
@@ -559,15 +589,8 @@
 
 			var oDash = new AscWord.CRunText(8212);
 			oRun.AddToContent(this.Pos + 1, oDash);
-			var oStartPos = oRunElementsBefore.GetContentPositions()[0];
-			var oEndPos   = oContentPos;
-			oContentPos.Update(this.Pos + 1, oContentPos.GetDepth());
-
-			oParagraph.RemoveSelection();
-			oParagraph.SetSelectionUse(true);
-			oParagraph.SetSelectionContentPos(oStartPos, oEndPos, false);
-			oParagraph.Remove(1);
-			oParagraph.RemoveSelection();
+			oRun.RemoveFromContent(this.Pos, 1);
+			oParagraph.RemoveRunElement(oRunElementsBefore.GetContentPositions()[0]);
 
 			oDocument.Recalculate();
 			oDocument.FinalizeAction();
@@ -613,6 +636,7 @@
 			if (arrElements.length > 1 && para_Text === arrElements[nElementsCount - 2].Type && 45 !== arrElements[nElementsCount - 2].Value)
 			{
 				var oTempRunElementsBefore = new CParagraphRunElements(oRunElementsBefore.GetContentPositions()[nElementsCount - 1], 1, null, false);
+				oTempRunElementsBefore.SetBreakOnMath(true);
 				oTempRunElementsBefore.SetSaveContentPositions(true);
 				oParagraph.GetPrevRunElements(oTempRunElementsBefore);
 				arrElements = oTempRunElementsBefore.GetElements();
@@ -623,6 +647,7 @@
 		else
 		{
 			var oTempRunElementsBefore = new CParagraphRunElements(oRunElementsBefore.GetContentPositions()[nElementsCount - 1], 3, null, false);
+			oTempRunElementsBefore.SetBreakOnMath(true);
 			oTempRunElementsBefore.SetSaveContentPositions(true);
 			oParagraph.GetPrevRunElements(oTempRunElementsBefore);
 			arrElements = oTempRunElementsBefore.GetElements();
@@ -753,17 +778,13 @@
 
 		if (!this.AsYouType)
 			return false;
-
-		if (!oDocument.IsAutoCorrectFirstLetterOfSentences())
+		
+		let isCellFistLetter = (oRunElementsBefore.IsEnd() && oParagraph.IsTableCellContent());
+		
+		if ((isCellFistLetter && !oDocument.IsAutoCorrectFirstLetterOfCells())
+			|| (!isCellFistLetter && !oDocument.IsAutoCorrectFirstLetterOfSentences()))
 			return false;
-
-		if (oRunElementsBefore.IsEnd()
-			&& oParagraph.IsTableCellContent()
-			&& !oDocument.IsAutoCorrectFirstLetterOfCells())
-		{
-			return false;
-		}
-
+		
 		if ("www" === sText || "http" === sText || "https" === sText)
 			return false;
 
@@ -856,13 +877,17 @@
 		var oItem = oRun.GetElement(nInRunPos);
 		if (!oItem || oItem.Type !== para_Text)
 			return false;
+		
+		let codePoint = oItem.GetCodePoint();
+		if (AscCommon.IsGeorgianScript(codePoint))
+			return false;
 
 		if (this.private_IsDocumentLocked())
 			return false;
 
 		oDocument.StartAction(AscDFH.historydescription_Document_AutoCorrectFirstLetterOfSentence);
 
-		var oNewItem = new AscWord.CRunText(String.fromCharCode(oItem.Value).toUpperCase().charCodeAt(0));
+		var oNewItem = new AscWord.CRunText(String.fromCharCode(codePoint).toUpperCase().charCodeAt(0));
 		oRun.RemoveFromContent(nInRunPos, 1, true);
 		oRun.AddToContent(nInRunPos, oNewItem, true);
 
@@ -982,7 +1007,7 @@
 					var oPrevNumLvl = oDocument.GetNumbering().GetNum(oPrevNumPr.NumId).GetLvl(oPrevNumPr.Lvl);
 					if (oPrevNumLvl.IsSimilar(oNumLvl))
 					{
-						oNumPr = new CNumPr(oPrevNumPr.NumId, oPrevNumPr.Lvl);
+						oNumPr = new AscWord.NumPr(oPrevNumPr.NumId, oPrevNumPr.Lvl);
 					}
 				}
 
@@ -991,7 +1016,7 @@
 					var oNum = oDocument.GetNumbering().CreateNum();
 					oNum.CreateDefault(c_oAscMultiLevelNumbering.Bullet);
 					oNum.SetLvl(oNumLvl, 0);
-					oNumPr = new CNumPr(oNum.GetId(), 0);
+					oNumPr = new AscWord.NumPr(oNum.GetId(), 0);
 				}
 			}
 		}
@@ -1057,7 +1082,7 @@
 					}
 
 					if (isAdd)
-						oNumPr = new CNumPr(oPrevNumPr.NumId, nResultLvL);
+						oNumPr = new AscWord.NumPr(oPrevNumPr.NumId, nResultLvL);
 				}
 				else
 				{
@@ -1084,7 +1109,7 @@
 							oNum.SetLvl(newLvl, iLvl);
 						}
 
-						oNumPr = new CNumPr(oNum.GetId(), arrResult.length - 1);
+						oNumPr = new AscWord.NumPr(oNum.GetId(), arrResult.length - 1);
 					}
 				}
 			}
@@ -1143,6 +1168,41 @@
 		var nFirstCharCode = sText.charCodeAt(0);
 
 		var sValue = sText.slice(0, sText.length - 1);
+		
+		function _getDigit(code)
+		{
+			if (0x0030 <= code && code <= 0x0039) // DIGIT
+				return code - 0x0030;
+			else if (0x0660 <= code && code <= 0x0669) // ARABIC-INDIC
+				return code - 0x0660;
+			else if (0x06F0 <= code && code <= 0x06F9) // EXTENDED ARABIC-INDIC
+				return code - 0x06f0;
+			
+			return -1;
+		}
+		
+		function _isDigit(code)
+		{
+			return -1 !== _getDigit(code);
+		}
+		
+		function _parseInt(text)
+		{
+			let val = 0;
+			let pos = 0;
+			
+			for (; pos < text.length; ++pos)
+			{
+				let c = text.codePointAt(pos);
+				let d = _getDigit(c);
+				if (-1 === d)
+					break;
+				
+				val = val * 10 + d;
+			}
+			
+			return 0 === pos ? null : val;
+		}
 
 		function private_ParseNextInt(sText, nPos)
 		{
@@ -1163,16 +1223,16 @@
 				nEndPos = Math.min(nNextDotPos, nNextParaPos);
 
 			var sValue = sText.slice(nPos, nEndPos);
-			var nValue = parseInt(sValue);
+			var nValue = _parseInt(sValue);
 
-			if (isNaN(nValue))
+			if (null === nValue)
 				return null;
 
 			return {Value : nValue, Char : sText.charAt(nEndPos), Pos : nEndPos + 1};
 		}
 
 		// Проверяем, либо у нас все числовое, либо у нас все буквенное (все заглавные, либо все не заглавные)
-		if (48 <= nFirstCharCode && nFirstCharCode <= 57)
+		if (_isDigit(nFirstCharCode))
 		{
 
 			var arrResult = [], nPos = 0;
@@ -1185,6 +1245,7 @@
 				nPos = oNum.Pos;
 
 				var oNumberingLvl = new CNumberingLvl();
+				oNumberingLvl.InitDefault(0, c_oAscMultiLevelNumbering.Numbered);
 				if ('.' === oNum.Char)
 					oNumberingLvl.SetByType(c_oAscNumberingLevel.DecimalDot_Left, nCurLvl);
 				else if (')' === oNum.Char)

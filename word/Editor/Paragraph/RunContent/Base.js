@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -64,7 +64,7 @@
 	};
 	CRunElementBase.prototype.GetWidth = function()
 	{
-		return (this.Width / TEXTWIDTH_DIVIDER);
+		return (this.Width > 0 ? this.Width / TEXTWIDTH_DIVIDER : 0);
 	};
 	CRunElementBase.prototype.Set_Width = function(nWidth)
 	{
@@ -86,9 +86,9 @@
 	CRunElementBase.prototype.GetWidthVisible = function()
 	{
 		if (undefined !== this.WidthVisible)
-			return (this.WidthVisible / TEXTWIDTH_DIVIDER);
+			return (this.WidthVisible > 0 ? this.WidthVisible / TEXTWIDTH_DIVIDER : 0);
 
-		return (this.Width / TEXTWIDTH_DIVIDER);
+		return (this.Width > 0 ? this.Width / TEXTWIDTH_DIVIDER : 0);
 	};
 	CRunElementBase.prototype.SetWidthVisible = function(nWidthVisible)
 	{
@@ -101,12 +101,62 @@
 	CRunElementBase.prototype.SetParent = function(oParent)
 	{
 	};
+	CRunElementBase.prototype.GetRun = function()
+	{
+		return null;
+	};
+	CRunElementBase.prototype.GetInRunPos = function()
+	{
+		let run = this.GetRun();
+		if (!run)
+			return -1;
+		
+		return run.GetElementPosition(this);
+	};
+	CRunElementBase.prototype.GetInParagraphPos = function()
+	{
+		let run = this.GetRun();
+		if (!run)
+			return null;
+		
+		let paragraph = run.GetParagraph();
+		if (!paragraph)
+			return null;
+		
+		let inRunPos = this.GetInRunPos();
+		if (-1 === inRunPos)
+			return null;
+		
+		let paraPos = paragraph.GetPosByElement(run);
+		if (!paraPos)
+			return null;
+		
+		paraPos.Add(inRunPos);
+		return paraPos;
+	};
 	CRunElementBase.prototype.SetParagraph = function(oParagraph)
 	{
 	};
+	CRunElementBase.prototype.GetParagraph = function()
+	{
+		let run = this.GetRun();
+		return run ? run.GetParagraph() : null;
+	};
+	CRunElementBase.prototype.IsInPermRange = function()
+	{
+		let paragraph = this.GetParagraph();
+		if (!paragraph)
+			return false;
+		
+		let paraPos = this.GetInParagraphPos();
+		if (!paraPos)
+			return null;
+		
+		return paragraph.GetPermRangesByPos(paraPos).length > 0;
+	};
 	CRunElementBase.prototype.Copy = function()
 	{
-		return new CRunElementBase();
+		return new this.constructor();
 	};
 	CRunElementBase.prototype.Write_ToBinary = function(Writer)
 	{
@@ -115,6 +165,19 @@
 	};
 	CRunElementBase.prototype.Read_FromBinary = function(Reader)
 	{
+	};
+	CRunElementBase.prototype.RemoveThisFromDocument = function()
+	{
+		let run = this.GetRun();
+		if (!run)
+			return false;
+		
+		let inRunPos = run.GetElementPosition(this);
+		if (-1 === inRunPos)
+			return false;
+		
+		run.RemoveFromContent(inRunPos, 1, true);
+		return true;
 	};
 	/**
 	 * Может ли строка начинаться с данного элемента
@@ -205,6 +268,14 @@
 		return false;
 	};
 	/**
+	 * Можно ли ставить разрыв слова перед данным элементом
+	 * @returns {boolean}
+	 */
+	CRunElementBase.prototype.IsSpaceBefore = function()
+	{
+		return false;
+	};
+	/**
 	 * Нужно ли ставить дефис для автоматического переноса
 	 * @returns {boolean}
 	 */
@@ -273,6 +344,14 @@
 	 * @returns {boolean}
 	 */
 	CRunElementBase.prototype.IsText = function()
+	{
+		return false;
+	};
+	/**
+	 * Является ли данный элемент текстовым элементом внутри математического выражения
+	 * @returns {boolean}
+	 */
+	CRunElementBase.prototype.IsMathText = function()
 	{
 		return false;
 	};
@@ -348,6 +427,20 @@
 		return false;
 	};
 	/**
+	 * return {AscBidi.TYPE}
+	 */
+	CRunElementBase.prototype.getBidiType = function()
+	{
+		return AscBidi.TYPE.ON;
+	};
+	/**
+	 * @returns {AscBidi.DIRECTION_FLAG}
+	 */
+	CRunElementBase.prototype.GetDirectionFlag = function()
+	{
+		return AscBidi.DIRECTION_FLAG.Other;
+	};
+	/**
 	 * @return {number}
 	 */
 	CRunElementBase.prototype.GetCombWidth = function()
@@ -380,7 +473,7 @@
 			oCurTextPr.SetFontFamily(sFont);
 
 			oContext.SetTextPr(oCurTextPr, oTheme);
-			oContext.SetFontSlot(this.RGapFontSlot, oTextPr.Get_FontKoef());
+			oContext.SetFontSlot(this.RGapFontSlot, oTextPr.getFontCoef());
 		}
 
 		this.RGapCharWidth = !nCharCode ? nCombBorderW : Math.max(oContext.MeasureCode(nCharCode).Width + oTextPr.Spacing + nCombBorderW, nCombBorderW);
@@ -400,7 +493,7 @@
 			oCurTextPr.SetFontFamily(this.RGapFont);
 
 			oGraphics.SetTextPr(oCurTextPr, PDSE.Theme);
-			oGraphics.SetFontSlot(this.RGapFontSlot, oTextPr.Get_FontKoef());
+			oGraphics.SetFontSlot(this.RGapFontSlot, oTextPr.getFontCoef());
 		}
 
 		if (this.RGap && this.RGapCount)

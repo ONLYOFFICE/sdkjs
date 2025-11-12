@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -1811,13 +1811,13 @@
 		//txStyles
 		oParsedMaster["txStyles"] && oMasterSlide.setTxStyles(this.TxStylesFromJSON(oParsedMaster["txStyles"]));
 
-		oMasterSlide.preserve    = oParsedMaster["preserve"];
+		oMasterSlide.setPreserve(oParsedMaster["preserve"]);
 		oMasterSlide.ImageBase64 = oParsedMaster["imgBase64"];
 
 		if (!oPres)
 			oPres = private_GetPresentation();
 
-		oPres.addSlideMaster(oPres.slideMasters.length, oMasterSlide);
+		oPres.pushSlideMaster(oMasterSlide);
 		this.mastersMap[oParsedMaster["id"]] = oMasterSlide;
 
 		return oMasterSlide;
@@ -2118,7 +2118,7 @@
 		oParsedLayout["transition"] && oLayout.applyTransition(this.TransitionFromJSON(oParsedLayout["transition"]));
 
 		oParsedLayout["matchingName"] && oLayout.setMatchingName(oParsedLayout["matchingName"]);
-		oLayout.preserve = oParsedLayout["preserve"];	
+		oLayout.setPreserve(oParsedLayout["preserve"]);
 		oParsedLayout["showMasterPhAnim"] && oLayout.setShowPhAnim(oParsedLayout["showMasterPhAnim"]);
 		oParsedLayout["showMasterSp"] && oLayout.setShowMasterSp(oParsedLayout["showMasterSp"]);
 		oLayout.userDrawn = oParsedLayout["userDrawn"];
@@ -2176,7 +2176,7 @@
 		// установим MasterSlide для Layout, если не задан
 		if (!oLayout.Master)
 		{
-			oMaster = oPresentation.lastMaster ? oPresentation.lastMaster : oPresentation.slideMasters[0];
+			oMaster = oPresentation.getDefaultMasterSlide();
 			oLayout.setMaster(oMaster);
 			oMaster.addToSldLayoutLstToPos(oMaster.length, oLayout);
 		}
@@ -2307,7 +2307,7 @@
 	};
 	ReaderFromJSON.prototype.CommentFromJSON = function(oParsedComment, oParent)
 	{
-		var oAscCommentData = new Asc.asc_CCommentData({
+		var oAscCommentData = new Asc.asc_CCommentDataSlide({
 			m_sText:     oParsedComment["text"],
 			m_sUserName: oParsedComment["authorName"],
 			m_sUserId:   oParsedComment["authorId"],

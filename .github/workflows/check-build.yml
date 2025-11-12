@@ -1,0 +1,152 @@
+name: Check sdkjs
+on:
+  push:
+    branches:
+      - develop
+      - 'release/**'
+      - 'hotfix/**'
+  pull_request:
+    branches:
+      - develop
+      - 'release/**'
+      - 'hotfix/**'
+jobs:
+  code-style:
+    runs-on: ubuntu-latest
+    steps:
+      - name: check out repository
+        uses: actions/checkout@v3
+
+      - name: setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: execute check styles
+        run: python tests/code-style/check.py
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libatk1.0-0 libcups2 libatk-bridge2.0-0 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libnss3 libgbm1 libasound2t64
+
+      - name: check out repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+            node-version: 20
+      
+      - name: Run unit tests
+        run: |
+          npm install grunt-cli node-qunit-puppeteer
+          npm install --prefix build
+          node node_modules/grunt-cli/bin/grunt --gruntfile build/Gruntfile.js develop
+          node node_modules/node-qunit-puppeteer/cli.js tests/common/api/api.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/cell/shortcuts/shortcuts.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/FormulaTests.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/PivotTests.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/copy-paste-tests.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/SheetStructureTests.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/autoFilterTests.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/UserProtectedRangesTest.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/FormulaTrace.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/NumFormatParse.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/DataValidationTests.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/conditionalFormattingTests.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/ExternalReference.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/SheetMemoryTest.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/cell/spreadsheet-calculation/whatIfAnalysisTests.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/unit-tests/paragraphContentPos.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/unit-tests/deleted-text-recovery.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/content-control/block-level/cursorAndSelection.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/content-control/inline-level/checkbox.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/content-control/inline-level/cursorAndSelection.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/content-control/inline-level/date-time.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/custom-xml/custom-xml.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/floating-position/drawing.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/paragraph.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/table/correctBadTable.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/table/flowTablePosition.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/table/pageBreak.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/table/table-flow.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/table/table-header.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/textShaper/textShaper.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/document-calculation/text-hyphenator/text-hyphenator.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/forms/forms.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/forms/complexForm.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/numbering/numberingApplicator.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/numbering/numberingCalculation.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/numbering/numberingAutocorrect.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/api/api.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/api/cross-ref.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/api/textInput.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/styles/displayStyle.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/styles/paraPr.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/styles/styleApplicator.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/text-autocorrection/as-you-type.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/plugins/pluginsApi.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/revisions/paragraph.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/merge-documents/mergeDocuments.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/math-autocorrection/math-autocorrection.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/math-ml/math-ml.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/change-case/change-case.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/js-api/js-api.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/word/shortcuts/shortcuts.html 30000 "--no-sandbox"
+          node node_modules/node-qunit-puppeteer/cli.js tests/slide/shortcuts/shortcuts.html 30000 "--no-sandbox"
+
+      - name: Send message to telegram if failure
+        if: failure()
+        uses: ./.github/actions/send-message
+        with:
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          chat: ${{ secrets.TELEGRAM_TO }}
+
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: check out repository
+        uses: actions/checkout@v4
+        with:
+          path: sdkjs
+
+      - name: check out repository sdkjs-forms current branch
+        id: sdkjs-forms
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: ONLYOFFICE/sdkjs-forms
+          token: ${{ secrets.READ_PAT }}
+          path: sdkjs-forms
+          ref: ${{ github.ref }}
+      - name: check out repository sdkjs-forms master branch
+        if: steps.sdkjs-forms.outcome != 'success'
+        uses: actions/checkout@v4
+        with:
+          repository: ONLYOFFICE/sdkjs-forms
+          token: ${{ secrets.READ_PAT }}
+          path: sdkjs-forms
+          ref: master
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run build sdkjs
+        run: |
+          cd sdkjs
+          npm install grunt-cli
+          npm install --prefix build
+          node node_modules/grunt-cli/bin/grunt --gruntfile build/Gruntfile.js
+
+      - name: Send message to telegram if failure
+        if: failure()
+        uses: ./sdkjs/.github/actions/send-message
+        with:
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          chat: ${{ secrets.TELEGRAM_TO }}

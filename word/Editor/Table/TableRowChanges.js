@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -214,6 +214,7 @@ CChangesTableRowBefore.prototype.private_SetValue = function(Value)
 	oTableRow.private_UpdateTableGrid();
 };
 CChangesTableRowBefore.prototype.Merge = private_TableRowChangesOnMergePr;
+CChangesTableRowBefore.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
@@ -322,6 +323,7 @@ CChangesTableRowAfter.prototype.private_SetValue = function(Value)
 	oTableRow.private_UpdateTableGrid();
 };
 CChangesTableRowAfter.prototype.Merge = private_TableRowChangesOnMergePr;
+CChangesTableRowAfter.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
@@ -395,6 +397,7 @@ CChangesTableRowCellSpacing.prototype.private_SetValue = function(Value)
 	oTableRow.private_UpdateTableGrid();
 };
 CChangesTableRowCellSpacing.prototype.Merge = private_TableRowChangesOnMergePr;
+CChangesTableRowCellSpacing.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectProperty}
@@ -417,6 +420,7 @@ CChangesTableRowHeight.prototype.private_SetValue = function(Value)
 	oTable.Recalc_CompiledPr();
 };
 CChangesTableRowHeight.prototype.Merge = private_TableRowChangesOnMergePr;
+CChangesTableRowHeight.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseContentChange}
@@ -492,6 +496,7 @@ CChangesTableRowAddCell.prototype.CreateReverseChange = function()
 {
 	return this.private_CreateReverseChange(CChangesTableRowRemoveCell);
 };
+CChangesTableRowAddCell.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseContentChange}
@@ -566,6 +571,7 @@ CChangesTableRowRemoveCell.prototype.CreateReverseChange = function()
 {
 	return this.private_CreateReverseChange(CChangesTableRowAddCell);
 };
+CChangesTableRowRemoveCell.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseBoolProperty}
@@ -585,6 +591,7 @@ CChangesTableRowTableHeader.prototype.private_SetValue = function(Value)
 	oRow.RecalcCopiledPrCells();
 };
 CChangesTableRowTableHeader.prototype.Merge = private_TableRowChangesOnMergePr;
+CChangesTableRowTableHeader.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectValue}
@@ -611,7 +618,7 @@ CChangesTableRowPr.prototype.private_SetValue = function(Value)
 	row.private_UpdateTableGrid();
 	
 	if (trackRevisions)
-		row.private_UpdateTrackRevisions();
+		row.updateTrackRevisions();
 };
 CChangesTableRowPr.prototype.Merge = function(oChange)
 {
@@ -657,6 +664,7 @@ CChangesTableRowPr.prototype.Merge = function(oChange)
 
 	return true;
 };
+CChangesTableRowPr.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBase}
@@ -676,14 +684,14 @@ CChangesTableRowPrChange.prototype.Undo = function()
 	var oTableRow = this.Class;
 	oTableRow.Pr.PrChange   = this.Old.PrChange;
 	oTableRow.Pr.ReviewInfo = this.Old.ReviewInfo;
-	oTableRow.private_UpdateTrackRevisions();
+	oTableRow.updateTrackRevisions();
 };
 CChangesTableRowPrChange.prototype.Redo = function()
 {
 	var oTableRow = this.Class;
 	oTableRow.Pr.PrChange   = this.New.PrChange;
 	oTableRow.Pr.ReviewInfo = this.New.ReviewInfo;
-	oTableRow.private_UpdateTrackRevisions();
+	oTableRow.updateTrackRevisions();
 };
 CChangesTableRowPrChange.prototype.WriteToBinary = function(oWriter)
 {
@@ -693,9 +701,9 @@ CChangesTableRowPrChange.prototype.WriteToBinary = function(oWriter)
 	// 3-bit : is Old.PrChange undefined ?
 	// 4-bit : is Old.ReviewInfo undefined ?
 	// Variable(CTableRowPr) : New.PrChange   (1bit = 0)
-	// Variable(CReviewInfo) : New.ReviewInfo (2bit = 0)
+	// Variable(AscWord.ReviewInfo) : New.ReviewInfo (2bit = 0)
 	// Variable(CTableRowPr) : Old.PrChange   (3bit = 0)
-	// Variable(CReviewInfo) : Old.ReviewInfo (4bit = 0)
+	// Variable(AscWord.ReviewInfo) : Old.ReviewInfo (4bit = 0)
 
 	var nFlags = 0;
 	if (undefined === this.New.PrChange)
@@ -732,9 +740,9 @@ CChangesTableRowPrChange.prototype.ReadFromBinary = function(oReader)
 	// 3-bit : is Old.PrChange undefined ?
 	// 4-bit : is Old.ReviewInfo undefined ?
 	// Variable(CTableRowPr) : New.PrChange   (1bit = 0)
-	// Variable(CReviewInfo) : New.ReviewInfo (2bit = 0)
+	// Variable(AscWord.ReviewInfo) : New.ReviewInfo (2bit = 0)
 	// Variable(CTableRowPr) : Old.PrChange   (3bit = 0)
-	// Variable(CReviewInfo) : Old.ReviewInfo (4bit = 0)
+	// Variable(AscWord.ReviewInfo) : Old.ReviewInfo (4bit = 0)
 
 	var nFlags = oReader.GetLong();
 
@@ -764,7 +772,7 @@ CChangesTableRowPrChange.prototype.ReadFromBinary = function(oReader)
 	}
 	else
 	{
-		this.New.ReviewInfo = new CReviewInfo();
+		this.New.ReviewInfo = new AscWord.ReviewInfo();
 		this.New.ReviewInfo.ReadFromBinary(oReader);
 	}
 
@@ -784,7 +792,7 @@ CChangesTableRowPrChange.prototype.ReadFromBinary = function(oReader)
 	}
 	else
 	{
-		this.Old.ReviewInfo = new CReviewInfo();
+		this.Old.ReviewInfo = new AscWord.ReviewInfo();
 		this.Old.ReviewInfo.ReadFromBinary(oReader);
 	}
 };
@@ -802,6 +810,7 @@ CChangesTableRowPrChange.prototype.Merge = function(oChange)
 
 	return true;
 };
+CChangesTableRowPrChange.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
@@ -816,9 +825,9 @@ CChangesTableRowReviewType.prototype.Type = AscDFH.historyitem_TableRow_ReviewTy
 CChangesTableRowReviewType.prototype.WriteToBinary = function(oWriter)
 {
 	// Long        : New ReviewType
-	// CReviewInfo : New ReviewInfo
+	// AscWord.ReviewInfo : New ReviewInfo
 	// Long        : Old ReviewType
-	// CReviewInfo : Old ReviewInfo
+	// AscWord.ReviewInfo : Old ReviewInfo
 	oWriter.WriteLong(this.New.ReviewType);
 	this.New.ReviewInfo.WriteToBinary(oWriter);
 	oWriter.WriteLong(this.Old.ReviewType);
@@ -827,18 +836,18 @@ CChangesTableRowReviewType.prototype.WriteToBinary = function(oWriter)
 CChangesTableRowReviewType.prototype.ReadFromBinary = function(oReader)
 {
 	// Long        : New ReviewType
-	// CReviewInfo : New ReviewInfo
+	// AscWord.ReviewInfo : New ReviewInfo
 	// Long        : Old ReviewType
-	// CReviewInfo : Old ReviewInfo
+	// AscWord.ReviewInfo : Old ReviewInfo
 
 	this.New = {
 		ReviewType : reviewtype_Common,
-		ReviewInfo : new CReviewInfo()
+		ReviewInfo : new AscWord.ReviewInfo()
 	};
 
 	this.Old = {
 		ReviewType : reviewtype_Common,
-		ReviewInfo : new CReviewInfo()
+		ReviewInfo : new AscWord.ReviewInfo()
 	};
 
 	this.New.ReviewType = oReader.GetLong();
@@ -852,5 +861,6 @@ CChangesTableRowReviewType.prototype.private_SetValue = function(Value)
 
 	oTableRow.ReviewType = Value.ReviewType;
 	oTableRow.ReviewInfo = Value.ReviewInfo;
-	oTableRow.private_UpdateTrackRevisions();
+	oTableRow.updateTrackRevisions();
 };
+CChangesTableRowReviewType.prototype.CheckLock = private_TableChangesCheckLock;

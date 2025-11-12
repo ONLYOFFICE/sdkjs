@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -185,26 +185,57 @@ function OverlayObject(geometry, extX, extY, brush, pen, transform )
     };
 }
 
-function ObjectToDraw(brush, pen, extX, extY, geometry, transform, x, y, oComment, Code)
-{
-    this.extX = extX;
-    this.extY = extY;
-    this.transform = transform;
-    this.TransformMatrix = transform;
-    this.geometry = geometry;
-    this.parentShape = null;
-    this.Comment = oComment;
-    this.Code = Code;
-    this.pen = pen;
-    this.brush = brush;
+OverlayObject.prototype.getTransformMatrix = function () {
+	return this.TransformMatrix;
+};
+OverlayObject.prototype.getGeometry = function () {
+	return this.geometry;
+};
+OverlayObject.prototype.getBounds = function () {
+	const originalDrawer = this.shapeDrawer;
 
-	/*позиция символа*/
-    this.x = x;
-    this.y = y;
-}
-ObjectToDraw.prototype =
-{
-    check_bounds: function(boundsChecker)
+	const tmpDrawer = new AscCommon.CShapeDrawer();
+	const boundsChecker = new AscFormat.CSlideBoundsChecker();
+
+	this.shapeDrawer = tmpDrawer;
+	this.draw(boundsChecker, this.TransformMatrix);
+	this.shapeDrawer = originalDrawer;
+
+	boundsChecker.CorrectBounds();
+
+	return new AscFormat.CGraphicBounds(
+		boundsChecker.Bounds.min_x,
+		boundsChecker.Bounds.min_y,
+		boundsChecker.Bounds.max_x,
+		boundsChecker.Bounds.max_y
+	);
+};
+OverlayObject.prototype.getFullRotate = function () {
+	return AscCommon.deg2rad(this.TransformMatrix.GetRotation());
+};
+
+    function ObjectToDraw(brush, pen, extX, extY, geometry, transform, x, y, oComment, TextElement, oLineStructure, nId, bIsBulletSymbol)
+    {
+        this.extX = extX;
+        this.extY = extY;
+        this.transform = transform;
+        this.TransformMatrix = transform;
+        this.geometry = geometry;
+        this.parentShape = null;
+        this.Comment = oComment;
+        this.TextElement = TextElement;
+        this.pen = pen;
+        this.brush = brush;
+		this.lineStructure = oLineStructure;
+		this.isBulletSymbol = bIsBulletSymbol;
+		this.SpaceTextElements = [];
+        /*позиция символа*/
+        this.x = x;
+        this.y = y;
+
+        this.id = nId;
+    }
+    ObjectToDraw.prototype.check_bounds = function(boundsChecker)
     {
         if(this.geometry)
         {
@@ -220,9 +251,8 @@ ObjectToDraw.prototype =
             boundsChecker._z();
             boundsChecker._e();
         }
-    },
-
-    resetBrushPen: function(brush, pen, x, y, Code)
+    };
+    ObjectToDraw.prototype.resetBrushPen = function(brush, pen, x, y, TextElement, isBulletSymbol)
     {
         this.brush = brush;
         this.pen = pen;
@@ -232,13 +262,15 @@ ObjectToDraw.prototype =
             this.x = x;
             this.y = y;
         }
-        if(AscFormat.isRealNumber(Code))
+        if(TextElement)
         {
-            this.Code = Code;
+            this.TextElement = TextElement;
         }
-    },
-
-    Recalculate: function(oTheme, oColorMap, dWidth, dHeight, oShape, bResetPathsInfo)
+				if (AscFormat.isRealBool(isBulletSymbol)) {
+					this.isBulletSymbol = isBulletSymbol;
+				}
+    };
+    ObjectToDraw.prototype.Recalculate = function(oTheme, oColorMap, dWidth, dHeight, oShape, bResetPathsInfo)
     {
        // if(AscFormat.isRealNumber(this.x) && AscFormat.isRealNumber(this.y))
        // {
@@ -261,9 +293,8 @@ ObjectToDraw.prototype =
             this.geometry.Recalculate(dWidth, dHeight, bResetPathsInfo);
         }
         this.parentShape = oShape;
-    },
-
-    getTransform: function(oTransformMatrix, bNoParentShapeTransform)
+    };
+    ObjectToDraw.prototype.getTransform = function(oTransformMatrix, bNoParentShapeTransform)
     {
 
         var oTransform;
@@ -283,15 +314,13 @@ ObjectToDraw.prototype =
             }
         }
         return oTransform;
-    },
-
-    drawComment2: function(graphics, bNoParentShapeTransform, oTransformMatrix)
+    };
+    ObjectToDraw.prototype.drawComment2 = function(graphics, bNoParentShapeTransform, oTransformMatrix)
     {
         var oTransform = this.getTransform(oTransformMatrix, bNoParentShapeTransform);
         this.DrawComment(graphics, oTransform);
-    },
-
-    DrawComment : function(graphics, oTransform)
+    };
+    ObjectToDraw.prototype.DrawComment  = function(graphics, oTransform)
     {
         if(this.Comment)
         {
@@ -312,16 +341,15 @@ ObjectToDraw.prototype =
                         this.brush = AscFormat.G_O_NO_ACTIVE_COMMENT_BRUSH;
                     }
                     var oComm = this.Comment;
-                    if(!graphics.IsSlideBoundsCheckerType && !AscCommon.IsShapeToImageConverter) 
+                    if(!graphics.isBoundsChecker() && !AscCommon.IsShapeToImageConverter)
                     {
                         oComments.Add_DrawingRect(oComm.x0, oComm.y0, oComm.x1 - oComm.x0, oComm.y1 - oComm.y0, graphics.PageNum, this.Comment.Additional.CommentId, global_MatrixTransformer.Invert(oTransform));
                     }
                 }
             }
         }
-    },
-
-    draw: function(graphics, bNoParentShapeTransform, oTransformMatrix, oTheme, oColorMap)
+    };
+    ObjectToDraw.prototype.draw = function(graphics, bNoParentShapeTransform, oTransformMatrix, oTheme, oColorMap)
     {
         var oTransform = this.getTransform(oTransformMatrix, bNoParentShapeTransform);
         this.DrawComment(graphics, oTransform);
@@ -341,30 +369,115 @@ ObjectToDraw.prototype =
         graphics.transform3(oTransform, false);
         var shape_drawer = new AscCommon.CShapeDrawer();
         shape_drawer.fromShape2(this, graphics, this.geometry);
-        if(graphics.IsSlideBoundsCheckerType)
+        if(graphics.isBoundsChecker())
         {
             shape_drawer.bIsNoFillAttack = false;
         }
+        if (this.TextElement)
+        {
+            shape_drawer.bIsNoSmartAttack = true;
+        }
         shape_drawer.draw(this.geometry);
         graphics.RestoreGrState();
-    },
-
-    createDuplicate: function()
+    };
+    ObjectToDraw.prototype.createDuplicate = function()
     {
-    },
-
-    compareForMorph: function(oDrawingToCheck, oCurCandidate) {
-        if(AscFormat.isRealNumber(this.Code) && oDrawingToCheck.Code === this.Code) {
+    };
+    ObjectToDraw.prototype.getTextElementCode = function () {
+		if (this.TextElement && this.TextElement.GetCharCode) {
+			return this.TextElement.GetCharCode();
+		}
+	};
+    ObjectToDraw.prototype.addSpaceTextElement = function (oElement) {
+		this.SpaceTextElements.push(oElement);
+	};
+    ObjectToDraw.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate) {
+        if(AscFormat.isRealNumber(this.getTextElementCode()) && oDrawingToCheck.getTextElementCode() === this.getTextElementCode()) {
             return oDrawingToCheck;
         }
         return oCurCandidate;
+    };
+    ObjectToDraw.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate) {
+        if(AscFormat.isRealNumber(this.getTextElementCode()) && oDrawingToCheck.getTextElementCode() === this.getTextElementCode()) {
+            return oDrawingToCheck;
+        }
+        return oCurCandidate;
+    };
+    ObjectToDraw.prototype.Write_ToBinary = function(writer)
+    {
+        writer.WriteDouble(this.extX);
+        writer.WriteDouble(this.extY);
+        this.geometry.Write_ToBinary(writer);
+
+        if(this.pen)
+        {
+            writer.WriteBool(true);
+            this.pen.Write_ToBinary(writer);
+        }
+        else
+        {
+            writer.WriteBool(false);
+        }
+        if(this.brush)
+        {
+            writer.WriteBool(true);
+            this.brush.Write_ToBinary(writer);
+        }
+        else
+        {
+            writer.WriteBool(false);
+        }
+    };
+    ObjectToDraw.prototype.Read_FromBinary = function(reader)
+    {
+        this.extX = reader.GetDouble();
+        this.extY = reader.GetDouble();
+
+
+        this.geometry = AscFormat.ExecuteNoHistory(function(){ return new AscFormat.Geometry();}, this, []);
+        this.geometry.Read_FromBinary(reader);
+
+        let bPen = reader.GetBool();
+        if(bPen)
+        {
+            this.pen = new AscFormat.CLn();
+            this.pen.Read_FromBinary(reader);
+        }
+        else
+        {
+            this.pen = null;
+        }
+        let bBrush = reader.GetBool();
+        if(bBrush)
+        {
+            this.brush = new AscFormat.CUniFill();
+            this.brush.Read_FromBinary(reader);
+        }
+        else
+        {
+            this.brush = null;
+        }
+        this.transform = this.TransformMatrix = new AscCommon.CMatrix();
+    };
+    ObjectToDraw.prototype.getBounds = function () {
+
+        if (this.geometry) {
+            let boundsChecker = new AscFormat.CSlideBoundsChecker();
+            boundsChecker.init(100, 100, 100, 100);
+            this.geometry.check_bounds(boundsChecker);
+            boundsChecker.CorrectBounds();
+            let bounds = boundsChecker.Bounds;
+            return new AscFormat.CGraphicBounds(bounds.min_x, bounds.min_y, bounds.max_x, bounds.max_y);
+        }
+        return new AscFormat.CGraphicBounds(0, 0, 0, 0);
     }
-};
 function RotateTrackShapeImage(originalObject)
 {
     this.bIsTracked = false;
     this.originalObject = originalObject;
     this.transform = new CMatrix();
+
+		this.smartArtParent = this.originalObject.isObjectInSmartArt() ? this.originalObject.group.group.parent : null;
     var brush;
     if(originalObject.blipFill)
     {
@@ -430,6 +543,14 @@ function RotateTrackShapeImage(originalObject)
         {
             global_MatrixTransformer.MultiplyAppend(this.transform, this.originalObject.group.transform);
         }
+	    if (this.smartArtParent)
+	    {
+		    var parent_transform = this.smartArtParent.Get_ParentTextTransform && this.smartArtParent.Get_ParentTextTransform();
+		    if(parent_transform)
+		    {
+			    global_MatrixTransformer.MultiplyAppend(this.transform, parent_transform);
+		    }
+	    }
         if(this.originalObject.parent)
         {
             var parent_transform = this.originalObject.parent.Get_ParentTextTransform && this.originalObject.parent.Get_ParentTextTransform();
@@ -500,6 +621,14 @@ function RotateTrackShapeImage(originalObject)
         boundsChecker.Bounds.extY = this.originalObject.extY;
         return boundsChecker.Bounds;
     }
+	this.checkDrawingPartWithHistory = function () {
+			if (this.originalObject.checkDrawingPartWithHistory) {
+				const newObject = this.originalObject.checkDrawingPartWithHistory();
+				if (newObject) {
+					this.originalObject = newObject;
+				}
+			}
+	};
 }
 
 function RotateTrackGroup(originalObject)
@@ -610,6 +739,14 @@ function RotateTrackGroup(originalObject)
             global_MatrixTransformer.ScaleAppend(this.transform, 1, -1);
         global_MatrixTransformer.RotateRadAppend(this.transform, -this.angle);
         global_MatrixTransformer.TranslateAppend(this.transform, this.originalObject.x + hc, this.originalObject.y + vc);
+	    if(this.originalObject.parent)
+	    {
+		    var parent_transform = this.originalObject.parent.Get_ParentTextTransform && this.originalObject.parent.Get_ParentTextTransform();
+		    if(parent_transform)
+		    {
+			    global_MatrixTransformer.MultiplyAppend(this.transform, parent_transform);
+		    }
+	    }
         for(var i = 0; i < this.overlayObjects.length; ++i)
         {
             var new_transform = this.arrTransforms2[i].CreateDublicate();
@@ -636,6 +773,11 @@ function RotateTrackGroup(originalObject)
         }
         this.originalObject.spPr.xfrm.setRot(this.angle);
     }
+	this.checkDrawingPartWithHistory = function () {
+		if (this.originalObject.checkDrawingPartWithHistory) {
+			this.originalObject.checkDrawingPartWithHistory()
+		}
+	};
 }
 
 function Chart3dAdjustTrack(oChartSpace, numHandle, startX, startY)
@@ -917,6 +1059,7 @@ function Chart3dAdjustTrack(oChartSpace, numHandle, startX, startY)
         }
         oChartSpace.changeView3d(this.view3D.createDuplicate());
     }
+	this.checkDrawingPartWithHistory = function () {};
 }
 
     //--------------------------------------------------------export----------------------------------------------------

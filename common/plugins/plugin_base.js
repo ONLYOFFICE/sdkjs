@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -431,12 +431,28 @@
 	CPluginWindow.prototype.show = function(settings)
 	{
 		var url = settings.url;
+
+		if ((0 !== url.indexOf("http://")) &&
+			(0 !== url.indexOf("https://")) &&
+			(0 !== url.indexOf("file://")) &&
+			(0 !== url.indexOf("www.")))
+		{
+			let location  = window.location;
+			let start = location.pathname.lastIndexOf('/') + 1;
+			let file = location.pathname.substring(start);
+			url = location.href.replace(file, url);
+		}
+
 		if (-1 === url.indexOf(".html?"))
 			url += "?windowID=";
 		else
 			url += "&windowID=";
 		settings.url = url + this.id;
 		window.Asc.plugin.executeMethod("ShowWindow", [this.id, settings]);
+	};
+	CPluginWindow.prototype.activate = function(isFocus)
+	{
+		window.Asc.plugin.executeMethod("ActivateWindow", [this.id, isFocus]);
 	};
 	CPluginWindow.prototype.close = function()
 	{
@@ -545,7 +561,7 @@
 		".select2-container--default .select2-selection--single .select2-selection__rendered" : { "color" : "text-normal" },
 		".select2-results" : { "background-color" : "background-normal" },
 		".select2-container--default .select2-results__option--highlighted[aria-selected]" : { "background-color" : "highlight-button-hover !important"},
-		".select2-container--default .select2-results__option[aria-selected=true]" : { "background-color" : "highlight-button-pressed !important"},
+		".select2-container--default .select2-results__option[aria-selected=true]" : { "background-color" : "highlight-button-pressed !important", "color" : "text-normal-pressed"},
 		".select2-dropdown, .select2-container--default .select2-selection--single" : { "border-color" : "border-regular-control !important"},
 		".select2-container--default.select2-container--open .select2-selection--single" : { "border-color" : "border-control-focus !important"},
 		".select2-container--default.select2-container--focus:not(.select2-container--open) .select2-selection--single" : { "border-color" : "border-regular-control !important"},
@@ -618,8 +634,11 @@
 				}
 			}
 
-			if (type == "init")
+			if (type === "init")
 				window.Asc.plugin.info = pluginData;
+
+			if (type === "updateOptions" && pluginData.options)
+				window.Asc.plugin.info.options = pluginData.options;
 
 			if (undefined !== pluginData.theme)
 			{
@@ -804,8 +823,10 @@
 				{
 					if (window.Asc.plugin.onCallCommandCallback)
 					{
-						window.Asc.plugin.onCallCommandCallback(pluginData.commandReturnData);
+						var methodCallback = window.Asc.plugin.onCallCommandCallback;
 						window.Asc.plugin.onCallCommandCallback = null;
+						methodCallback(pluginData.commandReturnData);
+						methodCallback = null;
 					}
 					else if (window.Asc.plugin.onCommandCallback)
 						window.Asc.plugin.onCommandCallback(pluginData.commandReturnData);
@@ -828,8 +849,35 @@
 				case "onWindowEvent":
 				{
 					if (window.Asc.plugin._windows && pluginData.windowID && window.Asc.plugin._windows[pluginData.windowID])
-						window.Asc.plugin._windows[pluginData.windowID]._oncommand(pluginData.eventName, pluginData.eventData);
+					{
+						if ("private_window_method" === pluginData.eventName)
+						{
+							var _windowID = pluginData.windowID;
+							window.Asc.plugin.executeMethod(pluginData.eventData.name, pluginData.eventData.params, function(retValue){
+								if (window.Asc.plugin._windows && window.Asc.plugin._windows[_windowID])
+									window.Asc.plugin._windows[_windowID].command("on_private_window_method", retValue);
+							});
+						}
+						else if ("private_window_command" === pluginData.eventName)
+						{
+							var _windowID = pluginData.windowID;
+							window.Asc.plugin.info.recalculate = (false === pluginData.eventData.isCalc) ? false : true;
+							window.Asc.plugin.executeCommand("command", pluginData.eventData.code, function(retValue){
+								if (window.Asc.plugin._windows && window.Asc.plugin._windows[_windowID])
+									window.Asc.plugin._windows[_windowID].command("on_private_window_command", retValue);
+							});
+						}
+						else
+						{
+							window.Asc.plugin._windows[pluginData.windowID]._oncommand(pluginData.eventName, pluginData.eventData);
+						}
+					}
 					break;
+				}
+				case "updateOptions":
+				{
+					if (window.Asc.plugin.onUpdateOptions)
+						window.Asc.plugin.onUpdateOptions();
 				}
 				default:
 					break;

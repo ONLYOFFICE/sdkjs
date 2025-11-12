@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -36,15 +36,21 @@
 //если не выставлено в настройках
 /////////////////////****//////////////////////////
 
-function CMathNaryPr()
+function CMathNaryPr(ctrPr)
 {
-    this.chr     = undefined;
-    this.chrType = undefined;
-    this.grow    = false;
-    this.limLoc  = undefined;
-    this.subHide = false;
-    this.supHide = false;
+	this.chr		= undefined;
+	this.chrType	= undefined;
+	this.grow		= false;
+	this.limLoc		= undefined;
+	this.subHide	= false;
+	this.supHide	= false;
+	this.ctrPr		= new CMathCtrlPr(ctrPr);
 }
+
+CMathNaryPr.prototype.GetRPr = function ()
+{
+	return this.ctrPr.GetRPr();
+};
 
 CMathNaryPr.prototype.Set_FromObject = function(Obj)
 {
@@ -62,6 +68,8 @@ CMathNaryPr.prototype.Set_FromObject = function(Obj)
 
     if(true === Obj.supHide === true || 1 === Obj.supHide)
         this.supHide = true;
+
+	this.ctrPr.SetRPr(Obj.ctrPrp);
 };
 
 CMathNaryPr.prototype.Copy = function()
@@ -74,6 +82,7 @@ CMathNaryPr.prototype.Copy = function()
     NewPr.limLoc  = this.limLoc ;
     NewPr.subHide = this.subHide;
     NewPr.supHide = this.supHide;
+	NewPr.ctrPr = this.ctrPr;
 
     return NewPr;
 };
@@ -120,6 +129,9 @@ CMathNaryPr.prototype.Write_ToBinary = function(Writer)
     Writer.WriteBool(this.grow);
     Writer.WriteBool(this.subHide);
     Writer.WriteBool(this.supHide);
+
+	Writer.WriteBool(true);
+	this.ctrPr.Write_ToBinary(Writer);
 };
 
 CMathNaryPr.prototype.Read_FromBinary = function(Reader)
@@ -154,6 +166,11 @@ CMathNaryPr.prototype.Read_FromBinary = function(Reader)
     this.grow    = Reader.GetBool();
     this.subHide = Reader.GetBool();
     this.supHide = Reader.GetBool();
+
+	if (Reader.GetBool())
+	{
+		this.ctrPr.Read_FromBinary(Reader);
+	}
 };
 
 /**
@@ -168,20 +185,20 @@ function CNary(props)
 
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    this.Pr = new CMathNaryPr();
+	this.Pr = new CMathNaryPr(this.CtrPrp);
 
-    this.Base = null;
-    this.Sign = null;
-    this.LowerIterator = null;
-    this.UpperIterator = null;
-    this.Arg           = null;
+	this.Base = null;
+	this.Sign = null;
+	this.LowerIterator = null;
+	this.UpperIterator = null;
+	this.Arg           = null;
 
-    this.CurrentLimLoc = null;
+	this.CurrentLimLoc = null;
 
-    if(props !== null && props !== undefined)
-        this.init(props);
+	if(props !== null && props !== undefined)
+		this.init(props);
 
-    AscCommon.g_oTableId.Add( this, this.Id );
+	AscCommon.g_oTableId.Add( this, this.Id );
 }
 CNary.prototype = Object.create(CMathBase.prototype);
 CNary.prototype.constructor = CNary;
@@ -272,7 +289,7 @@ CNary.prototype.fillBase = function(PropsInfo)
             base.setBase(Sign);
             base.setLowerIterator(this.LowerIterator);
             base.setUpperIterator(this.UpperIterator);
-            
+
             base.fillContent();
         }
     }
@@ -293,8 +310,7 @@ CNary.prototype.ApplyProperties = function(RPI)
 
         if(bSimpleNarySubSup)
         {
-            this.Sign = new CMathText(true);
-            this.Sign.add(oSign.chrCode);
+			this.Sign = new CNaryInlineOperator(oSign.chrCode);
         }
         else
         {
@@ -348,7 +364,7 @@ CNary.prototype.PreRecalc = function(Parent, ParaMath, ArgSize, RPI, GapsInfo)
     RPI.bNaryInline = bNaryInline;
 };
 CNary.prototype.getSign = function(chrCode, chrType)
-{    
+{
     var result = 
     {
         chrCode:   null,
@@ -815,64 +831,94 @@ CNary.prototype.Can_ModifyArgSize = function()
 {
     return this.CurPos !== 2 && false === this.Is_SelectInside();
 };
-CNary.prototype.GetTextOfElement = function(isLaTeX)
+/**
+ *
+ * @param {MathTextAndStyles} oMathText
+ * @return {*}
+ * @constructor
+ */
+CNary.prototype.GetTextOfElement = function(oMathText)
 {
-	var strTemp = "";
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
-	var strStartCode = String.fromCharCode(this.Pr.chr || this.getSign().chrCode);
-	var strSupContent = this.getSupMathContent().GetMultipleContentForGetText(isLaTeX, undefined, true);
-	var strSubContent = this.getSubMathContent().GetMultipleContentForGetText(isLaTeX, undefined, true);
-	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
+	let strStartCode;
+	let oBase	= this.getBase();
+	let oUpper	= this.getUpperIterator();
+	let oLower	= this.getLowerIterator();
 
-    if (isLaTeX)
-    {
-        switch (strStartCode.codePointAt())
-        {
-            case 8747:	strStartCode = '\\int';			break;
-            case 8748:	strStartCode = '\\iint';		break;
-            case 8749:	strStartCode = '\\iiint';		break;
-            case 8750:
-            case 8755:	strStartCode = '\\oint';		break;
-            case 8751:	strStartCode = '\\oiint';		break;
-            case 8752:	strStartCode = '\\oiiint';		break;
-            case 8721:	strStartCode = '\\sum';			break;
-            case 8719:	strStartCode = '\\prod';		break;
-            case 8720:	strStartCode = '\\coprod';		break;
-            case 8899:	strStartCode = '\\bigcup';		break;
-            case 8898:	strStartCode = '\\bigcap';		break;
-            case 8897:	strStartCode = '\\bigvee';		break;
-            case 8896:	strStartCode = '\\bigwedge';	break;
-            case 10753:	strStartCode = '\\bigoplus';	break;
-            case 10754:	strStartCode = '\\bigotimes';	break;
-            case 10756:	strStartCode = '\\biguplus';	break;
-            case 10764:	strStartCode = '\\iiiint';		break;
-            case 10758: strStartCode = '\\bigsqcup';	break;
-            case 10752: strStartCode = '\\bigodot';		break;
-            default: break;
-        }
-        if (strSupContent.length === 0 && strSubContent.length === 0)
-        {
-            strStartCode += " ";
-        }
-    }
-    else if (!isLaTeX && strBase.length > 0)
-    {
-        strBase = '▒' + strBase;
+	if (oMathText.IsLaTeX())
+	{
+		strStartCode		= AscMath.MathLiterals.nary.Unicode[String.fromCharCode(this.Pr.chr)];
+		if (undefined === strStartCode)
+			strStartCode = '\\int';
+
+		oMathText.AddText(new AscMath.MathText(strStartCode, this));
+
+		if (oLower)
+		{
+			oMathText.SetGlobalStyle(oLower);
+			let oLowerPos	= oMathText.Add(oLower, true,  2);
+			oLowerPos		= oMathText.AddBefore(oLowerPos, new AscMath.MathText("_", oLower));
+		}
+
+		if (oUpper)
+		{
+			oMathText.SetNotGetStyleFromFirst();
+			let oUpperPos = oMathText.AddText(new AscMath.MathText("^", oUpper));
+
+			oMathText.SetGlobalStyle(oUpper);
+			oMathText.Add(oUpper, true, 2);
+		}
+
+		if (oBase)
+		{
+			oMathText.SetGlobalStyle(this);
+			oMathText.Add(oBase, true, 1);
+		}
+	}
+	else
+	{
+		if (undefined === this.Pr.chr)
+			strStartCode = '∫';
+		else
+			strStartCode = String.fromCharCode(this.Pr.chr);
+
+		let startChar = new AscMath.MathText(strStartCode, this);
+		if (this.Pr.limLoc === NARY_UndOvr)
+		{
+			let oAddData	= startChar.GetAdditionalData();
+			let oMetaData	= oAddData.GetMathMetaData();
+			oMetaData.setIsLimitNary(true);
+		}
+
+		let oLastPos = oMathText.AddText(startChar);
+
+		if (oLower)
+		{
+			oMathText.SetGlobalStyle(this);
+			oMathText.AddText(new AscMath.MathText("_", oLower));
+			oLastPos = oMathText.Add(oLower, true);
+		}
+
+		if (oUpper)
+		{
+			oMathText.SetGlobalStyle(this);
+			oMathText.AddText(new AscMath.MathText("^", oUpper));
+			oLastPos = oMathText.Add(oUpper, true);
+		}
+
+		if (oBase)
+		{
+			let oPosBeforeBase	= oLastPos.Copy();
+			oLastPos			= oMathText.Add(oBase, true, 1);
+			let strBase			= oBase.GetTextOfElement().GetText();
+
+			if (strBase.length > 0)
+				oMathText.AddAfter(oPosBeforeBase, new AscMath.MathText("▒", oBase));
+		}
 	}
 
-	strTemp += strStartCode;
-
-	if (strSupContent.length > 0)
-    {
-		strTemp += "^" + strSupContent;
-	}
-	if (strSubContent.length > 0)
-    {
-		strTemp += "_" + strSubContent;
-	}
-	strTemp += strBase;
-
-	return strTemp;
+	return oMathText;
 };
 
 /**
@@ -1170,15 +1216,75 @@ CNaryUndOvr.prototype.getUpperIterator = function()
     return this.elements[0][0];
 };
 
+function CNaryInlineOperator(chrCode)
+{
+	this.Base		= new CMathText(true);
+	this.size		= new CMathSize();
+    this.pos		= new CMathPosition();
+	this.Parent		= null;
+	this.ParaMath	= null;
+	
+	this.Base.add(chrCode);
+}
+CNaryInlineOperator.prototype.Draw_Elements = function(PDSE)
+{
+	this.Parent.Make_ShdColor(PDSE, this.Parent.Get_CompiledCtrPrp());
+    var PosLine = this.ParaMath.GetLinePosition(PDSE.Line, PDSE.Range);
+
+    this.drawTextElem(PosLine.x, PosLine.y, PDSE.Graphics);
+};
+CNaryInlineOperator.prototype.PreRecalc = function(Parent, ParaMath, ArgSize, RPI)
+{
+    this.Parent		= Parent;
+    this.ParaMath	= ParaMath;
+
+	this.Base.PreRecalc(Parent, ParaMath);
+};
+CNaryInlineOperator.prototype.IsJustDraw = function()
+{
+    return true;
+};
+CNaryInlineOperator.prototype.Measure = function(oMeasure, RPI)
+{
+	this.Base.Measure(oMeasure, RPI);
+	
+	this.size.ascent	= this.Base.size.ascent;
+	this.size.height	= this.Base.size.height;
+	this.size.width		= this.Base.size.width;
+};
+CNaryInlineOperator.prototype.setPosition = function(pos)
+{
+    this.pos.x = pos.x;
+    this.pos.y = pos.y;
+};
+CNaryInlineOperator.prototype.drawTextElem = function(x, y, pGraphics)
+{
+    var ctrPrp = this.Get_TxtPrControlLetter();
+
+    var Font =
+    {
+        FontSize:   ctrPrp.FontSize,
+        FontFamily: {Name : ctrPrp.FontFamily.Name, Index : ctrPrp.FontFamily.Index},
+        Italic:     false,
+        Bold:       false
+    };
+
+    pGraphics.SetFont(Font);
+	pGraphics.FillTextCode(x + this.pos.x, y + this.pos.y + this.size.height - (this.size.height - this.size.ascent), this.Base.RecalcInfo.StyleCode);
+};
+CNaryInlineOperator.prototype.Get_TxtPrControlLetter = function()
+{
+    return this.Parent.Get_TxtPrControlLetter();
+};
 
 function CNaryOperator(flip)
 {
-    this.size = new CMathSize();
-    this.pos = new CMathPosition();
-    this.bFlip = (flip == -1);
-    this.Parent   = null;
-    this.ParaMath = null;
-    this.sizeGlyph = null;
+    this.size		= new CMathSize();
+    this.pos		= new CMathPosition();
+    this.bFlip		= (flip == -1);
+    this.Parent		= null;
+    this.ParaMath	= null;
+    this.sizeGlyph	= null;
 }
 CNaryOperator.prototype.Draw_Elements = function(PDSE)
 {
@@ -2391,7 +2497,7 @@ CClosedPathIntegral.prototype.drawGlyph = function(parameters)
 
     this.Parent.Make_ShdColor(PDSE, this.Parent.Get_CompiledCtrPrp());
 
-    if(pGraphics.Start_Command)
+    if(pGraphics.isSupportTextOutline())
     {
         for(var i = 0; i < CircleLng; i++)
         {
@@ -2422,16 +2528,9 @@ CClosedPathIntegral.prototype.drawGlyph = function(parameters)
         pGraphics.df();
 
         // делаем заливку уже обводки
-
-        var WidthLine;
-        if(pGraphics.m_oTextPr.TextOutline && AscFormat.isRealNumber(pGraphics.m_oTextPr.TextOutline.w))
-        {
-            WidthLine = (pGraphics.m_oTextPr.TextOutline.w/36000) *0.6; // сместим заливку на половину толщины линии , чтобы не было зазоров м/ду обводкой и заливкой
-        }
-        else
-        {
-            WidthLine = 0;
-        }
+		var WidthLine = 0;
+		if (oTextOutline && AscFormat.isRealNumber(oTextOutline.w))
+			WidthLine = (oTextOutline.w / 36000) * 0.6; // сместим заливку на половину толщины линии , чтобы не было зазоров м/ду обводкой и заливкой
 
         // последняя точка совпадает в пути с первой, поэтому берем предпоследнюю
 
@@ -2500,10 +2599,9 @@ CClosedPathIntegral.prototype.drawGlyph = function(parameters)
         IntegralX[0] = IntegralX[IntegralLng - 1];
         IntegralY[0] = IntegralY[IntegralLng - 1];
 
-        // т.к. при отрисовке textArt сравниаются ссылки текстовых настроек и если они совпали, то текстовые настройки не меняются и отрисовка происходит с теми же текстовые настройками, к-ые выставлены ранее
-        oCompiledPr.TextOutline  = null;
-
-        pGraphics.SetTextPr(oCompiledPr, PDSE.Theme);
+		let _compiledPr = oCompiledPr.Copy();
+		_compiledPr.TextOutline  = null;
+        pGraphics.SetTextPr(_compiledPr, PDSE.Theme);
 
         pGraphics._s();
         Circle.drawPath(pGraphics, ExtX, ExtY);
@@ -2517,8 +2615,6 @@ CClosedPathIntegral.prototype.drawGlyph = function(parameters)
         Integral.drawPath(pGraphics, IntegralX, IntegralY, IntegralW*alpha);
         pGraphics.ds();
         pGraphics.df();
-
-        oCompiledPr.TextOutline = oTextOutline; // меняем обратно, чтобы не изменились скомпилированные текстовые настройки
     }
     else
     {
@@ -2672,3 +2768,5 @@ CVolumeIntegral.prototype.calculateSizeGlyph = function()
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CNary = CNary;
+
+AscMath.Nary = CNary;

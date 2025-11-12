@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -77,16 +77,12 @@
 	};
 	CRunSeparator.prototype.UpdateWidth = function(PRS)
 	{
-		var oPara    = PRS.Paragraph;
-		var nCurPage = PRS.Page;
-
-		oPara.Parent.Update_ContentIndexing();
-		var oLimits = oPara.Parent.Get_PageContentStartPos2(oPara.PageNum, oPara.ColumnNum, nCurPage, oPara.Index);
-
-		var nWidth = (Math.min(50, (oLimits.XLimit - oLimits.X)) * AscWord.TEXTWIDTH_DIVIDER) | 0;
-
-		this.Width        = nWidth;
-		this.WidthVisible = nWidth;
+		let contentFrame = PRS.Paragraph.GetPageContentFrame(PRS.Page);
+		
+		let width = (Math.min(50, (contentFrame.XLimit - contentFrame.X)) * AscWord.TEXTWIDTH_DIVIDER) | 0;
+		
+		this.Width        = width;
+		this.WidthVisible = width;
 	};
 	CRunSeparator.prototype.IsNeedSaveRecalculateObject = function()
 	{

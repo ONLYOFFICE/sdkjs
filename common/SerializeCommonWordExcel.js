@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -83,7 +83,8 @@ var c_oSerBorderType = {
     Value: 3,
 	ColorTheme: 4,
 	SpacePoint: 5,
-	Size8Point: 6
+	Size8Point: 6,
+	ValueType: 7
 };
 var c_oSerBordersType = {
     left: 0,
@@ -239,6 +240,10 @@ BinaryCommonWriter.prototype.WriteBorder = function(border)
         this.memory.WriteByte(c_oSerBorderType.Value);
         this.memory.WriteByte(c_oSerPropLenType.Byte);
         this.memory.WriteByte(border.Value);
+		
+		this.memory.WriteByte(c_oSerBorderType.ValueType);
+		this.memory.WriteByte(c_oSerPropLenType.Long);
+		this.memory.WriteLong(border.getValue());
     }
 };
 BinaryCommonWriter.prototype.WriteBorders = function(Borders)
@@ -268,11 +273,23 @@ BinaryCommonWriter.prototype.WriteBorders = function(Borders)
 };
 BinaryCommonWriter.prototype.WriteColor = function(type, color)
 {
-    this.memory.WriteByte(type);
-    this.memory.WriteByte(c_oSerPropLenType.Three);
-    this.memory.WriteByte(color.r);
-    this.memory.WriteByte(color.g);
-    this.memory.WriteByte(color.b);
+	if (color instanceof AscWord.CDocumentColorA)
+	{
+		this.memory.WriteByte(type);
+		this.memory.WriteByte(c_oSerPropLenType.Long);
+		this.memory.WriteByte(color.a);
+		this.memory.WriteByte(color.r);
+		this.memory.WriteByte(color.g);
+		this.memory.WriteByte(color.b);
+	}
+	else
+	{
+		this.memory.WriteByte(type);
+		this.memory.WriteByte(c_oSerPropLenType.Three);
+		this.memory.WriteByte(color.r);
+		this.memory.WriteByte(color.g);
+		this.memory.WriteByte(color.b);
+	}
 };
 BinaryCommonWriter.prototype.WriteShd = function(Shd)
 {
@@ -573,12 +590,23 @@ Binary_CommonReader.prototype.ReadDouble = function()
     dRes /= 100000;
     return dRes;
 };
-Binary_CommonReader.prototype.ReadColor = function()
+Binary_CommonReader.prototype.ReadColor = function(length)
 {
-    var r = this.stream.GetUChar();
-    var g = this.stream.GetUChar();
-    var b = this.stream.GetUChar();
-    return new AscCommonWord.CDocumentColor(r, g, b);
+	if (length && 4 === length)
+	{
+		let a = this.stream.GetUChar();
+		let r = this.stream.GetUChar();
+		let g = this.stream.GetUChar();
+		let b = this.stream.GetUChar();
+		return new AscWord.CDocumentColorA(r, g, b, a);
+	}
+	else
+	{
+		let r = this.stream.GetUChar();
+		let g = this.stream.GetUChar();
+		let b = this.stream.GetUChar();
+		return new AscWord.CDocumentColor(r, g, b);
+	}
 };
 Binary_CommonReader.prototype.ReadShd = function(type, length, Shd, themeColor, themeFill)
 {
@@ -587,14 +615,14 @@ Binary_CommonReader.prototype.ReadShd = function(type, length, Shd, themeColor, 
     switch(type)
     {
         case c_oSerShdType.Value: Shd.Value = this.stream.GetUChar();break;
-        case c_oSerShdType.Color: Shd.Color = this.ReadColor();break;
+        case c_oSerShdType.Color: Shd.Color = this.ReadColor(length);break;
 		case c_oSerShdType.ColorTheme:
 			res = this.Read2(length, function(t, l){
 				return oThis.ReadColorTheme(t, l, themeColor);
 			});
 			break;
 		case c_oSerShdType.Fill:
-            Shd.Fill = this.ReadColor();
+            Shd.Fill = this.ReadColor(length);
 			break;
 		case c_oSerShdType.FillTheme:
 			res = this.Read2(length, function(t, l){
@@ -788,11 +816,20 @@ FT_Stream2.prototype.GetString2 = function() {
 	return this.GetString2LE(Len);
 };
 //String
-FT_Stream2.prototype.GetString2LE = function(len) {
+const global_string_decoder_le = (typeof TextDecoder !== "undefined") ? new TextDecoder('utf-16le', { ignoreBOM: true }) : null;
+FT_Stream2.prototype.GetString2LE = function(len)
+{
 	if (this.cur + len > this.size)
 		return "";
+
+	if (global_string_decoder_le && undefined !== this.data.buffer) {
+		const subdata = new Uint8Array(this.data.buffer, this.data.byteOffset + this.cur, len);
+		this.cur += len;
+		return global_string_decoder_le.decode(subdata);
+	}
+
 	var a = [];
-	for (var i = 0; i + 1 < len; i+=2)
+	for (var i = 0; i + 1 < len; i += 2)
 		a.push(String.fromCharCode(this.data[this.cur + i] | this.data[this.cur + i + 1] << 8));
 	this.cur += len;
 	return a.join("");
@@ -861,6 +898,7 @@ FT_Stream2.prototype.GetBuffer = function(length) {
 };
 FT_Stream2.prototype.GetBufferUint8 = function(length) {
 	let pos = this.GetCurPos();
+	this.cur += length;
 	return this.data.slice(pos, pos + length);
 };
 FT_Stream2.prototype.ToFileStream = function() {
@@ -991,7 +1029,7 @@ var g_oCellAddressUtils = new CellAddressUtils();
 		return g_oCellAddressUtils.colnumToColstr(this.col + 1) + (this.row + 1);
 	};
 	CellBase.prototype.fromRefA1 = function(val) {
-		this.clean();
+		this.row = this.col = 0;
 		var index = 0;
 		var char = val.charCodeAt(index);
 		while (65 <= char && char <= 90) {//'A'<'Z'
@@ -1006,12 +1044,8 @@ var g_oCellAddressUtils = new CellAddressUtils();
 			this.row = 10 * this.row + char - 48;
 			char = val.charCodeAt(++index);
 		}
-		this.row -= 1;
-		this.col -= 1;
-		this.row = Math.min(this.row, gc_nMaxRow0);
-		this.row = Math.max(this.row, 0);
-		this.col = Math.min(this.col, gc_nMaxCol0);
-		this.col = Math.max(this.col, 0);
+		this.row = Math.max(0, Math.min(this.row - 1, gc_nMaxRow0));
+		this.col = Math.max(0, Math.min(this.col - 1, gc_nMaxCol0));
 	};
 	CellBase.prototype.toRefA1 = function (row, col) {
 		//TODO функция неверно работает, если кол-во столбцов превышает 26
@@ -1283,6 +1317,13 @@ function isRealObject(obj)
         return 0;
       return this.data[this.cur++];
     }
+	  this.GetUChar_TypeNode = function()
+	  {
+		  if (this.cur >= this.size)
+			  return c_nodeAttribute.nodeAttributeEnd;
+		  return this.data[this.cur++];
+	  }
+
     this.GetBool = function()
     {
       if (this.cur >= this.size)
@@ -1332,12 +1373,12 @@ function isRealObject(obj)
     
     this.ReadByteFromPPTY = function ()
     {
-      var value = 0;
+      var value = null;
       var end = this.cur + this.GetULong() + 4;
       this.Skip2(1);
       while (true)
       {
-        var _at = this.GetUChar();
+        var _at = this.GetUChar_TypeNode();
         if (_at === c_nodeAttribute.nodeAttributeEnd)
         {
           break;
@@ -1417,6 +1458,12 @@ function isRealObject(obj)
       var len = this.GetULong();
       return this.GetString1(len);
     }
+    this.GetString2Utf8 = function()
+    {
+      var len = this.GetULong();
+      return AscCommon.GetStringUtf8(this, len)
+    }
+
     this.GetBuffer = function (length) {
       var res = new Array(length);
       for (var i = 0; i < length; ++i) {
@@ -1426,6 +1473,7 @@ function isRealObject(obj)
     };
     this.GetBufferUint8 = function (length) {
       let pos = this.GetCurPos();
+      this.cur += length;
       return this.data.slice(pos, pos + length);
     };
 
@@ -1471,83 +1519,36 @@ function isRealObject(obj)
 
       return _ret;
     }
+  
+    this.GetString2LE = function(len)
+    {
+      return this.GetString(len);
+    }
+  
+    this.GetULongLE = function()
+    {
+      if (this.cur + 3 >= this.size)
+        return 0;
+      return (this.data[this.cur++] | this.data[this.cur++] << 8 | this.data[this.cur++] << 16 | this.data[this.cur++] << 24);
+    }
+  
+    this.GetSize = function()
+    {
+      return this.size;
+    }
   }
-	function GetUTF16_fromUnicodeChar(code) {
-		if (code < 0x10000) {
-			return String.fromCharCode(code);
-		} else {
-			code -= 0x10000;
-			return String.fromCharCode(0xD800 | ((code >> 10) & 0x03FF)) +
-				String.fromCharCode(0xDC00 | (code & 0x03FF));
-		}
-	};
+	/**
+	 * @param {Object} reader - stream reader
+	 * @param {number} len - bytes to read
+	 * @returns {string}
+	 */
 	function GetStringUtf8(reader, len) {
 		if (reader.cur + len > reader.size) {
 			return "";
 		}
-		var _res = "";
-
-		var end = reader.cur + len;
-		var val = 0;
-		while (reader.cur < end) {
-			var byteMain = reader.data[reader.cur];
-			if (0x00 == (byteMain & 0x80)) {
-				// 1 byte
-				_res += GetUTF16_fromUnicodeChar(byteMain);
-				++reader.cur;
-			}
-			else if (0x00 == (byteMain & 0x20)) {
-				// 2 byte
-				val = (((byteMain & 0x1F) << 6) |
-				(reader.data[reader.cur + 1] & 0x3F));
-				_res += GetUTF16_fromUnicodeChar(val);
-				reader.cur += 2;
-			}
-			else if (0x00 == (byteMain & 0x10)) {
-				// 3 byte
-				val = (((byteMain & 0x0F) << 12) |
-				((reader.data[reader.cur + 1] & 0x3F) << 6) |
-				(reader.data[reader.cur + 2] & 0x3F));
-
-				_res += GetUTF16_fromUnicodeChar(val);
-				reader.cur += 3;
-			}
-			else if (0x00 == (byteMain & 0x08)) {
-				// 4 byte
-				val = (((byteMain & 0x07) << 18) |
-				((reader.data[reader.cur + 1] & 0x3F) << 12) |
-				((reader.data[reader.cur + 2] & 0x3F) << 6) |
-				(reader.data[reader.cur + 3] & 0x3F));
-
-				_res += GetUTF16_fromUnicodeChar(val);
-				reader.cur += 4;
-			}
-			else if (0x00 == (byteMain & 0x04)) {
-				// 5 byte
-				val = (((byteMain & 0x03) << 24) |
-				((reader.data[reader.cur + 1] & 0x3F) << 18) |
-				((reader.data[reader.cur + 2] & 0x3F) << 12) |
-				((reader.data[reader.cur + 3] & 0x3F) << 6) |
-				(reader.data[reader.cur + 4] & 0x3F));
-
-				_res += GetUTF16_fromUnicodeChar(val);
-				reader.cur += 5;
-			}
-			else {
-				// 6 byte
-				val = (((byteMain & 0x01) << 30) |
-				((reader.data[reader.cur + 1] & 0x3F) << 24) |
-				((reader.data[reader.cur + 2] & 0x3F) << 18) |
-				((reader.data[reader.cur + 3] & 0x3F) << 12) |
-				((reader.data[reader.cur + 4] & 0x3F) << 6) |
-				(reader.data[reader.cur + 5] & 0x3F));
-
-				_res += GetUTF16_fromUnicodeChar(val);
-				reader.cur += 6;
-			}
-		}
-
-		return _res;
+		let content = AscCommon.UTF8ArrayToString(reader.data, reader.cur, len);
+		reader.cur += len;
+		return content;
 	};
 
   //----------------------------------------------------------export----------------------------------------------------

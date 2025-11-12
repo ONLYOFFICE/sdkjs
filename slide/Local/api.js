@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -338,3 +338,9 @@ Asc['asc_docs_api'].prototype.asc_setAdvancedOptions = function(idOption, option
     }
 };
 Asc['asc_docs_api'].prototype["asc_setAdvancedOptions"] = Asc['asc_docs_api'].prototype.asc_setAdvancedOptions;
+
+Asc['asc_docs_api'].prototype.asc_changeExternalReference = function(eR)
+{
+	this._changeDesktopChartExternalReference(eR);
+};
+Asc['asc_docs_api'].prototype["asc_changeExternalReference"] = Asc['asc_docs_api'].prototype.asc_changeExternalReference;

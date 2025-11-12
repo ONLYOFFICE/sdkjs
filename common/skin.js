@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -116,6 +116,35 @@ var EditorSkins = {
 		SplitterWidthMM                 : 1,
 		ThumbnailScrollWidthNullIfNoScrolling : false,
 
+		AnimPaneBackground                  : "#F7F7F7",
+		AnimPaneItemFillSelected            : "#ADADAD",
+		AnimPaneItemFillHovered             : "#999999",
+		AnimPaneButtonFill                  : "#F7F7F7",
+		AnimPaneButtonFillHovered           : "#DDDDDD",
+		AnimPaneButtonFillDisabled          : "#F7F7F7",
+		AnimPanePlayButtonFill              : "#FFFFFF",
+		AnimPanePlayButtonOutline           : "#CBCBCB",
+		AnimPaneEffectBarFillEntrance       : "#77B583",
+		AnimPaneEffectBarOutlineEntrance    : "#0E8A26",
+		AnimPaneEffectBarFillEmphasis       : "#FBC37C",
+		AnimPaneEffectBarOutlineEmphasis    : "#FF8E00",
+		AnimPaneEffectBarFillExit           : "#F59A9A",
+		AnimPaneEffectBarOutlineExit        : "#F23D3D",
+		AnimPaneEffectBarFillPath           : "#A1CEE3",
+		AnimPaneEffectBarOutlinePath        : "#254662",
+		AnimPaneTimelineRulerOutline        : "#CBCBCB",
+		AnimPaneTimelineRulerTick           : "#DFDFDF",
+
+		AnimPaneTimelineScrollerFill           : "#000000",
+		AnimPaneTimelineScrollerOutline        : "#444444",
+		AnimPaneTimelineScrollerOpacity        : 0x0,
+		AnimPaneTimelineScrollerOpacityHovered : 0x40,
+		AnimPaneTimelineScrollerOpacityActive  : 0x80,
+
+		AnimPaneText        : "#000000",
+		AnimPaneTextActive  : "#000000",
+		AnimPaneTextHover   : "#000000",
+
 		// demonstration
 		DemBackgroundColor              : "#F0F0F0",
 		DemButtonBackgroundColor        : "#FFFFFF",
@@ -129,7 +158,7 @@ var EditorSkins = {
 
 		/* spreadsheets */
 		//TODO названия не менял. использую такие же как и были ранее. пересмотреть!
-		Background               : "#F0F0F0",
+		Background               : "#F7F7F7",
 		BackgroundActive         : "#c1c1c1",
 		BackgroundHighlighted    : "#dfdfdf",
 
@@ -139,13 +168,13 @@ var EditorSkins = {
 
 		Color                    : "#363636",
 		ColorActive              : "#363636",
-		ColorHighlighted         : "#6a6a70",
+		ColorHighlighted         : "#363636",
 		ColorFiltering           : "#008636",
 
-		SheetViewCellBackground        : "#73bf92",
+		SheetViewCellBackground        : "#73bf91",
 		SheetViewCellBackgroundPressed : "#aaffcc",
-		SheetViewCellBackgroundHover   : "#97e3b7",
-		SheetViewCellTitleLabel        : "#121213",
+		SheetViewCellBackgroundHover   : "#97e3b6",
+		SheetViewCellTitleLabel        : "#121212",
 
 		ColorDark                : "#ffffff",
 		ColorDarkActive          : "#ffffff",
@@ -237,6 +266,35 @@ var EditorSkins = {
 		SplitterWidthMM                       : 1,
 		ThumbnailScrollWidthNullIfNoScrolling : false,
 
+		AnimPaneBackground                  : "#F7F7F7",
+		AnimPaneItemFillSelected            : "#ADADAD",
+		AnimPaneItemFillHovered             : "#999999",
+		AnimPaneButtonFill                  : "#F7F7F7",
+		AnimPaneButtonFillHovered           : "#DDDDDD",
+		AnimPaneButtonFillDisabled          : "#F7F7F7",
+		AnimPanePlayButtonFill              : "#FFFFFF",
+		AnimPanePlayButtonOutline           : "#CBCBCB",
+		AnimPaneEffectBarFillEntrance       : "#77B583",
+		AnimPaneEffectBarOutlineEntrance    : "#0E8A26",
+		AnimPaneEffectBarFillEmphasis       : "#FBC37C",
+		AnimPaneEffectBarOutlineEmphasis    : "#FF8E00",
+		AnimPaneEffectBarFillExit           : "#F59A9A",
+		AnimPaneEffectBarOutlineExit        : "#F23D3D",
+		AnimPaneEffectBarFillPath           : "#A1CEE3",
+		AnimPaneEffectBarOutlinePath        : "#254662",
+		AnimPaneTimelineRulerOutline        : "#CBCBCB",
+		AnimPaneTimelineRulerTick           : "#DFDFDF",
+
+		AnimPaneText        : "#FFFFFF",
+		AnimPaneTextActive  : "#FFFFFF",
+		AnimPaneTextHover   : "#FFFFFF",
+
+		AnimPaneTimelineScrollerFill           : "#000000",
+		AnimPaneTimelineScrollerOutline        : "#444444",
+		AnimPaneTimelineScrollerOpacity        : 0x0,
+		AnimPaneTimelineScrollerOpacityHovered : 0x40,
+		AnimPaneTimelineScrollerOpacityActive  : 0x80,
+
 		// demonstration
 		DemBackgroundColor              : "#666666",
 		DemButtonBackgroundColor        : "#333333",
@@ -262,10 +320,10 @@ var EditorSkins = {
 		ColorHighlighted         : "#d9d9d9",
 		ColorFiltering           : "#6BEC9F",
 
-		SheetViewCellBackground        : "#73bf93",
+		SheetViewCellBackground        : "#73bf91",
 		SheetViewCellBackgroundPressed : "#aaffcc",
-		SheetViewCellBackgroundHover   : "#97e3b8",
-		SheetViewCellTitleLabel        : "#121214",
+		SheetViewCellBackgroundHover   : "#97e3b6",
+		SheetViewCellTitleLabel        : "#121212",
 
 		ColorDark                : "#333",
 		ColorDarkActive          : "#333",
@@ -346,10 +404,39 @@ function updateGlobalSkinColors(theme)
 
 		BorderSplitterColor             : "border-toolbar",
 
+		AnimPaneBackground                  : "canvas-anim-pane-background",
+		AnimPaneItemFillSelected            : "canvas-anim-pane-item-fill-selected",
+		AnimPaneItemFillHovered             : "canvas-anim-pane-item-fill-hovered",
+		AnimPaneButtonFill                  : "canvas-anim-pane-button-fill",
+		AnimPaneButtonFillHovered           : "canvas-anim-pane-button-fill-hovered",
+		AnimPaneButtonFillDisabled          : "canvas-anim-pane-button-fill-disabled",
+		AnimPanePlayButtonFill              : "canvas-anim-pane-play-button-fill",
+		AnimPanePlayButtonOutline           : "canvas-anim-pane-play-button-outline",
+		AnimPaneEffectBarFillEntrance       : "canvas-anim-pane-effect-bar-entrance-fill",
+		AnimPaneEffectBarOutlineEntrance    : "canvas-anim-pane-effect-bar-entrance-outline",
+		AnimPaneEffectBarFillEmphasis       : "canvas-anim-pane-effect-bar-emphasis-fill",
+		AnimPaneEffectBarOutlineEmphasis    : "canvas-anim-pane-effect-bar-emphasis-outline",
+		AnimPaneEffectBarFillExit           : "canvas-anim-pane-effect-bar-exit-fill",
+		AnimPaneEffectBarOutlineExit        : "canvas-anim-pane-effect-bar-exit-outline",
+		AnimPaneEffectBarFillPath           : "canvas-anim-pane-effect-bar-path-fill",
+		AnimPaneEffectBarOutlinePath        : "canvas-anim-pane-effect-bar-path-outline",
+		AnimPaneTimelineRulerOutline        : "canvas-anim-pane-timeline-ruler-outline",
+		AnimPaneTimelineRulerTick           : "canvas-anim-pane-timeline-ruler-tick",
+
+		AnimPaneText                         : "text-normal",
+		AnimPaneTextActive                   : "text-normal",
+		AnimPaneTextHover                    : "text-normal",
+
+		AnimPaneTimelineScrollerFill           : "canvas-anim-pane-timeline-scroller-fill",
+		AnimPaneTimelineScrollerOutline        : "canvas-anim-pane-timeline-scroller-outline",
+		AnimPaneTimelineScrollerOpacity        : "canvas-anim-pane-timeline-scroller-opacity",
+		AnimPaneTimelineScrollerOpacityHovered : "canvas-anim-pane-timeline-scroller-opacity-hovered",
+		AnimPaneTimelineScrollerOpacityActive  : "canvas-anim-pane-timeline-scroller-opacity-active",
+
 		// demonstration
 		DemBackgroundColor              : "background-toolbar",
 		DemButtonBackgroundColor        : "background-normal",
-		DemButtonBackgroundColorHover   : "highlight-buttin-hover",
+		DemButtonBackgroundColorHover   : "highlight-button-hover",
 		DemButtonBackgroundColorActive  : "highlight-button-pressed",
 		DemButtonBorderColor            : "border-regular-control",
 		DemButtonTextColor              : "text-normal",
@@ -358,17 +445,17 @@ function updateGlobalSkinColors(theme)
 		DemTextColor                    : "text-normal",
 
 		/* spreadsheets */
-		Background                      : "canvas-background",
-		BackgroundActive                : "canvas-cell-title-selected",
-		BackgroundHighlighted           : "canvas-cell-title-hover",
+		Background                      : "canvas-cell-title-background",
+		BackgroundActive                : "canvas-cell-title-background-selected",
+		BackgroundHighlighted           : "canvas-cell-title-background-hover",
 
 		Border                          : "canvas-cell-title-border",
 		BorderActive                    : "canvas-cell-title-border-selected",
 		BorderHighlighted               : "canvas-cell-title-border-hover",
 
-		Color                           : "canvas-cell-title",
-		ColorActive                     : "canvas-cell-title",
-		ColorHighlighted                : "canvas-cell-title",
+		Color                           : "canvas-cell-title-text",
+		ColorActive                     : "canvas-cell-title-text",
+		ColorHighlighted                : "canvas-cell-title-text",
 
 		SheetViewCellBackground         : "canvas-sheet-view-cell-background",
 		SheetViewCellBackgroundPressed  : "canvas-sheet-view-cell-background-pressed",
@@ -414,7 +501,9 @@ function updateGlobalSkinColors(theme)
 		if (undefined === theme[colorMap[color]])
 			continue;
 
-		if (0 === GlobalSkin[color].indexOf("rgb"))
+		if(typeof GlobalSkin[color] === "number")
+			GlobalSkin[color] = parseFloat(theme[colorMap[color]]);
+		else if (0 === GlobalSkin[color].indexOf("rgb"))
 			GlobalSkin[color] = theme[colorMap[color]];
 		else
 			GlobalSkin[color] = correctColor(theme[colorMap[color]]);
@@ -446,6 +535,10 @@ function updateGlobalSkin(obj)
 				break;
 			}
 		}
+	}
+
+	if (obj["name"]) {
+		GlobalSkin.Name = obj["name"];
 	}
 
 	updateGlobalSkinColors(obj);
@@ -494,14 +587,58 @@ window['AscCommon'].RgbaHexToRGBA = function(color)
 
 	return ret;
 };
-window['AscCommon'].RgbaTextToRgbaHex = function(color)
+window['AscCommon']['RgbaTextToRgbaHex'] = window['AscCommon'].RgbaTextToRgbaHex = function(color)
 {
 	var toHex = function (c) {
 		var res = Number(c).toString(16);
 		return res.length === 1 ? "0" + res : res;
 	};
 
-	if (0 !== color.indexOf("rgb"))
+	var hslToRgb = function (h, s, l) {
+		h = h / 360;
+		s = s / 100;
+		l = l / 100;
+
+		var r, g, b;
+
+		if (s === 0) {
+			r = g = b = l;
+		} else {
+			var _toRgb = function (p, q, t) {
+				if (t < 0) {
+					t += 1;
+				}
+				if (t > 1) {
+					t -= 1;
+				}
+				if (t < 1 / 6) {
+					return p + (q - p) * 6 * t;
+				}
+				if (t < 1 / 2) {
+					return q;
+				}
+				if (t < 2 / 3) {
+					return p + (q - p) * (2 / 3 - t) * 6;
+				}
+
+				return p;
+			};
+
+			var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+			var p = 2 * l - q;
+			r = _toRgb(p, q, h + 1 / 3);
+			g = _toRgb(p, q, h);
+			b = _toRgb(p, q, h - 1 / 3);
+		}
+
+		return {
+			r: Math.round(r * 255),
+			g: Math.round(g * 255),
+			b: Math.round(b * 255)
+		};
+	};
+
+	if (0 !== color.indexOf("rgb") && 0 !== color.indexOf("hsl"))
 	{
 		if (color.length < 6)
 		{
@@ -519,12 +656,63 @@ window['AscCommon'].RgbaTextToRgbaHex = function(color)
 	for (var i in colors)
 		colors[i] = colors[i].trim();
 
-	var r = colors[0] || 0;
-	var g = colors[1] || 0;
-	var b = colors[2] || 0;
-	var a = (colors[3] === undefined) ? 255 : colors[3];
+	let r, g, b, a;
+	if (0 === color.indexOf("hsl"))
+	{
+		var h = parseFloat(colors[0]) || 0;
+		var s = parseFloat(colors[1]) || 0;
+		var l = parseFloat(colors[2]) || 0;
+		a = (colors[3] === undefined) ? 255 : Math.round(parseFloat(colors[3]) * 255);
+
+		if (typeof colors[1] === 'string' && colors[1].indexOf('%') !== -1)
+		{
+			s = parseFloat(colors[1].replace('%', ''));
+		}
+		if (typeof colors[2] === 'string' && colors[2].indexOf('%') !== -1)
+		{
+			l = parseFloat(colors[2].replace('%', ''));
+		}
+
+		var rgb = hslToRgb(h, s, l);
+		r = rgb.r;
+		g = rgb.g;
+		b = rgb.b;
+	}
+	else
+	{
+		r = parseInt(colors[0]) || 0;
+		g = parseInt(colors[1]) || 0;
+		b = parseInt(colors[2]) || 0;
+		a = (colors[3] === undefined) ? 255 : Math.round(parseFloat(colors[3]) * 255);
+	}
 
 	return "#" + toHex(r) + toHex(g) + toHex(b);
+};
+window['AscCommon']['RgbaTextToRGBA'] = window['AscCommon'].RgbaTextToRGBA = function(rgbStr)
+{
+	try
+	{
+		const match = rgbStr.match(/^\s*rgb\(\s*(\d+)\s*[\s,]\s*(\d+)\s*[\s,]\s*(\d+)\s*\)\s*$/);
+
+		if (!match)
+			return AscCommon.RgbaHexToRGBA(rgbStr);
+
+		return {
+			R : Math.min(255, Math.max(0, parseInt(match[1]))),
+			G : Math.min(255, Math.max(0, parseInt(match[2]))),
+			B : Math.min(255, Math.max(0, parseInt(match[3]))),
+			A : 255
+		};
+	}
+	catch (e)
+	{
+		return {
+			R : 0,
+			G : 0,
+			B : 0,
+			A : 255
+		};
+	}
 };
 
 if (AscCommon.TEMP_STYLE_THUMBNAIL_WIDTH !== undefined && AscCommon.TEMP_STYLE_THUMBNAIL_HEIGHT !== undefined)

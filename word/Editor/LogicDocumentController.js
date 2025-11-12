@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -61,9 +61,9 @@ CLogicDocumentController.prototype.AddNewParagraph = function(bRecalculate, bFor
 {
 	return this.LogicDocument.controller_AddNewParagraph(bRecalculate, bForceAdd);
 };
-CLogicDocumentController.prototype.AddInlineImage = function(nW, nH, oImage, oChart, bFlow)
+CLogicDocumentController.prototype.AddInlineImage = function(nW, nH, oImage, oGraphicObject, bFlow)
 {
-	this.LogicDocument.controller_AddInlineImage(nW, nH, oImage, oChart, bFlow);
+	this.LogicDocument.controller_AddInlineImage(nW, nH, oImage, oGraphicObject, bFlow);
 };
 CLogicDocumentController.prototype.AddImages = function(aImages)
 {
@@ -73,11 +73,31 @@ CLogicDocumentController.prototype.AddOleObject = function(nW, nH, nWidthPix, nH
 {
 	return this.LogicDocument.controller_AddOleObject(nW, nH, nWidthPix, nHeightPix, oImage, oData, sApplicationId, bSelect, arrImagesForAddToHistory);
 };
-CLogicDocumentController.prototype.AddTextArt = function(nStyle)
+CLogicDocumentController.prototype.LoadChartData = function(bNeedRecalculate)
 {
-	this.LogicDocument.controller_AddTextArt(nStyle);
+	// Ничего не делаем
 };
 CLogicDocumentController.prototype.EditChart = function(Chart)
+{
+	// Ничего не делаем
+};
+CLogicDocumentController.prototype.UpdateChart = function(Chart)
+{
+	// Ничего не делаем
+};
+CLogicDocumentController.prototype.OpenChartEditor = function()
+{
+	// Ничего не делаем
+};
+CLogicDocumentController.prototype.ApplyChartSettings = function(oChartSettings)
+{
+	// Ничего не делаем
+};
+CLogicDocumentController.prototype.GetChartSettings = function()
+{
+	// Ничего не делаем
+};
+CLogicDocumentController.prototype.OpenOleEditor = function(Chart)
 {
 	// Ничего не делаем
 };
@@ -458,4 +478,8 @@ CLogicDocumentController.prototype.IsSelectionLocked = function(CheckType)
 CLogicDocumentController.prototype.CollectSelectedReviewChanges = function(oTrackManager)
 {
 	return this.LogicDocument.controller_CollectSelectedReviewChanges(oTrackManager);
+};
+CLogicDocumentController.prototype.GetCurrentTopDocContent = function()
+{
+	return this.LogicDocument;
 };

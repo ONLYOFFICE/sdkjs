@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -40,7 +40,6 @@
 	function (window, undefined) {
 // Import
 		var CShape = AscFormat.CShape;
-		var History = AscCommon.History;
 		var global_MatrixTransformer = AscCommon.global_MatrixTransformer;
 
 		var isRealObject = AscCommon.isRealObject;
@@ -98,12 +97,12 @@
 
 		AscFormat.InitClass(CImageShape, AscFormat.CGraphicObjectBase, AscDFH.historyitem_type_ImageShape);
 		CImageShape.prototype.setNvPicPr = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetNvPicPr, this.nvPicPr, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetNvPicPr, this.nvPicPr, pr));
 			this.nvPicPr = pr;
 		};
 
 		CImageShape.prototype.setSpPr = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetSpPr, this.spPr, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetSpPr, this.spPr, pr));
 			this.spPr = pr;
 
 			if (pr) {
@@ -112,22 +111,48 @@
 		};
 
 		CImageShape.prototype.setBlipFill = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ImageShapeSetBlipFill, this.blipFill, pr));
+			if(!Asc.editor.evalCommand) {
+				AscCommon.History.Add(new AscDFH.CChangesImageIdStart(this));
+				const prNoRaster = pr && pr.createDuplicateNoRaster();
+				const currentNoRaster = this.blipFill && this.blipFill.createDuplicateNoRaster();
+				AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ImageShapeSetBlipFill, currentNoRaster, prNoRaster));
+				const rasterChunks = createRasterImageHistoryChunks(this, this.blipFill ? this.blipFill.RasterImageId : "", pr.RasterImageId, 1048576);
+				for (let chunkIdx = 0; chunkIdx < rasterChunks.length; ++chunkIdx) {
+					let chunk = rasterChunks[chunkIdx];
+					AscCommon.History.Add(chunk);
+				}
+				AscCommon.History.Add(new AscDFH.CChangesImageIdEnd(this));
+			}
+
 			this.blipFill = pr;
 		};
 
+		function createRasterImageHistoryChunks(obj, oldStr, newStr, chunkSize) {
+			const changes = [];
+			const total = Math.ceil(Math.max(newStr.length, oldStr.length) / chunkSize);
+
+			for (let i = 0; i < total; i++) {
+				const newChunk = newStr.substr(i * chunkSize, chunkSize);
+				const oldChunk = oldStr.substr(i * chunkSize, chunkSize);
+				const change = new AscDFH.CChangesDrawingsImageRasterImageIdPart(obj, newChunk, oldChunk);
+				changes.push(change);
+			}
+
+			return changes;
+		}
+
 		CImageShape.prototype.setParent = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetParent, this.parent, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetParent, this.parent, pr));
 			this.parent = pr;
 		};
 
 		CImageShape.prototype.setGroup = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetGroup, this.group, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetGroup, this.group, pr));
 			this.group = pr;
 		};
 
 		CImageShape.prototype.setStyle = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetStyle, this.style, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetStyle, this.style, pr));
 			this.style = pr;
 		};
 
@@ -174,6 +199,19 @@
 				return this.blipFill.RasterImageId;
 			return null;
 		};
+		CImageShape.prototype.getTransparent = function () {
+			if (isRealObject(this.blipFill)) {
+				return this.blipFill.getTransparent();
+			}
+			return null;
+		};
+		CImageShape.prototype.setTransparent = function (v) {
+			if(this.blipFill) {
+				let oNewBlipFill = this.blipFill.createDuplicate();
+				oNewBlipFill.setTransparent(v);
+				this.setBlipFill(oNewBlipFill);
+			}
+		};
 
 		CImageShape.prototype.getSnapArrays = function (snapX, snapY) {
 			var transform = this.getTransformMatrix();
@@ -185,16 +223,13 @@
 			snapY.push(transform.ty + this.extY);
 		};
 
-		CImageShape.prototype.isPlaceholder = function () {
-			return this.nvPicPr != null && this.nvPicPr.nvPr != undefined && this.nvPicPr.nvPr.ph != undefined;
-		};
-
-
 		CImageShape.prototype.getWatermarkProps = function () {
 			var oProps = new Asc.CAscWatermarkProperties();
 			oProps.put_Type(Asc.c_oAscWatermarkType.Image);
+			oProps.setXfrmRot(AscFormat.normalizeRotate(this.getXfrmRot() || 0));
 			oProps.put_ImageUrl2(this.blipFill.RasterImageId);
 			oProps.put_Scale(-1);
+			oProps.put_ImageSize(this.getXfrmExtX() * 36000 + 0.5 >> 0, this.getXfrmExtY() * 36000 + 0.5 >> 0);
 			var oApi;
 			if (window["Asc"] && window["Asc"]["editor"]) {
 				oApi = window["Asc"]["editor"];
@@ -240,6 +275,8 @@
 		CImageShape.prototype.getRotateAngle = CShape.prototype.getRotateAngle;
 
 		CImageShape.prototype.changeSize = CShape.prototype.changeSize;
+
+		CImageShape.prototype.getBounds = CShape.prototype.getBounds;
 
 		CImageShape.prototype.canRotate = function () {
 			if (this.isCrop) {
@@ -292,6 +329,41 @@
 			return ret;
 		};
 
+		CImageShape.prototype.convertToPdf = function () {
+			let copy = new AscPDF.CPdfImage();
+			
+			copy.setParent(null);
+			copy.setBDeleted(false);
+
+			if (this.nvPicPr) {
+				copy.setNvPicPr(this.nvPicPr.createDuplicate());
+			}
+			if (this.spPr) {
+				copy.setSpPr(this.spPr.createDuplicate());
+				copy.spPr.setParent(copy);
+			}
+			if (this.blipFill) {
+				copy.setBlipFill(this.blipFill.createDuplicate());
+			}
+			if (this.style) {
+				copy.setStyle(this.style.createDuplicate());
+			}
+			if (this.macro !== null) {
+				copy.setMacro(this.macro);
+			}
+			if (this.textLink !== null) {
+				copy.setTextLink(this.textLink);
+			}
+			if (this.clientData) {
+				copy.setClientData(this.clientData.createDuplicate());
+			}
+			if (this.fLocksText !== null) {
+				copy.setFLocksText(this.fLocksText);
+			}
+			copy.setLocks(this.locks);
+			return copy;
+		};
+
 		CImageShape.prototype.recalculateBrush = CShape.prototype.recalculateBrush;
 
 		CImageShape.prototype.recalculatePen = function () {
@@ -317,29 +389,26 @@
 		};
 
 		CImageShape.prototype.getHierarchy = function () {
-			if (this.recalcInfo.recalculateShapeHierarchy) {
-				this.compiledHierarchy.length = 0;
-				var hierarchy = this.compiledHierarchy;
-				if (this.isPlaceholder()) {
-					var ph_type = this.getPlaceholderType();
-					var ph_index = this.getPlaceholderIndex();
-					var b_is_single_body = this.getIsSingleBody();
-					switch (this.parent.kind) {
-						case AscFormat.TYPE_KIND.SLIDE: {
-							hierarchy.push(this.parent.Layout.getMatchingShape(ph_type, ph_index, b_is_single_body));
-							hierarchy.push(this.parent.Layout.Master.getMatchingShape(ph_type, ph_index, b_is_single_body));
-							break;
-						}
 
-						case AscFormat.TYPE_KIND.LAYOUT: {
-							hierarchy.push(this.parent.Master.getMatchingShape(ph_type, ph_index, b_is_single_body));
-							break;
-						}
+			let hierarchy = [];
+			if (this.isPlaceholder()) {
+				var ph_type = this.getPlaceholderType();
+				var ph_index = this.getPlaceholderIndex();
+				var b_is_single_body = this.getIsSingleBody();
+				switch (this.parent.kind) {
+					case AscFormat.TYPE_KIND.SLIDE: {
+						hierarchy.push(this.parent.Layout.getMatchingShape(ph_type, ph_index, b_is_single_body));
+						hierarchy.push(this.parent.Layout.Master.getMatchingShape(ph_type, ph_index, b_is_single_body));
+						break;
+					}
+
+					case AscFormat.TYPE_KIND.LAYOUT: {
+						hierarchy.push(this.parent.Master.getMatchingShape(ph_type, ph_index, b_is_single_body));
+						break;
 					}
 				}
-				this.recalcInfo.recalculateShapeHierarchy = true;
 			}
-			return this.compiledHierarchy;
+			return hierarchy;
 		};
 
 		CImageShape.prototype.recalculateTransform = function () {
@@ -456,6 +525,10 @@
 					this.addToRecalculate();
 					break;
 				}
+				case AscDFH.historyitem_AutoShapes_AddToDrawingObjects: {
+					this.addToRecalculate();
+					break;
+				}
 				case AscDFH.historyitem_ShapeSetBDeleted: {
 					if (!this.bDeleted) {
 						this.addToRecalculate();
@@ -467,7 +540,7 @@
 
 		CImageShape.prototype.recalculateGeometry = function () {
 			this.calcGeometry = null;
-			if (isRealObject(this.spPr.geometry)) {
+			if (isRealObject(this.spPr && this.spPr.geometry)) {
 				this.calcGeometry = this.spPr.geometry;
 			} else {
 				var hierarchy = this.getHierarchy();
@@ -530,7 +603,7 @@
 
 
 			var oClipRect;
-			if (!graphics.IsSlideBoundsCheckerType) {
+			if (!graphics.isBoundsChecker()) {
 				oClipRect = this.getClipRect();
 			}
 			if (oClipRect) {
@@ -550,14 +623,14 @@
 			var oldBrush = this.brush;
 			var oldPen = this.pen;
 
-			if (this.getObjectType() === AscDFH.historyitem_type_OleObject) {
+			if (this.getObjectType() === AscDFH.historyitem_type_OleObject && !graphics.isBoundsChecker()) {
 				var sImageId = this.blipFill && this.blipFill.RasterImageId;
 				if (sImageId) {
 					var oApi = editor || window['Asc']['editor'];
 					if (oApi) {
 						sImageId = AscCommon.getFullImageSrc2(sImageId);
 						var _img = oApi.ImageLoader.map_image_index[sImageId];
-						if ((_img && _img.Status === AscFonts.ImageLoadStatus.Loading) || (_img && _img.Image) || true === graphics.IsSlideBoundsCheckerType || true == graphics.RENDERER_PDF_FLAG) {
+						if ((_img && _img.Status === AscFonts.ImageLoadStatus.Loading) || (_img && _img.Image) || window["NATIVE_EDITOR_ENJINE"]) {
 							this.brush = CreateBrushFromBlipFill(this.blipFill);
 							this.pen = null;
 						} else {
@@ -627,6 +700,26 @@
 			}
 			this.spPr.setLn(stroke);
 		};
+		CImageShape.prototype.changeFill = function (unifill) {
+
+			if (this.recalcInfo.recalculateBrush) {
+				this.recalculateBrush();
+			}
+			var unifill2 = AscFormat.CorrectUniFill(unifill, this.brush, this.getEditorType());
+			unifill2.convertToPPTXMods();
+			this.setFill(unifill2);
+		};
+		CImageShape.prototype.setFill = function (fill) {
+
+			this.spPr.setFill(fill);
+		};
+
+		CImageShape.prototype.hasCrop = function () {
+			if(this.blipFill && this.blipFill.srcRect || this.isShapeCrop()) {
+				return true;
+			}
+			return false;
+		};
 
 
 		CImageShape.prototype.drawAdjustments = function (drawingDocument) {
@@ -640,31 +733,15 @@
 
 		CImageShape.prototype.hitToAdjustment = CShape.prototype.hitToAdjustment;
 
-		CImageShape.prototype.getPlaceholderType = function () {
-			return this.isPlaceholder() ? this.nvPicPr.nvPr.ph.type : null;
-		};
-
-		CImageShape.prototype.getPlaceholderIndex = function () {
-			return this.isPlaceholder() ? this.nvPicPr.nvPr.ph.idx : null;
-		};
-
-		CImageShape.prototype.getPhType = function () {
-			return this.isPlaceholder() ? this.nvPicPr.nvPr.ph.type : null;
-		};
-
-		CImageShape.prototype.getPhIndex = function () {
-			return this.isPlaceholder() ? this.nvPicPr.nvPr.ph.idx : null;
-		};
-
 		CImageShape.prototype.getMediaFileName = function () {
-			if (this.nvPicPr && this.nvPicPr.nvPr && this.nvPicPr.nvPr.unimedia) {
-				var oUniMedia = this.nvPicPr.nvPr.unimedia;
+			let oUniMedia = this.getUniMedia();
+			if (oUniMedia) {
 				if (oUniMedia.type === 7 || oUniMedia.type === 8) {
 					if (typeof oUniMedia.media === "string" && oUniMedia.media.length > 0) {
-						var sExt = AscCommon.GetFileExtension(oUniMedia.media);
+						let sExt = AscCommon.GetFileExtension(oUniMedia.media);
 						if (this.blipFill && typeof this.blipFill.RasterImageId === 'string') {
-							var sName = AscCommon.GetFileName(this.blipFill.RasterImageId);
-							var sMediaFile = sName + '.' + sExt;
+							let sName = AscCommon.GetFileName(this.blipFill.RasterImageId);
+							let sMediaFile = sName + '.' + sExt;
 							return sMediaFile;
 						}
 					}
@@ -673,8 +750,25 @@
 			return null;
 		};
 
+
+		CImageShape.prototype.isVideo = function() {
+			let oUniMedia = this.getUniMedia();
+			if (oUniMedia && oUniMedia.type === 7) {
+				return true;
+			}
+			return false;
+		};
+
+		CImageShape.prototype.getMediaData = function () {
+			let oMediaData = new CMediaData(this);
+			if (!oMediaData.isValid()) {
+				return null;
+			}
+			return oMediaData;
+		};
+
 		CImageShape.prototype.setNvSpPr = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetNvPicPr, this.nvPicPr, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetNvPicPr, this.nvPicPr, pr));
 			this.nvPicPr = pr;
 		};
 
@@ -691,9 +785,6 @@
 				return false;
 			}
 			return true;
-		};
-
-		CImageShape.prototype.Load_LinkData = function (linkData) {
 		};
 
 		CImageShape.prototype.getTypeName = function () {
@@ -839,32 +930,161 @@
 			}
 			this.pasteDrawingFormatting(oFormatData.Drawing);
 		};
-		CImageShape.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate) {
-			return AscFormat.CShape.prototype.compareForMorph.call(this, oDrawingToCheck, oCurCandidate);
+		CImageShape.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate, oMapPaired) {
+			return AscFormat.CShape.prototype.compareForMorph.call(this, oDrawingToCheck, oCurCandidate, oMapPaired);
 		};
 		CImageShape.prototype.getText = function() {
 			return null;
 		};
+		CImageShape.prototype.canFill = function () {
+			return true;
+		};
+		CImageShape.prototype.getCropHeightCoefficient = function() {
+			const oSrcRect = this.blipFill && this.blipFill.srcRect;
+			if (oSrcRect) {
+				return (oSrcRect.b - oSrcRect.t) / 100;
+			}
+			return 1;
+		};
+		CImageShape.prototype.getCropWidthCoefficient = function() {
+			const oSrcRect = this.blipFill && this.blipFill.srcRect;
+			if (oSrcRect) {
+				return (oSrcRect.r - oSrcRect.l) / 100;
+			}
+			return 1;
+		};
+
+		CImageShape.prototype.isShapeCrop = function() {
+			if (this.spPr && this.spPr.geometry) {
+				const sPresetType = this.spPr.geometry.preset;
+				if (sPresetType === 'rect') {
+					return false;
+				}
+			}
+			return true;
+		};
+
 		function CreateBrushFromBlipFill(oBlipFill) {
 			if (!oBlipFill) {
 				return null;
 			}
 			var oBrush = new AscFormat.CUniFill();
 			oBrush.fill = oBlipFill;
-			if (Array.isArray(oBlipFill.Effects)) {
-				for (var nEffect = 0; nEffect < oBlipFill.Effects.length; ++nEffect) {
-					var oEffect = oBlipFill.Effects[nEffect];
-					if (oEffect && oEffect instanceof AscFormat.CAlphaModFix && AscFormat.isRealNumber(oEffect.amt)) {
-						oBrush.setTransparent(255 * oEffect.amt / 100000);
-						break;
-					}
-				}
+
+			let nTransparent = oBlipFill.getTransparent();
+			if(AscFormat.isRealNumber(nTransparent)) {
+				oBrush.setTransparent(nTransparent);
 			}
 			return oBrush;
 		}
 
+		function CMediaData(drawing) {
+			this.drawing = drawing;
+			this.additionalData = null;
+		}
+		CMediaData.prototype.setDrawing = function(oDrawing) {
+			this.drawing = oDrawing;
+		};
+		CMediaData.prototype.setAdditionalData = function(oAdditionalData) {
+			this.additionalData = oAdditionalData;
+		};
+		CMediaData.prototype.getName = function() {
+			if(!this.drawing)
+				return null;
+			return this.drawing.getMediaFileName();
+		};
+		CMediaData.prototype.isValid = function() {
+			if(!this.getName())
+				return false;
+			let oDrawing = this.getDrawing();
+			if(!oDrawing || !oDrawing.IsUseInDocument())
+				return false;
+			return true;
+		};
+		CMediaData.prototype.getDrawing = function() {
+			return this.drawing;
+		};
+		CMediaData.prototype.getTransform = function() {
+			if(!this.drawing)
+				return null;
+			return this.drawing.getTransformMatrix();
+		};
+		CMediaData.prototype.isFullScreen = function() {
+			if(!this.additionalData)
+				return false;
 
+			return this.additionalData.isFullScreen();
+		};
+		CMediaData.prototype.isMute = function() {
+			if(!this.additionalData)
+				return false;
+
+			return this.additionalData.isMute();
+		};
+		CMediaData.prototype.isVideo = function() {
+			if(!this.additionalData)
+				return this.drawing.isVideo();
+
+			return this.additionalData.isVideo();
+		};
+		CMediaData.prototype.getVol = function() {
+			if(!this.additionalData)
+				return null;
+
+			return this.additionalData.getVol();
+		};
+		CMediaData.prototype.getStartTime = function() {
+			if(!this.drawing)
+				return null;
+			return this.drawing.getMediaStartTime();
+		};
+		CMediaData.prototype.getEndTime = function() {
+			if(!this.drawing)
+				return null;
+			return this.drawing.getMediaEndTime();
+		};
+		CMediaData.prototype.getPlayerData = function(oFrameRect, oControlRect) {
+			if(!this.isValid())
+				return null;
+			let oDrawing = this.getDrawing();
+			let oData = CreateMediaData();
+			oData["DrawingId"] = oDrawing.Id;
+			oData["FullScreen"] = this.isFullScreen();
+			oData["Mute"] = this.isMute();
+			oData["IsVideo"] = this.isVideo();
+			oData["Volume"] = this.getVol();
+			oData["StartTime"] = this.getStartTime();
+			oData["EndTime"] = this.getEndTime();
+			oData["FrameRect"] = oFrameRect.toObject();
+			oData["ControlRect"] = oControlRect.toObject();
+			oData["Rotation"] = oDrawing.getFullRotate();
+			oData["FlipH"] = oDrawing.getFullFlipH();
+			oData["FlipV"] = oDrawing.getFullFlipV();
+			oData["IsSelected"] = oDrawing.selected;
+			oData["MediaFile"] = this.getName();
+			oData["From"] = 0;
+			oData["Theme"] = AscCommon.GlobalSkin.Type;
+			return oData;
+		};
+
+		function CreateMediaData() {
+			let oData = {};
+			oData["DrawingId"] = null;
+			oData["FullScreen"] = null;
+			oData["Mute"] = null;
+			oData["IsVideo"] = null;
+			oData["Volume"] = null;
+			oData["StartTime"] = null;
+			oData["EndTime"] = null;
+			oData["FrameRect"] = null;
+			oData["ControlRect"] = null;
+			oData["DrawingTransform"] = null;
+			oData["MediaFile"] = null;
+			oData["From"] = null;
+			return oData;
+		}
 		//--------------------------------------------------------export----------------------------------------------------
 		window['AscFormat'] = window['AscFormat'] || {};
 		window['AscFormat'].CImageShape = CImageShape;
+		window['AscFormat'].CreateMediaData = CreateMediaData;
 	})(window);

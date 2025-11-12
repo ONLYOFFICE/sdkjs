@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -194,7 +194,7 @@ function CFlowTable(Table, PageIndex)
 
     this.Table          = Table;
     this.Id             = Table.Get_Id();
-    this.PageNum        = Table.Get_StartPage_Absolute();
+    this.PageNum        = Table.GetAbsoluteStartPage();
     this.PageController = PageIndex - Table.PageNum;
     this.Distance       = Table.Distance;
 	this.WrappingType   = WRAPPING_TYPE_SQUARE;

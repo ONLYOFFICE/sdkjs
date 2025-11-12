@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -100,6 +100,7 @@ function Spline(drawingObjects, theme, master, layout, slide, pageIndex)
 
         this.pen = pen;
         this.splineForDraw = new SplineForDrawer(this);
+        this.overlayObject = this.splineForDraw;
     }, this, []);
     this.Draw = function(graphics)
     {
@@ -230,7 +231,7 @@ function Spline(drawingObjects, theme, master, layout, slide, pageIndex)
         xMax = max_x;
         yMin = min_y;
         yMax = max_y;
-        var shape = new AscFormat.CShape();
+        var shape = this.drawingObjects.createShape();
         //if(drawingObjects)
         //{
         //    shape.setWorksheet(drawingObjects.getWorksheetModel());

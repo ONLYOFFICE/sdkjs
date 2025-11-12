@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -41,6 +41,7 @@ function onLoadFontsModule(window, undefined)
 	AscFonts.TT_INTERPRETER_VERSION_40 = 40;
 
 	AscFonts.CopyStreamToMemory = AscFonts["CopyStreamToMemory"];
+	AscFonts.GetUint8ArrayFromPointer = AscFonts["GetUint8ArrayFromPointer"];
 
 	AscFonts.AllocString2 = AscFonts["AllocString"];
 	AscFonts.AllocString = function(size)
@@ -80,7 +81,6 @@ function onLoadFontsModule(window, undefined)
 	AscFonts.Hyphen_LoadDictionary = AscFonts["Hyphen_LoadDictionary"];
 	AscFonts.Hyphen_CheckDictionary = AscFonts["Hyphen_CheckDictionary"];
 	AscFonts.Hyphen_Word = AscFonts["Hyphen_Word"];
-
 
 	AscFonts.CreateNativeStreamByIndex = function(stream_index)
 	{
@@ -441,9 +441,9 @@ function onLoadFontsModule(window, undefined)
 		this.codePoints       = codePointsBuffer;
 		this.codePointsCount  =  0
 	}
-	CCodePointsCalculator.prototype.start = function()
+	CCodePointsCalculator.prototype.start = function(startCluster)
 	{
-		this.currentCluster = 0;
+		this.currentCluster   = startCluster;
 		this.currentCodePoint = 0;
 		this.codePointsCount  = 0;
 	}
@@ -452,10 +452,14 @@ function onLoadFontsModule(window, undefined)
 		this.currentCodePoint += this.codePointsCount;
 
 		let nCodePointsCount = 0;
-
+		
 		if (cluster < this.currentCluster)
 		{
-			// TODO: RTL
+			while (this.currentCluster > cluster)
+			{
+				this.currentCluster -= this.clusterBuffer[this.currentCodePoint + nCodePointsCount];
+				++nCodePointsCount;
+			}
 		}
 		else
 		{
@@ -562,9 +566,12 @@ function onLoadFontsModule(window, undefined)
 		let retObj = AscFonts.HB_ShapeText(fontFile, STRING_POINTER, features, script, direction, language, READER);
 		if (retObj["error"])
 			return;
-
-		CODEPOINTS_CALCULATOR.start();
-		let prevCluster = -1, type, flags, gid, cluster, x_advance, y_advance, x_offset, y_offset, codePoints;
+		
+		let isRtl = direction === AscFonts.HB_DIRECTION.HB_DIRECTION_RTL;
+		
+		CODEPOINTS_CALCULATOR.start(isRtl ? CLUSTER_MAX : 0);
+		let prevCluster = -1;
+		let type, flags, gid, cluster, x_advance, y_advance, x_offset, y_offset;
 		let isLigature = false;
 		let nWidth     = 0;
 		let reader = READER;
@@ -579,10 +586,10 @@ function onLoadFontsModule(window, undefined)
 			y_advance = reader.readInt();
 			x_offset  = reader.readInt();
 			y_offset  = reader.readInt();
-
+			
 			if (cluster !== prevCluster && -1 !== prevCluster)
 			{
-				CODEPOINTS_CALCULATOR.calculate(cluster);
+				CODEPOINTS_CALCULATOR.calculate(isRtl ? prevCluster : cluster);
 				textShaper.FlushGrapheme(AscFonts.GetGrapheme(CODEPOINTS_CALCULATOR), nWidth, CODEPOINTS_CALCULATOR.getCount(), isLigature);
 				nWidth = 0;
 			}
@@ -597,9 +604,10 @@ function onLoadFontsModule(window, undefined)
 			AscFonts.AddGlyphToGrapheme(gid, x_advance, y_advance, x_offset, y_offset);
 			nWidth += x_advance * COEF;
 		}
-		CODEPOINTS_CALCULATOR.calculate(CLUSTER_MAX);
+		
+		CODEPOINTS_CALCULATOR.calculate(isRtl ? 0 : CLUSTER_MAX);
 		textShaper.FlushGrapheme(AscFonts.GetGrapheme(CODEPOINTS_CALCULATOR), nWidth, CODEPOINTS_CALCULATOR.getCount(), isLigature);
-
+		
 		retObj["free"]();
 	};
 
@@ -675,6 +683,182 @@ function onLoadFontsModule(window, undefined)
 		return glyphs;
 	};
 
+	// ZLIB
+	function ZLib()
+	{
+		/** @suppress {checkVars} */
+		this.engine = window["NATIVE_EDITOR_ENJINE"] ? CreateEmbedObject("CZipEmbed") : new AscCommon["CZLibEngineJS"]();
+		this.files = [];
+	}
+	/**
+	 * Open archive from bytes
+	 * @param {Uint8Array | ArrayBuffer} buf
+	 * @returns {boolean} success or not
+	 */
+	ZLib.prototype.open = function(buf)
+	{
+		if (this.engine.open(buf))
+			this.files = this.engine["getPaths"]();
+		return (this.files.length > 0) ? true : false;
+	};
+	/**
+	 * Create new archive
+	 * @returns {boolean} success or not
+	 */
+	ZLib.prototype.create = function()
+	{
+		return this.engine["create"]();
+	};
+	/**
+	 * Save archive from current files
+	 * @returns {Uint8Array | null} zip-archive bytes, or null if error
+	 */
+	ZLib.prototype.save = function()
+	{
+		return this.engine["save"]();
+	};
+	/**
+	 * Get uncomressed file from archive
+	 * @param {string} path
+	 * @returns {Uint8Array | null} bytes of uncompressed data, or null if error
+	 */
+	ZLib.prototype.getFile = function(path)
+	{
+		return this.engine["getFile"](path);
+	};
+	/**
+	 * Add uncomressed file to archive
+	 * @param {string} path
+	 * @param {Uint8Array | ArrayBuffer} new file in archive
+	 * @returns {boolean} success or not
+	 */
+	ZLib.prototype.addFile = function(path, data)
+	{
+		return this.engine["addFile"](path, (undefined !== data.byteLength) ? new Uint8Array(data) : data);
+	};
+	/**
+	 * Remove file from archive
+	 * @param {string} path
+	 * @returns {boolean} success or not
+	 */
+	ZLib.prototype.removeFile = function(path)
+	{
+		return this.engine["removeFile"](path);
+	};
+	/**
+	 * Close & remove all used memory in archive
+	 * @returns {undefined}
+	 */
+	ZLib.prototype.close = function()
+	{
+		return this.engine["close"]();
+	};
+	/**
+	 * Get image blob for browser
+	 * @returns {Blob}
+	 */
+	ZLib.prototype.getImageBlob = function(path)
+	{
+		return this.engine["getImageBlob"](path);
+	};
+	/**
+	 * Get image file raw data. this memory was copied and detach from archive.
+	 * @returns {Uint8Array}
+	 */
+	ZLib.prototype.getImageBuffer = function(path)
+	{
+		return this.engine["getImageBuffer"](path);
+	};
+	/**
+	 * Get all file paths in archive
+	 * @returns {Array}
+	 */
+	ZLib.prototype.getPaths = function()
+	{
+		return this.engine["getPaths"]();
+	};
+
+	AscCommon.ZLib = ZLib;
+
+	function ZlibImageBlobs()
+	{
+		this.url2BlobUrl = {};
+		this.blobUrl2Data = {};
+		this.url2Base64 = {};
+
+		this.nativeBlobCounter = 1;
+	}
+	ZlibImageBlobs.prototype.getBlobUrl = function(path, zip)
+	{
+		if (this.url2BlobUrl[path])
+			return this.url2BlobUrl[path];
+
+		let result = zip.getImageBuffer(path);
+		if (result == null)
+			return "";
+
+		let blobUrl = "";
+		let blobType = AscCommon.openXml.GetMimeType((24 !== result["type"]) ? AscCommon.GetFileExtension(path) : "svg");
+
+		if (window["NATIVE_EDITOR_ENJINE"])
+		{
+			blobUrl = "blob:internal-image" + this.nativeBlobCounter++;
+		}
+		else
+		{
+			try
+			{
+				let blob = new Blob([result["dataBlob"] ? result["dataBlob"] : result["data"]], {type: blobType});
+				blobUrl = window.URL.createObjectURL(blob);
+			}
+			catch (e)
+			{
+				blobUrl = "error";
+				AscCommon.consoleLog("ERROR: Image blob was not loaded");
+			}
+		}
+
+		this.blobUrl2Data[blobUrl] = result;
+		this.url2BlobUrl[path] = blobUrl;
+		return blobUrl;
+	};
+	ZlibImageBlobs.prototype.getImageBase64 = function(url)
+	{
+		if (this.url2Base64[url])
+			return this.url2Base64[url];
+
+		let obj = this.blobUrl2Data[url];
+		if (!obj)
+			return url;
+
+		let header = "";
+		switch (obj.type)
+		{
+			case 3:
+				header = "data:image/jpeg;base64,";
+				break;
+			case 24:
+				header = "data:image/svg+xml;base64,";
+				break;
+			case 4:
+			default:
+				header = "data:image/png;base64,";
+		}
+
+		this.url2Base64[url] = header + AscCommon.Base64.encode(obj.data);
+		return this.url2Base64[url];
+	};
+
+	window["AscCommon"].g_oDocumentBlobUrls = new ZlibImageBlobs();
+
+	if (AscCommon["CZLibEngineJS"])
+		AscCommon["CZLibEngineJS"].prototype["isModuleInit"] = true;
+
+	if (window["NATIVE_EDITOR_ENJINE"])
+		window["InitNativeZLib"] = function() { window.nativeZlibEngine = new ZLib(); };
+	else
+		window.nativeZlibEngine = new ZLib();
+
 	function Hyphenation()
 	{
 		this._value = "";
@@ -733,21 +917,28 @@ function onLoadFontsModule(window, undefined)
 				this._mapToNames = AscCommon.spellcheckGetLanguages();
 
 			let _langKey = "" + lang;
-			let _langName = this._mapToNames[_langKey];
-			if (_langName === undefined)
+			let _langObj = this._mapToNames[_langKey];
+			if (!_langObj || !_langObj["hyphen"] || !_langObj["name"])
 			{
 				this._dictionaries[_langKey] = false;
 				callback();
 				return;
 			}
 
-			this._loadDictionaryAttemt(_langKey, _langName, callback);
+			this._loadDictionaryAttemt(_langKey, _langObj["name"], callback);
 		};
 
 		this._loadDictionaryAttemt = function(langKey, langName, callback, currentAttempt)
 		{
 			var xhr = new XMLHttpRequest();
 			let urlDictionaries = "../../../../dictionaries/";
+			if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["getDictionariesPath"])
+			{
+				let urlDesktop = window["AscDesktopEditor"]["getDictionariesPath"]();
+				if ("" !== urlDesktop)
+					urlDictionaries = urlDesktop;
+			}
+			
 			let url = urlDictionaries + langName + "/hyph_" + langName + ".dic";
 
 			xhr.open('GET', url, true);

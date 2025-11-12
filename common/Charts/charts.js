@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -680,31 +680,40 @@ ChartPreviewManager.prototype.getChartPreviews = function(chartType, arrId, bEmp
 		this.SMARTART_PREVIEW_SIZE_MM = 8128000 * AscCommonWord.g_dKoef_emu_to_mm;
 		this.CANVAS_SIZE = 70;
 		this.canvas = null;
-		this.imageType = "image/jpeg";
+		this.imageType = "image/png";
 		this.imageBuffer = [];
 		this.index = 0;
 		this.cache = {};
 		this.queue = [];
+		this.typeOfSectionLoad = null;
 	}
 	SmartArtPreviewDrawer.prototype = Object.create(AscCommon.CActionOnTimerBase.prototype);
 	SmartArtPreviewDrawer.prototype.constructor = SmartArtPreviewDrawer;
 
 	SmartArtPreviewDrawer.prototype.Begin = function (nTypeOfSectionLoad) {
+
 		const oApi = Asc.editor || editor;
-		if (oApi && AscCommon.g_oBinarySmartArts) {
-			if (AscFormat.isRealNumber(nTypeOfSectionLoad)) {
-				const arrPreviewObjects = Asc.c_oAscSmartArtSections[nTypeOfSectionLoad].map(function (nTypeOfSmartArt) {
-					return new CSmartArtPreviewInfo(nTypeOfSmartArt, nTypeOfSectionLoad);
-				});
-				this.queue = this.queue.concat(arrPreviewObjects);
-				AscCommon.CActionOnTimerBase.prototype.Begin.call(this);
-			}
+		if(!oApi) {
+			return;
 		}
+		this.typeOfSectionLoad = nTypeOfSectionLoad;
+		const oThis = this;
+		AscCommon.g_oBinarySmartArts.checkLoadDrawing().then(function ()
+		{
+			if (AscFormat.isRealNumber(oThis.typeOfSectionLoad)) {
+				const arrPreviewObjects = Asc.c_oAscSmartArtSections[oThis.typeOfSectionLoad].map(function (nTypeOfSmartArt) {
+					return new CSmartArtPreviewInfo(nTypeOfSmartArt, oThis.typeOfSectionLoad);
+				});
+				oThis.queue = oThis.queue.concat(arrPreviewObjects);
+				AscCommon.CActionOnTimerBase.prototype.Begin.call(oThis);
+			}
+		});
 	};
 	SmartArtPreviewDrawer.prototype.OnBegin = function () {
 		const oApi = Asc.editor || editor;
 		this.index = 0;
-		if (oApi) oApi.sendEvent("asc_onBeginSmartArtPreview");
+		if (oApi)
+			oApi.sendEvent("asc_onBeginSmartArtPreview", this.typeOfSectionLoad);
 	}
 
 	SmartArtPreviewDrawer.prototype.OnEnd = function() {
@@ -835,7 +844,7 @@ ChartPreviewManager.prototype.getChartPreviews = function(chartType, arrId, bEmp
 
 	SmartArtPreviewDrawer.prototype.getSmartArt = function(nSmartArtType) {
 		return AscFormat.ExecuteNoHistory(function () {
-			const oSmartArt = new AscFormat.SmartArt();
+			const oSmartArt = Asc.editor.isPdfEditor() ? new AscPDF.CPdfSmartArt() : new AscFormat.SmartArt();
 			oSmartArt.bNeedUpdatePosition = false;
 			oSmartArt.bFirstRecalculate = false;
 			const oApi = Asc.editor || editor;
@@ -1163,21 +1172,22 @@ TextArtPreviewManager.prototype.getShape =  function()
 	var oShape = new AscFormat.CShape();
 	var oParent = null, oWorkSheet = null;
 	var bWord = true;
-	if (Asc['editor'] && AscCommon.c_oEditorId.Spreadsheet === Asc['editor'].getEditorId()) {
+	let nEditorId = Asc['editor'].getEditorId();
+	if (Asc.editor.isPdfEditor()) {
+		bWord = false;
+	}
+	else if(nEditorId === AscCommon.c_oEditorId.Spreadsheet) {
 		var api_sheet = Asc['editor'];
 		oShape.setWorksheet(api_sheet.wb.getWorksheet().model);
 		oWorkSheet = api_sheet.wb.getWorksheet().model;
 		bWord = false;
-	} else {
-		if (editor && editor.WordControl && Array.isArray(editor.WordControl.m_oLogicDocument.Slides)) {
-			if (editor.WordControl.m_oLogicDocument.Slides[editor.WordControl.m_oLogicDocument.CurPage]) {
-				oShape.setParent(editor.WordControl.m_oLogicDocument.Slides[editor.WordControl.m_oLogicDocument.CurPage]);
-				oParent = editor.WordControl.m_oLogicDocument.Slides[editor.WordControl.m_oLogicDocument.CurPage];
-				bWord = false;
-			} else {
-				return null;
-			}
-		}
+	}
+	else if(nEditorId === AscCommon.c_oEditorId.Presentation) {
+		let oPres = Asc.editor.private_GetLogicDocument();
+		let oSlide = oPres.GetCurrentSlide();
+		oShape.setParent(oSlide);
+		oParent = oSlide;
+		bWord = false;
 	}
 
 
@@ -1214,6 +1224,7 @@ TextArtPreviewManager.prototype.getShape =  function()
 	oShape.spPr.xfrm.setOffY(0);
 	oShape.spPr.xfrm.setExtX(this.shapeWidth);
 	oShape.spPr.xfrm.setExtY(this.shapeHeight);
+	oShape._page = 0;
 	return oShape;
 };
 

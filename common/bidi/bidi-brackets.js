@@ -1,0 +1,203 @@
+/*
+ * (c) Copyright Ascensio System SIA 2010-2024
+ *
+ * This program is a free software product. You can redistribute it and/or
+ * modify it under the terms of the GNU Affero General Public License (AGPL)
+ * version 3 as published by the Free Software Foundation. In accordance with
+ * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
+ * that Ascensio System SIA expressly excludes the warranty of non-infringement
+ * of any third-party rights.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
+ * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ *
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
+ * street, Riga, Latvia, EU, LV-1050.
+ *
+ * The  interactive user interfaces in modified source and object code versions
+ * of the Program must display Appropriate Legal Notices, as required under
+ * Section 5 of the GNU AGPL version 3.
+ *
+ * Pursuant to Section 7(b) of the License you must retain the original Product
+ * logo when distributing the program. Pursuant to Section 7(e) we decline to
+ * grant you any rights under trademark law for use of our trademarks.
+ *
+ * All the Product's GUI elements, including illustrations and icon sets, as
+ * well as technical writing content are licensed under the terms of the
+ * Creative Commons Attribution-ShareAlike 4.0 International. See the License
+ * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ *
+ */
+
+"use strict";
+
+(function()
+{
+	const t = {
+		0x0028 : 0x0029, // o # LEFT PARENTHESIS
+		0x0029 : 0x0028, // c # RIGHT PARENTHESIS
+		0x005B : 0x005D, // o # LEFT SQUARE BRACKET
+		0x005D : 0x005B, // c # RIGHT SQUARE BRACKET
+		0x007B : 0x007D, // o # LEFT CURLY BRACKET
+		0x007D : 0x007B, // c # RIGHT CURLY BRACKET
+		0x0F3A : 0x0F3B, // o # TIBETAN MARK GUG RTAGS GYON
+		0x0F3B : 0x0F3A, // c # TIBETAN MARK GUG RTAGS GYAS
+		0x0F3C : 0x0F3D, // o # TIBETAN MARK ANG KHANG GYON
+		0x0F3D : 0x0F3C, // c # TIBETAN MARK ANG KHANG GYAS
+		0x169B : 0x169C, // o # OGHAM FEATHER MARK
+		0x169C : 0x169B, // c # OGHAM REVERSED FEATHER MARK
+		0x2045 : 0x2046, // o # LEFT SQUARE BRACKET WITH QUILL
+		0x2046 : 0x2045, // c # RIGHT SQUARE BRACKET WITH QUILL
+		0x207D : 0x207E, // o # SUPERSCRIPT LEFT PARENTHESIS
+		0x207E : 0x207D, // c # SUPERSCRIPT RIGHT PARENTHESIS
+		0x208D : 0x208E, // o # SUBSCRIPT LEFT PARENTHESIS
+		0x208E : 0x208D, // c # SUBSCRIPT RIGHT PARENTHESIS
+		0x2308 : 0x2309, // o # LEFT CEILING
+		0x2309 : 0x2308, // c # RIGHT CEILING
+		0x230A : 0x230B, // o # LEFT FLOOR
+		0x230B : 0x230A, // c # RIGHT FLOOR
+		0x2329 : 0x232A, // o # LEFT-POINTING ANGLE BRACKET
+		0x232A : 0x2329, // c # RIGHT-POINTING ANGLE BRACKET
+		0x2768 : 0x2769, // o # MEDIUM LEFT PARENTHESIS ORNAMENT
+		0x2769 : 0x2768, // c # MEDIUM RIGHT PARENTHESIS ORNAMENT
+		0x276A : 0x276B, // o # MEDIUM FLATTENED LEFT PARENTHESIS ORNAMENT
+		0x276B : 0x276A, // c # MEDIUM FLATTENED RIGHT PARENTHESIS ORNAMENT
+		0x276C : 0x276D, // o # MEDIUM LEFT-POINTING ANGLE BRACKET ORNAMENT
+		0x276D : 0x276C, // c # MEDIUM RIGHT-POINTING ANGLE BRACKET ORNAMENT
+		0x276E : 0x276F, // o # HEAVY LEFT-POINTING ANGLE QUOTATION MARK ORNAMENT
+		0x276F : 0x276E, // c # HEAVY RIGHT-POINTING ANGLE QUOTATION MARK ORNAMENT
+		0x2770 : 0x2771, // o # HEAVY LEFT-POINTING ANGLE BRACKET ORNAMENT
+		0x2771 : 0x2770, // c # HEAVY RIGHT-POINTING ANGLE BRACKET ORNAMENT
+		0x2772 : 0x2773, // o # LIGHT LEFT TORTOISE SHELL BRACKET ORNAMENT
+		0x2773 : 0x2772, // c # LIGHT RIGHT TORTOISE SHELL BRACKET ORNAMENT
+		0x2774 : 0x2775, // o # MEDIUM LEFT CURLY BRACKET ORNAMENT
+		0x2775 : 0x2774, // c # MEDIUM RIGHT CURLY BRACKET ORNAMENT
+		0x27C5 : 0x27C6, // o # LEFT S-SHAPED BAG DELIMITER
+		0x27C6 : 0x27C5, // c # RIGHT S-SHAPED BAG DELIMITER
+		0x27E6 : 0x27E7, // o # MATHEMATICAL LEFT WHITE SQUARE BRACKET
+		0x27E7 : 0x27E6, // c # MATHEMATICAL RIGHT WHITE SQUARE BRACKET
+		0x27E8 : 0x27E9, // o # MATHEMATICAL LEFT ANGLE BRACKET
+		0x27E9 : 0x27E8, // c # MATHEMATICAL RIGHT ANGLE BRACKET
+		0x27EA : 0x27EB, // o # MATHEMATICAL LEFT DOUBLE ANGLE BRACKET
+		0x27EB : 0x27EA, // c # MATHEMATICAL RIGHT DOUBLE ANGLE BRACKET
+		0x27EC : 0x27ED, // o # MATHEMATICAL LEFT WHITE TORTOISE SHELL BRACKET
+		0x27ED : 0x27EC, // c # MATHEMATICAL RIGHT WHITE TORTOISE SHELL BRACKET
+		0x27EE : 0x27EF, // o # MATHEMATICAL LEFT FLATTENED PARENTHESIS
+		0x27EF : 0x27EE, // c # MATHEMATICAL RIGHT FLATTENED PARENTHESIS
+		0x2983 : 0x2984, // o # LEFT WHITE CURLY BRACKET
+		0x2984 : 0x2983, // c # RIGHT WHITE CURLY BRACKET
+		0x2985 : 0x2986, // o # LEFT WHITE PARENTHESIS
+		0x2986 : 0x2985, // c # RIGHT WHITE PARENTHESIS
+		0x2987 : 0x2988, // o # Z NOTATION LEFT IMAGE BRACKET
+		0x2988 : 0x2987, // c # Z NOTATION RIGHT IMAGE BRACKET
+		0x2989 : 0x298A, // o # Z NOTATION LEFT BINDING BRACKET
+		0x298A : 0x2989, // c # Z NOTATION RIGHT BINDING BRACKET
+		0x298B : 0x298C, // o # LEFT SQUARE BRACKET WITH UNDERBAR
+		0x298C : 0x298B, // c # RIGHT SQUARE BRACKET WITH UNDERBAR
+		0x298D : 0x2990, // o # LEFT SQUARE BRACKET WITH TICK IN TOP CORNER
+		0x298E : 0x298F, // c # RIGHT SQUARE BRACKET WITH TICK IN BOTTOM CORNER
+		0x298F : 0x298E, // o # LEFT SQUARE BRACKET WITH TICK IN BOTTOM CORNER
+		0x2990 : 0x298D, // c # RIGHT SQUARE BRACKET WITH TICK IN TOP CORNER
+		0x2991 : 0x2992, // o # LEFT ANGLE BRACKET WITH DOT
+		0x2992 : 0x2991, // c # RIGHT ANGLE BRACKET WITH DOT
+		0x2993 : 0x2994, // o # LEFT ARC LESS-THAN BRACKET
+		0x2994 : 0x2993, // c # RIGHT ARC GREATER-THAN BRACKET
+		0x2995 : 0x2996, // o # DOUBLE LEFT ARC GREATER-THAN BRACKET
+		0x2996 : 0x2995, // c # DOUBLE RIGHT ARC LESS-THAN BRACKET
+		0x2997 : 0x2998, // o # LEFT BLACK TORTOISE SHELL BRACKET
+		0x2998 : 0x2997, // c # RIGHT BLACK TORTOISE SHELL BRACKET
+		0x29D8 : 0x29D9, // o # LEFT WIGGLY FENCE
+		0x29D9 : 0x29D8, // c # RIGHT WIGGLY FENCE
+		0x29DA : 0x29DB, // o # LEFT DOUBLE WIGGLY FENCE
+		0x29DB : 0x29DA, // c # RIGHT DOUBLE WIGGLY FENCE
+		0x29FC : 0x29FD, // o # LEFT-POINTING CURVED ANGLE BRACKET
+		0x29FD : 0x29FC, // c # RIGHT-POINTING CURVED ANGLE BRACKET
+		0x2E22 : 0x2E23, // o # TOP LEFT HALF BRACKET
+		0x2E23 : 0x2E22, // c # TOP RIGHT HALF BRACKET
+		0x2E24 : 0x2E25, // o # BOTTOM LEFT HALF BRACKET
+		0x2E25 : 0x2E24, // c # BOTTOM RIGHT HALF BRACKET
+		0x2E26 : 0x2E27, // o # LEFT SIDEWAYS U BRACKET
+		0x2E27 : 0x2E26, // c # RIGHT SIDEWAYS U BRACKET
+		0x2E28 : 0x2E29, // o # LEFT DOUBLE PARENTHESIS
+		0x2E29 : 0x2E28, // c # RIGHT DOUBLE PARENTHESIS
+		0x2E55 : 0x2E56, // o # LEFT SQUARE BRACKET WITH STROKE
+		0x2E56 : 0x2E55, // c # RIGHT SQUARE BRACKET WITH STROKE
+		0x2E57 : 0x2E58, // o # LEFT SQUARE BRACKET WITH DOUBLE STROKE
+		0x2E58 : 0x2E57, // c # RIGHT SQUARE BRACKET WITH DOUBLE STROKE
+		0x2E59 : 0x2E5A, // o # TOP HALF LEFT PARENTHESIS
+		0x2E5A : 0x2E59, // c # TOP HALF RIGHT PARENTHESIS
+		0x2E5B : 0x2E5C, // o # BOTTOM HALF LEFT PARENTHESIS
+		0x2E5C : 0x2E5B, // c # BOTTOM HALF RIGHT PARENTHESIS
+		0x3008 : 0x3009, // o # LEFT ANGLE BRACKET
+		0x3009 : 0x3008, // c # RIGHT ANGLE BRACKET
+		0x300A : 0x300B, // o # LEFT DOUBLE ANGLE BRACKET
+		0x300B : 0x300A, // c # RIGHT DOUBLE ANGLE BRACKET
+		0x300C : 0x300D, // o # LEFT CORNER BRACKET
+		0x300D : 0x300C, // c # RIGHT CORNER BRACKET
+		0x300E : 0x300F, // o # LEFT WHITE CORNER BRACKET
+		0x300F : 0x300E, // c # RIGHT WHITE CORNER BRACKET
+		0x3010 : 0x3011, // o # LEFT BLACK LENTICULAR BRACKET
+		0x3011 : 0x3010, // c # RIGHT BLACK LENTICULAR BRACKET
+		0x3014 : 0x3015, // o # LEFT TORTOISE SHELL BRACKET
+		0x3015 : 0x3014, // c # RIGHT TORTOISE SHELL BRACKET
+		0x3016 : 0x3017, // o # LEFT WHITE LENTICULAR BRACKET
+		0x3017 : 0x3016, // c # RIGHT WHITE LENTICULAR BRACKET
+		0x3018 : 0x3019, // o # LEFT WHITE TORTOISE SHELL BRACKET
+		0x3019 : 0x3018, // c # RIGHT WHITE TORTOISE SHELL BRACKET
+		0x301A : 0x301B, // o # LEFT WHITE SQUARE BRACKET
+		0x301B : 0x301A, // c # RIGHT WHITE SQUARE BRACKET
+		0xFE59 : 0xFE5A, // o # SMALL LEFT PARENTHESIS
+		0xFE5A : 0xFE59, // c # SMALL RIGHT PARENTHESIS
+		0xFE5B : 0xFE5C, // o # SMALL LEFT CURLY BRACKET
+		0xFE5C : 0xFE5B, // c # SMALL RIGHT CURLY BRACKET
+		0xFE5D : 0xFE5E, // o # SMALL LEFT TORTOISE SHELL BRACKET
+		0xFE5E : 0xFE5D, // c # SMALL RIGHT TORTOISE SHELL BRACKET
+		0xFF08 : 0xFF09, // o # FULLWIDTH LEFT PARENTHESIS
+		0xFF09 : 0xFF08, // c # FULLWIDTH RIGHT PARENTHESIS
+		0xFF3B : 0xFF3D, // o # FULLWIDTH LEFT SQUARE BRACKET
+		0xFF3D : 0xFF3B, // c # FULLWIDTH RIGHT SQUARE BRACKET
+		0xFF5B : 0xFF5D, // o # FULLWIDTH LEFT CURLY BRACKET
+		0xFF5D : 0xFF5B, // c # FULLWIDTH RIGHT CURLY BRACKET
+		0xFF5F : 0xFF60, // o # FULLWIDTH LEFT WHITE PARENTHESIS
+		0xFF60 : 0xFF5F, // c # FULLWIDTH RIGHT WHITE PARENTHESIS
+		0xFF62 : 0xFF63, // o # HALFWIDTH LEFT CORNER BRACKET
+		0xFF63 : 0xFF62, // c # HALFWIDTH RIGHT CORNER BRACKET
+		
+		0x003E : 0x003C, // o
+		0x003C : 0x003E, // c
+		0x00AB : 0x00BB, // o # «
+		0x00BB : 0x00AB  // c # »
+	};
+	
+	let pairedGraphemes = {};
+	AscBidi.getPairedBracketGrapheme = function(graphemeId)
+	{
+		if (pairedGraphemes[graphemeId])
+			return pairedGraphemes[graphemeId];
+		
+		let codePoints = AscFonts.GetGraphemeCodePoints(graphemeId);
+		if (1 !== codePoints.length)
+			return graphemeId;
+		
+		let codePoint = codePoints[0];
+		if (!t[codePoint])
+			return graphemeId;
+		
+		let fontId    = AscFonts.GetGraphemeFontId(graphemeId);
+		let fontName  = AscFonts.GetFontNameByFontId(fontId);
+		let fontStyle = AscFonts.GetFontStyleByFontId(fontId);
+		
+		pairedGraphemes[graphemeId] = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(t[codePoint], fontName, fontStyle);
+		return pairedGraphemes[graphemeId];
+	}
+	AscBidi.isPairedBracket = function(codePoint)
+	{
+		return !!t[codePoint];
+	}
+	AscBidi.getPairedBracket = function(codePoint)
+	{
+		return t[codePoint] ? t[codePoint] : -1;
+	}
+	
+})(window);

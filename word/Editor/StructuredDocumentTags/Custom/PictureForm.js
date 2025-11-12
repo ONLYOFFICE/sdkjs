@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -45,6 +45,7 @@
 		this.Borders     = false;
 		this.ShiftX      = 0.5; // 0..1
 		this.ShiftY      = 0.5; // 0..1
+		this.Signature   = false;
 	}
 	CSdtPictureFormPr.prototype.Copy = function()
 	{
@@ -55,6 +56,7 @@
 		oFormPr.Borders     = this.Borders;
 		oFormPr.ShiftX      = this.ShiftX;
 		oFormPr.ShiftY      = this.ShiftY;
+		oFormPr.Signature   = this.Signature;
 
 		return oFormPr;
 	};
@@ -65,7 +67,8 @@
 			&& this.Proportions === oOther.Proportions
 			&& this.Borders === oOther.Borders
 			&& Math.abs(this.ShiftX - oOther.ShiftX) < 0.001
-			&& Math.abs(this.ShiftY - oOther.ShiftY) < 0.001);
+			&& Math.abs(this.ShiftY - oOther.ShiftY) < 0.001
+			&& this.Signature === oOther.Signature);
 	};
 	CSdtPictureFormPr.prototype.WriteToBinary = function(oWriter)
 	{
@@ -74,6 +77,7 @@
 		oWriter.WriteBool(this.Borders);
 		oWriter.WriteDouble(this.ShiftX);
 		oWriter.WriteDouble(this.ShiftY);
+		oWriter.WriteBool(this.Signature);
 	};
 	CSdtPictureFormPr.prototype.ReadFromBinary = function(oReader)
 	{
@@ -82,6 +86,7 @@
 		this.Borders     = oReader.GetBool();
 		this.ShiftX      = oReader.GetDouble();
 		this.ShiftY      = oReader.GetDouble();
+		this.Signature   = oReader.GetBool();
 	};
 	CSdtPictureFormPr.prototype.Write_ToBinary = function(oWriter)
 	{
@@ -130,6 +135,14 @@
 	CSdtPictureFormPr.prototype.GetShiftY = function()
 	{
 		return this.ShiftY;
+	};
+	CSdtPictureFormPr.prototype.IsSignature = function()
+	{
+		return this.Signature;
+	};
+	CSdtPictureFormPr.prototype.SetSignature = function(isSignature)
+	{
+		this.Signature = isSignature;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};

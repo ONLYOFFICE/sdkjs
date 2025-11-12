@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -165,27 +165,36 @@ CDocProtect.prototype.setFromInterface = function (oProps) {
 };
 CDocProtect.prototype.Refresh_RecalcData = function () {
 };
-CDocProtect.prototype.Copy = function () {
-	return AscFormat.ExecuteNoHistory(function () {
-		var oDocProtect = new CDocProtect();
-		oDocProtect.algorithmName = this.algorithmName;
-		oDocProtect.edit = this.edit;
-		oDocProtect.enforcement = this.enforcement;
-		oDocProtect.formatting = this.formatting;
-		oDocProtect.hashValue = this.hashValue;
-		oDocProtect.saltValue = this.saltValue;
-		oDocProtect.spinCount = this.spinCount;
-		oDocProtect.algIdExt = this.algIdExt;
-		oDocProtect.algIdExtSource = this.algIdExtSource;
-		oDocProtect.cryptAlgorithmClass = this.cryptAlgorithmClass;
-		oDocProtect.cryptAlgorithmSid = this.cryptAlgorithmSid;
-		oDocProtect.cryptAlgorithmType = this.cryptAlgorithmType;
-		oDocProtect.cryptProvider = this.cryptProvider;
-		oDocProtect.cryptProviderType = this.cryptProviderType;
-		oDocProtect.cryptProviderTypeExt = this.cryptProviderTypeExt;
-		oDocProtect.cryptProviderTypeExtSource = this.cryptProviderTypeExtSource;
-		return oDocProtect;
-	}, this, []);
+CDocProtect.prototype.copyTo = function(docProtect)
+{
+	docProtect.algorithmName = this.algorithmName;
+	docProtect.edit = this.edit;
+	docProtect.enforcement = this.enforcement;
+	docProtect.formatting = this.formatting;
+	docProtect.hashValue = this.hashValue;
+	docProtect.saltValue = this.saltValue;
+	docProtect.spinCount = this.spinCount;
+	docProtect.algIdExt = this.algIdExt;
+	docProtect.algIdExtSource = this.algIdExtSource;
+	docProtect.cryptAlgorithmClass = this.cryptAlgorithmClass;
+	docProtect.cryptAlgorithmSid = this.cryptAlgorithmSid;
+	docProtect.cryptAlgorithmType = this.cryptAlgorithmType;
+	docProtect.cryptProvider = this.cryptProvider;
+	docProtect.cryptProviderType = this.cryptProviderType;
+	docProtect.cryptProviderTypeExt = this.cryptProviderTypeExt;
+	docProtect.cryptProviderTypeExtSource = this.cryptProviderTypeExtSource;
+};
+CDocProtect.prototype.Copy = function()
+{
+	let docProtect = new AscCommonWord.CDocProtect();
+	this.copyTo(docProtect);
+	return docProtect;
+};
+CDocProtect.prototype.getAscDocProtect = function()
+{
+	let docProtect = new Asc.DocProtect()
+	this.copyTo(docProtect);
+	return docProtect;
 };
 /*CDocProtect.prototype.Write_ToBinary2 = function(Writer)
 {
@@ -215,7 +224,6 @@ CDocProtect.prototype.asc_setEditType = function(val)
 		this.enforcement = true;
 	}
 };
-
 
 function CWriteProtection() {
 	this.algorithmName = null;
@@ -248,3 +256,36 @@ window['AscCommonWord'].ECryptAlgoritmName = ECryptAlgoritmName;
 window['AscCommonWord'].ECryptAlgClass = ECryptAlgClass;
 window['AscCommonWord'].ECryptAlgType = ECryptAlgType;
 window['AscCommonWord'].ECryptProv = ECryptProv;
+
+(function(window)
+{
+	/**
+	 * Класс DocProtect для использования в интерфейсе или сериализации (не в формате, для формата AscCommonWord.CDocProtect)
+	 * @constructor
+	 */
+	function DocProtect()
+	{
+		AscCommon.ExecuteNoHistory(function()
+		{
+			AscCommonWord.CDocProtect.call(this);
+		}, undefined, this);
+	}
+	
+	DocProtect.prototype = Object.create(AscCommonWord.CDocProtect.prototype);
+	DocProtect.prototype.constructor = DocProtect;
+	DocProtect.prototype.Copy = function()
+	{
+		return this.getAscDocProtect();
+	};
+	DocProtect.prototype.setProps = function(props)
+	{
+		AscCommon.ExecuteNoHistory(function()
+		{
+			AscCommonWord.CDocProtect.prototype.setProps.call(this, props);
+		});
+	};
+	//--------------------------------------------------------export----------------------------------------------------
+	window['Asc'] = window['Asc'] || {};
+	window['Asc']['DocProtect'] = window['Asc'].DocProtect = DocProtect;
+})(window);
+

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -44,12 +44,82 @@
 		this.CoEditing = coEditing;
 
 		this.Changes   = []; // Список всех изменений
+		this.ChangesSplitByPoints = [] // Список изменений разделенных по точкам
 		this.OwnRanges = []; // Диапазоны собственных изменений
 
-		this.SyncIndex = -1; // Позиция в массиве изменений, которые согласованы с сервером
-
+		this.SyncIndex      = -1; // Позиция в массиве изменений, которые согласованы с сервером
+		this.curChangeIndex = -1; // Текущая позиция в массиве изменений разделенных по точкам
+		//this.StepTextPoint = undefined; //Позиция предыдущего состояния
+		
+		this.textRecovery = null;
 	}
+	/**
+	 * Разделяем изменения ревизии для отображения истории ревизии
+	 */
+	CCollaborativeHistory.prototype.SplitChangesByPoints = function ()
+	{
+		if (!this.Changes || !this.Changes || this.ChangesSplitByPoints.length !== 0)
+			return;
 
+		let arrCurrent = [0];
+		for (let i = 1; i < this.Changes.length; i++)
+		{
+			let oCurrentChange = this.Changes[i];
+			let oPrevChange = (i === 0)
+				? undefined
+				: this.Changes[i - 1];
+
+			if (!(oPrevChange && (oPrevChange instanceof AscCommon.CChangesTableIdDescription || oPrevChange.IsDescriptionChange() === oCurrentChange.IsDescriptionChange())))
+			{
+				arrCurrent.push(i);
+			}
+		}
+
+		arrCurrent.push(this.Changes.length);
+		this.ChangesSplitByPoints = arrCurrent;
+		this.curChangeIndex = arrCurrent.length - 1;
+	};
+	CCollaborativeHistory.prototype.clear = function()
+	{
+		this.Changes   = [];
+		this.OwnRanges = [];
+		this.ChangesSplitByPoints = [];
+		
+		this.SyncIndex      = -1;
+		this.curChangeIndex = -1;
+		
+		this.textRecovery = null;
+	};
+	/**
+	 * Перемещаемся по истории ревизии на заданную точку
+	 * @param {number} pointIndex - Позиция на которую необходимо переместится
+	 * @constructor
+	 */
+	CCollaborativeHistory.prototype.NavigationRevisionHistoryByStep = function(pointIndex)
+	{
+		let logicDocument = this.CoEditing.GetLogicDocument();
+		if (!logicDocument || !logicDocument.IsDocumentEditor())
+			return false;
+
+		this.UndoDeletedTextRecovery();
+		this.SplitChangesByPoints();
+		if (this.curChangeIndex < 0)
+			return false;
+		
+		pointIndex = Math.max(0, Math.min(pointIndex, this.ChangesSplitByPoints.length - 1));
+		if (pointIndex === this.curChangeIndex)
+			return false;
+		
+		let changes;
+		if (this.curChangeIndex < pointIndex)
+			changes = this._RedoChanges(this.ChangesSplitByPoints[this.curChangeIndex], this.ChangesSplitByPoints[pointIndex]);
+		else
+			changes = this._UndoChanges(this.ChangesSplitByPoints[this.curChangeIndex], this.ChangesSplitByPoints[pointIndex]);
+		
+		this.curChangeIndex	= pointIndex;
+		logicDocument.RecalculateByChanges(changes);
+		return true;
+	};
 	CCollaborativeHistory.prototype.AddChange = function(change)
 	{
 		this.Changes.push(change);
@@ -89,6 +159,52 @@
 	{
 		return (this.OwnRanges.length > 0)
 	};
+	CCollaborativeHistory.prototype._RedoChanges = function(startPos, endPos)
+	{
+		let changes = [];
+		for (let i = startPos; i < endPos; ++i)
+		{
+			let change = this.Changes[i];
+			if (change.IsContentChange())
+			{
+				let simpleChanges = change.ConvertToSimpleChanges();
+				for (let simpleIndex = 0; simpleIndex < simpleChanges.length; ++simpleIndex)
+				{
+					simpleChanges[simpleIndex].Redo();
+					changes.push(simpleChanges[simpleIndex]);
+				}
+			}
+			else
+			{
+				change.Redo();
+				changes.push(change);
+			}
+		}
+		return changes;
+	};
+	CCollaborativeHistory.prototype._UndoChanges = function(startPos, endPos)
+	{
+		let changes = [];
+		for (let i = startPos - 1; i >= endPos; --i)
+		{
+			let change = this.Changes[i];
+			if (change.IsContentChange())
+			{
+				let simpleChanges = change.ConvertToSimpleChanges();
+				for (let simpleIndex = simpleChanges.length - 1; simpleIndex >= 0; --simpleIndex)
+				{
+					simpleChanges[simpleIndex].Undo();
+					changes.push(simpleChanges[simpleIndex]);
+				}
+			}
+			else
+			{
+				change.Undo();
+				changes.push(change);
+			}
+		}
+		return changes;
+	};
 	/**
 	 * Откатываем заданное количество действий
 	 * @param {number} count
@@ -96,6 +212,8 @@
 	 */
 	CCollaborativeHistory.prototype.UndoGlobalChanges = function(count)
 	{
+		this.UndoDeletedTextRecovery();
+
 		count = Math.min(count, this.Changes.length);
 
 		if (!count)
@@ -134,6 +252,8 @@
 	 */
 	CCollaborativeHistory.prototype.UndoGlobalPoint = function()
 	{
+		this.UndoDeletedTextRecovery();
+
 		let count = 0;
 		for (let index = this.Changes.length - 1; index > 0; --index, ++count)
 		{
@@ -151,6 +271,73 @@
 		return count ? this.UndoGlobalChanges(count) : [];
 	};
 	/**
+	 * Получаем количество позиций истории в текущей ревизии
+	 * @return {number}
+	 * @constructor
+	 */
+	CCollaborativeHistory.prototype.GetGlobalPointCount = function()
+	{
+		this.SplitChangesByPoints();
+		return this.ChangesSplitByPoints.length;
+	};
+	/**
+	 * Получаем текущую позицию в истории ревизии
+	 * @return {number}
+	 */
+	CCollaborativeHistory.prototype.GetGlobalPointIndex = function()
+	{
+		this.SplitChangesByPoints();
+		return this.curChangeIndex;
+	};
+	/**
+	 * Перемещаемся на нужную точку истории ревизии
+	 * @param nPos - позиция в истории
+	 * @return {boolean} - был ли произведен переход на данную позицию
+	 */
+	CCollaborativeHistory.prototype.MoveToPoint = function(nPos)
+	{
+		return this.NavigationRevisionHistoryByStep(nPos);
+	};
+	CCollaborativeHistory.prototype.InitTextRecover = function ()
+	{
+		if (this.textRecovery)
+			return;
+		
+		let logicDocument = this.CoEditing.GetLogicDocument();
+		if (!logicDocument || !logicDocument.IsDocumentEditor())
+			return;
+		
+		this.textRecovery = new AscCommon.DeletedTextRecovery(logicDocument);
+	};
+	/**
+	 * Отображаем удаленный текст для данный точки в истории ревизии
+	 * @return {boolean} - был ли отображен удаленный текст
+	 */
+	CCollaborativeHistory.prototype.RecoverDeletedText = function()
+	{
+		this.InitTextRecover();
+		return this.textRecovery.RecoverDeletedText();
+	};
+	/**
+	 * Отменить отображение удаленного текста в данной точке истории ревизии
+	 * @return {boolean}
+	 */
+	CCollaborativeHistory.prototype.UndoDeletedTextRecovery = function()
+	{
+		if (this.textRecovery)
+			return this.textRecovery.UndoRecoveredText();
+
+		return false;
+	};
+	CCollaborativeHistory.prototype.HaveDeletedTextRecovery = function()
+	{
+		return !!(this.textRecovery && this.textRecovery.HaveRecoveredText());
+	};
+	CCollaborativeHistory.prototype.GetCollaborativeMarks = function ()
+	{
+		return this.CoEditing.Get_CollaborativeMarks();
+	}
+	/**
 	 * Отменяем собственные последние действия, прокатывая их через чужие
 	 * @returns {[]} возвращаем массив новых действий
 	 */
@@ -159,17 +346,16 @@
 		// Формируем новую пачку действий, которые будут откатывать нужные нам действия
 		let reverseChanges = this.GetReverseOwnChanges();
 		if (reverseChanges.length <= 0)
+		{
+			//чтобы не было бесконечного saving(пересмотреть чтобы работало без saveChanges)
+			this.saveChanges([]);
 			return [];
+		}
 
 		for (let index = 0, count = reverseChanges.length; index < count; ++index)
 		{
-			let oClass = reverseChanges[index].GetClass();
 			reverseChanges[index].Load();
-
-			if (oClass && oClass.SetIsRecalculated && (!reverseChanges[index] || reverseChanges[index].IsNeedRecalculate()))
-				oClass.SetIsRecalculated(false);
-
-			this.AddChange(reverseChanges[index]);
+			reverseChanges[index].CheckNeedRecalculate();
 		}
 
 		// Создаем точку в истории. Делаем действия через обычные функции (с отключенным пересчетом), которые пишут в
@@ -180,23 +366,38 @@
 		for (let index = 0, count = historyPoint.Items.length; index < count; ++index)
 		{
 			let historyItem   = historyPoint.Items[index];
-			let historyChange = historyItem.Data;
+			let historyChange;
 			let historyClass  = historyItem.Class;
 
-			if (!historyClass || !historyClass.Get_Id)
+			//todo: Refactor Class and Data in spreadsheet to follow other editors design
+			if (AscCommon.History.Item_ToSerializable) {
+				historyChange = AscCommon.History.Item_ToSerializable(historyItem);
+			} else {
+				historyChange = historyItem.Data;
+			}
+
+			if (!historyClass || !(historyClass.Get_Id || historyClass.Class && historyClass.Class.Get_Id))
 				continue;
 
-			let data = AscCommon.CCollaborativeChanges.ToBase64(historyItem.Binary.Pos, historyItem.Binary.Len);
-			changesToSend.push(data);
+			if (historyItem.Binary.Len) //spreadsheet local changes
+			{
+				let data = AscCommon.CCollaborativeChanges.ToBase64(historyItem.Binary.Pos, historyItem.Binary.Len);
+				changesToSend.push(data);
+			}
 
 			changesToRecalc.push(historyChange);
+			this.AddChange(historyChange);
 		}
 		AscCommon.History.Remove_LastPoint();
 		this.CoEditing.Clear_DCChanges();
 
-		editor.CoAuthoringApi.saveChanges(changesToSend, null, null, false, this.CoEditing.getCollaborativeEditing());
-
+		this.saveChanges(changesToSend);
 		return changesToRecalc;
+	};
+	CCollaborativeHistory.prototype.saveChanges = function(changesToSend)
+	{
+		//separate function to override in excel
+		(Asc.editor || editor).CoAuthoringApi.saveChanges(changesToSend, null, null, false, this.CoEditing.getCollaborativeEditing());
 	};
 	CCollaborativeHistory.prototype.GetEmptyContentChanges = function()
 	{
@@ -210,7 +411,29 @@
 		}
 		return changes;
 	};
-
+	/**
+	 * Проверяем, что последнее изменение в документе - это ввод заданного символа
+	 * @param {AscWord.CRun} run
+	 * @param {number} inRunPos
+	 * @param {?number} codePoint
+	 * @returns {boolean}
+	 */
+	CCollaborativeHistory.prototype.checkAsYouTypeEnterText = function(run, inRunPos, codePoint)
+	{
+		if (!this.Changes.length || !this.OwnRanges.length)
+			return false;
+		
+		let lastOwnRange = this.OwnRanges[this.OwnRanges.length - 1];
+		if (this.Changes.length !== lastOwnRange.Position + lastOwnRange.Length)
+			return false;
+		
+		let lastChange = this.Changes[this.Changes.length - 1];
+		return (AscDFH.historyitem_ParaRun_AddItem === lastChange.Type
+			&& lastChange.Class === run
+			&& lastChange.Pos === inRunPos - 1
+			&& lastChange.Items.length
+			&& (undefined === codePoint || lastChange.Items[0].GetCodePoint() === codePoint));
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -229,7 +452,7 @@
 		let nPosition = range.Position;
 		let nCount    = range.Length;
 
-		let arrChanges = [];
+		let arrReverseChanges = [];
 		for (let nIndex = nCount - 1; nIndex >= 0; --nIndex)
 		{
 			let oChange = this.Changes[nPosition + nIndex];
@@ -240,10 +463,56 @@
 			if (oChange.IsContentChange())
 			{
 				let _oChange = oChange.Copy();
-
-				if (this.CommuteContentChange(_oChange, nPosition + nCount))
-					arrChanges.push(_oChange);
-
+				let simpleChanges = _oChange.ConvertToSimpleChanges();
+				for (let simpleIndex = simpleChanges.length - 1; simpleIndex >= 0; --simpleIndex)
+				{
+					let simpleChange = simpleChanges[simpleIndex];
+					if (this.CommuteContentChange(simpleChange, nPosition + nCount))
+					{
+						let oReverseChange = simpleChange.CreateReverseChange();
+						if (oReverseChange)
+						{
+							arrReverseChanges.push(oReverseChange);
+							oReverseChange.SetReverted(true);
+						}
+					}
+				}
+				oChange.SetReverted(true);
+			}
+			else if (oChange.IsSpreadsheetChange())
+			{
+				let _oChange = oChange.Copy();
+				//удобнее сначала создавать обратное изменение
+				let oReverseChange = _oChange.CreateReverseChange();
+				if (oReverseChange) {
+					if (this.CommuteRelated(oClass, oReverseChange, nPosition + nCount))
+					{
+						oReverseChange.SetReverted(true);
+						arrReverseChanges.push(oReverseChange);
+					}
+					else
+					{
+						//todo для автофигур не надо скрывать всю точку
+						//в таблицах не принимается вся точка
+						//например при вставка столбца копируется заливка соседнего столбца
+						arrReverseChanges = [];
+						for (let i = nCount - 1; i > nIndex; --i)
+						{
+							this.Changes[nPosition + i].SetReverted(false);
+						}
+						break;
+					}
+				}
+				else if(null !== oReverseChange)
+				{
+					//ничего не делаем если есть изменения которые не готовы
+					arrReverseChanges = [];
+					for (let i = nCount - 1; i > nIndex; --i)
+					{
+						this.Changes[nPosition + i].SetReverted(false);
+					}
+					break;
+				}
 				oChange.SetReverted(true);
 			}
 			else
@@ -251,27 +520,27 @@
 				let _oChange = oChange; // TODO: Тут надо бы сделать копирование
 
 				if (this.CommutePropertyChange(oClass, _oChange, nPosition + nCount))
-					arrChanges.push(_oChange);
+				{
+					let oReverseChange = _oChange.CreateReverseChange();
+					if (oReverseChange)
+					{
+						arrReverseChanges.push(oReverseChange);
+						oReverseChange.SetReverted(true);
+					}
+				}
 			}
 		}
 
 		this.OwnRanges.length = this.OwnRanges.length - 1;
 
-		let arrReverseChanges = [];
-		for (let nIndex = 0, nCount = arrChanges.length; nIndex < nCount; ++nIndex)
-		{
-			let oReverseChange = arrChanges[nIndex].CreateReverseChange();
-			if (oReverseChange)
-			{
-				arrReverseChanges.push(oReverseChange);
-				oReverseChange.SetReverted(true);
-			}
-		}
-
 		return arrReverseChanges;
 	};
-	CCollaborativeHistory.prototype.CommuteContentChange = function(oChange, nStartPosition)
+	CCollaborativeHistory.prototype.CommuteContentChange = function(oChange, nStartPosition, arrChanges)
 	{
+		var arrChangesForProceed = this.Changes;
+		if (arrChanges && arrChanges.length > 0)
+			arrChangesForProceed = arrChanges;
+
 		var arrActions          = oChange.ConvertToSimpleActions();
 		var arrCommutateActions = [];
 
@@ -280,9 +549,9 @@
 			var oAction = arrActions[nActionIndex];
 			var oResult = oAction;
 
-			for (var nIndex = nStartPosition, nOverallCount = this.Changes.length; nIndex < nOverallCount; ++nIndex)
+			for (var nIndex = nStartPosition, nOverallCount = arrChangesForProceed.length; nIndex < nOverallCount; ++nIndex)
 			{
-				var oTempChange = this.Changes[nIndex];
+				var oTempChange = arrChangesForProceed[nIndex];
 				if (!oTempChange)
 					continue;
 
@@ -312,12 +581,11 @@
 			if (null !== oResult)
 				arrCommutateActions.push(oResult);
 		}
-
-		if (arrCommutateActions.length > 0)
-			oChange.ConvertFromSimpleActions(arrCommutateActions);
-		else
+		
+		if (arrCommutateActions.length <= 0)
 			return false;
 
+		oChange.ConvertFromSimpleActions(arrCommutateActions, true);
 		return true;
 	};
 	CCollaborativeHistory.prototype.CommuteContentChangeActions = function(oActionL, oActionR)
@@ -388,17 +656,26 @@
 
 		return true;
 	};
+
+	CCollaborativeHistory.prototype.CommuteRelated = function(oClass, oChange, nStartPosition)
+	{
+		return true;
+	}
 	CCollaborativeHistory.prototype.CreateLocalHistoryPointByReverseChanges = function(reverseChanges)
 	{
 		let localHistory = AscCommon.History;
 
 		let pointIndex = localHistory.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_Undo);
-
+		
+		// До вызова данного метода мы все изменения reverseChanges прогнали через Load, где
+		// изменения позиций из-за этих изменений уже были отмечены
+		this.CoEditing.StopTrackingPositions();
 		for (let index = 0, count = reverseChanges.length; index < count; ++index)
 		{
 			let change = reverseChanges[index];
 			localHistory.Add(change);
 		}
+		this.CoEditing.StartTrackingPositions();
 
 		this.CorrectReveredChanges(reverseChanges);
 
@@ -439,7 +716,7 @@
 			{
 				mapDocumentContents[oClass.Get_Id()] = oClass;
 			}
-			else if (oClass instanceof AscCommonWord.Paragraph)
+			else if (oClass instanceof AscWord.Paragraph)
 			{
 				mapParagraphs[oClass.Get_Id()] = oClass;
 			}
@@ -682,7 +959,7 @@
 			nContentLen = oDocumentContent.Content.length;
 			if (nContentLen <= 0 || AscCommonWord.type_Paragraph !== oDocumentContent.Content[nContentLen - 1].GetType())
 			{
-				var oNewParagraph = new AscCommonWord.Paragraph(oLogicDocument.Get_DrawingDocument(), oDocumentContent, 0, 0, 0, 0, 0, false);
+				var oNewParagraph = new AscWord.Paragraph(oDocumentContent, 0, 0, 0, 0, 0, false);
 				oDocumentContent.Add_ToContent(nContentLen, oNewParagraph);
 			}
 		}
@@ -726,5 +1003,11 @@
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].CCollaborativeHistory = CCollaborativeHistory;
-
+	
+	CCollaborativeHistory.prototype["GetGlobalPointCount"]     = CCollaborativeHistory.prototype.GetGlobalPointCount;
+	CCollaborativeHistory.prototype["getGlobalPointIndex"]     = CCollaborativeHistory.prototype.GetGlobalPointIndex;
+	CCollaborativeHistory.prototype["moveToPoint"]             = CCollaborativeHistory.prototype.MoveToPoint;
+	CCollaborativeHistory.prototype["recoverDeletedText"]      = CCollaborativeHistory.prototype.RecoverDeletedText;
+	CCollaborativeHistory.prototype["undoDeletedTextRecovery"] = CCollaborativeHistory.prototype.UndoDeletedTextRecovery;
+	
 })(window);

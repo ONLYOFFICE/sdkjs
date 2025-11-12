@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -73,7 +73,6 @@ CGroupShape.prototype.handleUpdateLn = function()
 CGroupShape.prototype.getRecalcObject = CShape.prototype.getRecalcObject;
 CGroupShape.prototype.setRecalcObject = CShape.prototype.setRecalcObject;
 CGroupShape.prototype.Get_ColorMap = CShape.prototype.Get_ColorMap;
-CGroupShape.prototype.IsUseInDocument = CShape.prototype.IsUseInDocument;
 
 
 CGroupShape.prototype.getTargetDocContent = AscFormat.DrawingObjectsController.prototype.getTargetDocContent;

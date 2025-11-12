@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -157,6 +157,9 @@
 			{
 				this.FontsByRange[_range.Name] = _range.Name;
 				this.FontsByRangeCount++;
+
+				if (window["onLogPickFont"])
+					window["onLogPickFont"]("FontBySymbol: " + _char + " => " + _range.Name);
 			}
 
 			return _range.Name;
@@ -173,7 +176,11 @@
 			var oldCount = this.FontsByRangeCount;
 			for (var i = _text.getUnicodeIterator(); i.check(); i.next())
 			{
-				AscFonts.FontPickerByCharacter.getFontBySymbol(i.value());
+				let _char = i.value();
+				if (this.LastRange && this.LastRange.Start <= _char && _char <= this.LastRange.End)
+					continue;
+
+				this.getFontBySymbol(_char);
 			}
 			return (this.FontsByRangeCount != oldCount);
 		},
@@ -191,7 +198,7 @@
 			{
 				if (32 === _array[i])
 					continue;
-				AscFonts.FontPickerByCharacter.getFontBySymbol(_array[i]);
+				this.getFontBySymbol(_array[i]);
 			}
 			return (this.FontsByRangeCount != oldCount);
 		},
@@ -220,7 +227,7 @@
 				}
 
 				if (!isFound)
-					fonts[fonts.length] = new AscFonts.CFont(this.FontsByRange[i], 0, "", 0, null);
+					fonts[fonts.length] = new AscFonts.CFont(this.FontsByRange[i]);
 			}
 
 			if (true !== isNoRealExtend)

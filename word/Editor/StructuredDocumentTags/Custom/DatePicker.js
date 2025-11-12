@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -42,7 +42,7 @@
 	{
 		this.FullDate   = (new Date()).toISOString().slice(0, 19) + 'Z';
 		this.LangId     = 1033;
-		this.DateFormat = "dd.MM.yyyy";
+		this.DateFormat = "mm/dd/yyyy";
 		this.Calendar   = Asc.c_oAscCalendarType.Gregorian;
 		
 		// Специальный параметр, чтобы при выставлении значения из интерфейса, но не из календаря мы помечали, что реально дата не проставлена
@@ -128,6 +128,9 @@
 		else
 			date = new Date(fullDate);
 		
+		if (isNaN(date))
+			date = new Date();
+		
 		this.FullDate = date.toISOString().slice(0, 19) + 'Z';
 		this.NullFullDate = false;
 	};
@@ -165,6 +168,9 @@
 	};
 	CSdtDatePickerPr.prototype.GetFormatsExamples = function()
 	{
+		if (Asc.c_oAscDateTimeFormat[this.LangId])
+			return Asc.c_oAscDateTimeFormat[this.LangId];
+		
 		return [
 			"MM/DD/YYYY",
 			"dddd\,\ mmmm\ dd\,\ yyyy",

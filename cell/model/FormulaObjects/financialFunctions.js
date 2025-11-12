@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -36,7 +36,7 @@
  * @param {Window} window
  * @param {undefined} undefined
  */
-	function (window, undefined) {
+function (window, undefined) {
 	var cDate = Asc.cDate;
 	var cErrorType = AscCommonExcel.cErrorType;
 	var cNumber = AscCommonExcel.cNumber;
@@ -51,18 +51,20 @@
 	var argType = Asc.c_oAscFormulaArgumentType;
 	var cElementType = AscCommonExcel.cElementType;
 
+	var c_msPerDay = AscCommonExcel.c_msPerDay;
+
 	var startRangeCurrentDateSystem = 1;
 
 	function getPMT(rate, nper, pv, fv, flag) {
 		var res, part;
 		if (rate === 0) {
-			res = ( pv + fv ) / nper;
+			res = (pv + fv) / nper;
 		} else {
 			part = Math.pow(1 + rate, nper);
 			if (flag > 0) {
-				res = ( fv * rate / ( part - 1 ) + pv * rate / ( 1 - 1 / part ) ) / ( 1 + rate );
+				res = (fv * rate / (part - 1) + pv * rate / (1 - 1 / part)) / (1 + rate);
 			} else {
-				res = fv * rate / ( part - 1 ) + pv * rate / ( 1 - 1 / part );
+				res = fv * rate / (part - 1) + pv * rate / (1 - 1 / part);
 			}
 		}
 
@@ -76,9 +78,9 @@
 		} else {
 			part = Math.pow(1 + rate, nper);
 			if (type > 0) {
-				res = pv * part + pmt * ( 1 + rate ) * ( part - 1 ) / rate;
+				res = pv * part + pmt * (1 + rate) * (part - 1) / rate;
 			} else {
-				res = pv * part + pmt * ( part - 1 ) / rate;
+				res = pv * part + pmt * (part - 1) / rate;
 			}
 		}
 
@@ -149,7 +151,7 @@
 					geoSeriesDerivation = nper * (nper - 1) / 2;
 				} else {
 					geoSeries = (powN - 1) / x;
-					geoSeriesDerivation = ( nper * powNminus1 - geoSeries ) / x;
+					geoSeriesDerivation = (nper * powNminus1 - geoSeries) / x;
 				}
 				term = fv + pv * powN + payment * geoSeries;
 				termDerivation = pv * nper * powNminus1 + payment * geoSeriesDerivation;
@@ -210,6 +212,11 @@
 		while (n > settl) {
 			n.addMonths(-12 / freq);
 		}
+
+		if (n.getExcelDate() < 0) {
+			return new cDate((0 - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
+		}
+
 		return n;
 	}
 
@@ -218,7 +225,7 @@
 		if (matur > settl) {
 			matur.addYears(-1);
 		}
-		while (matur < settl) {
+		while (matur <= settl) {
 			matur.addMonths(12 / freq);
 		}
 	}
@@ -266,9 +273,9 @@
 
 		var cdays = getcoupdays(new cDate(settle), new cDate(mat), freq, base),
 			cnum = getcoupnum(new cDate(settle), new cDate(mat), freq),
-			cdaybs = getcoupdaybs(new cDate(settle), new cDate(mat), freq, base), cdaysnc = ( cdays - cdaybs ) / cdays,
+			cdaybs = getcoupdaybs(new cDate(settle), new cDate(mat), freq, base), cdaysnc = (cdays - cdaybs) / cdays,
 			fT1 = 100 * rate / freq, fT2 = 1 + yld / freq,
-			res = redemp / ( Math.pow(1 + yld / freq, cnum - 1 + cdaysnc) );
+			res = redemp / (Math.pow(1 + yld / freq, cnum - 1 + cdaysnc));
 
 		if (cnum == 1) {
 			return (redemp + fT1) / (1 + cdaysnc * yld / freq) - 100 * rate / freq * cdaybs / cdays;
@@ -285,7 +292,7 @@
 
 	function getYield(settle, mat, coup, price, redemp, freq, base) {
 		var priceN = 0, yield1 = 0, yield2 = 1, price1 = getprice(settle, mat, coup, yield1, redemp, freq, base),
-			price2 = getprice(settle, mat, coup, yield2, redemp, freq, base), yieldN = ( yield2 - yield1 ) * 0.5;
+			price2 = getprice(settle, mat, coup, yield2, redemp, freq, base), yieldN = (yield2 - yield1) * 0.5;
 
 		for (var i = 0; i < 100 && priceN != price; i++) {
 			priceN = getprice(settle, mat, coup, yieldN, redemp, freq, base);
@@ -299,7 +306,7 @@
 			} else if (price < price2) {
 				yield2 *= 2;
 				price2 = getprice(settle, mat, coup, yield2, redemp, freq, base);
-				yieldN = ( yield2 - yield1 ) * 0.5;
+				yieldN = (yield2 - yield1) * 0.5;
 			} else {
 				if (price < priceN) {
 					yield1 = yieldN;
@@ -309,7 +316,7 @@
 					price2 = priceN;
 				}
 
-				yieldN = yield2 - ( yield2 - yield1 ) * ( ( price - price2 ) / ( price1 - price2 ) );
+				yieldN = yield2 - (yield2 - yield1) * ((price - price2) / (price1 - price2));
 			}
 		}
 
@@ -487,9 +494,10 @@
 	cACCRINT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cACCRINT.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any, argType.any, argType.any, argType.any];
 	cACCRINT.prototype.Calculate = function (arg) {
-		let issue = arg[0], 
-			firstInterest = arg[1], 
-			settlement = arg[2], 
+		// the ACCRINT formula in ms does not always match the calculation using the formula manually
+		let issue = arg[0],
+			firstInterest = arg[1],
+			settlement = arg[2],
 			rate = arg[3],
 			par = arg[4] && !(cElementType.empty === arg[4].type) ? arg[4] : new cNumber(1000),
 			frequency = arg[5],
@@ -656,29 +664,9 @@
 		basis = basis.tocNumber();
 		calcMethod = calcMethod.tocBool();
 
-		if (cElementType.error === issue.type) {
-			return issue;
-		}
-		if (cElementType.error === firstInterest.type) {
-			return firstInterest;
-		}
-		if (cElementType.error === settlement.type) {
-			return settlement;
-		}
-		if (cElementType.error === rate.type) {
-			return rate;
-		}
-		if (cElementType.error === par.type) {
-			return par;
-		}
-		if (cElementType.error === frequency.type) {
-			return frequency;
-		}
-		if (cElementType.error === basis.type) {
-			return basis;
-		}
-		if (cElementType.error === calcMethod.type) {
-			return calcMethod;
+		let argError;
+		if (argError = this._checkErrorArg([issue, firstInterest, settlement, rate, par, frequency, basis, calcMethod])) {
+			return argError;
 		}
 
 		issue = Math.floor(issue.getValue());
@@ -690,9 +678,15 @@
 		basis = Math.floor(basis.getValue());
 		calcMethod = calcMethod.toBool();
 
+		// checking for out-of-date dates
+		let maxDate = AscCommonExcel.getMaxDate();
+		if (issue > maxDate || firstInterest > maxDate || settlement > maxDate) {
+			return new cError(cErrorType.not_numeric);
+		}
+
 		if (issue < startRangeCurrentDateSystem || issue <= 0 || issue >= settlement || firstInterest < startRangeCurrentDateSystem ||
 			settlement < startRangeCurrentDateSystem || rate <= 0 || par <= 0 || basis < 0 ||
-			basis > 4 || (frequency != 1 && frequency != 2 && frequency != 4)) {
+			basis > 4 || (frequency != 1 && frequency != 2 && frequency != 4) || (!calcMethod && firstInterest < 366 / frequency)) {
 			return new cError(cErrorType.not_numeric);
 		}
 
@@ -705,17 +699,30 @@
 			return newDate;
 		}
 
-		let iss = cDate.prototype.getDateFromExcel(issue), 
-			fInter = cDate.prototype.getDateFromExcel(firstInterest),
-			settl = cDate.prototype.getDateFromExcel(settlement), 
-			numMonths = 12 / frequency, 
+		// The function calculates accrued interest on a security on which interest is paid at a certain frequency
+		// Argument calc_method = 0 (we calculate the accumulated interest from the first payment date (first_interest) to the date of purchase of the security (settlement))
+		// calc_method = 1 (we calculate the accumulated interest from the issue date to the date of purchase of the security (settlement))
+		// calc_method = 0 is taken into account only if the date of the first payment (first_interest) is greater than the release date (issue)
+
+		// exception for 1900/1/29 date
+		let iss = issue === 60 ? new Date(Date.UTC(1900, 1, 29)) : AscCommonExcel.getCorrectDate(issue),
+			fInter = firstInterest === 60 ? new Date(Date.UTC(1900, 1, 29)) : AscCommonExcel.getCorrectDate(firstInterest),
+			settl = settlement === 60 ? new Date(Date.UTC(1900, 1, 29)) : AscCommonExcel.getCorrectDate(settlement),
+			numMonths = 12 / frequency,
 			numMonthsNeg = -numMonths,
-			endMonth = fInter.lastDayOfMonth(), coupPCD, firstDate, startDate, endDate, res, days, coupDays;
+			endMonth = fInter.lastDayOfMonth() || (fInter.getUTCDate() === 30 && basis === AscCommonExcel.DayCountBasis.UsPsa30_360), 
+			coupPCD, firstDate, startDate, endDate, res, days, coupDays;
+
+		let mainCoupPcd = lcl_GetCouppcd(iss, fInter, frequency);
+		// if the first coupon period === 0, return 0 as in MS
+		if (mainCoupPcd.getExcelDate() <= 0) {
+			return new cNumber(0);
+		}
 
 		if (settl > fInter && calcMethod) {
 			coupPCD = new cDate(fInter);
 			startDate = endDate = new cDate(settl);
-			
+
 			while (!(numMonths > 0 ? coupPCD >= startDate : coupPCD <= startDate)) {
 				endDate = coupPCD;
 				coupPCD = addMonth(coupPCD, numMonths, endMonth);
@@ -727,24 +734,39 @@
 
 		// basis = 0;
 		firstDate = new cDate(iss > coupPCD ? iss : coupPCD);
-		days = AscCommonExcel.days360(firstDate, settl, basis, true);
+		mainCoupPcd = lcl_GetCouppcd(settl, fInter, frequency);
+
+		// if first coup period, get date difference by default
+		if (mainCoupPcd < iss) {
+			days = AscCommonExcel.diffDate(firstDate, settl, basis).getValue();
+		} else {
+			days = AscCommonExcel.days360(firstDate, settl, basis, true);
+		}
+		
+		// if the first date was greater, change the sign of the day difference to minus
+		days = Math.abs(days) * (firstDate > settl ? -1 : 1);
+
 		coupDays = getcoupdays(coupPCD, fInter, frequency, basis).getValue();
 		res = days / coupDays;
 		startDate = new cDate(coupPCD);
 		endDate = iss;
-
-		// ???
-		while (!( numMonthsNeg > 0 ? startDate >= iss : startDate <= iss )) {
+	
+		// res - the coefficient that we use in the formula res * par * rate / frequency
+		// is found by iterating from the first coupon date to the issue date of the bond
+		// 1 step equals the number of months in the coupon period (12, 6, 3)
+		// at each iteration, the issue date and the current coupon date (with the step) are checked, and depending on the result, a number is added to the coefficient:
+		// - 1 or 0 depending on the calc_method used
+		// - or a fraction - the result of dividing the difference in days between the previous step's date and the current date by the number of days in the coupon period
+		while (!(numMonthsNeg > 0 ? startDate >= iss : startDate <= iss)) {
 			endDate = startDate;
 			startDate = addMonth(startDate, numMonthsNeg, endMonth);
 			firstDate = iss > startDate ? iss : startDate;
 			if (basis == AscCommonExcel.DayCountBasis.UsPsa30_360) {
-				days = AscCommonExcel.days360(firstDate, endDate, !( iss > startDate ));
+				days = AscCommonExcel.days360(firstDate, endDate, !(iss > startDate));
 				coupDays = getcoupdays(startDate, endDate, frequency, basis).getValue();
 			} else {
 				days = AscCommonExcel.diffDate(firstDate, endDate, basis).getValue();
-				coupDays = ( basis == AscCommonExcel.DayCountBasis.Actual365 ) ? ( 365 / frequency ) :
-					AscCommonExcel.diffDate(startDate, endDate, basis).getValue();
+				coupDays = (basis == AscCommonExcel.DayCountBasis.Actual365) ? (365 / frequency) : AscCommonExcel.diffDate(startDate, endDate, basis).getValue();
 			}
 
 			res += (iss <= startDate) ? calcMethod : days / coupDays;
@@ -1241,7 +1263,7 @@
 
 		if (settlement < startRangeCurrentDateSystem || maturity < startRangeCurrentDateSystem ||
 			settlement >= maturity || basis < 0 || basis > 4 ||
-			( frequency != 1 && frequency != 2 && frequency != 4 )) {
+			(frequency != 1 && frequency != 2 && frequency != 4)) {
 			return new cError(cErrorType.not_numeric);
 		}
 
@@ -1320,7 +1342,7 @@
 
 		if (settlement < startRangeCurrentDateSystem || maturity < startRangeCurrentDateSystem ||
 			settlement >= maturity || basis < 0 || basis > 4 ||
-			( frequency != 1 && frequency != 2 && frequency != 4 )) {
+			(frequency != 1 && frequency != 2 && frequency != 4)) {
 			return new cError(cErrorType.not_numeric);
 		}
 
@@ -1399,7 +1421,7 @@
 
 		if (settlement < startRangeCurrentDateSystem || maturity < startRangeCurrentDateSystem ||
 			settlement >= maturity || basis < 0 || basis > 4 ||
-			( frequency != 1 && frequency != 2 && frequency != 4 )) {
+			(frequency != 1 && frequency != 2 && frequency != 4)) {
 			return new cError(cErrorType.not_numeric);
 		}
 
@@ -1426,31 +1448,35 @@
 	cCOUPNCD.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cCOUPNCD.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any];
 	cCOUPNCD.prototype.Calculate = function (arg) {
-		var settlement = arg[0], maturity = arg[1], frequency = arg[2],
-			basis = arg[3] && !(arg[3] instanceof cEmpty) ? arg[3] : new cNumber(0);
+		let settlement = arg[0], maturity = arg[1], frequency = arg[2],
+			basis = arg[3] && !(arg[3].type === cElementType.empty) ? arg[3] : new cNumber(0);
 
-		if (settlement instanceof cArea || settlement instanceof cArea3D) {
+		if (settlement.type === cElementType.cellsRange || settlement.type === cElementType.cellsRange3D) {
 			settlement = settlement.cross(arguments[1]);
-		} else if (settlement instanceof cArray) {
+		} else if (settlement.type === cElementType.array) {
 			settlement = settlement.getElementRowCol(0, 0);
 		}
 
-		if (maturity instanceof cArea || maturity instanceof cArea3D) {
+		if (maturity.type === cElementType.cellsRange || maturity.type === cElementType.cellsRange3D) {
 			maturity = maturity.cross(arguments[1]);
-		} else if (maturity instanceof cArray) {
+		} else if (maturity.type === cElementType.array) {
 			maturity = maturity.getElementRowCol(0, 0);
 		}
 
-		if (frequency instanceof cArea || frequency instanceof cArea3D) {
+		if (frequency.type === cElementType.cellsRange || frequency.type === cElementType.cellsRange3D) {
 			frequency = frequency.cross(arguments[1]);
-		} else if (frequency instanceof cArray) {
+		} else if (frequency.type === cElementType.array) {
 			frequency = frequency.getElementRowCol(0, 0);
 		}
 
-		if (basis instanceof cArea || basis instanceof cArea3D) {
+		if (basis.type === cElementType.cellsRange || basis.type === cElementType.cellsRange3D) {
 			basis = basis.cross(arguments[1]);
-		} else if (basis instanceof cArray) {
+		} else if (basis.type === cElementType.array) {
 			basis = basis.getElementRowCol(0, 0);
+		}
+
+		if (settlement.type === cElementType.empty || maturity.type === cElementType.empty || frequency.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
 		}
 
 		settlement = settlement.tocNumber();
@@ -1458,17 +1484,9 @@
 		frequency = frequency.tocNumber();
 		basis = basis.tocNumber();
 
-		if (settlement instanceof cError) {
-			return settlement;
-		}
-		if (maturity instanceof cError) {
-			return maturity;
-		}
-		if (frequency instanceof cError) {
-			return frequency;
-		}
-		if (basis instanceof cError) {
-			return basis;
+		let argError;
+		if (argError = this._checkErrorArg([settlement, maturity, frequency, basis])) {
+			return argError;
 		}
 
 		settlement = Math.floor(settlement.getValue());
@@ -1476,16 +1494,16 @@
 		frequency = Math.floor(frequency.getValue());
 		basis = Math.floor(basis.getValue());
 
-		if (settlement < startRangeCurrentDateSystem || maturity < startRangeCurrentDateSystem ||
+		if ((settlement !== 0 && settlement < startRangeCurrentDateSystem) || maturity < startRangeCurrentDateSystem ||
 			settlement >= maturity || basis < 0 || basis > 4 ||
-			( frequency != 1 && frequency != 2 && frequency != 4 )) {
+			(frequency != 1 && frequency != 2 && frequency != 4)) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var settl = cDate.prototype.getDateFromExcel(settlement), matur = cDate.prototype.getDateFromExcel(maturity);
+		let settl = AscCommonExcel.getCorrectDate(settlement), matur = AscCommonExcel.getCorrectDate(maturity)
 
-		var res = new cNumber(getcoupncd(settl, matur, frequency).getExcelDate());
-		res.numFormat = 14;
+		let res = new cNumber(getcoupncd(settl, matur, frequency).getExcelDate());
+		// res.numFormat = 14;
 		return res;
 
 	};
@@ -1559,7 +1577,7 @@
 
 		if (settlement < startRangeCurrentDateSystem || maturity < startRangeCurrentDateSystem ||
 			settlement >= maturity || basis < 0 || basis > 4 ||
-			( frequency != 1 && frequency != 2 && frequency != 4 )) {
+			(frequency != 1 && frequency != 2 && frequency != 4)) {
 			return new cError(cErrorType.not_numeric);
 		}
 
@@ -1588,30 +1606,30 @@
 	cCOUPPCD.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cCOUPPCD.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any];
 	cCOUPPCD.prototype.Calculate = function (arg) {
-		var settlement = arg[0], maturity = arg[1], frequency = arg[2],
-			basis = arg[3] && !(arg[3] instanceof cEmpty) ? arg[3] : new cNumber(0);
+		let settlement = arg[0], maturity = arg[1], frequency = arg[2],
+			basis = arg[3] && !(arg[3].type === cElementType.empty) ? arg[3] : new cNumber(0);
 
-		if (settlement instanceof cArea || settlement instanceof cArea3D) {
+		if (settlement.type === cElementType.cellsRange || settlement.type === cElementType.cellsRange3D) {
 			settlement = settlement.cross(arguments[1]);
-		} else if (settlement instanceof cArray) {
+		} else if (settlement.type === cElementType.array) {
 			settlement = settlement.getElementRowCol(0, 0);
 		}
 
-		if (maturity instanceof cArea || maturity instanceof cArea3D) {
+		if (maturity.type === cElementType.cellsRange || maturity.type === cElementType.cellsRange3D) {
 			maturity = maturity.cross(arguments[1]);
-		} else if (maturity instanceof cArray) {
+		} else if (maturity.type === cElementType.array) {
 			maturity = maturity.getElementRowCol(0, 0);
 		}
 
-		if (frequency instanceof cArea || frequency instanceof cArea3D) {
+		if (frequency.type === cElementType.cellsRange || frequency.type === cElementType.cellsRange3D) {
 			frequency = frequency.cross(arguments[1]);
-		} else if (frequency instanceof cArray) {
+		} else if (frequency.type === cElementType.array) {
 			frequency = frequency.getElementRowCol(0, 0);
 		}
 
-		if (basis instanceof cArea || basis instanceof cArea3D) {
+		if (basis.type === cElementType.cellsRange || basis.type === cElementType.cellsRange3D) {
 			basis = basis.cross(arguments[1]);
-		} else if (basis instanceof cArray) {
+		} else if (basis.type === cElementType.array) {
 			basis = basis.getElementRowCol(0, 0);
 		}
 
@@ -1620,17 +1638,9 @@
 		frequency = frequency.tocNumber();
 		basis = basis.tocNumber();
 
-		if (settlement instanceof cError) {
-			return settlement;
-		}
-		if (maturity instanceof cError) {
-			return maturity;
-		}
-		if (frequency instanceof cError) {
-			return frequency;
-		}
-		if (basis instanceof cError) {
-			return basis;
+		let argError;
+		if (argError = this._checkErrorArg([settlement, maturity, frequency, basis])) {
+			return argError;
 		}
 
 		settlement = Math.floor(settlement.getValue());
@@ -1640,16 +1650,15 @@
 
 		if (settlement < startRangeCurrentDateSystem || maturity < startRangeCurrentDateSystem ||
 			settlement >= maturity || basis < 0 || basis > 4 ||
-			( frequency != 1 && frequency != 2 && frequency != 4 )) {
+			(frequency != 1 && frequency != 2 && frequency != 4)) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var settl = cDate.prototype.getDateFromExcel(settlement), matur = cDate.prototype.getDateFromExcel(maturity);
+		let settl = cDate.prototype.getDateFromExcel(settlement), matur = cDate.prototype.getDateFromExcel(maturity);
 
-		var n = lcl_GetCouppcd(settl, matur, frequency);
-
-		var res = new cNumber(n.getExcelDate());
-		res.numFormat = 14;
+		let n = lcl_GetCouppcd(settl, matur, frequency);
+		let res = new cNumber(n.getExcelDate());
+		// res.numFormat = 14;
 		return res;
 
 	};
@@ -1745,7 +1754,7 @@
 		var fv, ipmt = 0;
 
 		if (startPeriod < 1 || endPeriod < startPeriod || rate <= 0 || endPeriod > nper || nper <= 0 || pv <= 0 ||
-			( type != 0 && type != 1 )) {
+			(type != 0 && type != 1)) {
 			return new cError(cErrorType.not_numeric);
 		}
 
@@ -1865,7 +1874,7 @@
 		var fv, res = 0, nStart = startPeriod;
 
 		if (startPeriod < 1 || endPeriod < startPeriod || endPeriod < 1 || rate <= 0 || nper <= 0 || pv <= 0 ||
-			( type != 0 && type != 1 )) {
+			(type != 0 && type != 1)) {
 			return new cError(cErrorType.not_numeric);
 		}
 
@@ -1882,7 +1891,7 @@
 
 		for (var i = nStart; i <= endPeriod; i++) {
 			if (type > 0) {
-				res += fv - ( getFV(rate, i - 2, fv, pv, 1) - fv ) * rate;
+				res += fv - (getFV(rate, i - 2, fv, pv, 1) - fv) * rate;
 			} else {
 				res += fv - getFV(rate, i - 1, fv, pv, 0) * rate;
 			}
@@ -2176,8 +2185,8 @@
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var res = ( 1 - pr / redemption ) / AscCommonExcel.yearFrac(cDate.prototype.getDateFromExcel(settlement),
-				cDate.prototype.getDateFromExcel(maturity), basis);
+		var res = (1 - pr / redemption) / AscCommonExcel.yearFrac(cDate.prototype.getDateFromExcel(settlement),
+			cDate.prototype.getDateFromExcel(maturity), basis);
 
 //    this.value.numFormat = 9;
 		return new cNumber(res);
@@ -2403,7 +2412,7 @@
 
 		if (settlement < startRangeCurrentDateSystem || maturity < startRangeCurrentDateSystem ||
 			settlement >= maturity || basis < 0 || basis > 4 ||
-			( frequency != 1 && frequency != 2 && frequency != 4 ) || yld < 0 || coupon < 0) {
+			(frequency != 1 && frequency != 2 && frequency != 4) || yld < 0 || coupon < 0) {
 			return new cError(cErrorType.not_numeric);
 		}
 
@@ -2541,11 +2550,11 @@
 
 		var res;
 		if (rate.getValue() != 0) {
-			res = -1 * ( pv.getValue() * Math.pow(1 + rate.getValue(), nper.getValue()) +
-				pmt.getValue() * ( 1 + rate.getValue() * type.getValue() ) *
-				(Math.pow((1 + rate.getValue()), nper.getValue()) - 1) / rate.getValue() );
+			res = -1 * (pv.getValue() * Math.pow(1 + rate.getValue(), nper.getValue()) +
+				pmt.getValue() * (1 + rate.getValue() * type.getValue()) *
+				(Math.pow((1 + rate.getValue()), nper.getValue()) - 1) / rate.getValue());
 		} else {
-			res = -1 * ( pv.getValue() + pmt.getValue() * nper.getValue() );
+			res = -1 * (pv.getValue() + pmt.getValue() * nper.getValue());
 		}
 
 		return new cNumber(res);
@@ -2692,7 +2701,7 @@
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var res = ( ( redemption / investment ) - 1 ) /
+		var res = ((redemption / investment) - 1) /
 			AscCommonExcel.yearFrac(cDate.prototype.getDateFromExcel(settlement),
 				cDate.prototype.getDateFromExcel(maturity), basis);
 
@@ -2833,7 +2842,7 @@
 			var g_Eps = 1e-7, nIM = 500, eps = 1, nMC = 0, xN, guess = x;
 
 			while (eps > g_Eps && nMC < nIM) {
-				xN = x - npv(x, arr) / ( (npv(x + g_Eps, arr) - npv(x - g_Eps, arr)) / (2 * g_Eps) );
+				xN = x - npv(x, arr) / ((npv(x + g_Eps, arr) - npv(x - g_Eps, arr)) / (2 * g_Eps));
 				nMC++;
 				eps = Math.abs(xN - x);
 				x = xN;
@@ -3092,7 +3101,7 @@
 
 		if (settlement < startRangeCurrentDateSystem || maturity < startRangeCurrentDateSystem ||
 			settlement >= maturity || basis < 0 || basis > 4 ||
-			( frequency != 1 && frequency != 2 && frequency != 4 ) || yld < 0 || coupon < 0) {
+			(frequency != 1 && frequency != 2 && frequency != 4) || yld < 0 || coupon < 0) {
 			return new cError(cErrorType.not_numeric);
 		}
 
@@ -3141,7 +3150,11 @@
 			})
 		} else if (arg0 instanceof cArea3D) {
 			if (arg0.isSingleSheet()) {
-				valueArray = arg0.getMatrix()[0];
+				arg0.foreach2(function (c) {
+					if (c instanceof cNumber || c instanceof cError) {
+						valueArray.push(c);
+					}
+				})
 			} else {
 				return new cError(cErrorType.wrong_value_type);
 			}
@@ -3203,7 +3216,7 @@
 
 		}
 
-		if (!( wasNegative && wasPositive )) {
+		if (!(wasNegative && wasPositive)) {
 			return new cError(cErrorType.division_by_zero);
 		}
 
@@ -3267,7 +3280,7 @@
 			return new cError(cErrorType.not_numeric);
 		}
 //    this.value.numFormat = 9;
-		return new cNumber(( Math.pow(effectRate + 1, 1 / npery) - 1 ) * npery);
+		return new cNumber((Math.pow(effectRate + 1, 1 / npery) - 1) * npery);
 
 	};
 
@@ -3287,36 +3300,36 @@
 	cNPER.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cNPER.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.number, argType.number];
 	cNPER.prototype.Calculate = function (arg) {
-		var rate = arg[0], pmt = arg[1], pv = arg[2], fv = arg[3] ? arg[3] : new cNumber(0),
+		let rate = arg[0], pmt = arg[1], pv = arg[2], fv = arg[3] ? arg[3] : new cNumber(0),
 			type = arg[4] ? arg[4] : new cNumber(0);
 
-		if (rate instanceof cArea || rate instanceof cArea3D) {
+		if (rate.type === cElementType.cellsRange || rate.type === cElementType.cellsRange3D) {
 			rate = rate.cross(arguments[1]);
-		} else if (rate instanceof cArray) {
+		} else if (rate.type === cElementType.array) {
 			rate = rate.getElementRowCol(0, 0);
 		}
 
-		if (pmt instanceof cArea || pmt instanceof cArea3D) {
+		if (pmt.type === cElementType.cellsRange || pmt.type === cElementType.cellsRange3D) {
 			pmt = pmt.cross(arguments[1]);
-		} else if (pmt instanceof cArray) {
+		} else if (pmt.type === cElementType.array) {
 			pmt = pmt.getElementRowCol(0, 0);
 		}
 
-		if (pv instanceof cArea || pv instanceof cArea3D) {
+		if (pv.type === cElementType.cellsRange || pv.type === cElementType.cellsRange3D) {
 			pv = pv.cross(arguments[1]);
-		} else if (pv instanceof cArray) {
+		} else if (pv.type === cElementType.array) {
 			pv = pv.getElementRowCol(0, 0);
 		}
 
-		if (fv instanceof cArea || fv instanceof cArea3D) {
+		if (fv.type === cElementType.cellsRange || fv.type === cElementType.cellsRange3D) {
 			fv = fv.cross(arguments[1]);
-		} else if (fv instanceof cArray) {
+		} else if (fv.type === cElementType.array) {
 			fv = fv.getElementRowCol(0, 0);
 		}
 
-		if (type instanceof cArea || type instanceof cArea3D) {
+		if (type.type === cElementType.cellsRange || type.type === cElementType.cellsRange3D) {
 			type = type.cross(arguments[1]);
-		} else if (type instanceof cArray) {
+		} else if (type.type === cElementType.array) {
 			type = type.getElementRowCol(0, 0);
 		}
 
@@ -3326,19 +3339,19 @@
 		fv = fv.tocNumber();
 		type = type.tocNumber();
 
-		if (rate instanceof cError) {
+		if (rate.type === cElementType.error) {
 			return rate;
 		}
-		if (pmt instanceof cError) {
+		if (pmt.type === cElementType.error) {
 			return pmt;
 		}
-		if (pmt instanceof cError) {
+		if (pv.type === cElementType.error) {
 			return pv;
 		}
-		if (fv instanceof cError) {
+		if (fv.type === cElementType.error) {
 			return fv;
 		}
-		if (type instanceof cError) {
+		if (type.type === cElementType.error) {
 			return type;
 		}
 
@@ -3346,7 +3359,7 @@
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var res;
+		let res;
 		if (rate.getValue() != 0) {
 			rate = rate.getValue();
 			pmt = pmt.getValue();
@@ -3356,7 +3369,7 @@
 			res = (-fv * rate + pmt * (1 + rate * type)) / (rate * pv + pmt * (1 + rate * type));
 			res = Math.log(res) / Math.log(1 + rate)
 		} else {
-			res = -pv.getValue() - fv.getValue() / pmt.getValue();
+			res = -(pv.getValue() + fv.getValue()) / pmt.getValue();
 		}
 
 		return new cNumber(res);
@@ -3378,6 +3391,12 @@
 	cNPV.prototype.argumentsType = [argType.number, [argType.number]];
 	//TODO нужен новый тип - все элементы приходят в виде массива, кроме первого
 	cNPV.prototype.arrayIndexes = {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1};
+	cNPV.prototype.getArrayIndex = function (index) {
+		if (index === 0) {
+			return undefined;
+		}
+		return 1;
+	};
 	cNPV.prototype.Calculate = function (arg) {
 		var arg0 = arg[0], iStart = 1, res = 0, rate;
 
@@ -3593,61 +3612,61 @@
 	cODDFYIELD.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any, argType.any,
 		argType.any, argType.any, argType.any];
 	cODDFYIELD.prototype.Calculate = function (arg) {
-		var settlement = arg[0], maturity = arg[1], issue = arg[2], first_coupon = arg[3], rate = arg[4], pr = arg[5],
+		let settlement = arg[0], maturity = arg[1], issue = arg[2], first_coupon = arg[3], rate = arg[4], pr = arg[5],
 			redemption = arg[6], frequency = arg[7],
 			basis = arg[8] && !(arg[8] instanceof cEmpty) ? arg[8] : new cNumber(0);
 
-		if (settlement instanceof cArea || settlement instanceof cArea3D) {
+		if (settlement.type === cElementType.cellsRange || settlement.type === cElementType.cellsRange3D) {
 			settlement = settlement.cross(arguments[1]);
-		} else if (settlement instanceof cArray) {
+		} else if (settlement.type === cElementType.array) {
 			settlement = settlement.getElementRowCol(0, 0);
 		}
 
-		if (maturity instanceof cArea || maturity instanceof cArea3D) {
+		if (maturity.type === cElementType.cellsRange || maturity.type === cElementType.cellsRange3D) {
 			maturity = maturity.cross(arguments[1]);
-		} else if (maturity instanceof cArray) {
+		} else if (maturity.type === cElementType.array) {
 			maturity = maturity.getElementRowCol(0, 0);
 		}
 
-		if (issue instanceof cArea || issue instanceof cArea3D) {
+		if (issue.type === cElementType.cellsRange || issue.type === cElementType.cellsRange3D) {
 			issue = issue.cross(arguments[1]);
-		} else if (issue instanceof cArray) {
+		} else if (issue.type === cElementType.array) {
 			issue = issue.getElementRowCol(0, 0);
 		}
 
-		if (first_coupon instanceof cArea || first_coupon instanceof cArea3D) {
+		if (first_coupon.type === cElementType.cellsRange || first_coupon.type === cElementType.cellsRange3D) {
 			first_coupon = first_coupon.cross(arguments[1]);
-		} else if (first_coupon instanceof cArray) {
+		} else if (first_coupon.type === cElementType.array) {
 			first_coupon = first_coupon.getElementRowCol(0, 0);
 		}
 
-		if (rate instanceof cArea || rate instanceof cArea3D) {
+		if (rate.type === cElementType.cellsRange || rate.type === cElementType.cellsRange3D) {
 			rate = rate.cross(arguments[1]);
-		} else if (rate instanceof cArray) {
+		} else if (rate.type === cElementType.array) {
 			rate = rate.getElementRowCol(0, 0);
 		}
 
-		if (pr instanceof cArea || pr instanceof cArea3D) {
+		if (pr.type === cElementType.cellsRange || pr.type === cElementType.cellsRange3D) {
 			pr = pr.cross(arguments[1]);
-		} else if (pr instanceof cArray) {
+		} else if (pr.type === cElementType.array) {
 			pr = pr.getElementRowCol(0, 0);
 		}
 
-		if (redemption instanceof cArea || redemption instanceof cArea3D) {
+		if (redemption.type === cElementType.cellsRange || redemption.type === cElementType.cellsRange3D) {
 			redemption = redemption.cross(arguments[1]);
-		} else if (redemption instanceof cArray) {
+		} else if (redemption.type === cElementType.array) {
 			redemption = redemption.getElementRowCol(0, 0);
 		}
 
-		if (frequency instanceof cArea || frequency instanceof cArea3D) {
+		if (frequency.type === cElementType.cellsRange || frequency.type === cElementType.cellsRange3D) {
 			frequency = frequency.cross(arguments[1]);
-		} else if (frequency instanceof cArray) {
+		} else if (frequency.type === cElementType.array) {
 			frequency = frequency.getElementRowCol(0, 0);
 		}
 
-		if (basis instanceof cArea || basis instanceof cArea3D) {
+		if (basis.type === cElementType.cellsRange || basis.type === cElementType.cellsRange3D) {
 			basis = basis.cross(arguments[1]);
-		} else if (basis instanceof cArray) {
+		} else if (basis.type === cElementType.array) {
 			basis = basis.getElementRowCol(0, 0);
 		}
 
@@ -3661,31 +3680,31 @@
 		frequency = frequency.tocNumber();
 		basis = basis.tocNumber();
 
-		if (settlement instanceof cError) {
+		if (settlement.type === cElementType.error) {
 			return settlement;
 		}
-		if (maturity instanceof cError) {
+		if (maturity.type === cElementType.error) {
 			return maturity;
 		}
-		if (issue instanceof cError) {
+		if (issue.type === cElementType.error) {
 			return issue;
 		}
-		if (first_coupon instanceof cError) {
+		if (first_coupon.type === cElementType.error) {
 			return first_coupon;
 		}
-		if (rate instanceof cError) {
+		if (rate.type === cElementType.error) {
 			return rate;
 		}
-		if (pr instanceof cError) {
+		if (pr.type === cElementType.error) {
 			return pr;
 		}
-		if (redemption instanceof cError) {
+		if (redemption.type === cElementType.error) {
 			return redemption;
 		}
-		if (frequency instanceof cError) {
+		if (frequency.type === cElementType.error) {
 			return frequency;
 		}
-		if (basis instanceof cError) {
+		if (basis.type === cElementType.error) {
 			return basis;
 		}
 
@@ -3710,7 +3729,7 @@
 			iss = cDate.prototype.getDateFromExcel(issue), firstCoup = cDate.prototype.getDateFromExcel(first_coupon);
 
 		var years = AscCommonExcel.diffDate(settl, matur, basis), px = pr - 100, num = rate * years * 100 - px,
-			denum = px * 0.25 * ( 1 + 2 * years ) + years * 100, guess = num / denum, x = guess, g_Eps = 1e-7,
+			denum = px * 0.25 * (1 + 2 * years) + years * 100, guess = num / denum, x = guess, g_Eps = 1e-7,
 			nIM = 500, eps = 1, nMC = 0, xN;
 
 		function iterF(yld) {
@@ -3718,13 +3737,13 @@
 		}
 
 		while (eps > g_Eps && nMC < nIM) {
-			xN = x - iterF(x) / ( (iterF(x + g_Eps) - iterF(x - g_Eps)) / (2 * g_Eps) );
+			xN = x - iterF(x) / ((iterF(x + g_Eps) - iterF(x - g_Eps)) / (2 * g_Eps));
 			nMC++;
 			eps = Math.abs(xN - x);
 			x = xN;
 		}
 		if (isNaN(x) || Infinity == Math.abs(x)) {
-			var max = Number.MAX_VALUE, min = -Number.MAX_VALUE, step = 1.6,
+			let max = Number.MAX_VALUE, min = -Number.MAX_VALUE, step = 1.6,
 				low = guess - 0.01 <= min ? min + g_Eps : guess - 0.01,
 				high = guess + 0.01 >= max ? max - g_Eps : guess + 0.01, i, xBegin, xEnd, x, y, currentIter = 0;
 
@@ -3751,7 +3770,7 @@
 				return new cError(cErrorType.not_numeric);
 			}
 
-			var fXbegin = iterF(xBegin), fXend = iterF(xEnd), fXi, xI;
+			let fXbegin = iterF(xBegin), fXend = iterF(xEnd), fXi, xI;
 
 			if (Math.abs(fXbegin) < g_Eps) {
 				return new cNumber(fXbegin);
@@ -4172,14 +4191,14 @@
 
 		var res;
 		if (rate != 0) {
-			res = -1 * ( pv * Math.pow(1 + rate, nper) + fv ) /
-				( ( 1 + rate * type ) * ( Math.pow((1 + rate), nper) - 1 ) / rate );
+			res = -1 * (pv * Math.pow(1 + rate, nper) + fv) /
+				((1 + rate * type) * (Math.pow((1 + rate), nper) - 1) / rate);
 		} else {
-			res = -1 * ( pv + fv ) / nper;
+			res = -1 * (pv + fv) / nper;
 		}
 
 		res = new cNumber(res);
-		res.numFormat = 8;
+		res.numFormat = "#,##0.00\\ \"₽\";[Red]\\-#,##0.00\\ \"₽\"";
 		return res;
 	};
 
@@ -4389,7 +4408,7 @@
 
 		if (settlement < startRangeCurrentDateSystem || maturity < startRangeCurrentDateSystem ||
 			settlement >= maturity || basis < 0 || basis > 4 ||
-			( frequency != 1 && frequency != 2 && frequency != 4 ) || rate < 0 || yld < 0 || redemption <= 0) {
+			(frequency != 1 && frequency != 2 && frequency != 4) || rate < 0 || yld < 0 || redemption <= 0) {
 			return new cError(cErrorType.not_numeric);
 		}
 
@@ -4484,7 +4503,7 @@
 
 		var settl = cDate.prototype.getDateFromExcel(settlement), matur = cDate.prototype.getDateFromExcel(maturity);
 
-		var res = redemption * ( 1 - discount * AscCommonExcel.yearFrac(settl, matur, basis) );
+		var res = redemption * (1 - discount * AscCommonExcel.yearFrac(settl, matur, basis));
 
 		return new cNumber(res);
 
@@ -4679,11 +4698,11 @@
 
 		var res;
 		if (rate.getValue() != 0) {
-			res = -1 * ( fv.getValue() + pmt.getValue() * (1 + rate.getValue() * type.getValue()) *
-				( (Math.pow((1 + rate.getValue()), nper.getValue()) - 1) / rate.getValue() ) ) /
+			res = -1 * (fv.getValue() + pmt.getValue() * (1 + rate.getValue() * type.getValue()) *
+				((Math.pow((1 + rate.getValue()), nper.getValue()) - 1) / rate.getValue())) /
 				Math.pow(1 + rate.getValue(), nper.getValue())
 		} else {
-			res = -1 * ( fv.getValue() + pmt.getValue() * nper.getValue() );
+			res = -1 * (fv.getValue() + pmt.getValue() * nper.getValue());
 		}
 
 		return new cNumber(res);
@@ -4871,8 +4890,8 @@
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var res = investment / ( 1 - ( discount * AscCommonExcel.yearFrac(cDate.prototype.getDateFromExcel(settlement),
-				cDate.prototype.getDateFromExcel(maturity), basis) ) );
+		var res = investment / (1 - (discount * AscCommonExcel.yearFrac(cDate.prototype.getDateFromExcel(settlement),
+			cDate.prototype.getDateFromExcel(maturity), basis)));
 
 //    this.value.numFormat = 9;
 		return res >= 0 ? new cNumber(res) : new cError(cErrorType.not_numeric);
@@ -4979,7 +4998,7 @@
 			return new cError(cErrorType.division_by_zero);
 		}
 
-		return new cNumber(( cost - salvage ) / life)
+		return new cNumber((cost - salvage) / life)
 
 	};
 
@@ -5133,7 +5152,7 @@
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var res = new cNumber(( 365 * discount ) / ( 360 - ( discount * nDiff ) ));
+		var res = new cNumber((365 * discount) / (360 - (discount * nDiff)));
 
 		res.numFormat = 9;
 		return res;
@@ -5210,7 +5229,7 @@
 
 		discount *= AscCommonExcel.diffDate(d1, d2, AscCommonExcel.DayCountBasis.ActualActual);
 
-		return new cNumber(100 * ( 1 - discount / 360 ));
+		return new cNumber(100 * (1 - discount / 360));
 
 	};
 
@@ -5231,37 +5250,43 @@
 	cTBILLYIELD.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cTBILLYIELD.prototype.argumentsType = [argType.any, argType.any, argType.any];
 	cTBILLYIELD.prototype.Calculate = function (arg) {
-		var settlement = arg[0], maturity = arg[1], pr = arg[2];
+		let settlement = arg[0], maturity = arg[1], pr = arg[2];
 
-		if (settlement instanceof cArea || settlement instanceof cArea3D) {
+		if (settlement.type === cElementType.cellsRange || settlement.type === cElementType.cellsRange3D) {
 			settlement = settlement.cross(arguments[1]);
-		} else if (settlement instanceof cArray) {
+		} else if (settlement.type === cElementType.array) {
 			settlement = settlement.getElementRowCol(0, 0);
 		}
 
-		if (maturity instanceof cArea || maturity instanceof cArea3D) {
+		if (maturity.type === cElementType.cellsRange || maturity.type === cElementType.cellsRange3D) {
 			maturity = maturity.cross(arguments[1]);
-		} else if (maturity instanceof cArray) {
+		} else if (maturity.type === cElementType.array) {
 			maturity = maturity.getElementRowCol(0, 0);
 		}
 
-		if (pr instanceof cArea || pr instanceof cArea3D) {
+		if (pr.type === cElementType.cellsRange || pr.type === cElementType.cellsRange3D) {
 			pr = pr.cross(arguments[1]);
-		} else if (pr instanceof cArray) {
+		} else if (pr.type === cElementType.array) {
 			pr = pr.getElementRowCol(0, 0);
+		}
+
+		if (settlement.type === cElementType.bool || maturity.type === cElementType.bool || pr.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (settlement.type === cElementType.empty || maturity.type === cElementType.empty || pr.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
 		}
 
 		settlement = settlement.tocNumber();
 		maturity = maturity.tocNumber();
 		pr = pr.tocNumber();
 
-		if (settlement instanceof cError) {
+		if (settlement.type === cElementType.error) {
 			return settlement;
 		}
-		if (maturity instanceof cError) {
+		if (maturity.type === cElementType.error) {
 			return maturity;
 		}
-		if (pr instanceof cError) {
+		if (pr.type === cElementType.error) {
 			return pr;
 		}
 
@@ -5274,18 +5299,20 @@
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var d1 = cDate.prototype.getDateFromExcel(settlement), d2 = cDate.prototype.getDateFromExcel(maturity),
-			date1 = d1.getUTCDate(), month1 = d1.getUTCMonth(), year1 = d1.getUTCFullYear(), date2 = d2.getUTCDate(),
-			month2 = d2.getUTCMonth(), year2 = d2.getUTCFullYear();
+		let d1 = cDate.prototype.getDateFromExcel(settlement), d2 = cDate.prototype.getDateFromExcel(maturity),
+			date1 = d1.getUTCDate(), month1 = d1.getUTCMonth(), year1 = d1.getUTCFullYear(),
+			date2 = d2.getUTCDate(), month2 = d2.getUTCMonth(), year2 = d2.getUTCFullYear();
 
-		var nDiff = AscCommonExcel.GetDiffDate360(date1, month1, year1, date2, month2, year2, true);
-		nDiff++;
+		let nDiff = AscCommonExcel.GetDiffDate360(date1, month1, year1, date2, month2, year2, true);
+		if (maturity >= 33) {
+			nDiff++;
+		}
 
 		if (nDiff > 360) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var res = new cNumber(( ( 100 - pr ) / pr) * (360 / nDiff));
+		let res = new cNumber(((100 - pr) / pr) * (360 / nDiff));
 		res.numFormat = 9;
 		return res;
 
@@ -5307,188 +5334,188 @@
 	cVDB.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cVDB.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.number, argType.number,
 		argType.number, argType.logical];
-		cVDB.prototype.Calculate = function (arg) {
-			let cost = arg[0], salvage = arg[1], life = arg[2], startPeriod = arg[3], endPeriod = arg[4], factor,
+	cVDB.prototype.Calculate = function (arg) {
+		let cost = arg[0], salvage = arg[1], life = arg[2], startPeriod = arg[3], endPeriod = arg[4], factor,
 			flag = arg[6] && !(cElementType.empty === arg[6].type) ? arg[6] : new cBool(false);
 
-			// in ms factor = 0 if arg is empty and factor = 2 if undefined
-			if(arg[5] === undefined) {
-				factor = new cNumber(2);
-			} else if(cElementType.empty === arg[5].type) {
-				factor = new cNumber(0);
-			} else {
-				factor = arg[5];
-			}
-	
-			function getVDB(cost, fRest, life, life1, startPeriod, factor) {
-				let res = 0, loopEnd = end = Math.ceil(startPeriod), temp, sln = 0, rest = cost - fRest, sln1 = false, ddb;
-	
-				for (let i = 1; i <= loopEnd; i++) {
-					if (!sln1) {
-	
-						ddb = getDDB(cost, fRest, life, i, factor);
-						sln = rest / (life1 - (i - 1));
-	
-						if (sln > ddb) {
-							temp = sln;
-							sln1 = true;
-						} else {
-							temp = ddb;
-							rest -= ddb;
-						}
-	
-					} else {
+		// in ms factor = 0 if arg is empty and factor = 2 if undefined
+		if (arg[5] === undefined) {
+			factor = new cNumber(2);
+		} else if (cElementType.empty === arg[5].type) {
+			factor = new cNumber(0);
+		} else {
+			factor = arg[5];
+		}
+
+		function getVDB(cost, fRest, life, life1, startPeriod, factor) {
+			let res = 0, loopEnd = end = Math.ceil(startPeriod), temp, sln = 0, rest = cost - fRest, sln1 = false, ddb;
+
+			for (let i = 1; i <= loopEnd; i++) {
+				if (!sln1) {
+
+					ddb = getDDB(cost, fRest, life, i, factor);
+					sln = rest / (life1 - (i - 1));
+
+					if (sln > ddb) {
 						temp = sln;
+						sln1 = true;
+					} else {
+						temp = ddb;
+						rest -= ddb;
 					}
-	
-					if (i == loopEnd) {
-						temp *= ( startPeriod + 1.0 - end );
-					}
-	
-					res += temp;
-				}
-				return res;
-			}
-	
-			if (cElementType.cellsRange === cost.type || cElementType.cellsRange3D === cost.type) {
-				cost = cost.cross(arguments[1]);
-			} else if (cElementType.array === cost.type) {
-				cost = cost.getElementRowCol(0, 0);
-			}
-	
-			if (cElementType.cellsRange === salvage.type || cElementType.cellsRange3D === salvage.type) {
-				salvage = salvage.cross(arguments[1]);
-			} else if (cElementType.array === salvage.type) {
-				salvage = salvage.getElementRowCol(0, 0);
-			}
-	
-			if (cElementType.cellsRange === life.type || cElementType.cellsRange3D === life.type) {
-				life = life.cross(arguments[1]);
-			} else if (cElementType.array === life.type) {
-				life = life.getElementRowCol(0, 0);
-			}
-	
-			if (cElementType.cellsRange === startPeriod.type || cElementType.cellsRange3D === startPeriod.type) {
-				startPeriod = startPeriod.cross(arguments[1]);
-			} else if (cElementType.array === startPeriod.type) {
-				startPeriod = startPeriod.getElementRowCol(0, 0);
-			}
-	
-			if (cElementType.cellsRange === endPeriod.type || cElementType.cellsRange3D === endPeriod.type) {
-				endPeriod = endPeriod.cross(arguments[1]);
-			} else if (cElementType.array === endPeriod.type) {
-				endPeriod = endPeriod.getElementRowCol(0, 0);
-			}
-	
-			if (cElementType.cellsRange === factor.type || cElementType.cellsRange3D === factor.type) {
-				factor = factor.cross(arguments[1]);
-			} else if (cElementType.array === factor.type) {
-				factor = factor.getElementRowCol(0, 0);
-			}
-	
-			if (cElementType.cellsRange === flag.type || cElementType.cellsRange3D === flag.type) {
-				flag = flag.cross(arguments[1]);
-			} else if (cElementType.array === flag.type) {
-				flag = flag.getElementRowCol(0, 0);
-			}
-	
-			cost = cost.tocNumber();
-			salvage = salvage.tocNumber();
-			life = life.tocNumber();
-			startPeriod = startPeriod.tocNumber();
-			endPeriod = endPeriod.tocNumber();
-			factor = factor.tocNumber();
-			flag = flag.tocBool();
-	
-			if (cElementType.error === cost.type) {
-				return cost;
-			}
-			if (cElementType.error === salvage.type) {
-				return salvage;
-			}
-			if (cElementType.error === life.type) {
-				return life;
-			}
-			if (cElementType.error === startPeriod.type) {
-				return startPeriod;
-			}
-			if (cElementType.error === endPeriod.type) {
-				return endPeriod;
-			}
-			if (cElementType.error === factor.type) {
-				return factor;
-			}
-			if (cElementType.error === flag.type) {
-				return flag;
-			}
-			if (flag.type === cElementType.string) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-	
-			cost = cost.getValue();
-			salvage = salvage.getValue();
-			life = life.getValue();
-			startPeriod = startPeriod.getValue();
-			endPeriod = endPeriod.getValue();
-			factor = factor.getValue();
-			flag = flag.toBool();
-	
-			if (life === 0 && startPeriod === 0 && endPeriod === 0) {
-				return new cError(cErrorType.division_by_zero);
-			}
-	
-			if (cost < 0 || salvage < 0 || life < 0 || startPeriod < 0 || endPeriod < 0 || factor < 0 || life < startPeriod || startPeriod > endPeriod ||
-				life < endPeriod) {
-				return new cError(cErrorType.not_numeric);
-			}
-	
-			let start = Math.floor(startPeriod), end = Math.ceil(endPeriod);
-	
-			let res = 0;
 
-			if (cost < salvage) {
-				if (startPeriod >= 1 || flag) {
-					return new cNumber(res);
 				} else {
-					let tempMinus = Math.abs(cost - salvage);
-					res = tempMinus * (endPeriod - startPeriod) > tempMinus ? tempMinus : tempMinus * (endPeriod - startPeriod);
-					return new cNumber(res * -1);
+					temp = sln;
+				}
+
+				if (i == loopEnd) {
+					temp *= (startPeriod + 1.0 - end);
+				}
+
+				res += temp;
+			}
+			return res;
+		}
+
+		if (cElementType.cellsRange === cost.type || cElementType.cellsRange3D === cost.type) {
+			cost = cost.cross(arguments[1]);
+		} else if (cElementType.array === cost.type) {
+			cost = cost.getElementRowCol(0, 0);
+		}
+
+		if (cElementType.cellsRange === salvage.type || cElementType.cellsRange3D === salvage.type) {
+			salvage = salvage.cross(arguments[1]);
+		} else if (cElementType.array === salvage.type) {
+			salvage = salvage.getElementRowCol(0, 0);
+		}
+
+		if (cElementType.cellsRange === life.type || cElementType.cellsRange3D === life.type) {
+			life = life.cross(arguments[1]);
+		} else if (cElementType.array === life.type) {
+			life = life.getElementRowCol(0, 0);
+		}
+
+		if (cElementType.cellsRange === startPeriod.type || cElementType.cellsRange3D === startPeriod.type) {
+			startPeriod = startPeriod.cross(arguments[1]);
+		} else if (cElementType.array === startPeriod.type) {
+			startPeriod = startPeriod.getElementRowCol(0, 0);
+		}
+
+		if (cElementType.cellsRange === endPeriod.type || cElementType.cellsRange3D === endPeriod.type) {
+			endPeriod = endPeriod.cross(arguments[1]);
+		} else if (cElementType.array === endPeriod.type) {
+			endPeriod = endPeriod.getElementRowCol(0, 0);
+		}
+
+		if (cElementType.cellsRange === factor.type || cElementType.cellsRange3D === factor.type) {
+			factor = factor.cross(arguments[1]);
+		} else if (cElementType.array === factor.type) {
+			factor = factor.getElementRowCol(0, 0);
+		}
+
+		if (cElementType.cellsRange === flag.type || cElementType.cellsRange3D === flag.type) {
+			flag = flag.cross(arguments[1]);
+		} else if (cElementType.array === flag.type) {
+			flag = flag.getElementRowCol(0, 0);
+		}
+
+		cost = cost.tocNumber();
+		salvage = salvage.tocNumber();
+		life = life.tocNumber();
+		startPeriod = startPeriod.tocNumber();
+		endPeriod = endPeriod.tocNumber();
+		factor = factor.tocNumber();
+		flag = flag.tocBool();
+
+		if (cElementType.error === cost.type) {
+			return cost;
+		}
+		if (cElementType.error === salvage.type) {
+			return salvage;
+		}
+		if (cElementType.error === life.type) {
+			return life;
+		}
+		if (cElementType.error === startPeriod.type) {
+			return startPeriod;
+		}
+		if (cElementType.error === endPeriod.type) {
+			return endPeriod;
+		}
+		if (cElementType.error === factor.type) {
+			return factor;
+		}
+		if (cElementType.error === flag.type) {
+			return flag;
+		}
+		if (flag.type === cElementType.string) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		cost = cost.getValue();
+		salvage = salvage.getValue();
+		life = life.getValue();
+		startPeriod = startPeriod.getValue();
+		endPeriod = endPeriod.getValue();
+		factor = factor.getValue();
+		flag = flag.toBool();
+
+		if (life === 0 && startPeriod === 0 && endPeriod === 0) {
+			return new cError(cErrorType.division_by_zero);
+		}
+
+		if (cost < 0 || salvage < 0 || life < 0 || startPeriod < 0 || endPeriod < 0 || factor < 0 || life < startPeriod || startPeriod > endPeriod ||
+			life < endPeriod) {
+			return new cError(cErrorType.not_numeric);
+		}
+
+		let start = Math.floor(startPeriod), end = Math.ceil(endPeriod);
+
+		let res = 0;
+
+		if (cost < salvage) {
+			if (startPeriod >= 1 || flag) {
+				return new cNumber(res);
+			} else {
+				let tempMinus = Math.abs(cost - salvage);
+				res = tempMinus * (endPeriod - startPeriod) > tempMinus ? tempMinus : tempMinus * (endPeriod - startPeriod);
+				return new cNumber(res * -1);
+			}
+		}
+
+		if (flag) {
+			for (let i = start + 1; i <= end; i++) {
+				let ddb = getDDB(cost, salvage, life, i, factor);
+
+				if (i == start + 1) {
+					ddb *= (Math.min(endPeriod, start + 1) - startPeriod);
+				} else if (i == end) {
+					ddb *= (endPeriod + 1 - end);
+				}
+
+				res += ddb;
+			}
+		} else {
+
+			let life1 = life;
+
+			if (!Math.approxEqual(startPeriod, Math.floor(startPeriod))) {
+				if (factor > 1) {
+					if (startPeriod > life / 2 || Math.approxEqual(startPeriod, life / 2)) {
+						let fPart = startPeriod - life / 2;
+						startPeriod = life / 2;
+						endPeriod -= fPart;
+						life1 += 1;
+					}
 				}
 			}
 
-			if (flag) {
-				for (let i = start + 1; i <= end; i++) {
-					let ddb = getDDB(cost, salvage, life, i, factor);
-	
-					if (i == start + 1) {
-						ddb *= ( Math.min(endPeriod, start + 1) - startPeriod );
-					} else if (i == end) {
-						ddb *= ( endPeriod + 1 - end );
-					}
-	
-					res += ddb;
-				}
-			} else {
-	
-				let life1 = life;
-	
-				if (!Math.approxEqual(startPeriod, Math.floor(startPeriod))) {
-					if (factor > 1) {
-						if (startPeriod > life / 2 || Math.approxEqual(startPeriod, life / 2)) {
-							let fPart = startPeriod - life / 2;
-							startPeriod = life / 2;
-							endPeriod -= fPart;
-							life1 += 1;
-						}
-					}
-				}
-	
-				cost -= getVDB(cost, salvage, life, life1, startPeriod, factor);
-				res = getVDB(cost, salvage, life, life - startPeriod, endPeriod - startPeriod, factor);
-			}
-	
-			return new cNumber(res);
-		};
+			cost -= getVDB(cost, salvage, life, life1, startPeriod, factor);
+			res = getVDB(cost, salvage, life, life - startPeriod, endPeriod - startPeriod, factor);
+		}
+
+		return new cNumber(res);
+	};
 
 	/**
 	 * @constructor
@@ -5504,11 +5531,11 @@
 	cXIRR.prototype.argumentsMin = 2;
 	cXIRR.prototype.argumentsMax = 3;
 	cXIRR.prototype.numFormat = AscCommonExcel.cNumFormatNone;
-	cXIRR.prototype.arrayIndexes = {0:1, 1: 1};
+	cXIRR.prototype.arrayIndexes = {0: 1, 1: 1};
 	cXIRR.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cXIRR.prototype.argumentsType = [argType.any, argType.any, argType.any];
 	cXIRR.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : new cNumber(0.1);
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : new cNumber(0.1);
 
 		function xirrFunction(values, dates, rate) {
 			var D_0 = dates[0], r = rate + 1, res = values[0];
@@ -5529,8 +5556,13 @@
 
 		function xirr2(_values, _dates, _rate) {
 
-			var arr0 = _values[0], arr1 = _dates[0];
-
+			
+			if (_values.length === 0 || _dates.length === 0) {
+				return new cError(cErrorType.not_numeric); 
+			}
+			
+			let arr0 = _values[0], arr1 = _dates[0];
+			
 			if (arr0 instanceof cError) {
 				return arr0;
 			}
@@ -5581,8 +5613,8 @@
 
 			while (eps > g_Eps && nMC < nIM) {
 				xN = res - xirrFunction(_values, _dates, res) /
-					( (xirrFunction(_values, _dates, res + g_Eps) - xirrFunction(_values, _dates, res - g_Eps)) /
-					g_Eps2 );
+					((xirrFunction(_values, _dates, res + g_Eps) - xirrFunction(_values, _dates, res - g_Eps)) /
+						g_Eps2);
 				nMC++;
 				eps = Math.abs(xN - res);
 				res = xN;
@@ -5643,9 +5675,26 @@
 
 		}
 
-		var _dates = [], _values = [];
+		if (arg0.type === cElementType.error) {
+			return arg0;
+		}
+		if (arg1.type === cElementType.error) {
+			return arg1;
+		}
+		if (arg2.type === cElementType.error) {
+			return arg2;
+		}
 
-		if (arg0 instanceof cArea) {
+		if (arg0.type === cElementType.empty || arg1.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
+		}
+
+		let _dates = [], _values = [];
+
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
+			if (arg0.type === cElementType.cellsRange3D && !arg0.isSingleSheet()) {
+				return new cError(cErrorType.wrong_value_type);
+			}
 			arg0.foreach2(function (c) {
 				if (c instanceof cNumber) {
 					_values.push(c);
@@ -5654,8 +5703,8 @@
 				} else {
 					_values.push(new cError(cErrorType.wrong_value_type));
 				}
-			});
-		} else if (arg0 instanceof cArray) {
+			})
+		} else if (arg0.type === cElementType.array) {
 			arg0.foreach(function (c) {
 				if (c instanceof cNumber) {
 					_values.push(c);
@@ -5665,21 +5714,17 @@
 					_values.push(new cError(cErrorType.wrong_value_type));
 				}
 			})
-		} else if (arg0 instanceof cArea3D) {
-			if (arg0.isSingleSheet()) {
-				_values = arg0.getMatrix()[0];
-			} else {
-				return new cError(cErrorType.wrong_value_type);
-			}
 		} else {
-			if (!(arg0 instanceof cNumber)) {
+			if (!(arg0.type === cElementType.number)) {
 				return new cError(cErrorType.wrong_value_type)
-			} else {
-				_values[0] = arg0;
 			}
+			_values[0] = arg0;
 		}
 
-		if (arg1 instanceof cArea) {
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
+			if (arg1.type === cElementType.cellsRange3D && !arg1.isSingleSheet()) {
+				return new cError(cErrorType.wrong_value_type);
+			}
 			arg1.foreach2(function (c) {
 				if (c instanceof cNumber) {
 					_dates.push(c);
@@ -5688,8 +5733,8 @@
 				} else {
 					_dates.push(new cError(cErrorType.wrong_value_type));
 				}
-			});
-		} else if (arg1 instanceof cArray) {
+			})
+		} else if (arg1.type === cElementType.array) {
 			arg1.foreach(function (c) {
 				if (c instanceof cNumber) {
 					_dates.push(c);
@@ -5699,18 +5744,11 @@
 					_dates.push(new cError(cErrorType.wrong_value_type));
 				}
 			})
-		} else if (arg1 instanceof cArea3D) {
-			if (arg1.isSingleSheet()) {
-				_dates = arg1.getMatrix()[0];
-			} else {
-				return new cError(cErrorType.wrong_value_type);
-			}
 		} else {
-			if (!(arg1 instanceof cNumber)) {
+			if (!(arg1.type === cElementType.number)) {
 				return new cError(cErrorType.wrong_value_type)
-			} else {
-				_dates[0] = arg1;
 			}
+			_dates[0] = arg1;
 		}
 
 		if (arg2 instanceof AscCommonExcel.cRef || arg2 instanceof AscCommonExcel.cRef3D) {
@@ -5736,7 +5774,7 @@
 			return arg2;
 		}
 
-		var res = xirr2(_values, _dates, arg2);
+		let res = xirr2(_values, _dates, arg2);
 		res.numFormat = 9;
 		return res;
 
@@ -5770,7 +5808,7 @@
 				return new cError(cErrorType.not_numeric);
 			}
 
-			if (!( dateArray[0] instanceof cNumber ) || !( valueArray[0] instanceof cNumber )) {
+			if (!(dateArray[0] instanceof cNumber) || !(valueArray[0] instanceof cNumber)) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 
@@ -5783,7 +5821,7 @@
 					return new cError(cErrorType.not_numeric);
 				}
 
-				res += vaTmp.getValue() / ( Math.pow(r, ( Math.floor(daTmp.getValue()) - d1 ) / 365) );
+				res += vaTmp.getValue() / (Math.pow(r, (Math.floor(daTmp.getValue()) - d1) / 365));
 			}
 
 			return new cNumber(res);
@@ -5976,7 +6014,7 @@
 
 		if (settlement < startRangeCurrentDateSystem || maturity < startRangeCurrentDateSystem ||
 			settlement >= maturity || basis < 0 || basis > 4 ||
-			( frequency != 1 && frequency != 2 && frequency != 4 ) || rate < 0 || pr <= 0 || redemption <= 0) {
+			(frequency != 1 && frequency != 2 && frequency != 4) || rate < 0 || pr <= 0 || redemption <= 0) {
 			return new cError(cErrorType.not_numeric);
 		}
 
@@ -6072,7 +6110,7 @@
 
 		var settl = cDate.prototype.getDateFromExcel(settlement), matur = cDate.prototype.getDateFromExcel(maturity);
 
-		var fRet = ( redemption / pr ) - 1;
+		var fRet = (redemption / pr) - 1;
 		fRet /= AscCommonExcel.yearFrac(settl, matur, basis);
 
 		var res = new cNumber(fRet);

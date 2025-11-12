@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -75,9 +75,9 @@ CHdrFtrController.prototype.AddSignatureLine = function(oSignatureDrawing)
 {
 	this.HdrFtr.AddSignatureLine(oSignatureDrawing);
 };
-CHdrFtrController.prototype.AddInlineImage = function(nW, nH, oImage, oChart, bFlow)
+CHdrFtrController.prototype.AddInlineImage = function(nW, nH, oImage, oGraphicObject, bFlow)
 {
-	this.HdrFtr.AddInlineImage(nW, nH, oImage, oChart, bFlow);
+	this.HdrFtr.AddInlineImage(nW, nH, oImage, oGraphicObject, bFlow);
 };
 CHdrFtrController.prototype.AddImages = function(aImages)
 {
@@ -91,9 +91,33 @@ CHdrFtrController.prototype.AddTextArt = function(nStyle)
 {
 	this.HdrFtr.AddTextArt(nStyle);
 };
+CHdrFtrController.prototype.LoadChartData = function(bNeedRecalculate)
+{
+	this.HdrFtr.LoadChartData(bNeedRecalculate);
+};
 CHdrFtrController.prototype.EditChart = function(Chart)
 {
 	this.HdrFtr.EditChart(Chart);
+};
+CHdrFtrController.prototype.UpdateChart = function(Chart)
+{
+	this.HdrFtr.UpdateChart(Chart);
+};
+CHdrFtrController.prototype.OpenChartEditor = function()
+{
+	this.HdrFtr.OpenChartEditor();
+};
+CHdrFtrController.prototype.ApplyChartSettings = function(oChartSettings)
+{
+	return this.HdrFtr.ApplyChartSettings(oChartSettings);
+};
+CHdrFtrController.prototype.GetChartSettings = function()
+{
+	return this.HdrFtr.GetChartSettings();
+};
+CHdrFtrController.prototype.OpenOleEditor = function()
+{
+	this.HdrFtr.OpenOleEditor();
 };
 CHdrFtrController.prototype.AddInlineTable = function(nCols, nRows, nMode)
 {
@@ -565,4 +589,12 @@ CHdrFtrController.prototype.IsSelectionLocked = function(CheckType)
 CHdrFtrController.prototype.CollectSelectedReviewChanges = function(oTrackManager)
 {
 	this.HdrFtr.CollectSelectedReviewChanges(oTrackManager);
+};
+CHdrFtrController.prototype.GetCurrentTopDocContent = function()
+{
+	let curHdrFtr = this.HdrFtr.Get_CurHdrFtr();
+	if (curHdrFtr)
+		return curHdrFtr.GetContent();
+	
+	return this.LogicDocument;
 };

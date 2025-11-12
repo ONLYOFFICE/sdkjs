@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -88,12 +88,29 @@
 
     AscFormat.getAnimPresetsScript = getAnimPresetsScript;
 
-
     function CBaseAnimObject() {
         CBaseFormatObject.call(this);
     }
 
     InitClass(CBaseAnimObject, CBaseFormatObject, AscDFH.historyitem_type_Unknown);
+	CBaseAnimObject.prototype.getTargetObjectId = function () {
+		if (this.cBhvr) {
+			return this.cBhvr.getTargetObjectId();
+		}
+		if (this.tgtEl) {
+			return this.tgtEl.getSpId();
+		}
+		return null;
+	};
+	CBaseAnimObject.prototype.changeTargetObjectId = function (newId) {
+		if (this.cBhvr) {
+			return this.cBhvr.changeTargetObjectId(newId);
+		}
+		if (this.tgtEl) {
+			return this.tgtEl.changeTargetObjectId(newId);
+		}
+		return null;
+	};
     CBaseAnimObject.prototype.Refresh_RecalcData2 = function () {
         if (this.parent && this.parent.Refresh_RecalcData2) {
             this.parent.Refresh_RecalcData2();
@@ -282,6 +299,10 @@
     }
 
     InitClass(CTimeNodeBase, CBaseAnimObject, AscDFH.historyitem_type_Unknown);
+		CTimeNodeBase.prototype.isNodePlaceholder = function () {
+			const oAttributes = this.getAttributesObject();
+			return oAttributes && oAttributes.isNodePlaceholder();
+		};
     CTimeNodeBase.prototype.isTimingContainer = function () {
         return this.isPar() || this.isSeq() || this.isExcl();
     };
@@ -296,6 +317,14 @@
     CTimeNodeBase.prototype.isExcl = function () {
         var nType = this.getObjectType();
         return (nType === AscDFH.historyitem_type_Excl);
+    };
+    CTimeNodeBase.prototype.isVideo = function () {
+        var nType = this.getObjectType();
+        return (nType === AscDFH.historyitem_type_Video);
+    };
+    CTimeNodeBase.prototype.isAudio = function () {
+        var nType = this.getObjectType();
+        return (nType === AscDFH.historyitem_type_Audio);
     };
     CTimeNodeBase.prototype.isTimeNode = function () {
         return true;
@@ -375,6 +404,123 @@
     CTimeNodeBase.prototype.getChildNode = function (nIdx) {
         return this.getChildrenTimeNodes()[nIdx] || null;
     };
+	CTimeNodeBase.prototype.isForceDrawingAnimation = function () {
+		return false;
+	};
+	CTimeNodeBase.prototype.isForceTextAnimation = function () {
+		return false;
+	};
+	CTimeNodeBase.prototype.isSkipMainDrawing = function() {
+		if (!this.isTimingContainer()) {
+			const oDrawing = this.getTargetObject();
+			const oTargetTextOptions = this.getTargetTextOptions();
+			if (oTargetTextOptions) {
+				return true;
+			}  else if (this.isForceTextAnimation()) {
+				return true;
+			} else if (this.isCanIterate()) {
+				return !(oDrawing.brush && oDrawing.brush.isVisible() || oDrawing.pen && oDrawing.pen.Fill && oDrawing.pen.Fill.isVisible() || oDrawing.blipFill && oDrawing.blipFill.RasterImageId);
+			}
+		}
+		return false;
+	};
+	CTimeNodeBase.prototype.getObjectOptionsHash = function() {
+		const sDrawingId = this.getTargetObjectId();
+		if (!sDrawingId) {
+			return null;
+		}
+		const arrHash = [];
+		arrHash.push(sDrawingId);
+		arrHash.push(this.getIterationType());
+		arrHash.push(Number(this.isSkipMainDrawing()));
+		arrHash.push(Number(this.isForceTextAnimation()));
+		arrHash.push(Number(this.isForceDrawingAnimation()));
+		const oTargetEl = this.getTargetTextOptions();
+		if (oTargetEl) {
+			if (oTargetEl.pRg) {
+				arrHash.push(0, oTargetEl.pRg.st, oTargetEl.pRg.end);
+			} else if (oTargetEl.charRg) {
+				arrHash.push(1, oTargetEl.charRg.st, oTargetEl.charRg.end);
+			}
+		}
+		return arrHash.join(';');
+	};
+	CTimeNodeBase.prototype.getDrawingObjects = function (oDrawer) {
+		const sHash = this.getObjectOptionsHash();
+		if (!sHash) {
+			return [];
+		}
+		if (oDrawer.drawingObjectsCache[sHash]) {
+			return oDrawer.drawingObjectsCache[sHash];
+		}
+
+		const oDrawing = this.getTargetObject();
+		if (!oDrawing) {
+			return [];
+		}
+		const sId = oDrawing.GetId();
+		const arrDrawingObjects = [];
+		if (!this.isSkipMainDrawing()) {
+			arrDrawingObjects.push(oDrawing);
+		}
+
+		const oDocStructure = oDrawer.getDrawingTextCache(sId);
+		if (!oDocStructure) {
+			oDrawer.drawingObjectsCache[sHash] = arrDrawingObjects;
+			return arrDrawingObjects;
+		}
+		const oTargetTextOptions = this.getTargetTextOptions();
+		const nIterationType = this.getIterationType();
+		if (oTargetTextOptions) {
+			if (oTargetTextOptions.pRg) {
+				const nStartIndex = Math.max(0, Math.min(oTargetTextOptions.pRg.st, oDocStructure.m_aContent.length - 1));
+				const nEndIndex = Math.min(oTargetTextOptions.pRg.end, oDocStructure.m_aContent.length - 1);
+				for (let i = nStartIndex; i <= nEndIndex; i += 1) {
+					const oParagraph = oDocStructure.m_aContent[i];
+					const arrObjects = oParagraph.getParagraphWrappersByIterationType(nIterationType);
+					arrDrawingObjects.push.apply(arrDrawingObjects, arrObjects);
+				}
+			} else if (oTargetTextOptions.charRg) {
+				const oDocContent = oDrawing.getDocContent();
+				const nContentLength = oDocContent ? oDocContent.getCharContentLength() : 0;
+				const nStartIndex = Math.max(Math.min(oTargetTextOptions.charRg.st, nContentLength - 1), 0);
+				const nEndIndex = Math.min(oTargetTextOptions.charRg.end - 1, nContentLength - 1);
+
+				let oCachedWrapper = null;
+				if (typeof nIterationType !== 'number') {
+					oCachedWrapper = new AscCommonSlide.CWrapperDrawer([]);
+					arrDrawingObjects.push(oCachedWrapper);
+				}
+				for (let i = 0; i < oDocStructure.m_aContent.length; i += 1) {
+					const oParagraph = oDocStructure.m_aContent[i];
+					const bBreak = oParagraph.getCharWrappersByIterationType(nIterationType, arrDrawingObjects, oCachedWrapper, nStartIndex, nEndIndex);
+					if (bBreak) {
+						break;
+					}
+				}
+			}
+		} else if (!oDrawer.skipDrawTextIteration[sId]) {
+				if (this.isCanIterate() && !this.isForceDrawingAnimation()) {
+					for (let i = 0; i < oDocStructure.m_aContent.length; i += 1) {
+						const oParagraph = oDocStructure.m_aContent[i];
+						const arrObjects = oParagraph.getParagraphWrappersByIterationType(nIterationType);
+						arrDrawingObjects.push.apply(arrDrawingObjects, arrObjects);
+					}
+				} else if (this.isForceTextAnimation()) {
+					const arrTempDrawingObjects = [];
+					for (let i = 0; i < oDocStructure.m_aContent.length; i += 1) {
+						const oParagraph = oDocStructure.m_aContent[i];
+						const arrObjects = oParagraph.getParagraphWrappersByIterationType();
+						arrTempDrawingObjects.push.apply(arrTempDrawingObjects, arrObjects);
+					}
+					const oWrapperDrawer = new AscCommonSlide.CWrapperDrawer(arrTempDrawingObjects);
+					arrDrawingObjects.push(oWrapperDrawer);
+				}
+		}
+		oDrawer.drawingObjectsCache[sHash] = arrDrawingObjects;
+		return arrDrawingObjects;
+	};
+
     CTimeNodeBase.prototype.scheduleStart = function (oPlayer) {
         oPlayer.scheduleEvent(new CAnimEvent(this.getActivateCallback(oPlayer), this.getStartTrigger(oPlayer), this));
     };
@@ -508,7 +654,7 @@
                 }
                 if (oPreviousTimeNode) {
                     oTrigger = this.createEffectTrigger(function () {
-                        return oPreviousTimeNode.isActive() || oPreviousTimeNode.isAtEnd();
+											return oPreviousTimeNode.isActive() || oPreviousTimeNode.isAtEnd();
                     }, oPlayer);
                 } else {
                     oTrigger = oAttributes.stCondLst.createComplexTrigger(oPlayer);
@@ -613,9 +759,8 @@
         }
         this.calculateParams(oPlayer);
         this.setState(TIME_NODE_STATE_ACTIVE);
-        var oParentNode = this.getParentTimeNode();
-        if (oParentNode) {
-            oParentNode.onActivated(this, oPlayer);
+        if (oParent) {
+            oParent.onActivated(this, oPlayer);
         }
         this.startSimpleDuration(0, oPlayer);
         this.scheduleEnd(oPlayer);
@@ -626,11 +771,68 @@
         this.activateChildrenCallback(oPlayer);
     };
     CTimeNodeBase.prototype.calculateParams = function (oPlayer) {
-        this.startTick = oPlayer.getElapsedTicks();
         this.simpleDuration = this.calculateSimpleDuration();
         this.repeatCount = this.calculateRepeatCount();
+			this.initStartTicks(oPlayer);
         this.privateCalculateParams()
     };
+	CTimeNodeBase.prototype.getMaxTick = function () {
+		let nMaxTick = 0;
+		if (this.startTick) {
+			for (let sId in this.startTick) {
+				const nTick = this.startTick[sId];
+				if (nTick > nMaxTick) {
+					nMaxTick = nTick;
+				}
+			}
+		}
+		return nMaxTick;
+	};
+	CTimeNodeBase.prototype.initStartTicks = function(oPlayer) {
+		const startTick = oPlayer.getElapsedTicks();
+		this.startTick = {};
+		this.startTick[this.GetId()] = startTick;
+		const arrDrawings = this.getDrawingObjects(oPlayer.animationDrawer);
+		if (!arrDrawings.length) {
+			return;
+		}
+		const oThis = this;
+		const oFirstDrawing = arrDrawings[0];
+		oFirstDrawing.forEachAnimationDrawing(function(oAnimationDrawing) {
+			oThis.startTick[oAnimationDrawing.GetId()] = startTick;
+		});
+
+		if (arrDrawings.length <= 1) {
+			return;
+		}
+		const oParent = this.getParentTimeNode();
+		const nIterationDelta = this.getIterationDelta();
+		const oAttr = oParent.getAttributesObject();
+		const nEffectDuration = oAttr && oAttr.getEffectDuration() || 0;
+		let nIterationTick;
+		let startIndex;
+		if (this.isSkipMainDrawing()) {
+			nIterationTick = startTick;
+			startIndex = 1;
+		} else {
+			const nDelay = oAttr && oAttr.getDelay() || 0;
+			nIterationTick = startTick + nEffectDuration + nDelay;
+			const oFirstIterationObject = arrDrawings[1];
+			oFirstIterationObject.forEachAnimationDrawing(function(oAnimationDrawing) {
+				oThis.startTick[oAnimationDrawing.GetId()] = nIterationTick;
+			});
+
+			startIndex = 2;
+		}
+		const nCalcIterationDelta = nEffectDuration * nIterationDelta;
+		for (let i = startIndex; i < arrDrawings.length; i++) {
+			nIterationTick = nIterationTick + nCalcIterationDelta;
+			const oDrawing = arrDrawings[i];
+			oDrawing.forEachAnimationDrawing(function(oAnimationDrawing) {
+				oThis.startTick[oAnimationDrawing.GetId()] = nIterationTick;
+			});
+		}
+	};
     CTimeNodeBase.prototype.privateCalculateParams = function (oPlayer) {
     };
     CTimeNodeBase.prototype.scheduleEnd = function (oPlayer) {
@@ -643,6 +845,14 @@
             ));
         }
     };
+	CTimeNodeBase.prototype.getIterationType = function () {
+		const oParentTimeNode = this.getParentTimeNode();
+		const oParentAttr = oParentTimeNode && oParentTimeNode.getAttributesObject();
+		if (oParentAttr) {
+			return oParentAttr.getIterationType();
+		}
+		return null;
+	};
     CTimeNodeBase.prototype.getEndTrigger = function (oPlayer) {
         if (!this.isTimingContainer() && !this.getTargetObjectId()) {
             return this.getDefaultTrigger(oPlayer);
@@ -650,7 +860,7 @@
         if (this.simpleDuration.isDefinite() && this.repeatCount.isDefinite()) {
             return this.getTimeTrigger(
                 oPlayer,
-                this.startTick + this.simpleDuration.getVal() * this.repeatCount.getVal() / 1000
+                this.getMaxTick() + this.simpleDuration.getVal() * this.repeatCount.getVal() / 1000
             );
         } else {
             if (this.isTimingContainer()) {
@@ -659,17 +869,31 @@
                     var oTrigger = new CAnimComplexTrigger();
                     var aChildren = this.getChildrenTimeNodes();
                     var oThis = this;
-                    oTrigger.addTrigger(function () {
-                        for (var nChild = 0; nChild < aChildren.length; ++nChild) {
-                            if (!aChildren[nChild].isAtEnd()) {
+
+                    if(oPlayer instanceof CDemoAnimPlayer) {
+                        oTrigger.addTrigger(function () {
+                            for (var nChild = 0; nChild < aChildren.length; ++nChild) {
+                                if (!aChildren[nChild].isAtEnd() && (!aChildren[nChild].repeatCount || !aChildren[nChild].repeatCount.isIndefinite())) {
+                                    return false;
+                                }
+                            }
+                            return true;
+                        });
+                    }
+                    else {
+                        oTrigger.addTrigger(function () {
+                            for (var nChild = 0; nChild < aChildren.length; ++nChild) {
+                                if (!aChildren[nChild].isAtEnd()) {
+                                    return false;
+                                }
+                            }
+                            if (oThis.checkRepeatCondition(oPlayer)) {
                                 return false;
                             }
-                        }
-                        if (oThis.checkRepeatCondition(oPlayer)) {
-                            return false;
-                        }
-                        return true;
-                    });
+                            return true;
+                        });
+                    }
+
                     if (oEndSync) {
                         oEndSync.fillTrigger(oPlayer, oTrigger);
                     }
@@ -773,8 +997,6 @@
     };
     CTimeNodeBase.prototype.setState = function (nState) {
         this.state = nState;
-
-        //this.logState("SET STATE:");
     };
     CTimeNodeBase.prototype.logState = function (sPrefix) {
         var oAttr = this.getAttributesObject();
@@ -841,6 +1063,12 @@
         }
         return this.repeatCount.isSpecified() && this.simpleDurationIdx + 1 < this.repeatCount.getVal() / 1000;
     };
+
+	CTimeNodeBase.prototype.isCanIterate = function () {
+		const oParent = this.getParentTimeNode();
+		const oAttributeMap = oParent && oParent.getAttributesObject();
+		return !!(oAttributeMap && oAttributeMap.isAnimEffect() && oAttributeMap.iterate);
+	};
     CTimeNodeBase.prototype.onFinished = function (oChild, oPlayer) {
         if (!this.isActive()) {
             return;
@@ -904,6 +1132,9 @@
         return this.state === TIME_NODE_STATE_FINISHED;
     };
     CTimeNodeBase.prototype.isDrawable = function () {
+        if(this.isAtEnd() && this.getRewind()) {
+            return false;
+        }
         return this.isActive() || this.isFrozen() || (this.isTimingContainer() || this.isFinished());
     };
     CTimeNodeBase.prototype.isAtEnd = function () {
@@ -947,6 +1178,9 @@
     CTimeNodeBase.prototype.isInteractiveSeq = function (sSpId) {
         return sSpId === this.getSpClickInteractiveSeq();
     };
+    CTimeNodeBase.prototype.isInteractiveSeqBool = function () {
+        return this.getNodeType() === AscFormat.NODE_TYPE_INTERACTIVESEQ;
+    };
 
     CTimeNodeBase.prototype.isPartOfInteractiveSeq = function () {
         var aHierarchy = this.getHierarchy();
@@ -955,8 +1189,14 @@
         }
         return null;
     };
+	CTimeNodeBase.prototype.isInterractiveSeq = function () {
+		if (this.getObectType() !== AscDFH.historyitem_type_Seq) {
+			return false;
+		}
+		return this.getNodeType() === AscFormat.NODE_TYPE_INTERACTIVESEQ;
+	};
     CTimeNodeBase.prototype.getSpClickInteractiveSeq = function () {
-        if (this.getNodeType() === AscFormat.NODE_TYPE_INTERACTIVESEQ) {
+        if (this.isInterractiveSeq()) {
             return this.getSpClickAdvance();
         }
         return null;
@@ -970,27 +1210,60 @@
     CTimeNodeBase.prototype.isAfterEffect = function () {
         return this.isAnimEffect() && this.getNodeType() === AscFormat.NODE_TYPE_AFTEREFFECT;
     };
-    CTimeNodeBase.prototype.traverseTimeNodes = function (fCallback) {
-        fCallback(this);
-        var aChildren = this.getChildrenTimeNodes();
-        for (var nChild = 0; nChild < aChildren.length; ++nChild) {
-            aChildren[nChild].traverseTimeNodes(fCallback);
+	CTimeNodeBase.prototype.isInstantEffect = function () {
+		return this.cTn.presetID === 1 && this.cTn.presetClass === AscFormat.PRESET_CLASS_ENTR ||
+			this.cTn.presetID === 1 && this.cTn.presetClass === AscFormat.PRESET_CLASS_EXIT
+	}
+	CTimeNodeBase.prototype.isUntilEffect = function () {
+		return false;
+	}
+
+    CTimeNodeBase.prototype.getFullDelay = function() {
+        let nDelay = 0;
+        let aHierarchy = this.getHierarchy();
+        for(let nNode = 3; nNode < aHierarchy.length; ++nNode) {
+            nDelay += aHierarchy[nNode].getDelay();
         }
+        return nDelay;
+    };
+	CTimeNodeBase.prototype.getBaseTime = function () {
+		if (!this.isAnimEffect()) { return 0; }
+
+        let oParentNode = this.getParentTimeNode();
+        if(!oParentNode) {
+            return 0;
+        }
+        return oParentNode.getDelay();
+	}
+    CTimeNodeBase.prototype.traverseTimeNodes = function (fCallback) {
+        if(fCallback(this)) {
+            return true;
+        }
+        let aChildren = this.getChildrenTimeNodes();
+        for (let nChild = 0; nChild < aChildren.length; ++nChild) {
+            if(aChildren[nChild].traverseTimeNodes(fCallback)) {
+                return true;
+            }
+        }
+        return false;
     };
     CTimeNodeBase.prototype.traverseDrawable = function (oPlayer) {
         if (!this.isDrawable()) {
             return;
         }
-        if (this.isTimingContainer()) {
+        if (this.isTimingContainer() && !this.isNodePlaceholder()) {
             var aChildren = this.getChildrenTimeNodes();
             for (var nChild = 0; nChild < aChildren.length; ++nChild) {
                 aChildren[nChild].traverseDrawable(oPlayer);
             }
         } else {
-            var sTargertId = this.getTargetObjectId();
-            if (sTargertId) {
-                oPlayer.addAnimationToDraw(sTargertId, this);
-            }
+					const sTargetId = this.getTargetObjectId();
+          if (sTargetId) {
+						const arrDrawings = this.getDrawingObjects(oPlayer.animationDrawer);
+						if (arrDrawings.length) {
+							oPlayer.addAnimationToDraw(sTargetId, this, arrDrawings);
+						}
+          }
         }
     };
     CTimeNodeBase.prototype.getTimeNodeById = function (id) {
@@ -1009,16 +1282,19 @@
         }
         return null;
     };
-    CTimeNodeBase.prototype.getTargetObjectId = function () {
-        if (this.cBhvr) {
-            return this.cBhvr.getTargetObjectId();
-        }
-        return null;
+		CTimeNodeBase.prototype.getTargetTextOptions = function () {
+			if (this.cBhvr) {
+				return this.cBhvr.getTargetTextOptions();
+			}
+			if (this.tgtEl) {
+				return this.tgtEl.getTargetTextOptions();
+			}
+			return null;
+		}
+    CTimeNodeBase.prototype.getTargetObject = function (sDrawingId) {
+        return AscCommon.g_oTableId.Get_ById(sDrawingId || this.getTargetObjectId());
     };
-    CTimeNodeBase.prototype.getTargetObject = function () {
-        return AscCommon.g_oTableId.Get_ById(this.getTargetObjectId());
-    };
-    CTimeNodeBase.prototype.calculateAttributes = function (nElapsedTime, oAttributes) {
+    CTimeNodeBase.prototype.calculateAttributes = function (nElapsedTime, oAttributes, sDrawingId, nDrawingIteration) {
     };
     CTimeNodeBase.prototype.setAttributeValue = function (oAttributes, sName, value) {
         if (AscFormat.isRealNumber(oAttributes[sName])) {
@@ -1028,79 +1304,85 @@
         }
     };
     CTimeNodeBase.prototype.getRewind = function () {
-        var oParentTimeNode = this.getParentTimeNode();
-        if (oParentTimeNode) {
-            return oParentTimeNode.getRewind();
-        }
         return false;
     };
-    CTimeNodeBase.prototype.getRelativeTime = function (nElapsedTime) {
-        var oAttr = this.getAttributesObject();
-        var oParentTimeNode = this.getParentTimeNode();
-        var oParentAttr = null;
-        if (oParentTimeNode) {
-            oParentAttr = oParentTimeNode.getAttributesObject();
-        }
-        var bAutoRev = oAttr.autoRev || (oParentAttr && oParentAttr.autoRev);
-        var sTmFilter = oAttr.tmFilter;
-        var fRelTime = 0.0;
-        if (this.isFrozen() || this.isFinished()) {
-            if (this.getRewind()) {
-                fRelTime = 0.0;
-            } else {
-                if (bAutoRev) {
-                    fRelTime = 0.0;
-                } else {
-                    fRelTime = 1.0;
-                }
-            }
-        } else {
-            var fSimpleDur = this.simpleDuration.getVal();
-            fRelTime = (nElapsedTime - this.startTick) / fSimpleDur;
-            if (bAutoRev) {
-                if (fRelTime <= 0.5) {
-                    fRelTime *= 2;
-                } else {
-                    fRelTime = (1 - fRelTime) * 2;
-                }
-            }
-        }
-        if (typeof sTmFilter === "string" && sTmFilter.length > 0) {
-            var aPairs = sTmFilter.split(";");
-            var aNumPairs = [];
-            for (var nPair = 0; nPair < aPairs.length; ++nPair) {
-                var aPair = aPairs[nPair].split(",");
-                if (aPair.length !== 2) {
-                    return fRelTime;
-                }
-                var fNum1 = parseFloat(aPair[0]);
-                if (!AscFormat.isRealNumber(fNum1)) {
-                    return fRelTime;
-                }
-                var fNum2 = parseFloat(aPair[1]);
-                if (!AscFormat.isRealNumber(fNum2)) {
-                    return fRelTime;
-                }
-                if (AscFormat.fApproxEqual(fRelTime, fNum1)) {
-                    return fNum2;
-                }
-                if (fRelTime <= fNum1) {
-                    if (aNumPairs.length > 0) {
-                        var aPrevPair = aNumPairs[aNumPairs.length - 1];
-                        return aPrevPair[1] + (fRelTime - aPrevPair[0]) * ((fNum2 - aPrevPair[1]) / (fNum1 - aPrevPair[0]));
-                    } else {
-                        return fRelTime;
-                    }
-                } else {
-                    aNumPairs.push([fNum1, fNum2]);
-                }
-            }
-        }
-        if (oAttr.spd !== null && oAttr.spd < 0) {
-            fRelTime = 1 - fRelTime;
-        }
-        return fRelTime;
-    };
+	CTimeNodeBase.prototype.getIterationDelta = function () {
+			const oParentTimeNode = this.getParentTimeNode();
+			const oParentAttr = oParentTimeNode && oParentTimeNode.getAttributesObject();
+			if (oParentAttr) {
+				return oParentAttr.getIterationDelta();
+			}
+
+		return null;
+	};
+	CTimeNodeBase.prototype.getRelativeTime = function (nElapsedTime, sDrawingId) {
+		var oAttr = this.getAttributesObject();
+		var oParentTimeNode = this.getParentTimeNode();
+		var oParentAttr = null;
+		if (oParentTimeNode) {
+			oParentAttr = oParentTimeNode.getAttributesObject();
+		}
+		var bAutoRev = oAttr.autoRev || (oParentAttr && oParentAttr.autoRev);
+		var sTmFilter = oAttr.tmFilter;
+		var fRelTime = 0.0;
+		if (this.isFrozen() || this.isFinished()) {
+			if (this.getRewind()) {
+				fRelTime = 0.0;
+			} else {
+				if (bAutoRev) {
+					fRelTime = 0.0;
+				} else {
+					fRelTime = 1.0;
+				}
+			}
+		} else {
+			var fSimpleDur = this.simpleDuration.getVal();
+			fRelTime = (nElapsedTime - this.startTick[sDrawingId]) / fSimpleDur;
+			fRelTime = Math.min(1, Math.max(fRelTime, 0));
+			if (bAutoRev) {
+				if (fRelTime <= 0.5) {
+					fRelTime *= 2;
+				} else {
+					fRelTime = (1 - fRelTime) * 2;
+				}
+			}
+		}
+		if (typeof sTmFilter === "string" && sTmFilter.length > 0) {
+			var aPairs = sTmFilter.split(";");
+			var aNumPairs = [];
+			for (var nPair = 0; nPair < aPairs.length; ++nPair) {
+				var aPair = aPairs[nPair].split(",");
+				if (aPair.length !== 2) {
+					return fRelTime;
+				}
+				var fNum1 = parseFloat(aPair[0]);
+				if (!AscFormat.isRealNumber(fNum1)) {
+					return fRelTime;
+				}
+				var fNum2 = parseFloat(aPair[1]);
+				if (!AscFormat.isRealNumber(fNum2)) {
+					return fRelTime;
+				}
+				if (AscFormat.fApproxEqual(fRelTime, fNum1)) {
+					return fNum2;
+				}
+				if (fRelTime <= fNum1) {
+					if (aNumPairs.length > 0) {
+						var aPrevPair = aNumPairs[aNumPairs.length - 1];
+						return aPrevPair[1] + (fRelTime - aPrevPair[0]) * ((fNum2 - aPrevPair[1]) / (fNum1 - aPrevPair[0]));
+					} else {
+						return fRelTime;
+					}
+				} else {
+					aNumPairs.push([fNum1, fNum2]);
+				}
+			}
+		}
+		if (oAttr.spd !== null && oAttr.spd < 0) {
+			fRelTime = 1 - fRelTime;
+		}
+		return fRelTime;
+	};
     CTimeNodeBase.prototype.getSlideWidth = function () {
         return this.getPresentation().GetWidthMM();
     };
@@ -1156,27 +1438,17 @@
         }
         return oObject.rot;
     };
-    CTimeNodeBase.prototype.getTargetObjectBrush = function () {
-        var oObject = this.getTargetObject();
+    CTimeNodeBase.prototype.getTargetObjectBrush = function (oObject) {
         if (!oObject) {
             return null;
         }
-        if (!oObject.brush || oObject.brush.isNoFill()) {
-            var oBrush = AscFormat.CreateUniFillByUniColor(AscFormat.CreateUniColorRGB(255, 255, 255));
-            oBrush.fill.color.RGBA.R = 255;
-            oBrush.fill.color.RGBA.G = 255;
-            oBrush.fill.color.RGBA.B = 255;
-            oBrush.fill.color.RGBA.A = 255;
-            return oBrush;
-        }
-        return oObject.brush;
+	    return oObject.getBrush();
     };
-    CTimeNodeBase.prototype.getTargetObjectPen = function () {
-        var oObject = this.getTargetObject();
+    CTimeNodeBase.prototype.getTargetObjectPen = function (oObject) {
         if (!oObject) {
             return null;
         }
-        return oObject.pen;
+        return oObject.getPen();
     };
     CTimeNodeBase.prototype.getAnimatedVal = function (fTime, fStart, fEnd) {
         return fStart * (1 - fTime) + fEnd * fTime;
@@ -1217,8 +1489,8 @@
             }
         }
     };
-    CTimeNodeBase.prototype.getOrigAttrVal = function (sAttrName) {
-        var oTargetObject = this.getTargetObject();
+    CTimeNodeBase.prototype.getOrigAttrVal = function (sAttrName, sDrawingId) {
+        var oTargetObject = this.getTargetObject(sDrawingId);
         if (!oTargetObject) {
             return null;
         }
@@ -1294,6 +1566,10 @@
         }
         aHierarchy.push(this);
         return aHierarchy;
+    };
+    CTimeNodeBase.prototype.getLvl = function() {
+        let aHierarchy = this.getHierarchy();
+        return aHierarchy.length - 1;
     };
     CTimeNodeBase.prototype.getAllAnimEffects = function (aEffects) {
         var aEffectsInternal = aEffects;
@@ -1687,6 +1963,11 @@
     CTiming.prototype.onRemoveObject = function (sObjectId) {
         this.removeObjectAnimation(sObjectId);
     };
+		CTiming.prototype.onRemoveContent = function (sObjectId) {
+			this.traverse(function (oNode) {
+				oNode.handleRemoveContent(sObjectId);
+			});
+		};
     CTiming.prototype.removeObjectAnimation = function (sObjectId) {
         this.traverse(function (oNode) {
             oNode.handleRemoveObject(sObjectId);
@@ -1699,14 +1980,6 @@
         } else if (oChild === this.bldLst) {
             this.setBldLst(null);
         }
-    };
-    CTiming.prototype.onAnimPaneChanged = function (oRect) {
-        var oSlide = this.parent;
-        if (!oSlide) {
-            return;
-        }
-        var oPresentation = this.getPresentation();
-        oPresentation.OnAnimPaneChanged(oSlide.num, oRect)
     };
     CTiming.prototype.getTimingRootNode = function () {
         if (this.tnLst) {
@@ -1798,15 +2071,8 @@
                 }
                 if (sPresetBinary) {
                     AscCommon.pptx_content_loader.Clear(true);
-                    var stream = AscFormat.CreateBinaryReader(sPresetBinary, "PPTY;v10;".length, sPresetBinary.length);
-                    var oBinaryReader = new AscCommon.BinaryPPTYLoader();
-                    oBinaryReader.stream = new AscCommon.FileStream();
-                    oBinaryReader.stream.obj = stream.obj;
-                    oBinaryReader.stream.data = stream.data;
-                    oBinaryReader.stream.size = stream.size;
-                    oBinaryReader.stream.pos = stream.pos;
-                    oBinaryReader.stream.cur = stream.cur;
-                    var oPar = new CPar();
+                    let oBinaryReader = AscFormat.CreatePPTYLoader(sPresetBinary, "PPTY;v10;".length, sPresetBinary.length);
+                    let oPar = new CPar();
                     oPar.fromPPTY(oBinaryReader);
                     var oConnectedObjects = oBinaryReader.oConnectedObjects;
                     for (var sKey in oConnectedObjects) {
@@ -1815,19 +2081,7 @@
                             oConnectedObject.setSpid(sObjectId);
                         }
                     }
-                    if(oColor) {
-                        let aSimpleEffects = oPar.getChildrenTimeNodes();
-
-                        for(let nEffect = 0; nEffect < aSimpleEffects.length; ++nEffect) {
-                            let oEffect = aSimpleEffects[nEffect];
-                            if(oEffect instanceof CAnimClr) {
-                                if(oEffect.to) {
-                                    let oUniColor = AscFormat.CorrectUniColor(oColor, new AscFormat.CUniColor(), 0);
-                                    oEffect.setTo(oUniColor);
-                                }
-                            }
-                        }
-                    }
+                    oPar.changeColor(oColor);
                     return oPar;
                 }
             }
@@ -1881,6 +2135,16 @@
         }
         return oTmRoot.getAllAnimEffects();
     };
+
+	CTiming.prototype.getAnimEffectById = function(sId) {
+		const allEffects = this.getAllAnimEffects();
+		for (let nEffect = 0; nEffect < allEffects.length; ++nEffect) {
+			if (sId === allEffects[nEffect].Id) {
+				return allEffects[nEffect];
+			}
+		}
+		return null;
+	};
 	CTiming.prototype.hasEffects = function() {
 		if (!this.tnLst) {
 			return false;
@@ -1945,6 +2209,19 @@
         }
         return oMainSeq;
     };
+	CTiming.prototype.getInteractiveSequences = function () {
+		let res = [];
+		let oTmRoot = this.checkTimeRoot();
+		let aSeq = oTmRoot.getChildrenTimeNodes();
+		let oSeq;
+		for (let nSeq = 0; nSeq < aSeq.length; ++nSeq) {
+			oSeq = aSeq[nSeq];
+			if (oSeq.isInteractiveSeqBool()) {
+				res.push(oSeq);
+			}
+		}
+		return res;
+	};
     CTiming.prototype.checkInteractiveSequence = function (sObjectId) {
         var oTnContainer, oCTn;
         var oTmRoot = this.checkTimeRoot();
@@ -1965,19 +2242,7 @@
             oCTn = this.createCCTn(null, NODE_FILL_HOLD, null, AscFormat.NODE_TYPE_INTERACTIVESEQ, RESTART_TYPE_WHEN_NOT_ACTIVE, true, null);
             oTnContainer.setCTn(oCTn);
             oCTn.setEvtFilter("cancelBubble");
-            var oStCondLst = new CCondLst();
-            var oCond = new CCond();
-            oCond.setEvt(COND_EVNT_ON_CLICK);
-            oCond.setDelay("0");
-            var oTgt = new CTgtEl();
-            var oSpTgt = new CSpTgt();
-            oSpTgt.setSpid(sObjectId);
-            oTgt.setSpTgt(oSpTgt);
-            oCond.setTgtEl(oTgt);
-            oStCondLst.push(oCond);
-            oCTn.setStCondLst(oStCondLst);
-            var oNextCondLst = oStCondLst.createDuplicate();
-            oTnContainer.setNextCondLst(oNextCondLst);
+			oTnContainer.setTriggerSp(sObjectId);
             var oEndSync = new CCond();
             oEndSync.setEvt(COND_EVNT_END);
             oEndSync.setDelay("0");
@@ -2066,6 +2331,14 @@
             if (aSelectedEffects.length === 0) {
                 return this.addAnimationToSelectedObjects(nPresetClass, nPresetId, nPresetSubtype, oColor);
             } else {
+
+                if(oColor) {
+                    for(let nEffect = 0; nEffect < aSelectedEffects.length; ++nEffect) {
+                        aSelectedEffects[nEffect].changeColor(oColor);
+                    }
+                    aAddedEffects = aAddedEffects.concat(aSelectedEffects);
+                    return aAddedEffects;
+                }
                 var oMapOfObjects = {};
                 var aSelectedObjects = this.parent.graphicObjects.selectedObjects;
                 var bNeedRemoveExtra = (aSelectedObjects.length > 0);
@@ -2090,7 +2363,7 @@
                             oNewEffect = this.createEffect(sObjectId, nPresetClass, nPresetId, nPresetSubtype, oColor);
                             if (oNewEffect) {
                                 oNewEffect.cTn.setNodeType(oEffect.cTn.nodeType);
-                                oNewEffect.cTn.changeDelay(oEffect.cTn.getDelay(true));
+                                oNewEffect.cTn.changeDelay(oEffect.cTn.getDelay());
                                 oNewEffect.select();
                                 aSeq[nEffectIdx] = oNewEffect;
                                 bNeedRebuild = true;
@@ -2200,126 +2473,107 @@
         }
         return aRanges;
     };
-    CTiming.prototype.getSequencesForMove = function (bEarlier, bCheckPossibility) {
-        var aSeqs = this.getEffectsSequences();
-        if (bEarlier && (!aSeqs[0] || aSeqs[0][0] !== null)) {
-            aSeqs.splice(0, 0, [null]);
+    CTiming.prototype.getSequencesForMove = function (bEarlier, bCheckPossibility, nPositions) {
+        if (!AscFormat.isRealNumber(nPositions) || nPositions < 1) {
+            nPositions = 1;
         }
-        var aRanges = this.getSelectionRanges(aSeqs);
-        var nSeq, aSeq;
+
+        // Получаем последовательности и выбранные интервалы
+        const aSeqs = this.getEffectsSequences();
+        const aRanges = this.getSelectionRanges(aSeqs);
+
         if (aRanges.length !== 1) {
             return bCheckPossibility ? false : null;
         }
-        var aRange = aRanges[0];
-        var aStart = aRange[0];
-        var aEnd = aRange[1];
-        var nEffectStart;
-        var nEffectEnd;
-        var nCount;
-        var aEffectsToInsert = [];
-        var nPos;
-        if (bEarlier) {
-            if (aStart[0] === 0) {
-                if (aStart[1] === 1) {
-                    return bCheckPossibility ? false : null;
-                }
-            }
-            if (bCheckPossibility) {
-                return true;
-            }
-        } else {
-            if (aEnd[0] === aSeqs.length - 1) {
-                if (aEnd[1] === aSeqs[aSeqs.length - 1].length - 1) {
-                    return bCheckPossibility ? false : null;
-                }
-            }
-            if (bCheckPossibility) {
-                return true;
-            }
+
+        if (bEarlier && (!aSeqs[0] || aSeqs[0][0] !== null)) {
+            aSeqs.splice(0, 0, [null]);
         }
 
+        const aRange = aRanges[0];
+        const aStart = aRange[0];
+        const aEnd = aRange[1];
 
-        var nPosStartEnd;
-        var aSeqToInsert;
+        // Вычисляем максимальное разрешенное количество перемещений
+        let nAllowedMovements;
         if (bEarlier) {
-            if (aStart[1] === 1) {
-                aSeqToInsert = aSeqs[aStart[0] - 1];
-                nPosStartEnd = aSeqToInsert.length;
-            } else {
-                aSeqToInsert = aSeqs[aStart[0]];
-                nPosStartEnd = aStart[1] - 1;
+            let nOuterPossibleMovements = aStart[0];
+            let nInnerPossibleMovements = aStart[1] - 1;
+            for (let nSeq = 0; nSeq < aStart[0]; nSeq++) {
+                nInnerPossibleMovements += (aSeqs[nSeq].length - 1);
             }
+            nAllowedMovements = nInnerPossibleMovements + nOuterPossibleMovements;
         } else {
-            if (aEnd[1] === aSeqs[aEnd[0]].length - 1) {
-                aSeqToInsert = aSeqs[aEnd[0] + 1];
-                nPosStartEnd = aSeqToInsert.length - 1;
-            } else {
-                aSeqToInsert = aSeqs[aEnd[0]];
-                nPosStartEnd = aSeqToInsert.length - (aEnd[1] + 2);
+            let nOuterPossibleMovements = (aSeqs.length - 1) - aEnd[0];
+            let nInnerPossibleMovements = (aSeqs[aEnd[0]].length - 1) - aEnd[1];
+            for (let nSeq = aSeqs.length - 1; nSeq > aEnd[0]; nSeq--) {
+                nInnerPossibleMovements += (aSeqs[nSeq].length - 1);
             }
+            nAllowedMovements = nInnerPossibleMovements + nOuterPossibleMovements;
         }
 
+        if (bCheckPossibility) {
+            return (nPositions <= nAllowedMovements);
+        }
 
-        for (nSeq = aStart[0]; nSeq <= aEnd[0]; ++nSeq) {
-            aSeq = aSeqs[nSeq];
-            if (nSeq === aStart[0]) {
-                nEffectStart = aStart[1];
-            } else {
-                nEffectStart = 1;
+        if (nPositions > nAllowedMovements) {
+            return null;
+        }
+
+        // Вычисляем целевую последовательность и позицию в ней
+        let newStart = [].concat(aStart);
+        let newEnd = [].concat(aEnd);
+        if (bEarlier) {
+            for (let nTmpPos = 1; nTmpPos <= nPositions; nTmpPos++) {
+                if (newStart[1] > 1) {
+                    newStart[1] = newStart[1] - 1;
+                } else {
+                    newStart[0] = newStart[0] - 1;
+                    newStart[1] = aSeqs[newStart[0]].length; // newStart[0] have been decremented on last line
+                }
             }
-            if (nSeq === aEnd[0]) {
-                nEffectEnd = aEnd[1];
-            } else {
-                nEffectEnd = aSeq.length - 1;
+        } else {
+            for (let nTmpPos = 1; nTmpPos <= nPositions; nTmpPos++) {
+                let maxAllowedPos = aEnd[0] === newEnd[0] ?
+                    aSeqs[newEnd[0]].length - 1 :
+                    aSeqs[newEnd[0]].length;
+
+                if (newEnd[1] < maxAllowedPos) {
+                    newEnd[1] = newEnd[1] + 1;
+                } else {
+                    newEnd[0] = newEnd[0] + 1;
+                    newEnd[1] = 1;
+                }
             }
-            nCount = nEffectEnd - nEffectStart + 1;
+        }
+        let aSeqToInsert = bEarlier ? aSeqs[newStart[0]] : aSeqs[newEnd[0]];
+        let nPosToInsert = bEarlier ? newStart[1] : newEnd[1];
+
+        // Забираем из последовательностей все выбранные эффекты и складываем их в aEffectsToInsert
+        let aEffectsToInsert = [];
+        for (let nSeq = aStart[0]; nSeq <= aEnd[0]; nSeq++) {
+            let aSeq = aSeqs[nSeq];
+
+            let nEffectStart = (nSeq === aStart[0]) ? aStart[1] : 1;
+            let nEffectEnd = (nSeq === aEnd[0]) ? aEnd[1] : aSeq.length - 1;
+            let nCount = nEffectEnd - nEffectStart + 1;
+
             aEffectsToInsert = aEffectsToInsert.concat(aSeq.splice(nEffectStart, nCount));
         }
-        if (bEarlier) {
-            nPos = nPosStartEnd;
-        } else {
-            nPos = aSeqToInsert.length - nPosStartEnd;
-        }
-        aSeqToInsert.splice.apply(aSeqToInsert, [nPos, 0].concat(aEffectsToInsert));
+
+        // aSeqToInsert.splice(nPos, 0, ...aEffectsToInsert);
+        aSeqToInsert.splice.apply(aSeqToInsert, [nPosToInsert, 0].concat(aEffectsToInsert));
         return aSeqs;
     };
-    CTiming.prototype.canMoveAnimation = function (bEarlier) {
-        return this.getSequencesForMove(bEarlier, true);
+    CTiming.prototype.canMoveAnimation = function (bEarlier, nPositions) {
+        return this.getSequencesForMove(bEarlier, true, nPositions);
     };
-    CTiming.prototype.moveAnimation = function (bEarlier) {
-        var aSeqs = this.getSequencesForMove(bEarlier, false);
+    CTiming.prototype.moveAnimation = function (bEarlier, nPositions) {
+        var aSeqs = this.getSequencesForMove(bEarlier, false, nPositions);
         if (!Array.isArray(aSeqs)) {
             return;
         }
         this.buildTree(aSeqs);
-    };
-    CTiming.prototype.drawAnimPane = function (oGraphics) {
-        if (!this.animPane) {
-            this.animPane = new CAnimPane(this);
-        }
-        this.animPane.recalculate();
-        this.animPane.draw(oGraphics);
-    };
-    CTiming.prototype.getAnimPane = function () {
-        if (!this.animPane) {
-            this.animPane = new CAnimPane(this);
-        }
-        return this.animPane;
-    };
-    CTiming.prototype.onAnimPaneResize = function () {
-        this.getAnimPane().onResize();
-    };
-    CTiming.prototype.onAnimPaneMouseDown = function (e, x, y) {
-        this.getAnimPane().onMouseDown(e, x, y);
-    };
-    CTiming.prototype.onAnimPaneMouseMove = function (e, x, y) {
-        this.getAnimPane().onMouseMove(e, x, y);
-    };
-    CTiming.prototype.onAnimPaneMouseUp = function (e, x, y) {
-        this.getAnimPane().onMouseUp(e, x, y);
-    };
-    CTiming.prototype.onAnimPaneMouseWheel = function (e, deltaY, X, Y) {
-        this.getAnimPane().onMouseWheel(e, deltaY, X, Y);
     };
     CTiming.prototype.getRootSequences = function () {
         var oTmRoot = this.getTimingRootNode();
@@ -2359,7 +2613,7 @@
         }
         return aSequences;
     };
-    CTiming.prototype.buildTree = function (aSequences, bRestedDelayShift) {
+    CTiming.prototype.buildTree = function (aSequences) {
         var aCurSequence;
         var oEffect;
         var sSeqId;
@@ -2367,16 +2621,6 @@
         var nSeq;
         var oCont1;//containers by depth
         var aAddedEffects = [];
-        if (bRestedDelayShift !== false) {
-            //substract delay shift from afterEffect nodes
-            for (nSeq = 0; nSeq < aSequences.length; ++nSeq) {
-                aCurSequence = aSequences[nSeq];
-                for (nEffect = 1; nEffect < aCurSequence.length; ++nEffect) {
-                    oEffect = aCurSequence[nEffect];
-                    oEffect.resetDelayShift();
-                }
-            }
-        }
         this.createTimingRoot();
         var oTmRoot = this.getTimingRootNode();
         if (oTmRoot) {
@@ -2415,77 +2659,15 @@
         this.updateNodesIDs();
         return aAddedEffects;
     };
-    CTiming.prototype.executeWithCheckDelay = function (fCallback, aEffects) {
-        var aDelays = [];
-        for (var nEffect = 0; nEffect < aEffects.length; ++nEffect) {
-            aDelays.push(aEffects[nEffect].cTn.getDelay(true));
-        }
-        fCallback();
-        for (nEffect = 0; nEffect < aEffects.length; ++nEffect) {
-            if (aEffects[nEffect].isAfterEffect()) {
-                aEffects[nEffect].cTn.changeDelay(aDelays[nEffect], true);
-            }
-        }
-    };
     CTiming.prototype.setAnimationProperties = function (oPr) {
-        var aEffects = this.getSelectedEffects();
-        var oCurPr = this.getAnimProperties();
-        var nEffect, oEffect;
-        var aAllEffects = this.getAllAnimEffects();
-        var aEffectsForCheck;
-        var aSeqs, aSeq, nSeq;
+        let aEffects = this.getSelectedEffects();
+        let oCurPr = this.getAnimProperties();
+        let nEffect, oEffect;
+        let aSeqs, aSeq, nSeq;
         if (aEffects.length < 1) {
             return null;
         }
 
-        if (oPr.asc_getDelay() !== oCurPr.asc_getDelay() && AscFormat.isRealNumber(oPr.asc_getDelay())) {
-            for (nEffect = aAllEffects.length - 1; nEffect > -1; --nEffect) {
-                if (aAllEffects[nEffect].isSelected()) {
-                    break;
-                }
-            }
-            aEffectsForCheck = aAllEffects.slice(nEffect + 1);
-            this.executeWithCheckDelay(function () {
-                for (nEffect = 0; nEffect < aEffects.length; ++nEffect) {
-                    oEffect = aEffects[nEffect];
-                    oEffect.cTn.changeDelay(oPr.asc_getDelay());
-                }
-            }, aEffectsForCheck);
-        }
-
-        if (oPr.asc_getDuration() !== oCurPr.asc_getDuration() && AscFormat.isRealNumber(oPr.asc_getDuration())) {
-            for (nEffect = 0; nEffect < aAllEffects.length; ++nEffect) {
-                if (aAllEffects[nEffect].isSelected()) {
-                    break;
-                }
-            }
-            aEffectsForCheck = aAllEffects.slice(nEffect + 1);
-            this.executeWithCheckDelay(function () {
-                for (nEffect = 0; nEffect < aEffects.length; ++nEffect) {
-                    oEffect = aEffects[nEffect];
-                    oEffect.cTn.changeEffectDuration(oPr.asc_getDuration());
-                }
-            }, aEffectsForCheck);
-        }
-        if (oPr.asc_getSubtype() !== oCurPr.asc_getSubtype()) {
-            for (nEffect = 0; nEffect < aEffects.length; ++nEffect) {
-                oEffect = aEffects[nEffect];
-                oEffect.cTn.changeSubtype(oPr.asc_getSubtype());
-            }
-        }
-        if (oPr.asc_getRepeatCount() !== oCurPr.asc_getRepeatCount() && AscFormat.isRealNumber(oPr.asc_getRepeatCount())) {
-            for (nEffect = 0; nEffect < aEffects.length; ++nEffect) {
-                oEffect = aEffects[nEffect];
-                oEffect.cTn.changeRepeatCount(oPr.asc_getRepeatCount());
-            }
-        }
-
-        if (oPr.asc_getRewind() !== oCurPr.asc_getRewind() && AscFormat.isRealBool(oCurPr.asc_getRewind())) {
-            for (nEffect = 0; nEffect < aEffects.length; ++nEffect) {
-                oEffect = aEffects[nEffect];
-                oEffect.cTn.changeRewind(oPr.asc_getRewind());
-            }
-        }
 
 
         if (oPr.asc_getStartType() !== oCurPr.asc_getStartType()) {
@@ -2494,13 +2676,13 @@
                 aSeq = aSeqs[nSeq];
                 for (nEffect = 1; nEffect < aSeq.length; ++nEffect) {
                     oEffect = aSeq[nEffect];
-                    oEffect.resetDelayShift();
                     if (oEffect.isSelected()) {
                         oEffect.cTn.setNodeType(oPr.asc_getStartType());
                     }
                 }
             }
-            this.buildTree(aSeqs, false);
+            this.buildTree(aSeqs);
+            return;
         }
 
 
@@ -2508,30 +2690,30 @@
             || oPr.asc_getTriggerObjectClick() !== oCurPr.asc_getTriggerObjectClick()) {
             aSeqs = this.getEffectsSequences();
 
-            var sSeqId;
+            let sSeqId;
             if (oPr.asc_getTriggerClickSequence() || !oPr.asc_getTriggerObjectClick()) {
                 sSeqId = null;
             } else {
-                var oTimingParent = this.parent;//might be slide, layout, master
+                let oTimingParent = this.parent;//might be slide, layout, master
                 if (!oTimingParent) {
                     return;
                 }
-                var oCSld = oTimingParent.cSld;
+                let oCSld = oTimingParent.cSld;
                 if (!oCSld) {
                     return;
                 }
-                var sObjectId;
+                let sObjectId;
 
-                var oDrawing = oCSld.getObjectByName(oPr.asc_getTriggerObjectClick());
+                let oDrawing = oCSld.getObjectByName(oPr.asc_getTriggerObjectClick());
                 if (!oDrawing) {
                     return;
                 }
                 sObjectId = oDrawing.Get_Id();
                 sSeqId = sObjectId;
             }
-            var aEffectsToInsert = [];
-            var sCurSeqId;
-            var aTriggerSeq = null;
+            let aEffectsToInsert = [];
+            let sCurSeqId;
+            let aTriggerSeq = null;
             for (nSeq = 0; nSeq < aSeqs.length; ++nSeq) {
                 aSeq = aSeqs[nSeq];
                 sCurSeqId = aSeq[0];
@@ -2540,7 +2722,6 @@
                 }
                 for (nEffect = aSeq.length - 1; nEffect > 0; --nEffect) {
                     oEffect = aSeq[nEffect];
-                    oEffect.resetDelayShift();
                     if (oEffect.isSelected()) {
                         if (sCurSeqId !== sSeqId) {
                             aEffectsToInsert.splice(0, 0, aSeq.splice(nEffect, 1)[0]);
@@ -2555,7 +2736,64 @@
             for (nEffect = 0; nEffect < aEffectsToInsert.length; ++nEffect) {
                 aTriggerSeq.push(aEffectsToInsert[nEffect]);
             }
-            this.buildTree(aSeqs, false);
+            this.buildTree(aSeqs);
+            return;
+        }
+
+
+        let iN = AscFormat.isRealNumber;
+        let iB = AscFormat.isRealBool;
+        let nDelay = null;
+        let nDuration = null;
+        let nSubtype = null;
+        let nRepeatCount = null;
+        let bRewind = null;
+        if (oPr.asc_getDelay() !== oCurPr.asc_getDelay() && iN(oPr.asc_getDelay())) {
+            nDelay = oPr.asc_getDelay();
+        }
+
+        if (oPr.asc_getDuration() !== oCurPr.asc_getDuration() && iN(oPr.asc_getDuration())) {
+            nDuration = oPr.asc_getDuration();
+        }
+        if (oPr.asc_getSubtype() !== oCurPr.asc_getSubtype()) {
+            nSubtype = oPr.asc_getSubtype();
+        }
+        if (oPr.asc_getRepeatCount() !== oCurPr.asc_getRepeatCount() && iN(oPr.asc_getRepeatCount())) {
+            nRepeatCount = oPr.asc_getRepeatCount();
+        }
+
+        if (oPr.asc_getRewind() !== oCurPr.asc_getRewind() && iB(oCurPr.asc_getRewind())) {
+            bRewind = oPr.asc_getRewind();
+        }
+        let oPar2Map = {};
+        if(iN(nDelay) || iN(nDuration) || iN(nSubtype) || iN(nRepeatCount) || iB(bRewind)) {
+            for (nEffect = 0; nEffect < aEffects.length; ++nEffect) {
+                oEffect = aEffects[nEffect];
+                if(iN(nDelay)) {
+                    oEffect.cTn.changeDelay(nDelay);
+                }
+                if(iN(nDuration)) {
+                    oEffect.cTn.changeEffectDuration(nDuration);
+                }
+                if(iN(nSubtype)) {
+                    oEffect.cTn.changeSubtype(nSubtype);
+                }
+                if(iN(nRepeatCount)) {
+                    oEffect.cTn.changeRepeatCount(nRepeatCount);
+                }
+                if(iB(bRewind)) {
+                    oEffect.cTn.changeRewind(bRewind);
+                }
+                let oPar2Node = oEffect.getTimeNodeWithLvl(2);
+                if(oPar2Node) {
+                    oPar2Map[oPar2Node.Id] = oPar2Node;
+                }
+            }
+            for(let sId in oPar2Map) {
+                if(oPar2Map.hasOwnProperty(sId)) {
+                    oPar2Map[sId].update3LvlDelays();
+                }
+            }
         }
     };
     CTiming.prototype.getObjectEffects = function (sObjectId) {
@@ -2630,71 +2868,108 @@
             oRoot.printTree();
         }
     };
-    CTiming.prototype.getEffectsForDemo = function () {
-        var aEffectsForDemo, aCurEffects;
-        var aSelectedEffects = this.getSelectedEffects();
-        if (aSelectedEffects.length > 0 && !this.isAllSlideAnimations) {
-            aCurEffects = aSelectedEffects;
-        } else {
-            aCurEffects = this.getAllAnimEffects();
-        }
+	CTiming.prototype.getEffectsForDemo = function () {
+		const aSelectedEffects = this.getSelectedEffects();
+		const aAllAnimEffects = this.getAllAnimEffects();
 
-        aEffectsForDemo = [];
-        for (var nEffect = 0; nEffect < aCurEffects.length; ++nEffect) {
-            var oEffect = aCurEffects[nEffect];
-            if (oEffect.isPartOfMainSequence()) {
-                aEffectsForDemo.push(oEffect);
-            }
-        }
-        if (aEffectsForDemo.length === 0) {
-            return null;
-        }
-        return aEffectsForDemo;
-    };
+		let aEffectsForDemo;
+		if (this.isAllSlideAnimations) {
+			aEffectsForDemo = aAllAnimEffects;
+		} else {
+			if (aSelectedEffects.length === 0) {
+				aEffectsForDemo = aAllAnimEffects;
+			}
+			if (aSelectedEffects.length === 1) {
+				if (this.bIncludeFollowing) {
+					const selectedEffectIndex = aAllAnimEffects.indexOf(aSelectedEffects[0]);
+					aEffectsForDemo = aAllAnimEffects.slice(selectedEffectIndex);
+				} else {
+					aEffectsForDemo = aSelectedEffects;
+				}
+			}
+			if (aSelectedEffects.length > 1) {
+				aEffectsForDemo = aSelectedEffects;
+			}
+		}
+
+		return (aEffectsForDemo.length === 0) ? null : aEffectsForDemo;
+	};
     CTiming.prototype.canStartDemo = function () {
         return this.getEffectsForDemo() !== null;
     };
-    CTiming.prototype.createDemoTiming = function () {
+    CTiming.prototype.createDemoTiming = function (bDisableSmooth) {
         return AscFormat.ExecuteNoHistory(function () {
-            if (!this.canStartDemo()) {
-                return null;
-            }
-            var aEffectsForDemo = this.getEffectsForDemo();
-            if (!aEffectsForDemo) {
-                return null;
-            }
-            var aSeqs = [];
-            var aSeq = [null];
-            var oEffect;
-            aSeqs.push(aSeq);
-            for (var nIdx = 0; nIdx < aEffectsForDemo.length; ++nIdx) {
-                oEffect = aEffectsForDemo[nIdx];
-                var oCopyEffect = oEffect.createDuplicate();
-                oCopyEffect.originalNode = oEffect;
-                oCopyEffect.cTn.resetDelayShift();
-                if (oCopyEffect.cTn.nodeType === AscFormat.NODE_TYPE_CLICKEFFECT) {
-                    oCopyEffect.cTn.setNodeType(nIdx === 0 ? AscFormat.NODE_TYPE_WITHEFFECT : AscFormat.NODE_TYPE_AFTEREFFECT);
-                }
-                var nRepeatCount = oCopyEffect.asc_getRepeatCount();
-                if (nRepeatCount === AscFormat.untilNextSlide || nRepeatCount === AscFormat.untilNextClick) {
-                    oCopyEffect.cTn.changeRepeatCount(1000);
-                }
-                var nDur = oCopyEffect.asc_getDuration();
-                if (nDur === AscFormat.untilNextSlide || nDur === AscFormat.untilNextClick) {
-                    oCopyEffect.cTn.changeEffectDuration(1000);
-                }
-                if (AscFormat.isRealNumber(nDur) && nDur < 50) {
-                    oCopyEffect.cTn.changeEffectDuration(750);
-                }
+            if (!this.canStartDemo()) return null;
 
-                oCopyEffect.originalNode = null;
-                aSeq.push(oCopyEffect);
+            const aEffectsForDemo = this.getEffectsForDemo();
+            if (!aEffectsForDemo) return null;
+
+            const aSeqs = [];
+            const aSeq = [null];
+            aSeqs.push(aSeq);
+
+            const aEffectCopies = [];
+            for (let nIdx = 0; nIdx < aEffectsForDemo.length; ++nIdx) {
+                const oEffect = aEffectsForDemo[nIdx];
+                const oEffectCopy = oEffect.createDuplicate();
+                oEffectCopy.originalNode = oEffect;
+                oEffect.copyNode = oEffectCopy;
+                aEffectCopies.push(oEffectCopy);
             }
-            var oTiming = new CTiming();
+
+            for (let nIdx = 0; nIdx < aEffectCopies.length; ++nIdx) {
+                const oEffectCopy = aEffectCopies[nIdx];
+                if (!bDisableSmooth) {
+                    if (oEffectCopy.cTn.nodeType === AscFormat.NODE_TYPE_CLICKEFFECT) {
+                        oEffectCopy.cTn.setNodeType(nIdx === 0 ? AscFormat.NODE_TYPE_WITHEFFECT : AscFormat.NODE_TYPE_AFTEREFFECT);
+                    }
+
+                    const nRepeatCount = oEffectCopy.asc_getRepeatCount();
+                    if (nRepeatCount === AscFormat.untilNextSlide || nRepeatCount === AscFormat.untilNextClick) {
+                        const lastFiniteEffect = (nRepeatCount === AscFormat.untilNextSlide)
+                            ? this.getLastFiniteEffect(aEffectsForDemo)
+                            : this.getLastFiniteEffect(oEffectCopy.originalNode.getTimeNodeWithLvl(2).getAllAnimEffects());
+
+                        if (lastFiniteEffect === oEffectCopy || aEffectCopies.length === 1) {
+                            oEffectCopy.cTn.changeRepeatCount(1000);
+                        } else {
+                            oEffectCopy.cTn.setEndCondLst(new CCondLst());
+                            const oCond = new CCond();
+                            oCond.setEvt(COND_EVNT_ON_END);
+                            oCond.setTn(lastFiniteEffect.copyNode.getAttributesObject().id);
+                            oEffectCopy.cTn.endCondLst.push(oCond);
+                        }
+                    }
+
+                    const nDur = oEffectCopy.asc_getDuration();
+                    if (nDur === AscFormat.untilNextSlide || nDur === AscFormat.untilNextClick) {
+                        oEffectCopy.cTn.changeEffectDuration(1000);
+                    }
+                    if (AscFormat.isRealNumber(nDur) && nDur < 50) {
+                        oEffectCopy.cTn.changeEffectDuration(750);
+                    }
+                }
+                aSeq.push(oEffectCopy);
+            }
+            const oTiming = new CTiming();
             oTiming.setParent(this.parent);
-            oTiming.buildTree(aSeqs, false);
+            oTiming.buildTree(aSeqs);
             return oTiming;
         }, this, []);
+    };
+    CTiming.prototype.getLastFiniteEffect = function (aEffects) {
+        let maxEndTime = 0;
+        let effect = null;
+        for (let nEffect = 0; nEffect < aEffects.length; ++nEffect) {
+            const oEffect = aEffects[nEffect];
+            const repeatCount = oEffect.asc_getRepeatCount();
+            const endTime = oEffect.getFullDelay() + oEffect.asc_getDuration() * (repeatCount >= 0 ? repeatCount : 1000);
+            if (endTime >= maxEndTime) {
+                maxEndTime = endTime;
+                effect = oEffect;
+            }
+        }
+        return effect;
     };
     CTiming.prototype.createDemoPlayer = function () {
         if (!this.canStartDemo()) {
@@ -2796,36 +3071,26 @@
         }
         return this.collectAllMoveEffectShapes();
     };
-    CTiming.prototype.drawEffectsLabels = function (oGraphics) {
-        if (oGraphics.IsThumbnail === true || oGraphics.IsDemonstrationMode === true || AscCommon.IsShapeToImageConverter) {
-            return;
-        }
-        var oApi = editor || Asc.editor;
-        if (!oApi.isDrawAnimLabels || !oApi.isDrawAnimLabels()) {
-            return;
-        }
-        var aEffectsForDraw = this.getEffectsForLabelsDraw();
+	CTiming.prototype.drawEffectsLabels = function (oGraphics) {
+		if (oGraphics.IsThumbnail === true || oGraphics.IsDemonstrationMode === true || AscCommon.IsShapeToImageConverter) {
+			return;
+		}
+		var oApi = editor || Asc.editor;
+		if (!oApi.isDrawAnimLabels || !oApi.isDrawAnimLabels()) {
+			return;
+		}
+		var aEffectsForDraw = this.getEffectsForLabelsDraw();
 
-        if(aEffectsForDraw.length > 0) {
-            oGraphics.SaveGrState();
-            oGraphics.transform3(new AscCommon.CMatrix());
-            oGraphics.SetIntegerGrid(true);
-            var oContext = oGraphics.m_oContext;
-            var sOldFill;
-            if (oContext) {
-                var dPR = AscCommon.AscBrowser.retinaPixelRatio;
-                oContext.font = Math.round(8 * dPR) + "pt Arial";
-                oContext.textAlign = "center";
-            }
-            for (var nEffect = 0; nEffect < aEffectsForDraw.length; ++nEffect) {
-                aEffectsForDraw[nEffect].drawEffectLabel(oGraphics);
-            }
-            if (oContext) {
-                oContext.fillStyle = sOldFill;
-            }
-            oGraphics.RestoreGrState();
-        }
-    };
+		if (aEffectsForDraw.length > 0) {
+			oGraphics.SaveGrState();
+			oGraphics.transform3(new AscCommon.CMatrix());
+			oGraphics.SetIntegerGrid(true);
+			for (var nEffect = 0; nEffect < aEffectsForDraw.length; ++nEffect) {
+				aEffectsForDraw[nEffect].drawEffectLabel(oGraphics);
+			}
+			oGraphics.RestoreGrState();
+		}
+	};
     CTiming.prototype.isDrawAnimLabels = function () {
         var oApi = editor || Asc.editor;
         if (!oApi.isDrawAnimLabels || !oApi.isDrawAnimLabels()) {
@@ -2993,9 +3258,16 @@
     CCommonTimingList.prototype.writeChildren = function (pWriter) {
         if (this.list.length > 0) {
             pWriter.StartRecord(0);
-            pWriter.WriteULong(this.list.length);
-            for (var nIndex = 0; nIndex < this.list.length; ++nIndex) {
-                this.writeRecord1(pWriter, 0, this.list[nIndex]);
+            let aListTowWrite = [];
+            for (let nIndex = 0; nIndex < this.list.length; ++nIndex) {
+                let oElement = this.list[nIndex];
+                if(!oElement.isValid || oElement.isValid()) {
+                    aListTowWrite.push(oElement);
+                }
+            }
+            pWriter.WriteULong(aListTowWrite.length);
+            for (let nIndex = 0; nIndex < aListTowWrite.length; ++nIndex) {
+                this.writeRecord1(pWriter, 0, aListTowWrite[nIndex]);
             }
             pWriter.EndRecord();
         }
@@ -3363,6 +3635,12 @@
         for (let nSp = 0; nSp < aSpTree.length; ++nSp) {
             let oSp = aSpTree[nSp];
             if (oSp.getFormatIdString() === this.spid) {
+                if(!isDrawingOnSlide(oSp)) {
+                    if (this.parent) {
+                        this.parent.onRemoveChild(this);
+                    }
+                    return;
+                }
                 this.setSpid(oSp.Id);
                 return;
             }
@@ -3393,6 +3671,9 @@
             }
         }
     };
+	CObjectTarget.prototype.handleRemoveContent = function (sObjectId) {
+
+	};
 
     changesFactory[AscDFH.historyitem_BldBaseGrpId] = CChangeLong;
     changesFactory[AscDFH.historyitem_BldBaseUIExpand] = CChangeBool;
@@ -3416,9 +3697,9 @@
     };
 
     CBldBase.prototype.assignConnection = function (oObjectsMap) {
-        if (AscCommon.isRealObject(oObjectsMap[this.spid]) &&
-            (oObjectsMap[this.spid].getObjectType && oObjectsMap[this.spid].getObjectType() === AscDFH.historyitem_type_ChartSpace)) {
-            this.setSpid(oObjectsMap[this.spid].Id);
+        let oSp = oObjectsMap[this.spid];
+        if (AscCommon.isRealObject(oSp) && oSp.isDrawing && isDrawingOnSlide(oSp)) {
+            this.setSpid(oSp.Id);
         } else {
             if (this.parent) {
                 this.parent.onRemoveChild(this);
@@ -3429,6 +3710,12 @@
         for (let nSp = 0; nSp < aSpTree.length; ++nSp) {
             let oSp = aSpTree[nSp];
             if ((oSp.getObjectType && oSp.getObjectType() === AscDFH.historyitem_type_ChartSpace) && oSp.getFormatIdString() === this.spid) {
+                if(!isDrawingOnSlide(oSp)) {
+                    if (this.parent) {
+                        this.parent.onRemoveChild(this);
+                    }
+                    return;
+                }
                 this.setSpid(oSp.Id);
                 return;
             }
@@ -3775,20 +4062,19 @@
         this.rev = pr;
     };
     CBldSub.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.chart !== null) {
+        if (this.chart !== null && this.chart !== undefined) {
             oCopy.setChart(this.chart);
         }
-        if (this.animBg !== null) {
+        if (this.animBg !== null && this.animBg !== undefined) {
             oCopy.setAnimBg(this.animBg);
         }
-
-        if (this.bldChart !== null) {
+        if (this.bldChart !== null && this.bldChart !== undefined) {
             oCopy.setBldChart(this.bldChart);
         }
-        if (this.bldDgm !== null) {
+        if (this.bldDgm !== null && this.bldDgm !== undefined) {
             oCopy.setBldDgm(this.bldDgm);
         }
-        if (this.rev !== null) {
+        if (this.rev !== null && this.rev !== undefined) {
             oCopy.setRev(this.rev);
         }
     };
@@ -3917,6 +4203,12 @@
         for (let nSp = 0; nSp < aSpTree.length; ++nSp) {
             let oSp = aSpTree[nSp];
             if (oSp.getFormatIdString() === this.dgmId) {
+                if(!isDrawingOnSlide(oSp)) {
+                    if (this.parent) {
+                        this.parent.onRemoveChild(this);
+                    }
+                    return;
+                }
                 this.setDgmId(oSp.Id);
                 return;
             }
@@ -3942,23 +4234,23 @@
         this.categoryIdx = pr;
     };
     CGraphicEl.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.dgmId !== null) {
+        if (this.dgmId !== null && this.dgmId !== undefined) {
             var sDgmId = this.dgmId;
             if (oIdMap && oIdMap[this.dgmId]) {
                 sDgmId = oIdMap[this.dgmId];
             }
             oCopy.setDgmId(sDgmId);
         }
-        if (this.dgmBuildStep !== null) {
+        if (this.dgmBuildStep !== null && this.dgmBuildStep !== undefined) {
             oCopy.setDgmBuildStep(this.dgmBuildStep);
         }
-        if (this.chartBuildStep !== null) {
+        if (this.chartBuildStep !== null && this.chartBuildStep !== undefined) {
             oCopy.setChartBuildStep(this.chartBuildStep);
         }
-        if (this.seriesIdx !== null) {
+        if (this.seriesIdx !== null && this.seriesIdx !== undefined) {
             oCopy.setSeriesIdx(this.seriesIdx);
         }
-        if (this.categoryIdx !== null) {
+        if (this.categoryIdx !== null && this.categoryIdx !== undefined) {
             oCopy.setCategoryIdx(this.categoryIdx);
         }
     };
@@ -3993,6 +4285,9 @@
             }
         }
     };
+	CGraphicEl.prototype.handleRemoveContent = function (sObjectId) {
+
+	};
 
     changesFactory[AscDFH.historyitem_IndexRgSt] = CChangeLong;
     changesFactory[AscDFH.historyitem_IndexRgEnd] = CChangeLong;
@@ -4019,10 +4314,10 @@
         this.end = pr;
     };
     CIndexRg.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.end !== null) {
+        if (this.end !== null && this.end !== undefined) {
             oCopy.setEnd(this.end);
         }
-        if (this.st !== null) {
+        if (this.st !== null && this.st !== undefined) {
             oCopy.setSt(this.st);
         }
     };
@@ -4061,10 +4356,10 @@
         this.setParentToChild(pr);
     };
     CTmpl.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.lvl !== null) {
+        if (this.lvl !== null && this.lvl !== undefined) {
             oCopy.setLvl(this.lvl);
         }
-        if (this.tnLst !== null) {
+        if (this.tnLst !== null && this.tnLst !== undefined) {
             oCopy.setTnLst(this.tnLst.createDuplicate(oIdMap));
         }
     };
@@ -4175,25 +4470,25 @@
         this.valueType = pr;
     };
     CAnim.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.cBhvr !== null) {
+        if (this.cBhvr !== null && this.cBhvr !== undefined) {
             oCopy.setCBhvr(this.cBhvr.createDuplicate(oIdMap));
         }
-        if (this.tavLst !== null) {
+        if (this.tavLst !== null && this.tavLst !== undefined) {
             oCopy.setTavLst(this.tavLst.createDuplicate(oIdMap));
         }
-        if (this.by !== null) {
+        if (this.by !== null && this.by !== undefined) {
             oCopy.setBy(this.by);
         }
-        if (this.calcmode !== null) {
+        if (this.calcmode !== null && this.calcmode !== undefined) {
             oCopy.setCalcmode(this.calcmode);
         }
-        if (this.from !== null) {
+        if (this.from !== null && this.from !== undefined) {
             oCopy.setFrom(this.from);
         }
-        if (this.to !== null) {
+        if (this.to !== null && this.to !== undefined) {
             oCopy.setTo(this.to);
         }
-        if (this.valueType !== null) {
+        if (this.valueType !== null && this.valueType !== undefined) {
             oCopy.setValueType(this.valueType);
         }
     };
@@ -4244,8 +4539,8 @@
         }
         return this.valueType;
     };
-    CAnim.prototype.calculateAttributes = function (nElapsedTime, oAttributes) {
-        var oTargetObject = this.getTargetObject();
+    CAnim.prototype.calculateAttributes = function (nElapsedTime, oAttributes, sDrawingId) {
+        var oTargetObject = this.getTargetObject(sDrawingId);
         if (!oTargetObject) {
             return;
         }
@@ -4263,7 +4558,7 @@
         }
         var val = null;
         var sFmla = null;
-        var fRelTime = this.getRelativeTime(nElapsedTime);
+        var fRelTime = this.getRelativeTime(nElapsedTime, sDrawingId);
         var nValueType = this.getValueType();
         var oVarMap;
         var oFirstTav;
@@ -4295,7 +4590,7 @@
                             fTimeInsideInterval = (fRelTime) / (oSecondTav.getTime());
                         }
                     }
-                    val = this.calculateBetweenTwoVals(oFirstTav.val, oSecondTav.val, fTimeInsideInterval, oAttributes);
+                    val = this.calculateBetweenTwoVals(oFirstTav.val, oSecondTav.val, fTimeInsideInterval, oAttributes, sDrawingId);
                 } else {
                     for (nTav = 1; nTav < aTav.length; ++nTav) {
                         if (fRelTime >= aTav[nTav - 1].getTime() && fRelTime <= aTav[nTav].getTime()) {
@@ -4310,14 +4605,14 @@
                             } else {
                                 oTav = aTav[nTav - 1];
                             }
-                            val = this.calculateBetweenTwoVals(oTav.val, oTav.val, 0, oAttributes);
+                            val = this.calculateBetweenTwoVals(oTav.val, oTav.val, 0, oAttributes, sDrawingId);
                             if (aTav[nTav - 1]) {
                                 sFmla = aTav[nTav - 1].fmla;
                             }
                         } else {
                             if (AscFormat.fApproxEqual(fRelTime, aTav[nTav].getTime())) {
                                 oTav = aTav[nTav];
-                                val = this.calculateBetweenTwoVals(oTav.val, oTav.val, 0, oAttributes);
+                                val = this.calculateBetweenTwoVals(oTav.val, oTav.val, 0, oAttributes, sDrawingId);
                                 if (aTav[nTav - 1]) {
                                     sFmla = aTav[nTav - 1].fmla;
                                 }
@@ -4326,14 +4621,14 @@
                                 oSecondTav = aTav[nTav];
                                 sFmla = oFirstTav.fmla;
                                 fTimeInsideInterval = (fRelTime - aTav[nTav - 1].getTime()) / (aTav[nTav].getTime() - aTav[nTav - 1].getTime());
-                                val = this.calculateBetweenTwoVals(oFirstTav.val, oSecondTav.val, fTimeInsideInterval, oAttributes);
+                                val = this.calculateBetweenTwoVals(oFirstTav.val, oSecondTav.val, fTimeInsideInterval, oAttributes, sDrawingId);
                             }
                         }
                     }
                 }
                 if (val !== null) {
                     if (sFmla) {
-                        oVarMap = this.getVarMapForFmla(oAttributes);
+                        oVarMap = this.getVarMapForFmla(oAttributes, sDrawingId);
                         oVarMap["$"] = val;
                         var fFmlaResult = this.getFormulaResult(sFmla, oVarMap);
                         if (fFmlaResult !== null) {
@@ -4350,7 +4645,7 @@
                 this.from === null && this.to !== null && this.by === null ||
                 this.from === null && this.to === null && this.by !== null) {
                 if (nValueType === VALUE_TYPE_NUM) {
-                    oVarMap = this.getVarMapForFmla();
+                    oVarMap = this.getVarMapForFmla(undefined, sDrawingId);
                     var fFrom = null, fTo = null, fBy = null;
                     if (this.from !== null) {
                         fFrom = this.getFormulaResult(this.from, oVarMap);
@@ -4396,16 +4691,16 @@
             }
         }
     };
-    CAnim.prototype.getVarMapForFmla = function (oAttributes) {
+    CAnim.prototype.getVarMapForFmla = function (oAttributes, sDrawingId) {
         return {
-            "#ppt_x": this.getOrigAttrVal("ppt_x"),
-            "#ppt_y": this.getOrigAttrVal("ppt_y"),
-            "#ppt_w": this.getOrigAttrVal("ppt_w"),
-            "#ppt_h": this.getOrigAttrVal("ppt_h"),
-            "ppt_x": oAttributes && AscFormat.isRealNumber(oAttributes["ppt_x"]) ? oAttributes["ppt_x"] : this.getOrigAttrVal("ppt_x"),
-            "ppt_y": oAttributes && AscFormat.isRealNumber(oAttributes["ppt_y"]) ? oAttributes["ppt_y"] : this.getOrigAttrVal("ppt_y"),
-            "ppt_w": oAttributes && AscFormat.isRealNumber(oAttributes["ppt_w"]) ? oAttributes["ppt_w"] : this.getOrigAttrVal("ppt_w"),
-            "ppt_h": oAttributes && AscFormat.isRealNumber(oAttributes["ppt_h"]) ? oAttributes["ppt_h"] : this.getOrigAttrVal("ppt_h"),
+            "#ppt_x": this.getOrigAttrVal("ppt_x", sDrawingId),
+            "#ppt_y": this.getOrigAttrVal("ppt_y", sDrawingId),
+            "#ppt_w": this.getOrigAttrVal("ppt_w", sDrawingId),
+            "#ppt_h": this.getOrigAttrVal("ppt_h", sDrawingId),
+            "ppt_x": oAttributes && AscFormat.isRealNumber(oAttributes["ppt_x"]) ? oAttributes["ppt_x"] : this.getOrigAttrVal("ppt_x", sDrawingId),
+            "ppt_y": oAttributes && AscFormat.isRealNumber(oAttributes["ppt_y"]) ? oAttributes["ppt_y"] : this.getOrigAttrVal("ppt_y", sDrawingId),
+            "ppt_w": oAttributes && AscFormat.isRealNumber(oAttributes["ppt_w"]) ? oAttributes["ppt_w"] : this.getOrigAttrVal("ppt_w", sDrawingId),
+            "ppt_h": oAttributes && AscFormat.isRealNumber(oAttributes["ppt_h"]) ? oAttributes["ppt_h"] : this.getOrigAttrVal("ppt_h", sDrawingId),
             "ppt_x_no_attr": !(oAttributes && AscFormat.isRealNumber(oAttributes["ppt_x"])),
             "ppt_y_no_attr": !(oAttributes && AscFormat.isRealNumber(oAttributes["ppt_y"])),
             "ppt_w_no_attr": !(oAttributes && AscFormat.isRealNumber(oAttributes["ppt_w"])),
@@ -4415,7 +4710,7 @@
     CAnim.prototype.getFormulaResult = function (sFormula, oVarMap) {
         return (new CFormulaParser(sFormula, oVarMap)).getResult();
     };
-    CAnim.prototype.calculateBetweenTwoVals = function (oVal1, oVal2, fRelTime, oAttributes) {
+    CAnim.prototype.calculateBetweenTwoVals = function (oVal1, oVal2, fRelTime, oAttributes, sDrawingId) {
         if (!oVal1 || !oVal2) {
             return null;
         }
@@ -4441,7 +4736,7 @@
             if (sStrVal1 === "hidden" || sStrVal1 === "visible") {
                 return sStrVal1;
             }
-            oVarMap = this.getVarMapForFmla(oAttributes);
+            oVarMap = this.getVarMapForFmla(oAttributes, sDrawingId);
             oVarMap["$"] = fRelTime;
             fVal1 = this.getFormulaResult(sStrVal1, oVarMap);
         }
@@ -4456,7 +4751,7 @@
             fVal2 = oVal2.intVal;
         }
         if (oVal2.isStr()) {
-            oVarMap = this.getVarMapForFmla(oAttributes);
+            oVarMap = this.getVarMapForFmla(oAttributes, sDrawingId);
             oVarMap["$"] = fRelTime;
             var sStrVal2 = oVal2.getVal();
             fVal2 = this.getFormulaResult(sStrVal2, oVarMap);
@@ -4642,37 +4937,37 @@
         this.xfrmType = pr;
     };
     CCBhvr.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.attrNameLst !== null) {
+        if (this.attrNameLst !== null && this.attrNameLst !== undefined) {
             oCopy.setAttrNameLst(this.attrNameLst.createDuplicate(oIdMap));
         }
-        if (this.cTn !== null) {
+        if (this.cTn !== null && this.cTn !== undefined) {
             oCopy.setCTn(this.cTn.createDuplicate(oIdMap));
         }
-        if (this.tgtEl !== null) {
+        if (this.tgtEl !== null && this.tgtEl !== undefined) {
             oCopy.setTgtEl(this.tgtEl.createDuplicate(oIdMap));
         }
-        if (this.accumulate !== null) {
+        if (this.accumulate !== null && this.accumulate !== undefined) {
             oCopy.setAccumulate(this.accumulate);
         }
-        if (this.additive !== null) {
+        if (this.additive !== null && this.additive !== undefined) {
             oCopy.setAdditive(this.additive);
         }
-        if (this.by !== null) {
+        if (this.by !== null && this.by !== undefined) {
             oCopy.setBy(this.by);
         }
-        if (this.from !== null) {
+        if (this.from !== null && this.from !== undefined) {
             oCopy.setFrom(this.from);
         }
-        if (this.override !== null) {
+        if (this.override !== null && this.override !== undefined) {
             oCopy.setOverride(this.override);
         }
-        if (this.rctx !== null) {
+        if (this.rctx !== null && this.rctx !== undefined) {
             oCopy.setRctx(this.rctx);
         }
-        if (this.to !== null) {
+        if (this.to !== null && this.to !== undefined) {
             oCopy.setTo(this.to);
         }
-        if (this.xfrmType !== null) {
+        if (this.xfrmType !== null && this.xfrmType	!== undefined) {
             oCopy.setXfrmType(this.xfrmType);
         }
     };
@@ -4743,6 +5038,18 @@
         }
         return null;
     };
+	CCBhvr.prototype.changeTargetObjectId = function (newId) {
+		if (this.tgtEl) {
+			return this.tgtEl.changeTargetObjectId(newId);
+		}
+		return null;
+	};
+	CCBhvr.prototype.getTargetTextOptions = function () {
+		if (this.tgtEl) {
+			return this.tgtEl.getTargetTextOptions();
+		}
+		return null;
+	};
     CCBhvr.prototype.getAttributes = function () {
         if (!this.attrNameLst) {
             return [];
@@ -4757,6 +5064,13 @@
             this.attrNameLst.push(oAttrName);
         }
     };
+
+		CCBhvr.prototype.isOverrideChildStyle = function () {
+			return this.override === TLOverrideChildStyle;
+		};
+	CCBhvr.prototype.isOverrideNormal = function () {
+		return this.override !== TLOverrideChildStyle;
+	};
 
 
     const RESTART_TYPE_ALWAYS = 0;
@@ -5048,88 +5362,88 @@
         if (AscCommon.isRealObject(this.childTnLst)) {
             oCopy.setChildTnLst(this.childTnLst.createDuplicate(oIdMap));
         }
-        if (this.endCondLst !== null) {
+        if (this.endCondLst !== null && this.endCondLst !== undefined) {
             oCopy.setEndCondLst(this.endCondLst.createDuplicate(oIdMap));
         }
-        if (this.endSync !== null) {
+        if (this.endSync !== null && this.endSync !== undefined) {
             oCopy.setEndSync(this.endSync.createDuplicate(oIdMap));
         }
-        if (this.iterate !== null) {
+        if (this.iterate !== null && this.iterate !== undefined) {
             oCopy.setIterate(this.iterate.createDuplicate(oIdMap));
         }
-        if (this.stCondLst !== null) {
+        if (this.stCondLst !== null && this.stCondLst !== undefined) {
             oCopy.setStCondLst(this.stCondLst.createDuplicate(oIdMap));
         }
-        if (this.subTnLst !== null) {
+        if (this.subTnLst !== null && this.subTnLst !== undefined) {
             oCopy.setSubTnLst(this.subTnLst.createDuplicate(oIdMap));
         }
-        if (this.accel !== null) {
+        if (this.accel !== null && this.accel !== undefined) {
             oCopy.setAccel(this.accel);
         }
-        if (this.afterEffect !== null) {
+        if (this.afterEffect !== null && this.afterEffect !== undefined) {
             oCopy.setAfterEffect(this.afterEffect);
         }
-        if (this.autoRev !== null) {
+        if (this.autoRev !== null && this.autoRev !== undefined) {
             oCopy.setAutoRev(this.autoRev);
         }
-        if (this.bldLvl !== null) {
+        if (this.bldLvl !== null && this.bldLvl !== undefined) {
             oCopy.setBldLvl(this.bldLvl);
         }
-        if (this.decel !== null) {
+        if (this.decel !== null && this.decel !== undefined) {
             oCopy.setDecel(this.decel);
         }
-        if (this.display !== null) {
+        if (this.display !== null && this.display !== undefined) {
             oCopy.setDisplay(this.display);
         }
-        if (this.dur !== null) {
+        if (this.dur !== null && this.dur !== undefined) {
             oCopy.setDur(this.dur);
         }
-        if (this.evtFilter !== null) {
+        if (this.evtFilter !== null && this.evtFilter !== undefined) {
             oCopy.setEvtFilter(this.evtFilter);
         }
-        if (this.fill !== null) {
+        if (this.fill !== null && this.fill !== undefined) {
             oCopy.setFill(this.fill);
         }
-        if (this.grpId !== null) {
+        if (this.grpId !== null && this.grpId !== undefined) {
             oCopy.setGrpId(this.grpId);
         }
-        if (this.id !== null) {
+        if (this.id !== null && this.id !== undefined) {
             oCopy.setId(this.id);
         }
-        if (this.masterRel !== null) {
+        if (this.masterRel !== null && this.masterRel !== undefined) {
             oCopy.setMasterRel(this.masterRel);
         }
-        if (this.nodePh !== null) {
+        if (this.nodePh !== null && this.nodePh !== undefined) {
             oCopy.setNodePh(this.nodePh);
         }
-        if (this.nodeType !== null) {
+        if (this.nodeType !== null && this.nodeType !== undefined) {
             oCopy.setNodeType(this.nodeType);
         }
-        if (this.presetClass !== null) {
+        if (this.presetClass !== null && this.presetClass !== undefined ) {
             oCopy.setPresetClass(this.presetClass);
         }
-        if (this.presetID !== null) {
+        if (this.presetID !== null && this.presetID !== undefined ) {
             oCopy.setPresetID(this.presetID);
         }
-        if (this.presetSubtype !== null) {
+        if (this.presetSubtype !== null && this.presetSubtype !== undefined ) {
             oCopy.setPresetSubtype(this.presetSubtype);
         }
-        if (this.repeatCount !== null) {
+        if (this.repeatCount !== null && this.repeatCount !== undefined ) {
             oCopy.setRepeatCount(this.repeatCount);
         }
-        if (this.repeatDur !== null) {
+        if (this.repeatDur !== null && this.repeatDur !== undefined ) {
             oCopy.setRepeatDur(this.repeatDur);
         }
-        if (this.restart !== null) {
+        if (this.restart !== null && this.restart !== undefined ) {
             oCopy.setRestart(this.restart);
         }
-        if (this.spd !== null) {
+        if (this.spd !== null && this.spd !== undefined ) {
             oCopy.setSpd(this.spd);
         }
-        if (this.syncBehavior !== null) {
+        if (this.syncBehavior !== null && this.syncBehavior !== undefined ) {
             oCopy.setSyncBehavior(this.syncBehavior);
         }
-        if (this.tmFilter !== null) {
+        if (this.tmFilter !== null && this.tmFilter !== undefined ) {
             oCopy.setTmFilter(this.tmFilter);
         }
     };
@@ -5307,51 +5621,28 @@
             this.setChildTnLst(new CChildTnLst());
         }
     };
-    CCTn.prototype.getDelayShift = function () {
-        if (this.nodeType === AscFormat.NODE_TYPE_AFTEREFFECT ||
-            this.nodeType === AscFormat.NODE_TYPE_WITHEFFECT) {
-            var oPrev = this.parent.getPreviousEffect();
-            if (oPrev && oPrev.cTn) {
-                var nShift = oPrev.cTn.getDelay(false);
-                if (this.nodeType === AscFormat.NODE_TYPE_AFTEREFFECT) {
-                    nShift += oPrev.cTn.getEffectDuration()
-                }
-                return nShift;
-            }
-        }
-        return 0;
-    };
-    CCTn.prototype.getDelay = function (bUseDelayShift) {
-        var delay = 0;
-        var aConds;
+    CCTn.prototype.getDelay = function () {
+        let delay = 0;
+        let aConds;
         if (this.stCondLst) {
             aConds = this.stCondLst.list;
-            for (var nCond = 0; nCond < aConds.length; ++nCond) {
+            for (let nCond = 0; nCond < aConds.length; ++nCond) {
                 if (aConds[nCond].delay !== null) {
                     delay = aConds[nCond].getDelayTime().getVal();
                     break;
                 }
             }
         }
-        var nDelayShift;
-        if (bUseDelayShift === false) {
-            nDelayShift = 0;
-        } else {
-            nDelayShift = this.getDelayShift();
-        }
-        delay = Math.max(0, delay - nDelayShift);
+        delay = Math.max(0, delay);
         return delay;
     };
-    CCTn.prototype.changeDelay = function (nDelay, bUseDelayShift) {
-        var nDelayShift;
-        if (bUseDelayShift === false) {
-            nDelayShift = 0;
-        } else {
-            nDelayShift = this.getDelayShift();
+    CCTn.prototype.changeDelay = function (nDelay) {
+        let nNewDelay = ((Math.max(0, nDelay) + 0.5) >> 0);
+        if(this.getDelay() === nNewDelay) {
+            return;
         }
-        var nNewDelay = ((Math.max(0, nDelay + nDelayShift) + 0.5) >> 0);
-        var sNewDelay = nNewDelay + "";
-        var aConds;
+        let sNewDelay = nNewDelay + "";
+        let aConds;
         if (!this.stCondLst) {
             this.setStCondLst(new CCondLst());
         }
@@ -5365,18 +5656,6 @@
         this.stCondLst.push(oCond);
         oCond.setDelay(sNewDelay);
     };
-    CCTn.prototype.resetDelayShift = function () {
-        var nDelayShift = this.getDelayShift();
-        if (nDelayShift > 0) {
-            this.changeDelay(this.getDelay(false) - this.getDelayShift(), false);
-        }
-    };
-    CCTn.prototype.setDelayShift = function () {
-        var nDelayShift = this.getDelayShift();
-        if (nDelayShift > 0) {
-            this.changeDelay(this.getDelay(false), true);
-        }
-    };
     CCTn.prototype.getEffectDuration = function () {
         var nDur = 0;
         var aChildren = this.childTnLst && this.childTnLst.list;
@@ -5387,7 +5666,7 @@
                 if (oDur.isSpecified()) {
 
                     var oAttr = oChild.getAttributesObject();
-                    var nDelay = oAttr.getDelay(false);
+                    var nDelay = oAttr.getDelay();
                     nDur = Math.max(nDur, oDur.getVal() + nDelay);
                 }
             }
@@ -5395,24 +5674,24 @@
         return nDur;
     };
     CCTn.prototype.changeEffectDuration = function (v) {
-        var dOldV = this.getEffectDuration();
-        var dCoef = null;
-        var v_ = Math.max(10, v);
+        let dOldV = this.getEffectDuration();
+        let dCoef = null;
+        let v_ = Math.max(10, v);
         if (dOldV > 0) {
             dCoef = v_ / dOldV;
             if (AscFormat.fApproxEqual(dCoef, 1.0)) {
                 return;
             }
         }
-        var bIsIndefinite = (v === AscFormat.untilNextSlide || v === AscFormat.untilNextClick);
-        var aChildren = this.childTnLst && this.childTnLst.list;
+        let bIsIndefinite = (v === AscFormat.untilNextSlide || v === AscFormat.untilNextClick);
+        let aChildren = this.childTnLst && this.childTnLst.list;
         if (aChildren) {
             for (var nChild = 0; nChild < aChildren.length; ++nChild) {
                 var oChild = aChildren[nChild];
                 var oDur = oChild.getDur();
                 if (oDur.isSpecified()) {
                     var oAttr = oChild.getAttributesObject();
-                    var nDelay = oAttr.getDelay(false);
+                    var nDelay = oAttr.getDelay();
                     if (bIsIndefinite) {
                         oAttr.setDur("indefinite");
                     } else if (dCoef !== null) {
@@ -5459,7 +5738,7 @@
     CCTn.prototype.changeRewind = function (v) {
         this.setFill(v === true ? NODE_FILL_REMOVE : NODE_FILL_HOLD);
     };
-    CCTn.prototype.getObjectId = function (v) {
+    CCTn.prototype.getObjectId = function () {
         var sObjectId = null;
         this.traverse(function (oChild) {
             if (oChild.isTimeNode() && (sObjectId = oChild.getTargetObjectId())) {
@@ -5564,7 +5843,6 @@
                 oPar2Lvl = oCurPar2Lvl;
                 oPar2Lvl.splice(nIdx2 + 1, 0, oPar3Lvl);
             }
-            oEffectNode.setDelayShift();
         }
         if (oCurPar3Lvl.getChildrenCount() === 0) {
             oCurPar3Lvl.parent.onRemoveChild(oCurPar3Lvl);
@@ -5636,6 +5914,22 @@
             }
         }
     };
+		CCTn.prototype.getIterationDelta = function () {
+			if (this.iterate) {
+				const nAbsTime = this.getEffectDuration();
+				return this.iterate.getIterationDelta(nAbsTime);
+			}
+			return null;
+		};
+	CCTn.prototype.getIterationType = function () {
+		if (this.iterate) {
+			return this.iterate.type;
+		}
+		return null;
+	};
+	CCTn.prototype.isNodePlaceholder = function () {
+		return !!this.nodePh;
+	};
 
 
     changesFactory[AscDFH.historyitem_CondRtn] = CChangeObject;
@@ -5723,19 +6017,19 @@
         this.evt = pr;
     };
     CCond.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.rtn !== null) {
+        if (this.rtn !== null && this.rtn !== undefined) {
             oCopy.setRtn(this.rtn);
         }
-        if (this.tgtEl !== null) {
+        if (this.tgtEl !== null && this.tgtEl !== undefined) {
             oCopy.setTgtEl(this.tgtEl.createDuplicate(oIdMap));
         }
-        if (this.tn !== null) {
+        if (this.tn !== null && this.tn !== undefined) {
             oCopy.setTn(this.tn);
         }
-        if (this.delay !== null) {
+        if (this.delay !== null && this.delay !== undefined) {
             oCopy.setDelay(this.delay);
         }
-        if (this.evt !== null) {
+        if (this.evt !== null && this.evt !== undefined) {
             oCopy.setEvt(this.evt);
         }
     };
@@ -5843,7 +6137,7 @@
     };
     CCond.prototype.createOnEndTrigger = function (oPlayer) {
         return this.createTimeNodeTrigger(oPlayer, function (oTimeNode) {
-            return oTimeNode.isFinished();
+            return oTimeNode.isAtEnd();
         });
     };
     CCond.prototype.fillTrigger = function (oPlayer, oTrigger) {
@@ -5897,12 +6191,7 @@
             }
         }
     };
-    CCond.prototype.getTargetObjectId = function () {
-        if (this.tgtEl) {
-            return this.tgtEl.getSpId();
-        }
-        return null;
-    };
+
 
     changesFactory[AscDFH.historyitem_RtnVal] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_RtnVal] = function (oClass, value) {
@@ -5956,16 +6245,16 @@
         this.setParentToChild(pr);
     };
     CTgtEl.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.inkTgt !== null) {
+        if (this.inkTgt !== null && this.inkTgt !== undefined) {
             oCopy.setInkTgt(this.inkTgt.createDuplicate(oIdMap));
         }
-        if (this.sldTgt !== null) {
+        if (this.sldTgt !== null && this.sldTgt !== undefined) {
             oCopy.setSldTgt(this.sldTgt.createDuplicate(oIdMap));
         }
-        if (this.sndTgt !== null) {
+        if (this.sndTgt !== null && this.sndTgt !== undefined) {
             oCopy.setSndTgt(this.sndTgt.createDuplicate(oIdMap));
         }
-        if (this.spTgt !== null) {
+        if (this.spTgt !== null && this.spTgt !== undefined) {
             oCopy.setSpTgt(this.spTgt.createDuplicate(oIdMap));
         }
     };
@@ -6033,6 +6322,30 @@
         }
         return null;
     };
+    CTgtEl.prototype.changeTargetObjectId = function (newId) {
+        if (this.spTgt) {
+            return this.spTgt.setSpid(newId);
+        }
+    };
+	CTgtEl.prototype.getTargetTextOptions = function () {
+		if (this.spTgt) {
+			return this.spTgt.getTargetTextOptions();
+		}
+		return null;
+	};
+    CTgtEl.prototype.isValid = function () {
+        if(!this.spTgt) {
+            return false;
+        }
+        let oSp = AscCommon.g_oTableId.Get_ById(this.spTgt.getTargetObject());
+        if(!oSp) {
+            return false;
+        }
+        if(!isDrawingOnSlide(oSp)) {
+            return false;
+        }
+        return true;
+    };
 
 
     changesFactory[AscDFH.historyitem_SndTgtEmbed] = CChangeLong;
@@ -6069,13 +6382,13 @@
         this.builtIn = pr;
     };
     CSndTgt.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.embed !== null) {
+        if (this.embed !== null && this.embed !== undefined) {
             oCopy.setEmbed(this.embed);
         }
-        if (this.name !== null) {
+        if (this.name !== null && this.name !== undefined) {
             oCopy.setName(this.name);
         }
-        if (this.builtIn !== null) {
+        if (this.builtIn !== null && this.builtIn !== undefined) {
             oCopy.setBuiltIn(this.builtIn);
         }
     };
@@ -6110,6 +6423,20 @@
         oClass.txEl = value;
     };
 
+    function isDrawingOnSlide(oDrawing) {
+        if(!oDrawing) return false;
+        let oSlide = oDrawing.parent;
+        if(!oSlide) return false;
+        let aSpTree = oSlide.cSld && oSlide.cSld.spTree;
+        if(!Array.isArray(aSpTree)) return false;
+        for(let nSp = 0; nSp < aSpTree.length; ++nSp) {
+            if(aSpTree[nSp] === oDrawing) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     function CSpTgt() {
         CObjectTarget.call(this);
         this.bg = null;
@@ -6143,7 +6470,8 @@
     };
     CSpTgt.prototype.assignConnection = function (oObjectsMap) {
         if (this.spid !== null) {
-            if (AscCommon.isRealObject(oObjectsMap[this.spid])) {
+            let oSp = oObjectsMap[this.spid];
+            if (AscCommon.isRealObject(oSp) && isDrawingOnSlide(oSp)) {
                 this.setSpid(oObjectsMap[this.spid].Id);
             } else {
                 if (this.parent) {
@@ -6165,6 +6493,12 @@
         for (let nSp = 0; nSp < aSpTree.length; ++nSp) {
             let oSp = aSpTree[nSp];
             if (oSp.getFormatIdString() === this.spid) {
+                if(!isDrawingOnSlide(oSp)) {
+                    if (this.parent) {
+                        this.parent.onRemoveChild(this);
+                    }
+                    return;
+                }
                 this.setSpid(oSp.Id);
                 return;
             }
@@ -6193,23 +6527,23 @@
     };
     CSpTgt.prototype.fillObject = function (oCopy, oIdMap) {
         CObjectTarget.prototype.fillObject.call(this, oCopy, oIdMap);
-        if (this.bg !== null) {
+        if (this.bg !== null && this.bg !== undefined) {
             oCopy.setBg(this.bg);
         }
-        if (this.graphicEl !== null) {
+        if (this.graphicEl !== null && this.graphicEl !== undefined) {
             oCopy.setGraphicEl(this.graphicEl.createDuplicate(oIdMap));
         }
-        if (this.oleChartEl !== null) {
+        if (this.oleChartEl !== null && this.oleChartEl !== undefined) {
             oCopy.setOleChartEl(this.oleChartEl.createDuplicate(oIdMap));
         }
-        if (this.subSpId !== null) {
+        if (this.subSpId !== null && this.subSpId !== undefined) {
             var sId = this.subSpId;
             if (oIdMap && oIdMap[this.subSpId]) {
                 sId = oIdMap[this.subSpId];
             }
             oCopy.setSubSpId(sId);
         }
-        if (this.txEl !== null) {
+        if (this.txEl !== null && this.txEl !== undefined) {
             oCopy.setTxEl(this.txEl.createDuplicate(oIdMap));
         }
     };
@@ -6271,6 +6605,17 @@
             }
         }
     };
+	CSpTgt.prototype.handleRemoveContent = function (sObjectId) {
+		if (this.spid === sObjectId) {
+			if (this.txEl) {
+				const oTargetObject = AscCommon.g_oTableId.Get_ById(sObjectId);
+				this.txEl.handleRemoveContent(oTargetObject);
+			}
+		}
+	};
+		CSpTgt.prototype.getTargetTextOptions = function () {
+			return this.txEl;
+		};
 
     changesFactory[AscDFH.historyitem_IterateDataTmAbs] = CChangeString;
     changesFactory[AscDFH.historyitem_IterateDataTmPct] = CChangeLong;
@@ -6315,16 +6660,16 @@
         this.type = pr;
     };
     CIterateData.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.tmAbs !== null) {
+        if (this.tmAbs !== null && this.tmAbs !== undefined) {
             oCopy.setTmAbs(this.tmAbs);
         }
-        if (this.tmPct !== null) {
+        if (this.tmPct !== null && this.tmPct !== undefined) {
             oCopy.setTmPct(this.tmPct);
         }
-        if (this.backwards !== null) {
+        if (this.backwards !== null && this.backwards !== undefined) {
             oCopy.setBackwards(this.backwards);
         }
-        if (this.type !== null) {
+        if (this.type !== null && this.type !== undefined) {
             oCopy.setType(this.type);
         }
     };
@@ -6346,6 +6691,17 @@
     CIterateData.prototype.readChild = function (nType, pReader) {
         pReader.stream.SkipRecord();
     };
+	CIterateData.prototype.getIterationDelta = function (nAbsTime) {
+			if (this.tmPct !== null) {
+				return this.tmPct / 100000;
+			} else if (this.tmAbs) {
+				if (nAbsTime === 0) {
+					return 0;
+				}
+				return this.tmAbs / nAbsTime;
+			}
+			return null;
+		};
 
     changesFactory[AscDFH.historyitem_TavVal] = CChangeObject;
     changesFactory[AscDFH.historyitem_TavFmla] = CChangeString;
@@ -6382,13 +6738,13 @@
         this.tm = pr;
     };
     CTav.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.val !== null) {
+        if (this.val !== null && this.val !== undefined) {
             oCopy.setVal(this.val.createDuplicate(oIdMap));
         }
-        if (this.fmla !== null) {
+        if (this.fmla !== null && this.fmla !== undefined) {
             oCopy.setFmla(this.fmla);
         }
-        if (this.tm !== null) {
+        if (this.tm !== null && this.tm !== undefined) {
             oCopy.setTm(this.tm);
         }
     };
@@ -6488,19 +6844,19 @@
         this.strVal = pr;
     };
     CAnimVariant.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.boolVal !== null) {
+        if (this.boolVal !== null && this.boolVal !== undefined) {
             oCopy.setBoolVal(this.boolVal);
         }
-        if (this.clrVal !== null) {
+        if (this.clrVal !== null && this.clrVal !== undefined) {
             oCopy.setClrVal(this.clrVal.createDuplicate());
         }
-        if (this.fltVal !== null) {
+        if (this.fltVal !== null && this.fltVal !== undefined) {
             oCopy.setFltVal(this.fltVal);
         }
-        if (this.intVal !== null) {
+        if (this.intVal !== null && this.intVal !== undefined) {
             oCopy.setIntVal(this.intVal);
         }
-        if (this.strVal !== null) {
+        if (this.strVal !== null && this.strVal !== undefined) {
             oCopy.setStrVal(this.strVal);
         }
     };
@@ -6712,25 +7068,25 @@
         this.dir = pr;
     };
     CAnimClr.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.byRGB !== null) {
+        if (this.byRGB !== null && this.byRGB !== undefined) {
             oCopy.setByRGB(this.byRGB.createDuplicate(oIdMap));
         }
-        if (this.byHSL !== null) {
+        if (this.byHSL !== null && this.byHSL !== undefined) {
             oCopy.setByHSL(this.byHSL.createDuplicate(oIdMap));
         }
-        if (this.cBhvr !== null) {
+        if (this.cBhvr !== null && this.cBhvr !== undefined) {
             oCopy.setCBhvr(this.cBhvr.createDuplicate(oIdMap));
         }
-        if (this.from !== null) {
+        if (this.from !== null && this.from !== undefined) {
             oCopy.setFrom(this.from.createDuplicate(oIdMap));
         }
-        if (this.to !== null) {
+        if (this.to !== null && this.to !== undefined) {
             oCopy.setTo(this.to.createDuplicate(oIdMap));
         }
-        if (this.clrSpc !== null) {
+        if (this.clrSpc !== null && this.clrSpc !== undefined) {
             oCopy.setClrSpc(this.clrSpc);
         }
-        if (this.dir !== null) {
+        if (this.dir !== null && this.dir !== undefined) {
             oCopy.setDir(this.dir);
         }
     };
@@ -6814,8 +7170,20 @@
     CAnimClr.prototype.isAllowedAttribute = function (sAttrName) {
         return sAttrName === "style.color" || sAttrName === "fillcolor" || sAttrName === "stroke.color";
     };
-    CAnimClr.prototype.calculateAttributes = function (nElapsedTime, oAttributes) {
-        var oTargetObject = this.getTargetObject();
+		CAnimClr.prototype.isForceDrawingAnimation = function () {
+			if (this.cBhvr) {
+				return this.cBhvr.isOverrideNormal();
+			}
+			return false;
+		};
+	CAnimClr.prototype.isForceTextAnimation = function () {
+		if (this.cBhvr) {
+			return this.cBhvr.isOverrideChildStyle();
+		}
+		return false;
+	};
+    CAnimClr.prototype.calculateAttributes = function (nElapsedTime, oAttributes, sDrawingId) {
+        var oTargetObject = this.getTargetObject(sDrawingId);
         if (!oTargetObject) {
             return;
         }
@@ -6836,14 +7204,32 @@
         } else {
             var oBrush;
             if (sFirstAttrName === "stroke.color") {
-                var oPen = this.getTargetObjectPen();
-                oBrush = oPen && oPen.Fill || AscFormat.CreateUnfilFromRGB(0, 0, 0);
+                var oPen = this.getTargetObjectPen(oTargetObject);
+                oBrush = oPen && oPen.Fill;
+								if (!oBrush || oBrush.isNoFill()) {
+									if (this.clrSpc === TLColorSpaceRGB) {
+										oBrush = AscFormat.CreateUnfilFromRGB(0, 0, 0);
+									} else {
+										return;
+									}
+								}
             } else {
-                oBrush = this.getTargetObjectBrush();
+                oBrush = this.getTargetObjectBrush(oTargetObject);
+								if (!oBrush || oBrush.isNoFill()) {
+									if (this.clrSpc === TLColorSpaceRGB) {
+										oBrush = AscFormat.CreateUniFillByUniColor(AscFormat.CreateUniColorRGB(255, 255, 255));
+										oBrush.fill.color.RGBA.R = 255;
+										oBrush.fill.color.RGBA.G = 255;
+										oBrush.fill.color.RGBA.B = 255;
+										oBrush.fill.color.RGBA.A = 255;
+									} else {
+										return;
+									}
+								}
             }
 
             if (oBrush) {
-                oStartRGBColor = oBrush.getRGBAColor();
+                oStartRGBColor = oBrush.getStartAnimRGBA();
                 oStartUniColor = AscFormat.CreateUniColorRGB(oStartRGBColor.R, oStartRGBColor.G, oStartRGBColor.B);
             } else {
                 oStartUniColor = AscFormat.CreateUniColorRGB(255, 255, 255);
@@ -6867,7 +7253,7 @@
                 oEndRGBColor.B = oStartRGBColor.B * (1 + this.byRGB.c3 / 100000);
                 oEndRGBColor.B = Math.min(255, Math.max(0, oStartRGBColor.B));
             } else if (this.byHSL) {
-                fRelTime = this.getRelativeTime(nElapsedTime);
+                fRelTime = this.getRelativeTime(nElapsedTime, sDrawingId);
                 var oStartHSL = this.toFormatHSLColor(oStartRGBColor);
                 var oResultHSL = {};
 
@@ -6892,7 +7278,7 @@
             oEndUniColor = AscFormat.CreateUniColorRGB(oEndRGBColor.R, oEndRGBColor.G, oEndRGBColor.B);
         }
 
-        fRelTime = this.getRelativeTime(nElapsedTime);
+        fRelTime = this.getRelativeTime(nElapsedTime, sDrawingId);
         oAttributes[sFirstAttrName] = this.getAnimatedClr(fRelTime, oStartUniColor, oEndUniColor);
     };
 
@@ -6919,7 +7305,7 @@
         oHSL.L = Math.min(255, Math.max(0, 255 * (oFormatHSL.L + 100000) / 200000));
         var oRGBColor = {R: 255, G: 255, B: 255, A: 255};
         var oColorModifiers = new AscFormat.CColorModifiers();
-        oColorModifiers.HSL2RGB(oHSL, oRGBColor);
+        oColorModifiers.HSL2RGB(oHSL, oRGBColor, true);
         return oRGBColor;
     };
     CAnimClr.prototype.alignNumber = function (dVal, dMax) {
@@ -6992,19 +7378,19 @@
         this.transition = pr;
     };
     CAnimEffect.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.cBhvr !== null) {
+        if (this.cBhvr !== null && this.cBhvr !== undefined) {
             oCopy.setCBhvr(this.cBhvr.createDuplicate(oIdMap));
         }
-        if (this.progress !== null) {
+        if (this.progress !== null && this.progress !== undefined) {
             oCopy.setProgress(this.progress.createDuplicate(oIdMap));
         }
-        if (this.filter !== null) {
+        if (this.filter !== null && this.filter !== undefined) {
             oCopy.setFilter(this.filter);
         }
-        if (this.prLst !== null) {
+        if (this.prLst !== null && this.prLst !== undefined) {
             oCopy.setPrLst(this.prLst);
         }
-        if (this.transition !== null) {
+        if (this.transition !== null && this.transition !== undefined) {
             oCopy.setTransition(this.transition);
         }
     };
@@ -7045,14 +7431,17 @@
     CAnimEffect.prototype.getChildren = function () {
         return [this.cBhvr, this.progress];
     };
-    CAnimEffect.prototype.calculateAttributes = function (nElapsedTime, oAttributes) {
+    CAnimEffect.prototype.isRemoveAfterFill = function () {
+        return true;
+    };
+    CAnimEffect.prototype.calculateAttributes = function (nElapsedTime, oAttributes, sDrawingId) {
         if (!this.filter) {
             return;
         }
         if (this.checkRemoveAtEnd()) {
             return;
         }
-        var fRelTime = this.getRelativeTime(nElapsedTime);
+        var fRelTime = this.getRelativeTime(nElapsedTime, sDrawingId);
         // if(this.transition === TRANSITION_TYPE_IN) {
         //     fRelTime = 1 - fRelTime;
         // }
@@ -7222,34 +7611,34 @@
         this.rAng = pr;
     };
     CAnimMotion.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.by !== null) {
+        if (this.by !== null && this.by !== undefined) {
             oCopy.setBy(this.by.createDuplicate(oIdMap));
         }
-        if (this.cBhvr !== null) {
+        if (this.cBhvr !== null && this.cBhvr !== undefined) {
             oCopy.setCBhvr(this.cBhvr.createDuplicate(oIdMap));
         }
-        if (this.from !== null) {
+        if (this.from !== null && this.from !== undefined) {
             oCopy.setFrom(this.from.createDuplicate(oIdMap));
         }
-        if (this.rCtr !== null) {
+        if (this.rCtr !== null && this.rCtr !== undefined) {
             oCopy.setRCtr(this.rCtr.createDuplicate(oIdMap));
         }
-        if (this.to !== null) {
+        if (this.to !== null && this.to !== undefined) {
             oCopy.setTo(this.to.createDuplicate(oIdMap));
         }
-        if (this.origin !== null) {
+        if (this.origin !== null && this.origin !== undefined) {
             oCopy.setOrigin(this.origin);
         }
-        if (this.path !== null) {
+        if (this.path !== null && this.path !== undefined) {
             oCopy.setPath(this.path);
         }
-        if (this.pathEditMode !== null) {
+        if (this.pathEditMode !== null && this.pathEditMode !== undefined) {
             oCopy.setPathEditMode(this.pathEditMode);
         }
-        if (this.ptsTypes !== null) {
+        if (this.ptsTypes !== null && this.ptsTypes !== undefined) {
             oCopy.setPtsTypes(this.ptsTypes);
         }
-        if (this.rAng !== null) {
+        if (this.rAng !== null && this.rAng !== undefined) {
             oCopy.setRAng(this.rAng);
         }
     };
@@ -7354,8 +7743,8 @@
         }
         return ORIGIN_PARENT;
     };
-    CAnimMotion.prototype.calculateAttributes = function (nElapsedTime, oAttributes) {
-        var oTargetObject = this.getTargetObject();
+    CAnimMotion.prototype.calculateAttributes = function (nElapsedTime, oAttributes, sDrawingId) {
+        var oTargetObject = this.getTargetObject(sDrawingId);
         if (!oTargetObject) {
             return;
         }
@@ -7363,7 +7752,7 @@
             return;
         }
         var nOrigin = this.getOrigin();
-        var fRelTime = this.getRelativeTime(nElapsedTime);
+        var fRelTime = this.getRelativeTime(nElapsedTime, sDrawingId);
         var dPosX = null, dPosY = null;
         var dRelX = null, dRelY = null;
         var oBounds = oTargetObject.getBoundsByDrawing();
@@ -7793,16 +8182,16 @@
         this.to = pr;
     };
     CAnimRot.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.cBhvr !== null) {
+        if (this.cBhvr !== null && this.cBhvr !== undefined) {
             oCopy.setCBhvr(this.cBhvr.createDuplicate(oIdMap));
         }
-        if (this.by !== null) {
+        if (this.by !== null && this.by !== undefined) {
             oCopy.setBy(this.by);
         }
-        if (this.from !== null) {
+        if (this.from !== null && this.from !== undefined) {
             oCopy.setFrom(this.from);
         }
-        if (this.to !== null) {
+        if (this.to !== null && this.to !== undefined) {
             oCopy.setTo(this.to);
         }
     };
@@ -7836,15 +8225,15 @@
     CAnimRot.prototype.getChildren = function () {
         return [this.cBhvr];
     };
-    CAnimRot.prototype.calculateAttributes = function (nElapsedTime, oAttributes) {
-        var oTargetObject = this.getTargetObject();
+    CAnimRot.prototype.calculateAttributes = function (nElapsedTime, oAttributes, sDrawingId) {
+        var oTargetObject = this.getTargetObject(sDrawingId);
         if (!oTargetObject) {
             return;
         }
         if (this.checkRemoveAtEnd()) {
             return;
         }
-        var fRelTime = this.getRelativeTime(nElapsedTime);
+        var fRelTime = this.getRelativeTime(nElapsedTime, sDrawingId);
         var dR = null;
         if (this.to && this.from) {
             dR = this.from + (this.to - this.from) & fRelTime;
@@ -7927,19 +8316,19 @@
         this.zoomContents = pr;
     };
     CAnimScale.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.cBhvr !== null) {
+        if (this.cBhvr !== null && this.cBhvr !== undefined) {
             oCopy.setCBhvr(this.cBhvr.createDuplicate(oIdMap));
         }
-        if (this.by !== null) {
+        if (this.by !== null && this.by !== undefined) {
             oCopy.setBy(this.by.createDuplicate(oIdMap));
         }
-        if (this.from !== null) {
+        if (this.from !== null && this.from !== undefined) {
             oCopy.setFrom(this.from.createDuplicate(oIdMap));
         }
-        if (this.to !== null) {
+        if (this.to !== null && this.to !== undefined) {
             oCopy.setTo(this.to.createDuplicate(oIdMap));
         }
-        if (this.zoomContents !== null) {
+        if (this.zoomContents !== null && this.zoomContents !== undefined) {
             oCopy.setZoomContents(this.zoomContents);
         }
     };
@@ -8008,15 +8397,15 @@
     CAnimScale.prototype.getChildren = function () {
         return [this.cBhvr];
     };
-    CAnimScale.prototype.calculateAttributes = function (nElapsedTime, oAttributes) {
-        var oTargetObject = this.getTargetObject();
+    CAnimScale.prototype.calculateAttributes = function (nElapsedTime, oAttributes, sDrawingId) {
+        var oTargetObject = this.getTargetObject(sDrawingId);
         if (!oTargetObject) {
             return;
         }
         if (this.checkRemoveAtEnd()) {
             return;
         }
-        var fRelTime = this.getRelativeTime(nElapsedTime);
+        var fRelTime = this.getRelativeTime(nElapsedTime, sDrawingId);
         var dRelX = null, dRelY = null;
         if (this.to && this.from) {
             dRelX = (this.from.x + (this.to.x - this.from.x) * fRelTime) / 100000;
@@ -8065,10 +8454,10 @@
         this.isNarration = pr;
     };
     CAudio.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.cMediaNode !== null) {
+        if (this.cMediaNode !== null && this.cMediaNode !== undefined) {
             oCopy.setCMediaNode(this.cMediaNode.createDuplicate(oIdMap));
         }
-        if (this.isNarration !== null) {
+        if (this.isNarration !== null && this.isNarration !== undefined) {
             oCopy.setIsNarration(this.isNarration);
         }
     };
@@ -8161,22 +8550,22 @@
         this.vol = pr;
     };
     CCMediaNode.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.cTn !== null) {
+        if (this.cTn !== null && this.cTn !== undefined) {
             oCopy.setCTn(this.cTn.createDuplicate(oIdMap));
         }
-        if (this.tgtEl !== null) {
+        if (this.tgtEl !== null && this.tgtEl !== undefined) {
             oCopy.setTgtEl(this.tgtEl.createDuplicate(oIdMap));
         }
-        if (this.mute !== null) {
+        if (this.mute !== null && this.mute !== undefined) {
             oCopy.setMute(this.mute);
         }
-        if (this.numSld !== null) {
+        if (this.numSld !== null && this.numSld !== undefined) {
             oCopy.setNumSld(this.numSld);
         }
-        if (this.showWhenStopped !== null) {
+        if (this.showWhenStopped !== null && this.showWhenStopped !== undefined) {
             oCopy.setShowWhenStopped(this.showWhenStopped);
         }
-        if (this.vol !== null) {
+        if (this.vol !== null && this.vol !== undefined) {
             oCopy.setVol(this.vol);
         }
     };
@@ -8254,13 +8643,13 @@
         this.type = pr;
     };
     CCmd.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.cBhvr !== null) {
+        if (this.cBhvr !== null && this.cBhvr !== undefined) {
             oCopy.setCBhvr(this.cBhvr.createDuplicate(oIdMap));
         }
-        if (this.cmd !== null) {
+        if (this.cmd !== null && this.cmd !== undefined) {
             oCopy.setCmd(this.cmd);
         }
-        if (this.type !== null) {
+        if (this.type !== null && this.type !== undefined) {
             oCopy.setType(this.type);
         }
     };
@@ -8292,26 +8681,92 @@
         return [this.cBhvr];
     };
 
+    CCmd.prototype.getMediaData = function () {
+        //cmd
+        /*{
+        id: sId, //drawing id
+        name: sMediaName,//name of media file
+        fullScreen: bFullScreen, //show on fullscreen or not
+        mute: false,
+        vol: 100,
+        video: true
+        }*/
+
+        let oSp = this.getTargetObject();
+        if(!oSp) {
+            return null;
+        }
+
+
+        let oData = oSp.getMediaData();
+        if(!oData) {
+            return null;
+        }
+        let sId = oSp.GetId();
+        let oRoot = this.getRoot();//find video node with video
+        if(oRoot) {
+            let oMediaNode = null;
+            oRoot.traverseTimeNodes(function (oNode) {
+                if(oNode.isVideo() || oNode.isAudio()) {
+                    let oMedia = oNode.cMediaNode;
+                    if(sId === oMedia.getTargetObjectId()) {
+                        oMediaNode = oNode;
+                        return true;
+                    }
+                }
+            });
+            if(oMediaNode) {
+                let oPr = oMediaNode.cMediaNode;
+                let oAdditionalData = new CAdditionalMediaData();
+                oAdditionalData.fullScreen = !!oPr.fullScrn;
+                oAdditionalData.mute = !!oPr.mute;
+                oAdditionalData.vol = oPr.vol !== null ? oPr.vol : null;
+                oAdditionalData.video = oMediaNode.isVideo();
+                oData.setAdditionalData(oAdditionalData);
+
+            }
+        }
+        return oData;
+    };
     CCmd.prototype.setState = function (nState) {
         CTimeNodeBase.prototype.setState.call(this, nState);
         if (nState === TIME_NODE_STATE_ACTIVE) {
-            var sCmd = this.cmd;
-            if (sCmd) {
-                if (sCmd.indexOf("play") || sCmd === "resume" || sCmd === "togglePause") {
-                    var oSp = this.getTargetObject();
-                    if (oSp) {
-                        var sMediaName = oSp.getMediaFileName();
-                        if (sMediaName) {
-                            var oApi = Asc.editor || editor;
-                            if (oApi && oApi.showVideoControl) {
-                                oApi.showVideoControl(sMediaName, oSp.extX, oSp.extY, oSp.transform);
-                            }
+            if(this.type === TLCommandTypeCall) {
+                var sCmd = this.cmd;
+                if (sCmd) {
+                    if (sCmd.indexOf("play") ||
+                        sCmd === "pause" ||
+                        sCmd === "resume" ||
+                        sCmd === "stop" ||
+                        sCmd === "togglePause") {
+                        let oMediaData = this.getMediaData();
+                        if(oMediaData) {
+                            Asc.editor.callMediaPlayerCommand(sCmd, oMediaData);
                         }
                     }
                 }
             }
         }
-        //this.logState("SET STATE:");
+    };
+
+
+    function CAdditionalMediaData() {
+        this.fullScreen = null;
+        this.mute = null;
+        this.vol = null;
+        this.video = null;
+    }
+    CAdditionalMediaData.prototype.isFullScreen = function () {
+        return this.fullScreen === true;
+    };
+    CAdditionalMediaData.prototype.isMute = function () {
+        return this.mute === true;
+    };
+    CAdditionalMediaData.prototype.getVol = function () {
+        return this.vol;
+    };
+    CAdditionalMediaData.prototype.isVideo = function () {
+        return this.video !== false;
     };
 
     changesFactory[AscDFH.historyitem_TimeNodeContainerCTn] = CChangeObject;
@@ -8336,13 +8791,17 @@
     }
 
     InitClass(CTimeNodeContainer, CTimeNodeBase, AscDFH.historyitem_type_TimeNodeContainer);
+	CTimeNodeContainer.prototype.isUntilEffect = function () {
+		return this.asc_getRepeatCount() === AscFormat.untilNextClick ||
+			this.asc_getRepeatCount() === AscFormat.untilNextSlide;
+	};
     CTimeNodeContainer.prototype.setCTn = function (pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_TimeNodeContainerCTn, this.cTn, pr));
         this.cTn = pr;
         this.setParentToChild(pr);
     };
     CTimeNodeContainer.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.cTn !== null) {
+        if (this.cTn !== null && this.cTn !== undefined) {
             oCopy.setCTn(this.cTn.createDuplicate(oIdMap));
         }
         if (this.selected) {
@@ -8397,13 +8856,26 @@
     CTimeNodeContainer.prototype.getIndexInSequence = function () {
         var aHierarchy = this.getHierarchy();
         if (aHierarchy[1] && aHierarchy[2]) {
-            return aHierarchy[1].getChildNodeIdx(aHierarchy[2]);
+            let nResultIdx = aHierarchy[1].getChildNodeIdx(aHierarchy[2]);
+            let oFirstEffectContainer = aHierarchy[1].getChildNode(0);
+            if(oFirstEffectContainer) {
+                let aEffects = oFirstEffectContainer.getAllEffects();
+                let oFirstEffect = aEffects[0];
+                if(!oFirstEffect || oFirstEffect.isWithEffect()) {
+                    nResultIdx -= 1;
+                }
+            }
+            return nResultIdx + 1;
         }
         return -1;
     };
     CTimeNodeContainer.prototype.getLabelFillColor = function () {
 
     };
+	CTimeNodeContainer.prototype.getEffectsCount = function () {
+		return this.getAllEffects().length;
+	};
+
     CTimeNodeContainer.prototype.getLabelRect = function () {
         var oTiming = this.getTiming();
         if (!oTiming) {
@@ -8455,111 +8927,133 @@
     };
     const ICON_TRIGGER = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTEiIGhlaWdodD0iMTQiIHZpZXdCb3g9IjAgMCAxMSAxNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTEgMEg1TDAgN0g0TDAgMTRMMTEgNUg2TDExIDBaIiBmaWxsPSIjNDQ0NDQ0Ii8+PC9zdmc+";
 
-    CTimeNodeContainer.prototype.internalDrawEffectLabel = function (oGraphics) {
-        var oRect = this.getLabelRect();
-        if (!oRect) {
-            return;
-        }
-        AscFormat.ExecuteNoHistory(function () {
-            var dX, dY, dW, dH;
-            dX = oRect.l;
-            dY = oRect.t;
-            dW = oRect.w;
-            dH = oRect.h;
+	CTimeNodeContainer.prototype.drawLabelText = function (sText, oGraphics, oRectLabel) {
+		const oWrapper = this.getLabelWrapper(sText);
+		const oApi = Asc.editor;
+		if (oWrapper && oApi) {
+			const nScaleValue = 1 / (oApi.WordControl.getZoomValue());
+			const oT = new AscCommon.CMatrix();
+			oT.sx = nScaleValue;
+			oT.sy = nScaleValue;
+			oT.tx = oRectLabel.l + (oRectLabel.w / 2 - (oWrapper.bounds.x + oWrapper.bounds.w / 2) * nScaleValue);
+			oT.ty = oRectLabel.t + (oRectLabel.h / 2 - (oWrapper.bounds.y + oWrapper.bounds.h / 2) * nScaleValue);
+			oWrapper.transform = oT;
 
-            if (oGraphics.IsSlideBoundsCheckerType) {
-                oGraphics.rect(dX, dY, dW, dH);
-                return;
-            }
-            var oContext = oGraphics.m_oContext;
-            var oFullTr = oGraphics.m_oFullTransform;
-            var oT = oGraphics.m_oCoordTransform;
-            if (!oContext || !oFullTr || !oT) {
-                return;
-            }
+			const bOldViewMode = oApi.isViewMode;
+			const bOldMarks = oApi.ShowParaMarks;
+			oApi.isViewMode = true;
+			oApi.ShowParaMarks = false;
+			oWrapper.draw(oGraphics);
+			oApi.isViewMode = bOldViewMode;
+			oApi.ShowParaMarks = bOldMarks;
+		}
+	};
+	CTimeNodeContainer.prototype.getLabelWrapper = function (sText) {
+		return AscFormat.ExecuteNoHistory(function () {
+			const oApi = Asc.editor;
+			const oLogicDocument = oApi && oApi.getLogicDocument();
+			if (!oLogicDocument) {
+				return;
+			}
+			if (!oLogicDocument.cachedAnimationLabelText[sText]) {
+				const oSp = new AscFormat.CShape();
+				oSp.setBDeleted(false);
+				oSp.extX = ANIM_LABEL_WIDTH_PIX * g_dKoef_pix_to_mm;
+				oSp.extY = ANIM_LABEL_HEIGHT_PIX * g_dKoef_pix_to_mm;
+				oSp.createTextBody();
+				const oBodyPr = new AscFormat.CBodyPr();
+				oBodyPr.setInsets(0, 0, 0, 0);
+				oSp.txBody.setBodyPr(oBodyPr);
+				const oContent = oSp.txBody.content;
+				oSp.txBody.replaceContentFitText(sText);
+				oContent.ApplyToAll = true;
+				oContent.AddToParagraph(new AscCommonWord.ParaTextPr({
+					FontSize  : 8,
+					FontFamily: {Name: "Arial", Index: -1},
+					Color     : AscWord.BLACK_COLOR
+				}), false);
+				oContent.ApplyToAll = false;
+				oSp.recalculateContent();
+				const oDocStructure = oSp.getDocStructure();
+				const oWrapper = new AscCommonSlide.CObjectForDrawArrayWrapper(oDocStructure.m_aContent[0].m_aContent[0].m_aContent, oSp.transformText);
+				oLogicDocument.cachedAnimationLabelText[sText] = oWrapper;
+			}
+			return oLogicDocument.cachedAnimationLabelText[sText];
+		}, this, []);
+	};
+	CTimeNodeContainer.prototype.internalDrawEffectLabel = function (oGraphics) {
+		let oRect = this.getLabelRect();
+		if (!oRect) {
+			return;
+		}
+		AscFormat.ExecuteNoHistory(function () {
+			let dX, dY, dW, dH;
+			dX = oRect.l;
+			dY = oRect.t;
+			dW = oRect.w;
+			dH = oRect.h;
 
-            oGraphics.SaveGrState();
+			if (oGraphics.isBoundsChecker()) {
+				oGraphics.rect(dX, dY, dW, dH);
+				return;
+			}
+			var sObjectId = this.getObjectId();
+			var oObject = AscCommon.g_oTableId.Get_ById(sObjectId);
+			if (!oObject) {
+				return null;
+			}
+			oGraphics.SaveGrState();
 
-            var oMatrix = new AscCommon.CMatrix();
-            oMatrix.tx = dX;
-            oMatrix.ty = dY;
-            oGraphics.transform3(oMatrix);
-            //draw rect
+			let oMatrix = new AscCommon.CMatrix();
+			oMatrix.tx = dX;
+			oMatrix.ty = dY;
+			oGraphics.transform3(oMatrix);
+			//draw rect
 
-            oGraphics.SetIntegerGrid(true);
-            var nFillColor = this.isSelected() ? 0xCBCBCB : 0xFFFFFF;
-            var nLineColor = 0xC0C0C0;
-            oGraphics.b_color1((nFillColor >> 16) & 0xFF, (nFillColor >> 8) & 0xFF, nFillColor & 0xFF, 0xFF);
-            oGraphics.p_color((nLineColor >> 16) & 0xFF, (nLineColor >> 8) & 0xFF, nLineColor & 0xFF, 255);
-            oGraphics.p_width(0);
-            oGraphics._s();
+			oGraphics.SetIntegerGrid(true);
+			var nFillColor = this.isSelected() ? 0xCBCBCB : 0xFFFFFF;
+			var nLineColor = 0xC0C0C0;
+			oGraphics.b_color1((nFillColor >> 16) & 0xFF, (nFillColor >> 8) & 0xFF, nFillColor & 0xFF, 0xFF);
+			oGraphics.p_color((nLineColor >> 16) & 0xFF, (nLineColor >> 8) & 0xFF, nLineColor & 0xFF, 255);
+			oGraphics.p_width(0);
+			oGraphics._s();
 
+			oGraphics._s();
+			oGraphics._m(0, 0);
+			oGraphics._l(dW, 0);
+			oGraphics._l(dW, dH);
+			oGraphics._l(0, dH);
+			oGraphics._z();
+			oGraphics.df();
+			oGraphics.ds();
 
-            var _x1 = (oFullTr.TransformPointX(0, 0)) >> 0;
-            var _y1 = (oFullTr.TransformPointY(0, 0)) >> 0;
-            var _x2 = (oFullTr.TransformPointX(dW, dH)) >> 0;
-            var _y2 = (oFullTr.TransformPointY(dW, dH)) >> 0;
+			oGraphics.RestoreGrState();
 
-            oContext.lineWidth = 1;
-            oContext.rect(_x1 + 0.5, _y1 + 0.5, _x2 - _x1, _y2 - _y1);
-            //oGraphics.rect(0, 0, dW, dH);
-            oGraphics.df();
-            oGraphics.ds();
+			if (this.isPartOfMainSequence()) {
+				var nIdx = this.getIndexInSequence();
+				if (AscFormat.isRealNumber(nIdx)) {
+					const sText = nIdx + "";
+					this.drawLabelText(sText, oGraphics, oRect);
+				}
+			} else {
+				var oApi = editor || Asc.editor;
+				if (oApi && oApi.ImageLoader) {
+					var oImage = oApi.ImageLoader.map_image_index[ICON_TRIGGER];
+					if (oImage) {
+						let oNImage = oImage.Image;
+						let nNativeW = Math.round(oNImage.width / 2);
+						let nNativeH = Math.round(oNImage.height / 2);
+						const nRWidth = oObject.convertPixToMM(nNativeW);
+						const nRHeight = oObject.convertPixToMM(nNativeH);
+						let dTX = dX + (dW - nRWidth) / 2;
+						let dTY = dY + (dH - nRHeight) / 2;
 
-            // oGraphics.p_color((nLineColor >> 16) & 0xFF, (nLineColor >> 8) & 0xFF, nLineColor & 0xFF, 255);
-            // oGraphics.p_width(0);
-            // oGraphics._s();
-            // oGraphics.drawVerLine(1, 0, 0, dH, 0);
-            // oGraphics.drawVerLine(1, dW, 0, dH, 0);
-            // oGraphics.drawHorLine(1, 0, 0, dW, 0);
-            // oGraphics.drawHorLine(1, dH, 0, dW, 0);
-            // oGraphics.ds();
-            //draw internal part
-
-            oGraphics.RestoreGrState();
-
-            var sObjectId = this.getObjectId();
-            var oObject = AscCommon.g_oTableId.Get_ById(sObjectId);
-            if (this.isPartOfMainSequence()) {
-                var nIdx = this.getIndexInSequence();
-                if (AscFormat.isRealNumber(nIdx)) {
-                    if (!oObject) {
-                        return null;
-                    }
-                    var dTX = dX + dW / 2;
-                    var dTY = dY + dH - oObject.convertPixToMM(4);
-
-
-                    var nX = oT.TransformPointX(dTX, dTY);
-                    var nY = oT.TransformPointY(dTX, dTY);
-                    var sOldFill = oContext.fillStyle;
-                    oContext.fillStyle = "#000000";
-                    oContext.fillText((nIdx + 1) + "", nX, nY);
-                    oContext.fillStyle = sOldFill;
-                }
-            } else {
-
-                var oApi = editor || Asc.editor;
-                if (oApi && oApi.ImageLoader) {
-                    var oImage = oApi.ImageLoader.map_image_index[ICON_TRIGGER];
-                    if (oImage) {
-                        var oNImage = oImage.Image;
-                        var nNativeW = oNImage.width / 2;
-                        var nNativeH = oNImage.height / 2;
-                        var nWidth = AscCommon.AscBrowser.convertToRetinaValue(nNativeW, true);
-                        var nHeight = AscCommon.AscBrowser.convertToRetinaValue(nNativeH, true);
-                        var dTX = dX + (dW - oObject.convertPixToMM(nNativeW)) / 2;
-                        var dTY = dY + (dH - oObject.convertPixToMM(nNativeH)) / 2;
-                        var nX = oT.TransformPointX(dTX, dTY);
-                        var nY = oT.TransformPointY(dTX, dTY);
-                        oContext.drawImage(oImage.Image, nX, nY, nWidth, nHeight);
-                    }
-                }
-            }
-
-
-        }, this, []);
-    };
+						oGraphics.drawImage(ICON_TRIGGER, dTX, dTY, nRWidth, nRHeight);
+					}
+				}
+			}
+		}, this, []);
+	};
     CTimeNodeContainer.prototype.getObjectId = function () {
         if (this.isAnimEffect()) {
             return this.cTn.getObjectId();
@@ -8604,21 +9098,43 @@
     CTimeNodeContainer.prototype.clearChildTnLst = function () {
         this.cTn.clearChildTnLst();
     };
-    CTimeNodeContainer.prototype.resetDelayShift = function () {
-        if (this.isAnimEffect()) {
-            this.cTn.resetDelayShift();
-        }
-    };
-    CTimeNodeContainer.prototype.setDelayShift = function () {
-        if (this.isAnimEffect()) {
-            this.cTn.setDelayShift();
-        }
-    };
     CTimeNodeContainer.prototype.splice = function () {
         return this.cTn.childTnLst.splice.apply(this.cTn.childTnLst, arguments);
     };
     CTimeNodeContainer.prototype.getLastChild = function () {
         return this.cTn.childTnLst.getLast();
+    };
+
+    CTimeNodeContainer.prototype.getTimeNodeWithLvl = function (nLvl) {
+        return this.getHierarchy()[nLvl] || null;
+    };
+    CTimeNodeContainer.prototype.update3LvlDelays = function () {
+        let oPar2 = this.getTimeNodeWithLvl(2);
+        if(!oPar2) {
+            return;
+        }
+        let aChildren = oPar2.getChildrenTimeNodes();
+        let nCurDelay = 0;
+        for(let nNode = 0; nNode < aChildren.length; ++nNode) {
+            let oPar3Node = aChildren[nNode];
+            let oPrev3Node = aChildren[nNode - 1];
+            if(oPrev3Node) {
+                let nMaxEffectEnd = 0;
+                let aChildEffects = oPrev3Node.getChildrenTimeNodes();
+                for(let nEffect = 0; nEffect < aChildEffects.length; ++nEffect) {
+                    let oEffect = aChildEffects[nEffect];
+                    let nDurationDelay = oEffect.cTn.getEffectDuration();
+                    let oRepeatCount = oEffect.getRepeatCount();
+                    if (oRepeatCount.isDefinite()) {
+                        nDurationDelay *= oRepeatCount.val / 1000;
+                    }
+                    let nEffectEnd = oEffect.cTn.getDelay() + nDurationDelay;
+                    nMaxEffectEnd = Math.max(nMaxEffectEnd, nEffectEnd);
+                }
+                nCurDelay += nMaxEffectEnd;
+            }
+            oPar3Node.cTn.changeDelay(nCurDelay);
+        }
     };
     CTimeNodeContainer.prototype.addEffects = function (nInsertIdx, aEffects) {
         for (var nIdx = 0; nIdx < aEffects.length; ++nIdx) {
@@ -8641,7 +9157,7 @@
         if (!oEffect) {
             return;
         }
-        var oPar2Lvl, oPar3Lvl;
+        let oPar2Lvl, oPar3Lvl;
         if (oEffect.isClickEffect()) {
             this.addEffectToTheEndOfSeqAsClickEffect(oEffect);
         } else if (oEffect.isAfterEffect()) {
@@ -8668,7 +9184,9 @@
                 }
             }
         }
-        oEffect.setDelayShift();
+        if(oPar2Lvl) {
+            oPar2Lvl.update3LvlDelays();
+        }
     };
     CTimeNodeContainer.prototype.getChildrenCount = function () {
         return this.cTn.childTnLst.getLength();
@@ -8685,21 +9203,23 @@
             if (oChild.isTimeNode() && oChild.isAnimEffect()) {
                 aAllEffects.push(oChild);
             }
-        });
+        }, false);
         return aAllEffects;
     };
     CTimeNodeContainer.prototype.getLabel = function () {
         if (this.isMainSequence()) {
             return null;
         }
+        let sResult = AscCommon.translateManager.getValue("Trigger");
+        let sObjectName = AscCommon.translateManager.getValue("Without Name");
         var sClickSp = this.getSpClickInteractiveSeq();
         if (sClickSp) {
             var oSp = AscCommon.g_oTableId.Get_ById(sClickSp);
             if (oSp) {
-                return AscCommon.translateManager.getValue("Trigger:") + " " + oSp.getObjectName();
+                sObjectName = oSp.getObjectName();
             }
         }
-        return null;
+        return AscCommon.translateManager.getValue("Trigger") + ": " + sObjectName;
     };
     CTimeNodeContainer.prototype.getObjectName = function () {
         var sObjectId = this.getObjectId();
@@ -8708,6 +9228,21 @@
             return oObject.getObjectName();
         }
         return "";
+    };
+    CTimeNodeContainer.prototype.getObjectText = function () {
+        const sObjectId = this.getObjectId();
+        const oObject = AscCommon.g_oTableId.Get_ById(sObjectId);
+				if (oObject && oObject.getText) {
+					let sText = oObject.getText();
+					if (typeof sText === 'string') {
+						const nLastIndex = sText.lastIndexOf("\r\n");
+						if (nLastIndex !== -1) {
+							return sText.slice(0, nLastIndex);
+						}
+					}
+					return sText;
+				}
+				return "";
     };
     CTimeNodeContainer.prototype.asc_getStartType = function () {
         if (this.cTn) {
@@ -8738,6 +9273,9 @@
             }
             return nFirst;
         }
+        return this.getDelay();
+    };
+    CTimeNodeContainer.prototype.getDelay = function () {
         if (this.cTn) {
             return this.cTn.getDelay();
         }
@@ -8783,6 +9321,8 @@
             return nDur;
         }
     };
+
+
     CTimeNodeContainer.prototype["asc_getDuration"] = CTimeNodeContainer.prototype.asc_getDuration;
     CTimeNodeContainer.prototype.asc_getIsAutoDuration = function () {
         return (new CAnimationTime(this.asc_getDuration())).isIndefinite();
@@ -8966,6 +9506,9 @@
     CTimeNodeContainer.prototype.deselect = function () {
         this.selected = false;
     };
+	CTimeNodeContainer.prototype.toggleSelect = function () {
+        this.selected = !this.selected;
+    };
     CTimeNodeContainer.prototype.asc_getColor = function() {
         let aEffects = this.merged;
         if(!Array.isArray(aEffects) || aEffects.length !== 1) {
@@ -9002,6 +9545,39 @@
         return AscCommon.CreateAscColor(oResultUnicolor)
     };
     CTimeNodeContainer.prototype["asc_getColor"] = CTimeNodeContainer.prototype.asc_getColor;
+
+    CTimeNodeContainer.prototype.changeColor = function(oColor) {
+        if(oColor) {
+            let aSimpleEffects = this.getChildrenTimeNodes();
+            for(let nEffect = 0; nEffect < aSimpleEffects.length; ++nEffect) {
+                let oEffect = aSimpleEffects[nEffect];
+                if(oEffect instanceof CAnimClr) {
+                    if(oEffect.to) {
+                        let oUniColor = AscFormat.CorrectUniColor(oColor, new AscFormat.CUniColor(), 0);
+                        oEffect.setTo(oUniColor);
+                    }
+                }
+            }
+        }
+    };
+    CTimeNodeContainer.prototype.isValid = function() {
+        if(!this.isAnimEffect()) {
+            return true;
+        }
+        let bValid = true;
+        this.traverse(function (oElem) {
+            if(oElem.getObjectType() !== AscDFH.historyitem_type_TgtEl) {
+                return false;
+            }
+            if(!oElem.isValid()) {
+                bValid = false;
+                return true;
+            }
+            return false;
+        });
+        return bValid;
+    };
+
 
     function CPar() {
         CTimeNodeContainer.call(this);
@@ -9097,19 +9673,19 @@
     };
     CSeq.prototype.fillObject = function (oCopy, oIdMap) {
         CTimeNodeContainer.prototype.fillObject.call(this, oCopy, oIdMap);
-        if (this.nextCondLst !== null) {
+        if (this.nextCondLst !== null && this.nextCondLst !== undefined) {
             oCopy.setNextCondLst(this.nextCondLst.createDuplicate(oIdMap));
         }
-        if (this.prevCondLst !== null) {
+        if (this.prevCondLst !== null && this.prevCondLst !== undefined) {
             oCopy.setPrevCondLst(this.prevCondLst.createDuplicate(oIdMap));
         }
-        if (this.concurrent !== null) {
+        if (this.concurrent !== null && this.concurrent !== undefined) {
             oCopy.setConcurrent(this.concurrent);
         }
-        if (this.nextAc !== null) {
+        if (this.nextAc !== null && this.nextAc !== undefined) {
             oCopy.setNextAc(this.nextAc);
         }
-        if (this.prevAc !== null) {
+        if (this.prevAc !== null && this.prevAc !== undefined) {
             oCopy.setPrevAc(this.prevAc);
         }
     };
@@ -9141,6 +9717,27 @@
             this.cTn.fromPPTY(pReader);
         }
     };
+	CSeq.prototype.setTriggerSp = function (objectId) {
+		if (!this.isInterractiveSeq()) {
+			return;
+		}
+		let drawing = AscCommon.g_oTableId.Get_ById(objectId);
+		if (!drawing)
+			return;
+		let oStCondLst = new CCondLst();
+		let oCond = new CCond();
+		oCond.setEvt(COND_EVNT_ON_CLICK);
+		oCond.setDelay("0");
+		let oTgt = new CTgtEl();
+		let oSpTgt = new CSpTgt();
+		oSpTgt.setSpid(objectId);
+		oTgt.setSpTgt(oSpTgt);
+		oCond.setTgtEl(oTgt);
+		oStCondLst.push(oCond);
+		this.cTn.setStCondLst(oStCondLst);
+		let oNextCondLst = oStCondLst.createDuplicate();
+		this.setNextCondLst(oNextCondLst);
+	};
     CSeq.prototype.getChildren = function () {
         return [this.prevCondLst, this.nextCondLst, this.cTn];
     };
@@ -9162,19 +9759,19 @@
             var oThis = this;
             var oComplexTrigger = this.nextCondLst.createComplexTrigger(oPlayer);
             var aChildren = oThis.getChildrenTimeNodes();
-
-
+					const oLastChild = aChildren[aChildren.length - 1];
+					const bIsUntilEffect = oLastChild && oLastChild.traverseTimeNodes(function(oNode) {
+						if (oNode.isUntilEffect()) {
+							return true;
+						}
+					});
             oComplexTrigger.addTrigger(function () {
-                var oLastChild = aChildren[aChildren.length - 1];
                 if (oLastChild) {
                     if (oLastChild.isAtEnd()) {
                         return false;
                     }
-                    if (oLastChild.isActive()) {
-                        var oSimpleDuration = oLastChild.simpleDuration;
-                        if (oSimpleDuration && (oSimpleDuration.isIndefinite() || oSimpleDuration.isUnresolved())) {
-                            return false;
-                        }
+                    if (oLastChild.isActive() && bIsUntilEffect) {
+											return false;
                     }
                 }
                 return true;
@@ -9195,7 +9792,7 @@
                                 var bFreeze = true;
                                 oChild.traverseTimeNodes(function (oNode) {
                                     if (!bFreeze) {
-                                        return
+                                        return;
                                     }
                                     if (oNode.isAnimEffect()) {
                                         if (oNode.asc_getRepeatCount() === AscFormat.untilNextSlide) {
@@ -9290,10 +9887,10 @@
         this.setParentToChild(pr);
     };
     CSet.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.cBhvr !== null) {
+        if (this.cBhvr !== null && this.cBhvr !== undefined) {
             oCopy.setCBhvr(this.cBhvr.createDuplicate(oIdMap));
         }
-        if (this.to !== null) {
+        if (this.to !== null && this.to !== undefined) {
             oCopy.setTo(this.to.createDuplicate(oIdMap));
         }
     };
@@ -9317,7 +9914,7 @@
     CSet.prototype.getChildren = function () {
         return [this.cBhvr, this.to];
     };
-    CSet.prototype.calculateAttributes = function (nElapsedTime, oAttributes) {
+    CSet.prototype.calculateAttributes = function (nElapsedTime, oAttributes, sDrawingId) {
         if (!this.to) {
             return;
         }
@@ -9404,10 +10001,10 @@
         this.setParentToChild(pr);
     };
     CVideo.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.cMediaNode !== null) {
+        if (this.cMediaNode !== null && this.cMediaNode !== undefined) {
             oCopy.setCMediaNode(this.cMediaNode.createDuplicate(oIdMap));
         }
-        if (this.fullScrn !== null) {
+        if (this.fullScrn !== null && this.fullScrn !== undefined) {
             oCopy.setFullScrn(this.fullScrn);
         }
     };
@@ -9467,10 +10064,10 @@
         this.type = pr;
     };
     COleChartEl.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.lvl !== null) {
+        if (this.lvl !== null && this.lvl !== undefined) {
             oCopy.setLvl(this.lvl);
         }
-        if (this.type !== null) {
+        if (this.type !== null && this.type !== undefined) {
             oCopy.setType(this.type);
         }
     };
@@ -9508,10 +10105,10 @@
         this.y = pr;
     };
     CTLPoint.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.x !== null) {
+        if (this.x !== null && this.x !== undefined) {
             oCopy.setX(this.x);
         }
-        if (this.y !== null) {
+        if (this.y !== null && this.y !== undefined) {
             oCopy.setY(this.y);
         }
     };
@@ -9549,10 +10146,10 @@
         this.stSnd = pr;
     };
     CSndAc.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.endSnd !== null) {
+        if (this.endSnd !== null && this.endSnd !== undefined) {
             oCopy.setEndSnd(this.endSnd.createDuplicate(oIdMap));
         }
-        if (this.stSnd !== null) {
+        if (this.stSnd !== null && this.stSnd !== undefined) {
             oCopy.setStSnd(this.stSnd.createDuplicate(oIdMap));
         }
     };
@@ -9591,10 +10188,10 @@
         this.loop = pr;
     };
     CStSnd.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.snd !== null) {
+        if (this.snd !== null && this.snd !== undefined) {
             oCopy.setSnd(this.snd.createDuplicate(oIdMap));
         }
-        if (this.loop !== null) {
+        if (this.loop !== null && this.loop !== undefined) {
             oCopy.setLoop(this.loop);
         }
     };
@@ -9624,6 +10221,31 @@
     }
 
     InitClass(CTxEl, CBaseAnimObject, AscDFH.historyitem_type_TxEl);
+		CTxEl.prototype.handleRemoveContent = function (oObject) {
+			const oContent = oObject.getDocContent();
+			if (oContent) {
+				if (this.pRg) {
+						const nLastIndex = Math.max(oContent.Content.length - 1, 0);
+						if (this.pRg.st > nLastIndex) {
+							this.pRg.setSt(nLastIndex);
+						}
+						if (this.pRg.end > nLastIndex) {
+							this.pRg.setEnd(nLastIndex);
+						}
+				} else if (this.charRg) {
+					const nContentLength = oContent.getCharContentLength();
+					const nLastIndex = Math.max(0, nContentLength - 1);
+					if (this.pRg.st > nLastIndex) {
+						this.pRg.setSt(nLastIndex);
+					}
+					if (this.pRg.end > nContentLength) {
+						this.pRg.setEnd(nContentLength);
+					}
+
+				}
+			}
+
+		};
     CTxEl.prototype.setCharRg = function (pr) {
         oHistory.Add(new CChangeObject(this, AscDFH.historyitem_TxElCharRg, this.charRg, pr));
         this.charRg = pr;
@@ -9635,10 +10257,10 @@
         this.setParentToChild(pr);
     };
     CTxEl.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.charRg !== null) {
+        if (this.charRg !== null && this.charRg !== undefined) {
             oCopy.setCharRg(this.charRg.createDuplicate(oIdMap));
         }
-        if (this.pRg !== null) {
+        if (this.pRg !== null && this.pRg !== undefined) {
             oCopy.setPRg(this.pRg.createDuplicate(oIdMap));
         }
     };
@@ -9700,7 +10322,7 @@
         this.spokes = pr;
     };
     CWheel.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.spokes !== null) {
+        if (this.spokes !== null && this.spokes !== undefined) {
             oCopy.setSpokes(this.spokes);
         }
     };
@@ -9730,7 +10352,7 @@
         this.text = pr;
     };
     CAttrName.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.text !== null) {
+        if (this.text !== null && this.text !== undefined) {
             oCopy.setText(this.text);
         }
     };
@@ -10056,12 +10678,35 @@
     const RANDOM_BARS_ARRAY = [62, 4, 27, 42, 80, 34, 67, 20, 74, 32, 10, 54, 3, 77, 36, 55, 26, 53, 97, 90, 68, 65, 57, 12, 52, 70, 23, 64, 30, 73, 79, 22, 14, 51, 9, 0, 49, 1, 15, 71, 93, 86, 19, 28, 45, 41, 39, 60, 25, 7, 92, 46, 2, 98, 33, 40, 31, 72, 69, 24, 75, 84, 43, 47, 87, 50, 18, 56, 13, 61, 76, 17, 91, 37, 8, 11, 78, 6, 5, 48, 59, 95, 66, 63, 81, 96, 35, 88, 94, 89, 38, 99, 82, 29, 16, 83, 21, 58, 44, 85];
     const STRIPS_COUNT = 16;
 
-    function CBaseAnimTexture(oCanvas, fScale, nX, nY) {
+    function CBaseAnimTexture(oCanvas, fScale, nX, nY, bNoText, brush, pen) {
         this.canvas = oCanvas;
         this.scale = fScale;
         this.x = nX;
         this.y = nY;
+				this.bNoText = bNoText;
+				this.brush = brush;
+				this.pen = pen;
     }
+		CBaseAnimTexture.prototype.isEqualsBrushPen = function (oBrush, oPen) {
+			let bBrushEquals = false;
+			const oObjectBrush = this.brush;
+			if (!oObjectBrush && !oBrush) {
+				bBrushEquals = true;
+			} else if (oObjectBrush) {
+					bBrushEquals = oObjectBrush.IsIdentical(oBrush);
+			}
+			if (!bBrushEquals) {
+				return false;
+			}
+			let bPenEquals = false;
+			const oObjectPen = this.pen;
+			if (oObjectPen) {
+				bPenEquals = oObjectPen.IsIdentical(oPen)
+			} else if (!oObjectPen && !oPen) {
+				bPenEquals = true;
+			}
+			return bPenEquals;
+		};
     CBaseAnimTexture.prototype.drawInRect = function(oGraphics, dAlpha, nX, nY, nW, nH) {
         if(this.canvas.width === 0 || this.canvas.height === 0 || nW === 0 || nH === 0) {
             return;
@@ -10078,33 +10723,31 @@
         if(this.canvas.width === 0 || this.canvas.height === 0) {
             return;
         }
-        var bNoTransform = false;
-        if (!oTransform) {
-            bNoTransform = true;
-        } else {
-            // if(oTransform.IsIdentity2()) {
-            //     var fDelta = 2;
-            //     if(AscFormat.fApproxEqual(oTransform.tx*this.scale, this.x, fDelta) &&
-            //         AscFormat.fApproxEqual(oTransform.ty*this.scale, this.y, fDelta)) {
-            //         bNoTransform = true;
-            //     }
-            // }
+        oGraphics.SaveGrState();
+        this.drawWithoutSaveState(oGraphics, oTransform);
+        oGraphics.RestoreGrState();
+        oGraphics.FreeFont && oGraphics.FreeFont();
+    };
+    CBaseAnimTexture.prototype.drawWithIntegerGrid = function (oGraphics) {
+        oGraphics.SetIntegerGrid(true);
+        let nDx = oGraphics.m_oCoordTransform.tx;
+        let nDy = oGraphics.m_oCoordTransform.ty;
+        oGraphics.m_oContext.drawImage(this.canvas, (nDx + this.x + 0.5) >> 0, (nDy + this.y + 0.5) >> 0, this.canvas.width, this.canvas.height);
+    };
+    CBaseAnimTexture.prototype.drawWithoutIntegerGrid = function (oGraphics, oTransform) {
+        oGraphics.SetIntegerGrid(false);
+        oGraphics.transform3(oTransform, false);
+        oGraphics.drawImage2(this.canvas, 0, 0, this.canvas.width / this.scale, this.canvas.height / this.scale);
+    };
+    CBaseAnimTexture.prototype.drawWithoutSaveState = function(oGraphics, oTransform) {
+        if(this.canvas.width === 0 || this.canvas.height === 0) {
+            return;
         }
-        if (bNoTransform) {
-            oGraphics.SaveGrState();
-            oGraphics.SetIntegerGrid(true);
-            var nDx = oGraphics.m_oCoordTransform.tx;
-            var nDy = oGraphics.m_oCoordTransform.ty;
-            oGraphics.m_oContext.drawImage(this.canvas, (nDx + this.x + 0.5) >> 0, (nDy + this.y + 0.5) >> 0, this.canvas.width, this.canvas.height);
-            oGraphics.RestoreGrState();
-            oGraphics.FreeFont && oGraphics.FreeFont();
-        } else {
-            oGraphics.SaveGrState();
-            oGraphics.SetIntegerGrid(false);
-            oGraphics.transform3(oTransform, false);
-            oGraphics.drawImage2(this.canvas, 0, 0, this.canvas.width / this.scale, this.canvas.height / this.scale);
-            oGraphics.RestoreGrState();
-            oGraphics.FreeFont && oGraphics.FreeFont();
+        if (!oTransform) {
+            this.drawWithIntegerGrid(oGraphics);
+        }
+        else {
+            this.drawWithoutIntegerGrid(oGraphics, oTransform);
         }
     };
 	CBaseAnimTexture.prototype.beforeRelease = function() {
@@ -10126,8 +10769,8 @@
         return 0;
 	};
 
-    function CAnimTexture(oCache, oCanvas, fScale, nX, nY) {
-        CBaseAnimTexture.call(this, oCanvas, fScale, nX, nY);
+    function CAnimTexture(oCache, oCanvas, fScale, nX, nY, bNoText, brush, pen) {
+        CBaseAnimTexture.call(this, oCanvas, fScale, nX, nY, bNoText, brush, pen);
         this.cache = oCache;
         this.effectTexture = null;
     }
@@ -10326,11 +10969,11 @@
         }
         return this;
     };
-    CAnimTexture.prototype.createTexture = function () {
+    CAnimTexture.prototype.createTexture = function (nWidth, nHeight) {
         if (!this.effectTexture) {
             var oCanvas = document.createElement('canvas');
-            oCanvas.width = this.canvas.width;
-            oCanvas.height = this.canvas.height;
+            oCanvas.width = nWidth || this.canvas.width;
+            oCanvas.height = nHeight || this.canvas.height;
             this.effectTexture = new CAnimTexture(this.cache, oCanvas, this.scale, this.x, this.y);
         } else {
             //this.effectTexture.canvas.width = this.effectTexture.canvas.width;
@@ -11181,12 +11824,35 @@
     function CTexturesCache() {
         this.map = {};
     }
-
-    CTexturesCache.prototype.checkTexture = function (sId, fScale, bMorph, bCheckSize) {
+		CTexturesCache.prototype.clearImageCache = function(sImageSrc) {
+			for (let sId in this.map) {
+				const oDrawing = AscCommon.g_oTableId.Get_ById(sId);
+				if (oDrawing && oDrawing.getAllRasterImages) {
+					const arrImages = [];
+					oDrawing.getAllRasterImages(arrImages);
+					for (let i = 0; i < arrImages.length; i++) {
+						if (AscCommon.getFullImageSrc2(arrImages[i]) === sImageSrc) {
+							this.removeTexture(sId);
+							break;
+						}
+					}
+				}
+			}
+		};
+    CTexturesCache.prototype.checkTexture = function (oDrawing, fScale, bMorph, bCheckSize, oAnimParams, bNoText, oBrushPen) {
         let bCreate = false;
+				const sId = oDrawing.GetId();
         if(!this.map[sId] || !this.map[sId].checkScale(fScale)) {
             bCreate = true;
         }
+				else if (oBrushPen && !this.map[sId].isEqualsBrushPen(oBrushPen.brush, oBrushPen.pen)) {
+	        this.removeTexture(sId);
+	        bCreate = true;
+        }
+				else if (!!this.map[sId].bNoText !== !!bNoText) {
+					this.removeTexture(sId);
+					bCreate = true;
+				}
         else if(bMorph && bCheckSize) {
             const oDrawing = AscCommon.g_oTableId.Get_ById(sId);
             if (!oDrawing) {
@@ -11200,26 +11866,22 @@
             }
         }
         if (bCreate) {
-            const oTexture = this.createDrawingTexture(sId, fScale, bMorph);
+            const oTexture = this.createDrawingTexture(oDrawing, fScale, bMorph, oAnimParams, bNoText, oBrushPen);
             if(oTexture) {
                 this.map[sId] = oTexture;
             }
         }
         return this.map[sId];
     };
-    CTexturesCache.prototype.checkMorphTexture = function (sId, fScale, bCheckSize) {
-        return this.checkTexture(sId, fScale, true, bCheckSize);
+    CTexturesCache.prototype.checkMorphTexture = function (oDrawing, fScale, bCheckSize, oAnimParams, bNoText) {
+        return this.checkTexture(oDrawing, fScale, true, bCheckSize, oAnimParams, bNoText);
     };
-    CTexturesCache.prototype.createDrawingTexture = function (sId, fScale, bMorph) {
-        var oDrawing = AscCommon.g_oTableId.Get_ById(sId);
-        if (!oDrawing) {
-            return undefined;
-        }
-        var oBaseTexture = oDrawing.getAnimTexture(fScale, bMorph);
+    CTexturesCache.prototype.createDrawingTexture = function (oDrawing, fScale, bMorph, oAnimParams, bNoText, oBrushPen) {
+        var oBaseTexture = oDrawing.getAnimTexture(fScale, bMorph, oAnimParams, bNoText, oBrushPen);
 		if(!oBaseTexture) {
 			return undefined;
 		}
-        return new CAnimTexture(this, oBaseTexture.canvas, oBaseTexture.scale, oBaseTexture.x, oBaseTexture.y);
+        return new CAnimTexture(this, oBaseTexture.canvas, oBaseTexture.scale, oBaseTexture.x, oBaseTexture.y, bNoText, oBaseTexture.brush, oBaseTexture.pen);
     };
     CTexturesCache.prototype.removeTexture = function (sId) {
         if (this.map[sId]) {
@@ -11233,7 +11895,6 @@
         }
     };
     CTexturesCache.prototype.createBoundsTexture = function(sTextureId, oBounds, dScale) {
-        const oCanvas = oBounds.createCanvas(dScale);
         const oTexture = new CAnimTexture(this, oBounds.createCanvas(dScale), dScale, 0, 0);
         this.map[sTextureId] = oTexture;
         return oTexture;
@@ -11290,9 +11951,16 @@
         this.texturesCache = new CTexturesCache();
         this.hiddenObjects = {};
         this.showObjects = {};
+				this.docStructureByDrawing = {};
+				this.allAnimationDrawingObjects = {};
+				this.drawingObjectsCache = {};
+				this.skipDrawTextIteration = {};
+			this.generateParagraphCaches()
         this.collectHiddenObjects();
     }
-
+		CAnimationDrawer.prototype.clearImageCache = function(sImageSrc) {
+			this.texturesCache.clearImageCache(sImageSrc);
+		};
     CAnimationDrawer.prototype.clearSandwiches = function () {
         this.sandwiches = {};
     };
@@ -11307,12 +11975,12 @@
         this.clearLastFrameSandwiches();
         this.clearTextureCache();
     };
-    CAnimationDrawer.prototype.addAnimationToDraw = function (sDrawingId, oAnimation) {
+    CAnimationDrawer.prototype.addAnimationToDraw = function (sDrawingId, oAnimation, arrDrawings) {
         if (!this.sandwiches[sDrawingId]) {
-            this.sandwiches[sDrawingId] = new CAnimSandwich(sDrawingId, this.player.getElapsedTicks());
+	        this.sandwiches[sDrawingId] = new CAnimSandwich(this.player.getElapsedTicks(), this.player);
         }
         var oSandwich = this.sandwiches[sDrawingId];
-        oSandwich.addAnimation(oAnimation);
+        oSandwich.addAnimation(oAnimation, arrDrawings);
     };
     CAnimationDrawer.prototype.onFrame = function () {
         this.lastFrameSandwiches = this.sandwiches;
@@ -11361,24 +12029,79 @@
         oGraphics.animationDrawer = this;
         oSlide.draw(oGraphics);
         oGraphics.RestoreGrState();
-        oSlide.getDrawingDocument().m_oWordControl.DemonstrationManager.CheckWatermarkInternal(oGraphics.m_oContext, oRect);
-    };
-    CAnimationDrawer.prototype.drawObject = function (oDrawing, oGraphics) {
-        var sDrawingId = oDrawing.Get_Id();
-        var oSandwich = this.getSandwich(sDrawingId);
-        var oAttributes = oSandwich && oSandwich.getAttributesMap()
-        var fScale = oGraphics.m_oCoordTransform.sx;
-        if (!this.isDrawingHidden(sDrawingId) || (oAttributes && oAttributes["style.visibility"] === "visible")) {
-            if (!oSandwich) {
-                var oTexture = this.texturesCache.checkTexture(sDrawingId, fScale);
-				if(oTexture) {
-					oTexture.draw(oGraphics);
+
+				const oDemonstrationManager = oSlide.getDrawingDocument().m_oWordControl.DemonstrationManager;
+				if (oDemonstrationManager) {
+					oDemonstrationManager.CheckWatermarkInternal(oGraphics.m_oContext, oRect);
+					oDemonstrationManager.CheckAnnotationsInternal(oGraphics, oSlide);
 				}
-            } else {
-                oSandwich.drawObject(oGraphics, oDrawing, this.texturesCache, oAttributes);
-            }
-        }
     };
+    CAnimationDrawer.prototype.isDrawingVisible = function(sDrawingId, oSandwich) {
+        oSandwich = oSandwich || this.getSandwich(sDrawingId);
+        let oAttributes = oSandwich && oSandwich.getAttributesMap(sDrawingId);
+        return !this.isDrawingHidden(sDrawingId) || (oAttributes && oAttributes["style.visibility"] === "visible");
+    };
+    CAnimationDrawer.prototype.isDrawingAnimated = function(sDrawingId) {
+        return this.getSandwich(sDrawingId) !== null;
+    };
+
+	CAnimationDrawer.prototype.getDrawingTextCache = function(sDrawingId) {
+		return this.docStructureByDrawing[sDrawingId];
+	};
+	CAnimationDrawer.prototype.drawDrawingWithoutAnimation = function(oGraphics, oDrawing, nScale, bSkipDrawTxBody) {
+		const oTexture = this.texturesCache.checkTexture(oDrawing, nScale, undefined, undefined, undefined, bSkipDrawTxBody);
+		if (oTexture) {
+			oTexture.draw(oGraphics);
+		}
+	};
+	CAnimationDrawer.prototype.getAllAnimationDrawingObjects = function (oDrawing) {
+		const sId = oDrawing.Get_Id();
+		if (!this.allAnimationDrawingObjects[sId]) {
+			const arrResult = [oDrawing];
+			const oDocStructure = this.getDrawingTextCache(sId);
+			if (oDocStructure) {
+				for (let i = 0; i < oDocStructure.m_aContent.length; i++) {
+					const oParagraph = oDocStructure.m_aContent[i];
+					if (oParagraph.m_aWrapperElementsCache) {
+						for (let i = 0; i < oParagraph.m_aWrapperElementsCache.length; i += 1) {
+							const oElement = oParagraph.m_aWrapperElementsCache[i]
+							oElement.forEachAnimationDrawing(function (oAnimationDrawing) {
+								arrResult.push(oAnimationDrawing);
+							});
+
+						}
+					}
+				}
+			}
+			this.allAnimationDrawingObjects[sId] = arrResult;
+		}
+		return this.allAnimationDrawingObjects[sId];
+	};
+	CAnimationDrawer.prototype.drawObject = function (oDrawing, oGraphics) {
+		const sDrawingId = oDrawing.Get_Id();
+		const oSandwich = this.getSandwich(sDrawingId);
+		const dScale = oGraphics.m_oCoordTransform.sx;
+		const bSkipDrawTxBody = !!this.docStructureByDrawing[sDrawingId];
+		const arrAllDrawingObjects = this.getAllAnimationDrawingObjects(oDrawing);
+		if (oSandwich) {
+			for (let i = 0; i < arrAllDrawingObjects.length; i += 1) {
+				const oAnimationDrawing = arrAllDrawingObjects[i];
+				const sAnimationId = oAnimationDrawing.GetId();
+				const bIsSandwichObject = oSandwich.drawObject(oGraphics, this.texturesCache, bSkipDrawTxBody, this, oAnimationDrawing);
+				if (!bIsSandwichObject && this.isDrawingVisible(sAnimationId, oSandwich)) {
+					this.drawDrawingWithoutAnimation(oGraphics, oAnimationDrawing, dScale, bSkipDrawTxBody);
+				}
+			}
+		} else {
+			for (let i = 0; i < arrAllDrawingObjects.length; i += 1) {
+				const oAnimationDrawing = arrAllDrawingObjects[i];
+				const sAnimationId = oAnimationDrawing.GetId();
+				if (this.isDrawingVisible(sAnimationId)) {
+					this.drawDrawingWithoutAnimation(oGraphics, oAnimationDrawing, dScale, bSkipDrawTxBody);
+				}
+			}
+		}
+	};
     CAnimationDrawer.prototype.createGraphics = function (oCanvas, oRect) {
         var wPix = oRect.w;
         var hPix = oRect.h;
@@ -11428,26 +12151,31 @@
         if (!oAnim) {
             return false;
         }
-        if (!oAnim.isDrawable()) {
-
-            return true;
-        }
-        return false;
+        return !!(!oAnim.isDrawable() || (oAnim.startTick && (oAnim.startTick[sId] > this.player.getElapsedTicks())));
     };
     CAnimationDrawer.prototype.checkShowObject = function (oTimeNode) {
         if (oTimeNode.doesShowObject()) {
-            var sId = oTimeNode.getTargetObjectId();
-            if (sId !== null) {
-                this.showObjects[sId] = oTimeNode;
-            }
+					const oThis = this;
+					const arrDrawingObjects = oTimeNode.getDrawingObjects(this);
+					for (let i = 0; i < arrDrawingObjects.length; i++) {
+						arrDrawingObjects[i].forEachAnimationDrawing(function(oAnimationDrawing) {
+							oThis.showObjects[oAnimationDrawing.GetId()] = oTimeNode;
+						});
+					}
         }
     };
     CAnimationDrawer.prototype.checkHiddenObject = function (oTimeNode) {
         if (oTimeNode.doesHideObject()) {
-            var sId = oTimeNode.getTargetObjectId();
-            if (sId !== null && !this.showObjects[sId]) {
-                this.hiddenObjects[oTimeNode.getTargetObjectId()] = oTimeNode;
-            }
+					const oThis = this;
+					const arrDrawingObjects = oTimeNode.getDrawingObjects(this);
+					for (let i = 0; i < arrDrawingObjects.length; i++) {
+						arrDrawingObjects[i].forEachAnimationDrawing(function(oAnimationDrawing) {
+							var sId = oAnimationDrawing.GetId();
+							if (sId && !oThis.showObjects[sId]) {
+								oThis.hiddenObjects[sId] = oTimeNode;
+							}
+						});
+					}
         }
     };
     CAnimationDrawer.prototype.collectHiddenObjects = function () {
@@ -11458,7 +12186,7 @@
         for (var nTiming = 0; nTiming < aTimings.length; ++nTiming) {
             var oRoot = aTimings[nTiming].getTimingRootNode();
             if (oRoot) {
-                oRoot.traverseTimeNodes(function (oTimeNode) {
+                oRoot.traverseTimeNodes(function callback(oTimeNode) {
                     oThis.checkShowObject(oTimeNode);
                     oThis.checkHiddenObject(oTimeNode);
                 });
@@ -11469,6 +12197,104 @@
     CAnimationDrawer.prototype.clearObjectTexture = function (sId) {
         this.texturesCache.removeTexture(sId);
     };
+    CAnimationDrawer.prototype.getDrawingParams = function(sId, bMorph) {
+        let oSandwich = this.getSandwich(sId);
+        if(!oSandwich) {
+            return null;
+        }
+        return oSandwich.getDrawingParams(sId, bMorph);
+    };
+		CAnimationDrawer.prototype.generateParagraphCaches = function() {
+			const oStructuresByDrawing = {};
+			const oThis = this;
+			this.traverseTimeNodes((function(oTimeNode) {
+				const oDrawing = oTimeNode.getTargetObject();
+				if (oDrawing) {
+					const oTextEl = oTimeNode.getTargetTextOptions();
+					const bIsCanIterate = oTimeNode.isCanIterate();
+					if (!(oTextEl || oTimeNode.isCanIterate() || oTimeNode.isForceTextAnimation())) {
+						return;
+					}
+					const oDocContent = oDrawing.getDocContent();
+					if (!oDocContent) {
+						return;
+					}
+					if (!oStructuresByDrawing[oDrawing.GetId()]) {
+						oStructuresByDrawing[oDrawing.GetId()] = {};
+					}
+					const nIterationType = oTimeNode.getIterationType();
+					const sDrawingId = oDrawing.GetId();
+					const oDrawingInfo = oStructuresByDrawing[sDrawingId];
+				if (oTextEl && oTextEl.charRg) {
+						const nStart = oTextEl.charRg.st;
+						const nEnd = oTextEl.charRg.end - 1;
+						let nCharIndex = 0;
+						for (let i = 0; i < oDocContent.Content.length; i++) {
+							const oParagraph = oDocContent.Content[i];
+							if (nEnd < nCharIndex) {
+								break;
+							}
+							oParagraph.CheckRunContent(function (oRun) {
+								nCharIndex += oRun.Content.length;
+								if (nEnd < nCharIndex) {
+									return true;
+								}
+							});
+							if (nCharIndex >= nStart) {
+								oDrawingInfo[i] = ITERATEDATA_TYPE_LETTER;
+							}
+						}
+					} else if (bIsCanIterate) {
+						if (oTextEl) {
+							oThis.skipDrawTextIteration[sDrawingId] = true;
+							if (oTextEl.pRg) {
+								const nStart = Math.max(0, Math.min(oTextEl.pRg.st, oDocContent.Content.length - 1));
+								const nEnd = Math.min(oTextEl.pRg.end, oDocContent.Content.length - 1);
+								for (let i = nStart; i <= nEnd; i += 1) {
+									if (oDrawingInfo[i] !== ITERATEDATA_TYPE_LETTER) {
+										oDrawingInfo[i] = nIterationType;
+									}
+								}
+							}
+						} else {
+							for (let i = 0; i < oDocContent.Content.length; i++) {
+								if (oDrawingInfo[i] !== ITERATEDATA_TYPE_LETTER) {
+									oDrawingInfo[i] = nIterationType;
+								}
+							}
+						}
+					}
+				}
+			}).bind(this));
+			const oIdGenerator = new AscFormat.CIdGenerator();
+			for (let sId in oStructuresByDrawing) {
+				const oParagraphSettings = oStructuresByDrawing[sId];
+				const oDrawing = AscCommon.g_oTableId.Get_ById(sId);
+				const oDocStructure = oDrawing.getDocStructure(oParagraphSettings, oIdGenerator);
+				if (oDocStructure) {
+					this.docStructureByDrawing[sId] = oDocStructure;
+				}
+			}
+		};
+	CAnimationDrawer.prototype.traverseTimeNodes = function(fCallback) {
+		var aTimings = this.player.timings;
+		for (var nTiming = 0; nTiming < aTimings.length; ++nTiming) {
+			var oRoot = aTimings[nTiming].getTimingRootNode();
+			if (oRoot) {
+				oRoot.traverseTimeNodes(fCallback);
+			}
+		}
+	};
+
+    function createDrawingParams(isVisible, transform, brush, pen, opacity) {
+        return {
+            isVisible: isVisible,
+            transform: transform,
+            brush: brush,
+            pen: pen,
+            opacity: opacity
+        };
+    }
 
     function CAnimationPlayer(oSlide, drawer) {
         this.slide = oSlide;
@@ -11480,7 +12306,12 @@
         this.timer = new CAnimationTimer(this);
         this.drawer = drawer;
     }
-
+		CAnimationPlayer.prototype.clearImageCache = function(sImageSrc) {
+			this.animationDrawer.clearImageCache(sImageSrc);
+		};
+    CAnimationPlayer.prototype.createGraphics = function (oCanvas, oRect) {
+        return this.animationDrawer.createGraphics(oCanvas, oRect);
+    };
     CAnimationPlayer.prototype.updateTimingList = function () {
         this.timings.length = 0;
         if (this.slide.timing) {
@@ -11665,8 +12496,8 @@
     CAnimationPlayer.prototype.onPrevSlide = function () {
         return this.addExternalEvent(new CExternalEvent(this.eventsProcessor, COND_EVNT_ON_PREV, null));
     };
-    CAnimationPlayer.prototype.addAnimationToDraw = function (sDrawingId, oAnimation) {
-        this.animationDrawer.addAnimationToDraw(sDrawingId, oAnimation);
+    CAnimationPlayer.prototype.addAnimationToDraw = function (sDrawingId, oAnimation, arrDrawings) {
+        this.animationDrawer.addAnimationToDraw(sDrawingId, oAnimation, arrDrawings);
     };
     CAnimationPlayer.prototype.drawFrame = function (oCanvas, oRect) {
         this.animationDrawer.drawFrame(oCanvas, oRect);
@@ -11685,6 +12516,33 @@
     CAnimationPlayer.prototype.isDrawingHidden = function (sId) {
         return this.animationDrawer.isDrawingHidden(sId);
     };
+    CAnimationPlayer.prototype.goToEnd = function () {
+        this.start();
+        let nCount = 0;
+        const nMaxCount = 100;
+        while (this.onNextSlide()) {
+
+            this.timer.elapsed += 1000000;
+            this.onFrame();
+            ++nCount;
+            if(nCount >= nMaxCount) {
+                this.start();
+                break;
+            }
+        }
+        //this.onFrame();
+    };
+    CAnimationPlayer.prototype.getDrawingParams = function(sId, bMorph) {
+        return this.animationDrawer.getDrawingParams(sId, bMorph);
+    };
+
+    CAnimationPlayer.prototype.isDrawingVisible = function(sDrawingId) {
+        return this.animationDrawer.isDrawingVisible(sDrawingId);
+    };
+
+    CAnimationPlayer.prototype.isDrawingAnimated = function(sDrawingId) {
+        return  this.animationDrawer.isDrawingAnimated(sDrawingId);
+    };
 
 
     function CDemoAnimPlayer(oSlide) {
@@ -11698,9 +12556,12 @@
         if (oTiming) {
             var oDemoTiming = oTiming.createDemoTiming();
             if (oDemoTiming) {
-
+                this.timings.push(oDemoTiming);
             }
-            this.timings.push(oDemoTiming);
+            const oRawDemoTiming = oTiming.createDemoTiming(true);
+            if (oRawDemoTiming) {
+                this.timings.push(oRawDemoTiming);
+            }
         }
         var oTr = editor.WordControl.m_oDrawingDocument.TransitionSlide;
         oTr.CalculateRect();
@@ -11710,25 +12571,37 @@
         this.overlay = editor.WordControl.m_oOverlayApi;
     };
     CDemoAnimPlayer.prototype.onMainSeqFinished = function () {
-        var oThis = this;
+        let oThis = this;
+        oThis.pause();
         setTimeout(function () {
             if (!oThis.isStopped()) {
                 oThis.stop();
                 editor.WordControl.m_oLogicDocument.StopAnimationPreview();
             }
-        }, 1000);
+        }, 700);
+    };
+    CDemoAnimPlayer.prototype.onFrame = function () {
+        CAnimationPlayer.prototype.onFrame.call(this);
+
+        if (this.isStarted()) {
+            Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.onPreview(this.getElapsedTicks());
+        }
     };
 
     CDemoAnimPlayer.prototype.start = function () {
         CAnimationPlayer.prototype.start.call(this);
         this.overlay.CheckRect(this.rect.x, this.rect.y, this.rect.w, this.rect.h);
         this.onRecalculateFrame();
+
+        Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.onPreviewStart();
     };
     CDemoAnimPlayer.prototype.stop = function () {
         CAnimationPlayer.prototype.stop.call(this);
         this.overlay.Clear();
         this.overlay.CheckRect(this.rect.x, this.rect.y, this.rect.w, this.rect.h);
         this.slide.showDrawingObjects();
+
+        Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.onPreviewStop();
     };
     CDemoAnimPlayer.prototype.onRecalculateFrame = function () {
         this.overlay.Clear();
@@ -11889,6 +12762,10 @@
     drawProgressAllAtOnce
     */
 
+	const ITERATEDATA_TYPE_ELEMENT = 0;
+	const ITERATEDATA_TYPE_LETTER = 1;
+	const ITERATEDATA_TYPE_WORD = 2;
+
     const FILTER_TYPE_BLINDS_HORIZONTAL = 0;
     const FILTER_TYPE_BLINDS_VERTICAL = 1;
     const FILTER_TYPE_BOX_IN = 2;
@@ -11974,168 +12851,199 @@
     FILTER_MAP["wipe(down)"] = FILTER_TYPE_WIPE_DOWN;
     FILTER_MAP["wipe(up)"] = FILTER_TYPE_WIPE_UP;
 
-    function CAnimSandwich(sDrawingId, nElapsedTime) {
-        this.drawingId = sDrawingId;
+    function CAnimSandwich(nElapsedTime) {
         this.elapsedTime = nElapsedTime;
-        this.animations = [];
-        this.cachedAttributes = null;
+				this.animations = {};
+        this.cachedAttributes = {};
     }
 
-    CAnimSandwich.prototype.getDrawingId = function () {
-        return this.drawingId;
-    };
-    CAnimSandwich.prototype.addAnimation = function (oAnimation) {
-        this.animations.push(oAnimation);
+    CAnimSandwich.prototype.addAnimation = function (oAnimation, arrDrawings) {
+			const oThis = this;
+			for (let i = 0; i < arrDrawings.length; i++) {
+				const oDrawing = arrDrawings[i];
+				oDrawing.forEachAnimationDrawing(function(oAnimationDrawing) {
+					const sId = oAnimationDrawing.GetId();
+					if (!oThis.animations[sId]) {
+						oThis.animations[sId] = [];
+					}
+					oThis.animations[sId].push(oAnimation);
+				});
+
+			}
+
         if (this.cachedAttributes) {
-            this.cachedAttributes = null;
+            this.cachedAttributes = {};
         }
         this.checkOnAdd();
     };
     CAnimSandwich.prototype.checkOnAdd = function () {
     };
-    CAnimSandwich.prototype.getDrawing = function () {
-        return AscCommon.g_oTableId.Get_ById(this.drawingId);
-    };
-    CAnimSandwich.prototype.checkRemoveOldAnim = function () {
-        var oEntrEffect = null, oExitEffect = null;
-        for (var nAnim = 0; nAnim < this.animations.length; ++nAnim) {
-            var oAnim = this.animations[nAnim];
-            var oEffect = oAnim.getParentTimeNode();
-            if (oEffect.isAnimEffect()) {
-                var oAttrObject = oEffect.getAttributesObject();
-                if (oAttrObject && AscFormat.PRESET_CLASS_EXIT === oAttrObject.presetClass) {
-                    oExitEffect = oEffect;
-                }
-                if (oAttrObject && AscFormat.PRESET_CLASS_ENTR === oAttrObject.presetClass) {
-                    oEntrEffect = oEffect;
-                }
-                if (oEntrEffect && oExitEffect) {
-                    break;
-                }
-            }
-        }
-        var oEffectToDelete = null;
-        if (oEntrEffect && oExitEffect) {
-            if (oEntrEffect.isAtEnd() && !oExitEffect.isAtEnd()) {
-                oEffectToDelete = oEntrEffect;
-            }
-            if (!oEntrEffect.isAtEnd() && oExitEffect.isAtEnd()) {
-                oEffectToDelete = oExitEffect;
-            }
+	CAnimSandwich.prototype.checkRemoveOldAnim = function(sDrawingId) {
+		const arrAnimations = this.animations[sDrawingId];
+		if (!arrAnimations) {
+			return;
+		}
+		while (true) {
+			let oEntrEffect = null;
+			let oExitEffect = null;
+			for (let nAnim = 0; nAnim < arrAnimations.length; ++nAnim) {
+				const oAnim = arrAnimations[nAnim];
+				const oEffect = oAnim.getParentTimeNode();
+				if (oEffect.isAnimEffect()) {
+					const oAttrObject = oEffect.getAttributesObject();
+					if (oAttrObject && AscFormat.PRESET_CLASS_EXIT === oAttrObject.presetClass) {
+						oExitEffect = oEffect;
+					}
+					if (oAttrObject && AscFormat.PRESET_CLASS_ENTR === oAttrObject.presetClass) {
+						oEntrEffect = oEffect;
+					}
+					if (oEntrEffect && oExitEffect) {
+						break;
+					}
+				}
+			}
+			let oEffectToDelete = null;
+			if (oEntrEffect && oExitEffect) {
+				if (oEntrEffect.isAtEnd() && !oExitEffect.isAtEnd()) {
+					oEffectToDelete = oEntrEffect;
+				}
+				if (!oEntrEffect.isAtEnd() && oExitEffect.isAtEnd()) {
+					oEffectToDelete = oExitEffect;
+				}
 
-            if (oEntrEffect.isAtEnd() && oExitEffect.isAtEnd()) {
-                if (oEntrEffect.startTick < oExitEffect.startTick) {
-                    oEffectToDelete = oEntrEffect;
-                } else {
-                    oEffectToDelete = oExitEffect;
-                }
-            }
-        }
-        if (oEffectToDelete) {
-            for (var nAnim = this.animations.length - 1; nAnim > -1; --nAnim) {
-                var oAnim = this.animations[nAnim];
-                var oEffect = oAnim.getParentTimeNode();
-                if (oEffect === oEffectToDelete) {
-                    this.animations.splice(nAnim, 1);
-                }
-            }
-            return true;
-        }
-        return false;
-    };
-    CAnimSandwich.prototype.getAttributesMap = function () {
-        if (this.cachedAttributes) {
-            return this.cachedAttributes;
-        }
+				if (oEntrEffect.isAtEnd() && oExitEffect.isAtEnd()) {
+					if (oEntrEffect.startTick[oEntrEffect.GetId()] < oExitEffect.startTick[oExitEffect.GetId()]) {
+						oEffectToDelete = oEntrEffect;
+					} else {
+						oEffectToDelete = oExitEffect;
+					}
+				}
+			}
+			if (oEffectToDelete) {
+				for (let nAnim = arrAnimations.length - 1; nAnim > -1; --nAnim) {
+					const oAnim = arrAnimations[nAnim];
+					const oEffect = oAnim.getParentTimeNode();
+					if (oEffect === oEffectToDelete) {
+						arrAnimations.splice(nAnim, 1);
+					}
+				}
+			} else {
+				break;
+			}
+		}
 
-        var bCheckRemove = true;
+	};
+	CAnimSandwich.prototype.getAttributesMap = function(sDrawingId) {
+		if (this.cachedAttributes[sDrawingId]) {
+			return this.cachedAttributes[sDrawingId];
+		}
+		const arrAnimations = this.animations[sDrawingId];
+		if (!arrAnimations) {
+			this.cachedAttributes[sDrawingId] = {};
+			return this.cachedAttributes[sDrawingId];
+		}
+		const oAttributes = {};
+		this.checkRemoveOldAnim(sDrawingId);
 
-        while (bCheckRemove) {
-            bCheckRemove = this.checkRemoveOldAnim();
-        }
 
-
-        this.animations.sort(function (oAnim1, oAnim2) {
-            if (AscFormat.isRealNumber(oAnim1.startTick) && AscFormat.isRealNumber(oAnim2.startTick)) {
-                return oAnim1.startTick - oAnim2.startTick;
-            }
-            return 0;
-        });
-        var oAttributes = {};
-        for (var nAnim = 0; nAnim < this.animations.length; ++nAnim) {
-            this.animations[nAnim].calculateAttributes(this.elapsedTime, oAttributes);
-        }
-        this.cachedAttributes = oAttributes;
-        return oAttributes;
-    };
+		arrAnimations.sort(function(oAnim1, oAnim2) {
+			if (oAnim1.startTick && oAnim2.startTick) {
+				return oAnim1.startTick[sDrawingId] - oAnim2.startTick[sDrawingId];
+			}
+			return 0;
+		});
+		for (var nAnim = 0; nAnim < arrAnimations.length; ++nAnim) {
+			const oAnimation = arrAnimations[nAnim];
+			const startTick = oAnimation.startTick[sDrawingId];
+			if (AscFormat.isRealNumber(startTick) && (this.elapsedTime >= startTick) || oAnimation.isAtEnd()) {
+				oAnimation.calculateAttributes(this.elapsedTime, oAttributes, sDrawingId);
+			}
+		}
+		this.cachedAttributes[sDrawingId] = oAttributes;
+		return oAttributes;
+	};
     CAnimSandwich.prototype.print = function () {
         var oAttributes = this.getAttributesMap();
         //console.log(oAttributes);
     };
-    CAnimSandwich.prototype.drawObject = function (oGraphics, oDrawing, oTextureCache, oAttributesMap) {
-        //this.print();
-        //console.log(oAttributesMap);
-        var sVisibility = oAttributesMap["style.visibility"];
-        if (sVisibility === "hidden") {
-            return;
+    CAnimSandwich.prototype.drawObject = function (oGraphics, oTextureCache, bSkipDrawTxBody, oDrawer, oObjectToDraw) {
+			const sDrawingId = oObjectToDraw.GetId();
+			if (!this.animations[sDrawingId]) {
+				return false;
+			}
+			const dScale = oGraphics.m_oCoordTransform.sx;
+				if (!oDrawer.isDrawingVisible(sDrawingId, this)) {
+					return true;
+				}
+				const oTextureData = this.getTextureData(oObjectToDraw, oTextureCache, dScale, bSkipDrawTxBody);
+				if(!oTextureData) {
+					return true;
+				}
+
+				const fOpacity = oTextureData.opacity;
+				const oTransform = oTextureData.transform;
+				const oTexture = oTextureData.texture;
+				if (fOpacity !== undefined) {
+					oGraphics.put_GlobalAlpha(true, 1 - fOpacity);
+				}
+				oTexture.draw(oGraphics, oTransform);
+				if (fOpacity !== undefined) {
+					oGraphics.put_GlobalAlpha(false, 1);
+				}
+	    return true;
+    };
+    CAnimSandwich.prototype.getBrushPen = function(oDrawing) {
+        let oAttributesMap = this.getAttributesMap(oDrawing.Get_Id());
+				let oFillColor = oAttributesMap["fillcolor"] || oAttributesMap["style.color"];
+        let sFillType = oAttributesMap["fill.type"];
+        let bFillOn = oAttributesMap["fill.on"];
+
+        let oStrokeColor = oAttributesMap["stroke.color"];
+        let bStrokeOn = oAttributesMap["stroke.on"];
+
+
+        let oCurBrush;
+        if(oDrawing.blipFill) {
+            oCurBrush = new AscFormat.CUniFill();
+            oCurBrush.fill = oDrawing.blipFill;
         }
-        var oFillColor = oAttributesMap["fillcolor"] || oAttributesMap["style.color"];
-        var sFillType = oAttributesMap["fill.type"];
-        var bFillOn = oAttributesMap["fill.on"];
-        var fOpacity = oAttributesMap["style.opacity"];
-
-        var oStrokeColor = oAttributesMap["stroke.color"];
-        var bStrokeOn = oAttributesMap["stroke.on"];
-
-        var fScale = oGraphics.m_oCoordTransform.sx;
-        var sId = oDrawing.Get_Id();
-        var oTexture = oTextureCache.checkTexture(sId, fScale);
-		if(!oTexture) {
-			return;
-		}
+        else {
+            oCurBrush = oDrawing.getBrush();
+        }
+        let oCurPen = oDrawing.getPen();
+        let oNewBrush = oCurBrush;
+        let oNewPen = oCurPen;
         if (oFillColor || sFillType || bFillOn !== undefined || oStrokeColor || bStrokeOn !== undefined) {
-            var oOldBrush = oDrawing.brush;
-            var oOldPen = oDrawing.pen;
             if (bFillOn === false) {
-                oDrawing.brush = AscFormat.CreateNoFillUniFill();
+                oNewBrush = AscFormat.CreateNoFillUniFill();
             } else {
                 if (oFillColor) {
-                    if (oDrawing.brush && oDrawing.brush.fill && oDrawing.brush.fill.type === AscFormat.FILL_TYPE_SOLID || sFillType === "solid") {
-                        oDrawing.brush = AscFormat.CreateUniFillByUniColor(oFillColor);
+                    if (oCurBrush && oCurBrush.isSolidFill() || sFillType === "solid") {
+                        oNewBrush = AscFormat.CreateUniFillByUniColor(oFillColor);
                     }
                 }
             }
             if (bStrokeOn === false) {
-                oDrawing.pen = AscFormat.CreateNoFillLine();
+                oNewPen = AscFormat.CreateNoFillLine();
             } else {
                 if (oStrokeColor) {
-                    var oPen;
-                    if (oDrawing.pen) {
-                        oPen = oDrawing.pen.createDuplicate();
-                        var oMods;
-                        if (oPen.Fill &&
-                            oPen.Fill.fill &&
-                            oPen.Fill.fill.color &&
-                            oPen.Fill.fill.color.Mods &&
-                            oPen.Fill.fill.color.Mods.Mods.length !== 0) {
-                            oMods = oPen.Fill.fill.color.Mods;
-                            oMods.Apply(oStrokeColor.RGBA);
-                        }
+                    if (oCurPen) {
+                        oNewPen = oCurPen.createDuplicate();
                     } else {
-                        oPen = AscFormat.CreateNoFillLine();
+                        oNewPen = AscFormat.CreateNoFillLine();
                     }
-                    oPen.Fill = AscFormat.CreateUniFillByUniColor(oStrokeColor);
-                    oDrawing.pen = oPen;
+                    oNewPen.Fill = AscFormat.CreateUniFillByUniColor(oStrokeColor);
                 }
             }
-            oTexture = oTextureCache.createDrawingTexture(sId, fScale);
-            oDrawing.brush = oOldBrush;
-            oDrawing.pen = oOldPen;
         }
-        var oBounds = oDrawing.getBoundsByDrawing();
-        var oPresSize = oDrawing.getPresentationSize();
-        var fCenterX, fCenterY;
-        var bTransform = false;
+        return {brush: oNewBrush, pen: oNewPen};
+    };
+    CAnimSandwich.prototype.getTransform = function(oDrawing, bMorph) {
+        let oAttributesMap = this.getAttributesMap(oDrawing.Get_Id());
+        let oBounds = oDrawing.getBoundsByDrawing(bMorph);
+        let oPresSize = oDrawing.getPresentationSize();
+        let fCenterX, fCenterY;
+        let bTransform = false;
         fCenterX = oBounds.x + oBounds.w / 2;
         fCenterY = oBounds.y + oBounds.h / 2;
         if (AscFormat.isRealNumber(oAttributesMap["ppt_x"])) {
@@ -12146,24 +13054,24 @@
             fCenterY = oAttributesMap["ppt_y"] * oPresSize.h;
             bTransform = true;
         }
-        var fScaleX = 1.0, fScaleY = 1.0;
+        let fScaleX = 1.0, fScaleY = 1.0;
         if (AscFormat.isRealNumber(oAttributesMap["ScaleX"]) && AscFormat.isRealNumber(oAttributesMap["ScaleY"])) {
             fScaleX = oAttributesMap["ScaleX"];
             fScaleY = oAttributesMap["ScaleY"];
             bTransform = true;
         }
         if (AscFormat.isRealNumber(oAttributesMap["ppt_w"])) {
-            var fOrigW = oBounds.w / oPresSize.w;
+            let fOrigW = oBounds.w / oPresSize.w;
             fScaleX *= oAttributesMap["ppt_w"] / fOrigW;
             bTransform = true;
         }
         if (AscFormat.isRealNumber(oAttributesMap["ppt_h"])) {
-            var fOrigH = oBounds.h / oPresSize.h;
+            let fOrigH = oBounds.h / oPresSize.h;
             fScaleY *= oAttributesMap["ppt_h"] / fOrigH;
             bTransform = true;
         }
-        var fR = 0;
-        var fAttrRot = oAttributesMap["ppt_r"] || oAttributesMap["r"] || oAttributesMap["style.rotation"];
+        let fR = 0;
+        let fAttrRot = oAttributesMap["ppt_r"] || oAttributesMap["r"] || oAttributesMap["style.rotation"];
         if (AscFormat.isRealNumber(fAttrRot)) {
             if (oAttributesMap["ppt_r"] || oAttributesMap["r"]) {
                 fR = AscFormat.cToRad * fAttrRot;
@@ -12173,11 +13081,11 @@
             bTransform = true;
         }
 
-        var oTransform = null;
+        let oTransform = null;
         if (bTransform) {
             oTransform = new AscCommon.CMatrix();
-            var hc = oBounds.w * 0.5;
-            var vc = oBounds.h * 0.5;
+            let hc = oBounds.w * 0.5;
+            let vc = oBounds.h * 0.5;
             AscCommon.global_MatrixTransformer.TranslateAppend(oTransform, -hc, -vc);
             if (fScaleX !== 1 || fScaleY !== 1) {
                 AscCommon.global_MatrixTransformer.ScaleAppend(oTransform, fScaleX, fScaleY);
@@ -12187,59 +13095,98 @@
             }
             AscCommon.global_MatrixTransformer.TranslateAppend(oTransform, fCenterX, fCenterY);
         }
-
-        oTexture = oTexture.createEffectTexture(oAttributesMap["effect"]);
-
-        if (fOpacity !== undefined) {
-            oGraphics.put_GlobalAlpha(true, 1 - fOpacity);
-        }
-        oTexture.draw(oGraphics, oTransform);
-        if (fOpacity !== undefined) {
-            oGraphics.put_GlobalAlpha(false, 1);
-        }
+        return oTransform;
     };
-    CAnimSandwich.prototype.isEqualResultAttributes = function (oOtherSandwich) {
-        var oAttributes = this.getAttributesMap();
-        var oOtherAttributes = oOtherSandwich.getAttributesMap();
-        var sKey, val, otherVal;
-        for (sKey in oAttributes) {
-            val = oAttributes[sKey];
-            otherVal = oOtherAttributes[sKey];
-            if (otherVal === undefined) {
-                return false;
-            }
-            if (val === otherVal) {
-                continue;
-            }
-            if (sKey === "effect") {
-                if (!val.isEqual(otherVal)) {
-                    return false;
-                }
-            }
-            if (AscFormat.isRealNumber(val)) {
-                if (!AscFormat.fApproxEqual(val, otherVal)) {
-                    return false;
-                }
-            } else if (typeof val === "string") {
-                if (val !== otherVal) {
-                    return false;
-                }
-            } else if (val instanceof AscFormat.CUniColor) {
-                if (!val.IsIdentical(otherVal)) {
-                    return false;
-                }
-            }
-        }
-        for (sKey in oOtherAttributes) {
-            val = oAttributes[sKey];
-            if (val === undefined) {
-                return false;
-            }
-        }
-        return true;
+    CAnimSandwich.prototype.isDrawingVisible = function(sDrawingId) {
+        let oAttributesMap = this.getAttributesMap(sDrawingId);
+        let sVisibility = oAttributesMap["style.visibility"];
+        return sVisibility !== "hidden";
     };
+    CAnimSandwich.prototype.getOpacity = function(sDrawingId) {
 
-
+        let oAttributesMap = this.getAttributesMap(sDrawingId);
+        let dOpacity = oAttributesMap["style.opacity"];
+        return dOpacity;
+    };
+    CAnimSandwich.prototype.checkEffectTexture = function(oTexture, sDrawingId) {
+        let oAttributesMap = this.getAttributesMap(sDrawingId);
+        return oTexture.createEffectTexture(oAttributesMap["effect"]);
+    };
+    CAnimSandwich.prototype.getTextureData = function (oDrawing, oTextureCache, fScale, bNoText) {
+        //this.print();
+        //console.log(oAttributesMap);
+	    let sId = oDrawing.Get_Id();
+        if(!this.isDrawingVisible(sId)) {
+            return null;
+        }
+	    const oNewBrushPen = this.getBrushPen(oDrawing);
+        let oTexture = oTextureCache.checkTexture(oDrawing, fScale, undefined, undefined, undefined, bNoText, oNewBrushPen);
+        if(!oTexture) {
+            return null;
+        }
+        let oTransform = this.getTransform(oDrawing);
+        oTexture = this.checkEffectTexture(oTexture, sId);
+        let dOpacity = this.getOpacity(sId);
+        return {texture: oTexture, opacity: dOpacity, transform: oTransform};
+    };
+	CAnimSandwich.prototype.isEqualResultAttributes = function (oOtherSandwich) {
+		for (let sId in oOtherSandwich.animations) {
+			if (!this.animations[sId]) {
+				return false;
+			}
+		}
+		for (let sId in this.animations) {
+			if (!oOtherSandwich.animations[sId]) {
+				return false;
+			}
+			var oAttributes = this.getAttributesMap(sId);
+			var oOtherAttributes = oOtherSandwich.getAttributesMap(sId);
+			var sKey, val, otherVal;
+			for (sKey in oAttributes) {
+				val = oAttributes[sKey];
+				otherVal = oOtherAttributes[sKey];
+				if (otherVal === undefined) {
+					return false;
+				}
+				if (val === otherVal) {
+					continue;
+				}
+				if (sKey === "effect") {
+					if (!val.isEqual(otherVal)) {
+						return false;
+					}
+				}
+				if (AscFormat.isRealNumber(val)) {
+					if (!AscFormat.fApproxEqual(val, otherVal)) {
+						return false;
+					}
+				} else if (typeof val === "string") {
+					if (val !== otherVal) {
+						return false;
+					}
+				} else if (val instanceof AscFormat.CUniColor) {
+					if (!val.IsIdentical(otherVal)) {
+						return false;
+					}
+				}
+			}
+			for (sKey in oOtherAttributes) {
+				val = oAttributes[sKey];
+				if (val === undefined) {
+					return false;
+				}
+			}
+		}
+		return true;
+	};
+    CAnimSandwich.prototype.getDrawingParams = function(sId, bMorph) {
+        const oDrawing = AscCommon.g_oTableId.Get_ById(sId);
+        const bIsVisible = this.isDrawingVisible(sId);
+        const oBrushPen = this.getBrushPen(oDrawing);
+        const oTransform = this.getTransform(oDrawing, bMorph);
+        const dOpacity = this.getOpacity(sId);
+        return createDrawingParams(bIsVisible, oTransform, oBrushPen.brush, oBrushPen.pen, dOpacity);
+    };
     //--------------------------------------------
     //Formula parser
 
@@ -12902,1935 +13849,7 @@
     };
     //--------------------------------------------------------------------------
 
-
-    const STATE_FLAG_SELECTED = 1;
-    const STATE_FLAG_HOVERED = 2;
-
-    const CONTROL_TYPE_UNKNOWN = 0;
-    const CONTROL_TYPE_HEADER = 1;
-    const CONTROL_TYPE_TOOLBAR = 2;
-    const CONTROL_TYPE_SEQ_LIST_CONTAINER = 3;
-    const CONTROL_TYPE_SCROLL_VERT = 4;
-    const CONTROL_TYPE_SCROLL_HOR = 5;
-    const CONTROL_TYPE_SEQ_LIST = 6;
-    const CONTROL_TYPE_ANIM_SEQ = 7;
-    const CONTROL_TYPE_ANIM_GROUP_LIST = 8;
-    const CONTROL_TYPE_ANIM_GROUP = 9;
-    const CONTROL_TYPE_ANIM_ITEM = 10;
-    const CONTROL_TYPE_LABEL = 11;
-    const CONTROL_TYPE_BUTTON = 12;
-    const CONTROL_TYPE_IMAGE = 13;
-    const CONTROL_TYPE_TIMELINE_CONTAINER = 14;
-    const CONTROL_TYPE_TIMELINE = 15;
-    const CONTROL_TYPE_EFFECT_BAR = 16;
-
-    const LEFT_TIMELINE_INDENT = 14 * AscCommon.g_dKoef_pix_to_mm;
-    const LABEL_TIMELINE_WIDTH = 155 * AscCommon.g_dKoef_pix_to_mm;
-
-    function CControl(oParentControl) {
-        AscFormat.ExecuteNoHistory(function () {
-            AscFormat.CShape.call(this);
-            this.setRecalculateInfo();
-            this.setBDeleted(false);
-            this.setLayout(0, 0, 0, 0);
-        }, this, []);
-
-        this.parent = editor.WordControl.m_oLogicDocument.Slides[0];
-        this.parentControl = oParentControl;
-        this.state = 0;
-        this.hidden = false;
-        this.previous = null;
-        this.next = null;
-    }
-
-    InitClass(CControl, AscFormat.CShape, CONTROL_TYPE_UNKNOWN);
-    CControl.prototype.DEFALT_WRAP_OBJECT = {
-        oTxWarpStruct: null,
-        oTxWarpStructParamarks: null,
-        oTxWarpStructNoTransform: null,
-        oTxWarpStructParamarksNoTransform: null
-    };
-    CControl.prototype.setHidden = function (bVal) {
-        if (this.hidden !== bVal) {
-            this.hidden = bVal;
-            this.onUpdate();
-        }
-    };
-    CControl.prototype.show = function () {
-        this.setHidden(false);
-    };
-    CControl.prototype.hide = function () {
-        this.setHidden(true);
-    };
-    CControl.prototype.isHidden = function () {
-        return this.hidden;
-    };
-    CControl.prototype.notAllowedWithoutId = function () {
-        return false;
-    };
-    //define shape methods
-    CControl.prototype.getBodyPr = function () {
-        return this.bodyPr;
-    };
-    CControl.prototype.getScrollOffsetX = function (oChild) {
-        return 0;
-    };
-    CControl.prototype.getScrollOffsetY = function (oChild) {
-        return 0;
-    };
-    CControl.prototype.getParentScrollOffsetX = function (oChild) {
-        if (this.parentControl) {
-            return this.parentControl.getScrollOffsetX(oChild);
-        }
-        return 0;
-    };
-    CControl.prototype.getParentScrollOffsetY = function (oChild) {
-        if (this.parentControl) {
-            return this.parentControl.getScrollOffsetY(oChild);
-        }
-        return 0;
-    };
-    CControl.prototype.getFullTransformMatrix = function () {
-        return this.transform;
-    };
-    CControl.prototype.getInvFullTransformMatrix = function () {
-        return this.invertTransform;
-    };
-    CControl.prototype.multiplyParentTransforms = function (oLocalTransform) {
-        var oMT = AscCommon.global_MatrixTransformer;
-        var oTransform = oMT.CreateDublicateM(oLocalTransform);
-        var oScrollMatrix = new AscCommon.CMatrix();
-        oScrollMatrix.tx = this.getParentScrollOffsetX(this);
-        oScrollMatrix.ty = this.getParentScrollOffsetY(this);
-        oMT.MultiplyAppend(oTransform, oScrollMatrix);
-        var oParentTransform = this.parentControl && this.parentControl.getFullTransformMatrix();
-        oParentTransform && oMT.MultiplyAppend(oTransform, oParentTransform);
-        return oTransform;
-    };
-    CControl.prototype.getFullTransform = function () {
-        return this.transform;
-    };
-    CControl.prototype.getFullTextTransform = function () {
-        return this.transformText;
-    };
-
-    CControl.prototype.recalculate = function () {
-        AscFormat.CShape.prototype.recalculate.call(this);
-    };
-    CControl.prototype.recalculateBrush = function () {
-        this.brush = null;
-    };
-    CControl.prototype.recalculatePen = function () {
-        this.pen = null;
-    };
-    CControl.prototype.recalculateContent = function () {
-    };
-    CControl.prototype.recalculateGeometry = function () {
-        //this.calcGeometry = AscFormat.CreateGeometry("rect");
-        //this.calcGeometry.Recalculate(this.extX, this.extY);
-    };
-    CControl.prototype.recalculateTransform = function () {
-        if (!this.transform) {
-            this.transform = new AscCommon.CMatrix();
-        }
-        var tx = this.getLeft();
-        var ty = this.getTop();
-        this.x = tx;
-        this.y = ty;
-        this.rot = 0;
-        this.extX = this.getWidth();
-        this.extY = this.getHeight();
-        this.flipH = false;
-        this.flipV = false;
-        ty += this.getParentScrollOffsetY(this);
-        var oCurParent = this.parentControl;
-
-        if (oCurParent) {
-            tx += oCurParent.transform.tx;
-            ty += oCurParent.transform.ty
-        }
-        this.transform.tx = tx;
-        this.transform.ty = ty;
-        if (!this.invertTransform) {
-            this.invertTransform = new AscCommon.CMatrix();
-        }
-        this.invertTransform.tx = -tx;
-        this.invertTransform.ty = -ty;
-        this.localTransform = this.transform;
-    };
-    CControl.prototype.recalculateTransformText = function () {
-        if (!this.transformText) {
-            this.transformText = new AscCommon.CMatrix();
-        }
-        this.transformText.tx = this.transform.tx;
-        this.transformText.ty = this.transform.ty;
-
-        if (!this.invertTransformText) {
-            this.invertTransformText = new AscCommon.CMatrix();
-        }
-        this.invertTransformText.tx = -this.transform.tx;
-        this.invertTransformText.ty = -this.transform.ty;
-        this.localTransformText = this.transformText;
-    };
-    CControl.prototype.recalculateBounds = function () {
-        var dX = this.transform.tx;
-        var dY = this.transform.ty;
-        this.bounds.reset(dX, dY, dX + this.getWidth(), dY + this.getHeight())
-    };
-    CControl.prototype.recalculateSnapArrays = function () {
-    };
-    CControl.prototype.checkAutofit = function (bIgnoreWordShape) {
-        return false;
-    };
-    CControl.prototype.checkTextWarp = function (oContent, oBodyPr, dWidth, dHeight, bNeedNoTransform, bNeedWarp) {
-        return this.DEFALT_WRAP_OBJECT;
-    };
-    CControl.prototype.addToRecalculate = function () {
-    };
-    CControl.prototype.canHandleEvents = function () {
-        return true;
-    };
-    CControl.prototype.getPenWidth = function (graphics) {
-        var fScale = graphics.m_oCoordTransform.sx;
-        var nPenW = AscCommon.AscBrowser.convertToRetinaValue(1, true) / fScale;
-        return nPenW;
-    };
-    CControl.prototype.draw = function (graphics) {
-        if (this.isHidden()) {
-            return false;
-        }
-        if (!this.checkUpdateRect(graphics.updatedRect)) {
-            return false;
-        }
-
-        this.recalculateTransform();
-        this.recalculateTransformText();
-
-        var sFillColor = this.getFillColor();
-        var sOutlineColor = this.getOutlineColor();
-        var oColor;
-        if (sOutlineColor || sFillColor) {
-            graphics.SaveGrState();
-            graphics.transform3(this.transform);
-            var x = 0;
-            var y = 0;
-            var extX = this.getWidth();
-            var extY = this.getHeight();
-            if (sFillColor) {
-                oColor = AscCommon.RgbaHexToRGBA(sFillColor);
-                graphics.b_color1(oColor.R, oColor.G, oColor.B, 0xFF);
-                graphics.rect(x, y, extX, extY);
-                graphics.df();
-            }
-            if (sOutlineColor) {
-                oColor = AscCommon.RgbaHexToRGBA(sOutlineColor);
-                graphics.SetIntegerGrid(true);
-
-                var nPenW = this.getPenWidth(graphics);
-                //graphics.p_width(100);//AscCommon.AscBrowser.convertToRetinaValue(1, true);
-                graphics.p_color(oColor.R, oColor.G, oColor.B, 0xFF);
-                graphics.drawHorLine(0, y, x, x + extX, nPenW);
-                graphics.drawHorLine(0, y + extY, x, x + extX, nPenW);
-                graphics.drawVerLine(2, x, y, y + extY, nPenW);
-                graphics.drawVerLine(2, x + extX, y, y + extY, nPenW);
-                graphics.ds();
-            }
-            graphics.RestoreGrState();
-        }
-        AscFormat.CShape.prototype.draw.call(this, graphics);
-        return true;
-
-    };
-    CControl.prototype.hit = function (x, y) {
-        if (this.parentControl && !this.parentControl.hit(x, y)) {
-            return false;
-        }
-        var oInv = this.invertTransform;
-        var tx = oInv.TransformPointX(x, y);
-        var ty = oInv.TransformPointY(x, y);
-        return tx >= 0 && tx <= this.extX && ty >= 0 && ty <= this.extY;
-    };
-    CControl.prototype.isHovered = function () {
-        return this.getStateFlag(STATE_FLAG_HOVERED);
-    };
-    CControl.prototype.isActive = function () {
-        if (this.parentControl) {
-            if (!this.eventListener && this.parentControl.isEventListener(this)) {
-                return true;
-            }
-        }
-        return false;
-    };
-    CControl.prototype.setStateFlag = function (nFlag, bValue) {
-        var nOldState = this.state;
-        if (bValue) {
-            this.state |= nFlag;
-        } else {
-            this.state &= (~nFlag);
-        }
-        if (nOldState !== this.state) {
-            this.onUpdate();
-        }
-    };
-    CControl.prototype.setHoverState = function () {
-        this.setStateFlag(STATE_FLAG_HOVERED, true);
-    };
-    CControl.prototype.setNotHoverState = function () {
-        this.setStateFlag(STATE_FLAG_HOVERED, false);
-    };
-    CControl.prototype.getStateFlag = function (nFlag) {
-        return (this.state & nFlag) !== 0;
-    };
-    CControl.prototype.onMouseMove = function (e, x, y) {
-        if (e.IsLocked) {
-            return false;
-        }
-        if (!this.canHandleEvents()) {
-            return false;
-        }
-        var bHover = this.hit(x, y);
-        var bRet = bHover !== this.isHovered();
-        if (bHover) {
-            this.setHoverState();
-        } else {
-            this.setNotHoverState();
-        }
-        return bRet;
-    };
-    CControl.prototype.onMouseDown = function (e, x, y) {
-        if (!this.canHandleEvents()) {
-            return false;
-        }
-        if (this.hit(x, y)) {
-            if (this.parentControl) {
-                this.parentControl.setEventListener(this);
-            }
-            return true;
-        }
-        return false;
-    };
-    CControl.prototype.onMouseUp = function (e, x, y) {
-        if (this.parentControl) {
-            this.parentControl.setEventListener(null);
-        }
-        return false;
-    };
-    CControl.prototype.onMouseWheel = function (e, deltaY, X, Y) {
-        return false;
-    };
-    CControl.prototype.onUpdate = function () {
-        if (this.parentControl) {
-            var oBounds = this.getBounds();
-            this.parentControl.onChildUpdate(oBounds);
-        }
-    };
-    CControl.prototype.onChildUpdate = function (oBounds) {
-        if (this.parentControl) {
-            this.parentControl.onChildUpdate(oBounds);
-        }
-    };
-    CControl.prototype.getCursorInfo = function (e, x, y) {
-        if (!this.hit(x, y)) {
-            return null;
-        } else {
-            return {
-                cursorType: "default",
-                tooltip: this.getTooltipText()
-            }
-        }
-    };
-    CControl.prototype.checkUpdateRect = function (oUpdateRect) {
-        var oBounds = this.getBounds();
-        if (oUpdateRect && oBounds) {
-            if (!oUpdateRect.isIntersectOther(oBounds)) {
-                return false;
-            }
-        }
-        return true;
-    };
-    CControl.prototype.recalculate = function () {
-        AscFormat.CShape.prototype.recalculate.call(this);
-    };
-    CControl.prototype.setLayout = function (dX, dY, dExtX, dExtY) {
-        if (!this.spPr) {
-            this.spPr = new AscFormat.CSpPr();
-        }
-        if (!this.spPr.xfrm) {
-            this.spPr.xfrm = new AscFormat.CXfrm();
-        }
-
-        this.spPr.xfrm.offX = dX;
-        this.spPr.xfrm.offY = dY;
-        this.spPr.xfrm.extX = dExtX;
-        this.spPr.xfrm.extY = dExtY;
-        this.handleUpdateExtents();
-    };
-    CControl.prototype.getLeft = function () {
-        return this.spPr.xfrm.offX;
-    };
-    CControl.prototype.getTop = function () {
-        return this.spPr.xfrm.offY;
-    };
-    CControl.prototype.getRight = function () {
-        return this.spPr.xfrm.offX + this.spPr.xfrm.extX;
-    };
-    CControl.prototype.getBottom = function () {
-        return this.spPr.xfrm.offY + this.spPr.xfrm.extY;
-    };
-    CControl.prototype.getWidth = function () {
-        return this.spPr.xfrm.extX;
-    };
-    CControl.prototype.getHeight = function () {
-        return this.spPr.xfrm.extY;
-    };
-    CControl.prototype.getBounds = function () {
-        this.recalculateBounds();
-        this.recalculateTransform();
-        this.recalculateTransformText();
-        return this.bounds;
-    };
-    CControl.prototype.convertRelToAbs = function (oPos) {
-        var oAbsPos = {x: oPos.x, y: oPos.y};
-        var oParent = this;
-        while (oParent) {
-            oAbsPos.x += oParent.getLeft();
-            oAbsPos.y += oParent.getTop();
-            oParent = oParent.parentControl;
-        }
-        return oAbsPos;
-    };
-    CControl.prototype.convertAbsToRel = function (oPos) {
-        var oRelPos = {x: oPos.x, y: oPos.y};
-        var oParent = this;
-        while (oParent) {
-            oRelPos.x -= oParent.getLeft();
-            oRelPos.y -= oParent.getTop();
-            oParent = oParent.parentControl;
-        }
-        return oRelPos;
-    };
-    CControl.prototype.getNext = function () {
-        return this.next;
-    };
-    CControl.prototype.getPrevious = function () {
-        return this.previous;
-    };
-    CControl.prototype.setNext = function (v) {
-        this.next = v;
-    };
-    CControl.prototype.setPrevious = function (v) {
-        this.previous = v;
-    };
-    CControl.prototype.setParentControl = function (v) {
-        this.parentControl = v;
-    };
-    CControl.prototype.getTiming = function () {
-        var oSlide = this.getSlide();
-        if (oSlide) {
-            return oSlide.timing;
-        }
-        return null;
-    };
-    CControl.prototype.getSlide = function () {
-        var oSlide = null;
-        if (editor.WordControl && editor.WordControl.m_oLogicDocument) {
-            oSlide = editor.WordControl.m_oLogicDocument.GetCurrentSlide();
-            return oSlide;
-        }
-        return null;
-    };
-    CControl.prototype.getSlideNum = function () {
-        var oSlide = this.getSlide();
-        if (oSlide) {
-            return oSlide.num;
-        }
-        return -1;
-    };
-    CControl.prototype.getFillColor = function () {
-        var sFillColor;
-        var oSkin = AscCommon.GlobalSkin;
-        if (this.isActive()) {
-            sFillColor = oSkin.ThumbnailsPageOutlineActive;
-        } else if (this.isHovered()) {
-            sFillColor = oSkin.ScrollerHoverColor;
-        } else {
-            sFillColor = oSkin.BackgroundColorThumbnails;
-        }
-        return sFillColor;
-    };
-    CControl.prototype.getOutlineColor = function () {
-        var sOutlineColor;
-        var oSkin = AscCommon.GlobalSkin;
-        if (this.isActive()) {
-            sOutlineColor = oSkin.ScrollOutlineActiveColor;
-        } else if (this.isHovered()) {
-            sOutlineColor = oSkin.ThumbnailsPageOutlineHover;
-        } else {
-            sOutlineColor = oSkin.ScrollOutlineColor;
-        }
-        return sOutlineColor;
-    };
-    CControl.prototype.drawShdw = function () {
-
-    };
-
-    function CControlContainer(oParentControl) {
-        CControl.call(this, oParentControl);
-        this.children = [];
-        this.recalcInfo.recalculateChildrenLayout = true;
-        this.recalcInfo.recalculateChildren = true;
-
-        this.eventListener = null;
-    }
-
-    InitClass(CControlContainer, CControl, CONTROL_TYPE_UNKNOWN);
-    CControlContainer.prototype.isEventListener = function (oChild) {
-        return this.eventListener === oChild;
-    };
-    CControlContainer.prototype.onScroll = function () {
-    };
-    CControlContainer.prototype.onStartScroll = function () {
-    };
-    CControlContainer.prototype.onEndScroll = function () {
-    };
-    CControlContainer.prototype.clear = function () {
-        for (var nIdx = this.children.length - 1; nIdx > -1; --nIdx) {
-            this.removeControl(this.children[nIdx]);
-        }
-    };
-    CControlContainer.prototype.addControl = function (oChild) {
-        var oLast = this.children[this.children.length - 1];
-        this.children.push(oChild);
-        if (oLast) {
-            oLast.setNext(oChild);
-            oChild.setPrevious(oLast);
-            oChild.setParentControl(this);
-        }
-        return oChild;
-    };
-    CControlContainer.prototype.removeControl = function (oChild) {
-        var nIdx = this.getChildIdx(oChild);
-        this.removeByIdx(nIdx);
-    };
-    CControlContainer.prototype.removeByIdx = function (nIdx) {
-        if (nIdx > -1 && nIdx < this.children.length) {
-            var oChild = this.children[nIdx];
-            oChild.setNext(null);
-            oChild.setPrevious(null);
-            oChild.setParentControl(null);
-            var oPrev = this.children[nIdx - 1] || null;
-            var oNext = this.children[nIdx + 1] || null;
-            if (oPrev) {
-                oPrev.setNext(oNext);
-            }
-            if (oNext) {
-                oNext.setPrevious(oPrev);
-            }
-            this.children.splice(nIdx, 1);
-        }
-    };
-    CControlContainer.prototype.getChildIdx = function (oChild) {
-        for (var nChild = 0; nChild < this.children.length; ++nChild) {
-            if (this.children[nChild] === oChild) {
-                return nChild;
-            }
-        }
-        return -1;
-    };
-    CControlContainer.prototype.getChildByType = function (nType) {
-        for (var nChild = 0; nChild < this.children.length; ++nChild) {
-            var oChild = this.children[nChild];
-            if (oChild.getObjectType() === nType) {
-                return oChild;
-            }
-        }
-        return null;
-    };
-    CControlContainer.prototype.getChild = function (nIdx) {
-        if (nIdx > -1 && nIdx < this.children.length) {
-            return this.children[nIdx];
-        }
-    };
-    CControlContainer.prototype.draw = function (graphics) {
-        if (!CControl.prototype.draw.call(this, graphics)) {
-            return false;
-        }
-        this.clipStart(graphics);
-        for (var nChild = 0; nChild < this.children.length; ++nChild) {
-            this.children[nChild].draw(graphics);
-        }
-        this.clipEnd(graphics);
-        return true;
-    };
-    CControlContainer.prototype.clipStart = function (graphics) {
-    };
-    CControlContainer.prototype.clipEnd = function (graphics) {
-    };
-    CControlContainer.prototype.recalculateChildrenLayout = function () {
-    };
-    CControlContainer.prototype.recalculateChildren = function () {
-    };
-    CControlContainer.prototype.recalculate = function () {
-        AscFormat.ExecuteNoHistory(function () {
-            CControl.prototype.recalculate.call(this);
-            if (this.recalcInfo.recalculateChildren) {
-                this.recalculateChildren();
-                this.recalcInfo.recalculateChildren = false;
-            }
-            if (this.recalcInfo.recalculateChildrenLayout) {
-                this.recalculateChildrenLayout();
-                this.recalcInfo.recalculateChildrenLayout = false;
-            }
-            for (var nChild = 0; nChild < this.children.length; ++nChild) {
-                this.children[nChild].recalculate();
-            }
-        }, this, []);
-    };
-    CControlContainer.prototype.setLayout = function (dX, dY, dExtX, dExtY) {
-        AscFormat.ExecuteNoHistory(function () {
-            CControl.prototype.setLayout.call(this, dX, dY, dExtX, dExtY);
-            this.recalcInfo.recalculateChildrenLayout = true;
-        }, this, []);
-    };
-    CControlContainer.prototype.handleUpdateExtents = function () {
-        this.recalcInfo.recalculateChildrenLayout = true;
-        CControl.prototype.handleUpdateExtents.call(this);
-    };
-    CControlContainer.prototype.setEventListener = function (oChild) {
-        if (oChild) {
-            this.eventListener = oChild;
-            if (this.parentControl) {
-                this.parentControl.setEventListener(this);
-            }
-        } else {
-            this.eventListener = null;
-            if (this.parentControl) {
-                this.parentControl.setEventListener(null);
-            }
-        }
-    };
-    CControlContainer.prototype.onMouseDown = function (e, x, y) {
-        for (var nChild = 0; nChild < this.children.length; ++nChild) {
-            if (this.children[nChild].onMouseDown(e, x, y)) {
-                return true;
-            }
-        }
-        return CControl.prototype.onMouseDown.call(this, e, x, y);
-    };
-    CControlContainer.prototype.onMouseMove = function (e, x, y) {
-        for (var nChild = 0; nChild < this.children.length; ++nChild) {
-            if (this.children[nChild].onMouseMove(e, x, y)) {
-                return true;
-            }
-        }
-        return CControl.prototype.onMouseMove.call(this, e, x, y);
-    };
-    CControlContainer.prototype.onMouseUp = function (e, x, y) {
-        for (var nChild = 0; nChild < this.children.length; ++nChild) {
-            if (this.children[nChild].onMouseUp(e, x, y)) {
-                return true;
-            }
-        }
-        return CControl.prototype.onMouseUp.call(this, e, x, y);
-    };
-    CControlContainer.prototype.onMouseWheel = function (e, deltaY, X, Y) {
-        for (var nChild = 0; nChild < this.children.length; ++nChild) {
-            if (this.children[nChild].onMouseWheel(e, deltaY, X, Y)) {
-                return true;
-            }
-        }
-        return CControl.prototype.onMouseWheel.call(this, e, deltaY, X, Y);
-    };
-    CControlContainer.prototype.isScrolling = function () {
-        for (var nChild = 0; nChild < this.children.length; ++nChild) {
-            var oChild = this.children[nChild];
-            if (oChild.isOnScroll && oChild.isOnScroll()) {
-                return true;
-            }
-        }
-        return false;
-    };
-    CControlContainer.prototype.canHandleEvents = function () {
-        return false;
-    };
-    CControlContainer.prototype.onResize = function () {
-        this.handleUpdateExtents();
-        this.recalculate();
-    };
-
-
-    function CTopControl(oDrawer) {
-        CControlContainer.call(this, null);
-        this.drawer = oDrawer;
-    }
-
-    InitClass(CTopControl, CControlContainer, CONTROL_TYPE_UNKNOWN);
-    CTopControl.prototype.onUpdateRect = function (oBounds) {
-        if (this.drawer) {
-            var oSlide = this.getSlide();
-            if (oSlide) {
-                this.drawer.OnAnimPaneChanged(oSlide.num, oBounds);
-            }
-        }
-    };
-    CTopControl.prototype.onUpdate = function () {
-        var oBounds = this.getBounds();
-        this.onUpdateRect(oBounds);
-    };
-    CTopControl.prototype.onChildUpdate = function (oBounds) {
-        this.onUpdateRect(oBounds);
-    };
-    CTopControl.prototype.onResize = function () {
-        this.setLayout(0, 0, this.drawer.GetWidth(), this.drawer.GetHeight());
-        CControlContainer.prototype.onResize.call(this);
-        this.onUpdate();
-    };
-
-    function CSeqListContainer(oDrawer) {
-        CTopControl.call(this, oDrawer);
-        this.seqList = this.addControl(new CSeqList(this));
-    }
-
-    InitClass(CSeqListContainer, CTopControl, CONTROL_TYPE_SEQ_LIST_CONTAINER);
-    CSeqListContainer.prototype.getScrollOffsetY = function (oChild) {
-        return 0;
-    };
-    CSeqListContainer.prototype.recalculateChildrenLayout = function () {
-        this.seqList.setLayout(0, 0, this.getWidth(), this.seqList.getHeight());
-        this.seqList.recalculate();
-        this.setLayout(0, 0, this.seqList.getWidth(), this.seqList.getHeight());
-    };
-    CSeqListContainer.prototype.clipStart = function (graphics) {
-
-    };
-    CSeqListContainer.prototype.clipEnd = function (graphics) {
-    };
-    CSeqListContainer.prototype.onScroll = function () {
-        this.onUpdate();
-    };
-    CSeqListContainer.prototype.getFillColor = function () {
-        return null;
-    };
-    CSeqListContainer.prototype.getOutlineColor = function () {
-        return null;
-    };
-    CSeqListContainer.prototype.onMouseWheel = function (e, deltaY, X, Y) {
-        return false;
-    };
-
-    const SCROLL_TIMER_INTERVAL = 200;
-
-    function CScrollBase(oParentControl, oContainer, oChild) {
-        CControlContainer.call(this, oParentControl);
-        this.addControl(new CButton(this, function (e, x, y) {
-            if (this.hit(x, y)) {
-                this.parentControl.setEventListener(this);
-                this.parentControl.startScroll(-ANIM_ITEM_HEIGHT);
-            }
-        }, null, function (e, x, y) {
-            this.parentControl.setEventListener(null);
-            this.parentControl.endScroll();
-        }));//left or top button
-        this.addControl(new CButton(this, function (e, x, y) {
-            if (this.hit(x, y)) {
-                this.parentControl.setEventListener(this);
-                this.parentControl.startScroll(ANIM_ITEM_HEIGHT);
-            }
-        }, null, function (e, x, y) {
-            this.parentControl.setEventListener(null);
-            this.parentControl.endScroll();
-        }));//right or bottom button
-        this.container = oContainer;
-        this.scrolledChild = oChild;
-        this.scrollOffset = 0;
-        this.tmpScrollOffset = null;
-        this.startScrollerPos = null;
-        this.startScrollTop = null;
-        this.timerId = null;
-    }
-
-    InitClass(CScrollBase, CControlContainer, CONTROL_TYPE_UNKNOWN);
-    CScrollBase.prototype.getScrollOffset = function () {
-        if (this.tmpScrollOffset !== null) {
-            return this.tmpScrollOffset;
-        }
-        this.checkOffset();
-        return this.scrollOffset;
-    };
-    CScrollBase.prototype.checkOffset = function () {
-        this.scrollOffset = Math.max(0, Math.min(this.scrollOffset, this.getMaxScrollOffset()));
-    };
-    CScrollBase.prototype.setTmpScroll = function (val) {
-        this.tmpScrollOffset = Math.max(0, Math.min(this.getMaxScrollOffset(), val));
-        this.parentControl.onScroll();
-        this.onUpdate();
-    };
-    CScrollBase.prototype.clearTmpScroll = function () {
-        if (this.tmpScrollOffset !== null) {
-            this.scrollOffset = this.tmpScrollOffset;
-            this.tmpScrollOffset = null;
-            this.parentControl.onScroll();
-            this.onUpdate();
-        }
-    };
-    CScrollBase.prototype.getMaxScrollOffset = function (val) {
-        return 0;
-    };
-    CScrollBase.prototype.getScrollerX = function (dScrollOffset) {
-        return 0;
-    };
-    CScrollBase.prototype.getScrollerY = function (dScrollOffset) {
-        return 0;
-    };
-    CScrollBase.prototype.getScrollerWidth = function (dScrollOffset) {
-        return 0;
-    };
-    CScrollBase.prototype.getScrollerHeight = function (dScrollOffset) {
-        return 0;
-    };
-    CScrollBase.prototype.hitInScroller = function (x, y) {
-        if (this.isHidden()) {
-            return false;
-        }
-        var oInv = this.getInvFullTransformMatrix();
-        var tx = oInv.TransformPointX(x, y);
-        var ty = oInv.TransformPointY(x, y);
-        var l = this.getScrollerX();
-        var t = this.getScrollerY();
-        var r = l + this.getScrollerWidth();
-        var b = t + this.getScrollerHeight();
-        return tx >= l && tx <= r && ty >= t && ty <= b;
-    };
-    CScrollBase.prototype.startScroll = function (step) {
-        this.endScroll();
-        var oScroll = this;
-        this.tmpScrollOffset = this.getScrollOffset();
-        oScroll.addScroll(step);
-        this.timerId = setInterval(function () {
-            oScroll.addScroll(step);
-        }, SCROLL_TIMER_INTERVAL);
-    };
-    CScrollBase.prototype.addScroll = function (step) {
-        this.setTmpScroll(this.tmpScrollOffset + step);
-        this.parentControl.onScroll();
-    };
-    CScrollBase.prototype.endScroll = function () {
-        if (this.timerId !== null) {
-            clearInterval(this.timerId);
-            this.timerId = null;
-        }
-        this.clearTmpScroll();
-        this.setStateFlag(STATE_FLAG_SELECTED, false);
-        this.startScrollerPos = null;
-        this.startScrollTop = null;
-    };
-    CScrollBase.prototype.isOnScroll = function (step) {
-        return this.timerId !== null || this.parentControl.isEventListener(this);
-    };
-    CScrollBase.prototype.getFillColor = function () {
-        return null;
-    };
-    CScrollBase.prototype.getOutlineColor = function () {
-        return null;
-    };
-
-    function CScrollVert(oParentControl, oContainer, oChild) {
-        CScrollBase.call(this, oParentControl, oContainer, oChild);
-        this.topButton = this.children[0];
-        this.bottomButton = this.children[1];
-    }
-
-    InitClass(CScrollVert, CScrollBase, CONTROL_TYPE_SCROLL_VERT);
-    CScrollVert.prototype.recalculateChildrenLayout = function () {
-        this.topButton.setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
-        this.bottomButton.setLayout(0, this.getHeight() - SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
-    };
-    CScrollVert.prototype.getRailHeight = function () {
-        return this.getHeight() - this.children[0].getHeight() - this.children[1].getHeight();
-    };
-    CScrollVert.prototype.getRelScrollerPos = function (dScrollOffset) {
-        return this.topButton.getBottom() + dScrollOffset * ((this.getRailHeight() - this.getScrollerHeight()) / (this.getMaxScrollOffset()));
-    };
-    CScrollVert.prototype.getScrollerX = function (dScrollOffset) {
-        return 0;
-    };
-    CScrollVert.prototype.getScrollerY = function () {
-        return this.getRelScrollerPos(this.getScrollOffset());
-    };
-    CScrollVert.prototype.getScrollerWidth = function (dScrollOffset) {
-        return this.getWidth();
-    };
-    CScrollVert.prototype.getScrollerHeight = function () {
-        var dRailH = this.getRailHeight();
-        var dMinRailH = dRailH / 4;
-        return Math.max(dMinRailH, dRailH * (dRailH / this.scrolledChild.getHeight()))
-    };
-    CScrollVert.prototype.getMaxScrollOffset = function () {
-        return Math.max(0, this.scrolledChild.getHeight() - this.container.getHeight());
-    };
-    CScrollVert.prototype.getMaxRelScrollOffset = function () {
-        return Math.max(0, this.getRailHeight() - this.getScrollerHeight());
-    };
-    CScrollVert.prototype.draw = function (graphics) {
-        if (this.isHidden()) {
-            return false;
-        }
-        if (!this.checkUpdateRect(graphics.updatedRect)) {
-            return false;
-        }
-        this.children[0].draw(graphics);
-        this.children[1].draw(graphics);
-
-
-        graphics.SaveGrState();
-        var oSkin = AscCommon.GlobalSkin;
-        //ScrollBackgroundColor     : "#EEEEEE",
-        //ScrollOutlineColor        : "#CBCBCB",
-        //ScrollOutlineHoverColor   : "#CBCBCB",
-        //ScrollOutlineActiveColor  : "#ADADAD",
-        //ScrollerColor             : "#F7F7F7",
-        //ScrollerHoverColor        : "#C0C0C0",
-        //ScrollerActiveColor       : "#ADADAD",
-        //ScrollArrowColor          : "#ADADAD",
-        //ScrollArrowHoverColor     : "#F7F7F7",
-        //ScrollArrowActiveColor    : "#F7F7F7",
-        //ScrollerTargetColor       : "#CFCFCF",
-        //ScrollerTargetHoverColor  : "#F1F1F1",
-        //ScrollerTargetActiveColor : "#F1F1F1",
-        var x = this.getScrollerX();
-        var y = this.getRelScrollerPos(this.getScrollOffset());
-        var extX = this.getScrollerWidth();
-        var extY = this.getScrollerHeight();
-        graphics.transform3(this.transform);
-
-        var sFillColor;
-        var sOutlineColor;
-        var oColor;
-        if (this.isActive()) {
-            sFillColor = oSkin.ScrollerActiveColor;
-            sOutlineColor = oSkin.ScrollOutlineActiveColor;
-        } else if (this.isHovered()) {
-            sFillColor = oSkin.ScrollerHoverColor;
-            sOutlineColor = oSkin.ScrollOutlineHoverColor;
-        } else {
-            sFillColor = oSkin.ScrollerColor;
-            sOutlineColor = oSkin.ScrollOutlineColor;
-        }
-        oColor = AscCommon.RgbaHexToRGBA(sFillColor);
-        graphics.b_color1(oColor.R, oColor.G, oColor.B, 0xFF);
-        graphics.rect(x, y, extX, extY);
-        graphics.df();
-        oColor = AscCommon.RgbaHexToRGBA(sOutlineColor);
-
-        graphics.SetIntegerGrid(true);
-        var nPenW = this.getPenWidth(graphics);
-        graphics.p_color(oColor.R, oColor.G, oColor.B, 0xFF);
-        graphics.drawHorLine(0, y, x, x + extX, nPenW);
-        graphics.drawHorLine(0, y + extY, x, x + extX, nPenW);
-        graphics.drawVerLine(2, x, y, y + extY, nPenW);
-        graphics.drawVerLine(2, x + extX, y, y + extY, nPenW);
-        graphics.ds();
-        graphics.RestoreGrState();
-        return true;
-    };
-    CScrollVert.prototype.onMouseMove = function (e, x, y) {
-        if (this.isHidden()) {
-            return false;
-        }
-        var bRet = false;
-        if (this.eventListener) {
-            this.eventListener.onMouseMove(e, x, y);
-            return true;
-        }
-
-        if (this.parentControl.isEventListener(this)) {
-            if (this.startScrollerPos === null) {
-                this.startScrollerPos = y;
-            }
-            if (this.startScrollTop === null) {
-                this.startScrollTop = this.getScrollOffset();
-            }
-            var dCoeff = this.getMaxScrollOffset() / this.getMaxRelScrollOffset();
-            var dy = dCoeff * (y - this.startScrollerPos);
-            this.setTmpScroll(dy + this.startScrollTop);
-            return true;
-        }
-        bRet |= this.children[0].onMouseMove(e, x, y);
-        bRet |= this.children[1].onMouseMove(e, x, y);
-
-        var bHit = this.hitInScroller(x, y);
-        var nState = this.isHovered();
-        if (this.isHovered()) {
-            if (!bHit) {
-                this.setStateFlag(STATE_FLAG_HOVERED, false);
-                bRet = true;
-            }
-        } else {
-            if (bHit) {
-                this.setStateFlag(STATE_FLAG_HOVERED, true);
-                bRet = true;
-            }
-        }
-        //-----------------------------
-        return bRet;
-    };
-    CScrollVert.prototype.onMouseDown = function (e, x, y) {
-        var bRet = false;
-        if (this.hit(x, y)) {
-            bRet |= this.children[0].onMouseDown(e, x, y);
-            bRet |= this.children[1].onMouseDown(e, x, y);
-            if (!bRet) {
-                if (this.hitInScroller(x, y)) {
-                    this.startScrollerPos = y;
-                    this.startScrollTop = this.getScrollOffset();
-                    this.setStateFlag(STATE_FLAG_SELECTED, true);
-                    this.parentControl.setEventListener(this);
-                    this.parentControl.onScroll();
-                    //-----------------------------
-                } else {
-                    this.parentControl.setEventListener(this);
-                    var oInv = this.getInvFullTransformMatrix();
-                    var ty = oInv.TransformPointY(x, y);
-                    if (ty < this.getScrollerY()) {
-                        this.startScroll(-ANIM_ITEM_HEIGHT);
-                    } else {
-                        this.startScroll(ANIM_ITEM_HEIGHT);
-                    }
-                }
-                return true;
-            }
-        }
-        return bRet;
-    };
-    CScrollVert.prototype.onMouseUp = function (e, x, y) {
-        this.endScroll();
-        var bRet = false;
-        if (this.eventListener) {
-            bRet = this.eventListener.onMouseUp(e, x, y);
-            this.eventListener = null;
-            return bRet;
-        }
-        bRet |= this.children[0].onMouseUp(e, x, y);
-        bRet |= this.children[1].onMouseUp(e, x, y);
-        this.setEventListener(null);
-        return bRet;
-    };
-
-    function CScrollHor(oParentControl, oContainer, oChild) {
-        CScrollBase.call(this, oParentControl, oContainer, oChild);
-    }
-
-    InitClass(CScrollHor, CScrollBase, CONTROL_TYPE_SCROLL_HOR);
-
-    function CSeqList(oParentControl) {
-        CControlContainer.call(this, oParentControl);
-        this.sequences = this.children;
-    }
-
-    InitClass(CSeqList, CControlContainer, CONTROL_TYPE_SEQ_LIST);
-    CSeqList.prototype.getIndexLabelRight = function () {
-        return 10;//TODO
-    };
-    CSeqList.prototype.recalculateChildren = function () {
-        this.clear();
-        var oTiming = this.getTiming();
-        if (oTiming) {
-            var aAllSeqs = oTiming.getRootSequences();
-            var oLastSeqView = null;
-            for (var nSeq = 0; nSeq < aAllSeqs.length; ++nSeq) {
-                var oSeqView = new CAnimSequence(this, aAllSeqs[nSeq]);
-                this.addControl(oSeqView);
-                oLastSeqView = oSeqView;
-            }
-        }
-    };
-    CSeqList.prototype.recalculateChildrenLayout = function () {
-        var dLastBottom = 0;
-        for (var nChild = 0; nChild < this.children.length; ++nChild) {
-            var oSeq = this.children[nChild];
-            oSeq.setLayout(0, dLastBottom, this.getWidth(), 0);
-            oSeq.recalculate();
-            dLastBottom = oSeq.getBottom();
-        }
-        this.setLayout(this.getLeft(), this.getTop(), this.getWidth(), dLastBottom);
-    };
-    CSeqList.prototype.getFillColor = function () {
-        return null;
-    };
-    CSeqList.prototype.getOutlineColor = function () {
-        return null;
-    };
-    // CSeqList.prototype.draw = function(graphics) {
-    //     if(!this.checkUpdateRect(graphics.updateRect)) {
-    //         return false;
-    //     }
-    //     if(this.parentControl.isScrolling() && !this.bDrawTexture) {
-    //         this.recalculateTransform();
-    //         this.checkCachedTexture(graphics).draw(graphics, new AscCommon.CMatrix());
-    //         return;
-    //     }
-    //     this.clearCachedTexture();
-    //     return CControlContainer.prototype.draw.call(this, graphics);
-    // };
-
-
-    CSeqList.prototype.checkCachedTexture = function (graphics) {
-        var dGraphicsScale = graphics.m_oCoordTransform.sx;
-        if (this.cachedCanvas) {
-            var dScale = this.cachedCanvas.scale;
-            if (AscFormat.fApproxEqual(dScale, dGraphicsScale)) {
-                return this.cachedCanvas;
-            }
-        }
-        this.bDrawTexture = true;
-        var oBaseTexture = this.getAnimTexture(dGraphicsScale);
-		if(oBaseTexture) {
-			this.cachedCanvas = new CAnimTexture(this, oBaseTexture.canvas, oBaseTexture.scale, oBaseTexture.x, oBaseTexture.y);
-		}
-		else {
-			this.cachedCanvas = null;
-		}
-		this.bDrawTexture = false;
-        return this.cachedCanvas;
-    };
-    CSeqList.prototype.clearCachedTexture = function () {
-        if (this.cachedCanvas) {
-            this.cachedCanvas = null;
-        }
-    };
-
-    function CAnimSequence(oParentControl, oSeq) {//main seq, interactive seq
-        CControlContainer.call(this, oParentControl);
-        this.seq = oSeq;
-        this.label = null; //this.addControl(new CLabel(this, "seq"));
-        this.groupList = null;//this.addControl(new CAnimGroupList(this));
-    }
-
-    InitClass(CAnimSequence, CControlContainer, CONTROL_TYPE_ANIM_SEQ);
-    CAnimSequence.prototype.getIndexLabelRight = function () {
-        return this.parentControl.getIndexLabelRight() - this.getLeft();
-    };
-    CAnimSequence.prototype.recalculateChildren = function () {
-        this.clear();
-        var sLabel = this.seq.getLabel();
-        if (typeof sLabel === "string" && sLabel.length > 0) {
-            this.label = this.addControl(new CLabel(this, sLabel, 9, true));
-        } else {
-            this.label = null;
-        }
-        this.groupList = this.addControl(new CAnimGroupList(this));
-    };
-    CAnimSequence.prototype.getSeq = function () {
-        return this.seq;
-    };
-    CAnimSequence.prototype.recalculateChildrenLayout = function () {
-        var dCurY = 0;
-        if (this.label) {
-            this.label.setLayout(0, dCurY, this.getWidth(), SEQ_LABEL_HEIGHT);
-            this.label.recalculate();
-            dCurY += this.label.getHeight();
-        }
-        if (this.groupList) {
-            this.groupList.setLayout(0, dCurY, this.getWidth(), 0);
-            this.groupList.recalculate();
-            dCurY += this.groupList.getHeight();
-        }
-        this.setLayout(this.getLeft(), this.getTop(), this.getWidth(), dCurY);
-    };
-    CAnimSequence.prototype.getFillColor = function () {
-        return null;
-    };
-    CAnimSequence.prototype.getOutlineColor = function () {
-        return null;
-    };
-
-    function CAnimGroupList(oParentControl) {//main seq, interactive seq
-        CControlContainer.call(this, oParentControl);
-    }
-
-    InitClass(CAnimGroupList, CControlContainer, CONTROL_TYPE_ANIM_GROUP_LIST);
-    CAnimGroupList.prototype.getIndexLabelRight = function () {
-        return this.parentControl.getIndexLabelRight() - this.getLeft();
-    };
-    CAnimGroupList.prototype.getSeq = function () {
-        return this.parentControl.getSeq();
-    };
-    CAnimGroupList.prototype.recalculateChildren = function () {
-        this.clear();
-        var oSeq = this.getSeq();
-        var aAllEffects = oSeq.getAllEffects();
-
-        for (var nCurEffect = 0; nCurEffect < aAllEffects.length; ++nCurEffect) {
-            var oItem = new CAnimItem(this, aAllEffects[nCurEffect]);
-            this.addControl(oItem);
-        }
-    };
-    CAnimGroupList.prototype.getFillColor = function () {
-        return null;
-    };
-    CAnimGroupList.prototype.getOutlineColor = function () {
-        return null;
-    };
-
-    //CAnimGroupList.prototype.draw = function() {
-    //};
-    CAnimGroupList.prototype.recalculateChildrenLayout = function () {
-        var dLastBottom = 0;
-        for (var nChild = 0; nChild < this.children.length; ++nChild) {
-            var oChild = this.children[nChild];
-            oChild.setLayout(0, dLastBottom, this.getWidth(), ANIM_ITEM_HEIGHT);
-            oChild.recalculate();
-            dLastBottom = oChild.getBottom();
-        }
-        this.setLayout(this.getLeft(), this.getTop(), this.getWidth(), dLastBottom);
-    };
-
-    function CAnimGroup(oParentControl, aEffects) {
-        CControlContainer.call(this, oParentControl);
-    }
-
-    InitClass(CAnimGroup, CControlContainer, CONTROL_TYPE_ANIM_GROUP);
-    CAnimGroup.prototype.getIndexLabelRight = function () {
-        return this.parentControl.getIndexLabelRight() - this.getLeft();
-    };
-
-    function CImageControl(oParentControl) {
-        CControl.call(this, oParentControl)
-    }
-
-    InitClass(CImageControl, CControl, CONTROL_TYPE_IMAGE);
-    CImageControl.prototype.canHandleEvents = function () {
-        return false;
-    };
-    //CImageControl.prototype.draw = function() {
-    //};
-
-    function CEffectBar(oParentControl) {
-        CControl.call(this, oParentControl)
-    }
-
-    InitClass(CEffectBar, CControl, CONTROL_TYPE_EFFECT_BAR);
-
-    function CAnimItem(oParentControl, oEffect) {
-        CControlContainer.call(this, oParentControl);
-        this.indexLabel = this.addControl(new CLabel(this, "1.", 7.5));
-        this.eventTypeImage = this.addControl(new CImageControl(this));
-        this.effectTypeImage = this.addControl(new CImageControl(this));
-        this.effectLabel = this.addControl(new CLabel(this, oEffect.getObjectName(), 7.5));
-        this.effectBar = this.addControl(new CEffectBar(this));
-        this.contextMenuButton = this.addControl(new CButton(this));
-
-        this.effect = oEffect;
-    }
-
-    InitClass(CAnimItem, CControlContainer, CONTROL_TYPE_ANIM_ITEM);
-    CAnimItem.prototype.getIndexLabelRight = function () {
-        return this.parentControl.getIndexLabelRight() - this.getLeft();
-    };
-    CAnimItem.prototype.getEffectLabelRight = function () {
-        return LABEL_TIMELINE_WIDTH;
-    };
-    CAnimItem.prototype.recalculateChildrenLayout = function () {
-        var dIndexLabelRight = this.getIndexLabelRight();
-        var dYInside = (this.getHeight() - EFFECT_BAR_HEIGHT) / 2;
-        this.indexLabel.setLayout(0, dYInside, dIndexLabelRight, EFFECT_BAR_HEIGHT);
-        this.eventTypeImage.setLayout(this.indexLabel.getRight(), dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
-        this.effectTypeImage.setLayout(this.eventTypeImage.getRight(), dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
-        var dLabelRight = this.getEffectLabelRight();
-        var dEffectLabelLeft = this.effectTypeImage.getRight();
-        this.effectLabel.setLayout(dEffectLabelLeft, dYInside, dLabelRight - dEffectLabelLeft, EFFECT_BAR_HEIGHT);
-        this.effectBar.setLayout(0, 0, 0, 0);//todo
-        var dRightSpace = dYInside;
-        this.contextMenuButton.setLayout(this.getRight() - dRightSpace - EFFECT_BAR_HEIGHT, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
-    };
-    CAnimItem.prototype.canHandleEvents = function () {
-        return true;
-    };
-    // CAnimItem.prototype.getFillColor = function() {
-    //     return null;
-    // };
-    CAnimItem.prototype.getOutlineColor = function () {
-        return null;
-    };
-
-    //CAnimItem.prototype.draw = function() {
-    //};
-
-    function CLabel(oParentControl, sString, nFontSize, bBold, nParaAlign) {
-        CControl.call(this, oParentControl);
-        AscFormat.ExecuteNoHistory(function () {
-            this.string = sString;
-            this.fontSize = nFontSize;
-            this.createTextBody();
-            var oTxLstStyle = new AscFormat.TextListStyle();
-            oTxLstStyle.levels[0] = new CParaPr();
-            oTxLstStyle.levels[0].DefaultRunPr = new AscCommonWord.CTextPr();
-            oTxLstStyle.levels[0].DefaultRunPr.FontSize = nFontSize;
-            oTxLstStyle.levels[0].DefaultRunPr.Bold = bBold;
-            oTxLstStyle.levels[0].DefaultRunPr.Color = new AscCommonWord.CDocumentColor(0x44, 0x44, 0x44, false);
-            oTxLstStyle.levels[0].DefaultRunPr.RFonts.SetAll("Arial", -1);
-            if (AscFormat.isRealNumber(nParaAlign)) {
-                oTxLstStyle.levels[0].Jc = nParaAlign;
-            }
-            this.txBody.setLstStyle(oTxLstStyle);
-            this.bodyPr = new AscFormat.CBodyPr();
-            this.bodyPr.setDefault();
-            this.bodyPr.anchor = 1;//vertical align ctr
-            this.bodyPr.lIns = 0;
-            this.bodyPr.rIns = 0;
-            this.bodyPr.tIns = 0;
-            this.bodyPr.bIns = 0;
-            this.bodyPr.horzOverflow = AscFormat.nHOTClip;
-            this.bodyPr.vertOverflow = AscFormat.nVOTClip;
-        }, this, []);
-    }
-
-    InitClass(CLabel, CControl, CONTROL_TYPE_LABEL);
-    CLabel.prototype.getString = function () {
-        return AscCommon.translateManager.getValue(this.string);
-    };
-    CLabel.prototype.recalculateContent = function () {
-        //this.recalculateGeometry();
-        this.recalculateTransform();
-//        this.txBody.content.Recalc_AllParagraphs_CompiledPr();
-        if (!this.txBody.bFit || !AscFormat.isRealNumber(this.txBody.fitWidth) || this.txBody.fitWidth > this.getWidth()) {
-            this.txBody.recalculateOneString(this.getString());
-        }
-    };
-    CLabel.prototype.canHandleEvents = function () {
-        return false;
-    };
-    CLabel.prototype.getFillColor = function () {
-        return null;
-    };
-    CLabel.prototype.getOutlineColor = function () {
-        return null;
-    };
-    CLabel.prototype.recalculateTransformText = function () {
-        var Y = this.getHeight() / 2 - this.txBody.content.GetSummaryHeight() / 2;
-        if (!this.transformText) {
-            this.transformText = new AscCommon.CMatrix();
-        }
-        this.transformText.tx = this.transform.tx;
-        this.transformText.ty = this.transform.ty + Y;
-
-        if (!this.invertTransformText) {
-            this.invertTransformText = new AscCommon.CMatrix();
-        }
-        this.invertTransformText.tx = -this.transformText.tx;
-        this.invertTransformText.ty = -this.transformText.ty;
-        this.localTransformText = this.transformText;
-    };
-    CLabel.prototype.recalculateTransformText2 = function () {
-        return null;
-    };
-
-    function CButton(oParentControl, fOnMouseDown, fOnMouseMove, fOnMouseUp) {
-        CControlContainer.call(this, oParentControl);
-        this.onMouseDownCallback = fOnMouseDown;
-        this.onMouseMoveCallback = fOnMouseMove;
-        this.onMouseUpCallback = fOnMouseUp;
-    }
-
-    InitClass(CButton, CControlContainer, CONTROL_TYPE_BUTTON);
-    CButton.prototype.onMouseDown = function (e, x, y) {
-        if (this.onMouseDownCallback && this.onMouseDownCallback.call(this, e, x, y)) {
-            return true;
-        }
-        return CControlContainer.prototype.onMouseDown.call(this, e, x, y);
-    };
-    CButton.prototype.onMouseMove = function (e, x, y) {
-        if (this.onMouseMoveCallback && this.onMouseMoveCallback.call(this, e, x, y)) {
-            return true;
-        }
-        return CControlContainer.prototype.onMouseMove.call(this, e, x, y);
-    };
-    CButton.prototype.onMouseUp = function (e, x, y) {
-        if (this.onMouseUpCallback && this.onMouseUpCallback.call(this, e, x, y)) {
-            return true;
-        }
-        return CControlContainer.prototype.onMouseUp.call(this, e, x, y);
-    };
-    CButton.prototype.canHandleEvents = function () {
-        return true;
-    };
-    CButton.prototype.canHandleEvents = function () {
-        return true;
-    };
-    // CButton.prototype.draw = function(graphics) {
-    //     if(this.isHidden()){
-    //         return false;
-    //     }
-    //     if(!this.checkUpdateRect(graphics.updatedRect)) {
-    //         return false;
-    //     }
-    //
-    //     graphics.SaveGrState();
-    //     var oSkin = AscCommon.GlobalSkin;
-    //     //ScrollBackgroundColor     : "#EEEEEE",
-    //     //ScrollOutlineColor        : "#CBCBCB",
-    //     //ScrollOutlineHoverColor   : "#CBCBCB",
-    //     //ScrollOutlineActiveColor  : "#ADADAD",
-    //     //ScrollerColor             : "#F7F7F7",
-    //     //ScrollerHoverColor        : "#C0C0C0",
-    //     //ScrollerActiveColor       : "#ADADAD",
-    //     //ScrollArrowColor          : "#ADADAD",
-    //     //ScrollArrowHoverColor     : "#F7F7F7",
-    //     //ScrollArrowActiveColor    : "#F7F7F7",
-    //     //ScrollerTargetColor       : "#CFCFCF",
-    //     //ScrollerTargetHoverColor  : "#F1F1F1",
-    //     //ScrollerTargetActiveColor : "#F1F1F1",
-    //     var x = 0;
-    //     var y = 0;
-    //     var extX = this.getWidth();
-    //     var extY = this.getHeight();
-    //     graphics.transform3(this.transform);
-    //
-    //     var sFillColor;
-    //     var sOutlineColor;
-    //     var oColor;
-    //     if(this.isActive()) {
-    //         sFillColor = oSkin.ScrollerActiveColor;
-    //         sOutlineColor = oSkin.ScrollOutlineActiveColor;
-    //     }
-    //     else if(this.isHovered()) {
-    //         sFillColor = oSkin.ScrollerHoverColor;
-    //         sOutlineColor = oSkin.ScrollOutlineHoverColor;
-    //     }
-    //     else {
-    //         sFillColor = oSkin.ScrollerColor;
-    //         sOutlineColor = oSkin.ScrollOutlineColor;
-    //     }
-    //     oColor = AscCommon.RgbaHexToRGBA(sFillColor);
-    //     graphics.b_color1(oColor.R, oColor.G, oColor.B, 0xFF);
-    //     graphics.rect(x, y, extX, extY);
-    //     graphics.df();
-    //     oColor = AscCommon.RgbaHexToRGBA(sOutlineColor);
-    //
-    //     graphics.SetIntegerGrid(true);
-    //     graphics.p_width(0);
-    //     graphics.p_color(oColor.R, oColor.G, oColor.B, 0xFF);
-    //     graphics.drawHorLine(0, y, x, x + extX, 0);
-    //     graphics.drawHorLine(0, y + extY, x, x + extX, 0);
-    //     graphics.drawVerLine(2, x, y, y + extY, 0);
-    //     graphics.drawVerLine(2, x + extX, y, y + extY, 0);
-    //     graphics.ds();
-    //     graphics.RestoreGrState();
-    //     return true;
-    // };
-
-    CButton.prototype.getFillColor = function () {
-        // if(this.parentControl instanceof CTimelineContainer) {
-        //     return null;
-        // }
-        var oSkin = AscCommon.GlobalSkin;
-        if (this.isActive()) {
-            return oSkin.ScrollerActiveColor;
-        } else if (this.isHovered()) {
-            return oSkin.ScrollerHoverColor;
-        } else {
-            return oSkin.ScrollerColor;
-        }
-    };
-    CButton.prototype.getOutlineColor = function () {
-        // if(this.parentControl instanceof CTimelineContainer) {
-        //     return null;
-        // }
-        var oSkin = AscCommon.GlobalSkin;
-        if (this.isActive()) {
-            return oSkin.ScrollOutlineActiveColor;
-        } else if (this.isHovered()) {
-            return oSkin.ScrollOutlineHoverColor;
-        } else {
-            return oSkin.ScrollOutlineColor;
-        }
-    };
-
-    var PLAY_BUTTON_WIDTH = 82 * AscCommon.g_dKoef_pix_to_mm;
-    var PLAY_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
-    var PLAY_BUTTON_LEFT = 145 * AscCommon.g_dKoef_pix_to_mm;
-    var PLAY_BUTTON_TOP = 12 * AscCommon.g_dKoef_pix_to_mm;
-
-    function CAnimPaneHeader(oDrawer) {
-        CTopControl.call(this, oDrawer);
-        this.label = this.addControl(new CLabel(this, "Animation Pane", 10, true));
-        this.playButton = this.addControl(new CButton(this));
-        this.closeButton = this.addControl(new CButton(this));
-    }
-
-    InitClass(CAnimPaneHeader, CTopControl, CONTROL_TYPE_HEADER);
-    CAnimPaneHeader.prototype.recalculateChildrenLayout = function () {
-        this.closeButton.setLayout(
-            this.getWidth() - AscCommon.TIMELINE_LIST_RIGHT_MARGIN - BUTTON_SIZE,
-            (this.getHeight() - BUTTON_SIZE) / 2,
-            BUTTON_SIZE,
-            BUTTON_SIZE
-        );
-        this.playButton.setLayout(
-            PLAY_BUTTON_LEFT,
-            PLAY_BUTTON_TOP,
-            PLAY_BUTTON_WIDTH,
-            PLAY_BUTTON_HEIGHT
-        );
-        this.label.setLayout(
-            AscCommon.TIMELINE_LEFT_MARGIN,
-            0,
-            this.playButton.getLeft(),
-            this.getHeight()
-        );
-
-    };
-    CAnimPaneHeader.prototype.getFillColor = function () {
-        return null;
-    };
-    CAnimPaneHeader.prototype.getOutlineColor = function () {
-        return null;
-    };
-
-    function CToolbar(oParentControl) {
-        CControlContainer.call(this, oParentControl);
-        this.playButton = this.addControl(new CButton(this));
-        this.upButton = this.addControl(new CButton(this));
-        this.downButton = this.addControl(new CButton(this));
-    }
-
-    InitClass(CToolbar, CControlContainer, CONTROL_TYPE_TOOLBAR);
-    CToolbar.prototype.recalculateChildrenLayout = function () {
-        this.playButton.setLayout(0, 0, this.getWidth(), BUTTON_SIZE);
-        this.downButton.setLayout(
-            this.getWidth() - BUTTON_SIZE,
-            this.getHeight() - BUTTON_SIZE,
-            BUTTON_SIZE,
-            BUTTON_SIZE
-        );
-        this.upButton.setLayout(
-            this.downButton.getLeft() - BUTTON_SPACE - BUTTON_SIZE,
-            this.getHeight() - BUTTON_SIZE,
-            BUTTON_SIZE,
-            BUTTON_SIZE
-        );
-    };
-    CToolbar.prototype.getFillColor = function () {
-        return null;
-    };
-    CToolbar.prototype.getOutlineColor = function () {
-        return null;
-    };
-
-
-    var SECONDS_BUTTON_WIDTH = 76 * AscCommon.g_dKoef_pix_to_mm;
-    var SECONDS_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
-    var SECONDS_BUTTON_LEFT = 57 * AscCommon.g_dKoef_pix_to_mm;
-
-    function CTimelineContainer(oDrawer) {
-        CTopControl.call(this, oDrawer);
-        this.drawer = oDrawer;
-        this.secondsButton = this.addControl(new CButton(this));
-        this.timeline = this.addControl(new CTimeline(this));
-    }
-
-    InitClass(CTimelineContainer, CTopControl, CONTROL_TYPE_TIMELINE_CONTAINER);
-    CTimelineContainer.prototype.recalculateChildrenLayout = function () {
-        var dPosY = (this.getHeight() - SECONDS_BUTTON_HEIGHT) / 2;
-        this.secondsButton.setLayout(SECONDS_BUTTON_LEFT, dPosY, SECONDS_BUTTON_WIDTH, SECONDS_BUTTON_HEIGHT);
-        var dLeft = LABEL_TIMELINE_WIDTH + AscCommon.TIMELINE_LEFT_MARGIN - 1.5 * SCROLL_THICKNESS;
-        var dWidth = this.getWidth() - AscCommon.TIMELINE_LIST_RIGHT_MARGIN - dLeft;
-        dPosY = (this.getHeight() - SCROLL_THICKNESS) / 2;
-        this.timeline.setLayout(dLeft, dPosY, dWidth, SCROLL_THICKNESS);
-    };
-    CTimelineContainer.prototype.getFillColor = function () {
-        return null;
-    };
-    CTimelineContainer.prototype.getOutlineColor = function () {
-        return null;
-    };
-
-    //Time scales in seconds
-    const TIME_SCALES = [
-        1,
-        1,
-        2,
-        5,
-        10,
-        20,
-        60,
-        120,
-        300,
-        600,
-        600
-    ];
-    //lengths
-    const SMALL_TIME_INTERVAL = 15;
-    const MIDDLE_1_TIME_INTERVAL = 20;
-    const MIDDLE_2_TIME_INTERVAL = 25;
-    const LONG_TIME_INTERVAL = 30;
-    const TIME_INTERVALS = [
-        LONG_TIME_INTERVAL, //1
-        SMALL_TIME_INTERVAL, //1
-        SMALL_TIME_INTERVAL, //2
-        MIDDLE_1_TIME_INTERVAL, //5
-        MIDDLE_1_TIME_INTERVAL,//10
-        MIDDLE_1_TIME_INTERVAL,//20
-        MIDDLE_2_TIME_INTERVAL,//60
-        MIDDLE_2_TIME_INTERVAL,//120
-        MIDDLE_2_TIME_INTERVAL,//300
-        MIDDLE_2_TIME_INTERVAL,//600
-        SMALL_TIME_INTERVAL//600
-    ];
-    const LABEL_WIDTH = 100;
-
-    function CTimeline(oParentControl) {
-        CScrollHor.call(this, oParentControl);
-        this.startTimePos = 0;
-        this.curTimePos = 0;
-        this.tmScaleIdx = 5;
-
-        //labels cache
-        this.labels = {};
-        this.usedLabels = {};
-
-        this.cachedParaPr = null;
-    }
-
-    InitClass(CTimeline, CScrollHor, CONTROL_TYPE_TIMELINE);
-    CTimeline.prototype.startDrawLabels = function () {
-        this.usedLabels = {};
-    };
-    CTimeline.prototype.endDrawLabels = function () {
-        for (var nTime in this.labels) {
-            if (!this.usedLabels[nTime]) {
-                var oLabel = this.labels[nTime];
-                oLabel.parentControl = null;
-                oLabel.bDeleted = true;
-                delete this.labels[nTime];
-            }
-        }
-    };
-    CTimeline.prototype.getLabel = function (nTime, scale) {
-        this.usedLabels[nTime] = true;
-        if (this.labels[nTime] && AscFormat.fApproxEqual(this.labels[nTime].scale, scale, 0.01)) {
-            return this.labels[nTime];
-        }
-        return this.cacheLabel(nTime, scale);
-    };
-    CTimeline.prototype.cacheLabel = function (nTime, scale) {
-        var oLabel = new CLabel(this, this.getTimeString(nTime), 7.5);
-        var oContent = oLabel.txBody.content;
-        oLabel.setLayout(0, 0, LABEL_WIDTH, this.getHeight());
-        if (this.cachedParaPr) {
-            oContent.Content[0].CompiledPr = this.cachedParaPr;
-        } else {
-            oContent.SetApplyToAll(true);
-            oContent.SetParagraphAlign(AscCommon.align_Center);
-            oContent.SetApplyToAll(false);
-        }
-        oLabel.recalculate();
-        if (!this.cachedParaPr) {
-            this.cachedParaPr = oContent.Content[0].CompiledPr;
-        }
-        var oBaseTexture = oLabel.getAnimTexture(scale);
-		if(oBaseTexture) {
-			this.labels[nTime] = new CAnimTexture(this, oBaseTexture.canvas, oBaseTexture.scale, oBaseTexture.x, oBaseTexture.y);
-		}
-		return this.labels[nTime];
-    };
-    CTimeline.prototype.getTimeString = function (nTime) {
-        if (nTime < 60) {
-            return "" + nTime;
-        }
-        var nMin, nSec;
-        var sMin, sSec;
-        nSec = (nTime % 60);
-        if (nSec === 0) {
-            sSec = "00";
-        } else {
-            sSec = "" + nSec;
-        }
-        if (nTime < 3600) {
-            return (((nTime / 60) >> 0) + ":") + sSec;
-        }
-
-        nMin = ((nTime / 60) >> 0);
-        if (nMin === 0) {
-            sMin = "00";
-        } else {
-            sMin = "" + nMin;
-        }
-        return (((nTime / 3600) >> 0) + ":") + (sMin + ":") + sSec;
-    };
-    CTimeline.prototype.drawLabel = function (graphics, dPos, nTime) {
-        var oLabelTexture = this.getLabel(nTime, graphics.m_oCoordTransform.sx);
-        var oMatrix = new AscCommon.CMatrix();
-        var dWidth = oLabelTexture.canvas.width / oLabelTexture.scale;
-        var dHeight = oLabelTexture.canvas.height / oLabelTexture.scale;
-        graphics.drawImage2(oLabelTexture.canvas,
-            dPos - dWidth / 2, this.getHeight() / 2 - dHeight / 2,
-            dWidth,
-            dHeight);
-        // var oContent = oLabel.txBody.content;
-        // oContent.ShiftView(dPos - LABEL_WIDTH / 2, this.getHeight() / 2 - oContent.GetSummaryHeight() / 2);
-        // oContent.Draw(0, graphics);
-        // oContent.ResetShiftView();
-    };
-    CTimeline.prototype.getPaneLeft = function () {
-        return SCROLL_BUTTON_SIZE;
-    };
-    CTimeline.prototype.getFillColor = function () {
-        return null;
-    };
-    CTimeline.prototype.getOutlineColor = function () {
-        return null;
-    };
-    CTimeline.prototype.recalculateChildrenLayout = function () {
-        this.children[0].setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
-        this.children[1].setLayout(this.getWidth() - SCROLL_BUTTON_SIZE, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
-    };
-    CTimeline.prototype.canHandleEvents = function () {
-        return true;
-    };
-    CTimeline.prototype.drawMark = function (graphics, dPos) {
-        var dHeight = this.getHeight() / 3;
-        var nPenW = this.getPenWidth(graphics);
-        graphics.drawVerLine(1, dPos, dHeight, dHeight + dHeight, nPenW);
-    };
-    CTimeline.prototype.start = function (graphics, dPos) {
-        var dHeight = this.getHeight() / 3;
-        var nPenW = this.getPenWidth(graphics);
-        graphics.drawVerLine(1, dPos, dHeight, dHeight + dHeight, nPenW);
-    };
-    CTimeline.prototype.draw = function (graphics) {
-        if (!CScrollHor.prototype.draw.call(this, graphics)) {
-            return false;
-        }
-        graphics.SaveGrState();
-        // var dPenW = this.getPenWidth(graphics);
-        // graphics.SetIntegerGrid(true);
-        // graphics.p_width(dPenW);
-        // var sColor = this.children[0].getOutlineColor();
-        // var oColor = AscCommon.RgbaHexToRGBA(sColor);
-        // graphics.p_color(oColor.R, oColor.G, oColor.B, 255);
-        // var dPaneLeft = this.children[0].getRight();
-        // var dPaneWidth = this.getWidth() - (this.children[0].getWidth() + this.children[1].getWidth());
-        // graphics.rect(dPaneLeft, 0, dPaneWidth, this.getHeight());
-        // graphics.ds();
-        // graphics.RestoreGrState();
-        var sColor = this.children[0].getOutlineColor();
-        var oColor = AscCommon.RgbaHexToRGBA(sColor);
-        var dPaneLeft = this.getRulerStart();
-        var dPaneWidth = this.getRulerEnd() - dPaneLeft;
-        var x = dPaneLeft;
-        var y = 0;
-        var extX = dPaneWidth;
-        var extY = this.getHeight();
-        graphics.transform3(this.transform);
-        graphics.SetIntegerGrid(true);
-        var nPenW = this.getPenWidth(graphics);
-        graphics.p_color(oColor.R, oColor.G, oColor.B, 0xFF);
-        graphics.drawHorLine(0, y, x, x + extX, nPenW);
-        graphics.drawHorLine(0, y + extY, x, x + extX, nPenW);
-        graphics.drawVerLine(2, x, y, y + extY, nPenW);
-        graphics.drawVerLine(2, x + extX, y, y + extY, nPenW);
-        graphics.ds();
-
-        //draw marks
-        //find first visible
-        var fStartTime = this.posToTime(this.getRulerStart());
-        var fTimeInterval = TIME_SCALES[this.tmScaleIdx];
-        var nMarksCount = TIME_INTERVALS[this.tmScaleIdx] === LONG_TIME_INTERVAL ? 10 : 2;
-
-        var dTimeOfSmallInterval = fTimeInterval / nMarksCount;
-        var nStartIntervalIdx = this.startTimePos / dTimeOfSmallInterval >> 0;
-        var nEndIntervalIdx = this.posToTime(this.getRulerEnd()) / dTimeOfSmallInterval + 0.5 >> 0;
-        this.startDrawLabels();
-        var nInterval;
-        graphics.AddClipRect(x, y, extX, extY);
-        for (nInterval = nStartIntervalIdx; nInterval <= nEndIntervalIdx; ++nInterval) {
-            var dTime = nInterval * dTimeOfSmallInterval;
-            var dPos = this.timeToPos(dTime);
-            if (nInterval % nMarksCount !== 0) {
-                this.drawMark(graphics, dPos);
-            } else {
-                this.drawLabel(graphics, dPos, dTime);
-            }
-        }
-        graphics.ds();
-        // for(nInterval = nFirstInterval; nInterval <= nLastInterval; ++nInterval) {
-        //     var dTime = nInterval*dSmallInterval;
-        //     var dPos = this.timeToPos(dTime);
-        //     if(nInterval % nMarksCount === 0) {
-        //         this.drawLabel(graphics, dPos, dTime);
-        //     }
-        // }
-        this.endDrawLabels();
-        //
-
-        graphics.RestoreGrState();
-    };
-    CTimeline.prototype.getRulerStart = function () {
-        return this.children[0].getRight();
-    };
-    CTimeline.prototype.getRulerEnd = function () {
-        return this.getWidth() - this.children[1].getWidth();
-    };
-    CTimeline.prototype.getCursorSize = function () {
-        return BUTTON_SIZE;
-    };
-    CTimeline.prototype.getZeroShift = function () {
-        return this.getRulerStart() + this.getCursorSize() / 2;
-    };
-    CTimeline.prototype.timeToPos = function (fTime) {
-        //linear relationship x = a*t + b
-        var oCoefs = this.getLinearCoeffs();
-        return oCoefs.a * fTime + oCoefs.b;
-    };
-    CTimeline.prototype.getLinearCoeffs = function () {
-        //linear relationship x = a*t + b
-        var a = TIME_INTERVALS[this.tmScaleIdx] / TIME_SCALES[this.tmScaleIdx];
-        var b = this.getZeroShift() - a * this.startTimePos;
-        return {a: a, b: b};
-    };
-    CTimeline.prototype.posToTime = function (fPos) {
-        //linear relationship x = a*t + b
-        var oCoefs = this.getLinearCoeffs();
-        return (fPos - oCoefs.b) / oCoefs.a;
-    };
-
-    const HEADER_HEIGHT = 7.5;
-    const BUTTON_SIZE = HEADER_HEIGHT;
-    const TOOLBAR_HEIGHT = HEADER_HEIGHT;
-    const PADDING_LEFT = 3;
-    const PADDING_TOP = PADDING_LEFT;
-    const PADDING_RIGHT = PADDING_LEFT;
-    const PADDING_BOTTOM = PADDING_LEFT;
-    const VERTICAL_SPACE = PADDING_LEFT;
-    const HORIZONTAL_SPACE = PADDING_LEFT;
-    const SCROLL_THICKNESS = 15 * AscCommon.g_dKoef_pix_to_mm;
-    const SCROLL_BUTTON_SIZE = SCROLL_THICKNESS;
-    const TIMELINE_HEIGHT = SCROLL_THICKNESS + 1;
-    const BUTTON_SPACE = HORIZONTAL_SPACE / 2;
-    const TOOLBAR_WIDTH = 25;
-    const ANIM_LABEL_WIDTH = 40;
-    const ANIM_ITEM_HEIGHT = TIMELINE_HEIGHT;
-    const EFFECT_BAR_HEIGHT = 2 * ANIM_ITEM_HEIGHT / 3;
-    const SEQ_LABEL_HEIGHT = EFFECT_BAR_HEIGHT;
-
-
-    function CAnimPane(oTiming) {
-        CControlContainer.call(this, null);
-        this.timing = oTiming;
-        this.header = this.addControl(new CAnimPaneHeader(this));
-        this.toolbar = this.addControl(new CToolbar(this));
-        this.seqListContainer = this.addControl(new CSeqListContainer(this));
-        this.timelineContainer = this.addControl(new CTimelineContainer(this));
-
-        this.recalcInfo.recalculateHeader = true;
-        this.recalcInfo.recalculateToolbar = true;
-        this.recalcInfo.recalculateSeqListContainer = true;
-        this.recalcInfo.recalculateTimelineContainer = true;
-    }
-
-    InitClass(CAnimPane, CControlContainer, CONTROL_TYPE_UNKNOWN);
-    CAnimPane.prototype.getHeader = function () {
-        return this.getChildByType(CONTROL_TYPE_HEADER);
-    };
-    CAnimPane.prototype.getToolbar = function () {
-        return this.getChildByType(CONTROL_TYPE_TOOLBAR);
-    };
-    CAnimPane.prototype.getSeqListContainer = function () {
-        return this.getChildByType(CONTROL_TYPE_SEQ_LIST_CONTAINER);
-    };
-    CAnimPane.prototype.getTimelineContainer = function () {
-        return this.getChildByType(CONTROL_TYPE_TIMELINE_CONTAINER);
-    };
-    CAnimPane.prototype.onChanged = function (oRect) {
-        this.timing.onAnimPaneChanged(oRect);
-    };
-    CAnimPane.prototype.onResize = function () {
-        return;
-        this.setLayout(
-            0,
-            0,
-            this.getExternalControlWidth(),
-            this.getExternalControlHeight()
-        );
-        this.recalculate();
-        this.onUpdate();
-    };
-    CAnimPane.prototype.getExternalControl = function () {
-        return editor.WordControl.m_oAnimPaneApi;
-    };
-    CAnimPane.prototype.getExternalControlWidth = function () {
-        return this.getExternalControl().GetWidth();
-    };
-    CAnimPane.prototype.getExternalControlHeight = function () {
-        return this.getExternalControl().GetHeight();
-    };
-    CAnimPane.prototype.onChildUpdate = function (oBounds) {
-        this.getExternalControl().OnAnimPaneChanged(this.getSlideNum(), oBounds);
-    };
-    CAnimPane.prototype.onUpdate = function () {
-        this.getExternalControl().OnAnimPaneChanged(this.getSlideNum(), this.getBounds());
-    };
-    CAnimPane.prototype.getSlideNum = function (oBounds) {
-        return this.timing.parent.num;
-    };
-    CAnimPane.prototype.recalculateChildrenLayout = function () {
-        var dControlWidth = Math.max(0, this.getWidth() - PADDING_LEFT - PADDING_RIGHT);
-        this.header.setLayout(
-            PADDING_LEFT,
-            PADDING_TOP,
-            this.getWidth() - PADDING_LEFT - PADDING_RIGHT,
-            HEADER_HEIGHT
-        );
-        var dBottomPartY = this.header.getBottom() + VERTICAL_SPACE;
-        this.toolbar.setLayout(
-            PADDING_LEFT,
-            dBottomPartY,
-            TOOLBAR_WIDTH,
-            this.getHeight() - dBottomPartY - PADDING_BOTTOM
-        );
-
-        var dRightPartX = PADDING_LEFT + this.toolbar.getWidth() + VERTICAL_SPACE;
-        var dRightPartWidth = Math.max(0, this.getWidth() - dRightPartX - PADDING_RIGHT);
-        this.timelineContainer.setLayout(
-            dRightPartX,
-            this.getHeight() - PADDING_BOTTOM - TIMELINE_HEIGHT,
-            dRightPartWidth,
-            TIMELINE_HEIGHT
-        );
-        var dListTop = dBottomPartY;
-        var dListBottom = this.timelineContainer.getTop();
-        var dListLeft = dRightPartX;
-        this.seqListContainer.setLayout(
-            dListLeft,
-            dListTop,
-            dRightPartWidth,
-            Math.max(0, dListBottom - dListTop)
-        );
-    };
-    CAnimPane.prototype.recalculateHeader = function () {
-        this.header.recalculate();
-    };
-    CAnimPane.prototype.recalculateToolbar = function () {
-        this.toolbar.recalculate();
-    };
-    CAnimPane.prototype.recalculateSeqListContainer = function () {
-        this.seqListContainer.recalculate();
-    };
-    CAnimPane.prototype.recalculateTimelineContainer = function () {
-        this.timelineContainer.recalculate();
-    };
-
-    CAnimPane.prototype.recalculate = function () {
-        return;
-    };
-    //CAnimPane.prototype.draw = function(oGraphics) {
-    //    oGraphics.b_color1(255, 0, 0, 255);
-    //    oGraphics.rect(0, 0, 100, 100);
-    //    oGraphics.df();
-    //};
-
-
+	
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].CTiming = CTiming;
     window['AscFormat'].CEmptyObject = CEmptyObject;
@@ -14890,6 +13909,7 @@
     window['AscFormat'].CBaseAnimObject = CBaseAnimObject;
     window['AscFormat'].CAnimFormulaParser = CFormulaParser;
     window['AscFormat'].CBaseAnimTexture = CBaseAnimTexture;
+    window['AscFormat'].CAnimTexture = CAnimTexture;
     window['AscFormat'].CDemoAnimPlayer = CDemoAnimPlayer;
     window['AscFormat'].ICON_TRIGGER = ICON_TRIGGER;
     window['AscFormat'].MoveAnimationDrawObject = MoveAnimationDrawObject;
@@ -15173,137 +14193,145 @@
     MoveAnimationDrawObject.prototype.canGroup = function () {
         return false;
     };
-    MoveAnimationDrawObject.prototype.draw = function (oGraphics) {
-        if (oGraphics.IsThumbnail === true ||
-            oGraphics.IsDemonstrationMode === true ||
-            AscCommon.IsShapeToImageConverter) {
-            return;
-        }
-        this.pen = this.pen1;
-        AscFormat.CShape.prototype.draw.call(this, oGraphics);
-        this.pen = this.pen2;
-        AscFormat.CShape.prototype.draw.call(this, oGraphics);
-        var oGeometry = this.spPr.geometry;
-        if (oGeometry) {
-            var oPath = oGeometry.pathLst[0];
-        }
-        if (oPath) {
-            var dStartX1, dStartX2, dStartY1, dStartY2;
-            var aCommands = oPath.ArrPathCommand, nCmd, oCmd;
-            var aPTS = [];
-            var bClosed = false;
-            for (var nCmd = 0; nCmd < aCommands.length; ++nCmd) {
-                oCmd = aCommands[nCmd];
-                if (oCmd.id === AscFormat.moveTo || oCmd.id === AscFormat.lineTo) {
-                    aPTS.push({x: oCmd.X, y: oCmd.Y})
-                } else if (oCmd.id === AscFormat.bezier4) {
-                    aPTS.push({x: oCmd.X0, y: oCmd.Y0});
-                    aPTS.push({x: oCmd.X1, y: oCmd.Y1});
-                    aPTS.push({x: oCmd.X2, y: oCmd.Y2});
-                } else if (oCmd.id === AscFormat.close) {
-                    bClosed = true;
-                }
-            }
-            if (aPTS.length > 1) {
-                oGraphics.SaveGrState();
-                // if(this.selected) {
-                //     var oTexture = this.getDrawingTexture(oGraphics);
-                //     var oTransform = null;
-                //     var dXS, dYS, dXE, dYE;
-                //     dXS = this.transform.TransformPointX(aPTS[0].x, aPTS[0].y);
-                //     dYS = this.transform.TransformPointY(aPTS[0].x, aPTS[0].y);
-                //     dXE = this.transform.TransformPointX(aPTS[aPTS.length - 1].x, aPTS[aPTS.length - 1].y);
-                //     dYE = this.transform.TransformPointY(aPTS[aPTS.length - 1].x, aPTS[aPTS.length - 1].y);
-                //     if(oTexture) {
-                //
-                //         oTransform = new AscCommon.CMatrix();
-                //         var hc = this.boundsByDrawing.w * 0.5;
-                //         var vc = this.boundsByDrawing.h * 0.5;
-                //         AscCommon.global_MatrixTransformer.TranslateAppend(oTransform, -hc + dXS, -vc + dYS);
-                //
-                //
-                //         oGraphics.put_GlobalAlpha(true, 0.5);
-                //         oTexture.draw(oGraphics, oTransform);
-                //
-                //         if(!bClosed) {
-                //             oTransform = new AscCommon.CMatrix();
-                //             AscCommon.global_MatrixTransformer.TranslateAppend(oTransform, -hc + dXE, -vc + dYE);
-                //             oTexture.draw(oGraphics, oTransform);
-                //         }
-                //         oGraphics.put_GlobalAlpha(false, 1);
-                //     }
-                // }
-                //draw start arrow
-                var dWidth = 5, dLen = 3;
-                var x0p, y0p, x1p, y1p, x2p, y2p, dx, dy, dStartLen, dWidthCoeff, dLenCoeff;
-                dx = aPTS[1].x - aPTS[0].x;
-                dy = aPTS[1].y - aPTS[0].y;
-                dStartLen = Math.sqrt(dx * dx + dy * dy);
-                dWidthCoeff = dWidth / dStartLen;
-                x0p = aPTS[0].x - dy * dWidthCoeff / 2;
-                y0p = aPTS[0].y + dx * dWidthCoeff / 2;
-                x1p = aPTS[0].x + dy * dWidthCoeff / 2;
-                y1p = aPTS[0].y - dx * dWidthCoeff / 2;
-
-                dLenCoeff = dLen / dStartLen;
-                x2p = aPTS[0].x + dx * dLenCoeff;
-                y2p = aPTS[0].y + dy * dLenCoeff;
-                oGraphics.transform3(this.transform);
-                oGraphics.b_color1(43, 166, 15, 128);
-                oGraphics.p_color(43, 166, 15, 255);
-                oGraphics._s()
-                oGraphics._m(x0p, y0p);
-                oGraphics._l(x1p, y1p);
-                oGraphics._l(x2p, y2p);
-                oGraphics._z();
-                oGraphics.df();
-                oGraphics.ds();
-                oGraphics._e();
-
-
-                if (!bClosed) {
-                    dx = aPTS[aPTS.length - 2].x - aPTS[aPTS.length - 1].x;
-                    dy = aPTS[aPTS.length - 2].y - aPTS[aPTS.length - 1].y;
-                    dStartLen = Math.sqrt(dx * dx + dy * dy);
-                    dLenCoeff = dLen / dStartLen;
-                    dWidthCoeff = dWidth / dStartLen;
-                    var xp = aPTS[aPTS.length - 1].x + dx * dLenCoeff;
-                    var yp = aPTS[aPTS.length - 1].y + dy * dLenCoeff;
-
-
-                    x0p = xp - dy * dWidthCoeff / 2;
-                    y0p = yp + dx * dWidthCoeff / 2;
-                    x1p = xp + dy * dWidthCoeff / 2;
-                    y1p = yp - dx * dWidthCoeff / 2;
-
-                    x2p = aPTS[aPTS.length - 1].x;
-                    y2p = aPTS[aPTS.length - 1].y;
-                    oGraphics.b_color1(222, 5, 5, 128);
-                    oGraphics.p_color(222, 5, 5, 255);
-                    oGraphics._s()
-                    oGraphics._m(x0p, y0p);
-                    oGraphics._l(x1p, y1p);
-                    oGraphics._l(x2p, y2p);
-                    oGraphics._z()
-
-
-                    x0p = aPTS[aPTS.length - 1].x - dy * dWidthCoeff / 2;
-                    y0p = aPTS[aPTS.length - 1].y + dx * dWidthCoeff / 2;
-
-                    x1p = aPTS[aPTS.length - 1].x + dy * dWidthCoeff / 2;
-                    y1p = aPTS[aPTS.length - 1].y - dx * dWidthCoeff / 2;
-                    oGraphics._m(x0p, y0p);
-                    oGraphics._l(x1p, y1p);
-
-                    oGraphics.df();
-                    oGraphics.ds();
-                    oGraphics._e();
-                }
-
-                oGraphics.RestoreGrState();
-            }
-        }
+    MoveAnimationDrawObject.prototype.canResize = function () {
+        return true;
     };
+	MoveAnimationDrawObject.prototype.draw = function (oGraphics) {
+		if (oGraphics.IsThumbnail === true ||
+			oGraphics.IsDemonstrationMode === true ||
+			AscCommon.IsShapeToImageConverter) {
+			return;
+		}
+
+		// Draw dashed line (path itself)
+		this.pen = this.pen1;
+		AscFormat.CShape.prototype.draw.call(this, oGraphics);
+		this.pen = this.pen2;
+		AscFormat.CShape.prototype.draw.call(this, oGraphics);
+
+		const path = this.spPr.geometry && this.spPr.geometry.pathLst[0];
+		if (!path) return;
+
+		// Collect key points array
+		let aPTS = [];
+		let bClosed = false;
+		path.ArrPathCommand.forEach(function (command, index) {
+			switch (command.id) {
+				case AscFormat.moveTo:
+				case AscFormat.lineTo:
+					aPTS.push({ x: command.X, y: command.Y });
+					break;
+
+				case AscFormat.bezier4:
+					aPTS.push({ x: command.X0, y: command.Y0 });
+					aPTS.push({ x: command.X1, y: command.Y1 });
+					aPTS.push({ x: command.X2, y: command.Y2 });
+					break;
+
+				case AscFormat.close:
+					bClosed = true;
+					break;
+			}
+		});
+
+		if (aPTS.length > 1) {
+			oGraphics.SaveGrState();
+
+			// Draw preview start and end shapes
+			if (this.selected) {
+				const dXS = this.transform.TransformPointX(aPTS[0].x, aPTS[0].y);
+				const dYS = this.transform.TransformPointY(aPTS[0].x, aPTS[0].y);
+				const dXE = this.transform.TransformPointX(aPTS[aPTS.length - 1].x, aPTS[aPTS.length - 1].y);
+				const dYE = this.transform.TransformPointY(aPTS[aPTS.length - 1].x, aPTS[aPTS.length - 1].y);
+
+				const texture = this.getDrawingTexture(oGraphics);
+				if (texture) {
+
+					oGraphics.put_GlobalAlpha(true, 0.5);
+					const horizontalCenter = this.boundsByDrawing.w * 0.5;
+					const verticalCenter = this.boundsByDrawing.h * 0.5;
+
+					let oTransform = new AscCommon.CMatrix();
+					AscCommon.global_MatrixTransformer.TranslateAppend(oTransform, -horizontalCenter + dXS, -verticalCenter + dYS);
+					texture.draw(oGraphics, oTransform);
+
+					if (!bClosed) {
+						oTransform = new AscCommon.CMatrix();
+						AscCommon.global_MatrixTransformer.TranslateAppend(oTransform, -horizontalCenter + dXE, -verticalCenter + dYE);
+						texture.draw(oGraphics, oTransform);
+					}
+					oGraphics.put_GlobalAlpha(false, 1);
+				}
+			}
+
+			// Draw start arrow
+			const dWidth = 5, dLen = 3;
+			var x0p, y0p, x1p, y1p, x2p, y2p, dx, dy, dStartLen, dWidthCoeff, dLenCoeff;
+			dx = aPTS[1].x - aPTS[0].x;
+			dy = aPTS[1].y - aPTS[0].y;
+			dStartLen = Math.sqrt(dx * dx + dy * dy);
+			dWidthCoeff = dWidth / dStartLen;
+			x0p = aPTS[0].x - dy * dWidthCoeff / 2;
+			y0p = aPTS[0].y + dx * dWidthCoeff / 2;
+			x1p = aPTS[0].x + dy * dWidthCoeff / 2;
+			y1p = aPTS[0].y - dx * dWidthCoeff / 2;
+
+			dLenCoeff = dLen / dStartLen;
+			x2p = aPTS[0].x + dx * dLenCoeff;
+			y2p = aPTS[0].y + dy * dLenCoeff;
+			oGraphics.transform3(this.transform);
+			oGraphics.b_color1(43, 166, 15, 128);
+			oGraphics.p_color(43, 166, 15, 255);
+			oGraphics._s();
+			oGraphics._m(x0p, y0p);
+			oGraphics._l(x1p, y1p);
+			oGraphics._l(x2p, y2p);
+			oGraphics._z();
+			oGraphics.df();
+			oGraphics.ds();
+			oGraphics._e();
+
+			if (!bClosed) {
+				// Draw end arrow
+				dx = aPTS[aPTS.length - 2].x - aPTS[aPTS.length - 1].x;
+				dy = aPTS[aPTS.length - 2].y - aPTS[aPTS.length - 1].y;
+				dStartLen = Math.sqrt(dx * dx + dy * dy);
+				dLenCoeff = dLen / dStartLen;
+				dWidthCoeff = dWidth / dStartLen;
+				var xp = aPTS[aPTS.length - 1].x + dx * dLenCoeff;
+				var yp = aPTS[aPTS.length - 1].y + dy * dLenCoeff;
+
+				x0p = xp - dy * dWidthCoeff / 2;
+				y0p = yp + dx * dWidthCoeff / 2;
+				x1p = xp + dy * dWidthCoeff / 2;
+				y1p = yp - dx * dWidthCoeff / 2;
+
+				x2p = aPTS[aPTS.length - 1].x;
+				y2p = aPTS[aPTS.length - 1].y;
+				oGraphics.b_color1(222, 5, 5, 128);
+				oGraphics.p_color(222, 5, 5, 255);
+				oGraphics._s()
+				oGraphics._m(x0p, y0p);
+				oGraphics._l(x1p, y1p);
+				oGraphics._l(x2p, y2p);
+				oGraphics._z()
+
+				x0p = aPTS[aPTS.length - 1].x - dy * dWidthCoeff / 2;
+				y0p = aPTS[aPTS.length - 1].y + dx * dWidthCoeff / 2;
+
+				x1p = aPTS[aPTS.length - 1].x + dy * dWidthCoeff / 2;
+				y1p = aPTS[aPTS.length - 1].y - dx * dWidthCoeff / 2;
+				oGraphics._m(x0p, y0p);
+				oGraphics._l(x1p, y1p);
+
+				oGraphics.df();
+				oGraphics.ds();
+				oGraphics._e();
+			}
+
+			oGraphics.RestoreGrState();
+		}
+	};
     MoveAnimationDrawObject.prototype.recalculate = function () {
         var oPresentation = editor.WordControl.m_oLogicDocument;
         var sPath = this.anim.path;
@@ -15982,11 +15010,7 @@
     PRESET_SUBTYPES[0] = "PPTY;v10;267;BwEAAPr7AAABAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQQAAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wS3AAAA+vsAsAAAAAEAAAAJpwAAAPoAAQEBAhEAAABNACAAMAAgADAAIABMACAAMAAgAC0AMAAuADIANQAgAEUAAwAAAAD7AHAAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAgAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsAEQAAAPoABQAAAHAAcAB0AF8AeQD7";
 
 
-
     window['AscCommon'] = window['AscCommon'] || {};
-    window['AscCommon'].CAnimPaneHeader = CAnimPaneHeader;
-    window['AscCommon'].CSeqListContainer = CSeqListContainer;
-    window['AscCommon'].CTimelineContainer = CTimelineContainer;
     window['AscCommon'].CColorPercentage = CColorPercentage;
     window['AscCommon'].CTexturesCache = CTexturesCache;
 
@@ -16062,6 +15086,9 @@
     window['AscFormat'].TLChartSubElementPtInCategory = TLChartSubElementPtInCategory;
     window['AscFormat'].TLChartSubElementPtInSeries = TLChartSubElementPtInSeries;
     window['AscFormat'].TLChartSubElementSeries = TLChartSubElementSeries;
+	window['AscFormat'].ITERATEDATA_TYPE_ELEMENT = ITERATEDATA_TYPE_ELEMENT;
+	window['AscFormat'].ITERATEDATA_TYPE_LETTER = ITERATEDATA_TYPE_LETTER;
+	window['AscFormat'].ITERATEDATA_TYPE_WORD = ITERATEDATA_TYPE_WORD;
     window['AscFormat'].PLAYER_STATE_IDLE = PLAYER_STATE_IDLE;
     window['AscFormat'].PLAYER_STATE_PLAYING = PLAYER_STATE_PLAYING;
     window['AscFormat'].PLAYER_STATE_PAUSING = PLAYER_STATE_PAUSING;

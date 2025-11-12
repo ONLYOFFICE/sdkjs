@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -34,39 +34,56 @@
 
 (function(window)
 {
-  let oLogicDocument = null;
+  let logicDocument = null;
 
-  function CreateLogicDocument()
-  {
-    if (oLogicDocument)
-      return oLogicDocument;
-    
-    editor.InitEditor();
-    editor.bInit_word_control = true;
-    editor.WordControl.Thumbnails.SetFont = function () {
+	function CreateLogicDocument()
+	{
+		if (logicDocument)
+			return logicDocument;
 
-    };
-		editor.WordControl.StartMainTimer = function ()
-		{
+		logicDocument = new AscCommonSlide.CPresentation(AscTest.DrawingDocument, true);
+		logicDocument.Api = AscTest.Editor;
 
-		};
-    editor.WordControl.InitControl();
-
-    oLogicDocument = editor.WordControl.m_oLogicDocument;
-    oLogicDocument.createNecessaryObjectsIfNoPresent();
-    AscTest.DrawingDocument.m_oLogicDocument = oLogicDocument;
-
-    return oLogicDocument;
-  }
+		AscTest.DrawingDocument.m_oLogicDocument = logicDocument;
+		logicDocument.createNecessaryObjectsIfNoPresent();
+		return logicDocument;
+	}
 
   function GetParagraphText(paragraph)
   {
-    return paragraph.GetText({ParaEndToSpace : false});
+    return paragraph.GetText({
+		ParaSeparator : "",
+		TableCellSeparator : "",
+		TableRowSeparator : "",
+	});
   }
+
+	function EnterText(text)
+	{
+		if (!logicDocument)
+			return;
+
+		logicDocument.EnterText(text);
+	}
+
+	function TurnOnRecalculate()
+	{
+		logicDocument.Recalculate = AscCommonSlide.CPresentation.prototype.Recalculate.bind(logicDocument);
+		logicDocument.Recalculate2 = AscCommonSlide.CPresentation.prototype.Recalculate2.bind(logicDocument);
+	}
+
+	function TurnOffRecalculate()
+	{
+		logicDocument.Recalculate = function () {};
+		logicDocument.Recalculate2 = function () {};
+	}
 
   //--------------------------------------------------------export----------------------------------------------------
   AscTest.CreateLogicDocument      = CreateLogicDocument;
   AscTest.GetParagraphText         = GetParagraphText;
+  AscTest.EnterText                = EnterText;
+  AscTest.TurnOnRecalculate        = TurnOnRecalculate;
+  AscTest.TurnOffRecalculate       = TurnOffRecalculate;
 
 
 })(window);

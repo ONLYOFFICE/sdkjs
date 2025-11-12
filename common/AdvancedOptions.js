@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -42,6 +42,8 @@
 		function asc_CDownloadOptions(fileType, isDownloadEvent) {
 			this.fileType = fileType;
 			this.isDownloadEvent = !!isDownloadEvent;
+			this.isSaveAs = false;
+			this.wopiSaveAsPath = null;
 			this.advancedOptions = null;
 			this.compatible = true;
 
@@ -53,12 +55,15 @@
 			
 			this.isGetTextFromUrl = null;
 			this.isPdfPrint = false;
+			this.pdfChanges = null;
 
 			this.textParams = null;
 		}
 
 		asc_CDownloadOptions.prototype.asc_setFileType = function (fileType) {this.fileType = fileType;};
 		asc_CDownloadOptions.prototype.asc_setIsDownloadEvent = function (isDownloadEvent) {this.isDownloadEvent = isDownloadEvent;};
+		asc_CDownloadOptions.prototype.asc_setIsSaveAs = function (isSaveAs) {this.isSaveAs = isSaveAs;};
+		asc_CDownloadOptions.prototype.asc_setWopiSaveAsPath = function (wopiSaveAsPath) {this.wopiSaveAsPath = wopiSaveAsPath;};
 		asc_CDownloadOptions.prototype.asc_setAdvancedOptions = function (advancedOptions) {this.advancedOptions = advancedOptions;};
 		asc_CDownloadOptions.prototype.asc_setCompatible = function (compatible) {this.compatible = compatible;};
 		asc_CDownloadOptions.prototype.asc_setTextParams = function (textParams) {this.textParams = textParams;};
@@ -87,7 +92,7 @@
 			this.delimiter = delimiter;
 			this.delimiterChar = delimiterChar;
 
-			this.textQualifier = null;
+			this.textQualifier = '"';
 
 			this.numberDecimalSeparator = null;
 			this.numberGroupSeparator = null;
@@ -100,6 +105,13 @@
 		asc_CTextOptions.prototype.asc_getDelimiterChar = function(){return this.delimiterChar;};
 		asc_CTextOptions.prototype.asc_setDelimiterChar = function(v){this.delimiterChar = v;};
 		asc_CTextOptions.prototype.asc_getCodePage = function(){return this.codePage;};
+		asc_CTextOptions.prototype.asc_getCodePageOrDefault = function() {
+			//c_oAscCodePageNone is invalid codepage for convertion. undefined codepage cause repeated dialog
+			if (this.codePage === AscCommon.c_oAscCodePageNone || this.codePage === undefined || this.codePage === null) {
+				return AscCommon.c_oAscCodePageUtf8;
+			}
+			return this.codePage;
+		};
 		asc_CTextOptions.prototype.asc_setCodePage = function(v){this.codePage = v;};
 		asc_CTextOptions.prototype.asc_getNumberDecimalSeparator = function () {
 			return this.numberDecimalSeparator !== null ? this.numberDecimalSeparator : AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator;
@@ -208,6 +220,8 @@
 		prot = asc_CDownloadOptions.prototype;
 		prot["asc_setFileType"] = prot.asc_setFileType;
 		prot["asc_setIsDownloadEvent"] = prot.asc_setIsDownloadEvent;
+		prot["asc_setIsSaveAs"] = prot.asc_setIsSaveAs;
+		prot["asc_setWopiSaveAsPath"] = prot.asc_setWopiSaveAsPath;
 		prot["asc_setAdvancedOptions"] = prot.asc_setAdvancedOptions;
 		prot["asc_setCompatible"] = prot.asc_setCompatible;
 		prot["asc_setTextParams"] = prot.asc_setTextParams;
@@ -225,6 +239,7 @@
 		prot["asc_getDelimiterChar"] = prot.asc_getDelimiterChar;
 		prot["asc_setDelimiterChar"] = prot.asc_setDelimiterChar;
 		prot["asc_getCodePage"] = prot.asc_getCodePage;
+		prot["asc_getCodePageOrDefault"] = prot.asc_getCodePageOrDefault;
 		prot["asc_setCodePage"] = prot.asc_setCodePage;
 		prot["asc_setNumberDecimalSeparator"] = prot.asc_setNumberDecimalSeparator;
 		prot["asc_setNumberGroupSeparator"] = prot.asc_setNumberGroupSeparator;
@@ -259,7 +274,8 @@
 		window["AscCommon"].asc_CFormula = asc_CFormula;
 		prot = asc_CFormula.prototype;
 		prot["asc_getName"]				= prot.asc_getName;
-		prot["asc_getLocaleName"]	= prot.asc_getLocaleName;
+		prot["asc_getLocaleName"]	    = prot.asc_getLocaleName;
+
 
 		window["AscCommon"].asc_CTextParams = window["AscCommon"]["asc_CTextParams"] = asc_CTextParams;
 		prot = asc_CTextParams.prototype;

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -32,13 +32,36 @@
 
 "use strict";
 
-(function(window, undefined)
+(function(window)
 {
 	const NON_LETTER_SYMBOLS = [];
 	NON_LETTER_SYMBOLS[0x00A0] = 1;
 	NON_LETTER_SYMBOLS[0x00AE] = 1;
+	
+	function isNonLetter(code)
+	{
+		if (0x2070 <= code && code <= 0x209F)
+			return true;
+		
+		return !!NON_LETTER_SYMBOLS[code];
+	}
+	
 
 	const CHECKED_LIMIT = 2000;
+	
+	// Если значения совпадают - значит апостроф развернут в правильную сторону, если нет, то в значении лежит апостроф в нужном направлении
+	const APOSTROPHES = {
+		0x0027 : 0x0027,
+		0x02BC : 0x02BC,
+		0x02BD : 0x02BC,
+		0x2018 : 0x2019,
+		0x2019 : 0x2019
+	};
+	
+	function isCorrectApostrophe(codePoint)
+	{
+		return APOSTROPHES[codePoint] === codePoint;
+	}
 	
 
 	/**
@@ -52,12 +75,21 @@
 		this.ContentPos   = new AscWord.CParagraphContentPos();
 		this.SpellChecker = oSpellChecker;
 
+		this.ParaBidi = oSpellChecker.Paragraph.isRtlDirection();
+		this.Lang     = null;
 		this.CurLcid  = -1;
 		this.bWord    = false;
 		this.sWord    = "";
-		this.StartPos = null; // AscWord.CParagraphContentPos
-		this.EndPos   = null; // AscWord.CParagraphContentPos
+		
+		this.startRun      = null;
+		this.startInRunPos = 0;
+		this.endRun        = null;
+		this.endInRunPos   = 0;
+		
 		this.Prefix   = null;
+		
+		this.apostrophe     = null;
+		this.lastApostrophe = null;
 
 		// Защита от проверки орфографии в большом параграфе
 		// TODO: Возможно стоить заменить проверку с количества пройденных элементов на время выполнения
@@ -144,47 +176,69 @@
 	{
 		if (this.bWord)
 		{
-			this.SpellChecker.Add(this.StartPos, this.EndPos, this.sWord, this.CurLcid, this.GetPrefix(), 0);
+			this.SpellChecker.Add(this.startRun, this.startInRunPos, this.endRun, this.endInRunPos, this.sWord, this.CurLcid, this.GetPrefix(), 0, this.apostrophe);
 
 			this.bWord = false;
 			this.sWord = "";
+			
+			this.apostrophe     = null;
+			this.lastApostrophe = null;
+			this.CurLcid        = -1;
 		}
 	};
 	/**
 	 * @param {AscWord.CRunElementBase} oElement
 	 * @param {CTextPr} oTextPr
+	 * @param {AscWord.Run} run
+	 * @param {number} inRunPos
 	 */
-	CParagraphSpellCheckerCollector.prototype.HandleRunElement = function(oElement, oTextPr)
+	CParagraphSpellCheckerCollector.prototype.HandleRunElement = function(oElement, oTextPr, run, inRunPos)
 	{
 		if (this.IsWordLetter(oElement))
 		{
+			this.CheckLang(oElement.GetDirectionFlag());
+			
 			if (!this.bWord)
 			{
-				this.StartPos = this.ContentPos.Copy();
-				this.EndPos   = this.ContentPos.Copy();
-
-				let nDepth = this.ContentPos.GetDepth();
-				this.EndPos.Update(this.ContentPos.Get(nDepth) + 1, nDepth);
-
+				this.startRun      = run;
+				this.startInRunPos = inRunPos;
+				this.endRun        = run;
+				this.endInRunPos   = inRunPos + 1;
+				
 				this.bWord = true;
 				this.sWord = oElement.GetCharForSpellCheck(oTextPr.Caps);
 			}
 			else
 			{
+				if (this.lastApostrophe)
+				{
+					this.sWord += isCorrectApostrophe(this.lastApostrophe) ? String.fromCharCode(0x0027) : String.fromCharCode(0x0020);
+					this.apostrophe     = APOSTROPHES[this.lastApostrophe];
+					this.lastApostrophe = null;
+				}
+				
 				this.sWord += oElement.GetCharForSpellCheck(oTextPr.Caps);
-
-				this.EndPos = this.ContentPos.Copy();
-
-				let nDepth = this.ContentPos.GetDepth();
-				this.EndPos.Update(this.ContentPos.Get(nDepth) + 1, nDepth);
+				
+				this.endRun      = run;
+				this.endInRunPos = inRunPos + 1;
 			}
+		}
+		else if (this.bWord && this.IsApostrophe(oElement))
+		{
+			if (this.lastApostrophe)
+				this.FlushWord();
+			else
+				this.lastApostrophe = oElement.GetCodePoint();
 		}
 		else
 		{
 			if (this.bWord)
 			{
+				this.SpellChecker.Add(this.startRun, this.startInRunPos, this.endRun, this.endInRunPos, this.sWord, this.CurLcid, this.GetPrefix(), oElement.IsDot() ? oElement.GetCharCode() : 0, this.apostrophe);
 				this.bWord = false;
-				this.SpellChecker.Add(this.StartPos, this.EndPos, this.sWord, this.CurLcid, this.GetPrefix(), oElement.IsDot() ? oElement.GetCharCode() : 0);
+				this.sWord = "";
+				this.apostrophe     = null;
+				this.lastApostrophe = null;
 				this.CheckPrefix(null);
 			}
 			else
@@ -195,14 +249,9 @@
 
 		this.IncreaseCheckedCounter();
 	};
-	CParagraphSpellCheckerCollector.prototype.HandleLang = function(nLang)
+	CParagraphSpellCheckerCollector.prototype.HandleLang = function(lang)
 	{
-		if (this.CurLcid === nLang)
-			return;
-
-		this.FlushWord();
-
-		this.CurLcid = nLang;
+		this.Lang = lang;
 	};
 	CParagraphSpellCheckerCollector.prototype.IsPunctuation = function(oElement)
 	{
@@ -216,23 +265,118 @@
 	};
 	CParagraphSpellCheckerCollector.prototype.IsWordLetter = function(oElement)
 	{
-		return (oElement.IsText() && !this.IsPunctuation(oElement) && !NON_LETTER_SYMBOLS[oElement.GetCodePoint()]);
+		return (oElement.IsText() && !this.IsPunctuation(oElement) && !isNonLetter(oElement.GetCodePoint()));
+	};
+	CParagraphSpellCheckerCollector.prototype.IsApostrophe = function(oElement)
+	{
+		if (!oElement.IsText())
+			return false;
+		
+		return !!(APOSTROPHES[oElement.GetCodePoint()]);
+	};
+	CParagraphSpellCheckerCollector.prototype.CheckLang = function(dirFlag)
+	{
+		let lcid = -1;
+		if (AscBidi.DIRECTION_FLAG.LTR === dirFlag)
+			lcid = this.Lang.Val;
+		else if (AscBidi.DIRECTION_FLAG.RTL === dirFlag)
+			lcid = this.Lang.Bidi;
+		
+		if (-1 === lcid)
+			return;
+		
+		if (-1 !== this.CurLcid && this.CurLcid !== lcid)
+			this.FlushWord();
+		
+		this.CurLcid = lcid;
 	};
 
 	/**
-	 * Метка начала/конца элемента для проверки
+	 * Метка начала элемента для проверки
 	 * @constructor
 	 */
-	function CParagraphSpellingMark(SpellCheckerElement, Start, Depth)
+	function SpellMarkStart(spellCheckElement)
 	{
-		this.Element = SpellCheckerElement;
-		this.Start   = Start;
-		this.Depth   = Depth;
+		this.Element = spellCheckElement;
 	}
-
+	SpellMarkStart.prototype.getElement = function()
+	{
+		return this.Element;
+	};
+	SpellMarkStart.prototype.isStart = function()
+	{
+		return true;
+	};
+	SpellMarkStart.prototype.onAdd = function(pos)
+	{
+		if (this.Element.startInRunPos >= pos)
+			++this.Element.startInRunPos;
+	};
+	SpellMarkStart.prototype.onRemove = function(pos, count)
+	{
+		if (this.Element.startInRunPos > pos + count)
+			this.Element.startInRunPos -= count;
+		else if (this.Element.startInRunPos > pos)
+			this.Element.startInRunPos = Math.max(0, pos);
+	};
+	SpellMarkStart.prototype.movePos = function(shift)
+	{
+		this.Element.startInRunPos += shift;
+	};
+	SpellMarkStart.prototype.getPos = function()
+	{
+		return this.Element.startInRunPos;
+	};
+	SpellMarkStart.prototype.isMisspelled = function()
+	{
+		return false === this.Element.Checked;
+	};
+	/**
+	 * Метка конца элемента для проверки
+	 * @constructor
+	 */
+	function SpellMarkEnd(spellCheckElement)
+	{
+		this.Element = spellCheckElement;
+	}
+	SpellMarkEnd.prototype.getElement = function()
+	{
+		return this.Element;
+	};
+	SpellMarkEnd.prototype.isStart = function()
+	{
+		return false;
+	};
+	SpellMarkEnd.prototype.onAdd = function(pos)
+	{
+		if (this.Element.endInRunPos >= pos)
+			++this.Element.endInRunPos;
+	};
+	SpellMarkEnd.prototype.onRemove = function(pos, count)
+	{
+		if (this.Element.endInRunPos > pos + count)
+			this.Element.endInRunPos -= count;
+		else if (this.Element.endInRunPos > pos)
+			this.Element.endInRunPos = Math.max(0, pos);
+	};
+	SpellMarkEnd.prototype.movePos = function(shift)
+	{
+		this.Element.endInRunPos += shift;
+	};
+	SpellMarkEnd.prototype.getPos = function()
+	{
+		return this.Element.endInRunPos;
+	};
+	SpellMarkEnd.prototype.isMisspelled = function()
+	{
+		return false === this.Element.Checked;
+	};
+	
 	//--------------------------------------------------------export----------------------------------------------------
-	window['AscCommonWord'] = window['AscCommonWord'] || {};
-	window['AscCommonWord'].CParagraphSpellCheckerCollector = CParagraphSpellCheckerCollector;
-	window['AscCommonWord'].CParagraphSpellingMark          = CParagraphSpellingMark;
+	AscWord.CParagraphSpellCheckerCollector = CParagraphSpellCheckerCollector;
+	
+	window['AscWord'] = window['AscWord'] || {};
+	window['AscWord'].SpellMarkStart = SpellMarkStart;
+	window['AscWord'].SpellMarkEnd   = SpellMarkEnd;
 
 })(window);

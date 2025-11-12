@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -390,10 +390,6 @@ function CDrawingDocument()
     this.ConvertCoordsToCursor3 = function(x, y, pageIndex)
     {
         return { X : 0, Y : 0, Error: true };
-    };
-
-    this.InitViewer = function()
-    {
     };
 
     this.TargetStart = function()

@@ -19,37 +19,26 @@
 <h2 id="qunit-userAgent"></h2>
 <ol id="qunit-tests"></ol>
 <div id="qunit-fixture">test markup, will be hidden</div>
-<div style="display: none" id="editor_sdk"></div>
-<div style="display: none" id="presentation-preview"></div>
 <script type="text/javascript" src="../../../develop/sdkjs/slide/scripts.js"></script>
 <script type="text/javascript">
 	window.sdk_scripts.forEach(function (item)
 	{
-		if (item === '../../../../sdkjs/common/TableId.js')
+		if (item.includes('TableId.js'))
 		{
 			document.write('<script type="text/javascript" src="../common/common.js"><\/script>');
-		} else
-		{
-			if (item === "../../../../sdkjs/common/libfont/fonts.js" || item === "../../../../sdkjs/common/zlib/zlib.js")
-			{
-				return;
-			}
-			document.write('<script type="text/javascript" src="' + item + '"><\/script>');
-			if (item === '../../../../sdkjs/common/Controls.js')
-			{
-				document.write('<script type="text/javascript" src="../common/controls.js"><\/script>');
-			}
-			if (item === '../../../../sdkjs/common/measurer.js')
-			{
-				document.write('<script type="text/javascript" src="../common/controls.js"><\/script>');
-			}
 		}
+		else
+		{
+			document.write('<script type="text/javascript" src="' + item + '"><\/script>');
+		}
+
 	});
 </script>
 <script type="text/javascript" src="../common/editor.js"></script>
+<script type="text/javascript" src="../common/demonstrationManager.js"></script>
+<script type="text/javascript" src="../common/thumbnails.js"></script>
 <script type="text/javascript" src="../common/presentation.js"></script>
 <script type="text/javascript" src="../common/measurer.js"></script>
-<script type="text/javascript" src="helpers.js"></script>
 <script type="text/javascript" src="events.js"></script>
 <script type="text/javascript" src="shortcuts.js"></script>
 </body>

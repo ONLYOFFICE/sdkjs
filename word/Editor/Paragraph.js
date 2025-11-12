@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -45,7 +45,6 @@ var align_Center = AscCommon.align_Center;
 var g_oTableId = AscCommon.g_oTableId;
 var g_oTextMeasurer = AscCommon.g_oTextMeasurer;
 var c_oAscRevisionsChangeType = Asc.c_oAscRevisionsChangeType;
-var History = AscCommon.History;
 
 var linerule_Exact = Asc.linerule_Exact;
 var c_oAscRelativeFromV = Asc.c_oAscRelativeFromV;
@@ -62,7 +61,7 @@ var REVIEW_NUMBERING_COLOR = new AscCommon.CColor(27, 156, 171, 255);
  * @constructor
  * @extends {CDocumentContentElementBase}
  */
-function Paragraph(DrawingDocument, Parent, bFromPresentation)
+function Paragraph(Parent, bFromPresentation)
 {
 	CDocumentContentElementBase.call(this, Parent);
 
@@ -81,7 +80,7 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
     this.TextPr.Parent = this;
 
     // Настройки секции
-    this.SectPr = undefined; // undefined или CSectionPr
+    this.SectPr = undefined; // undefined или AscWord.SectPr
 
     this.Bounds = new CDocumentBounds(0, 0, 0, 0);
 
@@ -111,20 +110,9 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
 
     this.CorrectContentFlag = 0;
 
-    this.DrawingDocument = null;
     this.LogicDocument   = null;
-    this.bFromDocument   = true;
-
-    if ( undefined !== DrawingDocument && null !== DrawingDocument )
-	{
-		this.DrawingDocument = DrawingDocument;
-		this.LogicDocument   = this.DrawingDocument.m_oLogicDocument;
-		this.bFromDocument   = bFromPresentation === true ? false : !!this.LogicDocument;
-	}
-    else
-    {
-        this.bFromDocument = !(true === bFromPresentation);
-    }
+    this.bFromDocument   = !(true === bFromPresentation);
+	
     this.ApplyToAll = false; // Специальный параметр, используемый в ячейках таблицы.
     // True, если ячейка попадает в выделение по ячейкам.
 
@@ -135,11 +123,11 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
 	// ситуации, а лочим при любом первом действии с параграфом
 	if (this.bFromDocument
 		&& false === AscCommon.g_oIdCounter.m_bLoad
-		&& true === History.Is_On()
+		&& true === AscCommon.History.Is_On()
 		&& AscCommon.CollaborativeEditing
 		&& !AscCommon.CollaborativeEditing.Is_SingleUser())
 	{
-		this.Lock.Set_Type(AscCommon.locktype_Mine, false);
+		this.Lock.Set_Type(AscCommon.c_oAscLockTypes.kLockTypeMine, false);
 		AscCommon.CollaborativeEditing.Add_Unlock2(this);
 	}
 
@@ -162,7 +150,7 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
 
     this.SearchResults = {};
 
-    this.SpellChecker  = new AscCommonWord.CParagraphSpellChecker(this);
+    this.SpellChecker  = new AscWord.CParagraphSpellChecker(this);
 
     this.NearPosArray  = [];
 
@@ -175,21 +163,17 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
 	endRun.AddToContent(0, new AscWord.CRunParagraphMark());
 	this.Content[0] = endRun;
 
-    this.m_oPRSW = new CParagraphRecalculateStateWrap(this);
-    this.m_oPRSC = new CParagraphRecalculateStateCounter();
-    this.m_oPRSA = new CParagraphRecalculateStateAlign();
-    this.m_oPRSI = new CParagraphRecalculateStateInfo();
-
-    this.m_oPDSE = new CParagraphDrawStateElements();
     this.StartState = null;
 
     this.CollPrChange = false;
 
-	this.ParaId = null;//for comment xml serialization
+	// На загрузке мы не должны генерить ID, иначе они будут разные у разных пользователей
+	this.ParaId = !AscCommon.g_oIdCounter.IsLoad() ? AscCommon.CreateDurableId() : undefined;
+	this.TextId = undefined;
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
     AscCommon.g_oTableId.Add( this, this.Id );
-    if(bFromPresentation === true && History.Is_On())
+    if(bFromPresentation === true && AscCommon.History.Is_On())
     {
         this.Save_StartState();
     }
@@ -221,6 +205,30 @@ Paragraph.prototype.Set_Pr = function(oNewPr)
 {
 	return this.SetDirectParaPr(oNewPr);
 };
+Paragraph.prototype.SetParaId = function(paraId)
+{
+	if (this.ParaId === paraId)
+		return;
+	
+	AscCommon.History.Add(new AscDFH.CChangesParagraphParaId(this, this.ParaId, paraId));
+	this.ParaId = paraId;
+};
+Paragraph.prototype.GetParaId = function()
+{
+	return this.ParaId;
+};
+Paragraph.prototype.SetTextId = function(textId)
+{
+	if (this.TextId === textId)
+		return;
+	
+	AscCommon.History.Add(new AscDFH.CChangesParagraphTextId(this, this.TextId, textId));
+	this.TextId = textId;
+};
+Paragraph.prototype.GetTextId = function()
+{
+	return this.TextId;
+};
 /**
  * @param paraPr {AscWord.CParaPr}
  */
@@ -241,7 +249,7 @@ Paragraph.prototype.SetDirectParaPr = function(oParaPr)
 
 	var oNewPr = oParaPr.Copy(true);
 
-	History.Add(new CChangesParagraphPr(this, this.Pr, oNewPr));
+	AscCommon.History.Add(new CChangesParagraphPr(this, this.Pr, oNewPr));
 
 	this.Pr = oNewPr;
 
@@ -281,7 +289,7 @@ Paragraph.prototype.SetDirectTextPr = function(oTextPr)
 };
 Paragraph.prototype.Copy = function(Parent, DrawingDocument, oPr)
 {
-	var Para = new Paragraph(DrawingDocument ? DrawingDocument : this.DrawingDocument, Parent, !this.bFromDocument);
+	var Para = new AscWord.Paragraph(Parent, !this.bFromDocument);
 
 	if (!oPr)
 		oPr = {};
@@ -313,7 +321,7 @@ Paragraph.prototype.Copy = function(Parent, DrawingDocument, oPr)
 	{
 		var Item = this.Content[Index];
 
-		if (para_Comment === Item.Type && true === oPr.SkipComments)
+		if (para_Comment === Item.Type && (true === oPr.SkipComments || oPr.Comparison && oPr.Comparison.skipCommentElementOnCopyParagraph(Item)))
 			continue;
 		if (para_Bookmark === Item.Type && true === oPr.SkipBookmarks)
 			continue;
@@ -354,7 +362,11 @@ Paragraph.prototype.Copy = function(Parent, DrawingDocument, oPr)
 	EndRun.Set_Pr(this.TextPr.Value.Copy(undefined, oPr));
 
 	if (oPr && oPr.CopyReviewPr)
-		EndRun.SetReviewTypeWithInfo(this.GetReviewType(), this.GetReviewInfo().Copy(), false);
+	{
+		let reviewType = this.GetReviewType();
+		let reviewInfo = this.GetReviewInfo();
+		EndRun.SetReviewTypeWithInfo(reviewType, reviewInfo ? reviewInfo.Copy() : undefined, false);
+	}
 
 	if(oPr && oPr.Comparison)
 	{
@@ -371,7 +383,7 @@ Paragraph.prototype.Copy = function(Parent, DrawingDocument, oPr)
 			oLogicDocument = oPr.Comparison.originalDocument;
 			bCopyHdrFtr = true;
 		}
-		var SectPr = new CSectionPr(oLogicDocument);
+		var SectPr = new AscWord.SectPr(oLogicDocument);
 		SectPr.Copy(this.SectPr, bCopyHdrFtr, oPr);
 		Para.Set_SectionPr(SectPr);
 	}
@@ -383,7 +395,7 @@ Paragraph.prototype.Copy = function(Parent, DrawingDocument, oPr)
 };
 Paragraph.prototype.Copy2 = function(Parent)
 {
-	var Para = new Paragraph(this.DrawingDocument, Parent, true);
+	var Para = new AscWord.Paragraph(Parent, true);
 
 	// Копируем настройки
 	Para.Set_Pr(this.Pr.Copy());
@@ -410,7 +422,7 @@ Paragraph.prototype.Copy2 = function(Parent)
 
 Paragraph.prototype.createDuplicateForSmartArt = function(Parent, oPr)
 {
-	var Para = new Paragraph(this.DrawingDocument, Parent, true);
+	var Para = new AscWord.Paragraph(Parent, true);
 	Para.Set_Pr(this.Pr.createDuplicateForSmartArt());
 	Para.TextPr.Set_Value(this.TextPr.Value.createDuplicateForSmartArt(oPr));
 	Para.Internal_Content_Remove2(0, Para.Content.length);
@@ -432,6 +444,20 @@ Paragraph.prototype.GetFirstRunPr = function()
 		return this.TextPr.Value.Copy();
 
 	return this.Content[0].Pr.Copy();
+};
+Paragraph.prototype.GetParaEndPr = function()
+{
+	return this.TextPr.Value.Copy();
+};
+Paragraph.prototype.SetParaEndPr = function(textPr)
+{
+	if (!textPr)
+		return;
+	
+	this.TextPr.Set_Value(textPr.Copy());
+	let endRun = this.GetParaEndRun();
+	if (endRun)
+		endRun.SetPr(textPr.Copy());
 };
 Paragraph.prototype.Get_FirstTextPr = function()
 {
@@ -564,7 +590,7 @@ Paragraph.prototype.GetAllParagraphs = function(Props, ParaArray)
 		if (!oCurNumPr)
 			return;
 
-		if (Props.NumPr instanceof CNumPr)
+		if (Props.NumPr instanceof AscWord.NumPr)
 		{
 			var oNumPr = Props.NumPr;
 			if (oCurNumPr.NumId === oNumPr.NumId && (oCurNumPr.Lvl === oNumPr.Lvl || undefined === oNumPr.Lvl || null === oNumPr.Lvl))
@@ -628,6 +654,18 @@ Paragraph.prototype.GetAllParaMaths = function(arrParaMaths)
 	}
 
 	return arrParaMaths;
+};
+Paragraph.prototype.GetAllPermRangeMarks = function(marks)
+{
+	if (!marks)
+		marks = [];
+	
+	for (let i = 0, count = this.Content.length; i < count; ++i)
+	{
+		this.Content[i].GetAllPermRangeMarks(marks);
+	}
+	
+	return marks;
 };
 
 Paragraph.prototype.GetAllSeqFieldsByType = function(sType, aFields)
@@ -731,6 +769,10 @@ Paragraph.prototype.GetTheme = function()
 	
 	return AscFormat.GetDefaultTheme();
 };
+Paragraph.prototype.getTheme = function()
+{
+	return this.GetTheme();
+};
 Paragraph.prototype.Get_ColorMap = function()
 {
 	return this.GetColorMap();
@@ -742,7 +784,11 @@ Paragraph.prototype.GetColorMap = function()
 	
 	return AscFormat.GetDefaultColorMap();
 };
-Paragraph.prototype.Reset = function(X, Y, XLimit, YLimit, PageNum, ColumnNum, ColumnsCount)
+Paragraph.prototype.getColorMap = function()
+{
+	return this.GetColorMap();
+};
+Paragraph.prototype.Reset = function(X, Y, XLimit, YLimit, PageNum, ColumnNum, ColumnsCount, sectionIndex, sectPr)
 {
 	this.X      = X;
 	this.Y      = Y;
@@ -755,13 +801,16 @@ Paragraph.prototype.Reset = function(X, Y, XLimit, YLimit, PageNum, ColumnNum, C
 	this.PageNum      = PageNum;
 	this.ColumnNum    = ColumnNum ? ColumnNum : 0;
 	this.ColumnsCount = ColumnsCount ? ColumnsCount : 1;
-
+	this.SectionNum   = sectionIndex ? sectionIndex : 0;
+	
 	// При первом пересчете параграфа this.Parent.RecalcInfo.Can_RecalcObject() всегда будет true, а вот при повторных
 	// уже нет Кроме случая, когда параграф меняет свое местоположение на страницах и колонках
 	if (true === this.Parent.RecalcInfo.Can_RecalcObject() || ColumnNumOld !== this.ColumnNum || PageNumOld !== this.PageNum)
 	{
 		this.private_RecalculateColumnLimits();
 	}
+	
+	this.ResetSection(X, Y, XLimit, YLimit, PageNum, sectionIndex, sectPr);
 };
 Paragraph.prototype.private_RecalculateColumnLimits = function()
 {
@@ -837,7 +886,7 @@ Paragraph.prototype.CopyPr_Open = function(OtherParagraph)
 	// их изменить.
 	var oOldPr        = OtherParagraph.Pr;
 	OtherParagraph.Pr = this.Pr.Copy(true);
-	History.Add(new CChangesParagraphPr(OtherParagraph, oOldPr, OtherParagraph.Pr));
+	AscCommon.History.Add(new CChangesParagraphPr(OtherParagraph, oOldPr, OtherParagraph.Pr));
 	OtherParagraph.private_UpdateTrackRevisionOnChangeParaPr(true);
 
 	if (this.bFromDocument)
@@ -948,9 +997,9 @@ Paragraph.prototype.private_UpdateSelectionPosOnRemove = function(nPosition, nCo
  */
 Paragraph.prototype.Internal_Content_Add = function(Pos, Item)
 {
-	History.Add(new CChangesParagraphAddItem(this, Pos, [Item]));
+	AscCommon.History.Add(new CChangesParagraphAddItem(this, Pos, [Item]));
 	this.Content.splice(Pos, 0, Item);
-	this.private_UpdateTrackRevisions();
+	this.updateTrackRevisions();
 	this.private_CheckUpdateBookmarks([Item]);
 	this.UpdateDocumentOutline();
 	this.private_UpdateSelectionPosOnAdd(Pos, 1);
@@ -979,22 +1028,7 @@ Paragraph.prototype.Internal_Content_Add = function(Pos, Item)
 		if (ContentPos.Data[0] >= Pos)
 			ContentPos.Data[0]++;
 	}
-
-	// Передвинем все метки слов для проверки орфографии
-	for (var nIndex = 0, nCount = this.SpellChecker.Elements.length; nIndex < nCount; ++nIndex)
-	{
-		var Element    = this.SpellChecker.Elements[nIndex];
-		var ContentPos = Element.StartPos;
-
-		if (ContentPos.Data[0] >= Pos)
-			ContentPos.Data[0]++;
-
-		ContentPos = Element.EndPos;
-
-		if (ContentPos.Data[0] >= Pos)
-			ContentPos.Data[0]++;
-	}
-
+	
 	if (Item.SetParent)
 		Item.SetParent(this);
 
@@ -1050,8 +1084,8 @@ Paragraph.prototype.ConcatContent = function(arrItems)
 			oItem.Recalc_RunsCompiledPr();
 	}
 
-	History.Add(new CChangesParagraphAddItem(this, nInsertPos, arrNewItems));
-	this.private_UpdateTrackRevisions();
+	AscCommon.History.Add(new CChangesParagraphAddItem(this, nInsertPos, arrNewItems));
+	this.updateTrackRevisions();
 	this.private_CheckUpdateBookmarks(arrNewItems);
 	this.UpdateDocumentOutline();
 
@@ -1068,13 +1102,13 @@ Paragraph.prototype.ConcatContent = function(arrItems)
 Paragraph.prototype.Internal_Content_Remove = function(Pos)
 {
 	var Item = this.Content[Pos];
-	History.Add(new CChangesParagraphRemoveItem(this, Pos, [Item]));
+	AscCommon.History.Add(new CChangesParagraphRemoveItem(this, Pos, [Item]));
 
 	if (Item.PreDelete)
 		Item.PreDelete();
 
 	this.Content.splice(Pos, 1);
-	this.private_UpdateTrackRevisions();
+	this.updateTrackRevisions();
 	this.private_CheckUpdateBookmarks([Item]);
 	this.UpdateDocumentOutline();
 	this.private_UpdateSelectionPosOnRemove(Pos, 1);
@@ -1107,20 +1141,6 @@ Paragraph.prototype.Internal_Content_Remove = function(Pos)
 	// Удаляем комментарий, если это необходимо
 	if (true === this.DeleteCommentOnRemove && para_Comment === Item.Type && this.LogicDocument)
 		this.LogicDocument.RemoveComment(Item.CommentId, true, false);
-
-	for (var nIndex = 0, nCount = this.SpellChecker.Elements.length; nIndex < nCount; ++nIndex)
-	{
-		var Element    = this.SpellChecker.Elements[nIndex];
-		var ContentPos = Element.StartPos;
-
-		if (ContentPos.Data[0] > Pos)
-			ContentPos.Data[0]--;
-
-		ContentPos = Element.EndPos;
-
-		if (ContentPos.Data[0] > Pos)
-			ContentPos.Data[0]--;
-	}
 
 	this.OnContentChange();
 };
@@ -1167,8 +1187,8 @@ Paragraph.prototype.Internal_Content_Remove2 = function(Pos, Count)
 	}
 
 	var DeletedItems = this.Content.slice(Pos, Pos + Count);
-	History.Add(new CChangesParagraphRemoveItem(this, Pos, DeletedItems));
-	this.private_UpdateTrackRevisions();
+	AscCommon.History.Add(new CChangesParagraphRemoveItem(this, Pos, DeletedItems));
+	this.updateTrackRevisions();
 	this.private_CheckUpdateBookmarks(DeletedItems);
 	this.UpdateDocumentOutline();
 
@@ -1273,9 +1293,9 @@ Paragraph.prototype.ClearContent = function()
 			oItem.PreDelete();
 	}
 
-	History.Add(new CChangesParagraphRemoveItem(this, 0, this.Content));
+	AscCommon.History.Add(new CChangesParagraphRemoveItem(this, 0, this.Content));
 
-	this.private_UpdateTrackRevisions();
+	this.updateTrackRevisions();
 	this.private_CheckUpdateBookmarks(this.Content);
 	this.UpdateDocumentOutline();
 
@@ -1306,6 +1326,11 @@ Paragraph.prototype.OnContentChange = function()
 	if (this.Parent && this.Parent.OnContentChange)
 		this.Parent.OnContentChange();
 };
+Paragraph.prototype.OnTextPrChange = function()
+{
+	if (this.Parent && this.Parent.OnTextPrChange)
+		this.Parent.OnTextPrChange();
+};
 Paragraph.prototype.NeedHyphenateText = function()
 {
 	this.RecalcInfo.NeedHyphenateText();
@@ -1326,10 +1351,10 @@ Paragraph.prototype.Refresh_ContentChanges = function()
  * Получаем текущую позицию внутри параграфа
  * @returns {CParaPos}
  */
-Paragraph.prototype.GetCurrentParaPos = function()
+Paragraph.prototype.GetCurrentParaPos = function(align)
 {
 	// Сначала определим строку и отрезок
-	var ParaPos = this.Content[this.CurPos.ContentPos].GetCurrentParaPos();
+	var ParaPos = this.Content[this.CurPos.ContentPos].GetCurrentParaPos(align);
 
 	if (-1 !== this.CurPos.Line)
 	{
@@ -1340,6 +1365,22 @@ Paragraph.prototype.GetCurrentParaPos = function()
 	ParaPos.Page = this.Get_PageByLine(ParaPos.Line);
 
 	return ParaPos;
+};
+/**
+ * Get the line, range and page number for the specified content position
+ * @param {CParagraphContentPos} contentPos
+ * @param {number} [align=1] if specified position is a line break position, then it can have differents line infos
+ *                           align=-1 for top-left line info
+ *                           otherwise for bottom-right line info
+ * @returns {CParaPos}
+ */
+Paragraph.prototype.getLineInfoByPos = function(contentPos, align)
+{
+	let state = this.SaveSelectionState();
+	this.Set_ParaContentPos(contentPos, false, -1, -1, false);
+	let paraPos = this.GetCurrentParaPos(align);
+	this.LoadSelectionState(state);
+	return paraPos;
 };
 Paragraph.prototype.Get_PageByLine = function(LineIndex)
 {
@@ -1386,13 +1427,23 @@ Paragraph.prototype.ConvertParaContentPosToRangePos = function(oContentPos)
 	for (var nPos = 0; nPos < nCurPos; ++nPos)
 	{
 		if (this.Content[nPos] instanceof CParagraphContentWithContentBase)
+		{
+			if (nPos != 0 && this.Content[nPos] instanceof ParaRun)
+				nRangePos++;
+			
 			nRangePos += this.Content[nPos].ConvertParaContentPosToRangePos(null);
+		}
 	}
 
 	if (this.Content[nCurPos])
 	{
-		if (this.Content[nPos] instanceof CParagraphContentWithContentBase)
+		if (this.Content[nCurPos] instanceof CParagraphContentWithContentBase)
+		{
+			if (nCurPos != 0 && this.Content[nCurPos] instanceof ParaRun)
+				nRangePos++;
+
 			nRangePos += this.Content[nCurPos].ConvertParaContentPosToRangePos(oContentPos, 1);
+		}
 	}
 		
 	return nRangePos;
@@ -1459,10 +1510,9 @@ Paragraph.prototype.CheckNotInlineObject = function(nMathPos, nDirection)
 			}
 			else
 			{
-				if (undefined !== this.Get_CompiledPr2(false).ParaPr.Bullet)
-				{
+				let oBullet = this.Get_CompiledPr2(false).ParaPr.Bullet;
+				if (oBullet && !oBullet.isNone())
 					return false;
-				}
 			}
 		}
 
@@ -1486,7 +1536,7 @@ Paragraph.prototype.CheckNotInlineObject = function(nMathPos, nDirection)
 
 	return true;
 };
-Paragraph.prototype.RecalculateEndInfo = function()
+Paragraph.prototype.RecalculateEndInfo = function(isFast, isForce)
 {
 	let logicDocument = this.GetLogicDocument();
 	if (!logicDocument || !logicDocument.GetRecalcId)
@@ -1497,11 +1547,12 @@ Paragraph.prototype.RecalculateEndInfo = function()
 		return;
 	
 	let prevEndInfo = this.Parent.GetPrevElementEndInfo(this);
-	if (prevEndInfo && !prevEndInfo.CheckRecalcId(recalcId))
+	if (!isForce && prevEndInfo && !prevEndInfo.CheckRecalcId(recalcId))
 		return;
 	
-	let prsi = this.m_oPRSI;
+	let prsi = AscWord.ParagraphStatePool.getEndInfoState();
 	prsi.Reset(prevEndInfo);
+	prsi.setFast(!!isFast);
 	
 	for (let pos = 0, count = this.Content.length; pos < count; ++pos)
 	{
@@ -1510,6 +1561,8 @@ Paragraph.prototype.RecalculateEndInfo = function()
 	
 	this.EndInfo.SetFromPRSI(prsi);
 	this.EndInfo.SetRecalcId(recalcId);
+	
+	AscWord.ParagraphStatePool.release(prsi);
 };
 /**
  * Данная функция вызывается, когда с данным элементом, и с элементами до него не произошло никаких изменений и мы
@@ -1539,7 +1592,7 @@ Paragraph.prototype.Recalculate_PageEndInfo = function(PRSW, CurPage)
 {
 	var PrevInfo = ( 0 === CurPage ? this.Parent.GetPrevElementEndInfo(this) : this.Pages[CurPage - 1].EndInfo.Copy() );
 
-	var PRSI = this.m_oPRSI;
+	var PRSI = AscWord.ParagraphStatePool.getEndInfoState();
 
 	PRSI.Reset(PrevInfo);
 
@@ -1564,6 +1617,8 @@ Paragraph.prototype.Recalculate_PageEndInfo = function(PRSW, CurPage)
 
 	if (PRSW)
 		this.Pages[CurPage].EndInfo.RunRecalcInfo = PRSW.RunRecalcInfoBreak;
+	
+	AscWord.ParagraphStatePool.release(PRSI)
 };
 Paragraph.prototype.UpdateEndInfo = function()
 {
@@ -1640,91 +1695,158 @@ Paragraph.prototype.CheckSplitPageOnPageBreak = function(oPageBreakItem)
 /**
  * Пересчитываем заданную позицию элемента или текущую позицию курсора.
  */
-Paragraph.prototype.Internal_Recalculate_CurPos = function(Pos, UpdateCurPos, UpdateTarget, ReturnTarget)
+Paragraph.prototype.Internal_Recalculate_CurPos = function(updateCurPos, updateTarget, returnTarget)
 {
-	var Transform = this.Get_ParentTextTransform();
+	let transform = this.Get_ParentTextTransform();
+	let result = {
+		X         : 0,
+		Y         : 0,
+		Height    : 0,
+		PageNum   : 0,
+		Internal  : {
+			Line  : 0,
+			Page  : 0,
+			Range : 0
+		},
+		Transform : transform
+	};
 
 	if (!this.IsRecalculated() || this.Lines.length <= 0)
-	{
-		return {
-			X         : 0,
-			Y         : 0,
-			Height    : 0,
-			PageNum   : 0,
-			Internal  : {Line : 0, Page : 0, Range : 0},
-			Transform : Transform
-		};
-	}
+		return result;
 
 	var LinePos = this.GetCurrentParaPos();
 
 	if (-1 === LinePos.Line || LinePos.Line >= this.Lines.length)
-	{
-		return {
-			X         : 0,
-			Y         : 0,
-			Height    : 0,
-			PageNum   : 0,
-			Internal  : {Line : 0, Page : 0, Range : 0},
-			Transform : Transform
-		};
-	}
+		return result;
 
 	var CurLine  = LinePos.Line;
 	var CurRange = LinePos.Range;
 	var CurPage  = LinePos.Page;
 
 	// Если в текущей позиции явно указана строка
-	if (-1 != this.CurPos.Line)
+	if (-1 !== this.CurPos.Line)
 	{
 		CurLine  = this.CurPos.Line;
 		CurRange = this.CurPos.Range;
 	}
 
 	if (this.Lines[CurLine].Ranges.length <= 0)
+		return result;
+	
+	let startPos = this.Lines[CurLine].Ranges[CurRange].StartPos;
+	let endPos   = this.Lines[CurLine].Ranges[CurRange].EndPos;
+	
+	let positionCalculator = new AscWord.ParagraphPositionCalculator(this);
+	positionCalculator.reset(CurPage, CurLine, CurRange);
+	for (let pos = startPos; pos <= endPos; ++pos)
 	{
-		return {
-			X         : 0,
-			Y         : 0,
-			Height    : 0,
-			PageNum   : 0,
-			Internal  : {Line : 0, Page : 0, Range : 0},
-			Transform : Transform
-		};
+		let item = this.Content[pos];
+		item.recalculateCursorPosition(positionCalculator, pos === this.CurPos.ContentPos);
 	}
+	
+	let point  = positionCalculator.getXY();
+	result.X = point.x;
+	result.Y = point.y;
+	result.PageNum = this.GetAbsolutePage(CurPage);
 
-	var X = this.Lines[CurLine].Ranges[CurRange].XVisible;
-	var Y = this.Pages[CurPage].Y + this.Lines[CurLine].Y;
-
-	var StartPos = this.Lines[CurLine].Ranges[CurRange].StartPos;
-	var EndPos   = this.Lines[CurLine].Ranges[CurRange].EndPos;
-
-	if (true === this.Numbering.Check_Range(CurRange, CurLine))
-		X += this.Numbering.WidthVisible;
-
-	for (var CurPos = StartPos; CurPos <= EndPos; CurPos++)
+	result.Internal.Line  = CurLine;
+	result.Internal.Page  = CurPage;
+	result.Internal.Range = CurRange;
+	
+	if (updateCurPos)
 	{
-		var Item = this.Content[CurPos];
-		var Res  = Item.Recalculate_CurPos(X, Y, (CurPos === this.CurPos.ContentPos ? true : false), CurRange, CurLine, CurPage, UpdateCurPos, UpdateTarget, ReturnTarget);
-
-		if (CurPos === this.CurPos.ContentPos)
-		{
-			Res.Transform = Transform;
-			return Res;
-		}
-		else
-		{
-			X = Res.X;
-		}
+		this.CurPos.X        = point.x;
+		this.CurPos.Y        = point.y;
+		this.CurPos.PagesPos = CurPage;
 	}
-
-	return {
-		X         : X,
-		Y         : Y,
-		PageNum   : this.Get_AbsolutePage(CurPage),
-		Internal  : {Line : CurLine, Page : CurPage, Range : CurRange},
-		Transform : Transform
-	};
+	
+	let drawingDocument = this.getDrawingDocument();
+	if (updateTarget && drawingDocument)
+	{
+		let target = positionCalculator.getTargetXY();
+		
+		let targetX = target.x;
+		let targetY = target.y;
+		let targetH = target.h;
+		let ascent  = target.ascent;
+		
+		let color = positionCalculator.getTargetColor();
+		
+		// Special hack for scrolling to the last selected line
+		let logicDocument = this.GetLogicDocument();
+		if (logicDocument
+			&& logicDocument.IsDocumentEditor()
+			&& !logicDocument.IsStartSelection()
+			&& this.IsSelectionUse())
+		{
+			let paraLine = this.Lines[CurLine];
+			let paraPage = this.Pages[CurPage];
+			
+			if (paraLine && paraPage)
+			{
+				targetY = paraPage.Y + paraLine.Top;
+				targetH = paraLine.Bottom - paraLine.Top;
+				ascent  = paraLine.Metrics.Ascent;
+			}
+		}
+		
+		
+		let absPage = this.GetAbsolutePage(CurPage);
+		let pdfForm = this.Parent && this.Parent.ParentPDF ? this.Parent.ParentPDF : null;
+		
+		// TODO: Убрать данную заглушку
+		// загрушка для обновления target (курсора)
+		// т.к. у любой формы у объекта CDocumentContent page == 0
+		if (pdfForm)
+			absPage = pdfForm.GetPage();
+		
+		if (this.GetFramePr())
+		{
+			let lineTop = this.Pages[CurPage].Y + this.Lines[CurLine].Top;
+			let lineBot = this.Pages[CurPage].Y + this.Lines[CurLine].Bottom;
+			
+			let top = Math.max(lineTop, targetY);
+			let bot = Math.min(lineBot, targetY + targetH);
+			
+			targetH = bot - top;
+			targetY = top;
+		}
+		
+		if (this.Parent && this.Parent instanceof AscWord.CDocumentContent)
+		{
+			let relPage = this.GetRelativePage(CurPage);
+			let clip = this.Parent.GetClip(relPage);
+			if (clip)
+			{
+				let x0 = clip.correctX0(targetX);
+				let x1 = clip.correctX1(targetX);
+				
+				let y0 = clip.correctY0(targetY);
+				let y1 = clip.correctY1(targetY + targetH);
+				
+				if (x0 > x1 || y0 > y1)
+				{
+					targetH = 0;
+					ascent  = 0;
+				}
+			}
+		}
+		
+		drawingDocument.SetTargetColor(color.r, color.g, color.b);
+		drawingDocument.SetTargetSize(targetH, ascent);
+		drawingDocument.UpdateTargetTransform(transform);
+		drawingDocument.UpdateTarget(targetX, targetY, absPage);
+	}
+	
+	if (returnTarget)
+	{
+		let target = positionCalculator.getTargetXY();
+		
+		result.Y      = target.y;
+		result.Height = target.h;
+	}
+	
+	return result;
 };
 /**
  * Проверяем не пустые ли границы
@@ -1767,19 +1889,8 @@ Paragraph.prototype.IsSingleRangeOnLine = function(nCurLine, nCurRange)
  */
 Paragraph.prototype.GetNumberingTextPr = function()
 {
-	var oNumPr = this.GetNumPr();
-	if (!oNumPr)
-		return AscWord.DEFAULT_TEXT_PR;
-
-	var oNumbering = this.Parent.GetNumbering();
-	var oNum       = oNumbering.GetNum(oNumPr.NumId);
-	if (!oNum)
-		return AscWord.DEFAULT_TEXT_PR;
-
-	var oLvl = oNum.GetLvl(oNumPr.Lvl);
-
 	let numTextPr = this.Get_CompiledPr2(false).TextPr.Copy();
-
+	
 	// Word не рисует подчеркивание у символа списка, если оно пришло из настроек для символа параграфа
 	let _underline = numTextPr.Underline;
 
@@ -1792,10 +1903,20 @@ Paragraph.prototype.GetNumberingTextPr = function()
 	}
 
 	numTextPr.Merge(paraMarkTextPr);
-
 	numTextPr.Underline = _underline;
-
-	numTextPr.Merge(oLvl.GetTextPr());
+	
+	let numbering = this.Parent.GetNumbering();
+	
+	let numPr = this.GetNumPr();
+	if (!numPr)
+		numPr = this.GetPrChangeNumPr();
+	
+	let num = numPr ? numbering.GetNum(numPr.NumId) : null;
+	if (!num)
+		return numTextPr;
+	
+	let numLvl = num.GetLvl(numPr.Lvl);
+	numTextPr.Merge(numLvl.GetTextPr());
 
 	// TODO: Пока возвращаем всегда шрифт лежащий в Ascii, в будущем надо будет это переделать
 	if (undefined !== numTextPr.RFonts && null !== numTextPr.RFonts)
@@ -1819,12 +1940,36 @@ Paragraph.prototype.GetNumberingText = function(bWithoutLvlText)
 {
 	var oParent = this.GetParent();
 	var oNumPr  = this.GetNumPr();
-	if (!oNumPr || !oParent)
+	
+	// При копировании иногда неправильно проставляется родительский класс, поэтому проверяем не только наличие
+	// родительского класса и что данный параграф в нем присутсвует
+	if (!oNumPr || !oParent || -1 === this.GetIndex())
 		return "";
 
 	var oNumbering = oParent.GetNumbering();
 	var oNumInfo   = oParent.CalculateNumberingValues(this, oNumPr);
-	return oNumbering.GetText(oNumPr.NumId, oNumPr.Lvl, oNumInfo, bWithoutLvlText);
+	return oNumbering.GetText(oNumPr.NumId, oNumPr.Lvl, oNumInfo, bWithoutLvlText, this.GetNumberingTextPr().Lang);
+};
+/**
+ * Получаем рассчитанное значение нумерации для данного параграфа вместе с суффиксом
+ * @returns {string}
+ */
+Paragraph.prototype.GetNumberingTextWithSuffix = function()
+{
+	let numText = this.GetNumberingText(false);
+	if (!numText)
+		return "";
+	
+	let parent = this.GetParent();
+	let numPr  = this.GetNumPr();
+	
+	let suff = parent.GetNumbering().GetNum(numPr.NumId).GetLvl(numPr.Lvl).GetSuff();
+	if (Asc.c_oAscNumberingSuff.Tab === suff)
+		numText += "	";
+	else if (Asc.c_oAscNumberingSuff.Space === suff)
+		numText += " ";
+	
+	return numText;
 };
 /**
  * Есть ли у параграфа нумерованная нумерация
@@ -1886,6 +2031,14 @@ Paragraph.prototype.IsEmptyRange = function(nCurLine, nCurRange)
 
 	return true;
 };
+Paragraph.prototype.getLineCount = function()
+{
+	return this.GetLinesCount();
+};
+Paragraph.prototype.getLine = function(line)
+{
+	return this.Lines[line] ? this.Lines[line] : null;
+};
 Paragraph.prototype.GetLinesCount = function()
 {
 	if (!this.IsRecalculated())
@@ -1896,7 +2049,7 @@ Paragraph.prototype.GetLinesCount = function()
 Paragraph.prototype.GetLineBounds = function(nCurLine)
 {
 	var oLine    = this.Lines[nCurLine];
-	var nCurPage = this.GetPageByLine();
+	var nCurPage = this.getPageByLine(nCurLine);
 	var oPage    = this.Pages[nCurPage];
 	if (!this.IsRecalculated() || !oLine || oLine.Ranges.length <= 0 || !oPage)
 		return new CDocumentBounds(0, 0, 0, 0);
@@ -1905,6 +2058,10 @@ Paragraph.prototype.GetLineBounds = function(nCurLine)
 	var nBottom = oPage.Y + oLine.Bottom;
 
 	return new CDocumentBounds(oPage.X, nTop, oPage.XLimit, nBottom);
+};
+Paragraph.prototype.getLineMetrics = function(iLine)
+{
+	return this.Lines[iLine] ? this.Lines[iLine].Metrics : new CParaLineMetrics();
 };
 Paragraph.prototype.GetTextOnLine = function(nCurLine)
 {
@@ -1924,11 +2081,60 @@ Paragraph.prototype.GetTextOnLine = function(nCurLine)
 	this.Selection.Use   = true;
 	this.Selection.Start = false;
 	this.SetSelectionContentPos(oStartPos, oEndPos);
-	let sResult = this.GetSelectedText(false, {Numbering : false});
+	let sResult = this.GetSelectedText(false, {
+		Numbering : false,
+		ParaSeparator : "",
+		TableCellSeparator : "",
+		TableRowSeparator : ""
+	});
 
 	this.LoadSelectionState(oState);
 
 	return sResult;
+};
+/**
+ * Получаем текст на заданной строке, если строка не задана, то получаем текст на текущей строке
+ * @param {number} line
+ */
+Paragraph.prototype.getTextOnLine = function(line)
+{
+	if (undefined === line || -1 === line)
+	{
+		let posInfo = this.RecalculateCurPos();
+		line = posInfo.Internal.Line;
+	}
+	
+	return this.GetTextOnLine(line);
+};
+/**
+ * @param {number} line
+ * @return {number}
+ */
+Paragraph.prototype.getRangeCount = function(line)
+{
+	return this.Lines[line] ? this.Lines[line].Ranges.length : 0;
+};
+Paragraph.prototype.getRange = function(line, range)
+{
+	return this.Lines[line] && this.Lines[line].Ranges[range] ? this.Lines[line].Ranges[range] : null;
+};
+Paragraph.prototype.getTextInLineRange = function(line, range)
+{
+	if (!this.IsRecalculated() || !this.Lines[line] || !this.Lines[line].Ranges[range])
+		return "";
+	
+	let paraState = this.SaveSelectionState();
+	
+	let startPos = this.Get_StartRangePos2(line, range);
+	let endPos   = this.Get_EndRangePos2(line, range);
+	
+	this.Selection.Use   = true;
+	this.Selection.Start = false;
+	this.SetSelectionContentPos(startPos, endPos);
+	
+	let result = this.GetSelectedText(false, {Numbering : false});
+	this.LoadSelectionState(paraState);
+	return result;
 };
 Paragraph.prototype.Reset_RecalculateCache = function()
 {
@@ -1941,7 +2147,7 @@ Paragraph.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY, isUpdateTar
 	if (undefined === isReturnTarget)
 		isReturnTarget = false;
 
-	var oCurPosInfo = this.Internal_Recalculate_CurPos(this.CurPos.ContentPos, true, isUpdateTarget, isReturnTarget);
+	var oCurPosInfo = this.Internal_Recalculate_CurPos(true, isUpdateTarget, isReturnTarget);
 
 	if (bUpdateX)
 		this.CurPos.RealX = oCurPosInfo.X;
@@ -1951,9 +2157,24 @@ Paragraph.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY, isUpdateTar
 
 	return oCurPosInfo;
 };
+Paragraph.prototype.GetStartPosXY = function()
+{
+	if (!this.IsRecalculated())
+		return null;
+	
+	let curPos = this.Get_StartPos();
+	if (!curPos)
+		return null;
+	
+	let state = this.SaveSelectionState();
+	this.Set_ParaContentPos(curPos, false, -1, -1, true); // Обязательно корректируем позицию
+	let result = this.GetCalculatedCurPosXY();
+	this.LoadSelectionState(state);
+	return result;
+};
 Paragraph.prototype.GetCalculatedCurPosXY = function()
 {
-	return this.Internal_Recalculate_CurPos(this.CurPos.ContentPos, false, false, true);
+	return this.Internal_Recalculate_CurPos(false, false, true);
 };
 Paragraph.prototype.RecalculateMinMaxContentWidth = function(isRotated)
 {
@@ -2002,28 +2223,12 @@ Paragraph.prototype.Draw = function(CurPage, pGraphics)
 {
 	if (!this.Pages[CurPage] || this.Pages[CurPage].EndLine < 0)
 		return;
-
-	if (pGraphics.Start_Command)
-	{
-		pGraphics.Start_Command(AscFormat.DRAW_COMMAND_PARAGRAPH);
-	}
+	
+	pGraphics.Start_Command(AscFormat.DRAW_COMMAND_PARAGRAPH, this);
 
 	var Pr = this.Get_CompiledPr();
-
-	// Выясним какая заливка у нашего текста
-	var BgColor  = undefined;
-	if (Pr.ParaPr.Shd && !Pr.ParaPr.Shd.IsNil())
-	{
-		BgColor = Pr.ParaPr.Shd.GetSimpleColor(this.GetTheme(), this.GetColorMap());
-		if (true === BgColor.Auto)
-			BgColor = this.Parent.Get_TextBackGroundColor();
-	}
-	else
-	{
-		// Нам надо выяснить заливку у родительского класса (возможно мы находимся в ячейке таблицы с забивкой)
-		BgColor = this.Parent.Get_TextBackGroundColor();
-	}
-
+	let drawState = AscWord.ParagraphStatePool.getDrawState();
+	drawState.init(this, pGraphics);
 
 	// 1 часть отрисовки :
 	//    Рисуем слева от параграфа знак, если данный параграф зажат другим пользователем
@@ -2038,32 +2243,30 @@ Paragraph.prototype.Draw = function(CurPage, pGraphics)
 	// 3 часть отрисовки :
 	//    Рисуем заливку параграфа и различные выделения текста (highlight, поиск, совместное редактирование).
 	//    Кроме этого рисуем боковые линии обводки параграфа.
-	this.Internal_Draw_3(CurPage, pGraphics, Pr);
+	this.drawRunHighlight(CurPage, pGraphics, Pr, drawState);
 
 	// 4 часть отрисовки :
 	//    Рисуем сами элементы параграфа
-	this.Internal_Draw_4(CurPage, pGraphics, Pr, BgColor, this.GetTheme(), this.GetColorMap());
+	this.drawRunContentElements(CurPage, pGraphics, drawState);
 
 	// 5 часть отрисовки :
 	//    Рисуем различные подчеркивания и зачеркивания.
-	this.Internal_Draw_5(CurPage, pGraphics, Pr, BgColor);
+	this.drawRunContentLines(CurPage, pGraphics, drawState);
 
 	// 6 часть отрисовки :
 	//    Рисуем верхнюю, нижнюю и промежуточную границы
 	this.Internal_Draw_6(CurPage, pGraphics, Pr);
 	
-	if (pGraphics.End_Command)
-	{
-		pGraphics.End_Command();
-	}
-
+	pGraphics.End_Command();
+	
+	AscWord.ParagraphStatePool.release(drawState);
 };
 Paragraph.prototype.Internal_Draw_1 = function(CurPage, pGraphics, Pr)
 {
-	if (this.bFromDocument && (pGraphics.RENDERER_PDF_FLAG !== true))
+	if (this.bFromDocument && pGraphics.isSupportEditFeatures())
 	{
 		// Если данный параграф зажат другим пользователем, рисуем соответствующий знак
-		if (AscCommon.locktype_None != this.Lock.Get_Type() && this.LogicDocument && !this.LogicDocument.IsViewModeInReview())
+		if (AscCommon.c_oAscLockTypes.kLockTypeNone != this.Lock.Get_Type() && this.LogicDocument && !this.LogicDocument.IsViewModeInReview())
 		{
 			if (( CurPage > 0 || false === this.IsStartFromNewPage() || null === this.Get_DocumentPrev() ))
 			{
@@ -2071,7 +2274,7 @@ Paragraph.prototype.Internal_Draw_1 = function(CurPage, pGraphics, Pr)
 				var Y_top    = this.Pages[CurPage].Bounds.Top;
 				var Y_bottom = this.Pages[CurPage].Bounds.Bottom;
 
-				if (true === editor.isCoMarksDraw || AscCommon.locktype_Mine != this.Lock.Get_Type())
+				if (true === editor.isCoMarksDraw || AscCommon.c_oAscLockTypes.kLockTypeMine != this.Lock.Get_Type())
 					pGraphics.DrawLockParagraph(this.Lock.Get_Type(), X_min, Y_top, Y_bottom);
 			}
 		}
@@ -2128,45 +2331,40 @@ Paragraph.prototype.Internal_Draw_2 = function(CurPage, pGraphics, Pr)
 		pGraphics.FillText(SpecX, Y, SpecSym);
 	}
 };
-Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
+Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawState)
 {
 	var LogicDocument = this.LogicDocument;
-	if (!LogicDocument)
-		return;
 
 	var bDrawBorders = this.Is_NeedDrawBorders();
 	if (true === bDrawBorders && 0 === CurPage && true === this.private_IsEmptyPageWithBreak(CurPage))
 		bDrawBorders = false;
 
-	var PDSH = g_oPDSH;
-
-	PDSH.ComplexFields.ResetPage(this, CurPage);
+	let PDSH = drawState.getHighlightState();
 
 	var _Page = this.Pages[CurPage];
 
-	var DocumentComments = LogicDocument.Comments;
-	var Page_abs         = this.Get_AbsolutePage(CurPage);
+	var DocumentComments = LogicDocument && LogicDocument.Comments;
+	var Page_abs         = this.GetAbsolutePage(CurPage);
 
-	var DrawComm           = DocumentComments ? DocumentComments.Is_Use() : false;
-	var DrawFind           = LogicDocument.SearchEngine.Selection;
-	var DrawColl           = undefined !== pGraphics.RENDERER_PDF_FLAG;
-	var DrawMMFields       = !!(this.LogicDocument && this.LogicDocument.Is_HighlightMailMergeFields && true === this.LogicDocument.Is_HighlightMailMergeFields());
-	var DrawSolvedComments = DocumentComments ? DocumentComments.IsUseSolved() : false;
+	var SdtHighlightColor  = LogicDocument && this.LogicDocument.GetSdtGlobalShowHighlight && this.LogicDocument.GetSdtGlobalShowHighlight() ? this.LogicDocument.GetSdtGlobalColor() : null;
+	var FormsHighlight     = LogicDocument && this.LogicDocument.GetSpecialFormsHighlight && this.LogicDocument.GetSpecialFormsHighlight() ? this.LogicDocument.GetSpecialFormsHighlight() : null;
 
-	var SdtHighlightColor  = this.LogicDocument.GetSdtGlobalShowHighlight && this.LogicDocument.GetSdtGlobalShowHighlight() ? this.LogicDocument.GetSdtGlobalColor() : null;
-	var FormsHighlight     = this.LogicDocument.GetSpecialFormsHighlight && this.LogicDocument.GetSpecialFormsHighlight() ? this.LogicDocument.GetSpecialFormsHighlight() : null;
-
-	if (false === this.LogicDocument.ForceDrawFormHighlight
-		|| (true !== this.LogicDocument.ForceDrawFormHighlight && undefined !== pGraphics.RENDERER_PDF_FLAG))
+	if (!LogicDocument || false === this.LogicDocument.ForceDrawFormHighlight
+		|| (true !== this.LogicDocument.ForceDrawFormHighlight && pGraphics.isPdf()))
 	{
 		SdtHighlightColor = null;
 		FormsHighlight    = null;
 	}
+	
+	let isAllRolesFilled = (LogicDocument
+		&& LogicDocument.IsDocumentEditor()
+		&& LogicDocument.GetOFormDocument()
+		&& LogicDocument.GetOFormDocument().isAllRolesFilled());
 
 	if (FormsHighlight && FormsHighlight.IsAuto())
 		FormsHighlight = null;
 
-	PDSH.Reset(this, pGraphics, DrawColl, DrawFind, DrawComm, DrawMMFields, this.GetEndInfoByPage(CurPage - 1), DrawSolvedComments);
+	PDSH.resetPage(CurPage);
 
 	var StartLine = _Page.StartLine;
 	var EndLine   = _Page.EndLine;
@@ -2187,19 +2385,21 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 		let Y1 = (_Page.Y + line.Y + lineMetrics.Descent);
 		if (lineMetrics.LineGap < 0)
 			Y1 += lineMetrics.LineGap;
+		
+		PDSH.resetLine(curLine, Y0, Y1);
 
 		for (let curRange = 0, rangesCount = line.Ranges.length; curRange < rangesCount; ++curRange)
 		{
 			let range = line.Ranges[curRange];
-			PDSH.Reset_Range(CurPage, curLine, curRange, range.XVisible, Y0, Y1, range.Spaces);
-
-			if (this.Numbering.Check_Range(curRange, curLine))
-				PDSH.X += this.Numbering.WidthVisible;
+			
+			PDSH.beginRange(curRange, range.XVisible, range.Spaces)
 
 			for (let contentPos = range.StartPos; contentPos <= range.EndPos; ++contentPos)
 			{
 				this.Content[contentPos].Draw_HighLights(PDSH);
 			}
+		
+			PDSH.endRange();
 
 			var isFormShd = false;
 			var oInlineSdt, isForm, oFormShd;
@@ -2220,10 +2420,10 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 			{
 				var oSdtBounds;
 
-				let isDrawFormHighlight = !pGraphics.isPrintMode;
-				if (true === LogicDocument.ForceDrawFormHighlight)
+				let isDrawFormHighlight = !pGraphics.isPrintMode && !isAllRolesFilled;
+				if (LogicDocument && true === LogicDocument.ForceDrawFormHighlight)
 					isDrawFormHighlight = true;
-				else if (false === LogicDocument.ForceDrawFormHighlight)
+				else if (!LogicDocument || false === LogicDocument.ForceDrawFormHighlight)
 					isDrawFormHighlight = false;
 
 				for (var nSdtIndex = 0, nSdtCount = PDSH.InlineSdt.length; nSdtIndex < nSdtCount; ++nSdtIndex)
@@ -2235,7 +2435,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 					if (!isForm || !oInlineSdt.IsFixedForm() || -1 !== fixedForms.indexOf(oInlineSdt))
 						continue;
 
-					if (isForm && pGraphics.RENDERER_PDF_FLAG && !pGraphics.isPrintMode)
+					if (isForm && pGraphics.isPdf() && !pGraphics.isPrintMode)
 						continue;
 
 					if (!isDrawFormHighlight && isForm && (!oFormShd || oFormShd.IsNil()))
@@ -2279,19 +2479,19 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 		}
 	}
 	PDSH.SetCollectFixedForms(false);
-	PDSH.ComplexFields.ResetPage(this, CurPage);
-	PDSH.Reset(this, pGraphics, DrawColl, DrawFind, DrawComm, DrawMMFields, this.GetEndInfoByPage(CurPage - 1), DrawSolvedComments);
+	PDSH.resetPage(CurPage);
 
 	for (var CurLine = StartLine; CurLine <= EndLine; CurLine++)
 	{
 		var _Line        = this.Lines[CurLine];
 		var _LineMetrics = _Line.Metrics;
-		var EndLinePos   = _Line.EndPos;
 
 		var Y0 = (_Page.Y + _Line.Y - _LineMetrics.Ascent);
 		var Y1 = (_Page.Y + _Line.Y + _LineMetrics.Descent);
 		if (_LineMetrics.LineGap < 0)
 			Y1 += _LineMetrics.LineGap;
+		
+		PDSH.resetLine(CurLine, Y0, Y1);
 
 		var RangesCount = _Line.Ranges.length;
 		for (var CurRange = 0; CurRange < RangesCount; CurRange++)
@@ -2305,68 +2505,25 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 			// сохраним позиции начала и конца продолжительных одинаковых настроек
 			// выделения, совместного редактирования и поиска соответственно.
 
-			PDSH.Reset_Range(CurPage, CurLine, CurRange, X, Y0, Y1, _Range.Spaces);
-
-			if (true === this.Numbering.Check_Range(CurRange, CurLine))
-			{
-				var NumberingType = this.Numbering.Type;
-				var NumberingItem = this.Numbering;
-
-				if (para_Numbering === NumberingType)
-				{
-					var NumPr = Pr.ParaPr.NumPr;
-					if (undefined === NumPr || undefined === NumPr.NumId || 0 === NumPr.NumId || "0" === NumPr.NumId || (this.Parent && this.Parent.IsEmptyParagraphAfterTableInTableCell(this.GetIndex())))
-					{
-						// Ничего не делаем
-					}
-					else
-					{
-						let oNumbering = this.Parent.GetNumbering();
-						let oNumLvl    = oNumbering.GetNum(NumPr.NumId).GetLvl(NumPr.Lvl);
-						let nNumJc     = oNumLvl.GetJc();
-						let numTextPr  = this.GetNumberingTextPr();
-
-						var X_start = X;
-
-						if (align_Right === nNumJc)
-							X_start = X - NumberingItem.WidthNum;
-						else if (align_Center === nNumJc)
-							X_start = X - NumberingItem.WidthNum / 2;
-
-						// Если есть выделение текста, рисуем его сначала
-						if (highlight_None !== numTextPr.HighLight)
-							PDSH.High.Add(Y0, Y1, X_start, X_start + NumberingItem.WidthNum + NumberingItem.WidthSuff, 0, numTextPr.HighLight.r, numTextPr.HighLight.g, numTextPr.HighLight.b, undefined, numTextPr);
-					}
-				}
-
-				PDSH.X += this.Numbering.WidthVisible;
-			}
-
+			PDSH.beginRange(CurRange, X, _Range.Spaces);
 			for (var Pos = StartPos; Pos <= EndPos; Pos++)
 			{
 				var Item = this.Content[Pos];
 				Item.Draw_HighLights(PDSH);
 			}
+			PDSH.endRange();
 
 			//----------------------------------------------------------------------------------------------------------
 			// Заливка параграфа
 			//----------------------------------------------------------------------------------------------------------
-			var oShdColor = Pr.ParaPr.Shd.IsNil() ? null : Pr.ParaPr.Shd.GetSimpleColor(this.GetTheme(), this.GetColorMap());
+			let paraPr = Pr.ParaPr;
+			var oShdColor = paraPr.Shd.IsNil() ? null : paraPr.Shd.GetSimpleColor(this.GetTheme(), this.GetColorMap());
 			if ((_Range.W > 0.001 || true === this.IsEmpty() || true !== this.IsEmptyRange(CurLine, CurRange))
 				&& ((this.Pages.length - 1 === CurPage) || (CurLine < this.Pages[CurPage + 1].FirstLine))
 				&& oShdColor
 				&& !oShdColor.IsAuto())
 			{
-				if (pGraphics.Start_Command)
-				{
-					pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE, this.Lines[CurLine], CurLine, 4)
-				}
-
-				var TempX0 = this.Lines[CurLine].Ranges[CurRange].X;
-				if (0 === CurRange)
-					TempX0 = Math.min(TempX0, this.Pages[CurPage].X + Pr.ParaPr.Ind.Left, this.Pages[CurPage].X + Pr.ParaPr.Ind.Left + Pr.ParaPr.Ind.FirstLine);
-
-				var TempX1 = this.Lines[CurLine].Ranges[CurRange].XEnd;
+				pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE, this.Lines[CurLine], CurLine, AscFormat.CLineStructure_DrawType_ParagraphBackgrounds)
 
 				var TempTop    = this.Lines[CurLine].Top;
 				var TempBottom = this.Lines[CurLine].Bottom;
@@ -2377,29 +2534,36 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 					// на странице, предыдущий параграф тоже имеет не пустой фон и у текущего и предыдущего
 					// параграфов совпадают правая и левая границы фонов.
 
-					var PrevEl = this.Get_DocumentPrev();
-					var PrevPr = null;
+					let prevEl = this.Get_DocumentPrev();
+					let prevPr = null;
 
-					var PrevLeft  = 0;
-					var PrevRight = 0;
-					var CurLeft   = Math.min(Pr.ParaPr.Ind.Left, Pr.ParaPr.Ind.Left + Pr.ParaPr.Ind.FirstLine);
-					var CurRight  = Pr.ParaPr.Ind.Right;
-					if (null != PrevEl && type_Paragraph === PrevEl.GetType())
+					let prevLeft  = 0;
+					let prevRight = 0;
+					let curLeft   = paraPr.Bidi ? paraPr.Ind.Right : Math.min(paraPr.Ind.Left, paraPr.Ind.Left + paraPr.Ind.FirstLine);
+					let curRight  = paraPr.Bidi ? Math.min(paraPr.Ind.Left, paraPr.Ind.Left + paraPr.Ind.FirstLine) : paraPr.Ind.Right;
+					if (prevEl && prevEl.IsParagraph())
 					{
-						PrevPr    = PrevEl.Get_CompiledPr2();
-						PrevLeft  = Math.min(PrevPr.ParaPr.Ind.Left, PrevPr.ParaPr.Ind.Left + PrevPr.ParaPr.Ind.FirstLine);
-						PrevRight = PrevPr.ParaPr.Ind.Right;
+						prevPr    = prevEl.Get_CompiledPr2().ParaPr;
+						prevLeft  = prevPr.Bidi ? prevPr.Ind.Right : Math.min(prevPr.Ind.Left, prevPr.Ind.Left + prevPr.Ind.FirstLine);
+						prevRight = prevPr.Bidi ? Math.min(prevPr.Ind.Left, prevPr.Ind.Left + prevPr.Ind.FirstLine) : prevPr.Ind.Right;
 					}
 
 					// Если данный параграф находится в группе параграфов с одинаковыми границами(с хотябы одной
 					// непустой), и он не первый, тогда закрашиваем вместе с расстоянием до параграфа
-					if (true === Pr.ParaPr.Brd.First)
+					if (true === paraPr.Brd.First)
 					{
-						// Если следующий элемент таблица, тогда PrevPr = null
-						if (null === PrevEl || true === this.IsStartFromNewPage() || null === PrevPr || Asc.c_oAscShdNil === PrevPr.ParaPr.Shd.Value || PrevLeft != CurLeft || CurRight != PrevRight || false === this.Internal_Is_NullBorders(PrevPr.ParaPr.Brd) || false === this.Internal_Is_NullBorders(Pr.ParaPr.Brd))
+						// Если следующий элемент таблица, тогда prevPr = null
+						if (!prevEl
+							|| this.IsStartFromNewPage()
+							|| !prevPr
+							|| Asc.c_oAscShdNil === prevPr.Shd.Value
+							|| Math.abs(prevLeft - curLeft) > AscWord.EPSILON
+							|| Math.abs(curRight - prevRight) > AscWord.EPSILON
+							|| false === this.Internal_Is_NullBorders(prevPr.Brd)
+							|| false === this.Internal_Is_NullBorders(paraPr.Brd))
 						{
-							if (false === this.IsStartFromNewPage() || null === PrevEl)
-								TempTop += Pr.ParaPr.Spacing.Before;
+							if (false === this.IsStartFromNewPage() || !prevEl)
+								TempTop += paraPr.Spacing.Before;
 						}
 					}
 				}
@@ -2410,50 +2574,67 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 					// на странице, следующий параграф тоже имеет не пустой фон и у текущего и следующего
 					// параграфов совпадают правая и левая границы фонов.
 
-					var NextEl = this.Get_DocumentNext();
-					var NextPr = null;
+					let nextEl = this.Get_DocumentNext();
+					let nextPr = null;
 
-					var NextLeft  = 0;
-					var NextRight = 0;
-					var CurLeft   = Math.min(Pr.ParaPr.Ind.Left, Pr.ParaPr.Ind.Left + Pr.ParaPr.Ind.FirstLine);
-					var CurRight  = Pr.ParaPr.Ind.Right;
-					if (null != NextEl && type_Paragraph === NextEl.GetType())
+					let nextLeft  = 0;
+					let nextRight = 0;
+					let curLeft   = paraPr.Bidi ? paraPr.Ind.Right : Math.min(paraPr.Ind.Left, paraPr.Ind.Left + paraPr.Ind.FirstLine);
+					let curRight  = paraPr.Bidi ? Math.min(paraPr.Ind.Left, paraPr.Ind.Left + paraPr.Ind.FirstLine) : paraPr.Ind.Right;
+					if (nextEl && nextEl.IsParagraph())
 					{
-						NextPr    = NextEl.Get_CompiledPr2();
-						NextLeft  = Math.min(NextPr.ParaPr.Ind.Left, NextPr.ParaPr.Ind.Left + NextPr.ParaPr.Ind.FirstLine);
-						NextRight = NextPr.ParaPr.Ind.Right;
+						nextPr    = nextEl.Get_CompiledPr2().ParaPr;
+						nextLeft  = nextPr.Bidi ? nextPr.Ind.Right : Math.min(nextPr.Ind.Left, nextPr.Ind.Left + nextPr.Ind.FirstLine);
+						nextRight = nextPr.Bidi ? Math.min(nextPr.Ind.Left, nextPr.Ind.Left + nextPr.Ind.FirstLine) : nextPr.Ind.Right;
 					}
 
-					if (null != NextEl && type_Paragraph === NextEl.GetType() && true === NextEl.IsStartFromNewPage())
+					if (nextEl && nextEl.IsParagraph() && nextEl.IsStartFromNewPage())
 					{
 						TempBottom = this.Lines[CurLine].Y + this.Lines[CurLine].Metrics.Descent + this.Lines[CurLine].Metrics.LineGap;
 					}
 					// Если данный параграф находится в группе параграфов с одинаковыми границами(с хотябы одной
 					// непустой), и он не последний, тогда закрашиваем вместе с расстоянием после параграфа
-					else if (true === Pr.ParaPr.Brd.Last)
+					else if (true === paraPr.Brd.Last)
 					{
-						// Если следующий элемент таблица, тогда NextPr = null
-						if (null === NextEl || true === NextEl.IsStartFromNewPage() || null === NextPr || Asc.c_oAscShdNil === NextPr.ParaPr.Shd.Value || NextLeft != CurLeft || CurRight != NextRight || false === this.Internal_Is_NullBorders(NextPr.ParaPr.Brd) || false === this.Internal_Is_NullBorders(Pr.ParaPr.Brd))
-							TempBottom -= Pr.ParaPr.Spacing.After;
+						// Если следующий элемент таблица, тогда nextPr = null
+						if (!nextEl
+							|| nextEl.IsStartFromNewPage()
+							|| !nextPr
+							|| Asc.c_oAscShdNil === nextPr.Shd.Value
+							|| Math.abs(nextLeft - curLeft) > AscWord.EPSILON
+							|| Math.abs(curRight - nextRight) > AscWord.EPSILON
+							|| false === this.Internal_Is_NullBorders(nextPr.Brd)
+							|| false === this.Internal_Is_NullBorders(paraPr.Brd))
+							TempBottom -= paraPr.Spacing.After;
 					}
 				}
 
-				if (0 === CurRange)
-				{
-					if (Pr.ParaPr.Brd.Left.Value === border_Single)
-						TempX0 -= 0.5 + Pr.ParaPr.Brd.Left.Size + Pr.ParaPr.Brd.Left.Space;
-					else
-						TempX0 -= 0.5;
-				}
+				let isRtl = Pr.ParaPr.Bidi;
 
-				if (this.Lines[CurLine].Ranges.length - 1 === CurRange)
+				let x0 = this.Lines[CurLine].Ranges[CurRange].X;
+				let x1 = this.Lines[CurLine].Ranges[CurRange].getXEndOrigin();
+				let rangeCount = this.Lines[CurLine].Ranges.length;
+
+				if ((0 === CurRange && isRtl) || (rangeCount - 1 === CurRange && !isRtl))
 				{
-					TempX1 = this.Pages[CurPage].XLimit - Pr.ParaPr.Ind.Right;
+					let x_right = this.Pages[CurPage].XLimit - (isRtl ? Math.min(Pr.ParaPr.Ind.Left, Pr.ParaPr.Ind.Left + Pr.ParaPr.Ind.FirstLine) : Pr.ParaPr.Ind.Right);
+					x1 = Math.max(x1, x_right);
 
 					if (Pr.ParaPr.Brd.Right.Value === border_Single)
-						TempX1 += 0.5 + Pr.ParaPr.Brd.Right.Size + Pr.ParaPr.Brd.Right.Space;
+						x1 += 0.5 + Pr.ParaPr.Brd.Right.Size + Pr.ParaPr.Brd.Right.Space;
 					else
-						TempX1 += 0.5;
+						x1 += 0.5;
+				}
+
+				if ((0 === CurRange && !isRtl) || (rangeCount - 1 === CurRange && isRtl))
+				{
+					let x_left = this.Pages[CurPage].X + (isRtl ? Pr.ParaPr.Ind.Right : Math.min(Pr.ParaPr.Ind.Left, Pr.ParaPr.Ind.Left + Pr.ParaPr.Ind.FirstLine));
+					x0 = Math.min(x0, x_left);
+
+					if (Pr.ParaPr.Brd.Left.Value === border_Single)
+						x0 -= 0.5 + Pr.ParaPr.Brd.Left.Size + Pr.ParaPr.Brd.Left.Space;
+					else
+						x0 -= 0.5;
 				}
 
 				pGraphics.b_color1(oShdColor.r, oShdColor.g, oShdColor.b, 255);
@@ -2461,13 +2642,10 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 				if (pGraphics.SetShd)
 					pGraphics.SetShd(Pr.ParaPr.Shd);
 
-				pGraphics.rect(TempX0, this.Pages[CurPage].Y + TempTop, TempX1 - TempX0, TempBottom - TempTop);
+				pGraphics.rect(x0, this.Pages[CurPage].Y + TempTop, x1 - x0, TempBottom - TempTop);
 				pGraphics.df();
 
-				if (pGraphics.End_Command)
-				{
-					pGraphics.End_Command()
-				}
+				pGraphics.End_Command();
 			}
 
 			//----------------------------------------------------------------------------------------------------------
@@ -2481,7 +2659,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 				isForm     = oInlineSdt.IsForm();
 				oFormShd   = isForm ? oInlineSdt.GetFormShd() : null;
 
-				if (oFormShd && !oFormShd.IsNil())
+				if ((oFormShd && !oFormShd.IsNil()) || oInlineSdt.getShdColor())
 				{
 					isFormShd = true;
 					break;
@@ -2491,9 +2669,10 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 			if (SdtHighlightColor || FormsHighlight || isFormShd)
 			{
 				var oSdtBounds;
-				var oPrevColor = new CDocumentColor(-1, -1, -1);
+				let currentColor = new AscWord.CDocumentColorA(-1, -1, -1, 255);
+				let shdColor = null;
 
-				let isDrawFormHighlight = !pGraphics.isPrintMode;
+				let isDrawFormHighlight = !pGraphics.isPrintMode && !isAllRolesFilled;
 				if (true === LogicDocument.ForceDrawFormHighlight)
 					isDrawFormHighlight = true;
 				else if (false === LogicDocument.ForceDrawFormHighlight)
@@ -2505,11 +2684,12 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 					isForm     = oInlineSdt.IsForm();
 					oSdtBounds = PDSH.InlineSdt[nSdtIndex].GetRangeBounds(CurLine, CurRange);
 					oFormShd   = isForm ? oInlineSdt.GetFormShd() : null;
+					shdColor   = oInlineSdt.getShdColor();
 
 					if (-1 !== fixedForms.indexOf(oInlineSdt) || oInlineSdt.IsFixedForm())
 						continue;
 
-					if (isForm && pGraphics.RENDERER_PDF_FLAG && !pGraphics.isPrintMode)
+					if (isForm && pGraphics.isPdf() && !pGraphics.isPrintMode)
 						continue;
 
 					if (!isDrawFormHighlight && isForm && (!oFormShd || oFormShd.IsNil()))
@@ -2523,43 +2703,51 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 
 						if (oInlineSdt.IsCurrentComplexForm() || !isDrawFormHighlight)
 						{
-							if (!oPrevColor.IsEqualRGB(oFormShdColor))
+							if (!currentColor.isEqualRgb(oFormShdColor))
 							{
 								pGraphics.b_color1(oFormShdColor.r, oFormShdColor.g, oFormShdColor.b, 255);
-								oPrevColor.SetFromColor(oFormShdColor);
+								currentColor.setRgb(oFormShdColor);
 							}
 						}
 						else
 						{
 							if ((formHighlightColor = oInlineSdt.GetFormHighlightColor(FormsHighlight)))
 							{
-								if (!oPrevColor.IsEqualRGB(formHighlightColor))
+								if (!currentColor.isEqualRgb(formHighlightColor))
 								{
 									pGraphics.b_color1(formHighlightColor.r, formHighlightColor.g, formHighlightColor.b, 255);
-									oPrevColor.SetFromColor(formHighlightColor);
+									currentColor.setRgb(formHighlightColor);
 								}
 							}
-							else if (!oPrevColor.IsEqualRGB(oFormShdColorDark))
+							else if (!currentColor.isEqualRgb(oFormShdColorDark))
 							{
 								pGraphics.b_color1(oFormShdColorDark.r, oFormShdColorDark.g, oFormShdColorDark.b, 255);
-								oPrevColor.SetFromColor(oFormShdColorDark);
+								currentColor.setRgb(oFormShdColorDark);
 							}
 						}
 					}
 					else if (isForm && (formHighlightColor = oInlineSdt.GetFormHighlightColor(FormsHighlight)) && !oInlineSdt.IsCurrentComplexForm())
 					{
-						if (!oPrevColor.IsEqualRGB(formHighlightColor))
+						if (!currentColor.isEqualRgb(formHighlightColor))
 						{
 							pGraphics.b_color1(formHighlightColor.r, formHighlightColor.g, formHighlightColor.b, 255);
-							oPrevColor.SetFromColor(formHighlightColor);
+							currentColor.setRgb(formHighlightColor);
+						}
+					}
+					else if (shdColor)
+					{
+						if (!currentColor.isEqual(shdColor))
+						{
+							pGraphics.b_color1(shdColor.r, shdColor.g, shdColor.b, shdColor.a);
+							currentColor.setRgba(shdColor);
 						}
 					}
 					else if (!isForm && SdtHighlightColor)
 					{
-						if (!oPrevColor.IsEqualRGB(SdtHighlightColor))
+						if (!currentColor.isEqualRgb(SdtHighlightColor))
 						{
 							pGraphics.b_color1(SdtHighlightColor.r, SdtHighlightColor.g, SdtHighlightColor.b, 255);
-							oPrevColor.SetFromColor(SdtHighlightColor);
+							currentColor.setRgb(SdtHighlightColor);
 						}
 					}
 					else
@@ -2578,10 +2766,8 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 			// Рисуем заливку текста
 			//----------------------------------------------------------------------------------------------------------
 
-			if (pGraphics.Start_Command)
-			{
-				pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE, this.Lines[CurLine], CurLine, 2);
-			}
+			pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE, this.Lines[CurLine], CurLine, AscFormat.CLineStructure_DrawType_Backgrounds);
+
 			var aShd    = PDSH.Shd;
 			var Element = aShd.Get_Next();
 			while (null != Element)
@@ -2600,7 +2786,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 			// Рисуем выделение текста
 			//----------------------------------------------------------------------------------------------------------
 			var aMMFields = PDSH.MMFields;
-			var Element   = (pGraphics.RENDERER_PDF_FLAG === true ? null : aMMFields.Get_Next());
+			var Element   = pGraphics.isPdf() ? null : aMMFields.Get_Next();
 			while (null != Element)
 			{
 				pGraphics.drawMailMergeField(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0, Element);
@@ -2611,16 +2797,18 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 			// Заливка сложных полей
 			//----------------------------------------------------------------------------------------------------------
 			var aCFields = PDSH.CFields;
-			var Element   = (pGraphics.RENDERER_PDF_FLAG === true ? null : aCFields.Get_Next());
+			var Element  = pGraphics.isPdf() ? null : aCFields.Get_Next();
 			while (null != Element)
 			{
 				pGraphics.drawMailMergeField(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0, Element);
 				Element = aCFields.Get_Next();
 			}
-
+			pGraphics.End_Command();
 			//----------------------------------------------------------------------------------------------------------
 			// Рисуем выделение текста
 			//----------------------------------------------------------------------------------------------------------
+			pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE, this.Lines[CurLine], CurLine, AscFormat.CLineStructure_DrawType_Highlights);
+
 			var aHigh   = PDSH.High;
 			var Element = aHigh.Get_Next();
 			while (null != Element)
@@ -2635,14 +2823,38 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 				}
 				pGraphics.rect(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0, Element.Additional2);
 				pGraphics.df();
+				if (pGraphics.m_bIsTextDrawer)
+				{
+					pGraphics.addGroundElement(Element);
+				}
 				Element = aHigh.Get_Next();
 			}
-
+			pGraphics.End_Command();
+			pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE, this.Lines[CurLine], CurLine, AscFormat.CLineStructure_DrawType_Backgrounds);
+			//----------------------------------------------------------------------------------------------------------
+			// Рисуем выделение разрешенных областей
+			//----------------------------------------------------------------------------------------------------------
+			if (!pGraphics.isPrintMode && !pGraphics.isPdf())
+			{
+				let aPerm = PDSH.Perm;
+				Element   = aPerm.Get_Next();
+				while (null != Element)
+				{
+					if (!pGraphics.set_fillColor)
+						pGraphics.b_color1(Element.r, Element.g, Element.b, 255);
+					else
+						pGraphics.set_fillColor(Element.r, Element.g, Element.b);
+					
+					pGraphics.rect(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0);
+					pGraphics.df();
+					Element = aPerm.Get_Next();
+				}
+			}
 			//----------------------------------------------------------------------------------------------------------
 			// Рисуем комментарии
 			//----------------------------------------------------------------------------------------------------------
 			var aComm                 = PDSH.Comm;
-			Element                   = ( pGraphics.RENDERER_PDF_FLAG === true ? null : aComm.Get_Next() );
+			Element                   = pGraphics.isPdf() ? null : aComm.Get_Next();
 			var ParentInvertTransform = Element && this.Get_ParentTextInvertTransform();
 			while (null != Element)
 			{
@@ -2665,11 +2877,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 				Element = aComm.Get_Next();
 			}
 
-
-			if (pGraphics.End_Command)
-			{
-				pGraphics.End_Command()
-			}
+			pGraphics.End_Command();
 
 			//----------------------------------------------------------------------------------------------------------
 			// Рисуем выделение совместного редактирования
@@ -2743,8 +2951,43 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 					}
 					else if (sValue)
 					{
-						var _sValue = sAnchor ? sValue + "#" + sAnchor : sValue;
-						pGraphics.AddHyperlink(_l, _t, _r - _l, _b - _t, _sValue, _sValue);
+						if (AscCommon.IsLinkPPAction(sValue))
+						{
+							let oLogicDocument	= Asc.editor.private_GetLogicDocument();
+							let nCurPage		= Asc.editor.isPdfEditor() ? oLogicDocument.GetCurPage() : oLogicDocument.Get_CurPage();
+							let nPagesCount		= Asc.editor.isPdfEditor() ? oLogicDocument.GetPagesCount() : oLogicDocument.GetSlidesCount();
+							
+							if (sValue == "ppaction://hlinkshowjump?jump=firstslide")
+							{
+								pGraphics.AddLink(_l, _t, _r - _l, _b - _t, 0, 0, 0);
+							}
+							else if (sValue == "ppaction://hlinkshowjump?jump=lastslide")
+							{
+								pGraphics.AddLink(_l, _t, _r - _l, _b - _t, 0, 0, nPagesCount - 1);
+							}
+							else if (sValue == "ppaction://hlinkshowjump?jump=nextslide")
+							{
+								pGraphics.AddLink(_l, _t, _r - _l, _b - _t, 0, 0, nCurPage + 1);
+							}
+							else if (sValue == "ppaction://hlinkshowjump?jump=previousslide")
+							{
+								pGraphics.AddLink(_l, _t, _r - _l, _b - _t, 0, 0, nCurPage - 1);
+							}
+							else
+							{
+								let mask	= "ppaction://hlinksldjumpslide";
+								let posNum	= sValue.indexOf(mask);
+								if (0 == posNum)
+								{
+									let pageNum = parseInt(sValue.substring(mask.length));
+									pGraphics.AddLink(_l, _t, _r - _l, _b - _t, 0, 0, pageNum);
+								}
+							}
+						}
+						else {
+							var _sValue = sAnchor ? sValue + "#" + sAnchor : sValue;
+							pGraphics.AddHyperlink(_l, _t, _r - _l, _b - _t, _sValue, _sValue);
+						}
 					}
 					else if (sAnchor)
 					{
@@ -2778,26 +3021,32 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 			}
 		}
 
+		pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE, this.Lines[CurLine], CurLine, AscFormat.CLineStructure_DrawType_Borders);
 
-		if (pGraphics.Start_Command)
-		{
-			pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE, this.Lines[CurLine], CurLine, 1)
-		}
 		//----------------------------------------------------------------------------------------------------------
 		// Рисуем боковые линии границы параграфа
 		//----------------------------------------------------------------------------------------------------------
 		if (true === bDrawBorders && ( ( this.Pages.length - 1 === CurPage ) || ( CurLine < this.Pages[CurPage + 1].FirstLine ) ))
 		{
-			var TempX0 = Math.min(this.Lines[CurLine].Ranges[0].X, this.Pages[CurPage].X + Pr.ParaPr.Ind.Left, this.Pages[CurPage].X + Pr.ParaPr.Ind.Left + Pr.ParaPr.Ind.FirstLine);
-			var TempX1 = this.Pages[CurPage].XLimit - Pr.ParaPr.Ind.Right;//this.Lines[CurLine].Ranges[this.Lines[CurLine].Ranges.length - 1].XEnd;
+			let x0 = this.Lines[CurLine].Ranges[0].X;
+			let x1 = this.Lines[CurLine].Ranges[this.Lines[CurLine].Ranges.length - 1].getXEndOrigin();
 
-			if (true === this.Is_LineDropCap())
+			if (Pr.ParaPr.Bidi)
 			{
-				TempX1 = TempX0 + this.Get_LineDropCapWidth();
+				x0 = Math.min(x0, this.Pages[CurPage].X + Pr.ParaPr.Ind.Right);
+				x1 = Math.max(x1, this.Pages[CurPage].XLimit - Pr.ParaPr.Ind.Left, this.Pages[CurPage].XLimit - Pr.ParaPr.Ind.Left - Pr.ParaPr.Ind.FirstLine);
+			}
+			else
+			{
+				x0 = Math.min(x0, this.Pages[CurPage].X + Pr.ParaPr.Ind.Left, this.Pages[CurPage].X + Pr.ParaPr.Ind.Left + Pr.ParaPr.Ind.FirstLine);
+				x1 = Math.max(x1, this.Pages[CurPage].XLimit - Pr.ParaPr.Ind.Right);
 			}
 
-			var TempTop    = this.Lines[CurLine].Top;
-			var TempBottom = this.Lines[CurLine].Bottom;
+			if (this.Is_LineDropCap())
+				x1 = x0 + this.Get_LineDropCapWidth();
+
+			let TempTop    = this.Lines[CurLine].Top;
+			let TempBottom = this.Lines[CurLine].Bottom;
 
 			if (0 === CurLine)
 			{
@@ -2811,7 +3060,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 
 			if (this.Lines.length - 1 === CurLine)
 			{
-				var NextEl = this.GetNextDocumentElement();
+				let NextEl = this.GetNextDocumentElement();
 				while (NextEl && NextEl.IsBlockLevelSdt())
 				{
 					NextEl = NextEl.GetElement(0);
@@ -2826,50 +3075,41 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 
 			if (Pr.ParaPr.Brd.Right.Value === border_Single)
 			{
-				var RGBA = Pr.ParaPr.Brd.Right.Get_Color(this);
+				let RGBA = Pr.ParaPr.Brd.Right.Get_Color(this);
 				pGraphics.p_color(RGBA.r, RGBA.g, RGBA.b, 255);
-				if (pGraphics.SetBorder)
-				{
-					pGraphics.SetBorder(Pr.ParaPr.Brd.Right);
-				}
-				pGraphics.drawVerLine(c_oAscLineDrawingRule.Right, TempX1 + 0.5 + Pr.ParaPr.Brd.Right.Size + Pr.ParaPr.Brd.Right.Space, this.Pages[CurPage].Y + TempTop, this.Pages[CurPage].Y + TempBottom, Pr.ParaPr.Brd.Right.Size);
+				pGraphics.SetBorder(Pr.ParaPr.Brd.Right);
+				pGraphics.drawVerLine(c_oAscLineDrawingRule.Right, x1 + 0.5 + Pr.ParaPr.Brd.Right.Size + Pr.ParaPr.Brd.Right.Space, this.Pages[CurPage].Y + TempTop, this.Pages[CurPage].Y + TempBottom, Pr.ParaPr.Brd.Right.Size);
 			}
 
 			if (Pr.ParaPr.Brd.Left.Value === border_Single)
 			{
-				var RGBA = Pr.ParaPr.Brd.Left.Get_Color(this);
+				let RGBA = Pr.ParaPr.Brd.Left.Get_Color(this);
 				pGraphics.p_color(RGBA.r, RGBA.g, RGBA.b, 255);
-				if (pGraphics.SetBorder)
-				{
-					pGraphics.SetBorder(Pr.ParaPr.Brd.Left);
-				}
-				pGraphics.drawVerLine(c_oAscLineDrawingRule.Left, TempX0 - 0.5 - Pr.ParaPr.Brd.Left.Size - Pr.ParaPr.Brd.Left.Space, this.Pages[CurPage].Y + TempTop, this.Pages[CurPage].Y + TempBottom, Pr.ParaPr.Brd.Left.Size);
+				pGraphics.SetBorder(Pr.ParaPr.Brd.Left);
+				pGraphics.drawVerLine(c_oAscLineDrawingRule.Left, x0 - 0.5 - Pr.ParaPr.Brd.Left.Size - Pr.ParaPr.Brd.Left.Space, this.Pages[CurPage].Y + TempTop, this.Pages[CurPage].Y + TempBottom, Pr.ParaPr.Brd.Left.Size);
 			}
 		}
-
-		if (pGraphics.End_Command)
-		{
-			pGraphics.End_Command()
-		}
+		pGraphics.End_Command();
 	}
 };
-Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, BgColor, Theme, ColorMap)
+Paragraph.prototype.drawRunContentElements = function(CurPage, pGraphics, drawState)
 {
-	var PDSE = this.m_oPDSE;
-	PDSE.Reset(this, pGraphics, BgColor, Theme, ColorMap);
-	PDSE.ComplexFields.ResetPage(this, CurPage);
-
+	let PDSE = drawState.getRunElementState();
+	
 	var StartLine = this.Pages[CurPage].StartLine;
 	var EndLine   = this.Pages[CurPage].EndLine;
-
+	
+	let Theme    = drawState.getTheme();
+	let ColorMap = drawState.getColorMap();
+	let Pr       = drawState.getParagraphCompiledPr();
+	
+	PDSE.resetPage(CurPage);
 	for (var CurLine = StartLine; CurLine <= EndLine; CurLine++)
 	{
 		var Line        = this.Lines[CurLine];
 		var RangesCount = Line.Ranges.length;
-		if (pGraphics.Start_Command)
-		{
-			pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE, Line, CurLine, 0);
-		}
+
+		pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE, Line, CurLine, AscFormat.CLineStructure_DrawType_Content);
 
 		var Y = this.Pages[CurPage].Y + this.Lines[CurLine].Y;
 		var X = this.Pages[CurPage].X;
@@ -2881,290 +3121,37 @@ Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, BgColor, 
 		{
 			this.private_DrawLineNumber(X, Y, pGraphics, this.LineNumbersInfo.StartNum + CurLine + 1, Theme, ColorMap, CurPage, CurLine);
 		}
-
+		
+		PDSE.resetLine(CurLine, Y, Y - Line.Metrics.Ascent, Y + Line.Metrics.Descent);
 		for (var CurRange = 0; CurRange < RangesCount; CurRange++)
 		{
 			X = this.Lines[CurLine].Ranges[CurRange].XVisible;
 
 			var Range = Line.Ranges[CurRange];
-
-			PDSE.Set_LineMetrics(Y, Y - Line.Metrics.Ascent, Y + Line.Metrics.Descent);
-			PDSE.Reset_Range(CurPage, CurLine, CurRange, X, Y);
-
+			
+			PDSE.beginRange(CurRange, X);
+			
 			var StartPos = Range.StartPos;
 			var EndPos   = Range.EndPos;
-
-			// Отрисовка нумерации
-			if (true === this.Numbering.Check_Range(CurRange, CurLine))
-			{
-				var nReviewType  = this.GetReviewType();
-				var oReviewColor = this.GetReviewColor();
-
-				var NumberingItem = this.Numbering;
-				if (para_Numbering === NumberingItem.Type)
-				{
-					var isHavePrChange = this.HavePrChange();
-					var oPrevNumPr     = this.GetPrChangeNumPr();
-
-					var NumPr = Pr.ParaPr.NumPr;
-
-					var isHaveNumbering = false;
-					if ((undefined === this.Get_SectionPr()
-						|| true !== this.IsEmpty())
-						&& (!this.Parent || !this.Parent.IsEmptyParagraphAfterTableInTableCell(this.GetIndex()))
-						&& ((NumPr
-						&& undefined !== NumPr.NumId
-						&& 0 !== NumPr.NumId
-						&& "0" !== NumPr.NumId)
-						|| (oPrevNumPr
-						&& undefined !== oPrevNumPr.NumId
-						&& undefined !== oPrevNumPr.Lvl
-						&& 0 !== oPrevNumPr.NumId
-						&& "0" !== oPrevNumPr.NumId)))
-					{
-						isHaveNumbering = true;
-					}
-
-					if (!isHaveNumbering || (!NumPr && !oPrevNumPr))
-					{
-						// Ничего не делаем
-					}
-					else
-					{
-						var oNumbering = this.Parent.GetNumbering();
-
-						var oNumLvl = null;
-						if (NumPr)
-							oNumLvl = oNumbering.GetNum(NumPr.NumId).GetLvl(NumPr.Lvl);
-						else if (oPrevNumPr)
-							oNumLvl = oNumbering.GetNum(oPrevNumPr.NumId).GetLvl(oPrevNumPr.Lvl);
-
-						var nNumSuff   = oNumLvl.GetSuff();
-						var nNumJc     = oNumLvl.GetJc();
-						var oNumTextPr = this.GetNumberingTextPr();
-
-						var oPrevNumTextPr = oPrevNumPr ? this.Get_CompiledPr2(false).TextPr.Copy() : null;
-						if (oPrevNumTextPr && (oPrevNumPr
-							&& undefined !== oPrevNumPr.NumId
-							&& undefined !== oPrevNumPr.Lvl
-							&& 0 !== oPrevNumPr.NumId
-							&& "0" !== oPrevNumPr.NumId))
-						{
-							var oPrevNumLvl = oNumbering.GetNum(oPrevNumPr.NumId).GetLvl(oPrevNumPr.Lvl);
-							oPrevNumTextPr.Merge(this.TextPr.Value.Copy());
-							oPrevNumTextPr.Merge(oPrevNumLvl.GetTextPr());
-						}
-
-						var X_start = X;
-
-						if (align_Right === nNumJc)
-							X_start = X - NumberingItem.WidthNum;
-						else if (align_Center === nNumJc)
-							X_start = X - NumberingItem.WidthNum / 2;
-
-						var AutoColor = ( undefined != BgColor && false === BgColor.Check_BlackAutoColor() ? new CDocumentColor(255, 255, 255, false) : new CDocumentColor(0, 0, 0, false) );
-
-						var RGBA;
-						if (oNumTextPr.Unifill)
-						{
-							oNumTextPr.Unifill.check(PDSE.Theme, PDSE.ColorMap);
-							RGBA = oNumTextPr.Unifill.getRGBAColor();
-							pGraphics.b_color1(RGBA.R, RGBA.G, RGBA.B, 255);
-						}
-						else
-						{
-							if (true === oNumTextPr.Color.Auto)
-							{
-								if(oNumTextPr.FontRef && oNumTextPr.FontRef.Color)
-								{
-									oNumTextPr.FontRef.Color.check(Theme, ColorMap);
-									RGBA = oNumTextPr.FontRef.Color.RGBA;
-									pGraphics.b_color1(RGBA.R, RGBA.G, RGBA.B, 255);
-								}
-								else
-								{
-									pGraphics.b_color1(AutoColor.r, AutoColor.g, AutoColor.b, 255);
-								}
-							}
-							else
-							{
-								pGraphics.b_color1(oNumTextPr.Color.r, oNumTextPr.Color.g, oNumTextPr.Color.b, 255);
-							}
-						}
-
-						if (NumberingItem.HaveSourceNumbering() || reviewtype_Common !== nReviewType)
-						{
-							if (reviewtype_Common === nReviewType)
-								pGraphics.b_color1(REVIEW_NUMBERING_COLOR.r, REVIEW_NUMBERING_COLOR.g, REVIEW_NUMBERING_COLOR.b, 255);
-							else
-								pGraphics.b_color1(oReviewColor.r, oReviewColor.g, oReviewColor.b, 255);
-						}
-						else if (isHavePrChange && NumPr && !oPrevNumPr)
-						{
-							var oPrReviewColor = this.GetPrReviewColor();
-							pGraphics.b_color1(oPrReviewColor.r, oPrReviewColor.g, oPrReviewColor.b, 255);
-						}
-
-						var TempY = Y;
-						switch (oNumTextPr.VertAlign)
-						{
-							case AscCommon.vertalign_SubScript:
-							{
-								Y -= AscCommon.vaKSub * oNumTextPr.FontSize * g_dKoef_pt_to_mm;
-								break;
-							}
-							case AscCommon.vertalign_SuperScript:
-							{
-								Y -= AscCommon.vaKSuper * oNumTextPr.FontSize * g_dKoef_pt_to_mm;
-								break;
-							}
-						}
-
-						// Рисуется только сам символ нумерации
-						switch (nNumJc)
-						{
-							case align_Right:
-								NumberingItem.Draw(X - NumberingItem.WidthNum, Y, pGraphics, oNumbering, oNumTextPr, PDSE.Theme, oPrevNumTextPr);
-								break;
-
-							case align_Center:
-								NumberingItem.Draw(X - NumberingItem.WidthNum / 2, Y, pGraphics, oNumbering, oNumTextPr, PDSE.Theme, oPrevNumTextPr);
-								break;
-
-							case align_Left:
-							default:
-								NumberingItem.Draw(X, Y, pGraphics, oNumbering, oNumTextPr, PDSE.Theme, oPrevNumTextPr);
-								break;
-						}
-
-						if (true === oNumTextPr.Strikeout || true === oNumTextPr.Underline)
-						{
-							if (oNumTextPr.Unifill)
-							{
-								pGraphics.p_color(RGBA.R, RGBA.G, RGBA.B, 255);
-							}
-							else
-							{
-								if (true === oNumTextPr.Color.Auto)
-									pGraphics.p_color(AutoColor.r, AutoColor.g, AutoColor.b, 255);
-								else
-									pGraphics.p_color(oNumTextPr.Color.r, oNumTextPr.Color.g, oNumTextPr.Color.b, 255);
-							}
-						}
-
-						if (NumberingItem.HaveSourceNumbering() || reviewtype_Common !== nReviewType)
-						{
-							var nSourceWidth = NumberingItem.GetSourceWidth();
-
-							if (reviewtype_Common === nReviewType)
-								pGraphics.p_color(REVIEW_NUMBERING_COLOR.r, REVIEW_NUMBERING_COLOR.g, REVIEW_NUMBERING_COLOR.b, 255);
-							else
-								pGraphics.p_color(oReviewColor.r, oReviewColor.g, oReviewColor.b, 255);
-
-							// Либо у нас есть удаленная часть, либо у нас одновременно добавлен и удален параграф, тогда мы зачеркиваем суффикс
-							if (NumberingItem.HaveSourceNumbering() || (!NumberingItem.HaveSourceNumbering() && !NumberingItem.HaveFinalNumbering()))
-							{
-								if (NumberingItem.HaveFinalNumbering())
-									pGraphics.drawHorLine(0, (Y - oNumTextPr.FontSize * g_dKoef_pt_to_mm * 0.27), X_start, X_start + nSourceWidth, (oNumTextPr.FontSize / 18) * g_dKoef_pt_to_mm);
-								else
-									pGraphics.drawHorLine(0, (Y - oNumTextPr.FontSize * g_dKoef_pt_to_mm * 0.27), X_start, X_start + nSourceWidth + NumberingItem.WidthSuff, (oNumTextPr.FontSize / 18) * g_dKoef_pt_to_mm);
-							}
-
-							if (NumberingItem.HaveFinalNumbering())
-								pGraphics.drawHorLine(0, (Y + this.Lines[CurLine].Metrics.TextDescent * 0.4), X_start + nSourceWidth, X_start + NumberingItem.WidthNum + NumberingItem.WidthSuff, (oNumTextPr.FontSize / 18) * g_dKoef_pt_to_mm);
-						}
-						else if (isHavePrChange && NumPr && !oPrevNumPr)
-						{
-							var oPrReviewColor = this.GetPrReviewColor();
-							pGraphics.p_color(oPrReviewColor.r, oPrReviewColor.g, oPrReviewColor.b, 255);
-							pGraphics.drawHorLine(0, (Y + this.Lines[CurLine].Metrics.TextDescent * 0.4), X_start, X_start + NumberingItem.WidthNum + NumberingItem.WidthSuff, (oNumTextPr.FontSize / 18) * g_dKoef_pt_to_mm);
-						}
-						else
-						{
-							if (true === oNumTextPr.Strikeout)
-								pGraphics.drawHorLine(0, (Y - oNumTextPr.FontSize * g_dKoef_pt_to_mm * 0.27), X_start, X_start + NumberingItem.WidthNum, (oNumTextPr.FontSize / 18) * g_dKoef_pt_to_mm);
-
-							if (true === oNumTextPr.Underline)
-								pGraphics.drawHorLine(0, (Y + this.Lines[CurLine].Metrics.TextDescent * 0.4), X_start, X_start + NumberingItem.WidthNum, (oNumTextPr.FontSize / 18) * g_dKoef_pt_to_mm);
-						}
-
-						Y = TempY;
-
-						if (true === editor.ShowParaMarks && (Asc.c_oAscNumberingSuff.Tab === nNumSuff || oNumLvl.IsLegacy()))
-						{
-							var TempWidth     = NumberingItem.WidthSuff;
-							var TempRealWidth = 3.143; // ширина символа "стрелка влево" в шрифте Wingding3,10
-
-							var X1 = X;
-							switch (nNumJc)
-							{
-								case align_Right:
-									break;
-
-								case align_Center:
-									X1 += NumberingItem.WidthNum / 2;
-									break;
-
-								case align_Left:
-								default:
-									X1 += NumberingItem.WidthNum;
-									break;
-							}
-
-							var X0 = TempWidth / 2 - TempRealWidth / 2;
-
-							pGraphics.SetFont({
-								FontFamily : {Name : "ASCW3", Index : -1},
-								FontSize   : 10,
-								Italic     : false,
-								Bold       : false
-							});
-
-							if (X0 > 0)
-								pGraphics.FillText2(X1 + X0, Y, String.fromCharCode(tab_Symbol), 0, TempWidth);
-							else
-								pGraphics.FillText2(X1, Y, String.fromCharCode(tab_Symbol), TempRealWidth - TempWidth, TempWidth);
-						}
-					}
-				}
-				else if (para_PresentationNumbering === this.Numbering.Type)
-				{
-					var bIsEmpty = this.IsEmpty();
-					if (!bIsEmpty ||
-						this.IsThisElementCurrent() ||
-						this.Parent.IsSelectionUse() && this.Parent.IsSelectionEmpty() && this.Parent.Selection.StartPos === this.Index)
-					{
-						if (Pr.ParaPr.Ind.FirstLine < 0)
-							NumberingItem.Draw(X, Y, pGraphics, PDSE);
-						else
-							NumberingItem.Draw(this.Pages[CurPage].X  + Pr.ParaPr.Ind.Left, Y, pGraphics, PDSE);
-					}
-				}
-
-				PDSE.X += NumberingItem.WidthVisible;
-			}
-
+			
 			for (var Pos = StartPos; Pos <= EndPos; Pos++)
 			{
 				var Item = this.Content[Pos];
 				PDSE.CurPos.Update(Pos, 0);
-
 				Item.Draw_Elements(PDSE);
 			}
+			
+			PDSE.endRange();
 		}
 
-		if (pGraphics.End_Command)
-		{
-			pGraphics.End_Command();
-		}
+		pGraphics.End_Command();
 	}
 };
-Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
+Paragraph.prototype.drawRunContentLines = function(CurPage, pGraphics, drawState)
 {
-	var PDSL = g_oPDSL;
-	PDSL.Reset(this, pGraphics, BgColor);
-	PDSL.ComplexFields.ResetPage(this, CurPage);
-
+	let PDSL = drawState.getLineState();
+	PDSL.resetPage(CurPage);
+	
 	var Page = this.Pages[CurPage];
 
 	var StartLine = Page.StartLine;
@@ -3175,27 +3162,28 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 	var arrRunReviewAreasColors = [];
 	var arrRunReviewAreas       = [];
 	var arrRunReviewRects       = [];
+	let runReviewLineW          = [];
 
 	var oCurForm = null;
 	var arrFormAreasColors = [];
 	var arrFormAreas       = [];
 	var arrFormRects       = [];
-	var arrFormAreasWidths = [];
+	let formLineW          = [];
+	
+	let drawRunPrReview = !pGraphics.isPrintMode && !pGraphics.isPdf();
 
 	for (var CurLine = StartLine; CurLine <= EndLine; CurLine++)
 	{
-		var Line  = this.Lines[CurLine];
-		var LineM = Line.Metrics;
-
-		if (pGraphics.Start_Command)
-		{
-			pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE, Line, CurLine, 3)
-		}
+		var Line        = this.Lines[CurLine];
+		var lineMetrics = Line.Metrics;
+		
+		let lineY0 = (Page.Y + Line.Y - lineMetrics.TextAscent);
+		let lineY1 = (Page.Y + Line.Y + lineMetrics.TextDescent);
 
 		var Baseline        = Page.Y + Line.Y;
-		var UnderlineOffset = LineM.TextDescent * 0.4;
+		var UnderlineOffset = lineMetrics.TextDescent * 0.4;
 
-		PDSL.Reset_Line(CurPage, CurLine, Baseline, UnderlineOffset);
+		PDSL.resetLine(CurLine, Baseline, UnderlineOffset, lineY0, lineY1);
 
 		// Сначала проанализируем данную строку: в массивы aStrikeout, aDStrikeout, aUnderline
 		// aSpelling сохраним позиции начала и конца продолжительных одинаковых настроек зачеркивания,
@@ -3206,14 +3194,14 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 		{
 			var Range = Line.Ranges[CurRange];
 			var X     = Range.XVisible;
-
-			PDSL.Reset_Range(CurRange, X, Range.Spaces);
-
+			
+			PDSL.beginRange(CurRange, X, Range.Spaces);
+			
 			var StartPos = Range.StartPos;
 			var EndPos   = Range.EndPos;
 
 			// TODO: Нумерация подчеркивается и зачеркивается в Draw_Elements, неплохо бы сюда перенести
-			if (true === this.Numbering.Check_Range(CurRange, CurLine))
+			if (this.Numbering.checkRange(CurRange, CurLine) && !this.isRtlDirection())
 				PDSL.X += this.Numbering.WidthVisible;
 
 			for (var Pos = StartPos; Pos <= EndPos; Pos++)
@@ -3224,6 +3212,8 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 				var Item = this.Content[Pos];
 				Item.Draw_Lines(PDSL);
 			}
+			
+			PDSL.endRange();
 		}
 
 		var aStrikeout  = PDSL.Strikeout;
@@ -3236,60 +3226,87 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 		var aFormBorder = PDSL.FormBorder;
 
 		// Рисуем зачеркивание
+		pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE, Line, CurLine, AscFormat.CLineStructure_DrawType_Strikeouts);
 		var Element = aStrikeout.Get_Next();
 		while (null != Element)
 		{
-			if (pGraphics.SetAdditionalProps)
+			if (pGraphics.m_bIsTextDrawer)
 			{
 				pGraphics.SetAdditionalProps(Element.Additional2);
 			}
+
 			pGraphics.p_color(Element.r, Element.g, Element.b, 255);
 			pGraphics.drawHorLine(c_oAscLineDrawingRule.Top, Element.y0, Element.x0, Element.x1, Element.w);
+			if (pGraphics.m_bIsTextDrawer)
+			{
+				pGraphics.addGroundElement(Element);
+			}
 			Element = aStrikeout.Get_Next();
 		}
+		pGraphics.End_Command();
 
 		// Рисуем двойное зачеркивание
+		pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE, Line, CurLine, AscFormat.CLineStructure_DrawType_DStrikeouts);
 		Element = aDStrikeout.Get_Next();
 		while (null != Element)
 		{
-			if (pGraphics.SetAdditionalProps)
+			if (pGraphics.m_bIsTextDrawer)
 			{
 				pGraphics.SetAdditionalProps(Element.Additional2);
 			}
+
 			pGraphics.p_color(Element.r, Element.g, Element.b, 255);
 			pGraphics.drawHorLine2(c_oAscLineDrawingRule.Top, Element.y0, Element.x0, Element.x1, Element.w);
-
+			if (pGraphics.m_bIsTextDrawer)
+			{
+				pGraphics.addGroundElement(Element);
+			}
 			Element = aDStrikeout.Get_Next();
 		}
+		pGraphics.End_Command();
 
 		// Рисуем подчеркивание
+		pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE, Line, CurLine, AscFormat.CLineStructure_DrawType_Underlines);
 		aUnderline.Correct_w_ForUnderline();
 		Element = aUnderline.Get_Next();
 		while (null != Element)
 		{
-			if (pGraphics.SetAdditionalProps)
+			if (pGraphics.m_bIsTextDrawer)
 			{
 				pGraphics.SetAdditionalProps(Element.Additional2);
 			}
+
 			pGraphics.p_color(Element.r, Element.g, Element.b, 255);
 			pGraphics.drawHorLine(0, Element.y0, Element.x0, Element.x1, Element.w);
+			if (pGraphics.m_bIsTextDrawer)
+			{
+				pGraphics.addGroundElement(Element);
+			}
 			Element = aUnderline.Get_Next();
 		}
+		pGraphics.End_Command();
 
+		pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE, Line, CurLine, AscFormat.CLineStructure_DrawType_DUnderlines);
 		Element = aDUnderline.Get_Next();
 		while (null != Element)
 		{
-			if (pGraphics.SetAdditionalProps)
+			if (pGraphics.m_bIsTextDrawer)
 			{
 				pGraphics.SetAdditionalProps(Element.Additional2);
 			}
+
 			pGraphics.p_color(Element.r, Element.g, Element.b, 255);
 			pGraphics.drawHorLine2(c_oAscLineDrawingRule.Top, Element.y0, Element.x0, Element.x1, Element.w);
-
+			if (pGraphics.m_bIsTextDrawer)
+			{
+				pGraphics.addGroundElement(Element);
+			}
 			Element = aDUnderline.Get_Next();
 		}
+		pGraphics.End_Command();
 
-		if (pGraphics.RENDERER_PDF_FLAG !== true)
+		pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE, Line, CurLine, AscFormat.CLineStructure_DrawType_Foregrounds)
+		if (drawRunPrReview)
 		{
 			// Рисуем красный рект вокруг измененных ранов
 			var arrRunReviewRectsLine = [];
@@ -3306,7 +3323,8 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 					RunPrReview       = Element.Additional.RunPr;
 					arrRunReviewRects = [];
 					arrRunReviewAreas.push(arrRunReviewRects);
-					arrRunReviewAreasColors.push(new CDocumentColor(Element.r, Element.g, Element.b));
+					arrRunReviewAreasColors.push(new AscWord.CDocumentColorA(Element.r, Element.g, Element.b, 255));
+					runReviewLineW.push(0);
 				}
 
 				arrRunReviewRectsLine.push({
@@ -3331,23 +3349,27 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 				Element = aCollChange.Get_Next();
 			}
             // Рисуем подчеркивание орфографии
-            if (editor && this.LogicDocument && true === this.LogicDocument.Spelling.Use && !(pGraphics.IsThumbnail === true || pGraphics.IsDemonstrationMode === true || AscCommon.IsShapeToImageConverter))
+            if (this.IsSpellingUse() && !(pGraphics.IsThumbnail === true || pGraphics.IsDemonstrationMode === true || AscCommon.IsShapeToImageConverter))
             {
-                pGraphics.p_color(255, 0, 0, 255);
-                var SpellingW = editor.WordControl.m_oDrawingDocument.GetMMPerDot(1);
-                Element       = aSpelling.Get_Next();
-                while (null != Element)
-                {
-                    pGraphics.DrawSpellingLine(Element.y0, Element.x0, Element.x1, SpellingW);
-                    Element = aSpelling.Get_Next();
-                }
+				let drawingDocument = this.getDrawingDocument();
+				if(drawingDocument)
+				{
+					pGraphics.p_color(255, 0, 0, 255);
+					let SpellingW = drawingDocument.GetMMPerDot(1);
+					Element       = aSpelling.Get_Next();
+					while (null != Element)
+					{
+						pGraphics.DrawSpellingLine(Element.y0, Element.x0, Element.x1, SpellingW);
+						Element = aSpelling.Get_Next();
+					}
+				}
             }
 		}
 
 		Element = aFormBorder.Get_NextForward();
 		if (Element)
 		{
-			if (this.IsInFixedForm() && this.GetInnerForm() && !this.GetInnerForm().IsComplexForm())
+			if (this.IsInFixedForm() && this.GetInnerForm())
 			{
 				pGraphics.RemoveLastClip && pGraphics.RemoveLastClip();
 
@@ -3445,8 +3467,8 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 							}
 							arrFormRects = [];
 							arrFormAreas.push(arrFormRects);
-							arrFormAreasColors.push(new CDocumentColor(Element.r, Element.g, Element.b));
-							arrFormAreasWidths.push(Element.w);
+							arrFormAreasColors.push(new AscWord.CDocumentColorA(Element.r, Element.g, Element.b, Element.a));
+							formLineW.push(Element.w);
 						}
 
 						arrFormRectsLine.push({
@@ -3464,71 +3486,92 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 					arrFormRects.push(arrFormRectsLine);
 			}
 		}
-
-		if (pGraphics.End_Command)
-		{
-			pGraphics.End_Command()
-		}
+		pGraphics.End_Command();
 	}
-
-	if (pGraphics.DrawPolygon)
+	
+	this.drawPolygons(pGraphics, arrRunReviewAreas, arrRunReviewAreasColors, runReviewLineW, 0);
+	this.drawPolygons(pGraphics, arrFormAreas, arrFormAreasColors, formLineW, 0);
+};
+Paragraph.prototype.drawPolygons = function(graphics, areas, colors, lineWidth, shift)
+{
+	for (let i = 0, areaCount = areas.length; i < areaCount; ++i)
 	{
-		for (var ReviewAreaIndex = 0, ReviewAreasCount = arrRunReviewAreas.length; ReviewAreaIndex < ReviewAreasCount; ++ReviewAreaIndex)
-		{
-			var arrRunReviewRects = arrRunReviewAreas[ReviewAreaIndex];
-			var oRunReviewColor   = arrRunReviewAreasColors[ReviewAreaIndex];
-			var ReviewPolygon     = new AscCommon.CPolygon();
-			ReviewPolygon.fill(arrRunReviewRects);
-			var PolygonPaths = ReviewPolygon.GetPaths(0);
-			pGraphics.p_color(oRunReviewColor.r, oRunReviewColor.g, oRunReviewColor.b, 255);
-			for (var PolygonIndex = 0, PolygonsCount = PolygonPaths.length; PolygonIndex < PolygonsCount; ++PolygonIndex)
-			{
-				var Path = PolygonPaths[PolygonIndex];
-				pGraphics.DrawPolygon(Path, 1, 0);
-			}
-		}
-
-		for (var nFormAreaIndex = 0, nFormAreasCount = arrFormAreas.length; nFormAreaIndex < nFormAreasCount; ++nFormAreaIndex)
-		{
-			var arrFormRects = arrFormAreas[nFormAreaIndex];
-			var oFormColor   = arrFormAreasColors[nFormAreaIndex];
-			var oPolygon     = new AscCommon.CPolygon();
-			oPolygon.fill(arrFormRects);
-			var arrPolygonPaths = oPolygon.GetPaths(0);
-			pGraphics.p_color(oFormColor.r, oFormColor.g, oFormColor.b, 255);
-			for (var nPolygonIndex = 0, nPolygonsCount = arrPolygonPaths.length; nPolygonIndex < nPolygonsCount; ++nPolygonIndex)
-			{
-				pGraphics.DrawPolygon(arrPolygonPaths[nPolygonIndex], 1, 0);//arrFormAreasWidths[nFormAreaIndex], 0);
-			}
-		}
+		graphics.p_color(colors[i].r, colors[i].g, colors[i].b, colors[i].a);
+		graphics.drawPolygonByRects(areas[i], lineWidth[i], shift);
 	}
 };
+Paragraph.prototype.drawHorizontalBorder = function(graphics, curLine, border, lineAlign, y, isEmptyPara, X_left, X_right, leftMW, rightMW)
+{
+	let isRtl = this.isRtlDirection();
+	let RGBA = border.Get_Color(this);
+	graphics.p_color(RGBA.r, RGBA.g, RGBA.b, 255);
+	graphics.SetBorder(border);
+
+	graphics.Start_Command(AscFormat.DRAW_COMMAND_LINE, this.Lines[curLine], curLine, AscFormat.CLineStructure_DrawType_Borders);
+
+	for (let curRange = 0, rangeCount = this.Lines[curLine].Ranges.length; curRange < rangeCount; ++curRange)
+	{
+		let lMW = 0;
+		let rMW = 0;
+		let x0 = this.Lines[curLine].Ranges[curRange].X;
+		let x1 = this.Lines[curLine].Ranges[curRange].XEnd;
+
+		if ((0 === curRange && isRtl) || (rangeCount - 1 === curRange && !isRtl))
+		{
+			x1  = X_right;
+			rMW = rightMW;
+		}
+
+		if ((0 === curRange && !isRtl) || (rangeCount - 1 === curRange && isRtl))
+		{
+			x0  = X_left;
+			lMW = leftMW;
+		}
+
+		if (!this.IsEmptyRange(curLine, curRange) || (isEmptyPara && 1 === rangeCount))
+			graphics.drawHorLineExt(lineAlign, y, x0, x1, border.Size, lMW, rMW);
+	}
+
+	graphics.End_Command();
+}
 Paragraph.prototype.Internal_Draw_6 = function(CurPage, pGraphics, Pr)
 {
 	if (true !== this.Is_NeedDrawBorders())
 		return;
 
+	let paraPr = Pr.ParaPr;
+
+	let leftInd  = paraPr.Ind.Left;
+	let rightInd = paraPr.Ind.Right;
+	let firstInd = paraPr.Ind.FirstLine;
+
 	var bEmpty  = this.IsEmpty();
-	var X_left  = Math.min(this.Pages[CurPage].X + Pr.ParaPr.Ind.Left, this.Pages[CurPage].X + Pr.ParaPr.Ind.Left + Pr.ParaPr.Ind.FirstLine);
-	var X_right = this.Pages[CurPage].XLimit - Pr.ParaPr.Ind.Right;
+
+	let X_left  = this.Pages[CurPage].X + Math.min(leftInd, leftInd + firstInd);
+	let X_right = this.Pages[CurPage].XLimit - rightInd;
+
+	let isRtl = this.isRtlDirection();
+	if (isRtl)
+	{
+		X_left  = this.Pages[CurPage].X + rightInd;
+		X_right = this.Pages[CurPage].XLimit - Math.min(leftInd, leftInd + firstInd);
+	}
 
 	if (true === this.Is_LineDropCap())
 		X_right = X_left + this.Get_LineDropCapWidth();
 
-	if (Pr.ParaPr.Brd.Left.Value === border_Single)
-		X_left -= 0.5 + Pr.ParaPr.Brd.Left.Space;
+	if (paraPr.Brd.Left.Value === border_Single)
+		X_left -= 0.5 + paraPr.Brd.Left.Space;
 	else
 		X_left -= 0.5;
 
-	if (Pr.ParaPr.Brd.Right.Value === border_Single)
-		X_right += 0.5 + Pr.ParaPr.Brd.Right.Space;
+	if (paraPr.Brd.Right.Value === border_Single)
+		X_right += 0.5 + paraPr.Brd.Right.Space;
 	else
 		X_right += 0.5;
 
-	var LeftMW  = -( border_Single === Pr.ParaPr.Brd.Left.Value ? Pr.ParaPr.Brd.Left.Size : 0 );
-	var RightMW = ( border_Single === Pr.ParaPr.Brd.Right.Value ? Pr.ParaPr.Brd.Right.Size : 0 );
-
-	var RGBA;
+	let leftMW  = -( border_Single === paraPr.Brd.Left.Value ? paraPr.Brd.Left.Size : 0 );
+	let rightMW = ( border_Single === paraPr.Brd.Right.Value ? paraPr.Brd.Right.Size : 0 );
 
 	var bEmptyPagesWithBreakBefore = false;
 	var bCurEmptyPageWithBreak     = false;
@@ -3560,14 +3603,14 @@ Paragraph.prototype.Internal_Draw_6 = function(CurPage, pGraphics, Pr)
 	bEmptyPageCurrent = this.IsEmptyPage(CurPage);
 
 	var bDrawTop = false;
-	if (border_Single === Pr.ParaPr.Brd.Top.Value
-		&& ((true === Pr.ParaPr.Brd.First
+	if (border_Single === paraPr.Brd.Top.Value
+		&& ((true === paraPr.Brd.First
 		&& false === bCurEmptyPageWithBreak
 		&& ((true === bEmptyPagesBefore
 		&& true !== bEmptyPageCurrent)
 		|| (true === bEmptyPagesWithBreakBefore
 		&& false === bCurEmptyPageWithBreak)))
-		|| (false === Pr.ParaPr.Brd.First
+		|| (false === paraPr.Brd.First
 		&& true === bEmptyPagesWithBreakBefore
 		&& false === bCurEmptyPageWithBreak)))
 	{
@@ -3575,82 +3618,31 @@ Paragraph.prototype.Internal_Draw_6 = function(CurPage, pGraphics, Pr)
 	}
 
 	var bDrawBetween = false;
-	if (border_Single === Pr.ParaPr.Brd.Between.Value
+	if (border_Single === paraPr.Brd.Between.Value
 		&& false === bDrawTop
 		&& false === bEmptyPageCurrent
 		&& true === bEmptyPagesBefore
-		&& false === Pr.ParaPr.Brd.First)
+		&& false === paraPr.Brd.First)
 	{
 		bDrawBetween = true;
 	}
 
 	if (bDrawTop)
 	{
-		var Y_top = this.Pages[CurPage].Y;
+		let y = this.Pages[CurPage].Y;
 
-		if (this.private_CheckNeedBeforeSpacing(CurPage, this.Parent, this.GetAbsolutePage(CurPage), Pr.ParaPr))
-			Y_top += Pr.ParaPr.Spacing.Before;
+		if (this.private_CheckNeedBeforeSpacing(CurPage, this.Parent, this.GetAbsolutePage(CurPage), paraPr))
+			y += paraPr.Spacing.Before;
 
-		RGBA = Pr.ParaPr.Brd.Top.Get_Color(this);
-		pGraphics.p_color(RGBA.r, RGBA.g, RGBA.b, 255);
-
-		if (pGraphics.SetBorder)
-		{
-			pGraphics.SetBorder(Pr.ParaPr.Brd.Top);
-		}
-		// Учтем разрывы из-за обтекания
-		var StartLine = this.Pages[CurPage].StartLine;
-
-		if (pGraphics.Start_Command)
-		{
-			pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE, this.Lines[StartLine], StartLine, 1);
-		}
-		var RangesCount = this.Lines[StartLine].Ranges.length;
-		for (var CurRange = 0; CurRange < RangesCount; CurRange++)
-		{
-			var X0 = ( 0 === CurRange ? X_left : this.Lines[StartLine].Ranges[CurRange].X );
-			var X1 = ( RangesCount - 1 === CurRange ? X_right : this.Lines[StartLine].Ranges[CurRange].XEnd );
-
-			if (false === this.IsEmptyRange(StartLine, CurRange) || ( true === bEmpty && 1 === RangesCount ))
-				pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Top, Y_top, X0, X1, Pr.ParaPr.Brd.Top.Size, LeftMW, RightMW);
-		}
-
-		if (pGraphics.End_Command)
-		{
-			pGraphics.End_Command();
-		}
+		let startLine = this.Pages[CurPage].StartLine;
+		this.drawHorizontalBorder(pGraphics, startLine, paraPr.Brd.Top, c_oAscLineDrawingRule.Top, y, bEmpty, X_left, X_right, leftMW, rightMW);
 	}
 
-	if (true === bDrawBetween)
+	if (bDrawBetween)
 	{
-		RGBA = Pr.ParaPr.Brd.Between.Get_Color(this);
-		pGraphics.p_color(RGBA.r, RGBA.g, RGBA.b, 255);
-		if (pGraphics.SetBorder)
-		{
-			pGraphics.SetBorder(Pr.ParaPr.Brd.Between);
-		}
-		var Size = Pr.ParaPr.Brd.Between.Size;
-		var Y    = this.Pages[CurPage].Y + Pr.ParaPr.Spacing.Before;
-
-		// Учтем разрывы из-за обтекания
-		var StartLine   = this.Pages[CurPage].StartLine;
-		var RangesCount = this.Lines[StartLine].Ranges.length;
-		if (pGraphics.Start_Command)
-		{
-			pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE, this.Lines[StartLine], StartLine, 1);
-		}
-		for (var CurRange = 0; CurRange < RangesCount; CurRange++)
-		{
-			var X0 = ( 0 === CurRange ? X_left : this.Lines[StartLine].Ranges[CurRange].X );
-			var X1 = ( RangesCount - 1 === CurRange ? X_right : this.Lines[StartLine].Ranges[CurRange].XEnd );
-
-			if (false === this.IsEmptyRange(StartLine, CurRange) || ( true === bEmpty && 1 === RangesCount ))
-				pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Top, Y, X0, X1, Size, LeftMW, RightMW);
-		}
-		if (pGraphics.End_Command)
-		{
-			pGraphics.End_Command();
-		}
+		let y = this.Pages[CurPage].Y + paraPr.Spacing.Before;
+		let startLine = this.Pages[CurPage].StartLine;
+		this.drawHorizontalBorder(pGraphics, startLine, paraPr.Brd.Between, c_oAscLineDrawingRule.Top, y, bEmpty, X_left, X_right, leftMW, rightMW);
 	}
 
 	var CurLine = this.Pages[CurPage].EndLine;
@@ -3663,9 +3655,9 @@ Paragraph.prototype.Internal_Draw_6 = function(CurPage, pGraphics, Pr)
 		NextEl = NextEl.GetElement(0);
 	}
 
-	if (border_Single === Pr.ParaPr.Brd.Bottom.Value
+	if (border_Single === paraPr.Brd.Bottom.Value
 		&& true === bEnd
-		&& (true === Pr.ParaPr.Brd.Last
+		&& (true === paraPr.Brd.Last
 			|| !NextEl
 			|| !NextEl.IsParagraph()
 			|| NextEl.private_IsEmptyPageWithBreak(0)))
@@ -3673,45 +3665,22 @@ Paragraph.prototype.Internal_Draw_6 = function(CurPage, pGraphics, Pr)
 		bDrawBottom = true;
 	}
 
-	if (true === bDrawBottom)
+	if (bDrawBottom)
 	{
-		var TempY, DrawLineRule;
+		let y, lineAlign;
 		if (NextEl && NextEl.IsParagraph() && NextEl.IsStartFromNewPage())
 		{
-			TempY        = this.Pages[CurPage].Y + this.Lines[CurLine].Y + this.Lines[CurLine].Metrics.Descent + this.Lines[CurLine].Metrics.LineGap;
-			DrawLineRule = c_oAscLineDrawingRule.Top;
+			y = this.Pages[CurPage].Y + this.Lines[CurLine].Y + this.Lines[CurLine].Metrics.Descent + this.Lines[CurLine].Metrics.LineGap;
+			lineAlign = c_oAscLineDrawingRule.Top;
 		}
 		else
 		{
-			TempY        = this.Pages[CurPage].Y + this.Lines[CurLine].Bottom - Pr.ParaPr.Spacing.After;
-			DrawLineRule = c_oAscLineDrawingRule.Bottom;
+			y = this.Pages[CurPage].Y + this.Lines[CurLine].Bottom - paraPr.Spacing.After;
+			lineAlign = c_oAscLineDrawingRule.Bottom;
 		}
 
-		RGBA = Pr.ParaPr.Brd.Bottom.Get_Color(this);
-		pGraphics.p_color(RGBA.r, RGBA.g, RGBA.b, 255);
-		if (pGraphics.SetBorder)
-		{
-			pGraphics.SetBorder(Pr.ParaPr.Brd.Bottom);
-		}
-		// Учтем разрывы из-за обтекания
-		var EndLine     = this.Pages[CurPage].EndLine;
-		var RangesCount = this.Lines[EndLine].Ranges.length;
-		if (pGraphics.Start_Command)
-		{
-			pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE, this.Lines[EndLine], EndLine, 1);
-		}
-		for (var CurRange = 0; CurRange < RangesCount; CurRange++)
-		{
-			var X0 = ( 0 === CurRange ? X_left : this.Lines[EndLine].Ranges[CurRange].X );
-			var X1 = ( RangesCount - 1 === CurRange ? X_right : this.Lines[EndLine].Ranges[CurRange].XEnd );
-
-			if (false === this.IsEmptyRange(EndLine, CurRange) || ( true === bEmpty && 1 === RangesCount ))
-				pGraphics.drawHorLineExt(DrawLineRule, TempY, X0, X1, Pr.ParaPr.Brd.Bottom.Size, LeftMW, RightMW);
-		}
-		if (pGraphics.End_Command)
-		{
-			pGraphics.End_Command();
-		}
+		let endLine = this.Pages[CurPage].EndLine;
+		this.drawHorizontalBorder(pGraphics, endLine, paraPr.Brd.Bottom, lineAlign, y, bEmpty, X_left, X_right, leftMW, rightMW);
 	}
 };
 /**
@@ -3767,6 +3736,9 @@ Paragraph.prototype.private_DrawLineNumber = function(X, Y, oContext, nLineNumbe
 	var nCountBy  = oSectPr.GetLineNumbersCountBy();
 	var nDistance = oSectPr.GetLineNumbersDistance();
 	var nRestart  = oSectPr.GetLineNumbersRestart();
+	
+	if (undefined === nCountBy || nCountBy <= 0)
+		return;
 
 	var _nLineNumber = this.LineNumbersInfo.StartNum + nStart + nCurLine; // nStart - 1 + nCurLine + 1
 
@@ -3793,7 +3765,7 @@ Paragraph.prototype.private_DrawLineNumber = function(X, Y, oContext, nLineNumbe
 		_nLineNumber = nLinesCount + nStart + _nCurLine;  // nStart - 1 + nCurLine + 1
 	}
 
-	if (nCountBy && nCountBy > 1 && 0 !== _nLineNumber % nCountBy)
+	if (nCountBy > 1 && 0 !== _nLineNumber % nCountBy)
 		return;
 
 	var nLineNumDistance = undefined === nDistance ? (this.ColumnsCount > 1 ? AscCommon.TwipsToMM(180) : AscCommon.TwipsToMM(360)) : AscCommon.TwipsToMM(nDistance);
@@ -3892,7 +3864,7 @@ Paragraph.prototype.Is_NeedDrawBorders = function()
 };
 Paragraph.prototype.ReDraw = function()
 {
-	this.Parent.OnContentReDraw(this.Get_AbsolutePage(0), this.Get_AbsolutePage(this.Pages.length - 1));
+	this.Parent.OnContentReDraw(this.GetAbsolutePage(0), this.GetAbsolutePage(this.Pages.length - 1));
 };
 Paragraph.prototype.Shift = function(CurPage, Dx, Dy)
 {
@@ -4014,6 +3986,14 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 						this.Selection.Use = false;
 
 					this.Internal_Content_Remove(StartPos);
+					
+					// Fix the content after deletion
+					if (!bOnAddText
+						&& !this.Content[StartPos].IsCursorPlaceable()
+						&& (0 === StartPos || !this.Content[StartPos - 1].IsCursorPlaceable()))
+					{
+						this.AddToContent(StartPos, new AscWord.Run());
+					}
 
 					this.CurPos.ContentPos = StartPos;
 					this.Content[StartPos].MoveCursorToStartPos();
@@ -4024,7 +4004,10 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 					this.CurPos.ContentPos = StartPos;
 				}
 				
-				if (this.LogicDocument && true === this.LogicDocument.IsTrackRevisions() && this.IsSelectionUse())
+				if (this.LogicDocument
+					&& true === this.LogicDocument.IsTrackRevisions()
+					&& this.Content[this.CurPos.ContentPos].IsSelectionUse()
+					&& !this.GetPlaceHolderObject())
 				{
 					// TODO: Используем данные функции для сброса селекта, по-хорошему надо сделать для
 					//       этого отдельные методы
@@ -4131,8 +4114,12 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 			{
 				this.Content[StartPos].Remove(nCount, bOnAddText);
 
-				// Мы не удаляем последний элемент с ParaEnd
-				if (StartPos <= this.Content.length - 2 && true === this.Content[StartPos].Is_Empty() && true !== this.Content[StartPos].Is_CheckingNearestPos() && ((nCount > -1 && true !== bOnAddText) || para_Run !== this.Content[StartPos].Type))
+				// Всегда держим Run с ParaEnd и Run для ввода текста
+				if (StartPos <= this.Content.length - 2
+					&& this.Content.length > 2
+					&& true === this.Content[StartPos].Is_Empty()
+					&& true !== this.Content[StartPos].Is_CheckingNearestPos()
+					&& ((nCount > -1 && true !== bOnAddText) || para_Run !== this.Content[StartPos].Type))
 				{
 					this.RemoveFromContent(StartPos, 1);
 					isStartDeleted = true;
@@ -4142,20 +4129,40 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 					this.Content[StartPos].SetRStyle(undefined);
 				}
 			}
-
+			
 			if (this.LogicDocument && true === this.LogicDocument.IsTrackRevisions() && this.IsSelectionUse())
 			{
-				// TODO: Используем данные функции для сброса селекта, по-хорошему надо сделать для
-				//       этого отдельные методы
+				let _startPos = this.Selection.StartPos < this.Selection.EndPos ? this.Selection.StartPos : this.Selection.EndPos;
+				let _endPos   = this.Selection.StartPos < this.Selection.EndPos ? this.Selection.EndPos : this.Selection.StartPos;
+				
+				// TODO: Используем данные функции для сброса селекта, по-хорошему надо сделать для этого отдельные методы
 				if (Direction < 0)
-					this.MoveCursorLeft(false, false);
+				{
+					if (this.Content[_startPos].IsSelectionUse())
+						this.MoveCursorLeft(false, false);
+					else
+						this.RemoveSelection();
+				}
 				else
-					this.MoveCursorRight(false, false);
+				{
+					if (this.Content[_endPos].IsSelectionUse())
+						this.MoveCursorRight(false, false);
+					else
+						this.RemoveSelection();
+				}
 			}
-
+			
 			if (isStartDeleted && isEndDeleted)
 				this.Selection.Use = false;
-
+			
+			// Fix the content after deletion
+			if (!bOnAddText
+				&& !this.Content[StartPos].IsCursorPlaceable()
+				&& (0 === StartPos || !this.Content[StartPos - 1].IsCursorPlaceable()))
+			{
+				this.AddToContent(StartPos, new AscWord.Run());
+			}
+			
 			if (nCount > -1 && true !== bOnAddText)
 			{
 				this.Correct_ContentPos2();
@@ -4184,10 +4191,6 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 		if (true !== this.Content[this.CurPos.ContentPos].IsSelectionUse())
 		{
 			this.RemoveSelection();
-
-			// TODO: Переделать корректировку содержимого
-			// if (nCount > -1 && true !== bOnAddText)
-			// 	this.Correct_Content();
 		}
 		else
 		{
@@ -4196,10 +4199,6 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 			this.Selection.Flag     = selectionflag_Common;
 			this.Selection.StartPos = this.CurPos.ContentPos;
 			this.Selection.EndPos   = this.CurPos.ContentPos;
-			
-			// TODO: Переделать корректировку содержимого
-			// if (nCount > -1 && true !== bOnAddText)
-			// 	this.Correct_Content();
 
 			this.Document_SetThisElementCurrent(false);
 
@@ -4594,11 +4593,16 @@ Paragraph.prototype.Add = function(Item)
 
 	if (Item.SetParagraph)
 		Item.SetParagraph(this);
-
+	
+	let itemType = Item.GetType();
+	if ((para_Text === itemType || para_Space === itemType) && this.IsCurrentPosInComplexFieldCode())
+		Item = new ParaInstrText(Item.GetCodePoint());
+	
 	switch (Item.Get_Type())
 	{
 		case para_Text:
 		case para_Space:
+		case para_InstrText:
 		case para_PageNum:
 		case para_Tab:
 		case para_Drawing:
@@ -4611,6 +4615,7 @@ Paragraph.prototype.Add = function(Item)
 		case para_ContinuationSeparator:
 		default:
 		{
+			
 			// Элементы данного типа добавляем во внутренний элемент
 			this.Content[this.CurPos.ContentPos].Add(Item);
 
@@ -4746,6 +4751,7 @@ Paragraph.prototype.Add = function(Item)
 					this.AddToContent(CurPos + 1, paraMath);
 					this.CurPos.ContentPos = CurPos + 1;
 					this.Content[this.CurPos.ContentPos].MoveCursorToEndPos(false);
+
 				}
 			}
 			else
@@ -4850,7 +4856,7 @@ Paragraph.prototype.Add_Tab = function(bShift)
 		if (nDefaultTabStop < 0.001)
 			return;
 
-		var LD_PageFields = this.LogicDocument.Get_PageFields(this.Get_AbsolutePage(0), this.Parent && this.Parent.IsHdrFtr());
+		var LD_PageFields = this.LogicDocument.Get_PageFields(this.GetAbsolutePage(0), this.Parent && this.Parent.IsHdrFtr());
 
 		var nLeft  = ParaPr.Ind.Left;
 		var nFirst = ParaPr.Ind.FirstLine;
@@ -4963,7 +4969,7 @@ Paragraph.prototype.Add_Tab = function(bShift)
 /**
  * Расширяем параграф до позиции X
  */
-Paragraph.prototype.Extend_ToPos = function(_X)
+Paragraph.prototype.extendLastLineToPos = function(_X)
 {
 	var CompiledPr = this.Get_CompiledPr2(false).ParaPr;
 	var Page       = this.Pages[this.Pages.length - 1];
@@ -4973,47 +4979,91 @@ Paragraph.prototype.Extend_ToPos = function(_X)
 	var X  = _X - X0;
 
 	var Align = CompiledPr.Jc;
-
-	if (X < 0 || X > X1 || ( X < 7.5 && align_Left === Align ) || ( X > X1 - 10 && align_Right === Align ) || ( Math.abs(X1 / 2 - X) < 10 && align_Center === Align ))
-		return false;
-
-	if (true === this.IsEmpty())
+	
+	if (this.isRtlDirection())
 	{
-		if (align_Left !== Align)
+		if (X < 0 || X > X1 || (X < 7.5 && AscCommon.align_Right === Align) || (X > X1 - 10 && AscCommon.align_Left === Align) || (Math.abs(X1 / 2 - X) < 10 && align_Center === Align))
+			return false;
+		
+		if (this.IsEmpty())
 		{
-			this.Set_Align(align_Left);
+			if (AscCommon.align_Left !== Align)
+				this.Set_Align(AscCommon.align_Left);
+			
+			if (Math.abs(X - X1 / 2) < 12.5)
+			{
+				this.Set_Align(AscCommon.align_Center);
+				return true;
+			}
+			else if (X < 12.5)
+			{
+				this.Set_Align(align_Right);
+				return true;
+			}
+			else if (X > X1 - 17.5)
+			{
+				this.Set_Ind({FirstLine : 12.5}, false);
+				return true;
+			}
 		}
-
+		
+		let Tabs = CompiledPr.Tabs.Copy();
+		
 		if (Math.abs(X - X1 / 2) < 12.5)
-		{
-			this.Set_Align(align_Center);
-			return true;
-		}
-		else if (X > X1 - 12.5)
-		{
-			this.Set_Align(align_Right);
-			return true;
-		}
-		else if (X < 17.5)
-		{
-			this.Set_Ind({FirstLine : 12.5}, false);
-			return true;
-		}
+			Tabs.Add(new CParaTab(tab_Center, X1 / 2));
+		else if (X < 12.5)
+			Tabs.Add(new CParaTab(tab_Right, X1 - 0.001));
+		else
+			Tabs.Add(new CParaTab(tab_Left, X1 - X));
+		
+		this.Set_Tabs(Tabs);
+		
+		this.Set_ParaContentPos(this.Get_EndPos(false), false, -1, -1);
+		this.Add(new AscWord.CRunTab());
 	}
-
-	var Tabs = CompiledPr.Tabs.Copy();
-
-	if (Math.abs(X - X1 / 2) < 12.5)
-		Tabs.Add(new CParaTab(tab_Center, X1 / 2));
-	else if (X > X1 - 12.5)
-		Tabs.Add(new CParaTab(tab_Right, X1 - 0.001));
 	else
-		Tabs.Add(new CParaTab(tab_Left, X));
-
-	this.Set_Tabs(Tabs);
-
-	this.Set_ParaContentPos(this.Get_EndPos(false), false, -1, -1);
-	this.Add(new AscWord.CRunTab());
+	{
+		if (X < 0 || X > X1 || (X < 7.5 && align_Left === Align) || (X > X1 - 10 && align_Right === Align) || (Math.abs(X1 / 2 - X) < 10 && align_Center === Align))
+			return false;
+		
+		if (true === this.IsEmpty())
+		{
+			if (align_Left !== Align)
+			{
+				this.Set_Align(align_Left);
+			}
+			
+			if (Math.abs(X - X1 / 2) < 12.5)
+			{
+				this.Set_Align(align_Center);
+				return true;
+			}
+			else if (X > X1 - 12.5)
+			{
+				this.Set_Align(align_Right);
+				return true;
+			}
+			else if (X < 17.5)
+			{
+				this.Set_Ind({FirstLine : 12.5}, false);
+				return true;
+			}
+		}
+		
+		let Tabs = CompiledPr.Tabs.Copy();
+		
+		if (Math.abs(X - X1 / 2) < 12.5)
+			Tabs.Add(new CParaTab(tab_Center, X1 / 2));
+		else if (X > X1 - 12.5)
+			Tabs.Add(new CParaTab(tab_Right, X1 - 0.001));
+		else
+			Tabs.Add(new CParaTab(tab_Left, X));
+		
+		this.Set_Tabs(Tabs);
+		
+		this.Set_ParaContentPos(this.Get_EndPos(false), false, -1, -1);
+		this.Add(new AscWord.CRunTab());
+	}
 
 	return true;
 };
@@ -5136,8 +5186,8 @@ Paragraph.prototype.Shift_NumberingLvl = function(bShift)
 				oNum.ShiftLeftInd(NewX);
 
 				this.private_AddPrChange();
-				History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, undefined));
-				History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, undefined));
+				AscCommon.History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, undefined));
+				AscCommon.History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, undefined));
 
 				// При добавлении списка в параграф, удаляем все собственные сдвиги
 				this.Pr.Ind.FirstLine = undefined;
@@ -5402,6 +5452,18 @@ Paragraph.prototype.Correct_ContentPos2 = function()
 
 	this.Content[this.CurPos.ContentPos].CorrectContentPos();
 };
+Paragraph.prototype.getSelectionStartPos = function()
+{
+	return this.Get_ParaContentPos(true, true);
+};
+Paragraph.prototype.getSelectionEndPos = function()
+{
+	return this.Get_ParaContentPos(true, false);
+};
+Paragraph.prototype.getCurrentPos = function()
+{
+	return this.Get_ParaContentPos(false);
+};
 Paragraph.prototype.GetParaContentPos = function(selection, selectionStart, correctPosition)
 {
 	return this.Get_ParaContentPos(selection, selectionStart, correctPosition);
@@ -5471,7 +5533,7 @@ Paragraph.prototype.Set_ParaContentPos = function(ContentPos, CorrectEndLinePos,
 	this.CurPos.Line  = Line;
 	this.CurPos.Range = Range;
 };
-Paragraph.prototype.Set_SelectionContentPos = function(StartContentPos, EndContentPos, CorrectAnchor)
+Paragraph.prototype.Set_SelectionContentPos = function(StartContentPos, EndContentPos, CorrectAnchor, startLine, startRange, endLine, endRange)
 {
 	var Depth = 0;
 
@@ -5679,6 +5741,22 @@ Paragraph.prototype.Set_SelectionContentPos = function(StartContentPos, EndConte
 			}
 		}
 	}
+	
+	this.SetSelectionLineRangePos(true, startLine, startRange);
+	this.SetSelectionLineRangePos(false, endLine, endRange);
+};
+Paragraph.prototype.SetSelectionLineRangePos = function(isStart, line, range)
+{
+	if (isStart)
+	{
+		this.Selection.StartLine  = undefined === line ? -1 : line;
+		this.Selection.StartRange = undefined === range ? -1 : range;
+	}
+	else
+	{
+		this.Selection.EndLine  = undefined === line ? -1 : line;
+		this.Selection.EndRange = undefined === range ? -1 : range;
+	}
 };
 /**
  * Устанавливаем позиции селекта внутри данного параграфа
@@ -5690,6 +5768,24 @@ Paragraph.prototype.Set_SelectionContentPos = function(StartContentPos, EndConte
 Paragraph.prototype.SetSelectionContentPos = function(oStartPos, oEndPos, isCorrectAnchor)
 {
 	return this.Set_SelectionContentPos(oStartPos, oEndPos, isCorrectAnchor);
+};
+/**
+ * Устанавливаем стартовую позицию селекта внутри данного параграфа
+ * NB: Данная функция не стартует селект в параграфе, а лишь выставляет его стартовую границу
+ * @param startPos {AscWord.CParagraphContentPos}
+ */
+Paragraph.prototype.SetSelectionStartContentPos = function(startPos)
+{
+	return this.SetSelectionContentPos(startPos, this.Get_ParaContentPos(true, false, false), false);
+};
+/**
+ * Устанавливаем конечную позицию селекта внутри данного параграфа
+ * NB: Данная функция не стартует селект в параграфе, а лишь выставляет его конечную границу
+ * @param endPos {AscWord.CParagraphContentPos}
+ */
+Paragraph.prototype.SetSelectionEndContentPos = function(endPos)
+{
+	return this.Set_SelectionContentPos(this.Get_ParaContentPos(true, true, false), endPos, true);
 };
 Paragraph.prototype.private_GetClosestPosInCombiningMark = function(oContentPos, nDiff)
 {
@@ -5763,6 +5859,21 @@ Paragraph.prototype.private_CorrectPosInCombiningMark = function(oContentPos, is
 {
 	let oSearchPos;
 	let oCurrentPos  = oContentPos;
+	
+	function canCombinePositions(nextPos)
+	{
+		let depth = oContentPos.GetDepth();
+		if (depth !== nextPos.GetDepth())
+			return false;
+		
+		for (let i = 0; i < depth - 2; ++i)
+		{
+			if (oContentPos.Get(i) !== nextPos.Get(i))
+				return false;
+			
+		}
+		return true;
+	}
 
 	while (true)
 	{
@@ -5771,8 +5882,8 @@ Paragraph.prototype.private_CorrectPosInCombiningMark = function(oContentPos, is
 
 		if (!oPrev
 			|| !oNext
-			|| !oPrev.IsText()
-			|| !oNext.IsText()
+			|| (!oPrev.IsText() && !oPrev.IsMathText())
+			|| (!oNext.IsText() && !oNext.IsMathText())
 			|| !oNext.IsCombiningMark())
 			break;
 
@@ -5788,171 +5899,34 @@ Paragraph.prototype.private_CorrectPosInCombiningMark = function(oContentPos, is
 
 		if (!oSearchPos.IsFound())
 			break;
-
-		oCurrentPos = oSearchPos.GetPos().Copy();
+		
+		let newPos = oSearchPos.GetPos();
+		if (!canCombinePositions(newPos))
+			break;
+		
+		oCurrentPos = newPos.Copy();
 	}
 
 	return oCurrentPos;
 };
-Paragraph.prototype.Get_ParaContentPosByXY = function(X, Y, PageIndex, bYLine, StepEnd, bCenterMode)
+/**
+ * @returns {ParagraphSearchPositionXY}
+ */
+Paragraph.prototype.getSearchPosByXY = function(x, y, page, yIsLine, stepEnd, centerMode)
 {
-	var SearchPos        = new CParagraphSearchPosXY();
-	SearchPos.CenterMode = (undefined === bCenterMode ? true : bCenterMode);
-
-	if (this.Lines.length <= 0)
-		return SearchPos;
-
-	// Определим страницу
-	var PNum = (-1 === PageIndex || undefined === PageIndex ? 0 : PageIndex);
-
-	// Сначала определим на какую строку мы попали
-	if (PNum >= this.Pages.length)
-	{
-		PNum   = this.Pages.length - 1;
-		bYLine = true;
-		Y      = this.Lines.length - 1;
-	}
-	else if (PNum < 0)
-	{
-		PNum   = 0;
-		bYLine = true;
-		Y      = 0;
-	}
-
-	var CurLine = 0;
-	if (true === bYLine)
-		CurLine = Y;
+	let logicDocument = this.GetLogicDocument();
+	if (stepEnd && logicDocument && logicDocument.IsSelectParagraphEndMark)
+		stepEnd = logicDocument.IsSelectParagraphEndMark();
+	
+	let searchPos = new AscWord.ParagraphSearchPositionXY();
+	searchPos.init(this, stepEnd, centerMode);
+	
+	if (yIsLine)
+		searchPos.searchByLine(x, y, page);
 	else
-	{
-		CurLine = this.Pages[PNum].FirstLine;
-
-		var bFindY   = false;
-		var CurLineY = this.Pages[PNum].Y + this.Lines[CurLine].Y + this.Lines[CurLine].Metrics.Descent + this.Lines[CurLine].Metrics.LineGap;
-		var LastLine = ( PNum >= this.Pages.length - 1 ? this.Lines.length - 1 : this.Pages[PNum + 1].FirstLine - 1 );
-
-		while (!bFindY)
-		{
-			if (Y < CurLineY)
-				break;
-			if (CurLine >= LastLine)
-				break;
-
-			CurLine++;
-			CurLineY = this.Lines[CurLine].Y + this.Pages[PNum].Y + this.Lines[CurLine].Metrics.Descent + this.Lines[CurLine].Metrics.LineGap;
-		}
-	}
-
-	// Определим отрезок, в который мы попадаем
-	var CurRange    = 0;
-	var RangesCount = this.Lines[CurLine].Ranges.length;
-
-	if (RangesCount <= 0)
-	{
-		return SearchPos;
-	}
-	else if (RangesCount > 1)
-	{
-		for (; CurRange < RangesCount - 1; CurRange++)
-		{
-			var _CurRange  = this.Lines[CurLine].Ranges[CurRange];
-			var _NextRange = this.Lines[CurLine].Ranges[CurRange + 1];
-			if (X < (_CurRange.XEnd + _NextRange.X) / 2 || _CurRange.WEnd > 0.001)
-				break;
-		}
-	}
-
-	if (CurRange >= RangesCount)
-		CurRange = Math.max(RangesCount - 1, 0);
-
-	// Определим уже непосредственно позицию, куда мы попадаем
-	var Range    = this.Lines[CurLine].Ranges[CurRange];
-	var StartPos = Range.StartPos;
-	var EndPos   = Range.EndPos;
-
-	SearchPos.CurX = Range.XVisible;
-	SearchPos.X    = X;
-	SearchPos.Y    = Y;
-
-	// Проверим попадание в нумерацию
-	if (true === this.Numbering.Check_Range(CurRange, CurLine))
-	{
-		var oNumPr = this.GetNumPr();
-		if (para_Numbering === this.Numbering.Type && oNumPr && oNumPr.IsValid())
-		{
-			var NumJc = this.Parent.GetNumbering().GetNum(oNumPr.NumId).GetLvl(oNumPr.Lvl).GetJc();
-
-			var NumX0 = SearchPos.CurX;
-			var NumX1 = SearchPos.CurX;
-
-			switch (NumJc)
-			{
-				case align_Right:
-				{
-					NumX0 -= this.Numbering.WidthNum;
-					break;
-				}
-				case align_Center:
-				{
-					NumX0 -= this.Numbering.WidthNum / 2;
-					NumX1 += this.Numbering.WidthNum / 2;
-					break;
-				}
-				case align_Left:
-				default:
-				{
-					NumX1 += this.Numbering.WidthNum;
-					break;
-				}
-			}
-
-			if (SearchPos.X >= NumX0 && SearchPos.X <= NumX1)
-			{
-				SearchPos.Numbering = true;
-			}
-		}
-
-		SearchPos.CurX += this.Numbering.WidthVisible;
-	}
-
-	// TODO: ParaEnd
-	// Заглушка, чтобы не попадать в последний ран с символом конца параграфа
-	if (true !== StepEnd && EndPos === this.Content.length - 1 && EndPos > StartPos)
-		EndPos--;
-
-	for (var CurPos = StartPos; CurPos <= EndPos; CurPos++)
-	{
-		var Item = this.Content[CurPos];
-
-		if (false === SearchPos.InText)
-			SearchPos.InTextPos.Update2(CurPos, 0);
-
-		if (true === Item.Get_ParaContentPosByXY(SearchPos, 1, CurLine, CurRange, StepEnd))
-			SearchPos.Pos.Update2(CurPos, 0);
-	}
-
-	SearchPos.InTextX = SearchPos.InText;
-
-	// По Х попали в какой-то элемент, проверяем по Y
-	if (true === SearchPos.InText && Y >= this.Pages[PNum].Y + this.Lines[CurLine].Y - this.Lines[CurLine].Metrics.Ascent - 0.01 && Y <= this.Pages[PNum].Y + this.Lines[CurLine].Y + this.Lines[CurLine].Metrics.Descent + this.Lines[CurLine].Metrics.LineGap + 0.01)
-		SearchPos.InText = true;
-	else
-		SearchPos.InText = false;
-
-	// Такое возможно, если все раны до этого (в том числе и этот) были пустыми, тогда, чтобы не возвращать
-	// неправильную позицию вернем позицию начала данного пустого рана.
-	if (SearchPos.DiffX > 1000000 - 1)
-	{
-		SearchPos.Line  = -1;
-		SearchPos.Range = -1;
-	}
-	else
-	{
-		SearchPos.Line  = CurLine;
-		SearchPos.Range = CurRange;
-	}
-
-	SearchPos.Pos = this.private_GetClosestPosInCombiningMark(SearchPos.Pos, SearchPos.DiffAbs);
-	return SearchPos;
+		searchPos.searchByXY(x, y, page);
+	
+	return searchPos;
 };
 Paragraph.prototype.GetCursorPosXY = function()
 {
@@ -6056,15 +6030,17 @@ Paragraph.prototype.MoveCursorLeft = function(AddToSelect, Word)
 	// Обновляем текущую позицию X,Y. Если есть селект, тогда обновляем по концу селекта
 	if (true === this.Selection.Use)
 	{
+		this.updateSelectionLineInfo();
+		
 		var SelectionEndPos = this.Get_ParaContentPos(true, false);
-		this.Set_ParaContentPos(SelectionEndPos, false, -1, -1);
+		this.Set_ParaContentPos(SelectionEndPos, false, this.Selection.EndLine, this.Selection.EndRange);
 		
 		// To have the ability to deselect a paragraph mark
 		if (!isSelectAll)
 			this.CheckSmartSelection();
 	}
 
-	this.Internal_Recalculate_CurPos(this.CurPos.ContentPos, true, false, false);
+	this.Internal_Recalculate_CurPos(true, false, false);
 
 	this.CurPos.RealX = this.CurPos.X;
 	this.CurPos.RealY = this.CurPos.Y;
@@ -6179,15 +6155,16 @@ Paragraph.prototype.MoveCursorRight = function(AddToSelect, Word)
 		}
 	}
 
-	// Обновляем текущую позицию X,Y. Если есть селект, тогда обновляем по концу селекта
-	if (true === this.Selection.Use)
+	if (this.IsSelectionUse())
 	{
+		this.updateSelectionLineInfo();
+		
 		var SelectionEndPos = this.Get_ParaContentPos(true, false);
-		this.Set_ParaContentPos(SelectionEndPos, false, -1, -1);
+		this.Set_ParaContentPos(SelectionEndPos, false, this.Selection.EndLine, this.Selection.EndRange);
 		this.CheckSmartSelection();
 	}
 
-	this.Internal_Recalculate_CurPos(this.CurPos.ContentPos, true, false, false);
+	this.Internal_Recalculate_CurPos(true, false, false);
 
 	this.CurPos.RealX = this.CurPos.X;
 	this.CurPos.RealY = this.CurPos.Y;
@@ -6204,10 +6181,10 @@ Paragraph.prototype.MoveCursorToXY = function(X, Y, bLine, bDontChangeRealPos, C
 	if (!this.IsRecalculated())
 		return;
 
-	var SearchPosXY = this.Get_ParaContentPosByXY(X, Y, CurPage, bLine, false);
+	var SearchPosXY = this.getSearchPosByXY(X, Y, CurPage, bLine, false);
 
-	this.Set_ParaContentPos(SearchPosXY.Pos, false, SearchPosXY.Line, SearchPosXY.Range);
-	this.Internal_Recalculate_CurPos(-1, false, false, false);
+	this.Set_ParaContentPos(SearchPosXY.getPos(), false, SearchPosXY.getLine(), SearchPosXY.getRange());
+	this.Internal_Recalculate_CurPos(false, false, false);
 
 	if (bDontChangeRealPos != true)
 	{
@@ -6373,7 +6350,9 @@ Paragraph.prototype.Get_LeftPos = function(SearchPos, ContentPos)
 Paragraph.prototype.GetCursorLeftPos = function(oSearchPos, oContentPos)
 {
 	this.Get_LeftPos(oSearchPos, oContentPos);
-	oSearchPos.Pos = this.private_CorrectPosInCombiningMark(oSearchPos.GetPos(), false);
+	
+	if (oSearchPos.Found)
+		oSearchPos.Pos = this.private_CorrectPosInCombiningMark(oSearchPos.GetPos(), false);
 };
 Paragraph.prototype.Get_RightPos = function(SearchPos, ContentPos, StepEnd)
 {
@@ -6425,7 +6404,9 @@ Paragraph.prototype.Get_RightPos = function(SearchPos, ContentPos, StepEnd)
 Paragraph.prototype.GetCursorRightPos = function(oSearchPos, oContentPos, isStepEnd)
 {
 	this.Get_RightPos(oSearchPos, oContentPos, isStepEnd);
-	oSearchPos.Pos = this.private_CorrectPosInCombiningMark(oSearchPos.GetPos(), true);
+	
+	if (oSearchPos.Found)
+		oSearchPos.Pos = this.private_CorrectPosInCombiningMark(oSearchPos.GetPos(), true);
 };
 Paragraph.prototype.Get_WordStartPos = function(SearchPos, ContentPos)
 {
@@ -6551,8 +6532,10 @@ Paragraph.prototype.Get_WordEndPos = function(SearchPos, ContentPos, StepEnd)
 	if (SearchPos.Shift)
 		SearchPos.Found = true;
 };
-Paragraph.prototype.Get_EndRangePos = function(SearchPos, ContentPos)
+Paragraph.prototype.Get_EndRangePos = function(ContentPos)
 {
+	let SearchPos = new CParagraphSearchPos();
+	
 	var LinePos = this.Get_ParaPosByContentPos(ContentPos);
 
 	var CurLine  = LinePos.Line;
@@ -6583,9 +6566,12 @@ Paragraph.prototype.Get_EndRangePos = function(SearchPos, ContentPos)
 	}
 
 	SearchPos.Pos = this.private_CorrectPosInCombiningMark(SearchPos.Pos, true);
+	return SearchPos;
 };
-Paragraph.prototype.Get_StartRangePos = function(SearchPos, ContentPos)
+Paragraph.prototype.Get_StartRangePos = function(ContentPos)
 {
+	let SearchPos = new CParagraphSearchPos();
+	
 	var LinePos = this.Get_ParaPosByContentPos(ContentPos);
 
 	var CurLine  = LinePos.Line;
@@ -6616,6 +6602,7 @@ Paragraph.prototype.Get_StartRangePos = function(SearchPos, ContentPos)
 	}
 
 	SearchPos.Pos = this.private_CorrectPosInCombiningMark(SearchPos.Pos, false);
+	return SearchPos;
 };
 Paragraph.prototype.Get_StartRangePos2 = function(CurLine, CurRange)
 {
@@ -6631,7 +6618,7 @@ Paragraph.prototype.Get_StartRangePos2 = function(CurLine, CurRange)
 	this.Content[Pos].Get_StartRangePos2(CurLine, CurRange, ContentPos, Depth + 1);
 	return ContentPos;
 };
-Paragraph.prototype.Get_EndRangePos2 = function(CurLine, CurRange)
+Paragraph.prototype.Get_EndRangePos2 = function(CurLine, CurRange, stepEnd)
 {
 	var ContentPos = new AscWord.CParagraphContentPos();
 	if (!this.Lines[CurLine] || !this.Lines[CurLine].Ranges[CurRange])
@@ -6639,8 +6626,12 @@ Paragraph.prototype.Get_EndRangePos2 = function(CurLine, CurRange)
 
 	var Depth = 0;
 	var Pos   = this.Lines[CurLine].Ranges[CurRange].EndPos;
+	if (false === stepEnd && Pos === this.Content.length - 1 && Pos > 0)
+		--Pos;
+	
 	ContentPos.Update(Pos, Depth);
 	this.Content[Pos].Get_EndRangePos2(CurLine, CurRange, ContentPos, Depth + 1);
+	
 	return ContentPos;
 };
 Paragraph.prototype.Get_StartPos = function()
@@ -6652,6 +6643,51 @@ Paragraph.prototype.Get_StartPos = function()
 
 	this.Content[0].Get_StartPos(ContentPos, Depth + 1);
 	return ContentPos;
+};
+/**
+ * Correct the specified position to a placeable position within the paragraph
+ * @param {AscWord.CParagraphContentPos} paraPos
+ * @returns {AscWord.CParagraphContentPos}
+ */
+Paragraph.prototype.GetCursorPlaceablePos = function(paraPos)
+{
+	let obj = this.GetClassesByPos(paraPos);
+	if (obj.length && obj[obj.length - 1] instanceof AscWord.Run)
+		return paraPos;
+	
+	for (let i = 0; i < obj.length; ++i)
+	{
+		if (!obj[i].IsCursorPlaceable())
+		{
+			let parent = i ? obj[i - 1] : this;
+			let curPos = paraPos.Get(i);
+			
+			let contentLen = parent.Content.length;
+			let checkEndPos = true;
+			while (curPos > 0 && !parent.Content[curPos].IsCursorPlaceable())
+				--curPos;
+			
+			while (curPos < contentLen && !parent.Content[curPos].IsCursorPlaceable())
+			{
+				checkEndPos = false;
+				++curPos;
+			}
+			
+			if (parent.Content[curPos].IsCursorPlaceable())
+			{
+				let contentPos = parent === this ? new AscWord.CParagraphContentPos() : this.Get_PosByElement(parent);
+				contentPos.Update(curPos, contentPos.GetDepth() + 1);
+				// TODO: Need to check IsCursorPlaceable for inner objects (GetStartPlaceablePos/GetEndPlaceablePos)
+				if (checkEndPos)
+					parent.Content[curPos].Get_EndPos(true, contentPos, contentPos.GetDepth() + 1);
+				else
+					parent.Content[curPos].Get_StartPos(contentPos, contentPos.GetDepth() + 1);
+				return contentPos;
+			}
+		}
+	}
+	
+	return paraPos;
 };
 /**
  * Получаем начальную позицию в параграфе
@@ -6760,6 +6796,8 @@ Paragraph.prototype.GetNextRunElement = function(oParaPos)
 	let _oParaPos = oParaPos ? oParaPos : this.Get_ParaContentPos(this.Selection.Use, false, false);
 
 	var oRunElements = new CParagraphRunElements(_oParaPos, 1, null);
+	oRunElements.SkipMath = false;
+
 	this.GetNextRunElements(oRunElements);
 
 	if (oRunElements.Elements.length <= 0)
@@ -6777,6 +6815,8 @@ Paragraph.prototype.GetPrevRunElement = function(oParaPos)
 	let _oParaPos = oParaPos ? oParaPos : this.Get_ParaContentPos(this.Selection.Use, false, false)
 
 	var oRunElements = new CParagraphRunElements(_oParaPos, 1, null, true);
+	oRunElements.SkipMath = false;
+
 	this.GetPrevRunElements(oRunElements);
 
 	if (oRunElements.Elements.length <= 0)
@@ -6807,6 +6847,37 @@ Paragraph.prototype.RemoveRunElement = function(oParaPos)
 	}
 
 	return false;
+};
+/**
+ * Получаем либо текущую формулу, либо формулу, находяющуюся слева или справа от курсора
+ * @returns {ParaMath|null}
+ */
+Paragraph.prototype.getAdjacentMath = function()
+{
+	let math = this.GetSelectedElementsInfo().GetMath();
+	if (math)
+		return math;
+	
+	let state = this.SaveSelectionState();
+	this.MoveCursorLeft(false, false);
+	math = this.GetSelectedElementsInfo().GetMath();
+	this.LoadSelectionState(state);
+	if (math)
+	{
+		math.MoveCursorToEndPos();
+		return math;
+	}
+	
+	this.MoveCursorRight(false, false);
+	math = this.GetSelectedElementsInfo().GetMath();
+	this.LoadSelectionState(state);
+	if (math)
+	{
+		math.MoveCursorToStartPos();
+		return math;
+	}
+	
+	return null;
 };
 Paragraph.prototype.MoveCursorUp = function(AddToSelect)
 {
@@ -6850,7 +6921,7 @@ Paragraph.prototype.MoveCursorUp = function(AddToSelect)
 			// Пересчитаем координату точки TopPos
 			this.Set_ParaContentPos(TopPos, false, CurLine, CurRange);
 
-			this.Internal_Recalculate_CurPos(0, true, false, false);
+			this.Internal_Recalculate_CurPos(true, false, false);
 			this.CurPos.RealX = this.CurPos.X;
 			this.CurPos.RealY = this.CurPos.Y;
 
@@ -6951,7 +7022,7 @@ Paragraph.prototype.MoveCursorDown = function(AddToSelect)
 			// Пересчитаем координату BottomPos
 			this.Set_ParaContentPos(BottomPos, false, CurLine, CurRange);
 
-			this.Internal_Recalculate_CurPos(0, true, false, false);
+			this.Internal_Recalculate_CurPos(true, false, false);
 			this.CurPos.RealX = this.CurPos.X;
 			this.CurPos.RealY = this.CurPos.Y;
 
@@ -7010,146 +7081,159 @@ Paragraph.prototype.MoveCursorDown = function(AddToSelect)
 
 	return Result;
 };
-Paragraph.prototype.MoveCursorToEndOfLine = function(AddToSelect)
+Paragraph.prototype.MoveCursorToEndOfLine = function(addToSelect)
 {
-	if (true === this.Selection.Use)
+	if (!this.IsRecalculated())
+		return this.MoveCursorToEndPos(addToSelect);
+	
+	if (this.IsSelectionUse())
 	{
-		var EndSelectionPos   = this.Get_ParaContentPos(true, false);
-		var StartSelectionPos = this.Get_ParaContentPos(true, true);
-
-		if (true === AddToSelect)
+		if (addToSelect)
 		{
-			var SearchPos = new CParagraphSearchPos();
-			this.Get_EndRangePos(SearchPos, EndSelectionPos);
-
-			this.Set_SelectionContentPos(StartSelectionPos, SearchPos.Pos);
+			let endPos;
+			if (-1 !== this.Selection.EndLine && -1 !== this.Selection.EndRange)
+				endPos = this.Get_EndRangePos2(this.Selection.EndLine, this.Selection.EndRange);
+			else
+				endPos = this.Get_EndRangePos(this.getSelectionEndPos()).Pos;
+			
+			this.Set_SelectionContentPos(this.getSelectionStartPos(), endPos, true, this.Selection.StartLine, this.Selection.StartRange, this.Selection.EndLine, this.Selection.EndRange);
 		}
 		else
 		{
-			var RightPos = EndSelectionPos;
-			if (EndSelectionPos.Compare(StartSelectionPos) < 0)
-				RightPos = StartSelectionPos;
-
-			var SearchPos = new CParagraphSearchPos();
-			this.Get_EndRangePos(SearchPos, RightPos);
-
+			let curPos = this.getSelectionEndPos();
+			let line   = this.Selection.EndLine;
+			let range  = this.Selection.EndRange;
+			if (this.GetSelectDirection() < 0)
+			{
+				curPos = this.getSelectionStartPos();
+				line   = this.Selection.StartLine;
+				range  = this.Selection.StartRange;
+			}
+			
+			if (-1 !== line && -1 !== range)
+				curPos = this.Get_EndRangePos2(line, range);
+			else
+				curPos = this.Get_EndRangePos(curPos).Pos;
+			
 			this.RemoveSelection();
-
-			this.Set_ParaContentPos(SearchPos.Pos, false, SearchPos.Line, SearchPos.Range);
+			this.Set_ParaContentPos(curPos, false, line, range);
 		}
 	}
 	else
 	{
-		var SearchPos  = new CParagraphSearchPos();
-		var ContentPos = this.Get_ParaContentPos(false, false);
+		let curPos = this.getCurrentPos();
+		
+		let endPos = curPos;
+		let line   = -1;
+		let range  = -1;
 
-		let oResultPos, nLine, nRange;
-		let oParaPos = this.GetCurrentParaPos();
-		if (oParaPos.IsValid(this))
+		let posInfo = this.GetCurrentParaPos();
+		if (posInfo.IsValid(this))
 		{
-			oResultPos = this.Get_EndRangePos2(oParaPos.Line, oParaPos.Range);
-			nLine      = oParaPos.Line;
-			nRange     = oParaPos.Range;
+			line   = posInfo.Line;
+			range  = posInfo.Range;
+			endPos = this.Get_EndRangePos2(line, range);
 		}
 		else
 		{
-			this.Get_EndRangePos(SearchPos, ContentPos);
-			oResultPos = SearchPos.Pos;
-			nLine      = SearchPos.Line;
-			nRange     = SearchPos.Range;
+			endPos = this.Get_EndRangePos(curPos).Pos;
 		}
-
-		if (true === AddToSelect)
+		
+		if (addToSelect)
 		{
 			this.Selection.Use = true;
-			this.Set_SelectionContentPos(ContentPos, oResultPos);
+			this.Set_SelectionContentPos(curPos, endPos, true, line, range, line, range);
 		}
 		else
 		{
-			this.Set_ParaContentPos(oResultPos, false, nLine, nRange);
+			this.Set_ParaContentPos(endPos, false, line, range);
 		}
 	}
-
-	// Обновляем текущую позицию X,Y. Если есть селект, тогда обновляем по концу селекта
-	if (true === this.Selection.Use)
-	{
-		var SelectionEndPos = this.Get_ParaContentPos(true, false);
-		this.Set_ParaContentPos(SelectionEndPos, false, -1, -1);
-	}
-
-	this.Internal_Recalculate_CurPos(this.CurPos.ContentPos, true, false, false);
-
+	
+	// Текущую позицию выставляем на конец селекта
+	if (this.IsSelectionUse())
+		this.Set_ParaContentPos(this.getSelectionEndPos(), false, this.Selection.EndLine, this.Selection.EndRange);
+	
+	this.Internal_Recalculate_CurPos(true, false, false);
+	
 	this.CurPos.RealX = this.CurPos.X;
 	this.CurPos.RealY = this.CurPos.Y;
 };
-Paragraph.prototype.MoveCursorToStartOfLine = function(AddToSelect)
+Paragraph.prototype.MoveCursorToStartOfLine = function(addToSelect)
 {
-	if (true === this.Selection.Use)
+	if (!this.IsRecalculated())
+		return this.MoveCursorToStartPos(addToSelect);
+	
+	if (this.IsSelectionUse())
 	{
-		var EndSelectionPos   = this.Get_ParaContentPos(true, false);
-		var StartSelectionPos = this.Get_ParaContentPos(true, true);
-
-		if (true === AddToSelect)
+		if (addToSelect)
 		{
-			var SearchPos = new CParagraphSearchPos();
-			this.Get_StartRangePos(SearchPos, EndSelectionPos);
-
-			this.Set_SelectionContentPos(StartSelectionPos, SearchPos.Pos);
+			let endPos;
+			if (-1 !== this.Selection.EndLine && -1 !== this.Selection.EndRange)
+				endPos = this.Get_StartRangePos2(this.Selection.EndLine, this.Selection.EndRange);
+			else
+				endPos = this.Get_StartRangePos(this.getSelectionEndPos()).Pos;
+			
+			this.Set_SelectionContentPos(this.getSelectionStartPos(), endPos, true, this.Selection.StartLine, this.Selection.StartRange, this.Selection.EndLine, this.Selection.EndRange);
 		}
 		else
 		{
-			var LeftPos = StartSelectionPos;
-			if (StartSelectionPos.Compare(EndSelectionPos) > 0)
-				LeftPos = EndSelectionPos;
-
-			var SearchPos = new CParagraphSearchPos();
-			this.Get_StartRangePos(SearchPos, LeftPos);
-
+			let curPos = this.getSelectionStartPos();
+			let line   = this.Selection.StartLine;
+			let range  = this.Selection.StartRange;
+			if (this.GetSelectDirection() < 0)
+			{
+				curPos = this.getSelectionEndPos();
+				line   = this.Selection.EndLine;
+				range  = this.Selection.EndRange;
+			}
+			
+			if (-1 !== line && -1 !== range)
+				curPos = this.Get_StartRangePos2(line, range);
+			else
+				curPos = this.Get_StartRangePos(curPos).Pos;
+			
 			this.RemoveSelection();
-
-			this.Set_ParaContentPos(SearchPos.Pos, false, SearchPos.Line, SearchPos.Range);
+			this.Set_ParaContentPos(curPos, false, line, range);
 		}
 	}
 	else
 	{
-		var SearchPos  = new CParagraphSearchPos();
-		var ContentPos = this.Get_ParaContentPos(false, false);
-
-		let oResultPos, nLine, nRange;
-		let oParaPos = this.GetCurrentParaPos();
-		if (oParaPos.IsValid(this))
+		let curPos = this.getCurrentPos();
+		
+		let endPos = curPos;
+		let line   = -1;
+		let range  = -1;
+		
+		let posInfo = this.GetCurrentParaPos();
+		if (posInfo.IsValid(this))
 		{
-			oResultPos = this.Get_StartRangePos2(oParaPos.Line, oParaPos.Range);
-			nLine      = oParaPos.Line;
-			nRange     = oParaPos.Range;
+			line   = posInfo.Line;
+			range  = posInfo.Range;
+			endPos = this.Get_StartRangePos2(line, range);
 		}
 		else
 		{
-			this.Get_StartRangePos(SearchPos, ContentPos);
-			oResultPos = SearchPos.Pos;
-			nLine      = SearchPos.Line;
-			nRange     = SearchPos.Range;
+			endPos = this.Get_StartRangePos(curPos).Pos;
 		}
-		if (true === AddToSelect)
+		
+		if (addToSelect)
 		{
 			this.Selection.Use = true;
-			this.Set_SelectionContentPos(ContentPos, oResultPos);
+			this.Set_SelectionContentPos(curPos, endPos, true, line, range, line, range);
 		}
 		else
 		{
-			this.Set_ParaContentPos(oResultPos, false, nLine, nRange);
+			this.Set_ParaContentPos(endPos, false, line, range);
 		}
 	}
-
+	
 	// Обновляем текущую позицию X,Y. Если есть селект, тогда обновляем по концу селекта
-	if (true === this.Selection.Use)
-	{
-		var SelectionEndPos = this.Get_ParaContentPos(true, false);
-		this.Set_ParaContentPos(SelectionEndPos, false, -1, -1);
-	}
-
-	this.Internal_Recalculate_CurPos(this.CurPos.ContentPos, true, false, false);
-
+	if (this.IsSelectionUse())
+		this.Set_ParaContentPos(this.getSelectionEndPos(), false, this.Selection.EndLine, this.Selection.EndRange);
+	
+	this.Internal_Recalculate_CurPos(true, false, false);
+	
 	this.CurPos.RealX = this.CurPos.X;
 	this.CurPos.RealY = this.CurPos.Y;
 };
@@ -7342,7 +7426,7 @@ Paragraph.prototype.MoveCursorToDrawing = function(Id, bBefore)
 	this.RemoveSelection();
 	this.Set_ParaContentPos(ContentPos, false, -1, -1);
 
-	this.RecalculateCurPos();
+	this.RecalculateCurPos(true, true, false, false);
 	this.CurPos.RealX = this.CurPos.X;
 	this.CurPos.RealY = this.CurPos.Y;
 };
@@ -7399,17 +7483,17 @@ Paragraph.prototype.CanCorrectContent = function()
 /**
  * Корректируем содержимое параграфа
  */
-Paragraph.prototype.CorrectContent = function()
+Paragraph.prototype.CorrectContent = function(startPos, endPos, preserveEmptyElements)
 {
 	if (!this.CanCorrectContent())
 		return;
 
-	this.Correct_Content();
+	this.Correct_Content(startPos, endPos, preserveEmptyElements);
 
 	if (this.CurPos.ContentPos >= this.Content.length - 1)
 		this.MoveCursorToEndPos();
 };
-Paragraph.prototype.Correct_Content = function(_StartPos, _EndPos, bDoNotDeleteEmptyRuns)
+Paragraph.prototype.Correct_Content = function(_StartPos, _EndPos, preserveEmptyElements)
 {
 	if (!this.CanCorrectContent())
 		return;
@@ -7429,33 +7513,39 @@ Paragraph.prototype.Correct_Content = function(_StartPos, _EndPos, bDoNotDeleteE
 
 	for (var CurPos = EndPos; CurPos >= StartPos; CurPos--)
 	{
+		if (CurPos === this.CurPos.ContentPos)
+			continue;
+		
 		var CurElement = this.Content[CurPos];
-
+		
 		if (CurElement.CorrectContent)
 			CurElement.CorrectContent();
-
-		if ((para_Hyperlink === CurElement.Type || para_Math === CurElement.Type || para_Field === CurElement.Type || para_InlineLevelSdt === CurElement.Type) && true === CurElement.Is_Empty() && true !== CurElement.Is_CheckingNearestPos())
+		
+		if (para_InlineLevelSdt === CurElement.Type && !CurElement.CanBeDeleted())
+			continue;
+		
+		if ((para_Hyperlink === CurElement.Type
+				|| para_Math === CurElement.Type
+				|| para_Field === CurElement.Type
+				|| (para_InlineLevelSdt === CurElement.Type && !CurElement.IsPlaceHolder()))
+			&& true === CurElement.Is_Empty()
+			&& true !== CurElement.Is_CheckingNearestPos()
+			&& true !== preserveEmptyElements)
 		{
 			this.Internal_Content_Remove(CurPos);
 		}
 		else if (para_Run !== CurElement.Type)
 		{
 			if (CurPos === this.Content.length - 1 || para_Run !== this.Content[CurPos + 1].Type || CurPos === this.Content.length - 2)
-			{
-				var NewRun = new ParaRun(this);
-				this.Internal_Content_Add(CurPos + 1, NewRun);
-			}
+				this.Internal_Content_Add(CurPos + 1, new AscWord.Run());
 
 			// Для начального элемента проверим еще и предыдущий
 			if (StartPos === CurPos && ( 0 === CurPos || para_Run !== this.Content[CurPos - 1].Type  ))
-			{
-				var NewRun = new ParaRun(this);
-				this.Internal_Content_Add(CurPos, NewRun);
-			}
+				this.Internal_Content_Add(CurPos, new AscWord.Run());
 		}
 		else
 		{
-			if (true !== bDoNotDeleteEmptyRuns)
+			if (true !== preserveEmptyElements)
 			{
 				// TODO (Para_End): Предпоследний элемент мы не проверяем, т.к. на ран с Para_End мы не ориентируемся
 				if (true === CurElement.Is_Empty() && (0 < CurPos || para_Run !== this.Content[CurPos].Type) && CurPos < this.Content.length - 2 && para_Run === this.Content[CurPos + 1].Type)
@@ -7467,9 +7557,9 @@ Paragraph.prototype.Correct_Content = function(_StartPos, _EndPos, bDoNotDeleteE
 	// Проверим, чтобы предпоследний элемент был Run
 	if (1 === this.Content.length || para_Run !== this.Content[this.Content.length - 2].Type)
 	{
-		var NewRun = new ParaRun(this);
-		NewRun.Set_Pr(this.TextPr.Value.Copy());
-		this.Internal_Content_Add(this.Content.length - 1, NewRun);
+		let run = new AscWord.Run();
+		run.Set_Pr(this.TextPr.Value.Copy());
+		this.Internal_Content_Add(this.Content.length - 1, run);
 	}
 
 	this.Correct_ContentPos2();
@@ -7833,7 +7923,9 @@ Paragraph.prototype.AddHyperlink = function(HyperProps)
 		TextPr.RStyle    = editor && editor.isDocumentEditor ? editor.WordControl.m_oLogicDocument.Get_Styles().GetDefaultHyperlink() : null;
 		if (!this.bFromDocument)
 		{
-			//TextPr.Unifill   = AscFormat.CreateUniFillSchemeColorWidthTint(11, 0);
+			if (editor && editor.isPdfEditor())
+				TextPr.Unifill = AscFormat.CreateUniFillSchemeColorWidthTint(11, 0);
+			
 			TextPr.Underline = true;
 		}
 		Hyperlink.Apply_TextPr(TextPr, undefined, false);
@@ -7889,8 +7981,9 @@ Paragraph.prototype.AddHyperlink = function(HyperProps)
 		{
 			HyperRun.Set_Pr(TextPr.Copy());
 			HyperRun.Set_Color(undefined);
-			//HyperRun.Set_Unifill(AscFormat.CreateUniFillSchemeColorWidthTint(11, 0));
 			HyperRun.SetUnderline(true);
+			if (editor && editor.isPdfEditor())
+				HyperRun.Set_Unifill(AscFormat.CreateUniFillSchemeColorWidthTint(11, 0));
 		}
 
 		// Заполняем ран гиперссылки текстом
@@ -8218,22 +8311,38 @@ Paragraph.prototype.Selection_SetStart = function(X, Y, CurPage, bTableBorder)
 	// Найдем позицию в контенте, в которую мы попали
 	// Если мы начинаем селект внутри параграфа (не выходя за знак конца абзаца), то даем выделять знак абзаца,
 	// в противном случае, не выделяем знак конца абзаца
-	var SearchPosXY  = this.Get_ParaContentPosByXY(X, Y, CurPage, false, true);
-	var SearchPosXY2 = this.Get_ParaContentPosByXY(X, Y, CurPage, false, false);
+	var SearchPosXY  = this.getSearchPosByXY(X, Y, CurPage, false, true);
+	var SearchPosXY2 = this.getSearchPosByXY(X, Y, CurPage, false, false);
+	
+	let pos  = SearchPosXY.getPos();
+	let pos2 = SearchPosXY2.getPos();
 	
 	this.Selection.Use            = true;
 	this.Selection.Start          = true;
 	this.Selection.Flag           = selectionflag_Common;
 	this.Selection.StartManually  = true;
-	this.Selection.StartBehindEnd = SearchPosXY.Pos.Compare(SearchPosXY2.Pos) > 0;
+	this.Selection.StartBehindEnd = pos.Compare(pos2) > 0;
 	
-	this.Set_ParaContentPos(SearchPosXY2.Pos, true, SearchPosXY2.Line, SearchPosXY2.Range);
-	this.Set_SelectionContentPos(SearchPosXY2.Pos, SearchPosXY2.Pos);
+	let line  = SearchPosXY2.getLine();
+	let range = SearchPosXY2.getRange();
 	
-	if (true === SearchPosXY2.Numbering && undefined !== this.GetNumPr())
+	this.Set_ParaContentPos(pos2, true, line, range);
+	this.Set_SelectionContentPos(pos2, pos2, true, line, range, line, range);
+	
+	if (SearchPosXY2.isNumbering())
 	{
-		this.Set_ParaContentPos(this.Get_StartPos(), true, -1, -1);
-		this.Parent.SelectNumbering(this.GetNumPr(), this);
+		let numPr = this.GetNumPr();
+		let prevNumPr = this.GetPrChangeNumPr();
+		if (numPr && numPr.IsValid())
+		{
+			this.Set_ParaContentPos(this.Get_StartPos(), true, -1, -1);
+			this.Parent.SelectNumbering(numPr, this);
+		}
+		else if (prevNumPr && prevNumPr.IsValid())
+		{
+			this.Set_ParaContentPos(this.Get_StartPos(), true, -1, -1);
+			this.Parent.SelectNumberingSingleParagraph(this);
+		}
 	}
 };
 /**
@@ -8265,42 +8374,22 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 	this.Selection.EndManually = true;
 	
 	// Найдем позицию в контенте, в которую мы попали (для селекта ищем и за знаком параграфа, для курсора только перед)
-	var SearchPosXY  = this.Get_ParaContentPosByXY(X, Y, CurPage, false, !this.Selection.StartBehindEnd, true);
-	var SearchPosXY2 = this.Get_ParaContentPosByXY(X, Y, CurPage, false, false, true);
+	var SearchPosXY  = this.getSearchPosByXY(X, Y, CurPage, false, !this.Selection.StartBehindEnd, true);
+	var SearchPosXY2 = this.getSearchPosByXY(X, Y, CurPage, false, false, true);
+	
+	let pos  = SearchPosXY.getPos();
+	let pos2 = SearchPosXY2.getPos();
 
 	// Выставим в полученном месте текущую позицию курсора
-	this.Set_ParaContentPos(SearchPosXY2.Pos, true, SearchPosXY2.Line, SearchPosXY2.Range);
-
-	if (true === SearchPosXY.End || true === this.Is_Empty())
-	{
-		var LastRange = this.Lines[this.Lines.length - 1].Ranges[this.Lines[this.Lines.length - 1].Ranges.length - 1];
-		if (!isFixedForm && !this.Parent.IsFootnote() && CurPage >= PagesCount - 1 && X > LastRange.W && MouseEvent.ClickCount >= 2 && Y <= this.Pages[PagesCount - 1].Bounds.Bottom)
-		{
-			if (this.bFromDocument && false === this.LogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_None, {
-					Type      : AscCommon.changestype_2_Element_and_Type,
-					Element   : this,
-					CheckType : AscCommon.changestype_Paragraph_Content
-				}))
-			{
-				this.LogicDocument.StartAction(AscDFH.historydescription_Document_ParagraphExtendToPos);
-				this.LogicDocument.GetHistory().Set_Additional_ExtendDocumentToPos();
-
-				if (this.Extend_ToPos(X))
-				{
-					this.RemoveSelection();
-					this.MoveCursorToEndPos();
-					this.Document_SetThisElementCurrent(true);
-					this.LogicDocument.Recalculate();
-				}
-
-				this.LogicDocument.FinalizeAction();
-				return;
-			}
-		}
-	}
+	this.Set_ParaContentPos(pos2, true, SearchPosXY2.getLine(), SearchPosXY2.getRange());
+	
+	if (!isFixedForm
+		&& !this.Parent.IsFootnote()
+		&& this.extendLastLineToXY(X, Y, CurPage, MouseEvent))
+		return;
 
 	// Выставляем селект
-	this.Set_SelectionContentPos(this.Get_ParaContentPos(true, true), SearchPosXY.Pos);
+	this.Set_SelectionContentPos(this.Get_ParaContentPos(true, true), pos, true, this.Selection.StartLine, this.Selection.StartRange, SearchPosXY2.getLine(), SearchPosXY2.getRange());
 	
 	if (!this.GetPlaceHolderObject())
 		this.CheckSmartSelection();
@@ -8325,7 +8414,7 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 			oSdt.SelectAll(1);
 			oSdt.SelectThisElement(1);
 		}
-		else if (oField && fieldtype_FORMTEXT === oField.Get_FieldType())
+		else if (oField && AscWord.fieldtype_FORMTEXT === oField.Get_FieldType())
 		{
 			oField.SelectAll(1);
 			oField.SelectThisElement(1);
@@ -8354,7 +8443,7 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 				var SearchPosS = new CParagraphSearchPos();
 				var SearchPosE = new CParagraphSearchPos();
 
-				this.Get_WordEndPos(SearchPosE, SearchPosXY.Pos);
+				this.Get_WordEndPos(SearchPosE, pos);
 				this.Get_WordStartPos(SearchPosS, SearchPosE.Pos);
 
 				var StartPos = ( true === SearchPosS.Found ? SearchPosS.Pos : this.Get_StartPos() );
@@ -8404,9 +8493,77 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 		}
 	}
 };
+Paragraph.prototype.extendLastLineToXY = function(x, y, curPage, mouseEvent)
+{
+	if ((!this.IsEmpty() && !this.getSearchPosByXY(x, y, curPage, false, true, true).isBeyondEnd()))
+		return false;
+	
+	let lastLine  = this.Lines.length ? this.Lines[this.Lines.length - 1] : null;
+	let lastRange = lastLine && lastLine.Ranges.length ? lastLine.Ranges[lastLine.Ranges.length - 1] : null;
+	let lastPage  = this.Pages.length ? this.Pages[this.Pages.length - 1] : null;
+	if (!lastRange
+		|| mouseEvent.ClickCount < 2
+		|| curPage !== this.Pages.length - 1
+		|| x <= lastRange.W
+		|| y > lastPage.Bounds.Bottom)
+		return false;
+	
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return false;
+
+	if (logicDocument.IsSelectionLocked(AscCommon.changestype_None, {
+			Type      : AscCommon.changestype_2_Element_and_Type,
+			Element   : this,
+			CheckType : AscCommon.changestype_Paragraph_Content
+		}))
+		return false;
+	
+	logicDocument.StartAction(AscDFH.historydescription_Document_ParagraphExtendToPos);
+	logicDocument.GetHistory().Set_Additional_ExtendDocumentToPos();
+	
+	if (this.extendLastLineToPos(x))
+	{
+		this.RemoveSelection();
+		this.MoveCursorToEndPos();
+		this.Document_SetThisElementCurrent(true);
+		logicDocument.Recalculate();
+	}
+	
+	logicDocument.FinalizeAction();
+	return true;
+};
 Paragraph.prototype.StopSelection = function()
 {
 	this.Selection.Start = false;
+};
+Paragraph.prototype.updateSelectionLineInfo = function()
+{
+	if (!this.IsSelectionUse())
+		return;
+	
+	let direction = this.GetSelectDirection();
+	
+	let leftPos  = direction > 0 ? this.getSelectionStartPos() : this.getSelectionEndPos();
+	let rightPos = direction > 0 ? this.getSelectionEndPos() : this.getSelectionStartPos();
+	
+	let leftInfo  = this.getLineInfoByPos(leftPos, 1);
+	let rightInfo = this.getLineInfoByPos(rightPos, -1);
+	
+	if (direction > 0)
+	{
+		this.Selection.StartLine  = leftInfo.Line;
+		this.Selection.StartRange = leftInfo.Range;
+		this.Selection.EndLine    = rightInfo.Line;
+		this.Selection.EndRange   = rightInfo.Range;
+	}
+	else
+	{
+		this.Selection.EndLine    = leftInfo.Line;
+		this.Selection.EndRange   = leftInfo.Range;
+		this.Selection.StartLine  = rightInfo.Line;
+		this.Selection.StartRange = rightInfo.Range;
+	}
 };
 Paragraph.prototype.CheckSmartSelection = function()
 {
@@ -8437,11 +8594,18 @@ Paragraph.prototype.CheckSmartParagraphSelection = function()
 	// TODO: Надо заменить на функции GetPrevVisibleElement/GetNextVisibleElement
 	//       потому что MathEquation, в которой ничего не заполнено, ничего и не возвращает
 	//       хотя сама по себе уже является визуальным объектом
-	if (this.GetPrevRunElement(startPos))
+	
+	let runElements = new CParagraphRunElements(startPos, 1, null, true);
+	runElements.SetSkipMath(false);
+	this.GetPrevRunElements(runElements);
+	if (runElements.GetElements().length)
 		return;
 	
-	let nextElement = this.GetNextRunElement(endPos);
-	if (nextElement && !nextElement.IsParaEnd())
+	runElements = new CParagraphRunElements(endPos, 1, null, true)
+	runElements.SetSkipMath(false);
+	this.GetNextRunElements(runElements);
+	let nextElements = runElements.GetElements();
+	if (nextElements.length && !nextElements[0].IsParaEnd())
 		return;
 	
 	endPos = this.GetEndPos(true);
@@ -8478,22 +8642,52 @@ Paragraph.prototype.RemoveSelection = function()
 	this.Selection.StartPos = 0;
 	this.Selection.EndPos   = 0;
 };
-Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
+(function()
+{
+	function drawSelectionOnPage(drawingDocument, clipInfo, page, x, y, w, h, draw2)
+	{
+		if (clipInfo)
+		{
+			let x0 = clipInfo.correctX0(x);
+			let x1 = clipInfo.correctX1(x + w)
+			let y0 = clipInfo.correctY0(y);
+			let y1 = clipInfo.correctY1(y + h);
+			x      = x0;
+			w      = Math.max(0, x1 - x0)
+			y      = y0;
+			h      = Math.max(0, y1 - y0);
+		}
+		
+		if (w < 0.001 || h < 0.001)
+			return;
+		
+		if (draw2)
+			drawingDocument.AddPageSelection2(page, x, y, w, h);
+		else
+			drawingDocument.AddPageSelection(page, x, y, w, h);
+	}
+	AscWord.drawSelectionOnPage = drawSelectionOnPage;
+})();
+Paragraph.prototype.DrawSelectionOnPage = function(CurPage, clipInfo)
 {
 	if (!this.IsRecalculated())
 		return;
-
+	
 	if (true !== this.Selection.Use)
 		return;
-
+	
+	let drawingDocument = this.getDrawingDocument();
+	if (!drawingDocument)
+		return;
+	
 	if (CurPage < 0 || CurPage >= this.Pages.length)
 		return;
 
-	var PageAbs = this.private_GetAbsolutePageIndex(CurPage);
+	var PageAbs = this.GetAbsolutePage(CurPage);
 
 	if (0 === CurPage && this.Pages[0].EndLine < 0)
 		return;
-
+	
 	var oLogicDocument = this.GetLogicDocument();
 	var isFillingForm  = oLogicDocument ? oLogicDocument.IsFillingFormMode() : false;
 
@@ -8518,7 +8712,7 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 				StartPos = this.Selection.EndPos;
 				EndPos   = this.Selection.StartPos;
 			}
-
+			
 			var _StartLine = this.Pages[CurPage].StartLine;
 			var _EndLine   = this.Pages[CurPage].EndLine;
 
@@ -8527,85 +8721,85 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 			else
 			{
 				StartPos = Math.max(StartPos, this.Lines[_StartLine].Get_StartPos());
-				EndPos   = Math.min(EndPos, ( _EndLine != this.Lines.length - 1 ? this.Lines[_EndLine].Get_EndPos() : this.Content.length - 1 ));
+				EndPos   = Math.min(EndPos, ( _EndLine !== this.Lines.length - 1 ? this.Lines[_EndLine].Get_EndPos() : this.Content.length - 1 ));
 			}
-
-			var DrawSelection = new CParagraphDrawSelectionRange();
-
-			var bInline = this.Is_Inline();
-
-			for (var CurLine = _StartLine; CurLine <= _EndLine; CurLine++)
+			
+			let selectionStart = StartPos;
+			let selectionEnd   = EndPos;
+			
+			let isInline = this.IsInline();
+			
+			let drawSelectionState = new AscWord.ParagraphDrawSelectionState(this);
+			drawSelectionState.resetPage(CurPage);
+			for (let iLine = _StartLine; iLine <= _EndLine; ++iLine)
 			{
-				var Line        = this.Lines[CurLine];
-				var RangesCount = Line.Ranges.length;
-
-				// Определяем позицию и высоту строки
-				DrawSelection.StartY = this.Pages[CurPage].Y + this.Lines[CurLine].Top;
-				DrawSelection.H      = this.Lines[CurLine].Bottom - this.Lines[CurLine].Top;
-
-				for (var CurRange = 0; CurRange < RangesCount; CurRange++)
+				let line = this.Lines[iLine];
+				drawSelectionState.resetLine(iLine);
+				
+				for (let iRange = 0, rangeCount = line.Ranges.length; iRange < rangeCount; ++iRange)
 				{
-					var Range = Line.Ranges[CurRange];
-
-					var RStartPos = Range.StartPos;
-					var REndPos   = Range.EndPos;
-
+					let range = line.Ranges[iRange];
+					
+					let rangeStart = range.StartPos;
+					let rangeEnd   = range.EndPos;
+					
 					// Если пересечение пустое с селектом, тогда пропускаем данный отрезок
-					if (StartPos > REndPos || EndPos < RStartPos)
+					if (selectionStart > rangeEnd || selectionEnd < rangeStart)
 						continue;
-
-					DrawSelection.StartX    = this.Lines[CurLine].Ranges[CurRange].XVisible;
-					DrawSelection.W         = 0;
-					DrawSelection.FindStart = true;
-
-					if (CurLine === this.Numbering.Line && CurRange === this.Numbering.Range)
-						DrawSelection.StartX += this.Numbering.WidthVisible;
-
-					for (var CurPos = RStartPos; CurPos <= REndPos; CurPos++)
+					
+					drawSelectionState.beginRange(iRange);
+					
+					for (let pos = rangeStart; pos <= rangeEnd; ++pos)
 					{
-						var Item = this.Content[CurPos];
-						Item.Selection_DrawRange(CurLine, CurRange, DrawSelection);
+						this.Content[pos].drawSelectionInRange(iLine, iRange, drawSelectionState);
 					}
-
-					var StartX = DrawSelection.StartX;
-					var W      = DrawSelection.W;
-
-					var StartY = DrawSelection.StartY;
-					var H      = DrawSelection.H;
-
-					if (true !== bInline && this.CalculatedFrame)
+					
+					drawSelectionState.endRange();
+					
+					let anchored = drawSelectionState.getAnchoredObjects();
+					for (let index = 0; index < anchored.length; ++index)
 					{
-						var Frame_X_min = this.CalculatedFrame.L2;
-						var Frame_Y_min = this.CalculatedFrame.T2;
-						var Frame_X_max = this.CalculatedFrame.L2 + this.CalculatedFrame.W2;
-						var Frame_Y_max = this.CalculatedFrame.T2 + this.CalculatedFrame.H2;
-
-						StartX = Math.min(Math.max(Frame_X_min, StartX), Frame_X_max);
-						StartY = Math.min(Math.max(Frame_Y_min, StartY), Frame_Y_max);
-						W      = Math.min(W, Frame_X_max - StartX);
-						H      = Math.min(H, Frame_Y_max - StartY);
+						anchored[index].Draw_Selection();
 					}
-
-					if (oFillingCC)
+					
+					let selectionRanges = drawSelectionState.getSelectionRanges();
+					for (let iSel = 0; iSel < selectionRanges.length; ++iSel)
 					{
-						var arrRects = oFillingCC.IntersectWithRect(StartX, StartY, W, H, PageAbs);
-
-						for (var nIndex = 0, nCount = arrRects.length; nIndex < nCount; ++nIndex)
+						let _x = selectionRanges[iSel].x;
+						let _w = selectionRanges[iSel].w;
+						let _y = selectionRanges[iSel].y;
+						let _h = selectionRanges[iSel].h;
+						
+						if (!isInline && this.CalculatedFrame)
 						{
-							var oRect = arrRects[nIndex];
-
-							if (oRect.W > 0.001 && oRect.H > 0.001)
-								this.DrawingDocument.AddPageSelection(PageAbs, oRect.X, oRect.Y, oRect.W, oRect.H);
+							var Frame_X_min = this.CalculatedFrame.L2;
+							var Frame_Y_min = this.CalculatedFrame.T2;
+							var Frame_X_max = this.CalculatedFrame.L2 + this.CalculatedFrame.W2;
+							var Frame_Y_max = this.CalculatedFrame.T2 + this.CalculatedFrame.H2;
+							
+							_x = Math.min(Math.max(Frame_X_min, _x), Frame_X_max);
+							_y = Math.min(Math.max(Frame_Y_min, _y), Frame_Y_max);
+							_w = Math.min(_w, Frame_X_max - _x);
+							_h = Math.min(_h, Frame_Y_max - _y);
 						}
-					}
-					else
-					{
-						if (W > 0.001)
-							this.DrawingDocument.AddPageSelection(PageAbs, StartX, StartY, W, H);
+						
+						if (oFillingCC)
+						{
+							var arrRects = oFillingCC.IntersectWithRect(_x, _y, _w, _h, PageAbs);
+							for (var nIndex = 0, nCount = arrRects.length; nIndex < nCount; ++nIndex)
+							{
+								var oRect = arrRects[nIndex];
+								
+								AscWord.drawSelectionOnPage(drawingDocument, clipInfo, PageAbs, oRect.X, oRect.Y, oRect.W, oRect.H);
+							}
+						}
+						else
+						{
+							AscWord.drawSelectionOnPage(drawingDocument, clipInfo, PageAbs, _x, _y, _w, _h);
+						}
 					}
 				}
 			}
-
 			break;
 		}
 		case selectionflag_Numbering:
@@ -8627,43 +8821,69 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 			var SelectX = this.Lines[CurLine].Ranges[CurRange].XVisible;
 			var SelectW = ParaNum.WidthVisible;
 			var SelectH = this.Lines[CurLine].Bottom - this.Lines[CurLine].Top;
+			
+			let SelectX2 = SelectX;
+			let SelectW2 = ParaNum.WidthNum;
 
-			var SelectW2 = SelectW;
-
-			var oNumPr = this.GetNumPr();
-			if (!oNumPr)
+			let numLvl    = null;
+			let numPr     = this.GetNumPr();
+			let prevNumPr = this.GetPrChangeNumPr();
+			if (numPr)
+				numLvl = this.Parent.GetNumbering().GetNum(numPr.NumId).GetLvl(numPr.Lvl);
+			else if (prevNumPr)
+				numLvl = this.Parent.GetNumbering().GetNum(prevNumPr.NumId).GetLvl(undefined !== prevNumPr.Lvl && null !== prevNumPr.Lvl ? prevNumPr.Lvl : 0);
+			
+			if (!numLvl)
 				break;
-
-			var nNumJc = this.Parent.GetNumbering().GetNum(oNumPr.NumId).GetLvl(oNumPr.Lvl).GetJc();
-
-			switch (nNumJc)
+			
+			let numJc = numLvl.GetJc();
+			
+			if (this.isRtlDirection())
 			{
-				case align_Center:
+				let xEnd = this.Lines[CurLine].Ranges[CurRange].XEndVisible;
+				SelectX = xEnd - ParaNum.WidthVisible;
+				if (AscCommon.align_Center === numJc)
 				{
-					SelectX = this.Lines[CurLine].Ranges[CurRange].XVisible - ParaNum.WidthNum / 2;
-					SelectW = ParaNum.WidthVisible + ParaNum.WidthNum / 2;
-					break;
+					SelectW  = ParaNum.WidthVisible + ParaNum.WidthNum / 2;
+					SelectX2 = xEnd - ParaNum.WidthNum / 2;
 				}
-				case align_Right:
+				else if (AscCommon.align_Right === numJc)
 				{
-					SelectX = this.Lines[CurLine].Ranges[CurRange].XVisible - ParaNum.WidthNum;
-					SelectW = ParaNum.WidthVisible + ParaNum.WidthNum;
-					break;
+					SelectW  = ParaNum.WidthVisible + ParaNum.WidthNum;
+					SelectX2 = xEnd;
 				}
-				case align_Left:
-				default:
+				else // if (AscCommon.align_Left === numJc)
 				{
-					SelectX = this.Lines[CurLine].Ranges[CurRange].XVisible;
-					SelectW = ParaNum.WidthVisible;
-					break;
+					SelectW  = ParaNum.WidthVisible;
+					SelectX2 = xEnd - ParaNum.WidthNum;
 				}
 			}
-
-			this.DrawingDocument.AddPageSelection(PageAbs, SelectX, SelectY, SelectW, SelectH);
-
-			if (selectionflag_NumberingCur === this.Selection.Flag && this.DrawingDocument.AddPageSelection2)
-				this.DrawingDocument.AddPageSelection2(PageAbs, SelectX, SelectY, SelectW2, SelectH);
-
+			else
+			{
+				let xStart = this.Lines[CurLine].Ranges[CurRange].XVisible;
+				if (AscCommon.align_Center === numJc)
+				{
+					SelectX = xStart - ParaNum.WidthNum / 2;
+					SelectW = ParaNum.WidthVisible + ParaNum.WidthNum / 2;
+				}
+				else if (AscCommon.align_Right === numJc)
+				{
+					SelectX = xStart - ParaNum.WidthNum;
+					SelectW = ParaNum.WidthVisible + ParaNum.WidthNum;
+				}
+				else // if (AscCommon.align_Left === numJc)
+				{
+					SelectX = xStart;
+					SelectW = ParaNum.WidthVisible;
+				}
+				SelectX2 = SelectX;
+			}
+			
+			AscWord.drawSelectionOnPage(drawingDocument, clipInfo, PageAbs, SelectX, SelectY, SelectW, SelectH);
+			
+			if (selectionflag_NumberingCur === this.Selection.Flag && drawingDocument.AddPageSelection2)
+				AscWord.drawSelectionOnPage(drawingDocument, clipInfo, PageAbs, SelectX2, SelectY, SelectW2, SelectH, true);
+			
 			break;
 		}
 	}
@@ -8721,13 +8941,10 @@ Paragraph.prototype.CheckPosInSelection = function(X, Y, CurPage, NearPos)
 		if (CurPage < 0 || CurPage >= this.Pages.length || true != this.Selection.Use)
 			return false;
 
-		var SearchPosXY = this.Get_ParaContentPosByXY(X, Y, CurPage, false, true, false);
-
-		if (true === SearchPosXY.InTextX)
-		{
-			return this.Selection_CheckParaContentPos(SearchPosXY.InTextPos);
-		}
-
+		let searchPosXY = this.getSearchPosByXY(X, Y, CurPage, false, true, false);
+		if (searchPosXY.isInTextByX())
+			return this.Selection_CheckParaContentPos(searchPosXY.getInTextPos());
+		
 		return false;
 	}
 };
@@ -8816,9 +9033,9 @@ Paragraph.prototype.Selection_SelectNumbering = function()
 		this.Selection.Flag = selectionflag_Numbering;
 	}
 };
-Paragraph.prototype.SelectNumbering = function(isCurrent)
+Paragraph.prototype.SelectNumbering = function(isCurrent, isForce)
 {
-	if (this.HaveNumbering())
+	if (this.HaveNumbering() || isForce)
 	{
 		this.Selection.Use  = true;
 		this.Selection.Flag = isCurrent ? selectionflag_NumberingCur : selectionflag_Numbering;
@@ -8856,28 +9073,33 @@ Paragraph.prototype.SetSelectionToBeginEnd = function(isSelectionStart, isElemen
 {
 	this.Selection_SetBegEnd(isSelectionStart, isElementStart);
 };
-Paragraph.prototype.SelectAll = function(Direction)
+/**
+ * @param direction {AscWord.Direction}
+ */
+Paragraph.prototype.SelectAll = function(direction)
 {
 	this.Selection.Use = true;
-
-	var StartPos = null, EndPos = null;
-	if (-1 === Direction)
+	
+	let startPos, endPos, curPos;
+	if (AscWord.Direction.BACKWARD === direction)
 	{
-		StartPos = this.Get_EndPos(true);
-		EndPos   = this.Get_StartPos();
+		startPos = this.Get_EndPos(true);
+		endPos   = this.Get_StartPos();
+		curPos   = endPos;
 	}
 	else
 	{
-		StartPos = this.Get_StartPos();
-		EndPos   = this.Get_EndPos(true);
+		startPos = this.Get_StartPos();
+		endPos   = this.Get_EndPos(true);
+		curPos   = this.Get_EndPos(false);
 	}
-
+	
 	this.Selection.StartManually  = false;
 	this.Selection.EndManually    = false;
 	this.Selection.StartBehindEnd = false;
 	
-	this.Set_ParaContentPos(EndPos, true, -1, -1);
-	this.Set_SelectionContentPos(StartPos, EndPos);
+	this.Set_ParaContentPos(curPos, true, -1, -1);
+	this.Set_SelectionContentPos(startPos, endPos);
 };
 Paragraph.prototype.Select_Math = function(ParaMath)
 {
@@ -8908,8 +9130,6 @@ Paragraph.prototype.GetSelectionBounds = function()
 			Direction : 1
 		};
 	}
-
-	var X0 = this.X, X1 = this.XLimit, Y = this.Y;
 
 	var BeginRect = null;
 	var EndRect   = null;
@@ -8943,78 +9163,68 @@ Paragraph.prototype.GetSelectionBounds = function()
 		StartLine = Math.min(Math.max(0, StartLine), LinesCount - 1);
 		EndLine   = Math.min(Math.max(0, EndLine), LinesCount - 1);
 
-		StartPage = this.GetPageByLine(StartLine);
-		EndPage   = this.GetPageByLine(EndLine);
+		StartPage = this.getPageByLine(StartLine);
+		EndPage   = this.getPageByLine(EndLine);
 
-		var PagesCount     = this.Pages.length;
 		var DrawSelection  = new CParagraphDrawSelectionRange();
 		DrawSelection.Draw = false;
-
-		for (var CurLine = StartLine; CurLine <= EndLine; CurLine++)
+		
+		let drawSelectionState = new AscWord.ParagraphDrawSelectionState(this);
+		for (let iLine = StartLine; iLine <= EndLine; ++iLine)
 		{
-			var Line        = this.Lines[CurLine];
-			var RangesCount = Line.Ranges.length;
+			let paraLine = this.Lines[iLine];
 
-			var CurPage = this.GetPageByLine(CurLine);
-
-			// Определяем позицию и высоту строки
-			DrawSelection.StartY = this.Pages[CurPage].Y + this.Lines[CurLine].Top;
-			DrawSelection.H      = this.Lines[CurLine].Bottom - this.Lines[CurLine].Top;
-
-			var Result = null;
-
-			for (var CurRange = 0; CurRange < RangesCount; CurRange++)
+			let iPage   = this.getPageByLine(iLine);
+			let absPage = this.GetAbsolutePage(iPage);
+			drawSelectionState.resetPage(iPage);
+			drawSelectionState.resetLine(iLine);
+			for (let iRange = 0, rangeCount = paraLine.Ranges.length; iRange < rangeCount; ++iRange)
 			{
-				var Range = Line.Ranges[CurRange];
+				let range = paraLine.Ranges[iRange];
 
-				var RStartPos = Range.StartPos;
-				var REndPos   = Range.EndPos;
-
-				// Если пересечение пустое с селектом, тогда пропускаем данный отрезок
-				if (StartPos > REndPos || EndPos < RStartPos)
+				let rangeStart = range.StartPos;
+				let rangeEnd   = range.EndPos;
+				
+				if (StartPos > rangeEnd || EndPos < rangeStart)
 					continue;
-
-				DrawSelection.StartX    = this.Lines[CurLine].Ranges[CurRange].XVisible;
-				DrawSelection.W         = 0;
-				DrawSelection.FindStart = true;
-
-				if (CurLine === this.Numbering.Line && CurRange === this.Numbering.Range)
-					DrawSelection.StartX += this.Numbering.WidthVisible;
-
-				for (var CurPos = RStartPos; CurPos <= REndPos; CurPos++)
+				
+				drawSelectionState.beginRange(iRange);
+				for (var CurPos = rangeStart; CurPos <= rangeEnd; CurPos++)
 				{
 					var Item = this.Content[CurPos];
-					Item.Selection_DrawRange(CurLine, CurRange, DrawSelection);
+					Item.drawSelectionInRange(iLine, iRange, drawSelectionState);
 				}
-
-				var StartX = DrawSelection.StartX;
-				var W      = DrawSelection.W;
-
-				var StartY = DrawSelection.StartY;
-				var H      = DrawSelection.H;
-
-				if (W > 0.001)
+				drawSelectionState.endRange();
+				
+				if (!BeginRect)
 				{
-					X0 = StartX;
-					X1 = StartX + W;
-					Y  = StartY;
-
-					var Page = this.Get_AbsolutePage(CurPage);
-
-					if (null === BeginRect)
-						BeginRect = {X : StartX, Y : StartY, W : W, H : H, Page : Page};
-
-					EndRect = {X : StartX, Y : StartY, W : W, H : H, Page : Page};
+					let beginInfo = drawSelectionState.getBeginInfo();
+					if (beginInfo)
+					{
+						BeginRect = {
+							X    : beginInfo.x,
+							Y    : beginInfo.y,
+							W    : beginInfo.w,
+							H    : beginInfo.h,
+							Page : absPage
+						}
+					}
 				}
-
-				if (null === _StartX)
+				
+				let endInfo = drawSelectionState.getEndInfo();
+				if (endInfo)
 				{
-					_StartX = StartX;
-					_StartY = StartY;
+					EndRect = {
+						X    : endInfo.x,
+						Y    : endInfo.y,
+						W    : endInfo.w,
+						H    : endInfo.h,
+						Page : absPage
+					};
+					
+					_EndX = endInfo.x;
+					_EndY = endInfo.y;
 				}
-
-				_EndX = StartX;
-				_EndY = StartY;
 			}
 		}
 	}
@@ -9031,24 +9241,32 @@ Paragraph.prototype.GetSelectionBounds = function()
 	}
 
 	if (null === BeginRect)
+	{
 		BeginRect = {
 			X    : _StartX === null ? this.Pages[StartPage].X : _StartX,
 			Y    : _StartY === null ? this.Pages[StartPage].Y : _StartY,
 			W    : 0,
 			H    : 0,
-			Page : this.Get_AbsolutePage(StartPage)
+			Page : this.GetAbsolutePage(StartPage)
 		};
+	}
 
 	if (null === EndRect)
+	{
 		EndRect = {
 			X    : _EndX === null ? this.Pages[StartPage].X : _EndX,
 			Y    : _EndY === null ? this.Pages[StartPage].Y : _EndY,
 			W    : 0,
 			H    : 0,
-			Page : this.Get_AbsolutePage(EndPage)
+			Page : this.GetAbsolutePage(EndPage)
 		};
-
-	return {Start : BeginRect, End : EndRect, Direction : this.GetSelectDirection()};
+	}
+	
+	return {
+		Start     : BeginRect,
+		End       : EndRect,
+		Direction : this.GetSelectDirection()
+	};
 };
 Paragraph.prototype.GetSelectDirection = function()
 {
@@ -9064,14 +9282,13 @@ Paragraph.prototype.GetSelectDirection = function()
 };
 Paragraph.prototype.GetSelectionAnchorPos = function()
 {
-	var X0 = this.X, X1 = this.XLimit, Y = this.Y, Page = this.Get_AbsolutePage(0);
+	var X0 = this.X, X1 = this.XLimit, Y = this.Y, Page = this.GetAbsolutePage(0);
 	if (true === this.ApplyToAll)
 	{
 		// Ничего не делаем
 	}
 	else if (true === this.Selection.Use)
 	{
-		// Делаем подсветку
 		var StartPos = this.Selection.StartPos;
 		var EndPos   = this.Selection.EndPos;
 
@@ -9097,81 +9314,57 @@ Paragraph.prototype.GetSelectionAnchorPos = function()
 		StartLine = Math.min(Math.max(0, StartLine), LinesCount - 1);
 		EndLine   = Math.min(Math.max(0, EndLine), LinesCount - 1);
 
-		var PagesCount     = this.Pages.length;
-		var DrawSelection  = new CParagraphDrawSelectionRange();
-		DrawSelection.Draw = false;
-
-		for (var CurLine = StartLine; CurLine <= EndLine; CurLine++)
+		let drawSelectionState = new AscWord.ParagraphDrawSelectionState(this);
+		for (let iLine = StartLine; iLine <= EndLine; ++iLine)
 		{
-			var Line        = this.Lines[CurLine];
-			var RangesCount = Line.Ranges.length;
-
-			// Определим номер страницы
-			var CurPage = 0;
-			for (; CurPage < PagesCount; CurPage++)
-			{
-				if (CurLine >= this.Pages[CurPage].StartLine && CurLine <= this.Pages[CurPage].EndLine)
-					break;
-			}
-
-			CurPage = Math.min(PagesCount - 1, CurPage);
-
-			// Определяем позицию и высоту строки
-			DrawSelection.StartY = this.Pages[CurPage].Y + this.Lines[CurLine].Top;
-			DrawSelection.H      = this.Lines[CurLine].Bottom - this.Lines[CurLine].Top;
-
+			let paraLine = this.Lines[iLine];
+			
+			let iPage = this.getPageByLine(iLine);
+			drawSelectionState.resetPage(iPage);
+			drawSelectionState.resetLine(iLine);
+			
 			var Result = null;
-
-			for (var CurRange = 0; CurRange < RangesCount; CurRange++)
+			for (let iRange = 0, rangeCount = paraLine.Ranges.length; iRange < rangeCount; ++iRange)
 			{
-				var Range = Line.Ranges[CurRange];
+				let range = paraLine.Ranges[iRange];
 
-				var RStartPos = Range.StartPos;
-				var REndPos   = Range.EndPos;
+				var RStartPos = range.StartPos;
+				var REndPos   = range.EndPos;
 
 				// Если пересечение пустое с селектом, тогда пропускаем данный отрезок
 				if (StartPos > REndPos || EndPos < RStartPos)
 					continue;
 
-				DrawSelection.StartX    = this.Lines[CurLine].Ranges[CurRange].XVisible;
-				DrawSelection.W         = 0;
-				DrawSelection.FindStart = true;
-
-				if (CurLine === this.Numbering.Line && CurRange === this.Numbering.Range)
-					DrawSelection.StartX += this.Numbering.WidthVisible;
-
+				drawSelectionState.beginRange(iRange);
 				for (var CurPos = RStartPos; CurPos <= REndPos; CurPos++)
 				{
 					var Item = this.Content[CurPos];
-					Item.Selection_DrawRange(CurLine, CurRange, DrawSelection);
+					Item.drawSelectionInRange(iLine, iRange, drawSelectionState);
 				}
-
-				var StartX = DrawSelection.StartX;
-				var W      = DrawSelection.W;
-
-				var StartY = DrawSelection.StartY;
-				var H      = DrawSelection.H;
-
-				var StartX = DrawSelection.StartX;
-				var W      = DrawSelection.W;
-
-				var StartY = DrawSelection.StartY;
-				var H      = DrawSelection.H;
-
-				if (W > 0.001)
+				drawSelectionState.endRange();
+				
+				let selectionRanges = drawSelectionState.getSelectionRanges();
+				for (let iSel = 0; iSel < selectionRanges.length; ++iSel)
 				{
-					X0 = StartX;
-					X1 = StartX + W;
-					Y  = StartY;
-
-					Page = this.Get_AbsolutePage(CurPage);
-
-					if (null === Result)
-						Result = {X0 : X0, X1 : X1, Y : Y, Page : Page};
-					else
+					let _x = selectionRanges[iSel].x;
+					let _w = selectionRanges[iSel].w;
+					let _y = selectionRanges[iSel].y;
+					
+					if (_w > 0.001)
 					{
-						Result.X0 = Math.min(Result.X0, X0);
-						Result.X1 = Math.max(Result.X1, X1);
+						X0 = _x;
+						X1 = _x + _w;
+						Y  = _y;
+						
+						Page = this.GetAbsolutePage(iPage);
+						
+						if (null === Result)
+							Result = {X0 : X0, X1 : X1, Y : Y, Page : Page};
+						else
+						{
+							Result.X0 = Math.min(Result.X0, X0);
+							Result.X1 = Math.max(Result.X1, X1);
+						}
 					}
 				}
 			}
@@ -9188,7 +9381,7 @@ Paragraph.prototype.GetSelectionAnchorPos = function()
 		X0   = this.CurPos.X;
 		X1   = this.CurPos.X;
 		Y    = this.CurPos.Y;
-		Page = this.Get_AbsolutePage(this.CurPos.PagesPos);
+		Page = this.GetAbsolutePage(this.CurPos.PagesPos);
 	}
 
 	return {X0 : X0, X1 : X1, Y : Y, Page : Page};
@@ -9204,15 +9397,7 @@ Paragraph.prototype.GetSelectedText = function(bClearText, oPr)
 	{
 		var oNumPr = this.GetNumPr();
 		if (oNumPr && oNumPr.IsValid() && this.IsSelectionFromStart(false))
-		{
-			Str += this.GetNumberingText(false);
-
-			var nSuff = this.Parent.GetNumbering().GetNum(oNumPr.NumId).GetLvl(oNumPr.Lvl).GetSuff();
-			if (Asc.c_oAscNumberingSuff.Tab === nSuff)
-				Str += "	";
-			else if (Asc.c_oAscNumberingSuff.Space === nSuff)
-				Str += " ";
-		}
+			Str += this.GetNumberingTextWithSuffix();
 	}
 
 	var Count = this.Content.length;
@@ -9230,6 +9415,9 @@ Paragraph.prototype.GetSelectedText = function(bClearText, oPr)
 };
 Paragraph.prototype.GetSelectedElementsInfo = function(oInfo, ContentPos, Depth)
 {
+	if (!oInfo)
+		oInfo = new CSelectedElementsInfo();
+		
 	oInfo.SetParagraph(this);
 
 	if (ContentPos)
@@ -9289,11 +9477,13 @@ Paragraph.prototype.GetSelectedElementsInfo = function(oInfo, ContentPos, Depth)
 	var arrComplexFields = this.GetComplexFieldsByPos(ContentPos ? ContentPos : (this.Selection.Use === true ? this.Get_ParaContentPos(false, false) : this.Get_ParaContentPos(false)), false);
 	if (arrComplexFields.length > 0)
 		oInfo.SetComplexFields(arrComplexFields);
+	
+	return oInfo;
 };
 Paragraph.prototype.GetElementsInfoByXY = function(oInfo, X, Y, CurPage)
 {
-	var SearchPosXY = this.Get_ParaContentPosByXY(X, Y, CurPage, false, false);
-	this.GetSelectedElementsInfo(oInfo, SearchPosXY.Pos, 0);
+	let searchPosXY = this.getSearchPosByXY(X, Y, CurPage, false, false);
+	this.GetSelectedElementsInfo(oInfo, searchPosXY.getPos(), 0);
 };
 Paragraph.prototype.GetSelectedContent = function(oSelectedContent)
 {
@@ -9313,7 +9503,7 @@ Paragraph.prototype.GetSelectedContent = function(oSelectedContent)
 	var oPara = null;
 	if (oSelectedContent.IsTrackRevisions())
 	{
-		oPara = new Paragraph(this.DrawingDocument, this.Parent, !this.bFromDocument);
+		oPara = new AscWord.Paragraph(this.Parent, !this.bFromDocument);
 		oPara.Set_Pr(this.Pr.Copy());
 		oPara.TextPr.Set_Value(this.TextPr.Value.Copy());
 
@@ -9342,7 +9532,7 @@ Paragraph.prototype.GetSelectedContent = function(oSelectedContent)
 		}
 		else
 		{
-			oPara = new Paragraph(this.DrawingDocument, this.Parent, !this.bFromDocument);
+			oPara = new AscWord.Paragraph(this.Parent, !this.bFromDocument);
 
 			// Копируем настройки
 			oPara.Set_Pr(this.Pr.Copy(true));
@@ -9378,7 +9568,7 @@ Paragraph.prototype.GetSelectedContent = function(oSelectedContent)
 			// Добавляем секцию в конце
 			if (undefined !== this.SectPr)
 			{
-				var SectPr = new CSectionPr(this.SectPr.LogicDocument);
+				var SectPr = new AscWord.SectPr(this.SectPr.LogicDocument);
 				SectPr.Copy(this.SectPr);
 				oPara.Set_SectionPr(SectPr);
 			}
@@ -9404,8 +9594,17 @@ Paragraph.prototype.GetSelectedContent = function(oSelectedContent)
 };
 Paragraph.prototype.CheckHitInParaEnd = function(X, Y, CurPage)
 {
-	var oContentPos = this.Get_ParaContentPosByXY(X, Y, CurPage, false, true).InTextPos;
+	var oContentPos = this.getSearchPosByXY(X, Y, CurPage, false, true).getInTextPos();
 	return (oContentPos.Get(0) === (this.Content.length - 1));
+};
+Paragraph.prototype.GetRunElementByXY = function(x, y, curPage)
+{
+	let searchPos = this.getSearchPosByXY(x, y, curPage, false, true);
+	if (!searchPos.isInText())
+		return null;
+	
+	let contentPos = searchPos.getInTextPos();
+	return this.Get_RunElementByPos(contentPos);
 };
 /**
  * Задаем сохраненное значение нумерации для данного параграфа (используется при печати выделенного фрагмента)
@@ -9573,7 +9772,8 @@ Paragraph.prototype.GetCalculatedParaPr = function()
  */
 Paragraph.prototype.Is_Empty = function(Props)
 {
-	var Pr = {SkipEnd : true};
+	let Pr = Props ? Props : {};
+	Pr.SkipEnd = true;
 
 	if (undefined !== Props)
 	{
@@ -9604,8 +9804,8 @@ Paragraph.prototype.IsInText = function(X, Y, CurPage)
 	if (CurPage < 0 || CurPage >= this.Pages.length)
 		return null;
 
-	var SearchPosXY = this.Get_ParaContentPosByXY(X, Y, CurPage, false, true);
-	if (true === SearchPosXY.InText)
+	let searchPosXY = this.getSearchPosByXY(X, Y, CurPage, false, true);
+	if (true === searchPosXY.isInText())
 		return this;
 
 	return null;
@@ -9747,8 +9947,9 @@ Paragraph.prototype.Remove_StartTabs = function(TabsCounter)
  * Применяем заданную нумерацию к данному параграфу (учитываем отступы, количество табов в начале параграфа и т.д.)
  * @param sNumId {string}
  * @param nLvl {number} 0..8
+ * @param checkIndents {boolean} - Подбирать ли уровень по отступам
  */
-Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
+Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl, checkIndents)
 {
 	var ParaPr    = this.Get_CompiledPr2(false).ParaPr;
 	var NumPr_old = this.GetNumPr();
@@ -9816,7 +10017,7 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
 	// Если у параграфа не было никакой нумерации изначально
 	if (undefined === NumPr_old)
 	{
-		if (true === SelectedOneElement || false === SelectionUse)
+		if ((true === SelectedOneElement || false === SelectionUse) && undefined !== nLvl && null !== nLvl)
 		{
 			// Проверим сначала предыдущий элемент, если у него точно такая же нумерация, тогда копируем его сдвиги
 			var Prev          = this.Get_DocumentPrev();
@@ -9825,8 +10026,8 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
 			{
 				var NewFirstLine = Prev.Pr.Ind.FirstLine;
 				var NewLeft      = Prev.Pr.Ind.Left;
-				History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, NewFirstLine));
-				History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, NewLeft));
+				AscCommon.History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, NewFirstLine));
+				AscCommon.History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, NewLeft));
 
 				// При добавлении списка в параграф, удаляем все собственные сдвиги
 				this.Pr.Ind.FirstLine = NewFirstLine;
@@ -9842,8 +10043,8 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
 					oNum.ShiftLeftInd(X + 12.5);
 					//oNum.ShiftLeftInd(X + oNumParaPr.Ind.Left);
 
-					History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, undefined));
-					History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, undefined));
+					AscCommon.History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, undefined));
+					AscCommon.History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, undefined));
 
 					// При добавлении списка в параграф, удаляем все собственные сдвиги
 					this.Pr.Ind.FirstLine = undefined;
@@ -9851,9 +10052,8 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
 				}
 			}
 
-			this.Pr.NumPr = new CNumPr();
-			this.Pr.NumPr.Set(sNumId, nLvl);
-			History.Add(new CChangesParagraphNumbering(this, NumPr_old, this.Pr.NumPr));
+			this.Pr.NumPr = new AscWord.NumPr(sNumId, nLvl);
+			AscCommon.History.Add(new CChangesParagraphNumbering(this, NumPr_old, this.Pr.NumPr));
 			this.private_RefreshNumbering(NumPr_old);
 			this.private_RefreshNumbering(this.Pr.NumPr);
 		}
@@ -9862,37 +10062,42 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
 			// Если выделено несколько параграфов, тогда уже по сдвигу X определяем уровень данной нумерации
 
 			var LvlFound  = -1;
-			for (var LvlIndex = 0; LvlIndex < 9; ++LvlIndex)
+			if (false !== checkIndents)
 			{
-				var oNumLvl = oNum.GetLvl(LvlIndex);
-				if (oNumLvl)
+				for (var LvlIndex = 0; LvlIndex < 9; ++LvlIndex)
 				{
-					var oNumParaPr = oNumLvl.GetParaPr();
-
-					if (undefined != oNumParaPr.Ind && undefined != oNumParaPr.Ind.Left && X <= oNumParaPr.Ind.Left)
+					var oNumLvl = oNum.GetLvl(LvlIndex);
+					if (oNumLvl)
 					{
-						LvlFound = LvlIndex;
-						break;
+						var oNumParaPr = oNumLvl.GetParaPr();
+						
+						if (undefined != oNumParaPr.Ind && undefined != oNumParaPr.Ind.Left && X <= oNumParaPr.Ind.Left)
+						{
+							LvlFound = LvlIndex;
+							break;
+						}
 					}
 				}
+				if (-1 === LvlFound)
+					LvlFound = 0;
 			}
-
-			if (-1 === LvlFound)
-				LvlFound = 0;
-
+			else
+			{
+				LvlFound = undefined !== nLvl ? nLvl : 0;
+			}
+			
 			if (this.Pr.Ind && (undefined !== this.Pr.Ind || undefined !== this.Pr.Ind.Left))
 			{
-				History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, undefined));
-				History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, undefined));
+				AscCommon.History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, undefined));
+				AscCommon.History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, undefined));
 
 				// При добавлении списка в параграф, удаляем все собственные сдвиги
 				this.Pr.Ind.FirstLine = undefined;
 				this.Pr.Ind.Left      = undefined;
 			}
 
-			this.Pr.NumPr = new CNumPr();
-			this.Pr.NumPr.Set(sNumId, LvlFound);
-			History.Add(new CChangesParagraphNumbering(this, NumPr_old, this.Pr.NumPr));
+			this.Pr.NumPr = new AscWord.NumPr(sNumId, LvlFound);
+			AscCommon.History.Add(new CChangesParagraphNumbering(this, NumPr_old, this.Pr.NumPr));
 			this.private_RefreshNumbering(NumPr_old);
 			this.private_RefreshNumbering(this.Pr.NumPr);
 		}
@@ -9903,19 +10108,21 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
 	}
 	else
 	{
+		if (undefined === nLvl || null === nLvl)
+			nLvl = NumPr_old.Lvl;
+		
 		// просто меняем список, так чтобы он не двигался
-		this.Pr.NumPr = new CNumPr();
-		this.Pr.NumPr.Set(sNumId, nLvl);
+		this.Pr.NumPr = new AscWord.NumPr(sNumId, nLvl);
 
-		History.Add(new CChangesParagraphNumbering(this, NumPr_old, this.Pr.NumPr));
+		AscCommon.History.Add(new CChangesParagraphNumbering(this, NumPr_old, this.Pr.NumPr));
 		this.private_RefreshNumbering(NumPr_old);
 		this.private_RefreshNumbering(this.Pr.NumPr);
 
 		var Left      = ( NumPr_old.Lvl === nLvl ? undefined : ParaPr.Ind.Left );
 		var FirstLine = ( NumPr_old.Lvl === nLvl ? undefined : ParaPr.Ind.FirstLine );
 
-		History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, FirstLine));
-		History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, Left));
+		AscCommon.History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, FirstLine));
+		AscCommon.History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, Left));
 
 		this.Pr.Ind.FirstLine = FirstLine;
 		this.Pr.Ind.Left      = Left;
@@ -9947,7 +10154,7 @@ Paragraph.prototype.SetNumPr = function(sNumId, nLvl)
 		{
 			this.private_AddPrChange();
 
-			History.Add(new CChangesParagraphNumbering(this, this.Pr.NumPr, undefined));
+			AscCommon.History.Add(new CChangesParagraphNumbering(this, this.Pr.NumPr, undefined));
 			this.private_RefreshNumbering(this.Pr.NumPr);
 
 			this.Pr.NumPr = undefined;
@@ -9968,9 +10175,9 @@ Paragraph.prototype.SetNumPr = function(sNumId, nLvl)
 
 		this.private_AddPrChange();
 
-		var oNewNumPr = new CNumPr(sNumId, nLvl);
+		var oNewNumPr = new AscWord.NumPr(sNumId, nLvl);
 
-		History.Add(new CChangesParagraphNumbering(this, this.Pr.NumPr, oNewNumPr));
+		AscCommon.History.Add(new CChangesParagraphNumbering(this, this.Pr.NumPr, oNewNumPr));
 		this.private_RefreshNumbering(oNewNumPr);
 		this.private_RefreshNumbering(this.Pr.NumPr);
 
@@ -9998,7 +10205,7 @@ Paragraph.prototype.IndDecNumberingLevel = function(isIncrease)
 	
 	this.private_AddPrChange();
 	
-	let change = new CChangesParagraphNumbering(this, this.Pr.NumPr, new CNumPr(numPr.NumId, newLvl));
+	let change = new CChangesParagraphNumbering(this, this.Pr.NumPr, new AscWord.NumPr(numPr.NumId, newLvl));
 	AscCommon.History.Add(change);
 	change.Redo();
 	
@@ -10020,7 +10227,7 @@ Paragraph.prototype.IndDecNumberingLevel = function(isIncrease)
 };
 /**
  * Получаем настройку нумерации у данного параграфа, если она есть
- * @returns {?CNumPr}
+ * @returns {?AscWord.NumPr}
  */
 Paragraph.prototype.GetNumPr = function()
 {
@@ -10041,15 +10248,14 @@ Paragraph.prototype.RemoveNumPr = function()
 	var NewNumPr = undefined;
 	if (undefined != this.CompiledPr.Pr.ParaPr.StyleNumPr)
 	{
-		NewNumPr = new CNumPr();
-		NewNumPr.Set(0, 0);
+		NewNumPr = new AscWord.NumPr(0, 0);
 	}
 
 	this.private_AddPrChange();
 
 	var OldNumPr = undefined != this.Pr.NumPr ? this.Pr.NumPr : undefined;
 
-	History.Add(new CChangesParagraphNumbering(this, OldNumPr, NewNumPr));
+	AscCommon.History.Add(new CChangesParagraphNumbering(this, OldNumPr, NewNumPr));
 	this.private_RefreshNumbering(OldNumPr);
 	this.private_RefreshNumbering(NewNumPr);
 
@@ -10079,8 +10285,8 @@ Paragraph.prototype.RemoveNumPr = function()
 						var NewFirstLine = 0;
 						var NewLeft      = Left < 0 ? Left : Math.max(0, Left - NumLeftCorrection);
 
-						History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, NewLeft));
-						History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, NewFirstLine));
+						AscCommon.History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, NewLeft));
+						AscCommon.History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, NewFirstLine));
 						this.Pr.Ind.Left      = NewLeft;
 						this.Pr.Ind.FirstLine = NewFirstLine;
 					}
@@ -10089,13 +10295,13 @@ Paragraph.prototype.RemoveNumPr = function()
 		}
 		else if (this.Pr.Ind.FirstLine < 0)
 		{
-			History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, 0));
+			AscCommon.History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, 0));
 			this.Pr.Ind.FirstLine = 0;
 		}
 		else if (undefined != this.Pr.Ind.Left && this.Pr.Ind.FirstLine > 0)
 		{
-			History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, this.Pr.Ind.Left + this.Pr.Ind.FirstLine));
-			History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, 0));
+			AscCommon.History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, this.Pr.Ind.Left + this.Pr.Ind.FirstLine));
+			AscCommon.History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, 0));
 			this.Pr.Ind.Left += this.Pr.Ind.FirstLine;
 			this.Pr.Ind.FirstLine = 0;
 		}
@@ -10301,7 +10507,7 @@ Paragraph.prototype.Set_PresentationLevel = function(Level)
 	if (this.Pr.Lvl != Level)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphPresentationPrLevel(this, this.Pr.Lvl, Level));
+		AscCommon.History.Add(new CChangesParagraphPresentationPrLevel(this, this.Pr.Lvl, Level));
 		this.Pr.Lvl                = Level;
 		this.CompiledPr.NeedRecalc = true;
 		this.Recalc_RunsCompiledPr();
@@ -10368,6 +10574,8 @@ Paragraph.prototype.IsEmptyWithBullet = function()
 Paragraph.prototype.Get_CompiledPr = function()
 {
 	var Pr = this.Get_CompiledPr2();
+	if (!this.Parent)
+		return Pr;
 
 	// При формировании конечных настроек параграфа, нужно учитывать предыдущий и последующий
 	// параграфы. Например, для формирования интервала между параграфами.
@@ -10470,9 +10678,9 @@ Paragraph.prototype.Get_CompiledPr = function()
 	}
 	else if (null === PrevEl)
 	{
-		if (true === this.Parent.IsTableCellContent() && true === Pr.ParaPr.ContextualSpacing)
+		if (true === this.IsTableCellContent() && true === Pr.ParaPr.ContextualSpacing)
 		{
-			var Cell = this.Parent.IsTableCellContent(true);
+			var Cell = this.IsTableCellContent(true);
 			if (Cell)
 			{
 				var PrevEl = Cell.GetLastElementInPrevCell();
@@ -10576,9 +10784,9 @@ Paragraph.prototype.Get_CompiledPr = function()
 	}
 	else
 	{
-		if (true === this.Parent.IsTableCellContent() && true === Pr.ParaPr.ContextualSpacing)
+		if (true === this.IsTableCellContent() && true === Pr.ParaPr.ContextualSpacing)
 		{
-			var Cell = this.Parent.IsTableCellContent(true);
+			var Cell = this.IsTableCellContent(true);
 			if (Cell)
 			{
 				var NextEl = Cell.GetFirstElementInNextCell();
@@ -10588,7 +10796,7 @@ Paragraph.prototype.Get_CompiledPr = function()
 				}
 			}
 		}
-		else if (true === this.Parent.IsTableCellContent() && true === Pr.ParaPr.Spacing.AfterAutoSpacing)
+		else if (true === this.IsTableCellContent() && true === Pr.ParaPr.Spacing.AfterAutoSpacing)
 		{
 			Pr.ParaPr.Spacing.After = 0;
 		}
@@ -10625,6 +10833,10 @@ Paragraph.prototype.Get_CompiledPr = function()
 	}
 
 	return Pr;
+};
+Paragraph.prototype.getCompiledPr = function()
+{
+	return this.Get_CompiledPr();
 };
 Paragraph.prototype.Recalc_CompiledPr = function()
 {
@@ -10823,8 +11035,16 @@ Paragraph.prototype.Internal_CompileParaPr2 = function()
 			Pr.ParaPr.NumPr.Lvl = Lvl;
 		else
 			Pr.ParaPr.NumPr = undefined;
-
-
+		
+		let logicDocument = this.GetLogicDocument();
+		if (logicDocument && logicDocument.IsDocumentEditor())
+		{
+			let left = Pr.ParaPr.Ind.Left;
+			Pr.ParaPr.Ind.Left  = logicDocument.Layout.calculateIndent(Pr.ParaPr.Ind.Left, this);
+			Pr.ParaPr.Ind.Right = logicDocument.Layout.calculateIndent(Pr.ParaPr.Ind.Right, this);
+			Pr.ParaPr.Ind.FirstLine = logicDocument.Layout.calculateIndent(left + Pr.ParaPr.Ind.FirstLine, this) - Pr.ParaPr.Ind.Left;
+		}
+		
 		return Pr;
 	}
 	else
@@ -10865,8 +11085,28 @@ Paragraph.prototype.Internal_CompiledParaPrPresentation = function(Lvl, bNoMerge
 			Pr.TextPr.Merge(this.Pr.DefaultRunPr);
 	}
 	Pr.TextPr.Color.Auto = false;
+	
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsDocumentEditor() && Pr.ParaPr.Bidi)
+	{
+		if (AscCommon.align_Left === Pr.ParaPr.Jc)
+			Pr.ParaPr.Jc = AscCommon.align_Right;
+		else if (AscCommon.align_Right === Pr.ParaPr.Jc)
+			Pr.ParaPr.Jc = AscCommon.align_Left;
+	}
 
 	return Pr;
+};
+Paragraph.prototype.getCompiledPrFromStyle = function()
+{
+	let parent = this.Parent;
+	
+	let styleManager = parent.Get_Styles();
+	let tableStyle   = parent.Get_TableStyleForPara();
+	let shapeStyle   = parent.Get_ShapeStyleForPara();
+	let styleId      = this.Style_Get();
+	
+	return styleManager.Get_Pr(styleId, styletype_Paragraph, tableStyle, shapeStyle);
 };
 /**
  * Сообщаем параграфу, что ему надо будет пересчитать скомпилированный стиль
@@ -11095,7 +11335,7 @@ Paragraph.prototype.SetPStyle = function(styleId)
 	
 	this.private_AddPrChange();
 	
-	History.Add(new CChangesParagraphPStyle(this, this.Pr.PStyle, styleId));
+	AscCommon.History.Add(new CChangesParagraphPStyle(this, this.Pr.PStyle, styleId));
 	this.Pr.PStyle = styleId;
 	
 	this.RecalcCompiledPr();
@@ -11108,7 +11348,7 @@ Paragraph.prototype.Style_Remove = function()
 	if (undefined != this.Pr.PStyle)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphPStyle(this, this.Pr.PStyle, undefined));
+		AscCommon.History.Add(new CChangesParagraphPStyle(this, this.Pr.PStyle, undefined));
 		this.Pr.PStyle = undefined;
 		this.UpdateDocumentOutline();
 		this.private_RefreshNumbering();
@@ -11260,21 +11500,21 @@ Paragraph.prototype.Set_Ind = function(Ind, bDeleteUndefined)
 	if (( undefined != Ind.FirstLine || true === bDeleteUndefined ) && this.Pr.Ind.FirstLine !== Ind.FirstLine)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, Ind.FirstLine));
+		AscCommon.History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, Ind.FirstLine));
 		this.Pr.Ind.FirstLine = Ind.FirstLine;
 	}
 
 	if (( undefined != Ind.Left || true === bDeleteUndefined ) && this.Pr.Ind.Left !== Ind.Left)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, Ind.Left));
+		AscCommon.History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, Ind.Left));
 		this.Pr.Ind.Left = Ind.Left;
 	}
 
 	if (( undefined != Ind.Right || true === bDeleteUndefined ) && this.Pr.Ind.Right !== Ind.Right)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphIndRight(this, this.Pr.Ind.Right, Ind.Right));
+		AscCommon.History.Add(new CChangesParagraphIndRight(this, this.Pr.Ind.Right, Ind.Right));
 		this.Pr.Ind.Right = Ind.Right;
 	}
 
@@ -11302,42 +11542,42 @@ Paragraph.prototype.Set_Spacing = function(Spacing, bDeleteUndefined)
 		}
 
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphSpacingLine(this, this.Pr.Spacing.Line, LineValue));
+		AscCommon.History.Add(new CChangesParagraphSpacingLine(this, this.Pr.Spacing.Line, LineValue));
 		this.Pr.Spacing.Line = LineValue;
 	}
 
 	if (( undefined != Spacing.LineRule || true === bDeleteUndefined ) && this.Pr.Spacing.LineRule !== Spacing.LineRule)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphSpacingLineRule(this, this.Pr.Spacing.LineRule, Spacing.LineRule));
+		AscCommon.History.Add(new CChangesParagraphSpacingLineRule(this, this.Pr.Spacing.LineRule, Spacing.LineRule));
 		this.Pr.Spacing.LineRule = Spacing.LineRule;
 	}
 
 	if (( undefined != Spacing.Before || true === bDeleteUndefined ) && this.Pr.Spacing.Before !== Spacing.Before)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphSpacingBefore(this, this.Pr.Spacing.Before, Spacing.Before));
+		AscCommon.History.Add(new CChangesParagraphSpacingBefore(this, this.Pr.Spacing.Before, Spacing.Before));
 		this.Pr.Spacing.Before = Spacing.Before;
 	}
 
 	if (( undefined != Spacing.After || true === bDeleteUndefined ) && this.Pr.Spacing.After !== Spacing.After)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphSpacingAfter(this, this.Pr.Spacing.After, Spacing.After));
+		AscCommon.History.Add(new CChangesParagraphSpacingAfter(this, this.Pr.Spacing.After, Spacing.After));
 		this.Pr.Spacing.After = Spacing.After;
 	}
 
 	if (( undefined != Spacing.AfterAutoSpacing || true === bDeleteUndefined ) && this.Pr.Spacing.AfterAutoSpacing !== Spacing.AfterAutoSpacing)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphSpacingAfterAutoSpacing(this, this.Pr.Spacing.AfterAutoSpacing, Spacing.AfterAutoSpacing));
+		AscCommon.History.Add(new CChangesParagraphSpacingAfterAutoSpacing(this, this.Pr.Spacing.AfterAutoSpacing, Spacing.AfterAutoSpacing));
 		this.Pr.Spacing.AfterAutoSpacing = Spacing.AfterAutoSpacing;
 	}
 
 	if (( undefined != Spacing.BeforeAutoSpacing || true === bDeleteUndefined ) && this.Pr.Spacing.BeforeAutoSpacing !== Spacing.BeforeAutoSpacing)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphSpacingBeforeAutoSpacing(this, this.Pr.Spacing.BeforeAutoSpacing, Spacing.BeforeAutoSpacing));
+		AscCommon.History.Add(new CChangesParagraphSpacingBeforeAutoSpacing(this, this.Pr.Spacing.BeforeAutoSpacing, Spacing.BeforeAutoSpacing));
 		this.Pr.Spacing.BeforeAutoSpacing = Spacing.BeforeAutoSpacing;
 	}
 
@@ -11351,7 +11591,7 @@ Paragraph.prototype.Set_Align = function(Align)
 	{
 		this.private_AddPrChange();
 
-		History.Add(new CChangesParagraphAlign(this, this.Pr.Jc, Align));
+		AscCommon.History.Add(new CChangesParagraphAlign(this, this.Pr.Jc, Align));
 		this.Pr.Jc = Align;
 
 		// Надо пересчитать конечный стиль
@@ -11372,7 +11612,7 @@ Paragraph.prototype.Set_DefaultTabSize = function(TabSize)
 	{
 		this.private_AddPrChange();
 
-		History.Add(new CChangesParagraphDefaultTabSize(this, this.Pr.DefaultTab, TabSize));
+		AscCommon.History.Add(new CChangesParagraphDefaultTabSize(this, this.Pr.DefaultTab, TabSize));
 		this.Pr.DefaultTab = TabSize;
 
 		// Надо пересчитать конечный стиль
@@ -11388,7 +11628,7 @@ Paragraph.prototype.Set_Shd = function(_Shd, bDeleteUndefined)
 		if (undefined != this.Pr.Shd)
 		{
 			this.private_AddPrChange();
-			History.Add(new CChangesParagraphShd(this, this.Pr.Shd, undefined));
+			AscCommon.History.Add(new CChangesParagraphShd(this, this.Pr.Shd, undefined));
 			this.Pr.Shd = undefined;
 		}
 	}
@@ -11400,27 +11640,27 @@ Paragraph.prototype.Set_Shd = function(_Shd, bDeleteUndefined)
 		if (undefined === this.Pr.Shd)
 		{
 			this.Pr.Shd = new CDocumentShd();
-			History.Add(new CChangesParagraphShd(this, undefined, this.Pr.Shd));
+			AscCommon.History.Add(new CChangesParagraphShd(this, undefined, this.Pr.Shd));
 		}
 
 		if (( undefined != Shd.Value || true === bDeleteUndefined ) && this.Pr.Shd.Value !== Shd.Value)
 		{
 			this.private_AddPrChange();
-			History.Add(new CChangesParagraphShdValue(this, this.Pr.Shd.Value, Shd.Value));
+			AscCommon.History.Add(new CChangesParagraphShdValue(this, this.Pr.Shd.Value, Shd.Value));
 			this.Pr.Shd.Value = Shd.Value;
 		}
 
 		if (undefined != Shd.Color || true === bDeleteUndefined)
 		{
 			this.private_AddPrChange();
-			History.Add(new CChangesParagraphShdColor(this, this.Pr.Shd.Color, Shd.Color));
+			AscCommon.History.Add(new CChangesParagraphShdColor(this, this.Pr.Shd.Color, Shd.Color));
 			this.Pr.Shd.Color = Shd.Color;
 		}
 
 		if (undefined != Shd.Unifill || true === bDeleteUndefined)
 		{
 			this.private_AddPrChange();
-			History.Add(new CChangesParagraphShdUnifill(this, this.Pr.Shd.Unifill, Shd.Unifill));
+			AscCommon.History.Add(new CChangesParagraphShdUnifill(this, this.Pr.Shd.Unifill, Shd.Unifill));
 			this.Pr.Shd.Unifill = Shd.Unifill;
 		}
 
@@ -11428,14 +11668,14 @@ Paragraph.prototype.Set_Shd = function(_Shd, bDeleteUndefined)
 		{
 			var oThemeFill = Shd.ThemeFill ? Shd.ThemeFill.createDuplicate() : undefined;
 			this.private_AddPrChange();
-			History.Add(new CChangesParagraphShdThemeFill(this, this.Pr.Shd.ThemeFill, oThemeFill));
+			AscCommon.History.Add(new CChangesParagraphShdThemeFill(this, this.Pr.Shd.ThemeFill, oThemeFill));
 			this.Pr.Shd.ThemeFill = oThemeFill;
 		}
 
 		if (Shd.Fill || true === bDeleteUndefined)
 		{
 			this.private_AddPrChange();
-			History.Add(new CChangesParagraphShdFill(this, this.Pr.Shd.Fill, Shd.Fill));
+			AscCommon.History.Add(new CChangesParagraphShdFill(this, this.Pr.Shd.Fill, Shd.Fill));
 			this.Pr.Shd.Fill = Shd.Fill;
 		}
 	}
@@ -11446,43 +11686,46 @@ Paragraph.prototype.Set_Shd = function(_Shd, bDeleteUndefined)
 };
 Paragraph.prototype.Set_Tabs = function(Tabs)
 {
-	var _Tabs = new CParaTabs();
-
-	if (Tabs)
+	if (Tabs != this.Pr.Tabs)
 	{
-		var StyleTabs = this.Get_CompiledPr2(false).ParaPr.StyleTabs;
+		var _Tabs = Tabs ? new CParaTabs() : Tabs;
 
-		// 1. Ищем табы, которые уже есть в стиле (такие добавлять не надо)
-		for (var Index = 0; Index < Tabs.Tabs.length; Index++)
+		if (Tabs)
 		{
-			var Value = StyleTabs.Get_Value(Tabs.Tabs[Index].Pos);
-			if (-1 === Value)
-				_Tabs.Add(Tabs.Tabs[Index]);
+			var StyleTabs = this.Get_CompiledPr2(false).ParaPr.StyleTabs;
+
+			// 1. Ищем табы, которые уже есть в стиле (такие добавлять не надо)
+			for (var Index = 0; Index < Tabs.Tabs.length; Index++)
+			{
+				var Value = StyleTabs.Get_Value(Tabs.Tabs[Index].Pos);
+				if (-1 === Value)
+					_Tabs.Add(Tabs.Tabs[Index]);
+			}
+
+			// 2. Ищем табы в стиле, которые нужно отменить
+			for (var Index = 0; Index < StyleTabs.Tabs.length; Index++)
+			{
+				var Value = _Tabs.Get_Value(StyleTabs.Tabs[Index].Pos);
+				if (tab_Clear != StyleTabs.Tabs[Index] && -1 === Value)
+					_Tabs.Add(new CParaTab(tab_Clear, StyleTabs.Tabs[Index].Pos));
+			}
 		}
 
-		// 2. Ищем табы в стиле, которые нужно отменить
-		for (var Index = 0; Index < StyleTabs.Tabs.length; Index++)
-		{
-			var Value = _Tabs.Get_Value(StyleTabs.Tabs[Index].Pos);
-			if (tab_Clear != StyleTabs.Tabs[Index] && -1 === Value)
-				_Tabs.Add(new CParaTab(tab_Clear, StyleTabs.Tabs[Index].Pos));
-		}
+		this.private_AddPrChange();
+		AscCommon.History.Add(new CChangesParagraphTabs(this, this.Pr.Tabs, _Tabs));
+		this.Pr.Tabs = _Tabs;
+
+		// Надо пересчитать конечный стиль
+		this.CompiledPr.NeedRecalc = true;
+		this.private_UpdateTrackRevisionOnChangeParaPr(true);
 	}
-
-	this.private_AddPrChange();
-	History.Add(new CChangesParagraphTabs(this, this.Pr.Tabs, _Tabs));
-	this.Pr.Tabs = _Tabs;
-
-	// Надо пересчитать конечный стиль
-	this.CompiledPr.NeedRecalc = true;
-	this.private_UpdateTrackRevisionOnChangeParaPr(true);
 };
 Paragraph.prototype.Set_ContextualSpacing = function(Value)
 {
 	if (Value != this.Pr.ContextualSpacing)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphContextualSpacing(this, this.Pr.ContextualSpacing, Value));
+		AscCommon.History.Add(new CChangesParagraphContextualSpacing(this, this.Pr.ContextualSpacing, Value));
 		this.Pr.ContextualSpacing = Value;
 
 		// Надо пересчитать конечный стиль
@@ -11495,7 +11738,7 @@ Paragraph.prototype.Set_PageBreakBefore = function(Value)
 	if (Value != this.Pr.PageBreakBefore)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphPageBreakBefore(this, this.Pr.PageBreakBefore, Value));
+		AscCommon.History.Add(new CChangesParagraphPageBreakBefore(this, this.Pr.PageBreakBefore, Value));
 		this.Pr.PageBreakBefore = Value;
 
 		// Надо пересчитать конечный стиль
@@ -11508,7 +11751,7 @@ Paragraph.prototype.Set_KeepLines = function(Value)
 	if (Value != this.Pr.KeepLines)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphKeepLines(this, this.Pr.KeepLines, Value));
+		AscCommon.History.Add(new CChangesParagraphKeepLines(this, this.Pr.KeepLines, Value));
 		this.Pr.KeepLines = Value;
 
 		// Надо пересчитать конечный стиль
@@ -11521,7 +11764,7 @@ Paragraph.prototype.Set_KeepNext = function(Value)
 	if (Value != this.Pr.KeepNext)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphKeepNext(this, this.Pr.KeepNext, Value));
+		AscCommon.History.Add(new CChangesParagraphKeepNext(this, this.Pr.KeepNext, Value));
 		this.Pr.KeepNext = Value;
 
 		// Надо пересчитать конечный стиль
@@ -11538,7 +11781,7 @@ Paragraph.prototype.Set_WidowControl = function(Value)
 	if (Value != this.Pr.WidowControl)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphWidowControl(this, this.Pr.WidowControl, Value));
+		AscCommon.History.Add(new CChangesParagraphWidowControl(this, this.Pr.WidowControl, Value));
 		this.Pr.WidowControl = Value;
 
 		// Надо пересчитать конечный стиль
@@ -11567,7 +11810,7 @@ Paragraph.prototype.Set_Borders = function(Borders)
 		}
 
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphBordersBetween(this, this.Pr.Brd.Between, NewBorder));
+		AscCommon.History.Add(new CChangesParagraphBordersBetween(this, this.Pr.Brd.Between, NewBorder));
 		this.Pr.Brd.Between = NewBorder;
 	}
 
@@ -11586,7 +11829,7 @@ Paragraph.prototype.Set_Borders = function(Borders)
 		}
 
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphBordersTop(this, this.Pr.Brd.Top, NewBorder));
+		AscCommon.History.Add(new CChangesParagraphBordersTop(this, this.Pr.Brd.Top, NewBorder));
 		this.Pr.Brd.Top = NewBorder;
 	}
 
@@ -11605,7 +11848,7 @@ Paragraph.prototype.Set_Borders = function(Borders)
 		}
 
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphBordersRight(this, this.Pr.Brd.Right, NewBorder));
+		AscCommon.History.Add(new CChangesParagraphBordersRight(this, this.Pr.Brd.Right, NewBorder));
 		this.Pr.Brd.Right = NewBorder;
 	}
 
@@ -11623,7 +11866,7 @@ Paragraph.prototype.Set_Borders = function(Borders)
 		}
 
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphBordersBottom(this, this.Pr.Brd.Bottom, NewBorder));
+		AscCommon.History.Add(new CChangesParagraphBordersBottom(this, this.Pr.Brd.Bottom, NewBorder));
 		this.Pr.Brd.Bottom = NewBorder;
 	}
 
@@ -11642,7 +11885,7 @@ Paragraph.prototype.Set_Borders = function(Borders)
 		}
 
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphBordersLeft(this, this.Pr.Brd.Left, NewBorder));
+		AscCommon.History.Add(new CChangesParagraphBordersLeft(this, this.Pr.Brd.Left, NewBorder));
 		this.Pr.Brd.Left = NewBorder;
 	}
 
@@ -11655,23 +11898,23 @@ Paragraph.prototype.Set_Border = function(Border, HistoryType)
 	switch (HistoryType)
 	{
 		case AscDFH.historyitem_Paragraph_Borders_Between:
-			History.Add(new CChangesParagraphBordersBetween(this, this.Pr.Brd.Between, Border));
+			AscCommon.History.Add(new CChangesParagraphBordersBetween(this, this.Pr.Brd.Between, Border));
 			this.Pr.Brd.Between = Border;
 			break;
 		case AscDFH.historyitem_Paragraph_Borders_Bottom:
-			History.Add(new CChangesParagraphBordersBottom(this, this.Pr.Brd.Bottom, Border));
+			AscCommon.History.Add(new CChangesParagraphBordersBottom(this, this.Pr.Brd.Bottom, Border));
 			this.Pr.Brd.Bottom = Border;
 			break;
 		case AscDFH.historyitem_Paragraph_Borders_Left:
-			History.Add(new CChangesParagraphBordersLeft(this, this.Pr.Brd.Left, Border));
+			AscCommon.History.Add(new CChangesParagraphBordersLeft(this, this.Pr.Brd.Left, Border));
 			this.Pr.Brd.Left = Border;
 			break;
 		case AscDFH.historyitem_Paragraph_Borders_Right:
-			History.Add(new CChangesParagraphBordersRight(this, this.Pr.Brd.Right, Border));
+			AscCommon.History.Add(new CChangesParagraphBordersRight(this, this.Pr.Brd.Right, Border));
 			this.Pr.Brd.Right = Border;
 			break;
 		case AscDFH.historyitem_Paragraph_Borders_Top:
-			History.Add(new CChangesParagraphBordersTop(this, this.Pr.Brd.Top, Border));
+			AscCommon.History.Add(new CChangesParagraphBordersTop(this, this.Pr.Brd.Top, Border));
 			this.Pr.Brd.Top = Border;
 			break;
 	}
@@ -11685,7 +11928,7 @@ Paragraph.prototype.Set_Border = function(Border, HistoryType)
 Paragraph.prototype.Set_Bullet = function(Bullet)
 {
 	this.private_AddPrChange();
-	History.Add(new CChangesParagraphPresentationPrBullet(this, this.Pr.Bullet, Bullet));
+	AscCommon.History.Add(new CChangesParagraphPresentationPrBullet(this, this.Pr.Bullet, Bullet));
 	this.Pr.Bullet             = Bullet;
 	this.CompiledPr.NeedRecalc = true;
 	this.private_UpdateTrackRevisionOnChangeParaPr(true);
@@ -11696,7 +11939,7 @@ Paragraph.prototype.SetOutlineLvl = function(nLvl)
 		nLvl = undefined;
 
 	this.private_AddPrChange();
-	History.Add(new CChangesParagraphOutlineLvl(this, this.Pr.OutlineLvl, nLvl));
+	AscCommon.History.Add(new CChangesParagraphOutlineLvl(this, this.Pr.OutlineLvl, nLvl));
 	this.Pr.OutlineLvl = nLvl;
 	this.CompiledPr.NeedRecalc = true;
 	this.private_UpdateTrackRevisionOnChangeParaPr(true);
@@ -11723,7 +11966,7 @@ Paragraph.prototype.SetSuppressLineNumbers = function(isSuppress)
 		isSuppress = undefined;
 
 	this.private_AddPrChange();
-	History.Add(new CChangesParagraphSuppressLineNumbers(this, this.Pr.SuppressLineNumbers, isSuppress));
+	AscCommon.History.Add(new CChangesParagraphSuppressLineNumbers(this, this.Pr.SuppressLineNumbers, isSuppress));
 	this.Pr.SuppressLineNumbers = isSuppress;
 	this.CompiledPr.NeedRecalc = true;
 	this.private_UpdateTrackRevisionOnChangeParaPr(true);
@@ -11744,6 +11987,18 @@ Paragraph.prototype.IsStartFromNewPage = function()
 		return true;
 
 	return false;
+};
+Paragraph.prototype.IsFirstOnDocumentPage = function()
+{
+	if (!this.IsStartFromNewPage())
+		return false;
+	
+	if (!this.Parent || !this.Parent.IsFirstOnDocumentPage)
+		return true;
+	
+	let curPage = (this.Pages.length > 1 && this.Pages[0].FirstLine === this.Pages[1].FirstLine) ? 1 : 0;
+	let relPage = this.GetRelativePage(curPage);
+	return this.Parent.IsFirstOnDocumentPage(relPage);
 };
 /**
  * Возвращаем ран в котором лежит данный объект
@@ -11840,20 +12095,20 @@ Paragraph.prototype.Internal_CorrectAnchorPos = function(Result, Drawing)
  */
 Paragraph.prototype.Get_NearestPos = function(CurPage, X, Y, bAnchor, Drawing)
 {
-	var SearchPosXY = this.Get_ParaContentPosByXY(X, Y, CurPage, false, false);
+	let searchPosXY = this.getSearchPosByXY(X, Y, CurPage, false, false);
 
 	var oState = this.SaveSelectionState();
 
-	this.Set_ParaContentPos(SearchPosXY.Pos, true, SearchPosXY.Line, SearchPosXY.Range);
+	this.Set_ParaContentPos(searchPosXY.getPos(), true, searchPosXY.getLine(), searchPosXY.getRange());
 	var ContentPos = this.Get_ParaContentPos(false, false);
 
 	ContentPos = this.private_CorrectNearestPos(ContentPos, bAnchor, Drawing);
 
-	var Result = this.Internal_Recalculate_CurPos(ContentPos, false, false, true);
+	var Result = this.Internal_Recalculate_CurPos(false, false, true);
 
 	// Сохраняем параграф и найденное место в параграфе
 	Result.ContentPos = ContentPos;
-	Result.SearchPos  = SearchPosXY.Pos;
+	Result.SearchPos  = searchPosXY.getPos();
 	Result.Paragraph  = this;
 	Result.transform  = this.Get_ParentTextTransform();
 
@@ -11891,8 +12146,20 @@ Paragraph.prototype.private_CorrectNearestPos = function(ContentPos, Anchor, Dra
 				this.Set_ParaContentPos(ContentPos, false, -1, -1);
 			}
 		}
+		
+		// TODO: Пока сделаем так, чтобы картинка перемещался в заданный параграф. По-хорошему нужно найти ближайшую
+		//  позицию за пределами формы или другого запрещенного элемента
+		let classes = this.GetClassesByPos(ContentPos);
+		for (let index = 0; index < classes.length; ++index)
+		{
+			if (classes[index] instanceof AscWord.CInlineLevelSdt && classes[index].IsForm())
+			{
+				ContentPos = this.GetStartPos();
+				break;
+			}
+		}
 	}
-
+	
 	return ContentPos;
 };
 Paragraph.prototype.Check_NearestPos = function(NearPos)
@@ -11961,7 +12228,7 @@ Paragraph.prototype.Get_Layout = function(ContentPos, Drawing)
 	var X = this.Lines[CurLine].Ranges[CurRange].XVisible;
 	var Y = this.Pages[CurPage].Y + this.Lines[CurLine].Y;
 
-	if (true === this.Numbering.Check_Range(CurRange, CurLine))
+	if (true === this.Numbering.checkRange(CurRange, CurLine))
 		X += this.Numbering.WidthVisible;
 
 	var DrawingLayout = new CParagraphDrawingLayout(Drawing, this, X, Y, CurLine, CurRange, CurPage);
@@ -11998,9 +12265,9 @@ Paragraph.prototype.Get_Layout = function(ContentPos, Drawing)
 			var CurPage = DrawingLayout.Page;
 			var Drawing = DrawingLayout.Drawing;
 
-			var PageAbs   = this.Get_AbsolutePage(CurPage);
-			var ColumnAbs = this.Get_AbsoluteColumn(CurPage);
-			var PageRel   = PageAbs - this.Parent.Get_AbsolutePage(0);
+			var PageAbs   = this.GetAbsolutePage(CurPage);
+			var ColumnAbs = this.GetAbsoluteColumn(CurPage);
+			var PageRel   = PageAbs - this.Parent.GetAbsolutePage(0);
 
 			var PageLimits = this.Parent.Get_PageLimits(PageRel);
 			var PageFields = this.Parent.Get_PageFields(PageRel, isInHdrFtr);
@@ -12016,7 +12283,7 @@ Paragraph.prototype.Get_Layout = function(ContentPos, Drawing)
 			var Bottom_Margin = Y_Bottom_Margin;
 			var Page_H        = Page_Height;
 
-			if (true === this.Parent.IsTableCellContent() && undefined != Drawing && true == Drawing.Use_TextWrap())
+			if (true === this.IsTableCellContent() && undefined != Drawing && true == Drawing.Use_TextWrap())
 			{
 				Top_Margin    = 0;
 				Bottom_Margin = 0;
@@ -12024,7 +12291,7 @@ Paragraph.prototype.Get_Layout = function(ContentPos, Drawing)
 			}
 
 			var PageLimitsOrigin = this.Parent.Get_PageLimits(PageRel);
-			if (true === this.Parent.IsTableCellContent() && false === Drawing.IsLayoutInCell())
+			if (true === this.IsTableCellContent() && false === Drawing.IsLayoutInCell())
 			{
 				PageLimitsOrigin     = LogicDocument.Get_PageLimits(PageAbs);
 				var PageFieldsOrigin = LogicDocument.Get_PageFields(PageAbs, isInHdrFtr);
@@ -12039,12 +12306,27 @@ Paragraph.prototype.Get_Layout = function(ContentPos, Drawing)
 			}
 
 			var ParagraphTop = (true != Drawing.Use_TextWrap() ? this.Lines[this.Pages[_CurPage].StartLine].Top + this.Pages[_CurPage].Y : this.Pages[_CurPage].Y);
-			var Layout       = new CParagraphLayout(DrawingLayout.X, DrawingLayout.Y, this.Get_AbsolutePage(CurPage), DrawingLayout.LastW, ColumnStartX, ColumnEndX, X_Left_Margin, X_Right_Margin, Page_Width, Top_Margin, Bottom_Margin, Page_H, PageFields.X, PageFields.Y, this.Pages[CurPage].Y + this.Lines[CurLine].Y - this.Lines[CurLine].Metrics.Ascent, ParagraphTop);
+			var Layout       = new CParagraphLayout(DrawingLayout.X, DrawingLayout.Y, this.GetAbsolutePage(CurPage), DrawingLayout.LastW, ColumnStartX, ColumnEndX, X_Left_Margin, X_Right_Margin, Page_Width, Top_Margin, Bottom_Margin, Page_H, PageFields.X, PageFields.Y, this.Pages[CurPage].Y + this.Lines[CurLine].Y - this.Lines[CurLine].Metrics.Ascent, ParagraphTop);
 			return {ParagraphLayout : Layout, PageLimits : PageLimits, PageLimitsOrigin : PageLimitsOrigin};
 		}
 	}
 
 	return null;
+};
+Paragraph.prototype.GetLayout = function(contentPos, useWrap)
+{
+	let drawing = {
+		Use_TextWrap : function()
+		{
+			return useWrap;
+		},
+		IsLayoutInCell : function()
+		{
+			return false;
+		}
+	};
+	
+	return this.Get_Layout(contentPos, drawing);
 };
 Paragraph.prototype.Get_AnchorPos = function(Drawing)
 {
@@ -12060,7 +12342,7 @@ Paragraph.prototype.Get_AnchorPos = function(Drawing)
 
 	this.Set_ParaContentPos(ContentPos, false, -1, -1);
 
-	var Result = this.Internal_Recalculate_CurPos(ContentPos, false, false, true);
+	var Result = this.Internal_Recalculate_CurPos(false, false, true);
 
 	Result.Paragraph  = this;
 	Result.ContentPos = ContentPos;
@@ -12077,17 +12359,17 @@ Paragraph.prototype.IsContentOnFirstPage = function()
 
 	return true;
 };
-Paragraph.prototype.Get_CurrentPage_Absolute = function()
+Paragraph.prototype.GetAbsoluteCurrentPage = function()
 {
 	// Обновляем позицию
-	this.Internal_Recalculate_CurPos(this.CurPos.ContentPos, true, false, false);
-	return this.private_GetAbsolutePageIndex(this.CurPos.PagesPos);
+	this.Internal_Recalculate_CurPos(true, false, false);
+	return this.GetAbsolutePage(this.CurPos.PagesPos);
 };
-Paragraph.prototype.Get_CurrentPage_Relative = function()
+Paragraph.prototype.GetRelativeCurrentPage = function()
 {
 	// Обновляем позицию
-	this.Internal_Recalculate_CurPos(this.CurPos.ContentPos, true, false, false);
-	return this.private_GetRelativePageIndex(this.CurPos.PagesPos);
+	this.Internal_Recalculate_CurPos(true, false, false);
+	return this.GetRelativePage(this.CurPos.PagesPos);
 };
 Paragraph.prototype.CollectDocumentStatistics = function(Stats)
 {
@@ -12147,20 +12429,22 @@ Paragraph.prototype.Get_ParentTextInvertTransform = function()
 };
 Paragraph.prototype.UpdateCursorType = function(X, Y, CurPage)
 {
-	if (!this.IsRecalculated())
+	let logicDocument   = this.GetLogicDocument();
+	let drawingDocument = this.getDrawingDocument();
+	if (!this.IsRecalculated() || !drawingDocument)
 		return;
 	
 	CurPage            = Math.max(0, Math.min(CurPage, this.Pages.length - 1));
 	var text_transform = this.Get_ParentTextTransform();
 	var MMData         = new AscCommon.CMouseMoveData();
-	var Coords         = this.DrawingDocument.ConvertCoordsToCursorWR(X, Y, this.Get_AbsolutePage(CurPage), text_transform);
+	var Coords         = drawingDocument.ConvertCoordsToCursorWR(X, Y, this.GetAbsolutePage(CurPage), text_transform);
 	MMData.X_abs       = Coords.X;
 	MMData.Y_abs       = Coords.Y;
 
 	// TODO: Поиск гиперссылок и сносок нужно переделать через работу с SelectedElementsInfo
 	var oInfo = new CSelectedElementsInfo();
 
-	var oContentPos = this.Get_ParaContentPosByXY(X, Y, CurPage, false, false).Pos;
+	var oContentPos = this.getSearchPosByXY(X, Y, CurPage, false, false).getPos();
 	this.GetSelectedElementsInfo(oInfo, oContentPos, 0);
 
 	var bPageRefLink = false;
@@ -12169,7 +12453,7 @@ Paragraph.prototype.UpdateCursorType = function(X, Y, CurPage)
 	{
 		var oComplexField = arrComplexFields[nIndex];
 		var oInstruction  = oComplexField.GetInstruction();
-		if (oInstruction && fieldtype_PAGEREF === oInstruction.GetType() && oInstruction.IsHyperlink())
+		if (oInstruction && AscWord.fieldtype_PAGEREF === oInstruction.GetType() && oInstruction.IsHyperlink())
 		{
 			bPageRefLink = true;
 			break;
@@ -12184,7 +12468,8 @@ Paragraph.prototype.UpdateCursorType = function(X, Y, CurPage)
 	if (oContentControl)
 	{
 		oContentControl.DrawContentControlsTrack(AscCommon.ContentControlTrack.Hover, X, Y, CurPage);
-		isCheckBox = oContentControl.IsCheckBox() && oContentControl.CheckHitInContentControlByXY(X, Y, this.GetAbsolutePage(CurPage), false);
+		isCheckBox = (oContentControl.CheckHitInContentControlByXY(X, Y, this.GetAbsolutePage(CurPage), false)
+			&& (oContentControl.IsCheckBox() || (logicDocument && oContentControl.IsLabeledCheckBox() && logicDocument.IsFillingOFormMode())));
 	}
 
 	var Footnote      = this.CheckFootnote(X, Y, CurPage);
@@ -12214,9 +12499,11 @@ Paragraph.prototype.UpdateCursorType = function(X, Y, CurPage)
 	}
 
 	if (isInText && (isCheckBox || ((null != oHyperlink || bPageRefLink) && true === AscCommon.global_keyboardEvent.CtrlKey)))
-		this.DrawingDocument.SetCursorType("pointer", MMData);
+		drawingDocument.SetCursorType("pointer", MMData);
+	else if (this.LogicDocument && this.LogicDocument.IsDocumentEditor() && this.LogicDocument.IsFillingOFormMode())
+		drawingDocument.SetCursorType("default", MMData);
 	else
-		this.DrawingDocument.SetCursorType("text", MMData);
+		drawingDocument.SetCursorType("text", MMData);
 
 	var Bounds = this.Pages[CurPage].Bounds;
 	if (true === this.Lock.Is_Locked() && X < Bounds.Right && X > Bounds.Left && Y > Bounds.Top && Y < Bounds.Bottom && this.LogicDocument && !this.LogicDocument.IsViewModeInReview())
@@ -12225,7 +12512,7 @@ Paragraph.prototype.UpdateCursorType = function(X, Y, CurPage)
 		var _Y = this.Pages[CurPage].Y;
 
 		var MMData              = new AscCommon.CMouseMoveData();
-		var Coords              = this.DrawingDocument.ConvertCoordsToCursorWR(_X, _Y, this.Get_AbsolutePage(CurPage), text_transform);
+		var Coords              = drawingDocument.ConvertCoordsToCursorWR(_X, _Y, this.GetAbsolutePage(CurPage), text_transform);
 		MMData.X_abs            = Coords.X - 5;
 		MMData.Y_abs            = Coords.Y;
 		MMData.Type             = Asc.c_oAscMouseMoveDataTypes.LockedObject;
@@ -12302,7 +12589,7 @@ Paragraph.prototype.Document_UpdateRulersState = function()
 			T         : oFrame.T2,
 			R         : oFrame.L2 + oFrame.W2,
 			B         : oFrame.T2 + oFrame.H2,
-			PageIndex : this.GetStartPageAbsolute(),
+			PageIndex : this.GetAbsoluteStartPage(),
 			Frame     : this
 		}, false);
 	}
@@ -12329,7 +12616,7 @@ Paragraph.prototype.Document_UpdateInterfaceState = function()
 		EndPos     = CurPos;
 	}
 
-	if (this.LogicDocument && true === this.LogicDocument.Spelling.Use && (selectionflag_Numbering !== this.Selection.Flag && selectionflag_NumberingCur !== this.Selection.Flag))
+	if (this.IsSpellingUse() && (selectionflag_Numbering !== this.Selection.Flag && selectionflag_NumberingCur !== this.Selection.Flag))
 	{
 		let oSpellCheckElement = this.SpellChecker.GetElementByRange(StartPos, EndPos);
 		if (oSpellCheckElement && oSpellCheckElement.IsWrong())
@@ -12368,7 +12655,7 @@ Paragraph.prototype.Document_UpdateInterfaceState = function()
 	for (var nIndex = 0, nCount = arrComplexFields.length; nIndex < nCount; ++nIndex)
 	{
 		var oInstruction = arrComplexFields[nIndex].GetInstruction();
-		if (oInstruction && fieldtype_HYPERLINK === oInstruction.GetType())
+		if (oInstruction && AscWord.fieldtype_HYPERLINK === oInstruction.GetType())
 		{
 			var oHyperProps = new Asc.CHyperlinkProperty();
 			oHyperProps.put_ToolTip(oInstruction.GetToolTip());
@@ -12522,28 +12809,28 @@ Paragraph.prototype.CollectSelectedReviewChanges = function(oTrackManager)
  */
 Paragraph.prototype.PreDelete = function()
 {
+	if (this.isPreventedPreDelete())
+		return;
+	
 	// Поскольку данный элемент удаляется, поэтому надо удалить все записи о
 	// inline объектах в родительском классе, используемых в данном параграфе.
 	// Кроме этого, если тут начинались или заканчивались комметарии, то их тоже
 	// удаляем.
 
+	let logicDocument = this.GetLogicDocument();
 	for (var Index = 0; Index < this.Content.length; Index++)
 	{
 		var Item = this.Content[Index];
 
 		if (Item.PreDelete)
 			Item.PreDelete(true);
-
-		if(this.LogicDocument)
+		
+		if (logicDocument && logicDocument.IsDocumentEditor())
 		{
-			if (para_Comment === Item.Type  && true === this.LogicDocument.RemoveCommentsOnPreDelete)
-			{
-				this.LogicDocument.RemoveComment(Item.CommentId, true, false);
-			}
+			if (para_Comment === Item.Type && true === logicDocument.RemoveCommentsOnPreDelete)
+				logicDocument.RemoveComment(Item.CommentId, true, false);
 			else if (para_Bookmark === Item.Type)
-			{
-				this.LogicDocument.GetBookmarksManager().SetNeedUpdate(true);
-			}
+				logicDocument.GetBookmarksManager().SetNeedUpdate(true);
 		}
 	}
 
@@ -12564,22 +12851,30 @@ Paragraph.prototype.PreDelete = function()
 //----------------------------------------------------------------------------------------------------------------------
 Paragraph.prototype.Document_SetThisElementCurrent = function(bUpdateStates)
 {
-	this.Parent.Update_ContentIndexing();
-	this.Parent.Set_CurrentElement(this.Index, bUpdateStates);
+	let parent = this.GetParent();
+	if (!parent)
+		return;
+	
+	parent.Update_ContentIndexing();
+	parent.Set_CurrentElement(this.Index, bUpdateStates);
 };
 Paragraph.prototype.IsThisElementCurrent = function()
 {
-	let oParent = this.Parent;
-	let nIndex  = this.GetIndex();
-	if (-1 === nIndex || docpostype_Content !== oParent.GetDocPosType())
+	let parent = this.GetParent();
+	if (!parent)
+		return false;
+	
+	let nIndex = this.GetIndex();
+	if (-1 === nIndex || docpostype_Content !== parent.GetDocPosType())
+		return false;
+	
+	if ((parent.IsSelectionUse()
+			&& (parent.Selection.StartPos !== parent.Selection.EndPos
+				|| nIndex !== parent.Selection.StartPos))
+		|| (!parent.IsSelectionUse() && nIndex !== parent.CurPos.ContentPos))
 		return false;
 
-	if ((oParent.IsSelectionUse() && (oParent.Selection.StartPos !== oParent.Selection.EndPos
-			|| nIndex !== oParent.Selection.StartPos))
-		|| (!oParent.IsSelectionUse() && nIndex !== oParent.CurPos.ContentPos))
-		return false;
-
-	return oParent.IsThisElementCurrent();
+	return parent.IsThisElementCurrent();
 };
 Paragraph.prototype.Is_Inline = function()
 {
@@ -12627,7 +12922,7 @@ Paragraph.prototype.Set_FramePr = function(FramePr, bDelete)
 	{
 		this.Pr.FramePr = undefined;
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphFramePr(this, FramePr_old, undefined));
+		AscCommon.History.Add(new CChangesParagraphFramePr(this, FramePr_old, undefined));
 		this.CompiledPr.NeedRecalc = true;
 		this.private_UpdateTrackRevisionOnChangeParaPr(true);
 		return;
@@ -12763,14 +13058,14 @@ Paragraph.prototype.Set_FramePr = function(FramePr, bDelete)
 	}
 
 	this.private_AddPrChange();
-	History.Add(new CChangesParagraphFramePr(this, FramePr_old, this.Pr.FramePr));
+	AscCommon.History.Add(new CChangesParagraphFramePr(this, FramePr_old, this.Pr.FramePr));
 	this.CompiledPr.NeedRecalc = true;
 	this.private_UpdateTrackRevisionOnChangeParaPr(true);
 };
 Paragraph.prototype.Set_FramePr2 = function(FramePr)
 {
 	this.private_AddPrChange();
-	History.Add(new CChangesParagraphFramePr(this, this.Pr.FramePr, FramePr));
+	AscCommon.History.Add(new CChangesParagraphFramePr(this, this.Pr.FramePr, FramePr));
 	this.Pr.FramePr            = FramePr;
 	this.CompiledPr.NeedRecalc = true;
 	this.private_UpdateTrackRevisionOnChangeParaPr(true);
@@ -13324,40 +13619,85 @@ Paragraph.prototype.Get_FrameAnchorPara = function()
 };
 /**
  * Разделяем данный параграф, возвращаем правую часть
- * @param {Paragraph} [oNewParagraph=undefined] Если не задан, тогда мы создаем новый
- * @param {AscWord.CParagraphContentPos} [oContentPos=undefined]
+ * @param {Paragraph} [newParagraph=undefined] Если не задан, тогда мы создаем новый
+ * @param {AscWord.CParagraphContentPos} [contentPos=undefined]
  * @param {boolean} [isNoDuplicate=false] специальный режим для Split, смотри функцию SplitNoDuplicate
  * @returns {Paragraph}
  */
-Paragraph.prototype.Split = function(oNewParagraph, oContentPos, isNoDuplicate)
+Paragraph.prototype.Split = function(newParagraph, contentPos, isNoDuplicate)
 {
-	if (!oNewParagraph)
-		oNewParagraph = new Paragraph(this.DrawingDocument, this.Parent);
-
-	oNewParagraph.DeleteCommentOnRemove = false;
-	this.DeleteCommentOnRemove          = false;
-
-	// Обнулим селект и курсор
-	this.RemoveSelection();
-	oNewParagraph.RemoveSelection();
-
-	if (!oContentPos)
-		oContentPos = this.Get_ParaContentPos(false, false);
+	if (!contentPos)
+		contentPos = this.Get_ParaContentPos(false, false);
 	
-	let complexFields = this.GetComplexFieldsByPos(oContentPos);
-	for (let iField = 0, nFields = complexFields.length; iField < nFields; ++iField)
-		complexFields[iField].StartCharsUpdate();
-
-	var TextPr = this.Get_TextPr(oContentPos);
+	let textPr = this.Get_TextPr(contentPos);
 
 	var oLogicDocument = this.GetLogicDocument();
 	var oStyles        = oLogicDocument && oLogicDocument.GetStyles ? oLogicDocument.GetStyles() : null;
-	if (oStyles && (TextPr.RStyle === oStyles.GetDefaultEndnoteReference() || TextPr.RStyle === oStyles.GetDefaultFootnoteReference()))
+	if (oStyles instanceof AscWord.CStyles && (textPr.RStyle === oStyles.GetDefaultEndnoteReference() || textPr.RStyle === oStyles.GetDefaultFootnoteReference()))
+	{
+		textPr        = textPr.Copy();
+		textPr.RStyle = undefined;
+	}
+	
+	newParagraph = this.SplitContent(newParagraph, true, contentPos, isNoDuplicate);
+	
+	// Копируем все настройки в новый параграф. Делаем это после того как определили контент параграфов.
+	// У нового параграфа настройки конца параграфа делаем, как у старого (происходит в функции CopyPr), а у старого
+	// меняем их на настройки текущего рана.
+	this.CopyPr(newParagraph);
+	this.TextPr.Clear_Style();
+	this.TextPr.Apply_TextPr(textPr);
+
+	// Если на данном параграфе заканчивалась секция, тогда переносим конец секции на новый параграф
+	var SectPr = this.Get_SectionPr();
+	if (undefined !== SectPr)
+	{
+		this.Set_SectionPr(undefined);
+		newParagraph.Set_SectionPr(SectPr);
+	}
+
+	this.MoveCursorToEndPos(false, false);
+	newParagraph.MoveCursorToStartPos(false);
+	
+	return newParagraph;
+};
+/**
+ * Разделяем содержимое данного параграфа, перенося заданную часть в новый параграф
+ * @param {Paragraph} [newParagraph=undefined] Если не задан, тогда мы создаем новый
+ * @param {boolean} [after=true] true - все, что после позиции переносим в новый параграф, false - все, что до позиции
+ * @param {AscWord.CParagraphContentPos} [contentPos=undefined]
+ * @param {boolean} [isNoDuplicate=false] специальный режим для Split, смотри функцию SplitNoDuplicate
+ * @returns {Paragraph}
+ */
+Paragraph.prototype.SplitContent = function(newParagraph, after, contentPos, isNoDuplicate)
+{
+	if (!newParagraph)
+		newParagraph = new AscWord.Paragraph();
+	
+	newParagraph.DeleteCommentOnRemove = false;
+	this.DeleteCommentOnRemove          = false;
+	
+	// Обнулим селект и курсор
+	this.RemoveSelection();
+	newParagraph.RemoveSelection();
+	
+	if (!contentPos)
+		contentPos = this.Get_ParaContentPos(false, false);
+	
+	let complexFields = this.GetComplexFieldsByPos(contentPos);
+	for (let iField = 0, nFields = complexFields.length; iField < nFields; ++iField)
+		complexFields[iField].StartCharsUpdate();
+	
+	var TextPr = this.Get_TextPr(contentPos);
+	
+	var oLogicDocument = this.GetLogicDocument();
+	var oStyles        = oLogicDocument && oLogicDocument.GetStyles ? oLogicDocument.GetStyles() : null;
+	if (oStyles instanceof AscWord.CStyles && (TextPr.RStyle === oStyles.GetDefaultEndnoteReference() || TextPr.RStyle === oStyles.GetDefaultFootnoteReference()))
 	{
 		TextPr        = TextPr.Copy();
 		TextPr.RStyle = undefined;
 	}
-
+	
 	let localTrack = false;
 	if (oLogicDocument
 		&& oLogicDocument.IsDocumentEditor()
@@ -13366,79 +13706,124 @@ Paragraph.prototype.Split = function(oNewParagraph, oContentPos, isNoDuplicate)
 		localTrack = oLogicDocument.GetLocalTrackRevisions();
 		oLogicDocument.SetLocalTrackRevisions(false);
 	}
-
-	var nCurPos = oContentPos.Get(0);
+	
+	let clearNotesOnPreDelete = true;
+	if (oLogicDocument && oLogicDocument.IsDocumentEditor())
+	{
+		clearNotesOnPreDelete = oLogicDocument.ClearNotesOnPreDelete;
+		oLogicDocument.ClearNotesOnPreDelete = false;
+	}
+	
+	var nCurPos = contentPos.Get(0);
 	if (true === isNoDuplicate)
 	{
-		oNewParagraph.Internal_Content_Remove2(0, oNewParagraph.Content.length);
-
-		this.Content[nCurPos].SplitNoDuplicate(oContentPos, 1, oNewParagraph);
-
-		var arrNewContent = this.Content.slice(nCurPos + 1);
-		oNewParagraph.ConcatContent(arrNewContent);
-		oNewParagraph.CorrectContent();
-
-		this.RemoveFromContent(nCurPos + 1, this.Content.length - nCurPos - 1, false);
+		newParagraph.Internal_Content_Remove2(0, newParagraph.Content.length);
+		this.Content[nCurPos].SplitNoDuplicate(contentPos, 1, newParagraph);
+		let newContent = [];
+		if (after)
+		{
+			newContent = this.Content.slice(nCurPos + 1);
+			this.RemoveFromContent(nCurPos + 1, this.Content.length - nCurPos - 1, false);
+		}
+		else
+		{
+			newContent = this.Content.slice(0, nCurPos + 1);
+			this.RemoveFromContent(0, nCurPos + 1, false);
+		}
 		this.CheckParaEnd();
+		newParagraph.ConcatContent(newContent);
+		newParagraph.CorrectContent();
 	}
 	else
 	{
-		// Разделяем текущий элемент (возвращается правая, отделившаяся часть, если она null, тогда заменяем
-		// ее на пустой ран с заданными настройками).
-		var NewElement = this.Content[nCurPos].Split(oContentPos, 1);
-
-		if (null === NewElement)
-		{
-			NewElement = new ParaRun(oNewParagraph);
-			NewElement.Set_Pr(TextPr.Copy());
-		}
-
 		// Теперь делим наш параграф на три части:
 		// 1. До элемента с номером nCurPos включительно (оставляем эту часть в исходном параграфе)
 		// 2. После элемента с номером nCurPos (добавляем эту часть в новый параграф)
 		// 3. Новый элемент, полученный после разделения элемента с номером nCurPos, который мы
 		//    добавляем в начало нового параграфа.
-
-		var NewContent = this.Content.slice(nCurPos + 1);
-
-		// Очищаем новый параграф и добавляем в него Right элемент и NewContent
-		oNewParagraph.Internal_Content_Remove2(0, oNewParagraph.Content.length);
-		oNewParagraph.ConcatContent(NewContent);
-		oNewParagraph.Internal_Content_Add(0, NewElement);
-		oNewParagraph.CorrectContent();
-
-		this.Internal_Content_Remove2(nCurPos + 1, this.Content.length - nCurPos - 1);
+		
+		let newContent = [];
+		if (after)
+		{
+			// Разделяем текущий элемент (возвращается правая, отделившаяся часть, если она null, тогда заменяем
+			// ее на пустой ран с заданными настройками).
+			var NewElement = this.Content[nCurPos].Split(contentPos, 1);
+			
+			if (null === NewElement)
+			{
+				NewElement = new AscWord.Run();
+				NewElement.Set_Pr(TextPr.Copy());
+			}
+			
+			newContent = this.Content.slice(nCurPos + 1);
+			this.Internal_Content_Remove2(nCurPos + 1, this.Content.length - nCurPos - 1);
+			newContent.splice(0, 0, NewElement);
+		}
+		else
+		{
+			
+			this.Content[nCurPos].RemoveSelection();
+			this.Content[nCurPos].Set_ParaContentPos(contentPos, 1);
+			
+			// Отключаем preDelete, чтобы не чистилось внутреннее содержимое, т.к. мы переносим элементы, а не удаляем их
+			let _t = this;
+			AscCommon.executeNoPreDelete(function()
+			{
+				// Специальная заглушка для строгого редактирования. Т.е. мы даем добавлять параграф, когда курсор находится
+				// в начале параграфа, то не нужно делить текущий раз из-за текщих колизий в совместке. (Если проблема
+				// с обновлением изменений при разделении рана будет решена, то можно будет назад объединить этот код)
+				if (_t.Content[nCurPos].IsCursorAtBegin())
+				{
+					if (nCurPos > 0)
+					{
+						newContent = _t.Content.slice(0, nCurPos);
+						_t.Internal_Content_Remove2(0, nCurPos);
+					}
+					
+					let newElement = new AscWord.Run();
+					newElement.Set_Pr(TextPr.Copy());
+					newContent.push(newElement);
+				}
+				else
+				{
+					// Разделяем текущий элемент (возвращается правая, отделившаяся часть, если она null, тогда заменяем
+					// ее на пустой ран с заданными настройками).
+					var NewElement = _t.Content[nCurPos].Split(contentPos, 1);
+					
+					if (null === NewElement)
+					{
+						NewElement = new AscWord.Run();
+						NewElement.Set_Pr(TextPr.Copy());
+					}
+					
+					newContent = _t.Content.slice(0, nCurPos + 1);
+					_t.Internal_Content_Remove2(0, nCurPos + 1);
+					_t.Internal_Content_Add(0, NewElement);
+				}
+			}, oLogicDocument, this);
+		}
+		
 		this.CheckParaEnd();
+		
+		// Очищаем новый параграф и добавляем в него Right элемент и NewContent
+		newParagraph.Internal_Content_Remove2(0, newParagraph.Content.length);
+		newParagraph.ConcatContent(newContent);
+		newParagraph.CorrectContent();
 	}
-
+	
 	if (false !== localTrack)
 		oLogicDocument.SetLocalTrackRevisions(localTrack);
-
-	// Копируем все настройки в новый параграф. Делаем это после того как определили контент параграфов.
-	// У нового параграфа настройки конца параграфа делаем, как у старого (происходит в функции CopyPr), а у старого
-	// меняем их на настройки текущего рана.
-	this.CopyPr(oNewParagraph);
-	this.TextPr.Clear_Style();
-	this.TextPr.Apply_TextPr(TextPr);
-
-	// Если на данном параграфе заканчивалась секция, тогда переносим конец секции на новый параграф
-	var SectPr = this.Get_SectionPr();
-	if (undefined !== SectPr)
-	{
-		this.Set_SectionPr(undefined);
-		oNewParagraph.Set_SectionPr(SectPr);
-	}
-
-	this.MoveCursorToEndPos(false, false);
-	oNewParagraph.MoveCursorToStartPos(false);
-
-	oNewParagraph.DeleteCommentOnRemove = true;
+	
+	if (oLogicDocument && oLogicDocument.IsDocumentEditor())
+		oLogicDocument.ClearNotesOnPreDelete = clearNotesOnPreDelete;
+	
+	newParagraph.DeleteCommentOnRemove = true;
 	this.DeleteCommentOnRemove          = true;
 	
 	for (let iField = 0, nFields = complexFields.length; iField < nFields; ++iField)
 		complexFields[iField].FinishCharsUpdate();
 	
-	return oNewParagraph;
+	return newParagraph;
 };
 /**
  * Присоединяем контент параграфа Para к текущему параграфу
@@ -13534,7 +13919,7 @@ Paragraph.prototype.ConcatBefore = function(oPara, nSelection)
 	let nCount = oPara.Content.length;
 	for (let nPos = 0; nPos < nCount; ++nPos)
 	{
-		this.AddToContent(nPos, oPara.Content[nPos].Copy());
+		this.AddToContent(nPos, oPara.Content[nPos].Copy(false, {CopyReviewPr : true}));
 	}
 
 	// Класс нужно почистить, чтобы сообщить внутренним классам, что они больше не используются
@@ -13675,6 +14060,7 @@ Paragraph.prototype.GetSelectionState = function()
 		X          : this.CurPos.X,
 		Y          : this.CurPos.Y,
 		Line       : this.CurPos.Line,
+		Range      : this.CurPos.Range,
 		ContentPos : this.Get_ParaContentPos(false, false),
 		RealX      : this.CurPos.RealX,
 		RealY      : this.CurPos.RealY,
@@ -13703,22 +14089,22 @@ Paragraph.prototype.SetSelectionState = function(State, StateIndex)
 		return;
 
 	var ParaState = State[StateIndex];
-
+	
+	this.RemoveSelection();
+	this.Set_ParaContentPos(ParaState.CurPos.ContentPos, true, -1, -1, false);
+	
 	this.CurPos.X        = ParaState.CurPos.X;
 	this.CurPos.Y        = ParaState.CurPos.Y;
 	this.CurPos.Line     = ParaState.CurPos.Line;
+	this.CurPos.Range    = ParaState.CurPos.Range;
 	this.CurPos.RealX    = ParaState.CurPos.RealX;
 	this.CurPos.RealY    = ParaState.CurPos.RealY;
 	this.CurPos.PagesPos = ParaState.CurPos.PagesPos;
-
-	this.Set_ParaContentPos(ParaState.CurPos.ContentPos, true, -1, -1);
-
-	this.RemoveSelection();
-
+	
 	this.Selection.Start = ParaState.Selection.Start;
 	this.Selection.Use   = ParaState.Selection.Use;
 	this.Selection.Flag  = ParaState.Selection.Flag;
-
+	
 	if (true === this.Selection.Use)
 		this.Set_SelectionContentPos(ParaState.Selection.StartPos, ParaState.Selection.EndPos);
 };
@@ -13770,7 +14156,7 @@ Paragraph.prototype.Refresh_RecalcData = function(Data)
 
 			break;
 		}
-
+		case AscDFH.historyitem_Paragraph_Bidi:
 		case AscDFH.historyitem_Paragraph_Align:
 		case AscDFH.historyitem_Paragraph_DefaultTabSize:
 		case AscDFH.historyitem_Paragraph_Ind_First:
@@ -13823,14 +14209,21 @@ Paragraph.prototype.Refresh_RecalcData = function(Data)
 		}
 		case AscDFH.historyitem_Paragraph_SectionPr:
 		{
-			if (this.Parent instanceof CDocument)
+			let logicDocument = this.GetLogicDocument();
+			if (logicDocument instanceof AscWord.Document)
 			{
-				this.Parent.UpdateContentIndexing();
-				var nSectionIndex = this.Parent.GetSectionIndexByElementIndex(this.GetIndex());
-				var oFirstElement = this.Parent.GetFirstElementInSection(nSectionIndex);
+				// TODO: Когда удаляется параграф, мы удаляем в нем секцию. И параграф уже нигде не лежит,
+				//       и положение секции уже не определить. По-хорошему нужно пройтись по расчитанным страницам,
+				//       найти удаленную секцию, и начать расчет с начальной точки секции (либо в секцию записать
+				//       расчетную информацию о том, где располагалась секция). Сейчас в данной ситуации
+				//       мы рассчитываем документ с самого начала
+				
+				let documentSections = logicDocument.GetSections();
+				let sectionIndex     = documentSections.GetIndexByElement(this);
+				let firstParagraph   = documentSections.GetFirstParagraph(-1 !== sectionIndex ? sectionIndex : 0);
 
-				if (oFirstElement)
-					this.Parent.Refresh_RecalcData2(oFirstElement.GetIndex(), oFirstElement.private_GetRelativePageIndex(0));
+				if (firstParagraph)
+					firstParagraph.Refresh_RecalcData2();
 			}
 
 			break;
@@ -13844,7 +14237,7 @@ Paragraph.prototype.Refresh_RecalcData = function(Data)
 		}
 		case AscDFH.historyitem_Paragraph_SuppressLineNumbers:
 		{
-			History.AddLineNumbersToRecalculateData();
+			AscCommon.History.AddLineNumbersToRecalculateData();
 			break;
 		}
 	}
@@ -13867,7 +14260,7 @@ Paragraph.prototype.Refresh_RecalcData2 = function(CurPage)
 
 	// Если Index < 0, значит данный элемент еще не был добавлен в родительский класс
 	if (this.Index >= 0)
-		this.Parent.Refresh_RecalcData2(this.Index, this.private_GetRelativePageIndex(CurPage));
+		this.Parent.Refresh_RecalcData2(this.Index, this.GetRelativePage(CurPage));
 };
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для совместного редактирования
@@ -13881,7 +14274,7 @@ Paragraph.prototype.Write_ToBinary2 = function(Writer)
 	// String2   : Id TextPr
 	// Long      : количество элементов
 	// Array of String2 : массив с Id элементами
-	// Bool     : bFromDocument
+	// Flags     : 0 - bFromDocument, 1 - paraId -> Long, 2 - textId -> Long
 
 	Writer.WriteString2("" + this.Id);
 
@@ -13910,8 +14303,31 @@ Paragraph.prototype.Write_ToBinary2 = function(Writer)
 	{
 		Writer.WriteString2("" + ContentForWrite[Index].Get_Id());
 	}
-
-	Writer.WriteBool(this.bFromDocument);
+	
+	let startPos = Writer.GetCurPosition();
+	Writer.Skip(4);
+	
+	let flags = 0;
+	if (this.bFromDocument)
+		flags |= 1;
+	
+	if (this.ParaId)
+	{
+		Writer.WriteLong(this.ParaId);
+		flags |= 2;
+	}
+	
+	if (this.TextId)
+	{
+		Writer.WriteLong(this.TextId);
+		flags |= 4;
+	}
+	
+	let endPos = Writer.GetCurPosition();
+	Writer.Seek(startPos);
+	Writer.WriteLong(flags);
+	Writer.Seek(endPos);
+	
 };
 Paragraph.prototype.Read_FromBinary2 = function(Reader)
 {
@@ -13920,7 +14336,7 @@ Paragraph.prototype.Read_FromBinary2 = function(Reader)
 	// String2   : Id TextPr
 	// Long      : количество элементов
 	// Array of String2 : массив с Id элементами
-	// Bool     : bFromDocument
+	// Flags     : 0 - bFromDocument, 1 - paraId -> Long, 2 - textId -> Long
 
 	this.Id = Reader.GetString2();
 
@@ -13944,36 +14360,18 @@ Paragraph.prototype.Read_FromBinary2 = function(Reader)
 				Element.SetParagraph(this);
 		}
 	}
-
-	AscCommon.CollaborativeEditing.Add_NewObject(this);
-
-	this.bFromDocument = Reader.GetBool();
+	
+	let flags = Reader.GetLong();
+	
+	this.bFromDocument = !!(flags & 1);
+	
+	this.ParaId = (flags & 2 ? Reader.GetLong() : undefined);
+	this.TextId = (flags & 4 ? Reader.GetLong() : undefined);
+	
 	if (!this.bFromDocument)
-	{
 		this.Numbering = new ParaPresentationNumbering();
-	}
-	if (this.bFromDocument || (editor && editor.WordControl && editor.WordControl.m_oDrawingDocument))
-	{
-		var DrawingDocument = editor.WordControl.m_oDrawingDocument;
-		if (undefined !== DrawingDocument && null !== DrawingDocument)
-		{
-			this.DrawingDocument = DrawingDocument;
-			this.LogicDocument   = this.DrawingDocument.m_oLogicDocument;
-		}
-	}
-	else
-	{
-		AscCommon.CollaborativeEditing.Add_LinkData(this, {});
-	}
-
+	
 	this.PageNum = 0;
-};
-Paragraph.prototype.Load_LinkData = function(LinkData)
-{
-	if (this.Parent && this.Parent.Parent && this.Parent.Parent.getDrawingDocument)
-	{
-		this.DrawingDocument = this.Parent.Parent.getDrawingDocument();
-	}
 };
 Paragraph.prototype.Get_SelectionState2 = function()
 {
@@ -14278,12 +14676,12 @@ Paragraph.prototype.GetCommentMark = function(sId, isStart)
 
 	return null;
 };
-Paragraph.prototype.MoveCursorToCommentMark = function(sId)
+Paragraph.prototype.MoveCursorToCommentMark = function(oParaComment)
 {
 	for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
 	{
 		var oItem = this.Content[nPos];
-		if (para_Comment === oItem.Type && sId === oItem.CommentId)
+		if (oItem === oParaComment)
 		{
 			if (oItem.IsCommentStart())
 			{
@@ -14397,7 +14795,7 @@ Paragraph.prototype.GetCurrentComments = function(oComments)
 // SpellCheck
 //----------------------------------------------------------------------------------------------------------------------
 /**
- * @returns {AscCommonWord.CParagraphSpellChecker}
+ * @returns {AscWord.CParagraphSpellChecker}
  */
 Paragraph.prototype.GetSpellChecker = function()
 {
@@ -14413,14 +14811,21 @@ Paragraph.prototype.RestartSpellCheck = function()
 	{
 		this.Content[nIndex].RestartSpellCheck();
 	}
-
-	this.LogicDocument.Spelling.AddParagraphToCheck(this);
+	let oSpelling = this.getSpelling();
+	if(oSpelling)
+	{
+		oSpelling.AddParagraphToCheck(this);
+	}
 };
 Paragraph.prototype.RequestSpellCheck = function()
 {
 	if (this.RecalcInfo.SpellCheck)
 	{
-		this.LogicDocument && this.LogicDocument.Spelling.AddParagraphToCheck(this);
+		let oSpelling = this.getSpelling();
+		if(oSpelling)
+		{
+			oSpelling.AddParagraphToCheck(this);
+		}
 	}
 };
 /**
@@ -14502,20 +14907,6 @@ Paragraph.prototype.private_CheckDropCapForSpellCheck = function()
 
 	oElement.SetCorrect();
 };
-Paragraph.prototype.AddSpellCheckerElement = function(oElement)
-{
-	let oRun = this.GetClassByPos(oElement.GetStartPos());
-	if (!oRun || !oRun.IsRun())
-		return;
-
-	oRun.AddSpellCheckerElement(oElement, true);
-
-	oRun = this.GetClassByPos(oElement.GetEndPos());
-	if (!oRun || !oRun.IsRun())
-		return;
-
-	oRun.AddSpellCheckerElement(oElement, false);
-};
 Paragraph.prototype.ReplaceMisspelledWord = function(Word, oElement)
 {
 	var Element = null;
@@ -14545,16 +14936,13 @@ Paragraph.prototype.ReplaceMisspelledWord = function(Word, oElement)
 		Word = Word.substr(1);
 
 	// Сначала вставим новое слово
-	var Class = Element.StartRun;
-	if (para_Run !== Class.Type || Element.StartPos.Data.Depth <= 0)
-		return;
-
-	var RunPos = Element.StartPos.Data[Element.StartPos.Depth - 1];
-	Class.AddText(Word, RunPos);
+	var startRun = Element.GetStartRun();
+	var inRunPos = Element.GetStartInRunPos();
+	startRun.AddText(Word, inRunPos);
 
 	// Удалим старое слово
-	var StartPos = Element.StartPos;
-	var EndPos   = Element.EndPos;
+	var StartPos = Element.GetStartPos();
+	var EndPos   = Element.GetEndPos();
 
 	// Если комментарии попадают в текст, тогда сначала их надо отдельно удалить
 	var CommentsToDelete = {};
@@ -14606,8 +14994,12 @@ Paragraph.prototype.IgnoreMisspelledWord = function(oElement)
 };
 Paragraph.prototype.CanAddSectionPr = function()
 {
-	let oParent = this.Parent;
-	return (oParent && (oParent.GetTopDocumentContent() instanceof CDocument) && !oParent.IsTableCellContent() && this.IsUseInDocument());
+	let logicDocument = this.GetLogicDocument();
+	return (logicDocument
+		&& logicDocument.IsDocumentEditor()
+		&& this.IsUseInDocument()
+		&& !this.IsTableCellContent()
+		&& this.GetTopDocumentContent() === logicDocument);
 };
 //----------------------------------------------------------------------------------------------------------------------
 // Search
@@ -14813,28 +15205,49 @@ Paragraph.prototype.Get_SectionPr = function()
 {
 	return this.SectPr;
 };
-Paragraph.prototype.Set_SectionPr = function(SectPr, bUpdate)
+Paragraph.prototype.Set_SectionPr = function(sectPr, update)
 {
-	if (this.LogicDocument !== this.Parent && (!this.LogicDocument || true !== this.LogicDocument.ForceCopySectPr))
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument
+		&& logicDocument !== this.GetTopDocumentContent()
+		&& true !== this.LogicDocument.ForceCopySectPr)
 		return;
-
-	if (SectPr !== this.SectPr)
-	{
-		History.Add(new CChangesParagraphSectPr(this, this.SectPr, SectPr));
-
-		var oOldSectPr = this.SectPr;
-		this.SectPr = SectPr;
-
-		if (false !== bUpdate)
-			this.LogicDocument.UpdateSectionInfo(oOldSectPr, SectPr, true);
-
-		// TODO: Когда избавимся от ParaEnd переделать тут
-		if (this.Content.length > 0 && para_Run === this.Content[this.Content.length - 1].Type)
-		{
-			var LastRun                = this.Content[this.Content.length - 1];
-			LastRun.RecalcInfo.Measure = true;
-		}
-	}
+	
+	if (sectPr === this.SectPr)
+		return;
+	
+	let oldSectPr = this.SectPr;
+	this.SectPr   = sectPr;
+	
+	AscCommon.History.Add(new CChangesParagraphSectPr(this, oldSectPr, sectPr));
+	
+	if (false !== update)
+		this.UpdateSectionInfo(oldSectPr, true);
+	
+	// TODO: Когда избавимся от ParaEnd переделать тут
+	let paraEndRun = this.GetParaEndRun();
+	if (paraEndRun)
+		paraEndRun.RecalcMeasure();
+};
+/**
+ * Обновляем информацию о заданной секции
+ * @param prevSectPr {AscWord.SectPr} - Если не задано, значит добавляется новая секция
+ * @param checkHdrFtr {boolean} - Проверять ли колонтитулы при удалении секции
+ */
+Paragraph.prototype.UpdateSectionInfo = function(prevSectPr, checkHdrFtr)
+{
+	if (prevSectPr === this.SectPr)
+		return;
+	
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument
+		|| !logicDocument.IsDocumentEditor()
+		|| !this.IsUseInDocument()
+		|| this.IsTableCellContent()
+		|| this.GetTopDocumentContent() !== logicDocument)
+		return;
+	
+	logicDocument.GetSections().UpdateSection(this, prevSectPr, checkHdrFtr);
 };
 Paragraph.prototype.SetSectionPr = function(sectPr, isUpdate)
 {
@@ -14864,7 +15277,7 @@ Paragraph.prototype.GetLastRangeVisibleBounds = function()
 		RangeW.W   = 0;
 		RangeW.End = false;
 
-		if (true === this.Numbering.Check_Range(CurRange, CurLine))
+		if (true === this.Numbering.checkRange(CurRange, CurLine))
 			RangeW.W += this.Numbering.WidthVisible;
 
 		for (var Pos = StartPos; Pos <= EndPos; Pos++)
@@ -15029,7 +15442,7 @@ Paragraph.prototype.private_RecalculateTextMetrics = function(TextMetrics)
             this.Content[Index].Recalculate_Measure2(TextMetrics);
     }
 };
-Paragraph.prototype.GetPageByLine = function(CurLine)
+Paragraph.prototype.getPageByLine = function(CurLine)
 {
     var CurPage = 0;
     var PagesCount = this.Pages.length;
@@ -15215,7 +15628,7 @@ Paragraph.prototype.GetPrChangeNumPr = function()
 	{
 		var oNumPr = this.GetNumPr();
 		if (oNumPr)
-			oPrevNumPr = new CNumPr(oPrevNumPr.NumId, oNumPr.Lvl);
+			oPrevNumPr = new AscWord.NumPr(oPrevNumPr.NumId, oNumPr.Lvl);
 	}
 
 	return oPrevNumPr;
@@ -15243,7 +15656,7 @@ Paragraph.prototype.AddPrChange = function()
     if (false === this.HavePrChange())
     {
         this.Pr.AddPrChange();
-		History.Add(new CChangesParagraphPrChange(this,
+		AscCommon.History.Add(new CChangesParagraphPrChange(this,
 			{
 				PrChange   : undefined,
 				ReviewInfo : undefined
@@ -15252,12 +15665,12 @@ Paragraph.prototype.AddPrChange = function()
 				PrChange   : this.Pr.PrChange,
 				ReviewInfo : this.Pr.ReviewInfo
 			}));
-        this.private_UpdateTrackRevisions();
+        this.updateTrackRevisions();
     }
 };
 Paragraph.prototype.SetPrChange = function(PrChange, ReviewInfo)
 {
-	History.Add(new CChangesParagraphPrChange(this,
+	AscCommon.History.Add(new CChangesParagraphPrChange(this,
 		{
 			PrChange   : this.Pr.PrChange,
 			ReviewInfo : this.Pr.ReviewInfo ? this.Pr.ReviewInfo.Copy() : undefined
@@ -15267,7 +15680,7 @@ Paragraph.prototype.SetPrChange = function(PrChange, ReviewInfo)
 			ReviewInfo : ReviewInfo ? ReviewInfo.Copy() : undefined
 		}));
     this.Pr.SetPrChange(PrChange, ReviewInfo);
-    this.private_UpdateTrackRevisions();
+    this.updateTrackRevisions();
 };
 Paragraph.prototype.SetPStyleToPrChange = function(styleId)
 {
@@ -15289,7 +15702,7 @@ Paragraph.prototype.SetNumPrToPrChange = function(numId, iLvl)
 	
 	let prChange   = this.Pr.PrChange.Copy();
 	let reviewInfo = this.Pr.ReviewInfo ? this.Pr.ReviewInfo.Copy() : undefined;
-	prChange.NumPr = new AscWord.CNumPr(numId, iLvl);
+	prChange.NumPr = new AscWord.NumPr(numId, iLvl);
 	
 	this.SetPrChange(prChange, reviewInfo);
 };
@@ -15297,7 +15710,7 @@ Paragraph.prototype.RemovePrChange = function()
 {
     if (true === this.HavePrChange())
     {
-		History.Add(new CChangesParagraphPrChange(this,
+		AscCommon.History.Add(new CChangesParagraphPrChange(this,
 			{
 				PrChange   : this.Pr.PrChange,
 				ReviewInfo : this.Pr.ReviewInfo
@@ -15307,7 +15720,7 @@ Paragraph.prototype.RemovePrChange = function()
 				ReviewInfo : undefined
 			}));
         this.Pr.RemovePrChange();
-        this.private_UpdateTrackRevisions();
+        this.updateTrackRevisions();
     }
 };
 Paragraph.prototype.private_AddPrChange = function()
@@ -15355,29 +15768,22 @@ Paragraph.prototype.IsTrackRevisions = function()
     return false;
 };
 /**
- * Отличие данной функции от Get_SectionPr в том, что здесь возвращаются настройки секции, к которой
- * принадлежит данный параграф, а там конкретно настройки секции, которые лежат в данном параграфе.
- */
-Paragraph.prototype.Get_SectPr = function()
-{
-    if (this.Parent && this.Parent.Get_SectPr)
-    {
-        this.Parent.Update_ContentIndexing();
-		if(this.Index > -1)
-		{
-			return this.Parent.Get_SectPr(this.Index);
-		}
-    }
-
-    return null;
-};
-/**
  * Получаем секцию, в которой лежит заданный параграф
- * @returns  {?CSectionPr}
+ * @returns  {?AscWord.SectPr}
  */
 Paragraph.prototype.GetDocumentSectPr = function()
 {
 	return this.Get_SectPr();
+};
+Paragraph.prototype.GetAllSectPrParagraphs = function(paragraphs)
+{
+	if (!paragraphs)
+		paragraphs = [];
+	
+	if (this.Get_SectionPr())
+		paragraphs.push(this);
+	
+	return paragraphs;
 };
 Paragraph.prototype.CheckRevisionsChanges = function(oRevisionsManager)
 {
@@ -15449,22 +15855,14 @@ Paragraph.prototype.private_UpdateTrackRevisionOnChangeParaPr = function(bUpdate
 {
     if (true === this.HavePrChange())
     {
-        this.private_UpdateTrackRevisions();
+        this.updateTrackRevisions();
 
         if (true === bUpdateInfo && this.LogicDocument && true === this.LogicDocument.IsTrackRevisions())
         {
             var OldReviewInfo = this.Pr.ReviewInfo.Copy();
             this.Pr.ReviewInfo.Update();
-            History.Add(new CChangesParagraphPrReviewInfo(this, OldReviewInfo, this.Pr.ReviewInfo.Copy()));
+            AscCommon.History.Add(new CChangesParagraphPrReviewInfo(this, OldReviewInfo, this.Pr.ReviewInfo.Copy()));
         }
-    }
-};
-Paragraph.prototype.private_UpdateTrackRevisions = function()
-{
-    if (this.LogicDocument && this.LogicDocument.GetTrackRevisionsManager)
-    {
-        var RevisionsManager = this.LogicDocument.GetTrackRevisionsManager();
-        RevisionsManager.CheckElement(this);
     }
 };
 Paragraph.prototype.UpdateDocumentOutline = function()
@@ -15570,7 +15968,7 @@ Paragraph.prototype.AcceptRevisionChanges = function(Type, bAll)
 		{
 			this.Correct_Content();
 			this.Correct_ContentPos(false);
-			this.private_UpdateTrackRevisions();
+			this.updateTrackRevisions();
 		}
     }
 };
@@ -15635,7 +16033,7 @@ Paragraph.prototype.RejectRevisionChanges = function(Type, bAll)
 
 		this.Correct_Content();
 		this.Correct_ContentPos(false);
-		this.private_UpdateTrackRevisions();
+		this.updateTrackRevisions();
 	}
 };
 Paragraph.prototype.GetRevisionsChangeElement = function(SearchEngine)
@@ -15929,7 +16327,7 @@ Paragraph.prototype.Get_XYByContentPos = function(ContentPos)
 {
 	var ParaContentPos = this.Get_ParaContentPos(false, false);
 	this.Set_ParaContentPos(ContentPos, true, -1, -1);
-	var Result = this.Internal_Recalculate_CurPos(-1, false, false, true);
+	var Result = this.Internal_Recalculate_CurPos(false, false, true);
 	this.Set_ParaContentPos(ParaContentPos, true, this.CurPos.Line, this.CurPos.Range, false);
 	return Result;
 };
@@ -15942,6 +16340,10 @@ Paragraph.prototype.Get_PagesCount = function()
     return this.Pages.length;
 };
 Paragraph.prototype.GetPagesCount = function()
+{
+	return this.Pages.length;
+};
+Paragraph.prototype.getPageCount = function()
 {
 	return this.Pages.length;
 };
@@ -15978,8 +16380,8 @@ Paragraph.prototype.Check_EmptyPages = function(CurPage, bSkipEmptyLinesWithBrea
 };
 Paragraph.prototype.Get_CurrentColumn = function(CurPage)
 {
-    this.Internal_Recalculate_CurPos(this.CurPos.ContentPos, true, false, false);
-    return this.Get_AbsoluteColumn(this.CurPos.PagesPos);
+    this.Internal_Recalculate_CurPos(true, false, false);
+    return this.GetAbsoluteColumn(this.CurPos.PagesPos);
 };
 Paragraph.prototype.private_RefreshNumbering = function(NumPr)
 {
@@ -15991,7 +16393,7 @@ Paragraph.prototype.private_RefreshNumbering = function(NumPr)
     if (undefined === NumPr || null === NumPr)
         return;
 
-    History.Add_RecalcNumPr(NumPr);
+    AscCommon.History.Add_RecalcNumPr(NumPr);
 };
 Paragraph.prototype.Get_NumberingPage = function()
 {
@@ -16030,27 +16432,26 @@ Paragraph.prototype.Set_ParaPropsForVerticalTextInCell = function(isVerticalText
     }
 };
 /**
- * Проверяем можно ли объединить границы двух параграфов с заданными настройками Pr1, Pr2.
+ * Проверяем можно ли объединить границы двух параграфов с заданными настройками paraPr1, paraPr2
+ * @param paraPr1 {AscWord.CParaPr}
+ * @param paraPr2 {AscWord.CParaPr}
+ * @return {boolean}
  */
-Paragraph.prototype.private_CompareBorderSettings = function(Pr1, Pr2)
+Paragraph.prototype.private_CompareBorderSettings = function(paraPr1, paraPr2)
 {
-	// Сначала сравним правую и левую границы параграфов
-	var Left_1  = Math.min(Pr1.Ind.Left, Pr1.Ind.Left + Pr1.Ind.FirstLine);
-	var Right_1 = Pr1.Ind.Right;
-	var Left_2  = Math.min(Pr2.Ind.Left, Pr2.Ind.Left + Pr2.Ind.FirstLine);
-	var Right_2 = Pr2.Ind.Right;
+	let l_1 = paraPr1.Bidi ? paraPr1.Ind.Right : Math.min(paraPr1.Ind.Left, paraPr1.Ind.Left + paraPr1.Ind.FirstLine);
+	let r_1 = paraPr1.Bidi ? Math.min(paraPr1.Ind.Left, paraPr1.Ind.Left + paraPr1.Ind.FirstLine) : paraPr1.Ind.Right;
 
-	if (Math.abs(Left_1 - Left_2) > 0.001 || Math.abs(Right_1 - Right_2) > 0.001)
-		return false;
+	let l_2 = paraPr2.Bidi ? paraPr2.Ind.Right : Math.min(paraPr2.Ind.Left, paraPr2.Ind.Left + paraPr2.Ind.FirstLine);
+	let r_2 = paraPr2.Bidi ? Math.min(paraPr2.Ind.Left, paraPr2.Ind.Left + paraPr2.Ind.FirstLine) : paraPr2.Ind.Right;
 
 	// Почему то Word не сравнивает границы между параграфами.
-	if (false === Pr1.Brd.Top.Compare(Pr2.Brd.Top)
-		|| false === Pr1.Brd.Bottom.Compare(Pr2.Brd.Bottom)
-		|| false === Pr1.Brd.Left.Compare(Pr2.Brd.Left)
-		|| false === Pr1.Brd.Right.Compare(Pr2.Brd.Right))
-		return false;
-
-	return true;
+	return (Math.abs(l_1 - l_2) < AscWord.EPSILON
+		&& Math.abs(r_1 - r_2) < AscWord.EPSILON
+		&& paraPr1.Brd.Top.Compare(paraPr2.Brd.Top)
+		&& paraPr1.Brd.Bottom.Compare(paraPr2.Brd.Bottom)
+		&& paraPr1.Brd.Left.Compare(paraPr2.Brd.Left)
+		&& paraPr1.Brd.Right.Compare(paraPr2.Brd.Right));
 };
 Paragraph.prototype.GetFootnotesList = function(oEngine)
 {
@@ -16141,25 +16542,20 @@ Paragraph.prototype.GetText = function(oPr)
 	var oText = new CParagraphGetText();
 
 	oText.SetBreakOnNonText(false);
-	oText.SetParaEndToSpace(oPr && undefined !== oPr.ParaEndToSpace ? oPr.ParaEndToSpace: true);
+	
+	oText.SetParaSeparator(oPr && undefined !== oPr.ParaSeparator ? oPr.ParaSeparator : "\r\n");
 	oText.SetParaNumbering(oPr && undefined !== oPr.Numbering ? oPr.Numbering: true);
 	oText.SetParaMath(oPr && undefined !== oPr.Math ? oPr.Math: true);
 	oText.SetParaTabSymbol(oPr && undefined !== oPr.TabSymbol ? oPr.TabSymbol: " ");
 	oText.SetParaNewLineSeparator(oPr && undefined !== oPr.NewLineSeparator ? oPr.NewLineSeparator: "\r");
+	oText.SetTableCellSeparator(oPr && undefined !== oPr.TableCellSeparator ? oPr.TableCellSeparator: "\t");
+	oText.SetTableRowSeparator(oPr && undefined !== oPr.TableRowSeparator ? oPr.TableRowSeparator: "\r\n");
 
 	if (true === oText.Numbering)
 	{
 		var oNumPr = this.GetNumPr();
 		if (oNumPr && oNumPr.IsValid())
-		{
-			oText.Text += this.GetNumberingText(false);
-
-			var nSuff = this.Parent.GetNumbering().GetNum(oNumPr.NumId).GetLvl(oNumPr.Lvl).GetSuff();
-			if (Asc.c_oAscNumberingSuff.Tab === nSuff)
-				oText.Text += "	";
-			else if (Asc.c_oAscNumberingSuff.Space === nSuff)
-				oText.Text += " ";
-		}
+			oText.Text += this.GetNumberingTextWithSuffix();
 	}
 
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
@@ -16172,10 +16568,10 @@ Paragraph.prototype.GetText = function(oPr)
 };
 Paragraph.prototype.CheckFootnote = function(X, Y, CurPage)
 {
-	var SearchPosXY = this.Get_ParaContentPosByXY(X, Y, CurPage, false, false);
-	var CurLine = SearchPosXY.Line;
+	let searchPosXY = this.getSearchPosByXY(X, Y, CurPage, false, false);
+	var CurLine = searchPosXY.getLine();
 
-	if (true !== SearchPosXY.InText)
+	if (!searchPosXY.isInText())
 		return null;
 
 	if (!this.Lines[CurLine])
@@ -16341,9 +16737,38 @@ Paragraph.prototype.SetParagraphPr = function(oParaPr)
 {
 	this.SetDirectParaPr(oParaPr);
 };
-Paragraph.prototype.SetParagraphAlign = function(Align)
+Paragraph.prototype.SetParagraphBidi = function(isRtl)
 {
-	this.Set_Align(Align);
+	if (this.Pr.Bidi === isRtl)
+		return;
+	
+	this.private_AddPrChange();
+	AscCommon.AddAndExecuteChange(new CChangesParagraphBidi(this, this.Pr.Bidi, isRtl));
+	
+	if (!this.bFromDocument)
+	{
+		let jc = this.GetParagraphAlign();
+		if (AscCommon.align_Left === jc)
+			this.Set_Align(AscCommon.align_Right);
+		else if (AscCommon.align_Right === jc)
+			this.Set_Align(AscCommon.align_Left);
+	}
+};
+Paragraph.prototype.GetParagraphBidi = function()
+{
+	return !!this.Get_CompiledPr2(false).ParaPr.Bidi;
+};
+Paragraph.prototype.SetParagraphAlign = function(align)
+{
+	if (this.isRtlDirection() && this.bFromDocument)
+	{
+		if (AscCommon.align_Left === align)
+			align = AscCommon.align_Right;
+		else if (AscCommon.align_Right === align)
+			align = AscCommon.align_Left;
+	}
+	
+	this.Set_Align(align);
 };
 Paragraph.prototype.GetParagraphAlign = function()
 {
@@ -16454,7 +16879,7 @@ Paragraph.prototype.GetAllContentControls = function(arrContentControls)
 };
 Paragraph.prototype.GetTargetPos = function()
 {
-	return this.Internal_Recalculate_CurPos(this.CurPos.ContentPos, false, false, true);
+	return this.Internal_Recalculate_CurPos(false, false, true);
 };
 Paragraph.prototype.GetSelectedContentControls = function()
 {
@@ -16583,6 +17008,79 @@ Paragraph.prototype.AddContentControl = function(nContentControlType)
 		return oContentControl;
 	}
 };
+Paragraph.prototype.GetCurrentPermRanges = function()
+{
+	let permRanges = [];
+	
+	let endInfo = this.GetEndInfoByPage(-1);
+	if (endInfo)
+		permRanges = endInfo.GetPermRanges().slice();
+	
+	let endPos = Math.min(this.CurPos.ContentPos, this.Content.length - 1);
+	for (let pos = 0; pos <= endPos; ++pos)
+	{
+		this.Content[pos].GetCurrentPermRanges(permRanges, pos === endPos);
+	}
+	
+	return permRanges;
+};
+Paragraph.prototype.GetPermRangesByPos = function(paraPos)
+{
+	let state = this.SaveSelectionState();
+	this.Set_ParaContentPos(paraPos, false, -1, -1, false);
+	let permRanges = this.GetCurrentPermRanges();
+	this.LoadSelectionState(state);
+	return permRanges;
+};
+/**
+ * Корректируем заданную позицию, чтобы она попала в каку-либо разрешенную область, но приэтом так, чтобы физически
+ * позиция не изменилась.
+ * @param {AscWord.CParagraphContentPos} paraPos
+ */
+Paragraph.prototype.CorrectPosToPermRanges = function(paraPos)
+{
+	if (this.GetPermRangesByPos(paraPos).length)
+		return paraPos;
+	
+	let state = new AscWord.ParagraphPosToPermRangeState();
+	state.setDirection(true);
+	let curPos = paraPos.Get(0);
+	for (let pos = curPos; pos < this.Content.length; ++pos)
+	{
+		state.setPos(pos, 0);
+		
+		if (this.Content[pos].CorrectPosToPermRanges(state, paraPos, 1, pos === curPos))
+			break;
+		
+		if (state.isStopped())
+			break;
+	}
+	
+	if (!state.isFound())
+	{
+		state.setDirection(false);
+		for (let pos = curPos; pos >= 0; --pos)
+		{
+			state.setPos(pos, 0);
+			
+			if (this.Content[pos].CorrectPosToPermRanges(state, paraPos, 1, pos === curPos))
+				break;
+			
+			if (state.isStopped())
+				break;
+		}
+	}
+	
+	return state.isFound() ? state.getCorrectedPos() : paraPos;
+};
+Paragraph.prototype.IsCurrentPosInComplexFieldCode = function()
+{
+	let cfStatePos = this.GetCurrentComplexFields(true);
+	if (!cfStatePos.length)
+		return false;
+	
+	return cfStatePos[cfStatePos.length - 1].IsFieldCode();
+};
 Paragraph.prototype.GetCurrentComplexFields = function(bReturnFieldPos)
 {
 	var arrComplexFields = [];
@@ -16625,8 +17123,8 @@ Paragraph.prototype.GetComplexFieldsByPos = function(oParaPos, bReturnFieldPos)
 };
 Paragraph.prototype.GetComplexFieldsByXY = function(X, Y, CurPage, bReturnFieldPos)
 {
-	var SearchPosXY = this.Get_ParaContentPosByXY(X, Y, CurPage, false, false);
-	return this.GetComplexFieldsByPos(SearchPosXY.Pos, bReturnFieldPos);
+	let searchPosXY = this.getSearchPosByXY(X, Y, CurPage, false, false);
+	return this.GetComplexFieldsByPos(searchPosXY.getPos(), bReturnFieldPos);
 };
 Paragraph.prototype.GetOutlineParagraphs = function(arrOutline, oPr)
 {
@@ -16721,7 +17219,7 @@ Paragraph.prototype.GetTableOfContents = function(isUnique, isCheckFields)
 
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
 	{
-		var oResult = this.Content[nIndex].GetComplexField(fieldtype_TOC);
+		var oResult = this.Content[nIndex].GetComplexField(AscWord.fieldtype_TOC);
 		if (oResult)
 		{
 			var oInstruction = oResult.GetInstruction();
@@ -16738,7 +17236,7 @@ Paragraph.prototype.GetTablesOfFigures = function(arrComplexFields)
 {
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
 	{
-		var oResult = this.Content[nIndex].GetComplexField(fieldtype_TOC);
+		var oResult = this.Content[nIndex].GetComplexField(AscWord.fieldtype_TOC);
 		if (oResult)
 		{
 			var oInstruction = oResult.GetInstruction();
@@ -16761,10 +17259,11 @@ Paragraph.prototype.GetComplexFieldsArrayByType = function(nType)
 };
 Paragraph.prototype.AddBookmarkForTOC = function()
 {
-	if (!this.LogicDocument)
-		return;
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return null;
 
-	var oBookmarksManager = this.LogicDocument.GetBookmarksManager();
+	var oBookmarksManager = logicDocument.GetBookmarksManager();
 
 	var sId   = oBookmarksManager.GetNewBookmarkId();
 	var sName = oBookmarksManager.GetNewBookmarkNameTOC();
@@ -16776,23 +17275,34 @@ Paragraph.prototype.AddBookmarkForTOC = function()
 
 	return sName;
 };
+/**
+ * Проверяем, есть ли в параграфе уже закладка для ссылки на данный параграф
+ * @returns {string}
+ */
+Paragraph.prototype.GetBookmarkRefToParagraph = function()
+{
+	let startBookmarks = this.private_FindBookmarks(0, this.Content.length - 1);
+	if (startBookmarks.length <= 0)
+		return "";
+	
+	let endBookmarks = this.private_FindBookmarks(this.Content.length - 2, 0);
+	let pair = this.private_FindPairBookmarks(startBookmarks, endBookmarks, "_Ref");
+	if (pair)
+		return pair[0].GetBookmarkName();
+	
+	return "";
+};
 Paragraph.prototype.AddBookmarkForRef = function()
 {
-	if (!this.LogicDocument)
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
 		return null;
-
-	//check is ref bookmark in paragraph
-	var aStartBookmarks = this.private_FindBookmarks(0, this.Content.length - 1), aEndBookmarks;
-	if(aStartBookmarks.length > 0)
-	{
-		aEndBookmarks = this.private_FindBookmarks(this.Content.length - 2, 0);
-		var aPair = this.private_FindPairBookmarks(aStartBookmarks, aEndBookmarks, "_Ref");
-		if(aPair)
-		{
-			return aPair[0].GetBookmarkName();
-		}
-	}
-	var oBookmarksManager = this.LogicDocument.GetBookmarksManager();
+	
+	let bookmark = this.GetBookmarkRefToParagraph();
+	if (bookmark)
+		return bookmark;
+	
+	var oBookmarksManager = logicDocument.GetBookmarksManager();
 	var sId   = oBookmarksManager.GetNewBookmarkId();
 	var sBookmarkName = oBookmarksManager.GetNewBookmarkNameRef();
 	this.Add_ToContent(0, new CParagraphBookmark(true, sId, sBookmarkName));
@@ -16985,6 +17495,7 @@ Paragraph.prototype.private_GetLastSEQPos = function(sCaption)
 };
 Paragraph.prototype.CanAddRefAfterSEQ = function(sCaption)
 {
+	
 	if (!this.LogicDocument)
 		return false;
 	var oSEQPos = this.private_GetLastSEQPos(sCaption);
@@ -17236,7 +17747,7 @@ Paragraph.prototype.CheckPageRefLink = function(X, Y, CurPage)
 	{
 		var oComplexField = arrComplexFields[nIndex];
 		var oInstruction  = oComplexField.GetInstruction();
-		if (oInstruction && fieldtype_PAGEREF === oInstruction.GetType() && oInstruction.IsHyperlink())
+		if (oInstruction && AscWord.fieldtype_PAGEREF === oInstruction.GetType() && oInstruction.IsHyperlink())
 			return oComplexField;
 	}
 
@@ -17259,7 +17770,7 @@ Paragraph.prototype.GetFirstNonEmptyPageAbsolute = function()
 		nCurPage++;
 	}
 
-	return this.Get_AbsolutePage(nCurPage);
+	return this.GetAbsolutePage(nCurPage);
 };
 /**
  * Удаляем все кроме первого таба в параграфе.
@@ -17280,9 +17791,12 @@ Paragraph.prototype.RemoveTabsForTOC = function()
  * Проверяем лежит ли данный параграф в таблице
  * @returns {boolean}
  */
-Paragraph.prototype.IsTableCellContent = function()
+Paragraph.prototype.IsTableCellContent = function(bReturnCell)
 {
-	return (this.Parent && this.Parent.IsTableCellContent() ? true : false);
+	if (bReturnCell)
+		return (this.Parent ? this.Parent.IsTableCellContent(true) : null);
+	
+	return !!(this.Parent && this.Parent.IsTableCellContent());
 };
 /**
  * Проверяем является ли данный параграф последним в ячейке (возвращаем false, если параграф не лежит в таблице вообще)
@@ -17363,6 +17877,11 @@ Paragraph.prototype.GetParaEndCompiledPr = function()
 
 	oTextPr.Merge(this.TextPr.Value);
 	oTextPr.CheckFontScale();
+	
+	let layoutCoeff = this.getLayoutFontSizeCoefficient();
+	oTextPr.FontSize   *= layoutCoeff;
+	oTextPr.FontSizeCS *= layoutCoeff;
+	
 	return oTextPr;
 };
 Paragraph.prototype.GetLastParagraph = function()
@@ -17497,6 +18016,34 @@ Paragraph.prototype.isAutoHyphenation = function()
 	return false;
 };
 /**
+ * Получаем один следующий текстовый символ, если следующий элемент существует и он текстовый
+ * @param {AscWord.CParagraphContentPos} [paraPos=undefined] Если не задано, то от текущей позиции
+ * @returns {string}
+ */
+Paragraph.prototype.getNextCharacter = function(paraPos)
+{
+	let state = this.SaveSelectionState();
+	
+	this.RemoveSelection();
+	
+	if (paraPos)
+		this.Set_ParaContentPos(paraPos, false, -1, -1);
+	
+	let startPos = this.GetParaContentPos(false, false, false);
+	
+	this.MoveCursorRight(false);
+	let endPos = this.GetParaContentPos(false, false, false);
+	
+	this.StartSelectionFromCurPos();
+	this.SetSelectionContentPos(startPos, endPos, false);
+	
+	let result = this.GetSelectedText(false);
+	
+	this.LoadSelectionState(state);
+	
+	return result;
+};
+/**
  * Выделяем слово, около которого стоит курсор
  * @returns {boolean}
  */
@@ -17518,9 +18065,13 @@ Paragraph.prototype.SelectCurrentWord = function()
 };
 /**
  * Получаем текущее слово (или часть текущего слова)
- * @param nDirection {number} -1 - часть до курсора, 1 - часть после курсора, 0 (или не задано) слово целиком
+ * @param direction {number} -1 - часть до курсора, 1 - часть после курсора, 0 (или не задано) слово целиком
  * @returns {string}
  */
+Paragraph.prototype.getCurrentWord = function(direction)
+{
+	return this.GetCurrentWord(direction);
+};
 Paragraph.prototype.GetCurrentWord = function(nDirection)
 {
 	if (this.IsSelectionUse())
@@ -17904,24 +18455,24 @@ Paragraph.prototype.AddTrackMoveMark = function(isFrom, isStart, sMarkId)
 };
 /**
  * Удаляем из параграфа заданный элемент, если он тут есть
- * @param oElement
+ * @param element
  */
-Paragraph.prototype.RemoveElement = function(oElement)
+Paragraph.prototype.RemoveElement = function(element)
 {
-	for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
+	for (let i = 0, count = this.Content.length; i < count; ++i)
 	{
-		var oItem = this.Content[nPos];
-		if (oItem === oElement)
+		let item = this.Content[i];
+		if (item === element)
 		{
-			this.Internal_Content_Remove(nPos);
-			nPos--;
-			nCount--;
+			this.RemoveFromContent(i, 1);
+			return true;
 		}
-		else if (oItem.RemoveElement)
+		else if (item.RemoveElement(element))
 		{
-			oItem.RemoveElement(oElement);
+			return true;
 		}
 	}
+	return false;
 };
 /**
  * Пробегаемся по все ранам с заданной функцией
@@ -18023,12 +18574,12 @@ Paragraph.prototype.ProcessComplexFields = function()
 	{
 		return;
 	}
-	var oComplexFields = new CParagraphComplexFieldsInfo();
-	oComplexFields.ResetPage(this, 0);
+	let complexFields = new AscWord.ParagraphComplexFieldStack();
+	complexFields.resetPage(this, 0);
 
 	for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
 	{
-		this.Content[nPos].ProcessComplexFields(oComplexFields);
+		this.Content[nPos].ProcessComplexFields(complexFields);
 	}
 };
 Paragraph.prototype.GetStartPageForRecalculate = function(nPageAbs)
@@ -18221,8 +18772,24 @@ Paragraph.prototype.Document_Is_SelectionLocked = function(CheckType)
 	var arrContentControls = this.GetSelectedContentControls();
 	for (var nIndex = 0, nCount = arrContentControls.length; nIndex < nCount; ++nIndex)
 	{
-		if (arrContentControls[nIndex].IsSelectionUse() === isSelectionUse)
-			arrContentControls[nIndex].Document_Is_SelectionLocked(CheckType);
+		let cc = arrContentControls[nIndex];
+		if (!(cc instanceof AscWord.CInlineLevelSdt) || this !== cc.GetParagraph())
+		{
+			// Проверяем типы, при которых произойдет удаление элемента, содержащего данный контрол
+			if (CheckType !== AscCommon.changestype_Paragraph_AddText
+				&& CheckType !== AscCommon.changestype_Remove
+				&& CheckType !== AscCommon.changestype_Delete
+				&& CheckType !== AscCommon.changestype_Document_Content
+				&& CheckType !== AscCommon.changestype_Paragraph_Content)
+				continue;
+			
+			if (Asc.c_oAscSdtLockType.SdtLocked === cc.GetContentControlLock() || Asc.c_oAscSdtLockType.SdtContentLocked === cc.GetContentControlLock())
+				AscCommon.CollaborativeEditing.Add_CheckLock(true);
+		}
+		else if (cc.IsSelectionUse() === isSelectionUse)
+		{
+			cc.Document_Is_SelectionLocked(CheckType);
+		}
 	}
 
 	// Проверка для специального случая, когда мы переносим текст из параграфа в него самого. В такой ситуации надо
@@ -18581,7 +19148,10 @@ Paragraph.prototype.GetInnerForm = function()
 Paragraph.prototype.IsInFixedForm = function()
 {
 	var oShape = this.Parent ? this.Parent.Is_DrawingShape(true) : null;
-	return (oShape && oShape.isForm());
+	if (oShape && oShape.isForm())
+		return true;
+
+	return false;
 };
 Paragraph.prototype.GetParentShape = function()
 {
@@ -18702,6 +19272,51 @@ Paragraph.prototype.SelectFotMath = function()
 	
 	this.Document_SetThisElementCurrent(false);
 }
+Paragraph.prototype.getLayoutFontSizeCoefficient = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return 1;
+	
+	let shape   = this.GetParentShape();
+	let drawing = shape ? shape.GetParaDrawing() : null;
+	if (drawing)
+		return drawing.GetScaleCoefficient();
+	
+	// TODO: В MSWord в режиме readmode не скейлится размер шрифта вне таблицы, а уменьшается вместе с самой таблицой
+	//       у нас пока было решено скейлить текст в таблицах и вне таблицы одинаково
+	// if (this.IsTableCellContent())
+	// 	return this.getLayoutScaleCoefficient();
+	
+	return logicDocument.GetDocumentLayout().GetFontScale();
+};
+Paragraph.prototype.isRtlDirection = function()
+{
+	// for pdf forms
+	if (Asc.editor.isPdfEditor()) {
+		if (this.Parent && this.Parent.ParentPDF) {
+			if (this.Parent.ParentPDF.IsRTL()) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+	}
+
+	return !!this.Get_CompiledPr2(false).ParaPr.Bidi;
+};
+Paragraph.prototype.GetAllAnnotationMarks = function(marks)
+{
+	if (!marks)
+		marks = [];
+	
+	for (let i = 0; i < this.Content.length; ++i)
+	{
+		this.Content[i].GetAllAnnotationMarks(marks);
+	}
+	return marks;
+};
 
 Paragraph.prototype.asc_getText = function()
 {
@@ -18718,12 +19333,7 @@ Paragraph.prototype.asc_getText = function()
 				sText += " ";
 			}
 		}
-		var sNumText = this.GetNumberingText();
-		if(typeof sNumText === "string" && sNumText.length > 0)
-		{
-			sText += sNumText;
-			sText += " ";
-		}
+		sText += this.GetNumberingTextWithSuffix();
 	}
 	sText += this.GetText();
 	return sText;
@@ -18817,6 +19427,7 @@ function CParagraphPageEndInfo()
 {
     this.Comments      = []; // Массив незакрытых комментариев на данной странице
 	this.ComplexFields = []; // Массив незакрытых полей на данной странице
+	this.PermRanges    = []; // Массив незакрытых разрешенных областей
 
     this.RunRecalcInfo = null;
 	this.RecalcId     = -1;
@@ -18825,16 +19436,18 @@ CParagraphPageEndInfo.prototype.Copy = function()
 {
 	var oInfo = new CParagraphPageEndInfo();
 
-	for (var nIndex = 0, nCount = this.Comments.length; nIndex < nCount; ++nIndex)
+	for (let nIndex = 0, nCount = this.Comments.length; nIndex < nCount; ++nIndex)
 	{
 		oInfo.Comments.push(this.Comments[nIndex]);
 	}
 
-	for (var nIndex = 0, nCount = this.ComplexFields.length; nIndex < nCount; ++nIndex)
+	for (let nIndex = 0, nCount = this.ComplexFields.length; nIndex < nCount; ++nIndex)
 	{
 		if (this.ComplexFields[nIndex].ComplexField.IsUse())
 			oInfo.ComplexFields.push(this.ComplexFields[nIndex].Copy());
 	}
+	
+	oInfo.PermRanges = this.PermRanges.slice();
 
 	return oInfo;
 };
@@ -18842,6 +19455,7 @@ CParagraphPageEndInfo.prototype.SetFromPRSI = function(PRSI)
 {
 	this.Comments      = PRSI.Comments;
 	this.ComplexFields = PRSI.ComplexFields;
+	this.PermRanges    = PRSI.PermRanges;
 };
 CParagraphPageEndInfo.prototype.GetComplexFields = function()
 {
@@ -18856,23 +19470,35 @@ CParagraphPageEndInfo.prototype.GetComments = function()
 {
 	return this.Comments;
 };
+CParagraphPageEndInfo.prototype.GetPermRanges = function()
+{
+	return this.PermRanges;
+};
 CParagraphPageEndInfo.prototype.IsEqual = function(oEndInfo)
 {
-	if (this.Comments.length !== oEndInfo.Comments.length || this.ComplexFields.length !== oEndInfo.ComplexFields.length)
+	if (this.Comments.length !== oEndInfo.Comments.length
+		|| this.ComplexFields.length !== oEndInfo.ComplexFields.length
+		|| this.PermRanges.length !== oEndInfo.PermRanges.length)
 		return false;
 
-	for (var nIndex = 0, nCount = this.Comments.length; nIndex < nCount; ++nIndex)
+	for (let nIndex = 0, nCount = this.Comments.length; nIndex < nCount; ++nIndex)
 	{
 		if (this.Comments[nIndex] !== oEndInfo.Comments[nIndex])
 			return false;
 	}
 
-	for (var nIndex = 0, nCount = this.ComplexFields.length; nIndex < nCount; ++nIndex)
+	for (let nIndex = 0, nCount = this.ComplexFields.length; nIndex < nCount; ++nIndex)
 	{
 		if (!this.ComplexFields[nIndex].IsEqual(oEndInfo.ComplexFields[nIndex]))
 			return false;
 	}
-
+	
+	for (let index = 0, count = this.PermRanges.length; index < count; ++index)
+	{
+		if (this.PermRanges[index] !== oEndInfo.PermRanges[index])
+			return false;
+	}
+	
 	return true;
 };
 CParagraphPageEndInfo.prototype.CheckRecalcId = function(recalcId)
@@ -18901,7 +19527,7 @@ CParaPos.prototype.IsValid = function(oParagraph)
 
 
 // используется в Internal_Draw_3 и Internal_Draw_5
-function CParaDrawingRangeLinesElement(y0, y1, x0, x1, w, r, g, b, Additional, Additional2)
+function CParaDrawingRangeLinesElement(y0, y1, x0, x1, w, r, g, b, a, Additional, Additional2)
 {
     this.y0 = y0;
     this.y1 = y1;
@@ -18911,12 +19537,12 @@ function CParaDrawingRangeLinesElement(y0, y1, x0, x1, w, r, g, b, Additional, A
     this.r  = r;
     this.g  = g;
     this.b  = b;
+	this.a  = a;
 
     this.Additional   = Additional;
     this.Additional2  = Additional2;
     this.Intermediate = [];
 }
-
 
 function CParaDrawingRangeLines()
 {
@@ -18932,8 +19558,14 @@ CParaDrawingRangeLines.prototype =
 
     Add : function (y0, y1, x0, x1, w, r, g, b, Additional, Additional2)
     {
-        this.Elements.push( new CParaDrawingRangeLinesElement(y0, y1, x0, x1, w, r, g, b, Additional, Additional2) );
+        this.Elements.push( new CParaDrawingRangeLinesElement(y0, y1, x0, x1, w, r, g, b, 255, Additional, Additional2) );
     },
+	
+	// TODO: Unite Add and addWithAlpha methods
+	addWithAlpha : function(y0, y1, x0, x1, w, r, g, b, a, Additional, Additional2)
+	{
+		this.Elements.push(new CParaDrawingRangeLinesElement(y0, y1, x0, x1, w, r, g, b, a, Additional, Additional2));
+	},
 
     Get_Next : function(isSaveIntermediate)
     {
@@ -18967,6 +19599,11 @@ CParaDrawingRangeLines.prototype =
 
         return Element;
     },
+	
+	getNext : function(saveIntermediate)
+	{
+		return this.Get_Next(saveIntermediate);
+	},
 
     Get_NextForward : function()
     {
@@ -19002,7 +19639,8 @@ CParaDrawingRangeLines.prototype =
 			&& Math.abs(PrevEl.w - Element.w) < 0.001
 			&& PrevEl.r === Element.r
 			&& PrevEl.g === Element.g
-			&& PrevEl.b === Element.b)
+			&& PrevEl.b === Element.b
+			&& PrevEl.a === Element.a)
 		{
 			if (undefined === PrevEl.Additional && undefined === Element.Additional)
 				return true;
@@ -19040,6 +19678,19 @@ CParaDrawingRangeLines.prototype =
 					&& Math.abs(PrevEl.Additional.Y - Element.Additional.Y) < 0.001
 					&& Math.abs(PrevEl.Additional.H - Element.Additional.H) < 0.001
 					&& PrevEl.Additional.Form === Element.Additional.Form);
+			} else if (PrevEl.Additional.TextDrawer && Element.Additional.TextDrawer) {
+				const oPrevTextInfo = PrevEl.Additional.TextDrawer;
+				if (oPrevTextInfo.SplitType === null) {
+					return true;
+				}
+				const oCurTextInfo = Element.Additional.TextDrawer;
+				const bIsSplitByWords = oPrevTextInfo.SplitType === AscFormat.ITERATEDATA_TYPE_WORD;
+				const bPrevText = !oPrevTextInfo.TextElement || oPrevTextInfo.TextElement.IsText() || oPrevTextInfo.TextElement.IsMathText();
+				const bNextText = !oCurTextInfo.TextElement || oCurTextInfo.TextElement.IsText() || oCurTextInfo.TextElement.IsMathText();
+				if (bIsSplitByWords) {
+					return bPrevText === bNextText;
+				}
+				return !(bPrevText || bNextText);
 			}
 
 			return false;
@@ -19066,7 +19717,7 @@ CParaDrawingRangeLines.prototype =
             {
                 var PrevEl = CurElements[CurCount - 1];
 
-                if ( Math.abs( PrevEl.y0 - Element.y0 ) < 0.001 && Math.abs( PrevEl.y1 - Element.y1 ) < 0.001 && Math.abs( PrevEl.x1 - Element.x0 ) < 0.001 )
+                if ( Math.abs( PrevEl.y0 - Element.y0 ) < 0.001 && Math.abs( PrevEl.y1 - Element.y1 ) < 0.001 && Math.abs( PrevEl.x1 - Element.x0 ) < 0.001)
                 {
                     // Сравниваем толщины линий
                     if ( Element.w > PrevEl.w )
@@ -19088,6 +19739,25 @@ CParaDrawingRangeLines.prototype =
         }
     }
 };
+function CParaDrawingRangeHorizontalLines()
+{
+	CParaDrawingRangeLines.call(this);
+	
+	this.y = 0;
+	this.w = 0;
+}
+CParaDrawingRangeHorizontalLines.prototype = Object.create(CParaDrawingRangeLines.prototype);
+CParaDrawingRangeHorizontalLines.prototype.constructor = CParaDrawingRangeHorizontalLines;
+CParaDrawingRangeHorizontalLines.prototype.set = function(y, w)
+{
+	this.y = y;
+	this.w = w;
+};
+CParaDrawingRangeHorizontalLines.prototype.Add = function(x0, x1, color, additional, additional2)
+{
+	return CParaDrawingRangeLines.prototype.Add.call(this, this.y, this.y, x0, x1, this.w, color.r, color.g, color.b, additional, additional2);
+};
+
 
 function CParagraphCurPos()
 {
@@ -19108,6 +19778,11 @@ function CParagraphSelection()
     this.StartPos  = 0;
     this.EndPos    = 0;
     this.Flag      = selectionflag_Common;
+	
+	this.StartLine  = -1;
+	this.StartRange = -1;
+	this.EndLine    = -1;
+	this.EndRange   = -1;
 
     this.StartManually  = true; // true - через Selection_SetStart, false - через Selection_SetBegEnd
     this.EndManually    = true; // true - через Selection_SetEnd, false - через Selection_SetBegEnd
@@ -19151,587 +19826,11 @@ CComplexFieldStatePos.prototype.IsEqual = function(oState)
 		&& oState.ComplexField
 		&& this.ComplexField.GetBeginChar() === oState.ComplexField.GetBeginChar());
 };
-
-function CParagraphComplexFieldsInfo()
+CComplexFieldStatePos.prototype.IsShowFieldCode = function()
 {
-	// Массив CComplexFieldStatePos
-	this.CF = [];
-
-	this.isHidden = null;
-
-	this.StoredState = null;
-}
-CParagraphComplexFieldsInfo.prototype.ResetPage = function(Paragraph, CurPage)
-{
-	this.isHidden = null;
-
-	var PageEndInfo = Paragraph.GetEndInfoByPage(CurPage - 1);
-
-	if (PageEndInfo)
-		this.CF = PageEndInfo.GetComplexFields();
-	else
-		this.CF = [];
+	let beginChar = this.ComplexField ? this.ComplexField.GetBeginChar() : null;
+	return beginChar ? beginChar.IsShowFieldCode() : null;
 };
-/**
- * Находимся ли мы внутри содержимого скрытого поля
- * @returns {boolean}
- */
-CParagraphComplexFieldsInfo.prototype.IsHiddenFieldContent = function()
-{
-	if (null === this.isHidden)
-		this.isHidden = this.private_IsHiddenFieldContent();
-
-	return this.isHidden;
-};
-CParagraphComplexFieldsInfo.prototype.private_IsHiddenFieldContent = function()
-{
-	if (this.CF.length > 0)
-	{
-		for (var nIndex = 0, nCount = this.CF.length; nIndex < nCount; ++nIndex)
-		{
-			if (this.CF[nIndex].ComplexField.IsHidden())
-				return true;
-		}
-	}
-
-	return false;
-};
-/**
- * Данная функция используется при пересчете, когда мы собираем сложное поле.
- * @param oChar
- */
-CParagraphComplexFieldsInfo.prototype.ProcessFieldCharAndCollectComplexField = function(oChar)
-{
-	this.isHidden = null;
-
-	if (oChar.IsBegin())
-	{
-		var oComplexField = oChar.GetComplexField();
-		if (!oComplexField)
-		{
-			oChar.SetUse(false);
-		}
-		else
-		{
-			oChar.SetUse(true);
-			oComplexField.SetBeginChar(oChar);
-			this.CF.push(new CComplexFieldStatePos(oComplexField, true));
-		}
-	}
-	else if (oChar.IsEnd())
-	{
-		if (this.CF.length > 0)
-		{
-			oChar.SetUse(true);
-			var oComplexField = this.CF[this.CF.length - 1].ComplexField;
-			oComplexField.SetEndChar(oChar);
-			this.CF.splice(this.CF.length - 1, 1);
-
-			if (this.CF.length > 0 && this.CF[this.CF.length - 1].IsFieldCode())
-				this.CF[this.CF.length - 1].ComplexField.SetInstructionCF(oComplexField);
-		}
-		else
-		{
-			oChar.SetUse(false);
-		}
-	}
-	else if (oChar.IsSeparate())
-	{
-		if (this.CF.length > 0)
-		{
-			oChar.SetUse(true);
-			var oComplexField = this.CF[this.CF.length - 1].ComplexField;
-			oComplexField.SetSeparateChar(oChar);
-			this.CF[this.CF.length - 1].SetFieldCode(false);
-		}
-		else
-		{
-			oChar.SetUse(false);
-		}
-	}
-};
-/**
- * Данная функция используется, когда мы просто хотим отследить где мы находимся, относительно сложных полей
- * @param oChar
- */
-CParagraphComplexFieldsInfo.prototype.ProcessFieldChar = function(oChar)
-{
-	this.isHidden = null;
-
-	if (!oChar || !oChar.IsUse())
-		return;
-
-	var oComplexField = oChar.GetComplexField();
-
-	if (oChar.IsBegin())
-	{
-		this.CF.push(new CComplexFieldStatePos(oComplexField, true));
-	}
-	else if (oChar.IsSeparate())
-	{
-		if (this.CF.length > 0)
-		{
-			this.CF[this.CF.length - 1].SetFieldCode(false);
-		}
-	}
-	else if (oChar.IsEnd())
-	{
-		if (this.CF.length > 0)
-		{
-			this.CF.splice(this.CF.length - 1, 1);
-		}
-	}
-};
-CParagraphComplexFieldsInfo.prototype.ProcessInstruction = function(oInstruction)
-{
-	if (this.CF.length <= 0)
-		return;
-
-	var oComplexField = this.CF[this.CF.length - 1].ComplexField;
-	if (oComplexField && null === oComplexField.GetSeparateChar())
-		oComplexField.SetInstruction(oInstruction);
-};
-CParagraphComplexFieldsInfo.prototype.IsComplexField = function()
-{
-	return (this.CF.length > 0 ? true : false);
-};
-CParagraphComplexFieldsInfo.prototype.IsComplexFieldCode = function()
-{
-	if (!this.IsComplexField())
-		return false;
-
-	for (var nIndex = 0, nCount = this.CF.length; nIndex < nCount; ++nIndex)
-	{
-		if (this.CF[nIndex].IsFieldCode())
-			return true;
-	}
-
-	return false;
-};
-CParagraphComplexFieldsInfo.prototype.IsCurrentComplexField = function()
-{
-	for (var nIndex = 0, nCount = this.CF.length; nIndex < nCount; ++nIndex)
-	{
-		if (this.CF[nIndex].ComplexField.IsCurrent())
-			return true;
-	}
-
-	return false;
-};
-CParagraphComplexFieldsInfo.prototype.IsHyperlinkField = function()
-{
-	var isHaveHyperlink = false,
-		isOtherField    = false;
-
-	for (var nIndex = 0, nCount = this.CF.length; nIndex < nCount; ++nIndex)
-	{
-		var oInstruction = this.CF[nIndex].ComplexField.GetInstruction();
-		if (oInstruction && fieldtype_HYPERLINK === oInstruction.GetType())
-			isHaveHyperlink = true;
-		else
-			isOtherField = true;
-
-	}
-
-	return (isHaveHyperlink && !isOtherField ? true : false);
-};
-CParagraphComplexFieldsInfo.prototype.PushState = function()
-{
-	this.StoredState = {
-		Hidden : this.isHidden,
-		CF     : []
-	};
-
-	for (var nIndex = 0, nCount = this.CF.length; nIndex < nCount; ++nIndex)
-	{
-		this.StoredState.CF[nIndex] = this.CF[nIndex].Copy();
-	}
-};
-CParagraphComplexFieldsInfo.prototype.PopState = function()
-{
-	if (this.StoredState)
-	{
-		this.isHidden    = this.StoredState.Hidden;
-		this.CF          = this.StoredState.CF;
-		this.StoredState = null;
-	}
-};
-CParagraphComplexFieldsInfo.prototype.GetREForHYPERLINK = function()
-{
-	for (var nIndex = this.CF.length - 1; nIndex >= 0; --nIndex)
-	{
-		var oInstruction = this.CF[nIndex].ComplexField.GetInstruction();
-		if (oInstruction && 
-			(fieldtype_HYPERLINK === oInstruction.GetType() 
-			|| fieldtype_REF === oInstruction.GetType() && oInstruction.GetHyperlink()
-			|| fieldtype_NOTEREF === oInstruction.GetType() && oInstruction.GetHyperlink()))
-			return this.CF[nIndex].ComplexField;
-	}
-
-	return null;
-};
-
-function CParagraphDrawStateHighlights()
-{
-    this.Page   = 0;
-    this.Line   = 0;
-    this.Range  = 0;
-
-    this.CurPos = new AscWord.CParagraphContentPos();
-
-    this.DrawColl     = false;
-    this.DrawMMFields = false;
-
-    this.High     = new CParaDrawingRangeLines();
-    this.Coll     = new CParaDrawingRangeLines();
-    this.Find     = new CParaDrawingRangeLines();
-    this.Comm     = new CParaDrawingRangeLines();
-    this.Shd      = new CParaDrawingRangeLines();
-    this.MMFields = new CParaDrawingRangeLines();
-    this.CFields  = new CParaDrawingRangeLines();
-    this.HyperCF  = new CParaDrawingRangeLines();
-
-	this.DrawComments       = true;
-	this.DrawSolvedComments = true;
-	this.Comments           = [];
-	this.CommentsFlag       = AscCommon.comments_NoComment;
-
-    this.SearchCounter = 0;
-
-    this.Paragraph = undefined;
-    this.Graphics  = undefined;
-
-    this.X  = 0;
-    this.Y0 = 0;
-    this.Y1 = 0;
-
-    this.Spaces = 0;
-
-    this.InlineSdt = [];
-    this.CollectFixedForms = false;
-
-    this.ComplexFields = new CParagraphComplexFieldsInfo();
-}
-CParagraphDrawStateHighlights.prototype.Reset = function(Paragraph, Graphics, DrawColl, DrawFind, DrawComments, DrawMMFields, PageEndInfo, DrawSolvedComments)
-{
-	this.Paragraph = Paragraph;
-	this.Graphics  = Graphics;
-
-	this.DrawColl     = DrawColl;
-	this.DrawFind     = DrawFind;
-	this.DrawMMFields = DrawMMFields;
-
-	this.CurPos = new AscWord.CParagraphContentPos();
-
-	this.SearchCounter = 0;
-
-	this.DrawComments       = DrawComments;
-	this.DrawSolvedComments = DrawSolvedComments;
-
-	this.Comments = [];
-	if (null !== PageEndInfo)
-	{
-		for (var nIndex = 0, nCount = PageEndInfo.Comments.length; nIndex < nCount; ++nIndex)
-		{
-			this.AddComment(PageEndInfo.Comments[nIndex]);
-		}
-	}
-
-	this.Check_CommentsFlag();
-};
-CParagraphDrawStateHighlights.prototype.Reset_Range = function(Page, Line, Range, X, Y0, Y1, SpacesCount)
-{
-	this.Page  = Page;
-	this.Line  = Line;
-	this.Range = Range;
-
-	this.High.Clear();
-	this.Coll.Clear();
-	this.Find.Clear();
-	this.Comm.Clear();
-	this.Shd.Clear();
-	this.MMFields.Clear();
-	this.CFields.Clear();
-	this.HyperCF.Clear();
-
-	this.X  = X;
-	this.Y0 = Y0;
-	this.Y1 = Y1;
-
-	this.Spaces = SpacesCount;
-
-	this.InlineSdt = [];
-};
-CParagraphDrawStateHighlights.prototype.AddInlineSdt = function(oSdt)
-{
-	this.InlineSdt.push(oSdt);
-};
-CParagraphDrawStateHighlights.prototype.AddComment = function(Id)
-{
-	if (!this.DrawComments)
-		return;
-
-	var oComment = AscCommon.g_oTableId.Get_ById(Id);
-	if (!oComment || (!this.DrawSolvedComments && oComment.IsSolved()) || !AscCommon.UserInfoParser.canViewComment(oComment.GetUserName()))
-		return;
-
-	this.Comments.push(Id);
-	this.Check_CommentsFlag();
-};
-CParagraphDrawStateHighlights.prototype.RemoveComment = function(Id)
-{
-	if (!this.DrawComments)
-		return;
-
-	var oComment = AscCommon.g_oTableId.Get_ById(Id);
-	if (!oComment || (!this.DrawSolvedComments && oComment.IsSolved()) || !AscCommon.UserInfoParser.canViewComment(oComment.GetUserName()))
-		return;
-
-	for (var nIndex = 0, nCount = this.Comments.length; nIndex < nCount; ++nIndex)
-	{
-		if (this.Comments[nIndex] === Id)
-		{
-			this.Comments.splice(nIndex, 1);
-			break;
-		}
-	}
-
-	this.Check_CommentsFlag();
-};
-CParagraphDrawStateHighlights.prototype.Check_CommentsFlag = function()
-{
-	if(!this.Paragraph.bFromDocument)
-	{
-		return;
-	}
-	// Проверяем флаг
-	var Para             = this.Paragraph;
-	var DocumentComments = Para.LogicDocument.Comments;
-	var CurComment       = DocumentComments.Get_CurrentId();
-	var CommLen          = this.Comments.length;
-
-	// Сначала проверим есть ли вообще комментарии
-	this.CommentsFlag = ( CommLen > 0 ? AscCommon.comments_NonActiveComment : AscCommon.comments_NoComment );
-
-	// Проверим является ли какой-либо комментарий активным
-	for (var CurPos = 0; CurPos < CommLen; CurPos++)
-	{
-		if (CurComment === this.Comments[CurPos])
-		{
-			this.CommentsFlag = AscCommon.comments_ActiveComment;
-			break
-		}
-	}
-};
-CParagraphDrawStateHighlights.prototype.Save_Coll = function()
-{
-	var Coll  = this.Coll;
-	this.Coll = new CParaDrawingRangeLines();
-	return Coll;
-};
-CParagraphDrawStateHighlights.prototype.Save_Comm = function()
-{
-	var Comm  = this.Comm;
-	this.Comm = new CParaDrawingRangeLines();
-	return Comm;
-};
-CParagraphDrawStateHighlights.prototype.Load_Coll = function(Coll)
-{
-	this.Coll = Coll;
-};
-CParagraphDrawStateHighlights.prototype.Load_Comm = function(Comm)
-{
-	this.Comm = Comm;
-};
-CParagraphDrawStateHighlights.prototype.IsCollectFixedForms = function()
-{
-	return this.CollectFixedForms;
-};
-CParagraphDrawStateHighlights.prototype.SetCollectFixedForms = function(isCollect)
-{
-	this.CollectFixedForms = isCollect;
-};
-
-function CParagraphDrawStateElements()
-{
-    this.Paragraph = undefined;
-    this.Graphics  = undefined;
-    this.BgColor   = undefined;
-
-    this.Theme     = undefined;
-    this.ColorMap  = undefined;
-
-    this.CurPos = new AscWord.CParagraphContentPos();
-
-    this.VisitedHyperlink = false;
-    this.Hyperlink = false;
-
-    this.Page   = 0;
-    this.Line   = 0;
-    this.Range  = 0;
-
-    this.X = 0;
-    this.Y = 0;
-
-    this.LineTop    = 0;
-    this.LineBottom = 0;
-    this.BaseLine   = 0;
-
-    this.ComplexFields = new CParagraphComplexFieldsInfo();
-}
-
-CParagraphDrawStateElements.prototype =
-{
-    Reset : function(Paragraph, Graphics, BgColor, Theme, ColorMap)
-    {
-        this.Paragraph = Paragraph;
-        this.Graphics  = Graphics;
-        this.BgColor   = BgColor;
-        this.Theme     = Theme;
-        this.ColorMap  = ColorMap;
-
-        this.VisitedHyperlink = false;
-        this.Hyperlink = false;
-
-        this.CurPos = new AscWord.CParagraphContentPos();
-    },
-
-    Reset_Range : function(Page, Line, Range, X, Y)
-    {
-        this.Page  = Page;
-        this.Line  = Line;
-        this.Range = Range;
-
-        this.X = X;
-        this.Y = Y;
-    },
-
-    Set_LineMetrics : function(BaseLine, Top, Bottom)
-    {
-        this.LineTop    = Top;
-        this.LineBottom = Bottom;
-        this.BaseLine   = BaseLine;
-    }
-};
-
-function CParagraphDrawStateLines()
-{
-    this.Paragraph = undefined;
-    this.Graphics  = undefined;
-    this.BgColor   = undefined;
-
-    this.CurPos   = new AscWord.CParagraphContentPos();
-    this.CurDepth = 0;
-
-    this.VisitedHyperlink = false;
-    this.Hyperlink = false;
-
-    this.UlTrailSpace = false;
-
-    this.Strikeout  = new CParaDrawingRangeLines();
-    this.DStrikeout = new CParaDrawingRangeLines();
-    this.Underline  = new CParaDrawingRangeLines();
-    this.Spelling   = new CParaDrawingRangeLines();
-    this.RunReview  = new CParaDrawingRangeLines();
-    this.CollChange = new CParaDrawingRangeLines();
-    this.DUnderline = new CParaDrawingRangeLines();
-    this.FormBorder = new CParaDrawingRangeLines();
-
-    this.Page  = 0;
-    this.Line  = 0;
-    this.Range = 0;
-
-    this.X               = 0;
-    this.BaseLine        = 0;
-    this.UnderlineOffset = 0;
-    this.Spaces          = 0;
-
-    this.ComplexFields = new CParagraphComplexFieldsInfo();
-}
-
-CParagraphDrawStateLines.prototype =
-{
-    Reset : function(Paragraph, Graphics, BgColor)
-    {
-        this.Paragraph = Paragraph;
-        this.Graphics  = Graphics;
-        this.BgColor   = BgColor;
-
-        this.VisitedHyperlink = false;
-        this.Hyperlink = false;
-
-		this.CurPos   = new AscWord.CParagraphContentPos();
-		this.CurDepth = 0;
-
-
-		let oLogicDocument = this.GetLogicDocument();
-		if (oLogicDocument && oLogicDocument.IsDocumentEditor())
-		{
-			this.UlTrailSpace = oLogicDocument.IsUnderlineTrailSpace();
-		}
-    },
-
-    Reset_Line : function(Page, Line, Baseline, UnderlineOffset)
-    {
-        this.Page  = Page;
-        this.Line  = Line;
-
-        this.Baseline        = Baseline;
-        this.UnderlineOffset = UnderlineOffset;
-
-        this.Strikeout.Clear();
-        this.DStrikeout.Clear();
-        this.Underline.Clear();
-        this.Spelling.Clear();
-		this.RunReview.Clear();
-		this.CollChange.Clear();
-		this.DUnderline.Clear();
-		this.FormBorder.Clear();
-    },
-
-    Reset_Range : function(Range, X, Spaces)
-    {
-        this.Range  = Range;
-        this.X      = X;
-        this.Spaces = Spaces;
-    }
-};
-/**
- * Получаем количество орфографических ошибок в данном месте
- * @returns {number}
- */
-CParagraphDrawStateLines.prototype.GetSpellingErrorsCounter = function()
-{
-	var nCounter = 0;
-	var oSpellChecker = this.Paragraph.GetSpellChecker();
-	for (var nIndex = 0, nCount = oSpellChecker.GetElementsCount(); nIndex < nCount; ++nIndex)
-	{
-		var oSpellElement = oSpellChecker.GetElement(nIndex);
-
-		if (false !== oSpellElement.Checked || oSpellElement.CurPos)
-			continue;
-
-		var oStartPos = oSpellElement.GetStartPos();
-		var oEndPos   = oSpellElement.GetEndPos();
-
-		if (this.CurPos.Compare(oStartPos) > 0 && this.CurPos.Compare(oEndPos) < 0)
-			nCounter++;
-	}
-
-	return nCounter;
-};
-CParagraphDrawStateLines.prototype.GetLogicDocument = function()
-{
-	return this.Paragraph.GetLogicDocument();
-};
-CParagraphDrawStateLines.prototype.IsUnderlineTrailSpace = function()
-{
-	return this.UlTrailSpace;
-};
-
-var g_oPDSH = new CParagraphDrawStateHighlights();
-//var g_oPDSE = new CParagraphDrawStateElements();
-var g_oPDSL = new CParagraphDrawStateLines();
 
 //----------------------------------------------------------------------------------------------------------------------
 // Классы для работы с курсором
@@ -19849,13 +19948,13 @@ CParagraphSearchPos.prototype.InitComplexFields = function(arrComplexFields)
 {
 	this.ComplexFields = arrComplexFields;
 };
-CParagraphSearchPos.prototype.IsComplexField = function()
+CParagraphSearchPos.prototype.isComplexField = function()
 {
-	return (this.ComplexFields.length > 0 ? true : false);
+	return (this.ComplexFields.length > 0);
 };
-CParagraphSearchPos.prototype.IsComplexFieldCode = function()
+CParagraphSearchPos.prototype.isComplexFieldCode = function()
 {
-	if (!this.IsComplexField())
+	if (!this.isComplexField())
 		return false;
 
 	for (var nIndex = 0, nCount = this.ComplexFields.length; nIndex < nCount; ++nIndex)
@@ -19866,14 +19965,26 @@ CParagraphSearchPos.prototype.IsComplexFieldCode = function()
 
 	return false;
 };
-CParagraphSearchPos.prototype.IsComplexFieldValue = function()
+CParagraphSearchPos.prototype.isHiddenComplexFieldPart = function()
 {
-	if (!this.IsComplexField() || this.IsComplexFieldCode())
+	for (let fieldIndex = 0, fieldCount = this.ComplexFields.length; fieldIndex < fieldCount; ++ fieldIndex)
+	{
+		let isFieldCode = this.ComplexFields[fieldIndex].IsFieldCode();
+		let isShowCode  = this.ComplexFields[fieldIndex].IsShowFieldCode();
+		if (isFieldCode !== isShowCode)
+			return true;
+	}
+	
+	return false;
+};
+CParagraphSearchPos.prototype.isComplexFieldValue = function()
+{
+	if (!this.isComplexField() || this.isComplexFieldCode())
 		return false;
 
 	return true;
 };
-CParagraphSearchPos.prototype.IsHiddenComplexField = function()
+CParagraphSearchPos.prototype.isHiddenComplexField = function()
 {
 	for (var nIndex = 0, nCount = this.ComplexFields.length; nIndex < nCount; ++nIndex)
 	{
@@ -19898,35 +20009,6 @@ CParagraphSearchPos.prototype.IsFound = function()
 CParagraphSearchPos.prototype.GetPos = function()
 {
 	return this.Pos;
-};
-
-function CParagraphSearchPosXY()
-{
-    this.Pos       = new AscWord.CParagraphContentPos();
-    this.InTextPos = new AscWord.CParagraphContentPos();
-
-    this.CenterMode     = true; // Ищем ближайший (т.е. ориентируемся по центру элемента), или ищем именно прохождение через элемент
-    this.CurX           = 0;
-    this.CurY           = 0;
-    this.X              = 0;
-    this.Y              = 0;
-    this.DiffX          = 1000000; // километра для ограничения должно хватить
-    this.NumberingDiffX = 1000000; // километра для ограничения должно хватить
-	this.DiffAbs        = 1000000;
-
-    this.Line      = 0;
-    this.Range     = 0;
-
-    this.InTextX   = false;
-    this.InText    = false;
-    this.Numbering = false;
-    this.End       = false;
-    this.Field     = null;
-}
-CParagraphSearchPosXY.prototype.SetDiffX = function(nDiff)
-{
-	this.DiffX   = Math.abs(nDiff);
-	this.DiffAbs = nDiff;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -19976,7 +20058,7 @@ function CParagraphGetText()
     this.Text = "";
 
     this.BreakOnNonText 	= true;
-    this.ParaEndToSpace 	= false;
+	this.ParaSeparator      = undefined;
 	this.Numbering			= false;
 	this.Math				= false;
 	this.TabSymbol			= undefined;
@@ -19991,9 +20073,9 @@ CParagraphGetText.prototype.SetBreakOnNonText = function(bValue)
 {
 	this.BreakOnNonText = bValue;
 };
-CParagraphGetText.prototype.SetParaEndToSpace = function(bValue)
+CParagraphGetText.prototype.SetParaSeparator = function(separator)
 {
-	this.ParaEndToSpace = bValue;
+	this.ParaSeparator = separator;
 };
 CParagraphGetText.prototype.SetParaNewLineSeparator = function(sValue)
 {
@@ -20010,6 +20092,14 @@ CParagraphGetText.prototype.SetParaMath = function(bValue)
 CParagraphGetText.prototype.SetParaTabSymbol = function(sValue)
 {
 	this.TabSymbol = sValue;
+};
+CParagraphGetText.prototype.SetTableCellSeparator = function(sValue)
+{
+	this.TableCellSeparator = sValue;
+};
+CParagraphGetText.prototype.SetTableRowSeparator = function(sValue)
+{
+	this.TableRowSeparator = sValue;
 };
 
 function CParagraphNearPos()
@@ -20264,6 +20354,7 @@ function CParagraphRunElements(ContentPos, Count, arrTypes, isReverse)
 
 	this.BreakBadType        = false; // Заканчиваем ли поиск при нахождении неподходящих типов
 	this.BreakDifferentClass = false; // Заканчиваем ли поиск при достижении элемента, находящегося в классе отличном от this.StartClass
+	this.BreakMath           = false;
 	this.SkipMath            = true;  // TODO: Временно так делаем
 
 	this.CurContentPos        = new AscWord.CParagraphContentPos();
@@ -20288,6 +20379,21 @@ CParagraphRunElements.prototype.UpdatePos = function(nPos, nDepth)
 CParagraphRunElements.prototype.SetBreakOnBadType = function(isBreak)
 {
 	this.BreakBadType = isBreak;
+};
+/**
+ * Set if we need to stop when a math equation is encountered
+ * @param {boolean} isBreak
+ */
+CParagraphRunElements.prototype.SetBreakOnMath = function(isBreak)
+{
+	this.BreakMath = isBreak;
+};
+/**
+ * Check if we need to stop on math equation
+ */
+CParagraphRunElements.prototype.IsBreakOnMath = function()
+{
+	return this.BreakMath;
 };
 /**
  * Останавливаемся при попадании в другой класс
@@ -20441,6 +20547,15 @@ CParagraphRunElements.prototype.IsSkipMath = function()
 {
 	return this.SkipMath;
 };
+/**
+ * Stops the collection process
+ * @param isEnd {boolean}
+ */
+CParagraphRunElements.prototype.Stop = function(isEnd)
+{
+	this.End   = isEnd ? isEnd : false;
+	this.Count = 0;
+};
 
 function CParagraphStatistics(Stats)
 {
@@ -20461,10 +20576,21 @@ function CParagraphMinMaxContentWidth()
     this.nMinWidth    = 0;
     this.nMaxWidth    = 0;
     this.nCurMaxWidth = 0;
-    this.bMath_OneLine = false; // for ParaMath
     this.nMaxHeight    = 0;
     this.nEndHeight    = 0;
 }
+
+CParagraphMinMaxContentWidth.prototype.addLetter = function(width)
+{
+	if (!this.bWord)
+	{
+		this.bWord    = true;
+		this.nWordLen = 0;
+	}
+	
+	this.nWordLen += width;
+	this.nCurMaxWidth += width;
+};
 
 function CParagraphRangeVisibleWidth()
 {
@@ -20765,9 +20891,8 @@ function CParagraphLineNumbersInfo(nStartLineNum)
 
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
-window['AscCommonWord'].Paragraph = Paragraph;
 window['AscCommonWord'].UnknownValue = UnknownValue;
 window['AscCommonWord'].type_Paragraph = type_Paragraph;
 
-window['AscWord'].CParagraph = Paragraph;
 window['AscWord'].Paragraph = Paragraph;
+window['AscWord'].CParagraphSearchPos = CParagraphSearchPos;

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -64,24 +64,47 @@
 			e.stopPropagation();
 	};
 
-	// для мозиллы пока отключаем, так как браузер не распознает это как "юзерское действие". (window.open, input[file].click)
-	var isUsePointerEvents = (AscBrowser.isChrome && (AscBrowser.chromeVersion > 70)/* || AscBrowser.isMozilla*/) ? true : false;
+	var isUsePointerEvents = true;
+	if (AscBrowser.isChrome && (AscBrowser.chromeVersion <= 70)) // xp
+		isUsePointerEvents = false;
+	else if (AscBrowser.isSafari && (AscBrowser.safariVersion < 15000000))
+		isUsePointerEvents = false;
+	else if (AscBrowser.isIE)
+		isUsePointerEvents = false;
+
+	AscCommon.getPtrEvtName = function (sType)
+	{
+		return (isUsePointerEvents ? "pointer" : "mouse") + sType;
+	};
+	AscCommon.getPtrEvtType = function (sType)
+	{
+		return "on" + AscCommon.getPtrEvtName(sType);
+	};
 
 	AscCommon.addMouseEvent = function(elem, type, handler)
 	{
-		var _type = (isUsePointerEvents ? "onpointer" : "onmouse") + type;
+		var _type = AscCommon.getPtrEvtType(type);
 		elem[_type] = handler;
 	};
     AscCommon.removeMouseEvent = function(elem, type)
     {
-        var _type = (isUsePointerEvents ? "onpointer" : "onmouse") + type;
+        var _type = AscCommon.getPtrEvtType(type);
         if (elem[_type])
         	delete elem[_type];
     };
 	AscCommon.getMouseEvent = function(elem, type)
 	{
-		var _type = (isUsePointerEvents ? "onpointer" : "onmouse") + type;
+		var _type = AscCommon.getPtrEvtType(type);
 		return elem[_type];
+	};
+	AscCommon.capturePointer = function(e, elem)
+	{
+		if (e.pointerType === "mouse" && elem.setPointerCapture)
+		{
+			try {
+				elem.setPointerCapture(e.pointerId);
+			} catch (e) {}
+		}
 	};
 
 	function CMouseEventHandler()
@@ -90,6 +113,7 @@
 		this.Y = 0;                            // позиция курсора Y
 
 		this.Button = g_mouse_button_left;          // кнопка мыши
+		this.ButtonOverride = -1;
 		this.Type   = g_mouse_event_type_move;      // тип евента
 
 		this.AltKey   = false;                        // нажата ли кнопка alt
@@ -211,6 +235,14 @@
 	{
 		return (this.CtrlKey || (this.AltKey && this.AltGr));
 	};
+	CKeyboardEvent.prototype.IsShortcutCtrl = function()
+	{
+		return (this.CtrlKey && !this.MacCmdKey || (this.AltKey && this.AltGr));
+	};
+	CKeyboardEvent.prototype.IsCmd = function()
+	{
+		return this.MacCmdKey;
+	};
 	CKeyboardEvent.prototype.IsShift = function()
 	{
 		return this.ShiftKey;
@@ -319,6 +351,8 @@
 
 	function getMouseButton(e)
 	{
+		if (-1 !== global_mouseEvent.ButtonOverride)
+			return global_mouseEvent.ButtonOverride;
 		var res = e.button;
 		return (res && -1 !== res) ? res : 0;
 	}
@@ -433,6 +467,8 @@
 
 		if (!global_mouseEvent.IsLocked || !global_mouseEvent.Sender)
 			global_mouseEvent.Sender = (e.srcElement) ? e.srcElement : e.target;
+
+		AscCommon.capturePointer(e, global_mouseEvent.Sender);
 
 		if (isClicks)
 		{
@@ -741,8 +777,9 @@
 		return oEvent.defaultPrevented;
 	}
 
-	function PaintMessageLoop(interval)
+	function PaintMessageLoop(interval, api)
 	{
+		this.isUseInterval = api.isMobileVersion !== true;
 		this.interval = interval || 40;
 		this.id = null;
 
@@ -758,7 +795,7 @@
 			window.oCancelRequestAnimationFrame ||
 			window.msCancelRequestAnimationFrame || null;
 
-		this.isUseRequestAnimationFrame = AscCommon.AscBrowser.isChrome;
+		this.isUseRequestAnimationFrame = AscCommon.AscBrowser.isChrome || AscCommon.AscBrowser.isSafari;
 		if (this.isUseRequestAnimationFrame && !this.requestAnimationFrame)
 			this.isUseRequestAnimationFrame = false;
 
@@ -792,7 +829,7 @@
 
 		if (this.isUseRequestAnimationFrame)
 		{
-			this.cancelAnimationFrame(this.id);
+			this.cancelAnimationFrame.call(window, this.id);
 		}
 		else
 		{
@@ -805,7 +842,7 @@
 	PaintMessageLoop.prototype._animation = function()
 	{
 		var now = Date.now();
-		if (-1 === this.requestAnimationOldTime || (now >= (this.requestAnimationOldTime + 40)) || (now < this.requestAnimationOldTime))
+		if (!this.isUseInterval || -1 === this.requestAnimationOldTime || (now >= (this.requestAnimationOldTime + this.interval)) || (now < this.requestAnimationOldTime))
 		{
 			this.requestAnimationOldTime = now;
 			this.engine();
@@ -863,6 +900,83 @@
 		return isSupport;
 	}
 
+	function checkMouseWhell(e, options)
+	{
+		let isSupportBidirectional = false;
+		let isAllowHorizontal = false;
+		let isUseMaximumDelta = false;
+
+		if (options)
+		{
+			isSupportBidirectional = (true === options.isSupportBidirectional);
+			isAllowHorizontal = (true === options.isAllowHorizontal);
+			isUseMaximumDelta = (true === options.isUseMaximumDelta);
+		}
+
+		let delta  = 0;
+		let deltaX = 0;
+		let deltaY = 0;
+
+		// delta
+		if (undefined !== e.wheelDelta && 0 !== e.wheelDelta)
+		{
+			delta = -45 * e.wheelDelta / 120;
+		}
+		else if (undefined !== e.detail && 0 !== e.detail)
+		{
+			delta = 45 * e.detail / 3;
+		}
+
+		// y
+		if (undefined !== e.wheelDeltaY)
+		{
+			deltaY = -45 * e.wheelDeltaY / 120;
+		}
+		else
+			deltaY = delta;
+
+		// x
+		if (isAllowHorizontal)
+		{
+			if (undefined !== e.wheelDeltaX)
+			{
+				deltaX = -45 * e.wheelDeltaX / 120;
+			}
+
+			if (e.axis !== undefined && e.axis === e.HORIZONTAL_AXIS)
+			{
+				deltaY = 0;
+
+				if (0 === deltaX)
+					deltaX = delta;
+			}
+		}
+
+		deltaX >>= 0;
+		deltaY >>= 0;
+
+		if (!isSupportBidirectional)
+		{
+			if (isUseMaximumDelta)
+			{
+				if (Math.abs(deltaY) >= Math.abs(deltaX))
+					deltaX = 0;
+				else
+					deltaY = 0;
+			}
+			else
+			{
+				if (0 !== deltaX)
+					deltaY = 0;
+			}
+		}
+
+		return {
+			x : deltaX,
+			y : deltaY
+		};
+	}
+
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                          = window['AscCommon'] || {};
 	window['AscCommon'].g_mouse_event_type_down  = g_mouse_event_type_down;
@@ -890,5 +1004,7 @@
 
 	window['AscCommon'].PaintMessageLoop 	     = PaintMessageLoop;
 	window['AscCommon'].isSupportDoublePx 	     = isSupportDoublePx;
+
+	window['AscCommon'].checkMouseWhell 	     = checkMouseWhell;
 
 })(window);

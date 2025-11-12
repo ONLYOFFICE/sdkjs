@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -47,7 +47,6 @@ CImageShape.prototype.recalculateBounds = CShape.prototype.recalculateBounds;
 CImageShape.prototype.getArrayWrapPolygons = CShape.prototype.getArrayWrapPolygons;
 CImageShape.prototype.getRotateAngle = CShape.prototype.getRotateAngle;
 CImageShape.prototype.recalculateWrapPolygon = CShape.prototype.recalculateWrapPolygon;
-CImageShape.prototype.IsUseInDocument = CShape.prototype.IsUseInDocument;
 
 CImageShape.prototype.setRecalculateInfo = function()
 {
@@ -146,6 +145,8 @@ CImageShape.prototype.handleUpdateFlip = function()
 CImageShape.prototype.handleUpdateFill = function()
 {
     this.recalcBrush();
+    this.recalcFill();
+    this.recalcTransparent();
     this.addToRecalculate();
 };
 CImageShape.prototype.handleUpdateGeometry = function()
@@ -213,7 +214,6 @@ CImageShape.prototype.check_bounds = CShape.prototype.check_bounds;
 CImageShape.prototype.updatePosition = CShape.prototype.updatePosition;
 CImageShape.prototype.getDrawingDocument = CShape.prototype.getDrawingDocument;
 CImageShape.prototype.getArrayWrapIntervals = CShape.prototype.getArrayWrapIntervals;
-CImageShape.prototype.getBounds = CShape.prototype.getBounds;
 CImageShape.prototype.setStartPage = CShape.prototype.setStartPage;
 CImageShape.prototype.getRecalcObject = CShape.prototype.getRecalcObject;
 CImageShape.prototype.setRecalcObject = CShape.prototype.setRecalcObject;

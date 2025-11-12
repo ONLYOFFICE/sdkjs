@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -96,15 +96,17 @@
 	}
 	function CreateParagraph()
 	{
-		return new AscWord.CParagraph(AscTest.DrawingDocument);
+		return new AscWord.Paragraph();
 	}
 	function CreateRun()
 	{
 		return new AscWord.CRun();
 	}
-	function CreateTable(rows, cols)
+	function CreateTable(rows, cols, tableGrid)
 	{
-		return new AscWord.CTable(AscTest.DrawingDocument, null, true, rows, cols);
+		let t = new AscWord.CTable(AscTest.DrawingDocument, null, true, rows, cols, tableGrid);
+		t.CorrectBadTable();
+		return t;
 	}
 	function CreateImage(w, h)
 	{
@@ -138,9 +140,82 @@
 	{
 		return CreateStyle(styletype_Character, name);
 	}
+	function CreateMath()
+	{
+		let math = new AscWord.ParaMath();
+		let run = new AscWord.CRun(null, true);
+		math.Root.AddToContent(0, run);
+		return math;
+	}
+	function CreateBlockLevelSdt()
+	{
+		return new AscWord.CBlockLevelSdt()
+	}
+	function CreateDefaultHeader(sectPr)
+	{
+		if (!sectPr || !logicDocument)
+			return null;
+		
+		let header = new AscCommonWord.CHeaderFooter(logicDocument.HdrFtr, logicDocument, logicDocument.DrawingDocument, AscCommon.hdrftr_Header);
+		sectPr.Set_Header_Default(header);
+		return header.GetContent();
+	}
 	function GetParagraphText(paragraph)
 	{
-		return paragraph.GetText({ParaEndToSpace : false});
+		return paragraph.GetText({
+			ParaSeparator : "",
+			TableCellSeparator : "",
+			TableRowSeparator : "",
+		});
+	}
+	function GetParagraphReviewText(paragraph)
+	{
+		let result = [];
+		paragraph.CheckRunContent(function(run)
+		{
+			let text = run.GetText({
+				ParaSeparator : "",
+				Text : ""
+			});
+			if (!text || !text.length)
+				return;
+			
+			let reviewType = run.GetReviewType();
+			if (result.length && reviewType === result[result.length - 1][0])
+				result[result.length - 1][1] += text;
+			else
+				result.push([reviewType, text]);
+		});
+		return result;
+	}
+	function GetBlockLevelSdtText(cc)
+	{
+		let result = "";
+		cc.CheckRunContent(function(run)
+		{
+			result += run.GetText();
+		});
+		return result;
+	}
+	function GetBlockLevelSdtReviewText(cc)
+	{
+		let result = [];
+		cc.CheckRunContent(function(run)
+		{
+			let text = run.GetText({
+				ParaSeparator : "",
+				Text : ""
+			});
+			if (!text || !text.length)
+				return;
+			
+			let reviewType = run.GetReviewType();
+			if (result.length && reviewType === result[result.length - 1][0])
+				result[result.length - 1][1] += text;
+			else
+				result.push([reviewType, text]);
+		});
+		return result;
 	}
 	function RemoveTableBorders(table)
 	{
@@ -158,14 +233,27 @@
 		table.Set_TableBorder_InsideH(CreateNoneBorder());
 		table.Set_TableBorder_InsideV(CreateNoneBorder());
 	}
+	function RemoveTableMargins(table)
+	{
+		table.Set_TableCellMar(0, 0, 0, 0);
+		
+		for (let rowIndex = 0, rowCount = table.GetRowsCount(); rowIndex < rowIndex; ++rowIndex)
+		{
+			let row = table.GetRow(rowIndex);
+			for (let cellIndex = 0, cellCount = table.GetCells; cellIndex < cellCount; ++cellIndex)
+			{
+				row.GetCell(cellIndex).Set_Margins(null);
+			}
+		}
+	}
 	function SetFillingFormMode(isOForm)
 	{
 		editor.restrictions = Asc.c_oAscRestrictionType.OnlyForms;
 
 		if (isOForm)
-			editor.DocInfo = {Format : "oform"};
+			editor.DocInfo = {Format : "oform", isFormatWithForms : function() {return true;}};
 		else
-			editor.DocInfo = {Format : "docx"};
+			editor.DocInfo = {Format : "docx", isFormatWithForms : function() {return false;}};
 	}
 	function SetEditingMode()
 	{
@@ -179,6 +267,34 @@
 			return;
 		
 		logicDocument.SetLocalTrackRevisions(turnOn);
+	}
+	function AcceptAllRevisionChanges()
+	{
+		if (!logicDocument)
+			return;
+		
+		logicDocument.AcceptAllRevisionChanges();
+	}
+	function RejectAllRevisionChanges()
+	{
+		if (!logicDocument)
+			return;
+		
+		logicDocument.RejectAllRevisionChanges();
+	}
+	function AcceptRevisionChangesBySelection()
+	{
+		if (!logicDocument)
+			return;
+		
+		logicDocument.AcceptRevisionChangesBySelection();
+	}
+	function RejectRevisionChangesBySelection()
+	{
+		if (!logicDocument)
+			return;
+		
+		logicDocument.RejectRevisionChangesBySelection();
 	}
 	function PressKey(keyCode, isCtrl, isShift, isAlt)
 	{
@@ -260,11 +376,18 @@
 		
 		p.RemoveFromContent(0, p.GetElementsCount());
 	}
+	function AddTextToParagraph(p, text)
+	{
+		let run = CreateRun();
+		p.AddToContentToEnd(run);
+		run.AddText(text);
+		return run;
+	}
 	function EnterText(text)
 	{
 		if (!logicDocument)
 			return;
-
+		
 		logicDocument.EnterText(text);
 	}
 	function CorrectEnterText(oldText, newText)
@@ -279,21 +402,21 @@
 		if (!logicDocument)
 			return;
 
-		logicDocument.Begin_CompositeInput();
+		logicDocument.getCompositeInput().begin();
 	}
 	function ReplaceCompositeInput(text)
 	{
 		if (!logicDocument)
 			return;
 
-		logicDocument.Replace_CompositeText(text);
+		logicDocument.getCompositeInput().replace(text);
 	}
 	function EndCompositeInput()
 	{
 		if (!logicDocument)
 			return;
 
-		logicDocument.End_CompositeInput();
+		logicDocument.getCompositeInput().end();
 	}
 	function EnterTextCompositeInput(text)
 	{
@@ -303,7 +426,7 @@
 	}
 	function MoveCursorToParagraph(paragraph, isToStart)
 	{
-		if (!paragraph || !(paragraph instanceof AscWord.CParagraph))
+		if (!paragraph || !(paragraph instanceof AscWord.Paragraph))
 			return;
 		
 		paragraph.SetThisElementCurrent();
@@ -361,6 +484,36 @@
 			logicDocument.Content[pos].SelectAll(direction);
 		}
 	}
+	function SelectParagraphRange(paragraph, start, end)
+	{
+		if (!paragraph || start >= end)
+			return;
+		
+		if (logicDocument)
+			logicDocument.RemoveSelection();
+		
+		paragraph.RemoveSelection();
+		paragraph.MoveCursorToStartPos();
+		for (let i = 0; i < start; ++i)
+			paragraph.MoveCursorRight(false, false);
+		
+		let startPos = paragraph.getCurrentPos();
+		for (let i = start; i < end; ++i)
+			paragraph.MoveCursorRight(false, false);
+		
+		let endPos = paragraph.getCurrentPos();
+		paragraph.StartSelectionFromCurPos();
+		paragraph.SetSelectionContentPos(startPos, endPos, false);
+		paragraph.Document_SetThisElementCurrent();
+	}
+	function SelectParagraph(paragraph)
+	{
+		if (logicDocument)
+			logicDocument.RemoveSelection();
+		
+		paragraph.SelectAll();
+		paragraph.Document_SetThisElementCurrent();
+	}
 	function GetFinalSection()
 	{
 		if (!logicDocument)
@@ -375,40 +528,104 @@
 		
 		logicDocument.Settings.CompatibilityMode = mode;
 	}
+	function StartCollaboration()
+	{
+		AscCommon.CollaborativeEditing.Start_CollaborationEditing();
+		if (logicDocument)
+			logicDocument.StartCollaborationEditing();
+		
+		SyncCollaboration();
+	}
+	function SyncCollaboration()
+	{
+		AscCommon.CollaborativeEditing.Send_Changes();
+		
+	}
+	function EndCollaboration()
+	{
+		AscCommon.CollaborativeEditing.End_CollaborationEditing();
+	}
+	function StartTextSpeaker()
+	{
+		AscCommon.EditorActionSpeaker.run();
+	}
+	function StopTextSpeaker()
+	{
+		AscCommon.EditorActionSpeaker.stop();
+	}
+	function SelectTableCells(table, startCell, startRow, endCell, endRow)
+	{
+		if (!logicDocument)
+			return;
+		
+		logicDocument.RemoveSelection();
+		// TODO: Get rid of double SelectRange
+		table.SelectRange(startCell, startRow, endCell, endRow);
+		table.Document_SetThisElementCurrent();
+		table.SelectRange(startCell, startRow, endCell, endRow);
+	}
+	function MergeTableCells(table, startCell, startRow, endCell, endRow)
+	{
+		SelectTableCells(table, startCell, startRow, endCell, endRow);
+		table.MergeTableCells(true);
+	}
+	
 	//--------------------------------------------------------export----------------------------------------------------
-	AscTest.CreateLogicDocument      = CreateLogicDocument;
-	AscTest.CreateParagraph          = CreateParagraph;
-	AscTest.CreateRun                = CreateRun;
-	AscTest.CreateTable              = CreateTable;
-	AscTest.CreateImage              = CreateImage;
-	AscTest.CreateStyle              = CreateStyle;
-	AscTest.CreateParagraphStyle     = CreateParagraphStyle;
-	AscTest.CreateRunStyle           = CreateRunStyle;
-	AscTest.GetParagraphText         = GetParagraphText;
-	AscTest.RemoveTableBorders       = RemoveTableBorders;
-	AscTest.SetFillingFormMode       = SetFillingFormMode;
-	AscTest.SetEditingMode           = SetEditingMode;
-	AscTest.SetTrackRevisions        = SetTrackRevisions;
-	AscTest.PressKey                 = PressKey;
-	AscTest.MoveCursorLeft           = MoveCursorLeft;
-	AscTest.MoveCursorRight          = MoveCursorRight;
-	AscTest.Recalculate              = Recalculate;
-	AscTest.ClickMouseButton         = ClickMouseButton;
-	AscTest.ClearDocument            = ClearDocument;
-	AscTest.ClearParagraph           = ClearParagraph;
-	AscTest.EnterText                = EnterText;
-	AscTest.CorrectEnterText         = CorrectEnterText;
-	AscTest.BeginCompositeInput      = BeginCompositeInput;
-	AscTest.ReplaceCompositeInput    = ReplaceCompositeInput;
-	AscTest.EndCompositeInput        = EndCompositeInput;
-	AscTest.EnterTextCompositeInput  = EnterTextCompositeInput;
-	AscTest.Key                      = Key;
-	AscTest.MoveCursorToParagraph    = MoveCursorToParagraph;
-	AscTest.AddNumbering             = AddNumbering;
-	AscTest.SetParagraphNumberingLvl = SetParagraphNumberingLvl;
-	AscTest.SelectDocumentRange      = SelectDocumentRange;
-	AscTest.GetFinalSection          = GetFinalSection;
-	AscTest.SetCompatibilityMode     = SetCompatibilityMode;
+	AscTest.CreateLogicDocument              = CreateLogicDocument;
+	AscTest.GetLogicDocument                 = CreateLogicDocument;
+	AscTest.CreateParagraph                  = CreateParagraph;
+	AscTest.CreateRun                        = CreateRun;
+	AscTest.CreateTable                      = CreateTable;
+	AscTest.CreateImage                      = CreateImage;
+	AscTest.CreateStyle                      = CreateStyle;
+	AscTest.CreateParagraphStyle             = CreateParagraphStyle;
+	AscTest.CreateRunStyle                   = CreateRunStyle;
+	AscTest.CreateMath                       = CreateMath;
+	AscTest.CreateBlockLvlSdt                = CreateBlockLevelSdt;
+	AscTest.CreateDefaultHeader              = CreateDefaultHeader;
+	AscTest.GetParagraphText                 = GetParagraphText;
+	AscTest.GetParagraphReviewText           = GetParagraphReviewText;
+	AscTest.GetBlockLevelSdtText             = GetBlockLevelSdtText;
+	AscTest.GetBlockLevelSdtReviewText       = GetBlockLevelSdtReviewText;
+	AscTest.RemoveTableBorders               = RemoveTableBorders;
+	AscTest.RemoveTableMargins               = RemoveTableMargins;
+	AscTest.SetFillingFormMode               = SetFillingFormMode;
+	AscTest.SetEditingMode                   = SetEditingMode;
+	AscTest.SetTrackRevisions                = SetTrackRevisions;
+	AscTest.AcceptAllRevisionChanges         = AcceptAllRevisionChanges;
+	AscTest.RejectAllRevisionChanges         = RejectAllRevisionChanges;
+	AscTest.AcceptRevisionChangesBySelection = AcceptRevisionChangesBySelection;
+	AscTest.RejectRevisionChangesBySelection = RejectRevisionChangesBySelection;
+	AscTest.PressKey                         = PressKey;
+	AscTest.MoveCursorLeft                   = MoveCursorLeft;
+	AscTest.MoveCursorRight                  = MoveCursorRight;
+	AscTest.Recalculate                      = Recalculate;
+	AscTest.ClickMouseButton                 = ClickMouseButton;
+	AscTest.ClearDocument                    = ClearDocument;
+	AscTest.ClearParagraph                   = ClearParagraph;
+	AscTest.AddTextToParagraph               = AddTextToParagraph;
+	AscTest.EnterText                        = EnterText;
+	AscTest.CorrectEnterText                 = CorrectEnterText;
+	AscTest.BeginCompositeInput              = BeginCompositeInput;
+	AscTest.ReplaceCompositeInput            = ReplaceCompositeInput;
+	AscTest.EndCompositeInput                = EndCompositeInput;
+	AscTest.EnterTextCompositeInput          = EnterTextCompositeInput;
+	AscTest.Key                              = Key;
+	AscTest.MoveCursorToParagraph            = MoveCursorToParagraph;
+	AscTest.AddNumbering                     = AddNumbering;
+	AscTest.SetParagraphNumberingLvl         = SetParagraphNumberingLvl;
+	AscTest.SelectDocumentRange              = SelectDocumentRange;
+	AscTest.GetFinalSection                  = GetFinalSection;
+	AscTest.SetCompatibilityMode             = SetCompatibilityMode;
+	AscTest.StartCollaboration               = StartCollaboration;
+	AscTest.SyncCollaboration                = SyncCollaboration;
+	AscTest.EndCollaboration                 = EndCollaboration;
+	AscTest.SelectParagraphRange             = SelectParagraphRange;
+	AscTest.SelectParagraph                  = SelectParagraph;
+	AscTest.StartTextSpeaker                 = StartTextSpeaker;
+	AscTest.StopTextSpeaker                  = StopTextSpeaker;
+	AscTest.SelectTableCells                 = SelectTableCells;
+	AscTest.MergeTableCells                  = MergeTableCells;
 
 })(window);
 

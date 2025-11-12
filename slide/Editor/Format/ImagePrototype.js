@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -43,11 +43,9 @@ CImageShape.prototype.getParentObjects = CShape.prototype.getParentObjects;
 CImageShape.prototype.recalculateTransform = CShape.prototype.recalculateTransform;
 CImageShape.prototype.recalculateBounds = CShape.prototype.recalculateBounds;
 CImageShape.prototype.getRotateAngle = CShape.prototype.getRotateAngle;
-CImageShape.prototype.getDrawingObjectsController = CShape.prototype.getDrawingObjectsController;
 CImageShape.prototype.handleUpdateTheme = CShape.prototype.handleUpdateTheme;
 CImageShape.prototype.getIsSingleBody = CShape.prototype.getIsSingleBody;
 CImageShape.prototype.getSlideIndex = CShape.prototype.getSlideIndex;
-CImageShape.prototype.IsUseInDocument = CShape.prototype.IsUseInDocument;
 CImageShape.prototype.getEditorType = function()
 {
     return 0;
@@ -135,6 +133,8 @@ CImageShape.prototype.handleUpdateFlip = function()
 CImageShape.prototype.handleUpdateFill = function()
 {
     this.recalcBrush();
+    this.recalcFill();
+    this.recalcTransparent();
     this.addToRecalculate();
 };
 CImageShape.prototype.handleUpdateGeometry = function()

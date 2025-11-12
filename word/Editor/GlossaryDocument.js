@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -33,14 +33,15 @@
 "use strict";
 
 var c_oAscDefaultPlaceholderName = {
-	Text      : "DefaultPlaceholder_TEXT",
-	List      : "DefaultPlaceholder_LIST",
-	DateTime  : "DefaultPlaceholder_DATE",
-	Equation  : "DefaultPlaceholder_EQUATION",
-	TextForm  : "DefaultPlaceholder_TEXTFORM",
-	TextOform : "DefaultPlaceholder_TEXT_OFORM",
-	ListOform : "DefaultPlaceholder_LIST_OFORM",
-	DateOform : "DefaultPlaceholder_DATE_OFORM"
+	Text           : "DefaultPlaceholder_TEXT",
+	List           : "DefaultPlaceholder_LIST",
+	DateTime       : "DefaultPlaceholder_DATE",
+	Equation       : "DefaultPlaceholder_EQUATION",
+	TextForm       : "DefaultPlaceholder_TEXTFORM",
+	TextOform      : "DefaultPlaceholder_TEXT_OFORM",
+	ListOform      : "DefaultPlaceholder_LIST_OFORM",
+	DateOform      : "DefaultPlaceholder_DATE_OFORM",
+	SignatureOform : "DefaultPlaceholder_SIGNATURE_OFORM",
 };
 
 /**
@@ -60,14 +61,15 @@ function CGlossaryDocument(oLogicDocument)
 
 	// Инициализировать нужно сразу, чтобы не было проблем с совместным редактированием
 	this.DefaultPlaceholder = {
-		Text      : this.private_CreateDefaultPlaceholder(c_oAscDefaultPlaceholderName.Text, AscCommon.translateManager.getValue("Your text here")),
-		List      : this.private_CreateDefaultPlaceholder(c_oAscDefaultPlaceholderName.List, AscCommon.translateManager.getValue("Choose an item")),
-		DateTime  : this.private_CreateDefaultPlaceholder(c_oAscDefaultPlaceholderName.DateTime, AscCommon.translateManager.getValue("Enter a date")),
-		Equation  : this.private_CreateDefaultPlaceholder(c_oAscDefaultPlaceholderName.Equation, AscCommon.translateManager.getValue("Type equation here")),
-		TextForm  : this.private_CreateDefaultTextFormPlaceholder(),
-		TextOform : this.private_CreateDefaultOformPlaceholder(c_oAscDefaultPlaceholderName.TextOform, AscCommon.translateManager.getValue("Your text here")),
-		ListOform : this.private_CreateDefaultOformPlaceholder(c_oAscDefaultPlaceholderName.ListOform, AscCommon.translateManager.getValue("Choose an item")),
-		DateOform : this.private_CreateDefaultOformPlaceholder(c_oAscDefaultPlaceholderName.DateOform, AscCommon.translateManager.getValue("Enter a date")),
+		Text           : this.private_CreateDefaultPlaceholder(c_oAscDefaultPlaceholderName.Text, AscCommon.translateManager.getValue("Your text here")),
+		List           : this.private_CreateDefaultPlaceholder(c_oAscDefaultPlaceholderName.List, AscCommon.translateManager.getValue("Choose an item")),
+		DateTime       : this.private_CreateDefaultPlaceholder(c_oAscDefaultPlaceholderName.DateTime, AscCommon.translateManager.getValue("Enter a date")),
+		Equation       : this.private_CreateDefaultPlaceholder(c_oAscDefaultPlaceholderName.Equation, AscCommon.translateManager.getValue("Type equation here")),
+		TextForm       : this.private_CreateDefaultTextFormPlaceholder(),
+		TextOform      : this.private_CreateDefaultOformPlaceholder(c_oAscDefaultPlaceholderName.TextOform, AscCommon.translateManager.getValue("Your text here")),
+		ListOform      : this.private_CreateDefaultOformPlaceholder(c_oAscDefaultPlaceholderName.ListOform, AscCommon.translateManager.getValue("Choose an item")),
+		DateOform      : this.private_CreateDefaultOformPlaceholder(c_oAscDefaultPlaceholderName.DateOform, AscCommon.translateManager.getValue("Enter a date")),
+		SignatureOform : this.private_CreateDefaultOformPlaceholder(c_oAscDefaultPlaceholderName.SignatureOform, AscCommon.translateManager.getValue("Signature"))
 	};
 
 	// TODO: Реализовать работу нумерации, стилей, сносок, заданных в контентах по-нормальному
@@ -231,18 +233,32 @@ CGlossaryDocument.prototype.GetDefaultPlaceholderDateOform = function()
 	return this.DefaultPlaceholder.DateOform;
 };
 /**
+ * @returns {CDocPart}
+ */
+CGlossaryDocument.prototype.GetDefaultPlaceholderSignatureOform = function()
+{
+	return this.DefaultPlaceholder.SignatureOform;
+};
+/**
  * @param sName
  * @param sText
  * @returns {CDocPart}
  */
 CGlossaryDocument.prototype.private_CreateDefaultPlaceholder = function(sName, sText)
 {
+	let logicDocument = this.LogicDocument;
+	let styles = logicDocument ? logicDocument.GetStyles() : null;
+	let defaultStyle = styles ? styles.GetDefaultPlaceholderText() : null;
+	
 	var oDocPart = this.CreateDocPart(sName);
 
 	var oParagraph = oDocPart.GetFirstParagraph();
 	var oRun       = new ParaRun();
 	oParagraph.AddToContent(0, oRun);
 	oRun.AddText(sText);
+	
+	if (defaultStyle)
+		oRun.SetRStyle(defaultStyle);
 
 	oDocPart.SetDocPartBehavior(c_oAscDocPartBehavior.Content);
 	oDocPart.SetDocPartCategory("Common", c_oAscDocPartGallery.Placeholder);
@@ -321,7 +337,8 @@ CGlossaryDocument.prototype.IsDefaultDocPart = function(oDocPart)
 		|| oDocPart === this.DefaultPlaceholder.TextForm
 		|| oDocPart === this.DefaultPlaceholder.TextOform
 		|| oDocPart === this.DefaultPlaceholder.ListOform
-		|| oDocPart === this.DefaultPlaceholder.DateOform);
+		|| oDocPart === this.DefaultPlaceholder.DateOform
+		|| oDocPart === this.DefaultPlaceholder.SignatureOform);
 };
 CGlossaryDocument.prototype.Refresh_RecalcData = function(Data)
 {
@@ -358,6 +375,30 @@ CGlossaryDocument.prototype.GetDefaultPlaceholderListOformDocPartId = function()
 CGlossaryDocument.prototype.GetDefaultPlaceholderDateOformDocPartId = function()
 {
 	return c_oAscDefaultPlaceholderName.DateOform;
+};
+CGlossaryDocument.prototype.GetDefaultPlaceholderSignatureOformDocPartId = function()
+{
+	return c_oAscDefaultPlaceholderName.SignatureOform;
+};
+CGlossaryDocument.prototype.UpdateStyleLinks = function()
+{
+	let logicDocument = this.LogicDocument;
+	let styles = logicDocument ? logicDocument.GetStyles() : null;
+	let defaultStyle = styles ? styles.GetDefaultPlaceholderText() : null;
+	
+	// Пока так жестко проверяем дефолтовый стиль, вообще надо сделать нормальное обновление стилей
+	for (let docPartId in this.DefaultPlaceholder)
+	{
+		let docPart = this.DefaultPlaceholder[docPartId];
+		docPart.CheckRunContent(function(run)
+		{
+			let rStyle = run.GetRStyle();
+			if (rStyle)
+				run.SetRStyle(defaultStyle);
+			
+			return false;
+		});
+	}
 };
 
 /**
@@ -552,6 +593,14 @@ CDocPart.prototype.AddDocPartBehavior = function(nType)
 CDocPart.prototype.CheckDocPartBehavior = function(nType)
 {
 	return !!(this.Pr.Behavior & nType);
+};
+CDocPart.prototype.IsTableCellContent = function()
+{
+	return false;
+};
+CDocPart.prototype.Is_DrawingShape = function(returnShape)
+{
+	return returnShape ? null : false;
 };
 
 /** @enum {number} */

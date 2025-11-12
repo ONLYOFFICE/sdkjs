@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -37,7 +37,7 @@
 		 * Import
 		 * -----------------------------------------------------------------------------
 		 */
-		var asc_applyFunction	= AscCommonExcel.applyFunction;
+		var asc_applyFunction = AscCommonExcel.applyFunction;
 
 		var c_oAscLockTypes = AscCommon.c_oAscLockTypes;
 
@@ -52,17 +52,17 @@
 		 * @constructor
 		 * @memberOf AscCommonExcel
 		 */
-		function CCollaborativeEditing (handlers, isViewerMode) {
-			if ( !(this instanceof CCollaborativeEditing) ) {
-				return new CCollaborativeEditing ();
+		function CCollaborativeEditing(handlers, isViewerMode) {
+			if (!(this instanceof CCollaborativeEditing)) {
+				return new CCollaborativeEditing();
 			}
+			AscCommon.CCollaborativeEditingBase.call(this);
 
 			this.m_nUseType					= 1;  // 1 - 1 клиент и мы сохраняем историю, -1 - несколько клиентов, 0 - переход из -1 в 1
-			this.m_bIsCollaborativeWithLiveViewer = false;//todo remove after implementing undo in spreadsheet
 
 			this.handlers					= new AscCommonExcel.asc_CHandlersList(handlers);
 			this.m_bIsViewerMode			= !!isViewerMode; // Режим Viewer-а
-			this.m_bGlobalLock				= false; // Глобальный lock
+			this.m_bGlobalLock				= 0; // Глобальный lock
 			this.m_bGlobalLockEditCell		= false; // Глобальный lock (для редактирования ячейки) - отключаем смену select-а, но разрешаем сразу вводить
 			this.m_arrCheckLocks			= [];    // Массив для проверки залоченности объектов, которые мы собираемся изменять
 
@@ -80,12 +80,14 @@
 			this.m_bFast = false;
 
 			this.m_aForeignCursorsData = {};
+			this.WaitImages = {};//cell/model/DrawingObjects/GlobalCounters.js
 
 			this.init();
 
 			return this;
 		}
 
+		CCollaborativeEditing.prototype = Object.create(AscCommon.CCollaborativeEditingBase.prototype);
 		CCollaborativeEditing.prototype.init = function () {
 		};
 
@@ -96,12 +98,12 @@
 		};
 
 		// Начало совместного редактирования
-		CCollaborativeEditing.prototype.startCollaborationEditing = function() {
+		CCollaborativeEditing.prototype.startCollaborationEditing = function () {
 			this.m_nUseType = -1;
 		};
 
 		// Временное окончание совместного редактирования
-		CCollaborativeEditing.prototype.endCollaborationEditing = function() {
+		CCollaborativeEditing.prototype.endCollaborationEditing = function () {
 			if (this.m_nUseType <= 0)
 				this.m_nUseType = 0;
 		};
@@ -197,20 +199,21 @@
 			this.m_arrCheckLocks.length = 0;
 		};
 		CCollaborativeEditing.prototype.addCheckLock = function (oItem) {
-			this.m_arrCheckLocks.push (oItem);
+			this.m_arrCheckLocks.push(oItem);
 		};
 		CCollaborativeEditing.prototype.onEndCheckLock = function (callback) {
 			var t = this;
 			if (this.m_arrCheckLocks.length > 0) {
 				// Отправляем запрос на сервер со списком элементов
-				this.handlers.trigger("askLock", this.m_arrCheckLocks, function (result) {t.onCallbackAskLock (result, callback);});
+				this.handlers.trigger("askLock", this.m_arrCheckLocks, function (result) {
+					t.onCallbackAskLock(result, callback);
+				});
 
 				if (undefined !== callback) {
 					// Ставим глобальный лок (только если мы не одни и ждем ответа!)
-					this.m_bGlobalLock = true;
+					this.Set_GlobalLock(true);
 				}
-			}
-			else {
+			} else {
 				asc_applyFunction(callback, true);
 
 				// Снимаем глобальный лок (для редактирования ячейки)
@@ -218,9 +221,9 @@
 			}
 		};
 
-		CCollaborativeEditing.prototype.onCallbackAskLock = function(result, callback) {
+		CCollaborativeEditing.prototype.onCallbackAskLock = function (result, callback) {
 			// Снимаем глобальный лок
-			this.m_bGlobalLock = false;
+			this.Set_GlobalLock(false);
 			// Снимаем глобальный лок (для редактирования ячейки)
 			this.m_bGlobalLockEditCell = false;
 
@@ -233,28 +236,27 @@
 					if (true !== oItem && false !== oItem) // сравниваем по значению и типу обязательно
 					{
 						var oNewLock = new CLock(oItem);
-						oNewLock.setType (c_oAscLockTypes.kLockTypeMine);
-						this.addUnlock2 (oNewLock);
+						oNewLock.setType(c_oAscLockTypes.kLockTypeMine);
+						this.addUnlock2(oNewLock);
 					}
 				}
 
 				asc_applyFunction(callback, true);
 			} else if (result["error"]) {
-				if (Asc.editor && Asc.editor.isOleEditor && !Asc.editor.isEditOleMode) {
+				if (Asc.editor.frameManager.isLoadingOleEditor) {
 					Asc.editor.sync_closeOleEditor();
 				}
 
 				asc_applyFunction(callback, false);
 			}
-			if (Asc.editor && !Asc.editor.isEditOleMode) {
-				Asc.editor.isOleEditor = false;
-			}
+
+			Asc.editor.frameManager.endLoadOleEditor();
 		};
 		CCollaborativeEditing.prototype.addUnlock = function (LockClass) {
-			this.m_arrNeedUnlock.push (LockClass);
+			this.m_arrNeedUnlock.push(LockClass);
 		};
 		CCollaborativeEditing.prototype.addUnlock2 = function (Lock) {
-			this.m_arrNeedUnlock2.push (Lock);
+			this.m_arrNeedUnlock2.push(Lock);
 			this.handlers.trigger("updateDocumentCanSave");
 		};
 
@@ -268,20 +270,23 @@
 		};
 
 		CCollaborativeEditing.prototype.addChanges = function (oChanges) {
-			this.m_arrChanges.push (oChanges);
+			this.m_arrChanges.push(oChanges);
 		};
 
 		// Возвращает - нужно ли отправлять end action
-		CCollaborativeEditing.prototype.applyChanges = function () {
+		CCollaborativeEditing.prototype.applyChanges = function (oColor) {
 			var t = this;
 			var length = this.m_arrChanges.length;
+			var oApi = Asc.editor;
 			// Принимаем изменения
 			if (0 < length) {
 				//splice to prevent double apply other changes in case of load fonts
+				oApi.sendEvent("asc_onBeforeApplyChanges");
 				var changes = t.m_arrChanges.splice(0, length);
 				this.handlers.trigger("applyChanges", changes, function () {
 					t.handlers.trigger("updateAfterApplyChanges");
-				});
+				}, oColor);
+				oApi.sendEvent("asc_onApplyChanges");
 
 				return false;
 			}
@@ -289,7 +294,7 @@
 			return true;
 		};
 
-		CCollaborativeEditing.prototype.sendChanges = function (IsUserSave, isAfterAskSave) {
+		CCollaborativeEditing.prototype.sendChanges = function (IsUserSave, isAfterAskSave, changesToSend) {
 			// Когда не совместное редактирование чистить ничего не нужно, но отправлять нужно.
 			var bIsCollaborative = this.getCollaborativeEditing();
 
@@ -307,17 +312,17 @@
 					oLock.setType(c_oAscLockTypes.kLockTypeNone, false);
 
 					var drawing = AscCommon.g_oTableId.Get_ById(oLock.Element["rangeOrObjectId"]);
-					if(drawing && drawing.lockType !== c_oAscLockTypes.kLockTypeNone) {
+					if (drawing && drawing.lockType !== c_oAscLockTypes.kLockTypeNone) {
 						var bLocked = drawing.lockType !== c_oAscLockTypes.kLockTypeNone && drawing.lockType !== c_oAscLockTypes.kLockTypeMine;
 						drawing.lockType = c_oAscLockTypes.kLockTypeNone;
 						bRedrawGraphicObjects = true;
-						if(drawing instanceof AscCommon.CCore) {
-							if(bLocked) {
+						if (drawing instanceof AscCommon.CCore) {
+							if (bLocked) {
 								Asc.editor && Asc.editor.sendEvent("asc_onLockCore", false);
 							}
 						}
 					}
-					if(!bUnlockDefName){
+					if (!bUnlockDefName) {
 						bUnlockDefName = this.handlers.trigger("checkDefNameLock", oLock);
 					}
 
@@ -327,24 +332,24 @@
 				// Очищаем примененные чужие изменения
 				var nIndex = 0;
 				var nCount = this.m_arrNeedUnlock.length;
-				for (;nIndex < nCount; ++nIndex) {
+				for (; nIndex < nCount; ++nIndex) {
 					oLock = this.m_arrNeedUnlock[nIndex];
 					if (c_oAscLockTypes.kLockTypeOther2 === oLock.getType()) {
 						if (!this.handlers.trigger("checkCommentRemoveLock", oLock.Element)
 							&& !this.handlers.trigger("checkCFRemoveLock", oLock.Element) &&
 							!this.handlers.trigger("checkProtectedRangeRemoveLock", oLock.Element)) {
 							drawing = AscCommon.g_oTableId.Get_ById(oLock.Element["rangeOrObjectId"]);
-							if(drawing && drawing.lockType !== c_oAscLockTypes.kLockTypeNone) {
+							if (drawing && drawing.lockType !== c_oAscLockTypes.kLockTypeNone) {
 								var bLocked = drawing.lockType !== c_oAscLockTypes.kLockTypeNone && drawing.lockType !== c_oAscLockTypes.kLockTypeMine;
 								drawing.lockType = c_oAscLockTypes.kLockTypeNone;
 								bRedrawGraphicObjects = true;
-								if(drawing instanceof AscCommon.CCore) {
-									if(bLocked) {
+								if (drawing instanceof AscCommon.CCore) {
+									if (bLocked) {
 										Asc.editor && Asc.editor.sendEvent("asc_onLockCore", false);
 									}
 								}
 							}
-							if(!bUnlockDefName){
+							if (!bUnlockDefName) {
 								bUnlockDefName = this.handlers.trigger("checkDefNameLock", oLock);
 							}
 						}
@@ -357,7 +362,7 @@
 			}
 
 			// Отправляем на сервер изменения
-			this.handlers.trigger("sendChanges", this.getRecalcIndexSave(this.m_oRecalcIndexColumns), this.getRecalcIndexSave(this.m_oRecalcIndexRows), isAfterAskSave);
+			this.handlers.trigger("sendChanges", this.getRecalcIndexSave(this.m_oRecalcIndexColumns), this.getRecalcIndexSave(this.m_oRecalcIndexRows), isAfterAskSave, changesToSend);
 
 			if (bIsCollaborative) {
 				// Пересчитываем lock-и от чужих пользователей
@@ -372,6 +377,7 @@
 				this.clearRecalcIndex();
 
 				// Чистим Undo/Redo
+				AscCommon.History.Clear_Redo();
 				AscCommon.History.Clear();
 
 				// Перерисовываем
@@ -386,7 +392,7 @@
 					this.handlers.trigger("showDrawingObjects");
 
 //                if(bUnlockDefName){
-                    this.handlers.trigger("unlockDefName");
+				this.handlers.trigger("unlockDefName");
 //                }
 
 				this.handlers.trigger("updateAllLayoutsLock");
@@ -402,14 +408,12 @@
 
 				if (0 === this.m_nUseType)
 					this.m_nUseType = 1;
-			} else if(this.m_bIsCollaborativeWithLiveViewer) {
-				//todo remove
-				// Чистим Undo/Redo
-				AscCommon.History.Clear();
 			} else {
 				// Обновляем точку последнего сохранения в истории
 				AscCommon.History.Reset_SavedIndex(IsUserSave);
 			}
+
+			Asc.editor.wb.Document_UpdateUndoRedoState();
 		};
 
 		CCollaborativeEditing.prototype.getRecalcIndexSave = function (oRecalcIndex) {
@@ -423,9 +427,11 @@
 				for (var i = 0, length = oRecalcIndex[sheetId]._arrElements.length; i < length; ++i) {
 					bHasIndex = true;
 					element = oRecalcIndex[sheetId]._arrElements[i];
-					result[sheetId]["_arrElements"].push({"_recalcType" : element._recalcType,
-						"_position" : element._position, "_count" : element._count,
-						"m_bIsSaveIndex" : element.m_bIsSaveIndex});
+					result[sheetId]["_arrElements"].push({
+						"_recalcType": element._recalcType,
+						"_position": element._position, "_count": element._count,
+						"m_bIsSaveIndex": element.m_bIsSaveIndex
+					});
 				}
 			}
 
@@ -913,24 +919,24 @@
 				return row;
 			return this.m_oRecalcIndexRows[sheetId].getLockSaveOther(row);
 		};
-		CCollaborativeEditing.prototype.checkObjectsLock = function(aObjectId, callback) {
+		CCollaborativeEditing.prototype.checkObjectsLock = function (aObjectId, callback) {
 			var oApi = Asc.editor;
 			var bCanNotEdit = this.getGlobalLock() || oApi && !oApi.canEdit();
-			if(bCanNotEdit) {
-				if(callback) {
+			if (bCanNotEdit) {
+				if (callback) {
 					callback(false, true);
 				}
 				return false;
 			}
-			if(oApi) {
+			if (oApi) {
 				oApi.incrementCounterLongAction();
 			}
 			const oInkDrawerState = oApi.inkDrawer.getState();
-			var callbackEx = function(result, sync) {
-				if(oApi) {
+			var callbackEx = function (result, sync) {
+				if (oApi) {
 					oApi.decrementCounterLongAction();
 				}
-				if ( callback ) {
+				if (callback) {
 					oApi.inkDrawer.restoreState(oInkDrawerState);
 					callback(result, sync);
 					oApi.inkDrawer.restoreState(oInkDrawerState);
@@ -942,16 +948,15 @@
 				return bRet;
 			}
 			this.onStartCheckLock();
-			for ( var i = 0; i < aObjectId.length; i++ ) {
-				var lockInfo = this.getLockInfo( AscCommonExcel.c_oAscLockTypeElem.Object, null, "", aObjectId[i] );
-				if ( false === this.getCollaborativeEditing() ) {
+			for (var i = 0; i < aObjectId.length; i++) {
+				var lockInfo = this.getLockInfo(AscCommonExcel.c_oAscLockTypeElem.Object, null, "", aObjectId[i]);
+				if (false === this.getCollaborativeEditing()) {
 					asc_applyFunction(callbackEx, true, true);
 					callbackEx = undefined;
 				}
-				if ( false !== this.getLockIntersection(lockInfo, c_oAscLockTypes.kLockTypeMine, false) ) {
+				if (false !== this.getLockIntersection(lockInfo, c_oAscLockTypes.kLockTypeMine, false)) {
 					continue;
-				}
-				else if ( false !== this.getLockIntersection(lockInfo, c_oAscLockTypes.kLockTypeOther, false) ) {
+				} else if (false !== this.getLockIntersection(lockInfo, c_oAscLockTypes.kLockTypeOther, false)) {
 					asc_applyFunction(callbackEx, false);
 					return false;
 				}
@@ -960,8 +965,7 @@
 			this.onEndCheckLock(callbackEx);
 			return bRet;
 		};
-		CCollaborativeEditing.prototype.Add_ForeignCursor = function(UserId, DocumentPos, UserShortId)
-		{
+		CCollaborativeEditing.prototype.Add_ForeignCursor = function (UserId, DocumentPos, UserShortId) {
 			var isEqual = function (val1, val2) {
 				var res = false;
 				if (val1.isEdit === val2.isEdit && val1.sheetId === val2.sheetId) {
@@ -989,17 +993,17 @@
 
 			return true;
 		};
-		CCollaborativeEditing.prototype.Remove_ForeignCursor = function(UserId){
+		CCollaborativeEditing.prototype.Remove_ForeignCursor = function (UserId) {
 			delete this.m_aForeignCursorsData[UserId];
 		};
-		CCollaborativeEditing.prototype.Remove_AllForeignCursors = function(){
+		CCollaborativeEditing.prototype.Remove_AllForeignCursors = function () {
 			this.handlers.trigger("cleanSelection");
 			for (var UserId in this.m_aForeignCursorsData) {
 				this.Remove_ForeignCursor(UserId);
 			}
 			this.handlers.trigger("drawSelection");
 		};
-		CCollaborativeEditing.prototype.getForeignSelectIntersection = function(col, row){
+		CCollaborativeEditing.prototype.getForeignSelectIntersection = function (col, row) {
 			var res = null;
 			for (var i in this.m_aForeignCursorsData) {
 				if (this.m_aForeignCursorsData[i]) {
@@ -1013,6 +1017,61 @@
 			}
 			return res;
 		};
+		CCollaborativeEditing.prototype.PreUndo = function () {
+			let res = AscCommon.CCollaborativeEditingBase.prototype.PreUndo.apply(this);
+
+			this.oRedoObjectParam = new AscCommonExcel.RedoObjectParam();
+			AscCommon.History.UndoRedoPrepare(this.oRedoObjectParam, false, true);
+			//todo встроить в GetReverseOwnChanges
+			if (this.CoHistory.OwnRanges.length > 0) {
+				let range     = this.CoHistory.OwnRanges[this.CoHistory.OwnRanges.length - 1];
+				let change = this.CoHistory.Changes[range.Position];
+				if (change && change.oData && change.oData.snapshot) {
+					this.oRedoObjectParam.snapshot = change.oData.snapshot
+				}
+			}
+			return res;
+		}
+		CCollaborativeEditing.prototype.PostUndo = function (state, changes) {
+			let Point = {Items: []}
+			if (changes.length > 0) {
+				//изменение не последнее потому что могут добавиться при корректировке
+				let elem = changes.find(function(elem){
+					if(elem && elem.oData && elem.oData.Point) {
+						return true;
+					}
+				});
+				if (elem) {
+					Point = elem.oData.Point;
+				}
+			}
+			//todo Apply_LinkData inside UndoRedoEnd
+			AscCommon.CollaborativeEditing.Apply_LinkData();
+			AscCommon.History.UndoRedoEnd(Point, this.oRedoObjectParam, false);
+
+			AscCommon.CCollaborativeEditingBase.prototype.PostUndo.apply(this, arguments);
+		}
+
+		AscCommon.CCollaborativeHistory.prototype.CommuteRelated = function(oClass, oChange, nStartPosition)
+		{
+			//todo снаследоваться потому что планируется обьедениение sdk
+			var arrChangesForProceed = this.Changes;
+			for (var nIndex = nStartPosition, nOverallCount = arrChangesForProceed.length; nIndex < nOverallCount; ++nIndex) {
+				var oOtherAction = arrChangesForProceed[nIndex];
+				if (!oOtherAction) {
+					continue;
+				}
+				if (true !== oOtherAction.IsReverted() && oChange.CommuteRelated && false === oChange.CommuteRelated(oChange, oOtherAction)) {
+					return false;
+				}
+			}
+			return true;
+		};
+
+		AscCommon.CCollaborativeHistory.prototype.saveChanges = function(changesToSend)
+		{
+			this.CoEditing.sendChanges(false, true, changesToSend);
+		};
 
 		/**
 		 * Отвечает за лок в совместном редактировании
@@ -1022,7 +1081,7 @@
 		 * @memberOf Asc
 		 */
 		function CLock(element) {
-			this.Type   = c_oAscLockTypes.kLockTypeNone;
+			this.Type = c_oAscLockTypes.kLockTypeNone;
 			this.UserId = null;
 			this.Element = element;
 
@@ -1043,9 +1102,8 @@
 			this.Type = newType;
 		};
 
-		CLock.prototype.Lock = function(bMine) {
-			if (c_oAscLockTypes.kLockTypeNone === this.Type)
-			{
+		CLock.prototype.Lock = function (bMine) {
+			if (c_oAscLockTypes.kLockTypeNone === this.Type) {
 				if (true === bMine)
 					this.Type = c_oAscLockTypes.kLockTypeMine;
 				else
@@ -1053,13 +1111,13 @@
 			}
 		};
 
-		CLock.prototype.setUserId = function(UserId) {
+		CLock.prototype.setUserId = function (UserId) {
 			this.UserId = UserId;
 		};
 
 		function CRecalcIndexElement(recalcType, position, bIsSaveIndex) {
-			if ( !(this instanceof CRecalcIndexElement) ) {
-				return new CRecalcIndexElement (recalcType, position, bIsSaveIndex);
+			if (!(this instanceof CRecalcIndexElement)) {
+				return new CRecalcIndexElement(recalcType, position, bIsSaveIndex);
 			}
 
 			this._recalcType	= recalcType;		// Тип изменений (удаление или добавление)
@@ -1131,8 +1189,8 @@
 		};
 
 		function CRecalcIndex() {
-			if ( !(this instanceof CRecalcIndex) ) {
-				return new CRecalcIndex ();
+			if (!(this instanceof CRecalcIndex)) {
+				return new CRecalcIndex();
 			}
 
 			this._arrElements = [];		// Массив CRecalcIndexElement

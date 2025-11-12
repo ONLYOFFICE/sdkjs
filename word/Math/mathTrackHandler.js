@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -203,8 +203,36 @@
 			y1 = Math.max.apply(Math, aY);
 		}
 
-		let pos0 = this.DrawingDocument.ConvertCoordsToCursorWR(x0, y0, pageNum);
-		let pos1 = this.DrawingDocument.ConvertCoordsToCursorWR(x1, y1, pageNum);
+		let pos0 = {};
+		let pos1 = {};
+
+		if (Asc.editor.isPdfEditor())
+		{
+			let oDoc	= Asc.editor.getPDFDoc();
+			let oFile	= Asc.editor.getDocumentRenderer().file;
+
+			let oTr		= oDoc.pagesTransform[pageNum].normal.CreateDublicate();
+			let inchC	= (25.4 / oFile.pages[pageNum].Dpi);
+			AscCommon.global_MatrixTransformer.ScaleAppend(oTr, inchC, inchC);
+			oTr.Invert();
+
+			let oPt1 = oTr.TransformPoint(x0, y0);
+			let oPt2 = oTr.TransformPoint(x1, y1);
+
+			pos0 = {
+				X: Math.min(oPt1.x, oPt2.x),
+				Y: Math.min(oPt1.y, oPt2.y)
+			};
+			pos1 = {
+				X: Math.max(oPt1.x, oPt2.x),
+				Y: Math.max(oPt1.y, oPt2.y)
+			};
+		}
+		else
+		{
+			pos0 = this.DrawingDocument.ConvertCoordsToCursorWR(x0, y0, pageNum);
+			pos1 = this.DrawingDocument.ConvertCoordsToCursorWR(x1, y1, pageNum);
+		}
 
 		return [pos0.X, pos0.Y, pos1.X, pos1.Y];
 	};

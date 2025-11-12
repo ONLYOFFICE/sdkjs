@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -434,13 +434,13 @@ function FrozenPlace(ws, type) {
 			break;
 			
 			case FrozenAreaType.Bottom: {
-				scroll = -(_this.worksheet._getRowTop(fv.row) - _this.worksheet._getRowTop(_this.frozenCell.row)) + headerPx;
+				scroll = -(_this.worksheet._getRowTop(fv.row) - _this.worksheet._getRowTop(_this.frozenCell.row) + _this.worksheet.getScrollCorrect()) + headerPx;
 			}
 			break;
 			
 			case FrozenAreaType.Left:
 			case FrozenAreaType.Right: {
-				scroll = -(_this.worksheet._getRowTop(fv.row) - _this.worksheet.cellsTop) + headerPx;
+				scroll = -(_this.worksheet._getRowTop(fv.row) - _this.worksheet.cellsTop + _this.worksheet.getScrollCorrect()) + headerPx;
 			}
 			break;
 			
@@ -453,13 +453,13 @@ function FrozenPlace(ws, type) {
 			
 			case FrozenAreaType.LeftBottom:
 			case FrozenAreaType.RightBottom: {
-				scroll = -(_this.worksheet._getRowTop(fv.row) - _this.worksheet._getRowTop(_this.frozenCell.row)) + headerPx;
+				scroll = -(_this.worksheet._getRowTop(fv.row) - _this.worksheet._getRowTop(_this.frozenCell.row) + _this.worksheet.getScrollCorrect()) + headerPx;
 			}
 			break;
 			
 			// No frozen areas
 			case FrozenAreaType.Center: {
-				scroll = -(_this.worksheet._getRowTop(fv.row) - _this.worksheet.cellsTop) + headerPx;
+				scroll = -(_this.worksheet._getRowTop(fv.row) - _this.worksheet.cellsTop + _this.worksheet.getScrollCorrect()) + headerPx;
 			}
 			break;
 		}
@@ -477,7 +477,7 @@ function FrozenPlace(ws, type) {
 			// Two places
 			case FrozenAreaType.Top:
 			case FrozenAreaType.Bottom: {
-				scroll = -(_this.worksheet._getColLeft(fv.col) - _this.worksheet.cellsLeft) + headerPx;
+				scroll = -(_this.worksheet._getColLeft(fv.col) - _this.worksheet.cellsLeft + _this.worksheet.getHorizontalScrollCorrect()) + headerPx;
 			}
 			break;
 			
@@ -487,7 +487,7 @@ function FrozenPlace(ws, type) {
 			break;
 			
 			case FrozenAreaType.Right: {
-				scroll = -(_this.worksheet._getColLeft(fv.col) - _this.worksheet._getColLeft(_this.frozenCell.col)) + headerPx;
+				scroll = -(_this.worksheet._getColLeft(fv.col) - _this.worksheet._getColLeft(_this.frozenCell.col) +  _this.worksheet.getHorizontalScrollCorrect()) + headerPx;
 			}
 			break;
 			
@@ -500,17 +500,17 @@ function FrozenPlace(ws, type) {
 			
 			case FrozenAreaType.RightTop:
 			case FrozenAreaType.RightBottom: {
-				scroll = -(_this.worksheet._getColLeft(fv.col) - _this.worksheet._getColLeft(_this.frozenCell.col)) + headerPx;
+				scroll = -(_this.worksheet._getColLeft(fv.col) - _this.worksheet._getColLeft(_this.frozenCell.col) + _this.worksheet.getHorizontalScrollCorrect()) + headerPx;
 			}
 			break;			
 			
 			// No frozen areas
 			case FrozenAreaType.Center: {
-				scroll = -(_this.worksheet._getColLeft(fv.col) - _this.worksheet.cellsLeft) + headerPx;
+				scroll = -(_this.worksheet._getColLeft(fv.col) - _this.worksheet.cellsLeft + _this.worksheet.getHorizontalScrollCorrect()) + headerPx;
 			}
 			break;
 		}
-		return scroll;
+		return _this.worksheet.getRightToLeft() ? -scroll : scroll;
 	};
 	
 	_this.clip = function(canvas, rect) {
@@ -527,22 +527,24 @@ function FrozenPlace(ws, type) {
 		// этот рестор нужен для восстановления сложных вложенных клипов
         canvas.m_oContext.restore();
 	};
-	
-	_this.drawObject = function(object, oRect) {
-	
-		var oUpdateRect = _this.worksheet.rangeToRectAbs(_this.range, 3);
+	_this.getUpdateRect = function (oRect) {
+		let oUpdateRect = _this.worksheet.rangeToRectAbs(_this.range, 3);
 		if(oRect) {
 			oUpdateRect = oUpdateRect.intersection(oRect);
-			if(!oUpdateRect) {
-				return;
-			}
+		}
+		return oUpdateRect;
+	}
+	_this._updateGraphicCanvas = function (fCallback, oRect) {
+		var oUpdateRect = _this.getUpdateRect(oRect);
+		if (!oUpdateRect) {
+			return;
 		}
 		var canvas = _this.worksheet.objectRender.getDrawingCanvas();
 		_this.setTransform(canvas.shapeCtx, canvas.shapeOverlayCtx, canvas.autoShapeTrack);
 
 		var oClipRect;
 		if(!oRect) {
-			oClipRect = _this.worksheet.rangeToRectRel(_this.range, 0);
+			oClipRect = _this.worksheet.rangeToRectRel(_this.range, 0, true);
 		}
 		else {
 			var oT = canvas.shapeCtx.m_oCoordTransform;
@@ -555,22 +557,31 @@ function FrozenPlace(ws, type) {
 
 		_this.clip(canvas.shapeCtx, oClipRect);
 		canvas.shapeCtx.updatedRect = oUpdateRect;
-		object.draw(canvas.shapeCtx);
+		fCallback(canvas.shapeCtx);
 		canvas.shapeCtx.updatedRect = null;
-		// Lock
-		if ( (object.graphicObject.lockType !== undefined) && (object.graphicObject.lockType !== AscCommon.c_oAscLockTypes.kLockTypeNone) ) {
-			var oApi = Asc['editor'];
-			if(oApi){
-				if (!oApi.collaborativeEditing.getFast() || object.graphicObject.lockType !== AscCommon.c_oAscLockTypes.kLockTypeMine){
-					canvas.shapeCtx.SetIntegerGrid(false);
-					canvas.shapeCtx.transform3(object.graphicObject.transform, false);
-					canvas.shapeCtx.DrawLockObjectRect(object.graphicObject.lockType, 0, 0, object.graphicObject.extX, object.graphicObject.extY );
-					canvas.shapeCtx.reset();
-					canvas.shapeCtx.SetIntegerGrid(true);
+		_this.restore(canvas.shapeCtx);
+	}
+	_this.drawObject = function(object, oRect) {
+		this._updateGraphicCanvas(function (graphics) {
+			object.draw(graphics);
+			if ( (object.graphicObject.lockType !== undefined) && (object.graphicObject.lockType !== AscCommon.c_oAscLockTypes.kLockTypeNone) ) {
+				var oApi = Asc['editor'];
+				if(oApi){
+					if (!oApi.collaborativeEditing.getFast() || object.graphicObject.lockType !== AscCommon.c_oAscLockTypes.kLockTypeMine){
+						graphics.SetIntegerGrid(false);
+						graphics.transform3(object.graphicObject.transform, false);
+						graphics.DrawLockObjectRect(object.graphicObject.lockType, 0, 0, object.graphicObject.extX, object.graphicObject.extY );
+						graphics.reset();
+						graphics.SetIntegerGrid(true);
+					}
 				}
 			}
-		}
-		_this.restore(canvas.shapeCtx);
+		}, oRect);
+	};
+	_this.drawDropDown = function(object, oRect) {
+		this._updateGraphicCanvas(function (graphics) {
+			object.drawDropDown(graphics);
+		});
 	};
 	
 	_this.updateRange = function(object, oRange) {
@@ -580,7 +591,7 @@ function FrozenPlace(ws, type) {
 		}
 		var canvas = _this.worksheet.objectRender.getDrawingCanvas();
 		_this.setTransform(canvas.shapeCtx, canvas.shapeOverlayCtx, canvas.autoShapeTrack);
-		_this.clip(canvas.shapeCtx, _this.worksheet.rangeToRectRel(oClipRange, 0));
+		_this.clip(canvas.shapeCtx, _this.worksheet.rangeToRectRel(oClipRange, 0, true));
 		canvas.shapeCtx.updatedRect = _this.worksheet.rangeToRectAbs(oClipRange, 3);
 		//For debug
 		// canvas.shapeCtx.p_color(0, 0, 0, 255);
@@ -629,10 +640,10 @@ function FrozenPlace(ws, type) {
 			}
 			autoShapeTrack.m_oOverlay.CheckPoint1(x - nW, top);
 			autoShapeTrack.m_oOverlay.CheckPoint2(x + nW, bottom);
-			autoShapeTrack.drawImage(sFrozenImageRotUrl, x, top, nW, bottom);
+			autoShapeTrack.drawImage(sFrozenImageRotUrl, _this.worksheet.checkRtl(x), top, nW, bottom);
 		}
 		else {
-			autoShapeTrack.m_oOverlay.DrawFrozenPlaceVerLine(x, top, bottom);
+			autoShapeTrack.m_oOverlay.DrawFrozenPlaceVerLine(_this.worksheet.checkRtl(x), top, bottom);
 		}
 	};
 	_this.drawSelection = function(drawingDocument, shapeCtx, shapeOverlayCtx, autoShapeTrack, trackOverlay) {
@@ -640,7 +651,7 @@ function FrozenPlace(ws, type) {
 		var ctx = trackOverlay.m_oContext;
 		_this.setTransform(shapeCtx, shapeOverlayCtx, autoShapeTrack, trackOverlay);
 		// Clip
-		_this.clip(shapeOverlayCtx, _this.worksheet.rangeToRectRel(_this.range, 0));
+		_this.clip(shapeOverlayCtx, _this.worksheet.rangeToRectRel(_this.range, 0, true));
 		if (drawingDocument.m_bIsSelection) {
 			if (!window["IS_NATIVE_EDITOR"]) {
 				drawingDocument.SelectionMatrix = null;
@@ -793,6 +804,15 @@ DrawingArea.prototype.init = function() {
 DrawingArea.prototype.clear = function() {
     this.worksheet.drawingGraphicCtx.clear();
 };
+	DrawingArea.prototype.clearRect = function(oRect) {
+		var canvas = this.worksheet.objectRender.getDrawingCanvas();
+		var oT = canvas.shapeCtx.m_oCoordTransform;
+		var l = (oT.TransformPointX(oRect.l, oRect.t) >> 0) - 1;
+		var t = (oT.TransformPointY(oRect.l, oRect.t) >> 0) - 1;
+		var r = (oT.TransformPointX(oRect.r, oRect.b) >> 0) + 1;
+		var b = (oT.TransformPointY(oRect.r, oRect.b) >> 0) + 1;
+		canvas.shapeCtx.m_oContext.clearRect(l, t, r - l, b - t);
+	};
 
 DrawingArea.prototype.drawObject = function(object, oRect) {
     for ( var i = 0; i < this.frozenPlaces.length; i++ ) {
@@ -801,6 +821,11 @@ DrawingArea.prototype.drawObject = function(object, oRect) {
         }
     }
 };
+	DrawingArea.prototype.drawDropDown = function(object, oRect) {
+		for ( var i = 0; i < this.frozenPlaces.length; i++ ) {
+			this.frozenPlaces[i].drawDropDown(object, oRect);
+		}
+	};
 DrawingArea.prototype.updateRange = function(object, oRange) {
     for ( var i = 0; i < this.frozenPlaces.length; i++ ) {
         if ( this.frozenPlaces[i].isObjectInside(object) ) {
@@ -857,7 +882,17 @@ DrawingArea.prototype.drawSelection = function(drawingDocument) {
 	if(oWatermark) {
 		oWatermark.zoom = 1.0;
 		oWatermark.Generate();
-		oWatermark.Draw(ctx, ctx.canvas.width, ctx.canvas.height);
+		if(oWatermark.width > 0 && oWatermark.height > 0) {
+			let nOffsetY = oWS.cellsTop;
+			while (nOffsetY < ctx.canvas.height) {
+				let nOffsetX = oWS.cellsLeft;
+				while (nOffsetX < ctx.canvas.width) {
+					oWatermark.Draw(ctx, nOffsetX, nOffsetY, oWatermark.width, oWatermark.height);
+					nOffsetX += oWatermark.width;
+				}
+				nOffsetY += oWatermark.height;
+			}
+		}
 	}
 
 	if (this.api) {

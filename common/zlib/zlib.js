@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -146,7 +146,14 @@
 			{
 				return this.engine["getPaths"]();
 			};
-
+			/**
+			 * Get image file raw data. this memory was copied and detach from archive.
+			 * @returns {Uint8Array}
+			 */
+			ZLib.prototype.getImageBuffer = function(path)
+			{
+				return this.engine["getImageBuffer"](path);
+			};
 
 			AscCommon.ZLib = ZLib;
 			AscCommon.ZLib.prototype.isModuleInit = true;

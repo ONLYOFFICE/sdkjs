@@ -3,7 +3,7 @@
 
 ## Sdkjs
 
-JavaScript SDK which is a part of [ONLYOFFICE Document Server][2] and [ONLYOFFICE Desktop Editors][4]. Contains API for all the included components client-side interaction.
+JavaScript SDK which is a part of [ONLYOFFICE Document Server][2] and [ONLYOFFICE Desktop Editors][4]. Contains API for all the included components client-side interaction and implementation of [Office JavaScript APIs][5].
 
 ## Project Information
 
@@ -21,6 +21,7 @@ If you have any problems with or questions about [ONLYOFFICE Document Server][2]
   [2]: https://github.com/ONLYOFFICE/DocumentServer
   [3]: http://stackoverflow.com/questions/tagged/onlyoffice
   [4]: https://github.com/ONLYOFFICE/DesktopEditors
+  [5]: https://github.com/ONLYOFFICE/office-js-api
   
 ## License
 

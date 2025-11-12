@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -113,9 +113,8 @@ $(function () {
 		AscCommon.g_oTableId.init();
 		api._onEndLoadSdk();
 		api.isOpenOOXInBrowser = false;
-		api._openDocument(AscCommon.getEmpty());
-		api._openOnClient();
-		api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
+		api.OpenDocumentFromBin(null, AscCommon.getEmpty());
+		api.initCollaborativeEditing({});
 		api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
 			api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
 
@@ -144,11 +143,21 @@ $(function () {
 	}
 
 	function create(ref, name, users) {
+		let oUsers;
+		for (let i = 0; i < users.length; i++) {
+			if (!oUsers) {
+				oUsers = [];
+			}
+			let oUser = new Asc.CUserProtectedRangeUserInfo();
+			oUser.id = users[i].id;
+			oUsers.push(oUser);
+		}
+
 		let obj = new Asc.CUserProtectedRange(ws);
 		obj.asc_setRef(ref);
 		obj.asc_setName(name);
-		if (users) {
-			obj.asc_setUsers(users);
+		if (oUsers) {
+			obj.asc_setUsers(oUsers);
 		}
 		api.asc_addUserProtectedRange(obj);
 		return obj;
@@ -359,8 +368,8 @@ $(function () {
 				assert.strictEqual(ws.userProtectedRanges[2].asc_getRef(), "=Sheet1!$D$10:$E$13", desc + "_val_3");
 			}, "move_2");
 
-			AscCommon.History.Undo();
-			AscCommon.History.Undo();
+			api.asc_deleteUserProtectedRange([ws.userProtectedRanges[0]]);
+			api.asc_deleteUserProtectedRange([ws.userProtectedRanges[0]]);
 		});
 	}
 

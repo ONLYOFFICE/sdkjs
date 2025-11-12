@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -255,8 +255,8 @@
 			getPageBackgroundColor : function() {
 				// TODO: get color from theme
 				if (this.isDarkMode)
-					return [0x3A, 0x3A, 0x3A];
-				return [0xFF, 0xFF, 0xFF];
+					return { R: 0x3A, G : 0x3A, B : 0x3A };
+				return { R: 0xFF, G : 0xFF, B : 0xFF };
 			},
 
 			WordControl : {

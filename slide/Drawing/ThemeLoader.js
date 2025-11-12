@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -114,7 +114,7 @@ function CThemeLoader()
         // применяется тема из стандартных.
         if (null != theme_load_info)
         {
-            if (indexTheme >= 0 && theme_load_info.Master.sldLayoutLst.length === 0)
+            if (indexTheme >= 0)
             {
                 // мега схема. нужно переоткрыть бинарник, чтобы все открылось с историей
                 this.IsReloadBinaryThemeEditorNow = true;
@@ -224,10 +224,6 @@ function CThemeLoader()
 
             AscCommon.History.MinorChanges = true;
             _loader.Load(_binary, pres);
-            for(var i = 0; i < pres.slideMasters.length; ++i)
-            {
-                pres.slideMasters[i].setThemeIndex(oThis.CurrentLoadThemeIndex);
-            }
             AscCommon.History.MinorChanges = false;
 
             if (oThis.IsReloadBinaryThemeEditorNow || window["NATIVE_EDITOR_ENJINE"])
@@ -259,7 +255,7 @@ function CThemeLoader()
         this.Api.ImageLoader.LoadDocumentImages(this.themes_info_editor[this.CurrentLoadThemeIndex].ImageMap);
     };
 
-    this.asyncImagesStartLoaded = function()
+    this.asyncImagesStartLoaded = function(aImages)
     {
         // началась загрузка картинок
     };

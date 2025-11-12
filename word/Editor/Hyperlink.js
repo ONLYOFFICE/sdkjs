@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -31,9 +31,6 @@
  */
 
 "use strict";
-
-// Import
-var History = AscCommon.History;
 
 /**
  *
@@ -106,7 +103,7 @@ ParaHyperlink.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
         return;
     }
 
-	History.Add(new CChangesHyperlinkAddItem(this, Pos, [Item]));
+	AscCommon.History.Add(new CChangesHyperlinkAddItem(this, Pos, [Item]));
 
     CParagraphContentWithParagraphLikeContent.prototype.Add_ToContent.apply(this, arguments);
 };
@@ -115,7 +112,7 @@ ParaHyperlink.prototype.Remove_FromContent = function(Pos, Count, UpdatePosition
 {
     // Получим массив удаляемых элементов
     var DeletedItems = this.Content.slice( Pos, Pos + Count );
-    History.Add(new CChangesHyperlinkRemoveItem(this, Pos, DeletedItems));
+    AscCommon.History.Add(new CChangesHyperlinkRemoveItem(this, Pos, DeletedItems));
 
     CParagraphContentWithParagraphLikeContent.prototype.Remove_FromContent.apply(this, arguments);
 };
@@ -227,11 +224,11 @@ ParaHyperlink.prototype.Draw_Lines = function(PDSL)
 	PDSL.VisitedHyperlink = false;
 	PDSL.Hyperlink        = false;
 };
-ParaHyperlink.prototype.Draw_HighLights = function(PDSH)
+ParaHyperlink.prototype.Draw_HighLights = function(drawState)
 {
-	PDSH.Hyperlink = this;
+	drawState.pushHyperlink(this);
 	CParagraphContentWithParagraphLikeContent.prototype.Draw_HighLights.apply(this, arguments);
-	PDSH.Hyperlink = null;
+	drawState.popHyperlink();
 };
 //-----------------------------------------------------------------------------------
 // Работаем со значениями
@@ -246,13 +243,56 @@ ParaHyperlink.prototype.SetVisited = function(isVisited)
 };
 ParaHyperlink.prototype.SetToolTip = function(ToolTip)
 {
-    History.Add(new CChangesHyperlinkToolTip(this, this.ToolTip, ToolTip));
+    AscCommon.History.Add(new CChangesHyperlinkToolTip(this, this.ToolTip, ToolTip));
     this.ToolTip = ToolTip;
 };
 ParaHyperlink.prototype.GetToolTip = function()
 {
 	if (!this.ToolTip)
 	{
+
+		if (AscCommon.IsLinkPPAction(this.Value) && (Asc.editor.isPdfEditor() || Asc.editor.isPresentationEditor))
+		{
+
+			if (this.Value == "ppaction://hlinkshowjump?jump=firstslide")
+			{
+				const str = Asc.editor.isPresentationEditor ? 'First Slide' : 'First Page';
+				return AscCommon.translateManager.getValue(str);
+			}
+
+			if (this.Value == "ppaction://hlinkshowjump?jump=lastslide")
+			{
+				const str = Asc.editor.isPresentationEditor ? 'Last Slide' : 'Last Page';
+				return AscCommon.translateManager.getValue(str);
+			}
+
+			if (this.Value == "ppaction://hlinkshowjump?jump=nextslide")
+			{
+				const str = Asc.editor.isPresentationEditor ? 'Next Slide' : 'Next Page';
+				return AscCommon.translateManager.getValue(str);
+			}
+
+			if (this.Value == "ppaction://hlinkshowjump?jump=previousslide")
+			{
+				const str = Asc.editor.isPresentationEditor ? 'Previous Slide' : 'Previous Page';
+				return AscCommon.translateManager.getValue(str);
+			}
+
+			if (this.Value.indexOf("ppaction://hlinkfile") === 0)
+			{
+				return this.Value.substring("ppaction://hlinkfile?file=".length);
+			}
+
+			const mask = "ppaction://hlinksldjumpslide";
+			let posStr = this.Value.indexOf(mask);
+			if (0 == posStr)
+			{
+				let pageNum = parseInt(this.Value.substring(mask.length));
+				const str = Asc.editor.isPresentationEditor ? 'Slide ' : 'Page ';
+				return AscCommon.translateManager.getValue(str + (pageNum + 1));
+			}
+		}
+
 		if ("string" === typeof(this.Value))
 			return (this.Anchor ? this.Value + "#" + this.Anchor : this.Value);
 		else if (this.Anchor)
@@ -267,7 +307,7 @@ ParaHyperlink.prototype.GetToolTip = function()
 };
 ParaHyperlink.prototype.Set_Value = function(Value)
 {
-    History.Add(new CChangesHyperlinkValue(this, this.Value, Value));
+    AscCommon.History.Add(new CChangesHyperlinkValue(this, this.Value, Value));
     this.Value = Value;
 };
 ParaHyperlink.prototype.GetAnchor = function()
@@ -276,7 +316,7 @@ ParaHyperlink.prototype.GetAnchor = function()
 };
 ParaHyperlink.prototype.SetAnchor = function(sBookmarkName)
 {
-	History.Add(new CChangesHyperlinkAnchor(this, this.Anchor, sBookmarkName));
+	AscCommon.History.Add(new CChangesHyperlinkAnchor(this, this.Anchor, sBookmarkName));
 	this.Anchor = sBookmarkName;
 };
 ParaHyperlink.prototype.GetValue = function()
