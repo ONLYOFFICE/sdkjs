@@ -680,6 +680,7 @@
 		this.stream = null;
 		this.blobs = null;
 		this.closeCallbacks = [];
+		this.isLoadedStream = true;
 		this.documentUrl = null;
 	};
 	CBinaryLoaderData.prototype.addCloseCallback = function (fCallback) {
@@ -720,6 +721,9 @@
 		const oThis = this;
 		let oData = new CBinaryLoaderData();
 		const binaryData = AscCommon.g_oBinaryCacheManager.getBinary(binaryId);
+		if (binaryId && binaryData === null) {
+			oData.isLoadedStream = false;
+		}
 		return new Promise(function (resolve)
 		{
 			if (binaryData && binaryData.length)
@@ -756,7 +760,7 @@
 	};
 
 	CFrameBinaryLoader.prototype.resolvePromise = function (oData) {
-		if (this.isTruthStream(oData.stream)) {
+		if (oData.isLoadedStream && this.isTruthStream(oData.stream)) {
 			this.setFromData(oData);
 			this.loadFrame();
 		} else {
@@ -771,6 +775,9 @@
 	{
 		return (arrStream && (arrStream.length !== 0)) || !this.isExternal();
 	}
+	CFrameBinaryLoader.prototype.isExternal = function() {
+		return false;
+	};
 	CFrameBinaryLoader.prototype.startLoadWorksheet = function ()
 	{
 		this.api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
@@ -957,10 +964,6 @@
 	CFrameDiagramBinaryLoader.prototype.isExternal = function ()
 	{
 		return this.chart.isExternal();
-	}
-	CFrameDiagramBinaryLoader.prototype.isTruthStream = function (arrStream)
-	{
-		return (arrStream && (arrStream.length !== 0)) || !this.isExternal();
 	}
 	CFrameDiagramBinaryLoader.prototype.startLoadWorksheet = function ()
 	{
