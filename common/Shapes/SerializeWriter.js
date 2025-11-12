@@ -5484,6 +5484,13 @@ function CBinaryFileWriter()
                 _writer.EndRecord();
             });
         };
+		this.WriteHyperlink = function (memory, hyperlink, type)
+		{
+			const writer = this.BinaryFileWriter;
+			this.WritePPTXObject(memory, function () {
+				writer.Write_Hyperlink2(hyperlink);
+			});
+		};
 		this.WriteRunProperties = function(memory, rPr)
 		{
 			var _writer = this.BinaryFileWriter;

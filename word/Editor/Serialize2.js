@@ -1078,8 +1078,8 @@ var c_oSerDocPr = {
 	Title: 3,
 	Descr: 4,
 	Form: 5,
-	// HlinkClick: 6,
-	// HlinkHover: 7,
+	HlinkClick: 6,
+	HlinkHover: 7,
 };
 var c_oSerBackgroundType = {
 	Color: 0,
@@ -6392,12 +6392,18 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		if (oParaDrawing && oParaDrawing.IsForm()) {
 			this.bs.WriteItem(c_oSerDocPr.Form, function(){oThis.memory.WriteBool(oParaDrawing.IsForm());});
 		}
-		// if (null != docPr.hlinkClick) {
-		// 	oThis.bs.WriteRecord2(c_oSerDocPr.HlinkClick, docPr.hlinkClick, oThis.pptx_content_writer.Write_Hyperlink2);
-		// }
-		// if (null != docPr.hlinkHover) {
-		// 	oThis.bs.WriteRecord2(c_oSerDocPr.HlinkHover, docPr.hlinkHover, oThis.pptx_content_writer.Write_Hyperlink2);
-		// }
+		if (null != docPr.hlinkClick) {
+			this.memory.WriteByte(c_oSerDocPr.HlinkClick);
+			this.bs.WriteItemWithLength(function () {
+				pptx_content_writer.WriteHyperlink(oThis.memory, docPr.hlinkClick, 0);
+			});
+		}
+		if (null != docPr.hlinkHover) {
+			this.memory.WriteByte(c_oSerDocPr.HlinkHover);
+			this.bs.WriteItemWithLength(function () {
+				pptx_content_writer.WriteHyperlink(oThis.memory, docPr.hlinkHover, 1);
+			});
+		}
 	}
 	this.WriteEffectExtent = function(EffectExtent)
 	{
@@ -11594,14 +11600,14 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
                 return oThis.ReadParagraphContent(t, l, paragraph);
             });
         }
-		else if (c_oSerParType.ParaID === type)
-		{
-			paragraph.SetParaId(this.stream.GetLong());
-		}
-		else if (c_oSerParType.TextID === type)
-		{
-			paragraph.SetTextId(this.stream.GetLong());
-		}
+		// else if (c_oSerParType.ParaID === type)
+		// {
+		// 	paragraph.SetParaId(this.stream.GetLong());
+		// }
+		// else if (c_oSerParType.TextID === type)
+		// {
+		// 	paragraph.SetTextId(this.stream.GetLong());
+		// }
         else
             res = c_oSerConstants.ReadUnknown;
         return res;
@@ -12654,16 +12660,16 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			docPr.setDescr(this.stream.GetString2LE(length));
 		} else if (c_oSerDocPr.Form === type) {
 			oParaDrawing.SetForm(this.stream.GetBool());
-		// } else if (c_oSerDocPr.HlinkClick === type) {
-		// 	res = this.bcr.Read1(length, function(t, l) {
-		// 		docPr.setHlinkClick(pptx_content_loader.ReadHyperlink(oThis.stream));
-		// 		return c_oSerConstants.ReadOk;
-		// 	});
-		// } else if (c_oSerDocPr.HlinkHover === type) {
-		// 	res = this.bcr.Read1(length, function(t, l) {
-		// 		docPr.setHlinkHover(pptx_content_loader.ReadHyperlink(oThis.stream));
-		// 		return c_oSerConstants.ReadOk;
-		// 	});
+		} else if (c_oSerDocPr.HlinkClick === type) {
+			if (length > 0) {
+				const hyperlink = pptx_content_loader.ReadHyperlink(this, this.stream);
+				hyperlink && docPr.setHlinkClick(hyperlink);
+			}
+		} else if (c_oSerDocPr.HlinkHover === type) {
+			if (length > 0) {
+				var hyperlink = pptx_content_loader.ReadHyperlink(this, this.stream);
+				hyperlink && docPr.setHlinkHover(hyperlink);
+			}
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}

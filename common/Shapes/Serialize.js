@@ -10835,8 +10835,6 @@ function BinaryPPTYLoader()
                 return oThis.Reader.ReadColorMod();
             });
         };
-
-
         this.ReadTheme = function(reader, stream) {
             var oThis = this;
             return this.ReadPPTXElement(reader, stream, function() {
@@ -11031,6 +11029,12 @@ function BinaryPPTYLoader()
             });
         };
 
+		this.ReadHyperlink = function (reader, stream) {
+			const oThis = this;
+			return this.ReadPPTXElement(reader, stream, function () {
+				return oThis.Reader.ReadHyperlink();
+			});
+		};
 		this.ReadRunProperties = function(stream, type) {
             var oThis = this;
             return this.ReadPPTXElement(undefined, stream, function() {
