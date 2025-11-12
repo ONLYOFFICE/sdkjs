@@ -33728,7 +33728,7 @@ $(function () {
 		ws.getRange2("A105").setValue("1");
 		ws.getRange2("A106").setValue("2");
 		ws.getRange2("A107").setValue("3");
-		ws.getRange2("A109").setValue("4");
+		ws.getRange2("A108").setValue("4");
 		ws.getRange2("A109").setValue("5");
 		ws.getRange2("A110").setValue("6");
 		ws.getRange2("A111").setValue("");
@@ -33770,7 +33770,7 @@ $(function () {
 		// Case #3: String. Numeric strings converted to numbers. Returns skewness.
 		oParser = new parserFormula('SKEW({"1","2","3","5"})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW({"1","2","3","5"}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: String. Numeric strings converted to numbers. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: String. Numeric strings converted to numbers. Returns skewness.');
 		// Case #4: Formula. Nested SQRT formulas producing valid numbers. Returns skewness.
 		oParser = new parserFormula('SKEW({1,2,3,30})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW({1,2,3,30}) is parsed.');
@@ -33778,7 +33778,7 @@ $(function () {
 		// Case #5: Reference link. Reference to cell with valid array. Returns skewness.
 		oParser = new parserFormula('SKEW(A100)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(A100) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Reference link. Reference to cell with valid array. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Reference link. Reference to cell with valid array. Returns skewness.');
 		// Case #6: Area. Range of two cells. Returns skewness.
 		oParser = new parserFormula('SKEW(A101:A105)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(A101:A105) is parsed.');
@@ -33790,23 +33790,23 @@ $(function () {
 		// Case #8: Name. Named range with valid array. Returns skewness.
 		oParser = new parserFormula('SKEW(TestName1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(TestName1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Name. Named range with valid array. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Name. Named range with valid array. Returns skewness.');
 		// Case #9: Name3D. 3D named range with valid array. Returns skewness.
 		oParser = new parserFormula('SKEW(TestName3D)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(TestName3D2 is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Name3D. 3D named range with valid array. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Name3D. 3D named range with valid array. Returns skewness.');
 		// Case #10: Ref3D. 3D reference to cell with valid array. Returns skewness.
 		oParser = new parserFormula('SKEW(Sheet2!A1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(Sheet2!A1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Ref3D. 3D reference to cell with valid array. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Ref3D. 3D reference to cell with valid array. Returns skewness.');
 		// Case #11: Area3D. 3D range of two cells. Returns skewness.
 		oParser = new parserFormula('SKEW(Sheet2!A2:A3)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(Sheet2!A2:A3) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Area3D. 3D range of two cells. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Area3D. 3D range of two cells. Returns skewness.');
 		// Case #12: Table. Table with valid numbers. Returns skewness.
 		oParser = new parserFormula('SKEW(Table1[Column1])', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(Table1[Column1]) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Table. Table with valid numbers. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Table. Table with valid numbers. Returns skewness.');
 		// Case #13: Date. Dates as serial numbers. Returns skewness.
 		oParser = new parserFormula('SKEW({1000,20000,30000})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW({1000,20000,30000}) is parsed.');
@@ -33817,8 +33817,9 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), 1.6795356000385135, 'Test: Positive case: Time. Time values as fractions. Returns skewness.');
 		// Case #15: Formula. Nested IF returning valid array. Returns skewness.
 		oParser = new parserFormula('SKEW(IF(TRUE,{1,2,3,4,50},{2,3,4,5,60}))', 'A2', ws);
+		oParser.setArrayFormulaRef(ws.getRange2("A1:B2").bbox);
 		assert.ok(oParser.parse(), 'Test: SKEW(IF(TRUE,{1,2,3,4,50},{2,3,4,5,60})) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 2.220640458, 'Test: Positive case: Formula. Nested IF returning valid array. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), 2.2206404584946933, 'Test: Positive case: Formula. Nested IF returning valid array. Returns skewness.');
 		// Case #16: Formula. Nested RAND generating valid numbers. Returns skewness.
 		oParser = new parserFormula('SKEW({0.5,0.6,0.7,0.1})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW({0.5,0.6,0.7,0.1}) is parsed.');
@@ -33830,15 +33831,15 @@ $(function () {
 		// Case #18: String. Numeric strings with decimals. Returns skewness.
 		oParser = new parserFormula('SKEW({"1.5","2.5","30.5"})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW({"1.5","2.5","30.5"}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: String. Numeric strings with decimals. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: String. Numeric strings with decimals. Returns skewness.');
 		// Case #19: Reference link. Reference to cell with valid numbers. Returns skewness.
 		oParser = new parserFormula('SKEW(A102)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(A102) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Reference link. Reference to cell with valid numbers. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Reference link. Reference to cell with valid numbers. Returns skewness.');
 		// Case #20: Area. Two-cell range with valid numbers. Returns skewness.
 		oParser = new parserFormula('SKEW(A103:A110)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(A103:A110) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), -0.367276936, 'Test: Positive case: Area. Two-cell range with valid numbers. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), -0.36727693613628765, 'Test: Positive case: Area. Two-cell range with valid numbers. Returns skewness.');
 		// Case #21: Formula. Nested SUM formulas. Returns skewness.
 		oParser = new parserFormula('SKEW(SUM(1,1),SUM(2,2),SUM(3,4))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(SUM(1,1),SUM(2,2),SUM(3,4)) is parsed.');
@@ -33848,93 +33849,97 @@ $(function () {
 		// Case #1: Number. Array with fewer than 3 values returns #DIV/0!.
 		oParser = new parserFormula('SKEW({1,2})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW({1,2}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Number. Array with fewer than 3 values returns #DIV/0!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Number. Array with fewer than 3 values returns #DIV/0!.');
 		// Case #2: String. Non-numeric strings return #VALUE!.
 		oParser = new parserFormula('SKEW({"abc","def","ghi"})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW({"abc","def","ghi"}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: String. Non-numeric strings return #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: String. Non-numeric strings return #VALUE!.');
 		// Case #3: Error. Error value in array propagates #N/A.
 		oParser = new parserFormula('SKEW(NA(),1/0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(NA(),1/0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Error. Error value in array propagates #N/A.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Error. Error value in array propagates #N/A.');
 		// Case #4: Empty. Empty cell reference returns #DIV/0!.
 		oParser = new parserFormula('SKEW(A105)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(A105) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Empty. Empty cell reference returns #DIV/0!.');
+		 assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Empty. Empty cell reference returns #DIV/0!.');
 		// Case #5: Boolean. Booleans in array return #VALUE!.
 		oParser = new parserFormula('SKEW({TRUE,FALSE,TRUE})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW({TRUE,FALSE,TRUE}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Boolean. Booleans in array return #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Boolean. Booleans in array return #VALUE!.');
 		// Case #6: Reference link. Reference to cell with text returns #VALUE!.
 		oParser = new parserFormula('SKEW(A106)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(A106) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Reference link. Reference to cell with text returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Reference link. Reference to cell with text returns #VALUE!.');
 		// Case #7: Area. Range with non-numeric value returns #VALUE!.
 		oParser = new parserFormula('SKEW(A107:A108)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(A107:A108) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area. Range with non-numeric value returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area. Range with non-numeric value returns #VALUE!.');
 		// Case #8: Name. Named range with text returns #VALUE!.
 		oParser = new parserFormula('SKEW(TestName2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(TestName2) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Name. Named range with text returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Name. Named range with text returns #VALUE!.');
 		// Case #9: Name3D. 3D named range with single value returns #DIV/0!.
 		oParser = new parserFormula('SKEW(TestName3D)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(TestName3D) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Name3D. 3D named range with single value returns #DIV/0!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Name3D. 3D named range with single value returns #DIV/0!.');
 		// Case #10: Ref3D. 3D reference to text returns #VALUE!.
 		oParser = new parserFormula('SKEW(Sheet2!A4)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(Sheet2!A4) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Ref3D. 3D reference to text returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Ref3D. 3D reference to text returns #VALUE!.');
 		// Case #11: Area3D. 3D range with error value returns #N/A.
 		oParser = new parserFormula('SKEW(Sheet2!A5:A6)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(Sheet2!A5:A6) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area3D. 3D range with error value returns #N/A.');
-		// Case #12: Table. Table with text values returns #VALUE!.
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area3D. 3D range with error value returns #N/A.');
+		// Case #12: Table. Table with one value returns #DIV/0!.
 		oParser = new parserFormula('SKEW(Table1[Column2])', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(Table1[Column2]) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Table. Table with text values returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Table. Table with one value returns #DIV/0!.');
 		// Case #13: Formula. Nested formula with #NUM! error propagates error.
 		oParser = new parserFormula('SKEW(SQRT(-1),1,2,3)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(SQRT(-1),1,2,3) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Formula. Nested formula with #NUM! error propagates error.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Formula. Nested formula with #NUM! error propagates error.');
 		// Case #14: Number. All identical values return #DIV/0!.
 		oParser = new parserFormula('SKEW({0,0,0})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW({0,0,0}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Number. All identical values return #DIV/0!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Number. All identical values return #DIV/0!.');
+		// Case #14.1: Number. All identical values return #DIV/0!.
+		oParser = new parserFormula('SKEW({1,1,1,1,1})', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: SKEW({1,1,1,1,1}) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Number. All identical values return #DIV/0!.');
 		// Case #15: Array. Single-element array returns #DIV/0!.
 		oParser = new parserFormula('SKEW({1})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW({1}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Array. Single-element array returns #DIV/0!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Array. Single-element array returns #DIV/0!.');
 		// Case #16: String. Empty string in array returns #VALUE!.
 		oParser = new parserFormula('SKEW({""})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW({""}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: String. Empty string in array returns #VALUE!.');
-		// Case #17: Formula. Nested IF returning text causes #VALUE!.
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: String. Empty string in array returns #VALUE!.');
+		// Case #17: Formula. Nested IF returning text causes #DIV/0 because text is skipped.
 		oParser = new parserFormula('SKEW(IF(FALSE,1,"text"),2,3)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(IF(FALSE,1,"text"),2,3) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Formula. Nested IF returning text causes #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Formula. Nested IF returning text causes #DIV/0 because text is skipped.');
 		// Case #18: Reference link. Reference to error value returns #N/A.
 		oParser = new parserFormula('SKEW(A109)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(A109) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Reference link. Reference to error value returns #N/A.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Reference link. Reference to error value returns #N/A.');
 		// Case #19: Area. Range with one value returns #DIV/0!.
 		oParser = new parserFormula('SKEW(A100:A111)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(A100:A111) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0.407806725, 'Test: Negative case: Area. Range with one value returns #DIV/0!.');
+		assert.strictEqual(oParser.calculate().getValue(), 0.40780672525755, 'Test: Negative case: Area. Range with one value returns #DIV/0!.');
 		// Case #20: Name. Named range with two values returns #DIV/0!.
 		oParser = new parserFormula('SKEW(TestNameArea)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(TestNameArea) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Name. Named range with two values returns #DIV/0!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Name. Named range with two values returns #DIV/0!.');
 		// Case #21: Area3D. 3D range with two values returns #DIV/0!.
 		oParser = new parserFormula('SKEW(Sheet2!A7:A8)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW(Sheet2!A7:A8) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area3D. 3D range with two values returns #DIV/0!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area3D. 3D range with two values returns #DIV/0!.');
 
 		// Bounded cases:
 		// Case #1: Number. Max Excel number in dataset. Returns skewness.
 		oParser = new parserFormula('SKEW({1.797E+307,1,2,3,10})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW({1.797E+307,1,2,3,10}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Bounded case: Number. Max Excel number in dataset. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Bounded case: Number. Max Excel number in dataset. Returns skewness.');
 		// Case #2: Number. Min positive Excel number in dataset. Returns skewness.
 		oParser = new parserFormula('SKEW({2.23E-308,1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW({2.23E-308,1,2,3}) is parsed.');
@@ -33943,21 +33948,6 @@ $(function () {
 		oParser = new parserFormula('SKEW({1E+100,1E+100,1E-100})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW({1E+100,1E+100,1E-100}) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), -1.7320508075688759, 'Test: Bounded case: Number. Highly skewed dataset with extreme values. Returns skewness.');
-
-		// TODO many problems in results: error types diff, resut diff from ms, error handle
-		// Need to fix:
-		// Case #3: String. Numeric strings converted to numbers. Returns skewness.
-		// Case #5: Reference link. Reference to cell with valid array. Returns skewness.
-		// Case #8: Name. Named range with valid array. Returns skewness.
-		// Case #9: Name3D. 3D named range with valid array. Returns skewness.
-		// Case #10: Ref3D. 3D reference to cell with valid array. Returns skewness.
-		// Case #11: Area3D. 3D range of two cells. Returns skewness.
-		// Case #12: Table. Table with valid numbers. Returns skewness.
-		// Case #15: Formula. Nested IF returning valid array. Returns skewness.
-		// Case #18: String. Numeric strings with decimals. Returns skewness.
-		// Case #19: Reference link. Reference to cell with valid numbers. Returns skewness.
-		// Case #20: Area. Two-cell range with valid numbers. Returns skewness.
-		// Case #3: Error. Error value in array propagates #N/A.
 
 		testArrayFormula2(assert, "SKEW", 1, 8, null, true);
 	});
@@ -33989,7 +33979,7 @@ $(function () {
 		ws.getRange2("A105").setValue("1");
 		ws.getRange2("A106").setValue("2");
 		ws.getRange2("A107").setValue("3");
-		ws.getRange2("A109").setValue("4");
+		ws.getRange2("A108").setValue("4");
 		ws.getRange2("A109").setValue("5");
 		ws.getRange2("A110").setValue("6");
 		ws.getRange2("A111").setValue("");
@@ -34031,7 +34021,7 @@ $(function () {
 		// Case #3: String. Numeric strings converted to numbers. Returns skewness.
 		oParser = new parserFormula('SKEW.P({"1","2","3","5"})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P({"1","2","3","5"}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: String. Numeric strings converted to numbers. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: String. Numeric strings converted to numbers. Returns skewness.');
 		// Case #4: Formula. Nested SQRT formulas producing valid numbers. Returns skewness.
 		oParser = new parserFormula('SKEW.P({1,2,3,30})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P({1,2,3,30}) is parsed.');
@@ -34039,7 +34029,7 @@ $(function () {
 		// Case #5: Reference link. Reference to cell with valid array. Returns skewness.
 		oParser = new parserFormula('SKEW.P(A100)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(A100) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Reference link. Reference to cell with valid array. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Reference link. Reference to cell with valid array. Returns skewness.');
 		// Case #6: Area. Range of two cells. Returns skewness.
 		oParser = new parserFormula('SKEW.P(A101:A105)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(A101:A105) is parsed.');
@@ -34051,23 +34041,23 @@ $(function () {
 		// Case #8: Name. Named range with valid array. Returns skewness.
 		oParser = new parserFormula('SKEW.P(TestName1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(TestName1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Name. Named range with valid array. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Name. Named range with valid array. Returns skewness.');
 		// Case #9: Name3D. 3D named range with valid array. Returns skewness.
 		oParser = new parserFormula('SKEW.P(TestName3D)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(TestName3D) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Name3D. 3D named range with valid array. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Name3D. 3D named range with valid array. Returns skewness.');
 		// Case #10: Ref3D. 3D reference to cell with valid array. Returns skewness.
 		oParser = new parserFormula('SKEW.P(Sheet2!A1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(Sheet2!A1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Ref3D. 3D reference to cell with valid array. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Ref3D. 3D reference to cell with valid array. Returns skewness.');
 		// Case #11: Area3D. 3D range of two cells. Returns skewness.
 		oParser = new parserFormula('SKEW.P(Sheet2!A2:A3)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(Sheet2!A2:A3) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Area3D. 3D range of two cells. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Area3D. 3D range of two cells. Returns skewness.');
 		// Case #12: Table. Table with valid numbers. Returns skewness.
 		oParser = new parserFormula('SKEW.P(Table1[Column1])', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(Table1[Column1]) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Table. Table with valid numbers. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Table. Table with valid numbers. Returns skewness.');
 		// Case #13: Date. Dates as serial numbers. Returns skewness.
 		oParser = new parserFormula('SKEW.P({1000,20000,30000})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P({1000,20000,30000}) is parsed.');
@@ -34078,8 +34068,9 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), 0.6856675374889215, 'Test: Positive case: Time. Time values as fractions. Returns skewness.');
 		// Case #15: Formula. Nested IF returning valid array. Returns skewness.
 		oParser = new parserFormula('SKEW.P(IF(TRUE,{1,2,3,4,50},{2,3,4,5,60}))', 'A2', ws);
+		oParser.setArrayFormulaRef(ws.getRange2("A1:B2").bbox);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(IF(TRUE,{1,2,3,4,50},{2,3,4,5,60})) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1.489650906, 'Test: Positive case: Formula. Nested IF returning valid array. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), 1.489650905634131, 'Test: Positive case: Formula. Nested IF returning valid array. Returns skewness.');
 		// Case #16: Formula. Nested RAND generating valid numbers. Returns skewness.
 		oParser = new parserFormula('SKEW.P({0.5,0.6,0.7,0.1})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P({0.5,0.6,0.7,0.1}) is parsed.');
@@ -34091,15 +34082,15 @@ $(function () {
 		// Case #18: String. Numeric strings with decimals. Returns skewness.
 		oParser = new parserFormula('SKEW.P({"1.5","2.5","30.5"})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P({"1.5","2.5","30.5"}) is parsed.');
-		// ?assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: String. Numeric strings with decimals. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: String. Numeric strings with decimals. Returns skewness.');
 		// Case #19: Reference link. Reference to cell with valid numbers. Returns skewness.
 		oParser = new parserFormula('SKEW.P(A102)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(A102) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Reference link. Reference to cell with valid numbers. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Reference link. Reference to cell with valid numbers. Returns skewness.');
 		// Case #20: Area. Two-cell range with valid numbers. Returns skewness.
 		oParser = new parserFormula('SKEW.P(A103:A110)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(A103:A110) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), -0.283360308, 'Test: Positive case: Area. Two-cell range with valid numbers. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), -0.2833603080482124, 'Test: Positive case: Area. Two-cell range with valid numbers. Returns skewness.');
 		// Case #21: Formula. Nested SUM formulas. Returns skewness.
 		oParser = new parserFormula('SKEW.P(SUM(1,1),SUM(2,2),SUM(3,4))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(SUM(1,1),SUM(2,2),SUM(3,4)) is parsed.');
@@ -34109,93 +34100,97 @@ $(function () {
 		// Case #1: Number. Array with fewer than 3 values returns #DIV/0!.
 		oParser = new parserFormula('SKEW.P({1,2})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P({1,2}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Number. Array with fewer than 3 values returns #DIV/0!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Number. Array with fewer than 3 values returns #DIV/0!.');
 		// Case #2: String. Non-numeric strings return #VALUE!.
 		oParser = new parserFormula('SKEW.P({"abc","def","ghi"})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P({"abc","def","ghi"}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: String. Non-numeric strings return #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: String. Non-numeric strings return #VALUE!.');
 		// Case #3: Error. Error value in array propagates #N/A.
 		oParser = new parserFormula('SKEW.P(NA(),1/0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(NA(),1/0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Error. Error value in array propagates #N/A.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Error. Error value in array propagates #N/A.');
 		// Case #4: Empty. Empty cell reference returns #DIV/0!.
 		oParser = new parserFormula('SKEW.P(A105)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(A105) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Empty. Empty cell reference returns #DIV/0!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Empty. Empty cell reference returns #DIV/0!.');
 		// Case #5: Boolean. Booleans in array return #VALUE!.
 		oParser = new parserFormula('SKEW.P({TRUE,FALSE,TRUE})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P({TRUE,FALSE,TRUE}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Boolean. Booleans in array return #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Boolean. Booleans in array return #VALUE!.');
 		// Case #6: Reference link. Reference to cell with text returns #VALUE!.
 		oParser = new parserFormula('SKEW.P(A106)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(A106) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Reference link. Reference to cell with text returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Reference link. Reference to cell with text returns #VALUE!.');
 		// Case #7: Area. Range with non-numeric value returns #VALUE!.
 		oParser = new parserFormula('SKEW.P(A107:A108)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(A107:A108) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area. Range with non-numeric value returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area. Range with non-numeric value returns #VALUE!.');
 		// Case #8: Name. Named range with text returns #VALUE!.
 		oParser = new parserFormula('SKEW.P(TestName2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(TestName2) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Name. Named range with text returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Name. Named range with text returns #VALUE!.');
 		// Case #9: Name3D. 3D named range with single value returns #DIV/0!.
 		oParser = new parserFormula('SKEW.P(TestName3D)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(TestName3D) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Name3D. 3D named range with single value returns #DIV/0!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Name3D. 3D named range with single value returns #DIV/0!.');
 		// Case #10: Ref3D. 3D reference to text returns #VALUE!.
 		oParser = new parserFormula('SKEW.P(Sheet2!A4)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(Sheet2!A4) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Ref3D. 3D reference to text returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Ref3D. 3D reference to text returns #VALUE!.');
 		// Case #11: Area3D. 3D range with error value returns #N/A.
 		oParser = new parserFormula('SKEW.P(Sheet2!A5:A6)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(Sheet2!A5:A6) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area3D. 3D range with error value returns #N/A.');
-		// Case #12: Table. Table with text values returns #VALUE!.
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area3D. 3D range with error value returns #N/A.');
+		// Case #12: Table. Table with single value returns #DIV/0!.
 		oParser = new parserFormula('SKEW.P(Table1[Column2])', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(Table1[Column2]) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Table. Table with text values returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Table. Table with single value returns #DIV/0!.');
 		// Case #13: Formula. Nested formula with #NUM! error propagates error.
 		oParser = new parserFormula('SKEW.P(SQRT(-1),1,2,3)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(SQRT(-1),1,2,3) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Formula. Nested formula with #NUM! error propagates error.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Formula. Nested formula with #NUM! error propagates error.');
 		// Case #14: Number. All identical values return #DIV/0!.
 		oParser = new parserFormula('SKEW.P({0,0,0})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P({0,0,0}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Number. All identical values return #DIV/0!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Number. All identical values return #DIV/0!.');
+		// Case #14.1: Number. All identical values return #DIV/0!.
+		oParser = new parserFormula('SKEW.P({1,1,1,1,1})', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: SKEW.P({1,1,1,1,1}) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Number. All identical values return #DIV/0!.');
 		// Case #15: Array. Single-element array returns #DIV/0!.
 		oParser = new parserFormula('SKEW.P({1})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P({1}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Array. Single-element array returns #DIV/0!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Array. Single-element array returns #DIV/0!.');
 		// Case #16: String. Empty string in array returns #VALUE!.
 		oParser = new parserFormula('SKEW.P({""})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P({""}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: String. Empty string in array returns #VALUE!.');
-		// Case #17: Formula. Nested IF returning text causes #VALUE!.
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: String. Empty string in array returns #VALUE!.');
+		// Case #17: Formula. Nested IF returning text causes #DIV/0!.
 		oParser = new parserFormula('SKEW.P(IF(FALSE,1,"text"),2,3)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: SKEW.P(IF(FALSE,1,"text"),2,3) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Formula. Nested IF returning text causes #VALUE!.');
+		assert.ok(oParser.parse(), 'Test: SKEW.P(IF(FALSE,1,"text"),2,3) is parsed.');debugger
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Formula. Nested IF returning text causes #DIV/0!.');
 		// Case #18: Reference link. Reference to error value returns #N/A.
 		oParser = new parserFormula('SKEW.P(A109)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(A109) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Reference link. Reference to error value returns #N/A.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Reference link. Reference to error value returns #N/A.');
 		// Case #19: Area. Range with one value returns #DIV/0!.
 		oParser = new parserFormula('SKEW.P(A100:A111)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(A100:A111) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0.343892826, 'Test: Negative case: Area. Range with one value returns #DIV/0!.');
+		assert.strictEqual(oParser.calculate().getValue(), 0.3438928258529, 'Test: Negative case: Area. Range with one value returns #DIV/0!.');
 		// Case #20: Name. Named range with two values returns #DIV/0!.
 		oParser = new parserFormula('SKEW.P(TestNameArea)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(TestNameArea) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Name. Named range with two values returns #DIV/0!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Name. Named range with two values returns #DIV/0!.');
 		// Case #21: Area3D. 3D range with two values returns #DIV/0!.
 		oParser = new parserFormula('SKEW.P(Sheet2!A7:A8)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P(Sheet2!A7:A8) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area3D. 3D range with two values returns #DIV/0!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area3D. 3D range with two values returns #DIV/0!.');
 
 		// Bounded cases:
 		// Case #1: Number. Max Excel number in dataset. Returns skewness.
 		oParser = new parserFormula('SKEW.P({1.797E+307,1,2,3,10})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P({1.797E+307,1,2,3,10}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Bounded case: Number. Max Excel number in dataset. Returns skewness.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Bounded case: Number. Max Excel number in dataset. Returns skewness.');
 		// Case #2: Number. Min positive Excel number in dataset. Returns skewness.
 		oParser = new parserFormula('SKEW.P({2.23E-308,1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SKEW.P({2.23E-308,1,2,3}) is parsed.');
@@ -34205,7 +34200,6 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: SKEW.P({1E+100,1E+100,1E-100}) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), -0.7071067811865474, 'Test: Bounded case: Number. Highly skewed dataset with extreme values. Returns skewness.');
 
-		// TODO many problems in results: error types diff, resut diff from ms, error handle
 
 	});
 

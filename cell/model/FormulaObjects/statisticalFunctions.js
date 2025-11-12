@@ -1311,7 +1311,12 @@ function (window, undefined) {
 
 	function skew(x, bSkewp) {
 
-		var sumSQRDeltaX = 0, _x = 0, xLength = 0, sumSQRDeltaXDivstandDev = 0, i;
+		let sumSQRDeltaX = 0, _x = 0, xLength = 0, sumSQRDeltaXDivstandDev = 0, i;
+
+		if (x.length <= 2) {
+			return new cError(cErrorType.division_by_zero);
+		}
+
 		for (i = 0; i < x.length; i++) {
 
 			if (x[i] instanceof cNumber) {
@@ -1319,10 +1324,6 @@ function (window, undefined) {
 				xLength++;
 			}
 
-		}
-
-		if (xLength <= 2) {
-			return new cError(cErrorType.not_available);
 		}
 
 		_x /= xLength;
@@ -1335,11 +1336,15 @@ function (window, undefined) {
 
 		}
 
-		var standDev;
+		let standDev;
 		if (bSkewp) {
 			standDev = Math.sqrt(sumSQRDeltaX / (xLength));
 		} else {
 			standDev = Math.sqrt(sumSQRDeltaX / (xLength - 1));
+		}
+
+		if (!Number.isFinite(standDev)) {
+			return new cError(cErrorType.division_by_zero);
 		}
 
 		for (i = 0; i < x.length; i++) {
@@ -1348,14 +1353,22 @@ function (window, undefined) {
 				sumSQRDeltaXDivstandDev += Math.pow((x[i].getValue() - _x) / standDev, 3);
 			}
 
+			if (!Number.isFinite(sumSQRDeltaXDivstandDev)) {
+				return new cError(cErrorType.division_by_zero);
+			}
+
 		}
 
-		var res;
+		let res;
 		if (bSkewp) {
 			res = sumSQRDeltaXDivstandDev / xLength;
 		} else {
 			res = xLength / (xLength - 1) / (xLength - 2) * sumSQRDeltaXDivstandDev;
 		}
+
+		// if (res === 0) {
+		// 	return new cError(cErrorType.division_by_zero);
+		// }
 
 		return new cNumber(res);
 	}
@@ -10148,31 +10161,40 @@ function (window, undefined) {
 	cSKEW.prototype.isXLFN = true;
 	cSKEW.prototype.Calculate = function (arg) {
 
-		var arr0 = [];
+		const arr0 = [];
 
-		for (var j = 0; j < arg.length; j++) {
+		for (let j = 0; j < arg.length; j++) {
 
-			if (arg[j] instanceof cArea || arg[j] instanceof cArea3D) {
-				arg[j].foreach2(function (elem) {
-					if (elem instanceof cNumber) {
-						arr0.push(elem);
+			if (arg[j].type === cElementType.array || arg[j].type === cElementType.cellsRange || arg[j].type === cElementType.cellsRange3D) {
+				let dimensions = arg[j].getDimensions();
+
+				for (let row = 0; row < dimensions.row; row++) {
+					for (let col = 0; col < dimensions.col; col++) {
+						let elem = arg[j].getValueByRowCol ? arg[j].getValueByRowCol(row,col) : arg[j].getElementRowCol(row,col);
+						if (!elem) {
+							continue;
+						}
+
+						if (elem.type === cElementType.number) {
+							arr0.push(elem);
+						} else if (elem.type === cElementType.error) {
+							return elem;
+						}
+
 					}
-				});
-			} else if (arg[j] instanceof cRef || arg[j] instanceof cRef3D) {
-				var a = arg[j].getValue();
-				if (a instanceof cNumber) {
+				}
+
+			} else if (arg[j].type === cElementType.cell || arg[j].type === cElementType.cell3D) {
+				let a = arg[j].getValue();
+				if (a && a.type === cElementType.number) {
 					arr0.push(a);
 				}
-			} else if (arg[j] instanceof cArray) {
-				arg[j].foreach(function (elem) {
-					if (elem instanceof cNumber) {
-						arr0.push(elem);
-					}
-				});
-			} else if (arg[j] instanceof cNumber || arg[j] instanceof cBool) {
-				arr0.push(arg[j].tocNumber());
-			} else if (arg[j] instanceof cString) {
+			} else if (arg[j].type === cElementType.number) {
+				arr0.push(arg[j]);
+			} else if (arg[j].type === cElementType.string || arg[j].type === cElementType.empty || arg[j].type === cElementType.bool) {
 				continue;
+			} else if (arg[j].type === cElementType.error) {
+				return arg[j];
 			} else {
 				return new cError(cErrorType.wrong_value_type);
 			}
@@ -10198,31 +10220,39 @@ function (window, undefined) {
 	cSKEW_P.prototype.argumentsType = [[argType.number]];
 	cSKEW_P.prototype.Calculate = function (arg) {
 
-		var arr0 = [];
+		const arr0 = [];
 
-		for (var j = 0; j < arg.length; j++) {
+		for (let j = 0; j < arg.length; j++) {
 
-			if (arg[j] instanceof cArea || arg[j] instanceof cArea3D) {
-				arg[j].foreach2(function (elem) {
-					if (elem instanceof cNumber) {
-						arr0.push(elem);
+			if (arg[j].type === cElementType.array || arg[j].type === cElementType.cellsRange || arg[j].type === cElementType.cellsRange3D) {
+				let dimensions = arg[j].getDimensions();
+
+				for (let row = 0; row < dimensions.row; row++) {
+					for (let col = 0; col < dimensions.col; col++) {
+						let elem = arg[j].getValueByRowCol ? arg[j].getValueByRowCol(row,col) : arg[j].getElementRowCol(row,col);
+						if (!elem) {
+							continue;
+						}
+
+						if (elem.type === cElementType.number) {
+							arr0.push(elem);
+						} else if (elem.type === cElementType.error) {
+							return elem;
+						}
 					}
-				});
-			} else if (arg[j] instanceof cRef || arg[j] instanceof cRef3D) {
-				var a = arg[j].getValue();
-				if (a instanceof cNumber) {
+				}
+
+			} else if (arg[j].type === cElementType.cell || arg[j].type === cElementType.cell3D) {
+				let a = arg[j].getValue();
+				if (a && a.type === cElementType.number) {
 					arr0.push(a);
 				}
-			} else if (arg[j] instanceof cArray) {
-				arg[j].foreach(function (elem) {
-					if (elem instanceof cNumber) {
-						arr0.push(elem);
-					}
-				});
-			} else if (arg[j] instanceof cNumber || arg[j] instanceof cBool) {
-				arr0.push(arg[j].tocNumber());
-			} else if (arg[j] instanceof cString) {
+			} else if (arg[j].type === cElementType.number) {
+				arr0.push(arg[j]);
+			} else if (arg[j].type === cElementType.string || arg[j].type === cElementType.empty || arg[j].type === cElementType.bool) {
 				continue;
+			} else if (arg[j].type === cElementType.error) {
+				return arg[j];
 			} else {
 				return new cError(cErrorType.wrong_value_type);
 			}
