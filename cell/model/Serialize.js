@@ -11626,9 +11626,10 @@
                 oHyperlink.Ref = ws.getRange2(this.stream.GetString2LE(length));
             else if ( c_oSerHyperlinkTypes.Hyperlink == type )
                 oHyperlink.Hyperlink = this.stream.GetString2LE(length);
-            else if ( c_oSerHyperlinkTypes.Location == type )
+            else if ( c_oSerHyperlinkTypes.Location == type ) {
                 oHyperlink.setLocation(this.stream.GetString2LE(length));
-            else if ( c_oSerHyperlinkTypes.Tooltip == type )
+                oHyperlink.checkAfterOpen();
+            } else if ( c_oSerHyperlinkTypes.Tooltip == type )
                 oHyperlink.Tooltip = this.stream.GetString2LE(length);
             else
                 res = c_oSerConstants.ReadUnknown;

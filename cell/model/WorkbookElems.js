@@ -6081,6 +6081,8 @@ StyleManager.prototype =
 		this.bVisited = false;
 
 		this.bHyperlinkFunction = null;
+		
+		this._tempLocation = null;
 	}
 
 	Hyperlink.prototype.clone = function (oNewWs) {
@@ -6147,6 +6149,9 @@ StyleManager.prototype =
 			}
 		}
 		this._updateLocation();
+		if (Location && !this.Location) {
+			this._tempLocation = Location;
+		}
 	};
 	Hyperlink.prototype.getLocation = function () {
 		if (this.bUpdateLocation)
@@ -6287,6 +6292,14 @@ StyleManager.prototype =
 	Hyperlink.prototype.getHyperlinkFunction = function () {
 		return this.bHyperlinkFunction;
 	};
+	Hyperlink.prototype.checkAfterOpen = function () {
+		let type = this.getHyperlinkType();
+		if (type === Asc.c_oAscHyperlinkType.WebLink && this._tempLocation) {
+			this.Location = this._tempLocation;
+		}
+		this._tempLocation = null;
+	};
+	
 
 	/** @constructor */
 	function SheetFormatPr() {
