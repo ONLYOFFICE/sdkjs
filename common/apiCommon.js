@@ -1971,6 +1971,35 @@ function (window, undefined) {
 		return this._height;
 	};
 
+	function asc_CExactRect(tl, tr, br, bl) {
+		function exportProps(pt) {
+			pt['x'] = pt.x;
+			pt['y'] = pt.y;
+		}
+
+		exportProps(tl);
+		exportProps(tr);
+		exportProps(br);
+		exportProps(bl);
+
+		this.tl = tl;
+		this.tr = tr;
+		this.br = br;
+		this.bl = bl;
+	}
+
+	asc_CExactRect.prototype.asc_getTL = function () {
+		return this.tl;
+	};
+	asc_CExactRect.prototype.asc_getTR = function () {
+		return this.tr;
+	};
+	asc_CExactRect.prototype.asc_getBR = function () {
+		return this.br;
+	};
+	asc_CExactRect.prototype.asc_getBL = function () {
+		return this.bl;
+	};
 
 	const STANDART_COLORS_MAP = {};
 	STANDART_COLORS_MAP[0x000000] = "Black";
@@ -8438,6 +8467,13 @@ function (window, undefined) {
 	prot["asc_getY"] = prot.asc_getY;
 	prot["asc_getWidth"] = prot.asc_getWidth;
 	prot["asc_getHeight"] = prot.asc_getHeight;
+	
+	window["AscCommon"].asc_CExactRect = asc_CExactRect;
+	prot = asc_CExactRect.prototype;
+	prot["asc_getTL"] = prot.asc_getTL;
+	prot["asc_getTR"] = prot.asc_getTR;
+	prot["asc_getBR"] = prot.asc_getBR;
+	prot["asc_getBL"] = prot.asc_getBL;
 
 	window["AscCommon"].CColor = CColor;
 	prot = CColor.prototype;

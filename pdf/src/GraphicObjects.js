@@ -2010,24 +2010,83 @@
             return object.asc_getObjectType && object.asc_getObjectType() === Asc.c_oAscTypeSelectElement.Chart;
         };
         
-        let getRect = function (bounds, pageIndex) {
+        function rotatedRectCorners(offX, offY, extX, extY, rot) {
+            let w = extX, h = extY;
+
+            // rectangle corners before rotation
+            let TL = { x: offX,     y: offY     };
+            let TR = { x: offX + w, y: offY     };
+            let BR = { x: offX + w, y: offY + h };
+            let BL = { x: offX,     y: offY + h };
+
+            // determine pivot point
+            let cx = offX + w / 2; 
+            let cy = offY + h / 2;
+
+            let c = Math.cos(rot);
+            let s = Math.sin(rot);
+
+            function rotate(point) {
+                let dx = point.x - cx;
+                let dy = point.y - cy;
+
+                return {
+                    x: cx + dx * c - dy * s,
+                    y: cy + dx * s + dy * c
+                };
+            }
+
+            return {
+                TL: rotate(TL),
+                TR: rotate(TR),
+                BR: rotate(BR),
+                BL: rotate(BL)
+            };
+        }
+
+        function labelRectCorners(p1, p2, p3, p4) {
+            // copy to avoid mutating input
+            var pts = [ {x:p1.x, y:p1.y}, {x:p2.x, y:p2.y}, {x:p3.x, y:p3.y}, {x:p4.x, y:p4.y} ];
+
+            // sort by y asc, then x asc (screen coordinates: smaller y is "top")
+            pts.sort(function(a, b) {
+                if (a.y !== b.y) return a.y - b.y;
+                return a.x - b.x;
+            });
+
+            var top = [pts[0], pts[1]];
+            var bottom = [pts[2], pts[3]];
+
+            // left/right within each row
+            top.sort(function(a, b) { return a.x - b.x; });
+            bottom.sort(function(a, b) { return a.x - b.x; });
+
+            return {
+                TL: top[0],
+                TR: top[1],
+                BL: bottom[0],
+                BR: bottom[1]
+            };
+        }
+
+        let getRect = function (oChartSpace) {
             const oDoc = Asc.editor.getPDFDoc();
             if (!oDoc) return null;
 
-            let oFirtsTr = oDoc.pagesTransform[pageIndex].invert;
+            let nPageIndex = oChartSpace.GetPage();
+            let oFirtsTr = oDoc.pagesTransform[nPageIndex].invert;
 
-            let convertedPosTopLeft = oFirtsTr.TransformPoint(bounds.l * g_dKoef_mm_to_pt, bounds.t * g_dKoef_mm_to_pt);
-            let convertedPosRightBottom = oFirtsTr.TransformPoint(bounds.r * g_dKoef_mm_to_pt, bounds.b * g_dKoef_mm_to_pt);
+            let oXfrm = oChartSpace.getXfrm();
+            let oPageRect = rotatedRectCorners(oXfrm.offX, oXfrm.offY, oXfrm.extX, oXfrm.extY, oXfrm.rot);
+            
+            let oPt1 = oFirtsTr.TransformPoint(oPageRect.TL.x, oPageRect.TL.y);
+            let oPt2 = oFirtsTr.TransformPoint(oPageRect.TR.x, oPageRect.TR.y);
+            let oPt3 = oFirtsTr.TransformPoint(oPageRect.BR.x, oPageRect.BR.y);
+            let oPt4 = oFirtsTr.TransformPoint(oPageRect.BL.x, oPageRect.BL.y);
 
-            let xMin = Math.min(convertedPosTopLeft.x, convertedPosRightBottom.x);
-            let yMin = Math.min(convertedPosTopLeft.y, convertedPosRightBottom.y);
-            let xMax = Math.max(convertedPosTopLeft.x, convertedPosRightBottom.x);
-            let yMax = Math.max(convertedPosTopLeft.y, convertedPosRightBottom.y);
+            let oGlobalRect = labelRectCorners(oPt1, oPt2, oPt3, oPt4);
 
-            return new AscCommon.asc_CRect(
-                xMin, yMin,
-                xMax - xMin, yMax - yMin
-            );
+            return new AscCommon.asc_CExactRect(oGlobalRect.TL, oGlobalRect.TR, oGlobalRect.BR, oGlobalRect.BL);
         };
 
         const chartObjects = selectedObjects.filter(isChart);
@@ -2047,7 +2106,7 @@
             return;
         }
 
-        const chartSpaceRect = getRect(chartSpace.getRectBounds(), chartSpace.GetPage());
+        const chartSpaceRect = getRect(chartSpace);
         Asc.editor.sendEvent("asc_onSingleChartSelectionChanged", chartSpaceRect || null);
     };
 
