@@ -5488,7 +5488,7 @@ function CBinaryFileWriter()
 		{
 			const writer = this.BinaryFileWriter;
 			this.WritePPTXObject(memory, function () {
-				writer.Write_Hyperlink2(hyperlink);
+				writer.WriteRecord2(type, hyperlink, writer.Write_Hyperlink2);
 			});
 		};
 		this.WriteRunProperties = function(memory, rPr)
