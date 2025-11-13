@@ -2726,7 +2726,9 @@ background-repeat: no-repeat;\
 			this.forceSaveSendFormRequest = false;
 			this.setCurrentRoleFilled();
 			sendChanges();
-			this._sendForm();
+			onSaveEnd.push(function(){
+				t._sendForm();
+			});
 		}
 		else if (this.forceSaveOformRequest)
 		{
@@ -14649,7 +14651,15 @@ background-repeat: no-repeat;\
 		logicDocument.UpdateSelection();
 	};
 	
-	asc_docs_api.prototype._onEndGroupActions = function()
+	asc_docs_api.prototype._onStartGroupActions = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		logicDocument.GetSpellCheckManager().TurnOff();
+	};
+	asc_docs_api.prototype._onEndGroupActions = function(isFullEnd)
 	{
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument)
@@ -14659,6 +14669,13 @@ background-repeat: no-repeat;\
 		AscCommon.History.resetGroupChanges();
 		if (groupChanges.length)
 			logicDocument.RecalculateByChanges(groupChanges);
+		
+		if (isFullEnd)
+		{
+			logicDocument.UpdateInterface();
+			logicDocument.UpdateSelection();
+			logicDocument.GetSpellCheckManager().TurnOn();
+		}
 	};
 
 

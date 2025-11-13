@@ -102,6 +102,15 @@
 		}
 		return null;
 	};
+	CBaseAnimObject.prototype.changeTargetObjectId = function (newId) {
+		if (this.cBhvr) {
+			return this.cBhvr.changeTargetObjectId(newId);
+		}
+		if (this.tgtEl) {
+			return this.tgtEl.changeTargetObjectId(newId);
+		}
+		return null;
+	};
     CBaseAnimObject.prototype.Refresh_RecalcData2 = function () {
         if (this.parent && this.parent.Refresh_RecalcData2) {
             this.parent.Refresh_RecalcData2();
@@ -401,41 +410,41 @@
 	CTimeNodeBase.prototype.isForceTextAnimation = function () {
 		return false;
 	};
-		CTimeNodeBase.prototype.isSkipMainDrawing = function() {
-			if (!this.isTimingContainer()) {
-				const oDrawing = this.getTargetObject();
-				const oTargetTextOptions = this.getTargetTextOptions();
-				if (oTargetTextOptions) {
-					return true;
-				}  else if (this.isForceTextAnimation()) {
-					return true;
-				} else if (this.isCanIterate()) {
-					return !(oDrawing.brush && oDrawing.brush.isVisible() || oDrawing.pen && oDrawing.pen.Fill && oDrawing.pen.Fill.isVisible() || oDrawing.blipFill && oDrawing.blipFill.RasterImageId);
-				}
+	CTimeNodeBase.prototype.isSkipMainDrawing = function() {
+		if (!this.isTimingContainer()) {
+			const oDrawing = this.getTargetObject();
+			const oTargetTextOptions = this.getTargetTextOptions();
+			if (oTargetTextOptions) {
+				return true;
+			}  else if (this.isForceTextAnimation()) {
+				return true;
+			} else if (this.isCanIterate()) {
+				return !(oDrawing.brush && oDrawing.brush.isVisible() || oDrawing.pen && oDrawing.pen.Fill && oDrawing.pen.Fill.isVisible() || oDrawing.blipFill && oDrawing.blipFill.RasterImageId);
 			}
-			return false;
-		};
-		CTimeNodeBase.prototype.getObjectOptionsHash = function() {
-			const sDrawingId = this.getTargetObjectId();
-			if (!sDrawingId) {
-				return null;
+		}
+		return false;
+	};
+	CTimeNodeBase.prototype.getObjectOptionsHash = function() {
+		const sDrawingId = this.getTargetObjectId();
+		if (!sDrawingId) {
+			return null;
+		}
+		const arrHash = [];
+		arrHash.push(sDrawingId);
+		arrHash.push(this.getIterationType());
+		arrHash.push(Number(this.isSkipMainDrawing()));
+		arrHash.push(Number(this.isForceTextAnimation()));
+		arrHash.push(Number(this.isForceDrawingAnimation()));
+		const oTargetEl = this.getTargetTextOptions();
+		if (oTargetEl) {
+			if (oTargetEl.pRg) {
+				arrHash.push(0, oTargetEl.pRg.st, oTargetEl.pRg.end);
+			} else if (oTargetEl.charRg) {
+				arrHash.push(1, oTargetEl.charRg.st, oTargetEl.charRg.end);
 			}
-			const arrHash = [];
-			arrHash.push(sDrawingId);
-			arrHash.push(this.getIterationType());
-			arrHash.push(Number(this.isSkipMainDrawing()));
-			arrHash.push(Number(this.isForceTextAnimation()));
-			arrHash.push(Number(this.isForceDrawingAnimation()));
-			const oTargetEl = this.getTargetTextOptions();
-			if (oTargetEl) {
-				if (oTargetEl.pRg) {
-					arrHash.push(0, oTargetEl.pRg.st, oTargetEl.pRg.end);
-				} else if (oTargetEl.charRg) {
-					arrHash.push(1, oTargetEl.charRg.st, oTargetEl.charRg.end);
-				}
-			}
-			return arrHash.join(';');
-		};
+		}
+		return arrHash.join(';');
+	};
 	CTimeNodeBase.prototype.getDrawingObjects = function (oDrawer) {
 		const sHash = this.getObjectOptionsHash();
 		if (!sHash) {
@@ -1169,6 +1178,9 @@
     CTimeNodeBase.prototype.isInteractiveSeq = function (sSpId) {
         return sSpId === this.getSpClickInteractiveSeq();
     };
+    CTimeNodeBase.prototype.isInteractiveSeqBool = function () {
+        return this.getNodeType() === AscFormat.NODE_TYPE_INTERACTIVESEQ;
+    };
 
     CTimeNodeBase.prototype.isPartOfInteractiveSeq = function () {
         var aHierarchy = this.getHierarchy();
@@ -1177,8 +1189,14 @@
         }
         return null;
     };
+	CTimeNodeBase.prototype.isInterractiveSeq = function () {
+		if (this.getObjectType() !== AscDFH.historyitem_type_Seq) {
+			return false;
+		}
+		return this.getNodeType() === AscFormat.NODE_TYPE_INTERACTIVESEQ;
+	};
     CTimeNodeBase.prototype.getSpClickInteractiveSeq = function () {
-        if (this.getNodeType() === AscFormat.NODE_TYPE_INTERACTIVESEQ) {
+        if (this.isInterractiveSeq()) {
             return this.getSpClickAdvance();
         }
         return null;
@@ -2191,6 +2209,19 @@
         }
         return oMainSeq;
     };
+	CTiming.prototype.getInteractiveSequences = function () {
+		let res = [];
+		let oTmRoot = this.checkTimeRoot();
+		let aSeq = oTmRoot.getChildrenTimeNodes();
+		let oSeq;
+		for (let nSeq = 0; nSeq < aSeq.length; ++nSeq) {
+			oSeq = aSeq[nSeq];
+			if (oSeq.isInteractiveSeqBool()) {
+				res.push(oSeq);
+			}
+		}
+		return res;
+	};
     CTiming.prototype.checkInteractiveSequence = function (sObjectId) {
         var oTnContainer, oCTn;
         var oTmRoot = this.checkTimeRoot();
@@ -2211,19 +2242,7 @@
             oCTn = this.createCCTn(null, NODE_FILL_HOLD, null, AscFormat.NODE_TYPE_INTERACTIVESEQ, RESTART_TYPE_WHEN_NOT_ACTIVE, true, null);
             oTnContainer.setCTn(oCTn);
             oCTn.setEvtFilter("cancelBubble");
-            var oStCondLst = new CCondLst();
-            var oCond = new CCond();
-            oCond.setEvt(COND_EVNT_ON_CLICK);
-            oCond.setDelay("0");
-            var oTgt = new CTgtEl();
-            var oSpTgt = new CSpTgt();
-            oSpTgt.setSpid(sObjectId);
-            oTgt.setSpTgt(oSpTgt);
-            oCond.setTgtEl(oTgt);
-            oStCondLst.push(oCond);
-            oCTn.setStCondLst(oStCondLst);
-            var oNextCondLst = oStCondLst.createDuplicate();
-            oTnContainer.setNextCondLst(oNextCondLst);
+			oTnContainer.setTriggerSp(sObjectId);
             var oEndSync = new CCond();
             oEndSync.setEvt(COND_EVNT_END);
             oEndSync.setDelay("0");
@@ -5019,12 +5038,18 @@
         }
         return null;
     };
-		CCBhvr.prototype.getTargetTextOptions = function () {
-			if (this.tgtEl) {
-				return this.tgtEl.getTargetTextOptions();
-			}
-			return null;
-		};
+	CCBhvr.prototype.changeTargetObjectId = function (newId) {
+		if (this.tgtEl) {
+			return this.tgtEl.changeTargetObjectId(newId);
+		}
+		return null;
+	};
+	CCBhvr.prototype.getTargetTextOptions = function () {
+		if (this.tgtEl) {
+			return this.tgtEl.getTargetTextOptions();
+		}
+		return null;
+	};
     CCBhvr.prototype.getAttributes = function () {
         if (!this.attrNameLst) {
             return [];
@@ -6296,6 +6321,11 @@
             return this.spTgt.spid;
         }
         return null;
+    };
+    CTgtEl.prototype.changeTargetObjectId = function (newId) {
+        if (this.spTgt) {
+            return this.spTgt.setSpid(newId);
+        }
     };
 	CTgtEl.prototype.getTargetTextOptions = function () {
 		if (this.spTgt) {
@@ -8842,6 +8872,10 @@
     CTimeNodeContainer.prototype.getLabelFillColor = function () {
 
     };
+	CTimeNodeContainer.prototype.getEffectsCount = function () {
+		return this.getAllEffects().length;
+	};
+
     CTimeNodeContainer.prototype.getLabelRect = function () {
         var oTiming = this.getTiming();
         if (!oTiming) {
@@ -9683,6 +9717,27 @@
             this.cTn.fromPPTY(pReader);
         }
     };
+	CSeq.prototype.setTriggerSp = function (objectId) {
+		if (!this.isInterractiveSeq()) {
+			return;
+		}
+		let drawing = AscCommon.g_oTableId.Get_ById(objectId);
+		if (!drawing)
+			return;
+		let oStCondLst = new CCondLst();
+		let oCond = new CCond();
+		oCond.setEvt(COND_EVNT_ON_CLICK);
+		oCond.setDelay("0");
+		let oTgt = new CTgtEl();
+		let oSpTgt = new CSpTgt();
+		oSpTgt.setSpid(objectId);
+		oTgt.setSpTgt(oSpTgt);
+		oCond.setTgtEl(oTgt);
+		oStCondLst.push(oCond);
+		this.cTn.setStCondLst(oStCondLst);
+		let oNextCondLst = oStCondLst.createDuplicate();
+		this.setNextCondLst(oNextCondLst);
+	};
     CSeq.prototype.getChildren = function () {
         return [this.prevCondLst, this.nextCondLst, this.cTn];
     };

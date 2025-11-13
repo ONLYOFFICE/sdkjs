@@ -1381,15 +1381,44 @@
 
 		if (streamObj["undo"])
 			this["pluginMethod_EndAction"]("GroupActions", "", "cancel");
-
-		if (streamObj["stable"] !== "")
-			this["pluginMethod_PasteHtml"](streamObj["stable"]);
-
-		if (streamObj["tail"] !== "")
+		
+		let _t = this;
+		function startSilentMode()
 		{
-			this["pluginMethod_StartAction"]("GroupActions");
-			this["pluginMethod_PasteHtml"](streamObj["tail"]);
+			window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
+			
+			logicDocument.TurnOff_Recalculate();
+			logicDocument.TurnOff_InterfaceEvents();
 		}
+		
+		function endSilentMode()
+		{
+			logicDocument.TurnOn_Recalculate();
+			logicDocument.TurnOn_InterfaceEvents();
+			
+			logicDocument.Recalculate();
+			window.g_asc_plugins && window.g_asc_plugins.onPluginMethodReturn(true);
+		}
+		
+		function pasteTail()
+		{
+			if (streamObj["tail"] !== "")
+			{
+				_t["pluginMethod_StartAction"]("GroupActions");
+				_t._pluginMethod_PasteHtml(streamObj["tail"], endSilentMode);
+			}
+			else
+			{
+				endSilentMode();
+			}
+		}
+		
+		startSilentMode();
+		
+		if (streamObj["stable"] !== "")
+			this._pluginMethod_PasteHtml(streamObj["stable"], pasteTail);
+		else
+			pasteTail();
 	};
 
 	window["AscCommon"] = window["AscCommon"] || {};

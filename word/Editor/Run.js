@@ -498,7 +498,7 @@ ParaRun.prototype.Get_Text = function(Text)
 			}
 			case para_NewLine:
 			{
-				Text.Text += undefined !== Text.NewLineSeparator ? Text.NewLineSeparator : " ";
+				Text.Text += undefined !== Text.NewLineSeparator ? Text.NewLineSeparator : "\r";
 				break;
 			}
 			case para_Tab:

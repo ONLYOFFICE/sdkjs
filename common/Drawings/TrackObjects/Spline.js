@@ -100,6 +100,7 @@ function Spline(drawingObjects, theme, master, layout, slide, pageIndex)
 
         this.pen = pen;
         this.splineForDraw = new SplineForDrawer(this);
+        this.overlayObject = this.splineForDraw;
     }, this, []);
     this.Draw = function(graphics)
     {

@@ -1817,7 +1817,7 @@
 		if (!oPres)
 			oPres = private_GetPresentation();
 
-		oPres.addSlideMaster(oPres.slideMasters.length, oMasterSlide);
+		oPres.pushSlideMaster(oMasterSlide);
 		this.mastersMap[oParsedMaster["id"]] = oMasterSlide;
 
 		return oMasterSlide;

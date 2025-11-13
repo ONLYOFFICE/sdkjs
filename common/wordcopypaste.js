@@ -9859,16 +9859,96 @@ PasteProcessor.prototype =
 					nType = Asc.c_oAscNumberingFormat.Bullet;
 				} else if ("decimal" === sType) {
 					nType = Asc.c_oAscNumberingFormat.Decimal;
-				} else if ("roman-lower" === sType) {
+				} else if ("roman-lower" === sType || "lower-roman" === sType) {
 					nType = Asc.c_oAscNumberingFormat.LowerRoman;
-				} else if ("roman-upper" === sType) {
+				} else if ("roman-upper" === sType || "upper-roman" === sType) {
 					nType = Asc.c_oAscNumberingFormat.UpperRoman;
-				} else if ("letter-lower" === sType || "alpha-lower" === sType) {
+				} else if ("letter-lower" === sType || "alpha-lower" === sType || "lower-alpha" === sType) {
 					nType = Asc.c_oAscNumberingFormat.LowerLetter;
-				} else if ("letter-upper" === sType || "alpha-upper" === sType) {
+				} else if ("letter-upper" === sType || "alpha-upper" === sType || "upper-alpha" === sType) {
 					nType = Asc.c_oAscNumberingFormat.UpperLetter;
-				} else if ("decimal-zero" === sType) {
+				} else if ("decimal-zero" === sType || "arabic-leading-zero" === sType) {
 					nType = Asc.c_oAscNumberingFormat.DecimalZero;
+				} else if ("aiueo" === sType) {
+					nType = Asc.c_oAscNumberingFormat.Aiueo;
+				} else if ("aiueo-full-width" === sType) {
+					nType = Asc.c_oAscNumberingFormat.AiueoFullWidth;
+				} else if ("arabic-abjad" === sType) {
+					nType = Asc.c_oAscNumberingFormat.ArabicAbjad;
+				} else if ("arabic-alpha" === sType) {
+					nType = Asc.c_oAscNumberingFormat.ArabicAlpha;
+				} else if ("cardinal-text" === sType) {
+					nType = Asc.c_oAscNumberingFormat.CardinalText;
+				} else if ("chicago" === sType) {
+					nType = Asc.c_oAscNumberingFormat.Chicago;
+				} else if ("chinese-counting" === sType) {
+					nType = Asc.c_oAscNumberingFormat.ChineseCounting;
+				} else if ("chinese-counting-thousand" === sType) {
+					nType = Asc.c_oAscNumberingFormat.ChineseCountingThousand;
+				} else if ("chinese-legal-simplified" === sType) {
+					nType = Asc.c_oAscNumberingFormat.ChineseLegalSimplified;
+				} else if ("chosung" === sType) {
+					nType = Asc.c_oAscNumberingFormat.Chosung;
+				} else if ("decimal-enclosed-circle" === sType) {
+					nType = Asc.c_oAscNumberingFormat.DecimalEnclosedCircle;
+				} else if ("decimal-enclosed-circle-chinese" === sType) {
+					nType = Asc.c_oAscNumberingFormat.DecimalEnclosedCircleChinese;
+				} else if ("decimal-enclosed-fullstop" === sType) {
+					nType = Asc.c_oAscNumberingFormat.DecimalEnclosedFullstop;
+				} else if ("decimal-enclosed-paren" === sType) {
+					nType = Asc.c_oAscNumberingFormat.DecimalEnclosedParen;
+				} else if ("decimal-full-width" === sType) {
+					nType = Asc.c_oAscNumberingFormat.DecimalFullWidth;
+				} else if ("decimal-half-width" === sType) {
+					nType = Asc.c_oAscNumberingFormat.DecimalHalfWidth;
+				} else if ("ganada" === sType) {
+					nType = Asc.c_oAscNumberingFormat.Ganada;
+				} else if ("hangul-digital" === sType) {
+					nType = Asc.c_oAscNumberingFormat.KoreanDigital;
+				} else if ("hebrew-1" === sType) {
+					nType = Asc.c_oAscNumberingFormat.Hebrew1;
+				} else if ("hebrew-2" === sType) {
+					nType = Asc.c_oAscNumberingFormat.Hebrew2;
+				} else if ("hexadecimal" === sType) {
+					nType = Asc.c_oAscNumberingFormat.Hex;
+				} else if ("ideograph-digital" === sType) {
+					nType = Asc.c_oAscNumberingFormat.IdeographDigital;
+				} else if ("ideograph-enclosed-circle" === sType) {
+					nType = Asc.c_oAscNumberingFormat.IdeographEnclosedCircle;
+				} else if ("ideograph-legal-traditional" === sType) {
+					nType = Asc.c_oAscNumberingFormat.IdeographLegalTraditional;
+				} else if ("ideograph-traditional" === sType) {
+					nType = Asc.c_oAscNumberingFormat.IdeographTraditional;
+				} else if ("ideograph-zodiak" === sType) {
+					nType = Asc.c_oAscNumberingFormat.IdeographZodiac;
+				} else if ("ideograph-zodiak-traditional" === sType) {
+					nType = Asc.c_oAscNumberingFormat.IdeographZodiacTraditional;
+				} else if ("iroha" === sType) {
+					nType = Asc.c_oAscNumberingFormat.Iroha;
+				} else if ("iroha-full-width" === sType) {
+					nType = Asc.c_oAscNumberingFormat.IrohaFullWidth;
+				} else if ("japanese-counting" === sType) {
+					nType = Asc.c_oAscNumberingFormat.JapaneseCounting;
+				} else if ("japanese-digital-ten-thousand" === sType) {
+					nType = Asc.c_oAscNumberingFormat.JapaneseDigitalTenThousand;
+				} else if ("japanese-legal" === sType) {
+					nType = Asc.c_oAscNumberingFormat.JapaneseLegal;
+				} else if ("korean-counting" === sType) {
+					nType = Asc.c_oAscNumberingFormat.KoreanCounting;
+				} else if ("korean-digital" === sType) {
+					nType = Asc.c_oAscNumberingFormat.KoreanDigital;
+				} else if ("korean-legal" === sType) {
+					nType = Asc.c_oAscNumberingFormat.KoreanLegal;
+				} else if ("ordinal" === sType) {
+					nType = Asc.c_oAscNumberingFormat.Ordinal;
+				} else if ("ordinal-text" === sType) {
+					nType = Asc.c_oAscNumberingFormat.OrdinalText;
+				} else if ("taiwanese-counting" === sType) {
+					nType = Asc.c_oAscNumberingFormat.TaiwaneseCounting;
+				} else if ("taiwanese-counting-thousand" === sType) {
+					nType = Asc.c_oAscNumberingFormat.TaiwaneseCountingThousand;
+				} else if ("taiwanese-digital" === sType) {
+					nType = Asc.c_oAscNumberingFormat.TaiwaneseDigital;
 				} else {
 					nType = Asc.c_oAscNumberingFormat.Decimal;
 				}
@@ -11307,11 +11387,6 @@ PasteProcessor.prototype =
 		oPasteProcessor._Execute(node, pPr, true, true, false);
 
 		oPasteProcessor._PrepareContent();
-		oPasteProcessor._AddNextPrevToContent(levelSdt.Content);
-
-		if (oPasteProcessor.aContent.length && !isBlockLevelSdt) {
-			levelSdt.Content = [];
-		}
 
 		let i, j, length, length2;
 		if (isBlockLevelSdt) {
@@ -11324,21 +11399,20 @@ PasteProcessor.prototype =
 			}
 			levelSdt.Content.Internal_Content_Remove(0, 1);
 		} else {
+			if (oPasteProcessor.aContent.length) {
+				levelSdt.RemoveAll();
+			}
 			for (i = 0, length = oPasteProcessor.aContent.length; i < length; ++i) {
 				if (oPasteProcessor.aContent[i] && oPasteProcessor.aContent[i].Content) {
 					for (j = 0, length2 = oPasteProcessor.aContent[i].Content.length - 1; j < length2; ++j) {
-						levelSdt.AddToContent(j, oPasteProcessor.aContent[i].Content[j]);
+						levelSdt.AddToContentToEnd(oPasteProcessor.aContent[i].Content[j]);
 					}
 				}
 			}
-		}
-
-		if (!isBlockLevelSdt && !levelSdt.Content.length) {
-			let oRun = new ParaRun(levelSdt.GetParagraph(), false);
-			if (plcHdrText) {
-				oRun.AddText(plcHdrText);
+			
+			if (levelSdt.IsEmpty()) {
+				levelSdt.ReplaceContentWithPlaceHolder(false, true);
 			}
-			levelSdt.AddToContent(levelSdt.GetContentLength(), oRun);
 		}
 	},
 
@@ -11866,7 +11940,6 @@ PasteProcessor.prototype =
 			}
 			oPasteProcessor._Execute(node, {}, true, true, false);
 			oPasteProcessor._PrepareContent(indent);
-			oPasteProcessor._AddNextPrevToContent(cell.Content);
 			if (0 === oPasteProcessor.aContent.length) {
 				var oDocContent = cell.Content;
 				var oNewPar = new AscWord.Paragraph(oDocContent);
@@ -13126,6 +13199,7 @@ PasteProcessor.prototype =
 				//CBlockLevelSdt
 				bAddParagraph = this._Decide_AddParagraph(node, pPr, bAddParagraph);
 				this._ExecuteBlockLevelStd(node, pPr);
+				this._Set_Run_Pr(this.oCurRun.Pr.Copy());
 				return bAddParagraph;
 			}
 

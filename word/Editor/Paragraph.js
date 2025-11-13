@@ -1954,7 +1954,7 @@ Paragraph.prototype.GetNumberingText = function(bWithoutLvlText)
  * Получаем рассчитанное значение нумерации для данного параграфа вместе с суффиксом
  * @returns {string}
  */
-Paragraph.prototype.GetNumberingTextWithSuffix = function()
+Paragraph.prototype.GetNumberingTextWithSuffix = function(pr)
 {
 	let numText = this.GetNumberingText(false);
 	if (!numText)
@@ -1965,7 +1965,7 @@ Paragraph.prototype.GetNumberingTextWithSuffix = function()
 	
 	let suff = parent.GetNumbering().GetNum(numPr.NumId).GetLvl(numPr.Lvl).GetSuff();
 	if (Asc.c_oAscNumberingSuff.Tab === suff)
-		numText += "	";
+		numText += pr && undefined !== pr.TabSymbol ? pr.TabSymbol : "\t";
 	else if (Asc.c_oAscNumberingSuff.Space === suff)
 		numText += " ";
 	
@@ -9397,7 +9397,7 @@ Paragraph.prototype.GetSelectedText = function(bClearText, oPr)
 	{
 		var oNumPr = this.GetNumPr();
 		if (oNumPr && oNumPr.IsValid() && this.IsSelectionFromStart(false))
-			Str += this.GetNumberingTextWithSuffix();
+			Str += this.GetNumberingTextWithSuffix(oPr);
 	}
 
 	var Count = this.Content.length;
@@ -16555,7 +16555,7 @@ Paragraph.prototype.GetText = function(oPr)
 	{
 		var oNumPr = this.GetNumPr();
 		if (oNumPr && oNumPr.IsValid())
-			oText.Text += this.GetNumberingTextWithSuffix();
+			oText.Text += this.GetNumberingTextWithSuffix(oPr);
 	}
 
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)

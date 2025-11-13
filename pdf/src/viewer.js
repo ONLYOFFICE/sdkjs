@@ -1493,7 +1493,7 @@
 			let nPage		= oActiveObj ? oActiveObj.GetPage() : undefined;
 
 			this.m_oScrollVerApi.scrollToY(posY);
-			this.m_oScrollVerApi.scrollToX(posX);
+			this.m_oScrollHorApi.scrollToX(posX);
 
 			this.checkVisiblePages();
 			// выход из активного объекта если сместились на другую страницу

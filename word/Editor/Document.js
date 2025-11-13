@@ -5084,7 +5084,7 @@ CDocument.prototype.OnContentReDraw                          = function(StartPag
 };
 CDocument.prototype.CheckTargetUpdate = function()
 {
-	// TODO: Эту загрушку стоит поменять на что-то более понятное
+	// TODO: Эту заглушку стоит поменять на что-то более понятное
 	// Документ ни разу не был расчитан
 	if (this.RecalcId <= 0)
 		return;
