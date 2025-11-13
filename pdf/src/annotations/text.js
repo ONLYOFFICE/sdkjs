@@ -92,7 +92,7 @@
 
         this._replies = [];
     }
-    AscFormat.InitClass(CAnnotationText, AscPDF.CAnnotationBase, AscDFH.historyitem_type_Pdf_Annot_Text);
+    AscCommon.InitClass(CAnnotationText, AscPDF.CAnnotationBase, AscDFH.historyitem_type_Pdf_Annot_Text);
 	CAnnotationText.prototype.constructor = CAnnotationText;
     
     CAnnotationText.prototype.select = AscFormat.CGraphicObjectBase.prototype.select;

@@ -95,7 +95,7 @@
 			this.shdwSp = null;
 		}
 
-		AscFormat.InitClass(CImageShape, AscFormat.CGraphicObjectBase, AscDFH.historyitem_type_ImageShape);
+		AscCommon.InitClass(CImageShape, AscFormat.CGraphicObjectBase, AscDFH.historyitem_type_ImageShape);
 		CImageShape.prototype.setNvPicPr = function (pr) {
 			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetNvPicPr, this.nvPicPr, pr));
 			this.nvPicPr = pr;

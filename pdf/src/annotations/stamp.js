@@ -82,7 +82,7 @@
     }
     
 	CAnnotationStamp.prototype.constructor = CAnnotationStamp;
-    AscFormat.InitClass(CAnnotationStamp, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Stamp);
+    AscCommon.InitClass(CAnnotationStamp, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Stamp);
     Object.assign(CAnnotationStamp.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationStamp.prototype.Copy = function(isForMove) {

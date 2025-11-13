@@ -55,7 +55,7 @@
         this._rectDiff      = [0, 0, 0, 0];
     }
     CAnnotationSquare.prototype.constructor = CAnnotationSquare;
-    AscFormat.InitClass(CAnnotationSquare, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Square);
+    AscCommon.InitClass(CAnnotationSquare, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Square);
     Object.assign(CAnnotationSquare.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationSquare.prototype.RefillGeometry = function(oGeometry, aShapeRectInMM) {

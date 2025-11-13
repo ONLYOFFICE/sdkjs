@@ -45,7 +45,7 @@
         this._caption       = undefined;
     }
     CCheckBoxField.prototype.constructor = CCheckBoxField;
-    AscFormat.InitClass(CCheckBoxField, AscPDF.CBaseCheckBoxField, AscDFH.historyitem_type_Pdf_Checkbox_Field);
+    AscCommon.InitClass(CCheckBoxField, AscPDF.CBaseCheckBoxField, AscDFH.historyitem_type_Pdf_Checkbox_Field);
     
     /**
 	 * Applies value of this field to all field with the same name

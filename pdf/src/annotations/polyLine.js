@@ -63,7 +63,7 @@
         this._width         = undefined;
     }
     CAnnotationPolyLine.prototype.constructor = CAnnotationPolyLine;
-    AscFormat.InitClass(CAnnotationPolyLine, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Polyline);
+    AscCommon.InitClass(CAnnotationPolyLine, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Polyline);
     Object.assign(CAnnotationPolyLine.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationPolyLine.prototype.SetVertices = function(aVertices) {

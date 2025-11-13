@@ -193,7 +193,7 @@
         CAnnotationTextMarkup.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Highlight, nPage, aRect, oDoc);
     }
     CAnnotationHighlight.prototype.constructor = CAnnotationHighlight;
-    AscFormat.InitClass(CAnnotationHighlight, CAnnotationTextMarkup, AscDFH.historyitem_type_Pdf_Annot_Highlight);
+    AscCommon.InitClass(CAnnotationHighlight, CAnnotationTextMarkup, AscDFH.historyitem_type_Pdf_Annot_Highlight);
 
     CAnnotationHighlight.prototype.IsHighlight = function() {
         return true;
@@ -271,7 +271,7 @@
         CAnnotationTextMarkup.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Underline, nPage, aRect, oDoc);
     }
     CAnnotationUnderline.prototype.constructor = CAnnotationUnderline;
-    AscFormat.InitClass(CAnnotationUnderline, CAnnotationTextMarkup, AscDFH.historyitem_type_Pdf_Annot_Underline);
+    AscCommon.InitClass(CAnnotationUnderline, CAnnotationTextMarkup, AscDFH.historyitem_type_Pdf_Annot_Underline);
 
     CAnnotationUnderline.prototype.Draw = function(oGraphicsPDF) {
         if (this.IsHidden() == true)
@@ -357,7 +357,7 @@
         CAnnotationTextMarkup.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Strikeout, nPage, aRect, oDoc);
     }
     CAnnotationStrikeout.prototype.constructor = CAnnotationStrikeout;
-    AscFormat.InitClass(CAnnotationStrikeout, CAnnotationTextMarkup, AscDFH.historyitem_type_Pdf_Annot_Strikeout);
+    AscCommon.InitClass(CAnnotationStrikeout, CAnnotationTextMarkup, AscDFH.historyitem_type_Pdf_Annot_Strikeout);
 
     CAnnotationStrikeout.prototype.Draw = function(oGraphicsPDF) {
         if (this.IsHidden() == true)
@@ -436,7 +436,7 @@
         CAnnotationTextMarkup.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Squiggly, nPage, aRect, oDoc);
     }
     CAnnotationSquiggly.prototype.constructor = CAnnotationSquiggly;
-    AscFormat.InitClass(CAnnotationSquiggly, CAnnotationTextMarkup, AscDFH.historyitem_type_Pdf_Annot_Squiggly);
+    AscCommon.InitClass(CAnnotationSquiggly, CAnnotationTextMarkup, AscDFH.historyitem_type_Pdf_Annot_Squiggly);
 
     CAnnotationSquiggly.prototype.Draw = function(oGraphicsPDF) {
         if (this.IsHidden())
@@ -551,7 +551,7 @@
         this._caretSymbol = CARET_SYMBOL.None;
     }
     CAnnotationCaret.prototype.constructor = CAnnotationCaret;
-    AscFormat.InitClass(CAnnotationCaret, CAnnotationTextMarkup, AscDFH.historyitem_type_Pdf_Annot_Caret);
+    AscCommon.InitClass(CAnnotationCaret, CAnnotationTextMarkup, AscDFH.historyitem_type_Pdf_Annot_Caret);
 
     CAnnotationCaret.prototype.Draw = function(oGraphicsPDF) {
         if (this.IsHidden() == true)
@@ -675,7 +675,7 @@
         CAnnotationTextMarkup.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Redact, nPage, aRect, oDoc);
     }
     CAnnotationRedact.prototype.constructor = CAnnotationRedact;
-    AscFormat.InitClass(CAnnotationRedact, CAnnotationTextMarkup, AscDFH.historyitem_type_Pdf_Annot_Redact);
+    AscCommon.InitClass(CAnnotationRedact, CAnnotationTextMarkup, AscDFH.historyitem_type_Pdf_Annot_Redact);
 
     CAnnotationRedact.prototype.Copy = function() {
         let oCopy = AscPDF.CAnnotationBase.prototype.Copy.call(this);

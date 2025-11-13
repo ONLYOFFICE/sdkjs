@@ -46,7 +46,7 @@
     let CChangeContent = AscDFH.CChangesDrawingsContent;
     let CChangeDouble2 = AscDFH.CChangesDrawingsDouble2;
 
-    let IC = AscFormat.InitClass;
+    let IC = AscCommon.InitClass;
     let CBFO = AscFormat.CBaseFormatObject;
 
 

@@ -15177,7 +15177,7 @@ function RangeDataManagerElem(bbox, data)
 		ExternalReferenceBase.call(this);
 		this.chart = chart;
 	}
-	AscFormat.InitClassWithoutType(CChartExternalReference, ExternalReferenceBase);
+	AscCommon.InitClassWithoutType(CChartExternalReference, ExternalReferenceBase);
 
 	CChartExternalReference.prototype.Write_ToBinary = function(writer) {
 		this.WriteToBinary(writer);
@@ -15247,7 +15247,7 @@ function RangeDataManagerElem(bbox, data)
 
 		this.worksheets = {};
 	}
-	AscFormat.InitClassWithoutType(ExternalReference, ExternalReferenceBase);
+	AscCommon.InitClassWithoutType(ExternalReference, ExternalReferenceBase);
 
 	ExternalReference.prototype.getType = function() {
 		return AscCommonExcel.UndoRedoDataTypes.externalReference;

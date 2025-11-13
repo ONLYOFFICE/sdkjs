@@ -53,7 +53,7 @@
     }
     
 	CAnnotationInk.prototype.constructor = CAnnotationInk;
-    AscFormat.InitClass(CAnnotationInk, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Ink);
+    AscCommon.InitClass(CAnnotationInk, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Ink);
     Object.assign(CAnnotationInk.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationInk.prototype.Copy = function(isForMove) {

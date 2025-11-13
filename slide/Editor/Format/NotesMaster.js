@@ -89,7 +89,7 @@
 
         this.m_oContentChanges = new AscCommon.CContentChanges(); // список изменений(добавление/удаление элементов)
     }
-    AscFormat.InitClass(CNotesMaster, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_NotesMaster);
+    AscCommon.InitClass(CNotesMaster, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_NotesMaster);
 
 
     CNotesMaster.prototype.getObjectType = function(){

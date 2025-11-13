@@ -79,7 +79,7 @@
 		  }
 	  }
   }
-  AscFormat.InitClassWithoutType(CCellFormatPasteData, AscCommon.CFormattingPasteDataBase);
+  AscCommon.InitClassWithoutType(CCellFormatPasteData, AscCommon.CFormattingPasteDataBase);
 	CCellFormatPasteData.prototype.isDrawingData = function() {
 		return !!this.docData;
 	};

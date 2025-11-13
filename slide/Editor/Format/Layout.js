@@ -149,7 +149,7 @@ function SlideLayout()
     this.layoutLock = new PropLocker(this.Id);
     this.showLock = new PropLocker(this.Id);
 }
-AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_SlideLayout);
+AscCommon.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_SlideLayout);
 
 
 

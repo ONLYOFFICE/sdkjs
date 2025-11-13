@@ -905,7 +905,7 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
 
         this.bDrawSmart = false;
     }
-    AscFormat.InitClass(Geometry, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_Geometry);
+    AscCommon.InitClass(Geometry, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_Geometry);
     Geometry.prototype.Refresh_RecalcData = function(data)
     {
         if(this.parent && this.parent.handleUpdateGeometry)
@@ -1706,30 +1706,30 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
         this.bAdjustments = bAdjustments;
         this.geometry = oGeometry;
     }
-    AscFormat.InitClass(CAvLst, AscFormat.CBaseNoIdObject, 0);
+    AscCommon.InitClass(CAvLst, AscFormat.CBaseNoIdObject, 0);
 
     function CAhLst(oGeometry) {
         AscFormat.CBaseNoIdObject.call(this);
         this.geometry = oGeometry;
     }
-    AscFormat.InitClass(CAhLst, AscFormat.CBaseNoIdObject, 0);
+    AscCommon.InitClass(CAhLst, AscFormat.CBaseNoIdObject, 0);
     function CCxnLst(oGeometry) {
         AscFormat.CBaseNoIdObject.call(this);
         this.geometry = oGeometry;
     }
-    AscFormat.InitClass(CCxnLst, AscFormat.CBaseNoIdObject, 0);
+    AscCommon.InitClass(CCxnLst, AscFormat.CBaseNoIdObject, 0);
     function CPathLst(oGeometry) {
         AscFormat.CBaseNoIdObject.call(this);
         this.geometry = oGeometry;
     }
-    AscFormat.InitClass(CPathLst, AscFormat.CBaseNoIdObject, 0);
+    AscCommon.InitClass(CPathLst, AscFormat.CBaseNoIdObject, 0);
 
     function CPos() {
         AscFormat.CBaseNoIdObject.call(this);
         this.x = null;
         this.y = null;
     }
-    AscFormat.InitClass(CPos, AscFormat.CBaseNoIdObject, 0);
+    AscCommon.InitClass(CPos, AscFormat.CBaseNoIdObject, 0);
     function CAhPolar(oGeometry) {
         AscFormat.CBaseNoIdObject.call(this);
         this.geometry = oGeometry;
@@ -1741,7 +1741,7 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
         this.minAng = null;
         this.minR = null;
     }
-    AscFormat.InitClass(CAhPolar, AscFormat.CBaseNoIdObject, 0);
+    AscCommon.InitClass(CAhPolar, AscFormat.CBaseNoIdObject, 0);
 
     function CCxn(oGeometry) {
         AscFormat.CBaseNoIdObject.call(this);
@@ -1749,7 +1749,7 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
         this.pos = null;
         this.ang = null;
     }
-    AscFormat.InitClass(CCxn, AscFormat.CBaseNoIdObject, 0);
+    AscCommon.InitClass(CCxn, AscFormat.CBaseNoIdObject, 0);
 
     function CAhXY(oGeometry) {
         AscFormat.CBaseNoIdObject.call(this);
@@ -1762,7 +1762,7 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
         this.minX = null;
         this.minY = null;
     }
-    AscFormat.InitClass(CAhXY, AscFormat.CBaseNoIdObject, 0);
+    AscCommon.InitClass(CAhXY, AscFormat.CBaseNoIdObject, 0);
 
     function CGuide(oGeometry, bAdj) {
         AscFormat.CBaseNoIdObject.call(this);
@@ -1774,7 +1774,7 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
         this.y = null;
         this.z = null;
     }
-    AscFormat.InitClass(CGuide, AscFormat.CBaseNoIdObject, 0);
+    AscCommon.InitClass(CGuide, AscFormat.CBaseNoIdObject, 0);
 
 
 

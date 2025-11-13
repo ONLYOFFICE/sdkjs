@@ -33,7 +33,7 @@
 "use strict";
 
 (function (window, undefined) {
-	var InitClass = AscFormat.InitClass;
+	var InitClass = AscCommon.InitClass;
 	var CAnimTexture = AscFormat.CAnimTexture;
 
 

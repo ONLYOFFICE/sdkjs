@@ -97,7 +97,7 @@
 				};
 		}
 
-		AscFormat.InitClass(CGroupShape, AscFormat.CGraphicObjectBase, AscDFH.historyitem_type_GroupShape);
+		AscCommon.InitClass(CGroupShape, AscFormat.CGraphicObjectBase, AscDFH.historyitem_type_GroupShape);
 
 		CGroupShape.prototype.GetAllDrawingObjects = function (DrawingObjects) {
 			for (var i = 0; i < this.spTree.length; ++i) {

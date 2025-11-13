@@ -258,7 +258,7 @@ function CShowPr() {
 	this.useTimings = undefined;
 }
 
-AscFormat.InitClass(CShowPr, AscFormat.CBaseNoIdObject, 0);
+AscCommon.InitClass(CShowPr, AscFormat.CBaseNoIdObject, 0);
 
 CShowPr.prototype.Write_ToBinary = function (w) {
 	var nStartPos = w.GetCurPosition();
@@ -474,7 +474,7 @@ function CSlideSize() {
 	this.type = null;
 }
 
-AscFormat.InitClass(CSlideSize, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_SldSz);
+AscCommon.InitClass(CSlideSize, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_SldSz);
 CSlideSize.prototype.DEFAULT_CX = 9144000;
 CSlideSize.prototype.DEFAULT_CY = 6858000;
 CSlideSize.prototype.static_CreateNotesSize = function () {
@@ -687,7 +687,7 @@ function CPresentation(DrawingDocument) {
 	this.cachedAnimationLabelText = {};
 }
 
-AscFormat.InitClass(CPresentation, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_Presentation);
+AscCommon.InitClass(CPresentation, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_Presentation);
 CPresentation.prototype.getFirstSlideImagesMap = function () {
 	const oRequiredSyncImagesMap = {};
 	const oFirstSlide = this.Slides[0];
@@ -11755,7 +11755,7 @@ function IdList(name) {
 	this.list = [];
 }
 
-AscFormat.InitClass(IdList, AscFormat.CBaseNoIdObject, undefined);
+AscCommon.InitClass(IdList, AscFormat.CBaseNoIdObject, undefined);
 let MIN_SLD_MASTER_ID = 0x80000000;
 let MIN_SLD_ID = 0xFF;
 let MIN_SLD_LAYOUT_ID = 0x80000000;
@@ -11770,7 +11770,7 @@ function CPresentationProperties(oPresentation) {
 	this.presentation = oPresentation;
 }
 
-AscFormat.InitClass(CPresentationProperties, AscFormat.CBaseNoIdObject, 0);
+AscCommon.InitClass(CPresentationProperties, AscFormat.CBaseNoIdObject, 0);
 
 function isSlideLikeObject(oObjectToCheck) {
 	if(!oObjectToCheck) return false;

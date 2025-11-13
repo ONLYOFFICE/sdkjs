@@ -95,7 +95,7 @@
         this.Lock = new AscCommon.CLock();
         this.graphicObjects = new AscFormat.DrawingObjectsController(this);
     }
-    AscFormat.InitClass(CNotes, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_Notes);
+    AscCommon.InitClass(CNotes, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_Notes);
 
     CNotes.prototype.Clear_ContentChanges = function()
     {

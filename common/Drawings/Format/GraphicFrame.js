@@ -84,7 +84,7 @@
 		this.RecalcInfo = {};
 	}
 
-	AscFormat.InitClass(CGraphicFrame, AscFormat.CGraphicObjectBase, AscDFH.historyitem_type_GraphicFrame);
+	AscCommon.InitClass(CGraphicFrame, AscFormat.CGraphicObjectBase, AscDFH.historyitem_type_GraphicFrame);
 
 	CGraphicFrame.prototype.addToRecalculate = CShape.prototype.addToRecalculate;
 

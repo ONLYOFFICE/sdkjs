@@ -231,7 +231,7 @@ function Slide(presentation, slideLayout, slideNum)
         this.setSlideNum(slideNum);
     }
 }
-AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_Slide);
+AscCommon.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_Slide);
 
     Slide.prototype.getDrawingDocument = function()
     {

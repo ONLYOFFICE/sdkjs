@@ -95,7 +95,7 @@
 		this._rasterId        = null;
     }
     CPushButtonField.prototype.constructor = CPushButtonField;
-    AscFormat.InitClass(CPushButtonField, AscPDF.CBaseField, AscDFH.historyitem_type_Pdf_Button_Field);
+    AscCommon.InitClass(CPushButtonField, AscPDF.CBaseField, AscDFH.historyitem_type_Pdf_Button_Field);
 
     CPushButtonField.prototype.Copy = function() {
         let oCopy = AscPDF.CBaseField.prototype.Copy.call(this);

@@ -191,7 +191,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		//stubs for compatibility with DocumentContent
 		AscCommon.mockLogicDoc(CVisioDocument.prototype);
 	}
-	AscFormat.InitClass(CVisioDocument, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(CVisioDocument, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 	CVisioDocument.prototype.IsDocumentEditor = function() {
 		return false;
 	};
@@ -1159,7 +1159,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.xmlns = null;
 		this.r = null;
 	}
-	AscFormat.InitClass(CWindows, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioWindows);
+	AscCommon.InitClass(CWindows, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioWindows);
 
 	// Docs:
 	// Masters_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/masters_type-complextypevisio-xml
@@ -1175,7 +1175,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.xmlns = null;
 		this.r = null;
 	}
-	AscFormat.InitClass(CMasters, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioMasters);
+	AscCommon.InitClass(CMasters, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioMasters);
 
 	// Another name in docs PageContents_Type
 	/**
@@ -1190,7 +1190,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.xmlns = null;
 		this.r = null;
 	}
-	AscFormat.InitClass(CMasterContents, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioMasterContents);
+	AscCommon.InitClass(CMasterContents, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioMasterContents);
 
 	// Docs:
 	// Pages_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/pages_type-complextypevisio-xml
@@ -1205,7 +1205,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.xmlns = null;
 		this.r = null;
 	}
-	AscFormat.InitClass(CPages, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioPages);
+	AscCommon.InitClass(CPages, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioPages);
 
 	// Docs:
 	// Элемент Shapes (PageContents_Type complexType): https://learn.microsoft.com/ru-ru/office/client-developer/visio/shapes-element-pagecontents_type-complextypevisio-xml
@@ -1226,7 +1226,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.xmlns = null;
 		this.r = null;
 	}
-	AscFormat.InitClass(CPageContents, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioPageContents);
+	AscCommon.InitClass(CPageContents, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioPageContents);
 
 	// Docs:
 	// Comments_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/comments_type-complextypevisio-xml
@@ -1243,7 +1243,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.xmlns = null;
 		this.r = null;
 	}
-	AscFormat.InitClass(CComments, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioComments);
+	AscCommon.InitClass(CComments, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioComments);
 
 	// Docs:
 	// Extensions_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/extensions_type-complextypevisio-xml
@@ -1260,7 +1260,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.xmlns = null;
 		this.r = null;
 	}
-	AscFormat.InitClass(CExtensions, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioExtensions);
+	AscCommon.InitClass(CExtensions, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioExtensions);
 
 	// Docs:
 	// DataConnections_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/dataconnections_type-complextypevisio-xml
@@ -1276,7 +1276,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.xmlns = null;
 		this.r = null;
 	}
-	AscFormat.InitClass(CDataConnections, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioDataConnections);
+	AscCommon.InitClass(CDataConnections, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioDataConnections);
 
 	// Docs:
 	// DataRecordSets_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/datarecordsets_type-complextypevisio-xml
@@ -1294,7 +1294,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.xmlns = null;
 		this.r = null;
 	}
-	AscFormat.InitClass(CDataRecordSets, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioDataRecordSets);
+	AscCommon.InitClass(CDataRecordSets, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioDataRecordSets);
 
 	// Docs old:
 	// Validation_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/validation_type-complextypevisio-xml
@@ -1311,7 +1311,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.xmlns = null;
 		this.r = null;
 	}
-	AscFormat.InitClass(CValidation, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioValidation);
+	AscCommon.InitClass(CValidation, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioValidation);
 
 	// Not realized, file defines schema and data of that schema
 	// Docs:
@@ -1327,7 +1327,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.xmlns = null;
 		this.r = null;
 	}
-	AscFormat.InitClass(CSolutions, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioSolutions);
+	AscCommon.InitClass(CSolutions, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioSolutions);
 
 	// Not realized, file defines schema and data of that schema
 	// Docs:
@@ -1344,7 +1344,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		// string containing overall xml
 		this.fileContents = null;
 	}
-	AscFormat.InitClass(CSolutionXML, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioSolutionXML);
+	AscCommon.InitClass(CSolutionXML, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioSolutionXML);
 
 	// Docs:
 	// PublishSettings_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/publishsettings_type-complextypevisio-xml
@@ -1357,7 +1357,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.publishedPage = [];
 		this.refreshableData = [];
 	}
-	AscFormat.InitClass(PublishSettings_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioPublishSettings);
+	AscCommon.InitClass(PublishSettings_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioPublishSettings);
 
 	// Docs:
 	// ColorEntry_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/colorentry_type-complextypevisio-xml
@@ -1370,7 +1370,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.ix = null;
 		this.rgb = null;
 	}
-	AscFormat.InitClass(ColorEntry_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioColorEntry);
+	AscCommon.InitClass(ColorEntry_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioColorEntry);
 
 	// Docs:
 	// FaceName_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/facename_type-complextypevisio-xml
@@ -1389,7 +1389,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.id = null;
 		this.name = null;
 	}
-	AscFormat.InitClass(FaceName_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioFaceName);
+	AscCommon.InitClass(FaceName_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioFaceName);
 
 	// Docs:
 	// RefBy_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/refby_type-complextypevisio-xml
@@ -1402,7 +1402,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.t = null;
 		this.id = null;
 	}
-	AscFormat.InitClass(RefBy_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioRefBy);
+	AscCommon.InitClass(RefBy_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioRefBy);
 
 	// Docs:
 	// Элемент PageSheet (Master_Type complexType): https://learn.microsoft.com/ru-ru/office/client-developer/visio/pagesheet-element-master_type-complextypevisio-xml
@@ -1443,7 +1443,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		 */
 		this.content = null;
 	}
-	AscFormat.InitClass(Master_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioMaster);
+	AscCommon.InitClass(Master_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioMaster);
 
 	// Docs:
 	// Элемент Icon (MasterShortcut_Type complexType): https://learn.microsoft.com/ru-ru/office/client-developer/visio/icon-element-mastershortcut_type-complextypevisio-xml
@@ -1474,7 +1474,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		 */
 		this.content = null;
 	}
-	AscFormat.InitClass(MasterShortcut_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioMasterShortcut);
+	AscCommon.InitClass(MasterShortcut_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioMasterShortcut);
 
 	// Docs:
 	// Connect_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/connect_type-complextypevisio-xml
@@ -1491,7 +1491,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.toCell = null;
 		this.toPart = null;
 	}
-	AscFormat.InitClass(Connect_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioConnect);
+	AscCommon.InitClass(Connect_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioConnect);
 
 	// Docs:
 	// DataConnection_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/dataconnection_type-complextypevisio-xml
@@ -1509,7 +1509,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.timeout = null;
 		this.alwaysUseConnectionFile = null;
 	}
-	AscFormat.InitClass(DataConnection_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioDataConnection);
+	AscCommon.InitClass(DataConnection_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioDataConnection);
 
 	// Docs:
 	// Элемент DynamicGridEnabled (DocumentSettings_Type complexType): https://learn.microsoft.com/ru-ru/office/client-developer/visio/dynamicgridenabled-element-documentsettings_type-complextypevisio-xml
@@ -1542,7 +1542,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.customToolbarsFile = null;
 		this.attachedToolbars = null;
 	}
-	AscFormat.InitClass(DocumentSettings_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioDocumentSettings);
+	AscCommon.InitClass(DocumentSettings_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioDocumentSettings);
 
 	// Docs:
 	// DocumentProperties_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/documentproperties_type-complextypevisio-xml
@@ -1572,7 +1572,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.timeEdited = null;
 		this.timePrinted = null;
 	}
-	AscFormat.InitClass(DocumentProperties_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioDocumentProperties);
+	AscCommon.InitClass(DocumentProperties_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioDocumentProperties);
 
 	// Docs:
 	// HeaderFooter_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/headerfooter_type-complextypevisio-xml
@@ -1593,7 +1593,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.footerRight = null;
 		this.headerFooterFont = null;
 	}
-	AscFormat.InitClass(HeaderFooter_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioHeaderFooter);
+	AscCommon.InitClass(HeaderFooter_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioHeaderFooter);
 
 	// Docs:
 	// DataTransferInfo_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/datatransferinfo_type-complextypevisio-xml
@@ -1611,7 +1611,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.transferType = null;
 		this.transferTime = null;
 	}
-	AscFormat.InitClass(DataTransferInfo_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioDataTransferInfo);
+	AscCommon.InitClass(DataTransferInfo_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioDataTransferInfo);
 
 	// Docs:
 	// Solution_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/solution_type-complextypevisio-xml
@@ -1625,7 +1625,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.rel = null;
 		this.content = null;
 	}
-	AscFormat.InitClass(Solution_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioSolution);
+	AscCommon.InitClass(Solution_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioSolution);
 
 	// Docs old:
 	// EventItem_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/eventitem_type-complextypevisio-xml
@@ -1643,7 +1643,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.targetArgs = null;
 		return this;
 	}
-	AscFormat.InitClass(EventItem_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioEventItem);
+	AscCommon.InitClass(EventItem_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_VisioEventItem);
 
 	// Docs old:
 // Элемент DynamicGridEnabled (Window_Type complexType): https://learn.microsoft.com/ru-ru/office/client-developer/visio/dynamicgridenabled-element-window_type-complextypevisio-xml
@@ -1691,7 +1691,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.tabSplitterPos = null;
 		return this;
 	}
-	AscFormat.InitClass(Window_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(Window_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // tp_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/tp_type-complextypevisio-xml
@@ -1704,7 +1704,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.ix = null;
 		return this;
 	}
-	AscFormat.InitClass(tp_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(tp_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // pp_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/pp_type-complextypevisio-xml
@@ -1717,7 +1717,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.ix = null;
 		return this;
 	}
-	AscFormat.InitClass(pp_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(pp_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // fld_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/fld_type-complextypevisio-xml
@@ -1731,7 +1731,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(fld_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(fld_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // cp_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/cp_type-complextypevisio-xml
@@ -1744,7 +1744,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.ix = null;
 		return this;
 	}
-	AscFormat.InitClass(cp_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(cp_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	function parseApp(doc, reader, context) {
 		let appPart = doc.getPartByRelationshipType(AscCommon.openXml.Types.extendedFileProperties.relationType);
@@ -1989,7 +1989,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.commentList = [];
 		return this;
 	}
-	AscFormat.InitClass(Comments_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(Comments_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	// RuleTest_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/ruletest_type-complextypevisio-xml
@@ -2002,7 +2002,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(RuleTest_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(RuleTest_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	// RuleFilter_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/rulefilter_type-complextypevisio-xml
@@ -2015,7 +2015,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(RuleFilter_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(RuleFilter_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // RowKeyValue_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/rowkeyvalue_type-complextypevisio-xml
@@ -2029,7 +2029,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(RowKeyValue_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(RowKeyValue_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // DataColumn_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/datacolumn_type-complextypevisio-xml
@@ -2055,7 +2055,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.hyperlink = null;
 		return this;
 	}
-	AscFormat.InitClass(DataColumn_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(DataColumn_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // RuleInfo_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/ruleinfo_type-complextypevisio-xml
@@ -2069,7 +2069,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.ruleID = null;
 		return this;
 	}
-	AscFormat.InitClass(RuleInfo_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(RuleInfo_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // IssueTarget_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/issuetarget_type-complextypevisio-xml
@@ -2083,7 +2083,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.shapeID = null;
 		return this;
 	}
-	AscFormat.InitClass(IssueTarget_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(IssueTarget_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // Rule_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/rule_type-complextypevisio-xml
@@ -2103,7 +2103,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.ruleTest = null;
 		return this;
 	}
-	AscFormat.InitClass(Rule_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(Rule_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // RuleSetFlags_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/rulesetflags_type-complextypevisio-xml
@@ -2116,7 +2116,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.hidden = null;
 		return this;
 	}
-	AscFormat.InitClass(RuleSetFlags_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(RuleSetFlags_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // AutoLinkComparison_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/autolinkcomparison_type-complextypevisio-xml
@@ -2131,7 +2131,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.contextTypeLabel = null;
 		return this;
 	}
-	AscFormat.InitClass(AutoLinkComparison_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(AutoLinkComparison_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // RefreshConflict_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/refreshconflict_type-complextypevisio-xml
@@ -2146,7 +2146,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.pageID = null;
 		return this;
 	}
-	AscFormat.InitClass(RefreshConflict_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(RefreshConflict_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // RowMap_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/rowmap_type-complextypevisio-xml
@@ -2161,7 +2161,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.shapeID = null;
 		return this;
 	}
-	AscFormat.InitClass(RowMap_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(RowMap_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // PrimaryKey_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/primarykey_type-complextypevisio-xml
@@ -2175,7 +2175,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.rowKeyValue = [];
 		return this;
 	}
-	AscFormat.InitClass(PrimaryKey_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(PrimaryKey_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // DataColumns_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/datacolumns_type-complextypevisio-xml
@@ -2190,7 +2190,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.dataColumn = [];
 		return this;
 	}
-	AscFormat.InitClass(DataColumns_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(DataColumns_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2201,7 +2201,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		AscFormat.CBaseFormatNoIdObject.call(this);
 		return this;
 	}
-	AscFormat.InitClass(ADOData_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(ADOData_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // Rel_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/rel_type-complextypevisio-xml
@@ -2215,7 +2215,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.id = null;
 		return this;
 	}
-	AscFormat.InitClass(Rel_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(Rel_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // CommentEntry_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/commententry_type-complextypevisio-xml
@@ -2236,7 +2236,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(CommentEntry_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(CommentEntry_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // AuthorEntry_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/authorentry_type-complextypevisio-xml
@@ -2254,7 +2254,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.resolutionID = null;
 		return this;
 	}
-	AscFormat.InitClass(AuthorEntry_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(AuthorEntry_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // RefreshableData_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/refreshabledata_type-complextypevisio-xml
@@ -2267,7 +2267,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.id = null;
 		return this;
 	}
-	AscFormat.InitClass(RefreshableData_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(RefreshableData_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // PublishedPage_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/publishedpage_type-complextypevisio-xml
@@ -2280,7 +2280,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.id = null;
 		return this;
 	}
-	AscFormat.InitClass(PublishedPage_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(PublishedPage_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // HeaderFooterFont_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/headerfooterfont_type-complextypevisio-xml
@@ -2306,7 +2306,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.faceName = null;
 		return this;
 	}
-	AscFormat.InitClass(HeaderFooterFont_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(HeaderFooterFont_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // FooterRight_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/footerright_type-complextypevisio-xml
@@ -2319,7 +2319,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(FooterRight_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(FooterRight_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // FooterCenter_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/footercenter_type-complextypevisio-xml
@@ -2332,7 +2332,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(FooterCenter_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(FooterCenter_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // FooterLeft_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/footerleft_type-complextypevisio-xml
@@ -2345,7 +2345,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(FooterLeft_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(FooterLeft_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // HeaderRight_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/headerright_type-complextypevisio-xml
@@ -2358,7 +2358,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(HeaderRight_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(HeaderRight_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // HeaderCenter_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/headercenter_type-complextypevisio-xml
@@ -2371,7 +2371,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(HeaderCenter_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(HeaderCenter_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // HeaderLeft_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/headerleft_type-complextypevisio-xml
@@ -2384,7 +2384,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(HeaderLeft_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(HeaderLeft_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // FooterMargin_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/footermargin_type-complextypevisio-xml
@@ -2398,7 +2398,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(FooterMargin_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(FooterMargin_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // HeaderMargin_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/headermargin_type-complextypevisio-xml
@@ -2412,7 +2412,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(HeaderMargin_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(HeaderMargin_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // CustomMenusFile_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/custommenusfile_type-complextypevisio-xml
@@ -2425,7 +2425,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(CustomMenusFile_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(CustomMenusFile_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // SnapAngle_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/snapangle_type-complextypevisio-xml
@@ -2438,7 +2438,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(SnapAngle_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(SnapAngle_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // SnapExtensions_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/snapextensions_type-complextypevisio-xml
@@ -2451,7 +2451,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(SnapExtensions_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(SnapExtensions_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	// https://learn.microsoft.com/ru-ru/search/?terms=TimePrinted
@@ -2464,7 +2464,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(TimePrinted_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(TimePrinted_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2476,7 +2476,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(TimeEdited_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(TimeEdited_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	// https://learn.microsoft.com/ru-ru/office/vba/api/visio.document.timesaved
@@ -2489,7 +2489,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(TimeSaved_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(TimeSaved_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2501,7 +2501,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(TimeCreated_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(TimeCreated_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2515,7 +2515,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(CustomProp_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(CustomProp_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2528,7 +2528,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(PreviewPicture_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(PreviewPicture_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2540,7 +2540,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(BuildNumberEdited_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(BuildNumberEdited_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2552,7 +2552,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(BuildNumberCreated_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(BuildNumberCreated_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2564,7 +2564,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(Template_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(Template_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2576,7 +2576,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(AlternateNames_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(AlternateNames_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2588,7 +2588,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.href = null;
 		return this;
 	}
-	AscFormat.InitClass(HyperlinkBase_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(HyperlinkBase_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2600,7 +2600,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(Desc_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(Desc_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2612,7 +2612,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(Keywords_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(Keywords_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2624,7 +2624,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(Category_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(Category_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2636,7 +2636,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(Company_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(Company_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2648,7 +2648,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(Manager_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(Manager_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2660,7 +2660,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(Creator_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(Creator_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2672,7 +2672,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(Subject_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(Subject_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2684,7 +2684,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(Title_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(Title_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // SectionDef_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/sectiondef_type-complextypevisio-xml
@@ -2701,7 +2701,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.rowDef = [];
 		return this;
 	}
-	AscFormat.InitClass(SectionDef_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(SectionDef_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // FunctionDef_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/functiondef_type-complextypevisio-xml
@@ -2714,7 +2714,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.n = null;
 		return this;
 	}
-	AscFormat.InitClass(FunctionDef_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(FunctionDef_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // CellDef_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/celldef_type-complextypevisio-xml
@@ -2726,7 +2726,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		AscFormat.CBaseFormatNoIdObject.call(this);
 		return this;
 	}
-	AscFormat.InitClass(CellDef_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(CellDef_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // Issue_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/issue_type-complextypevisio-xml
@@ -2742,7 +2742,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.ruleInfo = null;
 		return this;
 	}
-	AscFormat.InitClass(Issue_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(Issue_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // RuleSet_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/ruleset_type-complextypevisio-xml
@@ -2761,7 +2761,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.rule = [];
 		return this;
 	}
-	AscFormat.InitClass(RuleSet_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(RuleSet_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // ValidationProperties_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/validationproperties_type-complextypevisio-xml
@@ -2775,7 +2775,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.showIgnored = null;
 		return this;
 	}
-	AscFormat.InitClass(ValidationProperties_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(ValidationProperties_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 // Элемент Rel (DataRecordSet_Type complexType): https://learn.microsoft.com/ru-ru/office/client-developer/visio/rel-element-datarecordset_type-complextypevisio-xml
@@ -2809,7 +2809,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.content = null;
 		return this;
 	}
-	AscFormat.InitClass(DataRecordSet_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(DataRecordSet_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2825,7 +2825,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.s = null;
 		return this;
 	}
-	AscFormat.InitClass(CellDefBase_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(CellDefBase_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2837,7 +2837,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.t = null;
 		return this;
 	}
-	AscFormat.InitClass(GeometryRow_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(GeometryRow_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2849,7 +2849,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.ix = null;
 		return this;
 	}
-	AscFormat.InitClass(IndexedRow_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(IndexedRow_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2863,7 +2863,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.ix = null;
 		return this;
 	}
-	AscFormat.InitClass(NamedIndexedRow_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(NamedIndexedRow_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2877,7 +2877,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.anyAttr = null;
 		return this;
 	}
-	AscFormat.InitClass(SolutionXML_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(SolutionXML_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	// Docs old:
 	/**
@@ -2889,7 +2889,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		this.solutionXML = null;
 		return this;
 	}
-	AscFormat.InitClass(ExtendableCell_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(ExtendableCell_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 
 

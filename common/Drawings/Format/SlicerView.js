@@ -2858,7 +2858,7 @@
         AscFormat.CShape.call(this);
         this.name = null;
     }
-    AscFormat.InitClass(CTimeslicer, AscFormat.CShape, AscDFH.historyitem_type_TimelineSlicerView);
+    AscCommon.InitClass(CTimeslicer, AscFormat.CShape, AscDFH.historyitem_type_TimelineSlicerView);
     CTimeslicer.prototype.setName = function (val) {
         AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_TimelineSlicerViewName, this.name, val));
         this.name = val;

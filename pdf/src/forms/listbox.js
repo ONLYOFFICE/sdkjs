@@ -63,7 +63,7 @@
         AscCommon.History.EndNoHistoryMode();
     };
 	CListBoxField.prototype.constructor = CListBoxField;
-    AscFormat.InitClass(CListBoxField, AscPDF.CBaseListField, AscDFH.historyitem_type_Pdf_Listbox_Field);
+    AscCommon.InitClass(CListBoxField, AscPDF.CBaseListField, AscDFH.historyitem_type_Pdf_Listbox_Field);
 
     CListBoxField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
         if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())

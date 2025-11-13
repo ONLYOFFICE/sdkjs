@@ -153,7 +153,7 @@ function MasterSlide(presentation, theme)
     this.layoutLock = new PropLocker(this.Id);
     this.showLock = new PropLocker(this.Id);
 }
-AscFormat.InitClass(MasterSlide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_SlideMaster)
+AscCommon.InitClass(MasterSlide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_SlideMaster)
 
 MasterSlide.prototype.addLayout = function (layout) {
     this.addToSldLayoutLstToPos(this.sldLayoutLst.length, layout);

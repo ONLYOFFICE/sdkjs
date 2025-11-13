@@ -47,7 +47,7 @@
         this._chStyle       = AscPDF.CHECKBOX_STYLES.circle;
     }
 	CRadioButtonField.prototype.constructor = CRadioButtonField;
-    AscFormat.InitClass(CRadioButtonField, AscPDF.CBaseCheckBoxField, AscDFH.historyitem_type_Pdf_Radiobutton_Field);
+    AscCommon.InitClass(CRadioButtonField, AscPDF.CBaseCheckBoxField, AscDFH.historyitem_type_Pdf_Radiobutton_Field);
     
     /**
 	 * Updates all field with this field name.

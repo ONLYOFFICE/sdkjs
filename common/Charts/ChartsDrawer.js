@@ -7887,7 +7887,7 @@ function drawParetoChart(seria, chartsDrawer) {
 	this.linePath = null;
 }
 
-AscFormat.InitClassWithoutType(drawParetoChart, drawClusteredColumn);
+AscCommon.InitClassWithoutType(drawParetoChart, drawClusteredColumn);
 
 drawParetoChart.prototype.recalculate = function () {
 		const cachedData = this.cChartSpace ? this.cChartSpace.getCachedData() : null;
@@ -19600,7 +19600,7 @@ CColorObj.prototype =
 		}
 	}
 
-	AscFormat.InitClassWithoutType(CCachedClusteredColumn, CCachedChartExData);
+	AscCommon.InitClassWithoutType(CCachedClusteredColumn, CCachedChartExData);
 
 	CCachedClusteredColumn.prototype._calculate = function (seria, numLit, strLit, axisProperties) {
 		if (!seria || !seria.layoutPr || !numLit || !axisProperties) {
@@ -19759,7 +19759,7 @@ CColorObj.prototype =
 		this._calculate(seria, numLit, axisProperties);
 	}
 
-	AscFormat.InitClassWithoutType(CCachedWaterfall, CCachedChartExData);
+	AscCommon.InitClassWithoutType(CCachedWaterfall, CCachedChartExData);
 
 	CCachedWaterfall.prototype._calculate = function (seria, numLit, axisProperties) {
 		if (!seria || !seria.layoutPr || !numLit || !axisProperties) {
@@ -19812,7 +19812,7 @@ CColorObj.prototype =
 		this._calculate(numLit, axisProperties);
 	}
 
-	AscFormat.InitClassWithoutType(CCachedFunnel, CCachedChartExData);
+	AscCommon.InitClassWithoutType(CCachedFunnel, CCachedChartExData);
 
 	CCachedFunnel.prototype._calculate = function (numLit, axisProperties) {
 		if (!numLit || !axisProperties) {
@@ -19891,7 +19891,7 @@ CColorObj.prototype =
 		this._calculate(numLit, strLit, width, height);
 	}
 
-	AscFormat.InitClassWithoutType(CCachedTreemap, CCachedChartExData);
+	AscCommon.InitClassWithoutType(CCachedTreemap, CCachedChartExData);
 
 	CCachedTreemap.prototype._calculate = function (numLit, strLit, width, height) {
 		if (!numLit || !numLit.pts) {
@@ -20036,7 +20036,7 @@ CColorObj.prototype =
 		this._calculate(seria, numLit, strLit, axisProperties);
 	}
 
-	AscFormat.InitClassWithoutType(CCachedBoxWhisker, CCachedChartExData);
+	AscCommon.InitClassWithoutType(CCachedBoxWhisker, CCachedChartExData);
 
 	CCachedBoxWhisker.prototype._calculate = function (seria, numLit, strLit, axisProperties) {
 		if (!numLit || !axisProperties || !numLit.pts) {
@@ -20214,7 +20214,7 @@ CColorObj.prototype =
 		this.endIdx = endIdx;
 		this.children = children || [];
 	}
-	AscFormat.InitClassWithoutType(CSunburstNode, AscCommon.CTree);
+	AscCommon.InitClassWithoutType(CSunburstNode, AscCommon.CTree);
 
 	CSunburstNode.prototype.fillObject = function (oCopy) {
 		AscCommon.CTree.prototype.fillObject.call(this, oCopy);
@@ -20244,7 +20244,7 @@ CColorObj.prototype =
 		this._calculate(numLit, strLit);
 	}
 
-	AscFormat.InitClassWithoutType(CCachedSunburst, CCachedChartExData);
+	AscCommon.InitClassWithoutType(CCachedSunburst, CCachedChartExData);
 
 	CCachedSunburst.prototype._calculate = function (numLit, strLit) {
 		if (!numLit || !numLit.pts) {

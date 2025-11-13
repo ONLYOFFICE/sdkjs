@@ -68,7 +68,7 @@
         this._markRect = {};
     }
     CTextField.prototype.constructor = CTextField;
-    AscFormat.InitClass(CTextField, AscPDF.CBaseField, AscDFH.historyitem_type_Pdf_Text_Field);
+    AscCommon.InitClass(CTextField, AscPDF.CBaseField, AscDFH.historyitem_type_Pdf_Text_Field);
 
     CTextField.prototype.SetComb = function(bComb) {
         let oParent = this.GetParent(true);

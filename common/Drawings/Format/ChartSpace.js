@@ -1941,7 +1941,7 @@ function(window, undefined) {
 			};
 	}
 
-	AscFormat.InitClass(CChartSpace, AscFormat.CGraphicObjectBase, AscDFH.historyitem_type_ChartSpace);
+	AscCommon.InitClass(CChartSpace, AscFormat.CGraphicObjectBase, AscDFH.historyitem_type_ChartSpace);
 	CChartSpace.prototype.getPlotArea = function () {
 		if(!this.chart) return null;
 		return this.chart.plotArea;

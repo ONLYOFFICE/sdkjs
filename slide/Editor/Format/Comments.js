@@ -541,7 +541,7 @@ function (window, undefined) {
 		this.Initials = "";
 	}
 
-	AscFormat.InitClass(CCommentAuthor, AscFormat.CBaseNoIdObject, 0);
+	AscCommon.InitClass(CCommentAuthor, AscFormat.CBaseNoIdObject, 0);
 	CCommentAuthor.prototype.Calculate = function () {
 		var arr = this.Name.split(" ");
 		this.Initials = "";

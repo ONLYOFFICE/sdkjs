@@ -74,7 +74,7 @@
     AscDFH.drawingsConstructorsMap[AscDFH.historyitem_TextBodySetLstStyle] = AscFormat.TextListStyle;
 
 
-    var InitClass = AscFormat.InitClass;
+    var InitClass = AscCommon.InitClass;
     var CBaseFormatObject = AscFormat.CBaseFormatObject;
 
     function CTextBody() {

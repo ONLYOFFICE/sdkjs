@@ -61,7 +61,7 @@
         this._intent        = undefined;
     }
     CAnnotationPolygon.prototype.constructor = CAnnotationPolygon;
-    AscFormat.InitClass(CAnnotationPolygon, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Polygon);
+    AscCommon.InitClass(CAnnotationPolygon, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Polygon);
     Object.assign(CAnnotationPolygon.prototype, AscPDF.CAnnotationBase.prototype);
     
     CAnnotationPolygon.prototype.Copy = function(isForMove) {

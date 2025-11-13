@@ -1493,7 +1493,7 @@
 	function SmartArtSibDataNode(mainPoint, depth) {
 		SmartArtDataNodeBase.call(this, mainPoint, depth);
 	}
-	AscFormat.InitClassWithoutType(SmartArtSibDataNode, SmartArtDataNodeBase);
+	AscCommon.InitClassWithoutType(SmartArtSibDataNode, SmartArtDataNodeBase);
 	SmartArtSibDataNode.prototype.isSibNode = function () {
 		return true;
 	};
@@ -1514,7 +1514,7 @@
 	function SmartArtParDataNode(mainPoint, depth) {
 		SmartArtDataNodeBase.call(this, mainPoint, depth);
 	}
-	AscFormat.InitClassWithoutType(SmartArtParDataNode, SmartArtDataNodeBase);
+	AscCommon.InitClassWithoutType(SmartArtParDataNode, SmartArtDataNodeBase);
 	SmartArtParDataNode.prototype.isParNode = function () {
 		return true;
 	};
@@ -1530,7 +1530,7 @@
 		this.parNode = null;
 		this.childDepth = null;
 	}
-	AscFormat.InitClassWithoutType(SmartArtDataNode, SmartArtDataNodeBase);
+	AscCommon.InitClassWithoutType(SmartArtDataNode, SmartArtDataNodeBase);
 	SmartArtDataNode.prototype.getPointType = function () {
 		return this.point.getType();
 	}
@@ -1740,7 +1740,7 @@
 		this.radialVector = null;
 		this.incAngle = null;
 	}
-	AscFormat.InitClassWithoutType(ShadowShape, Position);
+	AscCommon.InitClassWithoutType(ShadowShape, Position);
 	ShadowShape.prototype.setRadialInfo = function (radialVector, incAngle) {
 		const nodes = [this.node];
 		while (nodes.length) {
@@ -2343,7 +2343,7 @@
 		this.shapeContainer = null;
 		this.coefficientShapeContainer = null;
 	}
-	AscFormat.InitClassWithoutType(PositionAlgorithm, BaseAlgorithm);
+	AscCommon.InitClassWithoutType(PositionAlgorithm, BaseAlgorithm);
 	PositionAlgorithm.prototype.getParentNodeWidth = function (isAdapt) {
 		return this.parentNode.getConstr(AscFormat.Constr_type_w, isAdapt) || this.parentNode.getParentWidth(isAdapt);
 	};
@@ -2390,7 +2390,7 @@
 		};
 	}
 
-	AscFormat.InitClassWithoutType(SnakeAlgorithm, PositionAlgorithm);
+	AscCommon.InitClassWithoutType(SnakeAlgorithm, PositionAlgorithm);
 	SnakeAlgorithm.prototype.initParams = function (params) {
 		BaseAlgorithm.prototype.initParams.call(this, params);
 		if (this.params[AscFormat.Param_type_flowDir] === undefined) {
@@ -2888,7 +2888,7 @@
 		this.shapes = [];
 		this.bounds = null;
 	}
-	AscFormat.InitClassWithoutType(ShapeContainer, ContainerBase);
+	AscCommon.InitClassWithoutType(ShapeContainer, ContainerBase);
 	ShapeContainer.prototype.forEachShape = function (callback) {
 		for (let i = 0; i < this.shapes.length; i += 1) {
 			callback(this.shapes[i]);
@@ -2935,12 +2935,12 @@
 	function PyramidContainer() {
 		ShapeContainer.call(this)
 	}
-	AscFormat.InitClassWithoutType(PyramidContainer, ShapeContainer);
+	AscCommon.InitClassWithoutType(PyramidContainer, ShapeContainer);
 
 	function HierarchyChildContainer() {
 		ShapeContainer.call(this);
 	}
-	AscFormat.InitClassWithoutType(HierarchyChildContainer, ShapeContainer);
+	AscCommon.InitClassWithoutType(HierarchyChildContainer, ShapeContainer);
 	HierarchyChildContainer.prototype.getBounds = function (isCalculateScaleCoefficient) {
 		let bounds;
 		for (let i = 0; i < this.shapes.length; i += 1) {
@@ -2956,11 +2956,11 @@
 	function HierarchyRootContainer() {
 		ShapeContainer.call(this);
 	}
-	AscFormat.InitClassWithoutType(HierarchyRootContainer, ShapeContainer);
+	AscCommon.InitClassWithoutType(HierarchyRootContainer, ShapeContainer);
 	function CycleContainer() {
 		ShapeContainer.call(this);
 	}
-	AscFormat.InitClassWithoutType(CycleContainer, ShapeContainer);
+	AscCommon.InitClassWithoutType(CycleContainer, ShapeContainer);
 	CycleContainer.prototype.getBounds = function (isCalculateScaleCoefficient) {
 			if (this.shapes.length) {
 				const firstShape = this.shapes[0];
@@ -3003,7 +3003,7 @@
 		this.rows = [];
 		this.gap = 0;
 	}
-	AscFormat.InitClassWithoutType(ShapeRows, ContainerBase);
+	AscCommon.InitClassWithoutType(ShapeRows, ContainerBase);
 	ShapeRows.prototype.getLength = function () {
 		return this.rows.length;
 	};
@@ -3076,7 +3076,7 @@
 		this.columns = [];
 		this.gap = 0;
 	}
-	AscFormat.InitClassWithoutType(ShapeColumns, ContainerBase);
+	AscCommon.InitClassWithoutType(ShapeColumns, ContainerBase);
 
 	ShapeColumns.prototype.getLength = function () {
 		return this.columns.length;
@@ -3153,7 +3153,7 @@ function HierarchyAlgorithm() {
 		mainChilds: null
 	};
 }
-	AscFormat.InitClassWithoutType(HierarchyAlgorithm, PositionAlgorithm);
+	AscCommon.InitClassWithoutType(HierarchyAlgorithm, PositionAlgorithm);
 	HierarchyAlgorithm.prototype.moveToHierarchyOffsets = function (dx, dy) {
 		for (let i = 0; i < this.levelPositions.length; i += 1) {
 			const levelPosition = this.levelPositions[i];
@@ -3301,7 +3301,7 @@ function HierarchyAlgorithm() {
 	function HierarchyChildAlgorithm() {
 		HierarchyAlgorithm.call(this);
 	}
-	AscFormat.InitClassWithoutType(HierarchyChildAlgorithm, HierarchyAlgorithm);
+	AscCommon.InitClassWithoutType(HierarchyChildAlgorithm, HierarchyAlgorithm);
 
 	HierarchyChildAlgorithm.prototype.getHorizontalSibSp = function (node, isCalculateScaleCoefficient, fromLeft) {
 		const sibSp = this.parentNode.getConstr(AscFormat.Constr_type_sibSp, !isCalculateScaleCoefficient);
@@ -3809,7 +3809,7 @@ function HierarchyAlgorithm() {
 	function HierarchyRootAlgorithm() {
 		HierarchyAlgorithm.call(this);
 	}
-	AscFormat.InitClassWithoutType(HierarchyRootAlgorithm, HierarchyAlgorithm);
+	AscCommon.InitClassWithoutType(HierarchyRootAlgorithm, HierarchyAlgorithm);
 	HierarchyRootAlgorithm.prototype.isHorizontalHierarchy = function () {
 		switch (this.params[AscFormat.Param_type_hierAlign]) {
 			case AscFormat.ParameterVal_hierarchyAlignment_lB:
@@ -4156,7 +4156,7 @@ function HierarchyAlgorithm() {
 			defaultBlockHeight: 0
 		};
 	}
-	AscFormat.InitClassWithoutType(PyramidAlgorithm, PositionAlgorithm);
+	AscCommon.InitClassWithoutType(PyramidAlgorithm, PositionAlgorithm);
 	PyramidAlgorithm.prototype.initParams = function (params) {
 		PositionAlgorithm.prototype.initParams.call(this, params);
 		if (this.params[AscFormat.Param_type_pyraAcctPos] === undefined) {
@@ -4457,7 +4457,7 @@ function HierarchyAlgorithm() {
 			isInit: false
 		};
 	}
-	AscFormat.InitClassWithoutType(CycleAlgorithm, PositionAlgorithm);
+	AscCommon.InitClassWithoutType(CycleAlgorithm, PositionAlgorithm);
 	CycleAlgorithm.prototype.getChildAlgorithmAlignBounds = function (isCalculateCoefficients, skipRotate) {
 		const x = this.parentNode.getConstr(AscFormat.Constr_type_l, !isCalculateCoefficients);
 		const y = this.parentNode.getConstr(AscFormat.Constr_type_t, !isCalculateCoefficients);
@@ -4865,7 +4865,7 @@ function HierarchyAlgorithm() {
 	function LinearAlgorithm() {
 		PositionAlgorithm.call(this);
 	}
-	AscFormat.InitClassWithoutType(LinearAlgorithm, PositionAlgorithm);
+	AscCommon.InitClassWithoutType(LinearAlgorithm, PositionAlgorithm);
 
 	LinearAlgorithm.prototype.isRow = function () {
 		return this.params[AscFormat.Param_type_linDir] === AscFormat.ParameterVal_linearDirection_fromL ||
@@ -5182,7 +5182,7 @@ function HierarchyAlgorithm() {
 			pointPositions: null
 		}
 	}
-	AscFormat.InitClassWithoutType(ConnectorAlgorithm, BaseAlgorithm);
+	AscCommon.InitClassWithoutType(ConnectorAlgorithm, BaseAlgorithm);
 	ConnectorAlgorithm.prototype.reset = function () {
 		this.calcValues = {
 			edgePoints: null,
@@ -6343,7 +6343,7 @@ function HierarchyAlgorithm() {
 	function SpaceAlgorithm() {
 		BaseAlgorithm.call(this);
 	}
-	AscFormat.InitClassWithoutType(SpaceAlgorithm, BaseAlgorithm);
+	AscCommon.InitClassWithoutType(SpaceAlgorithm, BaseAlgorithm);
 
 	SpaceAlgorithm.prototype.applyTextSettings = function (editorShape) {
 		const node = this.parentNode.node;
@@ -6367,7 +6367,7 @@ function HierarchyAlgorithm() {
 		BaseAlgorithm.call(this);
 	}
 
-	AscFormat.InitClassWithoutType(TextAlgorithm, BaseAlgorithm);
+	AscCommon.InitClassWithoutType(TextAlgorithm, BaseAlgorithm);
 	TextAlgorithm.prototype.initParams = function (params) {
 		BaseAlgorithm.prototype.initParams.call(this, params);
 		if (this.params[AscFormat.Param_type_parTxLTRAlign] === undefined) {
@@ -6739,7 +6739,7 @@ function HierarchyAlgorithm() {
 	function CompositeAlgorithm() {
 		BaseAlgorithm.call(this);
 	}
-	AscFormat.InitClassWithoutType(CompositeAlgorithm, BaseAlgorithm);
+	AscCommon.InitClassWithoutType(CompositeAlgorithm, BaseAlgorithm);
 	CompositeAlgorithm.prototype.initParams = function (params) {
 		BaseAlgorithm.prototype.initParams.call(this, params);
 		if (this.params[AscFormat.Param_type_horzAlign] === undefined) {

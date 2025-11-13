@@ -128,7 +128,7 @@
 
 		this.SetLocks(new AscPDF.PropLocker(this.GetId()), new AscPDF.PropLocker(this.GetId()), new AscPDF.PropLocker(this.GetId()));
 	}
-	AscFormat.InitClass(CPageInfo, AscFormat.CBaseNoIdObject, AscDFH.historyitem_type_Pdf_Page);
+	AscCommon.InitClass(CPageInfo, AscFormat.CBaseNoIdObject, AscDFH.historyitem_type_Pdf_Page);
 	CPageInfo.prototype.constructor = CPageInfo;
 
 	Object.defineProperties(CPageInfo.prototype, {

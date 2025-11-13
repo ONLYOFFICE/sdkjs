@@ -44,7 +44,7 @@
     };
 
     CSignatureField.prototype.constructor = CSignatureField;
-    AscFormat.InitClass(CSignatureField, AscPDF.CBaseField, AscDFH.historyitem_type_Pdf_Signature_Field);
+    AscCommon.InitClass(CSignatureField, AscPDF.CBaseField, AscDFH.historyitem_type_Pdf_Signature_Field);
     
     CSignatureField.prototype.SetValue = function() {
         return;

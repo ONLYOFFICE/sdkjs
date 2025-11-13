@@ -2135,7 +2135,7 @@
     var CChangesDrawingsContent = AscDFH.CChangesDrawingsContent;
     var CChangesDrawingsDouble2 = AscDFH.CChangesDrawingsDouble2;
 
-    var InitClass = AscFormat.InitClass;
+    var InitClass = AscCommon.InitClass;
     var CBaseFormatObject = AscFormat.CBaseFormatObject;
 
     function CBaseChartObject() {

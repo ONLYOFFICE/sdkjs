@@ -52,7 +52,7 @@
 
     var oPercentageRegeExp = new RegExp("((100)|([0-9][0-9]?))(\.[0-9][0-9]?)?%", "g");
 
-    var InitClass = AscFormat.InitClass;
+    var InitClass = AscCommon.InitClass;
     var CBaseFormatObject = AscFormat.CBaseFormatObject;
 
     var GENERATE_PRESETS_SCRIPT = false;

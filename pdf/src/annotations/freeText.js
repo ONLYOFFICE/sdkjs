@@ -82,7 +82,7 @@
         this.lastClickCoords = {}; // for onPreMove
     };
     CAnnotationFreeText.prototype.constructor = CAnnotationFreeText;
-    AscFormat.InitClass(CAnnotationFreeText, AscFormat.CGroupShape, AscDFH.historyitem_type_Pdf_Annot_FreeText);
+    AscCommon.InitClass(CAnnotationFreeText, AscFormat.CGroupShape, AscDFH.historyitem_type_Pdf_Annot_FreeText);
     Object.assign(CAnnotationFreeText.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationFreeText.prototype.GetCalloutExitPos = function(aTxBoxRect) {

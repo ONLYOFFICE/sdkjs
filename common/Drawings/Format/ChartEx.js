@@ -152,7 +152,7 @@ function (window, undefined) {
 
 // Import
 	const History = AscCommon.History;
-	const InitClass = AscFormat.InitClass;
+	const InitClass = AscCommon.InitClass;
 	const CBaseChartObject = AscFormat.CBaseChartObject;
 	const CAxisBase = AscFormat.CAxisBase;
 

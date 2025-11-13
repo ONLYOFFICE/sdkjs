@@ -91,7 +91,7 @@
         this._needRecalc        = false;
     }
 	CAnnotationLine.prototype.constructor = CAnnotationLine;
-    AscFormat.InitClass(CAnnotationLine, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Line);
+    AscCommon.InitClass(CAnnotationLine, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Line);
     Object.assign(CAnnotationLine.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationLine.prototype.SetCaptionOffset = function(array) {

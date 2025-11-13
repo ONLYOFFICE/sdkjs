@@ -210,7 +210,7 @@ function (window, undefined) {
 		this.ArrPathCommand = [];
 	}
 
-	AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_Path);
+	AscCommon.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_Path);
 	Path.prototypeRefresh_RecalcData = function () {
 	};
 	Path.prototype.createDuplicate = function () {
@@ -2054,7 +2054,7 @@ function (window, undefined) {
 		this.pts = [];
 	}
 
-	AscFormat.InitClass(CPathCmd, AscFormat.CBaseNoIdObject, 0);
+	AscCommon.InitClass(CPathCmd, AscFormat.CBaseNoIdObject, 0);
 
 	function CheckPointByPaths(dX, dY, dWidth, dHeight, dMinX, dMinY, oPolygonWrapper1, oPolygonWrapper2) {
 		let cX, cY, point, topX, topY, bottomX, bottomY;

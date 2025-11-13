@@ -77,7 +77,7 @@
 		// if you want to see \r\n set proper settings in your editor
 		return this;
 	}
-	AscFormat.InitClass(Text_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(Text_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 	Text_Type.prototype.kind = c_oVsdxSheetStorageKind.Text_Type;
 
 	/**
@@ -93,7 +93,7 @@
 		this.tagName = null;
 		return this;
 	}
-	AscFormat.InitClass(Data_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(Data_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 	Data_Type.prototype.kind = c_oVsdxSheetStorageKind.Data_Type;
 
 	/**
@@ -121,7 +121,7 @@
 		this.oleFilename = null;
 		return this;
 	}
-	AscFormat.InitClass(ForeignData_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(ForeignData_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 	ForeignData_Type.prototype.kind = c_oVsdxSheetStorageKind.ForeignData_Type;
 
 
@@ -135,7 +135,7 @@
 		this.refBy = [];
 		this.n = null;
 	}
-	AscFormat.InitClass(Trigger_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(Trigger_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 	Trigger_Type.prototype.kind = c_oVsdxSheetStorageKind.Trigger_Type;
 	/**
 	 * Abstract class. For all Cell containers: ShapeSheet_Type (Sheet_Type) descendents and
@@ -176,7 +176,7 @@
 		// this.data3 = null;
 		// this.foreignData = null;
 	}
-	AscFormat.InitClass(SheetStorage, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(SheetStorage, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	/**
 	 * clone master elements (sections, rows, cells) to shapeElements.
@@ -876,7 +876,7 @@
 		// left separate attributes refBy  and textContent and dont replace both by elements
 		return this;
 	}
-	AscFormat.InitClass(Cell_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(Cell_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 	Cell_Type.prototype.kind = c_oVsdxSheetStorageKind.Cell_Type;
 	/**
 	 * get String(cell.v)
@@ -1945,7 +1945,7 @@
 		this.deleteLock = new AscVisio.PropLocker(undefined);
 		return this;
 	}
-	AscFormat.InitClass(Page_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(Page_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 	/**
 	 * // Docs old:
@@ -2069,7 +2069,7 @@
 		this.value = null;
 		return this;
 	}
-	AscFormat.InitClass(Icon_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
+	AscCommon.InitClass(Icon_Type, AscFormat.CBaseFormatNoIdObject, AscDFH.historyitem_type_Unknown);
 
 
 	//todo move to commons

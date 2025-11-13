@@ -1006,7 +1006,7 @@
 			this.shapeSmartArtInfo = null;
 		}
 
-		AscFormat.InitClass(CShape, AscFormat.CGraphicObjectBase, AscDFH.historyitem_type_Shape);
+		AscCommon.InitClass(CShape, AscFormat.CGraphicObjectBase, AscDFH.historyitem_type_Shape);
 		CShape.prototype.setCustT = function (value) {
 			var pointContent = this.getSmartArtPointContent();
 			if (pointContent) {

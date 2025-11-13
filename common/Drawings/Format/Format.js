@@ -73,6 +73,8 @@
 		var CChangesDrawingsContent = AscDFH.CChangesDrawingsContent;
 		var CChangesDrawingsDouble2 = AscDFH.CChangesDrawingsDouble2;
 
+		const InitClass = AscCommon.InitClass;
+
 
 
 		function CBaseNoIdObject() {
@@ -215,17 +217,6 @@
 				}
 			}
 		};
-
-		function InitClassWithoutType(fClass, fBase) {
-			fClass.prototype = Object.create(fBase.prototype);
-			fClass.prototype.superclass = fBase;
-			fClass.prototype.constructor = fClass;
-		}
-
-		function InitClass(fClass, fBase, nType) {
-			InitClassWithoutType(fClass, fBase);
-			fClass.prototype.classType = nType;
-		}
 
 		function CBaseFormatNoIdObject() {
 			CBaseNoIdObject.call(this);
@@ -20751,8 +20742,6 @@
 		window['AscFormat'].CBlend = CBlend;
 		window['AscFormat'].CreateNoneBullet = CreateNoneBullet;
 		window['AscFormat'].ChartBuilderTypeToInternal = ChartBuilderTypeToInternal;
-		window['AscFormat'].InitClass = InitClass;
-		window['AscFormat'].InitClassWithoutType = InitClassWithoutType;
 		window['AscFormat'].CBaseObject = CBaseObject;
 		window['AscFormat'].CBaseFormatObject = CBaseFormatObject;
 		window['AscFormat'].CBaseFormatNoIdObject = CBaseFormatNoIdObject;
