@@ -191,7 +191,7 @@ $(function () {
             [37753.6844097222, 'dd"d "hh"h "mm"m "ss"s"" "AM/PM', '12d 04h 25m 33s PM'],
             [37753.6844097222, '[h]"h*"mm"m*"ss"s*"ss"ms"', '906088h*25m*33s*33ms'],
             [37753.6844097222, 'yyyy"Y-"mm"M-"dd"D "hh"H:"mm"M:"ss"."s"S"" "AM/PM', '2003Y-05M-12D 04H:25M:33.33S PM'],
-            [37753.6844097222, 'dd:mm:yyyy" "hh:mm:ss" "[hh]:[mm]" "AM/PM" ""minutes AM/PM"', '12:05:2003 04:25:33 04:54365305 PM minutes AM/PM'],
+            [37753.6844097222, 'dd:mm:yyyy" "hh:mm:ss" "[hh]:[mm]" "AM/PM" ""minutes AM/PM"', '12:05:2003 04:25:33 04:54365305 PM minutes AM/PM'],        
         ];
         
         for (let i = 0; i < testCases.length; i++) {
@@ -207,6 +207,61 @@ $(function () {
             }
             
             assert.strictEqual(text, expected, `format("${format}", ${value})`);
+        }
+    });
+
+    QUnit.test('formatParse', function (assert) {
+        let testCases = [
+            ["1/2", "d-mmm"],
+            [" 1/2", "General"],
+            ["150/200", "null"],
+            ["0 1/5/5", "null"],
+            ["1/5/5", "m/d/yyyy"],
+            [" 150/200", "General"],
+            ["+1/2", "General"],
+            ["-1/2", "General"],
+            ["$1/2", "General"],
+            ["(1/2", "General"],
+            ["1/2)", "General"],
+            ["1/2%", "General"],
+            ["1/2 $", "General"],
+            ["1/2 p.", "General"],
+            ["+1 1/2%", "0.00%"],
+            ["-$2 3/4", "# ?/?"], //General
+            ["(100 1/2)", "# ?/?"],
+            ["25 50/100 %", "0.00%"],
+
+            ["0 1/2", "# ?/?"],
+            ["0 1/10", "# ??/??"],
+            ["0 1/100", "# ???/???"],
+            ["0 10/2", "General"],
+            ["0 15/3", "General"],
+            ["0 12/120", "# ??/??"],
+            ["0 25/250", "# ??/??"],
+            ["0 100/200", "# ?/?"],
+            ["0 125/250", "# ?/?"],
+            ["0 0/1", "General"],
+            ["0 1/1", "General"],
+            ["0 999/999", "General"],
+            ["0 1/999", "# ???/???"], //General
+            ["0 999/1", "General"],
+
+            
+            // Fraction format cases
+        
+        ];
+        
+        for (let i = 0; i < testCases.length; i++) {
+            let value = testCases[i][0];
+            let format = testCases[i][1];
+            
+            let formatted = AscCommon.g_oFormatParser.parse(testCases[i][0]);
+
+            if(formatted)
+                assert.strictEqual(formatted.format, testCases[i][1], `Case format: ${testCases[i][0]}`);              
+            else
+                assert.strictEqual(formatted, null, `Case format: ${testCases[i][0]}`);
+
         }
     });
 

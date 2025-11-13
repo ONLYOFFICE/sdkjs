@@ -2796,6 +2796,7 @@ NumFormatCache.prototype =
 	},
     get : function(format, formatType)
     {
+        return new CellFormat(format, formatType, false);
 		var key = format + String.fromCharCode(5) + formatType;
         var res = this.oNumFormats[key];
         if(null == res)
@@ -3649,19 +3650,33 @@ FormatParser.prototype =
         //replace Non-breaking space(0xA0) with White-space(0x20)
         if (" " == cultureInfo.NumberGroupSeparator)
             value = value.replace(new RegExp(String.fromCharCode(0xA0), "g"));
-        var rx_thouthand = new RegExp("^(([ \\+\\-%\\$€£¥\\(]|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)((\\d+" + escapeRegExp(cultureInfo.NumberGroupSeparator) + "\\d+)*\\d*" + escapeRegExp(cultureInfo.NumberDecimalSeparator) + "?\\d*)(([ %\\)]|р.|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)$");
+        //var rx_thouthand = new RegExp("^(([ \\+\\-%\\$€£¥\\(]|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)((\\d+" + escapeRegExp(cultureInfo.NumberGroupSeparator) + "\\d+)*\\d*" + escapeRegExp(cultureInfo.NumberDecimalSeparator) + "?\\d*)(([ %\\)]|р.|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)$");
+        var rx_thouthand = new RegExp("^(([ \\+\\-%\\$€£¥\\(]|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)((?:\\d+(?:" + escapeRegExp(cultureInfo.NumberGroupSeparator) + "\\d+)*)(?:" + escapeRegExp(cultureInfo.NumberDecimalSeparator) + "\\d*)?(?:\\s+\\d+/\\d+)?)(([ %\\)]|р.|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)$");
         var match = value.match(rx_thouthand);
         if (null != match) {
+            var match2 = match[3].match(/\d+/g);
+
             var sBefore = match[1];
-            var sVal = match[3];
+            var sVal = match2[0];
             var sAfter = match[5];
+
+            var sNumerator = match2[1]
+            var sDenominator = match2[2]
+            if(sNumerator && sDenominator)
+                var sDivide = '/'
+
 			var oChartCount = {};
 			if(null != sBefore)
 			    this._parseStringLetters(sBefore, cultureInfo.CurrencySymbol, true, oChartCount);
 			if(null != sAfter)
 			    this._parseStringLetters(sAfter, cultureInfo.CurrencySymbol, false, oChartCount);
+			if(null != sDivide)
+			    this._parseStringLetters(sDivide, cultureInfo.CurrencySymbol, false, oChartCount);
 			var bMinus = false;
 			var bPercent = false;
+            var bFraction = false;
+            var bGeneral = false
+
 			var sCurrency = null;
 			var oCurrencyElem = null;
 			var nBracket = 0;
@@ -3703,6 +3718,23 @@ FormatParser.prototype =
 					else
 						bError = true;
 				}
+                else if('/' == sChar){
+                    if (sVal)
+                    {
+                        if(1 == elem.all)
+                            bFraction = true;
+                        else
+                            bError = true;
+                    }
+                    else
+                    {
+                        if(1 == elem.all)
+                            bGeneral = true;
+                        else
+                            bError = true;
+                    } 
+                    
+                }
 				else{
 					if(null == sCurrency && 1 == elem.all){
 						sCurrency = sChar;
@@ -3747,8 +3779,9 @@ FormatParser.prototype =
 				    bError = true;
 			}
 			if(!bError){
-				var oVal = this._parseThouthand(sVal, cultureInfo);
-				if (oVal) {
+				var oVal = this._parseThouthand(sVal, sNumerator, sDenominator, cultureInfo);
+
+                if (oVal) {
 					res = {format: null, value: null, bDateTime: false, bDate: false, bTime: false, bPercent: false, bCurrency: false};
 					var dVal = oVal.number;
 					if (bMinus)
@@ -3762,6 +3795,34 @@ FormatParser.prototype =
 						dVal /= 100;
 						sFormat = "0" + sFracFormat + "%";
 					}
+                    else if (bFraction) 
+                    {
+                        res.bFraction = true;
+                        
+                        if (dVal % 1 === 0) 
+                        {
+                            sFormat = AscCommon.g_cGeneralFormat;
+                        } else 
+                        {
+                            var simplifiedFraction = this._simplifyFraction(sNumerator, sDenominator);
+                            var numLength = simplifiedFraction.numerator.toString().length;
+                            var denomLength = simplifiedFraction.denominator.toString().length;
+                            
+                            if (numLength <= 1 && denomLength <= 1) 
+                            {
+                                sFormat = "# ?/?";
+                            } else if (numLength <= 2 && denomLength <= 2) 
+                            {
+                                sFormat = "# ??/??";
+                            } else if (numLength <= 3 && denomLength <= 3) 
+                            {
+                                sFormat = "# ???/???";
+                            } else 
+                            {
+                                sFormat = AscCommon.g_cGeneralFormat;
+                            }
+                        }
+                    }
 					else if (sCurrency) {
 						res.bCurrency = true;
 					    var sNumberFormat = "#" + gc_sFormatThousandSeparator + "##0" + sFracFormat;
@@ -3847,10 +3908,14 @@ FormatParser.prototype =
 						sFormat = AscCommon.g_cGeneralFormat;
 					res.format = sFormat;
 					res.value = dVal;
+                    if (!sFormat) 
+                        res = null
 				}
 			}
         }
-        if (null == res && !bError)
+        if(value[0] == ' ')
+            res = {format: AscCommon.g_cGeneralFormat, value: value, bDateTime: false, bDate: false, bTime: false, bPercent: false, bCurrency: false};
+        else if (null == res && !bError)
             res = this.parseDate(value, cultureInfo);
         return res;
     },
@@ -3892,7 +3957,7 @@ FormatParser.prototype =
 			elem.all++;
 		}
 	},
-    _parseThouthand: function (val, cultureInfo)
+    _parseThouthand: function (val, sNumerator, sDenominator, cultureInfo)
     {
         var oRes = null;
         var bThouthand = false;
@@ -3927,11 +3992,26 @@ FormatParser.prototype =
             }
 			if (g_oFormatParser.isLocaleNumber(val, cultureInfo)) {
 				var dNumber = g_oFormatParser.parseLocaleNumber(val, cultureInfo);
-				oRes = { number: dNumber, thouthand: bThouthand };
+                if(sNumerator && sDenominator)
+                    oRes = { number: dNumber + (sNumerator / sDenominator), thouthand: bThouthand };
+				else
+                    oRes = { number: dNumber, thouthand: bThouthand };
 			}
         }
 		return oRes;
 	},
+    _simplifyFraction: function(numerator, denominator) 
+    {
+        function gcd(a, b) 
+        {
+            return b ? gcd(b, a % b) : a;
+        }
+        var divisor = gcd(numerator, denominator);
+        return {
+            numerator: numerator / divisor,
+            denominator: denominator / divisor
+        };
+    },
     _parseDateFromArray: function (match, oDataTypes, cultureInfo)
 	{
         var res = null;
