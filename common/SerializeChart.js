@@ -8325,6 +8325,32 @@ BinaryChartReader.prototype.ReadCT_Layout = function (type, length, val) {
         res = c_oSerConstants.ReadUnknown;
     return res;
 };
+BinaryChartReader.prototype.readDlblLayoutFromExt = function (type, length, val) {
+	const oThis = this;
+	let res = c_oSerConstants.ReadOk;
+
+	switch (type) {
+		case c_oserct_layoutMANUALLAYOUT: {
+			let layout = val.layout;
+			if (!layout) {
+				layout = new AscFormat.CLayout();
+				val.setLayout(layout);
+			}
+
+			res = this.bcr.Read1(length, function (t, l) {
+				return oThis.ReadCT_ManualLayout(t, l, layout);
+			});
+			break;
+		}
+
+		default: {
+			res = c_oSerConstants.ReadUnknown;
+			break;
+		}
+	}
+
+	return res;
+};
 BinaryChartReader.prototype.ReadCT_ManualLayout = function (type, length, val) {
     var res = c_oSerConstants.ReadOk;
     var oThis = this;
@@ -10360,19 +10386,35 @@ BinaryChartReader.prototype.ReadCT_DLbl = function (type, length, val) {
     return res;
 };
 BinaryChartReader.prototype.ReadCT_DLblExt = function(type, length, val) {
-
 	let res = c_oSerConstants.ReadOk;
-	let oThis = this;
-	if (c_oserct_showDataLabelsRange === type) {
-		let oNewVal = { m_val: null };
-		res = this.bcr.Read1(length, function (t, l) {
-			return oThis.ReadCT_Boolean(t, l, oNewVal);
-		});
-		if (null != oNewVal.m_val)
-			val.setShowDlblsRange(oNewVal.m_val);
+	const oThis = this;
+	switch (type) {
+		case c_oserct_showDataLabelsRange: {
+			let oNewVal = { m_val: null };
+
+			res = this.bcr.Read1(length, function (t, l) {
+				return oThis.ReadCT_Boolean(t, l, oNewVal);
+			});
+
+			if (null != oNewVal.m_val) {
+				val.setShowDlblsRange(oNewVal.m_val);
+			}
+			break;
+		}
+
+		case c_oserct_dlblLAYOUT: {
+			res = this.bcr.Read1(length, function (t, l) {
+				return oThis.readDlblLayoutFromExt(t, l, val);
+			});
+			break;
+		}
+
+		default: {
+			res = c_oSerConstants.ReadUnknown;
+			break;
+		}
 	}
-	else
-		res = c_oSerConstants.ReadUnknown;
+
 	return res;
 };
 BinaryChartReader.prototype.ReadCT_DLblPos = function (type, length, val) {
