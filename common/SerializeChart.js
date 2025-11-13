@@ -8307,11 +8307,12 @@ BinaryChartReader.prototype.ReadCT_Layout = function (type, length, val) {
     var res = c_oSerConstants.ReadOk;
     var oThis = this;
     if (c_oserct_layoutMANUALLAYOUT === type) {
-        var oNewVal = new AscFormat.CLayout();
-        res = this.bcr.Read1(length, function (t, l) {
-            return oThis.ReadCT_ManualLayout(t, l, oNewVal);
-        });
-        val.setLayout(oNewVal);
+		// var oNewVal = new AscFormat.CLayout();
+		const oVal = val.layout || new AscFormat.CLayout();
+		res = this.bcr.Read1(length, function (t, l) {
+			return oThis.ReadCT_ManualLayout(t, l, oVal);
+		});
+		val.setLayout(oVal);
     }
     else if (c_oserct_layoutEXTLST === type) {
         var oNewVal;
@@ -8323,31 +8324,6 @@ BinaryChartReader.prototype.ReadCT_Layout = function (type, length, val) {
     }
     else
         res = c_oSerConstants.ReadUnknown;
-    return res;
-};
-BinaryChartReader.prototype.readDlblLayoutFromExt = function (type, length, val) {
-	const oThis = this;
-	let res = c_oSerConstants.ReadOk;
-
-	switch (type) {
-		case c_oserct_layoutMANUALLAYOUT: {
-			let layout = val.layout;
-			if (!layout) {
-				layout = new AscFormat.CLayout();
-				val.setLayout(layout);
-			}
-
-			res = this.bcr.Read1(length, function (t, l) {
-				return oThis.ReadCT_ManualLayout(t, l, layout);
-			});
-			break;
-		}
-
-		default: {
-			res = c_oSerConstants.ReadUnknown;
-			break;
-		}
-	}
 
 	return res;
 };
@@ -10404,7 +10380,7 @@ BinaryChartReader.prototype.ReadCT_DLblExt = function(type, length, val) {
 
 		case c_oserct_dlblLAYOUT: {
 			res = this.bcr.Read1(length, function (t, l) {
-				return oThis.readDlblLayoutFromExt(t, l, val);
+				return oThis.ReadCT_Layout(t, l, val);
 			});
 			break;
 		}
