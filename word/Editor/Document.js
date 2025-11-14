@@ -17271,7 +17271,7 @@ CDocument.prototype.SetContentControlText = function(sText, oCC)
 
 		var oRun;
 		if (oCC.IsBlockLevel())
-			oRun = this.Content.MakeSingleParagraphContent().MakeSingleRunParagraph(true);
+			oRun = oCC.Content.MakeSingleParagraphContent().MakeSingleRunParagraph(true);
 		else if (oCC.IsInlineLevel())
 			oRun = oCC.MakeSingleRunElement(true);
 
