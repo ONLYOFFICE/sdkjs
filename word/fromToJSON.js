@@ -11567,7 +11567,7 @@
 			oParentSdt.SetDocPartObj(oParsedSdtPr["docPartObj"]["docPartCategory"], oParsedSdtPr["docPartObj"]["docPartGallery"], oParsedSdtPr["docPartObj"]["docPartUnique"]);
 
 		// dropdown
-		if (oParsedSdtPr["comboBox"])
+		if (oParsedSdtPr["dropDownList"])
 		{
 			var oDropDownPr   = new AscWord.CSdtComboBoxPr();
 			oTempListItem = null;
