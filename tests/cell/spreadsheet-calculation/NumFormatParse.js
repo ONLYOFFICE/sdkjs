@@ -210,8 +210,39 @@ $(function () {
         }
     });
 
-    QUnit.test('formatParse', function (assert) {
+    QUnit.test('formatRecognition', function (assert) {
         let testCases = [
+            ['1,234', '#,##0'],
+            ['1,234,567', '#,##0'],
+            ['-1,234', '#,##0'],
+            
+            // Decimal places
+            ['1,234.56', '#,##0.00'],
+            ['1,234.50', '#,##0.00'],
+            
+            // Percentages
+            ['50%', '0%'],
+            ['12.50%', '0.00%'],
+            ['100%', '0%'],
+            [' 100 %', '0%'],
+            
+            // Currency with text literals
+            ['$1,234.56', '\\$#,##0.00_);[Red](\\$#,##0.00)'],
+            ['$0.00', '\\$#,##0_);[Red](\\$#,##0)'],
+            ['-$50.00', '\\$#,##0_);[Red](\\$#,##0)'],
+            ['USD 1000.00', '"USD "0.00'],
+            
+            // Negative numbers in parentheses
+            ['(100)', 'General'],
+            ['(50.50)', 'General'],
+            
+            // Optional digits with
+            ['123', 'General'],
+            ['12.3', 'General'],
+            ['12.', 'General'],
+            
+
+            // Fraction format cases
             ["1/2", "d-mmm"],
             [" 1/2", "General"],
             ["150/200", "null"],
@@ -244,23 +275,47 @@ $(function () {
             ["0 1/1", "General"],
             ["0 999/999", "General"],
             ["0 1/999", "# ???/???"], //General
-            ["0 999/1", "General"],
-
-            
-            // Fraction format cases
-        
+            ["0 999/1", "General"],          
         ];
         
         for (let i = 0; i < testCases.length; i++) {
             let value = testCases[i][0];
             let format = testCases[i][1];
             
-            let formatted = AscCommon.g_oFormatParser.parse(testCases[i][0]);
+            let formatted = AscCommon.g_oFormatParser.parse(value);
 
             if(formatted)
-                assert.strictEqual(formatted.format, testCases[i][1], `Case format: ${testCases[i][0]}`);              
+                assert.strictEqual(formatted.format, format, `Case format: ${value}`);              
             else
-                assert.strictEqual(formatted, null, `Case format: ${testCases[i][0]}`);
+                assert.strictEqual(formatted, null, `Case format: ${value}`);
+
+        }
+    });
+    QUnit.test('formatParse2', function (assert) {
+        let testCases = [
+            // Fraction format cases
+            ["1/2", "# ?/?", 0.5, 9],
+            ["3/4", "# ?/?", 0.75, 9],
+            ["15/20", "# ?/?", 0.75, 9],        
+            ["1/2", "d-mmm", 45659, 0],
+            ["3/4", "d-mmm", 45720, 0],
+            ["15/20", "d-mmm", 45720, 0],   
+        ];
+        
+        for (let i = 0; i < testCases.length; i++) {
+            let value = testCases[i][0];
+            let format = testCases[i][1];
+            let res = testCases[i][2];
+            let appliedFormat = testCases[i][3]
+            
+            // Apply format
+            let formatted = AscCommon.g_oFormatParser.parse(value, appliedFormat);
+
+            if(formatted)
+            {
+                assert.strictEqual(formatted.format, format, `Case format: ${value}`);              
+                assert.strictEqual(formatted.value, res, `Case format: ${res}`);              
+            }
 
         }
     });

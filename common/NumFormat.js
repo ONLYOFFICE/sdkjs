@@ -1939,7 +1939,7 @@ NumFormat.prototype =
         }
     },
     setFormat: function(format, cultureInfo, formatType, useLocaleFormat) {
-		if (null == cultureInfo) {
+        if (null == cultureInfo) {
             cultureInfo = g_oDefaultCultureInfo;
         }
         this.formatString = format;
@@ -3641,7 +3641,7 @@ FormatParser.prototype =
         }
         return val - 0;
     },
-    parse: function (value, cultureInfo)
+    parse: function (value, currentFormat=numFormat_Text, cultureInfo)
     {
         if (null == cultureInfo)
             cultureInfo = g_oDefaultCultureInfo;
@@ -3652,16 +3652,38 @@ FormatParser.prototype =
             value = value.replace(new RegExp(String.fromCharCode(0xA0), "g"));
         //var rx_thouthand = new RegExp("^(([ \\+\\-%\\$€£¥\\(]|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)((\\d+" + escapeRegExp(cultureInfo.NumberGroupSeparator) + "\\d+)*\\d*" + escapeRegExp(cultureInfo.NumberDecimalSeparator) + "?\\d*)(([ %\\)]|р.|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)$");
         var rx_thouthand = new RegExp("^(([ \\+\\-%\\$€£¥\\(]|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)((?:\\d+(?:" + escapeRegExp(cultureInfo.NumberGroupSeparator) + "\\d+)*)(?:" + escapeRegExp(cultureInfo.NumberDecimalSeparator) + "\\d*)?(?:\\s+\\d+/\\d+)?)(([ %\\)]|р.|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)$");
+        // If the format is already applied, the regular expression should read a fraction like "1/2"
+        if(currentFormat == 9)
+            var rx_thouthand = new RegExp("^(([ \\+\\-%\\$€£¥\\(]|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)((?:\\d+(?:" + escapeRegExp(cultureInfo.NumberGroupSeparator) + "\\d+)*(?:" + escapeRegExp(cultureInfo.NumberDecimalSeparator) + "\\d*)?)?(?:\\s*\\d+/\\d+)?)(([ %\\)]|р.|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)$");        
         var match = value.match(rx_thouthand);
         if (null != match) {
-            var match2 = match[3].match(/\d+/g);
+            // If the third group has "/" symbol parse it like a fraction
+            if (match[3] && match[3].includes('/'))
+            {
+                var match2 = match[3].match(/\d+/g);
+                // If the fraction like a "1/2"
+                if(match2.length == 2)
+                {
+                    var sVal = '0';
+                    var sNumerator = match2[0];
+                    var sDenominator = match2[1];
+                }
+                // If the fraction like a "0 1/2"
+                else
+                {
+                    var sVal = match2[0];
+                    var sNumerator = match2[1];
+                    var sDenominator = match2[2];
+                }
+            }
+            else 
+                var sVal = match[3]
+                
 
             var sBefore = match[1];
-            var sVal = match2[0];
             var sAfter = match[5];
 
-            var sNumerator = match2[1]
-            var sDenominator = match2[2]
+
             if(sNumerator && sDenominator)
                 var sDivide = '/'
 
@@ -3675,7 +3697,6 @@ FormatParser.prototype =
 			var bMinus = false;
 			var bPercent = false;
             var bFraction = false;
-            var bGeneral = false
 
 			var sCurrency = null;
 			var oCurrencyElem = null;
@@ -3799,12 +3820,14 @@ FormatParser.prototype =
                     {
                         res.bFraction = true;
                         
+                        // If a number is divisible without a remainder, apply a general format to it 
                         if (dVal % 1 === 0) 
                         {
                             sFormat = AscCommon.g_cGeneralFormat;
                         } else 
                         {
                             var simplifiedFraction = this._simplifyFraction(sNumerator, sDenominator);
+                            // Calculate the number of symbols in the numerator and denominator to set the correct format (?/?, ??/??, ???/???)
                             var numLength = simplifiedFraction.numerator.toString().length;
                             var denomLength = simplifiedFraction.denominator.toString().length;
                             
@@ -3913,11 +3936,11 @@ FormatParser.prototype =
 				}
 			}
         }
-        if(value[0] == ' ')
-            res = {format: AscCommon.g_cGeneralFormat, value: value, bDateTime: false, bDate: false, bTime: false, bPercent: false, bCurrency: false};
+        if(res == null && value[0] == ' ')
+            return res;
         else if (null == res && !bError)
-            res = this.parseDate(value, cultureInfo);
-        return res;
+            return res = this.parseDate(value, cultureInfo);
+        return res
     },
     _parseStringLetters: function (sVal, currencySymbol, bBefore, oRes) {
         //отдельно обрабатываем 'р.' и currencySymbol потому что они могут быть не односимвольными
