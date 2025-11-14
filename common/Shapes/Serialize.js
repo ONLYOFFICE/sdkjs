@@ -56,9 +56,28 @@ function IsHiddenObj(object)
 
     return false;
 }
+function CBuilderBase() {
 
+}
+	CBuilderBase.prototype.SetUrl = function(url) {
+
+	};
+	CBuilderBase.prototype.GetUrl = function() {
+		return null;
+	};
+	CBuilderBase.prototype.GetAdditionalUrls = function() {
+		return [];
+	};
+	CBuilderBase.prototype.IsUrlForLoading = function() {
+		return false;
+	};
+	CBuilderBase.prototype.ResetImageId = function(drawing, rIdOverride) {};
+	CBuilderBase.prototype.SetParagraphTextPr = function(paragraph, textPr) {};
+	CBuilderBase.prototype.SetEndRunTextPr = function(run, runTextPr, paraTextPr) {};
+	CBuilderBase.prototype.SetRunTextPr = function(run, runTextPr) {};
 function CBuilderImages(blip_fill, full_url, image_shape, sp_pr, ln, text_pr, para_text_pr, run, paragraph, bullet)
 {
+	CBuilderBase.call(this);
     this.Url = full_url;
     this.BlipFill = blip_fill;
     this.ImageShape = image_shape;
@@ -72,91 +91,137 @@ function CBuilderImages(blip_fill, full_url, image_shape, sp_pr, ln, text_pr, pa
     this.Bullet = bullet;
     this.AdditionalUrls = [];//для wmf, ole
 }
-CBuilderImages.prototype =
-{
-    SetUrl : function(url)
-    {
-        if(url !== "error")
-        {
-            var oCopyFill, oCopyBlipFill, oCopyLn;
-            if(!this.Ln && this.SpPr && this.SpPr.Fill)
-            {
-                oCopyFill = this.SpPr.Fill.createDuplicate();
-                if(oCopyFill.fill && oCopyFill.fill.type === c_oAscFill.FILL_TYPE_BLIP)
-                {
-                    oCopyFill.fill.setRasterImageId(url);
-                    this.SpPr.setFill(oCopyFill);
-                }
-            }
-            if(this.Ln && this.SpPr && this.SpPr === this.Ln && this.Ln.Fill && this.Ln.Fill.fill && this.Ln.Fill.fill.type === c_oAscFill.FILL_TYPE_BLIP)
-            {
-                oCopyLn = this.Ln.createDuplicate();
-                oCopyLn.Fill.fill.setRasterImageId(url);
-                this.SpPr.setLn(oCopyLn);
-            }
-            if(this.ImageShape && this.ImageShape.blipFill)
-            {
-                oCopyBlipFill = this.ImageShape.blipFill.createDuplicate();
-                oCopyBlipFill.setRasterImageId(url);
-                this.ImageShape.setBlipFill(oCopyBlipFill);
-            }
-            if(this.TextPr && !this.Ln)
-            {
-                if(this.Paragraph)
-                {
-                    var oPr = this.Paragraph.Pr;
-                    if(oPr.DefaultRunPr && oPr.DefaultRunPr.Unifill && oPr.DefaultRunPr.Unifill.fill && oPr.DefaultRunPr.Unifill.fill.type === c_oAscFill.FILL_TYPE_BLIP)
-                    {
-                        var Pr = this.Paragraph.Pr.Copy();
-                        Pr.DefaultRunPr.Unifill.fill.setRasterImageId(url);
-                        this.Paragraph.Set_Pr(Pr);
-                    }
-                }
-                else if(this.ParaTextPr || this.Run)
-                {
-                    if(this.ParaTextPr && this.ParaTextPr.Value && this.ParaTextPr.Value.Unifill && this.ParaTextPr.Value.Unifill.fill && this.ParaTextPr.Value.Unifill.fill.type === c_oAscFill.FILL_TYPE_BLIP)
-                    {
-                        oCopyFill = this.ParaTextPr.Value.Unifill.createDuplicate();
-                        oCopyFill.fill.setRasterImageId(url);
-                        this.ParaTextPr.Set_Unifill(oCopyFill);
-                    }
-                    if(this.Run && this.Run.Pr && this.Run.Pr.Unifill && this.Run.Pr.Unifill.fill && this.Run.Pr.Unifill.fill.type === c_oAscFill.FILL_TYPE_BLIP)
-                    {
-                        oCopyFill = this.Run.Pr.Unifill.createDuplicate();
-                        oCopyFill.fill.setRasterImageId(url);
-                        this.Run.Set_Unifill(oCopyFill);
-                    }
-                }
-            }
-            if(this.Bullet) 
-            {
-                if(this.Paragraph) 
-                {
-                    var oPr = this.Paragraph.Pr;
-                    var oBullet = oPr.Bullet;
-                    if(oBullet.getImageBulletURL()) 
-                    {
-                        var oNewPr = oPr.Copy();
-                        oNewPr.Bullet.fillBulletImage(url);
-                        this.Paragraph.Set_Pr(oNewPr);
-                    }
-                }
-            }
-            this.BlipFill.RasterImageId = url;
-        }
-    }
+AscCommon.InitClassWithoutType(CBuilderImages, CBuilderBase);
+CBuilderImages.prototype.SetParagraphTextPr = function(paragraph, textPr) {
+	var oTextPr = new CTextPr();
+	oTextPr.Set_FromObject(textPr);
+	this.TextPr = oTextPr;
+	this.Paragraph = paragraph;
+}
+CBuilderImages.prototype.SetEndRunTextPr = function(run, runTextPr, paraTextPr) {
+	var textPr = new CTextPr();
+	textPr.Set_FromObject(runTextPr);
+	this.TextPr = textPr;
+	this.ParaTextPr = paraTextPr;
+	this.Run = run;
 };
+	CBuilderImages.prototype.SetRunTextPr = function(run, runTextPr) {
+		var textPr = new CTextPr();
+		textPr.Set_FromObject(runTextPr);
+		this.TextPr = textPr;
+		this.Run = run;
+	};
+	CBuilderImages.prototype.ResetImageId = function(drawing, rIdOverride) {
+		if (this.ImageShape === drawing || this.SpPr && this.SpPr.parent === drawing) {
+			if (this.BlipFill) {
+				this.BlipFill.embed = rIdOverride;
+			}
+		}
+	};
+	CBuilderImages.prototype.SetUrl = function(url)
+	{
+		if(url !== "error")
+		{
+			var oCopyFill, oCopyBlipFill, oCopyLn;
+			if(!this.Ln && this.SpPr && this.SpPr.Fill)
+			{
+				oCopyFill = this.SpPr.Fill.createDuplicate();
+				if(oCopyFill.fill && oCopyFill.fill.type === c_oAscFill.FILL_TYPE_BLIP)
+				{
+					oCopyFill.fill.setRasterImageId(url);
+					this.SpPr.setFill(oCopyFill);
+				}
+			}
+			if(this.Ln && this.SpPr && this.SpPr === this.Ln && this.Ln.Fill && this.Ln.Fill.fill && this.Ln.Fill.fill.type === c_oAscFill.FILL_TYPE_BLIP)
+			{
+				oCopyLn = this.Ln.createDuplicate();
+				oCopyLn.Fill.fill.setRasterImageId(url);
+				this.SpPr.setLn(oCopyLn);
+			}
+			if(this.ImageShape && this.ImageShape.blipFill)
+			{
+				oCopyBlipFill = this.ImageShape.blipFill.createDuplicate();
+				oCopyBlipFill.setRasterImageId(url);
+				this.ImageShape.setBlipFill(oCopyBlipFill);
+			}
+			if(this.TextPr && !this.Ln)
+			{
+				if(this.Paragraph)
+				{
+					var oPr = this.Paragraph.Pr;
+					if(oPr.DefaultRunPr && oPr.DefaultRunPr.Unifill && oPr.DefaultRunPr.Unifill.fill && oPr.DefaultRunPr.Unifill.fill.type === c_oAscFill.FILL_TYPE_BLIP)
+					{
+						var Pr = this.Paragraph.Pr.Copy();
+						Pr.DefaultRunPr.Unifill.fill.setRasterImageId(url);
+						this.Paragraph.Set_Pr(Pr);
+					}
+				}
+				else if(this.ParaTextPr || this.Run)
+				{
+					if(this.ParaTextPr && this.ParaTextPr.Value && this.ParaTextPr.Value.Unifill && this.ParaTextPr.Value.Unifill.fill && this.ParaTextPr.Value.Unifill.fill.type === c_oAscFill.FILL_TYPE_BLIP)
+					{
+						oCopyFill = this.ParaTextPr.Value.Unifill.createDuplicate();
+						oCopyFill.fill.setRasterImageId(url);
+						this.ParaTextPr.Set_Unifill(oCopyFill);
+					}
+					if(this.Run && this.Run.Pr && this.Run.Pr.Unifill && this.Run.Pr.Unifill.fill && this.Run.Pr.Unifill.fill.type === c_oAscFill.FILL_TYPE_BLIP)
+					{
+						oCopyFill = this.Run.Pr.Unifill.createDuplicate();
+						oCopyFill.fill.setRasterImageId(url);
+						this.Run.Set_Unifill(oCopyFill);
+					}
+				}
+			}
+			if(this.Bullet)
+			{
+				if(this.Paragraph)
+				{
+					var oPr = this.Paragraph.Pr;
+					var oBullet = oPr.Bullet;
+					if(oBullet.getImageBulletURL())
+					{
+						var oNewPr = oPr.Copy();
+						oNewPr.Bullet.fillBulletImage(url);
+						this.Paragraph.Set_Pr(oNewPr);
+					}
+				}
+			}
+			this.BlipFill.RasterImageId = url;
+		}
+	};
+	CBuilderImages.prototype.IsUrlForLoading = function() {
+		const sUrl = this.Url;
+		return sUrl && !AscCommon.g_oDocumentUrls.getImageLocal(sUrl) && !AscCommon.g_oDocumentUrls.isThemeUrl(sUrl)
+	}
+CBuilderImages.prototype.GetUrl = function() {
+	return this.Url;
+};
+	CBuilderImages.prototype.GetAdditionalUrls = function() {
+		return this.AdditionalUrls;
+	};
 
 function CBuilderBinaries(oClass, arrBinary) {
+	CBuilderBase.call(this);
 	this.class = oClass;
 	this.binary = arrBinary;
+	this.hash = null;
 }
-CBuilderBinaries.prototype.getDataUrl = function() {
-	return AscCommon.g_oBinaryCacheManager.getDataURLFromBinary(this.binary);
-};
-CBuilderBinaries.prototype.setId = function(id) {
-
-};
+	AscCommon.InitClassWithoutType(CBuilderBinaries, CBuilderBase);
+	CBuilderBinaries.prototype.GetUrl = function() {
+		return AscCommon.g_oBinaryCacheManager.getDataURLFromBinary(this.binary);
+	};
+	CBuilderBinaries.prototype.IsUrlForLoading = function() {
+		return AscCommon.g_oBinaryCacheManager.getBinary(this.getHash()) !== null;
+	};
+	CBuilderBinaries.prototype.getHash = function() {
+		if (this.hash === null) {
+			this.hash = AscCommon.g_oBinaryCacheManager.getHash(this.binary);
+		}
+		return this.hash;
+	}
+	CBuilderBinaries.prototype.SetUrl = function(url) {
+		this.class.setXLSXId(this.getHash());
+	};
 
 function BinaryPPTYLoader()
 {
@@ -176,8 +241,7 @@ function BinaryPPTYLoader()
 
     this.IsUseFullUrl = false;
 	this.insertDocumentUrlsData = null;
-    this.RebuildImages = [];
-		this.XLSXBinaries = [];
+    this.RebuildObjects = [];
 
     this.aSlideLayouts = [];
     this.aThemes = [];
@@ -188,7 +252,7 @@ function BinaryPPTYLoader()
 	this.smartarts = [];
 
 	this.AddXLSXBinary = function(oClass, arrBinary) {
-		this.XLSXBinaries.push(new CBuilderBinaries(oClass, arrBinary));
+		this.RebuildObjects.push(new CBuilderBinaries(oClass, arrBinary));
 	}
 	this.ClearConnectedObjects = function(){
         this.oConnectedObjects = {};
@@ -214,10 +278,10 @@ function BinaryPPTYLoader()
 
     this.End_UseFullUrl = function()
     {
-        var _result = this.RebuildImages;
+        var _result = this.RebuildObjects;
 
         this.IsUseFullUrl = false;
-        this.RebuildImages = [];
+        this.RebuildObjects = [];
 
         return _result;
     };
@@ -3193,7 +3257,7 @@ function BinaryPPTYLoader()
 
         if (this.IsUseFullUrl && builderImage)
         {
-            this.RebuildImages.push(builderImage);
+            this.RebuildObjects.push(builderImage);
         }
         s.Seek2(_e2);
     }
@@ -3347,7 +3411,7 @@ function BinaryPPTYLoader()
                             }
                             case 101:
                             {
-                              var oBuilderImages = this.RebuildImages[this.RebuildImages.length - 1];
+                              var oBuilderImages = this.RebuildObjects[this.RebuildObjects.length - 1];
                               if (this.IsUseFullUrl && oBuilderImages) {
                                 s.Skip2(4);
                                 var urlsCount = s.GetUChar();
@@ -3618,7 +3682,7 @@ function BinaryPPTYLoader()
             this.ImageMapChecker[sReadPath] = true;
 
         if (this.IsUseFullUrl)
-            this.RebuildImages.push(new CBuilderImages(blipFill, sReadPath));
+            this.RebuildObjects.push(new CBuilderImages(blipFill, sReadPath));
     }
     // ------------------------------------------
 
@@ -6776,13 +6840,9 @@ function BinaryPPTYLoader()
 
     this.ResetImageId = function(drawing, rIdOverride) {
         if (this.IsUseFullUrl) {
-            for (let idx = 0; idx < this.RebuildImages.length; ++idx) {
-                let builderImage = this.RebuildImages[idx];
-                if (builderImage.ImageShape === drawing || builderImage.SpPr && builderImage.SpPr.parent === drawing) {
-                    if (builderImage.BlipFill) {
-                        builderImage.BlipFill.embed = rIdOverride;
-                    }
-                }
+            for (let idx = 0; idx < this.RebuildObjects.length; ++idx) {
+                let builderObject = this.RebuildObjects[idx];
+								builderObject.ResetImageId(drawing, rIdOverride);
             }
         }
     }
@@ -10072,7 +10132,7 @@ function BinaryPPTYLoader()
                     var OldBlipCount = 0;
 
                     if (this.IsUseFullUrl && par)
-                        OldBlipCount = this.RebuildImages.length;
+                        OldBlipCount = this.RebuildObjects.length;
 
                     var r_pr = this.ReadRunProperties();
                     if(r_pr)
@@ -10089,14 +10149,12 @@ function BinaryPPTYLoader()
                         if (this.IsUseFullUrl && par)
                         {
 
-                            if(this.RebuildImages.length > OldBlipCount)
+                            if(this.RebuildObjects.length > OldBlipCount)
                             {
-                                for(var _t = OldBlipCount; _t < this.RebuildImages.length; ++_t)
+                                for(var _t = OldBlipCount; _t < this.RebuildObjects.length; ++_t)
                                 {
-                                    var oTextPr = new CTextPr();
-                                    oTextPr.Set_FromObject(r_pr);
-                                    this.RebuildImages[_t].TextPr = oTextPr;
-                                    this.RebuildImages[_t].Paragraph = par;
+																	const oRebuildObject = this.RebuildObjects[_t];
+																	oRebuildObject.SetParagraphTextPr(par, r_pr);
                                 }
                             }
 
@@ -10352,7 +10410,7 @@ function BinaryPPTYLoader()
                     var OldImgCount = 0;
                     if(this.IsUseFullUrl)
                     {
-                        OldImgCount = this.RebuildImages.length;
+                        OldImgCount = this.RebuildObjects.length;
                     }
                     var endRunPr =  this.ReadRunProperties();
                     var _value_text_pr = new CTextPr();
@@ -10367,15 +10425,11 @@ function BinaryPPTYLoader()
                     par.Content[0].Set_Pr(oTextPrEnd);
                     if(this.IsUseFullUrl)
                     {
-                        if(this.RebuildImages.length > OldImgCount)
+                        if(this.RebuildObjects.length > OldImgCount)
                         {
-                            for(var _t = OldImgCount; _t < this.RebuildImages.length; ++_t)
+                            for(var _t = OldImgCount; _t < this.RebuildObjects.length; ++_t)
                             {
-                                var _text_pr = new CTextPr();
-                                _text_pr.Set_FromObject(endRunPr);
-                                this.RebuildImages[_t].TextPr = _text_pr;
-                                this.RebuildImages[_t].ParaTextPr = par.TextPr;
-                                this.RebuildImages[_t].Run = par.Content[0];
+															this.RebuildObjects[_t].SetEndRunTextPr(par.Content[0], endRunPr, par.TextPr);
 
                             }
                         }
@@ -10414,7 +10468,7 @@ function BinaryPPTYLoader()
                                 var OldImgCount = 0;
                                 if(this.IsUseFullUrl)
                                 {
-                                    OldImgCount = this.RebuildImages.length;
+                                    OldImgCount = this.RebuildObjects.length;
                                 }
 
                                 var _run = null;
@@ -10457,15 +10511,11 @@ function BinaryPPTYLoader()
                                     new_run.Set_Pr(text_pr);
                                     if(this.IsUseFullUrl)
                                     {
-                                        if(this.RebuildImages.length > OldImgCount)
+                                        if(this.RebuildObjects.length > OldImgCount)
                                         {
-                                            for(var _t = OldImgCount; _t < this.RebuildImages.length; ++_t)
+                                            for(var _t = OldImgCount; _t < this.RebuildObjects.length; ++_t)
                                             {
-                                                var _text_pr = new CTextPr();
-                                                _text_pr.Set_FromObject(text_pr);
-                                                this.RebuildImages[_t].TextPr = _text_pr;
-                                                this.RebuildImages[_t].Run = new_run;
-
+																							this.RebuildObjects[_t].SetRunTextPr(new_run, text_pr);
                                             }
                                         }
                                     }

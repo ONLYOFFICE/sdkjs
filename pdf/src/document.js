@@ -6156,23 +6156,25 @@ var CPresentation = CPresentation || function(){};
         }
 
         if (allImages.length > 0) {
-            AscCommon.sendImgUrls(Asc.editor, allImages, function(data) {
-                let oObjectsForDownload = AscCommon.GetObjectsForImageDownload(aResetBuilderImages);
-                AscCommon.ResetNewUrls(data, allImages, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
+					let oObjectsForDownloadPromise = AscCommon.GetConvertedPromiseForImageDownload(AscCommon.GetObjectsForImageDownload(aResetBuilderImages));
+					oObjectsForDownloadPromise.then(function(oObjectsForDownload) {
+						AscCommon.sendImgUrls(Asc.editor, allImages, function(data) {
+							AscCommon.ResetNewUrls(data, allImages, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
 
-                for (let nIdx = 0; nIdx < data.length; ++nIdx) {
-                    if(data[nIdx].url) {
-                        oLoadUrls[++imgCount] = data[nIdx].url;
-                    }
-                }
+							for (let nIdx = 0; nIdx < data.length; ++nIdx) {
+								if(data[nIdx].url) {
+									oLoadUrls[++imgCount] = data[nIdx].url;
+								}
+							}
 
-                let _file = _this.Viewer.file;
-                for (let nIdx = 0; nIdx < data.length; ++nIdx) {
-                    _file.nativeFile["changeImageUrl"](allImages[nIdx], AscCommon.g_oDocumentUrls.imagePath2Local(data[nIdx].path));
-                }
-                Asc.editor.pre_Paste(aFonts, oLoadUrls, fEndCallback);
+							let _file = _this.Viewer.file;
+							for (let nIdx = 0; nIdx < data.length; ++nIdx) {
+								_file.nativeFile["changeImageUrl"](allImages[nIdx], AscCommon.g_oDocumentUrls.imagePath2Local(data[nIdx].path));
+							}
+							Asc.editor.pre_Paste(aFonts, oLoadUrls, fEndCallback);
+						});
+					});
 
-            });
         }
         else {
 

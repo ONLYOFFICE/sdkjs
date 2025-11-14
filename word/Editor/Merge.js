@@ -731,42 +731,46 @@
 	    this.oBookmarkManager.init(oOriginalDocument, oRevisedDocument);
         const oThis = this;
         const aImages = AscCommon.pptx_content_loader.End_UseFullUrl();
-        const oObjectsForDownload = AscCommon.GetObjectsForImageDownload(aImages);
         const oApi = oOriginalDocument.GetApi();
         if (!oApi) {
             return;
         }
-        const fCallback = function (data) {
-            const oImageMap = {};
-            AscFormat.ExecuteNoHistory(function () {
-                AscCommon.ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
-            }, oThis, []);
 
-            const NewNumbering = oRevisedDocument.Numbering.CopyAllNums(oOriginalDocument.Numbering);
-            oRevisedDocument.CopyNumberingMap = NewNumbering.NumMap;
-            oOriginalDocument.Numbering.AppendAbstractNums(NewNumbering.AbstractNum);
-            oOriginalDocument.Numbering.AppendNums(NewNumbering.Num);
-            for (let key in NewNumbering.NumMap) {
-                if (NewNumbering.NumMap.hasOwnProperty(key)) {
-                    oThis.checkedNums[NewNumbering.NumMap[key]] = true;
-                }
-            }
-            oThis.compareRoots(oOriginalDocument, oRevisedDocument);
-            oThis.compareSectPr(oOriginalDocument, oRevisedDocument, !oThis.options.headersAndFooters);
 
-            const oFonts = oOriginalDocument.Document_Get_AllFontNames();
-            const aFonts = [];
-            for (let i in oFonts) {
-                if (oFonts.hasOwnProperty(i)) {
-                    aFonts[aFonts.length] = new AscFonts.CFont(i);
-                }
-            }
-            oApi.pre_Paste(aFonts, oImageMap, function () {
-                callback && callback();
-            });
-        };
-        AscCommon.sendImgUrls(oApi, oObjectsForDownload.aUrls, fCallback, true);
-        return null;
+			const oObjectsForDownloadPromise = AscCommon.GetObjectsForImageDownload(aImages);
+			oObjectsForDownloadPromise.then(function(oObjectsForDownload) {
+				const fCallback = function (data) {
+					const oImageMap = {};
+					AscFormat.ExecuteNoHistory(function () {
+						AscCommon.ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
+					}, oThis, []);
+
+					const NewNumbering = oRevisedDocument.Numbering.CopyAllNums(oOriginalDocument.Numbering);
+					oRevisedDocument.CopyNumberingMap = NewNumbering.NumMap;
+					oOriginalDocument.Numbering.AppendAbstractNums(NewNumbering.AbstractNum);
+					oOriginalDocument.Numbering.AppendNums(NewNumbering.Num);
+					for (let key in NewNumbering.NumMap) {
+						if (NewNumbering.NumMap.hasOwnProperty(key)) {
+							oThis.checkedNums[NewNumbering.NumMap[key]] = true;
+						}
+					}
+					oThis.compareRoots(oOriginalDocument, oRevisedDocument);
+					oThis.compareSectPr(oOriginalDocument, oRevisedDocument, !oThis.options.headersAndFooters);
+
+					const oFonts = oOriginalDocument.Document_Get_AllFontNames();
+					const aFonts = [];
+					for (let i in oFonts) {
+						if (oFonts.hasOwnProperty(i)) {
+							aFonts[aFonts.length] = new AscFonts.CFont(i);
+						}
+					}
+					oApi.pre_Paste(aFonts, oImageMap, function () {
+						callback && callback();
+					});
+				};
+				AscCommon.sendImgUrls(oApi, oObjectsForDownload.aUrls, fCallback, true);
+			});
+      return null;
     };
 
     function CDocumentMerge(oOriginalDocument, oRevisedDocument, oOptions) {

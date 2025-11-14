@@ -2643,78 +2643,81 @@
 				this.oBookmarkManager.init(oOriginalDocument, oRevisedDocument);
         const oThis = this;
         const aImages = AscCommon.pptx_content_loader.End_UseFullUrl();
-        const oObjectsForDownload = AscCommon.GetObjectsForImageDownload(aImages);
+
         const oApi = oOriginalDocument.GetApi();
         if(!oApi)
         {
             return;
         }
-        const fCallback = function (data) {
-            const oImageMap = {};
-			AscFormat.ExecuteNoHistory(function () {
-				AscCommon.ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
-			}, oThis, []);
-            oOriginalDocument.StopRecalculate();
-            oOriginalDocument.StartAction(AscDFH.historydescription_Document_CompareDocuments);
-            oOriginalDocument.Start_SilentMode();
-            const oldTrackRevisions = oOriginalDocument.GetLocalTrackRevisions();
-            oOriginalDocument.SetTrackRevisions(false);
-            const LogicDocuments = oOriginalDocument.TrackRevisionsManager.Get_AllChangesLogicDocuments();
-            for (let LogicDocId in LogicDocuments)
-            {
-                const LogicDoc = AscCommon.g_oTableId.Get_ById(LogicDocId);
-                if (LogicDoc)
-                {
-                    LogicDoc.AcceptRevisionChanges(undefined, true);
-                }
-            }
-            const NewNumbering = oRevisedDocument.Numbering.CopyAllNums(oOriginalDocument.Numbering);
-            oRevisedDocument.CopyNumberingMap = NewNumbering.NumMap;
-            oOriginalDocument.Numbering.AppendAbstractNums(NewNumbering.AbstractNum);
-            oOriginalDocument.Numbering.AppendNums(NewNumbering.Num);
-            for(let key in NewNumbering.NumMap)
-            {
-                if (NewNumbering.NumMap.hasOwnProperty(key))
-                {
-                    oThis.checkedNums[NewNumbering.NumMap[key]] = true;
-                }
-            }
-            oThis.compareRoots(oOriginalDocument, oRevisedDocument);
-            oThis.compareSectPr(oOriginalDocument, oRevisedDocument, !oThis.options.headersAndFooters);
+			const oObjectsForDownloadPromise = AscCommon.GetConvertedPromiseForImageDownload(AscCommon.GetObjectsForImageDownload(aImages));
+			oObjectsForDownloadPromise.then(function(oObjectsForDownload) {
+				const fCallback = function (data) {
+					const oImageMap = {};
+					AscFormat.ExecuteNoHistory(function () {
+						AscCommon.ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
+					}, oThis, []);
+					oOriginalDocument.StopRecalculate();
+					oOriginalDocument.StartAction(AscDFH.historydescription_Document_CompareDocuments);
+					oOriginalDocument.Start_SilentMode();
+					const oldTrackRevisions = oOriginalDocument.GetLocalTrackRevisions();
+					oOriginalDocument.SetTrackRevisions(false);
+					const LogicDocuments = oOriginalDocument.TrackRevisionsManager.Get_AllChangesLogicDocuments();
+					for (let LogicDocId in LogicDocuments)
+					{
+						const LogicDoc = AscCommon.g_oTableId.Get_ById(LogicDocId);
+						if (LogicDoc)
+						{
+							LogicDoc.AcceptRevisionChanges(undefined, true);
+						}
+					}
+					const NewNumbering = oRevisedDocument.Numbering.CopyAllNums(oOriginalDocument.Numbering);
+					oRevisedDocument.CopyNumberingMap = NewNumbering.NumMap;
+					oOriginalDocument.Numbering.AppendAbstractNums(NewNumbering.AbstractNum);
+					oOriginalDocument.Numbering.AppendNums(NewNumbering.Num);
+					for(let key in NewNumbering.NumMap)
+					{
+						if (NewNumbering.NumMap.hasOwnProperty(key))
+						{
+							oThis.checkedNums[NewNumbering.NumMap[key]] = true;
+						}
+					}
+					oThis.compareRoots(oOriginalDocument, oRevisedDocument);
+					oThis.compareSectPr(oOriginalDocument, oRevisedDocument, !oThis.options.headersAndFooters);
 
-            const oFonts = oOriginalDocument.Document_Get_AllFontNames();
-            const aFonts = [];
-            for (let i in oFonts)
-            {
-                if(oFonts.hasOwnProperty(i))
-                {
-                    aFonts[aFonts.length] = new AscFonts.CFont(i);
-                }
-            }
-            oApi.pre_Paste(aFonts, oImageMap, function()
-            {
-							oThis.removeCommentsFromMap();
-                oOriginalDocument.SetTrackRevisions(oldTrackRevisions);
-                oOriginalDocument.End_SilentMode(false);
-								if (oThis.oBookmarkManager.needUpdateBookmarks)
-								{
-									oOriginalDocument.UpdateBookmarks();
-								}
-								oThis.updateCommentsQuoteText();
-                oOriginalDocument.Recalculate();
-                oOriginalDocument.UpdateInterface();
-                oOriginalDocument.FinalizeAction();
-                oApi.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
-                callback && callback();
-            });
-        };
-        if (oApi.getViewMode()) {
-            //todo allow image upload in view mode or deny setRequestedDocument
-            //temp stub for bug 75266. Use images from converted document. downloadAs also relies on images from the converted document
-            fCallback(oObjectsForDownload.aUrls);
-        } else {
-            AscCommon.sendImgUrls(oApi, oObjectsForDownload.aUrls, fCallback, true);
-        }
+					const oFonts = oOriginalDocument.Document_Get_AllFontNames();
+					const aFonts = [];
+					for (let i in oFonts)
+					{
+						if(oFonts.hasOwnProperty(i))
+						{
+							aFonts[aFonts.length] = new AscFonts.CFont(i);
+						}
+					}
+					oApi.pre_Paste(aFonts, oImageMap, function()
+					{
+						oThis.removeCommentsFromMap();
+						oOriginalDocument.SetTrackRevisions(oldTrackRevisions);
+						oOriginalDocument.End_SilentMode(false);
+						if (oThis.oBookmarkManager.needUpdateBookmarks)
+						{
+							oOriginalDocument.UpdateBookmarks();
+						}
+						oThis.updateCommentsQuoteText();
+						oOriginalDocument.Recalculate();
+						oOriginalDocument.UpdateInterface();
+						oOriginalDocument.FinalizeAction();
+						oApi.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
+						callback && callback();
+					});
+				};
+				if (oApi.getViewMode()) {
+					//todo allow image upload in view mode or deny setRequestedDocument
+					//temp stub for bug 75266. Use images from converted document. downloadAs also relies on images from the converted document
+					fCallback(oObjectsForDownload.aUrls);
+				} else {
+					AscCommon.sendImgUrls(oApi, oObjectsForDownload.aUrls, fCallback, true);
+				}
+			});
         return null;
     };
 	CDocumentComparison.prototype.getNewParaPrWithDiff = function (oElementPr, oPartnerPr)

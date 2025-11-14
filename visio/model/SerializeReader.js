@@ -2128,7 +2128,7 @@
 					}
 
 					if (this.IsUseFullUrl) {
-						//this.RebuildImages.push(new CBuilderImages(uni_fill.fill, sReadPath, oImageShape, oSpPr, oLn, undefined, undefined, undefined, oParagraph, oBullet));
+						//this.RebuildObjects.push(new CBuilderImages(uni_fill.fill, sReadPath, oImageShape, oSpPr, oLn, undefined, undefined, undefined, oParagraph, oBullet));
 					}
 
 

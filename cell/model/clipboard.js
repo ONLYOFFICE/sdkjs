@@ -3176,16 +3176,15 @@
 			_loadImagesOnServer: function (aPastedImages, callback) {
 				var api = Asc["editor"];
 
-				var oObjectsForDownload = AscCommon.GetObjectsForImageDownload(aPastedImages);
-
-				AscCommon.sendImgUrls(api, oObjectsForDownload.aUrls, function (data) {
-					var oImageMap = {};
-
-					History.TurnOff();
-					AscCommon.ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
-					History.TurnOn();
-
-					callback();
+				var oObjectsForDownloadPromise = AscCommon.GetConvertedPromiseForImageDownload(AscCommon.GetObjectsForImageDownload(aPastedImages));
+				oObjectsForDownloadPromise.then(function(oObjectsForDownload) {
+					AscCommon.sendImgUrls(api, oObjectsForDownload.aUrls, function (data) {
+						var oImageMap = {};
+						History.TurnOff();
+						AscCommon.ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
+						History.TurnOn();
+						callback();
+					});
 				});
 			},
 
@@ -4453,17 +4452,19 @@
 				var aImagesToDownload = this.aResult.props._images;
 				if (!this.clipboard.alreadyLoadImagesOnServer && aImagesToDownload && (!specialPasteProps || (specialPasteProps && specialPasteProps.images)))//load to server
 				{
-					var oObjectsForDownload = AscCommon.GetObjectsForImageDownload(t.aResult.props._aPastedImages);
+					var oObjectsForDownloadPromise =  AscCommon.GetConvertedPromiseForImageDownload(AscCommon.GetObjectsForImageDownload(t.aResult.props._aPastedImages));
 					var api = window["Asc"]["editor"];
 					var oImageMap = {};
-					AscCommon.sendImgUrls(api, oObjectsForDownload.aUrls, function (data) {
-						History.TurnOff();
-						AscCommon.ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl,
-							oImageMap);
-						History.TurnOn();
-						t.aResult.props.oImageMap = oImageMap;
-						t.aResult.props.data = data;
-						worksheet.setSelectionInfo('paste', {data: t.aResult});
+					oObjectsForDownloadPromise.then(function(oObjectsForDownload) {
+						AscCommon.sendImgUrls(api, oObjectsForDownload.aUrls, function (data) {
+							History.TurnOff();
+							AscCommon.ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl,
+								oImageMap);
+							History.TurnOn();
+							t.aResult.props.oImageMap = oImageMap;
+							t.aResult.props.data = data;
+							worksheet.setSelectionInfo('paste', {data: t.aResult});
+						});
 					});
 				} else {
 					worksheet.setSelectionInfo('paste', {data: t.aResult});
