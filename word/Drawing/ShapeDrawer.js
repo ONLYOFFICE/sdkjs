@@ -2332,6 +2332,12 @@ CShapeDrawer.prototype =
                                 this.Graphics.put_brushTexture(getFullImageSrc2(this.UniFill.fill.RasterImageId), 0);
                             }
                         }
+
+                        const fillRect = this.UniFill.fill.stretch.getFillRect();
+                        const tx = this.min_x + (this.max_x - this.min_x) * fillRect.l / 100;
+                        const ty = this.min_y + (this.max_y - this.min_y) * fillRect.t / 100;
+                        if (null != fillRect && undefined != fillRect)
+                            this.Graphics.put_PathOffset(tx, ty);
                     }
                     else
                     {
@@ -2343,6 +2349,10 @@ CShapeDrawer.prototype =
                         {
                             this.Graphics.put_brushTexture(getFullImageSrc2(this.UniFill.fill.RasterImageId), 1);
                         }
+
+                        const tx = this.UniFill.fill.tile.tx ? this.UniFill.fill.tile.tx * AscCommonWord.g_dKoef_emu_to_mm : 0;
+                        const ty = this.UniFill.fill.tile.ty ? this.UniFill.fill.tile.ty * AscCommonWord.g_dKoef_emu_to_mm : 0;
+                        this.Graphics.put_PathOffset(tx, ty);
                     }
                     this.Graphics.put_BrushTextureAlpha(this.UniFill.transparent);
                 }

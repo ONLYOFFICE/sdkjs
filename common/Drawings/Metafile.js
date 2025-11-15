@@ -1663,6 +1663,7 @@
 		this.ctPathCommandGetCurrentPoint = 101;
 		this.ctPathCommandText            = 102;
 		this.ctPathCommandTextEx          = 103;
+		this.ctPathCommandOffset          = 104;
 
 		// image
 		this.ctDrawImage         = 110;
@@ -2112,6 +2113,13 @@
 
 			this.Memory.WriteByte(CommandType.ctBrushTextureAlpha);
 			this.Memory.WriteByte(write);
+		},
+
+		put_PathOffset : function(tx, ty)
+		{
+			this.Memory.WriteByte(CommandType.ctPathCommandOffset);
+			this.Memory.WriteDouble(tx);
+			this.Memory.WriteDouble(ty);
 		},
 
 		put_BrushGradient : function(gradFill, points, transparent)
@@ -3378,6 +3386,11 @@
 	{
 		if (0 != this.m_lPagesCount)
 			this.m_arrayPages[this.m_lPagesCount - 1].put_BrushTextureAlpha(alpha);
+	};
+	CDocumentRenderer.prototype.put_PathOffset = function (tx, ty)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].put_PathOffset(tx, ty);
 	};
 	CDocumentRenderer.prototype.put_BrushGradient = function(gradFill, points, transparent)
 	{
