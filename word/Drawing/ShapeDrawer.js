@@ -2353,6 +2353,9 @@ CShapeDrawer.prototype =
                         const tx = this.UniFill.fill.tile.tx ? this.UniFill.fill.tile.tx * AscCommonWord.g_dKoef_emu_to_mm : 0;
                         const ty = this.UniFill.fill.tile.ty ? this.UniFill.fill.tile.ty * AscCommonWord.g_dKoef_emu_to_mm : 0;
                         this.Graphics.put_PathOffset(tx, ty);
+                        const sx = this.UniFill.fill.tile.sx ? (this.UniFill.fill.tile.sx / 1000) / 100 : 1;
+                        const sy = this.UniFill.fill.tile.sy ? (this.UniFill.fill.tile.sy / 1000) / 100 : 1;
+                        this.Graphics.put_PathScale(sx, sy);
                     }
                     this.Graphics.put_BrushTextureAlpha(this.UniFill.transparent);
                 }
