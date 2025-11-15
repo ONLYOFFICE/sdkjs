@@ -1617,6 +1617,7 @@
 		this.ctBrushRectableEnabled = 30;
 		this.ctBrushGradient        = 31;
 		this.ctBrushTexturePath     = 32;
+		this.ctResetRotation        = 33;
 
 		// font
 		this.ctFontXML       = 40;
@@ -2128,6 +2129,11 @@
 			this.Memory.WriteByte(CommandType.ctPathCommandScale);
 			this.Memory.WriteDouble(sx);
 			this.Memory.WriteDouble(sy);
+		},
+
+		ResetRotation : function()
+		{
+			this.Memory.WriteByte(CommandType.ctResetRotation);
 		},
 
 		put_BrushGradient : function(gradFill, points, transparent)
@@ -3404,6 +3410,11 @@
 	{
 		if (0 != this.m_lPagesCount)
 			this.m_arrayPages[this.m_lPagesCount - 1].put_PathScale(sx, sy);
+	};
+	CDocumentRenderer.prototype.ResetRotation = function()
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].ResetRotation();
 	};
 	CDocumentRenderer.prototype.put_BrushGradient = function(gradFill, points, transparent)
 	{

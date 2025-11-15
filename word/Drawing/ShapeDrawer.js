@@ -2358,6 +2358,8 @@ CShapeDrawer.prototype =
                         this.Graphics.put_PathScale(sx, sy);
                     }
                     this.Graphics.put_BrushTextureAlpha(this.UniFill.transparent);
+                    if (!(this.UniFill.fill.rotWithShape || this.UniFill.fill.rotWithShape === null))
+                        this.Graphics.ResetRotation();
                 }
                 else
                 {
