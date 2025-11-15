@@ -2341,13 +2341,14 @@ CShapeDrawer.prototype =
                     }
                     else
                     {
+                        const type = this.UniFill.fill.tile.flip + 1;
                         if (this.UniFill.fill.canvas)
                         {
-                            this.Graphics.put_brushTexture(this.UniFill.fill.canvas.toDataURL("image/png"), 1);
+                            this.Graphics.put_brushTexture(this.UniFill.fill.canvas.toDataURL("image/png"), type);
                         }
                         else
                         {
-                            this.Graphics.put_brushTexture(getFullImageSrc2(this.UniFill.fill.RasterImageId), 1);
+                            this.Graphics.put_brushTexture(getFullImageSrc2(this.UniFill.fill.RasterImageId), type);
                         }
 
                         const tx = this.UniFill.fill.tile.tx ? this.UniFill.fill.tile.tx * AscCommonWord.g_dKoef_emu_to_mm : 0;
