@@ -6866,9 +6866,10 @@ background-repeat: no-repeat;\
 			const drawing = selectedArray[0];
 			if (drawing)
 			{
+				const isGroup = drawing.isGroup && drawing.isGroup();
 				const isShapeDrawing = drawing.isShape && drawing.isShape(); 
 				const isImageDrawing = drawing.isImage && drawing.isImage();
-				if (isShapeDrawing || isImageDrawing)
+				if (isGroup || isShapeDrawing || isImageDrawing)
 				{
 					const cNvProps = controller.hyperlinkCollectNonVisualProperties(drawing)[0];
 					return cNvProps && AscCommon.isRealObject(cNvProps.hlinkClick) ? false : null;

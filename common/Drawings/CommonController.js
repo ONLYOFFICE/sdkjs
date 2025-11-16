@@ -3408,21 +3408,21 @@
 							let aSelectedObjects = this.getSelectedArray();
 							if(aSelectedObjects.length === 1) {
 								let oDrawing = aSelectedObjects[0];
+								const isGroup = oDrawing.isGroup();
 								const isShapeDrawing = oDrawing.isShape();
 								const isImageDrawing = oDrawing.isImage();
-								if (isShapeDrawing || isImageDrawing) {
-									if (!bCheckInHyperlink) {
-										return true;
+								if (isGroup || isShapeDrawing || isImageDrawing) {
+									if (bCheckInHyperlink) {
+										let nvProps = this.hyperlinkCollectNonVisualProperties(oDrawing);
+										const oNvPr = nvProps[0];
+										if (oNvPr
+											&& oNvPr.hlinkClick
+											&& typeof oNvPr.hlinkClick.id === "string"
+											&& oNvPr.hlinkClick.id.length > 0) {
+											return false;
+										}
 									}
-
-									let nvProps = this.hyperlinkCollectNonVisualProperties(oDrawing);
-									const oNvPr = nvProps[0];
-									if (oNvPr
-										&& oNvPr.hlinkClick
-										&& typeof oNvPr.hlinkClick.id === "string"
-										&& oNvPr.hlinkClick.id.length > 0) {
-										return false;
-									}
+									return true;
 								}
 							}
 						}
@@ -3446,10 +3446,10 @@
 							let aSelectedObjects = this.getSelectedArray();
 							if(aSelectedObjects.length === 1) {
 								let oDrawing = aSelectedObjects[0];
+								const isGroup = oDrawing.isGroup();
 								const isImageDrawing = oDrawing.isImage();
 								const isShapeDrawing = oDrawing.isShape();
-								if(isShapeDrawing || isImageDrawing) {
-
+								if (isGroup || isShapeDrawing || isImageDrawing) {
 									let nvProps = this.hyperlinkCollectNonVisualProperties(oDrawing);
 									nvProps.forEach(function (oNvPr) {
 										if (oNvPr.hlinkClick)
@@ -3481,10 +3481,10 @@
 								let aSelectedObjects = this.getSelectedArray();
 								if(aSelectedObjects.length === 1) {
 									let oDrawing = aSelectedObjects[0];
+									const isGroup = oDrawing.isGroup();
 									const isShapeDrawing = oDrawing.isShape();
 									const isImageDrawing = oDrawing.isImage();
-									if(isShapeDrawing || isImageDrawing) {
-
+									if (isGroup || isShapeDrawing || isImageDrawing) {
 										let nvProps = this.hyperlinkCollectNonVisualProperties(oDrawing);
 										nvProps.forEach(function (oNvPr) {
 											let oHyper = new AscFormat.CT_Hyperlink();
@@ -3495,7 +3495,6 @@
 											oHyper.tooltip = HyperProps.ToolTip;
 											oNvPr.setHlinkClick(oHyper);
 										});
-
 									}
 								}
 							}
@@ -3531,10 +3530,10 @@
 								let aSelectedObjects = this.getSelectedArray();
 								if(aSelectedObjects.length === 1) {
 									let oDrawing = aSelectedObjects[0];
+									const isGroup = oDrawing.isGroup();
 									const isShapeDrawing = oDrawing.isShape();
 									const isImageDrawing = oDrawing.isImage();
-									if(isShapeDrawing || isImageDrawing) {
-
+									if (isGroup || isShapeDrawing || isImageDrawing) {
 										let nvProps = this.hyperlinkCollectNonVisualProperties(oDrawing);
 										nvProps.forEach(function (oNvPr) {
 											let oHyper = new AscFormat.CT_Hyperlink();
@@ -3545,7 +3544,6 @@
 											oHyper.tooltip = HyperProps.ToolTip;
 											oNvPr.setHlinkClick(oHyper);
 										});
-
 									}
 								}
 							}
@@ -8150,12 +8148,13 @@
 						const oDrawingObjectsController = oDrawing.getDrawingObjectsController && oDrawing.getDrawingObjectsController();
 						const oTargetDocContent = oDrawingObjectsController && oDrawingObjectsController.getTargetDocContent();
 
+						const isGroup = oDrawing.isGroup();
 						const isShapeDrawing = oDrawing.isShape();
 						const isImageDrawing = oDrawing.isImage();
 						const isStickyNote = oDrawing.IsAnnot && oDrawing.IsAnnot() && oDrawing.IsComment() ||
 							drawing.IsEditFieldShape && oDrawing.IsEditFieldShape(); // skip pdf text annot and form
 
-						if (!isStickyNote && (isShapeDrawing || isImageDrawing)) {
+						if (!isStickyNote && (isGroup || isShapeDrawing || isImageDrawing)) {
 							const isWordEditor = editorId === AscCommon.c_oEditorId.Word;
 							const nvProps = this.hyperlinkCollectNonVisualProperties(oDrawing);
 							const oNvPr = nvProps[0];
