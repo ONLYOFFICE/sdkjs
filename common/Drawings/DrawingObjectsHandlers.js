@@ -704,6 +704,14 @@ function handleShapeImageInGroup(drawingObjectsController, drawing, shape, e, x,
 
 function handleGroup(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord)
 {
+	let bHit = drawing.hit && drawing.hit(x, y);
+	if (bHit) {
+		const oCheckResult = drawingObjectsController.checkDrawingHyperlinkAndMacro(drawing, e, bHit, x, y, pageIndex);
+		if (oCheckResult) {
+			return oCheckResult;
+		}
+	}
+
     var grouped_objects = drawing.getArrGraphicObjects();
     var ret;
     for(var j = grouped_objects.length - 1; j > -1; --j)
