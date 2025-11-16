@@ -4372,7 +4372,7 @@ PasteProcessor.prototype =
 			oThis.aContent = aContent.content;
 			fPrepasteCallback();
 		} else {
-            let oObjectsForDownloadPromise =  GetConvertedPromiseForImageDownload(GetObjectsForImageDownload(aContentExcel.arrImages));
+            let oObjectsForDownloadPromise =  GetConvertedPromiseForImageDownload(aContentExcel.arrImages);
 			oObjectsForDownloadPromise.then(function(oObjectsForDownload) {
 				if (oObjectsForDownload && oObjectsForDownload.aUrls.length > 0) {
 					AscCommon.sendImgUrls(oThis.api, oObjectsForDownload.aUrls, function (data) {
@@ -4531,7 +4531,7 @@ PasteProcessor.prototype =
 			//images
 			var images = aContent.images;
 			var arrImages = aContent.aPastedImages;
-			var oObjectsForDownloadPromise = GetConvertedPromiseForImageDownload(GetObjectsForImageDownload(arrImages));
+			var oObjectsForDownloadPromise = GetConvertedPromiseForImageDownload(arrImages);
 			oObjectsForDownloadPromise.then(function(oObjectsForDownload) {
 				if (oObjectsForDownload.aUrls.length > 0) {
 					AscCommon.sendImgUrls(oThis.api, oObjectsForDownload.aUrls, function (data) {
@@ -4685,7 +4685,7 @@ PasteProcessor.prototype =
 			//images
 			let images = aContent.images;
 			let arrImages = aContent.aPastedImages;
-			let oObjectsForDownloadPromise = GetConvertedPromiseForImageDownload(GetObjectsForImageDownload(arrImages));
+			let oObjectsForDownloadPromise = GetConvertedPromiseForImageDownload(arrImages);
 			oObjectsForDownloadPromise.then(function(oObjectsForDownload) {
 				if (oObjectsForDownload.aUrls.length > 0) {
 					AscCommon.sendImgUrls(oThis.api, oObjectsForDownload.aUrls, function (data) {
@@ -4851,7 +4851,7 @@ PasteProcessor.prototype =
 			Asc.c_oSpecialPasteProps.keepTextOnly === window['AscCommon'].g_specialPasteHelper.specialPasteProps) {
 			oThis.api.pre_Paste([], [], fPrepasteCallback);
 		} else {
-			var oObjectsForDownloadPromise = GetConvertedPromiseForImageDownload(GetObjectsForImageDownload(aContent.aPastedImages));
+			var oObjectsForDownloadPromise = GetConvertedPromiseForImageDownload(aContent.aPastedImages);
 			oObjectsForDownloadPromise.then(function(oObjectsForDownload) {
 				if (oObjectsForDownload.aUrls.length > 0) {
 					if (window["IS_NATIVE_EDITOR"]) {
@@ -5030,7 +5030,7 @@ PasteProcessor.prototype =
 		for (var i in font_map)
 			fonts.push(new CFont(i));
 
-		var oObjectsForDownloadPromise = GetConvertedPromiseForImageDownload(GetObjectsForImageDownload(aContent.aPastedImages));
+		var oObjectsForDownloadPromise = GetConvertedPromiseForImageDownload(aContent.aPastedImages);
 		oObjectsForDownloadPromise.then(function(oObjectsForDownload) {
 			if (oObjectsForDownload.aUrls.length > 0) {
 				AscCommon.sendImgUrls(oThis.api, oObjectsForDownload.aUrls, function (data) {
@@ -5157,7 +5157,7 @@ PasteProcessor.prototype =
 				}
 			}
 
-			var oObjectsForDownloadPromise = GetConvertedPromiseForImageDownload(GetObjectsForImageDownload(arrImages));
+			var oObjectsForDownloadPromise = GetConvertedPromiseForImageDownload(arrImages);
 			oObjectsForDownloadPromise.then(function(oObjectsForDownload) {
 				var aImagesToDownload = oObjectsForDownload.aUrls;
 				AscCommon.sendImgUrls(oThis.api, aImagesToDownload, function (data) {
@@ -5357,7 +5357,7 @@ PasteProcessor.prototype =
 			}, this, []);
 		}
 		
-		var oObjectsForDownloadPromise = GetConvertedPromiseForImageDownload(GetObjectsForImageDownload(aContent.aPastedImages));
+		var oObjectsForDownloadPromise = GetConvertedPromiseForImageDownload(aContent.aPastedImages);
 		oObjectsForDownloadPromise.then(function(oObjectsForDownload) {
 			if (oObjectsForDownload.aUrls.length > 0) {
 				AscCommon.sendImgUrls(oThis.api, oObjectsForDownload.aUrls, function (data) {
@@ -5459,7 +5459,7 @@ PasteProcessor.prototype =
 				}
 			};
 
-			let oObjectsForDownloadPromise = GetConvertedPromiseForImageDownload(GetObjectsForImageDownload(arr_Images, p_url === this.api.documentId));
+			let oObjectsForDownloadPromise = GetConvertedPromiseForImageDownload(arr_Images, p_url === this.api.documentId);
 			oObjectsForDownloadPromise.then(function(oObjectsForDownload) {
 				if (oObjectsForDownload.aUrls.length > 0) {
 					AscCommon.sendImgUrls(oThis.api, oObjectsForDownload.aUrls, function (data) {
@@ -5569,7 +5569,7 @@ PasteProcessor.prototype =
 				}
 			}
 
-			var oObjectsForDownloadPromise = GetConvertedPromiseForImageDownload(GetObjectsForImageDownload(arrImages));
+			var oObjectsForDownloadPromise = GetConvertedPromiseForImageDownload(arrImages);
 			oObjectsForDownloadPromise.then(function(oObjectsForDownload) {
 				var aImagesToDownload = oObjectsForDownload.aUrls;
 				AscCommon.sendImgUrls(oThis.api, aImagesToDownload, function (data) {
@@ -5723,7 +5723,7 @@ PasteProcessor.prototype =
 				}
 			};
 
-			var oObjectsForDownload = GetConvertedPromiseForImageDownload(GetObjectsForImageDownload(arr_Images, p_url === this.api.documentId));
+			var oObjectsForDownload = GetConvertedPromiseForImageDownload(arr_Images, p_url === this.api.documentId);
 			oObjectsForDownload.then(function(oObjectsForDownload) {
 				if (oObjectsForDownload.aUrls.length > 0) {
 					AscCommon.sendImgUrls(oThis.api, oObjectsForDownload.aUrls, function (data) {
@@ -5829,7 +5829,7 @@ PasteProcessor.prototype =
 				}
 			});
 
-			let oObjectsForDownloadPromise = GetConvertedPromiseForImageDownload(GetObjectsForImageDownload(arr_Images, p_url === this.api.documentId));
+			let oObjectsForDownloadPromise = GetConvertedPromiseForImageDownload(arr_Images, p_url === this.api.documentId);
 			oObjectsForDownloadPromise.then(function(oObjectsForDownload) {
 				if (oObjectsForDownload.aUrls.length > 0) {
 					AscCommon.sendImgUrls(oThis.api, oObjectsForDownload.aUrls, function (data) {
@@ -6225,7 +6225,7 @@ PasteProcessor.prototype =
 				}
 			};
 
-			var oObjectsForDownloadPromise = GetConvertedPromiseForImageDownload(GetObjectsForImageDownload(arr_Images, p_url === this.api.documentId));
+			var oObjectsForDownloadPromise = GetConvertedPromiseForImageDownload(arr_Images, p_url === this.api.documentId);
 			oObjectsForDownloadPromise.then(function(oObjectsForDownload) {
 				if (oObjectsForDownload.aUrls.length > 0) {
 					AscCommon.sendImgUrls(oThis.api, oObjectsForDownload.aUrls, function (data) {

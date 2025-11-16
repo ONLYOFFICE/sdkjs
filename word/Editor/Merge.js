@@ -737,7 +737,7 @@
         }
 
 
-			const oObjectsForDownloadPromise = AscCommon.GetObjectsForImageDownload(aImages);
+			const oObjectsForDownloadPromise = AscCommon.GetConvertedPromiseForImageDownload(aImages);
 			oObjectsForDownloadPromise.then(function(oObjectsForDownload) {
 				const fCallback = function (data) {
 					const oImageMap = {};

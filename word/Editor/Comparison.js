@@ -2649,7 +2649,7 @@
         {
             return;
         }
-			const oObjectsForDownloadPromise = AscCommon.GetConvertedPromiseForImageDownload(AscCommon.GetObjectsForImageDownload(aImages));
+			const oObjectsForDownloadPromise = AscCommon.GetConvertedPromiseForImageDownload(aImages);
 			oObjectsForDownloadPromise.then(function(oObjectsForDownload) {
 				const fCallback = function (data) {
 					const oImageMap = {};

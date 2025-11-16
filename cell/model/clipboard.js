@@ -3176,7 +3176,7 @@
 			_loadImagesOnServer: function (aPastedImages, callback) {
 				var api = Asc["editor"];
 
-				var oObjectsForDownloadPromise = AscCommon.GetConvertedPromiseForImageDownload(AscCommon.GetObjectsForImageDownload(aPastedImages));
+				var oObjectsForDownloadPromise = AscCommon.GetConvertedPromiseForImageDownload(aPastedImages);
 				oObjectsForDownloadPromise.then(function(oObjectsForDownload) {
 					AscCommon.sendImgUrls(api, oObjectsForDownload.aUrls, function (data) {
 						var oImageMap = {};

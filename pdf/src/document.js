@@ -6156,7 +6156,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         if (allImages.length > 0) {
-					let oObjectsForDownloadPromise = AscCommon.GetConvertedPromiseForImageDownload(AscCommon.GetObjectsForImageDownload(aResetBuilderImages));
+					let oObjectsForDownloadPromise = AscCommon.GetConvertedPromiseForImageDownload(aResetBuilderImages);
 					oObjectsForDownloadPromise.then(function(oObjectsForDownload) {
 						AscCommon.sendImgUrls(Asc.editor, allImages, function(data) {
 							AscCommon.ResetNewUrls(data, allImages, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
