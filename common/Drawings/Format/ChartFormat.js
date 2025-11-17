@@ -3253,6 +3253,29 @@
     CDLbl.prototype.getMaxWidth = function(bodyPr) {
         var oChartSpace = this.getChartSpace();
 
+		if (oChartSpace && this.layout) {
+			const verticalTypes = [
+				AscFormat.nVertTTeaVert,
+				AscFormat.nVertTTmongolianVert,
+				AscFormat.nVertTTvert,
+				AscFormat.nVertTTwordArtVert,
+				AscFormat.nVertTTwordArtVertRtl,
+				AscFormat.nVertTTvert270
+			];
+			const isVertical = verticalTypes.indexOf(bodyPr.vert) !== -1;
+
+			const chartSize = isVertical ? oChartSpace.extY : oChartSpace.extX;
+			const layoutSize = isVertical ? this.layout.h : this.layout.w;
+			const layoutMode = isVertical ? this.layout.hMode : this.layout.wMode;
+
+			if (AscFormat.isRealNumber(layoutSize)) {
+				var calculatedSize = oChartSpace.calculateSizeByLayout(0, chartSize, layoutSize, layoutMode);
+				if (calculatedSize > 0) {
+					return calculatedSize;
+				}
+			}
+		}
+
         if(this.parent && this.parent.getObjectType() === AscDFH.historyitem_type_TrendLine) {
             if(!oChartSpace) {
                 return 20000;
@@ -3443,14 +3466,14 @@
 				let finalHeight = this.extY;
 
 				if (AscFormat.isRealNumber(this.layout.w)) {
-					const layoutWidth = chartSpace.calculateSizeByLayout(0, chartSpace.extX - 2 * SCALE_INSET_COEFF, this.layout.w, this.layout.wMode);
+					const layoutWidth = chartSpace.calculateSizeByLayout(0, chartSpace.extX, this.layout.w, this.layout.wMode);
 					if (layoutWidth > 0) {
 						finalWidth = layoutWidth;
 						needRecalculateContent = true;
 					}
 				}
 				if (AscFormat.isRealNumber(this.layout.h)) {
-					const layoutHeight = chartSpace.calculateSizeByLayout(0, chartSpace.extY - 2 * SCALE_INSET_COEFF, this.layout.h, this.layout.hMode);
+					const layoutHeight = chartSpace.calculateSizeByLayout(0, chartSpace.extY, this.layout.h, this.layout.hMode);
 					if (layoutHeight > 0) {
 						finalHeight = layoutHeight;
 					}
