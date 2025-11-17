@@ -11838,7 +11838,6 @@
                 oFormula.bx = this.stream.GetBool();
             else if ( c_oSerFormulaTypes.Ca === type )
                 oFormula.ca = this.stream.GetBool();
-				oFormula.ca = this.stream.GetBool();
 			else if ( c_oSerFormulaTypes.Del1 === type )
 				oFormula.del1 = this.stream.GetBool();
 			else if ( c_oSerFormulaTypes.Del2 === type )
