@@ -85,9 +85,20 @@ function CDocumentReaderMode()
         return "" + dRes + "em";
     };
 }
-function GetConvertedPromiseForImageDownload(oObjectsForDownload) {
-	return new Promise(function(resolove) {
-		resolve(null)
+function GetConvertedPromiseForImageDownload(aBuilderImages, bSameDoc) {
+	const arrPromiseFunctions = [];
+	for (let i = 0; i < aBuilderImages.length; i += 1) {
+		const oBuilderImage = aBuilderImages[i];
+		if (oBuilderImage.IsUrlForLoading()) {
+			oBuilderImage.collectConvertPromiseFunctions(arrPromiseFunctions);
+		}
+	}
+	return new Promise(function(resolve) {
+		const promiseIterator = new AscCommon.CPromiseGetterIterator(arrPromiseFunctions);
+		promiseIterator.forAllSuccessValues(function() {
+			const oObjectsForDownload = GetObjectsForImageDownload(aBuilderImages, bSameDoc);
+			resolve(oObjectsForDownload);
+		});
 	});
 }
 	function GetObjectsForImageDownload(aBuilderImages, bSameDoc) {
@@ -4508,7 +4519,7 @@ PasteProcessor.prototype =
 
 			var aImagesToDownload = [];
 			for (var i = 0; i < aPastedImages.length; i++) {
-				aImagesToDownload.push(aPastedImages[i].Url);
+				aImagesToDownload.push(aPastedImages[i].GetUrl());
 			}
 
 			aContent = {aPastedImages: aPastedImages, images: aImagesToDownload};
@@ -4542,8 +4553,8 @@ PasteProcessor.prototype =
 						oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
 					}, true);
 				} else {
-					this.SetShortImageId(arrImages);
-					this.api.pre_Paste(fonts, images, paste_callback);
+					oThis.SetShortImageId(arrImages);
+					oThis.api.pre_Paste(fonts, images, paste_callback);
 				}
 			});
 
@@ -4698,8 +4709,8 @@ PasteProcessor.prototype =
 						oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
 					}, true);
 				} else {
-					this.SetShortImageId(arrImages);
-					this.api.pre_Paste(fonts, images, paste_callback);
+					oThis.SetShortImageId(arrImages);
+					oThis.api.pre_Paste(fonts, images, paste_callback);
 				}
 			});
 		} else {

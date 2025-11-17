@@ -7045,21 +7045,17 @@ var editor;
   spreadsheet_api.prototype.pre_Paste = function(_fonts, _images, callback)
   {
     AscFonts.FontPickerByCharacter.extendFonts(_fonts);
-
+		const oThis = this;
     var oFontMap = {};
     for(var i = 0; i < _fonts.length; ++i){
       oFontMap[_fonts[i].name] = 1;
     }
     this._loadFonts(oFontMap, function() {
-
-      var aImages = [];
-      for(var key in _images){
-        if(_images.hasOwnProperty(key)){
-          aImages.push(_images[key])
-        }
-      }
-      if(aImages.length > 0)      {
-         window["Asc"]["editor"].ImageLoader.LoadDocumentImages(aImages, true);
+			const imageMap = oThis.prepareImageMap(_images);
+      if(imageMap.images.length > 0 || imageMap.binaries.length > 0) {
+				AscCommon.g_oBinaryCacheManager.loadBinaries(imageMap.binaries).then(function() {
+					oThis.ImageLoader.LoadDocumentImages(imageMap.images, true);
+				});
       }
       callback();
     });

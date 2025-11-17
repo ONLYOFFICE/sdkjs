@@ -5583,6 +5583,7 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asyncFontsDocumentEndLoaded   = function(blockType)
 	{
+		const oThis = this;
 		// все, шрифты загружены. Теперь нужно подгрузить картинки
 		if (this.isPasteFonts_Images)
 			this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.LoadFont);
@@ -5599,29 +5600,19 @@ background-repeat: no-repeat;\
 		this.EndActionLoadImages = 0;
 		if (this.isPasteFonts_Images)
 		{
-			var _count = 0;
-			for (var i in this.pasteImageMap)
-				++_count;
-
-			if (_count > 0)
+			if (this.pasteImageMap.images.length > 0 || this.pasteImageMap.binaries.length > 0)
 			{
 				this.EndActionLoadImages = 2;
 				this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.LoadImage);
 			}
-
-			this.ImageLoader.LoadDocumentImages(this.pasteImageMap);
+			AscCommon.g_oBinaryCacheManager.loadBinaries(this.pasteImageMap.binaries).then(function() {
+				oThis.ImageLoader.LoadDocumentImages(oThis.pasteImageMap.images);
+			});
 			return;
 		}
 		else if (this.isSaveFonts_Images)
 		{
-			var _count = 0;
-			for (let i in this.saveImageMap.images)
-				++_count;
-
-			for (let i in this.saveImageMap.binaries)
-				++_count;
-
-			if (_count > 0)
+			if (this.saveImageMap.images.length > 0 || this.saveImageMap.binaries.length > 0)
 			{
 				this.EndActionLoadImages = 2;
 				this.sync_StartAction(c_oAscAsyncActionType.Information, c_oAscAsyncAction.LoadImage);
@@ -6115,14 +6106,9 @@ background-repeat: no-repeat;\
 			return;
 		}
 		this.pasteCallback = callback;
-		this.pasteImageMap = _images;
-
-		var _count = 0;
-		for (var i in this.pasteImageMap)
-			++_count;
-
+		this.pasteImageMap = this.prepareImageMap(_images);
         AscFonts.FontPickerByCharacter.extendFonts(_fonts);
-		if (0 == _count && false === this.FontLoader.CheckFontsNeedLoading(_fonts))
+		if (this.pasteImageMap.images.length === 0 && this.pasteImageMap.binaries.length === 0 && false === this.FontLoader.CheckFontsNeedLoading(_fonts))
 		{
 			// никаких евентов. ничего грузить не нужно. сделано для сафари под макОс.
 			// там при LongActions теряется фокус и вставляются пробелы

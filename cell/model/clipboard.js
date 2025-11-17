@@ -4452,7 +4452,7 @@
 				var aImagesToDownload = this.aResult.props._images;
 				if (!this.clipboard.alreadyLoadImagesOnServer && aImagesToDownload && (!specialPasteProps || (specialPasteProps && specialPasteProps.images)))//load to server
 				{
-					var oObjectsForDownloadPromise =  AscCommon.GetConvertedPromiseForImageDownload(AscCommon.GetObjectsForImageDownload(t.aResult.props._aPastedImages));
+					var oObjectsForDownloadPromise =  AscCommon.GetConvertedPromiseForImageDownload(t.aResult.props._aPastedImages);
 					var api = window["Asc"]["editor"];
 					var oImageMap = {};
 					oObjectsForDownloadPromise.then(function(oObjectsForDownload) {

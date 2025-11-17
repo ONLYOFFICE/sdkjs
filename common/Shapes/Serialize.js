@@ -75,6 +75,7 @@ function CBuilderBase() {
 	CBuilderBase.prototype.SetParagraphTextPr = function(paragraph, textPr) {};
 	CBuilderBase.prototype.SetEndRunTextPr = function(run, runTextPr, paraTextPr) {};
 	CBuilderBase.prototype.SetRunTextPr = function(run, runTextPr) {};
+	CBuilderBase.prototype.collectConvertPromiseFunctions = function(arrPromiseFunctions) {};
 function CBuilderImages(blip_fill, full_url, image_shape, sp_pr, ln, text_pr, para_text_pr, run, paragraph, bullet)
 {
 	CBuilderBase.call(this);
@@ -211,7 +212,7 @@ function CBuilderBinaries(oClass, arrBinary) {
 		return AscCommon.g_oBinaryCacheManager.getDataURLFromBinary(this.binary);
 	};
 	CBuilderBinaries.prototype.IsUrlForLoading = function() {
-		return AscCommon.g_oBinaryCacheManager.getBinary(this.getHash()) !== null;
+		return AscCommon.g_oBinaryCacheManager.getBinary(this.getHash()) === null;
 	};
 	CBuilderBinaries.prototype.getHash = function() {
 		if (this.hash === null) {
@@ -222,6 +223,26 @@ function CBuilderBinaries(oClass, arrBinary) {
 	CBuilderBinaries.prototype.SetUrl = function(url) {
 		this.class.setXLSXId(this.getHash());
 	};
+	CBuilderBinaries.prototype.collectConvertPromiseFunctions = function(arrPromiseFunctions) {
+		const oThis = this;
+		if (!AscCommon.checkOOXMLSignature(oThis.binary)) {
+			arrPromiseFunctions.push(function() {
+				return new Promise(function(resolve) {
+					const xlsyBinary = ("XLSY;v2;" + oThis.binary.length + ";" + AscCommon.Base64.encode(oThis.binary)).toUtf8();
+					Asc.editor.getConvertedXLSXFileFromUrl({data: xlsyBinary}, Asc.c_oAscFileType.XLSX, function(arrBinaryData) {
+						if (arrBinaryData) {
+							oThis.setBinary(arrBinaryData);
+							resolve();
+						}
+					});
+				});
+			});
+		}
+	};
+	CBuilderBinaries.prototype.setBinary = function(arrBinary) {
+		this.binary = arrBinary;
+		this.hash = null;
+	}
 
 function BinaryPPTYLoader()
 {

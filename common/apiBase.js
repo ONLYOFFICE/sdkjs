@@ -6108,12 +6108,12 @@
 			images: []
 		};
 		const xlsxExtension = ".xlsx";
-		for (let i = 0; i < images.length; i += 1) {
+		for (let i in images) {
 			const url = images[i];
 			if (url.lastIndexOf(xlsxExtension) === (url.length - xlsxExtension.length)) {
-				result.binaries[i] = url;
+				result.binaries.push(url);
 			} else {
-				result.images[i] = url;
+				result.images.push(url);
 			}
 		}
 		return result;
