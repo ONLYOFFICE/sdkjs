@@ -2299,6 +2299,7 @@ CShapeDrawer.prototype =
             {
                 if (this.bIsTexture)
                 {
+					const rotWithShape = this.UniFill.fill.rotWithShape;
                     if (null == this.UniFill.fill.tile)
                     {
                         if (null == this.UniFill.fill.srcRect)
@@ -2333,11 +2334,24 @@ CShapeDrawer.prototype =
                             }
                         }
 
-                        const fillRect = this.UniFill.fill.stretch.getFillRect();
-                        const tx = this.min_x + (this.max_x - this.min_x) * fillRect.l / 100;
-                        const ty = this.min_y + (this.max_y - this.min_y) * fillRect.t / 100;
-                        if (null != fillRect && undefined != fillRect)
-                            this.Graphics.put_PathOffset(tx, ty);
+	                    const fillRect = this.UniFill.fill.stretch.getFillRect();
+	                    if (null != fillRect && undefined != fillRect)
+	                    {
+		                    let tx, ty;
+							if (rotWithShape)
+							{
+			                    tx = this.min_x + (this.max_x - this.min_x) * fillRect.l / 100;
+			                    ty = this.min_y + (this.max_y - this.min_y) * fillRect.t / 100;
+		                    }
+							else
+							{
+								const shapeBounds = this.Shape.getBounds();
+
+								tx = shapeBounds.x + shapeBounds.w * (fillRect.l / 100);
+								tx = shapeBounds.y + shapeBounds.h * (fillRect.t / 100);
+							}
+							this.Graphics.put_PathOffset(tx, ty);
+	                    }
                     }
                     else
                     {
@@ -2359,7 +2373,7 @@ CShapeDrawer.prototype =
                         this.Graphics.put_PathScale(sx, sy);
                     }
                     this.Graphics.put_BrushTextureAlpha(this.UniFill.transparent);
-                    if (!(this.UniFill.fill.rotWithShape || this.UniFill.fill.rotWithShape === null))
+                    if (!this.UniFill.fill.rotWithShape || this.UniFill.fill.rotWithShape === null)
                         this.Graphics.ResetRotation();
                 }
                 else
