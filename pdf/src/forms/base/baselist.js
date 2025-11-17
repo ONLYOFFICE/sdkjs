@@ -54,18 +54,21 @@
     CBaseListField.prototype = Object.create(AscPDF.CBaseField.prototype);
 	CBaseListField.prototype.constructor = CBaseListField;
 
+    CBaseListField.prototype.AddKid = function(oField) {
+        oField.SetOptions([]);
+        AscPDF.CBaseField.prototype.AddKid.call(this, oField);
+    };
     CBaseListField.prototype.SetParentCurIdxs = function(aIdxs) {
-        let oParent = this.GetParent();
-        if (oParent && this.IsWidget() && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (oParent && this.IsWidget())
             oParent.SetParentCurIdxs(aIdxs);
         else {
-            let oDoc = this.GetDocument();
-            oDoc.History.Add(new CChangesPDFListFormParentCurIdxs(this, this.GetParentCurIdxs(), aIdxs));
+            AscCommon.History.Add(new CChangesPDFListFormParentCurIdxs(this, this.GetParentCurIdxs(), aIdxs));
             this._currentValueIndices = aIdxs;
         }
     };
     CBaseListField.prototype.GetParentCurIdxs = function(bInherit) {
-        let oParent = this.GetParent();
+        let oParent = this.GetParent(true);
         if (oParent == null)
             return this._currentValueIndices;
         else if (bInherit === false || (this.GetPartialName() != null)) {
@@ -77,28 +80,27 @@
     };
     CBaseListField.prototype.SetTopIndex = function() {};
     CBaseListField.prototype.SetCommitOnSelChange = function(bValue) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (oParent) {
             oParent.SetCommitOnSelChange(bValue);
             return;
         }
 
-        let oDoc = this.GetDocument();
-        oDoc.History.Add(new CChangesPDFListCommitOnSelChange(this, this._commitOnSelChange, bValue));
+        AscCommon.History.Add(new CChangesPDFListCommitOnSelChange(this, this._commitOnSelChange, bValue));
 
         this._commitOnSelChange = bValue;
         this.SetWasChanged(true);
     };
     CBaseListField.prototype.IsCommitOnSelChange = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
             return oParent.IsCommitOnSelChange();
 
         return this._commitOnSelChange;
     };
 
     CBaseListField.prototype.GetOptions = function(bInherit) {
-        let oParent = this.GetParent();
+        let oParent = this.GetParent(true);
         if (oParent == null)
             return this._options;
         else if (bInherit === false || (this.GetPartialName() != null)) {

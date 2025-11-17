@@ -10,8 +10,12 @@
   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/qunit/2.16.0/qunit.min.js"></script>
   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xregexp/3.2.0/xregexp-all.min.js"></script>
 
-  <script type="text/javascript" src="../../../common/commonDefines.js"></script>
-  <script type="text/javascript" src="../../../common/NumFormat.js"></script>
+  <script type="text/javascript" src="../../../develop/sdkjs/cell/scripts.js"></script>
+  <script type="text/javascript">
+    window.sdk_scripts.forEach(function(item){
+      document.write('<script type="text/javascript" src="' + item + '"><\/script>');
+    });
+  </script>
   <script type="text/javascript" src="NumFormatParse.js"></script>
 </head>
 <body>

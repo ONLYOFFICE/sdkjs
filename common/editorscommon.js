@@ -199,26 +199,9 @@
 	var nMaxRequestLength = 5242880;//5mb <requestLimits maxAllowedContentLength="30000000" /> default 30mb
 
 	function decimalNumberConversion(number, base) {
-		if (typeof number !== 'number') {
-			return;
-		}
-		var result = [];
-		if (number === 0)
-		{
-			return [0];
-		}
-		while (number > 0) {
-			var remainder = number % base;
-			if (remainder === 0) {
-				result.unshift(0);
-
-			} else {
-				result.unshift(remainder);
-				number = number - remainder;
-			}
-			number /= base;
-		}
-		return result;
+		return number.toString(base).split("").map(function (digit) {
+			return parseInt(digit, base);
+		});
 	}
 
 	function getSockJs()
@@ -1119,6 +1102,9 @@
 			case c_oAscServerError.ChangeDocInfo :
 				nRes = Asc.c_oAscError.ID.AccessDeny;
 				break;
+			case c_oAscServerError.ForcedViewMode :
+				nRes = Asc.c_oAscError.ID.ForcedViewMode;
+				break;
 			case c_oAscServerError.Storage :
 			case c_oAscServerError.StorageFileNoFound :
 			case c_oAscServerError.StorageRead :
@@ -1311,13 +1297,9 @@
 
 	var UTF8Decoder = typeof TextDecoder !== "undefined" ? new TextDecoder("utf8") : undefined;
 	function UTF8ArrayToString(u8Array, idx, maxBytesToRead) {
-		var endIdx = idx + maxBytesToRead;
-		var endPtr = idx;
-		while (u8Array[endPtr] && !(endPtr >= endIdx)) {
-			++endPtr;
-		}
-		if (endPtr - idx > 16 && u8Array.subarray && UTF8Decoder) {
-			return UTF8Decoder.decode(u8Array.subarray(idx, endPtr));
+		var endPtr = idx + maxBytesToRead;
+		if (endPtr - idx > 16 && UTF8Decoder) {
+			return UTF8Decoder.decode(new Uint8Array(u8Array.buffer, u8Array.byteOffset + idx, endPtr - idx));
 		} else {
 			var str = "";
 			while (idx < endPtr) {
@@ -1720,7 +1702,9 @@
 		VKeyKeyExpire:       -122,
 		VKeyUserCountExceed: -123,
 
-		Password: -180
+		Password: -180,
+
+		ForcedViewMode: -200
 	};
 
 	//todo get from server config
@@ -3944,10 +3928,10 @@
 
 		const match = XRegExp.exec(subSTR, local ? rx_table_local : rx_table);
 
-		if (match != null && match["tableName"])
-		{
-			this.operand_str = tableIntersection ? "[" + match.columnName1 + "]" : match[0];
-			this.pCurrPos += tableIntersection ? match.columnName1.length + 2 : match[0].length;
+		if (match != null && match["tableName"]) {
+			let colNameToInsert = match["columnName1"] ? match["columnName1"] : "";
+			this.operand_str = tableIntersection ? "[" + colNameToInsert + "]" : match[0];
+			this.pCurrPos += tableIntersection ? colNameToInsert.length + 2 : match[0].length;
 			return match;
 		}
 
@@ -4545,6 +4529,7 @@
 		this.m_nOFormEditCounter = 0;
 		
 		this.m_nPdfNewFormCounter = 0;
+		this.m_nPdfRedactCounter = 0;
 
 		this.m_nTurnOffCounter = 0;
 	}
@@ -4573,6 +4558,10 @@
 	{
 		this.m_bLoad = bValue;
 	};
+	CIdCounter.prototype.IsLoad = function()
+	{
+		return this.m_bLoad;
+	};
 	CIdCounter.prototype.Clear = function ()
 	{
 		this.m_sUserId = null;
@@ -4584,6 +4573,7 @@
 		this.m_nOFormEditCounter = 0;
 
 		this.m_nPdfNewFormCounter = 0;
+		this.m_nPdfRedactCounter = 0;
 	};
 	CIdCounter.prototype.GetNewIdForOForm = function()
 	{
@@ -4595,6 +4585,13 @@
 	CIdCounter.prototype.GetNewIdForPdfForm = function()
 	{
 		return ++this.m_nPdfNewFormCounter;
+	};
+	CIdCounter.prototype.GetNewIdForPdfRedact = function()
+	{
+		if (true === this.m_bLoad || null === this.m_sUserId)
+			return ("_redact_" + (++this.m_nPdfRedactCounter));
+		else
+			return ("" + this.m_sUserId + "_redact_" + (++this.m_nPdfRedactCounter));
 	};
 
 	function CLock()
@@ -10904,7 +10901,7 @@
 		{
 			AscCommon.History.TurnOff && AscCommon.History.TurnOff();
 
-			if (AscCommon.g_oTableId && !AscCommon.g_oTableId.IsOn())
+			if (AscCommon.g_oTableId && AscCommon.g_oTableId.IsOn())
 			{
 				AscCommon.g_oTableId.TurnOff();
 				isTableId = true;
@@ -11116,6 +11113,13 @@
 			return new CColor(0, 0, 0, 255);
 
 		return true === isDark ? res.Dark : res.Light;
+	}
+	function setUserColorById(userId, light, dark)
+	{
+		g_oUserColorById[userId] = {
+			Light : new CColor(light.r, light.g, light.b, 255),
+			Dark : new CColor(dark.r, dark.g, dark.b, 255),
+		};
 	}
 	function getUserColorById(userId, userName, isDark, isNumericValue)
 	{
@@ -12192,32 +12196,34 @@
 		this.CustomCounter = 0;
 		this.CustomActions = {};
 	}
-	CShortcuts.prototype.Add = function(nType, nCode, isCtrl, isShift, isAlt)
-	{
-		this.List[this.private_GetIndex(nCode, isCtrl, isShift, isAlt)] = nType;
+	CShortcuts.GetShortcutIndex = function(nCode, isCtrl, isShift, isAlt, isCommand) {
+		return ((nCode << 16) | (isCtrl ? 8 : 0) | (isShift ? 4 : 0) | (isAlt ? 2 : 0) | (isCommand ? 1 : 0));
 	};
-	CShortcuts.prototype.Get = function(nCode, isCtrl, isShift, isAlt)
+	CShortcuts.prototype.Add = function(nType, nCode, isCtrl, isShift, isAlt, isCommand)
 	{
-		var nType = this.List[this.private_GetIndex(nCode, isCtrl, isShift, isAlt)];
+		this.List[CShortcuts.GetShortcutIndex(nCode, isCtrl, isShift, isAlt, isCommand)] = nType;
+	};
+	CShortcuts.prototype.Get = function(nCode, isCtrl, isShift, isAlt, isCommand)
+	{
+		var nType = this.List[CShortcuts.GetShortcutIndex(nCode, isCtrl, isShift, isAlt, isCommand)];
 		return (undefined !== nType ? nType : 0);
 	};
-	CShortcuts.prototype.private_GetIndex = function(nCode, isCtrl, isShift, isAlt)
-	{
-		return ((nCode << 8) | (isCtrl ? 4 : 0) | (isShift ? 2 : 0) | (isAlt ? 1 : 0));
-	}
+	CShortcuts.prototype.GetShortcutObject = function(nIndex) {
+		return {KeyCode : nIndex >>> 16, CtrlKey : !!(nIndex & 8), ShiftKey : !!(nIndex & 4), AltKey : !!(nIndex & 2), MacCmdKey : !!(nIndex & 1)};
+	};
 	CShortcuts.prototype.CheckType = function(nType)
 	{
 		for (var nIndex in this.List)
 		{
 			if (this.List[nIndex] === nType)
-				return {KeyCode : nIndex >>> 8, CtrlKey : !!(nIndex & 4), ShiftKey : !!(nIndex & 2), AltKey : !!(nIndex & 1)};
+				return this.GetShortcutObject(nIndex);
 		}
 
 		return null;
 	};
-	CShortcuts.prototype.Remove = function(nCode, isCtrl, isShift, isAlt)
+	CShortcuts.prototype.Remove = function(nCode, isCtrl, isShift, isAlt, isCommand)
 	{
-		delete this.List[this.private_GetIndex(nCode, isCtrl, isShift, isAlt)];
+		delete this.List[CShortcuts.GetShortcutIndex(nCode, isCtrl, isShift, isAlt, isCommand)];
 	};
 	CShortcuts.prototype.RemoveByType = function(nType)
 	{
@@ -12244,6 +12250,33 @@
 		var nType = this.GetNewCustomType();
 		this.CustomActions[nType] = new CCustomShortcutActionSymbol(nCharCode, sFont);
 		return nType;
+	};
+	CShortcuts.prototype.Reset = function()
+	{
+		this.List = {};
+	};
+	CShortcuts.prototype.ApplyFromStorage = function(oAscShortcut)
+	{
+		const arrKeyCodes = [oAscShortcut.keyCode];
+		const arrAddKeyCodes = Asc.c_oAscKeyCodeAnalogues[oAscShortcut.keyCode];
+		if (arrAddKeyCodes)
+		{
+			arrKeyCodes.push.apply(arrKeyCodes, arrAddKeyCodes);
+		}
+		if (oAscShortcut.isHidden)
+		{
+			for (let i = 0; i < arrKeyCodes.length; i += 1)
+			{
+				this.Remove(arrKeyCodes[i], oAscShortcut.ctrlKey, oAscShortcut.shiftKey, oAscShortcut.altKey, oAscShortcut.commandKey);
+			}
+		}
+		else
+		{
+			for (let i = 0; i < arrKeyCodes.length; i += 1)
+			{
+				this.Add(oAscShortcut.type, arrKeyCodes[i], oAscShortcut.ctrlKey, oAscShortcut.shiftKey, oAscShortcut.altKey, oAscShortcut.commandKey);
+			}
+		}
 	};
 
 	function CCustomShortcutActionSymbol(nCharCode, sFont)
@@ -13871,6 +13904,11 @@
 	{
 		this.started = true;
 		this.endCallback = fEndCallback;
+		let drawingDocument = Asc.editor.getDrawingDocument();
+		if (drawingDocument)
+		{
+			drawingDocument.LockCursorType("eyedropper");
+		}
 	};
 	CEyedropper.prototype.cancel = function()
 	{
@@ -13883,6 +13921,12 @@
 		this.api.sendEvent("asc_onHideEyedropper");
 		this.clearColor();
 		this.clearImageData();
+
+		let drawingDocument = Asc.editor.getDrawingDocument();
+		if (drawingDocument)
+		{
+			drawingDocument.UnlockCursorType();
+		}
 	};
 	CEyedropper.prototype.clearImageData = function()
 	{
@@ -14031,95 +14075,123 @@
 		}
 	}
 	
+	/**
+	 * @param {string} text
+	 * @param {Asc.asc_CTextOptions} options
+	 * @param {boolean} bTrimSpaces - Whether to trim spaces when using space delimiter
+	 * @returns {Array<Array<string>>} Matrix of parsed CSV values
+	 */
 	function parseText(text, options, bTrimSpaces) {
-		var delimiterChar;
-		if (options.asc_getDelimiterChar()) {
-			delimiterChar = options.asc_getDelimiterChar();
-		} else {
-			switch (options.asc_getDelimiter()) {
-				case AscCommon.c_oAscCsvDelimiter.None:
-					delimiterChar = undefined;
-					break;
-				case AscCommon.c_oAscCsvDelimiter.Tab:
-					delimiterChar = "\t";
-					break;
-				case AscCommon.c_oAscCsvDelimiter.Semicolon:
-					delimiterChar = ";";
-					break;
-				case AscCommon.c_oAscCsvDelimiter.Colon:
-					delimiterChar = ":";
-					break;
-				case AscCommon.c_oAscCsvDelimiter.Comma:
-					delimiterChar = ",";
-					break;
-				case AscCommon.c_oAscCsvDelimiter.Space:
-					delimiterChar = " ";
-					break;
-			}
-		}
-
-		var textQualifier = options.asc_getTextQualifier();
-		var matrix = [];
-		//var rows = text.match(/[^\r\n]+/g);
-		var rows;
-		if (delimiterChar === '\n') {
-			rows = [text];
-		} else {
-			rows = text.split(/\r?\n/);
-		}
-		for (var i = 0; i < rows.length; ++i) {
-			var row = rows[i];
-			if(" " === delimiterChar && bTrimSpaces) {
-				var addSpace = false;
-				if(row[0] === delimiterChar) {
-					addSpace = true;
-				}
-				row = addSpace ? delimiterChar + row.trim() : row.trim();
-			}
-			//todo quotes
-			if (textQualifier) {
-				if (!row.length) {
-					matrix.push(row.split(delimiterChar));
-					continue;
-				}
-
-				var _text = "";
-				var startQualifier = false;
-				for (var j = 0; j < row.length; j++) {
-					if (!startQualifier && row[j] === textQualifier && (!row[j - 1] || (row[j - 1] && row[j - 1] === delimiterChar))) {
-						startQualifier = !startQualifier;
-						continue;
-					} else if (startQualifier && row[j] === textQualifier) {
-						startQualifier = !startQualifier;
-
-						if (j === row.length - 1) {
-							if (!matrix[i]) {
-								matrix[i] = [];
-							}
-							matrix[i].push(_text);
-						}
-
+		let delimiterMap = {};
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.None] = undefined;
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Tab] = "\t";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Semicolon] = ";";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Colon] = ":";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Comma] = ",";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Space] = " ";
+		const delimiterChar = options.asc_getDelimiterChar() || delimiterMap[options.asc_getDelimiter()];
+		const textQualifier = options.asc_getTextQualifier();
+		const hasQualifier = !!textQualifier;
+		
+		if (!text.length) return [[]];
+		
+		let rows = delimiterChar === '\n' ? [text] : text.split(/\r\n|\r|\n/);
+		if (rows.length > 1 && rows[rows.length - 1] === '') rows.pop();
+		
+		const isSpace = delimiterChar === " ";
+		// Note: Using charCodeAt instead of codePointAt for performance.
+		// CSV delimiters are always basic ASCII chars (comma=44, semicolon=59, tab=9, etc.)
+		const delimiterCode = delimiterChar ? delimiterChar.charCodeAt(0) : 0;
+		const qualifierCode = hasQualifier ? textQualifier.charCodeAt(0) : 0;
+		
+		/**
+		 * Trim and normalize a row when space is the delimiter and trimming is enabled.
+		 * Preserves a single leading space delimiter when present to avoid data loss.
+		 * @param {string} row
+		 * @returns {string}
+		 */
+		const processSpaceRow = function(row) {
+			if (!isSpace || !bTrimSpaces) return row;
+			const hasLeadingSpace = row.length > 0 && row.charCodeAt(0) === delimiterCode;
+			row = row.trim();
+			return hasLeadingSpace ? delimiterChar + row : row;
+		};
+		
+		/**
+		 * Parse a logical CSV record that may span multiple pre-split rows.
+		 * @param {string} row - Row to parse
+		 * @param {number} startIndex - Index in rows array to start parsing from
+		 * @returns {{fields: Array<string>, curIndex: number}}
+		 */
+		const parseRowWithQualifiers = function(row, startIndex) {
+			const fields = [];
+			let idx = startIndex;
+			let rowLength = row.length;
+			let textParts = [];
+			let insideQualifier = false;
+			let j = 0;
+			
+			while (true) {
+				if (j >= rowLength) {
+					if (insideQualifier && idx + 1 < rows.length) {
+						// Continue to next line, adding normalized newline
+						textParts.push('\n');
+						idx++;
+						row = rows[idx] || "";
+						row = processSpaceRow(row);
+						rowLength = row.length;
+						j = 0;
 						continue;
 					}
-					
-					if (!startQualifier && row[j] === delimiterChar) {
-						if (!matrix[i]) {
-							matrix[i] = [];
-						}
-						matrix[i].push(_text);
-						_text = "";
-					} else {
-						_text += row[j];
-						if (j === row.length - 1) {
-							if (!matrix[i]) {
-								matrix[i] = [];
-							}
-							matrix[i].push(_text);
+					// End of record
+					fields.push(textParts.join(''));
+					return { fields: fields, curIndex: idx };
+				}
+
+				const charCode = row.charCodeAt(j);
+				if (charCode === qualifierCode) {
+					if (!insideQualifier && (j === 0 || row.charCodeAt(j - 1) === delimiterCode)) {
+						insideQualifier = true;
+						j++;
+						continue;
+					} else if (insideQualifier) {
+						if (j + 1 < rowLength && row.charCodeAt(j + 1) === qualifierCode) {
+							textParts.push(textQualifier);
+							j += 2;
+							continue;
+						} else {
+							insideQualifier = false;
+							j++;
+							continue;
 						}
 					}
 				}
+				
+				if (!insideQualifier && charCode === delimiterCode) {
+					fields.push(textParts.join(''));
+					textParts = [];
+				} else {
+					textParts.push(row[j]);
+				}
+				j++;
+			}
+		};
+		
+		const matrix = [];
+		for (let i = 0; i < rows.length; i++) {
+			let row = processSpaceRow(rows[i]);
+			
+			if (!row.length) {
+				matrix.push([""]);
+				continue;
+			}
+			
+			if (hasQualifier) {
+				const res = parseRowWithQualifiers(row, i);
+				matrix.push(res.fields);
+				i = res.curIndex;
 			} else {
-				matrix.push(row.split(delimiterChar));	
+				matrix.push(delimiterChar === undefined ? [row] : row.split(delimiterChar));
 			}
 		}
 		return matrix;
@@ -15051,6 +15123,257 @@
 		return str;
 	}
 
+	function getCharStrongDir(char) {
+		let type = AscBidi.getType(char);
+		if (type & AscBidi.FLAG.STRONG) {
+			if (type & AscBidi.FLAG.RTL) {
+				return AscBidi.DIRECTION_FLAG.RTL;
+			} else {
+				return AscBidi.DIRECTION_FLAG.LTR;
+			}
+		}
+		return null;
+	}
+
+	function applyElementDirection(element) {
+		if (!element)
+			return;
+		const text = element.value || '';
+		let dir = 'ltr';
+		for (let iter = text.getUnicodeIterator(); iter.check(); iter.next()) {
+			let charDir = AscCommon.getCharStrongDir(iter.value());
+			if (charDir === AscBidi.DIRECTION_FLAG.RTL) {
+				dir = 'rtl';
+				break;
+			}
+		}
+		element.dir = dir;
+	}
+
+
+	function getFirstStrongDirection(text) {
+		if(!text) return null;
+		for (let iter = text.getUnicodeIterator(); iter.check(); iter.next()) {
+			let cp = iter.value();
+			let dir = getCharStrongDir(cp);
+			if (dir !== null) {
+				return dir;
+			}
+		}
+		return null;
+	}
+
+	function getGradientPoints(min_x, min_y, max_x, max_y, _angle, scale) {
+		let points = { x0 : 0, y0 : 0, x1 : 0, y1 : 0 };
+
+		let fAE = AscFormat.fApproxEqual;
+		if (fAE(min_x, max_x) && fAE(min_y, max_y)) {
+			points.x0 = min_x;
+			points.y0 = min_y;
+			points.x1 = min_x;
+			points.y1 = min_y;
+			return points;
+		}
+
+		if (fAE(min_x, max_x)) {
+			points.x0 = min_x;
+			points.y0 = min_y;
+			points.x1 = min_x;
+			points.y1 = max_y;
+			return points;
+		}
+
+		if (fAE(min_y, max_y)) {
+			points.x0 = min_x;
+			points.y0 = min_y;
+			points.x1 = max_x;
+			points.y1 = min_y;
+			return points;
+		}
+
+		let angle = _angle / 60000;
+		while (angle < 0)
+			angle += 360;
+		while (angle >= 360)
+			angle -= 360;
+
+		if (Math.abs(angle) < 1) {
+			points.x0 = min_x;
+			points.y0 = min_y;
+			points.x1 = max_x;
+			points.y1 = min_y;
+
+			return points;
+		}
+		else if (Math.abs(angle - 90) < 1) {
+			points.x0 = min_x;
+			points.y0 = min_y;
+			points.x1 = min_x;
+			points.y1 = max_y;
+
+			return points;
+		}
+		else if (Math.abs(angle - 180) < 1) {
+			points.x0 = max_x;
+			points.y0 = min_y;
+			points.x1 = min_x;
+			points.y1 = min_y;
+
+			return points;
+		}
+		else if (Math.abs(angle - 270) < 1) {
+			points.x0 = min_x;
+			points.y0 = max_y;
+			points.x1 = min_x;
+			points.y1 = min_y;
+
+			return points;
+		}
+
+		let grad_a = AscCommon.deg2rad(angle);
+		if (!scale) {
+			if (angle > 0 && angle < 90) {
+				let p = this.getNormalPoint(min_x, min_y, grad_a, max_x, max_y);
+
+				points.x0 = min_x;
+				points.y0 = min_y;
+				points.x1 = p.X;
+				points.y1 = p.Y;
+
+				return points;
+			}
+			if (angle > 90 && angle < 180) {
+				let p = this.getNormalPoint(max_x, min_y, grad_a, min_x, max_y);
+
+				points.x0 = max_x;
+				points.y0 = min_y;
+				points.x1 = p.X;
+				points.y1 = p.Y;
+
+				return points;
+			}
+			if (angle > 180 && angle < 270) {
+				let p = this.getNormalPoint(max_x, max_y, grad_a, min_x, min_y);
+
+				points.x0 = max_x;
+				points.y0 = max_y;
+				points.x1 = p.X;
+				points.y1 = p.Y;
+
+				return points;
+			}
+			if (angle > 270 && angle < 360) {
+				let p = this.getNormalPoint(min_x, max_y, grad_a, max_x, min_y);
+
+				points.x0 = min_x;
+				points.y0 = max_y;
+				points.x1 = p.X;
+				points.y1 = p.Y;
+
+				return points;
+			}
+			// никогда сюда не зайдем
+			return points;
+		}
+
+		// scale == true
+		let _grad_45 = (Math.PI / 2) - Math.atan2(max_y - min_y, max_x - min_x);
+		let _grad_90_45 = (Math.PI / 2) - _grad_45;
+		if (angle > 0 && angle < 90) {
+			if (angle <= 45)
+			{
+				grad_a = (_grad_45 * angle / 45);
+			}
+			else
+			{
+				grad_a = _grad_45 + _grad_90_45 * (angle - 45) / 45;
+			}
+
+			let p = this.getNormalPoint(min_x, min_y, grad_a, max_x, max_y);
+
+			points.x0 = min_x;
+			points.y0 = min_y;
+			points.x1 = p.X;
+			points.y1 = p.Y;
+
+			return points;
+		}
+		if (angle > 90 && angle < 180) {
+			if (angle <= 135) {
+				grad_a = Math.PI / 2 + _grad_90_45 * (angle - 90) / 45;
+			}
+			else {
+				grad_a = Math.PI / 2 + _grad_90_45 + _grad_45 * (angle - 135) / 45;
+			}
+
+			let p = this.getNormalPoint(max_x, min_y, grad_a, min_x, max_y);
+
+			points.x0 = max_x;
+			points.y0 = min_y;
+			points.x1 = p.X;
+			points.y1 = p.Y;
+
+			return points;
+		}
+		if (angle > 180 && angle < 270) {
+			if (angle <= 225)
+			{
+				grad_a = Math.PI + _grad_45 * (angle - 180) / 45;
+			}
+			else
+			{
+				grad_a = Math.PI + _grad_45 + _grad_90_45 * (angle - 225) / 45;
+			}
+
+			let p = this.getNormalPoint(max_x, max_y, grad_a, min_x, min_y);
+
+			points.x0 = max_x;
+			points.y0 = max_y;
+			points.x1 = p.X;
+			points.y1 = p.Y;
+
+			return points;
+		}
+		if (angle > 270 && angle < 360) {
+			if (angle <= 315)
+			{
+				grad_a = 3 * Math.PI / 2 + _grad_90_45 * (angle - 270) / 45;
+			}
+			else
+			{
+				grad_a = 3 * Math.PI / 2 + _grad_90_45 + _grad_45 * (angle - 315) / 45;
+			}
+
+			let p = this.getNormalPoint(min_x, max_y, grad_a, max_x, min_y);
+
+			points.x0 = min_x;
+			points.y0 = max_y;
+			points.x1 = p.X;
+			points.y1 = p.Y;
+
+			return points;
+		}
+		// никогда сюда не зайдем
+		return points;
+	}
+
+	function getNormalPoint(x0, y0, angle, x1, y1) {
+		// точка - пересечение прямой, проходящей через точку (x0, y0) под углом angle и
+		// перпендикуляра к первой прямой, проведенной из точки (x1, y1)
+		let ex1 = Math.cos(angle);
+		let ey1 = Math.sin(angle);
+
+		let ex2 = -ey1;
+		let ey2 = ex1;
+
+		let a = ex1 / ey1;
+		let b = ex2 / ey2;
+
+		let x = ((a * b * y1 - a * b * y0) - (a * x1 - b * x0)) / (b - a);
+		let y = (x - x0) / a + y0;
+
+		return { X : x, Y : y };
+	}
 	function CTree() {
 	}
 
@@ -15158,6 +15481,11 @@
 				}
 			}
 		}
+	};
+
+	function clampNumber(value, min, max)
+	{
+		return value < min ? min : value > max ? max : value;
 	}
 
 	//------------------------------------------------------------export---------------------------------------------------
@@ -15176,6 +15504,7 @@
 	window["AscCommon"].openFileCommand = openFileCommand;
 	window["AscCommon"].sendCommand = sendCommand;
 	window["AscCommon"].sendSaveFile = sendSaveFile;
+	window["AscCommon"].c_oAscServerError = c_oAscServerError;
 	window["AscCommon"].mapAscServerErrorToAscError = mapAscServerErrorToAscError;
 	window["AscCommon"].joinUrls = joinUrls;
 	window["AscCommon"].getFullImageSrc2 = getFullImageSrc2;
@@ -15209,6 +15538,7 @@
 	window["AscCommon"].getUrlType = getUrlType;
 	window["AscCommon"].prepareUrl = prepareUrl;
 	window["AscCommon"].getUserColorById = getUserColorById;
+	window["AscCommon"].setUserColorById = setUserColorById;
 	window["AscCommon"].isNullOrEmptyString = isNullOrEmptyString;
 	window["AscCommon"].unleakString = unleakString;
 	window["AscCommon"].readValAttr = readValAttr;
@@ -15225,6 +15555,12 @@
 	window["AscCommon"].getLTRString = getLTRString;
 	window["AscCommon"].getRTLString = getRTLString;
 	window["AscCommon"].stripDirectionMarks = stripDirectionMarks;
+	window["AscCommon"].getCharStrongDir = getCharStrongDir;
+	window["AscCommon"].applyElementDirection = applyElementDirection;
+	window["AscCommon"].getFirstStrongDirection = getFirstStrongDirection;
+	window["AscCommon"].getGradientPoints = getGradientPoints;
+	window["AscCommon"].getNormalPoint = getNormalPoint;
+	window["AscCommon"].clampNumber = clampNumber;
 
 	window["AscCommon"].DocumentUrls = DocumentUrls;
 	window["AscCommon"].OpenFileResult = OpenFileResult;
@@ -15364,7 +15700,7 @@
 	window["AscCommon"].fromModelCryptAlgorithmSid = fromModelCryptAlgorithmSid;
 	window["AscCommon"].getMemoryInfo = getMemoryInfo;
 	window["AscCommon"].getClientInfoString = getClientInfoString;
-	window["AscCommon"].sendClientLog = sendClientLog;
+	window["AscCommon"].sendClientLog = window["AscCommon"]["sendClientLog"] = sendClientLog;
 
 	window["AscCommon"].getNativePrintRanges = getNativePrintRanges;
 

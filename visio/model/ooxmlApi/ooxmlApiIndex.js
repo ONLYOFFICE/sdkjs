@@ -46,8 +46,8 @@
 	/**
 	 *    // Docs old:
 	 * // Text_Type complexType: https://learn.microsoft.com/ru-ru/office/client-developer/visio/text_type-complextypevisio-xml
-	 * @returns {Text_Type}
 	 * @constructor
+	 * @extends CBaseFormatNoIdObject
 	 */
 	function Text_Type() {
 		AscFormat.CBaseFormatNoIdObject.call(this);
@@ -566,7 +566,7 @@
 	 * Finds shape section by formula. Compares N with string argument. For Geometry use find sections.
 	 * @param {String} formula
 	 * @memberof SheetStorage
-	 * @returns {Section_Type | null}
+	 * @returns {Section_Type | undefined}
 	 */
 	SheetStorage.prototype.getSection = function getSection(formula) {
 		let section = this.inheritedElements[formula];
@@ -581,7 +581,7 @@
 	 * Returns link to object not copy.
 	 * @param {String} formula
 	 * @memberof SheetStorage
-	 * @returns {Row_Type | null}
+	 * @returns {Row_Type | undefined}
 	 */
 	SheetStorage.prototype.getRow = function getRow(formula) {
 		let row = this.inheritedElements[formula];
@@ -613,7 +613,7 @@
 	 * Let's search cells only directly in Section for now (if called on Section).
 	 * @param {String} formula
 	 * @memberof SheetStorage
-	 * @returns {Cell_Type|null}
+	 * @returns {Cell_Type | undefined}
 	 */
 	SheetStorage.prototype.getCell = function getCell(formula) {
 		// Cells can have N only no IX
@@ -682,7 +682,7 @@
 	 * low performance function! use if can't use get section
 	 * @param {String} formula
 	 * @memberof SheetStorage
-	 * @returns {Section_Type[] | null}
+	 * @returns {Section_Type[]}
 	 */
 	SheetStorage.prototype.getSections = function(formula) {
 		// TODO check may be optimized. maybe use getGeometrySections
@@ -938,7 +938,7 @@
 	 * @param {CTheme[]} themes
 	 * @param {{fontColor?: boolean, lineUniFill?: boolean, uniFillForegnd?: boolean}?} themeValWasUsedFor - changes
 	 * during function. use only for font Color LineColor and FillColor cells otherwise undefined
-	 * @param {boolean?} gradientEnabled
+	 * @param {boolean?} gradientEnabled - true by default
 	 * @param {number?}  themedColorsRow
 	 * @return {(CUniFill | CUniColor | boolean | *)}
 	 */
@@ -959,9 +959,9 @@
 		let fillColorResultCells = ["Color", "GradientStopColor", "ShdwForegnd"];
 		let numberResultCells = ["LinePattern", "LineWeight", "GradientStopColorTrans", "GradientStopPosition",
 		"FillGradientAngle", "EndArrowSize", "BeginArrowSize", "FillPattern", "LineCap", "ShdwPattern",
-		"ShapeShdwOffsetX", "ShapeShdwOffsetY"];
+		"ShapeShdwOffsetX", "ShapeShdwOffsetY", "ShapeShdwShow", "ShapeShdwType", "ShapeShdwScaleFactor"];
 		let stringResultCells = ["EndArrow", "BeginArrow", "Font"];
-		let booleanResultCells = ["FillGradientEnabled"];
+		let booleanResultCells = ["FillGradientEnabled", "LineGradientEnabled"];
 
 		// TODO handle 2.2.7.5	Fixed Theme
 
@@ -1354,7 +1354,7 @@
 	 * Returns object of shape not copy!
 	 *
 	 * @memberof Shape_Type
-	 * @returns {Text_Type | null}
+	 * @returns {Text_Type | undefined}
 	 */
 	Shape_Type.prototype.getTextElement = function getTextElement() {
 		let text = this.inheritedElements["Text"];
@@ -1817,6 +1817,72 @@
 		// return this.elements.find(function findForeignData(element) {
 		// 	return element.constructor.name === "ForeignData_Type";
 		// });
+	}
+
+	/**
+	 * @memberof Shape_Type
+	 * returns index of color shape theme
+	 */
+	Shape_Type.prototype.calculateColorThemeIndex = function calculateColorThemeIndex(pageInfo) {
+		let themeIndex = 0; // zero index means no theme - use default values
+		let themeScopeCellName = this.isConnectorStyleIherited ? "ConnectorSchemeIndex" : "ColorSchemeIndex";
+		let shapeColorSchemeThemeIndex = this.getCellNumberValue(themeScopeCellName);
+		if (isNaN(shapeColorSchemeThemeIndex)) {
+			// if not found or smth
+			// shapeColorSchemeThemeIndex = 0; // zero index means no theme
+			themeIndex = 0; // zero index means no theme
+		} else if (shapeColorSchemeThemeIndex === 65534) {
+			let pageThemeIndex = pageInfo.pageSheet.getCellNumberValue(themeScopeCellName);
+			if (!isNaN(pageThemeIndex)) {
+				themeIndex = pageThemeIndex;
+			} else {
+				// it's ok sometimes
+				// AscCommon.consoleLog("pageThemeIndexCell not found");
+				themeIndex = 0;
+			}
+		} else {
+			themeIndex = shapeColorSchemeThemeIndex;
+		}
+		return themeIndex;
+	}
+
+	/**
+	 * calculate color theme index and get theme from themes.
+	 * Todo for proper cell select proper themeIndex ConnectorSchemeIndex / EffectSchemeIndex / FontSchemeIndex ...
+	 * @param {Page_Type} pageInfo
+	 * @param {CTheme[]} themes
+	 * @return {*}
+	 */
+	Shape_Type.prototype.getTheme = function getTheme(pageInfo, themes) {
+		let isConnectorShape = this.isConnectorStyleIherited;
+
+		let themeIndex = this.calculateColorThemeIndex(pageInfo);
+
+		// find theme by themeIndex
+		let theme = themes.find(function (theme) {
+			// if search by theme index - theme.themeElements.themeExt.themeSchemeSchemeEnum
+			let findThemeByElement;
+			if (isConnectorShape && theme.themeElements.themeExt) {
+				findThemeByElement = theme.themeElements.themeExt.themeSchemeSchemeEnum;
+			} else if (!isConnectorShape && theme.themeElements.clrScheme.clrSchemeExtLst) {
+				findThemeByElement = theme.themeElements.clrScheme.clrSchemeExtLst.schemeEnum;
+			}
+
+			if (!findThemeByElement) {
+				return false;
+			}
+
+			let themeEnum = Number(findThemeByElement);
+			return themeEnum === themeIndex;
+		});
+
+		// themes.find didn't find anything
+		if (theme === undefined) {
+			AscCommon.consoleLog("Theme was not found by theme enum in themes. using themes[0]");
+			theme = themes[0];
+		}
+
+		return theme;
 	}
 
 	/**

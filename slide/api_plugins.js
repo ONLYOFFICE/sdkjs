@@ -163,6 +163,22 @@
 	};
 
 	/**
+	 * Removes the OLE object from the presentation by its internal ID.
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @alias RemoveOleObject
+	 * @param {string} internalId - The OLE object identifier which is used to work with OLE object added to the presentation.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveOleObject.js
+	 */
+	Api.prototype["pluginMethod_RemoveOleObject"] = function (internalId) {
+		let logicDocument = this.WordControl.m_oLogicDocument;
+		if (logicDocument) {
+			logicDocument.RemoveDrawingObjectById(internalId);
+		}
+	};
+
+	/**
 	 * Starts the presentation slide show.
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]

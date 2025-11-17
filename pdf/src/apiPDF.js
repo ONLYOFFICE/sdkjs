@@ -433,9 +433,9 @@
         // },
         get: function() {
             if (this.field.IsWidget())
-                return this.field.GetOrigRect();
+                return this.field.GetRect();
             else if (this.field.IsAllKidsWidgets())
-                return this.field.GetKid(0).GetOrigRect();
+                return this.field.GetKid(0).GetRect();
             else
                 throw Error("InvalidGetError: Field is not a widget");
         }

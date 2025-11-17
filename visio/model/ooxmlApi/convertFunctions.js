@@ -71,93 +71,1247 @@
 	Shape_Type.prototype.convertShape = function (visioDocument,
 												  pageInfo, drawingPageScale, currentGroupHandling) {
 
+
+		// Method start
+
+		// Refact:
+		// 1) I guess any cell can be = THEMEVAL() so better to always
+		// use Cell_Type.calculateValue method
+		// consider sometimes = THEMEVAL() can be replaced not to Themed but
+		// to concrete value on save for Cell_Type.v
+		// 2) May be create methods on rows sections and shape -
+		// this.calculateCellValue("FillBkgnd",this, pageInfo,
+		// 			visioDocument.themes, themeValWasUsedFor, true);
+		// 3) May be bind arguments to calculateValue function
+		// 4) May be move getTextCShape to other file
+
+		let maxHeightScaledIn;
+		if (currentGroupHandling) {
+			let heightMM = currentGroupHandling.spPr.xfrm.extY;
+			maxHeightScaledIn = heightMM / g_dKoef_in_to_mm;
+		} else {
+			let pageIndex = visioDocument.pages.page.indexOf(pageInfo);
+			maxHeightScaledIn = visioDocument.GetHeightScaledMM(pageIndex) / g_dKoef_in_to_mm;
+		}
+
+		// there was case with shape type group with no PinX and PinY
+		// https://disk.yandex.ru/d/tl877cuzcRcZYg
+		let pinX_inch = this.getCellNumberValueWithScale("PinX", drawingPageScale);
+		let pinY_inch = this.getCellNumberValueWithScale("PinY", drawingPageScale);
+
+		/** @type {{ [key: string]: Cell_Type }} */
+		let layerProperties = this.getLayerProperties(pageInfo);
+		// only if all shape layers are invisible shape is invisible
+		let areShapeLayersInvisible = layerProperties["Visible"] !== undefined && layerProperties["Visible"].v === "0";
+
 		/**
-		 * handle QuickStyleVariation cell which can change color (but only if color is a result of ThemeVal)
-		 * cant be separated for unifill and stroke
-		 * @param {CUniFill} oStrokeUniFill
-		 * @param {CUniFill} uniFill
-		 * @param {Shape_Type} shape
-		 * @param {{lineUniFill: boolean, uniFillForegnd: boolean}} themeValWasUsedFor
+		 * @type {CUniFill | undefined}
+		 * if layerColor is applied fill is always white
 		 */
-		function handleQuickStyleVariation(oStrokeUniFill, uniFill, shape, themeValWasUsedFor) {
-			// https://learn.microsoft.com/en-us/openspecs/sharepoint_protocols/ms-vsdx/68bb0221-d8a1-476e-a132-8c60a49cea63?redirectedfrom=MSDN
-			// consider "QuickStyleVariation" cell
-			// https://visualsignals.typepad.co.uk/vislog/2013/05/visio-2013-themes-in-the-shapesheet-part-2.html
-			let backgroundColorHSL = {H: undefined, S: undefined, L: undefined};
-			let lineColorHSL = {H: undefined, S: undefined, L: undefined};
-			let fillColorHSL = {H: undefined, S: undefined, L: undefined};
-			let lineColor = oStrokeUniFill.fill && oStrokeUniFill.fill.color && oStrokeUniFill.fill.color.color.RGBA;
-			let fillColor = uniFill.fill && uniFill.fill.color && uniFill.fill.color.color.RGBA;
+		let layerColor;
 
-			if (lineColor !== undefined && fillColor !== undefined) {
-				AscFormat.CColorModifiers.prototype.RGB2HSL(255, 255, 255, backgroundColorHSL);
-				AscFormat.CColorModifiers.prototype.RGB2HSL(lineColor.R, lineColor.G, lineColor.B, lineColorHSL);
-				AscFormat.CColorModifiers.prototype.RGB2HSL(fillColor.R, fillColor.G, fillColor.B, fillColorHSL);
+		/**
+		 * @type {CUniFill}
+		 * if layerColor is applied fill is always white
+		 */
+		let layerFill = AscFormat.CreateUnfilFromRGB(255, 255, 255);
+		if (layerProperties["Color"] !== undefined && layerProperties["Color"].v !== "255") {
+			let layerColorUniColor = layerProperties["Color"].calculateValue(this, pageInfo,
+					visioDocument.themes);
+			layerColor = AscFormat.CreateUnfilFromRGB(layerColorUniColor.color.RGBA.R,
+					layerColorUniColor.color.RGBA.G, layerColorUniColor.color.RGBA.B);
+		}
 
-				// covert L to percents
-				backgroundColorHSL.L = backgroundColorHSL.L / 255 * 100;
-				lineColorHSL.L = lineColorHSL.L / 255 * 100;
-				fillColorHSL.L = fillColorHSL.L / 255 * 100;
+		let isShapeDeleted = this.del === "1" || this.del === true;
+		if (isShapeDeleted) {
+			return createEmptyShape();
+		}
 
-				let quickStyleVariationCell = shape.getCell("QuickStyleVariation");
-				if (quickStyleVariationCell) {
-					let quickStyleVariationCellValue = Number(quickStyleVariationCell.v);
-					if ((quickStyleVariationCellValue & 4) === 4 && themeValWasUsedFor.lineUniFill) {
-						// line color variation enabled (bit mask used)
-						if (Math.abs(backgroundColorHSL.L - lineColorHSL.L) < 16.66) {
-							if (backgroundColorHSL.L <= 72.92) {
-								// if background is dark set stroke to white
-								lineColor.R = 255;
-								lineColor.G = 255;
-								lineColor.B = 255;
-							} else {
-								if (Math.abs(backgroundColorHSL.L - fillColorHSL.L) >
-									Math.abs(backgroundColorHSL.L - lineColorHSL.L)) {
-									// evaluation = THEMEVAL("FillColor")
-									// get theme shape fill color despite cell
-									// line below will give unifill with pattern maybe or gradient
-									// lineUniFill = AscVisio.themeval(this.theme, shape, null, "FillColor");
-									lineColor.R = fillColor.R;
-									lineColor.G = fillColor.G;
-									lineColor.B = fillColor.B;
+
+		// also check for {}, undefined, NaN, null
+		if (isNaN(pinX_inch) || pinX_inch === null || isNaN(pinY_inch) || pinY_inch === null ||
+			areShapeLayersInvisible) {
+			// AscCommon.consoleLog('pinX_inch or pinY_inch is NaN for Shape or areShapeLayersInvisible. Its ok sometimes. ' +
+				// 'Empty CShape is returned. See original shape: ', this);
+			// let's use empty shape
+			return createEmptyShape();
+		}
+
+		let shapeAngle = this.getCellNumberValue("Angle");
+		let locPinX_inch = this.getCellNumberValueWithScale("LocPinX", drawingPageScale);
+		let locPinY_inch = this.getCellNumberValueWithScale("LocPinY", drawingPageScale);
+		let shapeWidth_inch = this.getCellNumberValueWithScale("Width", drawingPageScale);
+		let shapeHeight_inch = this.getCellNumberValueWithScale("Height", drawingPageScale);
+
+		if (isInvertCoords) {
+			pinY_inch = maxHeightScaledIn - pinY_inch;
+			shapeAngle *= -1;
+			locPinY_inch = shapeHeight_inch - locPinY_inch;
+		}
+
+		// to rotate around point we: 1) move shape to new cords 2) rotate shape around center using shape angle
+		let newCords = getCordsRotatedAroundPoint(pinX_inch,
+				pinY_inch, locPinX_inch,
+				locPinY_inch, shapeWidth_inch, shapeHeight_inch, shapeAngle);
+		let x_inch = newCords[0];
+		let y_inch = newCords[1];
+
+		/**
+		 * Fill without gradient used for handleQuickStyleVariation function and for handleTextQuickStyleVariation.
+		 * We need fill without pattern and gradient applied. Pattern applied can set NoSolidFill object without color,
+		 * so we will not be able to calculate handleVariationColor function result
+		 * @type CUniFill
+		 */
+		let uniFillForegndNoGradient = null;
+
+		/**
+		 * Used for handleQuickStyleVariation function and for handleTextQuickStyleVariation.
+		 * @type CUniFill */
+		let lineUniFillNoGradient = null;
+
+		/**
+		 * Final uniFill with gradient and pattern applied.
+		 * Used for result shape fill.
+		 * @type CUniFill */
+		let uniFillForegndWithPattern = null;
+
+		/**
+		 * lineUniFill after gradient applied.
+		 * Used for result shape stroke.
+		 * @type {CUniFill}
+		 */
+		let lineUniFill = null;
+
+		if (layerColor) {
+			uniFillForegndWithPattern = layerFill;
+			uniFillForegndNoGradient = layerFill;
+			lineUniFillNoGradient = layerColor;
+			lineUniFill = layerColor;
+		} else {
+			/**
+			 * @type boolean
+			 */
+			let fillGradientEnabled;
+
+			/**
+			 * Fill without pattern applied. But with gradient applied.
+			 * @type CUniFill */
+			let uniFillForegnd = null;
+
+			/** @type CUniFill */
+			let	uniFillBkgnd = null;
+
+
+			/**
+			 * Let's memorize what color properties used themeVal because quickStyleVariation can change only those
+			 * color props that used themeVal function.
+			 * @type {{lineUniFill: boolean, uniFillForegnd: boolean}}
+			 */
+			let themeValWasUsedFor = {
+				lineUniFill : false,
+				uniFillForegnd: false
+			}
+
+			uniFillForegndNoGradient = getForegroundNoGradient(this, pageInfo, visioDocument, themeValWasUsedFor);
+
+			uniFillBkgnd = getFillBackground(this, pageInfo, visioDocument, themeValWasUsedFor);
+
+			lineUniFillNoGradient = getLineColorNoGradient(this, pageInfo, visioDocument, themeValWasUsedFor);
+
+			// calculate variation before pattern bcs pattern can make NoFillUniFill object without color
+			// use quickStyleVariation only if themes exist in file.
+			// Default theme which come to visioDocument.themes[0] should not be considered.
+			// See bug https://bugzilla.onlyoffice.com/show_bug.cgi?id=76044
+			if (this.calculateColorThemeIndex(pageInfo) !== 0) {
+				let newFills = handleQuickStyleVariation(lineUniFillNoGradient, uniFillForegndNoGradient,
+						this, themeValWasUsedFor, pageInfo, visioDocument.themes);
+				uniFillForegndNoGradient = newFills[0];
+				lineUniFillNoGradient = newFills[1];
+			}
+
+			// FillGradientDir and FillPattern can tell about gradient type
+			// if FillGradient Enabled
+			// FillGradientDir defines gradient type. If gradient is linear gradient type is complemented with angle.
+			// 13 FillGradientDir is path. path cant be set in interface. also like some radial gradient types witch cant be set in interface.
+			// FillGradientDir > 13 is linear like FillGradientDir = 0
+			//
+			// if FillGradientEnabled Disabled
+			// FillPattern defines gradient type and colors define. There linear types with different predefined angles, rectandulat and radial gradient types.
+			// Rectangular and radial gradient types differs. There are two colors when i set three colors for gradient. Also FillPattern gradients are not listed in
+			// interface. Only true patterns.
+			//
+			// Its better to convert linear FillPattern gradients there. But FillPattern radial gradients seems to be
+			// not like FillGradientDir radial gradients but with different colors
+
+			let fillGradientEnabledCell = this.getCell("FillGradientEnabled");
+			if (fillGradientEnabledCell !== undefined) {
+				fillGradientEnabled = fillGradientEnabledCell.calculateValue(this, pageInfo,
+						visioDocument.themes, undefined, true);
+			} else {
+				fillGradientEnabled = false;
+			}
+
+			if (fillGradientEnabled) {
+				uniFillForegnd = calculateGradient(this, pageInfo,
+						visioDocument.themes, themeValWasUsedFor, true);
+			} else {
+				uniFillForegnd = uniFillForegndNoGradient;
+			}
+
+			let lineGradientEnabled;
+			let lineGradientEnabledCell = this.getCell("LineGradientEnabled");
+			if (lineGradientEnabledCell !== undefined) {
+				lineGradientEnabled = lineGradientEnabledCell.calculateValue(this, pageInfo,
+						visioDocument.themes);
+			} else {
+				lineGradientEnabled = false;
+			}
+
+			if (lineGradientEnabled) {
+				// Line gradient uniFill is not supported for now so let's take middle color from gradient
+				let lineGradientFill = calculateGradient(this, pageInfo,
+						visioDocument.themes, themeValWasUsedFor, false);
+				let colorIndex = Math.floor(lineGradientFill.fill.colors.length / 2);
+				let cUniColor = lineGradientFill.fill.colors[colorIndex].color;
+
+				// lineUniFill = lineGradientFill;
+				lineUniFill = new AscFormat.CUniFill();
+				lineUniFill.setFill(new AscFormat.CSolidFill());
+				lineUniFill.fill.setColor(cUniColor);
+			} else {
+				lineUniFill = lineUniFillNoGradient;
+			}
+
+			uniFillForegndWithPattern = getUnifillForegroundWithPattern(this, pageInfo,visioDocument,
+					themeValWasUsedFor, uniFillBkgnd, uniFillForegnd, fillGradientEnabled);
+
+
+			// Block end
+			// Used functions:
+			/**
+			 * Calculate FillForegnd without gradient for handleQuickStyleVariation
+			 * @param {Shape_Type} shape
+			 * @param {Page_Type} pageInfo
+			 * @param {CVisioDocument} visioDocument
+			 * @param {{lineUniFill: boolean, uniFillForegnd: boolean}} themeValWasUsedFor
+			 * @return {CUniFill} uniFillForegndNoGradient
+			 */
+			function getForegroundNoGradient(shape, pageInfo, visioDocument, themeValWasUsedFor) {
+				const fillForegndCell = shape.getCell("FillForegnd");
+				let res;
+				if (fillForegndCell) {
+					// AscCommon.consoleLog("FillForegnd was found:", fillForegndCell);
+					res = fillForegndCell.calculateValue(shape, pageInfo,
+							visioDocument.themes, themeValWasUsedFor, false);
+
+					const fillForegndTransValue = shape.getCellNumberValue("FillForegndTrans");
+					if (!isNaN(fillForegndTransValue)) {
+						/** @type {CSolidFill} */
+						const fillObj = res.fill;
+						fillObj.color.color.RGBA.A = fillObj.color.color.RGBA.A * (1 - fillForegndTransValue);
+					} else {
+						// AscCommon.consoleLog("fillForegndTrans value is themed or something. Not calculated for", this);
+					}
+				} else {
+					AscCommon.consoleLog("fillForegnd cell not found for", shape);
+					// try to get from theme
+					// uniFillForegnd = AscVisio.themeval(null, this, pageInfo, visioDocument.themes, "FillColor",
+					// 	undefined, fillGradientEnabled);
+					// just use white
+					res = AscFormat.CreateUnfilFromRGB(255, 255, 255);
+				}
+				return res;
+			}
+
+			/**
+			 * Calculate FillBkgnd with gradient
+			 * @param {Shape_Type} shape
+			 * @param {Page_Type} pageInfo
+			 * @param {CVisioDocument} visioDocument
+			 * @param {{lineUniFill: boolean, uniFillForegnd: boolean}} themeValWasUsedFor
+			 * @return {CUniFill} uniFillBkgnd
+			 */
+			function getFillBackground(shape, pageInfo, visioDocument, themeValWasUsedFor) {
+				const fillBkgndCell = shape.getCell("FillBkgnd");
+				let res;
+				if (fillBkgndCell) {
+					// AscCommon.consoleLog("FillBkgnd was found:", fillBkgndCell);
+					res = fillBkgndCell.calculateValue(shape, pageInfo,
+							visioDocument.themes, themeValWasUsedFor);
+
+					if (!(res.fill.type === Asc.c_oAscFill.FILL_TYPE_GRAD)) {
+						const fillBkgndTransValue = shape.getCellNumberValue("FillBkgndTrans");
+						if (!isNaN(fillBkgndTransValue)) {
+							/** @type {CSolidFill} */
+							const fillObj = res.fill;
+							fillObj.color.color.RGBA.A = fillObj.color.color.RGBA.A * (1 - fillBkgndTransValue);
+						} else {
+							// AscCommon.consoleLog("fillBkgndTrans value is themed or something. Not calculated for", this);
+						}
+					}
+				}
+				return res;
+			}
+
+			/**
+			 * Calculate LineColor no gradient
+			 * @param {Shape_Type} shape
+			 * @param {Page_Type} pageInfo
+			 * @param {CVisioDocument} visioDocument
+			 * @param {{lineUniFill: boolean, uniFillForegnd: boolean}} themeValWasUsedFor
+			 * @return {CUniFill} lineUniFillNoGradient
+			 */
+			function getLineColorNoGradient(shape, pageInfo, visioDocument, themeValWasUsedFor) {
+				const lineColorCell = shape.getCell("LineColor");
+				let res;
+				if (lineColorCell) {
+					// AscCommon.consoleLog("LineColor was found for shape", lineColorCell);
+					res = lineColorCell.calculateValue(shape, pageInfo,
+							visioDocument.themes, themeValWasUsedFor, false);
+
+					const lineTransValue = shape.getCellNumberValue("LineColorTrans");
+					if (!isNaN(lineTransValue)) {
+						// lineUniFillNoGradient.transparent is opacity in fact
+						// setting RGBA.A doesn't work
+						res.transparent = 255 - lineTransValue * 255;
+					}
+				} else {
+					AscCommon.consoleLog("LineColor cell for line stroke (border) was not found painting dark");
+					res = AscFormat.CreateUnfilFromRGB(0, 0, 0);
+				}
+				return res;
+			}
+
+			/**
+			 * Using shape data and params for calculations
+			 * @param {Shape_Type} shape
+			 * @param {Page_Type} pageInfo
+			 * @param {CVisioDocument} visioDocument
+			 * @param {{lineUniFill: boolean, uniFillForegnd: boolean}} themeValWasUsedFor
+			 * @param {CUniFill} uniFillBkgnd
+			 * @param {CUniFill} uniFillForegnd
+			 * @param {boolean} fillGradientEnabled
+			 * @return {CUniFill} fill foreground with pattern applied
+			 */
+			function getUnifillForegroundWithPattern(shape, pageInfo, visioDocument,
+													 themeValWasUsedFor, uniFillBkgnd, uniFillForegnd, fillGradientEnabled) {
+				const fillPatternTypeCell = shape.getCell("FillPattern");
+				const fillPatternType = fillPatternTypeCell ? fillPatternTypeCell.calculateValue(shape, pageInfo,
+						visioDocument.themes) : 1;
+				let res;
+
+				if (!isNaN(fillPatternType) && uniFillBkgnd && uniFillForegnd) {
+					// https://learn.microsoft.com/ru-ru/office/client-developer/visio/fillpattern-cell-fill-format-section
+					let isfillPatternTypeGradient = fillPatternType >= 25 && fillPatternType <= 40;
+					if (fillGradientEnabled) {
+						res = uniFillForegnd;
+					} else if (fillPatternType === 0) {
+						res = AscFormat.CreateNoFillUniFill();
+					} else if (fillPatternType === 1) {
+						// convert fill to solid
+						//
+						// FILL_TYPE_NONE never comes
+						// FILL_TYPE_BLIP - images are handled separate from fill
+						// FILL_TYPE_NOFILL never comes
+						// FILL_TYPE_SOLID is handled
+						// FILL_TYPE_GRAD if gradient is not enabled uniFillNoGradient is in uniFillForegnd
+						// which is solid otherwise fillGradientEnabled is true and above code run
+						// FILL_TYPE_PATT is handled
+						// FILL_TYPE_GRP empty fill
+						if (uniFillForegnd.fill.type === Asc.c_oAscFill.FILL_TYPE_PATT) {
+							res = new AscFormat.CUniFill();
+							res.fill = new AscFormat.CSolidFill();
+							res.fill.color = uniFillForegnd.fill.fgClr;
+						} else if (uniFillForegnd.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID) {
+							res = uniFillForegnd;
+						} else {
+							res = uniFillForegnd;
+							AscCommon.consoleLog("Unknown fill type. Need to convert to solid");
+						}
+					} else if (isfillPatternTypeGradient) {
+						if (fillPatternType === 25) {
+							let fillGradientStops = [];
+
+							// has color (CUniColor) and pos from 0 to 100000
+							let colorStop1 = new AscFormat.CGs();
+							// calculate color (AscFormat.CUniColor)
+							let color1 = uniFillForegnd.fill.color;
+							let pos1 = 0;
+							colorStop1.setColor(color1);
+							colorStop1.setPos(pos1);
+							fillGradientStops.push({Gs : colorStop1});
+
+							let colorStop2 = new AscFormat.CGs();
+							// calculate color (AscFormat.CUniColor)
+							let color2 = uniFillBkgnd.fill.color;
+							let pos2 = 100000;
+							colorStop2.setColor(color2);
+							colorStop2.setPos(pos2);
+							fillGradientStops.push({Gs : colorStop2});
+
+							res = AscFormat.builder_CreateLinearGradient(fillGradientStops, 0);
+						} else if (fillPatternType === 26) {
+							let fillGradientStops = [];
+
+							// has color (CUniColor) and pos from 0 to 100000
+							let colorStop1 = new AscFormat.CGs();
+							// calculate color (AscFormat.CUniColor)
+							let color1 = uniFillBkgnd.fill.color;
+							let pos1 = 0;
+							colorStop1.setColor(color1);
+							colorStop1.setPos(pos1);
+							fillGradientStops.push({Gs : colorStop1});
+
+							let colorStop2 = new AscFormat.CGs();
+							// calculate color (AscFormat.CUniColor)
+							let color2 = uniFillForegnd.fill.color;
+							let pos2 = 50000;
+							colorStop2.setColor(color2);
+							colorStop2.setPos(pos2);
+							fillGradientStops.push({Gs : colorStop2});
+
+							let colorStop3 = new AscFormat.CGs();
+							// calculate color (AscFormat.CUniColor)
+							let color3 = uniFillBkgnd.fill.color;
+							let pos3 = 100000;
+							colorStop3.setColor(color3);
+							colorStop3.setPos(pos3);
+							fillGradientStops.push({Gs : colorStop3});
+
+							res = AscFormat.builder_CreateLinearGradient(fillGradientStops, 0);
+						} else if (fillPatternType === 27) {
+							let fillGradientStops = [];
+
+							// has color (CUniColor) and pos from 0 to 100000
+							let colorStop1 = new AscFormat.CGs();
+							// calculate color (AscFormat.CUniColor)
+							let color1 = uniFillBkgnd.fill.color;
+							let pos1 = 0;
+							colorStop1.setColor(color1);
+							colorStop1.setPos(pos1);
+							fillGradientStops.push({Gs : colorStop1});
+
+							let colorStop2 = new AscFormat.CGs();
+							// calculate color (AscFormat.CUniColor)
+							let color2 = uniFillForegnd.fill.color;
+							let pos2 = 100000;
+							colorStop2.setColor(color2);
+							colorStop2.setPos(pos2);
+							fillGradientStops.push({Gs : colorStop2});
+
+							res = AscFormat.builder_CreateLinearGradient(fillGradientStops, 0);
+						} else if (fillPatternType === 28) {
+							let fillGradientStops = [];
+
+							// has color (CUniColor) and pos from 0 to 100000
+							let colorStop1 = new AscFormat.CGs();
+							// calculate color (AscFormat.CUniColor)
+							let color1 = uniFillForegnd.fill.color;
+							let pos1 = 0;
+							colorStop1.setColor(color1);
+							colorStop1.setPos(pos1);
+							fillGradientStops.push({Gs : colorStop1});
+
+							let colorStop2 = new AscFormat.CGs();
+							// calculate color (AscFormat.CUniColor)
+							let color2 = uniFillBkgnd.fill.color;
+							let pos2 = 100000;
+							colorStop2.setColor(color2);
+							colorStop2.setPos(pos2);
+							fillGradientStops.push({Gs : colorStop2});
+
+							res = AscFormat.builder_CreateLinearGradient(fillGradientStops, 90 * AscFormat.degToC);
+						} else if (fillPatternType === 29) {
+							let fillGradientStops = [];
+
+							// has color (CUniColor) and pos from 0 to 100000
+							let colorStop1 = new AscFormat.CGs();
+							// calculate color (AscFormat.CUniColor)
+							let color1 = uniFillBkgnd.fill.color;
+							let pos1 = 0;
+							colorStop1.setColor(color1);
+							colorStop1.setPos(pos1);
+							fillGradientStops.push({Gs : colorStop1});
+
+							let colorStop2 = new AscFormat.CGs();
+							// calculate color (AscFormat.CUniColor)
+							let color2 = uniFillForegnd.fill.color;
+							let pos2 = 50000;
+							colorStop2.setColor(color2);
+							colorStop2.setPos(pos2);
+							fillGradientStops.push({Gs : colorStop2});
+
+							let colorStop3 = new AscFormat.CGs();
+							// calculate color (AscFormat.CUniColor)
+							let color3 = uniFillBkgnd.fill.color;
+							let pos3 = 100000;
+							colorStop3.setColor(color3);
+							colorStop3.setPos(pos3);
+							fillGradientStops.push({Gs : colorStop3});
+
+							res = AscFormat.builder_CreateLinearGradient(fillGradientStops, 90 * AscFormat.degToC);
+						} else if (fillPatternType === 30) {
+							let fillGradientStops = [];
+
+							// has color (CUniColor) and pos from 0 to 100000
+							let colorStop1 = new AscFormat.CGs();
+							// calculate color (AscFormat.CUniColor)
+							let color1 = uniFillForegnd.fill.color;
+							let pos1 = 0;
+							colorStop1.setColor(color1);
+							colorStop1.setPos(pos1);
+							fillGradientStops.push({Gs : colorStop1});
+
+							let colorStop2 = new AscFormat.CGs();
+							// calculate color (AscFormat.CUniColor)
+							let color2 = uniFillBkgnd.fill.color;
+							let pos2 = 100000;
+							colorStop2.setColor(color2);
+							colorStop2.setPos(pos2);
+							fillGradientStops.push({Gs : colorStop2});
+
+							res = AscFormat.builder_CreateLinearGradient(fillGradientStops, -90 * AscFormat.degToC);
+						} else {
+							let fillGradientStops = [];
+
+							// has color (CUniColor) and pos from 0 to 100000
+							let colorStop1 = new AscFormat.CGs();
+							// calculate color (AscFormat.CUniColor)
+							let color1 = uniFillForegnd.fill.color;
+							let pos1 = 0;
+							colorStop1.setColor(color1);
+							colorStop1.setPos(pos1);
+							fillGradientStops.push({Gs : colorStop1});
+
+							let colorStop2 = new AscFormat.CGs();
+							// calculate color (AscFormat.CUniColor)
+							let color2 = uniFillBkgnd.fill.color;
+							let pos2 = 100000;
+							colorStop2.setColor(color2);
+							colorStop2.setPos(pos2);
+							fillGradientStops.push({Gs : colorStop2});
+
+							res = AscFormat.builder_CreateRadialGradient(fillGradientStops);
+						}
+					} else if (fillPatternType > 1) {
+						// create patt fill using foregnd and bkgnd colors
+						const ooxmlFillPatternType = mapVisioFillPatternToOOXML(fillPatternType);
+						res = AscFormat.CreatePatternFillUniFill(ooxmlFillPatternType,
+								uniFillBkgnd.fill.color, uniFillForegnd.fill.color);
+
+						function mapVisioFillPatternToOOXML(fillPatternType) {
+							// change down to up and up to down bcs of Global matrix inverted
+							let upSideDownPatterns = false;
+							switch (fillPatternType) {
+								case 2:
+									return upSideDownPatterns ? AscCommon.global_hatch_offsets["dnDiag"] :
+											AscCommon.global_hatch_offsets["upDiag"];
+								case 3:
+									return AscCommon.global_hatch_offsets["cross"];
+								case 4:
+									return AscCommon.global_hatch_offsets["diagCross"];
+								case 5:
+									return upSideDownPatterns ? AscCommon.global_hatch_offsets["upDiag"] :
+											AscCommon.global_hatch_offsets["dnDiag"];
+								case 6:
+									return AscCommon.global_hatch_offsets["horz"];
+								case 7:
+									return AscCommon.global_hatch_offsets["vert"];
+								case 8:
+									return AscCommon.global_hatch_offsets["pct60"];
+								case 9:
+									return AscCommon.global_hatch_offsets["pct40"];
+								case 10:
+									return AscCommon.global_hatch_offsets["pct25"];
+								case 11:
+									return AscCommon.global_hatch_offsets["pct20"];
+								case 12:
+									return AscCommon.global_hatch_offsets["pct10"];
+								case 13:
+									return AscCommon.global_hatch_offsets["dkHorz"];
+								case 14:
+									return AscCommon.global_hatch_offsets["dkVert"];
+								case 15:
+									return upSideDownPatterns ? AscCommon.global_hatch_offsets["dkUpDiag"] :
+											AscCommon.global_hatch_offsets["dkDnDiag"];
+								case 16:
+									return upSideDownPatterns ? AscCommon.global_hatch_offsets["dkDnDiag"] :
+											AscCommon.global_hatch_offsets["dkUpDiag"];
+								case 17:
+									return AscCommon.global_hatch_offsets["smCheck"];
+								case 18:
+									return AscCommon.global_hatch_offsets["trellis"];
+								case 19:
+									return AscCommon.global_hatch_offsets["ltHorz"];
+								case 20:
+									return AscCommon.global_hatch_offsets["ltVert"];
+								case 21:
+									return upSideDownPatterns ? AscCommon.global_hatch_offsets["ltUpDiag"] :
+											AscCommon.global_hatch_offsets["ltDnDiag"];
+								case 22:
+									return upSideDownPatterns ? AscCommon.global_hatch_offsets["ltDnDiag"] :
+											AscCommon.global_hatch_offsets["ltUpDiag"];
+								case 23:
+									return AscCommon.global_hatch_offsets["smGrid"];
+								case 24:
+									return AscCommon.global_hatch_offsets["pct50"];
+								default:
+									AscCommon.consoleLog("patten fill unhandled");
+									return AscCommon.global_hatch_offsets["cross"];
+							}
+						}
+					}
+				} else if (uniFillForegnd) {
+					res = uniFillForegnd;
+				} else {
+					AscCommon.consoleLog("FillForegnd not found for shape", shape);
+					res = AscFormat.CreateNoFillUniFill();
+				}
+
+				return res;
+			}
+
+			/**
+			 * Get proper shape data and calculate fill or line gradient
+			 * @param {Shape_Type} shape
+			 * @param {Page_Type} pageInfo
+			 * @param {CTheme[]} visioDocumentThemes
+			 * @param {{lineUniFill: boolean, uniFillForegnd: boolean}} themeValWasUsedFor
+			 * @param {boolean} isFillGradient - if not isFillGradient calculates line gradient
+			 * @return {CUniFill} gradient fill
+			 */
+			function calculateGradient(shape, pageInfo, visioDocumentThemes,
+									   themeValWasUsedFor,  isFillGradient) {
+				/**
+				 * @type {CUniFill | undefined}
+				 */
+				let returnValue;
+
+				let gradientDirCellName = isFillGradient ? "FillGradientDir" : "LineGradientDir";
+
+				let gradientDir = shape.getCellNumberValue(gradientDirCellName);
+
+				let invertGradient = false;
+				// global matrix transform: invert Y axis causes 0 is bottom of gradient and 100000 is top
+				// let invertGradient = !isInvertCoords;
+				// if (gradientDir === 3) {
+				// 	// radial gradient seems to be handled in another way
+				// 	invertGradient = isInvertCoords;
+				// }
+
+				// now let's come through gradient stops
+				let gradientStopsSectionName = isFillGradient ? "FillGradient" : "LineGradient";
+				let fillGradientStopsSection = shape.getSection(gradientStopsSectionName);
+				let rows = fillGradientStopsSection.getElements();
+				let fillGradientStops = [];
+				let prevPos = invertGradient ? 100000 : 0;
+				for (const rowKey in rows) {
+					let row = rows[rowKey];
+					if (row.del) {
+						continue;
+					}
+
+					// has color (CUniColor) and pos from 0 to 100000
+					let colorStop = new AscFormat.CGs();
+
+					// calculate color (CUniColor)
+					let color = new AscFormat.CUniColor();
+					let gradientStopColorCell = row.getCell("GradientStopColor");
+					color = gradientStopColorCell.calculateValue(shape, pageInfo,
+							visioDocumentThemes, themeValWasUsedFor, true, rowKey);
+
+					let gradientStopColorTransCell = row.getCell("GradientStopColorTrans");
+					let gradientStopColorTransValue = gradientStopColorTransCell.calculateValue(shape, pageInfo,
+							visioDocumentThemes, themeValWasUsedFor, true, rowKey);
+					color.RGBA.A = color.RGBA.A * (1 - gradientStopColorTransValue);
+
+					// now let's get pos
+					let gradientStopPositionCell = row.getCell("GradientStopPosition");
+					let pos = gradientStopPositionCell.calculateValue(shape, pageInfo,
+							visioDocumentThemes, undefined, true, rowKey);
+					pos = invertGradient ? 100000 - pos : pos;
+
+					// if new pos < prevPos break
+					if (!invertGradient && pos < prevPos || invertGradient && pos > prevPos) {
+						break;
+					}
+					prevPos = pos;
+
+					colorStop.setColor(color);
+					colorStop.setPos(pos);
+
+					fillGradientStops.push({Gs : colorStop});
+
+					if ((pos === 100000 && !invertGradient) || (invertGradient && pos === 0)) {
+						break;
+					}
+				}
+
+				// gradientDir 0 is linear. FillGradientDir from 1 to 13 including are
+				// unhandled so paint them as radial. FillGradientDir from 14 including as same as FillGradientDir 0
+				if (gradientDir && gradientDir !== 0 && gradientDir < 14) {
+					// radial
+					returnValue = AscFormat.builder_CreateRadialGradient(fillGradientStops);
+				} else {
+					let gradientAngleCellName = isFillGradient ? "FillGradientAngle" : "LineGradientAngle";
+					let gradientAngleCell = shape.getCell(gradientAngleCellName);
+					// TODO handle multiple gradient types
+					let gradientAngle = gradientAngleCell.calculateValue(shape, pageInfo,
+							visioDocumentThemes);
+
+					returnValue = AscFormat.builder_CreateLinearGradient(fillGradientStops, gradientAngle);
+				}
+				return returnValue;
+			}
+
+			/**
+			 * handle QuickStyleVariation cell which can change color (but only if color is a result of ThemeVal)
+			 * cant be separated for unifill and stroke
+			 * @param {CUniFill} lineUniFill stroke
+			 * @param {CUniFill} fillUniFill
+			 * @param {Shape_Type} shape
+			 * @param {{lineUniFill: boolean, uniFillForegnd: boolean}} themeValWasUsedFor
+			 * @param {Page_Type} pageInfo
+			 * @param {CTheme[]} themes
+			 * @return {[]} [newFillUnifill, newLineUniFill]
+			 */
+			function handleQuickStyleVariation(lineUniFill, fillUniFill, shape, themeValWasUsedFor, pageInfo, themes) {
+				// https://learn.microsoft.com/en-us/openspecs/sharepoint_protocols/ms-vsdx/68bb0221-d8a1-476e-a132-8c60a49cea63?redirectedfrom=MSDN
+				// consider "QuickStyleVariation" cell
+				// https://visualsignals.typepad.co.uk/vislog/2013/05/visio-2013-themes-in-the-shapesheet-part-2.html
+
+				let backgroundColorHSL = {H: undefined, S: undefined, L: undefined};
+				let lineColorHSL = {H: undefined, S: undefined, L: undefined};
+				let fillColorHSL = {H: undefined, S: undefined, L: undefined};
+
+				// in quick style variation we need to consider fill.color not fill.color.color because
+				// fill.color consider mods applied. And we need to store new color to fill.color.color because
+				// fill.color is calculated in recalculate function from fill.color.color
+
+				// Calculate fill.color if it is not calculated
+				let theme = shape.getTheme(pageInfo, themes);
+				fillUniFill.fill.color.Calculate(theme);
+				lineUniFill.fill.color.Calculate(theme);
+
+				let lineColorRGBA = lineUniFill.fill && lineUniFill.fill.color && lineUniFill.fill.color.RGBA;
+				let fillColorRGBA = fillUniFill.fill && fillUniFill.fill.color && fillUniFill.fill.color.RGBA;
+				// let lineColorNoMods = lineUniFill.fill && lineUniFill.fill.color && lineUniFill.fill.color.color
+				// 		&& lineUniFill.fill.color.color.RGBA;
+				// let fillColorNoMods = fillUniFill.fill && fillUniFill.fill.color && fillUniFill.fill.color.color
+				// 		&& fillUniFill.fill.color.color.RGBA;
+
+				let newLineUniFill = new AscFormat.CUniFill();
+				newLineUniFill.fill = new AscFormat.CSolidFill();
+				newLineUniFill.fill.color = new AscFormat.CUniColor();
+				newLineUniFill.fill.color.color = new AscFormat.CRGBColor();
+				let newLineColorNoMods = newLineUniFill.fill.color.color;
+				// set defaults for new color
+				newLineColorNoMods.setColor(lineColorRGBA.R, lineColorRGBA.G, lineColorRGBA.B);
+				newLineColorNoMods.RGBA.A = lineColorRGBA.A;
+				newLineUniFill.transparent = lineUniFill.transparent;
+
+
+				let newFillUniFill = new AscFormat.CUniFill();
+				newFillUniFill.fill = new AscFormat.CSolidFill();
+				newFillUniFill.fill.color = new AscFormat.CUniColor();
+				newFillUniFill.fill.color.color = new AscFormat.CRGBColor();
+				let newFillColorNoMods = newFillUniFill.fill.color.color;
+				// set defaults for new color
+				newFillColorNoMods.setColor(fillColorRGBA.R, fillColorRGBA.G, fillColorRGBA.B);
+				newFillColorNoMods.RGBA.A = fillColorRGBA.A;
+				newFillUniFill.transparent = fillUniFill.transparent;
+
+
+				if (lineColorRGBA !== undefined && fillColorRGBA !== undefined) {
+					AscFormat.CColorModifiers.prototype.RGB2HSL(255, 255, 255, backgroundColorHSL);
+					AscFormat.CColorModifiers.prototype.RGB2HSL(lineColorRGBA.R, lineColorRGBA.G, lineColorRGBA.B, lineColorHSL);
+					AscFormat.CColorModifiers.prototype.RGB2HSL(fillColorRGBA.R, fillColorRGBA.G, fillColorRGBA.B, fillColorHSL);
+
+					// covert L to percents
+					backgroundColorHSL.L = backgroundColorHSL.L / 255 * 100;
+					lineColorHSL.L = lineColorHSL.L / 255 * 100;
+					fillColorHSL.L = fillColorHSL.L / 255 * 100;
+
+					let quickStyleVariationCell = shape.getCell("QuickStyleVariation");
+					if (quickStyleVariationCell) {
+						let quickStyleVariationCellValue = Number(quickStyleVariationCell.v);
+						if ((quickStyleVariationCellValue & 4) === 4 && themeValWasUsedFor.lineUniFill) {
+							// line color variation enabled (bit mask used)
+							if (Math.abs(backgroundColorHSL.L - lineColorHSL.L) < 16.66) {
+								if (backgroundColorHSL.L <= 72.92) {
+									// if background is dark set stroke to white
+									newLineColorNoMods.setColor(255, 255, 255);
+									newLineColorNoMods.RGBA.A = 255;
+									newLineUniFill.transparent = 255; // transparent is opacity in fact
 								} else {
-									// evaluation = THEMEVAL("LineColor") or not affected I guess
-									// get theme line color despite cell
-									// lineUniFill = AscVisio.themeval(this.theme, shape, null, "LineColor");
+									if (Math.abs(backgroundColorHSL.L - fillColorHSL.L) >
+											Math.abs(backgroundColorHSL.L - lineColorHSL.L)) {
+										// evaluation = THEMEVAL("FillColor")
+										newLineColorNoMods.setColor(fillColorRGBA.R, fillColorRGBA.G, fillColorRGBA.B);
+										newLineColorNoMods.RGBA.A = fillColorRGBA.A;
+										// transparency should not be considered
+										// newLineUniFill.transparent = fillUniFill.transparent;
+									} else {
+										// evaluation = THEMEVAL("LineColor") or not affected I guess
+										// get theme line color despite cell
+										// lineUniFillNoGradient = AscVisio.themeval(this.theme, shape, null, "LineColor");
+									}
 								}
 							}
 						}
+
+						if ((quickStyleVariationCellValue & 8) === 8 && themeValWasUsedFor.uniFillForegnd) {
+							// fill color variation enabled (bit mask used)
+							if (Math.abs(backgroundColorHSL.L - fillColorHSL.L) < 16.66) {
+								if (backgroundColorHSL.L <= 72.92) {
+									// if background is dark set stroke to white
+									newFillColorNoMods.setColor(255, 255, 255);
+									newFillColorNoMods.RGBA.A = 255;
+									newFillUniFill.transparent = 255; // transparent is opacity in fact
+								} else {
+									if (Math.abs(backgroundColorHSL.L - lineColorHSL.L) >
+											Math.abs(backgroundColorHSL.L - fillColorHSL.L)) {
+										// evaluation = THEMEVAL("LineColor")
+										newFillColorNoMods.setColor(lineColorRGBA.R, lineColorRGBA.G, lineColorRGBA.B);
+										newFillColorNoMods.RGBA.A = lineColorRGBA.A;
+										// transparency should not be considered
+										// newFillUniFill.transparent = lineUniFill.transparent;
+									}
+								}
+							}
+						}
+
+						// if ((quickStyleVariationCellValue & 2) === 2) {
+						// 	// text color variation enabled (bit mask used)
+						// 	// Text color variation is realized in getTextCShape function handleTextQuickStyleVariation
+						// }
+					}
+				}
+				return [newFillUniFill, newLineUniFill];
+			}
+		}
+
+		let lineWidthEmu = getLineWidth(this, pageInfo, visioDocument);
+
+		// not scaling lineWidth
+		/**	 * @type {CLn}	 */
+		let oStroke = AscFormat.builder_CreateLine(lineWidthEmu, {UniFill: lineUniFill});
+
+		// seems to be unsupported for now
+		// see [MS-VSDX]-220215 (1) - 2.4.4.170	LineCap
+		let lineCap = getLineCap(this, pageInfo, visioDocument);
+		oStroke.setCap(lineCap);
+
+		let linePattern = getPresetDash(this, pageInfo, visioDocument, lineCap);
+		if (linePattern === 11 && oStroke.Fill) {
+			// 11 type is vsdx transparent
+			//todo реализовать прозрачный тип через отдельную настройку или разделить fill для линий и наконечников
+			//в vsdx может быть прозрачная линия с видимыми наконечниками
+			oStroke.Fill.fill = new AscFormat.CNoFill();
+		} else {
+			oStroke.setPrstDash(linePattern);
+		}
+
+		// Each geometry section may have arrows
+		// Arrow are displayed only if that geometry section has NoFill cell equal to 1
+		// For now as we set arrow for all the shape let's check first geometry only
+		let firstGeometrySection = this.getSection("Geometry_0");
+		if (firstGeometrySection && firstGeometrySection.getCellNumberValue("NoFill") === 1) {
+			let endArrowTypeCell = this.getCell("EndArrow");
+			let endArrowSizeCell = this.getCell("EndArrowSize");
+			let endArrowType = endArrowTypeCell ? endArrowTypeCell.calculateValue(this, pageInfo,
+				visioDocument.themes) : 0;
+			let endArrowSize = endArrowSizeCell ? endArrowSizeCell.calculateValue(this, pageInfo,
+				visioDocument.themes) : 1;
+			let endArrow = getEndArrow(endArrowType, endArrowSize);
+			oStroke.setTailEnd(endArrow);
+
+			let beginArrowTypeCell = this.getCell("BeginArrow");
+			let beginArrowSizeCell = this.getCell("BeginArrowSize");
+			let beginArrowType = beginArrowTypeCell ? beginArrowTypeCell.calculateValue(this, pageInfo,
+				visioDocument.themes) : 0;
+			let beginArrowSize = beginArrowSizeCell ? beginArrowSizeCell.calculateValue(this, pageInfo,
+				visioDocument.themes) : 1;
+			let beginArrow = getEndArrow(beginArrowType, beginArrowSize);
+			oStroke.setHeadEnd(beginArrow);
+		}
+
+
+		// apply flip props consider flip point: locPinX_inch or locPinY_inch
+		let flipHorizontally = this.getCellNumberValue("FlipX") === 1;
+		if (flipHorizontally) {
+			x_inch = x_inch + 2 * (locPinX_inch - shapeWidth_inch / 2);
+		}
+
+		let flipVertically = this.getCellNumberValue("FlipY") === 1;
+		if (flipVertically) {
+			y_inch = y_inch + 2 * (locPinY_inch - shapeHeight_inch / 2);
+		}
+
+		let x_mm = x_inch * g_dKoef_in_to_mm;
+		let y_mm = y_inch * g_dKoef_in_to_mm;
+
+		let shapeWidth_mm = shapeWidth_inch * g_dKoef_in_to_mm;
+		let shapeHeight_mm = shapeHeight_inch * g_dKoef_in_to_mm;
+
+
+		let cShape = this.convertToCShapeUsingParamsObj({
+			x_mm: x_mm, y_mm: y_mm,
+			w_mm: shapeWidth_mm, h_mm: shapeHeight_mm,
+			rot: shapeAngle,
+			oFill: uniFillForegndWithPattern, oStroke: oStroke,
+			flipHorizontally: flipHorizontally, flipVertically: flipVertically,
+			pageInfo: pageInfo,
+			cVisioDocument: visioDocument,
+			drawingPageScale : drawingPageScale,
+			isInvertCoords: isInvertCoords,
+			isShapeDeleted: isShapeDeleted,
+			id: this.id
+		});
+
+
+		// set shadow
+		// check shadow pattern
+		let shadowPatternCell = this.getCell("ShdwPattern");
+		let shadowPattern = shadowPatternCell ? shadowPatternCell.calculateValue(this, pageInfo,
+				visioDocument.themes) : 0;
+		let isShadowVisible = shadowPattern === 1;
+
+		if (isShadowVisible) {
+			let shadows = getShadows(this, pageInfo, visioDocument);
+			let outerShadow = shadows[0];
+			let innerShadow = shadows[1];
+
+			// cShape.spPr.changeShadow(shadow);
+			cShape.spPr.effectProps = new AscFormat.CEffectProperties();
+
+			// EffectDag (effect container) doesn't work for now
+			// cShape.spPr.effectProps.EffectDag = new AscFormat.CEffectContainer();
+			// cShape.spPr.effectProps.EffectDag.name = "1container";
+			// // cShape.spPr.effectProps.EffectDag.type = AscFormat.effectcontainertypeTree;
+			// // cShape.spPr.effectProps.EffectDag.type = AscFormat.effectcontainertypeSib;
+			// cShape.spPr.effectProps.EffectDag.effectList.push(shadow);
+
+			cShape.spPr.effectProps.EffectLst = new AscFormat.CEffectLst();
+			cShape.spPr.effectProps.EffectLst.outerShdw = outerShadow;
+			cShape.spPr.effectProps.EffectLst.innerShdw = innerShadow;
+
+			/**
+			 * @param {Shape_Type} shape
+			 * @param {Page_Type} pageInfo
+			 * @param {CVisioDocument} visioDocument
+			 * @return {[COuterShdw,CInnerShdw]} outer shadow and inner
+			 */
+			function getShadows(shape, pageInfo, visioDocument) {
+				/**
+				 * @type {COuterShdw}
+				 */
+				let shadow = new AscFormat.COuterShdw();
+
+				let shadowColor = getShadowColor(shape, pageInfo, visioDocument);
+				shadow.color = shadowColor;
+
+
+				let shadowTypeCell = shape.getCell("ShapeShdwType");
+				// TODO check themed type. shadowTypeCell.calculateValue return undefined on THEMEVAL
+				//  because there is an issue with visio THEMEVAL it sometimes return 0 sometimes 1 on empty effectStyleLst
+				//  where shadow data should be
+				//  see files: offsets shadow properties themeval type 1.vsdx and offsets shadow properties themeval type 0.vsdx
+				//  in https://bugzilla.onlyoffice.com/show_bug.cgi?id=75884
+				let shadowType = shadowTypeCell && shadowTypeCell.calculateValue(shape, pageInfo,visioDocument.themes);
+
+				let shadowOffsetX_inch;
+				let shadowOffsetY_inch;
+				let shadowScaleX;
+				let shadowScaleY;
+				if (shadowType !== undefined && shadowType === 0) {
+					shadowOffsetX_inch = 0.0625;
+					shadowOffsetY_inch = -0.0625;
+					shadowScaleX = 1;
+					shadowScaleY = 1;
+				} else {
+					let shapeShdwScaleFactorCell = shape.getCell("ShapeShdwScaleFactor");
+					let shapeShdwScaleFactor = shapeShdwScaleFactorCell && shapeShdwScaleFactorCell.calculateValue(shape, pageInfo,
+							visioDocument.themes);
+					shadowScaleX = shapeShdwScaleFactor;
+					shadowScaleY = shapeShdwScaleFactor;
+
+					// set offsets for shadow
+					let shadowOffsetXcell = shape.getCell("ShapeShdwOffsetX");
+					if (shadowOffsetXcell) {
+						shadowOffsetX_inch = shadowOffsetXcell.calculateValue(shape, pageInfo, visioDocument.themes);
+					} else {
+						shadowOffsetX_inch = 0.125;
 					}
 
-					if ((quickStyleVariationCellValue & 8) === 8 && themeValWasUsedFor.uniFillForegnd) {
-						// fill color variation enabled (bit mask used)
-						if (Math.abs(backgroundColorHSL.L - fillColorHSL.L) < 16.66) {
-							if (backgroundColorHSL.L <= 72.92) {
-								// if background is dark set stroke to white
-								fillColor.R = 255;
-								fillColor.G = 255;
-								fillColor.B = 255;
+					let shadowOffsetYcell = shape.getCell("ShapeShdwOffsetY");
+					if (shadowOffsetYcell) {
+						shadowOffsetY_inch = shadowOffsetYcell.calculateValue(shape, pageInfo, visioDocument.themes);
+					} else {
+						shadowOffsetY_inch = -0.125;
+					}
+				}
+
+				let shadowSx = shadowScaleX * 100000;
+				let shadowSy = shadowScaleY * 100000;
+				shadow.sx = shadowSx;
+				shadow.sy = shadowSy;
+
+				let shadowOffsetX = shadowOffsetX_inch === undefined ? 0 : shadowOffsetX_inch * g_dKoef_in_to_mm;
+				let shadowOffsetY = shadowOffsetY_inch === undefined ? 0 : shadowOffsetY_inch * g_dKoef_in_to_mm;
+				let atan = Math.atan2(shadowOffsetY, shadowOffsetX);
+				let emuDist =  Math.hypot(shadowOffsetX, shadowOffsetY) * g_dKoef_mm_to_emu;
+				shadow.dist = emuDist;
+				// if true move to cord system where y goes down
+				if (isInvertCoords) {
+					atan = -atan;
+				}
+				let dirC = atan * AscFormat.radToDeg * AscFormat.degToC;
+				shadow.dir = dirC;
+
+				shadow.rotWithShape = true;
+
+				/**
+				 * @type {CInnerShdw}
+				 */
+				let shadowInner = new AscFormat.CInnerShdw();
+				if (shadowType && shadowType === 3) {
+					shadowInner = new AscFormat.CInnerShdw();
+					shadowInner.color = shadowColor;
+					shadowInner.sx = shadowSx;
+					shadowInner.sy = shadowSy;
+					shadowInner.dist = emuDist;
+					shadowInner.dir = dirC;
+					shadowInner.rotWithShape = true;
+				}
+
+				return [shadow, shadowInner];
+
+				/**
+				 * @param {Shape_Type} shape
+				 * @param {Page_Type} pageInfo
+				 * @param {CVisioDocument} visioDocument
+				 * @return {CUniColor} shadow color
+				 */
+				function getShadowColor(shape, pageInfo, visioDocument) {
+					let shadowForegndCell = shape.getCell("ShdwForegnd");
+					let shadowColor;
+					if (shadowForegndCell) {
+						// AscCommon.consoleLog("FillForegnd was found:", fillForegndCell);
+						shadowColor = shadowForegndCell.calculateValue(shape, pageInfo,
+								visioDocument.themes);
+
+						let mainFillAlphaCoef = 1;
+						let fillForegndTransValue = shape.getCellNumberValue("FillForegndTrans");
+						if (!isNaN(fillForegndTransValue)) {
+							mainFillAlphaCoef = 1 - fillForegndTransValue;
+						}
+
+						let shadowTransValue = 0;
+						let shadowTransCell = shape.getCell("ShdwForegndTrans");
+						// if themed alpha is included in shadowColor already
+						if (shadowTransCell.getStringValue() !== "Themed") {
+							shadowTransValue = shadowTransCell.getNumberValue("ShdwForegndTrans");
+
+							let shadowAlpha = (1 - shadowTransValue) * mainFillAlphaCoef;
+							if (shadowAlpha !== 1) {
+								let oMod = new AscFormat.CColorMod("alpha", shadowAlpha  * 100 * 1000 + 0.5 >> 0);
+								shadowColor.addColorMod(oMod);
+							}
+						} else {
+							// check if alpha is set already
+							let alphaMod = shadowColor.Mods && shadowColor.Mods.Mods.find(function (mod) {
+								return mod.name === "alpha";
+							});
+							if (alphaMod) {
+								alphaMod.val = alphaMod.val * mainFillAlphaCoef;
 							} else {
-								if (Math.abs(backgroundColorHSL.L - lineColorHSL.L) >
-									Math.abs(backgroundColorHSL.L - fillColorHSL.L)) {
-									// evaluation = THEMEVAL("FillColor")
-									// get theme shape fill color despite cell
-									// line below will give unifill with pattern maybe or gradient
-									// lineUniFill = AscVisio.themeval(this.theme, shape, null, "FillColor");
-									fillColor.R = lineColor.R;
-									fillColor.G = lineColor.G;
-									fillColor.B = lineColor.B;
-								}
+								let oMod = new AscFormat.CColorMod("alpha", mainFillAlphaCoef  * 100 * 1000 + 0.5 >> 0);
+								shadowColor.addColorMod(oMod);
 							}
 						}
+					} else {
+						// AscCommon.consoleLog("shadow foreground cell not found for", this);
+						shadowColor = AscFormat.CreateUniColorRGB(0,0,0);
 					}
-
-					// if ((quickStyleVariationCellValue & 2) === 2) {
-					// 	// text color variation enabled (bit mask used)
-					// 	// Text color variation is realized in getTextCShape function handleTextQuickStyleVariation
-					// }
+					return shadowColor;
 				}
 			}
+		}
+
+
+		// not scaling fontSize
+		let textCShape = getTextCShape(visioDocument.themes[0], this, cShape,
+			lineUniFillNoGradient, uniFillForegndNoGradient, drawingPageScale, maxHeightScaledIn,
+			visioDocument.pageIndex, visioDocument.pages.page.length, pageInfo, layerColor);
+
+		if (textCShape !== null) {
+			if (isShapeDeleted) {
+				textCShape.setBDeleted(true);
+			}
+		}
+
+		if (this.type === AscVisio.SHAPE_TYPES_FOREIGN) {
+			// AscCommon.consoleLog("Shape has type Foreign and may not be displayed. " +
+			// 	"Check shape.elements --> ForeignData_Type obj. See shape:", this);
+
+			let foreignDataObject = this.getForeignDataObject();
+			if (foreignDataObject) {
+				if (this.cImageShape !== null) {
+					setCImageShapeParams(this.cImageShape, cShape, this, shapeWidth_mm, shapeHeight_mm);
+
+					this.cImageShape.setParent2(visioDocument);
+					cShape = this.cImageShape;
+
+					/**
+					 * changing cImageShape to set its size, position and other props from cShape
+					 * @param cImageShape
+					 * @param cShape
+					 * @param shapeType
+					 * @param shapeWidth_mm
+					 * @param shapeHeight_mm
+					 */
+					function setCImageShapeParams(cImageShape, cShape, shapeType, shapeWidth_mm, shapeHeight_mm) {
+						// move some properties from shape to image. Then we will return cImageShape instead of cShape
+						cImageShape.setLocks(0);
+						cImageShape.setBDeleted(false);
+						cImageShape.setSpPr(cShape.spPr.createDuplicate());
+						cImageShape.spPr.setParent(cImageShape);
+
+						let imgWidth_inch = shapeType.getCellNumberValueWithScale("ImgWidth", drawingPageScale);
+						let imgHeight_inch = shapeType.getCellNumberValueWithScale("ImgHeight", drawingPageScale);
+						let imgOffsetX_inch = shapeType.getCellNumberValueWithScale("ImgOffsetX", drawingPageScale);
+						let imgOffsetY_inch = shapeType.getCellNumberValueWithScale("ImgOffsetY", drawingPageScale);
+
+						let imgWidth_mm = imgWidth_inch * g_dKoef_in_to_mm;
+						let imgHeight_mm = imgHeight_inch * g_dKoef_in_to_mm;
+
+						cImageShape.blipFill.srcRect = new AscFormat.CSrcRect();
+						let rect = cImageShape.blipFill.srcRect;
+
+						// add scale
+						if (imgWidth_inch !== undefined && imgHeight_inch !== undefined) {
+							let widthScale = imgWidth_mm / shapeWidth_mm;
+							let heightScale = imgHeight_mm / shapeHeight_mm;
+							// coords in our class CSrcRect is srcRect relative i.e. relative to original image size
+							// isInvertCoords check?
+							rect.setLTRB(0, 100 - 1/heightScale * 100, 1/widthScale * 100, 100);
+						}
+						// add horizontal shift
+						if (imgOffsetX_inch !== undefined) {
+							let imgOffsetX_mm = imgOffsetX_inch * g_dKoef_in_to_mm;
+							let offsetX = imgOffsetX_mm / imgWidth_mm;
+							rect.setLTRB(rect.l - offsetX * 100, rect.t, rect.r - offsetX * 100, rect.b);
+						}
+						// add vertical shift
+						if (imgOffsetY_inch !== undefined) {
+							let imgOffsetY_mm = imgOffsetY_inch * g_dKoef_in_to_mm;
+							let offsetY = imgOffsetY_mm / imgHeight_mm;
+							rect.setLTRB(rect.l, rect.t + offsetY * 100, rect.r, rect.b + offsetY * 100);
+						}
+
+
+						cImageShape.rot = cShape.rot;
+						// cImageShape.brush = cShape.brush;
+						cImageShape.bounds = cShape.bounds;
+						cImageShape.flipH = cShape.flipH;
+						cImageShape.flipV = cShape.flipV;
+						cImageShape.localTransform = cShape.localTransform;
+						// cImageShape.pen = cShape.pen;
+						cImageShape.Id = cShape.Id;
+					}
+				} else {
+					AscCommon.consoleLog("Unknown error: cImageShape was not initialized on ooxml parse");
+				}
+			}
+		}
+
+		// combine textCShape and geometryCShape to group
+		if (textCShape !== null) {
+			let groupShape = new AscFormat.CGroupShape();
+			// this.graphicObjectsController = new AscFormat.DrawingObjectsController();
+			// let groupShape = AscFormat.builder_CreateGroup();
+
+			groupShape.setLocks(0);
+
+			groupShape.setBDeleted(false);
+
+			// Create CGroupShape with SpPr from cShape but with no fill and line
+			let noLineFillSpPr = cShape.spPr.createDuplicate();
+			noLineFillSpPr.setFill(AscFormat.CreateNoFillUniFill());
+			noLineFillSpPr.setLn(AscFormat.CreateNoFillLine());
+			groupShape.setSpPr(noLineFillSpPr);
+			groupShape.spPr.setParent(groupShape);
+			// these props came to group
+			cShape.spPr.xfrm.rot = 0;
+			cShape.spPr.xfrm.flipV = false;
+			cShape.spPr.xfrm.flipH = false;
+
+
+			groupShape.brush = cShape.brush;
+			groupShape.bounds = cShape.bounds;
+			groupShape.localTransform = cShape.localTransform;
+			groupShape.pen = cShape.pen;
+			groupShape.Id = cShape.Id + "ShapeAndText";
+
+			groupShape.addToSpTree(groupShape.spTree.length, cShape);
+			groupShape.spTree[groupShape.spTree.length - 1].setGroup(groupShape);
+			cShape.spPr.xfrm.setOffX(0);
+			cShape.spPr.xfrm.setOffY(0);
+
+
+			groupShape.addToSpTree(groupShape.spTree.length, textCShape);
+			groupShape.spTree[groupShape.spTree.length - 1].setGroup(groupShape);
+			textCShape.spPr.xfrm.setOffX(textCShape.spPr.xfrm.offX - groupShape.spPr.xfrm.offX);
+			textCShape.spPr.xfrm.setOffY(textCShape.spPr.xfrm.offY - groupShape.spPr.xfrm.offY);
+			textCShape.spPr.xfrm.flipH = false;
+			textCShape.spPr.xfrm.flipV = false;
+
+			// In power point presentations on flipV text position is flipped + text
+			// is mirrored horizontally and vertically (https://disk.yandex.ru/d/Hi8OCMITgb730Q)
+			// below we remove text mirror. In visio text is never mirrored. (https://disk.yandex.ru/d/JjbNzzZLDIAEuQ)
+			// (on flipH in power point presentation text is not mirrored)
+			let currentFlip = groupShape.spPr.xfrm.flipV;
+			let groupFlip = currentGroupHandling && currentGroupHandling.getFullFlipVSpPr();
+			let flip = groupFlip ? !currentFlip : currentFlip;
+			if (flip) {
+				textCShape.spPr.xfrm.setRot(Math.PI + textCShape.spPr.xfrm.rot);
+			}
+
+			groupShape.setParent2(visioDocument);
+
+			return groupShape;
+		} else {
+			return cShape;
+		}
+
+		// Method end
+		// Used functions:
+		// TODO import
+		/**
+		 * Calculates coordinates after rotation using rotation point
+		 * @param {number} rotatePointX_global
+		 * @param {number} rotatePointY_global
+		 * @param {number} rotatePointX_local
+		 * @param {number} rotatePointY_local
+		 * @param {number} shapeWidth
+		 * @param {number} shapeHeight
+		 * @param {number} angle - radians rotate clockwise. E.g. 30 degrees goes down.
+		 * @return {[x: number, y: number]} returns left bottom corner coordinates.
+		 */
+		function getCordsRotatedAroundPoint(rotatePointX_global, rotatePointY_global,
+											rotatePointX_local, rotatePointY_local, shapeWidth, shapeHeight, angle) {
+			// to rotate around point we 1) add one more offset 2) rotate around center
+			// could be refactored maybe
+			// https://www.figma.com/design/SJSKMY5dGoAvRg75YnHpdX/newRotateScheme?node-id=0-1&node-type=canvas&t=UTtoZyLRItzaQvS9-0
+			let redVector = {x: -(rotatePointX_local - shapeWidth/2), y: -(rotatePointY_local - shapeHeight/2)};
+			// rotate antiClockWise by shapeAngle
+			let purpleVector = rotatePointAroundCordsStartClockWise(redVector.x, redVector.y, -angle);
+			let rotatedCenter = {x: rotatePointX_global + purpleVector.x, y: rotatePointY_global + purpleVector.y};
+			let turquoiseVector = {x: -shapeWidth/2, y: -shapeHeight/2};
+			let x = rotatedCenter.x + turquoiseVector.x;
+			let y = rotatedCenter.y + turquoiseVector.y;
+			return [x, y];
 		}
 
 		//TODO import
@@ -165,7 +1319,7 @@
 		 * afin rotate clockwise
 		 * @param {number} x
 		 * @param {number} y
-		 * @param {number} radiansRotateAngle radians Rotate AntiClockWise Angle. E.g. 30 degrees rotates does DOWN.
+		 * @param {number} radiansRotateAngle radians Rotate clockwise Angle. E.g. 30 degrees rotates does DOWN.
 		 * @returns {{x: number, y: number}} point
 		 */
 		function rotatePointAroundCordsStartClockWise(x, y, radiansRotateAngle) {
@@ -178,15 +1332,15 @@
 		 * @param {CTheme} theme
 		 * @param {Shape_Type} shape
 		 * @param {CShape} cShape
-		 * @param {CUniFill} lineUniFill
-		 * @param {CUniFill} fillUniFill
+		 * @param {CUniFill} lineUniFill - without gradient to handle text quickStyleVariation
+		 * @param {CUniFill} fillUniFill - without gradient to handle text quickStyleVariation
 		 * @param {number} drawingPageScale
 		 * @param {number} maxHeightScaledIn
 		 * @param {number} currentPageIndex
 		 * @param {number} pagesCount
 		 * @param {Page_Type} pageInfo
 		 * @param {CUniFill?} layerColor
-		 * @return {CShape} textCShape
+		 * @return {CShape | null} return textCShape or null if no text
 		 */
 		function getTextCShape(theme, shape, cShape, lineUniFill,
 							   fillUniFill, drawingPageScale, maxHeightScaledIn, currentPageIndex, pagesCount, pageInfo, layerColor) {
@@ -256,17 +1410,17 @@
 									// return the color with the largest absolute difference in luminance from the
 									// formula evaluation of the "TextColor", "FillColor", and "LineColor"
 									let fillDifferenceIsTheLargest =
-										Math.abs(backgroundColorHSL.L - fillColorHSL.L) >
-										Math.abs(backgroundColorHSL.L - lineColorHSL.L) &&
-										Math.abs(backgroundColorHSL.L - fillColorHSL.L) >
-										Math.abs(backgroundColorHSL.L - textColorHSL.L);
+											Math.abs(backgroundColorHSL.L - fillColorHSL.L) >
+											Math.abs(backgroundColorHSL.L - lineColorHSL.L) &&
+											Math.abs(backgroundColorHSL.L - fillColorHSL.L) >
+											Math.abs(backgroundColorHSL.L - textColorHSL.L);
 									if (fillDifferenceIsTheLargest) {
 										textColorRGBA.R = fillColorRGBA.R;
 										textColorRGBA.G = fillColorRGBA.G;
 										textColorRGBA.B = fillColorRGBA.B;
 									} else {
 										if (Math.abs(backgroundColorHSL.L - lineColorHSL.L) >
-											Math.abs(backgroundColorHSL.L - textColorHSL.L)) {
+												Math.abs(backgroundColorHSL.L - textColorHSL.L)) {
 											textColorRGBA.R = lineColorRGBA.R;
 											textColorRGBA.G = lineColorRGBA.G;
 											textColorRGBA.B = lineColorRGBA.B;
@@ -312,7 +1466,7 @@
 									// return the color with the largest absolute difference in luminance from the
 									// formula evaluation of the "TextColor" and "FillColor" or "LineColor" i.e. compareColor
 									if (Math.abs(backgroundColorHSL.L - compareColorHSL.L) >
-										Math.abs(backgroundColorHSL.L - textColorHSL.L)) {
+											Math.abs(backgroundColorHSL.L - textColorHSL.L)) {
 										textColorRGBA.R = compareColorRGBA.R;
 										textColorRGBA.G = compareColorRGBA.G;
 										textColorRGBA.B = compareColorRGBA.B;
@@ -326,19 +1480,21 @@
 
 			/**
 			 * Searches for pp element after passed element in textElements
-			 * @param {[]} textElements
+			 * @param {[]} textElements - elements with pp tp cp and text with \n
 			 * @param {number} currentIndex
-			 * @param {string?} afterDropText
-			 * @return {number} row num
+			 * @param {string?} afterDropText - afterDropText without \n
+			 * @param {boolean?} isNextElementLineDrop
+			 * @return {number | undefined} row num
 			 */
-			function searchForPP(textElements, currentIndex, afterDropText) {
+			function searchForPP(textElements, currentIndex, afterDropText, isNextElementLineDrop) {
 				if (afterDropText === undefined) {
 					afterDropText = "";
 				}
 				let afterNext = textElements[currentIndex + 2];
 				let next = textElements[currentIndex + 1];
-				// if there is text after \r\n
-				if (afterDropText.length > 2) {
+				// if there is something after \n
+				// also check for isNextElementLineDrop - means new paragraph start
+				if (afterDropText.length > 0 || isNextElementLineDrop) {
 					return undefined;
 				} else if (afterNext && afterNext.kind === AscVisio.c_oVsdxTextKind.PP) {
 					return afterNext.ix;
@@ -448,6 +1604,12 @@
 					indentationLeft = indentationLeftCell.getNumberValue() * AscCommonWord.g_dKoef_in_to_mm;
 				}
 
+				// handle first line indentation
+				let indentationFirstLineCell = paragraphPropsFinal && paragraphPropsFinal.getCell("IndFirst");
+				let indentationFirstLine;
+				if (indentationLeftCell) {
+					indentationFirstLine = indentationFirstLineCell.getNumberValue() * AscCommonWord.g_dKoef_in_to_mm;
+				}
 
 
 				// create new paragraph to hold new properties
@@ -490,6 +1652,7 @@
 				// paragraph.Add_PresentationNumbering(Bullet);
 
 				paragraph.Pr.Ind.Left = indentationLeft;
+				paragraph.Pr.Ind.FirstLine = indentationFirstLine;
 
 				oContent.Content.push(paragraph);
 				paragraph.SetParent(oContent);
@@ -633,7 +1796,7 @@
 					// all document fonts all loaded already in CVisioDocument.prototype.loadFonts
 
 					let fontName = fontCell.calculateValue(shape, pageInfo,
-						visioDocument.themes, undefined, true);
+							visioDocument.themes, undefined, true);
 
 					cRFonts = getRFonts(fontName, visioDocument);
 				} else {
@@ -857,7 +2020,7 @@
 				// return valueV ? valueV : fldTagText;
 			}
 
-			
+
 			let textElement = shape.getTextElement();
 			if (!textElement) {
 				return null;
@@ -923,46 +2086,60 @@
 			 */
 			const isTextInherited = textElement.isInherited;
 
-			// visio set extra \r\n at the end of each text element: see fix below. Both are needed
-			let lastTextEl = textElement.elements[textElement.elements.length - 1];
-			if (typeof lastTextEl === "string" && lastTextEl.endsWith("\r\n")) {
-				lastTextEl = lastTextEl.slice(0, lastTextEl.length - 2);
-				textElement.elements[textElement.elements.length - 1] = lastTextEl;
-			}
+			// UPD: now with binary file read \r\n in original is replaced with \n! Focus is made for binary \n
 
 			// read text:
-			// consider CRLF (\r\n) as new paragraph start. Right after CRLF visio searches for pp
+			// consider CRLF (\r\n) (UPD: \n for binary read) as new paragraph start.
+			// Right after CRLF visio searches for pp
 			// which will be properties for new paragraph.
-			// (Or if it is something after CRLF it doesn't search for pp)
+			// (Or if it is something after CRLF it doesn't search for pp. E.g. if pp comes in text, it ignores)
 
-			// interesting moment: if pp comes in text, so it ignores
 			textElement.elements.forEach(function(textElementPart, i) {
+				// init currentParagraph: if there is text in first element use default paragraph with
+				// properties from 0 paragraph props row
+				// otherwise search for pp tag witch can set paragraph properties for future text
 				if (i === 0) {
-					currentParagraphPropsRow = searchForPP(textElement.elements, i);
-					// check defaultParagraph properties: get pp_Type object and in paragraphPropsCommon get needed Row (0)
-					currentParagraphPropsRow = currentParagraphPropsRow === undefined ? 0 : currentParagraphPropsRow;
+					if (typeof textElementPart === "string" || textElementPart.kind === AscVisio.c_oVsdxTextKind.FLD) {
+						currentParagraphPropsRow = 0;
+					} else {
+						currentParagraphPropsRow = searchForPP(textElement.elements, i);
+						currentParagraphPropsRow = currentParagraphPropsRow === undefined ? 0 : currentParagraphPropsRow;
+					}
 					parseParagraphAndAddToShapeContent(currentParagraphPropsRow,
-						paragraphPropsCommon, textCShape);
+							paragraphPropsCommon, textCShape);
 					currentParagraph = oContent.Content.slice(-1)[0]; // last paragraph
 				}
 
+				// visio set extra \r\n at the end of each Text tag: see fix below.
+				// UPD: fix below works for both binary read with \n and xml with \r\n
+				if (i === textElement.elements.length - 1) {
+					if (typeof textElementPart === "string") {
+						if (textElementPart.endsWith("\r\n")) {
+							textElementPart = textElementPart.slice(0, textElementPart.length - 2);
+						} else if (textElementPart.endsWith("\n")) {
+							textElementPart = textElementPart.slice(0, textElementPart.length - 1);
+						}
+					}
+				}
+
+
 				if (typeof textElementPart === "string" || textElementPart.kind === AscVisio.c_oVsdxTextKind.FLD) {
 					if (typeof textElementPart === "string") {
-						// "LSCRLF" transforms to line drop and new paragraph without line drop so we get one
-						// line drop where should be two line drops so let's add extra line drop
-						textElementPart = textElementPart.replaceAll("\u2028\r\n", "\u2028\u2028\r\n");
-						let textArr = textElementPart.split("\r\n");
+						// Split on CRLF, or LF
+						let textArr = textElementPart.split(/\r\n|\n/);
 
 						for (let j = 0; j < textArr.length; j++) {
 							let text = textArr[j];
 
 							// if j > 0 CR exists in textArr and should be handled as new paragraph start
 							if (j > 0) {
-								let nextPP = searchForPP(textElement.elements, i, text);
+								// instead of lineDrop we get "" after split();
+								let isNextElementLineDrop = textArr[j + 1] === "";
+								let nextPP = searchForPP(textElement.elements, i, text, isNextElementLineDrop);
 								currentParagraphPropsRow = nextPP ? nextPP : currentParagraphPropsRow;
 
 								parseParagraphAndAddToShapeContent(currentParagraphPropsRow,
-									paragraphPropsCommon, textCShape);
+										paragraphPropsCommon, textCShape);
 								currentParagraph = oContent.Content.slice(-1)[0]; // last paragraph
 							}
 
@@ -979,11 +2156,10 @@
 
 							// setup Run props
 							setRunProps(characterRowNum, characterPropsCommon,
-								oRun, lineUniFill, fillUniFill, theme, shape,
-								visioDocument, pageInfo);
+									oRun, lineUniFill, fillUniFill, theme, shape,
+									visioDocument, pageInfo);
 							currentParagraph.Add_ToContent(currentParagraph.Content.length - 1, oRun);
 						}
-
 					} else if (textElementPart.kind === AscVisio.c_oVsdxTextKind.FLD) {
 						// text field
 
@@ -1008,8 +2184,8 @@
 						}
 
 						setRunProps(characterRowNum, characterPropsCommon,
-							oFld, lineUniFill, fillUniFill, theme, shape,
-							visioDocument, pageInfo);
+								oFld, lineUniFill, fillUniFill, theme, shape,
+								visioDocument, pageInfo);
 
 						currentParagraph.AddToContent(currentParagraph.Content.length - 1, new ParaRun(currentParagraph, false));
 						currentParagraph.AddToContent(currentParagraph.Content.length - 1, oFld);
@@ -1036,18 +2212,6 @@
 				parseParagraphAndAddToShapeContent(0, paragraphPropsCommon, textCShape);
 			}
 
-			// visio set \r\n at the end of each paragraph
-			for (let i = 0; i < oContent.Content.length; i++) {
-				const paragraph = oContent.Content[i];
-				if (paragraph.Content.length > 1) {
-					// get second to last run. extra line drop should be here. Bcs last run is default
-					const penultimateRun = paragraph.Content[paragraph.Content.length - 2];
-					if (penultimateRun.Content[penultimateRun.Content.length - 1] instanceof AscWord.CRunBreak) {
-						// remove CRunBreak i.e. lineBreak from run
-						penultimateRun.Content.splice(penultimateRun.Content.length - 1, 1);
-					}
-				}
-			}
 
 			// handle horizontal align i. e. defaultParagraph align
 
@@ -1463,68 +2627,6 @@
 			return endArrow;
 		}
 
-		function mapVisioFillPatternToOOXML(fillPatternType) {
-			// change down to up and up to down bcs of Global matrix inverted
-			let upSideDownPatterns = false;
-			switch (fillPatternType) {
-				case 2:
-					return upSideDownPatterns ? AscCommon.global_hatch_offsets["dnDiag"] :
-						AscCommon.global_hatch_offsets["upDiag"];
-				case 3:
-					return AscCommon.global_hatch_offsets["cross"];
-				case 4:
-					return AscCommon.global_hatch_offsets["diagCross"];
-				case 5:
-					return upSideDownPatterns ? AscCommon.global_hatch_offsets["upDiag"] :
-						AscCommon.global_hatch_offsets["dnDiag"];
-				case 6:
-					return AscCommon.global_hatch_offsets["horz"];
-				case 7:
-					return AscCommon.global_hatch_offsets["vert"];
-				case 8:
-					return AscCommon.global_hatch_offsets["pct60"];
-				case 9:
-					return AscCommon.global_hatch_offsets["pct40"];
-				case 10:
-					return AscCommon.global_hatch_offsets["pct25"];
-				case 11:
-					return AscCommon.global_hatch_offsets["pct20"];
-				case 12:
-					return AscCommon.global_hatch_offsets["pct10"];
-				case 13:
-					return AscCommon.global_hatch_offsets["dkHorz"];
-				case 14:
-					return AscCommon.global_hatch_offsets["dkVert"];
-				case 15:
-					return upSideDownPatterns ? AscCommon.global_hatch_offsets["dkUpDiag"] :
-						AscCommon.global_hatch_offsets["dkDnDiag"];
-				case 16:
-					return upSideDownPatterns ? AscCommon.global_hatch_offsets["dkDnDiag"] :
-						AscCommon.global_hatch_offsets["dkUpDiag"];
-				case 17:
-					return AscCommon.global_hatch_offsets["smCheck"];
-				case 18:
-					return AscCommon.global_hatch_offsets["trellis"];
-				case 19:
-					return AscCommon.global_hatch_offsets["ltHorz"];
-				case 20:
-					return AscCommon.global_hatch_offsets["ltVert"];
-				case 21:
-					return upSideDownPatterns ? AscCommon.global_hatch_offsets["ltUpDiag"] :
-						AscCommon.global_hatch_offsets["ltDnDiag"];
-				case 22:
-					return upSideDownPatterns ? AscCommon.global_hatch_offsets["ltDnDiag"] :
-						AscCommon.global_hatch_offsets["ltUpDiag"];
-				case 23:
-					return AscCommon.global_hatch_offsets["smGrid"];
-				case 24:
-					return AscCommon.global_hatch_offsets["pct50"];
-				default:
-					AscCommon.consoleLog("patten fill unhandled");
-					return AscCommon.global_hatch_offsets["cross"];
-			}
-		}
-
 		function createEmptyShape() {
 			let emptyCShape = new AscFormat.CShape();
 			emptyCShape.setWordShape(false);
@@ -1543,867 +2645,138 @@
 			return emptyCShape;
 		}
 
-		// Method start
-
-		// Refact:
-		// 1) I guess any cell can be = THEMEVAL() so better to always
-		// use Cell_Type.calculateValue method
-		// consider sometimes = THEMEVAL() can be replaced not to Themed but
-		// to concrete value on save for Cell_Type.v
-		// 2) May be create methods on rows sections and shape -
-		// this.calculateCellValue("FillBkgnd",this, pageInfo,
-		// 			visioDocument.themes, themeValWasUsedFor, true);
-		// 3) May be bind arguments to calculateValue function
-		// 4) May be move getTextCShape to other file
-
-		let maxHeightScaledIn;
-		if (currentGroupHandling) {
-			let heightMM = currentGroupHandling.spPr.xfrm.extY;
-			maxHeightScaledIn = heightMM / g_dKoef_in_to_mm;
-		} else {
-			let pageIndex = visioDocument.pages.page.indexOf(pageInfo);
-			maxHeightScaledIn = visioDocument.GetHeightScaledMM(pageIndex) / g_dKoef_in_to_mm;
-		}
-
-		// there was case with shape type group with no PinX and PinY
-		// https://disk.yandex.ru/d/tl877cuzcRcZYg
-		let pinX_inch = this.getCellNumberValueWithScale("PinX", drawingPageScale);
-		let pinY_inch = this.getCellNumberValueWithScale("PinY", drawingPageScale);
-
-		/** @type {{ [key: string]: Cell_Type }} */
-		let layerProperties = this.getLayerProperties(pageInfo);
-		// only if all shape layers are invisible shape is invisible
-		let areShapeLayersInvisible = layerProperties["Visible"] !== undefined && layerProperties["Visible"].v === "0";
-
 		/**
-		 * @type {CUniFill | undefined}
-		 * if layerColor is applied fill is always white
+		 * @param {Shape_Type} shape
+		 * @param {Page_Type} pageInfo
+		 * @param {CVisioDocument} visioDocument
+		 * @return {number} line width EMUs
 		 */
-		let layerColor;
-
-		/**
-		 * @type {CUniFill}
-		 * if layerColor is applied fill is always white
-		 */
-		let layerFill = AscFormat.CreateUnfilFromRGB(255, 255, 255);
-		if (layerProperties["Color"] !== undefined && layerProperties["Color"].v !== "255") {
-			let layerColorUniColor = layerProperties["Color"].calculateValue(this, pageInfo,
-					visioDocument.themes);
-			layerColor = AscFormat.CreateUnfilFromRGB(layerColorUniColor.color.RGBA.R,
-					layerColorUniColor.color.RGBA.G, layerColorUniColor.color.RGBA.B);
-		}
-
-		let isShapeDeleted = this.del === "1" || this.del === true;
-		if (isShapeDeleted) {
-			return null;
-		}
-
-
-		// also check for {}, undefined, NaN, null
-		if (isNaN(pinX_inch) || pinX_inch === null || isNaN(pinY_inch) || pinY_inch === null ||
-			areShapeLayersInvisible) {
-			// AscCommon.consoleLog('pinX_inch or pinY_inch is NaN for Shape or areShapeLayersInvisible. Its ok sometimes. ' +
-				// 'Empty CShape is returned. See original shape: ', this);
-			// let's use empty shape
-			return createEmptyShape();
-		}
-
-		let shapeAngle = this.getCellNumberValue("Angle");
-		let locPinX_inch = this.getCellNumberValueWithScale("LocPinX", drawingPageScale);
-		let locPinY_inch = this.getCellNumberValueWithScale("LocPinY", drawingPageScale);
-		let shapeWidth_inch = this.getCellNumberValueWithScale("Width", drawingPageScale);
-		let shapeHeight_inch = this.getCellNumberValueWithScale("Height", drawingPageScale);
-
-		if (isInvertCoords) {
-			pinY_inch = maxHeightScaledIn - pinY_inch;
-			shapeAngle *= -1;
-			locPinY_inch = shapeHeight_inch - locPinY_inch;
-		}
-
-		// to rotate around point we 1) add one more offset 2) rotate around center
-		// could be refactored maybe
-		// https://www.figma.com/design/SJSKMY5dGoAvRg75YnHpdX/newRotateScheme?node-id=0-1&node-type=canvas&t=UTtoZyLRItzaQvS9-0
-		let redVector = {x: -(locPinX_inch - shapeWidth_inch/2), y: -(locPinY_inch - shapeHeight_inch/2)};
-		// rotate antiClockWise by shapeAngle
-		let purpleVector = rotatePointAroundCordsStartClockWise(redVector.x, redVector.y, -shapeAngle);
-		let rotatedCenter = {x: pinX_inch + purpleVector.x, y: pinY_inch + purpleVector.y};
-		let turquoiseVector = {x: -shapeWidth_inch/2, y: -shapeHeight_inch/2};
-		let x_inch = rotatedCenter.x + turquoiseVector.x;
-		let y_inch = rotatedCenter.y + turquoiseVector.y;
-
-		/**
-		 * Fill without pattern applied.
-		 * @type CUniFill */
-		let uniFillForegnd = null;
-
-		/**
-		 * fill without gradient used to handle handleQuickStyleVariation function
-		 * @type CUniFill
-		 */
-		let uniFillForegndNoGradient = null;
-
-		/** @type CUniFill */
-		let uniFillForegndWithPattern = null;
-
-		/** @type CUniFill */
-		let	uniFillBkgnd = null;
-
-		/**
-		 * We need fill without pattern applied bcs pattern applied can set NoSolidFill object without color,
-		 * so we will not be able to calculate handleVariationColor function result
-		 * @type CUniFill */
-		let lineUniFill = null;
-
-
-		/**
-		 * @type boolean
-		 */
-		let fillGradientEnabled;
-
-		if (layerColor) {
-			uniFillForegndWithPattern = layerFill;
-			lineUniFill = layerColor;
-		} else {
-			/**
-			 * Let's memorize what color properties used themeVal because quickStyleVariation can change only those
-			 * color props that used themeVal function.
-			 * @type {{lineUniFill: boolean, uniFillForegnd: boolean}}
-			 */
-			let themeValWasUsedFor = {
-				lineUniFill : false,
-				uniFillForegnd: false
-			}
-
-			let fillGradientEnabledCell = this.getCell("FillGradientEnabled");
-			if (fillGradientEnabledCell !== undefined) {
-				fillGradientEnabled = fillGradientEnabledCell.calculateValue(this, pageInfo,
-						visioDocument.themes, undefined, true);
-			} else {
-				fillGradientEnabled = false;
-			}
-
-
-			// FillGradientDir and FillPattern can tell about gradient type
-			// if FillGradient Enabled
-			// FillGradientDir defines gradient type (shape) and clolors define colors. If gradient is linear gradient type is complemented with angle.
-			// 13 FillGradientDir is path. path cant be set in interface. also like some radial gradient types witch cant be set in interface.
-			// FillGradientDir > 13 is linear like FillGradientDir = 0
-			//
-			// if FillGradientEnabled Disabled
-			// FillPattern defines gradient type and colors define. There linear types with different predefined angles, rectandulat and radial gradient types.
-			// Rectangular and radial gradient types differs. There are two colors when i set three colors for gradient. Also FillPattern gradients are not listed in
-			// interface. Only true patterns.
-			//
-			// Its better to convert linear FillPattern gradients there. But FillPattern radial gradients seems to be
-			// not like FillGradientDir radial gradients but with different colors
-
-			// Calculate fillForegnd without gradient anyway for handleQuickStyleVariation
-			let fillForegndCell = this.getCell("FillForegnd");
-			if (fillForegndCell) {
-				// AscCommon.consoleLog("FillForegnd was found:", fillForegndCell);
-				uniFillForegndNoGradient = fillForegndCell.calculateValue(this, pageInfo,
-					visioDocument.themes, themeValWasUsedFor, false);
-
-				let fillForegndTransValue = this.getCellNumberValue("FillForegndTrans");
-				if (!isNaN(fillForegndTransValue)) {
-					let fillObj = uniFillForegndNoGradient.fill;
-					if (fillObj.type === Asc.c_oAscFill.FILL_TYPE_PATT) {
-						// pattern fill
-						fillObj.fgClr.color.RGBA.A = fillObj.fgClr.color.RGBA.A * (1 - fillForegndTransValue);
-					} else {
-						fillObj.color.color.RGBA.A = fillObj.color.color.RGBA.A * (1 - fillForegndTransValue);
-					}
+		function getLineWidth(shape, pageInfo, visioDocument) {
+			let lineWidthEmu = null;
+			let lineWeightCell = shape.getCell("LineWeight");
+			if (lineWeightCell) {
+				// to cell.v visio always saves inches
+				// let lineWeightInches = Number(lineWeightCell.v);
+				let lineWeightInches = lineWeightCell.calculateValue(shape, pageInfo,
+						visioDocument.themes);
+				if (!isNaN(lineWeightInches)) {
+					lineWidthEmu = lineWeightInches * AscCommonWord.g_dKoef_in_to_mm * AscCommonWord.g_dKoef_mm_to_emu;
 				} else {
-					AscCommon.consoleLog("fillForegndTrans value is themed or something. Not calculated for", this);
+					AscCommon.consoleLog("caught unknown error. line will be painted 9525 emus");
+					// 9255 emus = 0.01041666666666667 inches is document.xml StyleSheet ID=0 LineWeight e. g. default value
+					lineWidthEmu = 9525;
 				}
 			} else {
-				AscCommon.consoleLog("fillForegnd cell not found for", this);
-				// try to get from theme
-				// uniFillForegnd = AscVisio.themeval(null, this, pageInfo, visioDocument.themes, "FillColor",
-				// 	undefined, fillGradientEnabled);
-				// just use white
-				uniFillForegndNoGradient = AscFormat.CreateUnfilFromRGB(255, 255, 255);
-			}
-
-			if (fillGradientEnabled) {
-				let fillGradientDir = this.getCellNumberValue("FillGradientDir");
-
-				let invertGradient = false;
-				// global matrix transform: invert Y axis causes 0 is bottom of gradient and 100000 is top
-				// let invertGradient = !isInvertCoords;
-				// if (fillGradientDir === 3) {
-				// 	// radial gradient seems to be handled in another way
-				// 	invertGradient = isInvertCoords;
-				// }
-
-				// now let's come through gradient stops
-				let fillGradientStopsSection = this.getSection("FillGradient");
-				let rows = fillGradientStopsSection.getElements();
-				let fillGradientStops = [];
-				let prevPos = invertGradient ? 100000 : 0;
-				for (const rowKey in rows) {
-					let row = rows[rowKey];
-					if (row.del) {
-						continue;
-					}
-
-					// has color (CUniColor) and pos from 0 to 100000
-					let colorStop = new AscFormat.CGs();
-
-					// calculate color (CUniColor)
-					let color = new AscFormat.CUniColor();
-					let gradientStopColorCell = row.getCell("GradientStopColor");
-					color = gradientStopColorCell.calculateValue(this, pageInfo,
-						visioDocument.themes, themeValWasUsedFor, fillGradientEnabled, rowKey);
-
-					let gradientStopColorTransCell = row.getCell("GradientStopColorTrans");
-					let gradientStopColorTransValue = gradientStopColorTransCell.calculateValue(this, pageInfo,
-						visioDocument.themes, themeValWasUsedFor, fillGradientEnabled, rowKey);
-					color.RGBA.A = color.RGBA.A * (1 - gradientStopColorTransValue);
-
-					// now let's get pos
-					let gradientStopPositionCell = row.getCell("GradientStopPosition");
-					let pos = gradientStopPositionCell.calculateValue(this, pageInfo,
-						visioDocument.themes, undefined, fillGradientEnabled, rowKey);
-					pos = invertGradient ? 100000 - pos : pos;
-
-					// if new pos < prevPos break
-					if (!invertGradient && pos < prevPos || invertGradient && pos > prevPos) {
-						break;
-					}
-					prevPos = pos;
-
-					colorStop.setColor(color);
-					colorStop.setPos(pos);
-
-					fillGradientStops.push({Gs : colorStop});
-
-					if ((pos === 100000 && !invertGradient) || (invertGradient && pos === 0)) {
-						break;
-					}
-				}
-
-				if (fillGradientDir && fillGradientDir !== 0) {
-					// radial
-					uniFillForegnd = AscFormat.builder_CreateRadialGradient(fillGradientStops);
-				} else {
-					// also if fillGradientDir === 0 - linear
-					let fillGradientAngleCell = this.getCell("FillGradientAngle");
-					// TODO handle multiple gradient types
-					let fillGradientAngle = fillGradientAngleCell.calculateValue(this, pageInfo,
-						visioDocument.themes, undefined, fillGradientEnabled);
-
-					uniFillForegnd = AscFormat.builder_CreateLinearGradient(fillGradientStops, fillGradientAngle);
-				}
-			} else {
-				uniFillForegnd = uniFillForegndNoGradient;
-			}
-
-
-			let fillBkgndCell = this.getCell("FillBkgnd");
-			if (fillBkgndCell) {
-				// AscCommon.consoleLog("FillBkgnd was found:", fillBkgndCell);
-				uniFillBkgnd = fillBkgndCell.calculateValue(this, pageInfo,
-					visioDocument.themes, themeValWasUsedFor);
-
-				if (!(uniFillBkgnd.fill.type === Asc.c_oAscFill.FILL_TYPE_GRAD)) {
-					let fillBkgndTransValue = this.getCellNumberValue("FillBkgndTrans");
-					if (!isNaN(fillBkgndTransValue)) {
-						let fillObj = uniFillBkgnd.fill;
-						if (fillObj.type === Asc.c_oAscFill.FILL_TYPE_PATT) {
-							// pattern fill
-							fillObj.bgClr.color.RGBA.A = fillObj.fgClr.color.RGBA.A * (1 - fillBkgndTransValue);
-						} else {
-							fillObj.color.color.RGBA.A = fillObj.color.color.RGBA.A * (1 - fillBkgndTransValue);
-						}
-					} else {
-						// AscCommon.consoleLog("fillBkgndTrans value is themed or something. Not calculated for", this);
-					}
-				}
-			}
-
-			let lineColorCell = this.getCell("LineColor");
-			if (lineColorCell) {
-				// AscCommon.consoleLog("LineColor was found for shape", lineColorCell);
-				lineUniFill = lineColorCell.calculateValue(this, pageInfo,
-					visioDocument.themes, themeValWasUsedFor);
-
-				let lineTransValue = this.getCellNumberValue("LineColorTrans");
-				if (!isNaN(lineTransValue)) {
-					// lineUniFill.transparent is opacity in fact
-					// setting RGBA.A doesn't work
-					lineUniFill.transparent = 255 - lineTransValue * 255;
-				}
-			} else {
-				AscCommon.consoleLog("LineColor cell for line stroke (border) was not found painting red");
-				lineUniFill = AscFormat.CreateUnfilFromRGB(255,0,0);
-			}
-
-			// calculate variation before pattern bcs pattern can make NoFillUniFill object without color
-			handleQuickStyleVariation(lineUniFill, uniFillForegndNoGradient, this, themeValWasUsedFor);
-
-
-			let fillPatternTypeCell = this.getCell("FillPattern");
-			let fillPatternType = fillPatternTypeCell ? fillPatternTypeCell.calculateValue(this, pageInfo,
-					visioDocument.themes) : 1;
-
-			if (!isNaN(fillPatternType) && uniFillBkgnd && uniFillForegnd) {
-				// https://learn.microsoft.com/ru-ru/office/client-developer/visio/fillpattern-cell-fill-format-section
-				let isfillPatternTypeGradient = fillPatternType >= 25 && fillPatternType <= 40;
-				if (fillGradientEnabled) {
-					uniFillForegndWithPattern = uniFillForegnd;
-				} else if (fillPatternType === 0) {
-					uniFillForegndWithPattern = AscFormat.CreateNoFillUniFill();
-				} else if (fillPatternType === 1) {
-					uniFillForegndWithPattern = uniFillForegnd;
-				} else if (isfillPatternTypeGradient) {
-					if (fillPatternType === 25) {
-						let fillGradientStops = [];
-
-						// has color (CUniColor) and pos from 0 to 100000
-						let colorStop1 = new AscFormat.CGs();
-						// calculate color (AscFormat.CUniColor)
-						let color1 = uniFillForegnd.fill.color;
-						let pos1 = 0;
-						colorStop1.setColor(color1);
-						colorStop1.setPos(pos1);
-						fillGradientStops.push({Gs : colorStop1});
-
-						let colorStop2 = new AscFormat.CGs();
-						// calculate color (AscFormat.CUniColor)
-						let color2 = uniFillBkgnd.fill.color;
-						let pos2 = 100000;
-						colorStop2.setColor(color2);
-						colorStop2.setPos(pos2);
-						fillGradientStops.push({Gs : colorStop2});
-
-						uniFillForegndWithPattern = AscFormat.builder_CreateLinearGradient(fillGradientStops, 0);
-					} else if (fillPatternType === 26) {
-						let fillGradientStops = [];
-
-						// has color (CUniColor) and pos from 0 to 100000
-						let colorStop1 = new AscFormat.CGs();
-						// calculate color (AscFormat.CUniColor)
-						let color1 = uniFillBkgnd.fill.color;
-						let pos1 = 0;
-						colorStop1.setColor(color1);
-						colorStop1.setPos(pos1);
-						fillGradientStops.push({Gs : colorStop1});
-
-						let colorStop2 = new AscFormat.CGs();
-						// calculate color (AscFormat.CUniColor)
-						let color2 = uniFillForegnd.fill.color;
-						let pos2 = 50000;
-						colorStop2.setColor(color2);
-						colorStop2.setPos(pos2);
-						fillGradientStops.push({Gs : colorStop2});
-
-						let colorStop3 = new AscFormat.CGs();
-						// calculate color (AscFormat.CUniColor)
-						let color3 = uniFillBkgnd.fill.color;
-						let pos3 = 100000;
-						colorStop3.setColor(color3);
-						colorStop3.setPos(pos3);
-						fillGradientStops.push({Gs : colorStop3});
-
-						uniFillForegndWithPattern = AscFormat.builder_CreateLinearGradient(fillGradientStops, 0);
-					} else if (fillPatternType === 27) {
-						let fillGradientStops = [];
-
-						// has color (CUniColor) and pos from 0 to 100000
-						let colorStop1 = new AscFormat.CGs();
-						// calculate color (AscFormat.CUniColor)
-						let color1 = uniFillBkgnd.fill.color;
-						let pos1 = 0;
-						colorStop1.setColor(color1);
-						colorStop1.setPos(pos1);
-						fillGradientStops.push({Gs : colorStop1});
-
-						let colorStop2 = new AscFormat.CGs();
-						// calculate color (AscFormat.CUniColor)
-						let color2 = uniFillForegnd.fill.color;
-						let pos2 = 100000;
-						colorStop2.setColor(color2);
-						colorStop2.setPos(pos2);
-						fillGradientStops.push({Gs : colorStop2});
-
-						uniFillForegndWithPattern = AscFormat.builder_CreateLinearGradient(fillGradientStops, 0);
-					} else if (fillPatternType === 28) {
-						let fillGradientStops = [];
-
-						// has color (CUniColor) and pos from 0 to 100000
-						let colorStop1 = new AscFormat.CGs();
-						// calculate color (AscFormat.CUniColor)
-						let color1 = uniFillForegnd.fill.color;
-						let pos1 = 0;
-						colorStop1.setColor(color1);
-						colorStop1.setPos(pos1);
-						fillGradientStops.push({Gs : colorStop1});
-
-						let colorStop2 = new AscFormat.CGs();
-						// calculate color (AscFormat.CUniColor)
-						let color2 = uniFillBkgnd.fill.color;
-						let pos2 = 100000;
-						colorStop2.setColor(color2);
-						colorStop2.setPos(pos2);
-						fillGradientStops.push({Gs : colorStop2});
-
-						uniFillForegndWithPattern = AscFormat.builder_CreateLinearGradient(fillGradientStops, 90 * AscFormat.degToC);
-					} else if (fillPatternType === 29) {
-						let fillGradientStops = [];
-
-						// has color (CUniColor) and pos from 0 to 100000
-						let colorStop1 = new AscFormat.CGs();
-						// calculate color (AscFormat.CUniColor)
-						let color1 = uniFillBkgnd.fill.color;
-						let pos1 = 0;
-						colorStop1.setColor(color1);
-						colorStop1.setPos(pos1);
-						fillGradientStops.push({Gs : colorStop1});
-
-						let colorStop2 = new AscFormat.CGs();
-						// calculate color (AscFormat.CUniColor)
-						let color2 = uniFillForegnd.fill.color;
-						let pos2 = 50000;
-						colorStop2.setColor(color2);
-						colorStop2.setPos(pos2);
-						fillGradientStops.push({Gs : colorStop2});
-
-						let colorStop3 = new AscFormat.CGs();
-						// calculate color (AscFormat.CUniColor)
-						let color3 = uniFillBkgnd.fill.color;
-						let pos3 = 100000;
-						colorStop3.setColor(color3);
-						colorStop3.setPos(pos3);
-						fillGradientStops.push({Gs : colorStop3});
-
-						uniFillForegndWithPattern = AscFormat.builder_CreateLinearGradient(fillGradientStops, 90 * AscFormat.degToC);
-					} else if (fillPatternType === 30) {
-						let fillGradientStops = [];
-
-						// has color (CUniColor) and pos from 0 to 100000
-						let colorStop1 = new AscFormat.CGs();
-						// calculate color (AscFormat.CUniColor)
-						let color1 = uniFillForegnd.fill.color;
-						let pos1 = 0;
-						colorStop1.setColor(color1);
-						colorStop1.setPos(pos1);
-						fillGradientStops.push({Gs : colorStop1});
-
-						let colorStop2 = new AscFormat.CGs();
-						// calculate color (AscFormat.CUniColor)
-						let color2 = uniFillBkgnd.fill.color;
-						let pos2 = 100000;
-						colorStop2.setColor(color2);
-						colorStop2.setPos(pos2);
-						fillGradientStops.push({Gs : colorStop2});
-
-						uniFillForegndWithPattern = AscFormat.builder_CreateLinearGradient(fillGradientStops, -90 * AscFormat.degToC);
-					} else {
-						let fillGradientStops = [];
-
-						// has color (CUniColor) and pos from 0 to 100000
-						let colorStop1 = new AscFormat.CGs();
-						// calculate color (AscFormat.CUniColor)
-						let color1 = uniFillForegnd.fill.color;
-						let pos1 = 0;
-						colorStop1.setColor(color1);
-						colorStop1.setPos(pos1);
-						fillGradientStops.push({Gs : colorStop1});
-
-						let colorStop2 = new AscFormat.CGs();
-						// calculate color (AscFormat.CUniColor)
-						let color2 = uniFillBkgnd.fill.color;
-						let pos2 = 100000;
-						colorStop2.setColor(color2);
-						colorStop2.setPos(pos2);
-						fillGradientStops.push({Gs : colorStop2});
-
-						uniFillForegndWithPattern = AscFormat.builder_CreateRadialGradient(fillGradientStops);
-					}
-				} else if (fillPatternType > 1) {
-					let ooxmlFillPatternType = mapVisioFillPatternToOOXML(fillPatternType);
-					if (uniFillForegnd.fill instanceof AscFormat.CPattFill) {
-						uniFillForegndWithPattern = AscFormat.CreatePatternFillUniFill(ooxmlFillPatternType,
-								uniFillForegnd.fill.bgClr, uniFillForegnd.fill.fgClr);
-					} else {
-						uniFillForegndWithPattern = AscFormat.CreatePatternFillUniFill(ooxmlFillPatternType,
-								uniFillBkgnd.fill.color, uniFillForegnd.fill.color);
-					}
-				}
-			} else if (uniFillForegnd) {
-				uniFillForegndWithPattern = uniFillForegnd;
-			} else {
-				AscCommon.consoleLog("FillForegnd not found for shape", this);
-				uniFillForegndWithPattern = AscFormat.CreateNoFillUniFill();
-			}
-		}
-
-
-		let lineWidthEmu = null;
-		let lineWeightCell = this.getCell("LineWeight");
-		if (lineWeightCell) {
-			// to cell.v visio always saves inches
-			// let lineWeightInches = Number(lineWeightCell.v);
-			let lineWeightInches = lineWeightCell.calculateValue(this, pageInfo,
-				visioDocument.themes);
-			if (!isNaN(lineWeightInches)) {
-				lineWidthEmu = lineWeightInches * AscCommonWord.g_dKoef_in_to_mm * AscCommonWord.g_dKoef_mm_to_emu;
-			} else {
-				AscCommon.consoleLog("caught unknown error. line will be painted 9525 emus");
-				// 9255 emus = 0.01041666666666667 inches is document.xml StyleSheet ID=0 LineWeight e. g. default value
+				AscCommon.consoleLog("LineWeight cell was not calculated. line will be painted 9525 emus");
 				lineWidthEmu = 9525;
 			}
-		} else {
-			AscCommon.consoleLog("LineWeight cell was not calculated. line will be painted 9525 emus");
-			lineWidthEmu = 9525;
+			return lineWidthEmu;
 		}
 
-		// not scaling lineWidth
-		/**	 * @type {CLn}	 */
-		let oStroke = AscFormat.builder_CreateLine(lineWidthEmu, {UniFill: lineUniFill});
-
-		// seems to be unsupported for now
-		let lineCapCell = this.getCell("LineCap");
-		let lineCapNumber;
-		if (lineCapCell) {
-			// see [MS-VSDX]-220215 (1) - 2.4.4.170	LineCap
-			lineCapNumber = lineCapCell.calculateValue(this, pageInfo, visioDocument.themes);
-			if (isNaN(lineCapNumber)) {
-				oStroke.setCap(2);
+		/**
+		 * @param {Shape_Type} shape
+		 * @param {Page_Type} pageInfo
+		 * @param {CVisioDocument} visioDocument
+		 * @return {number} cap type
+		 */
+		function getLineCap(shape, pageInfo, visioDocument) {
+			let lineCapCell = shape.getCell("LineCap");
+			let lineCapNumber;
+			if (lineCapCell) {
+				lineCapNumber = lineCapCell.calculateValue(shape, pageInfo, visioDocument.themes);
+				if (isNaN(lineCapNumber)) {
+					lineCapNumber = 2;
+				}
 			} else {
-				oStroke.setCap(lineCapNumber);
+				lineCapNumber = 2;
 			}
+			return lineCapNumber;
 		}
 
-		let linePattern = this.getCell("LinePattern");
-		if (linePattern) {
-			// see ECMA-376-1 - L.4.8.5.2 Line Dash Properties and [MS-VSDX]-220215 (1) - 2.4.4.180	LinePattern
-			let linePatternNumber = linePattern.calculateValue(this, pageInfo, visioDocument.themes);
-			if (isNaN(linePatternNumber)) {
-				oStroke.setPrstDash(oStroke.GetDashCode("vsdxSolid"));
-			} else {
-				let shift = 11;
-				let dashTypeName = oStroke.GetDashByCode(linePatternNumber + shift);
-				if (dashTypeName !== null) {
-					if (lineCapNumber !== 2) {
-						AscCommon.consoleLog("linePattern may be wrong. Because visio cap is not square" +
-							"Now only flat cap is supported in sdkjs but Line patterns were made " +
-							"for visio cap square looks correct" +
-							"So when visio cap is not square line pattern will not fit."
+		/**
+		 * Calculate line pattern. See some issues inside.
+		 * @param {Shape_Type} shape
+		 * @param {Page_Type} pageInfo
+		 * @param {CVisioDocument} visioDocument
+		 * @param {number} lineCap
+		 * @return {number} cap type
+		 */
+		function getPresetDash(shape, pageInfo, visioDocument, lineCap) {
+			let linePattern = shape.getCell("LinePattern");
+			let prstDash;
+			if (linePattern) {
+				// see ECMA-376-1 - L.4.8.5.2 Line Dash Properties and [MS-VSDX]-220215 (1) - 2.4.4.180	LinePattern
+				let linePatternNumber = linePattern.calculateValue(shape, pageInfo, visioDocument.themes);
+				if (isNaN(linePatternNumber)) {
+					prstDash = AscFormat.CLn.prototype.GetDashCode("vsdxSolid");
+				} else {
+					const shift = 11;
+					const visioLineCode = linePatternNumber + shift;
+					let dashTypeName = AscFormat.CLn.prototype.GetDashByCode(visioLineCode);
+					if (dashTypeName !== null) {
+						if (lineCap !== 2) {
+							AscCommon.consoleLog("linePattern may be wrong. Because visio cap is not square" +
+									"Now only flat cap is supported in sdkjs but Line patterns were made " +
+									"for visio cap square looks correct" +
+									"So when visio cap is not square line pattern will not fit."
 							)
-						if ("vsdxHalfHalfDash" === dashTypeName) {
-							// vsdxHalfHalfDash looks like solid on visio cap square but if cap is not square in visio
-							// vsdxHalfHalfDash should be dotted
-							linePatternNumber = 10;
+							if ("vsdxHalfHalfDash" === dashTypeName) {
+								// vsdxHalfHalfDash looks like solid on visio cap square but if cap is not square in visio
+								// vsdxHalfHalfDash should be dotted
+								// set 10th visio pattern
+								return 10 + shift;
+							}
 						}
-					}
-					if ("vsdxTransparent" === dashTypeName && oStroke.Fill) {
-						//todo реализовать прозрачный тип через отдельную настройку или разделить fill для линий и наконечников
-						//в vsdx может быть прозрачная линия с видимыми наконечниками
-						oStroke.Fill.fill = new AscFormat.CNoFill();
+						prstDash = visioLineCode;
 					} else {
-						oStroke.setPrstDash(linePatternNumber + shift);
-					}
-				} else {
-					oStroke.setPrstDash(oStroke.GetDashCode("vsdxDash"));
-				}
-			}
-		}
-
-		// Each geometry section may have arrows
-		// Arrow are displayed only if that geometry section has NoFill cell equal to 1
-		// For now as we set arrow for all the shape let's check first geometry only
-		let firstGeometrySection = this.getSection("Geometry_0");
-		if (firstGeometrySection && firstGeometrySection.getCellNumberValue("NoFill") === 1) {
-			let endArrowTypeCell = this.getCell("EndArrow");
-			let endArrowSizeCell = this.getCell("EndArrowSize");
-			let endArrowType = endArrowTypeCell ? endArrowTypeCell.calculateValue(this, pageInfo,
-				visioDocument.themes) : 0;
-			let endArrowSize = endArrowSizeCell ? endArrowSizeCell.calculateValue(this, pageInfo,
-				visioDocument.themes) : 1;
-			let endArrow = getEndArrow(endArrowType, endArrowSize);
-			oStroke.setTailEnd(endArrow);
-
-			let beginArrowTypeCell = this.getCell("BeginArrow");
-			let beginArrowSizeCell = this.getCell("BeginArrowSize");
-			let beginArrowType = beginArrowTypeCell ? beginArrowTypeCell.calculateValue(this, pageInfo,
-				visioDocument.themes) : 0;
-			let beginArrowSize = beginArrowSizeCell ? beginArrowSizeCell.calculateValue(this, pageInfo,
-				visioDocument.themes) : 1;
-			let beginArrow = getEndArrow(beginArrowType, beginArrowSize);
-			oStroke.setHeadEnd(beginArrow);
-		}
-
-
-		let flipHorizontally = this.getCellNumberValue("FlipX") === 1;
-		if (flipHorizontally) {
-			x_inch = x_inch + 2 * (locPinX_inch - shapeWidth_inch / 2);
-		}
-
-		let flipVertically = this.getCellNumberValue("FlipY") === 1;
-		if (flipVertically) {
-			y_inch = y_inch + 2 * (locPinY_inch - shapeHeight_inch / 2);
-		}
-
-		let x_mm = x_inch * g_dKoef_in_to_mm;
-		let y_mm = y_inch * g_dKoef_in_to_mm;
-
-		let shapeWidth_mm = shapeWidth_inch * g_dKoef_in_to_mm;
-		let shapeHeight_mm = shapeHeight_inch * g_dKoef_in_to_mm;
-
-
-		let cShape = this.convertToCShapeUsingParamsObj({
-			x_mm: x_mm, y_mm: y_mm,
-			w_mm: shapeWidth_mm, h_mm: shapeHeight_mm,
-			rot: shapeAngle,
-			oFill: uniFillForegndWithPattern, oStroke: oStroke,
-			flipHorizontally: flipHorizontally, flipVertically: flipVertically,
-			pageInfo: pageInfo,
-			cVisioDocument: visioDocument,
-			drawingPageScale : drawingPageScale,
-			isInvertCoords: isInvertCoords,
-			isShapeDeleted: isShapeDeleted,
-			id: this.id
-		});
-
-
-		// set shadow
-		// ShdwPattern = 1 means shadow is visible
-		let shadowPatternCell = this.getCell("ShdwPattern");
-		let shadowPattern = shadowPatternCell ? shadowPatternCell.calculateValue(this, pageInfo,
-				visioDocument.themes, undefined, false) : 0;
-		let isShadowVisible = shadowPattern === 1;
-
-		let shapeShadowTypeCell = this.getCell("ShapeShdwType");
-		let isShadowTypeSupported = shapeShadowTypeCell ? (
-				shapeShadowTypeCell.getNumberValue("ShapeShdwType") === 1 ||
-				shapeShadowTypeCell.getNumberValue("ShapeShdwType") === 2 ||
-				shapeShadowTypeCell.getStringValue() === "Themed") : false;
-		if (isShadowVisible && isShadowTypeSupported) {
-			let shadow = new AscFormat.COuterShdw();
-
-			// get color for shadow
-			let shadowForegndCell = this.getCell("ShdwForegnd");
-			let shadowColor;
-			if (shadowForegndCell) {
-				// AscCommon.consoleLog("FillForegnd was found:", fillForegndCell);
-				shadowColor = shadowForegndCell.calculateValue(this, pageInfo,
-						visioDocument.themes, undefined, false);;
-
-				let mainFillAlphaCoef = 1;
-				let fillForegndTransValue = this.getCellNumberValue("FillForegndTrans");
-				if (!isNaN(fillForegndTransValue)) {
-					mainFillAlphaCoef = 1 - fillForegndTransValue;
-				}
-
-				let shadowTransValue = 0;
-				let shadowTransCell = this.getCell("ShdwForegndTrans");
-				// if themed alpha is included in shadowColor already
-				if (shadowTransCell.getStringValue() !== "Themed") {
-					shadowTransValue = shadowTransCell.getNumberValue("ShdwForegndTrans");
-
-					let shadowAlpha = (1 - shadowTransValue) * mainFillAlphaCoef;
-					if (shadowAlpha !== 1) {
-						let oMod = new AscFormat.CColorMod("alpha", shadowAlpha  * 100 * 1000 + 0.5 >> 0);
-						shadowColor.addColorMod(oMod);
-					}
-				} else {
-					// check if alpha is set already
-					let alphaMod = shadowColor.Mods && shadowColor.Mods.Mods.find(function (mod) {
-						return mod.name === "alpha";
-					});
-					if (alphaMod) {
-						alphaMod.val = alphaMod.val * mainFillAlphaCoef;
-					} else {
-						let oMod = new AscFormat.CColorMod("alpha", mainFillAlphaCoef  * 100 * 1000 + 0.5 >> 0);
-						shadowColor.addColorMod(oMod);
+						prstDash = AscFormat.CLn.prototype.GetDashCode("vsdxDash");
 					}
 				}
-
 			} else {
-				AscCommon.consoleLog("shadow foreground cell not found for", this);
+				prstDash = AscFormat.CLn.prototype.GetDashCode("vsdxSolid");
 			}
-			// shadow.color = AscFormat.CreateUniColorRGB(100,100,100);
-			// shadow.color.color = new AscFormat.CPrstColor();
-			// shadow.color.color.id = "black";
-			// shadow.putTransparency(60);
-			shadow.color = shadowColor;
-
-			let shadowOffsetXcell = this.getCell("ShapeShdwOffsetX");
-			let shadowOffsetYcell = this.getCell("ShapeShdwOffsetY");
-			let shadowOffsetX_inch = shadowOffsetXcell.calculateValue(this, pageInfo, visioDocument.themes);
-			let shadowOffsetY_inch = shadowOffsetYcell.calculateValue(this, pageInfo, visioDocument.themes);
-			let shadowOffsetX = shadowOffsetX_inch === undefined ? 0 : shadowOffsetX_inch * g_dKoef_in_to_mm;
-			let shadowOffsetY = shadowOffsetY_inch === undefined ? 0 : shadowOffsetY_inch * g_dKoef_in_to_mm;
-			let atan = Math.atan2(shadowOffsetY, shadowOffsetX);
-			shadow.dist = Math.hypot(shadowOffsetX, shadowOffsetY) * g_dKoef_mm_to_emu;
-			// if true move to cord system where y goes down
-			if (isInvertCoords) {
-				atan = -atan;
-			}
-			shadow.dir = atan * AscFormat.radToDeg * AscFormat.degToC;
-
-			shadow.rotWithShape = true;
-			// cShape.spPr.changeShadow(shadow);
-			cShape.spPr.effectProps = new AscFormat.CEffectProperties();
-			cShape.spPr.effectProps.EffectLst = new AscFormat.CEffectLst();
-			cShape.spPr.effectProps.EffectLst.outerShdw = shadow;
-
-			// cShape.spPr.effectProps.EffectLst.prstShdw = new AscFormat.CPrstShdw();
-			// cShape.spPr.effectProps.EffectLst.prstShdw.dir = 300 * 3600;
-		}
-
-
-		// not scaling fontSize
-		let textCShape = getTextCShape(visioDocument.themes[0], this, cShape,
-			lineUniFill, uniFillForegndNoGradient, drawingPageScale, maxHeightScaledIn,
-			visioDocument.pageIndex, visioDocument.pages.page.length, pageInfo, layerColor);
-
-		if (textCShape !== null) {
-			if (isShapeDeleted) {
-				textCShape.setBDeleted(true);
-			}
-		}
-
-		if (this.type === AscVisio.SHAPE_TYPES_FOREIGN) {
-			// AscCommon.consoleLog("Shape has type Foreign and may not be displayed. " +
-			// 	"Check shape.elements --> ForeignData_Type obj. See shape:", this);
-
-			let foreignDataObject = this.getForeignDataObject();
-			if (foreignDataObject) {
-				if (this.cImageShape !== null) {
-					this.cImageShape.setLocks(0);
-					this.cImageShape.setBDeleted(false);
-					this.cImageShape.setSpPr(cShape.spPr.createDuplicate());
-					this.cImageShape.spPr.setParent(this.cImageShape);
-
-					let imgWidth_inch = this.getCellNumberValueWithScale("ImgWidth", drawingPageScale);
-					let imgHeight_inch = this.getCellNumberValueWithScale("ImgHeight", drawingPageScale);
-					let imgOffsetX_inch = this.getCellNumberValueWithScale("ImgOffsetX", drawingPageScale);
-					let imgOffsetY_inch = this.getCellNumberValueWithScale("ImgOffsetY", drawingPageScale);
-
-					let imgWidth_mm = imgWidth_inch * g_dKoef_in_to_mm;
-					let imgHeight_mm = imgHeight_inch * g_dKoef_in_to_mm;
-
-					this.cImageShape.blipFill.srcRect = new AscFormat.CSrcRect();
-					let rect = this.cImageShape.blipFill.srcRect;
-
-					if (imgWidth_inch !== undefined && imgHeight_inch !== undefined) {
-						let widthScale = imgWidth_mm / shapeWidth_mm;
-						let heightScale = imgHeight_mm / shapeHeight_mm;
-						// coords in our class CSrcRect is srcRect relative i.e. relative to original image size
-						// isInvertCoords check?
-						// add scale
-						rect.setLTRB(0, 100 - 1/heightScale * 100, 1/widthScale * 100, 100);
-					 }
-					if (imgOffsetX_inch !== undefined) {
-						let imgOffsetX_mm = imgOffsetX_inch * g_dKoef_in_to_mm;
-						let offsetX = imgOffsetX_mm / imgWidth_mm;
-						// add horizontal shift
-						rect.setLTRB(rect.l - offsetX * 100, rect.t, rect.r - offsetX * 100, rect.b);
-					}
-					if (imgOffsetY_inch !== undefined) {
-						let imgOffsetY_mm = imgOffsetY_inch * g_dKoef_in_to_mm;
-						let offsetY = imgOffsetY_mm / imgHeight_mm;
-						// add vertical shift
-						rect.setLTRB(rect.l, rect.t + offsetY * 100, rect.r, rect.b + offsetY * 100);
-					}
-
-
-					this.cImageShape.rot = cShape.rot;
-					// this.cImageShape.brush = cShape.brush;
-					this.cImageShape.bounds = cShape.bounds;
-					this.cImageShape.flipH = cShape.flipH;
-					this.cImageShape.flipV = cShape.flipV;
-					this.cImageShape.localTransform = cShape.localTransform;
-					// this.cImageShape.pen = cShape.pen;
-					this.cImageShape.Id = cShape.Id;
-
-					this.cImageShape.setParent2(visioDocument);
-
-					cShape = this.cImageShape;
-				} else {
-					AscCommon.consoleLog("Unknown error: cImageShape was not initialized on ooxml parse");
-				}
-			}
-		}
-
-		// combine textCShape and geometryCShape to group
-		if (textCShape !== null) {
-			let groupShape = new AscFormat.CGroupShape();
-			// this.graphicObjectsController = new AscFormat.DrawingObjectsController();
-			// let groupShape = AscFormat.builder_CreateGroup();
-
-			groupShape.setLocks(0);
-
-			groupShape.setBDeleted(false);
-
-			// Create CGroupShape with SpPr from cShape but with no fill and line
-			let noLineFillSpPr = cShape.spPr.createDuplicate();
-			noLineFillSpPr.setFill(AscFormat.CreateNoFillUniFill());
-			noLineFillSpPr.setLn(AscFormat.CreateNoFillLine());
-			groupShape.setSpPr(noLineFillSpPr);
-			groupShape.spPr.setParent(groupShape);
-			// these props came to group
-			cShape.spPr.xfrm.rot = 0;
-			cShape.spPr.xfrm.flipV = false;
-			cShape.spPr.xfrm.flipH = false;
-
-
-			groupShape.brush = cShape.brush;
-			groupShape.bounds = cShape.bounds;
-			groupShape.localTransform = cShape.localTransform;
-			groupShape.pen = cShape.pen;
-			groupShape.Id = cShape.Id + "ShapeAndText";
-
-			groupShape.addToSpTree(groupShape.spTree.length, cShape);
-			groupShape.spTree[groupShape.spTree.length - 1].setGroup(groupShape);
-			cShape.spPr.xfrm.setOffX(0);
-			cShape.spPr.xfrm.setOffY(0);
-
-
-			groupShape.addToSpTree(groupShape.spTree.length, textCShape);
-			groupShape.spTree[groupShape.spTree.length - 1].setGroup(groupShape);
-			textCShape.spPr.xfrm.setOffX(textCShape.spPr.xfrm.offX - groupShape.spPr.xfrm.offX);
-			textCShape.spPr.xfrm.setOffY(textCShape.spPr.xfrm.offY - groupShape.spPr.xfrm.offY);
-			textCShape.spPr.xfrm.flipH = false;
-			textCShape.spPr.xfrm.flipV = false;
-
-			// In power point presentations on flipV text is position is flipped + text
-			// is mirrored horizontally and vertically (https://disk.yandex.ru/d/Hi8OCMITgb730Q)
-			// below we remove text mirror. In visio text is never mirrored. (https://disk.yandex.ru/d/JjbNzzZLDIAEuQ)
-			// (on flipH in power point presentation text is not mirrored)
-			let currentFlip = groupShape.spPr.xfrm.flipV;
-			let groupFlip = currentGroupHandling && currentGroupHandling.getFullFlipVSpPr();
-			let flip = groupFlip ? !currentFlip : currentFlip;
-			if (flip) {
-				textCShape.spPr.xfrm.setRot(Math.PI + textCShape.spPr.xfrm.rot);
-			}
-
-			groupShape.setParent2(visioDocument);
-
-			return groupShape;
-		} else {
-			return cShape;
+			return prstDash;
 		}
 	}
 
 	/**
 	 * converts !Shape TypeGroup! To CGroupShape Recursively.
-	 * let's say shape can only have subshapes if its Type='Group'.
+	 * Shape can only have subshapes if its Type='Group'.
+	 * Can be called on shapes Type not 'Group' then shape just adds to currentGroupHandling
 	 * @memberOf Shape_Type
 	 * @param {CVisioDocument} visioDocument
 	 * @param {Page_Type} pageInfo
 	 * @param {Number} drawingPageScale
 	 * @param {CGroupShape?} currentGroupHandling
-	 * @return {CGroupShape}
+	 * @param {number[]?} delMasterShapes - shapes with MasterShape included in array will not be converted
+	 * @return {CGroupShape | undefined}
 	 */
 	Shape_Type.prototype.convertGroup = function (visioDocument, pageInfo,
-												  drawingPageScale, currentGroupHandling) {
+												  drawingPageScale, currentGroupHandling, delMasterShapes) {
 		// if we need to create CGroupShape create CShape first then copy its properties to CGroupShape object
 		// so anyway create CShapes
 		let cShapeOrCGroupShape = this.convertShape(visioDocument, pageInfo, drawingPageScale, currentGroupHandling);
+
+		// handle ShapeShdwShow to hide shadow if shape has ShapeShdwShow 1 and shape is in group
+		let shapeShdwShowCell = this.getCell("ShapeShdwShow");
+		let shapeShdwShow = shapeShdwShowCell && shapeShdwShowCell.calculateValue(this, pageInfo, visioDocument.themes);
+		if (shapeShdwShow === 1 && currentGroupHandling) {
+			let shape;
+			if (cShapeOrCGroupShape.getObjectType() === AscDFH.historyitem_type_GroupShape) {
+				shape = cShapeOrCGroupShape.spTree[0];
+			} else {
+				shape = cShapeOrCGroupShape;
+			}
+			if (shape && shape.spPr.effectProps && shape.spPr.effectProps.EffectLst &&
+					shape.spPr.effectProps.EffectLst.outerShdw) {
+				// hide shadow
+				// TODO dont delete shadow object but create ShapeShdwShow property for CShape to handle it on draw
+				shape.spPr.effectProps.EffectLst.outerShdw = null;
+				shape.spPr.effectProps.EffectLst.innerShdw = null;
+				shape.spPr.effectProps.EffectLst.prstShdw = null;
+			}
+
+		}
 
 		// if it is group in vsdx
 		if (this.type === AscVisio.SHAPE_TYPES_GROUP) {
@@ -2451,18 +2824,43 @@
 					groupShape.spTree[groupShape.spTree.length - 1].setGroup(groupShape);
 				}
 
-				if (currentGroupHandling) {
-					// insert group to currentGroupHandling
-					currentGroupHandling.addToSpTree(currentGroupHandling.spTree.length, groupShape);
-					currentGroupHandling.spTree[currentGroupHandling.spTree.length - 1].setGroup(currentGroupHandling);
-				}
-
 				// handle sub-shapes
-				currentGroupHandling = groupShape;
 				let subShapes = this.getSubshapes();
+
+				/**
+				 * see bug for Del attribute handle: https://bugzilla.onlyoffice.com/show_bug.cgi?id=76050
+				 * let's collect dels first and then traverse through all the group again in groupShape.deleteShapes().
+				 * Dels appear rarely so it is ok.
+				 * @type {number[]}
+				 */
+				let delMasterShapesCurrent = [];
 				for (let i = 0; i < subShapes.length; i++) {
 					const subShape = subShapes[i];
-					subShape.convertGroup(visioDocument, pageInfo, drawingPageScale, currentGroupHandling);
+					if (subShape.del && subShape.masterShape !== null) {
+						delMasterShapesCurrent.push(subShape.masterShape);
+					}
+				}
+				if (delMasterShapes === undefined) {
+					delMasterShapes = delMasterShapesCurrent;
+				} else {
+					delMasterShapes = delMasterShapes.concat(delMasterShapesCurrent);
+				}
+
+				for (let i = 0; i < subShapes.length; i++) {
+					const subShape = subShapes[i];
+					// if group - remove
+					// if shape and fully inherited - remove
+					// if shape/group is not inherited check for masterShape
+					// if shape/group is inherited check for id
+					// TODO Optimization: use Set() because has() is faster than includes()
+					// TODO try changing shape Del='1' IDs and see what happens
+					const delIdCheck = this.inheritedShapes.includes(subShape) && delMasterShapes.includes(subShape.id)
+							|| delMasterShapes.includes(subShape.masterShape);
+					const isDeleted = delIdCheck && (subShape.type === AscVisio.SHAPE_TYPES_GROUP
+							|| subShape.type === AscVisio.SHAPE_TYPES_SHAPE && this.inheritedShapes.includes(subShape))
+					if (!isDeleted) {
+						subShape.convertGroup(visioDocument, pageInfo, drawingPageScale, groupShape, delMasterShapes);
+					}
 				}
 
 				// if group geometry should be on the top layer
@@ -2481,6 +2879,14 @@
 					groupShape.addToSpTree(groupShape.spTree.length, cShapeOrCGroupShape.spTree[1]);
 					groupShape.spTree[groupShape.spTree.length - 1].setGroup(groupShape);
 				}
+
+				if (currentGroupHandling) {
+					// insert group to currentGroupHandling
+					currentGroupHandling.addToSpTree(currentGroupHandling.spTree.length, groupShape);
+					currentGroupHandling.spTree[currentGroupHandling.spTree.length - 1].setGroup(currentGroupHandling);
+				}
+
+				return groupShape;
 			}
 		} else {
 			// if read cShape not CGroupShape
@@ -2494,8 +2900,6 @@
 				}
 			}
 		}
-
-		return currentGroupHandling;
 	}
 
 	/**
@@ -2523,8 +2927,8 @@
 		let shapeGeom = AscVisio.getGeometryFromShape(this, drawingPageScale, isInvertCoords);
 
 		let sType   = "rect";
-		let nWidth_mm  = Math.round(w_mm);
-		let nHeight_mm = Math.round(h_mm);
+		let nWidth_mm  = w_mm;
+		let nHeight_mm = h_mm;
 		//let oDrawingDocument = new AscCommon.CDrawingDocument();
 		let shape = AscFormat.builder_CreateShape(sType, nWidth_mm, nHeight_mm,
 			oFill, oStroke, cVisioDocument, cVisioDocument.themes[0], null, false);

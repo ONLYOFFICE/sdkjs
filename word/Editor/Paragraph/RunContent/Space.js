@@ -38,6 +38,8 @@
 	const FLAGS_FONTKOEF_SCRIPT    = 0x01;
 	const FLAGS_FONTKOEF_SMALLCAPS = 0x02;
 	const FLAGS_GAPS               = 0x04;
+	
+	// 16-31 биты зарезервированы под FontSize
 
 	const FLAGS_NON_FONTKOEF_SCRIPT    = FLAGS_MASK ^ FLAGS_FONTKOEF_SCRIPT;
 	const FLAGS_NON_FONTKOEF_SMALLCAPS = FLAGS_MASK ^ FLAGS_FONTKOEF_SMALLCAPS;
@@ -58,6 +60,7 @@
 		this.Width        = 0x00000000 | 0;
 		this.WidthVisible = 0x00000000 | 0;
 		this.WidthOrigin  = 0x00000000 | 0;
+		this.Grapheme     = AscFonts.NO_GRAPHEME;
 
 		if (AscFonts.IsCheckSymbols)
 			AscFonts.FontPickerByCharacter.getFontBySymbol(this.Value);
@@ -69,6 +72,10 @@
 	CRunSpace.prototype.IsSpace = function()
 	{
 		return true;
+	};
+	CRunSpace.prototype.SetWidth = function(width)
+	{
+		this.Width = ((width * (((this.Flags >> 16) & 0xFFFF) / 64)) * AscWord.TEXTWIDTH_DIVIDER) | 0;
 	};
 	CRunSpace.prototype.GetWidth = function()
 	{
@@ -87,6 +94,20 @@
 	{
 		return AscBidi.TYPE.WS;
 	};
+	CRunSpace.prototype.SetGrapheme = function(grapheme)
+	{
+		this.Grapheme = grapheme;
+	};
+	CRunSpace.prototype.SetMetrics = function(fontSize, fontSlot, textPr)
+	{
+		this.SetScriptFlag(textPr.VertAlign !== AscCommon.vertalign_Baseline);
+		this.SetSmallCapsFlag(!textPr.Caps && textPr.SmallCaps);
+		let fontCoef = this.GetFontCoef();
+		// Разрешенные размеры шрифта только либо целое, либо целое/2. Даже после применения fontCoef, поэтому
+		// мы должны подкрутить коэффициент так, чтобы после домножения на него, у на получался разрешенный размер.
+		fontSize = (((fontSize * fontCoef * 2 + 0.5) | 0) / 2);
+		this.Flags = (this.Flags & 0xFFFF) | (((fontSize * 64) & 0xFFFF) << 16);
+	};
 	CRunSpace.prototype.Draw = function(X, Y, Context, PDSE, oTextPr)
 	{
 		if (this.Flags & FLAGS_GAPS)
@@ -99,7 +120,13 @@
 		{
 			Context.CheckSpaceDraw(this);
 		}
-		if (undefined !== editor && editor.ShowParaMarks)
+		
+		if (AscFonts.NO_GRAPHEME !== this.Grapheme)
+		{
+			let fontSize = (((this.Flags >> 16) & 0xFFFF) / 64);
+			AscFonts.DrawGrapheme(this.Grapheme, Context, X, Y, fontSize);
+		}
+		else if (undefined !== editor && editor.ShowParaMarks)
 		{
 			Context.SetFontSlot(AscWord.fontslot_ASCII, this.GetFontCoef());
 
@@ -114,53 +141,36 @@
 				Context.FillText(X, Y, String.fromCharCode(0x00B7));
 		}
 	};
-	CRunSpace.prototype.Measure = function(Context, TextPr)
+	CRunSpace.prototype.SetWidth = function(width, textPr, enWidth)
 	{
-		this.SetScriptFlag(TextPr.VertAlign !== AscCommon.vertalign_Baseline);
-		this.SetSmallCapsFlag(!TextPr.Caps && TextPr.SmallCaps);
-
-		// Разрешенные размеры шрифта только либо целое, либо целое/2. Даже после применения FontKoef, поэтому
-		// мы должны подкрутить коэффициент так, чтобы после домножения на него, у нас получался разрешенный размер
-		var FontKoef = this.GetFontCoef();
-		var FontSize = TextPr.FontSize;
-		if (1 !== FontKoef)
-			FontKoef = (((FontSize * FontKoef * 2 + 0.5) | 0) / 2) / FontSize;
-
-		if (0x3000 === this.Value)
-			Context.SetFontSlot(AscWord.fontslot_EastAsia, FontKoef);
-		else
-			Context.SetFontSlot(AscWord.fontslot_ASCII, FontKoef);
+		let fontSize = (((this.Flags >> 16) & 0xFFFF) / 64);
+		let Temp = width * fontSize;
 		
-		var Temp  = Context.MeasureCode(this.Value).Width;
-		
-		var ResultWidth  = (Math.max((Temp + TextPr.Spacing), 0) * 16384) | 0;
+		var ResultWidth  = (Math.max((Temp + textPr.Spacing), 0) * AscWord.TEXTWIDTH_DIVIDER) | 0;
 		this.Width       = ResultWidth;
 		this.WidthOrigin = ResultWidth;
-
+		
 		if (Math.abs(Temp) > 0.001)
-		{
-			let nEnKoef;
-			if (g_oTextMeasurer.m_oManager && g_oTextMeasurer.m_oManager.m_pFont && 0 !== g_oTextMeasurer.m_oManager.m_pFont.GetGIDByUnicode(0x2002))
-				nEnKoef = Context.MeasureCode(0x2002).Width / Temp;
-			else
-				nEnKoef = TextPr.FontSize / 72 * 25.4 / 2 / Temp;
-
-			this.WidthEn = (ResultWidth * nEnKoef) | 0;
-		}
+			this.WidthEn = (ResultWidth * enWidth / width) | 0;
 		else
-		{
 			this.WidthEn = ResultWidth;
+		
+		if (0x2003 === this.Value || 0x2002 === this.Value || 0x2005 === this.Value)
+		{
+			g_oTextMeasurer.SetTextPr(textPr);
+			g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, this.GetFontCoef());
+			let code = 0x2005 === this.Value ? 0x007C : 0x00B0;
+			this.SpaceGap = Math.max((Temp - g_oTextMeasurer.MeasureCode(code).Width) / 2, 0);
 		}
-
-		if (0x2003 === this.Value || 0x2002 === this.Value)
-			this.SpaceGap = Math.max((Temp - Context.MeasureCode(0x00B0).Width) / 2, 0);
-		else if (0x2005 === this.Value)
-			this.SpaceGap = (Temp - Context.MeasureCode(0x007C).Width) / 2;
 		else if (undefined !== this.SpaceGap)
+		{
 			this.SpaceGap = 0;
-
+		}
+		
 		// Не меняем здесь WidthVisible, это значение для пробела высчитывается отдельно, и не должно меняться при пересчете
-
+	};
+	CRunSpace.prototype.Measure = function(Context, TextPr)
+	{
 		if (this.Flags & FLAGS_GAPS)
 		{
 			this.Flags &= FLAGS_NON_GAPS;

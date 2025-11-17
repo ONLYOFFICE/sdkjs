@@ -75,7 +75,7 @@ function (window, undefined) {
 	var arrayFunctionsMap = {"SUMPRODUCT": 1, "FILTER": 1, "SUM": 1, "LOOKUP": 1, "AGGREGATE": 1};
 
 	var importRangeLinksState = {importRangeLinks: null, startBuildImportRangeLinks: null};
-	const aExcludeRecursiveFormulas = ['ISFORMULA', 'SHEETS', 'AREAS', 'COLUMN', 'COLUMNS', 'ROW', 'ROWS', 'CELL', 'OFFSET'];
+	const aExcludeRecursiveFormulas = ['ISFORMULA','SHEET','SHEETS', 'AREAS', 'COLUMN', 'COLUMNS', 'ROW', 'ROWS', 'CELL', 'OFFSET'];
 
 	const cReplaceFormulaType = {
 		val: 1,
@@ -3233,7 +3233,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return {col: realSize ? realSize.col : col, row: realSize ? realSize.row : row};
 	};
 	cArray.prototype.fillMatrix = function (replace_empty) {
-		let maxColCount = Math.max.apply(null, this.countElementInRow);
+		let maxColCount = 0;
+		for (let i = 0; i < this.countElementInRow.length; i++) {
+			if (this.countElementInRow[i] > maxColCount) {
+				maxColCount = this.countElementInRow[i];
+			}
+		}
 		this.countElementInRow = [];
 		this.countElement = 0;
 		for (let i = 0; i < this.rowCount; i++) {
@@ -5060,6 +5065,18 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		delete cFormulaFunction[sName];
 		delete cAllFormulaFunction[sName];
 	}
+	function removeCustomFunctions() {
+		if (AscCommonExcel.cFormulaFunctionGroup["Custom"] && AscCommonExcel.cFormulaFunctionGroup["Custom"].length) {
+			let aCustomFunc = AscCommonExcel.cFormulaFunctionGroup["Custom"];
+			for (let i = 0; i < aCustomFunc.length; i++) {
+				let sName = aCustomFunc[i].prototype.name;
+				AscCommonExcel.removeCustomFunction(sName);
+			}
+			AscCommonExcel.cFormulaFunctionGroup["Custom"] = [];
+			return true;
+		}
+		return false;
+	}
 	function getRangeByRef(ref, ws, onlyRanges, checkMultiSelection, checkFormula) {
 		var activeCell = ws.getSelection().activeCell;
 		var bbox = new Asc.Range(activeCell.col, activeCell.row, activeCell.col, activeCell.row);
@@ -5377,13 +5394,13 @@ _func[cElementType.string][cElementType.string] = function ( arg0, arg1, what ) 
 
 	let _arg0, _arg1;
 	if (what === ">") {
-		res = arg0.getValue(true) > arg1.getValue(true);
+		res = AscCommonExcel.stringCompare(arg0.getValue(true), arg1.getValue(true)) > 0;
 	} else if (what === ">=") {
-		res = arg0.getValue(true) >= arg1.getValue(true);
+		res = AscCommonExcel.stringCompare(arg0.getValue(true), arg1.getValue(true)) >= 0;
 	} else if (what === "<") {
-		res = arg0.getValue(true) < arg1.getValue(true);
+		res = AscCommonExcel.stringCompare(arg0.getValue(true), arg1.getValue(true)) < 0;
 	} else if (what === "<=") {
-		res = arg0.getValue(true) <= arg1.getValue(true);
+		res = AscCommonExcel.stringCompare(arg0.getValue(true), arg1.getValue(true)) <= 0;
 	} else if (what === "=") {
 		res = isEqualStrings(arg0.getValue(true), arg1.getValue(true));
 	} else if (what === "<>") {
@@ -5906,77 +5923,6 @@ _func[cElementType.number][cElementType.array] = _func[cElementType.string][cEle
             return res;
         };
 
-
-_func.binarySearch = function ( sElem, arrTagert, regExp ) {
-	var first = 0, /* The number of the first element in the array */
-		last = arrTagert.length - 1, /* The number of the element in the array that comes AFTER the last one */
-		/* If the viewed segment is not empty, first<last */
-		mid;
-
-	var arrTagertOneType = [], isString = false;
-
-	for (var i = 0; i < arrTagert.length; i++) {
-		if ((arrTagert[i] instanceof cString || sElem instanceof cString) && !isString) {
-			i = 0;
-			isString = true;
-			sElem = new cString(sElem.toString().toLowerCase());
-		}
-		if (isString) {
-			arrTagertOneType[i] = new cString(arrTagert[i].toString().toLowerCase());
-		} else {
-			arrTagertOneType[i] = arrTagert[i].tocNumber();
-		}
-	}
-
-	// comparing the lengths of arrays and the first and last element
-	if (arrTagert.length === 0) {
-		return -1;
-		/* array empty */
-	} else if (arrTagert[0].value > sElem.value) {
-		return -2;
-	} else if (arrTagert[arrTagert.length - 1].value < sElem.value) {
-		return arrTagert.length - 1;
-	}
-
-	// according to the sorting in MS, the comparison will be like this: cError > cBool > cText > (cNumber == cEmpty)
-	while (first < last) {
-		mid = Math.floor(first + (last - first) / 2);
-		if (sElem.type !== arrTagert[mid].type) {
-			if (sElem.type === cElementType.empty || arrTagert[mid].type === cElementType.empty) {
-				if (sElem.value <= arrTagert[mid].value) {
-					// cEmpty.tocNumber() ?
-					last = mid;
-				} else {
-					first = mid + 1;
-				}
-			} else {
-				if (cElementTypeWeight.get(sElem.type) < cElementTypeWeight.get(arrTagert[mid].type)) {
-					last = mid;
-				} else {
-					first = mid + 1;
-				}
-			}
-		} else {
-			// if cError && cError ?
-			if (sElem.value < arrTagert[mid].value || ( regExp && regExp.test(arrTagert[mid].value) )) {
-				last = mid;
-			} else {
-				first = mid + 1;
-			}
-		}
-	}
-
-	/* If the conditional operator if(n==0) and so on is omitted at the beginning - then uncomment it here!    */
-	if (/* last<n &&*/ arrTagert[last].value === sElem.value) {
-		return last;
-		/* The desired element is found. last is the desired index */
-	} else {
-		return last - 1;
-		/* The desired element is not found. But if you suddenly need to insert it with a shift, its place is at last.    */
-	}
-
-};
-
 _func.lookupBinarySearch = function ( sElem, arrayNoEmpty, isByRangeCall, regExp ) {
 	let first = 0, last, mid;
 	let typedArr;
@@ -6027,7 +5973,7 @@ _func.lookupBinarySearch = function ( sElem, arrayNoEmpty, isByRangeCall, regExp
 	} else if (cacheIndex !== undefined && typedArr[cacheIndex].v.value <= sElem.value) {
 		return typedArr[cacheIndex].i;
 	} else {
-		return -2;
+		return -1;
 	}
 };
 
@@ -6245,6 +6191,9 @@ _func[cElementType.cell3D] = _func[cElementType.cell];
 		//в процессе добавления формулы может найтись ссылка на внешний источник, который ещё не добавлен
 		//сюда добавляем индексы и после парсинга формулы, добавляем новую структуру
 		this.externalReferenesNeedAdd = null;
+
+		this.needAssemble = null;
+		this.needCorrect = null;
 	}
 
 	ParseResult.prototype.addRefPos = function(start, end, index, oper, isName) {
@@ -6343,22 +6292,25 @@ _func[cElementType.cell3D] = _func[cElementType.cell];
 		return res;
 	};
 
-	ParseResult.prototype.getActiveFunction = function(start, end) {
+	ParseResult.prototype.getActiveFunction = function(start, end, opt_get_arg_pos) {
 		var res = null;
 		if (this.allFunctionsPos) {
 			var startFuncs, endFuncs, i, j;
 			for (i = 0; i < this.allFunctionsPos.length; i++) {
-				if (this.allFunctionsPos[i].start + 1 <= start && this.allFunctionsPos[i].end + 1 >= start) {
+				var func = this.allFunctionsPos[i];
+				var endCheck = opt_get_arg_pos && func.isComplete ? func.end : func.end + 1;
+				
+				if (func.start + 1 <= start && endCheck >= start) {
 					if (!startFuncs) {
 						startFuncs = [];
 					}
-					startFuncs.push(this.allFunctionsPos[i]);
+					startFuncs.push(func);
 				}
-				if (start !== end && this.allFunctionsPos[i].start + 1 <= end && this.allFunctionsPos[i].end + 1 >= end) {
+				if (start !== end && func.start + 1 <= end && endCheck >= end) {
 					if (!endFuncs) {
 						endFuncs = [];
 					}
-					endFuncs.push(this.allFunctionsPos[i]);
+					endFuncs.push(func);
 				}
 			}
 
@@ -6389,9 +6341,56 @@ _func[cElementType.cell3D] = _func[cElementType.cell];
 							res = commonFuncs[i];
 						}
 					}
+					
+					if (opt_get_arg_pos && res.isComplete && start > res.end) {
+						var incompleteOuter = null;
+						for (i = 0; i < commonFuncs.length; i++) {
+							if (!commonFuncs[i].isComplete && commonFuncs[i].start < res.start) {
+								incompleteOuter = commonFuncs[i];
+								break;
+							}
+						}
+						if (incompleteOuter) {
+							res = incompleteOuter;
+						}
+					}
 				}
 			}
 
+			if (opt_get_arg_pos) {
+				if (res) {
+					let checkInside = function (pos, start, end, isComplete) {
+						if (pos >= start && pos <= end) {
+							return true;
+						}
+						if (!isComplete && pos === end + 1) {
+							return true;
+						}
+						return false;
+					};
+
+					let activeFunction = res, fCurrent, fPos, argPos;
+
+					let functionNameEnd = activeFunction.start + ((activeFunction.func && activeFunction.func.name) ? activeFunction.func.name.length : 0);
+
+					if (start <= functionNameEnd) {
+						argPos = null;
+					} else if (activeFunction.args && activeFunction.args.length > 0) {
+						for (let k = 0; k < activeFunction.args.length; k++) {
+							let arg = activeFunction.args[k];
+							if (checkInside(start, arg.start, arg.end, k === activeFunction.args.length - 1 ? activeFunction.isComplete : true)) {
+								argPos = k;
+								break;
+							}
+						}
+
+						if (argPos === null && !activeFunction.isComplete && activeFunction.args.length > 0) {
+							argPos = activeFunction.args.length - 1;
+						}
+					}
+					res.argPos = argPos;
+				}
+			}
 		}
 		return res;
 	};
@@ -6858,9 +6857,11 @@ function parserFormula( formula, parent, _ws ) {
 		let oDefaultResult = null;
 
 		if (sFunctionName === "IF") {
-			aLogicalTests.push(aOutStack.shift());
-			aTrueResults.push(aOutStack.shift());
-			oFalseResult = aOutStack.shift();
+			aLogicalTests.push(aOutStack[0]);
+			aTrueResults.push(aOutStack[1]);
+			oFalseResult = aOutStack[2];
+			// Remove processed arguments from stack
+			aOutStack.splice(0, 3);
 
 			return [aLogicalTests, aTrueResults, oFalseResult];
 		}
@@ -7139,7 +7140,13 @@ function parserFormula( formula, parent, _ws ) {
 				let oRange = aArg[i].getRange();
 				oRange._foreachNoEmpty(function (oCell) {
 					if (!bRecursiveCell) {
-						bRecursiveCell = oCell.checkRecursiveFormula(oThis.getParent());
+						const sCellKey = oCell.ws.getId() + '_' + oCell.nRow + '_' + oCell.nCol;
+						if (g_cCalcRecursion.isCellChecked(sCellKey)) {
+							bRecursiveCell = g_cCalcRecursion.getCheckedCell(sCellKey);
+						} else {
+							bRecursiveCell = oCell.checkRecursiveFormula(oThis.getParent());
+							g_cCalcRecursion.addCheckedCell(sCellKey, bRecursiveCell);
+						}
 					}
 				});
 
@@ -7870,7 +7877,18 @@ function parserFormula( formula, parent, _ws ) {
 							bError = true;
 						}
 					} else {
-						bError = true;
+						if (parseResult.needCorrect && func.name === "IF" && top_elem_arg_count === 1) {
+							t.outStack.push(new cBool(true));
+							top_elem_arg_count++;
+							t.outStack.push(null !== startArrayArg && startArrayArg < currentFuncLevel ? -top_elem_arg_count : top_elem_arg_count);
+							if (!func.checkArguments(top_elem_arg_count)) {
+								bError = true;
+							} else {
+								parseResult.needAssemble = true;
+							}
+						} else {
+							bError = true;
+						}
 					}
 
 					if (bError) {
@@ -7933,7 +7951,7 @@ function parserFormula( formula, parent, _ws ) {
 				if (!parseResult.allFunctionsPos) {
 					parseResult.allFunctionsPos = [];
 				}
-				parseResult.allFunctionsPos.push({func: levelFuncMap[currentFuncLevel].func, start: levelFuncMap[currentFuncLevel].startPos, end: ph.pCurrPos, args: _argPos});
+				parseResult.allFunctionsPos.push({func: levelFuncMap[currentFuncLevel].func, start: levelFuncMap[currentFuncLevel].startPos, end: ph.pCurrPos, args: _argPos, isComplete: true});
 
 				currentFuncLevel--;
 			}
@@ -8699,16 +8717,79 @@ function parserFormula( formula, parent, _ws ) {
 					1) {
 					parseResult.activeArgumentPos = argFuncMap[currentFuncLevel].count;
 				}
+
+				if (undefined === parseResult.argPos && currentFuncLevel >= 0 && levelFuncMap[currentFuncLevel]) {
+					var currentArgCount = 1;
+					
+					if (argFuncMap[currentFuncLevel] && argFuncMap[currentFuncLevel].count >= 0) {
+						currentArgCount = argFuncMap[currentFuncLevel].count + 1;
+					} else {
+						var foundParenthesesIndex = -1;
+						var functionCount = 0;
+						
+						for (var i = elemArr.length - 1; i >= 0; i--) {
+							if (elemArr[i].type === cElementType.operator && elemArr[i].name === '(') {
+								if (functionCount === 0) {
+									foundParenthesesIndex = i;
+									break;
+								}
+								functionCount--;
+							} else if (elemArr[i].type === cElementType.func) {
+								functionCount++;
+							}
+						}
+						
+						if (foundParenthesesIndex >= 0 && leftParentArgumentsCurrentArr[foundParenthesesIndex]) {
+							currentArgCount = leftParentArgumentsCurrentArr[foundParenthesesIndex];
+						}
+					}
+					
+					parseResult.argPos = currentArgCount;
+				}
 				var _argPos = argPosArrMap[currentFuncLevel];
 				var lastArgPos = _argPos && _argPos[_argPos.length - 1];
 				if (lastArgPos && undefined === lastArgPos.end) {
 					lastArgPos.end = lastArgPos.start > ph.pCurrPos ? lastArgPos.start : ph.pCurrPos;
 				}
-				if (levelFuncMap[currentFuncLevel]) {
+				/*if (levelFuncMap[currentFuncLevel]) {
 					if (!parseResult.allFunctionsPos) {
 						parseResult.allFunctionsPos = [];
 					}
 					parseResult.allFunctionsPos.push({func: levelFuncMap[currentFuncLevel].func, start: levelFuncMap[currentFuncLevel].startPos, end: ph.pCurrPos, args: _argPos});
+				}*/
+
+
+				if (!parseResult.allFunctionsPos) {
+					parseResult.allFunctionsPos = [];
+				}
+				
+				for (var level = 0; level <= currentFuncLevel; level++) {
+					if (levelFuncMap[level]) {
+						var _argPosForLevel = argPosArrMap[level];
+						var lastArgPosForLevel = _argPosForLevel && _argPosForLevel[_argPosForLevel.length - 1];
+						if (lastArgPosForLevel && undefined === lastArgPosForLevel.end) {
+							lastArgPosForLevel.end = lastArgPosForLevel.start > ph.pCurrPos ? lastArgPosForLevel.start : ph.pCurrPos;
+						}
+						
+						var alreadyExists = false;
+						for (let i = 0; i < parseResult.allFunctionsPos.length; i++) {
+							if (parseResult.allFunctionsPos[i].func === levelFuncMap[level].func && 
+								parseResult.allFunctionsPos[i].start === levelFuncMap[level].startPos) {
+								alreadyExists = true;
+								break;
+							}
+						}
+						
+						if (!alreadyExists) {
+							parseResult.allFunctionsPos.push({
+								func: levelFuncMap[level].func, 
+								start: levelFuncMap[level].startPos, 
+								end: ph.pCurrPos, 
+								args: _argPosForLevel,
+								isComplete: false
+							});
+						}
+					}
 				}
 			}
 		};
@@ -10428,6 +10509,7 @@ function parserFormula( formula, parent, _ws ) {
 		this.bIsProcessRecursion = false;
 		this.aElems = [];
 		this.aElemsPart = [];
+		this.oCheckedCells = null;
 
 		this.nIterStep = 1;
 		this.oStartCellIndex = null;
@@ -11234,6 +11316,46 @@ function parserFormula( formula, parent, _ws ) {
 	CalcRecursion.prototype.clearCycleCells = function () {
 		this.aCycleCell = [];
 	};
+	/**
+	 * Method adds the result of the checked cell to the object.
+	 * @memberof CalcRecursion
+	 * @param {string} sCellKey
+	 * @param {boolean} bCheckResult
+	 */
+	CalcRecursion.prototype.addCheckedCell = function (sCellKey, bCheckResult) {
+		if (this.oCheckedCells == null) {
+			this.oCheckedCells = {};
+		}
+
+		this.oCheckedCells[sCellKey] = bCheckResult;
+	};
+	/**
+	 * Method clears oCheckedCells attribute.
+	 * @memberof CalcResursion
+	 */
+	CalcRecursion.prototype.clearCheckedCells = function () {
+		if (this.oCheckedCells) {
+			this.oCheckedCells = null;
+		}
+	};
+	/**
+	 * Method checks whether the cell has already been checked for a cycle.
+	 * @memberof CalcRecursion
+	 * @param {string} sCellKey
+	 * @returns {boolean}
+	 */
+	CalcRecursion.prototype.isCellChecked = function (sCellKey) {
+		return !!(this.oCheckedCells && this.oCheckedCells.hasOwnProperty(sCellKey));
+	};
+	/**
+	 * Method returns result of checked cell.
+	 * @memberof CalcRecursion
+	 * @param {string} sCellKey
+	 * @returns {boolean}
+	 */
+	CalcRecursion.prototype.getCheckedCell = function (sCellKey) {
+		return this.oCheckedCells && this.oCheckedCells[sCellKey];
+	};
 
 	const g_cCalcRecursion = new CalcRecursion();
 
@@ -11269,7 +11391,81 @@ function parserFormula( formula, parent, _ws ) {
 
 		return res;
 	}
-
+	/**
+	 * @param {cElementType} type
+	 * @param {string} op
+	 * @param {boolean} isWildcard
+	 * @returns {Function}
+	 */
+	function getMatchingFunction(type, op, isWildcard) {
+		if (type === cElementType.string) {
+			switch (op) {
+				case ">":
+					return function (a, b) {
+						return AscCommonExcel.stringCompare(a, b) > 0;
+					};
+				case "<":
+					return function (a, b) {
+						return AscCommonExcel.stringCompare(a, b) < 0;
+					};
+				case ">=":
+					return function (a, b) {
+						return AscCommonExcel.stringCompare(a, b) >= 0;
+					};
+				case "<=":
+					return function (a, b) {
+						return AscCommonExcel.stringCompare(a, b) <= 0;
+					};
+				case "<>":
+					if (isWildcard) {
+						return function (a, b) {
+							return !AscCommonExcel.searchRegExp2(a, b);
+						};
+					}
+					return function (a, b) {
+						return AscCommonExcel.stringCompare(a, b) !== 0;
+					};
+				case "=":
+				default:
+					if (isWildcard) {
+						return function (a, b) {
+							return AscCommonExcel.searchRegExp2(a, b);
+						};
+					}
+					return function (a, b) {
+						return AscCommonExcel.stringCompare(a, b) === 0;
+					};
+			}
+		} else {
+			switch (op) {
+				case ">":
+					return function (a, b) {
+						return a > b;
+					};
+				case "<":
+					return function (a, b) {
+						return a < b;
+					};
+				case ">=":
+					return function (a, b) {
+						return a >= b;
+					};
+				case "<=":
+					return function (a, b) {
+						return a <= b;
+					};
+				case "<>":
+					return function (a, b) {
+						return a !== b;
+					};
+				case "=":
+				default:
+					return function (a, b) {
+						return a === b;
+					};
+			}
+		}
+	}
 	function matching(x, matchingInfo, doNotParseNum, doNotParseFormat) {
 		var y = matchingInfo.val;
 		var operator = matchingInfo.op;
@@ -12009,6 +12205,7 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].forEachElementInRef = forEachElementInRef;
 	window['AscCommonExcel'].addNewFunction = addNewFunction;
 	window['AscCommonExcel'].removeCustomFunction = removeCustomFunction;
+	window['AscCommonExcel'].removeCustomFunctions = removeCustomFunctions;
 	window['AscCommonExcel'].getRangeByName = getRangeByName;
 
 	window['AscCommonExcel']._func = _func;
@@ -12019,6 +12216,7 @@ function parserFormula( formula, parent, _ws ) {
 
 	window['AscCommonExcel'].parseNum = parseNum;
 	window['AscCommonExcel'].matching = matching;
+	window['AscCommonExcel'].getMatchingFunction = getMatchingFunction;
 	window['AscCommonExcel'].matchingValue = matchingValue;
 	window['AscCommonExcel'].GetDiffDate360 = GetDiffDate360;
 	window['AscCommonExcel'].searchRegExp2 = searchRegExp2;

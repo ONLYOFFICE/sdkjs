@@ -109,16 +109,41 @@ var AscTest = AscTest || {};
 
 if (QUnit && !QUnit.assert.close)
 {
-	QUnit.assert.close = function(number, expected, maxDifference, message)
+	if (!QUnit.assert.close)
 	{
-		if (undefined === maxDifference || null === maxDifference || 0 === maxDifference)
-			maxDifference = 0.00001;
-		
-		QUnit.assert.pushResult({
-			result : Math.abs(number - expected) < maxDifference,
-			actual : number,
-			expected : expected,
-			message : message
-		});
+		QUnit.assert.close = function(number, expected, maxDifference, message)
+		{
+			if (undefined === maxDifference || null === maxDifference || 0 === maxDifference)
+				maxDifference = 0.00001;
+			
+			QUnit.assert.pushResult({
+				result   : Math.abs(number - expected) < maxDifference,
+				actual   : number,
+				expected : expected,
+				message  : message
+			});
+		}
+	}
+	
+	if (!QUnit.assert.equalRgb)
+	{
+		QUnit.assert.equalRgb = function(actualRgb, expectedRgb, message)
+		{
+			QUnit.assert.strictEqual(actualRgb.r, expectedRgb.r, (message ? message : "") + " check r component");
+			QUnit.assert.strictEqual(actualRgb.g, expectedRgb.g, (message ? message : "") + " check g component");
+			QUnit.assert.strictEqual(actualRgb.b, expectedRgb.b, (message ? message : "") + " check b component");
+		};
+	}
+	
+	if (!QUnit.assert.equalRgba)
+	{
+		QUnit.assert.equalRgba = function(actualRgba, expectedRgba, message)
+		{
+			QUnit.assert.strictEqual(actualRgba.r, expectedRgba.r, (message ? message : "") + " check r component");
+			QUnit.assert.strictEqual(actualRgba.g, expectedRgba.g, (message ? message : "") + " check g component");
+			QUnit.assert.strictEqual(actualRgba.b, expectedRgba.b, (message ? message : "") + " check b component");
+			QUnit.assert.strictEqual(actualRgba.a, expectedRgba.a, (message ? message : "") + " check a component");
+		};
 	}
 }
+

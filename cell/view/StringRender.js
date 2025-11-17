@@ -340,6 +340,13 @@
 				0x002D: 1, 0x00AD: 1, 0x2010: 1, 0x2012: 1, 0x2013: 1, 0x2014: 1
 			};
 
+			this.clipRect = {
+				x: 0,
+				y: 0,
+				w: 0,
+				h: 0,
+				use: false
+			};
 
 			// For replacing invisible chars while rendering
 			/** @type RegExp */
@@ -411,7 +418,7 @@
 
 				drawingCtx.setTransform(mbt.sx, mbt.shy, mbt.shx, mbt.sy, mbt.tx, mbt.ty);
 			}
-
+			this.removeClipRect();
 			return this;
 		};
 
@@ -1390,22 +1397,23 @@
 		};
 		StringRender.prototype.getEffectiveAlign = function() {
 			let align = this.flags ? this.flags.textAlign : null;
-			let isRtl = this.drawState.getMainDirection() === AscBidi.TYPE.R;
 
-			if (!isRtl) {
-				return align;
-			}
+			if (align !== null) return align;
+			let isRtl = this.drawState.getMainDirection() === AscBidi.DIRECTION_FLAG.RTL;
+			return isRtl ? AscCommon.align_Right : AscCommon.align_Left;
+		};
 
-			if (align === AscCommon.align_Left) {
-				return AscCommon.align_Right;
-			} else if (align === AscCommon.align_Right) {
-				return AscCommon.align_Left;
-			}
-			else if(align === null) {
-				return AscCommon.align_Right;
-			}
 
-			return align;
+		StringRender.prototype.addClipRect = function(x, y, w, h) {
+			this.clipRect.x = x;
+			this.clipRect.y = y;
+			this.clipRect.w = w;
+			this.clipRect.h = h;
+			this.clipRect.use = true;
+		};
+
+		StringRender.prototype.removeClipRect = function() {
+			this.clipRect.use = false;
 		};
 		//------------------------------------------------------------export---------------------------------------------------
 		window['AscCommonExcel'] = window['AscCommonExcel'] || {};
@@ -1452,14 +1460,22 @@
 				}
 				let char = this.stringRender.chars[i];
 				let bidiType = this.getBidiType(char, charProp);
-
 				this.stringRender._setFont(this.drawingCtx, prop.font);
-				this.drawingCtx.setFillStyle(prop.c || this.stringRender.textColor);
-				// this.handleBidiFlow({
-				// 	charIndex: i,
-				// 	charProp: charProp,
-				// 	fragmentProp: prop
-				// }, bidiType);
+
+				//todo: implement the stack of states in DrawingContext and remove this check
+				let textColor = prop.c || this.stringRender.textColor;
+				let _r = textColor.getR();
+				let _g = textColor.getG();
+				let _b = textColor.getB();
+				let _a = textColor.getA();
+				let setColor = true;
+				if (this.drawingCtx.fillColor && this.drawingCtx.fillColor.isEqual(_r, _g, _b, _a)) {
+					setColor = false;
+				}
+				if (setColor || window["IS_NATIVE_EDITOR"]) {
+					this.drawingCtx.setFillStyle(textColor);
+				}
+				/////
 				this.bidiFlow.add({
 					charIndex: i,
 					charProp: charProp,
@@ -1471,9 +1487,16 @@
 
 		TableCellDrawState.prototype.handleBidiFlow = function(data, direction) {
 			let charIndex = data.charIndex;
+			let width = this.stringRender.charWidths[charIndex];
+			let cr = this.stringRender.clipRect;
+			if (cr.use) {
+				if (cr.x > this.x + width || cr.x + cr.w < this.x) {
+					this.x += width;
+					return;
+				}
+			}
 			let charProp = data.charProp;
 			let char = this.stringRender.chars[charIndex];
-			let width = this.stringRender.charWidths[charIndex];
 			let grapheme = charProp ? charProp.grapheme : AscFonts.NO_GRAPHEME;
 
 			if (direction === AscBidi.DIRECTION.R && AscBidi.isPairedBracket(char)) {
@@ -1498,7 +1521,7 @@
 			this.y = y;
 			this.baseY = y;
 
-			this.bidiFlow.begin(this.getMainDirection() === AscBidi.TYPE.R);
+			this.bidiFlow.begin(this.getMainDirection() === AscBidi.DIRECTION_FLAG.RTL);
 		};
 
 
@@ -1519,25 +1542,21 @@
 		};
 		TableCellDrawState.prototype.getMainDirection = function() {
 			let readingOrder = this.stringRender.flags ? this.stringRender.flags.getReadingOrder() : null;
-			if (readingOrder === 1) {
-				return AscBidi.TYPE.L;
-			} else if (readingOrder === 2) {
-				return AscBidi.TYPE.R;
+			if (readingOrder === Asc.c_oReadingOrderTypes.LTR) {
+				return AscBidi.DIRECTION_FLAG.LTR;
+			} else if (readingOrder === Asc.c_oReadingOrderTypes.RTL) {
+				return AscBidi.DIRECTION_FLAG.RTL;
 			}
 			for (let i = 0; i < this.stringRender.chars.length; ++i) {
 				let char = this.stringRender.chars[i];
-				let type = AscBidi.getType(char);
-				if (type & AscBidi.FLAG.STRONG) {
-					if (type & AscBidi.FLAG.RTL) {
-						return AscBidi.TYPE.R;
-					} else {
-						return AscBidi.TYPE.L;
-					}
+				let strongDir = AscCommon.getCharStrongDir(char);
+				if (strongDir !== null) {
+					return strongDir;
 				}
 			}
-
-			return AscBidi.TYPE.L;
+			return AscBidi.DIRECTION_FLAG.LTR;
 		};
+
 	}
 
 

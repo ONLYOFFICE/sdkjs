@@ -187,6 +187,9 @@ function (window, undefined) {
 
 								AscFormat.ExecuteNoHistory(function () {
 									const oBinaryFileReader = new AscCommonExcel.BinaryFileReader(true);
+									oBinaryFileReader.InitOpenManager.copyPasteObj = {
+										isCopyPaste: true, activeRange: null, selectAllSheet: true
+									};
 									AscCommon.pptx_content_loader.Start_UseFullUrl();
 									AscCommon.pptx_content_loader.Reader.ClearConnectedObjects();
 									oBinaryFileReader.Read(binaryData, wb);
@@ -210,6 +213,9 @@ function (window, undefined) {
 							wb.aWorksheets = updatedData;
 							wb._updateWorksheetIndexes();
 							wb.dependencyFormulas.initOpen();
+							wb.externalReferences.forEach(function(elem){
+								elem.initPostOpen();
+							});
 							if (updatedData) {
 								for (let j = 0; j < arrExternalChartReferences.length; j += 1) {
 									const oExternalReference = arrExternalChartReferences[j].externalReference;

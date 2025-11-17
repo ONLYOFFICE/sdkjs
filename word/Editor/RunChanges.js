@@ -2210,8 +2210,9 @@ CChangesRunPrReviewInfo.prototype.private_CreateObject = function()
 };
 CChangesRunPrReviewInfo.prototype.private_SetValue = function(Value)
 {
-	var oRun = this.Class;
-	oRun.Pr.ReviewInfo = Value;
+	let run = this.Class;
+	run.Pr.ReviewInfo = Value;
+	run.updateTrackRevisions()
 };
 CChangesRunPrReviewInfo.prototype.Merge = function(oChange)
 {
@@ -2244,8 +2245,9 @@ CChangesRunContentReviewInfo.prototype.private_IsCreateEmptyObject = function()
 };
 CChangesRunContentReviewInfo.prototype.private_SetValue = function(Value)
 {
-	var oRun = this.Class;
-	oRun.ReviewInfo = Value;
+	let run = this.Class;
+	run.ReviewInfo = Value;
+	run.updateTrackRevisions()
 };
 CChangesRunContentReviewInfo.prototype.Merge = function(oChange)
 {

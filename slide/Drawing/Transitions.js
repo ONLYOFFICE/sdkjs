@@ -4011,6 +4011,9 @@ function CDemonstrationManager(htmlpage)
 
     this.onMouseDown = function(e)
     {
+        oThis.startPageX = e.pageX;
+        oThis.startPageY = e.pageY;
+
         AscCommon.global_mouseEvent.LockMouse()
         var documentMI = oThis.documentMouseInfo(e);
         if (documentMI)
@@ -4131,12 +4134,34 @@ function CDemonstrationManager(htmlpage)
 
         AscCommon.global_mouseEvent.UnLockMouse();
 
-				const isMouseDown = oThis.isMouseDown || isFromMainToReporterMouseDown;
-				oThis.isMouseDown = false;
+        const isMouseDown = oThis.isMouseDown || isFromMainToReporterMouseDown;
+        oThis.isMouseDown = false;
 		if (isFromMainToReporter && oThis.PointerDiv && oThis.HtmlPage.m_oApi.isReporterMode)
 		    oThis.PointerRemove();
 
-		if (oThis.PointerDiv && oThis.HtmlPage.m_oApi.isReporterMode)
+        let handleSwipe = false;
+        if (e.pointerType === "touch")
+        {
+            let iN = AscFormat.isRealNumber;
+            if (iN(oThis.startPageX) && iN(oThis.startPageY) && iN(e.pageX) && iN(e.pageY) )
+            {
+                if (e.pageX - oThis.startPageX > 20)
+                {
+                    oThis.OnPrevSlide();
+                    handleSwipe = true;
+                }
+                else if (oThis.startPageX - e.pageX > 20 ||
+                        (Math.abs(e.pageX - oThis.startPageX) < 1 &&
+                            Math.abs(e.pageY- oThis.startPageY) < 1))
+                {
+                    oThis.OnNextSlide();
+                    handleSwipe = true;
+                }
+            }
+        }
+        this.startPageX = null;
+        this.startPageY = null;
+		if (handleSwipe || oThis.PointerDiv && oThis.HtmlPage.m_oApi.isReporterMode)
 		{
 			AscCommon.stopEvent(e);
 			return false;

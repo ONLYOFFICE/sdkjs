@@ -259,7 +259,7 @@
 
 	var CUnicodeIteratorNew = null;
 
-	if (String.prototype.codePointAt && (typeof Symbol === 'function') && ('iterator' in Symbol))
+	if (String.prototype.codePointAt && (typeof Symbol === 'function') && typeof Symbol.iterator === "symbol")
 	{
 		CUnicodeIteratorNew = function(str)
 		{

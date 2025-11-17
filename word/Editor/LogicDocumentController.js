@@ -479,3 +479,7 @@ CLogicDocumentController.prototype.CollectSelectedReviewChanges = function(oTrac
 {
 	return this.LogicDocument.controller_CollectSelectedReviewChanges(oTrackManager);
 };
+CLogicDocumentController.prototype.GetCurrentTopDocContent = function()
+{
+	return this.LogicDocument;
+};

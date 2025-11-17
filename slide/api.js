@@ -59,7 +59,6 @@
 	var c_oAscTypeSelectElement = Asc.c_oAscTypeSelectElement;
 	var c_oAscFill              = Asc.c_oAscFill;
 	var asc_CShapeFill          = Asc.asc_CShapeFill;
-	var asc_CFillBlip           = Asc.asc_CFillBlip;
     var c_oAscFontRenderingModeType = Asc.c_oAscFontRenderingModeType;
 
 	function CAscSlideProps()
@@ -219,344 +218,6 @@
 	CAscSlideProps.prototype.get_IsMasterSelected     = function()
 	{
 		return this.IsMaster;
-	};
-
-	function CAscChartProp(obj)
-	{
-		if (obj)
-		{
-
-			this.Width    = (undefined != obj.w) ? obj.w : undefined;
-			this.Height   = (undefined != obj.h) ? obj.h : undefined;
-			this.Position = new Asc.CPosition({X : obj.x, Y : obj.y});
-
-			this.Locked          = (undefined != obj.locked) ? obj.locked : false;
-			this.lockAspect      = (undefined != obj.lockAspect) ? obj.lockAspect : false;
-			this.ChartProperties = (undefined != obj.chartProps) ? obj.chartProps : null;
-
-			this.severalCharts      = obj.severalCharts != undefined ? obj.severalCharts : false;
-			this.severalChartTypes  = obj.severalChartTypes != undefined ? obj.severalChartTypes : undefined;
-			this.severalChartStyles = obj.severalChartStyles != undefined ? obj.severalChartStyles : undefined;
-
-			this.title = obj.title != undefined ? obj.title : undefined;
-			this.description = obj.description != undefined ? obj.description : undefined;
-			this.name = obj.name != undefined ? obj.name : undefined;
-		}
-		else
-		{
-			this.Width           = undefined;
-			this.Height          = undefined;
-			this.Position        = undefined;
-			this.Locked          = false;
-			this.lockAspect      = undefined;
-			this.ChartProperties = new Asc.asc_ChartSettings();
-
-			this.severalCharts      = false;
-			this.severalChartTypes  = undefined;
-			this.severalChartStyles = undefined;
-            this.title = undefined;
-            this.description = undefined;
-		}
-	}
-
-	CAscChartProp.prototype.get_ChangeLevel = function()
-	{
-		return this.ChangeLevel;
-	};
-	CAscChartProp.prototype.put_ChangeLevel = function(v)
-	{
-		this.ChangeLevel = v;
-	};
-
-	CAscChartProp.prototype.get_CanBeFlow     = function()
-	{
-		return this.CanBeFlow;
-	};
-	CAscChartProp.prototype.get_Width         = function()
-	{
-		return this.Width;
-	};
-	CAscChartProp.prototype.put_Width         = function(v)
-	{
-		this.Width = v;
-	};
-	CAscChartProp.prototype.get_Height        = function()
-	{
-		return this.Height;
-	};
-	CAscChartProp.prototype.put_Height        = function(v)
-	{
-		this.Height = v;
-	};
-	CAscChartProp.prototype.get_WrappingStyle = function()
-	{
-		return this.WrappingStyle;
-	};
-	CAscChartProp.prototype.put_WrappingStyle = function(v)
-	{
-		this.WrappingStyle = v;
-	};
-	// Возвращается объект класса Asc.asc_CPaddings
-	CAscChartProp.prototype.get_Paddings      = function()
-	{
-		return this.Paddings;
-	};
-	// Аргумент объект класса Asc.asc_CPaddings
-	CAscChartProp.prototype.put_Paddings      = function(v)
-	{
-		this.Paddings = v;
-	};
-	CAscChartProp.prototype.get_AllowOverlap  = function()
-	{
-		return this.AllowOverlap;
-	};
-	CAscChartProp.prototype.put_AllowOverlap  = function(v)
-	{
-		this.AllowOverlap = v;
-	};
-	// Возвращается объект класса CPosition
-	CAscChartProp.prototype.get_Position      = function()
-	{
-		return this.Position;
-	};
-	// Аргумент объект класса CPosition
-	CAscChartProp.prototype.put_Position      = function(v)
-	{
-		this.Position = v;
-	};
-	CAscChartProp.prototype.get_PositionH     = function()
-	{
-		return this.PositionH;
-	};
-	CAscChartProp.prototype.put_PositionH     = function(v)
-	{
-		this.PositionH = v;
-	};
-	CAscChartProp.prototype.get_PositionV     = function()
-	{
-		return this.PositionV;
-	};
-	CAscChartProp.prototype.put_PositionV     = function(v)
-	{
-		this.PositionV = v;
-	};
-	CAscChartProp.prototype.get_Value_X       = function(RelativeFrom)
-	{
-		if (null != this.Internal_Position) return this.Internal_Position.Calculate_X_Value(RelativeFrom);
-		return 0;
-	};
-	CAscChartProp.prototype.get_Value_Y       = function(RelativeFrom)
-	{
-		if (null != this.Internal_Position) return this.Internal_Position.Calculate_Y_Value(RelativeFrom);
-		return 0;
-	};
-
-	CAscChartProp.prototype.get_ImageUrl     = function()
-	{
-		return this.ImageUrl;
-	};
-	CAscChartProp.prototype.put_ImageUrl     = function(v)
-	{
-		this.ImageUrl = v;
-	};
-	CAscChartProp.prototype.get_Group        = function()
-	{
-		return this.Group;
-	};
-	CAscChartProp.prototype.put_Group        = function(v)
-	{
-		this.Group = v;
-	};
-	CAscChartProp.prototype.asc_getFromGroup = function()
-	{
-		return this.fromGroup;
-	};
-	CAscChartProp.prototype.asc_putFromGroup = function(v)
-	{
-		this.fromGroup = v;
-	};
-
-	CAscChartProp.prototype.get_isChartProps = function()
-	{
-		return this.isChartProps;
-	};
-	CAscChartProp.prototype.put_isChartPross = function(v)
-	{
-		this.isChartProps = v;
-	};
-
-	CAscChartProp.prototype.get_SeveralCharts     = function()
-	{
-		return this.severalCharts;
-	};
-	CAscChartProp.prototype.put_SeveralCharts     = function(v)
-	{
-		this.severalCharts = v;
-	};
-	CAscChartProp.prototype.get_SeveralChartTypes = function()
-	{
-		return this.severalChartTypes;
-	};
-	CAscChartProp.prototype.put_SeveralChartTypes = function(v)
-	{
-		this.severalChartTypes = v;
-	};
-
-	CAscChartProp.prototype.get_SeveralChartStyles = function()
-	{
-		return this.severalChartStyles;
-	};
-	CAscChartProp.prototype.put_SeveralChartStyles = function(v)
-	{
-		this.severalChartStyles = v;
-	};
-
-	CAscChartProp.prototype.get_VerticalTextAlign = function()
-	{
-		return this.verticalTextAlign;
-	};
-	CAscChartProp.prototype.put_VerticalTextAlign = function(v)
-	{
-		this.verticalTextAlign = v;
-	};
-
-	CAscChartProp.prototype.get_Locked = function()
-	{
-		return this.Locked;
-	};
-
-	CAscChartProp.prototype.get_ChartProperties = function()
-	{
-		return this.ChartProperties;
-	};
-
-	CAscChartProp.prototype.put_ChartProperties = function(v)
-	{
-		this.ChartProperties = v;
-	};
-
-	CAscChartProp.prototype.get_ShapeProperties = function()
-	{
-		return this.ShapeProperties;
-	};
-
-	CAscChartProp.prototype.put_ShapeProperties = function(v)
-	{
-		this.ShapeProperties = v;
-	};
-
-	CAscChartProp.prototype.asc_getType    = function()
-	{
-		return this.ChartProperties.asc_getType();
-	};
-	CAscChartProp.prototype.asc_getSubType = function()
-	{
-		return this.ChartProperties.asc_getSubType();
-	};
-
-	CAscChartProp.prototype.asc_getStyleId = function()
-	{
-		return this.ChartProperties.asc_getStyleId();
-	};
-
-	CAscChartProp.prototype.asc_getHeight = function()
-	{
-		return this.Height;
-	};
-	CAscChartProp.prototype.asc_getWidth  = function()
-	{
-		return this.Width;
-	};
-
-	CAscChartProp.prototype.asc_setType    = function(v)
-	{
-		this.ChartProperties.asc_setType(v);
-	};
-	CAscChartProp.prototype.asc_setSubType = function(v)
-	{
-		this.ChartProperties.asc_setSubType(v);
-	};
-
-	CAscChartProp.prototype.asc_setStyleId = function(v)
-	{
-		this.ChartProperties.asc_setStyleId(v);
-	};
-
-	CAscChartProp.prototype.asc_setHeight = function(v)
-	{
-		this.Height = v;
-	};
-	CAscChartProp.prototype.asc_setWidth  = function(v)
-	{
-		this.Width = v;
-	};
-
-	CAscChartProp.prototype.asc_setTitle = function(v)
-	{
-		this.title = v;
-	};
-	CAscChartProp.prototype.asc_setDescription  = function(v)
-	{
-		this.description = v;
-	};
-
-	CAscChartProp.prototype.asc_getTitle = function()
-	{
-		return this.title;
-	};
-	CAscChartProp.prototype.asc_getDescription  = function()
-	{
-		return this.description;
-	};
-
-	CAscChartProp.prototype.asc_getPosition  = function()
-	{
-		return this.Position;
-	};
-
-	CAscChartProp.prototype.asc_putPosition  = function(v)
-	{
-		this.Position = v;
-	};
-
-	CAscChartProp.prototype.asc_getName  = function()
-	{
-		return this.name;
-	};
-	CAscChartProp.prototype.asc_putName  = function(v)
-	{
-		this.name = v;
-	};
-
-	CAscChartProp.prototype.getType = function()
-	{
-		return this.ChartProperties && this.ChartProperties.getType();
-	};
-	CAscChartProp.prototype.putType = function(v)
-	{
-		return this.ChartProperties && this.ChartProperties.putType(v);
-	};
-
-	CAscChartProp.prototype.getStyle      = function()
-	{
-		return this.ChartProperties && this.ChartProperties.getStyle();
-	};
-	CAscChartProp.prototype.putStyle      = function(v)
-	{
-		return this.ChartProperties && this.ChartProperties.putStyle(v);
-	};
-	CAscChartProp.prototype.getLockAspect = function()
-	{
-		return this.lockAspect;
-	};
-	CAscChartProp.prototype.putLockAspect = function(v)
-	{
-		return this.lockAspect = v;
-	};
-
-	CAscChartProp.prototype.changeType = function(v)
-	{
-		return this.ChartProperties && this.ChartProperties.changeType(v);
 	};
 
 	// CSearchResult - returns result of searching
@@ -1739,50 +1400,6 @@ background-repeat: no-repeat;\
 
 	};
 
-	asc_docs_api.prototype.initDefaultShortcuts = function()
-	{
-		// [[ActionType, KeyCode, Ctrl, Shift, Alt]]
-		var aShortcuts =
-		[
-			[Asc.c_oAscPresentationShortcutType.EditSelectAll, 65, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.EditUndo, 90, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.EditRedo, 89, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.Cut, 88, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.Copy, 67, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.Paste, 86, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.Duplicate, 68, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.Print, 80, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.Save, 83, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.ShowContextMenu, 93, false, false, false],
-			[Asc.c_oAscPresentationShortcutType.ShowContextMenu, 121, false, true, false],
-			[Asc.c_oAscPresentationShortcutType.ShowContextMenu, 57351, false, false, false],
-			[Asc.c_oAscPresentationShortcutType.ShowParaMarks, 56, true, true, false],
-			[Asc.c_oAscPresentationShortcutType.Bold, 66, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.CopyFormat, 67, true, false, true],
-			[Asc.c_oAscPresentationShortcutType.CenterAlign, 69, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.EuroSign, 69, true, false, true],
-			[Asc.c_oAscPresentationShortcutType.Group, 71, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.UnGroup, 71, true, true, false],
-			[Asc.c_oAscPresentationShortcutType.Italic, 73, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.JustifyAlign, 74, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.AddHyperlink, 75, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.BulletList, 76, true, true, false],
-			[Asc.c_oAscPresentationShortcutType.LeftAlign, 76, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.RightAlign, 82, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.Underline, 85, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.Strikethrough, 53, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.PasteFormat, 86, true, false, true],
-			[Asc.c_oAscPresentationShortcutType.Superscript, 188, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.Subscript, 190, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.EnDash, 189, true, true, false],
-			[Asc.c_oAscPresentationShortcutType.EnDash, 173, true, true, false],
-			[Asc.c_oAscPresentationShortcutType.DecreaseFont, 219, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.IncreaseFont, 221, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.SpeechWorker, 90, true, false, true]
-		];
-		this.initShortcuts(aShortcuts, false)
-	};
-
 	asc_docs_api.prototype.InitEditor = function()
 	{
 		this.WordControl.m_oLogicDocument                    = new AscCommonSlide.CPresentation(this.WordControl.m_oDrawingDocument);
@@ -2585,7 +2202,11 @@ background-repeat: no-repeat;\
 		}
 	};
 	asc_docs_api.prototype._saveCheck = function() {
-		return !this.isLongAction() && !(this.isSlideShow());
+		return (!this.isLongAction()
+			&& !this.isGroupActions()
+			&& !this.isOpenedFrameEditor
+			&& !(this.isSlideShow())
+		);
 	};
 	asc_docs_api.prototype._haveOtherChanges = function () {
 		return AscCommon.CollaborativeEditing.Have_OtherChanges();
@@ -2919,7 +2540,7 @@ background-repeat: no-repeat;\
 		{
 			if (editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
 			{
-				this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_ParagraphAdd);
+				this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_PutTextPrFontName, name);
 				this.WordControl.m_oLogicDocument.AddToParagraph(new AscCommonWord.ParaTextPr({
 					FontFamily : {
 						Name  : name,
@@ -2937,7 +2558,7 @@ background-repeat: no-repeat;\
 		}
 		if (this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
 		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_ParagraphAdd);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_PutTextPrFontSize, size);
 			this.WordControl.m_oLogicDocument.AddToParagraph(new AscCommonWord.ParaTextPr({FontSize : Math.min(size, 300)}), false);
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 			// для мобильной версии это важно
@@ -2964,7 +2585,7 @@ background-repeat: no-repeat;\
 	{
 		if (editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
 		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_ParagraphAdd);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_PutTextPrBold, value);
 			this.WordControl.m_oLogicDocument.AddToParagraph(new AscCommonWord.ParaTextPr({Bold : value}), false);
 			this.WordControl.m_oLogicDocument.FinalizeAction()
 		}
@@ -2973,7 +2594,7 @@ background-repeat: no-repeat;\
 	{
 		if (editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
 		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_ParagraphAdd);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_PutTextPrItalic, value);
 			this.WordControl.m_oLogicDocument.AddToParagraph(new AscCommonWord.ParaTextPr({Italic : value}), false);
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
@@ -2982,7 +2603,7 @@ background-repeat: no-repeat;\
 	{
 		if (editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
 		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_ParagraphAdd);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_PutTextPrUnderline, value);
 			this.WordControl.m_oLogicDocument.AddToParagraph(new AscCommonWord.ParaTextPr({Underline : value}), false);
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
@@ -2991,7 +2612,7 @@ background-repeat: no-repeat;\
 	{
 		if (editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
 		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_ParagraphAdd);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_PutTextPrStrikeout, value);
 			this.WordControl.m_oLogicDocument.AddToParagraph(new AscCommonWord.ParaTextPr({
                 Strikeout  : value,
                 DStrikeout : false
@@ -3001,7 +2622,9 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.put_PrLineSpacing          = function(Type, Value)
 	{
+		this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_PutTextPrLineSpacing, {type: Type, value: Value});
 		this.WordControl.m_oLogicDocument.SetParagraphSpacing({LineRule : Type, Line : Value});
+		this.WordControl.m_oLogicDocument.FinalizeAction();
 	};
 	asc_docs_api.prototype.put_LineSpacingBeforeAfter = function(type, value)//"type == 0" means "Before", "type == 1" means "After"
 	{
@@ -3213,7 +2836,7 @@ background-repeat: no-repeat;\
 	{
 		if (editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
 		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_ParagraphAdd);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_SetTextVertAlign, value);
 			this.WordControl.m_oLogicDocument.AddToParagraph(new AscCommonWord.ParaTextPr({VertAlign : value}), false);
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
@@ -3885,7 +3508,7 @@ background-repeat: no-repeat;\
 	{
 		if (editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
 		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_ParagraphAdd);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_PutTextColor, color);
 			var _unifill        = new AscFormat.CUniFill();
 			_unifill.fill       = new AscFormat.CSolidFill();
 			_unifill.fill.color = AscFormat.CorrectUniColor(color, _unifill.fill.color, 0);
@@ -4704,9 +4327,9 @@ background-repeat: no-repeat;\
 	{
 		this.WordControl.m_oLogicDocument.StopAnimationPreview();
 	};
-	asc_docs_api.prototype.asc_SetAnimationProperties = function(oPr)
+	asc_docs_api.prototype.asc_SetAnimationProperties = function(oPr, bStartDemo)
 	{
-		this.WordControl.m_oLogicDocument.SetAnimationProperties(oPr)
+		this.WordControl.m_oLogicDocument.SetAnimationProperties(oPr, bStartDemo)
 	};
 	asc_docs_api.prototype.asc_canMoveAnimationEarlier = function(nPositions)
 	{
@@ -5044,27 +4667,21 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.AddImageUrlActionCallback = function(_image, obj)
 	{
-		var _w = AscCommon.Page_Width - (AscCommon.X_Left_Margin + AscCommon.X_Right_Margin);
-		var _h = AscCommon.Page_Height - (AscCommon.Y_Top_Margin + AscCommon.Y_Bottom_Margin);
+		let _w = AscCommon.Page_Width - (AscCommon.X_Left_Margin + AscCommon.X_Right_Margin);
+		let _h = AscCommon.Page_Height - (AscCommon.Y_Top_Margin + AscCommon.Y_Bottom_Margin);
 		if (_image.Image != null)
 		{
-			var __w = Math.max((_image.Image.width * AscCommon.g_dKoef_pix_to_mm), 1);
-			var __h = Math.max((_image.Image.height * AscCommon.g_dKoef_pix_to_mm), 1);
+			let __w = Math.max((_image.Image.width * AscCommon.g_dKoef_pix_to_mm), 1);
+			let __h = Math.max((_image.Image.height * AscCommon.g_dKoef_pix_to_mm), 1);
 			_w      = Math.max(5, Math.min(_w, __w));
 			_h      = Math.max(5, Math.min((_w * __h / __w)));
 		}
 
-		var src = _image.src;
+		let src = _image.src;
 		if (obj && obj.isShapeImageChangeUrl)
 		{
-			var AscShapeProp       = new Asc.asc_CShapeProperty();
-			AscShapeProp.fill      = new asc_CShapeFill();
-			AscShapeProp.fill.type = c_oAscFill.FILL_TYPE_BLIP;
-			AscShapeProp.fill.fill = new asc_CFillBlip();
-			AscShapeProp.fill.fill.asc_putUrl(src);
-			if(obj.textureType !== null && obj.textureType !== undefined){
-                AscShapeProp.fill.fill.asc_putType(obj.textureType);
-			}
+			let AscShapeProp       = new Asc.asc_CShapeProperty();
+			AscShapeProp.fillBlipFill(src, obj.textureType);
 			this.ShapeApply(AscShapeProp);
 		}
 		else if (obj && obj.fAfterUploadOleObjectImage)
@@ -5073,34 +4690,29 @@ background-repeat: no-repeat;\
 		}
 		else if (obj && obj.isImageBullet)
 		{
-			var fillBlip = new Asc.asc_CFillBlip();
+			let fillBlip = new AscFormat.CBlipFill();
 			fillBlip.asc_putUrl(src, null);
 			this.put_ListType(undefined, undefined, fillBlip);
 		}
 		else if (obj && obj.isSlideImageChangeUrl)
 		{
-			var AscSlideProp             = new CAscSlideProps();
+			let AscSlideProp             = new CAscSlideProps();
 			AscSlideProp.Background      = new asc_CShapeFill();
-			AscSlideProp.Background.type = c_oAscFill.FILL_TYPE_BLIP;
-			AscSlideProp.Background.fill = new asc_CFillBlip();
-			AscSlideProp.Background.fill.asc_putUrl(src);
-			if(obj.textureType !== null && obj.textureType !== undefined){
-                AscSlideProp.Background.fill.asc_putType(obj.textureType);
-			}
+			AscSlideProp.Background.fillBlipFill(src, obj.textureType);
 			this.SetSlideProps(AscSlideProp);
 		}
 		else if (obj && obj.isImageChangeUrl)
 		{
-			var AscImageProp      = new Asc.asc_CImgProperty();
+			let AscImageProp      = new Asc.asc_CImgProperty();
 			AscImageProp.ImageUrl = src;
 			this.ImgApply(AscImageProp);
 		}
 		else if (obj && obj.isTextArtChangeUrl)
 		{
-			var AscShapeProp = new Asc.asc_CShapeProperty();
-			var oFill        = new asc_CShapeFill();
+			let AscShapeProp = new Asc.asc_CShapeProperty();
+			let oFill        = new asc_CShapeFill();
 			oFill.type       = c_oAscFill.FILL_TYPE_BLIP;
-			oFill.fill       = new asc_CFillBlip();
+			oFill.fill       = new AscFormat.CBlipFill();
 			oFill.fill.asc_putUrl(src);
             if(obj.textureType !== null && obj.textureType !== undefined){
 				oFill.fill.asc_putType(obj.textureType);
@@ -5111,7 +4723,7 @@ background-repeat: no-repeat;\
 		}
 		else
 		{
-			var srcLocal = g_oDocumentUrls.getImageLocal(src);
+			let srcLocal = g_oDocumentUrls.getImageLocal(src);
 			if (srcLocal)
 			{
 				src = srcLocal;
@@ -5341,7 +4953,7 @@ background-repeat: no-repeat;\
 		var objects;
 		if (type === c_oAscTypeSelectElement.Chart)
 		{
-			objects = new CAscChartProp(imgProp);
+			objects = new Asc.CAscChartProp(imgProp);
 		}
 		else
 		{
@@ -5484,6 +5096,9 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.sync_currentPageCallback = function(number)
 	{
 		this.sendEvent("asc_onCurrentPage", number);
+
+		if (window.g_asc_plugins)
+			window.g_asc_plugins.onPluginEvent("onChangeCurrentSlide", number);
 	};
 
 	asc_docs_api.prototype.sync_SendThemeColors = function(colors, standart_colors)
@@ -5560,7 +5175,7 @@ background-repeat: no-repeat;\
 	//-----------------------------------------------------------------
 	// Функции для работы с комментариями
 	//-----------------------------------------------------------------
-	function asc_CCommentData(obj)
+	function asc_CCommentDataSlide(obj)
 	{
 		if (obj)
 		{
@@ -5581,7 +5196,7 @@ background-repeat: no-repeat;\
 				var Count = obj.m_aReplies.length;
 				for (var Index = 0; Index < Count; Index++)
 				{
-					var Reply = new asc_CCommentData(obj.m_aReplies[Index]);
+					var Reply = new asc_CCommentDataSlide(obj.m_aReplies[Index]);
 					this.m_aReplies.push(Reply);
 				}
 			}
@@ -5603,156 +5218,106 @@ background-repeat: no-repeat;\
 		}
 	}
 
-	asc_CCommentData.prototype.asc_getText         = function()
+	asc_CCommentDataSlide.prototype.asc_getText         = function()
 	{
 		return this.m_sText;
 	};
-	asc_CCommentData.prototype.asc_putText         = function(v)
+	asc_CCommentDataSlide.prototype.asc_putText         = function(v)
 	{
 		this.m_sText = v ? v.slice(0, Asc.c_oAscMaxCellOrCommentLength) : v;
 	};
-	asc_CCommentData.prototype.asc_getTime         = function()
+	asc_CCommentDataSlide.prototype.asc_getTime         = function()
 	{
 		return this.m_sTime;
 	};
-	asc_CCommentData.prototype.asc_putTime         = function(v)
+	asc_CCommentDataSlide.prototype.asc_putTime         = function(v)
 	{
 		this.m_sTime = v;
 		this.m_nTimeZoneBias = new Date().getTimezoneOffset();
 	};
-	asc_CCommentData.prototype.asc_getOnlyOfficeTime         = function()
+	asc_CCommentDataSlide.prototype.asc_getOnlyOfficeTime         = function()
 	{
 		return this.m_sOOTime;
 	};
-	asc_CCommentData.prototype.asc_putOnlyOfficeTime         = function(v)
+	asc_CCommentDataSlide.prototype.asc_putOnlyOfficeTime         = function(v)
 	{
 		this.m_sOOTime = v;
 	};
-	asc_CCommentData.prototype.asc_getUserId       = function()
+	asc_CCommentDataSlide.prototype.asc_getUserId       = function()
 	{
 		return this.m_sUserId;
 	};
-	asc_CCommentData.prototype.asc_putUserId       = function(v)
+	asc_CCommentDataSlide.prototype.asc_putUserId       = function(v)
 	{
 		this.m_sUserId = v;
 	};
-	asc_CCommentData.prototype.asc_getUserName     = function()
+	asc_CCommentDataSlide.prototype.asc_getUserName     = function()
 	{
 		return this.m_sUserName;
 	};
-	asc_CCommentData.prototype.asc_putUserName     = function(v)
+	asc_CCommentDataSlide.prototype.asc_putUserName     = function(v)
 	{
 		this.m_sUserName = v;
 	};
-	asc_CCommentData.prototype.asc_getGuid     = function()
+	asc_CCommentDataSlide.prototype.asc_getGuid     = function()
 	{
 		return this.m_sGuid;
 	};
-	asc_CCommentData.prototype.asc_putGuid     = function(v)
+	asc_CCommentDataSlide.prototype.asc_putGuid     = function(v)
 	{
 		this.m_sGuid = v;
 	};
-	asc_CCommentData.prototype.asc_putTimeZoneBias     = function(v)
+	asc_CCommentDataSlide.prototype.asc_putTimeZoneBias     = function(v)
 	{
 		this.m_nTimeZoneBias = v;
 	};
-	asc_CCommentData.prototype.asc_getTimeZoneBias     = function()
+	asc_CCommentDataSlide.prototype.asc_getTimeZoneBias     = function()
 	{
 		return this.m_nTimeZoneBias;
 	};
-	asc_CCommentData.prototype.asc_getQuoteText    = function()
+	asc_CCommentDataSlide.prototype.asc_getQuoteText    = function()
 	{
 		return this.m_sQuoteText;
 	};
-	asc_CCommentData.prototype.asc_putQuoteText    = function(v)
+	asc_CCommentDataSlide.prototype.asc_putQuoteText    = function(v)
 	{
 		this.m_sQuoteText = v;
 	};
-	asc_CCommentData.prototype.asc_getSolved       = function()
+	asc_CCommentDataSlide.prototype.asc_getSolved       = function()
 	{
 		return this.m_bSolved;
 	};
-	asc_CCommentData.prototype.asc_putSolved       = function(v)
+	asc_CCommentDataSlide.prototype.asc_putSolved       = function(v)
 	{
 		this.m_bSolved = v;
 	};
-	asc_CCommentData.prototype.asc_getReply        = function(i)
+	asc_CCommentDataSlide.prototype.asc_getReply        = function(i)
 	{
 		return this.m_aReplies[i];
 	};
-	asc_CCommentData.prototype.asc_addReply        = function(v)
+	asc_CCommentDataSlide.prototype.asc_addReply        = function(v)
 	{
 		this.m_aReplies.push(v);
 	};
-	asc_CCommentData.prototype.asc_getRepliesCount = function(v)
+	asc_CCommentDataSlide.prototype.asc_getRepliesCount = function(v)
 	{
 		return this.m_aReplies.length;
 	};
-	asc_CCommentData.prototype.asc_putDocumentFlag        = function(v)
+	asc_CCommentDataSlide.prototype.asc_putDocumentFlag        = function(v)
 	{
 		this.bDocument = v;
 	};
-	asc_CCommentData.prototype.asc_getDocumentFlag = function()
+	asc_CCommentDataSlide.prototype.asc_getDocumentFlag = function()
 	{
 		return this.bDocument;
 	};
-	asc_CCommentData.prototype.asc_putUserData        = function(v)
+	asc_CCommentDataSlide.prototype.asc_putUserData        = function(v)
 	{
 		this.m_sUserData = v;
 	};
-	asc_CCommentData.prototype.asc_getUserData = function()
+	asc_CCommentDataSlide.prototype.asc_getUserData = function()
 	{
 		return this.m_sUserData;
-	};
-	asc_CCommentData.prototype.fromCValue = function (value) {
-		if (!value) {
-			return value;
-		}
-		let pr = new AscWord.CSdtPictureFormPr();
-		pr.asc_putText(value["Text"]);
-		pr.asc_putTime(value["Time"]);
-		pr.asc_putOnlyOfficeTime(value["OnlyOfficeTime"]);
-		pr.asc_putUserId(value["UserId"]);
-		pr.asc_putUserName(value["UserName"]);
-		pr.asc_putGuid(value["Guid"]);
-		pr.asc_putTimeZoneBias(value["TimeZoneBias"]);
-		pr.asc_putQuoteText(value["QuoteText"]);
-		pr.asc_putSolved(value["Solved"]);
-
-		if (Array.isArray(value["asc_getReplies"])) {
-			for (let nIdx = 0; nIdx < value["asc_getReplies"].length; ++nIdx) {
-				let reply = Asc.asc_CCommentData.prototype.fromCValue(value["asc_getReplies"][nIdx]);
-				if (reply) {
-					this.asc_addReply(reply);
-				}
-			}
-		}
-		pr.asc_putDocumentFlag(value["DocumentFlag"]);
-		pr.asc_putUserData(value["UserData"]);
-		return pr;
-	};
-	asc_CCommentData.prototype.toCValue = function () {
-		let value = {};
-		value["Text"] = this.asc_getText();
-		value["Time"] = this.asc_getTime();
-		value["OnlyOfficeTime"] = this.asc_getOnlyOfficeTime();
-		value["UserId"] = this.asc_getUserId();
-		value["UserName"] = this.asc_getUserName();
-		value["Guid"] = this.asc_getGuid();
-		value["TimeZoneBias"] = this.asc_getTimeZoneBias();
-		value["QuoteText"] = this.asc_getQuoteText();
-		value["Solved"] = this.asc_getSolved();
-		value["asc_getReplies"] = [];
-		let Count = this.m_aReplies.length;
-		for (let nIdx = 0; nIdx < Count; nIdx++) {
-			let val = this.m_aReplies[nIdx].toCValue();
-			if (val) {
-				value["asc_getReplies"].push(val);
-			}
-		}
-		value["DocumentFlag"] = this.asc_getDocumentFlag();
-		value["UserData"] = this.asc_getUserData();
-		return value;
 	};
 
 	asc_docs_api.prototype.asc_showComments = function()
@@ -5872,7 +5437,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.asc_onDeleteComment = function(Id, oCommentData)
 	{
-		var AscCommentData = new asc_CCommentData(oCommentData);
+		var AscCommentData = new asc_CCommentDataSlide(oCommentData);
 		this.sendEvent("asc_onDeleteComment", Id, AscCommentData);
 	};
 
@@ -5916,7 +5481,7 @@ background-repeat: no-repeat;\
 	{
 		if (this.bNoSendComments === false)
 		{
-			var AscCommentData = new asc_CCommentData(CommentData);
+			var AscCommentData = new asc_CCommentDataSlide(CommentData);
 			AscCommentData.asc_putQuoteText("");
 			this.sendEvent("asc_onAddComment", Id, AscCommentData);
 		}
@@ -5947,7 +5512,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.sync_ChangeCommentData = function(Id, CommentData)
 	{
-		var AscCommentData = new asc_CCommentData(CommentData);
+		var AscCommentData = new asc_CCommentDataSlide(CommentData);
 		this.sendEvent("asc_onChangeCommentData", Id, AscCommentData);
 	};
 
@@ -6299,6 +5864,9 @@ background-repeat: no-repeat;\
 		this.goTo();
 		this.onNeedUpdateExternalReferenceOnOpen();
 		this.initBroadcastChannelListeners();
+
+		// Toggle chart elements (bug #67197)
+		Asc.editor.asc_registerCallback('asc_onFocusObject', this.toggleChartElementsCallback);
 	};
 	asc_docs_api.prototype.asc_IsStartDemonstrationOnOpen = function()
 	{
@@ -6337,7 +5905,7 @@ background-repeat: no-repeat;\
 		if (false === logicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Content))
 		{
 			let textPr = logicDocument.GetDirectTextPr();
-			logicDocument.StartAction(AscDFH.historydescription_Document_AddMath);
+			logicDocument.StartAction(AscDFH.historydescription_Document_AddMath, Type);
 			var MathElement = new AscCommonWord.MathMenu(Type, textPr ? textPr.Copy() : null);
 			logicDocument.AddToParagraph(MathElement, false);
 			logicDocument.FinalizeAction();
@@ -7037,8 +6605,8 @@ background-repeat: no-repeat;\
 			return oPresentation.GetSelectedText(true);
 		}
 
-		const value = AscCommon.isRealObject(aSelectedArray[0].nvSpPr.cNvPr.hlinkClick);
-		return value ? false : null;
+		const cNvProps = aSelectedArray[0].getCNvProps();
+		return cNvProps && AscCommon.isRealObject(cNvProps.hlinkClick) ? false : null;
 	};
 
 	// HyperProps - объект CHyperlinkProperty
@@ -7589,6 +7157,10 @@ background-repeat: no-repeat;\
 			{
 				this.WordControl.onPrevPage();
 			}
+			else if (Url.indexOf('ppaction://hlinkfile') == 0)
+			{
+				this.sendEvent("asc_onHyperlinkClick", Url.replace("ppaction://hlinkfile?file=", "file://"));
+			}
 			else
 			{
 				var mask     = "ppaction://hlinksldjumpslide";
@@ -7837,7 +7409,6 @@ background-repeat: no-repeat;\
 		return this.StartDemonstration(divId, slideIndex, reporterStartObject);
 	};
 	asc_docs_api.prototype.StartDemonstration = function (div_id, slidestart_num, reporterStartObject) {
-		console.log(div_id, reporterStartObject)
 		if (window.g_asc_plugins)
 			window.g_asc_plugins.stopWorked();
 
@@ -8089,7 +7660,13 @@ background-repeat: no-repeat;\
 			data["translations"]["highlighter"],
 			data["translations"]["inkColor"],
 			data["translations"]["eraser"],
-			data["translations"]["eraseScreen"]
+			data["translations"]["eraseScreen"],
+			data["translations"]["play"],
+			data["translations"]["pause"],
+			data["translations"]["prevSlide"],
+			data["translations"]["nextSlide"],
+			data["translations"]["pointer"],
+			data["translations"]["draw"]
 		];
 
         if (data["cryptoCurrentPassword"])
@@ -8118,13 +7695,17 @@ background-repeat: no-repeat;\
 
 		var _button1 = document.getElementById("dem_id_reset");
 		var _button2 = document.getElementById("dem_id_end");
+        var _btnPlay = document.getElementById("dem_id_play");
+        var _btnPrev = document.getElementById("dem_id_prev");
+        var _btnNext = document.getElementById("dem_id_next");
+        var _btnPointer = document.getElementById("dem_id_pointer");
+        var _btnDrawMenu = document.getElementById("dem_id_draw_menu_trigger");
 
 		var _miPen = document.querySelector("#dem_id_draw_menu a[data-tool=\"pen\"]");
 		var _miHighlighter = document.querySelector("#dem_id_draw_menu a[data-tool=\"highlighter\"]");
 		var _miInkColor = document.querySelector("#dem_id_draw_color_menu_trigger > a");
 		var _miEraser = document.querySelector("#dem_id_draw_menu a[data-tool=\"eraser\"]");
 		var _miEraseAll = document.querySelector("#dem_id_draw_menu a[data-tool=\"erase-all\"]");
-
 
 		if (_button1)
 			_button1.innerHTML = this.reporterTranslates[0];
@@ -8133,6 +7714,14 @@ background-repeat: no-repeat;\
 			_button2.innerHTML = this.reporterTranslates[2];
 			this.WordControl.OnResizeReporter();
 		}
+        if (_btnPlay) {
+            _btnPlay.setAttribute("data-play-tooltip", this.reporterTranslates[9]);
+            _btnPlay.setAttribute("data-pause-tooltip", this.reporterTranslates[10]);
+        }
+        if (_btnPrev) _btnPrev.setAttribute("data-tooltip", this.reporterTranslates[11]);
+        if (_btnNext) _btnNext.setAttribute("data-tooltip", this.reporterTranslates[12]);
+        if (_btnPointer) _btnPointer.setAttribute("data-tooltip", this.reporterTranslates[13]);
+        if (_btnDrawMenu) _btnDrawMenu.setAttribute("data-tooltip", this.reporterTranslates[14]);
 
 		if (_miPen) _miPen.childNodes[1].textContent = this.reporterTranslates[4];
 		if (_miHighlighter) _miHighlighter.childNodes[1].textContent = this.reporterTranslates[5];
@@ -8472,7 +8061,7 @@ background-repeat: no-repeat;\
 		}
 	};
 
-	asc_docs_api.prototype.asc_addChartDrawingObject = function(nType, Placeholder)
+	asc_docs_api.prototype.asc_addChartDrawingObject = function(nType, Placeholder, bOpenChartEditor)
 	{
 		this.asc_onCloseFrameEditor();
 		const oLogicDocument = this.private_GetLogicDocument();
@@ -8480,15 +8069,26 @@ background-repeat: no-repeat;\
 		return;
 
 		this.WordControl.m_oLogicDocument.addChart(nType, true, Placeholder);
+		if (bOpenChartEditor) {
+			const oCurSlide = oLogicDocument.GetCurrentSlide();
+			if (oCurSlide) {
+				oCurSlide.openChartEditor();
+			}
+		}
 	};
 
 	asc_docs_api.prototype.asc_editChartDrawingObject = function(chartBinary)
 	{
 		this.asc_onCloseFrameEditor();
 		// Находим выделенную диаграмму и накатываем бинарник
-		if (AscCommon.isRealObject(chartBinary))
+		const oLogicDocument = this.WordControl.m_oLogicDocument;
+		if (oLogicDocument)
 		{
-			this.WordControl.m_oLogicDocument.FinalizeEditChart(chartBinary);
+			if (AscCommon.isRealObject(chartBinary))
+			{
+				oLogicDocument.FinalizeEditChart(chartBinary);
+			}
+			oLogicDocument.Document_UpdateUndoRedoState();
 		}
 	};
 
@@ -8507,11 +8107,17 @@ background-repeat: no-repeat;\
 		const oLogicDocument = this.private_GetLogicDocument();
 		if (oLogicDocument)
 		{
-			if(bNoLock !== true) {
-				this.asc_onOpenFrameEditor();
-			}
 			const oController = oLogicDocument.GetCurrentController();
-			return oController.getChartSettings();
+			const oChartSettings = oController.getChartSettings();
+			if (bNoLock)
+			{
+				return oChartSettings;
+			}
+			if (oChartSettings && oLogicDocument.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
+			{
+				this.asc_onOpenFrameEditor();
+				return oChartSettings;
+			}
 		}
 	};
 
@@ -8870,7 +8476,8 @@ background-repeat: no-repeat;\
 		let logicDocument = this.getLogicDocument();
 		if (!logicDocument)
 			return false;
-
+		
+		this.executeGroupActionsStart();
 		logicDocument.StartAction(AscDFH.historydescription_BuilderScript);
 		return true;
 	};
@@ -8883,6 +8490,7 @@ background-repeat: no-repeat;\
 		if (callback)
 			callback(true)
 		
+		this.executeGroupActionsEnd();
 		return true;
 	};
 
@@ -10370,32 +9978,33 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_SetThumbnailsPosition"] = asc_docs_api.prototype.asc_SetThumbnailsPosition;
 
 
-	window['Asc']['asc_CCommentData'] = window['Asc'].asc_CCommentData = asc_CCommentData;
-	asc_CCommentData.prototype['asc_getText']         = asc_CCommentData.prototype.asc_getText;
-	asc_CCommentData.prototype['asc_putText']         = asc_CCommentData.prototype.asc_putText;
-	asc_CCommentData.prototype['asc_getTime']         = asc_CCommentData.prototype.asc_getTime;
-	asc_CCommentData.prototype['asc_putTime']         = asc_CCommentData.prototype.asc_putTime;
-	asc_CCommentData.prototype['asc_getOnlyOfficeTime']         = asc_CCommentData.prototype.asc_getOnlyOfficeTime;
-	asc_CCommentData.prototype['asc_putOnlyOfficeTime']         = asc_CCommentData.prototype.asc_putOnlyOfficeTime;
-	asc_CCommentData.prototype['asc_getUserId']       = asc_CCommentData.prototype.asc_getUserId;
-	asc_CCommentData.prototype['asc_putUserId']       = asc_CCommentData.prototype.asc_putUserId;
-	asc_CCommentData.prototype['asc_getUserName']     = asc_CCommentData.prototype.asc_getUserName;
-	asc_CCommentData.prototype['asc_putUserName']     = asc_CCommentData.prototype.asc_putUserName;
-	asc_CCommentData.prototype['asc_getGuid']         = asc_CCommentData.prototype.asc_getGuid;
-	asc_CCommentData.prototype['asc_putGuid']         = asc_CCommentData.prototype.asc_putGuid;
-	asc_CCommentData.prototype['asc_getTimeZoneBias'] = asc_CCommentData.prototype.asc_getTimeZoneBias;
-	asc_CCommentData.prototype['asc_putTimeZoneBias'] = asc_CCommentData.prototype.asc_putTimeZoneBias;
-	asc_CCommentData.prototype['asc_getQuoteText']    = asc_CCommentData.prototype.asc_getQuoteText;
-	asc_CCommentData.prototype['asc_putQuoteText']    = asc_CCommentData.prototype.asc_putQuoteText;
-	asc_CCommentData.prototype['asc_getSolved']       = asc_CCommentData.prototype.asc_getSolved;
-	asc_CCommentData.prototype['asc_putSolved']       = asc_CCommentData.prototype.asc_putSolved;
-	asc_CCommentData.prototype['asc_getReply']        = asc_CCommentData.prototype.asc_getReply;
-	asc_CCommentData.prototype['asc_addReply']        = asc_CCommentData.prototype.asc_addReply;
-	asc_CCommentData.prototype['asc_getRepliesCount'] = asc_CCommentData.prototype.asc_getRepliesCount;
-	asc_CCommentData.prototype["asc_putDocumentFlag"] = asc_CCommentData.prototype.asc_putDocumentFlag;
-	asc_CCommentData.prototype["asc_getDocumentFlag"] = asc_CCommentData.prototype.asc_getDocumentFlag;
-	asc_CCommentData.prototype["asc_putUserData"]     = asc_CCommentData.prototype.asc_putUserData;
-	asc_CCommentData.prototype["asc_getUserData"]     = asc_CCommentData.prototype.asc_getUserData;
+	window['Asc']['asc_CCommentDataSlide'] = window['Asc'].asc_CCommentDataSlide = asc_CCommentDataSlide;
+	window['Asc']['asc_CCommentData'] = window['Asc'].asc_CCommentData = asc_CCommentDataSlide;
+	asc_CCommentDataSlide.prototype['asc_getText']           = asc_CCommentDataSlide.prototype.asc_getText;
+	asc_CCommentDataSlide.prototype['asc_putText']           = asc_CCommentDataSlide.prototype.asc_putText;
+	asc_CCommentDataSlide.prototype['asc_getTime']           = asc_CCommentDataSlide.prototype.asc_getTime;
+	asc_CCommentDataSlide.prototype['asc_putTime']           = asc_CCommentDataSlide.prototype.asc_putTime;
+	asc_CCommentDataSlide.prototype['asc_getOnlyOfficeTime'] = asc_CCommentDataSlide.prototype.asc_getOnlyOfficeTime;
+	asc_CCommentDataSlide.prototype['asc_putOnlyOfficeTime'] = asc_CCommentDataSlide.prototype.asc_putOnlyOfficeTime;
+	asc_CCommentDataSlide.prototype['asc_getUserId']         = asc_CCommentDataSlide.prototype.asc_getUserId;
+	asc_CCommentDataSlide.prototype['asc_putUserId']         = asc_CCommentDataSlide.prototype.asc_putUserId;
+	asc_CCommentDataSlide.prototype['asc_getUserName']       = asc_CCommentDataSlide.prototype.asc_getUserName;
+	asc_CCommentDataSlide.prototype['asc_putUserName']       = asc_CCommentDataSlide.prototype.asc_putUserName;
+	asc_CCommentDataSlide.prototype['asc_getGuid']           = asc_CCommentDataSlide.prototype.asc_getGuid;
+	asc_CCommentDataSlide.prototype['asc_putGuid']           = asc_CCommentDataSlide.prototype.asc_putGuid;
+	asc_CCommentDataSlide.prototype['asc_getTimeZoneBias']   = asc_CCommentDataSlide.prototype.asc_getTimeZoneBias;
+	asc_CCommentDataSlide.prototype['asc_putTimeZoneBias']   = asc_CCommentDataSlide.prototype.asc_putTimeZoneBias;
+	asc_CCommentDataSlide.prototype['asc_getQuoteText']      = asc_CCommentDataSlide.prototype.asc_getQuoteText;
+	asc_CCommentDataSlide.prototype['asc_putQuoteText']      = asc_CCommentDataSlide.prototype.asc_putQuoteText;
+	asc_CCommentDataSlide.prototype['asc_getSolved']         = asc_CCommentDataSlide.prototype.asc_getSolved;
+	asc_CCommentDataSlide.prototype['asc_putSolved']         = asc_CCommentDataSlide.prototype.asc_putSolved;
+	asc_CCommentDataSlide.prototype['asc_getReply']          = asc_CCommentDataSlide.prototype.asc_getReply;
+	asc_CCommentDataSlide.prototype['asc_addReply']          = asc_CCommentDataSlide.prototype.asc_addReply;
+	asc_CCommentDataSlide.prototype['asc_getRepliesCount']   = asc_CCommentDataSlide.prototype.asc_getRepliesCount;
+	asc_CCommentDataSlide.prototype["asc_putDocumentFlag"]   = asc_CCommentDataSlide.prototype.asc_putDocumentFlag;
+	asc_CCommentDataSlide.prototype["asc_getDocumentFlag"]   = asc_CCommentDataSlide.prototype.asc_getDocumentFlag;
+	asc_CCommentDataSlide.prototype["asc_putUserData"]       = asc_CCommentDataSlide.prototype.asc_putUserData;
+	asc_CCommentDataSlide.prototype["asc_getUserData"]       = asc_CCommentDataSlide.prototype.asc_getUserData;
 
 	window['AscCommonSlide'].CContextMenuData         = CContextMenuData;
 	CContextMenuData.prototype['get_Type']            = CContextMenuData.prototype.get_Type;
@@ -10444,74 +10053,6 @@ background-repeat: no-repeat;\
 	CAscSlideProps.prototype['get_ShowMasterSp']             = CAscSlideProps.prototype.get_ShowMasterSp;
 	CAscSlideProps.prototype['put_ShowMasterSp']             = CAscSlideProps.prototype.put_ShowMasterSp;
 	CAscSlideProps.prototype['get_IsMasterSelected']         = CAscSlideProps.prototype.get_IsMasterSelected;
-	window['Asc']['CAscChartProp'] = window['Asc'].CAscChartProp = CAscChartProp;
-	CAscChartProp.prototype['get_ChangeLevel']        = CAscChartProp.prototype.get_ChangeLevel;
-	CAscChartProp.prototype['put_ChangeLevel']        = CAscChartProp.prototype.put_ChangeLevel;
-	CAscChartProp.prototype['get_CanBeFlow']          = CAscChartProp.prototype.get_CanBeFlow;
-	CAscChartProp.prototype['get_Width']              = CAscChartProp.prototype.get_Width;
-	CAscChartProp.prototype['put_Width']              = CAscChartProp.prototype.put_Width;
-	CAscChartProp.prototype['get_Height']             = CAscChartProp.prototype.get_Height;
-	CAscChartProp.prototype['put_Height']             = CAscChartProp.prototype.put_Height;
-	CAscChartProp.prototype['get_WrappingStyle']      = CAscChartProp.prototype.get_WrappingStyle;
-	CAscChartProp.prototype['put_WrappingStyle']      = CAscChartProp.prototype.put_WrappingStyle;
-	CAscChartProp.prototype['get_Paddings']           = CAscChartProp.prototype.get_Paddings;
-	CAscChartProp.prototype['put_Paddings']           = CAscChartProp.prototype.put_Paddings;
-	CAscChartProp.prototype['get_AllowOverlap']       = CAscChartProp.prototype.get_AllowOverlap;
-	CAscChartProp.prototype['put_AllowOverlap']       = CAscChartProp.prototype.put_AllowOverlap;
-	CAscChartProp.prototype['get_Position']           = CAscChartProp.prototype.get_Position;
-	CAscChartProp.prototype['put_Position']           = CAscChartProp.prototype.put_Position;
-	CAscChartProp.prototype['get_PositionH']          = CAscChartProp.prototype.get_PositionH;
-	CAscChartProp.prototype['put_PositionH']          = CAscChartProp.prototype.put_PositionH;
-	CAscChartProp.prototype['get_PositionV']          = CAscChartProp.prototype.get_PositionV;
-	CAscChartProp.prototype['put_PositionV']          = CAscChartProp.prototype.put_PositionV;
-	CAscChartProp.prototype['get_Value_X']            = CAscChartProp.prototype.get_Value_X;
-	CAscChartProp.prototype['get_Value_Y']            = CAscChartProp.prototype.get_Value_Y;
-	CAscChartProp.prototype['get_ImageUrl']           = CAscChartProp.prototype.get_ImageUrl;
-	CAscChartProp.prototype['put_ImageUrl']           = CAscChartProp.prototype.put_ImageUrl;
-	CAscChartProp.prototype['get_Group']              = CAscChartProp.prototype.get_Group;
-	CAscChartProp.prototype['put_Group']              = CAscChartProp.prototype.put_Group;
-	CAscChartProp.prototype['asc_getFromGroup']       = CAscChartProp.prototype.asc_getFromGroup;
-	CAscChartProp.prototype['asc_putFromGroup']       = CAscChartProp.prototype.asc_putFromGroup;
-	CAscChartProp.prototype['get_isChartProps']       = CAscChartProp.prototype.get_isChartProps;
-	CAscChartProp.prototype['put_isChartPross']       = CAscChartProp.prototype.put_isChartPross;
-	CAscChartProp.prototype['get_SeveralCharts']      = CAscChartProp.prototype.get_SeveralCharts;
-	CAscChartProp.prototype['put_SeveralCharts']      = CAscChartProp.prototype.put_SeveralCharts;
-	CAscChartProp.prototype['get_SeveralChartTypes']  = CAscChartProp.prototype.get_SeveralChartTypes;
-	CAscChartProp.prototype['put_SeveralChartTypes']  = CAscChartProp.prototype.put_SeveralChartTypes;
-	CAscChartProp.prototype['get_SeveralChartStyles'] = CAscChartProp.prototype.get_SeveralChartStyles;
-	CAscChartProp.prototype['put_SeveralChartStyles'] = CAscChartProp.prototype.put_SeveralChartStyles;
-	CAscChartProp.prototype['get_VerticalTextAlign']  = CAscChartProp.prototype.get_VerticalTextAlign;
-	CAscChartProp.prototype['put_VerticalTextAlign']  = CAscChartProp.prototype.put_VerticalTextAlign;
-	CAscChartProp.prototype['get_Locked']             = CAscChartProp.prototype.get_Locked;
-	CAscChartProp.prototype['get_ChartProperties']    = CAscChartProp.prototype.get_ChartProperties;
-	CAscChartProp.prototype['put_ChartProperties']    = CAscChartProp.prototype.put_ChartProperties;
-	CAscChartProp.prototype['get_ShapeProperties']    = CAscChartProp.prototype.get_ShapeProperties;
-	CAscChartProp.prototype['put_ShapeProperties']    = CAscChartProp.prototype.put_ShapeProperties;
-	CAscChartProp.prototype['asc_getType']            = CAscChartProp.prototype.asc_getType;
-	CAscChartProp.prototype['asc_getSubType']         = CAscChartProp.prototype.asc_getSubType;
-	CAscChartProp.prototype['asc_getStyleId']         = CAscChartProp.prototype.asc_getStyleId;
-	CAscChartProp.prototype['asc_getHeight']          = CAscChartProp.prototype.asc_getHeight;
-	CAscChartProp.prototype['asc_getWidth']           = CAscChartProp.prototype.asc_getWidth;
-	CAscChartProp.prototype['asc_setType']            = CAscChartProp.prototype.asc_setType;
-	CAscChartProp.prototype['asc_setSubType']         = CAscChartProp.prototype.asc_setSubType;
-	CAscChartProp.prototype['asc_setStyleId']         = CAscChartProp.prototype.asc_setStyleId;
-	CAscChartProp.prototype['asc_setHeight']          = CAscChartProp.prototype.asc_setHeight;
-	CAscChartProp.prototype['asc_setWidth']           = CAscChartProp.prototype.asc_setWidth;
-	CAscChartProp.prototype['asc_putTitle']           = CAscChartProp.prototype['put_Title']           = CAscChartProp.prototype['asc_setTitle']           = CAscChartProp.prototype.asc_setTitle;
-	CAscChartProp.prototype['asc_putDescription']     = CAscChartProp.prototype['put_Description']     = CAscChartProp.prototype['asc_setDescription']     = CAscChartProp.prototype.asc_setDescription;
-	CAscChartProp.prototype['asc_getTitle']           = CAscChartProp.prototype.asc_getTitle;
-	CAscChartProp.prototype['asc_getDescription']     = CAscChartProp.prototype.asc_getDescription;
-	CAscChartProp.prototype['asc_getPosition']     = CAscChartProp.prototype.asc_getPosition;
-	CAscChartProp.prototype['asc_putPosition']     = CAscChartProp.prototype.asc_putPosition;
-	CAscChartProp.prototype['asc_getName']     = CAscChartProp.prototype.asc_getName;
-	CAscChartProp.prototype['asc_putName']     = CAscChartProp.prototype.asc_putName;
-	CAscChartProp.prototype['getType']                = CAscChartProp.prototype.getType;
-	CAscChartProp.prototype['putType']                = CAscChartProp.prototype.putType;
-	CAscChartProp.prototype['getStyle']               = CAscChartProp.prototype.getStyle;
-	CAscChartProp.prototype['putStyle']               = CAscChartProp.prototype.putStyle;
-	CAscChartProp.prototype['putLockAspect']          = CAscChartProp.prototype['asc_putLockAspect'] = CAscChartProp.prototype.putLockAspect;
-	CAscChartProp.prototype['getLockAspect'] = CAscChartProp.prototype['asc_getLockAspect'] = CAscChartProp.prototype.getLockAspect;
-	CAscChartProp.prototype['changeType']        = CAscChartProp.prototype.changeType;
 	CSearchResult.prototype['get_Text']          = CSearchResult.prototype.get_Text;
 	CSearchResult.prototype['get_Navigator']     = CSearchResult.prototype.get_Navigator;
 	CSearchResult.prototype['put_Navigator']     = CSearchResult.prototype.put_Navigator;

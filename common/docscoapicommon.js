@@ -148,7 +148,8 @@
 	updateVersion: 4008,
 	noCache: 4009,
 	restore: 4010,
-	quiet: 4011
+	quiet: 4011,
+	reconnectFailed: 4012
   };
   
 	var c_oAscServerCommandErrors = {
@@ -190,6 +191,8 @@
 		} else if (c_oCloseCode.restore === opt_closeCode) {
 			//todo unique error code
 			code = Asc.c_oAscError.ID.SessionToken;
+		} else if (c_oCloseCode.reconnectFailed === opt_closeCode) {
+			code = Asc.c_oAscError.ID.CoAuthoringDisconnect;
 		}
 		return code;
 	}

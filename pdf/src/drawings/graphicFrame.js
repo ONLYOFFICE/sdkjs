@@ -39,6 +39,7 @@
     function CPdfGraphicFrame()
     {
         AscFormat.CGraphicFrame.call(this);
+        AscPDF.CPdfDrawingPrototype.call(this);
     }
     
     CPdfGraphicFrame.prototype.constructor = CPdfGraphicFrame;
@@ -79,17 +80,19 @@
             }
         }
 
-        ret._page = this._page; 
+        if ((!oPr || !oPr.bSkipRedactsIds) && this.GetRedactIds) {
+            this.GetRedactIds().forEach(function(id) {
+                ret.AddRedactId(id);
+            });
+        }
+
         return ret;
     };
-    CPdfGraphicFrame.prototype.handleUpdateRot = function() {
-        this.SetNeedRecalc(true);
+    CPdfGraphicFrame.prototype.GetPageContentFrame = function(page, sectPr) {
+        return this.GetDocument().Get_PageLimits(page);
     };
-    CPdfGraphicFrame.prototype.Get_PageContentStartPos = function(nPage) {
-        return this.GetDocument().Get_PageLimits(nPage);
-    };
-    CPdfGraphicFrame.prototype.Get_PageContentStartPos2 = function(nPage) {
-        return this.Get_PageContentStartPos(nPage);
+    CPdfGraphicFrame.prototype.GetColumnContentFrame = function(page, column, sectPr) {
+        return this.GetPageContentFrame(page);
     };
     CPdfGraphicFrame.prototype.GetDocContent = function() {
         return this.getDocContent();

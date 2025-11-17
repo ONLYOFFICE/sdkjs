@@ -274,7 +274,7 @@
 			this.TempImage = document.createElement("canvas");
 			this.TempImage.width = w;
 			this.TempImage.height = h;
-			var ctxD = this.TempImage.getContext("2d");
+			var ctxD = AscCommon.AscBrowser.getContext2D(this.TempImage);
 			var pixDst = null;
 
 			if (this.m_oCanvas != null)
@@ -375,7 +375,7 @@
 			this.m_oCanvas.width = (width == 0) ? 1 : width;
 			this.m_oCanvas.height = (height == 0) ? 1 : height;
 
-			this.m_oContext = this.m_oCanvas.getContext('2d');
+			this.m_oContext = AscCommon.AscBrowser.getContext2D(this.m_oCanvas);
 			this.m_oContext.globalCompositeOperation = "source-in";
 		}
 	};

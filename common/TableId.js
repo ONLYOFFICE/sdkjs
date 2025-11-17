@@ -156,12 +156,12 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_TableCell]              = AscCommonWord.CTableCell;
 		this.m_oFactoryClass[AscDFH.historyitem_type_DocumentContent]        = AscCommonWord.CDocumentContent;
 		this.m_oFactoryClass[AscDFH.historyitem_type_HdrFtr]                 = AscCommonWord.CHeaderFooter;
-		this.m_oFactoryClass[AscDFH.historyitem_type_AbstractNum]            = AscCommonWord.CAbstractNum;
+		this.m_oFactoryClass[AscDFH.historyitem_type_AbstractNum]            = AscWord.CAbstractNum;
 		this.m_oFactoryClass[AscDFH.historyitem_type_Comment]                = AscCommon.CComment;
 		this.m_oFactoryClass[AscDFH.historyitem_type_Style]                  = AscCommonWord.CStyle;
 		this.m_oFactoryClass[AscDFH.historyitem_type_CommentMark]            = AscCommon.ParaComment;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ParaRun]                = AscCommonWord.ParaRun;
-		this.m_oFactoryClass[AscDFH.historyitem_type_Section]                = AscCommonWord.CSectionPr;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Section]                = AscWord.SectPr;
 		this.m_oFactoryClass[AscDFH.historyitem_type_Field]                  = AscCommonWord.ParaField;
 		this.m_oFactoryClass[AscDFH.historyitem_type_FootEndNote]            = AscCommonWord.CFootEndnote;
 		this.m_oFactoryClass[AscDFH.historyitem_type_DefaultShapeDefinition] = AscFormat.DefaultShapeDefinition;
@@ -453,15 +453,25 @@
 			this.m_oFactoryClass[AscDFH.historyitem_type_Shape]					= AscPDF.CPdfShape;
 			this.m_oFactoryClass[AscDFH.historyitem_type_GraphicFrame]			= AscPDF.CPdfGraphicFrame;
 			this.m_oFactoryClass[AscDFH.historyitem_type_ImageShape]			= AscPDF.CPdfImage;
+			this.m_oFactoryClass[AscDFH.historyitem_type_ChartSpace]			= AscPDF.CPdfChartSpace;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Cnx]					= AscPDF.CPdfConnectionShape;
+			this.m_oFactoryClass[AscDFH.historyitem_type_SmartArt]				= AscPDF.CPdfSmartArt;
 
 			// annots
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Text]		= AscPDF.CAnnotationText;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Ink]			= AscPDF.CAnnotationInk;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Circle]		= AscPDF.CAnnotationCircle;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_FreeText]	= AscPDF.CAnnotationFreeText;
+
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Highlight]	= AscPDF.CAnnotationHighlight;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Underline]	= AscPDF.CAnnotationUnderline;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Strikeout]	= AscPDF.CAnnotationStrikeout;
-			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_FreeText]	= AscPDF.CAnnotationFreeText;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Redact]		= AscPDF.CAnnotationRedact;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Ink]			= AscPDF.CAnnotationInk;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Line]		= AscPDF.CAnnotationLine;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Polygon]		= AscPDF.CAnnotationPolygon;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Polyline]	= AscPDF.CAnnotationPolyLine;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Square]		= AscPDF.CAnnotationSquare;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Stamp]		= AscPDF.CAnnotationStamp;
 
 			//forms
@@ -571,6 +581,24 @@
 			delete this.m_oFactoryClass[AscDFH.historyitem_type_OForm_Document];
 			delete this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldGroup];
 		}
+	};
+	CTableId.prototype.Print = function()
+	{
+		let result = {};
+		for (let id in this.m_aPairs)
+		{
+			let name =  this.m_aPairs[id].constructor.name;
+			if (!result[name])
+				result[name] = [];
+			
+			result[name].push(id);
+			console.log("Id=" + id + " class=" + name);
+		}
+		
+		// for (let name in result)
+		// {
+		// 	console.log(name + "\n" + result[name] + "\n");
+		// }
 	};
 	//-----------------------------------------------------------------------------------
 	// Функции для работы с совместным редактирования

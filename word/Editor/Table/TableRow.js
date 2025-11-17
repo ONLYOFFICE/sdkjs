@@ -783,6 +783,7 @@ CTableRow.prototype =
 		this.Internal_ReIndexing();
 	}
 };
+CTableRow.prototype.constructor = CTableRow;
 /**
  * Доступ к родительской таблице
  * @returns {null | CTable}
@@ -1326,3 +1327,4 @@ CTableRowRecalculateObject.prototype =
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CTableRow = CTableRow;
+window['AscWord'].TableRow = CTableRow;

@@ -1306,16 +1306,23 @@ NumFormat.prototype =
             {
                 //Разрешаем конфликты numFormat_MonthMinute
                 var bRightCond = false;
-                //ищем вперед первый элемент с типом datetime 
-                for(var j = i + 1; j < nFormatLength; ++j)
+                if (item.bElapsed)
                 {
-                    var subItem = this.aRawFormat[j];
-                    if(numFormat_Year == subItem.type || numFormat_Month == subItem.type || numFormat_Day == subItem.type || numFormat_MonthMinute == subItem.type ||
-                    numFormat_Hour == subItem.type || numFormat_Minute == subItem.type || numFormat_Second == subItem.type || numFormat_Milliseconds == subItem.type)
+                    bRightCond = true;
+                }
+                else
+                {
+                    //ищем вперед первый элемент с типом datetime 
+                    for(var j = i + 1; j < nFormatLength; ++j)
                     {
-                        if(numFormat_Second == subItem.type)
-                            bRightCond = true;
-                        break;
+                        var subItem = this.aRawFormat[j];
+                        if(numFormat_Year == subItem.type || numFormat_Month == subItem.type || numFormat_Day == subItem.type || numFormat_MonthMinute == subItem.type ||
+                        numFormat_Hour == subItem.type || numFormat_Minute == subItem.type || numFormat_Second == subItem.type || numFormat_Milliseconds == subItem.type)
+                        {
+                            if(numFormat_Second == subItem.type)
+                                bRightCond = true;
+                            break;
+                        }
                     }
                 }
                 var bLeftCond = false;
@@ -2727,13 +2734,25 @@ NumFormat.prototype =
             }
             else if(numFormat_Minute == item.type)
             {
+                if (item.bElapsed) {
+                    res += "[";
+                }
                 for(var j = 0; j < item.val; ++j)
                     res += minute;
+                if (item.bElapsed) {
+                    res += "]";
+                }
             }
             else if(numFormat_Second == item.type)
             {
+                if (item.bElapsed) {
+                    res += "[";
+                }
                 for(var j = 0; j < item.val; ++j)
                     res += second;
+                if (item.bElapsed) {
+                    res += "]";
+                }
             }
 			else if(numFormat_DayOfWeek == item.type)
 			{
@@ -2966,31 +2985,63 @@ CellFormat.prototype =
 		}
 		else
 		{
-			//ищем совпадение
-			for (let i = 0; i < this.aComporationFormats.length && i < 2; ++i)
+			//todo only 4 formats allowed in aComporationFormats
+			// Handle text values - use text format if available
+			if(typeof dNumber === 'string')
 			{
-				let oCurFormat = this.aComporationFormats[i];
-				let oOperationValue, operator;
-				if (null != oCurFormat.ComporationOperator) {
-					operator = oCurFormat.ComporationOperator.operator;
-					oOperationValue = oCurFormat.ComporationOperator.operatorValue;
-				} else {
-					oOperationValue = 0;
-					operator = 0 === i ? NumComporationOperators.greater : NumComporationOperators.less;
+				// Look for text format (usually at index 3)
+				for (let i = 0; i < this.aComporationFormats.length; ++i) {
+					let oCurFormat = this.aComporationFormats[i];
+					if (null == oCurFormat.ComporationOperator && oCurFormat.bTextFormat) {
+						oRes = oCurFormat;
+						break;
+					}
 				}
-				let isMatch = (operator === NumComporationOperators.equal && dNumber === oOperationValue) ||
-					(operator === NumComporationOperators.greater && dNumber > oOperationValue) ||
-					(operator === NumComporationOperators.less && dNumber < oOperationValue) ||
-					(operator === NumComporationOperators.greaterorequal && dNumber >= oOperationValue) ||
-					(operator === NumComporationOperators.lessorequal && dNumber <= oOperationValue) ||
-					(operator === NumComporationOperators.notequal && dNumber !== oOperationValue);
-				if (isMatch) {
-					oRes = oCurFormat;
-					break;
+				if (null == oRes && this.aComporationFormats.length > 3 && this.aComporationFormats[3]) {
+					oRes = this.aComporationFormats[3];
 				}
 			}
-			if (null == oRes && null != this.aComporationFormats.length > 2)
-				oRes = this.aComporationFormats[2];
+			else
+			{
+				// Process all conditional formats in order
+				for (let i = 0; i < this.aComporationFormats.length; ++i)
+				{
+					let oCurFormat = this.aComporationFormats[i];
+					let oOperationValue, operator;
+					
+					// Skip text format
+					if (null == oCurFormat.ComporationOperator && oCurFormat.bTextFormat) {
+						continue;
+					}
+					
+					if (null != oCurFormat.ComporationOperator) {
+						operator = oCurFormat.ComporationOperator.operator;
+						oOperationValue = oCurFormat.ComporationOperator.operatorValue;
+					} else if(0 === i) {
+						oOperationValue = 0;
+						operator = NumComporationOperators.greater;
+					} else if(1 === i && this.aComporationFormats.length > 2 && !this.aComporationFormats[2].bTextFormat) {
+						oOperationValue = 0;
+						operator = NumComporationOperators.less;
+					} else if(!oCurFormat.bTextFormat) {
+						//fallback
+						oRes = oCurFormat;
+					} else {
+						break;
+					}
+					
+					let isMatch = (operator === NumComporationOperators.equal && dNumber === oOperationValue) ||
+						(operator === NumComporationOperators.greater && dNumber > oOperationValue) ||
+						(operator === NumComporationOperators.less && dNumber < oOperationValue) ||
+						(operator === NumComporationOperators.greaterorequal && dNumber >= oOperationValue) ||
+						(operator === NumComporationOperators.lessorequal && dNumber <= oOperationValue) ||
+						(operator === NumComporationOperators.notequal && dNumber !== oOperationValue);
+					if (isMatch) {
+						oRes = oCurFormat;
+						break;
+					}
+				}
+			}
 		}
 		return oRes;
 	},
@@ -4756,7 +4807,7 @@ FormatParser.prototype =
 				var nSecond = 0;
 				var dValue = 0;
 				var bValidDate = true;
-				if(null != m && (null != d || null != y))
+				if(null != m)
 				{
 					bDate = true;
 					var oNowDate;

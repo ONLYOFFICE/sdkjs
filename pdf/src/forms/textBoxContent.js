@@ -91,10 +91,19 @@
 	CTextBoxContent.prototype.GetAlign = function() {
 		let align = this.GetElement(0).GetParagraphAlign();
 		
-		switch (align) {
-			case align_Left: return AscPDF.ALIGN_TYPE.left;
-			case align_Center: return AscPDF.ALIGN_TYPE.center;
-			case align_Right: return AscPDF.ALIGN_TYPE.right;
+		if (!this.ParentPDF.IsRTL()) {
+			switch (align) {
+				case align_Left: return AscPDF.ALIGN_TYPE.left;
+				case align_Center: return AscPDF.ALIGN_TYPE.center;
+				case align_Right: return AscPDF.ALIGN_TYPE.right;
+			}
+		}
+		else {
+			switch (align) {
+				case align_Left: return AscPDF.ALIGN_TYPE.right;
+				case align_Center: return AscPDF.ALIGN_TYPE.center;
+				case align_Right: return AscPDF.ALIGN_TYPE.left;
+			}
 		}
 		
 		return AscPDF.ALIGN_TYPE.left;
@@ -147,8 +156,7 @@
 		
 		if (codePoints) {
 			if (this.ParentPDF && this.ParentPDF.GetCharLimit && 0 !== this.ParentPDF.GetCharLimit()) {
-				let oDoc        = this.ParentPDF.GetDocument();
-				let isOnOpen    = oDoc.Viewer.IsOpenFormsInProgress;
+				let isOnOpen    = Asc.editor.getDocumentRenderer().IsOpenFormsInProgress;
 				let nCharLimit	= this.ParentPDF.GetCharLimit();
 				
 				if (false == isOnOpen && bIgnoreCount !== true) {
@@ -211,20 +219,13 @@
 		return true;
 	};
 	CTextBoxContent.prototype.getAllText = function() {
-		let paragraph = this.GetElement(0);
-		if (!paragraph || !paragraph.IsParagraph())
-			return "";
-		
-		paragraph.SetApplyToAll(true);
-		let text = paragraph.GetSelectedText(true, {ParaSeparator: ""});
-		paragraph.SetApplyToAll(false);
-		return text;
+		return AscWord.CDocumentContent.prototype.GetText.call(this, {ParaSeparator: ""});
 	};
 	CTextBoxContent.prototype.OnContentChange = function() {
 		if (this.ParentPDF && this.ParentPDF.OnContentChange && this.isFormatContent == false)
 			this.ParentPDF.OnContentChange();
 	};
-	CTextBoxContent.prototype.Get_AbsolutePage = function() {
+	CTextBoxContent.prototype.GetAbsolutePage = function() {
 		return this.ParentPDF.GetPage();
 	};
 	CTextBoxContent.prototype.Get_ParentTextTransform = function() {
@@ -254,6 +255,7 @@
 	
 	function getInternalAlignByPdfType(nPdfType) {
 		let nInternalType = AscCommon.align_Left;
+
 		switch (nPdfType) {
 			case AscPDF.ALIGN_TYPE.left:
 				nInternalType = AscCommon.align_Left;
@@ -264,23 +266,42 @@
 			case AscPDF.ALIGN_TYPE.right:
 				nInternalType = AscCommon.align_Right;
 				break;
+			case AscPDF.ALIGN_TYPE.justify:
+				nInternalType = AscCommon.align_Justify;
+				break;
 		}
 
 		return nInternalType;
 	}
 
-	function getPdfTypeAlignByInternal(nInternalType) {
+	function getPdfTypeAlignByInternal(nInternalType, isRTL) {
 		let nPdfType = AscPDF.ALIGN_TYPE.left;
-		switch (nInternalType) {
-			case AscCommon.align_Left:
-				nPdfType = AscPDF.ALIGN_TYPE.left;
-				break;
-			case AscCommon.align_Center:
-				nPdfType = AscPDF.ALIGN_TYPE.center;
-				break;
-			case AscCommon.align_Right:
-				nPdfType = AscPDF.ALIGN_TYPE.right;
-				break;
+
+		if (!isRTL) {
+			switch (nInternalType) {
+				case AscCommon.align_Left:
+					nPdfType = AscPDF.ALIGN_TYPE.left;
+					break;
+				case AscCommon.align_Center:
+					nPdfType = AscPDF.ALIGN_TYPE.center;
+					break;
+				case AscCommon.align_Right:
+					nPdfType = AscPDF.ALIGN_TYPE.right;
+					break;
+			}
+		}
+		else {
+			switch (nInternalType) {
+				case AscCommon.align_Left:
+					nPdfType = AscPDF.ALIGN_TYPE.right;
+					break;
+				case AscCommon.align_Center:
+					nPdfType = AscPDF.ALIGN_TYPE.center;
+					break;
+				case AscCommon.align_Right:
+					nPdfType = AscPDF.ALIGN_TYPE.left;
+					break;
+			}
 		}
 
 		return nPdfType;

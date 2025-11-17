@@ -422,9 +422,15 @@ CGraphicObjects.prototype =
 
     addToRecalculate: function(object)
     {
-        if(typeof object.Get_Id === "function" && typeof object.recalculate === "function")
-            History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, Object: object});
-        return;
+		if (object && object.Get_Id && object.recalculate) {
+			History.RecalcData_Add({Type : AscDFH.historyitem_recalctype_Drawing, Object : object});
+			if (object.checkAutofit && object.checkAutofit()) {
+				let mainObject = object.group && object.getMainGroup ? object.getMainGroup() : object;
+				if (mainObject && mainObject.parent) {
+					mainObject.parent.Refresh_RecalcData({Type : AscDFH.historyitem_Drawing_SetExtent});
+				}
+			}
+		}
     },
 
     createWatermarkImage: DrawingObjectsController.prototype.createWatermarkImage,
@@ -778,11 +784,13 @@ CGraphicObjects.prototype =
 
     checkSelectedObjectsForMove: DrawingObjectsController.prototype.checkSelectedObjectsForMove,
 
+    getDrawingProps: DrawingObjectsController.prototype.getDrawingProps,
     getDrawingPropsFromArray: DrawingObjectsController.prototype.getDrawingPropsFromArray,
     getSelectedObjectsByTypes: DrawingObjectsController.prototype.getSelectedObjectsByTypes,
 		getChartSettings: DrawingObjectsController.prototype.getChartSettings,
 		editChartDrawingObjects: DrawingObjectsController.prototype.editChartDrawingObjects,
 		editChartCallback: DrawingObjectsController.prototype.editChartCallback,
+	getSelectedSingleChart: DrawingObjectsController.prototype.getSelectedSingleChart,
 
 
     getPageSizesByDrawingObjects: function()
@@ -1460,7 +1468,7 @@ CGraphicObjects.prototype =
                 }
                 else if(arrObjects[i].IsTable())
                 {
-                	if (0 === arrObjects[i].GetStartPageRelative())
+                	if (0 === arrObjects[i].GetRelativeStartPage())
                     	ret.push(new CFlowTable(arrObjects[i], 0));
                 }
             }
@@ -2282,6 +2290,8 @@ CGraphicObjects.prototype =
     getSelectionState: DrawingObjectsController.prototype.getSelectionState,
     resetTrackState: DrawingObjectsController.prototype.resetTrackState,
     applyPropsToChartSpace: DrawingObjectsController.prototype.applyPropsToChartSpace,
+	getAllowedDataLabelsPosition: DrawingObjectsController.prototype.getAllowedDataLabelsPosition,
+	checkSingleChartSelection: DrawingObjectsController.prototype.checkSingleChartSelection,
 
     documentUpdateSelectionState: function()
     {
@@ -4466,7 +4476,7 @@ CGraphicObjects.prototype =
             if(obj.isHdrFtrChild(false))
             {
                 const oDocContent = obj.GetDocumentContent();
-                if(oDocContent && oDocContent.Get_StartPage_Absolute() !== obj.PageNum)
+                if(oDocContent && oDocContent.GetAbsoluteStartPage() !== obj.PageNum)
                 {
                     nPageIndex = obj.PageNum;
                 }
@@ -4779,6 +4789,7 @@ CGraphicObjects.prototype =
     },
     endTrackNewShape: DrawingObjectsController.prototype.endTrackNewShape
 };
+CGraphicObjects.prototype.constructor = CGraphicObjects;
 CGraphicObjects.prototype.saveDocumentState = function() {
 	this.startDocState = null;
 	if(!this.document) {

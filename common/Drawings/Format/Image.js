@@ -276,6 +276,8 @@
 
 		CImageShape.prototype.changeSize = CShape.prototype.changeSize;
 
+		CImageShape.prototype.getBounds = CShape.prototype.getBounds;
+
 		CImageShape.prototype.canRotate = function () {
 			if (this.isCrop) {
 				return false;
@@ -520,6 +522,10 @@
 				case AscDFH.historyitem_ImageShapeSetBlipFill: {
 					this.recalcBrush();
 					this.recalcFill();
+					this.addToRecalculate();
+					break;
+				}
+				case AscDFH.historyitem_AutoShapes_AddToDrawingObjects: {
 					this.addToRecalculate();
 					break;
 				}

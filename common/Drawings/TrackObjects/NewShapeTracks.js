@@ -272,6 +272,12 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
 
         this.isLine = this.presetGeom === "line";
 
+        // adding annots
+        if (Asc.editor.isStartAddAnnot) {
+            pen = Asc.editor.addAnnotPen;
+            brush = AscFormat.CreateNoFillUniFill();
+        }
+
         this.overlayObject = new AscFormat.OverlayObject(geometry, 5, 5, brush, pen, this.transform);
         this.shape = null;
 
@@ -560,7 +566,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
             }
         }
 
-        if (Asc.editor.isPdfEditor()) {
+        if (Asc.editor.isPdfEditor() && !this.isLine) {
             let oDoc = Asc.editor.getPDFDoc();
             let nRotAngle = oDoc.Viewer.getPageRotate(this.pageIndex);
             this.rot = -nRotAngle * Math.PI / 180;
@@ -804,7 +810,12 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
                 if(!shape.spPr.geometry){
                     shape.spPr.setGeometry(AscFormat.CreateGeometry(this.presetGeom));
                 }
-                shape.setStyle(AscFormat.CreateDefaultShapeStyle(this.presetGeom));
+                if (Asc.editor.isStartAddAnnot) {
+                    shape.spPr.setLn(Asc.editor.addAnnotPen.createDuplicate());
+                }
+                else {
+                    shape.setStyle(AscFormat.CreateDefaultShapeStyle(this.presetGeom));
+                }
                 if(this.arrowsCount > 0)
                 {
                     var ln = new AscFormat.CLn();

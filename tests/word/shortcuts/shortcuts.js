@@ -533,10 +533,10 @@
 
 			logicDocument.SelectAll();
 
-			ExecuteHotkey(testHotkeyActions.testIndent);
+			ExecuteHotkey(testHotkeyActions.BeginIndent);
 			assert.strictEqual(GetDirectParaPr().GetIndLeft(), 12.5, "Check multi indent");
 
-			ExecuteHotkey(testHotkeyActions.testUnIndent);
+			ExecuteHotkey(testHotkeyActions.BeginUnIndent);
 			assert.strictEqual(GetDirectParaPr().GetIndLeft(), 0, "Check multi unindent");
 		});
 
@@ -1167,26 +1167,29 @@
 			assert.false(checkBox.IsCheckBoxChecked(), 'Check turn off checkbox');
 			AscTest.SetEditingMode();
 
-			ClearDocumentAndAddParagraph('');
-			AddComboBox(['Hello', 'World', 'yo']);
-			AscTest.SetFillingFormMode(true);
-			ExecuteHotkey(testHotkeyActions.nextOptionComboBox);
-			assert.strictEqual(logicDocument.GetSelectedText(), 'Hello', 'Check select next option in combobox');
-
-			ExecuteHotkey(testHotkeyActions.nextOptionComboBox);
-			assert.strictEqual(logicDocument.GetSelectedText(), 'World', 'Check select next option in combobox');
-
-			ExecuteHotkey(testHotkeyActions.nextOptionComboBox);
-			assert.strictEqual(logicDocument.GetSelectedText(), 'yo', 'Check select next option in combobox');
-
-			ExecuteHotkey(testHotkeyActions.previousOptionComboBox);
-			assert.strictEqual(logicDocument.GetSelectedText(), 'World', 'Check select previous option in combobox');
-
-			ExecuteHotkey(testHotkeyActions.previousOptionComboBox);
-			assert.strictEqual(logicDocument.GetSelectedText(), 'Hello', 'Check select previous option in combobox');
-
-			ExecuteHotkey(testHotkeyActions.previousOptionComboBox);
-			assert.strictEqual(logicDocument.GetSelectedText(), 'yo', 'Check select previous option in combobox');
+			// Previously we changed the value directly in the form
+			// Now we open the drop-down list
+			
+			// ClearDocumentAndAddParagraph('');
+			// AddComboBox(['Hello', 'World', 'yo']);
+			// AscTest.SetFillingFormMode(true);
+			// ExecuteHotkey(testHotkeyActions.nextOptionComboBox);
+			// assert.strictEqual(logicDocument.GetSelectedText(), 'Hello', 'Check select next option in combobox');
+			//
+			// ExecuteHotkey(testHotkeyActions.nextOptionComboBox);
+			// assert.strictEqual(logicDocument.GetSelectedText(), 'World', 'Check select next option in combobox');
+			//
+			// ExecuteHotkey(testHotkeyActions.nextOptionComboBox);
+			// assert.strictEqual(logicDocument.GetSelectedText(), 'yo', 'Check select next option in combobox');
+			//
+			// ExecuteHotkey(testHotkeyActions.previousOptionComboBox);
+			// assert.strictEqual(logicDocument.GetSelectedText(), 'World', 'Check select previous option in combobox');
+			//
+			// ExecuteHotkey(testHotkeyActions.previousOptionComboBox);
+			// assert.strictEqual(logicDocument.GetSelectedText(), 'Hello', 'Check select previous option in combobox');
+			//
+			// ExecuteHotkey(testHotkeyActions.previousOptionComboBox);
+			// assert.strictEqual(logicDocument.GetSelectedText(), 'yo', 'Check select previous option in combobox');
 			AscTest.SetEditingMode();
 		});
 

@@ -1290,7 +1290,7 @@ function (window, undefined) {
 		if (!this.getMenuEditorMode()) {
 			this._fireUpdated();
 		}
-		this._updateCursorPosition(true, isExpand);
+		this._updateCursorPosition(true, isExpand, null, true);
 		this._updateCursor();
 
 		this._updateUndoRedoChanged();
@@ -1323,10 +1323,18 @@ function (window, undefined) {
 			fPos = obj.fPos;
 			fName = obj.fName;
 			fCurrent = this._getEditableFunction(this._parseResult).func;
+		} else {
+			this._parseResult = null;
 		}
 
 		this.handlers.trigger("updated", s, this.cursorPos, fPos, fName);
-		this.handlers.trigger("updatedEditableFunction", fCurrent, fPos !== undefined ? this.calculateOffset(fPos) : null);
+		let functionInfo = null;
+		if (this._parseResult && this._parseResult.argPos && fCurrent) {
+			functionInfo = new AscCommonExcel.CFunctionInfo(AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale[fCurrent] : fCurrent);
+			functionInfo.activeArgPos = this._parseResult.argPos;
+			functionInfo.activeArgsCount = this._parseResult.argPosArr && this._parseResult.argPosArr.length;
+		}
+		this.handlers.trigger("updatedEditableFunction", fCurrent, fPos !== undefined ? this.calculateOffset(fPos) : null, functionInfo);
 		if (api && api.isMobileVersion) {
 			this.restoreFocus();
 		}
@@ -1747,7 +1755,7 @@ function (window, undefined) {
 		this.cursorStyle.display = "none";
 	};
 
-	CellEditor.prototype._updateCursorPosition = function (redrawText, isExpand, lineIndex) {
+	CellEditor.prototype._updateCursorPosition = function (redrawText, isExpand, lineIndex, opt_not_formulas_update) {
 		// ToDo should forward this function
 		let h = this.canvas.height;
 		let y = -this.textRender.calcLineOffset(this.topLineIndex);
@@ -1822,6 +1830,27 @@ function (window, undefined) {
 			this._updateTopLineCurPos();
 		}
 
+		var s = AscCommonExcel.getFragmentsText(this.options.fragments);
+		var isFormula = -1 === this.beginCompositePos && (s.charAt(0) === "=" || s.charAt(0) === "+" || s.charAt(0) === "-");
+		var fPos, fName, fCurrent, argPos = null;
+
+		if (!opt_not_formulas_update && isFormula && this._parseResult && this._parseResult.allFunctionsPos && this.cursorPos) {
+			let activeFunction = this._parseResult.getActiveFunction(this.cursorPos, this.cursorPos, true);
+			let argPos = activeFunction && activeFunction.argPos;
+
+			fCurrent = activeFunction && activeFunction.func ? activeFunction.func.name : null;
+			fPos = activeFunction && activeFunction.start;
+
+			let functionInfo = null;
+			if (fCurrent) {
+				functionInfo = new AscCommonExcel.CFunctionInfo(AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale[fCurrent] : fCurrent);
+				functionInfo.activeArgPos = argPos != null ? argPos + 1 : null;
+				functionInfo.activeArgsCount = activeFunction && activeFunction.args ? activeFunction.args.length : 0;
+			}
+			this.handlers.trigger("updatedEditableFunction", fCurrent, fPos !== undefined ? this.calculateOffset(fPos) : null, functionInfo);
+		}
+
+
 		if (this.getMenuEditorMode()) {
 			this.handlers.trigger("updateMenuEditorCursorPosition", curTop, curHeight);
 		}
@@ -1835,12 +1864,33 @@ function (window, undefined) {
 		this.newTextFormat = null;
 		var t = this;
 		this.sAutoComplete = null;
+
+		let getLineIndex = function (_curPos) {
+			if (!t.textRender || !t.textRender.lines) {
+				return;
+			}
+			for (var i = 0; i < t.textRender.lines.length; i++) {
+				var line = t.textRender.lines[i];
+				if (_curPos >= line.beg && _curPos <= line.end) {
+					return i;
+				}
+			}
+		};
+		let oldCursorPos = t.cursorPos, _lineIndex;
 		switch (kind) {
 			case kPrevChar:
+				_lineIndex = getLineIndex(oldCursorPos);
 				t.cursorPos = t.textRender.getPrevChar(t.cursorPos);
+				if (_lineIndex != null && oldCursorPos - 1 === t.cursorPos && t.textRender.lines[_lineIndex] && t.textRender.lines[_lineIndex].beg === t.cursorPos) {
+					lineIndex = _lineIndex;
+				}
 				break;
 			case kNextChar:
+				_lineIndex = getLineIndex(oldCursorPos);
 				t.cursorPos = t.textRender.getNextChar(t.cursorPos);
+				if (_lineIndex != null && oldCursorPos + 1 === t.cursorPos && t.textRender.lines[_lineIndex + 1] && t.textRender.lines[_lineIndex + 1].beg === t.cursorPos) {
+					lineIndex = _lineIndex + 1;
+				}
 				break;
 			case kPrevWord:
 				t.cursorPos = t.textRender.getPrevWord(t.cursorPos);
@@ -2624,10 +2674,10 @@ function (window, undefined) {
 			}
 			case Asc.c_oAscSpreadsheetShortcutType.CellInsertDate: {
 				const oDate = new Asc.cDate();
-				this._addChars(oDate.getDateString(oApi));
+				this._addChars(oDate.getDateString(oApi, true));
 				break;
 			}
-			case Asc.c_oAscSpreadsheetShortcutType.Print: {
+			case Asc.c_oAscSpreadsheetShortcutType.PrintPreviewAndPrint: {
 				break;
 			}
 			case Asc.c_oAscSpreadsheetShortcutType.EditOpenCellEditor: {

@@ -691,7 +691,7 @@
 					if (_sy >= _sb || _sy >= _h || _sb <= 0 || h <= 0)
 						return;
 
-					this.m_oContext.drawImage(img,_sx,_sy,_sr-_sx,_sb-_sy,x,y,w,h);
+					this.m_oContext.drawImage(img, _sx, _sy, _sr - _sx, _sb - _sy, x, y, w, h);
 				}
 				else
 				{
@@ -878,6 +878,117 @@
 				this.m_oPen.Color.B + "," + (this.m_oPen.Color.A / 255) + ")";
 		}
 	};
+	CGraphics.prototype.drawBlipFillTile = function (transform, imageUrl, alpha, scaleX, scaleY, offsetX, offsetY, flipH, flipV) {
+		const ctx = this.m_oContext;
+		if (!ctx) return;
+
+		ctx.save();
+
+		if (transform) {
+			ctx.transform(
+				transform.sx,
+				transform.shy,
+				transform.shx,
+				transform.sy,
+				transform.tx,
+				transform.ty
+			);
+		}
+
+		const imageData = Asc.editor.ImageLoader.map_image_index[imageUrl];
+		if (!imageData || this.checkLoadingImage(imageData)) return;
+
+		const image = imageData.Image;
+		if (!image) return;
+
+		// Translation (offsets)
+		ctx.translate(offsetX, offsetY);
+
+		// Scaling (local)
+		ctx.scale(scaleX, scaleY);
+
+		// Mirroring
+		function createVerticalFlipPattern(sourceCanvas, width, height) {
+			const newCanvas = document.createElement('canvas');
+			newCanvas.width = width;
+			newCanvas.height = height * 2;
+
+			const newCtx = newCanvas.getContext('2d');
+			newCtx.drawImage(sourceCanvas, 0, 0, width, height);
+			newCtx.scale(1, -1);
+			newCtx.drawImage(sourceCanvas, 0, -height * 2, width, height);
+
+			return newCanvas;
+		}
+		function createHorizontalFlipPattern(sourceCanvas, width, height) {
+			const newCanvas = document.createElement('canvas');
+			newCanvas.width = width * 2;
+			newCanvas.height = height;
+
+			const newCtx = newCanvas.getContext('2d');
+			newCtx.drawImage(sourceCanvas, 0, 0, width, height);
+			newCtx.scale(-1, 1);
+			newCtx.drawImage(sourceCanvas, -width * 2, 0, width, height);
+
+			return newCanvas;
+		}
+
+		let patternSource = image;
+
+		if (flipH || flipV) {
+			const tempCanvas = document.createElement('canvas');
+			tempCanvas.width = image.width;
+			tempCanvas.height = image.height;
+			const tempCtx = tempCanvas.getContext('2d');
+			tempCtx.drawImage(image, 0, 0);
+			patternSource = tempCanvas;
+		}
+
+		if (flipV) {
+			patternSource = createVerticalFlipPattern(patternSource, patternSource.width, patternSource.height);
+		}
+		if (flipH) {
+			patternSource = createHorizontalFlipPattern(patternSource, patternSource.width, patternSource.height);
+		}
+
+		// Transparency
+		if (AscFormat.isRealNumber(alpha) && alpha >= 0 && alpha <= 1) {
+			ctx.globalAlpha = alpha;
+		}
+
+		const pattern = ctx.createPattern(patternSource, 'repeat');
+		ctx.fillStyle = pattern;
+		ctx.fill();
+
+		ctx.restore();
+	};
+	CGraphics.prototype.drawBlipFillStretch = function (transform, imageUrl, alpha, x, y, w, h, srcRect, canvas) {
+		const ctx = this.m_oContext;
+		if (!ctx) return;
+
+		ctx.save();
+
+		if (transform) {
+			ctx.transform(
+				transform.sx,
+				transform.shy,
+				transform.shx,
+				transform.sy,
+				transform.tx,
+				transform.ty
+			);
+		}
+
+		this.drawImage(
+			imageUrl,
+			x, y, w, h,
+			alpha * 255,
+			srcRect,
+			canvas
+		);
+
+		ctx.restore();
+	}
 
 	// text
 	CGraphics.prototype.GetFont = function()
@@ -2577,6 +2688,51 @@
 		{
 			this.m_oContext.setTransform(this.m_oFullTransform.sx,this.m_oFullTransform.shy,this.m_oFullTransform.shx,
 				this.m_oFullTransform.sy,this.m_oFullTransform.tx,this.m_oFullTransform.ty);
+		}
+	};
+	
+	CGraphics.prototype.drawPermissionMark = function(x, y, h, isStart, isActive)
+	{
+		if (isActive)
+			this.p_color(164, 160, 0, 255);
+		else
+			this.p_color(127, 127, 127, 255);
+
+		if (!global_MatrixTransformer.IsIdentity2(this.m_oTransform))
+		{
+			let coeff = this.m_oCoordTransform.sx;
+			
+			this.p_width(2 / coeff * 1000);
+			let shift = isStart ? 3 / coeff : -3 / coeff;
+			this._s();
+			this._m(x + shift, y);
+			this._l(x, y);
+			this._l(x, y + h);
+			this._l(x + shift, y + h);
+			this.ds();
+			this._s();
+		}
+		else
+		{
+			let pen_w = 2;
+			
+			let ctx = this.m_oContext;
+			ctx.setTransform(1, 0, 0, 1, 0, 0);
+			ctx.lineWidth = 2;
+			
+			let _y = (this.m_oFullTransform.TransformPointY(x, y) >> 0) + 0.5 - 0.5;
+			let _b = (this.m_oFullTransform.TransformPointY(x, y + h) >> 0) + 0.5 - 0.5;
+			
+			let _x0 = (this.m_oFullTransform.TransformPointX(x, y) >> 0) + 0.5 - 0.5 - pen_w / 2;
+			let _x1 = _x0 + (isStart ? pen_w / 2 + 3 : -pen_w / 2 - 3);
+			
+			ctx.beginPath();
+			ctx.moveTo(_x1, _y);
+			ctx.lineTo(_x0, _y);
+			ctx.lineTo(_x0, _b);
+			ctx.lineTo(_x1, _b);
+			ctx.stroke();
+			ctx.beginPath();
 		}
 	};
 

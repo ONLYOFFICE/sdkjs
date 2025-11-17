@@ -594,7 +594,51 @@ window['AscCommon']['RgbaTextToRgbaHex'] = window['AscCommon'].RgbaTextToRgbaHex
 		return res.length === 1 ? "0" + res : res;
 	};
 
-	if (0 !== color.indexOf("rgb"))
+	var hslToRgb = function (h, s, l) {
+		h = h / 360;
+		s = s / 100;
+		l = l / 100;
+
+		var r, g, b;
+
+		if (s === 0) {
+			r = g = b = l;
+		} else {
+			var _toRgb = function (p, q, t) {
+				if (t < 0) {
+					t += 1;
+				}
+				if (t > 1) {
+					t -= 1;
+				}
+				if (t < 1 / 6) {
+					return p + (q - p) * 6 * t;
+				}
+				if (t < 1 / 2) {
+					return q;
+				}
+				if (t < 2 / 3) {
+					return p + (q - p) * (2 / 3 - t) * 6;
+				}
+
+				return p;
+			};
+
+			var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+			var p = 2 * l - q;
+			r = _toRgb(p, q, h + 1 / 3);
+			g = _toRgb(p, q, h);
+			b = _toRgb(p, q, h - 1 / 3);
+		}
+
+		return {
+			r: Math.round(r * 255),
+			g: Math.round(g * 255),
+			b: Math.round(b * 255)
+		};
+	};
+
+	if (0 !== color.indexOf("rgb") && 0 !== color.indexOf("hsl"))
 	{
 		if (color.length < 6)
 		{
@@ -612,10 +656,35 @@ window['AscCommon']['RgbaTextToRgbaHex'] = window['AscCommon'].RgbaTextToRgbaHex
 	for (var i in colors)
 		colors[i] = colors[i].trim();
 
-	var r = colors[0] || 0;
-	var g = colors[1] || 0;
-	var b = colors[2] || 0;
-	var a = (colors[3] === undefined) ? 255 : colors[3];
+	let r, g, b, a;
+	if (0 === color.indexOf("hsl"))
+	{
+		var h = parseFloat(colors[0]) || 0;
+		var s = parseFloat(colors[1]) || 0;
+		var l = parseFloat(colors[2]) || 0;
+		a = (colors[3] === undefined) ? 255 : Math.round(parseFloat(colors[3]) * 255);
+
+		if (typeof colors[1] === 'string' && colors[1].indexOf('%') !== -1)
+		{
+			s = parseFloat(colors[1].replace('%', ''));
+		}
+		if (typeof colors[2] === 'string' && colors[2].indexOf('%') !== -1)
+		{
+			l = parseFloat(colors[2].replace('%', ''));
+		}
+
+		var rgb = hslToRgb(h, s, l);
+		r = rgb.r;
+		g = rgb.g;
+		b = rgb.b;
+	}
+	else
+	{
+		r = parseInt(colors[0]) || 0;
+		g = parseInt(colors[1]) || 0;
+		b = parseInt(colors[2]) || 0;
+		a = (colors[3] === undefined) ? 255 : Math.round(parseFloat(colors[3]) * 255);
+	}
 
 	return "#" + toHex(r) + toHex(g) + toHex(b);
 };

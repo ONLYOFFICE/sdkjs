@@ -4924,6 +4924,13 @@ var g_oFontProperties = {
 	CellXfs.prototype.asc_getShrinkToFit = function () {
 		return this.getAlign2().getShrinkToFit();
 	};
+	CellXfs.prototype.asc_getReadingOrder = function () {
+		let readingOrder = this.getAlign2().getReadingOrder();
+		if (readingOrder === null || readingOrder === undefined) {
+			readingOrder = Asc.c_oReadingOrderTypes.Context;
+		}
+		return readingOrder;
+	};
 	CellXfs.prototype.asc_getPreview = function (api, text, width, height) {
 		return AscCommonExcel.generateXfsStyle(width, height, api.wb, this, text);
 	};
@@ -5089,7 +5096,6 @@ var g_oFontProperties = {
 			WrapText: 8
 	};
 
-
 	window['Asc']['c_oSerAligmentTypes'] = window['Asc'].c_oSerAligmentTypes = c_oSerAligmentTypes;
 	prot = c_oSerAligmentTypes;
 	prot['Horizontal'] = prot.Horizontal;
@@ -5110,7 +5116,7 @@ var g_oFontProperties = {
 		this.hor = val.hor;
 		this.indent = val.indent;
 		this.RelativeIndent = val.RelativeIndent;
-		this.ReadingOrder = val.ReadingOrder;
+		this.readingOrder = val.readingOrder;
 		this.shrink = val.shrink;
 		this.angle = val.angle;
 		this.ver = val.ver;
@@ -5123,7 +5129,7 @@ var g_oFontProperties = {
 	Align.prototype.Properties = Asc.c_oSerAligmentTypes;
 	Align.prototype.getHash = function () {
 		if (!this._hash) {
-			this._hash = this.hor + '|' + this.indent + '|' + this.ReadingOrder + '|' + this.RelativeIndent + '|' + this.shrink + '|' +
+			this._hash = this.hor + '|' + this.indent + '|' + this.readingOrder + '|' + this.RelativeIndent + '|' + this.shrink + '|' +
 				this.angle + '|' + this.ver + '|' + this.wrap;
 		}
 		return this._hash;
@@ -5146,7 +5152,7 @@ var g_oFontProperties = {
 		var oRes = new Align();
 		oRes.hor = this._mergeProperty(this.hor, align.hor, defaultAlign.hor);
 		oRes.indent = this._mergeProperty(this.indent, align.indent, defaultAlign.indent);
-		oRes.ReadingOrder = this._mergeProperty(this.ReadingOrder, align.ReadingOrder, defaultAlign.ReadingOrder);
+		oRes.readingOrder = this._mergeProperty(this.readingOrder, align.readingOrder, defaultAlign.readingOrder);
 		oRes.RelativeIndent = this._mergeProperty(this.RelativeIndent, align.RelativeIndent, defaultAlign.RelativeIndent);
 		oRes.shrink = this._mergeProperty(this.shrink, align.shrink, defaultAlign.shrink);
 		oRes.angle = this._mergeProperty(this.angle, align.angle, defaultAlign.angle);
@@ -5172,8 +5178,8 @@ var g_oFontProperties = {
 		} else {
 			bEmpty = false;
 		}
-		if (this.ReadingOrder == val.ReadingOrder) {
-			oRes.ReadingOrder = null;
+		if (this.readingOrder == val.readingOrder) {
+			oRes.readingOrder = null;
 		} else {
 			bEmpty = false;
 		}
@@ -5203,7 +5209,7 @@ var g_oFontProperties = {
 		return oRes;
 	};
 	Align.prototype.isEqual = function (val) {
-		return this.hor == val.hor && this.indent == val.indent && this.ReadingOrder == val.ReadingOrder && this.RelativeIndent == val.RelativeIndent && this.shrink == val.shrink &&
+		return this.hor == val.hor && this.indent == val.indent && this.readingOrder == val.readingOrder && this.RelativeIndent == val.RelativeIndent && this.shrink == val.shrink &&
 			this.angle == val.angle && this.ver == val.ver && this.wrap == val.wrap;
 	};
 	Align.prototype.clone = function () {
@@ -5291,10 +5297,10 @@ var g_oFontProperties = {
 		this.shrink = val;
 	};
 	Align.prototype.getReadingOrder = function () {
-		return this.ReadingOrder;
+		return this.readingOrder;
 	};
 	Align.prototype.setReadingOrder = function (val) {
-		this.ReadingOrder = val;
+		this.readingOrder = val;
 	};
 	Align.prototype.getAlignHorizontal = function () {
 		return this.hor;
@@ -5350,7 +5356,7 @@ var g_oFontProperties = {
 			}
 			val = vals["readingOrder"];
 			if (undefined !== val) {
-				this.ReadingOrder = val - 0;
+				this.readingOrder = val - 0;
 			}
 			val = vals["shrinkToFit"];
 			if (undefined !== val) {
@@ -5665,6 +5671,10 @@ StyleManager.prototype =
 	setAlignHorizontal : function(oItemWithXfs, val)
 	{
 		return this._setAlignProperty(oItemWithXfs, val, "alignHorizontal", Align.prototype.getAlignHorizontal, Align.prototype.setAlignHorizontal);
+	},
+	setReadingOrder : function(oItemWithXfs, val)
+	{
+		return this._setAlignProperty(oItemWithXfs, val, "readingOrder", Align.prototype.getReadingOrder, Align.prototype.setReadingOrder);
 	},
 	setShrinkToFit : function(oItemWithXfs, val)
 	{
@@ -6071,6 +6081,8 @@ StyleManager.prototype =
 		this.bVisited = false;
 
 		this.bHyperlinkFunction = null;
+		
+		this._tempLocation = null;
 	}
 
 	Hyperlink.prototype.clone = function (oNewWs) {
@@ -6137,6 +6149,9 @@ StyleManager.prototype =
 			}
 		}
 		this._updateLocation();
+		if (Location && !this.Location) {
+			this._tempLocation = Location;
+		}
 	};
 	Hyperlink.prototype.getLocation = function () {
 		if (this.bUpdateLocation)
@@ -6277,6 +6292,14 @@ StyleManager.prototype =
 	Hyperlink.prototype.getHyperlinkFunction = function () {
 		return this.bHyperlinkFunction;
 	};
+	Hyperlink.prototype.checkAfterOpen = function () {
+		let type = this.getHyperlinkType();
+		if (type === Asc.c_oAscHyperlinkType.WebLink && this._tempLocation) {
+			this.Location = this._tempLocation;
+		}
+		this._tempLocation = null;
+	};
+	
 
 	/** @constructor */
 	function SheetFormatPr() {
@@ -6558,6 +6581,13 @@ StyleManager.prototype =
 		var oRes = this.ws.workbook.oStyleManager.setAlignHorizontal(this, val);
 		if (AscCommon.History.Is_On() && oRes.oldVal != oRes.newVal) {
 			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoCol, AscCH.historyitem_RowCol_AlignHorizontal, this.ws.getId(),
+				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, false, oRes.oldVal, oRes.newVal));
+		}
+	};
+	Col.prototype.setReadingOrder = function (val) {
+		var oRes = this.ws.workbook.oStyleManager.setReadingOrder(this, val);
+		if (AscCommon.History.Is_On() && oRes.oldVal != oRes.newVal) {
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoCol, AscCH.historyitem_RowCol_ReadingOrder, this.ws.getId(),
 				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, false, oRes.oldVal, oRes.newVal));
 		}
 	};
@@ -6963,6 +6993,13 @@ StyleManager.prototype =
 				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, true, oRes.oldVal, oRes.newVal));
 		}
 	};
+	Row.prototype.setReadingOrder = function (val) {
+		var oRes = this.ws.workbook.oStyleManager.setReadingOrder(this, val);
+		if (AscCommon.History.Is_On() && oRes.oldVal != oRes.newVal) {
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoRow, AscCH.historyitem_RowCol_ReadingOrder, this.ws.getId(),
+				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, true, oRes.oldVal, oRes.newVal));
+		}
+	};
 	Row.prototype.setFill = function (val) {
 		var oRes = this.ws.workbook.oStyleManager.setFill(this, val);
 		if (AscCommon.History.Is_On() && oRes.oldVal != oRes.newVal) {
@@ -7167,6 +7204,11 @@ StyleManager.prototype =
 		}
 		stream.Seek2(end);
 	};
+	Row.prototype.isEqualForXLSB = function(row) {
+		return this.xfs === row.xfs && this.h === row.h && this.outlineLevel === row.outlineLevel &&
+			this.getCollapsed() === row.getCollapsed() && this.getHidden() === row.getHidden() &&
+			this.getCustomHeight() === row.getCustomHeight();
+	};
 	Row.prototype.toXLSB = function(stream, offsetIndex, stylesForWrite) {
 		stream.XlsbStartRecord(AscCommonExcel.XLSB.rt_ROW_HDR, 17);
 		stream.WriteULong((this.index + offsetIndex) & 0xFFFFF);
@@ -7201,6 +7243,7 @@ StyleManager.prototype =
 		stream.WriteByte(0);
 		stream.WriteULong(0);
 		stream.XlsbEndRecord();
+		return 0 === nS && 0 === nHt && 0 === byteExtra2;
 	};
 	Row.prototype.onStartNode = function(elem, attr, uq, tagend, getStrNode) {
 		var attrVals;
@@ -11671,18 +11714,19 @@ function RangeDataManagerElem(bbox, data)
 			case Asc.c_oAscDynamicAutoFilter.belowAverage: {
 				let sum = 0;
 				let counter = 0;
+				if (range) {
+					range._foreachNoEmpty(function (cell) {
+						let cellVal = parseFloat(cell.getValueWithoutFormat());
 
-				range._foreachNoEmpty(function (cell) {
-					let cellVal = parseFloat(cell.getValueWithoutFormat());
-
-					if (!isNaN(cellVal)) {
-						sum += parseFloat(cellVal);
-						counter++;
+						if (!isNaN(cellVal)) {
+							sum += parseFloat(cellVal);
+							counter++;
+						}
+					});
+					if (counter > 0) {
+						val = sum / counter;
 					}
-
-				});
-				val = sum / counter;
-
+				}
 				break;
 			}
 			case Asc.c_oAscDynamicAutoFilter.lastMonth:
@@ -12979,16 +13023,20 @@ function RangeDataManagerElem(bbox, data)
 	 */
 	function CSharedStrings () {
 		this.all = [];
-		this.text = new Map();
-		this.multiTextMap = new Map();
+		this.text = Object.create(null);
+		this.multiTextMap = Object.create(null);
+
+		this.bssr = null;
 	}
 
 	CSharedStrings.prototype.addText = function(text) {
-		var index = this.text.get(text);
+		var textMap = this.text;
+		var index = textMap[text];
 		if (undefined === index) {
-			this.all.push(text);
-			index = this.all.length;
-			this.text.set(text, index);
+			var allArray = this.all;
+			allArray.push(text);
+			index = allArray.length;
+			textMap[text] = index;
 			if (AscFonts.IsCheckSymbols) {
 				AscFonts.FontPickerByCharacter.getFontsByString(text);
 			}
@@ -13000,10 +13048,10 @@ function RangeDataManagerElem(bbox, data)
 		var text = multiText.reduce(function(accumulator, currentValue) {
 			return accumulator + currentValue.text;
 		}, '');
-		var mapElem = this.multiTextMap.get(text);
+		var mapElem = this.multiTextMap[text];
 		if (!mapElem) {
 			mapElem = [];
-			this.multiTextMap.set(text, mapElem);
+			this.multiTextMap[text] = mapElem;
 		}
 		for (i = 0; i < mapElem.length; ++i) {
 			if (AscCommonExcel.isEqualMultiText(multiText, this.all[mapElem[i] - 1])) {
@@ -13016,12 +13064,63 @@ function RangeDataManagerElem(bbox, data)
 			index = this.all.length;
 			mapElem.push(index);
 			if (AscFonts.IsCheckSymbols) {
-				for (i = 0; i < multiText.length; ++i) {
-					AscFonts.FontPickerByCharacter.getFontsByString(multiText[i].text);
-				}
+				AscFonts.FontPickerByCharacter.getFontsByString(text);
 			}
 		}
 		return index;
+	};
+	/**
+	 * Initialize with sharedStrings from file. rely on uniqines
+	 * @param {Array<string | Array<{text: string, format: CellXfs}>>} sharedStrings
+	 */
+	CSharedStrings.prototype.initWithSharedStrings = function(sharedStrings) {
+		this.all = sharedStrings.slice(); //copy
+		this.text = Object.create(null);
+		this.multiTextMap = Object.create(null);
+		
+		for (let i = 0; i < sharedStrings.length; i++) {
+			const text = sharedStrings[i];
+			this._addSharedStringCacheByIndex(text, i + 1);// 1-based indexing
+		}
+	};
+	CSharedStrings.prototype._addSharedStringCacheByIndex = function(text, index) {
+		if (typeof text === 'string') {
+			this.text[text] = index;
+			if (AscFonts.IsCheckSymbols) {
+				AscFonts.FontPickerByCharacter.getFontsByString(text);
+			}
+		} else {
+			let key = "";
+			for (let j = 0; j < text.length; ++j) {
+				key += text[j].text;
+			}
+			if (AscFonts.IsCheckSymbols) {
+				AscFonts.FontPickerByCharacter.getFontsByString(key);
+			}
+			var mapElem = this.multiTextMap[key];
+			if (!mapElem) {
+				mapElem = [];
+				this.multiTextMap[key] = mapElem;
+			}
+			mapElem.push(index);
+		}
+	};
+	CSharedStrings.prototype.initWithBinaryReader = function(bssr) {
+		this.all = new Array(bssr.offsets.length / 2);
+		this.bssr = bssr;
+		this.get = this._getFromBinaryReader;
+	}
+	CSharedStrings.prototype._getFromBinaryReader = function(index) {
+		let res = null;
+		if (1 <= index && index <= this.all.length) {
+			res = this.all[index - 1];
+			if (undefined === res) {
+				res = this.bssr.ReadSharedStringByOffset(index - 1);
+				this.all[index - 1] = res
+				this._addSharedStringCacheByIndex(res, index);
+			}
+		}
+		return res;
 	};
 	CSharedStrings.prototype.get = function(index) {
 		return 1 <= index && index <= this.all.length ? this.all[index - 1] : null;
@@ -13030,7 +13129,9 @@ function RangeDataManagerElem(bbox, data)
 		return this.all.length;
 	};
 	CSharedStrings.prototype.generateFontMap = function(oFontMap) {
-		this.multiTextMap.forEach(function(mapElem) {
+		var keys = Object.keys(this.multiTextMap);
+		for (var k = 0; k < keys.length; ++k) {
+			var mapElem = this.multiTextMap[keys[k]];
 			for (var i = 0; i < mapElem.length; ++i) {
 				var multiText = this.all[mapElem[i] - 1];
 				for (var j = 0; j < multiText.length; ++j) {
@@ -13040,7 +13141,7 @@ function RangeDataManagerElem(bbox, data)
 					}
 				}
 			}
-		}, this);
+		}
 	};
 
 	/**
@@ -13221,6 +13322,7 @@ function RangeDataManagerElem(bbox, data)
 		//для превью передаём из интерфейса
 		this.headerFooter = null;
 		this.printArea = null;
+		this.selection = null;
 
 		this.ws = ws;
 
@@ -13471,6 +13573,7 @@ function RangeDataManagerElem(bbox, data)
 		res["pageSetup"]["pageOrder"] = this.pageSetup.pageOrder;
 		res["pageSetup"]["paperUnits"] = this.pageSetup.paperUnits;
 		res["pageSetup"]["printArea"] = this.pageSetup.printArea;
+		res["pageSetup"]["selection"] = this.pageSetup.selection;
 		res["pageSetup"]["scale"] = this.pageSetup.scale;
 		res["pageSetup"]["useFirstPageNumber"] = this.pageSetup.useFirstPageNumber;
 		res["pageSetup"]["usePrinterDefaults"] = this.pageSetup.usePrinterDefaults;
@@ -13529,6 +13632,7 @@ function RangeDataManagerElem(bbox, data)
 		this.pageSetup.pageOrder = checkOnNull(props["pageSetup"]["pageOrder"], this.pageSetup.pageOrder);
 		this.pageSetup.paperUnits = checkOnNull(props["pageSetup"]["paperUnits"], this.pageSetup.paperUnits);
 		this.pageSetup.printArea = checkOnNull(props["pageSetup"]["printArea"], this.pageSetup.printArea);
+		this.pageSetup.selection = checkOnNull(props["pageSetup"]["selection"], this.pageSetup.selection);
 		this.pageSetup.scale = checkOnNull(props["pageSetup"]["scale"], this.pageSetup.scale);
 		this.pageSetup.useFirstPageNumber = checkOnNull(props["pageSetup"]["useFirstPageNumber"], this.pageSetup.useFirstPageNumber);
 		this.pageSetup.usePrinterDefaults = checkOnNull(props["pageSetup"]["usePrinterDefaults"], this.pageSetup.usePrinterDefaults);
@@ -14458,6 +14562,9 @@ function RangeDataManagerElem(bbox, data)
 
 		this.arguments = null;
 
+		this.activeArgPos = null;
+		this.activeArgsCount = null;
+
 		this._init(name);
 
 		return this;
@@ -14501,6 +14608,12 @@ function RangeDataManagerElem(bbox, data)
 	};
 	CFunctionInfo.prototype.asc_setArguments = function (val) {
 		this.arguments = val;
+	};
+	CFunctionInfo.prototype.asc_getActiveArgPos = function () {
+		return this.activeArgPos;
+	};
+	CFunctionInfo.prototype.asc_getActiveArgsCount = function () {
+		return this.activeArgsCount;
 	};
 
 
@@ -15618,17 +15731,21 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	ExternalReference.prototype.initWorksheet = function (sheetName) {
-		var ws = this.worksheets[sheetName];
-		if (!this.worksheets[sheetName]) {
+		let ws = this.worksheets[sheetName];
+		if (!ws) {
 			var wb = this.getWb();
 			if (!wb) {
 				wb = new AscCommonExcel.Workbook(null, window["Asc"]["editor"], false);
+				wb.dependencyFormulas.lockRecal();
 			}
 			ws = new AscCommonExcel.Worksheet(wb);
 			ws.sName = sheetName;
+			wb.aWorksheets.push(ws);
+			ws._setIndex(wb.aWorksheets.length - 1);
 
 			this.worksheets[sheetName] = ws;
 		}
+		return ws;
 	};
 
 	ExternalReference.prototype.initWorksheetFromSheetDataSet = function (sheetName) {
@@ -15636,21 +15753,7 @@ function RangeDataManagerElem(bbox, data)
 		if (null !== sheetDataSetIndex) {
 
 			var sheetDataSet = this.SheetDataSet[sheetDataSetIndex];
-			var ws = this.worksheets[sheetName];
-			if (!this.worksheets[sheetName]) {
-				var wb = this.getWb();
-				if (!wb) {
-					wb = new AscCommonExcel.Workbook(null, window["Asc"]["editor"], false);
-					wb.dependencyFormulas.lockRecal();
-				}
-				ws = new AscCommonExcel.Worksheet(wb);
-				ws.sName = sheetName;
-				wb.aWorksheets.push(ws);
-				ws._setIndex(wb.aWorksheets.length - 1);
-
-				this.worksheets[sheetName] = ws;
-			}
-
+			var ws = this.initWorksheet(sheetName);
 
 			//клонируем все данные из SheetDataSet в данный темповый Worksheet
 			if (!sheetDataSet || !sheetDataSet.Row) {
@@ -16090,7 +16193,7 @@ function RangeDataManagerElem(bbox, data)
 					});
 				}
 			}
-			wbView && wbView.handleChartsOnWorkbookChange(aRanges);
+			wbView && wbView.handleDrawingsOnWorkbookChange(aRanges);
 		}
 		return isChanged;
 	};
@@ -16282,7 +16385,18 @@ function RangeDataManagerElem(bbox, data)
 				});
 			}
 
-			let newVal = noData ? "#REF!" : cell.getValue();
+			let cellType = cell.getType();
+			let newVal;
+			if (noData) {
+				newVal = "#REF!";
+			} else {
+				if (cellType === CellValueType.Number) {
+					let _numVal = cell.getNumberValue();
+					newVal = _numVal == null ? cell.getValue() : _numVal + "";
+				} else {
+					newVal = cell.getValue();
+				}
+			}
 			if (this.CellValue !== newVal) {
 				isChanged = true;
 				this.CellValue = newVal;
@@ -16290,12 +16404,21 @@ function RangeDataManagerElem(bbox, data)
 
 
 			var cellValueType = null;
-			switch (cell.getType()) {
+			switch (cellType) {
 				case CellValueType.String:
 					cellValueType = Asc.ECellTypeType.celltypeStr;
 					break;
 				case CellValueType.Bool:
 					cellValueType = Asc.ECellTypeType.celltypeBool;
+					break;
+				case CellValueType.Number:
+					let cellFormat = cell.getNumFormat();
+					let isDateTimeFormat = cellFormat && cellFormat.isDateTimeFormat() && cellFormat.getType() !== Asc.c_oAscNumFormatType.Time;
+					if (isDateTimeFormat) {
+						cellValueType = Asc.ECellTypeType.celltypeDate;
+					} else {
+						cellValueType = Asc.ECellTypeType.celltypeNumber;
+					}
 					break;
 				case CellValueType.Error:
 					cellValueType = Asc.ECellTypeType.celltypeError;
@@ -18554,8 +18677,8 @@ function RangeDataManagerElem(bbox, data)
 			argumentsMin = argsInfo.length - optionalCount;
 		}
 
-		let returnInfo = options.returnInfo;
-		if (options.returnInfo && !supportedTypes[returnInfo.type]) {
+		let returnInfo = options && options.returnInfo;
+		if (options && options.returnInfo && !supportedTypes[returnInfo.type]) {
 			console.log("Registration custom function \"" +  funcName + "\" warning. Invalid return type. The following types must be used: number, string, boolean, any, number[][], string[][], boolean[][], any[][].");
 		}
 
@@ -18597,7 +18720,7 @@ function RangeDataManagerElem(bbox, data)
 				oContext["address"] = arguments[1] && arguments[1].getName();
 
 				oContext["address"] = ((ws && ws.getName) ? (AscCommon.parserHelp.getEscapeSheetName(ws.getName()) + "!") : "") + oContext["address"];
-				oContext["argsInfo"] = [];
+				oContext["args"] = [];
 
 				//prepare arguments
 				let args = [];
@@ -18610,7 +18733,7 @@ function RangeDataManagerElem(bbox, data)
 						let _range = arg[i].getRange();
 						let ws = _range.worksheet;
 						let _address = (ws ? AscCommon.parserHelp.getEscapeSheetName(ws.getName()) + "!" : "") + _range.getName();
-						oContext["argsInfo"][i] = {"address": _address, "startCol": _range.bbox.c1, "endCol": _range.bbox.c2, "startRow": _range.bbox.r1, "endRow": _range.bbox.r2};
+						oContext["args"][i] = {"address": _address};
 					}
 
 
@@ -18638,7 +18761,7 @@ function RangeDataManagerElem(bbox, data)
 				let res = func.apply(oContext, args);
 
 				//prepare result
-				let returnInfo = options.returnInfo;
+				let returnInfo = options && options.returnInfo;
 				return oThis.prepareResult(res, returnInfo ? returnInfo.type : null);
 			} catch (e) {
 				console.log("ERROR CUSTOM FUNCTION CALCULATE");
@@ -18679,14 +18802,7 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	CCustomFunctionEngine.prototype.clear = function () {
-		if (AscCommonExcel.cFormulaFunctionGroup["Custom"] && AscCommonExcel.cFormulaFunctionGroup["Custom"].length) {
-			let aCustomFunc = AscCommonExcel.cFormulaFunctionGroup["Custom"];
-			for (let i = 0; i < aCustomFunc.length; i++) {
-				let sName = aCustomFunc[i].prototype.name;
-				AscCommonExcel.removeCustomFunction(sName);
-			}
-			AscCommonExcel.cFormulaFunctionGroup["Custom"] = [];
-
+		if (AscCommonExcel.removeCustomFunctions()) {
 			this.wb.initFormulasList && this.wb.initFormulasList();
 			if (this.wb && this.wb.Api) {
 				this.wb.Api.formulasList = AscCommonExcel.getFormulasInfo();
@@ -18749,10 +18865,10 @@ function RangeDataManagerElem(bbox, data)
 	CCustomFunctionEngine.prototype.addToFunctionsList = function (newFunc, params) {
 		AscCommonExcel.cFormulaFunctionGroup['Custom'] = AscCommonExcel.cFormulaFunctionGroup['Custom'] || [];
 
-		let translations = params.nameLocale;
-		let description = params.description;
-		let args = params.params;
-		let tags = params.tags;
+		let translations = params && params.nameLocale;
+		let description = params && params.description;
+		let args = params && params.params;
+		let tags = params && params.tags;
 
 		let funcName = newFunc.prototype.name;
 
@@ -18808,7 +18924,7 @@ function RangeDataManagerElem(bbox, data)
 			this.funcsMapInfo[funcName].description = description;
 		}
 
-		this.funcsMapInfo[funcName].replaceFormulaToVal = tags["replaceFormulaToVal"];
+		this.funcsMapInfo[funcName].replaceFormulaToVal = tags && tags["replaceFormulaToVal"];
 
 		AscCommonExcel.cFormulaFunctionGroup["Custom"].push(newFunc);
 		AscCommonExcel.addNewFunction(newFunc);
@@ -20329,6 +20445,7 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_getIndent"] = prot.asc_getIndent;
 	prot["asc_getWrapText"] = prot.asc_getWrapText;
 	prot["asc_getShrinkToFit"] = prot.asc_getShrinkToFit;
+	prot["asc_getReadingOrder"] = prot.asc_getReadingOrder;
 	prot["asc_getPreview"] = prot.asc_getPreview;
 	prot["asc_getLocked"] = prot.asc_getLocked;
 	prot["asc_getHidden"] = prot.asc_getHidden;
@@ -20595,6 +20712,8 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_getName"] = prot.asc_getName;
 	prot["asc_getArguments"] = prot.asc_getArguments;
 	prot["asc_setArguments"] = prot.asc_setArguments;
+	prot["asc_getActiveArgPos"] = prot.asc_getActiveArgPos;
+	prot["asc_getActiveArgsCount"] = prot.asc_getActiveArgsCount
 
 
 	window["Asc"]["asc_CExternalReference"] = window["Asc"].asc_CExternalReference = asc_CExternalReference;

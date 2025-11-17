@@ -451,6 +451,10 @@
 	CGraphicsBase.prototype.drawFlowAnchor = function(x, y)
 	{
 	};
+	
+	CGraphicsBase.prototype.drawPermissionMark = function(x, y, h, isStart, isActive)
+	{
+	};
 
 	CGraphicsBase.prototype.DrawFootnoteRect = function(x, y, w, h)
 	{
@@ -459,6 +463,8 @@
 	CGraphicsBase.prototype.DrawPresentationComment = function(type, x, y, w, h)
 	{
 	};
+	CGraphicsBase.prototype.drawBlipFillTile = function () { };
+	CGraphicsBase.prototype.drawBlipFillStretch = function () { };
 
 	// INTEGER GRID
 	CGraphicsBase.prototype.SetIntegerGrid = function(param)

@@ -517,7 +517,9 @@
 				document.oncut            = function(e)
 				{
 					if (g_clipboardBase.isUseNewCopy()) {
-						e.preventDefault();
+						if (g_clipboardBase.Api.asc_IsFocus(true) && !g_clipboardBase._isUseMobileNewCopy()) {
+							e.preventDefault();
+						}
 						return g_clipboardBase.Copy_New(true);
 					} else {
 						return g_clipboardBase._private_oncut(e)
@@ -992,6 +994,14 @@
 		isUseNewCopy : function()
 		{
 			if (navigator.clipboard) {
+
+				if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["getEngineVersion"])
+				{
+					let nVersion = window["AscDesktopEditor"]["getEngineVersion"]();
+					if (nVersion < 109)
+						return false;
+				}
+
 				return true;
 			}
 			if (this._isUseMobileNewCopy())

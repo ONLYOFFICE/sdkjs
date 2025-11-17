@@ -419,6 +419,74 @@ function (window, undefined) {
 			degree: degree
 		});
 	};
+	/**
+	 * Normalizes coordinates in ArrPathCommandInfo by scaling them relative to shape size
+	 * @param {number} shapeWidth - shape width to normalize by
+	 * @param {number} shapeHeight - shape height to normalize by
+	 * @param {number} pathWidth - destination path width to scale to
+	 * @param {number} pathHeight - destination path height to scale to
+	 */
+	Path.prototype.normalizeCoordinates = function (shapeWidth, shapeHeight, pathWidth, pathHeight) {
+		if (shapeWidth === 0 || shapeHeight === 0) {
+			return;
+		}
+
+		let command;
+		let controlPoint;
+		
+		for (let i = 0; i < this.ArrPathCommandInfo.length; i++) {
+			command = this.ArrPathCommandInfo[i];
+			
+			switch (command.id) {
+				case moveTo:
+				case lineTo:
+					command.X = Math.round((command.X / shapeWidth) * pathWidth);
+					command.Y = Math.round((command.Y / shapeHeight) * pathHeight);
+					break;
+					
+				case arcTo:
+					command.wR = Math.round((command.wR / shapeWidth) * pathWidth);
+					command.hR = Math.round((command.hR / shapeHeight) * pathHeight);
+					break;
+					
+				case bezier3:
+					command.X0 = Math.round((command.X0 / shapeWidth) * pathWidth);
+					command.Y0 = Math.round((command.Y0 / shapeHeight) * pathHeight);
+					command.X1 = Math.round((command.X1 / shapeWidth) * pathWidth);
+					command.Y1 = Math.round((command.Y1 / shapeHeight) * pathHeight);
+					break;
+					
+				case bezier4:
+					command.X0 = Math.round((command.X0 / shapeWidth) * pathWidth);
+					command.Y0 = Math.round((command.Y0 / shapeHeight) * pathHeight);
+					command.X1 = Math.round((command.X1 / shapeWidth) * pathWidth);
+					command.Y1 = Math.round((command.Y1 / shapeHeight) * pathHeight);
+					command.X2 = Math.round((command.X2 / shapeWidth) * pathWidth);
+					command.Y2 = Math.round((command.Y2 / shapeHeight) * pathHeight);
+					break;
+					
+				case ellipticalArcTo:
+					command.x = Math.round((command.x / shapeWidth) * pathWidth);
+					command.y = Math.round((command.y / shapeHeight) * pathHeight);
+					command.a = Math.round((command.a / shapeWidth) * pathWidth);
+					command.b = Math.round((command.b / shapeHeight) * pathHeight);
+					break;
+					
+				case nurbsTo:
+					for (let j = 0; j < command.controlPoints.length; j++) {
+						controlPoint = command.controlPoints[j];
+						controlPoint.x = Math.round((controlPoint.x / shapeWidth) * pathWidth);
+						controlPoint.y = Math.round((controlPoint.y / shapeHeight) * pathHeight);
+					}
+					break;
+					
+				case close:
+					//no coordinates to normalize
+					break;
+			}
+		}
+	};
+	
 	Path.prototype.calculateCommandCoord = function (oGdLst, sFormula, dFormulaCoeff, dNumberCoeff) {
 		let dVal;
 		dVal = oGdLst[sFormula];
@@ -1980,6 +2048,7 @@ function (window, undefined) {
 		return true;
 	};
 
+	Path.prototype.clear = function () {};
 	function CPathCmd() {
 		AscFormat.CBaseNoIdObject.call(this);
 		this.pts = [];
@@ -2618,6 +2687,13 @@ function (window, undefined) {
 			_ctx.lineWidth = _lineWidth;
 
 			if ((_lineWidth & 0x01) == 0x01) bIsEven = true;
+
+			if (_graphics.dash_no_smart) {
+				for (let index = 0; index < _graphics.dash_no_smart.length; index++) _graphics.dash_no_smart[index] = (_graphics.m_oCoordTransform.sx * _graphics.dash_no_smart[index] + 0.5) >> 0;
+
+				_graphics.m_oContext.setLineDash(_graphics.dash_no_smart);
+				_graphics.dash_no_smart = null;
+			}
 		}
 
 		let bIsDrawLast = false;

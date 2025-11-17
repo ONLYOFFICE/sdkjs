@@ -465,12 +465,34 @@ function CContentControlPr(nType)
 }
 CContentControlPr.prototype.GetEventObject = function()
 {
-	return {
+	let result = {
 		"Tag"        : this.Tag,
 		"Id"         : this.Id,
 		"Lock"       : this.Lock,
-		"InternalId" : this.InternalId
+		"InternalId" : this.InternalId,
+		"Alias"      : this.Alias,
+		"Appearance" : this.Appearance
 	};
+	
+	if (this.CC && this.CC.IsForm())
+	{
+		result["FormKey"] = this.CC.GetFormKey();
+		if (this.CC.IsRadioButton())
+			result["RadioGroup"] = this.CC.GetRadioButtonGroupKey();
+		
+		result["FormValue"] = this.CC.GetFormValue();
+	}
+	
+	if (this.Color)
+	{
+		result["Color"] = {
+			"R" : this.Color.r,
+			"G" : this.Color.g,
+			"B" : this.Color.b
+		};
+	}
+	
+	return result;
 };
 CContentControlPr.prototype.FillFromObject = function(oPr)
 {
@@ -531,6 +553,10 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 		this.CheckBoxPr = oContentControl.GetCheckBoxPr().Copy();
 		if (oContentControl.IsRadioButton())
 			this.CheckBoxPr.SetChoiceName(oContentControl.GetFormKey());
+		
+		let mainForm = oContentControl.GetMainForm();
+		if (mainForm && mainForm.IsLabeledCheckBox())
+			this.CheckBoxPr.SetLabel(mainForm.GetCheckBoxLabel());
 	}
 	else if (oContentControl.IsComboBox())
 		this.ComboBoxPr = oContentControl.GetComboBoxPr().Copy();
@@ -554,6 +580,12 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 	if (oContentControl.IsForm())
 	{
 		let mainForm = oContentControl.IsMainForm() ? oContentControl : oContentControl.GetMainForm();
+		
+		if (mainForm.IsLabeledCheckBox())
+			mainForm = mainForm.GetInnerCheckBox();
+		
+		if (!mainForm)
+			mainForm = oContentControl;
 		
 		this.FormPr = mainForm.GetFormPr().Copy();
 		this.FormPr.SetFixed(mainForm.IsFixedForm());
@@ -614,23 +646,33 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 	
 	if (undefined !== this.Temporary)
 		oContentControl.SetContentControlTemporary(this.Temporary);
-
-	if (undefined !== this.CheckBoxPr)
+	
+	let checkBox = oContentControl;
+	if (oContentControl.IsLabeledCheckBox())
+		checkBox = oContentControl.GetInnerCheckBox();
+	
+	if (undefined !== this.CheckBoxPr && checkBox)
 	{
-		let prevGroupKey = oContentControl.GetCheckBoxPr() ? oContentControl.GetCheckBoxPr().GetGroupKey() : undefined;
+		let prevGroupKey = checkBox.GetCheckBoxPr() ? checkBox.GetCheckBoxPr().GetGroupKey() : undefined;
 		if (prevGroupKey !== this.CheckBoxPr.GroupKey && undefined !== this.CheckBoxPr.Checked)
 			this.CheckBoxPr.Checked = false;
 		
 		let choiceName = this.CheckBoxPr.GetChoiceName(true);
 		if (undefined !== choiceName)
 		{
-			oContentControl.SetFormKey(choiceName);
+			checkBox.SetFormKey(choiceName);
 			if (this.FormPr)
 				this.FormPr.SetKey(choiceName);
 		}
 		
-		oContentControl.SetCheckBoxPr(this.CheckBoxPr);
-		oContentControl.private_UpdateCheckBoxContent();
+		if (this.FormPr)
+		{
+			if (prevGroupKey !== this.CheckBoxPr.GroupKey)
+				this.OnSetGroupKeyToForm(this.CheckBoxPr.GroupKey, checkBox);
+		}
+		
+		checkBox.SetCheckBoxPr(this.CheckBoxPr);
+		checkBox.private_UpdateCheckBoxContent();
 	}
 
 	if (undefined !== this.ComboBoxPr)
@@ -684,8 +726,17 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 
 	if (undefined !== this.PlaceholderText)
 		oContentControl.SetPlaceholderText(this.PlaceholderText);
-
-	this.SetFormPrToContentControl(oContentControl);
+	
+	let mainForm = oContentControl.GetMainForm();
+	if (mainForm && mainForm.IsLabeledCheckBox())
+	{
+		this.SetFormPrToContentControl(mainForm.GetInnerCheckBox());
+		this.SetFormPrToContentControl(mainForm);
+	}
+	else
+	{
+		this.SetFormPrToContentControl(oContentControl);
+	}
 
 	if (undefined !== this.PictureFormPr && oContentControl.IsInlineLevel())
 	{
@@ -701,16 +752,29 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 	
 	if (this.BorderColor)
 		oContentControl.setBorderColor(AscWord.CDocumentColorA.fromObjectRgba(this.BorderColor));
+	
+	if (this.CheckBoxPr && undefined !== this.CheckBoxPr.GetLabel())
+	{
+		let mainForm = oContentControl.GetMainForm();
+		if (mainForm && mainForm !== oContentControl && mainForm.IsLabeledCheckBox())
+			mainForm.SetCheckBoxLabel(this.CheckBoxPr.GetLabel());
+		else
+			oContentControl.SetCheckBoxLabel(this.CheckBoxPr.GetLabel());
+	}
 };
 CContentControlPr.prototype.SetFormPrToContentControl = function(contentControl)
 {
-	if (!this.FormPr)
+	if (!this.FormPr || !contentControl)
 		return;
 	
 	let formPr = this.FormPr;
 	
 	let newRole = formPr.GetRole();
-	if (contentControl.IsForm() && !contentControl.IsMainForm())
+	let mainForm = contentControl.GetMainForm();
+	if (contentControl.IsForm()
+		&& mainForm
+		&& !contentControl.IsMainForm()
+		&& !mainForm.IsLabeledCheckBox())
 	{
 		// Ключ у подформы должен сохраняться
 		let oldKey    = contentControl.GetFormKey();
@@ -742,7 +806,7 @@ CContentControlPr.prototype.SetFormPrToContentControl = function(contentControl)
 	let userMaster  = fieldMaster ? fieldMaster.getFirstUser() : null;
 	let oldRole     = userMaster ? userMaster.getRole() : null;
 	
-	let isKeyChanged = newKey && newKey !== oldKey;
+	let isKeyChanged = newKey && newKey !== oldKey && !contentControl.IsRadioButton();
 	let isRoleChanged = newRole && newRole !== oldRole;
 	
 	if (isKeyChanged && isRoleChanged)
@@ -793,6 +857,38 @@ CContentControlPr.prototype.OnSetKeyToForm = function(newKey, form)
 		return;
 	
 	this.FormPr.SetRole(role);
+};
+CContentControlPr.prototype.OnSetGroupKeyToForm = function(newKey, form)
+{
+	let logicDocument = form.GetLogicDocument();
+	if (!logicDocument || !form.IsRadioButton())
+		return;
+	
+	let formManager = logicDocument.GetFormsManager();
+	let allForms = formManager.GetRadioButtons(newKey);
+	let firstForm = null;
+	for (let iForm = 0, nForms = allForms.length; iForm < nForms; ++iForm)
+	{
+		if (allForms[iForm] === form)
+			continue;
+		
+		firstForm = allForms[iForm];
+		
+		// Напрямую у formManager не вызываем, т.к. еще может быть не выставлен ключ у текущей формы
+		logicDocument.OnChangeForm(allForms[iForm]);
+		break;
+	}
+	
+	let role;
+	if (firstForm)
+	{
+		form.SyncFormPrWithSameKey(firstForm);
+		this.FormPr.SetRequired(firstForm.IsFormRequired());
+		role = firstForm.GetFormRole();
+	}
+	
+	if (role)
+		this.FormPr.SetRole(role);
 };
 CContentControlPr.prototype.OnSetRoleToForm = function(newRole, form)
 {

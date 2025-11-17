@@ -742,7 +742,7 @@ CNum.prototype.GetText = function(nLvl, oNumInfo, bWithoutLastLvlText, oLang)
 			{
 				var nCurLvl = arrText[Index].Value;
 				if (nCurLvl < oNumInfo.length)
-					sResult += this.private_GetNumberedLvlText(nCurLvl, oNumInfo[nCurLvl], false, oLang);
+					sResult += this.private_GetNumberedLvlText(nCurLvl, oNumInfo[nCurLvl], oLvl.IsLegalStyle(), oLang);
 
 				break;
 			}
@@ -783,7 +783,8 @@ CNum.prototype.GetAbstractNum = function()
  */
 CNum.prototype.GetAbstractNumId = function()
 {
-	return this.AbstractNumId;
+	let abstractNum = this.GetAbstractNum();
+	return abstractNum ? abstractNum.GetId() : this.AbstractNumId;
 };
 /**
  * Получаем параметр StartOverride для заданного уровня
@@ -1015,7 +1016,8 @@ CNum.prototype.Read_FromBinary2 = function(oReader)
 			this.LvlOverride[nLvl].ReadFromBinary();
 		}
 	}
-
+	
+	// TODO: Нужно перенести в сам класс нумерации
 	if (!this.Numbering)
 		this.Numbering = editor.WordControl.m_oLogicDocument.GetNumbering();
 

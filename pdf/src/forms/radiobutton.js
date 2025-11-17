@@ -55,7 +55,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CRadioButtonField.prototype.UpdateAll = function() {
-        let oParent     = this.GetParent();
+        let oParent     = this.GetParent(true);
         let aParentOpt  = oParent ? oParent.GetOptions() : undefined;
         let aFields     = this.GetDocument().GetAllWidgets(this.GetFullName());
         let value       = this.GetParentValue();
@@ -155,16 +155,15 @@
     };
     
     CRadioButtonField.prototype.SetRadiosInUnison = function(bValue) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (oParent)
             return oParent.SetRadiosInUnison(bValue);
 
         if (this._radiosInUnison === bValue) {
             return true;
         }
         
-        let oDoc = this.GetDocument();
-        oDoc.History.Add(new CChangesPDFRadiobuttonIsUnison(this, this._radiosInUnison, bValue));
+        AscCommon.History.Add(new CChangesPDFRadiobuttonIsUnison(this, this._radiosInUnison, bValue));
 
         this._radiosInUnison = bValue;
         this.SetWasChanged(true);
@@ -172,8 +171,8 @@
         return true;
     };
     CRadioButtonField.prototype.IsRadiosInUnison = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
             return oParent.IsRadiosInUnison();
 
         return this._radiosInUnison;

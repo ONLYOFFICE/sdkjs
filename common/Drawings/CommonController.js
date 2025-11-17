@@ -121,7 +121,7 @@
 
 			var blip_fill = new AscFormat.CBlipFill();
 			blip_fill.setRasterImageId(rasterImageId);
-			blip_fill.setStretch(true);
+			blip_fill.setStretch(new AscFormat.CBlipFillStretch());
 			image.setBlipFill(blip_fill);
 			image.setNvPicPr(new AscFormat.UniNvPr());
 
@@ -576,6 +576,7 @@
 				var type = drawing.getObjectType();
 				switch (type) {
 					case AscDFH.historyitem_type_Shape:
+					case AscDFH.historyitem_type_Control:
 					case AscDFH.historyitem_type_Cnx: {
 						ret.shapes.push(drawing);
 						break;
@@ -706,6 +707,7 @@
 
 
 			this.lastCursorInfo = null;
+			this.dropDowns = [];
 		}
 
 		function CanStartEditText(oController) {
@@ -1124,7 +1126,7 @@
 						var oThis = this;
 						this.checkSelectedObjectsAndCallback(function () {
 							if (!oShape.bWordShape) {
-								oShape.createTextBody();
+								oShape.createTextBodyOnEdit();
 							} else {
 								oShape.createTextBoxContent();
 							}
@@ -1490,7 +1492,7 @@
 					if (!oShape.getDocContent() && oShape.canEditText()) {
 						this.checkSelectedObjectsAndCallback(function () {
 							if (!oShape.bWordShape) {
-								oShape.createTextBody();
+								oShape.createTextBodyOnEdit();
 							} else {
 								oShape.createTextBoxContent();
 							}
@@ -1502,7 +1504,6 @@
 						}, [], false);
 					}
 				},
-
 				handleMoveHit: function (object, e, x, y, group, bInSelect, pageIndex, bWord) {
 					var b_is_inline;
 					if (isRealObject(group)) {
@@ -1604,7 +1605,7 @@
 								return null;
 							}
 						}
-						if (object.canMove() || bStartMedia) {
+						if (/*object.selected && */(object.canMove() || bStartMedia)) {
 							this.checkSelectedObjectsForMove(pageIndex);
 							if (!isRealObject(group)) {
 								var bGroupSelection = AscCommon.isRealObject(this.selection.groupSelection);
@@ -2086,7 +2087,7 @@
 									}
 								} else {
 									if (!oShape.txBody) {
-										oShape.createTextBody();
+										oShape.createTextBodyOnEdit();
 									}
 								}
 								oController.selection.textSelection = oShape;
@@ -2497,7 +2498,6 @@
 							var g = new AscCommon.CGraphics();
 							g.init(_ctx, w_px, h_px, w_mm, h_mm);
 							g.m_oFontManager = AscCommon.g_fontManager;
-
 							g.m_oCoordTransform.tx = -_bounds_cheker.Bounds.min_x;
 							g.m_oCoordTransform.ty = -_bounds_cheker.Bounds.min_y;
 							g.transform(1, 0, 0, 1, 0, 0);
@@ -2688,7 +2688,7 @@
 												if (drawing.bWordShape) {
 													drawing.createTextBoxContent();
 												} else {
-													drawing.createTextBody();
+													drawing.createTextBodyOnEdit();
 												}
 												content = drawing.getDocContent();
 												if (content) {
@@ -2853,7 +2853,7 @@
 											if (oSelectedObject.bWordShape) {
 												oSelectedObject.createTextBoxContent();
 											} else {
-												oSelectedObject.createTextBody();
+												oSelectedObject.createTextBodyOnEdit();
 											}
 											oContent = oSelectedObject.getDocContent();
 											if (oContent) {
@@ -3361,6 +3361,11 @@
 				},
 
 				hyperlinkCanAdd: function (bCheckInHyperlink) {
+					const targetTextObject = getTargetTextObject(this);
+					if (targetTextObject instanceof AscFormat.CTitle) {
+						return false;
+					}
+
 					var content = this.getTargetDocContent();
 					if (content) {
 						if (this.document && content.Parent && content.Parent instanceof AscFormat.CTextBody)
@@ -4012,7 +4017,7 @@
 							if (oBlipFill) {
 								let oBlipFillCopy = oBlipFill.createDuplicate();
 								oBlipFillCopy.tile = null;
-								oBlipFillCopy.stretch = true;
+								oBlipFillCopy.stretch = new AscFormat.CBlipFillStretch();
 								oBlipFillCopy.srcRect = null;
 								oImg.setBlipFill(oBlipFillCopy);
 
@@ -4363,6 +4368,95 @@
 					oChartSpace.applyChartSettings(oProps);
 				},
 
+				getAllowedDataLabelsPosition: function (chartType, position) {
+					const types = Asc.c_oAscChartTypeSettings;
+					const positions = Asc.c_oAscChartDataLabelsPos;
+
+					if (position === positions.none) {
+						return position;
+					}
+
+					let allowedPositions;
+					switch (chartType) {
+						case types.barNormal:
+						case types.hBarNormal:
+							allowedPositions = [positions.ctr, positions.inBase, positions.inEnd, positions.outEnd];
+							break;
+
+						case types.barStacked:
+						case types.barStackedPer:
+						case types.hBarStacked:
+						case types.hBarStackedPer:
+							allowedPositions = [positions.ctr, positions.inBase, positions.inEnd];
+							break;
+
+						case types.lineNormal:
+						case types.lineStacked:
+						case types.lineStackedPer:
+						case types.lineNormalMarker:
+						case types.lineStackedMarker:
+						case types.lineStackedPerMarker:
+							allowedPositions = [positions.ctr, positions.l, positions.t, positions.r, positions.b];
+							break;
+
+						case types.pie:
+						case types.pie3d:
+						case types.doughnut:
+							allowedPositions = [positions.ctr, positions.inEnd, positions.outEnd, positions.bestFit];
+							break;
+
+						case types.barNormal3d:
+						case types.barStacked3d:
+						case types.barStackedPer3d:
+						case types.barNormal3dPerspective:
+						case types.hBarNormal3d:
+						case types.hBarStacked3d:
+						case types.hBarStackedPer3d:
+						case types.line3d:
+						case types.areaNormal:
+						case types.areaStacked:
+						case types.areaStackedPer:
+						case types.radar:
+						case types.radarMarker:
+						case types.radarFilled:
+							allowedPositions = [positions.show];
+							break;
+
+						case types.scatter:
+						case types.scatterLine:
+						case types.scatterLineMarker:
+						case types.scatterMarker:
+						case types.scatterNone:
+						case types.scatterSmooth:
+						case types.scatterSmoothMarker:
+						case types.stock:
+							allowedPositions = [positions.ctr, positions.l, positions.r, positions.t, positions.b];
+							break;
+
+						case types.surfaceNormal:
+						case types.surfaceWireframe:
+						case types.contourNormal:
+						case types.contourWireframe:
+						case types.comboCustom:
+						case types.comboBarLine:
+						case types.comboBarLineSecondary:
+						case types.comboAreaBar:
+						case types.unknown:
+							allowedPositions = [];
+							break;
+
+						default: allowedPositions = [];
+					}
+
+					if (allowedPositions.indexOf(position) > -1) {
+						return position;
+					} else if (AscFormat.isRealNumber(allowedPositions[0])) {
+						return allowedPositions[0];
+					} else {
+						return positions.none;
+					}
+				},
+
 				checkDlblsPosition: function (chart, chart_type, position) {
 					var finish_dlbl_pos = position;
 
@@ -4421,6 +4515,134 @@
 				},
 
 
+				getSelectedSingleChart: function() {
+					let selectedObjects = this.getSelectedArray();
+					let singleChart = null;
+					for (let drawing = 0; drawing < selectedObjects.length; ++drawing) {
+						if (selectedObjects[drawing].getObjectType() === AscDFH.historyitem_type_ChartSpace) {
+							if (singleChart) {
+								return null;
+							}
+							singleChart = selectedObjects[drawing];
+						}
+					}
+					return singleChart;
+				},
+				checkSingleChartSelection: function () {
+					const controller = Asc.editor.getGraphicController();
+					if (!controller) return;
+
+					const editorId = Asc.editor.getEditorId();
+					let selectedObjects, isChart, getRect;
+
+					switch (editorId) {
+						case AscCommon.c_oEditorId.Word: {
+							selectedObjects = Asc.editor.getSelectedElements();
+
+							isChart = function (object) {
+								const value = object.asc_getObjectValue && object.asc_getObjectValue();
+								return object.asc_getObjectType() === Asc.c_oAscTypeSelectElement.Image && value && value.asc_getChartProperties();
+							};
+							
+							getRect = function (bounds) {
+								const logicDocument = Asc.editor.getLogicDocument();
+								if (!logicDocument) return null;
+
+								const pageIndex = logicDocument.GetCurPage();
+								const convertedPosTopLeft = logicDocument.DrawingDocument.ConvertCoordsToCursorWR(bounds.l, bounds.t, pageIndex);
+								const convertedPosRightBottom = logicDocument.DrawingDocument.ConvertCoordsToCursorWR(bounds.r, bounds.b, pageIndex);
+
+								return new AscCommon.asc_CRect(
+									convertedPosTopLeft.X, convertedPosTopLeft.Y,
+									convertedPosRightBottom.X - convertedPosTopLeft.X, convertedPosRightBottom.Y - convertedPosTopLeft.Y
+								);
+							};
+
+							break;
+						}
+
+						case AscCommon.c_oEditorId.Spreadsheet: {
+							selectedObjects = Asc.editor.asc_getGraphicObjectProps();
+
+							isChart = function (object) {
+								const value = object.asc_getObjectValue && object.asc_getObjectValue();
+								return object.asc_getObjectType() === Asc.c_oAscTypeSelectElement.Image && value && value.asc_getChartProperties();
+							};
+
+							getRect = function (bounds) {
+								const ws = Asc.editor.wb.getWorksheet();
+								if (!ws) return null;
+
+								const ppi = ws._getPPIX();
+								const mmToPx = Asc.getCvtRatio(3, 0, ppi);
+								const freezeOffset = ws.getFrozenPaneOffset(false, false);
+
+								const left = AscCommon.AscBrowser.convertToRetinaValue(bounds.l * mmToPx - ws._getOffsetX() + ws.cellsLeft + freezeOffset.offsetX);
+								const top = AscCommon.AscBrowser.convertToRetinaValue(bounds.t * mmToPx - ws._getOffsetY() + ws.cellsTop + freezeOffset.offsetY);
+								const right = AscCommon.AscBrowser.convertToRetinaValue(bounds.r * mmToPx - ws._getOffsetX() + ws.cellsLeft + freezeOffset.offsetX);
+								const bottom = AscCommon.AscBrowser.convertToRetinaValue(bounds.b * mmToPx - ws._getOffsetY() + ws.cellsTop + freezeOffset.offsetY);
+
+								return new AscCommon.asc_CRect(left, top, right - left, bottom - top);
+							};
+
+							break;
+						}
+
+						case AscCommon.c_oEditorId.Presentation: {
+							selectedObjects = Asc.editor.getSelectedElements();
+
+							isChart = function (object) {
+								return object.asc_getObjectType && object.asc_getObjectType() === Asc.c_oAscTypeSelectElement.Chart;
+							};
+
+							getRect = function (bounds) {
+								const logicDocument = Asc.editor.getLogicDocument();
+								if (!logicDocument) return null;
+
+								const slideIndex = logicDocument.GetSlideIndex();
+								const convertedPosTopLeft = logicDocument.DrawingDocument.ConvertCoordsToCursorWR(bounds.l, bounds.t, slideIndex);
+								const convertedPosRightBottom = logicDocument.DrawingDocument.ConvertCoordsToCursorWR(bounds.r, bounds.b, slideIndex);
+
+								return new AscCommon.asc_CRect(
+									convertedPosTopLeft.X, convertedPosTopLeft.Y,
+									convertedPosRightBottom.X - convertedPosTopLeft.X, convertedPosRightBottom.Y - convertedPosTopLeft.Y
+								);
+							};
+
+							break;
+						}
+
+						default: return;
+					}
+
+					const chartObjects = selectedObjects.filter(isChart);
+					let singleChart = this.getSelectedSingleChart();
+					if (singleChart && chartObjects.length !== 1) {
+						return;
+					}
+					if (chartObjects.length === 1 && !singleChart) {
+						return;
+					}
+					if (chartObjects.length !== 1) {
+						Asc.editor.sendEvent("asc_onSingleChartSelectionChanged", null);
+						return;
+					}
+
+					const chartObject = chartObjects[0];
+					const chartSpace = chartObject &&
+						chartObject.Value &&
+						chartObject.Value.ChartProperties &&
+						chartObject.Value.ChartProperties.chartSpace;
+
+					if (!chartSpace) {
+						Asc.editor.sendEvent("asc_onSingleChartSelectionChanged", null);
+						return;
+					}
+
+					const chartSpaceRect = getRect(chartSpace.getRectBounds());
+					Asc.editor.sendEvent("asc_onSingleChartSelectionChanged", chartSpaceRect || null);
+				},
+
 				getChartForRangesDrawing: function () {
 					var chart;
 					var selected_objects = this.getSelectedArray();
@@ -4439,6 +4661,108 @@
 					return ret;
 				},
 
+				getPropsFromChart: function (chart_space) {
+					var chart = chart_space.chart, plot_area = chart_space.chart.plotArea;
+					var ret = new Asc.asc_ChartSettings();
+					ret.chartSpace = chart_space;
+					var range_obj = chart_space.getRangeObjectStr();
+					if (range_obj) {
+						if (typeof range_obj.range === "string" && range_obj.range.length > 0) {
+							ret.putRange(range_obj.range);
+							ret.putInColumns(!range_obj.bVert);
+						}
+					}
+
+					ret.putStyle(chart_space.getChartStyleIdx());
+					ret.putDisplayTrendlinesEquation(chart_space.getDisplayTrendlinesEquation());
+
+					ret.putTitle(isRealObject(chart.title) ? (chart.title.overlay ? c_oAscChartTitleShowSettings.overlay : c_oAscChartTitleShowSettings.noOverlay) : c_oAscChartTitleShowSettings.none);
+
+					var oOrderedAxes = chart_space.getOrderedAxes();
+					var aAx = oOrderedAxes.getHorizontalAxes();
+					var nAx;
+					for (nAx = 0; nAx < aAx.length; ++nAx) {
+						ret.addHorAxesProps(aAx[nAx].getMenuProps());
+					}
+					aAx = oOrderedAxes.getVerticalAxes();
+					for (nAx = 0; nAx < aAx.length; ++nAx) {
+						ret.addVertAxesProps(aAx[nAx].getMenuProps());
+					}
+                    aAx = oOrderedAxes.getDepthAxes();
+                    for (nAx = 0; nAx < aAx.length; ++nAx) {
+                        ret.addDepthAxesProps(aAx[nAx].getMenuProps());
+                    }
+
+					if (chart.legend) {
+						ret.putLegendPos(chart.legend.getPropsPos());
+					} else {
+						ret.putLegendPos(c_oAscChartLegendShowSettings.none);
+					}
+					ret.putType(chart_space.getChartType());
+
+					//TODO: change work with labels and markers
+					var aPositions = chart_space.getPossibleDLblsPosition();
+					var nDefaultDatalabelsPos;
+					nDefaultDatalabelsPos = aPositions[0];
+					var oFirstChart;
+					if (plot_area.isChartEx()) {
+						oFirstChart = plot_area.plotAreaRegion
+					} else {
+						oFirstChart = plot_area.charts[0];
+					}
+					var aSeries = oFirstChart.series;
+					var nSer, oSeries;
+					var oFirstSeries = aSeries[0];
+					var data_labels = oFirstChart.dLbls;
+					if (data_labels) {
+						if (oFirstSeries && oFirstSeries.dLbls) {
+							this.collectPropsFromDLbls(nDefaultDatalabelsPos, oFirstSeries.dLbls, ret);
+						} else {
+							this.collectPropsFromDLbls(nDefaultDatalabelsPos, data_labels, ret);
+						}
+					} else {
+						if (oFirstSeries && oFirstSeries.dLbls) {
+							this.collectPropsFromDLbls(nDefaultDatalabelsPos, oFirstSeries.dLbls, ret);
+						} else {
+							ret.putShowSerName(false);
+							ret.putShowCatName(false);
+							ret.putShowVal(false);
+							ret.putSeparator("");
+							ret.putDataLabelsPos(c_oAscChartDataLabelsPos.none);
+						}
+					}
+					var bNoLine, bSmooth;
+					if (oFirstChart.getObjectType() === AscDFH.historyitem_type_LineChart) {
+						bNoLine = oFirstChart.isNoLine();
+						bSmooth = oFirstChart.isSmooth();
+						if (!bNoLine) {
+							ret.putLine(true);
+							ret.putSmooth(bSmooth);
+						} else {
+							ret.putLine(false);
+						}
+					} else if (oFirstChart.getObjectType() === AscDFH.historyitem_type_ScatterChart) {
+						ret.bLine = !oFirstChart.isNoLine();
+						ret.smooth = oFirstChart.isSmooth();
+						ret.showMarker = oFirstChart.isMarkerChart();
+					}
+					ret.putView3d(chart_space.getView3d());
+					return ret;
+				},
+
+				collectPropsFromDLbls: function (nDefaultDatalabelsPos, data_labels, ret) {
+					ret.putShowSerName(data_labels.showSerName === true);
+					ret.putShowCatName(data_labels.showCatName === true);
+					ret.putShowVal(data_labels.showVal === true);
+					ret.putSeparator(data_labels.separator);
+					if (data_labels.bDelete) {
+						ret.putDataLabelsPos(c_oAscChartDataLabelsPos.none);
+					} else if (data_labels.showSerName || data_labels.showCatName || data_labels.showVal || data_labels.showPercent) {
+						ret.putDataLabelsPos(AscFormat.isRealNumber(data_labels.dLblPos) ? data_labels.dLblPos : nDefaultDatalabelsPos);
+					} else {
+						ret.putDataLabelsPos(c_oAscChartDataLabelsPos.none);
+					}
+				},
 				_getChartSpace: function (chartSeries, options, bUseCache) {
 					switch (options.type) {
 						case c_oAscChartTypeSettings.lineNormal:
@@ -5559,7 +5883,7 @@
 							this.decreaseFontSize();
 							break;
 						}
-						case Asc.c_oAscSpreadsheetShortcutType.DrawingSubscript: {
+						case Asc.c_oAscSpreadsheetShortcutType.Subscript: {
 							if (!bCanEdit) {
 								break;
 							}
@@ -5569,7 +5893,7 @@
 							}
 							break;
 						}
-						case Asc.c_oAscSpreadsheetShortcutType.DrawingSuperscript: {
+						case Asc.c_oAscSpreadsheetShortcutType.Superscript: {
 							if (!bCanEdit) {
 								break;
 							}
@@ -5579,7 +5903,7 @@
 							}
 							break;
 						}
-						case Asc.c_oAscSpreadsheetShortcutType.DrawingCenterPara: {
+						case Asc.c_oAscSpreadsheetShortcutType.CenterPara: {
 							if (!bCanEdit) {
 								break;
 							}
@@ -5589,7 +5913,7 @@
 							}
 							break;
 						}
-						case Asc.c_oAscSpreadsheetShortcutType.DrawingJustifyPara: {
+						case Asc.c_oAscSpreadsheetShortcutType.JustifyPara: {
 							if (!bCanEdit) {
 								break;
 							}
@@ -5599,7 +5923,7 @@
 							}
 							break;
 						}
-						case Asc.c_oAscSpreadsheetShortcutType.DrawingLeftPara: {
+						case Asc.c_oAscSpreadsheetShortcutType.LeftPara: {
 							if (!bCanEdit) {
 								break;
 							}
@@ -5609,7 +5933,7 @@
 							}
 							break;
 						}
-						case Asc.c_oAscSpreadsheetShortcutType.DrawingRightPara: {
+						case Asc.c_oAscSpreadsheetShortcutType.RightPara: {
 							if (!bCanEdit) {
 								break;
 							}
@@ -5619,7 +5943,7 @@
 							}
 							break;
 						}
-						case Asc.c_oAscSpreadsheetShortcutType.DrawingEnDash: {
+						case Asc.c_oAscSpreadsheetShortcutType.EnDash: {
 							if (!bCanEdit) {
 								break;
 							}
@@ -5961,12 +6285,21 @@
 				},
 
 				onMouseWheel: function (deltaX, deltaY) {
+					for (let i = 0; i < this.dropDowns.length; i += 1) {
+						this.dropDowns[i].forceUpdate();
+					}
 					var aSelection = this.getSelectedArray();
 					if (aSelection.length === 1
 						&& aSelection[0].getObjectType() === AscDFH.historyitem_type_SlicerView) {
 						return aSelection[0].onWheel(deltaX, deltaY);
 					}
 					return false;
+				},
+				addDropDown: function(oDropDown) {
+					this.dropDowns.push(oDropDown);
+				},
+				resetDropDowns: function() {
+					this.dropDowns.length = 0;
 				},
 
 				/*onKeyPress: function(e)
@@ -7122,6 +7455,7 @@
 						let sOwnName = drawing.getObjectName();
 						switch (drawing.getObjectType()) {
 							case AscDFH.historyitem_type_Shape:
+							case AscDFH.historyitem_type_Control:
 							case AscDFH.historyitem_type_Cnx:
 							case AscDFH.historyitem_type_SmartArt: {
 								var oBodyPr = drawing.getBodyPr();
@@ -7415,7 +7749,7 @@
 										bFromSmartArtInternal: false,
 										bFromGroup: AscCommon.isRealObject(drawing.group),
 										locked: locked,
-										textArtProperties: null,
+										textArtProperties: drawing.getTextArtProperties(),
 										lockAspect: lockAspect,
 										title: drawing.getTitle(),
 										name: sOwnName,
@@ -8231,7 +8565,7 @@
 						oShape.createTextBoxContent();
 					} else {
 						nFontSize = 54;
-						oShape.createTextBody();
+						oShape.createTextBodyOnEdit();
 					}
 					var bUseStartString = (typeof sStartString === "string");
 					if (bUseStartString) {
@@ -9006,89 +9340,98 @@
 					}
 				},
 
-
 				bringToFront: function () {
 					AscCommon.IsChangingDrawingZIndex = true;
-					var sp_tree = this.getDrawingObjects();
-					if (!(this.selection.groupSelection)) {
-						var selected = [];
-						for (var i = 0; i < sp_tree.length; ++i) {
-							if (sp_tree[i].selected) {
-								selected.push(sp_tree[i]);
-							}
-						}
-						for (var i = sp_tree.length - 1; i > -1; --i) {
-							if (sp_tree[i].selected) {
-								sp_tree[i].deleteDrawingBase();
-							}
-						}
-						for (i = 0; i < selected.length; ++i) {
-							selected[i].addToDrawingObjects(sp_tree.length);
-						}
-					} else {
+					const sp_tree = this.getDrawingObjects();
+
+					if (this.selection.groupSelection) {
 						this.selection.groupSelection.bringToFront();
+
+					} else {
+						const selected = sp_tree.filter(function (drawingObject) {
+							return drawingObject.selected;
+						});
+
+						sp_tree.forEach(function (drawingObject) {
+							if (drawingObject.selected) {
+								drawingObject.deleteDrawingBase();
+							}
+						});
+
+						selected.forEach(function (drawingObject) {
+							drawingObject.addToDrawingObjects(sp_tree.length);
+						});
 					}
+
+					this.startRecalculate();
 					this.drawingObjects.showDrawingObjects();
 					AscCommon.IsChangingDrawingZIndex = false;
 				},
 
 				bringForward: function () {
 					AscCommon.IsChangingDrawingZIndex = true;
-					var sp_tree = this.getDrawingObjects();
-					if (!(this.selection.groupSelection)) {
-						for (var i = sp_tree.length - 1; i > -1; --i) {
-							var sp = sp_tree[i];
-							if (sp.selected && i < sp_tree.length - 1 && !sp_tree[i + 1].selected) {
+					const sp_tree = this.getDrawingObjects();
+
+					if (this.selection.groupSelection) {
+						this.selection.groupSelection.bringForward();
+
+					} else {
+						for (let i = sp_tree.length - 1; i > -1; --i) {
+							const sp = sp_tree[i];
+							const canMoveForward = i < sp_tree.length - 1 && !sp_tree[i + 1].selected;
+							if (sp.selected && canMoveForward) {
 								sp.deleteDrawingBase();
 								sp.addToDrawingObjects(i + 1);
 							}
 						}
-					} else {
-						this.selection.groupSelection.bringForward();
 					}
+
+					this.startRecalculate();
 					this.drawingObjects.showDrawingObjects();
 					AscCommon.IsChangingDrawingZIndex = false;
 				},
 
 				sendToBack: function () {
-
 					AscCommon.IsChangingDrawingZIndex = true;
-					var sp_tree = this.getDrawingObjects();
+					const sp_tree = this.getDrawingObjects();
 
-					if (!(this.selection.groupSelection)) {
-						var j = 0;
-						for (var i = 0; i < sp_tree.length; ++i) {
-							if (sp_tree[i].selected) {
-								var object = sp_tree[i];
-								object.deleteDrawingBase();
-								object.addToDrawingObjects(j);
-								++j;
-							}
-						}
-					} else {
+					if (this.selection.groupSelection) {
 						this.selection.groupSelection.sendToBack();
-					}
-					this.drawingObjects.showDrawingObjects();
 
+					} else {
+						let insertionIndex = 0;
+						sp_tree.forEach(function (drawingObject) {
+							if (drawingObject.selected) {
+								drawingObject.deleteDrawingBase();
+								drawingObject.addToDrawingObjects(insertionIndex);
+								insertionIndex++;
+							}
+						});
+					}
+
+					this.startRecalculate();
+					this.drawingObjects.showDrawingObjects();
 					AscCommon.IsChangingDrawingZIndex = false;
 				},
 
-
 				bringBackward: function () {
-
 					AscCommon.IsChangingDrawingZIndex = true;
-					var sp_tree = this.getDrawingObjects();
-					if (!(this.selection.groupSelection)) {
-						for (var i = 0; i < sp_tree.length; ++i) {
-							var sp = sp_tree[i];
-							if (sp.selected && i > 0 && !sp_tree[i - 1].selected) {
-								sp.deleteDrawingBase();
-								sp.addToDrawingObjects(i - 1);
-							}
-						}
-					} else {
+					const sp_tree = this.getDrawingObjects();
+
+					if (this.selection.groupSelection) {
 						this.selection.groupSelection.bringBackward();
+
+					} else {
+						sp_tree.forEach(function (drawingObject, index) {
+							const canMoveBackward = index > 0 && !sp_tree[index - 1].selected;
+							if (drawingObject.selected && canMoveBackward) {
+								drawingObject.deleteDrawingBase();
+								drawingObject.addToDrawingObjects(index - 1);
+							}
+						});
 					}
+
+					this.startRecalculate();
 					this.drawingObjects.showDrawingObjects();
 					AscCommon.IsChangingDrawingZIndex = false;
 				},

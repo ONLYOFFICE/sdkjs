@@ -1639,9 +1639,185 @@ CShapeDrawer.prototype =
         this.Graphics.m_oContext.globalAlpha = dOldGlobalAlpha;
     },
 
+	drawBlipFill: function () {
+		const graphics = this.Graphics.isTrack() ? this.Graphics.Graphics : this.Graphics;
+		if (!graphics) return;
 
-    df : function(mode)
-    {
+		const imageName = this.UniFill.fill.RasterImageId;
+		const imageUrl = AscCommon.getFullImageSrc2(imageName);
+		const imageData = Asc.editor.ImageLoader.map_image_index[imageUrl];
+
+		const isImageLoaded = imageData != undefined && imageData.Image != null && imageData.Status == AscFonts.ImageLoadStatus.Complete;
+		if (!isImageLoaded) return;
+
+		graphics.save();
+		graphics.clip();
+
+		const isTile = AscCommon.isRealObject(this.UniFill.fill.tile);
+		const isTileSupported = !(AscCommon.AscBrowser.isIE && imageName && imageName.lastIndexOf('.svg') == imageName.length - 4);
+
+		if (isTile && isTileSupported) {
+			this.drawBlipFillTile(imageData);
+		} else if (this.UniFill.IsTransitionTextures) {
+			this.drawTransitionTextures(this.UniFill.canvas1, this.UniFill.alpha1, this.UniFill.canvas2, this.UniFill.alpha2);
+		} else {
+			this.drawBlipFillStretch(imageData);
+		}
+
+		graphics.restore();
+	},
+
+	drawBlipFillTile: function (imageData) {
+		const graphics = this.Graphics.isTrack() ? this.Graphics.Graphics : this.Graphics;
+		if (!graphics) return;
+
+		const transform = this.Shape.getTransformMatrix
+			? this.Shape.getTransformMatrix()
+			: new AscCommon.CMatrix();
+		const invertedTransform = AscCommon.global_MatrixTransformer.Invert(transform);
+
+		const tile = this.UniFill.fill.tile;
+		const rotWithShape = this.UniFill.fill.rotWithShape || this.UniFill.fill.rotWithShape === null;
+
+		// Scaling
+        const imageDPI = 96; // Image DPI is not supported yet (so we use a fixed value of 96 DPI)
+        const canvasDPI = 96;
+		const scaleCoefX = AscCommon.g_dKoef_pix_to_mm * (canvasDPI / imageDPI);
+		const scaleCoefY = AscCommon.g_dKoef_pix_to_mm * (canvasDPI / imageDPI);
+
+		const scaleX = tile.sx ? (tile.sx / 1000) / 100 : 1;
+		const scaleY = tile.sy ? (tile.sy / 1000) / 100 : 1;
+
+		// Offsets (aligning and direct offsets)
+		function getAlignment(key) {
+			switch (key) {
+				case AscCommon.c_oAscRectAlignType.tl: return [0, 0];
+				case AscCommon.c_oAscRectAlignType.t: return [0.5, 0];
+				case AscCommon.c_oAscRectAlignType.tr: return [1, 0];
+				case AscCommon.c_oAscRectAlignType.l: return [0, 0.5];
+				case AscCommon.c_oAscRectAlignType.ctr: return [0.5, 0.5];
+				case AscCommon.c_oAscRectAlignType.r: return [1, 0.5];
+				case AscCommon.c_oAscRectAlignType.bl: return [0, 1];
+				case AscCommon.c_oAscRectAlignType.b: return [0.5, 1];
+				case AscCommon.c_oAscRectAlignType.br: return [1, 1];
+				default: return [0, 0];
+			}
+		}
+
+		const align = AscFormat.isRealNumber(tile.algn) && tile.algn >= 0 && tile.algn <= 8
+			? tile.algn
+			: AscCommon.c_oAscRectAlignType.tl; // AscCommon.c_oAscRectAlignType
+
+		let alignOffsetX, alignOffsetY;
+		if (rotWithShape) {
+			const shapeWidth = this.max_x - this.min_x;
+			const shapeHeight = this.max_y - this.min_y;
+			const imageWidth = imageData.Image.width * scaleX * scaleCoefX;
+			const imageHeight = imageData.Image.height * scaleY * scaleCoefY;
+
+			alignOffsetX = getAlignment(align)[0] * (shapeWidth - imageWidth);
+			alignOffsetY = getAlignment(align)[1] * (shapeHeight - imageHeight);
+
+		} else {
+			const shapeBounds = this.Shape.getBounds();
+
+			const shapeWidth = shapeBounds.w;
+			const shapeHeight = shapeBounds.h;
+			const imageWidth = imageData.Image.width * scaleX * scaleCoefX;
+			const imageHeight = imageData.Image.height * scaleY * scaleCoefY;
+
+			alignOffsetX = shapeBounds.x + getAlignment(align)[0] * (shapeWidth - imageWidth);
+			alignOffsetY = shapeBounds.y + getAlignment(align)[1] * (shapeHeight - imageHeight);
+		}
+
+		const offsetX = tile.tx ? tile.tx * AscCommonWord.g_dKoef_emu_to_mm : 0;
+		const offsetY = tile.ty ? tile.ty * AscCommonWord.g_dKoef_emu_to_mm : 0;
+
+		// Mirroring
+		const flipH = tile.flip === AscFormat.CBlipFillTile.flipTypes.x || tile.flip === AscFormat.CBlipFillTile.flipTypes.xy;
+		const flipV = tile.flip === AscFormat.CBlipFillTile.flipTypes.y || tile.flip === AscFormat.CBlipFillTile.flipTypes.xy;
+
+		// Opacity
+		const isTransparent = this.UniFill.transparent != null && this.UniFill.transparent != 255;
+		const useTransparency = this.Graphics.isSupportTextDraw() && isTransparent;
+		const alpha = useTransparency ? this.UniFill.transparent / 255 : 1;
+
+		graphics.drawBlipFillTile(
+			rotWithShape ? null : invertedTransform,
+			imageData.src,
+			alpha,
+			scaleX * scaleCoefX,
+			scaleY * scaleCoefY,
+			offsetX + alignOffsetX,
+			offsetY + alignOffsetY,
+			flipH, flipV
+		);
+
+		graphics.m_bPenColorInit = false;
+		graphics.m_bBrushColorInit = false;
+	},
+
+	drawBlipFillStretch: function (imageData) {
+		const graphics = this.Graphics.isTrack() ? this.Graphics.Graphics : this.Graphics;
+		if (!graphics) return;
+
+		const transform = this.Shape.getTransformMatrix
+			? this.Shape.getTransformMatrix()
+			: new AscCommon.CMatrix();
+		const invertedTransform = AscCommon.global_MatrixTransformer.Invert(transform);
+
+		const rotWithShape = this.UniFill.fill.rotWithShape || this.UniFill.fill.rotWithShape === null;
+
+		// Margins
+		const fillRect = AscCommon.isRealObject(this.UniFill.fill.stretch) && AscCommon.isRealObject(this.UniFill.fill.stretch.fillRect)
+			? this.UniFill.fill.stretch.fillRect
+			: new AscFormat.CFillRect(0, 0, 100, 100);
+
+		let dstRect;
+		if (rotWithShape) {
+			const shapeWidth = this.max_x - this.min_x;
+			const shapeHeight = this.max_y - this.min_y;
+
+			dstRect = {
+				l: this.min_x + shapeWidth * fillRect.l / 100,
+				t: this.min_y + shapeHeight * fillRect.t / 100,
+				r: this.max_x - shapeWidth * (100 - fillRect.r) / 100,
+				b: this.max_y - shapeHeight * (100 - fillRect.b) / 100,
+			};
+
+		} else {
+			const shapeBounds = this.Shape.getBounds();
+
+			const shapeWidth = shapeBounds.w;
+			const shapeHeight = shapeBounds.h;
+
+			dstRect = {
+				l: shapeBounds.x + shapeWidth * (fillRect.l / 100),
+				t: shapeBounds.y + shapeHeight * (fillRect.t / 100),
+				r: shapeBounds.x + shapeWidth - shapeWidth * (100 - fillRect.r) / 100,
+				b: shapeBounds.y + shapeHeight - shapeHeight * (100 - fillRect.b) / 100,
+			};
+		}
+
+		// Opacity
+		const isTransparent = this.UniFill.transparent != null && this.UniFill.transparent != 255;
+		const useTransparency = this.IsRectShape ? true : graphics.isSupportTextDraw() && !graphics.isTrack();
+		const alpha = (isTransparent && useTransparency) ? this.UniFill.transparent / 255 : 1;
+
+		// this.UniFill.fill.srcRect === this.Shape.brush.fill.srcRect === this.Shape.blipFill.srcRect
+		const srcRect = this.UniFill.fill.srcRect;
+
+		graphics.drawBlipFillStretch(
+			rotWithShape ? null : invertedTransform,
+			imageData.src,
+			alpha,
+			dstRect.l, dstRect.t, dstRect.r - dstRect.l, dstRect.b - dstRect.t,
+			srcRect,
+			this.UniFill.fill.canvas
+		);
+	},
+
+    df: function (mode) {
         if (mode == "none" || this.bIsNoFillAttack)
             return;
 
@@ -1651,175 +1827,22 @@ CShapeDrawer.prototype =
         if (this.Graphics.isBoundsChecker() === true)
             return;
 
-        var editorInfo = this.getEditorInfo();
-
         var bIsIntegerGridTRUE = false;
-        if (this.bIsTexture)
-        {
-            if (this.Graphics.m_bIntegerGrid === true)
-            {
+        if (this.bIsTexture) {
+            if (this.Graphics.m_bIntegerGrid === true) {
                 this.Graphics.SetIntegerGrid(false);
                 bIsIntegerGridTRUE = true;
             }
-
-            if (this.isPdf())
-            {
-                if (null == this.UniFill.fill.tile || this.Graphics.m_oContext === undefined)
-                {
-                    this.Graphics.put_brushTexture(getFullImageSrc2(this.UniFill.fill.RasterImageId), 0);
-                }
-                else
-                {
-                    this.Graphics.put_brushTexture(getFullImageSrc2(this.UniFill.fill.RasterImageId), 1);
-                }
-
-                if (bIsIntegerGridTRUE)
-                {
-                    this.Graphics.SetIntegerGrid(true);
-                }
-                return;
+    
+            if (this.isPdf()) {
+                const image = getFullImageSrc2(this.UniFill.fill.RasterImageId);
+                const type = this.UniFill.fill.tile != null && this.Graphics.m_oContext !== undefined ? 1 : 0;
+                this.Graphics.put_brushTexture(image, type);
+            } else {
+                this.drawBlipFill();
             }
 
-			var bIsUnusePattern = false;
-			if (AscCommon.AscBrowser.isIE)
-			{
-				// ie падает иначе !!!
-				if (this.UniFill.fill.RasterImageId)
-				{
-					if (this.UniFill.fill.RasterImageId.lastIndexOf(".svg") == this.UniFill.fill.RasterImageId.length - 4)
-						bIsUnusePattern = true;
-				}
-			}
-
-            if (bIsUnusePattern || null == this.UniFill.fill.tile || this.Graphics.m_oContext === undefined)
-            {
-                if (this.IsRectShape)
-                {
-                    if(this.UniFill.IsTransitionTextures)
-                    {
-                        this.drawTransitionTextures(this.UniFill.canvas1, this.UniFill.alpha1, this.UniFill.canvas2, this.UniFill.alpha2);
-                    }
-                    else if ((null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
-                    {
-                        this.Graphics.drawImage(getFullImageSrc2(this.UniFill.fill.RasterImageId), this.min_x, this.min_y, (this.max_x - this.min_x), (this.max_y - this.min_y), undefined, this.UniFill.fill.srcRect, this.UniFill.fill.canvas);
-                    }
-                    else
-                    {
-                        var _old_global_alpha = this.Graphics.m_oContext.globalAlpha;
-                        this.Graphics.m_oContext.globalAlpha = this.UniFill.transparent / 255;
-                        this.Graphics.drawImage(getFullImageSrc2(this.UniFill.fill.RasterImageId), this.min_x, this.min_y, (this.max_x - this.min_x), (this.max_y - this.min_y), undefined, this.UniFill.fill.srcRect, this.UniFill.fill.canvas);
-                        this.Graphics.m_oContext.globalAlpha = _old_global_alpha;
-                    }
-                }
-                else
-                {
-                    this.Graphics.save();
-                    this.Graphics.clip();
-
-                    if(this.UniFill.IsTransitionTextures)
-                    {
-                        this.drawTransitionTextures(this.UniFill.canvas1, this.UniFill.alpha1, this.UniFill.canvas2, this.UniFill.alpha2);
-                    }
-                    else if (!this.Graphics.isSupportTextDraw() || this.Graphics.isTrack() || (null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
-                    {
-                        this.Graphics.drawImage(getFullImageSrc2(this.UniFill.fill.RasterImageId), this.min_x, this.min_y, (this.max_x - this.min_x), (this.max_y - this.min_y), undefined, this.UniFill.fill.srcRect, this.UniFill.fill.canvas);
-                    }
-                    else
-                    {
-                        var _old_global_alpha = this.Graphics.m_oContext.globalAlpha;
-                        this.Graphics.m_oContext.globalAlpha = this.UniFill.transparent / 255;
-                        this.Graphics.drawImage(getFullImageSrc2(this.UniFill.fill.RasterImageId), this.min_x, this.min_y, (this.max_x - this.min_x), (this.max_y - this.min_y), undefined, this.UniFill.fill.srcRect, this.UniFill.fill.canvas);
-                        this.Graphics.m_oContext.globalAlpha = _old_global_alpha;
-                    }
-
-                    this.Graphics.restore();
-                }
-            }
-            else
-            {
-                var _img = editorInfo.editor.ImageLoader.map_image_index[getFullImageSrc2(this.UniFill.fill.RasterImageId)];
-                var _img_native = this.UniFill.fill.canvas;
-                if ((!_img_native) && (_img == undefined || _img.Image == null || _img.Status == AscFonts.ImageLoadStatus.Loading))
-                {
-                    this.Graphics.save();
-                    this.Graphics.clip();
-
-                    if (!this.Graphics.isSupportTextDraw() || this.Graphics.isTrack() || (null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
-                    {
-                        this.Graphics.drawImage(getFullImageSrc2(this.UniFill.fill.RasterImageId), this.min_x, this.min_y, (this.max_x - this.min_x), (this.max_y - this.min_y));
-                    }
-                    else
-                    {
-                        var _old_global_alpha = this.Graphics.m_oContext.globalAlpha;
-                        this.Graphics.m_oContext.globalAlpha = this.UniFill.transparent / 255;
-                        this.Graphics.drawImage(getFullImageSrc2(this.UniFill.fill.RasterImageId), this.min_x, this.min_y, (this.max_x - this.min_x), (this.max_y - this.min_y));
-                        this.Graphics.m_oContext.globalAlpha = _old_global_alpha;
-                    }
-
-                    this.Graphics.restore();
-                }
-                else
-                {
-                    var _is_ctx = false;
-                    if (!this.Graphics.isSupportTextDraw() || undefined === this.Graphics.m_oContext || (null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
-                    {
-                        _is_ctx = false;
-                    }
-                    else
-                    {
-                        _is_ctx = true;
-                    }
-
-                    var _gr = this.Graphics.isTrack() ? this.Graphics.Graphics : this.Graphics;
-                    var _ctx = _gr.m_oContext;
-
-                    var patt = !_img_native ? _ctx.createPattern(_img.Image, "repeat") : _ctx.createPattern(_img_native, "repeat");
-
-                    _ctx.save();
-
-                    var __graphics = (this.Graphics.MaxEpsLine === undefined) ? this.Graphics : this.Graphics.Graphics;
-                    var bIsThumbnail = (__graphics.IsThumbnail === true) ? true : false;
-
-                    var koefX = editorInfo.scale;
-                    var koefY = editorInfo.scale;
-
-                    if (bIsThumbnail)
-                    {
-                        koefX = __graphics.m_dDpiX / AscCommon.g_dDpiX;
-                        koefY = __graphics.m_dDpiY / AscCommon.g_dDpiX;
-
-                        koefX /= AscCommon.AscBrowser.retinaPixelRatio;
-                        koefY /= AscCommon.AscBrowser.retinaPixelRatio;
-                    }
-
-                    // TODO: !!!
-                    _ctx.translate(this.min_x, this.min_y);
-
-                    _ctx.scale(koefX * __graphics.TextureFillTransformScaleX, koefY * __graphics.TextureFillTransformScaleY);
-
-                    if (_is_ctx === true)
-                    {
-                        var _old_global_alpha = _ctx.globalAlpha;
-                        _ctx.globalAlpha = this.UniFill.transparent / 255;
-                        _ctx.fillStyle = patt;
-                        _ctx.fill();
-                        _ctx.globalAlpha = _old_global_alpha;
-                    }
-                    else
-                    {
-                        _ctx.fillStyle = patt;
-                        _ctx.fill();
-                    }
-
-                    _ctx.restore();
-
-                    _gr.m_bPenColorInit = false;
-                    _gr.m_bBrushColorInit = false;
-                }
-            }
-
-            if (bIsIntegerGridTRUE)
-            {
+            if (bIsIntegerGridTRUE) {
                 this.Graphics.SetIntegerGrid(true);
             }
             return;
@@ -1864,6 +1887,7 @@ CShapeDrawer.prototype =
 
                 _ctx.save();
 
+                const editorInfo = this.getEditorInfo();
                 var koefX = editorInfo.scale;
                 var koefY = editorInfo.scale;
                 if (this.Graphics.IsThumbnail)
@@ -2533,206 +2557,12 @@ CShapeDrawer.prototype =
     // common funcs
     getNormalPoint : function(x0, y0, angle, x1, y1)
     {
-        // точка - пересечение прямой, проходящей через точку (x0, y0) под углом angle и
-        // перпендикуляра к первой прямой, проведенной из точки (x1, y1)
-        var ex1 = Math.cos(angle);
-        var ey1 = Math.sin(angle);
-
-        var ex2 = -ey1;
-        var ey2 = ex1;
-
-        var a = ex1 / ey1;
-        var b = ex2 / ey2;
-
-        var x = ((a * b * y1 - a * b * y0) - (a * x1 - b * x0)) / (b - a);
-        var y = (x - x0) / a + y0;
-
-        return { X : x, Y : y };
+        return AscCommon.getNormalPoint(x0, y0, angle, x1, y1);
     },
 
     getGradientPoints : function(min_x, min_y, max_x, max_y, _angle, scale)
     {
-        var points = { x0 : 0, y0 : 0, x1 : 0, y1 : 0 };
-
-        var angle = _angle / 60000;
-        while (angle < 0)
-            angle += 360;
-        while (angle >= 360)
-            angle -= 360;
-
-        if (Math.abs(angle) < 1)
-        {
-            points.x0 = min_x;
-            points.y0 = min_y;
-            points.x1 = max_x;
-            points.y1 = min_y;
-
-            return points;
-        }
-        else if (Math.abs(angle - 90) < 1)
-        {
-            points.x0 = min_x;
-            points.y0 = min_y;
-            points.x1 = min_x;
-            points.y1 = max_y;
-
-            return points;
-        }
-        else if (Math.abs(angle - 180) < 1)
-        {
-            points.x0 = max_x;
-            points.y0 = min_y;
-            points.x1 = min_x;
-            points.y1 = min_y;
-
-            return points;
-        }
-        else if (Math.abs(angle - 270) < 1)
-        {
-            points.x0 = min_x;
-            points.y0 = max_y;
-            points.x1 = min_x;
-            points.y1 = min_y;
-
-            return points;
-        }
-
-        var grad_a = AscCommon.deg2rad(angle);
-        if (!scale)
-        {
-            if (angle > 0 && angle < 90)
-            {
-                var p = this.getNormalPoint(min_x, min_y, grad_a, max_x, max_y);
-
-                points.x0 = min_x;
-                points.y0 = min_y;
-                points.x1 = p.X;
-                points.y1 = p.Y;
-
-                return points;
-            }
-            if (angle > 90 && angle < 180)
-            {
-                var p = this.getNormalPoint(max_x, min_y, grad_a, min_x, max_y);
-
-                points.x0 = max_x;
-                points.y0 = min_y;
-                points.x1 = p.X;
-                points.y1 = p.Y;
-
-                return points;
-            }
-            if (angle > 180 && angle < 270)
-            {
-                var p = this.getNormalPoint(max_x, max_y, grad_a, min_x, min_y);
-
-                points.x0 = max_x;
-                points.y0 = max_y;
-                points.x1 = p.X;
-                points.y1 = p.Y;
-
-                return points;
-            }
-            if (angle > 270 && angle < 360)
-            {
-                var p = this.getNormalPoint(min_x, max_y, grad_a, max_x, min_y);
-
-                points.x0 = min_x;
-                points.y0 = max_y;
-                points.x1 = p.X;
-                points.y1 = p.Y;
-
-                return points;
-            }
-            // никогда сюда не зайдем
-            return points;
-        }
-
-        // scale == true
-        var _grad_45 = (Math.PI / 2) - Math.atan2(max_y - min_y, max_x - min_x);
-        var _grad_90_45 = (Math.PI / 2) - _grad_45;
-        if (angle > 0 && angle < 90)
-        {
-            if (angle <= 45)
-            {
-                grad_a = (_grad_45 * angle / 45);
-            }
-            else
-            {
-                grad_a = _grad_45 + _grad_90_45 * (angle - 45) / 45;
-            }
-
-            var p = this.getNormalPoint(min_x, min_y, grad_a, max_x, max_y);
-
-            points.x0 = min_x;
-            points.y0 = min_y;
-            points.x1 = p.X;
-            points.y1 = p.Y;
-
-            return points;
-        }
-        if (angle > 90 && angle < 180)
-        {
-            if (angle <= 135)
-            {
-                grad_a = Math.PI / 2 + _grad_90_45 * (angle - 90) / 45;
-            }
-            else
-            {
-				grad_a = Math.PI / 2 + _grad_90_45 + _grad_45 * (angle - 135) / 45;
-            }
-
-            var p = this.getNormalPoint(max_x, min_y, grad_a, min_x, max_y);
-
-            points.x0 = max_x;
-            points.y0 = min_y;
-            points.x1 = p.X;
-            points.y1 = p.Y;
-
-            return points;
-        }
-        if (angle > 180 && angle < 270)
-        {
-            if (angle <= 225)
-            {
-                grad_a = Math.PI + _grad_45 * (angle - 180) / 45;
-            }
-            else
-            {
-				grad_a = Math.PI + _grad_45 + _grad_90_45 * (angle - 225) / 45;
-            }
-
-            var p = this.getNormalPoint(max_x, max_y, grad_a, min_x, min_y);
-
-            points.x0 = max_x;
-            points.y0 = max_y;
-            points.x1 = p.X;
-            points.y1 = p.Y;
-
-            return points;
-        }
-        if (angle > 270 && angle < 360)
-        {
-            if (angle <= 315)
-            {
-                grad_a = 3 * Math.PI / 2 + _grad_90_45 * (angle - 270) / 45;
-            }
-            else
-            {
-				grad_a = 3 * Math.PI / 2 + _grad_90_45 + _grad_45 * (angle - 315) / 45;
-            }
-
-            var p = this.getNormalPoint(min_x, max_y, grad_a, max_x, min_y);
-
-            points.x0 = min_x;
-            points.y0 = max_y;
-            points.x1 = p.X;
-            points.y1 = p.Y;
-
-            return points;
-        }
-        // никогда сюда не зайдем
-        return points;
+        return AscCommon.getGradientPoints(min_x, min_y, max_x, max_y, _angle, scale);
     },
 
     DrawPresentationComment : function(type, x, y, w, h)

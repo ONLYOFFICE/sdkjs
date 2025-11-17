@@ -59,6 +59,15 @@
 	var Api = window["Asc"]["spreadsheet_api"];
 
 	/**
+	 * Class representing the currently active workbook
+	 *
+	 * @constructor
+	 */
+	function ApiWorkbook(workbook) {
+		this.Workbook = workbook;
+	}
+
+	/**
 	 * The callback function which is called when the specified range of the current sheet changes.
 	 * <note>Please note that the event is not called for the undo/redo operations.</note>
 	 * @event Api#onWorksheetChange
@@ -102,7 +111,10 @@
 	 * @property {number} Col - Returns the column number for the selected cell.
 	 * @property {ApiRange} Rows - Returns the ApiRange object that represents the rows of the specified range.
 	 * @property {ApiRange} Cols - Returns the ApiRange object that represents the columns of the specified range.
+	 * @property {ApiRange} Columns - Returns the ApiRange object that represents the columns of the specified range.
 	 * @property {ApiRange} Cells - Returns a Range object that represents all the cells in the specified range or a specified cell.
+	 * @property {ApiRange} EntireRow - Returns a Range object that represents the entire row(s) containing the specified range.
+	 * @property {ApiRange} EntireColumn - Returns a Range object that represents the entire column(s) containing the specified range.
 	 * @property {number} Count - Returns the rows or columns count.
 	 * @property {string} Address - Returns the range address.
 	 * @property {string} Value - Returns a value from the first cell of the specified range or sets it to this cell.
@@ -119,6 +131,7 @@
 	 * @property {string} FontName - Sets the specified font family as the font name for the current cell range.
 	 * @property {'center' | 'bottom' | 'top' | 'distributed' | 'justify'} AlignVertical - Sets the text vertical alignment to the current cell range.
 	 * @property {'left' | 'right' | 'center' | 'justify'} AlignHorizontal - Sets the text horizontal alignment to the current cell range.
+	 * @property {'context' | 'ltr' | 'rtl'} ReadingOrder - Sets the direction (reading order) of the text in the current cell range.
 	 * @property {boolean} Bold - Sets the bold property to the text characters from the current cell or cell range.
 	 * @property {boolean} Italic - Sets the italic property to the text characters in the current cell or cell range.
 	 * @property {'none' | 'single' | 'singleAccounting' | 'double' | 'doubleAccounting'} Underline - Sets the type of underline applied to the font.
@@ -127,17 +140,25 @@
 	 * @property {ApiColor|'No Fill'} FillColor - Returns or sets the background color of the current cell range.
 	 * @property {string} NumberFormat - Sets a value that represents the format code for the object.
 	 * @property {ApiRange} MergeArea - Returns the cell or cell range from the merge area.
+	 * @property {ApiRange} CurrentRegion - Returns a range that represents the expanded range around the current range.
 	 * @property {ApiWorksheet} Worksheet - Returns the ApiWorksheet object that represents the worksheet containing the specified range.
 	 * @property {ApiName} DefName - Returns the ApiName object.
 	 * @property {ApiComment | null} Comments - Returns the ApiComment collection that represents all the comments from the specified worksheet.
-	 * @property {'xlDownward' | 'xlHorizontal' | 'xlUpward' | 'xlVertical'} Orientation - Sets an angle to the current cell range.
+	 * @property {Angle} Orientation - Returns an angle to the current cell range.
 	 * @property {ApiAreas} Areas - Returns a collection of the areas.
 	 * @property {ApiCharacters} Characters - Returns the ApiCharacters object that represents a range of characters within the object text. Use the ApiCharacters object to format characters within a text string.
 	 * @property {ApiPivotTable | null} PivotTable - Returns the ApiPivotTable object that represents the pivot table report containing the upper-left corner of the specified range.
+	 * @property {number} CellsCount - Returns a number of cells in the current range.
+	 * @property {number} ColumnsCount - Returns a number of columns in the current range.
+	 * @property {number} RowsCount - Returns a number of rows in the current range.
+	 * @property {ApiFormatConditions} FormatConditions - Returns the collection of conditional formatting rules for the current range.
 	 */
 	function ApiRange(range, areas) {
 		this.range = range;
 		this.areas = areas || null;
+
+		this._validation = null;
+		this._formatConditions = null;
 	}
 
 
@@ -480,6 +501,9 @@
 	 * @property {string | number} CurrentPage - Returns the current page which is displayed for the page field (valid only for page fields).
 	 * @property {ApiPivotItem | ApiPivotItem[]} PivotItems - Returns an object that represents either a single pivot table item (the ApiPivotItem object)
 	 * or a collection of all the visible and hidden items (an array of the ApiPivotItem objects) in the specified field.
+	 * @property {ApiPivotFilters} PivotFilters - Returns an object that represents the filters for the specified field.
+	 * @property {string} AutoSortField - Returns the name of the field that is used to sort the specified field.
+	 * @property {SortOrder} AutoSortOrder - Returns the sort order for the specified field.
 	 */
 	function ApiPivotField(table, index, pivotField) {
 		/** @type {ApiPivotTable} */
@@ -526,12 +550,15 @@
 	 * @property {string} Value - Returns a name of the specified item in the pivot table field.
 	 * @property {string} Parent - Returns a parent of the pivot item.
 	 * @property {string} Field - Returns a field of the pivot item.
+	 * @property {boolean} Visible - Returns or sets the visibility of the pivot item.
 	 */
-	function ApiPivotItem(field, item) {
+	function ApiPivotItem(field, item, index) {
 		/** @type{ApiPivotField} */
 		this.field = field;
 		/** @type{CT_Item} */
 		this.pivotItem = item;
+		/** @type{number} */
+		this.index = index;
 	}
 
 
@@ -547,6 +574,14 @@
 	function ApiCharacters(options, parent) {
 		this._options = options;
 		this._parent = parent;
+	}
+
+	/**
+	 * Class representing a theme.
+	 * @constructor
+	 */
+	function ApiTheme(theme) {
+		this.Theme = theme;
 	}
 
 	/**
@@ -593,12 +628,16 @@
 
 	/**
 	 * Creates a new custom function.
-	 * The description of the function parameters and result is specified using JSDoc. The <em>@customfunction</em> tag is required in JSDoc.
-	 * Parameters and results can be specified as the <em>number / string / boolean / any / number[][] / string[][] / boolean[][] / any[][]</em> types.
+	 * The description of the function parameters and result is specified using JSDoc. The *@customfunction* tag is required in JSDoc.
+	 * Parameters and results can be specified as the *number / string / boolean / any / number[][] / string[][] / boolean[][] / any[][]* types.
 	 * Parameters can be required or optional. A user can also set a default value.
+	 * The passed function can be asynchronous (async function or function returning a Promise).
+	 * Inside the passed function, you can access the current cell address where the calculation is performed using *this.address*.
+	 * You can also access the addresses of function arguments using *this.args[0].address*, *this.args[1].address*, etc.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @param {Function} fCustom - A new function for calculating.
+	 * @param {Function} fCustom - A new function for calculating. Can be synchronous or asynchronous.
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddCustomFunction.js
 	 */
 	// Example with description:
 	// Calculates the sum of the specified numbers.
@@ -619,11 +658,12 @@
 		const isValidJsDoc = parsedJSDoc ? private_ValidateParamsForCustomFunction(parsedJSDoc) : false;
 		//const isValidOptions = options ? private_ValidateParamsForCustomFunction(options) : false;
 		if (!isValidJsDoc/* && !isValidOptions*/) {
-			throwException(new Error('Invalid parameters type in JSDOC or options.'));
+			logError(new Error('Invalid parameters type in JSDOC or options.'));
+			return null;
 		}
 		// remove it from this class and use it from the variable (only if it was the last)
 		// we don't remove it immediately, because we can have there data for another function
-		if (!this.parsedJSDoc.length) {
+		if (this.parsedJSDoc && !this.parsedJSDoc.length) {
 			delete this.parsedJSDoc;
 		}
 
@@ -695,15 +735,15 @@
 
 	/**
 	 * Registers a new custom functions library (see the <b>SetCustomFunctions</b> plugin method).
-	 * The description of the function parameters and result is specified using JSDoc. The <em>@customfunction</em> tag is required in JSDoc.
-	 * Parameters and results can be specified as the <em>number / string / boolean / any / number[][] / string[][] / boolean[][] / any[][]</em> types.
+	 * The description of the function parameters and result is specified using JSDoc. The *@customfunction* tag is required in JSDoc.
+	 * Parameters and results can be specified as the *number / string / boolean / any / number[][] / string[][] / boolean[][] / any[][]* types.
 	 * Parameters can be required or optional. A user can also set a default value.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sName - The library name.
 	 * @param {Function} Func - The custom functions library code.
 	 * @since 8.2.0
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddCustomFunction.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddCustomFunctionLibrary.js
 	 */
 	Api.prototype.AddCustomFunctionLibrary = function(sName, Func) {
 		this.addCustomFunctionsLibrary(sName, Func);
@@ -801,6 +841,22 @@
 	Object.defineProperty(Api.prototype, "ActiveSheet", {
 		get: function () {
 			return this.GetActiveSheet();
+		}
+	});
+
+	/**
+	 * Returns an object that represents the active workbook.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiWorkbook}
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetActiveWorkbook.js
+	 */
+	Api.prototype.GetActiveWorkbook = function () {
+		return new ApiWorkbook(this.wbModel);
+	};
+	Object.defineProperty(Api.prototype, "ActiveWorkbook", {
+		get: function () {
+			return this.GetActiveWorkbook();
 		}
 	});
 
@@ -3021,11 +3077,11 @@
 	 * Calculates predicted exponential growth by using existing data.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number[]} arg1 - The set of y-values from the <em>y = b*m^x</em> equation, an array or range of positive numbers.
-	 * @param {ApiRange | ApiName | number[]} [arg2] - An optional set of x-values from the <em>y = b*m^x</em> equation, an array or range of positive numbers that has the same size as the set of y-values.
+	 * @param {ApiRange | ApiName | number[]} arg1 - The set of y-values from the *y = b*m^x* equation, an array or range of positive numbers.
+	 * @param {ApiRange | ApiName | number[]} [arg2] - An optional set of x-values from the *y = b*m^x* equation, an array or range of positive numbers that has the same size as the set of y-values.
 	 * @param {ApiRange | ApiName | number[]} [arg3] - New x-values for which the function will return the corresponding y-values.
-	 * @param {ApiRange | ApiName | boolean} [arg4] - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b>,
-	 * and <em>b</em> is set equal to 1 if the parameter is <b>false</b> or omitted.
+	 * @param {ApiRange | ApiName | boolean} [arg4] - A logical value: the constant *b* is calculated normally if this parameter is set to <b>true</b>,
+	 * and *b* is set equal to 1 if the parameter is <b>false</b> or omitted.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/GROWTH.js
 	 */
@@ -3114,12 +3170,12 @@
 	 * Returns statistics that describe a linear trend matching known data points, by fitting a straight line using the least squares method.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName} arg1 - The set of y-values from the <em>y = mx + b</em> equation.
-	 * @param {ApiRange | ApiName} [arg2] - An optional set of x-values from the <em>y = mx + b</em> equation.
-	 * @param {ApiRange | ApiName | boolean} [arg3] - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b> or omitted,
-	 * and <em>b</em> is set equal to 0 if the parameter is <b>false</b>.
+	 * @param {ApiRange | ApiName} arg1 - The set of y-values from the *y = mx + b* equation.
+	 * @param {ApiRange | ApiName} [arg2] - An optional set of x-values from the *y = mx + b* equation.
+	 * @param {ApiRange | ApiName | boolean} [arg3] - A logical value: the constant *b* is calculated normally if this parameter is set to <b>true</b> or omitted,
+	 * and *b* is set equal to 0 if the parameter is <b>false</b>.
 	 * @param {ApiRange | ApiName | boolean} [arg4] - A logical value: return additional regression statistics if this parameter is set to <b>true</b>,
-	 * and return m-coefficients and the constant <em>b</em> if the parameter is <b>false</b> or omitted.
+	 * and return m-coefficients and the constant *b* if the parameter is <b>false</b> or omitted.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LINEST.js
 	 */
@@ -3130,12 +3186,12 @@
 	 * Returns statistics that describe an exponential curve matching known data points.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | ApiRange} arg1 - The set of y-values from the <em>y = b*m^x</em> equation.
-	 * @param {ApiRange | ApiName | ApiRange} [arg2] - An optional set of x-values from the <em>y = b*m^x</em> equation.
-	 * @param {ApiRange | ApiName | boolean} [arg3] - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b> or omitted,
-	 * and <em>b</em> is set equal to 1 if the parameter is <b>false</b>.
+	 * @param {ApiRange | ApiName | ApiRange} arg1 - The set of y-values from the *y = b*m^x* equation.
+	 * @param {ApiRange | ApiName | ApiRange} [arg2] - An optional set of x-values from the *y = b*m^x* equation.
+	 * @param {ApiRange | ApiName | boolean} [arg3] - A logical value: the constant *b* is calculated normally if this parameter is set to <b>true</b> or omitted,
+	 * and *b* is set equal to 1 if the parameter is <b>false</b>.
 	 * @param {ApiRange | ApiName | boolean} [arg4] - A logical value: return additional regression statistics if this parameter is set to <b>true</b>,
-	 * and return m-coefficients and the constant <em>b</em> if the parameter is <b>false</b> or omitted.
+	 * and return m-coefficients and the constant *b* if the parameter is <b>false</b> or omitted.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LOGEST.js
 	 */
@@ -3917,11 +3973,11 @@
 	 * Returns numbers in a linear trend matching known data points, using the least squares method.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number[]} arg1 - A range or array of y-values from the <em>y = mx + b</em> equation.
-	 * @param {ApiRange | ApiName | number[]} [arg2] - An optional range or array of x-values from the <em>y = mx + b</em> equation, an array of the same size as an array of y-values.
+	 * @param {ApiRange | ApiName | number[]} arg1 - A range or array of y-values from the *y = mx + b* equation.
+	 * @param {ApiRange | ApiName | number[]} [arg2] - An optional range or array of x-values from the *y = mx + b* equation, an array of the same size as an array of y-values.
 	 * @param {ApiRange | ApiName | number[]} [arg3] - A range or array of new x-values for which this function will return corresponding y-values.
-	 * @param {ApiRange | ApiName | boolean} [arg4] - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b> or omitted,
-	 * and <em>b</em> is set equal to 0 if the parameter is <b>false</b>.
+	 * @param {ApiRange | ApiName | boolean} [arg4] - A logical value: the constant *b* is calculated normally if this parameter is set to <b>true</b> or omitted,
+	 * and *b* is set equal to 0 if the parameter is <b>false</b>.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TREND.js
 	 */
@@ -4258,7 +4314,7 @@
 		return this.private_calculateFunction("NETWORKDAYS.INTL", arguments);
 	};
 	/**
-	 * Returns the current date and time in the <em>MM/dd/yy hh:mm</em> format.
+	 * Returns the current date and time in the *MM/dd/yy hh:mm* format.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
@@ -4303,7 +4359,7 @@
 		return this.private_calculateFunction("TIMEVALUE", arguments);
 	};
 	/**
-	 * Returns the current date in the <em>MM/dd/yy</em> format.
+	 * Returns the current date in the *MM/dd/yy* format.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
@@ -4702,7 +4758,7 @@
 	 * Returns the absolute value (modulus) of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMABS.js
 	 */
@@ -4713,7 +4769,7 @@
 	 * Returns the imaginary coefficient of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMAGINARY.js
 	 */
@@ -4724,7 +4780,7 @@
 	 * Returns the argument Theta, an angle expressed in radians.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMARGUMENT.js
 	 */
@@ -4735,7 +4791,7 @@
 	 * Returns the complex conjugate of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCONJUGATE.js
 	 */
@@ -4746,7 +4802,7 @@
 	 * Returns the cosine of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCOS.js
 	 */
@@ -4757,7 +4813,7 @@
 	 * Returns the hyperbolic cosine of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCOSH.js
 	 */
@@ -4768,7 +4824,7 @@
 	 * Returns the cotangent of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCOT.js
 	 */
@@ -4779,7 +4835,7 @@
 	 * Returns the cosecant of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCSC.js
 	 */
@@ -4790,7 +4846,7 @@
 	 * Returns the hyperbolic cosecant of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCSCH.js
 	 */
@@ -4801,8 +4857,8 @@
 	 * Returns the quotient of two complex numbers.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - The complex numerator or dividend in the <em>x + yi</em> or <em>x + yj</em> form.
-	 * @param {ApiRange | ApiName | number} arg2 - The complex denominator or divisor in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - The complex numerator or dividend in the *x + yi* or *x + yj* form.
+	 * @param {ApiRange | ApiName | number} arg2 - The complex denominator or divisor in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMDIV.js
 	 */
@@ -4813,7 +4869,7 @@
 	 * Returns the exponential of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMEXP.js
 	 */
@@ -4824,7 +4880,7 @@
 	 * Returns the natural logarithm of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMLN.js
 	 */
@@ -4835,7 +4891,7 @@
 	 * Returns the base-10 logarithm of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMLOG10.js
 	 */
@@ -4846,7 +4902,7 @@
 	 * Returns the base-2 logarithm of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMLOG2.js
 	 */
@@ -4857,7 +4913,7 @@
 	 * Returns a complex number raised to an integer power.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @param {ApiRange | ApiName | number} arg2 - The power to which the complex number will be raised.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMPOWER.js
@@ -4869,7 +4925,7 @@
 	 * Returns the product of the specified complex numbers.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | string} args - Up to 255 complex numbers expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | string} args - Up to 255 complex numbers expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMPRODUCT.js
 	 */
@@ -4880,7 +4936,7 @@
 	 * Returns the real coefficient of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMREAL.js
 	 */
@@ -4891,7 +4947,7 @@
 	 * Returns the secant of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSEC.js
 	 */
@@ -4902,7 +4958,7 @@
 	 * Returns the hyperbolic secant of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSECH.js
 	 */
@@ -4913,7 +4969,7 @@
 	 * Returns the sine of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSIN.js
 	 */
@@ -4924,7 +4980,7 @@
 	 * Returns the hyperbolic sine of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSINH.js
 	 */
@@ -4935,7 +4991,7 @@
 	 * Returns the square root of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSQRT.js
 	 */
@@ -4943,7 +4999,7 @@
 		return this.private_calculateFunction("IMSQRT", arguments);
 	};
 	/**
-	 * Returns the difference of two complex numbers expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * Returns the difference of two complex numbers expressed in the *x + yi* or *x + yj* form.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The complex number from which to subtract the second number.
@@ -4958,7 +5014,7 @@
 	 * Returns the sum of the specified complex numbers.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | string} args - Up to 255 complex numbers expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | string} args - Up to 255 complex numbers expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSUM.js
 	 */
@@ -4969,7 +5025,7 @@
 	 * Returns the tangent of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {ApiRange | ApiName | number} arg1 - A complex number expressed in the *x + yi* or *x + yj* form.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMTAN.js
 	 */
@@ -6070,7 +6126,7 @@
 		return this.private_calculateFunction("ARABIC", arguments);
 	};
 	/**
-	 * Returns the arcsine of a number in radians, in the range from <em>-Pi/2</em> to <em>Pi/2</em>.
+	 * Returns the arcsine of a number in radians, in the range from *-Pi/2* to *Pi/2*.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The angle sine. It must be from -1 to 1.
@@ -6092,7 +6148,7 @@
 		return this.private_calculateFunction("ASINH", arguments);
 	};
 	/**
-	 * Returns the arctangent of a number in radians, in the range from <em>-Pi/2</em> to <em>Pi/2</em>.
+	 * Returns the arctangent of a number in radians, in the range from *-Pi/2* to *Pi/2*.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The angle tangent.
@@ -6237,7 +6293,7 @@
 	 * Returns the hyperbolic cotangent of a number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - The angle in radians for which the hyperbolic cotangent will be calculated. Its absolute value must be less than <em>2^27</em>.
+	 * @param {ApiRange | ApiName | number} arg1 - The angle in radians for which the hyperbolic cotangent will be calculated. Its absolute value must be less than *2^27*.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COTH.js
 	 */
@@ -6259,7 +6315,7 @@
 	 * Returns the hyperbolic cosecant of an angle.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - The angle in radians for which the hyperbolic cosecant will be calculated. Its absolute value must be less than <em>2^27</em>.
+	 * @param {ApiRange | ApiName | number} arg1 - The angle in radians for which the hyperbolic cosecant will be calculated. Its absolute value must be less than *2^27*.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CSCH.js
 	 */
@@ -6324,7 +6380,7 @@
 		return this.private_calculateFunction("EXP", arguments);
 	};
 	/**
-	 * Returns the factorial of a number, which is equal to <em>1*2*3*...*</em> number.
+	 * Returns the factorial of a number, which is equal to *1*2*3*...** number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The nonnegative number for which the factorial will be calculated.
@@ -6735,7 +6791,7 @@
 	 * Returns the sine of an angle.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - The angle in radians for which the sine will be returned. If your argument is in degrees, multiply it by <em>PI()/180</em>.
+	 * @param {ApiRange | ApiName | number} arg1 - The angle in radians for which the sine will be returned. If your argument is in degrees, multiply it by *PI()/180*.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SIN.js
 	 */
@@ -6896,7 +6952,7 @@
 	 * Returns the tangent of an angle.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - The angle in radians for which the tangent will be returned. If the argument is in degrees, multiply it by <em>PI()/180</em>.
+	 * @param {ApiRange | ApiName | number} arg1 - The angle in radians for which the tangent will be returned. If the argument is in degrees, multiply it by *PI()/180*.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TAN.js
 	 */
@@ -7009,7 +7065,7 @@
 	/**
 	 * The match type.
 	 * * <b>-1</b> - The values must be sorted in descending order. If the exact match is not found, the function will return the smallest value that is greater than the searched value.
-	 * * <b>0</b> - The values can be sorted in any order. If the exact match is not found, the function will return the <em>#N/A</em> error.
+	 * * <b>0</b> - The values can be sorted in any order. If the exact match is not found, the function will return the *#N/A* error.
 	 * * <b>1</b> (or omitted) - The values must be sorted in ascending order. If the exact match is not found, the function will return the largest value that is less than the searched value.
 	 * @typedef {("-1" | "0" | "1")} MatchType
 	 * */
@@ -7091,7 +7147,7 @@
 		return this.private_calculateFunction("ERROR.TYPE", arguments);
 	};
 	/**
-	 * Checks whether a value is an error other than <em>#N/A</em>, and returns <b>true</b> or <b>false</b>.
+	 * Checks whether a value is an error other than *#N/A*, and returns <b>true</b> or <b>false</b>.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | boolean | ApiRange | ApiName} arg1 - The value to test.
@@ -7149,7 +7205,7 @@
 		return this.private_calculateFunction("ISLOGICAL", arguments);
 	};
 	/**
-	 * Checks whether a value is <em>#N/A</em>, and returns <b>true</b> or <b>false</b>.
+	 * Checks whether a value is *#N/A*, and returns <b>true</b> or <b>false</b>.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | string | number | boolean | ApiName} arg1 - The value to test.
@@ -7231,7 +7287,7 @@
 		return this.private_calculateFunction("N", arguments);
 	};
 	/**
-	 * Returns the <em>#N/A</em> error value which means "no value is available".
+	 * Returns the *#N/A* error value which means "no value is available".
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
@@ -7320,11 +7376,11 @@
 		return this.private_calculateFunction("IFERROR", arguments);
 	};
 	/**
-	 * Checks if there is an error in the formula in the first argument. The function returns the specified value if the formula returns the <em>#N/A</em> error value, otherwise returns the result of the formula.
+	 * Checks if there is an error in the formula in the first argument. The function returns the specified value if the formula returns the *#N/A* error value, otherwise returns the result of the formula.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number | string | boolean} arg1 - The value, expression, or reference that is checked for an error.
-	 * @param {ApiRange | ApiName | number | string | boolean} arg2 - The value to return if the formula evaluates to the <em>#N/A</em> error value.
+	 * @param {ApiRange | ApiName | number | string | boolean} arg2 - The value to return if the formula evaluates to the *#N/A* error value.
 	 * @returns {number | string | boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IFNA.js
 	 */
@@ -8054,6 +8110,136 @@
 	Api.prototype.GetCustomProperties = function () {
 		return new AscBuilder.ApiCustomProperties(this.wbModel.CustomProperties);
 	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiWorkbook
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Saves changes to the specified document.
+	 *
+	 * @memberof ApiWorkbook
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/Save.js
+	 */
+	ApiWorkbook.prototype.Save = function () {
+		return Asc.editor.Save();
+	};
+
+	/**
+	 * Returns a sheet collection that represents all the sheets in the workbook.
+	 *
+	 * @memberof ApiWorkbook
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiWorksheet[]}
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/GetSheets.js
+	 */
+	ApiWorkbook.prototype.GetSheets = function () {
+		return Asc.editor.GetSheets();
+	};
+
+	/**
+	 * Returns all pivot tables in the workbook.
+	 *
+	 * @memberof ApiWorkbook
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotTable[]}
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/Cell/ApiWorkbook/Methods/GetAllPivotTables.js
+	 */
+	ApiWorkbook.prototype.GetAllPivotTables = function () {
+		return Asc.editor.GetAllPivotTables();
+	};
+
+	/**
+	 * Returns the custom properties of the workbook.
+	 *
+	 * @memberof ApiWorkbook
+	 * @returns {ApiCustomProperties}
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/GetCustomProperties.js
+	 */
+	ApiWorkbook.prototype.GetCustomProperties = function () {
+		return Asc.editor.GetCustomProperties();
+	};
+
+	/**
+	 * Returns the theme of the workbook.
+	 *
+	 * @memberof ApiWorkbook
+	 * @returns {ApiTheme}
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/GetTheme.js
+	 */
+	ApiWorkbook.prototype.GetTheme = function () {
+		return new ApiTheme(Asc.editor.getCurrentTheme());
+	};
+
+	/**
+	 * Returns the name of the workbook.
+	 *
+	 * @memberof ApiWorkbook
+	 * @returns {string}
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/GetName.js
+	 */
+	ApiWorkbook.prototype.GetName = function () {
+		return Asc.editor.GetFullName();
+	};
+
+	/**
+	 * Returns the active sheet of the workbook.
+	 *
+	 * @memberof ApiWorkbook
+	 * @returns {ApiWorksheet}
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/GetActiveSheet.js
+	 */
+	ApiWorkbook.prototype.GetActiveSheet = function () {
+		return Asc.editor.GetActiveSheet();
+	};
+
+	/**
+	 * Returns the active chart of the workbook.
+	 *
+	 * @memberof ApiWorkbook
+	 * @returns {ApiChart | null}
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/GetActiveChart.js
+	 */
+	ApiWorkbook.prototype.GetActiveChart = function () {
+		const sheet = this.GetActiveSheet();
+		if (sheet) {
+			const allDrawings = sheet.worksheet.Drawings;
+			const selectedDrawings = allDrawings.filter(function (drawing) {
+				return drawing.graphicObject.selected;
+			});
+
+			if (selectedDrawings.length === 1) {
+				const selectedOne = selectedDrawings[0];
+
+				if (selectedOne.graphicObject && selectedOne.isChart()) {
+					return Asc.editor.private_CreateApiChart(selectedOne.graphicObject);
+				}
+			}
+		}
+		return null;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiWorksheet
+	//
+	//------------------------------------------------------------------------------------------------------------------
 
 	/**
 	 * Returns the state of sheet visibility.
@@ -8804,13 +8990,13 @@
 			}
 			this.worksheet.selectionRange.assign2(range.range.bbox);
 			var Hyperlink = new Asc.asc_CHyperlink();
-			if (sScreenTip) {
-				Hyperlink.asc_setText(sScreenTip);
+			if (sTextToDisplay) {
+				Hyperlink.asc_setText(sTextToDisplay);
 			} else {
 				Hyperlink.asc_setText((externalLink ? sAddress : subAddress));
 			}
-			if (sTextToDisplay) {
-				Hyperlink.asc_setTooltip(sTextToDisplay);
+			if (sScreenTip) {
+				Hyperlink.asc_setTooltip(sScreenTip);
 			}
 			if (externalLink) {
 				Hyperlink.asc_setHyperlinkUrl(sAddress);
@@ -8843,12 +9029,13 @@
 	 */
 	ApiWorksheet.prototype.AddChart =
 		function (sDataRange, bInRows, sType, nStyleIndex, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset) {
-			var settings = new Asc.asc_ChartSettings();
+			const settings = new Asc.asc_ChartSettings();
 			settings.type = AscFormat.ChartBuilderTypeToInternal(sType);
 			settings.style = nStyleIndex;
 			settings.inColumns = !bInRows;
 			settings.putRange(sDataRange);
-			var oChart = AscFormat.DrawingObjectsController.prototype.getChartSpace(settings);
+			settings.forcedWorksheet = this.worksheet;
+			const oChart = AscFormat.DrawingObjectsController.prototype.getChartSpace(settings);
 			if (arguments.length === 8) {//support old variant
 				oChart.setBDeleted(false);
 				oChart.setWorksheet(this.worksheet);
@@ -9308,6 +9495,23 @@
 		}
 	};
 
+	/**
+	 * Retrieves the custom XML manager associated with the current sheet.
+	 * This manager allows manipulation and access to custom XML parts within the current sheet.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @returns {ApiCustomXmlParts|null} Returns an instance of ApiCustomXmlParts if the custom XML manager exists, otherwise returns null.
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetCustomXmlParts.js
+	 */
+	ApiWorksheet.prototype.GetCustomXmlParts = function()
+	{
+		if (!(this.worksheet && this.worksheet.workbook))
+			return null;
+
+		let workbook = this.worksheet.workbook;
+		return new AscBuilder.ApiCustomXmlParts(workbook);
+	};
 
 
 	/**
@@ -9415,6 +9619,47 @@
 		wsView.cellCommentator.deleteCommentsRange(bbox, null);
 	};
 
+    /**
+     * Clears all formatting from the current range.
+     * @memberof ApiRange
+     * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/ClearFormats.js
+     */
+    ApiRange.prototype.ClearFormats = function () {
+        const range = this.range;
+        const bbox = range.bbox;
+        const ws = range.worksheet;
+		range.cleanFormat();
+        ws.clearConditionalFormattingRulesByRanges([bbox]);
+    };
+
+    /**
+     * Clears all contents from the current range.
+     * @memberof ApiRange
+     * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/ClearContents.js
+     */
+    ApiRange.prototype.ClearContents = function () {
+		const range = this.range;
+		const bbox = range.bbox;
+		const ws = range.worksheet;
+        this.range.cleanAll();
+		ws.deletePivotTables(bbox);
+    };
+
+    /**
+     * Clears all hyperlinks from the current range.
+     * @memberof ApiRange
+     * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/ClearHyperlinks.js
+     */
+    ApiRange.prototype.ClearHyperlinks = function () {
+        this.range.cleanHyperlinks();
+    };
+
 	/**
 	 * Returns a Range object that represents the rows in the specified range. If the specified row is outside the Range object, a new Range will be returned that represents the cells between the columns of the original range in the specified row.
 	 * @memberof ApiRange
@@ -9426,23 +9671,85 @@
 	ApiRange.prototype.GetRows = function (nRow) {
 		let result = null;
 		if (typeof nRow === "undefined") {
-			result = this;
+			nRow = 1;
+		}
+		if (typeof nRow === "number") {
+			nRow--;
+			let r = this.range.bbox.r1 + nRow;
+			if (r > AscCommon.gc_nMaxRow0) r = AscCommon.gc_nMaxRow0;
+			if (r < 0) r = 0;
+			result = new ApiRange(this.range.worksheet.getRange3(r, this.range.bbox.c1, r, this.range.bbox.c2));
 		} else {
-			if (typeof nRow === "number") {
-				nRow--;
-				let r = this.range.bbox.r1 + nRow;
-				if (r > AscCommon.gc_nMaxRow0) r = AscCommon.gc_nMaxRow0;
-				if (r < 0) r = 0;
-				result = new ApiRange(this.range.worksheet.getRange3(r, this.range.bbox.c1, r, this.range.bbox.c2));
-			} else {
-				logError(new Error('The nRow must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
-			}
+			logError(new Error('The nRow must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
 		}
 		return result;
 	};
 	Object.defineProperty(ApiRange.prototype, "Rows", {
 		get: function () {
 			return this.GetRows();
+		}
+	});
+
+	/**
+	 * Returns a number of cells in the current range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetCellsCount.js
+	 */
+	ApiRange.prototype.GetCellsCount = function() {
+		const bbox = this.range.bbox;
+		if (!bbox) {
+			return 0;
+		}
+		return bbox.getWidth() * bbox.getHeight();
+	};
+	Object.defineProperty(ApiRange.prototype, "CellsCount", {
+		get: function () {
+			return this.GetCellsCount();
+		}
+	});
+
+	/**
+	 * Returns a number of columns in the current range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetColumnsCount.js
+	 */
+	ApiRange.prototype.GetColumnsCount = function() {
+		const bbox = this.range.bbox;
+		if (!bbox) {
+			return 0;
+		}
+		return bbox.getWidth();
+	};
+	Object.defineProperty(ApiRange.prototype, "ColumnsCount", {
+		get: function () {
+			return this.GetColumnsCount();
+		}
+	});
+
+	/**
+	 * Returns a number of rows in the current range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetRowsCount.js
+	 */
+	ApiRange.prototype.GetRowsCount = function() {
+		const bbox = this.range.bbox;
+		if (!bbox) {
+			return 0;
+		}
+		return bbox.getHeight();
+	};
+	Object.defineProperty(ApiRange.prototype, "RowsCount", {
+		get: function () {
+			return this.GetRowsCount();
 		}
 	});
 
@@ -9457,21 +9764,25 @@
 	ApiRange.prototype.GetCols = function (nCol) {
 		let result = null;
 		if (typeof nCol === "undefined") {
-			result = this;
+			nCol = 1;
+		}
+		if (typeof nCol === "number") {
+			nCol--;
+			let c = this.range.bbox.c1 + nCol;
+			if (c > AscCommon.gc_nMaxCol0) c = AscCommon.gc_nMaxCol0;
+			if (c < 0) c = 0;
+			result = new ApiRange(this.range.worksheet.getRange3(this.range.bbox.r1, c, this.range.bbox.r2, c));
 		} else {
-			if (typeof nCol === "number") {
-				nCol--;
-				let c = this.range.bbox.c1 + nCol;
-				if (c > AscCommon.gc_nMaxCol0) c = AscCommon.gc_nMaxCol0;
-				if (c < 0) c = 0;
-				result = new ApiRange(this.range.worksheet.getRange3(this.range.bbox.r1, c, this.range.bbox.r2, c));
-			} else {
-				logError(new Error('The nCol must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxCol0 + 1)));
-			}
+			logError(new Error('The nCol must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxCol0 + 1)));
 		}
 		return result;
 	};
 	Object.defineProperty(ApiRange.prototype, "Cols", {
+		get: function () {
+			return this.GetCols();
+		}
+	});
+	Object.defineProperty(ApiRange.prototype, "Columns", {
 		get: function () {
 			return this.GetCols();
 		}
@@ -10166,6 +10477,28 @@
 	});
 
 	/**
+	 * Sets the direction (reading order) of the text in the current cell range.
+	 *
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {'context' | 'ltr' | 'rtl'} direction - The direction (reading order) that will be applied to the cell contents.
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetReadingOrder.js
+	 */
+	ApiRange.prototype.SetReadingOrder = function (direction) {
+		const map = {
+			"context": Asc.c_oReadingOrderTypes.Context, // 0
+			"ltr": Asc.c_oReadingOrderTypes.LTR, // 1
+			"rtl": Asc.c_oReadingOrderTypes.RTL, // 2
+		};
+		this.range.setReadingOrder(map[direction] || 0);
+	};
+	Object.defineProperty(ApiRange.prototype, "ReadingOrder", {
+		set: function (direction) {
+			return this.SetReadingOrder(direction);
+		}
+	});
+
+	/**
 	 * Sets the bold property to the text characters in the current cell or cell range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
@@ -10650,32 +10983,11 @@
 		var columnSort = sortSettings.columnSort = sOrientation !== "xlSortRows";
 
 		var getSortLevel = function (_key, _order) {
-			var index = null;
-			if (_key instanceof ApiRange) {
-				index = columnSort ? _key.range.bbox.c1 - range.c1 : _key.range.bbox.r1 - range.r1;
-			} else if (typeof _key === "string") {
-				//named range
-				var _defName = ws.workbook.getDefinesNames(_key);
-				if (_defName) {
-					var defNameRef;
-					AscCommonExcel.executeInR1C1Mode(false, function () {
-						defNameRef = AscCommonExcel.getRangeByRef(_defName.ref, ws, true, true)
-					});
-					if (defNameRef && defNameRef[0] && defNameRef[0].worksheet) {
-						if (range.contains(defNameRef[0].bbox.c1, defNameRef[0].bbox.r1)) {
-							if (defNameRef[0].worksheet.Id === ws.Id) {
-								index = columnSort ? defNameRef[0].bbox.c1 - range.c1 : defNameRef[0].bbox.r1 - range.r1;
-							}
-						} else {
-							//error
-							return false;
-						}
-					}
-				}
-			}
+			const index = columnSort ? _key.range.bbox.c1 - range.c1 : _key.range.bbox.r1 - range.r1;
+			const maxIndex = columnSort ? range.c2 - range.c1 : range.r2 - range.r1;
 
-			if (null === index) {
-				return null;
+			if (null === index || index < 0 || index > maxIndex) {
+				return false;
 			}
 
 			var level = new Asc.CSortPropertiesLevel();
@@ -10684,14 +10996,44 @@
 			sortSettings.levels.push(level);
 		};
 
+		const filterRange = function (_key) {
+			if (!_key || _key instanceof ApiRange) {
+				return _key;
+			}
+
+			// if named range
+			var _defName = ws.workbook.getDefinesNames(_key);
+			if (_defName) {
+				let defNameRef;
+				AscCommonExcel.executeInR1C1Mode(false, function () {
+					defNameRef = AscCommonExcel.getRangeByRef(_defName.ref, ws, true, true)
+				});
+				if (defNameRef && defNameRef[0] && defNameRef[0].worksheet) {
+					if (defNameRef[0].worksheet.Id === ws.Id) {
+						return new ApiRange(defNameRef[0]);
+					}
+				}
+			}
+
+			return _key;
+		}
+
+		const apiWorksheet = new ApiWorksheet(this.range.worksheet);
+		
 		sortSettings.levels = [];
-		if (key1 && false === getSortLevel(key1, sSortOrder1)) {
+		key1 = filterRange(key1);
+		const rangeKey1 = apiWorksheet.GetRange(key1);
+		if (key1 && false === getSortLevel(rangeKey1, sSortOrder1)) {
 			return;
 		}
-		if (key2 && false === getSortLevel(key2, sSortOrder2)) {
+		key2 = filterRange(key2);
+		const rangeKey2 = apiWorksheet.GetRange(key2);
+		if (key2 && false === getSortLevel(rangeKey2, sSortOrder2)) {
 			return;
 		}
-		if (key3 && false === getSortLevel(key3, sSortOrder3)) {
+		key3 = filterRange(key3);
+		const rangeKey3 = apiWorksheet.GetRange(key3);
+		if (key3 && false === getSortLevel(rangeKey3, sSortOrder3)) {
 			return;
 		}
 
@@ -10702,6 +11044,14 @@
 			obj = tables[0];
 		} else if (ws.AutoFilter && ws.AutoFilter.Ref && ws.AutoFilter.Ref.intersection(range)) {
 			obj = ws.AutoFilter;
+		}
+
+		if (sortSettings.hasHeaders) {
+			if (sortSettings.columnSort) {
+				range.r1++;
+			} else {
+				range.c1++;
+			}
 		}
 		ws.setCustomSort(sortSettings, obj, null, oWorksheet && oWorksheet.cellCommentator, range);
 	};
@@ -10897,8 +11247,8 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {PasteType} [sPasteType="xlPasteAll"]  - Paste option.
 	 * @param {PasteSpecialOperation} [sPasteSpecialOperation="xlPasteSpecialOperationNone"] - The mathematical operation which will be applied to the copied data.
-	 * @param {boolean} bSkipBlanks [bSkipBlanks=false] - Specifies whether to avoid replacing values in the paste area when blank cells occur in the copy area.
-	 * @param {boolean} bTranspose [bTranspose=false] - Specifies whether the pasted data will be transposed from rows to columns.
+	 * @param {boolean} [bSkipBlanks=false] - Specifies whether to avoid replacing values in the paste area when blank cells occur in the copy area.
+	 * @param {boolean} [bTranspose=false] - Specifies whether the pasted data will be transposed from rows to columns.
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/PasteSpecial.js
 	 */
@@ -11329,6 +11679,266 @@
 		}
 	});
 
+	let getOperator = function (val) {
+		let res = Asc.c_oAscCustomAutoFilter.equals;
+		switch (val) {
+			case "=": {
+				res = Asc.c_oAscCustomAutoFilter.equals;
+				break
+			}
+			case ">": {
+				res = Asc.c_oAscCustomAutoFilter.isGreaterThan;
+				break
+			}
+			case ">=": {
+				res = Asc.c_oAscCustomAutoFilter.isGreaterThanOrEqualTo;
+				break
+			}
+			case "<": {
+				res = Asc.c_oAscCustomAutoFilter.isLessThan;
+				break
+			}
+			case "<=": {
+				res = Asc.c_oAscCustomAutoFilter.isLessThanOrEqualTo;
+				break
+			}
+			case "<>": {
+				res = Asc.c_oAscCustomAutoFilter.doesNotEqual;
+				break
+			}
+		}
+		return res;
+	};
+	let createCustomFilter = function (autoFilterOptions, Criteria1, Criteria2, Operator, cellId, opt_operator1, opt_operator2) {
+		if (Criteria1 || Criteria1) {
+			let filterObj = new Asc.AutoFilterObj();
+			filterObj.asc_setFilter(new Asc.CustomFilters());
+			filterObj.asc_setType(Asc.c_oAscAutoFilterTypes.CustomFilters);
+			let newCustomFilter = filterObj.asc_getFilter();
+
+			let oCriteria1 = Criteria1 && AscCommonExcel.matchingValue(new AscCommonExcel.cString(Criteria1));
+			let oCriteria2 = Criteria2 && AscCommonExcel.matchingValue(new AscCommonExcel.cString(Criteria2));
+			let operator1 = opt_operator1 || (oCriteria1 && getOperator(oCriteria1.op));
+			let operator2 = opt_operator2 || (oCriteria2 && getOperator(oCriteria2.op));
+
+
+			let customFiltersArr = [];
+			if (oCriteria1) {
+				customFiltersArr[0] = new Asc.CustomFilter();
+				customFiltersArr[0].asc_setVal(oCriteria1.val.getValue() + "");
+				customFiltersArr[0].asc_setOperator(operator1);
+			}
+			if (oCriteria2) {
+				customFiltersArr[1] = new Asc.CustomFilter();
+				customFiltersArr[1].asc_setVal(oCriteria2.val.getValue() + "");
+				customFiltersArr[1].asc_setOperator(operator2);
+			}
+
+			newCustomFilter.asc_setCustomFilters(customFiltersArr);
+			newCustomFilter.asc_setAnd(Operator === "xlAnd");
+
+			autoFilterOptions.asc_setFilterObj(filterObj);
+			if (cellId) {
+				autoFilterOptions.asc_setCellId(cellId);
+			}
+		}
+	};
+
+	let createTop10Filter = function (autoFilterOptions, val, isPercent, isBottom, cellId) {
+		let _topFilter = new Asc.Top10();
+		_topFilter.asc_setVal(val);
+		if (isPercent) {
+			_topFilter.asc_setPercent(isPercent);
+		}
+		if (isBottom) {
+			_topFilter.asc_setTop(!isBottom);
+		}
+
+		let oFilter = new window["Asc"].AutoFilterObj();
+		oFilter.asc_setFilter(_topFilter);
+		oFilter.asc_setType(Asc.c_oAscAutoFilterTypes.Top10);
+		autoFilterOptions.asc_setFilterObj(oFilter);
+		if (cellId){
+			autoFilterOptions.asc_setCellId(cellId);
+		}
+	};
+
+	let toDynamicConst = function (val) {
+		let res = null;
+		switch (val) {
+			case "xlFilterAboveAverage": {
+				res = Asc.c_oAscDynamicAutoFilter.aboveAverage;
+				break
+			}
+			case "xlFilterAllDatesInPeriodApril": {
+				res = Asc.c_oAscDynamicAutoFilter.m4;
+				break
+			}
+			case "xlFilterAllDatesInPeriodSeptember": {
+				res = Asc.c_oAscDynamicAutoFilter.m9;
+				break
+			}
+			case "xlFilterAllDatesInPeriodMay": {
+				res = Asc.c_oAscDynamicAutoFilter.m5;
+				break
+			}
+			case "xlFilterAllDatesInPeriodAugust": {
+				res = Asc.c_oAscDynamicAutoFilter.m8;
+				break
+			}
+			case "xlFilterAllDatesInPeriodDecember": {
+				res = Asc.c_oAscDynamicAutoFilter.m12;
+				break
+			}
+			case "xlFilterAllDatesInPeriodFebruary": {
+				res = Asc.c_oAscDynamicAutoFilter.m2;
+				break
+			}
+			case "xlFilterAllDatesInPeriodMarch": {
+				res = Asc.c_oAscDynamicAutoFilter.m3;
+				break
+			}
+			case "xlFilterAllDatesInPeriodJanuary": {
+				res = Asc.c_oAscDynamicAutoFilter.m1;
+				break
+			}
+			case "xlFilterAllDatesInPeriodJuly": {
+				res = Asc.c_oAscDynamicAutoFilter.m7;
+				break
+			}
+			case "xlFilterAllDatesInPeriodJune": {
+				res = Asc.c_oAscDynamicAutoFilter.m6;
+				break
+			}
+			case "xlFilterAllDatesInPeriodNovember": {
+				res = Asc.c_oAscDynamicAutoFilter.m11;
+				break
+			}
+			case "xlFilterAllDatesInPeriodOctober": {
+				res = Asc.c_oAscDynamicAutoFilter.m10;
+				break
+			}
+			case "xlFilterAllDatesInPeriodQuarter1": {
+				res = Asc.c_oAscDynamicAutoFilter.q1;
+				break
+			}
+			case "xlFilterAllDatesInPeriodQuarter2": {
+				res = Asc.c_oAscDynamicAutoFilter.q2;
+				break
+			}
+			case "xlFilterAllDatesInPeriodQuarter3": {
+				res = Asc.c_oAscDynamicAutoFilter.q3;
+				break
+			}
+			case "xlFilterAllDatesInPeriodQuarter4": {
+				res = Asc.c_oAscDynamicAutoFilter.q4;
+				break
+			}
+			case "xlFilterBelowAverage": {
+				res = Asc.c_oAscDynamicAutoFilter.belowAverage;
+				break
+			}
+			case "xlFilterLastMonth": {
+				res = Asc.c_oAscDynamicAutoFilter.lastMonth;
+				break
+			}
+			case "xlFilterLastQuarter": {
+				res = Asc.c_oAscDynamicAutoFilter.lastQuarter;
+				break
+			}
+			case "xlFilterLastWeek": {
+				res = Asc.c_oAscDynamicAutoFilter.lastWeek;
+				break
+			}
+			case "xlFilterLastYear": {
+				res = Asc.c_oAscDynamicAutoFilter.lastYear;
+				break
+			}
+			case "xlFilterNextMonth": {
+				res = Asc.c_oAscDynamicAutoFilter.nextMonth;
+				break
+			}
+			case "xlFilterNextQuarter": {
+				res = Asc.c_oAscDynamicAutoFilter.nextQuarter;
+				break
+			}
+			case "xlFilterNextWeek": {
+				res = Asc.c_oAscDynamicAutoFilter.nextWeek;
+				break
+			}
+			case "xlFilterNextYear": {
+				res = Asc.c_oAscDynamicAutoFilter.nextYear;
+				break
+			}
+			case "xlFilterThisMonth": {
+				res = Asc.c_oAscDynamicAutoFilter.thisMonth;
+				break
+			}
+			case "xlFilterThisQuarter": {
+				res = Asc.c_oAscDynamicAutoFilter.thisQuarter;
+				break
+			}
+			case "xlFilterThisWeek": {
+				res = Asc.c_oAscDynamicAutoFilter.thisWeek;
+				break
+			}
+			case "xlFilterThisYear": {
+				res = Asc.c_oAscDynamicAutoFilter.thisYear;
+				break
+			}
+			case "xlFilterToday": {
+				res = Asc.c_oAscDynamicAutoFilter.today;
+				break
+			}
+			case "xlFilterTomorrow": {
+				res = Asc.c_oAscDynamicAutoFilter.tomorrow;
+				break
+			}
+			case "xlFilterYearToDate": {
+				res = Asc.c_oAscDynamicAutoFilter.yearToDate;
+				break
+			}
+			case "xlFilterYesterday": {
+				res = Asc.c_oAscDynamicAutoFilter.yesterday;
+				break
+			}
+
+		}
+		return res;
+	};
+
+	let createDynamicFilter = function (autoFilterOptions, val, cellId) {
+		let _dynamicFilter = new Asc.DynamicFilter();
+		_dynamicFilter.asc_setType(val);
+
+		let oFilter = new Asc.AutoFilterObj();
+		oFilter.asc_setFilter(_dynamicFilter);
+		oFilter.asc_setType(Asc.c_oAscAutoFilterTypes.DynamicFilter);
+		autoFilterOptions.asc_setFilterObj(oFilter);
+		if (cellId){
+			autoFilterOptions.asc_setCellId(cellId);
+		}
+	};
+
+	let toAscColor = function (_color) {
+		let res;
+		if (_color instanceof AscCommonExcel.RgbColor) {
+			res = new window["Asc"]["asc_CColor"](_color.getR(), _color.getG(), _color.getB());
+		} else if (_color - 0) {
+			_color = _color - 0;
+			if (!isNaN(_color)) {
+				if (_color === 0) {
+					res = new window["Asc"]["asc_CColor"](0,0,0);
+				} else {
+					res = new window["Asc"]["asc_CColor"](1,1,1);
+				}
+			} else {
+				res = new window["Asc"]["asc_CColor"](1,1,1);
+			}
+		}
+		return res;
+	};
+
 	/**
 	 * Filter type.
 	 * @typedef {("xlAnd" | "xlBottom10Items" | "xlBottom10Percent" | "xlFilterCellColor" | "xlFilterDynamic" | "xlFilterFontColor" | "xlFilterValues" | "xlOr" | "xlTop10Items" | "xlTop10Percent")} XlAutoFilterOperator
@@ -11438,7 +12048,7 @@
 		if (ws.AutoFilter) {
 			_range = ws.AutoFilter.Ref;
 		} else {
-			let filterProps = ws.autoFilters.getAddFormatTableOptions(selectionRange);
+			let filterProps = ws.autoFilters.getAddFormatTableOptions(this.range.bbox);
 			_range = filterProps && filterProps.range && AscCommonExcel.g_oRangeCache.getAscRange(filterProps.range);
 		}
 
@@ -11480,77 +12090,12 @@
 
 		if (Criteria1 == null) {
 			//clean current filter
-			ws.autoFilters.clearFilterColumn(Asc.range(_range.c1 + Field, _range.r1, _range.c1 + Field, _range.r1).getName());
+			ws.autoFilters.clearFilterColumn(Asc.Range(_range.c1 + Field, _range.r1, _range.c1 + Field, _range.r1).getName());
 			//api.asc_clearFilterColumn(Asc.range(_range.c1 + Field, _range.r1, _range.c1 + Field, _range.r1).getName());
 			return;
 		}
 
 		let cellId = Asc.Range(_range.c1 + Field - 1, _range.r1, _range.c1 + Field - 1, _range.r1).getName();
-
-		let getOperator = function (val) {
-			let res = Asc.c_oAscCustomAutoFilter.equals;
-			switch (val) {
-				case "=": {
-					res = Asc.c_oAscCustomAutoFilter.equals;
-					break
-				}
-				case ">": {
-					res = Asc.c_oAscCustomAutoFilter.isGreaterThan;
-					break
-				}
-				case ">=": {
-					res = Asc.c_oAscCustomAutoFilter.isGreaterThanOrEqualTo;
-					break
-				}
-				case "<": {
-					res = Asc.c_oAscCustomAutoFilter.isLessThan;
-					break
-				}
-				case "<=": {
-					res = Asc.c_oAscCustomAutoFilter.isLessThanOrEqualTo;
-					break
-				}
-				case "<>": {
-					res = Asc.c_oAscCustomAutoFilter.doesNotEqual;
-					break
-				}
-			}
-			return res;
-		};
-
-		let createCustomFilter = function () {
-			if (Criteria1 || Criteria1) {
-				let filterObj = new Asc.AutoFilterObj();
-				filterObj.asc_setFilter(new Asc.CustomFilters());
-				filterObj.asc_setType(Asc.c_oAscAutoFilterTypes.CustomFilters);
-				let newCustomFilter = filterObj.asc_getFilter();
-
-				let oCriteria1 = Criteria1 && AscCommonExcel.matchingValue(new AscCommonExcel.cString(Criteria1));
-				let oCriteria2 = Criteria2 && AscCommonExcel.matchingValue(new AscCommonExcel.cString(Criteria2));
-				let operator1 = oCriteria1 && getOperator(oCriteria1.op);
-				let operator2 = oCriteria2 && getOperator(oCriteria2.op);
-
-
-				let customFiltersArr = [];
-				if (oCriteria1) {
-					customFiltersArr[0] = new Asc.CustomFilter();
-					customFiltersArr[0].asc_setVal(oCriteria1.val.getValue() + "");
-					customFiltersArr[0].asc_setOperator(operator1);
-				}
-				if (oCriteria2) {
-					customFiltersArr[1] = new Asc.CustomFilter();
-					customFiltersArr[1].asc_setVal(oCriteria2.val.getValue() + "");
-					customFiltersArr[1].asc_setOperator(operator2);
-				}
-
-				newCustomFilter.asc_setCustomFilters(customFiltersArr);
-				newCustomFilter.asc_setAnd(Operator === "xlAnd");
-
-				autoFilterOptions = new window["Asc"].AutoFiltersOptions();
-				autoFilterOptions.asc_setFilterObj(filterObj);
-				autoFilterOptions.asc_setCellId(cellId);
-			}
-		};
 
 		let createSimpleFilter = function () {
 			if (Criteria1 && Array.isArray(Criteria1)) {
@@ -11597,43 +12142,6 @@
 			}
 		};
 
-		let createTop10Filter = function (val, isPercent, isBottom) {
-			let _topFilter = new Asc.Top10();
-			_topFilter.asc_setVal(val);
-			if (isPercent) {
-				_topFilter.asc_setPercent(isPercent);
-			}
-			if (isBottom) {
-				_topFilter.asc_setTop(!isBottom);
-			}
-
-			autoFilterOptions = new window["Asc"].AutoFiltersOptions();
-			let oFilter = new window["Asc"].AutoFilterObj();
-			oFilter.asc_setFilter(_topFilter);
-			oFilter.asc_setType(Asc.c_oAscAutoFilterTypes.Top10);
-			autoFilterOptions.asc_setFilterObj(oFilter);
-			autoFilterOptions.asc_setCellId(cellId);
-		};
-
-		let toAscColor = function (_color) {
-			let res;
-			if (_color instanceof AscCommonExcel.RgbColor) {
-				res = new Asc.asc_CColor(_color.getR(), _color.getG(), _color.getB());
-			} else if (_color - 0) {
-				_color = _color - 0;
-				if (!isNaN(_color)) {
-					if (_color === 0) {
-						res = new Asc.asc_CColor(0,0,0);
-					} else {
-						res = new Asc.asc_CColor(1,1,1);
-					}
-				} else {
-					res = new Asc.asc_CColor(1,1,1);
-				}
-			}
-			return res;
-		};
-
 		let createColorFilter = function (color, isCellColor) {
 
 			let _colorFilter = new Asc.ColorFilter();
@@ -11648,162 +12156,6 @@
 			autoFilterOptions.asc_setCellId(cellId);
 		};
 
-		let toDynamicConst = function (val) {
-			let res = null;
-			switch (val) {
-				case "xlFilterAboveAverage": {
-					res = Asc.c_oAscDynamicAutoFilter.aboveAverage;
-					break
-				}
-				case "xlFilterAllDatesInPeriodApril": {
-					res = Asc.c_oAscDynamicAutoFilter.m4;
-					break
-				}
-				case "xlFilterAllDatesInPeriodSeptember": {
-					res = Asc.c_oAscDynamicAutoFilter.m9;
-					break
-				}
-				case "xlFilterAllDatesInPeriodMay": {
-					res = Asc.c_oAscDynamicAutoFilter.m5;
-					break
-				}
-				case "xlFilterAllDatesInPeriodAugust": {
-					res = Asc.c_oAscDynamicAutoFilter.m8;
-					break
-				}
-				case "xlFilterAllDatesInPeriodDecember": {
-					res = Asc.c_oAscDynamicAutoFilter.m12;
-					break
-				}
-				case "xlFilterAllDatesInPeriodFebruary": {
-					res = Asc.c_oAscDynamicAutoFilter.m2;
-					break
-				}
-				case "xlFilterAllDatesInPeriodMarch": {
-					res = Asc.c_oAscDynamicAutoFilter.m3;
-					break
-				}
-				case "xlFilterAllDatesInPeriodJanuary": {
-					res = Asc.c_oAscDynamicAutoFilter.m1;
-					break
-				}
-				case "xlFilterAllDatesInPeriodJuly": {
-					res = Asc.c_oAscDynamicAutoFilter.m7;
-					break
-				}
-				case "xlFilterAllDatesInPeriodJune": {
-					res = Asc.c_oAscDynamicAutoFilter.m6;
-					break
-				}
-				case "xlFilterAllDatesInPeriodNovember": {
-					res = Asc.c_oAscDynamicAutoFilter.m11;
-					break
-				}
-				case "xlFilterAllDatesInPeriodOctober": {
-					res = Asc.c_oAscDynamicAutoFilter.m10;
-					break
-				}
-				case "xlFilterAllDatesInPeriodQuarter1": {
-					res = Asc.c_oAscDynamicAutoFilter.q1;
-					break
-				}
-				case "xlFilterAllDatesInPeriodQuarter2": {
-					res = Asc.c_oAscDynamicAutoFilter.q2;
-					break
-				}
-				case "xlFilterAllDatesInPeriodQuarter3": {
-					res = Asc.c_oAscDynamicAutoFilter.q3;
-					break
-				}
-				case "xlFilterAllDatesInPeriodQuarter4": {
-					res = Asc.c_oAscDynamicAutoFilter.q4;
-					break
-				}
-				case "xlFilterBelowAverage": {
-					res = Asc.c_oAscDynamicAutoFilter.belowAverage;
-					break
-				}
-				case "xlFilterLastMonth": {
-					res = Asc.c_oAscDynamicAutoFilter.lastMonth;
-					break
-				}
-				case "xlFilterLastQuarter": {
-					res = Asc.c_oAscDynamicAutoFilter.lastQuarter;
-					break
-				}
-				case "xlFilterLastWeek": {
-					res = Asc.c_oAscDynamicAutoFilter.lastWeek;
-					break
-				}
-				case "xlFilterLastYear": {
-					res = Asc.c_oAscDynamicAutoFilter.lastYear;
-					break
-				}
-				case "xlFilterNextMonth": {
-					res = Asc.c_oAscDynamicAutoFilter.nextMonth;
-					break
-				}
-				case "xlFilterNextQuarter": {
-					res = Asc.c_oAscDynamicAutoFilter.nextQuarter;
-					break
-				}
-				case "xlFilterNextWeek": {
-					res = Asc.c_oAscDynamicAutoFilter.nextWeek;
-					break
-				}
-				case "xlFilterNextYear": {
-					res = Asc.c_oAscDynamicAutoFilter.nextYear;
-					break
-				}
-				case "xlFilterThisMonth": {
-					res = Asc.c_oAscDynamicAutoFilter.thisMonth;
-					break
-				}
-				case "xlFilterThisQuarter": {
-					res = Asc.c_oAscDynamicAutoFilter.thisQuarter;
-					break
-				}
-				case "xlFilterThisWeek": {
-					res = Asc.c_oAscDynamicAutoFilter.thisWeek;
-					break
-				}
-				case "xlFilterThisYear": {
-					res = Asc.c_oAscDynamicAutoFilter.thisYear;
-					break
-				}
-				case "xlFilterToday": {
-					res = Asc.c_oAscDynamicAutoFilter.today;
-					break
-				}
-				case "xlFilterTomorrow": {
-					res = Asc.c_oAscDynamicAutoFilter.tomorrow;
-					break
-				}
-				case "xlFilterYearToDate": {
-					res = Asc.c_oAscDynamicAutoFilter.yearToDate;
-					break
-				}
-				case "xlFilterYesterday": {
-					res = Asc.c_oAscDynamicAutoFilter.yesterday;
-					break
-				}
-
-			}
-			return res;
-		};
-
-		let createDynamicFilter = function (val) {
-			let _dynamicFilter = new Asc.DynamicFilter();
-			_dynamicFilter.asc_setType(val);
-
-			autoFilterOptions = new Asc.AutoFiltersOptions();
-			let oFilter = new Asc.AutoFilterObj();
-			oFilter.asc_setFilter(_dynamicFilter);
-			oFilter.asc_setType(Asc.c_oAscAutoFilterTypes.DynamicFilter);
-			autoFilterOptions.asc_setFilterObj(oFilter);
-			autoFilterOptions.asc_setCellId(cellId);
-		};
-
 		//apply filtering
 		let isAutoFilter = this.range.worksheet && this.range.worksheet.AutoFilter && this.range.worksheet.AutoFilter.Ref.intersection(this.range.bbox);
 		let autoFilterOptions;
@@ -11811,7 +12163,8 @@
 			switch (Operator) {
 				case "xlOr":
 				case "xlAnd": {
-					createCustomFilter();
+					autoFilterOptions = new window["Asc"].AutoFiltersOptions();
+					createCustomFilter(autoFilterOptions, Criteria1, Criteria2, Operator, cellId);
 					break;
 				}
 				case "xlFilterFontColor":
@@ -11826,7 +12179,8 @@
 				}
 				case "xlFilterDynamic": {
 					let _type = toDynamicConst(Criteria1);
-					createDynamicFilter(_type);
+					autoFilterOptions = new Asc.AutoFiltersOptions();
+					createDynamicFilter(autoFilterOptions, _type, null);
 					break;
 				}
 				/*case "xlFilterIcon": {
@@ -11839,8 +12193,9 @@
 					//only criteria1, 1 to 500 number value
 					let top10Num = Criteria1 ? Criteria1 - 0 : 10;
 					if (top10Num > 0 && top10Num <= 500) {
-						createTop10Filter(top10Num, "xlTop10Percent" === Operator || "xlBottom10Percent" === Operator,
-							"xlBottom10Items" === Operator || "xlBottom10Percent" === Operator);
+						autoFilterOptions = new Asc.AutoFiltersOptions();
+						createTop10Filter(autoFilterOptions, top10Num, "xlTop10Percent" === Operator || "xlBottom10Percent" === Operator,
+							"xlBottom10Items" === Operator || "xlBottom10Percent" === Operator, null);
 					} else {
 						private_MakeError('Error! Criteria1 must be between 1 and 500!');
 						return false;
@@ -11852,7 +12207,8 @@
 					if (Criteria1 && Array.isArray(Criteria1)) {
 						createSimpleFilter();
 					} else {
-						createCustomFilter();
+						autoFilterOptions = new window["Asc"].AutoFiltersOptions();
+						createCustomFilter(autoFilterOptions, Criteria1, Criteria2, Operator, cellId);
 					}
 					break;
 			}
@@ -11860,8 +12216,22 @@
 				if (VisibleDropDown === false) {
 					autoFilterOptions.asc_setVisibleDropDown(VisibleDropDown);
 				}
-				ws.autoFilters.applyAutoFilter(autoFilterOptions, ws.selectionRange.getLast().clone());
-				//api.asc_applyAutoFilter(autoFilterOptions);
+				let applyFilterProps = ws.autoFilters.applyAutoFilter(autoFilterOptions, ws.selectionRange.getLast().clone());
+				let minChangeRow = applyFilterProps && applyFilterProps.minChangeRow;
+				if (null !== minChangeRow) {
+					let oWorksheet = Asc['editor'] && Asc['editor'].wb && Asc['editor'].wb.getWorksheet();
+					if (oWorksheet && oWorksheet.objectRender) {
+						let rangeOldFilter = applyFilterProps && applyFilterProps.rangeOldFilter;
+						if (rangeOldFilter) {
+							oWorksheet.objectRender.bUpdateMetrics = false;
+							oWorksheet._onUpdateFormatTable(rangeOldFilter, true);
+							oWorksheet.objectRender.bUpdateMetrics = true;
+						}
+						if (oWorksheet.objectRender.controller) {
+							oWorksheet.objectRender.updateSizeDrawingObjects({target: AscCommonExcel.c_oTargetType.RowResize, row: minChangeRow});
+						}
+					}
+				}
 			}
 		}
 	};
@@ -11962,6 +12332,227 @@
 		},
 		set: function (sValue) {
 			this.SetFormulaArray(sValue);
+		}
+	});
+
+	/**
+	 * Returns a range that represents the expanded range around the current range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange | null} - Returns the expanded range or null if the range cannot be expanded.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetCurrentRegion.js
+	 */
+	ApiRange.prototype.GetCurrentRegion = function () {
+		if (!this.range) {
+			return null;
+		}
+
+		let bbox = this.range.bbox;
+		let ws = this.range.worksheet;
+		let expandRange = ws && ws.autoFilters && ws.autoFilters.expandRange(bbox);
+
+		if (!expandRange) {
+			return null;
+		}
+
+		let res = ws.getRange3(expandRange.r1, expandRange.c1, expandRange.r2, expandRange.c2);
+		return new ApiRange(res);
+	};
+
+	Object.defineProperty(ApiRange.prototype, "CurrentRegion", {
+		get: function () {
+			return this.GetCurrentRegion();
+		}
+	});
+
+	/**
+	 * Returns a Range object offset from the current range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {number} rowOffset - The number of rows to offset the range.
+	 * @param {number} columnOffset - The number of columns to offset the range.
+	 * @returns {ApiRange | null} - Returns the offset range, or null if invalid.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/Cell/ApiRange/Methods/Offset.js
+	 */
+	ApiRange.prototype.Offset = function (rowOffset, columnOffset) {
+		if (!this.range) {
+			return null;
+		}
+
+		let bbox = this.range.bbox;
+		let newR1 = bbox.r1 + (rowOffset || 0);
+		let newC1 = bbox.c1 + (columnOffset || 0);
+		let newR2 = bbox.r2 + (rowOffset || 0);
+		let newC2 = bbox.c2 + (columnOffset || 0);
+
+		// Check bounds
+		if (newR1 < 0 || newC1 < 0 || newR2 >= AscCommon.gc_nMaxRow || newC2 >= AscCommon.gc_nMaxCol) {
+			return null;
+		}
+
+		let res = this.range.worksheet.getRange3(newR1, newC1, newR2, newC2);
+		return new ApiRange(res);
+	};
+
+	/**
+	 * Resizes the current range by changing the number of rows and columns.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {number} rowSize - The number of rows for the new range.
+	 * @param {number} columnSize - The number of columns for the new range.
+	 * @returns {ApiRange | null} - Returns the resized range, or null if invalid.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/Cell/ApiRange/Methods/Resize.js
+	 */
+	ApiRange.prototype.Resize = function (rowSize, columnSize) {
+		if (!this.range) {
+			return null;
+		}
+
+		let bbox = this.range.bbox;
+		let newRowSize = rowSize || (bbox.r2 - bbox.r1 + 1);
+		let newColSize = columnSize || (bbox.c2 - bbox.c1 + 1);
+
+		if (newRowSize <= 0 || newColSize <= 0) {
+			return null;
+		}
+
+		let newR2 = bbox.r1 + newRowSize - 1;
+		let newC2 = bbox.c1 + newColSize - 1;
+
+		// Check bounds
+		if (newR2 >= AscCommon.gc_nMaxRow || newC2 >= AscCommon.gc_nMaxCol) {
+			return null;
+		}
+
+		let res = this.range.worksheet.getRange3(bbox.r1, bbox.c1, newR2, newC2);
+		return new ApiRange(res);
+	};
+
+	/**
+	 * Returns a Range object that represents a cell or a range of cells.
+	 * When applied to a Range object, the property is relative to that Range object.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {string | ApiRange} cell1 - The first cell address (e.g., "A1" or "A1:B2").
+	 * @param {string | ApiRange} [cell2] - The second cell address (optional, defines the corner with "cell1").
+	 * @returns {ApiRange | null} - Returns the range relative to this range, or null if invalid.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetRange.js
+	 */
+	ApiRange.prototype.GetRange = function (cell1, cell2) {
+		if (!this.range) {
+			return null;
+		}
+
+		const apiWorksheet = new ApiWorksheet(this.range.worksheet);
+		const absoluteRange = apiWorksheet.GetRange(cell1, cell2);
+		
+		if (!absoluteRange || !absoluteRange.range) {
+			return null;
+		}
+		
+		const targetBbox = absoluteRange.range.bbox;
+		const rowCount = targetBbox.r2 - targetBbox.r1 + 1;
+		const colCount = targetBbox.c2 - targetBbox.c1 + 1;
+		
+		return this.Offset(targetBbox.r1, targetBbox.c1).Resize(rowCount, colCount);
+	};
+
+	/**
+	 * Returns a Range object that represents the entire row(s) containing the specified range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange | null} - Returns the entire row range, or null if invalid.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetEntireRow.js
+	 */
+	ApiRange.prototype.GetEntireRow = function () {
+		if (!this.range) {
+			return null;
+		}
+		let bbox = this.range.bbox;
+		let res = this.range.worksheet.getRange3(bbox.r1, 0, bbox.r2, AscCommon.gc_nMaxCol - 1);
+		return new ApiRange(res);
+	};
+	Object.defineProperty(ApiRange.prototype, "EntireRow", {
+		get: function () {
+			return this.GetEntireRow();
+		}
+	});
+
+	/**
+	 * Returns a Range object that represents the entire column(s) containing the specified range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange | null} - Returns the entire column range, or null if invalid.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetEntireColumn.js
+	 */
+	ApiRange.prototype.GetEntireColumn = function () {
+		if (!this.range) {
+			return null;
+		}
+		let bbox = this.range.bbox;
+		let res = this.range.worksheet.getRange3(0, bbox.c1, AscCommon.gc_nMaxRow - 1, bbox.c2);
+		return new ApiRange(res);
+	};
+	Object.defineProperty(ApiRange.prototype, "EntireColumn", {
+		get: function () {
+			return this.GetEntireColumn();
+		}
+	});
+	/**
+	 * Returns a collection of the ranges.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiValidation}
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetValidation.js
+	 */
+	ApiRange.prototype.GetValidation = function () {
+		if (!this._validation) {
+			let worksheet = this.range.worksheet;
+			let ranges = [];
+			if (this.areas) {
+				for (let i = 0; i < this.areas.length; i++) {
+					ranges.push(this.areas[i].bbox);
+				}
+			} else {
+				ranges.push(this.range.bbox);
+			}
+			this._validation = new ApiValidation(worksheet.getDataValidationProps(undefined, ranges, true), this);
+			if (!this._validation.range) {
+				this._validation.range = this;
+			}
+		}
+		return this._validation;
+	};
+	Object.defineProperty(ApiRange.prototype, "Validation", {
+		get: function () {
+			return this.GetValidation();
+		}
+	});
+
+	/**
+	 * Returns the collection of conditional formatting rules for the current range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiFormatConditions}
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetFormatConditions.js
+	 */
+	ApiRange.prototype.GetFormatConditions = function() {
+		if (!this._formatConditions) {
+			this._formatConditions = new ApiFormatConditions(this);
+		}
+		return this._formatConditions;
+	};
+
+	Object.defineProperty(ApiRange.prototype, "FormatConditions", {
+		get: function() {
+			return this.GetFormatConditions();
 		}
 	});
 
@@ -12160,6 +12751,23 @@
 		return nRad * 180 / Math.PI
 	};
 
+	/**
+	 * Selects the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
+	 */
+	ApiDrawing.prototype.Select = function() {
+		let oDrawing = this.Drawing;
+		if(!oDrawing) return;
+		let oController = oDrawing.getDrawingObjectsController();
+		if (!oController) return;
+		oController.selectObject(oDrawing, 0);
+		oController.updateSelectionState();
+		oController.updateOverlay();
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiImage
@@ -12253,6 +12861,45 @@
 			return true;
 		}
 
+		return false;
+	};
+
+
+
+	/**
+	 * Returns the geometry object from the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiGeometry}
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetGeometry.js
+	 * @since 9.1.0
+	 */
+
+	ApiShape.prototype.GetGeometry = function()
+	{
+		if (this.Shape && this.Shape.spPr && this.Shape.spPr.geometry)
+		{
+			return Api.prototype.private_CreateGeometry(this.Shape.spPr.geometry);
+		}
+		return null;
+	};
+
+	/**
+	 * Sets a custom geometry for the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiGeometry} oGeometry - The geometry to set.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetGeometry.js
+	 * @since 9.1.0
+	 */
+	ApiShape.prototype.SetGeometry = function(oGeometry)
+	{
+		if (this.Shape && this.Shape.spPr && oGeometry && oGeometry.geometry)
+		{
+			this.Shape.spPr.setGeometry(oGeometry.geometry);
+			return true;
+		}
 		return false;
 	};
 
@@ -13463,6 +14110,38 @@
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
+	// ApiTheme
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns a type of the ApiTheme class.
+	 *
+	 * @memberof ApiTheme
+	 * @typeofeditors ["CSE"]
+	 * @returns {"theme"}
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTheme/Methods/GetClassType.js
+	 */
+	ApiTheme.prototype.GetClassType = function () {
+		return 'theme';
+	};
+
+	/**
+	 * Returns the name of the theme.
+	 *
+	 * @memberof ApiTheme
+	 * @typeofeditors ["CSE"]
+	 * @returns {string} - The theme name.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTheme/Methods/GetName.js
+	 */
+	ApiTheme.prototype.GetName = function () {
+		return this.Theme.name || '';
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
 	// ApiFont
 	//
 	//------------------------------------------------------------------------------------------------------------------
@@ -13516,6 +14195,12 @@
 				isBold = null;
 			}
 			return isBold;
+		} else if (this._object instanceof ApiFormatCondition) {
+			let isBold = null;
+			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
+				isBold = this._object.rule.dxf.font.b;
+			}
+			return isBold;
 		}
 	};
 
@@ -13557,9 +14242,19 @@
 					}
 				}
 			}
-		}
+		} else if (this._object instanceof ApiFormatCondition) {
+			let currentBold = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.b;
+			let newBold = isBold ? true : null;
+			
+			if (currentBold === newBold) {
+				return;
+			}
+			
+			this._object.private_changeStyle(function (_newRule) {
+				_newRule.dxf.font.b = newBold;
+			});
+		} 
 	};
-
 	Object.defineProperty(ApiFont.prototype, "Bold", {
 		get: function () {
 			return this.GetBold();
@@ -13597,6 +14292,12 @@
 				}
 			} else {
 				isItalic = null;
+			}
+			return isItalic;
+		} else if (this._object instanceof ApiFormatCondition) {
+			let isItalic = null;
+			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
+				isItalic = this._object.rule.dxf.font.i;
 			}
 			return isItalic;
 		}
@@ -13640,6 +14341,17 @@
 					}
 				}
 			}
+		} else if (this._object instanceof ApiFormatCondition) {
+			let currentItalic = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.i;
+			let newItalic = isItalic ? true : null;
+			
+			if (currentItalic === newItalic) {
+				return;
+			}
+			
+			this._object.private_changeStyle(function (_newRule) {
+				_newRule.dxf.font.i = newItalic;
+			});
 		}
 	};
 
@@ -13682,6 +14394,12 @@
 				size = null;
 			}
 			return size;
+		} else if (this._object instanceof ApiFormatCondition) {
+			let fontSize = null;
+			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
+				fontSize = this._object.rule.dxf.font.fs;
+			}
+			return fontSize;
 		}
 	};
 
@@ -13723,6 +14441,16 @@
 					}
 				}
 			}
+		} else if (this._object instanceof ApiFormatCondition) {
+			let currentSize = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.fs;
+			
+			if (currentSize === Size) {
+				return;
+			}
+			
+			this._object.private_changeStyle(function (_newRule) {
+				_newRule.dxf.font.fs = Size;
+			});
 		}
 	};
 
@@ -13763,6 +14491,12 @@
 				}
 			} else {
 				isStrikethrough = null;
+			}
+			return isStrikethrough;
+		} else if (this._object instanceof ApiFormatCondition) {
+			let isStrikethrough = null;
+			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
+				isStrikethrough = this._object.rule.dxf.font.s;
 			}
 			return isStrikethrough;
 		}
@@ -13806,6 +14540,17 @@
 					}
 				}
 			}
+		} else if (this._object instanceof ApiFormatCondition) {
+			let currentStrike = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.s;
+			let newStrike = isStrikethrough ? true : null;
+
+			if (currentStrike === newStrike) {
+				return;
+			}
+
+			this._object.private_changeStyle(function (_newRule) {
+				_newRule.dxf.font.s = newStrike;
+			});
 		}
 	};
 
@@ -13880,6 +14625,24 @@
 			}
 
 			return Underline;
+		} else if (this._object instanceof ApiFormatCondition) {
+			let underlineType = null;
+			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
+				underlineType = this._object.rule.dxf.font.u;
+			}
+
+			 switch (underlineType) {
+				case Asc.EUnderline.underlineSingle:
+					return "xlUnderlineStyleSingle";
+				case Asc.EUnderline.underlineDouble:
+					return "xlUnderlineStyleDouble";
+				case Asc.EUnderline.underlineSingleAccounting:
+					return "xlUnderlineStyleSingleAccounting";
+				case Asc.EUnderline.underlineDoubleAccounting:
+					return "xlUnderlineStyleDoubleAccounting";
+				default:
+					return "xlUnderlineStyleNone";
+			}
 		}
 	};
 
@@ -13946,6 +14709,14 @@
 					}
 				}
 			}
+		} else if (this._object instanceof ApiFormatCondition) {
+			let currentUnderline = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.u;
+			if (currentUnderline === Underline) {
+				return;
+			}
+			this._object.private_changeStyle(function (_newRule) {
+				_newRule.dxf.font.u = Underline;
+			});
 		}
 	};
 
@@ -13986,6 +14757,12 @@
 				}
 			} else {
 				isSubscript = null;
+			}
+			return isSubscript;
+		} else if (this._object instanceof ApiFormatCondition) {
+			let isSubscript = null;
+			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
+				isSubscript = this._object.rule.dxf.font.va === AscCommon.vertalign_SubScript; // 2 = subscript
 			}
 			return isSubscript;
 		}
@@ -14029,6 +14806,17 @@
 					}
 				}
 			}
+		} else if (this._object instanceof ApiFormatCondition) {
+			let currentVertAlign = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.va;
+			let newVertAlign = isSubscript ? AscCommon.vertalign_SubScript : null;
+
+			if (currentVertAlign === newVertAlign) {
+				return;
+			}
+
+			this._object.private_changeStyle(function (_newRule) {
+				_newRule.dxf.font.va = newVertAlign;
+			});
 		}
 	};
 
@@ -14069,6 +14857,12 @@
 				}
 			} else {
 				isSuperscript = null;
+			}
+			return isSuperscript;
+		} else if (this._object instanceof ApiFormatCondition) {
+			let isSuperscript = null;
+			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
+				isSuperscript = this._object.rule.dxf.font.va === AscCommon.vertalign_SuperScript; // 1 = superscript
 			}
 			return isSuperscript;
 		}
@@ -14112,6 +14906,17 @@
 					}
 				}
 			}
+		} else if (this._object instanceof ApiFormatCondition) {
+			let currentVertAlign = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.va;
+			let newVertAlign = isSuperscript ? AscCommon.vertalign_SuperScript : null;
+
+			if (currentVertAlign === newVertAlign) {
+				return;
+			}
+
+			this._object.private_changeStyle(function (_newRule) {
+				_newRule.dxf.font.va = newVertAlign;
+			});
 		}
 	};
 
@@ -14154,6 +14959,12 @@
 				FontName = null;
 			}
 			return FontName;
+		} else if (this._object instanceof ApiFormatCondition) {
+			let fontName = null;
+			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font) {
+				fontName = this._object.rule.dxf.font.fn;
+			}
+			return fontName;
 		}
 	};
 
@@ -14196,6 +15007,16 @@
 					}
 				}
 			}
+		} else if (this._object instanceof ApiFormatCondition) {
+			let currentName = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.fn;
+
+			if (currentName === FontName) {
+				return;
+			}
+
+			this._object.private_changeStyle(function (_newRule) {
+				_newRule.dxf.font.fn = FontName;
+			});
 		}
 	};
 
@@ -14238,6 +15059,12 @@
 				color = null;
 			}
 			return (color !== null ? new ApiColor(color) : null);
+		} else if (this._object instanceof ApiFormatCondition) {
+			let fontColor = null;
+			if (this._object.rule && this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.c) {
+				fontColor = this._object.rule.dxf.font.c;
+			}
+			return fontColor ? new ApiColor(fontColor) : null;
 		}
 	};
 
@@ -14280,6 +15107,17 @@
 					}
 				}
 			}
+		} else if (this._object instanceof ApiFormatCondition) {
+			let currentColor = this._object.rule.dxf && this._object.rule.dxf.font && this._object.rule.dxf.font.c;
+			let newColor = Color.color;
+
+			if (currentColor === newColor) {
+				return;
+			}
+
+			this._object.private_changeStyle(function (_newRule) {
+				_newRule.dxf.font.c = newColor;
+			});
 		}
 	};
 
@@ -16019,8 +16857,8 @@
 	};
 
 	Object.defineProperty(ApiPivotTable.prototype, "Parent", {
-		set: function () {
-			this.GetParent();
+		get: function () {
+			return this.GetParent();
 		}
 	});
 
@@ -16482,7 +17320,7 @@
 		if (index != null) {
 			const item = pivotField[index];
 			if (item && item.t === Asc.c_oAscItemType.Data) {
-				return new ApiPivotItem(this, item);
+				return new ApiPivotItem(this, item, index);
 			}
 			private_MakeError('Invalid item index.');
 			return null;
@@ -16492,7 +17330,7 @@
 		return items.filter(function (item) {
 			return Asc.c_oAscItemType.Data === item.t;
 		}).map(function (item, index) {
-			return new ApiPivotItem(t, item);
+			return new ApiPivotItem(t, item, index);
 		})
 	};
 
@@ -16667,8 +17505,10 @@
 			return "Columns";
 		} else if (this.pivotField.axis === Asc.c_oAscAxis.AxisPage) {
 			return "Filters"
+		} else if (this.pivotField.dataField) {
+			return "Values";
 		} else {
-			return "Hidden"
+			return "Hidden";
 		}
 	};
 
@@ -16683,6 +17523,7 @@
 	 */
 	ApiPivotField.prototype.SetOrientation = function (type) {
 		switch (type) {
+			case "xlRowField":
 			case "Rows":
 				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisRow) {
 					this.table.pivot.asc_moveToRowField(this.table.api, this.index);
@@ -16690,6 +17531,7 @@
 					private_MakeError('The field already has that orientation.')
 				}
 				break;
+			case "xlColumnField":
 			case "Columns":
 				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisCol) {
 					this.table.pivot.asc_moveToColField(this.table.api, this.index);
@@ -16697,6 +17539,7 @@
 					private_MakeError('The field already has that orientation.')
 				}
 				break;
+			case "xlPageField":
 			case "Filters":
 				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisPage) {
 					this.table.pivot.asc_moveToPageField(this.table.api, this.index);
@@ -16704,9 +17547,11 @@
 					private_MakeError('The field already has that orientation.')
 				}
 				break;
+			case "xlDataField":
 			case "Values":
 				this.table.pivot.asc_moveToDataField(this.table.api, this.index);
 				break;
+			case "xlHidden":
 			case "Hidden":
 				this.Remove();
 				break;
@@ -17030,7 +17875,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetShowingInAxis.js
 	 */
 	ApiPivotField.prototype.GetShowingInAxis = function () {
-		return this.pivotField.axis !== null || this.pivotField.dataField;
+		return this.pivotField.showingInAxis();
 	};
 
 	Object.defineProperty(ApiPivotField.prototype, "ShowingInAxis", {
@@ -17196,7 +18041,7 @@
 	});
 
 	/**
-	 * The layout subtotal location. 
+	 * The layout subtotal location.
 	 * @typedef { "Top" | "Bottom" } LayoutSubtotalLocationType
 	 */
 
@@ -17640,6 +18485,330 @@
 		}
 	});
 
+	/**
+	 * Returns the collection of pivot filters applied to the specified pivot field.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotFilters}
+	 * @since 9.1.0
+	 */
+	ApiPivotField.prototype.GetPivotFilters = function () {
+		return new ApiPivotFilters(this);
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "PivotFilters", {
+		get: function () {
+			return this.GetPivotFilters();
+		}
+	});
+
+	/**
+	 * Establishes automatic field-sorting rules for the pivot table reports.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {SortOrder} order - The sort order.
+	 * @param {string} field - The name of the field to sort by (pivotField.SourceName, pivotField.Name, dataField.Name).
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/AutoSort.js
+	 */
+	ApiPivotField.prototype.AutoSort = function (order, field) {
+		// Validate input parameters
+		if (typeof order !== "string") {
+			private_MakeError('Invalid type for "order" parameter. Expected string.');
+			return;
+		}
+
+		if (typeof field !== "string") {
+			private_MakeError('Invalid type for "field" parameter. Expected string.');
+			return;
+		}
+
+		let sortOrder = null;
+		switch (order) {
+			case "xlAscending":
+				sortOrder = Asc.c_oAscSortOptions.Ascending;
+				break;
+			case "xlDescending":
+				sortOrder = Asc.c_oAscSortOptions.Descending;
+				break;
+			case "xlManual":
+				sortOrder = null;
+				break;
+			default:
+				private_MakeError('Invalid sort order. Use "xlAscending", "xlDescending", or "xlManual".');
+				return;
+		}
+		const fieldIndex = this.table.pivot.dataFields.getIndexByName(field);
+		this.table.pivot.sortByFieldIndex(this.table.api, this.index, sortOrder, fieldIndex);
+	};
+	Object.defineProperty(ApiPivotField.prototype, "AutoSortField", {
+		get: function () {
+			const autoFilterOptions = new Asc.AutoFiltersOptions();
+			this.table.pivot.fillAutoFiltersOptions(autoFilterOptions, this.index);
+			const pivotObj = autoFilterOptions.asc_getPivotObj();
+			if (autoFilterOptions.asc_getSortState() === null || !pivotObj) {
+				return "";
+			}
+			const dataFields = pivotObj.asc_getDataFields();
+			const dataFieldIndexSorting = pivotObj.asc_getDataFieldIndexSorting();
+			return dataFields[dataFieldIndexSorting] || "";
+		}
+	});
+	Object.defineProperty(ApiPivotField.prototype, "AutoSortOrder", {
+		get: function () {
+			const autoFilterOptions = new Asc.AutoFiltersOptions();
+			this.table.pivot.fillAutoFiltersOptions(autoFilterOptions, this.index);
+			switch (autoFilterOptions.asc_getSortState()) {
+				case Asc.c_oAscSortOptions.Ascending:
+					return "xlAscending";
+				case Asc.c_oAscSortOptions.Descending:
+					return "xlDescending";
+				default:
+					return "xlManual";
+			}
+		}
+	});
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiPivotFilters
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a collection of pivot filters applied to a pivot field.
+	 * @constructor
+	 * @param {ApiPivotField} field - The pivot field that owns this filter collection.
+	 */
+	function ApiPivotFilters(field) {
+		/** @type {ApiPivotField} */
+		this.field = field;
+	}
+
+	/**
+	 * The pivot filter type.
+	 * @typedef {("xlAfter" | "xlAfterOrEqualTo" | "xlAllDatesInPeriodApril" | "xlAllDatesInPeriodAugust" | "xlAllDatesInPeriodDecember" | "xlAllDatesInPeriodFebruary" | "xlAllDatesInPeriodJanuary" | "xlAllDatesInPeriodJuly" | "xlAllDatesInPeriodJune" | "xlAllDatesInPeriodMarch" | "xlAllDatesInPeriodMay" | "xlAllDatesInPeriodNovember" | "xlAllDatesInPeriodOctober" | "xlAllDatesInPeriodQuarter1" | "xlAllDatesInPeriodQuarter2" | "xlAllDatesInPeriodQuarter3" | "xlAllDatesInPeriodQuarter4" | "xlAllDatesInPeriodSeptember" | "xlBefore" | "xlBeforeOrEqualTo" | "xlBottomCount" | "xlBottomPercent" | "xlBottomSum" | "xlCaptionBeginsWith" | "xlCaptionContains" | "xlCaptionDoesNotBeginWith" | "xlCaptionDoesNotContain" | "xlCaptionDoesNotEndWith" | "xlCaptionDoesNotEqual" | "xlCaptionEndsWith" | "xlCaptionEquals" | "xlCaptionIsBetween" | "xlCaptionIsGreaterThan" | "xlCaptionIsGreaterThanOrEqualTo" | "xlCaptionIsLessThan" | "xlCaptionIsLessThanOrEqualTo" | "xlCaptionIsNotBetween" | "xlDateBetween" | "xlDateLastMonth" | "xlDateLastQuarter" | "xlDateLastWeek" | "xlDateLastYear" | "xlDateNextMonth" | "xlDateNextQuarter" | "xlDateNextWeek" | "xlDateNextYear" | "xlDateThisMonth" | "xlDateThisQuarter" | "xlDateThisWeek" | "xlDateThisYear" | "xlDateToday" | "xlDateTomorrow" | "xlDateYesterday" | "xlNotSpecificDate" | "xlSpecificDate" | "xlTopCount" | "xlTopPercent" | "xlTopSum" | "xlValueDoesNotEqual" | "xlValueEquals" | "xlValueIsBetween" | "xlValueIsGreaterThan" | "xlValueIsGreaterThanOrEqualTo" | "xlValueIsLessThan" | "xlValueIsLessThanOrEqualTo" | "xlValueIsNotBetween" | "xlYearToDate") } XlPivotFilterType
+	 */
+
+	/**
+	 * Adds a new filter to the pivot field. This method is VBA-compatible and follows the PivotFilters.Add signature from Excel VBA.
+	 * Supports all major filter types including label filters, value filters, top/bottom filters, and date filters.
+	 * @memberof ApiPivotFilters
+	 * @typeofeditors ["CSE"]
+	 * @param {XlPivotFilterType} filterType - The type of filter to add. Must match VBA XlPivotFilterType enum values.
+	 * @param {ApiPivotDataField} [dataField] - The data field object to filter by. Required for value filters (xlValue* types) and top/bottom filters.
+	 * @param {string | number | Date} [value1] - The first value for the filter condition. Required for comparison, between, and top/bottom count filters.
+	 * @param {string | number | Date} [value2] - The second value for "Between" conditions (xlCaptionIsBetween, xlCaptionIsNotBetween, xlValueIsBetween).
+	 * @param {boolean} [wholeDayFilter] - Specifies whether to filter by whole day for date filters. Reserved for future use, currently not implemented.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotFilters/Methods/Add.js
+	 */
+	ApiPivotFilters.prototype.Add = function (filterType, dataField, value1, value2, wholeDayFilter) {
+		// Validate required filterType parameter
+		if (!filterType || typeof filterType !== 'string') {
+			private_MakeError('Add filter requires a valid FilterType parameter.');
+			return;
+		}
+
+		const autoFilterOptions = new Asc.AutoFiltersOptions();
+		this.field.table.pivot.fillAutoFiltersOptions(autoFilterOptions, this.field.index);
+
+		// Convert values to strings for filter processing (preserve original validation above)
+		if (value1 !== undefined && value1 !== null) {
+			value1 = checkFormat(value1).toString();
+		}
+		if (value2 !== undefined && value2 !== null) {
+			value2 = checkFormat(value2).toString();
+		}
+		if (applyCaptionFilter(autoFilterOptions, filterType, value1, value2) ||
+			applyValueFilter(autoFilterOptions, filterType, value1, value2, dataField) ||
+			applyTopBottomFilter(autoFilterOptions, filterType, value1, dataField) ||
+			applyDateFilter(autoFilterOptions, filterType, value1, value2, wholeDayFilter)) {
+			// Apply filter
+			this.field.table.pivot.filterByFieldIndex(this.field.table.api, autoFilterOptions, this.field.index, false);
+		} else {
+			private_MakeError('Unsupported or unknown filter type: ' + filterType);
+		}
+	};
+
+	function addCaptionFilter(autoFilterOptions, captionFilters, betweenFilters, filterType, value1, value2) {
+		if (captionFilters.hasOwnProperty(filterType)) {
+			if (value1 === undefined || value1 === null) {
+				private_MakeError('Label filter requires value1 parameter.');
+				return false;
+			}
+			createCustomFilter(autoFilterOptions, value1, value2, "xlAnd", null, captionFilters[filterType]);
+			return true;
+		}
+		if (betweenFilters.hasOwnProperty(filterType)) {
+			// Validate value1 and value2 requirements for between filters
+			if (value1 === undefined || value1 === null) {
+				private_MakeError('Filter type "' + filterType + '" requires a value1 parameter.');
+				return false;
+			}
+			if (value2 === undefined || value2 === null) {
+				private_MakeError('Filter type "' + filterType + '" requires both value1 and value2 parameters.');
+				return false;
+			}
+			const isBetween = betweenFilters[filterType];
+			if (isBetween) {//xlOr
+				// Between: value1 <= field <= value2
+				createCustomFilter(autoFilterOptions, value1, value2, "xlAnd", null, Asc.c_oAscCustomAutoFilter.isGreaterThanOrEqualTo, Asc.c_oAscCustomAutoFilter.isLessThanOrEqualTo);
+			} else {
+				// Not Between: field < value1 OR field > value2
+				createCustomFilter(autoFilterOptions, value1, value2, "xlOr", null, Asc.c_oAscCustomAutoFilter.isLessThan, Asc.c_oAscCustomAutoFilter.isGreaterThan);
+			}
+			return true;
+		}
+		return false;
+	}
+	function applyCaptionFilter(autoFilterOptions, filterType, value1, value2) {
+		const captionFilters = {
+			'xlCaptionEquals': Asc.c_oAscCustomAutoFilter.equals,
+			'xlCaptionDoesNotEqual': Asc.c_oAscCustomAutoFilter.doesNotEqual,
+			'xlCaptionBeginsWith': Asc.c_oAscCustomAutoFilter.beginsWith,
+			'xlCaptionDoesNotBeginWith': Asc.c_oAscCustomAutoFilter.doesNotBeginWith,
+			'xlCaptionEndsWith': Asc.c_oAscCustomAutoFilter.endsWith,
+			'xlCaptionDoesNotEndWith': Asc.c_oAscCustomAutoFilter.doesNotEndWith,
+			'xlCaptionContains': Asc.c_oAscCustomAutoFilter.contains,
+			'xlCaptionDoesNotContain': Asc.c_oAscCustomAutoFilter.doesNotContain,
+			'xlCaptionIsGreaterThan': Asc.c_oAscCustomAutoFilter.isGreaterThan,
+			'xlCaptionIsGreaterThanOrEqualTo': Asc.c_oAscCustomAutoFilter.isGreaterThanOrEqualTo,
+			'xlCaptionIsLessThan': Asc.c_oAscCustomAutoFilter.isLessThan,
+			'xlCaptionIsLessThanOrEqualTo': Asc.c_oAscCustomAutoFilter.isLessThanOrEqualTo
+		};
+		const betweenFilters = {
+			'xlCaptionIsBetween': true,
+			'xlCaptionIsNotBetween': false
+		};
+		return addCaptionFilter(autoFilterOptions, captionFilters, betweenFilters, filterType, value1, value2);
+	}
+	function applyValueFilter(autoFilterOptions, filterType, value1, value2, dataField) {
+		const valueFilters = {
+			'xlValueEquals': Asc.c_oAscCustomAutoFilter.equals,
+			'xlValueDoesNotEqual': Asc.c_oAscCustomAutoFilter.doesNotEqual,
+			'xlValueIsGreaterThan': Asc.c_oAscCustomAutoFilter.isGreaterThan,
+			'xlValueIsLessThan': Asc.c_oAscCustomAutoFilter.isLessThan,
+			'xlValueIsGreaterThanOrEqualTo': Asc.c_oAscCustomAutoFilter.isGreaterThanOrEqualTo,
+			'xlValueIsLessThanOrEqualTo': Asc.c_oAscCustomAutoFilter.isLessThanOrEqualTo
+		};
+		const betweenFilters = {
+			'xlValueIsBetween': true,
+			'xlValueIsNotBetween': false
+		};
+		const res = addCaptionFilter(autoFilterOptions, valueFilters, betweenFilters, filterType, value1, value2);
+		if (res) {
+			// Validate dataField requirement for value filters
+			if (!dataField) {
+				private_MakeError('Filter type "' + filterType + '" requires a dataField parameter.');
+				return false;
+			}
+			// Configure pivot object for value filtering (dataFieldIndex > 0 for value filters)
+			const pivotObj = autoFilterOptions.asc_getPivotObj();
+			if (pivotObj && dataField) {
+				pivotObj.asc_setDataFieldIndexFilter(dataField.GetPosition());
+			}
+		}
+		return res;
+	}
+	function applyTopBottomFilter(autoFilterOptions, filterType, value1, dataField) {
+		if (filterType.startsWith('xlTop') || filterType.startsWith('xlBottom')) {
+			if (!dataField) {
+				private_MakeError('Filter type "' + filterType + '" requires a dataField parameter.');
+				return false;
+			}
+
+			const isPercent = "xlTopPercent" === filterType || "xlBottomPercent" === filterType;
+			const isBottom = filterType.startsWith('xlBottom');
+			const isSum = "xlTopSum" === filterType || "xlBottomSum" === filterType;
+
+			let top10Num = value1 ? value1 - 0 : 10;
+			if(top10Num < 0 || isPercent && top10Num > 100) {
+				private_MakeError('Top/bottom filters value1 is out of range: ' + top10Num);
+				return false;
+			}
+
+			createTop10Filter(autoFilterOptions, top10Num, isPercent, isBottom, null);
+			const pivotObj = autoFilterOptions.asc_getPivotObj();
+			if (pivotObj) {
+				// Set dataField and top10 sum configuration for value-based top/bottom
+				if (dataField) {
+					pivotObj.asc_setDataFieldIndexFilter(dataField.GetPosition());
+				}
+				pivotObj.asc_setIsTop10Sum(isSum);
+			}
+			return true;
+		}
+		return false;
+	}
+	function applyDateFilter(autoFilterOptions, filterType, value1, value2, wholeDayFilter) {
+		const pivotToExcelFilterMap = {
+			// Simple date filters - map to Excel filter constants
+			'xlDateToday': 'xlFilterToday',
+			'xlDateYesterday': 'xlFilterYesterday',
+			'xlDateTomorrow': 'xlFilterTomorrow',
+			'xlDateThisWeek': 'xlFilterThisWeek',
+			'xlDateLastWeek': 'xlFilterLastWeek',
+			'xlDateNextWeek': 'xlFilterNextWeek',
+			'xlDateThisMonth': 'xlFilterThisMonth',
+			'xlDateLastMonth': 'xlFilterLastMonth',
+			'xlDateNextMonth': 'xlFilterNextMonth',
+			'xlDateThisQuarter': 'xlFilterThisQuarter',
+			'xlDateLastQuarter': 'xlFilterLastQuarter',
+			'xlDateNextQuarter': 'xlFilterNextQuarter',
+			'xlDateThisYear': 'xlFilterThisYear',
+			'xlDateLastYear': 'xlFilterLastYear',
+			'xlDateNextYear': 'xlFilterNextYear',
+			'xlYearToDate': 'xlFilterYearToDate',
+			// Month period filters
+			'xlAllDatesInPeriodJanuary': 'xlFilterAllDatesInPeriodJanuary',
+			'xlAllDatesInPeriodFebruary': 'xlFilterAllDatesInPeriodFebruary',
+			'xlAllDatesInPeriodMarch': 'xlFilterAllDatesInPeriodMarch',
+			'xlAllDatesInPeriodApril': 'xlFilterAllDatesInPeriodApril',
+			'xlAllDatesInPeriodMay': 'xlFilterAllDatesInPeriodMay',
+			'xlAllDatesInPeriodJune': 'xlFilterAllDatesInPeriodJune',
+			'xlAllDatesInPeriodJuly': 'xlFilterAllDatesInPeriodJuly',
+			'xlAllDatesInPeriodAugust': 'xlFilterAllDatesInPeriodAugust',
+			'xlAllDatesInPeriodSeptember': 'xlFilterAllDatesInPeriodSeptember',
+			'xlAllDatesInPeriodOctober': 'xlFilterAllDatesInPeriodOctober',
+			'xlAllDatesInPeriodNovember': 'xlFilterAllDatesInPeriodNovember',
+			'xlAllDatesInPeriodDecember': 'xlFilterAllDatesInPeriodDecember',
+			// Quarter period filters
+			'xlAllDatesInPeriodQuarter1': 'xlFilterAllDatesInPeriodQuarter1',
+			'xlAllDatesInPeriodQuarter2': 'xlFilterAllDatesInPeriodQuarter2',
+			'xlAllDatesInPeriodQuarter3': 'xlFilterAllDatesInPeriodQuarter3',
+			'xlAllDatesInPeriodQuarter4': 'xlFilterAllDatesInPeriodQuarter4'
+		};
+
+		// Check if this filter type can be handled by dynamic filters
+		const excelFilterType = pivotToExcelFilterMap[filterType];
+		if (excelFilterType) {
+			const dynamicFilterConst = toDynamicConst(excelFilterType);
+			createDynamicFilter(autoFilterOptions, dynamicFilterConst, null);
+			return true;
+		}
+
+		// Handle comparison date filters that need custom filter logic
+		const captionFilters = {
+			'xlSpecificDate': Asc.c_oAscCustomAutoFilter.equals,
+			'xlNotSpecificDate': Asc.c_oAscCustomAutoFilter.doesNotEqual,
+			'xlAfter': Asc.c_oAscCustomAutoFilter.isGreaterThan,
+			'xlBefore': Asc.c_oAscCustomAutoFilter.isLessThan,
+			'xlAfterOrEqualTo': Asc.c_oAscCustomAutoFilter.isGreaterThanOrEqualTo,
+			'xlBeforeOrEqualTo': Asc.c_oAscCustomAutoFilter.isLessThanOrEqualTo
+		};
+		const betweenFilters = {
+			'xlDateBetween': true,
+			'xlDateNotBetween': false
+		};
+
+		const res = addCaptionFilter(autoFilterOptions, captionFilters, betweenFilters, filterType, value1, value2);
+		if (res) {
+			autoFilterOptions.asc_setIsDateFilter(true);
+		}
+		return res;
+	}
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiPivotItem
@@ -17728,10 +18897,7819 @@
 		}
 	});
 
+	/**
+	 * Returns the visibility of the pivot item.
+	 * @memberof ApiPivotItem
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} True if the pivot item is visible, false otherwise.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotItem/Methods/GetVisible.js
+	 */
+	ApiPivotItem.prototype.GetVisible = function () {
+		return !this.pivotItem.h;
+	};
+
+	/**
+	 * Sets the visibility of the pivot item.
+	 * <note> At least one item must remain visible when hiding others. </note>
+	 * @memberof ApiPivotItem
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} visible - Specifies whether the pivot item is visible.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiPivotItem/Methods/SetVisible.js
+	 */
+	ApiPivotItem.prototype.SetVisible = function (visible) {
+		//todo add ManualUpdate for performance reason
+		if (visible === this.GetVisible()) {
+			return;
+		}
+		const autoFilterOptions = new Asc.AutoFiltersOptions();
+		this.field.table.pivot.fillAutoFiltersOptions(autoFilterOptions, this.field.index);
+
+		autoFilterOptions.values[this.index].asc_setVisible(!!visible);
+
+		let oFilter = new window["Asc"].AutoFilterObj();
+		oFilter.asc_setType(Asc.c_oAscAutoFilterTypes.Filters);
+		autoFilterOptions.asc_setFilterObj(oFilter);
+
+		this.field.table.pivot.filterByFieldIndex(this.field.table.api, autoFilterOptions, this.field.index, false);
+	};
+
+	Object.defineProperty(ApiPivotItem.prototype, "Visible", {
+		get: function () {
+			return this.GetVisible();
+		},
+		set: function (visible) {
+			this.SetVisible(visible);
+		}
+	});
+
+
+	/**
+	 * The validation type.
+	 * @typedef {("xlValidateInputOnly" | "xlValidateWholeNumber" | "xlValidateDecimal" |
+	 * "xlValidateList" | "xlValidateDate" | "xlValidateTime" | "xlValidateTextLength" |
+	 * "xlValidateCustom")} ValidationType
+	 * @see office-js-api/Examples/Enumerations/ValidationType.js
+	 */
+
+	/**
+	 * The validation alert style.
+	 * @typedef {("xlValidAlertStop" | "xlValidAlertWarning" | "xlValidAlertInformation")} ValidationAlertStyle
+	 * @see office-js-api/Examples/Enumerations/ValidationAlertStyle.js
+	 */
+
+	/**
+	 * The validation operator.
+	 * @typedef {("xlBetween" | "xlNotBetween" | "xlEqual" | "xlNotEqual" |
+	 * "xlGreater" | "xlLess" | "xlGreaterEqual" | "xlLessEqual")} ValidationOperator
+	 * @see office-js-api/Examples/Enumerations/ValidationOperator.js
+	 */
+
+	/**
+	 * The condition value types for color scale conditional formatting criteria.
+	 * @typedef {("xlConditionValueAutomaticMax" | "xlConditionValueAutomaticMin" |
+	 * "xlConditionValueHighestValue" | "xlConditionValueLowestValue" |
+	 * "xlConditionValueNone" | "xlConditionValueNumber" | "xlConditionValuePercent" |
+	 * "xlConditionValuePercentile" | "xlConditionValueFormula")} XlConditionValueTypes
+	 */
+
+	/**
+	 * The icon set types for conditional formatting.
+	 * @typedef {("xl3Arrows" | "xl3ArrowsGray" | "xl3Flags" | "xl3TrafficLights1" | "xl3TrafficLights2" |
+	 * "xl3Signs" | "xl3Symbols" | "xl3Symbols2" | "xl4Arrows" | "xl4ArrowsGray" | "xl4RedToBlack" |
+	 * "xl4CRV" | "xl4TrafficLights" | "xl5Arrows" | "xl5ArrowsGray" | "xl5CRV" | "xl5Quarters" |
+	 * "xl3Stars" | "xl3Triangles" | "xl5Boxes")} XlIconSet
+	 */
+
+	/**
+	 * The calculation scope for pivot table conditional formatting.
+	 * @typedef {("xlAllValues" | "xlColItems" | "xlRowItems")} XlCalcFor
+	 */
+
+	/**
+	 * The top/bottom type for conditional formatting rules.
+	 * @typedef {("xlTop10Top" | "xlTop10Bottom")} XlTopBottom
+	 */
+
+	/**
+	 * Specifies whether to format duplicate or unique values.
+	 * @typedef {("xlDuplicate" | "xlUnique")} XlDuplicateValues
+	 */
+
+	/**
+	 * The icon constants for conditional formatting.
+	 * @typedef {("xlIcon0Bars" | "xlIcon0FilledBoxes" | "xlIcon1Bar" | "xlIcon1FilledBox" |
+	 * "xlIcon2Bars" | "xlIcon2FilledBoxes" | "xlIcon3Bars" | "xlIcon3FilledBoxes" |
+	 * "xlIcon4Bars" | "xlIcon4FilledBoxes" | "xlIconBlackCircle" | "xlIconBlackCircleWithBorder" |
+	 * "xlIconCircleWithOneWhiteQuarter" | "xlIconCircleWithThreeWhiteQuarters" |
+	 * "xlIconCircleWithTwoWhiteQuarters" | "xlIconGoldStar" | "xlIconGrayCircle" |
+	 * "xlIconGrayDownArrow" | "xlIconGrayDownInclineArrow" | "xlIconGraySideArrow" |
+	 * "xlIconGrayUpArrow" | "xlIconGrayUpInclineArrow" | "xlIconGreenCheck" |
+	 * "xlIconGreenCheckSymbol" | "xlIconGreenCircle" | "xlIconGreenFlag" |
+	 * "xlIconGreenTrafficLight" | "xlIconGreenUpArrow" | "xlIconGreenUpTriangle" |
+	 * "xlIconHalfGoldStar" | "xlIconNoCellIcon" | "xlIconPinkCircle" | "xlIconRedCircle" |
+	 * "xlIconRedCircleWithBorder" | "xlIconRedCross" | "xlIconRedCrossSymbol" |
+	 * "xlIconRedDiamond" | "xlIconRedDownArrow" | "xlIconRedDownTriangle" | "xlIconRedFlag" |
+	 * "xlIconRedTrafficLight" | "xlIconSilverStar" | "xlIconWhiteCircleAllWhiteQuarters" |
+	 * "xlIconYellowCircle" | "xlIconYellowDash" | "xlIconYellowDownInclineArrow" |
+	 * "xlIconYellowExclamation" | "xlIconYellowExclamationSymbol" | "xlIconYellowFlag" |
+	 * "xlIconYellowSideArrow" | "xlIconYellowTrafficLight" | "xlIconYellowTriangle" |
+	 * "xlIconYellowUpInclineArrow")} XlIcon
+	 */
+
+	function FromXlValidationTypeTo(sType) {
+		let nType = -1;
+		switch (sType) {
+			case "xlValidateInputOnly":
+				nType = Asc.EDataValidationType.None;
+				break;
+			case "xlValidateCustom":
+				nType = Asc.EDataValidationType.Custom;
+				break;
+			case "xlValidateDate":
+				nType = Asc.EDataValidationType.Date;
+				break;
+			case "xlValidateDecimal":
+				nType = Asc.EDataValidationType.Decimal;
+				break;
+			case "xlValidateList":
+				nType = Asc.EDataValidationType.List;
+				break;
+			case "xlValidateTextLength":
+				nType = Asc.EDataValidationType.TextLength;
+				break;
+			case "xlValidateTime":
+				nType = Asc.EDataValidationType.Time;
+				break;
+			case "xlValidateWholeNumber":
+				nType = Asc.EDataValidationType.Whole;
+				break;
+		}
+		return nType;
+	}
+
+	function ToXlValidationTypeFrom(nType) {
+		var sType = "";
+		switch (nType) {
+			case Asc.EDataValidationType.None:
+				sType = "xlValidateInputOnly";
+				break;
+			case Asc.EDataValidationType.Custom:
+				sType = "xlValidateCustom";
+				break;
+			case Asc.EDataValidationType.Date:
+				sType = "xlValidateDate";
+				break;
+			case Asc.EDataValidationType.Decimal:
+				sType = "xlValidateDecimal";
+				break;
+			case Asc.EDataValidationType.List:
+				sType = "xlValidateList";
+				break;
+			case Asc.EDataValidationType.TextLength:
+				sType = "xlValidateTextLength";
+				break;
+			case Asc.EDataValidationType.Time:
+				sType = "xlValidateTime";
+				break;
+			case Asc.EDataValidationType.Whole:
+				sType = "xlValidateWholeNumber";
+				break;
+		}
+		return sType;
+	}
+
+	function FromXlValidationAlertStyleTo(sStyle) {
+		var nStyle = -1;
+		switch (sStyle) {
+			case "xlValidAlertStop":
+				nStyle = Asc.EDataValidationErrorStyle.Stop;
+				break;
+			case "xlValidAlertWarning":
+				nStyle = Asc.EDataValidationErrorStyle.Warning;
+				break;
+			case "xlValidAlertInformation":
+				nStyle = Asc.EDataValidationErrorStyle.Information;
+				break;
+		}
+		return nStyle;
+	}
+
+	function ToXlValidationAlertStyleFrom(nStyle) {
+		var sStyle = "";
+		switch (nStyle) {
+			case Asc.EDataValidationErrorStyle.Stop:
+				sStyle = "xlValidAlertStop";
+				break;
+			case Asc.EDataValidationErrorStyle.Warning:
+				sStyle = "xlValidAlertWarning";
+				break;
+			case Asc.EDataValidationErrorStyle.Information:
+				sStyle = "xlValidAlertInformation";
+				break;
+		}
+		return sStyle;
+	}
+
+	function FromXlValidationOperatorTo(sOperator) {
+		var nOperator = -1;
+		switch (sOperator) {
+			case "xlBetween":
+				nOperator = Asc.EDataValidationOperator.Between;
+				break;
+			case "xlNotBetween":
+				nOperator = Asc.EDataValidationOperator.NotBetween;
+				break;
+			case "xlEqual":
+				nOperator = Asc.EDataValidationOperator.Equal;
+				break;
+			case "xlNotEqual":
+				nOperator = Asc.EDataValidationOperator.NotEqual;
+				break;
+			case "xlLess":
+				nOperator = Asc.EDataValidationOperator.LessThan;
+				break;
+			case "xlLessEqual":
+				nOperator = Asc.EDataValidationOperator.LessThanOrEqual;
+				break;
+			case "xlGreater":
+				nOperator = Asc.EDataValidationOperator.GreaterThan;
+				break;
+			case "xlGreaterEqual":
+				nOperator = Asc.EDataValidationOperator.GreaterThanOrEqual;
+				break;
+		}
+		return nOperator;
+	}
+
+	function ToXlValidationOperatorFrom(nOperator) {
+		var sOperator = "";
+		switch (nOperator) {
+			case Asc.EDataValidationOperator.Between:
+				sOperator = "xlBetween";
+				break;
+			case Asc.EDataValidationOperator.NotBetween:
+				sOperator = "xlNotBetween";
+				break;
+			case Asc.EDataValidationOperator.Equal:
+				sOperator = "xlEqual";
+				break;
+			case Asc.EDataValidationOperator.NotEqual:
+				sOperator = "xlNotEqual";
+				break;
+			case Asc.EDataValidationOperator.LessThan:
+				sOperator = "xlLess";
+				break;
+			case Asc.EDataValidationOperator.LessThanOrEqual:
+				sOperator = "xlLessEqual";
+				break;
+			case Asc.EDataValidationOperator.GreaterThan:
+				sOperator = "xlGreater";
+				break;
+			case Asc.EDataValidationOperator.GreaterThanOrEqual:
+				sOperator = "xlGreaterEqual";
+				break;
+		}
+		return sOperator;
+	}
+
+	// Helper to get single instance of validation
+	function getSingleValidation(apiValidation) {
+		if (!apiValidation) {
+			return;
+		}
+		if (!apiValidation.validations || !Array.isArray(apiValidation.validations) || !apiValidation.validations.length) {
+			const validation = new window['AscCommonExcel'].CDataValidations().getNewValidation();
+			apiValidation.validations = [validation];
+			return apiValidation.validations[0];
+		}
+		if (apiValidation.validations.length > 1) {
+			logError(new Error('Multiple validations exist'));
+			return null;
+		}
+		return apiValidation.validations[0];
+	}
+
+	/**
+	 * Class representing data validation.
+	 * @constructor
+	 * @property {ValidationType} Type - Returns or sets the validation type.
+	 * @property {ValidationAlertStyle} AlertStyle - Returns or sets the validation alert style.
+	 * @property {boolean} IgnoreBlank - Returns or sets a Boolean value that specifies whether blank values are permitted by the range data validation.
+	 * @property {boolean} InCellDropdown - Returns or sets a Boolean value indicating whether data validation displays a drop-down list that contains acceptable values.
+	 * @property {boolean} ShowInput - Returns or sets a Boolean value indicating whether the data validation input message will be displayed whenever the user selects a cell in the data validation range.
+	 * @property {boolean} ShowError - Returns or sets a Boolean value indicating whether the data validation error message will be displayed whenever the user enters invalid data.
+	 * @property {string} InputTitle - Returns or sets the title of the data-validation input dialog box.
+	 * @property {string} InputMessage - Returns or sets the data validation input message.
+	 * @property {string} ErrorTitle - Returns or sets the title of the data-validation error dialog box.
+	 * @property {string} ErrorMessage - Returns or sets the data validation error message.
+	 * @property {string} Formula1 - Returns or sets the value or expression associated with the conditional format or data validation.
+	 * @property {string} Formula2 - Returns or sets the value or expression associated with the second part of a conditional format or data validation.
+	 * @property {ValidationOperator} Operator - Returns or sets the data validation operator.
+	 * @property {ApiRange} Parent - Returns the parent range object.
+	 * @property {string} Value - Returns or sets the validation value.
+	 */
+	function ApiValidation(validations, range) {
+        if (!validations || !Array.isArray(validations) || !validations.length ) {
+            validations = [];
+        }
+		this.range = range;
+		this.validations = validations;
+	}
+
+	/**
+	 * Adds data validation to the specified range.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {ValidationType} Type - The validation type.
+	 * @param {ValidationAlertStyle} [AlertStyle] - The validation alert style.
+	 * @param {ValidationOperator} [Operator] - The data validation operator.
+	 * @param {string | number | ApiRange} [Formula1] - The first formula in the data validation.
+	 * @param {string | number | ApiRange} [Formula2] - The second formula in the data validation.
+	 * @returns {ApiValidation | null}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/Add.js
+	 */
+	ApiValidation.prototype.Add = function(Type, AlertStyle, Operator, Formula1, Formula2) {
+		if (!Type) {
+			return;
+		}
+
+		if (this.validations && Array.isArray(this.validations) && this.validations.length > 0 && this.validations[0].ranges) {
+			logError(new Error('Validation already exists.'));
+			return null;
+		}
+
+		let internalType = FromXlValidationTypeTo(Type);
+		let internalAlertStyle = AlertStyle ? FromXlValidationAlertStyleTo(AlertStyle) : Asc.EDataValidationErrorStyle.Stop;
+		let internalOperator = Operator ? FromXlValidationOperatorTo(Operator) : Asc.EDataValidationOperator.Between;
+
+		if (internalType === -1) {
+			return null;
+		}
+
+		let dataValidation = new window['AscCommonExcel'].CDataValidation();
+
+		dataValidation.type = internalType;
+		dataValidation.errorStyle = internalAlertStyle;
+		dataValidation.operator = internalOperator;
+		dataValidation.showErrorMessage = true;
+		dataValidation.showInputMessage = true;
+		dataValidation.allowBlank = true;
+
+		let processFormula = function(formula) {
+			if (formula === undefined || formula === null) {
+				return null;
+			}
+
+			if (typeof formula === "string") {
+				return new window['Asc'].CDataFormula(formula);
+			} else if (typeof formula === "number") {
+				return new window['Asc'].CDataFormula(formula.toString());
+			} else if (formula && formula.constructor === ApiRange) {
+				return new window['Asc'].CDataFormula(formula.GetAddress());
+			}
+
+			return null;
+		};
+
+		if (Formula1 !== undefined) {
+			dataValidation.formula1 = processFormula(Formula1);
+		}
+
+		if (Formula2 !== undefined) {
+			dataValidation.formula2 = processFormula(Formula2);
+		}
+
+		let ranges = [];
+		if (this.range.areas) {
+			for (let i = 0; i < this.range.areas.length; i++) {
+				ranges.push(this.range.areas[i].bbox);
+			}
+		} else {
+			ranges.push(this.range.range.bbox);
+		}
+		dataValidation.ranges = ranges;
+
+		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		if (!worksheet) {
+			return null;
+		}
+
+		if (Asc.c_oAscError.ID.No !== dataValidation.asc_checkValid()) {
+			logError(new Error('Check params error.'));
+			return null;
+		}
+
+		if (!worksheet.dataValidations) {
+			worksheet.dataValidations = new window['AscCommonExcel'].CDataValidations();
+		}
+
+		dataValidation._init(worksheet);
+		dataValidation.correctFromInterface(worksheet);
+
+		worksheet.dataValidations.add(worksheet, dataValidation, true);
+
+		this.validations = [dataValidation];
+
+		return this;
+	};
+
+	/**
+	 * Deletes the object.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/Delete.js
+	 */
+	ApiValidation.prototype.Delete = function() {
+		if (!this.validations || !Array.isArray(this.validations) || !this.validations.length) {
+			return;
+		}
+
+		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		if (!worksheet || !worksheet.dataValidations) {
+			return;
+		}
+
+		// for all validations in the this.validations remove intersecting range from validations
+		let rangeBbox = this.range.range.bbox;
+		worksheet.dataValidations.deleteMassValidations(this.validations, worksheet, rangeBbox, true);
+		
+
+		// Очищаем ссылку на validation
+		this.validations = [];
+		return this;
+	};
+
+	/**
+	 * Modifies data validation for a range.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {ValidationType} [Type] - The validation type.
+	 * @param {ValidationAlertStyle} [AlertStyle] - The validation alert style.
+	 * @param {ValidationOperator} [Operator] - The data validation operator.
+	 * @param {string | number | ApiRange} [Formula1] - The first formula in the data validation.
+	 * @param {string | number | ApiRange} [Formula2] - The second formula in the data validation.
+	 * @returns {ApiValidation | null}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/Modify.js
+	 */
+	ApiValidation.prototype.Modify = function(Type, AlertStyle, Operator, Formula1, Formula2) {
+		if (!this.validations || !Array.isArray(this.validations) || !this.validations.length) {
+			logError(new Error('No validation to modify.'));
+			return null;
+		}
+
+		if (this.validations.length > 0 && !this.validations[0].ranges) {
+			logError(new Error('No ranges to modify.'));
+			return null;
+		}
+
+		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		if (!worksheet || !worksheet.dataValidations) {
+			return null;
+		}
+				
+		worksheet.dataValidations.deleteMassValidations(this.validations, worksheet, this.range.range.bbox, true);
+		this.validations = [];
+		this.Add(Type, AlertStyle, Operator, Formula1, Formula2);
+
+		return this;
+	};
+
+	/**
+	 * Returns the validation type.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {ValidationType}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetType.js
+	 */
+	ApiValidation.prototype.GetType = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		return ToXlValidationTypeFrom(validation.asc_getType());
+	};
+
+	/**
+	 * Sets the validation type.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {ValidationType} Type - The validation type.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetType.js
+	 */
+	ApiValidation.prototype.SetType = function(Type) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		// If there are multiple validations, we cannot set type
+		let internalType = FromXlValidationTypeTo(Type);
+		if (internalType !== -1) {
+			validation.asc_setType(internalType);
+		}
+	};
+
+	/**
+	 * Returns the validation alert style.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {ValidationAlertStyle}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetAlertStyle.js
+	 */
+	ApiValidation.prototype.GetAlertStyle = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		return ToXlValidationAlertStyleFrom(validation.getErrorStyle());
+	};
+
+	/**
+	 * Sets the validation alert style.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {ValidationAlertStyle} AlertStyle - The validation alert style.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetAlertStyle.js
+	 */
+	ApiValidation.prototype.SetAlertStyle = function(AlertStyle) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		let internalAlertStyle = FromXlValidationAlertStyleTo(AlertStyle);
+		if (internalAlertStyle !== -1) {
+			validation.asc_setErrorStyle(internalAlertStyle);
+		}
+	};
+
+	/**
+	 * Returns whether blank values are permitted by the range data validation.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetIgnoreBlank.js
+	 */
+	ApiValidation.prototype.GetIgnoreBlank = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		return validation.getAllowBlank();
+	};
+
+	/**
+	 * Sets whether blank values are permitted by the range data validation.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} IgnoreBlank - Specifies whether blank values are permitted.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetIgnoreBlank.js
+	 */
+	ApiValidation.prototype.SetIgnoreBlank = function(IgnoreBlank) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		validation.asc_setAllowBlank(IgnoreBlank);
+	};
+
+	/**
+	 * Returns whether data validation displays a drop-down list that contains acceptable values.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetInCellDropdown.js
+	 */
+	ApiValidation.prototype.GetInCellDropdown = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		return !validation.getShowDropDown();
+	};
+
+	/**
+	 * Sets whether data validation displays a drop-down list that contains acceptable values.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} InCellDropdown - Specifies whether to display a drop-down list.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetInCellDropdown.js
+	 */
+	ApiValidation.prototype.SetInCellDropdown = function(InCellDropdown) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		validation.asc_setShowDropDown(!InCellDropdown);
+	};
+
+	/**
+	 * Returns whether the data validation input message will be displayed.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetShowInput.js
+	 */
+	ApiValidation.prototype.GetShowInput = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		return validation.getShowInputMessage();
+	};
+
+	/**
+	 * Sets whether the data validation input message will be displayed.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} ShowInput - Specifies whether to show input message.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetShowInput.js
+	 */
+	ApiValidation.prototype.SetShowInput = function(ShowInput) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		validation.asc_setShowInputMessage(ShowInput);
+	};
+
+	/**
+	 * Returns whether the data validation error message will be displayed.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetShowError.js
+	 */
+	ApiValidation.prototype.GetShowError = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		return validation.getShowErrorMessage();
+	};
+
+	/**
+	 * Sets whether the data validation error message will be displayed.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} ShowError - Specifies whether to show error message.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetShowError.js
+	 */
+	ApiValidation.prototype.SetShowError = function(ShowError) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		validation.asc_setShowErrorMessage(ShowError);
+	};
+
+	/**
+	 * Returns the title of the data-validation input dialog box.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetInputTitle.js
+	 */
+	ApiValidation.prototype.GetInputTitle = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		return validation.getPromptTitle();
+	};
+
+	/**
+	 * Sets the title of the data-validation input dialog box.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {string} InputTitle - The input dialog title.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetInputTitle.js
+	 */
+	ApiValidation.prototype.SetInputTitle = function(InputTitle) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		validation.asc_setPromptTitle(InputTitle);
+	};
+
+	/**
+	 * Returns the data validation input message.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetInputMessage.js
+	 */
+	ApiValidation.prototype.GetInputMessage = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		return validation.getPrompt();
+	};
+
+	/**
+	 * Sets the data validation input message.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {string} InputMessage - The input message.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetInputMessage.js
+	 */
+	ApiValidation.prototype.SetInputMessage = function(InputMessage) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		validation.asc_setPrompt(InputMessage);
+	};
+
+	/**
+	 * Returns the title of the data-validation error dialog box.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetErrorTitle.js
+	 */
+	ApiValidation.prototype.GetErrorTitle = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		return validation.getErrorTitle();
+	};
+
+	/**
+	 * Sets the title of the data-validation error dialog box.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {string} ErrorTitle - The error dialog title.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetErrorTitle.js
+	 */
+	ApiValidation.prototype.SetErrorTitle = function(ErrorTitle) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		validation.asc_setErrorTitle(ErrorTitle);
+	};
+
+	/**
+	 * Returns the data validation error message.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetErrorMessage.js
+	 */
+	ApiValidation.prototype.GetErrorMessage = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		return validation.getError();
+	};
+
+	/**
+	 * Sets the data validation error message.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {string} ErrorMessage - The error message.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetErrorMessage.js
+	 */
+	ApiValidation.prototype.SetErrorMessage = function(ErrorMessage) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		validation.asc_setError(ErrorMessage);
+	};
+
+	/**
+	 * Returns the first formula in the data validation.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetFormula1.js
+	 */
+	ApiValidation.prototype.GetFormula1 = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		let formula1 = validation.getFormula1();
+		return formula1 ? formula1.asc_getValue() : "";
+	};
+
+	/**
+	 * Sets the first formula in the data validation.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {string} Formula1 - The first formula.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetFormula1.js
+	 */
+	ApiValidation.prototype.SetFormula1 = function(Formula1) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		let formula = new window['Asc'].CDataFormula(Formula1);
+		validation.asc_setFormula1(formula);
+	};
+
+	/**
+	 * Returns the second formula in the data validation.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetFormula2.js
+	 */
+	ApiValidation.prototype.GetFormula2 = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		let formula2 = validation.getFormula2();
+		return formula2 ? formula2.asc_getValue() : "";
+	};
+
+	/**
+	 * Sets the second formula in the data validation.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {string} Formula2 - The second formula.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetFormula2.js
+	 */
+	ApiValidation.prototype.SetFormula2 = function(Formula2) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		let formula = new window['Asc'].CDataFormula(Formula2);
+		validation.asc_setFormula2(formula);
+	};
+
+	/**
+	 * Returns the data validation operator.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {ValidationOperator}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetOperator.js
+	 */
+	ApiValidation.prototype.GetOperator = function() {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		return ToXlValidationOperatorFrom(validation.getOperator());
+	};
+
+	/**
+	 * Sets the data validation operator.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @param {ValidationOperator} Operator - The validation operator.
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetOperator.js
+	 */
+	ApiValidation.prototype.SetOperator = function(Operator) {
+		const validation = getSingleValidation(this);
+		if (!validation) {
+			return;
+		}
+		let internalOperator = FromXlValidationOperatorTo(Operator);
+		if (internalOperator !== -1) {
+			validation.asc_setOperator(internalOperator);
+		}
+	};
+
+	/**
+	 * Returns the parent range object.
+	 * @memberof ApiValidation
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange}
+	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/GetParent.js
+	 */
+	ApiValidation.prototype.GetParent = function() {
+		return this.range;
+	};
+
+	// Property implementations с использованием новых методов
+	Object.defineProperty(ApiValidation.prototype, "Type", {
+		get: function() {
+			return this.GetType();
+		},
+		set: function(value) {
+			this.SetType(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "AlertStyle", {
+		get: function() {
+			return this.GetAlertStyle();
+		},
+		set: function(value) {
+			this.SetAlertStyle(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "IgnoreBlank", {
+		get: function() {
+			return this.GetIgnoreBlank();
+		},
+		set: function(value) {
+			this.SetIgnoreBlank(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "InCellDropdown", {
+		get: function() {
+			return this.GetInCellDropdown();
+		},
+		set: function(value) {
+			this.SetInCellDropdown(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "ShowInput", {
+		get: function() {
+			return this.GetShowInput();
+		},
+		set: function(value) {
+			this.SetShowInput(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "ShowError", {
+		get: function() {
+			return this.GetShowError();
+		},
+		set: function(value) {
+			this.SetShowError(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "InputTitle", {
+		get: function() {
+			return this.GetInputTitle();
+		},
+		set: function(value) {
+			this.SetInputTitle(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "InputMessage", {
+		get: function() {
+			return this.GetInputMessage();
+		},
+		set: function(value) {
+			this.SetInputMessage(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "ErrorTitle", {
+		get: function() {
+			return this.GetErrorTitle();
+		},
+		set: function(value) {
+			this.SetErrorTitle(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "ErrorMessage", {
+		get: function() {
+			return this.GetErrorMessage();
+		},
+		set: function(value) {
+			this.SetErrorMessage(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "Formula1", {
+		get: function() {
+			return this.GetFormula1();
+		},
+		set: function(value) {
+			this.SetFormula1(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "Formula2", {
+		get: function() {
+			return this.GetFormula2();
+		},
+		set: function(value) {
+			this.SetFormula2(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "Operator", {
+		get: function() {
+			return this.GetOperator();
+		},
+		set: function(value) {
+			this.SetOperator(value);
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "Parent", {
+		get: function() {
+			return this.GetParent();
+		}
+	});
+
+	Object.defineProperty(ApiValidation.prototype, "Value", {
+		get: function() {
+			return this.GetFormula1();
+		},
+		set: function(value) {
+			this.SetFormula1(value);
+		}
+	});
+
+	/**
+	 * The conditional formatting type.
+	 * @typedef {("xlCellValue" | "xlExpression" | "xlTop10" | "xlAboveAverageCondition" |
+	 * "xlUniqueValues" | "xlTextString" | "xlBlanksCondition" | "xlTimePeriod" | "xlErrorsCondition" |
+	 * "xlNoErrorsCondition" | "xlColorScale" | "xlDatabar" | "xlIconSets")} XlFormatConditionType
+	 */
+
+	/**
+	 * The format condition operator.
+	 * @typedef {("xlBetween" | "xlNotBetween" | "xlEqual" | "xlNotEqual" |
+	 * "xlGreater" | "xlLess" | "xlGreaterEqual" | "xlLessEqual" | "xlBeginsWith" |
+	 * "xlEndsWith" | "xlContains" | "xlNotContains")} XlFormatConditionOperator
+	 */
+
+	/**
+	 * The time period for conditional formatting.
+	 * @typedef {("xlToday" | "xlYesterday" | "xlTomorrow" | "xlLast7Days" | "xlLastWeek" |
+	 * "xlThisWeek" | "xlNextWeek" | "xlLastMonth" | "xlThisMonth" | "xlNextMonth")} XlTimePeriods
+	 */
+
+	/**
+	 * The operator for text-based conditional formatting.
+	 * @typedef {("xlContains" | "xlDoesNotContain" | "xlBeginsWith" | "xlEndsWith")} XlContainsOperator
+	 */
+
+	/**
+	 * The scope for pivot table conditional formatting rules.
+	 * @typedef {("xlFieldsScope" | "xlSelectionScope" | "xlDataFieldScope")} XlPivotConditionScope
+	 */
+
+	/**
+	 * The data bar axis position.
+	 * @typedef {("xlDataBarAxisAutomatic" | "xlDataBarAxisMidpoint" | "xlDataBarAxisNone")} XlDataBarAxisPosition
+	 */
+
+	/**
+	 * The reading order for data bars.
+	 * @typedef {("xlLTR" | "xlRTL" | "xlContext")} XlReadingOrder
+	 */
+
+	/**
+	 * The data bar fill type.
+	 * @typedef {("xlDataBarFillSolid" | "xlDataBarFillGradient")} XlDataBarFillType
+	 */
+
+	function FromXlFormatConditionTypeTo(sType) {
+		let nType = -1;
+		switch (sType) {
+			case "xlCellValue":
+				nType = Asc.ECfType.cellIs;
+				break;
+			case "xlExpression":
+				nType = Asc.ECfType.expression;
+				break;
+			case "xlTop10":
+				nType = Asc.ECfType.top10;
+				break;
+			case "xlAboveAverageCondition":
+				nType = Asc.ECfType.aboveAverage;
+				break;
+			case "xlUniqueValues":
+				nType = Asc.ECfType.uniqueValues;
+				break;
+			case "xlTextString":
+				nType = Asc.ECfType.containsText;
+				break;
+			case "xlBlanksCondition":
+				nType = Asc.ECfType.containsBlanks;
+				break;
+			case "xlTimePeriod":
+				nType = Asc.ECfType.timePeriod;
+				break;
+			case "xlErrorsCondition":
+				nType = Asc.ECfType.containsErrors;
+				break;
+			case "xlNoErrorsCondition":
+				nType = Asc.ECfType.notContainsErrors;
+				break;
+			case "xlColorScale":
+				nType = Asc.ECfType.colorScale;
+				break;
+			case "xlDatabar":
+				nType = Asc.ECfType.dataBar;
+				break;
+			case "xlIconSets":
+				nType = Asc.ECfType.iconSet;
+				break;
+		}
+		return nType;
+	}
+
+	function ToXlFormatConditionTypeFrom(nType) {
+		let sType = "";
+		switch (nType) {
+			case Asc.ECfType.cellIs:
+				sType = "xlCellValue";
+				break;
+			case Asc.ECfType.expression:
+				sType = "xlExpression";
+				break;
+			case Asc.ECfType.top10:
+				sType = "xlTop10";
+				break;
+			case Asc.ECfType.aboveAverage:
+				sType = "xlAboveAverageCondition";
+				break;
+			case Asc.ECfType.uniqueValues:
+				sType = "xlUniqueValues";
+				break;
+			case Asc.ECfType.containsText:
+			case Asc.ECfType.notContainsText:
+			case Asc.ECfType.beginsWith:
+			case Asc.ECfType.endsWith:
+				sType = "xlTextString";
+				break;
+			case Asc.ECfType.containsBlanks:
+				sType = "xlBlanksCondition";
+				break;
+			case Asc.ECfType.timePeriod:
+				sType = "xlTimePeriod";
+				break;
+			case Asc.ECfType.containsErrors:
+				sType = "xlErrorsCondition";
+				break;
+			case Asc.ECfType.notContainsErrors:
+				sType = "xlNoErrorsCondition";
+				break;
+			case Asc.ECfType.colorScale:
+				sType = "xlColorScale";
+				break;
+			case Asc.ECfType.dataBar:
+				sType = "xlDatabar";
+				break;
+			case Asc.ECfType.iconSet:
+				sType = "xlIconSets";
+				break;
+		}
+		return sType;
+	}
+
+	function FromXlFormatConditionOperatorTo(sOperator) {
+		let nOperator = -1;
+		switch (sOperator) {
+			case "xlBetween":
+				nOperator = AscCommonExcel.ECfOperator.Operator_between;
+				break;
+			case "xlNotBetween":
+				nOperator = AscCommonExcel.ECfOperator.Operator_notBetween;
+				break;
+			case "xlEqual":
+				nOperator = AscCommonExcel.ECfOperator.Operator_equal;
+				break;
+			case "xlNotEqual":
+				nOperator = AscCommonExcel.ECfOperator.Operator_notEqual;
+				break;
+			case "xlGreater":
+				nOperator = AscCommonExcel.ECfOperator.Operator_greaterThan;
+				break;
+			case "xlLess":
+				nOperator = AscCommonExcel.ECfOperator.Operator_lessThan;
+				break;
+			case "xlGreaterEqual":
+				nOperator = AscCommonExcel.ECfOperator.Operator_greaterThanOrEqual;
+				break;
+			case "xlLessEqual":
+				nOperator = AscCommonExcel.ECfOperator.Operator_lessThanOrEqual;
+				break;
+			case "xlBeginsWith":
+				nOperator = AscCommonExcel.ECfOperator.Operator_beginsWith;
+				break;
+			case "xlEndsWith":
+				nOperator = AscCommonExcel.ECfOperator.Operator_endsWith;
+				break;
+			case "xlContains":
+				nOperator = AscCommonExcel.ECfOperator.Operator_containsText;
+				break;
+			case "xlNotContains":
+				nOperator = AscCommonExcel.ECfOperator.Operator_notContains;
+				break;
+		}
+		return nOperator;
+	}
+
+	function ToXlFormatConditionOperatorFrom(nOperator) {
+		let sOperator = "";
+		switch (nOperator) {
+			case AscCommonExcel.ECfOperator.Operator_between:
+				sOperator = "xlBetween";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_notBetween:
+				sOperator = "xlNotBetween";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_equal:
+				sOperator = "xlEqual";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_notEqual:
+				sOperator = "xlNotEqual";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_greaterThan:
+				sOperator = "xlGreater";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_lessThan:
+				sOperator = "xlLess";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_greaterThanOrEqual:
+				sOperator = "xlGreaterEqual";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_lessThanOrEqual:
+				sOperator = "xlLessEqual";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_beginsWith:
+				sOperator = "xlBeginsWith";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_endsWith:
+				sOperator = "xlEndsWith";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_containsText:
+				sOperator = "xlContains";
+				break;
+			case AscCommonExcel.ECfOperator.Operator_notContains:
+				sOperator = "xlNotContains";
+				break;
+		}
+		return sOperator;
+	}
+
+	function FromXlTimePeriodsTo(sPeriod) {
+		let nPeriod = -1;
+		switch (sPeriod) {
+			case "xlToday":
+				nPeriod = AscCommonExcel.ST_TimePeriod.today;
+				break;
+			case "xlYesterday":
+				nPeriod = AscCommonExcel.ST_TimePeriod.yesterday;
+				break;
+			case "xlTomorrow":
+				nPeriod = AscCommonExcel.ST_TimePeriod.tomorrow;
+				break;
+			case "xlLast7Days":
+				nPeriod = AscCommonExcel.ST_TimePeriod.last7Days;
+				break;
+			case "xlLastWeek":
+				nPeriod = AscCommonExcel.ST_TimePeriod.lastWeek;
+				break;
+			case "xlThisWeek":
+				nPeriod = AscCommonExcel.ST_TimePeriod.thisWeek;
+				break;
+			case "xlNextWeek":
+				nPeriod = AscCommonExcel.ST_TimePeriod.nextWeek;
+				break;
+			case "xlLastMonth":
+				nPeriod = AscCommonExcel.ST_TimePeriod.lastMonth;
+				break;
+			case "xlThisMonth":
+				nPeriod = AscCommonExcel.ST_TimePeriod.thisMonth;
+				break;
+			case "xlNextMonth":
+				nPeriod = AscCommonExcel.ST_TimePeriod.nextMonth;
+				break;
+		}
+		return nPeriod;
+	}
+
+	function ToXlTimePeriodsFrom(nPeriod) {
+		let sPeriod = "";
+		switch (nPeriod) {
+			case AscCommonExcel.ST_TimePeriod.today:
+				sPeriod = "xlToday";
+				break;
+			case AscCommonExcel.ST_TimePeriod.yesterday:
+				sPeriod = "xlYesterday";
+				break;
+			case AscCommonExcel.ST_TimePeriod.tomorrow:
+				sPeriod = "xlTomorrow";
+				break;
+			case AscCommonExcel.ST_TimePeriod.last7Days:
+				sPeriod = "xlLast7Days";
+				break;
+			case AscCommonExcel.ST_TimePeriod.lastWeek:
+				sPeriod = "xlLastWeek";
+				break;
+			case AscCommonExcel.ST_TimePeriod.thisWeek:
+				sPeriod = "xlThisWeek";
+				break;
+			case AscCommonExcel.ST_TimePeriod.nextWeek:
+				sPeriod = "xlNextWeek";
+				break;
+			case AscCommonExcel.ST_TimePeriod.lastMonth:
+				sPeriod = "xlLastMonth";
+				break;
+			case AscCommonExcel.ST_TimePeriod.thisMonth:
+				sPeriod = "xlThisMonth";
+				break;
+			case AscCommonExcel.ST_TimePeriod.nextMonth:
+				sPeriod = "xlNextMonth";
+				break;
+		}
+		return sPeriod;
+	}
+
+	/**
+	 * Class representing a collection of format conditions.
+	 * @constructor
+	 * @property {number} Count - Returns the number of conditional formatting rules in the collection.
+	 * @property {ApiRange} Parent - Returns the parent range object associated with the current conditional formatting collection.
+	 */
+	function ApiFormatConditions(range) {
+		this.range = range;//parent
+		this.conditions = [];
+		this._updateExistingRules();
+	}
+
+	/**
+	 * Adds a new format condition to the collection.
+	 * @memberof ApiFormatConditions
+	 * @typeofeditors ["CSE"]
+	 * @param {XlFormatConditionType} Type - The format condition type.
+	 * @param {XlFormatConditionOperator} [Operator] - The format condition operator.
+	 * @param {string | number | ApiRange} [Formula1] - The first formula.
+	 * @param {string | number | ApiRange} [Formula2] - The second formula.
+	 * @returns {ApiFormatCondition | null} The created format condition, or null if the operation failed.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/Add.js
+	 */
+	ApiFormatConditions.prototype.Add = function(Type, Operator, Formula1, Formula2) {
+		if (!Type) {
+			return null;
+		}
+
+		let internalType = FromXlFormatConditionTypeTo(Type);
+		if (internalType === -1) {
+			return null;
+		}
+
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
+		if (!worksheet) {
+			return null;
+		}
+
+		let props = new window['AscCommonExcel'].CConditionalFormattingRule();
+		props.type = internalType;
+		props.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
+
+		if (Operator !== undefined && (internalType === Asc.ECfType.cellIs || internalType === Asc.ECfType.containsText)) {
+			let internalOperator = FromXlFormatConditionOperatorTo(Operator);
+			if (internalOperator !== -1) {
+				props.operator = internalOperator;
+			}
+		}
+
+		switch (internalType) {
+			case Asc.ECfType.containsText:
+				if (Formula1 !== undefined) {
+					let formula1String = (Formula1 instanceof ApiRange) ? Formula1.GetAddress() : Formula1.toString();
+					props.asc_setContainsText(formula1String);
+				}
+				let newType, newOperator;
+				if (props.operator === AscCommonExcel.ECfOperator.Operator_containsText) {
+					newType = Asc.ECfType.containsText;
+				} else if (props.operator === AscCommonExcel.ECfOperator.Operator_notContains) {
+					newType = Asc.ECfType.notContainsText;
+				} else if (props.operator === AscCommonExcel.ECfOperator.Operator_beginsWith) {
+					newType = Asc.ECfType.beginsWith;
+				} else if (props.operator === AscCommonExcel.ECfOperator.Operator_endsWith) {
+					newType = Asc.ECfType.endsWith;
+				}
+				if (newType != null) {
+					props.asc_setType(newType);
+				} else if (Operator !== undefined) {
+					let textOperatorType = FromXlFormatConditionOperatorTo(Operator);
+					if (textOperatorType !== -1) {
+						props.operator = textOperatorType;
+					}
+				}
+				break;
+
+			case Asc.ECfType.cellIs:
+				if (Formula1 !== undefined) {
+					let formula1String = (Formula1 instanceof ApiRange) ? Formula1.GetAddress() : Formula1.toString();
+					props.asc_setValue1(formula1String);
+				}
+				if (Formula2 !== undefined && (props.operator === AscCommonExcel.ECfOperator.Operator_between || props.operator === AscCommonExcel.ECfOperator.Operator_notBetween)) {
+					let formula2String = (Formula2 instanceof ApiRange) ? Formula2.GetAddress() : Formula2.toString();
+					props.asc_setValue2(formula2String);
+				}
+				break;
+
+			case Asc.ECfType.expression:
+				if (Formula1 !== undefined) {
+					let formula1String = (Formula1 instanceof ApiRange) ? Formula1.GetAddress() : Formula1.toString();
+					props.asc_setValue1(formula1String);
+				}
+				break;
+
+			case Asc.ECfType.top10:
+				props.asc_setBottom(false);
+				props.asc_setPercent(false);
+				if (Formula1 !== undefined) {
+					let rank = parseInt(Formula1);
+					if (!isNaN(rank)) {
+						props.asc_setRank(rank);
+					}
+				}
+				if (Operator && typeof Operator === 'string') {
+					if (Operator.toLowerCase().includes('bottom')) {
+						props.asc_setBottom(true);
+					}
+					if (Operator.toLowerCase().includes('percent')) {
+						props.asc_setPercent(true);
+					}
+				}
+				break;
+
+			case Asc.ECfType.aboveAverage:
+				props.asc_setAboveAverage(true);
+				props.asc_setEqualAverage(false);
+				props.asc_setStdDev(0);
+				// Operator может переопределить настройки
+				if (Operator !== undefined) {
+					// Здесь можно добавить логику для различных типов above/below average
+				}
+				break;
+
+			case Asc.ECfType.duplicateValues:
+			case Asc.ECfType.containsBlanks:
+
+				if (Operator !== undefined) {
+					let specificType = FromXlFormatConditionOperatorTo(Operator);
+					if (specificType !== -1) {
+						props.type = specificType;
+					}
+				}
+				break;
+
+			case Asc.ECfType.timePeriod:
+				if (Operator !== undefined) {
+					let timePeriod = FromXlTimePeriodsTo(Operator);
+					if (timePeriod !== -1) {
+						props.asc_setTimePeriod(timePeriod);
+					}
+				}
+				break;
+
+			case Asc.ECfType.colorScale:
+				let scaleProps = new AscCommonExcel.CColorScale();
+				let colors = [
+					new window["Asc"]["asc_CColor"](255, 99, 99), // red
+					new window["Asc"]["asc_CColor"](255, 255, 99), // yellow
+					new window["Asc"]["asc_CColor"](99, 255, 99)  // green
+				];
+				let scales = [];
+				for (let i = 0; i < 3; i++) {
+					let scale = new window['AscCommonExcel'].CConditionalFormatValueObject();
+					scale.asc_setType(i === 0 ? AscCommonExcel.ECfvoType.Min : (i === 2 ? AscCommonExcel.ECfvoType.Max : AscCommonExcel.ECfvoType.Percentile));
+					if (i === 1) {
+						scale.asc_setVal("50");
+					}
+					scales.push(scale);
+				}
+				scaleProps.asc_setColors(colors);
+				scaleProps.asc_setCFVOs(scales);
+				props.asc_setColorScaleOrDataBarOrIconSetRule(scaleProps);
+				break;
+
+			case Asc.ECfType.dataBar:
+				let barProps = new window['AscCommonExcel'].CDataBar();
+				barProps.asc_setInterfaceDefault();
+				let bars = [];
+				for (let i = 0; i < 2; i++) {
+					let bar = new window['AscCommonExcel'].CConditionalFormatValueObject();
+					bar.asc_setType(i === 0 ? AscCommonExcel.ECfvoType.AutoMin : AscCommonExcel.ECfvoType.AutoMax);
+					bars.push(bar);
+				}
+				barProps.asc_setCFVOs(bars);
+				props.asc_setColorScaleOrDataBarOrIconSetRule(barProps);
+				break;
+
+			case Asc.ECfType.iconSet:
+				let iconsProps = new window['AscCommonExcel'].CIconSet();
+				iconsProps.asc_setShowValue(true);
+				iconsProps.asc_setReverse(false);
+				iconsProps.asc_setIconSet(Asc.Asc.EIconSetType.ThreeTrafficLights1);
+
+				let values = [];
+				let iconCount = 3;
+				for (let i = 0; i < iconCount - 1; i++) {
+					let value = new window['AscCommonExcel'].CConditionalFormatValueObject();
+					value.asc_setType(AscCommonExcel.ECfvoType.Percent);
+					value.asc_setVal(i === 0 ? "33" : "67");
+					value.asc_setGte(true);
+					values.push(value);
+				}
+				iconsProps.asc_setCFVOs(values);
+				props.asc_setColorScaleOrDataBarOrIconSetRule(iconsProps);
+				break;
+		}
+
+		if (internalType === Asc.ECfType.containsText || internalType === Asc.ECfType.containsBlanks ||
+			internalType === Asc.ECfType.duplicateValues || internalType === Asc.ECfType.timePeriod ||
+			internalType === Asc.ECfType.aboveAverage || internalType === Asc.ECfType.top10 ||
+			internalType === Asc.ECfType.cellIs || internalType === Asc.ECfType.expression) {
+			props.dxf = new window['AscCommonExcel'].CellXfs();
+		}
+
+		let ranges = [];
+		if (this.range.areas) {
+			for (let i = 0; i < this.range.areas.length; i++) {
+				ranges.push(this.range.areas[i].bbox);
+			}
+		} else {
+			ranges.push(this.range.range.bbox);
+		}
+		props.ranges = ranges;
+
+		this.private_setRule(props);
+
+		let formatCondition = new ApiFormatCondition(props, this.range, this);
+		this.conditions.push(formatCondition);
+
+		return formatCondition;
+	};
+
+	/**
+	 * Adds a new above average conditional formatting rule to the collection.
+	 * @memberof ApiFormatConditions
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiAboveAverage | null} The created above average rule, or null if the operation fails.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/AddAboveAverage.js
+	 */
+	ApiFormatConditions.prototype.AddAboveAverage = function() {
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
+		if (!worksheet) {
+			return null;
+		}
+
+		let props = new window['AscCommonExcel'].CConditionalFormattingRule();
+		props.type = Asc.ECfType.aboveAverage;
+		props.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
+
+		// Set default values for above average condition
+		props.asc_setAboveAverage(true);
+		props.asc_setEqualAverage(false);
+		props.asc_setStdDev(0);
+
+		// Create default formatting style
+		props.dxf = new window['AscCommonExcel'].CellXfs();
+
+		let ranges = [];
+		if (this.range.areas) {
+			for (let i = 0; i < this.range.areas.length; i++) {
+				ranges.push(this.range.areas[i].bbox);
+			}
+		} else {
+			ranges.push(this.range.range.bbox);
+		}
+		props.ranges = ranges;
+
+		this.private_setRule(props);
+
+		let aboveAverage = new ApiAboveAverage(props, this.range, this);
+		this.conditions.push(aboveAverage);
+
+		return aboveAverage;
+	};
+
+	/**
+	 * Adds a new color scale conditional formatting rule to the collection.
+	 * @memberof ApiFormatConditions
+	 * @typeofeditors ["CSE"]
+	 * @param {number} [ColorScaleType=3] - The type of color scale (2 for two-color scale, 3 for three-color scale).
+	 * @returns {ApiColorScale | null} The created color scale rule, or null if the operation fails.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/AddColorScale.js
+	 */
+	ApiFormatConditions.prototype.AddColorScale = function(ColorScaleType) {
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
+		if (!worksheet) {
+			return null;
+		}
+
+		// Default to 3-color scale if not specified
+		if (ColorScaleType === undefined || ColorScaleType === null) {
+			ColorScaleType = 3;
+		}
+
+		// Validate ColorScaleType parameter
+		if (ColorScaleType !== 2 && ColorScaleType !== 3) {
+			logError(new Error("Invalid ColorScaleType. Must be 2 (two-color scale) or 3 (three-color scale)."));
+			return null;
+		}
+
+		let props = new window['AscCommonExcel'].CConditionalFormattingRule();
+		props.type = Asc.ECfType.colorScale;
+		props.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
+
+		// Create color scale properties
+		let scaleProps = new AscCommonExcel.CColorScale();
+
+		let colors = [];
+		let cfvos = [];
+
+		if (ColorScaleType === 2) {
+			//TODO need cnange base colors
+			/*<color rgb="FFFF7128"/>
+			<color rgb="FFFFEF9C"/>*/
+			colors = [
+				new window["Asc"]["asc_CColor"](248, 105, 107), // red
+				new window["Asc"]["asc_CColor"](99, 190, 123)   // green
+			];
+
+			// Create conditional format value objects for min and max
+			for (let i = 0; i < 2; i++) {
+				let cfvo = new window['AscCommonExcel'].CConditionalFormatValueObject();
+				if (i === 0) {
+					cfvo.asc_setType(AscCommonExcel.ECfvoType.Minimum);
+				} else {
+					cfvo.asc_setType(AscCommonExcel.ECfvoType.Maximum);
+				}
+				cfvos.push(cfvo);
+			}
+		} else {
+			// Three-color scale: red -> yellow -> green
+			colors = [
+				new window["Asc"]["asc_CColor"](248, 105, 107), // red
+				new window["Asc"]["asc_CColor"](255, 235, 132), // yellow
+				new window["Asc"]["asc_CColor"](99, 190, 123)   // green
+			];
+
+			// Create conditional format value objects for min, midpoint, max
+			for (let i = 0; i < 3; i++) {
+				let cfvo = new window['AscCommonExcel'].CConditionalFormatValueObject();
+				if (i === 0) {
+					cfvo.asc_setType(AscCommonExcel.ECfvoType.Minimum);
+				} else if (i === 1) {
+					cfvo.asc_setType(AscCommonExcel.ECfvoType.Percentile);
+					cfvo.asc_setVal("50");
+				} else {
+					cfvo.asc_setType(AscCommonExcel.ECfvoType.Maximum);
+				}
+				cfvos.push(cfvo);
+			}
+		}
+
+		// Set colors and value objects to the color scale
+		scaleProps.asc_setColors(colors);
+		scaleProps.asc_setCFVOs(cfvos);
+
+		// Apply the color scale rule
+		props.asc_setColorScaleOrDataBarOrIconSetRule(scaleProps);
+
+		// Set the ranges for the conditional formatting
+		let ranges = [];
+		if (this.range.areas) {
+			for (let i = 0; i < this.range.areas.length; i++) {
+				ranges.push(this.range.areas[i].bbox);
+			}
+		} else {
+			ranges.push(this.range.range.bbox);
+		}
+		props.ranges = ranges;
+
+		// Apply the conditional formatting rule to the worksheet
+		this.private_setRule(props);
+
+		// Create and return ApiColorScale object
+		let colorScale = new ApiColorScale(props, this.range, this);
+		this.conditions.push(colorScale);
+
+		return colorScale;
+	};
+
+	/**
+	 * Adds a new data bar conditional formatting rule to the collection.
+	 * @memberof ApiFormatConditions
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiDatabar | null} The created data bar rule, or null if the operation fails.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/AddDatabar.js
+	 */
+	ApiFormatConditions.prototype.AddDatabar = function() {
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
+		if (!worksheet) {
+			return null;
+		}
+
+		let props = new window['AscCommonExcel'].CConditionalFormattingRule();
+		props.type = Asc.ECfType.dataBar;
+		props.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
+
+		// Create data bar properties with default settings
+		let dataBarProps = new window['AscCommonExcel'].CDataBar();
+		dataBarProps.asc_setInterfaceDefault(); // Sets MinLength=0, MaxLength=100
+
+		// Set default CFVOs (Conditional Format Value Objects)
+		let cfvos = [];
+
+		// Minimum value (auto minimum)
+		let minCfvo = new window['AscCommonExcel'].CConditionalFormatValueObject();
+		minCfvo.asc_setType(AscCommonExcel.ECfvoType.Minimum);
+		minCfvo.asc_setGte(true);
+		cfvos.push(minCfvo);
+
+		// Maximum value (auto maximum)
+		let maxCfvo = new window['AscCommonExcel'].CConditionalFormatValueObject();
+		maxCfvo.asc_setType(AscCommonExcel.ECfvoType.Maximum);
+		maxCfvo.asc_setGte(true);
+		cfvos.push(maxCfvo);
+
+		dataBarProps.asc_setCFVOs(cfvos);
+
+		dataBarProps.asc_setColor(new window["Asc"]["asc_CColor"](99, 142, 198));
+
+		// Set the data bar rule to the conditional formatting rule
+		props.asc_setColorScaleOrDataBarOrIconSetRule(dataBarProps);
+
+		// Set the ranges for the conditional formatting
+		let ranges = [];
+		if (this.range.areas) {
+			for (let i = 0; i < this.range.areas.length; i++) {
+				ranges.push(this.range.areas[i].bbox);
+			}
+		} else {
+			ranges.push(this.range.range.bbox);
+		}
+		props.ranges = ranges;
+
+		// Apply the conditional formatting rule to the worksheet
+		this.private_setRule(props);
+
+		// Create and return ApiDatabar object
+		let dataBar = new ApiDatabar(props, this.range, this);
+		this.conditions.push(dataBar);
+
+		return dataBar;
+	};
+
+	/**
+	 * Adds a new icon set conditional formatting rule to the collection.
+	 * @memberof ApiFormatConditions
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiIconSetCondition | null} The created icon set rule, or null if the operation fails.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/AddIconSetCondition.js
+	 */
+	ApiFormatConditions.prototype.AddIconSetCondition = function() {
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
+		if (!worksheet) {
+			return null;
+		}
+
+		let props = new window['AscCommonExcel'].CConditionalFormattingRule();
+		props.type = Asc.ECfType.iconSet;
+		props.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
+
+		// Create icon set properties with default settings (3 arrows)
+		let iconSetProps = new window['AscCommonExcel'].CIconSet();
+		//iconSetProps.asc_setIconSet(Asc.EIconSetType.Arrows3); // Default to 3 arrows
+		iconSetProps.asc_setReverse(false);
+		iconSetProps.asc_setShowValue(true);
+		iconSetProps.Percent = true;
+
+		// Create default CFVOs (Conditional Format Value Objects) for 3-icon set
+		let cfvos = [];
+
+		// First threshold (minimum) - no threshold needed, always starts from minimum
+		let minCfvo = new window['AscCommonExcel'].CConditionalFormatValueObject();
+		minCfvo.asc_setType(AscCommonExcel.ECfvoType.Percent);
+		minCfvo.asc_setVal("0");
+		minCfvo.asc_setGte(true);
+		cfvos.push(minCfvo);
+
+		// Second threshold (33rd percentile)
+		let midCfvo = new window['AscCommonExcel'].CConditionalFormatValueObject();
+		midCfvo.asc_setType(AscCommonExcel.ECfvoType.Percent);
+		midCfvo.asc_setVal("33");
+		midCfvo.asc_setGte(true);
+		cfvos.push(midCfvo);
+
+		// Third threshold (67th percentile)
+		let maxCfvo = new window['AscCommonExcel'].CConditionalFormatValueObject();
+		maxCfvo.asc_setType(AscCommonExcel.ECfvoType.Percent);
+		maxCfvo.asc_setVal("67");
+		maxCfvo.asc_setGte(true);
+		cfvos.push(maxCfvo);
+
+		iconSetProps.asc_setCFVOs(cfvos);
+
+		// Set the icon set rule to the conditional formatting rule
+		props.asc_setColorScaleOrDataBarOrIconSetRule(iconSetProps);
+
+		// Set the ranges for the conditional formatting
+		let ranges = [];
+		if (this.range.areas) {
+			for (let i = 0; i < this.range.areas.length; i++) {
+				ranges.push(this.range.areas[i].bbox);
+			}
+		} else {
+			ranges.push(this.range.range.bbox);
+		}
+		props.ranges = ranges;
+
+		// Apply the conditional formatting rule to the worksheet
+		this.private_setRule(props);
+
+		// Create and return ApiIconSetCondition object
+		let iconSetCondition = new ApiIconSetCondition(props, this.range, this);
+		this.conditions.push(iconSetCondition);
+
+		return iconSetCondition;
+	};
+
+	/**
+	 * Adds a new top 10 conditional formatting rule to the collection.
+	 * @memberof ApiFormatConditions
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiTop10 | null} The created top 10 rule, or null if the operation fails.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/AddTop10.js
+	 */
+	ApiFormatConditions.prototype.AddTop10 = function() {
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
+		if (!worksheet) {
+			return null;
+		}
+
+		let props = new window['AscCommonExcel'].CConditionalFormattingRule();
+		props.type = Asc.ECfType.top10;
+		props.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
+
+		// Set default values for top 10 condition
+		props.asc_setRank(10); // Default to top 10
+		props.asc_setBottom(false); // Default to top (not bottom)
+		props.asc_setPercent(false); // Default to count (not percent)
+
+		// Create default formatting style
+		props.dxf = new window['AscCommonExcel'].CellXfs();
+
+		// Set the ranges for the conditional formatting
+		let ranges = [];
+		if (this.range.areas) {
+			for (let i = 0; i < this.range.areas.length; i++) {
+				ranges.push(this.range.areas[i].bbox);
+			}
+		} else {
+			ranges.push(this.range.range.bbox);
+		}
+		props.ranges = ranges;
+
+		// Apply the conditional formatting rule to the worksheet
+		this.private_setRule(props);
+
+		// Create and return ApiTop10 object
+		let top10 = new ApiTop10(props, this.range, this);
+		this.conditions.push(top10);
+
+		return top10;
+	};
+
+	/**
+	 * Adds a new unique values conditional formatting rule to the collection.
+	 * @memberof ApiFormatConditions
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiUniqueValues | null} The created unique values rule, or null if the operation fails.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/AddUniqueValues.js
+	 */
+	ApiFormatConditions.prototype.AddUniqueValues = function() {
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
+		if (!worksheet) {
+			return null;
+		}
+
+		let props = new window['AscCommonExcel'].CConditionalFormattingRule();
+		props.type = Asc.ECfType.uniqueValues;
+		props.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
+
+		// Create default formatting style
+		props.dxf = new window['AscCommonExcel'].CellXfs();
+
+		// Set the ranges for the conditional formatting
+		let ranges = [];
+		if (this.range.areas) {
+			for (let i = 0; i < this.range.areas.length; i++) {
+				ranges.push(this.range.areas[i].bbox);
+			}
+		} else {
+			ranges.push(this.range.range.bbox);
+		}
+		props.ranges = ranges;
+
+		// Apply the conditional formatting rule to the worksheet
+		this.private_setRule(props);
+
+		// Create and return ApiUniqueValues object
+		let uniqueValues = new ApiUniqueValues(props, this.range, this);
+		this.conditions.push(uniqueValues);
+
+		return uniqueValues;
+	};
+
+	/**
+	 * Deletes all format conditions from the collection.
+	 * @memberof ApiFormatConditions
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/Delete.js
+	 */
+	ApiFormatConditions.prototype.Delete = function() {
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
+		if (!worksheet || !worksheet.aConditionalFormattingRules) {
+			return;
+		}
+
+		let ranges = [];
+		if (this.range.areas) {
+			for (let i = 0; i < this.range.areas.length; i++) {
+				ranges.push(this.range.areas[i].bbox);
+			}
+		} else {
+			ranges.push(this.range.range.bbox);
+		}
+
+		this._updateExistingRules();
+
+		for (let i = 0; i < this.conditions.length; i++) {
+			let condition = this.conditions[i];
+			if (condition.rule) {
+				worksheet.tryClearCFRule(condition.rule, ranges);
+			}
+		}
+
+		this.conditions = [];
+	};
+
+	function createApiConditionFromRule(rule, range, parent) {
+		switch (rule.type) {
+			case Asc.ECfType.aboveAverage:
+				return new ApiAboveAverage(rule, range, parent);
+			case Asc.ECfType.colorScale:
+				return new ApiColorScale(rule, range, parent);
+			case Asc.ECfType.dataBar:
+				return new ApiDatabar(rule, range, parent);
+			case Asc.ECfType.iconSet:
+				return new ApiIconSetCondition(rule, range, parent);
+			case Asc.ECfType.top10:
+				return new ApiTop10(rule, range, parent);
+			case Asc.ECfType.uniqueValues:
+				return new ApiUniqueValues(rule, range, parent);
+			default:
+				return new ApiFormatCondition(rule, range, parent);
+		}
+	}
+
+	/**
+	 * Returns the number of conditional formatting rules in the collection.
+	 * @memberof ApiFormatConditions
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} The number of conditional formatting rules in the collection.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/GetCount.js
+	 */
+	ApiFormatConditions.prototype.GetCount = function() {
+		this._updateExistingRules();
+		return this.conditions.length;
+	};
+
+	ApiFormatConditions.prototype._updateExistingRules = function() {
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
+		if (!worksheet || !worksheet.aConditionalFormattingRules) {
+			this.conditions = [];
+			return;
+		}
+
+		let rangeRef = this.range.range.bbox;
+		let t = this;
+
+		let intersectingRuleIds = [];
+		worksheet.forEachConditionalFormattingRules(function(rule) {
+			if (rule.ranges) {
+				for (let i = 0; i < rule.ranges.length; i++) {
+					let ruleRange = rule.ranges[i];
+					if (rangeRef.intersectionSimple(ruleRange)) {
+						intersectingRuleIds.push(rule.id);
+
+						let existingCondition = null;
+						for (let j = 0; j < t.conditions.length; j++) {
+							if (t.conditions[j].rule && t.conditions[j].rule.id === rule.id) {
+								existingCondition = t.conditions[j];
+								break;
+							}
+						}
+
+						if (!existingCondition) {
+							let apiCondition = createApiConditionFromRule(rule, t.range, t);
+							if (apiCondition) {
+								t.conditions.push(apiCondition);
+							}
+						}
+						break;
+					}
+				}
+			}
+		});
+
+		let newConditions = [];
+		for (let i = 0; i < t.conditions.length; i++) {
+			let condition = t.conditions[i];
+			if (!condition.rule || !condition.rule.id) {
+				continue;
+			}
+
+			let found = false;
+			for (let j = 0; j < intersectingRuleIds.length; j++) {
+				if (intersectingRuleIds[j] === condition.rule.id) {
+					found = true;
+					break;
+				}
+			}
+
+			if (found) {
+				newConditions.push(condition);
+			}
+		}
+
+		t.conditions = newConditions;
+	};
+
+	/**
+	 * Returns a format condition by its index.
+	 * @memberof ApiFormatConditions
+	 * @typeofeditors ["CSE"]
+	 * @param {number} index - The index of the format condition (1-based).
+	 * @returns {ApiFormatCondition | null} - The format condition.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/GetItem.js
+	 */
+	ApiFormatConditions.prototype.GetItem = function(index) {
+		this._updateExistingRules();
+		if (index < 1 || index > this.conditions.length) {
+			return null;
+		}
+		return this.conditions[index - 1];
+	};
+
+	Object.defineProperty(ApiFormatConditions.prototype, "Count", {
+		get: function() {
+			return this.GetCount();
+		}
+	});
+
+	/**
+	 * Returns the parent range object associated with the current conditional formatting collection.
+	 * @memberof ApiFormatConditions
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange} The parent range object.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatConditions/Methods/GetParent.js
+	 */
+	ApiFormatConditions.prototype.GetParent = function() {
+		return this.range;
+	};
+
+	Object.defineProperty(ApiFormatConditions.prototype, "Parent", {
+		get: function() {
+			return this.GetParent();
+		}
+	});
+
+	ApiFormatConditions.prototype.private_removeRule = function(id) {
+		if (this.conditions) {
+			for (let i = 0; i < this.conditions.length; i++) {
+				if (this.conditions[i].rule && this.conditions[i].rule.id === id) {
+					this.conditions.splice(i);
+					return;
+				}
+			}
+		}
+	};
+
+	ApiFormatConditions.prototype.private_setRule = function(rule) {
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
+		let arr = [rule];
+		/*if (worksheet.isConditionalFormattingRules()) {
+			worksheet.forEachConditionalFormattingRules(function (val) {
+				var _id = val.id;
+				var oRule = val.clone();
+				oRule.id = _id;
+				oRule.priority++;
+				arr.push(oRule);
+			})
+		}*/
+		let maxPriority = 0;
+		worksheet.forEachConditionalFormattingRules(function (rule) {
+			if (rule.priority && rule.priority > maxPriority) {
+				maxPriority = rule.priority;
+			}
+		});
+		rule.priority = maxPriority + 1;
+		for (let i = 0; i < arr.length; i++) {
+			worksheet.setCFRule(arr[i]);
+		}
+	};
+
+	/**
+	 * Class representing a single format condition.
+	 * @constructor
+	 * @property {XlFormatConditionType} Type - Returns the format condition type.
+	 * @property {XlFormatConditionOperator} Operator - Returns the format condition operator.
+	 * @property {string} Formula1 - Returns or sets the first formula used by the format condition.
+	 * @property {string} Formula2 - Returns or sets the second formula used by the format condition.
+	 * @property {XlTimePeriods} DateOperator - Returns or sets the date operator for time period conditions.
+	 * @property {string} Text - Returns or sets the text for text-based conditions.
+	 * @property {number} Rank - Returns or sets the rank for top/bottom conditional formatting rules.
+	 * @property {boolean} PercentRank - Returns or sets whether the rank is percentage-based.
+	 * @property {boolean} AboveBelow - Returns or sets whether the condition applies above or below the average.
+	 * @property {number} StdDev - Returns or sets the number of standard deviations for average conditions.
+	 * @property {number} Priority - Returns or sets the priority of the condition.
+	 * @property {boolean} StopIfTrue - Returns or sets whether subsequent conditional formatting rules should be evaluated when this rule evaluates to true.
+	 * @property {ApiRange} AppliesTo - Returns the range to which this condition applies.
+	 * @property {string} NumberFormat - Returns or sets the number format applied to a cell when the conditional formatting rule evaluates to true.
+	 * @property {ApiRange} Parent - Returns the parent range object of the format condition.
+	 * @property {PTCondition} PTCondition - Returns the pivot table condition object.
+	 * @property {XlPivotConditionScope} ScopeType - Returns or sets the scope type for the format condition.
+	 * @property {XlContainsOperator} TextOperator - Returns or sets the text operator for text-based conditions.
+	 * @property {ApiColor|'No Fill'} FillColor - Returns or sets the background color of the format condition.
+	 */
+	function ApiFormatCondition(rule, range, _parent) {
+		this.rule = rule;
+		this.range = range;
+
+		this._parent = _parent; // if delete ApiFormatCondition, we must delete rule in ApiFormatConditions
+	}
+
+	/**
+	 * Deletes the current format condition.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/Delete.js
+	 */
+	ApiFormatCondition.prototype.Delete = function() {
+		if (!this.rule) {
+			return;
+		}
+
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
+		if (!worksheet || !worksheet.aConditionalFormattingRules) {
+			return;
+		}
+
+		worksheet.deleteCFRule(this.rule.id, true);
+		this._parent.private_removeRule(this.rule.id);
+		this.rule = null;
+	};
+
+	/**
+	 * Modifies the current format condition with the specified parameters.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {XlFormatConditionType} [Type] - The format condition type.
+	 * @param {XlFormatConditionOperator} [Operator] - The format condition operator.
+	 * @param {string | number | ApiRange} [Formula1] - The first formula.
+	 * @param {string | number | ApiRange} [Formula2] - The second formula.
+	 * @returns {ApiFormatCondition | null} The modified format condition, or null if the rule does not exist.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/Modify.js
+	 */
+	ApiFormatCondition.prototype.Modify = function(Type, Operator, Formula1, Formula2) {
+		if (!this.rule) {
+			return null;
+		}
+
+		let newRule = this.rule.clone();
+		if (Type !== undefined) {
+			let internalType = FromXlFormatConditionTypeTo(Type);
+			if (internalType !== -1) {
+				newRule.type = internalType;
+			}
+		}
+
+		if (Operator !== undefined) {
+			let internalOperator = FromXlFormatConditionOperatorTo(Operator);
+			if (internalOperator !== -1) {
+				newRule.operator = internalOperator;
+			}
+		}
+
+		let processFormula = function(formula) {
+			if (formula === undefined || formula === null) {
+				return null;
+			}
+
+			if (typeof formula === "string") {
+				let formulaCF = new window['AscCommonExcel'].CFormulaCF();
+				formulaCF.Text = formula;
+				return formulaCF;
+			} else if (typeof formula === "number") {
+				let formulaCF = new window['AscCommonExcel'].CFormulaCF();
+				formulaCF.Text = formula.toString();
+				return formulaCF;
+			} else if (formula && formula.constructor === ApiRange) {
+				let formulaCF = new window['AscCommonExcel'].CFormulaCF();
+				formulaCF.Text = formula.GetAddress();
+				return formulaCF;
+			}
+
+			return null;
+		};
+
+		if (Formula1 !== undefined) {
+			let formula = processFormula(Formula1);
+			if (formula) {
+				if (newRule.aRuleElements.length > 0) {
+					newRule.aRuleElements[0] = formula;
+				} else {
+					newRule.aRuleElements.push(formula);
+				}
+			}
+		}
+
+		if (Formula2 !== undefined) {
+			let formula = processFormula(Formula2);
+			if (formula) {
+				if (newRule.aRuleElements.length > 1) {
+					newRule.aRuleElements[1] = formula;
+				} else {
+					while (newRule.aRuleElements.length < 2) {
+						newRule.aRuleElements.push(null);
+					}
+					newRule.aRuleElements[1] = formula;
+				}
+			}
+		}
+
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
+		worksheet.changeCFRule(this.rule, newRule, true);
+
+		return this;
+	};
+
+	/**
+	 * Sets the cell range to which the current conditional formatting rule applies.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} Range - The range to which the current conditional formatting rule will be applied.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/ModifyAppliesToRange.js
+	 */
+	ApiFormatCondition.prototype.ModifyAppliesToRange = function(Range) {
+		if (!this.rule || !Range) {
+			return;
+		}
+
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
+		if (!worksheet || !worksheet.aConditionalFormattingRules) {
+			return;
+		}
+
+		let newRule = this.rule.clone()
+
+		let ranges = [];
+		if (Range.areas) {
+			for (let i = 0; i < Range.areas.length; i++) {
+				let area = Range.areas[i];
+				ranges.push(new Asc.Range(area.range.bbox.c1, area.range.bbox.r1, area.range.bbox.c2, area.range.bbox.r2));
+			}
+		} else {
+			ranges.push(new Asc.Range(Range.range.bbox.c1, Range.range.bbox.r1, Range.range.bbox.c2, Range.range.bbox.r2));
+		}
+
+		newRule.ranges = ranges;
+		worksheet.changeCFRule(this.rule, newRule, true);
+
+		this.range = Range;
+	};
+
+	/**
+	 * Sets the priority value for the current conditional formatting rule to "1" so that it will be evaluated before all other rules on the worksheet.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetFirstPriority.js
+	 */
+	ApiFormatCondition.prototype.SetFirstPriority = function() {
+		if (!this.rule) {
+			return;
+		}
+
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
+		if (!worksheet || !worksheet.aConditionalFormattingRules) {
+			return;
+		}
+
+		let currentPriority = this.rule.priority;
+		if (currentPriority === 1) {
+			return;
+		}
+
+		let newRule = this.rule.clone();
+		newRule.priority = 1;
+
+		let t = this;
+		worksheet.forEachConditionalFormattingRules(function (rule) {
+			if (rule.id !== t.rule.id && rule.priority && rule.priority >= 1 && rule.priority < currentPriority) {
+				let oldOtherRule = rule;
+				let newOtherRule = rule.clone();
+				newOtherRule.priority = rule.priority + 1;
+				worksheet.changeCFRule(oldOtherRule, newOtherRule, true);
+			}
+		});
+
+		worksheet.changeCFRule(this.rule, newRule, true);
+	};
+
+	/**
+	 * Sets the evaluation order for the current conditional formatting rule so it is evaluated after all other rules on the worksheet.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetLastPriority.js
+	 */
+	ApiFormatCondition.prototype.SetLastPriority = function() {
+		if (!this.rule) {
+			return;
+		}
+
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
+		if (!worksheet || !worksheet.aConditionalFormattingRules) {
+			return;
+		}
+
+		let maxPriority = 0;
+		worksheet.forEachConditionalFormattingRules(function (rule) {
+			if (rule.priority && rule.priority > maxPriority) {
+				maxPriority = rule.priority;
+			}
+		});
+
+		let newPriority = maxPriority + 1;
+		let currentPriority = this.rule.priority;
+
+		if (currentPriority === newPriority) {
+			return;
+		}
+
+		let newRule = this.rule.clone();
+		newRule.priority = newPriority;
+
+		/*worksheet.forEachConditionalFormattingRules(function (rule) {
+			if (rule.id !== t.rule.id && rule.priority && rule.priority > currentPriority) {
+				let oldOtherRule = rule;
+				let newOtherRule = rule.clone();
+				newOtherRule.priority = rule.priority - 1;
+				worksheet.changeCFRule(oldOtherRule, newOtherRule, true);
+			}
+		});*/
+
+		worksheet.changeCFRule(this.rule, newRule, true);
+	};
+
+	/**
+	 * Returns the range of cells to which the current conditional formatting rule applies.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange | null} The range of cells affected by the current condition, or null if no range is set.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetAppliesTo.js
+	 */
+	ApiFormatCondition.prototype.GetAppliesTo = function() {
+		if (!this.rule || !this.rule.ranges || this.rule.ranges.length === 0) {
+			return null;
+		}
+
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
+		if (!worksheet) {
+			return null;
+		}
+
+		let apiRange;
+		if (this.rule.ranges.length === 1) {
+			apiRange = new ApiRange(worksheet.getRange3(this.rule.ranges[0].r1, this.rule.ranges[0].c1, this.rule.ranges[0].r2, this.rule.ranges[0].c2))
+		} else {
+			let areas = [];
+			for (var i = 0; i < this.rule.ranges.length; i++) {
+				areas.push(worksheet.getRange3(this.rule.ranges[i].r1, this.rule.ranges[i].c1, this.rule.ranges[i].r2, this.rule.ranges[i].c2));
+			}
+			apiRange = new ApiRange(worksheet.getRange3(this.rule.ranges[0].r1, this.rule.ranges[0].c1, this.rule.ranges[0].r2, this.rule.ranges[0].c2), areas);
+		}
+
+		return apiRange;
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "AppliesTo", {
+		get: function() {
+			return this.GetAppliesTo();
+		}
+	});
+	/**
+	 * Returns the font applied by the current format condition.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiFont | null} An ApiFont object representing the font applied by the format condition, or null if no font is defined.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetFont.js
+	 */
+	ApiFormatCondition.prototype.GetFont = function() {
+		if (!this.rule || !this.rule.dxf) {
+			return null;
+		}
+
+		return new ApiFont(this);
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "Font", {
+		get: function() {
+			return this.GetFont();
+		}
+	});
+
+
+
+	/**
+	 * Returns the format condition type.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlFormatConditionType} The format condition type.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetType.js
+	 */
+	ApiFormatCondition.prototype.GetType = function() {
+		return ToXlFormatConditionTypeFrom(this.rule.type);
+	};
+
+	/**
+	 * Returns the first formula used by the current conditional formatting rule.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {string} The first formula.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetFormula1.js
+	 */
+	ApiFormatCondition.prototype.GetFormula1 = function() {
+		if (this.rule.aRuleElements && this.rule.aRuleElements.length > 0 && this.rule.aRuleElements[0]) {
+			return this.rule.aRuleElements[0].Text || "";
+		}
+		return "";
+	};
+
+	// /**
+	//  * Sets the first formula.
+	//  * @memberof ApiFormatCondition
+	//  * @typeofeditors ["CSE"]
+	//  * @param {string} Formula1 - The first formula.
+	//  * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetFormula1.js
+	//  */
+	// ApiFormatCondition.prototype.SetFormula1 = function(Formula1) {
+	// 	if (!this.rule) {
+	// 		return;
+	// 	}
+	//
+	// 	let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+	// 	if (!worksheet) {
+	// 		return;
+	// 	}
+	//
+	// 	let oldRule = this.rule;
+	// 	let newRule = this.rule.clone();
+	//
+	// 	let processFormula = function(formula) {
+	// 		if (formula === undefined || formula === null) {
+	// 			return null;
+	// 		}
+	//
+	// 		if (typeof formula === "string") {
+	// 			let formulaCF = new window['AscCommonExcel'].CFormulaCF();
+	// 			formulaCF.Text = formula;
+	// 			return formulaCF;
+	// 		} else if (typeof formula === "number") {
+	// 			let formulaCF = new window['AscCommonExcel'].CFormulaCF();
+	// 			formulaCF.Text = formula.toString();
+	// 			return formulaCF;
+	// 		}
+	//
+	// 		return null;
+	// 	};
+	//
+	// 	let formula = processFormula(Formula1);
+	// 	if (formula) {
+	// 		if (!newRule.aRuleElements) {
+	// 			newRule.aRuleElements = [];
+	// 		}
+	//
+	// 		if (newRule.aRuleElements.length > 0) {
+	// 			newRule.aRuleElements[0] = formula;
+	// 		} else {
+	// 			newRule.aRuleElements.push(formula);
+	// 		}
+	// 	} else {
+	// 		if (newRule.aRuleElements && newRule.aRuleElements.length > 0) {
+	// 			newRule.aRuleElements[0] = null;
+	// 		}
+	// 	}
+	//
+	// 	worksheet.changeCFRule(oldRule, newRule, true);
+	// };
+
+	Object.defineProperty(ApiFormatCondition.prototype, "Formula1", {
+		get: function() {
+			return this.GetFormula1();
+		}/*,
+		set: function(value) {
+			this.SetFormula1(value);
+		}*/
+	});
+
+	/**
+	 * Returns the second formula used by the current conditional formatting rule.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {string} The second formula.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetFormula2.js
+	 */
+	ApiFormatCondition.prototype.GetFormula2 = function() {
+		if (this.rule.aRuleElements && this.rule.aRuleElements.length > 1 && this.rule.aRuleElements[1]) {
+			return this.rule.aRuleElements[1].Text || "";
+		}
+		return "";
+	};
+
+	// /**
+	//  * Sets the second formula.
+	//  * @memberof ApiFormatCondition
+	//  * @typeofeditors ["CSE"]
+	//  * @param {string} Formula2 - The second formula.
+	//  * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetFormula2.js
+	//  */
+	// ApiFormatCondition.prototype.SetFormula2 = function(Formula2) {
+	// 	if (!this.rule) {
+	// 		return;
+	// 	}
+	//
+	// 	let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+	// 	if (!worksheet) {
+	// 		return;
+	// 	}
+	//
+	// 	// Check if operator supports Formula2 (only xlBetween or xlNotBetween)
+	// 	let operator = this.rule.operator;
+	// 	if (operator !== AscCommonExcel.ECfOperator.Operator_between &&
+	// 		operator !== AscCommonExcel.ECfOperator.Operator_notBetween) {
+	// 		return; // Formula2 is only valid for Between and NotBetween operators
+	// 	}
+	//
+	// 	let oldRule = this.rule;
+	// 	let newRule = this.rule.clone();
+	//
+	// 	let processFormula = function(formula) {
+	// 		if (formula === undefined || formula === null) {
+	// 			return null;
+	// 		}
+	//
+	// 		if (typeof formula === "string") {
+	// 			let formulaCF = new window['AscCommonExcel'].CFormulaCF();
+	// 			formulaCF.Text = formula;
+	// 			return formulaCF;
+	// 		} else if (typeof formula === "number") {
+	// 			let formulaCF = new window['AscCommonExcel'].CFormulaCF();
+	// 			formulaCF.Text = formula.toString();
+	// 			return formulaCF;
+	// 		}
+	//
+	// 		return null;
+	// 	};
+	//
+	// 	let formula = processFormula(Formula2);
+	// 	if (formula) {
+	// 		if (!newRule.aRuleElements) {
+	// 			newRule.aRuleElements = [];
+	// 		}
+	//
+	// 		while (newRule.aRuleElements.length < 2) {
+	// 			newRule.aRuleElements.push(null);
+	// 		}
+	// 		newRule.aRuleElements[1] = formula;
+	// 	} else {
+	// 		if (newRule.aRuleElements && newRule.aRuleElements.length > 1) {
+	// 			newRule.aRuleElements[1] = null;
+	// 		}
+	// 	}
+	//
+	// 	worksheet.changeCFRule(oldRule, newRule, true);
+	// };
+
+	Object.defineProperty(ApiFormatCondition.prototype, "Formula2", {
+		get: function() {
+			return this.GetFormula2();
+		}/*,
+		set: function(value) {
+			this.SetFormula2(value);
+		}*/
+	});
+
+	/**
+	 * Sets the number format applied to a cell when the conditional formatting rule evaluates to true.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {string} NumberFormat - The number format code (e.g., "General", "#,##0.00", etc.)
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetNumberFormat.js
+	 */
+	ApiFormatCondition.prototype.SetNumberFormat = function(NumberFormat) {
+		if (!this.rule) {
+			return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			newRule.dxf.asc_setNumFormatInfo(NumberFormat);
+		}, true);
+	};
+
+	/**
+	 * Returns the number format applied to a cell when the conditional formatting rule evaluates to true.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {string} The number format.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetNumberFormat.js
+	 */
+	ApiFormatCondition.prototype.GetNumberFormat = function() {
+		if (!this.rule || !this.rule.dxf || !this.rule.dxf.num) {
+			return "General";
+		}
+		//TODO check
+		return this.rule.dxf.asc_getNumFormat();
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "NumberFormat", {
+		get: function() {
+			return this.GetNumberFormat();
+		},
+		set: function(value) {
+			this.SetNumberFormat(value);
+		}
+	});
+
+	// /**
+	//  * Sets the format condition operator.
+	//  * @memberof ApiFormatCondition
+	//  * @typeofeditors ["CSE"]
+	//  * @param {XlFormatConditionOperator} Operator - The format condition operator.
+	//  * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetOperator.js
+	//  */
+	// ApiFormatCondition.prototype.SetOperator = function(Operator) {
+	// 	if (!this.rule) {
+	// 		return;
+	// 	}
+	//
+	// 	let internalOperator = FromXlFormatConditionOperatorTo(Operator);
+	// 	if (internalOperator !== -1) {
+	// 		this.private_changeStyle(function (newRule) {
+	// 			newRule.operator = internalOperator;
+	// 		}, true);
+	// 	}
+	// };
+
+	/**
+	 * Returns the format condition operator.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlFormatConditionOperator} The format condition operator.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetOperator.js
+	 */
+	ApiFormatCondition.prototype.GetOperator = function() {
+		if (!this.rule) {
+			return "";
+		}
+
+		return ToXlFormatConditionOperatorFrom(this.rule.operator);
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "Operator", {
+		get: function() {
+			return this.GetOperator();
+		}/*,
+		set: function(value) {
+			this.SetOperator(value);
+		}*/
+	});
+
+	/**
+	 * Returns the parent range object of the current format condition.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange} The parent range object.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetParent.js
+	 */
+	ApiFormatCondition.prototype.GetParent = function() {
+		return this.range;
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "Parent", {
+		get: function() {
+			return this.GetParent();
+		}
+	});
+
+	/**
+	 * Returns the format condition type.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlFormatConditionType} The format condition type.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetType.js
+	 */
+	ApiFormatCondition.prototype.GetType = function() {
+		return ToXlFormatConditionTypeFrom(this.rule.type);
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "Type", {
+		get: function() {
+			return this.GetType();
+		}
+	});
+
+	/**
+	 * Returns the pivot table condition object.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {PTCondition | null} The pivot table condition object.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetPTCondition.js
+	 */
+	ApiFormatCondition.prototype.GetPTCondition = function() {
+		if (!this.rule) {
+			return null;
+		}
+
+		if (this.rule.pivot) {
+			return this.rule.pivot;
+		}
+
+		return null;
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "PTCondition", {
+		get: function() {
+			return this.GetPTCondition();
+		}
+	});
+
+	/**
+	 * Returns the priority value of the conditional formatting rule.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} The priority value of the conditional formatting rule.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetPriority.js
+	 */
+	ApiFormatCondition.prototype.GetPriority = function() {
+		if (!this.rule) {
+			return null;
+		}
+		return this.rule.priority;
+	};
+
+	/**
+	 * Sets the priority value of the conditional formatting rule.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {number} Priority - The priority value (1-based).
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetPriority.js
+	 */
+	ApiFormatCondition.prototype.SetPriority = function(Priority) {
+		if (!this.rule || typeof Priority !== "number" || Priority < 1) {
+			return;
+		}
+
+		if (this.rule.priority === Priority) {
+			return;
+		}
+
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
+		if (!worksheet || !worksheet.aConditionalFormattingRules) {
+			return;
+		}
+		let isContains = false;
+		worksheet.forEachConditionalFormattingRules(function (rule) {
+			if (rule.priority === Priority) {
+				isContains = true;
+				return true;
+			}
+		});
+
+		if (isContains) {
+			logError(new Error("Priority already exists in the worksheet."));
+			return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			newRule.priority = Priority;
+		}, true);
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "Priority", {
+		get: function() {
+			return this.GetPriority();
+		},
+		set: function(value) {
+			this.SetPriority(value);
+		}
+	});
+
+	/**
+	 * Returns the scope type of the conditional formatting rule.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlPivotConditionScope} - Returns "xlSelectionScope" for normal ranges, "xlDataFieldScope" for entire worksheet, "xlFieldsScope" for pivot tables.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetScopeType.js
+	 */
+	ApiFormatCondition.prototype.GetScopeType = function() {
+		if (!this.rule) {
+			return "xlSelectionScope";
+		}
+
+		// Check if it's a pivot table conditional formatting
+		if (this.rule.pivot) {
+			return "xlFieldsScope";
+		}
+
+		// Check if it covers the entire worksheet (data field scope)
+		if (this.rule.ranges && this.rule.ranges.length === 1) {
+			let range = this.rule.ranges[0];
+			if (range.r1 === 0 && range.c1 === 0 &&
+				range.r2 === AscCommon.gc_nMaxRow0 && range.c2 === AscCommon.gc_nMaxCol0) {
+				return "xlDataFieldScope";
+			}
+		}
+
+		return "xlSelectionScope";
+	};
+
+	/**
+	 * Sets the scope type for the conditional formatting rule.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {XlPivotConditionScope} ScopeType - The scope type: "xlSelectionScope", "xlDataFieldScope", or "xlFieldsScope".
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetScopeType.js
+	 */
+	ApiFormatCondition.prototype.SetScopeType = function(ScopeType) {
+		if (!this.rule) {
+			return;
+		}
+
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
+		if (!worksheet) {
+			return;
+		}
+
+		let oldRule = this.rule;
+		let newRule = this.rule.clone();
+
+		switch (ScopeType) {
+			case "xlDataFieldScope":
+				newRule.ranges = [new Asc.Range(0, 0, AscCommon.gc_nMaxCol0, AscCommon.gc_nMaxRow0)];
+				newRule.pivot = false;
+				break;
+			case "xlFieldsScope":
+				// Find pivot table at current selection
+				let activeCell = worksheet.selectionRange.activeCell;
+				let pivot = worksheet.getPivotTable(activeCell.col, activeCell.row);
+				if (pivot && pivot.location && pivot.location.ref) {
+					newRule.ranges = [pivot.location.ref];
+					newRule.pivot = true;
+				}
+				break;
+			case "xlSelectionScope":
+			default:
+				// Keep current selection range from AppliesTo property
+				newRule.pivot = false;
+				break;
+		}
+
+		worksheet.changeCFRule(oldRule, newRule, true);
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "ScopeType", {
+		get: function() {
+			return this.GetScopeType();
+		},
+		set: function(value) {
+			this.SetScopeType(value);
+		}
+	});
+
+	// /**
+	//  * Returns whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
+	//  * @memberof ApiFormatCondition
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {boolean}
+	//  * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetStopIfTrue.js
+	//  */
+	// ApiFormatCondition.prototype.GetStopIfTrue = function() {
+	// 	if (!this.rule) {
+	// 		return false;
+	// 	}
+	// 	return this.rule.stopIfTrue;
+	// };
+
+	// /**
+	//  * Sets whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
+	//  * @memberof ApiFormatCondition
+	//  * @typeofeditors ["CSE"]
+	//  * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
+	//  * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetStopIfTrue.js
+	//  */
+	// ApiFormatCondition.prototype.SetStopIfTrue = function(StopIfTrue) {
+	// 	if (!this.rule || typeof StopIfTrue !== "boolean") {
+	// 		return;
+	// 	}
+	//
+	// 	this.private_changeStyle(function (newRule) {
+	// 		newRule.stopIfTrue = StopIfTrue;
+	// 	}, true);
+	// };
+	//
+	// Object.defineProperty(ApiFormatCondition.prototype, "StopIfTrue", {
+	// 	get: function() {
+	// 		return this.GetStopIfTrue();
+	// 	},
+	// 	set: function(value) {
+	// 		this.SetStopIfTrue(value);
+	// 	}
+	// });
+
+	/**
+	 * Returns the text value used in text-based conditional formatting rules.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {string} The text value used in text-based conditional formatting rules.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetText.js
+	 */
+	ApiFormatCondition.prototype.GetText = function() {
+		if (!this.rule) {
+			return "";
+		}
+		return this.rule.text || "";
+	};
+
+	/**
+	 * Sets the text value used in text-based conditional formatting rules.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {string} Text - The text value to compare against.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetText.js
+	 */
+	ApiFormatCondition.prototype.SetText = function(Text) {
+		if (!this.rule || typeof Text !== "string") {
+			return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			newRule.text = Text;
+
+			// Update formula for text-based conditions if needed
+			if (newRule.type === Asc.ECfType.containsText ||
+				newRule.type === Asc.ECfType.notContainsText ||
+				newRule.type === Asc.ECfType.beginsWith ||
+				newRule.type === Asc.ECfType.endsWith) {
+
+				// Generate appropriate formula based on type
+				let formula = null;
+				let range = newRule.ranges && newRule.ranges[0];
+				if (range) {
+					let firstCell = new Asc.Range(range.c1, range.r1, range.c1, range.r1).getName();
+					let quotedText = '"' + Text.replace(/"/g, '""') + '"';
+
+					switch (newRule.type) {
+						case Asc.ECfType.containsText:
+							formula = "NOT(ISERROR(SEARCH(" + quotedText + "," + firstCell + ")))";
+							break;
+						case Asc.ECfType.notContainsText:
+							formula = "ISERROR(SEARCH(" + quotedText + "," + firstCell + "))";
+							break;
+						case Asc.ECfType.beginsWith:
+							formula = "LEFT(" + firstCell + ",LEN(" + quotedText + "))=" + quotedText;
+							break;
+						case Asc.ECfType.endsWith:
+							formula = "RIGHT(" + firstCell + ",LEN(" + quotedText + "))=" + quotedText;
+							break;
+					}
+
+					if (formula) {
+						if (!newRule.aRuleElements) {
+							newRule.aRuleElements = [];
+						}
+						if (!newRule.aRuleElements[0]) {
+							newRule.aRuleElements[0] = new window['AscCommonExcel'].CFormulaCF();
+						}
+						newRule.aRuleElements[0].Text = formula;
+					}
+				}
+			}
+		}, true);
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "Text", {
+		get: function() {
+			return this.GetText();
+		},
+		set: function(value) {
+			this.SetText(value);
+		}
+	});
+
+	/**
+	 * Returns the text operator for text-based conditional formatting rules.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlContainsOperator | null} The operator defining how the text comparison is performed,
+	 * or null if the rule is not text-based.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetTextOperator.js
+	 */
+	ApiFormatCondition.prototype.GetTextOperator = function() {
+		if (!this.rule) {
+			return null;
+		}
+
+		if (!(this.rule.type === Asc.ECfType.containsText ||
+			this.rule.type === Asc.ECfType.notContainsText ||
+			this.rule.type === Asc.ECfType.beginsWith ||
+			this.rule.type === Asc.ECfType.endsWith)) {
+			logError(new Error('Type must be one of the text-based types: containsText, notContainsText, beginsWith, endsWith'));
+			return;
+		}
+
+		// Map internal types to text operators
+		switch (this.rule.operator) {
+			case AscCommonExcel.ECfOperator.Operator_beginsWith:
+				return "xlBeginsWith";
+			case AscCommonExcel.ECfOperator.Operator_endsWith:
+				return "xlEndsWith";
+			case AscCommonExcel.ECfOperator.Operator_containsText:
+				return "xlContains";
+			case AscCommonExcel.ECfOperator.Operator_notContains:
+				return "xlDoesNotContain";
+			default:
+				return null;
+		}
+	};
+
+	/**
+	 * Sets the text operator for text-based conditional formatting rules.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {XlContainsOperator} TextOperator - The text operator: "xlContains", "xlDoesNotContain", "xlBeginsWith", "xlEndsWith".
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetTextOperator.js
+	 */
+	ApiFormatCondition.prototype.SetTextOperator = function(TextOperator) {
+		if (!this.rule || !TextOperator) {
+			return;
+		}
+
+		if (!(this.rule.type === Asc.ECfType.containsText ||
+			this.rule.type === Asc.ECfType.notContainsText ||
+			this.rule.type === Asc.ECfType.beginsWith ||
+			this.rule.type === Asc.ECfType.endsWith)) {
+			logError(new Error('Type must be one of the text-based types: containsText, notContainsText, beginsWith, endsWith'));
+			return;
+		}
+
+		let newType = null;
+		let newOperator = null;
+		switch (TextOperator) {
+			case "xlContains":
+				newType = Asc.ECfType.containsText;
+				newOperator = AscCommonExcel.ECfOperator.Operator_containsText;
+				break;
+			case "xlDoesNotContain":
+				newType = Asc.ECfType.notContainsText;
+				newOperator = AscCommonExcel.ECfOperator.Operator_notContains;
+				break;
+			case "xlBeginsWith":
+				newType = Asc.ECfType.beginsWith;
+				newOperator = AscCommonExcel.ECfOperator.Operator_beginsWith;
+				break;
+			case "xlEndsWith":
+				newType = Asc.ECfType.endsWith;
+				newOperator = AscCommonExcel.ECfOperator.Operator_endsWith;
+				break;
+			default:
+				return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			newRule.type = newType;
+			newRule.operator = newOperator;
+
+			// Update formula if text is already set
+			if (newRule.text) {
+				let range = newRule.ranges && newRule.ranges[0];
+				if (range) {
+					let firstCell = new Asc.Range(range.c1, range.r1, range.c1, range.r1).getName();
+					let quotedText = '"' + newRule.text.replace(/"/g, '""') + '"';
+					let formula = null;
+
+					switch (newType) {
+						case Asc.ECfType.containsText:
+							formula = "NOT(ISERROR(SEARCH(" + quotedText + "," + firstCell + ")))";
+							break;
+						case Asc.ECfType.notContainsText:
+							formula = "ISERROR(SEARCH(" + quotedText + "," + firstCell + "))";
+							break;
+						case Asc.ECfType.beginsWith:
+							formula = "LEFT(" + firstCell + ",LEN(" + quotedText + "))=" + quotedText;
+							break;
+						case Asc.ECfType.endsWith:
+							formula = "RIGHT(" + firstCell + ",LEN(" + quotedText + "))=" + quotedText;
+							break;
+					}
+
+					if (formula) {
+						if (!newRule.aRuleElements) {
+							newRule.aRuleElements = [];
+						}
+						if (!newRule.aRuleElements[0]) {
+							newRule.aRuleElements[0] = new window['AscCommonExcel'].CFormulaCF();
+						}
+						newRule.aRuleElements[0].Text = formula;
+					}
+				}
+			}
+		}, true);
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "TextOperator", {
+		get: function() {
+			return this.GetTextOperator();
+		},
+		set: function(value) {
+			this.SetTextOperator(value);
+		}
+	});
+
+	/**
+	 * Returns the date operator for time period conditions.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlTimePeriods | null} The time period operator that defines how the date condition is evaluated,
+	 * or null if the rule is not date-based.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetDateOperator.js
+	 */
+	ApiFormatCondition.prototype.GetDateOperator = function() {
+		if (!this.rule) {
+			return null;
+		}
+
+		// DateOperator применяется только для условий типа xlTimePeriod
+		if (this.rule.type !== Asc.ECfType.timePeriod) {
+			return null;
+		}
+
+		return ToXlTimePeriodsFrom(this.rule.timePeriod);
+	};
+
+	/**
+	 * Sets the date operator for time period conditions.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {XlTimePeriods} DateOperator - The date operator for time period conditions.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetDateOperator.js
+	 */
+	ApiFormatCondition.prototype.SetDateOperator = function(DateOperator) {
+		if (!this.rule || typeof DateOperator !== "string") {
+			return;
+		}
+
+		// DateOperator применяется только для условий типа xlTimePeriod
+		if (this.rule.type !== Asc.ECfType.timePeriod) {
+			return;
+		}
+
+		let internalTimePeriod = FromXlTimePeriodsTo(DateOperator);
+		if (internalTimePeriod !== -1) {
+			this.private_changeStyle(function (newRule) {
+				newRule.asc_setTimePeriod(internalTimePeriod);
+			}, true);
+		}
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "DateOperator", {
+		get: function() {
+			return this.GetDateOperator();
+		},
+		set: function(value) {
+			this.SetDateOperator(value);
+		}
+	});
+
+	ApiFormatCondition.prototype.private_changeStyle = function(callback, notInitFont) {
+		let worksheet = this._parent.range.range.worksheet;
+		if (!worksheet || !worksheet.aConditionalFormattingRules) {
+			return false;
+		}
+
+		let oldRule = this.rule;
+		let newRule = oldRule.clone();
+
+		if (!newRule.dxf) {
+			newRule.dxf = new window['AscCommonExcel'].CellXfs();
+		}
+		if (!newRule.dxf.font && !notInitFont) {
+			newRule.dxf.font = new window['AscCommonExcel'].Font();
+		}
+		callback(newRule);
+
+		worksheet.changeCFRule(oldRule, newRule, true);
+		//this.rule = newRule;
+		return true;
+	};
+
+	/**
+	 * Sets the border style for the conditional formatting rule.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {BordersIndex} bordersIndex - Specifies the cell border position.
+	 * @param {LineStyle} lineStyle - Specifies the line style used to form the cell border.
+	 * @param {ApiColor} oColor - The color object which specifies the color to be set to the cell border.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetBorders.js
+	 */
+	ApiFormatCondition.prototype.SetBorders = function(bordersIndex, lineStyle, oColor) {
+		if (!this.rule) {
+			return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			if (!newRule.dxf.border) {
+				newRule.dxf.border = new AscCommonExcel.Border();
+				newRule.dxf.border.initDefault();
+			}
+
+			var borders = newRule.dxf.border;
+			switch (bordersIndex) {
+				case 'DiagonalDown':
+					borders.dd = true;
+					borders.d = private_MakeBorder(lineStyle, oColor);
+					break;
+				case 'DiagonalUp':
+					borders.du = true;
+					borders.d = private_MakeBorder(lineStyle, oColor);
+					break;
+				case 'Bottom':
+					borders.b = private_MakeBorder(lineStyle, oColor);
+					break;
+				case 'Left':
+					borders.l = private_MakeBorder(lineStyle, oColor);
+					break;
+				case 'Right':
+					borders.r = private_MakeBorder(lineStyle, oColor);
+					break;
+				case 'Top':
+					borders.t = private_MakeBorder(lineStyle, oColor);
+					break;
+				case 'InsideHorizontal':
+					borders.ih = private_MakeBorder(lineStyle, oColor);
+					break;
+				case 'InsideVertical':
+					borders.iv = private_MakeBorder(lineStyle, oColor);
+					break;
+			}
+		}, true);
+	};
+
+	/**
+	 * Sets the background color to the format condition with the previously created color object.
+	 * Sets 'No Fill' when previously created color object is null.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiColor} oColor - The color object that specifies the background color for the format condition.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/SetFillColor.js
+	 */
+	ApiFormatCondition.prototype.SetFillColor = function(oColor) {
+		if (!this.rule) {
+			return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			if (!newRule.dxf.fill) {
+				newRule.dxf.fill = new window['AscCommonExcel'].Fill();
+			}
+
+			if ('No Fill' === oColor || oColor === null) {
+				newRule.dxf.fill.fromColor(null);
+			} else if (oColor && oColor.color) {
+				newRule.dxf.fill.fromColor(oColor.color);
+			}
+		}, true);
+	};
+
+	/**
+	 * Returns the background color for the format condition. Returns 'No Fill' when the background color of the format condition is null.
+	 * @memberof ApiFormatCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiColor|'No Fill'} - The background color applied by the format condition, or 'No Fill' if none is set.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormatCondition/Methods/GetFillColor.js
+	 */
+	ApiFormatCondition.prototype.GetFillColor = function() {
+		if (!this.rule || !this.rule.dxf || !this.rule.dxf.fill) {
+			return 'No Fill';
+		}
+
+		var oColor = this.rule.dxf.fill.bg();
+		return oColor ? new ApiColor(oColor) : 'No Fill';
+	};
+
+	Object.defineProperty(ApiFormatCondition.prototype, "FillColor", {
+		get: function() {
+			return this.GetFillColor();
+		},
+		set: function(oColor) {
+			this.SetFillColor(oColor);
+		}
+	});
+
+	/**
+	 * Class representing an above average conditional formatting rule.
+	 * @constructor
+	 * @extends ApiFormatCondition
+	 * @property {boolean} AboveBelow - Returns or sets whether the rule is configured to detect values above or below the average.
+	 * @property {number} NumStdDev - Returns or sets the number of standard deviations from the average.
+	 * @property {XlFormatConditionType} Type - Returns the type of the above average conditional formatting rule.
+	 */
+	function ApiAboveAverage(rule, range, _parent) {
+		ApiFormatCondition.call(this, rule, range, _parent);
+	}
+
+	ApiAboveAverage.prototype = Object.create(ApiFormatCondition.prototype);
+	ApiAboveAverage.prototype.constructor = ApiAboveAverage;
+
+	/**
+	 * Returns whether the rule is configured to detect values above or below the average.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} True if the rule targets above-average values; false if it targets below-average values.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetAboveBelow.js
+	 */
+	ApiAboveAverage.prototype.GetAboveBelow = function() {
+		if (!this.rule) {
+			return true;
+		}
+		return this.rule.asc_getAboveAverage();
+	};
+
+	/**
+	 * Sets whether the rule targets values above or below the average.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} aboveBelow - True if the rule targets above-average values; false if it targets below-average values.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/SetAboveBelow.js
+	 */
+	ApiAboveAverage.prototype.SetAboveBelow = function(aboveBelow) {
+		if (!this.rule || typeof aboveBelow !== "boolean") {
+			return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			newRule.asc_setAboveAverage(aboveBelow);
+		}, true);
+	};
+
+	Object.defineProperty(ApiAboveAverage.prototype, "AboveBelow", {
+		get: function() {
+			return this.GetAboveBelow();
+		},
+		set: function(value) {
+			this.SetAboveBelow(value);
+		}
+	});
+
+	// /**
+	//  * Returns the calculation scope for the above average condition in pivot tables.
+	//  * @memberof ApiAboveAverage
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {number}
+	//  * @since 9.1.0
+	//  * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetCalcFor.js
+	//  */
+	// ApiAboveAverage.prototype.GetCalcFor = function() {
+	// 	if (!this.rule || !this.rule.pivot) {
+	// 		return 0; // xlAllValues
+	// 	}
+	//
+	// 	// Возвращаем значение области расчета для сводных таблиц
+	// 	return this.rule.pivot.calcFor || 0;
+	// };
+
+	// /**
+	//  * Sets the calculation scope for the above average condition in pivot tables.
+	//  * @memberof ApiAboveAverage
+	//  * @typeofeditors ["CSE"]
+	//  * @param {number} calcFor - The calculation scope (0 = xlAllValues, 1 = xlColItems, 2 = xlRowItems)
+	//  * @since 9.1.0
+	//  * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/SetCalcFor.js
+	//  */
+	// ApiAboveAverage.prototype.SetCalcFor = function(calcFor) {
+	// 	if (!this.rule || typeof calcFor !== "number") {
+	// 		return;
+	// 	}
+	//
+	// 	this.private_changeStyle(function (newRule) {
+	// 		if (!newRule.pivot) {
+	// 			newRule.pivot = {};
+	// 		}
+	// 		newRule.pivot.calcFor = calcFor;
+	// 	}, true);
+	// };
+	//
+	// Object.defineProperty(ApiAboveAverage.prototype, "CalcFor", {
+	// 	get: function() {
+	// 		return this.GetCalcFor();
+	// 	},
+	// 	set: function(value) {
+	// 		this.SetCalcFor(value);
+	// 	}
+	// });
+
+	/**
+	 * Returns the number of standard deviations from the average.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} The number of standard deviations from the average.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetNumStdDev.js
+	 */
+	ApiAboveAverage.prototype.GetNumStdDev = function() {
+		if (!this.rule) {
+			return 0;
+		}
+		return this.rule.asc_getStdDev() || 0;
+	};
+
+	/**
+	 * Sets the number of standard deviations from the average.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @param {number} numStdDev - The number of standard deviations (0 for simple average, positive numbers for deviations).
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/SetNumStdDev.js
+	 */
+	ApiAboveAverage.prototype.SetNumStdDev = function(numStdDev) {
+		if (!this.rule || typeof numStdDev !== "number") {
+			return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			newRule.asc_setStdDev(numStdDev);
+		}, true);
+	};
+
+	Object.defineProperty(ApiAboveAverage.prototype, "NumStdDev", {
+		get: function() {
+			return this.GetNumStdDev();
+		},
+		set: function(value) {
+			this.SetNumStdDev(value);
+		}
+	});
+
+	/**
+	 * Returns the type of the above average conditional formatting rule.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlFormatConditionType} The type of the above average conditional formatting rule.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetType.js
+	 */
+	ApiAboveAverage.prototype.GetType = function() {
+		return "xlAboveAverageCondition";
+	};
+
+	Object.defineProperty(ApiAboveAverage.prototype, "Type", {
+		get: function() {
+			return this.GetType();
+		}
+	});
+
+	// Inherited methods from ApiFormatCondition that are available for ApiAboveAverage
+
+	/**
+	 * Deletes the above average conditional formatting rule.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/Delete.js
+	 */
+	ApiAboveAverage.prototype.Delete = ApiFormatCondition.prototype.Delete;
+
+	/**
+	 * Modifies the cell range to which the current conditional formatting rule applies.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} Range - The range to which the current conditional formatting rule will be applied.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/ModifyAppliesToRange.js
+	 */
+	ApiAboveAverage.prototype.ModifyAppliesToRange = ApiFormatCondition.prototype.ModifyAppliesToRange;
+
+	/**
+	 * Sets the priority value for the current conditional formatting rule to "1" so that it will be evaluated before all other rules on the worksheet.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/SetFirstPriority.js
+	 */
+	ApiAboveAverage.prototype.SetFirstPriority = ApiFormatCondition.prototype.SetFirstPriority;
+
+	/**
+	 * Sets the evaluation order for the current conditional formatting rule so it is evaluated after all other rules on the worksheet.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/SetLastPriority.js
+	 */
+	ApiAboveAverage.prototype.SetLastPriority = ApiFormatCondition.prototype.SetLastPriority;
+
+	/**
+	 * Returns the range of cells to which the current conditional formatting rule applies.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange} The range of cells affected by the current condition.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetAppliesTo.js
+	 */
+	ApiAboveAverage.prototype.GetAppliesTo = ApiFormatCondition.prototype.GetAppliesTo;
+
+	// /**
+	//  * Returns the Borders collection that represents the borders of a style or a range of cells (including a range defined as part of a conditional format).
+	//  * @memberof ApiAboveAverage
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {ApiBorders}
+	//  * @since 9.1.0
+	//  * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetBorders.js
+	//  */
+	// ApiAboveAverage.prototype.GetBorders = ApiFormatCondition.prototype.GetBorders;
+
+	/**
+	 * Returns the font applied by the current format condition.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiFont} An ApiFont object representing the font applied by the format condition.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetFont.js
+	 */
+	ApiAboveAverage.prototype.GetFont = ApiFormatCondition.prototype.GetFont;
+
+	/**
+	 * Returns the number format applied to a cell when the conditional formatting rule evaluates to true.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @returns {string} The number format.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetNumberFormat.js
+	 */
+	ApiAboveAverage.prototype.GetNumberFormat = ApiFormatCondition.prototype.GetNumberFormat;
+
+	/**
+	 * Sets the number format applied to a cell when the conditional formatting rule evaluates to true.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @param {string} NumberFormat - The number format code.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/SetNumberFormat.js
+	 */
+	ApiAboveAverage.prototype.SetNumberFormat = ApiFormatCondition.prototype.SetNumberFormat;
+
+	/**
+	 * Returns the background color for the format condition. Returns 'No Fill' when the background color of the format condition is null.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiColor|'No Fill'} - The background color applied by the format condition, or 'No Fill' if none is set.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetFillColor.js
+	 */
+	ApiAboveAverage.prototype.GetFillColor = ApiFormatCondition.prototype.GetFillColor;
+
+	/**
+	 * Sets the background color to the format condition with the previously created color object.
+	 * Sets 'No Fill' when previously created color object is null.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiColor} oColor - The color object that specifies the background color for the format condition.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/SetFillColor.js
+	 */
+	ApiAboveAverage.prototype.SetFillColor = ApiFormatCondition.prototype.SetFillColor;
+
+	/**
+	 * Returns the parent range object of the current format condition.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange} - The parent range object.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetParent.js
+	 */
+	ApiAboveAverage.prototype.GetParent = ApiFormatCondition.prototype.GetParent;
+
+	/**
+	 * Returns the priority value of the conditional formatting rule.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} The priority value of the conditional formatting rule.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetPriority.js
+	 */
+	ApiAboveAverage.prototype.GetPriority = ApiFormatCondition.prototype.GetPriority;
+
+	/**
+	 * Sets the priority value for the conditional formatting rule.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @param {number} Priority - The priority value (1-based).
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/SetPriority.js
+	 */
+	ApiAboveAverage.prototype.SetPriority = ApiFormatCondition.prototype.SetPriority;
+
+	/**
+	 * Returns the pivot table condition object.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @returns {PTCondition | null} The pivot table condition object.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetPTCondition.js
+	 */
+	ApiAboveAverage.prototype.GetPTCondition = ApiFormatCondition.prototype.GetPTCondition;
+
+	/**
+	 * Returns the scope type of the conditional formatting rule.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlPivotConditionScope} Returns "xlSelectionScope" for normal ranges, "xlDataFieldScope" for entire worksheet, "xlFieldsScope" for pivot tables.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetScopeType.js
+	 */
+	ApiAboveAverage.prototype.GetScopeType = ApiFormatCondition.prototype.GetScopeType;
+
+	/**
+	 * Sets the scope type for the conditional formatting rule.
+	 * @memberof ApiAboveAverage
+	 * @typeofeditors ["CSE"]
+	 * @param {XlPivotConditionScope} ScopeType - The scope type: "xlSelectionScope", "xlDataFieldScope", or "xlFieldsScope".
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/SetScopeType.js
+	 */
+	ApiAboveAverage.prototype.SetScopeType = ApiFormatCondition.prototype.SetScopeType;
+
+	// /**
+	//  * Returns whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
+	//  * @memberof ApiAboveAverage
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {boolean}
+	//  * @since 9.1.0
+	//  * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/GetStopIfTrue.js
+	//  */
+	// ApiAboveAverage.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
+
+	// /**
+	//  * Sets whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
+	//  * @memberof ApiAboveAverage
+	//  * @typeofeditors ["CSE"]
+	//  * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
+	//  * @since 9.1.0
+	//  * @see office-js-api/Examples/{Editor}/ApiAboveAverage/Methods/SetStopIfTrue.js
+	//  */
+	// ApiAboveAverage.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
+
+	// Block inherited methods that should not be available for ApiAboveAverage
+	ApiAboveAverage.prototype.Modify = null;
+	ApiAboveAverage.prototype.GetOperator = null;
+	ApiAboveAverage.prototype.SetOperator = null;
+	ApiAboveAverage.prototype.GetFormula1 = null;
+	ApiAboveAverage.prototype.SetFormula1 = null;
+	ApiAboveAverage.prototype.GetFormula2 = null;
+	ApiAboveAverage.prototype.SetFormula2 = null;
+	ApiAboveAverage.prototype.GetDateOperator = null;
+	ApiAboveAverage.prototype.SetDateOperator = null;
+	ApiAboveAverage.prototype.GetText = null;
+	ApiAboveAverage.prototype.SetText = null;
+	ApiAboveAverage.prototype.GetTextOperator = null;
+	ApiAboveAverage.prototype.SetTextOperator = null;
+	ApiAboveAverage.prototype.GetRank = null;
+	ApiAboveAverage.prototype.SetRank = null;
+	ApiAboveAverage.prototype.GetPercentRank = null;
+	ApiAboveAverage.prototype.SetPercentRank = null;
+	ApiAboveAverage.prototype.GetStdDev = null;
+	ApiAboveAverage.prototype.SetStdDev = null;
+
+	/**
+	 * Class representing a color scale conditional formatting rule.
+	 * @constructor
+	 * @extends ApiFormatCondition
+	 * @property {ApiColorScaleCriterion[]} ColorScaleCriteria - Returns the collection of criteria that define this color scale rule.
+	 * @property {XlFormatConditionType} Type - Returns the type of the color scale conditional formatting rule.
+	 */
+	function ApiColorScale(rule, range, _parent) {
+		ApiFormatCondition.call(this, rule, range, _parent);
+
+		this._colorScaleCriteria = [];
+	}
+
+	ApiColorScale.prototype = Object.create(ApiFormatCondition.prototype);
+	ApiColorScale.prototype.constructor = ApiColorScale;
+
+	/**
+	 * Returns the collection of criteria that define this color scale rule.
+	 * @memberof ApiColorScale
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiColorScaleCriterion[] | null} An array of ApiColorScaleCriterion objects representing the color scale criteria,
+	 * or `null` if the rule is not a color scale type.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiColorScale/Methods/GetColorScaleCriteria.js
+	 */
+	ApiColorScale.prototype.GetColorScaleCriteria = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.colorScale) {
+			return null;
+		}
+
+		let colorScaleElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!colorScaleElement || colorScaleElement.type !== Asc.ECfType.colorScale) {
+			return null;
+		}
+
+		if (this._colorScaleCriteria && this._colorScaleCriteria.length) {
+			return this._colorScaleCriteria;
+		}
+
+		let aCFVOs = colorScaleElement.aCFVOs || [];
+		let aColors = colorScaleElement.aColors || [];
+		let length = Math.max(aCFVOs.length, aColors.length);
+
+		let criteria = [];
+		for (let i = 0; i < length; i++) {
+			criteria.push(new ApiColorScaleCriterion(
+				aCFVOs[i].clone(),
+				aColors[i],
+				this,
+				i
+			));
+		}
+
+		this._colorScaleCriteria = criteria;
+		return this._colorScaleCriteria;
+	};
+
+	Object.defineProperty(ApiColorScale.prototype, "ColorScaleCriteria", {
+		get: function() {
+			return this.GetColorScaleCriteria();
+		}
+	});
+
+	// /**
+	//  * Returns the formula for the color scale.
+	//  * @memberof ApiColorScale
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {string}
+	//  * @since 9.1.0
+	//  */
+	// ApiColorScale.prototype.GetFormula = function() {
+	// 	if (this.rule.aRuleElements && this.rule.aRuleElements.length > 0 && this.rule.aRuleElements[0]) {
+	// 		let element = this.rule.aRuleElements[0];
+	// 		if (element.aCFVOs && element.aCFVOs.length > 0 && element.aCFVOs[0] && element.aCFVOs[0].formula) {
+	// 			return "=" + element.aCFVOs[0].formula.getFormulaStr();
+	// 		}
+	// 	}
+	// 	return "";
+	// };
+	//
+	// Object.defineProperty(ApiColorScale.prototype, "Formula", {
+	// 	get: function() {
+	// 		return this.GetFormula();
+	// 	}
+	// });
+
+	/**
+	 * Returns the type of the color scale conditional formatting rule.
+	 * @memberof ApiColorScale
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlFormatConditionType} The type of the color scale conditional formatting rule.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiColorScale/Methods/GetType.js
+	 */
+	ApiColorScale.prototype.GetType = function() {
+		return "xlColorScale";
+	};
+
+	Object.defineProperty(ApiColorScale.prototype, "Type", {
+		get: function() {
+			return this.GetType();
+		}
+	});
+
+	// Inherited methods from ApiFormatCondition that are available for ApiColorScale
+
+	/**
+	 * Deletes the color scale conditional formatting rule.
+	 * @memberof ApiColorScale
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiColorScale/Methods/Delete.js
+	 */
+	ApiColorScale.prototype.Delete = ApiFormatCondition.prototype.Delete;
+
+	/**
+	 * Modifies the cell range to which the current conditional formatting rule applies.
+	 * @memberof ApiColorScale
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} Range - The range to which the current conditional formatting rule will be applied.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiColorScale/Methods/ModifyAppliesToRange.js
+	 */
+	ApiColorScale.prototype.ModifyAppliesToRange = ApiFormatCondition.prototype.ModifyAppliesToRange;
+
+	/**
+	 * Sets the priority value for the current conditional formatting rule to "1" so that it will be evaluated before all other rules on the worksheet.
+	 * @memberof ApiColorScale
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiColorScale/Methods/SetFirstPriority.js
+	 */
+	ApiColorScale.prototype.SetFirstPriority = ApiFormatCondition.prototype.SetFirstPriority;
+
+	/**
+	 * Sets the evaluation order for the current conditional formatting rule so it is evaluated after all other rules on the worksheet.
+	 * @memberof ApiColorScale
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiColorScale/Methods/SetLastPriority.js
+	 */
+	ApiColorScale.prototype.SetLastPriority = ApiFormatCondition.prototype.SetLastPriority;
+
+	/**
+	 * Returns the range of cells to which the current conditional formatting rule applies.
+	 * @memberof ApiColorScale
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange} The range of cells affected by the current condition.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiColorScale/Methods/GetAppliesTo.js
+	 */
+	ApiColorScale.prototype.GetAppliesTo = ApiFormatCondition.prototype.GetAppliesTo;
+
+	/**
+	 * Returns the parent range object of the current format condition.
+	 * @memberof ApiColorScale
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange} The parent range object.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiColorScale/Methods/GetParent.js
+	 */
+	ApiColorScale.prototype.GetParent = ApiFormatCondition.prototype.GetParent;
+
+	/**
+	 * Returns the priority value of the conditional formatting rule.
+	 * @memberof ApiColorScale
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} The priority value of the conditional formatting rule.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiColorScale/Methods/GetPriority.js
+	 */
+	ApiColorScale.prototype.GetPriority = ApiFormatCondition.prototype.GetPriority;
+
+	/**
+	 * Sets the priority value for the conditional formatting rule.
+	 * @memberof ApiColorScale
+	 * @typeofeditors ["CSE"]
+	 * @param {number} Priority - The priority value (1-based).
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiColorScale/Methods/SetPriority.js
+	 */
+	ApiColorScale.prototype.SetPriority = ApiFormatCondition.prototype.SetPriority;
+
+	/**
+	 * Returns the pivot table condition object.
+	 * @memberof ApiColorScale
+	 * @typeofeditors ["CSE"]
+	 * @returns {PTCondition | null} The pivot table condition object.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiColorScale/Methods/GetPTCondition.js
+	 */
+	ApiColorScale.prototype.GetPTCondition = ApiFormatCondition.prototype.GetPTCondition;
+
+	/**
+	 * Returns the scope type of the conditional formatting rule.
+	 * @memberof ApiColorScale
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlPivotConditionScope} Returns "xlSelectionScope" for normal ranges, "xlDataFieldScope" for entire worksheet, "xlFieldsScope" for pivot tables.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiColorScale/Methods/GetScopeType.js
+	 */
+	ApiColorScale.prototype.GetScopeType = ApiFormatCondition.prototype.GetScopeType;
+
+	/**
+	 * Sets the scope type for the conditional formatting rule.
+	 * @memberof ApiColorScale
+	 * @typeofeditors ["CSE"]
+	 * @param {XlPivotConditionScope} ScopeType - The scope type: "xlSelectionScope", "xlDataFieldScope", or "xlFieldsScope".
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiColorScale/Methods/SetScopeType.js
+	 */
+	ApiColorScale.prototype.SetScopeType = ApiFormatCondition.prototype.SetScopeType;
+
+	// /**
+	//  * Returns whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
+	//  * @memberof ApiColorScale
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {boolean}
+	//  * @since 9.1.0
+	//  * @see office-js-api/Examples/{Editor}/ApiColorScale/Methods/GetStopIfTrue.js
+	//  */
+	// ApiColorScale.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
+
+	// /**
+	//  * Sets whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
+	//  * @memberof ApiColorScale
+	//  * @typeofeditors ["CSE"]
+	//  * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
+	//  * @since 9.1.0
+	//  * @see office-js-api/Examples/{Editor}/ApiColorScale/Methods/SetStopIfTrue.js
+	//  */
+	// ApiColorScale.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
+
+	// Block inherited methods that should not be available for ApiColorScale
+	ApiColorScale.prototype.Modify = null;
+	ApiColorScale.prototype.GetOperator = null;
+	ApiColorScale.prototype.SetOperator = null;
+	ApiColorScale.prototype.GetFormula1 = null;
+	ApiColorScale.prototype.SetFormula1 = null;
+	ApiColorScale.prototype.GetFormula2 = null;
+	ApiColorScale.prototype.SetFormula2 = null;
+	ApiColorScale.prototype.GetDateOperator = null;
+	ApiColorScale.prototype.SetDateOperator = null;
+	ApiColorScale.prototype.GetText = null;
+	ApiColorScale.prototype.SetText = null;
+	ApiColorScale.prototype.GetTextOperator = null;
+	ApiColorScale.prototype.SetTextOperator = null;
+	ApiColorScale.prototype.GetRank = null;
+	ApiColorScale.prototype.SetRank = null;
+	ApiColorScale.prototype.GetPercentRank = null;
+	ApiColorScale.prototype.SetPercentRank = null;
+	ApiColorScale.prototype.GetStdDev = null;
+	ApiColorScale.prototype.SetStdDev = null;
+	ApiColorScale.prototype.GetAboveBelow = null;
+	ApiColorScale.prototype.SetAboveBelow = null;
+	//ApiColorScale.prototype.GetCalcFor = null;
+	//ApiColorScale.prototype.SetCalcFor = null;
+	ApiColorScale.prototype.GetNumStdDev = null;
+	ApiColorScale.prototype.SetNumStdDev = null;
+	//ApiColorScale.prototype.GetBorders = null;
+	ApiColorScale.prototype.GetFont = null;
+	ApiColorScale.prototype.GetNumberFormat = null;
+	ApiColorScale.prototype.SetNumberFormat = null;
+	ApiColorScale.prototype.GetFillColor = null;
+	ApiColorScale.prototype.SetFillColor = null;
+	ApiColorScale.prototype.SetBorders = null;
+
+	/**
+	 * Class representing single criterion in a color scale conditional formatting rule.
+	 * @constructor
+	 * @property {XlConditionValueTypes} Type - Returns or sets the type of the color scale criterion.
+	 * @property {string} Value - Returns or sets the value of the color scale criterion.
+	 * @property {number} Index - Returns the index indicating which threshold the criterion represents.
+	 * @property {ApiColor} Color - Returns or sets the format color of the color scale criterion.
+	 */
+	function ApiColorScaleCriterion(cfvo, color, parent, index) {
+		this.cfvo = cfvo;
+		this.color = color;
+		this.parent = parent;
+		this.index = index;
+	}
+
+	function FromXlConditionValueTypesTo(sType) {
+		let nType = -1;
+		switch (sType) {
+			case "xlConditionValueAutomaticMax":
+				nType = window['Asc']['c_oAscCfvoType'].AutoMax;
+				break;
+			case "xlConditionValueAutomaticMin":
+				nType = window['Asc']['c_oAscCfvoType'].AutoMin;
+				break;
+			case "xlConditionValueHighestValue":
+				nType = window['Asc']['c_oAscCfvoType'].Maximum;
+				break;
+			case "xlConditionValueLowestValue":
+				nType = window['Asc']['c_oAscCfvoType'].Minimum;
+				break;
+			case "xlConditionValueNone":
+				nType = window['Asc']['c_oAscCfvoType'].Number;
+				break;
+			case "xlConditionValueNumber":
+				nType = window['Asc']['c_oAscCfvoType'].Number;
+				break;
+			case "xlConditionValuePercent":
+				nType = window['Asc']['c_oAscCfvoType'].Percent;
+				break;
+			case "xlConditionValuePercentile":
+				nType = window['Asc']['c_oAscCfvoType'].Percentile;
+				break;
+			case "xlConditionValueFormula":
+				nType = window['Asc']['c_oAscCfvoType'].Formula;
+				break;
+		}
+		return nType;
+	}
+
+	function ToXlConditionValueTypesFrom(nType) {
+		let sType = "";
+		switch (nType) {
+			case window['Asc']['c_oAscCfvoType'].AutoMax:
+				sType = "xlConditionValueAutomaticMax";
+				break;
+			case window['Asc']['c_oAscCfvoType'].AutoMin:
+				sType = "xlConditionValueAutomaticMin";
+				break;
+			case window['Asc']['c_oAscCfvoType'].Maximum:
+				sType = "xlConditionValueHighestValue";
+				break;
+			case window['Asc']['c_oAscCfvoType'].Minimum:
+				sType = "xlConditionValueLowestValue";
+				break;
+			case window['Asc']['c_oAscCfvoType'].Number:
+				sType = "xlConditionValueNumber";
+				break;
+			case window['Asc']['c_oAscCfvoType'].Percent:
+				sType = "xlConditionValuePercent";
+				break;
+			case window['Asc']['c_oAscCfvoType'].Percentile:
+				sType = "xlConditionValuePercentile";
+				break;
+			case window['Asc']['c_oAscCfvoType'].Formula:
+				sType = "xlConditionValueFormula";
+				break;
+			default:
+				sType = "xlConditionValueNumber";
+				break;
+		}
+		return sType;
+	}
+
+	/**
+	 * Returns the type of the color scale criterion.
+	 * @memberof ApiColorScaleCriterion
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlConditionValueTypes | null} The type of the color scale criterion.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiColorScaleCriterion/Methods/GetType.js
+	 */
+	ApiColorScaleCriterion.prototype.GetType = function() {
+		if (!this.cfvo) {
+			return null;
+		}
+		return ToXlConditionValueTypesFrom(this.cfvo.asc_getType());
+	};
+
+	/**
+	 * Sets the type for the color scale criterion.
+	 * @memberof ApiColorScaleCriterion
+	 * @typeofeditors ["CSE"]
+	 * @param {XlConditionValueTypes} type - The type of the color scale criterion.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiColorScaleCriterion/Methods/SetType.js
+	 */
+	ApiColorScaleCriterion.prototype.SetType = function(type) {
+		if (this.cfvo) {
+			let internalType = FromXlConditionValueTypesTo(type);
+			if (internalType !== -1) {
+				let t = this;
+				this.parent.private_changeStyle(function (newRule) {
+					let index = t.GetIndex() - 1;
+					newRule.aRuleElements[0].aCFVOs[index].asc_setType(internalType);
+					newRule.aRuleElements[0].aCFVOs[index].formula = null;
+					newRule.aRuleElements[0].aCFVOs[index].formulaParent = null;
+					t.cfvo.asc_setType(internalType);
+
+				}, true);
+			}
+		}
+	};
+
+	Object.defineProperty(ApiColorScaleCriterion.prototype, "Type", {
+		get: function() {
+			return this.GetType();
+		},
+		set: function(value) {
+			this.SetType(value);
+		}
+	});
+
+
+	/**
+	 * Returns the value of the color scale criterion.
+	 * @memberof ApiColorScaleCriterion
+	 * @typeofeditors ["CSE"]
+	 * @returns {string | null} The value of the color scale criterion, or `null` if not set.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiColorScaleCriterion/Methods/GetValue.js
+	 */
+	ApiColorScaleCriterion.prototype.GetValue = function() {
+		if (!this.cfvo) {
+			return null;
+		}
+		//TODO return min/max values if val null
+		return this.cfvo.Val;
+	};
+
+	/**
+	 * Sets the value for the color scale criterion.
+	 * @memberof ApiColorScaleCriterion
+	 * @typeofeditors ["CSE"]
+	 * @param {string} value - The value of the color scale criterion.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiColorScaleCriterion/Methods/SetValue.js
+	 */
+	ApiColorScaleCriterion.prototype.SetValue = function(value) {
+		//TODO set in excel -> error, if max/min type
+		if (this.cfvo) {
+			let t = this;
+			this.parent.private_changeStyle(function (newRule) {
+				let index = t.GetIndex() - 1;
+				newRule.aRuleElements[0].aCFVOs[index].asc_setVal(value);
+				newRule.aRuleElements[0].aCFVOs[index].formula = null;
+				newRule.aRuleElements[0].aCFVOs[index].formulaParent = null;
+				t.cfvo.asc_setVal(value);
+			}, true);
+		}
+	};
+
+	Object.defineProperty(ApiColorScaleCriterion.prototype, "Value", {
+		get: function() {
+			return this.GetValue();
+		},
+		set: function(value) {
+			this.SetValue(value);
+		}
+	});
+
+	/**
+	 * Returns the index indicating which threshold the criterion represents.
+	 * @memberof ApiColorScaleCriterion
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} Returns 0 for minimum threshold, 1 for midpoint (3-color scale) or maximum (2-color scale), and 2 for maximum threshold (3-color scale only).
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiColorScaleCriterion/Methods/GetIndex.js
+	 */
+	ApiColorScaleCriterion.prototype.GetIndex = function() {
+		//starts with 0
+		return this.index + 1;
+		/*if (!this.colorScaleElement || !this.colorScaleElement.aCFVOs) {
+			return 1;
+		}
+
+		// Find the index of this criterion in the collection
+		for (let i = 0; i < this.colorScaleElement.aCFVOs.length; i++) {
+			if (this.colorScaleElement.aCFVOs[i] === this.cfvo) {
+				return i + 1; // Return 1-based index
+			}
+		}
+
+		// If not found, return 1 as default
+		return 1;*/
+	};
+
+	Object.defineProperty(ApiColorScaleCriterion.prototype, "Index", {
+		get: function() {
+			return this.GetIndex();
+		}
+	});
+
+	/**
+	 * Returns the format color of the color scale criterion.
+	 * @memberof ApiColorScaleCriterion
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiColor | null} An ApiColor object representing the criterion's color, or `null` if no color is set.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiColorScaleCriterion/Methods/GetColor.js
+	 */
+	ApiColorScaleCriterion.prototype.GetColor = function() {
+		if (!this.color) {
+			return null;
+		}
+		return new ApiColor(this.color);
+	};
+
+	/**
+	 * Sets the format color for the color scale criterion.
+	 * @memberof ApiColorScaleCriterion
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiColor} oColor - The ApiColor object specifying the color.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiColorScaleCriterion/Methods/SetColor.js
+	 */
+	ApiColorScaleCriterion.prototype.SetColor = function(oColor) {
+		if (!oColor || !(oColor instanceof ApiColor)) {
+			return;
+		}
+
+		if (this.color) {
+			let t = this;
+			this.parent.private_changeStyle(function (newRule) {
+				let index = t.GetIndex() - 1;
+				if (newRule.aRuleElements && newRule.aRuleElements[0] &&
+					newRule.aRuleElements[0].aColors &&
+					newRule.aRuleElements[0].aColors[index]) {
+					// Update the color in the color scale rule
+					newRule.aRuleElements[0].aColors[index] = oColor.color;
+				}
+			}, true);
+
+			// Update local reference
+			this.color = oColor.color;
+		}
+	};
+
+	Object.defineProperty(ApiColorScaleCriterion.prototype, "Color", {
+		get: function() {
+			return this.GetColor();
+		},
+		set: function(oColor) {
+			this.SetColor(oColor);
+		}
+	});
+
+	/**
+	 * Class representing a data bar conditional formatting rule.
+	 * @constructor
+	 * @extends ApiFormatCondition
+	 * @property {XlDataBarAxisPosition} AxisPosition - Returns or sets the axis position of the data bar conditional formatting rule.
+	 * @property {boolean} ShowValue - Returns or sets whether the data bar shows or hides the cell value.
+	 * @property {XlReadingOrder} Direction - Returns or sets the direction of the data bar.
+	 * @property {XlDataBarFillType} BarFillType - Returns or sets the bar fill type of the data bar.
+	 * @property {object} MinPoint - Returns the minimum value condition of the data bar.
+	 * @property {object} MaxPoint - Returns the maximum value condition of the data bar.
+	 * @property {ApiColor} NegativeBarColor - Returns or sets the negative bar color of the data bar.
+	 * @property {ApiColor} NegativeBorderColor - Returns or sets the negative bar border color of the data bar.
+	 * @property {number} PercentMax - Returns or sets the percent maximum value of the data bar.
+	 * @property {number} PercentMin - Returns or sets the percent minimum value of the data bar.
+	 * @property {string} Formula - Returns the formula of the data bar.
+	 * @property {XlFormatConditionType} Type - Returns the type of the data bar conditional formatting rule.
+	 */
+	function ApiDatabar(rule, range, _parent) {
+		ApiFormatCondition.call(this, rule, range, _parent);
+	}
+
+	ApiDatabar.prototype = Object.create(ApiFormatCondition.prototype);
+	ApiDatabar.prototype.constructor = ApiDatabar;
+
+	/**
+	 * Returns the axis color of the data bar conditional formatting rule.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiColor | null} The axis color as an ApiColor object, or null if no color is specified.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetAxisColor.js
+	 */
+	ApiDatabar.prototype.GetAxisColor = function()
+	{
+		var oColor;
+		if (this.rule.aRuleElements && this.rule.aRuleElements[0]) {
+			// Update the axis color in the data bar rule
+			oColor = this.rule.aRuleElements[0].AxisColor;
+		}
+		if (oColor) {
+			return new ApiColor(oColor);
+		}
+		return null;
+	};
+
+	/**
+	 * Sets the axis color for the data bar conditional formatting rule.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiColor} oColor - The axis color as an ApiColor object.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetAxisColor.js
+	 */
+	ApiDatabar.prototype.SetAxisColor = function(oColor)
+	{
+		if (!oColor || !(oColor instanceof ApiColor)) {
+			return;
+		}
+
+		if (!this.rule) {
+			return;
+		}
+
+		this.private_changeStyle(function (newRule) {
+			if (newRule.aRuleElements && newRule.aRuleElements[0]) {
+				// Update the axis color in the data bar rule
+				newRule.aRuleElements[0].asc_setAxisColor(toAscColor(oColor.color));
+			}
+		}, true);
+	};
+
+	//vba returns formatColor
+	// Object.defineProperty(ApiDatabar.prototype, "AxisColor", {
+	// 	get: function() {
+	// 		return this.GetAxisColor();
+	// 	},
+	// 	set: function(oColor) {
+	// 		this.SetAxisColor(oColor);
+	// 	}
+	// });
+
+	function FromXlDataBarAxisPositionTo(sPosition) {
+		let nPosition = -1;
+		switch (sPosition) {
+			case "xlDataBarAxisAutomatic":
+				nPosition = AscCommonExcel.EDataBarAxisPosition.automatic;
+				break;
+			case "xlDataBarAxisMidpoint":
+				nPosition = AscCommonExcel.EDataBarAxisPosition.middle;
+				break;
+			case "xlDataBarAxisNone":
+				nPosition = AscCommonExcel.EDataBarAxisPosition.none;
+				break;
+		}
+		return nPosition;
+	}
+
+	function ToXlDataBarAxisPositionFrom(nPosition) {
+		let sPosition = "";
+		switch (nPosition) {
+			case AscCommonExcel.EDataBarAxisPosition.automatic:
+				sPosition = "xlDataBarAxisAutomatic";
+				break;
+			case AscCommonExcel.EDataBarAxisPosition.middle:
+				sPosition = "xlDataBarAxisMidpoint";
+				break;
+			case AscCommonExcel.EDataBarAxisPosition.none:
+				sPosition = "xlDataBarAxisNone";
+				break;
+			default:
+				sPosition = "xlDataBarAxisAutomatic";
+				break;
+		}
+		return sPosition;
+	}
+
+	/**
+	 * Returns the axis position of the data bar conditional formatting rule.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlDataBarAxisPosition} The axis position setting for the data bar.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetAxisPosition.js
+	 */
+	ApiDatabar.prototype.GetAxisPosition = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return null;
+		}
+
+		return ToXlDataBarAxisPositionFrom(dataBarElement.AxisPosition || AscCommonExcel.EDataBarAxisPosition.automatic);
+	};
+
+	/**
+	 * Sets the axis position for the data bar conditional formatting rule.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {XlDataBarAxisPosition} position - The axis position setting for the data bar.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetAxisPosition.js
+	 */
+	ApiDatabar.prototype.SetAxisPosition = function(position) {
+		let internalPosition = FromXlDataBarAxisPositionTo(position);
+		if (internalPosition === -1) {
+			return false;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return false;
+		}
+
+		return this.private_changeStyle(function(newRule) {
+			newRule.aRuleElements[0].asc_setAxisPosition(internalPosition);
+		});
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "AxisPosition", {
+		get: function() {
+			return this.GetAxisPosition();
+		},
+		set: function(value) {
+			this.SetAxisPosition(value);
+		}
+	});
+
+	/**
+	 * Returns whether the data bar displays the cell value.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} True if the data bar shows the value, false otherwise.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetShowValue.js
+	 */
+	ApiDatabar.prototype.GetShowValue = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return true;
+		}
+
+		return dataBarElement.ShowValue !== false;
+	};
+
+	/**
+	 * Specifies whether the data bar displays the cell value.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} showValue - True to show the value, false to hide it.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetShowValue.js
+	 */
+	ApiDatabar.prototype.SetShowValue = function(showValue) {
+		if (typeof showValue !== "boolean") {
+			return false;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return false;
+		}
+
+		return this.private_changeStyle(function(newRule) {
+			newRule.aRuleElements[0].asc_setShowValue(showValue);
+		});
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "ShowValue", {
+		get: function() {
+			return this.GetShowValue();
+		},
+		set: function(value) {
+			this.SetShowValue(value);
+		}
+	});
+
+	/**
+	 * The reading order for data bars.
+	 * @typedef {("xlLTR" | "xlRTL" | "xlContext")} XlReadingOrder
+	 */
+
+	function FromXlReadingOrderTo(sDirection) {
+		let nDirection = -1;
+		switch (sDirection) {
+			case "xlContext":
+				nDirection = AscCommonExcel.EDataBarDirection.context;
+				break;
+			case "xlLTR":
+				nDirection = AscCommonExcel.EDataBarDirection.leftToRight;
+				break;
+			case "xlRTL":
+				nDirection = AscCommonExcel.EDataBarDirection.rightToLeft;
+				break;
+		}
+		return nDirection;
+	}
+
+	function ToXlReadingOrderFrom(nDirection) {
+		let sDirection = "";
+		switch (nDirection) {
+			case AscCommonExcel.EDataBarDirection.context:
+				sDirection = "xlContext";
+				break;
+			case AscCommonExcel.EDataBarDirection.leftToRight:
+				sDirection = "xlLTR";
+				break;
+			case AscCommonExcel.EDataBarDirection.rightToLeft:
+				sDirection = "xlRTL";
+				break;
+			default:
+				sDirection = "xlContext";
+				break;
+		}
+		return sDirection;
+	}
+
+	/**
+	 * Returns the direction of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlReadingOrder} The direction setting for the data bar (context, left-to-right, or right-to-left).
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetDirection.js
+	 */
+	ApiDatabar.prototype.GetDirection = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return null;
+		}
+
+		return ToXlReadingOrderFrom(dataBarElement.Direction || AscCommonExcel.EDataBarDirection.context);
+	};
+
+	/**
+	 * Sets the direction for the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {XlReadingOrder} direction - The direction setting for the data bar (context, left-to-right, or right-to-left).
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetDirection.js
+	 */
+	ApiDatabar.prototype.SetDirection = function(direction) {
+		if (typeof direction !== "string") {
+			return false;
+		}
+
+		let internalDirection = FromXlReadingOrderTo(direction);
+		if (internalDirection === -1) {
+			return false;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return false;
+		}
+
+		return this.private_changeStyle(function(newRule) {
+			newRule.aRuleElements[0].asc_setDirection(internalDirection);
+		});
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "Direction", {
+		get: function() {
+			return this.GetDirection();
+		},
+		set: function(value) {
+			this.SetDirection(value);
+		}
+	});
+
+	/**
+	 * Returns the bar color of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiColor | null} Returns the ApiColor object representing the bar color, or null if the bar color is not specified.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetBarColor.js
+	 */
+	ApiDatabar.prototype.GetBarColor = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement || !dataBarElement.Color) {
+			return null;
+		}
+
+		return new ApiColor(dataBarElement.Color);
+	};
+
+	/**
+	 * Sets the bar color for the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiColor} oColor - The ApiColor object representing the bar color.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetBarColor.js
+	 */
+	ApiDatabar.prototype.SetBarColor = function(oColor) {
+		if (!oColor || !(oColor instanceof ApiColor)) {
+			return;
+		}
+
+		if (!this.rule) {
+			return;
+		}
+
+		this.private_changeStyle(function(newRule) {
+			if (newRule.aRuleElements && newRule.aRuleElements[0]) {
+				newRule.aRuleElements[0].asc_setColor(toAscColor(oColor.color));
+			}
+		}, true);
+	};
+
+	//vba returns formatColor
+	// Object.defineProperty(ApiDatabar.prototype, "BarColor", {
+	// 	get: function() {
+	// 		return this.GetBarColor();
+	// 	},
+	// 	set: function(value) {
+	// 		this.SetBarColor(value.Color);
+	// 	}
+	// });
+
+	/**
+	 * Returns the bar fill type of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlDataBarFillType} The fill type setting for the data bar (solid or gradient).
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetBarFillType.js
+	 */
+	ApiDatabar.prototype.GetBarFillType = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return null;
+		}
+
+		return dataBarElement.Gradient ? "xlDataBarFillGradient" : "xlDataBarFillSolid";
+	};
+
+	/**
+	 * Sets the bar fill type for the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {XlDataBarFillType} fillType - The fill type setting for the data bar (solid or gradient).
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetBarFillType.js
+	 */
+	ApiDatabar.prototype.SetBarFillType = function(fillType) {
+		if (typeof fillType !== "string") {
+			return false;
+		}
+
+		var gradient = fillType === "xlDataBarFillGradient";
+		var oRule = this.rule;
+		if (!oRule) {
+			return false;
+		}
+
+		return this.private_changeStyle(function(newRule) {
+			newRule.aRuleElements[0].asc_setGradient(gradient);
+		}, true);
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "BarFillType", {
+		get: function() {
+			return this.GetBarFillType();
+		},
+		set: function(value) {
+			this.SetBarFillType(value);
+		}
+	});
+
+	/**
+	 * Returns the type of the minimum value condition for the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlConditionValueTypes | null} The type of the minimum value condition, or null if not specified.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetMinPointType.js
+	 */
+	ApiDatabar.prototype.GetMinPointType = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement || !dataBarElement.aCFVOs || dataBarElement.aCFVOs.length < 1) {
+			return null;
+		}
+
+		return ToXlConditionValueTypesFrom(dataBarElement.aCFVOs[0].asc_getType());
+	};
+
+	/**
+	 * Sets the type for the minimum value condition for the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {XlConditionValueTypes} type - The type of the minimum value condition.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetMinPointType.js
+	 */
+	ApiDatabar.prototype.SetMinPointType = function(type) {
+		let internalType = FromXlConditionValueTypesTo(type);
+		if (internalType === -1) {
+			return;
+		}
+
+		this.private_changeStyle(function(newRule) {
+			if (newRule.aRuleElements && newRule.aRuleElements[0] &&
+				newRule.aRuleElements[0].aCFVOs && newRule.aRuleElements[0].aCFVOs[0]) {
+				newRule.aRuleElements[0].aCFVOs[0].asc_setType(internalType);
+			}
+		}, true);
+	};
+
+	/**
+	 * Returns the value of the minimum value condition for the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {string | number | null} The value of the minimum value condition.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetMinPointValue.js
+	 */
+	ApiDatabar.prototype.GetMinPointValue = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement || !dataBarElement.aCFVOs || dataBarElement.aCFVOs.length < 1) {
+			return null;
+		}
+
+		let _val = dataBarElement.aCFVOs[0].Val;
+		return _val == null ? 0 : _val;
+	};
+
+	/**
+	 * Sets the value for the minimum value condition for the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {string | number} value - The value of the minimum value condition.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetMinPointValue.js
+	 */
+	ApiDatabar.prototype.SetMinPointValue = function(value) {
+		this.private_changeStyle(function(newRule) {
+			if (newRule.aRuleElements && newRule.aRuleElements[0] &&
+				newRule.aRuleElements[0].aCFVOs && newRule.aRuleElements[0].aCFVOs[0]) {
+				newRule.aRuleElements[0].aCFVOs[0].asc_setVal(value);
+			}
+		}, true);
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "MinPoint", {
+		get: function() {
+			return this.GetMinPoint();
+		}
+	});
+
+	/**
+	 * Returns the type of the maximum value condition for the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlConditionValueTypes | null} The type of the maximum value condition, or null if not specified.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetMaxPointType.js
+	 */
+	ApiDatabar.prototype.GetMaxPointType = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement || !dataBarElement.aCFVOs || dataBarElement.aCFVOs.length < 2) {
+			return null;
+		}
+
+		return ToXlConditionValueTypesFrom(dataBarElement.aCFVOs[1].asc_getType());
+	};
+
+	/**
+	 * Sets the type for the maximum value condition for the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {XlConditionValueTypes} type - The type of the maximum value condition.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetMaxPointType.js
+	 */
+	ApiDatabar.prototype.SetMaxPointType = function(type) {
+		let internalType = FromXlConditionValueTypesTo(type);
+		if (internalType === -1) {
+			return;
+		}
+
+		this.private_changeStyle(function(newRule) {
+			if (newRule.aRuleElements && newRule.aRuleElements[0] &&
+				newRule.aRuleElements[0].aCFVOs && newRule.aRuleElements[0].aCFVOs[1]) {
+				newRule.aRuleElements[0].aCFVOs[1].asc_setType(internalType);
+			}
+		}, true);
+	};
+
+	/**
+	 * Returns the value of the maximum value condition for the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {string | number | null} The value of the maximum value condition.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetMaxPointValue.js
+	 */
+	ApiDatabar.prototype.GetMaxPointValue = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement || !dataBarElement.aCFVOs || dataBarElement.aCFVOs.length < 2) {
+			return 0;
+		}
+
+		let _val = dataBarElement.aCFVOs[1].Val;
+		return _val == null ? 0 : _val;
+	};
+
+	/**
+	 * Sets the value for the maximum value condition for the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {string | number} value - The value of the maximum value condition.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetMaxPointValue.js
+	 */
+	ApiDatabar.prototype.SetMaxPointValue = function(value) {
+		this.private_changeStyle(function(newRule) {
+			if (newRule.aRuleElements && newRule.aRuleElements[0] &&
+				newRule.aRuleElements[0].aCFVOs && newRule.aRuleElements[0].aCFVOs[1]) {
+				newRule.aRuleElements[0].aCFVOs[1].asc_setVal(value);
+			}
+		}, true);
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "MaxPoint", {
+		get: function() {
+			return this.GetMaxPoint();
+		}
+	});
+
+	// /**
+	//  * Returns the negative bar format of the data bar.
+	//  * @memberof ApiDatabar
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {ApiNegativeBarFormat | null} Returns the negative bar format object.
+	//  * @since 9.1.0
+	//  * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetNegativeBarFormat.js
+	//  */
+	// ApiDatabar.prototype.GetNegativeBarFormat = function() {
+	// 	if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+	// 		return null;
+	// 	}
+	//
+	// 	let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+	// 	if (!dataBarElement) {
+	// 		return null;
+	// 	}
+	//
+	// 	return new ApiNegativeBarFormat(dataBarElement);
+	// };
+	//
+	// Object.defineProperty(ApiDatabar.prototype, "NegativeBarFormat", {
+	// 	get: function() {
+	// 		return this.GetNegativeBarFormat();
+	// 	}
+	// });
+
+		/**
+	 * Returns the negative bar color of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiColor | null} Returns the ApiColor object representing the negative bar color, or null if not specified.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetNegativeBarColor.js
+	 */
+	ApiDatabar.prototype.GetNegativeBarColor = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement || !dataBarElement.NegativeColor) {
+			return null;
+		}
+
+		return new ApiColor(dataBarElement.NegativeColor);
+	};
+
+	/**
+	 * Sets the negative bar color for the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiColor} oColor - The ApiColor object for the negative bars.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetNegativeBarColor.js
+	 */
+	ApiDatabar.prototype.SetNegativeBarColor = function(oColor) {
+		if (!oColor || !(oColor instanceof ApiColor)) {
+			return;
+		}
+
+		if (!this.rule) {
+			return;
+		}
+
+		this.private_changeStyle(function(newRule) {
+			if (!newRule.aRuleElements || !newRule.aRuleElements[0]) {
+				return;
+			}
+			newRule.aRuleElements[0].NegativeColor = oColor.color;
+		}, true);
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "NegativeBarColor", {
+		get: function() {
+			return this.GetNegativeBarColor();
+		},
+		set: function(oColor) {
+			this.SetNegativeBarColor(oColor);
+		}
+	});
+
+	/**
+	 * Returns the negative bar border color of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiColor | null} Returns the ApiColor object representing the negative bar border color, or null if not specified.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetNegativeBorderColor.js
+	 */
+	ApiDatabar.prototype.GetNegativeBorderColor = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement || !dataBarElement.NegativeBorderColor) {
+			return null;
+		}
+
+		return new ApiColor(dataBarElement.NegativeBorderColor);
+	};
+
+	/**
+	 * Sets the negative bar border color for the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiColor} oColor - The ApiColor object for the negative bar borders.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetNegativeBorderColor.js
+	 */
+	ApiDatabar.prototype.SetNegativeBorderColor = function(oColor) {
+		if (!oColor || !(oColor instanceof ApiColor)) {
+			return;
+		}
+
+		if (!this.rule) {
+			return;
+		}
+
+		this.private_changeStyle(function(newRule) {
+			if (!newRule.aRuleElements || !newRule.aRuleElements[0]) {
+				return;
+			}
+			newRule.aRuleElements[0].asc_setNegativeBorderColor(toAscColor(oColor.color));
+		}, true);
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "NegativeBorderColor", {
+		get: function() {
+			return this.GetNegativeBorderColor();
+		},
+		set: function(oColor) {
+			this.SetNegativeBorderColor(oColor);
+		}
+	});
+
+	//ms vba: use only color from borders
+	// /**
+	//  * Returns the bar border of the data bar.
+	//  * @memberof ApiDatabar
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {ApiDataBarBorder | null} Returns the data bar border object.
+	//  * @since 9.1.0
+	//  * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetBarBorder.js
+	//  */
+	// ApiDatabar.prototype.GetBarBorder = function() {
+	// 	if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+	// 		return null;
+	// 	}
+	//
+	// 	let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+	// 	if (!dataBarElement) {
+	// 		return null;
+	// 	}
+	//
+	// 	return new ApiDataBarBorder(dataBarElement);
+	// };
+	//
+	// Object.defineProperty(ApiDatabar.prototype, "BarBorder", {
+	// 	get: function() {
+	// 		return this.GetBarBorder();
+	// 	}
+	// });
+
+
+	/**
+	 * Returns the bar border color of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiColor | null} Returns the ApiColor object representing the bar border color, or null if not specified.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetBarBorderColor.js
+	 */
+	ApiDatabar.prototype.GetBarBorderColor = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement || !dataBarElement.BorderColor) {
+			return null;
+		}
+
+		return new ApiColor(dataBarElement.BorderColor);
+	};
+
+	/**
+	 * Sets the bar border color for the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiColor} oColor - The ApiColor object for the bar borders.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetBarBorderColor.js
+	 */
+	ApiDatabar.prototype.SetBarBorderColor = function(oColor) {
+		if (!oColor || !(oColor instanceof ApiColor)) {
+			return;
+		}
+
+		if (!this.rule) {
+			return;
+		}
+
+		this.private_changeStyle(function(newRule) {
+			if (newRule.aRuleElements && newRule.aRuleElements[0]) {
+				newRule.aRuleElements[0].asc_setBorderColor(toAscColor(oColor.color));
+			}
+		}, true);
+	};
+
+
+	/**
+	 * Returns the percent maximum value of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} The maximum length of the data bar in percent.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetPercentMax.js
+	 */
+	ApiDatabar.prototype.GetPercentMax = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return 100;
+		}
+
+		return dataBarElement.MaxLength || 100;
+	};
+
+	/**
+	 * Sets the percent maximum value for the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {number} percent - The maximum length of the data bar in percent.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetPercentMax.js
+	 */
+	ApiDatabar.prototype.SetPercentMax = function(percent) {
+		if (typeof percent !== "number") {
+			return false;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return false;
+		}
+
+		return this.private_changeStyle(function(newRule) {
+			let dataBarElement = newRule.aRuleElements && newRule.aRuleElements[0];
+			if (dataBarElement) {
+				dataBarElement.MaxLength = percent;
+			}
+		});
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "PercentMax", {
+		get: function() {
+			return this.GetPercentMax();
+		},
+		set: function(value) {
+			this.SetPercentMax(value);
+		}
+	});
+
+	/**
+	 * Returns the percent minimum value of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} Returns the minimum length of the data bar in percent.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetPercentMin.js
+	 */
+	ApiDatabar.prototype.GetPercentMin = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.dataBar) {
+			return null;
+		}
+
+		let dataBarElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!dataBarElement) {
+			return 0;
+		}
+
+		return dataBarElement.MinLength || 0;
+	};
+
+	/**
+	 * Sets the percent minimum value for the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {number} percent - The minimum length of the data bar in percent.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetPercentMin.js
+	 */
+	ApiDatabar.prototype.SetPercentMin = function(percent) {
+		if (typeof percent !== "number") {
+			return false;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return false;
+		}
+
+		return this.private_changeStyle(function(newRule) {
+			let dataBarElement = newRule.aRuleElements && newRule.aRuleElements[0];
+			if (dataBarElement) {
+				dataBarElement.MinLength = percent;
+			}
+		});
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "PercentMin", {
+		get: function() {
+			return this.GetPercentMin();
+		},
+		set: function(value) {
+			this.SetPercentMin(value);
+		}
+	});
+
+	/**
+	 * Returns the formula of the data bar.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {string} Returns the formula string.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetFormula.js
+	 */
+	ApiDatabar.prototype.GetFormula = function() {
+		//TODO excel error property
+		if (this.rule.aRuleElements && this.rule.aRuleElements.length > 0 && this.rule.aRuleElements[0]) {
+			let element = this.rule.aRuleElements[0];
+			return element.Text || "";
+		}
+		return "";
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "Formula", {
+		get: function() {
+			return this.GetFormula();
+		}
+	});
+
+	/**
+	 * Returns the type of the data bar conditional formatting rule.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlFormatConditionType} The type of the data bar conditional formatting rule.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetType.js
+	 */
+	ApiDatabar.prototype.GetType = function() {
+		return "xlDatabar";
+	};
+
+	Object.defineProperty(ApiDatabar.prototype, "Type", {
+		get: function() {
+			return this.GetType();
+		}
+	});
+
+	// Inherited methods from ApiFormatCondition that are available for ApiDatabar
+
+	/**
+	 * Deletes the data bar conditional formatting rule.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/Delete.js
+	 */
+	ApiDatabar.prototype.Delete = ApiFormatCondition.prototype.Delete;
+
+	/**
+	 * Modifies the cell range to which the current conditional formatting rule applies.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} Range - The range to which the current conditional formatting rule will be applied.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/ModifyAppliesToRange.js
+	 */
+	ApiDatabar.prototype.ModifyAppliesToRange = ApiFormatCondition.prototype.ModifyAppliesToRange;
+
+	/**
+	 * Sets the priority value for the current conditional formatting rule to "1" so that it will be evaluated before all other rules on the worksheet.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetFirstPriority.js
+	 */
+	ApiDatabar.prototype.SetFirstPriority = ApiFormatCondition.prototype.SetFirstPriority;
+
+	/**
+	 * Sets the evaluation order for the current conditional formatting rule so it is evaluated after all other rules on the worksheet.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetLastPriority.js
+	 */
+	ApiDatabar.prototype.SetLastPriority = ApiFormatCondition.prototype.SetLastPriority;
+
+	// Inherited methods for properties (with documentation for JSDoc)
+
+	/**
+	 * Returns the range of cells to which the current conditional formatting rule applies.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange} The range of cells affected by the current condition.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetAppliesTo.js
+	 */
+	ApiDatabar.prototype.GetAppliesTo = ApiFormatCondition.prototype.GetAppliesTo;
+
+	/**
+	 * Returns the parent range object of the current format condition.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange} The parent range object.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetParent.js
+	 */
+	ApiDatabar.prototype.GetParent = ApiFormatCondition.prototype.GetParent;
+
+	/**
+	 * Returns the priority value of the conditional formatting rule.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} The priority value of the conditional formatting rule.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetPriority.js
+	 */
+	ApiDatabar.prototype.GetPriority = ApiFormatCondition.prototype.GetPriority;
+
+	/**
+	 * Sets the priority value for the conditional formatting rule.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {number} Priority - The priority value (1-based).
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetPriority.js
+	 */
+	ApiDatabar.prototype.SetPriority = ApiFormatCondition.prototype.SetPriority;
+
+	/**
+	 * Returns the pivot table condition object.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {PTCondition | null} The pivot table condition object.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetPTCondition.js
+	 */
+	ApiDatabar.prototype.GetPTCondition = ApiFormatCondition.prototype.GetPTCondition;
+
+	/**
+	 * Returns the scope type of the conditional formatting rule.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlPivotConditionScope} Returns "xlSelectionScope" for normal ranges, "xlDataFieldScope" for entire worksheet, "xlFieldsScope" for pivot tables.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetScopeType.js
+	 */
+	ApiDatabar.prototype.GetScopeType = ApiFormatCondition.prototype.GetScopeType;
+
+	/**
+	 * Sets the scope type for the conditional formatting rule.
+	 * @memberof ApiDatabar
+	 * @typeofeditors ["CSE"]
+	 * @param {XlPivotConditionScope} ScopeType - The scope type: "xlSelectionScope", "xlDataFieldScope", or "xlFieldsScope".
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetScopeType.js
+	 */
+	ApiDatabar.prototype.SetScopeType = ApiFormatCondition.prototype.SetScopeType;
+
+	// /**
+	//  * Returns whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
+	//  * @memberof ApiDatabar
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {boolean}
+	//  * @since 9.1.0
+	//  * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetStopIfTrue.js
+	//  */
+	// ApiDatabar.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
+
+	// /**
+	//  * Sets whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
+	//  * @memberof ApiDatabar
+	//  * @typeofeditors ["CSE"]
+	//  * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
+	//  * @since 9.1.0
+	//  * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/SetStopIfTrue.js
+	//  */
+	// ApiDatabar.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
+
+	// Block inherited methods that should not be available for ApiDatabar
+	ApiDatabar.prototype.Modify = null;
+	ApiDatabar.prototype.GetOperator = null;
+	ApiDatabar.prototype.SetOperator = null;
+	ApiDatabar.prototype.GetFormula1 = null;
+	ApiDatabar.prototype.SetFormula1 = null;
+	ApiDatabar.prototype.GetFormula2 = null;
+	ApiDatabar.prototype.SetFormula2 = null;
+	ApiDatabar.prototype.GetDateOperator = null;
+	ApiDatabar.prototype.SetDateOperator = null;
+	ApiDatabar.prototype.GetText = null;
+	ApiDatabar.prototype.SetText = null;
+	ApiDatabar.prototype.GetTextOperator = null;
+	ApiDatabar.prototype.SetTextOperator = null;
+
+	/**
+	 * Class representing an icon set conditional formatting rule.
+	 * @constructor
+	 * @extends ApiFormatCondition
+	 * @property {XlIconSet} IconSet - Returns or sets the icon set type used in the conditional formatting rule.
+	 * @property {boolean} PercentileValues - Returns or sets whether the thresholds for the icon set conditional format are determined by using percentiles.
+	 * @property {boolean} ReverseOrder - Returns or sets whether the icon order in the icon set rule is reversed.
+	 * @property {boolean} ShowIconOnly - Returns or sets whether to display only icons in the icon set rule (without cell values).
+	 * @property {ApiIconCriterion[]} IconCriteria - Returns a collection of icon criteria that represent the threshold values and icons for the icon set conditional formatting rule.
+	 * @property {string} Formula - Returns the formula associated with the icon set condition.
+	 * @property {XlFormatConditionType} Type - Returns the type of the icon set conditional formatting rule.
+	 */
+	function ApiIconSetCondition(rule, range, _parent) {
+		ApiFormatCondition.call(this, rule, range, _parent);
+
+		this._iconCriteria = [];
+	}
+
+	ApiIconSetCondition.prototype = Object.create(ApiFormatCondition.prototype);
+	ApiIconSetCondition.prototype.constructor = ApiIconSetCondition;
+
+	function FromXlIconSetTo(sIconSet) {
+		let nIconSet = -1;
+		switch (sIconSet) {
+			case "xl3Arrows":
+				nIconSet = Asc.EIconSetType.Arrows3;
+				break;
+			case "xl3ArrowsGray":
+				nIconSet = Asc.EIconSetType.Arrows3Gray;
+				break;
+			case "xl3Flags":
+				nIconSet = Asc.EIconSetType.Flags3;
+				break;
+			case "xl3TrafficLights1":
+				nIconSet = Asc.EIconSetType.Traffic3Lights1;
+				break;
+			case "xl3TrafficLights2":
+				nIconSet = Asc.EIconSetType.Traffic3Lights2;
+				break;
+			case "xl3Signs":
+				nIconSet = Asc.EIconSetType.Signs3;
+				break;
+			case "xl3Symbols":
+				nIconSet = Asc.EIconSetType.Symbols3;
+				break;
+			case "xl3Symbols2":
+				nIconSet = Asc.EIconSetType.Symbols3_2;
+				break;
+			case "xl4Arrows":
+				nIconSet = Asc.EIconSetType.Arrows4;
+				break;
+			case "xl4ArrowsGray":
+				nIconSet = Asc.EIconSetType.Arrows4Gray;
+				break;
+			case "xl4RedToBlack":
+				nIconSet = Asc.EIconSetType.RedToBlack4;
+				break;
+			case "xl4CRV":
+				nIconSet = Asc.EIconSetType.Rating4;
+				break;
+			case "xl4TrafficLights":
+				nIconSet = Asc.EIconSetType.Traffic4Lights;
+				break;
+			case "xl5Arrows":
+				nIconSet = Asc.EIconSetType.Arrows5;
+				break;
+			case "xl5ArrowsGray":
+				nIconSet = Asc.EIconSetType.Arrows5Gray;
+				break;
+			case "xl5CRV":
+				nIconSet = Asc.EIconSetType.Rating5;
+				break;
+			case "xl5Quarters":
+				nIconSet = Asc.EIconSetType.Quarters5;
+				break;
+			case "xl3Stars":
+				nIconSet = Asc.EIconSetType.Stars3;
+				break;
+			case "xl3Triangles":
+				nIconSet = Asc.EIconSetType.Triangles3;
+				break;
+			case "xl5Boxes":
+				nIconSet = Asc.EIconSetType.Boxes5;
+				break;
+		}
+		return nIconSet;
+	}
+
+	function ToXlIconSetFrom(nIconSet) {
+		let sIconSet = "";
+		switch (nIconSet) {
+			case Asc.EIconSetType.Arrows3:
+				sIconSet = "xl3Arrows";
+				break;
+			case Asc.EIconSetType.Arrows3Gray:
+				sIconSet = "xl3ArrowsGray";
+				break;
+			case Asc.EIconSetType.Flags3:
+				sIconSet = "xl3Flags";
+				break;
+			case Asc.EIconSetType.Traffic3Lights1:
+				sIconSet = "xl3TrafficLights1";
+				break;
+			case Asc.EIconSetType.Traffic3Lights2:
+				sIconSet = "xl3TrafficLights2";
+				break;
+			case Asc.EIconSetType.Signs3:
+				sIconSet = "xl3Signs";
+				break;
+			case Asc.EIconSetType.Symbols3:
+				sIconSet = "xl3Symbols";
+				break;
+			case Asc.EIconSetType.Symbols3_2:
+				sIconSet = "xl3Symbols2";
+				break;
+			case Asc.EIconSetType.Arrows4:
+				sIconSet = "xl4Arrows";
+				break;
+			case Asc.EIconSetType.Arrows4Gray:
+				sIconSet = "xl4ArrowsGray";
+				break;
+			case Asc.EIconSetType.RedToBlack4:
+				sIconSet = "xl4RedToBlack";
+				break;
+			case Asc.EIconSetType.Rating4:
+				sIconSet = "xl4CRV";
+				break;
+			case Asc.EIconSetType.Traffic4Lights:
+				sIconSet = "xl4TrafficLights";
+				break;
+			case Asc.EIconSetType.Arrows5:
+				sIconSet = "xl5Arrows";
+				break;
+			case Asc.EIconSetType.Arrows5Gray:
+				sIconSet = "xl5ArrowsGray";
+				break;
+			case Asc.EIconSetType.Rating5:
+				sIconSet = "xl5CRV";
+				break;
+			case Asc.EIconSetType.Quarters5:
+				sIconSet = "xl5Quarters";
+				break;
+			case Asc.EIconSetType.Stars3:
+				sIconSet = "xl3Stars";
+				break;
+			case Asc.EIconSetType.Triangles3:
+				sIconSet = "xl3Triangles";
+				break;
+			case Asc.EIconSetType.Boxes5:
+				sIconSet = "xl5Boxes";
+				break;
+			default:
+				sIconSet = "xl3TrafficLights1";
+				break;
+		}
+		return sIconSet;
+	}
+
+	/**
+	 * Returns the icon set type used in the conditional formatting rule.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlIconSet | null} The icon set type, or null if not applicable.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetIconSet.js
+	 */
+	ApiIconSetCondition.prototype.GetIconSet = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.iconSet) {
+			return null;
+		}
+
+		let iconSetElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!iconSetElement) {
+			return null;
+		}
+
+		return ToXlIconSetFrom(iconSetElement.IconSet || Asc.EIconSetType.Traffic3Lights2);
+	};
+
+	function getIconSetCount(iconSetType) {
+		switch (iconSetType) {
+			case Asc.EIconSetType.Traffic3Lights1:
+			case Asc.EIconSetType.Traffic3Lights2:
+			case Asc.EIconSetType.Arrows3:
+			case Asc.EIconSetType.Arrows3Gray:
+			case Asc.EIconSetType.Flags3:
+			case Asc.EIconSetType.Signs3:
+			case Asc.EIconSetType.Symbols3:
+			case Asc.EIconSetType.Symbols3_2:
+			case Asc.EIconSetType.Stars3:
+			case Asc.EIconSetType.Triangles3:
+				return 3;
+
+			// 4-icon sets
+			case Asc.EIconSetType.Arrows4:
+			case Asc.EIconSetType.Arrows4Gray:
+			case Asc.EIconSetType.RedToBlack4:
+			case Asc.EIconSetType.Rating4:
+			case Asc.EIconSetType.Traffic4Lights:
+				return 4;
+
+			// 5-icon sets
+			case Asc.EIconSetType.Arrows5:
+			case Asc.EIconSetType.Arrows5Gray:
+			case Asc.EIconSetType.Rating5:
+			case Asc.EIconSetType.Quarters5:
+			case Asc.EIconSetType.Boxes5:
+				return 5;
+
+			default:
+				return -1;
+		}
+	}
+
+	/**
+	 * Sets the icon set type for the conditional formatting rule.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {XlIconSet} iconSet - The icon set type to apply.
+	 * @returns {boolean} True if the icon set was successfully set, false otherwise.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/SetIconSet.js
+	 */
+	ApiIconSetCondition.prototype.SetIconSet = function(iconSet) {
+		if (typeof iconSet !== "string") {
+			return false;
+		}
+
+		let internalIconSet = FromXlIconSetTo(iconSet);
+		if (internalIconSet === -1) {
+			return false;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return false;
+		}
+
+		let newIconCount = getIconSetCount(internalIconSet);
+		if (newIconCount === -1) {
+			return false;
+		}
+
+		return this.private_changeStyle(function(newRule) {
+			let iconSetElement = newRule.aRuleElements[0];
+			if (!iconSetElement) {
+				return;
+			}
+
+			let currentIconSet = iconSetElement.IconSet;
+			let currentIconCount = getIconSetCount(currentIconSet);
+
+			iconSetElement.asc_setIconSet(internalIconSet);
+
+			let currentCFVOs = iconSetElement.aCFVOs || [];
+
+			if (newIconCount !== currentIconCount) {
+				let newCFVOs = [];
+
+				if (currentCFVOs.length > 0 && currentCFVOs[0]) {
+					newCFVOs.push(currentCFVOs[0]);
+				} else {
+					let minCFVO = new window['AscCommonExcel'].CConditionalFormatValueObject();
+					minCFVO.asc_setGte(true);
+					minCFVO.asc_setType(window['AscCommonExcel'].ECfvoType.Minimum);
+					minCFVO.asc_setVal("");
+					newCFVOs.push(minCFVO);
+				}
+
+				let hasCustomValues = false;
+				for (let i = 1; i < currentCFVOs.length; i++) {
+					if (currentCFVOs[i] && !isDefaultCFVO(currentCFVOs[i], i, currentIconCount)) {
+						hasCustomValues = true;
+						break;
+					}
+				}
+
+				for (let i = 1; i < newIconCount; i++) {
+					let newCFVO = new window['AscCommonExcel'].CConditionalFormatValueObject();
+
+					if (hasCustomValues && i < currentCFVOs.length && currentCFVOs[i]) {
+						newCFVO.asc_setGte(currentCFVOs[i].asc_getGte());
+						newCFVO.asc_setType(currentCFVOs[i].asc_getType());
+						newCFVO.asc_setVal(currentCFVOs[i].asc_getVal());
+
+						if (currentCFVOs[i].formula) {
+							newCFVO.formula = currentCFVOs[i].formula.clone();
+						}
+						if (currentCFVOs[i].formulaParent) {
+							newCFVO.formulaParent = currentCFVOs[i].formulaParent.clone();
+						}
+					} else if (hasCustomValues && i >= currentCFVOs.length && currentCFVOs.length > 1) {
+						let lastCFVO = currentCFVOs[currentCFVOs.length - 1];
+						newCFVO.asc_setGte(lastCFVO.asc_getGte());
+						newCFVO.asc_setType(lastCFVO.asc_getType());
+
+						if (lastCFVO.asc_getType() === window['AscCommonExcel'].ECfvoType.Percent ||
+							lastCFVO.asc_getType() === window['AscCommonExcel'].ECfvoType.Percentile) {
+							let baseValue = parseFloat(lastCFVO.asc_getVal()) || 0;
+							let step = (100 - baseValue) / (newIconCount - currentCFVOs.length + 1);
+							let newValue = Math.round(baseValue + step * (i - currentCFVOs.length + 1));
+							newCFVO.asc_setVal(newValue.toString());
+						} else {
+							newCFVO.asc_setVal(lastCFVO.asc_getVal());
+						}
+
+						if (lastCFVO.formula) {
+							newCFVO.formula = lastCFVO.formula.clone();
+						}
+						if (lastCFVO.formulaParent) {
+							newCFVO.formulaParent = lastCFVO.formulaParent.clone();
+						}
+					} else {
+						newCFVO.asc_setGte(true);
+						newCFVO.asc_setType(window['AscCommonExcel'].ECfvoType.Percent);
+						let percentileValue = Math.round((i * 100) / newIconCount);
+						newCFVO.asc_setVal(percentileValue.toString());
+					}
+
+					newCFVOs.push(newCFVO);
+				}
+
+				iconSetElement.aCFVOs = newCFVOs;
+			}
+
+			let newIconSets = [];
+			for (let i = 0; i < newIconCount; i++) {
+				let newIconSetItem = new window['AscCommonExcel'].CConditionalFormatIconSet();
+				newIconSetItem.IconSet = internalIconSet;
+				newIconSetItem.IconId = i;
+				newIconSets.push(newIconSetItem);
+			}
+
+			iconSetElement.aIconSets = newIconSets;
+		});
+	};
+
+	Object.defineProperty(ApiIconSetCondition.prototype, "IconSet", {
+		get: function() {
+			return this.GetIconSet();
+		},
+		set: function(value) {
+			this.SetIconSet(value);
+		}
+	});
+
+	function isDefaultCFVO(cfvo, index, totalCount) {
+		if (!cfvo) {
+			return true;
+		}
+
+		if (index === 0) {
+			return cfvo.asc_getType() === window['AscCommonExcel'].ECfvoType.Minimum;
+		}
+
+		if (cfvo.asc_getType() === window['AscCommonExcel'].ECfvoType.Percent) {
+			let expectedPercent = Math.round((index * 100) / totalCount);
+			let actualValue = parseFloat(cfvo.asc_getVal());
+			return Math.abs(actualValue - expectedPercent) <= 1;
+		}
+
+		if (cfvo.asc_getType() === window['AscCommonExcel'].ECfvoType.Percentile) {
+			let expectedPercentile = Math.round((index * 100) / totalCount);
+			let actualValue = parseFloat(cfvo.asc_getVal());
+			return Math.abs(actualValue - expectedPercentile) <= 1;
+		}
+
+		return cfvo.asc_getType() === window['AscCommonExcel'].ECfvoType.Minimum ||
+			cfvo.asc_getType() === window['AscCommonExcel'].ECfvoType.Maximum;
+	}
+
+	/**
+	 * Returns whether the thresholds for the icon set conditional format are determined by using percentiles.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} True if all thresholds are set to percentile, false otherwise.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetPercentileValues.js
+	 */
+	ApiIconSetCondition.prototype.GetPercentileValues = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.iconSet) {
+			return false;
+		}
+
+		let iconSetElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!iconSetElement || !iconSetElement.aCFVOs) {
+			return false;
+		}
+
+		// Check if all CFVOs (except the first one which is always the minimum) are set to percentile
+		for (let i = 0; i < iconSetElement.aCFVOs.length; i++) {
+			let cfvo = iconSetElement.aCFVOs[i];
+			if (!cfvo || cfvo.asc_getType() !== AscCommonExcel.ECfvoType.Percentile) {
+				return false;
+			}
+		}
+
+		return true;
+	};
+
+	/**
+	 * Specifies whether the thresholds for the icon set conditional format are determined by using percentiles.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} percentileValues - True to set all thresholds to percentile, false otherwise.
+	 * @returns {boolean} True if the percentile values were successfully set, false otherwise.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/SetPercentileValues.js
+	 */
+	ApiIconSetCondition.prototype.SetPercentileValues = function(percentileValues) {
+		if (typeof percentileValues !== "boolean") {
+			return false;
+		}
+
+		if (!this.rule || this.rule.type !== Asc.ECfType.iconSet) {
+			return false;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return false;
+		}
+
+		return this.private_changeStyle(function(newRule) {
+			let iconSetElement = newRule.aRuleElements && newRule.aRuleElements[0];
+			if (!iconSetElement || !iconSetElement.aCFVOs) {
+				return false;
+			}
+
+			// Set type for all CFVOs (except the first one which is always the minimum)
+			for (let i = 0; i < iconSetElement.aCFVOs.length; i++) {
+				let cfvo = iconSetElement.aCFVOs[i];
+				if (cfvo) {
+					if (percentileValues) {
+						cfvo.asc_setType(AscCommonExcel.ECfvoType.Percentile);
+						// Set default percentile values if not already set
+						if (!cfvo.asc_getVal()) {
+							// For 3-icon set: 33%, 67%; for 4-icon set: 25%, 50%, 75%; for 5-icon set: 20%, 40%, 60%, 80%
+							let totalCfvos = iconSetElement.aCFVOs.length;
+							let percentileValue = Math.round((i / (totalCfvos - 1)) * 100);
+							cfvo.asc_setVal(percentileValue.toString());
+						}
+					} else {
+						cfvo.asc_setType(AscCommonExcel.ECfvoType.Number);
+						// Reset to default numeric values if needed
+						if (!cfvo.asc_getVal()) {
+							cfvo.asc_setVal("0");
+						}
+					}
+				}
+			}
+		});
+	};
+
+	Object.defineProperty(ApiIconSetCondition.prototype, "PercentileValues", {
+		get: function() {
+			return this.GetPercentileValues();
+		},
+		set: function(value) {
+			this.SetPercentileValues(value);
+		}
+	});
+
+	/**
+	 * Returns whether the icon order in the icon set rule is reversed.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean | null} True if the icon order is reversed, false otherwise, or null if not applicable.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetReverseOrder.js
+	 */
+	ApiIconSetCondition.prototype.GetReverseOrder = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.iconSet) {
+			return null;
+		}
+
+		let iconSetElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!iconSetElement) {
+			return false;
+		}
+
+		return iconSetElement.Reverse === true;
+	};
+
+	/**
+	 * Specifies whether the icon order in the icon set rule is reversed.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} reverse - True to reverse the icon order, false otherwise.
+	 * @returns {boolean} True if the setting was successfully applied, false otherwise.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/SetReverseOrder.js
+	 */
+	ApiIconSetCondition.prototype.SetReverseOrder = function(reverse) {
+		if (typeof reverse !== "boolean") {
+			return false;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return false;
+		}
+
+		return this.private_changeStyle(function(newRule) {
+			newRule.aRuleElements[0].asc_setReverse(reverse);
+		});
+	};
+
+	Object.defineProperty(ApiIconSetCondition.prototype, "ReverseOrder", {
+		get: function() {
+			return this.GetReverseOrder();
+		},
+		set: function(value) {
+			this.SetReverseOrder(value);
+		}
+	});
+
+	/**
+	 * Returns whether only icons are displayed in the icon set rule (without cell values).
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean | null} True if only icons are shown, false if values are also shown, or null if not applicable.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetShowIconOnly.js
+	 */
+	ApiIconSetCondition.prototype.GetShowIconOnly = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.iconSet) {
+			return null;
+		}
+
+		let iconSetElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!iconSetElement) {
+			return true;
+		}
+
+		return iconSetElement.ShowValue === false;
+	};
+
+	/**
+	 * Specifies whether to display only icons in the icon set rule (without cell values).
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} showIconOnly - True to show only icons, false to show both icons and values.
+	 * @returns {boolean} True if the setting was successfully applied, false otherwise.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/SetShowIconOnly.js
+	 */
+	ApiIconSetCondition.prototype.SetShowIconOnly = function(showIconOnly) {
+		if (typeof showIconOnly !== "boolean") {
+			return false;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return false;
+		}
+
+		return this.private_changeStyle(function(newRule) {
+			newRule.aRuleElements[0].asc_setShowValue(!showIconOnly);
+		});
+	};
+
+	Object.defineProperty(ApiIconSetCondition.prototype, "ShowIconOnly", {
+		get: function() {
+			return this.GetShowIconOnly();
+		},
+		set: function(value) {
+			this.SetShowIconOnly(value);
+		}
+	});
+
+	/**
+	 * Returns a collection of icon criteria that represent the threshold values and icons for the icon set conditional formatting rule.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiIconCriterion[] | null} A collection of icon criteria objects, or null if the rule is not an icon set type.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetIconCriteria.js
+	 */
+	ApiIconSetCondition.prototype.GetIconCriteria = function() {
+		if (!this.rule || this.rule.type !== Asc.ECfType.iconSet) {
+			return null;
+		}
+
+		let iconSetElement = this.rule.aRuleElements && this.rule.aRuleElements[0];
+		if (!iconSetElement) {
+			return null;
+		}
+
+		if (this._iconCriteria && this._iconCriteria.length) {
+			return this._iconCriteria;
+		}
+
+		let aCFVOs = iconSetElement.aCFVOs || [];
+		let aIconSets = iconSetElement.aIconSets || [];
+		let length = Math.max(aCFVOs.length, aIconSets.length);
+
+		let criteria = [];
+		for (let i = 0; i < length; i++) {
+			criteria.push(new ApiIconCriterion(
+				aCFVOs[i],
+				aIconSets[i],
+				iconSetElement,
+				this,
+				i
+			));
+		}
+
+		this._iconCriteria = criteria;
+		return this._iconCriteria;
+	};
+
+	Object.defineProperty(ApiIconSetCondition.prototype, "IconCriteria", {
+		get: function() {
+			return this.GetIconCriteria();
+		}
+	});
+
+	/**
+	 * Returns the formula associated with the icon set condition.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {string} The formula string, or empty string if no formula is set.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetFormula.js
+	 */
+	ApiIconSetCondition.prototype.GetFormula = function() {
+		if (this.rule.aRuleElements && this.rule.aRuleElements.length > 0 && this.rule.aRuleElements[0]) {
+			let element = this.rule.aRuleElements[0];
+			return element.Text || "";
+		}
+		return "";
+	};
+
+	Object.defineProperty(ApiIconSetCondition.prototype, "Formula", {
+		get: function() {
+			return this.GetFormula();
+		}
+	});
+
+	/**
+	 * Returns the type of the icon set conditional formatting rule.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlFormatConditionType} The type of the icon set conditional formatting rule.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetType.js
+	 */
+	ApiIconSetCondition.prototype.GetType = function() {
+		return "xlIconSets";
+	};
+
+	Object.defineProperty(ApiIconSetCondition.prototype, "Type", {
+		get: function() {
+			return this.GetType();
+		}
+	});
+
+	// Inherited methods from ApiFormatCondition that are available for ApiIconSetCondition
+
+	/**
+	 * Deletes the icon set conditional formatting rule.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/Delete.js
+	 */
+	ApiIconSetCondition.prototype.Delete = ApiFormatCondition.prototype.Delete;
+
+	/**
+	 * Modifies the cell range to which the current conditional formatting rule applies.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} Range - The range to which the current conditional formatting rule will be applied.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/ModifyAppliesToRange.js
+	 */
+	ApiIconSetCondition.prototype.ModifyAppliesToRange = ApiFormatCondition.prototype.ModifyAppliesToRange;
+
+	/**
+	 * Sets the priority value for the current conditional formatting rule to "1" so that it will be evaluated before all other rules on the worksheet.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/SetFirstPriority.js
+	 */
+	ApiIconSetCondition.prototype.SetFirstPriority = ApiFormatCondition.prototype.SetFirstPriority;
+
+	/**
+	 * Sets the evaluation order for the current conditional formatting rule so it is evaluated after all other rules on the worksheet.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/SetLastPriority.js
+	 */
+	ApiIconSetCondition.prototype.SetLastPriority = ApiFormatCondition.prototype.SetLastPriority;
+
+	// Inherited methods for properties (with documentation for JSDoc)
+
+	/**
+	 * Returns the range of cells to which the current conditional formatting rule applies.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange} The range of cells affected by the current condition.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetAppliesTo.js
+	 */
+	ApiIconSetCondition.prototype.GetAppliesTo = ApiFormatCondition.prototype.GetAppliesTo;
+
+	/**
+	 * Returns the parent range object of the current format condition.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange} The parent range object.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetParent.js
+	 */
+	ApiIconSetCondition.prototype.GetParent = ApiFormatCondition.prototype.GetParent;
+
+	/**
+	 * Returns the priority value of the conditional formatting rule.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} The priority value of the conditional formatting rule.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetPriority.js
+	 */
+	ApiIconSetCondition.prototype.GetPriority = ApiFormatCondition.prototype.GetPriority;
+
+	/**
+	 * Sets the priority value for the conditional formatting rule.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {number} Priority - The priority value (1-based).
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/SetPriority.js
+	 */
+	ApiIconSetCondition.prototype.SetPriority = ApiFormatCondition.prototype.SetPriority;
+
+	/**
+	 * Returns the pivot table condition object.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {PTCondition | null} The pivot table condition object.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetPTCondition.js
+	 */
+	ApiIconSetCondition.prototype.GetPTCondition = ApiFormatCondition.prototype.GetPTCondition;
+
+	/**
+	 * Returns the scope type of the conditional formatting rule.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlPivotConditionScope} Returns "xlSelectionScope" for normal ranges, "xlDataFieldScope" for entire worksheet, "xlFieldsScope" for pivot tables.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetScopeType.js
+	 */
+	ApiIconSetCondition.prototype.GetScopeType = ApiFormatCondition.prototype.GetScopeType;
+
+	/**
+	 * Sets the scope type for the conditional formatting rule.
+	 * @memberof ApiIconSetCondition
+	 * @typeofeditors ["CSE"]
+	 * @param {XlPivotConditionScope} ScopeType - The scope type: "xlSelectionScope", "xlDataFieldScope", or "xlFieldsScope".
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/SetScopeType.js
+	 */
+	ApiIconSetCondition.prototype.SetScopeType = ApiFormatCondition.prototype.SetScopeType;
+
+	// /**
+	//  * Returns whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
+	//  * @memberof ApiIconSetCondition
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {boolean}
+	//  * @since 9.1.0
+	//  * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetStopIfTrue.js
+	//  */
+	// ApiIconSetCondition.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
+
+	// /**
+	//  * Sets whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
+	//  * @memberof ApiIconSetCondition
+	//  * @typeofeditors ["CSE"]
+	//  * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
+	//  * @since 9.1.0
+	//  * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/SetStopIfTrue.js
+	//  */
+	// ApiIconSetCondition.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
+
+	// Block inherited methods that should not be available for ApiIconSetCondition
+	ApiIconSetCondition.prototype.Modify = null;
+	ApiIconSetCondition.prototype.GetOperator = null;
+	ApiIconSetCondition.prototype.SetOperator = null;
+	ApiIconSetCondition.prototype.GetFormula1 = null;
+	ApiIconSetCondition.prototype.SetFormula1 = null;
+	ApiIconSetCondition.prototype.GetFormula2 = null;
+	ApiIconSetCondition.prototype.SetFormula2 = null;
+	ApiIconSetCondition.prototype.GetDateOperator = null;
+	ApiIconSetCondition.prototype.SetDateOperator = null;
+	ApiIconSetCondition.prototype.GetText = null;
+	ApiIconSetCondition.prototype.SetText = null;
+	ApiIconSetCondition.prototype.GetTextOperator = null;
+	ApiIconSetCondition.prototype.SetTextOperator = null;
+
+	// /**
+	//  * Class representing a collection of icon criteria.
+	//  * @constructor
+	//  */
+	// function ApiIconCriteria(iconSetElement, parent) {
+	// 	this.iconSetElement = iconSetElement;
+	// 	this.aCFVOs = iconSetElement.aCFVOs || [];
+	// 	this.aIconSets = iconSetElement.aIconSets || [];
+	// 	this.length = Math.max(this.aCFVOs.length, this.aIconSets.length);
+	// 	this.parent = parent;
+	// }
+	//
+	// /**
+	//  * Returns the count of icon criteria in the collection.
+	//  * @memberof ApiIconCriteria
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {number} The number of icon criteria.
+	//  * @since 9.1.0
+	//  * @see office-js-api/Examples/{Editor}/ApiIconCriteria/Methods/GetCount.js
+	//  */
+	// ApiIconCriteria.prototype.GetCount = function() {
+	// 	return this.length;
+	// };
+	//
+	// Object.defineProperty(ApiIconCriteria.prototype, "Count", {
+	// 	get: function() {
+	// 		return this.GetCount();
+	// 	}
+	// });
+	//
+	// /**
+	//  * Returns an icon criterion by its index.
+	//  * @memberof ApiIconCriteria
+	//  * @typeofeditors ["CSE"]
+	//  * @param {number} index - The index of the criterion (1-based).
+	//  * @returns {ApiIconCriterion | null} The icon criterion object, or null if index is invalid.
+	//  * @since 9.1.0
+	//  * @see office-js-api/Examples/{Editor}/ApiIconCriteria/Methods/GetItem.js
+	//  */
+	// ApiIconCriteria.prototype.GetItem = function(index) {
+	// 	if (index < 1 || index > this.length) {
+	// 		return null;
+	// 	}
+	// 	let idx = index - 1;
+	// 	return new ApiIconCriterion(this.aCFVOs[idx], this.aIconSets[idx], this.iconSetElement, this);
+	// };
+
+	/**
+	 * Class representing a single icon criterion.
+	 * @constructor
+	 * @property {XlConditionValueTypes} Type - Returns or sets the condition value type of the icon criterion.
+	 * @property {string | number} Value - Returns or sets the threshold value of the icon criterion.
+	 * @property {string} Operator - Returns or sets the comparison operator of the icon criterion.
+	 * @property {number} Index - Returns the index of the icon criterion in the collection.
+	 * @property {XlIcon} Icon - Returns or sets the icon of the icon criterion.
+	 */
+	function ApiIconCriterion(cfvo, iconSet, iconSetElement, parent, index) {
+		this.cfvo = cfvo;
+		this.iconSet = iconSet;
+		this.iconSetElement = iconSetElement;
+		this.parent = parent;
+
+		this.index = index;
+	}
+
+	/**
+	 * Returns the condition value type for the icon criterion.
+	 * @memberof ApiIconCriterion
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlConditionValueTypes | null} The condition value type, or null if not available.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/GetType.js
+	 */
+	ApiIconCriterion.prototype.GetType = function() {
+		if (!this.cfvo) {
+			return null;
+		}
+		return ToXlConditionValueTypesFrom(this.cfvo.asc_getType());
+	};
+
+	/**
+	 * Sets the condition value type for the icon criterion.
+	 * @memberof ApiIconCriterion
+	 * @typeofeditors ["CSE"]
+	 * @param {XlConditionValueTypes} type - The condition value type. Only "xlConditionValueNumber", "xlConditionValuePercent", "xlConditionValuePercentile", or "xlConditionValueFormula" are supported.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/SetType.js
+	 */
+	ApiIconCriterion.prototype.SetType = function(type) {
+		if (!this.cfvo || typeof type !== "string") {
+			return;
+		}
+
+		// Check if the type is one of the supported types for setting
+		let supportedTypes = [
+			"xlConditionValueNumber",
+			"xlConditionValuePercent",
+			"xlConditionValuePercentile",
+			"xlConditionValueFormula"
+		];
+
+		if (supportedTypes.indexOf(type) === -1) {
+			return; // Only these types are supported for setting
+		}
+
+		let internalType = FromXlConditionValueTypesTo(type);
+		if (internalType === -1) {
+			return;
+		}
+
+		// MS Excel doesn't allow changing the type of the first criterion (minimum)
+		if (this.GetIndex() === 1) {
+			return;
+		}
+
+		let t = this;
+		this.parent.private_changeStyle(function (newRule) {
+			let index = t.GetIndex() - 1; // Convert to 0-based index
+			if (newRule.aRuleElements[0].aCFVOs && newRule.aRuleElements[0].aCFVOs[index]) {
+				newRule.aRuleElements[0].aCFVOs[index].asc_setType(internalType);
+
+				// Reset value when changing type
+				/*if (internalType === AscCommonExcel.ECfvoType.Formula) {
+					newRule.aRuleElements[0].aCFVOs[index].asc_setVal("0");
+				} else {
+					newRule.aRuleElements[0].aCFVOs[index].asc_setVal("0");
+				}*/
+			}
+		}, true);
+	};
+
+	Object.defineProperty(ApiIconCriterion.prototype, "Type", {
+		get: function() {
+			return this.GetType();
+		},
+		set: function(value) {
+			this.SetType(value);
+		}
+	});
+
+	/**
+	 * Returns the threshold value for the icon criterion.
+	 * @memberof ApiIconCriterion
+	 * @typeofeditors ["CSE"]
+	 * @returns {string | number | null} The threshold value, or null if not available.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/GetValue.js
+	 */
+	ApiIconCriterion.prototype.GetValue = function() {
+		if (!this.cfvo) {
+			return null;
+		}
+		return this.cfvo.asc_getVal();
+	};
+
+	/**
+	 * Sets the threshold value for the icon criterion.
+	 * @memberof ApiIconCriterion
+	 * @typeofeditors ["CSE"]
+	 * @param {string | number} value - The threshold value to set.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/SetValue.js
+	 */
+	ApiIconCriterion.prototype.SetValue = function(value) {
+		if (!this.cfvo) {
+			return;
+		}
+
+		//ms not allow change value at 1 criterion
+
+		// Check if the type allows setting a value
+		let currentType = this.cfvo.asc_getType();
+		let allowedTypes = [
+			AscCommonExcel.ECfvoType.Number,        // xlConditionValueNumber
+			AscCommonExcel.ECfvoType.Percent,       // xlConditionValuePercent
+			AscCommonExcel.ECfvoType.Percentile,    // xlConditionValuePercentile
+			AscCommonExcel.ECfvoType.Formula        // xlConditionValueFormula
+		];
+
+		if (allowedTypes.indexOf(currentType) === -1) {
+			return; // Cannot set value for this type
+		}
+
+		let t = this;
+		this.parent.private_changeStyle(function (newRule) {
+			let index = t.GetIndex() - 1;
+			newRule.aRuleElements[0].aCFVOs[index].asc_setVal(value);
+		}, true);
+	};
+
+	Object.defineProperty(ApiIconCriterion.prototype, "Value", {
+		get: function() {
+			return this.GetValue();
+		},
+		set: function(value) {
+			this.SetValue(value);
+		}
+	});
+
+	/**
+	 * Returns the comparison operator of the icon criterion.
+	 * @memberof ApiIconCriterion
+	 * @typeofeditors ["CSE"]
+	 * @returns {string | null} The operator ("xlGreaterEqual" or "xlGreater"), or null if not available.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/GetOperator.js
+	 */
+	ApiIconCriterion.prototype.GetOperator = function() {
+		if (!this.cfvo) {
+			return null;
+		}
+		return this.cfvo.asc_getGte() ? "xlGreaterEqual" : "xlGreater";
+	};
+
+	/**
+	 * Sets the comparison operator for the icon criterion.
+	 * @memberof ApiIconCriterion
+	 * @typeofeditors ["CSE"]
+	 * @param {string} operator - The operator to set ("xlGreaterEqual" or "xlGreater").
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/SetOperator.js
+	 */
+	ApiIconCriterion.prototype.SetOperator = function(operator) {
+		if (this.cfvo && typeof operator === "string") {
+			let t = this;
+			this.parent.private_changeStyle(function (newRule) {
+				let index = t.GetIndex() - 1;
+				newRule.aRuleElements[0].aCFVOs[index].asc_setGte(operator === "xlGreaterEqual");
+			}, true);
+		}
+	};
+
+	Object.defineProperty(ApiIconCriterion.prototype, "Operator", {
+		get: function() {
+			return this.GetOperator();
+		},
+		set: function(value) {
+			this.SetOperator(value);
+		}
+	});
+
+	/**
+	 * Returns the index of the icon criterion in the collection.
+	 * @memberof ApiIconCriterion
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} The 1-based index of the icon criterion.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/GetIndex.js
+	 */
+	ApiIconCriterion.prototype.GetIndex = function() {
+		return this.index + 1;
+		// if (!this.iconSetElement || !this.iconSetElement.aCFVOs) {
+		// 	return 1;
+		// }
+		//
+		// for (let i = 0; i < this.iconSetElement.aCFVOs.length; i++) {
+		// 	if (this.iconSetElement.aCFVOs[i] === this.cfvo) {
+		// 		return i + 1;
+		// 	}
+		// }
+		//
+		// return 1;
+	};
+
+	Object.defineProperty(ApiIconCriterion.prototype, "Index", {
+		get: function() {
+			return this.GetIndex();
+		}
+	});
+
+	/**
+	 * Returns the icon associated with the current icon criterion.
+	 * @memberof ApiIconCriterion
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlIcon | null} The icon constant, or null if not available.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/GetIcon.js
+	 */
+	ApiIconCriterion.prototype.GetIcon = function() {
+		if (!this.iconSetElement) {
+			return null;
+		}
+
+		// Check if there's a custom icon set for this specific criterion
+		if (this.iconSet && this.iconSet.asc_getIconSet && this.iconSet.asc_getIconSet() !== null && this.iconSet.asc_getIconSet() !== undefined) {
+			let customIconSetType = this.iconSet.asc_getIconSet();
+			let customIconIndex = this.iconSet.asc_getIndex();
+			return ToXlIconFrom(customIconSetType, customIconIndex);
+		}
+
+		// Otherwise return the default icon for this criterion's position in the parent icon set
+		let iconSetType = this.iconSetElement.IconSet || Asc.EIconSetType.Traffic3Lights2;
+		return ToXlIconFrom(iconSetType, this.index);
+	};
+
+	function FromXlIconTo(sIcon) {
+		let iconData = { iconSetType: -1, iconIndex: -1 };
+
+		switch (sIcon) {
+			// 3 Arrows
+			case "xlIconRedDownArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows3, iconIndex: 0 };
+				break;
+			case "xlIconYellowSideArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows3, iconIndex: 1 };
+				break;
+			case "xlIconGreenUpArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows3, iconIndex: 2 };
+				break;
+
+			// 3 Arrows Gray
+			case "xlIconGrayDownArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows3Gray, iconIndex: 0 };
+				break;
+			case "xlIconGraySideArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows3Gray, iconIndex: 1 };
+				break;
+			case "xlIconGrayUpArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows3Gray, iconIndex: 2 };
+				break;
+
+			// 3 Flags
+			case "xlIconRedFlag":
+				iconData = { iconSetType: Asc.EIconSetType.Flags3, iconIndex: 0 };
+				break;
+			case "xlIconYellowFlag":
+				iconData = { iconSetType: Asc.EIconSetType.Flags3, iconIndex: 1 };
+				break;
+			case "xlIconGreenFlag":
+				iconData = { iconSetType: Asc.EIconSetType.Flags3, iconIndex: 2 };
+				break;
+
+			// 3 Traffic Lights 1 (solid circles)
+			case "xlIconRedTrafficLight":
+				iconData = { iconSetType: Asc.EIconSetType.Traffic3Lights1, iconIndex: 0 };
+				break;
+			case "xlIconYellowTrafficLight":
+				iconData = { iconSetType: Asc.EIconSetType.Traffic3Lights1, iconIndex: 1 };
+				break;
+			case "xlIconGreenTrafficLight":
+				iconData = { iconSetType: Asc.EIconSetType.Traffic3Lights1, iconIndex: 2 };
+				break;
+
+			// 3 Traffic Lights 2 (circles with borders)
+			case "xlIconRedCircleWithBorder":
+				iconData = { iconSetType: Asc.EIconSetType.Traffic3Lights2, iconIndex: 0 };
+				break;
+			case "xlIconYellowCircleWithBorder":
+				iconData = { iconSetType: Asc.EIconSetType.Traffic3Lights2, iconIndex: 1 };
+				break;
+			case "xlIconGreenCircleWithBorder":
+				iconData = { iconSetType: Asc.EIconSetType.Traffic3Lights2, iconIndex: 2 };
+				break;
+
+			// 3 Signs
+			case "xlIconRedDiamond":
+				iconData = { iconSetType: Asc.EIconSetType.Signs3, iconIndex: 0 };
+				break;
+			case "xlIconYellowTriangle":
+				iconData = { iconSetType: Asc.EIconSetType.Signs3, iconIndex: 1 };
+				break;
+			case "xlIconGreenCircle":
+				iconData = { iconSetType: Asc.EIconSetType.Signs3, iconIndex: 2 };
+				break;
+
+			// 3 Symbols (circles with symbols)
+			case "xlIconRedCrossSymbol":
+				iconData = { iconSetType: Asc.EIconSetType.Symbols3, iconIndex: 0 };
+				break;
+			case "xlIconYellowExclamationSymbol":
+				iconData = { iconSetType: Asc.EIconSetType.Symbols3, iconIndex: 1 };
+				break;
+			case "xlIconGreenCheckSymbol":
+				iconData = { iconSetType: Asc.EIconSetType.Symbols3, iconIndex: 2 };
+				break;
+
+			// 3 Symbols 2 (plain symbols)
+			case "xlIconRedCross":
+				iconData = { iconSetType: Asc.EIconSetType.Symbols3_2, iconIndex: 0 };
+				break;
+			case "xlIconYellowExclamation":
+				iconData = { iconSetType: Asc.EIconSetType.Symbols3_2, iconIndex: 1 };
+				break;
+			case "xlIconGreenCheck":
+				iconData = { iconSetType: Asc.EIconSetType.Symbols3_2, iconIndex: 2 };
+				break;
+
+			// 4 Arrows
+			case "xlIconRedDownArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows4, iconIndex: 0 };
+				break;
+			case "xlIconYellowDownInclineArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows4, iconIndex: 1 };
+				break;
+			case "xlIconYellowUpInclineArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows4, iconIndex: 2 };
+				break;
+			case "xlIconGreenUpArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows4, iconIndex: 3 };
+				break;
+
+			// 4 Arrows Gray
+			case "xlIconGrayDownArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows4Gray, iconIndex: 0 };
+				break;
+			case "xlIconGrayDownInclineArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows4Gray, iconIndex: 1 };
+				break;
+			case "xlIconGrayUpInclineArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows4Gray, iconIndex: 2 };
+				break;
+			case "xlIconGrayUpArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows4Gray, iconIndex: 3 };
+				break;
+
+			// 4 Red To Black
+			case "xlIconBlackCircle":
+				iconData = { iconSetType: Asc.EIconSetType.RedToBlack4, iconIndex: 0 };
+				break;
+			case "xlIconGrayCircle":
+				iconData = { iconSetType: Asc.EIconSetType.RedToBlack4, iconIndex: 1 };
+				break;
+			case "xlIconPinkCircle":
+				iconData = { iconSetType: Asc.EIconSetType.RedToBlack4, iconIndex: 2 };
+				break;
+			case "xlIconRedCircle":
+				iconData = { iconSetType: Asc.EIconSetType.RedToBlack4, iconIndex: 3 };
+				break;
+
+			// 4 Rating (bars)
+			case "xlIcon1Bar":
+				iconData = { iconSetType: Asc.EIconSetType.Rating4, iconIndex: 0 };
+				break;
+			case "xlIcon2Bars":
+				iconData = { iconSetType: Asc.EIconSetType.Rating4, iconIndex: 1 };
+				break;
+			case "xlIcon3Bars":
+				iconData = { iconSetType: Asc.EIconSetType.Rating4, iconIndex: 2 };
+				break;
+			case "xlIcon4Bars":
+				iconData = { iconSetType: Asc.EIconSetType.Rating4, iconIndex: 3 };
+				break;
+
+			// 4 Traffic Lights
+			case "xlIconBlackCircle":
+				iconData = { iconSetType: Asc.EIconSetType.Traffic4Lights, iconIndex: 0 };
+				break;
+			case "xlIconRedCircle":
+				iconData = { iconSetType: Asc.EIconSetType.Traffic4Lights, iconIndex: 1 };
+				break;
+			case "xlIconYellowCircle":
+				iconData = { iconSetType: Asc.EIconSetType.Traffic4Lights, iconIndex: 2 };
+				break;
+			case "xlIconGreenCircle":
+				iconData = { iconSetType: Asc.EIconSetType.Traffic4Lights, iconIndex: 3 };
+				break;
+
+			// 5 Arrows
+			case "xlIconRedDownArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows5, iconIndex: 0 };
+				break;
+			case "xlIconYellowDownInclineArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows5, iconIndex: 1 };
+				break;
+			case "xlIconYellowSideArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows5, iconIndex: 2 };
+				break;
+			case "xlIconYellowUpInclineArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows5, iconIndex: 3 };
+				break;
+			case "xlIconGreenUpArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows5, iconIndex: 4 };
+				break;
+
+			// 5 Arrows Gray
+			case "xlIconGrayDownArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows5Gray, iconIndex: 0 };
+				break;
+			case "xlIconGrayDownInclineArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows5Gray, iconIndex: 1 };
+				break;
+			case "xlIconGraySideArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows5Gray, iconIndex: 2 };
+				break;
+			case "xlIconGrayUpInclineArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows5Gray, iconIndex: 3 };
+				break;
+			case "xlIconGrayUpArrow":
+				iconData = { iconSetType: Asc.EIconSetType.Arrows5Gray, iconIndex: 4 };
+				break;
+
+			// 5 Rating (bars)
+			case "xlIcon0Bars":
+				iconData = { iconSetType: Asc.EIconSetType.Rating5, iconIndex: 0 };
+				break;
+			case "xlIcon1Bar":
+				iconData = { iconSetType: Asc.EIconSetType.Rating5, iconIndex: 1 };
+				break;
+			case "xlIcon2Bars":
+				iconData = { iconSetType: Asc.EIconSetType.Rating5, iconIndex: 2 };
+				break;
+			case "xlIcon3Bars":
+				iconData = { iconSetType: Asc.EIconSetType.Rating5, iconIndex: 3 };
+				break;
+			case "xlIcon4Bars":
+				iconData = { iconSetType: Asc.EIconSetType.Rating5, iconIndex: 4 };
+				break;
+
+			// 5 Quarters
+			case "xlIconCircleWithOneWhiteQuarter":
+				iconData = { iconSetType: Asc.EIconSetType.Quarters5, iconIndex: 0 };
+				break;
+			case "xlIconCircleWithTwoWhiteQuarters":
+				iconData = { iconSetType: Asc.EIconSetType.Quarters5, iconIndex: 1 };
+				break;
+			case "xlIconCircleWithThreeWhiteQuarters":
+				iconData = { iconSetType: Asc.EIconSetType.Quarters5, iconIndex: 2 };
+				break;
+			case "xlIconWhiteCircleAllWhiteQuarters":
+				iconData = { iconSetType: Asc.EIconSetType.Quarters5, iconIndex: 3 };
+				break;
+			case "xlIconBlackCircleWithBorder":
+				iconData = { iconSetType: Asc.EIconSetType.Quarters5, iconIndex: 4 };
+				break;
+
+			// 3 Stars
+			case "xlIconSilverStar":
+				iconData = { iconSetType: Asc.EIconSetType.Stars3, iconIndex: 0 };
+				break;
+			case "xlIconHalfGoldStar":
+				iconData = { iconSetType: Asc.EIconSetType.Stars3, iconIndex: 1 };
+				break;
+			case "xlIconGoldStar":
+				iconData = { iconSetType: Asc.EIconSetType.Stars3, iconIndex: 2 };
+				break;
+
+			// 3 Triangles
+			case "xlIconRedDownTriangle":
+				iconData = { iconSetType: Asc.EIconSetType.Triangles3, iconIndex: 0 };
+				break;
+			case "xlIconYellowDash":
+				iconData = { iconSetType: Asc.EIconSetType.Triangles3, iconIndex: 1 };
+				break;
+			case "xlIconGreenUpTriangle":
+				iconData = { iconSetType: Asc.EIconSetType.Triangles3, iconIndex: 2 };
+				break;
+
+			// 5 Boxes
+			case "xlIcon0FilledBoxes":
+				iconData = { iconSetType: Asc.EIconSetType.Boxes5, iconIndex: 0 };
+				break;
+			case "xlIcon1FilledBox":
+				iconData = { iconSetType: Asc.EIconSetType.Boxes5, iconIndex: 1 };
+				break;
+			case "xlIcon2FilledBoxes":
+				iconData = { iconSetType: Asc.EIconSetType.Boxes5, iconIndex: 2 };
+				break;
+			case "xlIcon3FilledBoxes":
+				iconData = { iconSetType: Asc.EIconSetType.Boxes5, iconIndex: 3 };
+				break;
+			case "xlIcon4FilledBoxes":
+				iconData = { iconSetType: Asc.EIconSetType.Boxes5, iconIndex: 4 };
+				break;
+
+			// Special case for no icon
+			case "xlIconNoCellIcon":
+				iconData = { iconSetType: -1, iconIndex: -1 };
+				break;
+
+			default:
+				return iconData;
+		}
+
+		return iconData;
+	}
+
+	function ToXlIconFrom(iconSetType, iconIndex) {
+		let sIcon = "";
+
+		switch (iconSetType) {
+			case Asc.EIconSetType.Arrows3:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconRedDownArrow"; break;
+					case 1: sIcon = "xlIconYellowSideArrow"; break;
+					case 2: sIcon = "xlIconGreenUpArrow"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Arrows3Gray:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconGrayDownArrow"; break;
+					case 1: sIcon = "xlIconGraySideArrow"; break;
+					case 2: sIcon = "xlIconGrayUpArrow"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Flags3:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconRedFlag"; break;
+					case 1: sIcon = "xlIconYellowFlag"; break;
+					case 2: sIcon = "xlIconGreenFlag"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Signs3:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconRedDiamond"; break;
+					case 1: sIcon = "xlIconYellowTriangle"; break;
+					case 2: sIcon = "xlIconGreenCircle"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Symbols3:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconRedCrossSymbol"; break;
+					case 1: sIcon = "xlIconYellowExclamationSymbol"; break;
+					case 2: sIcon = "xlIconGreenCheckSymbol"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Symbols3_2:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconRedCross"; break;
+					case 1: sIcon = "xlIconYellowExclamation"; break;
+					case 2: sIcon = "xlIconGreenCheck"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Traffic3Lights1:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconRedTrafficLight"; break;
+					case 1: sIcon = "xlIconYellowTrafficLight"; break;
+					case 2: sIcon = "xlIconGreenTrafficLight"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Traffic3Lights2:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconRedCircleWithBorder"; break;
+					case 1: sIcon = "xlIconYellowCircleWithBorder"; break;
+					case 2: sIcon = "xlIconGreenCircleWithBorder"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Arrows4:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconRedDownArrow"; break;
+					case 1: sIcon = "xlIconYellowDownInclineArrow"; break;
+					case 2: sIcon = "xlIconYellowUpInclineArrow"; break;
+					case 3: sIcon = "xlIconGreenUpArrow"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Arrows4Gray:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconGrayDownArrow"; break;
+					case 1: sIcon = "xlIconGrayDownInclineArrow"; break;
+					case 2: sIcon = "xlIconGrayUpInclineArrow"; break;
+					case 3: sIcon = "xlIconGrayUpArrow"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.RedToBlack4:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconBlackCircle"; break;
+					case 1: sIcon = "xlIconGrayCircle"; break;
+					case 2: sIcon = "xlIconPinkCircle"; break;
+					case 3: sIcon = "xlIconRedCircle"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Rating4:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIcon1Bar"; break;
+					case 1: sIcon = "xlIcon2Bars"; break;
+					case 2: sIcon = "xlIcon3Bars"; break;
+					case 3: sIcon = "xlIcon4Bars"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Traffic4Lights:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconBlackCircle"; break;
+					case 1: sIcon = "xlIconRedCircle"; break;
+					case 2: sIcon = "xlIconYellowCircle"; break;
+					case 3: sIcon = "xlIconGreenCircle"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Arrows5:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconRedDownArrow"; break;
+					case 1: sIcon = "xlIconYellowDownInclineArrow"; break;
+					case 2: sIcon = "xlIconYellowSideArrow"; break;
+					case 3: sIcon = "xlIconYellowUpInclineArrow"; break;
+					case 4: sIcon = "xlIconGreenUpArrow"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Arrows5Gray:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconGrayDownArrow"; break;
+					case 1: sIcon = "xlIconGrayDownInclineArrow"; break;
+					case 2: sIcon = "xlIconGraySideArrow"; break;
+					case 3: sIcon = "xlIconGrayUpInclineArrow"; break;
+					case 4: sIcon = "xlIconGrayUpArrow"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Rating5:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIcon0Bars"; break;
+					case 1: sIcon = "xlIcon1Bar"; break;
+					case 2: sIcon = "xlIcon2Bars"; break;
+					case 3: sIcon = "xlIcon3Bars"; break;
+					case 4: sIcon = "xlIcon4Bars"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Quarters5:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconCircleWithOneWhiteQuarter"; break;
+					case 1: sIcon = "xlIconCircleWithTwoWhiteQuarters"; break;
+					case 2: sIcon = "xlIconCircleWithThreeWhiteQuarters"; break;
+					case 3: sIcon = "xlIconWhiteCircleAllWhiteQuarters"; break;
+					case 4: sIcon = "xlIconBlackCircleWithBorder"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Stars3:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconSilverStar"; break;
+					case 1: sIcon = "xlIconHalfGoldStar"; break;
+					case 2: sIcon = "xlIconGoldStar"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Triangles3:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIconRedDownTriangle"; break;
+					case 1: sIcon = "xlIconYellowDash"; break;
+					case 2: sIcon = "xlIconGreenUpTriangle"; break;
+				}
+				break;
+
+			case Asc.EIconSetType.Boxes5:
+				switch (iconIndex) {
+					case 0: sIcon = "xlIcon0FilledBoxes"; break;
+					case 1: sIcon = "xlIcon1FilledBox"; break;
+					case 2: sIcon = "xlIcon2FilledBoxes"; break;
+					case 3: sIcon = "xlIcon3FilledBoxes"; break;
+					case 4: sIcon = "xlIcon4FilledBoxes"; break;
+				}
+				break;
+
+			default:
+				sIcon = "xlIconNoCellIcon";
+				break;
+		}
+
+		return sIcon;
+	}
+
+	/**
+	 * Sets the icon for the current icon criterion.
+	 * @memberof ApiIconCriterion
+	 * @typeofeditors ["CSE"]
+	 * @param {XlIcon} icon - The icon constant to set.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/SetIcon.js
+	 */
+	ApiIconCriterion.prototype.SetIcon = function(icon) {
+		if (typeof icon !== "string") {
+			return;
+		}
+
+		let iconData = FromXlIconTo(icon);
+		if (iconData.iconSetType === -1 || iconData.iconIndex === -1) {
+			return;
+		}
+
+		// Создаем или обновляем iconSet
+		if (!this.iconSet) {
+			this.iconSet = new window['AscCommonExcel'].CConditionalFormatIconSet();
+		}
+
+		this.iconSet.asc_setIconSet(iconData.iconSetType);
+		this.iconSet.asc_setIndex(iconData.iconIndex);
+
+		// Обновляем правило через parent
+		let t = this;
+		this.parent.private_changeStyle(function (newRule) {
+			let iconSetElement = newRule.aRuleElements && newRule.aRuleElements[0];
+			if (iconSetElement && iconSetElement.aIconSets) {
+				// Убеждаемся что массив достаточно большой
+				while (iconSetElement.aIconSets.length <= t.index) {
+					iconSetElement.aIconSets.push(new window['AscCommonExcel'].CConditionalFormatIconSet());
+				}
+
+				iconSetElement.aIconSets[t.index].asc_setIconSet(iconData.iconSetType);
+				iconSetElement.aIconSets[t.index].asc_setIndex(iconData.iconIndex);
+			}
+		}, true);
+	};
+
+	Object.defineProperty(ApiIconCriterion.prototype, "Icon", {
+		get: function() {
+			return this.GetIcon();
+		},
+		set: function(value) {
+			this.SetIcon(value);
+		}
+	});
+
+	/**
+	 * Class representing a top 10 conditional formatting rule.
+	 * @constructor
+	 * @extends ApiFormatCondition
+	 * @property {XlTopBottom} TopBottom - Returns or sets the "XlTopBottom" constant indicating whether the ranking is evaluated from the top or bottom.
+	 * @property {boolean} Percent - Returns or sets whether the top 10 ranking is percentage-based.
+	 * @property {number} Rank - Returns or sets the rank value of the top 10 condition.
+	 * @property {XlFormatConditionType} Type - Returns the type of the top 10 conditional formatting rule.
+	 */
+	function ApiTop10(rule, range, _parent) {
+		ApiFormatCondition.call(this, rule, range, _parent);
+	}
+
+	ApiTop10.prototype = Object.create(ApiFormatCondition.prototype);
+	ApiTop10.prototype.constructor = ApiTop10;
+
+	function FromXlCalcForTo(sCalcFor) {
+		let nCalcFor = -1;
+		switch (sCalcFor) {
+			case "xlAllValues":
+				nCalcFor = 0;
+				break;
+			case "xlColItems":
+				nCalcFor = 1;
+				break;
+			case "xlRowItems":
+				nCalcFor = 2;
+				break;
+		}
+		return nCalcFor;
+	}
+
+	function ToXlCalcForFrom(nCalcFor) {
+		let sCalcFor = "";
+		switch (nCalcFor) {
+			case 0:
+				sCalcFor = "xlAllValues";
+				break;
+			case 1:
+				sCalcFor = "xlColItems";
+				break;
+			case 2:
+				sCalcFor = "xlRowItems";
+				break;
+			default:
+				sCalcFor = "xlAllValues";
+		}
+		return sCalcFor;
+	}
+
+	// /**
+	//  * Returns the calculation scope for the top 10 condition in pivot tables.
+	//  * @memberof ApiTop10
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {XlCalcFor}
+	//  * @since 9.1.0
+	//  * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetCalcFor.js
+	//  */
+	// ApiTop10.prototype.GetCalcFor = function() {
+	// 	if (!this.rule || !this.rule.pivot) {
+	// 		return "xlAllValues";
+	// 	}
+	// 	return ToXlCalcForFrom(this.rule.pivot.calcFor || 0);
+	// };
+
+	// /**
+	//  * Sets the calculation scope for the top 10 condition in pivot tables.
+	//  * @memberof ApiTop10
+	//  * @typeofeditors ["CSE"]
+	//  * @param {XlCalcFor} calcFor - The calculation scope
+	//  * @since 9.1.0
+	//  * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetCalcFor.js
+	//  */
+	// ApiTop10.prototype.SetCalcFor = function(calcFor) {
+	// 	if (!this.rule || typeof calcFor !== "string") {
+	// 		return;
+	// 	}
+	//
+	// 	let internalCalcFor = FromXlCalcForTo(calcFor);
+	// 	if (internalCalcFor === -1) {
+	// 		return;
+	// 	}
+	//
+	// 	this.private_changeStyle(function (newRule) {
+	// 		if (!newRule.pivot) {
+	// 			newRule.pivot = {};
+	// 		}
+	// 		newRule.pivot.calcFor = internalCalcFor;
+	// 	}, true);
+	// };
+	//
+	// Object.defineProperty(ApiTop10.prototype, "CalcFor", {
+	// 	get: function() {
+	// 		return this.GetCalcFor();
+	// 	},
+	// 	set: function(value) {
+	// 		this.SetCalcFor(value);
+	// 	}
+	// });
+
+	function FromXlTopBottomTo(sTopBottom) {
+		switch (sTopBottom) {
+			case "xlTop10Top":
+				return false;
+			case "xlTop10Bottom":
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	function ToXlTopBottomFrom(bBottom) {
+		return bBottom === true ? "xlTop10Bottom" : "xlTop10Top";
+	}
+
+	/**
+	 * Returns the "XlTopBottom" constant indicating whether the ranking is evaluated from the top or bottom.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlTopBottom} The ranking direction.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetTopBottom.js
+	 */
+	ApiTop10.prototype.GetTopBottom = function() {
+		if (!this.rule) {
+			return "xlTop10Top";
+		}
+		return ToXlTopBottomFrom(this.rule.bottom);
+	};
+
+	/**
+	 * Sets the "XlTopBottom" constant indicating whether the ranking is evaluated from the top or bottom.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @param {XlTopBottom} topBottom - The ranking direction.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetTopBottom.js
+	 */
+	ApiTop10.prototype.SetTopBottom = function(topBottom) {
+		if (typeof topBottom !== "string") {
+			return;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return;
+		}
+
+		var bottomValue = FromXlTopBottomTo(topBottom);
+		this.private_changeStyle(function(newRule) {
+			newRule.bottom = bottomValue;
+		});
+	};
+
+	Object.defineProperty(ApiTop10.prototype, "TopBottom", {
+		get: function() {
+			return this.GetTopBottom();
+		},
+		set: function(value) {
+			this.SetTopBottom(value);
+		}
+	});
+
+	/**
+	 * Returns whether the top 10 ranking is percentage-based.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} True if the ranking is percentage-based, false if count-based.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetPercent.js
+	 */
+	ApiTop10.prototype.GetPercent = function() {
+		if (!this.rule) {
+			return false;
+		}
+		return this.rule.percent === true;
+	};
+
+	/**
+	 * Sets whether the top 10 ranking is percentage-based.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} percent - True if the ranking is percentage-based, false if count-based.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetPercent.js
+	 */
+	ApiTop10.prototype.SetPercent = function(percent) {
+		if (typeof percent !== "boolean") {
+			return;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return;
+		}
+
+		this.private_changeStyle(function(newRule) {
+			newRule.percent = percent;
+		});
+	};
+
+	Object.defineProperty(ApiTop10.prototype, "Percent", {
+		get: function() {
+			return this.GetPercent();
+		},
+		set: function(value) {
+			this.SetPercent(value);
+		}
+	});
+
+	/**
+	 * Returns the rank value for the top 10 condition.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} The rank value.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetRank.js
+	 */
+	ApiTop10.prototype.GetRank = function() {
+		if (!this.rule) {
+			return 10;
+		}
+		return this.rule.rank || 10;
+	};
+
+	/**
+	 * Sets the rank value for the top 10 condition.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @param {number} rank - The rank value.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetRank.js
+	 */
+	ApiTop10.prototype.SetRank = function(rank) {
+		if (typeof rank !== "number") {
+			return;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return;
+		}
+
+		this.private_changeStyle(function(newRule) {
+			newRule.rank = rank;
+		});
+	};
+
+	Object.defineProperty(ApiTop10.prototype, "Rank", {
+		get: function() {
+			return this.GetRank();
+		},
+		set: function(value) {
+			this.SetRank(value);
+		}
+	});
+
+	/**
+	 * Returns the type of the top 10 conditional formatting rule.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlFormatConditionType} The type of the top 10 conditional formatting rule.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetType.js
+	 */
+	ApiTop10.prototype.GetType = function() {
+		return "xlTop10";
+	};
+
+	Object.defineProperty(ApiTop10.prototype, "Type", {
+		get: function() {
+			return this.GetType();
+		}
+	});
+
+	// Inherited methods from ApiFormatCondition that are available for ApiTop10
+
+	/**
+	 * Deletes the top 10 conditional formatting rule.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/Delete.js
+	 */
+	ApiTop10.prototype.Delete = ApiFormatCondition.prototype.Delete;
+
+	/**
+	 * Modifies the cell range to which the current conditional formatting rule applies.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} Range - The range to which the current conditional formatting rule will be applied.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/ModifyAppliesToRange.js
+	 */
+	ApiTop10.prototype.ModifyAppliesToRange = ApiFormatCondition.prototype.ModifyAppliesToRange;
+
+	/**
+	 * Sets the priority value for the current conditional formatting rule to "1" so that it will be evaluated before all other rules on the worksheet.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetFirstPriority.js
+	 */
+	ApiTop10.prototype.SetFirstPriority = ApiFormatCondition.prototype.SetFirstPriority;
+
+	/**
+	 * Sets the evaluation order for the current conditional formatting rule so it is evaluated after all other rules on the worksheet.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetLastPriority.js
+	 */
+	ApiTop10.prototype.SetLastPriority = ApiFormatCondition.prototype.SetLastPriority;
+
+	// Inherited methods for properties (with documentation for JSDoc)
+
+	/**
+	 * Returns the range of cells to which the current conditional formatting rule applies.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange} The range of cells affected by the current condition.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetAppliesTo.js
+	 */
+	ApiTop10.prototype.GetAppliesTo = ApiFormatCondition.prototype.GetAppliesTo;
+
+	/**
+	 * Returns the parent range object of the current format condition.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange} The parent range object.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetParent.js
+	 */
+	ApiTop10.prototype.GetParent = ApiFormatCondition.prototype.GetParent;
+
+	/**
+	 * Returns the priority value of the conditional formatting rule.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} The priority value of the conditional formatting rule.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetPriority.js
+	 */
+	ApiTop10.prototype.GetPriority = ApiFormatCondition.prototype.GetPriority;
+
+	/**
+	 * Sets the priority value for the conditional formatting rule.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @param {number} Priority - The priority value (1-based).
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetPriority.js
+	 */
+	ApiTop10.prototype.SetPriority = ApiFormatCondition.prototype.SetPriority;
+
+	/**
+	 * Returns the pivot table condition object.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @returns {PTCondition | null} The pivot table condition object.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetPTCondition.js
+	 */
+	ApiTop10.prototype.GetPTCondition = ApiFormatCondition.prototype.GetPTCondition;
+
+	/**
+	 * Returns the scope type of the conditional formatting rule.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlPivotConditionScope} Returns "xlSelectionScope" for normal ranges, "xlDataFieldScope" for entire worksheet, "xlFieldsScope" for pivot tables.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetScopeType.js
+	 */
+	ApiTop10.prototype.GetScopeType = ApiFormatCondition.prototype.GetScopeType;
+
+	/**
+	 * Sets the scope type for the conditional formatting rule.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @param {XlPivotConditionScope} ScopeType - The scope type: "xlSelectionScope", "xlDataFieldScope", or "xlFieldsScope".
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetScopeType.js
+	 */
+	ApiTop10.prototype.SetScopeType = ApiFormatCondition.prototype.SetScopeType;
+
+	// /**
+	//  * Returns whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
+	//  * @memberof ApiTop10
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {boolean}
+	//  * @since 9.1.0
+	//  * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetStopIfTrue.js
+	//  */
+	// ApiTop10.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
+
+	// /**
+	//  * Sets whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
+	//  * @memberof ApiTop10
+	//  * @typeofeditors ["CSE"]
+	//  * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
+	//  * @since 9.1.0
+	//  * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetStopIfTrue.js
+	//  */
+	// ApiTop10.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
+
+	/**
+	 * Returns the font formatting for the top 10 conditional formatting rule.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiFont} An ApiFont object representing the font applied by the format condition.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetFont.js
+	 */
+	ApiTop10.prototype.GetFont = ApiFormatCondition.prototype.GetFont;
+
+	// /**
+	//  * Returns the borders collection for the top 10 conditional formatting rule.
+	//  * @memberof ApiTop10
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {ApiBorders}
+	//  * @since 9.1.0
+	//  * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetBorders.js
+	//  */
+	// ApiTop10.prototype.GetBorders = ApiFormatCondition.prototype.GetBorders;
+
+	/**
+	 * Returns the number format for the top 10 conditional formatting rule.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @returns {string} The number format.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetNumberFormat.js
+	 */
+	ApiTop10.prototype.GetNumberFormat = ApiFormatCondition.prototype.GetNumberFormat;
+
+	/**
+	 * Sets the number format for the top 10 conditional formatting rule.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @param {string} NumberFormat - The number format to apply.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetNumberFormat.js
+	 */
+	ApiTop10.prototype.SetNumberFormat = ApiFormatCondition.prototype.SetNumberFormat;
+
+	/**
+	 * Returns the fill color for the top 10 conditional formatting rule.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiColor | null} The background color applied by the format condition, or null if none is set.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/GetFillColor.js
+	 */
+	ApiTop10.prototype.GetFillColor = ApiFormatCondition.prototype.GetFillColor;
+
+	/**
+	 * Sets the fill color for the top 10 conditional formatting rule.
+	 * @memberof ApiTop10
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiColor} oColor - The fill color to apply.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTop10/Methods/SetFillColor.js
+	 */
+	ApiTop10.prototype.SetFillColor = ApiFormatCondition.prototype.SetFillColor;
+
+
+	// Block inherited methods that should not be available for ApiTop10
+	ApiTop10.prototype.Modify = null;
+	ApiTop10.prototype.GetOperator = null;
+	ApiTop10.prototype.SetOperator = null;
+	ApiTop10.prototype.GetFormula1 = null;
+	ApiTop10.prototype.SetFormula1 = null;
+	ApiTop10.prototype.GetFormula2 = null;
+	ApiTop10.prototype.SetFormula2 = null;
+	ApiTop10.prototype.GetDateOperator = null;
+	ApiTop10.prototype.SetDateOperator = null;
+	ApiTop10.prototype.GetText = null;
+	ApiTop10.prototype.SetText = null;
+	ApiTop10.prototype.GetTextOperator = null;
+	ApiTop10.prototype.SetTextOperator = null;
+
+	/**
+	 * Class representing a unique values conditional formatting rule.
+	 * @constructor
+	 * @extends ApiFormatCondition
+	 * @property {XlDuplicateValues} DupeUnique - Returns or sets the setting that specifies whether to format duplicate or unique values for the unique values conditional formatting rule.
+	 * @property {XlFormatConditionType} Type - Returns the type of the unique values conditional formatting rule.
+	 */
+	function ApiUniqueValues(rule, range, _parent) {
+		ApiFormatCondition.call(this, rule, range, _parent);
+	}
+
+	ApiUniqueValues.prototype = Object.create(ApiFormatCondition.prototype);
+	ApiUniqueValues.prototype.constructor = ApiUniqueValues;
+
+	function FromXlDuplicateValuesTo(sDuplicateValues) {
+		switch (sDuplicateValues) {
+			case "xlDuplicate":
+				return Asc.ECfType.duplicateValues;
+			case "xlUnique":
+				return Asc.ECfType.uniqueValues;
+			default:
+				return Asc.ECfType.uniqueValues;
+		}
+	}
+
+	function ToXlDuplicateValuesFrom(nType) {
+		switch (nType) {
+			case Asc.ECfType.duplicateValues:
+				return "xlDuplicate";
+			case Asc.ECfType.uniqueValues:
+				return "xlUnique";
+			default:
+				return "xlUnique";
+		}
+	}
+
+	/**
+	 * Returns the setting that specifies whether to format duplicate or unique values for the unique values conditional formatting rule.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlDuplicateValues} Specifies whether to format duplicate or unique values.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetDupeUnique.js
+	 */
+	ApiUniqueValues.prototype.GetDupeUnique = function() {
+		if (!this.rule) {
+			return "xlUnique";
+		}
+		return ToXlDuplicateValuesFrom(this.rule.type);
+	};
+
+	/**
+	 * Sets the setting that specifies whether to format duplicate or unique values for the unique values conditional formatting rule.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @param {XlDuplicateValues} dupeUnique - Specifies whether to format duplicate or unique values.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/SetDupeUnique.js
+	 */
+	ApiUniqueValues.prototype.SetDupeUnique = function(dupeUnique) {
+		if (typeof dupeUnique !== "string") {
+			return;
+		}
+
+		var oRule = this.rule;
+		if (!oRule) {
+			return;
+		}
+
+		var newType = FromXlDuplicateValuesTo(dupeUnique);
+		this.private_changeStyle(function(newRule) {
+			newRule.type = newType;
+		});
+	};
+
+	Object.defineProperty(ApiUniqueValues.prototype, "DupeUnique", {
+		get: function() {
+			return this.GetDupeUnique();
+		},
+		set: function(value) {
+			this.SetDupeUnique(value);
+		}
+	});
+
+	/**
+	 * Returns the type of the unique values conditional formatting rule.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlFormatConditionType} The type of the unique values conditional formatting rule.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetType.js
+	 */
+	ApiUniqueValues.prototype.GetType = function() {
+		return "xlUniqueValues";
+	};
+
+	Object.defineProperty(ApiUniqueValues.prototype, "Type", {
+		get: function() {
+			return this.GetType();
+		}
+	});
+
+	// Inherited methods from ApiFormatCondition that are available for ApiUniqueValues
+
+	/**
+	 * Deletes the unique values conditional formatting rule.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/Delete.js
+	 */
+	ApiUniqueValues.prototype.Delete = ApiFormatCondition.prototype.Delete;
+
+	/**
+	 * Modifies the cell range to which the current conditional formatting rule applies.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} Range - The range to which the current conditional formatting rule will be applied.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/ModifyAppliesToRange.js
+	 */
+	ApiUniqueValues.prototype.ModifyAppliesToRange = ApiFormatCondition.prototype.ModifyAppliesToRange;
+
+	/**
+	 * Sets the priority value for the current conditional formatting rule to "1" so that it will be evaluated before all other rules on the worksheet.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/SetFirstPriority.js
+	 */
+	ApiUniqueValues.prototype.SetFirstPriority = ApiFormatCondition.prototype.SetFirstPriority;
+
+	/**
+	 * Sets the evaluation order for the current conditional formatting rule so it is evaluated after all other rules on the worksheet.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/SetLastPriority.js
+	 */
+	ApiUniqueValues.prototype.SetLastPriority = ApiFormatCondition.prototype.SetLastPriority;
+
+	// Inherited methods for properties (with documentation for JSDoc)
+	
+	/**
+	 * Returns the range of cells to which the current conditional formatting rule applies.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange} The range of cells affected by the current condition.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetAppliesTo.js
+	 */
+	ApiUniqueValues.prototype.GetAppliesTo = ApiFormatCondition.prototype.GetAppliesTo;
+
+	/**
+	 * Returns the parent range object of the current format condition.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange} The parent range object.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetParent.js
+	 */
+	ApiUniqueValues.prototype.GetParent = ApiFormatCondition.prototype.GetParent;
+
+	/**
+	 * Returns the priority value of the conditional formatting rule.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @returns {number} The priority value of the conditional formatting rule.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetPriority.js
+	 */
+	ApiUniqueValues.prototype.GetPriority = ApiFormatCondition.prototype.GetPriority;
+
+	/**
+	 * Sets the priority value for the conditional formatting rule.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @param {number} Priority - The priority value (1-based).
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/SetPriority.js
+	 */
+	ApiUniqueValues.prototype.SetPriority = ApiFormatCondition.prototype.SetPriority;
+
+	/**
+	 * Returns the pivot table condition object.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @returns {PTCondition | null} The pivot table condition object.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetPTCondition.js
+	 */
+	ApiUniqueValues.prototype.GetPTCondition = ApiFormatCondition.prototype.GetPTCondition;
+
+	/**
+	 * Returns the scope type of the conditional formatting rule.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @returns {XlPivotConditionScope} Returns "xlSelectionScope" for normal ranges, "xlDataFieldScope" for entire worksheet, "xlFieldsScope" for pivot tables.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetScopeType.js
+	 */
+	ApiUniqueValues.prototype.GetScopeType = ApiFormatCondition.prototype.GetScopeType;
+
+	/**
+	 * Sets the scope type for the conditional formatting rule.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @param {XlPivotConditionScope} ScopeType - The scope type: "xlSelectionScope", "xlDataFieldScope", or "xlFieldsScope".
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/SetScopeType.js
+	 */
+	ApiUniqueValues.prototype.SetScopeType = ApiFormatCondition.prototype.SetScopeType;
+
+	// /**
+	//  * Returns whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
+	//  * @memberof ApiUniqueValues
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {boolean}
+	//  * @since 9.1.0
+	//  * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetStopIfTrue.js
+	//  */
+	// ApiUniqueValues.prototype.GetStopIfTrue = ApiFormatCondition.prototype.GetStopIfTrue;
+
+	// /**
+	//  * Sets whether Excel will stop evaluating additional formatting rules if this rule evaluates to True.
+	//  * @memberof ApiUniqueValues
+	//  * @typeofeditors ["CSE"]
+	//  * @param {boolean} StopIfTrue - True to stop evaluating additional rules.
+	//  * @since 9.1.0
+	//  * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/SetStopIfTrue.js
+	//  */
+	// ApiUniqueValues.prototype.SetStopIfTrue = ApiFormatCondition.prototype.SetStopIfTrue;
+
+	/**
+	 * Returns the font formatting for the unique values conditional formatting rule.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiFont} An ApiFont object representing the font applied by the format condition.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetFont.js
+	 */
+	ApiUniqueValues.prototype.GetFont = ApiFormatCondition.prototype.GetFont;
+
+	// /**
+	//  * Returns the borders collection for the unique values conditional formatting rule.
+	//  * @memberof ApiUniqueValues
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {ApiBorders}
+	//  * @since 9.1.0
+	//  * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetBorders.js
+	//  */
+	// ApiUniqueValues.prototype.GetBorders = ApiFormatCondition.prototype.GetBorders;
+
+	/**
+	 * Returns the number format for the unique values conditional formatting rule.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @returns {string} The number format.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetNumberFormat.js
+	 */
+	ApiUniqueValues.prototype.GetNumberFormat = ApiFormatCondition.prototype.GetNumberFormat;
+
+	/**
+	 * Sets the number format for the unique values conditional formatting rule.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @param {string} NumberFormat - The number format to apply.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/SetNumberFormat.js
+	 */
+	ApiUniqueValues.prototype.SetNumberFormat = ApiFormatCondition.prototype.SetNumberFormat;
+
+	/**
+	 * Returns the fill color for the unique values conditional formatting rule.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiColor | null} The background color applied by the format condition, or null if none is set.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/GetFillColor.js
+	 */
+	ApiUniqueValues.prototype.GetFillColor = ApiFormatCondition.prototype.GetFillColor;
+
+	/**
+	 * Sets the fill color for the unique values conditional formatting rule.
+	 * @memberof ApiUniqueValues
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiColor} oColor - The fill color to apply.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiUniqueValues/Methods/SetFillColor.js
+	 */
+	ApiUniqueValues.prototype.SetFillColor = ApiFormatCondition.prototype.SetFillColor;
+
+	// Block inherited methods that should not be available for ApiUniqueValues
+	ApiUniqueValues.prototype.Modify = null;
+	ApiUniqueValues.prototype.GetOperator = null;
+	ApiUniqueValues.prototype.SetOperator = null;
+	ApiUniqueValues.prototype.GetFormula1 = null;
+	ApiUniqueValues.prototype.SetFormula1 = null;
+	ApiUniqueValues.prototype.GetFormula2 = null;
+	ApiUniqueValues.prototype.SetFormula2 = null;
+	ApiUniqueValues.prototype.GetDateOperator = null;
+	ApiUniqueValues.prototype.SetDateOperator = null;
+	ApiUniqueValues.prototype.GetText = null;
+	ApiUniqueValues.prototype.SetText = null;
+	ApiUniqueValues.prototype.GetTextOperator = null;
+	ApiUniqueValues.prototype.SetTextOperator = null;
+	ApiUniqueValues.prototype.GetTopBottom = null;
+	ApiUniqueValues.prototype.SetTopBottom = null;
+	ApiUniqueValues.prototype.GetPercent = null;
+	ApiUniqueValues.prototype.SetPercent = null;
+	ApiUniqueValues.prototype.GetRank = null;
+	ApiUniqueValues.prototype.SetRank = null;
+	//ApiUniqueValues.prototype.GetCalcFor = null;
+	//ApiUniqueValues.prototype.SetCalcFor = null;
+
+
 	Api.prototype["Format"]                = Api.prototype.Format;
 	Api.prototype["AddSheet"]              = Api.prototype.AddSheet;
 	Api.prototype["GetSheets"]             = Api.prototype.GetSheets;
 	Api.prototype["GetActiveSheet"]        = Api.prototype.GetActiveSheet;
+	Api.prototype["GetActiveWorkbook"]     = Api.prototype.GetActiveWorkbook;
 	Api.prototype["GetLocale"]             = Api.prototype.GetLocale;
 	Api.prototype["SetLocale"]             = Api.prototype.SetLocale;
 	Api.prototype["GetSheet"]              = Api.prototype.GetSheet;
@@ -17774,6 +26752,15 @@
 	Api.prototype["GetPivotByName"] = Api.prototype.GetPivotByName;
 	Api.prototype["RefreshAllPivots"] = Api.prototype.RefreshAllPivots;
 	Api.prototype["GetAllPivotTables"] = Api.prototype.GetAllPivotTables;
+
+	ApiWorkbook.prototype["Save"] = ApiWorkbook.prototype.Save;
+	ApiWorkbook.prototype["GetSheets"] = ApiWorkbook.prototype.GetSheets;
+	ApiWorkbook.prototype["GetAllPivotTables"] = ApiWorkbook.prototype.GetAllPivotTables;
+	ApiWorkbook.prototype["GetCustomProperties"] = ApiWorkbook.prototype.GetCustomProperties;
+	ApiWorkbook.prototype["GetTheme"] = ApiWorkbook.prototype.GetTheme;
+	ApiWorkbook.prototype["GetName"] = ApiWorkbook.prototype.GetName;
+	ApiWorkbook.prototype["GetActiveSheet"] = ApiWorkbook.prototype.GetActiveSheet;
+	ApiWorkbook.prototype["GetActiveChart"] = ApiWorkbook.prototype.GetActiveChart;
 
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
@@ -17834,11 +26821,18 @@
 	ApiWorksheet.prototype["GetPivotByName"] = ApiWorksheet.prototype.GetPivotByName;
 	ApiWorksheet.prototype["GetAllPivotTables"] = ApiWorksheet.prototype.GetAllPivotTables;
 	ApiWorksheet.prototype["RefreshAllPivots"] = ApiWorksheet.prototype.RefreshAllPivots;
+	ApiWorksheet.prototype["GetCustomXmlParts"] = ApiWorksheet.prototype.GetCustomXmlParts;
 
 	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType;
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
 	ApiRange.prototype["GetCol"] = ApiRange.prototype.GetCol;
+	ApiRange.prototype["GetCellsCount"] = ApiRange.prototype.GetCellsCount;
+	ApiRange.prototype["GetRowsCount"] = ApiRange.prototype.GetRowsCount;
+	ApiRange.prototype["GetColumnsCount"] = ApiRange.prototype.GetColumnsCount;
 	ApiRange.prototype["Clear"] = ApiRange.prototype.Clear;
+    ApiRange.prototype["ClearFormats"] = ApiRange.prototype.ClearFormats;
+    ApiRange.prototype["ClearContents"] = ApiRange.prototype.ClearContents;
+    ApiRange.prototype["ClearHyperlinks"] = ApiRange.prototype.ClearHyperlinks;
 	ApiRange.prototype["GetRows"] = ApiRange.prototype.GetRows;
 	ApiRange.prototype["GetCols"] = ApiRange.prototype.GetCols;
 	ApiRange.prototype["End"] = ApiRange.prototype.End;
@@ -17862,6 +26856,7 @@
 	ApiRange.prototype["SetFontName"] = ApiRange.prototype.SetFontName;
 	ApiRange.prototype["SetAlignVertical"] = ApiRange.prototype.SetAlignVertical;
 	ApiRange.prototype["SetAlignHorizontal"] = ApiRange.prototype.SetAlignHorizontal;
+	ApiRange.prototype["SetReadingOrder"] = ApiRange.prototype.SetReadingOrder;
 	ApiRange.prototype["SetBold"] = ApiRange.prototype.SetBold;
 	ApiRange.prototype["SetItalic"] = ApiRange.prototype.SetItalic;
 	ApiRange.prototype["SetUnderline"] = ApiRange.prototype.SetUnderline;
@@ -17902,6 +26897,14 @@
 	ApiRange.prototype["SetAutoFilter"] = ApiRange.prototype.SetAutoFilter;
 	ApiRange.prototype["SetFormulaArray"] = ApiRange.prototype.SetFormulaArray;
 	ApiRange.prototype["GetFormulaArray"] = ApiRange.prototype.GetFormulaArray;
+	ApiRange.prototype["Offset"] = ApiRange.prototype.Offset;
+	ApiRange.prototype["Resize"] = ApiRange.prototype.Resize;
+	ApiRange.prototype["GetRange"] = ApiRange.prototype.GetRange;
+	ApiRange.prototype["GetEntireRow"] = ApiRange.prototype.GetEntireRow;
+	ApiRange.prototype["GetEntireColumn"] = ApiRange.prototype.GetEntireColumn;
+	ApiRange.prototype["GetValidation"] = ApiRange.prototype.GetValidation;
+	ApiRange.prototype["GetCurrentRegion"] = ApiRange.prototype.GetCurrentRegion;
+	ApiRange.prototype["GetFormatConditions"] = ApiRange.prototype.GetFormatConditions;
 
 
 
@@ -17915,6 +26918,7 @@
 	ApiDrawing.prototype["GetParentSheet"]             =  ApiDrawing.prototype.GetParentSheet;
 	ApiDrawing.prototype["SetRotation"]                =  ApiDrawing.prototype.SetRotation;
 	ApiDrawing.prototype["GetRotation"]                =  ApiDrawing.prototype.GetRotation;
+	ApiDrawing.prototype["Select"]                     =  ApiDrawing.prototype.Select;
 
 	ApiImage.prototype["GetClassType"]                 =  ApiImage.prototype.GetClassType;
 
@@ -17922,6 +26926,8 @@
 	ApiShape.prototype["GetDocContent"]                =  ApiShape.prototype.GetDocContent;
 	ApiShape.prototype["GetContent"]                   =  ApiShape.prototype.GetContent;
 	ApiShape.prototype["SetVerticalTextAlign"]         =  ApiShape.prototype.SetVerticalTextAlign;
+	ApiShape.prototype["GetGeometry"]                  =  ApiShape.prototype.GetGeometry;
+	ApiShape.prototype["SetGeometry"]                  =  ApiShape.prototype.SetGeometry;
 
 	ApiChart.prototype["SetSeriaValues"]              =  ApiChart.prototype.SetSeriaValues;
 	ApiChart.prototype["SetSeriaXValues"]             =  ApiChart.prototype.SetSeriaXValues;
@@ -18004,7 +27010,9 @@
 	ApiCharacters.prototype["GetText"]           = ApiCharacters.prototype.GetText;
 	ApiCharacters.prototype["GetFont"]           = ApiCharacters.prototype.GetFont;
 
-	
+	ApiTheme.prototype["GetClassType"]           = ApiTheme.prototype.GetClassType;
+	ApiTheme.prototype["GetName"]                = ApiTheme.prototype.GetName;
+
 	ApiFont.prototype["GetParent"]               = ApiFont.prototype.GetParent;
 	ApiFont.prototype["GetBold"]                 = ApiFont.prototype.GetBold;
 	ApiFont.prototype["SetBold"]                 = ApiFont.prototype.SetBold;
@@ -18594,11 +27602,283 @@
 	ApiPivotField.prototype["SetNumberFormat"]           = ApiPivotField.prototype.SetNumberFormat;
 	ApiPivotField.prototype["SetFunction"]               = ApiPivotField.prototype.SetFunction;
 	ApiPivotField.prototype["GetFunction"]               = ApiPivotField.prototype.GetFunction;
+	ApiPivotField.prototype["GetPivotFilters"]           = ApiPivotField.prototype.GetPivotFilters;
+	ApiPivotField.prototype["AutoSort"]                  = ApiPivotField.prototype.AutoSort;
+
+	ApiPivotFilters.prototype["Add"]                     = ApiPivotFilters.prototype.Add;
 
 	ApiPivotItem.prototype["GetName"]    = ApiPivotItem.prototype.GetName;
 	ApiPivotItem.prototype["GetCaption"] = ApiPivotItem.prototype.GetCaption;
 	ApiPivotItem.prototype["GetValue"]   = ApiPivotItem.prototype.GetValue;
 	ApiPivotItem.prototype["GetParent"]  = ApiPivotItem.prototype.GetParent;
+	ApiPivotItem.prototype["GetVisible"] = ApiPivotItem.prototype.GetVisible;
+	ApiPivotItem.prototype["SetVisible"] = ApiPivotItem.prototype.SetVisible;
+
+	ApiValidation.prototype["Add"]                  = ApiValidation.prototype.Add;
+	ApiValidation.prototype["Delete"]               = ApiValidation.prototype.Delete;
+	ApiValidation.prototype["Modify"]               = ApiValidation.prototype.Modify;
+	ApiValidation.prototype["GetType"]              = ApiValidation.prototype.GetType;
+	ApiValidation.prototype["SetType"]              = ApiValidation.prototype.SetType;
+	ApiValidation.prototype["GetAlertStyle"]        = ApiValidation.prototype.GetAlertStyle;
+	ApiValidation.prototype["SetAlertStyle"]        = ApiValidation.prototype.SetAlertStyle;
+	ApiValidation.prototype["GetIgnoreBlank"]       = ApiValidation.prototype.GetIgnoreBlank;
+	ApiValidation.prototype["SetIgnoreBlank"]       = ApiValidation.prototype.SetIgnoreBlank;
+	ApiValidation.prototype["GetInCellDropdown"]    = ApiValidation.prototype.GetInCellDropdown;
+	ApiValidation.prototype["SetInCellDropdown"]    = ApiValidation.prototype.SetInCellDropdown;
+	ApiValidation.prototype["GetShowInput"]         = ApiValidation.prototype.GetShowInput;
+	ApiValidation.prototype["SetShowInput"]         = ApiValidation.prototype.SetShowInput;
+	ApiValidation.prototype["GetShowError"]         = ApiValidation.prototype.GetShowError;
+	ApiValidation.prototype["SetShowError"]         = ApiValidation.prototype.SetShowError;
+	ApiValidation.prototype["GetInputTitle"]        = ApiValidation.prototype.GetInputTitle;
+	ApiValidation.prototype["SetInputTitle"]        = ApiValidation.prototype.SetInputTitle;
+	ApiValidation.prototype["GetInputMessage"]      = ApiValidation.prototype.GetInputMessage;
+	ApiValidation.prototype["SetInputMessage"]      = ApiValidation.prototype.SetInputMessage;
+	ApiValidation.prototype["GetErrorTitle"]        = ApiValidation.prototype.GetErrorTitle;
+	ApiValidation.prototype["SetErrorTitle"]        = ApiValidation.prototype.SetErrorTitle;
+	ApiValidation.prototype["GetErrorMessage"]      = ApiValidation.prototype.GetErrorMessage;
+	ApiValidation.prototype["SetErrorMessage"]      = ApiValidation.prototype.SetErrorMessage;
+	ApiValidation.prototype["GetFormula1"]          = ApiValidation.prototype.GetFormula1;
+	ApiValidation.prototype["SetFormula1"]          = ApiValidation.prototype.SetFormula1;
+	ApiValidation.prototype["GetFormula2"]          = ApiValidation.prototype.GetFormula2;
+	ApiValidation.prototype["SetFormula2"]          = ApiValidation.prototype.SetFormula2;
+	ApiValidation.prototype["GetOperator"]          = ApiValidation.prototype.GetOperator;
+	ApiValidation.prototype["SetOperator"]          = ApiValidation.prototype.SetOperator;
+	ApiValidation.prototype["GetParent"]            = ApiValidation.prototype.GetParent;
+
+	ApiFormatConditions.prototype["Add"] = ApiFormatConditions.prototype.Add;
+	ApiFormatConditions.prototype["AddAboveAverage"] = ApiFormatConditions.prototype.AddAboveAverage;
+	ApiFormatConditions.prototype["AddColorScale"] = ApiFormatConditions.prototype.AddColorScale;
+	ApiFormatConditions.prototype["AddDatabar"] = ApiFormatConditions.prototype.AddDatabar;
+	ApiFormatConditions.prototype["AddIconSetCondition"] = ApiFormatConditions.prototype.AddIconSetCondition;
+	ApiFormatConditions.prototype["AddTop10"] = ApiFormatConditions.prototype.AddTop10;
+	ApiFormatConditions.prototype["AddUniqueValues"] = ApiFormatConditions.prototype.AddUniqueValues;
+	ApiFormatConditions.prototype["Delete"] = ApiFormatConditions.prototype.Delete;
+	ApiFormatConditions.prototype["GetCount"] = ApiFormatConditions.prototype.GetCount;
+	ApiFormatConditions.prototype["GetItem"] = ApiFormatConditions.prototype.GetItem;
+	ApiFormatConditions.prototype["GetParent"] = ApiFormatConditions.prototype.GetParent;
+
+	ApiFormatCondition.prototype["Delete"] = ApiFormatCondition.prototype.Delete;
+	ApiFormatCondition.prototype["Modify"] = ApiFormatCondition.prototype.Modify;
+	ApiFormatCondition.prototype["ModifyAppliesToRange"] = ApiFormatCondition.prototype.ModifyAppliesToRange;
+	ApiFormatCondition.prototype["SetFirstPriority"] = ApiFormatCondition.prototype.SetFirstPriority;
+	ApiFormatCondition.prototype["SetLastPriority"] = ApiFormatCondition.prototype.SetLastPriority;
+	ApiFormatCondition.prototype["GetType"] = ApiFormatCondition.prototype.GetType;
+	ApiFormatCondition.prototype["GetOperator"] = ApiFormatCondition.prototype.GetOperator;
+	ApiFormatCondition.prototype["SetOperator"] = ApiFormatCondition.prototype.SetOperator;
+	ApiFormatCondition.prototype["GetFormula1"] = ApiFormatCondition.prototype.GetFormula1;
+	ApiFormatCondition.prototype["GetFormula2"] = ApiFormatCondition.prototype.GetFormula2;
+	ApiFormatCondition.prototype["GetDateOperator"] = ApiFormatCondition.prototype.GetDateOperator;
+	ApiFormatCondition.prototype["SetDateOperator"] = ApiFormatCondition.prototype.SetDateOperator;
+	ApiFormatCondition.prototype["GetText"] = ApiFormatCondition.prototype.GetText;
+	ApiFormatCondition.prototype["SetText"] = ApiFormatCondition.prototype.SetText;
+	ApiFormatCondition.prototype["GetRank"] = ApiFormatCondition.prototype.GetRank;
+	ApiFormatCondition.prototype["SetRank"] = ApiFormatCondition.prototype.SetRank;
+	ApiFormatCondition.prototype["GetPercentRank"] = ApiFormatCondition.prototype.GetPercentRank;
+	ApiFormatCondition.prototype["SetPercentRank"] = ApiFormatCondition.prototype.SetPercentRank;
+	ApiFormatCondition.prototype["GetStdDev"] = ApiFormatCondition.prototype.GetStdDev;
+	ApiFormatCondition.prototype["SetStdDev"] = ApiFormatCondition.prototype.SetStdDev;
+	ApiFormatCondition.prototype["GetPriority"] = ApiFormatCondition.prototype.GetPriority;
+	ApiFormatCondition.prototype["SetPriority"] = ApiFormatCondition.prototype.SetPriority;
+	//ApiFormatCondition.prototype["GetStopIfTrue"] = ApiFormatCondition.prototype.GetStopIfTrue;
+	//ApiFormatCondition.prototype["SetStopIfTrue"] = ApiFormatCondition.prototype.SetStopIfTrue;
+	ApiFormatCondition.prototype["GetAppliesTo"] = ApiFormatCondition.prototype.GetAppliesTo;
+	ApiFormatCondition.prototype["SetBorders"] = ApiFormatCondition.prototype.SetBorders;
+	ApiFormatCondition.prototype["SetFillColor"] = ApiFormatCondition.prototype.SetFillColor;
+	ApiFormatCondition.prototype["GetFillColor"] = ApiFormatCondition.prototype.GetFillColor;
+	ApiFormatCondition.prototype["GetFont"] = ApiFormatCondition.prototype.GetFont;
+	ApiFormatCondition.prototype["SetNumberFormat"] = ApiFormatCondition.prototype.SetNumberFormat;
+	ApiFormatCondition.prototype["GetPTCondition"] = ApiFormatCondition.prototype.GetPTCondition;
+	ApiFormatCondition.prototype["GetScopeType"] = ApiFormatCondition.prototype.GetScopeType;
+	ApiFormatCondition.prototype["GetTextOperator"] = ApiFormatCondition.prototype.GetTextOperator;
+	ApiFormatCondition.prototype["GetNumberFormat"] = ApiFormatCondition.prototype.GetNumberFormat;
+	ApiFormatCondition.prototype["SetScopeType"] = ApiFormatCondition.prototype.SetScopeType;
+	ApiFormatCondition.prototype["SetTextOperator"] = ApiFormatCondition.prototype.SetTextOperator;
+	ApiFormatCondition.prototype["GetParent"] = ApiFormatCondition.prototype.GetParent;
+
+
+
+	ApiAboveAverage.prototype["GetAboveBelow"] = ApiAboveAverage.prototype.GetAboveBelow;
+	ApiAboveAverage.prototype["SetAboveBelow"] = ApiAboveAverage.prototype.SetAboveBelow;
+	ApiAboveAverage.prototype["GetNumStdDev"] = ApiAboveAverage.prototype.GetNumStdDev;
+	ApiAboveAverage.prototype["SetNumStdDev"] = ApiAboveAverage.prototype.SetNumStdDev;
+	ApiAboveAverage.prototype["GetType"] = ApiAboveAverage.prototype.GetType;
+	//ApiAboveAverage.prototype["GetCalcFor"] = ApiAboveAverage.prototype.GetCalcFor;
+	//ApiAboveAverage.prototype["SetCalcFor"] = ApiAboveAverage.prototype.SetCalcFor;
+	ApiAboveAverage.prototype["Delete"] = ApiAboveAverage.prototype.Delete;
+	ApiAboveAverage.prototype["ModifyAppliesToRange"] = ApiAboveAverage.prototype.ModifyAppliesToRange;
+	ApiAboveAverage.prototype["SetFirstPriority"] = ApiAboveAverage.prototype.SetFirstPriority;
+	ApiAboveAverage.prototype["SetLastPriority"] = ApiAboveAverage.prototype.SetLastPriority;
+	ApiAboveAverage.prototype["GetAppliesTo"] = ApiAboveAverage.prototype.GetAppliesTo;
+	//ApiAboveAverage.prototype["GetBorders"] = ApiAboveAverage.prototype.GetBorders;
+	ApiAboveAverage.prototype["GetFont"] = ApiAboveAverage.prototype.GetFont;
+	ApiAboveAverage.prototype["GetNumberFormat"] = ApiAboveAverage.prototype.GetNumberFormat;
+	ApiAboveAverage.prototype["SetNumberFormat"] = ApiAboveAverage.prototype.SetNumberFormat;
+	ApiAboveAverage.prototype["GetParent"] = ApiAboveAverage.prototype.GetParent;
+	ApiAboveAverage.prototype["GetPriority"] = ApiAboveAverage.prototype.GetPriority;
+	ApiAboveAverage.prototype["SetPriority"] = ApiAboveAverage.prototype.SetPriority;
+	ApiAboveAverage.prototype["GetPTCondition"] = ApiAboveAverage.prototype.GetPTCondition;
+	ApiAboveAverage.prototype["GetScopeType"] = ApiAboveAverage.prototype.GetScopeType;
+	ApiAboveAverage.prototype["SetScopeType"] = ApiAboveAverage.prototype.SetScopeType;
+	//ApiAboveAverage.prototype["GetStopIfTrue"] = ApiAboveAverage.prototype.GetStopIfTrue;
+	//ApiAboveAverage.prototype["SetStopIfTrue"] = ApiAboveAverage.prototype.SetStopIfTrue;
+
+	ApiUniqueValues.prototype["GetDupeUnique"] = ApiUniqueValues.prototype.GetDupeUnique;
+	ApiUniqueValues.prototype["SetDupeUnique"] = ApiUniqueValues.prototype.SetDupeUnique;
+	ApiUniqueValues.prototype["GetType"] = ApiUniqueValues.prototype.GetType;
+	ApiUniqueValues.prototype["Delete"] = ApiUniqueValues.prototype.Delete;
+	ApiUniqueValues.prototype["ModifyAppliesToRange"] = ApiUniqueValues.prototype.ModifyAppliesToRange;
+	ApiUniqueValues.prototype["SetFirstPriority"] = ApiUniqueValues.prototype.SetFirstPriority;
+	ApiUniqueValues.prototype["SetLastPriority"] = ApiUniqueValues.prototype.SetLastPriority;
+	ApiUniqueValues.prototype["GetAppliesTo"] = ApiUniqueValues.prototype.GetAppliesTo;
+	ApiUniqueValues.prototype["GetParent"] = ApiUniqueValues.prototype.GetParent;
+	ApiUniqueValues.prototype["GetPriority"] = ApiUniqueValues.prototype.GetPriority;
+	ApiUniqueValues.prototype["SetPriority"] = ApiUniqueValues.prototype.SetPriority;
+	ApiUniqueValues.prototype["GetPTCondition"] = ApiUniqueValues.prototype.GetPTCondition;
+	ApiUniqueValues.prototype["GetScopeType"] = ApiUniqueValues.prototype.GetScopeType;
+	ApiUniqueValues.prototype["SetScopeType"] = ApiUniqueValues.prototype.SetScopeType;
+	//ApiUniqueValues.prototype["GetStopIfTrue"] = ApiUniqueValues.prototype.GetStopIfTrue;
+	//ApiUniqueValues.prototype["SetStopIfTrue"] = ApiUniqueValues.prototype.SetStopIfTrue;
+	ApiUniqueValues.prototype["GetFont"] = ApiUniqueValues.prototype.GetFont;
+	//ApiUniqueValues.prototype["GetBorders"] = ApiUniqueValues.prototype.GetBorders;
+	ApiUniqueValues.prototype["GetNumberFormat"] = ApiUniqueValues.prototype.GetNumberFormat;
+	ApiUniqueValues.prototype["SetNumberFormat"] = ApiUniqueValues.prototype.SetNumberFormat;
+	ApiUniqueValues.prototype["GetFillColor"] = ApiUniqueValues.prototype.GetFillColor;
+	ApiUniqueValues.prototype["SetFillColor"] = ApiUniqueValues.prototype.SetFillColor;
+
+	//ApiTop10.prototype["GetCalcFor"] = ApiTop10.prototype.GetCalcFor;
+	//ApiTop10.prototype["SetCalcFor"] = ApiTop10.prototype.SetCalcFor;
+	ApiTop10.prototype["GetTopBottom"] = ApiTop10.prototype.GetTopBottom;
+	ApiTop10.prototype["SetTopBottom"] = ApiTop10.prototype.SetTopBottom;
+	ApiTop10.prototype["GetPercent"] = ApiTop10.prototype.GetPercent;
+	ApiTop10.prototype["SetPercent"] = ApiTop10.prototype.SetPercent;
+	ApiTop10.prototype["GetRank"] = ApiTop10.prototype.GetRank;
+	ApiTop10.prototype["SetRank"] = ApiTop10.prototype.SetRank;
+	ApiTop10.prototype["GetType"] = ApiTop10.prototype.GetType;
+	ApiTop10.prototype["Delete"] = ApiTop10.prototype.Delete;
+	ApiTop10.prototype["ModifyAppliesToRange"] = ApiTop10.prototype.ModifyAppliesToRange;
+	ApiTop10.prototype["SetFirstPriority"] = ApiTop10.prototype.SetFirstPriority;
+	ApiTop10.prototype["SetLastPriority"] = ApiTop10.prototype.SetLastPriority;
+	ApiTop10.prototype["GetAppliesTo"] = ApiTop10.prototype.GetAppliesTo;
+	ApiTop10.prototype["GetParent"] = ApiTop10.prototype.GetParent;
+	ApiTop10.prototype["GetPriority"] = ApiTop10.prototype.GetPriority;
+	ApiTop10.prototype["SetPriority"] = ApiTop10.prototype.SetPriority;
+	ApiTop10.prototype["GetPTCondition"] = ApiTop10.prototype.GetPTCondition;
+	ApiTop10.prototype["GetScopeType"] = ApiTop10.prototype.GetScopeType;
+	ApiTop10.prototype["SetScopeType"] = ApiTop10.prototype.SetScopeType;
+	//ApiTop10.prototype["GetStopIfTrue"] = ApiTop10.prototype.GetStopIfTrue;
+	//ApiTop10.prototype["SetStopIfTrue"] = ApiTop10.prototype.SetStopIfTrue;
+	ApiTop10.prototype["GetFont"] = ApiTop10.prototype.GetFont;
+	//ApiTop10.prototype["GetBorders"] = ApiTop10.prototype.GetBorders;
+	ApiTop10.prototype["GetNumberFormat"] = ApiTop10.prototype.GetNumberFormat;
+	ApiTop10.prototype["SetNumberFormat"] = ApiTop10.prototype.SetNumberFormat;
+	ApiTop10.prototype["GetFillColor"] = ApiTop10.prototype.GetFillColor;
+	ApiTop10.prototype["SetFillColor"] = ApiTop10.prototype.SetFillColor;
+
+	ApiColorScale.prototype["GetColorScaleCriteria"] = ApiColorScale.prototype.GetColorScaleCriteria;
+	ApiColorScale.prototype["GetType"] = ApiColorScale.prototype.GetType;
+	ApiColorScale.prototype["Delete"] = ApiColorScale.prototype.Delete;
+	ApiColorScale.prototype["ModifyAppliesToRange"] = ApiColorScale.prototype.ModifyAppliesToRange;
+	ApiColorScale.prototype["SetFirstPriority"] = ApiColorScale.prototype.SetFirstPriority;
+	ApiColorScale.prototype["SetLastPriority"] = ApiColorScale.prototype.SetLastPriority;
+	ApiColorScale.prototype["GetAppliesTo"] = ApiColorScale.prototype.GetAppliesTo;
+	ApiColorScale.prototype["GetParent"] = ApiColorScale.prototype.GetParent;
+	ApiColorScale.prototype["GetPriority"] = ApiColorScale.prototype.GetPriority;
+	ApiColorScale.prototype["SetPriority"] = ApiColorScale.prototype.SetPriority;
+	ApiColorScale.prototype["GetPTCondition"] = ApiColorScale.prototype.GetPTCondition;
+	ApiColorScale.prototype["GetScopeType"] = ApiColorScale.prototype.GetScopeType;
+	ApiColorScale.prototype["SetScopeType"] = ApiColorScale.prototype.SetScopeType;
+	//ApiColorScale.prototype["GetStopIfTrue"] = ApiColorScale.prototype.GetStopIfTrue;
+	//ApiColorScale.prototype["SetStopIfTrue"] = ApiColorScale.prototype.SetStopIfTrue;
+
+	ApiColorScaleCriterion.prototype["GetType"] = ApiColorScaleCriterion.prototype.GetType;
+	ApiColorScaleCriterion.prototype["SetType"] = ApiColorScaleCriterion.prototype.SetType;
+	ApiColorScaleCriterion.prototype["GetValue"] = ApiColorScaleCriterion.prototype.GetValue;
+	ApiColorScaleCriterion.prototype["SetValue"] = ApiColorScaleCriterion.prototype.SetValue;
+	ApiColorScaleCriterion.prototype["GetIndex"] = ApiColorScaleCriterion.prototype.GetIndex;
+	ApiColorScaleCriterion.prototype["GetColor"] = ApiColorScaleCriterion.prototype.GetColor;
+	ApiColorScaleCriterion.prototype["SetColor"] = ApiColorScaleCriterion.prototype.SetColor;
+
+	ApiDatabar.prototype["GetAxisColor"] = ApiDatabar.prototype.GetAxisColor;
+	ApiDatabar.prototype["SetAxisColor"] = ApiDatabar.prototype.SetAxisColor;
+	ApiDatabar.prototype["GetAxisPosition"] = ApiDatabar.prototype.GetAxisPosition;
+	ApiDatabar.prototype["SetAxisPosition"] = ApiDatabar.prototype.SetAxisPosition;
+	ApiDatabar.prototype["GetShowValue"] = ApiDatabar.prototype.GetShowValue;
+	ApiDatabar.prototype["SetShowValue"] = ApiDatabar.prototype.SetShowValue;
+	ApiDatabar.prototype["GetDirection"] = ApiDatabar.prototype.GetDirection;
+	ApiDatabar.prototype["SetDirection"] = ApiDatabar.prototype.SetDirection;
+	ApiDatabar.prototype["GetBarColor"] = ApiDatabar.prototype.GetBarColor;
+	ApiDatabar.prototype["SetBarColor"] = ApiDatabar.prototype.SetBarColor;
+	ApiDatabar.prototype["GetBarFillType"] = ApiDatabar.prototype.GetBarFillType;
+	ApiDatabar.prototype["SetBarFillType"] = ApiDatabar.prototype.SetBarFillType;
+	ApiDatabar.prototype["GetMinPointType"] = ApiDatabar.prototype.GetMinPointType;
+	ApiDatabar.prototype["SetMinPointType"] = ApiDatabar.prototype.SetMinPointType;
+	ApiDatabar.prototype["GetMinPointValue"] = ApiDatabar.prototype.GetMinPointValue;
+	ApiDatabar.prototype["SetMinPointValue"] = ApiDatabar.prototype.SetMinPointValue;
+	ApiDatabar.prototype["GetMaxPointType"] = ApiDatabar.prototype.GetMaxPointType;
+	ApiDatabar.prototype["SetMaxPointType"] = ApiDatabar.prototype.SetMaxPointType;
+	ApiDatabar.prototype["GetMaxPointValue"] = ApiDatabar.prototype.GetMaxPointValue;
+	ApiDatabar.prototype["SetMaxPointValue"] = ApiDatabar.prototype.SetMaxPointValue;
+	ApiDatabar.prototype["GetNegativeBarColor"] = ApiDatabar.prototype.GetNegativeBarColor;
+	ApiDatabar.prototype["SetNegativeBarColor"] = ApiDatabar.prototype.SetNegativeBarColor;
+	ApiDatabar.prototype["GetNegativeBorderColor"] = ApiDatabar.prototype.GetNegativeBorderColor;
+	ApiDatabar.prototype["SetNegativeBorderColor"] = ApiDatabar.prototype.SetNegativeBorderColor;
+	ApiDatabar.prototype["GetBarBorderColor"] = ApiDatabar.prototype.GetBarBorderColor;
+	ApiDatabar.prototype["SetBarBorderColor"] = ApiDatabar.prototype.SetBarBorderColor;
+	ApiDatabar.prototype["GetPercentMax"] = ApiDatabar.prototype.GetPercentMax;
+	ApiDatabar.prototype["SetPercentMax"] = ApiDatabar.prototype.SetPercentMax;
+	ApiDatabar.prototype["GetPercentMin"] = ApiDatabar.prototype.GetPercentMin;
+	ApiDatabar.prototype["SetPercentMin"] = ApiDatabar.prototype.SetPercentMin;
+	ApiDatabar.prototype["GetFormula"] = ApiDatabar.prototype.GetFormula;
+	ApiDatabar.prototype["GetType"] = ApiDatabar.prototype.GetType;
+	ApiDatabar.prototype["Delete"] = ApiDatabar.prototype.Delete;
+	ApiDatabar.prototype["ModifyAppliesToRange"] = ApiDatabar.prototype.ModifyAppliesToRange;
+	ApiDatabar.prototype["SetFirstPriority"] = ApiDatabar.prototype.SetFirstPriority;
+	ApiDatabar.prototype["SetLastPriority"] = ApiDatabar.prototype.SetLastPriority;
+	ApiDatabar.prototype["GetAppliesTo"] = ApiDatabar.prototype.GetAppliesTo;
+	ApiDatabar.prototype["GetParent"] = ApiDatabar.prototype.GetParent;
+	ApiDatabar.prototype["GetPriority"] = ApiDatabar.prototype.GetPriority;
+	ApiDatabar.prototype["SetPriority"] = ApiDatabar.prototype.SetPriority;
+	ApiDatabar.prototype["GetPTCondition"] = ApiDatabar.prototype.GetPTCondition;
+	ApiDatabar.prototype["GetScopeType"] = ApiDatabar.prototype.GetScopeType;
+	ApiDatabar.prototype["SetScopeType"] = ApiDatabar.prototype.SetScopeType;
+	//ApiDatabar.prototype["GetStopIfTrue"] = ApiDatabar.prototype.GetStopIfTrue;
+	//ApiDatabar.prototype["SetStopIfTrue"] = ApiDatabar.prototype.SetStopIfTrue;
+
+	ApiIconSetCondition.prototype["GetIconSet"] = ApiIconSetCondition.prototype.GetIconSet;
+	ApiIconSetCondition.prototype["SetIconSet"] = ApiIconSetCondition.prototype.SetIconSet;
+	ApiIconSetCondition.prototype["GetPercentileValues"] = ApiIconSetCondition.prototype.GetPercentileValues;
+	ApiIconSetCondition.prototype["SetPercentileValues"] = ApiIconSetCondition.prototype.SetPercentileValues;
+	ApiIconSetCondition.prototype["GetReverseOrder"] = ApiIconSetCondition.prototype.GetReverseOrder;
+	ApiIconSetCondition.prototype["SetReverseOrder"] = ApiIconSetCondition.prototype.SetReverseOrder;
+	ApiIconSetCondition.prototype["GetShowIconOnly"] = ApiIconSetCondition.prototype.GetShowIconOnly;
+	ApiIconSetCondition.prototype["SetShowIconOnly"] = ApiIconSetCondition.prototype.SetShowIconOnly;
+	ApiIconSetCondition.prototype["GetIconCriteria"] = ApiIconSetCondition.prototype.GetIconCriteria;
+	ApiIconSetCondition.prototype["GetFormula"] = ApiIconSetCondition.prototype.GetFormula;
+	ApiIconSetCondition.prototype["GetType"] = ApiIconSetCondition.prototype.GetType;
+	ApiIconSetCondition.prototype["Delete"] = ApiIconSetCondition.prototype.Delete;
+	ApiIconSetCondition.prototype["ModifyAppliesToRange"] = ApiIconSetCondition.prototype.ModifyAppliesToRange;
+	ApiIconSetCondition.prototype["SetFirstPriority"] = ApiIconSetCondition.prototype.SetFirstPriority;
+	ApiIconSetCondition.prototype["SetLastPriority"] = ApiIconSetCondition.prototype.SetLastPriority;
+	ApiIconSetCondition.prototype["GetAppliesTo"] = ApiIconSetCondition.prototype.GetAppliesTo;
+	ApiIconSetCondition.prototype["GetParent"] = ApiIconSetCondition.prototype.GetParent;
+	ApiIconSetCondition.prototype["GetPriority"] = ApiIconSetCondition.prototype.GetPriority;
+	ApiIconSetCondition.prototype["SetPriority"] = ApiIconSetCondition.prototype.SetPriority;
+	ApiIconSetCondition.prototype["GetPTCondition"] = ApiIconSetCondition.prototype.GetPTCondition;
+	ApiIconSetCondition.prototype["GetScopeType"] = ApiIconSetCondition.prototype.GetScopeType;
+	ApiIconSetCondition.prototype["SetScopeType"] = ApiIconSetCondition.prototype.SetScopeType;
+	//ApiIconSetCondition.prototype["GetStopIfTrue"] = ApiIconSetCondition.prototype.GetStopIfTrue;
+	//ApiIconSetCondition.prototype["SetStopIfTrue"] = ApiIconSetCondition.prototype.SetStopIfTrue;
+
+	ApiIconCriterion.prototype["GetType"] = ApiIconCriterion.prototype.GetType;
+	ApiIconCriterion.prototype["SetType"] = ApiIconCriterion.prototype.SetType;
+	ApiIconCriterion.prototype["GetValue"] = ApiIconCriterion.prototype.GetValue;
+	ApiIconCriterion.prototype["SetValue"] = ApiIconCriterion.prototype.SetValue;
+	ApiIconCriterion.prototype["GetOperator"] = ApiIconCriterion.prototype.GetOperator;
+	ApiIconCriterion.prototype["SetOperator"] = ApiIconCriterion.prototype.SetOperator;
+	ApiIconCriterion.prototype["GetIndex"] = ApiIconCriterion.prototype.GetIndex;
+	ApiIconCriterion.prototype["GetIcon"] = ApiIconCriterion.prototype.GetIcon;
+	ApiIconCriterion.prototype["SetIcon"] = ApiIconCriterion.prototype.SetIcon;
+
 
 	function private_SetCoords(oDrawing, oWorksheet, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset, pos) {
 		oDrawing.x = 0;
@@ -18852,4 +28132,3 @@
 	window['AscBuilder'].ApiOleObject       = ApiOleObject;
 
 }(window, null));
-

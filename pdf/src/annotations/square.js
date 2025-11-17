@@ -58,44 +58,11 @@
     AscFormat.InitClass(CAnnotationSquare, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Square);
     Object.assign(CAnnotationSquare.prototype, AscPDF.CAnnotationBase.prototype);
 
-    CAnnotationSquare.prototype.LazyCopy = function() {
-        let oDoc = this.GetDocument();
-        oDoc.StartNoHistoryMode();
-
-        let oSquare = new CAnnotationSquare(AscCommon.CreateGUID(), this.GetOrigRect().slice(), oDoc);
-
-        oSquare.lazyCopy = true;
-
-        this.fillObject(oSquare);
-
-        let aStrokeColor    = this.GetStrokeColor();
-        let aFillColor      = this.GetFillColor();
-        let aRD             = this.GetRectangleDiff();
-
-        oSquare._apIdx = this._apIdx;
-        oSquare._originView = this._originView;
-        oSquare.SetOriginPage(this.GetOriginPage());
-        oSquare.SetAuthor(this.GetAuthor());
-        oSquare.SetModDate(this.GetModDate());
-        oSquare.SetCreationDate(this.GetCreationDate());
-        aStrokeColor && oSquare.SetStrokeColor(aStrokeColor.slice());
-        aFillColor && oSquare.SetFillColor(aFillColor.slice());
-        oSquare.SetWidth(this.GetWidth());
-        oSquare.SetOpacity(this.GetOpacity());
-        oSquare.recalcGeometry()
-        aRD && oSquare.SetRectangleDiff(aRD.slice(), true);
-        oSquare.Recalculate(true);
-
-        oDoc.EndNoHistoryMode();
-
-        return oSquare;
-    };
     CAnnotationSquare.prototype.RefillGeometry = function(oGeometry, aShapeRectInMM) {
         if (this.GetBorderEffectStyle() !== AscPDF.BORDER_EFFECT_STYLES.Cloud)
             return;
 
-        let oDoc        = this.GetDocument();
-        let aOrigRect   = this.GetOrigRect();
+        let aOrigRect   = this.GetRect();
         let aRD         = this.GetRectangleDiff() || [0, 0, 0, 0];
 
         let aPoints;
@@ -123,71 +90,14 @@
             ]
         }
 
-        oDoc.StartNoHistoryMode();
+        AscCommon.History.StartNoHistoryMode();
         AscPDF.generateCloudyGeometry(aPoints, aShapeRectInMM, oGeometry, this.GetBorderEffectIntensity());
-        oDoc.EndNoHistoryMode();
+        AscCommon.History.EndNoHistoryMode();
 
         oGeometry.preset = undefined;
     };
-    CAnnotationSquare.prototype.SetRect = function(aOrigRect) {
-        let oViewer = editor.getDocumentRenderer();
-        let oDoc    = oViewer.getPDFDoc();
-
-        oDoc.History.Add(new CChangesPDFAnnotRect(this, this._origRect, aOrigRect));
-
-        this._origRect = aOrigRect;
-
-        this.SetWasChanged(true);
-        this.SetNeedRecalcSizes(true);
-    };
-    CAnnotationSquare.prototype.SetRectangleDiff = function(aDiff) {
-        let oDoc = this.GetDocument();
-        oDoc.History.Add(new CChangesPDFAnnotRD(this, this.GetRectangleDiff(), aDiff));
-
-        this._rectDiff = aDiff;
-
-        this.SetWasChanged(true);
-        this.SetNeedRecalcSizes(true);
-        this.SetNeedRecalc(true);
-    };
-    CAnnotationSquare.prototype.SetNeedRecalcSizes = function(bRecalc) {
-        this._needRecalcSizes = bRecalc;
-        this.recalcGeometry();
-    };
-    CAnnotationSquare.prototype.IsNeedRecalcSizes = function() {
-        return this._needRecalcSizes;
-    };
     CAnnotationSquare.prototype.IsSquare = function() {
         return true;
-    };
-    CAnnotationSquare.prototype.Recalculate = function(bForce) {
-        if (true !== bForce && false == this.IsNeedRecalc()) {
-            return;
-        }
-
-        if (this.IsNeedRecalcSizes()) {
-            let aOrigRect = this.GetOrigRect();
-            let aRD = this.GetRectangleDiff();
-            
-            let extX = ((aOrigRect[2] - aOrigRect[0]) - aRD[0] - aRD[2]) * g_dKoef_pt_to_mm;
-            let extY = ((aOrigRect[3] - aOrigRect[1]) - aRD[1] - aRD[3]) * g_dKoef_pt_to_mm;
-
-            this.spPr.xfrm.offX = (aOrigRect[0] + aRD[0]) * g_dKoef_pt_to_mm;
-            this.spPr.xfrm.offY = (aOrigRect[1] + aRD[1]) * g_dKoef_pt_to_mm;
-
-            this.spPr.xfrm.extX = extX;
-            this.spPr.xfrm.extY = extY;
-
-            this.SetNeedRecalcSizes(false);
-        }
-        if (this.recalcInfo.recalculateGeometry) {
-            this.RefillGeometry();
-        }
-
-        this.recalculateTransform();
-        this.updateTransformMatrix();
-        this.recalculate();
-        this.SetNeedRecalc(false);
     };
     
     CAnnotationSquare.prototype.WriteToBinary = function(memory) {

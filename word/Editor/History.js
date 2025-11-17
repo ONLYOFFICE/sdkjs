@@ -75,6 +75,7 @@
     this.Document   = Document;
     this.Api                  = null;
     this.CollaborativeEditing = null;
+	this.GroupChanges         = [];
 
     this.CanNotAddChanges     = false; // флаг для отслеживания ошибок добавления изменений без точки:Create_NewPoint->Add->Save_Changes->Add
 	this.CollectChanges       = false;
@@ -233,6 +234,7 @@ CHistory.prototype =
                 oItem.Data.Undo();
                 arrChanges.push(oItem.Data);
             }
+						this.Document.RecalculateByChanges(arrChanges);
             oPoint.Items.length = _bottomIndex + 1;
             this.Document.SetSelectionState( oPoint.State );
         }
@@ -488,7 +490,7 @@ CHistory.prototype =
 		if (!this.CollaborativeEditing || !_Class)
 			return;
 		
-		if (_Class.IsContentChange())
+		if (_Class.IsContentChange() && this.CollaborativeEditing.IsTrackingPositions())
 		{
 			var bAdd  = _Class.IsAdd();
 			var Count = _Class.GetItemsCount();
@@ -681,18 +683,17 @@ CHistory.prototype =
 
     OnEnd_GetRecalcData : function()
     {
-        // Пересчитываем таблицы
-        for (var TableId in this.RecalculateData.Tables)
-        {
-            var Table = AscCommon.g_oTableId.Get_ById(TableId);
-            if (null !== Table && Table.IsUseInDocument())
-            {
-                if (true === Table.Check_ChangedTableGrid())
-                {
-                    Table.Refresh_RecalcData2(0, 0);
-                }
-            }
-        }
+		// Пересчитываем таблицы
+		for (let tableId in this.RecalculateData.Tables)
+		{
+			let table = AscCommon.g_oTableId.Get_ById(tableId);
+			if (table
+				&& table.IsUseInDocument()
+				&& table.IsChangedTableGrid())
+			{
+				table.Refresh_RecalcData2(0, 0);
+			}
+		}
 
         // Делаем это, чтобы пересчитались ячейки таблиц, в которых есть заданная нумерация. Но нам не нужно менять
         // начальную точку пересчета здесь, т.к. начальная точка уже рассчитана правильно.
@@ -926,10 +927,15 @@ CHistory.prototype =
 		}
         else
         {
-            if (this.Index >= 0)
+            if (this.Index >= 0 || this.GroupChanges.length)
             {
                 this.private_ClearRecalcData();
-
+				
+				for (let i = 0; i < this.GroupChanges.length; ++i)
+				{
+					this.GroupChanges[i].RefreshRecalcData();
+				}
+				
                 for (var Pos = this.RecIndex + 1; Pos <= this.Index; Pos++)
                 {
                     // Считываем изменения, начиная с последней точки, и смотрим что надо пересчитать.
@@ -956,6 +962,7 @@ CHistory.prototype =
     Reset_RecalcIndex : function()
     {
         this.RecIndex = this.Index;
+		this.GroupChanges = [];
     },
 
     Set_Additional_ExtendDocumentToPos : function()
@@ -1797,6 +1804,68 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		else
 			point.Additional.FormFillingLockCheck.push([point.Items.length, 1]);
 	};
+	CHistory.prototype.startGroupPoints = function()
+	{
+		this.Create_NewPoint(AscDFH.historydescription_GroupPointsOpen);
+	};
+	CHistory.prototype.cancelGroupPoints = function()
+	{
+		let startIndex = this._getLongPointIndex();
+		if (-1 === startIndex || this.UndoRedoInProgress)
+			return [];
+		
+		let changes = [];
+		
+		this.UndoRedoInProgress = true;
+		
+		let point;
+		for (let i = this.Index; i >= startIndex; --i)
+		{
+			point = this.Points[i];
+			this.private_UndoPoint(point, changes);
+		}
+		
+		if (point && this.Document)
+			this.Document.SetSelectionState(point.State);
+		
+		if (!window['AscCommon'].g_specialPasteHelper.specialPasteStart)
+			window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide(true);
+		
+		this.Index = startIndex - 1;
+		this.ClearRedo()
+		
+		this.UndoRedoInProgress = false;
+		
+		this.GroupChanges = this.GroupChanges.length ? this.GroupChanges.concat(changes) : changes;
+		return changes;
+	};
+	CHistory.prototype.endGroupPoints = function()
+	{
+		this.ClearRedo();
+		
+		let startIndex = this._getLongPointIndex();
+		if (-1 === startIndex || this.UndoRedoInProgress)
+			return;
+		
+		let point = this.Points[startIndex];
+		point.Description = AscDFH.historydescription_GroupPoints;
+		
+		for (let i = startIndex + 1; i < this.Points.length; ++i)
+		{
+			point.Items = point.Items.concat(this.Points[i].Items);
+		}
+		
+		this.Points.length = startIndex + 1;
+		this.Index = startIndex;
+	};
+	CHistory.prototype.getGroupChanges = function()
+	{
+		return this.GroupChanges;
+	};
+	CHistory.prototype.resetGroupChanges = function()
+	{
+		this.GroupChanges = [];
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1832,6 +1901,16 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 	CHistory.prototype.private_IsFormFillingPoint = function(point, form)
 	{
 		return (point.Additional && form === point.Additional.FormFilling);
+	};
+	CHistory.prototype._getLongPointIndex = function()
+	{
+		for (let i = this.Index; i >= 0; --i)
+		{
+			if (AscDFH.historydescription_GroupPointsOpen === this.Points[i].Description)
+				return i;
+		}
+		
+		return -1;
 	};
 
 	CHistory.prototype.SavePointIndex = function()

@@ -408,6 +408,17 @@ function (window, undefined) {
 		var arrActions = [];
 		return arrActions;
 	};
+	UndoRedoItemSerializable.prototype.ConvertToSimpleChanges = function()
+	{
+		if (this.oClass) {
+			if (this.oClass.ConvertToSimpleChanges) {
+				return this.oClass.ConvertToSimpleChanges();
+			} else if (this.oClass.ConvertToSimpleChangesSpreadsheet) {
+				return this.oClass.ConvertToSimpleChangesSpreadsheet(this);
+			}
+		}
+		return [];
+	};
 	UndoRedoItemSerializable.prototype.ConvertFromSimpleActions = function(arrActions)
 	{
 		if (this.oClass) {
@@ -1815,7 +1826,7 @@ function (window, undefined) {
 	UndoRedoData_BinaryWrapper.prototype.Read_FromBinary2 = function (reader) {
 		this.Id = reader.GetString2();
 		this.len = reader.GetLong();
-		this.binary = reader.GetBuffer(this.len);
+		this.binary = reader.GetBufferUint8(this.len);
 	};
 	UndoRedoData_BinaryWrapper.prototype.getData = function () {
 		var reader = new AscCommon.FT_Stream2(this.binary, this.len);
@@ -1850,7 +1861,7 @@ function (window, undefined) {
 	};
 	UndoRedoData_BinaryWrapper2.prototype.Read_FromBinary2 = function (reader) {
 		this.len = reader.GetLong();
-		this.binary = reader.GetBuffer(this.len);
+		this.binary = reader.GetBufferUint8(this.len);
 	};
 	UndoRedoData_BinaryWrapper2.prototype.initObject = function (data) {
 		var reader = new AscCommon.FT_Stream2(this.binary, this.len);
@@ -1968,14 +1979,15 @@ function (window, undefined) {
 		}
 	};
 
-	function UndoRedoData_SheetRemove(index, sheetId, sheet) {
+	function UndoRedoData_SheetRemove(index, sheetId, sheet, moveSheet) {
 		this.index = index;
 		this.sheetId = sheetId;
 		this.sheet = sheet;
+		this.moveSheet = moveSheet;
 	}
 
 	UndoRedoData_SheetRemove.prototype.Properties = {
-		index: 0, sheetId: 1, sheet: 2
+		index: 0, sheetId: 1, sheet: 2, moveSheet: 3
 	};
 	UndoRedoData_SheetRemove.prototype.getType = function () {
 		return UndoRedoDataTypes.SheetRemove;
@@ -1991,6 +2003,8 @@ function (window, undefined) {
 				return this.sheetId;
 			case this.Properties.sheet:
 				return this.sheet;
+			case this.Properties.moveSheet:
+				return this.moveSheet;
 		}
 		return null;
 	};
@@ -2004,6 +2018,9 @@ function (window, undefined) {
 				break;
 			case this.Properties.sheet:
 				this.sheet = value;
+				break;
+			case this.Properties.moveSheet:
+				this.moveSheet = value;
 				break;
 		}
 	};
@@ -2836,16 +2853,21 @@ function (window, undefined) {
 	//для применения изменений
 	var UndoRedoClassTypes = new function () {
 		this.aTypes = [];
+		this.offset = 0;
 		this.Add = function (fCreate) {
 			var nRes = this.aTypes.length;
 			this.aTypes.push(fCreate);
-			return nRes;
+			return nRes + this.offset;
 		};
 		this.Create = function (nType) {
-			if (nType < this.aTypes.length) {
-				return this.aTypes[nType]();
+			const nTypeIndex = nType - this.offset;
+			if (0 <= nTypeIndex && nTypeIndex < this.aTypes.length) {
+				return this.aTypes[nTypeIndex]();
 			}
 			return null;
+		};
+		this.SetOffset = function (offset) {
+			this.offset = offset || 0;
 		};
 		this.Clean = function () {
 			this.aTypes = [];
@@ -2896,6 +2918,11 @@ function (window, undefined) {
 			Pos  : index,
 			Add  : isAdd
 		}];
+	};
+	UndoRedoWorkbook.prototype.ConvertToSimpleChangesSpreadsheet = function(SerializableItem)
+	{
+		const oItem = new UndoRedoItemSerializable(SerializableItem.oClass, SerializableItem.nActionType, SerializableItem.nSheetId, SerializableItem.oRange, SerializableItem.oData, SerializableItem.LocalChange);
+		return [oItem];
 	};
 	UndoRedoWorkbook.prototype.ConvertFromSimpleActionsSpreadsheet = function(arrActions, Data)
 	{
@@ -3003,7 +3030,7 @@ function (window, undefined) {
 					}
 				}
 				if (null != nIndex) {
-					wb.removeWorksheet(nIndex);
+					wb.removeWorksheet(nIndex, null, Data.moveSheet);
 				}
 			}
 			wb.handlers.trigger("updateWorksheetByModel");
@@ -3127,6 +3154,8 @@ function (window, undefined) {
 			wb.setShowVerticalScroll(bUndo ? Data.from : Data.to);
 		} else if (AscCH.historyitem_Workbook_ShowHorizontalScroll === Type) {
 			wb.setShowHorizontalScroll(bUndo ? Data.from : Data.to);
+		} else if (AscCH.historyitem_Workbook_SetCustomFunctions === Type) {
+			wb.oApi["pluginMethod_SetCustomFunctions"] && wb.oApi["pluginMethod_SetCustomFunctions"](bUndo ? Data.from : Data.to);
 		}
 	};
 	UndoRedoWorkbook.prototype.forwardTransformationIsAffect = function (Type) {
@@ -3229,6 +3258,8 @@ function (window, undefined) {
 				cell.setAlignVertical(Val);
 			} else if (AscCH.historyitem_Cell_AlignHorizontal == Type) {
 				cell.setAlignHorizontal(Val);
+			} else if (AscCH.historyitem_Cell_ReadingOrder == Type) {
+				cell.setReadingOrder(Val);
 			} else if (AscCH.historyitem_Cell_Fill == Type) {
 				cell.setFill(Val);
 			} else if (AscCH.historyitem_Cell_Border == Type) {
@@ -4691,6 +4722,8 @@ function (window, undefined) {
 				row.setAlignVertical(Val);
 			} else if (AscCH.historyitem_RowCol_AlignHorizontal == Type) {
 				row.setAlignHorizontal(Val);
+			} else if (AscCH.historyitem_RowCol_ReadingOrder == Type) {
+				row.setReadingOrder(Val);
 			} else if (AscCH.historyitem_RowCol_Fill == Type) {
 				row.setFill(Val);
 			} else if (AscCH.historyitem_RowCol_Border == Type) {

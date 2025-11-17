@@ -341,6 +341,8 @@
 					}
 				}
 
+				wb.model.checkProtectedValue = true;
+
 				//ignore hidden rows
 				var activeCell = ws.model.selectionRange.activeCell.clone();
 				var activeRange, selectionRange;
@@ -403,6 +405,7 @@
 
 				ws.model.excludeHiddenRows(false);
 				ws.model.ignoreWriteFormulas(false);
+				wb.model.checkProtectedValue = false;
 			}
 
 			if (ws && ws.workbook && !ws.workbook.getCellEditMode()) {
@@ -536,59 +539,85 @@
 
 		Clipboard.prototype.drawSelectedArea = function (ws, opt_get_bytes) {
 			let activeRange = ws.model.selectionRange.getLast();
-			let range = ws.getCellMetrics(activeRange.c1, activeRange.r1, true, true);
-			let rangeEnd = ws.getCellMetrics(activeRange.c2, activeRange.r2, true, true);
 
-			if (!range || !rangeEnd) {
+			// Canvas limitations for different browsers:
+			// Chrome/Edge: 32767px x 32767px
+			// Firefox: 32767px x 32767px
+			// Safari: 4096px x 4096px (most restrictive)
+			// IE9+: 8192px x 8192px
+			// IE8: 4096px x 4096px
+
+			let maxCanvasHeight, maxCanvasWidth, maxCanvasArea;
+
+			if (AscCommon.AscBrowser.isIE) {
+				maxCanvasHeight = 8192;
+				maxCanvasWidth = 8192;
+				maxCanvasArea = 8192 * 8192;
+			} else if (AscCommon.AscBrowser.isSafariMacOs) {
+				// Safari (not Chrome)
+				maxCanvasHeight = 4096;
+				maxCanvasWidth = 4096;
+				maxCanvasArea = 4096 * 4096;
+			} else {
+				// Chrome, Firefox, Edge and other modern browsers
+				// Reducing limits. Experimentally determined that when height exceeds 16383px, text rendering speed (fillText) drops by tens of times
+				// Setting limits with safety margin
+				maxCanvasHeight = 8192;
+				maxCanvasWidth = 8192;
+				maxCanvasArea = 8192 * 8192;
+			}
+
+			let estimatedHeight = ws._getRowTop(activeRange.r2 + 1) - ws._getRowTop(activeRange.r1);
+			let estimatedWidth = ws._getColLeft(activeRange.c2 + 1) - ws._getColLeft(activeRange.c1);
+
+			// Check height limitations
+			if (estimatedHeight > maxCanvasHeight) {
+				let currentHeight = 0;
+				let maxRow = activeRange.r1;
+
+				for (let row = activeRange.r1; row <= activeRange.r2; row++) {
+					let rowHeight = ws._getRowHeight(row);
+					if (currentHeight + rowHeight > maxCanvasHeight) {
+						break;
+					}
+					currentHeight += rowHeight;
+					maxRow = row;
+				}
+
+				activeRange = new Asc.Range(activeRange.c1, activeRange.r1, activeRange.c2, maxRow);
+				estimatedHeight = ws._getRowTop(activeRange.r2 + 1) - ws._getRowTop(activeRange.r1);
+			}
+
+			// Check width limitations
+			if (estimatedWidth > maxCanvasWidth) {
+				let currentWidth = 0;
+				let maxCol = activeRange.c1;
+
+				for (let col = activeRange.c1; col <= activeRange.c2; col++) {
+					let colWidth = ws._getColLeft(col + 1) - ws._getColLeft(col);
+					if (currentWidth + colWidth > maxCanvasWidth) {
+						break;
+					}
+					currentWidth += colWidth;
+					maxCol = col;
+				}
+
+				activeRange = new Asc.Range(activeRange.c1, activeRange.r1, maxCol, activeRange.r2);
+				estimatedWidth = ws._getColLeft(activeRange.c2 + 1) - ws._getColLeft(activeRange.c1);
+			}
+
+			//TODO cut by max size
+			if (estimatedHeight * estimatedWidth >= maxCanvasArea) {
 				return;
 			}
 
-			// Calculate dimensions
-			let width = rangeEnd.left + rangeEnd.width - range.left;
-			let height = rangeEnd.top + rangeEnd.height - range.top;
-
-			//TODO while add 1000px limit
-			let maxSize = 1000;
-			if (width > maxSize || height > maxSize) {
-				return;
+			let base64;
+			let ctx = ws.workbook.printForCopyPaste(ws, activeRange, true);
+			if (ctx && ctx.canvas) {
+				base64 = ctx.canvas.toDataURL("image/png");
 			}
 
-			// Create canvas and context
-			let canvas = document.createElement('canvas');
-			canvas.width = width * ws.getZoom();
-			canvas.height = height * ws.getZoom();
-			let ctx = canvas.getContext('2d');
-
-			//let zoom = ws.getZoom();
-			//ctx.scale(zoom, zoom);
-
-			ctx.save();
-
-			ctx.beginPath();
-			ctx.rect(0, 0, width, height);
-			ctx.clip();
-
-			// Calculate scroll offsets
-			let offsetX = range.left;
-			let offsetY = range.top;
-
-			// Translate context to draw from selected range start
-			//ctx.translate(-offsetX, -offsetY);
-
-			let oCtx = new Asc.DrawingContext({
-				canvas: canvas, units: 0/*px*/, fmgrGraphics: ws.workbook.fmgrGraphics, font: ws.workbook.m_oFont
-			});
-
-			oCtx.isNotDrawBackground = true;
-
-			// Draw worksheet elements
-			ws._drawGrid(oCtx, activeRange, offsetX, offsetY, undefined, undefined, undefined, true, true);
-			ws._drawCellsAndBorders(oCtx, activeRange, offsetX, offsetY);
-
-			ctx.restore();
-
-			let base64 = canvas.toDataURL();
-			if (opt_get_bytes) {
+			if (opt_get_bytes && base64) {
 				// Get base64 data without header
 				let base64Data = base64.split(',')[1];
 
@@ -655,9 +684,8 @@
 				 this.wb.Core.contentStatus = this.oldWorkbookCoreParameters.oldContentStatus;
 
 
-					var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(this.wb, false);
-					oBinaryFileWriter.Write();
-					this.cachedWbBinaryData = oBinaryFileWriter.Memory.data.slice();
+					var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(this.wb);
+					this.cachedWbBinaryData = oBinaryFileWriter.Write(true, false, true);
 
 					this.wb.Core.creator = newCreator;
 					this.wb.Core.identifier = newIdentifier;
@@ -861,10 +889,10 @@
 					var maxRow = 0;
 					var maxCol = 0;
 					range3._foreachNoEmpty(function (cell) {
-						if (cell.nCol > maxCol) {
+						if (cell.nCol > maxCol && !cell.ws.getColHidden(cell.nCol)) {
 							maxCol = cell.nCol;
 						}
-						if (cell.nRow > maxRow) {
+						if (cell.nRow > maxRow && !cell.ws.getRowHidden(cell.nRow)) {
 							maxRow = cell.nRow;
 						}
 					});
@@ -1095,12 +1123,12 @@
 
 			_generateHtmlDoc: function (range, worksheet) {
 				function skipMerged() {
-					var m = merged.filter(function (e) {
-						return row >= e.r1 && row <= e.r2 && col >= e.c1 && col <= e.c2
-					});
-					if (m.length > 0) {
-						col = m[0].c2;
-						return true;
+					for (var i = 0; i < merged.length; i++) {
+						var e = merged[i];
+						if (row >= e.r1 && row <= e.r2 && col >= e.c1 && col <= e.c2) {
+							col = e.c2;
+							return true;
+						}
 					}
 					return false;
 				}
@@ -1281,12 +1309,12 @@
 
 			_generateHtmlDocStr: function (range, worksheet, sBase64) {
 				function skipMerged() {
-					var m = merged.filter(function (e) {
-						return row >= e.r1 && row <= e.r2 && col >= e.c1 && col <= e.c2
-					});
-					if (m.length > 0) {
-						col = m[0].c2;
-						return true;
+					for (var i = 0; i < merged.length; i++) {
+						var e = merged[i];
+						if (row >= e.r1 && row <= e.r2 && col >= e.c1 && col <= e.c2) {
+							col = e.c2;
+							return true;
+						}
 					}
 					return false;
 				}
@@ -2530,7 +2558,7 @@
 
 					let arr_shapes = content.Drawings;
 					if (arr_shapes && arr_shapes.length && !(window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor)) {
-						if (content.Drawings.length === selectedContent2[1].content.Drawings.length) {
+						if (content.Drawings.length === pasteObj.content.Drawings.length) {
 							let oEndContent = {
 								Drawings: []
 							};
@@ -2539,7 +2567,7 @@
 							};
 							for (i = 0; i < content.Drawings.length; ++i) {
 								oEndContent.Drawings.push({Drawing: content.Drawings[i].graphicObject});
-								oSourceContent.Drawings.push({Drawing: selectedContent2[1].content.Drawings[i].graphicObject});
+								oSourceContent.Drawings.push({Drawing: pasteObj.content.Drawings[i].graphicObject});
 							}
 							AscFormat.checkDrawingsTransformBeforePaste(oEndContent, oSourceContent, null);
 						}
@@ -3090,7 +3118,7 @@
 					AscFormat.CheckSpPrXfrm2(graphicObject);
 					xfrm = graphicObject.spPr.xfrm;
 
-					curCol = xfrm.offX - startCol + ws.objectRender.convertMetric(ws._getColLeft(addImagesFromWord[i].col + activeRange.c1) - ws._getColLeft(0), 0, 3);
+					curCol = xfrm.offX - startCol + ws.objectRender.convertMetric(ws._getColLeft(addImagesFromWord[i].col + activeRange.c1, true) - (ws.getRightToLeft() ? - ws._getColLeft(0) : ws._getColLeft(0)), 0, 3);
 					curRow = xfrm.offY - startRow + ws.objectRender.convertMetric(ws._getRowTop(addImagesFromWord[i].row + activeRange.r1) - ws._getRowTop(0), 0, 3);
 
 					xfrm.setOffX(curCol);
@@ -3309,6 +3337,7 @@
 				var base64 = returnBinary.base64;
 				var base64FromWord = returnBinary.base64FromWord;
 				var base64FromPresentation = returnBinary.base64FromPresentation;
+				var base64FromPDF = returnBinary.base64FromPDF;
 
 				var result = false;
 				if (base64 != null)//from excel
@@ -3320,6 +3349,9 @@
 					worksheet.workbook.handlers.trigger("cleanCopyData", true);
 				} else if (base64FromPresentation) {
 					result = this._pasteFromBinaryPresentation(worksheet, base64FromPresentation, isIntoShape);
+					worksheet.workbook.handlers.trigger("cleanCopyData", true);
+				} else if (base64FromPDF) {
+					result = this._pasteFromBinaryPDF(worksheet, base64FromPDF, isIntoShape);
 					worksheet.workbook.handlers.trigger("cleanCopyData", true);
 				}
 
@@ -3345,7 +3377,7 @@
 					}
 				}
 
-				return {base64: base64, base64FromWord: base64FromWord, base64FromPresentation: base64FromPresentation};
+				return {base64: base64, base64FromWord: base64FromWord, base64FromPresentation: base64FromPresentation, base64FromPDF: base64FromPDF};
 			},
 
 			_getImageFromHtml: function (html, isGetUrlsArray) {

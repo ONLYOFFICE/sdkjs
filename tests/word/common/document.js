@@ -553,6 +553,22 @@
 	{
 		AscCommon.EditorActionSpeaker.stop();
 	}
+	function SelectTableCells(table, startCell, startRow, endCell, endRow)
+	{
+		if (!logicDocument)
+			return;
+		
+		logicDocument.RemoveSelection();
+		// TODO: Get rid of double SelectRange
+		table.SelectRange(startCell, startRow, endCell, endRow);
+		table.Document_SetThisElementCurrent();
+		table.SelectRange(startCell, startRow, endCell, endRow);
+	}
+	function MergeTableCells(table, startCell, startRow, endCell, endRow)
+	{
+		SelectTableCells(table, startCell, startRow, endCell, endRow);
+		table.MergeTableCells(true);
+	}
 	
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.CreateLogicDocument              = CreateLogicDocument;
@@ -608,6 +624,8 @@
 	AscTest.SelectParagraph                  = SelectParagraph;
 	AscTest.StartTextSpeaker                 = StartTextSpeaker;
 	AscTest.StopTextSpeaker                  = StopTextSpeaker;
+	AscTest.SelectTableCells                 = SelectTableCells;
+	AscTest.MergeTableCells                  = MergeTableCells;
 
 })(window);
 

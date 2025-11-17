@@ -97,6 +97,26 @@
     CPushButtonField.prototype.constructor = CPushButtonField;
     AscFormat.InitClass(CPushButtonField, AscPDF.CBaseField, AscDFH.historyitem_type_Pdf_Button_Field);
 
+    CPushButtonField.prototype.Copy = function() {
+        let oCopy = AscPDF.CBaseField.prototype.Copy.call(this);
+
+        let oIconPos = this.GetIconPosition();
+        oCopy.SetIconPosition(oIconPos.X, oIconPos.Y);
+        oCopy.SetButtonFitBounds(this.IsButtonFitBounds());
+        oCopy.SetLayout(this.GetLayout());
+        oCopy.SetScaleHow(this.GetScaleHow());
+        oCopy.SetScaleWhen(this.GetScaleWhen());
+        oCopy.SetHighlight(this.GetHighlight());
+        oCopy.SetCaption(this.GetCaption(AscPDF.APPEARANCE_TYPES.normal), AscPDF.APPEARANCE_TYPES.normal);
+        oCopy.SetCaption(this.GetCaption(AscPDF.APPEARANCE_TYPES.mouseDown), AscPDF.APPEARANCE_TYPES.mouseDown);
+        oCopy.SetCaption(this.GetCaption(AscPDF.APPEARANCE_TYPES.rollover), AscPDF.APPEARANCE_TYPES.rollover);
+        oCopy.SetImageRasterId(this.GetImageRasterId(AscPDF.APPEARANCE_TYPES.normal), AscPDF.APPEARANCE_TYPES.normal);
+        oCopy.SetImageRasterId(this.GetImageRasterId(AscPDF.APPEARANCE_TYPES.mouseDown), AscPDF.APPEARANCE_TYPES.mouseDown);
+        oCopy.SetImageRasterId(this.GetImageRasterId(AscPDF.APPEARANCE_TYPES.rollover), AscPDF.APPEARANCE_TYPES.rollover);
+
+        return oCopy;
+    };
+
     CPushButtonField.prototype.GetFontSizeAP = function(oContent) {
         let oPara   = oContent.GetElement(0);
         let oRun    = oPara.GetElement(0);
@@ -618,7 +638,7 @@
 
         let sPrevCaption;
         switch (nFace) {
-            case 0:
+            case AscPDF.APPEARANCE_TYPES.normal:
                 sPrevCaption = this.GetCaption();
                 this._buttonCaption = cCaption;
                 let oCaptionRun;
@@ -667,11 +687,11 @@
                 }
                 AscCommon.History.EndNoHistoryMode();
                 break;
-            case 1:
+            case AscPDF.APPEARANCE_TYPES.mouseDown:
                 sPrevCaption = this._downCaption;
                 this._downCaption = cCaption;
                 break;
-            case 2:
+            case AscPDF.APPEARANCE_TYPES.rollover:
                 sPrevCaption = this._rollOverCaption;
                 this._rollOverCaption = cCaption;
                 break;
@@ -688,7 +708,7 @@
     };
     CPushButtonField.prototype.private_SetValue = CPushButtonField.prototype.SetValue;
     CPushButtonField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
-        if (this.IsHidden() && !this.IsEditMode())
+        if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
             return;
 		
 		this._UpdateImage();
@@ -713,7 +733,7 @@
 
         if (this.IsPressed()) {
             let oViewer     = editor.getDocumentRenderer();
-            let aOrigRect   = this.GetOrigRect();
+            let aOrigRect   = this.GetRect();
             let oTr         = oGraphicsPDF.GetTransform();
 
             let origX   = aOrigRect[0];
@@ -796,8 +816,6 @@
     };
     CPushButtonField.prototype.SetImageRasterId = function(sRasterId, nAPType) {
         let sPrevRasterId;
-        let oViewer = Asc.editor.getDocumentRenderer();
-        let oDoc    = this.GetDocument();
 
         if (undefined == nAPType) {
             nAPType = AscPDF.APPEARANCE_TYPES.normal;
@@ -825,9 +843,7 @@
             return;
         }
 
-        if (oViewer.IsOpenFormsInProgress == false && oDoc.History.UndoRedoInProgress == false) {
-            oDoc.History.Add(new CChangesPDFPushbuttonImage(this, sPrevRasterId, sRasterId, nAPType));
-        }
+        AscCommon.History.Add(new CChangesPDFPushbuttonImage(this, sPrevRasterId, sRasterId, nAPType));
 
         this.SetNeedUpdateImage(true);
         this.SetWasChanged(true);
@@ -992,7 +1008,7 @@
     };
     CPushButtonField.prototype.DrawBackground = function(oGraphicsPDF) {
         
-        let aOrigRect       = this.GetOrigRect();
+        let aOrigRect       = this.GetRect();
         let aBgColor        = this.GetBackgroundColor();
         let oBgRGBColor;
 
@@ -1039,7 +1055,7 @@
         if (!this.content)
             return;
 
-        let aRect = this.GetOrigRect();
+        let aRect = this.GetRect();
         if (!aRect) {
             return;
         }
@@ -1072,8 +1088,10 @@
         return this.contentClipRect;
     };
     CPushButtonField.prototype.DoInitialRecalc = function() {
+        let oDoc = Asc.editor.getPDFDoc();
+
         if (null == this.contentClipRect || this.IsNeedRecalc()) {
-            if (this.GetDocument().checkFieldFont(this)) {
+            if (oDoc.checkFieldFont(this)) {
                 this.Recalculate();
                 return true;
             }
@@ -1101,7 +1119,7 @@
         this.SetNeedRecalc(false);
     };
     CPushButtonField.prototype.RecalculateContentRect = function() {
-        let aOrigRect = this.GetOrigRect();
+        let aOrigRect = this.GetRect();
         
         let X       = aOrigRect[0];
         let Y       = aOrigRect[1];
@@ -1214,6 +1232,7 @@
 			let oStyle = this.GetFontStyle();
 			this.content.SetBold(oStyle.bold);
 			this.content.SetItalic(oStyle.italic);
+            this.UpdateMEOptions();
             if (this.GetTextSize()) {
                 this.content.SetFontSize(this.GetTextSize());
             }
@@ -1227,7 +1246,7 @@
     };
 
     CPushButtonField.prototype.DrawFromStream = function(oGraphicsPDF, oGraphicsWord) {
-        if (this.IsHidden() && !this.IsEditMode())
+        if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
             return;
         
         let oViewer = editor.getDocumentRenderer();
@@ -1376,11 +1395,7 @@
         oDoc.activeForm = this;
 
         if (oDoc.IsEditFieldsMode()) {
-            let oController = oDoc.GetController();
-            this.editShape.select(oController, this.GetPage());
-            if (false == this.IsLocked()) {
-                this.editShape.onMouseDown(x, y, e)
-            }
+            this.editShape.onMouseDown(x, y, e);
             return;
         }
 
@@ -2023,11 +2038,10 @@
      * @typeofeditors ["PDF"]
      */
     CPushButtonField.prototype.Commit = function() {
-        let oDoc = this.GetDocument();
         let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         let oThisPara = this.content.GetElement(0);
         
-        oDoc.StartNoHistoryMode();
+        AscCommon.History.StartNoHistoryMode();
 
         if (aFields.length == 1)
             this.SetNeedCommit(false);
@@ -2051,7 +2065,7 @@
             aFields[i].SetNeedRecalc(true);
         }
 
-        oDoc.EndNoHistoryMode();
+        AscCommon.History.EndNoHistoryMode();
     };
 
     CPushButtonField.prototype.Reset = function() {
@@ -2127,15 +2141,35 @@
             nButtonFlags |= (1 << 4);
         }
 
+        function getBase64FromImage(imgElement) {
+            let canvas = document.createElement('canvas');
+            canvas.width = imgElement.naturalWidth;
+            canvas.height = imgElement.naturalHeight;
+
+            let ctx = canvas.getContext('2d');
+            ctx.drawImage(imgElement, 0, 0);
+
+            return canvas.toDataURL('image/png');
+        }
+
         function WriteImage(memory, nImgType) {
             let sPathToImg = AscCommon.getFullImageSrc2(this.GetImageRasterId(nImgType));
             let nExistIdx = memory.images.indexOf(sPathToImg);
+            if ((memory.isForSplit || memory.isCopyPaste) && sPathToImg) {
+                let mapItem = Asc.editor.ImageLoader.map_image_index[sPathToImg];
+                if (mapItem) {
+                    let oImageElm = mapItem.Image;
+                    sPathToImg = getBase64FromImage(oImageElm);
+                }
+            }
+            
             if (nExistIdx === -1) {
                 memory.WriteLong(memory.images.length);
                 memory.images.push(sPathToImg);
             }
             else
                 memory.WriteLong(nExistIdx);
+            
         }
 
         // not supported in server side now

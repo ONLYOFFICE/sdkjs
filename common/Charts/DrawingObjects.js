@@ -425,41 +425,62 @@ CCellObjectInfo.prototype.initAfterSerialize = function() {
 function asc_CChartBinary(chart) {
 
     this["binary"] = null;
-		if (chart)
-		{
-			if (chart.getObjectType() === AscDFH.historyitem_type_ChartSpace)
-			{
-				this["IsChartEx"] = chart.isChartEx();
-				const writer = new AscCommon.BinaryChartWriter(new AscCommon.CMemory(false));
-				if(this["IsChartEx"])
-				{
-					writer.WriteCT_ChartExSpace(chart);
-				}
-				else
-				{
-					writer.WriteCT_ChartSpace(chart);
-				}
-				this["binary"] = writer.memory.pos + ";" + writer.memory.GetBase64Memory();
-				this["documentImageUrls"] = AscCommon.g_oDocumentUrls.urls;
-			}
-			else if (chart.getObjectType() === AscDFH.historyitem_type_Chart)
-			{
-				this["IsChartEx"] = chart.isChartEx();
-				const chartWriter = new AscCommon.BinaryChartWriter(new AscCommon.CMemory(false));
-				if (this["IsChartEx"]) {
-					chartWriter.WriteCT_ChartEx(chart);
-					if (chart.parent && chart.parent.chartData) {
-						const chartDataWriter = new AscCommon.BinaryChartWriter(new AscCommon.CMemory(false));
-						chartDataWriter.WriteCT_ChartData(chart.parent.chartData);
-						this["binaryChartData"] = chartDataWriter.memory.GetBase64Memory();
-					}
-				} else {
-					chartWriter.WriteCT_Chart(chart);
-				}
-				this["binary"] = chartWriter.memory.GetBase64Memory();
-				this["documentImageUrls"] = AscCommon.g_oDocumentUrls.urls;
-			}
-		}
+    if (chart) {
+        if (chart.getObjectType() === AscDFH.historyitem_type_ChartSpace)
+        {
+            this["IsChartEx"] = chart.isChartEx();
+            const writer = new AscCommon.BinaryChartWriter(new AscCommon.CMemory(false));
+            if(this["IsChartEx"])
+            {
+                writer.WriteCT_ChartExSpace(chart);
+            }
+            else
+            {
+                writer.WriteCT_ChartSpace(chart);
+            }
+            this["binary"] = writer.memory.pos + ";" + writer.memory.GetBase64Memory();
+            this["documentImageUrls"] = AscCommon.g_oDocumentUrls.urls;
+        }
+        else if (chart.getObjectType() === AscDFH.historyitem_type_Chart)
+        {
+            this["IsChartEx"] = chart.isChartEx();
+            const chartWriter = new AscCommon.BinaryChartWriter(new AscCommon.CMemory(false));
+            if (this["IsChartEx"]) {
+                chartWriter.WriteCT_ChartEx(chart);
+                if (chart.parent && chart.parent.chartData) {
+                    const chartDataWriter = new AscCommon.BinaryChartWriter(new AscCommon.CMemory(false));
+                    chartDataWriter.WriteCT_ChartData(chart.parent.chartData);
+                    this["binaryChartData"] = chartDataWriter.memory.GetBase64Memory();
+                }
+            } else {
+                chartWriter.WriteCT_Chart(chart);
+            }
+            this["binary"] = chartWriter.memory.GetBase64Memory();
+            this["documentImageUrls"] = AscCommon.g_oDocumentUrls.urls;
+        }
+
+        if (window['IS_NATIVE_EDITOR']) {
+            if(chart.theme) {
+                let pptx_writer = new AscCommon.CBinaryFileWriter();
+                pptx_writer.WriteTheme(chart.theme);
+                this["themeBinary"] = pptx_writer.pos + ";" + pptx_writer.GetBase64Memory();
+            }
+            if(chart.colorMapOverride) {
+                let pptx_writer = new AscCommon.CBinaryFileWriter();
+                pptx_writer.WriteRecord1(1, chart.colorMapOverride, pptx_writer.WriteClrMap);
+                this["colorMapBinary"] = pptx_writer.pos + ";" + pptx_writer.GetBase64Memory();
+            }
+            this["urls"] = JSON.stringify(AscCommon.g_oDocumentUrls.getUrls());
+            if(chart.parent && chart.parent.docPr){
+                this["cTitle"] = chart.parent.docPr.title;
+                this["cDescription"] = chart.parent.docPr.descr;
+            }
+            else{
+                this["cTitle"] = chart.getTitle();
+                this["cDescription"] = chart.getDescription();
+            }
+        }
+    }
 }
 
 asc_CChartBinary.prototype = {
@@ -476,7 +497,7 @@ asc_CChartBinary.prototype = {
         const stream = AscFormat.CreateBinaryReader(binary, 0, binary.length);
         //надо сбросить то, что остался после открытия документа
         AscCommon.pptx_content_loader.Clear();
-        const oNewChartSpace = Asc.editor.isPdfEditor() ? new AscPDF.CPdfChart() : new AscFormat.CChartSpace();
+        const oNewChartSpace = Asc.editor.isPdfEditor() ? new AscPDF.CPdfChartSpace() : new AscFormat.CChartSpace();
         const oBinaryChartReader = new AscCommon.BinaryChartReader(stream);
 	    if(this["IsChartEx"]) {
 		    oBinaryChartReader.ExternalReadCT_ChartExSpace(stream.size , oNewChartSpace, workSheet);
@@ -523,8 +544,36 @@ asc_CChartBinary.prototype = {
 		});
 		return oChartData;
 	},
-		getWorkbookBinary: function() { return this["workbookBinary"]; },
-		setWorkbookBinary: function(val) { this["workbookBinary"] = val; }
+    getWorkbookBinary: function() { return this["workbookBinary"]; },
+    setWorkbookBinary: function(val) { this["workbookBinary"] = val; },
+
+    asc_getThemeBinary: function() { return this["themeBinary"]; },
+    asc_setThemeBinary: function(val) { this["themeBinary"] = val; },
+    asc_setColorMapBinary: function(val){this["colorMapBinary"] = val;},
+    asc_getColorMapBinary: function(){return this["colorMapBinary"];},
+    getTheme: function()
+    {
+        var binary = this["themeBinary"];
+        if(binary)
+        {
+            let oBinaryReader = AscFormat.CreatePPTYLoader(binary, 0, binary.length);
+            return oBinaryReader.ReadTheme();
+        }
+        return null;
+    },
+    getColorMap: function()
+    {
+        var binary = this["colorMapBinary"];
+        if(binary)
+        {
+            let oBinaryReader = AscFormat.CreatePPTYLoader(binary, 0, binary.length);
+            let _rec = oBinaryReader.stream.GetUChar();
+            let ret = new AscFormat.ClrMap();
+            oBinaryReader.ReadClrMap(ret);
+            return ret;
+        }
+        return null;
+    }
 };
 
 /** @constructor */
@@ -1770,7 +1819,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         this.graphicObject.handleObject(fCallback);
     };
     DrawingBase.prototype.initAfterSerialize = function(ws) {
-        if(!this.graphicObject) {
+        if(!this.graphicObject || !ws) {
             return;
         }
         let bIsShape = this.graphicObject.isShape();
@@ -2091,7 +2140,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         }
 		_this.recalculate(true);
         worksheet.model.Drawings = aObjects;
-    };
+	};
 
     _this.checkImageBullets = function (currentSheet, arrImages) {
         const aObjects = currentSheet.model.Drawings;
@@ -2323,14 +2372,20 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         if (worksheet.model !== api.wb.model.getActiveWs()) {
             return;
         }
-        if (!oUpdateRect) {
-            if(!window['IS_NATIVE_EDITOR']) {
-                _this.drawingArea.clear();
-            }
-                }
+				if (!window['IS_NATIVE_EDITOR']) {
+					if (oUpdateRect) {
+						_this.drawingArea.clearRect(oUpdateRect);
+					} else {
+						_this.drawingArea.clear();
+					}
+				}
         for (var nDrawing = 0; nDrawing < aObjects.length; nDrawing++) {
             _this.drawingArea.drawObject(aObjects[nDrawing], oUpdateRect);
                 }
+				const aDropDowns = _this.controller.dropDowns;
+			for (var nDrawing = 0; nDrawing < aDropDowns.length; nDrawing++) {
+				_this.drawingArea.drawDropDown(aDropDowns[nDrawing], oUpdateRect);
+			}
         _this.OnUpdateOverlay();
         _this.controller.updateSelectionState(true);
         AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
@@ -2479,7 +2534,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 
 
 
-    _this.addImageObjectCallback = function (_image, options) {
+    _this.addImageObjectCallback = function (_image, options, imageIndex) {
         var isOption = options && options.cell;
         if (!_image.Image) {
             worksheet.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.UplImageUrl, c_oAscError.Level.NoCritical);
@@ -2502,20 +2557,40 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                     Math.max((options.height * AscCommon.g_dKoef_pix_to_mm), 1), true);
             }
             var bCorrect = _this.calculateObjectMetrics(drawingObject, mmToPx(oSize.asc_getImageWidth()), mmToPx(oSize.asc_getImageHeight()), true);
+			const isRtl = worksheet.getRightToLeft();
 
-            var coordsFrom = _this.calculateCoords(drawingObject.from);
-            var coordsTo = _this.calculateCoords(drawingObject.to);
-            if (worksheet.getRightToLeft()) {
-                let temp = coordsTo.x;
-                coordsTo.x = coordsFrom.x;
-                coordsFrom.x = temp;
-            }
+			const coordsFrom = _this.calculateCoords(drawingObject.from);
+			const coordsTo = _this.calculateCoords(drawingObject.to);
+			if (isRtl) {
+				let temp = coordsTo.x;
+				coordsTo.x = coordsFrom.x;
+				coordsFrom.x = temp;
+			}
+
+			// Offsets for case of multiple images added
+			const OFFSET_PIX = mmToPx(5);
+			if (!AscFormat.isRealNumber(imageIndex)) imageIndex = 0;
+			let offsetX = isRtl ? imageIndex * OFFSET_PIX * (-1) : imageIndex * OFFSET_PIX;
+			let offsetY = imageIndex * OFFSET_PIX;
+			coordsFrom.x += offsetX;
+			coordsTo.x += offsetX;
+			coordsFrom.y += offsetY;
+			coordsTo.y += offsetY;
+
+            worksheet.workbook.StartAction(AscDFH.historydescription_Spreadsheet_AddImageUrls, {
+                src: _image.src,
+                width: pxToMm(coordsTo.x - coordsFrom.x),
+                height: pxToMm(coordsTo.y - coordsFrom.y),
+                from: drawingObject.from
+            })
+
             if(bCorrect) {
                 _this.controller.addImageFromParams(_image.src, pxToMm(coordsFrom.x) + MOVE_DELTA, pxToMm(coordsFrom.y) + MOVE_DELTA, pxToMm(coordsTo.x - coordsFrom.x), pxToMm(coordsTo.y - coordsFrom.y));
             }
             else {
                 _this.controller.addImageFromParams(_image.src, pxToMm(coordsFrom.x) + MOVE_DELTA, pxToMm(coordsFrom.y) + MOVE_DELTA, oSize.asc_getImageWidth(), oSize.asc_getImageHeight());
             }
+            worksheet.workbook.FinalizeAction()
         }
     };
 
@@ -2531,7 +2606,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                     var sImageUrl = imageUrls[i];
                     var _image = api.ImageLoader.LoadImage(sImageUrl, 1);
                     if (null != _image) {
-                        _this.addImageObjectCallback(_image, options);
+                        _this.addImageObjectCallback(_image, options, i);
                     } else {
                         worksheet.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.UplImageUrl, c_oAscError.Level.NoCritical);
                         break;
@@ -2567,7 +2642,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         if(aSelectedDrawings.length === 1 && aSelectedDrawings[0].isChart()) {
             _this.controller.checkSelectedObjectsAndCallback(function () {
                 let oSelectedChartSpace = aSelectedDrawings[0];
-                oSelectedChartSpace.fromOther(oChartSpace);
+                oSelectedChartSpace.fromOther(oChartSpace, true);
                 _this.controller.startRecalculate();
                 _this.sendGraphicObjectProps();
             }, [], false, 0, [], false);
@@ -2576,6 +2651,8 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 
         History.Create_NewPoint();
         worksheet.setSelectionShape(true);
+        worksheet.workbook.StartAction(AscDFH.historydescription_Document_AddChart)
+
         let oCSForAdd = oChartSpace.copy();
         let w, h, chartLeft, chartTop;
         w = this.convertMetric(AscCommon.AscBrowser.convertToRetinaValue(AscCommon.c_oAscChartDefines.defaultChartWidth, true), 0, 3);
@@ -2602,6 +2679,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         _this.controller.startRecalculate();
         this.sendGraphicObjectProps();
 
+        worksheet.workbook.FinalizeAction(AscDFH.historydescription_Document_AddChart, [oCSForAdd.chart])
     };
 
     _this.addSlicers = function(aNames) {
@@ -2758,47 +2836,35 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
     _this.editImageDrawingObject = function(imageUrl, obj) {
 
         if ( imageUrl ) {
-            var _image = api.ImageLoader.LoadImage(imageUrl, 1);
+            let _image = api.ImageLoader.LoadImage(imageUrl, 1);
 
-            var addImageObject = function (_image) {
+            let addImageObject = function (_image) {
 
                 if ( !_image.Image ) {
                     worksheet.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.UplImageUrl, c_oAscError.Level.NoCritical);
                 }
                 else {
                     if ( obj && obj.isImageChangeUrl ) {
-                        var imageProp = new Asc.asc_CImgProperty();
+                        let imageProp = new Asc.asc_CImgProperty();
                         imageProp.ImageUrl = _image.src;
                         _this.setGraphicObjectProps(imageProp);
                     }
                     else if ( obj && obj.isShapeImageChangeUrl ) {
-                        var imgProps = new Asc.asc_CImgProperty();
-                        var shapeProp = new Asc.asc_CShapeProperty();
+                        let shapeProp = new Asc.asc_CShapeProperty();
+                        shapeProp.fillBlipFill(_image.src, obj.textureType);
+                        let imgProps = new Asc.asc_CImgProperty();
                         imgProps.ShapeProperties = shapeProp;
-                        shapeProp.fill = new Asc.asc_CShapeFill();
-                        shapeProp.fill.type = Asc.c_oAscFill.FILL_TYPE_BLIP;
-                        shapeProp.fill.fill = new Asc.asc_CFillBlip();
-                        shapeProp.fill.fill.asc_putUrl(_image.src);
-                        if(obj.textureType !== null && obj.textureType !== undefined){
-                            shapeProp.fill.fill.asc_putType(obj.textureType);
-                        }
                         _this.setGraphicObjectProps(imgProps);
                     }
                     else if(obj && obj.isTextArtChangeUrl)
                     {
-                        var imgProps = new Asc.asc_CImgProperty();
-                        var AscShapeProp = new Asc.asc_CShapeProperty();
-                        imgProps.ShapeProperties = AscShapeProp;
-                        var oFill = new Asc.asc_CShapeFill();
-                        oFill.type = Asc.c_oAscFill.FILL_TYPE_BLIP;
-                        oFill.fill = new Asc.asc_CFillBlip();
-                        oFill.fill.asc_putUrl(imageUrl);
-                        if(obj.textureType !== null && obj.textureType !== undefined){
-                            oFill.fill.asc_putType(obj.textureType);
-                        }
+                        let AscShapeProp = new Asc.asc_CShapeProperty();
+                        let oFill = new Asc.asc_CShapeFill();
+                        oFill.fillBlipFill(imageUrl, obj.textureType);
                         AscShapeProp.textArtProperties = new Asc.asc_TextArtProperties();
                         AscShapeProp.textArtProperties.asc_putFill(oFill);
-
+                        let imgProps = new Asc.asc_CImgProperty();
+                        imgProps.ShapeProperties = AscShapeProp;
                         _this.setGraphicObjectProps(imgProps);
                     }
                     else if (obj && obj.fAfterUploadOleObjectImage) {
@@ -2832,6 +2898,107 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 			_this.controller.addChartDrawingObject(chart);
 		} else if (isObject(chart) && chart["binary"])
 		{
+            if (window["IS_NATIVE_EDITOR"])
+            {
+                var model = worksheet.model;
+                History.Clear();
+                for (var i = 0; i < aObjects.length; i++) {
+                    aObjects[i].graphicObject.deleteDrawingBase();
+                }
+                aObjects.length = 0;
+
+                var oAllRange = new Asc.Range(0, 0, gc_nMaxCol, gc_nMaxRow);
+
+                worksheet.endEditChart();
+
+                //worksheet._clean();
+
+                var asc_chart_binary = new Asc.asc_CChartBinary();
+                asc_chart_binary.asc_setBinary(chart["binary"]);
+                asc_chart_binary.asc_setThemeBinary(chart["themeBinary"]);
+                asc_chart_binary.asc_setColorMapBinary(chart["colorMapBinary"]);
+                asc_chart_binary.asc_setIsChartEx(chart["IsChartEx"]);
+                var oNewChartSpace = asc_chart_binary.getChartSpace(model);
+                var theme = asc_chart_binary.getTheme();
+                if(theme)
+                {
+                    model.workbook.theme = theme;
+                }
+                if(chart["cTitle"] || chart["cDescription"]){
+                    if(!oNewChartSpace.nvGraphicFramePr){
+                        var nv_sp_pr = new AscFormat.UniNvPr();
+                        nv_sp_pr.cNvPr.setId(1024);
+                        oNewChartSpace.setNvSpPr(nv_sp_pr);
+                    }
+                    oNewChartSpace.setTitle(chart["cTitle"]);
+                    oNewChartSpace.setDescription(chart["cDescription"]);
+                }
+                var colorMapOverride = asc_chart_binary.getColorMap();
+                if(colorMapOverride)
+                {
+                    AscFormat.DEFAULT_COLOR_MAP = colorMapOverride;
+                }
+
+                if(typeof chart["urls"] === "string") {
+                    AscCommon.g_oDocumentUrls.addUrls(JSON.parse(chart["urls"]));
+                }
+                var font_map = {};
+                oNewChartSpace.documentGetAllFontNames(font_map);
+                AscFormat.checkThemeFonts(font_map, model.workbook.theme.themeElements.fontScheme);
+                window["Asc"]["editor"]._loadFonts(font_map,
+                    function() {
+                        AscCommonExcel.executeInR1C1Mode(false,
+                            function()
+                            {
+                                oNewChartSpace.getWorksheetsFromCache(Asc['editor'].wbModel, true);
+
+                                aImagesSync.length = 0;
+                                oNewChartSpace.getAllRasterImages(aImagesSync);
+                                oNewChartSpace.setBDeleted(false);
+                                oNewChartSpace.setWorksheet(model);
+                                oNewChartSpace.addToDrawingObjects();
+                                oNewChartSpace.recalcInfo.recalculateReferences = false;
+                                var oDrawingBase_ = oNewChartSpace.drawingBase;
+                                oNewChartSpace.drawingBase = null;
+                                oNewChartSpace.recalculate();
+                                AscFormat.CheckSpPrXfrm(oNewChartSpace);
+                                oNewChartSpace.drawingBase = oDrawingBase_;
+
+                                var canvas_height = worksheet.drawingCtx.getHeight(3);
+                                var pos_y = (canvas_height - oNewChartSpace.spPr.xfrm.extY)/2;
+                                if(pos_y < 0)
+                                {
+                                    pos_y = 0;
+                                }
+
+                                var canvas_width = worksheet.drawingCtx.getWidth(3);
+                                var pos_x = (canvas_width - oNewChartSpace.spPr.xfrm.extX)/2;
+                                if(pos_x < 0)
+                                {
+                                    pos_x = 0;
+                                }
+                                oNewChartSpace.spPr.xfrm.setOffX(pos_x);
+                                oNewChartSpace.spPr.xfrm.setOffY(pos_y);
+                                oNewChartSpace.checkDrawingBaseCoords();
+                                oNewChartSpace.recalculate();
+                                worksheet._scrollToRange(_this.getSelectedDrawingsRange());
+                                _this.showDrawingObjects();
+                                _this.controller.resetSelection();
+                                _this.controller.selectObject(oNewChartSpace, 0);
+                                _this.controller.updateSelectionState();
+                                _this.sendGraphicObjectProps();
+                                worksheet._updateRange(oAllRange);
+                                worksheet.draw();
+                                if(aImagesSync.length > 0)
+                                {
+                                    window["Asc"]["editor"].ImageLoader.LoadDocumentImages(aImagesSync);
+                                }
+                                History.Clear();
+                            });
+                    }
+                );
+                return;
+            }
 			const oApi = Asc.editor;
 			oApi.frameManager.preObtain(chart);
 		}
@@ -4578,6 +4745,12 @@ ClickCounter.prototype.getClickCount = function() {
 	prot["getWorkbookBinary"] = prot.getWorkbookBinary;
 	prot["setWorkbookBinary"] = prot.setWorkbookBinary;
 	prot["getChartData"] = prot.getChartData;
+	prot["asc_getThemeBinary"] = prot.asc_getThemeBinary;
+	prot["asc_setThemeBinary"] = prot.asc_setThemeBinary;
+	prot["asc_setColorMapBinary"] = prot.asc_setColorMapBinary;
+	prot["asc_getColorMapBinary"] = prot.asc_getColorMapBinary;
+	prot["getTheme"] = prot.getTheme;
+	prot["getColorMap"] = prot.getColorMap;
 
     window["AscFormat"].asc_CChartSeria = asc_CChartSeria;
     prot = asc_CChartSeria.prototype;

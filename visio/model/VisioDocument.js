@@ -79,7 +79,6 @@ AscDFH.historyitem_type_VisioWindow = 328;
 	 */
 	function CVisioDocument(Api, DrawingDocument, isMainLogicDocument) {
 		AscFormat.CBaseFormatNoIdObject.call(this);
-		this.isVisioDocument = true;
 		this.start = null;
 		this.key = null;
 		this.metric = null;
@@ -126,6 +125,10 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		 * @type {CPages}
 		 */
 		this.pages = null;
+		/**
+		 *
+		 * @type {CTheme[]}
+		 */
 		this.themes = [];
 		this.app = null;
 		this.core = null;
@@ -192,9 +195,15 @@ AscDFH.historyitem_type_VisioWindow = 328;
 	CVisioDocument.prototype.IsDocumentEditor = function() {
 		return false;
 	};
-	CVisioDocument.prototype.IsPresentationEditor = function() {
-		//todo add new editor func
+	/**
+	 * @return {boolean}
+	 * @memberof CVisioDocument
+	 */
+	CVisioDocument.prototype.IsVisioEditor = function() {
 		return true;
+	};
+	CVisioDocument.prototype.IsPresentationEditor = function() {
+		return false;
 	};
 	CVisioDocument.prototype.IsSpreadSheetEditor = function() {
 		return false;
@@ -264,7 +273,6 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		let thumbNailPart = filePart.addPart(AscCommon.openXml.Types.thumbnail);
 		let windowsPart = docPart.part.addPart(AscCommon.openXml.Types.visioDocumentWindows);
 		let mastersPart = docPart.part.addPart(AscCommon.openXml.Types.masters);
-		let themesPart = docPart.part.addPart(AscCommon.openXml.Types.theme);
 		let commentsPart = docPart.part.addPart(AscCommon.openXml.Types.visioComments);
 		let extensionsPart = docPart.part.addPart(AscCommon.openXml.Types.visioExtensions);
 		let dataConnectionsPart = docPart.part.addPart(AscCommon.openXml.Types.visioDataConnections);
@@ -302,6 +310,14 @@ AscDFH.historyitem_type_VisioWindow = 328;
 			}
 		}
 
+		for (let i = 0; i < this.themes.length; i++) {
+			let theme = this.themes[i];
+			if (theme.themeElements.themeExt.themeSchemeSchemeEnum !== "0") {
+				let themeContent = docPart.part.addPart(AscCommon.openXml.Types.theme);
+				themeContent.part.setDataXml(theme, memory);
+			}
+		}
+
 		// Not realized, file defines schema and data of that schema
 		for (let i = 0; i < this.solutionXMLs.length; i++) {
 			let solutionContent = solutionsPart.part.addPart(AscCommon.openXml.Types.solution);
@@ -326,10 +342,6 @@ AscDFH.historyitem_type_VisioWindow = 328;
 			mastersPart.part.setDataXml(this.masters, memory);
 		}
 		pagesPart.part.setDataXml(this.pages, memory);
-		for (let i = 0; i < this.themes.length; i++) {
-			let themeContent = themesPart.part.addPart(AscCommon.openXml.Types.theme);
-			themeContent.part.setDataXml(this.themes[i], memory);
-		}
 		if (this.commentsPart) {
 			commentsPart.part.setDataXml(this.commentsPart, memory);
 		}
@@ -354,7 +366,7 @@ AscDFH.historyitem_type_VisioWindow = 328;
 	CVisioDocument.prototype.AfterOpenDocument = function(zip, context) {
 		if (!this.themes.length) {
 			AscCommon.consoleLog("No themes found by filenames. Creating default theme");
-			this.themes.push(AscFormat.GenerateDefaultTheme(null, null));
+			this.themes.push(AscFormat.GetDefaultTheme());
 		}
 	};
 

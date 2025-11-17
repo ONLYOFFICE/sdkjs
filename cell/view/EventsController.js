@@ -454,19 +454,21 @@
 			var self = this, settings, opt = this.settings;
 
 			// vertical scroll bar
-			this.vsb = document.createElement('div');
-			this.vsb.id = "ws-v-scrollbar";
-			this.vsb.style.backgroundColor = AscCommon.GlobalSkin.ScrollBackgroundColor;
+			if (!this.vsb || !document.getElementById("ws-v-scrollbar")) {
+				this.vsb = document.createElement('div');
+				this.vsb.id = "ws-v-scrollbar";
+				this.vsb.style.backgroundColor = AscCommon.GlobalSkin.ScrollBackgroundColor;
 
-			//TODO test rtl
-			/*if (window.rightToleft) {
-				this.vsb.style.left = "0px";
-				this.widget.prepend(this.vsb);
-				this.widget.children[1].style.left = this.vsb.clientWidth + "px";
-				this.widget.children[1].style.overflow = "visible"
-			} else {*/
+				//TODO test rtl
+				/*if (window.rightToleft) {
+					this.vsb.style.left = "0px";
+					this.widget.prepend(this.vsb);
+					this.widget.children[1].style.left = this.vsb.clientWidth + "px";
+					this.widget.children[1].style.overflow = "visible"
+				} else {*/
 				this.widget.appendChild(this.vsb);
-			//}
+				//}
+			}
 
 			if (!this.vsbApi) {
 				settings = this.createScrollSettings();
@@ -494,10 +496,12 @@
 			}
 
 			// horizontal scroll bar
-			this.hsb = document.createElement('div');
-			this.hsb.id = "ws-h-scrollbar";
-			this.hsb.style.backgroundColor = AscCommon.GlobalSkin.ScrollBackgroundColor;
-			this.widget.appendChild(this.hsb);
+			if (!this.hsb || !document.getElementById("ws-h-scrollbar")) {
+				this.hsb = document.createElement('div');
+				this.hsb.id = "ws-h-scrollbar";
+				this.hsb.style.backgroundColor = AscCommon.GlobalSkin.ScrollBackgroundColor;
+				this.widget.appendChild(this.hsb);
+			}
 
 			if (!this.hsbApi) {
 				settings = this.createScrollSettings();
@@ -937,7 +941,7 @@
 							'SUM', Asc.c_oAscPopUpSelectorType.Func, true);
 					break;
 				}
-				case Asc.c_oAscSpreadsheetShortcutType.Print: {
+				case Asc.c_oAscSpreadsheetShortcutType.PrintPreviewAndPrint: {
 					if (this.getCellEditMode()) {
 						break;
 					}
@@ -1063,7 +1067,7 @@
 			if (oThis.getCellEditMode() && !oThis.hasFocus || oThis.isSelectMode ||
 				oThis.isFillHandleMode || oThis.isMoveRangeMode || oThis.isMoveResizeRange) {
 				// For some reason, I really want to process extra conditions in our code, instead of processing them at the top...
-				if (oThis.enableKeyEvents || (nShortcutAction !== Asc.c_oAscSpreadsheetShortcutType.Print)) {
+				if (oThis.enableKeyEvents || (nShortcutAction !== Asc.c_oAscSpreadsheetShortcutType.PrintPreviewAndPrint)) {
 					// Only if events are disabled and Ctrl+S or Ctrl+P is pressed we will process them
 					return nRetValue;
 				}
@@ -1194,7 +1198,7 @@
 						if (oThis.getCellEditMode()) {
 							break;
 						}
-						const bIsSelectColumns = oEvent.IsShortcutCtrl() || oEvent.IsMacCmd();
+						const bIsSelectColumns = oEvent.IsShortcutCtrl() || oEvent.IsCmd();
 						if (bIsSelectColumns && bIsSelect && bIsMacOs) {
 							break;
 						}

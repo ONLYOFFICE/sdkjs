@@ -73,6 +73,17 @@ CNumberingLvl.prototype.GetFormat = function()
 	return this.Format;
 };
 /**
+ * Получаем расчитанное значение legacy формата
+ * @returns {c_oAscNumberingFormat}
+ */
+CNumberingLvl.prototype.GetLegalFormat = function()
+{
+	if (this.Format === Asc.c_oAscNumberingFormat.Decimal || this.Format === Asc.c_oAscNumberingFormat.DecimalZero)
+		return this.Format;
+	
+	return Asc.c_oAscNumberingFormat.Decimal;
+};
+/**
  * Доступ к связанному стилю
  * @returns {?string}
  */
@@ -1242,6 +1253,8 @@ CNumberingLvl.prototype.FillToAscNumberingLvl = function(oAscLvl)
 
 	oAscLvl.TextPr = this.TextPr.Copy();
 	oAscLvl.ParaPr = this.ParaPr.Copy();
+	
+	oAscLvl.put_IsLgl(this.IsLgl);
 };
 /**
  * Заполняем настройки уровня из интерфейсного класса
@@ -1293,6 +1306,9 @@ CNumberingLvl.prototype.FillFromAscNumberingLvl = function(oAscLvl)
 
 	if (undefined !== oAscLvl.get_PStyle())
 		this.PStyle = oAscLvl.get_PStyle();
+	
+	if (undefined !== oAscLvl.get_IsLgl())
+		this.IsLgl = oAscLvl.get_IsLgl();
 };
 CNumberingLvl.prototype.FillLvlText = function(arrOfInfo)
 {
@@ -1328,7 +1344,7 @@ CNumberingLvl.prototype.GetImage = function ()
  *
  * @returns {String | Object}
  */
-CNumberingLvl.prototype.GetDrawingContent = function (arrLvls, nLvl, nNum, oLang)
+CNumberingLvl.prototype.GetDrawingContent = function (arrLvls, nLvl, nNum, oLang, isLgl)
 {
 	if (this.IsImageBullet())
 	{
@@ -1349,11 +1365,11 @@ CNumberingLvl.prototype.GetDrawingContent = function (arrLvls, nLvl, nNum, oLang
 	}
 	else
 	{
-		return this.GetStringByLvlText(arrLvls, nLvl, nNum, oLang);
+		return this.GetStringByLvlText(arrLvls, nLvl, nNum, oLang, isLgl);
 	}
 }
 
-CNumberingLvl.prototype.GetStringByLvlText = function (arrLvls, nLvl, nNum, oLang)
+CNumberingLvl.prototype.GetStringByLvlText = function (arrLvls, nLvl, nNum, oLang, isLgl)
 {
 	const arrResult = [];
 	for (let i = 0; i < this.LvlText.length; i += 1)
@@ -1369,14 +1385,14 @@ CNumberingLvl.prototype.GetStringByLvlText = function (arrLvls, nLvl, nNum, oLan
 			if (AscFormat.isRealNumber(nNum))
 			{
 				const nNumberingLvl = oNumberingLvlText.GetValue();
-				let nFormat = this.GetFormat();
+				let nFormat = isLgl ? this.GetLegalFormat() : this.GetFormat();
 				if (nNumberingLvl === nLvl)
 				{
 					nNum = (this.GetStart() - 1) + nNum;
 				}
 				else if (arrLvls[nNumberingLvl] && nLvl > nNumberingLvl)
 				{
-					nFormat = arrLvls[nNumberingLvl].GetFormat();
+					nFormat = isLgl ? arrLvls[nNumberingLvl].GetLegalFormat() : arrLvls[nNumberingLvl].GetFormat();
 					nNum = arrLvls[nNumberingLvl].GetStart();
 				}
 				arrResult.push(AscCommon.IntToNumberFormat(nNum, nFormat, {lang: oLang}));

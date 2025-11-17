@@ -2168,7 +2168,12 @@
 	};
 	Tokenizer.prototype.GetStyle = function (nCursorPos)
 	{
-		return this._styles[nCursorPos - 1];
+		let style = this._styles[nCursorPos - 1];
+
+		if (!style)
+			style = new MathTextAdditionalData();
+
+		return style;
 	};
 	Tokenizer.prototype.ProcessString = function (str, char)
 	{
@@ -2295,6 +2300,13 @@
 	{
 		Paragraph = oContext.Paragraph;
 
+		let arrContentAfterConvert = [];
+		if (oContext.Content[oContext.CurPos] instanceof ParaRun)
+		{
+			arrContentAfterConvert = oContext.SplitContentByPos(oContext.CurPos, true)
+			oContext.CurPos = oContext.Content.length - 1;
+		}
+
 		if (typeof oTokens === "object")
 		{
 			if (oTokens.type === "LaTeXEquation" || oTokens.type === "UnicodeEquation")
@@ -2330,6 +2342,12 @@
 		else
 		{
 			oContext.Add_Text(oTokens);
+		}
+
+		if (arrContentAfterConvert.length)
+		{
+			oContext.MoveCursorToEndPos();
+			oContext.ConcatToContent(oContext.Content.length, arrContentAfterConvert);
 		}
 	}
 	// Find token in all types for convert
@@ -2479,7 +2497,10 @@
 							null,
 							null
 						);
-						oFraction.SetReviewTypeWithInfo(oTokens.style.reviewData.reviewType, oTokens.style.reviewData.reviewInfo);
+
+						if (oTokens.style.reviewData.reviewType && oTokens.style.reviewData.reviewInfo)
+							oFraction.SetReviewTypeWithInfo(oTokens.style.reviewData.reviewType, oTokens.style.reviewData.reviewInfo);
+
 						if (oTokens.style.reviewData.reviewInfo && oFraction.ReviewInfo)
 							oFraction.ReviewInfo.Update();
 
@@ -2658,7 +2679,8 @@
 							null
 						);
 
-						SubSup.SetReviewTypeWithInfo(oCurrentStyle.reviewData.reviewType, oCurrentStyle.reviewData.reviewInfo);
+						if (oCurrentStyle.reviewData.reviewType && oCurrentStyle.reviewData.reviewInfo)
+							SubSup.SetReviewTypeWithInfo(oCurrentStyle.reviewData.reviewType, oCurrentStyle.reviewData.reviewInfo);
 
 						ConvertTokens(
 							oTokens.value,
@@ -2682,7 +2704,7 @@
 						if (oUpper && oTokens.style.subStyle)
 						{
 							oUpper.CtrPrp.Merge(oTokens.style.subStyle.style);
-							if (oTokens.style.subStyle.reviewData.reviewInfo)
+							if (oTokens.style.subStyle.reviewData.reviewType && oTokens.style.subStyle.reviewData.reviewInfo)
 								oUpper.SetReviewTypeWithInfo(oTokens.style.subStyle.reviewData.reviewType, oTokens.style.subStyle.reviewData.reviewInfo);
 						}
 
@@ -2690,7 +2712,7 @@
 						if (oLower && oTokens.style.supStyle)
 						{
 							oLower.CtrPrp.Merge(oTokens.style.supStyle.style);
-							if (oTokens.style.supStyle.reviewData.reviewInfo)
+							if (oTokens.style.supStyle.reviewData.reviewType && oTokens.style.supStyle.reviewData.reviewInfo)
 								oLower.SetReviewTypeWithInfo(oTokens.style.supStyle.reviewData.reviewType, oTokens.style.supStyle.reviewData.reviewInfo);
 						}
 					}
@@ -2885,7 +2907,9 @@
 						null
 					);
 
-					oRadical.SetReviewTypeWithInfo(oTokens.style.reviewData.reviewType, oTokens.style.reviewData.reviewInfo);
+					if (oTokens.style.reviewData.reviewType && oTokens.style.reviewData.reviewInfo)
+						oRadical.SetReviewTypeWithInfo(oTokens.style.reviewData.reviewType, oTokens.style.reviewData.reviewInfo);
+					
 					UnicodeArgument(
 						oTokens.value,
 						MathStructures.bracket_block,
@@ -5585,6 +5609,9 @@
 
 		if (oContent)
 			this.SetAdditionalDataFromContent(oContent, isCtrPr);
+
+		if (!oContent)
+			this.style = new CTextPr();
 	}
 
 	MathTextAdditionalData.prototype.Copy = function()
@@ -5699,7 +5726,7 @@
 				? oStyleParent.Pr
 				: oStyleParent.CtrPrp;
 
-			return this.style.IsEqual(oStyle)
+			return this.IsPrStyleEqual(oStyle)
 				&& this.IsReviewDataEqual(oStyleParent)
 				&& this.IsMPrpEqual(oStyleParent.MathPrp)
 				&& this.IsMetaDataEqual(oStyleParent.math_autocorrection)
@@ -5723,6 +5750,13 @@
 		return oMetaData.getIsEscapedSlash() === oCurrentMetaData.getIsEscapedSlash()
 			&& oMetaData.getIsMathRm() === oCurrentMetaData.getIsMathRm()
 			&& oMetaData.getIsText() === oCurrentMetaData.getIsText();
+	};
+	MathTextAdditionalData.prototype.IsPrStyleEqual = function(oStyle)
+	{
+		if (this.style && this.style.IsEqual(oStyle))
+			return true;
+
+		return false;
 	};
 	MathTextAdditionalData.prototype.IsReviewDataEqual = function (oContent)
 	{
@@ -6268,7 +6302,7 @@
 
 			if (oPos)
 			{
-				while (!oPos.IsEqualPosition(oToken))
+				while (oToken && nCounter < arrAllTokens.length && !oPos.IsEqualPosition(oToken))
 				{
 					nCounter++;
 					oToken = arrAllTokens[nCounter];

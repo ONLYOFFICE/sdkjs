@@ -450,9 +450,9 @@
 		settings.url = url + this.id;
 		window.Asc.plugin.executeMethod("ShowWindow", [this.id, settings]);
 	};
-	CPluginWindow.prototype.activate = function()
+	CPluginWindow.prototype.activate = function(isFocus)
 	{
-		window.Asc.plugin.executeMethod("ActivateWindow", [this.id]);
+		window.Asc.plugin.executeMethod("ActivateWindow", [this.id, isFocus]);
 	};
 	CPluginWindow.prototype.close = function()
 	{
@@ -823,8 +823,10 @@
 				{
 					if (window.Asc.plugin.onCallCommandCallback)
 					{
-						window.Asc.plugin.onCallCommandCallback(pluginData.commandReturnData);
+						var methodCallback = window.Asc.plugin.onCallCommandCallback;
 						window.Asc.plugin.onCallCommandCallback = null;
+						methodCallback(pluginData.commandReturnData);
+						methodCallback = null;
 					}
 					else if (window.Asc.plugin.onCommandCallback)
 						window.Asc.plugin.onCommandCallback(pluginData.commandReturnData);
