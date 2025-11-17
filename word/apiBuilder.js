@@ -4617,12 +4617,16 @@
 	 */
 	Api.prototype.CreateGroup = function(drawings)
 	{
+		drawings = GetArrayParameter(drawings, []);
+		if (drawings.length == 0)
+			throwException(new Error("The drawings parameter must be a non empty array"));
+
 		let oDoc = private_GetLogicDocument();
 		let oDrDoc = private_GetDrawingDocument();
 		let oGraphicObjects = oDoc.getDrawingObjects();
 
 		if (drawings.find(function(drawing) { return drawing.Drawing.IsUseInDocument(); }))
-			return null;
+			throwException(new Error("All drawings must be in document"));
 		
 		drawings.forEach(function(drawing) { drawing.Drawing.recalculate(); })
 
@@ -28538,6 +28542,7 @@
 	window['AscBuilder'].GetIntParameter        = GetIntParameter;
 	window['AscBuilder'].GetArrayParameter      = GetArrayParameter;
 	window['AscBuilder'].executeNoFormLockCheck = executeNoFormLockCheck;
+	window['AscBuilder'].throwException			= throwException;
 
 	window['AscBuilder'].GetApiDrawings         = GetApiDrawings;
 	window['AscBuilder'].GetApiDrawing          = GetApiDrawing;
