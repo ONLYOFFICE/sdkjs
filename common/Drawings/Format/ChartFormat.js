@@ -3435,6 +3435,42 @@
                     break;
                 }
             }
+
+			const chartSpace = this.getChartSpace();
+			if (chartSpace && this.layout) {
+				let needRecalculateContent = false;
+				let finalWidth = this.extX;
+				let finalHeight = this.extY;
+
+				if (AscFormat.isRealNumber(this.layout.w)) {
+					const layoutWidth = chartSpace.calculateSizeByLayout(0, chartSpace.extX - 2 * SCALE_INSET_COEFF, this.layout.w, this.layout.wMode);
+					if (layoutWidth > 0) {
+						finalWidth = layoutWidth;
+						needRecalculateContent = true;
+					}
+				}
+				if (AscFormat.isRealNumber(this.layout.h)) {
+					const layoutHeight = chartSpace.calculateSizeByLayout(0, chartSpace.extY - 2 * SCALE_INSET_COEFF, this.layout.h, this.layout.hMode);
+					if (layoutHeight > 0) {
+						finalHeight = layoutHeight;
+					}
+				}
+
+				if (needRecalculateContent) {
+					content.RecalculateContent(finalWidth - 2 * SCALE_INSET_COEFF, 20000, 0);
+				}
+
+				this.extX = finalWidth;
+				this.extY = finalHeight;
+				this.x = 0;
+				this.y = 0;
+
+				this.txBody.contentWidth = this.extY;
+				this.txBody.contentHeight = this.extX;
+				this.contentWidth = this.extY;
+				this.contentHeight = this.extX;
+			}
+
             var oTextWarpContent = AscFormat.CShape.prototype.checkTextWarp.call(this, content, bodyPr, max_content_width, 20000, true, false);
             this.txWarpStructParamarks = oTextWarpContent.oTxWarpStructParamarksNoTransform;
             this.txWarpStruct = oTextWarpContent.oTxWarpStructNoTransform;
