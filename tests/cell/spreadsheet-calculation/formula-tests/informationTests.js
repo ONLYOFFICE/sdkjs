@@ -2203,10 +2203,10 @@ $(function () {
 		oParser = new parserFormula('ISEVEN("4")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISEVEN("4") is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 'TRUE', 'Test: Positive case: String. String convertible to even number, returns TRUE');
-		// Case #23: Formula. Volatile NOW formula (serial number, e.g., 45654), returns TRUE
-		oParser = new parserFormula('ISEVEN(NOW())', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: ISEVEN(NOW()) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 'TRUE', 'Test: Positive case: Formula. Volatile NOW formula (serial number, e.g., 45654), returns TRUE');
+		// Case #23: Formula. Formula, returns TRUE
+		oParser = new parserFormula('ISEVEN(SUM(123456))', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: ISEVEN(SUM(123456)) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 'TRUE', 'Test: Positive case: Formula. returns TRUE');
 		// Case #24: Name. Named range with float truncated to even, returns TRUE
 		oParser = new parserFormula('ISEVEN(TestName1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISEVEN(TestName1) is parsed.');
@@ -3746,10 +3746,10 @@ $(function () {
 		oParser = new parserFormula('ISODD("4")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISODD("4") is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 'FALSE', 'Test: Positive case: String. String convertible to even number, returns TRUE');
-		// Case #23: Formula. Volatile NOW formula (serial number, e.g., 45654), returns TRUE
-		oParser = new parserFormula('ISODD(NOW())', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: ISODD(NOW()) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 'FALSE', 'Test: Positive case: Formula. Volatile NOW formula (serial number, e.g., 45654), returns TRUE');
+		// Case #23: Formula. returns TRUE
+		oParser = new parserFormula('ISODD(SUM(12345))', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: ISODD(SUM(12345)) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 'TRUE', 'Test: Positive case: Formula. returns TRUE');
 		// Case #24: Name. Named range with float truncated to even, returns TRUE
 		oParser = new parserFormula('ISODD(TestName1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISODD(TestName1) is parsed.');
