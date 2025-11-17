@@ -776,22 +776,26 @@
      * Creates a group of drawings.
      * @memberof Api
      * @typeofeditors ["CPE"]
-     * @param {DrawingForGroup[]} aDrawings - An array of drawings to group.
+     * @param {DrawingForGroup[]} drawings - An array of drawings to group.
      * @returns {ApiGroup}
      * @since 8.3.0
      * @see office-js-api/Examples/{Editor}/Api/Methods/CreateGroup.js
 	 */
-    Api.prototype.CreateGroup = function(aDrawings) {
+    Api.prototype.CreateGroup = function(drawings) {
+        drawings = AscBuilder.GetArrayParameter(drawings, []);
+		if (drawings.length == 0)
+			AscBuilder.throwException(new Error("The drawings parameter must be a non empty array"));
+
         let oSlide = private_GetCurrentSlide();
         if (oSlide) {
-            if (aDrawings.find(function(drawing) {
+            if (drawings.find(function(drawing) {
                 return drawing.Drawing.IsUseInDocument();
             }))
-                return null;
+               AscBuilder.throwException(new Error("All drawings must be in document"));
 
-            aDrawings.forEach(function(drawing) { drawing.Drawing.recalculate(); })
+            drawings.forEach(function(drawing) { drawing.Drawing.recalculate(); })
 
-            let oGroup = AscFormat.builder_CreateGroup(aDrawings, oSlide.graphicObjects);
+            let oGroup = AscFormat.builder_CreateGroup(drawings, oSlide.graphicObjects);
             if (oGroup) {
                 return new ApiGroup(oGroup);
             }
