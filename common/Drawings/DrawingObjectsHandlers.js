@@ -706,7 +706,7 @@ function handleGroup(drawing, drawingObjectsController, e, x, y, group, pageInde
 {
 	let bHit = drawing.hit && drawing.hit(x, y);
 	if (bHit) {
-		const oCheckResult = drawingObjectsController.checkDrawingHyperlinkAndMacro(drawing, e, bHit, x, y, pageIndex);
+		const oCheckResult = drawingObjectsController.checkDrawingHyperlinkAndMacro(drawing, e, false, x, y, pageIndex);
 		if (oCheckResult) {
 			return oCheckResult;
 		}
