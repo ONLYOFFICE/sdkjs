@@ -1079,7 +1079,7 @@ var c_oSerDocPr = {
 	Descr: 4,
 	Form: 5,
 	HlinkClick: 6,
-	HlinkHover: 7,
+	HlinkHover: 7
 };
 var c_oSerBackgroundType = {
 	Color: 0,
