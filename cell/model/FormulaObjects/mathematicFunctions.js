@@ -3203,42 +3203,60 @@ function (window, undefined) {
 	cMUNIT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cMUNIT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cMUNIT.prototype.Calculate = function (arg) {
-		var arg0 = arg[0];
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
-			arg0 = arg0.cross(arguments[1]);
-		}
-		arg0 = arg0.tocNumber();
-		if (arg0 instanceof cError) {
-			return arg0;
-		} else if (arg0 instanceof cArray) {
-			//по обработке массива есть вопросы
-			//в случае если аргуметт функции должен вернуть массив - берётся первый элемента массива
-			//в случае формулы массива возвращается результат от каждого значения массива
-			//реализовываю второй вариант
-			arg0.foreach(function (elem, r, c) {
-				if (elem instanceof cNumber) {
-					this.array[r][c] = parseInt(elem.getValue()) > 0 ? new cNumber(1) : new cError(cErrorType.wrong_value_type);
-				} else {
-					this.array[r][c] = new cError(cErrorType.wrong_value_type);
+
+		let arg0 = arg[0];
+		let numZero = new cNumber(0);
+		let numOne = new cNumber(1);
+
+		if (arg0.type === cElementType.array || arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
+			// if the argument is an array or range, then we return an array of the size of the received argument
+			// which is filled with numbers(1) or errors depending on the values inside the argument
+			let dimensions = arg0.getDimensions();
+			let res = new cArray();
+
+			for (let row = 0; row < dimensions.row; row++) {
+				res.addRow();
+				for (let col = 0; col < dimensions.col; col++) {
+					let arg0Elem = arg0.getElementRowCol ? arg0.getElementRowCol(row, col) : arg0.getValueByRowCol(row, col, true);
+					let elemToAdd = new cError(cErrorType.wrong_value_type);
+
+					arg0Elem = arg0Elem.tocNumber();
+					if (arg0Elem.type === cElementType.number) {
+						elemToAdd = arg0Elem.getValue() > 0 ? new cNumber(1) : elemToAdd;
+						res.addElement(elemToAdd);
+					} else if (arg0Elem.type === cElementType.error) {
+						res.addElement(arg0Elem);
+					} else {
+						res.addElement(elemToAdd);
+					}
 				}
-			});
+			}
+
+			return res;
+		}
+
+
+		arg0 = arg0.tocNumber();
+		if (arg0.type === cElementType.error) {
 			return arg0;
 		} else {
-			var num = parseInt(arg0);
+			let num = parseInt(arg0);
 			if (num <= 0) {
 				return new cError(cErrorType.wrong_value_type);
 			}
-			var _arr = [];
-			for (var i = 0; i < num; i++) {
-				for (var j = 0; j < num; j++) {
-					if (!_arr[i]) {
-						_arr[i] = [];
+
+			let res = new cArray();
+			for (let row = 0; row < num; row++) {
+				res.addRow();
+				for (let col = 0; col < num; col++) {
+					if (row !== col) {
+						res.addElement(numZero);
+					} else {
+						res.addElement(numOne);
 					}
-					_arr[i][j] = i === j ? new cNumber(1) : new cNumber(0);
 				}
 			}
-			var res = new cArray();
-			res.fillFromArray(_arr);
+
 			return res;
 		}
 	};

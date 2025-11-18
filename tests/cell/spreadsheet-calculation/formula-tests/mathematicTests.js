@@ -13230,6 +13230,7 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"MUNIT\"", function (assert) {
+		ws.getRange2("A101:B102").cleanAll();
 		ws.getRange2("A101").setValue("5");
 		ws.getRange2("B102").setValue("6");
 
@@ -13259,7 +13260,10 @@ $(function () {
 
 		oParser = new parserFormula("MUNIT(A101:B102)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,1).getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,1).getValue(), 1);
 
 		oParser = new parserFormula("MUNIT({0,0;1,2;123,\"sdf\"})", "A1", ws);
 		assert.ok(oParser.parse());
@@ -13377,9 +13381,9 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: MUNIT(Table1[Column1]) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Table. Table structured reference with valid integer > 0. Returns 2x2 identity matrix. 1 argument used.');
 		// Case #15: Date. Date as serial number (large integer). Returns large identity matrix (Excel limits apply). 1 argument used.
-		//? oParser = new parserFormula('MUNIT(DATE(2025,1,1))', 'A2', ws);
-		//? assert.ok(oParser.parse(), 'Test: MUNIT(DATE(2025,1,1)) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Date. Date as serial number (large integer). Returns large identity matrix (Excel limits apply). 1 argument used.');
+		oParser = new parserFormula('MUNIT(DATE(2025,1,1))', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: MUNIT(DATE(2025,1,1)) is parsed.');
+		//? assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: Date. Date as serial number (large integer). Returns large identity matrix (Excel limits apply). 1 argument used.');
 		// Case #16: Time. Time adjusted to integer >= 1. Returns 3x3 identity matrix. 1 argument used.
 		oParser = new parserFormula('MUNIT(TIME(0,0,0)+3)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: MUNIT(TIME(0,0,0)+3) is parsed.');
@@ -13389,9 +13393,9 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: MUNIT(10) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Number. Larger valid integer. Returns 10x10 identity matrix. 1 argument used.');
 		// Case #18: String. String convertible to larger integer. Returns 100x100 identity matrix (Excel limits apply). 1 argument used.
-		//? oParser = new parserFormula('MUNIT("100")', 'A2', ws);
-		//? assert.ok(oParser.parse(), 'Test: MUNIT("100") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: String. String convertible to larger integer. Returns 100x100 identity matrix (Excel limits apply). 1 argument used.');
+		oParser = new parserFormula('MUNIT("100")', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: MUNIT("100") is parsed.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: String. String convertible to larger integer. Returns 100x100 identity matrix (Excel limits apply). 1 argument used.');
 		// Case #19: Formula. Nested formula evaluating to integer > 0. Returns 5x5 identity matrix. 1 argument used.
 		oParser = new parserFormula('MUNIT(ABS(-5))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: MUNIT(ABS(-5)) is parsed.');
@@ -13401,6 +13405,10 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: MUNIT({10,20}) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Array. Array with multiple valid integers. Returns first elements matrix (10x10 identity matrix). 1 argument used.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,1).getValue(), 1, 'Test: Positive case: Array. Array with multiple valid integers. Returns first elements matrix (10x10 identity matrix). 1 argument used.');
+		// Case #21: Formula. Nested formula evaluating to integer > 0. Returns the SUM of the matrix 1000x1000.
+		oParser = new parserFormula('SUM(MUNIT(1000))', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: SUM(MUNIT(1000)) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 1000, 'Test: Positive case: Formula. Nested formula evaluating to integer > 0. Returns the SUM of the matrix 1000x1000.');
 
 
 		// Negative cases:
@@ -13436,14 +13444,15 @@ $(function () {
 		oParser = new parserFormula('MUNIT(FALSE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: MUNIT(FALSE) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean FALSE (0) returns #NUM! error. 1 argument used.');
-		// // Case #9: Boolean. Boolean TRUE (1) returns 1x1 identity matrix (valid but edge case, treated as negative for testing). 1 argument used.
+		// Case #9: Boolean. Boolean TRUE (1) returns 1x1 identity matrix (valid but edge case, treated as negative for testing). 1 argument used.
 		oParser = new parserFormula('MUNIT(TRUE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: MUNIT(TRUE) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Negative case: Boolean. Boolean TRUE (1) returns 1x1 identity matrix (valid but edge case, treated as negative for testing). 1 argument used.');
-		// Case #10: Area. Multi-cell range returns error. 1 argument used.
+		// Case #10: Area. Multi-cell range can returns error depends on the value. 1 argument used.
 		oParser = new parserFormula('MUNIT(A104:A105)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: MUNIT(A104:A105) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Area. Multi-cell range returns error. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), '#VALUE!', 'Test: Negative case: Area. Multi-cell range can returns error depends on the value. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 1, 'Test: Negative case: Area. Multi-cell range can returns error depends on the value. 1 argument used.');
 		// Case #11: Array. Array with multiple elements returns #NUM! error (uses first element if valid). 1 argument used.
 		oParser = new parserFormula('MUNIT({1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: MUNIT({1,2,3}) is parsed.');
@@ -13457,11 +13466,11 @@ $(function () {
 		// Case #13: Name. Named range with text returns #VALUE! error. 1 argument used.
 		oParser = new parserFormula('MUNIT(TestNameArea)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: MUNIT(TestNameArea) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Test: Negative case: Name. Named range with text returns #VALUE! error. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#VALUE!", 'Test: Negative case: Name. Named range with text returns #VALUE! error. 1 argument used.');
 		// Case #14: Name3D. 3D named range with text returns #VALUE! error. 1 argument used.
 		oParser = new parserFormula('MUNIT(TestNameArea3D)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: MUNIT(TestNameArea3D) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Test: Negative case: Name3D. 3D named range with text returns #VALUE! error. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#VALUE!", 'Test: Negative case: Name3D. 3D named range with text returns #VALUE! error. 1 argument used.');
 		// Case #16: Formula. Formula resulting in #NUM! error propagates error. 1 argument used.
 		oParser = new parserFormula('MUNIT(SQRT(-1))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: MUNIT(SQRT(-1)) is parsed.');
@@ -13475,8 +13484,8 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: MUNIT("-2") is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: String. String convertible to negative number returns #NUM! error. 1 argument used.');
 		// Case #19: Number. Excessively large number exceeds Excel limits, returns #NUM! error. 1 argument used.
-		//? oParser = new parserFormula('MUNIT(1E+307)', 'A2', ws);
-		//? assert.ok(oParser.parse(), 'Test: MUNIT(1E+307) is parsed.');
+		oParser = new parserFormula('MUNIT(1E+307)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: MUNIT(1E+307) is parsed.');
 		//? assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: Number. Excessively large number exceeds Excel limits, returns #NUM! error. 1 argument used.');
 
 		// Bounded cases:
@@ -13485,19 +13494,17 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: MUNIT(1) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Bounded case: Number. Minimum valid value (n=1). Returns 1x1 identity matrix. 1 argument used.');
 		// Case #2: Number. Maximum valid value for Excel array size (approximate limit). Returns 255x255 identity matrix. 1 argument used.
-		//? oParser = new parserFormula('MUNIT(255)', 'A2', ws);
-		//? assert.ok(oParser.parse(), 'Test: MUNIT(255) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Bounded case: Number. Maximum valid value for Excel array size (approximate limit). Returns 255x255 identity matrix. 1 argument used.');
+		oParser = new parserFormula('MUNIT(255)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: MUNIT(255) is parsed.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Bounded case: Number. Maximum valid value for Excel array size (approximate limit). Returns 255x255 identity matrix. 1 argument used.');
 		// Case #3: Array. Array with minimum and maximum valid integers. Returns 1x1 identity matrix (uses first element). 1 argument used.
 		oParser = new parserFormula('MUNIT({1,255})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: MUNIT({1,255}) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Bounded case: Array. Array with minimum and maximum valid integers. Returns 1x1 identity matrix (uses first element). 1 argument used.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,1).getValue(), 1, 'Test: Bounded case: Array. Array with minimum and maximum valid integers. Returns 1x1 identity matrix (uses first element). 1 argument used.');
 
-		// Need to fix: app crash when we get big number in args, cellsRange link problem
+		// Need to fix: app crash when we get big number in arg
 		// Case #15: Date. Date as serial number (large integer)
-		// Case #18: String. String convertible to larger integer. Returns 100x100 identity matrix (Excel limits apply). 1 argument used.
-		// Case #10: Area. Multi-cell range returns error. 1 argument used.
 		// Case #19: Number. Excessively large number exceeds Excel limits, returns #NUM! error. 1 argument used.Case #2: Number. Maximum valid value for Excel array size (approximate limit).
 
 	});
