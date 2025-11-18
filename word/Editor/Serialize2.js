@@ -8716,7 +8716,7 @@ function BinaryFileReader(doc, openParams)
         var aPastedImages = pptx_content_loader.End_UseFullUrl();
         for (var i = 0, length = aPastedImages.length; i < length; ++i) {
             var elem = aPastedImages[i];
-            oPastedImagesUnique[elem.Url] = 1;
+            oPastedImagesUnique[elem.GetUrl()] = 1;
         }
         var aPrepeareImages = [];
         for (var i in oPastedImagesUnique)

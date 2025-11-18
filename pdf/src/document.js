@@ -6102,21 +6102,20 @@ var CPresentation = CPresentation || function(){};
             const aReaderImages = AscCommon.pptx_content_loader.Reader.End_UseFullUrl();
             const aLoaderImages = loader.End_UseFullUrl();
             loader.AssignConnectedObjects();
-
             const allBuilderImages = aReaderImages.concat(aLoaderImages);
             for (let imgIdx = 0; imgIdx < allBuilderImages.length; ++imgIdx) {
                 let embed = null;
                 const builderImage = allBuilderImages[imgIdx];
-                const blipFill = builderImage.BlipFill;
+                const blipFill = builderImage.GetBlipFill();
 
                 if (blipFill) {
                     if (blipFill.embed) {
                         embed = blipFill.embed;
                         const url = _this.Viewer.file.nativeFile["getImageBase64"](parseInt(embed.substring(3)));
-                        delete builderImage.BlipFill.embed;
+                        delete blipFill.embed;
 
-                        builderImage.BlipFill.RasterImageId = url;
-                        builderImage.Url = url;
+											blipFill.RasterImageId = url;
+                        builderImage.SetRawUrl(url);
                         if(url.indexOf("data:") === 0) {
                             aResetBuilderImages.push(builderImage);
                             allImages.push(url);

@@ -1055,6 +1055,9 @@
 		return new Promise(function(resolve) {
 			let len = urls.length;
 			let res = Array(len);
+			if (len === 0) {
+				resolve(res);
+			}
 			for (let i = 0; i < urls.length; i++) {
 				const sFullUrl = AscCommon.getFullImageSrc2(urls[i]);
 				oThis.api._downloadOriginalFile(sFullUrl, undefined, undefined, undefined, function(binary) {

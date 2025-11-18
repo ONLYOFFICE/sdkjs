@@ -71,6 +71,17 @@ function CBuilderBase() {
 	CBuilderBase.prototype.IsUrlForLoading = function() {
 		return false;
 	};
+	CBuilderBase.prototype.IsImage = function() {
+		return false;
+	};
+	CBuilderBase.prototype.SetUrlWithCheckBase64 = function(url) {
+		this.SetUrl(url);
+	};
+	CBuilderBase.prototype.GetBlipFill = function() {
+		return null;
+	};
+	CBuilderBase.prototype.SetRawUrl = function(url) {
+	};
 	CBuilderBase.prototype.ResetImageId = function(drawing, rIdOverride) {};
 	CBuilderBase.prototype.SetParagraphTextPr = function(paragraph, textPr) {};
 	CBuilderBase.prototype.SetEndRunTextPr = function(run, runTextPr, paraTextPr) {};
@@ -93,6 +104,22 @@ function CBuilderImages(blip_fill, full_url, image_shape, sp_pr, ln, text_pr, pa
     this.AdditionalUrls = [];//для wmf, ole
 }
 AscCommon.InitClassWithoutType(CBuilderImages, CBuilderBase);
+CBuilderImages.prototype.SetUrlWithCheckBase64 = function(url) {
+	if (this.ImageShape && this.ImageShape.base64) {
+		this.ImageShape.base64 = url;
+	} else {
+		this.SetUrl(url);
+	}
+}
+CBuilderImages.prototype.IsImage = function() {
+	return true;
+};
+	CBuilderImages.prototype.GetBlipFill = function() {
+		return this.BlipFill;
+	};
+	CBuilderImages.prototype.SetRawUrl = function(url) {
+		this.Url = url;
+	};
 CBuilderImages.prototype.SetParagraphTextPr = function(paragraph, textPr) {
 	var oTextPr = new CTextPr();
 	oTextPr.Set_FromObject(textPr);

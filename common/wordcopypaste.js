@@ -4102,7 +4102,7 @@ PasteProcessor.prototype =
             var imageElem = aPastedImages[i];
             if(null != imageElem)
             {
-                imageElem.SetUrl(imageElem.Url);
+                imageElem.SetUrl(imageElem.GetUrl());
             }
         }
     },
@@ -4673,7 +4673,7 @@ PasteProcessor.prototype =
 
 			let aImagesToDownload = [];
 			for (let i = 0; i < aPastedImages.length; i++) {
-				aImagesToDownload.push(aPastedImages[i].Url);
+				aImagesToDownload.push(aPastedImages[i].GetUrl());
 			}
 
 			aContent = {aPastedImages: aPastedImages, images: aImagesToDownload};
@@ -4870,7 +4870,7 @@ PasteProcessor.prototype =
 					} else if (bIsOnlyFromBinary && window["NativeCorrectImageUrlOnPaste"]) {
 						var url;
 						for (var i = 0; i < aContent.aPastedImages.length; ++i) {
-							url = window["NativeCorrectImageUrlOnPaste"](aContent.aPastedImages[i].Url);
+							url = window["NativeCorrectImageUrlOnPaste"](aContent.aPastedImages[i].GetUrl());
 							aContent.images[i] = url;
 
 							var imageElem = aContent.aPastedImages[i];
@@ -5183,20 +5183,12 @@ PasteProcessor.prototype =
 									for (var j = 0; j < imageElem.length; ++j) {
 										var curImageElem = imageElem[j];
 										if (null != curImageElem) {
-											if (curImageElem.ImageShape && curImageElem.ImageShape.base64) {
-												curImageElem.ImageShape.base64 = name;
-											} else {
-												curImageElem.SetUrl(name);
-											}
+											curImageElem.SetUrlWithCheckBase64(name);
 										}
 									}
 								} else {
 									//для вставки graphicFrame в виде картинки(если было при копировании выделено несколько графических объектов)
-									if (imageElem.ImageShape && imageElem.ImageShape.base64) {
-										imageElem.ImageShape.base64 = name;
-									} else {
-										imageElem.SetUrl(name);
-									}
+									imageElem.SetUrlWithCheckBase64(name);
 								}
 							}
 							image_map[i] = name;
@@ -5484,7 +5476,7 @@ PasteProcessor.prototype =
 				} else {
 					let oImageMap = {};
 					for(let nImg = 0; nImg < arr_Images.length; ++nImg) {
-						oImageMap[nImg] = arr_Images[nImg].Url
+						oImageMap[nImg] = arr_Images[nImg].GetUrl();
 					}
 					oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
 				}
@@ -5595,20 +5587,12 @@ PasteProcessor.prototype =
 									for (var j = 0; j < imageElem.length; ++j) {
 										var curImageElem = imageElem[j];
 										if (null != curImageElem) {
-											if (curImageElem.ImageShape && curImageElem.ImageShape.base64) {
-												curImageElem.ImageShape.base64 = name;
-											} else {
-												curImageElem.SetUrl(name);
-											}
+											curImageElem.SetUrlWithCheckBase64(name);
 										}
 									}
 								} else {
 									//для вставки graphicFrame в виде картинки(если было при копировании выделено несколько графических объектов)
-									if (imageElem.ImageShape && imageElem.ImageShape.base64) {
-										imageElem.ImageShape.base64 = name;
-									} else {
-										imageElem.SetUrl(name);
-									}
+									imageElem.SetUrlWithCheckBase64(name);
 								}
 							}
 							image_map[i] = name;
@@ -5746,7 +5730,7 @@ PasteProcessor.prototype =
 				} else {
 					let oImageMap = {};
 					for(let nImg = 0; nImg < arr_Images.length; ++nImg) {
-						oImageMap[nImg] = arr_Images[nImg].Url
+						oImageMap[nImg] = arr_Images[nImg].GetUrl();
 					}
 					oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
 				}
@@ -5855,7 +5839,7 @@ PasteProcessor.prototype =
 				} else {
 					let oImageMap = {};
 					for(let nImg = 0; nImg < arr_Images.length; ++nImg) {
-						oImageMap[nImg] = arr_Images[nImg].Url
+						oImageMap[nImg] = arr_Images[nImg].GetUrl();
 					}
 
 					oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
@@ -6248,7 +6232,7 @@ PasteProcessor.prototype =
 				} else {
 					let oImageMap = {};
 					for(let nImg = 0; nImg < arr_Images.length; ++nImg) {
-						oImageMap[nImg] = arr_Images[nImg].Url
+						oImageMap[nImg] = arr_Images[nImg].GetUrl();
 					}
 					oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
 				}
@@ -14431,10 +14415,10 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
 	let nAddIdx = 0;
 	for(let nImg = 0; nImg < aImages.length; ++nImg) {
 		let oImgObject = aImages[nImg];
-		if(!AscCommon.isRealObject(oImgObject)) {
+		if(!AscCommon.isRealObject(oImgObject) || oImgObject.isImage()) {
 			continue;
 		}
-		let sUrl = oImgObject.Url;
+		let sUrl = oImgObject.GetUrl();
 		let nDnldImg;
 		for(nDnldImg = 0; nDnldImg < aDwnldUrls.length; ++nDnldImg) {
 			let sDnldUrl = aDwnldUrls[nDnldImg];
