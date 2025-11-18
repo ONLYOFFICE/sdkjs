@@ -1008,7 +1008,11 @@
             return;
 
         this.Recalculate();
+        let aRect = this.GetRect();
+
+        oGraphicsWord.AddClipRect(aRect[0] * g_dKoef_pt_to_mm, aRect[1] * g_dKoef_pt_to_mm, (aRect[2] - aRect[0]) * g_dKoef_pt_to_mm, (aRect[3] - aRect[1]) * g_dKoef_pt_to_mm);
         this.draw(oGraphicsWord);
+        oGraphicsWord.RemoveLastClip();
 
         // draw annot rect
         // if (oGraphicsPDF) {
