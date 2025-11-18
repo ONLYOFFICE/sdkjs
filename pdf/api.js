@@ -1466,6 +1466,10 @@
 			})
 		}, AscDFH.historydescription_Pdf_ContextMenuRemove);
 	};
+	PDFEditorApi.prototype.AddRedactBySelect = function() {
+		let oDoc = this.getPDFDoc();
+		oDoc.AddRedactAnnotBySelect();
+	}
 
 	/////////////////////////////////////////////////////////////
 	///////// For filed
@@ -5093,6 +5097,7 @@
 	PDFEditorApi.prototype['ApplyRedact']		= PDFEditorApi.prototype.ApplyRedact;
 	PDFEditorApi.prototype['HasRedact']			= PDFEditorApi.prototype.HasRedact;
 	PDFEditorApi.prototype['RemoveAllRedact']	= PDFEditorApi.prototype.RemoveAllRedact;
+	PDFEditorApi.prototype['AddRedactBySelect']	= PDFEditorApi.prototype.AddRedactBySelect;
 
 	// forms
 	PDFEditorApi.prototype['IsEditFieldsMode']			= PDFEditorApi.prototype.IsEditFieldsMode;

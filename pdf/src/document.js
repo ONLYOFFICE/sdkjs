@@ -7652,6 +7652,15 @@ var CPresentation = CPresentation || function(){};
 
 		}, AscDFH.historydescription_Pdf_Apply_Redact, this);
     };
+    CPDFDoc.prototype.AddRedactAnnotBySelect = function() {
+        let oFile = this.Viewer.file;
+
+        this.DoAction(function() {
+            let aSelQuads = oFile.getSelectionQuads();
+
+            this.AddRedactAnnot(aSelQuads);
+        }, AscDFH.historydescription_Pdf_AddAnnot, this);  
+    };
 
     CPDFDoc.prototype.SetRedactData = function(sRedactId, nPage, aQuadsFlat, oRenderMemory) {
         let aUint8Array = oRenderMemory;
