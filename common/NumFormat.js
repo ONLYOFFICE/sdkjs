@@ -2796,7 +2796,6 @@ NumFormatCache.prototype =
 	},
     get : function(format, formatType)
     {
-        return new CellFormat(format, formatType, false);
 		var key = format + String.fromCharCode(5) + formatType;
         var res = this.oNumFormats[key];
         if(null == res)
@@ -3650,7 +3649,6 @@ FormatParser.prototype =
         //replace Non-breaking space(0xA0) with White-space(0x20)
         if (" " == cultureInfo.NumberGroupSeparator)
             value = value.replace(new RegExp(String.fromCharCode(0xA0), "g"));
-        //var rx_thouthand = new RegExp("^(([ \\+\\-%\\$€£¥\\(]|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)((\\d+" + escapeRegExp(cultureInfo.NumberGroupSeparator) + "\\d+)*\\d*" + escapeRegExp(cultureInfo.NumberDecimalSeparator) + "?\\d*)(([ %\\)]|р.|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)$");
         var rx_thouthand = new RegExp("^(([ \\+\\-%\\$€£¥\\(]|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)((?:\\d+(?:" + escapeRegExp(cultureInfo.NumberGroupSeparator) + "\\d+)*)(?:" + escapeRegExp(cultureInfo.NumberDecimalSeparator) + "\\d*)?(?:\\s+\\d+/\\d+)?)(([ %\\)]|р.|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)$");
         // If the format is already applied, the regular expression should read a fraction like "1/2"
         if(currentFormat == 9)
@@ -3819,32 +3817,30 @@ FormatParser.prototype =
                     else if (bFraction) 
                     {
                         res.bFraction = true;
+                        // Calculate the number of symbols in the numerator and denominator to set the correct format (?/?, ??/??)
+                        var numLength = sNumerator.length;
+                        var denomLength = sDenominator.length;
                         
-                        // If a number is divisible without a remainder, apply a general format to it 
-                        if (dVal % 1 === 0) 
+                        if (numLength == 1 && denomLength == 1) 
                         {
-                            sFormat = AscCommon.g_cGeneralFormat;
+                            sFormat = "# ?/?";
+                        } else if (numLength == 1 && denomLength == 2)
+                        {
+                             sFormat = "# ??/??";   
+                        } else if (numLength == 2 && denomLength == 1)
+                        {
+                             sFormat = "# ?/?";   
+                        } else if (numLength == 2 && denomLength == 2) 
+                        {
+                            sFormat = "# ??/??";
+                        } else if (numLength <= 3 && denomLength <= 3) 
+                        {
+                            sFormat = "# ??/??";
                         } else 
                         {
-                            var simplifiedFraction = this._simplifyFraction(sNumerator, sDenominator);
-                            // Calculate the number of symbols in the numerator and denominator to set the correct format (?/?, ??/??, ???/???)
-                            var numLength = simplifiedFraction.numerator.toString().length;
-                            var denomLength = simplifiedFraction.denominator.toString().length;
-                            
-                            if (numLength <= 1 && denomLength <= 1) 
-                            {
-                                sFormat = "# ?/?";
-                            } else if (numLength <= 2 && denomLength <= 2) 
-                            {
-                                sFormat = "# ??/??";
-                            } else if (numLength <= 3 && denomLength <= 3) 
-                            {
-                                sFormat = "# ???/???";
-                            } else 
-                            {
-                                sFormat = AscCommon.g_cGeneralFormat;
-                            }
+                            sFormat = AscCommon.g_cGeneralFormat;
                         }
+                    
                     }
 					else if (sCurrency) {
 						res.bCurrency = true;
@@ -4023,18 +4019,6 @@ FormatParser.prototype =
         }
 		return oRes;
 	},
-    _simplifyFraction: function(numerator, denominator) 
-    {
-        function gcd(a, b) 
-        {
-            return b ? gcd(b, a % b) : a;
-        }
-        var divisor = gcd(numerator, denominator);
-        return {
-            numerator: numerator / divisor,
-            denominator: denominator / divisor
-        };
-    },
     _parseDateFromArray: function (match, oDataTypes, cultureInfo)
 	{
         var res = null;
