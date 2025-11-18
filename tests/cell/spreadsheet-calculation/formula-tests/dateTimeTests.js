@@ -4402,8 +4402,8 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: MINUTE("00:30") is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 30, 'Test: Positive case: String. String with minimal hour format, returns 30 minutes. 1 argument used.');
 		// Case #20: Formula. Nested formula with current hour and fixed minutes, returns 30 minutes. 1 argument used.
-		oParser = new parserFormula('MINUTE(TIME(HOUR(NOW()),30,0))', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: MINUTE(TIME(HOUR(NOW()),30,0)) is parsed.');
+		oParser = new parserFormula('MINUTE(TIME(HOUR(12345),30,0))', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: MINUTE(TIME(HOUR(12345),30,0)) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 30, 'Test: Positive case: Formula. Nested formula with current hour and fixed minutes, returns 30 minutes. 1 argument used.');
 		// Case #21: Time. Maximum valid time, returns 59 minutes. 1 argument used.
 		oParser = new parserFormula('MINUTE(TIME(23,59,59))', 'A2', ws);
@@ -4904,8 +4904,8 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: MONTH("00:30") is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: String. String with minimal hour format, returns 30 minutes. 1 argument used.');
 		// Case #20: Formula. Nested formula with current hour and fixed minutes, returns 30 minutes. 1 argument used.
-		oParser = new parserFormula('MONTH(TIME(HOUR(NOW()),30,0))', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: MONTH(TIME(HOUR(NOW()),30,0)) is parsed.');
+		oParser = new parserFormula('MONTH(TIME(HOUR(12345),30,0))', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: MONTH(TIME(HOUR(12345),30,0)) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: Formula. Nested formula with current hour and fixed minutes, returns 30 minutes. 1 argument used.');
 		// Case #21: Time. Maximum valid time, returns 59 minutes. 1 argument used.
 		oParser = new parserFormula('MONTH(TIME(23,59,59))', 'A2', ws);
@@ -9208,10 +9208,10 @@ $(function () {
 		oParser = new parserFormula('YEAR({38777,45828})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: YEAR({38777,45828}) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 2006, 'Test: Positive case: Array. Multi-element array with valid dates. 1 argument used.');
-		// Case #21: Formula. Current date from NOW formula. 1 argument used.
-		oParser = new parserFormula('YEAR(NOW())', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: YEAR(NOW()) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 2025, 'Test: Positive case: Formula. Current date from NOW formula. 1 argument used.');
+		// Case #21: Formula. Current year from DATE formula. 1 argument used.
+		oParser = new parserFormula('YEAR(DATE(2025,1,1))', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: YEAR(DATE(2025,1,1)) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 2025, 'Test: Positive case: Formula. Current year from DATE formula. 1 argument used.');
 		// Case #22: String. Short date string format, assumes current year or default. 1 argument used.
 		oParser = new parserFormula('YEAR("5/5")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: YEAR("5/5") is parsed.');

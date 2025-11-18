@@ -1642,7 +1642,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return generate3DLink(exPath, wsFrom !== wsTo ? (wsFrom + ':' + wsTo) : wsFrom, name);
 	};
 	cArea3D.prototype.tocNumber = function () {
-		return this.getValue()[0].tocNumber();
+		let val = this.getValue()[0];
+		if (!val) {
+			return new cNumber(0);
+		}
+		return val.tocNumber();
 	};
 	cArea3D.prototype.tocString = function () {
 		let val = this.getValue()[0];
