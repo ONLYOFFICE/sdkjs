@@ -280,20 +280,23 @@
 	 * @param {string} textReplace - A string value that specifies the text to be replaced with a new text.
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/InputText.js
 	 */
-    Api.prototype["pluginMethod_InputText"] = function(text, textReplace)
-    {
-        if (!this.canEdit() || this.isPdfEditor() || !AscCommon.g_inputContext)
-            return;
-
-        if (textReplace)
-        {
-            for (var i = 0; i < textReplace.length; i++)
-                AscCommon.g_inputContext.emulateKeyDownApi(8);
-        }
-
-        AscCommon.g_inputContext.addText(text);
-        AscCommon.g_inputContext.keyPressInput = "";
-    };
+	Api.prototype["pluginMethod_InputText"] = function(text, textReplace)
+	{
+		if (!this.canEdit() || this.isPdfEditor() || !AscCommon.g_inputContext)
+			return;
+	
+		this.executeGroupActions(function()
+		{
+			if (textReplace)
+			{
+				for (var i = 0; i < textReplace.length; i++)
+					AscCommon.g_inputContext.emulateKeyDownApi(8);
+			}
+		
+			AscCommon.g_inputContext.addText(text);
+			AscCommon.g_inputContext.keyPressInput = "";
+		});
+	};
 
 	/**
 	 * Pastes text in the HTML format into the document.
@@ -304,30 +307,35 @@
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/PasteHtml.js
 	 */
 	Api.prototype["pluginMethod_PasteHtml"] = function (htmlText) {
-		if (!AscCommon.g_clipboardBase)
-			return null;
-
-		if (!this.canEdit())
-			return null;
-
-		let _elem = document.getElementById("pmpastehtml");
-		if (_elem)
-			return;
-
 		window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
-		_elem = document.createElement("div");
+		return this._pluginMethod_PasteHtml(htmlText, function(){
+			window.g_asc_plugins && window.g_asc_plugins.onPluginMethodReturn(true);
+		});
+	};
+	Api.prototype._pluginMethod_PasteHtml = function(htmlText, callback) {
+		if (!AscCommon.g_clipboardBase
+			|| !this.canEdit()
+			|| document.getElementById("pmpastehtml"))
+		{
+			if (callback)
+				callback();
+			
+			return null;
+		}
+		
+		let _elem = document.createElement("div");
 		_elem.id = "pmpastehtml";
 		_elem.style.color = "rgb(0,0,0)";
-
+		
 		if (this.editorId === AscCommon.c_oEditorId.Word || this.editorId === AscCommon.c_oEditorId.Presentation) {
 			let textPr = this.get_TextProps();
 			if (textPr && textPr.TextPr) {
 				if (undefined !== textPr.TextPr.FontSize)
 					_elem.style.fontSize = textPr.TextPr.FontSize + "pt";
-
+				
 				_elem.style.fontWeight = (true === textPr.TextPr.Bold) ? "bold" : "normal";
 				_elem.style.fontStyle = (true === textPr.TextPr.Italic) ? "italic" : "normal";
-
+				
 				let _color = textPr.TextPr.Color;
 				if (_color)
 					_elem.style.color = "rgb(" + _color.r + "," + _color.g + "," + _color.b + ")";
@@ -336,15 +344,17 @@
 			}
 		} else if (this.editorId === AscCommon.c_oEditorId.Spreadsheet) {
 			let props = this.asc_getCellInfo();
-
+			
 			if (props && props.font) {
 				if (undefined != props.font.size)
 					_elem.style.fontSize = props.font.size + "pt";
-
+				
 				_elem.style.fontWeight = (true === props.font.bold) ? "bold" : "normal";
 				_elem.style.fontStyle = (true === props.font.italic) ? "italic" : "normal";
 			}
 		}
+		
+		this.executeGroupActionsStart();
 
 		_elem.innerHTML = htmlText;
 		document.body.appendChild(_elem);
@@ -352,28 +362,42 @@
 		let b_old_save_format = AscCommon.g_clipboardBase.bSaveFormat;
 		AscCommon.g_clipboardBase.bSaveFormat = false;
 		let _t = this;
-		
-		this.executeGroupActions(function()
-		{
-			_t.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, _elem, undefined, undefined, undefined,
-				function()
+		_t.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, _elem, undefined, undefined, undefined,
+			function()
+			{
+				_t.decrementCounterLongAction();
+				
+				let fCallback = function()
 				{
-					_t.decrementCounterLongAction();
+					document.body.removeChild(_elem);
+					_elem = null;
 					
-					let fCallback = function()
+					AscCommon.g_clipboardBase.bSaveFormat = b_old_save_format;
+					
+					_t.executeGroupActionsEnd();
+					
+					if (callback)
+						callback();
+					
+					// Update target position after paste
+					if (AscCommon.c_oEditorId.Word === _t.getEditorId())
 					{
-						document.body.removeChild(_elem);
-						_elem                                 = null;
-						AscCommon.g_clipboardBase.bSaveFormat = b_old_save_format;
-					};
-					if (_t.checkLongActionCallback(fCallback, null))
-					{
-						fCallback();
+						let logicDocument = _t.private_GetLogicDocument();
+						if (logicDocument)
+						{
+							logicDocument.GetDrawingDocument().UpdateTargetFromPaint = true;
+							logicDocument.private_UpdateCursorXY(true, true, true);
+							logicDocument.RecalculateCurPos();
+							logicDocument.UpdateSelection();
+						}
 					}
-					window.g_asc_plugins && window.g_asc_plugins.onPluginMethodReturn(true);
+				};
+				if (_t.checkLongActionCallback(fCallback, null))
+				{
+					fCallback();
 				}
-			);
-		});
+			}
+		);
 	};
 
     /**
@@ -1161,7 +1185,7 @@
      * @param {string} [prop.TableCellSeparator='\t'] - Defines how the table cell separator will be specified in the resulting string. Any symbol can be used. The default separator is "\t".
      * @param {string} [prop.TableRowSeparator='\r\n'] - Defines how the table row separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
      * @param {string} [prop.ParaSeparator='\r\n'] - Defines how the paragraph separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
-     * @param {string} [prop.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string. Any symbol can be used. The default symbol is "\t".
+     * @param {string} [prop.TabSymbol=' '] - Defines how the tab will be specified in the resulting string. Any symbol can be used. The default symbol is " ".
      * @param {string} [prop.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r".
 	 * @return {string} - Selected text.
      * @since 7.1.0
@@ -2184,22 +2208,30 @@
 		{
 			let w = 300;
 			let h = 100;
+
+			let addH = 0;
 			if (variation["size"])
 			{
 				w = variation["size"][0];
 				h = variation["size"][1];
+
+				if (!variation["isCustomWindow"]) {
+					addH += 35;
+					if (variation["buttons"] && variation["buttons"].length)
+						addH += 55;
+				}
 			}
 
 			let offsets = this.getTargetOnBodyCoords();
 			if (w > offsets.W)
 				w = offsets.W;
-			if (h > offsets.H)
-				h = offsets.H;
+			if ((h + addH) > offsets.H)
+				h = Math.max(offsets.H - addH, 10);
 
 			let offsetToFrame = 10;
 			let r = offsets.X + offsetToFrame + w;
-			let t = offsets.Y - offsetToFrame - h;
-			let b = offsets.Y + offsets.TargetH + offsetToFrame + h;
+			let t = offsets.Y - offsetToFrame - h - addH;
+			let b = offsets.Y + offsets.TargetH + offsetToFrame + h + addH;
 
 			let x = offsets.X + offsetToFrame;
 			if (r > offsets.W)
@@ -2218,6 +2250,8 @@
 			{
 				y = offsets.Y + offsets.TargetH + offsetToFrame;
 				h += (offsets.H - b);
+
+				if (h < 10) h = 10;
 			}
 
 			if (y > offsets.H)
@@ -2227,7 +2261,9 @@
 			if (x < offsets.editorX)
 				x = offsets.editorX;
 
-			variation["size"] = [w, h];
+			if (!variation["fixedSize"])
+				variation["size"] = [w, h];
+
 			variation["positionX"] = x;
 			variation["positionY"] = y;
 		}

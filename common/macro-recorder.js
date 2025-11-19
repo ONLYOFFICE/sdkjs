@@ -93,8 +93,8 @@
 			else
 			{
 				macroData = {
-					macrosArray : [],
-					current     : -1
+					"macrosArray" : [],
+					"current"     : -1
 				};
 			}
 		}
@@ -103,13 +103,13 @@
 			return;
 		}
 		
-		let name = this.macroName ? this.macroName : this.getNewName(macroData.macrosArray);
+		let name = this.macroName ? this.macroName : this.getNewName(macroData["macrosArray"]);
 		let value = "(function()\n{\n" + this.result + "})();"
-		macroData.macrosArray.push({
-			guid : AscCommon.CreateUUID(true),
-			name : name,
-			autostart : false,
-			value : value
+		macroData["macrosArray"].push({
+			"guid" : AscCommon.CreateUUID(true),
+			"name" : name,
+			"autostart" : false,
+			"value" : value
 		});
 		
 		this.editor.asc_setMacros(JSON.stringify(macroData));
@@ -490,7 +490,7 @@
 			let highlightColor = "";
 			if (highlight)
 			{
-				let color = new CDocumentColor(highlight.r, highlight.g, highlight.b);
+				let color = new AscCommonWord.CDocumentColor(highlight.r, highlight.g, highlight.b);
 				highlightColor = color.ToHighlightColor();
 			}
 
@@ -576,16 +576,16 @@
 			else if (type === AscWord.break_Column)
 				return "\tdoc.GetCurrentParagraph().AddColumnBreak();\n" // to api selection
 		},
-		addSectionBreak			: function(type){ //todo check
-			if (type === c_oAscSectionBreakType.NextPage)
+		addSectionBreak			: function(type){
+			if (type === Asc.c_oAscSectionBreakType.NextPage)
 				return "\tdoc.CreateSection(doc.GetCurrentParagraph()).SetType(\"nextPage\");\n";
-			else if (type === c_oAscSectionBreakType.Column)
+			else if (type === Asc.c_oAscSectionBreakType.Column)
 				return "\tdoc.CreateSection(doc.GetCurrentParagraph()).SetType(\"nextColumn\");\n";
-			else if (type === c_oAscSectionBreakType.Continuous)
+			else if (type === Asc.c_oAscSectionBreakType.Continuous)
 				return "\tdoc.CreateSection(doc.GetCurrentParagraph()).SetType(\"continuous\");\n";
-			else if (type === c_oAscSectionBreakType.EvenPage)
+			else if (type === Asc.c_oAscSectionBreakType.EvenPage)
 				return "\tdoc.CreateSection(doc.GetCurrentParagraph()).SetType(\"evenPage\");\n";
-			else if (type === c_oAscSectionBreakType.OddPage)
+			else if (type === Asc.c_oAscSectionBreakType.OddPage)
 				return "\tdoc.CreateSection(doc.GetCurrentParagraph()).SetType(\"oddPage\");\n";
 		},
 		addTable				: function(prop){
@@ -1213,7 +1213,7 @@
 			let highlightColor = "";
 			if (highlight)
 			{
-				let color = new CDocumentColor(highlight.r, highlight.g, highlight.b);
+				let color = new AscCommonWord.CDocumentColor(highlight.r, highlight.g, highlight.b);
 				highlightColor = color.ToHighlightColor();
 			}
 

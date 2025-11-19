@@ -1025,6 +1025,7 @@ CHistory.prototype =
     _CheckCanNotAddChanges : function() {
         try {
             if (this.CanNotAddChanges && this.Api && !this.CollectChanges) {
+                this.CanNotAddChanges = false;
                 var tmpErr = new Error();
                 if (tmpErr.stack) {
 					AscCommon.sendClientLog("error", "changesError: " + tmpErr.stack, this.Api);

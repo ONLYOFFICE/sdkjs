@@ -2925,7 +2925,7 @@ function (window, undefined) {
 					arr.push(v);
 				}
 			});
-		} else if (arg0 instanceof cArea) {
+		} else if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0.foreach2(function (v) {
 				if (v instanceof cNumber) {
 					arr.push(v);

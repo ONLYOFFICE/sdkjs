@@ -296,14 +296,7 @@ function MoveShapeImageTrack(originalObject)
         }
         else
         {
-            if(!this.originalObject.group)
-            {
-                AscFormat.CheckSpPrXfrm3(this.originalObject, true);
-            }
-            else
-            {
-                AscFormat.CheckSpPrXfrm(this.originalObject, true);
-            }
+            this.originalObject.checkTransformBeforeApply();
         }
         if(this.originalObject.group)
         {

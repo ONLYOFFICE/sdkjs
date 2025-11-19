@@ -16656,7 +16656,7 @@
 
 			this.ws.workbook.dependencyFormulas.addToCleanCellCache(this.ws.getId(), this.nRow, this.nCol);
 			AscCommonExcel.g_oLOOKUPCache.remove(this);
-			AscCommonExcel.g_oVLOOKUPCache.remove(this);
+			AscCommonExcel.g_oVLOOKUPCache.remove(this, DataOld, res);
 			AscCommonExcel.g_oHLOOKUPCache.remove(this);
 			AscCommonExcel.g_oMatchCache.remove(this);
 			AscCommonExcel.g_oSUMIFSCache.remove(this);

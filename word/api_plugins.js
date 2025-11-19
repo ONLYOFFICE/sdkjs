@@ -341,16 +341,19 @@
 	 */
     Api.prototype["pluginMethod_RemoveSelectedContent"] = function()
     {
-        var oLogicDocument = this.private_GetLogicDocument();
-        if (!oLogicDocument || !oLogicDocument.IsSelectionUse())
-            return;
-
-        if (false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Remove, null, true, oLogicDocument.IsFormFieldEditing()))
-        {
-            oLogicDocument.StartAction(AscDFH.historydescription_Document_BackSpaceButton);
-            oLogicDocument.Remove(-1, true);
-            oLogicDocument.FinalizeAction();
-        }
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || !logicDocument.IsSelectionUse())
+			return;
+		
+		this.executeGroupActions(function()
+		{
+			if (!logicDocument.IsSelectionLocked(AscCommon.changestype_Remove, null, true, logicDocument.IsFormFieldEditing()))
+			{
+				logicDocument.StartAction(AscDFH.historydescription_Document_BackSpaceButton);
+				logicDocument.Remove(-1, true);
+				logicDocument.FinalizeAction();
+			}
+		});
     };
 
 	/**
@@ -1300,6 +1303,71 @@
 		let docPos = topDocument && topDocument.GetContentPosition ? topDocument.GetContentPosition(false) : null;
 		return bookmarks.GetBookmarkByDocPos(docPos);
 	};
+	/**
+	 * Annotate the specified paragraph.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias AnnotateParagraph
+	 * @param {Object} obj - The response object containing annotation data
+	 * @param {string} obj.type - The type of annotation operation (e.g., "highlightText")
+	 * @param {string} [obj.name] - Optional name of the annotation
+	 * @param {string} obj.paragraphId - ID of the paragraph being annotated (for highlightText type)
+	 * @param {string} obj.recalcId - Recalculation ID for validation (for highlightText type)
+	 * @param {Array<{start: number, length: number, id: string}>} [obj.ranges] - Array of text ranges to highlight (for highlightText type)
+	 * @param {number} obj.ranges[].start - Starting index of the text range
+	 * @param {number} obj.ranges[].length - Length of the text range
+	 * @param {string} obj.ranges[].id - Unique identifier for the range
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AnnotateParagraph.js
+	 */
+	Api.prototype["pluginMethod_AnnotateParagraph"] = function(obj)
+	{
+		if (!obj)
+			return;
+		
+		obj["guid"] = window.g_asc_plugins.getCurrentPluginGuid();
+		this.getTextAnnotatorEventManager().onResponse(obj);
+	};
+	/**
+	 * Selects a specific annotation range in the document.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias AnnotateParagraph
+	 * @param {Object} obj - The range selection object
+	 * @param {string} obj.paragraphId - ID of the paragraph containing the annotation
+	 * @param {string} obj.rangeId - ID of the specific range to select
+	 * @param {string} [obj.name] - Optional name/type of the annotation (e.g., "grammar", "spelling", etc.)
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SelectAnnotationRange.js
+	 */
+	Api.prototype["pluginMethod_SelectAnnotationRange"] = function(obj)
+	{
+		if (!obj)
+			return;
+		
+		obj["guid"] = window.g_asc_plugins.getCurrentPluginGuid();
+		this.getTextAnnotatorEventManager().selectRange(obj);
+	};
+	/**
+	 * Remove a specific annotation range from the document.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias RemoveAnnotationRange
+	 * @param {Object} obj - The range removing object
+	 * @param {string} obj.paragraphId - ID of the paragraph containing the annotation
+	 * @param {string} obj.rangeId - ID of the specific range to remove
+	 * @param {string} [obj.name] - Optional name/type of the annotation (e.g., "grammar", "spelling", etc.)
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveAnnotationRange.js
+	 */
+	Api.prototype["pluginMethod_RemoveAnnotationRange"] = function(obj)
+	{
+		if (!obj)
+			return;
+		
+		obj["guid"] = window.g_asc_plugins.getCurrentPluginGuid();
+		this.getTextAnnotatorEventManager().removeRange(obj);
+	};
 
 	function private_ReadContentControlCommonPr(commonPr)
 	{
@@ -1381,15 +1449,44 @@
 
 		if (streamObj["undo"])
 			this["pluginMethod_EndAction"]("GroupActions", "", "cancel");
-
-		if (streamObj["stable"] !== "")
-			this["pluginMethod_PasteHtml"](streamObj["stable"]);
-
-		if (streamObj["tail"] !== "")
+		
+		let _t = this;
+		function startSilentMode()
 		{
-			this["pluginMethod_StartAction"]("GroupActions");
-			this["pluginMethod_PasteHtml"](streamObj["tail"]);
+			window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
+			
+			logicDocument.TurnOff_Recalculate();
+			logicDocument.TurnOff_InterfaceEvents();
 		}
+		
+		function endSilentMode()
+		{
+			logicDocument.TurnOn_Recalculate();
+			logicDocument.TurnOn_InterfaceEvents();
+			
+			logicDocument.Recalculate();
+			window.g_asc_plugins && window.g_asc_plugins.onPluginMethodReturn(true);
+		}
+		
+		function pasteTail()
+		{
+			if (streamObj["tail"] !== "")
+			{
+				_t["pluginMethod_StartAction"]("GroupActions");
+				_t._pluginMethod_PasteHtml(streamObj["tail"], endSilentMode);
+			}
+			else
+			{
+				endSilentMode();
+			}
+		}
+		
+		startSilentMode();
+		
+		if (streamObj["stable"] !== "")
+			this._pluginMethod_PasteHtml(streamObj["stable"], pasteTail);
+		else
+			pasteTail();
 	};
 
 	window["AscCommon"] = window["AscCommon"] || {};

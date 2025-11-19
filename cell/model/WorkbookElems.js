@@ -1,4 +1,4 @@
-﻿/*
+/*
  * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
@@ -17979,6 +17979,7 @@ function RangeDataManagerElem(bbox, data)
 		this.HidePivotFieldList = null;
 		this.ShowPivotChartFilter = null;
 		this.UpdateLinks = null;
+		this.CodeName = null;
 	}
 	/**
 	 * Method clones calculation options
@@ -17993,6 +17994,7 @@ function RangeDataManagerElem(bbox, data)
 		res.HidePivotFieldList = this.HidePivotFieldList;
 		res.ShowPivotChartFilter = this.ShowPivotChartFilter;
 		res.UpdateLinks = this.UpdateLinks;
+		res.CodeName = this.CodeName;
 
 		return res;
 	};
@@ -18082,6 +18084,22 @@ function RangeDataManagerElem(bbox, data)
 			val = Asc.EUpdateLinksType.updatelinksNever;
 		}
 		this.UpdateLinks = val;
+	};
+	/**
+	 * Method returns "CodeName" value
+	 * @memberof CWorkbookPr
+	 * @returns {string|null}
+	 */
+	CWorkbookPr.prototype.getCodeName = function () {
+		return this.CodeName;
+	};
+	/**
+	 * Method set "CodeName" value
+	 * @memberof CWorkbookPr
+	 * @param {string} val - CodeName value
+	 */
+	CWorkbookPr.prototype.setCodeName = function (val) {
+		this.CodeName = val;
 	};
 
 

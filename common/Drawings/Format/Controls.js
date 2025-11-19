@@ -423,7 +423,11 @@ function getFlatPenColor() {
 				return;
 			}
 		}
-		this.controller.draw(graphics, transform, transformText, pageIndex, opt);
+		if (graphics.isBoundsChecker()) {
+			this.controller.drawBounds(graphics, transform, transformText, pageIndex, opt);
+		} else {
+			this.controller.draw(graphics, transform, transformText, pageIndex, opt);
+		}
 	};
 	CControl.prototype.hitInInnerArea = function (x, y) {
 		return this.controller.hitInInnerArea(x, y);
@@ -619,6 +623,18 @@ function getFlatPenColor() {
 			}
 		}
 	};
+	CControlControllerBase.prototype.drawBounds = function (graphics, transform, transformText, pageIndex, opt) {
+		const oControl = this.control;
+		transform = transform || oControl.transform;
+		graphics.transform3(transform);
+		graphics._s();
+		graphics._m(0, 0);
+		graphics._l(oControl.extX, 0);
+		graphics._l(oControl.extX, oControl.extY);
+		graphics._l(0, oControl.extY);
+		graphics._e();
+		graphics.reset();
+	};
 	CControlControllerBase.prototype.draw = function (graphics, transform, transformText, pageIndex, opt) {};
 	CControlControllerBase.prototype.getCursorInfo = function (e, nX, nY) {};
 	CControlControllerBase.prototype.onMouseDown = function (e, nX, nY, nPageIndex, oDrawingController) {};
@@ -775,6 +791,9 @@ function getFlatPenColor() {
 		this.checkBox.extY = CHECKBOX_SIDE_SIZE;
 		this.checkBox.transform = oCheckBoxTransform;
 		this.checkBox.invertTransform = oCheckBoxTransform.CreateDublicate().Invert();
+	};
+	CCheckBoxController.prototype.drawBounds = function (graphics, transform, transformText, pageIndex, opt) {
+		this.draw(graphics, transform, transformText, pageIndex, opt);
 	};
 	CCheckBoxController.prototype.draw = function (graphics, transform, transformText, pageIndex, opt) {
 		const oControl = this.control;

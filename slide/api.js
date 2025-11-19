@@ -2253,6 +2253,7 @@ background-repeat: no-repeat;\
 					"c": "reopen",
 					"title": this.documentTitle,
 					"password": option.asc_getPassword(),
+					"lcid": this.asc_getLocaleLCID(),
 					"nobase64": true
 				};
 

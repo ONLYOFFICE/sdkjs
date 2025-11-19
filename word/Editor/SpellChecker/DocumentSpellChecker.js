@@ -50,7 +50,7 @@
 	function CDocumentSpellChecker()
 	{
 		this.Use          = true;
-		this.TurnOn       = 1;
+		this.Active       = 1;
 		this.ErrorsExceed = false;
 		this.Paragraphs  = {}; // Параграфы, в которых есть ошибки в орфографии (объект с ключом - Id параграфа)
 		this.Words       = {}; // Слова, которые пользователь решил пропустить(нажал "пропустить все") при проверке орфографии
@@ -66,11 +66,11 @@
 
 	CDocumentSpellChecker.prototype.TurnOff = function()
 	{
-		this.TurnOn -= 1;
+		this.Active -= 1;
 	};
 	CDocumentSpellChecker.prototype.TurnOn = function()
 	{
-		this.TurnOn += 1;
+		this.Active += 1;
 	};
 	CDocumentSpellChecker.prototype.SetSettings = function(oSettings)
 	{
@@ -88,7 +88,7 @@
 	};
 	CDocumentSpellChecker.prototype.IsOn = function()
 	{
-		return (1 === this.TurnOn);
+		return (1 === this.Active);
 	};
 	CDocumentSpellChecker.prototype.IsErrorsExceed = function()
 	{
