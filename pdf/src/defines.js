@@ -284,6 +284,12 @@
 
     DIGITS_TYPES["arabic"]  = DIGITS_TYPES.arabic;
     DIGITS_TYPES["hindi"]   = DIGITS_TYPES.hindi;
+    
+    const USER_PERMISSIONS = {
+        edit:   4
+    };
+
+    USER_PERMISSIONS["edit"]  = USER_PERMISSIONS.edit;
 
     asc["FIELD_TYPES"]              = asc.FIELD_TYPES               = FIELD_TYPES;
     asc["BORDER_EFFECT_STYLES"]     = asc.BORDER_EFFECT_STYLES      = BORDER_EFFECT_STYLES;
@@ -300,5 +306,6 @@
     asc["BUTTON_HIGHLIGHT_TYPES"]   = asc.BUTTON_HIGHLIGHT_TYPES    = BUTTON_HIGHLIGHT_TYPES;
     asc["APPEARANCE_TYPES"]         = asc.APPEARANCE_TYPES          = APPEARANCE_TYPES;
     asc["DIGITS_TYPES"]             = asc.DIGITS_TYPES              = DIGITS_TYPES;
+    asc["USER_PERMISSIONS"]         = asc.USER_PERMISSIONS          = USER_PERMISSIONS;
     asc.CommandType                 = CommandType;
 })();
