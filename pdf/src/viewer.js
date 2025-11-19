@@ -1493,7 +1493,7 @@
 			let nPage		= oActiveObj ? oActiveObj.GetPage() : undefined;
 
 			this.m_oScrollVerApi.scrollToY(posY);
-			this.m_oScrollVerApi.scrollToX(posX);
+			this.m_oScrollHorApi.scrollToX(posX);
 
 			this.checkVisiblePages();
 			// выход из активного объекта если сместились на другую страницу
@@ -1768,7 +1768,7 @@
 					// у draw аннотаций ищем по path
 					if (oAnnot.IsShapeBased())
 					{
-						let isHitted = oAnnot.hitInBoundingRect(pageObjectMM.x, pageObjectMM.y) || oAnnot.hitToHandles(pageObjectMM.x, pageObjectMM.y) != -1 || oAnnot.hitInPath(pageObjectMM.x, pageObjectMM.y) || oAnnot.hitInInnerArea(pageObjectMM.x, pageObjectMM.y);
+						let isHitted = oAnnot.hitToHandles(pageObjectMM.x, pageObjectMM.y) != -1 || oAnnot.hitInPath(pageObjectMM.x, pageObjectMM.y) || oAnnot.hitInInnerArea(pageObjectMM.x, pageObjectMM.y);
 						if (isHitted)
 							return oAnnot;
 					}

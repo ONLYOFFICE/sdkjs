@@ -17773,79 +17773,79 @@ CErrBarsDraw.prototype = {
 	}
 };
 
-/** @constructor */
-function CGeometry2()
-{
-    this.pathLst = [];
-	this.isLine = false;
-	this.gdLst = [];
-}
-
-CGeometry2.prototype =
-{
-    constructor: CGeometry2,
-	
-	canFill: function()
-    {
-        if(this.preset === "line")
-            return false;
-        for(var i = 0; i < this.pathLst.length; ++i)
-        {
-            if(this.pathLst[i].fill !== "none")
-                return true;
-        }
-        return  false;
-    },
-
-    AddPath: function(path)
-    {
-        this.pathLst.push(path);
-    },
-	
-    AddRect: function(l, t, r, b)
-    {
-        this.rectS = {};
-        this.rectS.l = l;
-        this.rectS.t = t;
-        this.rectS.r = r;
-        this.rectS.b = b;
-    },
-
-    draw: function(shape_drawer)
-    {
-        for (var i=0, n=this.pathLst.length; i<n;++i)
-            this.pathLst[i].drawSmart(shape_drawer);
-    },
-	
-	check_bounds: function(checker)
-    {
-
-        for(var i=0, n=this.pathLst.length; i<n;++i)
-
-            this.pathLst[i].check_bounds(checker);
-
-    }
-};
-
 	/** @constructor */
-function CColorObj(pen, brush, geometry)
-{
-    this.pen = pen;
-	this.brush = brush;
-	this.geometry = geometry;
-}
+	function CGeometry2()
+	{
+		this.pathLst = [];
+		this.isLine = false;
+		this.gdLst = [];
+	}
+	CGeometry2.prototype.constructor = CGeometry2;
+	CGeometry2.prototype.canFill = function()
+	{
+		if(this.preset === "line")
+			return false;
+		for(var i = 0; i < this.pathLst.length; ++i)
+		{
+			if(this.pathLst[i].fill !== "none")
+				return true;
+		}
+		return  false;
+	};
+	CGeometry2.prototype.AddPath = function(path)
+	{
+		this.pathLst.push(path);
+	};
+	CGeometry2.prototype.AddRect = function(l, t, r, b)
+	{
+		this.rectS = {};
+		this.rectS.l = l;
+		this.rectS.t = t;
+		this.rectS.r = r;
+		this.rectS.b = b;
+	};
+	CGeometry2.prototype.draw = function(shape_drawer)
+	{
+		for (var i=0, n=this.pathLst.length; i<n;++i)
+			this.pathLst[i].drawSmart(shape_drawer);
+	};
+	CGeometry2.prototype.check_bounds = function(checker)
+	{
 
-CColorObj.prototype =
-{
-	constructor: CColorObj,
-	
-	check_bounds: function (checker) {
+		for(var i=0, n=this.pathLst.length; i<n;++i)
+
+			this.pathLst[i].check_bounds(checker);
+
+	};
+	CGeometry2.prototype.getContinuousSubpaths = function () {
+		const subpaths = [];
+		this.pathLst.forEach(function (path) {
+			if (path.stroke) {
+				path.getContinuousSubpaths().forEach(function (subpath) {
+					subpaths.push(subpath);
+				});
+			}
+		});
+		return subpaths;
+	};
+	/** @constructor */
+	function CColorObj(pen, brush, geometry) {
+		this.pen = pen;
+		this.brush = brush;
+		this.geometry = geometry;
+	}
+
+	CColorObj.prototype.constructor = CColorObj;
+	CColorObj.prototype.check_bounds = function (checker) {
 		if (this.geometry) {
 			this.geometry.check_bounds(checker);
 		}
-	},
+	};
+	CColorObj.prototype.getGeometry = function () {
+		return this.geometry;
+	};
 
-	getBounds: function () {
+	CColorObj.prototype.getBounds = function () {
 
 		if (this.geometry) {
 			let boundsChecker = new AscFormat.CSlideBoundsChecker();
@@ -17856,9 +17856,7 @@ CColorObj.prototype =
 			return new AscFormat.CGraphicBounds(bounds.min_x, bounds.min_y, bounds.max_x, bounds.max_y);
 		}
 		return new AscFormat.CGraphicBounds(0, 0, 0, 0);
-	}
-};
-
+	};
 	/** @constructor */
 	function calcShapesHelper(chartsDrawer)
 	{

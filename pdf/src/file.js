@@ -865,7 +865,9 @@ void main() {\n\
             return;
         }
 
+        let oViewer = this.viewer;
         let oDoc = this.viewer.getPDFDoc();
+        let _t = this;
 
         stream.pos = ret.LinePos;
 
@@ -930,6 +932,31 @@ void main() {\n\
         oDoc.TextSelectTrackHandler.Update(true);
         this.onUpdateSelection();
         this.onUpdateOverlay();
+
+        if (oViewer.Api.isMarkerFormat) {
+            let oColor = oDoc.GetMarkerColor(oViewer.Api.curMarkerType);
+
+            oDoc.DoAction(function() {
+                switch (oViewer.Api.curMarkerType) {
+                    case AscPDF.ANNOTATIONS_TYPES.Highlight:
+                        oViewer.Api.SetHighlight(oColor.r, oColor.g, oColor.b, oColor.a);
+                        break;
+                    case AscPDF.ANNOTATIONS_TYPES.Underline:
+                        oViewer.Api.SetUnderline(oColor.r, oColor.g, oColor.b, oColor.a);
+                        break;
+                    case AscPDF.ANNOTATIONS_TYPES.Strikeout:
+                        oViewer.Api.SetStrikeout(oColor.r, oColor.g, oColor.b, oColor.a);
+                        break;
+                }
+            }, AscDFH.historydescription_Pdf_AddAnnot);
+        }
+        else if (oViewer.Api.isRedactTool) {
+            oDoc.DoAction(function() {
+                let aSelQuads = _t.getSelectionQuads();
+
+                oDoc.AddRedactAnnot(aSelQuads);
+            }, AscDFH.historydescription_Pdf_AddAnnot);
+        }
     };
     CFile.prototype.selectWholeRow = function(pageIndex, x, y) {
         let ret = this.getNearestPos(pageIndex, x, y);

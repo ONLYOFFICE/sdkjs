@@ -316,7 +316,8 @@
         DateCompatibility: 1,
 		HidePivotFieldList: 2,
 		ShowPivotChartFilter: 3,
-        UpdateLinks: 4
+        UpdateLinks: 4,
+		CodeName: 5
     };
     /** @enum */
     var c_oSerWorkbookViewTypes =
@@ -3832,6 +3833,11 @@
                     this.memory.WriteByte(c_oSerWorkbookPrTypes.UpdateLinks);
                     this.memory.WriteByte(c_oSerPropLenType.Byte);
                     this.memory.WriteByte(oWorkbookPr.UpdateLinks);
+                }
+                if (null != oWorkbookPr.CodeName) {
+                    this.memory.WriteByte(c_oSerWorkbookPrTypes.CodeName);
+                    this.memory.WriteByte(c_oSerPropLenType.Variable);
+                    this.memory.WriteString2(oWorkbookPr.CodeName);
                 }
 			}
         };
@@ -10086,6 +10092,8 @@
 				WorkbookPr.setShowPivotChartFilter(this.stream.GetBool());
 			} else if ( c_oSerWorkbookPrTypes.UpdateLinks === type ) {
                 WorkbookPr.setUpdateLinks(this.stream.GetUChar());
+            } else if ( c_oSerWorkbookPrTypes.CodeName === type ) {
+                WorkbookPr.setCodeName(this.stream.GetString2LE(length));
             } else
                 res = c_oSerConstants.ReadUnknown;
             return res;

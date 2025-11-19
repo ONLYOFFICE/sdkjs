@@ -741,6 +741,7 @@ function CSelectedElementsInfo(oPr)
 	this.m_arrMoveMarks       = [];
 	this.m_arrFootEndNoteRefs = [];
 	this.m_bFixedFormShape    = false; // Специальная ситуация, когда выделена автофигура вокруг fixed-form, но при этом мы в m_oInlineLevelSdt мы возвращаем эту форму (хотя в ней не находимся по факту)
+	this.m_arrCustomMarks     = [];
 }
 CSelectedElementsInfo.prototype.Reset = function()
 {
@@ -1109,6 +1110,18 @@ CSelectedElementsInfo.prototype.IsFixedFormShape = function()
 {
 	return this.FixedFormShape;
 };
+CSelectedElementsInfo.prototype.IsCheckCustomMarks = function()
+{
+	return true;
+};
+CSelectedElementsInfo.prototype.SetCustomMarks = function(marks)
+{
+	this.m_arrCustomMarks = marks;
+};
+CSelectedElementsInfo.prototype.GetCustomMarks = function()
+{
+	return this.m_arrCustomMarks;
+};
 
 let ACTION_FLAGS = {
 	RECALCULATE      : 0x0001,
@@ -1185,7 +1198,10 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	};
 
 	this.Layout = this.Layouts.Print;
-
+	
+	this.CustomTextAnnotator = new AscWord.CustomTextAnnotator(this);
+	
+	
 	this.Content[0] = new AscWord.Paragraph(this);
     this.Content[0].Set_DocumentNext(null);
     this.Content[0].Set_DocumentPrev(null);
@@ -1404,7 +1420,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 
     // Параграфы, в которых есть ошибки в орфографии (объект с ключом - Id параграфа)
     this.Spelling = new AscWord.CDocumentSpellChecker();
-
+	
     // Дополнительные настройки
 	this.ForceHideCCTrack          = false; // Насильно запрещаем отрисовку рамок у ContentControl
     this.UseTextShd                = true;  // Использовать ли заливку текста
@@ -5084,7 +5100,7 @@ CDocument.prototype.OnContentReDraw                          = function(StartPag
 };
 CDocument.prototype.CheckTargetUpdate = function()
 {
-	// TODO: Эту загрушку стоит поменять на что-то более понятное
+	// TODO: Эту заглушку стоит поменять на что-то более понятное
 	// Документ ни разу не был расчитан
 	if (this.RecalcId <= 0)
 		return;
@@ -7725,6 +7741,8 @@ CDocument.prototype.Selection_SetEnd = function(X, Y, MouseEvent)
 							oBookmark[0].GoToBookmark();
 					}
 				}
+				
+				this.CustomTextAnnotator.onClick(X, Y, this.CurPage);
 			}
         }
         else
@@ -12160,6 +12178,9 @@ CDocument.prototype.private_UpdateTracks = function(bSelection, bEmptySelection)
 	this.DrawingDocument.endCollectContentControlTracks();
 
 	this.UpdateContentControlFocusState(oInlineLevelSdt ? oInlineLevelSdt : (oBlockLevelSdt ? oBlockLevelSdt : null));
+	
+	if (true)
+		this.CustomTextAnnotator.onCurrentParagraph(this.GetCurrentParagraph());
 
 	if (this.private_SetCurrentSpecialForm(oCurrentForm))
 	{
@@ -13878,6 +13899,9 @@ CDocument.prototype.AddComment = function(CommentData, isForceGlobal)
 		this.UpdateInterface();
 		this.UpdateSelection();
 	}
+	
+	if (Comment)
+		this.Api.sync_AddComment(Comment.GetId(), CommentData);
 
 	return Comment;
 };
@@ -27364,6 +27388,9 @@ CDocument.prototype.StopSpellCheck = function()
 CDocument.prototype.ContinueSpellCheck = function()
 {
 	this.Spelling.ContinueSpellCheck();
+	
+	// TODO: Пока таймер для проверки внешний аннотаций запускаем тут
+	this.CustomTextAnnotator.continueProcessing();
 };
 CDocument.prototype.TurnOffSpellCheck = function()
 {
@@ -28037,6 +28064,20 @@ CDocument.prototype.GetNumeralType = function()
 CDocument.prototype.IsFirstOnDocumentPage = function(curPage)
 {
 	return true;
+};
+/**
+ * @returns {AscWord.CustomTextAnnotator}
+ */
+CDocument.prototype.GetCustomTextAnnotator = function()
+{
+	return this.CustomTextAnnotator;
+};
+/**
+ * @returns {AscWord.CustomMarks}
+ */
+CDocument.prototype.GetCustomMarks = function()
+{
+	return this.CustomTextAnnotator.getMarks();
 };
 
 function CDocumentSelectionState()

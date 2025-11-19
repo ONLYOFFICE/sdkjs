@@ -1769,10 +1769,10 @@ $(function () {
 		oParser = new parserFormula('ACCRINTM(38777,38838,0.0000000001,1100,1)', "A2", ws);
 		assert.ok(oParser.parse(), 'Test: Formula ACCRINTM(38777,38838,0.0000000001,1100,1) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 1.838356164383562e-8, 'Test: Positive case: Number(5). Dates are correct in number format, Rate is small number, Basis - 1. 5 of 5 arguments used.');
-		// Case #10: Number, Formula, Formula, Number (2). Issue is date in number format, Settlement filled by NOW formula, Rate filled by formula, Basis - 2. 5 of 5 arguments used.
+		// Case #10: Number, Formula, Formula, Number (2). Issue is date in number format, Settlement filled by DATE formula, Rate filled by formula, Basis - 2. 5 of 5 arguments used.
 		oParser = new parserFormula('ACCRINTM(45792,DATE(2025,6,30),((110-100)+5)/100,1100,2)', "A2", ws);
 		assert.ok(oParser.parse(), 'Test: Formula ACCRINTM(45792,DATE(2025,6,30),((110-100)+5)/100,1100,2) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 21.083, 'Test: Positive case: Number, Formula, Formula, Number (2). Issue is date in number format, Settlement filled by NOW formula, Rate filled by formula, Basis - 2. 5 of 5 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 21.083, 'Test: Positive case: Number, Formula, Formula, Number (2). Issue is date in number format, Settlement filled by DATE formula, Rate filled by formula, Basis - 2. 5 of 5 arguments used.');
 		// Case #11: Reference link (5). All arguments in Ref link, basis - 3. 5 of 5 arguments used.
 		oParser = new parserFormula('ACCRINTM(A100,A101,A104,A107,A109)', "A2", ws);
 		assert.ok(oParser.parse(), 'Test: ACCRINTM(A100,A101,A104,A107,A109) is parsed.');

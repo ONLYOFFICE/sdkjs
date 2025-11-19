@@ -554,9 +554,15 @@ $(function () {
 						</merror>
 						</math>
 					`);
+
+					// without rules for Unicode and LaTeX linear form
+					let str = "";
+					math.Root.Content.forEach((content) => {
+						str += content.GetTextOfElement().GetText();
+					});
 					
 					assert.strictEqual(
-						math.GetTextOfElement().GetText(),
+						str,
 						"Unrecognized element: mfraction; arguments were:1+√5and2",
 						"Add <merror>"
 					);

@@ -4471,6 +4471,10 @@ CParagraphRecalculateStateAlign.prototype.getLineBottom = function()
 	let p = this.Paragraph;
 	return p.Pages[this.wrapState.Page].Y + p.Lines[this.wrapState.Line].Bottom;
 };
+CParagraphRecalculateStateAlign.prototype.isParagraphStartFromNewPage = function()
+{
+	return this.Paragraph.IsStartFromNewPage();
+};
 
 
 function CParagraphRecalculateStateInfo()

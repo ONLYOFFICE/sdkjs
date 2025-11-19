@@ -1313,7 +1313,8 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurP
 	let oMainForm;
 	if (this.IsForm() && (oMainForm = this.GetMainForm()) && oMainForm !== this)
 	{
-		if (oMainForm.IsLabeledCheckBox())
+		let parent = this.GetParent();
+		if ((parent instanceof AscWord.CInlineLevelSdt) && parent.IsLabeledCheckBox())
 			return false;
 		
 		if (AscCommon.ContentControlTrack.Hover === nType)

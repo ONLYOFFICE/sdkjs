@@ -216,6 +216,7 @@
         this.m_aForeignCursorsId  = {};
         this.m_aForeignCursorsXY     = {};
         this.m_aForeignCursorsToShow = {};
+		this.m_nSplitRun             = 0; //
 
 
         this.m_nAllChangesSavedIndex = 0;
@@ -962,14 +963,29 @@
         this.m_aDocumentPositions.Update_DocumentPositionsOnRemove(Class, Pos, Count);
         this.m_aForeignCursorsPos.Update_DocumentPositionsOnRemove(Class, Pos, Count);
     };
-    CCollaborativeEditingBase.prototype.OnStart_SplitRun = function(SplitRun, SplitPos){
-        this.m_aDocumentPositions.OnStart_SplitRun(SplitRun, SplitPos);
-        this.m_aForeignCursorsPos.OnStart_SplitRun(SplitRun, SplitPos);
-    };
-    CCollaborativeEditingBase.prototype.OnEnd_SplitRun = function(NewRun){
-        this.m_aDocumentPositions.OnEnd_SplitRun(NewRun);
-        this.m_aForeignCursorsPos.OnEnd_SplitRun(NewRun);
-    };
+	CCollaborativeEditingBase.prototype.OnStart_SplitRun = function(SplitRun, SplitPos) {
+		++this.m_nSplitRun;
+		if (!SplitRun)
+			return;
+		this.m_aDocumentPositions.OnStart_SplitRun(SplitRun, SplitPos);
+		this.m_aForeignCursorsPos.OnStart_SplitRun(SplitRun, SplitPos);
+	};
+	CCollaborativeEditingBase.prototype.OnEnd_SplitRun = function(NewRun) {
+		--this.m_nSplitRun;
+		if (!NewRun)
+			return;
+		this.m_aDocumentPositions.OnEnd_SplitRun(NewRun);
+		this.m_aForeignCursorsPos.OnEnd_SplitRun(NewRun);
+	};
+	CCollaborativeEditingBase.prototype.IsSplitConcatRun = function() {
+		return this.m_nSplitRun > 0;
+	};
+	CCollaborativeEditingBase.prototype.OnStartConcatRun = function() {
+		++this.m_nSplitRun;
+	};
+	CCollaborativeEditingBase.prototype.OnEndConcatRun = function() {
+		--this.m_nSplitRun;
+	};
     CCollaborativeEditingBase.prototype.Update_DocumentPosition = function(DocPos){
         this.m_aDocumentPositions.Update_DocumentPosition(DocPos);
     };

@@ -103,6 +103,7 @@
 			this.pen = pen;
 
 			this.polylineForDrawer = new PolylineForDrawer(this);
+			this.overlayObject = this.polylineForDrawer;
 			this.continuousRanges = [];
 			let oAnnot = Asc.editor.getAnnotations();
 			if(oAnnot) {

@@ -2277,66 +2277,75 @@ function (window, undefined) {
 	cSUBSTITUTE.prototype.argumentsMax = 4;
 	cSUBSTITUTE.prototype.argumentsType = [argType.text, argType.text, argType.text, argType.text];
 	cSUBSTITUTE.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2], arg3 = arg[3] ? arg[3] : new cNumber(0);
+		const MAX_SIGNED_INT = 2147483647;
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2], arg3 = arg[3] ? arg[3] : new cNumber(0);
 
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]).tocString();
-		} else if (arg0 instanceof cArray) {
+		} else if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElement(0).tocString();
 		}
 
 		arg0 = arg0.tocString();
 
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
 			arg1 = arg1.cross(arguments[1]).tocString();
-		} else if (arg1 instanceof cArray) {
+		} else if (arg1.type === cElementType.array) {
 			arg1 = arg1.getElement(0).tocString();
 		}
 
 		arg1 = arg1.tocString();
 
-		if (arg2 instanceof cArea || arg2 instanceof cArea3D) {
+		if (arg2.type === cElementType.cellsRange || arg2.type === cElementType.cellsRange3D) {
 			arg2 = arg2.cross(arguments[1]).tocString();
-		} else if (arg2 instanceof cArray) {
+		} else if (arg2.type === cElementType.array) {
 			arg2 = arg2.getElement(0).tocString();
 		}
 
 		arg2 = arg2.tocString();
 
-		if (arg3 instanceof cArea || arg3 instanceof cArea3D) {
-			arg3 = arg3.cross(arguments[1]).tocNumber();
-		} else if (arg3 instanceof cArray) {
-			arg3 = arg3.getElement(0).tocNumber();
+		if (arg3.type === cElementType.cellsRange || arg3.type === cElementType.cellsRange3D) {
+			arg3 = arg3.cross(arguments[1]).tocString();
+		} else if (arg3.type === cElementType.array) {
+			arg3 = arg3.getElement(0).tocString();
 		}
 
 		arg3 = arg3.tocNumber();
 
-		if (arg0 instanceof cError) {
+		if (arg0.type === cElementType.error) {
 			return arg0;
 		}
-		if (arg1 instanceof cError) {
+		if (arg1.type === cElementType.error) {
 			return arg1;
 		}
-		if (arg2 instanceof cError) {
+		if (arg2.type === cElementType.error) {
 			return arg2;
 		}
-		if (arg3 instanceof cError) {
+		if (arg3.type === cElementType.error) {
 			return arg3;
 		}
 
-		if (arg3.getValue() < 0) {
+		let string = arg0.getValue(), old_string = arg1.getValue(), new_string = arg2.getValue(),
+			occurence = Math.floor(arg3.getValue()), index = 0, res;
+
+		if (old_string === "") {
+			return arg0;
+		}
+		
+		if ((arg[3] && occurence <= 0) || occurence >= MAX_SIGNED_INT) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		var string = arg0.getValue(), old_string = arg1.getValue(), new_string = arg2.getValue(),
-			occurence = arg3.getValue(), index = 0, res;
+		if (occurence > string.length) {
+			return arg0;
+		}
+
 		res = string.replace(new RegExp(RegExp.escape(old_string), "g"), function (equal, p1, source) {
 			index++;
-			if (occurence == 0 || occurence > source.length) {
-				return new_string;
-			} else if (occurence == index) {
+			if (occurence === 0 || occurence > source.length || occurence === index) {
 				return new_string;
 			}
+
 			return equal;
 		});
 

@@ -7526,6 +7526,9 @@
 			}
 			return "arrow";
 		};
+		EndArrow.prototype.isPresent = function () {
+			return AscFormat.isRealNumber(this.type) && this.type !== LineEndType.None && this.type !== LineEndType.vsdxNone;
+		};
 
 
 		function ConvertJoinAggType(_type) {
@@ -8039,6 +8042,11 @@
 		CLn.prototype.getWidthMM = function () {
 			const nEmu = AscFormat.isRealNumber(this.w) ? this.w : 12700;
 			return nEmu * AscCommonWord.g_dKoef_emu_to_mm;
+		};
+		CLn.prototype.isArrowPresent = function () {
+			if(this.tailEnd && this.tailEnd.isPresent() || this.headEnd && this.headEnd.isPresent())
+				return true;
+			return false;
 		};
 // -----------------------------
 

@@ -3020,6 +3020,22 @@
 			this.Memory.Seek(nStartPos);
 			this.Memory.WriteLong(nEndPos - nStartPos);
 			this.Memory.Seek(nEndPos);
+		},
+
+		ClearLastFont : function()
+		{
+			this.m_oFont =
+			{
+				Name     : "",
+				FontSize : -1,
+				Style    : -1
+			};
+
+			this.m_oTextPr  = null;
+			this.m_oGrFonts = new CGrRFonts();
+
+			this.m_oFontSlotFont    = new CFontSetup();
+			this.LastFontOriginInfo = {Name : "", Replace : null};
 		}
 	};
 
@@ -3032,8 +3048,6 @@
 		//this.DocumentInfo = "";
 		this.Memory               = new CMemory();
 		this.VectorMemoryForPrint = null;
-
-		this.ArrayPoints       = null;
 
 		this.m_oPen       = null;
 		this.m_oBrush     = null;
@@ -3165,40 +3179,21 @@
 	{
 		if (0 != this.m_lPagesCount)
 			this.m_arrayPages[this.m_lPagesCount - 1]._m(x, y);
-
-		if (this.ArrayPoints != null)
-			this.ArrayPoints[this.ArrayPoints.length] = {x : x, y : y};
 	};
 	CDocumentRenderer.prototype._l = function(x, y)
 	{
 		if (0 != this.m_lPagesCount)
 			this.m_arrayPages[this.m_lPagesCount - 1]._l(x, y);
-
-		if (this.ArrayPoints != null)
-			this.ArrayPoints[this.ArrayPoints.length] = {x : x, y : y};
 	};
 	CDocumentRenderer.prototype._c = function(x1, y1, x2, y2, x3, y3)
 	{
 		if (0 != this.m_lPagesCount)
 			this.m_arrayPages[this.m_lPagesCount - 1]._c(x1, y1, x2, y2, x3, y3);
-
-		if (this.ArrayPoints != null)
-		{
-			this.ArrayPoints[this.ArrayPoints.length] = {x : x1, y : y1};
-			this.ArrayPoints[this.ArrayPoints.length] = {x : x2, y : y2};
-			this.ArrayPoints[this.ArrayPoints.length] = {x : x3, y : y3};
-		}
 	};
 	CDocumentRenderer.prototype._c2 = function(x1, y1, x2, y2)
 	{
 		if (0 != this.m_lPagesCount)
 			this.m_arrayPages[this.m_lPagesCount - 1]._c2(x1, y1, x2, y2);
-
-		if (this.ArrayPoints != null)
-		{
-			this.ArrayPoints[this.ArrayPoints.length] = {x : x1, y : y1};
-			this.ArrayPoints[this.ArrayPoints.length] = {x : x2, y : y2};
-		}
 	};
 	CDocumentRenderer.prototype.ds= function()
 	{
@@ -3590,6 +3585,12 @@
 			this.Memory.WriteLong(nFlag);
 			this.Memory.Seek(nEndPos);
 		}
+	};
+
+	CDocumentRenderer.prototype.ClearLastFont = function()
+	{
+		if (0 !== this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].ClearLastFont();
 	};
 
 	function WriteHeadings(memory, headings)

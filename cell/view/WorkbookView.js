@@ -1145,6 +1145,9 @@
         }
       }
     });
+	if (this.cellCommentator && this.cellCommentator.worksheet && !this.cellCommentator.worksheet.workbook) {
+		this.cellCommentator.worksheet.workbook = this;
+	}
     if (0 < this.model.aComments.length) {
       this.handlers.trigger("asc_onAddComments", this.model.aComments);
     }
@@ -7637,9 +7640,6 @@
 			return;
 		}
 		if (!this._checkDesktop()) {
-			return;
-		}
-		if (!this.externalFormulaEditMode) {
 			return;
 		}
 

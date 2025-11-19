@@ -853,6 +853,7 @@ $(function () {
 			Test("\\qdrt 1/2 ", [["ParaRun", ""], ["CFraction", "∜1/2"], ["ParaRun", ""]], false, "Check radical");
 			Test("∜1 ", [["ParaRun", ""], ["CRadical", "∜1"], ["ParaRun", ""]], false, "Check radical");
 			Test("∜(1) ", [["ParaRun", ""], ["CRadical", "∜1"], ["ParaRun", ""]], false, "Check radical");
+			Test("√(-1&1+2) ", [["ParaRun", ""], ["CRadical", "√(-1&1+2)"], ["ParaRun", ""]], false, "Check radical");
 		})
 
 		QUnit.module( "Other", function ()
@@ -1140,6 +1141,25 @@ $(function () {
 
 				let strBinomial = MathContent.GetTextOfElement(0).GetText();
 				assert.strictEqual(strBinomial, '(x|y|z)', 'Check');
+			})
+			QUnit.test('Check absolute brackets inside normal brackets', function (assert)
+			{
+				Clear();
+				logicDocument.SetMathInputType(0);
+				AddText('5 1/2 ');
+				assert.ok(true, "Add text '5 1/2 '");
+
+				let para = MathContent.Root.Content[0];
+				let frac = MathContent.Root.Content[1];
+
+				let paraText = para.GetTextOfElement().GetText();
+				let fracText = frac.GetTextOfElement().GetText();
+				assert.strictEqual(paraText, '5', 'Check para');
+				assert.strictEqual(fracText, '1/2', 'Check frac');
+
+				let text = MathContent.Root.GetTextOfElement().GetText();
+
+				assert.strictEqual(text, '5 1/2', 'Check linear form is "5 1/2"');
 			})
 
 			QUnit.test('Check Dirac notion', function (assert)

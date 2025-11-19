@@ -13230,6 +13230,7 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"MUNIT\"", function (assert) {
+		ws.getRange2("A101:B102").cleanAll();
 		ws.getRange2("A101").setValue("5");
 		ws.getRange2("B102").setValue("6");
 
@@ -13259,7 +13260,10 @@ $(function () {
 
 		oParser = new parserFormula("MUNIT(A101:B102)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,1).getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,1).getValue(), 1);
 
 		oParser = new parserFormula("MUNIT({0,0;1,2;123,\"sdf\"})", "A1", ws);
 		assert.ok(oParser.parse());
@@ -13377,9 +13381,9 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: MUNIT(Table1[Column1]) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Table. Table structured reference with valid integer > 0. Returns 2x2 identity matrix. 1 argument used.');
 		// Case #15: Date. Date as serial number (large integer). Returns large identity matrix (Excel limits apply). 1 argument used.
-		//? oParser = new parserFormula('MUNIT(DATE(2025,1,1))', 'A2', ws);
-		//? assert.ok(oParser.parse(), 'Test: MUNIT(DATE(2025,1,1)) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Date. Date as serial number (large integer). Returns large identity matrix (Excel limits apply). 1 argument used.');
+		oParser = new parserFormula('MUNIT(DATE(2025,1,1))', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: MUNIT(DATE(2025,1,1)) is parsed.');
+		//? assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: Date. Date as serial number (large integer). Returns large identity matrix (Excel limits apply). 1 argument used.');
 		// Case #16: Time. Time adjusted to integer >= 1. Returns 3x3 identity matrix. 1 argument used.
 		oParser = new parserFormula('MUNIT(TIME(0,0,0)+3)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: MUNIT(TIME(0,0,0)+3) is parsed.');
@@ -13389,9 +13393,9 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: MUNIT(10) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Number. Larger valid integer. Returns 10x10 identity matrix. 1 argument used.');
 		// Case #18: String. String convertible to larger integer. Returns 100x100 identity matrix (Excel limits apply). 1 argument used.
-		//? oParser = new parserFormula('MUNIT("100")', 'A2', ws);
-		//? assert.ok(oParser.parse(), 'Test: MUNIT("100") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: String. String convertible to larger integer. Returns 100x100 identity matrix (Excel limits apply). 1 argument used.');
+		oParser = new parserFormula('MUNIT("100")', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: MUNIT("100") is parsed.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: String. String convertible to larger integer. Returns 100x100 identity matrix (Excel limits apply). 1 argument used.');
 		// Case #19: Formula. Nested formula evaluating to integer > 0. Returns 5x5 identity matrix. 1 argument used.
 		oParser = new parserFormula('MUNIT(ABS(-5))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: MUNIT(ABS(-5)) is parsed.');
@@ -13401,6 +13405,10 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: MUNIT({10,20}) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Array. Array with multiple valid integers. Returns first elements matrix (10x10 identity matrix). 1 argument used.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,1).getValue(), 1, 'Test: Positive case: Array. Array with multiple valid integers. Returns first elements matrix (10x10 identity matrix). 1 argument used.');
+		// Case #21: Formula. Nested formula evaluating to integer > 0. Returns the SUM of the matrix 1000x1000.
+		oParser = new parserFormula('SUM(MUNIT(1000))', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: SUM(MUNIT(1000)) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 1000, 'Test: Positive case: Formula. Nested formula evaluating to integer > 0. Returns the SUM of the matrix 1000x1000.');
 
 
 		// Negative cases:
@@ -13436,14 +13444,15 @@ $(function () {
 		oParser = new parserFormula('MUNIT(FALSE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: MUNIT(FALSE) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean FALSE (0) returns #NUM! error. 1 argument used.');
-		// // Case #9: Boolean. Boolean TRUE (1) returns 1x1 identity matrix (valid but edge case, treated as negative for testing). 1 argument used.
+		// Case #9: Boolean. Boolean TRUE (1) returns 1x1 identity matrix (valid but edge case, treated as negative for testing). 1 argument used.
 		oParser = new parserFormula('MUNIT(TRUE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: MUNIT(TRUE) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Negative case: Boolean. Boolean TRUE (1) returns 1x1 identity matrix (valid but edge case, treated as negative for testing). 1 argument used.');
-		// Case #10: Area. Multi-cell range returns error. 1 argument used.
+		// Case #10: Area. Multi-cell range can returns error depends on the value. 1 argument used.
 		oParser = new parserFormula('MUNIT(A104:A105)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: MUNIT(A104:A105) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Area. Multi-cell range returns error. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), '#VALUE!', 'Test: Negative case: Area. Multi-cell range can returns error depends on the value. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 1, 'Test: Negative case: Area. Multi-cell range can returns error depends on the value. 1 argument used.');
 		// Case #11: Array. Array with multiple elements returns #NUM! error (uses first element if valid). 1 argument used.
 		oParser = new parserFormula('MUNIT({1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: MUNIT({1,2,3}) is parsed.');
@@ -13457,11 +13466,11 @@ $(function () {
 		// Case #13: Name. Named range with text returns #VALUE! error. 1 argument used.
 		oParser = new parserFormula('MUNIT(TestNameArea)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: MUNIT(TestNameArea) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Test: Negative case: Name. Named range with text returns #VALUE! error. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#VALUE!", 'Test: Negative case: Name. Named range with text returns #VALUE! error. 1 argument used.');
 		// Case #14: Name3D. 3D named range with text returns #VALUE! error. 1 argument used.
 		oParser = new parserFormula('MUNIT(TestNameArea3D)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: MUNIT(TestNameArea3D) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Test: Negative case: Name3D. 3D named range with text returns #VALUE! error. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "#VALUE!", 'Test: Negative case: Name3D. 3D named range with text returns #VALUE! error. 1 argument used.');
 		// Case #16: Formula. Formula resulting in #NUM! error propagates error. 1 argument used.
 		oParser = new parserFormula('MUNIT(SQRT(-1))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: MUNIT(SQRT(-1)) is parsed.');
@@ -13475,8 +13484,8 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: MUNIT("-2") is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: String. String convertible to negative number returns #NUM! error. 1 argument used.');
 		// Case #19: Number. Excessively large number exceeds Excel limits, returns #NUM! error. 1 argument used.
-		//? oParser = new parserFormula('MUNIT(1E+307)', 'A2', ws);
-		//? assert.ok(oParser.parse(), 'Test: MUNIT(1E+307) is parsed.');
+		oParser = new parserFormula('MUNIT(1E+307)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: MUNIT(1E+307) is parsed.');
 		//? assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: Number. Excessively large number exceeds Excel limits, returns #NUM! error. 1 argument used.');
 
 		// Bounded cases:
@@ -13485,19 +13494,17 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: MUNIT(1) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Bounded case: Number. Minimum valid value (n=1). Returns 1x1 identity matrix. 1 argument used.');
 		// Case #2: Number. Maximum valid value for Excel array size (approximate limit). Returns 255x255 identity matrix. 1 argument used.
-		//? oParser = new parserFormula('MUNIT(255)', 'A2', ws);
-		//? assert.ok(oParser.parse(), 'Test: MUNIT(255) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Bounded case: Number. Maximum valid value for Excel array size (approximate limit). Returns 255x255 identity matrix. 1 argument used.');
+		oParser = new parserFormula('MUNIT(255)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: MUNIT(255) is parsed.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Bounded case: Number. Maximum valid value for Excel array size (approximate limit). Returns 255x255 identity matrix. 1 argument used.');
 		// Case #3: Array. Array with minimum and maximum valid integers. Returns 1x1 identity matrix (uses first element). 1 argument used.
 		oParser = new parserFormula('MUNIT({1,255})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: MUNIT({1,255}) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Bounded case: Array. Array with minimum and maximum valid integers. Returns 1x1 identity matrix (uses first element). 1 argument used.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,1).getValue(), 1, 'Test: Bounded case: Array. Array with minimum and maximum valid integers. Returns 1x1 identity matrix (uses first element). 1 argument used.');
 
-		// Need to fix: app crash when we get big number in args, cellsRange link problem
+		// Need to fix: app crash when we get big number in arg
 		// Case #15: Date. Date as serial number (large integer)
-		// Case #18: String. String convertible to larger integer. Returns 100x100 identity matrix (Excel limits apply). 1 argument used.
-		// Case #10: Area. Multi-cell range returns error. 1 argument used.
 		// Case #19: Number. Excessively large number exceeds Excel limits, returns #NUM! error. 1 argument used.Case #2: Number. Maximum valid value for Excel array size (approximate limit).
 
 	});
@@ -18285,6 +18292,7 @@ $(function () {
 		ws2.getRange2("A1").setValue("0.5");
 		ws2.getRange2("A2").setValue("1.5");
 		ws2.getRange2("A3").setValue("Text");
+		ws2.getRange2("A4").setValue("TRUE");
 		ws2.getRange2("B1").setValue("-1");
 		ws2.getRange2("C1").setValue("1");
 		// DefNames.
@@ -18303,31 +18311,31 @@ $(function () {
 		// Case #0: Number(3), Array. Basic valid input: numbers for x, n, m, and array for coefficients. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(2,1,1,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(2,1,1,{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 34, 'Test: Positive case: Number(3), Array. Basic valid input: numbers for x, n, m, and array for coefficients. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 34, 'Test: Positive case: Number(3), Array. Basic valid input: numbers for x, n, m, and array for coefficients. 4 of 4 arguments used.');
 		// Case #1: Formula(3), Array. x as formula returning number. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(SQRT(4),1,1,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(SQRT(4),1,1,{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 34, 'Test: Positive case: Formula(3), Array. x as formula returning number. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 34, 'Test: Positive case: Formula(3), Array. x as formula returning number. 4 of 4 arguments used.');
 		// Case #2: Number, Formula, Number, Array. n as formula returning number. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(2,SQRT(1),1,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(2,SQRT(1),1,{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 34, 'Test: Positive case: Number, Formula, Number, Array. n as formula returning number. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 34, 'Test: Positive case: Number, Formula, Number, Array. n as formula returning number. 4 of 4 arguments used.');
 		// Case #3: Number(2), Formula, Array. m as formula returning number. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(2,1,SQRT(1),{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(2,1,SQRT(1),{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 34, 'Test: Positive case: Number(2), Formula, Array. m as formula returning number. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 34, 'Test: Positive case: Number(2), Formula, Array. m as formula returning number. 4 of 4 arguments used.');
 		// Case #4: String(3), Array. String arguments convertible to numbers. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM("2","1","1",{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM("2","1","1",{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 34, 'Test: Positive case: String(3), Array. String arguments convertible to numbers. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 34, 'Test: Positive case: String(3), Array. String arguments convertible to numbers. 4 of 4 arguments used.');
 		// Case #5: Reference link(3), Array. Reference links to valid numbers. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(A100,A101,A102,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(A100,A101,A102,{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 6, 'Test: Positive case: Reference link(3), Array. Reference links to valid numbers. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 6, 'Test: Positive case: Reference link(3), Array. Reference links to valid numbers. 4 of 4 arguments used.');
 		// Case #6: Area(3), Array. Single-cell ranges for x, n, m. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(A100:A100,A101:A101,A102:A102,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(A100:A100,A101:A101,A102:A102,{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 6, 'Test: Positive case: Area(3), Array. Single-cell ranges for x, n, m. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 6, 'Test: Positive case: Area(3), Array. Single-cell ranges for x, n, m. 4 of 4 arguments used.');
 		// Case #7: Number(3), Area. Coefficients as multi-cell range. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(2,1,1,A103:A105)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(2,1,1,A103:A105) is parsed.');
@@ -18335,11 +18343,11 @@ $(function () {
 		// Case #8: Name(3), Array. Named ranges for x, n, m. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(TestName,TestName1,TestName2,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(TestName,TestName1,TestName2,{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), -0.000976563, 'Test: Positive case: Name(3), Array. Named ranges for x, n, m. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), -0.0009765625, 'Test: Positive case: Name(3), Array. Named ranges for x, n, m. 4 of 4 arguments used.');
 		// Case #9: Name3D(3), Array. 3D named ranges for x, n, m. 4 of 4 arguments used.
-		oParser = new parserFormula('SERIESSUM(TestName3D,TestName32,TestName3D,{1,2,3})', 'A2', ws);
+		oParser = new parserFormula('SERIESSUM(TestName3D,TestName3D,TestName3D,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(TestName3D,TestName3D,TestName3D,{1,2,3}) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Test: Positive case: Name3D(3), Array. 3D named ranges for x, n, m. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), -4, 'Test: Positive case: Name3D(3), Array. 3D named ranges for x, n, m. 4 of 4 arguments used.');
 		// Case #10: Ref3D(3), Array. 3D references for x, n, m. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(Sheet2!A1,Sheet2!A2,Sheet2!A3,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(Sheet2!A1,Sheet2!A2,Sheet2!A3,{1,2,3}) is parsed.');
@@ -18355,41 +18363,61 @@ $(function () {
 		// Case #13: Date(3), Array. x as date serial number. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(DATE(2025,1,1),1,1,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(DATE(2025,1,1),1,1,{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 285547000000000, 'Test: Positive case: Date(3), Array. x as date serial number. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 285547424442522, 'Test: Positive case: Date(3), Array. x as date serial number. 4 of 4 arguments used.');
 		// Case #14: Time(3), Array. x as time adjusted to valid number. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(TIME(12,0,0)+1,1,1,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(TIME(12,0,0)+1,1,1,{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 16.125, 'Test: Positive case: Time(3), Array. x as time adjusted to valid number. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 16.125, 'Test: Positive case: Time(3), Array. x as time adjusted to valid number. 4 of 4 arguments used.');
 		// Case #15: Number(3), Array. n as zero (valid). 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(2,0,1,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(2,0,1,{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 17, 'Test: Positive case: Number(3), Array. n as zero (valid). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 17, 'Test: Positive case: Number(3), Array. n as zero (valid). 4 of 4 arguments used.');
 		// Case #16: Number(3), Array. m as zero (valid). 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(2,1,0,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(2,1,0,{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 12, 'Test: Positive case: Number(3), Array. m as zero (valid). 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 12, 'Test: Positive case: Number(3), Array. m as zero (valid). 4 of 4 arguments used.');
 		// Case #17: String(3), Array. Numeric strings converted to numbers. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM("1.5","1","1",{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM("1.5","1","1",{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 16.125, 'Test: Positive case: String(3), Array. Numeric strings converted to numbers. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 16.125, 'Test: Positive case: String(3), Array. Numeric strings converted to numbers. 4 of 4 arguments used.');
 		// Case #18: Number(3), Array. Float numbers for x, n, m. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(1.5,1,1,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(1.5,1,1,{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 16.125, 'Test: Positive case: Number(3), Array. Float numbers for x, n, m. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 16.125, 'Test: Positive case: Number(3), Array. Float numbers for x, n, m. 4 of 4 arguments used.');
 		// Case #19: Formula(3), Array. Nested IF formula for x. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(IF(TRUE,2,1),1,1,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(IF(TRUE,2,1),1,1,{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 34, 'Test: Positive case: Formula(3), Array. Nested IF formula for x. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 34, 'Test: Positive case: Formula(3), Array. Nested IF formula for x. 4 of 4 arguments used.');
 		// Case #20: Number(3), Array. Float coefficients in array. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(2,1,1,{1.5,2.5,3.5})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(2,1,1,{1.5,2.5,3.5}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 41, 'Test: Positive case: Number(3), Array. Float coefficients in array. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 41, 'Test: Positive case: Number(3), Array. Float coefficients in array. 4 of 4 arguments used.');
+		// Case #21: Array, Number(2), Array. Float coefficients in array. 4 of 4 arguments used.
+		oParser = new parserFormula('SERIESSUM({1,2,3},1,1,{1.5,2.5,3.5})', 'A2', ws);
+		oParser.setArrayFormulaRef(ws.getRange2("A1:C2").bbox);
+		assert.ok(oParser.parse(), 'Test: SERIESSUM({1,2,3},1,1,{1.5,2.5,3.5}) is parsed.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 7.5, 'Test: Positive case: Number(3), Array. Float coefficients in array. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,1).getValue(), 41, 'Test: Positive case: Number(3), Array. Float coefficients in array. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,2).getValue(), 121.5, 'Test: Positive case: Number(3), Array. Float coefficients in array. 4 of 4 arguments used.');
+		// Case #22: Cell3D, Number(2), Array . Float coefficients in array. 4 of 4 arguments used.
+		oParser = new parserFormula('SERIESSUM(Sheet2!A2,1,1,{1.5,2.5,3.5})', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: SERIESSUM(Sheet2!A2,1,1,{1.5,2.5,3.5}) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 19.6875, 'Test: Positive case: Number(3), Array. Float coefficients in array. 4 of 4 arguments used.');
+		// Case #23: Cell3D(Text), Number(2), . Float coefficients in array. 4 of 4 arguments used.
+		oParser = new parserFormula('SERIESSUM(Sheet2!A3,1,1,{1.5,2.5,3.5})', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: SERIESSUM(Sheet2!A3,1,1,{1.5,2.5,3.5}) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Test: Positive case: Number(3), Array. Float coefficients in array. 4 of 4 arguments used.');
+		// Case #24: Cell3D(Boolean), Number(2), . Float coefficients in array. 4 of 4 arguments used.
+		oParser = new parserFormula('SERIESSUM(Sheet2!A4,1,1,{1.5,2.5,3.5})', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: SERIESSUM(Sheet2!A4,1,1,{1.5,2.5,3.5}) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Test: Positive case: Number(3), Array. Float coefficients in array. 4 of 4 arguments used.');
+
 
 		// Negative cases:
 		// Case #1: Number(3), Array. Negative x may cause #NUM! depending on coefficients. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(-1,1,1,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(-1,1,1,{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), -2, 'Test: Negative case: Number(3), Array. Negative x may cause #NUM! depending on coefficients. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), -2, 'Test: Negative case: Number(3), Array. Negative x may cause #NUM! depending on coefficients. 4 of 4 arguments used.');
 		// Case #2: Number(2), String, Array. Non-numeric string for m returns #VALUE!. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(2,1,"abc",{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(2,1,"abc",{1,2,3}) is parsed.');
@@ -18397,7 +18425,7 @@ $(function () {
 		// Case #3: Number(2), Error, Array. Error value for m propagates #N/A. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(2,1,NA(),{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(2,1,NA(),{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number(2), Error, Array. Error value for m propagates #N/A. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number(2), Error, Array. Error value for m propagates #N/A. 4 of 4 arguments used.');
 		// Case #4: Number(2), Boolean, Array. Boolean for m returns #VALUE!. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(2,1,FALSE,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(2,1,FALSE,{1,2,3}) is parsed.');
@@ -18409,19 +18437,19 @@ $(function () {
 		// Case #6: Number(3), Empty. Empty coefficients returns #VALUE!. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(2,1,1,)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(2,1,1,) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number(3), Empty. Empty coefficients returns #VALUE!. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number(3), Empty. Empty coefficients returns #VALUE!. 4 of 4 arguments used.');
 		// Case #7: Empty, Number(2), Array. Empty x returns #VALUE!. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(,1,1,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(,1,1,{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty, Number(2), Array. Empty x returns #VALUE!. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty, Number(2), Array. Empty x returns #VALUE!. 4 of 4 arguments used.');
 		// Case #8: Number, Empty, Number, Array. Empty n returns #VALUE!. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(2,,1,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(2,,1,{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number, Empty, Number, Array. Empty n returns #VALUE!. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number, Empty, Number, Array. Empty n returns #VALUE!. 4 of 4 arguments used.');
 		// Case #9: Number(2), Empty, Array. Empty m returns #VALUE!. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(2,1,,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(2,1,,{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number(2), Empty, Array. Empty m returns #VALUE!. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number(2), Empty, Array. Empty m returns #VALUE!. 4 of 4 arguments used.');
 		// Case #10: Area(3), Array. Multi-cell range for x returns #VALUE!. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(A100:A101,A102:A102,A103:A103,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(A100:A101,A102:A102,A103:A103,{1,2,3}) is parsed.');
@@ -18433,10 +18461,10 @@ $(function () {
 		// Case #12: Ref3D(3), Array. 3D ref to text returns #VALUE!. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(Sheet2!A4,Sheet2!A5,Sheet2!A6,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(Sheet2!A4,Sheet2!A5,Sheet2!A6,{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Ref3D(3), Array. 3D ref to text returns #VALUE!. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Ref3D(3), Array. 3D ref to text returns #VALUE!. 4 of 4 arguments used.');
 		// Case #13: Name(3), Array. Named range with text returns #VALUE!. 4 of 4 arguments used.
-		oParser = new parserFormula('SERIESSUM(TestNameArea,TestName1,TestName2,{1,2,3})', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: SERIESSUM(TestNameArea,TestName1,TestName2,{1,2,3}) is parsed.');
+		oParser = new parserFormula('SERIESSUM(TestNameArea2,TestName1,TestName2,{1,2,3})', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: SERIESSUM(TestNameArea2,TestName1,TestName2,{1,2,3}) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Name(3), Array. Named range with text returns #VALUE!. 4 of 4 arguments used.');
 		// Case #14: Name3D(3), Array. 3D named range with text returns #VALUE!. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(TestNameArea3D2,TestName3D,TestName3D,{1,2,3})', 'A2', ws);
@@ -18449,15 +18477,15 @@ $(function () {
 		// Case #16: Number(3), Array. x as zero may cause #NUM! with certain n values. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(0,1,1,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(0,1,1,{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: Number(3), Array. x as zero may cause #NUM! with certain n values. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: Number(3), Array. x as zero may cause #NUM! with certain n values. 4 of 4 arguments used.');
 		// Case #17: Number(3), Array. Negative n returns #NUM!. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(2,-1,1,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(2,-1,1,{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 8.5, 'Test: Negative case: Number(3), Array. Negative n returns #NUM!. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 8.5, 'Test: Negative case: Number(3), Array. Negative n returns #NUM!. 4 of 4 arguments used.');
 		// Case #18: Number(3), Array. Negative m returns #NUM!. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(2,1,-1,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(2,1,-1,{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 5.5, 'Test: Negative case: Number(3), Array. Negative m returns #NUM!. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 5.5, 'Test: Negative case: Number(3), Array. Negative m returns #NUM!. 4 of 4 arguments used.');
 		// Case #19: Area3D(3), Array. 3D multi-cell range for x returns #VALUE!. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(Sheet2!A1:A2,Sheet2!A3:A3,Sheet2!A4:A4,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(Sheet2!A1:A2,Sheet2!A3:A3,Sheet2!A4:A4,{1,2,3}) is parsed.');
@@ -18471,31 +18499,15 @@ $(function () {
 		// Case #1: Number(3), Array. Minimum valid Excel numbers for x and coefficients. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(1E-307,0,0,{1E-307,1E-307})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(1E-307,0,0,{1E-307,1E-307}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 2e-307, 'Test: Bounded case: Number(3), Array. Minimum valid Excel numbers for x and coefficients. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 2e-307, 'Test: Bounded case: Number(3), Array. Minimum valid Excel numbers for x and coefficients. 4 of 4 arguments used.');
 		// Case #2: Number(3), Array. Maximum valid Excel numbers for x and coefficients. 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(1E+307,0,0,{1E+307,1E+307})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(1E+307,0,0,{1E+307,1E+307}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 2e+307, 'Test: Bounded case: Number(3), Array. Maximum valid Excel numbers for x and coefficients. 4 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 2e+307, 'Test: Bounded case: Number(3), Array. Maximum valid Excel numbers for x and coefficients. 4 of 4 arguments used.');
 		// Case #3: Number(3), Array. Maximum integer values for n and m (Excelâ??s 32-bit integer limit). 4 of 4 arguments used.
 		oParser = new parserFormula('SERIESSUM(1,2^31-1,2^31-1,{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SERIESSUM(1,2^31-1,2^31-1,{1,2,3}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 6, 'Test: Bounded case: Number(3), Array. Maximum integer values for n and m (Excelâ??s 32-bit integer limit). 4 of 4 arguments used.');
-
-		// TODO множественные проблемы в рассчетах, пересмотреть функцию целиком
-		// Need to fix:
-		// Case #0: Number(3), Array. Basic valid input: numbers for x, n, m, and array for coefficients. 4 of 4 arguments used.
-		// Case #1: Formula(3), Array. x as formula returning number. 4 of 4 arguments used.
-		// Case #2: Number, Formula, Number, Array. n as formula returning number. 4 of 4 arguments used.
-		// Case #3: Number(2), Formula, Array. m as formula returning number. 4 of 4 arguments used.
-		// Case #4: String(3), Array. String arguments convertible to numbers. 4 of 4 arguments used.
-		// Case #5: Reference link(3), Array. Reference links to valid numbers. 4 of 4 arguments used.
-		// Case #6: Area(3), Array. Single-cell ranges for x, n, m. 4 of 4 arguments used.
-		// Case #8: Name(3), Array. Named ranges for x, n, m. 4 of 4 arguments used.
-		// Case #13: Date(3), Array. x as date serial number. 4 of 4 arguments used.
-		// Case #14: Time(3), Array. x as time adjusted to valid number. 4 of 4 arguments used.
-		// Case #15: Number(3), Array. n as zero (valid). 4 of 4 arguments used.
-		// Case #16: Number(3), Array. m as zero (valid). 4 of 4 arguments used.
-		// Case #17: String(3), Array. Numeric strings converted to numbers. 4 of 4 arguments used.
+		assert.strictEqual(oParser.calculate().getValue(), 6, 'Test: Bounded case: Number(3), Array. Maximum integer values for n and m (Excelâ??s 32-bit integer limit). 4 of 4 arguments used.');
 
 
 		//TODO нужна другая функция для тестирования

@@ -6102,6 +6102,7 @@ function (window, undefined) {
 			this.Class = (undefined !== obj.Class) ? obj.Class : null;
 			this.Anchor = (undefined !== obj.Anchor) ? obj.Anchor : null;
 			this.Heading = (obj.Heading ? obj.Heading : null);
+			this.NoCtrl = (obj.NoCtrl ? obj.NoCtrl : false);
 		}
 		else {
 			this.Text = null;
@@ -6110,6 +6111,7 @@ function (window, undefined) {
 			this.Class = null;
 			this.Anchor = null;
 			this.Heading = null;
+			this.NoCtrl = false;
 		}
 	}
 
@@ -6158,6 +6160,12 @@ function (window, undefined) {
 	CHyperlinkProperty.prototype.get_Heading = function () {
 		return this.Heading;
 	};
+	CHyperlinkProperty.prototype.put_NoCtrl = function (bNoCtrl) {
+		this.NoCtrl = bNoCtrl;
+	};
+	CHyperlinkProperty.prototype.get_NoCtrl = function () {
+		return this.NoCtrl;
+	};
 
 	window['Asc']['CHyperlinkProperty'] = window['Asc'].CHyperlinkProperty = CHyperlinkProperty;
 	CHyperlinkProperty.prototype['get_Value'] = CHyperlinkProperty.prototype.get_Value;
@@ -6175,6 +6183,8 @@ function (window, undefined) {
 	CHyperlinkProperty.prototype['is_Heading'] = CHyperlinkProperty.prototype.is_Heading;
 	CHyperlinkProperty.prototype['put_Heading'] = CHyperlinkProperty.prototype.put_Heading;
 	CHyperlinkProperty.prototype['get_Heading'] = CHyperlinkProperty.prototype.get_Heading;
+	CHyperlinkProperty.prototype['put_NoCtrl'] = CHyperlinkProperty.prototype.put_NoCtrl;
+	CHyperlinkProperty.prototype['get_NoCtrl'] = CHyperlinkProperty.prototype.get_NoCtrl;
 
 
 	/**

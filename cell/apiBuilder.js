@@ -23095,7 +23095,7 @@
 	 */
 	ApiColorScaleCriterion.prototype.GetIndex = function() {
 		//starts with 0
-		return this.index + 1;
+		return this.index;
 		/*if (!this.colorScaleElement || !this.colorScaleElement.aCFVOs) {
 			return 1;
 		}

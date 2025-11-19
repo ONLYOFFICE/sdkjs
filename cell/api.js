@@ -1247,6 +1247,7 @@ var editor;
           "delimiter": option.asc_getDelimiter(),
           "delimiterChar": option.asc_getDelimiterChar(),
           "codepage": option.asc_getCodePageOrDefault(),
+          "lcid": this.asc_getLocaleLCID(),
           "nobase64": true
         };
         sendCommand(this, null, v);
@@ -1260,6 +1261,7 @@ var editor;
           "c": "reopen",
           "title": this.documentTitle,
           "password": option.asc_getPassword(),
+          "lcid": this.asc_getLocaleLCID(),
           "nobase64": true
         };
         sendCommand(this, null, v);
@@ -3186,9 +3188,9 @@ var editor;
 		this.sendStandartTextures();
 		this.sendMathToMenu();
 
-		this._applyPreOpenLocks();
 		// Применяем пришедшие при открытии изменения
 		this._applyFirstLoadChanges();
+		this._applyPreOpenLocks();
 		// Go to if sent options
 		this.goTo();
 

@@ -159,7 +159,7 @@
 				let isOnOpen    = Asc.editor.getDocumentRenderer().IsOpenFormsInProgress;
 				let nCharLimit	= this.ParentPDF.GetCharLimit();
 				
-				if (false == isOnOpen && bIgnoreCount !== true) {
+				if (false == isOnOpen && bIgnoreCount !== true && Asc.editor.isDocumentLoadComplete) {
 					let nCharsCount = AscWord.GraphemesCounter.GetCount(codePoints, this.GetCalculatedTextPr());
 					
 					if (nCharsCount > nCharLimit)

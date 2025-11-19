@@ -435,6 +435,10 @@
 	CGraphicsBase.prototype.DrawSpellingLine = function(y0, x0, x1, w)
 	{
 	};
+	CGraphicsBase.prototype.drawCustomRange = function(handlerId, rangeId, x0, y0, w, h, baseLine)
+	{
+	
+	};
 
 	CGraphicsBase.prototype.drawCollaborativeChanges = function(x, y, w, h, Color)
 	{

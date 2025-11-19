@@ -84,6 +84,17 @@
         this._filled = bValue;
         this.SetDrawHighlight(!bValue);
     };
+    CSignatureField.prototype.IsFilled = function() {
+        return this._filled;
+    };
+    CSignatureField.prototype.SetDrawHighlight = function(bDraw) {
+        if (this.IsFilled()) {
+            this._needDrawHighlight = false;
+        }
+        else {
+            this._needDrawHighlight = bDraw;
+        }
+    };
     /**
      * Synchronizes this field with fields with the same name.
      * @memberof CSignatureField

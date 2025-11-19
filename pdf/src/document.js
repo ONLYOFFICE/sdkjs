@@ -548,31 +548,31 @@ var CPresentation = CPresentation || function(){};
         let sFormType = "";
         switch (nFieldType) {
             case AscPDF.FIELD_TYPES.button: {
-                sFormType += "Button";
+                sFormType += AscCommon.translateManager.getValue("Button");
                 break;
             }
             case AscPDF.FIELD_TYPES.radiobutton: {
-                sFormType += "Group";
+                sFormType += AscCommon.translateManager.getValue("Group");
                 break;
             }
             case AscPDF.FIELD_TYPES.checkbox: {
-                sFormType += "Checkbox";
+                sFormType += AscCommon.translateManager.getValue("Checkbox");
                 break;
             }
             case AscPDF.FIELD_TYPES.text: {
-                sFormType += "Text";
+                sFormType += AscCommon.translateManager.getValue("Text");
                 break;
             }
             case AscPDF.FIELD_TYPES.combobox: {
-                sFormType += "Dropdown";
+                sFormType += AscCommon.translateManager.getValue("Dropdown");
                 break;
             }
             case AscPDF.FIELD_TYPES.listbox: {
-                sFormType += "Listbox";
+                sFormType += AscCommon.translateManager.getValue("Listbox");
                 break;
             }
             case AscPDF.FIELD_TYPES.signature: {
-                sFormType += "Signature";
+                sFormType += AscCommon.translateManager.getValue("Signature");
                 break;
             }
         }
@@ -1182,6 +1182,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         this.SetNeedUpdateSearch(false);
+        this.SearchEngine.StartTextAround();
 
         Asc.editor.sendEvent("asc_onUpdateRedactState");
     };
@@ -1289,19 +1290,20 @@ var CPresentation = CPresentation || function(){};
         oNextForm.Recalculate();
         oNextForm.SetDrawHighlight(false);
         
-        if (oNextForm.IsNeedDrawFromStream() == true && oNextForm.GetType() != AscPDF.FIELD_TYPES.button) {
+        let nFieldType = oNextForm.GetType();
+        if (oNextForm.IsNeedDrawFromStream() == true && nFieldType != AscPDF.FIELD_TYPES.button && nFieldType != AscPDF.FIELD_TYPES.signature) {
             oNextForm.SetDrawFromStream(false);
         }
         
         oNextForm.onFocus();
-        if (oNextForm.GetType() != AscPDF.FIELD_TYPES.button) {
+        if (nFieldType != AscPDF.FIELD_TYPES.button && nFieldType != AscPDF.FIELD_TYPES.signature) {
             oNextForm.AddToRedraw();
         }
 
         let callbackAfterFocus = function() {
             oNextForm.SetInForm(true);
 
-            switch (oNextForm.GetType()) {
+            switch (nFieldType) {
                 case AscPDF.FIELD_TYPES.text:
                 case AscPDF.FIELD_TYPES.combobox:
                     this.SetLocalHistory();
@@ -1375,19 +1377,20 @@ var CPresentation = CPresentation || function(){};
         oNextForm.Recalculate();
         oNextForm.SetDrawHighlight(false);
         
-        if (oNextForm.IsNeedDrawFromStream() == true && oNextForm.GetType() != AscPDF.FIELD_TYPES.button) {
+        let nFieldType = oNextForm.GetType();
+        if (oNextForm.IsNeedDrawFromStream() == true && nFieldType != AscPDF.FIELD_TYPES.button && nFieldType != AscPDF.FIELD_TYPES.signature) {
             oNextForm.SetDrawFromStream(false);
         }
         
         oNextForm.onFocus();
-        if (oNextForm.GetType() != AscPDF.FIELD_TYPES.button) {
+        if (nFieldType != AscPDF.FIELD_TYPES.button && nFieldType != AscPDF.FIELD_TYPES.signature) {
             oNextForm.AddToRedraw();
         }
 
         let callbackAfterFocus = function() {
             oNextForm.SetInForm(true);
 
-            switch (oNextForm.GetType()) {
+            switch (nFieldType) {
                 case AscPDF.FIELD_TYPES.text:
                 case AscPDF.FIELD_TYPES.combobox:
                     this.SetLocalHistory();
@@ -2516,6 +2519,24 @@ var CPresentation = CPresentation || function(){};
                 if (oMouseMoveAnnot)
                     oMouseMoveAnnot.onMouseEnter();
             }
+
+            if (oMouseMoveLink && !oMouseMoveField && !oMouseMoveAnnot && !oMouseMoveDrawing) {
+                if (oMouseMoveLink["link"]) {
+                    let oMMData   = new AscCommon.CMouseMoveData();
+                    let oCoords   = AscPDF.GetGlobalCoordsByPageCoords(pageObjectOrig.x, pageObjectOrig.y, pageObjectOrig.index);
+                    oMMData.X_abs = oCoords.X - 5;
+                    oMMData.Y_abs = oCoords.Y;
+                    oMMData.Type = Asc.c_oAscMouseMoveDataTypes.Hyperlink;
+                    oMMData.Hyperlink = new Asc.CHyperlinkProperty({
+                        Text: null,
+                        Value: oMouseMoveLink["link"],
+                        ToolTip: oMouseMoveLink["link"],
+                        Class: null,
+                        NoCtrl: true
+                    });
+                    Asc.editor.sync_MouseMoveCallback(oMMData);
+                }
+            }
         }
 
         this.Api.sync_MouseMoveEndCallback();
@@ -2730,7 +2751,7 @@ var CPresentation = CPresentation || function(){};
             oController.updateCursorType(pageObject.index, X, Y, e, false);
             oDrDoc.UnlockCursorType();
         }
-        else if (this.mouseDownLinkObject && this.mouseDownLinkObject == oMouseUpLink) {
+        else if (e.Button !== 2 && this.mouseDownLinkObject && this.mouseDownLinkObject == oMouseUpLink) {
             oViewer.navigateToLink(oMouseUpLink);
         }
         
@@ -3234,6 +3255,9 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.SetPageRotate = function(nPage, nAngle) {
 		let oViewer     = this.Viewer;
         let oPageInfo   = this.GetPageInfo(nPage);
+        if (!oPageInfo) {
+            return false;
+        }
 
         oPageInfo.SetRotate(nAngle);
 
@@ -4078,16 +4102,18 @@ var CPresentation = CPresentation || function(){};
         
         let actionCompleted = true;
         if (this.Action.CancelAction) {
-            let arrChanges = [];
-            for (var nIndex = 0, nPointsCount = this.Action.PointsCount; nIndex < nPointsCount; ++nIndex)
-            {
-                arrChanges = arrChanges.concat(this.History.Undo());
+            if (this.History.Can_Undo()) {
+                let arrChanges = [];
+                for (var nIndex = 0, nPointsCount = this.Action.PointsCount; nIndex < nPointsCount; ++nIndex) {
+                    arrChanges = arrChanges.concat(this.History.Undo());
+                }
+
+                if (arrChanges.length)
+                    this.RecalculateByChanges(arrChanges);
+
+                this.History.ClearRedo();
             }
-
-            if (arrChanges.length)
-                this.RecalculateByChanges(arrChanges);
-
-            this.History.ClearRedo();
+            
             actionCompleted = false;
 
             if (this.canSendLockedFormsWarning) {
@@ -7648,9 +7674,19 @@ var CPresentation = CPresentation || function(){};
                 forUpdateIdxs.push(curIdx);
             });
 
+            this.SetNeedUpdateSearch(true);
             this.Viewer.onUpdatePages(forUpdateIdxs);
 
 		}, AscDFH.historydescription_Pdf_Apply_Redact, this);
+    };
+    CPDFDoc.prototype.AddRedactAnnotBySelect = function() {
+        let oFile = this.Viewer.file;
+
+        this.DoAction(function() {
+            let aSelQuads = oFile.getSelectionQuads();
+
+            this.AddRedactAnnot(aSelQuads);
+        }, AscDFH.historydescription_Pdf_AddAnnot, this);  
     };
 
     CPDFDoc.prototype.SetRedactData = function(sRedactId, nPage, aQuadsFlat, oRenderMemory) {
@@ -9496,6 +9532,9 @@ var CPresentation = CPresentation || function(){};
 
         if (formJson["display"]) {
             oForm.SetDisplay(formJson["display"]);
+        }
+        if (formJson["tooltip"]) {
+            oForm.SetTooltip(formJson["tooltip"]);
         }
         
         if (formJson["sort"] != null) {

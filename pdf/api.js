@@ -1466,6 +1466,10 @@
 			})
 		}, AscDFH.historydescription_Pdf_ContextMenuRemove);
 	};
+	PDFEditorApi.prototype.AddRedactBySelect = function() {
+		let oDoc = this.getPDFDoc();
+		oDoc.AddRedactAnnotBySelect();
+	}
 
 	/////////////////////////////////////////////////////////////
 	///////// For filed
@@ -3164,7 +3168,9 @@
 			return null;
 		}
 
-		let oColor = oMouseDownAnnot.GetRGBColor(oMouseDownAnnot.GetStrokeColor());
+		let aInnerColor = oMouseDownAnnot.IsRedact() ? oMouseDownAnnot.GetFillColor() : oMouseDownAnnot.GetStrokeColor();
+		let oColor = oMouseDownAnnot.GetRGBColor(aInnerColor);
+		
 		oColor["r"] = oColor.r;
         oColor["g"] = oColor.g;
         oColor["b"] = oColor.b;
@@ -5093,6 +5099,7 @@
 	PDFEditorApi.prototype['ApplyRedact']		= PDFEditorApi.prototype.ApplyRedact;
 	PDFEditorApi.prototype['HasRedact']			= PDFEditorApi.prototype.HasRedact;
 	PDFEditorApi.prototype['RemoveAllRedact']	= PDFEditorApi.prototype.RemoveAllRedact;
+	PDFEditorApi.prototype['AddRedactBySelect']	= PDFEditorApi.prototype.AddRedactBySelect;
 
 	// forms
 	PDFEditorApi.prototype['IsEditFieldsMode']			= PDFEditorApi.prototype.IsEditFieldsMode;
