@@ -3188,9 +3188,9 @@ var editor;
 		this.sendStandartTextures();
 		this.sendMathToMenu();
 
-		this._applyPreOpenLocks();
 		// Применяем пришедшие при открытии изменения
 		this._applyFirstLoadChanges();
+		this._applyPreOpenLocks();
 		// Go to if sent options
 		this.goTo();
 
