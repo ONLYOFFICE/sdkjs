@@ -11600,14 +11600,14 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
                 return oThis.ReadParagraphContent(t, l, paragraph);
             });
         }
-		// else if (c_oSerParType.ParaID === type)
-		// {
-		// 	paragraph.SetParaId(this.stream.GetLong());
-		// }
-		// else if (c_oSerParType.TextID === type)
-		// {
-		// 	paragraph.SetTextId(this.stream.GetLong());
-		// }
+		else if (c_oSerParType.ParaID === type)
+		{
+			paragraph.SetParaId(this.stream.GetLong());
+		}
+		else if (c_oSerParType.TextID === type)
+		{
+			paragraph.SetTextId(this.stream.GetLong());
+		}
         else
             res = c_oSerConstants.ReadUnknown;
         return res;
