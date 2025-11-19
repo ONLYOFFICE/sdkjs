@@ -254,15 +254,7 @@ function CBuilderBinaries(oClass, arrBinary) {
 		const oThis = this;
 		if (!AscCommon.checkOOXMLSignature(oThis.binary)) {
 			arrPromiseFunctions.push(function() {
-				return new Promise(function(resolve) {
-					const xlsyBinary = ("XLSY;v2;" + oThis.binary.length + ";" + AscCommon.Base64.encode(oThis.binary)).toUtf8();
-					Asc.editor.getConvertedXLSXFileFromUrl({data: xlsyBinary}, Asc.c_oAscFileType.XLSX, function(arrBinaryData) {
-						if (arrBinaryData) {
-							oThis.setBinary(arrBinaryData);
-							resolve();
-						}
-					});
-				});
+				return AscCommon.g_oBinaryCacheManager.getFormatBinary(oThis.binary);
 			});
 		}
 	};

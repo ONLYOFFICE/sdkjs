@@ -305,6 +305,7 @@
 		const oFile = new AscCommon.OpenFileResult();
 		oFile.bSerFormat = AscCommon.checkStreamSignature(sStream, AscCommon.c_oSerFormat.Signature);
 		oFile.data = sStream;
+		oFile.isDecodedData = true;
 		this.api.asc_CloseFile();
 		AscCommon.g_oDocumentUrls.documentUrl = oInfo["documentUrl"];
 		this.initBlob(oInfo["blobUrl2Data"], oInfo["url2BlobUrl"]);
@@ -1124,7 +1125,7 @@
 	CBinaryCacheManager.prototype.addBinary = function(binary) {
 		binary = binary instanceof Uint8Array ? binary : new Uint8Array(binary);
 		const oThis = this;
-		return this.getXLSXBinary(binary).then(function(arrXLSXBinary) {
+		return this.getFormatBinary(binary).then(function(arrXLSXBinary) {
 			return oThis.loadBinaryToServer(arrXLSXBinary);
 		}).then(function(oLoadedData) {
 			if (oLoadedData) {
@@ -1135,22 +1136,20 @@
 		});
 	};
 	CBinaryCacheManager.prototype.addLocalBinary = function(binary) {
-		if (!AscCommon.checkOOXMLSignature(binary)) {
-			return null;
-		}
-
 		const hash = this.getHash(binary);
 		this.cache[hash] = binary;
 		return hash;
 	};
-
-	CBinaryCacheManager.prototype.getXLSXBinary = function(binary) {
+	CBinaryCacheManager.prototype.getBase64EncodedData = function(binary) {
+		return ("XLSY;v2;" + binary.length + ";" + AscCommon.Base64.encode(binary)).toUtf8();
+	}
+	CBinaryCacheManager.prototype.getFormatBinary = function(binary) {
 		const oThis = this;
 		return new Promise(function(resolve) {
 			if (AscCommon.checkOOXMLSignature(binary)) {
 				resolve(binary);
 			} else {
-				const xlsyBinary = ("XLSY;v2;" + binary.length + ";" + AscCommon.Base64.encode(binary)).toUtf8();
+				const xlsyBinary = oThis.getBase64EncodedData(binary);
 				oThis.api.getConvertedXLSXFileFromUrl({data: xlsyBinary}, Asc.c_oAscFileType.XLSX, function (arrBinaryData) {
 					if (arrBinaryData) {
 						resolve(arrBinaryData);

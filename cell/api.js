@@ -1800,7 +1800,7 @@ var editor;
 		this.openOOXInBrowserZip = file.data;
 		this.OpenDocumentFromZip(file.data);
 	} else {
-		this.OpenDocumentFromBin(file.url, file.data);
+		this.OpenDocumentFromBin(file.url, file.data, file.isDecodedData);
 	}
 	let perfEnd = performance.now();
 	AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onOpenDocument", perfEnd - perfStart), this);
@@ -1842,19 +1842,19 @@ var editor;
 		this.sendEvent("asc_onCloseFile");
 	};
 
-	spreadsheet_api.prototype.OpenDocumentFromBinNoInit = function(gObject)
+	spreadsheet_api.prototype.OpenDocumentFromBinNoInit = function(gObject, isDecodedData)
 	{
 		AscFonts.IsCheckSymbols = true;
 		var oBinaryFileReader = new AscCommonExcel.BinaryFileReader();
-		oBinaryFileReader.Read(gObject, this.wbModel);
+		oBinaryFileReader.Read(gObject, this.wbModel, isDecodedData);
 		AscFonts.IsCheckSymbols = false;
 	};
 
-	spreadsheet_api.prototype.OpenDocumentFromBin = function(url, gObject)
+	spreadsheet_api.prototype.OpenDocumentFromBin = function(url, gObject, isDecodedData)
 	{
 		this.wbModel = new AscCommonExcel.Workbook(this.handlers, this, true);
 		this.initGlobalObjects(this.wbModel, gObject.length);
-		this.OpenDocumentFromBinNoInit(gObject);
+		this.OpenDocumentFromBinNoInit(gObject, isDecodedData);
 		this._onEndOpen();
 	};
 	spreadsheet_api.prototype.OpenDocumentFromZip = function (data) {

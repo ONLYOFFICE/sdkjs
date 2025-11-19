@@ -13231,7 +13231,7 @@
 
             return AscCommon.Base64.decodeData(szSrc, index, srcLen, dstPx, nWritten);
         };
-        this.Read = function(data, wb)
+        this.Read = function(data, wb, isDecodedData)
         {
             var t = this;
             pptx_content_loader.Clear();
@@ -13240,7 +13240,7 @@
 			if(this.InitOpenManager.copyPasteObj && this.InitOpenManager.copyPasteObj.isCopyPaste && typeof editor != "undefined" && editor)
 				pasteBinaryFromExcel = true;
 
-			this.stream = this.getbase64DecodedData(data);
+			this.stream = isDecodedData ? new AscCommon.FT_Stream2(data, data.length) : this.getbase64DecodedData(data);
 			if(!pasteBinaryFromExcel)
 				History.TurnOff();
 
