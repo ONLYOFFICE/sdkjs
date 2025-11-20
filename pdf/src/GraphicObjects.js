@@ -1041,10 +1041,11 @@
             {
                 chart_space.setXLSXId(oBinary["workbookHash"]);
             }
-            if (oBinary['imagesForAddToHistory'])
-            {
-                AscDFH.addImagesFromFrame(chart_space, oBinary['imagesForAddToHistory']);
-            }
+						if (oBinary["workbookPath"])
+						{
+							AscDFH.addImagesFromFrame(chart_space, [oBinary['workbookPath']]);
+
+						}
             if(oSelectedChart.group)
             {
                 var parent_group = oSelectedChart.group;

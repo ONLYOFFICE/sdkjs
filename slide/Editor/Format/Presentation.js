@@ -3867,13 +3867,13 @@ CPresentation.prototype.addImages = function (aImages, placeholder) {
 	}
 };
 
-CPresentation.prototype.AddOleObject = function (fWidth, fHeight, nWidthPix, nHeightPix, sLocalUrl, Data, sApplicationId, bSelect, arrImagesForAddToHistory) {
+CPresentation.prototype.AddOleObject = function (fWidth, fHeight, nWidthPix, nHeightPix, sLocalUrl, Data, sApplicationId, bSelect, oLoadedData) {
 	let oSlide = this.GetCurrentSlide();
 	if (oSlide) {
 		var fPosX = (this.GetWidthMM() - fWidth) / 2;
 		var fPosY = (this.GetHeightMM() - fHeight) / 2;
 		var oController = oSlide.graphicObjects;
-		var Image = oController.createOleObject(Data, sApplicationId, sLocalUrl, fPosX, fPosY, fWidth, fHeight, nWidthPix, nHeightPix, arrImagesForAddToHistory);
+		var Image = oController.createOleObject(Data, sApplicationId, sLocalUrl, fPosX, fPosY, fWidth, fHeight, nWidthPix, nHeightPix, oLoadedData);
 		Image.setParent(oSlide);
 		Image.addToDrawingObjects();
 		oController.resetSelection();
@@ -3885,8 +3885,8 @@ CPresentation.prototype.AddOleObject = function (fWidth, fHeight, nWidthPix, nHe
 	}
 };
 
-CPresentation.prototype.EditOleObject = function (oOleObject, sData, sImageUrl, fWidth, fHeight, nPixWidth, nPixHeight, arrImagesForAddToHistory) {
-	oOleObject.editExternal(sData, sImageUrl, fWidth, fHeight, nPixWidth, nPixHeight, arrImagesForAddToHistory);
+CPresentation.prototype.EditOleObject = function (oOleObject, sData, sImageUrl, fWidth, fHeight, nPixWidth, nPixHeight, oLoadedData) {
+	oOleObject.editExternal(sData, sImageUrl, fWidth, fHeight, nPixWidth, nPixHeight, oLoadedData);
 };
 
 CPresentation.prototype.getImageDataFromSelection = function () {

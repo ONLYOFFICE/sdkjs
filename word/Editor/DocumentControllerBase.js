@@ -311,9 +311,9 @@ CDocumentControllerBase.prototype.AddImages = function(aImages){};
  * @param oData
  * @param sApplicationId
  * @param bSelect
- * @param arrImagesForAddToHistory
+ * @param oLoadedData
  */
-CDocumentControllerBase.prototype.AddOleObject = function(nW, nH, nWidthPix, nHeightPix, oImage, oData, sApplicationId, bSelect, arrImagesForAddToHistory)
+CDocumentControllerBase.prototype.AddOleObject = function(nW, nH, nWidthPix, nHeightPix, oImage, oData, sApplicationId, bSelect, oLoadedData)
 {
 	return null;
 };

@@ -153,7 +153,7 @@ function (window, undefined) {
         AscCommon.History.Add(new AscDFH.CChangesDrawingsLong(this, AscDFH.historyitem_ImageShapeSetOleType, this.m_nOleType, nOleType));
         this.m_nOleType = nOleType;
     };
-		COleObject.prototype.setBinaryId = function(sBinaryId) {
+		COleObject.prototype.setXLSXId = function(sBinaryId) {
 			this.m_sBinaryId = sBinaryId;
 		}
     COleObject.prototype.setMathObject = function(oMath)
@@ -336,16 +336,13 @@ function (window, undefined) {
         return oShape;
     };
 
-    COleObject.prototype.editExternal = function(Data, sImageUrl, fWidth, fHeight, nPixWidth, nPixHeight, arrImagesForAddToHistory) {
-        if (arrImagesForAddToHistory) {
-	        AscDFH.addImagesFromFrame(this, arrImagesForAddToHistory);
-        }
-
+    COleObject.prototype.editExternal = function(Data, sImageUrl, fWidth, fHeight, nPixWidth, nPixHeight, oLoadedData) {
         if(typeof Data === "string" && this.m_sData !== Data) {
             this.setData(Data);
         }
-        if (Data instanceof Uint8Array) {
-            this.setBinaryData(Data)
+        if (oLoadedData) {
+            this.setXLSXId(oLoadedData.hash);
+	        AscDFH.addImagesFromFrame(this, [AscCommon.g_oDocumentUrls.imagePath2Local(oLoadedData.data.path)]);
         }
         if (this.m_nDrawAspect === AscFormat.EOLEDrawAspect.oledrawaspectContent && !this.m_bShowAsIcon) {
             if(typeof sImageUrl  === "string" &&
@@ -494,7 +491,7 @@ function (window, undefined) {
               const binaryData = olePart.getDocumentContent('object');
               if (binaryData)
               {
-                this.setBinaryData(binaryData.slice());
+                this.setXLSXId(AscCommon.g_oBinaryCacheManager.addLocalBinary(binaryData.slice()));
               }
             }
           }

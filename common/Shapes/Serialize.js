@@ -6157,7 +6157,11 @@ function BinaryPPTYLoader()
                         case 0:
                         {
                             binary_length = s.GetULong();
-                            ole.setBinaryData(s.data.slice(s.cur, s.cur + binary_length));
+														if (this.IsUseFullUrl) {
+															this.AddXLSXBinary()
+														} else {
+															ole.setXLSXId(s.data.slice(s.cur, s.cur + binary_length));
+														}
                             s.Seek2(s.cur + binary_length);
                             break;
                         }
@@ -6165,7 +6169,7 @@ function BinaryPPTYLoader()
                         {
                             ole.setObjectFile("maskFile.docx");
                             binary_length = s.GetULong();
-                            ole.setBinaryData(s.data.slice(s.cur, s.cur + binary_length));
+                            ole.setXLSXId(s.data.slice(s.cur, s.cur + binary_length));
                             s.Seek2(s.cur + binary_length);
                             break;
                         }
@@ -6173,7 +6177,7 @@ function BinaryPPTYLoader()
                         {
                             ole.setObjectFile("maskFile.xlsx");
                             binary_length = s.GetULong();
-                            ole.setBinaryData(s.data.slice(s.cur, s.cur + binary_length));
+                            ole.setXLSXId(s.data.slice(s.cur, s.cur + binary_length));
                             s.Seek2(s.cur + binary_length);
                             break;
                         }
@@ -11533,10 +11537,11 @@ function BinaryPPTYLoader()
                         var binary_length;
                         switch(oleType)
                         {
+	                        //todo Maybe you should keep the unnecessary binaries separate
                             case 0:
                             {
                                 binary_length = s.GetULong();
-                                ole.setBinaryData(s.data.slice(s.cur, s.cur + binary_length));
+                                ole.setXLSXId(s.data.slice(s.cur, s.cur + binary_length));
                                 s.Seek2(s.cur + binary_length);
                                 break;
                             }
@@ -11544,7 +11549,7 @@ function BinaryPPTYLoader()
                             {
                                 ole.setObjectFile("maskFile.docx");
                                 binary_length = s.GetULong();
-                                ole.setBinaryData(s.data.slice(s.cur, s.cur + binary_length));
+                                ole.setXLSXId(s.data.slice(s.cur, s.cur + binary_length));
                                 s.Seek2(s.cur + binary_length);
                                 break;
                             }
@@ -11552,7 +11557,7 @@ function BinaryPPTYLoader()
                             {
                                 ole.setObjectFile("maskFile.xlsx");
                                 binary_length = s.GetULong();
-                                ole.setBinaryData(s.data.slice(s.cur, s.cur + binary_length));
+                                ole.setXLSXId(s.data.slice(s.cur, s.cur + binary_length));
                                 s.Seek2(s.cur + binary_length);
                                 break;
                             }

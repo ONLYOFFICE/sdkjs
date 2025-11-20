@@ -8529,14 +8529,12 @@
 					return image;
 				},
 
-				createOleObject: function (data, sApplicationId, rasterImageId, x, y, extX, extY, nWidthPix, nHeightPix, arrImagesForAddToHistory) {
+				createOleObject: function (data, sApplicationId, rasterImageId, x, y, extX, extY, nWidthPix, nHeightPix, oLoadedData) {
 					var oleObject = new AscFormat.COleObject();
 					AscFormat.fillImage(oleObject, rasterImageId, x, y, extX, extY);
-					if (arrImagesForAddToHistory) {
-						AscDFH.addImagesFromFrame(oleObject, arrImagesForAddToHistory);
-					}
-					if (data instanceof Uint8Array) {
-						oleObject.setBinaryData(data);
+					if (oLoadedData) {
+						oleObject.setXLSXId(oLoadedData.hash);
+						AscDFH.addImagesFromFrame(oleObject, [AscCommon.g_oDocumentUrls.imagePath2Local(oLoadedData.data.path)]);
 					} else {
 						oleObject.setData(data);
 					}

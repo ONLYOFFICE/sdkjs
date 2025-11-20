@@ -54,7 +54,6 @@
 	CFrameManagerBase.prototype.clear = function () {};
 	CFrameManagerBase.prototype.getWorkbookBinary = function () {};
 	CFrameManagerBase.prototype.getAllImageIds = function () {};
-	CFrameManagerBase.prototype.getImagesForHistory = function () {};
 	CFrameManagerBase.prototype.obtain = function (oInfo) {};
 	CFrameManagerBase.prototype.setGeneralDocumentUrls = function (oPr) {};
 	CFrameManagerBase.prototype.getGeneralImageUrl = function (sImageId) {};
@@ -248,26 +247,6 @@
 		return arrRasterImageIds;
 	};
 
-	CCellFrameManager.prototype.getImagesForHistory = function ()
-	{
-		if (this.api.isOpenOOXInBrowser)
-		{
-			return [];
-		}
-		const arrRasterImageIds = this.getAllImageIds();
-		const urlsForAddToHistory = [];
-		for (let i = 0; i < arrRasterImageIds.length; i += 1)
-		{
-			const url = AscCommon.g_oDocumentUrls.mediaPrefix + arrRasterImageIds[i];
-			if (!(this.generalDocumentUrls[url] && this.generalDocumentUrls[url] === AscCommon.g_oDocumentUrls.getUrls()[url]))
-			{
-				urlsForAddToHistory.push(arrRasterImageIds[i]);
-			}
-		}
-
-		return urlsForAddToHistory;
-	};
-
 	CCellFrameManager.prototype.obtain = function (oInfo)
 	{
 		this.updateOpenOnClient();
@@ -375,7 +354,6 @@
 				resolve({
 					'binary'               : workbookBinary,
 					'base64Image'          : oThis.getBase64Image(),
-					'imagesForAddToHistory': oThis.getImagesForHistory(),
 					'widthCoefficient'     : oThis.getImageWidthCoefficient(),
 					'heightCoefficient'    : oThis.getImageHeightCoefficient()
 				});
@@ -609,7 +587,6 @@
 				oThis.getWorkbookBinary().then(function (workbookBinary)
 				{
 					oDiagramBinary["workbookBinary"] = workbookBinary;
-					oDiagramBinary["imagesForAddToHistory"] = oThis.getImagesForHistory();
 					resolve(oDiagramBinary);
 				});
 			}
