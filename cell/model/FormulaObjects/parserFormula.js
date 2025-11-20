@@ -10502,6 +10502,15 @@ function parserFormula( formula, parent, _ws ) {
 		this.ca = val;
 	};
 
+	parserFormula.prototype.setCm = function(val) {
+		this.cm = val;
+	};
+	parserFormula.prototype.setVm = function(val) {
+		this.vm = val;
+	};
+	parserFormula.prototype.getCm = function() {
+		return this.cm;
+	};
 
 	/**
 	 * Class representative an iterative calculations logic

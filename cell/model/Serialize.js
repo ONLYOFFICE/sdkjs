@@ -1967,6 +1967,9 @@
 		this.si = null;
 		this.t = null;
 		this.v = null;
+
+		this.cm = null;
+		this.vm = null;
 	}
 	OpenFormula.prototype.clean = function(){
 		this.aca = null;
@@ -1982,6 +1985,9 @@
 		this.si = null;
 		this.t = null;
 		this.v = null;
+
+		this.cm = null;
+		this.vm = null;
 	};
 	function OpenColumnFormula(nRow, formula, parsed, refPos, base) {
 		this.nRow = nRow;
@@ -14413,6 +14419,8 @@
                 var newFormulaParent = new AscCommonExcel.CCellWithFormula(cell.ws, cell.nRow, cell.nCol);
                 var parsed = new AscCommonExcel.parserFormula(formula.v, newFormulaParent, cell.ws);
                 parsed.ca = formula.ca;
+                parsed.cm = formula.cm;
+                parsed.vm = formula.vm;
                 parseResult.needCorrect = true;
                 parsed.parse(undefined, undefined, parseResult);
                 if (parseResult.needAssemble) {
@@ -15317,7 +15325,7 @@
         if (formula && parsed && parsed.importFunctionsRangeLinks) {
             formula = "IFERROR(__xludf.DUMMYFUNCTION(\"" + formula.replace(/\"/g,"\"\"") + "\")" + "," + cell.getValue() + ")";
         }
-        return {formula: formula, si: si, ref: ref, type: type, ca: parsed.ca};
+        return {formula: formula, si: si, ref: ref, type: type, ca: parsed.ca, cm: parsed.cm, cv: parsed.cv};
     };
 
     function ReadWbComments (wb, contentWorkbookComment, InitOpenManager) {
