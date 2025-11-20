@@ -192,7 +192,10 @@
 		this.isSaveZipWorkbook = false;
 	}
 	InitClassWithoutType(CCellFrameManager, CFrameManagerBase);
-
+	CCellFrameManager.prototype.getEmptyFileData = function () {
+		const splitBinary = AscCommon.getEmpty().split(";");
+		return AscCommon.Base64.decode(splitBinary[splitBinary.length - 1]);
+	};
 	CCellFrameManager.prototype.isSaveZip = function ()
 	{
 		return this.isSaveZipWorkbook;
@@ -393,7 +396,7 @@
 		this.clear();
 		if (!oInfo)
 		{
-			oInfo = {"binary": AscCommon.getEmpty()};
+			oInfo = {"binary": this.getEmptyFileData()};
 			this.isCreatingOleObject = true;
 		}
 		this.isFromSheetEditor = oInfo["isFromSheetEditor"];
@@ -536,7 +539,7 @@
 		}
 		else
 		{
-			obtainInfo["binary"] = AscCommon.getEmpty();
+			obtainInfo["binary"] = this.getEmptyFileData();
 			this.obtainWithRepair(obtainInfo);
 		}
 	}
