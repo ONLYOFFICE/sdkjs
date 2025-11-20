@@ -15325,7 +15325,7 @@
         if (formula && parsed && parsed.importFunctionsRangeLinks) {
             formula = "IFERROR(__xludf.DUMMYFUNCTION(\"" + formula.replace(/\"/g,"\"\"") + "\")" + "," + cell.getValue() + ")";
         }
-        return {formula: formula, si: si, ref: ref, type: type, ca: parsed.ca, cm: parsed.cm, cv: parsed.cv};
+        return {formula: formula, si: si, ref: ref, type: type, ca: parsed.ca, cm: ref ? parsed.cm : null, cv: ref ? parsed.cv : null};
     };
 
     function ReadWbComments (wb, contentWorkbookComment, InitOpenManager) {

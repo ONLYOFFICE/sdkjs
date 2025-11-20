@@ -14322,7 +14322,7 @@
 
 
 //-------------------------------------------------------------------------------------------------
-	var g_nCellStructSize = 4 + 4 + 8 + 4 + 4;
+	var g_nCellStructSize = 4 + 4 + 8;
 
 	var g_nCellFlag_empty = 0;
 	var g_nCellFlag_init = 1;
