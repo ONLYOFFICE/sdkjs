@@ -1432,7 +1432,6 @@
 		this.aRuleElements = [];
 		val = correctFromInterface(val);
 
-
 		this.aRuleElements[0] = new CFormulaCF();
 		this.aRuleElements[0].Text = val;
 	};
@@ -2903,7 +2902,9 @@
 	}
 
 	function correctFromInterface(val) {
-		let _isNumeric = isNumeric(val);
+        // To correct convert a number, we need to get the current decimal separator 
+        var separator = getDecimalSeparator(lang)
+		let _isNumeric = isNumeric(val, separator);
 		if (!_isNumeric) {
 			let isDate;
 			let isFormula;
@@ -2934,10 +2935,28 @@
 					}
 				}
 			}
-		}
+		}else {
+            if (separator == ',')
+                // Change the comma to a dot that JS reads the string as a number
+                val = val.replace(',', '.')
+        }
 
 		return val;
 	}
+
+    function getDecimalSeparator(lang) {
+        var separators = {
+            "ar": ".", "zh-Hans": ".", "cs": ",", "da": ",", "de": ",", 
+            "el": ",", "en": ".", "es": ",", "fi": ",", "fr": ",", 
+            "hu": ",", "it": ",", "ja": ".", "ko": ".", "pl": ",", 
+            "pt": ",", "ru": ",", "sv": ",", "tr": ",", "id": ",", 
+            "uk": ",", "sl": ",", "lv": ",", "lt": ",", "vi": ",", 
+            "az": ",", "kk": ",", "mn": ".", "bg": ",", "zh-TW": ".", 
+            "hr": ",", "sk": ",", "nl": ",", "zh-HK": ".", "zh-SG": ".", 
+            "zh-MO": ".", "zh-CN": "."
+        };
+        return separators[lang] || ".";
+    }
 
 	function addQuotes(val) {
 		var _res;
@@ -2950,9 +2969,25 @@
 		return _res;
 	}
 
-	var isNumeric = function (_val) {
-		return !isNaN(parseFloat(_val)) && isFinite(_val);
-	};
+    var isNumeric = function (_val, decimalSeparator) {
+        if (typeof _val == 'number') return isFinite(_val);
+        if (typeof _val != 'string') return false;
+        
+        var str = _val.trim();
+        if (!str) return false;
+        
+        var regex;
+        // Depending on the separator we accept the string as a number or not
+        if (decimalSeparator == ',') {
+            regex = /^[-+]?(\d+([,]\d*)?|[,]\d+)$/;
+        } else if (decimalSeparator == '.') {
+            regex = /^[-+]?(\d+([.]\d*)?|[.]\d+)$/;
+        } else {
+            regex = /^[-+]?(\d+([.,]\d*)?|[.,]\d+)$/;
+        }
+        
+        return regex.test(str);
+    };
 
 	var cDefIconSize = 16;
 	var cDefIconFont = 11;
