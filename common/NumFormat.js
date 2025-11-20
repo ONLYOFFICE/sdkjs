@@ -3936,6 +3936,9 @@ FormatParser.prototype =
 	{
         var res = null;
         var bError = false;
+
+        var sameSeparators = cultureInfo.DateSeparator === cultureInfo.TimeSeparator;
+
         //в первый проход разделяем date и time с помощью delimiter
         for (var i = 0, length = match.length; i < length; i++) {
             var elem = match[i];
@@ -3944,15 +3947,32 @@ FormatParser.prototype =
                 if(i - 1 >= 0 && i + 1 < length){
                     var prev = match[i - 1];
                     var next = match[i + 1];
-                    if(prev.type != oDataTypes.delimiter && next.type != oDataTypes.delimite){
-                        if (cultureInfo.TimeSeparator == elem.val || (":" == elem.val && cultureInfo.DateSeparator != elem.val)) {
+                    if(prev.type != oDataTypes.delimiter && next.type != oDataTypes.delimiter){
+                        if (sameSeparators) {
+                            var looksLikeTime = this._looksLikeTimePart(prev, next, i, match, oDataTypes);
+                            
+                            if (looksLikeTime) {
+                                if(false == prev.date && false == next.date){
+                                    bError = false;
+                                    prev.time = true;
+                                    next.time = true;
+                                }
+                            } else {
+                                if(false == prev.time && false == next.time){
+                                    bError = false;
+                                    prev.date = true;
+                                    next.date = true;
+                                }
+                            }
+                        }    
+                        else if (cultureInfo.TimeSeparator == elem.val || (":" == elem.val && cultureInfo.DateSeparator != elem.val)) {
                             if(false == prev.date && false == next.date){
                                 bError = false;
                                 prev.time = true;
                                 next.time = true;
                             }
                         }
-                        else{
+                        else {
                             if(false == prev.time && false == next.time){
                                 bError = false;
                                 prev.date = true;
@@ -4185,6 +4205,48 @@ FormatParser.prototype =
         }
 		return res;
     },
+    _looksLikeTimePart: function(prev, next, currentIndex, match, oDataTypes) {
+        var hasLargeYear = false;
+        var hasMonthName = false;
+        var totalDigits = 0;
+        var totalDelimiters = 0;
+        
+        for (var i = 0; i < match.length; i++) {
+            var elem = match[i];
+            if (elem.type.id === oDataTypes.digit.id) {
+                totalDigits++;
+                if (elem.val > 31 && elem.val < 10000) {
+                    hasLargeYear = true;
+                }
+            } else if (elem.type.id === oDataTypes.delimiter.id) {
+                totalDelimiters++;
+            } else if (elem.type.id === oDataTypes.letter.id && elem.month) {
+                hasMonthName = true;
+            }
+        }
+        
+        if (hasLargeYear || hasMonthName || totalDigits >= 3) {
+            return false;
+        }
+        
+        var prevVal = parseInt(prev.val, 10);
+        var nextVal = parseInt(next.val, 10);
+        
+        var prevCouldBeHours = prevVal >= 0 && prevVal <= 23;
+        var nextCouldBeMinutes = nextVal >= 0 && nextVal <= 59;
+        
+        var hasAmPm = false;
+        for (var i = currentIndex + 2; i < match.length; i++) {
+            var futureElem = match[i];
+            if (futureElem.type.id === oDataTypes.letter.id && (futureElem.am || futureElem.pm)) {
+                hasAmPm = true;
+                break;
+            }
+        }
+        
+        return (prevCouldBeHours && nextCouldBeMinutes) || hasAmPm || (prev.time || next.time);
+    },
+
 	_parseDateFromArrayPDF: function (match, oDataTypes, cultureInfo, oFormat)
 	{
         var res = null;
