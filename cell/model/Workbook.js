@@ -17351,18 +17351,23 @@
 			}
 		}
 
-		stream.XlsbStartRecord(type, len);
-		stream.WriteULong(this.nCol & 0x3FFF);
 		var nFlags2 = 0;
 		if (null !== nXfsId) {
 			nFlags2 = nXfsId;
 		}
 		if (formulaToWrite && formulaToWrite.cm != null) {
 			nFlags2 |= 0x2000000;
+			len += 4;
 		}
 		if (formulaToWrite && formulaToWrite.vm != null) {
 			nFlags2 |= 0x4000000;
+			len += 4;
 		}
+
+		stream.XlsbStartRecord(type, len);
+		stream.WriteULong(this.nCol & 0x3FFF);
+
+
 		stream.WriteULong(nFlags2);
 
 		//todo RkNumber

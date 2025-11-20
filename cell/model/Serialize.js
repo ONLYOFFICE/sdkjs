@@ -4777,12 +4777,12 @@
 			}
 
 			var oThis = this;
-			if (pMetadataRecord.t) {
+			if (pMetadataRecord.t != null) {
 				this.bs.WriteItem(c_oSer_MetadataBlock.MetadataRecordType, function () {
 					oThis.memory.WriteLong(pMetadataRecord.t);
 				});
 			}
-			if (pMetadataRecord.v) {
+			if (pMetadataRecord.v != null) {
 				this.bs.WriteItem(c_oSer_MetadataBlock.MetadataRecordValue, function () {
 					oThis.memory.WriteLong(pMetadataRecord.v);
 				});
@@ -4803,13 +4803,13 @@
 
 					this.bs.WriteItem(c_oSer_FutureMetadataBlock.DynamicArrayProperties, function () {
 
-						if (pFutureMetadataBlock.extLst[i].dynamicArrayProperties.fDynamic) {
+						if (pFutureMetadataBlock.extLst[i].dynamicArrayProperties.fDynamic != null) {
 							oThis.bs.WriteItem(c_oSer_FutureMetadataBlock.DynamicArray, function () {
 								oThis.memory.WriteBool(pFutureMetadataBlock.extLst[i].dynamicArrayProperties.fDynamic);
 							});
 
 						}
-						if (pFutureMetadataBlock.extLst[i].dynamicArrayProperties.fCollapsed) {
+						if (pFutureMetadataBlock.extLst[i].dynamicArrayProperties.fCollapsed != null) {
 							oThis.bs.WriteItem(c_oSer_FutureMetadataBlock.CollapsedArray, function () {
 								oThis.memory.WriteBool(pFutureMetadataBlock.extLst[i].dynamicArrayProperties.fCollapsed);
 							});
@@ -4817,7 +4817,7 @@
 					});
 				}
 
-				if ((pFutureMetadataBlock.extLst[i].richValueBlock) && (pFutureMetadataBlock.extLst[i].richValueBlock.i)) {
+				if ((pFutureMetadataBlock.extLst[i].richValueBlock) && (pFutureMetadataBlock.extLst[i].richValueBlock.i != null)) {
 					oThis.bs.WriteItem(c_oSer_FutureMetadataBlock.RichValueBlock, function () {
 						oThis.memory.WriteLong(pFutureMetadataBlock.extLst[i].richValueBlock.i);
 					});
@@ -15325,7 +15325,7 @@
         if (formula && parsed && parsed.importFunctionsRangeLinks) {
             formula = "IFERROR(__xludf.DUMMYFUNCTION(\"" + formula.replace(/\"/g,"\"\"") + "\")" + "," + cell.getValue() + ")";
         }
-        return {formula: formula, si: si, ref: ref, type: type, ca: parsed.ca, cm: ref ? parsed.cm : null, cv: ref ? parsed.cv : null};
+        return {formula: formula, si: si, ref: ref, type: type, ca: parsed.ca, cm: ref ? parsed.cm : null, vm: ref ? parsed.vm : null};
     };
 
     function ReadWbComments (wb, contentWorkbookComment, InitOpenManager) {
