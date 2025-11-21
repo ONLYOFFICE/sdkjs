@@ -16677,10 +16677,11 @@ $(function () {
 		oParser = new parserFormula('FREQUENCY({1,3,4},{2})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY({1,3,4},{2}) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Formula. Nested formula evaluating to numbers in data_array and bins_array. Returns {1,2,0}.');
-		// Case #5: Reference link. Reference to cells with valid numbers. Returns {2,1,0}.
+		// Case #5: Reference link. Reference to cells with valid numbers. Returns {1,0}.
 		oParser = new parserFormula('FREQUENCY(A100,A101)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY(A100,A101) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: Reference link. Reference to cells with valid numbers. Returns {2,1,0}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Reference link. Reference to cells with valid numbers. Returns {1,0}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 0, 'Test: Positive case: Reference link. Reference to cells with valid numbers. Returns {1,0}.');
 		// Case #6: Area. Single-cell range for both arguments. Returns {1,1,0}.
 		oParser = new parserFormula('FREQUENCY(A102:A102,A103:A103)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY(A102:A102,A103:A103) is parsed.');
@@ -16688,71 +16689,107 @@ $(function () {
 		// Case #7: Array. Array with multiple elements. Returns {1,2,0}.
 		oParser = new parserFormula('FREQUENCY({1,2,3},{1,2})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY({1,2,3},{1,2}) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Array. Array with multiple elements. Returns {1,2,0}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Array. Array with multiple elements. Returns {1,1,1}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 1, 'Test: Positive case: Array. Array with multiple elements. Returns {1,1,1}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(2,0).getValue(), 1, 'Test: Positive case: Array. Array with multiple elements. Returns {1,1,1}.');
 		// Case #8: Name. Named range with valid numbers. Returns {2,1,0}.
 		oParser = new parserFormula('FREQUENCY(TestName,TestName1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY(TestName,TestName1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: Name. Named range with valid numbers. Returns {2,1,0}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Name. Named range with valid numbers. Returns {1,0}.');
 		// Case #9: Name3D. 3D named range with valid numbers. Returns {2,1,0}.
 		oParser = new parserFormula('FREQUENCY(TestName3D,TestName3D)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY(TestName3D,TestName3D) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Positive case: Name3D. 3D named range with valid numbers. Returns {2,1,0}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Name3D. 3D named range with valid numbers. Returns {1,0}.');
 		// Case #10: Ref3D. 3D reference to cells with valid numbers. Returns {2,1,0}.
 		oParser = new parserFormula('FREQUENCY(Sheet2!A1,Sheet2!A2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY(Sheet2!A1,Sheet2!A2) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: Ref3D. 3D reference to cells with valid numbers. Returns {2,1,0}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Ref3D. 3D reference to cells with valid numbers. Returns {1,0}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 0, 'Test: Positive case: Ref3D. 3D reference to cells with valid numbers. Returns {1,0}.');
 		// Case #11: Area3D. 3D single-cell range. Returns {1,1,0}.
 		oParser = new parserFormula('FREQUENCY(Sheet2!A3:A3,Sheet2!A4:A4)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY(Sheet2!A3:A3,Sheet2!A4:A4) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Positive case: Area3D. 3D single-cell range. Returns {1,1,0}.');
-		// Case #12: Table. Table structured reference with valid numbers. Returns {2,1,0}.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Positive case: Area3D. 3D single-cell range. Returns {0,0}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), "", 'Test: Positive case: Area3D. 3D single-cell range. Returns {0,0}.');
+		// Case #12: Table. Table structured reference with valid numbers in column.
 		oParser = new parserFormula('FREQUENCY(Table1[Column1],Table1[Column1])', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY(Table1[Column1],Table1[Column1]) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Positive case: Table. Table structured reference with valid numbers. Returns {2,1,0}.');
-		// Case #13: Date. Date serial numbers as numbers. Returns {1,1,0}.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Table. Table structured reference with valid numbers. Returns {1,0}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 0, 'Test: Positive case: Table. Table structured reference with valid numbers. Returns {1,0}.');
+		// Case #13: Date. Date serial numbers as numbers. Returns {4,0}.
 		oParser = new parserFormula('FREQUENCY({45.58,45,68,9},{45672})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY({45.58,45,68,9},{45672}) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 4, 'Test: Positive case: Date. Date serial numbers as numbers. Returns {1,1,0}.');
-		// Case #14: Time. Time adjusted to valid numbers (>1). Returns {1,1,0}.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 4, 'Test: Positive case: Date. Date serial numbers as numbers. Returns {4,0}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 0, 'Test: Positive case: Date. Date serial numbers as numbers. Returns {4,0}.');
+		// Case #14: Time. Time adjusted to valid numbers (>1). Returns {3,1}.
 		oParser = new parserFormula('FREQUENCY({1.5,2.5,3.5,10.5},{4})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY({1.5,2.5,3.5,10.5},{4}) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 3, 'Test: Positive case: Time. Time adjusted to valid numbers (>1). Returns {1,1,0}.');
-		// Case #15: Formula. Nested IF returning valid numbers. Returns {1,1,0}.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 3, 'Test: Positive case: Time. Time adjusted to valid numbers (>1). Returns {3,1}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 1, 'Test: Positive case: Time. Time adjusted to valid numbers (>1). Returns {3,1}.');
+		// Case #15: Formula. Nested IF returning valid numbers. Returns {1,0}.
 		oParser = new parserFormula('FREQUENCY(IF(TRUE,2,1),IF(TRUE,2,1))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY(IF(TRUE,2,1),IF(TRUE,2,1)) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: Formula. Nested IF returning valid numbers. Returns {1,1,0}.');
-		// Case #16: Number. Value slightly above 1 in data_array. Returns {1,1,0}.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Formula. Nested IF returning valid numbers. Returns {1,0}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 0, 'Test: Positive case: Formula. Nested IF returning valid numbers. Returns {1,0}.');
+		// Case #16: Number. Value slightly above 1 in data_array. Returns {1,1}.
 		oParser = new parserFormula('FREQUENCY({1.000000000000001,2},{1.5})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY({1.000000000000001,2},{1.5}) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Number. Value slightly above 1 in data_array. Returns {1,1,0}.');
-		// Case #17: String. String convertible to float numbers. Returns {1,1,0}.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Number. Value slightly above 1 in data_array. Returns {1,1}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 1, 'Test: Positive case: Number. Value slightly above 1 in data_array. Returns {1,1}.');
+		// Case #17: String. String convertible to float numbers. Returns {0,0}.
 		oParser = new parserFormula('FREQUENCY({"1.5","2.5"},{"1.75"})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY({"1.5","2.5"},{"1.75"}) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Positive case: String. String convertible to float numbers. Returns {1,1,0}.');
-		// Case #18: Array. Multi-element arrays for both arguments. Returns {1,2,1,0}.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Positive case: String. String convertible to float numbers. Returns {0,0}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 0, 'Test: Positive case: String. String convertible to float numbers. Returns {0,0}.');
+		// Case #18: Array. Multi-element arrays for both arguments. Returns {1,1,1,1}.
 		oParser = new parserFormula('FREQUENCY({1,2,3,4},{1,2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY({1,2,3,4},{1,2,3}) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Array. Multi-element arrays for both arguments. Returns {1,2,1,0}.');
-		// Case #19: Number. Zero and positive numbers in data_array. Returns {2,1,0}.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Array. Multi-element arrays for both arguments. Returns {1,1,1,1}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 1, 'Test: Positive case: Array. Multi-element arrays for both arguments. Returns {1,1,1,1}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(2,0).getValue(), 1, 'Test: Positive case: Array. Multi-element arrays for both arguments. Returns {1,1,1,1}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(3,0).getValue(), 1, 'Test: Positive case: Array. Multi-element arrays for both arguments. Returns {1,1,1,1}.');
+		// Case #19: Number. Zero and positive numbers in data_array. Returns {2,1}.
 		oParser = new parserFormula('FREQUENCY({0,1,2},{1})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY({0,1,2},{1}) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 2, 'Test: Positive case: Number. Zero and positive numbers in data_array. Returns {2,1,0}.');
-		// Case #20: Formula. Nested ROUND formula evaluating to numbers. Returns {1,1,0}.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 2, 'Test: Positive case: Number. Zero and positive numbers in data_array. Returns {2,1}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 1, 'Test: Positive case: Number. Zero and positive numbers in data_array. Returns {2,1}.');
+		// Case #20: Array, Array. -1 in bins array. Returns {0,6}.
 		oParser = new parserFormula('FREQUENCY({2,2,2,2,2,2},{-1})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY({2,2,2,2,2,2},{-1}) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Positive case: Formula. Nested ROUND formula evaluating to numbers. Returns {1,1,0}.');
-		// Case #21: Array. Array with duplicate values. Returns {2,2,0,0}.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Positive case: Array, Array. -1 in bins array. Returns {0,6}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 6, 'Test: Positive case: Array, Array. -1 in bins array. Returns {0,6}.');
+		// Case #21: Array. Array with duplicate values. Returns {2,0,2,0}.
 		oParser = new parserFormula('FREQUENCY({10,10,20,20},{10,15,20})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY({10,10,20,20},{10,15,20}) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 2, 'Test: Positive case: Array. Array with duplicate values. Returns {2,2,0,0}.');
-		// Case #22: Empty. Empty data_array returns array of zeros. Returns {0}.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 2, 'Test: Positive case: Array. Array with duplicate values. Returns {2,0,2,0}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 0, 'Test: Positive case: Array. Array with duplicate values. Returns {2,0,2,0}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(2,0).getValue(), 2, 'Test: Positive case: Array. Array with duplicate values. Returns {2,0,2,0}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(3,0).getValue(), 0, 'Test: Positive case: Array. Array with duplicate values. Returns {2,0,2,0}.');
+		// Case #22: Empty. Empty data_array returns array of zeros. Returns {0,0}.
 		oParser = new parserFormula('FREQUENCY({""},{1})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY({""},{1}) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Positive case: Empty. Empty data_array returns array of zeros. Returns {0}.');
-		// Case #23: Empty. Empty bins_array returns count of data_array elements. Returns {3}.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Positive case: Empty. Empty data_array returns array of zeros. Returns {0,0}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 0, 'Test: Positive case: Empty. Empty data_array returns array of zeros. Returns {0,0}.');
+		// Case #23: Empty. Empty bins_array returns count of data_array elements. Returns {0,3}.
 		oParser = new parserFormula('FREQUENCY({1,2,3},{""})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY({1,2,3},{""}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Positive case: Empty. Empty bins_array returns count of data_array elements. Returns {3}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Positive case: Empty string. Empty string in bins_array returns count of data_array elements. Returns {0,3}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 3, 'Test: Positive case: Empty string. Empty string in bins_array returns count of data_array elements. Returns {0,3}.');
+		// Case #24: Array, array. String in bins_array.
+		oParser = new parserFormula('FREQUENCY({0,2,3,0},{"E"})', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: FREQUENCY({0,2,3,0},{"E"}) is parsed.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 2, 'Test: Positive case: Array, array. String in bins_array.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 2, 'Test: Positive case: Array, array. String in bins_array.');
+		// Case #25: Array, number. Empty string in first array
+		oParser = new parserFormula('FREQUENCY({""},0)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: FREQUENCY({""},0) is parsed.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Positive case: Array, number. Empty string in first array.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 0, 'Test: Positive case: Array, number. Empty string in first array.');
+		// Case #26: Array, number. Bool in first array.
+		oParser = new parserFormula('FREQUENCY({TRUE},0)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: FREQUENCY({TRUE},0) is parsed.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Positive case: Array, number. Bool in first array.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 0, 'Test: Positive case: Array, number. Bool in first array.');
+
 
 		// Negative cases:
 		// Case #1: Number. Negative numbers in data_array are counted. Returns {3,0,0}.
@@ -16771,31 +16808,32 @@ $(function () {
 		oParser = new parserFormula('FREQUENCY(A102:A103,A104:A104)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY(A102:A103,A104:A104) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 2, 'Test: Negative case: Area. Multi-cell range for data_array returns #N/A.');
-		// Case #5: Empty. Empty cell reference for data_array returns {0}.
+		// Case #5: Empty. Empty cell reference for data_array returns {1,0}.
 		oParser = new parserFormula('FREQUENCY(A105,A106)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY(A105,A106) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Negative case: Empty. Empty cell reference for data_array returns {0}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Negative case: Empty. Empty cell reference for data_array returns {1,0}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 0, 'Test: Negative case: Empty. Empty cell reference for data_array returns {1,0}.');
 		// Case #6: String. Empty string in data_array ignored. Returns {0,0}.
 		oParser = new parserFormula('FREQUENCY({""},{"1"})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY({""},{"1"}) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Negative case: String. Empty string in data_array ignored. Returns {0,0}.');
-		// Case #7: Boolean. Boolean values (0,1) in data_array counted. Returns {1,1,0}.
+		// Case #7: Boolean. Boolean values (0,1) in data_array counted. Returns {0,0}.
 		oParser = new parserFormula('FREQUENCY({FALSE,TRUE},{1})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY({FALSE,TRUE},{1}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Negative case: Boolean. Boolean values (0,1) in data_array counted. Returns {1,1,0}.');
-		// Case #8: Ref3D. 3D ref to text returns #VALUE!.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Negative case: Boolean. Boolean values (0,1) in data_array counted. Returns {0,0}.');
+		// Case #8: Ref3D. 3D ref to empty values.
 		oParser = new parserFormula('FREQUENCY(Sheet2!A5,Sheet2!A6)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY(Sheet2!A5,Sheet2!A6) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: Ref3D. 3D ref to text returns #VALUE!.');
-		// Case #9: Name. Named range with multi-cell area returns #N/A.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Negative case: Ref3D. 3D ref to empty values.');
+		// Case #9: Name. Named range with multi-cell area.
 		oParser = new parserFormula('FREQUENCY(TestNameArea2,TestName1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY(TestNameArea2,TestName1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: Name. Named range with multi-cell area returns #N/A.');
-		// Case #11: Formula. Formula resulting in #NUM! propagates error. Returns #N/A.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Negative case: Name. Named range with multi-cell area');
+		// Case #11: Formula. Formula resulting in #NUM! propagates error. Returns #NUM.
 		oParser = new parserFormula('FREQUENCY(SQRT(-1),{1})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY(SQRT(-1),{1}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Formula. Formula resulting in #NUM! propagates error. Returns #N/A.');
-		// Case #12: Number. Zero in bins_array is valid but counts correctly. Returns {2,0,0}.
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Formula. Formula resulting in #NUM! propagates error. Returns #N/A.');
+		// Case #12: Number. Zero in bins_array is valid but counts correctly. Returns {1,1}.
 		oParser = new parserFormula('FREQUENCY({0,1},{0})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY({0,1},{0}) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Negative case: Number. Zero in bins_array is valid but counts correctly. Returns {2,0,0}.');
@@ -16810,19 +16848,20 @@ $(function () {
 		// Case #15: String. Non-numeric string in bins_array ignored, returns #VALUE!.
 		oParser = new parserFormula('FREQUENCY({1,2},{"abc"})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY({1,2},{"abc"}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Negative case: String. Non-numeric string in bins_array ignored, returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Negative case: String. Non-numeric string in bins_array ignored, returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 2, 'Test: Negative case: String. Non-numeric string in bins_array ignored, returns #VALUE!.');
 		// Case #16: Area3D. Multi-cell 3D range for data_array returns #N/A.
 		oParser = new parserFormula('FREQUENCY(Sheet2!A7:A8,Sheet2!A9)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY(Sheet2!A7:A8,Sheet2!A9) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: Area3D. Multi-cell 3D range for data_array returns #N/A.');
-		// Case #17: Name3D. 3D named range with multi-cell area returns #N/A.
-		oParser = new parserFormula('FREQUENCY(TestNameArea3D2,TestName3D1)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: FREQUENCY(TestNameArea3D2,TestName3D1) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Name3D. 3D named range with multi-cell area returns #N/A.');
-		// Case #18: Time. Time value (0.5) in data_array counted. Returns {1,1,0}.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Negative case: Area3D. Multi-cell 3D range for data_array.');
+		// Case #17: Name3D. 3D named range with multi-cell area.
+		oParser = new parserFormula('FREQUENCY(TestNameArea3D2,TestName3D)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: FREQUENCY(TestNameArea3D2,TestName3D) is parsed.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Negative case: Name3D. 3D named range with multi-cell area.');
+		// Case #18: Time. Time value (0.5) in data_array counted. Returns {2,0}.
 		oParser = new parserFormula('FREQUENCY({0.5,0.5},{0.6})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY({0.5,0.5},{0.6}) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 2, 'Test: Negative case: Time. Time value (0.5) in data_array counted. Returns {1,1,0}.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 2, 'Test: Negative case: Time. Time value (0.5) in data_array counted. Returns {2,0}.');
 		// Case #19: Date. Negative date serial number counted. Returns {2,0,0}.
 		oParser = new parserFormula('FREQUENCY({-45658,1},{1})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY({-45658,1},{1}) is parsed.');
@@ -16849,20 +16888,6 @@ $(function () {
 		oParser = new parserFormula('FREQUENCY({1,2},{-1.79769313486232E+307})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FREQUENCY({1,2},{-1.79769313486232E+307}) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Bounded case: Number. Minimum Excel number in bins_array. Returns {2,0,0}.');
-
-		// Need to fix: area handle, different results from MS
-		// Case #5: Reference link. Reference to cells with valid numbers. Returns {2,1,0}.
-		// Case #8: Name. Named range with valid numbers. Returns {2,1,0}.
-		// Case #10: Ref3D. 3D reference to cells with valid numbers. Returns {2,1,0}.
-		// Case #15: Formula. Nested IF returning valid numbers. Returns {1,1,0}.
-		// Case #23: Empty. Empty bins_array returns count of data_array elements. Returns {3}.
-		// Case #5: Empty. Empty cell reference for data_array returns {0}.
-		// Case #7: Boolean. Boolean values (0,1) in data_array counted. Returns {1,1,0}.
-		// Case #8: Ref3D. 3D ref to text returns #VALUE!.
-		// Case #9: Name. Named range with multi-cell area returns #N/A.
-		// Case #15: String. Non-numeric string in bins_array ignored, returns #VALUE!.
-		// Case #16: Area3D. Multi-cell 3D range for data_array returns #N/A.
-		// Case #11: Formula. Formula resulting in #NUM! propagates error. Returns #N/A.
 
 	});
 

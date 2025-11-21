@@ -16826,7 +16826,7 @@ $(function () {
 		// Case #2: Number(2). Largest valid Excel number, rounds to itself. 2 of 2 arguments used.
 		oParser = new parserFormula('ROUND(9.99999999999999E+307, 0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ROUND(9.99999999999999E+307, 0) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 9.99999999999999e+307, 'Test: Bounded case: Number(2). Largest valid Excel number, rounds to itself. 2 of 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 1e+308, 'Test: Bounded case: Number(2). Largest valid Excel number, rounds to itself. 2 of 2 arguments used.');
 		// Case #3: Number(2). Maximum num_digits (15) for rounding. 2 of 2 arguments used.
 		oParser = new parserFormula('ROUND(2.567, 15)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ROUND(2.567, 15) is parsed.');

@@ -6635,27 +6635,34 @@ function (window, undefined) {
 
 		function frequency(A, B) {
 
-			var tA = [], tB = [Number.NEGATIVE_INFINITY], i, j;
-
+			let tA = [], tB = [Number.NEGATIVE_INFINITY], i, j;
 			for (i = 0; i < A.length; i++) {
 				for (j = 0; j < A[i].length; j++) {
-					if (A[i][j] instanceof cError) {
-						return A[i][j];
-					} else if (A[i][j] instanceof cNumber) {
-						tA.push(A[i][j].getValue());
-					} else if (A[i][j] instanceof cBool) {
-						tA.push(A[i][j].tocNumber().getValue());
+					let elem = A[i][j];
+					if (elem) {
+						if (elem.type === cElementType.error) {
+							return elem;
+						}
+
+						if (elem.type === cElementType.number) {
+							tA.push(elem.getValue());
+						}
 					}
 				}
 			}
 			for (i = 0; i < B.length; i++) {
 				for (j = 0; j < B[i].length; j++) {
-					if (B[i][j] instanceof cError) {
-						return B[i][j];
-					} else if (B[i][j] instanceof cNumber) {
-						tB.push(B[i][j].getValue());
-					} else if (B[i][j] instanceof cBool) {
-						tB.push(B[i][j].tocNumber().getValue());
+					let elem = B[i][j];
+					if (elem) {
+						if (elem.type === cElementType.error) {
+							return elem;
+						}
+
+						if (elem.type === cElementType.string || elem.type === cElementType.bool) {
+							tB.push(0);
+						} else if (elem.type === cElementType.number) {
+							tB.push(elem.getValue());
+						}
 					}
 				}
 			}
@@ -6664,7 +6671,7 @@ function (window, undefined) {
 			tB.push(Number.POSITIVE_INFINITY);
 			tB.sort(fSortAscending);
 
-			var C = [[]], k = 0;
+			let C = [[]], k = 0;
 			for (i = 1; i < tB.length; i++, k++) {
 				if (!C[k]) {
 					C[k] = [];
@@ -6672,31 +6679,52 @@ function (window, undefined) {
 				C[k][0] = new cNumber(0);
 				for (j = 0; j < tA.length; j++) {
 					if (tA[j] > tB[i - 1] && tA[j] <= tB[i]) {
-						var a = C[k][0].getValue();
+						let a = C[k][0].getValue();
 						C[k][0] = new cNumber(++a);
 					}
 				}
 			}
-			var res = new cArray();
+			let res = new cArray();
 			res.fillFromArray(C);
 			return res;
 		}
 
-		var arg0 = arg[0], arg1 = arg[1];
-		if (arg0 instanceof cArea || arg0 instanceof cArray) {
-			arg0 = arg0.getMatrix();
-		} else if (arg0 instanceof cArea3D) {
-			arg0 = arg0.getMatrix()[0];
-		} else {
-			return new cError(cErrorType.not_available);
+		let arg0 = arg[0], arg1 = arg[1];
+
+		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
+			arg0 = arg0.tocNumber();
 		}
 
-		if (arg1 instanceof cArea || arg1 instanceof cArray) {
+		if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+			arg1 = arg1.tocNumber();
+		}
+
+		// error check block
+		if (arg0.type === cElementType.error) {
+			return arg0;	
+		} else if (arg1.type === cElementType.error) {
+			return arg1;
+		} else if (arg0.type === cElementType.empty || arg1.type === cElementType.empty) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.array) {
+			arg0 = arg0.getMatrix();
+		} else if (arg0.type === cElementType.cellsRange3D) {
+			arg0 = arg0.getMatrix()[0];
+		} else {
+			// create arr with single val
+			arg0 = [[arg0]];
+		}
+
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.array) {
 			arg1 = arg1.getMatrix();
-		} else if (arg1 instanceof cArea3D) {
+		} else if (arg1.type === cElementType.cellsRange3D) {
 			arg1 = arg1.getMatrix()[0];
 		} else {
-			return new cError(cErrorType.not_available);
+			// create arr with single val
+			arg1 = [[arg1]];
 		}
 
 		return frequency(arg0, arg1);
