@@ -490,10 +490,12 @@ ParaRun.prototype.Get_Text = function(Text)
 
 				break;
 			}
-
-			case para_Text :
+			case para_Text:
+			case para_Space:
+			case para_Math_Text:
+			case para_Math_BreakOperator:
 			{
-				Text.Text += String.fromCharCode(Item.Value);
+				Text.Text += String.fromCharCode(Item.GetCodePoint());
 				break;
 			}
 			case para_NewLine:
@@ -504,11 +506,6 @@ ParaRun.prototype.Get_Text = function(Text)
 			case para_Tab:
 			{
 				Text.Text += undefined !== Text.TabSymbol ? Text.TabSymbol : " ";
-				break;
-			}
-			case para_Space:
-			{
-				Text.Text += " ";
 				break;
 			}
 		}
@@ -3151,15 +3148,12 @@ ParaRun.prototype.GetSelectedText = function(bAll, bClearText, oPr)
 
                 break;
             }
-
-            case para_Text :
-            {
-                Str += AscCommon.encodeSurrogateChar(Item.Value);
-                break;
-            }
+			case para_Text :
 			case para_Space:
+			case para_Math_Text:
+			case para_Math_BreakOperator:
 			{
-				Str += " ";
+				Str += AscCommon.encodeSurrogateChar(Item.GetCodePoint());
 				break;
 			}
 			case para_Tab:
@@ -3167,12 +3161,6 @@ ParaRun.prototype.GetSelectedText = function(bAll, bClearText, oPr)
 				Str += oPr && undefined !== oPr.TabSymbol ? oPr.TabSymbol : ' ';
 				break;
 			}
-            case para_Math_Text:
-            case para_Math_BreakOperator:
-            {
-                Str += AscCommon.encodeSurrogateChar(Item.value);
-                break;
-            }
 			case para_NewLine:
 			{
 				Str += oPr && undefined !== oPr.NewLineSeparator ? oPr.NewLineSeparator : '\r';
