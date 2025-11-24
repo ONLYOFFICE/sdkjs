@@ -225,10 +225,7 @@ function (window, undefined) {
     };
     COleObject.prototype.checkTypeCorrect = function(){
         let bCorrectData = false;
-        if(this.m_sData) {
-            bCorrectData = true;
-        }
-        else if(this.m_sObjectFile) {
+        if(this.m_sData || this.m_sFileName || this.m_sObjectFile) {
             bCorrectData = true;
         }
         if(!bCorrectData){
