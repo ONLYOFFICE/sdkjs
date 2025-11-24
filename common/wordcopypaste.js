@@ -14415,7 +14415,7 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
 	let nAddIdx = 0;
 	for(let nImg = 0; nImg < aImages.length; ++nImg) {
 		let oImgObject = aImages[nImg];
-		if(!AscCommon.isRealObject(oImgObject) || oImgObject.isImage()) {
+		if(!AscCommon.isRealObject(oImgObject) || oImgObject.IsImage()) {
 			continue;
 		}
 		let sUrl = oImgObject.GetUrl();
