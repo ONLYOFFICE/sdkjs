@@ -5717,6 +5717,24 @@ function CBinaryFileWriter()
             _writer._WriteUChar2(5, 0);
 			_writer._WriteString2(7, ole.m_sObjectFile);
             _writer.WriteUChar(g_nodeAttributeEnd);
+					const arrXLSX = AscCommon.g_oBinaryCacheManager.getBinary(ole.m_sBinaryId);
+					if((ole.m_nOleType === 0 || ole.m_nOleType === 1 || ole.m_nOleType === 2 || ole.m_nOleType === 5) && arrXLSX)
+					{
+						_writer.WriteRecord1(1, ole.m_nOleType, function(val){
+							_writer.WriteUChar(val);
+						});
+						_writer.WriteRecord1(2, 0, function(val){
+							_writer.WriteBuffer(arrXLSX, 0, arrXLSX.length);
+						});
+					} else if (ole.m_nOleType === 0) {
+						_writer.WriteRecord1(1, ole.m_nOleType, function(val){
+							_writer.WriteUChar(val);
+						});
+						_writer.WriteRecord1(2, 0, function(val){
+							_writer._WriteString2(2, ole.m_sFileName);
+						});
+					}
+
         };
         this.WriteGroup = function(group, Document, oMapCommentId, oNumIdMap, copyParams, saveParams)
         {

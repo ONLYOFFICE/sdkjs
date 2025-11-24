@@ -11542,14 +11542,14 @@ function BinaryPPTYLoader()
                         var binary_length;
                         switch(oleType)
                         {
-	                        //todo Maybe you should keep the unnecessary binaries separate
-                            case 0:
-                            {
-                                binary_length = s.GetULong();
-                                ole.setXLSXId(s.data.slice(s.cur, s.cur + binary_length));
-                                s.Seek2(s.cur + binary_length);
-                                break;
-                            }
+													case 0:
+													{
+														s.GetULong();
+														s.GetUChar();
+														const sFileName = s.GetString2();
+														ole.setFileName(sFileName);
+														break;
+													}
                             case 1:
                             {
                                 ole.setObjectFile("maskFile.docx");
@@ -11582,6 +11582,14 @@ function BinaryPPTYLoader()
                                 }
                                 break;
                             }
+													case 5:
+													{
+														ole.setObjectFile("maskFile.vsdx");
+														binary_length = s.GetULong();
+														ole.setXLSXId(s.data.slice(s.cur, s.cur + binary_length));
+														s.Seek2(s.cur + binary_length);
+														break;
+													}
                             default:
                             {
                                 s.SkipRecord();
