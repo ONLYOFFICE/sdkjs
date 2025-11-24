@@ -16887,7 +16887,6 @@
 				else
 				{
 					//распознаем формат
-                    console.log(oNumFormat.getType());
 					var res = AscCommon.g_oFormatParser.parse(val, oNumFormat.getType());
 					if(null != res)
 					{
