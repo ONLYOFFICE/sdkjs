@@ -7532,7 +7532,7 @@ BinaryChartReader.prototype.ReadCT_ChartSpace = function (type, length, val, cur
 			const nCur = this.bcr.stream.cur;
 			const arrData = this.bcr.stream.data.slice(nCur, nCur + length);
 			if (AscCommon.pptx_content_loader.Reader.IsUseFullUrl) {
-				AscCommon.pptx_content_loader.Reader.AddXLSXBinary(val, arrData);
+				AscCommon.pptx_content_loader.Reader.AddChartBinary(val, arrData);
 			} else {
 				val.setXLSXId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrData));
 			}
@@ -7623,7 +7623,7 @@ BinaryChartReader.prototype.ReadCT_ChartExSpace = function (type, length, val) {
 	    const nCur = this.bcr.stream.cur;
 	    const arrData = this.bcr.stream.data.slice(nCur, nCur + length);
 			if (AscCommon.pptx_content_loader.Reader.IsUseFullUrl) {
-				AscCommon.pptx_content_loader.Reader.AddXLSXBinary(val, arrData);
+				AscCommon.pptx_content_loader.Reader.AddChartBinary(val, arrData);
 			} else {
 				val.setXLSXId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrData));
 			}

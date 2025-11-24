@@ -61,6 +61,7 @@ function (window, undefined) {
 		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetFileName] = AscDFH.CChangesDrawingsString;
 		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetDataLink] = AscDFH.CChangesDrawingsString;
 		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetOleType] = AscDFH.CChangesDrawingsLong;
+		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetBinaryId] = AscDFH.CChangesDrawingsString;
 		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetMathObject] = AscDFH.CChangesDrawingsObject;
 		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetDrawAspect] = AscDFH.CChangesDrawingsLong;
         AscDFH.drawingsConstructorsMap[AscDFH.historyitem_ChartStyleEntryDefRPr] = AscCommonWord.CTextPr;
@@ -78,6 +79,7 @@ function (window, undefined) {
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetFileName] = function(oClass, value){oClass.m_sFileName = value;};
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetDataLink] = function(oClass, value){oClass.m_sDataLink = value;};
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetOleType] = function(oClass, value){oClass.m_nOleType = value;};
+		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetBinaryId] = function(oClass, value){oClass.m_sBinaryId = value;};
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetMathObject] = function(oClass, value){oClass.m_oMathObject = value;};
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetDrawAspect] = function(oClass, value){oClass.m_nDrawAspect = value;};
 
@@ -161,7 +163,8 @@ function (window, undefined) {
         AscCommon.History.Add(new AscDFH.CChangesDrawingsLong(this, AscDFH.historyitem_ImageShapeSetOleType, this.m_nOleType, nOleType));
         this.m_nOleType = nOleType;
     };
-		COleObject.prototype.setXLSXId = function(sBinaryId) {
+		COleObject.prototype.setBinaryId = function(sBinaryId) {
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ImageShapeSetBinaryId, this.m_sBinaryId, sBinaryId));
 			this.m_sBinaryId = sBinaryId;
 		}
     COleObject.prototype.setMathObject = function(oMath)
@@ -201,7 +204,7 @@ function (window, undefined) {
         copy.setObjectFile(this.m_sObjectFile);
 			copy.setFileName(this.m_sFileName);
 			copy.setOleType(this.m_nOleType);
-				copy.setXLSXId(this.m_sBinaryId);
+				copy.setBinaryId(this.m_sBinaryId);
         if(this.macro !== null) {
             copy.setMacro(this.macro);
         }
@@ -347,7 +350,7 @@ function (window, undefined) {
             this.setData(Data);
         }
         if (oLoadedData) {
-            this.setXLSXId(oLoadedData.hash);
+            this.setBinaryId(oLoadedData.hash);
 	        AscDFH.addImagesFromFrame(this, [AscCommon.g_oDocumentUrls.imagePath2Local(oLoadedData.data.path)]);
         }
         if (this.m_nDrawAspect === AscFormat.EOLEDrawAspect.oledrawaspectContent && !this.m_bShowAsIcon) {
@@ -495,14 +498,35 @@ function (window, undefined) {
             if (olePart)
             {
               const binaryData = olePart.getDocumentContent('object');
-              if (binaryData)
-              {
-                this.setXLSXId(AscCommon.g_oBinaryCacheManager.addLocalBinary(binaryData.slice()));
-              }
+							this.fillBinaryData(binaryData);
             }
           }
         }
     };
+			COleObject.prototype.fillBinaryData = function(binaryData) {
+				const nEditorId = AscCommon.getEditorByOOXMLSignature(binaryData);
+				if (nEditorId !== null) {
+					this.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(binaryData));
+				}
+				switch (nEditorId) {
+					case AscCommon.c_oEditorId.Word: {
+						this.setObjectFile("maskFile.docx");
+						break;
+					}
+					case AscCommon.c_oEditorId.Presentation: {
+						this.setObjectFile("maskFile.pptx");
+						break;
+					}
+					case AscCommon.c_oEditorId.Spreadsheet: {
+						this.setObjectFile("maskFile.xlsx");
+						break;
+					}
+					case AscCommon.c_oEditorId.Visio: {
+						this.setObjectFile("maskFile.vsdx");
+						break;
+					}
+				}
+			};
 
     COleObject.prototype.getTypeName = function () {
         return AscCommon.translateManager.getValue("Object");

@@ -1117,7 +1117,7 @@
 	};
 	CBinaryCacheManager.prototype.addLocalBinary = function(binary) {
 		const hash = this.getHash(binary);
-		this.cache[hash] = binary;
+		this.cache[hash] = binary.slice();
 		return hash;
 	};
 	CBinaryCacheManager.prototype.getBase64EncodedData = function(binary) {
@@ -1141,7 +1141,7 @@
 		});
 	};
 	CBinaryCacheManager.prototype.getDataURLFromBinary = function(arrXLSXBinary) {
-		return "data:" + AscCommon.openXml.Types.package.contentType + ";base64," + AscCommon.Base64.encode(arrXLSXBinary, 0, arrXLSXBinary.length);
+		return "data:" + AscCommon.openXml.Types.xlsxPackage.contentType + ";base64," + AscCommon.Base64.encode(arrXLSXBinary, 0, arrXLSXBinary.length);
 	};
 
 	window["AscCommon"].CBinaryCacheManager = CBinaryCacheManager;

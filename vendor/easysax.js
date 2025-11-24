@@ -2066,7 +2066,7 @@ XmlWriterContext.prototype.getImageRId = function(sRasterImageId) {
 };
 XmlWriterContext.prototype.getDataRId = function(sDataLink) {
     let dataPart = this.dataMap[sDataLink];
-    let type = this.editorId === AscCommon.c_oEditorId.Word ? AscCommon.openXml.Types.wordPackage : AscCommon.openXml.Types.package;
+    let type = this.editorId === AscCommon.c_oEditorId.Word ? AscCommon.openXml.Types.xlsxWordPackage : AscCommon.openXml.Types.xlsxPackage;
     if (!dataPart) {
         if (this.part) {
             let ext = AscCommon.GetFileExtension(sDataLink);
@@ -2097,6 +2097,26 @@ XmlWriterContext.prototype.getSpIdxId = function(sEditorId){
         }
     }
     return null;
+};
+XmlWriterContext.prototype.addPartByBinary = function(writer, arrBinary) {
+	const bIsDocumentContext = this.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX;
+	switch (AscCommon.getEditorByOOXMLSignature(arrBinary)) {
+		case AscCommon.c_oEditorId.Spreadsheet: {
+			return bIsDocumentContext ? writer.context.part.addPart(AscCommon.openXml.Types.xlsxWordPackage) : writer.context.part.addPart(AscCommon.openXml.Types.xlsxPackage);
+		}
+		case AscCommon.c_oEditorId.Word: {
+			return bIsDocumentContext ? writer.context.part.addPart(AscCommon.openXml.Types.docxWordPackage) : writer.context.part.addPart(AscCommon.openXml.Types.docxPackage);
+		}
+		case AscCommon.c_oEditorId.Presentation: {
+			return bIsDocumentContext ? writer.context.part.addPart(AscCommon.openXml.Types.pptxWordPackage) : writer.context.part.addPart(AscCommon.openXml.Types.pptxPackage);
+		}
+		case AscCommon.c_oEditorId.Visio: {
+			return bIsDocumentContext ? writer.context.part.addPart(AscCommon.openXml.Types.vsdxWordPackage) : writer.context.part.addPart(AscCommon.openXml.Types.vsdxPackage);
+		}
+		default: {
+			return null;
+		}
+	}
 };
 function CT_XmlNode(opt_elemReader) {
     this.attributes = {};

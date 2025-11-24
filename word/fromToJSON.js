@@ -13625,7 +13625,7 @@
 		oParsedOleObj["data"]       != undefined && oOleObject.setData(oParsedOleObj["data"]);
 		oParsedOleObj["objFile"]    != undefined && oOleObject.setObjectFile(oParsedOleObj["objFile"]);
 		oParsedOleObj["oleType"]    != undefined && oOleObject.setOleType(From_XML_OleObj_Type(oParsedOleObj["oleType"]));
-		oParsedOleObj["binaryData"] != undefined && oOleObject.setXLSXId(oParsedOleObj["binaryData"]);
+		oParsedOleObj["binaryData"] != undefined && oOleObject.setBinaryId(oParsedOleObj["binaryData"]);
 		oParsedOleObj["mathObj"]    != undefined && oOleObject.setMathObject(this.ParaMathFromJSON(oParsedOleObj["mathObj"]));
 		
 		if (oParsedOleObj["dxaOrig"] > 0 && oParsedOleObj["dyaOrig"] > 0) {

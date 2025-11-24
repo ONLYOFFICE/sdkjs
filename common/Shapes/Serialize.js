@@ -247,9 +247,7 @@ function CBuilderBinaries(oClass, arrBinary) {
 		}
 		return this.hash;
 	}
-	CBuilderBinaries.prototype.SetUrl = function(url) {
-		this.class.setXLSXId(this.getHash());
-	};
+	CBuilderBinaries.prototype.SetUrl = function(url) {};
 	CBuilderBinaries.prototype.collectConvertPromiseFunctions = function(arrPromiseFunctions) {
 		const oThis = this;
 		if (!AscCommon.checkOOXMLSignature(oThis.binary)) {
@@ -262,6 +260,22 @@ function CBuilderBinaries(oClass, arrBinary) {
 		this.binary = arrBinary;
 		this.hash = null;
 	}
+
+	function CBuilderChartBinaries(oClass, arrBinary) {
+		CBuilderBinaries.call(this, oClass, arrBinary);
+	}
+	AscCommon.InitClassWithoutType(CBuilderChartBinaries, CBuilderBinaries);
+	CBuilderChartBinaries.prototype.SetUrl = function(url) {
+		this.class.setXLSXId(this.getHash());
+	};
+
+	function CBuilderOleBinaries(oClass, arrBinary) {
+		CBuilderBinaries.call(this, oClass, arrBinary);
+	}
+	AscCommon.InitClassWithoutType(CBuilderChartBinaries, CBuilderBinaries);
+	CBuilderOleBinaries.prototype.SetUrl = function(url) {
+		this.class.setBinaryId(this.getHash());
+	};
 
 function BinaryPPTYLoader()
 {
@@ -291,8 +305,11 @@ function BinaryPPTYLoader()
 	this.fields = [];
 	this.smartarts = [];
 
-	this.AddXLSXBinary = function(oClass, arrBinary) {
-		this.RebuildObjects.push(new CBuilderBinaries(oClass, arrBinary));
+	this.AddChartBinary = function(oClass, arrBinary) {
+		this.RebuildObjects.push(new CBuilderChartBinaries(oClass, arrBinary));
+	}
+	this.AddOleBinary = function(oClass, arrBinary) {
+		this.RebuildObjects.push(new CBuilderOleBinaries(oClass, arrBinary));
 	}
 	this.ClearConnectedObjects = function(){
         this.oConnectedObjects = {};
@@ -6166,7 +6183,12 @@ function BinaryPPTYLoader()
                         {
                             ole.setObjectFile("maskFile.docx");
                             binary_length = s.GetULong();
-                            ole.setXLSXId(s.data.slice(s.cur, s.cur + binary_length));
+														const arrBinaryData = s.data.slice(s.cur, s.cur + binary_length);
+														if (this.IsUseFullUrl) {
+															this.AddOleBinary(val, arrBinaryData);
+														} else {
+															ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData));
+														}
                             s.Seek2(s.cur + binary_length);
                             break;
                         }
@@ -6174,7 +6196,12 @@ function BinaryPPTYLoader()
                         {
                             ole.setObjectFile("maskFile.xlsx");
                             binary_length = s.GetULong();
-                            ole.setXLSXId(s.data.slice(s.cur, s.cur + binary_length));
+													const arrBinaryData = s.data.slice(s.cur, s.cur + binary_length);
+													if (this.IsUseFullUrl) {
+														this.AddOleBinary(val, arrBinaryData);
+													} else {
+														ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData));
+													}
                             s.Seek2(s.cur + binary_length);
                             break;
                         }
@@ -6198,7 +6225,12 @@ function BinaryPPTYLoader()
 											{
 												ole.setObjectFile("maskFile.vsdx");
 												binary_length = s.GetULong();
-												ole.setXLSXId(s.data.slice(s.cur, s.cur + binary_length));
+												const arrBinaryData = s.data.slice(s.cur, s.cur + binary_length);
+												if (this.IsUseFullUrl) {
+													this.AddOleBinary(val, arrBinaryData);
+												} else {
+													ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData));
+												}
 												s.Seek2(s.cur + binary_length);
 												break;
 											}
@@ -11554,7 +11586,13 @@ function BinaryPPTYLoader()
                             {
                                 ole.setObjectFile("maskFile.docx");
                                 binary_length = s.GetULong();
-                                ole.setXLSXId(s.data.slice(s.cur, s.cur + binary_length));
+
+															const arrBinaryData = s.data.slice(s.cur, s.cur + binary_length);
+															if (this.Reader.IsUseFullUrl) {
+																this.Reader.AddOleBinary(val, arrBinaryData);
+															} else {
+																ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData));
+															}
                                 s.Seek2(s.cur + binary_length);
                                 break;
                             }
@@ -11562,7 +11600,12 @@ function BinaryPPTYLoader()
                             {
                                 ole.setObjectFile("maskFile.xlsx");
                                 binary_length = s.GetULong();
-                                ole.setXLSXId(s.data.slice(s.cur, s.cur + binary_length));
+															const arrBinaryData = s.data.slice(s.cur, s.cur + binary_length);
+															if (this.Reader.IsUseFullUrl) {
+																this.Reader.AddOleBinary(val, arrBinaryData);
+															} else {
+																ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData));
+															}
                                 s.Seek2(s.cur + binary_length);
                                 break;
                             }
@@ -11586,7 +11629,12 @@ function BinaryPPTYLoader()
 													{
 														ole.setObjectFile("maskFile.vsdx");
 														binary_length = s.GetULong();
-														ole.setXLSXId(s.data.slice(s.cur, s.cur + binary_length));
+														const arrBinaryData = s.data.slice(s.cur, s.cur + binary_length);
+														if (this.Reader.IsUseFullUrl) {
+															this.Reader.AddOleBinary(val, arrBinaryData);
+														} else {
+															ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData));
+														}
 														s.Seek2(s.cur + binary_length);
 														break;
 													}

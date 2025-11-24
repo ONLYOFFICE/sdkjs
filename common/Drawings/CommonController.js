@@ -8533,7 +8533,7 @@
 					var oleObject = new AscFormat.COleObject();
 					AscFormat.fillImage(oleObject, rasterImageId, x, y, extX, extY);
 					if (oLoadedData) {
-						oleObject.setXLSXId(oLoadedData.hash);
+						oleObject.setBinaryId(oLoadedData.hash);
 						AscDFH.addImagesFromFrame(oleObject, [AscCommon.g_oDocumentUrls.imagePath2Local(oLoadedData.data.path)]);
 					} else {
 						oleObject.setData(data);
