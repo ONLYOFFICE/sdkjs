@@ -24825,6 +24825,38 @@
 		return false
 	};
 
+	/**
+	 * Checks if dynamic array is collapsed
+	 * @memberof CDynamicArrayManager
+	 * @param {number} row - Row index
+	 * @param {number} col - Column index
+	 * @returns {boolean|null} Returns true if collapsed, false if expanded, null if not a dynamic array
+	 */
+	CDynamicArrayManager.prototype.isCollapsed = function(row, col) {
+		let cmIndex;
+		this.ws._getCellNoEmpty(row, col, function(cell) {
+			if (cell && cell.formulaParsed) {
+				cmIndex = cell.formulaParsed.getCm();
+			}
+		});
+
+		if (cmIndex == null) {
+			return null;
+		}
+
+		const metadata = this.ws.workbook.metadata;
+		if (!metadata) {
+			return null;
+		}
+
+		const dynamicArrayProps = metadata.getDynamicArrayProperties(cmIndex);
+		if (!dynamicArrayProps) {
+			return null;
+		}
+
+		return dynamicArrayProps.fCollapsed === true;
+	};
+
 
 
 
