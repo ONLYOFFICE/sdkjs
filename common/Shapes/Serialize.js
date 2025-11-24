@@ -6156,13 +6156,10 @@ function BinaryPPTYLoader()
                     {
                         case 0:
                         {
-                            binary_length = s.GetULong();
-														if (this.IsUseFullUrl) {
-															this.AddXLSXBinary()
-														} else {
-															ole.setXLSXId(s.data.slice(s.cur, s.cur + binary_length));
-														}
-                            s.Seek2(s.cur + binary_length);
+													s.GetULong();
+													s.GetUChar();
+													const sFileName = s.GetString2();
+													ole.setFileName(sFileName);
                             break;
                         }
                         case 1:

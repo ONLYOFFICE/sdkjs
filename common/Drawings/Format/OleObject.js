@@ -58,6 +58,7 @@ function (window, undefined) {
         AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetApplicationId] = AscDFH.CChangesDrawingsString;
         AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetPixSizes] = AscDFH.CChangesDrawingsObjectNoId;
 		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetObjectFile] = AscDFH.CChangesDrawingsString;
+		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetFileName] = AscDFH.CChangesDrawingsString;
 		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetDataLink] = AscDFH.CChangesDrawingsString;
 		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetOleType] = AscDFH.CChangesDrawingsLong;
 		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetMathObject] = AscDFH.CChangesDrawingsObject;
@@ -74,6 +75,7 @@ function (window, undefined) {
         };
         AscDFH.drawingsConstructorsMap[AscDFH.historyitem_ImageShapeSetPixSizes] = COleSize;
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetObjectFile] = function(oClass, value){oClass.m_sObjectFile = value;};
+		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetFileName] = function(oClass, value){oClass.m_sFileName = value;};
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetDataLink] = function(oClass, value){oClass.m_sDataLink = value;};
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetOleType] = function(oClass, value){oClass.m_nOleType = value;};
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetMathObject] = function(oClass, value){oClass.m_oMathObject = value;};
@@ -100,6 +102,7 @@ function (window, undefined) {
         this.m_sDataLink = null;
         this.m_nDrawAspect = AscFormat.EOLEDrawAspect.oledrawaspectContent;
         this.m_bShowAsIcon = false;
+				this.m_sFileName = null;
     }
 
     COleObject.prototype = Object.create(AscFormat.CImageShape.prototype);
@@ -143,6 +146,11 @@ function (window, undefined) {
         AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ImageShapeSetObjectFile, this.m_sObjectFile, sObjectFile));
         this.m_sObjectFile = sObjectFile;
     };
+			COleObject.prototype.setFileName = function(sFileName)
+			{
+				AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ImageShapeSetFileName, this.m_sFileName, sFileName));
+				this.m_sFileName = sFileName;
+			};
     COleObject.prototype.setDataLink = function(sDataLink)
     {
         AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ImageShapeSetDataLink, this.m_sDataLink, sDataLink));
@@ -191,7 +199,8 @@ function (window, undefined) {
         copy.setApplicationId(this.m_sApplicationId);
         copy.setPixSizes(this.m_nPixWidth, this.m_nPixHeight);
         copy.setObjectFile(this.m_sObjectFile);
-        copy.setOleType(this.m_nOleType);
+			copy.setFileName(this.m_sFileName);
+			copy.setOleType(this.m_nOleType);
 				copy.setXLSXId(this.m_sBinaryId);
         if(this.macro !== null) {
             copy.setMacro(this.macro);

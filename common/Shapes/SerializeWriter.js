@@ -3760,7 +3760,15 @@ function CBinaryFileWriter()
             oThis.WriteRecord1(2, 0, function(val){
                 oThis.WriteBuffer(arrXLSX, 0, arrXLSX.length);
             });
-        }
+        } else if (ole.m_nOleType === 0) {
+					oThis.WriteRecord1(1, ole.m_nOleType, function(val){
+						oThis.WriteUChar(val);
+					});
+					oThis.WriteRecord1(2, 0, function(val){
+						oThis._WriteString2(2, ole.m_sFileName);
+					});
+
+				}
     };
     this.WriteGrFrame = function(grObj)
     {

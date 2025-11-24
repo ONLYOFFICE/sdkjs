@@ -3090,6 +3090,7 @@
 	window['AscDFH'].historyitem_ImageShapeSetDataLink           = window['AscDFH'].historyitem_type_ImageShape | 16;
 	window['AscDFH'].historyitem_ImageShapeSetDrawAspect         = window['AscDFH'].historyitem_type_ImageShape | 17;
 	window['AscDFH'].historyitem_ImageShapeLoadImagesfromContent = window['AscDFH'].historyitem_type_ImageShape | 18;
+	window['AscDFH'].historyitem_ImageShapeSetFileName           = window['AscDFH'].historyitem_type_ImageShape | 19;
 
 	window['AscDFH'].historyitem_GeometrySetParent      = window['AscDFH'].historyitem_type_Geometry | 1;
 	window['AscDFH'].historyitem_GeometryAddAdj         = window['AscDFH'].historyitem_type_Geometry | 2;
