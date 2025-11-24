@@ -3752,7 +3752,7 @@ function CBinaryFileWriter()
         oThis._WriteString2(7, ole.m_sObjectFile);
         oThis.WriteUChar(g_nodeAttributeEnd);
 				const arrXLSX = AscCommon.g_oBinaryCacheManager.getBinary(ole.m_sBinaryId);
-        if((ole.m_nOleType === 0 || ole.m_nOleType === 1 || ole.m_nOleType === 2) && arrXLSX)
+        if((ole.m_nOleType === 0 || ole.m_nOleType === 1 || ole.m_nOleType === 2 || ole.m_nOleType === 5) && arrXLSX)
         {
             oThis.WriteRecord1(1, ole.m_nOleType, function(val){
                 oThis.WriteUChar(val);

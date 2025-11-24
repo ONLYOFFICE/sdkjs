@@ -6194,6 +6194,14 @@ function BinaryPPTYLoader()
                             }
                             break;
                         }
+											case 5:
+											{
+												ole.setObjectFile("maskFile.vsdx");
+												binary_length = s.GetULong();
+												ole.setXLSXId(s.data.slice(s.cur, s.cur + binary_length));
+												s.Seek2(s.cur + binary_length);
+												break;
+											}
                         default:
                         {
                             s.SkipRecord();
