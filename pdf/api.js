@@ -4903,6 +4903,16 @@
 		// NOW USE ALWAYS BINARY DATA
 		return "binary";
 	};
+
+	PDFEditorApi.prototype.asc_CheckEditPassword = function(password) {
+		let oDoc = this.getPDFDoc();
+
+		if (null == password) {
+			return oDoc.Viewer.file.nativeFile['CheckPerm'](AscPDF.USER_PERMISSIONS.edit);
+		}
+
+		return oDoc.Viewer.file.nativeFile['CheckOwnerPassword'](password);
+	};
 	
 	function CPdfContextMenuData(obj) {
 		if (obj) {
@@ -5217,6 +5227,8 @@
 	PDFEditorApi.prototype['asc_setPdfViewer']		        = PDFEditorApi.prototype.asc_setPdfViewer;
 
 	PDFEditorApi.prototype['asc_GetTableOfContentsPr']      = PDFEditorApi.prototype.asc_GetTableOfContentsPr;
+	
+	PDFEditorApi.prototype['asc_CheckEditPassword']			= PDFEditorApi.prototype.asc_CheckEditPassword;
 	
 	window["PDFEditorApi"] = PDFEditorApi;
 
