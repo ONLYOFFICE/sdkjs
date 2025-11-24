@@ -13686,23 +13686,7 @@ BinaryChartReader.prototype.ReadCT_ChartEx = function (type, length, val) {
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_ChartExPlotArea(t, l, oNewVal);
         });
-        if (oNewVal && oNewVal.axId && Array.isArray(oNewVal.axId)) {
-            for (let i = 0; i < oNewVal.axId.length; i++) {
-                const axis = oNewVal.axId[i];
-                const start = (oNewVal.axId.length > 1) ? i : i + 1;
-                axis.initializeAxPos(start);
-            }
-            if (oNewVal.axId.length === 3) {
-                oNewVal.axId[0].setCrossAx(oNewVal.axId[1]);
-                oNewVal.axId[1].setCrossAx(oNewVal.axId[0]);
-                oNewVal.axId[2].setCrossAx(oNewVal.axId[0]);
-            } else if (oNewVal.axId.length === 2) {
-                oNewVal.axId[0].setCrossAx(oNewVal.axId[1]);
-                oNewVal.axId[1].setCrossAx(oNewVal.axId[0]);
-            } else if (oNewVal.axId.length === 1) {
-                oNewVal.axId[0].setCrossAx(oNewVal.axId[0]);
-            }
-        }
+        oNewVal.initializeChartAxes();
         val.setPlotArea(oNewVal);
     }
     else if (c_oserct_chartExChartTITLE === type)

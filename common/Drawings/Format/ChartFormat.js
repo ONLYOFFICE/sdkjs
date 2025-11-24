@@ -6626,6 +6626,28 @@
             this.axId[nAx].applyChartStyle(oChartStyle, oColors, oAdditionalData, bReset);
         }
     };
+	CPlotArea.prototype.initializeChartAxes = function () {
+		if (!this.axId || !Array.isArray(this.axId)) {
+			return;
+		}
+
+		for (let i = 0; i < this.axId.length; i++) {
+			const axis = this.axId[i];
+			const start = (this.axId.length > 1) ? i : 1;
+			axis.initializeAxPos(start);
+		}
+
+		if (this.axId.length === 3) {
+			this.axId[0].setCrossAx(this.axId[1]);
+			this.axId[1].setCrossAx(this.axId[0]);
+			this.axId[2].setCrossAx(this.axId[0]);
+		} else if (this.axId.length === 2) {
+			this.axId[0].setCrossAx(this.axId[1]);
+			this.axId[1].setCrossAx(this.axId[0]);
+		} else if (this.axId.length === 1) {
+			this.axId[0].setCrossAx(this.axId[0]);
+		}
+	}
     CPlotArea.prototype.initPostOpen = function(aChartWithAxis) {
         // выставляем axis в chart
         // TODO: 1. Диаграмм может быть больше, но мы пока работаем только с одной
@@ -6774,6 +6796,10 @@
                 }
             }
         }
+
+		if (this.isChartEx()) {
+			this.initializeChartAxes();
+		}
     };
     CPlotArea.prototype.updateReferences = function(bDisplayEmptyCellsAs, bDisplayHidden) {
         const aCharts = this.charts;
