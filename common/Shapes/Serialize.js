@@ -252,7 +252,7 @@ function CBuilderBinaries(oClass, arrBinary) {
 		const oThis = this;
 		if (!AscCommon.checkOOXMLSignature(oThis.binary)) {
 			arrPromiseFunctions.push(function() {
-				return AscCommon.g_oBinaryCacheManager.getFormatBinary(oThis.binary);
+				return AscCommon.g_oBinaryCacheManager.getFormatBinary(oThis.binary, oThis.class.getSignatureByBin());
 			});
 		}
 	};
@@ -272,7 +272,7 @@ function CBuilderBinaries(oClass, arrBinary) {
 	function CBuilderOleBinaries(oClass, arrBinary) {
 		CBuilderBinaries.call(this, oClass, arrBinary);
 	}
-	AscCommon.InitClassWithoutType(CBuilderChartBinaries, CBuilderBinaries);
+	AscCommon.InitClassWithoutType(CBuilderOleBinaries, CBuilderBinaries);
 	CBuilderOleBinaries.prototype.SetUrl = function(url) {
 		this.class.setBinaryId(this.getHash());
 	};
@@ -6185,7 +6185,7 @@ function BinaryPPTYLoader()
                             binary_length = s.GetULong();
 														const arrBinaryData = s.data.slice(s.cur, s.cur + binary_length);
 														if (this.IsUseFullUrl) {
-															this.AddOleBinary(val, arrBinaryData);
+															this.AddOleBinary(ole, arrBinaryData);
 														} else {
 															ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData));
 														}
@@ -6198,7 +6198,7 @@ function BinaryPPTYLoader()
                             binary_length = s.GetULong();
 													const arrBinaryData = s.data.slice(s.cur, s.cur + binary_length);
 													if (this.IsUseFullUrl) {
-														this.AddOleBinary(val, arrBinaryData);
+														this.AddOleBinary(ole, arrBinaryData);
 													} else {
 														ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData));
 													}
@@ -6227,7 +6227,7 @@ function BinaryPPTYLoader()
 												binary_length = s.GetULong();
 												const arrBinaryData = s.data.slice(s.cur, s.cur + binary_length);
 												if (this.IsUseFullUrl) {
-													this.AddOleBinary(val, arrBinaryData);
+													this.AddOleBinary(ole, arrBinaryData);
 												} else {
 													ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData));
 												}

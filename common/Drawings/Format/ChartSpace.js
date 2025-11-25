@@ -11824,6 +11824,9 @@ function(window, undefined) {
 	CChartSpace.prototype.asc_getSeries = CChartSpace.prototype["asc_getSeries"] = function() {
 		return this.getAllSeries();
 	};
+	CChartSpace.prototype.getSignatureByBin = function() {
+		return AscCommon.c_oEditorId.Spreadsheet;
+	};
 	function CAdditionalStyleData() {
 		this.dLbls = null;
 		this.catAx = null;

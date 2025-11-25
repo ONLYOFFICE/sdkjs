@@ -531,6 +531,20 @@ function (window, undefined) {
     COleObject.prototype.getTypeName = function () {
         return AscCommon.translateManager.getValue("Object");
     };
+		COleObject.prototype.getSignatureByBin = function() {
+			switch (this.m_sObjectFile) {
+				case "maskFile.xlsx":
+					return AscCommon.c_oEditorId.Spreadsheet;
+				case "maskFile.pptx":
+					return AscCommon.c_oEditorId.Presentation;
+				case "maskFile.docx":
+					return AscCommon.c_oEditorId.Word;
+				case "maskFile.vsdx":
+					return AscCommon.c_oEditorId.Visio;
+				default:
+					return null;
+			}
+		};
     window['Asc'] = window['Asc'] || {};
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].COleObject = COleObject;

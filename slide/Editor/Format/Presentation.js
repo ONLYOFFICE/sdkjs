@@ -4043,7 +4043,7 @@ CPresentation.prototype.FinalizeEditChart = function (binary)
 		oSlide.graphicObjects.loadChartData(binary['noHistory']);
 		if (!binary['noHistory'])
 		{
-			AscCommon.g_oBinaryCacheManager.addBinary(binary["workbookBinary"]).then(function(loadedData) {
+			AscCommon.g_oBinaryCacheManager.addBinary(binary["workbookBinary"], AscCommon.c_oEditorId.Spreadsheet).then(function(loadedData) {
 				if (loadedData) {
 					binary["workbookHash"] = loadedData.hash;
 					binary["workbookPath"] = AscCommon.g_oDocumentUrls.imagePath2Local(loadedData.data.path);
