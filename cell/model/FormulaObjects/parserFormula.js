@@ -6200,6 +6200,13 @@ _func[cElementType.cell3D] = _func[cElementType.cell];
 		this.needCorrect = null;
 	}
 
+	ParseResult.prototype.addAtOperator = function(start, end) {
+		if (!this.atOperators) {
+			this.atOperators = [];
+		}
+		this.atOperators.push({start: start, end: end});
+	};
+
 	ParseResult.prototype.addRefPos = function(start, end, index, oper, isName) {
 		if (this.refPos) {
 			this.refPos.push({start: start, end: end, index: index, oper: oper, isName: isName});
@@ -7760,6 +7767,8 @@ function parserFormula( formula, parent, _ws ) {
 					found_operator = cFormulaOperators['un_plus'].prototype;
 				} else if (' ' === ph.operand_str) {
 					return true;
+				} else if ('@' === ph.operand_str) {
+					return true;
 				} else {
 					parseResult.setError(c_oAscError.ID.FrmlWrongOperator);
 					t.outStack = [];
@@ -8255,8 +8264,21 @@ function parserFormula( formula, parent, _ws ) {
 				}
 			}
 			var prevCurrPos = ph.pCurrPos;
+			var atOperatorStart = -1;
 
-			/* Booleans */
+			if ('@' === t.Formula[ph.pCurrPos]) {
+				atOperatorStart = ph.pCurrPos;
+				ph.pCurrPos++;
+				if (ph.pCurrPos >= t.Formula.length) {
+					parseResult.setError(c_oAscError.ID.FrmlOperandExpected);
+					if (!ignoreErrors) {
+						t.outStack = [];
+						return false;
+					}
+				}
+				prevCurrPos = ph.pCurrPos;
+			}
+
 			if (opt_pivotNamesList && (_tableTMP = opt_pivotNamesList.length === 0 ? parserHelp.isPivotRaw.call(ph, t.Formula, ph.pCurrPos, local) : parserHelp.isPivot.call(ph, t.Formula, ph.pCurrPos, local, opt_pivotNamesList))) {
 
 				found_operand = cStrucPivotTable.prototype.createFromVal(_tableTMP);
@@ -8689,6 +8711,10 @@ function parserFormula( formula, parent, _ws ) {
 					elemArr.pop();
 				}
 
+				if (atOperatorStart !== -1) {
+					parseResult.addAtOperator(atOperatorStart, ph.pCurrPos);
+				}
+
 				t.outStack.push(found_operand);
 				parseResult.addElem(found_operand);
 				parseResult.operand_expected = false;
@@ -8939,6 +8965,33 @@ function parserFormula( formula, parent, _ws ) {
 		} else {
 			return this.isParsed = false;
 		}
+	};
+
+	parserFormula.prototype._assembleWithAtOperators = function(atOperators) {
+		if (!atOperators || atOperators.length === 0) {
+			return this.assemble();
+		}
+
+		var formula = this.Formula;
+		var offset = 0;
+
+		atOperators.sort(function(a, b) {
+			return a.start - b.start;
+		});
+
+		for (var i = 0; i < atOperators.length; i++) {
+			var atOp = atOperators[i];
+			var operandStr = formula.substring(atOp.start + 1 + offset, atOp.end + offset);
+			var replacement = "SINGLE(" + operandStr + ")";
+
+			formula = formula.substring(0, atOp.start + offset) +
+				replacement +
+				formula.substring(atOp.end + offset);
+
+			offset += replacement.length - (atOp.end - atOp.start);
+		}
+
+		return formula;
 	};
 
 	parserFormula.prototype.findRefByOutStack = function (forceCheck) {

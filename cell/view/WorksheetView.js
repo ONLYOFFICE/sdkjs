@@ -19021,6 +19021,25 @@ function isAllowPasteLink(pastedWb) {
 				}
 			}
 
+			//reparse if single operators included - @
+			if (!isFormulaFromVal && parseResult.atOperators && parseResult.atOperators.length > 0) {
+				let sBefore = newFP.Formula;
+				newFP.Formula = newFP._assembleWithAtOperators(parseResult.atOperators);
+				if (sBefore !== newFP.Formula) {
+					newFP.isParsed = false;
+					newFP.outStack = [];
+					parseResult = new AscCommonExcel.ParseResult();
+					if (!newFP.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep, parseResult)) {
+						if (parseResult.error !== c_oAscError.ID.FrmlWrongFunctionName && parseResult.error !== c_oAscError.ID.FrmlParenthesesCorrectCount) {
+							this.model.workbook.handlers.trigger("asc_onError", parseResult.error, c_oAscError.Level.NoCritical);
+							endTransaction();
+							return;
+						}
+					}
+					val[0].setFragmentText("=" + newFP.Formula);
+				}
+			}
+
 			// we check for new links to external data
 			if (parseResult.externalReferenesNeedAdd) {
 				t.model.workbook.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
