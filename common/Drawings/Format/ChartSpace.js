@@ -9165,14 +9165,18 @@ function(window, undefined) {
 					var compiled_brush = new AscFormat.CUniFill();
 					compiled_brush.merge(base_fills[oSeries.getIdx()]);
 
-					// if(oSeries.isChartEx()) {
-					// 	if (oChartSpace.chartStyle && oChartSpace.chartColors) {
-					// 		let oSpPr = oChartSpace.getSpPrFormStyleEntry(oChartSpace.chartStyle.dataPoint, oChartSpace.chartColors.generateColors(aSeries.length), oSeries.idx);
-					// 		if(oSpPr && oSpPr.Fill) {
-					// 			compiled_brush.merge(oSpPr.Fill);
-					// 		}
-					// 	}
-					// }
+					if (oSeries.isChartEx()) {
+						if (oChartSpace.chartStyle && oChartSpace.chartColors) {
+							let oSpPr = oChartSpace.getSpPrFormStyleEntry(
+								oChartSpace.chartStyle.dataPoint,
+								oChartSpace.chartColors.generateColors(aSeries.length),
+								oSeries.getIdx()
+							);
+							if (oSpPr && oSpPr.Fill) {
+								compiled_brush.merge(oSpPr.Fill);
+							}
+						}
+					}
 
 					if (oSeries.spPr && oSeries.spPr.Fill) {
 						compiled_brush.merge(oSeries.spPr.Fill);
@@ -9205,14 +9209,18 @@ function(window, undefined) {
 					else if (base_line_fills)
 						compiled_line.Fill.merge(base_line_fills[oSeries.idx]);
 
-					// if(oSeries.isChartEx()) {
-					// 	if (oChartSpace.chartStyle && oChartSpace.chartColors) {
-					// 		let oSpPr = oChartSpace.getSpPrFormStyleEntry(oChartSpace.chartStyle.dataPoint, oChartSpace.chartColors.generateColors(aSeries.length), oSeries.idx);
-					// 		if(oSpPr && oSpPr.ln) {
-					// 			compiled_line.merge(oSpPr.ln);
-					// 		}
-					// 	}
-					// }
+					if (oSeries.isChartEx()) {
+						if (oChartSpace.chartStyle && oChartSpace.chartColors) {
+							let oSpPr = oChartSpace.getSpPrFormStyleEntry(
+								oChartSpace.chartStyle.dataPoint,
+								oChartSpace.chartColors.generateColors(aSeries.length),
+								oSeries.getIdx()
+							);
+							if (oSpPr && oSpPr.ln) {
+								compiled_line.merge(oSpPr.ln);
+							}
+						}
+					}
 
 					if (oSeries.spPr && oSeries.spPr.ln) {
 						compiled_line.merge(oSeries.spPr.ln);
