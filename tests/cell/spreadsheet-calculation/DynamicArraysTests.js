@@ -676,15 +676,15 @@ $(function () {
 		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
 		resCell = getCell(ws.getRange2("A9"));
 		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(SIN(_xlfn.SINGLE(B1)))", "@SIN(@B1) -> SINGLE(SIN(SINGLE(B1)))");
-		
-		// fillRange = ws.getRange2("A10");
-		// wsView.setSelection(fillRange.bbox);
-		// fragment = ws.getRange2("A10").getValueForEdit2();
-		// fragment[0].setFragmentText("=@SUM(@B1:B3)");
-		// wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
-		// resCell = getCell(ws.getRange2("A10"));
-		// assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(SUM(_xlfn.SINGLE(B1:B3)))", "@SUM(@B1:B3) -> SINGLE(SUM(SINGLE(B1:B3)))");
-		//
+
+		fillRange = ws.getRange2("A10");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A10").getValueForEdit2();
+		fragment[0].setFragmentText("=@SUM(@B1:B3)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A10"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(SUM(_xlfn.SINGLE(B1:B3)))", "@SUM(@B1:B3) -> SINGLE(SUM(SINGLE(B1:B3)))");
+
 		// fillRange = ws.getRange2("A11");
 		// wsView.setSelection(fillRange.bbox);
 		// fragment = ws.getRange2("A11").getValueForEdit2();
@@ -692,8 +692,7 @@ $(function () {
 		// wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
 		// resCell = getCell(ws.getRange2("A11"));
 		// assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(IF(_xlfn.SINGLE(B1)>0,_xlfn.SINGLE(C1),0))", "@IF(@B1>0,@C1,0) -> SINGLE(IF(SINGLE(B1)>0,SINGLE(C1),0))");
-		//
-		//
+
 		// fillRange = ws.getRange2("A12");
 		// wsView.setSelection(fillRange.bbox);
 		// fragment = ws.getRange2("A12").getValueForEdit2();

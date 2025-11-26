@@ -7731,7 +7731,7 @@ function parserFormula( formula, parent, _ws ) {
 		var startArrayArg = null;
 		let bConditionalFormula = false;
 
-		let atOperatorStart = -1;
+		let atOperatorStack = [];
 
 		var t = this;
 		var _checkReferenceCount = function (weight) {
@@ -7969,6 +7969,11 @@ function parserFormula( formula, parent, _ws ) {
 				parseResult.allFunctionsPos.push({func: levelFuncMap[currentFuncLevel].func, start: levelFuncMap[currentFuncLevel].startPos, end: ph.pCurrPos, args: _argPos, isComplete: true});
 
 				currentFuncLevel--;
+
+				if (atOperatorStack.length > 0 && atOperatorStack[atOperatorStack.length - 1] !== undefined) {
+					parseResult.addAtOperator(atOperatorStack[atOperatorStack.length - 1], ph.pCurrPos);
+					atOperatorStack.pop();
+				}
 			}
 
 			return true;
@@ -8141,9 +8146,9 @@ function parserFormula( formula, parent, _ws ) {
 					return false;
 				}
 			}
-			if (atOperatorStart !== -1) {
-				parseResult.addAtOperator(atOperatorStart, ph.pCurrPos);
-				atOperatorStart = -1;
+			if (atOperatorStack.length > 0 && atOperatorStack[atOperatorStack.length - 1] !== undefined) {
+				parseResult.addAtOperator(atOperatorStack[atOperatorStack.length - 1], ph.pCurrPos);
+				atOperatorStack.pop();
 			}
 			t.outStack.push(arr);
 			parseResult.operand_expected = false;
@@ -8272,7 +8277,7 @@ function parserFormula( formula, parent, _ws ) {
 			var prevCurrPos = ph.pCurrPos;
 
 			if ('@' === t.Formula[ph.pCurrPos] && local) {
-				atOperatorStart = ph.pCurrPos;
+				atOperatorStack.push(ph.pCurrPos);
 				ph.pCurrPos++;
 				if (ph.pCurrPos >= t.Formula.length) {
 					parseResult.setError(c_oAscError.ID.FrmlOperandExpected);
@@ -8716,9 +8721,9 @@ function parserFormula( formula, parent, _ws ) {
 					elemArr.pop();
 				}
 
-				if (atOperatorStart !== -1) {
-					parseResult.addAtOperator(atOperatorStart, ph.pCurrPos);
-					atOperatorStart = -1;
+				if (atOperatorStack.length > 0 && atOperatorStack[atOperatorStack.length - 1] !== undefined) {
+					parseResult.addAtOperator(atOperatorStack[atOperatorStack.length - 1], ph.pCurrPos);
+					atOperatorStack.pop();
 				}
 
 				t.outStack.push(found_operand);
@@ -8876,7 +8881,7 @@ function parserFormula( formula, parent, _ws ) {
 				}
 			}/* Array */ else if (parserHelp.isLeftBrace.call(ph, this.Formula, ph.pCurrPos) || (isSingleStartPos != null && parserHelp.isLeftBrace.call(ph, this.Formula, ph.pCurrPos + 1))) {
 				if (isSingleStartPos != null) {
-					atOperatorStart = isSingleStartPos;
+					atOperatorStack.push(isSingleStartPos);
 				}
 				if (!parseArray()) {
 					if (ignoreErrors) {
@@ -8992,7 +8997,7 @@ function parserFormula( formula, parent, _ws ) {
 
 		for (var i = 0; i < atOperators.length; i++) {
 			var atOp = atOperators[i];
-			var operandStr = formula.substring(atOp.start + 1 + offset, atOp.end + offset);
+			var operandStr = formula.substring(atOp.start + offset, atOp.end + offset);
 			var replacement = "SINGLE(" + operandStr + ")";
 
 			formula = formula.substring(0, atOp.start + offset) +
