@@ -663,7 +663,7 @@
 		this.closeCallbacks = [];
 		this.isLoadedStream = true;
 		this.documentUrl = null;
-	};
+	}
 	CBinaryLoaderData.prototype.addCloseCallback = function (fCallback) {
 		if (fCallback) {
 			this.closeCallbacks.push(fCallback);
@@ -718,7 +718,7 @@
 				{
 					if (AscCommon.checkOOXMLSignature(binaryData))
 					{
-						oThis.api.getConvertedXLSXFileFromUrl({data: binaryData}, Asc.c_oAscFileType.XLSY, function (arrBinaryData) {
+						oThis.api.getConvertedFileFromUrl({data: binaryData}, Asc.c_oAscFileType.XLSY, function (arrBinaryData) {
 							if (arrBinaryData)
 							{
 								oThis.fillDataFromXLSTZip(arrBinaryData, oData);
@@ -1072,14 +1072,14 @@
 		}
 		return null;
 	};
-	CBinaryCacheManager.prototype.loadBinaryToServer = function(xlsxBinary) {
+	CBinaryCacheManager.prototype.loadBinaryToServer = function(xlsxBinary, editorType) {
 		const oThis = this;
 		const hash = this.getHash(xlsxBinary);
 		return new Promise(function(resolve, reject) {
 			if (AscCommon.History.IsOn()) {
 				if (!oThis.collaborativeCache[hash]) {
 					oThis.collaborativeCache[hash] = new CLoadBinaryData(hash, xlsxBinary);
-					const dataUrl = oThis.getDataURLFromBinary(xlsxBinary);
+					const dataUrl = oThis.getDataURLFromBinary(xlsxBinary, editorType);
 					AscCommon.sendImgUrls(oThis.api, [dataUrl], function(data) {
 						if (data && data[0] && data[0].url !== "error") {
 							oThis.collaborativeCache[hash].setLoadState(CLoadBinaryData_Complete);
@@ -1102,11 +1102,11 @@
 		});
 
 	};
-	CBinaryCacheManager.prototype.addBinary = function(binary) {
+	CBinaryCacheManager.prototype.addBinary = function(binary, editorType) {
 		binary = binary instanceof Uint8Array ? binary : new Uint8Array(binary);
 		const oThis = this;
-		return this.getFormatBinary(binary).then(function(arrXLSXBinary) {
-			return oThis.loadBinaryToServer(arrXLSXBinary);
+		return this.getFormatBinary(binary, editorType).then(function(arrXLSXBinary) {
+			return oThis.loadBinaryToServer(arrXLSXBinary, editorType);
 		}).then(function(oLoadedData) {
 			if (oLoadedData) {
 				oThis.cache[oLoadedData.hash] = oLoadedData.binary;
@@ -1115,22 +1115,84 @@
 			return null;
 		});
 	};
+	CBinaryCacheManager.prototype.getHeaders = function (editorType) {
+		switch (editorType) {
+			case AscCommon.c_oEditorId.Word: {
+				return "DOCY;v4;";
+			}
+			case AscCommon.c_oEditorId.Spreadsheet: {
+				return "XLSY;v2;";
+			}
+			case AscCommon.c_oEditorId.Presentation: {
+				return "PPTY;v1;";
+			}
+			case AscCommon.c_oEditorId.Visio: {
+				return "VSDY;v1;";
+			}
+			default: {
+				return null;
+			}
+		}
+	};
+	CBinaryCacheManager.prototype.getConvertFormat = function (editorType) {
+		switch (editorType) {
+			case AscCommon.c_oEditorId.Word: {
+				return Asc.c_oAscFileType.DOCX;
+			}
+			case AscCommon.c_oEditorId.Spreadsheet: {
+				return Asc.c_oAscFileType.XLSX;
+			}
+			case AscCommon.c_oEditorId.Presentation: {
+				return Asc.c_oAscFileType.PPTX;
+			}
+			case AscCommon.c_oEditorId.Visio: {
+				return Asc.c_oAscFileType.VSDX;
+			}
+			default:
+				return null;
+		}
+	};
+	CBinaryCacheManager.prototype.getContentType = function (editorType) {
+		switch (editorType) {
+			case AscCommon.c_oEditorId.Word: {
+				return AscCommon.openXml.Types.docxPackage.contentType;
+			}
+			case AscCommon.c_oEditorId.Spreadsheet: {
+				return AscCommon.openXml.Types.xlsxPackage.contentType;
+			}
+			case AscCommon.c_oEditorId.Presentation: {
+				return AscCommon.openXml.Types.pptxPackage.contentType;
+			}
+			case AscCommon.c_oEditorId.Visio: {
+				return AscCommon.openXml.Types.vsdxPackage.contentType;
+			}
+			default: {
+				return null;
+			}
+		}
+	};
 	CBinaryCacheManager.prototype.addLocalBinary = function(binary) {
 		const hash = this.getHash(binary);
 		this.cache[hash] = binary.slice();
 		return hash;
 	};
-	CBinaryCacheManager.prototype.getBase64EncodedData = function(binary) {
-		return ("XLSY;v2;" + binary.length + ";" + AscCommon.Base64.encode(binary)).toUtf8();
-	}
-	CBinaryCacheManager.prototype.getFormatBinary = function(binary) {
+	CBinaryCacheManager.prototype.getBase64EncodedData = function(binary, editorType) {
+		const headers = this.getHeaders(editorType);
+		return headers && (headers + binary.length + ";" + AscCommon.Base64.encode(binary)).toUtf8();
+	};
+	CBinaryCacheManager.prototype.getFormatBinary = function(binary, editorType) {
 		const oThis = this;
 		return new Promise(function(resolve) {
 			if (AscCommon.checkOOXMLSignature(binary)) {
 				resolve(binary);
 			} else {
-				const xlsyBinary = oThis.getBase64EncodedData(binary);
-				oThis.api.getConvertedXLSXFileFromUrl({data: xlsyBinary}, Asc.c_oAscFileType.XLSX, function (arrBinaryData) {
+				const arrBinary = oThis.getBase64EncodedData(binary, editorType);
+				const convertFormat = oThis.getConvertFormat(editorType);
+				if (!arrBinary || !convertFormat) {
+					resolve(null);
+					return;
+				}
+				oThis.api.getConvertedFileFromUrl({data: arrBinary}, convertFormat, function (arrBinaryData) {
 					if (arrBinaryData) {
 						resolve(arrBinaryData);
 					} else {
@@ -1140,8 +1202,9 @@
 			}
 		});
 	};
-	CBinaryCacheManager.prototype.getDataURLFromBinary = function(arrXLSXBinary) {
-		return "data:" + AscCommon.openXml.Types.xlsxPackage.contentType + ";base64," + AscCommon.Base64.encode(arrXLSXBinary, 0, arrXLSXBinary.length);
+	CBinaryCacheManager.prototype.getDataURLFromBinary = function(arrXLSXBinary, editorType) {
+		const contentType = this.getContentType(editorType);
+		return contentType && ("data:" + contentType + ";base64," + AscCommon.Base64.encode(arrXLSXBinary, 0, arrXLSXBinary.length));
 	};
 
 	window["AscCommon"].CBinaryCacheManager = CBinaryCacheManager;

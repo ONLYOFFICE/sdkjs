@@ -928,7 +928,7 @@
 			var sizes = AscCommon.getSourceImageSize(blipUrl);
 			var mmExtX = sizes.width * AscCommon.g_dKoef_pix_to_mm;
 			var mmExtY = sizes.height * AscCommon.g_dKoef_pix_to_mm;
-			AscCommon.g_oBinaryCacheManager.addBinary(binaryDataOfSheet).then(function (loadedData) {
+			AscCommon.g_oBinaryCacheManager.addBinary(binaryDataOfSheet, AscCommon.c_oEditorId.Spreadsheet).then(function (loadedData) {
 				if (loadedData) {
 					_this.asc_addOleObjectAction(blipUrl, binaryDataOfSheet, 'Excel.Sheet.12', mmExtX, mmExtY, sizes.width, sizes.height, true, loadedData);
 				}
@@ -1166,7 +1166,7 @@
 					nAdaptSizeHeight = (oSizes.height || 0) * nImageHeightCoefficient;
 					nMMExtY = nAdaptSizeHeight * AscCommon.g_dKoef_pix_to_mm;
 					nMMExtX = nAdaptSizeWidth * AscCommon.g_dKoef_pix_to_mm;
-					AscCommon.g_oBinaryCacheManager.addBinary(arrBinaryDataOfSheet).then(function (loadedData) {
+					AscCommon.g_oBinaryCacheManager.addBinary(arrBinaryDataOfSheet, AscCommon.c_oEditorId.Spreadsheet).then(function (loadedData) {
 						if (loadedData) {
 							oThis.asc_editOleObjectAction(oSelectedOleObject, sBlipUrl, arrBinaryDataOfSheet, nMMExtX, nMMExtY, nAdaptSizeWidth, nAdaptSizeHeight, loadedData);
 						}
@@ -1798,12 +1798,12 @@
 		AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("getEditorPermissions", performance.now()), this);
 		this._coAuthoringInit();
 	};
-	baseEditorsApi.prototype.getConvertedXLSXFileFromUrl  = function (oDocument, nOutputFormat, fCallback) {
+	baseEditorsApi.prototype.getConvertedFileFromUrl  = function (oDocument, nOutputFormat, fCallback) {
 		if (this.canEdit()) {
 			this.insertDocumentUrlsData = {
 				imageMap: null, documents: [oDocument], convertCallback: function (_api, url) {
 					_api.insertDocumentUrlsData.imageMap = url;
-					let sFileUrlAfterConvert = url['output.xlsx'] || url['output.xlst'];
+					let sFileUrlAfterConvert = url[Asc.c_oAscConvertedFieldByFileType[nOutputFormat]];
 					if (sFileUrlAfterConvert) {
 						AscCommon.loadFileContent(sFileUrlAfterConvert, function (httpRequest) {
 							let arrStream = null;
@@ -6113,10 +6113,10 @@
 			binaries: [],
 			images: []
 		};
-		const xlsxExtension = ".xlsx";
+		const binaryRegExp = new RegExp("\\.(xlsx|pptx|docx|vsdx)$");
 		for (let i in images) {
 			const url = images[i];
-			if (url.lastIndexOf(xlsxExtension) === (url.length - xlsxExtension.length)) {
+			if (url.search(binaryRegExp) !== -1) {
 				result.binaries.push(url);
 			} else {
 				result.images.push(url);

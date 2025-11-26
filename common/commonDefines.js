@@ -4801,6 +4801,12 @@ window.AscCommon.g_cIsBeta = "false";
 		Split: "split"
 	};
 
+	const c_oAscConvertedFieldByFileType = {};
+	c_oAscConvertedFieldByFileType[c_oAscFileType.XLSX] = "output.xlsx";
+	c_oAscConvertedFieldByFileType[c_oAscFileType.XLSY] = "output.xlst";
+	c_oAscConvertedFieldByFileType[c_oAscFileType.DOCX] = "output.docx";
+	c_oAscConvertedFieldByFileType[c_oAscFileType.PPTX] = "output.pptx";
+	c_oAscConvertedFieldByFileType[c_oAscFileType.VSDX] = "output.vsdx";
 
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
@@ -6424,5 +6430,8 @@ window.AscCommon.g_cIsBeta = "false";
 
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window['AscCommonExcel'].c_oAscPaneState = c_oAscPaneState;
+
+	window['Asc']['c_oAscConvertedFieldByFileType'] = window['Asc'].c_oAscConvertedFieldByFileType = c_oAscConvertedFieldByFileType;
+
 
 })(window);

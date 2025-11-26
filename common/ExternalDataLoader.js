@@ -242,7 +242,7 @@
 			const oData = oThis.getExternalData();
 			if ((sFileUrl && !bIsXLSX) || !isSupportOOXML) {
 				const oDocument = {url: sFileUrl, format: sFileType, token: sToken};
-				oThis.api.getConvertedXLSXFileFromUrl(oDocument, nOutputFormat,
+				oThis.api.getConvertedFileFromUrl(oDocument, nOutputFormat,
 					function (arrBinaryData) {
 						oData.stream = arrBinaryData;
 						fResolve(oData);

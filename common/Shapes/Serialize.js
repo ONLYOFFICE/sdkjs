@@ -236,7 +236,7 @@ function CBuilderBinaries(oClass, arrBinary) {
 }
 	AscCommon.InitClassWithoutType(CBuilderBinaries, CBuilderBase);
 	CBuilderBinaries.prototype.GetUrl = function() {
-		return AscCommon.g_oBinaryCacheManager.getDataURLFromBinary(this.binary);
+		return AscCommon.g_oBinaryCacheManager.getDataURLFromBinary(this.binary, this.class.getSignatureByBin());
 	};
 	CBuilderBinaries.prototype.IsUrlForLoading = function() {
 		return AscCommon.g_oBinaryCacheManager.getBinary(this.getHash()) === null;
