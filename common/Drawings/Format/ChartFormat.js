@@ -14866,7 +14866,10 @@
         if(!this.parent) {
             return;
         }
-        this.applyStyleEntry(oChartStyle.trendline, oColors.generateColors(1), 0, bReset);
+		const seriesIdx = this.parent.getIdx();
+		const colorsCount = this.parent.getMaxSeriesIdx() + 1;
+		const generatedColors = oColors.generateColors(colorsCount);
+		this.applyStyleEntry(oChartStyle.trendline, generatedColors, seriesIdx, bReset);
     };
     CTrendLine.prototype.getPen = function() {
         if(!this.pen) {
