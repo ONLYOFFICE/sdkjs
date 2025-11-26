@@ -7731,6 +7731,8 @@ function parserFormula( formula, parent, _ws ) {
 		var startArrayArg = null;
 		let bConditionalFormula = false;
 
+		let atOperatorStart = -1;
+
 		var t = this;
 		var _checkReferenceCount = function (weight) {
 			//ввожу ограничение на максимальное количество операндов в формуле
@@ -7767,7 +7769,7 @@ function parserFormula( formula, parent, _ws ) {
 					found_operator = cFormulaOperators['un_plus'].prototype;
 				} else if (' ' === ph.operand_str) {
 					return true;
-				} else if ('@' === ph.operand_str) {
+				} else if ('@' === ph.operand_str && local) {
 					return true;
 				} else {
 					parseResult.setError(c_oAscError.ID.FrmlWrongOperator);
@@ -8139,6 +8141,10 @@ function parserFormula( formula, parent, _ws ) {
 					return false;
 				}
 			}
+			if (atOperatorStart !== -1) {
+				parseResult.addAtOperator(atOperatorStart, ph.pCurrPos);
+				atOperatorStart = -1;
+			}
 			t.outStack.push(arr);
 			parseResult.operand_expected = false;
 			return true;
@@ -8264,9 +8270,8 @@ function parserFormula( formula, parent, _ws ) {
 				}
 			}
 			var prevCurrPos = ph.pCurrPos;
-			var atOperatorStart = -1;
 
-			if ('@' === t.Formula[ph.pCurrPos]) {
+			if ('@' === t.Formula[ph.pCurrPos] && local) {
 				atOperatorStart = ph.pCurrPos;
 				ph.pCurrPos++;
 				if (ph.pCurrPos >= t.Formula.length) {
@@ -8713,6 +8718,7 @@ function parserFormula( formula, parent, _ws ) {
 
 				if (atOperatorStart !== -1) {
 					parseResult.addAtOperator(atOperatorStart, ph.pCurrPos);
+					atOperatorStart = -1;
 				}
 
 				t.outStack.push(found_operand);
@@ -8833,6 +8839,8 @@ function parserFormula( formula, parent, _ws ) {
 				continue;
 			}
 
+			let isSingleStartPos = (local && ph.operand_str === '@') ? ph.pCurrPos : null;
+
 			/* Operators*/
 			if (parserHelp.isOperator.call(ph, this.Formula, ph.pCurrPos) || parserHelp.isNextPtg.call(ph, this.Formula, ph.pCurrPos)) {
 				if (!parseOperators()) {
@@ -8866,7 +8874,10 @@ function parserFormula( formula, parent, _ws ) {
 					}
 					return false;
 				}
-			}/* Array */ else if (parserHelp.isLeftBrace.call(ph, this.Formula, ph.pCurrPos)) {
+			}/* Array */ else if (parserHelp.isLeftBrace.call(ph, this.Formula, ph.pCurrPos) || (isSingleStartPos != null && parserHelp.isLeftBrace.call(ph, this.Formula, ph.pCurrPos + 1))) {
+				if (isSingleStartPos != null) {
+					atOperatorStart = isSingleStartPos;
+				}
 				if (!parseArray()) {
 					if (ignoreErrors) {
 						setArgInfo();
