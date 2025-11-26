@@ -2221,7 +2221,7 @@ ParaRun.prototype.Get_ParaPosByContentPos = function(ContentPos, Depth)
         }
     }
 
-    return new CParaPos((LinesCount === 1 ? this.protected_GetRangesCount(0) - 1 + this.StartRange : this.protected_GetRangesCount(0) - 1), LinesCount - 1 + this.StartLine, 0, 0);
+    return new CParaPos((LinesCount === 1 ? this.protected_GetRangesCount(0) - 1 + this.StartRange : this.protected_GetRangesCount(LinesCount - 1) - 1), LinesCount - 1 + this.StartLine, 0, 0);
 };
 
 ParaRun.prototype.recalculateCursorPosition = function(positionCalculator, isCurrent)
@@ -3425,7 +3425,7 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 	this.RecalcInfo.Recalc = true;
 	this.RecalcInfo.ResetMeasure();
 };
-ParaRun.prototype.getTextMetrics = function()
+ParaRun.prototype.getTextMetrics = function(isForceEmpty)
 {
 	let textPr = this.Get_CompiledPr(false);
 	if (this.IsUseAscFont(textPr))
@@ -3441,7 +3441,7 @@ ParaRun.prototype.getTextMetrics = function()
 		fontSlot |= this.Content[nPos].GetFontSlot(textPr);
 	}
 	
-	if (AscWord.fontslot_Unknown === fontSlot)
+	if ((AscWord.fontslot_Unknown === fontSlot) || (AscWord.fontslot_None === fontSlot && isForceEmpty))
 		fontSlot = textPr.CS || textPr.RTL ? AscWord.fontslot_CS : AscWord.fontslot_ASCII;
 	
 	return textPr.GetTextMetrics(fontSlot, this.Paragraph.GetTheme());

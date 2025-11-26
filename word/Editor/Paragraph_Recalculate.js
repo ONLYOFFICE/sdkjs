@@ -1282,11 +1282,41 @@ Paragraph.prototype.private_RecalculateLineMetrics     = function(CurLine, CurPa
     // текста, на котором закончилась данная строка.
     if ( true === PRS.EmptyLine || (PRS.LineAscent < 0.001 && PRS.LineDescent < 0.001) || (true === PRS.End && true !== PRS.TextOnLine))
 	{
-		var LastItem = (true === PRS.End ? this.Content[this.Content.length - 1] : this.Content[this.Lines[CurLine].Ranges[this.Lines[CurLine].Ranges.length - 1].EndPos]);
-
-		if (true === PRS.End)
+		let useParaEnd = true;
+		if (true !== PRS.End)
 		{
-			// TODO: Как только переделаем para_End переделать тут
+			let lastRange = this.Lines[CurLine].Ranges.length - 1;
+			let lastItem  = this.Content[this.Lines[CurLine].Ranges[lastRange].EndPos];
+			let lastRun   = lastItem.Get_LastRunInRange(CurLine, lastRange);
+			if (lastRun && lastRun instanceof AscWord.CRun)
+			{
+				let metrics = lastRun.getTextMetrics(true);
+				
+				let textDescent = metrics.Descent;
+				let textAscent  = metrics.Ascent + metrics.LineGap;
+				let textAscent2 = metrics.Ascent;
+				
+				if (PRS.LineTextAscent < textAscent)
+					PRS.LineTextAscent = textAscent;
+				
+				if (PRS.LineTextAscent2 < textAscent2)
+					PRS.LineTextAscent2 = textAscent2;
+				
+				if (PRS.LineTextDescent < textDescent)
+					PRS.LineTextDescent = textDescent;
+				
+				if (PRS.LineAscent < textAscent)
+					PRS.LineAscent = textAscent;
+				
+				if (PRS.LineDescent < textDescent)
+					PRS.LineDescent = textDescent;
+				
+				useParaEnd = false;
+			}
+		}
+		
+		if (useParaEnd || (PRS.LineAscent < 0.001 && PRS.LineDescent < 0.001))
+		{
 			let oTextPr  = this.GetParaEndCompiledPr();
 			let oMetrics = oTextPr.GetTextMetrics(oTextPr.CS || oTextPr.RTL ? AscWord.fontslot_CS : AscWord.fontslot_ASCII, this.GetTheme());
 
@@ -1303,33 +1333,6 @@ Paragraph.prototype.private_RecalculateLineMetrics     = function(CurLine, CurPa
 
 			if (PRS.LineDescent < EndTextDescent)
 				PRS.LineDescent = EndTextDescent;
-		}
-		else if (undefined !== LastItem)
-		{
-			let lastRun = LastItem.Get_LastRunInRange(PRS.Line, PRS.Range);
-			if (lastRun && lastRun instanceof AscWord.CRun)
-			{
-				let metrics = lastRun.getTextMetrics();
-				
-				let textDescent = metrics.Descent;
-				let textAscent  = metrics.Ascent + metrics.LineGap;
-				let textAscent2 = metrics.Ascent;
-				
-				if (PRS.LineTextAscent < textAscent)
-					PRS.LineTextAscent = textAscent;
-
-				if (PRS.LineTextAscent2 < textAscent2)
-					PRS.LineTextAscent2 = textAscent2;
-
-				if (PRS.LineTextDescent < textDescent)
-					PRS.LineTextDescent = textDescent;
-
-				if (PRS.LineAscent < textAscent)
-					PRS.LineAscent = textAscent;
-
-				if (PRS.LineDescent < textDescent)
-					PRS.LineDescent = textDescent;
-			}
 		}
 	}
 

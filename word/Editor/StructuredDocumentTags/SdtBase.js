@@ -1276,6 +1276,8 @@ CSdtBase.prototype.checkDataBinding = function()
 	else
 		content = content.getText();
 
+	if (content === "")
+		return false;
 
 	if (this.IsPicture())
 	{
