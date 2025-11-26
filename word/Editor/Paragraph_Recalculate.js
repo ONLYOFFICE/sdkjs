@@ -1812,7 +1812,14 @@ Paragraph.prototype.private_RecalculateLineEnd         = function(CurLine, CurPa
 
     if (true !== PRS.End)
     {
-        if ( true === PRS.ForceNewPage )
+		if (PRS.ForceNewPageAfter)
+		{
+			this.Pages[CurPage].Set_EndLine(CurLine);
+			this.Pages[CurPage].Bounds.Bottom = AscWord.MAX_MM_VALUE;
+			PRS.RecalcResult = recalcresult_NextPage;
+			return false;
+		}
+        else if (PRS.ForceNewPage)
         {
             this.Pages[CurPage].Set_EndLine( CurLine - 1 );
 
@@ -1825,6 +1832,9 @@ Paragraph.prototype.private_RecalculateLineEnd         = function(CurLine, CurPa
     }
     else
     {
+		if (PRS.ForceNewPageAfter)
+			this.Pages[CurPage].Bounds.Bottom = AscWord.MAX_MM_VALUE;
+		
         // В последней строке могут быть заполнены не все отрезки обтекания. Удаляем лишние.
         if (PRS.Range < PRS.RangesCount)
             this.Lines[CurLine].Ranges.length = PRS.Range + 1;
@@ -3536,6 +3546,7 @@ CParagraphRecalculateStateWrap.prototype.Reset_Line = function()
 	this.NewPage      = false;
 	this.ForceNewPage = false;
 	this.ForceNewLine = false;
+	this.ForceNewPageAfter = false;
 	
 	this.bMath_OneLine    = false;
 	this.bMathWordLarge   = false;
@@ -4329,6 +4340,7 @@ CParagraphRecalculateStateWrap.prototype.getAutoHyphenWidth = function(item, run
 CParagraphRecalculateStateWrap.prototype.isForceLineBreak = function()
 {
 	return (this.ForceNewPage
+		|| this.ForceNewPageAfter
 		|| this.NewPage
 		|| this.ForceNewLine
 		|| this.LastHyphenItem);

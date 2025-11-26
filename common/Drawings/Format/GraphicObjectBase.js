@@ -1048,7 +1048,7 @@
 	CGraphicObjectBase.prototype.Reassign_ImageUrls = function (mapUrl) {
 		var blip_fill;
 		if (this.blipFill) {
-			if (mapUrl[this.blipFill.RasterImageId] && mapUrl[this.blipFill.RasterImageId] !== this.blipFill.RasterImageId) {
+			if (mapUrl[this.blipFill.RasterImageId]) {
 				if (this.setBlipFill) {
 					blip_fill = this.blipFill.createDuplicate();
 					blip_fill.setRasterImageId(mapUrl[this.blipFill.RasterImageId]);

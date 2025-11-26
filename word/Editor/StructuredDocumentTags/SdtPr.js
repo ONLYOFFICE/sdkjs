@@ -157,7 +157,7 @@ CSdtPr.prototype.Write_ToBinary = function(Writer)
 
 	if (undefined !== this.Label)
 	{
-		Writer.WriteLong(this.Tag);
+		Writer.WriteLong(this.Label);
 		Flags |= 8;
 	}
 
@@ -315,7 +315,7 @@ CSdtPr.prototype.Read_FromBinary = function(Reader)
 		this.Tag = Reader.GetString2();
 
 	if (Flags & 8)
-		this.Tag = Reader.GetLong();
+		this.Label = Reader.GetLong();
 
 	if (Flags & 16)
 		this.Lock = Reader.GetLong();

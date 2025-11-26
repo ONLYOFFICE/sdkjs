@@ -165,6 +165,8 @@
 		this.mainEvents = {};
 
 		this.dockCallbacks = {};
+
+		this.pluginsWindows = {};
 	}
 
 	CPluginsManager.prototype =
@@ -919,6 +921,46 @@
 			}
 		},
 
+		addPluginWindow : function(id)
+		{
+			let guid = this.getCurrentPluginGuid();
+			if (!this.pluginsWindows[guid])
+				this.pluginsWindows[guid] = [];
+
+			this.pluginsWindows[guid].push(id);
+		},
+
+		removePluginWindow : function(id)
+		{
+			let guid = this.getCurrentPluginGuid();
+			if (!this.pluginsWindows[guid])
+				return;
+
+			let windows = this.pluginsWindows[guid];
+			for (let i = 0, len = windows.length; i < len; i++)
+			{
+				if (id === windows[i])
+				{
+					windows.splice(i, 1);
+					return;
+				}
+			}
+		},
+
+		closeAllWindows : function(guid)
+		{
+			if (!this.pluginsWindows[guid])
+				return;
+
+			let windows = this.pluginsWindows[guid];
+			for (let i = 0, len = windows.length; i < len; i++)
+			{
+				this.api.sendEvent("asc_onPluginWindowClose", windows[i]);
+			}
+
+			delete this.pluginsWindows[guid];
+		},
+
 		run : function(guid, variation, data, isOnlyResize)
 		{
 			if (window["AscDesktopEditor"] &&
@@ -1195,6 +1237,9 @@
 			}
 
 			delete this.runnedPluginsMap[guid];
+
+			this.closeAllWindows(guid);
+
 			this.api.onPluginClose(guid);
 
 			if (this.runAndCloseData)

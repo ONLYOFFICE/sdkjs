@@ -925,9 +925,10 @@
 	CCollaborativeEditingBase.prototype.Clear_DocumentPositions = function(){
         this.m_aDocumentPositions.Clear_DocumentPositions();
     };
-    CCollaborativeEditingBase.prototype.Add_DocumentPosition = function(DocumentPos){
-        this.m_aDocumentPositions.Add_DocumentPosition(DocumentPos);
-    };
+	CCollaborativeEditingBase.prototype.Add_DocumentPosition = function(DocumentPos, isRightPos)
+	{
+		this.m_aDocumentPositions.Add_DocumentPosition(DocumentPos, isRightPos);
+	};
 	CCollaborativeEditingBase.prototype.Remove_DocumentPosition = function(docPos)
 	{
 		this.m_aDocumentPositions.Remove_DocumentPosition(docPos);
@@ -1139,10 +1140,27 @@
 
         if (DocState.Pos)
             this.Add_DocumentPosition(DocState.Pos);
-        if (DocState.StartPos)
-            this.Add_DocumentPosition(DocState.StartPos);
-        if (DocState.EndPos)
-            this.Add_DocumentPosition(DocState.EndPos);
+		
+		if (DocState.StartPos && DocState.EndPos)
+		{
+			if (AscWord.CompareDocumentPositions(DocState.StartPos, DocState.EndPos) > 0)
+			{
+				this.Add_DocumentPosition(DocState.StartPos, true);
+				this.Add_DocumentPosition(DocState.EndPos);
+			}
+			else
+			{
+				this.Add_DocumentPosition(DocState.StartPos);
+				this.Add_DocumentPosition(DocState.EndPos, true);
+			}
+		}
+		else
+		{
+			if (DocState.StartPos)
+				this.Add_DocumentPosition(DocState.StartPos);
+			if (DocState.EndPos)
+				this.Add_DocumentPosition(DocState.EndPos);
+		}
 
 		if (DocState.AnchorPos)
 			this.Add_DocumentPosition(DocState.AnchorPos);
@@ -1354,10 +1372,13 @@
     //   Если да, тогда выставляем ее, если нет, тогда берем Run исходной позиции, и
     //   пытаемся сформировать полную позицию по данному Run. Если и это не получается,
     //   тогда восстанавливаем позицию по измененной полной исходной позиции.
+	//   Right - позиции, которые мы сдвигаем вправо, если добавляем элемент в той же позиции
+	//   используется для правой границы селекта
     //----------------------------------------------------------------------------------------------------------------------
     function CDocumentPositionsManager()
     {
         this.m_aDocumentPositions      = [];
+		this.m_aDocumentPositionsRight = [];
         this.m_aDocumentPositionsSplit = [];
         this.m_aDocumentPositionsMap   = [];
     }
@@ -1367,22 +1388,24 @@
         this.m_aDocumentPositionsSplit = [];
         this.m_aDocumentPositionsMap   = [];
     };
-    CDocumentPositionsManager.prototype.Add_DocumentPosition = function(Position)
+    CDocumentPositionsManager.prototype.Add_DocumentPosition = function(Position, isRight)
     {
         this.m_aDocumentPositions.push(Position);
+		this.m_aDocumentPositionsRight.push(!!isRight);
     };
     CDocumentPositionsManager.prototype.Update_DocumentPositionsOnAdd = function(Class, Pos)
     {
         for (var PosIndex = 0, PosCount = this.m_aDocumentPositions.length; PosIndex < PosCount; ++PosIndex)
         {
-            var DocPos = this.m_aDocumentPositions[PosIndex];
+            var DocPos  = this.m_aDocumentPositions[PosIndex];
+			let isRight = this.m_aDocumentPositionsRight[PosIndex];
             for (var ClassPos = 0, ClassLen = DocPos.length; ClassPos < ClassLen; ++ClassPos)
             {
                 var _Pos = DocPos[ClassPos];
                 if (Class === _Pos.Class
                     && undefined !== _Pos.Position
                     && (_Pos.Position > Pos
-                    || (_Pos.Position === Pos && !(Class instanceof AscCommonWord.ParaRun))))
+                    || (_Pos.Position === Pos && (!(Class instanceof AscCommonWord.ParaRun) || isRight))))
                 {
                     _Pos.Position++;
                     break;
@@ -1443,6 +1466,7 @@
             var NewDocPos = [];
             NewDocPos.push({Class : NewRun, Position : this.m_aDocumentPositionsSplit[PosIndex].NewRunPos});
             this.m_aDocumentPositions.push(NewDocPos);
+			this.m_aDocumentPositionsRight.push(false);
             this.m_aDocumentPositionsMap.push({StartPos : this.m_aDocumentPositionsSplit[PosIndex].DocPos, EndPos : NewDocPos});
         }
     };
@@ -1489,6 +1513,7 @@
             if (this.m_aDocumentPositions[Pos] === DocPos)
             {
                 this.m_aDocumentPositions.splice(Pos, 1);
+				this.m_aDocumentPositionsRight.splice(Pos, 1);
                 return;
             }
         }

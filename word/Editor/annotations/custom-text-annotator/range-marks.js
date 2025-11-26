@@ -132,6 +132,40 @@
 		}
 		return result;
 	};
+	/**
+	 * @param {AscWord.Paragraph} paragraph
+	 * @param {AscWord.CParagraphContentPos} paraContentPos
+	 * @returns {[]}
+	 */
+	CustomMarks.prototype.getMarksByPos = function(paragraph, paraContentPos)
+	{
+		let paraId = paragraph.GetId();
+		if (!this.paragraphs[paraId])
+			return [];
+		
+		let marks = this.paragraphs[paraId];
+		
+		let result = [];
+		for (let handlerId in marks)
+		{
+			for (let rangeId in marks[handlerId])
+			{
+				let startMark = marks[handlerId][rangeId].start;
+				let endMark   = marks[handlerId][rangeId].end;
+				if (!startMark || !endMark)
+					continue;
+				
+				let startPos = startMark.getParaPos();
+				let endPos   = endMark.getParaPos();
+				if (!startPos || !endPos)
+					continue;
+				
+				if (paraContentPos.Compare(startPos) >= 0 && paraContentPos.Compare(endPos) <= 0)
+					result.push(startMark);
+			}
+		}
+		return result;
+	};
 	CustomMarks.prototype.selectRange = function(paraId, handlerId, rangeId)
 	{
 		let paragraph = AscCommon.g_oTableId.GetById(paraId);
@@ -191,6 +225,13 @@
 		
 		if (paragraph)
 			paragraph.ReDraw();
+	};
+	CustomMarks.prototype.removeAllMarks = function(handlerId)
+	{
+		for (let paraId in this.paragraphs)
+		{
+			this.removeAllRanges(paraId, handlerId);
+		}
 	};
 	CustomMarks.prototype.flatRunMarks = function(runId)
 	{

@@ -846,7 +846,7 @@
     };
     CDocument.prototype._deletePage = function(nPage) {
         this.pages.splice(nPage, 1);
-        this._resize();
+        this.setNeedResize(true);
     };
     CDocument.prototype._addPage = function(nPos) {
         let pages = this.viewer.file.pages;
@@ -857,7 +857,7 @@
             koef = 100 / filePage.Dpi;
 
         this.pages.splice(nPos, 0, new CPage(koef * filePage.W, koef * filePage.H));
-        this._resize();
+        this.setNeedResize(true);
     };
 
     CDocument.prototype.getStartVisiblePage = function() {

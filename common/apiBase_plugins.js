@@ -383,7 +383,7 @@
 					if (AscCommon.c_oEditorId.Word === _t.getEditorId())
 					{
 						let logicDocument = _t.private_GetLogicDocument();
-						if (logicDocument)
+						if (logicDocument && logicDocument.IsDocumentEditor())
 						{
 							logicDocument.GetDrawingDocument().UpdateTargetFromPaint = true;
 							logicDocument.private_UpdateCursorXY(true, true, true);
@@ -2268,6 +2268,7 @@
 			variation["positionY"] = y;
 		}
 
+		window.g_asc_plugins.addPluginWindow(frameId);
 		this.sendEvent("asc_onPluginWindowShow", frameId, variation);
 	};
 
@@ -2306,6 +2307,7 @@
 	 */
 	Api.prototype["pluginMethod_CloseWindow"] = function(frameId)
 	{
+		window.g_asc_plugins.removePluginWindow(frameId);
 		this.sendEvent("asc_onPluginWindowClose", frameId);
 	};
 

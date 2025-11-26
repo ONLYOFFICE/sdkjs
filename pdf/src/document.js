@@ -3131,6 +3131,7 @@ var CPresentation = CPresentation || function(){};
             _t.CheckComment(annot);
         });
 
+        this.SetNeedUpdateSearch(true);
         oViewer.paint();
     };
 
@@ -3183,6 +3184,7 @@ var CPresentation = CPresentation || function(){};
 
         this.History.Add(new CChangesPDFDocumentPagesContent(this, nPos, aPages, false));
 
+        this.SetNeedUpdateSearch(true);
         oViewer.paint();
 
         return aPages[0];
@@ -7618,22 +7620,22 @@ var CPresentation = CPresentation || function(){};
 
                     annot.AddToRedraw();
 
-                    if (!isOrigPage) {
-                        return;
+                    if (!oMemory) {
+                        oMemory = new AscCommon.CMemory(true);
+                        oMemory.Init(24);
                     }
+
+                    // Fill color
+                    const oFillRGB = annot.GetRGBColor(annot.GetFillColor());
 
                     const aQuadsParts = annot.GetQuads();
                     aQuadsParts.forEach(function(quads) {
                         aQuadsFlat = aQuadsFlat.concat(quads);
+                        
+                        oMemory.WriteLong(oFillRGB.r);
+                        oMemory.WriteLong(oFillRGB.g);
+                        oMemory.WriteLong(oFillRGB.b);
                     });
-
-                    // Fill color
-                    const oFillRGB = annot.GetRGBColor(annot.GetFillColor());
-                    oMemory = new AscCommon.CMemory(true);
-                    oMemory.Init(24);
-                    oMemory.WriteLong(oFillRGB.r);
-                    oMemory.WriteLong(oFillRGB.g);
-                    oMemory.WriteLong(oFillRGB.b);
 
                     pagesIdxMap.set(pageIdx, nOrigPageIdx);
                 });
@@ -7648,14 +7650,16 @@ var CPresentation = CPresentation || function(){};
                 if (aQuadsFlat.length != 0) {
                     let oRender = new Uint8Array(oMemory.data.buffer, 0, oMemory.GetCurPosition());
 
-                    // Apply redact to the page
-                    oNativeFile["RedactPage"](
-                        nOrigPageIdx,
-                        aQuadsFlat,
-                        oRender
-                    );
+                    if (isOrigPage) {
+                        // Apply redact to the page
+                        oNativeFile["RedactPage"](
+                            nOrigPageIdx,
+                            aQuadsFlat,
+                            oRender
+                        );
+                    }
 
-                    this.SetRedactData(sRedactId, pageIdx, aQuadsFlat, oRender);
+                    this.SetRedactData(sRedactId, oPageInfo.GetId(), aQuadsFlat, oRender);
                 }
             }
 
@@ -7689,7 +7693,7 @@ var CPresentation = CPresentation || function(){};
         }, AscDFH.historydescription_Pdf_AddAnnot, this);  
     };
 
-    CPDFDoc.prototype.SetRedactData = function(sRedactId, nPage, aQuadsFlat, oRenderMemory) {
+    CPDFDoc.prototype.SetRedactData = function(sRedactId, sPageId, aQuadsFlat, oRenderMemory) {
         let aUint8Array = oRenderMemory;
 
         const BINARY_PART_HISTORY_LIMIT = 1048576;
@@ -7706,10 +7710,10 @@ var CPresentation = CPresentation || function(){};
             AscCommon.History.Add(new CChangesPDFDocumentPartRedact(this, [], binaryParts[i]));
         }
         
-        AscCommon.History.Add(new CChangesPDFDocumentEndRedact(this, sRedactId, nPage, aQuadsFlat));
+        AscCommon.History.Add(new CChangesPDFDocumentEndRedact(this, sRedactId, sPageId, aQuadsFlat));
 
         this.appliedRedactsData.push({
-            page: nPage,
+            pageId: sPageId,
             quads: aQuadsFlat,
             redactId: sRedactId,
             binary: aUint8Array
@@ -8194,6 +8198,11 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.GetPageInfo = function(nPage) {
         return this.Viewer.pagesInfo.pages[nPage];
+    };
+    CPDFDoc.prototype.GetPageInfoById = function(sId) {
+        return this.Viewer.pagesInfo.pages.find(function(pageInfo) {
+            return pageInfo.GetId() == sId;
+        });
     };
     CPDFDoc.prototype.GetThumbnails = function() {
         return this.Viewer.thumbnails;

@@ -1088,6 +1088,10 @@ CSdtBase.prototype.MoveCursorOutsideForm = function(isBefore)
 };
 CSdtBase.prototype.GetFieldMaster = function()
 {
+	let mainForm = this.GetMainForm();
+	if (mainForm && mainForm !== this)
+		return mainForm.GetFieldMaster();
+	
 	let formPr = this.GetFormPr();
 	if (!formPr)
 		return null;

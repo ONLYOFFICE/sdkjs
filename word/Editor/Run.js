@@ -4405,9 +4405,9 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                         {
                             LDRecalcInfo.Reset();
 
+							let continueCalc = false;
                             // Добавляем разрыв страницы. Если это первая страница, тогда ставим разрыв страницы в начале параграфа,
                             // если нет, тогда в начале текущей строки.
-
                             if (null != Para.Get_DocumentPrev() && true != Para.IsTableCellContent() && 0 === CurPage)
                             {
                                 Para.Recalculate_Drawing_AddPageBreak(0, 0, true);
@@ -4424,17 +4424,25 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                                     PRS.NewRange = true;
                                     return;
                                 }
-                                else
-                                {
-                                    RangeEndPos = Pos;
-                                    NewRange = true;
-                                    ForceNewPage = true;
-                                }
+                                else if (Para.IsStartFromNewPage())
+								{
+									// Делаем как MSWord перестаем учитывать обтекание данного объекта
+									continueCalc = true;
+									LDRecalcInfo.Set_FlowObject(Item, 0, recalcresult_NextElement, -1);
+									LDRecalcInfo.Set_PageBreakBefore(false);
+									LDRecalcInfo.SetForceNoWrap(true);
+									PRS.ForceNewPageAfter = true;
+								}
+								else
+								{
+									RangeEndPos  = Pos;
+									NewRange     = true;
+									ForceNewPage = true;
+								}
                             }
-
-
+							
                             // Если до этого было слово, тогда не надо проверять убирается ли оно
-                            if (true === Word || WordLen > 0)
+                            if (!continueCalc && (true === Word || WordLen > 0))
                             {
                                 // Добавляем длину пробелов до слова + длина самого слова. Не надо проверять
                                 // убирается ли слово, мы это проверяем при добавленнии букв.
@@ -5495,6 +5503,8 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
             }
             case para_Drawing:
             {
+				Item.SetForceNoWrap(false);
+				
                 var Para = PRSA.Paragraph;
                 var isInHdrFtr = Para.Parent.IsHdrFtr();
 
@@ -5704,6 +5714,12 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
                             // учета колонок, так делает и Word).
                             if ( Item.PageNum === PageAbs )
                             {
+								if (LDRecalcInfo.IsForceNoWrap())
+								{
+									Item.SetForceNoWrap(true);
+									Item.Update_Position(PRSA.Paragraph, new CParagraphLayout( PRSA.X, PRSA.Y , PageAbs, PRSA.LastW, ColumnStartX, ColumnEndX, X_Left_Margin, X_Right_Margin, Page_Width, Top_Margin, Bottom_Margin, Page_H, PageFields.X, PageFields.Y, Para.Pages[CurPage].Y + Para.Lines[_CurLine].Y - Para.Lines[_CurLine].Metrics.Ascent, Para.Pages[_CurPage].Y), PageLimits, PageLimitsOrigin, _CurLine, isInTable);
+								}
+								
                                 // Все нормально, можно продолжить пересчет
                                 LDRecalcInfo.Reset();
                                 Item.Reset_SavedPosition();

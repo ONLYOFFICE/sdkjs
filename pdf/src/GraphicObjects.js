@@ -1218,7 +1218,7 @@
             return true;
     
         } else {
-            var ret = { objectId: object.Get_Id(), cursorType: "text" };
+            var ret = { objectId: object.Get_Id(), cursorType: "text", content: object.getDocContent && object.getDocContent() };
             content = object.getDocContent();
             invert_transform_text = object.invertTransformText;
             if (content && invert_transform_text) {

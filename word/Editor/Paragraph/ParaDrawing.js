@@ -190,6 +190,8 @@ function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 			this.graphicObjects.addGraphicObject(this);
 	}
 	this.bCellHF = false;
+	
+	this.forceNoWrap = false;
 }
 ParaDrawing.prototype = Object.create(AscWord.CRunElementBase.prototype);
 ParaDrawing.prototype.constructor = ParaDrawing;
@@ -1906,6 +1908,10 @@ ParaDrawing.prototype.GetInnerForm = function()
 {
 	return this.GraphicObj ? this.GraphicObj.getInnerForm() : null;
 };
+ParaDrawing.prototype.SetForceNoWrap = function(noWrap)
+{
+	this.forceNoWrap = noWrap;
+};
 ParaDrawing.prototype.Use_TextWrap = function()
 {
 	if (this.IsInline())
@@ -1916,6 +1922,9 @@ ParaDrawing.prototype.Use_TextWrap = function()
 	if (!this.Parent
 		|| !this.Parent.GetFramePr
 		|| (this.Parent.GetFramePr() && !this.Parent.GetFramePr().IsInline()))
+		return false;
+	
+	if (this.forceNoWrap)
 		return false;
 
 	// здесь должна быть проверка, нужно ли использовать обтекание относительно данного объекта,

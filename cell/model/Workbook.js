@@ -5503,6 +5503,15 @@
 		return null;
 	};
 
+	Workbook.prototype.getExternalLinkIndexById = function (id) {
+		for (var i = 0; i < this.externalReferences.length; i++) {
+			if (this.externalReferences[i]._id === id) {
+				return i + 1;
+			}
+		}
+		return null;
+	};
+
 	Workbook.prototype.getExternalLinkIndexBySheetId = function (sheetId) {
 		for (var i = 0; i < this.externalReferences.length; i++) {
 			for (var j in this.externalReferences[i].worksheets) {

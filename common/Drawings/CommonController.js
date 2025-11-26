@@ -913,6 +913,7 @@
 										return {
 											objectId: drawing.Get_Id(),
 											cursorType: "text",
+											content: drawing.getDocContent ? drawing.getDocContent() : null,
 											bMarker: false,
 											hyperlink: oHyperlink,
 											macro: null
@@ -1878,8 +1879,8 @@
 						this.changeCurrentState(new AscFormat.TextAddState(this, object, x, y, e.Button));
 						return true;
 					} else {
-						var ret = {objectId: object.Get_Id(), cursorType: "text"};
 						content = object.getDocContent();
+						var ret = {objectId: object.Get_Id(), cursorType: "text", content: content};
 						invert_transform_text = object.invertTransformText;
 						if (content && invert_transform_text) {
 							tx = invert_transform_text.TransformPointX(x, y);
@@ -1928,6 +1929,29 @@
 					}
 				},
 
+
+
+				getParagraphByXY: function (x, y, pageIndex) {
+					let ret;
+					this.handleEventMode = HANDLE_EVENT_MODE_CURSOR;
+					ret = this.curState.onMouseDown(AscCommon.global_mouseEvent, x, y, pageIndex);
+					this.handleEventMode = HANDLE_EVENT_MODE_HANDLE;
+					if (ret && ret.content) {
+						let _x = x;
+						let _y = y;
+						let transform = ret.content.GetFullTransform();
+						if (transform) {
+							let invertTransform = AscCommon.global_MatrixTransformer.Invert(transform);
+							_x = invertTransform.TransformPointX(x, y);
+							_y = invertTransform.TransformPointY(x, y);
+						}
+						let index = ret.content.Internal_GetContentPosByXY(_x, _y, 0);
+						if (!AscFormat.isRealNumber(index))
+							return null;
+						return ret.content.GetElement(index);
+					}
+					return null;
+				},
 
 				isSlideShow: function () {
 					if (this.drawingObjects && this.drawingObjects.cSld) {

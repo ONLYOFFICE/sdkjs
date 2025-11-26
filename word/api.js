@@ -5978,7 +5978,7 @@ background-repeat: no-repeat;\
 				obj.CellsBackground.Unifill = AscFormat.CreateUnifillFromAscColor(obj.CellsBackground.Color, 1);
 			}
 
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_ApplyTablePr);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_ApplyTablePr, undefined, undefined, this.WordControl.m_oLogicDocument.Styles.GetName(obj.TableStyle));
 			this.WordControl.m_oLogicDocument.SetTableProps(obj);
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
@@ -14652,6 +14652,10 @@ background-repeat: no-repeat;\
 		AscCommon.baseEditorsApi.prototype.onPluginClose.call(this, guid);
 		if (this.WordControl && this.WordControl.m_oLogicDocument && this.WordControl.m_oLogicDocument.DrawingDocument)
 			this.WordControl.m_oLogicDocument.DrawingDocument.contentControls.removePluginButtons(guid);
+		
+		let logicDocument = this.private_GetLogicDocument();
+		if (logicDocument && logicDocument.IsDocumentEditor())
+			this.getTextAnnotatorEventManager().removePluginListener(guid);
 	};
 	asc_docs_api.prototype.onAttachPluginEvent = function(guid, name)
 	{
@@ -14661,6 +14665,10 @@ background-repeat: no-repeat;\
 			&& this.WordControl
 			&& this.WordControl.m_oDrawingDocument)
 			this.WordControl.m_oDrawingDocument.contentControls.onAttachPluginEvent(guid);
+		
+		let logicDocument = this.private_GetLogicDocument();
+		if ("onParagraphText" === name && logicDocument && logicDocument.IsDocumentEditor())
+			this.getTextAnnotatorEventManager().addPluginListener(guid);
 	};
 	asc_docs_api.prototype.initBroadcastChannelListeners = function() {
 		let oThis = this;

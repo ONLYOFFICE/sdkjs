@@ -318,6 +318,7 @@ function CDocumentRecalcInfo()
     this.FlowObjectPageBreakBefore = false;  // Нужно ли перед float-объектом поставить pagebreak
     this.FlowObjectPage            = 0;      // Количество обработанных страниц
     this.FlowObjectElementsCount   = 0;      // Количество элементов подряд идущих в рамке (только для рамок)
+	this.FlowObjectNoWrap          = false;  // Для случая, когда у плавающего объекта отключаем обтекание
     this.RecalcResult              = recalcresult_NextElement;
 
     this.WidowControlParagraph     = null;   // Параграф, который мы пересчитываем из-за висячих строк
@@ -351,6 +352,7 @@ CDocumentRecalcInfo.prototype =
         this.FlowObjectPageBreakBefore = false;
         this.FlowObjectPage            = 0;
         this.FlowObjectElementsCount   = 0;
+		this.FlowObjectNoWrap          = false;
         this.RecalcResult              = recalcresult_NextElement;
 
         this.WidowControlParagraph     = null;
@@ -446,6 +448,16 @@ CDocumentRecalcInfo.prototype =
     {
         return this.FlowObjectPageBreakBefore;
     },
+	
+	SetForceNoWrap : function(noWrap)
+	{
+		this.FlowObjectNoWrap = noWrap;
+	},
+	
+	IsForceNoWrap : function()
+	{
+		return this.FlowObjectNoWrap;
+	},
 
     Set_KeepNext : function(Paragraph, EndParagraph)
     {
@@ -521,6 +533,7 @@ CDocumentRecalcInfo.prototype =
 		this.FootnotePage              = 0;
 		this.FootnoteColumn            = 0;
 		this.FlowObjectPageBreakBefore = false;
+		this.FlowObjectNoWrap          = false;
     },
 
 	Set_NeedRecalculateFromStart : function(isNeedRecalculate)
@@ -1199,7 +1212,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 
 	this.Layout = this.Layouts.Print;
 	
-	this.CustomTextAnnotator = new AscWord.CustomTextAnnotator(this);
+	this.CustomTextAnnotator = false !== isMainLogicDocument ? new AscWord.CustomTextAnnotator(this) : null;
 	
 	
 	this.Content[0] = new AscWord.Paragraph(this);
@@ -2302,6 +2315,10 @@ CDocument.prototype.FinalizeAction = function(checkEmptyAction, additional)
 	this.sendEvent("asc_onUserActionEnd");
 	this.Api.getMacroRecorder().onAction(this.Action.Description, additional);
 	return actionCompleted;
+};
+CDocument.prototype.AddMacroData = function(type, additional)
+{
+	this.Api.getMacroRecorder().addStepData(type, additional);
 };
 /**
  * Сообщаем, что нужно отменить начатое действие
@@ -3500,6 +3517,10 @@ CDocument.prototype.Recalculate_Page = function()
     }
 	
 	this.Pages[PageIndex].Sections.length = SectionIndex + 1;
+	
+	let mainStartPos = this.FullRecalc.MainStartPos;
+	if (-1 !== mainStartPos && mainStartPos <= StartIndex)
+		this.Pages.length = PageIndex + 1;
 	
 	this.Endnotes.Reset(PageIndex, SectionIndex, ColumnIndex);
 
@@ -6452,7 +6473,6 @@ CDocument.prototype.MoveCursorLeft = function(AddToSelect, Word)
 		isRtl = (curPara ? curPara.isRtlDirection() : false);
 	}
 
-	this.StartAction(AscDFH.historydescription_Document_MoveCursorLeft, {isRtl: isRtl, isAddSelect: AddToSelect, isWord: Word});
 	if (isRtl)
 		this.Controller.MoveCursorRight(AddToSelect, Word);
 	else
@@ -6462,7 +6482,6 @@ CDocument.prototype.MoveCursorLeft = function(AddToSelect, Word)
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateRulersState();
 	this.private_UpdateCursorXY(true, true);
-	this.FinalizeAction();
 };
 CDocument.prototype.MoveCursorRight = function(AddToSelect, Word, FromPaste)
 {
@@ -6482,7 +6501,6 @@ CDocument.prototype.MoveCursorRight = function(AddToSelect, Word, FromPaste)
 		isRtl = (curPara ? curPara.isRtlDirection() : false);
 	}
 
-	this.StartAction(AscDFH.historydescription_Document_MoveCursorRight, {isRtl: isRtl, isAddSelect: AddToSelect, isWord: Word});
 	if (isRtl)
 		this.Controller.MoveCursorLeft(AddToSelect, Word);
 	else
@@ -6492,13 +6510,12 @@ CDocument.prototype.MoveCursorRight = function(AddToSelect, Word, FromPaste)
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateSelectionState();
 	this.private_UpdateCursorXY(true, true);
-	this.FinalizeAction();
 };
 CDocument.prototype.MoveCursorUp = function(AddToSelect, CtrlKey)
 {
 	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
 		return;
-	
+
 	this.ResetWordSelection();
 	this.private_UpdateTargetForCollaboration();
 	this.Controller.MoveCursorUp(AddToSelect, CtrlKey);
@@ -6507,7 +6524,7 @@ CDocument.prototype.MoveCursorDown = function(AddToSelect, CtrlKey)
 {
 	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
 		return;
-	
+
 	this.ResetWordSelection();
 	this.private_UpdateTargetForCollaboration();
 	this.Controller.MoveCursorDown(AddToSelect, CtrlKey);
@@ -7741,8 +7758,6 @@ CDocument.prototype.Selection_SetEnd = function(X, Y, MouseEvent)
 							oBookmark[0].GoToBookmark();
 					}
 				}
-				
-				this.CustomTextAnnotator.onClick(X, Y, this.CurPage);
 			}
         }
         else
@@ -10455,6 +10470,11 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 				this.Api.sync_MarkerFormatCallback(true);
 			}
 		}
+	}
+	
+	if (!this.IsTextSelectionUse() && (this.IsInText(X, Y, this.CurPage) || -1 !== this.DrawingObjects.IsInDrawingObject(X, Y, this.CurPage, this)))
+	{
+		this.CustomTextAnnotator.onClick(X, Y, this.CurPage, e);
 	}
 
 	this.private_CheckCursorPosInFillingFormMode();
@@ -28066,18 +28086,18 @@ CDocument.prototype.IsFirstOnDocumentPage = function(curPage)
 	return true;
 };
 /**
- * @returns {AscWord.CustomTextAnnotator}
+ * @returns {?AscWord.CustomTextAnnotator}
  */
 CDocument.prototype.GetCustomTextAnnotator = function()
 {
 	return this.CustomTextAnnotator;
 };
 /**
- * @returns {AscWord.CustomMarks}
+ * @returns {?AscWord.CustomMarks}
  */
 CDocument.prototype.GetCustomMarks = function()
 {
-	return this.CustomTextAnnotator.getMarks();
+	return this.CustomTextAnnotator ? this.CustomTextAnnotator.getMarks() : null;
 };
 
 function CDocumentSelectionState()
