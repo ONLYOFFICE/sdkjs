@@ -16887,7 +16887,7 @@
 				else
 				{
 					//распознаем формат
-					var res = AscCommon.g_oFormatParser.parse(val, oNumFormat.getType());
+					var res = AscCommon.g_oFormatParser.parse(val, null, oNumFormat.getType());
 					if(null != res)
 					{
 						//Сравниваем с текущим форматом, если типы совпадают - меняем только значение ячейки

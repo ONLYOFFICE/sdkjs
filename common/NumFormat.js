@@ -3251,7 +3251,10 @@ CellFormat.prototype =
 		}
 		else if (format.bDateTime) {
 			if (format.bDate) {
-				nType = c_oAscNumFormatType.Date;
+                if (format.aRawFormat.length <= 5)
+				    nType = c_oAscNumFormatType.Date;
+                else
+                    nType = c_oAscNumFormatType.LongDate;
 			} else {
 				nType = c_oAscNumFormatType.Time;
 			}
@@ -3640,7 +3643,7 @@ FormatParser.prototype =
         }
         return val - 0;
     },
-    parse: function (value, currentFormat=numFormat_Text, cultureInfo)
+    parse: function (value, cultureInfo, currentFormat)
     {
         if (null == cultureInfo)
             cultureInfo = g_oDefaultCultureInfo;
@@ -3651,9 +3654,13 @@ FormatParser.prototype =
             value = value.replace(new RegExp(String.fromCharCode(0xA0), "g"));
         var rx_thouthand = new RegExp("^(([ \\+\\-%\\$€£¥\\(]|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)((?:\\d+(?:" + escapeRegExp(cultureInfo.NumberGroupSeparator) + "\\d+)*)(?:" + escapeRegExp(cultureInfo.NumberDecimalSeparator) + "\\d*)?(?:\\s+\\d+/\\d+)?)(([ %\\)]|р.|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)$");
         // If the format is already applied, the regular expression should read a fraction like "1/2"
-        if(currentFormat == 9)
+        if(currentFormat == Asc.c_oAscNumFormatType.Fraction || currentFormat == Asc.c_oAscNumFormatType.Number || currentFormat == Asc.c_oAscNumFormatType.Scientific || currentFormat == Asc.c_oAscNumFormatType.Accounting || currentFormat == Asc.c_oAscNumFormatType.Currency || currentFormat == Asc.c_oAscNumFormatType.Percent)
             var rx_thouthand = new RegExp("^(([ \\+\\-%\\$€£¥\\(]|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)((?:\\d+(?:" + escapeRegExp(cultureInfo.NumberGroupSeparator) + "\\d+)*(?:" + escapeRegExp(cultureInfo.NumberDecimalSeparator) + "\\d*)?)?(?:\\s*\\d+/\\d+)?)(([ %\\)]|р.|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)$");        
         var match = value.match(rx_thouthand);
+
+        if (currentFormat == Asc.c_oAscNumFormatType.Text)
+            match = null
+
         if (null != match) {
             // If the third group has "/" symbol parse it like a fraction
             if (match[3] && match[3].includes('/'))
@@ -3662,6 +3669,7 @@ FormatParser.prototype =
                 // If the fraction like a "1/2"
                 if(match2.length == 2)
                 {
+                    var withoutRPart = true
                     var sVal = '0';
                     var sNumerator = match2[0];
                     var sDenominator = match2[1];
@@ -3681,10 +3689,25 @@ FormatParser.prototype =
             var sBefore = match[1];
             var sAfter = match[5];
 
-
-            if(sNumerator && sDenominator)
-                var sDivide = '/'
-
+        if(currentFormat == Asc.c_oAscNumFormatType.Currency){
+            var positivePattern = cultureInfo.CurrencyPositivePattern;
+            
+            var currencyBeforePatterns = [0, 1, 2, 9, 11, 12, 14];
+            var currencyAfterPatterns = [3, 4, 5, 6, 7, 8, 10, 13, 15];
+            // We need to detect where the currency symbol is located depending on the locale
+            if (currencyBeforePatterns.includes(positivePattern)) {
+                sBefore = cultureInfo.CurrencySymbol;
+            } else if (currencyAfterPatterns.includes(positivePattern)) {
+                sAfter = cultureInfo.CurrencySymbol;
+            } else {
+                sBefore = cultureInfo.CurrencySymbol;
+            }
+        // The second condition is for compability of results with Excel
+        } else if(currentFormat == Asc.c_oAscNumFormatType.Percent && value[0] !== " "){
+            sAfter = '%'
+        } else if (sNumerator && sDenominator) {
+            var sDivide = '/';
+        }
 			var oChartCount = {};
 			if(null != sBefore)
 			    this._parseStringLetters(sBefore, cultureInfo.CurrencySymbol, true, oChartCount);
@@ -3821,24 +3844,39 @@ FormatParser.prototype =
                         var numLength = sNumerator.length;
                         var denomLength = sDenominator.length;
                         
-                        if (numLength == 1 && denomLength == 1) 
+                        if(currentFormat == Asc.c_oAscNumFormatType.Number)
+                        {
+                            sFormat = '0.00'
+                        } else if (numLength == 1 && denomLength == 1) 
                         {
                             sFormat = "# ?/?";
-                        } else if (numLength == 1 && denomLength == 2)
+                        } else if (numLength == 1 && (denomLength == 2 || denomLength == 3))
                         {
-                             sFormat = "# ??/??";   
+                            if(currentFormat == Asc.c_oAscNumFormatType.Fraction)
+                                sFormat = "# ?/?"
+                            else 
+                                sFormat = "# ??/??";   
                         } else if (numLength == 2 && denomLength == 1)
                         {
                              sFormat = "# ?/?";   
-                        } else if (numLength == 2 && denomLength == 2) 
+                        } else if (numLength == 2 && (denomLength == 2 || denomLength == 3)) 
                         {
-                            sFormat = "# ??/??";
-                        } else if (numLength <= 3 && denomLength <= 3) 
+                            if(currentFormat == Asc.c_oAscNumFormatType.Fraction)
+                                sFormat = "# ?/?"
+                            else 
+                                sFormat = "# ??/??"; 
+                        } else if (numLength == 3 && denomLength == 1 && sVal == 0) 
                         {
-                            sFormat = "# ??/??";
+                            sFormat = "# ?/?";
+                        } else if (numLength == 3 && (denomLength == 2 || denomLength == 3) && sVal == 0) 
+                        {
+                            if (withoutRPart && currentFormat == Asc.c_oAscNumFormatType.Fraction)
+                                sFormat = "# ?/?" 
+                            else   
+                                sFormat = "# ??/??";
                         } else 
                         {
-                            sFormat = AscCommon.g_cGeneralFormat;
+                            sFormat = null;
                         }
                     
                     }
@@ -3932,10 +3970,16 @@ FormatParser.prototype =
 				}
 			}
         }
-        if(res == null && value[0] == ' ')
+        if (res == null && currentFormat == Asc.c_oAscNumFormatType.Text)
+            res = {format: '@', value: value, bDateTime: false, bDate: false, bTime: false, bPercent: false, bCurrency: false};
+        else if(res == null && value[0] == ' ')
             return res;
-        else if (null == res && !bError)
-            return res = this.parseDate(value, cultureInfo);
+        else if ((null == res) && !bError)
+            return res = this.parseDate(value, cultureInfo, currentFormat);
+        else if (currentFormat == Asc.c_oAscNumFormatType.Time)
+            res.format = 'h:mm:ss'
+        else if (currentFormat == Asc.c_oAscNumFormatType.LongDate)
+            res.format = 'dddd, mmmm d, yyyy'
         return res
     },
     _parseStringLetters: function (sVal, currencySymbol, bBefore, oRes) {
@@ -4472,7 +4516,7 @@ FormatParser.prototype =
         }
         return length === 0 ? false: bRes;
     },
-	parseDate: function (value, cultureInfo)
+	parseDate: function (value, cultureInfo, currentFormat)
 	{
 		//todo "11: AM" should fail
 		var res = null;
@@ -4700,7 +4744,17 @@ FormatParser.prototype =
 					if(dValue >= 0)
 					{
 						var sFormat = "";
-						if (bDate) {
+                        if (currentFormat == Asc.c_oAscNumFormatType.Date || currentFormat == Asc.c_oAscNumFormatType.LongDate || currentFormat == Asc.c_oAscNumFormatType.Time || currentFormat == Asc.c_oAscNumFormatType.Number){
+                            if (currentFormat == Asc.c_oAscNumFormatType.Date){
+                                sFormat += "m/d/yyyy";
+                            } else if (currentFormat == Asc.c_oAscNumFormatType.LongDate) {
+                                sFormat += "dddd, mmmm d, yyyy";
+                            } else if (currentFormat == Asc.c_oAscNumFormatType.Time) {
+                                sFormat += "h:mm:ss";
+                            } else if (currentFormat == Asc.c_oAscNumFormatType.Number) {
+                                sFormat += "0.00"
+                            }
+                        } else if (bDate) {
 							if (bTime && nHour > 23) {
 								sFormat = AscCommon.g_cGeneralFormat;
 							} else {
