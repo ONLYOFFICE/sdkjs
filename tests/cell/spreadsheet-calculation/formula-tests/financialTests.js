@@ -8622,7 +8622,7 @@ $(function () {
 		// Case #1: Number. Monthly payments at 1% monthly rate, 12 periods, no PV, end of period. Returns future value.
 		oParser = new parserFormula('FV(0.01,12,-100,0,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(0.01,12,-100,0,0) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 1268.2503013196979, 'Test: Positive case: Number. Monthly payments at 1% monthly rate, 12 periods, no PV, end of period. Returns future value.');
+		assert.strictEqual(oParser.calculate().getValue(), 1268.2503013196977, 'Test: Positive case: Number. Monthly payments at 1% monthly rate, 12 periods, no PV, end of period. Returns future value.');
 		// Case #2: Number. Annual payments at 12% annual rate, 4 years, no PV, end of period. Returns future value.
 		oParser = new parserFormula('FV(0.12,4,-1000,0,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(0.12,4,-1000,0,0) is parsed.');
@@ -8630,15 +8630,15 @@ $(function () {
 		// Case #3: String. String convertible to numbers, monthly rate and periods. Returns future value.
 		oParser = new parserFormula('FV("0.01","12","-100","0","0")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV("0.01","12","-100","0","0") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 1268.2503013196979, 'Test: Positive case: String. String convertible to numbers, monthly rate and periods. Returns future value.');
+		assert.strictEqual(oParser.calculate().getValue(), 1268.2503013196977, 'Test: Positive case: String. String convertible to numbers, monthly rate and periods. Returns future value.');
 		// Case #4: Formula. Nested formulas evaluating to valid numbers. Returns future value.
 		oParser = new parserFormula('FV(SQRT(0.0001),ROUND(12,0),-ABS(100),0,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(SQRT(0.0001),ROUND(12,0),-ABS(100),0,0) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 1268.2503013196979, 'Test: Positive case: Formula. Nested formulas evaluating to valid numbers. Returns future value.');
+		assert.strictEqual(oParser.calculate().getValue(), 1268.2503013196977, 'Test: Positive case: Formula. Nested formulas evaluating to valid numbers. Returns future value.');
 		// Case #5: Reference link. Reference to cells with valid numbers. Returns future value.
 		oParser = new parserFormula('FV(A100,A101,A102,A103,A104)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(A100,A101,A102,A103,A104) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), -0.471206043, 'Test: Positive case: Reference link. Reference to cells with valid numbers. Returns future value.');
+		assert.strictEqual(oParser.calculate().getValue(), -0.4712060430183893, 'Test: Positive case: Reference link. Reference to cells with valid numbers. Returns future value.');
 		// Case #6: Area. Single-cell range for all arguments. Returns future value.
 		oParser = new parserFormula('FV(A105:A105,A106:A106,A107:A107,A108:A108,A109:A109)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(A105:A105,A106:A106,A107:A107,A108:A108,A109:A109) is parsed.');
@@ -8646,19 +8646,19 @@ $(function () {
 		// Case #7: Array. Array with single valid elements. Returns future value.
 		oParser = new parserFormula('FV({0.01},{12},{-100},{0},{0})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV({0.01},{12},{-100},{0},{0}) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 1268.2503013196979, 'Test: Positive case: Array. Array with single valid elements. Returns future value.');
+		assert.strictEqual(oParser.calculate().getValue(), 1268.2503013196977, 'Test: Positive case: Array. Array with single valid elements. Returns future value.');
 		// Case #8: Name. Named range with valid numbers. Returns future value.
 		oParser = new parserFormula('FV(TestName,TestName1,TestName2,TestName3,TestName)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(TestName,TestName1,TestName2,TestName3,TestName) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Positive case: Name. Named range with valid numbers. Returns future value.');
+		assert.strictEqual(oParser.calculate().getValue(), -3.0753787975412505, 'Test: Positive case: Name. Named range with valid numbers. Returns future value.');
 		// Case #9: Name3D. 3D named range with valid numbers. Returns future value.
-		oParser = new parserFormula('FV(TestName3D,TestName3D1,TestName3D2,TestName3D3,TestName3D)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: FV(TestName3D,TestName3D1,TestName3D2,TestName3D3,TestName3D) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Positive case: Name3D. 3D named range with valid numbers. Returns future value.');
-		// Case #10: Ref3D. 3D reference to cells with valid numbers. Returns future value.
+		oParser = new parserFormula('FV(TestName3D,TestName3D,TestName3D,TestName3D,TestName3D)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: FV(TestName3D,TestName3D,TestName3D,TestName3D,TestName3D) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 0.5, 'Test: Positive case: Name3D. 3D named range with valid numbers. Returns future value.');
+		// Case #10: Ref3D. 3D reference to cells.
 		oParser = new parserFormula('FV(Sheet2!A1,Sheet2!A2,Sheet2!A3,Sheet2!A4,Sheet2!A5)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(Sheet2!A1,Sheet2!A2,Sheet2!A3,Sheet2!A4,Sheet2!A5) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Positive case: Ref3D. 3D reference to cells with valid numbers. Returns future value.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Positive case: Ref3D. 3D reference to cells');
 		// Case #11: Area3D. 3D single-cell range. Returns future value.
 		oParser = new parserFormula('FV(Sheet2!A6:A6,Sheet2!A7:A7,Sheet2!A8:A8,Sheet2!A9:A9,Sheet2!A10:A10)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(Sheet2!A6:A6,Sheet2!A7:A7,Sheet2!A8:A8,Sheet2!A9:A9,Sheet2!A10:A10) is parsed.');
@@ -8666,11 +8666,11 @@ $(function () {
 		// Case #12: Table. Table structured reference with valid numbers. Returns future value.
 		oParser = new parserFormula('FV(Table1[Column1],Table1[Column1],Table1[Column1],Table1[Column1],Table1[Column1])', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(Table1[Column1],Table1[Column1],Table1[Column1],Table1[Column1],Table1[Column1]) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Positive case: Table. Table structured reference with valid numbers. Returns future value.');
+		assert.strictEqual(oParser.calculate().getValue(), -4.051077781873799, 'Test: Positive case: Table. Table structured reference with valid numbers. Returns future value.');
 		// Case #13: Formula. Nested IF for rate. Returns future value.
 		oParser = new parserFormula('FV(IF(TRUE,0.01,0.02),12,-100,0,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(IF(TRUE,0.01,0.02),12,-100,0,0) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 1268.2503013196979, 'Test: Positive case: Formula. Nested IF for rate. Returns future value.');
+		assert.strictEqual(oParser.calculate().getValue(), 1268.2503013196977, 'Test: Positive case: Formula. Nested IF for rate. Returns future value.');
 		// Case #14: Number. Positive pmt (inflow), negative pv (outflow), payment at beginning. Returns future value.
 		oParser = new parserFormula('FV(0.01,12,100,-1000,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(0.01,12,100,-1000,1) is parsed.');
@@ -8694,19 +8694,20 @@ $(function () {
 		// Case #19: Number. Omitted pv defaults to 0, type -1 treated as 0. Returns future value.
 		oParser = new parserFormula('FV(0.01,12,-100,,-1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(0.01,12,-100,,-1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1280.932804, 'Test: Positive case: Number. Omitted pv defaults to 0, type -1 treated as 0. Returns future value.');
+		assert.strictEqual(oParser.calculate().getValue(), 1280.9328043328946, 'Test: Positive case: Number. Omitted pv defaults to 0, type -1 treated as 0. Returns future value.');
 		// Case #20: Number. Omitted type defaults to 0. Returns future value.
 		oParser = new parserFormula('FV(0.01,12,-100,-1000,)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(0.01,12,-100,-1000,) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 2395.075331451668, 'Test: Positive case: Number. Omitted type defaults to 0. Returns future value.');
+		assert.strictEqual(oParser.calculate().getValue(), 2395.0753314516674, 'Test: Positive case: Number. Omitted type defaults to 0. Returns future value.');
 		// Case #21: Array. Arrays with multiple valid elements. Returns array of future values.
 		oParser = new parserFormula('FV({0.01,0.02},{12,24},{-100,-200},{0,0},{0,0})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV({0.01,0.02},{12,24},{-100,-200},{0,0},{0,0}) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 1268.2503013196979, 'Test: Positive case: Array. Arrays with multiple valid elements. Returns array of future values.');
-		// Case #22: Number. Zero rate and pmt, negative pv. Returns future value (-1000).
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1268.2503013196977, 'Test: Positive case: Array. Arrays with multiple valid elements. Returns array of future values.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,1).getValue(), 6084.372494752261, 'Test: Positive case: Array. Arrays with multiple valid elements. Returns array of future values.');
+		// Case #22: Number. Zero rate and pmt, negative pv. Returns future value.
 		oParser = new parserFormula('FV(0,12,0,-1000,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(0,12,0,-1000,0) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 1000, 'Test: Positive case: Number. Zero rate and pmt, negative pv. Returns future value (-1000).');
+		assert.strictEqual(oParser.calculate().getValue(), 1000, 'Test: Positive case: Number. Zero rate and pmt, negative pv. Returns future value.');
 
 		// Negative cases:
 		// Case #1: String. Non-numeric string for rate returns #VALUE!.
@@ -8717,14 +8718,15 @@ $(function () {
 		oParser = new parserFormula('FV(NA(),12,-100,0,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(NA(),12,-100,0,0) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Error. Error in rate propagates #N/A. Returns #N/A.');
-		// Case #3: Area. Multi-cell range for rate returns #VALUE!.
+		// Case #3: Area. Multi-cell range for rate returns array of future values.
 		oParser = new parserFormula('FV(A100:A101,A102,A103,A104,A105)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(A100:A101,A102,A103,A104,A105) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), -0.642128221, 'Test: Negative case: Area. Multi-cell range for rate returns #VALUE!.');
-		// Case #4: Empty. Empty rate returns #VALUE!.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), -0.6421282211633659, 'Test: Negative case: Area. Multi-cell range for rate returns array of future values.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), -0.6630379084738486, 'Test: Negative case: Area. Multi-cell range for rate returns array of future values.');
+		// Case #4: Empty. Empty rate.
 		oParser = new parserFormula('FV(,12,-100,0,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(,12,-100,0,0) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 1200, 'Test: Negative case: Empty. Empty rate returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), 1200, 'Test: Negative case: Empty. Empty rate.');
 		// Case #5: Boolean. Boolean rate (1) is valid but high. Returns future value.
 		oParser = new parserFormula('FV(TRUE,12,-100,0,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(TRUE,12,-100,0,0) is parsed.');
@@ -8736,19 +8738,19 @@ $(function () {
 		// Case #7: Name. Named range with multi-cell area for rate returns #VALUE!.
 		oParser = new parserFormula('FV(TestNameArea,TestName1,TestName2,TestName3,TestName)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(TestNameArea,TestName1,TestName2,TestName3,TestName) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Name. Named range with multi-cell area for rate returns #VALUE!.');
-		// Case #9: Formula. Formula resulting in #NUM! for rate propagates error. Returns #N/A.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), -5.25, 'Test: Negative case: Name. Named range with multi-cell area for rate returns #VALUE!.');
+		// Case #9: Formula. Formula resulting in #NUM! for rate propagates error. Returns #NUM!.
 		oParser = new parserFormula('FV(SQRT(-1),12,-100,0,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(SQRT(-1),12,-100,0,0) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Formula. Formula resulting in #NUM! for rate propagates error. Returns #N/A.');
-		// Case #10: Number. Negative nper returns #NUM!.
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Formula. Formula resulting in #NUM! for rate propagates error. Returns #NUM!.');
+		// Case #10: Number. Negative nper returns negative number.
 		oParser = new parserFormula('FV(0.01,-12,-100,0,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(0.01,-12,-100,0,0) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), -1125.5077473484644, 'Test: Negative case: Number. Negative nper returns #NUM!.');
-		// Case #11: Number. Empty pmt returns #VALUE!.
+		assert.strictEqual(oParser.calculate().getValue(), -1125.5077473484641, 'Test: Negative case: Number. Negative nper returns negative number');
+		// Case #11: Number. Empty pmt. Returns number.
 		oParser = new parserFormula('FV(0.01,12,,"-1000",0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(0.01,12,,"-1000",0) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 1126.8250301319697, 'Test: Negative case: Number. Empty pmt returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), 1126.8250301319697, 'Test: Negative case: Number. Empty pmt. Returns number.');
 		// Case #12: String. Non-numeric string for pmt returns #VALUE!.
 		oParser = new parserFormula('FV(0.01,12,"abc",0,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(0.01,12,"abc",0,0) is parsed.');
@@ -8757,22 +8759,23 @@ $(function () {
 		oParser = new parserFormula('FV(0.01,12,NA(),0,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(0.01,12,NA(),0,0) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Error. Error in pmt propagates #N/A. Returns #N/A.');
-		// Case #14: Area3D. Multi-cell 3D range for rate returns #VALUE!.
+		// Case #14: Area3D. Multi-cell 3D range for rate returns num array.
 		oParser = new parserFormula('FV(Sheet2!A6:A7,Sheet2!A8,Sheet2!A9,Sheet2!A10,Sheet2!A1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(Sheet2!A6:A7,Sheet2!A8,Sheet2!A9,Sheet2!A10,Sheet2!A1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: Area3D. Multi-cell 3D range for rate returns #VALUE!.');
-		// Case #15: Name3D. 3D named range with multi-cell area for rate returns #VALUE!.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Negative case: Area3D. Multi-cell 3D range for rate returns num array.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 0, 'Test: Negative case: Area3D. Multi-cell 3D range for rate returns num array.');
+		// Case #15: Name3D. 3D named range with multi-cell area for rate returns num array.
 		oParser = new parserFormula('FV(TestNameArea3D2,TestNameArea3D2,TestNameArea3D2,TestNameArea3D2,TestNameArea3D2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(TestNameArea3D2,TestNameArea3D2,TestNameArea3D2,TestNameArea3D2,TestNameArea3D2) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Name3D. 3D named range with multi-cell area for rate returns #VALUE!.');
-		// Case #16: Date. Large date serial number as rate returns #NUM!.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Negative case: Name3D. 3D named range with multi-cell area for rate returns num array.');
+		// Case #16: Date. Large date serial number as rate returns num.
 		oParser = new parserFormula('FV(DATE(2025,1,1),12,-100,0,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(DATE(2025,1,1),12,-100,0,0) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 1.7980421279622045e+53, 'Test: Negative case: Date. Large date serial number as rate returns #NUM!.');
-		// Case #17: Time. Negative time value as rate returns #NUM!.
+		assert.strictEqual(oParser.calculate().getValue(), 1.7980421279622043e+53, 'Test: Negative case: Date. Large date serial number as rate returns num.');
+		// Case #17: Time. Negative time value as rate.
 		oParser = new parserFormula('FV(TIME(12,0,0)-1,12,-100,0,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(TIME(12,0,0)-1,12,-100,0,0) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 199.951171875, 'Test: Negative case: Time. Negative time value as rate returns #NUM!.');
+		assert.strictEqual(oParser.calculate().getValue(), 199.951171875, 'Test: Negative case: Time. Negative time value as rate.');
 		// Case #18: Number. Error in pv propagates #N/A. Returns #N/A.
 		oParser = new parserFormula('FV(0.01,12,-100,NA(),0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(0.01,12,-100,NA(),0) is parsed.');
@@ -8781,42 +8784,34 @@ $(function () {
 		oParser = new parserFormula('FV(0.01,12,-100,0,"abc")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(0.01,12,-100,0,"abc") is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number. Non-numeric string for type returns #VALUE!.');
-		// Case #20: Array. Array with booleans for rate returns #VALUE!.
+		// Case #20: Array. Array with booleans for rate returns array of valid nums.
 		oParser = new parserFormula('FV({TRUE,FALSE},12,-100,0,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV({TRUE,FALSE},12,-100,0,0) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 409500, 'Test: Negative case: Array. Array with booleans for rate returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 409500, 'Test: Negative case: Array. Array with booleans for rate returns array of valid nums.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,1).getValue(), 1200, 'Test: Negative case: Array. Array with booleans for rate returns array of valid nums.');
+
 
 		// Bounded cases:
-		// Case #1: Number. Maximum Excel number for rate. Returns large future value or #NUM! if overflow.
-		oParser = new parserFormula('FV(1.79769313486232E+308,1,-1,0,0)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: FV(1.79769313486232E+308,1,-1,0,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Bounded case: Number. Maximum Excel number for rate. Returns large future value or #NUM! if overflow.');
-		// Case #2: Number. Minimum Excel number for rate. Returns large future value or #NUM! if overflow.
-		oParser = new parserFormula('FV(-1.79769313486232E+308,1,-1,0,0)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: FV(-1.79769313486232E+308,1,-1,0,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Bounded case: Number. Minimum Excel number for rate. Returns large future value or #NUM! if overflow.');
+		// Case #1: Number. Maximum Excel number for rate.
+		oParser = new parserFormula('FV(1.79769313486232E+307,1,-1,0,0)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: FV(1.79769313486232E+307,1,-1,0,0) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Bounded case: Number. Maximum Excel number for rate.');
+		// Case #2: Number. Minimum Excel number for rate.
+		oParser = new parserFormula('FV(-1.79769313486232E+307,1,-1,0,0)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: FV(-1.79769313486232E+307,1,-1,0,0) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Bounded case: Number. Minimum Excel number for rate.');
 		// Case #3: Number. Maximum Excel number for nper. Returns #NUM! due to overflow.
-		oParser = new parserFormula('FV(0.01,1.79769313486232E+308,-1,0,0)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: FV(0.01,1.79769313486232E+308,-1,0,0) is parsed.');
+		oParser = new parserFormula('FV(0.01,1.79769313486232E+307,-1,0,0)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: FV(0.01,1.79769313486232E+307,-1,0,0) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number. Maximum Excel number for nper. Returns #NUM! due to overflow.');
 		// Case #4: Number. Minimum Excel number for pmt. Returns large future value.
-		oParser = new parserFormula('FV(0.01,1,-1.79769313486232E+308,0,0)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: FV(0.01,1,-1.79769313486232E+308,0,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1.7977e+307, 'Test: Bounded case: Number. Minimum Excel number for pmt. Returns large future value.');
+		oParser = new parserFormula('FV(0.01,1,-1.79769313486232E+307,0,0)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: FV(0.01,1,-1.79769313486232E+307,0,0) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 1.7976931348623215e+307, 'Test: Bounded case: Number. Minimum Excel number for pmt. Returns large future value.');
 		// Case #5: Number. Minimum Excel number for pv. Returns large future value.
-		oParser = new parserFormula('FV(0.01,1,-1,-1.79769313486232E+308,0)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: FV(0.01,1,-1,-1.79769313486232E+308,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1.8157e+307, 'Test: Bounded case: Number. Minimum Excel number for pv. Returns large future value.');
-
-		// Need to fix: area handle, ms result difference in some cases
-		// Case #5: Reference link. Reference to cells with valid numbers. Returns future value.
-		// Case #19: Number. Omitted pv defaults to 0, type -1 treated as 0. Returns future value. - calc problem
-		// Case #3: Area. Multi-cell range for rate returns #VALUE!.
-		// Case #14: Area3D. Multi-cell 3D range for rate returns #VALUE!.
-		// Case #1: Number. Maximum Excel number for rate. Returns large future value or #NUM! if overflow.
-		// Case #2: Number. Minimum Excel number for rate. Returns large future value or #NUM! if overflow.
-		// Case #4: Number. Minimum Excel number for pmt. Returns large future value.
-		// Case #5: Number. Minimum Excel number for pv. Returns large future value.
+		oParser = new parserFormula('FV(0.01,1,-1,-1.79769313486232E+307,0)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: FV(0.01,1,-1,-1.79769313486232E+307,0) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 1.8156700662109432e+307, 'Test: Bounded case: Number. Minimum Excel number for pv. Returns large future value.');
 
 
 		testArrayFormula2(assert, "FV", 3, 5);
