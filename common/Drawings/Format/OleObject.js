@@ -351,7 +351,9 @@ function (window, undefined) {
         }
         if (oLoadedData) {
             this.setBinaryId(oLoadedData.hash);
-	        AscDFH.addImagesFromFrame(this, [AscCommon.g_oDocumentUrls.imagePath2Local(oLoadedData.data.path)]);
+						if (oLoadedData.data) {
+							AscDFH.addImagesFromFrame(this, [AscCommon.g_oDocumentUrls.imagePath2Local(oLoadedData.data.path)]);
+						}
         }
         if (this.m_nDrawAspect === AscFormat.EOLEDrawAspect.oledrawaspectContent && !this.m_bShowAsIcon) {
             if(typeof sImageUrl  === "string" &&
@@ -506,7 +508,7 @@ function (window, undefined) {
 			COleObject.prototype.fillBinaryData = function(binaryData) {
 				const nEditorId = AscCommon.getEditorByOOXMLSignature(binaryData);
 				if (nEditorId !== null) {
-					this.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(binaryData));
+					this.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(binaryData).hash);
 				}
 				switch (nEditorId) {
 					case AscCommon.c_oEditorId.Word: {

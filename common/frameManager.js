@@ -993,6 +993,7 @@
 	const CLoadBinaryData_Loading = 1;
 	const CLoadBinaryData_Complete = 2;
 	const CLoadBinaryData_Error = 3;
+	const CLoadBinaryData_Offline = 4;
 	function CLoadBinaryData(hash, binary) {
 		this.hash = hash;
 		this.binary = binary;
@@ -1028,7 +1029,6 @@
 	};
 	function CBinaryCacheManager(api) {
 		this.cache = {};
-		this.collaborativeCache = {};
 		this.api = api;
 	}
 	CBinaryCacheManager.prototype.loadBinaries = function(urls) {
@@ -1040,7 +1040,14 @@
 				resolve(res);
 			}
 			for (let i = 0; i < urls.length; i++) {
-				const sFullUrl = AscCommon.getFullImageSrc2(urls[i]);
+				const sUrl = urls[i];
+				const sBase64 = sUrl.indexOf("data:") === 0 ? sUrl.indexOf("base64,") : -1;
+				if (sBase64 !== -1) {
+					const arrBinaryData = AscCommon.Base64.decode(sBase64);
+					resolve(oThis.addLocalBinary(arrBinaryData));
+					return;
+				}
+				const sFullUrl = AscCommon.getFullImageSrc2(sUrl);
 				oThis.api._downloadOriginalFile(sFullUrl, undefined, undefined, undefined, function(binary) {
 					res[i] = null;
 					if (binary) {
@@ -1048,9 +1055,8 @@
 						const loadedData = new CLoadBinaryData(hash, binary);
 						loadedData.setLoadState(CLoadBinaryData_Complete);
 						loadedData.data = {path: urls[i], url: sFullUrl};
-						oThis.collaborativeCache[hash] = loadedData;
+						oThis.cache[hash] = loadedData;
 						res[i] = loadedData;
-						oThis.cache[hash] = binary;
 					}
 					len -= 1;
 					if (len === 0) {
@@ -1068,7 +1074,7 @@
 	};
 	CBinaryCacheManager.prototype.getBinary = function(hash) {
 		if (this.cache[hash]) {
-			return this.cache[hash];
+			return this.cache[hash].binary;
 		}
 		return null;
 	};
@@ -1077,27 +1083,30 @@
 		const hash = this.getHash(xlsxBinary);
 		return new Promise(function(resolve, reject) {
 			if (AscCommon.History.IsOn()) {
-				if (!oThis.collaborativeCache[hash]) {
-					oThis.collaborativeCache[hash] = new CLoadBinaryData(hash, xlsxBinary);
+				const oldOfflineCache = oThis.cache[hash] && oThis.cache[hash].loadState === CLoadBinaryData_Offline ? oThis.cache[hash] : undefined;
+				if (!oThis.cache[hash] || oldOfflineCache) {
+					oThis.cache[hash] = new CLoadBinaryData(hash, xlsxBinary);
 					const dataUrl = oThis.getDataURLFromBinary(xlsxBinary, editorType);
 					AscCommon.sendImgUrls(oThis.api, [dataUrl], function(data) {
 						if (data && data[0] && data[0].url !== "error") {
-							oThis.collaborativeCache[hash].setLoadState(CLoadBinaryData_Complete);
-							oThis.collaborativeCache[hash].data = data[0];
+							oThis.cache[hash].setLoadState(CLoadBinaryData_Complete);
+							oThis.cache[hash].data = data[0];
 						} else {
-							oThis.collaborativeCache[hash].setLoadState(CLoadBinaryData_Error);
-							delete oThis.collaborativeCache[hash];
+							oThis.cache[hash].setLoadState(CLoadBinaryData_Error);
+							oThis.cache[hash] = oldOfflineCache;
 						}
 					});
 				}
-				const oLoadedData = oThis.collaborativeCache[hash];
+				const oLoadedData = oThis.cache[hash];
 				if (oLoadedData) {
 					oLoadedData.addLoadEventHandler(resolve, reject);
 				} else {
 					reject();
 				}
+			} else if (oThis.cache[hash]) {
+				resolve(oThis.cache[hash]);
 			} else {
-				resolve(new CLoadBinaryData(hash, xlsxBinary));
+				resolve(this.addLocalBinary(xlsxBinary));
 			}
 		});
 
@@ -1107,12 +1116,6 @@
 		const oThis = this;
 		return this.getFormatBinary(binary, editorType).then(function(arrXLSXBinary) {
 			return oThis.loadBinaryToServer(arrXLSXBinary, editorType);
-		}).then(function(oLoadedData) {
-			if (oLoadedData) {
-				oThis.cache[oLoadedData.hash] = oLoadedData.binary;
-				return oLoadedData;
-			}
-			return null;
 		});
 	};
 	CBinaryCacheManager.prototype.getHeaders = function (editorType) {
@@ -1173,8 +1176,10 @@
 	};
 	CBinaryCacheManager.prototype.addLocalBinary = function(binary) {
 		const hash = this.getHash(binary);
-		this.cache[hash] = binary.slice();
-		return hash;
+		const loadedData = new CLoadBinaryData(hash, binary);
+		loadedData.setLoadState(CLoadBinaryData_Offline);
+		this.cache[hash] = loadedData;
+		return loadedData;
 	};
 	CBinaryCacheManager.prototype.getBase64EncodedData = function(binary, editorType) {
 		const headers = this.getHeaders(editorType);

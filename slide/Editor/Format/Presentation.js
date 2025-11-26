@@ -4045,8 +4045,7 @@ CPresentation.prototype.FinalizeEditChart = function (binary)
 		{
 			AscCommon.g_oBinaryCacheManager.addBinary(binary["workbookBinary"], AscCommon.c_oEditorId.Spreadsheet).then(function(loadedData) {
 				if (loadedData) {
-					binary["workbookHash"] = loadedData.hash;
-					binary["workbookPath"] = AscCommon.g_oDocumentUrls.imagePath2Local(loadedData.data.path);
+					binary["loadedData"] = loadedData;
 					oSlide.graphicObjects.checkSelectedObjectsAndCallback(function () {
 						oThis.EditChart(binary);
 					}, [], false, AscDFH.historydescription_Presentation_EditChart);

@@ -7534,7 +7534,7 @@ BinaryChartReader.prototype.ReadCT_ChartSpace = function (type, length, val, cur
 			if (AscCommon.pptx_content_loader.Reader.IsUseFullUrl) {
 				AscCommon.pptx_content_loader.Reader.AddChartBinary(val, arrData);
 			} else {
-				val.setXLSXId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrData));
+				val.setXLSXId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrData).hash);
 			}
         res = c_oSerConstants.ReadUnknown;
     }
@@ -7625,7 +7625,7 @@ BinaryChartReader.prototype.ReadCT_ChartExSpace = function (type, length, val) {
 			if (AscCommon.pptx_content_loader.Reader.IsUseFullUrl) {
 				AscCommon.pptx_content_loader.Reader.AddChartBinary(val, arrData);
 			} else {
-				val.setXLSXId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrData));
+				val.setXLSXId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrData).hash);
 			}
 
 	    res = c_oSerConstants.ReadUnknown;

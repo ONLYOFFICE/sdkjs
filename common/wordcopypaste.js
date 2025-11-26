@@ -89,7 +89,7 @@ function GetConvertedPromiseForImageDownload(aBuilderImages, bSameDoc) {
 	const arrPromiseFunctions = [];
 	for (let i = 0; i < aBuilderImages.length; i += 1) {
 		const oBuilderImage = aBuilderImages[i];
-		if (oBuilderImage.IsUrlForLoading()) {
+		if (!oBuilderImage.IsConvertedUrl()) {
 			oBuilderImage.collectConvertPromiseFunctions(arrPromiseFunctions);
 		}
 	}

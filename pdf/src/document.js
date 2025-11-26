@@ -8054,7 +8054,7 @@ var CPresentation = CPresentation || function(){};
         if (!chartBinary['noHistory']) {
 					AscCommon.g_oBinaryCacheManager.addBinary(chartBinary["workbookBinary"], AscCommon.c_oEditorId.Spreadsheet).then(function(loadedData) {
 						if (loadedData) {
-							chartBinary["workbookHash"] = loadedData.hash;
+							chartBinary["loadedData"] = loadedData;
 							oThis.DrawingObjects.checkSelectedObjectsAndCallback(function () {
 								oThis.EditChart(chartBinary);
 							}, [], false, AscDFH.historydescription_Presentation_EditChart);

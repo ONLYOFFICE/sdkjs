@@ -318,14 +318,15 @@ DrawingObjectsController.prototype.editChart = function(binary)
     if(oSelectedChart)
     {
 	    oSelectedChart.recalculateChart();
-        if (!oSelectedChart.isExternal() && binary["workbookHash"])
-        {
-          chart_space.setXLSXId(binary["workbookHash"]);
-        }
-				if (binary['workbookPath'])
-				{
-					AscDFH.addImagesFromFrame(chart_space, [binary['workbookPath']]);
-				}
+	    const oLoadedData = binary["loadedData"];
+	    if (oLoadedData && !oSelectedChart.isExternal())
+	    {
+		    chart_space.setXLSXId(oLoadedData.hash);
+		    if (oLoadedData.data)
+		    {
+			    AscDFH.addImagesFromFrame(chart_space, [AscCommon.g_oDocumentUrls.imagePath2Local(oLoadedData.data.path)]);
+		    }
+	    }
         if(oSelectedChart.group)
         {
             var parent_group = oSelectedChart.group;

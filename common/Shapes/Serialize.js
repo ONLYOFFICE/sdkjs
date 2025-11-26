@@ -74,6 +74,9 @@ function CBuilderBase() {
 	CBuilderBase.prototype.IsImage = function() {
 		return false;
 	};
+	CBuilderBase.prototype.IsConvertedUrl = function() {
+		return true;
+	};
 	CBuilderBase.prototype.SetUrlWithCheckBase64 = function(url) {
 		this.SetUrl(url);
 	};
@@ -233,40 +236,46 @@ function CBuilderBinaries(oClass, arrBinary) {
 	this.class = oClass;
 	this.binary = arrBinary;
 	this.hash = null;
+	this.convertedBinary = AscCommon.checkOOXMLSignature(arrBinary) ? arrBinary : null;
 }
 	AscCommon.InitClassWithoutType(CBuilderBinaries, CBuilderBase);
 	CBuilderBinaries.prototype.GetUrl = function() {
-		return AscCommon.g_oBinaryCacheManager.getDataURLFromBinary(this.binary, this.class.getSignatureByBin());
+		if (!this.IsConvertedUrl()) {
+			return "";
+		}
+		return AscCommon.g_oBinaryCacheManager.getDataURLFromBinary(this.convertedBinary, this.class.getSignatureByBin());
 	};
 	CBuilderBinaries.prototype.IsUrlForLoading = function() {
-		return AscCommon.g_oBinaryCacheManager.getBinary(this.getHash()) === null;
+		return this.IsConvertedUrl() && AscCommon.g_oBinaryCacheManager.getBinary(this.GetHash()) === null;
 	};
-	CBuilderBinaries.prototype.getHash = function() {
-		if (this.hash === null) {
-			this.hash = AscCommon.g_oBinaryCacheManager.getHash(this.binary);
+	CBuilderBinaries.prototype.IsConvertedUrl = function() {
+		return !!this.convertedBinary;
+	};
+	CBuilderBinaries.prototype.GetHash = function() {
+		if (this.hash === null && this.IsConvertedUrl()) {
+			this.hash = AscCommon.g_oBinaryCacheManager.getHash(this.convertedBinary);
 		}
 		return this.hash;
 	}
 	CBuilderBinaries.prototype.SetUrl = function(url) {};
 	CBuilderBinaries.prototype.collectConvertPromiseFunctions = function(arrPromiseFunctions) {
 		const oThis = this;
-		if (!AscCommon.checkOOXMLSignature(oThis.binary)) {
+		if (!this.IsConvertedUrl()) {
 			arrPromiseFunctions.push(function() {
-				return AscCommon.g_oBinaryCacheManager.getFormatBinary(oThis.binary, oThis.class.getSignatureByBin());
+				return AscCommon.g_oBinaryCacheManager.getFormatBinary(oThis.binary, oThis.class.getSignatureByBin()).then(function(arrBinaryData) {
+					oThis.convertedBinary = arrBinaryData;
+				});
 			});
 		}
 	};
-	CBuilderBinaries.prototype.setBinary = function(arrBinary) {
-		this.binary = arrBinary;
-		this.hash = null;
-	}
 
 	function CBuilderChartBinaries(oClass, arrBinary) {
 		CBuilderBinaries.call(this, oClass, arrBinary);
 	}
 	AscCommon.InitClassWithoutType(CBuilderChartBinaries, CBuilderBinaries);
 	CBuilderChartBinaries.prototype.SetUrl = function(url) {
-		this.class.setXLSXId(this.getHash());
+		AscDFH.addImagesFromFrame(this.class, [url]);
+		this.class.setXLSXId(this.GetHash());
 	};
 
 	function CBuilderOleBinaries(oClass, arrBinary) {
@@ -274,7 +283,8 @@ function CBuilderBinaries(oClass, arrBinary) {
 	}
 	AscCommon.InitClassWithoutType(CBuilderOleBinaries, CBuilderBinaries);
 	CBuilderOleBinaries.prototype.SetUrl = function(url) {
-		this.class.setBinaryId(this.getHash());
+		AscDFH.addImagesFromFrame(this.class, [url]);
+		this.class.setBinaryId(this.GetHash());
 	};
 
 function BinaryPPTYLoader()
@@ -6187,7 +6197,7 @@ function BinaryPPTYLoader()
 														if (this.IsUseFullUrl) {
 															this.AddOleBinary(ole, arrBinaryData);
 														} else {
-															ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData));
+															ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData).hash);
 														}
                             s.Seek2(s.cur + binary_length);
                             break;
@@ -6200,7 +6210,7 @@ function BinaryPPTYLoader()
 													if (this.IsUseFullUrl) {
 														this.AddOleBinary(ole, arrBinaryData);
 													} else {
-														ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData));
+														ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData).hash);
 													}
                             s.Seek2(s.cur + binary_length);
                             break;
@@ -6229,7 +6239,7 @@ function BinaryPPTYLoader()
 												if (this.IsUseFullUrl) {
 													this.AddOleBinary(ole, arrBinaryData);
 												} else {
-													ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData));
+													ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData).hash);
 												}
 												s.Seek2(s.cur + binary_length);
 												break;
@@ -11591,7 +11601,7 @@ function BinaryPPTYLoader()
 															if (this.Reader.IsUseFullUrl) {
 																this.Reader.AddOleBinary(val, arrBinaryData);
 															} else {
-																ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData));
+																ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData).hash);
 															}
                                 s.Seek2(s.cur + binary_length);
                                 break;
@@ -11604,7 +11614,7 @@ function BinaryPPTYLoader()
 															if (this.Reader.IsUseFullUrl) {
 																this.Reader.AddOleBinary(val, arrBinaryData);
 															} else {
-																ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData));
+																ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData).hash);
 															}
                                 s.Seek2(s.cur + binary_length);
                                 break;
@@ -11633,7 +11643,7 @@ function BinaryPPTYLoader()
 														if (this.Reader.IsUseFullUrl) {
 															this.Reader.AddOleBinary(val, arrBinaryData);
 														} else {
-															ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData));
+															ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData).hash);
 														}
 														s.Seek2(s.cur + binary_length);
 														break;

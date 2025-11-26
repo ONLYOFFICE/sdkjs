@@ -1338,14 +1338,15 @@ CGraphicObjects.prototype =
 				const oSelectedChart  = this.getSingleSelectedChart();
         if(oSelectedChart)
         {
-	        if (!oSelectedChart.isExternal() && oBinary["workbookHash"])
+	        const oLoadedData = oBinary["loadedData"];
+	        if (oLoadedData && !oSelectedChart.isExternal())
 	        {
-		        chart_space.setXLSXId(oBinary["workbookHash"]);
+		        chart_space.setXLSXId(oLoadedData.hash);
+						if (oLoadedData.data)
+						{
+							AscDFH.addImagesFromFrame(chart_space, [AscCommon.g_oDocumentUrls.imagePath2Local(oLoadedData.data.path)]);
+						}
 	        }
-					if (oBinary["workbookPath"])
-					{
-						AscDFH.addImagesFromFrame(chart_space, [oBinary['workbookPath']]);
-					}
             if(oSelectedChart.group)
             {
                 var parent_group = oSelectedChart.group;
