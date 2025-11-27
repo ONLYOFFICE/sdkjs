@@ -16204,13 +16204,13 @@ drawSurfaceChart.prototype = {
 		for (var i = 0; i < points.length; i++) {
 			var tan = Math.atan2(points[i].x - x, points[i].y - y);
 			if (!repeatePoint[tan]) {
-				sortArray[i] = {tan: tan, point: points[i]};
+				sortArray.push({tan: tan, point: points[i]});
 				repeatePoint[tan] = 1;
 				nIndividualPoints++;
 			}
 		}
 
-		var path = null
+		var path = null;
 		if (nIndividualPoints > 2) {
 			sortArray.sort(function sortArr(a, b) {
 				return b.tan - a.tan;
