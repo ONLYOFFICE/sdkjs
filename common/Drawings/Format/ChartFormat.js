@@ -3944,17 +3944,19 @@
 		const errBarsArray = [errBars];
 		this.addErrBarsArray(errBarsArray);
 	};
-    CSeriesBase.prototype.removeAllErrBars = function () {
-        while (this.errBars.length) {
-            this.removeErrBars(0);
-        }
-    };    
-    CSeriesBase.prototype.removeErrBars = function(idx) {
-        if(this.errBars[idx]) {
-            this.errBars[idx].setParent(null);
-            AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_CommonChart_AddErrBars, idx, this.errBars.splice(idx, 1), false));
-        }
-    };
+	CSeriesBase.prototype.removeAllErrBars = function () {
+		while (this.errBars.length) {
+			this.removeErrBars(0);
+		}
+	};
+	CSeriesBase.prototype.removeErrBars = function (idx) {
+		const errBar = this.errBars[idx];
+		if (errBar) {
+			const removed = this.errBars.splice(idx, 1);
+			AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_CommonChart_AddErrBars, idx, removed, false));
+			errBar.setParent(null);
+		}
+	};
     CSeriesBase.prototype.getChildren = function() {
         let aResult = [this.spPr, this.tx, this.cat || this.xVal, this.val || this.yVal];
         for (let nIdx = 0; nIdx < this.errBars.length; ++nIdx) {
@@ -4714,8 +4716,37 @@
     CSeriesBase.prototype.getErrBars = function(errBarrId) {
         return this.errBars;
     };
-	CSeriesBase.prototype.checkSeriesAfterChangeType = function() {
+	CSeriesBase.prototype.checkSeriesAfterChangeType = function () {
+		if (!this.supportsErrorBars()) {
+			this.removeAllErrBars();
+		}
+		if (!this.supportsTrendlines()) {
+			this.removeAllTrendlines();
+		}
+	};
+	CSeriesBase.prototype.supportsErrorBars = function () {
+		if (this instanceof AscFormat.CAreaSeries ||
+			this instanceof AscFormat.CBarSeries ||
+			this instanceof AscFormat.CBubbleSeries ||
+			this instanceof AscFormat.CScatterSeries ||
+			this instanceof AscFormat.CLineSeries) {
 
+			const chart = this.parent;
+			return !(chart && chart.b3D);
+		}
+		return false;
+	};
+	CSeriesBase.prototype.supportsTrendlines = function () {
+		if (this instanceof AscFormat.CAreaSeries ||
+			this instanceof AscFormat.CBarSeries ||
+			this instanceof AscFormat.CBubbleSeries ||
+			this instanceof AscFormat.CScatterSeries ||
+			this instanceof AscFormat.CLineSeries) {
+
+			const chart = this.parent;
+			return !(chart && chart.b3D);
+		}
+		return false;
 	};
 	CSeriesBase.prototype.recalculateTrendlines = function () {
 		if (Array.isArray(this.trendlines)) {
@@ -4759,6 +4790,10 @@
 		return removed;
 	};
 	CSeriesBase.prototype.removeTrendlines = function (index, count) {
+		if (!Array.isArray(this.trendlines) || this.trendlines.length === 0) {
+			return [];
+		}
+
 		const removed = this.trendlines.splice(index, count);
 		const canAddChanges = AscCommon.History.CanAddChanges();
 		if (canAddChanges) {
@@ -4768,6 +4803,10 @@
 		return removed;
 	};
 	CSeriesBase.prototype.removeAllTrendlines = function () {
+		if (!Array.isArray(this.trendlines) || this.trendlines.length === 0) {
+			return [];
+		}
+
 		const index = 0;
 		const count = this.trendlines.length
 		return this.removeTrendlines(index, count);
@@ -6235,6 +6274,9 @@
 		else if(this.isRadarChart(nType)) {
 			this.switchToRadar(nType);
         }
+		this.getAllSeries().forEach(function(s) {
+			s.checkSeriesAfterChangeType();
+		});
     };
     CPlotArea.prototype.getAllSeries = function() {
         if(this.plotAreaRegion) {
@@ -11531,6 +11573,8 @@
         }
     };
     CLineSeries.prototype.checkSeriesAfterChangeType = function() {
+		CSeriesBase.prototype.checkSeriesAfterChangeType.call(this);
+
         this.setSmooth(false);
         if(this.spPr && this.spPr.hasNoFillLine()) {
             this.spPr.setLn(null);
@@ -12886,6 +12930,8 @@
         this.setParentToChild(pr);
     };
 	CPieSeries.prototype.checkSeriesAfterChangeType = function() {
+		CSeriesBase.prototype.checkSeriesAfterChangeType.call(this);
+
 		if(this.spPr) {
 			var oSpPr = this.spPr;
 			if(oSpPr.Fill) {
@@ -13224,6 +13270,8 @@
 		}
 	};
 	CRadarSeries.prototype.checkSeriesAfterChangeType = function(nType) {
+		CSeriesBase.prototype.checkSeriesAfterChangeType.call(this);
+
 		if(!this.parent) {
 			return;
 		}
@@ -13669,6 +13717,8 @@
         this.setYVal(pr);
     };
     CScatterSeries.prototype.checkSeriesAfterChangeType = function(pr) {
+		CSeriesBase.prototype.checkSeriesAfterChangeType.call(this);
+
 	    this.setMarker(null);
     };
 
