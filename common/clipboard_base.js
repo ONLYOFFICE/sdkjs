@@ -1023,7 +1023,7 @@
 
 		isUseNewPaste : function()
 		{
-			return false;
+			return true;
 		},
 
 		Button_Copy_New : function(isCut)
@@ -1151,6 +1151,7 @@
 
 								})
 								.catch(function(){});
+						}).catch(function(e){
 						});
 
 					return true;
