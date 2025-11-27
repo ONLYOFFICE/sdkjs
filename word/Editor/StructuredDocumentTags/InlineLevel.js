@@ -286,6 +286,7 @@ CInlineLevelSdt.prototype.private_CopyPrTo = function(oContentControl, oPr)
 		else
 		{
 			formPr.SetFieldMaster(undefined);
+			formPr.SetRole(this.GetFormRole());
 		}
 		
 		oContentControl.SetFormPr(formPr);

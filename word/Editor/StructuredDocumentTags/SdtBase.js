@@ -252,9 +252,10 @@ CSdtBase.prototype.private_CheckFieldMasterBeforeSet = function(formPr)
 	
 	// Настройки formPr могут прийти в интерфейс с заполненным fieldMaster, если в интерфейсе меняется роль, значит
 	// она будет здесь выставлена и имеет больший приоритет, чем выставленный fieldMaster
+	// Если данное поле не копируется вместе с FieldMaster, то имя роли мы у него не сбрасываем, чтобы
+	// его можно было сохранить и выставить на вставке
 	
 	formPr.SetFieldMaster(null);
-	formPr.SetRole(null);
 	
 	let logicDocument = this.GetLogicDocument();
 	let oform;
@@ -264,6 +265,8 @@ CSdtBase.prototype.private_CheckFieldMasterBeforeSet = function(formPr)
 		|| !(oform = logicDocument.GetOFormDocument())
 		|| !logicDocument.IsActionStarted())
 		return;
+	
+	formPr.SetRole(null);
 	
 	let role = oform.getRole(roleName);
 	let userMaster;
