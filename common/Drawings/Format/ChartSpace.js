@@ -4919,7 +4919,6 @@ function(window, undefined) {
 		this.recalcInfo.recalculateUpDownBars = true;
 		this.recalcInfo.recalculateLegend = true;
 		this.recalcInfo.recalculateReferences = true;
-		this.recalcInfo.recalculateFormulas = true;
 		this.chartObj = null;
 		this.addToRecalculate();
 	};

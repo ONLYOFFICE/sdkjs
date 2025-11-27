@@ -59,7 +59,6 @@
 	CFrameManagerBase.prototype.setGeneralDocumentUrls = function (oPr) {};
 	CFrameManagerBase.prototype.getGeneralImageUrl = function (sImageId) {};
 	CFrameManagerBase.prototype.openWorkbookData = function (sStream) {};
-	CFrameManagerBase.prototype.updateGeneralDiagramCache = function (aRanges) {};
 	CFrameManagerBase.prototype.sendLoadImages = function (arrImages, token, bNotShowError) {};
 	CFrameManagerBase.prototype.sendFromFrameToGeneralEditor = function (oSendObject) {};
 	CFrameManagerBase.prototype.getAscSettings               = function (oSendObject) {};
@@ -70,7 +69,9 @@
 	CFrameManagerBase.prototype.endLoadChartEditor = function () {};
 	CFrameManagerBase.prototype.isSaveZip = function () {};
 	CFrameManagerBase.prototype.openLocalDesktopFileLink = function (sLocalFileLink) {};
-
+	CFrameManagerBase.prototype.handleMainDiagram = function (fCallback) {};
+	CFrameManagerBase.prototype.getMainDiagramController = function (oDrawing) {};
+	CFrameManagerBase.prototype.setIsNeedUpdateMainDiagram = function (bPr) {};
 	CFrameManagerBase.prototype.preObtain = function (oInfo) {
 		this.obtain(oInfo);
 	};
@@ -184,6 +185,7 @@
 		this.generalDocumentUrls = {};
 		this.isInitFrameManager = true;
 		this.isSaveZipWorkbook = false;
+		this.isFromPdfEditor = false;
 	}
 	InitClassWithoutType(CCellFrameManager, CFrameManagerBase);
 
@@ -258,6 +260,7 @@
 
 	CCellFrameManager.prototype.obtain = function (oInfo)
 	{
+		this.isFromPdfEditor = oInfo["isFromPdfEditor"];
 		this.updateOpenOnClient();
 		this.isInitFrameManager = false;
 		let sStream = oInfo["binary"];
@@ -439,6 +442,7 @@
 		CCellFrameManager.call(this, oApi);
 		this.arrAfterLoadCallbacks = [];
 		this.mainDiagram = null;
+		this.isNeedUpdateMainDiagram = false;
 	}
 	InitClassWithoutType(CDiagramCellFrameManager, CCellFrameManager);
 
@@ -508,11 +512,11 @@
 		this.setAfterLoadCallback(oInfo);
 		if (oInfo["workbookBinary"])
 		{
-			this.obtain({"binary": oInfo["workbookBinary"], "documentImageUrls": oInfo["documentImageUrls"]});
+			this.obtain({"binary": oInfo["workbookBinary"], "documentImageUrls": oInfo["documentImageUrls"], "isFromPdfEditor": oInfo["isFromPdfEditor"]});
 		}
 		else
 		{
-			this.obtainWithRepair({"binary": AscCommon.getEmpty(), "documentImageUrls": oInfo["documentImageUrls"]});
+			this.obtainWithRepair({"binary": AscCommon.getEmpty(), "documentImageUrls": oInfo["documentImageUrls"], "isFromPdfEditor": oInfo["isFromPdfEditor"]});
 		}
 	}
 	CDiagramCellFrameManager.prototype.obtainWithRepair = function (oInfo)
@@ -538,6 +542,20 @@
 			oWs.draw();
 		}
 	};
+	CDiagramCellFrameManager.prototype.scrollToDiagramRange = function() {
+		if (!this.mainDiagram) {
+			return;
+		}
+		const sCommonRange = this.mainDiagram.getCommonRange();
+		const aRefs = AscFormat.fParseChartFormula(sCommonRange);
+		if (aRefs.length) {
+			const oRef = aRefs[0];
+			const nWsIndex = oRef.worksheet.index;
+			this.api.asc_showWorksheet(nWsIndex);
+			const oWs = this.api.wb.getWorksheet(nWsIndex);
+			oWs && oWs._scrollToRange(oRef.bbox);
+		}
+	};
 	CDiagramCellFrameManager.prototype.setAfterLoadCallback = function (oInfo)
 	{
 		const oApi = this.api;
@@ -555,6 +573,7 @@
 				oThis.mainDiagram.recalculateReferences();
 				oThis.sendUpdateDiagram();
 			}
+			oThis.scrollToDiagramRange();
 			oThis.selectMainDiagram();
 			oThis.api.wb.onFrameEditorReady();
 			oThis.updateProtectChart();
@@ -578,6 +597,10 @@
 			else
 			{
 				const oDiagramBinary = new Asc.asc_CChartBinary(oThis.mainDiagram);
+				if (oThis.isFromPdfEditor) {
+					resolve(oDiagramBinary);
+					return;
+				}
 				oThis.getWorkbookBinary().then(function (workbookBinary)
 				{
 					oDiagramBinary["workbookBinary"] = workbookBinary;
@@ -586,27 +609,16 @@
 				});
 			}
 		});
-	}
-
-	CDiagramCellFrameManager.prototype.updateGeneralDiagramCache = function (aRanges)
-	{
-		if (!this.mainDiagram) {
-			return;
-		}
-		const aRefsToChange = [];
-		this.mainDiagram.collectIntersectionRefs(aRanges, aRefsToChange);
-		for (let i = 0; i < aRefsToChange.length; i += 1)
-		{
-			aRefsToChange[i].updateCacheAndCat();
-		}
-		if (aRefsToChange.length)
-		{
-			this.sendUpdateDiagram();
-		}
 	};
-	CDiagramCellFrameManager.prototype.sendUpdateDiagram = function ()
+	CDiagramCellFrameManager.prototype.setIsNeedUpdateMainDiagram = function(bPr) {
+		this.isNeedUpdateMainDiagram = bPr;
+	};
+	CDiagramCellFrameManager.prototype.sendUpdateDiagram = function (bForce)
 	{
-		this.sendFromFrameToGeneralEditor(new CFrameUpdateDiagramData(this.mainDiagram.chart));
+		if (this.isNeedUpdateMainDiagram || bForce) {
+			this.setIsNeedUpdateMainDiagram(false);
+			this.sendFromFrameToGeneralEditor(new CFrameUpdateDiagramData(this.mainDiagram.chart));
+		}
 	};
 
 	CDiagramCellFrameManager.prototype.getAscSettings = function ()
@@ -619,13 +631,23 @@
 
 		oProps.setFUpdateGeneralChart(function (bSelectFrameChartRange)
 		{
-			oThis.sendUpdateDiagram();
+			oThis.sendUpdateDiagram(true);
 			if (bSelectFrameChartRange)
 			{
 				oThis.selectMainDiagram();
 			}
 		});
 		return oProps;
+	};
+	CDiagramCellFrameManager.prototype.handleMainDiagram = function(fCallback) {
+		if (this.mainDiagram) {
+			fCallback(this.mainDiagram);
+		}
+	};
+	CDiagramCellFrameManager.prototype.getMainDiagramController = function (oDrawing) {
+		if (oDrawing === this.mainDiagram) {
+			return this.api.getGraphicController();
+		}
 	};
 
 	function CFrameUpdateDiagramData(oDiagram)

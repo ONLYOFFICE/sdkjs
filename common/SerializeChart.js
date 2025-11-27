@@ -1411,7 +1411,7 @@ BinaryChartWriter.prototype.WriteCT_extLst = function (oVal) {
 			}
 		});
 	}
-	BinaryChartWriter.prototype.WriteCT_ChartXLSX = function (oVal, oCopyPaste) {
+	BinaryChartWriter.prototype.WriteCT_ChartXLSX = function (oVal, oCopyPaste, bSkipWriteXLSX) {
 		const oThis = this;
 		let bWriteExternalReference = true;
 		if (oCopyPaste && oCopyPaste.isExcel)
@@ -1429,7 +1429,7 @@ BinaryChartWriter.prototype.WriteCT_extLst = function (oVal) {
 				this.WriteCT_PortalData(wb.oApi.DocInfo.ReferenceData);
 				bWriteExternalReference = false;
 			}
-			const arrXLSX = oCopyPaste.getCachedWorkbookBinaryData();
+			const arrXLSX = bSkipWriteXLSX ? null : oCopyPaste.getCachedWorkbookBinaryData();
 			if (arrXLSX && arrXLSX.length)
 			{
 				this.bs.WriteItem(c_oserct_chartspaceXLSX, function () {
@@ -1439,11 +1439,11 @@ BinaryChartWriter.prototype.WriteCT_extLst = function (oVal) {
 		}
 		else
 		{
-			let XLSX = (oVal.XLSX && oVal.XLSX.length) ? oVal.XLSX : null;
+			let XLSX = (!bSkipWriteXLSX && oVal.XLSX && oVal.XLSX.length) ? oVal.XLSX : null;
 			if (oVal.externalReference && oVal.externalReference.Id) {
 				oThis.memory.WriteByte(c_oserct_chartspaceXLSXEXTERNAL);
 				oThis.memory.WriteString2(AscCommonExcel.encodeXmlPath(oVal.externalReference.Id));
-			} else if (!oVal.isWorkbookChart() && !XLSX) {
+			} else if (!bSkipWriteXLSX && !oVal.isWorkbookChart() && !XLSX) {
 				XLSX = oVal.getXLSXFromCache();
 			}
 			if (XLSX) {
@@ -1455,9 +1455,9 @@ BinaryChartWriter.prototype.WriteCT_extLst = function (oVal) {
 		}
 		return bWriteExternalReference;
 	};
-BinaryChartWriter.prototype.WriteCT_ChartSpace = function (oVal, oCopyPaste) {
+BinaryChartWriter.prototype.WriteCT_ChartSpace = function (oVal, oCopyPaste, bSkipWriteXLSX) {
     const oThis = this;
-		const bWriteExternalReference = this.WriteCT_ChartXLSX(oVal, oCopyPaste);
+		const bWriteExternalReference = this.WriteCT_ChartXLSX(oVal, oCopyPaste, bSkipWriteXLSX);
 
     if (null != oVal.date1904) {
         this.bs.WriteItem(c_oserct_chartspaceDATE1904, function () {
@@ -1566,9 +1566,9 @@ BinaryChartWriter.prototype.WriteCT_ChartSpace = function (oVal, oCopyPaste) {
         });
     }
 };
-BinaryChartWriter.prototype.WriteCT_ChartExSpace = function (oVal, oCopyPaste) {
+BinaryChartWriter.prototype.WriteCT_ChartExSpace = function (oVal, oCopyPaste, bSkipWriteXLSX) {
     var oThis = this;
-	const bWriteExternalReference = this.WriteCT_ChartXLSX(oVal, oCopyPaste);
+	const bWriteExternalReference = this.WriteCT_ChartXLSX(oVal, oCopyPaste, bSkipWriteXLSX);
     if(oVal.chartData !== null) {
         this.bs.WriteItem(c_oserct_chartExSpaceCHARTDATA, function() {
            oThis.WriteCT_ChartData(oVal.chartData, oCopyPaste);
