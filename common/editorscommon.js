@@ -11748,6 +11748,14 @@
 		"Meiryo", "MS Gothic", "MS PGothic", "MS UI Gothic", "Yu Gothic",
 		"Dotum", "Gulim", "Malgun Gothic"
 	];
+	
+	// Символы, на которых работает <w:rFonts w:hint="eastAsia"/>
+	function isAmbiguousCharacter(codePoint)
+	{
+		return (0x00D7 === codePoint
+			|| (0x0370 <= codePoint && codePoint <= 0x03FF));
+	}
+	
 
 	function IsEastAsianFont(sName)
 	{
@@ -15610,6 +15618,7 @@
 	window["AscCommon"].getAscColorScheme = getAscColorScheme;
 	window["AscCommon"].checkAddColorScheme = checkAddColorScheme;
 	window["AscCommon"].getIndexColorSchemeInArray = getIndexColorSchemeInArray;
+	window["AscCommon"].isAmbiguousCharacter = isAmbiguousCharacter;
 	window["AscCommon"].isEastAsianScript = isEastAsianScript;
 	window["AscCommon"].IsEastAsianFont = IsEastAsianFont;
 	window["AscCommon"].IsComplexScript = IsComplexScript;

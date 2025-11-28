@@ -3804,7 +3804,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 						}
 					}
 
-					let isBreakBefore = Item.IsSpaceBefore();
+					let isBreakBefore = Item.IsSpaceBefore(textPr.RFonts.Hint);
 					if (isBreakBefore
 						&& Word
 						&& PRS.LastItem.CanBeAtEndOfLine()
@@ -3826,7 +3826,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 					let isLigature  = Item.IsLigature();
 					let GraphemeLen = isLigature ? Item.GetLigatureWidth() : LetterLen;
 					
-					let isBreakAfter = Item.IsSpaceAfter() || textPr.RFonts.Hint === AscWord.fonthint_EastAsia;
+					let isBreakAfter = Item.IsSpaceAfter(textPr.RFonts.Hint);
 
 					if (FirstItemOnLine
 						&& (X + SpaceLen + WordLen + GraphemeLen > XEnd
