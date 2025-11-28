@@ -11842,6 +11842,11 @@
 			|| (0xA000 <= value && value <= 0xA48F)
 			|| (0xA490 <= value && value <= 0xA4CF));
 	}
+	
+	function isEastAsianPunctuation(value)
+	{
+		return (0x3000 <= value && value <= 0x4DB5);
+	}
 
 	function IsHangul(nCharCode)
 	{
@@ -15620,6 +15625,8 @@
 	window["AscCommon"].getIndexColorSchemeInArray = getIndexColorSchemeInArray;
 	window["AscCommon"].isAmbiguousCharacter = isAmbiguousCharacter;
 	window["AscCommon"].isEastAsianScript = isEastAsianScript;
+	window["AscCommon"].isEastAsianPunctuation = isEastAsianPunctuation;
+	window["AscCommon"].isHangul = IsHangul;
 	window["AscCommon"].IsEastAsianFont = IsEastAsianFont;
 	window["AscCommon"].IsComplexScript = IsComplexScript;
 	window["AscCommon"].IsGeorgianScript = IsGeorgianScript;

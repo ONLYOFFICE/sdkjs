@@ -123,6 +123,14 @@ $(function () {
 			"界! "
 		]);
 		
+		// Don't break words in Korean script (73922)
+		setText("안녕하세요 우주인님");
+		recalculate(charWidth * 8.5);
+		checkLines(assert, para, [
+			"안녕하세요 ",
+			"우주인님"
+		]);
+		
 		// Check ambiguous characters with the eastAsian hint (71108)
 		// × Ω (whole greek script)
 		
@@ -150,6 +158,13 @@ $(function () {
 			"你好世界! He",
 			"Ωlo! 你好世",
 			"界! 你好世界! "
+		]);
+		
+		setText("안녕하세요 우주인님");
+		recalculate(charWidth * 8.5);
+		checkLines(assert, para, [
+			"안녕하세요 ",
+			"우주인님"
 		]);
 		
 		run.SetRFontsHint(undefined);
