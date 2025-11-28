@@ -2993,7 +2993,7 @@ function (window, undefined) {
 					let insertIndex = 0;
 					for (let i = 0; i < array.length; i += 1) {
 						if (array[i] < changedIndex) {
-							insertIndex = i;
+							insertIndex = i + 1;
 						}
 					}
 					array.splice(insertIndex, 0, changedIndex);
@@ -3607,50 +3607,75 @@ function (window, undefined) {
 	 * This function is crucial for Excel's VLOOKUP/HLOOKUP approximate match behavior,
 	 * which requires returning the position of the LAST duplicate value when exact matches exist.
 	 * 
-	 * Uses binary search to efficiently locate the rightmost occurrence of a value
+	 * Uses binary search via sortedCache Map to efficiently locate the rightmost occurrence of a value
 	 * within the specified range boundaries.
 	 * 
 	 * @private
 	 * @param {number} currentIndexInTyped - The index in the typed array where the first match was found
 	 * @param {Uint32Array} typed - Sorted array containing worksheet row/column indices of cells with matching data types
-	 * @param {Uint32Array} typedMap - Mapping array where each element represents a unique value group identifier, used for efficient duplicate detection
 	 * @param {number} endIndex - The maximum allowed index boundary for the search range
+	 * @param {Worksheet} ws - The worksheet containing the data to search
+	 * @param {number} rowCol - The row (for VLOOKUP) or column (for HLOOKUP) index to search in
+	 * @param {LookUpElement} valueForSearching - The value being searched for (used to access sortedCache)
 	 * @return {number} The worksheet row/column index of the last occurrence of the same value within the specified range
 	 */
-	VHLOOKUPCache.prototype._findLastSame = function(currentIndexInTyped, typed,  endIndex, ws, rowCol) {
+	VHLOOKUPCache.prototype._findLastSame = function(currentIndexInTyped, typed, endIndex, ws, rowCol, valueForSearching) {
 		const t = this;
+		const currentIndex = typed[currentIndexInTyped];
+		
 		const getValue = function (index) {
 			const cell = ws.getCell3(t.bHor ? rowCol : index, t.bHor ? index : rowCol);
 			return checkTypeCell(cell, true);
-		}
-		// const currentValue = typedMap[currentIndexInTyped];
-		// let i = currentIndexInTyped + 1;
-		// let j = typedMap.length - 1
-		// let res = currentIndexInTyped;
-		// let resultIndex = typed[currentIndexInTyped];
-		// while (i <= j) {
-		// 	let k = Math.floor((i + j) / 2);
-		// 	if (typedMap[k] > currentValue || typed[k] > endIndex) {
-		// 		j = k - 1;
-		// 	} else {
-		// 		i = k + 1;
-		// 		res = k;
-		// 	}
-		// }
-		// if (typedMap[res] === currentValue) {
-		// 	resultIndex = typed[res];
-		// }
-		// return resultIndex;
-		let resultIndex = typed[currentIndexInTyped];
-		const searchValue = getValue(resultIndex).value;
-		for (let i = currentIndexInTyped + 1; i < typed.length && typed[i] <= endIndex; i += 1) {
-			if (((typed[i] - typed[i - 1]) === 1) && getValue(typed[i]).value === searchValue) {
-				resultIndex = typed[i];
+		};
+		const searchValue = getValue(currentIndex).value;
+		
+		// Binary search to find RIGHT boundary where typed[k] === currentIndex + (k - currentIndexInTyped)
+		let seqEnd = currentIndexInTyped;
+		let lo = currentIndexInTyped + 1;
+		let hi = typed.length - 1;
+		while (lo <= hi) {
+			const mid = Math.floor((lo + hi) / 2);
+			const expectedIndex = currentIndex + (mid - currentIndexInTyped);
+			if (typed[mid] === expectedIndex && typed[mid] <= endIndex) {
+				seqEnd = mid;
+				lo = mid + 1;
 			} else {
-				return resultIndex;
+				hi = mid - 1;
 			}
 		}
-		return resultIndex;
+		
+		// Get indices with searchValue from sortedCache
+		const maxIndex = typed[seqEnd];
+		const sortedData = this.sortedCache.getData(ws, rowCol, valueForSearching.type, currentIndex, maxIndex, this.bHor);
+		if (!sortedData) {
+			return currentIndex;
+		}
+		
+		const sameValueIndices = sortedData.get(searchValue);
+		if (!sameValueIndices || sameValueIndices.length === 0) {
+			return currentIndex;
+		}
+		
+		// Binary search in sameValueIndices for last index in range [currentIndex, maxIndex]
+		lo = 0;
+		hi = sameValueIndices.length - 1;
+		let result = currentIndex;
+		
+		while (lo <= hi) {
+			const mid = Math.floor((lo + hi) / 2);
+			const midValue = sameValueIndices[mid];
+			
+			if (midValue > maxIndex) {
+				hi = mid - 1;
+			} else if (midValue < currentIndex) {
+				lo = mid + 1;
+			} else {
+				result = midValue;
+				lo = mid + 1;
+			}
+		}
+		
+		return result;
 	};
 	/**
 	 * Performs a binary search to find the position of a value in a sorted range or array.
@@ -3713,7 +3738,7 @@ function (window, undefined) {
 					let currentIndexInTyped = this._findIndexInTyped(k, typed);
 					if (currentIndexInTyped !== -1) {
 						// Search for last occurrence of the same value
-						resultIndex = this._findLastSame(currentIndexInTyped, typed, endIndex, ws, rowCol);
+						resultIndex = this._findLastSame(currentIndexInTyped, typed, endIndex, ws, rowCol, valueForSearching);
 					}
 					break;
 				}
