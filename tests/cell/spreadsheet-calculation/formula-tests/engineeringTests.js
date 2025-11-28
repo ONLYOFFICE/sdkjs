@@ -9624,7 +9624,7 @@ $(function () {
 		// Case #5: Boolean. Boolean FALSE returns #VALUE!.
 		oParser = new parserFormula('IMCOS(FALSE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOS(FALSE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean FALSE returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean FALSE returns #VALUE!.');
 		// Case #6: Ref3D. 3D reference to cell with text returns #VALUE!.
 		oParser = new parserFormula('IMCOS(Sheet2!A5)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOS(Sheet2!A5) is parsed.');
@@ -9644,7 +9644,7 @@ $(function () {
 		// Case #10: String. Empty string returns #VALUE!.
 		oParser = new parserFormula('IMCOS("")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOS("") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: String. Empty string returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: String. Empty string returns #VALUE!.');
 		// Case #11: Date. Date serial number not valid complex number, returns #VALUE!.
 		oParser = new parserFormula('IMCOS(DATE(2025,1,1))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOS(DATE(2025,1,1)) is parsed.');
@@ -9656,7 +9656,7 @@ $(function () {
 		// Case #13: Array. Array with boolean returns #VALUE!.
 		oParser = new parserFormula('IMCOS({FALSE})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOS({FALSE}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array. Array with boolean returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array. Array with boolean returns #VALUE!.');
 		// Case #14: Name3D. 3D named range with text returns #VALUE!.
 		oParser = new parserFormula('IMCOS(TestNameArea3D2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOS(TestNameArea3D2) is parsed.');
@@ -9668,7 +9668,7 @@ $(function () {
 		// Case #16: String. Invalid complex number suffix (j instead of i) returns #VALUE!.
 		oParser = new parserFormula('IMCOS("3+4j")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOS("3+4j") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '-27.03494560307422-3.8511533348117766j', 'Test: Negative case: String. Invalid complex number suffix (j instead of i) returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '-27.03494560307422-3.8511533348117766j', 'Test: Negative case: String. Invalid complex number suffix (j instead of i) returns #VALUE!.');
 		// Case #17: Formula. Invalid complex number format returns #VALUE!.
 		oParser = new parserFormula('IMCOS("3+" & "4")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOS("3+" & "4") is parsed.');
@@ -9690,7 +9690,7 @@ $(function () {
 		// Case #1: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).
 		oParser = new parserFormula('IMCOS("1E+307+1E+307i")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOS("1E+307+1E+307i") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).');
 		// Case #2: Number. Minimum positive complex number. Returns modulus sqrt(1E-307^2 + 1E-307^2).
 		oParser = new parserFormula('IMCOS("1E-307+1E-307i")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOS("1E-307+1E-307i") is parsed.');
@@ -9700,12 +9700,6 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: IMCOS("0+1E-307i") is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '1', 'Test: Bounded case: Number. Minimum positive imaginary component. Returns modulus 1E-307.');
 
-		// Need to fix: bool handle, error type diff, Infinity in boundary case
-		// Case #5: Boolean. Boolean FALSE returns #VALUE!.
-		// Case #10: String. Empty string returns #VALUE!.
-		// Case #13: Array. Array with boolean returns #VALUE!.
-		// Case #16: String. Invalid complex number suffix (j instead of i) returns #VALUE!.
-		// Case #1: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2). - infinty
 
 		testArrayFormula(assert, "IMCOS", true);
 	});
@@ -9957,11 +9951,11 @@ $(function () {
 		// Case #10: String. Empty string returns #VALUE!.
 		oParser = new parserFormula('IMCOSH("")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOSH("") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: String. Empty string returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: String. Empty string returns #VALUE!.');
 		// Case #11: Date. Date serial number not valid complex number, returns #VALUE!.
 		oParser = new parserFormula('IMCOSH(DATE(2025,1,1))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOSH(DATE(2025,1,1)) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Date. Date serial number not valid complex number, returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Date. Date serial number not valid complex number, returns #VALUE!.');
 		// Case #12: Time. Time value not valid complex number, returns #VALUE!.
 		oParser = new parserFormula('IMCOSH(TIME(12,0,0))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOSH(TIME(12,0,0)) is parsed.');
@@ -9970,7 +9964,7 @@ $(function () {
 		oParser = new parserFormula('IMCOSH({FALSE})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOSH({FALSE}) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array. Array with boolean returns #VALUE!.');
-		// Case #14: Name3D. 3D named range with text returns #VALUE!.
+		// Case #14: Name3D. 3D named range with text returns num!.
 		oParser = new parserFormula('IMCOSH(TestNameArea3D2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOSH(TestNameArea3D2) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '1.3374349463048445', 'Test: Negative case: Name3D. 3D named range with text returns #VALUE!.');
@@ -9978,10 +9972,10 @@ $(function () {
 		oParser = new parserFormula('IMCOSH(Sheet2!A6:A7)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOSH(Sheet2!A6:A7) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Area3D. 3D multi-cell range returns #VALUE!.');
-		// Case #16: String. Invalid complex number suffix (j instead of i) returns #VALUE!.
+		// Case #16: String. Another complex number suffix (j instead of i) returns complex number with 'J'.
 		oParser = new parserFormula('IMCOSH("3+4j")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOSH("3+4j") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '-6.580663040551155-7.581552742746543i', 'Test: Negative case: String. Invalid complex number suffix (j instead of i) returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '-6.580663040551155-7.581552742746543j', 'Test: Negative case: String. Another complex number suffix (j instead of i) returns complex number with J');
 		// Case #17: Formula. Invalid complex number format returns #VALUE!.
 		oParser = new parserFormula('IMCOSH("3+" & "4")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOSH("3+" & "4") is parsed.');
@@ -10003,7 +9997,7 @@ $(function () {
 		// Case #1: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).
 		oParser = new parserFormula('IMCOSH("1E+307+1E+307i")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOSH("1E+307+1E+307i") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).');
 		// Case #2: Number. Minimum positive complex number. Returns modulus sqrt(1E-307^2 + 1E-307^2).
 		oParser = new parserFormula('IMCOSH("1E-307+1E-307i")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOSH("1E-307+1E-307i") is parsed.');
@@ -10012,11 +10006,6 @@ $(function () {
 		oParser = new parserFormula('IMCOSH("0+1E-307i")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOSH("0+1E-307i") is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '1', 'Test: Bounded case: Number. Minimum positive imaginary component. Returns modulus 1E-307.');
-
-		// Need to fix: empty handle, infinity problem
-		// Case #10: String. Empty string returns #VALUE!.
-		// Case #11: Date. Date serial number not valid complex number, returns #VALUE!.
-		// Case #1: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).
 
 
 		testArrayFormula(assert, "IMCOSH", true);
@@ -10143,7 +10132,7 @@ $(function () {
 		// Case #19: Reference link. Reference to cell with real number as complex. Returns modulus 5.
 		oParser = new parserFormula('IMCOT(A102)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOT(A102) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '-1.31303528549933i', 'Test: Positive case: Reference link. Reference to cell with real number as complex. Returns modulus 5.');
+		assert.strictEqual(oParser.calculate().getValue(), '-1.3130352854993315i', 'Test: Positive case: Reference link. Reference to cell with real number as complex. Returns modulus 5.');
 		// Case #20: Formula. Complex number string built by CONCATENATE. Returns modulus 5.
 		oParser = new parserFormula('IMCOT(CONCATENATE("3+","4i"))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOT(CONCATENATE("3+","4i")) is parsed.');
@@ -10151,7 +10140,7 @@ $(function () {
 		// Case #21: String. Zero complex number. Returns modulus 0.
 		oParser = new parserFormula('IMCOT("0+0i")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOT("0+0i") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Positive case: String. Zero complex number. Returns modulus 0.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Positive case: String. Zero complex number. Returns modulus 0.');
 		// Case #22: String. Complex number with negative real part. Returns modulus sqrt((-3)^2 + 4^2) = 5.
 		oParser = new parserFormula('IMCOT("-33.5+2i")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOT("-33.5+2i") is parsed.');
@@ -10290,10 +10279,10 @@ $(function () {
 		oParser = new parserFormula('IMCOT(Sheet2!A6:A7)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOT(Sheet2!A6:A7) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Area3D. 3D multi-cell range returns #VALUE!.');
-		// Case #16: String. Invalid complex number suffix (j instead of i) returns #VALUE!.
+		// Case #16: String. Another complex number suffix (j instead of i) returns complex num.
 		oParser = new parserFormula('IMCOT("3+4j")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOT("3+4j") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '-0.00018758773798365928-1.0006443924715591i', 'Test: Negative case: String. Invalid complex number suffix (j instead of i) returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '-0.00018758773798365928-1.0006443924715591j', 'Test: Negative case: String. Another complex number suffix (j instead of i) returns complex num');
 		// Case #17: Formula. Invalid complex number format returns #VALUE!.
 		oParser = new parserFormula('IMCOT("3+" & "4")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOT("3+" & "4") is parsed.');
@@ -10319,19 +10308,12 @@ $(function () {
 		// Case #2: Number. Minimum positive complex number. Returns modulus sqrt(1E-307^2 + 1E-307^2).
 		oParser = new parserFormula('IMCOT("1E-307+1E-307i")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOT("1E-307+1E-307i") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number. Minimum positive complex number. Returns modulus sqrt(1E-307^2 + 1E-307^2).');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number. Minimum positive complex number. Returns modulus sqrt(1E-307^2 + 1E-307^2).');
 		// Case #3: Number. Minimum positive imaginary component. Returns modulus 1E-307.
 		oParser = new parserFormula('IMCOT("0+1E-307i")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMCOT("0+1E-307i") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number. Minimum positive imaginary component. Returns modulus 1E-307.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number. Minimum positive imaginary component. Returns modulus 1E-307.');
 
-		// TODO many problem in boundary case
-		// Need to fix:
-		// Case #19: Reference link. Reference to cell with real number as complex. Returns modulus 5. - [obj obj]
-		// Case #21: String. Zero complex number. Returns modulus 0. - Infinity
-		// Case #1: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2). - NaNi
-		// Case #2: Number. Minimum positive complex number. Returns modulus sqrt(1E-307^2 + 1E-307^2). - InfinityNaNi
-		// Case #3: Number. Minimum positive imaginary component. Returns modulus 1E-307. - NaNNaNi
 
 		testArrayFormula(assert, "IMCOT", true);
 	});
@@ -11550,10 +11532,10 @@ $(function () {
 		oParser = new parserFormula('IMEXP(Sheet2!A6:A7)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMEXP(Sheet2!A6:A7) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Area3D. 3D multi-cell range returns #VALUE!.');
-		// Case #16: String. Invalid complex number suffix (j instead of i) returns #VALUE!.
+		// Case #16: String. Another complex number suffix (j instead of i) returns complex number with j.
 		oParser = new parserFormula('IMEXP("3+4j")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMEXP("3+4j") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '-13.128783081462158-15.200784463067954i', 'Test: Negative case: String. Invalid complex number suffix (j instead of i) returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '-13.128783081462158-15.200784463067954j', 'Test: Negative case: String. Another complex number suffix (j instead of i) returns complex number with j.');
 		// Case #17: Formula. Invalid complex number format returns #VALUE!.
 		oParser = new parserFormula('IMEXP("3+" & "4")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMEXP("3+" & "4") is parsed.');
@@ -11597,7 +11579,6 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"IMLN\"", function (assert) {
-		//TODO в excel результат данной формулы - "1.6094379124341+0.927295218001612i"
 		oParser = new parserFormula('IMLN("3+4i")', "A2", ws);
 		assert.ok(oParser.parse(), 'IMLN("3+4i")');
 		assert.strictEqual(oParser.calculate().getValue(), "1.6094379124341003+0.9272952180016123i", 'IMLN("3+4i")');
@@ -11718,7 +11699,7 @@ $(function () {
 		// Case #19: Reference link. Reference to cell with real number as complex. Returns modulus 5.
 		oParser = new parserFormula('IMLN(A102)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLN(A102) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '1.5707963267949i', 'Test: Positive case: Reference link. Reference to cell with real number as complex. Returns modulus 5.');
+		assert.strictEqual(oParser.calculate().getValue(), '1.5707963267948966i', 'Test: Positive case: Reference link. Reference to cell with real number as complex. Returns modulus 5.');
 		// Case #20: Formula. Complex number string built by CONCATENATE. Returns modulus 5.
 		oParser = new parserFormula('IMLN(CONCATENATE("3+","4i"))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLN(CONCATENATE("3+","4i")) is parsed.');
@@ -11824,7 +11805,7 @@ $(function () {
 		// Case #5: Boolean. Boolean FALSE returns #VALUE!.
 		oParser = new parserFormula('IMLN(FALSE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLN(FALSE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean FALSE returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean FALSE returns #VALUE!.');
 		// Case #6: Ref3D. 3D reference to cell with text returns #VALUE!.
 		oParser = new parserFormula('IMLN(Sheet2!A5)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLN(Sheet2!A5) is parsed.');
@@ -11856,7 +11837,7 @@ $(function () {
 		// Case #13: Array. Array with boolean returns #VALUE!.
 		oParser = new parserFormula('IMLN({FALSE})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLN({FALSE}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array. Array with boolean returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array. Array with boolean returns #VALUE!.');
 		// Case #14: Name3D. 3D named range with text returns #VALUE!.
 		oParser = new parserFormula('IMLN(TestNameArea3D2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLN(TestNameArea3D2) is parsed.');
@@ -11865,10 +11846,10 @@ $(function () {
 		oParser = new parserFormula('IMLN(Sheet2!A6:A7)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLN(Sheet2!A6:A7) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Area3D. 3D multi-cell range returns #VALUE!.');
-		// Case #16: String. Invalid complex number suffix (j instead of i) returns #VALUE!.
+		// Case #16: String. Another complex number suffix (j instead of i) returns complex value with J.
 		oParser = new parserFormula('IMLN("3+4j")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLN("3+4j") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '1.6094379124341003+0.9272952180016123i', 'Test: Negative case: String. Invalid complex number suffix (j instead of i) returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '1.6094379124341003+0.9272952180016123j', 'Test: Negative case: String. Another complex number suffix (j instead of i) returns complex value with J');
 		// Case #17: Formula. Invalid complex number format returns #VALUE!.
 		oParser = new parserFormula('IMLN("3+" & "4")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLN("3+" & "4") is parsed.');
@@ -11890,7 +11871,7 @@ $(function () {
 		// Case #1: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).
 		oParser = new parserFormula('IMLN("1E+307+1E+307i")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLN("1E+307+1E+307i") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).');
 		// Case #2: Number. Minimum positive complex number. Returns modulus sqrt(1E-307^2 + 1E-307^2).
 		oParser = new parserFormula('IMLN("1E-307+1E-307i")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLN("1E-307+1E-307i") is parsed.');
@@ -11900,18 +11881,11 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: IMLN("0+1E-307i") is parsed.');
 		//? assert.strictEqual(oParser.calculate().getValue(), '-706.893623549172+1.5707963267949i', 'Test: Bounded case: Number. Minimum positive imaginary component. Returns modulus 1E-307.');
 
-		// Need to fix: boolean handle, boundary cases
-		// Case #19: Reference link. Reference to cell with real number as complex. Returns modulus 5. - [Obj obj]
-		// Case #5: Boolean. Boolean FALSE returns #VALUE!.
-		// Case #13: Array. Array with boolean returns #VALUE!.
-		// Case #1: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).
-		// Case #3: Number. Minimum positive imaginary component. Returns modulus 1E-307.
 
 		testArrayFormula(assert, "IMLN", true);
 	});
 
 	QUnit.test("Test: \"IMLOG2\"", function (assert) {
-		//TODO в excel результат данной формулы - "2.32192809488736+1.33780421245098i"
 		oParser = new parserFormula('IMLOG2("3+4i")', "A2", ws);
 		assert.ok(oParser.parse(), 'IMLOG2("3+4i")');
 		assert.strictEqual(oParser.calculate().getValue(), "2.321928094887362+1.3378042124509761i", 'IMLOG2("3+4i")');
@@ -12000,7 +11974,7 @@ $(function () {
 		// Case #11: Area3D. 3D single-cell range with complex number. Returns modulus 5.
 		oParser = new parserFormula('IMLOG2(Sheet2!A2:A2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLOG2(Sheet2!A2:A2) is parsed.');
-		// assert.strictEqual(oParser.calculate().getValue(), '1', 'Test: Positive case: Area3D. 3D single-cell range with complex number. Returns modulus 5.');
+		//? assert.strictEqual(oParser.calculate().getValue(), '1', 'Test: Positive case: Area3D. 3D single-cell range with complex number. Returns modulus 5.');
 		// Case #12: Table. Table structured reference with complex number. Returns modulus 5.
 		oParser = new parserFormula('IMLOG2(Table1[Column1])', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLOG2(Table1[Column1]) is parsed.');
@@ -12032,7 +12006,7 @@ $(function () {
 		// Case #19: Reference link. Reference to cell with real number as complex. Returns modulus 5.
 		oParser = new parserFormula('IMLOG2(A102)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLOG2(A102) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '2.2661800709136i', 'Test: Positive case: Reference link. Reference to cell with real number as complex. Returns modulus 5.');
+		assert.strictEqual(oParser.calculate().getValue(), '2.266180070913597i', 'Test: Positive case: Reference link. Reference to cell with real number as complex. Returns modulus 5.');
 		// Case #20: Formula. Complex number string built by CONCATENATE. Returns modulus 5.
 		oParser = new parserFormula('IMLOG2(CONCATENATE("3+","4i"))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLOG2(CONCATENATE("3+","4i")) is parsed.');
@@ -12134,7 +12108,7 @@ $(function () {
 		// Case #5: Boolean. Boolean FALSE returns #VALUE!.
 		oParser = new parserFormula('IMLOG2(FALSE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLOG2(FALSE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean FALSE returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean FALSE returns #VALUE!.');
 		// Case #6: Ref3D. 3D reference to cell with text returns #VALUE!.
 		oParser = new parserFormula('IMLOG2(Sheet2!A5)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLOG2(Sheet2!A5) is parsed.');
@@ -12166,7 +12140,7 @@ $(function () {
 		// Case #13: Array. Array with boolean returns #VALUE!.
 		oParser = new parserFormula('IMLOG2({FALSE})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLOG2({FALSE}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array. Array with boolean returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array. Array with boolean returns #VALUE!.');
 		// Case #14: Name3D. 3D named range with text returns #VALUE!.
 		oParser = new parserFormula('IMLOG2(TestNameArea3D2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLOG2(TestNameArea3D2) is parsed.');
@@ -12178,7 +12152,7 @@ $(function () {
 		// Case #16: String. Invalid complex number suffix (j instead of i) returns #VALUE!.
 		oParser = new parserFormula('IMLOG2("3+4j")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLOG2("3+4j") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '2.321928094887362+1.3378042124509761i', 'Test: Negative case: String. Invalid complex number suffix (j instead of i) returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '2.321928094887362+1.3378042124509761j', 'Test: Negative case: String. Invalid complex number suffix (j instead of i) returns #VALUE!.');
 		// Case #17: Formula. Invalid complex number format returns #VALUE!.
 		oParser = new parserFormula('IMLOG2("3+" & "4")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLOG2("3+" & "4") is parsed.');
@@ -12199,8 +12173,8 @@ $(function () {
 		// Bounded cases:
 		// Case #1: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).
 		oParser = new parserFormula('IMLOG2("1E+307+1E+307i")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: IMLOG2("1E+307+1E+307i") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).');
+		assert.ok(oParser.parse(), 'Test: IMLOG2("1E+307+1E+307i") is parsed.');debugger
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).');
 		// Case #2: Number. Minimum positive complex number. Returns modulus sqrt(1E-307^2 + 1E-307^2).
 		oParser = new parserFormula('IMLOG2("1E-307+1E-307i")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLOG2("1E-307+1E-307i") is parsed.');
@@ -12210,24 +12184,11 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: IMLOG2("0+1E-307i") is parsed.');
 		//? assert.strictEqual(oParser.calculate().getValue(), '-1019.83192513042+2.2661800709136i', 'Test: Bounded case: Number. Minimum positive imaginary component. Returns modulus 1E-307.');
 
-		// Need to fix:
-		// Case #8: Name. Named range with complex number. Returns modulus 5.
-		// Case #9: Name3D. 3D named range with complex number. Returns modulus 5.
-		// Case #14: String. Pure imaginary number as string. Returns modulus 4. - calc
-		// Case #15: Formula. Pure imaginary number via COMPLEX formula. Returns modulus 4. - calc
-		// Case #19: Reference link. Reference to cell with real number as complex. Returns modulus 5. - [obj Obj]
-		// Case #40: Reference link. Reference to cell with pure imaginary number. Returns modulus 4.
-		// Case #5: Boolean. Boolean FALSE returns #VALUE!.
-		// Case #13: Array. Array with boolean returns #VALUE!.
-		// Case #1: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).
-		// Case #3: Number. Minimum positive imaginary component. Returns modulus 1E-307.
-
 
 		testArrayFormula(assert, "IMLOG2", true);
 	});
 
 	QUnit.test("Test: \"IMLOG10\"", function (assert) {
-		//TODO в excel результат данной формулы - "0.698970004336019+0.402719196273373i"
 		oParser = new parserFormula('IMLOG10("3+4i")', "A2", ws);
 		assert.ok(oParser.parse(), 'IMLOG10("3+4i")');
 		assert.strictEqual(oParser.calculate().getValue(), "0.6989700043360186+0.40271919627337305i", 'IMLOG10("3+4i")');
@@ -12344,10 +12305,10 @@ $(function () {
 		oParser = new parserFormula('IMLOG10({"3+4i";"1+2i"})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLOG10({"3+4i";"1+2i"}) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '0.6989700043360186+0.40271919627337305i', 'Test: Positive case: Array. Multi-element array, processes first element. Returns modulus 5.');
-		// Case #19: Reference link. Reference to cell with real number as complex. Returns modulus 5.
+		// Case #19: Reference link. Reference to cell with real number as complex. Returns complex num.
 		oParser = new parserFormula('IMLOG10(A102)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLOG10(A102) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '0.682188176920921i', 'Test: Positive case: Reference link. Reference to cell with real number as complex. Returns modulus 5.');
+		assert.strictEqual(oParser.calculate().getValue(), '0.6821881769209205i', 'Test: Positive case: Reference link. Reference to cell with real number as complex. Returns complex num.');
 		// Case #20: Formula. Complex number string built by CONCATENATE. Returns modulus 5.
 		oParser = new parserFormula('IMLOG10(CONCATENATE("3+","4i"))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLOG10(CONCATENATE("3+","4i")) is parsed.');
@@ -12453,7 +12414,7 @@ $(function () {
 		// Case #5: Boolean. Boolean FALSE returns #VALUE!.
 		oParser = new parserFormula('IMLOG10(FALSE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLOG10(FALSE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean FALSE returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean FALSE returns #VALUE!.');
 		// Case #6: Ref3D. 3D reference to cell with text returns #VALUE!.
 		oParser = new parserFormula('IMLOG10(Sheet2!A5)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLOG10(Sheet2!A5) is parsed.');
@@ -12485,7 +12446,7 @@ $(function () {
 		// Case #13: Array. Array with boolean returns #VALUE!.
 		oParser = new parserFormula('IMLOG10({FALSE})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLOG10({FALSE}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array. Array with boolean returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array. Array with boolean returns #VALUE!.');
 		// Case #14: Name3D. 3D named range with text returns #VALUE!.
 		oParser = new parserFormula('IMLOG10(TestNameArea3D2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLOG10(TestNameArea3D2) is parsed.');
@@ -12497,7 +12458,7 @@ $(function () {
 		// Case #16: String. Invalid complex number suffix (j instead of i) returns #VALUE!.
 		oParser = new parserFormula('IMLOG10("3+4j")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLOG10("3+4j") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '0.6989700043360186+0.40271919627337305i', 'Test: Negative case: String. Invalid complex number suffix (j instead of i) returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '0.6989700043360186+0.40271919627337305j', 'Test: Negative case: String. Invalid complex number suffix (j instead of i) returns #VALUE!.');
 		// Case #17: Formula. Invalid complex number format returns #VALUE!.
 		oParser = new parserFormula('IMLOG10("3+" & "4")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLOG10("3+" & "4") is parsed.');
@@ -12519,7 +12480,7 @@ $(function () {
 		// Case #1: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).
 		oParser = new parserFormula('IMLOG10("1E+307+1E+307i")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLOG10("1E+307+1E+307i") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).');
 		// Case #2: Number. Minimum positive complex number. Returns modulus sqrt(1E-307^2 + 1E-307^2).
 		oParser = new parserFormula('IMLOG10("1E-307+1E-307i")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLOG10("1E-307+1E-307i") is parsed.');
@@ -12528,13 +12489,6 @@ $(function () {
 		oParser = new parserFormula('IMLOG10("0+1E-307i")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMLOG10("0+1E-307i") is parsed.');
 		//? assert.strictEqual(oParser.calculate().getValue(), '-307+0.682188176920921i', 'Test: Bounded case: Number. Minimum positive imaginary component. Returns modulus 1E-307.');
-
-		// Need to fix: error, boolean handle, boundary cases
-		// Case #19: Reference link. Reference to cell with real number as complex. Returns modulus 5. - [obj Obj]
-		// Case #5: Boolean. Boolean FALSE returns #VALUE!.
-		// Case #13: Array. Array with boolean returns #VALUE!.
-		// Case #1: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).
-		// Case #3: Number. Minimum positive imaginary component. Returns modulus 1E-307.
 
 
 		testArrayFormula(assert, "IMLOG10", true);
@@ -13389,7 +13343,7 @@ $(function () {
 		// Case #5: Boolean. Boolean FALSE returns #VALUE!.
 		oParser = new parserFormula('IMREAL(FALSE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMREAL(FALSE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean FALSE returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean FALSE returns #VALUE!.');
 		// Case #6: Ref3D. 3D reference to cell with text returns #VALUE!.
 		oParser = new parserFormula('IMREAL(Sheet2!A5)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMREAL(Sheet2!A5) is parsed.');
@@ -13409,7 +13363,7 @@ $(function () {
 		// Case #10: String. Empty string returns #VALUE!.
 		oParser = new parserFormula('IMREAL("")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMREAL("") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: String. Empty string returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: String. Empty string returns #VALUE!.');
 		// Case #11: Date. Date serial number not valid complex number, returns #VALUE!.
 		oParser = new parserFormula('IMREAL(DATE(2025,1,1))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMREAL(DATE(2025,1,1)) is parsed.');
@@ -13421,7 +13375,7 @@ $(function () {
 		// Case #13: Array. Array with boolean returns #VALUE!.
 		oParser = new parserFormula('IMREAL({FALSE})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMREAL({FALSE}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array. Array with boolean returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array. Array with boolean returns #VALUE!.');
 		// Case #14: Name3D. 3D named range with text returns #VALUE!.
 		oParser = new parserFormula('IMREAL(TestNameArea3D2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMREAL(TestNameArea3D2) is parsed.');
@@ -13464,11 +13418,6 @@ $(function () {
 		oParser = new parserFormula('IMREAL("0+1E-307i")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMREAL("0+1E-307i") is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Bounded case: Number. Minimum positive imaginary component. Returns modulus 1E-307.');
-
-		// Need to fix: bool and empty handle
-		// Case #5: Boolean. Boolean FALSE returns #VALUE!.
-		// Case #10: String. Empty string returns #VALUE!.
-		// Case #13: Array. Array with boolean returns #VALUE!.
 
 
 		testArrayFormula(assert, "IMREAL", true);
@@ -13721,7 +13670,7 @@ $(function () {
 		// Case #10: String. Empty string returns #VALUE!.
 		oParser = new parserFormula('IMSEC("")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSEC("") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: String. Empty string returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: String. Empty string returns #VALUE!.');
 		// Case #11: Date. Date serial number not valid complex number, returns #VALUE!.
 		oParser = new parserFormula('IMSEC(DATE(2025,1,1))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSEC(DATE(2025,1,1)) is parsed.');
@@ -13745,7 +13694,7 @@ $(function () {
 		// Case #16: String. Invalid complex number suffix (j instead of i) returns #VALUE!.
 		oParser = new parserFormula('IMSEC("3+4j")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSEC("3+4j") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '-0.036253496915868884+0.005164344607753181i', 'Test: Negative case: String. Invalid complex number suffix (j instead of i) returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '-0.036253496915868884+0.005164344607753181j', 'Test: Negative case: String. Invalid complex number suffix (j instead of i) returns #VALUE!.');
 		// Case #17: Formula. Invalid complex number format returns #VALUE!.
 		oParser = new parserFormula('IMSEC("3+" & "4")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSEC("3+" & "4") is parsed.');
@@ -13777,18 +13726,14 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: IMSEC("0+1E-307i") is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '1', 'Test: Bounded case: Number. Minimum positive imaginary component. Returns modulus 1E-307.');
 
-		// Need to fix: different resultls from ms
-		// Case #10: String. Empty string returns #VALUE!.
-		// Case #1: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).
 
 		testArrayFormula(assert, "IMSEC", true);
 	});
 
 	QUnit.test("Test: \"IMSECH\"", function (assert) {
-		//TODO в хроме при расчёте разница, временно убираю
 		oParser = new parserFormula('IMSECH("4+3i")', "A2", ws);
 		assert.ok(oParser.parse(), 'IMSECH("4+3i")');
-		//assert.strictEqual( oParser.calculate().getValue(), "-0.03625349691586888-0.00516434460775318i", 'IMSECH("4+3i")' );
+		assert.strictEqual( oParser.calculate().getValue(), "-0.036253496915868884-0.005164344607753181i", 'IMSECH("4+3i")' );
 
 		ws.getRange2("A1:C214").cleanAll();
 		// Data for reference link. Use A100-A111
@@ -14032,7 +13977,7 @@ $(function () {
 		// Case #10: String. Empty string returns #VALUE!.
 		oParser = new parserFormula('IMSECH("")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSECH("") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: String. Empty string returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: String. Empty string returns #VALUE!.');
 		// Case #11: Date. Date serial number not valid complex number, returns #VALUE!.
 		oParser = new parserFormula('IMSECH(DATE(2025,1,1))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSECH(DATE(2025,1,1)) is parsed.');
@@ -14056,7 +14001,7 @@ $(function () {
 		// Case #16: String. Invalid complex number suffix (j instead of i) returns #VALUE!.
 		oParser = new parserFormula('IMSECH("3+4j")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSECH("3+4j") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '-0.06529402785794705+0.07522496030277323i', 'Test: Negative case: String. Invalid complex number suffix (j instead of i) returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '-0.06529402785794705+0.07522496030277323j', 'Test: Negative case: String. Invalid complex number suffix (j instead of i) returns #VALUE!.');
 		// Case #17: Formula. Invalid complex number format returns #VALUE!.
 		oParser = new parserFormula('IMSECH("3+" & "4")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSECH("3+" & "4") is parsed.');
@@ -14088,10 +14033,6 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: IMSECH("0+1E-307i") is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '1', 'Test: Bounded case: Number. Minimum positive imaginary component. Returns modulus 1E-307.');
 
-		// Need to fix: empty handle, j coeff, NaN err
-		// Case #10: String. Empty string returns #VALUE!.
-		// Case #16: String. Invalid complex number suffix (j instead of i) returns #VALUE!. - j problem?
-		// Case #1: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2). - NaNNaNi
 
 		testArrayFormula(assert, "IMSECH", true);
 	});
@@ -14217,7 +14158,7 @@ $(function () {
 		// Case #19: Reference link. Reference to cell with real number as complex. Returns modulus 5.
 		oParser = new parserFormula('IMSIN(A102)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSIN(A102) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '1.1752011936438i', 'Test: Positive case: Reference link. Reference to cell with real number as complex. Returns modulus 5.');
+		assert.strictEqual(oParser.calculate().getValue(), '1.1752011936438014i', 'Test: Positive case: Reference link. Reference to cell with real number as complex. Returns modulus 5.');
 		// Case #20: Formula. Complex number string built by CONCATENATE. Returns modulus 5.
 		oParser = new parserFormula('IMSIN(CONCATENATE("3+","4i"))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSIN(CONCATENATE("3+","4i")) is parsed.');
@@ -14343,7 +14284,7 @@ $(function () {
 		// Case #10: String. Empty string returns #VALUE!.
 		oParser = new parserFormula('IMSIN("")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSIN("") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: String. Empty string returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: String. Empty string returns #VALUE!.');
 		// Case #11: Date. Date serial number not valid complex number, returns #VALUE!.
 		oParser = new parserFormula('IMSIN(DATE(2025,1,1))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSIN(DATE(2025,1,1)) is parsed.');
@@ -14364,10 +14305,10 @@ $(function () {
 		oParser = new parserFormula('IMSIN(Sheet2!A6:A7)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSIN(Sheet2!A6:A7) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Area3D. 3D multi-cell range returns #VALUE!.');
-		// Case #16: String. Invalid complex number suffix (j instead of i) returns #VALUE!.
+		// Case #16: String. Another complex number suffix (j instead of i) returns complex num with J.
 		oParser = new parserFormula('IMSIN("3+4j")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSIN("3+4j") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '3.8537380379193764-27.01681325800393i', 'Test: Negative case: String. Invalid complex number suffix (j instead of i) returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '3.8537380379193764-27.01681325800393j', 'Test: Negative case: String. Another complex number suffix (j instead of i) returns complex num with J.');
 		// Case #17: Formula. Invalid complex number format returns #VALUE!.
 		oParser = new parserFormula('IMSIN("3+" & "4")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSIN("3+" & "4") is parsed.');
@@ -14389,7 +14330,7 @@ $(function () {
 		// Case #1: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).
 		oParser = new parserFormula('IMSIN("1E+307+1E+307i")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSIN("1E+307+1E+307i") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).');
 		// Case #2: Number. Minimum positive complex number. Returns modulus sqrt(1E-307^2 + 1E-307^2).
 		oParser = new parserFormula('IMSIN("1E-307+1E-307i")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSIN("1E-307+1E-307i") is parsed.');
@@ -14399,11 +14340,6 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: IMSIN("0+1E-307i") is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '0', 'Test: Bounded case: Number. Minimum positive imaginary component. Returns modulus 1E-307.');
 
-		// Need to fix: empty handle, j coeff problem, Infinity+Infinityi err?
-		// Case #19: Reference link. Reference to cell with real number as complex. Returns modulus 5. - [obj Obj]
-		// Case #10: String. Empty string returns #VALUE!.
-		// Case #16: String. Invalid complex number suffix (j instead of i) returns #VALUE!. - j coeff?
-		// Case #1: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2). - Infinity+Infinityi
 
 		testArrayFormula(assert, "IMSIN", true);
 	});
@@ -14529,7 +14465,7 @@ $(function () {
 		// Case #19: Reference link. Reference to cell with real number as complex. Returns modulus 5.
 		oParser = new parserFormula('IMSINH(A102)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSINH(A102) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '0.841470984807897i', 'Test: Positive case: Reference link. Reference to cell with real number as complex. Returns modulus 5.');
+		assert.strictEqual(oParser.calculate().getValue(), '0.8414709848078965i', 'Test: Positive case: Reference link. Reference to cell with real number as complex. Returns modulus 5.');
 		// Case #20: Formula. Complex number string built by CONCATENATE. Returns modulus 5.
 		oParser = new parserFormula('IMSINH(CONCATENATE("3+","4i"))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSINH(CONCATENATE("3+","4i")) is parsed.');
@@ -14655,11 +14591,11 @@ $(function () {
 		// Case #10: String. Empty string returns #VALUE!.
 		oParser = new parserFormula('IMSINH("")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSINH("") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: String. Empty string returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: String. Empty string returns #VALUE!.');
 		// Case #11: Date. Date serial number not valid complex number, returns #VALUE!.
 		oParser = new parserFormula('IMSINH(DATE(2025,1,1))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSINH(DATE(2025,1,1)) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Date. Date serial number not valid complex number, returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Date. Date serial number not valid complex number, returns #VALUE!.');
 		// Case #12: Time. Time value not valid complex number, returns #VALUE!.
 		oParser = new parserFormula('IMSINH(TIME(12,0,0))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSINH(TIME(12,0,0)) is parsed.');
@@ -14679,7 +14615,7 @@ $(function () {
 		// Case #16: String. Invalid complex number suffix (j instead of i) returns #VALUE!.
 		oParser = new parserFormula('IMSINH("3+4j")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSINH("3+4j") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '-6.548120040911002-7.619231720321408i', 'Test: Negative case: String. Invalid complex number suffix (j instead of i) returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '-6.548120040911002-7.619231720321408j', 'Test: Negative case: String. Invalid complex number suffix (j instead of i) returns #VALUE!.');
 		// Case #17: Formula. Invalid complex number format returns #VALUE!.
 		oParser = new parserFormula('IMSINH("3+" & "4")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSINH("3+" & "4") is parsed.');
@@ -14701,7 +14637,7 @@ $(function () {
 		// Case #1: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).
 		oParser = new parserFormula('IMSINH("1E+307+1E+307i")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSINH("1E+307+1E+307i") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).');
 		// Case #2: Number. Minimum positive complex number. Returns modulus sqrt(1E-307^2 + 1E-307^2).
 		oParser = new parserFormula('IMSINH("1E-307+1E-307i")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSINH("1E-307+1E-307i") is parsed.');
@@ -14711,13 +14647,6 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: IMSINH("0+1E-307i") is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '1e-307i', 'Test: Bounded case: Number. Minimum positive imaginary component. Returns modulus 1E-307.');
 
-		// Need to fix: [obj Obj], Infinity, j coeff problem, empty handle. diff res in boundary case
-		// Case #19: Reference link. Reference to cell with real number as complex. Returns modulus 5. - [obj Obj]
-		// Case #10: String. Empty string returns #VALUE!.
-		// Case #11: Date. Date serial number not valid complex number, returns #VALUE!. - Infinity
-		// Case #16: String. Invalid complex number suffix (j instead of i) returns #VALUE!. - j coeff?
-		// Case #1: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2). - Infinity-Infinityi
-		// Case #2: Number. Minimum positive complex number. Returns modulus sqrt(1E-307^2 + 1E-307^2).
 
 		testArrayFormula(assert, "IMSINH", true);
 	});
