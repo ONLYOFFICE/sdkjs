@@ -1502,10 +1502,13 @@
 		}
 	};
 
-	function addImagesFromFrame(Class, arrImagesId)
+	function addImagesFromFrame(arrImagesId)
 	{
-		for (let i = 0; i < arrImagesId.length; i += 1) {
-			AscCommon.History.Add(new CChangesDrawingsImageId(Class, arrImagesId[i]));
+		const oTableId = AscCommon.g_oTableId;
+		if (oTableId) {
+			for (let i = 0; i < arrImagesId.length; i += 1) {
+				AscCommon.History.Add(new CChangesDrawingsImageId(oTableId, arrImagesId[i]));
+			}
 		}
 	}
 	window['AscDFH'].addImagesFromFrame = addImagesFromFrame;

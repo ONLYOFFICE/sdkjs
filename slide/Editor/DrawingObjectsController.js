@@ -324,7 +324,7 @@ DrawingObjectsController.prototype.editChart = function(binary)
 		    chart_space.setXLSXId(oLoadedData.hash);
 		    if (oLoadedData.data)
 		    {
-			    AscDFH.addImagesFromFrame(chart_space, [AscCommon.g_oDocumentUrls.imagePath2Local(oLoadedData.data.path)]);
+			    AscDFH.addImagesFromFrame([AscCommon.g_oDocumentUrls.imagePath2Local(oLoadedData.data.path)]);
 		    }
 	    }
         if(oSelectedChart.group)

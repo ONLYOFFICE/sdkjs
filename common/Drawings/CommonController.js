@@ -8535,7 +8535,7 @@
 					if (oLoadedData) {
 						oleObject.setBinaryId(oLoadedData.hash);
 						if (oLoadedData.data) {
-							AscDFH.addImagesFromFrame(oleObject, [AscCommon.g_oDocumentUrls.imagePath2Local(oLoadedData.data.path)]);
+							AscDFH.addImagesFromFrame([AscCommon.g_oDocumentUrls.imagePath2Local(oLoadedData.data.path)]);
 						}
 					} else {
 						oleObject.setData(data);

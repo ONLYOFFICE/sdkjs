@@ -274,7 +274,7 @@ function CBuilderBinaries(oClass, arrBinary) {
 	}
 	AscCommon.InitClassWithoutType(CBuilderChartBinaries, CBuilderBinaries);
 	CBuilderChartBinaries.prototype.SetUrl = function(url) {
-		AscDFH.addImagesFromFrame(this.class, [url]);
+		AscDFH.addImagesFromFrame([url]);
 		this.class.setXLSXId(this.GetHash());
 	};
 
@@ -283,7 +283,7 @@ function CBuilderBinaries(oClass, arrBinary) {
 	}
 	AscCommon.InitClassWithoutType(CBuilderOleBinaries, CBuilderBinaries);
 	CBuilderOleBinaries.prototype.SetUrl = function(url) {
-		AscDFH.addImagesFromFrame(this.class, [url]);
+		AscDFH.addImagesFromFrame([url]);
 		this.class.setBinaryId(this.GetHash());
 	};
 

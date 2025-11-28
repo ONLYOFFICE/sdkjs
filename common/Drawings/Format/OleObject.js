@@ -352,7 +352,7 @@ function (window, undefined) {
         if (oLoadedData) {
             this.setBinaryId(oLoadedData.hash);
 						if (oLoadedData.data) {
-							AscDFH.addImagesFromFrame(this, [AscCommon.g_oDocumentUrls.imagePath2Local(oLoadedData.data.path)]);
+							AscDFH.addImagesFromFrame([AscCommon.g_oDocumentUrls.imagePath2Local(oLoadedData.data.path)]);
 						}
         }
         if (this.m_nDrawAspect === AscFormat.EOLEDrawAspect.oledrawaspectContent && !this.m_bShowAsIcon) {
