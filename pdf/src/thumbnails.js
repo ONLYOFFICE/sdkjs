@@ -879,6 +879,10 @@
     };
     CDocument.prototype.calculateVisibleBlocks = function()
     {
+        let element = document.getElementById(this.id);
+        if (0 === element.offsetWidth || !this.canvas)
+            return;
+
         this.startBlock = -1;
         this.endBlock = -1;
         var blocksCount = this.blocks.length;

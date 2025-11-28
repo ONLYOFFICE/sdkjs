@@ -779,7 +779,9 @@ var CPresentation = CPresentation || function(){};
 
                 oPdfMatch.Set_SelectionContentPos(SearchElement.StartPos, SearchElement.EndPos);
                 oPdfMatch.Set_ParaContentPos(SearchElement.StartPos, false, -1, -1);
-                oPdfMatch.Document_SetThisElementCurrent();
+                oPdfMatch.Parent.Selection.Use      = true;
+                oPdfMatch.Parent.Selection.StartPos = oPdfMatch.Index;
+                oPdfMatch.Parent.Selection.EndPos   = oPdfMatch.Index;
 
                 let oTopParent = AscPDF.CPdfDrawingPrototype.prototype.GetTopParentObj.call(oPdfMatch);
                 aSelQuadsParts = oTopParent.GetSelectionQuads();
@@ -854,7 +856,9 @@ var CPresentation = CPresentation || function(){};
 
                         pdfMatch.Set_SelectionContentPos(searchElement.StartPos, searchElement.EndPos);
                         pdfMatch.Set_ParaContentPos(searchElement.StartPos, false, -1, -1);
-                        pdfMatch.Document_SetThisElementCurrent();
+                        pdfMatch.Parent.Selection.Use      = true;
+                        pdfMatch.Parent.Selection.StartPos = pdfMatch.Index;
+                        pdfMatch.Parent.Selection.EndPos   = pdfMatch.Index;
 
                         let oTopParent = AscPDF.CPdfDrawingPrototype.prototype.GetTopParentObj.call(pdfMatch);
                         aSelQuadsParts = aSelQuadsParts.concat(oTopParent.GetSelectionQuads());
@@ -911,7 +915,9 @@ var CPresentation = CPresentation || function(){};
 
                     pdfMatch.Set_SelectionContentPos(searchElement.StartPos, searchElement.EndPos);
                     pdfMatch.Set_ParaContentPos(searchElement.StartPos, false, -1, -1);
-                    pdfMatch.Document_SetThisElementCurrent();
+                    pdfMatch.Parent.Selection.Use      = true;
+                    pdfMatch.Parent.Selection.StartPos = pdfMatch.Index;
+                    pdfMatch.Parent.Selection.EndPos   = pdfMatch.Index;
 
                     let aQuadsInfo = oTopParent.GetSelectionQuads();
                     aQuadsInfo[0].quads.forEach(function(selQuads) {
@@ -1028,7 +1034,9 @@ var CPresentation = CPresentation || function(){};
 
             oPdfMatch.Set_SelectionContentPos(SearchElement.StartPos, SearchElement.EndPos);
             oPdfMatch.Set_ParaContentPos(SearchElement.StartPos, false, -1, -1);
-            oPdfMatch.Document_SetThisElementCurrent();
+            oPdfMatch.Parent.Selection.Use      = true;
+            oPdfMatch.Parent.Selection.StartPos = oPdfMatch.Index;
+            oPdfMatch.Parent.Selection.EndPos   = oPdfMatch.Index;
 
             let aQuadsInfo = oTopParent.GetSelectionQuads();
             aQuadsInfo[0].quads.forEach(function(selQuads) {
