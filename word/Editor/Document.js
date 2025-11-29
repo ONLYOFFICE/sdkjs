@@ -26520,6 +26520,9 @@ CDocument.prototype.ConvertFormFixedType = function(sId, isToFixed)
  */
 CDocument.prototype.IsHighlightRequiredFields = function()
 {
+	if (this.OFormDocument && this.OFormDocument.isAllRolesFilled())
+		return false;
+	
 	return this.HighlightRequiredFields;
 };
 /**
