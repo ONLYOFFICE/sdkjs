@@ -405,18 +405,18 @@ $(function () {
             ["0 1/100", "# ??/??", 0.01, formatTypes.Date],
             
             // appliedFormat = 6 (LongDate - dddd, mmmm d, yyyy)
-            ["1/2", "dddd, mmmm d, yyyy", 45659, 6],
-            ["3/4", "dddd, mmmm d, yyyy", 45720, 6],
-            ["15/20", null, "15/20", 6],
-            [" 1/2", null, " 1/2", 6],
-            ["1 1/2", "dddd, mmmm d, yyyy", 1.5, 6], 
-            ["2 3/4", "dddd, mmmm d, yyyy", 2.75, 6],
-            ["15/3", null, "15/3", 6],
-            ["150/200", null, "150/200", 6],
-            ["1/5/5", "dddd, mmmm d, yyyy", 38357, 6],
-            ["0 1/2", "dddd, mmmm d, yyyy", 0.5, 6], 
-            ["0 1/10", "dddd, mmmm d, yyyy", 0.1, 6],   
-            ["0 1/100", "dddd, mmmm d, yyyy", 0.01, 6],  
+            ["1/2", "dddd\\,\\ mmmm\\ d\\,\\ yyyy", 45659, formatTypes.Date, "[$-F800]dddd\\,\\ mmmm\\ d\\,\\ yyyy"],
+            ["3/4", "dddd\\,\\ mmmm\\ d\\,\\ yyyy", 45720, formatTypes.Date, "[$-F800]dddd\\,\\ mmmm\\ d\\,\\ yyyy"],
+            ["15/20", null, "15/20", formatTypes.Date, "[$-F800]dddd\\,\\ mmmm\\ d\\,\\ yyyy"],
+            [" 1/2", null, " 1/2", formatTypes.Date, "[$-F800]dddd\\,\\ mmmm\\ d\\,\\ yyyy"],
+            ["1 1/2", "dddd\\,\\ mmmm\\ d\\,\\ yyyy", 1.5, formatTypes.Date, "[$-F800]dddd\\,\\ mmmm\\ d\\,\\ yyyy"], 
+            ["2 3/4", "dddd\\,\\ mmmm\\ d\\,\\ yyyy", 2.75, formatTypes.Date, "[$-F800]dddd\\,\\ mmmm\\ d\\,\\ yyyy"],
+            ["15/3", null, "15/3", formatTypes.Date, "[$-F800]dddd\\,\\ mmmm\\ d\\,\\ yyyy"],
+            ["150/200", null, "150/200", formatTypes.Date, "[$-F800]dddd\\,\\ mmmm\\ d\\,\\ yyyy"],
+            ["1/5/5", "dddd\\,\\ mmmm\\ d\\,\\ yyyy", 38357, formatTypes.Date, "[$-F800]dddd\\,\\ mmmm\\ d\\,\\ yyyy"],
+            ["0 1/2", "dddd\\,\\ mmmm\\ d\\,\\ yyyy", 0.5, formatTypes.Date, "[$-F800]dddd\\,\\ mmmm\\ d\\,\\ yyyy"], 
+            ["0 1/10", "dddd\\,\\ mmmm\\ d\\,\\ yyyy", 0.1, formatTypes.Date, "[$-F800]dddd\\,\\ mmmm\\ d\\,\\ yyyy"],   
+            ["0 1/100", "dddd\\,\\ mmmm\\ d\\,\\ yyyy", 0.01, formatTypes.Date, "[$-F800]dddd\\,\\ mmmm\\ d\\,\\ yyyy"],  
             
             // appliedFormat = 7 (Time - h:mm:ss)
             ["1/2", "h:mm:ss", 45659, formatTypes.Time],
@@ -459,6 +459,47 @@ $(function () {
             ["0 1/2", "# ?/?", 0.5, formatTypes.Fraction],
             ["0 1/10", "# ?/?", 0.1, formatTypes.Fraction],
             ["0 1/100", "# ?/?", 0.01, formatTypes.Fraction],
+
+            // Specific fraction formats
+            ["1/2", "# ?/2", 0.5, formatTypes.Fraction, "# ?/2"],
+            ["0 1/2", "# ?/2", 0.5, formatTypes.Fraction, "# ?/2"],
+            ["1 1/2", "# ?/2", 1.5, formatTypes.Fraction, "# ?/2"],
+            [" 1/2", "# ?/2", 0.5, formatTypes.Fraction, "# ?/2"],
+            ["3/7", "# ?/2", 0.42857142857142855, formatTypes.Fraction, "# ?/2"],
+            ["0 3/7", "# ?/2", 0.42857142857142855, formatTypes.Fraction, "# ?/2"],
+            ["1 3/7", "# ?/2", 1.42857142857142855, formatTypes.Fraction, "# ?/2"],
+            ["25/35", "# ?/2", 0.7142857142857143, formatTypes.Fraction, "# ?/2"],
+            ["0 25/35", "# ?/2", 0.7142857142857143, formatTypes.Fraction, "# ?/2"],
+            ["1 25/35", "# ?/2", 1.7142857142857144, formatTypes.Fraction, "# ?/2"],
+            ["17/37", "# ?/2", 0.4594594594594595, formatTypes.Fraction, "# ?/2"],
+            ["0 17/37", "# ?/2", 0.4594594594594595, formatTypes.Fraction, "# ?/2"],
+            ["1 17/37", "# ?/2", 1.4594594594594595, formatTypes.Fraction, "# ?/2"],
+            ["150/200", "# ?/2", 0.75, formatTypes.Fraction, "# ?/2"],
+            ["0 150/200", "# ?/2", 0.75, formatTypes.Fraction, "# ?/2"],
+            ["1 150/200", null, 1.75, formatTypes.Fraction, "# ?/2"],
+            ["137/235", "# ?/2", 0.5829787234042553, formatTypes.Fraction, "# ?/2"],
+            ["0 137/235", "# ?/2", 0.5829787234042553, formatTypes.Fraction, "# ?/2"],
+            ["1 137/235", null, 1.5829787234042553, formatTypes.Fraction, "# ?/2"],
+           
+            ["1/2", "# ?/8", 0.5, formatTypes.Fraction, "# ?/8"],
+            ["0 1/2", "# ?/8", 0.5, formatTypes.Fraction, "# ?/8"],
+            ["1 1/2", "# ?/8", 1.5, formatTypes.Fraction, "# ?/8"],
+            [" 1/2", "# ?/8", 0.5, formatTypes.Fraction, "# ?/8"],
+            ["3/7", "# ?/8", 0.42857142857142855, formatTypes.Fraction, "# ?/8"],
+            ["0 3/7", "# ?/8", 0.42857142857142855, formatTypes.Fraction, "# ?/8"],
+            ["1 3/7", "# ?/8", 1.42857142857142855, formatTypes.Fraction, "# ?/8"],
+            ["25/35", "# ?/8", 0.7142857142857143, formatTypes.Fraction, "# ?/8"],
+            ["0 25/35", "# ?/8", 0.7142857142857143, formatTypes.Fraction, "# ?/8"],
+            ["1 25/35", "# ?/8", 1.7142857142857144, formatTypes.Fraction, "# ?/8"],
+            ["17/37", "# ?/8", 0.4594594594594595, formatTypes.Fraction, "# ?/8"],
+            ["0 17/37", "# ?/8", 0.4594594594594595, formatTypes.Fraction, "# ?/8"],
+            ["1 17/37", "# ?/8", 1.4594594594594595, formatTypes.Fraction, "# ?/8"],
+            ["150/200", "# ?/8", 0.75, formatTypes.Fraction, "# ?/8"],
+            ["0 150/200", "# ?/8", 0.75, formatTypes.Fraction, "# ?/8"],
+            ["1 150/200", null, 1.75, formatTypes.Fraction, "# ?/8"],
+            ["137/235", "# ?/8", 0.5829787234042553, formatTypes.Fraction, "# ?/8"],
+            ["0 137/235", "# ?/8", 0.5829787234042553, formatTypes.Fraction, "# ?/8"],
+            ["1 137/235", null, 1.5829787234042553, formatTypes.Fraction, "# ?/8"],
             
             // appliedFormat = 10 (Text - @)
             ["1/2", "@", "1/2", 10],
@@ -481,8 +522,11 @@ $(function () {
             let res = testCases[i][2];
             let appliedFormat = testCases[i][3]
             
+            let appliedSpecificFormat = testCases[i][4]
+
+
             // Apply format
-            let formatted = AscCommon.g_oFormatParser.parse(value, null, appliedFormat);
+            let formatted = AscCommon.g_oFormatParser.parse(value, null, appliedFormat, appliedSpecificFormat);
 
             if (formatted) {
                 assert.strictEqual(formatted.format, format, `Case format: ${value}`);              

@@ -3251,10 +3251,7 @@ CellFormat.prototype =
 		}
 		else if (format.bDateTime) {
 			if (format.bDate) {
-                if (format.aRawFormat.length <= 5)
-				    nType = c_oAscNumFormatType.Date;
-                else
-                    nType = c_oAscNumFormatType.LongDate;
+                nType = c_oAscNumFormatType.Date;
 			} else {
 				nType = c_oAscNumFormatType.Time;
 			}
@@ -3643,7 +3640,7 @@ FormatParser.prototype =
         }
         return val - 0;
     },
-    parse: function (value, cultureInfo, currentFormat)
+    parse: function (value, cultureInfo, currentFormat, stringFormat)
     {
         if (null == cultureInfo)
             cultureInfo = g_oDefaultCultureInfo;
@@ -3669,7 +3666,7 @@ FormatParser.prototype =
                 // If the fraction like a "1/2"
                 if(match2.length == 2)
                 {
-                    var withoutRPart = true
+                    var withoutIntegerPart = true
                     var sVal = '0';
                     var sNumerator = match2[0];
                     var sDenominator = match2[1];
@@ -3843,10 +3840,19 @@ FormatParser.prototype =
                         // Calculate the number of symbols in the numerator and denominator to set the correct format (?/?, ??/??)
                         var numLength = sNumerator.length;
                         var denomLength = sDenominator.length;
-                        
                         if(currentFormat == Asc.c_oAscNumFormatType.Number)
                         {
                             sFormat = '0.00'
+                        } else if (stringFormat && currentFormat !== Asc.c_oAscNumFormatType.General && currentFormat !== Asc.c_oAscNumFormatType.Date && currentFormat !== Asc.c_oAscNumFormatType.Time && currentFormat !== Asc.c_oAscNumFormatType.Percent && currentFormat !== Asc.c_oAscNumFormatType.Scientific)
+                        {
+                            if (numLength == 3 && (denomLength == 2 || denomLength == 3) && sVal != 0)
+                                sFormat = null
+                            else
+                            {
+                                var formats = gc_aFractionFormats
+                                if (formats.indexOf(stringFormat) !== -1)
+                                    sFormat = stringFormat
+                            }
                         } else if (numLength == 1 && denomLength == 1) 
                         {
                             sFormat = "# ?/?";
@@ -3870,7 +3876,7 @@ FormatParser.prototype =
                             sFormat = "# ?/?";
                         } else if (numLength == 3 && (denomLength == 2 || denomLength == 3) && sVal == 0) 
                         {
-                            if (withoutRPart && currentFormat == Asc.c_oAscNumFormatType.Fraction)
+                            if (withoutIntegerPart && currentFormat == Asc.c_oAscNumFormatType.Fraction)
                                 sFormat = "# ?/?" 
                             else   
                                 sFormat = "# ??/??";
@@ -3974,12 +3980,15 @@ FormatParser.prototype =
             res = {format: '@', value: value, bDateTime: false, bDate: false, bTime: false, bPercent: false, bCurrency: false};
         else if(res == null && value[0] == ' ')
             return res;
-        else if ((null == res) && !bError)
-            return res = this.parseDate(value, cultureInfo, currentFormat);
+        else if (null == res && !bError)
+            res = this.parseDate(value, cultureInfo, currentFormat);    
         else if (currentFormat == Asc.c_oAscNumFormatType.Time)
-            res.format = 'h:mm:ss'
-        else if (currentFormat == Asc.c_oAscNumFormatType.LongDate)
-            res.format = 'dddd, mmmm d, yyyy'
+            res.format = 'h:mm:ss';     
+        if (res && stringFormat && stringFormat.replace(/^\[.*?\]/, '') == cultureInfo.LongDatePattern)
+               res.format = cultureInfo.LongDatePattern
+            
+        
+        
         return res
     },
     _parseStringLetters: function (sVal, currencySymbol, bBefore, oRes) {
@@ -4749,6 +4758,7 @@ FormatParser.prototype =
                                 sFormat += "m/d/yyyy";
                             } else if (currentFormat == Asc.c_oAscNumFormatType.LongDate) {
                                 sFormat += "dddd, mmmm d, yyyy";
+                                sFormat += cultureInfo.LongDatePattern
                             } else if (currentFormat == Asc.c_oAscNumFormatType.Time) {
                                 sFormat += "h:mm:ss";
                             } else if (currentFormat == Asc.c_oAscNumFormatType.Number) {
