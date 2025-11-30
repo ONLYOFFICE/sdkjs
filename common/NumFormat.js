@@ -3700,7 +3700,7 @@ FormatParser.prototype =
                 sBefore = cultureInfo.CurrencySymbol;
             }
         // The second condition is for compability of results with Excel
-        } else if(currentFormat == Asc.c_oAscNumFormatType.Percent && value[0] !== " "){
+        } else if(currentFormat === Asc.c_oAscNumFormatType.Percent && (value[0] !== " " || stringFormat !== "0.00%")){
             sAfter = '%'
         } else if (sNumerator && sDenominator) {
             var sDivide = '/';
@@ -3834,9 +3834,11 @@ FormatParser.prototype =
                         // Calculate the number of symbols in the numerator and denominator to set the correct format (?/?, ??/??)
                         var numLength = sNumerator.length;
                         var denomLength = sDenominator.length;
-                        if(currentFormat == Asc.c_oAscNumFormatType.Number)
+
+                        // The second condition checks how many decimal points the scientific data type has. If there are two points, the format parse as fraction (an Excel feature)
+                        if(currentFormat == Asc.c_oAscNumFormatType.Number || (currentFormat == Asc.c_oAscNumFormatType.Scientific && stringFormat !== "0.00E+00"))
                         {
-                            sFormat = '0.00'
+                            sFormat = stringFormat
                         } else if (stringFormat && currentFormat !== Asc.c_oAscNumFormatType.General && currentFormat !== Asc.c_oAscNumFormatType.Date && currentFormat !== Asc.c_oAscNumFormatType.Time && currentFormat !== Asc.c_oAscNumFormatType.Percent && currentFormat !== Asc.c_oAscNumFormatType.Scientific)
                         {
                             if (numLength == 3 && (denomLength == 2 || denomLength == 3) && sVal != 0)
@@ -3851,6 +3853,7 @@ FormatParser.prototype =
                         {
                             sFormat = "# ?/?";
                         } else if (numLength == 1 && (denomLength == 2 || denomLength == 3))
+                        // if (numLength == 1 && (denomLength == 2 || denomLength == 3))
                         {
                             if(currentFormat == Asc.c_oAscNumFormatType.Fraction)
                                 sFormat = "# ?/?"
@@ -3975,13 +3978,11 @@ FormatParser.prototype =
         else if(res == null && value[0] == ' ')
             return res;
         else if (null == res && !bError)
-            res = this.parseDate(value, cultureInfo, currentFormat);    
+            res = this.parseDate(value, cultureInfo, currentFormat, stringFormat);    
         else if (currentFormat == Asc.c_oAscNumFormatType.Time)
-            res.format = 'h:mm:ss';     
+            res.format = stringFormat;     
         if (res && stringFormat && stringFormat.replace(/^\[.*?\]/, '') == cultureInfo.LongDatePattern)
-               res.format = cultureInfo.LongDatePattern
-            
-        
+            res.format = cultureInfo.LongDatePattern 
         
         return res
     },
@@ -4519,7 +4520,7 @@ FormatParser.prototype =
         }
         return length === 0 ? false: bRes;
     },
-	parseDate: function (value, cultureInfo, currentFormat)
+	parseDate: function (value, cultureInfo, currentFormat, stringFormat)
 	{
 		//todo "11: AM" should fail
 		var res = null;
@@ -4747,18 +4748,11 @@ FormatParser.prototype =
 					if(dValue >= 0)
 					{
 						var sFormat = "";
-                        if (currentFormat == Asc.c_oAscNumFormatType.Date || currentFormat == Asc.c_oAscNumFormatType.LongDate || currentFormat == Asc.c_oAscNumFormatType.Time || currentFormat == Asc.c_oAscNumFormatType.Number){
-                            if (currentFormat == Asc.c_oAscNumFormatType.Date){
-                                sFormat += "m/d/yyyy";
-                            } else if (currentFormat == Asc.c_oAscNumFormatType.LongDate) {
-                                sFormat += "dddd, mmmm d, yyyy";
-                                sFormat += cultureInfo.LongDatePattern
-                            } else if (currentFormat == Asc.c_oAscNumFormatType.Time) {
-                                sFormat += "h:mm:ss";
-                            } else if (currentFormat == Asc.c_oAscNumFormatType.Number) {
-                                sFormat += "0.00"
-                            }
-                        } else if (bDate) {
+                        if (currentFormat == Asc.c_oAscNumFormatType.Date || currentFormat == Asc.c_oAscNumFormatType.Time || currentFormat == Asc.c_oAscNumFormatType.Number || (currentFormat == Asc.c_oAscNumFormatType.Scientific && stringFormat !== "0.00E+00"))
+                            sFormat += stringFormat;
+                        else if (currentFormat == Asc.c_oAscNumFormatType.LongDate)
+                            sFormat += cultureInfo.LongDatePattern
+                        else if (bDate) {
 							if (bTime && nHour > 23) {
 								sFormat = AscCommon.g_cGeneralFormat;
 							} else {
