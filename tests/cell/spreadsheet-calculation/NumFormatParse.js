@@ -37,21 +37,7 @@ $(function () {
     window["AscCommonExcel"].RgbColor = function () {
     };
 
-    const formatTypes = {
-        Accounting: 3,
-        Currency: 4,
-        Custom: 11,
-        Date: 5,
-        Fraction: 9,
-        General: 0,
-        LongDate: 6,
-        None: -1,
-        Number: 1,
-        Percent: 8,
-        Scientific: 2,
-        Text: 10,
-        Time: 7
-    }
+    const formatTypes = Asc.c_oAscNumFormatType;
 
 
     QUnit.module('NumFomat parse');
@@ -333,6 +319,7 @@ $(function () {
             ["0 1/2", "# ?/?", 0.5, formatTypes.General],
             ["0 1/10", "# ??/??", 0.1, formatTypes.General],
             ["0 1/100", "# ??/??", 0.01, formatTypes.General],
+            ["1 150/200", null, 1.75, formatTypes.General],
             
             // appliedFormat = 1 (Number - 0)
             ["1/2", "0.00", 0.5, formatTypes.Number],

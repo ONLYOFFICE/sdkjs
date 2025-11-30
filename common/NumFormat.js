@@ -3733,12 +3733,6 @@ FormatParser.prototype =
 					else
 						bMinus = true;
 				}
-				else if("-" == sChar){
-					if(elem.all > 1)
-						bError = true;
-					else
-						bMinus = true;
-				}
 				else if("(" == sChar){
 					if(1 == elem.all && 1 == elem.before)
 						nBracket++;
@@ -3871,10 +3865,10 @@ FormatParser.prototype =
                                 sFormat = "# ?/?"
                             else 
                                 sFormat = "# ??/??"; 
-                        } else if (numLength == 3 && denomLength == 1 && sVal == 0) 
+                        } else if (numLength == 3 && denomLength == 1 && sVal === '0') 
                         {
                             sFormat = "# ?/?";
-                        } else if (numLength == 3 && (denomLength == 2 || denomLength == 3) && sVal == 0) 
+                        } else if (numLength == 3 && (denomLength == 2 || denomLength == 3) && sVal === '0') 
                         {
                             if (withoutIntegerPart && currentFormat == Asc.c_oAscNumFormatType.Fraction)
                                 sFormat = "# ?/?" 
