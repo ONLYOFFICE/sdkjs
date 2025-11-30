@@ -2261,18 +2261,15 @@ CPresentation.prototype.IsFillingFormMode = function () {
 	return false;
 };
 
-CPresentation.prototype.ResetWordSelection = function () {
+CPresentation.prototype.SetTextSelectionType = function(type){
+	this.WordSelected = (type === AscWord.TEXT_SELECTION_TYPE.Word);
+};
+CPresentation.prototype.ResetTextSelectionType = function(){
 	this.WordSelected = false;
 };
-
-CPresentation.prototype.SetWordSelection = function (isWord) {
-	this.WordSelected = isWord;
-};
-
 CPresentation.prototype.IsWordSelection = function () {
 	return this.WordSelected;
 };
-
 
 CPresentation.prototype.checkCurrentTextObjectExtends = function () {
 	var oController = this.GetCurrentController();

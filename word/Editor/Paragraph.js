@@ -8347,6 +8347,36 @@ Paragraph.prototype.Selection_SetStart = function(X, Y, CurPage, bTableBorder)
 			this.Parent.SelectNumberingSingleParagraph(this);
 		}
 	}
+	
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument)
+	{
+		let e = global_mouseEvent;
+		// ClickCount приходит 0 не на AscCommon.g_mouse_event_type_up, при повторном ивенте
+		if (1 >= e.ClickCount)
+		{
+			logicDocument.SetTextSelectionType(AscWord.TEXT_SELECTION_TYPE.Common);
+		}
+		else if (e.ClickCount % 2)
+		{
+			this.SelectAll(1);
+			
+			this.Selection.Start          = true;
+			this.Selection.StartManually  = true;
+			this.Selection.EndManually    = true;
+			this.Selection.StartBehindEnd = false;
+			
+			logicDocument.SetTextSelectionType(AscWord.TEXT_SELECTION_TYPE.Paragraph);
+		}
+		else
+		{
+			this._SelectCurrentWord();
+			
+			this.Selection.EndManually = true;
+			
+			logicDocument.SetTextSelectionType(AscWord.TEXT_SELECTION_TYPE.Word);
+		}
+	}
 };
 /**
  * Данная функция может использоваться как при движении, так и при окончательном выставлении селекта.
@@ -8357,11 +8387,14 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 	var PagesCount = this.Pages.length;
 
 	var isFixedForm = this.IsInFixedForm();
+	
+	let logicDocument = this.GetLogicDocument();
 
 	// В сносках нельзя делать ExtendToPos, смотри замечание в CFootnotesController.prototype.EndSelection
 	if (!isFixedForm
-		&& this.bFromDocument && this.LogicDocument
-		&& true === this.LogicDocument.CanEdit()
+		&& this.bFromDocument
+		&& logicDocument
+		&& true === logicDocument.CanEdit()
 		&& null === this.Parent.IsHdrFtr(true)
 		&& !this.Parent.IsFootnote()
 		&& null == this.Get_DocumentNext()
@@ -8382,36 +8415,49 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 	
 	let pos  = SearchPosXY.getPos();
 	let pos2 = SearchPosXY2.getPos();
+	
+	let startPos = this.Get_ParaContentPos(true, true);
+	
+	if (logicDocument.IsWordSelection())
+		pos = this.getClosestWordPos(pos, SearchPosXY2.getLine(), SearchPosXY2.getRange(), this.GetSelectDirection());
 
 	// Выставим в полученном месте текущую позицию курсора
-	this.Set_ParaContentPos(pos2, true, SearchPosXY2.getLine(), SearchPosXY2.getRange());
-	
+	if (!logicDocument.IsWordSelection())
+		this.Set_ParaContentPos(pos2, true, SearchPosXY2.getLine(), SearchPosXY2.getRange());
+
 	if (!isFixedForm
 		&& !this.Parent.IsFootnote()
 		&& this.extendLastLineToXY(X, Y, CurPage, MouseEvent))
 		return;
 
 	// Выставляем селект
-	this.Set_SelectionContentPos(this.Get_ParaContentPos(true, true), pos, true, this.Selection.StartLine, this.Selection.StartRange, SearchPosXY2.getLine(), SearchPosXY2.getRange());
+	this.Set_SelectionContentPos(startPos, pos, true, this.Selection.StartLine, this.Selection.StartRange, SearchPosXY2.getLine(), SearchPosXY2.getRange());
+	
+	if (logicDocument.IsWordSelection())
+		this.checkWordSelection();
+	
+	if (logicDocument.IsParagraphSelection())
+		this.SelectAll(1);
 	
 	if (!this.GetPlaceHolderObject())
 		this.CheckSmartSelection();
 
 	var SelectionStartPos = this.Get_ParaContentPos(true, true);
 	var SelectionEndPos   = this.Get_ParaContentPos(true, false);
-
+	
 	if (0 === SelectionStartPos.Compare(SelectionEndPos) && AscCommon.g_mouse_event_type_up === MouseEvent.Type)
 	{
+		let isResetTextSelectionType = true;
 		var oInfo = new CSelectedElementsInfo();
 		this.GetSelectedElementsInfo(oInfo);
 		var oField = oInfo.GetField();
 		var oSdt   = oInfo.GetInlineLevelSdt();
 		let oMath  = oInfo.GetMath();
-
+		
 		let oForm = null;
-		if (oSdt && oSdt.IsForm() && this.GetLogicDocument() && this.GetLogicDocument().IsDocumentEditor() && this.GetLogicDocument().IsFillingFormMode())
+		if (oSdt && oSdt.IsForm() && logicDocument && logicDocument.IsDocumentEditor() && logicDocument.IsFillingFormMode())
 			oForm = oSdt;
-
+		
 		if (oSdt && oSdt.IsPlaceHolder())
 		{
 			oSdt.SelectAll(1);
@@ -8432,8 +8478,9 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 		}
 		else
 		{
+			isResetTextSelectionType = false;
 			var ClickCounter = MouseEvent.ClickCount % 2;
-
+			
 			if (1 >= MouseEvent.ClickCount)
 			{
 				// Убираем селект. Позицию курсора можно не выставлять, т.к. она у нас установлена на конец селекта
@@ -8445,18 +8492,18 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 				// Выделяем слово, в котором находимся
 				var SearchPosS = new CParagraphSearchPos();
 				var SearchPosE = new CParagraphSearchPos();
-
+				
 				this.Get_WordEndPos(SearchPosE, pos);
 				this.Get_WordStartPos(SearchPosS, SearchPosE.Pos);
-
-				var StartPos = ( true === SearchPosS.Found ? SearchPosS.Pos : this.Get_StartPos() );
-				var EndPos   = ( true === SearchPosE.Found ? SearchPosE.Pos : this.Get_EndPos(false) );
-
+				
+				var StartPos = (true === SearchPosS.Found ? SearchPosS.Pos : this.Get_StartPos());
+				var EndPos   = (true === SearchPosE.Found ? SearchPosE.Pos : this.Get_EndPos(false));
+				
 				if (oForm)
 				{
 					let oFormStartPos = oForm.GetStartPosInParagraph();
 					let oFormEndPos   = oForm.GetEndPosInParagraph();
-
+					
 					let oMainForm = oForm.GetMainForm();
 					if (oForm !== oMainForm && !oForm.IsComplexForm())
 					{
@@ -8467,17 +8514,14 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 					{
 						if (oFormStartPos.Compare(StartPos) > 0)
 							StartPos = oFormStartPos;
-
+						
 						if (oFormEndPos.Compare(EndPos) < 0)
 							EndPos = oFormEndPos;
 					}
 				}
-
+				
 				this.Selection.Use = true;
 				this.Set_SelectionContentPos(StartPos, EndPos);
-
-				if (this.LogicDocument)
-					this.LogicDocument.SetWordSelection(true);
 			}
 			else // ( 1 == ClickCounter % 2 )
 			{
@@ -8494,6 +8538,93 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 				}
 			}
 		}
+		
+		if (isResetTextSelectionType && logicDocument)
+			logicDocument.ResetTextSelectionType();
+	}
+};
+Paragraph.prototype._getWordPos = function(contentPos)
+{
+	var SearchPosS = new CParagraphSearchPos();
+	var SearchPosE = new CParagraphSearchPos();
+	
+	this.Get_WordEndPos(SearchPosE, contentPos);
+	this.Get_WordStartPos(SearchPosS, SearchPosE.Pos);
+	
+	let startPos = (true === SearchPosS.Found ? SearchPosS.Pos : this.Get_StartPos());
+	let endPos   = (true === SearchPosE.Found ? SearchPosE.Pos : this.Get_EndPos(false));
+	
+	let form = this.GetSelectedElementsInfo().GetForm();
+	let logicDocument = form ? this.GetLogicDocument() : null;
+	if (form && logicDocument && logicDocument.IsDocumentEditor() && logicDocument.IsFillingFormMode()	)
+	{
+		let formStartPos = form.GetStartPosInParagraph();
+		let formEndPos   = form.GetEndPosInParagraph();
+		
+		let mainForm = form.GetMainForm();
+		if (form !== mainForm && !form.IsComplexForm())
+		{
+			startPos = formStartPos;
+			endPos   = formEndPos;
+		}
+		else
+		{
+			if (formStartPos.Compare(startPos) > 0)
+				startPos = formStartPos;
+			
+			if (formEndPos.Compare(endPos) < 0)
+				endPos = formEndPos;
+		}
+	}
+	
+	return {
+		start : startPos,
+		end   : endPos
+	};
+};
+Paragraph.prototype.getClosestWordPos = function(contentPos, line, range, direction)
+{
+	let state = this.SaveSelectionState();
+	this.RemoveSelection();
+	
+	this.Set_ParaContentPos(contentPos, false, line, range);
+	
+	let curXY = this.GetCalculatedCurPosXY();
+	
+	let wordPos = this._getWordPos(contentPos);
+	
+	let result = wordPos.start;
+	if (direction >= 0)
+	{
+		this.Set_ParaContentPos(wordPos.start, false, line, range);
+		let startXY = this.GetCalculatedCurPosXY();
+		if (curXY.X - startXY.X > AscWord.EPSILON)
+			result = wordPos.end;
+	}
+	
+	this.LoadSelectionState(state);
+	return result;
+};
+Paragraph.prototype.checkWordSelection = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument && this !== logicDocument.GetCurrentParagraph(false, false, {StartInSelection : true}))
+		return;
+	
+	let startPos = this.Get_ParaContentPos(true, true);
+	let endPos   = this.Get_ParaContentPos(true, false);
+	
+	let curPos = this.Get_ParaContentPos(false);
+	
+	if (endPos.Compare(curPos) <= 0 && startPos.Compare(curPos) <= 0)
+	{
+		let wordPos = this._getWordPos(curPos);
+		this.Set_SelectionContentPos(wordPos.end, endPos);
+	}
+	else if (endPos.Compare(curPos) > 0 && startPos.Compare(curPos) > 0)
+	{
+		let wordPos = this._getWordPos(curPos);
+		this.Set_SelectionContentPos(wordPos.start, endPos);
 	}
 };
 Paragraph.prototype.extendLastLineToXY = function(x, y, curPage, mouseEvent)
@@ -8897,29 +9028,35 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage, clipInfo)
  */
 Paragraph.prototype.SelectCurrentWord = function()
 {
-	if (this.LogicDocument)
-		this.LogicDocument.RemoveSelection();
+	let logicDocument = this.GetLogicDocument();
+	
+	if (logicDocument)
+		logicDocument.RemoveSelection();
 	else
 		this.RemoveSelection();
+	
+	this._SelectCurrentWord();
+	this.Selection.Use = true;
+	this.Document_SetThisElementCurrent(false);
 
+	if (logicDocument)
+		logicDocument.SetTextSelectionType(AscWord.TEXT_SELECTION_TYPE.Word);
+};
+Paragraph.prototype._SelectCurrentWord = function()
+{
 	var oCurPos = this.Get_ParaContentPos(false, false)
-
+	
 	// Выделяем слово, в котором находимся
 	var SearchPosS = new CParagraphSearchPos();
 	var SearchPosE = new CParagraphSearchPos();
-
+	
 	this.Get_WordEndPos(SearchPosE, oCurPos);
 	this.Get_WordStartPos(SearchPosS, SearchPosE.Pos);
-
+	
 	var StartPos = (true === SearchPosS.Found ? SearchPosS.Pos : this.Get_StartPos());
 	var EndPos   = (true === SearchPosE.Found ? SearchPosE.Pos : this.Get_EndPos(false));
-
-	this.Selection.Use = true;
+	
 	this.Set_SelectionContentPos(StartPos, EndPos);
-	this.Document_SetThisElementCurrent(false);
-
-	if (this.LogicDocument)
-		this.LogicDocument.SetWordSelection(true);
 };
 Paragraph.prototype.Selection_CheckParaEnd = function()
 {

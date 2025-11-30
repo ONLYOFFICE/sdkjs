@@ -8682,8 +8682,9 @@ var CPresentation = CPresentation || function(){};
 		textController.GetDocContent().RecalculateCurPos();
 		this.NeedUpdateTarget = false;
 	};
-    CPDFDoc.prototype.SetWordSelection = function(){};
-    
+	CPDFDoc.prototype.SetTextSelectionType = function(type){};
+	CPDFDoc.prototype.ResetTextSelectionType = function(){};
+	CPDFDoc.prototype.IsWordSelection = function(){return false;};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Extension required for CTextBoxContent
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
