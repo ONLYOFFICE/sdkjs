@@ -3948,31 +3948,20 @@ FormatParser.prototype =
                     var prev = match[i - 1];
                     var next = match[i + 1];
                     if(prev.type != oDataTypes.delimiter && next.type != oDataTypes.delimiter){
+                        var isTimeSeparator;
                         if (sameSeparators) {
-                            var looksLikeTime = this._looksLikeTimePart(prev, next, i, match, oDataTypes);
-                            
-                            if (looksLikeTime) {
-                                if(false == prev.date && false == next.date){
-                                    bError = false;
-                                    prev.time = true;
-                                    next.time = true;
-                                }
-                            } else {
-                                if(false == prev.time && false == next.time){
-                                    bError = false;
-                                    prev.date = true;
-                                    next.date = true;
-                                }
-                            }
-                        }    
-                        else if (cultureInfo.TimeSeparator == elem.val || (":" == elem.val && cultureInfo.DateSeparator != elem.val)) {
+                            isTimeSeparator = this._looksLikeTimePart(prev, next, match, oDataTypes);
+                        } else {
+                            isTimeSeparator = cultureInfo.TimeSeparator == elem.val || (":" == elem.val && cultureInfo.DateSeparator != elem.val);
+                        }
+                        
+                        if (isTimeSeparator) {
                             if(false == prev.date && false == next.date){
                                 bError = false;
                                 prev.time = true;
                                 next.time = true;
                             }
-                        }
-                        else {
+                        } else {
                             if(false == prev.time && false == next.time){
                                 bError = false;
                                 prev.date = true;
@@ -4205,47 +4194,39 @@ FormatParser.prototype =
         }
 		return res;
     },
-    _looksLikeTimePart: function(prev, next, currentIndex, match, oDataTypes) {
-        var hasLargeYear = false;
-        var hasMonthName = false;
-        var totalDigits = 0;
-        var totalDelimiters = 0;
-        
-        for (var i = 0; i < match.length; i++) {
-            var elem = match[i];
-            if (elem.type.id === oDataTypes.digit.id) {
-                totalDigits++;
-                if (elem.val > 31 && elem.val < 10000) {
-                    hasLargeYear = true;
-                }
-            } else if (elem.type.id === oDataTypes.delimiter.id) {
-                totalDelimiters++;
-            } else if (elem.type.id === oDataTypes.letter.id && elem.month) {
-                hasMonthName = true;
-            }
-        }
-        
-        if (hasLargeYear || hasMonthName || totalDigits >= 3) {
-            return false;
-        }
-        
-        var prevVal = parseInt(prev.val, 10);
-        var nextVal = parseInt(next.val, 10);
-        
-        var prevCouldBeHours = prevVal >= 0 && prevVal <= 23;
-        var nextCouldBeMinutes = nextVal >= 0 && nextVal <= 59;
-        
-        var hasAmPm = false;
-        for (var i = currentIndex + 2; i < match.length; i++) {
-            var futureElem = match[i];
-            if (futureElem.type.id === oDataTypes.letter.id && (futureElem.am || futureElem.pm)) {
-                hasAmPm = true;
-                break;
-            }
-        }
-        
-        return (prevCouldBeHours && nextCouldBeMinutes) || hasAmPm || (prev.time || next.time);
-    },
+	_looksLikeTimePart: function(prev, next, match, oDataTypes) {
+		if (prev.time || next.time) {
+			return true;
+		}
+		var prevVal = parseInt(prev.val, 10);
+		var nextVal = parseInt(next.val, 10);
+		// Numbers don't fit time range
+		if (prevVal < 0 || prevVal > 23 || nextVal < 0 || nextVal > 59) {
+			return false;
+		}
+		var digitCount = 0;
+		for (var i = 0; i < match.length; i++) {
+			var elem = match[i];
+			if (elem.type.id === oDataTypes.digit.id) {
+				digitCount++;
+				// Large year
+				if (elem.val > 31 && elem.val < 10000) {
+					return false;
+				}
+			} else if (elem.type.id === oDataTypes.letter.id) {
+				// Month name
+				if (elem.month) {
+					return false;
+				}
+				// AM/PM indicates time
+				if (elem.am || elem.pm) {
+					return true;
+				}
+			}
+		}
+		// 3+ digits usually mean date
+		return digitCount < 3;
+	},
 
 	_parseDateFromArrayPDF: function (match, oDataTypes, cultureInfo, oFormat)
 	{
