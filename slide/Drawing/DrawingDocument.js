@@ -2046,7 +2046,7 @@ function CDrawingDocument()
 		}
 		else
 		{
-			if(_img.Status === ImageLoadStatus.Loading)
+			if(_img && _img.Status === ImageLoadStatus.Loading)
 			{
 
 			}

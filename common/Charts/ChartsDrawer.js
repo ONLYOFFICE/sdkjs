@@ -16204,13 +16204,13 @@ drawSurfaceChart.prototype = {
 		for (var i = 0; i < points.length; i++) {
 			var tan = Math.atan2(points[i].x - x, points[i].y - y);
 			if (!repeatePoint[tan]) {
-				sortArray[i] = {tan: tan, point: points[i]};
+				sortArray.push({tan: tan, point: points[i]});
 				repeatePoint[tan] = 1;
 				nIndividualPoints++;
 			}
 		}
 
-		var path = null
+		var path = null;
 		if (nIndividualPoints > 2) {
 			sortArray.sort(function sortArr(a, b) {
 				return b.tan - a.tan;
@@ -17773,79 +17773,79 @@ CErrBarsDraw.prototype = {
 	}
 };
 
-/** @constructor */
-function CGeometry2()
-{
-    this.pathLst = [];
-	this.isLine = false;
-	this.gdLst = [];
-}
-
-CGeometry2.prototype =
-{
-    constructor: CGeometry2,
-	
-	canFill: function()
-    {
-        if(this.preset === "line")
-            return false;
-        for(var i = 0; i < this.pathLst.length; ++i)
-        {
-            if(this.pathLst[i].fill !== "none")
-                return true;
-        }
-        return  false;
-    },
-
-    AddPath: function(path)
-    {
-        this.pathLst.push(path);
-    },
-	
-    AddRect: function(l, t, r, b)
-    {
-        this.rectS = {};
-        this.rectS.l = l;
-        this.rectS.t = t;
-        this.rectS.r = r;
-        this.rectS.b = b;
-    },
-
-    draw: function(shape_drawer)
-    {
-        for (var i=0, n=this.pathLst.length; i<n;++i)
-            this.pathLst[i].drawSmart(shape_drawer);
-    },
-	
-	check_bounds: function(checker)
-    {
-
-        for(var i=0, n=this.pathLst.length; i<n;++i)
-
-            this.pathLst[i].check_bounds(checker);
-
-    }
-};
-
 	/** @constructor */
-function CColorObj(pen, brush, geometry)
-{
-    this.pen = pen;
-	this.brush = brush;
-	this.geometry = geometry;
-}
+	function CGeometry2()
+	{
+		this.pathLst = [];
+		this.isLine = false;
+		this.gdLst = [];
+	}
+	CGeometry2.prototype.constructor = CGeometry2;
+	CGeometry2.prototype.canFill = function()
+	{
+		if(this.preset === "line")
+			return false;
+		for(var i = 0; i < this.pathLst.length; ++i)
+		{
+			if(this.pathLst[i].fill !== "none")
+				return true;
+		}
+		return  false;
+	};
+	CGeometry2.prototype.AddPath = function(path)
+	{
+		this.pathLst.push(path);
+	};
+	CGeometry2.prototype.AddRect = function(l, t, r, b)
+	{
+		this.rectS = {};
+		this.rectS.l = l;
+		this.rectS.t = t;
+		this.rectS.r = r;
+		this.rectS.b = b;
+	};
+	CGeometry2.prototype.draw = function(shape_drawer)
+	{
+		for (var i=0, n=this.pathLst.length; i<n;++i)
+			this.pathLst[i].drawSmart(shape_drawer);
+	};
+	CGeometry2.prototype.check_bounds = function(checker)
+	{
 
-CColorObj.prototype =
-{
-	constructor: CColorObj,
-	
-	check_bounds: function (checker) {
+		for(var i=0, n=this.pathLst.length; i<n;++i)
+
+			this.pathLst[i].check_bounds(checker);
+
+	};
+	CGeometry2.prototype.getContinuousSubpaths = function () {
+		const subpaths = [];
+		this.pathLst.forEach(function (path) {
+			if (path.stroke) {
+				path.getContinuousSubpaths().forEach(function (subpath) {
+					subpaths.push(subpath);
+				});
+			}
+		});
+		return subpaths;
+	};
+	/** @constructor */
+	function CColorObj(pen, brush, geometry) {
+		this.pen = pen;
+		this.brush = brush;
+		this.geometry = geometry;
+	}
+
+	CColorObj.prototype.constructor = CColorObj;
+	CColorObj.prototype.check_bounds = function (checker) {
 		if (this.geometry) {
 			this.geometry.check_bounds(checker);
 		}
-	},
+	};
+	CColorObj.prototype.getGeometry = function () {
+		return this.geometry;
+	};
 
-	getBounds: function () {
+	CColorObj.prototype.getBounds = function () {
 
 		if (this.geometry) {
 			let boundsChecker = new AscFormat.CSlideBoundsChecker();
@@ -17856,9 +17856,7 @@ CColorObj.prototype =
 			return new AscFormat.CGraphicBounds(bounds.min_x, bounds.min_y, bounds.max_x, bounds.max_y);
 		}
 		return new AscFormat.CGraphicBounds(0, 0, 0, 0);
-	}
-};
-
+	};
 	/** @constructor */
 	function calcShapesHelper(chartsDrawer)
 	{
@@ -20123,23 +20121,82 @@ CColorObj.prototype =
 			}
 			return sum / arr.length;
 		}
-		const fMedian = AscCommonExcel.getMedian(arr);
+
+
+		//the logic of the functions is repeated in the AscCommonExcel.getMedian/AscCommonExcel.getPercentile/AscCommonExcel.getPercentileExclusive
+		// but they cannot be used in that form. for the future, move the common part out and use it
+		function getMedian(rArray) {
+			rArray.sort(AscCommon.fSortAscending);
+			let nSize = rArray.length;
+			if (nSize == 0) {
+				return null;
+			}
+			if (nSize % 2 === 0) {
+				return (rArray[nSize / 2 - 1] + rArray[nSize / 2]) / 2;
+			} else {
+				return rArray[(nSize - 1) / 2];
+			}
+		}
+
+
+		function getPercentile(values, alpha, isSorted) {
+			values = isSorted ? values : values.sort(AscCommon.fSortAscending);
+
+			var nSize = values.length;
+			if (nSize === 0) {
+				return null;
+			} else {
+				if (nSize === 1) {
+					return values[0];
+				} else {
+					var nIndex = Math.floor(alpha * (nSize - 1));
+					var fDiff = alpha * (nSize - 1) - Math.floor(alpha * (nSize - 1));
+					if (fDiff === 0.0) {
+						return values[nIndex];
+					} else {
+						return values[nIndex] + fDiff * (values[nIndex + 1] - values[nIndex]);
+					}
+				}
+			}
+		}
+
+		function getPercentileExclusive(values, alpha, isSorted) {
+			values = isSorted ? values : values.sort(AscCommon.fSortAscending);
+
+			var nSize1 = values.length + 1;
+			if (nSize1 == 1) {
+				return null;
+			}
+			if (alpha * nSize1 < 1 || alpha * nSize1 > nSize1 - 1) {
+				return null;
+			}
+
+			var nIndex = Math.floor(alpha * nSize1 - 1);
+			var fDiff = alpha * nSize1 - 1 - Math.floor(alpha * nSize1 - 1);
+			if (fDiff === 0.0) {
+				return values[nIndex];
+			} else {
+				return values[nIndex] + fDiff * (values[nIndex + 1] - values[nIndex]);
+			}
+		}
+
+		const fMedian = getMedian(arr);
 
 		// Get the first quartile using the appropriate method based on `exclusive`
 		const fFirstQuartile = this.exclusive
-			? AscCommonExcel.getPercentileExclusive(arr, 0.25, true)
-			: AscCommonExcel.getPercentile(arr, 0.25, true);
+			? getPercentileExclusive(arr, 0.25, true)
+			: getPercentile(arr, 0.25, true);
 
 		// Get the value of the first quartile, convert "#!Num" to null
-		const fFirstQuartileVal = fFirstQuartile && fFirstQuartile.getValue() !== '#NUM!' ? fFirstQuartile.getValue() : null;
+		const fFirstQuartileVal = fFirstQuartile !== null ? fFirstQuartile : null;
 
 		// Get the second quartile using the appropriate method based on `exclusive`
 		const fThirdQuartile = this.exclusive
-			? AscCommonExcel.getPercentileExclusive(arr, 0.75, true)
-			: AscCommonExcel.getPercentile(arr, 0.75, true);
+			? getPercentileExclusive(arr, 0.75, true)
+			: getPercentile(arr, 0.75, true);
 
 		// Get the value of the second quartile, convert "#!Num" to null
-		const fThirdQuartileVal = fThirdQuartile && fThirdQuartile.getValue() !== '#NUM!' ? fThirdQuartile.getValue() : null;
+		const fThirdQuartileVal = fThirdQuartile !== null ? fThirdQuartile : null;
 
 		// Calculate the interquartile range (IQR), ensuring null values are handled
 		const fIQR = (fThirdQuartileVal !== null && fFirstQuartileVal !== null)
@@ -20158,12 +20215,12 @@ CColorObj.prototype =
 
 		this._chartExSetAxisMinAndMax(axisProperties.val, fLowestNum);
 		this._chartExSetAxisMinAndMax(axisProperties.val, fFirstQuartileVal);
-		this._chartExSetAxisMinAndMax(axisProperties.val, fMedian.getValue());
+		this._chartExSetAxisMinAndMax(axisProperties.val, fMedian);
 		this._chartExSetAxisMinAndMax(axisProperties.val, fMean);
 		this._chartExSetAxisMinAndMax(axisProperties.val, fThirdQuartileVal);
 		this._chartExSetAxisMinAndMax(axisProperties.val, fHighestNum);
 
-		return {fStart: fLowestNum, fFirstQuartile: fFirstQuartileVal, fMedian: fMedian.getValue(), fMean: fMean,  fThirdQuartile: fThirdQuartileVal, fEnd: fHighestNum}
+		return {fStart: fLowestNum, fFirstQuartile: fFirstQuartileVal, fMedian: fMedian, fMean: fMean,  fThirdQuartile: fThirdQuartileVal, fEnd: fHighestNum}
 	}
 
 	CCachedBoxWhisker.prototype._addDataPoints = function (box, arr) {

@@ -286,6 +286,7 @@ CInlineLevelSdt.prototype.private_CopyPrTo = function(oContentControl, oPr)
 		else
 		{
 			formPr.SetFieldMaster(undefined);
+			formPr.SetRole(this.GetFormRole());
 		}
 		
 		oContentControl.SetFormPr(formPr);
@@ -2090,7 +2091,7 @@ CInlineLevelSdt.prototype.SetLabel = function(sLabel)
 };
 CInlineLevelSdt.prototype.GetLabel = function()
 {
-	return (undefined !== this.Pr.Label ? this.Pr.Label : "");
+	return this.Pr.Label;
 };
 CInlineLevelSdt.prototype.SetDocPartObj = function(sCategory, sGallery, isUnique)
 {
@@ -2300,6 +2301,12 @@ CInlineLevelSdt.prototype.SetCheckBoxPr = function(oCheckBoxPr)
 {
 	if (undefined === this.Pr.CheckBox || !this.Pr.CheckBox.IsEqual(oCheckBoxPr))
 	{
+		if (oCheckBoxPr && AscFonts.IsCheckSymbols)
+		{
+			AscFonts.FontPickerByCharacter.getFontBySymbol(oCheckBoxPr.GetCheckedSymbol());
+			AscFonts.FontPickerByCharacter.getFontBySymbol(oCheckBoxPr.GetUncheckedSymbol());
+		}
+		
 		var _oCheckBox = oCheckBoxPr ? oCheckBoxPr.Copy() : undefined;
 		History.Add(new CChangesSdtPrCheckBox(this, this.Pr.CheckBox, _oCheckBox));
 		this.Pr.CheckBox = _oCheckBox;

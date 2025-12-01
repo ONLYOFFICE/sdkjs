@@ -1612,20 +1612,27 @@
 	};
 
 	/**
-	 * Adds a hyperlink to the specified range. 
+	 * Adds a hyperlink to the specified range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sLink - The link address.
 	 * @param {string} sScreenTipText - The screen tip text.
-	 * @return {ApiHyperlink | null}  - returns null if range contains more than one paragraph or sLink is invalid. 
+	 * @param {string} sBookmarkName - name of a bookmark
+	 * @return {?ApiHyperlink }  - returns null if range contains more than one paragraph or sLink is invalid. 
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/AddHyperlink.js
 	 */
-	ApiRange.prototype.AddHyperlink = function(sLink, sScreenTipText)
+	ApiRange.prototype.AddHyperlink = function(sLink, sScreenTipText, sBookmarkName)
 	{
-		if (typeof(sLink) !== "string" || sLink === "" || sLink.length > Asc.c_nMaxHyperlinkLength)
+		sLink = GetStringParameter(sLink, "");
+		sScreenTipText = GetStringParameter(sScreenTipText, "");
+		sBookmarkName = GetStringParameter(sBookmarkName, "");
+
+		if ((!sLink && !sBookmarkName) || (sLink && sBookmarkName)) {
 			return null;
-		if (typeof(sScreenTipText) !== "string")
-			sScreenTipText = "";
+		}
+
+		if (sLink.length > Asc.c_nMaxHyperlinkLength)
+			return null;
 
 		this.GetAllParagraphs();
 		if (this.Paragraphs.length !== 1)
@@ -1641,7 +1648,7 @@
 		sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
 		hyperlinkPr.put_Value(sLink);
 		hyperlinkPr.put_ToolTip(sScreenTipText);
-		hyperlinkPr.put_Bookmark(null);
+		hyperlinkPr.put_Bookmark(sBookmarkName);
 
 		this.Select(false);
 		var oHyperlink = new ApiHyperlink(this.Paragraphs[0].Paragraph.AddHyperlink(hyperlinkPr));
@@ -1710,7 +1717,7 @@
 		let oDoc			= private_GetLogicDocument();
 		let oldSelectionInfo	= oDoc.SaveDocumentState();
 
-		this.Select(false);
+		this.Select(true);
 		private_TrackRangesPositions();
 
 		let SelectedContent = oDoc.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -1747,14 +1754,28 @@
 		
 		if (bUpdate === undefined)
 			bUpdate = true;
+		
+		if (bUpdate)
+		{
+			for (let i = this.StartPos.length - 1; i >= 0; --i)
+			{
+				let obj = this.StartPos[i].Class;
+				if ((obj instanceof AscWord.CDocument) || (obj instanceof AscWord.CDocumentContent))
+				{
+					obj.SetThisElementCurrent(true);
+					bUpdate = false;
+					break;
+				}
+			}
+		}
 
 		this.StartPos[0].Class.SetContentPosition(this.StartPos, 0, 0);
 		this.StartPos[0].Class.SetSelectionByContentPositions(this.StartPos, this.EndPos);
-
+		
 		if (bUpdate)
 		{
 			var controllerType;
-
+			
 			if (this.StartPos[0].Class.IsHdrFtr())
 			{
 				controllerType = docpostype_HdrFtr;
@@ -1767,7 +1788,7 @@
 			{
 				controllerType = docpostype_DrawingObjects;
 			}
-			else 
+			else
 			{
 				controllerType = docpostype_Content;
 			}
@@ -4440,15 +4461,20 @@
 		else if (obj instanceof AscWord.CDocumentContent)
 			return new ApiDocumentContent(obj);
 		else if (obj instanceof AscWord.CInlineLevelSdt)
-			return new ApiInlineLvlSdt(obj);
+			return obj.IsForm() ? ToApiForm(obj) : new ApiInlineLvlSdt(obj);
 		else if (obj instanceof AscWord.CBlockLevelSdt)
 			return new ApiBlockLvlSdt(obj);
 		else if (obj instanceof AscWord.Paragraph)
 			return new ApiParagraph(obj);
-		else if (obj instanceof AscFormat.CGraphicObjectBase) {
+		else if (obj instanceof AscWord.Table)
+			return new ApiTable(obj);
+		else if (obj instanceof AscWord.TableRow)
+			return new ApiTableRow(obj);
+		else if (obj instanceof AscWord.TableCell)
+			return new ApiTableCell(obj);
+		else if (obj instanceof AscFormat.CGraphicObjectBase)
 			return new ApiDrawing(obj);
-		}
-			
+
 		return null;
 	};
 	/**
@@ -4615,12 +4641,16 @@
 	 */
 	Api.prototype.CreateGroup = function(drawings)
 	{
+		drawings = GetArrayParameter(drawings, []);
+		if (drawings.length == 0)
+			throwException(new Error("The drawings parameter must be a non empty array"));
+
 		let oDoc = private_GetLogicDocument();
 		let oDrDoc = private_GetDrawingDocument();
 		let oGraphicObjects = oDoc.getDrawingObjects();
 
 		if (drawings.find(function(drawing) { return drawing.Drawing.IsUseInDocument(); }))
-			return null;
+			throwException(new Error("All drawings must be in document"));
 		
 		drawings.forEach(function(drawing) { drawing.Drawing.recalculate(); })
 
@@ -5708,7 +5738,7 @@
 	 */
 	ApiDocumentContent.prototype.GetInternalId = function()
 	{
-		return this.Sdt.GetId();
+		return this.Document.GetId();
 	};
 	/**
 	 * Returns a number of elements in the current document.
@@ -7675,6 +7705,10 @@
 		}
 
 		this.Document.LoadDocumentState(documentState);
+		
+		if (!StartPos || !EndPos || !StartPos.length || !EndPos.length)
+			return null;
+		
 		return new ApiRange(StartPos[0].Class, StartPos, EndPos);
 	};
 	/**
@@ -9432,6 +9466,115 @@
 		this.Document.MoveCursorToEndPos();
 		return true;
 	};
+
+	/**
+	 * Add text to the document on the cursor position.
+	 * @memberof ApiDocument
+	 * @param {string} sText - The text to add to document.
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/EnterText.js
+	 */
+	ApiDocument.prototype.EnterText = function(sText)
+	{
+		this.Document.EnterText(sText);
+		return true;
+	}
+
+	/**
+	 * Add paragraph to the document on the cursor position.
+	 * @memberof ApiDocument
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/InsertParagraphBreak.js
+	 */
+	ApiDocument.prototype.InsertParagraphBreak = function()
+	{
+		this.Document.AddNewParagraph();
+		return true;
+	}
+
+	/**
+	 * Moves a cursor to the left.
+	 * @memberof ApiDocument
+	 * @param {number} nCount - The number of characters to move left.
+	 * @param {boolean} isShift - Specifies whether to select text during the move.
+	 * @param {boolean} isCtl - Specifies whether to move by word instead of by character.
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorLeft.js
+	 */
+	ApiDocument.prototype.MoveCursorLeft = function(nCount, isShift, isCtl)
+	{
+		for(let i = 0; i < nCount; i++)
+		{
+			this.Document.MoveCursorLeft(!!isShift, !!isCtl);
+		}
+		return true;
+	};
+	/**
+	 * Moves a cursor to the right.
+	 * @memberof ApiDocument
+	 * @param {number} nCount - The number of characters to move right.
+	 * @param {boolean} isShift - Specifies whether to select text during the move.
+	 * @param {boolean} isCtl - Specifies whether to move by word instead of by character.
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorRight.js
+	 */
+	ApiDocument.prototype.MoveCursorRight = function(nCount, isShift, isCtl)
+	{
+		for(let i = 0; i < nCount; i++)
+		{
+			this.Document.MoveCursorRight(!!isShift, !!isCtl);
+		}
+		return true;
+	};
+
+	/**
+	 * Moves a cursor up.
+	 * @memberof ApiDocument
+	 * @param {number} nCount - The number of lines to move up.
+	 * @param {boolean} isShift - Specifies whether to select text during the move.
+	 * @param {boolean} isCtl - Specifies whether to move by paragraph instead of by line.
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorUp.js
+	 */
+	ApiDocument.prototype.MoveCursorUp = function(nCount, isShift, isCtl)
+	{
+		for(let i = 0; i < nCount; i++)
+		{
+			this.Document.MoveCursorUp(!!isShift, !!isCtl);
+		}
+		return true;
+	};
+
+	/**
+	 * Moves a cursor down.
+	 * @memberof ApiDocument
+	 * @param {number} nCount - The number of lines to move down.
+	 * @param {boolean} isShift - Specifies whether to select text during the move.
+	 * @param {boolean} isCtl - Specifies whether to move by paragraph instead of by line.
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorDown.js
+	 */
+	ApiDocument.prototype.MoveCursorDown = function(nCount, isShift, isCtl)
+	{
+		for(let i = 0; i < nCount; i++)
+		{
+			this.Document.MoveCursorDown(!!isShift, !!isCtl);
+		}
+		return true;
+	};
+
 	/**
 	 * Moves a cursor to the start of the specified page in the document.
 	 * @memberof ApiDocument
@@ -9492,16 +9635,27 @@
 	 * Returns a unique ID for the current paragraph.
 	 * @memberof ApiParagraph
 	 * @returns {number} 0 if no identifier is specified for the current paragraph.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetParaId.js
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetParaId.js
 	 */
 	ApiParagraph.prototype.GetParaId = function()
 	{
 		let paraId = this.Paragraph.GetParaId();
 		return paraId ? paraId : 0;
 	};
-	
+	/**
+	 * Returns an internal ID of the current paragraph.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string}
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetInternalId.js
+	 */
+	ApiParagraph.prototype.GetInternalId = function()
+	{
+		return this.Paragraph.GetId();
+	};
 	/**
 	 * Adds some text to the current paragraph.
 	 * @memberof ApiParagraph
@@ -9933,15 +10087,22 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sLink - The link address.
 	 * @param {string} sScreenTipText - The screen tip text.
-	 * @return {ApiHyperlink | null} - returns null if params are invalid.
+	 * @param {string} sBookmarkName - name of a bookmark
+	 * @return {?ApiHyperlink } - returns null if params are invalid.
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/AddHyperlink.js
 	 */
-	ApiParagraph.prototype.AddHyperlink = function(sLink, sScreenTipText)
+	ApiParagraph.prototype.AddHyperlink = function(sLink, sScreenTipText, sBookmarkName)
 	{
-		if (typeof(sLink) !== "string" || sLink === "" || sLink.length > Asc.c_nMaxHyperlinkLength)
+		sLink = GetStringParameter(sLink, "");
+		sScreenTipText = GetStringParameter(sScreenTipText, "");
+		sBookmarkName = GetStringParameter(sBookmarkName, "");
+
+		if ((!sLink && !sBookmarkName) || (sLink && sBookmarkName)) {
 			return null;
-		if (typeof(sScreenTipText) !== "string")
-			sScreenTipText = "";
+		}
+
+		if (sLink.length > Asc.c_nMaxHyperlinkLength)
+			return null;
 		
 		var hyperlinkPr	= new Asc.CHyperlinkProperty();
 		var urlType		= AscCommon.getUrlType(sLink);
@@ -9954,7 +10115,7 @@
 		sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
 		hyperlinkPr.put_Value(sLink);
 		hyperlinkPr.put_ToolTip(sScreenTipText);
-		hyperlinkPr.put_Bookmark(null);
+		hyperlinkPr.put_Bookmark(sBookmarkName);
 		
 		oHyperlink = new ApiHyperlink(this.Paragraph.AddHyperlink(hyperlinkPr));
 		this.Paragraph.RemoveSelection();
@@ -10398,9 +10559,7 @@
 			'ltr': false,
 			'rtl': true
 		};
-		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.SetParagraphBidi(map[readingOrder]);
-		this.Paragraph.SetApplyToAll(false);
 		return this;
 	};
 	/**
@@ -11592,15 +11751,22 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sLink - The link address.
 	 * @param {string} sScreenTipText - The screen tip text.
-	 * @return {ApiHyperlink | null} - returns false if params are invalid.
+	 * @param {string} sBookmarkName - name of a bookmark
+	 * @return {?ApiHyperlink } - returns false if params are invalid.
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/AddHyperlink.js
 	 */
-	ApiRun.prototype.AddHyperlink = function(sLink, sScreenTipText)
+	ApiRun.prototype.AddHyperlink = function(sLink, sScreenTipText, sBookmarkName)
 	{
-		if (typeof(sLink) !== "string" || sLink === "" || sLink.length > Asc.c_nMaxHyperlinkLength)
+		sLink = GetStringParameter(sLink, "");
+		sScreenTipText = GetStringParameter(sScreenTipText, "");
+		sBookmarkName = GetStringParameter(sBookmarkName, "");
+
+		if ((!sLink && !sBookmarkName) || (sLink && sBookmarkName)) {
 			return null;
-		if (typeof(sScreenTipText) !== "string")
-			sScreenTipText = "";
+		}
+
+		if (sLink.length > Asc.c_nMaxHyperlinkLength)
+			return null;
 
 		var parentPara	= this.Run.GetParagraph();
 		if (!parentPara || this.Run.Content.length === 0)
@@ -11634,7 +11800,7 @@
 		sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
 		hyperlinkPr.put_Value(sLink);
 		hyperlinkPr.put_ToolTip(sScreenTipText);
-		hyperlinkPr.put_Bookmark(null);
+		hyperlinkPr.put_Bookmark(sBookmarkName);
 
 		oHyperlink = new ApiHyperlink(parentPara.AddHyperlink(hyperlinkPr));
 		StartPos[parentParaDepth].Class.RemoveSelection();
@@ -12782,6 +12948,18 @@
 		return "table";
 	};
 	/**
+	 * Returns an internal ID of the current table.
+	 * @memberof ApiTable
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string}
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetInternalId.js
+	 */
+	ApiTable.prototype.GetInternalId = function()
+	{
+		return this.Table.GetId();
+	};
+	/**
 	 * Returns a number of rows in the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
@@ -13745,6 +13923,18 @@
 		return "tableRow";
 	};
 	/**
+	 * Returns an internal id of the current table row.
+	 * @memberof ApiTableRow
+	 * @typeofeditors ["CDE"]
+	 * @since 9.2.0
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/GetInternalId.js
+	 */
+	ApiTableRow.prototype.GetInternalId = function()
+	{
+		return this.Row.GetId();
+	};
+	/**
 	 * Returns a number of cells in the current row.
 	 * @memberof ApiTableRow
 	 * @typeofeditors ["CDE"]
@@ -14062,6 +14252,18 @@
 	ApiTableCell.prototype.GetClassType = function()
 	{
 		return "tableCell";
+	};
+	/**
+	 * Returns an internal id of the current table cell.
+	 * @memberof ApiTableCell
+	 * @typeofeditors ["CDE"]
+	 * @since 9.2.0
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetInternalId.js
+	 */
+	ApiTableCell.prototype.GetInternalId = function()
+	{
+		return this.Cell.GetId();
 	};
 	/**
 	 * Returns the current cell content.
@@ -20630,13 +20832,19 @@
 	 * Adds a string label to the current inline text content control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sLabel - The label which will be added to the current inline text content control. Can be a positive or negative integer from <b>-2147483647</b> to <b>2147483647</b>.
+	 * @param {number} label - The label which will be added to the current inline text content control. Can be a positive or negative integer from <b>-2147483647</b> to <b>2147483647</b>.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetLabel.js
 	 */
-	ApiInlineLvlSdt.prototype.SetLabel = function(sLabel)
+	ApiInlineLvlSdt.prototype.SetLabel = function(label)
 	{
-		this.Sdt.SetLabel(sLabel);
+		label = AscBuilder.GetNumberParameter(label, null);
+		if (null === label)
+			throwException(new Error("Label must be a number"));
+		else if (label < -2147483647 || label > 2147483647)
+			throwException(new Error("Label must be in range from -2147483647 to 2147483647"));
+		
+		this.Sdt.SetLabel(label);
 		return true;
 	};
 
@@ -20644,7 +20852,7 @@
 	 * Returns the label attribute for the current container.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @returns {string}
+	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetLabel.js
 	 */
 	ApiInlineLvlSdt.prototype.GetLabel = function()
@@ -22190,12 +22398,18 @@
 	 * Sets the label attribute to the current container.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {string} label - The label which will be added to the current container. Can be a positive or negative integer from <b>-2147483647</b> to <b>2147483647</b>.
+	 * @param {number} label - The label which will be added to the current container. Can be a positive or negative integer from <b>-2147483647</b> to <b>2147483647</b>.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/SetLabel.js
 	 */
 	ApiBlockLvlSdt.prototype.SetLabel = function(label)
 	{
+		label = AscBuilder.GetNumberParameter(label, null);
+		if (null === label)
+			throwException(new Error("Label must be a number"));
+		else if (label < -2147483647 || label > 2147483647)
+			throwException(new Error("Label must be in range from -2147483647 to 2147483647"));
+		
 		this.Sdt.SetLabel(label);
 		return true;
 	};
@@ -22204,7 +22418,7 @@
 	 * Returns the label attribute for the current container.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @returns {string}
+	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/GetLabel.js
 	 */
 	ApiBlockLvlSdt.prototype.GetLabel = function()
@@ -23130,6 +23344,18 @@
 		return "form";
 	};
 	/**
+	 * Returns an internal id of the current form.
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @since 9.2.0
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/GetInternalId.js
+	 */
+	ApiFormBase.prototype.GetInternalId = function()
+	{
+		return this.Sdt.GetId();
+	};
+	/**
 	 * Returns a type of the current form.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
@@ -23631,7 +23857,27 @@
 	ApiFormBase.prototype.Delete = function(keepContent)
 	{
 		return executeNoFormLockCheck(function(){
-			return ApiInlineLvlSdt.prototype.Delete.call(this, keepContent);
+			
+			let form = this.Sdt;
+			let mainForm = form.GetMainForm();
+			if (mainForm && mainForm.IsLabeledCheckBox())
+				form = mainForm;
+			
+			if (keepContent && form.IsComplexForm())
+			{
+				if (!this._canBeDeleted())
+					return false;
+				
+				form.GetAllContentControls().forEach(function(cc){
+					cc.RemoveContentControlWrapper();
+				});
+				
+				form.RemoveContentControlWrapper();
+			}
+			else
+			{
+				return ApiInlineLvlSdt.prototype.Delete.call(this, keepContent);
+			}
 		}, this);
 	};
 	
@@ -25209,25 +25455,32 @@
 		else 
 		{
 			let oDocument = this.GetDocument();
+			let logicDocument = oDocument.Document;
+			let docState = logicDocument.SaveDocumentState(false);
+			
 			isTrackRevisions = oDocument && oDocument.IsTrackRevisions();
-			arrSelectedParas = oDocument.Document.GetSelectedParagraphs();
+			arrSelectedParas = logicDocument.GetSelectedParagraphs();
 			if(arrSelectedParas.length <= 0 )
 			{
 				return false;
 			}
+			
 			ReplaceInParas(arrSelectedParas);
 			
 			if (arrSelectedParas[0] && arrSelectedParas[0].Parent)
 				arrSelectedParas[0].Parent.RemoveSelection();
-			else 
-				oDocument.Document.RemoveSelection();
+			else
+				logicDocument.RemoveSelection();
 
 			// вставка оставшихся параграфов из textStrings
 			var oParaParent   = arrSelectedParas[0].Parent;
 			var nIndexToPaste = arrSelectedParas[arrSelectedParas.length - 1].Index + 1;
 			var isPres        = !arrSelectedParas[0].bFromDocument;
 			if (!oParaParent)
+			{
+				logicDocument.LoadDocumentState(docState);
 				return true;
+			}
 
 			for (var nPara = arrSelectedParas.length; nPara < textStrings.length; nPara++)
 			{
@@ -25239,6 +25492,8 @@
 
 				nIndexToPaste++;
 			}
+			
+			logicDocument.LoadDocumentState(docState, true);
 		}
 
 		return true;
@@ -27326,6 +27581,7 @@
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 	
 	ApiDocumentContent.prototype["GetClassType"]             = ApiDocumentContent.prototype.GetClassType;
+	ApiDocumentContent.prototype["GetInternalId"]            = ApiDocumentContent.prototype.GetInternalId;
 	ApiDocumentContent.prototype["GetElementsCount"]         = ApiDocumentContent.prototype.GetElementsCount;
 	ApiDocumentContent.prototype["GetElement"]               = ApiDocumentContent.prototype.GetElement;
 	ApiDocumentContent.prototype["AddElement"]               = ApiDocumentContent.prototype.AddElement;
@@ -27391,6 +27647,7 @@
 	ApiRange.prototype["AddField"]                   = ApiRange.prototype.AddField;
 	
 	ApiDocument.prototype["GetClassType"]                  = ApiDocument.prototype.GetClassType;
+	ApiDocument.prototype["GetInternalId"]                 = ApiDocument.prototype.GetInternalId;
 	ApiDocument.prototype["CreateNewHistoryPoint"]         = ApiDocument.prototype.CreateNewHistoryPoint;
 	ApiDocument.prototype["GetDefaultTextPr"]              = ApiDocument.prototype.GetDefaultTextPr;
 	ApiDocument.prototype["GetDefaultParaPr"]              = ApiDocument.prototype.GetDefaultParaPr;
@@ -27491,11 +27748,18 @@
 	ApiDocument.prototype["MoveCursorToEnd"]               = ApiDocument.prototype.MoveCursorToEnd;
 	ApiDocument.prototype["GoToPage"]                      = ApiDocument.prototype.GoToPage;
 	ApiDocument.prototype["GetDocumentVisitor"]            = ApiDocument.prototype.GetDocumentVisitor;
+	ApiDocument.prototype["EnterText"]                     = ApiDocument.prototype.EnterText;
+	ApiDocument.prototype["InsertParagraphBreak"]          = ApiDocument.prototype.InsertParagraphBreak;
+	ApiDocument.prototype["MoveCursorLeft"]                = ApiDocument.prototype.MoveCursorLeft;
+	ApiDocument.prototype["MoveCursorRight"]               = ApiDocument.prototype.MoveCursorRight;
+	ApiDocument.prototype["MoveCursorUp"]                  = ApiDocument.prototype.MoveCursorUp;
+	ApiDocument.prototype["MoveCursorDown"]                = ApiDocument.prototype.MoveCursorDown;
 	
 	
 	ApiParagraph.prototype["GetClassType"]           = ApiParagraph.prototype.GetClassType;
 	ApiParagraph.prototype["SetParaId"]              = ApiParagraph.prototype.SetParaId;
 	ApiParagraph.prototype["GetParaId"]              = ApiParagraph.prototype.GetParaId;
+	ApiParagraph.prototype["GetInternalId"]          = ApiParagraph.prototype.GetInternalId;
 	ApiParagraph.prototype["AddText"]                = ApiParagraph.prototype.AddText;
 	ApiParagraph.prototype["AddPageBreak"]           = ApiParagraph.prototype.AddPageBreak;
 	ApiParagraph.prototype["AddLineBreak"]           = ApiParagraph.prototype.AddLineBreak;
@@ -27660,6 +27924,7 @@
 	ApiSection.prototype["GetStartPageNumber"]       = ApiSection.prototype.GetStartPageNumber;
 	
 	ApiTable.prototype["GetClassType"]               = ApiTable.prototype.GetClassType;
+	ApiTable.prototype["GetInternalId"]              = ApiTable.prototype.GetInternalId;
 	ApiTable.prototype["SetJc"]                      = ApiTable.prototype.SetJc;
 	ApiTable.prototype["GetRowsCount"]               = ApiTable.prototype.GetRowsCount;
 	ApiTable.prototype["GetRow"]                     = ApiTable.prototype.GetRow;
@@ -27701,6 +27966,7 @@
 	ApiTable.prototype["AddCaption"]                 = ApiTable.prototype.AddCaption;
 
 	ApiTableRow.prototype["GetClassType"]            = ApiTableRow.prototype.GetClassType;
+	ApiTableRow.prototype["GetInternalId"]           = ApiTableRow.prototype.GetInternalId;
 	ApiTableRow.prototype["GetCellsCount"]           = ApiTableRow.prototype.GetCellsCount;
 	ApiTableRow.prototype["GetCell"]                 = ApiTableRow.prototype.GetCell;
 	ApiTableRow.prototype["GetIndex"]           	 = ApiTableRow.prototype.GetIndex;
@@ -27716,6 +27982,7 @@
 	ApiTableRow.prototype["SetBackgroundColor"]      = ApiTableRow.prototype.SetBackgroundColor;
 
 	ApiTableCell.prototype["GetClassType"]             = ApiTableCell.prototype.GetClassType;
+	ApiTableCell.prototype["GetInternalId"]            = ApiTableCell.prototype.GetInternalId;
 	ApiTableCell.prototype["GetContent"]               = ApiTableCell.prototype.GetContent;
 	ApiTableCell.prototype["GetIndex"]    			   = ApiTableCell.prototype.GetIndex;
 	ApiTableCell.prototype["GetRowIndex"]    		   = ApiTableCell.prototype.GetRowIndex;
@@ -28227,6 +28494,7 @@
 	
 	
 	ApiFormBase.prototype["GetClassType"]       = ApiFormBase.prototype.GetClassType;
+	ApiFormBase.prototype["GetInternalId"]      = ApiFormBase.prototype.GetInternalId;
 	ApiFormBase.prototype["GetFormType"]        = ApiFormBase.prototype.GetFormType;
 	ApiFormBase.prototype["GetFormKey"]         = ApiFormBase.prototype.GetFormKey;
 	ApiFormBase.prototype["SetFormKey"]         = ApiFormBase.prototype.SetFormKey;
@@ -28558,6 +28826,7 @@
 	window['AscBuilder'].GetIntParameter        = GetIntParameter;
 	window['AscBuilder'].GetArrayParameter      = GetArrayParameter;
 	window['AscBuilder'].executeNoFormLockCheck = executeNoFormLockCheck;
+	window['AscBuilder'].throwException			= throwException;
 
 	window['AscBuilder'].GetApiDrawings         = GetApiDrawings;
 	window['AscBuilder'].GetApiDrawing          = GetApiDrawing;

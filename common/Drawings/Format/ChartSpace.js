@@ -4875,7 +4875,6 @@ function(window, undefined) {
 		this.recalcInfo.recalculateUpDownBars = true;
 		this.recalcInfo.recalculateLegend = true;
 		this.recalcInfo.recalculateReferences = true;
-		this.recalcInfo.recalculateFormulas = true;
 		this.chartObj = null;
 		this.addToRecalculate();
 	};
@@ -9119,14 +9118,20 @@ function(window, undefined) {
 					let oSeries = aSeries[nSer];
 					var compiled_brush = new AscFormat.CUniFill();
 					compiled_brush.merge(base_fills[oSeries.getIdx()]);
-					if(oSeries.isChartEx()) {
+
+					if (oSeries.isChartEx()) {
 						if (oChartSpace.chartStyle && oChartSpace.chartColors) {
-							let oSpPr = oChartSpace.getSpPrFormStyleEntry(oChartSpace.chartStyle.dataPoint, oChartSpace.chartColors.generateColors(aSeries.length), oSeries.idx);
-							if(oSpPr && oSpPr.Fill) {
+							let oSpPr = oChartSpace.getSpPrFormStyleEntry(
+								oChartSpace.chartStyle.dataPoint,
+								oChartSpace.chartColors.generateColors(aSeries.length),
+								oSeries.getIdx()
+							);
+							if (oSpPr && oSpPr.Fill) {
 								compiled_brush.merge(oSpPr.Fill);
 							}
 						}
 					}
+
 					if (oSeries.spPr && oSeries.spPr.Fill) {
 						compiled_brush.merge(oSeries.spPr.Fill);
 					}
@@ -9157,14 +9162,20 @@ function(window, undefined) {
 						compiled_line.Fill.merge(style.line2[0]);
 					else if (base_line_fills)
 						compiled_line.Fill.merge(base_line_fills[oSeries.idx]);
-					if(oSeries.isChartEx()) {
+
+					if (oSeries.isChartEx()) {
 						if (oChartSpace.chartStyle && oChartSpace.chartColors) {
-							let oSpPr = oChartSpace.getSpPrFormStyleEntry(oChartSpace.chartStyle.dataPoint, oChartSpace.chartColors.generateColors(aSeries.length), oSeries.idx);
-							if(oSpPr && oSpPr.ln) {
+							let oSpPr = oChartSpace.getSpPrFormStyleEntry(
+								oChartSpace.chartStyle.dataPoint,
+								oChartSpace.chartColors.generateColors(aSeries.length),
+								oSeries.getIdx()
+							);
+							if (oSpPr && oSpPr.ln) {
 								compiled_line.merge(oSpPr.ln);
 							}
 						}
 					}
+
 					if (oSeries.spPr && oSeries.spPr.ln) {
 						compiled_line.merge(oSeries.spPr.ln);
 					}

@@ -57,14 +57,15 @@
 		this.ulTrailSpace     = false;
 		this.activePermRanges = false;
 		
-		this.Strikeout  = new CParaDrawingRangeHorizontalLines();
-		this.DStrikeout = new CParaDrawingRangeHorizontalLines();
-		this.Underline  = new CParaDrawingRangeHorizontalLines();
-		this.Spelling   = new CParaDrawingRangeHorizontalLines();
-		this.DUnderline = new CParaDrawingRangeHorizontalLines();
-		this.RunReview  = new CParaDrawingRangeLines();
-		this.CollChange = new CParaDrawingRangeLines();
-		this.FormBorder = new CParaDrawingRangeLines();
+		this.Strikeout   = new CParaDrawingRangeHorizontalLines();
+		this.DStrikeout  = new CParaDrawingRangeHorizontalLines();
+		this.Underline   = new CParaDrawingRangeHorizontalLines();
+		this.Spelling    = new CParaDrawingRangeHorizontalLines();
+		this.DUnderline  = new CParaDrawingRangeHorizontalLines();
+		this.RunReview   = new CParaDrawingRangeLines();
+		this.CollChange  = new CParaDrawingRangeLines();
+		this.FormBorder  = new CParaDrawingRangeLines();
+		this.CustomLines = {};
 		
 		this.Page  = 0;
 		this.Line  = 0;
@@ -111,6 +112,11 @@
 		
 		this.annotationMarks = [];
 		
+		this.customMarks        = null;
+		this.currentCustomMarks = [];
+		this.customMarkInRun    = null;
+		this.customMarkPos      = 0;
+		
 		this.bidiFlow = new AscWord.BidiFlow(this);
 	}
 	ParagraphLineDrawState.prototype.init = function()
@@ -123,6 +129,8 @@
 		{
 			this.ulTrailSpace     = this.logicDocument.IsUnderlineTrailSpace();
 			this.activePermRanges = this.logicDocument.IsEditCommentsMode() || this.logicDocument.IsViewModeInEditor();
+			
+			this.customMarks = this.logicDocument.GetCustomMarks();
 		}
 	};
 	ParagraphLineDrawState.prototype.resetPage = function(page)
@@ -154,6 +162,8 @@
 		this.CollChange.Clear();
 		this.DUnderline.Clear();
 		this.FormBorder.Clear();
+		
+		this.CustomLines = {};
 	};
 	ParagraphLineDrawState.prototype.beginRange = function(range, x, spaces)
 	{
@@ -185,17 +195,20 @@
 		if (para_Drawing === element.Type && !element.IsInline())
 			return;
 		
-		this.bidiFlow.add([element, run, inRunPos, misspell, this.annotationMarks], element.getBidiType());
+		this.checkCustomMarks(inRunPos);
+		
+		this.bidiFlow.add([element, run, inRunPos, misspell, this.annotationMarks, this.currentCustomMarks.length ? this.currentCustomMarks.slice() : null], element.getBidiType());
 		
 		this.annotationMarks = [];
 	};
 	ParagraphLineDrawState.prototype.handleBidiFlow = function(data, direction)
 	{
-		let element  = data[0];
-		let run      = data[1];
-		let inRunPos = data[2];
-		let misspell = data[3];
-		let marks    = data[4];
+		let element     = data[0];
+		let run         = data[1];
+		let inRunPos    = data[2];
+		let misspell    = data[3];
+		let marks       = data[4];
+		let customMarks = data[5];
 		
 		this.handleRun(run);
 		
@@ -265,6 +278,9 @@
 		if (misspell)
 			this.Spelling.Add(startX, endX, AscWord.BLACK_COLOR);
 		
+		if (customMarks)
+			this.addCustomMarkLines(startX, endX, customMarks);
+		
 		if (this.reviewPrColor)
 			this.RunReview.Add(0, 0, startX, endX, 0, this.reviewPrColor.r, this.reviewPrColor.g, this.reviewPrColor.b, {RunPr: this.textPr});
 		
@@ -309,6 +325,62 @@
 		}
 		
 		return nCounter;
+	};
+	ParagraphLineDrawState.prototype.getStartedCustomMarks = function()
+	{
+		if (!this.customMarks)
+			return [];
+		
+		return this.customMarks.getStartedMarks(this.Paragraph, this.CurPos);
+	};
+	ParagraphLineDrawState.prototype.initCustomMarks = function(run, startPos)
+	{
+		if (!this.customMarks)
+			return;
+		
+		this.currentCustomMarks = this.customMarks.getStartedMarks(this.Paragraph, this.CurPos);
+		this.customMarkInRun = this.customMarks.flatRunMarks(run.GetId());
+		this.customMarkPos = 0;
+		
+		if (this.customMarkInRun)
+		{
+			while (this.customMarkPos < this.customMarkInRun.length && startPos > this.customMarkInRun[this.customMarkPos].getPos())
+			{
+				++this.customMarkPos;
+			}
+		}
+	};
+	ParagraphLineDrawState.prototype.checkCustomMarks = function(pos)
+	{
+		if (!this.customMarkInRun)
+			return this.currentCustomMarks;
+		
+		while (this.customMarkPos < this.customMarkInRun.length && pos >= this.customMarkInRun[this.customMarkPos].getPos())
+		{
+			let mark = this.customMarkInRun[this.customMarkPos];
+			if (mark.isStart())
+			{
+				this.currentCustomMarks.push(mark);
+			}
+			else
+			{
+				let handlerId = mark.getHandlerId();
+				let rangeId   = mark.getRangeId();
+				for (let i = 0; i < this.currentCustomMarks.length; ++i)
+				{
+					let _mark = this.currentCustomMarks[i];
+					if (handlerId === _mark.getHandlerId() && rangeId === _mark.getRangeId())
+					{
+						if (i === this.currentCustomMarks)
+							this.currentCustomMarks.length--;
+						else
+							this.currentCustomMarks.splice(i, 1);
+						break;
+					}
+				}
+			}
+			++this.customMarkPos;
+		}
 	};
 	ParagraphLineDrawState.prototype.GetLogicDocument = function()
 	{
@@ -628,6 +700,39 @@
 			return;
 		
 		this.Underline.Add(this.X, this.X + element.GetWidthVisible(), this.color, undefined, this.textPr);
+	};
+	ParagraphLineDrawState.prototype.addCustomMarkLines = function(startX, endX, customMarks)
+	{
+		for (let i = 0; i < customMarks.length; ++i)
+		{
+			let mark      = customMarks[i];
+			let handlerId = mark.getHandlerId();
+			let rangeId   = mark.getRangeId();
+			
+			if (!this.CustomLines[handlerId])
+				this.CustomLines[handlerId] = {};
+			
+			if (!this.CustomLines[handlerId][rangeId])
+				this.CustomLines[handlerId][rangeId] = new CParaDrawingRangeHorizontalLines();
+			
+			this.CustomLines[handlerId][rangeId].Add(startX, endX, {r : 0, g : 0, b : 0});
+		}
+	};
+	ParagraphLineDrawState.prototype.drawCustomMarks = function(graphics, y, h, baseLineY)
+	{
+		for (let handlerId in this.CustomLines)
+		{
+			for (let rangeId in this.CustomLines[handlerId])
+			{
+				let lines   = this.CustomLines[handlerId][rangeId];
+				let element = lines.getNext();
+				while (element)
+				{
+					graphics.drawCustomRange(handlerId, rangeId, element.x0, y, element.x1 - element.x0, h, baseLineY);
+					element = lines.getNext();
+				}
+			}
+		}
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.ParagraphLineDrawState = ParagraphLineDrawState;

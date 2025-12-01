@@ -1438,12 +1438,8 @@ CDocumentContentElementBase.prototype.getDrawingDocument = function()
  */
 CDocumentContentElementBase.prototype.getSpelling = function()
 {
-	let oLogicDocument = this.GetLogicDocument();
-	if(oLogicDocument)
-	{
-		return oLogicDocument.Spelling;
-	}
-	return null;
+	let logicDocument = this.GetLogicDocument();
+	return logicDocument ? logicDocument.Spelling : null;
 };
 /**
  * @returns {boolean}
@@ -1454,6 +1450,14 @@ CDocumentContentElementBase.prototype.IsSpellingUse = function()
 	if(!oSpelling)
 		return false;
 	return oSpelling.Use;
+};
+/**
+ * @returns {?AscWord.CustomTextAnnotator}
+ */
+CDocumentContentElementBase.prototype.getCustomTextAnnotator = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	return logicDocument && logicDocument.IsDocumentEditor() ? logicDocument.CustomTextAnnotator : null;
 };
 /**
  * Получаем настройки рамки для данного элемента

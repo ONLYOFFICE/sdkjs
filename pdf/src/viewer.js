@@ -3622,7 +3622,7 @@
 				delete page.Rotate;
 
 			this.resize();
-			this.thumbnails && this.thumbnails.resize();
+			this.thumbnails && this.thumbnails.setNeedResize(true);
 		};
 
 		this.getPageRotate = function(pageNum)
@@ -4342,7 +4342,7 @@
 		}
 		
 		if (this.thumbnails)
-			this.thumbnails.resize();
+			this.thumbnails.setNeedResize(true);
 		
 		if (true !== isDisablePaint)
 			this.timerSync();
@@ -4680,9 +4680,9 @@
 			let nStartPos = oMemory.GetCurPosition();
 			oMemory.Skip(4);
 			
-			let nPage = oPageInfo.GetIndex();
+			let sPageId = oPageInfo.GetId();
 			let aPageRedactsData = oDoc.appliedRedactsData.filter(function(data) {
-				return nPage == data.page;
+				return sPageId == data.pageId;
 			});
 
 			oMemory.WriteLong(aPageRedactsData.length);
@@ -5019,9 +5019,9 @@
 			let nStartPos = oMemory.GetCurPosition();
 			oMemory.Skip(4);
 			
-			let nPage = oPageInfo.GetIndex();
+			let sPageId = oPageInfo.GetId();
 			let aPageRedactsData = oDoc.appliedRedactsData.filter(function(data) {
-				return nPage == data.page;
+				return sPageId == data.pageId;
 			});
 
 			oMemory.WriteLong(aPageRedactsData.length);

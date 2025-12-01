@@ -1411,7 +1411,7 @@ BinaryChartWriter.prototype.WriteCT_extLst = function (oVal) {
 			}
 		});
 	}
-	BinaryChartWriter.prototype.WriteCT_ChartXLSX = function (oVal, oCopyPaste) {
+	BinaryChartWriter.prototype.WriteCT_ChartXLSX = function (oVal, oCopyPaste, bSkipWriteXLSX) {
 		const oThis = this;
 		let bWriteExternalReference = true;
 		if (oCopyPaste && oCopyPaste.isExcel)
@@ -1429,7 +1429,7 @@ BinaryChartWriter.prototype.WriteCT_extLst = function (oVal) {
 				this.WriteCT_PortalData(wb.oApi.DocInfo.ReferenceData);
 				bWriteExternalReference = false;
 			}
-			const arrXLSX = oCopyPaste.getCachedWorkbookBinaryData();
+			const arrXLSX = bSkipWriteXLSX ? null : oCopyPaste.getCachedWorkbookBinaryData();
 			if (arrXLSX && arrXLSX.length)
 			{
 				this.bs.WriteItem(c_oserct_chartspaceXLSX, function () {
@@ -1439,11 +1439,11 @@ BinaryChartWriter.prototype.WriteCT_extLst = function (oVal) {
 		}
 		else
 		{
-			let XLSX = AscCommon.g_oBinaryCacheManager.getBinary(oVal.XLSXId);
+			let XLSX = !bSkipWriteXLSX && AscCommon.g_oBinaryCacheManager.getBinary(oVal.XLSXId);
 			if (oVal.externalReference && oVal.externalReference.Id) {
 				oThis.memory.WriteByte(c_oserct_chartspaceXLSXEXTERNAL);
 				oThis.memory.WriteString2(AscCommonExcel.encodeXmlPath(oVal.externalReference.Id));
-			} else if (!oVal.isWorkbookChart() && !XLSX) {
+			} else if (!bSkipWriteXLSX && !oVal.isWorkbookChart() && !XLSX) {
 				XLSX = oVal.getXLSXFromCache();
 			}
 			if (XLSX) {
@@ -1455,9 +1455,9 @@ BinaryChartWriter.prototype.WriteCT_extLst = function (oVal) {
 		}
 		return bWriteExternalReference;
 	};
-BinaryChartWriter.prototype.WriteCT_ChartSpace = function (oVal, oCopyPaste) {
+BinaryChartWriter.prototype.WriteCT_ChartSpace = function (oVal, oCopyPaste, bSkipWriteXLSX) {
     const oThis = this;
-		const bWriteExternalReference = this.WriteCT_ChartXLSX(oVal, oCopyPaste);
+		const bWriteExternalReference = this.WriteCT_ChartXLSX(oVal, oCopyPaste, bSkipWriteXLSX);
 
     if (null != oVal.date1904) {
         this.bs.WriteItem(c_oserct_chartspaceDATE1904, function () {
@@ -1566,9 +1566,9 @@ BinaryChartWriter.prototype.WriteCT_ChartSpace = function (oVal, oCopyPaste) {
         });
     }
 };
-BinaryChartWriter.prototype.WriteCT_ChartExSpace = function (oVal, oCopyPaste) {
+BinaryChartWriter.prototype.WriteCT_ChartExSpace = function (oVal, oCopyPaste, bSkipWriteXLSX) {
     var oThis = this;
-	const bWriteExternalReference = this.WriteCT_ChartXLSX(oVal, oCopyPaste);
+	const bWriteExternalReference = this.WriteCT_ChartXLSX(oVal, oCopyPaste, bSkipWriteXLSX);
     if(oVal.chartData !== null) {
         this.bs.WriteItem(c_oserct_chartExSpaceCHARTDATA, function() {
            oThis.WriteCT_ChartData(oVal.chartData, oCopyPaste);
@@ -8316,11 +8316,12 @@ BinaryChartReader.prototype.ReadCT_Layout = function (type, length, val) {
     var res = c_oSerConstants.ReadOk;
     var oThis = this;
     if (c_oserct_layoutMANUALLAYOUT === type) {
-        var oNewVal = new AscFormat.CLayout();
-        res = this.bcr.Read1(length, function (t, l) {
-            return oThis.ReadCT_ManualLayout(t, l, oNewVal);
-        });
-        val.setLayout(oNewVal);
+		// var oNewVal = new AscFormat.CLayout();
+		const oVal = val.layout || new AscFormat.CLayout();
+		res = this.bcr.Read1(length, function (t, l) {
+			return oThis.ReadCT_ManualLayout(t, l, oVal);
+		});
+		val.setLayout(oVal);
     }
     else if (c_oserct_layoutEXTLST === type) {
         var oNewVal;
@@ -8332,7 +8333,8 @@ BinaryChartReader.prototype.ReadCT_Layout = function (type, length, val) {
     }
     else
         res = c_oSerConstants.ReadUnknown;
-    return res;
+
+	return res;
 };
 BinaryChartReader.prototype.ReadCT_ManualLayout = function (type, length, val) {
     var res = c_oSerConstants.ReadOk;
@@ -10369,19 +10371,35 @@ BinaryChartReader.prototype.ReadCT_DLbl = function (type, length, val) {
     return res;
 };
 BinaryChartReader.prototype.ReadCT_DLblExt = function(type, length, val) {
-
 	let res = c_oSerConstants.ReadOk;
-	let oThis = this;
-	if (c_oserct_showDataLabelsRange === type) {
-		let oNewVal = { m_val: null };
-		res = this.bcr.Read1(length, function (t, l) {
-			return oThis.ReadCT_Boolean(t, l, oNewVal);
-		});
-		if (null != oNewVal.m_val)
-			val.setShowDlblsRange(oNewVal.m_val);
+	const oThis = this;
+	switch (type) {
+		case c_oserct_showDataLabelsRange: {
+			let oNewVal = { m_val: null };
+
+			res = this.bcr.Read1(length, function (t, l) {
+				return oThis.ReadCT_Boolean(t, l, oNewVal);
+			});
+
+			if (null != oNewVal.m_val) {
+				val.setShowDlblsRange(oNewVal.m_val);
+			}
+			break;
+		}
+
+		case c_oserct_dlblLAYOUT: {
+			res = this.bcr.Read1(length, function (t, l) {
+				return oThis.ReadCT_Layout(t, l, val);
+			});
+			break;
+		}
+
+		default: {
+			res = c_oSerConstants.ReadUnknown;
+			break;
+		}
 	}
-	else
-		res = c_oSerConstants.ReadUnknown;
+
 	return res;
 };
 BinaryChartReader.prototype.ReadCT_DLblPos = function (type, length, val) {
@@ -13695,23 +13713,7 @@ BinaryChartReader.prototype.ReadCT_ChartEx = function (type, length, val) {
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_ChartExPlotArea(t, l, oNewVal);
         });
-        if (oNewVal && oNewVal.axId && Array.isArray(oNewVal.axId)) {
-            for (let i = 0; i < oNewVal.axId.length; i++) {
-                const axis = oNewVal.axId[i];
-                const start = (oNewVal.axId.length > 1) ? i : i + 1;
-                axis.initializeAxPos(start);
-            }
-            if (oNewVal.axId.length === 3) {
-                oNewVal.axId[0].setCrossAx(oNewVal.axId[1]);
-                oNewVal.axId[1].setCrossAx(oNewVal.axId[0]);
-                oNewVal.axId[2].setCrossAx(oNewVal.axId[0]);
-            } else if (oNewVal.axId.length === 2) {
-                oNewVal.axId[0].setCrossAx(oNewVal.axId[1]);
-                oNewVal.axId[1].setCrossAx(oNewVal.axId[0]);
-            } else if (oNewVal.axId.length === 1) {
-                oNewVal.axId[0].setCrossAx(oNewVal.axId[0]);
-            }
-        }
+        oNewVal.initializeChartAxes();
         val.setPlotArea(oNewVal);
     }
     else if (c_oserct_chartExChartTITLE === type)

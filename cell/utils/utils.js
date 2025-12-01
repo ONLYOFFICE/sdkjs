@@ -3080,7 +3080,33 @@
 			return this.hyperlinkModel.getHyperlinkType();
 		};
 		asc_CHyperlink.prototype.asc_getHyperlinkUrl = function () {
-			return this.hyperlinkModel.Hyperlink;
+			let location = this.hyperlinkModel.Location;
+			let res;
+			if (location && this.hyperlinkModel.Hyperlink) {
+				let _baseLink;
+				let hashIndex = this.hyperlinkModel.Hyperlink.indexOf("#");
+				if (hashIndex !== -1) {
+					_baseLink = this.hyperlinkModel.Hyperlink.substring(0, hashIndex);
+				} else {
+					_baseLink = this.hyperlinkModel.Hyperlink;
+				}
+
+				if (_baseLink.length > 0) {
+					let protocolIndex = _baseLink.indexOf("://");
+					if (protocolIndex !== -1) {
+						let afterProtocol = _baseLink.substring(protocolIndex + 3);
+						let slashIndex = afterProtocol.indexOf("/");
+						if (slashIndex === -1) {
+							_baseLink = _baseLink + "/";
+						}
+					}
+				}
+
+				res = _baseLink + "#" + location;
+			} else if (this.hyperlinkModel.Hyperlink) {
+				res = this.hyperlinkModel.Hyperlink;
+			}
+			return res;
 		};
 		asc_CHyperlink.prototype.asc_getTooltip = function () {
 			return this.hyperlinkModel.Tooltip;

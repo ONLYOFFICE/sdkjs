@@ -800,7 +800,7 @@ function handleGroup(drawing, drawingObjectsController, e, x, y, group, pageInde
                                             content.UpdateCursorType(tx, ty, 0);
                                         }
                                     }
-                                    return {objectId: drawing.Get_Id(), cursorType: "text"};
+                                    return {objectId: drawing.Get_Id(), cursorType: "text", content: title.getDocContent ? title.getDocContent() : null};
                                 }
                             }
                         }
@@ -1622,7 +1622,7 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                                                     content.UpdateCursorType(tx, ty, 0);
                                                 }
                                             }
-                                            return {objectId: drawing.Get_Id(), cursorType: "text", title: oDLbl};
+                                            return {objectId: drawing.Get_Id(), cursorType: "text", title: oDLbl, content: oDLbl.getDocContent()};
                                         }
                                     }
                                 }
@@ -1712,7 +1712,7 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                                         content.UpdateCursorType(tx, ty, 0);
                                     }
                                 }
-                                return {objectId: drawing.Get_Id(), cursorType: "text", title: oTrendlineLbl};
+                                return {objectId: drawing.Get_Id(), cursorType: "text", title: oTrendlineLbl, content: oTrendlineLbl.getDocContent()};
                             }
                         }
                     }
@@ -1828,7 +1828,7 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                             content.UpdateCursorType(tx, ty, 0);
                         }
                     }
-                    return {objectId: drawing.Get_Id(), cursorType: "text", title: title};
+                    return {objectId: drawing.Get_Id(), cursorType: "text", title: title, content: title.getDocContent()};
                 }
             }
         }
@@ -2286,7 +2286,7 @@ function handleFloatTable(drawing, drawingObjectsController, e, x, y, group, pag
             else
             {
                 drawing.updateCursorType(x, y, e);
-                return {objectId: drawing.Get_Id(), cursorType: "text", updated: true};
+                return {objectId: drawing.Get_Id(), cursorType: "text", updated: true, content: drawing.getDocContent && drawing.getDocContent()};
             }
         }
     }

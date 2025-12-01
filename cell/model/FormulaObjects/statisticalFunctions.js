@@ -1311,7 +1311,12 @@ function (window, undefined) {
 
 	function skew(x, bSkewp) {
 
-		var sumSQRDeltaX = 0, _x = 0, xLength = 0, sumSQRDeltaXDivstandDev = 0, i;
+		let sumSQRDeltaX = 0, _x = 0, xLength = 0, sumSQRDeltaXDivstandDev = 0, i;
+
+		if (x.length <= 2) {
+			return new cError(cErrorType.division_by_zero);
+		}
+
 		for (i = 0; i < x.length; i++) {
 
 			if (x[i] instanceof cNumber) {
@@ -1319,10 +1324,6 @@ function (window, undefined) {
 				xLength++;
 			}
 
-		}
-
-		if (xLength <= 2) {
-			return new cError(cErrorType.not_available);
 		}
 
 		_x /= xLength;
@@ -1335,11 +1336,15 @@ function (window, undefined) {
 
 		}
 
-		var standDev;
+		let standDev;
 		if (bSkewp) {
 			standDev = Math.sqrt(sumSQRDeltaX / (xLength));
 		} else {
 			standDev = Math.sqrt(sumSQRDeltaX / (xLength - 1));
+		}
+
+		if (!Number.isFinite(standDev)) {
+			return new cError(cErrorType.division_by_zero);
 		}
 
 		for (i = 0; i < x.length; i++) {
@@ -1348,14 +1353,22 @@ function (window, undefined) {
 				sumSQRDeltaXDivstandDev += Math.pow((x[i].getValue() - _x) / standDev, 3);
 			}
 
+			if (!Number.isFinite(sumSQRDeltaXDivstandDev)) {
+				return new cError(cErrorType.division_by_zero);
+			}
+
 		}
 
-		var res;
+		let res;
 		if (bSkewp) {
 			res = sumSQRDeltaXDivstandDev / xLength;
 		} else {
 			res = xLength / (xLength - 1) / (xLength - 2) * sumSQRDeltaXDivstandDev;
 		}
+
+		// if (res === 0) {
+		// 	return new cError(cErrorType.division_by_zero);
+		// }
 
 		return new cNumber(res);
 	}
@@ -2840,10 +2853,18 @@ function (window, undefined) {
 
 	ScETSForecastCalculation.prototype.PreprocessDataRange =
 		function (rMatX, rMatY, rSmplInPrd, bDataCompletion, nAggregation, rTMat, eETSType) {
-			var nColMatX = rMatX.length;
-			var nRowMatX = rMatX[0].length;
-			var nColMatY = rMatY.length;
-			var nRowMatY = rMatY[0].length;
+			if (rMatX.length === 0 || rMatY.length === 0) {
+				return new cError(cErrorType.division_by_zero);
+			}
+
+			let nColMatX = rMatX.length;
+			let nRowMatX = rMatX[0] && rMatX[0].length;
+			let nColMatY = rMatY.length;
+			let nRowMatY = rMatY[0] && rMatY[0].length;
+
+			if (nRowMatX === undefined || nRowMatY === undefined) {
+				return new cError(cErrorType.division_by_zero);
+			}
 
 			if (nColMatX !== nColMatY || nRowMatX !== nRowMatY && !checkNumericMatrix(rMatX) ||
 				!checkNumericMatrix(rMatY)) {
@@ -2854,8 +2875,8 @@ function (window, undefined) {
 			this.bAdditive = /*( eETSType == etsAdd || eETSType == etsPIAdd || eETSType == etsStatAdd )*/true;
 
 			this.mnCount = rMatX.length;
-			var maRange = this.maRange;
-			for (var i = 0; i < this.mnCount; i++) {
+			let maRange = this.maRange;
+			for (let i = 0; i < this.mnCount; i++) {
 				maRange.push({X: rMatX[i][0].value, Y: rMatY[i][0].value});
 			}
 
@@ -2863,22 +2884,18 @@ function (window, undefined) {
 				return a.X - b.X;
 			});
 
-			if (rTMat) {
-				if (/*eETSType != etsPIAdd && eETSType != etsPIMult*/true) {
-					if (rTMat[0][0].getValue() < maRange[0].X) {
-						return new cError(cErrorType.not_numeric);
-					}
-				} else {
-					if (rTMat[0] < maRange[this.mnCount - 1].X) {
-						return new cError(cErrorType.wrong_value_type);
-					}
+			/*eETSType != etsPIAdd && eETSType != etsPIMult*/
+			if (rTMat && rTMat[0] && rTMat[0][0]) {
+				let rTMatFValue = rTMat[0][0].getValue();
+				if (rTMatFValue < maRange[0].X) {
+					return new cError(cErrorType.not_numeric);
 				}
 			}
 
-			var aDate = cDate.prototype.getDateFromExcel(maRange[0].X);
+			let aDate = cDate.prototype.getDateFromExcel(maRange[0].X);
 			this.mnMonthDay = aDate.getDate();
-			for (var i = 1; i < this.mnCount && this.mnMonthDay; i++) {
-				var aDate1 = cDate.prototype.getDateFromExcel(maRange[i].X);
+			for (let i = 1; i < this.mnCount && this.mnMonthDay; i++) {
+				let aDate1 = cDate.prototype.getDateFromExcel(maRange[i].X);
 				if (aDate !== aDate1) {
 					if (aDate1.getDate() !== this.mnMonthDay) {
 						this.mnMonthDay = 0;
@@ -2888,22 +2905,22 @@ function (window, undefined) {
 
 			this.mfStepSize = Number.MAX_VALUE;
 			if (this.mnMonthDay) {
-				for (var i = 0; i < this.mnCount; i++) {
-					var aDate = cDate.prototype.getDateFromExcel(maRange[i].X);
+				for (let i = 0; i < this.mnCount; i++) {
+					aDate = cDate.prototype.getDateFromExcel(maRange[i].X);
 					maRange[i].X = aDate.getUTCFullYear() * 12 + aDate.getMonth();
 				}
 			}
 
-			for (var i = 1; i < this.mnCount; i++) {
+			for (let i = 1; i < this.mnCount; i++) {
 
-				var fStep = maRange[i].X - maRange[i - 1].X;
+				let fStep = maRange[i].X - maRange[i - 1].X;
 				if (fStep === 0.0) {
 					if (nAggregation === 0) {
 						return new cError(cErrorType.wrong_value_type);
 					}
 
-					var fTmp = maRange[i - 1].Y;
-					var nCounter = 1;
+					let fTmp = maRange[i - 1].Y;
+					let nCounter = 1;
 					switch (nAggregation) {
 						case 1 : // AVERAGE (default)
 							while (i < this.mnCount && maRange[i].X === maRange[i - 1].X) {
@@ -2943,7 +2960,7 @@ function (window, undefined) {
 
 						case 5 : // MEDIAN
 
-							var aTmp = [];
+							let aTmp = [];
 							aTmp.push(maRange[i - 1].Y);
 							while (i < this.mnCount && maRange[i].X === maRange[i - 1].X) {
 								aTmp.push(maRange[i].Y);
@@ -2987,9 +3004,9 @@ function (window, undefined) {
 			}
 
 			// step must be constant (or gap multiple of step)
-			var bHasGap = false;
-			for (var i = 1; i < this.mnCount && !bHasGap; i++) {
-				var fStep = maRange[i].X - maRange[i - 1].X;
+			let bHasGap = false;
+			for (let i = 1; i < this.mnCount && !bHasGap; i++) {
+				let fStep = maRange[i].X - maRange[i - 1].X;
 
 				if (fStep != this.mfStepSize) {
 					if (Math.fmod(fStep, this.mfStepSize) !== 0.0) {
@@ -3000,16 +3017,16 @@ function (window, undefined) {
 			}
 
 			if (bHasGap) {
-				var nMissingXCount = 0;
-				var fOriginalCount = this.mnCount;
+				let nMissingXCount = 0;
+				let fOriginalCount = this.mnCount;
 				if (this.mnMonthDay) {
 					aDate = cDate.prototype.getDateFromExcel(maRange[0].X);
 				}
 
-				for (var i = 1; i < this.mnCount; i++) {
-					var fDist;
+				for (let i = 1; i < this.mnCount; i++) {
+					let fDist;
 					if (this.mnMonthDay) {
-						var aDate1 = cDate.prototype.getDateFromExcel(maRange[i].X);
+						let aDate1 = cDate.prototype.getDateFromExcel(maRange[i].X);
 						fDist = 12 * (aDate1.getUTCFullYear() - aDate.getUTCFullYear()) +
 							(aDate1.getMonth() - aDate.getMonth());
 						aDate = aDate1;
@@ -3019,10 +3036,10 @@ function (window, undefined) {
 
 					if (fDist > this.mfStepSize) {
 						// gap, insert missing data points
-						var fYGap = (maRange[i].Y + maRange[i - 1].Y) / 2.0;
-						for (var fXGap = maRange[i - 1].X + this.mfStepSize; fXGap < maRange[i].X;
+						let fYGap = (maRange[i].Y + maRange[i - 1].Y) / 2.0;
+						for (let fXGap = maRange[i - 1].X + this.mfStepSize; fXGap < maRange[i].X;
 							 fXGap += this.mfStepSize) {
-							var newAddElem = {X: fXGap, Y: (bDataCompletion ? fYGap : 0.0)};
+							let newAddElem = {X: fXGap, Y: (bDataCompletion ? fYGap : 0.0)};
 							maRange.splice(i, 1, newAddElem);
 							i++;
 							this.mnCount++;
@@ -4007,6 +4024,8 @@ function (window, undefined) {
 					count++;
 				} else if (cElementType.string === _argV.type) {
 					count++;
+				} else if (cElementType.error === _argV.type) {
+					return _argV;
 				}
 			} else if (cElementType.cellsRange === _arg.type || cElementType.cellsRange3D === _arg.type) {
 				var _argAreaValue = _arg.getValue();
@@ -4017,6 +4036,8 @@ function (window, undefined) {
 						count++;
 					} else if (cElementType.string === __arg.type) {
 						count++;
+					} else if (cElementType.error === __arg.type) {
+						return __arg;
 					}
 				}
 			} else if (cElementType.array === _arg.type) {
@@ -6475,22 +6496,22 @@ function (window, undefined) {
 	cFORECAST_ETS_SEASONALITY.prototype.Calculate = function (arg) {
 
 		//результаты данной фукнции соответсвуют результатам LO, но отличаются от MS!!!
-		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, cElementType.array]);
-		var argClone = oArguments.args;
+		let oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, cElementType.array]);
+		let argClone = oArguments.args;
 
 		argClone[2] = argClone[2] ? argClone[2].tocNumber() : new cNumber(1);
 		argClone[3] = argClone[3] ? argClone[3].tocNumber() : new cNumber(1);
 
 
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		var pMatY = argClone[0];
-		var pMatX = argClone[1];
-		var bDataCompletion = argClone[2].getValue();
-		var nAggregation = argClone[3].getValue();
+		let pMatY = argClone[0];
+		let pMatX = argClone[1];
+		let bDataCompletion = argClone[2].getValue();
+		let nAggregation = argClone[3].getValue();
 
 		if (nAggregation < 1 || nAggregation > 7) {
 			return new cError(cErrorType.not_numeric);
@@ -6499,8 +6520,8 @@ function (window, undefined) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var aETSCalc = new ScETSForecastCalculation(pMatX.length);
-		var isError = aETSCalc.PreprocessDataRange(pMatX, pMatY, 1, bDataCompletion, nAggregation);
+		let aETSCalc = new ScETSForecastCalculation(pMatX.length);
+		let isError = aETSCalc.PreprocessDataRange(pMatX, pMatY, 1, bDataCompletion, nAggregation);
 		if (!isError) {
 			///*,( eETSType != etsStatAdd && eETSType != etsStatMult ? pTMat : nullptr ),eETSType )
 			return new cError(cErrorType.wrong_value_type);
@@ -6508,7 +6529,7 @@ function (window, undefined) {
 			return isError;
 		}
 
-		var res = aETSCalc.mnSmplInPrd;
+		let res = aETSCalc.mnSmplInPrd;
 
 		return new cNumber(res);
 	};
@@ -6614,27 +6635,34 @@ function (window, undefined) {
 
 		function frequency(A, B) {
 
-			var tA = [], tB = [Number.NEGATIVE_INFINITY], i, j;
-
+			let tA = [], tB = [Number.NEGATIVE_INFINITY], i, j;
 			for (i = 0; i < A.length; i++) {
 				for (j = 0; j < A[i].length; j++) {
-					if (A[i][j] instanceof cError) {
-						return A[i][j];
-					} else if (A[i][j] instanceof cNumber) {
-						tA.push(A[i][j].getValue());
-					} else if (A[i][j] instanceof cBool) {
-						tA.push(A[i][j].tocNumber().getValue());
+					let elem = A[i][j];
+					if (elem) {
+						if (elem.type === cElementType.error) {
+							return elem;
+						}
+
+						if (elem.type === cElementType.number) {
+							tA.push(elem.getValue());
+						}
 					}
 				}
 			}
 			for (i = 0; i < B.length; i++) {
 				for (j = 0; j < B[i].length; j++) {
-					if (B[i][j] instanceof cError) {
-						return B[i][j];
-					} else if (B[i][j] instanceof cNumber) {
-						tB.push(B[i][j].getValue());
-					} else if (B[i][j] instanceof cBool) {
-						tB.push(B[i][j].tocNumber().getValue());
+					let elem = B[i][j];
+					if (elem) {
+						if (elem.type === cElementType.error) {
+							return elem;
+						}
+
+						if (elem.type === cElementType.string || elem.type === cElementType.bool) {
+							tB.push(0);
+						} else if (elem.type === cElementType.number) {
+							tB.push(elem.getValue());
+						}
 					}
 				}
 			}
@@ -6643,7 +6671,7 @@ function (window, undefined) {
 			tB.push(Number.POSITIVE_INFINITY);
 			tB.sort(fSortAscending);
 
-			var C = [[]], k = 0;
+			let C = [[]], k = 0;
 			for (i = 1; i < tB.length; i++, k++) {
 				if (!C[k]) {
 					C[k] = [];
@@ -6651,31 +6679,52 @@ function (window, undefined) {
 				C[k][0] = new cNumber(0);
 				for (j = 0; j < tA.length; j++) {
 					if (tA[j] > tB[i - 1] && tA[j] <= tB[i]) {
-						var a = C[k][0].getValue();
+						let a = C[k][0].getValue();
 						C[k][0] = new cNumber(++a);
 					}
 				}
 			}
-			var res = new cArray();
+			let res = new cArray();
 			res.fillFromArray(C);
 			return res;
 		}
 
-		var arg0 = arg[0], arg1 = arg[1];
-		if (arg0 instanceof cArea || arg0 instanceof cArray) {
-			arg0 = arg0.getMatrix();
-		} else if (arg0 instanceof cArea3D) {
-			arg0 = arg0.getMatrix()[0];
-		} else {
-			return new cError(cErrorType.not_available);
+		let arg0 = arg[0], arg1 = arg[1];
+
+		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
+			arg0 = arg0.tocNumber();
 		}
 
-		if (arg1 instanceof cArea || arg1 instanceof cArray) {
+		if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+			arg1 = arg1.tocNumber();
+		}
+
+		// error check block
+		if (arg0.type === cElementType.error) {
+			return arg0;	
+		} else if (arg1.type === cElementType.error) {
+			return arg1;
+		} else if (arg0.type === cElementType.empty || arg1.type === cElementType.empty) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.array) {
+			arg0 = arg0.getMatrix();
+		} else if (arg0.type === cElementType.cellsRange3D) {
+			arg0 = arg0.getMatrix()[0];
+		} else {
+			// create arr with single val
+			arg0 = [[arg0]];
+		}
+
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.array) {
 			arg1 = arg1.getMatrix();
-		} else if (arg1 instanceof cArea3D) {
+		} else if (arg1.type === cElementType.cellsRange3D) {
 			arg1 = arg1.getMatrix()[0];
 		} else {
-			return new cError(cErrorType.not_available);
+			// create arr with single val
+			arg1 = [[arg1]];
 		}
 
 		return frequency(arg0, arg1);
@@ -7456,7 +7505,7 @@ function (window, undefined) {
 
 		function kurt(x) {
 
-			var sumSQRDeltaX = 0, _x = 0, xLength = 0, sumSQRDeltaXDivstandDev = 0, i;
+			let sumSQRDeltaX = 0, _x = 0, xLength = 0, sumSQRDeltaXDivstandDev = 0, i;
 			for (i = 0; i < x.length; i++) {
 
 				if (x[i] instanceof cNumber) {
@@ -7476,7 +7525,7 @@ function (window, undefined) {
 
 			}
 
-			var standDev = Math.sqrt(sumSQRDeltaX / (xLength - 1));
+			let standDev = Math.sqrt(sumSQRDeltaX / (xLength - 1));
 
 			for (i = 0; i < x.length; i++) {
 
@@ -7491,9 +7540,9 @@ function (window, undefined) {
 
 		}
 
-		var arr0 = [];
+		let arr0 = [];
 
-		for (var j = 0; j < arg.length; j++) {
+		for (let j = 0; j < arg.length; j++) {
 
 			if (arg[j] instanceof cArea || arg[j] instanceof cArea3D) {
 				arg[j].foreach2(function (elem) {
@@ -7502,7 +7551,7 @@ function (window, undefined) {
 					}
 				});
 			} else if (arg[j] instanceof cRef || arg[j] instanceof cRef3D) {
-				var a = arg[j].getValue();
+				let a = arg[j].getValue();
 				if (a instanceof cNumber) {
 					arr0.push(a);
 				}
@@ -7512,10 +7561,12 @@ function (window, undefined) {
 						arr0.push(elem);
 					}
 				});
-			} else if (arg[j] instanceof cNumber || arg[j] instanceof cBool) {
+			} else if (arg[j] instanceof cNumber || arg[j] instanceof cBool || arg[j] instanceof cEmpty) {
 				arr0.push(arg[j].tocNumber());
 			} else if (arg[j] instanceof cString) {
 				continue;
+			} else if (arg[j] instanceof cError) {
+				return arg[j];
 			} else {
 				return new cError(cErrorType.wrong_value_type);
 			}
@@ -7551,9 +7602,9 @@ function (window, undefined) {
 			return new cError(cErrorType.not_available);
 		}
 
-		var v, tA = [];
-		for (var i = 0; i < arg0.length; i++) {
-			for (var j = 0; j < arg0[i].length; j++) {
+		let v, tA = [];
+		for (let i = 0; i < arg0.length; i++) {
+			for (let j = 0; j < arg0[i].length; j++) {
 				v = arg0[i][j];
 				if (cElementType.error === v.type) {
 					return v;
@@ -7567,14 +7618,24 @@ function (window, undefined) {
 
 		tA.sort(AscCommon.fSortDescending);
 
+		arg1 = Math.ceil(arg1);
 		if (arg1 > tA.length) {
-			return new cError(cErrorType.not_available);
+			return new cError(cErrorType.not_numeric);
 		} else {
 			return new cNumber(tA[arg1 - 1]);
 		}
 	};
 	cLARGE.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1];
+		let arg0 = arg[0], arg1 = arg[1];
+
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+
+		if (cElementType.error === arg1.type) {
+			return arg1;
+		}
+
 		if (cElementType.cellsRange === arg0.type) {
 			arg0 = arg0.getValuesNoEmpty(this.checkExclude, this.excludeHiddenRows, this.excludeErrorsVal,
 				this.excludeNestedStAg);
@@ -10128,31 +10189,40 @@ function (window, undefined) {
 	cSKEW.prototype.isXLFN = true;
 	cSKEW.prototype.Calculate = function (arg) {
 
-		var arr0 = [];
+		const arr0 = [];
 
-		for (var j = 0; j < arg.length; j++) {
+		for (let j = 0; j < arg.length; j++) {
 
-			if (arg[j] instanceof cArea || arg[j] instanceof cArea3D) {
-				arg[j].foreach2(function (elem) {
-					if (elem instanceof cNumber) {
-						arr0.push(elem);
+			if (arg[j].type === cElementType.array || arg[j].type === cElementType.cellsRange || arg[j].type === cElementType.cellsRange3D) {
+				let dimensions = arg[j].getDimensions();
+
+				for (let row = 0; row < dimensions.row; row++) {
+					for (let col = 0; col < dimensions.col; col++) {
+						let elem = arg[j].getValueByRowCol ? arg[j].getValueByRowCol(row,col) : arg[j].getElementRowCol(row,col);
+						if (!elem) {
+							continue;
+						}
+
+						if (elem.type === cElementType.number) {
+							arr0.push(elem);
+						} else if (elem.type === cElementType.error) {
+							return elem;
+						}
+
 					}
-				});
-			} else if (arg[j] instanceof cRef || arg[j] instanceof cRef3D) {
-				var a = arg[j].getValue();
-				if (a instanceof cNumber) {
+				}
+
+			} else if (arg[j].type === cElementType.cell || arg[j].type === cElementType.cell3D) {
+				let a = arg[j].getValue();
+				if (a && a.type === cElementType.number) {
 					arr0.push(a);
 				}
-			} else if (arg[j] instanceof cArray) {
-				arg[j].foreach(function (elem) {
-					if (elem instanceof cNumber) {
-						arr0.push(elem);
-					}
-				});
-			} else if (arg[j] instanceof cNumber || arg[j] instanceof cBool) {
-				arr0.push(arg[j].tocNumber());
-			} else if (arg[j] instanceof cString) {
+			} else if (arg[j].type === cElementType.number) {
+				arr0.push(arg[j]);
+			} else if (arg[j].type === cElementType.string || arg[j].type === cElementType.empty || arg[j].type === cElementType.bool) {
 				continue;
+			} else if (arg[j].type === cElementType.error) {
+				return arg[j];
 			} else {
 				return new cError(cErrorType.wrong_value_type);
 			}
@@ -10178,31 +10248,39 @@ function (window, undefined) {
 	cSKEW_P.prototype.argumentsType = [[argType.number]];
 	cSKEW_P.prototype.Calculate = function (arg) {
 
-		var arr0 = [];
+		const arr0 = [];
 
-		for (var j = 0; j < arg.length; j++) {
+		for (let j = 0; j < arg.length; j++) {
 
-			if (arg[j] instanceof cArea || arg[j] instanceof cArea3D) {
-				arg[j].foreach2(function (elem) {
-					if (elem instanceof cNumber) {
-						arr0.push(elem);
+			if (arg[j].type === cElementType.array || arg[j].type === cElementType.cellsRange || arg[j].type === cElementType.cellsRange3D) {
+				let dimensions = arg[j].getDimensions();
+
+				for (let row = 0; row < dimensions.row; row++) {
+					for (let col = 0; col < dimensions.col; col++) {
+						let elem = arg[j].getValueByRowCol ? arg[j].getValueByRowCol(row,col) : arg[j].getElementRowCol(row,col);
+						if (!elem) {
+							continue;
+						}
+
+						if (elem.type === cElementType.number) {
+							arr0.push(elem);
+						} else if (elem.type === cElementType.error) {
+							return elem;
+						}
 					}
-				});
-			} else if (arg[j] instanceof cRef || arg[j] instanceof cRef3D) {
-				var a = arg[j].getValue();
-				if (a instanceof cNumber) {
+				}
+
+			} else if (arg[j].type === cElementType.cell || arg[j].type === cElementType.cell3D) {
+				let a = arg[j].getValue();
+				if (a && a.type === cElementType.number) {
 					arr0.push(a);
 				}
-			} else if (arg[j] instanceof cArray) {
-				arg[j].foreach(function (elem) {
-					if (elem instanceof cNumber) {
-						arr0.push(elem);
-					}
-				});
-			} else if (arg[j] instanceof cNumber || arg[j] instanceof cBool) {
-				arr0.push(arg[j].tocNumber());
-			} else if (arg[j] instanceof cString) {
+			} else if (arg[j].type === cElementType.number) {
+				arr0.push(arg[j]);
+			} else if (arg[j].type === cElementType.string || arg[j].type === cElementType.empty || arg[j].type === cElementType.bool) {
 				continue;
+			} else if (arg[j].type === cElementType.error) {
+				return arg[j];
 			} else {
 				return new cError(cErrorType.wrong_value_type);
 			}

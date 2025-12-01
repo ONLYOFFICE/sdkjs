@@ -1466,6 +1466,10 @@
 			})
 		}, AscDFH.historydescription_Pdf_ContextMenuRemove);
 	};
+	PDFEditorApi.prototype.AddRedactBySelect = function() {
+		let oDoc = this.getPDFDoc();
+		oDoc.AddRedactAnnotBySelect();
+	}
 
 	/////////////////////////////////////////////////////////////
 	///////// For filed
@@ -4899,6 +4903,16 @@
 		// NOW USE ALWAYS BINARY DATA
 		return "binary";
 	};
+
+	PDFEditorApi.prototype.asc_CheckEditPassword = function(password) {
+		let oDoc = this.getPDFDoc();
+
+		if (null == password) {
+			return oDoc.Viewer.file.nativeFile['CheckPerm'](AscPDF.USER_PERMISSIONS.edit);
+		}
+
+		return oDoc.Viewer.file.nativeFile['CheckOwnerPassword'](password);
+	};
 	
 	function CPdfContextMenuData(obj) {
 		if (obj) {
@@ -5095,6 +5109,7 @@
 	PDFEditorApi.prototype['ApplyRedact']		= PDFEditorApi.prototype.ApplyRedact;
 	PDFEditorApi.prototype['HasRedact']			= PDFEditorApi.prototype.HasRedact;
 	PDFEditorApi.prototype['RemoveAllRedact']	= PDFEditorApi.prototype.RemoveAllRedact;
+	PDFEditorApi.prototype['AddRedactBySelect']	= PDFEditorApi.prototype.AddRedactBySelect;
 
 	// forms
 	PDFEditorApi.prototype['IsEditFieldsMode']			= PDFEditorApi.prototype.IsEditFieldsMode;
@@ -5212,6 +5227,8 @@
 	PDFEditorApi.prototype['asc_setPdfViewer']		        = PDFEditorApi.prototype.asc_setPdfViewer;
 
 	PDFEditorApi.prototype['asc_GetTableOfContentsPr']      = PDFEditorApi.prototype.asc_GetTableOfContentsPr;
+	
+	PDFEditorApi.prototype['asc_CheckEditPassword']			= PDFEditorApi.prototype.asc_CheckEditPassword;
 	
 	window["PDFEditorApi"] = PDFEditorApi;
 

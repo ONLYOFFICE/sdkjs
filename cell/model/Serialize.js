@@ -11634,9 +11634,10 @@
                 oHyperlink.Ref = ws.getRange2(this.stream.GetString2LE(length));
             else if ( c_oSerHyperlinkTypes.Hyperlink == type )
                 oHyperlink.Hyperlink = this.stream.GetString2LE(length);
-            else if ( c_oSerHyperlinkTypes.Location == type )
+            else if ( c_oSerHyperlinkTypes.Location == type ) {
                 oHyperlink.setLocation(this.stream.GetString2LE(length));
-            else if ( c_oSerHyperlinkTypes.Tooltip == type )
+                oHyperlink.checkAfterOpen();
+            } else if ( c_oSerHyperlinkTypes.Tooltip == type )
                 oHyperlink.Tooltip = this.stream.GetString2LE(length);
             else
                 res = c_oSerConstants.ReadUnknown;
@@ -14416,7 +14417,11 @@
                 var newFormulaParent = new AscCommonExcel.CCellWithFormula(cell.ws, cell.nRow, cell.nCol);
                 var parsed = new AscCommonExcel.parserFormula(formula.v, newFormulaParent, cell.ws);
                 parsed.ca = formula.ca;
+                parseResult.needCorrect = true;
                 parsed.parse(undefined, undefined, parseResult);
+                if (parseResult.needAssemble) {
+                    parsed.Formula = parsed.assemble(true);
+                }
                 if (parseResult.error === Asc.c_oAscError.ID.FrmlMaxReference) {
                     tmp.ws.workbook.openErrors.push(cell.getName());
                     return;
@@ -14884,7 +14889,7 @@
     };
     InitOpenManager.prototype.prepareConditionalFormatting = function (oWorksheet, oConditionalFormatting) {
         if (oConditionalFormatting && oConditionalFormatting.isValid()) {
-            oConditionalFormatting.initRules();
+            oConditionalFormatting.initRules(oWorksheet);
             for (let i = 0; i < oConditionalFormatting.aRules.length; i++) {
                 oWorksheet.addConditionalFormattingRule(oConditionalFormatting.aRules[i]);
             }

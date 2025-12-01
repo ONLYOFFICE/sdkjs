@@ -6896,7 +6896,9 @@ function (window, undefined) {
 				}
 				else if (this.imageBackground) {
 					oApi.ImageLoader.map_image_index[this.imageBackgroundUrl] = {
-						Image: this.imageBackground, Status: AscFonts.ImageLoadStatus.Complete
+						Image: this.imageBackground,
+						Status: AscFonts.ImageLoadStatus.Complete,
+						src: this.imageBackground.src
 					};
 					oShape.spPr.setFill(AscFormat.builder_CreateBlipFill(this.imageBackgroundUrl, "stretch"));
 				}

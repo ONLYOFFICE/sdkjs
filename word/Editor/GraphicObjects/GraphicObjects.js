@@ -3821,7 +3821,7 @@ CGraphicObjects.prototype =
         return false;
     },
 
-
+	getParagraphByXY: DrawingObjectsController.prototype.getParagraphByXY,
 
     checkTargetSelection: function()
     {

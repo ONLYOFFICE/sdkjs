@@ -1680,6 +1680,9 @@ CHeaderFooterController.prototype =
 
 			Pr.StartPageNumber = SectPr.GetPageNumStart();
 			Pr.NumFormat = SectPr.GetPageNumFormat();
+			
+			Pr.HeaderMargin = SectPr.GetPageMarginHeader();
+			Pr.FooterMargin = SectPr.GetPageMarginFooter();
 
             return Pr;
         }

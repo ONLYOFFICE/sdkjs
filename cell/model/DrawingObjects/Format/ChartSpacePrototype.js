@@ -93,11 +93,9 @@ CChartSpace.prototype.setRecalculateInfo = function()
         recalculateUpDownBars: true,
         recalculateLegend: true,
         recalculateReferences: true,
-        recalculateFormulas: true,
         recalculatePenBrush: true,
-        recalculateTextPr : true,
-        recalculateBBoxRange: true
-    };
+        recalculateTextPr : true
+		};
     this.chartObj = null;
     this.rectGeometry = AscFormat.ExecuteNoHistory(function(){return  AscFormat.CreateGeometry("rect");},  this, []);
     this.lockType = AscCommon.c_oAscLockTypes.kLockTypeNone;
@@ -249,6 +247,7 @@ CChartSpace.prototype.recalculate = function()
     //---------------------------------------------------
     AscFormat.ExecuteNoHistory(function()
     {
+			const bSendUpdateDiagram = this.isNeedUpdateFrameChart();
         this.updateLinks();
 
         if(this.recalcInfo.recalcTitle)
@@ -399,7 +398,10 @@ CChartSpace.prototype.recalculate = function()
         this.recalcInfo.dataLbls.length = 0;
         this.recalcInfo.axisLabels.length = 0;
         this.bNeedUpdatePosition = true;
-
+			if (bSendUpdateDiagram) {
+				const oApi = Asc.editor;
+				oApi && oApi.frameManager.setIsNeedUpdateMainDiagram(true);
+			}
     }, this, []);
 };
 
@@ -545,6 +547,17 @@ CChartSpace.prototype.Get_ColorMap = CShape.prototype.Get_ColorMap;
 				}
 			}
 		}
+	};
+	CChartSpace.prototype.isNeedUpdateFrameChart = function() {
+		if (this.isFrameChart) {
+			for (let recalcProp in this.recalcInfo) {
+				if (typeof this.recalcInfo[recalcProp] === "boolean" && this.recalcInfo[recalcProp] ||
+					Array.isArray(this.recalcInfo[recalcProp]) && this.recalcInfo[recalcProp].length) {
+					return true;
+				}
+			}
+		}
+		return false;
 	};
 
 })(window);

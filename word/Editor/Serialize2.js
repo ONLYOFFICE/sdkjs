@@ -1160,6 +1160,7 @@ var c_oSerSdt = {
 	FormPrBorder : 70,
 	FormPrShd    : 71,
 	TextFormPrCombWRule : 72,
+	FormPrRoleName : 73,
 
 	TextFormPrFormatType    : 80,
 	TextFormPrFormatVal     : 81,
@@ -2076,6 +2077,7 @@ function BinaryFileWriter(doc, bMailMergeDocx, bMailMergeHtml, isCompatible, opt
 		this.copyParams.bdtw = new BinaryDocumentTableWriter(this.memory, this.Document, null, this.copyParams.oUsedNumIdMap, this.copyParams, this.saveParams, null);
 		this.copyParams.nDocumentWriterTablePos = 0;
 		this.copyParams.nDocumentWriterPos = 0;
+		this.copyParams.isCopyPaste = true;
 		
 		this.WriteMainTableStart();
 		
@@ -6958,6 +6960,9 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 			if (sTarget) {
 				oThis.bs.WriteItem(c_oSerSdt.OformMaster, function (){oThis.memory.WriteString3(sTarget);});
 			}
+		}
+		if (oThis.copyParams && oThis.copyParams.isCopyPaste && val.RoleName) {
+			oThis.bs.WriteItem(c_oSerSdt.FormPrRoleName, function(){oThis.memory.WriteString3(val.RoleName);});
 		}
 	};
 	this.WriteSdtTextFormPr = function (val)
@@ -13368,6 +13373,25 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			}
 			sTarget = sTarget.replace(/\\/g, "/");
 			this.oReadResult.sdtPrWithFieldPath.push({sdt: oSdt, target: sTarget});
+		} else if (c_oSerSdt.FormPrRoleName === type && this.oReadResult.bCopyPaste) {
+			val.RoleName = this.stream.GetString2LE(length);
+			let oform = this.Document && this.Document.GetOFormDocument();
+			if (oform) {
+				if (val && !val.Field && val.RoleName) {
+					if (!oform.haveRole(val.RoleName)) {
+						const role = new AscCommon.CRoleSettings();
+						role.asc_putName(val.RoleName);
+						let ascRoleColor = new Asc.asc_CColor();
+						ascRoleColor.asc_putR(228);
+						ascRoleColor.asc_putG(205);
+						ascRoleColor.asc_putB(219);
+						role.asc_putColor(ascRoleColor);
+						if (oform) {
+							oform.asc_addRole(role);
+						}
+					}
+				}
+			}
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
@@ -17409,6 +17433,7 @@ function DocReadResult(doc) {
 	this.bCopyPaste = false;
 	this.styleGenIndex = 1;
 	this.sdtPrWithFieldPath = [];
+	this.sdtFormPrWithRoleName = [];
 
 	this.lastPar = null;
 	this.toNextPar = [];

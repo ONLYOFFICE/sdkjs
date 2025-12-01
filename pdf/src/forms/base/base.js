@@ -3479,6 +3479,7 @@
         let oContentToDraw = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format) ? this.contentFormat : this.content;
         let oldTrMatrix = oContentToDraw.transform;
         oContentToDraw.transform = new AscCommon.CMatrix();
+        memory.docRenderer.ClearLastFont();
         oContentToDraw.Draw(0, memory.docRenderer);
         oContentToDraw.transform = oldTrMatrix;
 

@@ -280,20 +280,23 @@
 	 * @param {string} textReplace - A string value that specifies the text to be replaced with a new text.
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/InputText.js
 	 */
-    Api.prototype["pluginMethod_InputText"] = function(text, textReplace)
-    {
-        if (!this.canEdit() || this.isPdfEditor() || !AscCommon.g_inputContext)
-            return;
-
-        if (textReplace)
-        {
-            for (var i = 0; i < textReplace.length; i++)
-                AscCommon.g_inputContext.emulateKeyDownApi(8);
-        }
-
-        AscCommon.g_inputContext.addText(text);
-        AscCommon.g_inputContext.keyPressInput = "";
-    };
+	Api.prototype["pluginMethod_InputText"] = function(text, textReplace)
+	{
+		if (!this.canEdit() || this.isPdfEditor() || !AscCommon.g_inputContext)
+			return;
+	
+		this.executeGroupActions(function()
+		{
+			if (textReplace)
+			{
+				for (var i = 0; i < textReplace.length; i++)
+					AscCommon.g_inputContext.emulateKeyDownApi(8);
+			}
+		
+			AscCommon.g_inputContext.addText(text);
+			AscCommon.g_inputContext.keyPressInput = "";
+		});
+	};
 
 	/**
 	 * Pastes text in the HTML format into the document.
@@ -380,7 +383,7 @@
 					if (AscCommon.c_oEditorId.Word === _t.getEditorId())
 					{
 						let logicDocument = _t.private_GetLogicDocument();
-						if (logicDocument)
+						if (logicDocument && logicDocument.IsDocumentEditor())
 						{
 							logicDocument.GetDrawingDocument().UpdateTargetFromPaint = true;
 							logicDocument.private_UpdateCursorXY(true, true, true);
@@ -2205,22 +2208,30 @@
 		{
 			let w = 300;
 			let h = 100;
+
+			let addH = 0;
 			if (variation["size"])
 			{
 				w = variation["size"][0];
 				h = variation["size"][1];
+
+				if (!variation["isCustomWindow"]) {
+					addH += 35;
+					if (variation["buttons"] && variation["buttons"].length)
+						addH += 55;
+				}
 			}
 
 			let offsets = this.getTargetOnBodyCoords();
 			if (w > offsets.W)
 				w = offsets.W;
-			if (h > offsets.H)
-				h = offsets.H;
+			if ((h + addH) > offsets.H)
+				h = Math.max(offsets.H - addH, 10);
 
 			let offsetToFrame = 10;
 			let r = offsets.X + offsetToFrame + w;
-			let t = offsets.Y - offsetToFrame - h;
-			let b = offsets.Y + offsets.TargetH + offsetToFrame + h;
+			let t = offsets.Y - offsetToFrame - h - addH;
+			let b = offsets.Y + offsets.TargetH + offsetToFrame + h + addH;
 
 			let x = offsets.X + offsetToFrame;
 			if (r > offsets.W)
@@ -2239,6 +2250,8 @@
 			{
 				y = offsets.Y + offsets.TargetH + offsetToFrame;
 				h += (offsets.H - b);
+
+				if (h < 10) h = 10;
 			}
 
 			if (y > offsets.H)
@@ -2248,11 +2261,14 @@
 			if (x < offsets.editorX)
 				x = offsets.editorX;
 
-			variation["size"] = [w, h];
+			if (!variation["fixedSize"])
+				variation["size"] = [w, h];
+
 			variation["positionX"] = x;
 			variation["positionY"] = y;
 		}
 
+		window.g_asc_plugins.addPluginWindow(frameId);
 		this.sendEvent("asc_onPluginWindowShow", frameId, variation);
 	};
 
@@ -2291,6 +2307,7 @@
 	 */
 	Api.prototype["pluginMethod_CloseWindow"] = function(frameId)
 	{
+		window.g_asc_plugins.removePluginWindow(frameId);
 		this.sendEvent("asc_onPluginWindowClose", frameId);
 	};
 

@@ -779,7 +779,9 @@ var CPresentation = CPresentation || function(){};
 
                 oPdfMatch.Set_SelectionContentPos(SearchElement.StartPos, SearchElement.EndPos);
                 oPdfMatch.Set_ParaContentPos(SearchElement.StartPos, false, -1, -1);
-                oPdfMatch.Document_SetThisElementCurrent();
+                oPdfMatch.Parent.Selection.Use      = true;
+                oPdfMatch.Parent.Selection.StartPos = oPdfMatch.Index;
+                oPdfMatch.Parent.Selection.EndPos   = oPdfMatch.Index;
 
                 let oTopParent = AscPDF.CPdfDrawingPrototype.prototype.GetTopParentObj.call(oPdfMatch);
                 aSelQuadsParts = oTopParent.GetSelectionQuads();
@@ -854,7 +856,9 @@ var CPresentation = CPresentation || function(){};
 
                         pdfMatch.Set_SelectionContentPos(searchElement.StartPos, searchElement.EndPos);
                         pdfMatch.Set_ParaContentPos(searchElement.StartPos, false, -1, -1);
-                        pdfMatch.Document_SetThisElementCurrent();
+                        pdfMatch.Parent.Selection.Use      = true;
+                        pdfMatch.Parent.Selection.StartPos = pdfMatch.Index;
+                        pdfMatch.Parent.Selection.EndPos   = pdfMatch.Index;
 
                         let oTopParent = AscPDF.CPdfDrawingPrototype.prototype.GetTopParentObj.call(pdfMatch);
                         aSelQuadsParts = aSelQuadsParts.concat(oTopParent.GetSelectionQuads());
@@ -911,7 +915,9 @@ var CPresentation = CPresentation || function(){};
 
                     pdfMatch.Set_SelectionContentPos(searchElement.StartPos, searchElement.EndPos);
                     pdfMatch.Set_ParaContentPos(searchElement.StartPos, false, -1, -1);
-                    pdfMatch.Document_SetThisElementCurrent();
+                    pdfMatch.Parent.Selection.Use      = true;
+                    pdfMatch.Parent.Selection.StartPos = pdfMatch.Index;
+                    pdfMatch.Parent.Selection.EndPos   = pdfMatch.Index;
 
                     let aQuadsInfo = oTopParent.GetSelectionQuads();
                     aQuadsInfo[0].quads.forEach(function(selQuads) {
@@ -1028,7 +1034,9 @@ var CPresentation = CPresentation || function(){};
 
             oPdfMatch.Set_SelectionContentPos(SearchElement.StartPos, SearchElement.EndPos);
             oPdfMatch.Set_ParaContentPos(SearchElement.StartPos, false, -1, -1);
-            oPdfMatch.Document_SetThisElementCurrent();
+            oPdfMatch.Parent.Selection.Use      = true;
+            oPdfMatch.Parent.Selection.StartPos = oPdfMatch.Index;
+            oPdfMatch.Parent.Selection.EndPos   = oPdfMatch.Index;
 
             let aQuadsInfo = oTopParent.GetSelectionQuads();
             aQuadsInfo[0].quads.forEach(function(selQuads) {
@@ -3131,6 +3139,7 @@ var CPresentation = CPresentation || function(){};
             _t.CheckComment(annot);
         });
 
+        this.SetNeedUpdateSearch(true);
         oViewer.paint();
     };
 
@@ -3183,6 +3192,7 @@ var CPresentation = CPresentation || function(){};
 
         this.History.Add(new CChangesPDFDocumentPagesContent(this, nPos, aPages, false));
 
+        this.SetNeedUpdateSearch(true);
         oViewer.paint();
 
         return aPages[0];
@@ -4102,16 +4112,18 @@ var CPresentation = CPresentation || function(){};
         
         let actionCompleted = true;
         if (this.Action.CancelAction) {
-            let arrChanges = [];
-            for (var nIndex = 0, nPointsCount = this.Action.PointsCount; nIndex < nPointsCount; ++nIndex)
-            {
-                arrChanges = arrChanges.concat(this.History.Undo());
+            if (this.History.Can_Undo()) {
+                let arrChanges = [];
+                for (var nIndex = 0, nPointsCount = this.Action.PointsCount; nIndex < nPointsCount; ++nIndex) {
+                    arrChanges = arrChanges.concat(this.History.Undo());
+                }
+
+                if (arrChanges.length)
+                    this.RecalculateByChanges(arrChanges);
+
+                this.History.ClearRedo();
             }
-
-            if (arrChanges.length)
-                this.RecalculateByChanges(arrChanges);
-
-            this.History.ClearRedo();
+            
             actionCompleted = false;
 
             if (this.canSendLockedFormsWarning) {
@@ -7617,22 +7629,22 @@ var CPresentation = CPresentation || function(){};
 
                     annot.AddToRedraw();
 
-                    if (!isOrigPage) {
-                        return;
+                    if (!oMemory) {
+                        oMemory = new AscCommon.CMemory(true);
+                        oMemory.Init(24);
                     }
+
+                    // Fill color
+                    const oFillRGB = annot.GetRGBColor(annot.GetFillColor());
 
                     const aQuadsParts = annot.GetQuads();
                     aQuadsParts.forEach(function(quads) {
                         aQuadsFlat = aQuadsFlat.concat(quads);
+                        
+                        oMemory.WriteLong(oFillRGB.r);
+                        oMemory.WriteLong(oFillRGB.g);
+                        oMemory.WriteLong(oFillRGB.b);
                     });
-
-                    // Fill color
-                    const oFillRGB = annot.GetRGBColor(annot.GetFillColor());
-                    oMemory = new AscCommon.CMemory(true);
-                    oMemory.Init(24);
-                    oMemory.WriteLong(oFillRGB.r);
-                    oMemory.WriteLong(oFillRGB.g);
-                    oMemory.WriteLong(oFillRGB.b);
 
                     pagesIdxMap.set(pageIdx, nOrigPageIdx);
                 });
@@ -7647,14 +7659,16 @@ var CPresentation = CPresentation || function(){};
                 if (aQuadsFlat.length != 0) {
                     let oRender = new Uint8Array(oMemory.data.buffer, 0, oMemory.GetCurPosition());
 
-                    // Apply redact to the page
-                    oNativeFile["RedactPage"](
-                        nOrigPageIdx,
-                        aQuadsFlat,
-                        oRender
-                    );
+                    if (isOrigPage) {
+                        // Apply redact to the page
+                        oNativeFile["RedactPage"](
+                            nOrigPageIdx,
+                            aQuadsFlat,
+                            oRender
+                        );
+                    }
 
-                    this.SetRedactData(sRedactId, pageIdx, aQuadsFlat, oRender);
+                    this.SetRedactData(sRedactId, oPageInfo.GetId(), aQuadsFlat, oRender);
                 }
             }
 
@@ -7678,8 +7692,17 @@ var CPresentation = CPresentation || function(){};
 
 		}, AscDFH.historydescription_Pdf_Apply_Redact, this);
     };
+    CPDFDoc.prototype.AddRedactAnnotBySelect = function() {
+        let oFile = this.Viewer.file;
 
-    CPDFDoc.prototype.SetRedactData = function(sRedactId, nPage, aQuadsFlat, oRenderMemory) {
+        this.DoAction(function() {
+            let aSelQuads = oFile.getSelectionQuads();
+
+            this.AddRedactAnnot(aSelQuads);
+        }, AscDFH.historydescription_Pdf_AddAnnot, this);  
+    };
+
+    CPDFDoc.prototype.SetRedactData = function(sRedactId, sPageId, aQuadsFlat, oRenderMemory) {
         let aUint8Array = oRenderMemory;
 
         const BINARY_PART_HISTORY_LIMIT = 1048576;
@@ -7696,10 +7719,10 @@ var CPresentation = CPresentation || function(){};
             AscCommon.History.Add(new CChangesPDFDocumentPartRedact(this, [], binaryParts[i]));
         }
         
-        AscCommon.History.Add(new CChangesPDFDocumentEndRedact(this, sRedactId, nPage, aQuadsFlat));
+        AscCommon.History.Add(new CChangesPDFDocumentEndRedact(this, sRedactId, sPageId, aQuadsFlat));
 
         this.appliedRedactsData.push({
-            page: nPage,
+            pageId: sPageId,
             quads: aQuadsFlat,
             redactId: sRedactId,
             binary: aUint8Array
@@ -8191,6 +8214,11 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.GetPageInfo = function(nPage) {
         return this.Viewer.pagesInfo.pages[nPage];
+    };
+    CPDFDoc.prototype.GetPageInfoById = function(sId) {
+        return this.Viewer.pagesInfo.pages.find(function(pageInfo) {
+            return pageInfo.GetId() == sId;
+        });
     };
     CPDFDoc.prototype.GetThumbnails = function() {
         return this.Viewer.thumbnails;

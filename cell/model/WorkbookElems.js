@@ -6081,6 +6081,8 @@ StyleManager.prototype =
 		this.bVisited = false;
 
 		this.bHyperlinkFunction = null;
+		
+		this._tempLocation = null;
 	}
 
 	Hyperlink.prototype.clone = function (oNewWs) {
@@ -6147,6 +6149,9 @@ StyleManager.prototype =
 			}
 		}
 		this._updateLocation();
+		if (Location && !this.Location) {
+			this._tempLocation = Location;
+		}
 	};
 	Hyperlink.prototype.getLocation = function () {
 		if (this.bUpdateLocation)
@@ -6287,6 +6292,14 @@ StyleManager.prototype =
 	Hyperlink.prototype.getHyperlinkFunction = function () {
 		return this.bHyperlinkFunction;
 	};
+	Hyperlink.prototype.checkAfterOpen = function () {
+		let type = this.getHyperlinkType();
+		if (type === Asc.c_oAscHyperlinkType.WebLink && this._tempLocation) {
+			this.Location = this._tempLocation;
+		}
+		this._tempLocation = null;
+	};
+	
 
 	/** @constructor */
 	function SheetFormatPr() {
@@ -15035,7 +15048,6 @@ function RangeDataManagerElem(bbox, data)
 
 		//temp for update
 		this.sKey = null;
-
 	}
 	ExternalReferenceBase.prototype.getKey = function() {
 		return this.sKey;
@@ -15246,6 +15258,8 @@ function RangeDataManagerElem(bbox, data)
 		this.SheetNames = [];
 
 		this.worksheets = {};
+
+		this._id = AscCommon.g_oIdCounter.Get_NewId();
 	}
 	AscCommon.InitClassWithoutType(ExternalReference, ExternalReferenceBase);
 
@@ -15303,6 +15317,10 @@ function RangeDataManagerElem(bbox, data)
 				this.referenceData["instanceId"] = r.GetString2();
 			}
 		}
+
+		if (r.GetBool()) {
+			this._id = r.GetString2();
+		}
 	};
 	ExternalReference.prototype.Write_ToBinary2 = function(w) {
 		var i;
@@ -15358,6 +15376,13 @@ function RangeDataManagerElem(bbox, data)
 		} else {
 			w.WriteBool(false);
 		}
+
+		if (null != this._id) {
+			w.WriteBool(true);
+			w.WriteString2(this._id);
+		} else {
+			w.WriteBool(false);
+		}
 	};
 
 	ExternalReference.prototype.clone = function (needCloneSheets) {
@@ -15394,6 +15419,8 @@ function RangeDataManagerElem(bbox, data)
 				newObj.worksheets[i] = this.worksheets[i];
 			}
 		}
+
+		newObj._id = this._id;
 
 		return newObj;
 	};

@@ -2765,21 +2765,21 @@ function (window, undefined) {
 	cUNIQUE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cUNIQUE.prototype.Calculate = function (arg) {
 
-		var _getUniqueArr = function (_arr, _byCol, _exactlyOnce) {
-			var rowCount = _arr && _arr.length;
-			var colCount = _arr && _arr[0] && _arr[0].length;
+		const _getUniqueArr = function (_arr, _byCol, _exactlyOnce) {
+			let rowCount = _arr && _arr.length;
+			let colCount = _arr && _arr[0] && _arr[0].length;
 			if (!rowCount || !colCount) {
 				return cError(cErrorType.wrong_value_type);
 			}
 
-			var res = new cArray();
-			var repeateArr = [];
-			var i, j, n, _value;
-			var resArr = [];
+			let res = new cArray();
+			let repeateArr = [];
+			let i, j, n, _value;
+			let resArr = [];
 
-			var _key;
+			let _key;
 			if (!_byCol) {
-				var _rowCount = 0;
+				let _rowCount = 0;
 				for (i = 0; i < rowCount; i++) {
 					_key = "";
 					for (j = 0; j < colCount; j++) {
@@ -2802,7 +2802,7 @@ function (window, undefined) {
 					}
 				}
 			} else {
-				var _colCount = 0;
+				let _colCount = 0;
 				for (i = 0; i < colCount; i++) {
 					_key = "";
 					for (j = 0; j < rowCount; j++) {
@@ -2827,10 +2827,10 @@ function (window, undefined) {
 			}
 
 			if (_exactlyOnce) {
-				var tempArr = [];
-				var _counter = 0;
+				let tempArr = [];
+				let _counter = 0;
 				for (i in repeateArr) {
-					var _elem = repeateArr[i];
+					let _elem = repeateArr[i];
 					if (_elem.count > 1) {
 						continue;
 					}
@@ -2859,7 +2859,7 @@ function (window, undefined) {
 			return res;
 		};
 
-		var arg0 = arg[0];
+		let arg0 = arg[0];
 		if (cElementType.cellsRange === arg0.type) {
 			arg0 = arg0.getMatrix();
 		} else if(cElementType.cellsRange3D === arg0.type) {
@@ -2878,21 +2878,36 @@ function (window, undefined) {
 		if (cElementType.error === arg0.type) {
 			return arg0;
 		}
-		if(0 === arg0.length){
+		if (0 === arg0.length) {
 			return new cError(cErrorType.wrong_value_type);
 		}
+		let arg1 = !arg[1] ? false : arg[1].tocBool();
+		if (arg1) {
+			if (cElementType.error === arg1.type) {
+				return arg1;
+			} else if (cElementType.bool !== arg1.type) {
+				arg1 = arg1.tocBool();
+			}
 
-		var arg1 = !arg[1] ? false : arg[1].tocBool();
-		if (arg1 && cElementType.error === arg1.type) {
-			return arg1;
-		} else if (arg1) {
+			if (cElementType.bool !== arg1.type) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
 			arg1 = arg1.toBool();
 		}
+		
+		let arg2 = !arg[2] ? false : arg[2].tocBool();
+		if (arg2) {
+			if (cElementType.error === arg2.type) {
+				return arg2;
+			} else if (cElementType.bool !== arg2.type) {
+				arg2 = arg2.tocBool();
+			}
 
-		var arg2 = !arg[2] ? false : arg[2].tocBool();
-		if (arg2 && cElementType.error === arg2.type) {
-			return arg2;
-		} else if (arg2) {
+			if (cElementType.bool !== arg2.type) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
 			arg2 = arg2.toBool();
 		}
 
@@ -2914,7 +2929,7 @@ function (window, undefined) {
 		}
 		const axisData = bHor ? this.data[wsId].horizontal : this.data[wsId].vertical;
 		if (!axisData[rowCol]) {
-			axisData[rowCol] = {start: startIndex, end: endIndex, data: {}};
+			axisData[rowCol] = {start: startIndex, end: startIndex - 1, data: {}};
 			const c1 = bHor ? startIndex : rowCol;
 			const r1 = bHor ? rowCol : startIndex;
 			const c2 = bHor ? endIndex : rowCol;
@@ -2923,49 +2938,7 @@ function (window, undefined) {
 			fullRange._foreachNoEmpty(function (cell, r, c) {
 				const value = checkTypeCell(cell, true);
 				const index = bHor ? c : r;
-				if (!axisData[rowCol].data[value.type]) {
-					axisData[rowCol].data[value.type] = new Map();
-				}
-				const map = axisData[rowCol].data[value.type];
-				if (!map.has(value.value)) {
-					map.set(value.value, []);
-				}
-				const arr = axisData[rowCol].data[value.type].get(value.value);
-				arr.push(index);
-			});
-			axisData[rowCol].start = startIndex;
-			axisData[rowCol].end = endIndex;
-		} else {
-			if (startIndex < axisData[rowCol].start) {
-				const c1 = bHor ? startIndex : rowCol;
-				const r1 = bHor ? rowCol : startIndex;
-				const c2 = bHor ? axisData[rowCol].start : rowCol;
-				const r2 = bHor ? rowCol : axisData[rowCol].start;
-				const fullRange = ws.getRange3(r1, c1, r2, c2);
-				fullRange._foreachNoEmpty(function (cell, r, c) {
-					const value = checkTypeCell(cell, true);
-					const index = bHor ? c : r;
-					if (!axisData[rowCol].data[value.type]) {
-						axisData[rowCol].data[value.type] = new Map();
-					}
-					const map = axisData[rowCol].data[value.type];
-					if (!map.has(value.value)) {
-						map.set(value.value, []);
-					}
-					const arr = axisData[rowCol].data[value.type].get(value.value);
-					arr.unshift(index);
-				});
-				axisData[rowCol].start = startIndex;
-			}
-			if (endIndex > axisData[rowCol].end) {
-				const c1 = bHor ? axisData[rowCol].end : rowCol;
-				const r1 = bHor ? rowCol : axisData[rowCol].end;
-				const c2 = bHor ? endIndex : rowCol;
-				const r2 = bHor ? rowCol : endIndex;
-				const fullRange = ws.getRange3(r1, c1, r2, c2);
-				fullRange._foreachNoEmpty(function (cell, r, c) {
-					const value = checkTypeCell(cell, true);
-					const index = bHor ? c : r;
+				if (index > axisData[rowCol].end) {
 					if (!axisData[rowCol].data[value.type]) {
 						axisData[rowCol].data[value.type] = new Map();
 					}
@@ -2975,6 +2948,70 @@ function (window, undefined) {
 					}
 					const arr = axisData[rowCol].data[value.type].get(value.value);
 					arr.push(index);
+					axisData[rowCol].end = index;
+				}
+			});
+			axisData[rowCol].end = endIndex;
+		} else {
+			if (startIndex < axisData[rowCol].start) {
+				const c1 = bHor ? startIndex : rowCol;
+				const r1 = bHor ? rowCol : startIndex;
+				const c2 = bHor ? axisData[rowCol].start - 1: rowCol;
+				const r2 = bHor ? rowCol : axisData[rowCol].start - 1;
+				const fullRange = ws.getRange3(r1, c1, r2, c2);
+				const unshiftMaps = {};
+				axisData[rowCol].start = startIndex;
+				fullRange._foreachNoEmpty(function (cell, r, c) {
+					const value = checkTypeCell(cell, true);
+					const index = bHor ? c : r;
+					if (!axisData[rowCol].data[value.type]) {
+						axisData[rowCol].data[value.type] = new Map();
+					}
+					const map = axisData[rowCol].data[value.type];
+					if (!map.has(value.value)) {
+						map.set(value.value, [index]);
+					} else {
+						if (!unshiftMaps[value.type]) {
+							unshiftMaps[value.type] = new Map();
+						}
+						const unshiftMap = unshiftMaps[value.type];
+						if (!unshiftMap.has(value.value)) {
+							unshiftMap.set(value.value, []);
+						}
+						const arr = unshiftMap.get(value.value);
+						arr.push(index);
+					}
+				});
+				for (let i in unshiftMaps) {
+					const unshiftMap = unshiftMaps[i];
+					unshiftMap.forEach(function (value, key) {
+						const map = axisData[rowCol].data[i];
+						const prevArr = map.get(key);
+						map.set(key, value.concat(prevArr));
+					})
+				}
+			}
+			if (endIndex > axisData[rowCol].end) {
+				const c1 = bHor ? axisData[rowCol].end + 1: rowCol;
+				const r1 = bHor ? rowCol : axisData[rowCol].end + 1;
+				const c2 = bHor ? endIndex : rowCol;
+				const r2 = bHor ? rowCol : endIndex;
+				const fullRange = ws.getRange3(r1, c1, r2, c2);
+				fullRange._foreachNoEmpty(function (cell, r, c) {
+					const value = checkTypeCell(cell, true);
+					const index = bHor ? c : r;
+					if (index > axisData[rowCol].end) {
+						if (!axisData[rowCol].data[value.type]) {
+							axisData[rowCol].data[value.type] = new Map();
+						}
+						const map = axisData[rowCol].data[value.type];
+						if (!map.has(value.value)) {
+							map.set(value.value, []);
+						}
+						const arr = axisData[rowCol].data[value.type].get(value.value);
+						arr.push(index);
+						axisData[rowCol].end = index;
+					}
 				});
 				axisData[rowCol].end = endIndex;
 			}
@@ -3000,7 +3037,7 @@ function (window, undefined) {
 									newArr.push(arr[i]);
 								}
 							}
-							mapOldType.set(newArr);
+							mapOldType.set(oldValue, newArr);
 						}
 					}
 				}
@@ -3010,21 +3047,19 @@ function (window, undefined) {
 				if (mapNewType) {
 					if (mapNewType.has(newValue)) {
 						const arr = mapNewType.get(newValue);
-						const newArr = [];
+						let newArr = [];
 						if (arr.length === 1) {
-							newArr.push(arr[0]);
-							changedIndex > arr[0] ? newArr.push(changedIndex) : newArr.unshift(changedIndex);
+							newArr = changedIndex > arr[0] ? [arr[0], changedIndex] :[changedIndex, arr[0]];
 						} else {
-							if (arr[0] < changedIndex) {
-								newArr.push(changedIndex);
-							}
-							for(let i = 1; i < arr.length; i += 1) {
-								if (arr[i] < changedIndex && arr[i - 1] > changedIndex) {
+							let isAdded = false;
+							for (let i = 0; i < arr.length; i += 1) {
+								if (changedIndex < arr[i] && !isAdded) {
+									isAdded = true;
 									newArr.push(changedIndex);
 								}
 								newArr.push(arr[i]);
 							}
-							if (arr[arr.length - 1] < changedIndex) {
+							if (changedIndex > arr[arr.length - 1]) {
 								newArr.push(changedIndex);
 							}
 						}

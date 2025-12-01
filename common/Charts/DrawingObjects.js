@@ -428,6 +428,7 @@ function asc_CChartBinary(chart) {
 	this["documentUrl"] = null;
 	this["url2BlobUrl"] = null;
 	this["blobUrl2Data"] = null;
+		this["isFromPdfEditor"] = Asc.editor && Asc.editor.isPdfEditor();
     if (chart) {
         if (chart.getObjectType() === AscDFH.historyitem_type_ChartSpace)
         {
@@ -435,11 +436,11 @@ function asc_CChartBinary(chart) {
             const writer = new AscCommon.BinaryChartWriter(new AscCommon.CMemory(false));
             if(this["IsChartEx"])
             {
-                writer.WriteCT_ChartExSpace(chart);
+                writer.WriteCT_ChartExSpace(chart, undefined, true);
             }
             else
             {
-                writer.WriteCT_ChartSpace(chart);
+                writer.WriteCT_ChartSpace(chart, undefined, true);
             }
             this["binary"] = writer.memory.pos + ";" + writer.memory.GetBase64Memory();
             this["documentImageUrls"] = AscCommon.g_oDocumentUrls.urls;
@@ -2400,6 +2401,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 						_this.drawingArea.clear();
 					}
 				}
+			api.frameManager.sendUpdateDiagram();
         for (var nDrawing = 0; nDrawing < aObjects.length; nDrawing++) {
             _this.drawingArea.drawObject(aObjects[nDrawing], oUpdateRect);
                 }

@@ -253,6 +253,8 @@
 
 		this.broadcastChannel = null;
 
+		this.textAnnotatorEventManager = null;
+
 		return this;
 	}
 
@@ -6076,11 +6078,11 @@
 		
 		if (this.groupActionsCounter > 0)
 			return;
-		
-		this._onEndGroupActions(false);
 
 		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
 		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
+
+		this._onEndGroupActions(false);
 	};
 	baseEditorsApi.prototype.endGroupActions = function()
 	{
@@ -6092,11 +6094,11 @@
 
 		if (this.groupActionsCounter > 0)
 			return;
-		
-		this._onEndGroupActions(true);
 
 		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
 		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
+
+		this._onEndGroupActions(true);
 	};
 	baseEditorsApi.prototype.isGroupActions = function()
 	{
@@ -6107,6 +6109,14 @@
 	};
 	baseEditorsApi.prototype._onEndGroupActions = function(isFullEnd)
 	{
+	};
+
+	baseEditorsApi.prototype.getTextAnnotatorEventManager = function()
+	{
+		if (!this.textAnnotatorEventManager)
+			this.textAnnotatorEventManager = new AscCommon.TextAnnotatorEventManager(this);
+
+		return this.textAnnotatorEventManager;
 	};
 	baseEditorsApi.prototype.prepareImageMap = function(images) {
 		const result = {

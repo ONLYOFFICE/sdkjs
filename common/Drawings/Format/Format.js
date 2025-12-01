@@ -7298,7 +7298,7 @@
 			return arrow && arrow.type === this.type && arrow.len === this.len && arrow.w === this.w;
 		};
 		EndArrow.prototype.GetWidth = function (_size, _max) {
-			var size = Math.max(_size, _max ? _max : 2);
+			var size = Math.min(_size, _max ? _max : 2);
 			var _ret = 3 * size;
 			let startSizeInch;
 			let inchSize;
@@ -7354,7 +7354,7 @@
 			return _ret;
 		};
 		EndArrow.prototype.GetLen = function (_size, _max) {
-			var size = Math.max(_size, _max ? _max : 2);
+			var size = Math.min(_size, _max ? _max : 2);
 			var _ret = 3 * size;
 			let startSizeInch;
 			let inchSize;
@@ -7516,6 +7516,9 @@
 				// not used for visio end types. use types enum directly
 			}
 			return "arrow";
+		};
+		EndArrow.prototype.isPresent = function () {
+			return AscFormat.isRealNumber(this.type) && this.type !== LineEndType.None && this.type !== LineEndType.vsdxNone;
 		};
 
 
@@ -8030,6 +8033,11 @@
 		CLn.prototype.getWidthMM = function () {
 			const nEmu = AscFormat.isRealNumber(this.w) ? this.w : 12700;
 			return nEmu * AscCommonWord.g_dKoef_emu_to_mm;
+		};
+		CLn.prototype.isArrowPresent = function () {
+			if(this.tailEnd && this.tailEnd.isPresent() || this.headEnd && this.headEnd.isPresent())
+				return true;
+			return false;
 		};
 // -----------------------------
 

@@ -468,7 +468,8 @@ CShape.prototype.recalcTextStyles = function()
 };
 CShape.prototype.addToRecalculate = function()
 {
-    var controller = this.getDrawingObjectsController && this.getDrawingObjectsController();
+	var oCellApi = window["Asc"] && window["Asc"]["editor"];
+	const controller = this.getDrawingObjectsController && this.getDrawingObjectsController() || oCellApi && oCellApi.frameManager.getMainDiagramController(this);
     if(controller)
     {
         controller.objectsForRecalculate[this.Id] = this;

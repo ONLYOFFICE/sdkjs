@@ -105,14 +105,66 @@ $(function () {
 			"界! "
 		]);
 		
-		// check non asian text with the eastAsian hint (71108)
+		setText("你好世界! HΩllo! 你好世界! 你好世界! ");
+		recalculate(charWidth * 8.5);
+		checkLines(assert, para, [
+			"你好世界! ",
+			"HΩllo! 你",
+			"好世界! 你好世",
+			"界! "
+		]);
+		
+		setText("你好世界! HeΩlo! 你好世界! 你好世界! ");
+		recalculate(charWidth * 8.5);
+		checkLines(assert, para, [
+			"你好世界! ",
+			"HeΩlo! 你",
+			"好世界! 你好世",
+			"界! "
+		]);
+		
+		// Don't break words in Korean script (73922)
+		setText("안녕하세요 우주인님");
+		recalculate(charWidth * 8.5);
+		checkLines(assert, para, [
+			"안녕하세요 ",
+			"우주인님"
+		]);
+		
+		// Check ambiguous characters with the eastAsian hint (71108)
+		// × Ω (whole greek script)
+		
 		run.SetRFontsHint(AscWord.fonthint_EastAsia);
 		setText("你好世界! Hello! 你好世界! 你好世界! ");
 		recalculate(charWidth * 8.5);
 		checkLines(assert, para, [
-			"你好世界! He",
+			"你好世界! ",
+			"Hello! 你",
+			"好世界! 你好世",
+			"界! "
+		]);
+		
+		setText("你好世界! HΩllo! 你好世界! 你好世界! ");
+		recalculate(charWidth * 8.5);
+		checkLines(assert, para, [
+			"你好世界! HΩ",
 			"llo! 你好世",
 			"界! 你好世界! "
+		]);
+		
+		setText("你好世界! HeΩlo! 你好世界! 你好世界! ");
+		recalculate(charWidth * 8.5);
+		checkLines(assert, para, [
+			"你好世界! He",
+			"Ωlo! 你好世",
+			"界! 你好世界! "
+		]);
+		
+		setText("안녕하세요 우주인님");
+		recalculate(charWidth * 8.5);
+		checkLines(assert, para, [
+			"안녕하세요 ",
+			"우주인님"
 		]);
 		
 		run.SetRFontsHint(undefined);
