@@ -85,6 +85,38 @@ function (window, undefined) {
 		cT_DIST_2T, cT_DIST_RT, cT_INV, cT_INV_2T, cTINV, cTREND, cTRIMMEAN, cTTEST, cT_TEST, cVAR, cVARA, cVARP,
 		cVAR_P, cVAR_S, cVARPA, cWEIBULL, cWEIBULL_DIST, cZTEST, cZ_TEST);
 
+	const MAX_SIGNED_INTEGER = 2147483647;	// 32 bit
+
+	function hypgeomDistExcel(k, n, M, N, cumulative) {
+		function logC(a, b) {
+			if (b < 0 || b > a) return -Infinity;
+			return getLogGamma(a + 1) - getLogGamma(b + 1) - getLogGamma(a - b + 1);
+		}
+
+		function pmf(x) {
+			return Math.exp(logC(M, x) + logC(N - M, n - x) - logC(N, n));
+		}
+
+		const xmin = Math.max(0, n - (N - M));
+		const xmax = Math.min(n, M);
+
+		// if (cumulative === "FALSE") return pmf(k);
+		if (!cumulative) {
+			if (k < xmin || k > xmax) return 0;
+			return pmf(k);
+		} 
+
+		// CDF
+		if (k < xmin) return 0;
+		if (k >= xmax) return 1;
+
+		let sum = 0;
+		for (let x = xmin; x <= k; x++)  {
+			sum += pmf(x);
+		} 
+		return sum;
+	}
+	
 	function integralPhi(x) { // Using gauss(x)+0.5 has severe cancellation errors for x<-4
 		return 0.5 * AscCommonExcel.rtl_math_erfc(-x * 0.7071067811865475); // * 1/sqrt(2)
 	}
@@ -7281,29 +7313,29 @@ function (window, undefined) {
 	cHYPGEOMDIST.prototype.argumentsMax = 4;
 	cHYPGEOMDIST.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.number];
 	cHYPGEOMDIST.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2], arg3 = arg[3];
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2], arg3 = arg[3];
 
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
-		} else if (arg0 instanceof cArray) {
+		} else if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElement(0);
 		}
 
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
 			arg1 = arg1.cross(arguments[1]);
-		} else if (arg1 instanceof cArray) {
+		} else if (arg1.type === cElementType.array) {
 			arg1 = arg1.getElement(0);
 		}
 
-		if (arg2 instanceof cArea || arg2 instanceof cArea3D) {
+		if (arg2.type === cElementType.cellsRange || arg2.type === cElementType.cellsRange3D) {
 			arg2 = arg2.cross(arguments[1]);
-		} else if (arg2 instanceof cArray) {
+		} else if (arg2.type === cElementType.array) {
 			arg2 = arg2.getElement(0);
 		}
 
-		if (arg3 instanceof cArea || arg3 instanceof cArea3D) {
+		if (arg3.type === cElementType.cellsRange || arg3.type === cElementType.cellsRange3D) {
 			arg3 = arg3.cross(arguments[1]);
-		} else if (arg3 instanceof cArray) {
+		} else if (arg3.type === cElementType.array) {
 			arg3 = arg3.getElement(0);
 		}
 
@@ -7312,30 +7344,36 @@ function (window, undefined) {
 		arg2 = arg2.tocNumber();
 		arg3 = arg3.tocNumber();
 
-		if (arg0 instanceof cError) {
+		if (arg0.type === cElementType.error) {
 			return arg0;
 		}
-		if (arg1 instanceof cError) {
+		if (arg1.type === cElementType.error) {
 			return arg1;
 		}
-		if (arg2 instanceof cError) {
+		if (arg2.type === cElementType.error) {
 			return arg2;
 		}
-		if (arg3 instanceof cError) {
+		if (arg3.type === cElementType.error) {
 			return arg3;
 		}
 
 
-		if (arg0.getValue() < 0 || arg0.getValue() > Math.min(arg1.getValue(), arg2.getValue()) ||
-			arg0.getValue() < Math.max(0, arg1.getValue() - arg3.getValue() + arg2.getValue()) ||
-			arg1.getValue() <= 0 || arg1.getValue() > arg3.getValue() || arg2.getValue() <= 0 ||
-			arg2.getValue() > arg3.getValue() || arg3.getValue() <= 0) {
+		arg0 = Math.floor(arg0);
+		arg1 = Math.floor(arg1);
+		arg2 = Math.floor(arg2);
+		arg3 = Math.floor(arg3);
+
+		if (arg0 < 0 || arg1 < 0 || arg2 < 0 || arg3 < 0 || arg1 > arg3 || arg2 > arg3 ) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		return new cNumber(Math.binomCoeff(arg2.getValue(), arg0.getValue()) *
-			Math.binomCoeff(arg3.getValue() - arg2.getValue(), arg1.getValue() - arg0.getValue()) /
-			Math.binomCoeff(arg3.getValue(), arg1.getValue()));
+		if (arg0 > MAX_SIGNED_INTEGER || arg1 > MAX_SIGNED_INTEGER || arg2 > MAX_SIGNED_INTEGER || arg3 > MAX_SIGNED_INTEGER) {
+			return new cError(cErrorType.not_numeric);
+		}	
+
+		let res = hypgeomDistExcel(arg0, arg1, arg2, arg3, /*bCumulative*/ false);
+
+		return isNaN(res) ? new cError(cErrorType.not_numeric) : new cNumber(res);
 
 	};
 
@@ -7355,53 +7393,46 @@ function (window, undefined) {
 	cHYPGEOM_DIST.prototype.isXLFN = true;
 	cHYPGEOM_DIST.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.number, argType.logical];
 	cHYPGEOM_DIST.prototype.Calculate = function (arg) {
-		var oArguments = this._prepareArguments(arg, arguments[1], true);
-		var argClone = oArguments.args;
+
+		let oArguments = this._prepareArguments(arg, arguments[1], true);
+		let argClone = oArguments.args;
 
 		argClone[0] = argClone[0].tocNumber();
 		argClone[1] = argClone[1].tocNumber();
 		argClone[2] = argClone[2].tocNumber();
 		argClone[3] = argClone[3].tocNumber();
-		argClone[4] = argClone[4].tocNumber();
+		argClone[4] = argClone[4].tocBool();
 
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		function hypgeomdist(argArray) {
-			var arg0 = Math.floor(argArray[0]);
-			var arg1 = Math.floor(argArray[1]);
-			var arg2 = Math.floor(argArray[2]);
-			var arg3 = Math.floor(argArray[3]);
-			var bCumulative = argArray[4];
+		if (argClone[4].type !== cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+		argClone[4] = argClone[4].value;
 
-			if (arg0 < 0 || arg0 > Math.min(arg1, arg2) || arg0 < Math.max(0, arg1 - arg3 + arg2) || arg1 <= 0 ||
-				arg1 > arg3 || arg2 <= 0 || arg2 > arg3 || arg3 <= 0) {
+		function hypgeomdist(argArray) {
+			let arg0 = Math.floor(argArray[0]),
+				arg1 = Math.floor(argArray[1]),
+				arg2 = Math.floor(argArray[2]),
+				arg3 = Math.floor(argArray[3]),
+				bCumulative = argArray[4];
+
+			if (arg0 < 0 || arg1 < 0 || arg2 < 0 || arg3 < 0 || arg1 > arg3 || arg2 > arg3 ) {
 				return new cError(cErrorType.not_numeric);
 			}
 
-			var res;
-			if (bCumulative) {
-				var fVal = 0.0;
+			if (arg0 > MAX_SIGNED_INTEGER || arg1 > MAX_SIGNED_INTEGER || arg2 > MAX_SIGNED_INTEGER || arg3 > MAX_SIGNED_INTEGER) {
+				return new cError(cErrorType.not_numeric);
+			}	
 
-				//TODO значения неверные для этой ветки! пересчитать
-				for (var i = 0; i <= arg0; i++) {
-					var temp = Math.binomCoeff(arg2, i) * Math.binomCoeff(arg3 - arg2, arg1 - i) /
-						Math.binomCoeff(arg3, arg1);
-					if (!isNaN(temp)) {
-						fVal += temp;
-					}
-				}
-
-				res = fVal;
-			} else {
-				res = Math.binomCoeff(arg2, arg0) * Math.binomCoeff(arg3 - arg2, arg1 - arg0) /
-					Math.binomCoeff(arg3, arg1);
-			}
+			let res = hypgeomDistExcel(arg0, arg1, arg2, arg3, bCumulative);
 
 			return isNaN(res) ? new cError(cErrorType.not_numeric) : new cNumber(res);
 		}
+
 
 		return this._findArrayInNumberArguments(oArguments, hypgeomdist);
 	};
