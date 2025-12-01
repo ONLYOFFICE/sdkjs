@@ -318,13 +318,21 @@ function BinaryPPTYLoader()
 	this.AddChartBinary = function(oClass, arrBinary) {
 		const oApi = Asc.editor;
 		if (oApi && !oApi.isPdfEditor()) {
-			this.RebuildObjects.push(new CBuilderChartBinaries(oClass, arrBinary));
+			const hash = AscCommon.g_oBinaryCacheManager.getCachedOOXMLHash(arrBinary);
+			oClass.setXLSXId(hash);
+			if (hash === null) {
+				this.RebuildObjects.push(new CBuilderChartBinaries(oClass, arrBinary));
+			}
 		}
 	}
 	this.AddOleBinary = function(oClass, arrBinary) {
 		const oApi = Asc.editor;
 		if (oApi && !oApi.isPdfEditor()) {
-			this.RebuildObjects.push(new CBuilderOleBinaries(oClass, arrBinary));
+			const hash = AscCommon.g_oBinaryCacheManager.getCachedOOXMLHash(arrBinary);
+			oClass.setBinaryId(hash);
+			if (hash === null) {
+				this.RebuildObjects.push(new CBuilderOleBinaries(oClass, arrBinary));
+			}
 		}
 	}
 	this.ClearConnectedObjects = function(){

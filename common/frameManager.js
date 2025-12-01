@@ -1051,6 +1051,7 @@
 	};
 	function CBinaryCacheManager(api) {
 		this.cache = {};
+		this.binaryCache = {};
 		this.api = api;
 	}
 	CBinaryCacheManager.prototype.loadBinaries = function(urls) {
@@ -1093,6 +1094,16 @@
 	CBinaryCacheManager.prototype.getHash = function(binary) {
 		const sha256 = AscCommon.Digest.sha256(binary, 0, binary.length);
 		return AscCommon.Hex.encode(sha256);
+	};
+	CBinaryCacheManager.prototype.getCachedOOXMLHash = function(binary) {
+		let hash = this.getHash(binary);
+		if (this.binaryCache[hash]) {
+			hash = this.binaryCache[hash];
+		}
+		if (this.cache[hash]) {
+			return hash;
+		}
+		return null;
 	};
 	CBinaryCacheManager.prototype.getBinary = function(hash) {
 		if (this.cache[hash]) {
@@ -1213,6 +1224,14 @@
 			if (AscCommon.checkOOXMLSignature(binary)) {
 				resolve(binary);
 			} else {
+				const binaryHash = oThis.getHash(binary);
+				if (oThis.binaryCache[binaryHash]) {
+					const cachedBinary = oThis.getBinary(oThis.binaryCache[binaryHash]);
+					if (cachedBinary) {
+						resolve(cachedBinary);
+						return;
+					}
+				}
 				const arrBinary = oThis.getBase64EncodedData(binary, editorType);
 				const convertFormat = oThis.getConvertFormat(editorType);
 				if (!arrBinary || !convertFormat) {
@@ -1221,6 +1240,7 @@
 				}
 				oThis.api.getConvertedFileFromUrl({data: arrBinary}, convertFormat, function (arrBinaryData) {
 					if (arrBinaryData) {
+						oThis.binaryCache[binaryHash] = oThis.getHash(arrBinaryData);
 						resolve(arrBinaryData);
 					} else {
 						resolve(null);
