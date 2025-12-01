@@ -645,6 +645,7 @@ $(function () {
 		resCell = getCell(ws.getRange2("A17"));
 		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "IFERROR(VLOOKUP(_xlfn.SINGLE(B1),_xlfn.SINGLE(D1:E10),2,FALSE),_xlfn.SINGLE(B1)*2)", "IFERROR(VLOOKUP(@B1,@D1:E10,2,FALSE),@B1*2) -> IFERROR(VLOOKUP(SINGLE(B1),SINGLE(D1:E10),2,FALSE),SINGLE(B1)*2)");
 
+		//TODO =SUMIF(SINGLE(B1:B10),">"&SINGLE(D1),SINGLE(C1:C10)) - don't check parser
 		// fillRange = ws.getRange2("A18");
 		// wsView.setSelection(fillRange.bbox);
 		// fragment = ws.getRange2("A18").getValueForEdit2();
@@ -685,71 +686,396 @@ $(function () {
 		resCell = getCell(ws.getRange2("A10"));
 		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(SUM(_xlfn.SINGLE(B1:B3)))", "@SUM(@B1:B3) -> SINGLE(SUM(SINGLE(B1:B3)))");
 
-		// fillRange = ws.getRange2("A11");
-		// wsView.setSelection(fillRange.bbox);
-		// fragment = ws.getRange2("A11").getValueForEdit2();
-		// fragment[0].setFragmentText("=@IF(@B1>0,@C1,0)");
-		// wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
-		// resCell = getCell(ws.getRange2("A11"));
-		// assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(IF(_xlfn.SINGLE(B1)>0,_xlfn.SINGLE(C1),0))", "@IF(@B1>0,@C1,0) -> SINGLE(IF(SINGLE(B1)>0,SINGLE(C1),0))");
+		fillRange = ws.getRange2("A11");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A11").getValueForEdit2();
+		fragment[0].setFragmentText("=@IF(@B1>0,@C1,0)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A11"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(IF(_xlfn.SINGLE(B1)>0,_xlfn.SINGLE(C1),0))", "@IF(@B1>0,@C1,0) -> SINGLE(IF(SINGLE(B1)>0,SINGLE(C1),0))");
 
-		// fillRange = ws.getRange2("A12");
-		// wsView.setSelection(fillRange.bbox);
-		// fragment = ws.getRange2("A12").getValueForEdit2();
-		// fragment[0].setFragmentText("=@ROUND(@AVERAGE(@B1:B3),2)");
-		// wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
-		// resCell = getCell(ws.getRange2("A12"));
-		// assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(ROUND(_xlfn.SINGLE(AVERAGE(_xlfn.SINGLE(B1:B3))),2))", "@ROUND(@AVERAGE(@B1:B3),2) -> SINGLE(ROUND(SINGLE(AVERAGE(SINGLE(B1:B3))),2))");
+		fillRange = ws.getRange2("A12");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A12").getValueForEdit2();
+		fragment[0].setFragmentText("=@ROUND(@AVERAGE(@B1:B3),2)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A12"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(ROUND(_xlfn.SINGLE(AVERAGE(_xlfn.SINGLE(B1:B3))),2))", "@ROUND(@AVERAGE(@B1:B3),2) -> SINGLE(ROUND(SINGLE(AVERAGE(SINGLE(B1:B3))),2))");
 
-		// fillRange = ws.getRange2("A13");
-		// wsView.setSelection(fillRange.bbox);
-		// fragment = ws.getRange2("A13").getValueForEdit2();
-		// fragment[0].setFragmentText("=@ABS(@MIN(@B1:B3))");
-		// wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
-		// resCell = getCell(ws.getRange2("A13"));
-		// assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(ABS(_xlfn.SINGLE(MIN(_xlfn.SINGLE(B1:B3)))))", "@ABS(@MIN(@B1:B3)) -> SINGLE(ABS(SINGLE(MIN(SINGLE(B1:B3)))))");
-		//
-		// fillRange = ws.getRange2("A14");
-		// wsView.setSelection(fillRange.bbox);
-		// fragment = ws.getRange2("A14").getValueForEdit2();
-		// fragment[0].setFragmentText("=@SQRT(@ABS(@B1))");
-		// wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
-		// resCell = getCell(ws.getRange2("A14"));
-		// assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(SQRT(_xlfn.SINGLE(ABS(_xlfn.SINGLE(B1)))))", "@SQRT(@ABS(@B1)) -> SINGLE(SQRT(SINGLE(ABS(SINGLE(B1)))))");
-		//
-		// fillRange = ws.getRange2("A15");
-		// wsView.setSelection(fillRange.bbox);
-		// fragment = ws.getRange2("A15").getValueForEdit2();
-		// fragment[0].setFragmentText("=@IF(@AND(@B1>0,@C1>0),@SUM(@B1:C1),0)");
-		// wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
-		// resCell = getCell(ws.getRange2("A15"));
-		// assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(IF(_xlfn.SINGLE(AND(_xlfn.SINGLE(B1)>0,_xlfn.SINGLE(C1)>0)),_xlfn.SINGLE(SUM(_xlfn.SINGLE(B1:C1))),0))", "@IF(@AND(@B1>0,@C1>0),@SUM(@B1:C1),0) -> SINGLE(IF(SINGLE(AND(SINGLE(B1)>0,SINGLE(C1)>0)),SINGLE(SUM(SINGLE(B1:C1))),0))");
-		//
-		// fillRange = ws.getRange2("A16");
-		// wsView.setSelection(fillRange.bbox);
-		// fragment = ws.getRange2("A16").getValueForEdit2();
-		// fragment[0].setFragmentText("=@VLOOKUP(@B1,@D1:E10,2,FALSE)");
-		// wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
-		// resCell = getCell(ws.getRange2("A16"));
-		// assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(VLOOKUP(_xlfn.SINGLE(B1),_xlfn.SINGLE(D1:E10),2,FALSE))", "@VLOOKUP(@B1,@D1:E10,2,FALSE) -> SINGLE(VLOOKUP(SINGLE(B1),SINGLE(D1:E10),2,FALSE))");
-		//
-		// fillRange = ws.getRange2("A17");
-		// wsView.setSelection(fillRange.bbox);
-		// fragment = ws.getRange2("A17").getValueForEdit2();
-		// fragment[0].setFragmentText("=@IFERROR(@VLOOKUP(@B1,@D1:E10,2,FALSE),@B1*2)");
-		// wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
-		// resCell = getCell(ws.getRange2("A17"));
-		// assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(IFERROR(_xlfn.SINGLE(VLOOKUP(_xlfn.SINGLE(B1),_xlfn.SINGLE(D1:E10),2,FALSE)),_xlfn.SINGLE(B1)*2))", "@IFERROR(@VLOOKUP(@B1,@D1:E10,2,FALSE),@B1*2) -> SINGLE(IFERROR(SINGLE(VLOOKUP(SINGLE(B1),SINGLE(D1:E10),2,FALSE)),SINGLE(B1)*2))");
-		//
-		// fillRange = ws.getRange2("A18");
-		// wsView.setSelection(fillRange.bbox);
-		// fragment = ws.getRange2("A18").getValueForEdit2();
-		// fragment[0].setFragmentText("=@TEXT(@ROUND(@AVERAGE(@B1:B3),2),\"0.00\")");
-		// wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
-		// resCell = getCell(ws.getRange2("A18"));
-		// assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(TEXT(_xlfn.SINGLE(ROUND(_xlfn.SINGLE(AVERAGE(_xlfn.SINGLE(B1:B3))),2)),\"0.00\"))", "@TEXT(@ROUND(@AVERAGE(@B1:B3),2),\"0.00\") -> SINGLE(TEXT(SINGLE(ROUND(SINGLE(AVERAGE(SINGLE(B1:B3))),2)),\"0.00\"))");
+		fillRange = ws.getRange2("A13");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A13").getValueForEdit2();
+		fragment[0].setFragmentText("=@ABS(@MIN(@B1:B3))");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A13"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(ABS(_xlfn.SINGLE(MIN(_xlfn.SINGLE(B1:B3)))))", "@ABS(@MIN(@B1:B3)) -> SINGLE(ABS(SINGLE(MIN(SINGLE(B1:B3)))))");
 
-		ws.getRange2("A1:Z100").cleanAll();
+		fillRange = ws.getRange2("A14");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A14").getValueForEdit2();
+		fragment[0].setFragmentText("=@SQRT(@ABS(@B1))");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A14"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(SQRT(_xlfn.SINGLE(ABS(_xlfn.SINGLE(B1)))))", "@SQRT(@ABS(@B1)) -> SINGLE(SQRT(SINGLE(ABS(SINGLE(B1)))))");
+
+		fillRange = ws.getRange2("A15");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A15").getValueForEdit2();
+		fragment[0].setFragmentText("=@IF(@AND(@B1>0,@C1>0),@SUM(@B1:C1),0)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A15"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(IF(_xlfn.SINGLE(AND(_xlfn.SINGLE(B1)>0,_xlfn.SINGLE(C1)>0)),_xlfn.SINGLE(SUM(_xlfn.SINGLE(B1:C1))),0))", "@IF(@AND(@B1>0,@C1>0),@SUM(@B1:C1),0) -> SINGLE(IF(SINGLE(AND(SINGLE(B1)>0,SINGLE(C1)>0)),SINGLE(SUM(SINGLE(B1:C1))),0))");
+
+		fillRange = ws.getRange2("A16");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A16").getValueForEdit2();
+		fragment[0].setFragmentText("=@VLOOKUP(@B1,@D1:E10,2,FALSE)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A16"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(VLOOKUP(_xlfn.SINGLE(B1),_xlfn.SINGLE(D1:E10),2,FALSE))", "@VLOOKUP(@B1,@D1:E10,2,FALSE) -> SINGLE(VLOOKUP(SINGLE(B1),SINGLE(D1:E10),2,FALSE))");
+
+		fillRange = ws.getRange2("A17");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A17").getValueForEdit2();
+		fragment[0].setFragmentText("=@IFERROR(@VLOOKUP(@B1,@D1:E10,2,FALSE),@B1*2)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A17"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(IFERROR(_xlfn.SINGLE(VLOOKUP(_xlfn.SINGLE(B1),_xlfn.SINGLE(D1:E10),2,FALSE)),_xlfn.SINGLE(B1)*2))", "@IFERROR(@VLOOKUP(@B1,@D1:E10,2,FALSE),@B1*2) -> SINGLE(IFERROR(SINGLE(VLOOKUP(SINGLE(B1),SINGLE(D1:E10),2,FALSE)),SINGLE(B1)*2))");
+
+		fillRange = ws.getRange2("A18");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A18").getValueForEdit2();
+		fragment[0].setFragmentText("=@TEXT(@ROUND(@AVERAGE(@B1:B3),2),\"0.00\")");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A18"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(TEXT(_xlfn.SINGLE(ROUND(_xlfn.SINGLE(AVERAGE(_xlfn.SINGLE(B1:B3))),2)),\"0.00\"))", "@TEXT(@ROUND(@AVERAGE(@B1:B3),2),\"0.00\") -> SINGLE(TEXT(SINGLE(ROUND(SINGLE(AVERAGE(SINGLE(B1:B3))),2)),\"0.00\"))");
+
+
+		fillRange = ws.getRange2("A18");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A18").getValueForEdit2();
+		fragment[0].setFragmentText("=@TEXT(@ROUND(@AVERAGE(@B1:B3),2),\"0.00\")");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A18"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(TEXT(_xlfn.SINGLE(ROUND(_xlfn.SINGLE(AVERAGE(_xlfn.SINGLE(B1:B3))),2)),\"0.00\"))", "@TEXT(@ROUND(@AVERAGE(@B1:B3),2),\"0.00\") -> SINGLE(TEXT(SINGLE(ROUND(SINGLE(AVERAGE(SINGLE(B1:B3))),2)),\"0.00\"))");
+
+		// Additional test cases for @ operator
+
+		// Test @ with numbers
+		fillRange = ws.getRange2("A21");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A21").getValueForEdit2();
+		fragment[0].setFragmentText("=@123");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A21"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(123)", "@123 -> SINGLE(123)");
+
+		// Test @ with negative numbers
+		fillRange = ws.getRange2("A22");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A22").getValueForEdit2();
+		fragment[0].setFragmentText("=SUM(@-5,@B1)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A22"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SUM(_xlfn.SINGLE(-5),_xlfn.SINGLE(B1))", "SUM(@-5,@B1) -> SUM(SINGLE(-5),SINGLE(B1))");
+
+		// Test @ with error values
+		fillRange = ws.getRange2("A23");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A23").getValueForEdit2();
+		fragment[0].setFragmentText("=IFERROR(@#N/A,0)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A23"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "IFERROR(_xlfn.SINGLE(#N/A),0)", "IFERROR(@#N/A,0) -> IFERROR(SINGLE(#N/A),0)");
+
+		// Test @ with 3D references
+		fillRange = ws.getRange2("A24");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A24").getValueForEdit2();
+		fragment[0].setFragmentText("=SUM(@Sheet1!A1:A10)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A24"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SUM(_xlfn.SINGLE(Sheet1!A1:A10))", "SUM(@Sheet1!A1:A10) -> SUM(SINGLE(Sheet1!A1:A10))");
+
+		// Test @ with CHOOSE function
+		fillRange = ws.getRange2("A25");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A25").getValueForEdit2();
+		fragment[0].setFragmentText("=CHOOSE(@B1,@C1,@D1,@E1)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A25"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "CHOOSE(_xlfn.SINGLE(B1),_xlfn.SINGLE(C1),_xlfn.SINGLE(D1),_xlfn.SINGLE(E1))", "CHOOSE(@B1,@C1,@D1,@E1) -> CHOOSE(SINGLE(B1),SINGLE(C1),SINGLE(D1),SINGLE(E1))");
+
+		// Test @ with COUNT functions
+		fillRange = ws.getRange2("A26");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A26").getValueForEdit2();
+		fragment[0].setFragmentText("=COUNTIF(@B1:B10,@C1)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A26"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUNTIF(_xlfn.SINGLE(B1:B10),_xlfn.SINGLE(C1))", "COUNTIF(@B1:B10,@C1) -> COUNTIF(SINGLE(B1:B10),SINGLE(C1))");
+
+		// Test @ with nested MAX/MIN
+		fillRange = ws.getRange2("A27");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A27").getValueForEdit2();
+		fragment[0].setFragmentText("=@MAX(@MIN(@B1:B10),@MIN(@C1:C10))");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A27"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(MAX(_xlfn.SINGLE(MIN(_xlfn.SINGLE(B1:B10))),_xlfn.SINGLE(MIN(_xlfn.SINGLE(C1:C10)))))", "@MAX(@MIN(@B1:B10),@MIN(@C1:C10)) -> SINGLE(MAX(SINGLE(MIN(SINGLE(B1:B10))),SINGLE(MIN(SINGLE(C1:C10)))))");
+
+		// Test @ with LEFT/RIGHT/MID string functions
+		fillRange = ws.getRange2("A28");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A28").getValueForEdit2();
+		fragment[0].setFragmentText("=LEFT(@B1,@C1)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A28"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "LEFT(_xlfn.SINGLE(B1),_xlfn.SINGLE(C1))", "LEFT(@B1,@C1) -> LEFT(SINGLE(B1),SINGLE(C1))");
+
+		// Test @ with MID function
+		fillRange = ws.getRange2("A29");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A29").getValueForEdit2();
+		fragment[0].setFragmentText("=MID(@B1,@C1,@D1)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A29"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "MID(_xlfn.SINGLE(B1),_xlfn.SINGLE(C1),_xlfn.SINGLE(D1))", "MID(@B1,@C1,@D1) -> MID(SINGLE(B1),SINGLE(C1),SINGLE(D1))");
+
+		// Test @ with DATE/TIME functions
+		fillRange = ws.getRange2("A30");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A30").getValueForEdit2();
+		fragment[0].setFragmentText("=DATE(@B1,@C1,@D1)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A30"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DATE(_xlfn.SINGLE(B1),_xlfn.SINGLE(C1),_xlfn.SINGLE(D1))", "DATE(@B1,@C1,@D1) -> DATE(SINGLE(B1),SINGLE(C1),SINGLE(D1))");
+
+		// Test @ with arithmetic operations between @ operands
+		fillRange = ws.getRange2("A31");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A31").getValueForEdit2();
+		fragment[0].setFragmentText("=@B1+@C1*@D1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A31"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(B1)+_xlfn.SINGLE(C1)*_xlfn.SINGLE(D1)", "@B1+@C1*@D1 -> SINGLE(B1)+SINGLE(C1)*SINGLE(D1)");
+
+		// Test @ with comparison operators
+		fillRange = ws.getRange2("A32");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A32").getValueForEdit2();
+		fragment[0].setFragmentText("=IF(@B1>=@C1,@B1,@C1)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A32"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "IF(_xlfn.SINGLE(B1)>=_xlfn.SINGLE(C1),_xlfn.SINGLE(B1),_xlfn.SINGLE(C1))", "IF(@B1>=@C1,@B1,@C1) -> IF(SINGLE(B1)>=SINGLE(C1),SINGLE(B1),SINGLE(C1))");
+
+		// Test @ with POWER function
+		fillRange = ws.getRange2("A33");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A33").getValueForEdit2();
+		fragment[0].setFragmentText("=POWER(@B1,@C1)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A33"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "POWER(_xlfn.SINGLE(B1),_xlfn.SINGLE(C1))", "POWER(@B1,@C1) -> POWER(SINGLE(B1),SINGLE(C1))");
+
+		// Test @ with MOD function
+		fillRange = ws.getRange2("A34");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A34").getValueForEdit2();
+		fragment[0].setFragmentText("=MOD(@B1,@C1)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A34"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "MOD(_xlfn.SINGLE(B1),_xlfn.SINGLE(C1))", "MOD(@B1,@C1) -> MOD(SINGLE(B1),SINGLE(C1))");
+
+		// Test @ with SUBSTITUTE function
+		fillRange = ws.getRange2("A35");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A35").getValueForEdit2();
+		fragment[0].setFragmentText("=SUBSTITUTE(@B1,@C1,@D1)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A35"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SUBSTITUTE(_xlfn.SINGLE(B1),_xlfn.SINGLE(C1),_xlfn.SINGLE(D1))", "SUBSTITUTE(@B1,@C1,@D1) -> SUBSTITUTE(SINGLE(B1),SINGLE(C1),SINGLE(D1))");
+
+		// Test @ with INDIRECT (dynamic reference)
+		fillRange = ws.getRange2("A36");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A36").getValueForEdit2();
+		fragment[0].setFragmentText("=@INDIRECT(@B1)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A36"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(INDIRECT(_xlfn.SINGLE(B1)))", "@INDIRECT(@B1) -> SINGLE(INDIRECT(SINGLE(B1)))");
+
+		// Test @ with OFFSET function
+		fillRange = ws.getRange2("A37");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A37").getValueForEdit2();
+		fragment[0].setFragmentText("=SUM(@OFFSET(@B1,@C1,@D1))");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A37"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SUM(_xlfn.SINGLE(OFFSET(_xlfn.SINGLE(B1),_xlfn.SINGLE(C1),_xlfn.SINGLE(D1))))", "SUM(@OFFSET(@B1,@C1,@D1)) -> SUM(SINGLE(OFFSET(SINGLE(B1),SINGLE(C1),SINGLE(D1))))");
+
+		// Test @ with LARGE/SMALL functions
+		fillRange = ws.getRange2("A38");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A38").getValueForEdit2();
+		fragment[0].setFragmentText("=LARGE(@B1:B10,@C1)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A38"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "LARGE(_xlfn.SINGLE(B1:B10),_xlfn.SINGLE(C1))", "LARGE(@B1:B10,@C1) -> LARGE(SINGLE(B1:B10),SINGLE(C1))");
+
+		// Test @ with SMALL function
+		fillRange = ws.getRange2("A39");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A39").getValueForEdit2();
+		fragment[0].setFragmentText("=@SMALL(@B1:B10,@C1)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A39"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(SMALL(_xlfn.SINGLE(B1:B10),_xlfn.SINGLE(C1)))", "@SMALL(@B1:B10,@C1) -> SINGLE(SMALL(SINGLE(B1:B10),SINGLE(C1)))");
+
+		// Test @ with LOOKUP function
+		fillRange = ws.getRange2("A40");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A40").getValueForEdit2();
+		fragment[0].setFragmentText("=LOOKUP(@B1,@C1:C10,@D1:D10)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A40"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "LOOKUP(_xlfn.SINGLE(B1),_xlfn.SINGLE(C1:C10),_xlfn.SINGLE(D1:D10))", "LOOKUP(@B1,@C1:C10,@D1:D10) -> LOOKUP(SINGLE(B1),SINGLE(C1:C10),SINGLE(D1:D10))");
+
+		// Test @ with HLOOKUP function
+		fillRange = ws.getRange2("A41");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A41").getValueForEdit2();
+		fragment[0].setFragmentText("=HLOOKUP(@B1,@C1:G3,@D1,FALSE)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A41"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "HLOOKUP(_xlfn.SINGLE(B1),_xlfn.SINGLE(C1:G3),_xlfn.SINGLE(D1),FALSE)", "HLOOKUP(@B1,@C1:G3,@D1,FALSE) -> HLOOKUP(SINGLE(B1),SINGLE(C1:G3),SINGLE(D1),FALSE)");
+
+		// Test @ with NOT function
+		fillRange = ws.getRange2("A42");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A42").getValueForEdit2();
+		fragment[0].setFragmentText("=IF(@NOT(@B1),@C1,@D1)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A42"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "IF(_xlfn.SINGLE(NOT(_xlfn.SINGLE(B1))),_xlfn.SINGLE(C1),_xlfn.SINGLE(D1))", "IF(@NOT(@B1),@C1,@D1) -> IF(SINGLE(NOT(SINGLE(B1))),SINGLE(C1),SINGLE(D1))");
+
+		// Test @ with ISBLANK function
+		fillRange = ws.getRange2("A43");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A43").getValueForEdit2();
+		fragment[0].setFragmentText("=IF(@ISBLANK(@B1),@C1,@B1)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A43"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "IF(_xlfn.SINGLE(ISBLANK(_xlfn.SINGLE(B1))),_xlfn.SINGLE(C1),_xlfn.SINGLE(B1))", "IF(@ISBLANK(@B1),@C1,@B1) -> IF(SINGLE(ISBLANK(SINGLE(B1))),SINGLE(C1),SINGLE(B1))");
+
+		// Test @ with ISNUMBER function
+		fillRange = ws.getRange2("A44");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A44").getValueForEdit2();
+		fragment[0].setFragmentText("=@ISNUMBER(@B1)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A44"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(ISNUMBER(_xlfn.SINGLE(B1)))", "@ISNUMBER(@B1) -> SINGLE(ISNUMBER(SINGLE(B1)))");
+
+		// Test @ with TRIM and CLEAN functions
+		fillRange = ws.getRange2("A45");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A45").getValueForEdit2();
+		fragment[0].setFragmentText("=@TRIM(@CLEAN(@B1))");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A45"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(TRIM(_xlfn.SINGLE(CLEAN(_xlfn.SINGLE(B1)))))", "@TRIM(@CLEAN(@B1)) -> SINGLE(TRIM(SINGLE(CLEAN(SINGLE(B1)))))");
+
+		// Test @ with VALUE function
+		fillRange = ws.getRange2("A46");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A46").getValueForEdit2();
+		fragment[0].setFragmentText("=@VALUE(@B1)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A46"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(VALUE(_xlfn.SINGLE(B1)))", "@VALUE(@B1) -> SINGLE(VALUE(SINGLE(B1)))");
+
+		// Test @ with UPPER/LOWER/PROPER functions
+		fillRange = ws.getRange2("A47");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A47").getValueForEdit2();
+		fragment[0].setFragmentText("=@UPPER(@LOWER(@PROPER(@B1)))");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A47"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(UPPER(_xlfn.SINGLE(LOWER(_xlfn.SINGLE(PROPER(_xlfn.SINGLE(B1)))))))", "@UPPER(@LOWER(@PROPER(@B1))) -> SINGLE(UPPER(SINGLE(LOWER(SINGLE(PROPER(SINGLE(B1)))))))");
+
+		// Test @ with REPT function
+		fillRange = ws.getRange2("A48");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A48").getValueForEdit2();
+		fragment[0].setFragmentText("=REPT(@B1,@C1)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A48"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "REPT(_xlfn.SINGLE(B1),_xlfn.SINGLE(C1))", "REPT(@B1,@C1) -> REPT(SINGLE(B1),SINGLE(C1))");
+
+		// Test @ with complex nested expression
+		fillRange = ws.getRange2("A49");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A49").getValueForEdit2();
+		fragment[0].setFragmentText("=@IF(@AND(@B1>0,@OR(@C1<10,@D1=5)),@SUM(@B1:D1),@AVERAGE(@B1:D1))");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A49"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(IF(_xlfn.SINGLE(AND(_xlfn.SINGLE(B1)>0,_xlfn.SINGLE(OR(_xlfn.SINGLE(C1)<10,_xlfn.SINGLE(D1)=5)))),_xlfn.SINGLE(SUM(_xlfn.SINGLE(B1:D1))),_xlfn.SINGLE(AVERAGE(_xlfn.SINGLE(B1:D1)))))", "@IF(@AND(@B1>0,@OR(@C1<10,@D1=5)),@SUM(@B1:D1),@AVERAGE(@B1:D1)) -> SINGLE(IF(SINGLE(AND(SINGLE(B1)>0,SINGLE(OR(SINGLE(C1)<10,SINGLE(D1)=5)))),SINGLE(SUM(SINGLE(B1:D1))),SINGLE(AVERAGE(SINGLE(B1:D1)))))");
+
+		// Test @ with ROW and COLUMN functions
+		fillRange = ws.getRange2("A50");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A50").getValueForEdit2();
+		fragment[0].setFragmentText("=@ROW(@B1)+@COLUMN(@B1)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A50"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(ROW(_xlfn.SINGLE(B1)))+_xlfn.SINGLE(COLUMN(_xlfn.SINGLE(B1)))", "@ROW(@B1)+@COLUMN(@B1) -> SINGLE(ROW(SINGLE(B1)))+SINGLE(COLUMN(SINGLE(B1)))");
+
+
+		// Test @ with deeply nested IFS and multiple conditions
+		fillRange = ws.getRange2("A51");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A51").getValueForEdit2();
+		fragment[0].setFragmentText("=@IF(@B1>100,@IF(@C1>50,@SUM(@B1:C1)*@D1,@AVERAGE(@B1:D1)),@IF(@B1<0,@ABS(@B1),@MIN(@B1:D1)))");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A51"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(IF(_xlfn.SINGLE(B1)>100,_xlfn.SINGLE(IF(_xlfn.SINGLE(C1)>50,_xlfn.SINGLE(SUM(_xlfn.SINGLE(B1:C1)))*_xlfn.SINGLE(D1),_xlfn.SINGLE(AVERAGE(_xlfn.SINGLE(B1:D1))))),_xlfn.SINGLE(IF(_xlfn.SINGLE(B1)<0,_xlfn.SINGLE(ABS(_xlfn.SINGLE(B1))),_xlfn.SINGLE(MIN(_xlfn.SINGLE(B1:D1)))))))", "@IF(@B1>100,@IF(@C1>50,@SUM(@B1:C1)*@D1,@AVERAGE(@B1:D1)),@IF(@B1<0,@ABS(@B1),@MIN(@B1:D1))) -> complex nested IF");
+
+		// Test @ with SUMPRODUCT and multiple array operations
+		fillRange = ws.getRange2("A52");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A52").getValueForEdit2();
+		fragment[0].setFragmentText("=@SUMPRODUCT((@B1:B10>@C1)*(@C1:C10<@D1)*(@D1:D10=@E1)*@B1:B10/@F1)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A52"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(SUMPRODUCT((_xlfn.SINGLE(B1:B10)>_xlfn.SINGLE(C1))*(_xlfn.SINGLE(C1:C10)<_xlfn.SINGLE(D1))*(_xlfn.SINGLE(D1:D10)=_xlfn.SINGLE(E1))*_xlfn.SINGLE(B1:B10)/_xlfn.SINGLE(F1)))", "@SUMPRODUCT with multiple @ array operations");
+
+		// Test @ with INDEX/MATCH combination and nested functions
+		fillRange = ws.getRange2("A53");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A53").getValueForEdit2();
+		fragment[0].setFragmentText("=@IFERROR(@INDEX(@B1:E10,@MATCH(@MAX(@A1:A10),@A1:A10,0),@MATCH(@MIN(@F1:F10),@F1:F10,0)),@AVERAGE(@B1:E10))");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A53"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(IFERROR(_xlfn.SINGLE(INDEX(_xlfn.SINGLE(B1:E10),_xlfn.SINGLE(MATCH(_xlfn.SINGLE(MAX(_xlfn.SINGLE(A1:A10))),_xlfn.SINGLE(A1:A10),0)),_xlfn.SINGLE(MATCH(_xlfn.SINGLE(MIN(_xlfn.SINGLE(F1:F10))),_xlfn.SINGLE(F1:F10),0)))),_xlfn.SINGLE(AVERAGE(_xlfn.SINGLE(B1:E10)))))", "@IFERROR(@INDEX with nested @MATCH and @MAX/@MIN");
+
+		// Test @ with TEXT formatting and nested calculations
+		fillRange = ws.getRange2("A54");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A54").getValueForEdit2();
+		fragment[0].setFragmentText("=@CONCATENATE(@TEXT(@ROUND(@SUM(@B1:B10)/@COUNT(@B1:B10),2),\"#,##0.00\"),\" \",@TEXT(@MAX(@B1:B10)-@MIN(@B1:B10),\"0.00%\"))");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A54"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(CONCATENATE(_xlfn.SINGLE(TEXT(_xlfn.SINGLE(ROUND(_xlfn.SINGLE(SUM(_xlfn.SINGLE(B1:B10)))/_xlfn.SINGLE(COUNT(_xlfn.SINGLE(B1:B10))),2)),\"#,##0.00\")),\" \",_xlfn.SINGLE(TEXT(_xlfn.SINGLE(MAX(_xlfn.SINGLE(B1:B10)))-_xlfn.SINGLE(MIN(_xlfn.SINGLE(B1:B10))),\"0.00%\"))))", "@CONCATENATE with @TEXT and nested arithmetic");
+
+		// Test @ with multiple logical functions combined
+		fillRange = ws.getRange2("A55");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A55").getValueForEdit2();
+		fragment[0].setFragmentText("=@IF(@AND(@NOT(@ISBLANK(@B1)),@OR(@ISNUMBER(@B1),@ISTEXT(@B1)),@ISERROR(@C1)=FALSE),@VLOOKUP(@B1,@D1:F10,@IF(@B1>0,2,3),@FALSE),@NA())");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A55"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SINGLE(IF(_xlfn.SINGLE(AND(_xlfn.SINGLE(NOT(_xlfn.SINGLE(ISBLANK(_xlfn.SINGLE(B1))))),_xlfn.SINGLE(OR(_xlfn.SINGLE(ISNUMBER(_xlfn.SINGLE(B1))),_xlfn.SINGLE(ISTEXT(_xlfn.SINGLE(B1))))),_xlfn.SINGLE(ISERROR(_xlfn.SINGLE(C1)))=FALSE)),_xlfn.SINGLE(VLOOKUP(_xlfn.SINGLE(B1),_xlfn.SINGLE(D1:F10),_xlfn.SINGLE(IF(_xlfn.SINGLE(B1)>0,2,3)),_xlfn.SINGLE(FALSE))),_xlfn.SINGLE(NA())))", "@IF with @AND, @NOT, @OR, @ISNUMBER, @ISTEXT, @ISERROR, @VLOOKUP");
 
 		ws.getRange2("A1:Z100").cleanAll();
 	});

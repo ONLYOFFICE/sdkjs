@@ -8276,8 +8276,9 @@ function parserFormula( formula, parent, _ws ) {
 			}
 			var prevCurrPos = ph.pCurrPos;
 
+			let currentAtOperatorPos = null;
 			if ('@' === t.Formula[ph.pCurrPos] && local) {
-				atOperatorStack.push(ph.pCurrPos);
+				currentAtOperatorPos = ph.pCurrPos;
 				ph.pCurrPos++;
 				if (ph.pCurrPos >= t.Formula.length) {
 					parseResult.setError(c_oAscError.ID.FrmlOperandExpected);
@@ -8360,7 +8361,7 @@ function parserFormula( formula, parent, _ws ) {
 				let wsF, wsT;
 				let sheetName = _3DRefTmp[1];
 
-				let isExternalRefExist, externalLink, receivedLink, externalName, 
+				let isExternalRefExist, externalLink, receivedLink, externalName,
 					createShortLink, externalProps, isCurrentFile, currentFileDefname;
 
 				/* these flags are needed to further check the link to the current file */
@@ -8388,7 +8389,7 @@ function parserFormula( formula, parent, _ws ) {
 					isCurrentFile = externalProps.isCurrentFile;
 					currentFileDefname = externalProps.currentFileDefname;
 				}
-				
+
 				if (externalProps && !sheetName) {
 					sheetName = externalProps.sheetName ? externalProps.sheetName : externalName;
 				}
@@ -8704,6 +8705,11 @@ function parserFormula( formula, parent, _ws ) {
 						startArrayArg = null;
 					}
 
+					if (currentAtOperatorPos !== null) {
+						atOperatorStack.push(currentAtOperatorPos);
+						currentAtOperatorPos = null;
+					}
+
 				} else {
 					parseResult.setError(c_oAscError.ID.FrmlWrongFunctionName);
 					if (!ignoreErrors) {
@@ -8721,9 +8727,9 @@ function parserFormula( formula, parent, _ws ) {
 					elemArr.pop();
 				}
 
-				if (atOperatorStack.length > 0 && atOperatorStack[atOperatorStack.length - 1] !== undefined) {
-					parseResult.addAtOperator(atOperatorStack[atOperatorStack.length - 1], ph.pCurrPos);
-					atOperatorStack.pop();
+				if (currentAtOperatorPos !== null) {
+					parseResult.addAtOperator(currentAtOperatorPos, ph.pCurrPos);
+					currentAtOperatorPos = null;
 				}
 
 				t.outStack.push(found_operand);
@@ -8988,23 +8994,53 @@ function parserFormula( formula, parent, _ws ) {
 			return this.assemble();
 		}
 
-		var formula = this.Formula;
-		var offset = 0;
-
+		let formula = this.Formula;
+		
 		atOperators.sort(function(a, b) {
-			return a.start - b.start;
+			let lenA = a.end - a.start;
+			let lenB = b.end - b.start;
+			if (lenA !== lenB) {
+				return lenA - lenB;
+			}
+			return b.start - a.start;
 		});
+		
+		let offsets = [];
 
-		for (var i = 0; i < atOperators.length; i++) {
-			var atOp = atOperators[i];
-			var operandStr = formula.substring(atOp.start + offset, atOp.end + offset);
-			var replacement = "SINGLE(" + operandStr + ")";
+		for (let i = 0; i < atOperators.length; i++) {
+			let atOp = atOperators[i];
+			
+			let adjustedStart = atOp.start;
+			let adjustedEnd = atOp.end;
 
-			formula = formula.substring(0, atOp.start + offset) +
+			for (let j = 0; j < offsets.length; j++) {
+				let off = offsets[j];
+				if (off.originalStart < atOp.start) {
+					adjustedStart += off.delta;
+					adjustedEnd += off.delta;
+				} else if (off.originalStart >= atOp.start && off.originalEnd <= atOp.end) {
+					adjustedEnd += off.delta;
+				}
+			}
+
+			let operandStr = formula.substring(adjustedStart, adjustedEnd);
+			
+			let innerContent = operandStr;
+			if (innerContent.charAt(0) === '@') {
+				innerContent = innerContent.substring(1);
+			}
+
+			let replacement = "SINGLE(" + innerContent + ")";
+
+			formula = formula.substring(0, adjustedStart) +
 				replacement +
-				formula.substring(atOp.end + offset);
-
-			offset += replacement.length - (atOp.end - atOp.start);
+				formula.substring(adjustedEnd);
+			
+			offsets.push({
+				originalStart: atOp.start,
+				originalEnd: atOp.end,
+				delta: replacement.length - (adjustedEnd - adjustedStart)
+			});
 		}
 
 		return formula;
