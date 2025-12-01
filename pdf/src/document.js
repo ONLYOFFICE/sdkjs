@@ -9637,13 +9637,13 @@ var CPresentation = CPresentation || function(){};
                 oAnnotProps = new Asc.asc_CFreeTextAnnotProperty();
                 oAnnotProps.asc_putBorderWidth(annot.GetWidth());
                 oAnnotProps.asc_putLineEnd(annot.GetLineEnd());
-                oAnnotProps.asc_putBorderStyle(annot.GetBorder());
+                oAnnotProps.asc_putBorderStyle(annot.GetComplexBorderType());
                 oAnnotProps.asc_putCanEditText(annot.IsInTextBox());
                 break;
             }
             case AscPDF.ANNOTATIONS_TYPES.Line: {
                 oAnnotProps = new Asc.asc_CLineAnnotProperty();
-                oAnnotProps.asc_putBorderStyle(annot.GetBorder());
+                oAnnotProps.asc_putBorderStyle(annot.GetComplexBorderType());
                 oAnnotProps.asc_putBorderWidth(annot.GetWidth());
                 oAnnotProps.asc_putLineEnd(annot.GetLineEnd());
                 oAnnotProps.asc_putLineStart(annot.GetLineStart());
@@ -9652,7 +9652,7 @@ var CPresentation = CPresentation || function(){};
             }
             case AscPDF.ANNOTATIONS_TYPES.PolyLine: {
                 oAnnotProps = new Asc.asc_CPolyLineAnnotProperty();
-                oAnnotProps.asc_putBorderStyle(annot.GetBorder());
+                oAnnotProps.asc_putBorderStyle(annot.GetComplexBorderType());
                 oAnnotProps.asc_putBorderWidth(annot.GetWidth());
                 oAnnotProps.asc_putLineEnd(annot.GetLineEnd());
                 oAnnotProps.asc_putLineStart(annot.GetLineStart());
@@ -9662,7 +9662,7 @@ var CPresentation = CPresentation || function(){};
             case AscPDF.ANNOTATIONS_TYPES.Square:
             case AscPDF.ANNOTATIONS_TYPES.Circle: {
                 oAnnotProps = new Asc.asc_CClosedAnnotProperty();
-                oAnnotProps.asc_putBorderStyle(annot.GetBorder());
+                oAnnotProps.asc_putBorderStyle(annot.GetComplexBorderType());
                 oAnnotProps.asc_putBorderWidth(annot.GetWidth());
                 break;
             }
