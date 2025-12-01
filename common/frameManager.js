@@ -288,9 +288,10 @@
 	CCellFrameManager.prototype.openWorkbookData = function (sStream, oInfo)
 	{
 		const oFile = new AscCommon.OpenFileResult();
-		oFile.bSerFormat = AscCommon.checkStreamSignature(sStream, AscCommon.c_oSerFormat.Signature);
+		const isStreamSignature = AscCommon.checkStreamSignature(sStream, AscCommon.c_oSerFormat.Signature);
+		oFile.bSerFormat = isStreamSignature || !AscCommon.checkOOXMLSignature(sStream);
 		oFile.data = sStream;
-		oFile.isDecodedData = true;
+		oFile.isDecodedData = !isStreamSignature;
 		this.api.asc_CloseFile();
 		AscCommon.g_oDocumentUrls.documentUrl = oInfo["documentUrl"];
 		this.initBlob(oInfo["blobUrl2Data"], oInfo["url2BlobUrl"]);
