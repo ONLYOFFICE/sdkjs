@@ -1075,7 +1075,7 @@
 					res[i] = null;
 					if (binary) {
 						const hash = oThis.getHash(binary);
-						const loadedData = new CLoadBinaryData(hash, binary);
+						const loadedData = new CLoadBinaryData(hash, binary.slice());
 						loadedData.setLoadState(CLoadBinaryData_Complete);
 						loadedData.data = {path: urls[i], url: sFullUrl};
 						oThis.cache[hash] = loadedData;
@@ -1118,7 +1118,7 @@
 			if (AscCommon.History.IsOn()) {
 				const oldOfflineCache = oThis.cache[hash] && oThis.cache[hash].loadState === CLoadBinaryData_Offline ? oThis.cache[hash] : undefined;
 				if (!oThis.cache[hash] || oldOfflineCache) {
-					oThis.cache[hash] = new CLoadBinaryData(hash, xlsxBinary);
+					oThis.cache[hash] = new CLoadBinaryData(hash, xlsxBinary.slice());
 					const dataUrl = oThis.getDataURLFromBinary(xlsxBinary, editorType);
 					AscCommon.sendImgUrls(oThis.api, [dataUrl], function(data) {
 						if (data && data[0] && data[0].url !== "error") {
@@ -1209,7 +1209,7 @@
 	};
 	CBinaryCacheManager.prototype.addLocalBinary = function(binary) {
 		const hash = this.getHash(binary);
-		const loadedData = new CLoadBinaryData(hash, binary);
+		const loadedData = new CLoadBinaryData(hash, binary.slice());
 		loadedData.setLoadState(CLoadBinaryData_Offline);
 		this.cache[hash] = loadedData;
 		return loadedData;

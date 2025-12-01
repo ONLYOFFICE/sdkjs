@@ -11613,7 +11613,7 @@ function BinaryPPTYLoader()
 
 															const arrBinaryData = s.data.slice(s.cur, s.cur + binary_length);
 															if (this.Reader.IsUseFullUrl) {
-																this.Reader.AddOleBinary(val, arrBinaryData);
+																this.Reader.AddOleBinary(ole, arrBinaryData);
 															} else {
 																ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData).hash);
 															}
@@ -11626,7 +11626,7 @@ function BinaryPPTYLoader()
                                 binary_length = s.GetULong();
 															const arrBinaryData = s.data.slice(s.cur, s.cur + binary_length);
 															if (this.Reader.IsUseFullUrl) {
-																this.Reader.AddOleBinary(val, arrBinaryData);
+																this.Reader.AddOleBinary(ole, arrBinaryData);
 															} else {
 																ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData).hash);
 															}
@@ -11655,7 +11655,7 @@ function BinaryPPTYLoader()
 														binary_length = s.GetULong();
 														const arrBinaryData = s.data.slice(s.cur, s.cur + binary_length);
 														if (this.Reader.IsUseFullUrl) {
-															this.Reader.AddOleBinary(val, arrBinaryData);
+															this.Reader.AddOleBinary(ole, arrBinaryData);
 														} else {
 															ole.setBinaryId(AscCommon.g_oBinaryCacheManager.addLocalBinary(arrBinaryData).hash);
 														}

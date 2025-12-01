@@ -513,18 +513,23 @@ function (window, undefined) {
 				switch (nEditorId) {
 					case AscCommon.c_oEditorId.Word: {
 						this.setObjectFile("maskFile.docx");
+						this.setOleType(1);
 						break;
 					}
 					case AscCommon.c_oEditorId.Presentation: {
 						this.setObjectFile("maskFile.pptx");
+						// todo
+						// this.setOleType(3);
 						break;
 					}
 					case AscCommon.c_oEditorId.Spreadsheet: {
 						this.setObjectFile("maskFile.xlsx");
+						this.setOleType(2);
 						break;
 					}
 					case AscCommon.c_oEditorId.Visio: {
 						this.setObjectFile("maskFile.vsdx");
+						this.setOleType(5);
 						break;
 					}
 				}
