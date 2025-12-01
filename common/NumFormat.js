@@ -3656,7 +3656,7 @@ FormatParser.prototype =
         var match = value.match(rx_thouthand);
 
         if (currentFormat == Asc.c_oAscNumFormatType.Text)
-            match = null
+            match = null;
 
         if (null != match) {
             // If the third group has "/" symbol parse it like a fraction
@@ -3666,7 +3666,7 @@ FormatParser.prototype =
                 // If the fraction like a "1/2"
                 if(match2.length == 2)
                 {
-                    var withoutIntegerPart = true
+                    var withoutIntegerPart = true;
                     var sVal = '0';
                     var sNumerator = match2[0];
                     var sDenominator = match2[1];
@@ -3680,7 +3680,7 @@ FormatParser.prototype =
                 }
             }
             else 
-                var sVal = match[3]
+                var sVal = match[3];
                 
 
             var sBefore = match[1];
@@ -3701,7 +3701,7 @@ FormatParser.prototype =
             }
         // The second condition is for compability of results with Excel
         } else if(currentFormat === Asc.c_oAscNumFormatType.Percent && (value[0] !== " " || stringFormat !== "0.00%")){
-            sAfter = '%'
+            sAfter = '%';
         } else if (sNumerator && sDenominator) {
             var sDivide = '/';
         }
@@ -3838,25 +3838,24 @@ FormatParser.prototype =
                         // The second condition checks how many decimal points the scientific data type has. If there are two points, the format parse as fraction (an Excel feature)
                         if(currentFormat == Asc.c_oAscNumFormatType.Number || (currentFormat == Asc.c_oAscNumFormatType.Scientific && stringFormat !== "0.00E+00"))
                         {
-                            sFormat = stringFormat
+                            sFormat = stringFormat;
                         } else if (stringFormat && currentFormat !== Asc.c_oAscNumFormatType.General && currentFormat !== Asc.c_oAscNumFormatType.Date && currentFormat !== Asc.c_oAscNumFormatType.Time && currentFormat !== Asc.c_oAscNumFormatType.Percent && currentFormat !== Asc.c_oAscNumFormatType.Scientific)
                         {
                             if (numLength == 3 && (denomLength == 2 || denomLength == 3) && sVal != 0)
-                                sFormat = null
+                                sFormat = null;
                             else
                             {
-                                var formats = gc_aFractionFormats
+                                var formats = gc_aFractionFormats;
                                 if (formats.indexOf(stringFormat) !== -1)
-                                    sFormat = stringFormat
+                                    sFormat = stringFormat;
                             }
                         } else if (numLength == 1 && denomLength == 1) 
                         {
                             sFormat = "# ?/?";
                         } else if (numLength == 1 && (denomLength == 2 || denomLength == 3))
-                        // if (numLength == 1 && (denomLength == 2 || denomLength == 3))
                         {
                             if(currentFormat == Asc.c_oAscNumFormatType.Fraction)
-                                sFormat = "# ?/?"
+                                sFormat = "# ?/?";
                             else 
                                 sFormat = "# ??/??";   
                         } else if (numLength == 2 && denomLength == 1)
@@ -3865,7 +3864,7 @@ FormatParser.prototype =
                         } else if (numLength == 2 && (denomLength == 2 || denomLength == 3)) 
                         {
                             if(currentFormat == Asc.c_oAscNumFormatType.Fraction)
-                                sFormat = "# ?/?"
+                                sFormat = "# ?/?";
                             else 
                                 sFormat = "# ??/??"; 
                         } else if (numLength == 3 && denomLength == 1 && sVal === '0') 
@@ -3969,7 +3968,7 @@ FormatParser.prototype =
 					res.format = sFormat;
 					res.value = dVal;
                     if (!sFormat) 
-                        res = null
+                        res = null;
 				}
 			}
         }
@@ -3981,9 +3980,13 @@ FormatParser.prototype =
             res = this.parseDate(value, cultureInfo, currentFormat, stringFormat);    
         else if (currentFormat == Asc.c_oAscNumFormatType.Time)
             res.format = stringFormat;     
+
+        // If the string is not read as a date but the format is set to date, we need to force the date format to be applied
         if (res && stringFormat && stringFormat.replace(/^\[.*?\]/, '') == cultureInfo.LongDatePattern)
-            res.format = cultureInfo.LongDatePattern 
-        
+            res.format = cultureInfo.LongDatePattern;
+        else if (res && currentFormat == Asc.c_oAscNumFormatType.Date && stringFormat !== getShortDateFormat(cultureInfo))
+            res.format = stringFormat;
+
         return res
     },
     _parseStringLetters: function (sVal, currencySymbol, bBefore, oRes) {
@@ -4751,7 +4754,7 @@ FormatParser.prototype =
                         if (currentFormat == Asc.c_oAscNumFormatType.Date || currentFormat == Asc.c_oAscNumFormatType.Time || currentFormat == Asc.c_oAscNumFormatType.Number || (currentFormat == Asc.c_oAscNumFormatType.Scientific && stringFormat !== "0.00E+00"))
                             sFormat += stringFormat;
                         else if (currentFormat == Asc.c_oAscNumFormatType.LongDate)
-                            sFormat += cultureInfo.LongDatePattern
+                            sFormat += cultureInfo.LongDatePattern;
                         else if (bDate) {
 							if (bTime && nHour > 23) {
 								sFormat = AscCommon.g_cGeneralFormat;
