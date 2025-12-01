@@ -1063,9 +1063,9 @@
 			}
 			for (let i = 0; i < urls.length; i++) {
 				const sUrl = urls[i];
-				const sBase64 = sUrl.indexOf("data:") === 0 ? sUrl.indexOf("base64,") : -1;
-				if (sBase64 !== -1) {
-					const arrBinaryData = AscCommon.Base64.decode(sBase64);
+				const sBase64Index = sUrl.indexOf("data:") === 0 ? sUrl.indexOf("base64,") : -1;
+				if (sBase64Index !== -1) {
+					const arrBinaryData = AscCommon.Base64.decode(sUrl.slice(sBase64Index + 7));
 					resolve(oThis.addLocalBinary(arrBinaryData));
 					return;
 				}
