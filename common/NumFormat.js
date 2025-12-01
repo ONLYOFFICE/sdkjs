@@ -3950,7 +3950,7 @@ FormatParser.prototype =
                     if(prev.type != oDataTypes.delimiter && next.type != oDataTypes.delimiter){
                         var isTimeSeparator;
                         if (sameSeparators) {
-                            isTimeSeparator = this._looksLikeTimePart(prev, next, match, oDataTypes);
+                            isTimeSeparator = this._looksLikeTimePart(prev, next, match, oDataTypes, cultureInfo.LCID);
                         } else {
                             isTimeSeparator = cultureInfo.TimeSeparator == elem.val || (":" == elem.val && cultureInfo.DateSeparator != elem.val);
                         }
@@ -4194,23 +4194,27 @@ FormatParser.prototype =
         }
 		return res;
     },
-	_looksLikeTimePart: function(prev, next, match, oDataTypes) {
+	_looksLikeTimePart: function(prev, next, match, oDataTypes, LCID) {
 		if (prev.time || next.time) {
 			return true;
 		}
 		var prevVal = parseInt(prev.val, 10);
 		var nextVal = parseInt(next.val, 10);
 		// Numbers don't fit time range
-		if (prevVal < 0 || prevVal > 23 || nextVal < 0 || nextVal > 59) {
-			return false;
-		}
+        var prevCouldBeHour = !isNaN(prevVal) && prevVal >= 0 && prevVal <= 24;
+        var nextCouldBeMinute = !isNaN(nextVal) && nextVal >= 0 && nextVal <= 59;
+        
+        if (!prevCouldBeHour || !nextCouldBeMinute) {
+            return false;
+        }
 		var digitCount = 0;
+        var isTimeSeparator = false
 		for (var i = 0; i < match.length; i++) {
 			var elem = match[i];
 			if (elem.type.id === oDataTypes.digit.id) {
 				digitCount++;
 				// Large year
-				if (elem.val > 31 && elem.val < 10000) {
+				if (elem.val > 59 && elem.val < 10000) {
 					return false;
 				}
 			} else if (elem.type.id === oDataTypes.letter.id) {
@@ -4222,8 +4226,17 @@ FormatParser.prototype =
 				if (elem.am || elem.pm) {
 					return true;
 				}
-			}
+			} else if (elem.type.id === oDataTypes.delimiter.id) {
+                if (elem.val === ":")
+                    isTimeSeparator = true;
+            }
 		}
+
+        // So far, only the Finnish language has the same separate symbol for date and time (LCID = 11). In Finnish, strings like "04.03" are considered dates, not times. 
+        if(LCID === 11 && digitCount === 2 && !isTimeSeparator)
+            return false;
+        else if (LCID === 11 && digitCount === 3 && isTimeSeparator)
+            return true;
 		// 3+ digits usually mean date
 		return digitCount < 3;
 	},
