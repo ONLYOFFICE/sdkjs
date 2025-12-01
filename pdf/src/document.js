@@ -8075,16 +8075,9 @@ var CPresentation = CPresentation || function(){};
         const oThis = this;
         this.DrawingObjects.loadChartData(chartBinary['noHistory']);
         if (!chartBinary['noHistory']) {
-					AscCommon.g_oBinaryCacheManager.addBinary(chartBinary["workbookBinary"], AscCommon.c_oEditorId.Spreadsheet).then(function(loadedData) {
-						if (loadedData) {
-							chartBinary["loadedData"] = loadedData;
-							oThis.DrawingObjects.checkSelectedObjectsAndCallback(function () {
-								oThis.EditChart(chartBinary);
-							}, [], false, AscDFH.historydescription_Presentation_EditChart);
-						}
-					}).then(function(e) {
-						
-					});
+						oThis.DrawingObjects.checkSelectedObjectsAndCallback(function () {
+							oThis.EditChart(chartBinary);
+						}, [], false, AscDFH.historydescription_Presentation_EditChart);
         }
     };
     CPDFDoc.prototype.EditChart = function (binary) {
