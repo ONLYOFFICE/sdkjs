@@ -10054,6 +10054,22 @@ function parserFormula( formula, parent, _ws ) {
 					continue;
 				}
 
+				if (bLocale && currentElement.type === cElementType.func && currentElement.name === "SINGLE") {
+					var argIndex = j - _count_arg - _argDiff;
+					var singleArg = elemArr[argIndex];
+					if (singleArg) {
+						var argStr = bLocale ?
+							(singleArg.toLocaleString ? singleArg.toLocaleString(digitDelim) : singleArg.toString()) :
+							singleArg.toString();
+						res = new cString("@" + argStr);
+					} else {
+						res = new cString("@");
+					}
+					j -= _count_arg + _argDiff;
+					elemArr[j] = res;
+					continue;
+				}
+
 				if (bLocale) {
 					res = currentElement.Assemble2Locale(elemArr, j - _count_arg - _argDiff, _count_arg, locale, digitDelim);
 				} else {
