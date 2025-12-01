@@ -16648,7 +16648,7 @@
 			}
 
 			this.ws.workbook.dependencyFormulas.addToCleanCellCache(this.ws.getId(), this.nRow, this.nCol);
-			AscCommonExcel.g_oLOOKUPCache.remove(this);
+			AscCommonExcel.g_oLOOKUPCache.remove(this, DataOld, res);
 			AscCommonExcel.g_oVLOOKUPCache.remove(this, DataOld, res);
 			AscCommonExcel.g_oHLOOKUPCache.remove(this), DataOld, res;
 			AscCommonExcel.g_oMatchCache.remove(this);
