@@ -5276,6 +5276,7 @@ function(window, undefined) {
 	CChartSpace.prototype.setXLSXId = function(sXLSXId) {
 		AscCommon.History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_ChartSpace_SetXLSXId, this.XLSXId, sXLSXId));
 		this.XLSXId = sXLSXId;
+		AscCommon.g_oBinaryCacheManager.sendBinaryPathToHistory(sXLSXId);
 	};
 	CChartSpace.prototype.setExternalReference = function (oExternalReference)
 	{

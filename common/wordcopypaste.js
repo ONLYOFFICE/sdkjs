@@ -94,10 +94,12 @@ function GetConvertedPromiseForImageDownload(aBuilderImages, bSameDoc) {
 		}
 	}
 	return new Promise(function(resolve) {
+		Asc.editor.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.LoadImage);
 		const promiseIterator = new AscCommon.CPromiseGetterIterator(arrPromiseFunctions);
 		promiseIterator.forAllSuccessValues(function() {
 			const oObjectsForDownload = GetObjectsForImageDownload(aBuilderImages, bSameDoc);
 			resolve(oObjectsForDownload);
+			Asc.editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.LoadImage);
 		});
 	});
 }

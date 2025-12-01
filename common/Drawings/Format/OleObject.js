@@ -166,6 +166,7 @@ function (window, undefined) {
 		COleObject.prototype.setBinaryId = function(sBinaryId) {
 			AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ImageShapeSetBinaryId, this.m_sBinaryId, sBinaryId));
 			this.m_sBinaryId = sBinaryId;
+			AscCommon.g_oBinaryCacheManager.sendBinaryPathToHistory(sBinaryId);
 		}
     COleObject.prototype.setMathObject = function(oMath)
     {
@@ -351,9 +352,6 @@ function (window, undefined) {
         }
         if (oLoadedData) {
             this.setBinaryId(oLoadedData.hash);
-						if (oLoadedData.data) {
-							AscDFH.addImagesFromFrame([AscCommon.g_oDocumentUrls.imagePath2Local(oLoadedData.data.path)]);
-						}
         }
         if (this.m_nDrawAspect === AscFormat.EOLEDrawAspect.oledrawaspectContent && !this.m_bShowAsIcon) {
             if(typeof sImageUrl  === "string" &&

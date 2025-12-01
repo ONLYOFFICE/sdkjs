@@ -1342,10 +1342,6 @@ CGraphicObjects.prototype =
 	        if (oLoadedData && !oSelectedChart.isExternal())
 	        {
 		        chart_space.setXLSXId(oLoadedData.hash);
-						if (oLoadedData.data)
-						{
-							AscDFH.addImagesFromFrame([AscCommon.g_oDocumentUrls.imagePath2Local(oLoadedData.data.path)]);
-						}
 	        }
             if(oSelectedChart.group)
             {

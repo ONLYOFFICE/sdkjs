@@ -1253,6 +1253,12 @@
 		const contentType = this.getContentType(editorType);
 		return contentType && ("data:" + contentType + ";base64," + AscCommon.Base64.encode(arrXLSXBinary, 0, arrXLSXBinary.length));
 	};
+	CBinaryCacheManager.prototype.sendBinaryPathToHistory = function(hash) {
+		const loadedData = this.cache[hash];
+		if (loadedData && loadedData.data && loadedData.data.path) {
+			AscDFH.addImagesFromFrame([AscCommon.g_oDocumentUrls.imagePath2Local(loadedData.data.path)])
+		}
+	};
 
 	window["AscCommon"].CBinaryCacheManager = CBinaryCacheManager;
 	window["AscCommon"].CDiagramCellFrameManager = CDiagramCellFrameManager;

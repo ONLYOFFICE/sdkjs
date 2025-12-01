@@ -8558,9 +8558,6 @@
 					AscFormat.fillImage(oleObject, rasterImageId, x, y, extX, extY);
 					if (oLoadedData) {
 						oleObject.setBinaryId(oLoadedData.hash);
-						if (oLoadedData.data) {
-							AscDFH.addImagesFromFrame([AscCommon.g_oDocumentUrls.imagePath2Local(oLoadedData.data.path)]);
-						}
 					} else {
 						oleObject.setData(data);
 					}
