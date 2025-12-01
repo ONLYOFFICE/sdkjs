@@ -8545,14 +8545,23 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 };
 Paragraph.prototype._getWordPos = function(contentPos)
 {
+	let endMarkPos = this.Get_EndPos(true);
+	if (0 === endMarkPos.Compare(contentPos))
+	{
+		return {
+			start : contentPos,
+			end   : contentPos
+		};
+	}
+	
 	var SearchPosS = new CParagraphSearchPos();
 	var SearchPosE = new CParagraphSearchPos();
 	
-	this.Get_WordEndPos(SearchPosE, contentPos);
-	this.Get_WordStartPos(SearchPosS, SearchPosE.Pos);
-	
+	this.Get_WordEndPos(SearchPosE, contentPos, true);
+	let endPos = (true === SearchPosE.Found ? SearchPosE.Pos : this.Get_EndPos(false));
+
+	this.Get_WordStartPos(SearchPosS, endPos);
 	let startPos = (true === SearchPosS.Found ? SearchPosS.Pos : this.Get_StartPos());
-	let endPos   = (true === SearchPosE.Found ? SearchPosE.Pos : this.Get_EndPos(false));
 	
 	let form = this.GetSelectedElementsInfo().GetForm();
 	let logicDocument = form ? this.GetLogicDocument() : null;
@@ -8608,7 +8617,7 @@ Paragraph.prototype.getClosestWordPos = function(contentPos, line, range, direct
 Paragraph.prototype.checkWordSelection = function()
 {
 	let logicDocument = this.GetLogicDocument();
-	if (!logicDocument && this !== logicDocument.GetCurrentParagraph(false, false, {StartInSelection : true}))
+	if (!logicDocument || this !== logicDocument.GetCurrentParagraph(false, false, {StartInSelection : true}))
 		return;
 	
 	let startPos = this.Get_ParaContentPos(true, true);
@@ -9181,27 +9190,6 @@ Paragraph.prototype.SelectNumbering = function(isCurrent, isForce)
 		this.Selection.Flag = isCurrent ? selectionflag_NumberingCur : selectionflag_Numbering;
 	}
 };
-/**
- * Выставляем начало/конец селекта в начало/конец параграфа
- */
-Paragraph.prototype.Selection_SetBegEnd = function(StartSelection, StartPara)
-{
-	var ContentPos = ( true === StartPara ? this.Get_StartPos() : this.Get_EndPos(true) );
-
-	if (true === StartSelection)
-	{
-		this.Selection.StartManually  = false;
-		this.Selection.StartBehindEnd = false;
-		this.Set_SelectionContentPos(ContentPos, this.Get_ParaContentPos(true, false));
-	}
-	else
-	{
-		this.Selection.EndManually = false;
-		this.Set_SelectionContentPos(this.Get_ParaContentPos(true, true), ContentPos);
-	}
-	
-	this.CheckSmartSelection();
-};
 Paragraph.prototype.SetSelectionUse = function(isUse)
 {
 	if (true === isUse)
@@ -9209,9 +9197,34 @@ Paragraph.prototype.SetSelectionUse = function(isUse)
 	else
 		this.RemoveSelection();
 };
-Paragraph.prototype.SetSelectionToBeginEnd = function(isSelectionStart, isElementStart)
+/**
+ * Выставляем начало/конец селекта в начало/конец параграфа
+ */
+Paragraph.prototype.SetSelectionToBeginEnd = function(isSelectionStart, isStartPos)
 {
-	this.Selection_SetBegEnd(isSelectionStart, isElementStart);
+	let contentPos = isStartPos ? this.Get_StartPos() : this.Get_EndPos(true);
+	
+	if (isSelectionStart)
+	{
+		this.Selection.StartManually  = false;
+		this.Selection.StartBehindEnd = false;
+		
+		this.Set_SelectionContentPos(contentPos, this.Get_ParaContentPos(true, false));
+		
+		let logicDocument = this.GetLogicDocument();
+		if (logicDocument && logicDocument.IsWordSelection())
+		{
+			let curPos = isStartPos ? this.Get_StartPos() : this.Get_EndPos(false);
+			this.Set_ParaContentPos(curPos, true, -1, -1);
+		}
+	}
+	else
+	{
+		this.Selection.EndManually = false;
+		this.Set_SelectionContentPos(this.Get_ParaContentPos(true, true), contentPos);
+	}
+	
+	this.CheckSmartSelection();
 };
 /**
  * @param direction {AscWord.Direction}

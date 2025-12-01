@@ -15189,10 +15189,12 @@ CDocument.prototype.private_CheckCursorInPlaceHolder = function()
 };
 CDocument.prototype.SetTextSelectionType = function(type)
 {
+	console.log(`Set ${type}`);
 	this.Selection.Type = type;
 };
 CDocument.prototype.ResetTextSelectionType = function()
 {
+	console.log(`Reset`);
 	this.Selection.Type = AscWord.TEXT_SELECTION_TYPE.Common;
 };
 CDocument.prototype.IsWordSelection = function()
