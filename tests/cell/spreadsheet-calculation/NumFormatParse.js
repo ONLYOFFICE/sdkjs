@@ -284,9 +284,9 @@ $(function () {
             ["0 1/999", "# ??/??", 0.001001001001001001],
             ["0 999/1", "# ?/?", 999],
 
-            ["1 999/1", null, "1 999/1"],
-            ["1 999/12", null, "1 999/12"],
-            ["1 999/134", null, "1 999/123"],
+            ["1 999/1", "# ?/?", 1000],
+            ["1 999/12", "# ??/??", 84.25],
+            ["1 999/134", "# ??/??", 8.455223880597014],
         ]; 
         
         for (let i = 0; i < testCases.length; i++) {
@@ -319,7 +319,7 @@ $(function () {
             ["0 1/2", "# ?/?", 0.5, formatTypes.General],
             ["0 1/10", "# ??/??", 0.1, formatTypes.General],
             ["0 1/100", "# ??/??", 0.01, formatTypes.General],
-            ["1 150/200", null, 1.75, formatTypes.General],
+            ["1 150/200", "# ??/??", 1.75, formatTypes.General],
             
             // appliedFormat = 1 (Number - 0)
             ["1/2", "0.00", 0.5, formatTypes.Number, "0.00"],
@@ -334,6 +334,8 @@ $(function () {
             ["0 1/2", "0.00", 0.5, formatTypes.Number, "0.00"],
             ["0 1/10", "0.00", 0.1, formatTypes.Number, "0.00"],
             ["0 1/100", "0.00", 0.01, formatTypes.Number, "0.00"],
+            ["1 150/200", "0.00", 1.75, formatTypes.Number, "0.00"],
+
 
             // Specific number format
             ["1/2", "0.00000", 0.5, formatTypes.Number, "0.00000"],
@@ -348,6 +350,7 @@ $(function () {
             ["0 1/2", "0.00000", 0.5, formatTypes.Number, "0.00000"],
             ["0 1/10", "0.00000", 0.1, formatTypes.Number, "0.00000"],
             ["0 1/100", "0.00000", 0.01, formatTypes.Number, "0.00000"],
+            ["1 150/200", "0.00000", 1.75, formatTypes.Number, "0.00000"],
 
             // appliedFormat = 2 (Scientific - 0.00E+00)
             ["1/2", "# ?/?", 0.5, formatTypes.Scientific, "0.00E+00"],
@@ -362,6 +365,7 @@ $(function () {
             ["0 1/2", "# ?/?", 0.5, formatTypes.Scientific, "0.00E+00"],
             ["0 1/10", "# ??/??", 0.1, formatTypes.Scientific, "0.00E+00"],
             ["0 1/100", "# ??/??", 0.01, formatTypes.Scientific, "0.00E+00"],
+            ["1 150/200", "# ??/??", 1.75, formatTypes.Scientific, "0.00E+00"],
             
             // Specific scientific format
             ["1/2", "0.00000E+00", 0.5, formatTypes.Scientific, "0.00000E+00"],
@@ -376,6 +380,7 @@ $(function () {
             ["0 1/2", "0.00000E+00", 0.5, formatTypes.Scientific, "0.00000E+00"],
             ["0 1/10", "0.00000E+00", 0.1, formatTypes.Scientific, "0.00000E+00"],
             ["0 1/100", "0.00000E+00", 0.01, formatTypes.Scientific, "0.00000E+00"],
+            ["1 150/200", "0.00000E+00", 1.75, formatTypes.Scientific, "0.00000E+00"],
             
 
             // appliedFormat = 3 (Accounting)
@@ -391,20 +396,37 @@ $(function () {
             ["0 1/2", "# ?/?", 0.5, formatTypes.Accounting],
             ["0 1/10", "# ??/??", 0.1, formatTypes.Accounting],
             ["0 1/100", "# ??/??", 0.01, formatTypes.Accounting],
+            ["1 150/200", "# ??/??", 1.75, formatTypes.Accounting],
+            
+            // Specific Accounting formats
+            ["1/2", '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)', 0.5, formatTypes.Accounting, '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)'],
+            ["3/4", '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)', 0.75, formatTypes.Accounting, '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)'],
+            ["15/20", '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)', 0.75, formatTypes.Accounting, '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)'],
+            [" 1/2", '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)', 0.5, formatTypes.Accounting, '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)'],
+            ["1 1/2", '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)', 1.5, formatTypes.Accounting, '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)'],
+            ["2 3/4", '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)', 2.75, formatTypes.Accounting, '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)'],
+            ["15/3", '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)', 5, formatTypes.Accounting, '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)'],
+            ["150/200", '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)', 0.75, formatTypes.Accounting, '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)'],
+            ["1/5/5", '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)', 38357, formatTypes.Accounting, '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)'],
+            ["0 1/2", '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)', 0.5, formatTypes.Accounting, '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)'],
+            ["0 1/10", '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)', 0.1, formatTypes.Accounting, '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)'],
+            ["0 1/100", '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)', 0.01, formatTypes.Accounting, '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)'],
+            ["1 150/200", '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)', 1.75, formatTypes.Accounting, '_([$$-9]* #,##0.000_);_([$$-9]* \\(#,##0.000\\);_([$$-9]* "-"???_);_(@_)'],
             
             // appliedFormat = 4 (Currency - $#,##0.00)
-            ["1/2", "\\$#,##0.00_);[Red](\\$#,##0.00)", 0.5, formatTypes.Currency],
-            ["3/4", "\\$#,##0.00_);[Red](\\$#,##0.00)", 0.75, formatTypes.Currency],
-            ["15/20", "\\$#,##0.00_);[Red](\\$#,##0.00)", 0.75, formatTypes.Currency],
-            [" 1/2", "\\$#,##0.00_);[Red](\\$#,##0.00)", 0.5, formatTypes.Currency],
-            ["1 1/2", "\\$#,##0.00_);[Red](\\$#,##0.00)", 1.5, formatTypes.Currency],
-            ["2 3/4", "\\$#,##0.00_);[Red](\\$#,##0.00)", 2.75, formatTypes.Currency],
-            ["15/3", "\\$#,##0_);[Red](\\$#,##0)", 5, formatTypes.Currency],
-            ["150/200", "\\$#,##0.00_);[Red](\\$#,##0.00)", 0.75, formatTypes.Currency],
-            // ["1/5/5", "\\$#,##0.00_);[Red](\\$#,##0.00)", 38357, formatTypes.Currency],
-            ["0 1/2", "\\$#,##0.00_);[Red](\\$#,##0.00)", 0.5, formatTypes.Currency],
-            ["0 1/10", "\\$#,##0.00_);[Red](\\$#,##0.00)", 0.1, formatTypes.Currency],
-            ["0 1/100", "\\$#,##0.00_);[Red](\\$#,##0.00)", 0.01, formatTypes.Currency],
+            ["1/2", "\\$#,##0.00_);[Red](\\$#,##0.00)", 0.5, formatTypes.Currency, "\\$#,##0.00_);[Red](\\$#,##0.00)"],
+            ["3/4", "\\$#,##0.00_);[Red](\\$#,##0.00)", 0.75, formatTypes.Currency, "\\$#,##0.00_);[Red](\\$#,##0.00)"],
+            ["15/20", "\\$#,##0.00_);[Red](\\$#,##0.00)", 0.75, formatTypes.Currency, "\\$#,##0.00_);[Red](\\$#,##0.00)"],
+            [" 1/2", "\\$#,##0.00_);[Red](\\$#,##0.00)", 0.5, formatTypes.Currency, "\\$#,##0.00_);[Red](\\$#,##0.00)"],
+            ["1 1/2", "\\$#,##0.00_);[Red](\\$#,##0.00)", 1.5, formatTypes.Currency, "\\$#,##0.00_);[Red](\\$#,##0.00)"],
+            ["2 3/4", "\\$#,##0.00_);[Red](\\$#,##0.00)", 2.75, formatTypes.Currency, "\\$#,##0.00_);[Red](\\$#,##0.00)"],
+            ["15/3", "\\$#,##0_);[Red](\\$#,##0)", 5, formatTypes.Currency, "\\$#,##0.00_);[Red](\\$#,##0.00)"],
+            ["150/200", "\\$#,##0.00_);[Red](\\$#,##0.00)", 0.75, formatTypes.Currency, "\\$#,##0.00_);[Red](\\$#,##0.00)"],
+            ["1/5/5", "\\$#,##0.00_);[Red](\\$#,##0.00)", 38357, formatTypes.Currency, "\\$#,##0.00_);[Red](\\$#,##0.00)"],
+            ["0 1/2", "\\$#,##0.00_);[Red](\\$#,##0.00)", 0.5, formatTypes.Currency, "\\$#,##0.00_);[Red](\\$#,##0.00)"],
+            ["0 1/10", "\\$#,##0.00_);[Red](\\$#,##0.00)", 0.1, formatTypes.Currency, "\\$#,##0.00_);[Red](\\$#,##0.00)"],
+            ["0 1/100", "\\$#,##0.00_);[Red](\\$#,##0.00)", 0.01, formatTypes.Currency, "\\$#,##0.00_);[Red](\\$#,##0.00)"],
+            ["1 150/200", "\\$#,##0.00_);[Red](\\$#,##0.00)", 1.75, formatTypes.Currency, "\\$#,##0.00_);[Red](\\$#,##0.00)"],
             
             // appliedFormat = 5 (Date - m/d/yyyy)
             ["1/2", "m/d/yyyy", 45659, formatTypes.Date, "m/d/yyyy"],
@@ -419,6 +441,7 @@ $(function () {
             ["0 1/2", "# ?/?", 0.5, formatTypes.Date, "m/d/yyyy"],
             ["0 1/10", "# ??/??", 0.1, formatTypes.Date, "m/d/yyyy"],
             ["0 1/100", "# ??/??", 0.01, formatTypes.Date, "m/d/yyyy"],
+            ["1 150/200", "# ??/??", 1.75, formatTypes.Date, "m/d/yyyy"],
             
             // appliedFormat = 6 (LongDate - dddd, mmmm d, yyyy)
             ["1/2", "dddd\\,\\ mmmm\\ d\\,\\ yyyy", 45659, formatTypes.Date, "[$-F800]dddd\\,\\ mmmm\\ d\\,\\ yyyy"],
@@ -433,6 +456,7 @@ $(function () {
             ["0 1/2", "dddd\\,\\ mmmm\\ d\\,\\ yyyy", 0.5, formatTypes.Date, "[$-F800]dddd\\,\\ mmmm\\ d\\,\\ yyyy"], 
             ["0 1/10", "dddd\\,\\ mmmm\\ d\\,\\ yyyy", 0.1, formatTypes.Date, "[$-F800]dddd\\,\\ mmmm\\ d\\,\\ yyyy"],   
             ["0 1/100", "dddd\\,\\ mmmm\\ d\\,\\ yyyy", 0.01, formatTypes.Date, "[$-F800]dddd\\,\\ mmmm\\ d\\,\\ yyyy"],  
+            ["1 150/200", "dddd\\,\\ mmmm\\ d\\,\\ yyyy", 1.75, formatTypes.Date, "[$-F800]dddd\\,\\ mmmm\\ d\\,\\ yyyy"],  
             
             // Specific date formats
             ["1/2", "yyyy-mm-dd", 45659, formatTypes.Date, "yyyy-mm-dd"],
@@ -448,6 +472,7 @@ $(function () {
             ["0 1/2", "yyyy-mm-dd", 0.5, formatTypes.Date, "yyyy-mm-dd"],
             ["0 1/10", "yyyy-mm-dd", 0.1, formatTypes.Date, "yyyy-mm-dd"],
             ["0 1/100", "yyyy-mm-dd", 0.01, formatTypes.Date, "yyyy-mm-dd"],
+            ["1 150/200", "yyyy-mm-dd", 1.75, formatTypes.Date, "yyyy-mm-dd"],
 
             // appliedFormat = 7 (Time - h:mm:ss)
             ["1/2", "h:mm:ss", 45659, formatTypes.Time, "h:mm:ss"],
@@ -462,6 +487,7 @@ $(function () {
             ["0 1/2", "h:mm:ss", 0.5, formatTypes.Time, "h:mm:ss"],
             ["0 1/10", "h:mm:ss", 0.1, formatTypes.Time, "h:mm:ss"],
             ["0 1/100", "h:mm:ss", 0.01, formatTypes.Time, "h:mm:ss"],
+            ["1 150/200", "h:mm:ss", 1.75, formatTypes.Time, "h:mm:ss"],
             
             // Specific time format
             ["1/2", "h:mm AM/PM", 45659, formatTypes.Time, "h:mm AM/PM"],
@@ -476,6 +502,7 @@ $(function () {
             ["0 1/2", "h:mm AM/PM", 0.5, formatTypes.Time, "h:mm AM/PM"],
             ["0 1/10", "h:mm AM/PM", 0.1, formatTypes.Time, "h:mm AM/PM"],
             ["0 1/100", "h:mm AM/PM", 0.01, formatTypes.Time, "h:mm AM/PM"],
+            ["1 150/200", "h:mm AM/PM", 1.75, formatTypes.Time, "h:mm AM/PM"],
 
             // appliedFormat = 8 (Percent - 0%)
             ["1/2", "0.00%", 0.005, formatTypes.Percent, "0.00%"],
@@ -490,6 +517,7 @@ $(function () {
             ["0 1/2", "0.00%", 0.005, formatTypes.Percent, "0.00%"],
             ["0 1/10", "0.00%", 0.001, formatTypes.Percent, "0.00%"],
             ["0 1/100", "0.00%", 0.0001, formatTypes.Percent, "0.00%"],
+            ["1 150/200", "0.00%", 0.0175, formatTypes.Percent, "0.00%"],
             
             // Specific percent formats
             ["1/2", "0.00%", 0.005, formatTypes.Percent, "0.0000%"],
@@ -504,6 +532,7 @@ $(function () {
             ["0 1/2", "0.00%", 0.005, formatTypes.Percent, "0.0000%"],
             ["0 1/10", "0.00%", 0.001, formatTypes.Percent, "0.0000%"],
             ["0 1/100", "0.00%", 0.0001, formatTypes.Percent, "0.0000%"],
+            ["1 150/200", "0.00%", 0.0175, formatTypes.Percent, "0.0000%"],
 
             // appliedFormat = 9 (Fraction - # ?/?)
             ["1/2", "# ?/?", 0.5, formatTypes.Fraction, "# ?/?"],
@@ -514,6 +543,7 @@ $(function () {
             ["2 3/4", "# ?/?", 2.75, formatTypes.Fraction, "# ?/?"],
             ["15/3", "# ?/?", 5, formatTypes.Fraction, "# ?/?"],
             ["150/200", "# ?/?", 0.75, formatTypes.Fraction, "# ?/?"],
+            ["1 150/200", "# ?/?", 1.75, formatTypes.Fraction, "# ?/?"],
             ["1/5/5", "m/d/yyyy", 38357, formatTypes.Fraction, "# ?/?"],
             ["0 1/2", "# ?/?", 0.5, formatTypes.Fraction, "# ?/?"],
             ["0 1/10", "# ?/?", 0.1, formatTypes.Fraction, "# ?/?"],
@@ -535,10 +565,10 @@ $(function () {
             ["1 17/37", "# ?/2", 1.4594594594594595, formatTypes.Fraction, "# ?/2"],
             ["150/200", "# ?/2", 0.75, formatTypes.Fraction, "# ?/2"],
             ["0 150/200", "# ?/2", 0.75, formatTypes.Fraction, "# ?/2"],
-            ["1 150/200", null, 1.75, formatTypes.Fraction, "# ?/2"],
+            ["1 150/200", "# ?/2", 1.75, formatTypes.Fraction, "# ?/2"],
             ["137/235", "# ?/2", 0.5829787234042553, formatTypes.Fraction, "# ?/2"],
             ["0 137/235", "# ?/2", 0.5829787234042553, formatTypes.Fraction, "# ?/2"],
-            ["1 137/235", null, 1.5829787234042553, formatTypes.Fraction, "# ?/2"],
+            ["1 137/235", "# ?/2", 1.5829787234042553, formatTypes.Fraction, "# ?/2"],
            
             ["1/2", "# ?/8", 0.5, formatTypes.Fraction, "# ?/8"],
             ["0 1/2", "# ?/8", 0.5, formatTypes.Fraction, "# ?/8"],
@@ -555,10 +585,10 @@ $(function () {
             ["1 17/37", "# ?/8", 1.4594594594594595, formatTypes.Fraction, "# ?/8"],
             ["150/200", "# ?/8", 0.75, formatTypes.Fraction, "# ?/8"],
             ["0 150/200", "# ?/8", 0.75, formatTypes.Fraction, "# ?/8"],
-            ["1 150/200", null, 1.75, formatTypes.Fraction, "# ?/8"],
+            ["1 150/200", "# ?/8", 1.75, formatTypes.Fraction, "# ?/8"],
             ["137/235", "# ?/8", 0.5829787234042553, formatTypes.Fraction, "# ?/8"],
             ["0 137/235", "# ?/8", 0.5829787234042553, formatTypes.Fraction, "# ?/8"],
-            ["1 137/235", null, 1.5829787234042553, formatTypes.Fraction, "# ?/8"],
+            ["1 137/235", "# ?/8", 1.5829787234042553, formatTypes.Fraction, "# ?/8"],
             
             // appliedFormat = 10 (Text - @)
             ["1/2", "@", "1/2", 10],

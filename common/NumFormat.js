@@ -3700,7 +3700,7 @@ FormatParser.prototype =
                 sBefore = cultureInfo.CurrencySymbol;
             }
         // The second condition is for compability of results with Excel
-        } else if(currentFormat === Asc.c_oAscNumFormatType.Percent && (value[0] !== " " || stringFormat !== "0.00%")){
+        } else if(currentFormat === Asc.c_oAscNumFormatType.Percent && (value[0] !== " " || /0\.000/.test(stringFormat))){
             sAfter = '%';
         } else if (sNumerator && sDenominator) {
             var sDivide = '/';
@@ -3836,19 +3836,14 @@ FormatParser.prototype =
                         var denomLength = sDenominator.length;
 
                         // The second condition checks how many decimal points the scientific data type has. If there are two points, the format parse as fraction (an Excel feature)
-                        if(currentFormat == Asc.c_oAscNumFormatType.Number || (currentFormat == Asc.c_oAscNumFormatType.Scientific && stringFormat !== "0.00E+00"))
+                        if(currentFormat == Asc.c_oAscNumFormatType.Number || (currentFormat == Asc.c_oAscNumFormatType.Scientific && stringFormat !== "0.00E+00") || (currentFormat == Asc.c_oAscNumFormatType.Accounting && /#,##0\.000/.test(stringFormat)))
                         {
                             sFormat = stringFormat;
-                        } else if (stringFormat && currentFormat !== Asc.c_oAscNumFormatType.General && currentFormat !== Asc.c_oAscNumFormatType.Date && currentFormat !== Asc.c_oAscNumFormatType.Time && currentFormat !== Asc.c_oAscNumFormatType.Percent && currentFormat !== Asc.c_oAscNumFormatType.Scientific)
+                        } else if (stringFormat && currentFormat !== Asc.c_oAscNumFormatType.General && currentFormat !== Asc.c_oAscNumFormatType.Date && currentFormat !== Asc.c_oAscNumFormatType.Time && currentFormat !== Asc.c_oAscNumFormatType.Percent && currentFormat !== Asc.c_oAscNumFormatType.Scientific && currentFormat !== Asc.c_oAscNumFormatType.Accounting)
                         {
-                            if (numLength == 3 && (denomLength == 2 || denomLength == 3) && sVal != 0)
-                                sFormat = null;
-                            else
-                            {
                                 var formats = gc_aFractionFormats;
                                 if (formats.indexOf(stringFormat) !== -1)
                                     sFormat = stringFormat;
-                            }
                         } else if (numLength == 1 && denomLength == 1) 
                         {
                             sFormat = "# ?/?";
@@ -3867,10 +3862,10 @@ FormatParser.prototype =
                                 sFormat = "# ?/?";
                             else 
                                 sFormat = "# ??/??"; 
-                        } else if (numLength == 3 && denomLength == 1 && sVal === '0') 
+                        } else if (numLength == 3 && denomLength == 1) 
                         {
                             sFormat = "# ?/?";
-                        } else if (numLength == 3 && (denomLength == 2 || denomLength == 3) && sVal === '0') 
+                        } else if (numLength == 3 && (denomLength == 2 || denomLength == 3)) 
                         {
                             if (withoutIntegerPart && currentFormat == Asc.c_oAscNumFormatType.Fraction)
                                 sFormat = "# ?/?" 
@@ -4751,7 +4746,8 @@ FormatParser.prototype =
 					if(dValue >= 0)
 					{
 						var sFormat = "";
-                        if (currentFormat == Asc.c_oAscNumFormatType.Date || currentFormat == Asc.c_oAscNumFormatType.Time || currentFormat == Asc.c_oAscNumFormatType.Number || (currentFormat == Asc.c_oAscNumFormatType.Scientific && stringFormat !== "0.00E+00"))
+                        // Some formats shoult not be converted to a date only when they have more than two decimal places (an Excel feature)
+                        if (currentFormat == Asc.c_oAscNumFormatType.Date || currentFormat == Asc.c_oAscNumFormatType.Time || currentFormat == Asc.c_oAscNumFormatType.Currency || currentFormat == Asc.c_oAscNumFormatType.Number || (currentFormat == Asc.c_oAscNumFormatType.Scientific && /0\.000/.test(stringFormat)) || (currentFormat == Asc.c_oAscNumFormatType.Fraction && stringFormat !== "# ?/?" && stringFormat !== "# ??/??") || (currentFormat == Asc.c_oAscNumFormatType.Accounting && /#,##0\.000/.test(stringFormat)))
                             sFormat += stringFormat;
                         else if (currentFormat == Asc.c_oAscNumFormatType.LongDate)
                             sFormat += cultureInfo.LongDatePattern;
