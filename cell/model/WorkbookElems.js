@@ -13071,9 +13071,21 @@ function RangeDataManagerElem(bbox, data)
 	};
 	/**
 	 * Initialize with sharedStrings from file. rely on uniqines
+	 * Adds new shared strings to existing ones without removing existing data
 	 * @param {Array<string | Array<{text: string, format: CellXfs}>>} sharedStrings
 	 */
 	CSharedStrings.prototype.initWithSharedStrings = function(sharedStrings) {
+		if (this.all.length > 0) {
+			for (let i = 0; i < sharedStrings.length; i++) {
+				const item = sharedStrings[i];
+				if (typeof item === 'string') {
+					this.addText(item);
+				} else {
+					this.addMultiText(item);
+				}
+			}
+			return;
+		}
 		this.all = sharedStrings.slice(); //copy
 		this.text = Object.create(null);
 		this.multiTextMap = Object.create(null);
