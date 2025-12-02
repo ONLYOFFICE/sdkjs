@@ -7005,6 +7005,18 @@ background-repeat: no-repeat;\
 		}
 	};
 
+	asc_docs_api.prototype.asc_addIgnoredMisspelledWords = function(words)
+	{
+		var LogicDocument = editor.WordControl.m_oLogicDocument;
+
+		for (const word of words) {
+			LogicDocument.Spelling.AddToIgnore(word);
+		}
+
+		LogicDocument.DrawingDocument.ClearCachePages();
+		LogicDocument.DrawingDocument.FirePaint();
+	};
+
     asc_docs_api.prototype._spellCheckRestart = function(word)
     {
 		var LogicDocument = this.WordControl.m_oLogicDocument;
@@ -15072,6 +15084,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['sync_SpellCheckVariantsFound']              = asc_docs_api.prototype.sync_SpellCheckVariantsFound;
 	asc_docs_api.prototype['asc_replaceMisspelledWord']                 = asc_docs_api.prototype.asc_replaceMisspelledWord;
 	asc_docs_api.prototype['asc_ignoreMisspelledWord']                  = asc_docs_api.prototype.asc_ignoreMisspelledWord;
+	asc_docs_api.prototype['asc_addIgnoredMisspelledWords']                  = asc_docs_api.prototype.asc_addIgnoredMisspelledWords;
     asc_docs_api.prototype['asc_spellCheckAddToDictionary']       		= asc_docs_api.prototype.asc_spellCheckAddToDictionary;
     asc_docs_api.prototype['asc_spellCheckClearDictionary']       		= asc_docs_api.prototype.asc_spellCheckClearDictionary;
 	asc_docs_api.prototype['asc_setDefaultLanguage']                    = asc_docs_api.prototype.asc_setDefaultLanguage;
