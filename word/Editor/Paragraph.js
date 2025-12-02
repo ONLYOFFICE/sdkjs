@@ -8423,7 +8423,7 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 		this.checkWordSelection();
 	
 	if (logicDocument.IsParagraphSelection())
-		this.SelectAll(1);
+		this.SelectAll(logicDocument.GetSelectDirection());
 	
 	if (!this.GetPlaceHolderObject())
 		this.CheckSmartSelection();
@@ -9197,7 +9197,8 @@ Paragraph.prototype.SetSelectionToBeginEnd = function(isSelectionStart, isStartP
 	{
 		if (logicDocument.IsParagraphSelection())
 		{
-			this.SelectAll(1);
+			let direction = isSelectionStart === isStartPos ? 1 : -1;
+			this.SelectAll(direction);
 			return;
 		}
 		else if (logicDocument.IsWordSelection())
