@@ -5956,6 +5956,23 @@ var editor;
       return;
     }
   	let ws = this.wb.getWorksheet();
+
+	let fArr = [];
+	  ws.model.getRange3(0, 3, 59, 3)._foreachNoEmpty(function (cell, r, c) {
+		  fArr.push(cell.getFormula())
+	  });
+
+	  let vArr = [];
+	  ws.model.getRange3(0, 4, 59, 4)._foreachNoEmpty(function (cell, r, c) {
+		  vArr.push(cell.getValue())
+	  });
+
+	  for (let i = 0; i < vArr.length; i++) {
+		  if (vArr[i] != fArr[i]) {
+			  console.log("formula: " + fArr[i] + " value: " + vArr[i])
+		  }
+	  }
+
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
     } else {

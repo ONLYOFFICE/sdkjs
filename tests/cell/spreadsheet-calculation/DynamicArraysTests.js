@@ -1284,6 +1284,26 @@ $(function () {
 	});
 
 
+	QUnit.test('Test @ -> not single() -> exceptions', function (assert) {
+		let fillRange, resCell, fragment, assembledVal;
+		let flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		let formula = "=SIN(@A1:B1)";
+		fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A1"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SIN(A1:B1)", "SIN(A1:B1) -> SIN(A1:B1)");
+		assembledVal = ws.getRange2("A1").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+
+	});
+
 	QUnit.module("Sheet structure");
 });
 

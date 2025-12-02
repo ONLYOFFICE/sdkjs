@@ -6200,11 +6200,11 @@ _func[cElementType.cell3D] = _func[cElementType.cell];
 		this.needCorrect = null;
 	}
 
-	ParseResult.prototype.addAtOperator = function(start, end) {
+	ParseResult.prototype.addAtOperator = function(start, end, canSkip) {
 		if (!this.atOperators) {
 			this.atOperators = [];
 		}
-		this.atOperators.push({start: start, end: end});
+		this.atOperators.push({start: start, end: end, canSkip: canSkip});
 	};
 
 	ParseResult.prototype.addRefPos = function(start, end, index, oper, isName) {
@@ -8728,7 +8728,10 @@ function parserFormula( formula, parent, _ws ) {
 				}
 
 				if (currentAtOperatorPos !== null) {
-					parseResult.addAtOperator(currentAtOperatorPos, ph.pCurrPos);
+					let _curFunc = levelFuncMap[currentFuncLevel];
+					let _curArgPos = argPosArrMap[currentFuncLevel];
+					let isCanSkip = t.checkSkipAtOperator(_curFunc, _curArgPos, found_operand);
+					parseResult.addAtOperator(currentAtOperatorPos, ph.pCurrPos, isCanSkip);
 					currentAtOperatorPos = null;
 				}
 
@@ -8987,6 +8990,32 @@ function parserFormula( formula, parent, _ws ) {
 		} else {
 			return this.isParsed = false;
 		}
+	};
+
+	parserFormula.prototype.checkSkipAtOperator = function(_curFunc, _curArgPos, found_operand) {
+		if (!found_operand) {
+			return false;
+		}
+
+		if (found_operand.type === cElementType.cell || found_operand.type === cElementType.cell3D) {
+			return true;
+		}
+
+		if (found_operand.type === cElementType.cellsRange || found_operand.type === cElementType.cellsRange3D) {
+			var bbox = found_operand.getBBox0 ? found_operand.getBBox0() : null;
+			if (bbox && bbox.isOneCell()) {
+				return true;
+			}
+		}
+
+		if (_curFunc && _curFunc.func && _curFunc.func.arrayIndexes) {
+			var argIndex = _curArgPos ? _curArgPos.length : 0;
+			if (_curFunc.func.getArrayIndex && _curFunc.func.getArrayIndex(argIndex)) {
+				return true;
+			}
+		}
+
+		return false;
 	};
 
 	parserFormula.prototype._assembleWithAtOperators = function(atOperators) {
