@@ -8682,8 +8682,9 @@ var CPresentation = CPresentation || function(){};
 		textController.GetDocContent().RecalculateCurPos();
 		this.NeedUpdateTarget = false;
 	};
-    CPDFDoc.prototype.SetWordSelection = function(){};
-    
+	CPDFDoc.prototype.SetTextSelectionType = function(type){};
+	CPDFDoc.prototype.ResetTextSelectionType = function(){};
+	CPDFDoc.prototype.IsWordSelection = function(){return false;};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Extension required for CTextBoxContent
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -9001,9 +9002,6 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.GetAllSignatures = function() {
         return [];
     };
-	CPDFDoc.prototype.IsWordSelection = function() {
-		return false;
-	};
     CPDFDoc.prototype.GetCursorRealPosition = function() {
         return {
             X: this.CurPosition.X,

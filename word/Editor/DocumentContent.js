@@ -2158,6 +2158,10 @@ CDocumentContent.prototype.GetCurrentParagraph = function(bIgnoreSelection, arrS
 						pos = this.Selection.StartPos <= this.Selection.EndPos ? this.Selection.StartPos : this.Selection.EndPos;
 					else if (oPr.LastInSelection)
 						pos = this.Selection.StartPos <= this.Selection.EndPos ? this.Selection.EndPos : this.Selection.StartPos;
+					else if (oPr.StartInSelection)
+						pos = this.Selection.StartPos;
+					else if (oPr.EndInSelection)
+						pos = this.Selection.EndPos;
 				}
 			}
 			

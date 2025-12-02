@@ -7495,11 +7495,12 @@ ParaRun.prototype.SkipAnchorsAtSelectionStart = function(Direction)
 	return true;
 };
 
-ParaRun.prototype.RemoveSelection = function()
+ParaRun.prototype.RemoveSelection = function(preserveCursorPosition)
 {
-	if (this.Selection.Use)
+	// TODO: По-хорошему, надо убрать выставление позиции здесь и проверить, что при отмене селекта она выставляется
+	if (this.Selection.Use && !preserveCursorPosition)
 		this.State.ContentPos = Math.min(this.Content.length, Math.max(0, this.Selection.EndPos));
-
+	
 	this.Selection.Use      = false;
 	this.Selection.StartPos = 0;
 	this.Selection.EndPos   = 0;
