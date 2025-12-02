@@ -642,7 +642,7 @@ CParagraphContentBase.prototype.MoveCursorOutsideElement = function(isBefore)
 CParagraphContentBase.prototype.Set_SelectionContentPos = function(StartContentPos, EndContentPos, Depth, StartFlag, EndFlag)
 {
 };
-CParagraphContentBase.prototype.RemoveSelection = function()
+CParagraphContentBase.prototype.RemoveSelection = function(preserveCursorPosition)
 {
 };
 CParagraphContentBase.prototype.SelectAll = function(Direction)
@@ -3863,7 +3863,7 @@ CParagraphContentWithParagraphLikeContent.prototype.SetContentPosition = functio
     else
         this.Content[Pos].MoveCursorToStartPos();
 };
-CParagraphContentWithParagraphLikeContent.prototype.RemoveSelection = function()
+CParagraphContentWithParagraphLikeContent.prototype.RemoveSelection = function(preserveCursorPosition)
 {
     var Selection = this.Selection;
 
@@ -3883,7 +3883,7 @@ CParagraphContentWithParagraphLikeContent.prototype.RemoveSelection = function()
 
         for ( var CurPos = StartPos; CurPos <= EndPos; CurPos++ )
         {
-            this.Content[CurPos].RemoveSelection();
+            this.Content[CurPos].RemoveSelection(preserveCursorPosition);
         }
     }
 

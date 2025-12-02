@@ -7367,8 +7367,6 @@ CDocument.prototype.GetSelectionBounds = function()
 };
 CDocument.prototype.Selection_SetStart         = function(X, Y, MouseEvent)
 {
-	this.ResetTextSelectionType();
-
     var bInText      = (null === this.IsInText(X, Y, this.CurPage) ? false : true);
     var bTableBorder = (null === this.IsTableBorder(X, Y, this.CurPage) ? false : true);
     var nInDrawing   = this.DrawingObjects.IsInDrawingObject(X, Y, this.CurPage, this);
@@ -10254,8 +10252,18 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 			if ((oInlineSdt && oInlineSdt.IsForm() && oInlineSdt.IsCheckBox()) || (oBlockSdt && oBlockSdt.IsForm() && oBlockSdt.IsCheckBox()))
 				this.CurPos.SetCC((oInlineSdt && oInlineSdt.IsForm() && oInlineSdt.IsCheckBox()) ? oInlineSdt : oBlockSdt);
 		}
-
+		
+		if (1 >= e.ClickCount)
+			this.SetTextSelectionType(AscWord.TEXT_SELECTION_TYPE.Common);
+		else if (e.ClickCount % 2)
+			this.SetTextSelectionType(AscWord.TEXT_SELECTION_TYPE.Paragraph);
+		else
+			this.SetTextSelectionType(AscWord.TEXT_SELECTION_TYPE.Word);
+		
 		this.Selection_SetStart(X, Y, e);
+		
+		if (!this.IsTextSelectionUse())
+			this.ResetTextSelectionType();
 		
 		var oSelectedContent = this.GetSelectedElementsInfo();
 		var oInlineSdt       = oSelectedContent.GetInlineLevelSdt();
@@ -15189,13 +15197,11 @@ CDocument.prototype.private_CheckCursorInPlaceHolder = function()
 };
 CDocument.prototype.SetTextSelectionType = function(type)
 {
-	console.log(`Set ${type}`);
 	this.Selection.Type = type;
 };
 CDocument.prototype.ResetTextSelectionType = function()
 {
-	console.log(`Reset`);
-	this.Selection.Type = AscWord.TEXT_SELECTION_TYPE.Common;
+	this.SetTextSelectionType(AscWord.TEXT_SELECTION_TYPE.Common);
 };
 CDocument.prototype.IsWordSelection = function()
 {

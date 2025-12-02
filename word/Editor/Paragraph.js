@@ -5607,7 +5607,7 @@ Paragraph.prototype.Set_SelectionContentPos = function(StartContentPos, EndConte
 
 		for (var CurPos = TempStart; CurPos < TempEnd; CurPos++)
 		{
-			this.Content[CurPos].RemoveSelection();
+			this.Content[CurPos].RemoveSelection(true);
 		}
 	}
 
@@ -5618,12 +5618,10 @@ Paragraph.prototype.Set_SelectionContentPos = function(StartContentPos, EndConte
 
 		for (var CurPos = TempStart; CurPos <= TempEnd; CurPos++)
 		{
-			this.Content[CurPos].RemoveSelection();
+			this.Content[CurPos].RemoveSelection(true);
 		}
 	}
-
-
-
+	
 	if (StartPos === EndPos)
 	{
 		this.Content[StartPos].Set_SelectionContentPos(StartContentPos, EndContentPos, Depth + 1, 0, 0);
@@ -8351,30 +8349,18 @@ Paragraph.prototype.Selection_SetStart = function(X, Y, CurPage, bTableBorder)
 	let logicDocument = this.GetLogicDocument();
 	if (logicDocument)
 	{
-		let e = global_mouseEvent;
-		// ClickCount приходит 0 не на AscCommon.g_mouse_event_type_up, при повторном ивенте
-		if (1 >= e.ClickCount)
-		{
-			logicDocument.SetTextSelectionType(AscWord.TEXT_SELECTION_TYPE.Common);
-		}
-		else if (e.ClickCount % 2)
+		if (logicDocument.IsParagraphSelection())
 		{
 			this.SelectAll(1);
-			
 			this.Selection.Start          = true;
 			this.Selection.StartManually  = true;
 			this.Selection.EndManually    = true;
 			this.Selection.StartBehindEnd = false;
-			
-			logicDocument.SetTextSelectionType(AscWord.TEXT_SELECTION_TYPE.Paragraph);
 		}
-		else
+		else if (logicDocument.IsWordSelection())
 		{
 			this._SelectCurrentWord();
-			
 			this.Selection.EndManually = true;
-			
-			logicDocument.SetTextSelectionType(AscWord.TEXT_SELECTION_TYPE.Word);
 		}
 	}
 };
@@ -8419,8 +8405,8 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 	let startPos = this.Get_ParaContentPos(true, true);
 	
 	if (logicDocument.IsWordSelection())
-		pos = this.getClosestWordPos(pos, SearchPosXY2.getLine(), SearchPosXY2.getRange(), this.GetSelectDirection());
-
+		pos = this.getClosestWordPos(pos, SearchPosXY2.getLine(), SearchPosXY2.getRange());
+	
 	// Выставим в полученном месте текущую позицию курсора
 	if (!logicDocument.IsWordSelection())
 		this.Set_ParaContentPos(pos2, true, SearchPosXY2.getLine(), SearchPosXY2.getRange());
@@ -8429,7 +8415,7 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 		&& !this.Parent.IsFootnote()
 		&& this.extendLastLineToXY(X, Y, CurPage, MouseEvent))
 		return;
-
+	
 	// Выставляем селект
 	this.Set_SelectionContentPos(startPos, pos, true, this.Selection.StartLine, this.Selection.StartRange, SearchPosXY2.getLine(), SearchPosXY2.getRange());
 	
@@ -8591,8 +8577,10 @@ Paragraph.prototype._getWordPos = function(contentPos)
 		end   : endPos
 	};
 };
-Paragraph.prototype.getClosestWordPos = function(contentPos, line, range, direction)
+Paragraph.prototype.getClosestWordPos = function(contentPos, line, range)
 {
+	let curPos = this.Get_ParaContentPos(false);
+	
 	let state = this.SaveSelectionState();
 	this.RemoveSelection();
 	
@@ -8603,7 +8591,7 @@ Paragraph.prototype.getClosestWordPos = function(contentPos, line, range, direct
 	let wordPos = this._getWordPos(contentPos);
 	
 	let result = wordPos.start;
-	if (direction >= 0)
+	if (contentPos.Compare(curPos) >= 0)
 	{
 		this.Set_ParaContentPos(wordPos.start, false, line, range);
 		let startXY = this.GetCalculatedCurPosXY();
@@ -8614,14 +8602,14 @@ Paragraph.prototype.getClosestWordPos = function(contentPos, line, range, direct
 	this.LoadSelectionState(state);
 	return result;
 };
-Paragraph.prototype.checkWordSelection = function()
+Paragraph.prototype.checkWordSelection = function(_startPos, _endPos)
 {
 	let logicDocument = this.GetLogicDocument();
 	if (!logicDocument || this !== logicDocument.GetCurrentParagraph(false, false, {StartInSelection : true}))
 		return;
 	
-	let startPos = this.Get_ParaContentPos(true, true);
-	let endPos   = this.Get_ParaContentPos(true, false);
+	let startPos = _startPos ? _startPos : this.Get_ParaContentPos(true, true);
+	let endPos   = _endPos ? _endPos : this.Get_ParaContentPos(true, false);
 	
 	let curPos = this.Get_ParaContentPos(false);
 	
@@ -9204,6 +9192,24 @@ Paragraph.prototype.SetSelectionToBeginEnd = function(isSelectionStart, isStartP
 {
 	let contentPos = isStartPos ? this.Get_StartPos() : this.Get_EndPos(true);
 	
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument)
+	{
+		if (logicDocument.IsParagraphSelection())
+		{
+			this.SelectAll(1);
+			return;
+		}
+		else if (logicDocument.IsWordSelection())
+		{
+			if (isSelectionStart)
+				this.checkWordSelection(contentPos, null);
+			else
+				this.checkWordSelection(null, contentPos);
+		}
+	}
+	
+	
 	if (isSelectionStart)
 	{
 		this.Selection.StartManually  = false;
@@ -9211,8 +9217,7 @@ Paragraph.prototype.SetSelectionToBeginEnd = function(isSelectionStart, isStartP
 		
 		this.Set_SelectionContentPos(contentPos, this.Get_ParaContentPos(true, false));
 		
-		let logicDocument = this.GetLogicDocument();
-		if (logicDocument && logicDocument.IsWordSelection())
+		if (logicDocument && (logicDocument.IsWordSelection() || logicDocument.IsParagraphSelection()))
 		{
 			let curPos = isStartPos ? this.Get_StartPos() : this.Get_EndPos(false);
 			this.Set_ParaContentPos(curPos, true, -1, -1);

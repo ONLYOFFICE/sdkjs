@@ -9002,9 +9002,6 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.GetAllSignatures = function() {
         return [];
     };
-	CPDFDoc.prototype.IsWordSelection = function() {
-		return false;
-	};
     CPDFDoc.prototype.GetCursorRealPosition = function() {
         return {
             X: this.CurPosition.X,

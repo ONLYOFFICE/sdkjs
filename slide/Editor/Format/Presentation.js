@@ -2270,6 +2270,9 @@ CPresentation.prototype.ResetTextSelectionType = function(){
 CPresentation.prototype.IsWordSelection = function () {
 	return this.WordSelected;
 };
+CPresentation.prototype.IsParagraphSelection = function() {
+	return false;
+};
 
 CPresentation.prototype.checkCurrentTextObjectExtends = function () {
 	var oController = this.GetCurrentController();
