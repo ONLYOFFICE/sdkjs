@@ -6964,7 +6964,7 @@
 		return arrResults;
 	};
 
-	WriterToJSON.prototype.SetSrcRect = function(srcRect) {
+	WriterToJSON.prototype.SerSrcRect = function(srcRect) {
 		if (!srcRect) return srcRect;
 		return {
 			"b": srcRect.b,
@@ -6984,7 +6984,7 @@
 		return {
 			"blip": this.SerEffects(oBlipFill.Effects),
 
-			"srcRect": this.SetSrcRect(oBlipFill.srcRect),
+			"srcRect": this.SerSrcRect(oBlipFill.srcRect),
 
 			"tile": oBlipFill.tile ? {
 				"algn": GetRectAlgnStrType(oBlipFill.tile.algn),
@@ -6996,7 +6996,7 @@
 			} : oBlipFill.tile,
 
 			"stretch":  oBlipFill.stretch ? {
-				"fillRect": this.SetSrcRect(oBlipFill.stretch.fillRect),
+				"fillRect": this.SerSrcRect(oBlipFill.stretch.fillRect),
 			} : oBlipFill.stretch,
 			"rotWithShape":  oBlipFill.rotWithShape,
 			"rasterImageId": rasterImageId,
@@ -11919,7 +11919,7 @@
 
 		if (oParsedFill["stretch"])
 		{
-			oBlipFill.stretch = AscFormat.CBlipFillStretch();
+			oBlipFill.stretch = new AscFormat.CBlipFillStretch();
 			oBlipFill.stretch.fillRect = this.SrcRectFromJSON(oParsedFill["stretch"]["fillRect"]);
 		}
 
