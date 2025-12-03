@@ -12606,7 +12606,8 @@ CDocument.prototype.SetWatermarkPropsAction = function(oProps)
 		if (!watermark)
 			return;
 		
-		resultWatermark = watermark;
+		if (!resultWatermark)
+			resultWatermark = watermark;
 		
 		const oContent = hdrFtr.GetContent();
 		let oWatermarkCC = null;
