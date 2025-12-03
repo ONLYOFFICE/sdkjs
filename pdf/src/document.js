@@ -5178,8 +5178,6 @@ var CPresentation = CPresentation || function(){};
         let oDrDoc = this.GetDrawingDocument();
 
         let oForm       = this.activeForm;
-        let oAnnot      = this.mouseDownAnnot;
-        let oDrawing    = this.activeDrawing;
         let oController = this.GetController();
 
         oDrDoc.UpdateTargetFromPaint = true;
@@ -5188,19 +5186,7 @@ var CPresentation = CPresentation || function(){};
         if (oForm && oForm.IsInForm() && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oForm.GetType())) {
             oForm.MoveCursorLeft(isShiftKey, isCtrlKey);
             oContent = oForm.GetDocContent();
-        }
-        else if (oAnnot) {
-            oContent = oController.getTargetDocContent();
 
-            if (oContent) {
-                oController.cursorMoveLeft(isShiftKey, isCtrlKey);
-            }
-        }
-        else if (oDrawing && oDrawing.IsInTextBox()) {
-            oController.cursorMoveLeft(isShiftKey, isCtrlKey);
-        }
-
-        if (oContent) {
             oDrDoc.TargetStart(true);
             
             if (oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
@@ -5209,13 +5195,14 @@ var CPresentation = CPresentation || function(){};
             this.Viewer.onUpdateOverlay();
             this.UpdateInterface();
         }
+        else {
+            cursorMove(oController, 'left', isShiftKey, isCtrlKey, this.Viewer.getPageRotate(this.GetCurPage()));
+        }
     };
     CPDFDoc.prototype.MoveCursorUp = function(isShiftKey, isCtrlKey) {
         let oDrDoc = this.GetDrawingDocument();
 
         let oForm       = this.activeForm;
-        let oAnnot      = this.mouseDownAnnot;
-        let oDrawing    = this.activeDrawing;
         let oController = this.GetController();
 
         oDrDoc.UpdateTargetFromPaint = true;
@@ -5236,34 +5223,25 @@ var CPresentation = CPresentation || function(){};
                     break;
                 }
             }
-        }
-        else if (oAnnot) {
-            oContent = oController.getTargetDocContent();
 
             if (oContent) {
-                oController.cursorMoveUp(isShiftKey, isCtrlKey);
+                oDrDoc.TargetStart(true);
+
+                if (oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
+                    oDrDoc.TargetEnd();
+
+                this.Viewer.onUpdateOverlay();
+                this.UpdateInterface();
             }
         }
-        else if (oDrawing && oDrawing.IsInTextBox()) {
-            oController.cursorMoveUp(isShiftKey, isCtrlKey);
-        }
-
-        if (oContent) {
-            oDrDoc.TargetStart(true);
-
-            if (oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
-                oDrDoc.TargetEnd();
-
-            this.Viewer.onUpdateOverlay();
-            this.UpdateInterface();
+        else {
+            cursorMove(oController, 'up', isShiftKey, isCtrlKey, this.Viewer.getPageRotate(this.GetCurPage()));
         }
     };
     CPDFDoc.prototype.MoveCursorRight = function(isShiftKey, isCtrlKey) {
         let oDrDoc = this.GetDrawingDocument();
 
         let oForm       = this.activeForm;
-        let oAnnot      = this.mouseDownAnnot;
-        let oDrawing    = this.activeDrawing;
         let oController = this.GetController();
 
         oDrDoc.UpdateTargetFromPaint = true;
@@ -5272,19 +5250,7 @@ var CPresentation = CPresentation || function(){};
         if (oForm && oForm.IsInForm() && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oForm.GetType())) {
             oForm.MoveCursorRight(isShiftKey, isCtrlKey);
             oContent = oForm.GetDocContent();
-        }
-        else if (oAnnot) {
-            oContent = oController.getTargetDocContent();
 
-            if (oContent) {
-                oController.cursorMoveRight(isShiftKey, isCtrlKey);
-            }
-        }
-        else if (oDrawing && oDrawing.IsInTextBox()) {
-            oController.cursorMoveRight(isShiftKey, isCtrlKey);
-        }
-
-        if (oContent) {
             oDrDoc.TargetStart(true);
 
             if (oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
@@ -5293,13 +5259,14 @@ var CPresentation = CPresentation || function(){};
             this.Viewer.onUpdateOverlay();
             this.UpdateInterface();
         }
+        else {
+            cursorMove(oController, 'right', isShiftKey, isCtrlKey, this.Viewer.getPageRotate(this.GetCurPage()));
+        }
     };
     CPDFDoc.prototype.MoveCursorDown = function(isShiftKey, isCtrlKey) {
         let oDrDoc = this.GetDrawingDocument();
 
         let oForm       = this.activeForm;
-        let oAnnot      = this.mouseDownAnnot;
-        let oDrawing    = this.activeDrawing;
         let oController = this.GetController();
 
         oDrDoc.UpdateTargetFromPaint = true;
@@ -5321,27 +5288,20 @@ var CPresentation = CPresentation || function(){};
                     break;
                 }
             }
-            
-        }
-        else if (oAnnot) {
-            oContent = oController.getTargetDocContent();
 
             if (oContent) {
-                oController.cursorMoveDown(isShiftKey, isCtrlKey);
+                oDrDoc.TargetStart(true);
+
+                if (oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
+                    oDrDoc.TargetEnd();
+
+                this.Viewer.onUpdateOverlay();
+                this.UpdateInterface();
             }
+            
         }
-        else if (oDrawing && oDrawing.IsInTextBox()) {
-            oController.cursorMoveDown(isShiftKey, isCtrlKey);
-        }
-
-        if (oContent) {
-            oDrDoc.TargetStart(true);
-
-            if (oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
-                oDrDoc.TargetEnd();
-
-            this.Viewer.onUpdateOverlay();
-            this.UpdateInterface();
+        else {
+            cursorMove(oController, 'down', isShiftKey, isCtrlKey, this.Viewer.getPageRotate(this.GetCurPage()));
         }
     };
     CPDFDoc.prototype.SelectAll = function() {
@@ -10293,6 +10253,53 @@ var CPresentation = CPresentation || function(){};
         }
     }
     
+    function cursorMove(controller, direction, isShiftKey, isCtrlKey, nAngle) {
+        const rotateMap = {
+            0: {
+                'up':    'up',
+                'down':  'down',
+                'left':  'left',
+                'right': 'right'
+            },
+            90: {
+                'up':    'left',
+                'down':  'right',
+                'left':  'down',
+                'right': 'up'
+            },
+            180: {
+                'up':    'down',
+                'down':  'up',
+                'left':  'right',
+                'right': 'left'
+            },
+            270: {
+                'up':    'right',
+                'down':  'left',
+                'left':  'up',
+                'right': 'down'
+            }
+        };
+
+        const normalized = ((nAngle % 360) + 360) % 360;
+        const finalDir = rotateMap[normalized][direction];
+
+        switch (finalDir) {
+            case 'up':
+                controller.cursorMoveUp(isShiftKey, isCtrlKey);
+                break;
+            case 'down':
+                controller.cursorMoveDown(isShiftKey, isCtrlKey);
+                break;
+            case 'left':
+                controller.cursorMoveLeft(isShiftKey, isCtrlKey);
+                break;
+            case 'right':
+                controller.cursorMoveRight(isShiftKey, isCtrlKey);
+                break;
+        }
+    }
+
     window["AscPDF"].CPDFDoc                    = CPDFDoc;
     window["AscPDF"].CreateAnnotByProps         = CreateAnnotByProps;
     window["AscPDF"].CreateAscAnnotPropFromObj  = CreateAscAnnotPropFromObj;
