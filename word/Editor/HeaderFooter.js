@@ -1376,6 +1376,14 @@ CHeaderFooter.prototype =
 	}
 };
 CHeaderFooter.prototype.constructor = CHeaderFooter;
+CHeaderFooter.prototype.IsHeader = function()
+{
+	return this.Type === AscCommon.hdrftr_Header;
+};
+CHeaderFooter.prototype.IsFooter = function()
+{
+	return this.Type === AscCommon.hdrftr_Footer;
+};
 CHeaderFooter.prototype.UpdateContentToDefaults = function()
 {
 	this.Content.ClearContent(true);
