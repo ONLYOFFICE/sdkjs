@@ -3017,7 +3017,7 @@ var g_oFontProperties = {
 		var res = undefined;
 		switch (val) {
 			case "automatic":
-				res = AscCommonExcel.EDataBarAxisPosition.context;
+				res = AscCommonExcel.EDataBarAxisPosition.automatic;
 				break;
 			case "middle":
 				res = AscCommonExcel.EDataBarAxisPosition.middle;

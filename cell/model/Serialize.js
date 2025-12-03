@@ -1800,6 +1800,72 @@
         updatelinksUserSet:  2
     };
 
+	var EDataValidationType = {
+		None: 0,
+		Custom: 1,
+		Date: 2,
+		Decimal: 3,
+		List: 4,
+		TextLength: 5,
+		Time: 6,
+		Whole: 7
+	};
+	var EDataValidationErrorStyle = {
+		Stop: 0,
+		Warning: 1,
+		Information: 2
+	};
+	var EDataValidationImeMode = {
+		NoControl: 0,
+		Off: 1,
+		On: 2,
+		Disabled: 3,
+		Hiragana: 4,
+		FullKatakana: 5,
+		HalfKatakana: 6,
+		FullAlpha: 7,
+		HalfAlpha: 8,
+		FullHangul: 9,
+		HalfHangul: 10
+	};
+	var EDataValidationOperator = {
+		Between: 0,
+		NotBetween: 1,
+		Equal: 2,
+		NotEqual: 3,
+		LessThan: 4,
+		LessThanOrEqual: 5,
+		GreaterThan: 6,
+		GreaterThanOrEqual: 7
+	};
+
+	var ST_olapSlicerCacheSortOrder = {
+		Natural: 0,
+		Ascending: 1,
+		Descending: 2
+	};
+	var ST_tabularSlicerCacheSortOrder = {
+		Ascending: 0,
+		Descending: 1
+	};
+
+	var ST_slicerCacheCrossFilter = {
+		None: 0,
+		ShowItemsWithDataAtTop: 1,
+		ShowItemsWithNoData: 2
+	};
+
+	var ST_slicerStyleType = {
+		unselectedItemWithData: 0,
+		selectedItemWithData: 1,
+		unselectedItemWithNoData: 2,
+		selectedItemWithNoData: 3,
+		hoveredUnselectedItemWithData: 4,
+		hoveredSelectedItemWithData: 5,
+		hoveredUnselectedItemWithNoData: 6,
+		hoveredSelectedItemWithNoData: 7
+	};
+
 		 const c_oSerControlTypes = {
 			 Control: 10,
 			 ControlAnchor: 11,
@@ -15713,4 +15779,61 @@
     prot['updatelinksNever'] = prot.updatelinksNever;
     prot['updatelinksUserSet'] = prot.updatelinksUserSet;
 
+	window['Asc']['c_oAscEDataValidationType'] = window['Asc'].EDataValidationType = EDataValidationType;
+	prot = EDataValidationType;
+	prot['None'] = prot.None;
+	prot['Custom'] = prot.Custom;
+	prot['Date'] = prot.Date;
+	prot['Decimal'] = prot.Decimal;
+	prot['List'] = prot.List;
+	prot['TextLength'] = prot.TextLength;
+	prot['Time'] = prot.Time;
+	prot['Whole'] = prot.Whole;
+
+	window['Asc']['c_oAscEDataValidationErrorStyle'] = window['Asc'].EDataValidationErrorStyle = EDataValidationErrorStyle;
+	prot = EDataValidationErrorStyle;
+	prot['Stop'] = prot.Stop;
+	prot['Warning'] = prot.Warning;
+	prot['Information'] = prot.Information;
+
+	window['Asc'].EDataValidationImeMode = EDataValidationImeMode;
+
+	window['Asc']['EDataValidationOperator'] = window['Asc'].EDataValidationOperator = EDataValidationOperator;
+	prot = EDataValidationOperator;
+	prot['Between'] = prot.Between;
+	prot['NotBetween'] = prot.NotBetween;
+	prot['Equal'] = prot.Equal;
+	prot['NotEqual'] = prot.NotEqual;
+	prot['LessThan'] = prot.LessThan;
+	prot['LessThanOrEqual'] = prot.LessThanOrEqual;
+	prot['GreaterThan'] = prot.GreaterThan;
+	prot['GreaterThanOrEqual'] = prot.GreaterThanOrEqual;
+
+	window['Asc']['ST_olapSlicerCacheSortOrder'] = window['AscCommonExcel'].ST_olapSlicerCacheSortOrder = ST_olapSlicerCacheSortOrder;
+	prot = ST_olapSlicerCacheSortOrder;
+	prot['Natural'] = prot.Natural;
+	prot['Ascending'] = prot.Ascending;
+	prot['Descending'] = prot.Descending;
+
+	window['Asc']['ST_tabularSlicerCacheSortOrder'] = window['Asc'].ST_tabularSlicerCacheSortOrder = ST_tabularSlicerCacheSortOrder;
+	prot = ST_tabularSlicerCacheSortOrder;
+	prot['Ascending'] = prot.Ascending;
+	prot['Descending'] = prot.Descending;
+
+	window['Asc']['ST_slicerCacheCrossFilter'] = window['Asc'].ST_slicerCacheCrossFilter = ST_slicerCacheCrossFilter;
+	prot = ST_slicerCacheCrossFilter;
+	prot['None'] = prot.None;
+	prot['ShowItemsWithDataAtTop'] = prot.ShowItemsWithDataAtTop;
+	prot['ShowItemsWithNoData'] = prot.ShowItemsWithNoData;
+
+	window['Asc']['ST_slicerStyleType'] = window['Asc'].ST_slicerStyleType = ST_slicerStyleType;
+	prot = ST_slicerStyleType;
+	prot['unselectedItemWithData'] = prot.unselectedItemWithData;
+	prot['selectedItemWithData'] = prot.selectedItemWithData;
+	prot['unselectedItemWithNoData'] = prot.unselectedItemWithNoData;
+	prot['selectedItemWithNoData'] = prot.selectedItemWithNoData;
+	prot['hoveredUnselectedItemWithData'] = prot.hoveredUnselectedItemWithData;
+	prot['hoveredSelectedItemWithData'] = prot.hoveredSelectedItemWithData;
+	prot['hoveredUnselectedItemWithNoData'] = prot.hoveredUnselectedItemWithNoData;
+	prot['hoveredSelectedItemWithNoData'] = prot.hoveredSelectedItemWithNoData;
 })(window);

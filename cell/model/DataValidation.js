@@ -42,44 +42,6 @@
 	var c_oAscDeleteOptions = Asc.c_oAscDeleteOptions;
 	var cElementType = AscCommonExcel.cElementType;
 
-	var EDataValidationType = {
-		None: 0,
-		Custom: 1,
-		Date: 2,
-		Decimal: 3,
-		List: 4,
-		TextLength: 5,
-		Time: 6,
-		Whole: 7
-	};
-	var EDataValidationErrorStyle = {
-		Stop: 0,
-		Warning: 1,
-		Information: 2
-	};
-	var EDataValidationImeMode = {
-		NoControl: 0,
-		Off: 1,
-		On: 2,
-		Disabled: 3,
-		Hiragana: 4,
-		FullKatakana: 5,
-		HalfKatakana: 6,
-		FullAlpha: 7,
-		HalfAlpha: 8,
-		FullHangul: 9,
-		HalfHangul: 10
-	};
-	var EDataValidationOperator = {
-		Between: 0,
-		NotBetween: 1,
-		Equal: 2,
-		NotEqual: 3,
-		LessThan: 4,
-		LessThanOrEqual: 5,
-		GreaterThan: 6,
-		GreaterThanOrEqual: 7
-	};
 
 	function checkIntegerType(val) {
 		return val && AscCommonExcel.cElementType.number === val.type;
@@ -166,10 +128,10 @@
 		this.showDropDown = false; // Excel considers this field to be a refusal to display
 		this.showErrorMessage = false;
 		this.showInputMessage = false;
-		this.type = EDataValidationType.None;
-		this.errorStyle = EDataValidationErrorStyle.Stop;
-		this.imeMode = EDataValidationImeMode.NoControl;
-		this.operator = EDataValidationOperator.Between;
+		this.type = Asc.EDataValidationType.None;
+		this.errorStyle = Asc.EDataValidationErrorStyle.Stop;
+		this.imeMode = Asc.EDataValidationImeMode.NoControl;
+		this.operator = Asc.EDataValidationOperator.Between;
 		this.error = null;
 		this.errorTitle = null;
 		this.prompt = null;
@@ -465,7 +427,7 @@
 		return res.length ? res : null;
 	};
 	CDataValidation.prototype.checkValue = function (cell, ws) {
-		if (!this.showErrorMessage || EDataValidationType.None === this.type) {
+		if (!this.showErrorMessage || Asc.EDataValidationType.None === this.type) {
 			return true;
 		}
 
@@ -482,7 +444,7 @@
 		let cellType = cell.getType();
 		let val = cell.getValueWithoutFormat();
 
-		if (EDataValidationType.List === this.type) {
+		if (Asc.EDataValidationType.List === this.type) {
 			let list = this._getListValues(ws);
 			let aValue = list[0];
 			if (!aValue) {
@@ -498,13 +460,13 @@
 			} else {
 				return -1 !== aValue.indexOf(val);
 			}
-		} else if (EDataValidationType.Custom === this.type) {
+		} else if (Asc.EDataValidationType.Custom === this.type) {
 			cleanFormulaCaches();
 			let v = this.formula1 && this.formula1.clone().getValue(ws, true, null, this.calculateOffset(ws));
 			v = v && v.tocBool();
 			return !!(v && AscCommonExcel.cElementType.bool === v.type && v.toBool());
 		} else {
-			if (EDataValidationType.TextLength === this.type) {
+			if (Asc.EDataValidationType.TextLength === this.type) {
 				val = val.length;
 			} else {
 				if (AscCommon.CellValueType.Number !== cellType) {
@@ -512,7 +474,7 @@
 				}
 				val = Number(val);
 
-				if (isNaN(val) || (EDataValidationType.Whole === this.type && (val >> 0) !== val)) {
+				if (isNaN(val) || (Asc.EDataValidationType.Whole === this.type && (val >> 0) !== val)) {
 					return false;
 				}
 			}
@@ -526,12 +488,12 @@
 			let res = false;
 			if (v1 == null && v2 == null) {
 				switch (this.type) {
-					case EDataValidationType.None:
-					case EDataValidationType.Date:
-					case EDataValidationType.Decimal:
-					case EDataValidationType.TextLength:
-					case EDataValidationType.Time:
-					case EDataValidationType.Whole:
+					case Asc.EDataValidationType.None:
+					case Asc.EDataValidationType.Date:
+					case Asc.EDataValidationType.Decimal:
+					case Asc.EDataValidationType.TextLength:
+					case Asc.EDataValidationType.Time:
+					case Asc.EDataValidationType.Whole:
 						res = true;
 						break;
 				}
@@ -544,28 +506,28 @@
 			v1 = v1.toNumber();
 
 			switch (this.operator) {
-				case EDataValidationOperator.Between:
+				case Asc.EDataValidationOperator.Between:
 					res = checkIntegerType(v2) && v1 <= val && val <= v2.toNumber();
 					break;
-				case EDataValidationOperator.NotBetween:
+				case Asc.EDataValidationOperator.NotBetween:
 					res = checkIntegerType(v2) && !(v1 <= val && val <= v2.toNumber());
 					break;
-				case EDataValidationOperator.Equal:
+				case Asc.EDataValidationOperator.Equal:
 					res = v1 === val;
 					break;
-				case EDataValidationOperator.NotEqual:
+				case Asc.EDataValidationOperator.NotEqual:
 					res = v1 !== val;
 					break;
-				case EDataValidationOperator.LessThan:
+				case Asc.EDataValidationOperator.LessThan:
 					res = v1 > val;
 					break;
-				case EDataValidationOperator.LessThanOrEqual:
+				case Asc.EDataValidationOperator.LessThanOrEqual:
 					res = v1 >= val;
 					break;
-				case EDataValidationOperator.GreaterThan:
+				case Asc.EDataValidationOperator.GreaterThan:
 					res = v1 < val;
 					break;
-				case EDataValidationOperator.GreaterThanOrEqual:
+				case Asc.EDataValidationOperator.GreaterThanOrEqual:
 					res = v1 <= val;
 					break;
 			}
@@ -634,7 +596,7 @@
 		return [aValue, aData];
 	};
 	CDataValidation.prototype.isListValues = function () {
-		return (this.type === EDataValidationType.List && !this.showDropDown);
+		return (this.type === Asc.EDataValidationType.List && !this.showDropDown);
 	};
 	CDataValidation.prototype.getListValues = function (ws) {
 		return this.isListValues() ? this._getListValues(ws) : null;
@@ -656,8 +618,8 @@
 			return _val;
 		};
 
-		if (this.type !== EDataValidationType.Custom && this.type !== EDataValidationType.List) {
-			if (this.operator === EDataValidationOperator.Between || this.operator === EDataValidationOperator.NotBetween) {
+		if (this.type !== Asc.EDataValidationType.Custom && this.type !== Asc.EDataValidationType.List) {
+			if (this.operator === Asc.EDataValidationOperator.Between || this.operator === Asc.EDataValidationOperator.NotBetween) {
 				if (this.formula1 && this.formula2) {
 					var nFormula1 = _getNumber(this.formula1.text);
 					var nFormula2 = _getNumber(this.formula2.text);
@@ -676,7 +638,7 @@
 			var _res = false;
 			if (val.type === cElementType.cell || val.type === cElementType.cell3D) {
 				_res = true;
-			} else if (type === EDataValidationType.List) {
+			} else if (type === Asc.EDataValidationType.List) {
 				if (val.type === cElementType.cellsRange || val.type === cElementType.cellsRange3D) {
 					_res = true;
 				}
@@ -707,7 +669,7 @@
 			//если ссылка на диапазон - в любом случае отдаём ошибку
 			if (fValue.type === cElementType.cellsRange || fValue.type === cElementType.cellsRange3D) {
 				//в случае списка допустимы строки/столбцы
-				if (type === EDataValidationType.List) {
+				if (type === Asc.EDataValidationType.List) {
 					var _bbox = fValue.getBBox0();
 					if (_bbox.c1 !== _bbox.c2 && _bbox.r1 !== _bbox.r2) {
 						return asc_error.DataValidateInvalidList;
@@ -722,8 +684,8 @@
 				return asc_error.DataValidateInvalid;
 			}
 
-			if (type !== EDataValidationType.Custom && !_checkValidType(fValue)) {
-				return type === EDataValidationType.List ? asc_error.DataValidateInvalidList : asc_error.DataValidateNotNumeric;
+			if (type !== Asc.EDataValidationType.Custom && !_checkValidType(fValue)) {
+				return type === Asc.EDataValidationType.List ? asc_error.DataValidateInvalidList : asc_error.DataValidateNotNumeric;
 			}
 
 			//если ощибка в подсчете формулы - выдаём предупреждение
@@ -747,7 +709,7 @@
 			isNumeric = isNum(_val);
 			if (!isNumeric) {
 				//проверим, может быть это дата или время
-				if (type !== EDataValidationType.List) {
+				if (type !== Asc.EDataValidationType.List) {
 					date = AscCommon.g_oFormatParser.parseDate(_val, AscCommon.g_oDefaultCultureInfo);
 				}
 			}
@@ -755,7 +717,7 @@
 
 		var res = asc_error.No;
 		switch (type) {
-			case EDataValidationType.Date:
+			case Asc.EDataValidationType.Date:
 				if (fResult) {
 
 				} else {
@@ -775,8 +737,8 @@
 				}
 
 				break;
-			case EDataValidationType.Decimal:
-			case EDataValidationType.Whole:
+			case Asc.EDataValidationType.Decimal:
+			case Asc.EDataValidationType.Whole:
 				if (fResult) {
 
 				} else {
@@ -790,7 +752,7 @@
 				}
 
 				break;
-			case EDataValidationType.List:
+			case Asc.EDataValidationType.List:
 				if (fResult) {
 
 				} else {
@@ -798,7 +760,7 @@
 				}
 
 				break;
-			case EDataValidationType.TextLength:
+			case Asc.EDataValidationType.TextLength:
 				if (fResult) {
 
 				} else {
@@ -815,7 +777,7 @@
 				}
 
 				break;
-			case EDataValidationType.Time:
+			case Asc.EDataValidationType.Time:
 				if (fResult) {
 
 				} else {
@@ -1105,9 +1067,9 @@
 				if (_isNum) {
 					//переводим в дату
 					var _format;
-					if (t.type === EDataValidationType.Date) {
+					if (t.type === Asc.EDataValidationType.Date) {
 						_format = AscCommon.oNumFormatCache.get("m/d/yyyy");
-					} else if (t.type === EDataValidationType.Time) {
+					} else if (t.type === Asc.EDataValidationType.Time) {
 						_format = AscCommon.oNumFormatCache.get("h:mm:ss AM/PM");
 					}
 					if (_format) {
@@ -1158,7 +1120,7 @@
 			var _val = _formula.text;
 			var isNumeric = isNum(_val);
 			if (isNumeric) {
-				if (t.type === EDataValidationType.List) {
+				if (t.type === Asc.EDataValidationType.List) {
 					_formula.text = '"' + _formula.text + '"';
 				}
 			} else {
@@ -1170,7 +1132,7 @@
 						_formula.text = _val;
 
 						if (isNum(_val)) {
-							if (t.type === EDataValidationType.List) {
+							if (t.type === Asc.EDataValidationType.List) {
 								_val = '"' + _val + '"';
 							}
 							_formula.text = _val;
@@ -1178,7 +1140,7 @@
 						}
 						var _tempFormula = new CDataFormula(_val);
 						isFormula = _tempFormula.getValue(ws, null, true);
-					} else if (t.type !== EDataValidationType.List) {
+					} else if (t.type !== Asc.EDataValidationType.List) {
 						isDate = AscCommon.g_oFormatParser.parseDate(_val, AscCommon.g_oDefaultCultureInfo);
 					}
 				}
@@ -1808,25 +1770,6 @@
 	 */
 	var prot;
 	window['Asc'] = window['Asc'] || {};
-	window['Asc']['c_oAscEDataValidationType'] = window['Asc'].EDataValidationType = EDataValidationType;
-	prot = EDataValidationType;
-	prot['None'] = prot.None;
-	prot['Custom'] = prot.Custom;
-	prot['Date'] = prot.Date;
-	prot['Decimal'] = prot.Decimal;
-	prot['List'] = prot.List;
-	prot['TextLength'] = prot.TextLength;
-	prot['Time'] = prot.Time;
-	prot['Whole'] = prot.Whole;
-
-	window['Asc']['c_oAscEDataValidationErrorStyle'] = window['Asc'].EDataValidationErrorStyle = EDataValidationErrorStyle;
-	prot = EDataValidationErrorStyle;
-	prot['Stop'] = prot.Stop;
-	prot['Warning'] = prot.Warning;
-	prot['Information'] = prot.Information;
-
-	window['Asc'].EDataValidationImeMode = EDataValidationImeMode;
-
 	window['Asc']['CDataFormula'] = window['Asc'].CDataFormula = CDataFormula;
 	prot = CDataFormula.prototype;
 	prot['asc_getValue'] = prot.asc_getValue;
@@ -1867,17 +1810,6 @@
 	prot['asc_setFormula1'] = prot.setFormula1;
 	prot['asc_setFormula2'] = prot.setFormula2;
 	prot['asc_checkValid'] = prot.asc_checkValid;
-
-	window['Asc']['EDataValidationOperator'] = window['Asc'].EDataValidationOperator = EDataValidationOperator;
-	prot = EDataValidationOperator;
-	prot['Between'] = prot.Between;
-	prot['NotBetween'] = prot.NotBetween;
-	prot['Equal'] = prot.Equal;
-	prot['NotEqual'] = prot.NotEqual;
-	prot['LessThan'] = prot.LessThan;
-	prot['LessThanOrEqual'] = prot.LessThanOrEqual;
-	prot['GreaterThan'] = prot.GreaterThan;
-	prot['GreaterThanOrEqual'] = prot.GreaterThanOrEqual;
 
 	window['AscCommonExcel'].CDataValidations = CDataValidations;
 })(window);
