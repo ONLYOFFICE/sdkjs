@@ -19024,7 +19024,7 @@ function isAllowPasteLink(pastedWb) {
 			//reparse if single operators included - @
 			if (!isFormulaFromVal && parseResult.atOperators && parseResult.atOperators.length > 0) {
 				let sBefore = newFP.Formula;
-				newFP.Formula = newFP._assembleWithAtOperators(parseResult.atOperators);
+				newFP.Formula = newFP._assembleWithAtOperators(parseResult.atOperators, parseResult);
 				if (sBefore !== newFP.Formula) {
 					newFP.isParsed = false;
 					newFP.outStack = [];
