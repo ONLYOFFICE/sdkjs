@@ -30066,6 +30066,19 @@
 		logicDocument.ClearActionOnChangeForm();
 		logicDocument.GetFormsManager().OnChange(this.Sdt);
 	};
+	ApiCheckBoxForm.prototype.private_GetImpl = function()
+	{
+		let impl = ApiFormBase.prototype.private_GetImpl.call(this);
+		
+		if (impl === this.Sdt)
+		{
+			let mainForm = this.Sdt.GetMainForm();
+			if (mainForm && mainForm !== this.Sdt && mainForm.IsLabeledCheckBox())
+				return mainForm;
+		}
+		
+		return impl;
+	};
 	
 	ApiComment.prototype.private_OnChange = function()
 	{
