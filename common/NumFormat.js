@@ -3950,7 +3950,7 @@ FormatParser.prototype =
                     if(prev.type != oDataTypes.delimiter && next.type != oDataTypes.delimiter){
                         var isTimeSeparator;
                         if (sameSeparators) {
-                            isTimeSeparator = this._looksLikeTimePart(prev, next, match, oDataTypes, cultureInfo.LCID);
+                            isTimeSeparator = this._looksLikeTimePart(prev, next, match, oDataTypes);
                         } else {
                             isTimeSeparator = cultureInfo.TimeSeparator == elem.val || (":" == elem.val && cultureInfo.DateSeparator != elem.val);
                         }
@@ -4194,29 +4194,18 @@ FormatParser.prototype =
         }
 		return res;
     },
-	_looksLikeTimePart: function(prev, next, match, oDataTypes, LCID) {
+	_looksLikeTimePart: function(prev, next, match, oDataTypes) {
+        //The function only checks the separator between values and the total number of values in the string. The strings validate will be checked later
 		if (prev.time || next.time) {
 			return true;
 		}
-		var prevVal = parseInt(prev.val, 10);
-		var nextVal = parseInt(next.val, 10);
-		// Numbers don't fit time range
-        var prevCouldBeHour = !isNaN(prevVal) && prevVal >= 0 && prevVal <= 24;
-        var nextCouldBeMinute = !isNaN(nextVal) && nextVal >= 0 && nextVal <= 59;
-        
-        if (!prevCouldBeHour || !nextCouldBeMinute) {
-            return false;
-        }
+
 		var digitCount = 0;
-        var isTimeSeparator = false
+        var separators = [];
 		for (var i = 0; i < match.length; i++) {
 			var elem = match[i];
 			if (elem.type.id === oDataTypes.digit.id) {
 				digitCount++;
-				// Large year
-				if (elem.val > 59 && elem.val < 10000) {
-					return false;
-				}
 			} else if (elem.type.id === oDataTypes.letter.id) {
 				// Month name
 				if (elem.month) {
@@ -4227,16 +4216,16 @@ FormatParser.prototype =
 					return true;
 				}
 			} else if (elem.type.id === oDataTypes.delimiter.id) {
-                if (elem.val === ":")
-                    isTimeSeparator = true;
+                separators.push(elem.val);
             }
 		}
 
-        // So far, only the Finnish language has the same separate symbol for date and time (LCID = 11). In Finnish, strings like "04.03" are considered dates, not times. 
-        if(LCID === 11 && digitCount === 2 && !isTimeSeparator)
+        if (separators.indexOf(".") !== -1 || separators.indexOf("/") !== -1 || separators.indexOf("-") !== -1)
             return false;
-        else if (LCID === 11 && digitCount === 3 && isTimeSeparator)
+        else if (separators.indexOf(":") !== -1)
             return true;
+
+
 		// 3+ digits usually mean date
 		return digitCount < 3;
 	},
