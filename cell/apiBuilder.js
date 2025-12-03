@@ -23134,7 +23134,7 @@
 			if (internalType !== -1) {
 				let t = this;
 				this.parent.private_changeStyle(function (newRule) {
-					let index = t.GetIndex() - 1;
+					let index = t.GetIndex();
 					newRule.aRuleElements[0].aCFVOs[index].asc_setType(internalType);
 					newRule.aRuleElements[0].aCFVOs[index].formula = null;
 					newRule.aRuleElements[0].aCFVOs[index].formulaParent = null;
@@ -23184,7 +23184,7 @@
 		if (this.cfvo) {
 			let t = this;
 			this.parent.private_changeStyle(function (newRule) {
-				let index = t.GetIndex() - 1;
+				let index = t.GetIndex();
 				newRule.aRuleElements[0].aCFVOs[index].asc_setVal(value);
 				newRule.aRuleElements[0].aCFVOs[index].formula = null;
 				newRule.aRuleElements[0].aCFVOs[index].formulaParent = null;
@@ -23265,7 +23265,7 @@
 		if (this.color) {
 			let t = this;
 			this.parent.private_changeStyle(function (newRule) {
-				let index = t.GetIndex() - 1;
+				let index = t.GetIndex();
 				if (newRule.aRuleElements && newRule.aRuleElements[0] &&
 					newRule.aRuleElements[0].aColors &&
 					newRule.aRuleElements[0].aColors[index]) {
