@@ -6200,11 +6200,11 @@ _func[cElementType.cell3D] = _func[cElementType.cell];
 		this.needCorrect = null;
 	}
 
-	ParseResult.prototype.addAtOperator = function(start, end, canSkip) {
+	ParseResult.prototype.addAtOperator = function(start, end, type) {
 		if (!this.atOperators) {
 			this.atOperators = [];
 		}
-		this.atOperators.push({start: start, end: end, canSkip: canSkip});
+		this.atOperators.push({start: start, end: end, type: type});
 	};
 
 	ParseResult.prototype.addRefPos = function(start, end, index, oper, isName) {
@@ -8147,7 +8147,7 @@ function parserFormula( formula, parent, _ws ) {
 				}
 			}
 			if (atOperatorStack.length > 0 && atOperatorStack[atOperatorStack.length - 1] !== undefined) {
-				parseResult.addAtOperator(atOperatorStack[atOperatorStack.length - 1], ph.pCurrPos);
+				parseResult.addAtOperator(atOperatorStack[atOperatorStack.length - 1], ph.pCurrPos, cElementType.array);
 				atOperatorStack.pop();
 			}
 			t.outStack.push(arr);
@@ -8731,7 +8731,7 @@ function parserFormula( formula, parent, _ws ) {
 					/*let _curFunc = levelFuncMap[currentFuncLevel];
 					let _curArgPos = argPosArrMap[currentFuncLevel];
 					let isCanSkip = t.checkSkipAtOperator(_curFunc, _curArgPos, found_operand);*/
-					parseResult.addAtOperator(currentAtOperatorPos, ph.pCurrPos/*, isCanSkip*/);
+					parseResult.addAtOperator(currentAtOperatorPos, ph.pCurrPos, found_operand.type);
 					currentAtOperatorPos = null;
 				}
 
@@ -9647,22 +9647,22 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		}
 
-	parserFormula.prototype.checkSkipAtOperator = function(_curFunc, _curArgPos, found_operand) {
-		if (!found_operand) {
+	parserFormula.prototype.checkSkipAtOperator = function(_curFunc, _curArgPos, found_operand_type) {
+		if (null == found_operand_type) {
 			return false;
 		}
 
-		if (found_operand.type === cElementType.cell || found_operand.type === cElementType.cell3D) {
+		if (found_operand_type === cElementType.cell || found_operand_type === cElementType.cell3D) {
 			return false;
 		}
 
-		if (found_operand.type === cElementType.cellsRange || found_operand.type === cElementType.cellsRange3D) {
-			return enabledToSingle[_curFunc][_curArgPos];
+		if (found_operand_type === cElementType.cellsRange || found_operand_type === cElementType.cellsRange3D) {
+			return !enabledToSingle[_curFunc] || !enabledToSingle[_curFunc][_curArgPos];
 		}
 
-		if (_curFunc && _curFunc.func && _curFunc.func.arrayIndexes) {
+		/*if (_curFunc && _curFunc.func && _curFunc.func.arrayIndexes) {
 			return enabledToSingle[_curFunc][_curArgPos];
-		}
+		}*/
 
 		return false;
 	};
@@ -9676,9 +9676,7 @@ function parserFormula( formula, parent, _ws ) {
 		for (let i = 0; i < atOperators.length; i++) {
 			let atOp = atOperators[i];
 			let funcInfo = parseResult.getActiveFunction(atOp.start + 1, atOp.end + 1, true);
-			if (funcInfo && funcInfo.argPos != null) {
-				atOp.isSkip = !(enabledToSingle[funcInfo.func.name] && enabledToSingle[funcInfo.func.name][funcInfo.argPos]);
-			}
+			atOp.isSkip = this.checkSkipAtOperator(funcInfo && funcInfo.func && funcInfo.func.name, funcInfo && funcInfo.argPos, atOp.type);
 			if (!atOp.isSkip) {
 				isAllSkip = false;
 			}
