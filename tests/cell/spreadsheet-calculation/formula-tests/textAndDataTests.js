@@ -3088,11 +3088,19 @@ $(function () {
 		oParser = new parserFormula('FIND("Y","AYF0093.YoungMensApparel",1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FIND("Y","AYF0093.YoungMensApparel",1) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 2, 'Test: Positive case: String. Case-sensitive match, start_num 1. Returns 2.');
-		// Case #21: String. Case-sensitive match, partial string. Returns 10.
+		// Case #21: String. Case-sensitive match, partial string. Returns #VALUE!.
 		oParser = new parserFormula('FIND("mens","YoungMensApparel",1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FIND("mens","YoungMensApparel",1) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Positive case: String. Case-sensitive match, partial string. Returns 10.');
-
+		// Case #22: String. Special symbol
+		oParser = new parserFormula('FIND("[","[Planning général light (1).xlsx]paramètres")', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: FIND("[","[Planning général light (1).xlsx]paramètres") is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: String. Special symbol.');
+		// Case #23: String. Special symbol
+		oParser = new parserFormula('FIND("[","[Planning général light (1).xlsx]paramètres",1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: FIND("[","[Planning général light (1).xlsx]paramètres",1) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: String. Special symbol.');
+		
 		// Negative cases:
 		// Case #1: String. Case-sensitive mismatch. Returns #VALUE! error.
 		oParser = new parserFormula('FIND("text","This is Text",1)', 'A2', ws);
@@ -3109,7 +3117,7 @@ $(function () {
 		// Case #4: Number. start_num not greater than 0. Returns #VALUE! error.
 		oParser = new parserFormula('FIND("text","This is text",0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FIND("text","This is text",0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number. start_num not greater than 0. Returns #VALUE! error.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number. start_num not greater than 0. Returns #VALUE! error.');
 		// Case #5: Number. start_num greater than within_text length (11). Returns #VALUE! error.
 		oParser = new parserFormula('FIND("text","This is text",12)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FIND("text","This is text",12) is parsed.');
@@ -3189,13 +3197,10 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: FIND("A","This is text",32767) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Number. Maximum valid start_num for within_text length (11). Returns #VALUE! error.');
 		// Case #4: String. Maximum find_text and within_text length (32,767 characters). Returns 1.
-        // todo this test works correctly. there is a problem in the git actions
-		// oParser = new parserFormula('FIND("A"&REPT("Z",32766),"A"&REPT("Z",32766),1)', 'A2', ws);
-		// assert.ok(oParser.parse(), 'Test: FIND("A"&REPT("Z",32766),"A"&REPT("Z",32766),1) is parsed.');
-		// assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Bounded case: String. Maximum find_text and within_text length (32,767 characters). Returns 1.');
+		oParser = new parserFormula('FIND("A"&REPT("Z",32766),"A"&REPT("Z",32766),1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: FIND("A"&REPT("Z",32766),"A"&REPT("Z",32766),1) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Bounded case: String. Maximum find_text and within_text length (32,767 characters). Returns 1.');
 
-		// Need to fix: diff result from ms
-		// Case #4: Number. start_num not greater than 0. Returns #VALUE! error.
 
 		testArrayFormula2(assert, "FIND", 2, 3);
 	});
@@ -3344,6 +3349,14 @@ $(function () {
 		oParser = new parserFormula('FINDB("mens","YoungMensApparel",1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FINDB("mens","YoungMensApparel",1) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Positive case: String. Case-sensitive match, partial string. Returns 10.');
+		// Case #22: String. Special symbol
+		oParser = new parserFormula('FINDB("[","[Planning général light (1).xlsx]paramètres")', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: FINDB("[","[Planning général light (1).xlsx]paramètres") is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: String. Special symbol.');
+		// Case #23: String. Special symbol
+		oParser = new parserFormula('FINDB("[","[Planning général light (1).xlsx]paramètres",1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: FINDB("[","[Planning général light (1).xlsx]paramètres",1) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: String. Special symbol.');
 
 		// Negative cases:
 		// Case #1: String. Case-sensitive mismatch. Returns #VALUE! error.
@@ -3361,7 +3374,7 @@ $(function () {
 		// Case #4: Number. start_num not greater than 0. Returns #VALUE! error.
 		oParser = new parserFormula('FINDB("text","This is text",0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FINDB("text","This is text",0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number. start_num not greater than 0. Returns #VALUE! error.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number. start_num not greater than 0. Returns #VALUE! error.');
 		// Case #5: Number. start_num greater than within_text length (11). Returns #VALUE! error.
 		oParser = new parserFormula('FINDB("text","This is text",12)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FINDB("text","This is text",12) is parsed.');
@@ -3441,13 +3454,10 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: FINDB("A","This is text",32767) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Bounded case: Number. Maximum valid start_num for within_text length (11). Returns #VALUE! error.');
 		// Case #4: String. Maximum find_text and within_text length (32,767 characters). Returns 1.
-        // todo this test works correctly. there is a problem in the git actions
-		// oParser = new parserFormula('FINDB("A"&REPT("Z",32766),"A"&REPT("Z",32766),1)', 'A2', ws);
-		// assert.ok(oParser.parse(), 'Test: FINDB("A"&REPT("Z",32766),"A"&REPT("Z",32766),1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Bounded case: String. Maximum find_text and within_text length (32,767 characters). Returns 1.');
+		oParser = new parserFormula('FINDB("A"&REPT("Z",32766),"A"&REPT("Z",32766),1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: FINDB("A"&REPT("Z",32766),"A"&REPT("Z",32766),1) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Bounded case: String. Maximum find_text and within_text length (32,767 characters). Returns 1.');
 
-		// Need to fix:
-		// Case #4: Number. start_num not greater than 0. Returns #VALUE! error.
 
 	});
 
