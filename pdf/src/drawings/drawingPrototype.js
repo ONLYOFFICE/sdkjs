@@ -564,15 +564,21 @@
         return false;
     };
 	CPdfDrawingPrototype.prototype.Remove = function(direction, isWord) {
-		let doc = this.GetDocument();
-		let content = this.GetDocContent();
-		
-		if (!doc || !content)
+		let oDoc = this.GetDocument();
+		if (!oDoc)
 			return;
 		
-		content.Remove(direction, true, false, false, isWord);
+		let oController = oDoc.GetController();
+		oController.remove(direction, true, false, false, isWord)
 		this.SetNeedRecalc(true);
-		content.RecalculateCurPos();
+	};
+	CPdfDrawingPrototype.prototype.deleteDrawingBase = function() {
+		let oDoc = this.GetDocument();
+		if (!oDoc) {
+			return;
+		}
+
+		oDoc.RemoveDrawing(this.GetId());
 	};
 	CPdfDrawingPrototype.prototype.EnterText = function(codePoints) {
 		let doc = this.GetDocument();

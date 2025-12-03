@@ -4334,7 +4334,8 @@ var CPresentation = CPresentation || function(){};
             oAnnot.Remove(nDirection, isCtrlKey);
             oContent = oAnnot.GetDocContent();
         }
-        else if (oDrawing && oDrawing.IsInTextBox()) {
+        else if (oDrawing) {
+            // remove drawing also here
             oDrawing.Remove(nDirection, isCtrlKey);
             oContent = oDrawing.GetDocContent();
         }
@@ -4348,9 +4349,6 @@ var CPresentation = CPresentation || function(){};
                         if (false == field.IsLocked()) {
                             oThis.RemoveField(field.GetId());
                         }
-                    }
-                    else {
-                        oThis.RemoveDrawing(object.GetId());
                     }
                 }
                 else if (object.IsAnnot() && oThis.Viewer.isMouseDown == false) {
@@ -6390,7 +6388,7 @@ var CPresentation = CPresentation || function(){};
 
                     if (oTargetDocContent) {
                         if (oTargetDocContent.Selection.Use) {
-                            oController.removeCallback(1, undefined, undefined, undefined, undefined, undefined);
+                            oController.remove(1, undefined, undefined, undefined, undefined, undefined);
                         }
 
                         paragraph = oTargetDocContent.Content[oTargetDocContent.CurPos.ContentPos];
