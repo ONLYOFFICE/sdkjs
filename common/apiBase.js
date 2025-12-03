@@ -212,6 +212,7 @@
         this.openFileCryptBinary = null;
 
         this.copyOutEnabled = true;
+		this.copyEnabled = true;
 
 		this.watermarkDraw = null;
 
@@ -616,7 +617,7 @@
 			var permissions = this.DocInfo.asc_getPermissions();
 			if (permissions && undefined !== permissions['copy'])
 			{
-				this.copyOutEnabled = permissions['copy'];
+				this.copyEnabled = permissions['copy'];
 			}
 
 			this.User = new AscCommon.asc_CUser();
@@ -751,6 +752,10 @@
 	baseEditorsApi.prototype.isCopyOutEnabled                = function()
 	{
 		return this.copyOutEnabled;
+	};
+	baseEditorsApi.prototype.isCopyEnabled                = function()
+	{
+		return this.copyEnabled;
 	};
 	baseEditorsApi.prototype.sync_CanCopyCutCallback = function (bCanCopyCut, bCanCut)
 	{

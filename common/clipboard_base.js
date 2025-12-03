@@ -155,6 +155,11 @@
 		{
 			this._console_log("oncopy");
 
+			if (!this.isCopyEnabled()) {
+				this.SendCopyDisabledEvent();
+				return;
+			}
+
 			if (!this.Api.asc_IsFocus(true))
 				return;
 
@@ -182,6 +187,11 @@
 		_private_oncut : function(e)
 		{
 			this._console_log("oncut");
+
+			if (!this.isCopyEnabled()) {
+				this.SendCopyDisabledEvent();
+				return;
+			}
 
 			if (!this.Api.asc_IsFocus(true))
 				return;
@@ -724,14 +734,14 @@
 				ElemToSelect.style["-o-user-select"]      = "text";
 				ElemToSelect.style["user-select"]         = "text";
 				ElemToSelect.style["-webkit-user-select"] = "text";
-				ElemToSelect.setAttribute("contentEditable", this.isCopyOutEnabled());
+				ElemToSelect.setAttribute("contentEditable", this.isCopyOutEnabled() && this.isCopyEnabled());
 
 				var _parent = ("" == this.CommonDivIdParent) ? document.body : document.getElementById(this.CommonDivIdParent);
 				_parent.appendChild(ElemToSelect);
 			}
 			else
 			{
-				ElemToSelect.setAttribute("contentEditable", this.isCopyOutEnabled());
+				ElemToSelect.setAttribute("contentEditable", this.isCopyOutEnabled() && this.isCopyEnabled());
 			}
 			return ElemToSelect;
 		},
@@ -944,7 +954,7 @@
 
 			if (this.ClosureParams.isDivCopy === true)
 			{
-				if (!this.isCopyOutEnabled())
+				if (!this.isCopyOutEnabled() || !this.isCopyEnabled())
 					return;
 
 				if (_format == AscCommon.c_oAscClipboardDataFormat.Html)
@@ -975,7 +985,7 @@
 					break;
 			}
 
-			if (_data_format != "" && _data !== null && this.isCopyOutEnabled())
+			if (_data_format != "" && _data !== null && this.isCopyOutEnabled() && this.isCopyEnabled())
 			{
 				if (_data_format == "text/x-custom")
 					this.ClosureParams.setData(_data_format, "asc_internalData2;" + _data);
@@ -1034,6 +1044,10 @@
 		Copy_New : function(isCut)
 		{
 			let oThis = this;
+			if (!this.isCopyEnabled()) {
+				this.SendCopyDisabledEvent();
+				return true;
+			}
 			//todo add check on mobile version, because before all work without focus check
 			if (!this.Api.asc_IsFocus(true) && !this._isUseMobileNewCopy()) {
 				return;
@@ -1197,6 +1211,10 @@
 
 		Button_Copy : function(oldCopy)
 		{
+			if (!this.isCopyEnabled()) {
+				this.SendCopyDisabledEvent();
+				return;
+			}
 			if (window["AscDesktopEditor"])
 			{
 				window["asc_desktop_copypaste"](this.Api, "Copy");
@@ -1405,6 +1423,14 @@
 			return true;
 		},
 
+		isCopyEnabled : function()
+		{
+			if (this.Api && this.Api.isCopyEnabled)
+				return this.Api.isCopyEnabled();
+			return true;
+		},
+
+
 		ChangeLastCopy : function(arr)
 		{
 			if (arr) {
@@ -1430,7 +1456,13 @@
 			if (null == this.LastCopyBinary)
 				this.LastCopyBinary = [];
 			this.LastCopyBinary.push({ type: _format, data : _data });
-		}
+		},
+
+		SendCopyDisabledEvent : function () {
+			if (this.Api) {
+				this.Api.sendEvent("asc_onError", c_oAscError.ID.CopyDisabled, c_oAscError.Level.NoCritical);
+			}
+		},
 	};
 
 	function definePastedFrom(doc)
