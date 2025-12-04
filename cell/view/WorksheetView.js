@@ -19022,16 +19022,19 @@ function isAllowPasteLink(pastedWb) {
 			}
 
 			//reparse if single operators included - @
+			let notReplaceDefaultSingle;
 			if (!isFormulaFromVal && parseResult.atOperators && parseResult.atOperators.length > 0) {
 				let sBefore = newFP.Formula;
-				newFP.Formula = newFP._assembleWithAtOperators(parseResult.atOperators, parseResult);
+				let atOperatorsFormula = newFP._assembleWithAtOperators(parseResult.atOperators, parseResult);
+				newFP.Formula = atOperatorsFormula.formula;
+				notReplaceDefaultSingle = atOperatorsFormula.notReplaceDefaultSingle;
 				if (sBefore !== newFP.Formula) {
 					newFP.isParsed = false;
 					newFP.outStack = [];
-					parseResult = new AscCommonExcel.ParseResult();
-					if (!newFP.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep, parseResult)) {
-						if (parseResult.error !== c_oAscError.ID.FrmlWrongFunctionName && parseResult.error !== c_oAscError.ID.FrmlParenthesesCorrectCount) {
-							this.model.workbook.handlers.trigger("asc_onError", parseResult.error, c_oAscError.Level.NoCritical);
+					let _parseResult = new AscCommonExcel.ParseResult();
+					if (!newFP.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep, _parseResult)) {
+						if (parseResult.error !== c_oAscError.ID.FrmlWrongFunctionName && _parseResult.error !== c_oAscError.ID.FrmlParenthesesCorrectCount) {
+							this.model.workbook.handlers.trigger("asc_onError", _parseResult.error, c_oAscError.Level.NoCritical);
 							endTransaction();
 							return;
 						}
@@ -19055,6 +19058,14 @@ function isAllowPasteLink(pastedWb) {
 			if (!applyByArray && AscCommonExcel.bIsSupportDynamicArrays) {
 				/* if we write not through cse, then check the formula for the presence of ref */
 				/* if ref exists, write the formula as an array formula and also find its dimensions for further expansion */
+				if (notReplaceDefaultSingle && notReplaceDefaultSingle !== newFP.Formula) {
+					let atOperatorsFormula = newFP._assembleWithAtOperators(parseResult.atOperators, parseResult, true);
+					let _parseResult = new AscCommonExcel.ParseResult();
+					newFP.Formula = atOperatorsFormula.formula;
+					newFP.isParsed = false;
+					newFP.outStack = [];
+					newFP.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep, _parseResult);
+				}
 				dynamicSelectionRange = t.model.dynamicArrayManager.getDynamicRangeByFormula(newFP, calculateResult, true);
 				if (dynamicSelectionRange) {
 					applyByArray = true;

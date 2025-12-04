@@ -9667,18 +9667,22 @@ function parserFormula( formula, parent, _ws ) {
 		return false;
 	};
 
-	parserFormula.prototype._assembleWithAtOperators = function(atOperators, parseResult) {
+	parserFormula.prototype._assembleWithAtOperators = function(atOperators, parseResult, opt_ignore_skip) {
 		if (!atOperators || atOperators.length === 0) {
-			return this.assemble();
+			let _formula = this.assemble();
+			return {formula: _formula, notReplaceDefaultSingle: _formula};
 		}
 
-		let isAllSkip = true;
-		for (let i = 0; i < atOperators.length; i++) {
-			let atOp = atOperators[i];
-			let funcInfo = parseResult.getActiveFunction(atOp.start + 1, atOp.end + 1, true);
-			atOp.isSkip = this.checkSkipAtOperator(funcInfo && funcInfo.func && funcInfo.func.name, funcInfo && funcInfo.argPos, atOp.type);
-			if (!atOp.isSkip) {
-				isAllSkip = false;
+		let isAllSkip = false;
+		if (!opt_ignore_skip) {
+			isAllSkip = true;
+			for (let i = 0; i < atOperators.length; i++) {
+				let atOp = atOperators[i];
+				let funcInfo = parseResult.getActiveFunction(atOp.start + 1, atOp.end + 1, true);
+				atOp.isSkip = this.checkSkipAtOperator(funcInfo && funcInfo.func && funcInfo.func.name, funcInfo && funcInfo.argPos, atOp.type);
+				if (!atOp.isSkip) {
+					isAllSkip = false;
+				}
 			}
 		}
 
@@ -9695,7 +9699,7 @@ function parserFormula( formula, parent, _ws ) {
 				}
 			}
 
-			return formula;
+			return {formula: formula, notReplaceDefaultSingle: this.Formula};
 		}
 		
 		atOperators.sort(function(a, b) {
@@ -9745,7 +9749,7 @@ function parserFormula( formula, parent, _ws ) {
 			});
 		}
 
-		return formula;
+		return {formula: formula, notReplaceDefaultSingle: formula};
 	};
 
 	parserFormula.prototype.findRefByOutStack = function (forceCheck) {
@@ -10725,6 +10729,10 @@ function parserFormula( formula, parent, _ws ) {
 			oldActiveCell = AscCommonExcel.g_ActiveCell;
 		}
 
+		var isArrayFormula = !!this.ref;
+		var parentFuncStack = [];
+		var argIndexInParentStack = [];
+
 		for (var i = 0, j = 0; i < _count; i++) {
 			currentElement = this.outStack[i];
 
@@ -10769,6 +10777,12 @@ function parserFormula( formula, parent, _ws ) {
 					}
 					j -= _count_arg + _argDiff;
 					elemArr[j] = res;
+					for (var k = 0; k < _count_arg; k++) {
+						parentFuncStack.pop();
+						argIndexInParentStack.pop();
+					}
+					parentFuncStack.push({func: currentElement, isSingle: true});
+					argIndexInParentStack.push(-1);
 					continue;
 				}
 
@@ -10779,6 +10793,12 @@ function parserFormula( formula, parent, _ws ) {
 				}
 				j -= _count_arg + _argDiff;
 				elemArr[j] = res;
+				for (var k = 0; k < _count_arg; k++) {
+					parentFuncStack.pop();
+					argIndexInParentStack.pop();
+				}
+				parentFuncStack.push({func: currentElement, isSingle: false});
+				argIndexInParentStack.push(-1);
 			} else {
 				if (cElementType.string === currentElement.type) {
 					if (bLocale) {
@@ -10788,8 +10808,32 @@ function parserFormula( formula, parent, _ws ) {
 					}
 
 				}
+
+				var needAddAt = false;
+				if (!isArrayFormula && bLocale &&
+					(currentElement.type === cElementType.cellsRange ||
+						currentElement.type === cElementType.cellsRange3D ||
+						currentElement.type === cElementType.array)) {
+					needAddAt = true;
+					var parentInfo = this._findParentFuncInOutStack(i);
+					if (parentInfo) {
+						if (parentInfo.funcName === "SINGLE") {
+							needAddAt = false;
+						} else if (enabledToSingle[parentInfo.funcName] && enabledToSingle[parentInfo.funcName][parentInfo.argIndex]) {
+							needAddAt = false;
+						}
+					}
+				}
+
+				if (needAddAt) {
+					var elemStr = bLocale ? currentElement.toLocaleString(digitDelim) : currentElement.toString();
+					currentElement = new cString("@" + elemStr);
+				}
+
 				res = currentElement;
 				elemArr[j] = res;
+				parentFuncStack.push(null);
+				argIndexInParentStack.push(-1);
 				if(onlyRangesElements) {
 					rangesStr = !rangesStr ? "" : rangesStr + ",";
 					rangesStr += bLocale ? res.toLocaleString(digitDelim) : res.toString();
@@ -10816,6 +10860,47 @@ function parserFormula( formula, parent, _ws ) {
 			AscCommonExcel.g_ActiveCell = oldActiveCell;
 		}
 		return res;
+	};
+
+	parserFormula.prototype._findParentFuncInOutStack = function (operandIndex) {
+		var stack = [];
+		for (var i = 0; i < this.outStack.length; i++) {
+			var elem = this.outStack[i];
+			if (elem.type === cElementType.specialFunctionStart || elem.type === cElementType.specialFunctionEnd) {
+				continue;
+			}
+			if ("number" === typeof(elem)) {
+				continue;
+			}
+			if (elem.type === cElementType.func || elem.type === cElementType.operator) {
+				var argCount = "number" === typeof(this.outStack[i - 1]) ? Math.abs(this.outStack[i - 1]) : elem.argumentsCurrent;
+				var args = [];
+				for (var k = 0; k < argCount; k++) {
+					if (stack.length > 0) {
+						args.unshift(stack.pop());
+					}
+				}
+				for (var k = 0; k < args.length; k++) {
+					if (args[k].index === operandIndex) {
+						return {funcName: elem.name, argIndex: k};
+					}
+					if (args[k].containsIndices && args[k].containsIndices.indexOf(operandIndex) !== -1) {
+						return {funcName: elem.name, argIndex: k};
+					}
+				}
+				var containsIndices = [];
+				for (var k = 0; k < args.length; k++) {
+					containsIndices.push(args[k].index);
+					if (args[k].containsIndices) {
+						containsIndices = containsIndices.concat(args[k].containsIndices);
+					}
+				}
+				stack.push({index: i, containsIndices: containsIndices});
+			} else {
+				stack.push({index: i, containsIndices: null});
+			}
+		}
+		return null;
 	};
 
 	parserFormula.prototype.buildDependencies = function() {
