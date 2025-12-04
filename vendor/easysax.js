@@ -1753,6 +1753,9 @@ function XmlParserContext(){
     this.cellValue = null;
     this.cellBase = null;
     this.drawingId = null;
+    this.MaxTextIndex = 0;
+    this.ReadFirstRows = 40;
+    this.ReadOnlyActive = true;
     //pptx
     this.layoutsMap = {};
     this.notesMastersMap = {};
