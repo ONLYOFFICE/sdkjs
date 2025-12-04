@@ -476,32 +476,30 @@ var CPresentation = CPresentation || function(){};
 
         switch (cFieldType) {
             case AscPDF.FIELD_TYPES.button:
-                oField = new AscPDF.CPushButtonField(sName, oCoords);
+                oField = new AscPDF.CPushButtonField(sName, oCoords, this);
                 break;
             case AscPDF.FIELD_TYPES.checkbox:
-                oField = new AscPDF.CCheckBoxField(sName, oCoords);
+                oField = new AscPDF.CCheckBoxField(sName, oCoords, this);
                 break;
             case AscPDF.FIELD_TYPES.combobox:
-                oField = new AscPDF.CComboBoxField(sName, oCoords);
+                oField = new AscPDF.CComboBoxField(sName, oCoords, this);
                 break;
             case AscPDF.FIELD_TYPES.listbox:
-                oField = new AscPDF.CListBoxField(sName, oCoords);
+                oField = new AscPDF.CListBoxField(sName, oCoords, this);
                 break;
             case AscPDF.FIELD_TYPES.radiobutton:
-                oField = new AscPDF.CRadioButtonField(sName, oCoords);
+                oField = new AscPDF.CRadioButtonField(sName, oCoords, this);
                 break;
             case AscPDF.FIELD_TYPES.signature:
-                oField = new AscPDF.CSignatureField(sName, oCoords);
+                oField = new AscPDF.CSignatureField(sName, oCoords, this);
                 break;
             case AscPDF.FIELD_TYPES.text:
-                oField = new AscPDF.CTextField(sName, oCoords);
+                oField = new AscPDF.CTextField(sName, oCoords, this);
                 break;
             case AscPDF.FIELD_TYPES.unknown: 
-                oField = new AscPDF.CBaseField(sName, oCoords);
+                oField = new AscPDF.CBaseField(sName, oCoords, this);
                 break;
         }
-
-        oField.SetDocument(this);
 
         return oField;
     };
@@ -3298,8 +3296,6 @@ var CPresentation = CPresentation || function(){};
         if (!oPagesInfo)
             return false;
 
-        oField.SetDocument(this);
-
         let sFieldName = oField.GetFullName();
         let oExistsField = this.GetField(sFieldName);
         if (oExistsField) {
@@ -3461,7 +3457,6 @@ var CPresentation = CPresentation || function(){};
             let oForm = AscPDF.ReadFieldFromJSON(oFormInfo, this);
 
             let oPagesInfo = this.GetPageInfo(pageOffset + oFormInfo["page"]);
-            oForm.SetDocument(this);
             oPagesInfo.AddField(oForm);
         }
         
@@ -3695,7 +3690,6 @@ var CPresentation = CPresentation || function(){};
         if (!oPagesInfo)
             return;
 
-        oAnnot.SetDocument(this);
         oPagesInfo.AddAnnot(oAnnot);
 
         this.CheckComment(oAnnot);
@@ -8643,6 +8637,7 @@ var CPresentation = CPresentation || function(){};
 	CPDFDoc.prototype.SetTextSelectionType = function(type){};
 	CPDFDoc.prototype.ResetTextSelectionType = function(){};
 	CPDFDoc.prototype.IsWordSelection = function(){return false;};
+    CPDFDoc.prototype.IsParagraphSelection = function() {return false;};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Extension required for CTextBoxContent
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
