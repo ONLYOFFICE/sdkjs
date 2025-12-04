@@ -4175,7 +4175,9 @@ FormatParser.prototype =
                     }
                     if(null != res.y)
                     {
-                        if(res.y < 30)
+                        if(res.m && !res.d && !res.y)
+                            res.y = null;
+                        else if(res.y < 30)
                             res.y = 2000 + res.y;
                         else if(res.y < 100)
                             res.y = 1900 + res.y;
@@ -4590,6 +4592,7 @@ FormatParser.prototype =
 				var nSecond = 0;
 				var dValue = 0;
 				var bValidDate = true;
+                var isOutside = false;
 				if(null != m && (null != d || null != y))
 				{
 					bDate = true;
@@ -4629,8 +4632,11 @@ FormatParser.prototype =
 					if(null != min)
 					{
 						nMinute = min - 0;
-						if(nMinute > 59)
+						if (nMinute > 59)
+                        {
 							bValidDate = false;
+                            isOutside = true;
+                        }
 					}
 					if(null != s)
 					{
@@ -4639,9 +4645,17 @@ FormatParser.prototype =
 							bSeconds = true;
 						} else {
 							bValidDate = false;
+                            isOutside = true;
 						}
 					}
-				}
+                    if (null != min && null !== s)
+                    {
+                        if (nMinute > 59 && nSecond > 59)
+                            isOutside = false;
+                    }
+                    if (nHour > 23)
+                        isOutside = false;
+				} 
 				if(true == bValidDate && (true == bDate || true == bTime))
 				{
 					if(AscCommon.bDate1904)
@@ -4682,6 +4696,25 @@ FormatParser.prototype =
 						res = {format: sFormat, value: dValue, bDateTime: true, bDate: bDate, bTime: bTime, bPercent: false, bCurrency: false};
 					}
 				}
+                else if (isOutside)
+                {
+                    if(AscCommon.bDate1904)
+						dValue = (Date.UTC(nYear,nMounth,nDay,nHour,nMinute,nSecond) - Date.UTC(1904,0,1,0,0,0)) / (86400 * 1000);
+					else
+					{
+						if(1900 < nYear || (1900 == nYear && 1 < nMounth ))
+							dValue = (Date.UTC(nYear,nMounth,nDay,nHour,nMinute,nSecond) - Date.UTC(1899,11,30,0,0,0)) / (86400 * 1000);
+						else if(1900 == nYear && 1 == nMounth && 29 == nDay)
+							dValue = 60;
+						else
+							dValue = (Date.UTC(nYear,nMounth,nDay,nHour,nMinute,nSecond) - Date.UTC(1899,11,31,0,0,0)) / (86400 * 1000);
+					}
+                    if(dValue >= 0)
+					{
+						var sFormat = AscCommon.g_cGeneralFormat;
+						res = {format: sFormat, value: dValue, bDateTime: false, bDate: bDate, bTime: bTime, bPercent: false, bCurrency: false};
+					}
+                }
             }
         }
 		return res;
