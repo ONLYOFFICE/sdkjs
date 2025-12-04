@@ -2600,15 +2600,22 @@ CDocument.prototype.private_FinalizeFormChange = function()
 {
 	this.Action.Additional.FormChangeStart = true;
 
-	for (var sKey in this.Action.Additional.FormChange)
+	for (let formKey in this.Action.Additional.FormChange)
 	{
-		let oForm = this.Action.Additional.FormChange[sKey];
-		
-		if (oForm.IsFixedForm() && oForm.IsMainForm() && oForm.IsAutoFitContent())
-			this.CheckFormAutoFit(oForm);
-		
-		this.FormsManager.OnChange(oForm);
-		this.Action.Recalculate = true;
+		let forms = this.Action.Additional.FormChange[formKey];
+		for (let i = 0; i < forms.length; ++i)
+		{
+			let form = forms[i];
+			if (!form.IsUseInDocument())
+				continue;
+			
+			if (form.IsFixedForm() && form.IsMainForm() && form.IsAutoFitContent())
+				this.CheckFormAutoFit(form);
+			
+			this.FormsManager.OnChange(form);
+			this.Action.Recalculate = true;
+			break;
+		}
 	}
 
 	delete this.Action.Additional.FormChangeStart;
@@ -2619,8 +2626,16 @@ CDocument.prototype.private_FinalizeFormPrChange = function()
 	
 	for (let formKey in this.Action.Additional.FormPrChange)
 	{
-		let form = this.Action.Additional.FormPrChange[formKey];
-		this.FormsManager.OnChangeFormPr(form);
+		let forms = this.Action.Additional.FormPrChange[formKey];
+		for (let i = 0; i < forms.length; ++i)
+		{
+			let form = forms[i];
+			if (!form.IsUseInDocument())
+				continue;
+			
+			this.FormsManager.OnChangeFormPr(form);
+			break;
+		}
 	}
 	
 	delete this.Action.Additional.FormPrChangeStart;
@@ -8103,6 +8118,7 @@ CDocument.prototype.OnEndTextDrag = function(NearPos, bCopy)
 					this.TrackMoveRelocation = false;
 					
 					NearPos.Paragraph.Clear_NearestPosArray();
+					this.CancelAction();
 					this.FinalizeAction();
 					this.SetCheckContentControlsLock(true);
 					return;
@@ -8150,8 +8166,7 @@ CDocument.prototype.OnEndTextDrag = function(NearPos, bCopy)
 					this.TrackMoveId         = null;
 					this.TrackMoveRelocation = false;
 
-                    this.Document_Undo();
-                    this.History.Clear_Redo();
+					this.CancelAction();
 					this.SetCheckContentControlsLock(true);
 					NearPos.Paragraph.Clear_NearestPosArray();
 					this.FinalizeAction(false);
@@ -8181,7 +8196,7 @@ CDocument.prototype.OnEndTextDrag = function(NearPos, bCopy)
 		}
         else
 		{
-			this.History.Remove_LastPoint();
+			this.CancelAction();
 			NearPos.Paragraph.Clear_NearestPosArray();
 			this.FinalizeAction(false);
 		}
@@ -26373,10 +26388,13 @@ CDocument.prototype.OnChangeForm = function(oForm)
 	if (!this.Action.Additional.FormChange)
 		this.Action.Additional.FormChange = {};
 
-	if (this.Action.Additional.FormChange[sKey])
+	if (!this.Action.Additional.FormChange[sKey])
+		this.Action.Additional.FormChange[sKey] = [];
+	
+	if (-1 !== this.Action.Additional.FormChange[sKey].indexOf(oForm))
 		return;
 
-	this.Action.Additional.FormChange[sKey] = oForm;
+	this.Action.Additional.FormChange[sKey].push(oForm);
 };
 /**
  * Удаляем все дополнительные обработки по изменению значения формы в конце действия
@@ -26412,10 +26430,13 @@ CDocument.prototype.OnChangeFormPr = function(form)
 	if (!this.Action.Additional.FormPrChange)
 		this.Action.Additional.FormPrChange = {};
 	
-	if (this.Action.Additional.FormPrChange[formKey])
+	if (!this.Action.Additional.FormPrChange[formKey])
+		this.Action.Additional.FormPrChange[formKey] = [];
+	
+	if (-1 !== this.Action.Additional.FormPrChange[formKey].indexOf(form))
 		return;
 	
-	this.Action.Additional.FormPrChange[formKey] = form;
+	this.Action.Additional.FormPrChange[formKey].push(form);
 };
 /**
  * Remove all additional processing for changing form settings at the end of the action
