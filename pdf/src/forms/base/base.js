@@ -2046,6 +2046,11 @@
         this._defaultValue = value;
         this.SetWasChanged(true);
 
+        const oViewer = Asc.editor.getDocumentRenderer();
+        if (oViewer.IsOpenFormsInProgress) {
+            return;
+        }
+        
         const shouldUpdate = !value && this.GetParentValue() === sOldDefValue || value && !this.GetParentValue();
 
         let oWidget = this.IsWidget() ? this : this.GetKid(0);
