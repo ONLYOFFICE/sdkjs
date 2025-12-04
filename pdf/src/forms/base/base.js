@@ -91,7 +91,7 @@
 	 * Class representing a base field class.
 	 * @constructor
     */
-    function CBaseField(sName, nType, aRect)
+    function CBaseField(sName, nType, aRect, oDoc)
     {
         this.Id = AscCommon.g_oIdCounter.Get_NewId();
         if ((AscCommon.g_oIdCounter.m_bLoad || AscCommon.History.CanAddChanges())) {
@@ -163,6 +163,7 @@
         this._meta = {};
         sName && this.SetPartialName(sName);
         aRect && this.SetRect(aRect);
+        oDoc && this.SetDocument(oDoc);
 
         this.kidsContentChanges = new AscCommon.CContentChanges();
         this.textMatrix = new AscCommon.CMatrix();
@@ -890,27 +891,27 @@
 
         switch (this.GetType()) {
             case AscPDF.FIELD_TYPES.text: {
-                oCopy = new AscPDF.CTextField(this.GetPartialName(), this.GetRect().slice());
+                oCopy = new AscPDF.CTextField(this.GetPartialName(), this.GetRect().slice(), this.GetDocument());
                 break;
             }
             case AscPDF.FIELD_TYPES.combobox: {
-                oCopy = new AscPDF.CComboBoxField(this.GetPartialName(), this.GetRect().slice());
+                oCopy = new AscPDF.CComboBoxField(this.GetPartialName(), this.GetRect().slice(), this.GetDocument());
                 break;
             }
             case AscPDF.FIELD_TYPES.listbox: {
-                oCopy = new AscPDF.CListBoxField(this.GetPartialName(), this.GetRect().slice());
+                oCopy = new AscPDF.CListBoxField(this.GetPartialName(), this.GetRect().slice(), this.GetDocument());
                 break;
             }
             case AscPDF.FIELD_TYPES.button: {
-                oCopy = new AscPDF.CPushButtonField(this.GetPartialName(), this.GetRect().slice());
+                oCopy = new AscPDF.CPushButtonField(this.GetPartialName(), this.GetRect().slice(), this.GetDocument());
                 break;
             }
             case AscPDF.FIELD_TYPES.checkbox: {
-                oCopy = new AscPDF.CCheckBoxField(this.GetPartialName(), this.GetRect().slice());
+                oCopy = new AscPDF.CCheckBoxField(this.GetPartialName(), this.GetRect().slice(), this.GetDocument());
                 break;
             }
             case AscPDF.FIELD_TYPES.radiobutton: {
-                oCopy = new AscPDF.CRadioButtonField(this.GetPartialName(), this.GetRect().slice());
+                oCopy = new AscPDF.CRadioButtonField(this.GetPartialName(), this.GetRect().slice(), this.GetDocument());
                 break;
             }
             default: {
