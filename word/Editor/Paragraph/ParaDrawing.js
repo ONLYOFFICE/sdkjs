@@ -2085,20 +2085,15 @@ ParaDrawing.prototype.Remove_FromDocument = function(bRecalculate)
 				oGrObject.setSignature(oGrObject.signatureLine);
 			}
 		}
-		var oPictureCC         = null;
-		var arrContentControls = oRun.GetParentContentControls();
-		for (var nIndex = arrContentControls.length - 1; nIndex >= 0; --nIndex)
+		
+		let parentContentControls = oRun.GetParentContentControls();
+		for (var nIndex = parentContentControls.length - 1; nIndex >= 0; --nIndex)
 		{
-			if (arrContentControls[nIndex].IsPicture())
-			{
-				oPictureCC = arrContentControls[nIndex];
-				break;
-			}
+			let cc = parentContentControls[nIndex];
+			if (cc.IsPicture() || cc.IsBuiltInWatermark())
+				cc.RemoveContentControlWrapper();
 		}
-
-		if (oPictureCC)
-			oPictureCC.RemoveContentControlWrapper();
-
+		
 		oRun.Remove_DrawingObject(this.Id);
 		if (oRun.IsInHyperlink())
 			oResult = new CTextPr();
