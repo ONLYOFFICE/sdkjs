@@ -8779,6 +8779,9 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.IsFillingFormMode = function() {
 		return false;
 	};
+	CPDFDoc.prototype.IsEditSignaturesMode = function() {
+		return false;
+	};
 	CPDFDoc.prototype.getDrawingObjects = function() {
 		return null;
 	};

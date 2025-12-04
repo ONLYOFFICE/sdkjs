@@ -3688,7 +3688,8 @@
 				break;
 		}
 
-		if (object.parent.document.m_oWordControl.m_oApi.isViewMode)
+		if ((object.parent.document.m_oWordControl.m_oApi.isViewMode)
+			|| (object.parent.document.m_oLogicDocument && object.parent.document.m_oLogicDocument.IsEditSignaturesMode()))
 		{
 			this.isUseMoveRect = false;
 			this.isCombobox = false;
