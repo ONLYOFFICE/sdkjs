@@ -291,6 +291,14 @@
 	{
 		return AscBidi.getType(this.Value);
 	};
+	CRunText.prototype.GetDirectionFlag = function()
+	{
+		let bidiType = AscBidi.getType(this.Value);
+		if (bidiType & AscBidi.FLAG.STRONG)
+			return (bidiType & AscBidi.FLAG.RTL ? AscBidi.DIRECTION_FLAG.RTL : AscBidi.DIRECTION_FLAG.LTR);
+		else
+			return AscBidi.DIRECTION_FLAG.Other;
+	};
 	CRunText.prototype.SetWidth = function(nWidth)
 	{
 		this.Width = ((nWidth * (((this.Flags >> 16) & 0xFFFF) / 64)) * AscWord.TEXTWIDTH_DIVIDER) | 0;
@@ -359,11 +367,11 @@
 
 		return (nWidth > 0 ? nWidth / (((this.Flags >> 16) & 0xFFFF) / 64) : 0);
 	};
-	CRunText.prototype.Draw = function(X, Y, Context, PDSE, oTextPr)
+	CRunText.prototype.Draw = function(X, Y, Context, PDSE, oTextPr, forceGrapheme)
 	{
 		if (Context.m_bIsTextDrawer === true)
 		{
-			Context.CheckAddNewPath(X, Y, this.Value);
+			Context.CheckAddNewPath(X, Y, this);
 		}
 		if (this.Flags & FLAGS_GAPS)
 		{
@@ -387,7 +395,7 @@
 		}
 		else if (AscFonts.NO_GRAPHEME !== this.Grapheme)
 		{
-			AscFonts.DrawGrapheme(this.Grapheme, Context, X, Y, nFontSize);
+			AscFonts.DrawGrapheme(forceGrapheme ? forceGrapheme : this.Grapheme, Context, X, Y, nFontSize);
 		}
 		
 		if (this.Flags & FLAGS_TEMPORARY_HYPHEN_AFTER)
@@ -465,9 +473,17 @@
 	{
 		return this.IsDigit();
 	};
-	CRunText.prototype.IsSpaceAfter = function()
+	CRunText.prototype.IsSpaceAfter = function(fontHint)
 	{
-		return !!(this.Flags & FLAGS_SPACEAFTER);
+		return ((this.Flags & FLAGS_SPACEAFTER)
+			|| (AscWord.fonthint_EastAsia === fontHint && AscCommon.isAmbiguousCharacter(this.Value)));
+	};
+	CRunText.prototype.IsSpaceBefore = function(fontHint)
+	{
+		return ((AscCommon.isEastAsianScript(this.Value)
+				&& !AscCommon.isHangul(this.Value)
+				&& !AscCommon.isEastAsianPunctuation(this.Value))
+			|| (AscWord.fonthint_EastAsia === fontHint && AscCommon.isAmbiguousCharacter(this.Value)));
 	};
 	CRunText.prototype.isHyphenAfter = function()
 	{
@@ -554,11 +570,11 @@
 		// Дефисы
 		if (0x002D === this.Value || 0x2014 === this.Value)
 			return true;
-
-		if (AscCommon.isEastAsianScript(this.Value) && this.CanBeAtEndOfLine())
-			return true;
-
-		return false;
+		
+		return (AscCommon.isEastAsianScript(this.Value)
+			&& this.CanBeAtEndOfLine()
+			&& !AscCommon.isHangul(this.Value)
+			&& !AscCommon.isEastAsianPunctuation(this.Value));
 	};
 	CRunText.prototype.CanBeAtBeginOfLine = function()
 	{

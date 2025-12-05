@@ -793,7 +793,7 @@ function (window, undefined) {
 		let aRes = [];
 		for (let nDim = 0; nDim < this.dimension.length; ++nDim) {
 			let oDim = this.dimension[nDim];
-			if ((oDim instanceof  CNumericDimension) && oDim.type === AscFormat.NUMERIC_DIMENSION_TYPE_VAL) {
+			if ((oDim instanceof  CNumericDimension) && (oDim.type === AscFormat.NUMERIC_DIMENSION_TYPE_VAL || oDim.type === AscFormat.NUMERIC_DIMENSION_TYPE_SIZE)) {
 				aRes.push(oDim);
 			}
 		}
@@ -2574,8 +2574,12 @@ function (window, undefined) {
 		return null;
 	};
 	CDimension.prototype.clearLevelData = function () {
+		const isClear = !!this.levelData.length;
 		for(let nIdx = this.levelData.length; nIdx > -1; --nIdx) {
 			this.removeLevelDataByPos(nIdx)
+		}
+		if (isClear) {
+			this.onUpdateCache();
 		}
 	};
 	CDimension.prototype.removeLevelDataByPos = function (nIdx) {
@@ -2668,11 +2672,18 @@ function (window, undefined) {
 				}
 			}
 		}
+		this.onUpdateCache();
 	};
 	CDimension.prototype.updateCache = function() {
 		AscFormat.ExecuteNoHistory(function () {
 			this.updateReferences();
 		}, this, []);
+	};
+	CDimension.prototype.Refresh_RecalcData = function (data) {
+		const chartSpace = this.getChartSpace();
+		if (chartSpace) {
+			chartSpace.Refresh_RecalcData(data);
+		}
 	};
 	// NumericDimension
 	drawingContentChanges[AscDFH.historyitem_NumericDimension_AddLevelData] =
@@ -3021,12 +3032,38 @@ function (window, undefined) {
 		}
 	}
 
-	CPlotAreaRegion.prototype.getCachedData = function () {
-		return this.cachedData;
+	CPlotAreaRegion.prototype.getCachedData = function (isMultiSeries) {
+		if (isMultiSeries) {
+			return this.cachedDatas || [];
+		}
+		if (Array.isArray(this.cachedDatas) && this.cachedDatas.length > 0) {
+			return this.cachedDatas[0];
+		}
+		return null;
 	};
 
 	CPlotAreaRegion.prototype.setCachedData = function (cachedData) {
-		this.cachedData = cachedData;
+		if (!cachedData) {
+			return;
+		}
+		if (!this.cachedDatas) {
+			this.cachedDatas = [];
+		}
+		for (let i = 0; i < this.cachedDatas.length; i++) {
+			if (this.cachedDatas[i].Id === cachedData.Id) {
+				return;
+			}
+		}
+		this.cachedDatas.push(cachedData);
+	}
+
+	CPlotAreaRegion.prototype.getSeriaById = function (id) {
+		for (let i = 0; i < this.series.length; i++) {
+			if (this.series[i].Id === id) {
+				return this.series[i];
+			}
+		}
+		return null;
 	}
 
 	CPlotAreaRegion.prototype.getMaxSeriesIdx = function () {
@@ -3219,7 +3256,10 @@ function (window, undefined) {
 		let nType = this.layoutId;
 		if(nType === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN ||
 			nType === AscFormat.SERIES_LAYOUT_WATERFALL ||
-			nType === AscFormat.SERIES_LAYOUT_FUNNEL) {
+			nType === AscFormat.SERIES_LAYOUT_FUNNEL ||
+			nType === AscFormat.SERIES_LAYOUT_TREEMAP ||
+			nType === AscFormat.SERIES_LAYOUT_BOX_WHISKER ||
+			nType === AscFormat.SERIES_LAYOUT_SUNBURST) {
 			return true;
 		}
 		return false;
@@ -3382,8 +3422,12 @@ function (window, undefined) {
 		if (aCatDim.length > 0) {
 			let oDim = aCatDim[0];
 			if (oDim) {
-				let index = (type === AscFormat.SERIES_LAYOUT_WATERFALL || type === AscFormat.SERIES_LAYOUT_FUNNEL) ? oDim.levelData.length - 1 : 0;
-				return oDim.levelData[index] || null;
+				if (type === AscFormat.SERIES_LAYOUT_SUNBURST) {
+					return oDim.levelData;
+				} else {
+					let index = (type === AscFormat.SERIES_LAYOUT_WATERFALL || type === AscFormat.SERIES_LAYOUT_FUNNEL) ? oDim.levelData.length - 1 : 0;
+					return oDim.levelData[index] || null;
+				}
 			}
 		}
 		return null;

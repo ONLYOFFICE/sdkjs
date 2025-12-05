@@ -187,7 +187,7 @@
 			"sortState":             oWorksheet.sortState != null ? this.SerSortState(oWorksheet.sortState) : undefined,
 			"tableParts":            oWorksheet.TableParts.length > 0 ? this.SerTableParts(oWorksheet.TableParts) : undefined,
 			"comments":              oWorksheet.aComments.length > 0 ? this.SerComments(oWorksheet.aComments) : undefined,
-			"conditionalFormatting": oWorksheet.aConditionalFormattingRules.length > 0 ? this.SerCondFormatting(oWorksheet.aConditionalFormattingRules) : undefined,
+			"conditionalFormatting": oWorksheet.isConditionalFormattingRules() ? this.SerCondFormatting(oWorksheet.getConditionalFormattingRules()) : undefined,
 			"sheetViews":            oWorksheet.sheetViews.length > 0 ? this.SerSheetViews(oWorksheet.sheetViews, oWorksheet) : undefined,
 			"sheetPr":               oWorksheet.sheetPr != null ? this.SerSheetPr(oWorksheet.sheetPr) : undefined,
 			"sparklineGroup":        oWorksheet.aSparklineGroups.length > 0 ? this.SerSparklineGroups(oWorksheet.aSparklineGroups) : undefined,
@@ -2741,7 +2741,7 @@
 	WriterToJSON.prototype.SerCondFormatting = function(aCondFormattingRules)
 	{
 		var aCondRules = [];
-		for (var nRule = 0; nRule < aCondFormattingRules.length; nRule++)
+		for (var nRule in aCondFormattingRules)
 			aCondRules.push(this.SerCondFormattingRule(aCondFormattingRules[nRule]));
 
 		return aCondRules;
@@ -3634,7 +3634,8 @@
 		if (oParsedSheet["protectedRanges"] != null)
 			oWorksheet.protectedRanges = this.ProtectedRangesFromJSON(oParsedSheet["protectedRanges"]);
 
-		oWorksheet.initPostOpenZip(this.pivotCaches, this.oNumFmtsOpen);
+		//todo test. other params?
+		oWorksheet.initPostOpen(oWorkbook.wsHandlers, {}, {}, this.pivotCaches, oWorkbook.oNumFmtsOpen, oWorkbook.dxfsOpen);
 		History.TurnOn();
 
 		return oWorksheet;
@@ -3644,7 +3645,7 @@
 		let api = window["Asc"]["editor"];
 		let WorkbookView = api.wb;
 		let renameSheetMap = {};
-		let oTempWorkBook = new AscCommonExcel.Workbook();
+		let oTempWorkBook = new AscCommonExcel.Workbook(undefined, undefined, false);
 		let aRestoredSheets = [];
 		let oThis = this;
 		oTempWorkBook.DrawingDocument = Asc.editor.wbModel.DrawingDocument;

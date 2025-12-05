@@ -173,7 +173,7 @@ function CMathBase(bInside)
     this.NearPosArray = [];
 
     this.ReviewType = reviewtype_Common;
-    this.ReviewInfo = new CReviewInfo();
+    this.ReviewInfo = new AscWord.ReviewInfo();
 
     var Api = editor;
     if (Api && !Api.isPresentationEditor && Api.WordControl && Api.WordControl.m_oLogicDocument && true === Api.WordControl.m_oLogicDocument.IsTrackRevisions())
@@ -814,8 +814,11 @@ CMathBase.prototype.Set_CompiledCtrPrp = function(Parent, ParaMath, RPI)
         if ( undefined != this.CtrPrp.RStyle )
         {
             var Styles = ParaMath.Paragraph.Parent.Get_Styles();
-            var StyleTextPr = Styles.Get_Pr( this.CtrPrp.RStyle, styletype_Character ).TextPr;
-            this.CompiledCtrPrp.Merge( StyleTextPr );
+            if (Styles instanceof AscWord.CStyles)
+            {
+                var StyleTextPr = Styles.Get_Pr( this.CtrPrp.RStyle, styletype_Character ).TextPr;
+                this.CompiledCtrPrp.Merge(StyleTextPr);
+            }
         }
 
         var defaultTxtPrp = ParaMath.Get_Default_TPrp();
@@ -1591,13 +1594,7 @@ CMathBase.prototype.Copy = function(Selected, oPr)
     }
     if(oPr && oPr.Comparison)
     {
-        if (oPr.SkipUpdateInfo) {
-            oPr.Comparison.saveReviewInfo(NewElement, this);
-        } else if (oPr.bSaveCustomReviewType) {
-            oPr.Comparison.saveCustomReviewInfo(NewElement, this, oPr.Comparison.nInsertChangesType);
-        } else {
-            oPr.Comparison.updateReviewInfo(NewElement, oPr.Comparison.nInsertChangesType);
-        }
+			oPr.Comparison.checkReviewInfoOfCopiedElements(NewElement, this);
     }
     return NewElement;
 };
@@ -1675,7 +1672,7 @@ CMathBase.prototype.Read_FromBinary2 = function( Reader )
     }
     else
     {
-        this.ReviewInfo = new CReviewInfo();
+        this.ReviewInfo = new AscWord.ReviewInfo();
         this.ReviewInfo.Read_FromBinary(Reader);
     }
 
@@ -2465,22 +2462,20 @@ CMathBase.prototype.Displace_BreakOperator = function(isForward, bBrkBefore, Cou
 };
 CMathBase.prototype.Get_AlignBrk = function(_CurLine, bBrkBefore)
 {
-    return this.Content[this.NumBreakContent].Get_AlignBrk(_CurLine, bBrkBefore);
+	if (!this.Content[this.NumBreakContent])
+		return null;
+
+	return this.Content[this.NumBreakContent].Get_AlignBrk(_CurLine, bBrkBefore);
 };
-CMathBase.prototype.raw_SetReviewType = function(Type, Info)
+CMathBase.prototype.raw_SetReviewInfo = function(reviewInfo)
 {
-    this.ReviewType = Type;
-    this.ReviewInfo = Info;
-    this.updateTrackRevisions();
+	this.ReviewInfo = reviewInfo;
+	this.updateTrackRevisions();
 };
 CMathBase.prototype.GetReviewType = function()
 {
-    if (this.Id)
-        return this.ReviewType;
-    else if (this.Parent && this.Parent.GetReviewType)
-        return this.Parent.GetReviewType();
-
-    return reviewtype_Common;
+	let reviewInfo = this.GetReviewInfo();
+	return reviewInfo ? reviewInfo.getType() : reviewtype_Common;
 };
 CMathBase.prototype.GetReviewInfo = function()
 {
@@ -2489,7 +2484,7 @@ CMathBase.prototype.GetReviewInfo = function()
 	else if (this.Parent && this.Parent.GetReviewInfo)
 		return this.Parent.GetReviewInfo();
 
-	return new CReviewInfo();
+	return new AscWord.ReviewInfo();
 };
 CMathBase.prototype.GetReviewMoveType = function()
 {
@@ -2511,32 +2506,49 @@ CMathBase.prototype.GetReviewColor = function()
 
     return REVIEW_COLOR;
 };
-CMathBase.prototype.SetReviewType = function(Type, isSetToContent)
+CMathBase.prototype.SetReviewType = function(reviewType, isSetToContent)
 {
 	if (!this.Id)
 		return;
-
+	
 	if (false !== isSetToContent)
 		CParagraphContentWithParagraphLikeContent.prototype.SetReviewType.apply(this, arguments);
-
-	if (Type !== this.ReviewType)
+	
+	if (reviewType === this.GetReviewType())
+		return;
+	
+	let oldInfo = this.GetReviewInfo();
+	let newInfo = undefined;
+	
+	if (reviewType !== reviewtype_Common)
 	{
-		var NewInfo = new CReviewInfo();
-		NewInfo.Update();
-
-		AscCommon.History.Add(new CChangesMathBaseReviewType(this, {Type : this.ReviewType, Info : this.ReviewInfo}, {Type : Type, Info : NewInfo}));
-		this.raw_SetReviewType(Type, NewInfo);
+		newInfo = new AscWord.ReviewInfo();
+		newInfo.setType(reviewType);
+		newInfo.Update();
 	}
+	
+	AscCommon.History.Add(new CChangesMathBaseReviewInfo(this, oldInfo ? oldInfo.Copy() : undefined, newInfo ? newInfo.Copy() : undefined));
+	this.raw_SetReviewInfo(newInfo);
 };
-CMathBase.prototype.SetReviewTypeWithInfo = function(ReviewType, ReviewInfo)
+CMathBase.prototype.SetReviewTypeWithInfo = function(reviewType, reviewInfo)
 {
 	if (!this.Id)
 		return;
-
+	
 	CParagraphContentWithParagraphLikeContent.prototype.SetReviewTypeWithInfo.apply(this, arguments);
-
-	AscCommon.History.Add(new CChangesMathBaseReviewType(this, {Type : this.ReviewType, Info : this.ReviewInfo}, {Type : ReviewType, Info : ReviewInfo}));
-	this.raw_SetReviewType(ReviewType, ReviewInfo);
+	
+	let oldInfo = this.GetReviewInfo();
+	
+	if (reviewType === reviewtype_Common)
+		reviewInfo = undefined;
+	else if (!reviewInfo)
+		reviewInfo = new AscWord.ReviewInfo();
+	
+	if (reviewInfo)
+		reviewInfo.setType(reviewType);
+	
+	AscCommon.History.Add(new CChangesMathBaseReviewInfo(this, oldInfo ? oldInfo.Copy() : undefined, reviewInfo ? reviewInfo.Copy() : undefined));
+	this.raw_SetReviewInfo(reviewInfo);
 };
 CMathBase.prototype.CheckRevisionsChanges = function(Checker, ContentPos, Depth)
 {
@@ -2852,13 +2864,6 @@ CMathBase.prototype.GetTextOfElement = function(oMathText)
 {
 	oMathText = new AscMath.MathTextAndStyles(oMathText);
 	return oMathText;
-};
-CMathBase.prototype.Set_RFont_ForMath = function()
-{
-	this.SetRFontsAscii({Name : "Cambria Math", Index : -1});
-	this.SetRFontsCS({Name : "Cambria Math", Index : -1});
-	this.SetRFontsEastAsia({Name : "Cambria Math", Index : -1});
-	this.SetRFontsHAnsi({Name : "Cambria Math", Index : -1});
 };
 CMathBase.prototype.CheckRunContent = function (fCheck, oStartPos, oEndPos, nDepth, oCurrentPos, isForward)
 {

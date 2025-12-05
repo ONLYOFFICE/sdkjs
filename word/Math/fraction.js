@@ -708,6 +708,17 @@ CFraction.prototype.GetTextOfElement = function(oMathText)
 	oMathText.ResetGlobalStyle()
 	return oMathText;
 };
+CFraction.fromMathMLContentMarkup = function (reader, num, den)
+{
+	let props = new CMathFractionPr();
+
+	props.content = [
+		AscWord.ParaMath.createContentFromText(num),
+		AscWord.ParaMath.createContentFromText(den)
+	];
+
+	return new CFraction(props);
+};
 /**
  *
  * @param CMathMenuFraction

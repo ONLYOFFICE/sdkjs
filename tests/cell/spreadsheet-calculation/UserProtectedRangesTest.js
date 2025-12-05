@@ -113,9 +113,8 @@ $(function () {
 		AscCommon.g_oTableId.init();
 		api._onEndLoadSdk();
 		api.isOpenOOXInBrowser = false;
-		api._openDocument(AscCommon.getEmpty());
-		api._openOnClient();
-		api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
+		api.OpenDocumentFromBin(null, AscCommon.getEmpty());
+		api.initCollaborativeEditing({});
 		api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
 			api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
 
@@ -369,8 +368,8 @@ $(function () {
 				assert.strictEqual(ws.userProtectedRanges[2].asc_getRef(), "=Sheet1!$D$10:$E$13", desc + "_val_3");
 			}, "move_2");
 
-			AscCommon.History.Undo();
-			AscCommon.History.Undo();
+			api.asc_deleteUserProtectedRange([ws.userProtectedRanges[0]]);
+			api.asc_deleteUserProtectedRange([ws.userProtectedRanges[0]]);
 		});
 	}
 

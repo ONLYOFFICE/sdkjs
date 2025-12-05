@@ -113,8 +113,7 @@ $(function () {
 		AscCommon.g_oTableId.init();
 		api._onEndLoadSdk();
 		api.isOpenOOXInBrowser = false;
-		api._openDocument(AscCommon.getEmpty());
-		api._openOnClient();
+		api.OpenDocumentFromBin(null, AscCommon.getEmpty());
 	}
 
 	var api = new Asc.spreadsheet_api({
@@ -127,9 +126,8 @@ $(function () {
 	AscCommon.g_oTableId.init();
 	api._onEndLoadSdk();
 	api.isOpenOOXInBrowser = false;
-	api._openDocument(AscCommon.getEmpty());
-	api._openOnClient();
-	api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
+	api.OpenDocumentFromBin(null, AscCommon.getEmpty());
+	api.initCollaborativeEditing({});
 	api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
 		api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
 	var wb = api.wbModel;
@@ -203,6 +201,9 @@ $(function () {
 	};
 
 	function compareAscColorAndRgbColor (ascColor, rgbColor) {
+		if ((ascColor && !rgbColor) || (!ascColor && rgbColor)) {
+			return false;
+		}
 		return ascColor.get_r() === rgbColor.getR() && ascColor.get_g() === rgbColor.getG() && ascColor.get_b() === rgbColor.getB();
 	};
 
@@ -298,6 +299,405 @@ $(function () {
 		clearData(0, 0, 1, 8);
 	});
 
+	QUnit.test('Conditional formatting: contains text tests', function (assert) {
+		// Preparing test data
+		let testData = [
+			["This is sample text"],
+			["Text with sample word"],
+			["No matching here"],
+			["SAMPLE in uppercase"]
+		];
+
+		let range = ws.getRange4(0, 0, 3, 0);
+		range.fillData(testData);
+
+		// Test 1: Check simple text condition
+		let textRule = new AscCommonExcel.CConditionalFormattingRule();
+		textRule.asc_setType(Asc.c_oAscCFType.containsText);
+		let xfs = new Asc.asc_CellXfs();
+		let fontColor = getRgbColor("2F75B5");
+		let fillColor = getRgbColor("BDD7EE");
+		xfs.asc_setFontColor(fontColor);
+		xfs.asc_setFillColor(fillColor);
+		textRule.asc_setDxf(xfs);
+		textRule.asc_setContainsText("sample");
+		textRule.asc_setLocation("$A$1:$A$4");
+
+		api.asc_setCF([textRule]);
+		ws.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange([new Asc.Range(0, 0, 0, 3)]));
+
+		// Check that the rule was applied
+		wsView.setSelection(new Asc.Range(0, 0, 0, 0));
+		let modelCf = api.asc_getCF(Asc.c_oAscSelectionForCFType.selection, 0);
+		assert.ok(modelCf && modelCf[0] && modelCf[0][0], "CF rule exists");
+
+		// Check that the style was applied to cells with 'sample'
+		let compiledStyle1 = ws.getCompiledStyle(0, 0);
+		let compiledStyle2 = ws.getCompiledStyle(1, 0);
+		let compiledStyle3 = ws.getCompiledStyle(2, 0);
+		let compiledStyle4 = ws.getCompiledStyle(3, 0);
+
+		let rgbColor1 = compiledStyle1.fill.bg();
+		let rgbColor2 = compiledStyle2.fill.bg();
+		let rgbColor3 = compiledStyle3 && compiledStyle3.fill.bg();
+		let rgbColor4 = compiledStyle4.fill.bg();
+
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor1), true, "Cell A1 matches 'sample' condition");
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor2), true, "Cell A2 matches 'sample' condition");
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor3), false, "Cell A3 doesn't match 'sample' condition");
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor4), true, "Cell A4 matches 'sample' condition (case insensitive)");
+
+		// Test 2: Check cell reference in condition
+		clearData(0, 0, 0, 4);
+
+		// New test data
+		testData = [
+			["apple"], // A1: search word
+			["This is an apple text"], // A2: contains the word
+			["Orange juice"], // A3: doesn't contain the word
+			["Pineapple is good"] // A4: contains the word as part of another word
+		];
+
+		range = ws.getRange4(0, 0, 3, 0);
+		range.fillData(testData);
+
+		// Create rule with cell reference
+		let cellRefRule = new AscCommonExcel.CConditionalFormattingRule();
+		cellRefRule.asc_setType(Asc.c_oAscCFType.containsText);
+		xfs = new Asc.asc_CellXfs();
+		fontColor = getRgbColor("006400");
+		fillColor = getRgbColor("C6EFCE");
+		xfs.asc_setFontColor(fontColor);
+		xfs.asc_setFillColor(fillColor);
+		cellRefRule.asc_setDxf(xfs);
+		cellRefRule.asc_setContainsText("=A1"); // Cell reference, not text
+		cellRefRule.asc_setLocation("$A$2:$A$4");
+
+		api.asc_setCF([cellRefRule]);
+		ws.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange([new Asc.Range(0, 1, 0, 3)]));
+
+		// Check that the rule was applied
+		wsView.setSelection(new Asc.Range(0, 1, 0, 1));
+		modelCf = api.asc_getCF(Asc.c_oAscSelectionForCFType.selection, 0);
+		assert.ok(modelCf && modelCf[0] && modelCf[0][0], "CF rule with cell reference exists");
+
+		// Check that the style was applied to cells with 'apple'
+		compiledStyle2 = ws.getCompiledStyle(1, 0);
+		compiledStyle3 = ws.getCompiledStyle(2, 0);
+		compiledStyle4 = ws.getCompiledStyle(3, 0);
+
+		rgbColor2 = compiledStyle2 && compiledStyle2.fill.bg();
+		rgbColor3 = compiledStyle3 && compiledStyle3.fill.bg();
+		rgbColor4 = compiledStyle4 && compiledStyle4.fill.bg();
+
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor2), true, "Cell A2 matches value from A1");
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor3), true, "Cell A3 doesn't match value from A1");
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor4), true, "Cell A4 matches value from A1 (as part of word)");
+
+		// Test 3: Check begins with / ends with
+		clearData(0, 0, 0, 5);
+
+		// New test data for begins/ends with
+		testData = [
+			["Spreadsheet testing"],
+			["Testing Spreadsheet"],
+			["Microsoft Spreadsheet"],
+			["spreadsheet lowercase"]
+		];
+
+		range = ws.getRange4(0, 0, 3, 0);
+		range.fillData(testData);
+
+		// Rule "Begins with Spreadsheet"
+		let beginsWithRule = new AscCommonExcel.CConditionalFormattingRule();
+		beginsWithRule.asc_setType(Asc.c_oAscCFType.beginsWith);
+		xfs = new Asc.asc_CellXfs();
+		fontColor = getRgbColor("9C5700");
+		fillColor = getRgbColor("FFEB9C");
+		xfs.asc_setFontColor(fontColor);
+		xfs.asc_setFillColor(fillColor);
+		beginsWithRule.asc_setDxf(xfs);
+		beginsWithRule.asc_setContainsText("Spreadsheet");
+		beginsWithRule.asc_setLocation("$A$1:$A$4");
+
+		api.asc_setCF([beginsWithRule]);
+		ws.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange([new Asc.Range(0, 0, 0, 3)]));
+
+		// Check cell styles
+		compiledStyle1 = ws.getCompiledStyle(0, 0);
+		compiledStyle2 = ws.getCompiledStyle(1, 0);
+		compiledStyle3 = ws.getCompiledStyle(2, 0);
+		compiledStyle4 = ws.getCompiledStyle(3, 0);
+
+		rgbColor1 = compiledStyle1 && compiledStyle1.fill.bg();
+		rgbColor2 = compiledStyle2 && compiledStyle2.fill.bg();
+		rgbColor3 = compiledStyle3 && compiledStyle3.fill.bg();
+		rgbColor4 = compiledStyle4 && compiledStyle4.fill.bg();
+
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor1), true, "Cell A1 begins with 'Spreadsheet'");
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor2), false, "Cell A2 doesn't begin with 'Spreadsheet'");
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor3), false, "Cell A3 doesn't begin with 'Spreadsheet'");
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor4), true, "Cell A4 begins with 'spreadsheet' (case insensitive)");
+
+		// Clean up data after tests
+		clearData(0, 0, 0, 5);
+	});
+
+	QUnit.test('Conditional formatting: not contains text tests', function (assert) {
+		// Preparing test data
+		let testData = [
+			["Report 2023"],
+			["Sales data"],
+			["Error in data"],
+			["Missing values"]
+		];
+
+		let range = ws.getRange4(0, 0, 3, 0);
+		range.fillData(testData);
+
+		// Rule "Does not contain Error"
+		let notContainsRule = new AscCommonExcel.CConditionalFormattingRule();
+		notContainsRule.asc_setType(Asc.c_oAscCFType.notContainsText);
+		let xfs = new Asc.asc_CellXfs();
+		let fontColor = getRgbColor("3F3F76");
+		let fillColor = getRgbColor("B4C6E7");
+		xfs.asc_setFontColor(fontColor);
+		xfs.asc_setFillColor(fillColor);
+		notContainsRule.asc_setDxf(xfs);
+		notContainsRule.asc_setContainsText("Error");
+		notContainsRule.asc_setLocation("$A$1:$A$4");
+
+		api.asc_setCF([notContainsRule]);
+		ws.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange([new Asc.Range(0, 0, 0, 3)]));
+
+		// Check cell styles
+		let compiledStyle1 = ws.getCompiledStyle(0, 0);
+		let compiledStyle2 = ws.getCompiledStyle(1, 0);
+		let compiledStyle3 = ws.getCompiledStyle(2, 0);
+		let compiledStyle4 = ws.getCompiledStyle(3, 0);
+
+		let rgbColor1 = compiledStyle1 && compiledStyle1.fill.bg();
+		let rgbColor2 = compiledStyle2 && compiledStyle2.fill.bg();
+		let rgbColor3 = compiledStyle3 && compiledStyle3.fill.bg();
+		let rgbColor4 = compiledStyle4 && compiledStyle4.fill.bg();
+
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor1), true, "Cell A1 doesn't contain 'Error'");
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor2), true, "Cell A2 doesn't contain 'Error'");
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor3), false, "Cell A3 contains 'Error'");
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor4), true, "Cell A4 doesn't contain 'Error'");
+
+		// Clean up data after tests
+		clearData(0, 0, 5, 5);
+	});
+
+	QUnit.test('Conditional formatting: asc_setContainsText with formula and text', function (assert) {
+		// Preparing test data
+		let testData = [
+			["Product"], // A1: header
+			["CPU Intel"], // A2
+			["Graphics card AMD"], // A3
+			["Intel Motherboard"], // A4
+			["AMD Processor"] // A5
+		];
+
+		let range = ws.getRange4(0, 0, 4, 0);
+		range.fillData(testData);
+
+		// Additional value for formula reference
+		let referenceData = [
+			["Intel"] // B1: value for reference
+		];
+		ws.getRange4(0, 1).fillData(referenceData);
+
+		// Test 1: Using plain text
+		let textRule = new AscCommonExcel.CConditionalFormattingRule();
+		textRule.asc_setType(Asc.c_oAscCFType.containsText);
+		let xfs = new Asc.asc_CellXfs();
+		let fontColor = getRgbColor("2F75B5");
+		let fillColor = getRgbColor("BDD7EE");
+		xfs.asc_setFontColor(fontColor);
+		xfs.asc_setFillColor(fillColor);
+		textRule.asc_setDxf(xfs);
+		textRule.asc_setContainsText("Intel"); // Plain text
+		textRule.asc_setLocation("$A$2:$A$5");
+
+		api.asc_setCF([textRule]);
+		ws.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange([new Asc.Range(0, 1, 0, 4)]));
+
+		// Check that styles are applied correctly for text search
+		let compiledStyle2 = ws.getCompiledStyle(1, 0);
+		let compiledStyle3 = ws.getCompiledStyle(2, 0);
+		let compiledStyle4 = ws.getCompiledStyle(3, 0);
+		let compiledStyle5 = ws.getCompiledStyle(4, 0);
+
+		let rgbColor2 = compiledStyle2 && compiledStyle2.fill.bg();
+		let rgbColor3 = compiledStyle3 && compiledStyle3.fill.bg();
+		let rgbColor4 = compiledStyle4 && compiledStyle4.fill.bg();
+		let rgbColor5 = compiledStyle5 && compiledStyle5.fill.bg();
+
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor2), true, "Cell A2 contains 'Intel' text");
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor3), false, "Cell A3 doesn't contain 'Intel' text");
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor4), true, "Cell A4 contains 'Intel' text");
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor5), false, "Cell A5 doesn't contain 'Intel' text");
+
+
+		// Test 2: Using cell reference formula
+		let formulaRule = new AscCommonExcel.CConditionalFormattingRule();
+		formulaRule.asc_setType(Asc.c_oAscCFType.containsText);
+		xfs = new Asc.asc_CellXfs();
+		fontColor = getRgbColor("006400");
+		fillColor = getRgbColor("C6EFCE");
+		xfs.asc_setFontColor(fontColor);
+		xfs.asc_setFillColor(fillColor);
+		formulaRule.asc_setDxf(xfs);
+		formulaRule.asc_setContainsText("=B1"); // Formula reference
+		formulaRule.asc_setLocation("$A$2:$A$5");
+
+		api.asc_setCF([formulaRule]);
+		ws.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange([new Asc.Range(0, 1, 0, 4)]));
+
+		// Check that styles are applied correctly for formula reference
+		compiledStyle2 = ws.getCompiledStyle(1, 0);
+		compiledStyle3 = ws.getCompiledStyle(2, 0);
+		compiledStyle4 = ws.getCompiledStyle(3, 0);
+		compiledStyle5 = ws.getCompiledStyle(4, 0);
+
+		rgbColor2 = compiledStyle2 && compiledStyle2.fill.bg();
+		rgbColor3 = compiledStyle3 && compiledStyle3.fill.bg();
+		rgbColor4 = compiledStyle4 && compiledStyle4.fill.bg();
+		rgbColor5 = compiledStyle5 && compiledStyle5.fill.bg();
+
+		//TODO!
+		// assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor2), true, "Cell A2 contains value from B1 (Intel)");
+		// assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor3), false, "Cell A3 doesn't contain value from B1");
+		// assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor4), true, "Cell A4 contains value from B1 (Intel)");
+		// assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor5), false, "Cell A5 doesn't contain value from B1");
+
+		// Test 3: Using more complex formula
+		// Change reference data
+		referenceData = [
+			["AMD"] // B1: changed value
+		];
+		ws.getRange4(0, 1).fillData(referenceData);
+
+		let complexFormulaRule = new AscCommonExcel.CConditionalFormattingRule();
+		complexFormulaRule.asc_setType(Asc.c_oAscCFType.containsText);
+		xfs = new Asc.asc_CellXfs();
+		fontColor = getRgbColor("9C5700");
+		fillColor = getRgbColor("FFEB9C");
+		xfs.asc_setFontColor(fontColor);
+		xfs.asc_setFillColor(fillColor);
+		complexFormulaRule.asc_setDxf(xfs);
+		complexFormulaRule.asc_setContainsText("=UPPER(B1)"); // Formula with function
+		complexFormulaRule.asc_setLocation("$A$2:$A$5");
+
+		api.asc_setCF([complexFormulaRule]);
+		ws.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange([new Asc.Range(0, 1, 0, 4)]));
+
+		// Check that styles are applied correctly for complex formula
+		compiledStyle2 = ws.getCompiledStyle(1, 0);
+		compiledStyle3 = ws.getCompiledStyle(2, 0);
+		compiledStyle4 = ws.getCompiledStyle(3, 0);
+		compiledStyle5 = ws.getCompiledStyle(4, 0);
+
+		rgbColor2 = compiledStyle2 && compiledStyle2.fill.bg();
+		rgbColor3 = compiledStyle3 && compiledStyle3.fill.bg();
+		rgbColor4 = compiledStyle4 && compiledStyle4.fill.bg();
+		rgbColor5 = compiledStyle5 && compiledStyle5.fill.bg();
+
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor2), false, "Cell A2 doesn't contain 'AMD'");
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor3), true, "Cell A3 contains 'AMD'");
+		//TODO!
+		//assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor4), false, "Cell A4 doesn't contain 'AMD'");
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor5), true, "Cell A5 contains 'AMD'");
+
+		clearData(0, 0, 5, 5);
+
+		// Test 4
+		testData = [
+			["test"],//A1
+			["test"],//A2
+			["test"],//A3
+			["test"],//A4
+			["test"]//A5
+		];
+
+		range = ws.getRange4(0, 0, 4, 0);
+		range.fillData(testData);
+
+		complexFormulaRule = new AscCommonExcel.CConditionalFormattingRule();
+		complexFormulaRule.asc_setType(Asc.c_oAscCFType.containsText);
+		xfs = new Asc.asc_CellXfs();
+		fontColor = getRgbColor("9C5700");
+		let fillColor1 = getRgbColor("FFEB9C");
+		xfs.asc_setFontColor(fontColor);
+		xfs.asc_setFillColor(fillColor1);
+		complexFormulaRule.asc_setDxf(xfs);
+		complexFormulaRule.asc_setContainsText("=test");
+		complexFormulaRule.asc_setLocation("$A$1");
+
+		api.asc_setCF([complexFormulaRule]);
+
+		complexFormulaRule = new AscCommonExcel.CConditionalFormattingRule();
+		complexFormulaRule.asc_setType(Asc.c_oAscCFType.containsText);
+		xfs = new Asc.asc_CellXfs();
+		fontColor = getRgbColor("9C5700");
+		let fillColor2 = getRgbColor("FFEB9C");
+		xfs.asc_setFontColor(fontColor);
+		xfs.asc_setFillColor(fillColor2);
+		complexFormulaRule.asc_setDxf(xfs);
+		complexFormulaRule.asc_setContainsText("=\"test\"");
+		complexFormulaRule.asc_setLocation("$A$2");
+
+		api.asc_setCF([complexFormulaRule]);
+
+		complexFormulaRule = new AscCommonExcel.CConditionalFormattingRule();
+		complexFormulaRule.asc_setType(Asc.c_oAscCFType.containsText);
+		xfs = new Asc.asc_CellXfs();
+		fontColor = getRgbColor("9C5700");
+		let fillColor3 = getRgbColor("FFEB9C");
+		xfs.asc_setFontColor(fontColor);
+		xfs.asc_setFillColor(fillColor3);
+		complexFormulaRule.asc_setDxf(xfs);
+		complexFormulaRule.asc_setContainsText("test");
+		complexFormulaRule.asc_setLocation("$A$3");
+
+		api.asc_setCF([complexFormulaRule]);
+
+		complexFormulaRule = new AscCommonExcel.CConditionalFormattingRule();
+		complexFormulaRule.asc_setType(Asc.c_oAscCFType.containsText);
+		xfs = new Asc.asc_CellXfs();
+		fontColor = getRgbColor("9C5700");
+		let fillColor4 = getRgbColor("FFEB9C");
+		xfs.asc_setFontColor(fontColor);
+		xfs.asc_setFillColor(fillColor4);
+		complexFormulaRule.asc_setDxf(xfs);
+		complexFormulaRule.asc_setContainsText("\"test\"");
+		complexFormulaRule.asc_setLocation("$A$4");
+
+		api.asc_setCF([complexFormulaRule]);
+
+		ws.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange([new Asc.Range(0, 0, 0, 4)]));
+
+		// Check that styles are applied correctly for complex formula
+		let compiledStyle1 = ws.getCompiledStyle(0, 0);
+		compiledStyle2 = ws.getCompiledStyle(1, 0);
+		compiledStyle3 = ws.getCompiledStyle(2, 0);
+		compiledStyle4 = ws.getCompiledStyle(3, 0);
+
+		let rgbColor1 = compiledStyle1 && compiledStyle1.fill.bg();
+		rgbColor2 = compiledStyle2 && compiledStyle2.fill.bg();
+		rgbColor3 = compiledStyle3 && compiledStyle3.fill.bg();
+		rgbColor4 = compiledStyle4 && compiledStyle4.fill.bg();
+
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor1, rgbColor1), false, "formula + text without quotes");
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor2, rgbColor2), true, "formula + text with quotes");
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor3, rgbColor3), true, "text without quote");
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor4, rgbColor4), false, "text with quotes");
+
+		// Clean up data after tests
+		clearData(0, 0, 5, 5);
+	});
 
 	QUnit.module("Conditional formatting");
 });

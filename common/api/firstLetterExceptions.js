@@ -98,8 +98,41 @@
 		"э", "экз",
 		"ю"
 	];
-
-
+	
+	DEFAULT_EXCEPTIONS[lcid_deDE] = [
+		"zb", "bzw", "dh", "evtl", "idr", "usw", "ua", "uu", "ca", "nr", "abs", "s", "univ", "str", "zt", "so", "su", "vgl", "dj", "dm", "uvm", "mwst", "ag", "gmbh", "zhd", "pa", "zzt", "ia", "iv", "uam", "zzgl", "inkl", "exkl", "baw", "nchr", "vchr", "zh", "st", "geb", "gest", "jh", "bd", "ff", "uae", "sa", "dhi", "dhs", "dhes", "dher", "dhdu", "dhich", "dhwir", "dh ihr", "dhsie", "dhes", "dhman", "dhjemand", "dhniemand", "dhalle", "dhkeiner", "dhjeder", "dhjemand", "dhniemand", "dhalle", "dhkeiner", "dhjeder", "dhjemand"
+	];
+	
+	DEFAULT_EXCEPTIONS[lcid_esES] = [
+		"ac", "dc", "pej", "etc", "pag", "num", "av", "c", "dpto", "tel", "aprox", "max", "min", "art", "cap", "ed", "vol", "fig", "sf", "sl", "sn", "qepd", "pd", "nb", "sa", "sl", "eeuu", "ffcc", "rrhh", "aavv", "dl"
+	];
+	
+	DEFAULT_EXCEPTIONS[lcid_frFR] = [
+		"av", "apr", "env", "etc", "pex", "cad", "n", "v", "cf", "ed", "vol", "fig", "chap", "art", "al", "obs", "nb", "ps", "sas", "sarl", "sa", "ong", "otan", "onu", "ue", "omc", "fmi", "oms", "oit", "unicef", "ovni", "adn", "sida", "tic", "ttc", "ht", "tva", "cdi", "cdd", "rh", "btp", "rer", "tgv", "ter", "hlm", "zup", "zac"
+	];
+	
+	DEFAULT_EXCEPTIONS[lcid_ptPT] = [
+		"pex", "etc", "ac", "dc", "n", "vol", "cap", "pag", "ed", "trad", "rev", "org", "coord", "dir", "ed", "comp", "col", "fig", "il", "obs", "ref", "apend", "anexo", "max", "min", "aprox", "adm", "dep", "func", "ger", "rechum", "ti", "rh", "cont", "fin", "mkt", "com", "vendas", "log", "prod", "qual", "seg", "manut", "ti", "adm", "aux", "est", "temp", "efet", "clt", "pj", "pf", "cpf", "cnpj", "rg", "ie", "im", "cep", "tel", "cel"
+	];
+	
+	DEFAULT_EXCEPTIONS[lcid_plPL] = [
+		"np", "itd", "itp", "tj", "tzw", "min", "godz", "min", "ul", "al", "pl", "sek", "r", "w", "zl", "gr", "cm", "m", "km", "kg", "g", "l", "ml", "s", "t", "wyd", "red", "oprac", "przyp", "zal", "cdn"
+	];
+	
+	DEFAULT_EXCEPTIONS[lcid_itIT] = [
+		"ps", "ecc", "pes", "ca", "cfr", "v", "n", "p", "vol", "cap", "art", "ed", "trad", "fig", "tab", "ecc", "etc", "ac", "dc", "km", "cm", "mm", "kg", "g", "l", "ml", "h", "min", "sec"
+	];
+	
+	DEFAULT_EXCEPTIONS[lcid_svSE] = [
+		"bla", "osv", "tex", "mm", "ca", "dvs", "ed", "jfr", "sk", "mfl", "mao", "od", "obs", "pga", "tom", "from", "kl", "nr", "s", "bil", "ang", "forts", "resp", "tidskr", "utg", "overs", "red", "forf", "anm", "fig", "tab", "jfr", "ibid", "opcit", "etal", "etc", "ie", "eg", "pm", "am", "ps"
+	];
+	
+	DEFAULT_EXCEPTIONS[lcid_daDK]= [
+		"feks", "mfl", "osv", "dvs", "ca", "bla", "jfr", "pga", "tom", "from", "kl", "nr", "s", "bil", "ang", "forts", "resp", "tidskr", "utg", "overs", "red", "forf", "anm", "fig", "tab", "jfr", "ibid", "opcit", "etal", "etc", "ie", "eg", "pm", "am", "ps"
+	];
+	
+	
+	
 	/**
 	 * Класс для работы с исключениями автозамены первого символа в предложении
 	 * @constructor
@@ -112,6 +145,10 @@
 	CFirstLetterExceptions.GetDefaultExceptions = function(lang)
 	{
 		return DEFAULT_EXCEPTIONS[lang] ? DEFAULT_EXCEPTIONS[lang] : [];
+	};
+	CFirstLetterExceptions.GetDefaultLangs = function()
+	{
+		return Object.keys(DEFAULT_EXCEPTIONS);
 	};
 	CFirstLetterExceptions.prototype.Check = function(word, lang)
 	{
@@ -206,9 +243,10 @@
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'].CFirstLetterExceptions = CFirstLetterExceptions;
-
+	
 	CFirstLetterExceptions.prototype["get_Exceptions"]        = CFirstLetterExceptions.prototype.get_Exceptions = CFirstLetterExceptions.prototype.GetExceptions;
 	CFirstLetterExceptions.prototype["put_Exceptions"]        = CFirstLetterExceptions.prototype.put_Exceptions = CFirstLetterExceptions.prototype.SetExceptions;
+	CFirstLetterExceptions.prototype["get_DefaultLangs"]      = CFirstLetterExceptions.prototype.get_DefaultLangs = CFirstLetterExceptions.GetDefaultLangs;
 	CFirstLetterExceptions.prototype["get_DefaultExceptions"] = CFirstLetterExceptions.prototype.get_DefaultExceptions = CFirstLetterExceptions.GetDefaultExceptions;
 	CFirstLetterExceptions.prototype["add_Exception"]         = CFirstLetterExceptions.prototype.add_Exception = CFirstLetterExceptions.prototype.AddException;
 	CFirstLetterExceptions.prototype["remove_Exception"]      = CFirstLetterExceptions.prototype.remove_Exception = CFirstLetterExceptions.prototype.RemoveException;

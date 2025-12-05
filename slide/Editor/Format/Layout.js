@@ -43,6 +43,7 @@ AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetType]           = AscDFH.
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetBg]             = AscDFH.CChangesDrawingsObjectNoId;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetCSldName]       = AscDFH.CChangesDrawingsString;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetShow]           = AscDFH.CChangesDrawingsBool;
+AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetPreserve]           = AscDFH.CChangesDrawingsBool;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetShowPhAnim]     = AscDFH.CChangesDrawingsBool;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetShowMasterSp]   = AscDFH.CChangesDrawingsBool;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetClrMapOverride] = AscDFH.CChangesDrawingsObject;
@@ -85,6 +86,7 @@ AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetClrMapOverride]    = 
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetSize]              = function(oClass, value){oClass.Width = value.a; oClass.Height = value.b;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetTiming]            = function(oClass, value){oClass.timing = value;};
 AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetTransition]        = function(oClass, value){oClass.transition = value;};
+AscDFH.drawingsChangesMap[AscDFH.historyitem_SlideLayoutSetPreserve]        = function(oClass, value){oClass.preserve = value;};
 
 AscDFH.drawingContentChanges[AscDFH.historyitem_SlideLayoutAddToSpTree] = function(oClass){
     oClass.recalcInfo.recalculateBounds = true;
@@ -317,6 +319,7 @@ SlideLayout.prototype.getMaster = function(){
             copy.setTiming(this.timing.createDuplicate(oIdMap));
         }
         copy.setSlideSize(this.Width, this.Height);
+				copy.setPreserve(this.preserve);
         return copy;
     };
     SlideLayout.prototype.setMaster = function(master)
@@ -445,6 +448,8 @@ SlideLayout.prototype.getMaster = function(){
     SlideLayout.prototype.handleAllContents = Slide.prototype.handleAllContents;
     SlideLayout.prototype.getAllRasterImagesForDraw = Slide.prototype.getAllRasterImagesForDraw;
     SlideLayout.prototype.checkImageDraw = Slide.prototype.checkImageDraw;
+    SlideLayout.prototype.openChartEditor = Slide.prototype.openChartEditor;
+    SlideLayout.prototype.openOleEditor = Slide.prototype.openOleEditor;
 
     SlideLayout.prototype.recalculateBackground = function()
     {
@@ -983,6 +988,19 @@ SlideLayout.prototype.getMaster = function(){
         }
         return false;
     };
+		SlideLayout.prototype.IsUseInSlides = function() {
+			const oPresentation = this.presentation;
+			if (!oPresentation) {
+				return;
+			}
+			for (let i = 0; i < oPresentation.Slides.length; i += 1) {
+				const oSlide = oPresentation.Slides[i];
+				if (oSlide.Layout === this) {
+					return true;
+				}
+			}
+			return false;
+		};
     SlideLayout.prototype.drawViewPrMarks = function(oGraphics) {
         if(oGraphics.isSupportTextDraw && !oGraphics.isSupportTextDraw()) return;
         return AscCommonSlide.Slide.prototype.drawViewPrMarks.call(this, oGraphics);
@@ -990,6 +1008,20 @@ SlideLayout.prototype.getMaster = function(){
     SlideLayout.prototype.checkPlaceholders = function(oPlaceholders) {
         return AscCommonSlide.Slide.prototype.checkPlaceholders.call(this, oPlaceholders);
     };
+SlideLayout.prototype.removeAllInks = function() {
+	return AscCommonSlide.Slide.prototype.removeAllInks.call(this);
+};
+SlideLayout.prototype.getAllInks = function(arrInks) {
+	arrInks = arrInks || [];
+	return AscCommonSlide.Slide.prototype.getAllInks.call(this, arrInks);
+};
+SlideLayout.prototype.isPreserve = function() {
+	return this.preserve;
+};
+SlideLayout.prototype.setPreserve = function(bPr) {
+	History.Add(new AscDFH.CChangesDrawingsBool(this, AscDFH.historyitem_SlideLayoutSetPreserve, this.preserve, bPr));
+	this.preserve = bPr;
+};
 
     let LAYOUT_TYPE_MAP = {};
     LAYOUT_TYPE_MAP["blank"] = AscFormat.nSldLtTBlank;
@@ -1436,6 +1468,7 @@ function CLayoutThumbnailDrawer()
         var _ctx = this.CanvasImage.getContext('2d');
 
         var g = new AscCommon.CGraphics();
+				g.IsThumbnail = true;
         g.init(_ctx, w_px, h_px, this.WidthMM, this.HeightMM);
         g.m_oFontManager = AscCommon.g_fontManager;
 

@@ -533,10 +533,10 @@
 
 			logicDocument.SelectAll();
 
-			ExecuteHotkey(testHotkeyActions.testIndent);
+			ExecuteHotkey(testHotkeyActions.BeginIndent);
 			assert.strictEqual(GetDirectParaPr().GetIndLeft(), 12.5, "Check multi indent");
 
-			ExecuteHotkey(testHotkeyActions.testUnIndent);
+			ExecuteHotkey(testHotkeyActions.BeginUnIndent);
 			assert.strictEqual(GetDirectParaPr().GetIndLeft(), 0, "Check multi unindent");
 		});
 
@@ -930,7 +930,7 @@
 			CheckSelectedText('Hello World Hello ', 'Select up');
 
 			ExecuteHotkey(testHotkeyActions.selectToEndDocument);
-			CheckSelectedText('Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello Hello World Hello Hello World Hello Hello World Hello World Hello World', 'Select to end document');
+			CheckSelectedText('Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello Hello World Hello Hello World Hello Hello World Hello World Hello World\r\n', 'Select to end document');
 
 			ExecuteHotkey(testHotkeyActions.selectToStartDocument);
 			CheckSelectedText('', 'Select to start document');
@@ -1051,7 +1051,7 @@
 			SelectDrawings([drawing2]);
 
 			ExecuteHotkey(testHotkeyActions.selectAllShapeEnter);
-			assert.strictEqual(logicDocument.GetSelectedText(), 'Hello', 'Check select non empty content');
+			assert.strictEqual(logicDocument.GetSelectedText(), 'Hello\r\n', 'Check select non empty content');
 
 			SelectDrawings([drawing1, drawing2]);
 
@@ -1167,26 +1167,29 @@
 			assert.false(checkBox.IsCheckBoxChecked(), 'Check turn off checkbox');
 			AscTest.SetEditingMode();
 
-			ClearDocumentAndAddParagraph('');
-			AddComboBox(['Hello', 'World', 'yo']);
-			AscTest.SetFillingFormMode(true);
-			ExecuteHotkey(testHotkeyActions.nextOptionComboBox);
-			assert.strictEqual(logicDocument.GetSelectedText(), 'Hello', 'Check select next option in combobox');
-
-			ExecuteHotkey(testHotkeyActions.nextOptionComboBox);
-			assert.strictEqual(logicDocument.GetSelectedText(), 'World', 'Check select next option in combobox');
-
-			ExecuteHotkey(testHotkeyActions.nextOptionComboBox);
-			assert.strictEqual(logicDocument.GetSelectedText(), 'yo', 'Check select next option in combobox');
-
-			ExecuteHotkey(testHotkeyActions.previousOptionComboBox);
-			assert.strictEqual(logicDocument.GetSelectedText(), 'World', 'Check select previous option in combobox');
-
-			ExecuteHotkey(testHotkeyActions.previousOptionComboBox);
-			assert.strictEqual(logicDocument.GetSelectedText(), 'Hello', 'Check select previous option in combobox');
-
-			ExecuteHotkey(testHotkeyActions.previousOptionComboBox);
-			assert.strictEqual(logicDocument.GetSelectedText(), 'yo', 'Check select previous option in combobox');
+			// Previously we changed the value directly in the form
+			// Now we open the drop-down list
+			
+			// ClearDocumentAndAddParagraph('');
+			// AddComboBox(['Hello', 'World', 'yo']);
+			// AscTest.SetFillingFormMode(true);
+			// ExecuteHotkey(testHotkeyActions.nextOptionComboBox);
+			// assert.strictEqual(logicDocument.GetSelectedText(), 'Hello', 'Check select next option in combobox');
+			//
+			// ExecuteHotkey(testHotkeyActions.nextOptionComboBox);
+			// assert.strictEqual(logicDocument.GetSelectedText(), 'World', 'Check select next option in combobox');
+			//
+			// ExecuteHotkey(testHotkeyActions.nextOptionComboBox);
+			// assert.strictEqual(logicDocument.GetSelectedText(), 'yo', 'Check select next option in combobox');
+			//
+			// ExecuteHotkey(testHotkeyActions.previousOptionComboBox);
+			// assert.strictEqual(logicDocument.GetSelectedText(), 'World', 'Check select previous option in combobox');
+			//
+			// ExecuteHotkey(testHotkeyActions.previousOptionComboBox);
+			// assert.strictEqual(logicDocument.GetSelectedText(), 'Hello', 'Check select previous option in combobox');
+			//
+			// ExecuteHotkey(testHotkeyActions.previousOptionComboBox);
+			// assert.strictEqual(logicDocument.GetSelectedText(), 'yo', 'Check select previous option in combobox');
 			AscTest.SetEditingMode();
 		});
 
@@ -1259,7 +1262,7 @@
 			chart.selectTitle(titles[0], 0);
 
 			ExecuteHotkey(testHotkeyActions.selectAllInChartTitle);
-			assert.strictEqual(logicDocument.GetSelectedText(), 'Diagram Title', 'Check select all in title');
+			assert.strictEqual(logicDocument.GetSelectedText(), 'Diagram Title\r\n', 'Check select all in title');
 		});
 
 		QUnit.test('Check add new paragraph in content', (assert) =>
@@ -1322,8 +1325,10 @@
 			TurnOnRecalculate();
 			ClearDocumentAndAddParagraph('');
 			const complexForm = AddComplexForm();
+			AscTest.Recalculate();
+			assert.strictEqual(complexForm.GetLinesCount(), 1, "Check line count before adding line break");
 			ExecuteHotkey(testHotkeyActions.addBreakLineInlineLvlSdt);
-			assert.strictEqual(complexForm.Lines[0], 2, "Check add break line");
+			assert.strictEqual(complexForm.GetLinesCount(), 2, "Check line count after adding line break");
 			TurnOffRecalculate();
 		});
 
@@ -1384,7 +1389,7 @@
 			ClearDocumentAndAddParagraph('2601');
 			AscTest.MoveCursorLeft(true, true);
 			ExecuteHotkey(testHotkeyActions.unicodeToChar, 0);
-			assert.strictEqual(logicDocument.GetSelectedText(), '☁', 'Check replace unicode code to symbol');
+			assert.strictEqual(logicDocument.GetSelectedText(), '☁\r\n', 'Check replace unicode code to symbol');
 			AscTest.MoveCursorRight();
 			AscTest.EnterText(' 261d');
 

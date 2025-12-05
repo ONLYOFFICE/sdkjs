@@ -71,12 +71,12 @@ $(function () {
 		logicDocument.AddToContent(0, p);
 		
 		logicDocument.SelectAll();
-		assert.strictEqual(logicDocument.GetSelectedText(), "", "Check empty selection");
+		assert.strictEqual(logicDocument.GetSelectedText(), "\r\n", "Check empty selection");
 		
 		logicDocument.AddTextWithPr("Hello World!");
 		
 		logicDocument.SelectAll();
-		assert.strictEqual(logicDocument.GetSelectedText(false, {NewLineParagraph : true}), "Hello World!\r\n", "Add text 'Hello World!'");
+		assert.strictEqual(logicDocument.GetSelectedText(false), "Hello World!\r\n", "Add text 'Hello World!'");
 		
 		logicDocument.MoveCursorToStartPos();
 		logicDocument.MoveCursorRight();

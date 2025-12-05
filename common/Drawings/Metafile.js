@@ -1694,6 +1694,7 @@
 		this.ctWidgetsInfo		= 166;
 
 		this.ctHeadings         = 169;
+		this.ctRedact			= 170;
 
 		this.ctPageWidth  = 200;
 		this.ctPageHeight = 201;
@@ -1746,13 +1747,14 @@
 	// 		vsdxHalfDashDashDot   	: 24,
 	// 		vsdxHalfLongDashShortDash   		 : 25,
 	// 		vsdxHalfLongDashShortDashShortDash   : 26,
-	// 		vsdxDoubleDot   		: 27,
-	// 		vsdxDoubleDashDot   	: 28,
-	// 		vsdxDoubleDashDotDot   	: 29,
-	// 		vsdxDoubleDashDashDot   : 30,
-	// 		vsdxDoubleLongDashShortDash   			: 31,
-	// 		vsdxDoubleLongDashShortDashShortDash    : 32,
-	// 		vsdxHalfHalfDash   		: 33,
+	//		vsdxDoubleDash:			: 27
+	// 		vsdxDoubleDot   		: 28,
+	// 		vsdxDoubleDashDot   	: 29,
+	// 		vsdxDoubleDashDotDot   	: 30,
+	// 		vsdxDoubleDashDashDot   : 31,
+	// 		vsdxDoubleLongDashShortDash   			: 32,
+	// 		vsdxDoubleLongDashShortDashShortDash    : 33,
+	// 		vsdxHalfHalfDash   		: 34,
 
 	var DashPatternPresets = [
 		[4, 3],
@@ -1767,6 +1769,8 @@
 		[3, 1, 1, 1, 1, 1],
 		[1, 1],
 		// visio types
+		// !!! line patterns were made to look correct for visio line cap type square.
+		// But now only flat cap type is supported in sdkjs.
 		[0, 1], // vsdxTransparent
 		[1, 0], // vsdxSolid
 		[9, 3], // vsdxDash
@@ -1790,8 +1794,7 @@
 		[16, 7, 16, 7, 2, 7], // vsdxDoubleDashDashDot
 		[41, 7, 17, 7], // vsdxDoubleLongDashShortDash
 		[41, 7, 17, 7, 17, 7], // vsdxDoubleLongDashShortDashShortDash
-		[1, 0], // vsdxHalfHalfDash (in visio is solid)
-
+		[1, 0], // vsdxHalfHalfDash (in visio is solid for cap type square)
 	];
 
 	function CMetafileFontPicker(manager)
@@ -2081,7 +2084,11 @@
 			this.Memory.WriteByte(CommandType.ctBrushTexturePath);
 
 			var _src = src;
-			if (isCloudPrinting)
+			if (src.startsWith("blob:"))
+			{
+				_src = AscCommon.g_oDocumentBlobUrls.getImageBase64(src);
+			}
+			else if (isCloudPrinting)
 			{
 				_src = getCloudPrintingUrl(src)
 			}
@@ -2378,6 +2385,16 @@
 		// images
 		drawImage : function(img, x, y, w, h, isUseOriginUrl)
 		{
+			if (img.startsWith("blob:"))
+			{
+				this.Memory.WriteString2(AscCommon.g_oDocumentBlobUrls.getImageBase64(img));
+				this.Memory.WriteDouble(x);
+				this.Memory.WriteDouble(y);
+				this.Memory.WriteDouble(w);
+				this.Memory.WriteDouble(h);
+				return;
+			}
+
 			var isCloudPrinting = isCloudPrintingUrl();
 
 			if (!window.editor)
@@ -2786,7 +2803,7 @@
 					this.Memory.WriteLong(oTextFormPr.MaxCharacters);
 				}
 
-				let sValue = oForm.GetSelectedText(true, false, {NewLine : true});
+				let sValue = oForm.GetSelectedText(true, false, {});
 				if (sValue)
 				{
 					nFlag |= (1 << 22);
@@ -2970,7 +2987,7 @@
 				this.Memory.WriteLong(6);
 				let dateTimePr = oForm.GetDatePickerPr();
 				
-				let value = oForm.GetSelectedText(true, false, {NewLine : true});
+				let value = oForm.GetSelectedText(true, false, {});
 				if (value)
 				{
 					nFlag |= (1 << 22);
@@ -3003,6 +3020,22 @@
 			this.Memory.Seek(nStartPos);
 			this.Memory.WriteLong(nEndPos - nStartPos);
 			this.Memory.Seek(nEndPos);
+		},
+
+		ClearLastFont : function()
+		{
+			this.m_oFont =
+			{
+				Name     : "",
+				FontSize : -1,
+				Style    : -1
+			};
+
+			this.m_oTextPr  = null;
+			this.m_oGrFonts = new CGrRFonts();
+
+			this.m_oFontSlotFont    = new CFontSetup();
+			this.LastFontOriginInfo = {Name : "", Replace : null};
 		}
 	};
 
@@ -3015,8 +3048,6 @@
 		//this.DocumentInfo = "";
 		this.Memory               = new CMemory();
 		this.VectorMemoryForPrint = null;
-
-		this.ArrayPoints       = null;
 
 		this.m_oPen       = null;
 		this.m_oBrush     = null;
@@ -3148,40 +3179,21 @@
 	{
 		if (0 != this.m_lPagesCount)
 			this.m_arrayPages[this.m_lPagesCount - 1]._m(x, y);
-
-		if (this.ArrayPoints != null)
-			this.ArrayPoints[this.ArrayPoints.length] = {x : x, y : y};
 	};
 	CDocumentRenderer.prototype._l = function(x, y)
 	{
 		if (0 != this.m_lPagesCount)
 			this.m_arrayPages[this.m_lPagesCount - 1]._l(x, y);
-
-		if (this.ArrayPoints != null)
-			this.ArrayPoints[this.ArrayPoints.length] = {x : x, y : y};
 	};
 	CDocumentRenderer.prototype._c = function(x1, y1, x2, y2, x3, y3)
 	{
 		if (0 != this.m_lPagesCount)
 			this.m_arrayPages[this.m_lPagesCount - 1]._c(x1, y1, x2, y2, x3, y3);
-
-		if (this.ArrayPoints != null)
-		{
-			this.ArrayPoints[this.ArrayPoints.length] = {x : x1, y : y1};
-			this.ArrayPoints[this.ArrayPoints.length] = {x : x2, y : y2};
-			this.ArrayPoints[this.ArrayPoints.length] = {x : x3, y : y3};
-		}
 	};
 	CDocumentRenderer.prototype._c2 = function(x1, y1, x2, y2)
 	{
 		if (0 != this.m_lPagesCount)
 			this.m_arrayPages[this.m_lPagesCount - 1]._c2(x1, y1, x2, y2);
-
-		if (this.ArrayPoints != null)
-		{
-			this.ArrayPoints[this.ArrayPoints.length] = {x : x1, y : y1};
-			this.ArrayPoints[this.ArrayPoints.length] = {x : x2, y : y2};
-		}
 	};
 	CDocumentRenderer.prototype.ds= function()
 	{
@@ -3573,6 +3585,12 @@
 			this.Memory.WriteLong(nFlag);
 			this.Memory.Seek(nEndPos);
 		}
+	};
+
+	CDocumentRenderer.prototype.ClearLastFont = function()
+	{
+		if (0 !== this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].ClearLastFont();
 	};
 
 	function WriteHeadings(memory, headings)

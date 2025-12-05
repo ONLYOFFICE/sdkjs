@@ -79,46 +79,6 @@ window.startPluginApi = function() {
 	 */
 
 	/**
-	 * @typedef {Object} ContentControl
-	 * Content control object.
-	 * @property {string} Tag - A tag assigned to the content control. The same tag can be assigned to several content controls so that you can make reference to them in your code.
-	 * @property {string} Id - A unique content control identifier. It can be used to search for a certain content control and make reference to it in your code.
-	 * @property {ContentControlLock} Lock - A value that defines if it is possible to delete and/or edit the content control or not.
-	 * @property {string} InternalId - A unique internal identifier of the content control. It is used for all operations with content controls.
-	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControl.js
-	 */
-
-	/**
-     * @typedef {(0 | 1 | 2 | 3)} ContentControlLock
-     * A value that defines if it is possible to delete and/or edit the content control or not:
-	 * <b>0</b> - only deleting,
-	 * <b>1</b> - disable deleting or editing,
-	 * <b>2</b> - only editing,
-	 * <b>3</b> - full access.
-     * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControlLock.js
-	 */
-
-	/**
-	 * @typedef {Object} comment
-	 * Comment object.
-	 * @property {string} Id - The comment ID.
-	 * @property {CommentData} Data - An object which contains the comment data.
-	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/comment.js
-	 */
-
-	/**
-	 * @typedef {Object} CommentData
-	 * The comment data.
-	 * @property {string} UserName - The comment author.
-	 * @property {string} Text - The comment text.
-	 * @property {string} Time - The time when the comment was posted (in milliseconds).
-	 * @property {boolean} Solved - Specifies if the comment is resolved (**true**) or not (**false**).
-	 * @property {CommentData[]} Replies - An array containing the comment replies represented as the *CommentData* object.
-	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/CommentData.js
-	 */
-
-
-	/**
 	 * Plugin variations, or subplugins, that are created inside the origin plugin.
 	 * @typed { Object } variation
 	 * @descr Plugin variations can be created for the following purposes:
@@ -206,34 +166,6 @@ window.startPluginApi = function() {
 	 */
 
 	/**
-	 * Event: onTargetPositionChanged
-	 * @event Plugin#onTargetPositionChanged
-	 * @memberof Plugin
-	 * @alias onTargetPositionChanged
-	 * @description The function called when the target position in the editor is changed.
-	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onTargetPositionChanged.js
-	 */
-
-	/**
-	 * Event: onDocumentContentReady
-	 * @event Plugin#onDocumentContentReady
-	 * @memberof Plugin
-	 * @alias onDocumentContentReady
-	 * @description The function called when the document is completely loaded.
-	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onDocumentContentReady.js
-	 */
-
-	/**
-	 * Event: onClick
-	 * @event Plugin#onClick
-	 * @memberof Plugin
-	 * @alias onClick
-	 * @description The function called when the user clicks on the element.
-	 * @param {boolean} isSelectionUse - Defines if the selection is used or not.
-	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onClick.js
-	 */
-
-	/**
 	 * Event: inputHelper_onSelectItem
 	 * @event Plugin#inputHelper_onSelectItem
 	 * @memberof Plugin
@@ -284,25 +216,6 @@ window.startPluginApi = function() {
 	 */
 
     /**
-     * Event: onEnableMouseEvent
-     * @event Plugin#onEnableMouseEvent
-     * @memberof Plugin
-     * @alias onEnableMouseEvent
-	 * @description The function called to turn the mouse or touchpad events on/off.
-	 * @param {boolean} isEnabled - Defines if the mouse or touchpad is enabled (**true**) or not (**false**).
-     * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onEnableMouseEvent.js
-	 */
-
-    /**
-     * Event: onExternalMouseUp
-     * @event Plugin#onExternalMouseUp
-     * @memberof Plugin
-     * @alias onExternalMouseUp
-	 * @description The function called when the mouse button is released outside the plugin iframe.
-     * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onExternalMouseUp.js
-	 */
-
-    /**
      * Event: onExternalPluginMessage
      * @event Plugin#onExternalPluginMessage
      * @memberof Plugin
@@ -316,39 +229,6 @@ window.startPluginApi = function() {
 	 * <b>type</b>: string,  
 	 * <b>example</b>: "text".
      * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onExternalPluginMessage.js
-	 */
-
-	/**
-	 * Event: onFocusContentControl
-	 * @event Plugin#onFocusContentControl
-	 * @memberof Plugin
-	 * @typeofeditors ["CDE"]
-	 * @alias onFocusContentControl
-	 * @description The function called to show which content control has been focused.
-	 * @param {ContentControl} control - Defines the content control that has been focused.
-	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onFocusContentControl.js
-	 */
-
-	/**
-	 * Event: onBlurContentControl
-	 * @event Plugin#onBlurContentControl
-	 * @memberof Plugin
-	 * @typeofeditors ["CDE"]
-	 * @alias onBlurContentControl
-	 * @description The function called to show which content control has been blurred.
-	 * @param {ContentControl} control - Defines the content control that has been blurred.
-	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onBlurContentControl.js
-	 */
-
-	/**
-	 * Event: onChangeContentControl
-	 * @event Plugin#onChangeContentControl
-	 * @memberof Plugin
-	 * @typeofeditors ["CDE"]
-	 * @alias onChangeContentControl
-	 * @description The function called to show which content control has been changed.
-	 * @param {ContentControl} control - Defines the content control that has been changed.
-	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onChangeContentControl.js
 	 */
 
 	/**
@@ -431,50 +311,7 @@ window.startPluginApi = function() {
 	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onMethodReturn.js
 	 */
 
-	/**
-	 * Event: onAddComment
-	 * @event Plugin#onAddComment
-	 * @memberof Plugin
-	 * @typeofeditors ["CDE"]
-	 * @alias onAddComment
-	 * @description The function called when a comment is added to the document with the {@link /plugin/executeMethod/text/addcomment AddComment} method.
-	 * @param {comment} comment - Defines the comment object containing the comment data.
-	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onAddComment.js
-	 */
-
-	/**
-	 * Event: onChangeCommentData
-	 * @event Plugin#onChangeCommentData
-	 * @memberof Plugin
-	 * @typeofeditors ["CDE"]
-	 * @alias onChangeCommentData
-	 * @description The function called when the specified comment is changed with the {@link /plugin/executeMethod/text/changecomment ChangeComment} method.
-	 * @param {comment} comment - Defines the comment object containing the comment data.
-	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onChangeCommentData.js
-	 */
-
-	/**
-	 * Event: onRemoveComment
-	 * @event Plugin#onRemoveComment
-	 * @memberof Plugin
-	 * @typeofeditors ["CDE"]
-	 * @alias onRemoveComment
-	 * @description The function called when the specified comment is removed with the {@link /plugin/executeMethod/text/removecomments RemoveComments} method.
-	 * @param {comment} comment - Defines the comment object containing the comment data.
-	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onRemoveComment.js
-	 */
-
-	/**
-	 * Event: onSubmitForm
-	 * @event Plugin#onSubmitForm
-	 * @memberof Plugin
-	 * @typeofeditors ["CDE"]
-	 * @alias onSubmitForm
-	 * @description The function called when the user clicks the "Complete & Submit" button.
-	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onSubmitForm.js
-	 */
-
-    var Plugin = window["Asc"]["plugin"];
+	var Plugin = window["Asc"]["plugin"];
 
 	Plugin._checkPluginOnWindow = function(isWindowSupport)
 	{
@@ -569,6 +406,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * executeMethod
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias executeMethod
 	 * @description Defines the method used to execute certain editor methods using the plugin.
@@ -620,6 +458,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * resizeWindow (only for visual modal plugins)
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias resizeWindow
 	 * @description Defines the method used to change the window size updating the minimum/maximum sizes.
@@ -661,6 +500,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * callCommand
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias callCommand
 	 * @description Defines the method used to send the data back to the editor.
@@ -700,6 +540,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * callModule
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias callModule
 	 * @description Defines the method used to execute a remotely located script following a link.
@@ -733,6 +574,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * loadModule
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias loadModule
 	 * @description Defines the method used to load a remotely located text resource.
@@ -757,8 +599,26 @@ window.startPluginApi = function() {
         _client.send();
     };
 
+	let isAsyncSupported = false;
+	try
+	{
+		new Function("async function test() {}");
+		isAsyncSupported = true;
+	}
+	catch (e)
+	{
+		isAsyncSupported = false;
+	}
+
+	if (isAsyncSupported)
+	{
+		eval("Asc.plugin.callCommandAsync = function(func) { return new Promise(function(resolve) { Asc.plugin.callCommand(func, false, true, function(retValue) { resolve(retValue); }) }); };");
+		eval("Asc.plugin.callMethodAsync = function(name, args) { return new Promise(function(resolve) { Asc.plugin.executeMethod(name, args || [], function(retValue) { resolve(retValue); }) }); };");
+	}
+
 	/**
 	 * @function attachEvent
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias attachEvent
 	 * @description Defines the method to add an event listener, a function that will be called whenever the specified event is delivered to the target.
@@ -770,6 +630,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * @function attachContextMenuClickEvent
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias attachContextMenuClickEvent
 	 * @description Defines the method to add an event listener, a function that will be called whenever the specified event is clicked in the context menu.
@@ -800,6 +661,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * @function createWindow
+	 * @undocumented
 	 * @memberof InputHelper
 	 * @alias createWindow
 	 * @description Creates an input helper window.
@@ -808,6 +670,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * @function getItems
+	 * @undocumented
 	 * @memberof InputHelper
 	 * @alias getItems
 	 * @description Returns an array of the {@link global#InputHelperItem InputHelperItem} objects that contain all the items from the input helper.
@@ -817,6 +680,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * @function setItems
+	 * @undocumented
 	 * @memberof InputHelper
 	 * @alias setItems
 	 * @description Sets the items to the input helper.
@@ -826,6 +690,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * @function show
+	 * @undocumented
 	 * @memberof InputHelper
 	 * @alias show
 	 * @description Shows an input helper.
@@ -837,6 +702,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * @function unShow
+	 * @undocumented
 	 * @memberof InputHelper
 	 * @alias unShow
 	 * @description Hides an input helper.
@@ -845,6 +711,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * @function getScrollSizes
+	 * @undocumented
 	 * @memberof InputHelper
 	 * @alias getScrollSizes
 	 * @description Returns the sizes of the input helper scrolled window. Returns an object with width and height parameters.
@@ -854,6 +721,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * createInputHelper
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias createInputHelper
 	 * @description Defines the method used to create an {@link inputhelper input helper} - a window that appears and disappears when you type text. Its location is tied to the cursor.
@@ -867,6 +735,7 @@ window.startPluginApi = function() {
     };
 	/**
 	 * getInputHelper
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias getInputHelper
 	 * @description Defines the method used to get the {@link inputhelper InputHelper object}.
@@ -882,6 +751,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * sendToPlugin
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias sendToPlugin
 	 * @description Sends a message from the modal window to the plugin.
@@ -911,6 +781,16 @@ window.startPluginApi = function() {
 		}
 		window.plugin_sendMessage(_message);
 		return true;
+	};
+
+	Plugin.sendEvent = function(name, data)
+	{
+		window.Asc.plugin.executeMethod("SendEvent", [name, data]);
+	};
+
+	Plugin.sendEventInternal = function(name, data)
+	{
+		window.Asc.plugin.executeMethod("SendEventInternal", [name, data]);
 	};
 
 };

@@ -1120,7 +1120,7 @@
         return false;
     };
     CSlicer.prototype.onKeyUp = function (e) {
-        if(e.keyCode === 91 /*meta*/|| e.keyCode === 17/*ctrl*/) {
+        if(e.KeyCode === 91 /*meta*/|| e.KeyCode === 17/*ctrl*/) {
             if(this.isSubscribed()) {
                 this.unsubscribeFromEvents();
                 if(!this.eventListener) {

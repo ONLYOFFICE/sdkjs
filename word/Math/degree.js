@@ -570,7 +570,26 @@ CDegree.prototype.GetTextOfElement = function(oMathText)
 
 	return oMathText;
 };
+CDegree.fromMathMLContentMarkup = function (reader, base, sub, type)
+{
+	let text		= reader.GetText();
+	let props		= new CMathDegreePr();
 
+	props.type		= type;
+	props.content	= [
+		AscWord.ParaMath.createContentFromText(sub ? sub : text),
+		AscWord.ParaMath.createContentFromText(base)
+	];
+
+	let textOfBase = props.content[0].GetTextOfElement().GetText();
+	if (AscMath.MathLiterals.nary.SearchU(textOfBase))
+	{
+		let nary = new AscMath.Nary.fromMathMLSubSup(props, false, false);
+		return nary;
+	}
+
+	return new AscMath.Degree(props);
+};
 /**
  *
  * @param iterUp

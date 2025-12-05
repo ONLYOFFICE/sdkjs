@@ -77,6 +77,15 @@ CShape.prototype.getDrawingObjectsController = function()
 
 function editorAddToDrawingObjects(oGraphicObject, pos, type)
 {
+    if(Asc.editor.isDrawSlideshowAnnotations())
+    {
+        let oAnnots = Asc.editor.getAnnotations();
+        if(oAnnots)
+        {
+            oAnnots.addInk(oGraphicObject);
+        }
+        return;
+    }
     if(oGraphicObject.parent && oGraphicObject.parent.cSld && oGraphicObject.parent.cSld.spTree)
     {
         if(oGraphicObject.signatureLine && oGraphicObject.setSignature)
@@ -89,6 +98,15 @@ function editorAddToDrawingObjects(oGraphicObject, pos, type)
     function editorDeleteDrawingBase(oGraphicObject, bCheckPlaceholder)
     {
         let oSlide = oGraphicObject.parent;
+        if(Asc.editor.isDrawSlideshowAnnotations())
+        {
+            let oAnnots = Asc.editor.getAnnotations();
+            if(oAnnots)
+            {
+                oAnnots.eraseInk(oGraphicObject);
+            }
+            return;
+        }
         if(AscFormat.isSlideLikeObject(oSlide))
         {
             let pos = oSlide.removeFromSpTreeById(oGraphicObject.Id);
@@ -213,7 +231,7 @@ CShape.prototype.addToRecalculate = function()
 };
 CShape.prototype.getSlideIndex = function()
 {
-    return this.Get_StartPage_Absolute();
+    return this.GetAbsoluteStartPage();
 };
 CShape.prototype.handleUpdatePosition = function()
 {
@@ -701,7 +719,7 @@ CShape.prototype.OnContentReDraw = function(){
     };
 
 
-    CShape.prototype.Get_StartPage_Absolute = function () {
+    CShape.prototype.GetAbsoluteStartPage = function () {
         if(this.getParentObjects) {
             let oParents = this.getParentObjects();
             if(oParents && oParents.presentation) {
@@ -721,6 +739,12 @@ CShape.prototype.OnContentReDraw = function(){
         }
         return 0;
     };
+		CShape.prototype.onRemoveContent = function () {
+			const oPresentation = this.getLogicDocument();
+			if (oPresentation && oPresentation.timing) {
+				oPresentation.timing.onRemoveContent(this.GetId());
+			}
+		};
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].editorDeleteDrawingBase = editorDeleteDrawingBase;

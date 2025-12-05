@@ -1199,6 +1199,17 @@
 					Left : tw2mm(1760)
 				}
 			}
+		},
+		{
+			StyleId    : "PlaceholderText",
+			Type       : AscWord.styletype_Character,
+			Name       : "Placeholder Text",
+			BasedOn    : "DefaultParagraphFont",
+			UiPriority : 99,
+			SemiHidden : true,
+			TextPr     : {
+				Color : {r : 0x66, g : 0x66, b : 0x66}
+			}
 		}
 	];
 	
@@ -1228,10 +1239,31 @@
 		return "";
 	}
 	
+	function setDefaultHeadingColor(r, g, b)
+	{
+		for (let i = 0; i < DEFAULT_STYLE_LIST.length; ++i)
+		{
+			if (DEFAULT_STYLE_LIST[i].StyleId
+				&& DEFAULT_STYLE_LIST[i].TextPr
+				&& 0 === DEFAULT_STYLE_LIST[i].StyleId.indexOf("Heading"))
+			{
+				DEFAULT_STYLE_LIST[i].TextPr.Color   = {r : r, g : g, b : b};
+				DEFAULT_STYLE_LIST[i].TextPr.Unifill = undefined;
+			}
+		}
+	}
+	function setDefaultHeadingColorStr(rgbStr)
+	{
+		let rgba = AscCommon.RgbaTextToRGBA(rgbStr);
+		setDefaultHeadingColor(rgba.R, rgba.G, rgba.B);
+	}
+	
 	//--------------------------------------------------------export----------------------------------------------------
-	AscWord.DEFAULT_STYLE_LIST    = DEFAULT_STYLE_LIST;
-	AscWord.DEFAULT_HEADING_FONT  = DEFAULT_HEADING_FONT;
-	AscWord.DEFAULT_FONT          = DEFAULT_FONT;
-	AscWord.getDefaultStyleObject = getDefaultStyleObject;
-	AscWord.getDefaultStyleName   = getDefaultStyleName;
+	AscWord.DEFAULT_STYLE_LIST     = DEFAULT_STYLE_LIST;
+	AscWord.DEFAULT_HEADING_FONT   = DEFAULT_HEADING_FONT;
+	AscWord.DEFAULT_FONT           = DEFAULT_FONT;
+	AscWord.getDefaultStyleObject  = getDefaultStyleObject;
+	AscWord.getDefaultStyleName    = getDefaultStyleName;
+	AscWord["setDefaultHeadingColor"] = AscWord.setDefaultHeadingColor = setDefaultHeadingColor;
+	AscWord["setDefaultHeadingColorStr"] = AscWord.setDefaultHeadingColorStr = setDefaultHeadingColorStr;
 })(window);

@@ -701,9 +701,9 @@ CChangesTableRowPrChange.prototype.WriteToBinary = function(oWriter)
 	// 3-bit : is Old.PrChange undefined ?
 	// 4-bit : is Old.ReviewInfo undefined ?
 	// Variable(CTableRowPr) : New.PrChange   (1bit = 0)
-	// Variable(CReviewInfo) : New.ReviewInfo (2bit = 0)
+	// Variable(AscWord.ReviewInfo) : New.ReviewInfo (2bit = 0)
 	// Variable(CTableRowPr) : Old.PrChange   (3bit = 0)
-	// Variable(CReviewInfo) : Old.ReviewInfo (4bit = 0)
+	// Variable(AscWord.ReviewInfo) : Old.ReviewInfo (4bit = 0)
 
 	var nFlags = 0;
 	if (undefined === this.New.PrChange)
@@ -740,9 +740,9 @@ CChangesTableRowPrChange.prototype.ReadFromBinary = function(oReader)
 	// 3-bit : is Old.PrChange undefined ?
 	// 4-bit : is Old.ReviewInfo undefined ?
 	// Variable(CTableRowPr) : New.PrChange   (1bit = 0)
-	// Variable(CReviewInfo) : New.ReviewInfo (2bit = 0)
+	// Variable(AscWord.ReviewInfo) : New.ReviewInfo (2bit = 0)
 	// Variable(CTableRowPr) : Old.PrChange   (3bit = 0)
-	// Variable(CReviewInfo) : Old.ReviewInfo (4bit = 0)
+	// Variable(AscWord.ReviewInfo) : Old.ReviewInfo (4bit = 0)
 
 	var nFlags = oReader.GetLong();
 
@@ -772,7 +772,7 @@ CChangesTableRowPrChange.prototype.ReadFromBinary = function(oReader)
 	}
 	else
 	{
-		this.New.ReviewInfo = new CReviewInfo();
+		this.New.ReviewInfo = new AscWord.ReviewInfo();
 		this.New.ReviewInfo.ReadFromBinary(oReader);
 	}
 
@@ -792,7 +792,7 @@ CChangesTableRowPrChange.prototype.ReadFromBinary = function(oReader)
 	}
 	else
 	{
-		this.Old.ReviewInfo = new CReviewInfo();
+		this.Old.ReviewInfo = new AscWord.ReviewInfo();
 		this.Old.ReviewInfo.ReadFromBinary(oReader);
 	}
 };
@@ -825,9 +825,9 @@ CChangesTableRowReviewType.prototype.Type = AscDFH.historyitem_TableRow_ReviewTy
 CChangesTableRowReviewType.prototype.WriteToBinary = function(oWriter)
 {
 	// Long        : New ReviewType
-	// CReviewInfo : New ReviewInfo
+	// AscWord.ReviewInfo : New ReviewInfo
 	// Long        : Old ReviewType
-	// CReviewInfo : Old ReviewInfo
+	// AscWord.ReviewInfo : Old ReviewInfo
 	oWriter.WriteLong(this.New.ReviewType);
 	this.New.ReviewInfo.WriteToBinary(oWriter);
 	oWriter.WriteLong(this.Old.ReviewType);
@@ -836,18 +836,18 @@ CChangesTableRowReviewType.prototype.WriteToBinary = function(oWriter)
 CChangesTableRowReviewType.prototype.ReadFromBinary = function(oReader)
 {
 	// Long        : New ReviewType
-	// CReviewInfo : New ReviewInfo
+	// AscWord.ReviewInfo : New ReviewInfo
 	// Long        : Old ReviewType
-	// CReviewInfo : Old ReviewInfo
+	// AscWord.ReviewInfo : Old ReviewInfo
 
 	this.New = {
 		ReviewType : reviewtype_Common,
-		ReviewInfo : new CReviewInfo()
+		ReviewInfo : new AscWord.ReviewInfo()
 	};
 
 	this.Old = {
 		ReviewType : reviewtype_Common,
-		ReviewInfo : new CReviewInfo()
+		ReviewInfo : new AscWord.ReviewInfo()
 	};
 
 	this.New.ReviewType = oReader.GetLong();

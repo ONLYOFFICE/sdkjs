@@ -76,7 +76,7 @@
 	CAnnotTextPrTrackHandler.prototype.OnChangePosition = function() {
 		let bounds = this.GetBounds();
 		if (!bounds)
-			return;
+			return this.OnHide();
 
 		this.OnShow(bounds);
 	};
@@ -87,7 +87,7 @@
 	CAnnotTextPrTrackHandler.prototype.GetBounds = function() {
 		let oAnnot = this.Annot;
 
-		if (!oAnnot)
+		if (!oAnnot || !oAnnot.IsUseInDocument())
 			return null;
 		
 		let oDoc = oAnnot.GetDocument();
@@ -95,7 +95,7 @@
 			return null;
 		}
 
-        let aOrigRect   = oAnnot.GetOrigRect();
+        let aOrigRect   = oAnnot.GetRect();
         let aRD         = oAnnot.GetRectangleDiff() || [0, 0, 0, 0]; // отступ координат фигуры с текстом от ректа аннотации
         let nPage       = oAnnot.GetPage();
 		let oTr			= oDoc.pagesTransform[nPage].invert;

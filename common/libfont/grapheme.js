@@ -251,15 +251,56 @@
 			maxY : maxY
 		};
 	}
+	function GetGraphemeFontId(graphemeId)
+	{
+		let oGrapheme = GRAPHEMES[graphemeId];
+		if (!oGrapheme)
+			return null;
+		
+		return oGrapheme[0];
+	}
+	function GetFontNameByFontId(fontId)
+	{
+		return AscCommon.FontNameMap.GetName((fontId | 0) >> 8);
+	}
+	function GetFontStyleByFontId(fontId)
+	{
+		return ((fontId | 0) & 0xF);
+	}
+	function GetGraphemeCodePoints(graphemeId)
+	{
+		let g = GRAPHEMES[graphemeId];
+		if (!g)
+			return [];
+		
+		if (1 === g[2])
+		{
+			return g[8];
+		}
+		else
+		{
+			let result = [];
+			for (let i = 0, pos = 8, count = g[2]; i < count; ++i, pos += 6)
+			{
+				result = result.concat(g[pos]);
+			}
+			return result;
+		}
+		
+	}
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscFonts'] = window['AscFonts'] || {};
-	window['AscFonts'].NO_GRAPHEME        = NO_GRAPHEME;
-	window['AscFonts'].InitGrapheme       = InitGrapheme;
-	window['AscFonts'].DrawGrapheme       = DrawGrapheme;
-	window['AscFonts'].CompareGraphemes   = CompareGraphemes;
-	window['AscFonts'].AddGlyphToGrapheme = AddGlyphToGrapheme;
-	window['AscFonts'].GetGrapheme        = GetGrapheme;
-	window['AscFonts'].GetGraphemeWidth   = GetGraphemeWidth;
-	window['AscFonts'].GetGraphemeBBox    = GetGraphemeBBox;
+	window['AscFonts'].NO_GRAPHEME           = NO_GRAPHEME;
+	window['AscFonts'].InitGrapheme          = InitGrapheme;
+	window['AscFonts'].DrawGrapheme          = DrawGrapheme;
+	window['AscFonts'].CompareGraphemes      = CompareGraphemes;
+	window['AscFonts'].AddGlyphToGrapheme    = AddGlyphToGrapheme;
+	window['AscFonts'].GetGrapheme           = GetGrapheme;
+	window['AscFonts'].GetGraphemeWidth      = GetGraphemeWidth;
+	window['AscFonts'].GetGraphemeBBox       = GetGraphemeBBox;
+	window['AscFonts'].GetGraphemeFontId     = GetGraphemeFontId;
+	window['AscFonts'].GetFontNameByFontId   = GetFontNameByFontId;
+	window['AscFonts'].GetFontStyleByFontId  = GetFontStyleByFontId;
+	window['AscFonts'].GetGraphemeCodePoints = GetGraphemeCodePoints;
 
 })(window);

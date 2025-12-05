@@ -115,4 +115,32 @@ $(function ()
 		assert.strictEqual(table.GetPage(1).GetFirstRow(), 5, "Check that page breaks on the 4-th row");
 	});
 	
+	QUnit.test("Page break before table and table breaks on the second page (bug 75532)", function (assert)
+	{
+		let paragraph = AscTest.CreateParagraph();
+		paragraph.Add(new AscWord.CRunBreak(AscWord.break_Page));
+		logicDocument.AddToContent(0, paragraph);
+
+		let table = AscTest.CreateTable(2, 2);
+		AscTest.RemoveTableBorders(table);
+		AscTest.RemoveTableMargins(table);
+		logicDocument.AddToContent(1, table);
+		AscTest.MergeTableCells(table, 0, 0, 0, 1);
+		
+		let cellContent = table.GetRow(0).GetCell(1).GetContent();
+		paragraph = cellContent.GetElement(0);
+		paragraph.SetParagraphSpacing({After : 80, Before : 0, LineRule : linerule_Auto, Line : 1});
+		paragraph = AscTest.CreateParagraph();
+		paragraph.SetParagraphSpacing({After : 700, Before : 0, LineRule : linerule_Auto, Line : 1});
+		cellContent.AddToContent(1, paragraph);
+		
+		AscTest.Recalculate();
+		assert.strictEqual(table.IsEmptyPage(0), true, "First page should be empty");
+		assert.strictEqual(table.GetPagesCount(), 3, "Check page count");
+		assert.strictEqual(table.GetPage(1).GetFirstRow(), 0, "Check first row for page 1");
+		assert.strictEqual(table.GetPage(1).GetLastRow(), 0, "Check last row for page 1");
+		assert.strictEqual(table.GetPage(2).GetFirstRow(), 0, "Check first row for page 2");
+		assert.strictEqual(table.GetPage(2).GetLastRow(), 1, "Check last row for page 2");
+	});
+	
 });

@@ -246,12 +246,19 @@ CGlossaryDocument.prototype.GetDefaultPlaceholderSignatureOform = function()
  */
 CGlossaryDocument.prototype.private_CreateDefaultPlaceholder = function(sName, sText)
 {
+	let logicDocument = this.LogicDocument;
+	let styles = logicDocument ? logicDocument.GetStyles() : null;
+	let defaultStyle = styles ? styles.GetDefaultPlaceholderText() : null;
+	
 	var oDocPart = this.CreateDocPart(sName);
 
 	var oParagraph = oDocPart.GetFirstParagraph();
 	var oRun       = new ParaRun();
 	oParagraph.AddToContent(0, oRun);
 	oRun.AddText(sText);
+	
+	if (defaultStyle)
+		oRun.SetRStyle(defaultStyle);
 
 	oDocPart.SetDocPartBehavior(c_oAscDocPartBehavior.Content);
 	oDocPart.SetDocPartCategory("Common", c_oAscDocPartGallery.Placeholder);
@@ -372,6 +379,26 @@ CGlossaryDocument.prototype.GetDefaultPlaceholderDateOformDocPartId = function()
 CGlossaryDocument.prototype.GetDefaultPlaceholderSignatureOformDocPartId = function()
 {
 	return c_oAscDefaultPlaceholderName.SignatureOform;
+};
+CGlossaryDocument.prototype.UpdateStyleLinks = function()
+{
+	let logicDocument = this.LogicDocument;
+	let styles = logicDocument ? logicDocument.GetStyles() : null;
+	let defaultStyle = styles ? styles.GetDefaultPlaceholderText() : null;
+	
+	// Пока так жестко проверяем дефолтовый стиль, вообще надо сделать нормальное обновление стилей
+	for (let docPartId in this.DefaultPlaceholder)
+	{
+		let docPart = this.DefaultPlaceholder[docPartId];
+		docPart.CheckRunContent(function(run)
+		{
+			let rStyle = run.GetRStyle();
+			if (rStyle)
+				run.SetRStyle(defaultStyle);
+			
+			return false;
+		});
+	}
 };
 
 /**

@@ -520,7 +520,7 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 		if (comment_type_HdrFtr === Type)
 		{
 			// Проставим начальные значения страниц (это текущий номер страницы, на котором произошло добавление комментария)
-			this.m_oStartInfo.PageNum = Data.Content.Get_StartPage_Absolute();
+			this.m_oStartInfo.PageNum = Data.Content.GetAbsoluteStartPage();
 		}
 	};
 	CComment.prototype.Get_TypeInfo = function()
@@ -1269,6 +1269,10 @@ ParaComment.prototype.Copy = function(Selected, oPr)
 	}
 	return new ParaComment(this.Start, this.CommentId);
 };
+ParaComment.prototype.IsAnnotationMark = function()
+{
+	return true;
+};
 ParaComment.prototype.Recalculate_Range_Spaces = function(PRSA, CurLine, CurRange, CurPage)
 {
 	var Para             = PRSA.Paragraph;
@@ -1313,19 +1317,45 @@ ParaComment.prototype.RecalculateEndInfo = function(oPRSI)
 };
 ParaComment.prototype.SaveRecalculateObject = function(Copy)
 {
-	return new CRunRecalculateObject(this.StartLine, this.StartRange);
+	let recalcObj = new CRunRecalculateObject(this.StartLine, this.StartRange);
+	
+	let logicDocument = this.GetLogicDocument();
+	if (this.Start
+		&& logicDocument
+		&& logicDocument.IsDocumentEditor())
+	{
+		let docComments = logicDocument.GetCommentsManager();
+		let comment     = docComments.Get_ById(this.CommentId);
+		
+		recalcObj.startInfo = {
+			page : comment.m_oStartInfo.PageNum,
+			x    : comment.m_oStartInfo.X,
+			y    : comment.m_oStartInfo.Y,
+			h    : comment.m_oStartInfo.H
+		};
+	}
+	
+	return recalcObj;
 };
-ParaComment.prototype.LoadRecalculateObject = function(RecalcObj, Parent)
+ParaComment.prototype.LoadRecalculateObject = function(recalcObj)
 {
-	this.StartLine  = RecalcObj.StartLine;
-	this.StartRange = RecalcObj.StartRange;
-
-	var PageNum = Parent.Get_StartPage_Absolute();
-
-	var DocumentComments = editor.WordControl.m_oLogicDocument.Comments;
-	var Comment          = DocumentComments.Get_ById(this.CommentId);
-
-	Comment.m_oStartInfo.PageNum = PageNum;
+	this.StartLine  = recalcObj.StartLine;
+	this.StartRange = recalcObj.StartRange;
+	
+	let logicDocument = this.GetLogicDocument();
+	if (this.Start
+		&& logicDocument
+		&& logicDocument.IsDocumentEditor()
+		&& recalcObj.startInfo)
+	{
+		let docComments = logicDocument.GetCommentsManager();
+		let comment     = docComments.Get_ById(this.CommentId);
+		
+		comment.m_oStartInfo.PageNum = recalcObj.startInfo.page;
+		comment.m_oStartInfo.X       = recalcObj.startInfo.x;
+		comment.m_oStartInfo.Y       = recalcObj.startInfo.y;
+		comment.m_oStartInfo.H       = recalcObj.startInfo.h;
+	}
 };
 ParaComment.prototype.PrepareRecalculateObject = function()
 {
@@ -1419,6 +1449,14 @@ ParaComment.prototype.MoveCursorToMark = function()
 		return;
 
 	oParagraph.MoveCursorToCommentMark(this);
+};
+ParaComment.prototype.GetAllAnnotationMarks = function(marks)
+{
+	if (!marks)
+		marks = [];
+	
+	marks.push(this);
+	return marks;
 };
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommon'] = window['AscCommon'] || {};

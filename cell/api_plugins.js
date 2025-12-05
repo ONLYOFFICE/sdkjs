@@ -43,6 +43,14 @@
 	var Api = window["Asc"]["spreadsheet_api"];
 
 	/**
+	 * @typedef {Object} comment
+	 * Comment object.
+	 * @property {string} Id - The comment ID.
+	 * @property {CommentData} Data - An object which contains the comment data.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/comment.js
+	 */
+	
+	/**
 	 * @typedef {Object} CommentData
 	 * The comment data.
 	 * @property {string} UserName - The comment author.
@@ -151,9 +159,22 @@
 		return arrResult;
 	};
 
+	/**
+	 * Removes the OLE object from the workbook by its internal ID.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @alias RemoveOleObject
+	 * @param {string} internalId - The OLE object identifier which is used to work with OLE object added to the worksheet.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveOleObject.js
+	 */
+	Api.prototype["pluginMethod_RemoveOleObject"] = function (internalId) {
+		if (this.wbModel) this.wbModel.RemoveDrawingObjectById(internalId);
+	};
+
 	const customFunctionsStorageId = "cell-custom-functions-library";
 
-	Api.prototype.registerCustomFunctionsLibrary = function(obj)
+	Api.prototype.registerCustomFunctionsLibrary = function(obj, isNotUpdate)
 	{
 		// DISABLE FOR NATIVE VERSION
 		if (window["NATIVE_EDITOR_ENJINE"])
@@ -169,6 +190,8 @@
 		if (undefined === obj)
 			obj = AscCommon.getLocalStorageItem(customFunctionsStorageId);
 
+		obj = AscCommonExcel.mergeCustomFunctions(obj, true);
+
 		if (!obj)
 			return;
 
@@ -179,17 +202,11 @@
 		{
 			for (let i = 0, len = arr.length; i < len; i++)
 			{
-				try
-				{
-					AscCommon.safePluginEval(arr[i]["value"]);
-				}
-				catch (err)
-				{
-				}
+				AscCommon.safePluginEval(arr[i]["value"]);
 			}
 		}
 
-		this.recalculateCustomFunctions();
+		this.recalculateCustomFunctions(isNotUpdate);
 	};
 
 	Api.prototype.addCustomFunctionsLibrary = function(sName, Func)
@@ -258,6 +275,7 @@
 		try
 		{
 			let res = window.localStorage.getItem(customFunctionsStorageId);
+			res = AscCommonExcel.mergeCustomFunctions(res);
 			if (!res) res = "";
 			return res;
 		}
@@ -280,9 +298,16 @@
 	{
 		try
 		{
+			if (AscCommon.History.Is_On()) {
+				AscCommon.History.Create_NewPoint();
+				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_SetCustomFunctions,
+					null, null, new AscCommonExcel.UndoRedoData_FromTo(this["pluginMethod_GetCustomFunctions"](), jsonString));
+			}
+
 			let obj = JSON.parse(jsonString);
 			AscCommon.setLocalStorageItem(customFunctionsStorageId, obj);
 
+			this.wb && this.wb.model && this.wb.model.clearFileCustomFunctions();
 			this.registerCustomFunctionsLibrary(obj);
 		}
 		catch (err)

@@ -61,6 +61,14 @@
 	};
 	BidiFlow.prototype.add = function(element, bidiType)
 	{
+		if (bidiType === AscBidi.TYPE.PM)
+		{
+			if (AscBidi.DIRECTION.L === this.direction && this.buffer.length)
+				this.end();
+			
+			bidiType = AscBidi.DIRECTION.R === this.direction ? AscBidi.TYPE.R : AscBidi.TYPE.L;
+		}
+		
 		if (bidiType === AscBidi.TYPE.B)
 			this.end();
 		

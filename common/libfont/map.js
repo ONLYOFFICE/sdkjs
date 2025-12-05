@@ -2936,6 +2936,10 @@
 
 				var _font = this.GetFontIndex(oSelect, true);
 				this.FontPickerMap[name] = _font;
+
+				if (window["onLogPickFont"])
+					window["onLogPickFont"]("FontPicker: " + name + " => " + _font.m_wsFontName);
+
 				return _font;
 			}
 		};

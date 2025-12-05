@@ -35,7 +35,7 @@
 // When merging, first we add the missing text from the second document, then from the first
 
 QUnit.dump.maxDepth = 7;
-const arrTestObjectsInfo = [
+const arrWordTestDocumentInfo = [
 	///////////////////////// -> 1 <- /////////////////////////////
 	{
 		originalDocument: [
@@ -899,9 +899,9 @@ const arrTestObjectsInfo = [
 	///////////////////////// -> 38 <- /////////////////////////////
 	{
 		originalDocument: [
-			[createParagraphInfo('Привет привет ', undefined, undefined), createParagraphInfo('привет', undefined, undefined, undefined, {comments:{start:[{start: true, id: 0}]}})], [createParagraphInfo('Привет привет привет', undefined, undefined), createParagraphInfo(undefined, undefined, undefined, undefined, {comments:{start:[{start: false, id: 0, data:{text: '123', quoteText: 'приветПривет привет привет', arrAnswers: null}}]}})]		],
+			[createParagraphInfo('Привет привет ', undefined, undefined), createParagraphInfo('привет', undefined, undefined, undefined, {comments:{start:[{start: true, id: 0}]}})], [createParagraphInfo('Привет привет привет', undefined, undefined), createParagraphInfo(undefined, undefined, undefined, undefined, {comments:{start:[{start: false, id: 0, data:{text: '123', quoteText: 'привет\r\nПривет привет привет', arrAnswers: null}}]}})]		],
 		revisedDocument : [
-			[createParagraphInfo('Привет ', undefined, undefined), createParagraphInfo('привет привет', undefined, undefined, undefined, {comments:{start:[{start: true, id: 0}]}})], [createParagraphInfo('Привет привет привет', undefined, undefined), createParagraphInfo(undefined, undefined, undefined, undefined, {comments:{start:[{start: false, id: 0, data:{text: '123', quoteText: 'привет приветПривет привет привет', arrAnswers: null}}]}})]
+			[createParagraphInfo('Привет ', undefined, undefined), createParagraphInfo('привет привет', undefined, undefined, undefined, {comments:{start:[{start: true, id: 0}]}})], [createParagraphInfo('Привет привет привет', undefined, undefined), createParagraphInfo(undefined, undefined, undefined, undefined, {comments:{start:[{start: false, id: 0, data:{text: '123', quoteText: 'привет привет\r\nПривет привет привет', arrAnswers: null}}]}})]
 		]
 	},
 	///////////////////////// -> 39 <- /////////////////////////////
@@ -1445,20 +1445,83 @@ const arrTestObjectsInfo = [
 				createParagraphInfo("вет")
 			]
 		]
-	}
+	},
+	{
+		originalDocument: [
+			[
+				createParagraphInfo("归乙方所有，甲方"),
+				createParagraphInfo("【有权无偿】", undefined, undefined, undefined, {textPr: {Bold: true}}),
+				createParagraphInfo("使用。")
+			]
+		],
+		revisedDocument: [
+			[
+				createParagraphInfo("归乙方所有，"),
+				createParagraphInfo("测试", undefined, undefined, undefined, {
+					comments: {
+						start: [{id: 0, start: true}],
+						end  : [{id: 0,data: {text: '4325', quoteText: "测试"}
+						}]
+					}
+				}),
+				createParagraphInfo("甲方", new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000)),
+				createParagraphInfo("【有权无偿】", new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000), undefined, undefined, {textPr: {Bold: true}}),
+				createParagraphInfo("使用", new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000)),
+				createParagraphInfo("。")
+			]
+		]
+	},
+	{
+		originalDocument: [
+			[
+				createParagraphInfo("培养更多优秀人才")
+			]
+		],
+		revisedDocument: [
+			[
+				createParagraphInfo("培养更多优秀人才gdfgfdgdfgfdgfdgfdgdg gdfg dfgdfgfdgfdgfdg")
+			]
+		]
+	},
+	{
+		originalDocument: [
+			[
+				createParagraphInfo("培养更培养更培养更培养更培养更培养更培养更培养更培养更")
+			]
+		],
+		revisedDocument: [
+			[
+				createParagraphInfo("培养更培养更培养更培养更培养更培养更培养更培养更培养更"),
+				createParagraphInfo("培养更", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000))
+			]
+		]
+	},
+	{
+		originalDocument: [
+			[
+				createParagraphInfo("培养更培养更培养更培养更培养更培养更培养更培养更培养更")
+			]
+		],
+		revisedDocument: [
+			[
+				createParagraphInfo("培养更", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+				createParagraphInfo("培养更培养更培养更培养更培养更培养更培养更培养更培养更")
+
+			]
+		]
+	},
 ];
 
-const arrAnswers = [
+const arrWordAnswers = [
 	/////////////////////////////////// -> 1 <- ////////////////////////////////////////////
 	{
 		finalDocument: [
-			[createParagraphInfo(undefined, {reviewType: reviewtype_Remove, userName: 'Valdemar', dateTime: 3000000})],
 			[
 				createParagraphInfo('Привет', {
 					reviewType: reviewtype_Add,
 					userName  : 'Valdemar',
 					dateTime  : 3000000
-				}), createParagraphInfo(undefined, {reviewType: reviewtype_Add, userName: 'Valdemar', dateTime: 3000000})
+				})
 			]
 		]
 	},
@@ -1471,16 +1534,15 @@ const arrAnswers = [
 	/////////////////////////////////// -> 3 <- ////////////////////////////////////////////
 	{
 		finalDocument: [
-			[createParagraphInfo('Привет', {
-				reviewType: reviewtype_Remove,
-				userName  : 'Valdemar',
-				dateTime  : 3000000
-			}), createParagraphInfo(undefined, {reviewType: reviewtype_Remove, userName: 'Valdemar', dateTime: 3000000})],
 			[createParagraphInfo('Приветище', {
 				reviewType: reviewtype_Add,
 				userName  : 'Valdemar',
 				dateTime  : 3000000
-			}), createParagraphInfo(undefined, {reviewType: reviewtype_Add, userName: 'Valdemar', dateTime: 3000000})]
+			}), createParagraphInfo('Привет', {
+				reviewType: reviewtype_Remove,
+				userName  : 'Valdemar',
+				dateTime  : 3000000
+			})]
 		]
 	},
 	/////////////////////////////////// -> 4 <- ////////////////////////////////////////////
@@ -1496,16 +1558,15 @@ const arrAnswers = [
 	/////////////////////////////////// -> 5 <- ////////////////////////////////////////////
 	{
 		finalDocument: [
-			[createParagraphInfo('Привет', {
-				reviewType: reviewtype_Remove,
-				userName  : 'Valdemar',
-				dateTime  : 3000000
-			}), createParagraphInfo(undefined, {reviewType: reviewtype_Remove, userName: 'Valdemar', dateTime: 3000000})],
 			[createParagraphInfo('Приветище', {
 				reviewType: reviewtype_Add,
 				userName  : 'John Smith',
 				dateTime  : 1000000
-			}), createParagraphInfo(undefined, {reviewType: reviewtype_Add, userName: 'Valdemar', dateTime: 3000000})]
+			}), createParagraphInfo('Привет', {
+				reviewType: reviewtype_Remove,
+				userName  : 'Valdemar',
+				dateTime  : 3000000
+			})]
 		]
 	},
 	/////////////////////////////////// -> 6 <- ////////////////////////////////////////////
@@ -2357,7 +2418,7 @@ const arrAnswers = [
 	/////////////////////////////////// -> 38 <- ////////////////////////////////////////////
 	{
 		finalDocument: [
-			[createParagraphInfo('Привет ', undefined, undefined), createParagraphInfo('привет привет', undefined, undefined, undefined, {comments:{start:[{start: true, id: 0}]}})], [createParagraphInfo('Привет привет привет', undefined, undefined), createParagraphInfo(undefined, undefined, undefined, undefined, {comments:{start:[{start: false, id: 0, data:{text: '123', quoteText: 'привет приветПривет привет привет', arrAnswers: null}}]}})]
+			[createParagraphInfo('Привет ', undefined, undefined), createParagraphInfo('привет привет', undefined, undefined, undefined, {comments:{start:[{start: true, id: 0}]}})], [createParagraphInfo('Привет привет привет', undefined, undefined), createParagraphInfo(undefined, undefined, undefined, undefined, {comments:{start:[{start: false, id: 0, data:{text: '123', quoteText: 'привет привет\r\nПривет привет привет', arrAnswers: null}}]}})]
 		]
 	},
 	/////////////////////////////////// -> 39 <- ////////////////////////////////////////////
@@ -2725,10 +2786,51 @@ const arrAnswers = [
 				createParagraphInfo("вет")
 			]
 		]
-	}
+	},
+	{
+		finalDocument: [
+			[
+				createParagraphInfo("归乙方所有，"),
+				createParagraphInfo("测试", new CCreatingReviewInfo('Valdemar', reviewtype_Add, 3000000), undefined, undefined, {
+					comments: {
+						start: [{id: 0, start: true}],
+						end  : [{id: 0, data: {text: '4325', quoteText: "测试"}}]
+					}
+				}),
+				createParagraphInfo("甲方", new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000)),
+				createParagraphInfo("【有权无偿】", new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000), undefined, undefined, {textPr: {Bold: true}}),
+				createParagraphInfo("使用", new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000)),
+				createParagraphInfo("。")
+			]
+		]
+	},
+	{
+		finalDocument: [
+			[
+				createParagraphInfo("培养更多优秀人才"),
+				createParagraphInfo("gdfgfdgdfgfdgfdgfdgdg gdfg dfgdfgfdgfdgfdg", new CCreatingReviewInfo('Valdemar', reviewtype_Add, 3000000)),
+			]
+		]
+	},
+	{
+		finalDocument: [
+			[
+				createParagraphInfo("培养更培养更培养更培养更培养更培养更培养更培养更培养更"),
+				createParagraphInfo("培养更", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000))
+			]
+		]
+	},
+	{
+		finalDocument: [
+			[
+				createParagraphInfo("培养更", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+				createParagraphInfo("培养更培养更培养更培养更培养更培养更培养更培养更培养更")
+			]
+		]
+	},
 ];
 
-const comments = [
+const arrWordComments = [
 	'Merging an empty document and a document with a non-reviewed paragraph',
 	'Merging empty documents',
 	'Merging documents with different paragraphs without review',
@@ -2771,9 +2873,315 @@ const comments = [
 	'Merging two documents with comment'
 ];
 
-function merge(oMainDocument, oRevisedDocument, fCallback)
+const arrSymbolDocumentTestInfo = [
+	{
+		originalDocument: [
+			[
+				createParagraphInfo("培养更培养更培养更培养更培养更培养更培养更培养更培养更cxz")
+			]
+		],
+		revisedDocument: [
+			[
+			createParagraphInfo("培养更培养更培养更培养更培养更培养更培养更培养更培养更"),
+			createParagraphInfo("培养更", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000))]
+		]
+	},
+	{
+		originalDocument: [
+			[
+				createParagraphInfo("依法向", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+				createParagraphInfo("乙方", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000)),
+				createParagraphInfo("乙乙方乙方", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000), new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+				createParagraphInfo("原告所在地具有管辖权的人民法院起诉", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+				createParagraphInfo("依法向乙方", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000)),
+				createParagraphInfo("甲方", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000), new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+				createParagraphInfo("所在地具有管辖权的人民法院起诉", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000)),
+				createParagraphInfo("。")
+			]
+		],
+		revisedDocument: [
+			[
+				createParagraphInfo("依法向", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+				createParagraphInfo("乙方", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000)),
+				createParagraphInfo("乙乙方乙方", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000),  new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+				createParagraphInfo("原告", new CCreatingReviewInfo("User1", reviewtype_Remove, 1000), new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+				createParagraphInfo("乙方", new CCreatingReviewInfo("User1", reviewtype_Add, 1000)),
+				createParagraphInfo("所在地具有管辖权的人民法院起诉", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+				createParagraphInfo("依法向乙方", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000)),
+				createParagraphInfo("甲方", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000), new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+				createParagraphInfo("所在地具有管辖权的人民法院起诉", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000)),
+				createParagraphInfo("。"),
+				]
+		]
+	},
+	{
+		originalDocument: [
+			[
+				createParagraphInfo("421421423241234124 214234314321432 241124123423141234")
+			]
+		],
+		revisedDocument: [
+			[
+				createParagraphInfo("421421423241234124 21423431214321432 241124123423141234")
+			]
+		]
+	},
+	{
+		originalDocument: [
+			[
+				createParagraphInfo("421421423241234124 214234314321432 241124123423141234")
+			]
+		],
+		revisedDocument: [
+			[
+				createParagraphInfo("421421423241234124 21423431"),
+				createParagraphInfo("21", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+				createParagraphInfo("4321432 241124123423141234"),
+			]
+		]
+	},
+	{
+		originalDocument: [
+			[
+				createParagraphInfo("Hello hello hello")
+			]
+		],
+		revisedDocument: [
+			[
+				createParagraphInfo("Hello hello hellok k")
+			]
+		]
+	},
+	{
+		originalDocument: [
+			[
+				createParagraphInfo("Привет привет "),
+				createParagraphInfo("прив", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SubScript}}),
+				createParagraphInfo("ет", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SuperScript}}),
+			]
+		],
+		revisedDocument: [
+			[
+				createParagraphInfo("Привет привет п", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+				createParagraphInfo("ри", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000), undefined, undefined, {textPr: {Bold: true}}),
+				createParagraphInfo("вет", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000), undefined, undefined, {textPr: {Bold: true, Italic: true}}),
+				createParagraphInfo("ик", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000), undefined, undefined, {textPr: {Italic: true}}),
+			]
+		]
+	},
+	{
+		originalDocument: [
+			[
+				createParagraphInfo("Привет привет "),
+				createParagraphInfo("прив", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SubScript}}),
+				createParagraphInfo("ет", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SuperScript}}),
+			]
+		],
+		revisedDocument: [
+			[
+				createParagraphInfo("Привет привет п"),
+				createParagraphInfo("ри", undefined, undefined, undefined, {textPr: {Bold: true}}),
+				createParagraphInfo("вет", undefined, undefined, undefined, {textPr: {Bold: true, Italic: true}}),
+				createParagraphInfo("ик", undefined, undefined, undefined, {textPr: {Italic: true}}),
+			]
+		]
+	},
+	{
+		originalDocument: [
+			[
+				createParagraphInfo("Привет привет привет")
+			]
+		],
+		revisedDocument: [
+			[
+				createParagraphInfo("Привет пр", undefined, undefined, {start: [{id: 0, name: "s1"}], end: [{id: 1, name: "s2"}]}),
+				createParagraphInfo("и", undefined, undefined, {end: [{id: 0}]}),
+				createParagraphInfo("в", undefined, undefined, {end: [{id: 3, name: "s4"}]}),
+				createParagraphInfo("ет", undefined, undefined, {end: [{id: 1}]}),
+				createParagraphInfo("и", undefined, undefined, {end: [{id: 2, name: "s3"}, {id: 2}]}),
+				createParagraphInfo("к"),
+				createParagraphInfo(" при", undefined, undefined, {end: [{id: 3}]}),
+				createParagraphInfo("вет"),
+			]
+		]
+	},
+	{
+		originalDocument: [
+			[
+				createParagraphInfo("Q"),
+				createParagraphInfo("wer", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SuperScript}}),
+				createParagraphInfo("tyuiop", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SuperScript, Bold: true}}),
+				createParagraphInfo("asdfghjklzxcvb", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SuperScript, Bold: true, Italic: true}}),
+				createParagraphInfo("nmqwertyuiopasdfghjklzxcvbnmqwert", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SubScript, Bold: true, Italic: true}}),
+				createParagraphInfo("yuioas", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SubScript, Bold: true}}),
+				createParagraphInfo("dfghj", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SubScript}}),
+				createParagraphInfo("kl"),
+			]
+		],
+		revisedDocument: [
+			[
+				createParagraphInfo("Q"),
+				createParagraphInfo("wereeeee", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SuperScript}}),
+				createParagraphInfo("tyuiop", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SuperScript, Bold: true}}),
+				createParagraphInfo("asdfghjklzqwefffffdsg", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SuperScript, Bold: true, Italic: true}}),
+				createParagraphInfo("fghjklzxcvbnmqwerte", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SubScript, Bold: true, Italic: true}}),
+				createParagraphInfo("yeeuioeeeeeas", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SubScript, Bold: true}}),
+				createParagraphInfo("dfghj", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SubScript}}),
+				createParagraphInfo("kl"),
+			]
+		]
+	},
+	// todo
+	// {
+	// 	originalDocument: [
+	// 		[
+	// 			createParagraphInfo("Привет привет", undefined, undefined, {start:[{id: 0, name: "s1"}], end: [{id: 0}]}),
+	// 			createParagraphInfo(" привет"),
+	// 		]
+	// 	],
+	// 	revisedDocument: [
+	// 		[
+	// 			createParagraphInfo("Привет приве", undefined, undefined, {start: [{id: 0, name: "s1"}, {id:1, name: "s2"}], end: [{id: 2, name: "s3"}]}),
+	// 			createParagraphInfo("т", undefined, undefined, {end: [{id: 0}]}),
+	// 			createParagraphInfo("ик", undefined, undefined, {end: [{id: 1}]}),
+	// 			createParagraphInfo("и приве", undefined, undefined, {end:[{id: 2}]}),
+	// 			createParagraphInfo("т"),
+	// 		]
+	// 	]
+	// },
+];
+const arrSymbolAnswers = [
+	{
+		finalDocument: [
+			[
+			createParagraphInfo("培养更培养更培养更培养更培养更培养更培养更培养更培养更"),
+			createParagraphInfo("培养更", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+			createParagraphInfo("cxz", new CCreatingReviewInfo("Valdemar", reviewtype_Remove, 3000000))]
+		]
+	},
+	{
+		finalDocument: [
+			[
+				createParagraphInfo("依法向", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+				createParagraphInfo("乙方", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000)),
+				createParagraphInfo("乙乙方乙方", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000),  new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+				createParagraphInfo("原告", new CCreatingReviewInfo("User1", reviewtype_Remove, 1000), new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+				createParagraphInfo("乙方", new CCreatingReviewInfo("User1", reviewtype_Add, 1000)),
+				createParagraphInfo("所在地具有管辖权的人民法院起诉", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+				createParagraphInfo("依法向乙方", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000)),
+				createParagraphInfo("甲方", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000), new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+				createParagraphInfo("所在地具有管辖权的人民法院起诉", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000)),
+				createParagraphInfo("。"),
+			]
+		]
+	},
+	{
+		finalDocument: [
+			[
+				createParagraphInfo("421421423241234124 2142343"),
+				createParagraphInfo("12", new CCreatingReviewInfo("Valdemar", reviewtype_Add, 3000000)),
+				createParagraphInfo("14321432 241124123423141234"),
+			]
+		]
+	},
+	{
+		finalDocument: [
+			[
+				createParagraphInfo("421421423241234124 21423431"),
+				createParagraphInfo("21", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+				createParagraphInfo("4321432 241124123423141234"),
+			]
+		]
+	},
+	{
+		finalDocument: [
+			[
+				createParagraphInfo("Hello hello "),
+				createParagraphInfo("hellok k", new CCreatingReviewInfo("Valdemar", reviewtype_Add, 3000000)),
+				createParagraphInfo("hello", new CCreatingReviewInfo("Valdemar", reviewtype_Remove, 3000000)),
+			]
+		]
+	},
+	{
+		finalDocument: [
+			[
+				createParagraphInfo("Привет привет п", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+				createParagraphInfo("ри", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000), undefined, undefined, {textPr: {Bold: true}}),
+				createParagraphInfo("вет", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000), undefined, undefined, {textPr: {Bold: true, Italic: true}}),
+				createParagraphInfo("ик", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000), undefined, undefined, {textPr: {Italic: true}}),
+			]
+		]
+	},
+	{
+		finalDocument: [
+			[
+				createParagraphInfo("Привет привет п"),
+				createParagraphInfo("ри", undefined, undefined, undefined, {textPr: {Bold: true}}),
+				createParagraphInfo("вет", undefined, undefined, undefined, {textPr: {Bold: true, Italic: true}}),
+				createParagraphInfo("ик", new CCreatingReviewInfo("Valdemar", reviewtype_Add, 3000000), undefined, undefined, {textPr: {Italic: true}}),
+			]
+		]
+	},
+	{
+		finalDocument: [
+			[
+				createParagraphInfo("Привет пр", undefined, undefined, {start: [{id: 0, name: "s1"}], end: [{id: 1, name: "s2"}]}),
+				createParagraphInfo("и", undefined, undefined, {end: [{id: 0}]}),
+				createParagraphInfo("в", undefined, undefined, {end: [{id: 3, name: "s4"}]}),
+				createParagraphInfo("ет", undefined, undefined, {end: [{id: 1}]}),
+				createParagraphInfo("и", new CCreatingReviewInfo("Valdemar", reviewtype_Add, 3000000), undefined, {end: [{id: 2, name: "s3"}, {id: 2}]}),
+				createParagraphInfo("к", new CCreatingReviewInfo("Valdemar", reviewtype_Add, 3000000)),
+				createParagraphInfo(" при", undefined, undefined, {end: [{id: 3}]}),
+				createParagraphInfo("вет"),
+			]
+		]
+	},
+	{
+		finalDocument: [
+			[
+				createParagraphInfo("Q"),
+				createParagraphInfo("wer", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SuperScript}}),
+				createParagraphInfo("eeeee", new CCreatingReviewInfo("Valdemar", reviewtype_Add, 3000000), undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SuperScript}}),
+				createParagraphInfo("tyuiop", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SuperScript, Bold: true}}),
+				createParagraphInfo("asdfghjklz", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SuperScript, Bold: true, Italic: true}}),
+				createParagraphInfo("xcvb", new CCreatingReviewInfo("Valdemar", reviewtype_Remove, 3000000), undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SuperScript, Bold: true, Italic: true}}),
+				createParagraphInfo("nm", new CCreatingReviewInfo("Valdemar", reviewtype_Remove, 3000000), undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SubScript, Bold: true, Italic: true}}),
+				createParagraphInfo("qwe", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SuperScript, Bold: true, Italic: true}}),
+				createParagraphInfo("fffffd", new CCreatingReviewInfo("Valdemar", reviewtype_Add, 3000000), undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SuperScript, Bold: true, Italic: true}}),
+				createParagraphInfo("rtyuiopa", new CCreatingReviewInfo("Valdemar", reviewtype_Remove, 3000000), undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SubScript, Bold: true, Italic: true}}),
+				createParagraphInfo("s", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SuperScript, Bold: true, Italic: true}}),
+				createParagraphInfo("g", new CCreatingReviewInfo("Valdemar", reviewtype_Add, 3000000), undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SuperScript, Bold: true, Italic: true}}),
+				createParagraphInfo("d", new CCreatingReviewInfo("Valdemar", reviewtype_Remove,3000000), undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SubScript, Bold: true, Italic: true}}),
+				createParagraphInfo("fghjklzxcvbnmqwert", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SubScript, Bold: true, Italic: true}}),
+				createParagraphInfo("e", new CCreatingReviewInfo("Valdemar", reviewtype_Add, 3000000), undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SubScript, Bold: true, Italic: true}}),
+				createParagraphInfo("y", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SubScript, Bold: true}}),
+				createParagraphInfo("ee", new CCreatingReviewInfo("Valdemar", reviewtype_Add, 3000000), undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SubScript, Bold: true}}),
+				createParagraphInfo("uio", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SubScript, Bold: true}}),
+				createParagraphInfo("eeeee", new CCreatingReviewInfo("Valdemar", reviewtype_Add, 3000000), undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SubScript, Bold: true}}),
+				createParagraphInfo("as", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SubScript, Bold: true}}),
+				createParagraphInfo("dfghj", undefined, undefined, undefined, {textPr: {VertAlign: AscCommon.vertalign_SubScript}}),
+				createParagraphInfo("kl"),
+			]
+		]
+	},
+	// todo
+	// {
+	// 	finalDocument: [
+	// 		[
+	// 			createParagraphInfo("Привет приве", undefined, undefined, {start: [{id: 0, name: "s1"}, {id:1, name: "s2"}], end: [{id: 2, name: "s3"}]}),
+	// 			createParagraphInfo("т", undefined, undefined, {end: [{id: 0}]}),
+	// 			createParagraphInfo("ик", new CCreatingReviewInfo("Valdemar", reviewtype_Add, 3000000), undefined, {end: [{id: 1}]}),
+	// 			createParagraphInfo("и", new CCreatingReviewInfo("Valdemar", reviewtype_Add, 3000000)),
+	// 			createParagraphInfo(" приве", undefined, undefined, {end:[{id: 2}]}),
+	// 			createParagraphInfo("т"),
+	// 		]
+	// 	]
+	// },
+];
+const arrSymbolComments = [];
+function merge(oMainDocument, oRevisedDocument, options, fCallback)
 {
-	const oMerge = new AscCommonWord.CDocumentMerge(oMainDocument, oRevisedDocument, new AscCommonWord.ComparisonOptions());
+	const oMerge = new AscCommonWord.CDocumentMerge(oMainDocument, oRevisedDocument, options);
 	const fOldMergeCallback = oMerge.applyLastMergeCallback;
 	oMerge.applyLastMergeCallback = function ()
 	{
@@ -2794,18 +3202,37 @@ $(function ()
 
 	QUnit.module("Unit-tests for merge documents feature");
 
-	QUnit.test("Test", function (assert)
+	QUnit.test("Test word document combine", function (assert)
 	{
 		AscFormat.ExecuteNoHistory(function ()
 		{
-			for (let i = 0; i < arrTestObjectsInfo.length; i += 1)
+			for (let i = 0; i < arrWordTestDocumentInfo.length; i += 1)
 			{
-				const oTestInformation = arrTestObjectsInfo[i];
-				merge(readMainDocument(oTestInformation.originalDocument), readRevisedDocument(oTestInformation.revisedDocument), function ()
+				const oTestInformation = arrWordTestDocumentInfo[i];
+				merge(readMainDocument(oTestInformation.originalDocument), readRevisedDocument(oTestInformation.revisedDocument), new AscCommonWord.ComparisonOptions(), function ()
 				{
 					const oResultDocument = mockEditor.WordControl.m_oLogicDocument;
 					const oResultObject = getTestObject(oResultDocument);
-					assert.deepEqual(oResultObject, getTestObject(readMainDocument(arrAnswers[i].finalDocument)), comments[i]);
+					assert.deepEqual(oResultObject, getTestObject(readMainDocument(arrWordAnswers[i].finalDocument)), arrWordComments[i]);
+				});
+			}
+		}, this, []);
+	});
+
+	QUnit.test("Test symbol document combine", function (assert)
+	{
+		AscFormat.ExecuteNoHistory(function ()
+		{
+			for (let i = 0; i < arrSymbolDocumentTestInfo.length; i += 1)
+			{
+				const oOptions = new AscCommonWord.ComparisonOptions();
+				oOptions.putWords(false);
+				const oTestInformation = arrSymbolDocumentTestInfo[i];
+				merge(readMainDocument(oTestInformation.originalDocument), readRevisedDocument(oTestInformation.revisedDocument), oOptions, function ()
+				{
+					const oResultDocument = mockEditor.WordControl.m_oLogicDocument;
+					const oResultObject = getTestObject(oResultDocument);
+					assert.deepEqual(oResultObject, getTestObject(readMainDocument(arrSymbolAnswers[i].finalDocument)), arrSymbolComments[i]);
 				});
 			}
 		}, this, []);

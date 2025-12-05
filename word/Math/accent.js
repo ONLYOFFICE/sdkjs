@@ -762,6 +762,7 @@ CAccent.prototype.GetTextOfElement = function(oMathText)
 	return oMathText;
 };
 
+
 /**
  *
  * @param CMathMenuAccent

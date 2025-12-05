@@ -51,7 +51,11 @@
 
   function GetParagraphText(paragraph)
   {
-    return paragraph.GetText({ParaEndToSpace : false});
+    return paragraph.GetText({
+		ParaSeparator : "",
+		TableCellSeparator : "",
+		TableRowSeparator : "",
+	});
   }
 
 	function EnterText(text)

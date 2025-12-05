@@ -776,7 +776,7 @@
 		}
 	};
 
-	CMobileTouchManagerBase.prototype.checkTouchEvent = function(e)
+	CMobileTouchManagerBase.prototype.checkTouchEvent = function(e, checkPen)
 	{
 		if (!e)
 			return false;
@@ -786,7 +786,7 @@
 			if (this.isTouchingInProcess())
 				return false;
 
-			if (e.pointerType === "touch")
+			if (e.pointerType === "touch" || (checkPen === true && e.pointerType === "pen"))
 			{
 				this.desktopTouchState = true;
 
@@ -805,7 +805,8 @@
 					}
 					case AscCommon.c_oEditorId.Spreadsheet:
 					{
-						if (this.Api.isStartAddShape === true)
+						if (this.Api.isStartAddShape === true ||
+							this.Api.isInkDrawerOn())
 						{
 							this.desktopTouchState = false;
 						}
@@ -813,7 +814,17 @@
 					}
 					case AscCommon.c_oEditorId.Presentation:
 					{
-						if (this.Api.isStartAddShape === true)
+						if (this.Api.isStartAddShape === true ||
+							this.Api.isInkDrawerOn())
+						{
+							this.desktopTouchState = false;
+						}
+						break;
+					}
+					case AscCommon.c_oEditorId.Visio:
+					{
+						if (this.Api.isStartAddShape === true ||
+							this.Api.isInkDrawerOn())
 						{
 							this.desktopTouchState = false;
 						}
@@ -1337,7 +1348,9 @@
 	CMobileTouchManagerBase.prototype.Destroy = function()
 	{
 		var _scroller = document.getElementById(this.iScrollElement);
-		this.delegate.GetScrollerParent().removeChild(_scroller);
+		if (_scroller) {
+			this.delegate.GetScrollerParent().removeChild(_scroller);
+		}
 
 		if (this.iScroll != null)
 			this.iScroll.destroy();
@@ -1357,7 +1370,7 @@
 			that.ContextMenuShowTimerId = -1;
 			var _pos = that.delegate.GetContextMenuPosition();
 			if (AscCommon.g_inputContext) AscCommon.g_inputContext.isGlobalDisableFocus = true;
-			that.Api.sendEvent("asc_onShowPopMenu", _pos.X, _pos.Y, (_pos.Mode > 1) ? true : false);
+			that.Api.sendEvent("asc_onShowPopMenu", _pos.X, _pos.Y, _pos.Mode);
 			if (AscCommon.g_inputContext) AscCommon.g_inputContext.isGlobalDisableFocus = false;
 		}, 500);
 	};
@@ -2698,10 +2711,12 @@
 				}
 			}
 			if (isShow)
-				AscCommon.g_inputContext.HtmlArea.focus();
+			{
+				AscCommon.g_inputContext.showKeyboard();
 
-			if (this.isCheckFocusOnClick)
-				this.isCheckFocusOnClickValue = true;
+				if (this.isCheckFocusOnClick)
+					this.isCheckFocusOnClickValue = true;
+			}
 		}
 	};
 
@@ -2716,7 +2731,7 @@
 		if (this.isCheckFocusOnClickValue === true)
 		{
 			if (AscCommon.g_inputContext)
-				AscCommon.g_inputContext.HtmlArea.focus();
+				AscCommon.g_inputContext.showKeyboard();
 			this.isCheckFocusOnClickValue = false;
 		}
 
@@ -2739,6 +2754,15 @@
 			this.iScroll._execEvent('scroll');
 		}
 	};
+
+
+	AscCommon["MobileTouchContextMenuType"] = AscCommon.MobileTouchContextMenuType;
+	let menuType = AscCommon.MobileTouchContextMenuType;
+	menuType["None"] = menuType.None;
+	menuType["Target"] = menuType.Target;
+	menuType["Select"] = menuType.Select;
+	menuType["Object"] = menuType.Object;
+	menuType["Slide"] = menuType.Slide;
 
 	//--------------------------------------------------------export----------------------------------------------------
 	AscCommon.CMobileDelegateSimple = CMobileDelegateSimple;

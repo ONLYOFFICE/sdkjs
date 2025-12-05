@@ -345,12 +345,13 @@ CDocumentContentBase.prototype.private_ReindexContent = function(StartPos)
 		this.ReindexStartPos = StartPos;
 };
 /**
- * Специальная функия для рассчета пустого параграфа с разрывом секции.
+ * Специальная функция для расчета пустого параграфа с разрывом секции.
  * @param Element
  * @param PrevElement
  * @param PageIndex
  * @param ColumnIndex
  * @param ColumnsCount
+ * @returns {number} recalcResult
  */
 CDocumentContentBase.prototype.private_RecalculateEmptySectionParagraph = function(Element, PrevElement, PageIndex, ColumnIndex, ColumnsCount)
 {
@@ -382,6 +383,7 @@ CDocumentContentBase.prototype.private_RecalculateEmptySectionParagraph = functi
 	Element.Lines[0].Bottom        = LastVisibleBounds.H;
 	Element.Pages[0].Bounds.Top    = ___Y;
 	Element.Pages[0].Bounds.Bottom = ___Y + LastVisibleBounds.H;
+	return Element.Get_SectionPr() ? recalcresult_NextSection : recalcresult_NextElement;
 };
 /**
  * Передвигаем курсор (от текущего положения) к началу ссылки на сноску
@@ -543,7 +545,7 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 					if (oElement && oElement.IsParagraph() && (nIndex < EndPos || this.Content[nIndex].IsSelectionToEnd()))
 					{
 						var oPrChange   = oElement.GetDirectParaPr();
-						var oReviewInfo = new CReviewInfo();
+						var oReviewInfo = new AscWord.ReviewInfo();
 						oReviewInfo.Update();
 
 						oElement.SetDirectParaPr(oDirectParaPr);
@@ -635,8 +637,21 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 					}
 				}
 			}
-
-			this.CurPos.ContentPos = StartPos;
+			
+			if (StartPos < this.Content.length)
+			{
+				this.CurPos.ContentPos = StartPos;
+			}
+			else if (this.Content.length > 0)
+			{
+				this.CurPos.ContentPos = this.Content.length - 1;
+				this.Content[this.CurPos.ContentPos].MoveCursorToEndPos();
+			}
+			else
+			{
+				// This shouldn't happen
+				this.CurPos.ContentPos = 0;
+			}
 		}
 		else
 		{
@@ -662,8 +677,13 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 
 				if (type_Paragraph === EndType || type_BlockLevelSdt === EndType)
 				{
+					if (type_Paragraph === EndType)
+						bEndEmpty = this.Content[EndPos].IsSelectionToEnd();
+					
 					this.Content[EndPos].Remove(1, true);
-					bEndEmpty = this.Content[EndPos].IsEmpty()
+					
+					if (type_BlockLevelSdt === EndType)
+						bEndEmpty = this.Content[EndPos].IsEmpty()
 				}
 				else if (type_Table === EndType)
 				{
@@ -925,7 +945,7 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 								{
 									var oParaPr   = this.Content[nCurContentPos].GetDirectParaPr();
 									var oPrChange = this.Content[nCurContentPos + 1].GetDirectParaPr();
-									var oReviewInfo = new CReviewInfo();
+									var oReviewInfo = new AscWord.ReviewInfo();
 									oReviewInfo.Update();
 
 									this.Content[nCurContentPos + 1].SetDirectParaPr(oParaPr);
@@ -1020,7 +1040,7 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 								{
 									var oParaPr   = this.Content[nCurContentPos - 1].GetDirectParaPr();
 									var oPrChange = this.Content[nCurContentPos].GetDirectParaPr();
-									var oReviewInfo = new CReviewInfo();
+									var oReviewInfo = new AscWord.ReviewInfo();
 									oReviewInfo.Update();
 
 									this.Content[nCurContentPos].SetDirectParaPr(oParaPr);
@@ -1242,7 +1262,9 @@ CDocumentContentBase.prototype.private_AddContentControl = function(nContentCont
 				oSdt.SetPlaceholder(c_oAscDefaultPlaceholderName.Text);
 
 				var oLogicDocument = this instanceof CDocument ? this : this.LogicDocument;
+				let preventPreDelete = oLogicDocument.PreventPreDelete;
 				oLogicDocument.RemoveCommentsOnPreDelete = false;
+				oLogicDocument.PreventPreDelete = true;
 
 				var nStartPos = this.Selection.StartPos;
 				var nEndPos   = this.Selection.EndPos;
@@ -1251,12 +1273,12 @@ CDocumentContentBase.prototype.private_AddContentControl = function(nContentCont
 					nEndPos   = this.Selection.StartPos;
 					nStartPos = this.Selection.EndPos;
 				}
-
-				for (var nIndex = nEndPos; nIndex >= nStartPos; --nIndex)
+				
+				for (let nIndex = nEndPos; nIndex >= nStartPos; --nIndex)
 				{
-					var oElement = this.Content[nIndex];
+					let oElement = this.Content[nIndex];
+					this.Remove_FromContent(nIndex, 1, false);
 					oSdt.Content.Add_ToContent(0, oElement);
-					this.Remove_FromContent(nIndex, 1);
 					oElement.SelectAll(1);
 				}
 
@@ -1265,12 +1287,13 @@ CDocumentContentBase.prototype.private_AddContentControl = function(nContentCont
 				oSdt.Content.Selection.StartPos = 0;
 				oSdt.Content.Selection.EndPos   = oSdt.Content.GetElementsCount() - 1;
 
-				this.Add_ToContent(nStartPos, oSdt);
+				this.Add_ToContent(nStartPos, oSdt, false);
 				this.Selection.StartPos = nStartPos;
 				this.Selection.EndPos   = nStartPos;
 				this.CurPos.ContentPos  = nStartPos;
 
 				oLogicDocument.RemoveCommentsOnPreDelete = true;
+				oLogicDocument.PreventPreDelete = preventPreDelete;
 				return oSdt;
 			}
 		}
@@ -1443,7 +1466,7 @@ CDocumentContentBase.prototype.SetSelectionByContentPositions = function(StartDo
 
 	if (this.Parent && this.LogicDocument)
 	{
-		this.Parent.Set_CurrentElement(false, this.Get_StartPage_Absolute(), this);
+		this.Parent.Set_CurrentElement(false, this.GetAbsoluteStartPage(), this);
 		this.LogicDocument.Selection.Use   = true;
 		this.LogicDocument.Selection.Start = false;
 	}
@@ -1766,6 +1789,41 @@ CDocumentContentBase.prototype.SelectNumbering = function(oNumPr, oPara)
 	else
 	{
 		oTopDocContent.SelectNumbering(oNumPr, oPara);
+	}
+};
+/**
+ * Select numbering in a single paragraph
+ * @param para {Paragraph} - current paragraph
+ */
+CDocumentContentBase.prototype.SelectNumberingSingleParagraph = function(para)
+{
+	let topDocContent = this.GetTopDocumentContent();
+	if (topDocContent === this)
+	{
+		this.RemoveSelection();
+		
+		para.Document_SetThisElementCurrent(false);
+		
+		this.Selection.Use      = true;
+		this.Selection.Flag     = selectionflag_Numbering;
+		this.Selection.StartPos = this.CurPos.ContentPos;
+		this.Selection.EndPos   = this.CurPos.ContentPos;
+		this.Selection.Data     = {
+			Paragraphs : [para],
+			CurPara    : para
+		};
+		
+		para.SelectNumbering(true, true);
+
+		this.DrawingDocument.SelectEnabled(true);
+		
+		let logicDocument = this.GetLogicDocument();
+		logicDocument.UpdateSelection();
+		logicDocument.UpdateInterface();
+	}
+	else
+	{
+		topDocContent.SelectNumberingSingleParagraph(para);
 	}
 };
 /**
@@ -2562,7 +2620,6 @@ CDocumentContentBase.prototype.OnTextPrChange = function()
 		shape.OnTextPrChange();
 	}
 };
-
 CDocumentContentBase.prototype.GetCalculatedTextPr = function()
 {
 	var oTextPr = new CTextPr();
@@ -2908,4 +2965,102 @@ CDocumentContentBase.prototype.GetCurrentRun = function()
 		return null;
 	
 	return run;
+};
+CDocumentContentBase.prototype.GetText = function(pr)
+{
+	let text = "";
+	for (let i = 0; i < this.Content.length; ++i)
+	{
+		if (this.Content[i].GetText)
+			text += this.Content[i].GetText(pr);
+	}
+	
+	return text;
+};
+CDocumentContentBase.prototype.GetCurrentContentControl = function()
+{
+	let selectedInfo = this.GetSelectedElementsInfo({SkipTOC : true});
+	
+	let inlineSdt = selectedInfo.GetInlineLevelSdt();
+	if (inlineSdt)
+	{
+		if (inlineSdt.IsLabeledCheckBox())
+		{
+			let checkBox = inlineSdt.GetInnerCheckBox();
+			inlineSdt = checkBox ? checkBox : inlineSdt;
+		}
+		return inlineSdt;
+	}
+	
+	let blockSdt = selectedInfo.GetBlockLevelSdt();
+	return blockSdt ? blockSdt : null;
+};
+CDocumentContentBase.prototype.GetAllSectPrParagraphs = function(paragraphs)
+{
+	if (!paragraphs)
+		paragraphs = [];
+	
+	for (let i = 0; i < this.Content.length; ++i)
+	{
+		this.Content[i].GetAllSectPrParagraphs(paragraphs);
+	}
+	
+	return paragraphs;
+};
+CDocumentContentBase.prototype.IsEmptySectionFlowParagraph = function(index)
+{
+	if (0 === index || index > this.Content.length)
+		return false;
+	
+	let element = this.Content[index];
+	if (!element.IsParagraph() || !element.IsEmpty() || !element.Get_SectionPr())
+		return false;
+	
+	let prevElement = this.Content[index - 1];
+	return (!prevElement.IsParagraph() || !prevElement.Get_SectionPr());
+};
+CDocumentContentBase.prototype.IsTableCellContent = function()
+{
+	return false;
+};
+CDocumentContentBase.prototype.IsAllowSectionBreak = function()
+{
+	return (!this.IsTableCellContent() && (this.GetLogicDocument() === this.GetTopDocumentContent()));
+};
+/**
+ * Данный метод должен вызываться ПОСЛЕ добавления элементов в контент (выставление родительского, индексации и прочее)
+ * @param {AscWord.CDocumentContentElementBase[]} items
+ */
+CDocumentContentBase.prototype.UpdateSectionsAfterAdd = function(items)
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument
+		|| !logicDocument.IsDocumentEditor()
+		|| !this.IsUseInDocument()
+		|| this.IsTableCellContent()
+		|| this.GetTopDocumentContent() !== logicDocument)
+		return;
+	
+	logicDocument.GetSections().UpdateOnAdd(items);
+};
+/**
+ * Данный метод должен вызываться ДО удаления элементов из контента
+ * @param {AscWord.CDocumentContentElementBase[]} items
+ * @param {boolean} checkHdrFtr
+ */
+CDocumentContentBase.prototype.UpdateSectionsBeforeRemove = function(items, checkHdrFtr)
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument
+		|| !logicDocument.IsDocumentEditor()
+		|| !this.IsUseInDocument()
+		|| this.IsTableCellContent()
+		|| this.GetTopDocumentContent() !== logicDocument)
+		return;
+	
+	logicDocument.GetSections().UpdateOnRemove(items, checkHdrFtr);
+};
+CDocumentContentBase.prototype.IsFirstOnDocumentPage = function(curPage)
+{
+	return false;
 };

@@ -122,8 +122,9 @@
 
 		// параметры для показа/скрытия виртуальной клавиатуры.
 		this.isHardCheckKeyboard = AscCommon.AscBrowser.isSailfish;
+
 		this.virtualKeyboardClickTimeout = -1;
-		this.virtualKeyboardClickPrevent = false;
+		this.virtualKeyboardReadOnly_ShowKeyboard = AscCommon.AscBrowser.isAndroid && AscCommon.AscBrowser.isMozilla;
 
 		// для сброса текста при фокусе
 		this.checkClearTextOnFocusTimerId = -1;
@@ -191,7 +192,15 @@
 				case 36: 	// home
 				case 27:	// escape
 				{
-					window.g_asc_plugins.onPluginEvent2("onKeyDown", { "keyCode" : e.keyCode }, this.isInputHelpers);
+					window.g_asc_plugins.onPluginEvent2("onKeyDown", {
+						"keyCode" : e.keyCode,
+						"key" : e.key,
+						"code" : e.code,
+						"altKey" : e.altKey,
+						"ctrlKey" : e.ctrlKey,
+						"metaKey" : e.metaKey,
+						"shiftKey" : e.shiftKey
+					}, this.isInputHelpers);
 
 					AscCommon.stopEvent(e);
 					return false;
@@ -199,6 +208,18 @@
 				default:
 					break;
 			}
+		}
+		else
+		{
+			window.g_asc_plugins.onPluginEvent("onKeyDown", {
+				"keyCode" : e.keyCode,
+				"key" : e.key,
+				"code" : e.code,
+				"altKey" : e.altKey,
+				"ctrlKey" : e.ctrlKey,
+				"metaKey" : e.metaKey,
+				"shiftKey" : e.shiftKey
+			});
 		}
 
 		if (null != this.nativeFocusElement)
@@ -828,7 +849,7 @@
 		this.clearAreaValue();
 
 		if (isFromFocus !== true)
-			focusHtmlElement(this.HtmlArea);
+			focusHtmlElement(this.getFocusElement());
 
 		if (window.g_asc_plugins)
 			window.g_asc_plugins.onPluginEvent("onInputHelperClear");
@@ -881,7 +902,7 @@
 			}
 
 			if (!this.isGlobalDisableFocus)
-				focusHtmlElement(this.HtmlArea);
+				focusHtmlElement(this.getFocusElement());
 		}
 	};
 	CTextInputPrototype.externalEndCompositeInput = function()
@@ -1125,8 +1146,8 @@
 	{
 		if (this.Api.asc_IsFocus() && !AscCommon.g_clipboardBase.IsFocus() && !AscCommon.g_clipboardBase.IsWorking())
 		{
-			if (document.activeElement != this.HtmlArea)
-				focusHtmlElement(this.HtmlArea);
+			if (document.activeElement != this.getFocusElement())
+				focusHtmlElement(this.getFocusElement());
 		}
 	};
 	CTextInputPrototype.moveAccurate = function(x, y)
@@ -1189,7 +1210,9 @@
 		if (AscCommon.AscBrowser.isAndroid)
 		{
 			this.setReadOnlyWrapper(true);
-			this.virtualKeyboardClickPrevent = true;
+
+			if (this.virtualKeyboardReadOnly_ShowKeyboard)
+				return;
 
 			this.virtualKeyboardClickTimeout = setTimeout(function ()
 			{
@@ -1205,6 +1228,9 @@
 
 		if (AscCommon.AscBrowser.isAndroid)
 		{
+			if (this.virtualKeyboardReadOnly_ShowKeyboard)
+				return;
+
 			if (-1 != this.virtualKeyboardClickTimeout)
 			{
 				clearTimeout(this.virtualKeyboardClickTimeout);
@@ -1212,7 +1238,6 @@
 			}
 
 			this.setReadOnlyWrapper(false);
-			this.virtualKeyboardClickPrevent = false;
 		}
 	};
 	CTextInputPrototype.preventVirtualKeyboard_Hard = function()
@@ -1223,6 +1248,22 @@
 	{
 		this.setReadOnlyWrapper(false);
 	};
+
+	CTextInputPrototype.showKeyboard = function()
+	{
+		if (this.virtualKeyboardReadOnly_ShowKeyboard)
+		{
+			if (this.HtmlArea.readOnly === true)
+			{
+				this.setReadOnlyWrapper(false);
+			}
+		}
+
+		if (!this.Api.asc_IsFocus())
+			this.Api.asc_enableKeyEvents(true);
+		else
+			focusHtmlElement(this.getFocusElement());
+	}
 
 	CTextInputPrototype.checkViewMode = function()
 	{
@@ -1254,6 +1295,10 @@
 		{
 			this.setReadOnlyWrapper(false);
 		}
+	};
+	CTextInputPrototype.getFocusElement = function()
+	{
+		return this.Api.getFocusElement();
 	};
 
 	function _getAttirbute(_elem, _attr, _depth)
@@ -1350,7 +1395,7 @@
 				return;
 			}
 
-			if (t.nativeFocusElement && (t.nativeFocusElement.id == t.HtmlArea.id))
+			if (t.nativeFocusElement && (t.nativeFocusElement.id == t.getFocusElement().id))
 			{
 				t.Api.asc_enableKeyEvents(true, true);
 
@@ -1426,14 +1471,14 @@
 
 			var _elem = t.nativeFocusElement;
 			t.nativeFocusElementNoRemoveOnElementFocus = true; // ie focus async
-			AscCommon.AscBrowser.isMozilla ? setTimeout(function(){ focusHtmlElement(t.HtmlArea); }, 0) : focusHtmlElement(t.HtmlArea);
+			AscCommon.AscBrowser.isMozilla ? setTimeout(function(){ focusHtmlElement(t.getFocusElement()); }, 0) : focusHtmlElement(t.getFocusElement());
 			t.nativeFocusElement = _elem;
 			t.Api.asc_enableKeyEvents(true, true);
 		}, true);
 
 		// send focus
 		if (!api.isMobileVersion && !api.isEmbedVersion)
-			focusHtmlElement(window['AscCommon'].g_inputContext.HtmlArea);
+			focusHtmlElement(api.getFocusElement());
 	};
 
 	function focusHtmlElement(element)
@@ -1474,4 +1519,28 @@
 			clearInterval(window.renderIntervalId);
 		}
 	};
+
+	/*
+	UNCOMMENT FOR DETECT FOCUS INITIALIZER
+	{
+		focusHtmlElement = function(element)
+		{
+			window.disableFocusDebugger = true;
+			element.focus();
+			delete window.disableFocusDebugger;
+		}
+
+		const originalFocus = HTMLElement.prototype.focus;
+
+		HTMLElement.prototype.focus = function(...args)
+		{
+			if (!window.disableFocusDebugger)
+				debugger;
+
+			console.log("FOCUS:", this);
+			originalFocus.apply(this, args);
+		};
+	}
+	*/
+
 })(window);

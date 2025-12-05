@@ -658,7 +658,7 @@
     CCellRangeNode.prototype.getContentValue = function(oContent){
         var sString;
         oContent.SetApplyToAll(true);
-        sString = oContent.GetSelectedText(false, {NewLineParagraph : true, NewLine : true});
+        sString = oContent.GetSelectedText(false);
         oContent.SetApplyToAll(false);
         return this.parseText(sString);
     };
@@ -897,7 +897,7 @@
                     }
                     if(this.isBookmark()){
                         if(!oTable){
-                            var sString = oDocument.GetSelectedText(false, {NewLineParagraph : true, NewLine : true});
+                            var sString = oDocument.GetSelectedText(false);
                             var oRes = this.parseText(sString);
                             if(oRes && !AscFormat.isRealNumber(oRes.result)){
                                 this.result = 0.0;

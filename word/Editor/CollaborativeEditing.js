@@ -66,6 +66,10 @@ CWordCollaborativeEditing.prototype.Clear = function()
 	AscCommon.CCollaborativeEditingBase.prototype.Clear.apply(this, arguments);
 	this.Remove_AllForeignCursors();
 };
+CWordCollaborativeEditing.prototype.Apply_OtherChanges = function()
+{
+	AscCommon.executeNoRevisions(AscCommon.CCollaborativeEditingBase.prototype.Apply_OtherChanges, this.GetLogicDocument(), this, arguments);
+};
 CWordCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalInfo, IsUpdateInterface, isAfterAskSave)
 {
 	if (!this.canSendChanges())
@@ -234,9 +238,9 @@ CWordCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
     if (this.Is_Fast())
 	{
 		var oParagraph = this.m_oLogicDocument.GetCurrentParagraph();
-		nPageIndex     = oParagraph ? Math.max(oParagraph.GetCurrentPageAbsolute(), editor.GetCurrentVisiblePage()) : undefined;
+		nPageIndex     = oParagraph ? Math.max(oParagraph.GetAbsoluteCurrentPage(), editor.GetCurrentVisiblePage()) : undefined;
 	}
-
+	
 	this.m_oLogicDocument.ResumeRecalculate();
 	this.m_oLogicDocument.RecalculateByChanges(this.CoHistory.GetAllChanges(), this.m_nRecalcIndexStart, this.m_nRecalcIndexEnd, false, nPageIndex);
 	this.m_oLogicDocument.UpdateTracks();
@@ -377,10 +381,10 @@ CWordCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
         {
             // Если у нас началось редактирование диаграммы, а вернулось, что ее редактировать нельзя,
             // посылаем сообщение о закрытии редактора диаграмм.
-            if (oEditor.isOpenedChartFrame)
-                oEditor.sync_closeChartEditor();
+            if (oEditor.frameManager.isLoadingChartEditor)
+	            oEditor.sync_closeChartEditor();
 
-          if (oEditor.isOleEditor)
+          if (oEditor.frameManager.isLoadingOleEditor)
             oEditor.sync_closeOleEditor();
 
             // Делаем откат на 1 шаг назад и удаляем из Undo/Redo эту последнюю точку
@@ -388,8 +392,8 @@ CWordCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
             AscCommon.History.Clear_Redo();
         }
 
-        oEditor.isChartEditor = false;
-        oEditor.isOleEditor = false;
+	    oEditor.frameManager.endLoadChartEditor();
+	    oEditor.frameManager.endLoadOleEditor();
     }
 };
 CWordCollaborativeEditing.prototype.AddContentControlForSkippingOnCheckEditingLock = function(oContentControl)
@@ -420,6 +424,26 @@ CWordCollaborativeEditing.prototype.End_CollaborationEditing = function()
 		else
 			this.m_nUseType = 0;
 	}
+};
+CWordCollaborativeEditing.prototype._PreUndo = function()
+{
+	let logicDocument = this.m_oLogicDocument;
+	
+	logicDocument.DrawingDocument.EndTrackTable(null, true);
+	logicDocument.TurnOffCheckChartSelection();
+	
+	return this.private_SaveDocumentState()
+};
+CWordCollaborativeEditing.prototype._PostUndo = function(state, changes)
+{
+	this.private_RestoreDocumentState(state);
+	this.private_RecalculateDocument(changes);
+	
+	let logicDocument = this.m_oLogicDocument;
+	logicDocument.TurnOnCheckChartSelection();
+	logicDocument.UpdateSelection();
+	logicDocument.UpdateInterface();
+	logicDocument.UpdateRulers();
 };
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для работы с сохраненными позициями документа.

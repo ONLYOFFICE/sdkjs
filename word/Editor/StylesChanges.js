@@ -126,7 +126,7 @@ CChangesStyleBaseObjectProperty.prototype.constructor = CChangesStyleBaseObjectP
 CChangesStyleBaseObjectProperty.prototype.Load = function()
 {
 	this.Redo();
-	AscCommon.CollaborativeEditing.Add_LinkData(this.Class, {StyleUpdate : true});
+	AscCommon.CollaborativeEditing.Add_EndActions(this.Class, {StyleUpdate : true});
 };
 /**
  * Базовый класс для строковых параметров у стиля.
@@ -198,7 +198,7 @@ CChangesStyleBaseStringProperty.prototype.ReadFromBinary = function(Reader)
 CChangesStyleBaseStringProperty.prototype.Load = function()
 {
 	this.Redo();
-	AscCommon.CollaborativeEditing.Add_LinkData(this.Class, {StyleUpdate : true});
+	AscCommon.CollaborativeEditing.Add_EndActions(this.Class, {StyleUpdate : true});
 };
 /**
  * Базовый класс для строковых параметров у стиля.
@@ -270,7 +270,7 @@ CChangesStyleBaseBoolProperty.prototype.ReadFromBinary = function(Reader)
 CChangesStyleBaseBoolProperty.prototype.Load = function()
 {
 	this.Redo();
-	AscCommon.CollaborativeEditing.Add_LinkData(this.Class, {StyleUpdate : true});
+	AscCommon.CollaborativeEditing.Add_EndActions(this.Class, {StyleUpdate : true});
 };
 /**
  * Базовый класс для строковых параметров у стиля.
@@ -342,7 +342,7 @@ CChangesStyleBaseLongProperty.prototype.ReadFromBinary = function(Reader)
 CChangesStyleBaseLongProperty.prototype.Load = function()
 {
 	this.Redo();
-	AscCommon.CollaborativeEditing.Add_LinkData(this.Class, {StyleUpdate : true});
+	AscCommon.CollaborativeEditing.Add_EndActions(this.Class, {StyleUpdate : true});
 };
 
 
@@ -763,7 +763,7 @@ CChangesStyleType.prototype.private_SetValue = function(Value)
 CChangesStyleType.prototype.Load = function()
 {
 	this.Redo();
-	AscCommon.CollaborativeEditing.Add_LinkData(this.Class, {StyleUpdate : true});
+	AscCommon.CollaborativeEditing.Add_EndActions(this.Class, {StyleUpdate : true});
 };
 /**
  * @constructor
@@ -932,7 +932,7 @@ CChangesStylesAdd.prototype.ReadFromBinary = function(Reader)
 CChangesStylesAdd.prototype.Load = function()
 {
 	this.Redo();
-	AscCommon.CollaborativeEditing.Add_LinkData(this.Class, {UpdateStyleId : this.Id});
+	AscCommon.CollaborativeEditing.Add_EndActions(this.Class, {UpdateStyleId : this.Id});
 };
 CChangesStylesAdd.prototype.CreateReverseChange = function()
 {
@@ -993,7 +993,7 @@ CChangesStylesRemove.prototype.ReadFromBinary = function(Reader)
 CChangesStylesRemove.prototype.Load = function()
 {
 	this.Redo();
-	AscCommon.CollaborativeEditing.Add_LinkData(this.Class, {UpdateStyleId : this.Id});
+	AscCommon.CollaborativeEditing.Add_EndActions(this.Class, {UpdateStyleId : this.Id});
 };
 CChangesStylesRemove.prototype.CreateReverseChange = function()
 {

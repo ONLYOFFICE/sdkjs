@@ -1811,13 +1811,13 @@
 		//txStyles
 		oParsedMaster["txStyles"] && oMasterSlide.setTxStyles(this.TxStylesFromJSON(oParsedMaster["txStyles"]));
 
-		oMasterSlide.preserve    = oParsedMaster["preserve"];
+		oMasterSlide.setPreserve(oParsedMaster["preserve"]);
 		oMasterSlide.ImageBase64 = oParsedMaster["imgBase64"];
 
 		if (!oPres)
 			oPres = private_GetPresentation();
 
-		oPres.addSlideMaster(oPres.slideMasters.length, oMasterSlide);
+		oPres.pushSlideMaster(oMasterSlide);
 		this.mastersMap[oParsedMaster["id"]] = oMasterSlide;
 
 		return oMasterSlide;
@@ -2118,7 +2118,7 @@
 		oParsedLayout["transition"] && oLayout.applyTransition(this.TransitionFromJSON(oParsedLayout["transition"]));
 
 		oParsedLayout["matchingName"] && oLayout.setMatchingName(oParsedLayout["matchingName"]);
-		oLayout.preserve = oParsedLayout["preserve"];	
+		oLayout.setPreserve(oParsedLayout["preserve"]);
 		oParsedLayout["showMasterPhAnim"] && oLayout.setShowPhAnim(oParsedLayout["showMasterPhAnim"]);
 		oParsedLayout["showMasterSp"] && oLayout.setShowMasterSp(oParsedLayout["showMasterSp"]);
 		oLayout.userDrawn = oParsedLayout["userDrawn"];
@@ -2307,7 +2307,7 @@
 	};
 	ReaderFromJSON.prototype.CommentFromJSON = function(oParsedComment, oParent)
 	{
-		var oAscCommentData = new Asc.asc_CCommentData({
+		var oAscCommentData = new Asc.asc_CCommentDataSlide({
 			m_sText:     oParsedComment["text"],
 			m_sUserName: oParsedComment["authorName"],
 			m_sUserId:   oParsedComment["authorId"],

@@ -289,7 +289,7 @@ CNary.prototype.fillBase = function(PropsInfo)
             base.setBase(Sign);
             base.setLowerIterator(this.LowerIterator);
             base.setUpperIterator(this.UpperIterator);
-            
+
             base.fillContent();
         }
     }
@@ -310,8 +310,7 @@ CNary.prototype.ApplyProperties = function(RPI)
 
         if(bSimpleNarySubSup)
         {
-            this.Sign = new CMathText(true);
-            this.Sign.add(oSign.chrCode);
+			this.Sign = new CNaryInlineOperator(oSign.chrCode);
         }
         else
         {
@@ -365,7 +364,7 @@ CNary.prototype.PreRecalc = function(Parent, ParaMath, ArgSize, RPI, GapsInfo)
     RPI.bNaryInline = bNaryInline;
 };
 CNary.prototype.getSign = function(chrCode, chrType)
-{    
+{
     var result = 
     {
         chrCode:   null,
@@ -884,20 +883,28 @@ CNary.prototype.GetTextOfElement = function(oMathText)
 		else
 			strStartCode = String.fromCharCode(this.Pr.chr);
 
-		let oLastPos = oMathText.AddText(new AscMath.MathText(strStartCode, this));
+		let startChar = new AscMath.MathText(strStartCode, this);
+		if (this.Pr.limLoc === NARY_UndOvr)
+		{
+			let oAddData	= startChar.GetAdditionalData();
+			let oMetaData	= oAddData.GetMathMetaData();
+			oMetaData.setIsLimitNary(true);
+		}
+
+		let oLastPos = oMathText.AddText(startChar);
 
 		if (oLower)
 		{
 			oMathText.SetGlobalStyle(this);
+			oMathText.AddText(new AscMath.MathText("_", oLower));
 			oLastPos = oMathText.Add(oLower, true);
-			oMathText.AddBefore(oLastPos, new AscMath.MathText("_", oLower));
 		}
 
 		if (oUpper)
 		{
 			oMathText.SetGlobalStyle(this);
+			oMathText.AddText(new AscMath.MathText("^", oUpper));
 			oLastPos = oMathText.Add(oUpper, true);
-			oMathText.AddBefore(oLastPos, new AscMath.MathText("^", oUpper));
 		}
 
 		if (oBase)
@@ -1209,15 +1216,75 @@ CNaryUndOvr.prototype.getUpperIterator = function()
     return this.elements[0][0];
 };
 
+function CNaryInlineOperator(chrCode)
+{
+	this.Base		= new CMathText(true);
+	this.size		= new CMathSize();
+    this.pos		= new CMathPosition();
+	this.Parent		= null;
+	this.ParaMath	= null;
+	
+	this.Base.add(chrCode);
+}
+CNaryInlineOperator.prototype.Draw_Elements = function(PDSE)
+{
+	this.Parent.Make_ShdColor(PDSE, this.Parent.Get_CompiledCtrPrp());
+    var PosLine = this.ParaMath.GetLinePosition(PDSE.Line, PDSE.Range);
+
+    this.drawTextElem(PosLine.x, PosLine.y, PDSE.Graphics);
+};
+CNaryInlineOperator.prototype.PreRecalc = function(Parent, ParaMath, ArgSize, RPI)
+{
+    this.Parent		= Parent;
+    this.ParaMath	= ParaMath;
+
+	this.Base.PreRecalc(Parent, ParaMath);
+};
+CNaryInlineOperator.prototype.IsJustDraw = function()
+{
+    return true;
+};
+CNaryInlineOperator.prototype.Measure = function(oMeasure, RPI)
+{
+	this.Base.Measure(oMeasure, RPI);
+	
+	this.size.ascent	= this.Base.size.ascent;
+	this.size.height	= this.Base.size.height;
+	this.size.width		= this.Base.size.width;
+};
+CNaryInlineOperator.prototype.setPosition = function(pos)
+{
+    this.pos.x = pos.x;
+    this.pos.y = pos.y;
+};
+CNaryInlineOperator.prototype.drawTextElem = function(x, y, pGraphics)
+{
+    var ctrPrp = this.Get_TxtPrControlLetter();
+
+    var Font =
+    {
+        FontSize:   ctrPrp.FontSize,
+        FontFamily: {Name : ctrPrp.FontFamily.Name, Index : ctrPrp.FontFamily.Index},
+        Italic:     false,
+        Bold:       false
+    };
+
+    pGraphics.SetFont(Font);
+	pGraphics.FillTextCode(x + this.pos.x, y + this.pos.y + this.size.height - (this.size.height - this.size.ascent), this.Base.RecalcInfo.StyleCode);
+};
+CNaryInlineOperator.prototype.Get_TxtPrControlLetter = function()
+{
+    return this.Parent.Get_TxtPrControlLetter();
+};
 
 function CNaryOperator(flip)
 {
-    this.size = new CMathSize();
-    this.pos = new CMathPosition();
-    this.bFlip = (flip == -1);
-    this.Parent   = null;
-    this.ParaMath = null;
-    this.sizeGlyph = null;
+    this.size		= new CMathSize();
+    this.pos		= new CMathPosition();
+    this.bFlip		= (flip == -1);
+    this.Parent		= null;
+    this.ParaMath	= null;
+    this.sizeGlyph	= null;
 }
 CNaryOperator.prototype.Draw_Elements = function(PDSE)
 {

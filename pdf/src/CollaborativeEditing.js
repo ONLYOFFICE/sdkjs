@@ -84,7 +84,7 @@ CPDFCollaborativeEditing.prototype.Check_ForeignSelectedObjectsLabels = function
                 continue;
             }
 
-            let aOrigRect = aObjects[i].GetOrigRect();
+            let aOrigRect = aObjects[i].GetRect();
             if (X >= aOrigRect[0] && X < aOrigRect[2] && Y > aOrigRect[1] && Y < aOrigRect[3]) {
                 let color = AscCommon.getUserColorById(this.m_aForeignCursorsId[UserId], null, true);
                 oDoc.Show_ForeignSelectedObjectLabel(UserId, aObjects[i], color);
@@ -105,6 +105,43 @@ CPDFCollaborativeEditing.prototype.Update_ForeignSelectedObjectsLabelsPositions 
             let color = AscCommon.getUserColorById(this.m_aForeignCursorsId[UserId], null, true);
             oDoc.Show_ForeignSelectedObjectLabel(UserId, aObjects[i], color);
         }
+    }
+};
+CPDFCollaborativeEditing.prototype.Update_ForeignCursorPosition = function(UserId, Run, InRunPos, isRemoveLabel) {
+    let DrawingDocument = this.m_oLogicDocument.DrawingDocument;
+
+    if (!(Run instanceof AscCommonWord.ParaRun))
+        return;
+
+    let Paragraph = Run.GetParagraph();
+
+    if (!Paragraph) {
+        DrawingDocument.Collaborative_RemoveTarget(UserId);
+        return;
+    }
+
+    let ParaContentPos = Paragraph.Get_PosByElement(Run);
+    if (!ParaContentPos) {
+        DrawingDocument.Collaborative_RemoveTarget(UserId);
+        return;
+    }
+    ParaContentPos.Update(InRunPos, ParaContentPos.GetDepth() + 1);
+
+    let XY = Paragraph.Get_XYByContentPos(ParaContentPos);
+    if (XY && XY.Height > 0.001 && XY.PageNum >= 0) {
+        let ShortId = this.m_aForeignCursorsId[UserId] ? this.m_aForeignCursorsId[UserId] : UserId;
+        DrawingDocument.Collaborative_UpdateTarget(UserId, ShortId, XY.X, XY.Y, XY.Height, XY.PageNum, Paragraph.Get_ParentTextTransform());
+        this.Add_ForeignCursorXY(UserId, XY.X, XY.Y, XY.PageNum, XY.Height, Paragraph, isRemoveLabel);
+
+        if (true === this.m_aForeignCursorsToShow[UserId]) {
+            this.Show_ForeignCursorLabel(UserId);
+            this.Remove_ForeignCursorToShow(UserId);
+        }
+    }
+    else {
+        DrawingDocument.Collaborative_RemoveTarget(UserId);
+        this.Remove_ForeignCursorXY(UserId);
+        this.Remove_ForeignCursorToShow(UserId);
     }
 };
 CPDFCollaborativeEditing.prototype.private_LockByMe = function() {
@@ -302,6 +339,38 @@ CPDFCollaborativeEditing.prototype.OnEnd_ReadForeignChanges = function() {
 	AscCommon.CCollaborativeEditingBase.prototype.OnEnd_ReadForeignChanges.apply(this, arguments);
 };
 CPDFCollaborativeEditing.prototype.Check_MergeData = function() {};
+CPDFCollaborativeEditing.prototype.Release_Locks = function() {
+    let UnlockCount = this.m_aNeedUnlock.length;
+    for (let Index = 0; Index < UnlockCount; Index++) {
+        let Class = this.m_aNeedUnlock[Index];
+        let CurLockType = Class.Lock.Get_Type();
+        
+        if (AscCommon.c_oAscLockTypes.kLockTypeOther3 != CurLockType && AscCommon.c_oAscLockTypes.kLockTypeOther != CurLockType) {
+            Class.Lock.Set_Type(AscCommon.c_oAscLockTypes.kLockTypeNone, false);
+            Class.AddToRedraw && Class.AddToRedraw();
+
+            if (Class.IsAnnot && Class.IsAnnot()) {
+                // if annot is comment or annot with comment then release locks for it too
+                if (Class.IsComment() || (Class.IsUseContentAsComment() && Class.GetContents() != undefined) || Class.GetReply(0) != null) {
+                    Asc.editor.sync_UnLockComment(Class.Get_Id());
+                }
+            }
+        }
+        else if (AscCommon.c_oAscLockTypes.kLockTypeOther3 === CurLockType)
+        {
+            Class.Lock.Set_Type(AscCommon.c_oAscLockTypes.kLockTypeOther, false);
+            Class.AddToRedraw && Class.AddToRedraw();
+        }
+    }
+};
+CPDFCollaborativeEditing.prototype._PreUndo = function() {
+    return this.private_SaveDocumentState()
+};
+CPDFCollaborativeEditing.prototype._PostUndo = function(state, changes) {
+    let logicDocument = this.m_oLogicDocument;
+    this.private_RestoreDocumentState(state);
+    logicDocument.History.Get_RecalcData(null, changes)
+};
 
 //--------------------------------------------------------export----------------------------------------------------
 window['AscPDF'] = window['AscPDF'] || {};

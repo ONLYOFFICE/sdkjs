@@ -114,12 +114,12 @@ $(function () {
 		
 		logicDocument.UpdateFields(false);
 		
-		assert.strictEqual(p.GetText(), "1 ", "Check the text of the third paragraph");
+		assert.strictEqual(AscTest.GetParagraphText(p), "1", "Check the text of the third paragraph");
 		
 		let fieldId = field.GetFieldId();
 		PluginsApi.pluginMethod_RemoveFieldWrapper(fieldId);
 		assert.strictEqual(logicDocument.GetAllFields().length, 1, "Remove field wrapper from second field and check number of fields");
-		assert.strictEqual(p.GetText(), "1 ", "Check the text of the third paragraph");
+		assert.strictEqual(AscTest.GetParagraphText(p), "1", "Check the text of the third paragraph");
 	});
 	
 	QUnit.test("Test SetEditingRestrictions", function(assert)

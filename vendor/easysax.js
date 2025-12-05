@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 
 /*
 new function() {
@@ -99,19 +99,7 @@ function replaceEntities(s, d, x, z) {
 };
 
 function xmlEntityDecode(s) {
-    var s = ('' + s);
-
-    if (s.length > 3 && s.indexOf('&') !== -1) {
-        if (s.indexOf('&lt;') !== -1) {s = s.replace(/&lt;/g, '<');}
-        if (s.indexOf('&gt;') !== -1) {s = s.replace(/&gt;/g, '>');}
-        if (s.indexOf('&quot;') !== -1) {s = s.replace(/&quot;/g, '"');}
-
-        if (s.indexOf('&') !== -1) {
-            s = s.replace(/&#(\d+);|&#x([0123456789abcdef]+);|&(\w+);/ig, replaceEntities);
-        };
-    };
-
-    return s;
+    return StaxParser.prototype.DecodeXml(s);
 };
 
 function cloneMatrixNS(nsmatrix) {
@@ -1184,44 +1172,44 @@ StaxParser.prototype.next = function() {
         this.depth--;
     }
 
-    this.eventType = EasySAXEvent.Unknown;
-    this.isTagStart = null;
     this.isInAttr = false;
-    this.isTagEnd = null;
-    this.eventType = null;
-    this.name = null;
-    this.text = null;
-    this.value = null;
+    this.eventType = EasySAXEvent.Unknown;
+    this.isTagStart = this.isTagEnd = this.name = this.text = this.value = null;
 
+    var xml = this.xml;
     var i = this.index;
-    if (this.xml.charCodeAt(i) !== 60) {//'<'
-        i = this.xml.indexOf('<', i);
-    }
 
-    if (i === -1) {
-        this.stop = true;
-        return;
-    }
-
-    // Text
-    if (this.index !== i) {
+    if (xml.charCodeAt(i) !== 60) { // '<'
+        i = xml.indexOf('<', i);
+        if (i === -1) {
+            this.stop = true;
+            return;
+        }
         this.eventType = EasySAXEvent.CHARACTERS;
-        this.text = this.xml.substring(this.index, i);
+        this.text = xml.substring(this.index, i);
         this.index = i;
         return this.eventType;
     }
 
     // ELEMENT
     // ---------------------------------------------
-    var w = this.xml.charCodeAt(i + 1);
+    var w = xml.charCodeAt(i + 1);
     if (w === 33) { // 33 == "!"
-        this.index = this.xml.indexOf('>', i);
+        if (i + 3 < this.length && xml.charCodeAt(i + 2) === 45 && xml.charCodeAt(i + 3) === 45) { // COMMENT
+            this.index = xml.indexOf('-->', i) + 3;
+        } else { // CDATA
+            this.index = xml.indexOf(']]>', i) + 3;
+        }
+        if (this.index === 2) { // -1 + 3 = 2
+            this.stop = true;
+        }
+        this.eventType = EasySAXEvent.Unknown;
         return this.eventType;
     }
     // QUESTION
     // ---------------------------------------------
     if (w === 63) { // "?"
-        this.index = this.xml.indexOf('>', i);
+        this.index = xml.indexOf('>', i);
         return this.eventType;
     }
     // NODE ELEMENT
@@ -1255,56 +1243,78 @@ StaxParser.prototype.next = function() {
     return this.eventType;
 };
 StaxParser.prototype.parseNode = function(indexStart) {
-    var ixNameStart = +indexStart + 1; // позиция первого сивола имени
+    var xml = this.xml;
+    var len = this.length;
+    var ixNameStart = indexStart + 1;
 
     var i = ixNameStart;
-    var w = this.xml.charCodeAt(i);
-    while (i < this.length) {
-        if (w > 96 && w < 123 || w > 64 && w < 91 || w > 47 && w < 59 || w === 45 || w === 46 || w === 95) {
-            w = this.xml.charCodeAt(++i);
+    var w;
+    while (i < len) {
+        w = xml.charCodeAt(i);
+        if ((w | 32) > 96 && (w | 32) < 123 || // letters
+            (w > 47 && w < 58) ||              // digits
+            w === 45 || w === 46 || w === 58 || w === 95) { // - . :_
+            ++i;
             continue;
         }
-        if (w === 32 || w === 9 || w === 10 || w === 11 || w === 12 || w === 13) { // \f\n\r\t\v space
-            this.name = this.xml.substring(ixNameStart, i);
+        // whitespace (space, tab, LF, VT, FF, CR)
+        if (w === 32 || (w >= 9 && w <= 13)) {
+            this.name = xml.substring(ixNameStart, i);
             return i;
         }
-        if (w === 62 /* ">" */ || w === 47 /* "/" */) {
-            this.name = this.xml.substring(ixNameStart, i);
+        // tag end or self-closing slash
+        if (w === 62 /* > */ || w === 47 /* / */) {
+            this.name = xml.substring(ixNameStart, i);
             return i;
         }
+        // invalid char
         return -1;
     }
     return -1;
 };
 StaxParser.prototype.MoveToNextAttribute = function() {
+    var xml = this.xml;
+    var len = this.length;
     var i = this.index;
-    var w = this.xml.charCodeAt(i);
-    while (i < this.length) {
-        if (w === 61 /* "=" */ && i + 1 < this.length) {
-            this.name = this.xml.substring(this.index, i);
-            this.name = this.name.trim();
+
+    while (i < len) {
+        var w = xml.charCodeAt(i);
+        if (w === 61 /* '=' */ && i + 1 < len) {
+            // Extract attribute name (likely clean, trim only if needed)
+            var nameStart = this.index;
+            var nameEnd = i;
+            var rawName = xml.substring(nameStart, nameEnd);
+            
+            // Fast quote detection
+            var quoteChar = xml.charCodeAt(i + 1);
             var textStart = i + 2;
-            if (this.xml.charCodeAt(textStart - 1) === 34/* "\"" */) {
-                i = this.xml.indexOf("\"", textStart);
+            
+            if (quoteChar === 34) { // '"'
+                i = xml.indexOf('"', textStart);
+            } else if (quoteChar === 39) { // "'"
+                i = xml.indexOf("'", textStart);
             } else {
-                i = this.xml.slice(textStart - 1).search(/["']/g);
-                if (-1 !== i) {
-                    i += textStart - 1;//slice compensation
-                    textStart = i + 1;
-                    i = this.xml.indexOf(this.xml[i], textStart);
-                }
+                // Fallback for other quotes
+                i = xml.indexOf(xml.charAt(i + 1), textStart);
             }
-            if (-1 !== i) {
-                this.text = this.xml.substring(textStart, i);
+            
+            if (i !== -1) {
+                // Only trim if name has leading/trailing spaces
+                if (rawName.charCodeAt(0) === 32 || rawName.charCodeAt(nameEnd - nameStart - 1) === 32) {
+                    this.name = rawName.trim();
+                } else {
+                    this.name = rawName;
+                }
+                this.text = xml.substring(textStart, i);
                 this.index = i + 1;
                 return true;
             } else {
                 break;
             }
         }
-        if (w === 32 || w === 9 || w === 10 || w === 11 || w === 12 || w === 13) { // \f\n\r\t\v space
-            //todo spaces between name and =
-            w = this.xml.charCodeAt(++i);
+        // whitespace (space, tab, LF, VT, FF, CR)
+        if (w === 32 || (w >= 9 && w <= 13)) {
+            ++i;
             continue;
         }
         if (w === 62 /* ">" */) {
@@ -1312,25 +1322,37 @@ StaxParser.prototype.MoveToNextAttribute = function() {
             this.isInAttr = false;
             return false;
         }
-        if (w === 47 /* "/" */ && i + 1 < this.length && this.xml.charCodeAt(i + 1) === 62) {
+        if (w === 47 /* "/" */ && i + 1 < len && xml.charCodeAt(i + 1) === 62) {
             this.index = i + 2;
             this.isInAttr = false;
             this.isTagEnd = true;
             return false;
         }
-        w = this.xml.charCodeAt(++i);
+        ++i;
     }
     this.stop = true;
     this.index = i;
     this.isInAttr = false;
     return false;
 };
+StaxParser.prototype.GetAttributes = function() {
+	let attributes = {};
+	while (this.MoveToNextAttribute()) {
+		attributes[this.GetName()] = this.GetValue();
+	}
+	
+	return attributes;
+};
 StaxParser.prototype.SkipAttributes = function() {
-    var i = this.xml.indexOf('>', this.index);
-    if (i === -1) { // error  ...> // не нашел знак закрытия тега
+    var xml = this.xml;
+    var i = xml.indexOf('>', this.index);
+    
+    if (i === -1) {
         this.stop = true;
+        return;
     }
-    this.isTagEnd = this.xml.charCodeAt(i - 1) === 47;
+    
+    this.isTagEnd = xml.charCodeAt(i - 1) === 47; // '/'
     this.isInAttr = false;
     this.index = i + 1;
 };
@@ -1347,17 +1369,24 @@ StaxParser.prototype.ReadNextNode = function() {
     return EasySAXEvent.START_ELEMENT === type;
 };
 StaxParser.prototype.ReadNextSiblingNode = function(depth) {
-    var type = EasySAXEvent.Unknown;
+    var targetDepth = depth + 1;
+    var type;
+    
     while (this.hasNext()) {
         type = this.next();
         var curDepth = this.depth;
-        if (curDepth < depth)
+        
+        if (curDepth < depth) {
             break;
-        if (EasySAXEvent.START_ELEMENT == type && curDepth == depth + 1)
+        }
+        
+        if (type === EasySAXEvent.START_ELEMENT && curDepth === targetDepth) {
             return true;
-        else if (EasySAXEvent.END_ELEMENT == type && curDepth == depth)
+        }
+        
+        if (type === EasySAXEvent.END_ELEMENT && curDepth === depth) {
             return false;
-
+        }
     }
     return false;
 };
@@ -1453,44 +1482,121 @@ StaxParser.prototype.GetValueDecodeXmlExt = function () {
     return this.GetValueDecodeXml();
 };
 StaxParser.prototype.DecodeXml = function (text) {
-    if (-1 !== text.indexOf('&')) {
-        var res = "";
-        for (var i = 0; i < text.length; ++i) {
-            if(text[i] === '&') {
-                if(i + 3 < text.length) {
-                    if(text[i + 1] == 'l' && text[i + 2] == 't' && text[i + 3] == ';') {
-                        res += '<';
-                        i+=3;
-                        continue;
-                    } else if(text[i + 1] == 'g' && text[i + 2] == 't' && text[i + 3] == ';') {
-                        res += '>';
-                        i+=3;
-                        continue;
-                    }
-                }
-                if(i + 4 < text.length && text[i + 1] == 'a' && text[i + 2] == 'm' && text[i + 3] == 'p' && text[i + 4] == ';') {
-                    res += '&';
-                    i+=4;
-                    continue;
-                }
-                if(i + 5 < text.length) {
-                    if(text[i + 1] == 'q' && text[i + 2] == 'u' && text[i + 3] == 'o' && text[i + 4] == 't' && text[i + 5] == ';') {
-                        res += '\"';
-                        i+=5;
-                        continue;
-                    } else if(text[i + 1] == 'a' && text[i + 2] == 'p' && text[i + 3] == 'o' && text[i + 4] == 's' && text[i + 5] == ';') {
-                        res += '\'';
-                        i+=5;
-                        continue;
-                    }
+    // Detect &amp; and _xHHHH_ patterns
+    const len = text.length;
+    let firstSpecial = -1;
+    let i = 0;
+    
+    for (i = 0; i < len; ++i) {
+        const c = text.charCodeAt(i);
+        if (c === 38 /* & */ || (c === 95 /* _ */ && i + 1 < len && text.charCodeAt(i + 1) === 120 /* x */)) {
+            firstSpecial = i;
+            break;
+        }
+    }
+    
+    if (firstSpecial === -1) {
+        return text;
+    }
+
+    const result = [];
+    let lastCopied = 0;
+    for (i = firstSpecial; i < len; ++i) {
+        const ch = text.charCodeAt(i);
+        let entityLen = 0;
+        let decoded = null;
+        
+        if (ch === 38) { // '&'
+            const nextChar = i + 1 < len ? text.charCodeAt(i + 1) : 0;
+
+            // &lt; (4 chars)
+            if (nextChar === 108 && i + 3 < len && // 'l'
+                text.charCodeAt(i + 2) === 116 && // 't'
+                text.charCodeAt(i + 3) === 59) {   // ';'
+                decoded = '<';
+                entityLen = 4;
+            }
+            // &gt; (4 chars)
+            else if (nextChar === 103 && i + 3 < len && // 'g'
+                text.charCodeAt(i + 2) === 116 && // 't'
+                text.charCodeAt(i + 3) === 59) {   // ';'
+                decoded = '>';
+                entityLen = 4;
+            }
+            // &amp; (5 chars)
+            else if (nextChar === 97 && i + 4 < len && // 'a'
+                text.charCodeAt(i + 2) === 109 && // 'm'
+                text.charCodeAt(i + 3) === 112 && // 'p'
+                text.charCodeAt(i + 4) === 59) {   // ';'
+                decoded = '&';
+                entityLen = 5;
+            }
+            // &quot; or &apos; (6 chars)
+            else if (i + 5 < len) {
+                if (nextChar === 113 && // 'q'
+                    text.charCodeAt(i + 2) === 117 && // 'u'
+                    text.charCodeAt(i + 3) === 111 && // 'o'
+                    text.charCodeAt(i + 4) === 116 && // 't'
+                    text.charCodeAt(i + 5) === 59) {   // ';'
+                    decoded = '"';
+                    entityLen = 6;
+                } else if (nextChar === 97 && // 'a'
+                    text.charCodeAt(i + 2) === 112 && // 'p'
+                    text.charCodeAt(i + 3) === 111 && // 'o'
+                    text.charCodeAt(i + 4) === 115 && // 's'
+                    text.charCodeAt(i + 5) === 59) {   // ';'
+                    decoded = "'";
+                    entityLen = 6;
                 }
             }
-            res += text[i]
+        } else if (ch === 95 && i + 6 < len && // '_'
+            text.charCodeAt(i + 1) === 120 && // 'x'
+            text.charCodeAt(i + 6) === 95) {  // '_'
+
+            // Inline hex parsing for _xHHHH_ pattern
+            let code = 0;
+            let isValidHex = true;
+
+            for (let j = i + 2; j < i + 6; ++j) {
+                const hexChar = text.charCodeAt(j);
+                code *= 16;
+
+                if (hexChar >= 48 && hexChar <= 57) {        // '0'-'9'
+                    code += hexChar - 48;
+                } else if (hexChar >= 65 && hexChar <= 70) { // 'A'-'F'
+                    code += hexChar - 55;
+                } else if (hexChar >= 97 && hexChar <= 102) { // 'a'-'f'
+                    code += hexChar - 87;
+                } else {
+                    isValidHex = false;
+                    break;
+                }
+            }
+
+            if (isValidHex) {
+                decoded = code === 0x005F ? '_' : stringFromCharCode(code);
+                entityLen = 7;
+            }
         }
-        return res;
-    } else {
-        return (' ' + text).substr(1);
+        
+        if (decoded !== null) {
+            // Copy text before entity
+            if (i > lastCopied) {
+                result.push(text.substring(lastCopied, i));
+            }
+            result.push(decoded);
+            const after = i + entityLen;
+            i = after - 1; // loop will ++i next iteration
+            lastCopied = after;
+        }
     }
+    
+    // Copy remaining text
+    if (lastCopied < len) {
+        result.push(text.substring(lastCopied, len));
+    }
+    
+    return result.join('');
 };
 StaxParser.prototype.GetText = function () {
     var text = "";
@@ -1815,15 +1921,9 @@ XmlParserContext.prototype.loadDataLinks = function() {
             oImageMap[_cur_ind++] = path;
             let data = this.zip.getFile(path);
             if (data) {
-                if (!window["NATIVE_EDITOR_ENJINE"]) {
-                    try {
-                        let blob = this.zip.getImageBlob(path);
-                        let url = window.URL.createObjectURL(blob);
-                        AscCommon.g_oDocumentUrls.addImageUrl(path, url);
-                    } catch (e) {
-                        AscCommon.consoleLog("ERROR: Image blob was not loaded");
-                    }
-                }
+                let blobUrl = AscCommon.g_oDocumentBlobUrls.getBlobUrl(path, this.zip);
+                AscCommon.g_oDocumentUrls.addImageUrl(path, blobUrl);
+
                 this.imageMap[path].forEach(function(blipFill) {
                     AscCommon.pptx_content_loader.Reader.initAfterBlipFill(path, blipFill);
                 });

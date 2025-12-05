@@ -75,14 +75,14 @@
 	{
 		return true;
 	};
-	CRunBreak.prototype.Draw = function(X, Y, Context)
+	CRunBreak.prototype.Draw = function(X, Y, Context, drawState)
 	{
 		if (false === this.Flags.Use)
 			return;
 
 		if(Context.m_bIsTextDrawer)
 		{
-			Context.CheckSpaceDraw();
+			Context.CheckSpaceDraw(this);
 		}
 		if (undefined !== editor && editor.ShowParaMarks)
 		{
@@ -100,7 +100,8 @@
 						Italic     : false,
 						Bold       : false
 					});
-					Context.FillText(X, Y, String.fromCharCode(0x0038/*0x21B5*/));
+					let code = drawState.isRtlMainDirection() ? 0x0039 : 0x0038;
+					Context.FillText(X, Y, String.fromCharCode(code/*0x21B5*/));
 					break;
 				}
 				case break_Page:
@@ -356,6 +357,10 @@
 	CRunBreak.prototype.GetFontSlot = function(oTextPr)
 	{
 		return AscWord.fontslot_Unknown;
+	};
+	CRunBreak.prototype.getBidiType = function()
+	{
+		return AscBidi.TYPE.PM;
 	};
 
 	//--------------------------------------------------------export----------------------------------------------------

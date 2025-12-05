@@ -36,26 +36,18 @@
 	 * @constructor
      * @extends {CBaseCheckBoxField}
 	 */
-    function CRadioButtonField(sName, nPage, aRect, oDoc)
+    function CRadioButtonField(sName, aRect, oDoc)
     {
-        AscPDF.CBaseCheckBoxField.call(this, sName, AscPDF.FIELD_TYPES.radiobutton, nPage, aRect, oDoc);
+        AscPDF.CBaseCheckBoxField.call(this, sName, AscPDF.FIELD_TYPES.radiobutton, aRect, oDoc);
         
+        this._exportValue   = "Choice1";
         this._radiosInUnison = false;
         this._noToggleToOff = true;
 
         this._chStyle       = AscPDF.CHECKBOX_STYLES.circle;
     }
-    CRadioButtonField.prototype = Object.create(AscPDF.CBaseCheckBoxField.prototype);
 	CRadioButtonField.prototype.constructor = CRadioButtonField;
-    
-    /**
-	 * Synchronizes this field with fields with the same name.
-	 * @memberof CRadioButtonField
-	 * @typeofeditors ["PDF"]
-	 */
-    CRadioButtonField.prototype.SyncField = function() {
-        // to do
-    };
+    AscFormat.InitClass(CRadioButtonField, AscPDF.CBaseCheckBoxField, AscDFH.historyitem_type_Pdf_Radiobutton_Field);
     
     /**
 	 * Updates all field with this field name.
@@ -63,10 +55,10 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CRadioButtonField.prototype.UpdateAll = function() {
-        let oParent     = this.GetParent();
+        let oParent     = this.GetParent(true);
         let aParentOpt  = oParent ? oParent.GetOptions() : undefined;
         let aFields     = this.GetDocument().GetAllWidgets(this.GetFullName());
-        let value       = this.GetApiValue();
+        let value       = this.GetParentValue();
 
         let bFromOpt = false;
         let sExportValue;
@@ -124,7 +116,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CRadioButtonField.prototype.Commit2 = function() {
-        let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
+        let aFields = this.GetAllWidgets();
         let oThis = this;
 
         if (false == this.IsRadiosInUnison()) {
@@ -132,7 +124,7 @@
                 if (field == oThis)
                     return;
 
-                if (field.IsChecked() == true && oThis.IsChecked()) {
+                if (field.IsChecked() == true) {
                     field.SetChecked(false);
                     field.SetNeedRecalc(true);
                 }
@@ -163,10 +155,26 @@
     };
     
     CRadioButtonField.prototype.SetRadiosInUnison = function(bValue) {
+        let oParent = this.GetParent(true);
+        if (oParent)
+            return oParent.SetRadiosInUnison(bValue);
+
+        if (this._radiosInUnison === bValue) {
+            return true;
+        }
+        
+        AscCommon.History.Add(new CChangesPDFRadiobuttonIsUnison(this, this._radiosInUnison, bValue));
+
         this._radiosInUnison = bValue;
         this.SetWasChanged(true);
+
+        return true;
     };
-    CRadioButtonField.prototype.IsRadiosInUnison = function() {
+    CRadioButtonField.prototype.IsRadiosInUnison = function(bInherit) {
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
+            return oParent.IsRadiosInUnison();
+
         return this._radiosInUnison;
     };
 

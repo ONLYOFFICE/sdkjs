@@ -302,6 +302,8 @@
 			this.sheetColumnName = null;
 			this.namedSheetView = null;
 
+			this.visibleDropDown = null;
+
 			//option for interface
 			//show time tree
 			this.isTimeFormat = null;
@@ -342,6 +344,8 @@
 						return this.sortColor;
 					case this.Properties.namedSheetView:
 						return this.namedSheetView;
+					case this.Properties.visibleDropDown:
+						return this.visibleDropDown;
 				}
 
 				return null;
@@ -377,6 +381,9 @@
 						break;
 					case this.Properties.namedSheetView:
 						this.namedSheetView = value;
+						break;
+					case this.Properties.visibleDropDown:
+						this.visibleDropDown = value;
 						break;
 				}
 			},
@@ -431,6 +438,9 @@
 			asc_setTimeFormat: function (val) {
 				this.isTimeFormat = val;
 			},
+			asc_setVisibleDropDown: function (val) {
+				this.visibleDropDown = val;
+			},
 
 
 			asc_getCellId: function () {
@@ -478,6 +488,9 @@
 			},
 			asc_getTimeFormat: function () {
 				return this.isTimeFormat;
+			},
+			asc_getVisibleDropDown: function () {
+				return this.visibleDropDown;
 			},
 
 			setVisibleFromValues: function (visible) {
@@ -872,7 +885,7 @@
 								wsView.shiftCellWatches(true, c_oAscInsertOptions.InsertCellsAndShiftDown, shiftRange.bbox);
 								moveToRange = new Asc.Range(filterRange.c1, filterRange.r1 + 1, filterRange.c2, filterRange.r2);
 							}
-							worksheet._moveRange(rangeWithoutDiff, moveToRange);
+							worksheet._moveRange(rangeWithoutDiff, moveToRange, null, null, true/* table created */);
 							wsView.cellCommentator.moveRangeComments(rangeWithoutDiff, moveToRange);
 							wsView.moveCellWatches(rangeWithoutDiff, moveToRange);
 						} else if (!addNameColumn && styleName) {
@@ -1542,6 +1555,12 @@
 
 				if (userRange) {
 					activeCells = AscCommonExcel.g_oRangeCache.getAscRange(userRange);
+					if (!activeCells) {
+						let aRanges = AscCommonExcel.getRangeByName(userRange, this.worksheet);
+						if (aRanges && aRanges.length === 1) {
+							activeCells = aRanges[0] && aRanges[0].bbox;
+						}
+					}
 				}
 
 				//данная функция возвращает false в двух случаях - при смене стиля ф/т или при поптыке добавить ф/т к части а/ф
@@ -1759,7 +1778,7 @@
 						if (!_doAdd)//добавляем фильтр
 						{
 							if (cloneData.TableStyleInfo) {
-								worksheet.addTablePart.push(cloneData);
+								worksheet.addTablePart(cloneData);
 								t._setColorStyleTable(cloneData.Ref, cloneData, null, true);
 								t.updateSlicer(cloneData.DisplayName);
 							} else {
@@ -3468,9 +3487,9 @@
 
 			checkTableColumnName: function (tableColumns, name) {
 				var res = name;
-
+				let _name = name.toLowerCase();
 				for (var i = 0; i < tableColumns.length; i++) {
-					if (name.toLowerCase() === tableColumns[i].Name.toLowerCase()) {
+					if (_name === tableColumns[i].getTableColumnName(true)) {
 						res = this._generateColumnName2(tableColumns);
 						break;
 					}
@@ -3647,8 +3666,9 @@
 					var res = false;
 
 					if (tableColumns && tableColumns.length) {
+						let _val = val.toLowerCase()
 						for (var i = 0; i < tableColumns.length; i++) {
-							if (tableColumns[i].Name.toLowerCase() === val.toLowerCase() && i !== exeptionCol) {
+							if (tableColumns[i].getTableColumnName(true) === _val && i !== exeptionCol) {
 								res = true;
 								break;
 							}
@@ -3697,20 +3717,20 @@
 								}
 
 								//если не пустая изменяем TableColumns
-								var oldVal = filter.TableColumns[j - tableRange.c1].Name;
+								var oldVal = filter.TableColumns[j - tableRange.c1].getTableColumnName();
 								var newVal = null;
 								//проверка на повторение уже существующих заголовков
 								if (val !== "" && checkRepeateColumnName(val, filter.TableColumns, j - tableRange.c1)) {
-									filter.TableColumns[j - tableRange.c1].Name = "";
+									filter.TableColumns[j - tableRange.c1].setTableColumnName("");
 									generateName = this._generateNextColumnName(filter.TableColumns, val);
 									if (!bUndo) {
 										cell.setValue(generateName);
 										cell.setType(CellValueType.String);
 									}
-									filter.TableColumns[j - tableRange.c1].Name = generateName;
+									filter.TableColumns[j - tableRange.c1].setTableColumnName(generateName);
 									newVal = generateName;
 								} else if (val !== "" && intersection.c1 <= j && intersection.c2 >= j) {
-									filter.TableColumns[j - tableRange.c1].Name = val;
+									filter.TableColumns[j - tableRange.c1].setTableColumnName(val);
 									if (!bUndo) {
 										//если пытаемся вбить формулу в заголовок - оставляем только результат
 										//ms в данном случае генерирует новое имя, начинающееся с 0
@@ -3722,13 +3742,13 @@
 									newVal = val;
 								} else if (val === "")//если пустая изменяем генерируем имя и добавляем его в TableColumns
 								{
-									filter.TableColumns[j - tableRange.c1].Name = "";
+									filter.TableColumns[j - tableRange.c1].setTableColumnName("");
 									generateName = this._generateColumnName(filter.TableColumns);
 									if (!bUndo) {
 										cell.setValue(generateName);
 										cell.setType(CellValueType.String);
 									}
-									filter.TableColumns[j - tableRange.c1].Name = generateName;
+									filter.TableColumns[j - tableRange.c1].setTableColumnName(generateName);
 									newVal = generateName;
 								}
 
@@ -4458,7 +4478,7 @@
 				return range;
 			},
 
-			expandRange: function (activeRange, ignoreFilter, doNotCheckEmpty) {
+			expandRange: function (activeRange, ignoreFilter, doNotCheckEmpty, checkLastEmpty) {
 				var ws = this.worksheet;
 
 				//если вдруг встретили мерженную ячейку в диапазоне, расширяем
@@ -4695,6 +4715,14 @@
 					rangeAfterTableCrop = range.clone();
 					range = activeRange.clone();
 					doExpand();
+				}
+
+
+				if (checkLastEmpty) {
+					let _cropRange = this.checkEmptyAreas(range, rangeAfterTableCrop);
+					if (_cropRange.r2 !== range.r2 || _cropRange.c2 !== range.c2) {
+						return activeRange;
+					}
 				}
 
 				//проверяем на наличие пустых колонок/строк
@@ -5457,7 +5485,7 @@
 								let cell = this.worksheet.getRange3(ref.r1, ref.c1 + i, ref.r1, ref.c1 + i);
 								cell.setValue(val);
 							}
-							newTableColumn.Name = val;
+							newTableColumn.setTableColumnName(val);
 							tableColumns.push(newTableColumn);
 							isDuplicate = false;
 							break;
@@ -5477,11 +5505,11 @@
 					}
 					var nameStart;
 					var nameEnd;
-					if (tableColumns[indexInsertColumn] && tableColumns[indexInsertColumn].Name) {
-						nameStart = tableColumns[indexInsertColumn].Name.split(columnName);
+					if (tableColumns[indexInsertColumn] && tableColumns[indexInsertColumn].getTableColumnName()) {
+						nameStart = tableColumns[indexInsertColumn].getTableColumnName().split(columnName);
 					}
-					if (tableColumns[indexInsertColumn + 1] && tableColumns[indexInsertColumn + 1].Name) {
-						nameEnd = tableColumns[indexInsertColumn + 1].Name.split(columnName);
+					if (tableColumns[indexInsertColumn + 1] && tableColumns[indexInsertColumn + 1].getTableColumnName()) {
+						nameEnd = tableColumns[indexInsertColumn + 1].getTableColumnName().split(columnName);
 					}
 					if (nameStart && nameStart[1] && nameEnd && nameEnd[1] && !isNaN(parseInt(nameStart[1])) && !isNaN(parseInt(nameEnd[1])) && ((parseInt(nameStart[1]) + 1) == parseInt(nameEnd[1]))) {
 						isSequence = true;
@@ -5491,8 +5519,8 @@
 				var name, i;
 				if (indexInsertColumn == undefined || !isSequence) {
 					for (i = 0; i < tableColumns.length; i++) {
-						if (tableColumns[i].Name) {
-							name = tableColumns[i].Name.split(columnName);
+						if (tableColumns[i].getTableColumnName()) {
+							name = tableColumns[i].getTableColumnName().split(columnName);
 						}
 						if (name && name[1] && !isNaN(parseFloat(name[1])) && index === parseFloat(name[1])) {
 							index++;
@@ -5501,16 +5529,16 @@
 					}
 					return columnName + index;
 				} else {
-					if (tableColumns[indexInsertColumn] && tableColumns[indexInsertColumn].Name) {
-						name = tableColumns[indexInsertColumn].Name.split(columnName);
+					if (tableColumns[indexInsertColumn] && tableColumns[indexInsertColumn].getTableColumnName()) {
+						name = tableColumns[indexInsertColumn].getTableColumnName().split(columnName);
 					}
 					if (name && name[1] && !isNaN(parseFloat(name[1]))) {
 						index = parseFloat(name[1]) + 1;
 					}
 
 					for (i = 0; i < tableColumns.length; i++) {
-						if (tableColumns[i].Name) {
-							name = tableColumns[i].Name.split(columnName);
+						if (tableColumns[i].getTableColumnName()) {
+							name = tableColumns[i].getTableColumnName().split(columnName);
 						}
 						if (name && name[1] && !isNaN(parseFloat(name[1])) && index == parseFloat(name[1])) {
 							index = parseInt((index - 1) + "2");
@@ -5532,7 +5560,7 @@
 			_generateNextColumnName: function (tableColumns, val) {
 				var tableColumnMap = [];
 				for (var i = 0; i < tableColumns.length; i++) {
-					tableColumnMap[tableColumns[i].Name.toLowerCase()] = 1;
+					tableColumnMap[tableColumns[i].getTableColumnName(true)] = 1;
 				}
 				var res = val;
 				var index = 2;
@@ -5574,8 +5602,8 @@
 								range = worksheet.getCell3(bbox.r1, ncol);
 								var num = ncol - bbox.c1;
 								var tableColumn = options.TableColumns[num];
-								if (null != tableColumn && null != tableColumn.Name && headerRowCount > 0) {
-									range.setValue(tableColumn.Name);
+								if (null != tableColumn && null != tableColumn.getTableColumnName() && headerRowCount > 0) {
+									range.setValue(tableColumn.getTableColumnName());
 									range.setType(CellValueType.String);
 								}
 
@@ -5591,7 +5619,7 @@
 									if (null !== formula) {
 										range.setValue("=" + formula, null, true);
 										if (isSetTotalRowType) {
-											var numFormatType = this._getFormatTableColumnRange(options, tableColumn.Name);
+											var numFormatType = this._getFormatTableColumnRange(options, tableColumn.getTableColumnName());
 											if (null !== numFormatType) {
 												range.setNumFormat(numFormatType);
 											}
@@ -6212,19 +6240,29 @@
 			},
 
 			bIsExcludeHiddenRows: function (range, activeCell, checkHiddenRows) {
-				var worksheet = this.worksheet;
-				var result = false;
+				let worksheet = this.worksheet;
+				let result = false;
 
-				//если есть общий фильтр со скрытыми строками, чтобы мы не удаляли на странице, данные в скрытых строках не трогаем
-				if (worksheet.AutoFilter && worksheet.AutoFilter.isApplyAutoFilter()) {
-					result = true;
-				} else if (this._getTableIntersectionWithActiveCell(activeCell, true))//если activeCell лежит внутри таблицы c примененным фильтром
-				{
-					result = true;
+				let activeNamedSheetView = worksheet.getActiveNamedSheetViewId();
+
+				//if all filter or intersection activeCell with tables
+				if (activeNamedSheetView) {
+					let _table = this._getTableIntersectionWithActiveCell(activeCell);
+					let _obj = this.getAutoFilter(_table ? _table : worksheet.AutoFilter, activeNamedSheetView);
+					if (_obj && _obj.isApplyAutoFilter && _obj.isApplyAutoFilter()) {
+						result = true;
+					}
+				} else {
+					if (worksheet.AutoFilter && worksheet.AutoFilter.isApplyAutoFilter()) {
+						result = true;
+					} else if (this._getTableIntersectionWithActiveCell(activeCell, true))//activeCell inside table with applyed filter
+					{
+						result = true;
+					}
 				}
 
 				if (result && checkHiddenRows) {
-					var range3 = range && range.bbox ? range : worksheet.getRange3(range.r1, range.c1, range.r2, range.c2);
+					let range3 = range && range.bbox ? range : worksheet.getRange3(range.r1, range.c1, range.r2, range.c2);
 					result = false;
 					range3._foreachRow(function (row) {
 						if (row.getHidden()) {
@@ -6247,7 +6285,7 @@
 							ref = new Asc.Range(ref.c1, ref.r1 + 1, ref.c2, ref.r2);
 						}
 						if (ref.contains(activeCell.col, activeCell.row)) {
-							if (checkApplyFiltering && worksheet.TableParts[i].isApplyAutoFilter()) {
+							if ((checkApplyFiltering && worksheet.TableParts[i].isApplyAutoFilter()) || !checkApplyFiltering) {
 								result = worksheet.TableParts[i];
 								break;
 							}
@@ -6348,7 +6386,7 @@
 						tableColumnsNameMap = {};
 						for (let i = 0; i < tableColumns.length; i++) {
 							if (tableColumns[i]) {
-								tableColumnsNameMap[tableColumns[i].Name] = 1;
+								tableColumnsNameMap[tableColumns[i].getTableColumnName()] = 1;
 							}
 						}
 					}

@@ -59,7 +59,7 @@
 		AscFormat.CColorModifiers.prototype.RGB2HSL(r, g, b, oHSL);
 		var dKoefL = (255 - 58) / 255;
 		oHSL.L = 255 - ((dKoefL * oHSL.L) >> 0);
-		AscFormat.CColorModifiers.prototype.HSL2RGB(oHSL, oRGB);
+		AscFormat.CColorModifiers.prototype.HSL2RGB(oHSL, oRGB, true);
 		return oRGB;
 	};
 
@@ -255,7 +255,6 @@
 	};
 	CGraphicsBase.prototype.p_width = function(w)
 	{
-		this.textAlpha = undefined;
 	};
 	CGraphicsBase.prototype.p_dash = function(params)
 	{
@@ -436,6 +435,10 @@
 	CGraphicsBase.prototype.DrawSpellingLine = function(y0, x0, x1, w)
 	{
 	};
+	CGraphicsBase.prototype.drawCustomRange = function(handlerId, rangeId, x0, y0, w, h, baseLine)
+	{
+	
+	};
 
 	CGraphicsBase.prototype.drawCollaborativeChanges = function(x, y, w, h, Color)
 	{
@@ -452,6 +455,10 @@
 	CGraphicsBase.prototype.drawFlowAnchor = function(x, y)
 	{
 	};
+	
+	CGraphicsBase.prototype.drawPermissionMark = function(x, y, h, isStart, isActive)
+	{
+	};
 
 	CGraphicsBase.prototype.DrawFootnoteRect = function(x, y, w, h)
 	{
@@ -460,6 +467,8 @@
 	CGraphicsBase.prototype.DrawPresentationComment = function(type, x, y, w, h)
 	{
 	};
+	CGraphicsBase.prototype.drawBlipFillTile = function () { };
+	CGraphicsBase.prototype.drawBlipFillStretch = function () { };
 
 	// INTEGER GRID
 	CGraphicsBase.prototype.SetIntegerGrid = function(param)
@@ -589,9 +598,9 @@
 		this.drawHorLine(align, y, x + leftMW, r + rightMW, penW);
 	};
 
-	CGraphicsBase.prototype.DrawPolygon = function(oPath, lineWidth, shift)
+	CGraphicsBase.prototype.drawPolygon = function(oPath, lineWidth, shift)
 	{
-		this.p_width(lineWidth);
+		this.p_width(lineWidth * 1000);
 		this._s();
 
 		let Points = oPath.Points;
@@ -643,6 +652,17 @@
 		this._z();
 		this.ds();
 		this._e();
+	};
+	
+	CGraphicsBase.prototype.drawPolygonByRects = function(rects, lineWidth, shift)
+	{
+		let polygon = new AscCommon.CPolygon();
+		polygon.fill(rects);
+		let paths = polygon.GetPaths(shift ? shift : 0);
+		for (let i = 0, count = paths.length; i < count; ++i)
+		{
+			this.drawPolygon(paths[i], lineWidth, 0);
+		}
 	};
 
 	/**
@@ -859,6 +879,10 @@
 	{
 	};
 	CGraphicsBase.prototype.End_Command = function(commandId)
+	{
+	};
+	
+	CGraphicsBase.prototype.SetBorder = function(border)
 	{
 	};
 

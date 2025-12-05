@@ -69,13 +69,15 @@
         UpLeftArrow:    16
     }
 
+    let HALF_SIZE = 11;
+    
     /**
 	 * Class representing a text annotation.
 	 * @constructor
     */
-    function CAnnotationText(sName, nPage, aOrigRect, oDoc)
+    function CAnnotationText(sName, aOrigRect, oDoc)
     {
-        AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Text, nPage, aOrigRect, oDoc);
+        AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Text, aOrigRect, oDoc);
 
         this._noteIcon      = NOTE_ICONS_TYPES.Comment;
         this._point         = undefined;
@@ -93,37 +95,54 @@
     AscFormat.InitClass(CAnnotationText, AscPDF.CAnnotationBase, AscDFH.historyitem_type_Pdf_Annot_Text);
 	CAnnotationText.prototype.constructor = CAnnotationText;
     
+    CAnnotationText.prototype.select = AscFormat.CGraphicObjectBase.prototype.select;
+    CAnnotationText.prototype.deselect = AscFormat.CGraphicObjectBase.prototype.deselect;
+    CAnnotationText.prototype.canChangeAdjustments = function() {};
+    CAnnotationText.prototype.hitToHandles = function() {};
+    CAnnotationText.prototype.hitInBoundingRect = function() {};
+    CAnnotationText.prototype.getNoChangeAspect = function() {};
+    CAnnotationText.prototype.getMainGroup = function() {};
+    CAnnotationText.prototype.getObjectName = function() {};
+    CAnnotationText.prototype.isShape = function() {};
+    CAnnotationText.prototype.isImage = function() {};
+    CAnnotationText.prototype.canMove = function() {
+        return true;
+    };
+    CAnnotationText.prototype.canResize = function() {
+        return false;
+    };
+    CAnnotationText.prototype.canRotate = function() {
+        return false;
+    };
+    
     CAnnotationText.prototype.SetState = function(nType) {
+        if (nType == this._state) {
+            return;
+        }
+
+        AscCommon.History.Add(new CChangesPDFTextAnnotState(this, this._state, nType));
+
         this._state = nType;
+        this.SetWasChanged(true);
     };
     CAnnotationText.prototype.GetState = function() {
         return this._state;
     };
     CAnnotationText.prototype.SetStateModel = function(nType) {
+        if (nType == this._stateModel) {
+            return;
+        }
+
+        AscCommon.History.Add(new CChangesPDFTextAnnotStateModel(this, this._stateModel, nType));
+
         this._stateModel = nType;
+        this.SetWasChanged(true);
     };
     CAnnotationText.prototype.GetStateModel = function() {
         return this._stateModel;
     };
     CAnnotationText.prototype.ClearReplies = function() {
         this._replies = [];
-    };
-    CAnnotationText.prototype.AddReply = function(CommentData, nPos) {
-        let oReply = new CAnnotationText(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), this.GetDocument());
-
-        oReply.SetContents(CommentData.m_sText);
-        oReply.SetCreationDate(CommentData.m_sOOTime);
-        oReply.SetModDate(CommentData.m_sOOTime);
-        oReply.SetAuthor(CommentData.m_sUserName);
-        oReply.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
-        oReply.SetReplyTo(this.GetReplyTo() || this);
-        CommentData.SetUserData(oReply.GetId());
-
-        if (!nPos) {
-            nPos = this._replies.length;
-        }
-
-        this._replies.splice(nPos, 0, oReply);
     };
     CAnnotationText.prototype.GetAscCommentData = function() {
         let oAscCommData = new Asc.asc_CCommentDataWord(null);
@@ -135,7 +154,7 @@
         let sModDate = this.GetModDate();
         if (sModDate)
             oAscCommData.asc_putOnlyOfficeTime(sModDate.toString());
-        oAscCommData.asc_putUserId(editor.documentUserId);
+        oAscCommData.asc_putUserId(this.GetUserId());
         oAscCommData.asc_putUserName(this.GetAuthor());
         
         let nState = this.GetState();
@@ -147,14 +166,23 @@
         oAscCommData.m_sUserData = this.GetId();
 
         this._replies.forEach(function(reply) {
-            oAscCommData.m_aReplies.push(reply.GetAscCommentData());
+            let oReplyAscCommData = reply.GetAscCommentData();
+            if (oReplyAscCommData) {
+                oAscCommData.m_aReplies.push(oReplyAscCommData);
+            }
         });
 
         return oAscCommData;
     };
 
     CAnnotationText.prototype.SetIconType = function(nType) {
+        if (nType == this._noteIcon) {
+            return;
+        }
+
+        AscCommon.History.Add(new CChangesPDFTextAnnotIcon(this, this._noteIcon, nType));
         this._noteIcon = nType;
+        this.SetWasChanged(true);
     };
     CAnnotationText.prototype.GetIconType = function() {
         return this._noteIcon;
@@ -199,28 +227,12 @@
 
         return null;
     };
-    CAnnotationText.prototype.LazyCopy = function() {
-        let oDoc = this.GetDocument();
-        oDoc.StartNoHistoryMode();
+    CAnnotationText.prototype.Copy = function() {
+        let oCopy = AscPDF.CAnnotationBase.prototype.Copy.call(this);
 
-        let oNewAnnot = new CAnnotationText(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+        oCopy.SetIconType(this.GetIconType());
 
-        oNewAnnot.lazyCopy = true;
-        oNewAnnot._originView = this._originView;
-        oNewAnnot._apIdx = this._apIdx;
-
-        let aFillColor = this.GetFillColor();
-        aFillColor && oNewAnnot.SetFillColor(aFillColor.slice());
-        oNewAnnot.SetOriginPage(this.GetOriginPage());
-        oNewAnnot.SetAuthor(this.GetAuthor());
-        oNewAnnot.SetModDate(this.GetModDate());
-        oNewAnnot.SetCreationDate(this.GetCreationDate());
-        oNewAnnot.SetContents(this.GetContents());
-        oNewAnnot.SetIconType(this.GetIconType());
-
-        oDoc.EndNoHistoryMode();
-
-        return oNewAnnot;
+        return oCopy;
     };
     CAnnotationText.prototype.Draw = function(oGraphics) {
         if (this.IsHidden() == true)
@@ -234,30 +246,30 @@
 
         let oDoc        = this.GetDocument();
         let nPage       = this.GetPage();
-        let aOrigRect   = this.GetOrigRect();
+        let aOrigRect   = this.GetRect();
         let nRotAngle   = oDoc.Viewer.getPageRotate(nPage);
         
-        let nX          = aOrigRect[0] + 0.5 >> 0;
-        let nY          = aOrigRect[1] + 0.5 >> 0;
-        let nWidth      = (aOrigRect[2] - aOrigRect[0]) / oDoc.Viewer.zoom;
-        let nHeight     = (aOrigRect[3] - aOrigRect[1]) / oDoc.Viewer.zoom;
+        let nX          = aOrigRect[0];
+        let nY          = aOrigRect[1];
+        let nWidth      = 21 / (oGraphics.isThumbnails ? 1 : oDoc.Viewer.zoom);
+        let nHeight     = 21 / (oGraphics.isThumbnails ? 1 : oDoc.Viewer.zoom);
         
         let oCtx = oGraphics.GetContext();
         oCtx.save();
         oGraphics.EnableTransform();
         oCtx.iconFill = "rgb(" + oRGB.r + "," + oRGB.g + "," + oRGB.b + ")";
 
-        let nScale = 1 / oDoc.Viewer.zoom;
+        let nScale = 1 / (oGraphics.isThumbnails ? 1 : oDoc.Viewer.zoom);
         let drawFunc = this.GetIconDrawFunc();
         drawFunc(oCtx, nX , nY, nScale, nScale, -nRotAngle * Math.PI / 180);
 
         oCtx.restore();
 
         let aRegions = [[
-            [nX + nWidth, nY],
             [nX, nY],
-            [nX, nY + nHeight],
-            [nX + nWidth, nY + nHeight]
+            [nX + nWidth, nY],
+            [nX + nWidth, nY + nHeight],
+            [nX, nY + nHeight]
         ]];
 
         oGraphics.DrawLockObjectRect(this.Lock.Get_Type(), aRegions);
@@ -313,25 +325,32 @@
     CAnnotationText.prototype.IsNeedDrawFromStream = function() {
         return false;
     };
-    CAnnotationText.prototype.onMouseDown = function(x, y, e) {
-        let oViewer         = Asc.editor.getDocumentRenderer();
-        let oDrawingObjects = oViewer.DrawingObjects;
-
-        this.selectStartPage = this.GetPage();
-
-        let pageObject = oViewer.getPageByCoords2(x, y);
-        if (!pageObject)
-            return false;
-
-        let X = pageObject.x;
-        let Y = pageObject.y;
-
-        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
-    };
     CAnnotationText.prototype.IsComment = function() {
         return true;
     };
-    
+    CAnnotationText.prototype.DrawSelected = function(overlay) {
+        overlay.m_oContext.lineWidth    = 3;
+        overlay.m_oContext.globalAlpha  = 1;
+        overlay.m_oContext.strokeStyle  = "rgb(33, 117, 200)";
+        overlay.m_oContext.beginPath();
+
+        let oViewer     = Asc.editor.getDocumentRenderer();
+        let aOrigRect   = this.GetRect();
+        let nX          = aOrigRect[0] + 0.5 >> 0;
+        let nY          = aOrigRect[1] + 0.5 >> 0;
+        let nWidth      = 21 / (oViewer.zoom);
+        let nHeight     = 21 / (oViewer.zoom);
+
+        let aRegions = [[
+            [nX + nWidth, nY],
+            [nX, nY],
+            [nX, nY + nHeight],
+            [nX + nWidth, nY + nHeight]
+        ]];
+
+        AscPDF.fillRegion({regions: aRegions}, overlay, this.GetPage());
+        overlay.m_oContext.stroke();
+    }
     CAnnotationText.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
 
@@ -345,7 +364,7 @@
         let nIconType = this.GetIconType();
         if (nIconType != null) {
             memory.annotFlags |= (1 << 16);
-            memory.WriteByte(this.GetIconType());
+            memory.WriteByte(nIconType);
         }
         
         // state model
@@ -370,6 +389,34 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
     };
+    CAnnotationText.prototype.ReadFromBinary = function(reader) {
+        reader.CommandType = reader.GetUChar();
+        
+        reader.Skip(4);
+    
+        this.ReadFromBinaryBase(reader);
+        this.ReadFromBinaryBase2(reader);
+    
+        // icon
+        if (reader.annotFlags & (1 << 16)) {
+            let nIconType = reader.GetUChar();
+            this.SetIconType(nIconType);
+        }
+    
+        // state model
+        if (reader.annotFlags & (1 << 17)) {
+            let nStateModel = reader.GetUChar();
+            this.SetStateModel(nStateModel);
+        }
+    
+        // state
+        if (reader.annotFlags & (1 << 18)) {
+            let nState = reader.GetUChar();
+            this.SetState(nState);
+        }
+    };
+    
+    
     
     window["AscPDF"].CAnnotationText            = CAnnotationText;
     window["AscPDF"].TEXT_ANNOT_STATE           = TEXT_ANNOT_STATE;
@@ -377,9 +424,10 @@
 	
     function drawIconCheck(ctx, x, y, xScale, yScale, rotationAngle) {
         ctx.save();
-        ctx.translate(x + 8 * xScale, y + 8 * yScale);
+        ctx.translate(x + HALF_SIZE * xScale, y + HALF_SIZE * yScale);
         ctx.rotate(rotationAngle);
-        ctx.translate(-8 * xScale, -8 * yScale);
+        ctx.translate(-HALF_SIZE * xScale, -HALF_SIZE * yScale);
+        
         ctx.scale(xScale, yScale);
 
         ctx.strokeStyle="rgba(0,0,0,0)";
@@ -487,9 +535,10 @@
     }
     function drawIconCircle(ctx, x, y, xScale, yScale, rotationAngle) {
         ctx.save();
-        ctx.translate(x + 8 * xScale, y + 8 * yScale);
+        ctx.translate(x + HALF_SIZE * xScale, y + HALF_SIZE * yScale);
         ctx.rotate(rotationAngle);
-        ctx.translate(-8 * xScale, -8 * yScale);
+        ctx.translate(-HALF_SIZE * xScale, -HALF_SIZE * yScale);
+        
         ctx.scale(xScale, yScale);
 
         ctx.strokeStyle="rgba(0,0,0,0)";
@@ -574,9 +623,10 @@
     }
     function drawIconComment(ctx, x, y, xScale, yScale, rotationAngle) {
         ctx.save();
-        ctx.translate(x + 8 * xScale, y + 8 * yScale);
+        ctx.translate(x + HALF_SIZE * xScale, y + HALF_SIZE * yScale);
         ctx.rotate(rotationAngle);
-        ctx.translate(-8 * xScale, -8 * yScale);
+        ctx.translate(-HALF_SIZE * xScale, -HALF_SIZE * yScale);
+        
         ctx.scale(xScale, yScale);
 
         ctx.strokeStyle="rgba(0,0,0,0)";
@@ -725,9 +775,10 @@
     }
     function drawIconCross(ctx, x, y, xScale, yScale, rotationAngle) {
         ctx.save();
-        ctx.translate(x + 8 * xScale, y + 8 * yScale);
+        ctx.translate(x + HALF_SIZE * xScale, y + HALF_SIZE * yScale);
         ctx.rotate(rotationAngle);
-        ctx.translate(-8 * xScale, -8 * yScale);
+        ctx.translate(-HALF_SIZE * xScale, -HALF_SIZE * yScale);
+        
         ctx.scale(xScale, yScale);
 
         ctx.strokeStyle="rgba(0,0,0,0)";
@@ -916,9 +967,10 @@
     }
     function drawIconCrossHairs(ctx, x, y, xScale, yScale, rotationAngle) {
         ctx.save();
-        ctx.translate(x + 8 * xScale, y + 8 * yScale);
+        ctx.translate(x + HALF_SIZE * xScale, y + HALF_SIZE * yScale);
         ctx.rotate(rotationAngle);
-        ctx.translate(-8 * xScale, -8 * yScale);
+        ctx.translate(-HALF_SIZE * xScale, -HALF_SIZE * yScale);
+        
         ctx.scale(xScale, yScale);
 
         ctx.strokeStyle="rgba(0,0,0,0)";
@@ -1005,9 +1057,10 @@
     }
     function drawIconHelp(ctx, x, y, xScale, yScale, rotationAngle) {
         ctx.save();
-        ctx.translate(x + 8 * xScale, y + 8 * yScale);
+        ctx.translate(x, y);
         ctx.rotate(rotationAngle);
-        ctx.translate(-8 * xScale, -8 * yScale);
+        // ctx.translate(-HALF_SIZE * xScale, -HALF_SIZE * yScale);
+        
         ctx.scale(xScale, yScale);
 
         ctx.strokeStyle="rgba(0,0,0,0)";
@@ -1159,9 +1212,10 @@
     }
     function drawIconInsert(ctx, x, y, xScale, yScale, rotationAngle) {
         ctx.save();
-        ctx.translate(x + 8 * xScale, y + 8 * yScale);
+        ctx.translate(x + HALF_SIZE * xScale, y + HALF_SIZE * yScale);
         ctx.rotate(rotationAngle);
-        ctx.translate(-8 * xScale, -8 * yScale);
+        ctx.translate(-HALF_SIZE * xScale, -HALF_SIZE * yScale);
+        
         ctx.scale(xScale, yScale);
 
         ctx.strokeStyle="rgba(0,0,0,0)";
@@ -1233,9 +1287,10 @@
     }
     function drawIconKey(ctx, x, y, xScale, yScale, rotationAngle) {
         ctx.save();
-        ctx.translate(x + 8 * xScale, y + 8 * yScale);
+        ctx.translate(x + HALF_SIZE * xScale, y + HALF_SIZE * yScale);
         ctx.rotate(rotationAngle);
-        ctx.translate(-8 * xScale, -8 * yScale);
+        ctx.translate(-HALF_SIZE * xScale, -HALF_SIZE * yScale);
+        
         ctx.scale(xScale, yScale);
 
         ctx.strokeStyle="rgba(0,0,0,0)";
@@ -1461,9 +1516,10 @@
     }
     function drawIconNewParagraph(ctx, x, y, xScale, yScale, rotationAngle) {
         ctx.save();
-        ctx.translate(x + 8 * xScale, y + 8 * yScale);
+        ctx.translate(x + HALF_SIZE * xScale, y + HALF_SIZE * yScale);
         ctx.rotate(rotationAngle);
-        ctx.translate(-8 * xScale, -8 * yScale);
+        ctx.translate(-HALF_SIZE * xScale, -HALF_SIZE * yScale);
+        
         ctx.scale(xScale, yScale);
 
         ctx.strokeStyle="rgba(0,0,0,0)";
@@ -1608,9 +1664,10 @@
     }
     function drawIconNote(ctx, x, y, xScale, yScale, rotationAngle) {
         ctx.save();
-        ctx.translate(x + 8 * xScale, y + 8 * yScale);
+        ctx.translate(x + HALF_SIZE * xScale, y + HALF_SIZE * yScale);
         ctx.rotate(rotationAngle);
-        ctx.translate(-8 * xScale, -8 * yScale);
+        ctx.translate(-HALF_SIZE * xScale, -HALF_SIZE * yScale);
+
         ctx.scale(xScale, yScale);
 
         ctx.strokeStyle="rgba(0,0,0,0)";
@@ -1724,9 +1781,10 @@
     }
     function drawIconParagraph(ctx, x, y, xScale, yScale, rotationAngle) {
         ctx.save();
-        ctx.translate(x + 8 * xScale, y + 8 * yScale);
+        ctx.translate(x + HALF_SIZE * xScale, y + HALF_SIZE * yScale);
         ctx.rotate(rotationAngle);
-        ctx.translate(-8 * xScale, -8 * yScale);
+        ctx.translate(-HALF_SIZE * xScale, -HALF_SIZE * yScale);
+        
         ctx.scale(xScale, yScale);
 
         ctx.strokeStyle="rgba(0,0,0,0)";
@@ -1809,9 +1867,10 @@
     }
     function drawIconRightArrow(ctx, x, y, xScale, yScale, rotationAngle) {
         ctx.save();
-        ctx.translate(x + 8 * xScale, y + 8 * yScale);
+        ctx.translate(x + HALF_SIZE * xScale, y + HALF_SIZE * yScale);
         ctx.rotate(rotationAngle);
-        ctx.translate(-8 * xScale, -8 * yScale);
+        ctx.translate(-HALF_SIZE * xScale, -HALF_SIZE * yScale);
+        
         ctx.scale(xScale, yScale);
 
         ctx.strokeStyle="rgba(0,0,0,0)";
@@ -1945,9 +2004,10 @@
     }
     function drawIconRightPointer(ctx, x, y, xScale, yScale, rotationAngle) {
         ctx.save();
-        ctx.translate(x + 8 * xScale, y + 8 * yScale);
+        ctx.translate(x + HALF_SIZE * xScale, y + HALF_SIZE * yScale);
         ctx.rotate(rotationAngle);
-        ctx.translate(-8 * xScale, -8 * yScale);
+        ctx.translate(-HALF_SIZE * xScale, -HALF_SIZE * yScale);
+        
         ctx.scale(xScale, yScale);
 
         ctx.strokeStyle="rgba(0,0,0,0)";
@@ -2024,9 +2084,10 @@
     }
     function drawIconStar(ctx, x, y, xScale, yScale, rotationAngle) {
         ctx.save();
-        ctx.translate(x + 8 * xScale, y + 8 * yScale);
+        ctx.translate(x + HALF_SIZE * xScale, y + HALF_SIZE * yScale);
         ctx.rotate(rotationAngle);
-        ctx.translate(-8 * xScale, -8 * yScale);
+        ctx.translate(-HALF_SIZE * xScale, -HALF_SIZE * yScale);
+        
         ctx.scale(xScale, yScale);
 
         ctx.strokeStyle="rgba(0,0,0,0)";
@@ -2194,9 +2255,10 @@
     }
     function drawIconUpArrow(ctx, x, y, xScale, yScale, rotationAngle) {
         ctx.save();
-        ctx.translate(x + 8 * xScale, y + 8 * yScale);
+        ctx.translate(x + HALF_SIZE * xScale, y + HALF_SIZE * yScale);
         ctx.rotate(rotationAngle);
-        ctx.translate(-8 * xScale, -8 * yScale);
+        ctx.translate(-HALF_SIZE * xScale, -HALF_SIZE * yScale);
+        
         ctx.scale(xScale, yScale);
 
         ctx.strokeStyle="rgba(0,0,0,0)";
@@ -2330,9 +2392,10 @@
     }
     function drawIconUpLeftArrow(ctx, x, y, xScale, yScale, rotationAngle) {
         ctx.save();
-        ctx.translate(x + 8 * xScale, y + 8 * yScale);
+        ctx.translate(x + HALF_SIZE * xScale, y + HALF_SIZE * yScale);
         ctx.rotate(rotationAngle);
-        ctx.translate(-8 * xScale, -8 * yScale);
+        ctx.translate(-HALF_SIZE * xScale, -HALF_SIZE * yScale);
+        
         ctx.scale(xScale, yScale);
 
         ctx.strokeStyle="rgba(0,0,0,0)";

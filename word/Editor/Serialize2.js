@@ -135,7 +135,8 @@ var c_oSerNumTypes = {
 	Legacy: 34,
 	LegacyIndent: 35,
 	LegacySpace: 36,
-	lvl_Jc: 37
+	lvl_Jc: 37,
+	Nsid: 38
 };
 var c_oSerOtherTableTypes = {
     ImageMap:0,
@@ -455,7 +456,9 @@ var c_oSerParType = {
 	DocParts: 27,
 	PermStart: 28,
 	PermEnd: 29,
-	JsaProjectExternal: 30
+	JsaProjectExternal: 30,
+	ParaID: 31,
+	TextID: 32
 };
 var c_oSerGlossary = {
 	DocPart: 0,
@@ -1157,14 +1160,21 @@ var c_oSerSdt = {
 	FormPrBorder : 70,
 	FormPrShd    : 71,
 	TextFormPrCombWRule : 72,
+	FormPrRoleName : 73,
 
 	TextFormPrFormatType    : 80,
 	TextFormPrFormatVal     : 81,
 	TextFormPrFormatSymbols : 82,
 
+	StoreItemCheckSum : 85,
+
 	ComplexFormPr     : 90,
 	ComplexFormPrType : 91,
-	OformMaster : 92
+	OformMaster : 92,
+	Border : 93,
+	Shd : 94,
+	RepeatingSection : 95,
+	RepeatingSectionItem : 96
 };
 var c_oSerFFData = {
 	CalcOnExit: 0,
@@ -1695,7 +1705,7 @@ function ReadMoveRangeEndElem(type, length, stream, options) {
 	return res;
 }
 function readMoveRangeStart(length, bcr, stream, oReadResult, paragraphContent, isFrom) {
-	let move = new CParaRevisionMove(true, isFrom, undefined, new CReviewInfo());
+	let move = new CParaRevisionMove(true, isFrom, undefined, new AscWord.ReviewInfo());
 	var options = {id: null};
 	var res = bcr.Read1(length, function(t, l) {
 		return ReadMoveRangeStartElem(t, l, stream, move, options);
@@ -1749,7 +1759,7 @@ function readPermStart(length, bcr, oReadResult, paragraphContent) {
 	let permPr = {};
 	let res = readPermPr(length, bcr, permPr);
 	let permStart = AscWord.ParagraphPermStart.fromObject(permPr);
-	oReadResult.addPermStart(paragraphContent, permStart);
+	oReadResult.addPermStart(paragraphContent, permStart, true);
 	return res;
 }
 function readPermEnd(length, bcr, oReadResult, paragraphContent) {
@@ -1759,7 +1769,7 @@ function readPermEnd(length, bcr, oReadResult, paragraphContent) {
 	let permPr = {};
 	let res = readPermPr(length, bcr, permPr);
 	let permEnd = AscWord.ParagraphPermEnd.fromObject(permPr);
-	oReadResult.addPermEnd(paragraphContent, permEnd);
+	oReadResult.addPermEnd(paragraphContent, permEnd, true);
 	return res;
 }
 function readPermPr(length, bcr, permPr) {
@@ -1954,8 +1964,10 @@ function BinaryFileWriter(doc, bMailMergeDocx, bMailMergeHtml, isCompatible, opt
 				pptx_content_writer.BinaryFileWriter.ImportFromMemory(old);
 			}});
 		}
-		if (this.Document.CustomXmls.length > 0) {
-			this.WriteTable(c_oSerTableTypes.Customs, new BinaryCustomsTableWriter(this.memory, this.Document, this.Document.CustomXmls));
+		
+		let xmlManager = this.Document.getCustomXmlManager();
+		if (xmlManager.getCount() > 0) {
+			this.WriteTable(c_oSerTableTypes.Customs, new AscCommon.BinaryCustomsTableWriter(xmlManager, this.memory, true));
 		}
 		//Write Settings
 		this.WriteTable(c_oSerTableTypes.Settings, new BinarySettingsTableWriter(this.memory, this.Document, this.saveParams));
@@ -2067,6 +2079,7 @@ function BinaryFileWriter(doc, bMailMergeDocx, bMailMergeHtml, isCompatible, opt
 		this.copyParams.bdtw = new BinaryDocumentTableWriter(this.memory, this.Document, null, this.copyParams.oUsedNumIdMap, this.copyParams, this.saveParams, null);
 		this.copyParams.nDocumentWriterTablePos = 0;
 		this.copyParams.nDocumentWriterPos = 0;
+		this.copyParams.isCopyPaste = true;
 		
 		this.WriteMainTableStart();
 		
@@ -2381,7 +2394,7 @@ function Binary_pPrWriter(memory, oNumIdMap, oBinaryHeaderFooterTableWriter, sav
 	this.oBinaryHeaderFooterTableWriter = oBinaryHeaderFooterTableWriter;
     this.bs = new BinaryCommonWriter(this.memory);
     this.brPrs = new Binary_rPrWriter(this.memory, saveParams);
-    this.Write_pPr = function(pPr, pPr_rPr, EndRun, SectPr, oDocument)
+    this.Write_pPr = function(pPr, pPr_rPr, EndRun, paragraph, oDocument)
     {
         var oThis = this;
         //Стили надо писать первыми, потому что применение стиля при открытии уничтажаются настройки параграфа
@@ -2501,11 +2514,14 @@ function Binary_pPrWriter(memory, oNumIdMap, oBinaryHeaderFooterTableWriter, sav
             this.bs.WriteItemWithLength(function(){oThis.WriteFramePr(pPr.FramePr);});
         }
         //SectPr
-        if(null != SectPr && null != oDocument)
+        if(paragraph
+			&& paragraph.Get_SectionPr()
+			&& !paragraph.IsTableCellContent()
+			&& oDocument)
         {
             this.memory.WriteByte(c_oSerProp_pPrType.SectPr);
             this.memory.WriteByte(c_oSerPropLenType.Variable);
-            this.bs.WriteItemWithLength(function(){oThis.WriteSectPr(SectPr, oDocument);});
+            this.bs.WriteItemWithLength(function(){oThis.WriteSectPr(paragraph.Get_SectionPr(), oDocument);});
         }
 
         if(null != pPr.PrChange && pPr.ReviewInfo)
@@ -2955,7 +2971,7 @@ function Binary_pPrWriter(memory, oNumIdMap, oBinaryHeaderFooterTableWriter, sav
 		if (undefined !== sectPr.GetPageNumChapStyle())
 			this.bs.WriteItem(c_oSerProp_secPrPageNumType.chapStyle, function(){oThis.memory.WriteLong(sectPr.GetPageNumChapStyle());});
 		if (undefined !== sectPr.GetPageNumChapSep())
-			this.bs.WriteItem(c_oSerProp_secPrPageNumType.chapSep, function(){oThis.memory.WriteLong(sectPr.GetPageNumChapSep());});
+			this.bs.WriteItem(c_oSerProp_secPrPageNumType.chapSep, function(){oThis.memory.WriteByte(sectPr.GetPageNumChapSep());});
 	}
 	this.WriteLineNumType = function(lineNum)
 	{
@@ -4469,6 +4485,16 @@ Binary_tblPrWriter.prototype =
 	WriteTbl: function(table)
     {
 		var oThis = this;
+		
+		// Обязательно пишем стиль самым первым (при сохранении в docx из бинарника эти данные напрямую в xml
+		// сохраняются), а MSWord плохо воспринимает некоторые параметры, если стиль идет после них (76106)
+		let styleId = table.GetTableStyle();
+		if (styleId)
+		{
+			this.memory.WriteByte(c_oSerProp_tblPrType.Style);
+			this.memory.WriteString2(styleId);
+		}
+		
 		this.WriteTblPr(table.Pr, table);
 		//Look
 		var oLook = table.Get_TableLook();
@@ -4488,13 +4514,6 @@ Binary_tblPrWriter.prototype =
 			if(!oLook.IsBandVer())
 				nLook |= 0x0400;
 			this.bs.WriteItem(c_oSerProp_tblPrType.Look, function(){oThis.memory.WriteLong(nLook);});
-		}
-		//Style
-		var sStyle = table.Get_TableStyle();
-		if(null != sStyle && "" != sStyle)
-		{
-			this.memory.WriteByte(c_oSerProp_tblPrType.Style);
-            this.memory.WriteString2(sStyle);
 		}
 	},
     WriteTblPr: function(tblPr, table)
@@ -5050,6 +5069,11 @@ function BinaryNumberingTableWriter(memory, doc, oNumIdMap, oUsedNumIdMap, saveP
             this.memory.WriteByte(c_oSerNumTypes.StyleLink);
             this.memory.WriteString2(num.StyleLink);
 		}
+		let nsid = num.GetNsid();
+		if (undefined !== nsid && null !== nsid)
+		{
+			this.bs.WriteItem(c_oSerNumTypes.Nsid, function (){oThis.memory.WriteLong(nsid);});
+		}
         //Lvl
         if(null != num.Lvl)
             this.bs.WriteItem(c_oSerNumTypes.AbstractNum_Lvls, function(){oThis.WriteLevels(num.Lvl);});
@@ -5207,6 +5231,7 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
     this.memory = memory;
     this.Document = doc;
 	this.oNumIdMap = oNumIdMap;
+	this.oBinaryHeaderFooterTableWriter = oBinaryHeaderFooterTableWriter;
     this.bs = new BinaryCommonWriter(this.memory);
 	this.btblPrs = new Binary_tblPrWriter(this.memory, oNumIdMap, saveParams);
     this.bpPrs = new Binary_pPrWriter(this.memory, oNumIdMap, oBinaryHeaderFooterTableWriter, saveParams);
@@ -5387,7 +5412,7 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
                 pPr = {};
             var EndRun = par.GetParaEndRun();
             this.memory.WriteByte(c_oSerParType.pPr);
-            this.bs.WriteItemWithLength(function(){oThis.bpPrs.Write_pPr(pPr, par.TextPr.Value, EndRun, par.Get_SectionPr(), oThis.Document);});
+            this.bs.WriteItemWithLength(function(){oThis.bpPrs.Write_pPr(pPr, par.TextPr.Value, EndRun, par, oThis.Document);});
         }
         //Content
         if(null != par.Content)
@@ -5395,6 +5420,24 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
             this.memory.WriteByte(c_oSerParType.Content);
             this.bs.WriteItemWithLength(function(){oThis.WriteParagraphContent(par, bUseSelection ,true, selectedAll);});
         }
+		
+		let paraId = par.GetParaId();
+		if (undefined !== paraId && null !== paraId)
+		{
+			this.memory.WriteByte(c_oSerParType.ParaID);
+			this.bs.WriteItemWithLength(function(){
+				oThis.memory.WriteLong(paraId);
+			});
+		}
+		
+		let textId = par.GetTextId();
+		if (undefined !== textId && null !== textId)
+		{
+			this.memory.WriteByte(c_oSerParType.TextID);
+			this.bs.WriteItemWithLength(function(){
+				oThis.memory.WriteLong(textId);
+			});
+		}
     };
     this.WriteParagraphContent = function (par, bUseSelection, bLastRun, selectedAll)
     {
@@ -6635,7 +6678,7 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
         //Content
         if(null != cell.Content)
         {
-            var oInnerDocument = new BinaryDocumentTableWriter(this.memory, this.Document, this.oMapCommentId, this.oNumIdMap, this.copyParams, this.saveParams, this.oBinaryHeaderFooterTableWriter);
+            var oInnerDocument = new BinaryDocumentTableWriter(this.memory, this.Document, this.oMapCommentId, this.oNumIdMap, this.copyParams, this.saveParams, null);
             this.bs.WriteItem(c_oSerDocTableType.Cell_Content, function(){oInnerDocument.WriteDocumentContent(cell.Content);});
         }
     };
@@ -6648,6 +6691,8 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 	};
 	this.WriteSdt = function (oSdt, type)
 	{
+		oSdt.updateDataBinding();
+		
 		var oThis = this;
 		if (oSdt.Pr) {
 			oThis.bs.WriteItem(c_oSerSdt.Pr, function () { oThis.WriteSdtPr(oSdt.Pr, oSdt); });
@@ -6655,12 +6700,18 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		// if (oSdt.EndPr) {
 		// 	this.bs.WriteItem(c_oSerSdt.EndPr, function(){oThis.brPrs.Write_rPr(oSdt.EndPr, null, null);});
 		// }
-		if (0 === type) {
+
+		if (0 === type)
+		{
 			var oInnerDocument = new BinaryDocumentTableWriter(this.memory, this.Document, this.oMapCommentId, this.oNumIdMap, this.copyParams, this.saveParams, this.oBinaryHeaderFooterTableWriter);
 			this.bs.WriteItem(c_oSerSdt.Content, function(){oInnerDocument.WriteDocumentContent(oSdt.Content);});
-		} else if (1 === type) {
+		}
+		else if (1 === type)
+		{
 			this.bs.WriteItem(c_oSerSdt.Content, function(){oThis.WriteParagraphContent(oSdt, false, false);});
 		}
+
+
 	};
 	this.WriteSdtPr = function (val, oSdt)
 	{
@@ -6678,9 +6729,9 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 			rPr.Color = val.Color;
 			oThis.bs.WriteItem(c_oSerSdt.Color, function (){oThis.brPrs.Write_rPr(rPr, null, null);});
 		}
-		// if (null != val.DataBinding) {
-		// 	oThis.bs.WriteItem(c_oSerSdt.DataBinding, function (){oThis.WriteSdtPrDataBinding(val.DataBinding);});
-		// }
+		if (null != val.DataBinding) {
+			oThis.bs.WriteItem(c_oSerSdt.DataBinding, function (){oThis.WriteSdtPrDataBinding(val.DataBinding);});
+		}
 		// if (null != val.DocPartList) {
 		// 	oThis.bs.WriteItem(c_oSerSdt.DocPartList, function (){oThis.WriteDocPartList(val.DocPartList);});
 		// }
@@ -6760,6 +6811,24 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		if (complexFormPr) {
 			this.bs.WriteItem(c_oSerSdt.ComplexFormPr, function (){oThis.WriteSdtComplexFormPr(complexFormPr)});
 		}
+		if (undefined !== val.ShdColor) {
+			let shd = new AscWord.CShd();
+			shd.Value = Asc.c_oAscShd.Clear;
+			shd.Color = val.ShdColor;
+			oThis.bs.WriteItem(c_oSerSdt.Shd, function(){oThis.bs.WriteShd(shd)});
+		}
+		if (undefined !== val.BorderColor) {
+			let border = new AscWord.CBorder();
+			border.Color = val.BorderColor;
+			border.Value = AscWord.BorderType.single;
+			oThis.bs.WriteItem(c_oSerSdt.Border, function(){oThis.bs.WriteBorder(border)});
+		}
+		if (oSdt.IsRepeatingSection()) {
+			oThis.bs.WriteItem(c_oSerSdt.RepeatingSection, function (){oThis.memory.WriteBool(true)});
+		}
+		if (oSdt.IsRepeatingSectionItem()) {
+			oThis.bs.WriteItem(c_oSerSdt.RepeatingSectionItem, function (){oThis.memory.WriteBool(true)});
+		}
 	};
 	this.WriteSdtCheckBox = function (val)
 	{
@@ -6816,17 +6885,22 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 	this.WriteSdtPrDataBinding = function (val)
 	{
 		var oThis = this;
-		if (null != val.PrefixMappings) {
+		if (undefined !== val.prefixMappings) {
 			this.memory.WriteByte(c_oSerSdt.PrefixMappings);
-			this.memory.WriteString2(val.PrefixMappings);
+			this.memory.WriteString2(val.prefixMappings);
 		}
-		if (null != val.StoreItemID) {
+		if (undefined !== val.storeItemID) {
 			this.memory.WriteByte(c_oSerSdt.StoreItemID);
-			this.memory.WriteString2(val.StoreItemID);
+			this.memory.WriteString2(val.storeItemID);
 		}
-		if (null != val.XPath) {
+		if (undefined !== val.xpath) {
 			this.memory.WriteByte(c_oSerSdt.XPath);
-			this.memory.WriteString2(val.XPath);
+			this.memory.WriteString2(val.xpath);
+		}
+		if (undefined !== val.storeItemCheckSum)
+		{
+			this.memory.WriteByte(c_oSerSdt.StoreItemCheckSum);
+			this.memory.WriteString2(val.storeItemCheckSum);
 		}
 	};
 	this.WriteSdtPrDate = function (val)
@@ -6894,6 +6968,9 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 			if (sTarget) {
 				oThis.bs.WriteItem(c_oSerSdt.OformMaster, function (){oThis.memory.WriteString3(sTarget);});
 			}
+		}
+		if (oThis.copyParams && oThis.copyParams.isCopyPaste && val.RoleName) {
+			oThis.bs.WriteItem(c_oSerSdt.FormPrRoleName, function(){oThis.memory.WriteString3(val.RoleName);});
 		}
 	};
 	this.WriteSdtTextFormPr = function (val)
@@ -7491,74 +7568,74 @@ function BinarySettingsTableWriter(memory, doc, saveParams)
 				oThis.memory.WriteBool(oDocProtect.formatting);
 			});
 		}
-		if (oDocProtect.hashValue)
+		if (null != oDocProtect.hashValue)
 		{
 			this.bs.WriteItem(c_oDocProtect.HashValue, function () {
 				oThis.memory.WriteString3(oDocProtect.hashValue);
 			});
 		}
-		if (oDocProtect.saltValue)
+		if (null != oDocProtect.saltValue)
 		{
 			this.bs.WriteItem(c_oDocProtect.SaltValue, function () {
 				oThis.memory.WriteString3(oDocProtect.saltValue);
 			});
 		}
-		if (oDocProtect.spinCount)
+		if (null != oDocProtect.spinCount)
 		{
 			this.bs.WriteItem(c_oDocProtect.SpinCount, function () {
 				oThis.memory.WriteLong(oDocProtect.spinCount);
 			});
 		}
 //ext
-		if (oDocProtect.algIdExt)
+		if (null != oDocProtect.algIdExt)
 		{
 			this.bs.WriteItem(c_oDocProtect.AlgIdExt, function () {
 				oThis.memory.WriteString2(oDocProtect.algIdExt);
 			});
 		}
-		if (oDocProtect.algIdExtSource)
+		if (null != oDocProtect.algIdExtSource)
 		{
 			this.bs.WriteItem(c_oDocProtect.AlgIdExtSource, function () {
 				oThis.memory.WriteString2(oDocProtect.algIdExtSource);
 			});
 		}
-		if (oDocProtect.cryptAlgorithmClass)
+		if (null != oDocProtect.cryptAlgorithmClass)
 		{
 			this.bs.WriteItem(c_oDocProtect.CryptAlgorithmClass, function () {
 				oThis.memory.WriteByte(oDocProtect.cryptAlgorithmClass);
 			});
 		}
-		if (oDocProtect.cryptAlgorithmSid)
+		if (null != oDocProtect.cryptAlgorithmSid)
 		{
 			this.bs.WriteItem(c_oDocProtect.CryptAlgorithmSid, function () {
 				oThis.memory.WriteLong(oDocProtect.cryptAlgorithmSid);
 			});
 		}
-		if (oDocProtect.cryptAlgorithmType)
+		if (null != oDocProtect.cryptAlgorithmType)
 		{
 			this.bs.WriteItem(c_oDocProtect.CryptAlgorithmType, function () {
 				oThis.memory.WriteByte(oDocProtect.cryptAlgorithmType);
 			});
 		}
-		if (oDocProtect.cryptProvider)
+		if (null != oDocProtect.cryptProvider)
 		{
 			this.bs.WriteItem(c_oDocProtect.cryptProvider, function () {
 				oThis.memory.WriteString2(oDocProtect.cryptProvider);
 			});
 		}
-		if (oDocProtect.cryptProviderType)
+		if (null != oDocProtect.cryptProviderType)
 		{
 			this.bs.WriteItem(c_oDocProtect.CryptProviderType, function () {
 				oThis.memory.WriteByte(oDocProtect.cryptProviderType);
 			});
 		}
-		if (oDocProtect.cryptProviderTypeExt)
+		if (null != oDocProtect.cryptProviderTypeExt)
 		{
 			this.bs.WriteItem(c_oDocProtect.CryptProviderTypeExt, function () {
 				oThis.memory.WriteString2(oDocProtect.cryptProviderTypeExt);
 			});
 		}
-		if (oDocProtect.cryptProviderTypeExtSource)
+		if (null != oDocProtect.cryptProviderTypeExtSource)
 		{
 			this.bs.WriteItem(c_oDocProtect.CryptProviderTypeExtSource, function () {
 				oThis.memory.WriteString2(oDocProtect.cryptProviderTypeExtSource);
@@ -7694,43 +7771,7 @@ function BinaryNotesTableWriter(memory, doc, oNumIdMap, oMapCommentId, copyParam
 		this.bs.WriteItem(c_oSerNotes.NoteContent, function(){dtw.WriteDocumentContent(note);});
 	};
 };
-function BinaryCustomsTableWriter(memory, doc, CustomXmls)
-{
-	this.memory = memory;
-	this.Document = doc;
-	this.bs = new BinaryCommonWriter(this.memory);
-	this.CustomXmls = CustomXmls;
-	this.Write = function()
-	{
-		var oThis = this;
-		this.bs.WriteItemWithLength(function(){oThis.WriteCustomXmls();});
-	};
-	this.WriteCustomXmls = function()
-	{
-		var oThis = this;
-		for (var i = 0; i < this.CustomXmls.length; ++i) {
-			this.bs.WriteItem(c_oSerCustoms.Custom, function() {oThis.WriteCustomXml(oThis.CustomXmls[i]);});
-		}
-	};
-	this.WriteCustomXml = function(customXml) {
-		var oThis = this;
-		for(var i = 0; i < customXml.Uri.length; ++i){
-			this.bs.WriteItem(c_oSerCustoms.Uri, function () {
-				oThis.memory.WriteString3(customXml.Uri[i]);
-			});
-		}
-		if (null !== customXml.ItemId) {
-			this.bs.WriteItem(c_oSerCustoms.ItemId, function() {
-				oThis.memory.WriteString3(customXml.ItemId);
-			});
-		}
-		if (null !== customXml.Content) {
-			this.bs.WriteItem(c_oSerCustoms.ContentA, function() {
-				oThis.memory.WriteBuffer(customXml.Content, 0, customXml.Content.length)
-			});
-		}
-	};
-};
+
 function BinaryFileReader(doc, openParams)
 {
     this.Document = doc;
@@ -7796,16 +7837,16 @@ function BinaryFileReader(doc, openParams)
 	this.ReadFromStream = function(stream, bClearStreamOnly)
 	{
 		this.stream = stream;
-		this.PreLoadPrepare(bClearStreamOnly);
+		this.PreLoadPrepare(bClearStreamOnly, true);
 		this.ReadMainTable();
-		this.PostLoadPrepare();
+		this.PostLoadPrepare(undefined, true);
 		return true;
 	};
     this.Read = function(data)
     {
 		return this.ReadFromStream(this.getbase64DecodedData(data));
     };
-	this.PreLoadPrepare = function(bClearStreamOnly)
+	this.PreLoadPrepare = function(bClearStreamOnly, bClearPptxLoader)
 	{
 		var styles = this.Document.Styles.Style;
         
@@ -7815,8 +7856,10 @@ function BinaryFileReader(doc, openParams)
         stDefault.Paragraph = null;
 		stDefault.Table = null;
 
-        //надо сбросить то, что остался после открытия документа(повторное открытие в Version History)
-        pptx_content_loader.Clear(bClearStreamOnly);
+		if (bClearPptxLoader) {
+			//надо сбросить то, что остался после открытия документа(повторное открытие в Version History)
+			pptx_content_loader.Clear(bClearStreamOnly);
+		}
 	}
     this.ReadMainTable = function()
 	{	
@@ -8019,7 +8062,7 @@ function BinaryFileReader(doc, openParams)
 					break;
 				case c_oSerTableTypes.Customs:
 					this.stream.Seek2(mtiOffBits);
-					res = (new Binary_CustomsTableReader(this.Document, this.oReadResult, this.stream, this.Document.CustomXmls)).Read();
+					res = (new AscCommon.BinaryCustomsTableReader(this.Document.getCustomXmlManager(), this.stream)).Read();
 					break;
 				case c_oSerTableTypes.Glossary:
 					if(!this.oReadResult.bCopyPaste || this.oReadResult.isDocumentPasting()) {
@@ -8084,7 +8127,7 @@ function BinaryFileReader(doc, openParams)
 			}
 		}
 	};
-    this.PostLoadPrepare = function(opt_xmlParserContext)
+    this.PostLoadPrepare = function(opt_xmlParserContext, bClearPptxLoader)
     {
 		let api = this.Document.DrawingDocument && this.Document.DrawingDocument.m_oWordControl && this.Document.DrawingDocument.m_oWordControl.m_oApi;
 		this.Document.UpdateDefaultsDependingOnCompatibility();
@@ -8232,6 +8275,9 @@ function BinaryFileReader(doc, openParams)
 		{
 			this.PostLoadPrepareCheckStylesRecursion(stId, aStylesGrey, styles);
 		}
+		
+		this.Document.GetGlossaryDocument().UpdateStyleLinks(oIdRenameMap);
+		
 		//DefpPr, DefrPr
 		//важно чтобы со списками разобрались выше чем этот код
 		if(null != this.oReadResult.DefpPr)
@@ -8446,10 +8492,16 @@ function BinaryFileReader(doc, openParams)
 				api && api.asc_addRestriction(restrictionType);
 			}
 		}
-	    pptx_content_loader.Reader.GenerateSmartArts();
-		
-		//чтобы удалялся stream с бинарником
-		pptx_content_loader.Clear(true);
+		if (this.openParams && this.openParams.noGenerateSmartArts) {
+			pptx_content_loader.Reader.smartarts.length = 0;
+		} else {
+			pptx_content_loader.Reader.GenerateSmartArts();
+		}
+
+		if (bClearPptxLoader) {
+			//чтобы удалялся stream с бинарником
+			pptx_content_loader.Clear(true);
+		}
     };
     this.ReadFromString = function (sBase64, copyPasteObj) {
         //надо сбросить то, что остался после открытия документа
@@ -9291,7 +9343,7 @@ function Binary_pPrReader(doc, oReadResult, stream)
 			case c_oSerProp_pPrType.SectPr:
 				if(null != this.paragraph && (!this.oReadResult.bCopyPaste || this.oReadResult.isDocumentPasting()))
 				{
-					var oNewSectionPr = new CSectionPr(this.oReadResult.logicDocument);
+					var oNewSectionPr = new AscWord.SectPr(this.oReadResult.logicDocument);
 					var oAdditional = {EvenAndOddHeaders: null};
 					res = this.bcr.Read1(length, function(t, l){
 							return oThis.Read_SecPr(t, l, oNewSectionPr, oAdditional);
@@ -9307,7 +9359,7 @@ function Binary_pPrReader(doc, oReadResult, stream)
             case c_oSerProp_pPrType.pPrChange:
                 if(null != this.paragraph && !this.isPrChange && this.oReadResult.checkReadRevisions() && (!this.oReadResult.bCopyPaste || this.oReadResult.isDocumentPasting())) {
                     var pPrChange = new CParaPr();
-                    var reviewInfo = new CReviewInfo();
+                    var reviewInfo = new AscWord.ReviewInfo();
                     var bpPrr = new Binary_pPrReader(this.Document, this.oReadResult, this.stream);
 					bpPrr.isPrChange = true;
                     res = this.bcr.Read1(length, function(t, l){
@@ -9336,7 +9388,7 @@ function Binary_pPrReader(doc, oReadResult, stream)
 		var oThis = this;
         if( c_oSerBorderType.Color === type )
         {
-            Border.Color = this.bcr.ReadColor();
+            Border.Color = this.bcr.ReadColor(length);
         }
         else if( c_oSerBorderType.Space === type )
         {
@@ -9647,9 +9699,13 @@ function Binary_pPrReader(doc, oReadResult, stream)
             res = c_oSerConstants.ReadUnknown;//todo
         else if( c_oSerProp_secPrType.cols === type ) {
             //todo clear;
+	        const arrColumns = [];
             res = this.bcr.Read1(length, function(t, l){
-                return oThis.Read_cols(t, l, oSectPr);
+                return oThis.Read_cols(t, l, oSectPr, arrColumns);
             });
+						if (arrColumns.length) {
+							oSectPr.Set_Columns_Cols(arrColumns);
+						}
         }
 		else if( c_oSerProp_secPrType.pgBorders === type ) {
 			res = this.bcr.Read1(length, function(t, l){
@@ -9925,7 +9981,7 @@ function Binary_pPrReader(doc, oReadResult, stream)
 			res = c_oSerConstants.ReadUnknown;
 		return res;
 	}
-    this.Read_cols = function(type, length, oSectPr)
+    this.Read_cols = function(type, length, oSectPr, arrColumns)
     {
         var res = c_oSerConstants.ReadOk;
         var oThis = this;
@@ -9938,11 +9994,11 @@ function Binary_pPrReader(doc, oReadResult, stream)
         } else if (c_oSerProp_Columns.Space === type) {
             oSectPr.Set_Columns_Space(g_dKoef_twips_to_mm * this.stream.GetULongLE());
         } else if (c_oSerProp_Columns.Column === type) {
-            var col = new CSectionColumn();
+            var col = new AscWord.SectionColumn();
             res = this.bcr.Read1(length, function(t, l){
                 return oThis.Read_col(t, l, col);
             });
-            oSectPr.Set_Columns_Col(oSectPr.Columns.Cols.length, col.W, col.Space);
+						arrColumns.push(col);
         } else
             res = c_oSerConstants.ReadUnknown;
         return res;
@@ -9999,7 +10055,7 @@ function Binary_pPrReader(doc, oReadResult, stream)
 		var oThis = this;
 		if( c_oSerPageBorders.Color === type )
 		{
-			Border.Color = this.bcr.ReadColor();
+			Border.Color = this.bcr.ReadColor(length);
 		}
 		else if( c_oSerPageBorders.Space === type )
 		{
@@ -10107,13 +10163,13 @@ function Binary_rPrReader(doc, oReadResult, stream)
                 rPr.FontSize = this.stream.GetULongLE() / 2;
                 break;
             case c_oSerProp_rPrType.Color:
-                rPr.Color = this.bcr.ReadColor();
+                rPr.Color = this.bcr.ReadColor(length);
                 break;
             case c_oSerProp_rPrType.VertAlign:
                 rPr.VertAlign = this.stream.GetUChar();
                 break;
             case c_oSerProp_rPrType.HighLight:
-                rPr.HighLight = this.bcr.ReadColor();
+                rPr.HighLight = this.bcr.ReadColor(length);
                 break;
             case c_oSerProp_rPrType.HighLightTyped:
                 var nHighLightTyped = this.stream.GetUChar();
@@ -10233,7 +10289,7 @@ function Binary_rPrReader(doc, oReadResult, stream)
 					res = c_oSerConstants.ReadUnknown;
 				break;
             case c_oSerProp_rPrType.Del:
-				var reviewInfo = new CReviewInfo();
+				var reviewInfo = new AscWord.ReviewInfo();
                 res = this.bcr.Read1(length, function(t, l){
                     return ReadTrackRevision(t, l, oThis.stream, reviewInfo, null);
                 });
@@ -10243,7 +10299,7 @@ function Binary_rPrReader(doc, oReadResult, stream)
 				break;
             case c_oSerProp_rPrType.Ins:
 				if (this.oReadResult.checkReadRevisions()) {
-					var reviewInfo = new CReviewInfo();
+					var reviewInfo = new AscWord.ReviewInfo();
 					res = this.bcr.Read1(length, function(t, l){
 						return ReadTrackRevision(t, l, oThis.stream, reviewInfo, null);
 					});
@@ -10255,7 +10311,7 @@ function Binary_rPrReader(doc, oReadResult, stream)
 				}
 				break;
 			case c_oSerProp_rPrType.MoveFrom:
-				var reviewInfo = new CReviewInfo();
+				var reviewInfo = new AscWord.ReviewInfo();
 				reviewInfo.SetMove(Asc.c_oAscRevisionsMove.MoveFrom);
 				res = this.bcr.Read1(length, function(t, l){
 					return ReadTrackRevision(t, l, oThis.stream, reviewInfo, null);
@@ -10266,7 +10322,7 @@ function Binary_rPrReader(doc, oReadResult, stream)
 				break;
 			case c_oSerProp_rPrType.MoveTo:
 				if (this.oReadResult.checkReadRevisions()) {
-					var reviewInfo = new CReviewInfo();
+					var reviewInfo = new AscWord.ReviewInfo();
 					reviewInfo.SetMove(Asc.c_oAscRevisionsMove.MoveTo);
 					res = this.bcr.Read1(length, function(t, l){
 						return ReadTrackRevision(t, l, oThis.stream, reviewInfo, null);
@@ -10281,7 +10337,7 @@ function Binary_rPrReader(doc, oReadResult, stream)
             case c_oSerProp_rPrType.rPrChange:
 				if (this.oReadResult.checkReadRevisions()) {
 					var rPrChange = new CTextPr();
-					var reviewInfo = new CReviewInfo();
+					var reviewInfo = new AscWord.ReviewInfo();
 					var brPrr = new Binary_rPrReader(this.Document, this.oReadResult, this.stream);
 					res = this.bcr.Read1(length, function(t, l){
 						return ReadTrackRevision(t, l, oThis.stream, reviewInfo, {brPrr: brPrr, rPr: rPrChange});
@@ -10389,7 +10445,7 @@ Binary_tblPrReader.prototype =
 		else if( c_oSerProp_tblPrType.tblPrChange === type && this.oReadResult.checkReadRevisions() && (!this.oReadResult.bCopyPaste || this.oReadResult.isDocumentPasting()))
 		{
 			var tblPrChange = new CTablePr();
-			var reviewInfo = new CReviewInfo();
+			var reviewInfo = new AscWord.ReviewInfo();
 			res = this.bcr.Read1(length, function(t, l) {
 				return ReadTrackRevision(t, l, oThis.stream, reviewInfo, {btblPrr: oThis, tblPr: tblPrChange});
 			});
@@ -10658,14 +10714,14 @@ Binary_tblPrReader.prototype =
             Pr.TableHeader = (this.stream.GetUChar() != 0);
         }
         else if(c_oSerProp_rowPrType.Del === type && row && (!this.oReadResult.bCopyPaste || this.oReadResult.isDocumentPasting())){
-			var reviewInfo = new CReviewInfo();
+			var reviewInfo = new AscWord.ReviewInfo();
 			res = this.bcr.Read1(length, function(t, l){
 				return ReadTrackRevision(t, l, oThis.stream, reviewInfo, null);
 			});
 			row.SetReviewTypeWithInfo(reviewtype_Remove, reviewInfo);
         }
         else if(c_oSerProp_rowPrType.Ins === type && row && this.oReadResult.checkReadRevisions() && (!this.oReadResult.bCopyPaste || this.oReadResult.isDocumentPasting())){
-			var reviewInfo = new CReviewInfo();
+			var reviewInfo = new AscWord.ReviewInfo();
 			res = this.bcr.Read1(length, function(t, l){
 				return ReadTrackRevision(t, l, oThis.stream, reviewInfo, null);
 			});
@@ -10673,7 +10729,7 @@ Binary_tblPrReader.prototype =
         }
         else if( c_oSerProp_rowPrType.trPrChange === type && this.oReadResult.checkReadRevisions() && (!this.oReadResult.bCopyPaste || this.oReadResult.isDocumentPasting())){
 			var trPr = new CTableRowPr();
-			var reviewInfo = new CReviewInfo();
+			var reviewInfo = new AscWord.ReviewInfo();
 			res = this.bcr.Read1(length, function(t, l) {
 				return ReadTrackRevision(t, l, oThis.stream, reviewInfo, {btblPrr: oThis, trPr: trPr});
 			});
@@ -10811,7 +10867,7 @@ Binary_tblPrReader.prototype =
         }
         else if( c_oSerProp_cellPrType.tcPrChange === type && this.oReadResult.checkReadRevisions() && (!this.oReadResult.bCopyPaste || this.oReadResult.isDocumentPasting())){
 			var tcPr = new CTableCellPr();
-			var reviewInfo = new CReviewInfo();
+			var reviewInfo = new AscWord.ReviewInfo();
 			res = this.bcr.Read1(length, function(t, l) {
 				return ReadTrackRevision(t, l, oThis.stream, reviewInfo, {btblPrr: oThis, tcPr: tcPr});
 			});
@@ -11010,9 +11066,11 @@ function Binary_NumberingTableReader(doc, oReadResult, stream)
         {
 			this.m_oANums[this.stream.GetULongLE()] = oNewNum;
             //oNewNum.Id = this.stream.GetULongLE();
-        }
-        else
-            res = c_oSerConstants.ReadUnknown;
+        } else if (c_oSerNumTypes.Nsid === type) {
+			oNewNum.SetNsid(this.stream.GetLongLE());
+		} else {
+			res = c_oSerConstants.ReadUnknown;
+		}
         return res;
     }
     this.ReadLevels = function(type, length, nLevelNum, oNewNum)
@@ -11274,16 +11332,20 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
     this.ReadAsTable = function(OpenContent)
     {
         var oThis = this;
-        return this.bcr.ReadTable(function(t, l){
+        const res = this.bcr.ReadTable(function(t, l){
                 return oThis.ReadDocumentContent(t, l, OpenContent);
             });
+	    this.oReadResult.checkDocumentContentReviewType(OpenContent);
+			return res;
     };
 	this.Read = function(length, OpenContent)
     {
         var oThis = this;
-        return this.bcr.Read1(length, function(t, l){
+        const res = this.bcr.Read1(length, function(t, l){
                 return oThis.ReadDocumentContent(t, l, OpenContent);
             });
+	    this.oReadResult.checkDocumentContentReviewType(OpenContent);
+			return res;
     };
     this.ReadDocumentContent = function(type, length, Content)
     {
@@ -11295,10 +11357,8 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
             res = this.bcr.Read1(length, function(t, l){
                 return oThis.ReadParagraph(t,l, oNewParagraph);
             });
-			if (reviewtype_Common === oNewParagraph.GetReviewType() || this.oReadResult.checkReadRevisions()) {
 				oNewParagraph.Correct_Content();
 				Content.push(oNewParagraph);
-			}
         }
         else if ( c_oSerParType.Table === type )
         {
@@ -11359,6 +11419,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			res = this.bcr.Read1(length, function(t, l){
 				return oThis.ReadSdt(t,l, oSdt, 0);
 			});
+			oSdt.checkDataBinding();
 			Content.push(oSdt);
 		} else if ( c_oSerParType.Background === type ) {
 			res = this.bcr.Read2(length, function(t, l){
@@ -11488,7 +11549,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		var res = c_oSerConstants.ReadOk;
 		var oThis = this;
 		if (c_oSerBackgroundType.Color === type){
-			oBackground.Color = this.bcr.ReadColor();
+			oBackground.Color = this.bcr.ReadColor(length);
 		} else if(c_oSerBackgroundType.ColorTheme === type) {
 			var themeColor = {Auto: null, Color: null, Tint: null, Shade: null};
 			res = this.bcr.Read2(length, function(t, l){
@@ -11526,6 +11587,14 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
                 return oThis.ReadParagraphContent(t, l, paragraph);
             });
         }
+		else if (c_oSerParType.ParaID === type)
+		{
+			paragraph.SetParaId(this.stream.GetLong());
+		}
+		else if (c_oSerParType.TextID === type)
+		{
+			paragraph.SetTextId(this.stream.GetLong());
+		}
         else
             res = c_oSerConstants.ReadUnknown;
         return res;
@@ -11654,7 +11723,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 				}
 			}
 		} else if (c_oSerParType.Del == type && this.oReadResult.checkReadRevisions()) {
-            var reviewInfo = new CReviewInfo();
+            var reviewInfo = new AscWord.ReviewInfo();
             var startPos = paragraphContent.GetElementsCount();
 			res = this.bcr.Read1(length, function(t, l){
                 return ReadTrackRevision(t, l, oThis.stream, reviewInfo, {paragraphContent: paragraphContent, bdtr: oThis});
@@ -11664,7 +11733,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 				this.oReadResult.setNestedReviewType(paragraphContent.GetElement(i), reviewtype_Remove, reviewInfo);
             }
         } else if (c_oSerParType.Ins == type) {
-            var reviewInfo = new CReviewInfo();
+            var reviewInfo = new AscWord.ReviewInfo();
             var startPos = paragraphContent.GetElementsCount();
 			res = this.bcr.Read1(length, function(t, l){
                 return ReadTrackRevision(t, l, oThis.stream, reviewInfo, {paragraphContent: paragraphContent, bdtr: oThis});
@@ -11676,7 +11745,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 				}
 			}
 		} else if (c_oSerParType.MoveFrom == type && this.oReadResult.checkReadRevisions()) {
-			var reviewInfo = new CReviewInfo();
+			var reviewInfo = new AscWord.ReviewInfo();
 			reviewInfo.SetMove(Asc.c_oAscRevisionsMove.MoveFrom);
 			var startPos = paragraphContent.GetElementsCount();
 			res = this.bcr.Read1(length, function(t, l){
@@ -11687,7 +11756,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 				this.oReadResult.setNestedReviewType(paragraphContent.GetElement(i), reviewtype_Remove, reviewInfo);
 			}
 		} else if (c_oSerParType.MoveTo == type) {
-			var reviewInfo = new CReviewInfo();
+			var reviewInfo = new AscWord.ReviewInfo();
 			reviewInfo.SetMove(Asc.c_oAscRevisionsMove.MoveTo);
 			var startPos = paragraphContent.GetElementsCount();
 			res = this.bcr.Read1(length, function(t, l){
@@ -11706,6 +11775,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			res = this.bcr.Read1(length, function(t, l){
 				return oThis.ReadSdt(t,l, oSdt, 1, oSdt);
 			});
+			oSdt.checkDataBinding();
 			if (oSdt.IsEmpty())
 				oSdt.ReplaceContentWithPlaceHolder();
 			paragraphContent.AddToContentToEnd(oSdt);
@@ -11956,39 +12026,23 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
         return res;
     };
 	this.ReadText = function(text, run, isInstrText){
-		for (var i = 0; i < text.length; ++i)
+		for (var it = text.getUnicodeIterator(); it.check(); it.next())
 		{
-			var nUnicode = null;
-			var nCharCode = text.charCodeAt(i);
-			if (AscCommon.isLeadingSurrogateChar(nCharCode))
+			let nUnicode = it.value();
+			if (isInstrText)
 			{
-				if(i + 1 < text.length)
-				{
-					i++;
-					var nTrailingChar = text.charCodeAt(i);
-					nUnicode = AscCommon.decodeSurrogateChar(nCharCode, nTrailingChar);
-				}
+				run.AddToContentToEnd(new AscWord.ParaInstrText(nUnicode));
 			}
 			else
-				nUnicode = nCharCode;
-
-			if (null !== nUnicode) {
-				if(isInstrText){
-					run.AddToContentToEnd(new ParaInstrText(nUnicode));
-				} else {
-					if (AscCommon.IsSpace(nUnicode)) {
-						run.AddToContentToEnd(new AscWord.CRunSpace(nUnicode));
-					} else if (0x0D === nUnicode) {
-						if (i + 1 < text.length && 0x0A === text.charCodeAt(i + 1)) {
-							i++;
-						}
-						run.AddToContentToEnd(new AscWord.CRunSpace());
-					} else if (0x09 === nUnicode) {
-						run.AddToContentToEnd(new AscWord.CRunTab());
-					} else {
-						run.AddToContentToEnd(new AscWord.CRunText(nUnicode));
-					}
-				}
+			{
+				if (AscCommon.IsSpace(nUnicode))
+					run.AddToContentToEnd(new AscWord.CRunSpace(nUnicode));
+				else if (0x0D === nUnicode)
+					run.AddToContentToEnd(new AscWord.CRunSpace());
+				else if (0x09 === nUnicode)
+					run.AddToContentToEnd(new AscWord.CRunTab());
+				else
+					run.AddToContentToEnd(new AscWord.CRunText(nUnicode));
 			}
 		}
 	};
@@ -12883,7 +12937,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		else if( c_oSerDocTableType.tblGridChange === type && table && this.oReadResult.checkReadRevisions() && (!this.oReadResult.bCopyPaste || this.oReadResult.isDocumentPasting()))
 		{
 			var tblGridChange = [];
-			var reviewInfo = new CReviewInfo();
+			var reviewInfo = new AscWord.ReviewInfo();
 			res = this.bcr.Read1(length, function(t, l) {
 				return ReadTrackRevision(t, l, oThis.stream, reviewInfo, {btblPrr: oThis, grid: tblGridChange});
 			});
@@ -13052,20 +13106,25 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 				if (oSdtContent.length > 0) {
 					oSdt.Content.ReplaceContent(oSdtContent);
 				}
-			} else if (1 === typeContainer) {
+			}
+			else if (1 === typeContainer) {
 				res = this.bcr.Read1(length, function(t, l) {
 					return oThis.ReadParagraphContent(t, l, container);
 				});
-			} else if (2 === typeContainer) {
+			}
+			else if (2 === typeContainer) {
 				res = this.bcr.Read1(length, function(t, l) {
 					return oThis.Read_TableContent(t, l, container);
 				});
-			} else if (3 === typeContainer) {
+			}
+			else if (3 === typeContainer) {
 				res = this.bcr.Read1(length, function(t, l) {
 					return oThis.ReadRowContent(t, l, container);
 				});
 			}
-		} else {
+		}
+		else
+		{
 			res = c_oSerConstants.ReadUnknown;
 		}
 		return res;
@@ -13101,12 +13160,14 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			if(textPr.Color){
 				oSdtPr.Color = textPr.Color;
 			}
-		// } else if (c_oSerSdt.DataBinding === type) {
-		// 	oSdtPr.DataBinding = {};
-		// 	res = this.bcr.Read1(length, function(t, l) {
-		// 		return oThis.ReadSdtPrDataBinding(t, l, oSdtPr.DataBinding);
-		// 	});
-		} else if (c_oSerSdt.PrDate === type) {
+		}
+		else if (c_oSerSdt.DataBinding === type) {
+			oSdtPr.DataBinding = new AscWord.DataBinding();
+			res = this.bcr.Read1(length, function(t, l) {
+				return oThis.ReadSdtPrDataBinding(t, l, oSdtPr.DataBinding);
+			});
+		}
+		else if (c_oSerSdt.PrDate === type) {
 			var datePicker = new AscWord.CSdtDatePickerPr();
 			res = this.bcr.Read1(length, function(t, l) {
 				return oThis.ReadSdtPrDate(t, l, datePicker);
@@ -13179,6 +13240,23 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 				return oThis.ReadSdtComplexFormPr(t, l, complexFormPr);
 			});
 			oSdt.SetComplexFormPr(complexFormPr);
+		} else if (c_oSerSdt.Border === type) {
+			let border = new AscWord.CBorder();
+			res = this.bcr.Read2(length, function (t, l) {
+				return oThis.bpPrr.ReadBorder(t, l, border);
+			});
+			if (border.Color)
+				oSdt.setBorderColor(border.Color);
+			
+		} else if (c_oSerSdt.Shd === type) {
+			let shd = new AscWord.CShd();
+			ReadDocumentShd(length, this.bcr, shd);
+			if (shd.Color)
+				oSdt.setShdColor(shd.Color);
+		} else if (c_oSerSdt.RepeatingSection === type) {
+			oSdt.SetRepeatingSection(this.stream.GetBool());
+		} else if (c_oSerSdt.RepeatingSectionItem === type) {
+			oSdt.SetRepeatingSectionItem(this.stream.GetBool());
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
@@ -13235,13 +13313,14 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 	};
 	this.ReadSdtPrDataBinding = function(type, length, val) {
 		var res = c_oSerConstants.ReadOk;
-		var oThis = this;
 		if (c_oSerSdt.PrefixMappings === type) {
-			val.PrefixMappings = this.stream.GetString2LE(length);
+			val.prefixMappings = this.stream.GetString2LE(length);
 		} else if (c_oSerSdt.StoreItemID === type) {
-			val.StoreItemID = this.stream.GetString2LE(length);
+			val.storeItemID = this.stream.GetString2LE(length);
 		} else if (c_oSerSdt.XPath === type) {
-			val.XPath = this.stream.GetString2LE(length);
+			val.xpath = this.stream.GetString2LE(length);
+		} else if (c_oSerSdt.StoreItemCheckSum === type) {
+			val.storeItemCheckSum = this.stream.GetString2LE(length)
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
@@ -13306,6 +13385,25 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			}
 			sTarget = sTarget.replace(/\\/g, "/");
 			this.oReadResult.sdtPrWithFieldPath.push({sdt: oSdt, target: sTarget});
+		} else if (c_oSerSdt.FormPrRoleName === type && this.oReadResult.bCopyPaste) {
+			val.RoleName = this.stream.GetString2LE(length);
+			let oform = this.Document && this.Document.GetOFormDocument();
+			if (oform) {
+				if (val && !val.Field && val.RoleName) {
+					if (!oform.haveRole(val.RoleName)) {
+						const role = new AscCommon.CRoleSettings();
+						role.asc_putName(val.RoleName);
+						let ascRoleColor = new Asc.asc_CColor();
+						ascRoleColor.asc_putR(228);
+						ascRoleColor.asc_putG(205);
+						ascRoleColor.asc_putB(219);
+						role.asc_putColor(ascRoleColor);
+						if (oform) {
+							oform.asc_addRole(role);
+						}
+					}
+				}
+			}
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
@@ -13447,39 +13545,20 @@ function Binary_oMathReader(stream, oReadResult, curNote, openParams)
         if (c_oSerRunType.run === type)
         {
             var text = this.stream.GetString2LE(length);
-
-			for (var i = 0; i < text.length; ++i)
+			for (var it = text.getUnicodeIterator(); it.check(); it.next())
 			{
-			    var nUnicode = null;
-			    var nCharCode = text.charCodeAt(i);
-			    if (AscCommon.isLeadingSurrogateChar(nCharCode))
-			    {
-			        if(i + 1 < text.length)
-			        {
-			            i++;
-			            var nTrailingChar = text.charCodeAt(i);
-			            nUnicode = AscCommon.decodeSurrogateChar(nCharCode, nTrailingChar);
-			        }
-			    }
-			    else
-			        nUnicode = nCharCode;
-
-			    if (null != nUnicode) {
-					if (AscCommon.IsSpace(nUnicode)) {
-						oPos.run.AddToContent(oPos.pos, new AscWord.CRunSpace(nUnicode), false);
-					} else if (0x0D === nUnicode) {
-						if (i + 1 < text.length && 0x0A === text.charCodeAt(i + 1)) {
-							i++;
-						}
-						oPos.run.AddToContent(oPos.pos, new AscWord.CRunSpace(), false);
-					} else if (0x09 === nUnicode) {
-						oPos.run.AddToContent(oPos.pos, new AscWord.CRunTab(), false);
-					} else {
-						oPos.run.AddToContent(oPos.pos, new AscWord.CRunText(nUnicode), false);
-					}
-					oPos.pos++;
-			    }
-            }
+				let nUnicode = it.value();
+				if (AscCommon.IsSpace(nUnicode)) {
+					oPos.run.AddToContent(oPos.pos, new AscWord.CRunSpace(nUnicode), false);
+				} else if (0x0D === nUnicode) {
+					oPos.run.AddToContent(oPos.pos, new AscWord.CRunSpace(), false);
+				} else if (0x09 === nUnicode) {
+					oPos.run.AddToContent(oPos.pos, new AscWord.CRunTab(), false);
+				} else {
+					oPos.run.AddToContent(oPos.pos, new AscWord.CRunText(nUnicode), false);
+				}
+				oPos.pos++;
+			}
         }
         else if (c_oSerRunType.tab === type)
         {
@@ -13727,7 +13806,7 @@ function Binary_oMathReader(stream, oReadResult, curNote, openParams)
         }
 		else if (c_oSer_OMathContentType.Del === type && this.oReadResult.checkReadRevisions())
 		{
-			var reviewInfo = new CReviewInfo();
+			var reviewInfo = new AscWord.ReviewInfo();
 			var oSdt = new AscCommonWord.CInlineLevelSdt();
 			oSdt.RemoveFromContent(0, oSdt.GetElementsCount());
 			oSdt.SetParagraph(paragraphContent.GetParagraph());
@@ -13783,7 +13862,7 @@ function Binary_oMathReader(stream, oReadResult, curNote, openParams)
         }
 		else if (c_oSer_OMathContentType.Ins === type)
 		{
-			var reviewInfo = new CReviewInfo();
+			var reviewInfo = new AscWord.ReviewInfo();
 			var oSdt = new AscCommonWord.CInlineLevelSdt();
 			oSdt.RemoveFromContent(0, oSdt.GetElementsCount());
 			oSdt.SetParagraph(paragraphContent.GetParagraph());
@@ -14312,7 +14391,7 @@ function Binary_oMathReader(stream, oReadResult, curNote, openParams)
 			props.ctrPrp = pptx_content_loader.ReadRunProperties(this.stream);
 		} else if (c_oSerRunType.del === type) {
             var rPrChange = new CTextPr();
-            var reviewInfo = new CReviewInfo();
+            var reviewInfo = new AscWord.ReviewInfo();
             var brPrr = new Binary_rPrReader(this.Document, this.oReadResult, this.stream);
             res = this.bcr.Read1(length, function(t, l){
                 return ReadTrackRevision(t, l, oThis.stream, reviewInfo, {brPrr: brPrr, rPr: rPrChange});
@@ -14320,7 +14399,7 @@ function Binary_oMathReader(stream, oReadResult, curNote, openParams)
             props.del = reviewInfo;
 		} else if (c_oSerRunType.ins === type) {
             var rPrChange = new CTextPr();
-            var reviewInfo = new CReviewInfo();
+            var reviewInfo = new AscWord.ReviewInfo();
             var brPrr = new Binary_rPrReader(this.Document, this.oReadResult, this.stream);
             res = this.bcr.Read1(length, function(t, l){
                 return ReadTrackRevision(t, l, oThis.stream, reviewInfo, {brPrr: brPrr, rPr: rPrChange});
@@ -15118,36 +15197,19 @@ function Binary_oMathReader(stream, oReadResult, curNote, openParams)
             res = c_oSerConstants.ReadUnknown;
         return res;
     };
-	this.ReadMathText = function(type, length, oMRun)
-    {
-        var res = c_oSerConstants.ReadOk;
-        var oThis = this;
-		if (c_oSer_OMathBottomNodesValType.Val === type)
-        {
-			var aUnicodes = [];
-            if (length > 0)
-                aUnicodes = AscCommon.convertUTF16toUnicode(this.stream.GetString2LE(length));
-
-			for (var nPos = 0, nCount = aUnicodes.length; nPos < nCount; ++nPos)
-            {
-                var nUnicode = aUnicodes[nPos];
-
-                var oText = null;
-                if (0x0026 == nUnicode)
-                    oText = new CMathAmp();
-                else
-                {
-                    oText = new CMathText(false);
-                    oText.add(nUnicode);
-                }
-                if (oText)
-                    oMRun.Add_ToContent(nPos, oText, false, true);
-            }
-        }
-		else
-            res = c_oSerConstants.ReadUnknown;
-        return res;
-    };
+	this.ReadMathText = function(type, length, mathRun)
+	{
+		if (c_oSer_OMathBottomNodesValType.Val !== type)
+			return c_oSerConstants.ReadUnknown;
+		
+		let text = this.stream.GetString2LE(length);
+		AscWord.TextToMathRunElements(text, function(item)
+		{
+			mathRun.AddToContentToEnd(item);
+		});
+		
+		return c_oSerConstants.ReadOk;
+	};
 	this.ReadMathMRun = function(type, length, oMRun, props, oParent, paragraphContent)
     {
 		//todo
@@ -15194,13 +15256,13 @@ function Binary_oMathReader(stream, oReadResult, curNote, openParams)
         {
             oNewElem = new AscWord.CRunBreak(AscWord.break_Column);
         } else if (c_oSer_OMathContentType.Del === type && this.oReadResult.checkReadRevisions()) {
-			var reviewInfo = new CReviewInfo();
+			var reviewInfo = new AscWord.ReviewInfo();
 			res = this.bcr.Read1(length, function(t, l){
 				return ReadTrackRevision(t, l, oThis.stream, reviewInfo, {run: oMRun, props: props, oParent: oParent, paragraphContent: paragraphContent, bmr: oThis});
 			});
 			oMRun.SetReviewTypeWithInfo(reviewtype_Remove, reviewInfo, false);
         } else if (c_oSer_OMathContentType.Ins === type) {
-			var reviewInfo = new CReviewInfo();
+			var reviewInfo = new AscWord.ReviewInfo();
 			res = this.bcr.Read1(length, function(t, l){
 				return ReadTrackRevision(t, l, oThis.stream, reviewInfo, {run: oMRun, props: props, oParent: oParent, paragraphContent: paragraphContent, bmr: oThis});
 			});
@@ -16205,45 +16267,6 @@ function Binary_OtherTableReader(doc, oReadResult, stream)
         return res;
     };
 };
-function Binary_CustomsTableReader(doc, oReadResult, stream, CustomXmls) {
-	this.Document = doc;
-	this.oReadResult = oReadResult;
-	this.stream = stream;
-	this.CustomXmls = CustomXmls;
-	this.bcr = new Binary_CommonReader(this.stream);
-	this.Read = function() {
-		var oThis = this;
-		return this.bcr.ReadTable(function(t, l) {
-			return oThis.ReadCustom(t, l);
-		});
-	};
-	this.ReadCustom = function(type, length) {
-		var res = c_oSerConstants.ReadOk;
-		var oThis = this;
-		if (c_oSerCustoms.Custom === type) {
-			var custom = {Uri: [], ItemId: null, Content: null};
-			res = this.bcr.Read1(length, function(t, l) {
-				return oThis.ReadCustomContent(t, l, custom);
-			});
-			this.CustomXmls.push(custom);
-		}
-		else
-			res = c_oSerConstants.ReadUnknown;
-		return res;
-	};
-	this.ReadCustomContent = function(type, length, custom) {
-		var res = c_oSerConstants.ReadOk;
-		if (c_oSerCustoms.Uri === type) {
-			custom.Uri.push(this.stream.GetString2LE(length));
-		} else if (c_oSerCustoms.ItemId === type) {
-			custom.ItemId = this.stream.GetString2LE(length);
-		} else if (c_oSerCustoms.ContentA === type) {
-			custom.Content = this.stream.GetBuffer(length);
-		} else
-			res = c_oSerConstants.ReadUnknown;
-		return res;
-	};
-}
 function Binary_CommentsTableReader(doc, oReadResult, stream, oComments)
 {
     this.Document = doc;
@@ -17422,6 +17445,7 @@ function DocReadResult(doc) {
 	this.bCopyPaste = false;
 	this.styleGenIndex = 1;
 	this.sdtPrWithFieldPath = [];
+	this.sdtFormPrWithRoleName = [];
 
 	this.lastPar = null;
 	this.toNextPar = [];
@@ -17543,10 +17567,10 @@ DocReadResult.prototype = {
 						}
 						break;
 					case para_PermStart:
-						this.addPermStart(par, elem.elem, false);
+						this.addPermStart(par, elem, false);
 						break;
 					case para_PermEnd:
-						this.addPermEnd(par, elem.elem, false);
+						this.addPermEnd(par, elem, false);
 						break;
 				}
 			}
@@ -17577,7 +17601,7 @@ DocReadResult.prototype = {
 	},
 	readMoveRangeStartXml: function (oReadResult, reader, paragraphContent, isFrom) {
 		let options = {id: null};
-		let move = new CParaRevisionMove(true, isFrom, undefined, new CReviewInfo());
+		let move = new CParaRevisionMove(true, isFrom, undefined, new AscWord.ReviewInfo());
 		move.fromXml(reader, options);
 		if (null !== options.id) {
 			oReadResult.addMoveRangeStart(paragraphContent, move, options.id, true);
@@ -17620,6 +17644,28 @@ DocReadResult.prototype = {
 				elem.SetNumPrToPrChange(numId, iLvl);
 			else
 				elem.SetNumPr(numId, iLvl);
+		}
+	},
+	checkDocumentContentReviewType: function (arrContent) {
+		if (!arrContent.length) {
+			return;
+		}
+		if (this.disableRevisions) {
+			const oLastElement = arrContent[arrContent.length - 1];
+			if (oLastElement instanceof AscWord.Paragraph && oLastElement.GetReviewType() === reviewtype_Remove) {
+				oLastElement.SetReviewType(reviewtype_Common);
+			}
+			for (let i = arrContent.length - 2; i >= 0; i -= 1) {
+				const oPrevElement = arrContent[i];
+				const oNextElement = arrContent[i + 1];
+				if (oPrevElement instanceof AscWord.Paragraph && oPrevElement.GetReviewType() === reviewtype_Remove) {
+					oPrevElement.SetReviewType(reviewtype_Common);
+					if (oNextElement instanceof AscWord.Paragraph) {
+						oPrevElement.Concat(oNextElement);
+						arrContent.splice(i + 1, 1);
+					}
+				}
+			}
 		}
 	}
 };

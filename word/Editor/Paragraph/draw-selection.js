@@ -43,7 +43,8 @@
 	 */
 	function ParagraphDrawSelectionState(paragraph)
 	{
-		this.paragraph = paragraph
+		this.paragraph     = paragraph;
+		this.logicDocument = paragraph ? paragraph.GetLogicDocument() : null;
 		
 		this.y = 0;
 		this.h = 0;
@@ -86,7 +87,7 @@
 		
 		this.x = this.paragraph.Lines[this.line].Ranges[this.range].XVisible;
 		
-		if (this.paragraph.Numbering.checkRange(this.line, this.range))
+		if (this.paragraph.Numbering.checkRange(this.line, this.range) && !this.paragraph.isRtlDirection())
 			this.x += this.paragraph.Numbering.WidthVisible;
 		
 		this.bidi.begin(this.paragraph.isRtlDirection());
@@ -131,6 +132,14 @@
 				this.anchoredObjects.push(element);
 			
 			return;
+		}
+		
+		if (element.IsParaEnd()
+			&& this.logicDocument
+			&& this.logicDocument.IsSelectParagraphEndMark
+			&& !this.logicDocument.IsSelectParagraphEndMark())
+		{
+			isSelected = false;
 		}
 		
 		if (isSelected)

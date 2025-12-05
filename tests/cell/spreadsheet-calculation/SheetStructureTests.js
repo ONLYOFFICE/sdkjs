@@ -56,6 +56,66 @@ $(function () {
 	};
 	AscCommonExcel.WorkbookView.prototype.restoreFocus = function () {
 	};
+	AscCommonExcel.WorkbookView.prototype._onChangeSelection = function (isStartPoint, dc, dr, isCoord, isCtrl, callback) {
+        if (!this._checkStopCellEditorInFormulas()) {
+            return;
+        }
+
+        var ws = this.getWorksheet();
+		if (ws.model.getSheetProtection(Asc.c_oAscSheetProtectType.selectUnlockedCells)) {
+			return;
+		}
+		if (ws.model.getSheetProtection(Asc.c_oAscSheetProtectType.selectLockedCells)) {
+			//TODO _getRangeByXY ?
+			var newRange = isCoord ? ws._getRangeByXY(dc, dr) :
+				ws._calcSelectionEndPointByOffset(dc, dr);
+			var lockedCell = ws.model.getLockedCell(newRange.c2, newRange.r2);
+			if (lockedCell || lockedCell === null) {
+				return;
+			}
+		}
+
+        if (this.selectionDialogMode && !ws.model.selectionRange) {
+            if (isCoord) {
+                ws.model.selectionRange = new AscCommonExcel.SelectionRange(ws.model);
+
+				// remove first range if we paste argument with ctrl key
+				if (isCtrl && ws.model.selectionRange.ranges && Array.isArray(ws.model.selectionRange.ranges)) {
+					ws.model.selectionRange.ranges.shift();
+				}
+
+                isStartPoint = true;
+            } else {
+                ws.model.selectionRange = ws.model.copySelection.clone();
+            }
+        }
+
+        var t = this;
+        var d = isStartPoint ? ws.changeSelectionStartPoint(dc, dr, isCoord, isCtrl) :
+            ws.changeSelectionEndPoint(dc, dr, isCoord, isCoord && this.keepType);
+        if (!isCoord && !isStartPoint) {
+            // Выделение с зажатым shift
+            this.canUpdateAfterShiftUp = true;
+        }
+        this.keepType = isCoord;
+        // if (isCoord && !this.timerEnd && this.timerId === null) {
+        //     this.timerId = setTimeout(function () {
+        //         var arrClose = [];
+        //         arrClose.push(new asc_CMM({type: c_oAscMouseMoveType.None}));
+        //         t.handlers.trigger("asc_onMouseMove", arrClose);
+        //         t._onUpdateCursor(AscCommon.Cursors.CellCur);
+        //         t.timerId = null;
+        //         t.timerEnd = true;
+        //     }, 1000);
+        // }
+
+        if (this.isFormulaEditMode && this.isCellEditMode && this.cellEditor && this.cellEditor.openFromTopLine) {
+            /* set focus to the top formula entry line */
+            this.cellEditor.restoreFocus();
+        }
+
+        AscCommonExcel.applyFunction(callback, d);
+    };
 	AscCommonExcel.WorksheetView.prototype._init = function () {
 	};
 	AscCommonExcel.WorksheetView.prototype.updateRanges = function () {
@@ -113,8 +173,7 @@ $(function () {
 		AscCommon.g_oTableId.init();
 		api._onEndLoadSdk();
 		api.isOpenOOXInBrowser = false;
-		api._openDocument(AscCommon.getEmpty());
-		api._openOnClient();
+		api.OpenDocumentFromBin(null, AscCommon.getEmpty());
 	}
 
 	var api = new Asc.spreadsheet_api({
@@ -127,9 +186,8 @@ $(function () {
 	AscCommon.g_oTableId.init();
 	api._onEndLoadSdk();
 	api.isOpenOOXInBrowser = false;
-	api._openDocument(AscCommon.getEmpty());
-	api._openOnClient();
-	api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
+	api.OpenDocumentFromBin(null, AscCommon.getEmpty());
+	api.initCollaborativeEditing({});
 	api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
 		api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
 	var wb = api.wbModel;
@@ -436,6 +494,13 @@ $(function () {
 
 	}
 
+	function CacheColumn() {
+	    this.left = 0;
+		this.width = 0;
+
+		this._widthForPrint = null;
+	}
+
 	QUnit.test("Test: \"Move rows/cols\"", function (assert) {
 		let testData = [
 			["row1col1", "row1col2", "row1col3", "row1col4", "row1col5", "row1col6"],
@@ -496,7 +561,7 @@ $(function () {
 			compareData(assert, rangeCompare, [["row2col1", "row2col2", "row2col3", "row2col4", "row2col5", "row2col6"]], desc);
 		}, function (desc){
 			compareData(assert, rangeCompare, [["row2col1", "row2col2", "row2col3", "row2col2", "row2col5", "row2col6"]], desc);
-		}, " move_col_1 ");
+		}, " move_col_1_ctrl ");
 
 		//move from 1-2 to 3-4 cols
 		wsView.activeMoveRange = getRange(3, 0, 4, AscCommon.gc_nMaxRow);
@@ -509,7 +574,7 @@ $(function () {
 			compareData(assert, rangeCompare, [["row2col1", "row2col2", "row2col3", "row2col4", "row2col5", "row2col6"]], desc);
 		}, function (desc){
 			compareData(assert, rangeCompare, [["row2col1", "row2col2", "row2col3", "row2col2", "row2col3", "row2col6"]], desc);
-		}, " move_col_2 ");
+		}, " move_col_2_ctrl ");
 
 
 		//***move without ctrl***
@@ -523,8 +588,8 @@ $(function () {
 		checkUndoRedo(function (desc) {
 			compareData(assert, rangeCompare, [["row2col1", "row2col2", "row2col3", "row2col4", "row2col5", "row2col6"]], desc);
 		}, function (desc){
-			compareData(assert, rangeCompare, [["row2col1", "", "row2col3", "row2col4", "row2col2", "row2col5"]], desc);
-		}, " move_col_1 ");
+			compareData(assert, rangeCompare, [["row2col1", "row2col3", "row2col4", "row2col2", "row2col5", "row2col6"]], desc);
+		}, " move_col_1_shift ");
 
 		//***move with ctrl***
 		//***move with shift***
@@ -538,7 +603,7 @@ $(function () {
 			compareData(assert, rangeCompare, [["row2col1", "row2col2", "row2col3", "row2col4", "row2col5", "row2col6"]], desc);
 		}, function (desc){
 			compareData(assert, rangeCompare, [["row2col1", "row2col2", "row2col3", "row2col4", "row2col2", "row2col5"]], desc);
-		}, " move_col_1 ");
+		}, " move_col_1_shift_ctrl ");
 
 
 		//***ROWS***
@@ -571,7 +636,7 @@ $(function () {
 			compareData(assert, rangeCompare, [["row1col2"], ["row2col2"], ["row3col2"], ["row4col2"], ["row5col2"], ["row6col2"], ["row7col2"], ["row8col2"], ["row9col2"]], desc);
 		}, function (desc){
 			compareData(assert, rangeCompare, [["row1col2"], ["row2col2"], ["row3col2"], ["row2col2"], ["row5col2"], ["row6col2"], ["row7col2"], ["row8col2"], ["row9col2"]], desc);
-		}, " move_row_2 ");
+		}, " move_row_2_ctrl ");
 
 		//***move without ctrl***
 		//***move with shift***
@@ -586,8 +651,8 @@ $(function () {
 		checkUndoRedo(function (desc) {
 			compareData(assert, rangeCompare, [["row1col2"], ["row2col2"], ["row3col2"], ["row4col2"], ["row5col2"], ["row6col2"], ["row7col2"], ["row8col2"], ["row9col2"]], desc);
 		}, function (desc){
-			compareData(assert, rangeCompare, [["row1col2"], [""], ["row3col2"], ["row4col2"], ["row2col2"], ["row5col2"], ["row6col2"], ["row7col2"], ["row8col2"]], desc);
-		}, " move_row_3 ");
+			compareData(assert, rangeCompare, [["row1col2"], ["row3col2"], ["row4col2"], ["row2col2"], ["row5col2"], ["row6col2"], ["row7col2"], ["row8col2"], ["row9col2"]], desc);
+		}, " move_row_3_shift ");
 
 
 		//***move with ctrl***
@@ -604,9 +669,870 @@ $(function () {
 			compareData(assert, rangeCompare, [["row1col2"], ["row2col2"], ["row3col2"], ["row4col2"], ["row5col2"], ["row6col2"], ["row7col2"], ["row8col2"], ["row9col2"]], desc);
 		}, function (desc){
 			compareData(assert, rangeCompare, [["row1col2"], ["row2col2"], ["row3col2"], ["row4col2"], ["row2col2"], ["row5col2"], ["row6col2"], ["row7col2"], ["row8col2"]], desc);
-		}, " move_row_4 ");
+		}, " move_row_4_shift_ctrl ");
 
 		clearData(0, 0, AscCommon.gc_nMaxCol, AscCommon.gc_nMaxRow);
+	});
+
+	QUnit.test("Test: \"Shift and insert cells/row\"", function (assert) {
+		ws.getRange2("A1:Z999").cleanAll();
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+		
+		let resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		let insertRange = ws.getRange3(99, 0, 99, 0);
+		let count = insertRange.bbox.r2 - insertRange.bbox.r1 + 1;
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A100 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 before row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A101 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 before row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A102 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 before row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A103 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 before row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A104 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 before row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in A105 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell A105 before row shifted");
+
+		assert.ok(1, "Row shifted from A100 cell selection");
+		ws.insertRowsBefore(insertRange.bbox.r1, count);
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "", "Value for edit in A100 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 after 1 row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A101 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 after 1 row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A102 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 after 1 row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A103 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 after 1 row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A104 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 after 1 row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A105 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A105 after 1 row shifted");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A101:A105)", "Value for edit in A105 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A101:A105)", "Formula in cell A105 after 1 row shifted");
+		ws.getRange2("A99:B110").cleanAll();
+
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+		
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		insertRange = ws.getRange3(101, 0, 101, 0);
+		count = insertRange.bbox.r2 - insertRange.bbox.r1 + 1;
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A100 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 before row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A101 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 before row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A102 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 before row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A103 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 before row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A104 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 before row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in A105 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell A105 before row shifted");
+
+		assert.ok(1, "Row shifted from A102 cell selection");
+		ws.insertRowsBefore(insertRange.bbox.r1, count);
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A100 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 after 1 row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A101 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 after 1 row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "", "Value for edit in A102 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 after 1 row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A103 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 after 1 row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A104 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 after 1 row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A105 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A105 after 1 row shifted");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A105)", "Value for edit in A105 after 1 row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A105)", "Formula in cell A105 after 1 row shifted");
+		ws.getRange2("A99:B110").cleanAll();
+
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+		
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		insertRange = ws.getRange3(103, 0, 103, 0);
+		count = insertRange.bbox.r2 - insertRange.bbox.r1 + 1;
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A100 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 before row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A101 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 before row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A102 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 before row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A103 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 before row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A104 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 before row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in A105 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell A105 before row shifted");
+
+		assert.ok(1, "Row shifted from A104 cell selection");
+		ws.insertRowsBefore(insertRange.bbox.r1, count);
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A100 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 after" + count + " row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A101 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 after" + count + " row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A102 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 after" + count + " row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A103 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 after" + count + " row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "", "Value for edit in A104 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 after" + count + " row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A105 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A105 after" + count + " row shifted");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A105)", "Value for edit in A105 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A105)", "Formula in cell A105 after" + count + " row shifted");
+		ws.getRange2("A99:B110").cleanAll();
+
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+		
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		insertRange = ws.getRange3(104, 0, 104, 0);
+		count = insertRange.bbox.r2 - insertRange.bbox.r1 + 1;
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A100 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 before row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A101 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 before row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A102 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 before row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A103 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 before row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A104 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 before row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in A105 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell A105 before row shifted");
+
+		assert.ok(1, "Row shifted from A105 cell selection");
+		ws.insertRowsBefore(insertRange.bbox.r1, count);
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A100 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 after" + count + " row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A101 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 after" + count + " row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A102 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 after" + count + " row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A103 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 after" + count + " row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A104 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 after" + count + " row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "", "Value for edit in A105 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A105 after" + count + " row shifted");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in A105 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell A105 after" + count + " row shifted");
+		ws.getRange2("A99:B110").cleanAll();
+
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+		
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		insertRange = ws.getRange3(99, 0, 101, 0);
+		count = insertRange.bbox.r2 - insertRange.bbox.r1 + 1;
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A100 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 before row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A101 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 before row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A102 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 before row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A103 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 before row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A104 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 before row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in A105 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell A105 before row shifted");
+
+		assert.ok(1, "Row shifted from A100:A102 cell selection");
+		ws.insertRowsBefore(insertRange.bbox.r1, count);
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "", "Value for edit in A100 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 after" + count + " row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "", "Value for edit in A101 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 after" + count + " row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "", "Value for edit in A102 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 after" + count + " row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A103 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 after" + count + " row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A104 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 after" + count + " row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A105 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A105 after" + count + " row shifted");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A106 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A106 after" + count + " row shifted");
+
+		resCell = ws.getRange4(106, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A107 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A107 after" + count + " row shifted");
+
+		resCell = ws.getRange4(107, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A103:A107)", "Value for edit in A108 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A103:A107)", "Formula in cell A108 after" + count + " row shifted");
+		ws.getRange2("A99:B110").cleanAll();
+
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+		
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		insertRange = ws.getRange3(104, 0, 105, 0);
+		count = insertRange.bbox.r2 - insertRange.bbox.r1 + 1;
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A100 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 before row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A101 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 before row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A102 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 before row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A103 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 before row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A104 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 before row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in A105 before row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell A105 before row shifted");
+
+		assert.ok(1, "Row shifted from A105:A106 cell selection");
+		ws.insertRowsBefore(insertRange.bbox.r1, count);
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A100 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 after" + count + " row shifted");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A101 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 after" + count + " row shifted");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A102 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 after" + count + " row shifted");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A103 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 after" + count + " row shifted");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A104 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 after" + count + " row shifted");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "", "Value for edit in A105 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A105 after" + count + " row shifted");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "", "Value for edit in A106 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A106 after" + count + " row shifted");
+
+		resCell = ws.getRange4(106, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in A107 after" + count + " row shifted");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell A107 after" + count + " row shifted");
+		ws.getRange2("A99:B110").cleanAll();
+
+		ws.getRange2("A1:Z999").cleanAll();
+	});
+
+	QUnit.test("Test: \"Shift/move cells after create a table\"", function (assert) {
+		// let testData = [
+		// 	["1", "row1col2", "row1col3", "row1col4", "row1col5", "row1col6"],
+		// 	["2", "row2col2", "row2col3", "row2col4", "row2col5", "row2col6"],
+		// 	["3", "row3col2", "row3col3", "row3col4", "row3col5", "row3col6"],
+		// 	["4", "row4col2", "row4col3", "row4col4", "row4col5", "row4col6"],
+		// 	["5", "row5col2", "row5col3", "row5col4", "row5col5", "row5col6"],
+		// ];
+
+		// for bug 39883
+		let array;
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+
+		let resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in A100 before table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A100 before table is created");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in A101 before table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A101 before table is created");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in A102 before table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A102 before table is created");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in A103 before table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A103 before table is created");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in A104 before table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell A104 before table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in A105 before table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell A105 before table is created");
+
+		let cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		let oParser = new AscCommonExcel.parserFormula("SUM(A100:A104)", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		oParser.buildDependencies();
+		array = oParser.calculate();
+
+		let tableOptions = new AscCommonExcel.AddFormatTableOptions();
+		tableOptions.range = "A100:A104";
+		// create table in A100:A104 range
+		tableOptions.isTitle = false;
+		api.asc_addAutoFilter("TableStyleMedium2", tableOptions);
+
+		let tables = wsView.model.autoFilters.getTablesIntersectionRange(new Asc.Range(0, 100, 0, 100));
+		assert.strictEqual(tables.length, 1, "Table was created without selection of formula. Compare tables length");
+
+		let table = tables[0];
+		let tableName = table.DisplayName;
+		// wsView.af_changeFormatTableInfo(tableName, Asc.c_oAscChangeTableStyleInfo.rowTotal, true);
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "Column1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A101:A105)", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A101:A105)", "Formula in cell after table is created");
+
+		tables.length = 0;
+		clearData(0, 0, 200, 200);
+
+
+		/* create table with header/title and with the same data as the previous test*/
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell before table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell before table is created");
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula("SUM(A100:A104)", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		oParser.buildDependencies();
+		array = oParser.calculate();
+
+		tableOptions = new AscCommonExcel.AddFormatTableOptions();
+		tableOptions.range = "A100:A104";
+		tableOptions.isTitle = true;
+		api.asc_addAutoFilter("TableStyleMedium2", tableOptions);
+
+		tables = wsView.model.autoFilters.getTablesIntersectionRange(new Asc.Range(0, 100, 0, 100));
+		assert.strictEqual(tables.length, 1, "Table was created without selection of formula.compare tables length");
+
+		table = tables[0];
+		tableName = table.DisplayName;
+		// wsView.af_changeFormatTableInfo(tableName, Asc.c_oAscChangeTableStyleInfo.rowTotal, true);
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in after table with title is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table with title is created");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in after table with title is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table with title is created");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in after table with title is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table with title is created");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in after table with title is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table with title is created");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in after table with title is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table with title is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in after table with title is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell after table with title is created");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table with title is created");
+
+		tables.length = 0;
+		clearData(0, 0, 200, 200);
+
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell before table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell before table is created");
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula("SUM(A100:A104)", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		oParser.buildDependencies();
+		array = oParser.calculate();
+
+		tableOptions = new AscCommonExcel.AddFormatTableOptions();
+		tableOptions.range = "A100:A105";
+		tableOptions.isTitle = false;
+		api.asc_addAutoFilter("TableStyleMedium2", tableOptions);
+
+		tables = wsView.model.autoFilters.getTablesIntersectionRange(new Asc.Range(0, 100, 0, 100));
+		assert.strictEqual(tables.length, 1, "Table was created with selection of formula. Compare tables length");
+
+		table = tables[0];
+		tableName = table.DisplayName;
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "Column1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A101:A105)", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A101:A105)", "Formula in cell after table is created");
+
+		tables.length = 0;
+		clearData(0, 0, 200, 200);
+
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell before table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell before table is created");
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula("SUM(A100:A104)", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		oParser.buildDependencies();
+		array = oParser.calculate();
+
+		tableOptions = new AscCommonExcel.AddFormatTableOptions();
+		tableOptions.range = "A100:A103";
+		tableOptions.isTitle = false;
+		api.asc_addAutoFilter("TableStyleMedium2", tableOptions);
+
+		tables = wsView.model.autoFilters.getTablesIntersectionRange(new Asc.Range(0, 100, 0, 100));
+		assert.strictEqual(tables.length, 1, "Table was created without selection of formula. Compare tables length");
+
+		table = tables[0];
+		tableName = table.DisplayName;
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "Column1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A101:A105)", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A101:A105)", "Formula in cell after table is created");
+
+		tables.length = 0;
+		clearData(0, 0, 200, 200);
+
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell before table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell before table is created");
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula("SUM(A100:A104)", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		oParser.buildDependencies();
+		array = oParser.calculate();
+		
+		tableOptions = new AscCommonExcel.AddFormatTableOptions();
+		tableOptions.range = "A102:A105";
+		tableOptions.isTitle = false;
+		api.asc_addAutoFilter("TableStyleMedium2", tableOptions);
+		
+		tables = wsView.model.autoFilters.getTablesIntersectionRange(new Asc.Range(0, 103, 0, 103));
+		assert.strictEqual(tables.length, 1, "Table was created with selection of formula. Compare tables length");
+
+		table = tables[0];
+		tableName = table.DisplayName;
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "Column1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A105)", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A105)", "Formula in cell after table is created");
+
+		tables.length = 0;
+		clearData(0, 0, 200, 200);
+		ws.getRange2("A99:B110").cleanAll();
+
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102").setValue("3");
+		ws.getRange2("A103").setValue("4");
+		ws.getRange2("A104").setValue("5");
+
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=SUM(A100:A104)");
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell before table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A104)", "Value for edit in before table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A104)", "Formula in cell before table is created");
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula("SUM(A100:A104)", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		oParser.buildDependencies();
+		array = oParser.calculate();
+		
+		tableOptions = new AscCommonExcel.AddFormatTableOptions();
+		tableOptions.range = "A102:A103";
+		tableOptions.isTitle = false;
+		api.asc_addAutoFilter("TableStyleMedium2", tableOptions);
+		
+		tables = wsView.model.autoFilters.getTablesIntersectionRange(new Asc.Range(0, 102, 0, 102));
+		assert.strictEqual(tables.length, 1, "Table was created with selection of formula. Compare tables length");
+
+		table = tables[0];
+		tableName = table.DisplayName;
+
+		resCell = ws.getRange4(99, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(100, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "2", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(101, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "Column1", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(102, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "3", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(103, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "4", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(104, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after table is created");
+
+		resCell = ws.getRange4(105, 0);
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A100:A105)", "Value for edit in after table is created");
+		assert.strictEqual(resCell.getFormula(), "SUM(A100:A105)", "Formula in cell after table is created");
+
+		tables.length = 0;
+		clearData(0, 0, 200, 200);
+		ws.getRange2("A99:B110").cleanAll();
+
 	});
 
 	QUnit.test('Autofill - Asc horizontal sequence: Days of the weeks', function (assert) {
@@ -2703,6 +3629,47 @@ $(function () {
 
 		// calc res check
 		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 101, 30);
+		oParser = new AscCommonExcel.parserFormula(tableName + "[[Column1]:[Column2]]", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getValueByRowCol(0, 0).getValue(), 1, 'Result of Table[[Column1]:[Column2]][0,0]');
+		assert.strictEqual(array.getValueByRowCol(0, 1).getValue(), 1, 'Result of Table[[Column1]:[Column2]][0,1]');
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(101, 30);
+		resCell.setValue("=" + tableName +"[[Column1]:[Column2]]");
+		
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[[Column1]:[Column2]]", "Value for edit in cell after Table[[Column1]:[Column2]] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[[Column1]:[Column2]]", "Formula in cell after Table[[Column1]:[Column2]] is typed");
+
+
+		// calc res check
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 101, 30);
+		oParser = new AscCommonExcel.parserFormula(tableName + "[[Column1]:[Column2]]", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getValueByRowCol(0, 0).getValue(), 1, 'Result of Table[[Column1]:[Column3]][0,0]');
+		assert.strictEqual(array.getValueByRowCol(0, 1).getValue(), 1, 'Result of Table[[Column1]:[Column3]][0,1]');
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(101, 30);
+		resCell.setValue("=" + tableName +"[[Column1]:[Column3]]");
+		
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[[Column1]:[Column3]]", "Value for edit in cell after Table[[Column1]:[Column3]] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[[Column1]:[Column3]]", "Formula in cell after Table[[Column1]:[Column3]] is typed");
+
+
+		// calc res check
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 101, 30);
+		oParser = new AscCommonExcel.parserFormula(tableName + "[[Column1]:[Column345]]", cellWithFormula, ws);
+		assert.ok(oParser.parse() === false);
+		array = oParser.calculate();
+		assert.strictEqual(array.type, AscCommonExcel.cElementType.error, 'Result of Table[[Column1]:[Column345]]');
+		assert.strictEqual(array.value, "#NAME?", 'Result of Table[[Column1]:[Column345]]');
+
+
+		// calc res check
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 101, 30);
 		oParser = new AscCommonExcel.parserFormula(tableName + "[@[Column1]:[Column2]]", cellWithFormula, ws);
 		assert.ok(oParser.parse());
 		array = oParser.calculate();
@@ -2843,8 +3810,8 @@ $(function () {
 		resCell = ws.getRange4(101, 70);
 		resCell.setValue("=" + tableName +"[#All]");
 		
-		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName, "Value for edit in cell after Table[#All] is typed");
-		assert.strictEqual(resCell.getFormula(), tableName, "Formula in cell after Table[#All] is typed");
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[#All]", "Value for edit in cell after Table[#All] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[#All]", "Formula in cell after Table[#All] is typed");
 
 
 		// calc res check
@@ -2883,8 +3850,8 @@ $(function () {
 		resCell = ws.getRange4(101, 80);
 		resCell.setValue("=" + tableName +"[#Data]");
 		
-		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName, "Value for edit in cell after Table[#Data] is typed");
-		assert.strictEqual(resCell.getFormula(), tableName, "Formula in cell after Table[#Data] is typed");
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName +"[#Data]", "Value for edit in cell after Table[#Data] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName +"[#Data]", "Formula in cell after Table[#Data] is typed");
 
 
 		// calc res check
@@ -3020,6 +3987,215 @@ $(function () {
 		//"=" + tableName + "[[#Headers],[#Data]]"
 		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[[#Data],[#Headers]]", "Value for edit in cell after Table[[#Data],[#Headers]] is typed");
 		assert.strictEqual(resCell.getFormula(), tableName + "[[#Data],[#Headers]]", "Formula in cell after Table[[#Data],[#Headers]] is typed");
+
+		// for bug 46174
+		// calc res check
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula("[[Column1]]", cellWithFormula, ws);
+		assert.ok(oParser.parse(true));
+		array = oParser.calculate();
+		assert.strictEqual(array.getValueByRowCol(0, 0).getValue(), 1, 'Short notation. Result of [[Column1]][0,0] inside table');
+		assert.strictEqual(array.getValueByRowCol(1, 0).getValue(), 1, 'Short notation. Result of [[Column1]][1,0] inside table');
+		assert.strictEqual(array.getValueByRowCol(2, 0).getValue(), 1, 'Short notation. Result of [[Column1]][2,0] inside table');
+		assert.strictEqual(array.getValueByRowCol(3, 0).getValue(), 1, 'Short notation. Result of [[Column1]][3,0] inside table');
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 105, 0);
+		oParser = new AscCommonExcel.parserFormula("[[Column1]]", cellWithFormula, ws);
+		assert.ok(!oParser.parse(true));
+		array = oParser.calculate();
+		assert.strictEqual(array.type, AscCommonExcel.cElementType.error, 'Short notation. Result of [[Column1]] outside table');
+		
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 101, 20);
+		oParser = new AscCommonExcel.parserFormula(tableName + "[[Column1]]", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getValueByRowCol(0, 0).getValue(), 1, 'Result of [[Column1]][0,0]');
+		assert.strictEqual(array.getValueByRowCol(1, 0).getValue(), 1, 'Result of [[Column1]][1,0]');
+		assert.strictEqual(array.getValueByRowCol(2, 0).getValue(), 1, 'Result of [[Column1]][2,0]');
+		assert.strictEqual(array.getValueByRowCol(3, 0).getValue(), 1, 'Result of [[Column1]][3,0]');
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(101, 20);
+		resCell.setValue("=" + tableName +"[[Column1]]");
+		
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[Column1]", "Value for edit in cell after Table[[Column1]] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[Column1]", "Formula in cell after Table[[Column1]] is typed");
+
+		// short links inside the table(check for correct formula parsing)
+		resCell = ws.getRange2("C101");
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 100, 2);
+		oParser = new AscCommonExcel.parserFormula("[]", cellWithFormula, ws);
+		parseResult = new AscCommonExcel.ParseResult([], []);
+		assert.ok(oParser.parse(true, true, parseResult, true));
+		assert.ok(oParser.outStack && oParser.outStack[0] && (oParser.outStack[0].type === AscCommonExcel.cElementType.table), "=[] Formula parsing Inside the table");
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 100, 2);
+		oParser = new AscCommonExcel.parserFormula("[Column1]", cellWithFormula, ws);
+		parseResult = new AscCommonExcel.ParseResult([], []);
+		assert.ok(oParser.parse(true, true, parseResult, true));
+		assert.ok(oParser.outStack && oParser.outStack[0] && (oParser.outStack[0].type === AscCommonExcel.cElementType.table), "=[Column1] Formula parsing Inside the table");
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 100, 2);
+		oParser = new AscCommonExcel.parserFormula("[[Column1]:[Column2]]", cellWithFormula, ws);
+		parseResult = new AscCommonExcel.ParseResult([], []);
+		assert.ok(oParser.parse(true, true, parseResult, true));
+		assert.ok(oParser.outStack && oParser.outStack[0] && (oParser.outStack[0].type === AscCommonExcel.cElementType.table), "=[[Column1]:[Column2]] Formula parsing Inside the table");
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 100, 2);
+		oParser = new AscCommonExcel.parserFormula("[@]", cellWithFormula, ws);
+		parseResult = new AscCommonExcel.ParseResult([], []);
+		assert.ok(oParser.parse(true, true, parseResult, true));
+		assert.ok(oParser.outStack && oParser.outStack[0] && (oParser.outStack[0].type === AscCommonExcel.cElementType.table), "=[@] Formula parsing Inside the table");
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 100, 2);
+		oParser = new AscCommonExcel.parserFormula("[@Column1]", cellWithFormula, ws);
+		parseResult = new AscCommonExcel.ParseResult([], []);
+		assert.ok(oParser.parse(true, true, parseResult, true));
+		assert.ok(oParser.outStack && oParser.outStack[0] && (oParser.outStack[0].type === AscCommonExcel.cElementType.table), "=[@Column1] Formula parsing Inside the table");
+
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 100, 2);
+		oParser = new AscCommonExcel.parserFormula("[@[Column1]:[Column2]]", cellWithFormula, ws);
+		parseResult = new AscCommonExcel.ParseResult([], []);
+		assert.ok(oParser.parse(true, true, parseResult, true));
+		assert.ok(oParser.outStack && oParser.outStack[0] && (oParser.outStack[0].type === AscCommonExcel.cElementType.table), "=[@[Column1]:[Column2]] Formula parsing Inside the table");
+
+		clearData(0, 99, 0, 105);
+	});
+
+	QUnit.test('Table special characters tests', function (assert) {
+		/* This test checks for special characters inside a table, namely column names with escaped characters */
+		let array;
+		ws.getRange2("A100:C103").setValue("1");
+		ws.getRange2("A100").setValue("With a single ' quote");
+		ws.getRange2("B100").setValue("With a double '' quote");
+		ws.getRange2("C100").setValue("With a special ' @ & ? * / | \ # '' [ ] characters");
+
+		let tableOptions = new AscCommonExcel.AddFormatTableOptions();
+		tableOptions.range = "A100:C103";
+		tableOptions.isTitle = true;
+		api.asc_addAutoFilter("TableStyleMedium2", tableOptions);	// create table in A100:C103 range
+
+		let tables = wsView.model.autoFilters.getTablesIntersectionRange(new Asc.Range(0, 100, 0, 100));
+		assert.strictEqual(tables.length, 1, "compare tables length");
+
+		let table = tables[0];
+		let tableName = table.DisplayName;	// due to the fact that other tables are used in file, get the name of the one we need by this way
+		wsView.af_changeFormatTableInfo(tableName, Asc.c_oAscChangeTableStyleInfo.rowTotal, true);
+
+		// calc res check
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 101, 70);
+		oParser = new AscCommonExcel.parserFormula(tableName + "[#All]", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getValueByRowCol(0, 0).getValue(), "With a single ' quote", 'Result of Table[#All][0,0]');
+		assert.strictEqual(array.getValueByRowCol(0, 1).getValue(), "With a double '' quote", 'Result of Table[#All][0,1]');
+		assert.strictEqual(array.getValueByRowCol(0, 2).getValue(), "With a special ' @ & ? * / |  # '' [ ] characters", 'Result of Table[#All][0,2]');
+		assert.strictEqual(array.getValueByRowCol(1, 0).getValue(), 1, 'Result of Table[#All][1,0]');
+		assert.strictEqual(array.getValueByRowCol(1, 1).getValue(), 1, 'Result of Table[#All][1,1]');
+		assert.strictEqual(array.getValueByRowCol(3, 0).getValue(), 1, 'Result of Table[#All][3,0]');
+		assert.strictEqual(array.getValueByRowCol(3, 1).getValue(), 1, 'Result of Table[#All][3,1]');
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(101, 70);
+		resCell.setValue("=" + tableName +"[#All]");
+		
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[#All]", "Value for edit in cell after Table[#All] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[#All]", "Formula in cell after Table[#All] is typed");
+
+
+		/* column header check */
+		// this pattern is looking for special characters in the string that need to be escaped
+		let specialSymbolsPattern = /(['#@\[\]])/g;
+		// set selection to the first column header
+		let selectedRange = ws.getRange2("A100");
+		wsView.setSelection(selectedRange.bbox);
+
+		let ranges = wsView.model.selectionRange.ranges;
+		let valueInCellEditMode = tables[0].getSelectionString(wsView.model.getSelection().activeCell, ranges[0]);
+		let expectedValue = tableName + "[[#Headers],[" + ws.getRange2("A100").getValueForEdit().replace(specialSymbolsPattern, "'$1") + "]]";
+
+		assert.strictEqual(valueInCellEditMode, expectedValue, "Header value in first column. Simulation value for edit in cellEditMode");
+
+
+		// set selection to the second column header
+		selectedRange = ws.getRange2("B100");
+		wsView.setSelection(selectedRange.bbox);
+
+		ranges = wsView.model.selectionRange.ranges;
+		valueInCellEditMode = tables[0].getSelectionString(wsView.model.getSelection().activeCell, ranges[0]);
+		expectedValue = tableName + "[[#Headers],[" + ws.getRange2("B100").getValueForEdit().replace(specialSymbolsPattern, "'$1") + "]]";
+
+		assert.strictEqual(valueInCellEditMode, expectedValue, "Header value in second column. Simulation value for edit in cellEditMode");
+
+
+		// set selection to the third column header
+		selectedRange = ws.getRange2("C100");
+		wsView.setSelection(selectedRange.bbox);
+
+		ranges = wsView.model.selectionRange.ranges;
+		valueInCellEditMode = tables[0].getSelectionString(wsView.model.getSelection().activeCell, ranges[0]);
+		expectedValue = tableName + "[[#Headers],[" + ws.getRange2("C100").getValueForEdit().replace(specialSymbolsPattern, "'$1") + "]]";
+
+		assert.strictEqual(valueInCellEditMode, expectedValue, "Header value in third column. Simulation value for edit in cellEditMode");
+
+		/* full column check */
+		// first column select
+		selectedRange = ws.getRange2("A101:A103");
+		wsView.setSelection(selectedRange.bbox);
+
+		ranges = wsView.model.selectionRange.ranges;
+		valueInCellEditMode = tables[0].getSelectionString(wsView.model.getSelection().activeCell, ranges[0]);
+		expectedValue = tableName + "[" + ws.getRange2("A100:A103").getValueForEdit().replace(specialSymbolsPattern, "'$1") + "]";
+
+		assert.strictEqual(valueInCellEditMode, expectedValue, "First column without header select. Simulation value for edit in cellEditMode");
+
+		// second column select
+		selectedRange = ws.getRange2("B101:B103");
+		wsView.setSelection(selectedRange.bbox);
+
+		ranges = wsView.model.selectionRange.ranges;
+		valueInCellEditMode = tables[0].getSelectionString(wsView.model.getSelection().activeCell, ranges[0]);
+		expectedValue = tableName + "[" + ws.getRange2("B100:B103").getValueForEdit().replace(specialSymbolsPattern, "'$1") + "]";
+
+		assert.strictEqual(valueInCellEditMode, expectedValue, "Second column without header select. Simulation value for edit in cellEditMode");
+
+		// third column select
+		selectedRange = ws.getRange2("C101:C103");
+		wsView.setSelection(selectedRange.bbox);
+
+		ranges = wsView.model.selectionRange.ranges;
+		valueInCellEditMode = tables[0].getSelectionString(wsView.model.getSelection().activeCell, ranges[0]);
+		expectedValue = tableName + "[" + ws.getRange2("C100:C103").getValueForEdit().replace(specialSymbolsPattern, "'$1") + "]";
+
+		assert.strictEqual(valueInCellEditMode, expectedValue, "Third column without header select. Simulation value for edit in cellEditMode");
+
+		/* two columns check */
+		// first and second column
+		selectedRange = ws.getRange2("A101:B103");
+		wsView.setSelection(selectedRange.bbox);
+
+		ranges = wsView.model.selectionRange.ranges;
+		valueInCellEditMode = tables[0].getSelectionString(wsView.model.getSelection().activeCell, ranges[0]);
+		expectedValue = tableName + "[" 
+						+ "[" + ws.getRange2("A100:A103").getValueForEdit().replace(specialSymbolsPattern, "'$1") + "]:" 
+						+ "[" + ws.getRange2("B100:B103").getValueForEdit().replace(specialSymbolsPattern, "'$1") + "]"
+						+ "]";
+
+		assert.strictEqual(valueInCellEditMode, expectedValue, "First and second column without header select. Simulation value for edit in cellEditMode");
+
+		// second and third column
+		selectedRange = ws.getRange2("B101:C103");
+		wsView.setSelection(selectedRange.bbox);
+
+		ranges = wsView.model.selectionRange.ranges;
+		valueInCellEditMode = tables[0].getSelectionString(wsView.model.getSelection().activeCell, ranges[0]);
+		expectedValue = tableName + "[" 
+						+ "[" + ws.getRange2("B100:B103").getValueForEdit().replace(specialSymbolsPattern, "'$1") + "]:" 
+						+ "[" + ws.getRange2("C100:C103").getValueForEdit().replace(specialSymbolsPattern, "'$1") + "]"
+						+ "]";
+
+		assert.strictEqual(valueInCellEditMode, expectedValue, "Second and third column without header select. Simulation value for edit in cellEditMode");
+
 
 		clearData(0, 99, 0, 105);
 	});
@@ -3165,6 +4341,17 @@ $(function () {
 		wb.dependencyFormulas._foreachDefName(function(defName) {
 			wb.dependencyFormulas.removeDefName(undefined, defName.name);
 		});
+
+		// for bug 61855
+		let insertArgsRes = api.wb.insertArgumentsInFormula(["1"], 0, 0, "SUM", true/*bEndInsertArg*/);
+		assert.strictEqual(insertArgsRes && insertArgsRes.functionResult, "1", "Calculation result for SUM function when insert first argument in formula");
+
+		insertArgsRes = api.wb.insertArgumentsInFormula(["1,2"], 1, 0, "SUM", true);
+		assert.strictEqual(insertArgsRes && insertArgsRes.functionResult, "3", "Calculation result for SUM function when insert second argument in formula");
+
+		insertArgsRes = api.wb.insertArgumentsInFormula(["1"], 1, 0, "SUM", true);
+		assert.strictEqual(insertArgsRes && insertArgsRes.functionResult, "1", "Calculation result for SUM function when delete second argument in formula");
+		
 	});
 
 	QUnit.test('autoCompleteFormula', function (assert) {
@@ -3578,7 +4765,9 @@ $(function () {
 
 
 		// number 
+		ws.getRange2("A20:A23").cleanAll();
 		fillRange = ws.getRange2("A20:A22");
+		fillRange.setValue("1");
 		fillRange.setNumFormat("0.00"); 	// change to the number format
 
 		wsView.setSelection(fillRange.bbox);
@@ -3724,8 +4913,490 @@ $(function () {
 		supposedActiveCell = ws.getCell2("B22");
 		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. B20:B22(only text in range) autosum");
 
+		/* autocomplete to merge cells */
+		ws.getRange2("A30:B31").setValue("111");
+		// C30:D31 merge & center
+		ws.getRange2("C30:D31").merge(Asc.c_oAscMergeOptions.MergeCenter);
+		assert.ok(ws.getRange2("C30:D31").hasMerged(), 'Range C30:D31 is merged');
+
+		fillRange = ws.getRange2("A30:D31");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("C30");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A30:D31 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A30:D31 autosum");
+		resCell = ws.getRange2("C31");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A30:D31 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A30:D31 autosum");
+		resCell = ws.getRange2("D30");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A30:D31 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A30:D31 autosum");
+		resCell = ws.getRange2("D31");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A30:D31 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A30:D31 autosum");
+
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A30:D31", "Selection after A30:D31 autosum");
+
+
+		ws.getRange2("A40:B41").setValue("111");
+		ws.getRange2("C40:C41").merge(Asc.c_oAscMergeOptions.MergeCenter);
+		assert.ok(ws.getRange2("C40:C41").hasMerged(), 'Range C40:C41 is merged');
+
+		ws.getRange2("D40:D41").merge(Asc.c_oAscMergeOptions.MergeCenter);
+		assert.ok(ws.getRange2("D40:C41").hasMerged(), 'Range D40:C41 is merged');
+
+		fillRange = ws.getRange2("A40:D41");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("C40");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A40:D41 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A40:D41 autosum");
+		resCell = ws.getRange2("C41");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A40:D41 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A40:D41 autosum");
+		resCell = ws.getRange2("D40");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A40:D41 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A40:D41 autosum");
+		resCell = ws.getRange2("D41");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A40:D41 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A40:D41 autosum");
+
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A40:D41", "Selection after A40:D41 autosum");
+
+
+		ws.getRange2("A50:A51").setValue("111");
+		ws.getRange2("A52:A53").merge(Asc.c_oAscMergeOptions.MergeCenter);
+		assert.ok(ws.getRange2("A52:A53").hasMerged(), 'Range A52:A53 is merged');
+
+		fillRange = ws.getRange2("A50:A53");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("A52");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A50:A53 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A50:A53 autosum");
+		resCell = ws.getRange2("A52");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A50:A53 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A50:A53 autosum");
+
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A50:A53", "Selection after A50:A53 autosum");
+
+
+		ws.getRange2("A60:B61").setValue("111");
+		ws.getRange2("C60:D60").merge(Asc.c_oAscMergeOptions.MergeCenter);
+		assert.ok(ws.getRange2("C60:D60").hasMerged(), 'Range C60:D60 is merged');
+
+		ws.getRange2("C62:D62").merge(Asc.c_oAscMergeOptions.MergeCenter);
+		assert.ok(ws.getRange2("C62:D62").hasMerged(), 'Range C62:D62 is merged');
+
+		fillRange = ws.getRange2("A60:D62");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("A62");
+		assert.strictEqual(resCell.getValueWithFormat(), "222", "Value in merged cell after A60:D62 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A60:A61)", "Formula in merged cell after A60:D62 autosum");
+		resCell = ws.getRange2("B62");
+		assert.strictEqual(resCell.getValueWithFormat(), "222", "Value in merged cell after A60:D62 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(B60:B61)", "Formula in merged cell after A60:D62 autosum");
+		resCell = ws.getRange2("C62");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A60:D62 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A60:D62 autosum");
+		resCell = ws.getRange2("D62");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A60:D62 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A60:D62 autosum");
+		resCell = ws.getRange2("D60");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A60:D62 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A60:D62 autosum");
+		resCell = ws.getRange2("D61");
+		assert.strictEqual(resCell.getValueWithFormat(), "222", "Value in merged cell after A60:D62 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A61:C61)", "Formula in merged cell after A60:D62 autosum");
+
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A60:D62", "Selection after A60:D62 autosum");
+
+		ws.getRange2("A1:D70").cleanAll();
+		// autosum from merged cell
+		ws.getRange2("A70:B70").setValue("111");
+		ws.getRange2("C70:D70").merge(Asc.c_oAscMergeOptions.MergeCenter);
+		assert.ok(ws.getRange2("C70:D70").hasMerged(), 'Range C70:D70 is merged');
+
+		fillRange = ws.getRange2("D70");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, "A70:B70", "Formula after autosum from merged cell. C70:D70 autosum from right");
+		resCell = ws.getRange2("C70");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after C70:D70 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after C70:D70 autosum");
+
+
+		ws.getRange2("A80:B82").setValue("111");
+		ws.getRange2("C80:H88").merge(Asc.c_oAscMergeOptions.MergeCenter);
+		assert.ok(ws.getRange2("C80:H88").hasMerged(), 'Range C80:H88" is merged');
+
+		fillRange = ws.getRange2("D82");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, "A80:B80", "Formula after autosum from merged cell. C80:H88 autosum from right");
+		resCell = ws.getRange2("C80");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after C80:H88 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after C80:H88 autosum");
+
+
+		ws.getRange2("A90:B91").setValue("111");
+		ws.getRange2("A92:D94").merge(Asc.c_oAscMergeOptions.MergeCenter);
+		assert.ok(ws.getRange2("A92:D94").hasMerged(), 'Range A92:D94 is merged');
+
+		fillRange = ws.getRange2("D94");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, "A90:A91", "Formula after autosum from merged cell. A92:D94 autosum from bottom");
+		resCell = ws.getRange2("A92");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A92:D94 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A92:D94 autosum");
+
+
+		ws.getRange2("A110:C111").setValue("111");
+		ws.getRange2("C112").setValue("111");
+		ws.getRange2("A113:C115").merge(Asc.c_oAscMergeOptions.MergeCenter);
+		assert.ok(ws.getRange2("A113:C115").hasMerged(), 'Range A113:C115 is merged');
+
+		fillRange = ws.getRange2("C113");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, "A110:A112", "Formula after autosum from merged cell. A113:C115 autosum from bottom");
+		resCell = ws.getRange2("A92");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in merged cell after A113:C115 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in merged cell after A113:C115 autosum");
+
+		// for bug 36902
+		// single cell selection, left cell data
+		ws.getRange2("A1:Z20").cleanAll();
+		ws.getRange2("A1:A3").setValue("1");
+		fillRange = ws.getRange2("B1");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("B1");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty B1 cell");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, "A1", "Formula for edit after autosum from empty B1 cell");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, undefined, "Is the B1 cell open for edit");
+		resCell = ws.getRange2("B1");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in cell B1 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in cell B1 after autosum");
+
+
+		fillRange = ws.getRange2("D1");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("D1");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty D1 cell");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, "A1:C1", "Formula for edit after autosum from empty D1 cell");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, undefined, "Is the D1 cell open for edit");
+		resCell = ws.getRange2("D1");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in cell D1 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in cell D1 after autosum");
+
+		// multi cells selection, left cell data
+		// vertical selection line
+		fillRange = ws.getRange2("B1:B3");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("B1");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty B1:B3 range");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, undefined, "Formula for edit after autosum from empty B1:B3 range");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, true, "Is the B1 cell open for edit");
+		resCell = ws.getRange2("B1");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell B1 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A1)", "Formula in cell B1 after autosum");
+		resCell = ws.getRange2("B2");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell B2 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A2)", "Formula in cell B2 after autosum");
+		resCell = ws.getRange2("B3");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell B3 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A3)", "Formula in cell B3 after autosum");
+		ws.getRange2("B1:B3").cleanAll();
+
 		
-		ws.getRange2("A1:Z100").cleanAll();
+		fillRange = ws.getRange2("D1:D3");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("D1");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty D1:D3 range");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, undefined, "Formula for edit after autosum from empty D1:D3 range");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, true, "Is the D1 cell open for edit");
+		resCell = ws.getRange2("D1");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell D1 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A1:C1)", "Formula in cell D1 after autosum");
+		resCell = ws.getRange2("D2");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell B2 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A2:C2)", "Formula in cell B2 after autosum");
+		resCell = ws.getRange2("D3");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell B3 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A3:C3)", "Formula in cell B3 after autosum");
+		ws.getRange2("D1:D3").cleanAll();
+
+		// horizontal
+		fillRange = ws.getRange2("B1:D1");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("B1");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty B1:D1 range");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, undefined, "Formula for edit after autosum from empty B1:D1 range");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, true, "Is the B1 cell open for edit");
+		resCell = ws.getRange2("B1");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell B1 after B1:D1 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A1)", "Formula in cell B1 after B1:D1 autosum");
+		resCell = ws.getRange2("C1");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell C1 after B1:D1 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(B1)", "Formula in cell C1 after B1:D1 autosum");
+		resCell = ws.getRange2("D1");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell D1 after B1:D1 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(C1)", "Formula in cell D1 after B1:D1 autosum");
+		ws.getRange2("B1:D1").cleanAll();
+
+
+		fillRange = ws.getRange2("D1:F1");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("D1");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty D1:F1 range");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, undefined, "Formula for edit after autosum from empty D1:F1 range");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, true, "Is the D1 cell open for edit");
+		resCell = ws.getRange2("D1");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell D1 after D1:F1 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A1:C1)", "Formula in cell D1 after D1:F1 autosum");
+		resCell = ws.getRange2("E1");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell E1 after D1:F1 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(B1:D1)", "Formula in cell E1 after D1:F1 autosum");
+		resCell = ws.getRange2("F1");
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value in cell F1 after D1:F1 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(C1:E1)", "Formula in cell F1 after D1:F1 autosum");
+		ws.getRange2("D1:F1").cleanAll();
+
+		// two-dimensional
+		fillRange = ws.getRange2("B2:C3");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("B2");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty B2:C3 range");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, "A2", "Formula for edit after autosum from empty B2:C3 range");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, undefined, "Is the B2 cell open for edit");
+		resCell = ws.getRange2("B2");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in cell B2 after B2:C3 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in cell B2 after B2:C3 autosum");
+		resCell = ws.getRange2("C3");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in cell C3 after B2:C3 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in cell C3 after B2:C3 autosum");
+
+
+		// single cell selection, top cell data
+		ws.getRange2("A1:D1").setValue("1");
+		fillRange = ws.getRange2("D2");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("D2");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty D2 cell");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, "D1", "Formula for edit after autosum from empty D2 cell");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, undefined, "Is the D2 cell open for edit");
+		resCell = ws.getRange2("D2");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in cell D2 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in cell D2 after autosum");
+
+
+		fillRange = ws.getRange2("D6");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("D6");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty D6 cell");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, "D1:D5", "Formula for edit after autosum from empty D6 cell");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, undefined, "Is the D6 cell open for edit");
+		resCell = ws.getRange2("D6");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in cell D6 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in cell D6 after autosum");
+
+
+		// multi cells selection, top cell data
+		// vertical
+		fillRange = ws.getRange2("D2:D3");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("D2");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty D2:D3 range");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, undefined, "Formula for edit after autosum from empty D2:D3 range");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, true, "Is the D2 cell open for edit");
+		resCell = ws.getRange2("D2");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell D2 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(D1)", "Formula in cell D2 after D2:D3 autosum");
+		resCell = ws.getRange2("D3");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell D3 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(D2)", "Formula in cell D3 after D2:D3 autosum");
+		ws.getRange2("D2:D3").cleanAll();
+
+
+		fillRange = ws.getRange2("D6:D8");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("D6");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty D6:D8 range");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, undefined, "Formula for edit after autosum from empty D6:D8 range");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, true, "Is the B1 cell open for edit");
+		resCell = ws.getRange2("D6");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell D6 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(D1:D5)", "Formula in cell D6 after D6:D8 autosum");
+		resCell = ws.getRange2("D7");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell D7 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(D2:D6)", "Formula in cell D7 after D6:D8 autosum");
+		resCell = ws.getRange2("D8");
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value in cell D8 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(D3:D7)", "Formula in cell D8 after D6:D8 autosum");
+		ws.getRange2("D6:D8").cleanAll();
+
+		// horizontal
+		fillRange = ws.getRange2("D2:F2");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("D2");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty D2:F2 range");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, undefined, "Formula for edit after autosum from empty D2:F2 range");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, true, "Is the D2 cell open for edit");
+		resCell = ws.getRange2("D2");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell D2 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(D1)", "Formula in cell D2 after D2:F2 autosum");
+		resCell = ws.getRange2("E2");
+		assert.strictEqual(resCell.getValueWithFormat(), "0", "Value in cell E2 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(E1)", "Formula in cell E2 after D2:F2 autosum");
+		resCell = ws.getRange2("F2");
+		assert.strictEqual(resCell.getValueWithFormat(), "0", "Value in cell F2 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(F1)", "Formula in cell F2 after D2:F2 autosum");
+		ws.getRange2("D2:F2").cleanAll();
+
+
+		fillRange = ws.getRange2("D5:F5");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("D5");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty D5:F5 range");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, undefined, "Formula for edit after autosum from empty D5:F5 range");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, true, "Is the D5 cell open for edit");
+		resCell = ws.getRange2("D5");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in cell D5 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(D1:D4)", "Formula in cell D5 after D5:F5 autosum");
+		resCell = ws.getRange2("E5");
+		assert.strictEqual(resCell.getValueWithFormat(), "0", "Value in cell E5 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(E1:E4)", "Formula in cell E5 after D5:F5 autosum");
+		resCell = ws.getRange2("F5");
+		assert.strictEqual(resCell.getValueWithFormat(), "0", "Value in cell F5 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(F1:F4)", "Formula in cell F5 after D5:F5 autosum");
+		ws.getRange2("D5:F5").cleanAll();
+
+		// two-dimensional
+		fillRange = ws.getRange2("D3:E4");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("D3");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. Call autosum from empty D3:E4 range");
+
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.text, "D1:D2", "Formula for edit after autosum from empty D3:E4 range");
+		assert.strictEqual(autoCompleteRes && autoCompleteRes.notEditCell, undefined, "Is the D4 cell open for edit");
+		resCell = ws.getRange2("D3");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in cell D3 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in cell D3 after D3:E4 autosum");
+		resCell = ws.getRange2("E4");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in cell E4 after autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in cell E4 after D3:E4 autosum");
+		ws.getRange2("D3:E4").cleanAll();
+		
+		ws.getRange2("A1:Z200").cleanAll();
 	});
 
 	/* for bug 69708 */
@@ -4899,16 +6570,15 @@ $(function () {
 		getAutofillCase([0, 0, 6, 7], [0, 0, 5, 0], 1, 'Date & Time format. Reverse sequence. Vertical. Two selected cells. Step - month. 1900 year.', expectedData);
 		ws.getRange2('A1:A20').cleanAll();
 		// Case #74: Date & Time format. Asc sequence. Horizontal. Two selected cells. Step - month. Asc month seq, but time sequence is reverse.
-		// TODO Need to fix bug.
-		/*testData = [
+		testData = [
 			['02/01/2000 12:00', '04/01/2000 5:00']
 		];
 		range = ws.getRange4(0, 0);
 		range.fillData(testData);
 		undoData = ['', '', '', '', '', ''];
-		expectedData = ['36677.91667', '36738.625', '36799.33333', '36860.04167', '36921.75', '36980.45833'];
+		expectedData = ['36677.916666666664', '36738.62499999999', '36799.33333333332', '36860.04166666665', '36921.74999999998', '36980.45833333331'];
 		getAutofillCase([0, 1, 0, 0], [2, 7, 0, 0], 3, 'Date & Time format. Asc sequence. Horizontal. Two selected cells. Step - month. Asc month seq, but time sequence is reverse.', expectedData);
-		ws.getRange2('A1:Z20').cleanAll();*/
+		ws.getRange2('A1:Z20').cleanAll();
 		// Case #75: Mixed date format. Asc sequence. Vertical. Two selected cells. Step - month.
 		testData = [
 			['01/01/2000 12:00'],
@@ -5127,6 +6797,43 @@ $(function () {
 		undoData = [[''], [''], ['37987'], ['37257.5'], ['36526.5']];
 		expectedData = [['35796.5'], ['35065.5'], ['34335.5'], ['33604.5'], ['32874.5']];
 		getAutofillCase([0, 0, 5, 7], [0, 0, 4, 0], 1, 'Mixed date format. Reverse sequence. Vertical. Three selected cells. Step - year.', expectedData);
+		ws.getRange2('A1:A20').cleanAll();
+		// Case #101: Date & Time format. Asc sequence. Horizontal. Two selected cells. Step - year. Asc month seq, but time sequence is reverse.
+		testData = [
+			['01/01/2000 12:00', '01/01/2002 5:00']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = ['', '', '', '', '', ''];
+		expectedData = ['37986.916666666664', '38717.62499999999', '39447.33333333332', '40178.04166666665', '40907.74999999998', '41638.45833333331'];
+		getAutofillCase([0, 1, 0, 0], [2, 7, 0, 0], 3, 'Date & Time format. Asc sequence. Horizontal. Two selected cells. Step - year. Asc month seq, but time sequence is reverse.', expectedData);
+		// Case #102: Date & Time format. Reverse sequence. Horizontal. Two selected cells. Step - year. Asc month seq, but time sequence is reverse.
+		range = ws.getRange4(0, 6);
+		range.fillData(testData);
+		undoData = ['', '', '', '', '37257.208333333336', '36526.5'];
+		expectedData = ['35796.79166666666', '35066.083333333314', '34336.37499999997', '33605.66666666663', '32875.958333333285', '32145.24999999994'];
+		getAutofillCase([6, 7, 0, 0], [5, 0, 0, 0], 1, 'Date & Time format. Reverse sequence. Horizontal. Two selected cells. Step - year. Asc month seq, but time sequence is reverse.', expectedData);
+		ws.getRange2('A1:Z20').cleanAll();
+		// Case #103: Date format. Asc sequence. Vertical. Two selected cells. Step - month. Next month is February, and the day is more than the last day of the month.
+		testData = [
+			['12/30/2002'],
+			['01/30/2003']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], [''], [''], [''], ['']];
+		expectedData = [['37680'], ['37710'], ['37741'], ['37771'], ['37802'], ['37832']];
+		getAutofillCase([0, 0, 0, 1], [0, 0, 2, 7], 3, 'Date format. Asc sequence. Vertical. Two selected cells. Step - month. Next month is February, and the day is more than the last day of the month.', expectedData);
+		// Case #104: Date format. Reverse sequence. Vertical. Two selected cells. Step - month. Next month is February, and the day is more than the last day of the month.
+		testData = [
+			['03/30/2003'],
+			['04/30/2003']
+		]
+		range = ws.getRange4(6, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], [''], [''], ['37651'], ['37620']];
+		expectedData = [['37680'], ['37651'], ['37620'], ['37590'], ['37559'], ['37529']];
+		getAutofillCase([0, 0, 6, 7], [0, 0, 5, 0], 1, 'Date format. Reverse sequence. Vertical. Two selected cells. Step - month. Next month is February, and the day is more than the last day of the month.', expectedData);
 		ws.getRange2('A1:A20').cleanAll();
 	});
 
@@ -5399,5 +7106,1020 @@ $(function () {
 
 	});
 
-	QUnit.module("Sheet structure");
+	QUnit.test("Test: \"Text to formula tests\"", function (assert) {
+		let cellWithFormula, fillRange, array;
+			
+		// wb.dependencyFormulas.unlockRecal();
+
+		ws.getRange2("A1:F10").cleanAll();
+		ws.getRange2("A1").setValue("1");
+		ws.getRange2("A2").setValue("2");
+		ws.getRange2("A3").setValue("3");
+		ws.getRange2("B1").setValue("+5");
+		ws.getRange2("B2").setValue("+5+5");
+		ws.getRange2("B3").setValue("-5");
+		ws.getRange2("B4").setValue("-5-5");
+
+		// set flags for CSE formula call
+		let flags = wsView._getCellFlags(0, 2);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// set selection C1
+		fillRange = ws.getRange2("C1");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+
+		let fragment = ws.getRange2("C1").getValueForEdit2();
+		fragment[0].setFragmentText("+5+5");
+		resCell = ws.getRange2("C1");
+
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		// assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "C1", "Selection after +5+5 non-cse formula call");
+		assert.strictEqual(resCell.getValueWithFormat(), "10", "Value in C1 after +5+5 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=5+5", "Formula in C1 after +5+5 calculate");
+
+		fragment[0].setFragmentText("-5-5");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "-10", "Value in C1 after -5-5 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=-5-5", "Formula in C1 after -5-5 calculate");
+
+		fragment[0].setFragmentText("-5-5");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "-10", "Value in C1 after -5-5 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=-5-5", "Formula in C1 after -5-5 calculate");
+
+		fragment[0].setFragmentText("*5-5");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "*5-5", "Value in C1 after *5-5 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "*5-5", "Formula in C1 after *5-5 calculate");
+
+		fragment[0].setFragmentText("/5-5");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "/5-5", "Value in C1 after /5-5 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "/5-5", "Formula in C1 after /5-5 calculate");
+
+		fragment[0].setFragmentText("^5-5");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "^5-5", "Value in C1 after ^5-5 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "^5-5", "Formula in C1 after ^5-5 calculate");
+
+		fragment[0].setFragmentText("+A1-5");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "-4", "Value in C1 after +A1-5 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=+A1-5", "Formula in C1 after +A1-5 calculate");
+
+		fragment[0].setFragmentText("-A1-5");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "-6", "Value in C1 after -A1-5 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=-A1-5", "Formula in C1 after -A1-5 calculate");
+
+		fragment[0].setFragmentText("+5-A1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "4", "Value in C1 after +5-A1 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=5-A1", "Formula in C1 after +5-A1 calculate");
+
+		fragment[0].setFragmentText("-5-A1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "-6", "Value in C1 after -5-A1 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=-5-A1", "Formula in C1 after -5-A1 calculate");
+
+		fragment[0].setFragmentText("+5-A1:A2");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "4", "Value in C1 after +5-A1:A2 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=5-A1:A2", "Formula in C1 after +5-A1:A2 calculate");
+		resCell = ws.getRange2("C2");
+		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value in C2 after +5-A1:A2 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=5-A1:A2", "Formula in C2 after +5-A1:A2 calculate");
+
+		fragment[0].setFragmentText("-5-A1:A2");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "-6", "Value in C1 after -5-A1:A2 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=-5-A1:A2", "Formula in C1 after -5-A1:A2 calculate");
+		resCell = ws.getRange2("C2");
+		assert.strictEqual(resCell.getValueWithFormat(), "-7", "Value in C2 after -5-A1:A2 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=-5-A1:A2", "Formula in C2 after -5-A1:A2 calculate");
+		
+		// todo unar operator should convert area to array?
+		// fragment[0].setFragmentText("+A1:A2+5");
+		// resCell = ws.getRange2("C1");
+		// wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		// assert.strictEqual(resCell.getValueWithFormat(), "6", "Value in C1 after +A1:A2+5 calculate");
+		// assert.strictEqual(resCell.getValueForEdit(), "=+A1:A2+5", "Formula in C1 after +A1:A2+5 calculate");
+		// resCell = ws.getRange2("C2");
+		// assert.strictEqual(resCell.getValueWithFormat(), "", "Value in C2 after +A1:A2+5 calculate");
+		// assert.strictEqual(resCell.getValueForEdit(), "=+A1:A2+5", "Formula in C2 after +A1:A2+5 calculate");
+
+		fragment[0].setFragmentText("+#N/A");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "#N/A", "Value in C1 after +#N/A calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=+#N/A", "Formula in C1 after +#N/A calculate");
+
+		fragment[0].setFragmentText("-#DIV/0!");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "#DIV/0!", "Value in C1 after -#DIV/0! calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=-#DIV/0!", "Formula in C1 after -#DIV/0! calculate");
+
+		fragment[0].setFragmentText("+dsdsd");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "#NAME?", "Value in C1 after +dsdsd calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=+dsdsd", "Formula in C1 after +dsdsd calculate");
+
+		fragment[0].setFragmentText("-dsdsd");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "#NAME?", "Value in C1 after -dsdsd calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=-dsdsd", "Formula in C1 after -dsdsd calculate");
+
+		// add defname
+		let sheetName = ws.getName();
+		wb.dependencyFormulas.addDefName("dName", sheetName + "!A3");
+
+		fragment[0].setFragmentText("+dName");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "0", "Value in C1 after -dsdsd calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=+dName", "Formula in C1 after -dsdsd calculate");
+
+		// array
+		fragment[0].setFragmentText("+{1,2}");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in C1 after +{1,2} calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=+{1,2}", "Formula in C1 after +{1,2} calculate");
+		resCell = ws.getRange2("D1");
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value in D1 after +{1,2} calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=+{1,2}", "Formula in D1 after +{1,2} calculate");
+
+		fragment[0].setFragmentText("-{1,2}");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "-1", "Value in C1 after -{1,2} calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=-{-1,-2}", "Formula in C1 after -{1,2} calculate");
+		resCell = ws.getRange2("D1");
+		assert.strictEqual(resCell.getValueWithFormat(), "-2", "Value in D1 after -{1,2} calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=-{-1,-2}", "Formula in D1 after -{1,2} calculate");
+
+		fragment[0].setFragmentText("-1*(1)");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "-1", "Value in C1 after -1*(1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=-1*(1)", "Formula in C1 after -1*(1) calculate");
+
+		fragment[0].setFragmentText("+1*(1)");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in C1 after +1*(1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=1*(1)", "Formula in C1 after +1*(1) calculate");
+
+		// formulas
+		fragment[0].setFragmentText("+SIN({1,2})");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "0.841470985", "Value in C1 after +SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=+SIN({1,2})", "Formula in C1 after +SIN({1,2}) calculate");
+		resCell = ws.getRange2("D1");
+		assert.strictEqual(resCell.getValueWithFormat(), "0.909297427", "Value in D1 after +SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=+SIN({1,2})", "Formula in D1 after +SIN({1,2}) calculate");
+
+		fragment[0].setFragmentText("+SIN({1,2}");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "0.841470985", "Value in C1 after +SIN({1,2} calculate (without close bracket)");
+		assert.strictEqual(resCell.getValueForEdit(), "=+SIN({1,2})", "Formula in C1 after +SIN({1,2} calculate (without close bracket)");
+		resCell = ws.getRange2("D1");
+		assert.strictEqual(resCell.getValueWithFormat(), "0.909297427", "Value in D1 after +SIN({1,2} calculate (without close bracket)");
+		assert.strictEqual(resCell.getValueForEdit(), "=+SIN({1,2})", "Formula in D1 after +SIN({1,2} calculate (without close bracket)");
+
+		fragment[0].setFragmentText("-SUM(1,1,1");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "-3", "Value in C1 after -SUM(1,1,1 calculate (without close bracket)");
+		assert.strictEqual(resCell.getValueForEdit(), "=-SUM(1,1,1)", "Formula in C1 after -SUM(1,1,1 calculate (without close bracket)");
+
+	});
+
+	QUnit.test("Test: \"Unar operator removing tests\"", function (assert) {
+
+		let fillRange, resCell;
+			
+		// wb.dependencyFormulas.unlockRecal();
+
+		ws.getRange2("A1:F10").cleanAll();
+		ws.getRange2("A1").setValue("1");
+		ws.getRange2("A2").setValue("3");
+		ws.getRange2("A3").setValue("#N/A");
+		ws.getRange2("B1").setValue("+5");
+		ws.getRange2("B2").setValue("+5+5");
+		ws.getRange2("B3").setValue("-5");
+		ws.getRange2("B4").setValue("-5-5");
+
+		// set flags for CSE formula call
+		let flags = wsView._getCellFlags(0, 2);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// set selection C1
+		fillRange = ws.getRange2("C1");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+
+		let fragment = ws.getRange2("C1").getValueForEdit2();
+
+		// single values(types)
+		fragment[0].setFragmentText("++1");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in C1 after ++1 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=+1", "Formula in C1 after ++1 calculate");
+
+		fragment[0].setFragmentText("++-+1");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "-1", "Value in C1 after ++-+1 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=++-1", "Formula in C1 after ++-+1 calculate");
+
+		fragment[0].setFragmentText("++-+-+-1");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "-1", "Value in C1 after ++-+-+-1 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=++-+-+-1", "Formula in C1 after ++-+-+-1 calculate");
+
+		fragment[0].setFragmentText("++1++1");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value in C1 after ++1++1 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=+1+1", "Formula in C1 after ++1++1 calculate");
+
+		fragment[0].setFragmentText("+++1+++1++1");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value in C1 after +++1+++1++1 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=++1++1+1", "Formula in C1 after +++1+++1++1 calculate");
+
+		fragment[0].setFragmentText("=1++-+2/3");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "0.333333333", "Value in C1 after =1++-+2/3 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=1++-2/3", "Formula in C1 after =1++-+2/3 calculate");
+
+		fragment[0].setFragmentText('=+++"STR"');
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "STR", 'Value in C1 after =+++"STR" calculate');
+		assert.strictEqual(resCell.getValueForEdit(), '=+++"STR"', 'Formula in C1 after =+++"STR" calculate');
+
+		fragment[0].setFragmentText('=+++TRUE');
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "TRUE", 'Value in C1 after =+++TRUE calculate');
+		assert.strictEqual(resCell.getValueForEdit(), '=+++TRUE', 'Formula in C1 after =+++TRUE calculate');
+
+		fragment[0].setFragmentText('=+++FALSE');
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "FALSE", 'Value in C1 after =+++FALSE calculate');
+		assert.strictEqual(resCell.getValueForEdit(), '=+++FALSE', 'Formula in C1 after =+++FALSE calculate');
+
+		fragment[0].setFragmentText('=+++A3');
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "#N/A", 'Value in C1 after =+++A3 (error in cell check) calculate');
+		assert.strictEqual(resCell.getValueForEdit(), '=+++A3', 'Formula in C1 after =+++A3 (error in cell check) calculate');
+
+		fragment[0].setFragmentText('=+++A1:A2');
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", 'Value in C1 after =+++A1:A2 calculate');
+		assert.strictEqual(resCell.getValueForEdit(), '=+++A1:A2', 'Formula in C1 after =+++A1:A2 calculate');
+
+		fragment[0].setFragmentText('=+++{1,2}');
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", 'Value in C1 after =+++{1,2} calculate');
+		assert.strictEqual(resCell.getValueForEdit(), '=+++{1,2}', 'Formula in C1 after =+++{1,2} calculate');
+		resCell = ws.getRange2("D1");
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value in D1 after =+++{1,2} calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=+++{1,2}", "Formula in D1 after =+++{1,2} calculate");
+
+		// formulas
+		fragment[0].setFragmentText("+SUM(-1)");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "-1", "Value in C1 after +SUM(-1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=+SUM(-1)", "Formula in C1 after +SUM(-1) calculate");
+
+		fragment[0].setFragmentText("+++SIN(++1)");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "0.841470985", "Value in C1 after +++SIN(++1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=+++SIN(+1)", "Formula in C1 after +++SIN(++1) calculate");
+
+		fragment[0].setFragmentText("+++-SIN(+++++-1++1---++1)");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "0.841470985", "Value in C1 after +++-SIN(+++++-1++1---++1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=+++-SIN(+++++-1+1---+1)", "Formula in C1 after +++-SIN(+++++-1++1---++1) calculate");
+
+		// recalculate wb with formulas
+		fragment[0].setFragmentText("+++1");
+		fillRange = ws.getRange2("C1");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in C1 after +++1 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=++1", "Formula in C1 after +++1 calculate");
+
+		fragment[0].setFragmentText("+++2");
+		fillRange = ws.getRange2("C2");
+		resCell = ws.getRange2("C2");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value in C2 after +++2 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=++2", "Formula in C2 after +++2 calculate");
+
+		fragment[0].setFragmentText("+++3");
+		fillRange = ws.getRange2("C3");
+		resCell = ws.getRange2("C3");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value in C3 after +++3 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=++3", "Formula in C3 after +++3 calculate");
+
+		wb.calculate(Asc.c_oAscCalculateType.All);
+
+		resCell = ws.getRange2("C1");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in C1 after workbook recalculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=++1", "Formula in C1 after workbook recalculate");
+
+		resCell = ws.getRange2("C2");
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value in C2 after workbook recalculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=++2", "Formula in C2 after workbook recalculate");
+
+		resCell = ws.getRange2("C3");
+		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value in C3 after workbook recalculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=++3", "Formula in C3 after workbook recalculate");
+
+		// single value check
+		fragment[0].setFragmentText("-5");
+		fillRange = ws.getRange2("C3");
+		resCell = ws.getRange2("C3");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "-5", "Value in C3 after -5 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "-5", "Formula in C3 after -5 calculate");
+
+		fragment[0].setFragmentText("--5");
+		fillRange = ws.getRange2("C3");
+		resCell = ws.getRange2("C3");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "5", "Value in C3 after --5 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=--5", "Formula in C3 after --5 calculate");
+
+		fragment[0].setFragmentText("+5");
+		fillRange = ws.getRange2("C3");
+		resCell = ws.getRange2("C3");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "5", "Value in C3 after +5 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "5", "Formula in C3 after +5 calculate");
+
+		fragment[0].setFragmentText("++5");
+		fillRange = ws.getRange2("C3");
+		resCell = ws.getRange2("C3");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "5", "Value in C3 after ++5 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=+5", "Formula in C3 after ++5 calculate");
+
+		fragment[0].setFragmentText("-A1");
+		fillRange = ws.getRange2("C3");
+		resCell = ws.getRange2("C3");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "-1", "Value in C3 after -A1 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=-A1", "Formula in C3 after -A1 calculate");
+
+		fragment[0].setFragmentText("+A1");
+		fillRange = ws.getRange2("C3");
+		resCell = ws.getRange2("C3");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in C3 after +A1 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=+A1", "Formula in C3 after +A1 calculate");
+
+		fragment[0].setFragmentText("-A1:A2");
+		fillRange = ws.getRange2("C3");
+		resCell = ws.getRange2("C3");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in C3 after -A1:A2 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=-A1:A2", "Formula in C3 after -A1:A2 calculate");
+
+		fragment[0].setFragmentText("+A1:A2");
+		fillRange = ws.getRange2("C3");
+		resCell = ws.getRange2("C3");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in C3 after +A1:A2 calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=+A1:A2", "Formula in C3 after +A1:A2 calculate");
+
+		fragment[0].setFragmentText("-{1,2,3}");
+		fillRange = ws.getRange2("C3");
+		resCell = ws.getRange2("C3");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "-1", "Value in C3 after -{1,2,3} calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=-{-1,-2,-3}", "Formula in C3 after -{1,2,3} calculate");
+
+		fragment[0].setFragmentText("+{1,2,3}");
+		fillRange = ws.getRange2("C3");
+		resCell = ws.getRange2("C3");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in C3 after +{1,2,3} calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=+{1,2,3}", "Formula in C3 after +{1,2,3} calculate");
+
+	});
+
+	QUnit.test("Test: \"Assemble formulas test\"", function (assert) {
+		let cellWithFormula, fillRange, array;
+			
+		ws.getRange2("A1:F100").cleanAll();
+		
+		// set flags for CSE formula call
+		let flags = wsView._getCellFlags(0, 2);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// set selection C1
+		fillRange = ws.getRange2("A100");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+
+
+		ws.getRange2("A1").setValue("1");
+		ws.getRange2("A2").setValue("2");
+		ws.getRange2("A3").setValue("3");
+		ws.getRange2("B1").setValue("4");
+		ws.getRange2("C1").setValue("5");
+		
+		let resCell = ws.getRange2("A100");
+
+		// TAKE formula check
+		resCell.setValue("=TAKE({1,2,3},2,1)");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after TAKE({1,2,3},2,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=TAKE({1,2,3},2,1)", "Value for edit with TAKE({1,2,3},2,1) formula");
+
+		resCell.setValue("=TAKE({1;2;3},2,1)");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after TAKE({1,2,3},2,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=TAKE({1;2;3},2,1)", "Value for edit with TAKE({1;2;3},2,1) formula");
+
+		resCell.setValue("=TAKE(A1:A3,2,1)");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after TAKE(A1:A3,2,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=TAKE(A1:A3,2,1)", "Value for edit with TAKE(A1:A3,2,1) formula");
+
+		resCell.setValue("=TAKE(A1:C1,2,1)");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after TAKE(A1:C1,2,1) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=TAKE(A1:C1,2,1)", "Value for edit with TAKE(A1:C1,2,1) formula");
+		
+	});
+
+	QUnit.test('All selection test', function (assert) {
+
+		ws.getRange2("A1:Z100").cleanAll();
+
+		ws.getRange2("A1").setValue("1");
+		ws.getRange2("A2").setValue("2");
+		ws.getRange2("B1").setValue("3");
+		ws.getRange2("B2").setValue("4");
+		ws.getRange2("C2").setValue("5");
+
+		let fillRange = new Asc.Range(0, 0, 0, 0);
+		wsView.setSelection(fillRange);
+		assert.strictEqual(ws.selectionRange.getLast().getName(), "A1");
+
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getName(), "A1:C2");
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getType(), Asc.c_oAscSelectionType.RangeMax);
+
+		fillRange = new Asc.Range(10, 10, 10, 10);
+		wsView.setSelection(fillRange);
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getType(), Asc.c_oAscSelectionType.RangeMax);
+
+
+		let tableOptions = new AscCommonExcel.AddFormatTableOptions();
+		fillRange = new Asc.Range(0, 0, 2, 1);
+		tableOptions.range = fillRange.getName();
+		ws.autoFilters.addAutoFilter("style", fillRange, tableOptions);
+		assert.strictEqual(ws.TableParts.length, 1);
+		assert.strictEqual(ws.TableParts[0].Ref.getName(), "A1:C3");
+
+
+		fillRange = new Asc.Range(1, 1, 1, 1);
+		wsView.setSelection(fillRange);
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getName(), "A2:C3");
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getName(), "A1:C3");
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getType(), Asc.c_oAscSelectionType.RangeMax);
+
+		fillRange = new Asc.Range(0, 0, 0, 0);
+		wsView.setSelection(fillRange);
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getName(), "A1:C3");
+		api.wb._onSelectAllByRange();
+		assert.strictEqual(ws.selectionRange.getLast().getType(), Asc.c_oAscSelectionType.RangeMax);
+	});
+
+	QUnit.test('Selection in formulas test', function (assert) {
+
+		ws.getRange2("A1:Z100").cleanAll();
+
+		// remove all data from selection
+		let selectedRange = ws.getRange2("A1:Z100");
+		wsView.setSelection(selectedRange.bbox);
+		wsView.emptySelection(Asc.c_oAscCleanOptions.All);
+
+		// remove defnames from wb
+		wb.dependencyFormulas._foreachDefName(function(defName) {
+			wb.dependencyFormulas.removeDefName(undefined, defName.name);
+		});
+
+		ws.getRange2("A1").setValue("1");
+		ws.getRange2("A2").setValue("2");
+		ws.getRange2("B1").setValue("3");
+		ws.getRange2("B2").setValue("4");
+		ws.getRange2("C2").setValue("5");
+
+		api.wb.cellEditor =  {
+			data : {},
+			changeCellText: function () {},
+			canEnterCellRange: function () {
+				return true;
+			},
+			getText: function () {
+				return "";
+			}
+		};
+
+		// set params to correct function start
+		api.wb.wsActive = ws.getIndex();
+		api.wb.setCellEditMode(true);
+		api.wb.isFormulaEditMode = true;
+		api.wb.selectionDialogMode = true;
+
+		ws.selectionRange = null;
+
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		wsView.cols[0] = new CacheColumn();
+
+		let isStartPoint = true, isCoord = true, isCtrl = true;
+		let dc = 0, dr = 0, callback;
+
+		// selection check with ctrl
+		assert.strictEqual(ws.selectionRange, null, "Ranges before cell select by coords with ctrl=true");
+		api.wb._onChangeSelection(isStartPoint, dc, dr, isCoord, isCtrl, callback);
+		assert.strictEqual(ws.selectionRange.ranges.length, 1, "Ranges after first cell select by dc: " + dc + " dr: " + dr + " coords with ctrl=true");
+		assert.strictEqual(wsView.getSelectionRangeValue(), "A1", "Selection in cell format by dc: " + dc + " dr: " + dr + " coords with ctrl=true");
+
+		api.wb._onChangeSelection(isStartPoint, dc, dr, isCoord, isCtrl, callback);
+		assert.strictEqual(ws.selectionRange.ranges.length, 2, "Ranges after second cell select by dc: " + dc + " dr: " + dr + " coords with ctrl=true");
+		assert.strictEqual(wsView.getSelectionRangeValue(), "A1,A1", "Selection in cell format by dc: " + dc + " dr: " + dr + " coords with ctrl=true");
+
+		api.wb._onChangeSelection(isStartPoint, dc, dr, isCoord, isCtrl, callback);
+		assert.strictEqual(ws.selectionRange.ranges.length, 3, "Ranges after third cell select by dc: " + dc + " dr: " + dr + " coords with ctrl=true");
+		assert.strictEqual(wsView.getSelectionRangeValue(), "A1,A1,A1", "Selection in cell format by dc: " + dc + " dr: " + dr + " coords with ctrl=true");
+
+		isCtrl = false;
+		api.wb._onChangeSelection(isStartPoint, dc, dr, isCoord, isCtrl, callback);
+		assert.strictEqual(ws.selectionRange.ranges.length, 1, "Ranges after fourth cell select by dc: " + dc + " dr: " + dr + " coords with ctrl=false");
+		assert.strictEqual(wsView.getSelectionRangeValue(), "A1", "Selection in cell format by dc: " + dc + " dr: " + dr + " coords with ctrl=false");
+		
+		// todo add more coords to test in _onChangeSelection?
+		
+		api.wb.isFormulaEditMode = false;
+		api.wb.selectionDialogMode = false;
+	});
+
+	QUnit.test("Test: \"Formulas calc test\"", function (assert) {
+		let cellWithFormula, fillRange, array;
+			
+		// wb.dependencyFormulas.unlockRecal();
+
+		ws.getRange2("A1:F10").cleanAll();
+		ws.getRange2("A1").setValue("1");
+		ws.getRange2("A2").setValue("2");
+		ws.getRange2("A3").setValue("3");
+		ws.getRange2("B1").setValue("+5");
+		ws.getRange2("B2").setValue("+5+5");
+		ws.getRange2("B3").setValue("-5");
+		ws.getRange2("B4").setValue("-5-5");
+
+		// set flags for CSE formula call
+		let flags = wsView._getCellFlags(0, 2);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// set selection C1
+		fillRange = ws.getRange2("C1");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+
+		let fragment = ws.getRange2("C1").getValueForEdit2();
+		let resCell = ws.getRange2("C1");
+		
+		// MDETERM
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value in C1 before =MDETERM({1,2,3,4}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula in C1 before =MDETERM({1,2,3,4}) calculate");
+		fragment[0].setFragmentText("=MDETERM({1,2,3,4})");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in C1 after =MDETERM({1,2,3,4}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=MDETERM({1,2,3,4})", "Formula in C1 after =MDETERM({1,2,3,4}) calculate");
+
+
+		assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in C1 before =MDETERM({1,2;10,11}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=MDETERM({1,2,3,4})", "Formula in C1 before =MDETERM({1,2;10,11}) calculate");
+		fragment[0].setFragmentText("=MDETERM({1,2;10,11})");
+		resCell = ws.getRange2("C1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "-9", "Value in C1 after =MDETERM({1,2;10,11}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=MDETERM({1,2;10,11})", "Formula in C1 after =MDETERM({1,2;10,11}) calculate");
+
+		
+	});
+
+	QUnit.test("Test: \"Workbook dependencies tests\"", function (assert) {
+		let cellWithFormula, fillRange, array, wsID = ws.getId();
+			
+		// wb.dependencyFormulas.unlockRecal();
+
+		ws.getRange2("A1:F10").cleanAll();
+		// set flags for CSE formula call
+		let flags = wsView._getCellFlags(0, 2);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// set selection C1
+		fillRange = ws.getRange2("C10");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		
+		// A1:D5 - Full Table
+		// A2:D4 - Table without headers
+		// A1:A4 - First Column and so on...
+		let dependencyFormulas = wb.dependencyFormulas;
+		let sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		let defNameListeners = dependencyFormulas.defNameListeners;
+
+		// set values and props for table
+		ws.getRange2("A1:D3").setValue("1");
+		let tableProp = AscCommonExcel.AddFormatTableOptions();
+		tableProp.asc_setRange("A1:D3");
+		tableProp.asc_setIsTitle(false);
+		
+		ws.autoFilters.addAutoFilter("TableStyleLight1", ws.selectionRange.getLast().clone(), tableProp);
+
+		let tables = wsView.model.autoFilters.getTablesIntersectionRange(ws.getRange2("A1").bbox);
+		assert.strictEqual(tables.length, 1, "Table was created without selection of formula. Compare tables length");
+
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after create the table");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after create the table");
+
+		let table = tables[0];
+		let tableName = table.DisplayName;
+
+		let fragment = ws.getRange2("C10").getValueForEdit2();
+		let resCell = ws.getRange2("C10");
+		// Table
+		// Table link without headers
+		fragment[0].setFragmentText("=SUM("+tableName+")");
+		// resCell = ws.getRange2("C10");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "12", "Value in C10 after =SUM(tableName) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM("+tableName+")", "Formula in C10 after =SUM(tableName) calculate");
+		// ws.getRange2("C10").setValue("=SUM("+tableName+")");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 2, "AreaMap listeners after set value =SUM(tableName)");
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap["A2:D4"].listeners).length, 1, "A2:D4(Table) listeners after set value =SUM(tableName)");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after set value =SUM(tableName)");
+
+		// delete formula
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after =22 calculate(remove =SUM(table)");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after =22 calculate(remove =SUM(table)");
+		// ws.getRange2("C10").setValue("22");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after delete value =SUM(tableName)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after delete value =SUM(tableName)");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after delete value =SUM(tableName)");
+
+
+		// Table[#All]
+		// Table link with headers
+		fragment[0].setFragmentText("=SUM("+tableName+"[#All])");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "12", "Value in C10 after =SUM("+tableName+"[#All]) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM("+tableName+"[#All])", "Formula in C10 after =SUM("+tableName+"[#All]) calculate");
+		// ws.getRange2("C10").setValue("=SUM("+tableName+"[#All])");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after set value =SUM(tableName#All)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after set value =SUM(tableName#All)");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 1, "DefNameListeners after set value =SUM(tableName#All)");
+
+		// delete formula
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after =22 calculate(remove =SUM(table[#All])");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after =22 calculate(remove =SUM(table[#All])");
+		// ws.getRange2("C10").setValue("22");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after delete value =SUM(tableName#All)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after delete value =SUM(tableName#All)");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after delete value =SUM(tableName#All)");
+
+
+		// Table[Column1]
+		// Table columns link without headers
+		fragment[0].setFragmentText("=SUM("+tableName+"[Column1])");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value in C10 after =SUM("+tableName+"[Column1]) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM("+tableName+"[Column1])", "Formula in C10 after =SUM("+tableName+"[Column1]) calculate");
+		// ws.getRange2("C10").setValue("=SUM("+tableName+"[Column1])");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 2, "AreaMap listeners after set value =SUM(Column1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after set value =SUM(Column1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"] !== undefined, true, "A2:A4(Column) listeners after set value =SUM(Column1)");
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap["A2:A4"].listeners).length, 1, "A2:A4(Column) listeners after set value =SUM(Column1)");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after set value =SUM(Column1)");
+
+		// delete formula
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after =SUM("+tableName+"[Column1]) delete");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after =SUM("+tableName+"[Column1]) delete");
+		// ws.getRange2("C10").setValue("22");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after delete value =SUM(Column1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after delete value =SUM(Column1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"], undefined, "A2:A4(Column) listeners after delete value =SUM(Column1)");	
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after delete value =SUM(Column1)");
+
+
+		// Table[[Column1]:[Column2]]
+		// Table columns link without headers
+		fragment[0].setFragmentText("=SUM("+tableName+"[[Column1]:[Column2]])");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "6", "Value in C10 after =SUM("+tableName+"[[Column1]:[Column2]]) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM("+tableName+"[[Column1]:[Column2]])", "Formula in C10 after =SUM("+tableName+"[[Column1]:[Column2]]) calculate");
+		// ws.getRange2("C10").setValue("=SUM("+tableName+"[[Column1]:[Column2]])");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 2, "AreaMap listeners after set value SUM(Table[Col1]:[Col2])");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after set value SUM(Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"], undefined, "A2:A4(Column) listeners after set value SUM(Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:B4"] !== undefined, true, "A2:B4(Columns) listeners after set value SUM(Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap["A2:B4"].listeners).length, 1, "A2:B4(Columns) listeners after set value SUM(Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after set value SUM(Table[Col1]:[Col2]");
+
+		// delete formula
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after =SUM("+tableName+"[[Column1]:[Column2]]) delete");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after =SUM("+tableName+"[[Column1]:[Column2]]) delete");
+		// ws.getRange2("C10").setValue("22");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after delete value SUM(Table[Col1]:[Col2])");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after delete value SUM(Table[Col1]:[Col2])");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"], undefined, "A2:A4(Column) listeners after delete value SUM(Table[Col1]:[Col2])");	
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:B4"], undefined, "A2:B4(Columns) listeners after delete value SUM(Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after delete value SUM(Table[Col1]:[Col2]");
+
+
+		// Table[[#All],[Column1]]
+		// Table columns link with headers
+		fragment[0].setFragmentText("=SUM("+tableName+"[[#All],[Column1]])");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value in C10 after =SUM("+tableName+"[[#All],[Column1]]) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM("+tableName+"[[#All],[Column1]])", "Formula in C10 after =SUM("+tableName+"[[#All],[Column1]]) calculate");
+		// ws.getRange2("C10").setValue("=SUM("+tableName+"[[#All],[Column1]])");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 2, "AreaMap listeners after set value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after set value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"], undefined, "A2:A4(Column) listeners after set value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:A4"] !== undefined, true, "A1:A4(Column) listeners after set value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap["A1:A4"].listeners).length, 1, "A1:A4(Column) listeners after set value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after set value SUM(tableName#All,Col1)");
+
+		// delete formula
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after =SUM("+tableName+"[[#All],[Column1]]) delete");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after =SUM("+tableName+"[[#All],[Column1]]) delete");
+		// ws.getRange2("C10").setValue("22");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after delete value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after delete value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"], undefined, "A2:A4(Column) listeners after delete value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:A4"], undefined, "A1:A4(Column) listeners after delete value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after delete value SUM(tableName#All,Col1)");
+
+
+		// Table[[#All],[Column1]:[Column2]]
+		// Table columns link with headers
+		fragment[0].setFragmentText("=SUM("+tableName+"[[#All],[Column1]:[Column2]])");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "6", "Value in C10 after =SUM("+tableName+"[[#All],[Column1]:[Column2]]) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM("+tableName+"[[#All],[Column1]:[Column2]])", "Formula in C10 after =SUM("+tableName+"[[#All],[Column1]:[Column2]]) calculate");
+		// ws.getRange2("C10").setValue("=SUM("+tableName+"[[#All],[Column1]:[Column2]])");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 2, "AreaMap listeners after set value SUM(tableName#All,Col1:Col2)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after set value SUM(tableName#All,Col1:Col2)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"], undefined, "A2:A4(Column) listeners after set value SUM(tableName#All,Col1:Col2)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:A4"], undefined, "A1:A4(Column) listeners after set value SUM(tableName#All,Col1:Col2)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:B4"] !== undefined, true, "A1:B4(Columns) listeners after set value SUM(tableName#All,Col1:Col2)");
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap["A1:B4"].listeners).length, 1, "A1:B4(Columns) listeners after set value SUM(tableName#All,Col1:Col2)");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after set value SUM(tableName#All,Col1:Col2)");
+
+		// delete formula
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after =SUM("+tableName+"[[#All],[Column1]:[Column2]]) delete");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after =SUM("+tableName+"[[#All],[Column1]:[Column2]]) delete");
+
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after delete value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after delete value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"], undefined, "A2:A4(Column) listeners after delete value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:A4"], undefined, "A1:A4(Column) listeners after delete value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:B4"], undefined, "A1:B4(Columns) listeners after delete value SUM(tableName#All,Col1)");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after delete value SUM(tableName#All,Col1)");
+
+
+		fragment[0].setFragmentText("=SUM("+tableName + "[[#All],[Column1]:[Column4]])");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "12", "Value in C10 after =SUM("+tableName + "[[#All],[Column1]:[Column4]]) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM("+tableName + "[[#All],[Column1]:[Column4]])", "Formula in C10 after =SUM("+tableName + "[[#All],[Column1]:[Column4]]) calculate");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 2, "AreaMap listeners after set value SUM(tableName#All,Col1:Col4)");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:D4"] !== undefined, true, "A1:D4(Columns) listeners after set value SUM(tableName#All,Col1:Col4)");
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap["A1:D4"].listeners).length, 1, "A1:D4(Columns) listeners after set value SUM(tableName#All,Col1:Col4)");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after set value SUM(tableName#All,Col1:Col4)");
+
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after tableName[[#All],[Column1]:[Column4]] delete");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after tableName[[#All],[Column1]:[Column4]] delete");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:D4"], undefined, "A1:D4(Columns) listeners after delete value tableName#All,Col1")
+
+
+		flags.ctrlKey = true;
+		flags.shiftKey = true;
+		fragment[0].setFragmentText("="+tableName);
+		fillRange = ws.getRange2("C10:G14");
+		wsView.setSelection(fillRange.bbox);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in C10 after tableName calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "="+tableName, "Formula in C10 after tableName calculate");
+		resCell = ws.getRange2("C11");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in C11 after tableName calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "="+tableName, "Formula in C11 after tableName calculate");
+		resCell = ws.getRange2("C12");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in C12 after tableName calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "="+tableName, "Formula in C12 after tableName calculate");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 2, "AreaMap listeners after set value tableName");
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap["A2:D4"].listeners).length, 1, "A2:D4(Table) listeners after set value tableName");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after set value tableName");
+
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after =22 calculate(remove table)");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after =22 calculate(remove table)");		
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after delete value tableName");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after delete value tableName");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after delete value tableName");
+
+		fragment[0].setFragmentText("="+tableName + "[#All]");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = ws.getRange2("C10");
+		assert.strictEqual(resCell.getValueWithFormat(), "Column1", "Value in C10 after tableName[#All] calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "="+tableName + "[#All]", "Formula in C10 after tableName[#All] calculate");
+		resCell = ws.getRange2("C11");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in C11 after tableName[#All] calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "="+tableName + "[#All]", "Formula in C11 after tableName[#All] calculate");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after set value tableName#All");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after set value tableName#All");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 1, "DefNameListeners after set value tableName#All");
+
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = ws.getRange2("C10");
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after =22 calculate(remove table[#All])");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after =22 calculate(remove table[#All])");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after delete value tableName#All");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after delete value tableName#All");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after delete value tableName#All");
+
+		fragment[0].setFragmentText("="+tableName + "[Column1]");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in C10 after tableName[Column1] calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "="+tableName + "[Column1]", "Formula in C10 after tableName[Column1] calculate");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 2, "AreaMap listeners after set value Column1");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after set value Column1");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"] !== undefined, true, "A2:A4(Column) listeners after set value Column1");
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap["A2:A4"].listeners).length, 1, "A2:A4(Column) listeners after set value Column1");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after set value Column1");
+
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after tableName[Column1] delete");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after tableName[Column1] delete");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after delete value Column1");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after delete value Column1");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"], undefined, "A2:A4(Column) listeners after delete value Column1");
+
+		fragment[0].setFragmentText("="+tableName + "[[Column1]:[Column2]]");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in C10 after tableName[[Column1]:[Column2]] calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "="+tableName + "[[Column1]:[Column2]]", "Formula in C10 after tableName[[Column1]:[Column2]] calculate");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 2, "AreaMap listeners after set value Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after set value Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"], undefined, "A2:A4(Column) listeners after set value Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:B4"] !== undefined, true, "A2:B4(Columns) listeners after set value Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap["A2:B4"].listeners).length, 1, "A2:B4(Columns) listeners after set value Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after set value Table[Col1]:[Col2]");
+
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after tableName[[Column1]:[Column2]] delete");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after tableName[[Column1]:[Column2]] delete");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after delete value Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after delete value Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"], undefined, "A2:A4(Column) listeners after delete value Table[Col1]:[Col2]");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:B4"], undefined, "A2:B4(Columns) listeners after delete value Table[Col1]:[Col2]");
+
+		fragment[0].setFragmentText("="+tableName + "[[#All],[Column1]]");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = ws.getRange2("C10");
+		assert.strictEqual(resCell.getValueWithFormat(), "Column1", "Value in C10 after tableName[[#All],[Column1]] calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "="+tableName + "[[#All],[Column1]]", "Formula in C10 after tableName[[#All],[Column1]] calculate");
+		resCell = ws.getRange2("C11");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in C11 after tableName[[#All],[Column1]] calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "="+tableName + "[[#All],[Column1]]", "Formula in C10 after tableName[[#All],[Column1]] calculate");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 2, "AreaMap listeners after set value tableName#All,Col1");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:D4"], undefined, "A2:D4(Table) listeners after set value tableName#All,Col1");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A2:A4"], undefined, "A2:A4(Column) listeners after set value tableName#All,Col1");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:A4"] !== undefined, true, "A1:A4(Column) listeners after set value tableName#All,Col1");
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap["A1:A4"].listeners).length, 1, "A1:A4(Column) listeners after set value tableName#All,Col1");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after set value tableName#All,Col1");
+
+		resCell = ws.getRange2("C10");
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after tableName[[#All],[Column1]] delete");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after tableName[[#All],[Column1]] delete");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 1, "AreaMap listeners after delete value tableName#All,Col1");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:A4"], undefined, "A1:A4(Column) listeners after delete value tableName#All,Col1");
+
+		fragment[0].setFragmentText("="+tableName + "[[#All],[Column1]:[Column2]]");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "Column1", "Value in C10 after tableName[[#All],[Column1]:[Column2]] calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "="+tableName + "[[#All],[Column1]:[Column2]]", "Formula in C10 after tableName[[#All],[Column1]:[Column2]] calculate");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap).length, 2, "AreaMap listeners after set value tableName#All,Col1:Col2");
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:B4"] !== undefined, true, "A1:B4(Columns) listeners after set value tableName#All,Col1:Col2");
+		assert.strictEqual(sheetListeners.areaMap && Object.keys(sheetListeners.areaMap["A1:B4"].listeners).length, 1, "A1:B4(Columns) listeners after set value tableName#All,Col1:Col2");
+		assert.strictEqual(sheetListeners && sheetListeners.areaMap && Object.keys(defNameListeners).length, 0, "DefNameListeners after set value tableName#All,Col1:Col2");
+
+		fragment[0].setFragmentText("=22");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		assert.strictEqual(resCell.getValueWithFormat(), "22", "Value in C10 after tableName[[#All],[Column1]:[Column2]] delete");
+		assert.strictEqual(resCell.getValueForEdit(), "=22", "Formula in C10 after tableName[[#All],[Column1]:[Column2]] delete");
+		sheetListeners = dependencyFormulas.sheetListeners[wsID];
+		assert.strictEqual(sheetListeners.areaMap && sheetListeners.areaMap["A1:B4"], undefined, "A1:B4(Columns) listeners after delete value tableName#All,Col1");
+
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+
+		// remove tables
+		tables.length = 0;
+		
+	});
+
+		QUnit.module("Sheet structure");
 });
+
+

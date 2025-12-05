@@ -68,6 +68,10 @@
   AscFonts.onLoadModule = function () {
     
   }
+  AscFonts.GetGraphemeWidth = function()
+  {
+    return CharWidth;
+  };
   AscFonts.CTextShaper.prototype.FlushWord = function()
   {
     AscFonts.HB_EndString();

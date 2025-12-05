@@ -97,9 +97,8 @@ $(function () {
 		api._onEndLoadSdk();
 		AscFormat.initStyleManager();
 		api.isOpenOOXInBrowser = false;
-		api._openDocument(AscCommon.getEmpty());
-		api._openOnClient();
-		api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
+		api.OpenDocumentFromBin(null, AscCommon.getEmpty());
+		api.initCollaborativeEditing({});
 		api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
 			api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
 		api.wb._init();

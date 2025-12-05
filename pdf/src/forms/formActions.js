@@ -95,46 +95,108 @@
         this.Calculate = null; 
         this.Format = null;
     }
-    CFormTriggers.prototype.Copy = function() {
-        let newObj = new CFormTriggers();
+    
+    CFormTriggers.prototype.Copy = function(oParentField) {
+        let oCopy = new CFormTriggers();
         if (this.MouseUp != null)
-            newObj.MouseUp = this.MouseUp.Copy(); 
+            oCopy.MouseUp = this.MouseUp.Copy(oParentField); 
         if (this.MouseDown != null)
-            newObj.MouseDown = this.MouseDown.Copy(); 
+            oCopy.MouseDown = this.MouseDown.Copy(oParentField); 
         if (this.MouseEnter != null)
-            newObj.MouseEnter = this.MouseEnter.Copy(); 
+            oCopy.MouseEnter = this.MouseEnter.Copy(oParentField); 
         if (this.MouseExit != null)
-            newObj.MouseExit = this.MouseExit.Copy(); 
+            oCopy.MouseExit = this.MouseExit.Copy(oParentField); 
         if (this.OnFocus != null)
-            newObj.OnFocus = this.OnFocus.Copy(); 
+            oCopy.OnFocus = this.OnFocus.Copy(oParentField); 
         if (this.OnBlur != null)
-            newObj.OnBlur = this.OnBlur.Copy(); 
+            oCopy.OnBlur = this.OnBlur.Copy(oParentField); 
         if (this.Keystroke != null)
-            newObj.Keystroke = this.Keystroke.Copy(); 
+            oCopy.Keystroke = this.Keystroke.Copy(oParentField); 
         if (this.Validate != null)
-            newObj.Validate = this.Validate.Copy(); 
+            oCopy.Validate = this.Validate.Copy(oParentField); 
         if (this.Calculate != null)
-            newObj.Calculate = this.Calculate.Copy(); 
+            oCopy.Calculate = this.Calculate.Copy(oParentField); 
         if (this.Format != null)
-            newObj.Format = this.Format.Copy();
+            oCopy.Format = this.Format.Copy(oParentField);
 
-        return newObj;
+        return oCopy;
     }
 
     function CFormTrigger(type, aActions) {
         this.type = type;
+        this.parentField = null;
 
         // actions
         this.Actions = aActions;
+
+        let _t = this;
+        this.Actions.forEach(function(action) {
+            action.SetParent(_t);
+        });
     }
-    CFormTrigger.prototype.Copy = function() {
-        return new CFormTrigger(this.type, this.script);
+    CFormTrigger.GetName = function(nType) {
+        switch (nType) {
+            case AscPDF.FORMS_TRIGGERS_TYPES.MouseUp: {
+                return "Mouse Up";
+            }
+            case AscPDF.FORMS_TRIGGERS_TYPES.MouseDown: {
+                return "Mouse Down";
+            }
+            case AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter: {
+                return "Mouse Enter";
+            }
+            case AscPDF.FORMS_TRIGGERS_TYPES.MouseExit: {
+                return "Mouse Exit";
+            }
+            case AscPDF.FORMS_TRIGGERS_TYPES.OnFocus: {
+                return "Focus";
+            }
+            case AscPDF.FORMS_TRIGGERS_TYPES.OnBlur: {
+                return "Blur";
+            }
+            case AscPDF.FORMS_TRIGGERS_TYPES.Keystroke: {
+                return "Keystroke";
+            }
+            case AscPDF.FORMS_TRIGGERS_TYPES.Validate: {
+                return "Validate";
+            }
+            case AscPDF.FORMS_TRIGGERS_TYPES.Calculate: {
+                return "Calculate";
+            }
+            case AscPDF.FORMS_TRIGGERS_TYPES.Format: {
+                return "Format";
+            }
+        }
+    };
+    CFormTrigger.prototype.Copy = function(oParentField) {
+        let aActionsCopies = [];
+        for (let i = 0; i < this.Actions.length; i++) {
+            let action = this.Actions[i];
+            aActionsCopies.push(action.Copy());
+        }
+
+        let oCopy = new CFormTrigger(this.type, aActionsCopies);
+        oCopy.SetParentField(oParentField); 
+
+        return oCopy;
     };
     CFormTrigger.prototype.GetActions = function() {
         return this.Actions;
     };
     CFormTrigger.prototype.GetType = function() {
         return this.type;
+    };
+    CFormTrigger.prototype.SetParentField = function(oField) {
+        this.parentField = oField;
+    };
+    CFormTrigger.prototype.GetParentField = function() {
+        return this.parentField;
+    };
+    CFormTrigger.prototype.SetCallerField = function(oField) {
+        this.callerField = oField;
+    };
+    CFormTrigger.prototype.GetCallerFiled = function() {
+        return this.callerField || this.GetParentField();
     };
     CFormTrigger.prototype.WriteToBinary = function(memory) {
         let nType = this.GetType();
@@ -182,17 +244,34 @@
 
     function CActionBase(nType) {
         this.type = nType;
-        this.field = null;
-        this.triggerType = undefined;
+        this.parent = null;
     };
     CActionBase.prototype.GetType = function() {
         return this.type;
     };
-    CActionBase.prototype.SetField = function(oField) {
-        this.field = oField;
+    CActionBase.prototype.GetCallerFiled = function() {
+        let oTrigger = this.GetParent();
+        if (oTrigger) {
+            return oTrigger.GetCallerFiled();
+        }
     };
-    CActionBase.prototype.SetTrigger = function(nType) {
-        this.triggerType = nType;
+    CActionBase.prototype.SetParent = function(oTrigger) {
+        this.parent = oTrigger;
+    };
+    CActionBase.prototype.GetParent = function() {
+        return this.parent;
+    };
+    CActionBase.prototype.GetTriggerType = function() {
+        let oTrigger = this.GetParent();
+        if (oTrigger) {
+            return oTrigger.GetType();
+        }
+    };
+    CActionBase.prototype.GetTriggerName = function() {
+        let oTrigger = this.GetParent();
+        if (oTrigger) {
+            return CFormTrigger.GetName(oTrigger.GetType());
+        }
     };
 
     function CActionGoTo(nPage, nGoToType, nZoom, oRect) {
@@ -205,8 +284,11 @@
     CActionGoTo.prototype = Object.create(CActionBase.prototype);
 	CActionGoTo.prototype.constructor = CActionGoTo;
 
-    CActionGoTo.prototype.GetZoom = function() {
-        if (this.zoom != null)
+    CActionGoTo.prototype.Copy = function() {
+        return new CActionGoTo(this.GetPage(), this.GetKind(), this.GetZoom(true), this.GetRect().slice());
+    };
+    CActionGoTo.prototype.GetZoom = function(bSource) {
+        if (this.zoom != null || bSource)
             return this.zoom;
 
         let oViewer     = editor.getDocumentRenderer();
@@ -268,15 +350,20 @@
         return this.goToType;
     };
 
+    CActionGoTo.prototype.GetRect = function() {
+        return this.rect;
+    };
+
     CActionGoTo.prototype.Do = function() {
-        let oViewer         = editor.getDocumentRenderer();
-        let oDoc            = this.field.GetDocument();
+        let oViewer         = Asc.editor.getDocumentRenderer();
+        let oField          = this.GetCallerFiled();
+        let oDoc            = oField.GetDocument();
         let oActionsQueue   = oDoc.GetActionsQueue();
 
         oActionsQueue.SetCurAction(this);
         
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oDoc.activeForm) {
+        if (this.GetTriggerType() == FORMS_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
         }
@@ -363,7 +450,10 @@
     CActionNamed.prototype = Object.create(CActionBase.prototype);
 	CActionNamed.prototype.constructor = CActionNamed;
 
-    CActionNamed.prototype.GetName = function() {
+    CActionNamed.prototype.Copy = function() {
+        return new CActionNamed(this.GetNameType());
+    };
+    CActionNamed.prototype.GetNameStrType = function() {
         switch (this.nameType) {
             case ACTION_NAMED_TYPES.NextPage:
                 return "NextPage";
@@ -376,6 +466,9 @@
         }
 
         return "";
+    };
+    CActionNamed.prototype.GetNameType = function() {
+        return this.nameType;
     };
 
     CActionNamed.GetInternalType = function(sType) {
@@ -394,15 +487,16 @@
     };
 
     CActionNamed.prototype.Do = function() {
-        let Api             = editor;
-        let oViewer         = editor.getDocumentRenderer();
-        let oDoc            = this.field.GetDocument();
+        let Api             = Asc.editor;
+        let oViewer         = Api.getDocumentRenderer();
+        let oField          = this.GetCallerFiled();
+        let oDoc            = oField.GetDocument();
         let oActionsQueue   = oDoc.GetActionsQueue();
 
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oDoc.activeForm) {
+        if (this.GetTriggerType() == FORMS_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
         }
@@ -430,7 +524,7 @@
 
     CActionNamed.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(this.GetType());
-        memory.WriteString(this.GetName());
+        memory.WriteString(this.GetNameStrType());
     };
 
     function CActionURI(sURI) {
@@ -440,20 +534,23 @@
     CActionURI.prototype = Object.create(CActionBase.prototype);
 	CActionURI.prototype.constructor = CActionURI;
 
+    CActionURI.prototype.Copy = function() {
+        return new CActionURI(this.GetURI());
+    };
     CActionURI.prototype.Do = function() {
-        let oViewer         = editor.getDocumentRenderer();
-        let oDoc            = this.field.GetDocument();
+        let oField          = this.GetCallerFiled();
+        let oDoc            = oField.GetDocument();
         let oActionsQueue   = oDoc.GetActionsQueue();
 
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oDoc.activeForm) {
+        if (this.GetTriggerType() == FORMS_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
         }
 
-        editor.sendEvent("asc_onOpenLinkPdfForm", this.uri, this.OpenLink.bind(this), oActionsQueue.Continue.bind(oActionsQueue));
+        Asc.editor.sendEvent("asc_onOpenLinkPdfForm", this.uri, this.OpenLink.bind(this), oActionsQueue.Continue.bind(oActionsQueue));
     };
     CActionURI.prototype.GetURI = function() {
         return this.uri;
@@ -461,7 +558,9 @@
     CActionURI.prototype.OpenLink = function() {
         window.open(this.uri, "_blank");
 
-        this.field.GetDocument().GetActionsQueue().Continue();
+        let oField          = this.GetCallerFiled();
+        let oDoc            = oField.GetDocument();
+        oDoc.GetActionsQueue().Continue();
     };
 
     CActionURI.prototype.WriteToBinary = function(memory) {
@@ -478,19 +577,30 @@
     CActionHideShow.prototype = Object.create(CActionBase.prototype);
 	CActionHideShow.prototype.constructor = CActionHideShow;
 
+    CActionHideShow.prototype.Copy = function() {
+        return new CActionHideShow(this.GetHidden(), this.GetNames().slice());
+    };
     CActionHideShow.prototype.Do = function() {
-        let oDoc            = this.field.GetDocument();
+        let oField          = this.GetCallerFiled();
+        let oDoc            = oField.GetDocument();
         let oActionsQueue   = oDoc.GetActionsQueue();
 
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oDoc.activeForm) {
+        if (this.GetTriggerType() == FORMS_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
         }
 
         oDoc.HideShowForms(this.hidden, this.names);
+    };
+
+    CActionHideShow.prototype.GetNames = function() {
+        return this.names;
+    };
+    CActionHideShow.prototype.GetHidden = function() {
+        return this.hidden;
     };
 
     CActionHideShow.prototype.WriteToBinary = function(memory) {
@@ -516,19 +626,30 @@
     CActionReset.prototype = Object.create(CActionBase.prototype);
 	CActionReset.prototype.constructor = CActionReset;
 
+    CActionReset.prototype.Copy = function() {
+        return new CActionReset(this.GetNames().slice(), this.GetNeedAllExcept());
+    };
     CActionReset.prototype.Do = function() {
-        let oDoc            = this.field.GetDocument();
+        let oField          = this.GetCallerFiled();
+        let oDoc            = oField.GetDocument();
         let oActionsQueue   = oDoc.GetActionsQueue();
 
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oDoc.activeForm) {
+        if (this.GetTriggerType() == FORMS_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
         }
             
         oDoc.ResetForms(this.names, this.bAllExcept);
+    };
+
+    CActionReset.prototype.GetNames = function() {
+        return this.names;
+    };
+    CActionReset.prototype.GetNeedAllExcept = function() {
+        return this.bAllExcept;
     };
 
     CActionReset.prototype.WriteToBinary = function(memory) {
@@ -555,57 +676,79 @@
     CActionRunScript.prototype = Object.create(CActionBase.prototype);
 	CActionRunScript.prototype.constructor = CActionRunScript;
 
+    CActionRunScript.prototype.Copy = function() {
+        return new CActionRunScript(this.GetScript());
+    };
     CActionRunScript.prototype.Do = function() {
-        let oViewer         = editor.getDocumentRenderer();
-        let oDoc            = this.field.GetDocument();
+        let oField          = this.GetCallerFiled();
+        let oDoc            = oField.GetDocument();
         let oActionsQueue   = oDoc.GetActionsQueue();
 
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oDoc.activeForm) {
+        if (this.GetTriggerType() == FORMS_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
         }
 
-        oDoc.SetEvent({
-            "target": this.field.GetFormApi(),
+        const oEvent = oDoc.CreateEvent({
+            "name": this.GetTriggerName(),
+            "target": oField.GetFormApi(),
             "rc": true
         });
 
         try {
-            EvalScript(this.script, oDoc);
+            EvalScript(this.script, oDoc, oEvent);
         }
         catch (err) {
             console.log(err);
+        }
+        finally {
+            oDoc.event = oDoc.eventsStack.pop();
         }
 
         if (this.bContinueAfterEval == true)
             oActionsQueue.Continue();
     };
 
-    CActionRunScript.prototype.RunScript = function() {
-        let oDoc = this.field.GetDocument();
+    CActionRunScript.prototype.RunScript = function(oEventPr) {
+        let oField = this.GetCallerFiled();
+        let oDoc = oField.GetDocument();
 
-        oDoc.SetEvent({
-            "target": this.field.GetFormApi(),
-            "rc": true
-        });
+        if (!oEventPr) {
+            oEventPr = {
+                "name": this.GetTriggerName(),
+                "target": oField.GetFormApi(),
+                "rc": true
+            }
+        }
 
+        const oEvent = oDoc.CreateEvent(oEventPr);
+        
         try {
-            EvalScript(this.script, oDoc);
+            EvalScript(this.script, oDoc, oEvent);
         }
         catch (err) {
             console.log(err);
         }
+        finally {
+            oDoc.event = oDoc.eventsStack.pop();
+        }
+
+        return oEvent;
     };
+
+    CActionRunScript.prototype.GetScript = function() {
+        return this.script;
+    }
 
     CActionRunScript.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(this.GetType());
         memory.WriteString(this.script);
     };
 	
-    function EvalScript(str, oParentDoc) {
+    function EvalScript(str, oParentDoc, oEvent) {
         let aArgsNamesToDelete = [
             "window",
             "setTimeout",
@@ -631,7 +774,7 @@
         };
         Object.freeze(oApiConsole);
     
-        let oApiObjects = AscPDF.Api.Objects;
+        let oApiObjects = AscPDF.Api.Types;
         let aArgsNamesPdfApi = [
             "event",
             "color",
@@ -655,28 +798,35 @@
             "AFRange_Validate",
         ];
     
+        if (!oParentDoc.globalEventStack) {
+            oParentDoc.globalEventStack = [];    
+        }
+
+        oParentDoc.globalEventStack.push(oParentDoc.event);
+        oParentDoc.event = oEvent;
+
         let oApiFunc = AscPDF.Api.Functions;
         let aArgsPdfApi = [
-            oParentDoc.event,
-            oApiObjects.color,
+            oEvent,
+            oApiObjects["color"],
 
-            oApiFunc.AFNumber_Format,
-            oApiFunc.AFNumber_Keystroke,
-            oApiFunc.AFPercent_Format,
-            oApiFunc.AFPercent_Keystroke,
-            oApiFunc.AFDate_Format,
-            oApiFunc.AFDate_Keystroke,
-            oApiFunc.AFDate_FormatEx,
-            oApiFunc.AFDate_KeystrokeEx,
-            oApiFunc.AFTime_Format,
-            oApiFunc.AFTime_Keystroke,
-            oApiFunc.AFTime_FormatEx,
-            oApiFunc.AFTime_KeystrokeEx,
-            oApiFunc.AFSpecial_Format,
-            oApiFunc.AFSpecial_Keystroke,
-            oApiFunc.AFSpecial_KeystrokeEx,
-            oApiFunc.AFSimple_Calculate,
-            oApiFunc.AFRange_Validate
+            oApiFunc["AFNumber_Format"],
+            oApiFunc["AFNumber_Keystroke"],
+            oApiFunc["AFPercent_Format"],
+            oApiFunc["AFPercent_Keystroke"],
+            oApiFunc["AFDate_Format"],
+            oApiFunc["AFDate_Keystroke"],
+            oApiFunc["AFDate_FormatEx"],
+            oApiFunc["AFDate_KeystrokeEx"],
+            oApiFunc["AFTime_Format"],
+            oApiFunc["AFTime_Keystroke"],
+            oApiFunc["AFTime_FormatEx"],
+            oApiFunc["AFTime_KeystrokeEx"],
+            oApiFunc["AFSpecial_Format"],
+            oApiFunc["AFSpecial_Keystroke"],
+            oApiFunc["AFSpecial_KeystrokeEx"],
+            oApiFunc["AFSimple_Calculate"],
+            oApiFunc["AFRange_Validate"]
         ];
     
         let funcArgs = aArgsNamesToDelete.concat(aArgsNamesPdfApi);

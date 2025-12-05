@@ -148,8 +148,6 @@
 
 		this.m_oBaseTransform   = null;
 
-		this.ArrayPoints = null;
-
 		this.m_oCurFont =
 		{
 			Name        : "",
@@ -458,9 +456,6 @@
 		if (false === this.m_bIntegerGrid)
 		{
 			this.m_oContext.moveTo(x,y);
-
-			if (this.ArrayPoints != null)
-				this.ArrayPoints[this.ArrayPoints.length] = {x: x, y: y};
 		}
 		else
 		{
@@ -474,9 +469,6 @@
 		if (false === this.m_bIntegerGrid)
 		{
 			this.m_oContext.lineTo(x,y);
-
-			if (this.ArrayPoints != null)
-				this.ArrayPoints[this.ArrayPoints.length] = {x: x, y: y};
 		}
 		else
 		{
@@ -490,13 +482,6 @@
 		if (false === this.m_bIntegerGrid)
 		{
 			this.m_oContext.bezierCurveTo(x1,y1,x2,y2,x3,y3);
-
-			if (this.ArrayPoints != null)
-			{
-				this.ArrayPoints[this.ArrayPoints.length] = {x: x1, y: y1};
-				this.ArrayPoints[this.ArrayPoints.length] = {x: x2, y: y2};
-				this.ArrayPoints[this.ArrayPoints.length] = {x: x3, y: y3};
-			}
 		}
 		else
 		{
@@ -516,12 +501,6 @@
 		 if (false === this.m_bIntegerGrid)
 		 {
 			 this.m_oContext.quadraticCurveTo(x1,y1,x2,y2);
-
-			 if (this.ArrayPoints != null)
-			 {
-				 this.ArrayPoints[this.ArrayPoints.length] = {x: x1, y: y1};
-				 this.ArrayPoints[this.ArrayPoints.length] = {x: x2, y: y2};
-			 }
 		 }
 		else
 		{
@@ -691,7 +670,7 @@
 					if (_sy >= _sb || _sy >= _h || _sb <= 0 || h <= 0)
 						return;
 
-					this.m_oContext.drawImage(img,_sx,_sy,_sr-_sx,_sb-_sy,x,y,w,h);
+					this.m_oContext.drawImage(img, _sx, _sy, _sr - _sx, _sb - _sy, x, y, w, h);
 				}
 				else
 				{
@@ -878,6 +857,117 @@
 				this.m_oPen.Color.B + "," + (this.m_oPen.Color.A / 255) + ")";
 		}
 	};
+	CGraphics.prototype.drawBlipFillTile = function (transform, imageUrl, alpha, scaleX, scaleY, offsetX, offsetY, flipH, flipV) {
+		const ctx = this.m_oContext;
+		if (!ctx) return;
+
+		ctx.save();
+
+		if (transform) {
+			ctx.transform(
+				transform.sx,
+				transform.shy,
+				transform.shx,
+				transform.sy,
+				transform.tx,
+				transform.ty
+			);
+		}
+
+		const imageData = Asc.editor.ImageLoader.map_image_index[imageUrl];
+		if (!imageData || this.checkLoadingImage(imageData)) return;
+
+		const image = imageData.Image;
+		if (!image) return;
+
+		// Translation (offsets)
+		ctx.translate(offsetX, offsetY);
+
+		// Scaling (local)
+		ctx.scale(scaleX, scaleY);
+
+		// Mirroring
+		function createVerticalFlipPattern(sourceCanvas, width, height) {
+			const newCanvas = document.createElement('canvas');
+			newCanvas.width = width;
+			newCanvas.height = height * 2;
+
+			const newCtx = newCanvas.getContext('2d');
+			newCtx.drawImage(sourceCanvas, 0, 0, width, height);
+			newCtx.scale(1, -1);
+			newCtx.drawImage(sourceCanvas, 0, -height * 2, width, height);
+
+			return newCanvas;
+		}
+		function createHorizontalFlipPattern(sourceCanvas, width, height) {
+			const newCanvas = document.createElement('canvas');
+			newCanvas.width = width * 2;
+			newCanvas.height = height;
+
+			const newCtx = newCanvas.getContext('2d');
+			newCtx.drawImage(sourceCanvas, 0, 0, width, height);
+			newCtx.scale(-1, 1);
+			newCtx.drawImage(sourceCanvas, -width * 2, 0, width, height);
+
+			return newCanvas;
+		}
+
+		let patternSource = image;
+
+		if (flipH || flipV) {
+			const tempCanvas = document.createElement('canvas');
+			tempCanvas.width = image.width;
+			tempCanvas.height = image.height;
+			const tempCtx = tempCanvas.getContext('2d');
+			tempCtx.drawImage(image, 0, 0);
+			patternSource = tempCanvas;
+		}
+
+		if (flipV) {
+			patternSource = createVerticalFlipPattern(patternSource, patternSource.width, patternSource.height);
+		}
+		if (flipH) {
+			patternSource = createHorizontalFlipPattern(patternSource, patternSource.width, patternSource.height);
+		}
+
+		// Transparency
+		if (AscFormat.isRealNumber(alpha) && alpha >= 0 && alpha <= 1) {
+			ctx.globalAlpha = alpha;
+		}
+
+		const pattern = ctx.createPattern(patternSource, 'repeat');
+		ctx.fillStyle = pattern;
+		ctx.fill();
+
+		ctx.restore();
+	};
+	CGraphics.prototype.drawBlipFillStretch = function (transform, imageUrl, alpha, x, y, w, h, srcRect, canvas) {
+		const ctx = this.m_oContext;
+		if (!ctx) return;
+
+		ctx.save();
+
+		if (transform) {
+			ctx.transform(
+				transform.sx,
+				transform.shy,
+				transform.shx,
+				transform.sy,
+				transform.tx,
+				transform.ty
+			);
+		}
+
+		this.drawImage(
+			imageUrl,
+			x, y, w, h,
+			alpha * 255,
+			srcRect,
+			canvas
+		);
+
+		ctx.restore();
+	}
 
 	// text
 	CGraphics.prototype.GetFont = function()
@@ -1842,7 +1932,7 @@
 			if (lock_type === locktype_Mine && true === AscCommon.CollaborativeEditing.Is_Fast())
 				return;
 
-			if (Asc.editor.WordControl.m_oDrawingDocument.IsLockObjectsEnable === false && lock_type === locktype_Mine)
+			if (Asc.editor.WordControl.m_oDrawingDocument && Asc.editor.WordControl.m_oDrawingDocument.IsLockObjectsEnable === false && lock_type === locktype_Mine)
 				return;
 		}
 
@@ -2047,6 +2137,29 @@
 	{
 		if (!Asc.editor.isViewMode)
 			this.drawHorLine(0, y0, x0, x1, w );
+	};
+	
+	CGraphics.prototype.drawCustomRange = function(handlerId, rangeId, x0, y0, w, h, baseLine)
+	{
+		if (Asc.editor.isViewMode)
+			return;
+		
+		let color = AscCommon.getUserColorById(handlerId, null, false);
+		let underlineY = 0.1 * (baseLine - y0) + baseLine;
+		
+		if (-1 !== handlerId.indexOf("spelling"))
+		{
+			color = new AscCommon.CColor(239, 68, 68, 255);
+		}
+		else if (-1 !== handlerId.indexOf("grammar"))
+		{
+			color = new AscCommon.CColor(59, 130, 246, 255);
+			underlineY = 0.2 * (baseLine - y0) + baseLine;
+		}
+		
+		this.p_color(color.r, color.g, color.b, 255);
+		this.p_width(0.25 * 1000);
+		this.drawHorLine(0, underlineY, x0, x0 + w, 0.25 );
 	};
 
 	// smart methods for horizontal / vertical lines
@@ -2577,6 +2690,51 @@
 		{
 			this.m_oContext.setTransform(this.m_oFullTransform.sx,this.m_oFullTransform.shy,this.m_oFullTransform.shx,
 				this.m_oFullTransform.sy,this.m_oFullTransform.tx,this.m_oFullTransform.ty);
+		}
+	};
+	
+	CGraphics.prototype.drawPermissionMark = function(x, y, h, isStart, isActive)
+	{
+		if (isActive)
+			this.p_color(164, 160, 0, 255);
+		else
+			this.p_color(127, 127, 127, 255);
+
+		if (!global_MatrixTransformer.IsIdentity2(this.m_oTransform))
+		{
+			let coeff = this.m_oCoordTransform.sx;
+			
+			this.p_width(2 / coeff * 1000);
+			let shift = isStart ? 3 / coeff : -3 / coeff;
+			this._s();
+			this._m(x + shift, y);
+			this._l(x, y);
+			this._l(x, y + h);
+			this._l(x + shift, y + h);
+			this.ds();
+			this._s();
+		}
+		else
+		{
+			let pen_w = 2;
+			
+			let ctx = this.m_oContext;
+			ctx.setTransform(1, 0, 0, 1, 0, 0);
+			ctx.lineWidth = 2;
+			
+			let _y = (this.m_oFullTransform.TransformPointY(x, y) >> 0) + 0.5 - 0.5;
+			let _b = (this.m_oFullTransform.TransformPointY(x, y + h) >> 0) + 0.5 - 0.5;
+			
+			let _x0 = (this.m_oFullTransform.TransformPointX(x, y) >> 0) + 0.5 - 0.5 - pen_w / 2;
+			let _x1 = _x0 + (isStart ? pen_w / 2 + 3 : -pen_w / 2 - 3);
+			
+			ctx.beginPath();
+			ctx.moveTo(_x1, _y);
+			ctx.lineTo(_x0, _y);
+			ctx.lineTo(_x0, _b);
+			ctx.lineTo(_x1, _b);
+			ctx.stroke();
+			ctx.beginPath();
 		}
 	};
 

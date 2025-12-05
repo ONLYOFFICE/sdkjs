@@ -671,7 +671,7 @@
 		}
 	};
 
-	CT_NsvFilter.prototype.isApplyAutoFilter = function (obj) {
+	CT_NsvFilter.prototype.isApplyAutoFilter = function () {
 		var res = null
 		if (this.columnsFilter && this.columnsFilter.length) {
 			for (var i = 0; i < this.columnsFilter.length; i++) {

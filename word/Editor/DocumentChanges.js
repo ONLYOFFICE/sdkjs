@@ -49,6 +49,8 @@ AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_ConsecutiveHyphenLimi
 AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_DoNotHyphenateCaps]     = CChangesDocumentSettingsDoNotHyphenateCaps;
 AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_HyphenationZone]        = CChangesDocumentSettingsHyphenationZone;
 AscDFH.changesFactory[AscDFH.historyitem_Document_PageColor]                       = CChangesDocumentPageColor;
+
+AscDFH.changesFactory[AscDFH.historyitem_Document_DisconnectEveryone]              = CChangesDocumentDisconnectEveryone;
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
 //----------------------------------------------------------------------------------------------------------------------
@@ -69,6 +71,7 @@ AscDFH.changesRelationMap[AscDFH.historyitem_Document_Settings_GutterAtTop]     
 AscDFH.changesRelationMap[AscDFH.historyitem_Document_Settings_MirrorMargins]     = [AscDFH.historyitem_Document_Settings_MirrorMargins];
 AscDFH.changesRelationMap[AscDFH.historyitem_Document_SpecialFormsGlobalSettings] = [AscDFH.historyitem_Document_SpecialFormsGlobalSettings];
 AscDFH.changesRelationMap[AscDFH.historyitem_Document_Settings_TrackRevisions]    = [AscDFH.historyitem_Document_Settings_TrackRevisions];
+AscDFH.changesRelationMap[AscDFH.historyitem_Document_DisconnectEveryone]         = [AscDFH.historyitem_Document_DisconnectEveryone];
 //----------------------------------------------------------------------------------------------------------------------
 
 /**
@@ -88,14 +91,12 @@ CChangesDocumentAddItem.prototype.Undo = function()
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
 	{
 		var Pos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
+		
+		oDocument.UpdateSectionsBeforeRemove([oDocument.Content[Pos]], false);
+		
 		var Elements = oDocument.Content.splice(Pos, 1);
 		oDocument.private_RecalculateNumbering(Elements);
 		oDocument.private_ReindexContent(Pos);
-		if (oDocument.SectionsInfo)
-		{
-			oDocument.SectionsInfo.Update_OnRemove(Pos, 1);
-		}
-
 		oDocument.private_UpdateSelectionPosOnRemove(Pos, 1);
 
 		if (Pos > 0)
@@ -127,11 +128,6 @@ CChangesDocumentAddItem.prototype.Redo = function()
 		oDocument.Content.splice(Pos, 0, Element);
 		oDocument.private_RecalculateNumbering([Element]);
 		oDocument.private_ReindexContent(Pos);
-		if (oDocument.SectionsInfo)
-		{
-			oDocument.SectionsInfo.Update_OnAdd(Pos, [Element]);
-		}
-
 		oDocument.private_UpdateSelectionPosOnAdd(Pos, 1);
 
 		if (Pos > 0)
@@ -155,6 +151,7 @@ CChangesDocumentAddItem.prototype.Redo = function()
 		}
 
 		Element.Parent = oDocument;
+		oDocument.UpdateSectionsAfterAdd([Element]);
 	}
 };
 CChangesDocumentAddItem.prototype.private_WriteItem = function(Writer, Item)
@@ -201,10 +198,6 @@ CChangesDocumentAddItem.prototype.Load = function(Color)
 
 			oDocument.Content.splice(Pos, 0, Element);
 			oDocument.private_RecalculateNumbering([Element]);
-			if (oDocument.SectionsInfo)
-			{
-				oDocument.SectionsInfo.Update_OnAdd(Pos, [Element]);
-			}
 			oDocument.private_ReindexContent(Pos);
 
 			AscCommon.CollaborativeEditing.Update_DocumentPositionsOnAdd(oDocument, Pos);
@@ -215,6 +208,7 @@ CChangesDocumentAddItem.prototype.Load = function(Color)
 				Element.RecalcCompiledPr(true);
 				Element.UpdateDocumentOutline();
 			}
+			oDocument.UpdateSectionsAfterAdd([Element]);
 		}
 	}
 };
@@ -250,12 +244,7 @@ CChangesDocumentRemoveItem.prototype.Undo = function()
 	oDocument.private_RecalculateNumbering(this.Items);
 	oDocument.private_ReindexContent(this.Pos);
 	oDocument.Content = Array_start.concat(this.Items, Array_end);
-
-	if(oDocument.SectionsInfo)
-	{
-        oDocument.SectionsInfo.Update_OnAdd(this.Pos, this.Items);
-	}
-
+	
 	oDocument.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
 
 	var nStartIndex = Math.max(this.Pos - 1, 0);
@@ -275,17 +264,18 @@ CChangesDocumentRemoveItem.prototype.Undo = function()
 
 		oElement.Parent = oDocument;
 	}
+	oDocument.UpdateSectionsAfterAdd(this.Items);
 };
 CChangesDocumentRemoveItem.prototype.Redo = function()
 {
 	var oDocument = this.Class;
+	
+	let removedElements = oDocument.Content.slice(this.Pos, this.Pos + this.Items.length);
+	oDocument.UpdateSectionsBeforeRemove(removedElements, false);
+	
 	var Elements = oDocument.Content.splice(this.Pos, this.Items.length);
 	oDocument.private_RecalculateNumbering(Elements);
 	oDocument.private_ReindexContent(this.Pos);
-	if(oDocument.SectionsInfo)
-	{
-        oDocument.SectionsInfo.Update_OnRemove(this.Pos, this.Items.length);
-	}
 
 	oDocument.private_UpdateSelectionPosOnRemove(this.Pos, this.Items.length);
 
@@ -325,6 +315,8 @@ CChangesDocumentRemoveItem.prototype.Load = function(Color)
 		// действие совпало, не делаем его
 		if (false === Pos)
 			continue;
+		
+		oDocument.UpdateSectionsBeforeRemove([oDocument.Content[Pos]], false);
 
 		var Elements = oDocument.Content.splice(Pos, 1);
 		oDocument.private_RecalculateNumbering(Elements);
@@ -359,11 +351,6 @@ CChangesDocumentRemoveItem.prototype.Load = function(Color)
 
 		if (0 <= Pos && Pos <= oDocument.Content.length - 1)
 		{
-			if (oDocument.SectionsInfo)
-			{
-				oDocument.SectionsInfo.Update_OnRemove(Pos, 1);
-			}
-
 			oDocument.private_ReindexContent(Pos);
 		}
 	}
@@ -1198,3 +1185,29 @@ CChangesDocumentPageColor.prototype.CreateReverseChange = function()
 {
 	return new CChangesDocumentPageColor(this.Class, this.New, this.Old);
 };
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBase}
+ */
+function CChangesDocumentDisconnectEveryone(Class)
+{
+	AscDFH.CChangesBase.call(this, Class);
+}
+CChangesDocumentDisconnectEveryone.prototype = Object.create(AscDFH.CChangesBase.prototype);
+CChangesDocumentDisconnectEveryone.prototype.constructor = CChangesDocumentDisconnectEveryone;
+CChangesDocumentDisconnectEveryone.prototype.Type = AscDFH.historyitem_Document_DisconnectEveryone;
+CChangesDocumentDisconnectEveryone.prototype.Undo = function()
+{
+};
+CChangesDocumentDisconnectEveryone.prototype.Redo = function()
+{
+	let logicDocument = this.Class;
+	
+	logicDocument.sendEvent("asc_onDisconnectEveryone");
+	let editorApi = logicDocument.GetApi();
+	
+	editorApi.setViewModeDisconnect(true);
+	editorApi.asc_coAuthoringDisconnect();
+};
+AscDFH.CChangesDocumentDisconnectEveryone = CChangesDocumentDisconnectEveryone;

@@ -58,7 +58,7 @@ async function run(inputFile = "unique.txt", outputFile = "deserialized.docx", m
 	let isDocx = outputFile.endsWith('.docx');
 	let propsReplaced = 0;
 	let text = fs.readFileSync(inputFile, {encoding: 'utf-8'});
-	let lines = text.split('\n');
+	let lines = text.split(/\n|\\n/);
 	let replaced = lines.map((line) => {
 		let sdkMatchRes = line.match(/\/([a-zA-z0-9\-\.]*)\/(sdkjs|web-apps)\/([a-zA-z0-9\-\.]*)\//);
 

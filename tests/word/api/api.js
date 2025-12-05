@@ -53,12 +53,12 @@ $(function () {
 		logicDocument.AddToContent(0, p);
 
 		logicDocument.SelectAll();
-		assert.strictEqual(logicDocument.GetSelectedText(), "", "Check empty selection");
+		assert.strictEqual(logicDocument.GetSelectedText(), "\r\n", "Check empty selection");
 
 		logicDocument.AddTextWithPr("Hello World!");
 
 		logicDocument.SelectAll();
-		assert.strictEqual(logicDocument.GetSelectedText(false, {NewLineParagraph : true}), "Hello World!\r\n", "Add text 'Hello World!'");
+		assert.strictEqual(logicDocument.GetSelectedText(false), "Hello World!\r\n", "Add text 'Hello World!'");
 
 		let p2 = new AscWord.Paragraph();
 		logicDocument.AddToContent(1, p2);
@@ -70,11 +70,11 @@ $(function () {
 		logicDocument.AddTextWithPr("Second paragraph");
 
 		logicDocument.SelectAll();
-		assert.strictEqual(logicDocument.GetSelectedText(false, {NewLineParagraph : true}), "Hello World!\r\nSecond paragraph\r\n", "Add text to the second paragraph");
+		assert.strictEqual(logicDocument.GetSelectedText(false), "Hello World!\r\nSecond paragraph\r\n", "Add text to the second paragraph");
 
 		logicDocument.AddTextWithPr("Test");
 		logicDocument.SelectAll();
-		assert.strictEqual(logicDocument.GetSelectedText(false, {NewLineParagraph : true}), "Test\r\n", "Replace all with adding text 'Test'");
+		assert.strictEqual(logicDocument.GetSelectedText(false), "Test\r\n", "Replace all with adding text 'Test'");
 
 		function StartTest(text)
 		{
@@ -88,7 +88,7 @@ $(function () {
 		function GetText()
 		{
 			logicDocument.SelectAll();
-			let text = logicDocument.GetSelectedText();
+			let text = logicDocument.GetSelectedText(false, {ParaSeparator : ""});
 			logicDocument.RemoveSelection();
 			return text;
 		}

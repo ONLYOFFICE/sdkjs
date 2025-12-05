@@ -34,6 +34,25 @@
 
 (function(window, undefined)
 {
+	const DIGITS = {
+		0x00B2 : 1,
+		0x00B3 : 1,
+		0x00B9 : 1,
+		0x00BC : 1,
+		0x00BD : 1,
+		0x00BE : 1
+	};
+	
+	function isHindiDigit(code)
+	{
+		return (0x0660 <= code && code <= 0x0669) || (0x06F0 <= code && code <= 0x06F9);
+	}
+	
+	function isDigit(code)
+	{
+		return AscCommon.IsDigit(code) || isHindiDigit(code) || (!!DIGITS[code]);
+	}
+	
 	const IGNORE_UPPERCASE = 0x0001;
 	const IGNORE_NUMBERS   = 0x0002;
 
@@ -383,9 +402,25 @@
 			for (var oIterator = sWord.getUnicodeIterator(); oIterator.check(); oIterator.next())
 			{
 				let nCharCode = oIterator.value();
-				if (AscCommon.IsDigit(nCharCode))
+				if (isDigit(nCharCode))
 					return false;
 			}
+		}
+		else
+		{
+			let nonNumber = false;
+			for (let iter = sWord.getUnicodeIterator(); iter.check(); iter.next())
+			{
+				let codePoint = iter.value();
+				if (!isDigit(codePoint))
+				{
+					nonNumber = true;
+					break;
+				}
+			}
+			
+			if (!nonNumber)
+				return false;
 		}
 
 		return true;

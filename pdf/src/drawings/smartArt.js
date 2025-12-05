@@ -36,41 +36,39 @@
 	 * Class representing a pdf text shape.
 	 * @constructor
     */
-    function CPdfSmartArt()
-    {
+    function CPdfSmartArt() {
         AscFormat.SmartArt.call(this);
-                
-        this._page          = undefined;
-        this._apIdx         = undefined; // индекс объекта в файле
-        this._rect          = [];       // scaled rect
-        this._richContents  = [];
-
-        this._isFromScan = false; // флаг, что был прочитан из скана текста 
-
-        this._doc                   = undefined;
-        this._needRecalc            = true;
-        this._wasChanged            = false; // была ли изменена
-        this._bDrawFromStream       = false; // нужно ли рисовать из стрима
-        this._hasOriginView         = false; // имеет ли внешний вид из файла
+        AscPDF.CPdfDrawingPrototype.call(this);
     }
     
     CPdfSmartArt.prototype.constructor = CPdfSmartArt;
     CPdfSmartArt.prototype = Object.create(AscFormat.SmartArt.prototype);
-    Object.assign(CPdfSmartArt.prototype, AscPDF.PdfDrawingPrototype.prototype);
+    Object.assign(CPdfSmartArt.prototype, AscPDF.CPdfDrawingPrototype.prototype);
 
     CPdfSmartArt.prototype.IsSmartArt = function() {
         return true;
     };
 
+    CPdfSmartArt.prototype.SetNeedRecalc = function(bRecalc, bSkipAddToRedraw) { 
+        AscPDF.CPdfDrawingPrototype.prototype.SetNeedRecalc.call(this, bRecalc, bSkipAddToRedraw);
+
+        if (bRecalc && !bSkipAddToRedraw) {
+            let oViewer = Asc.editor.getDocumentRenderer();
+            oViewer.paint(null, function() {
+                let oDoc = Asc.editor.getPDFDoc();
+                oDoc.private_UpdatePlaceholders();
+            });
+        }
+    };
     CPdfSmartArt.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
             return;
 
-        this.recalculateTransform();
-        this.updateTransformMatrix();
-        this.recalcGeometry();
-        this.checkExtentsByDocContent(true, true);
+        this.recalcInfo.recalculateTransform = true;
+        this.recalcInfo.recalculateSizes = true;
+        
         this.recalculate();
+        this.updateTransformMatrix();
         this.SetNeedRecalc(false);
     };
     CPdfSmartArt.prototype.onMouseDown = function(x, y, e) {
@@ -117,14 +115,6 @@
             oContent.RemoveSelection();
     };
     
-    /////////////////////////////
-    /// saving
-    ////////////////////////////
-
-    CPdfSmartArt.prototype.WriteToBinary = function(memory) {
-        this.toXml(memory, '');
-    };
-
     /////////////////////////////
     /// work with text properties
     ////////////////////////////
@@ -350,6 +340,37 @@
                 drawing_document.TargetEnd();
             }
         }
+    };
+    CPdfSmartArt.prototype.copy = function(oPr) {
+        let copy = new CPdfSmartArt();
+        this.copy2(copy, oPr);
+        let drawing = copy.getDrawing();
+
+        if (drawing) {
+            for (let i = 0; i < drawing.spTree.length; i += 1) {
+                let obj = drawing.spTree[i];
+                if (obj.getObjectType() === AscDFH.historyitem_type_Shape) {
+                    obj.copyTextInfoFromShapeToPoint();
+                }
+            }
+        }
+
+        if (oPr && oPr.contentCopyPr && oPr.contentCopyPr.Comparison) {
+            copy.generateDrawingPart();
+        }
+
+        if ((!oPr || !oPr.bSkipRedactsIds) && this.GetRedactIds) {
+            this.GetRedactIds().forEach(function(id) {
+                copy.AddRedactId(id);
+            });
+        }
+
+        return copy;
+    };
+
+    CPdfSmartArt.prototype.writeChildren = function(pWriter) {
+        AscFormat.SmartArt.prototype.writeChildren.call(this, pWriter);
+        this.WriteRedactIds(pWriter);
     };
 
     window["AscPDF"].CPdfSmartArt = CPdfSmartArt;

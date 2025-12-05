@@ -584,11 +584,11 @@ CTableCell.prototype =
 
 		return this.Row.IsUseInDocument(this.GetId());
     },
-
-    Get_PageContentStartPos : function(PageNum)
-    {
-        return this.Row.Table.Get_PageContentStartPos(PageNum + this.Content.StartPage, this.Row.Index, this.Index, true );
-    },
+	
+	GetPageContentFrame : function(page)
+	{
+		return this.Row.Table.GetCellPageContentFrame(page + this.Content.StartPage, this.Row.Index, this.Index);
+	},
 
     Set_CurrentElement : function(bUpdateStates)
     {
@@ -636,14 +636,14 @@ CTableCell.prototype =
     //-----------------------------------------------------------------------------------
     // Функции для работы с номерами страниц
     //-----------------------------------------------------------------------------------
-    Get_StartPage_Absolute : function()
+	GetAbsoluteStartPage : function()
     {
-        return this.Row.Table.Get_StartPage_Absolute();
+        return this.Row.Table.GetAbsoluteStartPage();
     },
-
-    Get_StartPage_Relative : function()
+	
+	GetRelativeStartPage : function()
     {
-        return this.Row.Table.Get_StartPage_Relative();
+        return this.Row.Table.GetRelativeStartPage();
     },
 
 	/**
@@ -651,19 +651,23 @@ CTableCell.prototype =
 	 * @param CurPage
 	 * @returns {number}
 	 */
-    Get_AbsolutePage : function(CurPage)
+	GetAbsolutePage : function(CurPage)
     {
-		return this.Row.Table.Get_AbsolutePage(CurPage);
+		return this.Row.Table.GetAbsolutePage(CurPage);
     },
 	/**
 	 * Получаем абсолютный номер колонки по относительному номеру страницы (относительно таблицы, а не ячейки!)
 	 * @param CurPage
 	 * @returns {number}
 	 */
-    Get_AbsoluteColumn : function(CurPage)
+	GetAbsoluteColumn : function(CurPage)
     {
-        return this.Row.Table.Get_AbsoluteColumn(CurPage);
+        return this.Row.Table.GetAbsoluteColumn(CurPage);
     },
+	GetAbsoluteSection : function(curPage)
+	{
+		return this.Row.Table.GetAbsoluteSection(curPage);
+	},
     //-----------------------------------------------------------------------------------
     // Работаем с содержимым ячейки
     //-----------------------------------------------------------------------------------
@@ -2040,15 +2044,10 @@ CTableCell.prototype =
 		this.Content = AscCommon.g_oTableId.Get_ById(Reader.GetString2());
 
 		if (this.Content)
-			this.Content.Parent = this;
-
-		AscCommon.CollaborativeEditing.Add_NewObject(this);
-	},
-
-    Load_LinkData : function(LinkData)
-    {
-    }
+			this.Content.SetParent(this);
+	}
 };
+CTableCell.prototype.constructor = CTableCell;
 /**
  * Доступ к содержимому ячейки
  * @returns {CDocumentContent}
@@ -2056,6 +2055,15 @@ CTableCell.prototype =
 CTableCell.prototype.GetContent = function()
 {
 	return this.Content;
+};
+/**
+ * Функция для выставления класса содержимого ячейки (используется в совместке)
+ * @param {CDocumentContent} oDocumentContent
+ */
+CTableCell.prototype.SetDocumentContent = function(oDocumentContent)
+{
+	this.Content = oDocumentContent;
+	oDocumentContent.SetParent(this);
 };
 /**
  * Доступ к родительской строке
@@ -2558,7 +2566,7 @@ CTableCell.prototype.GetCurPageByAbsolutePage = function(nPageAbs)
 	var nPagesCount = this.Content.Pages.length;
 	for (var nCurPage = 0; nCurPage < nPagesCount; ++nCurPage)
 	{
-		if (nPageAbs === this.Get_AbsolutePage(nStartPage + nCurPage))
+		if (nPageAbs === this.GetAbsolutePage(nStartPage + nCurPage))
 		{
 			arrPages.push(nStartPage + nCurPage);
 		}
@@ -2818,3 +2826,4 @@ CTableCellRecalculateObject.prototype =
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CTableCell = CTableCell;
 window['AscWord'].CTableCell = CTableCell;
+window['AscWord'].TableCell = CTableCell;

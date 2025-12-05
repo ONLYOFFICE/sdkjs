@@ -398,8 +398,15 @@
         {
             let redrawPages = [];
             let viewer = this.m_oDocumentRenderer;
+            let thumbnails = viewer.thumbnails;
 
-            for (let i = viewer.startVisiblePage; i <= viewer.endVisiblePage; i++)
+            let thumbStartVisiblePage = thumbnails && thumbnails.getStartVisiblePage();
+            let thumbEndVisiblePage = thumbnails && thumbnails.getEndVisiblePage();
+
+            let startVisiblePage = thumbStartVisiblePage != undefined ? thumbStartVisiblePage : viewer.startVisiblePage;
+            let endVisiblePage = thumbEndVisiblePage != undefined ? thumbEndVisiblePage : viewer.endVisiblePage;
+
+            for (let i = startVisiblePage; i <= endVisiblePage; i++)
             {
                 let imgs = viewer.DrawingObjects.getAllRasterImagesOnPage(i);
                 for (let j = 0, len = imgs.length; j < len; j++)
@@ -417,6 +424,75 @@
                 viewer.onUpdatePages(redrawPages);
                 viewer.onRepaintForms(redrawPages);
             }
+        };
+        // mouse events
+        this.checkMouseDown_Drawing = function(pos) {
+            let oWordControl = this.m_oWordControl;
+            let bIsReturn = false;
+
+            if (!this.isButtonsDisabled() && this.placeholders.onPointerDown(pos, this.m_arrPages[pos.Page].drawingPage, this.m_oLogicDocument.GetPageWidthMM(), this.m_oLogicDocument.GetPageHeightMM())) {
+                bIsReturn = true;
+                this.m_oWordControl.onMouseUpMainSimple();
+            }
+
+            if (bIsReturn) {
+                oWordControl.OnUpdateOverlay();
+                oWordControl.EndUpdateOverlay();
+            }
+            return bIsReturn;
+        };
+
+        this.checkMouseMove_Drawing = function(pos) {
+            let oWordControl = this.m_oWordControl;
+            let bIsReturn = false;
+
+            if (this.InlineTextTrackEnabled) {
+                if (-1 != oWordControl.m_oTimerScrollSelect) {
+                    clearInterval(oWordControl.m_oTimerScrollSelect);
+                    oWordControl.m_oTimerScrollSelect = -1;
+                }
+
+                this.InlineTextTrack = oWordControl.m_oLogicDocument.Get_NearestPos(pos.Page, pos.X, pos.Y, pos.isNotes);
+                this.InlineTextTrackPage = pos.Page;
+                this.InlineTextInNotes = pos.isNotes ? true : false;
+
+                bIsReturn = true;
+            } else {
+                if (!AscCommon.global_mouseEvent.IsLocked) {
+                    if (!this.isButtonsDisabled() && this.placeholders.onPointerMove(pos, this.m_arrPages[pos.Page].drawingPage, this.m_oLogicDocument.GetPageWidthMM(), this.m_oLogicDocument.GetPageHeightMM())) {
+                        oWordControl.OnUpdateOverlay();
+                        oWordControl.EndUpdateOverlay();
+                        bIsReturn = true;
+                    }
+                }
+            }
+
+            if (bIsReturn) {
+                oWordControl.OnUpdateOverlay();
+                oWordControl.EndUpdateOverlay();
+            }
+            return bIsReturn;
+        };
+
+        this.checkMouseUp_Drawing = function(pos) {
+            let oWordControl = this.m_oWordControl;
+            let bIsReturn = false;
+
+            if (this.InlineTextTrackEnabled) {
+                this.InlineTextTrack = oWordControl.m_oLogicDocument.Get_NearestPos(pos.Page, pos.X, pos.Y, pos.isNotes);
+                this.InlineTextTrackPage = pos.Page;
+                this.InlineTextInNotes = pos.isNotes ? true : false;
+                this.EndTrackText();
+
+                bIsReturn = true;
+            } else if (!this.isButtonsDisabled() && this.placeholders.onPointerUp(pos, this.m_arrPages[pos.Page].drawingPage, this.m_oLogicDocument.GetPageWidthMM(), this.m_oLogicDocument.GetPageHeightMM()))
+                bIsReturn = true;
+
+            if (bIsReturn) {
+                oWordControl.OnUpdateOverlay();
+                oWordControl.EndUpdateOverlay();
+            }
+            return bIsReturn;
         };
     }
 

@@ -39,32 +39,6 @@
 		pivotTable: 1
 	};
 
-	var ST_olapSlicerCacheSortOrder = {
-		Natural: 0,
-		Ascending: 1,
-		Descending: 2
-	};
-	var ST_tabularSlicerCacheSortOrder = {
-		Ascending: 0,
-		Descending: 1
-	};
-
-	var ST_slicerCacheCrossFilter = {
-		None: 0,
-		ShowItemsWithDataAtTop: 1,
-		ShowItemsWithNoData: 2
-	};
-
-	var ST_slicerStyleType = {
-		unselectedItemWithData: 0,
-		selectedItemWithData: 1,
-		unselectedItemWithNoData: 2,
-		selectedItemWithNoData: 3,
-		hoveredUnselectedItemWithData: 4,
-		hoveredSelectedItemWithData: 5,
-		hoveredUnselectedItemWithNoData: 6,
-		hoveredSelectedItemWithNoData: 7
-	};
 
 	function CT_slicerStyleElement() {
 		this.type = null;
@@ -830,7 +804,7 @@
 		if (table) {
 			return table.sortOrder;
 		}
-		return ST_tabularSlicerCacheSortOrder.Ascending;
+		return Asc.ST_tabularSlicerCacheSortOrder.Ascending;
 	};
 
 	CT_slicer.prototype.getCustomListSort = function () {
@@ -875,15 +849,15 @@
 
 	CT_slicer.prototype._ascGenerateCrossFilter = function (_ascHideItemsWithNoData, _ascIndicateItemsWithNoData, _ascShowItemsWithNoDataLast) {
 		if (_ascHideItemsWithNoData || (_ascIndicateItemsWithNoData && _ascShowItemsWithNoDataLast)) {
-			return ST_slicerCacheCrossFilter.ShowItemsWithDataAtTop;
+			return Asc.ST_slicerCacheCrossFilter.ShowItemsWithDataAtTop;
 		}
 		if (!_ascIndicateItemsWithNoData && !_ascShowItemsWithNoDataLast) {
-			return ST_slicerCacheCrossFilter.None;
+			return Asc.ST_slicerCacheCrossFilter.None;
 		}
 		if (_ascIndicateItemsWithNoData && !_ascShowItemsWithNoDataLast) {
-			return ST_slicerCacheCrossFilter.ShowItemsWithNoData;
+			return Asc.ST_slicerCacheCrossFilter.ShowItemsWithNoData;
 		}
-		return ST_slicerCacheCrossFilter.None;
+		return Asc.ST_slicerCacheCrossFilter.None;
 	};
 
 	CT_slicer.prototype.asc_setName = function (val) {
@@ -1007,7 +981,7 @@
 		if (table) {
 			return table.crossFilter;
 		}
-		return ST_slicerCacheCrossFilter.ShowItemsWithDataAtTop;
+		return Asc.ST_slicerCacheCrossFilter.ShowItemsWithDataAtTop;
 	};
 
 	CT_slicer.prototype.asc_getCustomListSort = function () {
@@ -1366,7 +1340,7 @@
 					if (colId !== null) {
 						var sortObj = {};
 						sortObj.fullValues = true;
-						sortObj.sortOrder = this.tableSlicerCache.sortOrder === ST_tabularSlicerCacheSortOrder.Ascending;
+						sortObj.sortOrder = this.tableSlicerCache.sortOrder === Asc.ST_tabularSlicerCacheSortOrder.Ascending;
 						sortObj.hideItemsWithNoData = this.getHideItemsWithNoData();
 						sortObj.indicateItemsWithNoData = this.getIndicateItemsWithNoData();
 						sortObj.showItemsWithNoDataLast = this.getShowItemsWithNoDataLast();
@@ -1386,9 +1360,7 @@
 					if (-1 !== fieldIndex) {
 						let pivotField;
 						if (pivotTables.length > 0) {
-							const slicerCachePivotTable = this.pivotTables[0];
-							const pivotTable = slicerCachePivotTable.getPivotTable(wb);
-							pivotField = pivotTable.asc_getPivotFields()[fieldIndex];
+							pivotField = pivotTables[0].asc_getPivotFields()[fieldIndex];
 						}
 						var cacheField = cacheDefinition.getFields()[fieldIndex];
 						res = {
@@ -1670,7 +1642,7 @@
 		} else {
 			var table = this.getTableSlicerCache() || this.getTabular();
 			if (table) {
-				return table.crossFilter !== ST_slicerCacheCrossFilter.None;
+				return table.crossFilter !== Asc.ST_slicerCacheCrossFilter.None;
 			}
 			return true;
 		}
@@ -1683,7 +1655,7 @@
 		} else {
 			var table = this.getTableSlicerCache() || this.getTabular();
 			if (table) {
-				return table.crossFilter === ST_slicerCacheCrossFilter.ShowItemsWithDataAtTop;
+				return table.crossFilter === Asc.ST_slicerCacheCrossFilter.ShowItemsWithDataAtTop;
 			}
 			return true;
 		}
@@ -2110,8 +2082,8 @@
 		this.uniqueName = null;
 		this.sourceCaption = null;
 		this.count = null;
-		this.sortOrder = ST_olapSlicerCacheSortOrder.Natural;
-		this.crossFilter = ST_slicerCacheCrossFilter.ShowItemsWithDataAtTop;
+		this.sortOrder = Asc.ST_olapSlicerCacheSortOrder.Natural;
+		this.crossFilter = Asc.ST_slicerCacheCrossFilter.ShowItemsWithDataAtTop;
 	}
 
 	CT_olapSlicerCacheLevelData.prototype.clone = function () {
@@ -2578,9 +2550,9 @@
 		this.tableIdOpen = null;//?
 		this.column = null;
 		this.columnOpen = null;//?
-		this.sortOrder = ST_tabularSlicerCacheSortOrder.Ascending;
+		this.sortOrder = Asc.ST_tabularSlicerCacheSortOrder.Ascending;
 		this.customListSort = true;
-		this.crossFilter = ST_slicerCacheCrossFilter.ShowItemsWithDataAtTop;
+		this.crossFilter = Asc.ST_slicerCacheCrossFilter.ShowItemsWithDataAtTop;
 
 		return this;
 	}
@@ -2709,10 +2681,10 @@
 		this.items = [];//TabularSlicerCacheItem
 		this.pivotCacheId = null;
 		this.pivotCacheDefinition = null;
-		this.sortOrder = ST_tabularSlicerCacheSortOrder.Ascending;
+		this.sortOrder = Asc.ST_tabularSlicerCacheSortOrder.Ascending;
 		this.customListSort = true;
 		this.showMissing = true;
-		this.crossFilter = ST_slicerCacheCrossFilter.ShowItemsWithDataAtTop;
+		this.crossFilter = Asc.ST_slicerCacheCrossFilter.ShowItemsWithDataAtTop;
 	}
 
 	CT_tabularSlicerCache.prototype.initAfterSerialize = function (wb, pivotCachesOpen) {
@@ -2832,7 +2804,7 @@
 				var item = new CT_tabularSlicerCacheItem();
 				item.x = pivotItem.x;
 				item.s = !pivotItem.h;
-				if (this.crossFilter !== ST_slicerCacheCrossFilter.None) {
+				if (this.crossFilter !== Asc.ST_slicerCacheCrossFilter.None) {
 					item.nd = !(!cacheFieldWithData || cacheFieldWithData[item.x]);
 				}
 				this.items.push(item);
@@ -2841,8 +2813,8 @@
 		this.sortItems(this.sortOrder, cacheField.getGroupOrSharedItems());
 	};
 	CT_tabularSlicerCache.prototype.sortItems = function (type, sharedItems) {
-		var sign = ST_tabularSlicerCacheSortOrder.Ascending === type ? 1 : -1;
-		if (this.crossFilter === ST_slicerCacheCrossFilter.ShowItemsWithDataAtTop) {
+		var sign = Asc.ST_tabularSlicerCacheSortOrder.Ascending === type ? 1 : -1;
+		if (this.crossFilter === Asc.ST_slicerCacheCrossFilter.ShowItemsWithDataAtTop) {
 			this.items.sort(function (a, b) {
 				if (a.nd === b.nd) {
 					return sign * AscCommonExcel.cmpPivotItems(sharedItems, a, b);
@@ -3208,34 +3180,6 @@
 	window['Asc']['CT_slicerCacheHideNoData'] = window['Asc'].CT_slicerCacheHideNoData = CT_slicerCacheHideNoData;
 	window['Asc']['CT_slicerCacheOlapLevelName'] = window['Asc'].CT_slicerCacheOlapLevelName = CT_slicerCacheOlapLevelName;
 	window['Asc']['CT_olapSlicerCacheItemParent'] = window['Asc'].CT_olapSlicerCacheItemParent = CT_olapSlicerCacheItemParent;
-
-	window['Asc']['ST_olapSlicerCacheSortOrder'] = window['AscCommonExcel'].ST_olapSlicerCacheSortOrder = ST_olapSlicerCacheSortOrder;
-	prot = ST_olapSlicerCacheSortOrder;
-	prot['Natural'] = prot.Natural;
-	prot['Ascending'] = prot.Ascending;
-	prot['Descending'] = prot.Descending;
-
-	window['Asc']['ST_tabularSlicerCacheSortOrder'] = window['Asc'].ST_tabularSlicerCacheSortOrder = ST_tabularSlicerCacheSortOrder;
-	prot = ST_tabularSlicerCacheSortOrder;
-	prot['Ascending'] = prot.Ascending;
-	prot['Descending'] = prot.Descending;
-
-	window['Asc']['ST_slicerCacheCrossFilter'] = window['Asc'].ST_slicerCacheCrossFilter = ST_slicerCacheCrossFilter;
-	prot = ST_slicerCacheCrossFilter;
-	prot['None'] = prot.None;
-	prot['ShowItemsWithDataAtTop'] = prot.ShowItemsWithDataAtTop;
-	prot['ShowItemsWithNoData'] = prot.ShowItemsWithNoData;
-
-	window['Asc']['ST_slicerStyleType'] = window['Asc'].ST_slicerStyleType = ST_slicerStyleType;
-	prot = ST_slicerStyleType;
-	prot['unselectedItemWithData'] = prot.unselectedItemWithData;
-	prot['selectedItemWithData'] = prot.selectedItemWithData;
-	prot['unselectedItemWithNoData'] = prot.unselectedItemWithNoData;
-	prot['selectedItemWithNoData'] = prot.selectedItemWithNoData;
-	prot['hoveredUnselectedItemWithData'] = prot.hoveredUnselectedItemWithData;
-	prot['hoveredSelectedItemWithData'] = prot.hoveredSelectedItemWithData;
-	prot['hoveredUnselectedItemWithNoData'] = prot.hoveredUnselectedItemWithNoData;
-	prot['hoveredSelectedItemWithNoData'] = prot.hoveredSelectedItemWithNoData;
 
 	window['AscCommonExcel'].insertSlicerType = insertSlicerType;
 	prot = insertSlicerType;

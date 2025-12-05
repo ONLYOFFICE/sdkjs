@@ -468,6 +468,8 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 			this.canvas = holder.children[1];
 		}
 
+		this.canvas.setAttribute("oo_no_focused", true);
+
 		this.canvas.style.width = "100%";
 		this.canvas.style.height = "100%";
 
@@ -1928,6 +1930,8 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 		    arrowHover = this.that._MouseArrowHover(mousePos);
 
 		this.that.mouseDown = true;
+
+		AscCommon.capturePointer(e, this.that.canvas);
 
 		//arrow pressed
 		if (this.that.settings.showArrows && arrowHover) {

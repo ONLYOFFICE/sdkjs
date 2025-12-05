@@ -507,7 +507,7 @@
 	 */
 	DrawingContext.prototype.setCanvas = function (canvas) {
 		this.canvas = canvas || null;
-		this.ctx = window["IS_NATIVE_EDITOR"] ? new NativeContext() : (this.canvas && this.canvas.getContext("2d"));
+		this.ctx = window["IS_NATIVE_EDITOR"] ? new NativeContext() : (this.canvas && AscCommon.AscBrowser.getContext2D(this.canvas));
 	};
 
 	/**
@@ -756,7 +756,6 @@
 		var _g = val.getG();
 		var _b = val.getB();
 		var _a = val.getA();
-		
 		this.fillColor = new AscCommon.CColor(_r, _g, _b, _a);
 		if (this.ctx.fillStyle) {
 			this.ctx.fillStyle = "rgba(" + _r + "," + _g + "," + _b + "," + _a + ")";

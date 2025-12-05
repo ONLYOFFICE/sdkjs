@@ -2474,6 +2474,9 @@ Processor3D.prototype.calculateCommonOptions = function () {
 		},
 
 		sortParallelepipeds: function (parallelepipeds) {
+			if (!parallelepipeds) {
+				return null;
+			}
 			let intersectionsParallelepipeds = this._getIntersectionsParallelepipeds(parallelepipeds);
 			let revIntersections = intersectionsParallelepipeds.reverseIntersections;
 			let countIntersection = intersectionsParallelepipeds.countIntersection;

@@ -66,7 +66,7 @@
 			AscCommonExcel.StringRender.apply(this, arguments);
 
 			/** @type RegExp */
-			this.reWordBegining = new XRegExp("[^\\p{L}\\p{N}][\\p{L}\\p{N}]", "i");
+			this.reWordBegining = new XRegExp("[^\\p{L}\\p{N}\\'][\\p{L}\\p{N}]", "i");
 
 			return this;
 		}
@@ -132,15 +132,15 @@
 
 		CellTextRender.prototype.getPrevWord = function (pos) {
 			//TODO регулярку не меняю, перегоняю в строку
-			var s = AscCommonExcel.convertUnicodeToSimpleString(this.chars);
-			var i = asc_lastindexof(s.slice(0, pos), this.reWordBegining);
+			let s = AscCommonExcel.convertUnicodeToSimpleString(this.chars);
+			let i = asc_lastindexof(s.slice(0, pos), this.reWordBegining);
 			return i >= 0 ? i + 1 : 0;
 		};
 
 		CellTextRender.prototype.getNextWord = function (pos) {
 			//TODO регулярку не меняю, перегоняю в строку
-			var s = AscCommonExcel.convertUnicodeToSimpleString(this.chars);
-			var i = s.slice(pos).search(this.reWordBegining);
+			let s = AscCommonExcel.convertUnicodeToSimpleString(this.chars);
+			let i = s.slice(pos).search(this.reWordBegining);
 			return i >= 0 ? pos + (i + 1) : this.getEndOfLine(pos);
 		};
 
@@ -233,7 +233,7 @@
 				h * zoom), Asc.round(li.th * zoom), lineIndex);
 		};
 
-		CellTextRender.prototype.calcCharOffset = function (pos) {
+		CellTextRender.prototype.calcCharOffset = function (pos, lineIndex) {
 			var t = this, l = t.lines, i, h, co;
 
 			if (l.length < 1) {
@@ -249,7 +249,10 @@
 
 			for (i = 0, h = 0; i < l.length; ++i) {
 				if (pos >= l[i].beg && pos <= l[i].end) {
-					return this.charOffset(pos, i, h);
+					//end of line and start of line can have same index
+					if (!(lineIndex != null && (pos === l[i].end/* || pos === l[i].beg*/) && lineIndex !== i)) {
+						return this.charOffset(pos, i, h);
+					}
 				}
 				if (i !== l.length - 1) {
 					h += l[i].th;
@@ -297,6 +300,43 @@
 			if (Math.abs(x - _x) < dist)
 				resultPos = line === this.getLinesCount() - 1 ?  lineInfo.end + 1 : lineInfo.end;
 			
+			return resultPos;
+		};
+
+		CellTextRender.prototype.getCharPosByXY = function(x, y, topLine, zoom) {
+			let line = this.getLineByY(y, topLine, zoom);
+			if (line < 0) {
+				return -1;
+			}
+
+			let lineInfo = this.getLineInfo(line);
+			let _x = lineInfo.startX;
+			let dist = Math.abs(x - _x);
+			let resultPos = lineInfo.beg;
+
+			for (let charPos = lineInfo.beg; charPos <= lineInfo.end; ++charPos) {
+
+				if (!this._isCombinedChar(charPos) && dist > Math.abs(x - _x)) {
+					dist = Math.abs(x - _x);
+					resultPos = charPos;
+				}
+
+				_x += this.getCharWidth(charPos);
+			}
+
+			if (Math.abs(x - _x) < dist)
+				resultPos = line === this.getLinesCount() - 1 ?  lineInfo.end + 1 : lineInfo.end;
+
+			// Если текст обрабатывался как bidi, корректируем позицию
+			if (this.bidiProcessed && this.baseDirection === AscFonts.HB_DIRECTION.HB_DIRECTION_RTL) {
+				let line = this.getLineByY(y, topLine, zoom);
+				if (line >= 0) {
+					let lineInfo = this.getLineInfo(line);
+					// Для RTL строк логика поиска позиции может быть скорректирована
+					// Пока оставляем базовую логику, но это место для дальнейших улучшений
+				}
+			}
+
 			return resultPos;
 		};
 		

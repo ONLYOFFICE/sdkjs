@@ -326,7 +326,7 @@
 		if (this.Field && this.Field.getUserCount())
 			return this.Field.getFirstUser().getRole();
 		
-		return AscCommon.translateManager.getValue("Anyone");
+		return "Anyone";
 	};
 	CSdtFormPr.prototype.SetAscRole = function(roleName)
 	{

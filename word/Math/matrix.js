@@ -1088,6 +1088,7 @@ CMathMatrix.prototype.GetTextOfElement = function (oMathText)
 	return oMathText;
 };
 
+
 /**
  *
  * @param CMathMenuMatrix
@@ -1654,7 +1655,7 @@ CEqArray.prototype.GetTextOfElement = function (oMathText)
 
 	if (oMathText.IsLaTeX())
 	{
-		oMathText.AddText(new AscMath.MathText("\\substack{", this.Content[0]), true);
+		oMathText.AddText(new AscMath.MathText("\\array{", this.Content[0]), true);
 	}
 	else
 	{

@@ -40,19 +40,20 @@ var tab_Num     = Asc.c_oAscTabType.Num;
 var tab_Right   = Asc.c_oAscTabType.Right;
 var tab_Left    = Asc.c_oAscTabType.Left;
 
-var tab_Symbol = 0x0022;//0x2192;
+let tab_Symbol     = 0x0022;//0x2192;
+let tab_Symbol_Rtl = 0x0021;
 
 (function(window)
 {
 	let tabWidth = null;
 	
-	function getTabActualWidth()
+	function getTabActualWidth(tabCode)
 	{
 		if (null !== tabWidth)
 			return tabWidth;
 		
 		g_oTextMeasurer.SetFont({FontFamily : {Name : "ASCW3", Index : -1}, FontSize : 10, Italic : false, Bold : false});
-		tabWidth = g_oTextMeasurer.Measure(String.fromCharCode(tab_Symbol)).Width;
+		tabWidth = g_oTextMeasurer.Measure(String.fromCharCode(tabCode)).Width;
 		return tabWidth;
 	}
 
@@ -80,7 +81,7 @@ var tab_Symbol = 0x0022;//0x2192;
 	{
 		return true;
 	};
-	CRunTab.prototype.Draw = function(X, Y, Context)
+	CRunTab.prototype.Draw = function(X, Y, Context, drawState)
 	{
 		if (this.Width > 0.01 && 0 !== this.LeaderCode)
 		{
@@ -94,22 +95,26 @@ var tab_Symbol = 0x0022;//0x2192;
 
 		if(Context.m_bIsTextDrawer)
 		{
-			Context.CheckSpaceDraw();
+			Context.CheckSpaceDraw(this);
 		}
+		
 		if (editor && editor.ShowParaMarks)
 		{
+			let isRtl = drawState.isRtlMainDirection();
+			
 			Context.p_color(0, 0, 0, 255);
 			Context.b_color1(0, 0, 0, 255);
-
-			let tabActualWidth = getTabActualWidth();
+			
+			let tabCode = drawState.isRtlMainDirection() ? tab_Symbol_Rtl : tab_Symbol;
+			let tabActualWidth = getTabActualWidth(tabCode);
 			var X0 = this.Width / 2 - tabActualWidth / 2;
 
 			Context.SetFont({FontFamily : {Name : "ASCW3", Index : -1}, FontSize : 10, Italic : false, Bold : false});
 
 			if (X0 > 0)
-				Context.FillText2(X + X0, Y, String.fromCharCode(tab_Symbol), 0, this.Width);
+				Context.FillText2(X + X0, Y, String.fromCharCode(tabCode), 0, this.Width);
 			else
-				Context.FillText2(X, Y, String.fromCharCode(tab_Symbol), tabActualWidth - this.Width, this.Width);
+				Context.FillText2(X, Y, String.fromCharCode(tabCode), isRtl ? 0 : tabActualWidth - this.Width, this.Width);
 		}
 	};
 	CRunTab.prototype.Measure = function(Context)
@@ -192,6 +197,10 @@ var tab_Symbol = 0x0022;//0x2192;
 	CRunTab.prototype.GetFontSlot = function(oTextPr)
 	{
 		return AscWord.fontslot_Unknown;
+	};
+	CRunTab.prototype.getBidiType = function()
+	{
+		return AscBidi.TYPE.PM;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};

@@ -45,10 +45,14 @@
 		'gcd', 'inf', 'asec', 'ker', 'asech', 'arccos', 'hom', 'lg',
 		'arctan', 'sup', 'arcsec', 'arccot', 'arccsc', 'sinh', 'cosh',
 		'tanh', 'coth', 'sech', 'csch', 'srcsinh', 'arctanh', 'arcsech', 'arccosh',
-		'arccoth', 'arccsch', 'Pr', 'lin', 'exp', "sgn",
+		'arccoth', 'arccsch', 'Pr', 'lin', 'exp', "sgn"
 	];
 	const limitFunctions = [
 		"lim", "min", "max", "log", "ln"
+	];
+	const limitFunctionsLaTeX = [
+		"lim", "min", "max", "liminf", "limup", 'sum', 'prod', 'coprod', 'bigcup',
+		'bigcap', 'bigsqcap', 'bigvee', 'bigwedge', 'bigodot', 'bigotimes', 'bigoplus'
 	];
 	const UnicodeSpecialScript = {
 		"⁰": "0",
@@ -125,10 +129,15 @@
 		"\\double": 12,
 	}
 
-	function SetIsAllowAutoCorrect (isAllow)
+	function SetIsAllowAutoCorrect(isAllow)
 	{
 		isAllowAutoCorrect = isAllow;
 	}
+	function GetIsAllowAutoCorrect()
+	{
+		return isAllowAutoCorrect;
+	}
+
 
 	// List of MathFont
 	const GetMathFontChar = {
@@ -1124,7 +1133,7 @@
 			"\\widehat": "̂",
 			"\\check": "̌",
 			"\\tilde": "̃",
-			"\\widetilde": "～",
+			"\\widetilde": "̃",
 			"\\acute": "́",
 			"\\grave": "̀",
 			"\\dot": "̇",
@@ -1194,7 +1203,6 @@
 			"\\begin{Bmatrix}" : 1,
 			"\\begin{vmatrix}" : 1,
 			"\\begin{Vmatrix}" : 1,
-			"\\begin{array}" : 1,
 			"\\begin{equation}" : 1,
 
 			"\\end{cases}" : 2,
@@ -1204,7 +1212,6 @@
 			"\\end{Bmatrix}" : 2,
 			"\\end{vmatrix}" : 2,
 			"\\end{Vmatrix}" : 2,
-			"\\end{array}" : 2,
 			"\\end{equation}" : 2,
 		};
 		this.Init();
@@ -1212,6 +1219,26 @@
 	TokenMatrix.prototype = Object.create(LexerLiterals.prototype);
 	TokenMatrix.prototype.constructor = TokenMatrix;
 	TokenMatrix.prototype.isUseLaTeXBrackets = true;
+
+	function TokenArray()
+	{
+		this.id = 89;
+		this.data = [];
+		this.Unicode = {};
+		this.LaTeX = {
+			"\\begin{array}" : 1,
+			"\\end{array}" : 2,
+			"\\array{" : 1,
+			"\\begin{aligned}": 1,
+			"\\end{aligned}": 2,
+			"\\begin{gathered}": 1,
+			"\\end{gathered}": 2,
+		};
+		this.Init();
+	}
+	TokenArray.prototype = Object.create(LexerLiterals.prototype);
+	TokenArray.prototype.constructor = TokenArray;
+	TokenArray.prototype.isUseLaTeXBrackets = true;
 
 	function TokenRect()
 	{
@@ -1237,7 +1264,7 @@
 			" "		:	1,
 			"‌"		:	1,
 		};
-		this.LaTeX = {
+	this.LaTeX = {
 			"\\nbsp"	:	" ",		// space width && no-break space
 			"\\numsp"	:	" ",		// digit width
 			"\\emsp"	:	" ",		// 18/18 em
@@ -1252,7 +1279,7 @@
 			" "			:	" ",
 
 			"\\ "		:	" ",
-			// "\\quad"	:	" ",
+			"\\quad"	:	" "
 			// "\\qquad"	:	"  ",
 			// "\:"		:	" ",
 			// "\;"		:	" ",
@@ -1266,6 +1293,12 @@
 
 	function TokenLaTeXWords()
 	{
+		this.LaTeX = {
+			"\\nolimits": "\\nolimits",
+			"\\underset": "\\underset",
+			"\\overset": "\\overset",
+			"\\operatorname": "\\operatorname"
+		};
 		this.id = 24;
 		this.isClassEqalData = true;
 	}
@@ -1294,7 +1327,7 @@
 	}
 	TokenFunctionLiteral.prototype.IsLaTeXIncludeLimit = function (str)
 	{
-		if (limitFunctions.includes(str.slice(1)))
+		if (limitFunctionsLaTeX.includes(str.slice(1)))
 			return str;
 	}
 	TokenFunctionLiteral.prototype.IsUnicodeInclude = function(arrStr)
@@ -1530,6 +1563,20 @@
 	TokenPunctuation.prototype = Object.create(LexerLiterals.prototype)
 	TokenPunctuation.prototype.constructor = TokenPunctuation;
 
+	function TokenText()
+	{
+		this.id = 35;
+		this.Unicode = {};
+		this.LaTeX = {};
+		//for now, later add Unicode
+		this.LaTeXSpecial = {
+			"\\text": "\\text"
+		};
+		this.Init();
+	}
+	TokenText.prototype = Object.create(LexerLiterals.prototype)
+	TokenText.prototype.constructor = TokenText;
+
 	//---------------------------------------Initialize data for Tokenizer----------------------------------------------
 
 	// List of tokens types for parsers processing
@@ -1557,6 +1604,7 @@
 		box: 			new TokenBox(),
 		rect:			new TokenRect(),
 		matrix: 		new TokenMatrix(),
+		array: 			new TokenArray(),
 		font:			new TokenFont(),
 		of:				new TokenOf(),
 		delimiter:		new TokenDelimiter(),
@@ -1565,6 +1613,7 @@
 		arrayMatrix:	new TokenArrayMatrix(),
 		eqArray:		new TokenEqArray(),
 		punct:			new TokenPunctuation(),
+		text:			new TokenText()
 	};
 
 	// The array defines the sequence in which the tokens are checked by the lexer
@@ -1591,6 +1640,7 @@
 		MathLiterals.invisible,
 		MathLiterals.horizontal,
 		MathLiterals.matrix,
+		MathLiterals.array,
 		MathLiterals.nary,
 		MathLiterals.radical,
 		MathLiterals.other,
@@ -1600,6 +1650,7 @@
 		MathLiterals.eqArray,
 		MathLiterals.punct,
 		MathLiterals.space,
+		MathLiterals.text
 	];
 
 	//-------------------------------------Generating AutoCorrection Rules----------------------------------------------
@@ -2065,48 +2116,48 @@
 				data: undefined,
 			};
 
-		let autoCorrectRule,
+		let autoCorrectRule = {class:null},
 			tokenValue,
 			tokenClass,
 			string = this._string.slice(this._cursor);
 
 		for (let i = arrTokensCheckerList.length - 1; i >= 0; i--)
 		{
-			autoCorrectRule = arrTokensCheckerList[i];
-			tokenValue = this.MatchToken(autoCorrectRule, string, isNextLookahead);
+			autoCorrectRule.class = arrTokensCheckerList[i];
+			tokenValue = this.MatchToken(autoCorrectRule, string, isNextLookahead, i);	
 
 			if (string[0] === "\\" && string[1] === "/")
 			{
-				autoCorrectRule = MathLiterals.divide;
+				autoCorrectRule.class = MathLiterals.divide;
 				tokenValue = "/"
 				this._cursor += this.GetStringLength("\\/");
 
 				let oStyle = this.GetStyle(this._cursor);
 				let oMetaData = oStyle.GetMathMetaData();
-				oMetaData.setIsEscapedSlash();
+				oMetaData.setIsEscapedSlash(true);
 			}
 
 			if (tokenValue === null)
 				continue;
-
-			else if (!Array.isArray(autoCorrectRule))
+			else if (!Array.isArray(autoCorrectRule.class))
 			{
-				tokenClass = (autoCorrectRule.isClassEqalData)
+				tokenClass = (autoCorrectRule.class.isClassEqalData)
 					? tokenValue
-					: autoCorrectRule.id;
+					: autoCorrectRule.class.id;
 			}
-			else if (autoCorrectRule.length === 1)
+			else if (autoCorrectRule.class.length === 1)
 			{
 				tokenClass = MathLiterals.char.id;
 			}
-			else if (autoCorrectRule.length === 2)
+			else if (autoCorrectRule.class.length === 2)
 			{
-				tokenClass = (autoCorrectRule[1] === true)
-					? autoCorrectRule[0]
-					: autoCorrectRule[1];
+				tokenClass = (autoCorrectRule.class[1] === true)
+					? autoCorrectRule.class[0]
+					: autoCorrectRule.class[1];
 			}
 
 			let oStyle = this.GetStyle(this._cursor);
+			this.LaTeXVariant = null;
 
 			return {
 				class: tokenClass,
@@ -2117,7 +2168,12 @@
 	};
 	Tokenizer.prototype.GetStyle = function (nCursorPos)
 	{
-		return this._styles[nCursorPos - 1];
+		let style = this._styles[nCursorPos - 1];
+
+		if (!style)
+			style = new MathTextAdditionalData();
+
+		return style;
 	};
 	Tokenizer.prototype.ProcessString = function (str, char)
 	{
@@ -2132,23 +2188,54 @@
 		}
 		return char;
 	};
-	Tokenizer.prototype.MatchToken = function (fMathCheck, arrStr, isNextLookahead)
+	Tokenizer.prototype.MatchToken = function (fMathCheck, arrStr, isNextLookahead, i)
 	{
-		if (undefined === fMathCheck)
+		if (undefined === fMathCheck.class)
 			return null;
 
-		let oMatched = fMathCheck.GetToken(this.isLaTeX, arrStr);
+		let oMatched = fMathCheck.class.GetToken(this.isLaTeX, arrStr);
 
 		if (oMatched === null || oMatched === undefined)
 			return null;
 
-		if (!isNextLookahead)
-			this._cursor += this.GetStringLength(oMatched);
+		if (this.isLaTeX && oMatched)
+		{
+			if (!this.LaTeXVariant || oMatched > this.LaTeXVariant.tokenValue)
+			{
+				this.LaTeXVariant = {
+					tokenValue: oMatched,
+					autoCorrectRule: fMathCheck.class
+				}
+			}
+		}
 
-		if (fMathCheck.IsNeedReturnCorrected_Unicode === true && this.isLaTeX)
-			oMatched = fMathCheck.LaTeX[oMatched];
+		if (this.isLaTeX)
+		{
+			if (i === 0)
+			{
+				fMathCheck.class = this.LaTeXVariant.autoCorrectRule;
+				oMatched = this.LaTeXVariant.tokenValue;
 
-		return oMatched;
+				if (!isNextLookahead)
+					this._cursor += this.GetStringLength(oMatched);
+
+				if (fMathCheck.class.IsNeedReturnCorrected_Unicode === true && this.isLaTeX)
+					oMatched = fMathCheck.class.LaTeX[oMatched];
+
+				return oMatched
+			}
+			else
+			{
+				return null;
+			}
+		}
+		else
+		{
+			if (!isNextLookahead)
+				this._cursor += this.GetStringLength(oMatched);
+
+			return oMatched;
+		}
 	};
 	Tokenizer.prototype.SaveState = function (oLookahead)
 	{
@@ -2213,6 +2300,13 @@
 	{
 		Paragraph = oContext.Paragraph;
 
+		let arrContentAfterConvert = [];
+		if (oContext.Content[oContext.CurPos] instanceof ParaRun)
+		{
+			arrContentAfterConvert = oContext.SplitContentByPos(oContext.CurPos, true)
+			oContext.CurPos = oContext.Content.length - 1;
+		}
+
 		if (typeof oTokens === "object")
 		{
 			if (oTokens.type === "LaTeXEquation" || oTokens.type === "UnicodeEquation")
@@ -2248,6 +2342,12 @@
 		else
 		{
 			oContext.Add_Text(oTokens);
+		}
+
+		if (arrContentAfterConvert.length)
+		{
+			oContext.MoveCursorToEndPos();
+			oContext.ConcatToContent(oContext.Content.length, arrContentAfterConvert);
 		}
 	}
 	// Find token in all types for convert
@@ -2397,8 +2497,11 @@
 							null,
 							null
 						);
-						oFraction.SetReviewTypeWithInfo(oTokens.style.reviewData.reviewType, oTokens.style.reviewData.reviewInfo);
-						if (oTokens.style.reviewData.reviewInfo)
+
+						if (oTokens.style.reviewData.reviewType && oTokens.style.reviewData.reviewInfo)
+							oFraction.SetReviewTypeWithInfo(oTokens.style.reviewData.reviewType, oTokens.style.reviewData.reviewInfo);
+
+						if (oTokens.style.reviewData.reviewInfo && oFraction.ReviewInfo)
 							oFraction.ReviewInfo.Update();
 
 						UnicodeArgument(
@@ -2436,7 +2539,7 @@
 
 						oTokens.value.type = MathStructures.char;
 						UnicodeArgument(
-							oTokens.value,
+							oTokens.value.value,
 							MathStructures.bracket_block,
 							SubSup.getBase()
 						);
@@ -2482,11 +2585,10 @@
 							null,
 							oTokens.up ? LIMIT_UP : LIMIT_LOW
 						);
-						oFuncWithLimit
-							.getFName()
-							.Content[0]
-							.getFName()
-							.Add_Text(oTokens.value.value, Paragraph, STY_PLAIN);
+
+						ConvertTokens(
+							oTokens.value.value,
+							oFuncWithLimit.getFName().Content[0].getFName());
 
 						let oLimitIterator = oFuncWithLimit
 							.getFName()
@@ -2515,6 +2617,7 @@
 							chr: oTokens.value.value.charCodeAt(0),
 							subHide: oTokens.down === undefined,
 							supHide: oTokens.up === undefined,
+							limLoc: oTokens.value.style.metaData.getIsLimitNary() === true ? NARY_UndOvr : NARY_SubSup
 						}
 
 						let oNary = oContext.Add_NAry(Pr, null, null, null);
@@ -2576,7 +2679,8 @@
 							null
 						);
 
-						SubSup.SetReviewTypeWithInfo(oCurrentStyle.reviewData.reviewType, oCurrentStyle.reviewData.reviewInfo);
+						if (oCurrentStyle.reviewData.reviewType && oCurrentStyle.reviewData.reviewInfo)
+							SubSup.SetReviewTypeWithInfo(oCurrentStyle.reviewData.reviewType, oCurrentStyle.reviewData.reviewInfo);
 
 						ConvertTokens(
 							oTokens.value,
@@ -2600,7 +2704,7 @@
 						if (oUpper && oTokens.style.subStyle)
 						{
 							oUpper.CtrPrp.Merge(oTokens.style.subStyle.style);
-							if (oTokens.style.subStyle.reviewData.reviewInfo)
+							if (oTokens.style.subStyle.reviewData.reviewType && oTokens.style.subStyle.reviewData.reviewInfo)
 								oUpper.SetReviewTypeWithInfo(oTokens.style.subStyle.reviewData.reviewType, oTokens.style.subStyle.reviewData.reviewInfo);
 						}
 
@@ -2608,7 +2712,7 @@
 						if (oLower && oTokens.style.supStyle)
 						{
 							oLower.CtrPrp.Merge(oTokens.style.supStyle.style);
-							if (oTokens.style.supStyle.reviewData.reviewInfo)
+							if (oTokens.style.supStyle.reviewData.reviewType && oTokens.style.supStyle.reviewData.reviewInfo)
 								oLower.SetReviewTypeWithInfo(oTokens.style.supStyle.reviewData.reviewType, oTokens.style.supStyle.reviewData.reviewInfo);
 						}
 					}
@@ -2803,7 +2907,9 @@
 						null
 					);
 
-					oRadical.SetReviewTypeWithInfo(oTokens.style.reviewData.reviewType, oTokens.style.reviewData.reviewInfo);
+					if (oTokens.style.reviewData.reviewType && oTokens.style.reviewData.reviewInfo)
+						oRadical.SetReviewTypeWithInfo(oTokens.style.reviewData.reviewType, oTokens.style.reviewData.reviewInfo);
+					
 					UnicodeArgument(
 						oTokens.value,
 						MathStructures.bracket_block,
@@ -2842,7 +2948,8 @@
 						}
 						else
 						{
-							strEndBracket = strStartBracket = oTokens.strMatrixType[0].charCodeAt(0)
+							strStartBracket = oTokens.strMatrixType[0].charCodeAt(0);
+							strEndBracket = -1;
 						}
 					}
 
@@ -2854,7 +2961,7 @@
 						cols = oTokens.value[0].length;
 					}
 
-					if (strEndBracket && strStartBracket)
+					if (strEndBracket || strStartBracket)
 					{
 						let Delimiter = oContext.Add_DelimiterEx(
 							new CTextPr(),
@@ -4482,10 +4589,10 @@
 			if (MathLiterals.accent.SearchU(strCorrection))
 				strCorrection = String.fromCharCode(160) + strCorrection; //add nbsp before accent, like word
 
-			for (let i = 0; i < strCorrection.length; i++)
+			for (let oIter = strCorrection.getUnicodeIterator(); oIter.check(); oIter.next())
 			{
 				let oAddMath = new MathTextAdditionalData(oCurrentEl.Parent);
-				oCMathContent.Add_Text(strCorrection[i], undefined, undefined, oAddMath);
+				oCMathContent.Add_Text(String.fromCodePoint(oIter.value()), undefined, undefined, oAddMath);
 			}
 
 			if (oLastOperator)
@@ -4682,15 +4789,12 @@
 			}
 		}
 	}
+
 	function GetConvertContent(nInputType, strConversionData, oContext)
 	{
-		oContext.CurPos = oContext.Content.length;
-
 		nInputType === Asc.c_oAscMathInputType.Unicode
 			? AscMath.CUnicodeConverter(strConversionData, oContext)
 			: AscMath.ConvertLaTeXToTokensList(strConversionData, oContext);
-
-		oContext.CurPos = oContext.Content.length;
 	}
 
 	let isGetLaTeX = true;
@@ -4965,18 +5069,12 @@
 		if (!(oContent instanceof MathTextAndStyles) && oContent.Content.length === 0)
 			return this.GetLastPos();
 
-		// check what's wrong
-		// for mathBase set rFont
-		if (!(oContent instanceof ParaRun)
-			&& !(oContent instanceof MathTextAndStyles)
-			&& !(oContent instanceof CMathContent))
-			oContent.Set_RFont_ForMath();
-
 		let nPosCopy = this.nPos;
 
 		if (oContent instanceof MathTextAndStyles)
 		{
 			this.arr.push(oContent);
+			this.Increase();
 			return this.AddPosition(this.nPos - nPosCopy);
 		}
 
@@ -5376,11 +5474,20 @@
 				return oLast;
 		}
 	}
+	MathTextAndStyles.prototype.DelFirstSpace = function ()
+	{
+		let oLastContent = this.GetFirstContent();
+
+		if (oLastContent && oLastContent.text[0] === " ")
+			oLastContent.text = oLastContent.text.slice(1, -1);
+
+		return this
+	};
 	MathTextAndStyles.prototype.DelLastSpace = function ()
 	{
 		let oLastContent = this.GetLastContent();
 
-		if (oLastContent.text[oLastContent.text.length - 1] === " ")
+		if (oLastContent && oLastContent.text[oLastContent.text.length - 1] === " ")
 			oLastContent.text = oLastContent.text.slice(0, -1);
 
 		return this
@@ -5389,35 +5496,104 @@
 	// for store data without symbols and transfer data between autocorrection/correction sessions
 	function MathMetaData()
 	{
+		this.isMathRm			= false;
 		this.isLinearFraction	= false;
 		this.isEscapedSlash		= false;
+		this.isLimitNary		= false;
+		this.isText				= false;
 
-		this.setIsLinearFraction = function ()
+		this.setIsLinearFraction = function (isLinearFraction)
 		{
-			this.isLinearFraction = true;
+			this.isLinearFraction = isLinearFraction;
 		}
 		this.getIsLinearFraction = function ()
 		{
 			return this.isLinearFraction;
 		}
 
-		this.setIsEscapedSlash = function ()
+		this.setIsMathRm = function(isMathRm)
 		{
-			this.isEscapedSlash = true;
+			this.isMathRm = isMathRm;
+		}
+		this.getIsMathRm = function()
+		{
+			return this.isMathRm;
+		}
+
+		this.setIsEscapedSlash = function (isEscapedSlash)
+		{
+			this.isEscapedSlash = isEscapedSlash;
 		}
 		this.getIsEscapedSlash = function ()
 		{
 			return this.isEscapedSlash;
 		}
 
+		this.setIsLimitNary = function(isLimitNary)
+		{
+			this.isLimitNary = isLimitNary;
+		}
+		this.getIsLimitNary = function()
+		{
+			return this.isLimitNary;
+		}
+
+		this.setIsText = function(isText)
+		{
+			this.isText = isText;
+		}
+		this.getIsText = function()
+		{
+			return this.isText;
+		}
+
 		this.Copy = function ()
 		{
 			let oCopy = new MathMetaData();
 
+			oCopy.setIsMathRm(this.isMathRm);
 			oCopy.setIsLinearFraction(this.isLinearFraction);
 			oCopy.setIsEscapedSlash(this.isEscapedSlash);
+			oCopy.setIsLimitNary(this.isLimitNary);
+			oCopy.setIsText(this.isText);
 
 			return oCopy;
+		}
+
+		this.Write_ToBinary = function(oWriter)
+		{
+			oWriter.WriteBool(this.isMathRm);
+			oWriter.WriteBool(this.isLinearFraction);
+			oWriter.WriteBool(this.isEscapedSlash);
+			oWriter.WriteBool(this.isLimitNary);
+			oWriter.WriteBool(this.isText);
+		}
+
+		this.Read_FromBinary = function(oReader)
+		{
+			this.isMathRm			= oReader.GetBool();
+			this.isLinearFraction	= oReader.GetBool();
+			this.isEscapedSlash		= oReader.GetBool();
+			this.isLimitNary		= oReader.GetBool();
+			this.isText				= oReader.GetBool();
+		}
+
+		this.Set = function(oMetaData)
+		{
+			if (this.isMathRm !== oMetaData.isMathRm)
+				this.setIsMathRm(oMetaData.isMathRm);
+
+			if (this.isLinearFraction !== oMetaData.isLinearFraction)
+				this.setIsLinearFraction(oMetaData.isLinearFraction);
+
+			if (this.isEscapedSlash !== oMetaData.isEscapedSlash)
+				this.setIsEscapedSlash(oMetaData.isEscapedSlash);
+
+			if (this.isLimitNary !== oMetaData.isLimitNary)
+				this.setIsLimitNary(oMetaData.isLimitNary);
+
+			if (this.isText !== oMetaData.isText)
+				this.setIsText(oMetaData.isTex);
 		}
 	}
 
@@ -5426,15 +5602,35 @@
 		this.style		= undefined;
 		this.reviewData	= {
 			reviewType : reviewtype_Common,
-			reviewInfo : new CReviewInfo()
+			reviewInfo : new AscWord.ReviewInfo()
 		}
 		this.mathPrp	= new CMPrp();
 		this.metaData	= new MathMetaData();
 
 		if (oContent)
 			this.SetAdditionalDataFromContent(oContent, isCtrPr);
+
+		if (!oContent)
+			this.style = new CTextPr();
 	}
 
+	MathTextAdditionalData.prototype.Copy = function()
+	{
+		let newAdditionalData = new MathTextAdditionalData();
+
+		if (this.style)
+			newAdditionalData.style = this.style.Copy();
+
+		newAdditionalData.reviewData = {
+			reviewType : this.reviewData.reviewType,
+			reviewInfo : this.reviewData.reviewInfo
+		}
+
+		newAdditionalData.mathPrp = this.mathPrp.Copy();
+		newAdditionalData.metaData = this.metaData.Copy();
+
+		return newAdditionalData;
+	}
 	/**
 	 *
 	 * @return {MathMetaData}
@@ -5520,7 +5716,8 @@
 
 			return this.style.IsEqual(oStyleParent.GetAdditionalStyleData())
 				&& this.IsReviewDataEqual(oStyleParent)
-				&& this.IsMPrpEqual(oStyleParent.mathPrp);
+				&& this.IsMPrpEqual(oStyleParent.mathPrp)
+				&& this.IsMetaDataEqual(oStyleParent.metaData)
 		}
 
 		if (oStyleParent)
@@ -5529,30 +5726,65 @@
 				? oStyleParent.Pr
 				: oStyleParent.CtrPrp;
 
-			return this.style.IsEqual(oStyle)
+			return this.IsPrStyleEqual(oStyle)
 				&& this.IsReviewDataEqual(oStyleParent)
-				&& this.IsMPrpEqual(oStyleParent.MathPrp);
+				&& this.IsMPrpEqual(oStyleParent.MathPrp)
+				&& this.IsMetaDataEqual(oStyleParent.math_autocorrection)
 		}
+
+		return false;
+	};
+	MathTextAdditionalData.prototype.IsMetaDataEqual = function (oMetaData)
+	{
+		let oCurrentMetaData = this.metaData;
+
+		if (!oMetaData
+			&& oCurrentMetaData.getIsEscapedSlash() === false
+			&& oCurrentMetaData.getIsMathRm() === false
+			&& oCurrentMetaData.getIsText() === false)
+			return true;
+
+		if (!oMetaData)
+			return false;
+
+		return oMetaData.getIsEscapedSlash() === oCurrentMetaData.getIsEscapedSlash()
+			&& oMetaData.getIsMathRm() === oCurrentMetaData.getIsMathRm()
+			&& oMetaData.getIsText() === oCurrentMetaData.getIsText();
+	};
+	MathTextAdditionalData.prototype.IsPrStyleEqual = function(oStyle)
+	{
+		if (this.style && this.style.IsEqual(oStyle))
+			return true;
 
 		return false;
 	};
 	MathTextAdditionalData.prototype.IsReviewDataEqual = function (oContent)
 	{
+		let reviewType = undefined;
+		let reviewInfo = undefined;
+		
 		if (oContent instanceof MathTextAdditionalData)
 		{
-			if (this.reviewData.reviewType === undefined || oContent.reviewData.reviewInfo === undefined)
-				return true;
-			return this.reviewData.reviewType === oContent.reviewData.reviewType
-				&& this.reviewData.reviewInfo.IsEqual(oContent.reviewData.reviewInfo, false)
+			reviewType = oContent.reviewData.reviewType;
+			reviewInfo = oContent.reviewData.reviewInfo;
 		}
-		else
+		else if (oContent.GetReviewType)
 		{
-			if (oContent.ReviewInfo === undefined)
-				return false;
-
-			return this.reviewData.reviewType === oContent.ReviewType
-				&& this.reviewData.reviewInfo.IsEqual(oContent.ReviewInfo, false)
+			reviewType = oContent.GetReviewType();
+			reviewInfo = oContent.GetReviewInfo();
 		}
+		
+		if (this.reviewData.reviewType !== reviewType)
+			return false;
+		
+		if (!this.reviewData.reviewInfo && !reviewInfo)
+			return true;
+		
+		if (!this.reviewData.reviewInfo || !reviewInfo)
+			return false;
+		
+		return this.reviewData.reviewInfo.IsEqual(reviewInfo, false)
+		
 	}
 	MathTextAdditionalData.prototype.SetAdditionalDataFromContent = function (oContent, isCtrPrp)
 	{
@@ -5582,8 +5814,17 @@
 		}
 
 		this.SetAdditionalStyleData(oPr);
-		this.SetAdditionalReviewType(oContent.ReviewType);
-		this.SetAdditionalReviewInfo(oContent.ReviewInfo);
+		
+		if (oContent.GetReviewType)
+		{
+			this.SetAdditionalReviewType(oContent.GetReviewType());
+			this.SetAdditionalReviewInfo(oContent.GetReviewInfo());
+		}
+		else
+		{
+			this.SetAdditionalReviewType(undefined);
+			this.SetAdditionalReviewInfo(undefined);
+		}
 
 		if (oContent instanceof ParaRun)
 			this.SetMathPrp(oContent.MathPrp);
@@ -5957,6 +6198,14 @@
 		}
 		this.Tokens.brackets = this.Brackets.GetContent();
 	};
+	ProceedTokens.prototype.GetFirstPosition = function ()
+	{
+		if (this.oCMathContent.Content.length > 0)
+		{
+			let oFirstContent = this.oCMathContent.Content[0];
+			return new PositionIsCMathContent(0, 0, 0, oFirstContent);
+		}
+	}
 	/**
 	 * Check given id is "other" (all tokens without brackets)
 	 * @param nId
@@ -6053,7 +6302,7 @@
 
 			if (oPos)
 			{
-				while (!oPos.IsEqualPosition(oToken))
+				while (oToken && nCounter < arrAllTokens.length && !oPos.IsEqualPosition(oToken))
 				{
 					nCounter++;
 					oToken = arrAllTokens[nCounter];
@@ -6106,8 +6355,9 @@
 					continue;
 				}
 
-				let oLastElement = oLastElem.Content[oLastElem.Content.length - 1];
-				let strValue = String.fromCharCode(oLastElement.value);
+				let nMinPosContent	= Math.max(0, oLastElem.State.ContentPos - 1);
+				let oLastElement	= oLastElem.Content[nMinPosContent];
+				let strValue		= String.fromCharCode(oLastElement.value);
 				return GetTokenType(strValue, TokenSearch_Everything);
 			}
 			else
@@ -6148,10 +6398,10 @@
 
 		if (oLastElem.Type === 49)
 		{
-			let nCount  = oLastElem.Content.length - 2;
-			if (nCount >= 0)
+			let nMinPosContent	= Math.min(oLastElem.Content.length - 2, oLastElem.State.ContentPos - 2);
+			if (nMinPosContent >= 0)
 			{
-				let oLastElement = oLastElem.Content[oLastElem.Content.length - 2];
+				let oLastElement = oLastElem.Content[nMinPosContent];
 				let strValue = String.fromCharCode(oLastElement.value);
 				return GetTokenType(strValue, TokenSearch_Everything);
 			}
@@ -6255,7 +6505,7 @@
 		let oAbsolutePLastId	= this.GetAbsolutePreLast();
 		let oFuncNamePos		= CheckFunctionOnCursor(this.oCMathContent);
 
-		if (this.oAbsoluteLastId === oAbsolutePLastId) // подряд два пробела, не начинам коррекцию
+		if (this.oAbsoluteLastId === oAbsolutePLastId && this.oAbsoluteLastId === MathLiterals.space.id) // подряд два пробела, не начинам коррекцию
 			return false;
 
 		// если нажали пробел после названия функции (cos, sin, lim, log, ...), то
@@ -6266,8 +6516,13 @@
 			let oLastMath		= this.GetAbsolutLastObject();
 			// получаем контент и удаляем пробел
 
-			let oParamsCutContent = {oDelMark: oFuncNamePos, isDelLastSpace: true};
-			let oMathContent	= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
+			let oParamsCutContent	= {
+				oDelMark			: oFuncNamePos,
+				oEndDelMark			: GetEndCurPos(oFuncNamePos),
+				isDelLastSpace		: true
+			};
+
+			let oMathContent		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
 
 			let oFuncName			= oMathContent.GetFirstContent();
 			let oAddDataFuncName	= oFuncName.GetAdditionalData();
@@ -6285,13 +6540,21 @@
 		}
 		else if (oRuleLast && oFuncNamePos && this.oAbsoluteLastId === MathLiterals.subSup.id)
 		{
-			let oParamsCutContentSubSup		= {oDelMark: oRuleLast};
+			let oParamsCutContentSubSup		= {
+				oDelMark					: oRuleLast,
+				oEndDelMark					: GetEndCurPos(oRuleLast)
+			};
 			let oMathContentSubSup			= CutContentFromEnd(this.oCMathContent, oParamsCutContentSubSup);
 
 			// последний элемент для получения стиля
 			let oLastMath			= this.GetAbsolutLastObject();
 
-			let oParamsCutContent	= {oDelMark: oFuncNamePos};
+			let oEndPos				= GetEndCurPos(oRuleLast);
+
+			let oParamsCutContent	= {
+				oDelMark			: oFuncNamePos,
+				oEndDelMark			: oEndPos
+			};
 			let oMathContent		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
 
 			let oFuncName			= oMathContent.GetFirstContent();
@@ -6300,9 +6563,9 @@
 			mPrp.SetStyle(false, false);
 
 			//добавляем символ funcapply
-			let oFuncApply		= new MathText(String.fromCodePoint(8289), oLastMath.additionalMathData);
+			let oFuncApply			= new MathText(String.fromCodePoint(8289), oLastMath.additionalMathData);
 			oMathContent.AddText(oFuncApply);
-			let oSubSup			= new MathText(oMathContentSubSup.GetText(), oLastMath.additionalMathData);
+			let oSubSup				= new MathText(oMathContentSubSup.GetText(), oLastMath.additionalMathData);
 			oMathContent.AddText(oSubSup);
 
 			this.oCMathContent.AddDataFromFlatMathTextAndStyles(oMathContent.Flat());
@@ -6338,7 +6601,11 @@
 				function (oRuleLast)
 				{
 					let oMathCopy			= this.oCMathContent.Copy();
-					let oParamsCutContent	= {oDelMark : oRuleLast, isDelLastSpace: true};
+					let oParamsCutContent	= {
+						oDelMark			: oRuleLast,
+						oEndDelMark			: GetEndCurPos(oRuleLast),
+						isDelLastSpace		: true
+					};
 					let oMathContent		= CutContentFromEnd(oMathCopy, oParamsCutContent);
 
 					GetConvertContent(0, oMathContent, oMathCopy);
@@ -6352,7 +6619,11 @@
 
 			if (!this.CompareMathContent(oMathContentTemp)) // если контент изменился, то преобразуем все после ▒
 			{
-				let oParamsCutContent	= {oDelMark : oRuleLast, isDelLastSpace: true};
+				let oParamsCutContent	= {
+					oDelMark			: oRuleLast,
+					oEndDelMark			: GetEndCurPos(oRuleLast),
+					isDelLastSpace		: true
+				};
 				let oMathContent		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
 
 				GetConvertContent(0, oMathContent, this.oCMathContent);
@@ -6366,7 +6637,11 @@
 
 				if (oStartPos)
 				{
-					let oParamsCutContent	= {oDelMark : oStartPos, isDelLastSpace: true};
+					let oParamsCutContent	= {
+						oDelMark			: oStartPos,
+						oEndDelMark			: GetEndCurPos(oStartPos),
+						isDelLastSpace		: true
+					};
 					let oMathContent = CutContentFromEnd(this.oCMathContent, oParamsCutContent);
 
 					GetConvertContent(0, oMathContent, this.oCMathContent);
@@ -6421,9 +6696,9 @@
 			oPos.IncreasePosition();
 
 		if (!oPos)
-			oPos = new PositionIsCMathContent(0, 0);
+			oPos = this.GetFirstPosition();
 
-		let oParamsCutContent	= {oDelMark : oPos};
+		let oParamsCutContent	= {oDelMark : oPos, oEndDelMark: GetEndCurPos(oPos)};
 
 		let oMathContentCopy = AscFormat.ExecuteNoHistory(
 			function () {
@@ -6450,16 +6725,52 @@
 	ProceedTokens.prototype.private_ProceedBeforeDivide = function (oRuleLast, isCopy)
 	{
 		let oTempMathContent	= isCopy ? this.oCMathContent.Copy() : this.oCMathContent;
-		let oParamsCutContent	= {oDelMark : oRuleLast};
+
+		function SetCurPos (oOriginalContent, oCopy)
+		{
+			let nCurPos			= oOriginalContent.CurPos;
+
+			oCopy.CurPos		= (oCopy.Content.length < nCurPos)
+				? oCopy.Content.length
+				: nCurPos;
+
+			let oLastElement	= oOriginalContent.Content[oCopy.CurPos];
+
+			if (oLastElement && oLastElement instanceof ParaRun)
+			{
+				let nOriginalContentPos			= oLastElement.State.ContentPos;
+				let oCopyParaRun				= oCopy.Content[oCopy.CurPos];
+
+				if (oCopyParaRun && oCopyParaRun instanceof ParaRun)
+				{
+					oCopyParaRun.State.ContentPos	= (oCopyParaRun.Content.length < nOriginalContentPos)
+						? oCopyParaRun.Content.length
+						: nOriginalContentPos;
+				}
+			}
+		}
+
+		SetCurPos(this.oCMathContent, oTempMathContent);
+
+		let oParamsCutContent	= {
+			oDelMark			: oRuleLast,
+			oEndDelMark			: GetEndCurPos(oRuleLast)
+		};
+
 		let oPos				= this.Brackets.GetLastPiarStartPos();
 		let oDivide				= CutContentFromEnd(oTempMathContent, oParamsCutContent);
 
 		if (!oPos)
 			oPos	= this.GetContentBlockBefore(oRuleLast).start;
 
-		oParamsCutContent	= {oDelMark : oPos};
+		oParamsCutContent	= {
+			oDelMark		: oPos,
+			oEndDelMark		: GetEndCurPos(oPos)
+		};
+
 		let oMathContent	= CutContentFromEnd(oTempMathContent, oParamsCutContent);
 
+		SetCurPos(this.oCMathContent, oTempMathContent);
 		GetConvertContent(0, oMathContent, oTempMathContent);
 		oTempMathContent.AddDataFromFlatMathTextAndStyles(oDivide.Flat());
 
@@ -6467,6 +6778,9 @@
 	}
 	ProceedTokens.prototype.ProceedBeforeDivide = function (oRuleLast)
 	{
+		if (!(oRuleLast instanceof PositionIsCMathContent))
+			return false;
+
 		let oMathContentTemp = AscFormat.ExecuteNoHistory(
 			this.private_ProceedBeforeDivide,
 			this,
@@ -6486,6 +6800,7 @@
 	ProceedTokens.prototype.CompareMathContent = function (oMathContentCopy, isCheckStr)
 	{
 		let isSame = true;
+		oMathContentCopy.Correct_Content(true);
 
 		for (let i = this.oCMathContent.Content.length; i >= 0;i--)
 		{
@@ -6557,7 +6872,12 @@
 	ProceedTokens.prototype.StartBracketAndClose = function ()
 	{
 		let oStartPos			= this.Tokens.brackets.NoPair[0];
-		let oParamsCutContent	= {oDelMark : oStartPos, isDelLastSpace: true};
+
+		let oParamsCutContent	= {
+			oDelMark			: oStartPos,
+			isDelLastSpace		: true,
+			oEndDelMark			: GetEndCurPos(oStartPos),
+		};
 		let oMathContent		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
 
 		GetConvertContent(0, oMathContent, this.oCMathContent);
@@ -6576,7 +6896,12 @@
 
 		if (strClosePos === "┤" && strOpenPos === "├")
 		{
-			let oParamsCutContent	= {oDelMark : oStartPos, isDelLastSpace: true};
+			let oParamsCutContent	= {
+				oDelMark			: oStartPos,
+				oEndDelMark			: GetEndCurPos(oStartPos),
+				isDelLastSpace		: true
+			};
+
 			let oMathContent		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
 
 			GetConvertContent(0, oMathContent, this.oCMathContent);
@@ -6590,10 +6915,19 @@
 		{
 			return AscFormat.ExecuteNoHistory(
 				function () {
+
 					if (this.Tokens.brackets.Pairs.length < 1)
 						return false;
+
 					let oFirstPair			= this.Tokens.brackets.Pairs[this.Tokens.brackets.Pairs.length - 1][1];
-					let oParamsCutContent	= {oDelMark : oFirstPair, isCopy : true, isDelLastSpace: true};
+
+					let oParamsCutContent	= {
+						oDelMark			: oFirstPair,
+						oEndDelMark			: GetEndCurPos(oFirstPair),
+						isCopy				: true,
+						isDelLastSpace		: true
+					};
+
 					let oMathContent		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
 					let strMathContent		= oMathContent.GetText();
 
@@ -6609,7 +6943,12 @@
 		if (this.Tokens.brackets.Pairs.length < 1)
 			return false;
 		let oFirstPair			= this.Tokens.brackets.Pairs[this.Tokens.brackets.Pairs.length - 1][1];
-		let oParamsCutContent	= {oDelMark : oFirstPair, isWrapFirstContent : true, isDelLastSpace: true};
+		let oParamsCutContent	= {
+			oDelMark			: oFirstPair,
+			oEndDelMark			: GetEndCurPos(oFirstPair),
+			isWrapFirstContent	: true,
+			isDelLastSpace		: true
+		};
 		let oMathContent 		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
 
 		GetConvertContent(0, oMathContent, this.oCMathContent);
@@ -6663,7 +7002,7 @@
 						isParaPosUsed = true;
 					}
 
-					oEndPos = new PositionIsCMathContent(nEndMathPos, nEndParaPos, undefined, oCurrentElement.Content);
+					oEndPos = new PositionIsCMathContent(nEndMathPos, nEndParaPos, undefined, oCurrentElement);
 					if (isSpace && oEndPos.GetType() === MathLiterals.space.id)
 						return {
 							start: oStartPos,
@@ -6677,7 +7016,7 @@
 
 						return {
 							start: oStartPos,
-							end: new PositionIsCMathContent(nEndMathPos, nEndParaPos, undefined, oCurrentElement.Content)
+							end: new PositionIsCMathContent(nEndMathPos, nEndParaPos, undefined, oCurrentElement)
 						}
 					}
 					else
@@ -6698,11 +7037,16 @@
 	 * @param {PositionIsCMathContent} oStartPos
 	 * @returns {{start : PositionIsCMathContent, end: PositionIsCMathContent} | undefined}
 	 */
-	ProceedTokens.prototype.GetContentBlockBefore = function (oStartPos)
+	ProceedTokens.prototype.GetContentBlockBefore = function (oInputPos)
 	{
-		oStartPos			= oStartPos.GetCopy();
-		let isSubSup		= oStartPos.GetType() === MathLiterals.subSup.id;
-		let isNary			= oStartPos.GetType() === MathLiterals.of.id;
+		let oTempStartPos		= oInputPos.GetCopy();
+
+		let oStartPos			= oInputPos.GetCopy();
+		let nStartType			= oStartPos.GetType();
+
+		let isSubSup			= nStartType === MathLiterals.subSup.id;
+		let isNary				= nStartType === MathLiterals.of.id;
+		let isFrac				= nStartType === MathLiterals.divide.id;
 
 		let strSubSupType	= isSubSup
 			? oStartPos.GetText()
@@ -6712,7 +7056,7 @@
 		{
 			return {
 				start: oStartPos,
-				end: oStartPos
+				end: oStartPos.GetCopy()
 			}
 		}
 
@@ -6737,6 +7081,9 @@
 		{
 			let oCurrentElement	= this.oCMathContent.Content[i];
 
+			if (i !== nMathPos)
+				nParaPos = oCurrentElement.Content.length - 1;
+
 			if (!oCurrentElement)
 				continue;
 
@@ -6752,7 +7099,7 @@
 					if (!isParaPosUsed)
 						isParaPosUsed = true;
 
-					let oEndPos = new PositionIsCMathContent(i, j, undefined, oCurrentElement.Content);
+					let oEndPos = new PositionIsCMathContent(i, j, undefined, oCurrentElement);
 					let oPos = this.IsStepInBracket(oEndPos, true);
 
 					if (oPos)
@@ -6763,7 +7110,7 @@
 						if (i === 0 && j === 0)
 						{
 							return {
-								start: new PositionIsCMathContent(0,0, oEndPos.GetType(), this.oCMathContent.Content),
+								start: new PositionIsCMathContent(0,0, oEndPos.GetType(), oCurrentElement),
 								end: oStartPos
 							}
 						}
@@ -6772,10 +7119,18 @@
 					}
 					else if (this.IsOperator(oEndPos) || oEndPos.GetText() === " ")
 					{
+						if (oEndPos.GetText() === " " && isFrac)
+						{
+							return {
+								start: oEndPos,
+								end: oTempStartPos,
+							}
+						}
+
 						oEndPos.IncreasePosition();
 						return {
 							start: oEndPos,
-							end: oStartPos,
+							end: oTempStartPos,
 						}
 					}
 					else if (oEndPos.GetType() === MathLiterals.of.id)
@@ -6783,7 +7138,7 @@
 						oEndPos.IncreasePosition()
 						return {
 							start: oEndPos,
-							end: oStartPos
+							end: oTempStartPos
 						}
 					}
 					else if (oEndPos.GetType() === MathLiterals.subSup.id && !isNary) // если _ или ^, то прерываемся
@@ -6796,7 +7151,7 @@
 								{
 									return {
 										start: oEndPos,
-										end: oStartPos,
+										end: oTempStartPos,
 									}
 								}
 								continue;
@@ -6805,7 +7160,7 @@
 							oEndPos.IncreasePosition()
 							return {
 								start: oEndPos,
-								end: oStartPos
+								end: oTempStartPos
 							}
 						}
 						else
@@ -6823,8 +7178,8 @@
 		}
 
 		return {
-			start: new PositionIsCMathContent(0, 0, 0, this.oCMathContent.Content),
-			end: oStartPos
+			start: new PositionIsCMathContent(0, 0, 0, this.oCMathContent.Content[0]),
+			end: oTempStartPos
 		}
 	};
 	/**
@@ -6872,7 +7227,11 @@
 				// если после матрицы есть скобка
 				if (arrPos[0] === arrLastPos[0] && arrPos[1] === arrLastPos[1])
 				{
-					let oParamsCutContent	= {oDelMark : oLast, isDelLastSpace: true};
+					let oParamsCutContent	= {
+						oDelMark			: oLast,
+						oEndDelMark			: GetEndCurPos(oLast),
+						isDelLastSpace		: true
+					};
 					let oMathContent 		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
 
 					GetConvertContent(0, oMathContent, this.oCMathContent);
@@ -6909,7 +7268,7 @@
 	 */
 	ProceedTokens.prototype.PCFunctionProcessing = function(oLast)
 	{
-		let oParamsCutContent	= {oDelMark : oLast, isDelLastSpace: true};
+		let oParamsCutContent	= {oDelMark : oLast, oEndDelMark: GetEndCurPos(oLast), isDelLastSpace: true};
 		let oMathContent = CutContentFromEnd(this.oCMathContent, oParamsCutContent);
 
 		GetConvertContent(0, oMathContent, this.oCMathContent);
@@ -6945,14 +7304,23 @@
 		if (oConvertPos)
 		{
 			let oStartPos			= oConvertPos.start;
-			let oParamsCutContent	= {oDelMark : oStartPos, isWrapFirstContent: true, isDelLastSpace: true};
+			let oParamsCutContent	= {
+				oDelMark			: oStartPos,
+				oEndDelMark			: GetEndCurPos(oStartPos),
+				isWrapFirstContent	: true,
+				isDelLastSpace		: true
+			};
 			let oMathContent 		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
 
 			GetConvertContent(0, oMathContent, this.oCMathContent);
 		}
 		else
 		{
-			let oParamsCutContent	= {oDelMark : oLast, isDelLastSpace: true};
+			let oParamsCutContent	= {
+				oDelMark 			: oLast,
+				oEndDelMark			: GetEndCurPos(oLast),
+				isDelLastSpace		: true
+			};
 			let oMathContent = CutContentFromEnd(this.oCMathContent, oParamsCutContent);
 
 			GetConvertContent(0, oMathContent, this.oCMathContent);
@@ -7040,39 +7408,37 @@
 	 */
 	ProceedTokens.prototype.BIFunctionProcessing = function(oLast)
 	{
-		let arrPreContent = this.GetContentBlockBefore(oLast);
+		let arrPreContent	= this.GetContentBlockBefore(oLast);
+		let oEndPos			= arrPreContent.end;
+		let isFrac			= oLast.GetType() === MathLiterals.divide.id;
+		oEndPos.IncreasePositionToCurPos();
 
 		if (arrPreContent)
 		{
 			let oStartPos			= arrPreContent.start;
 
-			// del space before converted content
-			let oSpacePos			= oStartPos.GetCopy();
-			oSpacePos.DecreasePosition();
-			if (oSpacePos.GetText() === " ")
-				oStartPos = oSpacePos;
-
 			// processing for pre-script "_2^j x ", "_(2+1)^(x) x ", "_2^j (1+y) "
 			if (oStartPos.GetText() === "_" && oLast.GetText() === "^" || oStartPos.GetText() === "^" && oLast.GetText() === "_")
 				return this.ProceedPreScript(oLast, oStartPos);
 
-			let oParamsCutContent	= {oDelMark : oStartPos, isWrapFirstContent: true, isDelLastSpace: true};
+			let oParamsCutContent	= {
+				oDelMark			: oStartPos,
+				oEndDelMark			: oEndPos,
+				isWrapFirstContent	: true,
+				isDelLastSpace		: true,
+				isDelStartSpace		: isFrac,
+			};
 			let oMathContent 		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
-
-			// del space before converted content
-			if (oStartPos === oSpacePos)
-			{
-				let oFirstContent	= oMathContent.GetFirstContent();
-				let strText			= oFirstContent.text;
-				if (strText[0] === " ")
-					oFirstContent.text = oFirstContent.text.substring(1);
-			}
 
 			GetConvertContent(0, oMathContent, this.oCMathContent);
 		}
 		else
 		{
-			let oParamsCutContent	= {oDelMark : oLast, isDelLastSpace: true};
+			let oParamsCutContent	= {
+				oDelMark			: oLast,
+				oEndDelMark			: GetEndCurPos(oLast),
+				isDelLastSpace		: true
+			};
 			let oMathContent 		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
 
 			GetConvertContent(0, oMathContent, this.oCMathContent);
@@ -7097,14 +7463,19 @@
 			return false;
 
 		oLastTemp.IncreasePosition(); // get base content
-		if (oLastTemp.GetText() === " ") // not space
+		if (oLastTemp.GetText() === " " || oLastTemp.GetText() === '') // not space
 			return false;
 
 		let oMathContentTemp = AscFormat.ExecuteNoHistory(
 			function (oRuleLast)
 			{
 				let oMathCopy			= this.oCMathContent.Copy();
-				let oParamsCutContent	= {oDelMark : oRuleLast, isDelLastSpace: true};
+
+				let oParamsCutContent	= {
+					oDelMark			: oRuleLast,
+					oEndDelMark			: GetEndCurPos(oRuleLast),
+					isDelLastSpace		: true
+				};
 				let oMathContent		= CutContentFromEnd(oMathCopy, oParamsCutContent);
 
 				GetConvertContent(0, oMathContent, oMathCopy);
@@ -7118,7 +7489,12 @@
 
 		if (!this.CompareMathContent(oMathContentTemp))
 		{
-			let oParamsCutContent	= {oDelMark : oStartPos, isDelLastSpace: true};
+			let oParamsCutContent	= {
+				oDelMark			: oStartPos,
+				oEndDelMark			: GetEndCurPos(oStartPos),
+				isDelLastSpace		: true
+			};
+
 			let oMathContent		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
 
 			GetConvertContent(0, oMathContent, this.oCMathContent);
@@ -7128,58 +7504,129 @@
 
 		return false
 	}
+	function GetEndCurPos(oPos)
+	{
+		let oNewPos = oPos.GetCopy();
+		oNewPos.IncreasePositionToCurPos();
+		return oNewPos;
+	}
+
 	/**
 	 * Deletes letters at the given position
 	 * @param	{CMathContent} oContent - Content that will proceed.
 	 * @param	{oParamsCutContent} oParamsCutContent - Setting of CutContentFromEnd.
 	 * @param		{PositionIsCMathContent} oParamsCutContent.oDelMark Deleting start position.
+	 * @param		{PositionIsCMathContent} oParamsCutContent.oEndDelMark Deleting end position.
 	 * @param		{boolean} [oParamsCutContent.isCopy] If we don't want change original content, copy it.
 	 * @param		{boolean} [oParamsCutContent.isWrapFirstContent] Is need to wrap custom block (CFraction, CDelimiter, CDegree, CMatrix e.g.) with 〖〗 brackets.
 	 * @param		{int} [oParamsCutContent.nTypeOfTrigger] Type of trigger for autocorrection
 	 * @param		{boolean} [oParamsCutContent.isDelLastSpace] Is need delete last space
+	 * @param		{boolean} [oParamsCutContent.isDelStartSpace] Is need delete first space
 	 */
 	function CutContentFromEnd(oContent, oParamsCutContent)
 	{
 		let oDelMark			= oParamsCutContent.oDelMark;
+		let oEndDelMark			= oParamsCutContent.oEndDelMark;
 		let isCopy				= oParamsCutContent.isCopy;
 		let isWrapFirstContent	= oParamsCutContent.isWrapFirstContent;
 		let nTypeOfTrigger		= oParamsCutContent.nTypeOfTrigger;
 		let isDelLastSpace		= oParamsCutContent.isDelLastSpace;
+		let isDelStartSpace		= oParamsCutContent.isDelStartSpace;
 
 		if (isCopy === true)
 			oContent = oContent.Copy();
 
 		let intMathContent		= oDelMark.GetMathPos();
 		let intRunContent		= oDelMark.GetPosition();
+
+		let nEndMathContent		= oEndDelMark.GetMathPos();
+		let nEndRunContent		= oEndDelMark.GetPosition();
+
 		let oMathTextAndStyles	= new MathTextAndStyles(false);
 
-		for (let nPosCMathContent = intMathContent; nPosCMathContent < oContent.Content.length; nPosCMathContent++)
+		for (let nPosCMathContent = intMathContent; nPosCMathContent < oContent.Content.length && nPosCMathContent <= nEndMathContent; nPosCMathContent++)
 		{
 			let oCurrentElement = oContent.Content[nPosCMathContent];
 
 			if (oCurrentElement.Type === 49)
 			{
-				if (nPosCMathContent === intMathContent)
+				if (oCurrentElement.Content.length > 0)
 				{
-					for (let nRunPos = intRunContent; nRunPos < oCurrentElement.Content.length; nRunPos++)
+					if (intMathContent === nPosCMathContent && nPosCMathContent === nEndMathContent)
 					{
-						let oEl = oCurrentElement.Content[nRunPos];
-						oEl.GetTextOfElement(oMathTextAndStyles);
-						oCurrentElement.Remove_FromContent(nRunPos, 1, true);
-						nRunPos--;
+						let isContentAfter = (nEndRunContent - intRunContent) < oCurrentElement.Content.length
+							&& intRunContent === 0;
+
+						for (let nRunPos = intRunContent; nRunPos < nEndRunContent; nRunPos++)
+						{
+							let oEl = oCurrentElement.Content[nRunPos];
+							if (oEl)
+								oEl.GetTextOfElement(oMathTextAndStyles);
+						}
+
+						oCurrentElement.State.ContentPos -= nEndRunContent - intRunContent;
+						oCurrentElement.State.ContentPos = Math.max(0, oCurrentElement.State.ContentPos);
+						oCurrentElement.Remove_FromContent(intRunContent, nEndRunContent - intRunContent, false);
 
 						if (oCurrentElement.Content.length === 0)
 						{
 							oContent.Remove_FromContent(nPosCMathContent, 1);
 							nPosCMathContent--;
+							nEndMathContent--;
 						}
+
+						if (!isContentAfter && nEndRunContent - intRunContent > 1)
+						{
+							oCurrentElement.Split2(intRunContent, oContent, nPosCMathContent);
+							oContent.CurPos = nPosCMathContent + 1;
+							continue;
+						}
+
+						oContent.CurPos = nPosCMathContent;
+					}
+					else if (nPosCMathContent === nEndMathContent)
+					{
+						for (let nRunPos = 0; nRunPos < nEndRunContent; nRunPos++)
+						{
+							let oEl = oCurrentElement.Content[nRunPos];
+							if (oEl)
+								oEl.GetTextOfElement(oMathTextAndStyles);
+						}
+
+						oCurrentElement.State.ContentPos = oCurrentElement.Content - 1;
+						oCurrentElement.Remove_FromContent(0, nEndRunContent, false);
+						oContent.CurPos = oContent.Content.length;
+					}
+					else if (nPosCMathContent === intMathContent)
+					{
+						for (let nRunPos = intRunContent; nRunPos < oCurrentElement.Content.length; nRunPos++)
+						{
+							let oEl = oCurrentElement.Content[nRunPos];
+							if (oEl)
+								oEl.GetTextOfElement(oMathTextAndStyles);
+						}
+						oCurrentElement.Remove_FromContent(intRunContent, oCurrentElement.Content.length - intRunContent, false);
+
+						if (oCurrentElement.Content.length === 0)
+						{
+							oContent.Remove_FromContent(nPosCMathContent, 1);
+							nPosCMathContent--;
+							nEndMathContent--;
+						}
+					}
+					else
+					{
+						oCurrentElement.GetTextOfElement(oMathTextAndStyles);
+						oContent.Remove_FromContent(nPosCMathContent, 1);
+						nPosCMathContent--;
+						nEndMathContent--;
 					}
 				}
 				else
 				{
-					oCurrentElement.GetTextOfElement(oMathTextAndStyles);
 					oContent.Remove_FromContent(nPosCMathContent, 1);
 					nPosCMathContent--;
+					nEndMathContent--;
 				}
 			}
 			else
@@ -7194,17 +7641,21 @@
 				{
 					let oFirstPos	= oMath.Positions[0];
 					let oLastPos	= oMath.Positions[oMath.Positions.length - 1];
-					oMath.AddBefore(oFirstPos, new MathText("〖"));
-					oMath.AddAfter(oLastPos, new MathText("〗"));
+					oMath.AddBefore(oFirstPos, new MathText("〖", oContent));
+					oMath.AddAfter(oLastPos, new MathText("〗", oContent));
 				}
 
 				oContent.Remove_FromContent(nPosCMathContent, 1);
 				nPosCMathContent--;
+				nEndMathContent--;
 			}
 		}
 
+		if (isDelStartSpace)
+			oMathTextAndStyles.DelFirstSpace();
 		if (isDelLastSpace)
 			oMathTextAndStyles.DelLastSpace();
+
 		return oMathTextAndStyles;
 	}
 	/**
@@ -7247,9 +7698,9 @@
 
 			if (oMathAutoCorrection.arrFunctionsNames[strWord.trim()] === null)
 			{
-				let nTempRunCounter = oContentIterator._nParaRun;
-				let nTempRootIndex = oContentIterator._index;
-				let oLast = oContentIterator.NextCopy();
+				let nTempRunCounter		= oContentIterator._nParaRun;
+				let nTempRootIndex		= oContentIterator._index;
+				let oLast				= oContentIterator.NextCopy();
 
 				if (!oLast || GetTokenType(oLast, TokenSearch_Everything) !== 0)
 				{
@@ -7257,9 +7708,13 @@
 						nTempRootIndex + 1,
 						nTempRunCounter + 1,
 						undefined,
-						oContent
+						oContentIterator._paraRun
 					);
 				}
+			}
+			else if (strCurrentContent === " ")
+			{
+				strWord = "";
 			}
 		}
 
@@ -7285,7 +7740,7 @@
 		if (isOnlyContent && oPos.type !== MathLiterals.specialBrac.id)
 			oPos.IncreasePosition();
 
-		let strConvertContent	= CutContentFromEnd(oCMathContent, {oDelMark : oPos});
+		let strConvertContent	= CutContentFromEnd(oCMathContent, {oDelMark : oPos, oEndDelMark: GetEndCurPos(oPos)});
 		strConvertContent.DelLastSpace();
 
 		GetConvertContent(0, strConvertContent, oCMathContent);
@@ -7312,9 +7767,13 @@
 		this.position = [ MathPos, RunPos ];
 		this.ref = ref;
 
-		if (this.ref !== undefined && this.ref !== null && this.ref.length - 1 < RunPos)
+		if (this.ref
+			&& this.ref.Content !== undefined
+			&& this.ref.Content !== null
+			&& this.ref.Content.length - 1 < RunPos
+			&& this.ref.Content.length > 0)
 		{
-			this.position[1] = this.ref.length - 1;
+			this.position[1] = this.ref.Content.length - 1;
 		}
 
 		/**
@@ -7382,10 +7841,11 @@
 		 */
 		this.GetText = function()
 		{
-			if (!this.ref)
+			if (!this.ref || !this.ref.Content || this.ref.Content.length === 0)
 				return "";
 
-			let oCMathText = this.ref[this.GetPosition()];
+			let oCMathText = this.ref.Content[this.GetPosition()];
+
 			if (!oCMathText)
 				return "";
 			if (!oCMathText.value)
@@ -7408,6 +7868,23 @@
 				this.ref
 			);
 		};
+		this.IncreaseMathPos = function ()
+		{
+			if (!this.ref)
+				return false;
+
+			let CMathContent = this.ref.Parent;
+
+			if (CMathContent.Content.length > this.position[0] + 1)
+			{
+				this.position[0]++;
+				this.position[1] = 0;
+				this.ref = CMathContent.Content[this.position[0]];
+				return true;
+			}
+
+			return false;
+		}
 		/**
 		 * Increase ParaRun position by one, of need change CMathContent position
 		 * @return {boolean}
@@ -7417,15 +7894,9 @@
 			if (!this.ref)
 				return false;
 
-			if (!this.ref[0].Parent)
-			{
-				this.position[1]++;
-				return true;
-			}
-			let ParaRun = this.ref[0].Parent;
-			let CMathContent = ParaRun.Parent;
+			let CMathContent = this.ref.Parent;
 
-			if (this.position[1] + 1 > this.ref.length - 1)
+			if (this.GetPosition() > this.ref.Content.length)
 			{
 				if (CMathContent.Content.length - 1 < this.position[0] + 1)
 					return false;
@@ -7433,7 +7904,7 @@
 				this.position[0]++;
 				this.position[1] = 0
 
-				this.ref = CMathContent.Content[this.position[0]].Content;
+				this.ref = CMathContent.Content[this.position[0]];
 			}
 			else
 			{
@@ -7449,21 +7920,20 @@
 		 */
 		this.DecreasePosition = function()
 		{
-			if (!this.ref || this.ref.length === 0)
+			if (!this.ref)
 				return false;
 
 			if (this.position[0] === 0 && this.position[1] === 0)
 				return false;
 
-			if (!this.ref[0].Parent)
+			if (!this.ref.Parent)
 			{
 				this.position[1]--;
 				this.type = GetTokenType(this.GetText(), TokenSearch_Everything)
 				return true;
 			}
 
-			let ParaRun = this.ref[0].Parent;
-			let CMathContent = ParaRun.Parent;
+			let CMathContent = this.ref.Parent;
 			let arrContent = CMathContent.Content;
 
 			if (this.position[1] === 0)
@@ -7496,11 +7966,33 @@
 		};
 		this.IsRef = function ()
 		{
-			return this.ref && this.ref.length > 0
+			return this.ref && this.ref.Content.length > 0
 		}
 		this.IsSetPosition = function ()
 		{
 			return this.position[0] !== undefined && this.position[1] !== undefined
+		}
+		this.IncreasePositionToCurPos = function ()
+		{
+			if (this.ref)
+			{
+				if (this.ref.Parent && this.ref.Parent.CurPos !== this.GetMathPos())
+				{
+					let isNotBreak = true;
+					while (this.GetMathPos() < this.ref.Parent.CurPos && isNotBreak)
+					{
+						isNotBreak = this.IncreaseMathPos();
+					}
+				}
+
+				if (this.ref.State.ContentPos !== 0)
+				{
+					while (this.GetPosition() < this.ref.State.ContentPos)
+					{
+						this.IncreasePosition();
+					}
+				}
+			}
 		}
 
 		if (this.IsRef() && this.IsSetPosition() && type === undefined)
@@ -7624,26 +8116,32 @@
 
 		for (let nCount = 0; nCount < oCMathContent.Content.length; nCount++)
 		{
-			let oCMathElement = oCMathContent.Content[nCount];
-
-			if (oCMathElement.Type === 49 && oCMathElement.Content.length > 0)
+			if (nCount <= oCMathContent.CurPos)
 			{
-				for (let nParaCount = 0; nParaCount < oCMathElement.Content.length; nParaCount++)
+				let oCMathElement = oCMathContent.Content[nCount];
+
+				if (oCMathElement.Type === 49 && oCMathElement.Content.length > 0)
 				{
-					let oCurrentTextElement = oCMathElement.Content[nParaCount].value;
-					let strContent = String.fromCharCode(oCurrentTextElement);
-					let intType = GetTokenType(strContent, arrTypesForSearch);
-
-					if (false !== intType)
+					for (let nParaCount = 0; nParaCount < oCMathElement.Content.length; nParaCount++)
 					{
-						let oNewCMathPos = new PositionIsCMathContent(
-							nCount,
-							nParaCount,
-							intType,
-							oCMathElement.Content
-						);
+						if (nCount !== oCMathContent.CurPos || nParaCount < oCMathElement.State.ContentPos)
+						{
+							let oCurrentTextElement	= oCMathElement.Content[nParaCount].value;
+							let strContent			= String.fromCharCode(oCurrentTextElement);
+							let intType				= GetTokenType(strContent, arrTypesForSearch);
 
-						arrMathPositions.push(oNewCMathPos);
+							if (false !== intType)
+							{
+								let oNewCMathPos = new PositionIsCMathContent(
+									nCount,
+									nParaCount,
+									intType,
+									oCMathElement
+								);
+
+								arrMathPositions.push(oNewCMathPos);
+							}
+						}
 					}
 				}
 			}
@@ -7760,4 +8258,7 @@
 	window["AscMath"].oStandardFont					= oStandardFont;
 	window["AscMath"].GetTypeFont					= GetTypeFont;
 	window["AscMath"].ConvertWord					= ConvertWord;
+	window["AscMath"].SetIsAllowAutoCorrect			= SetIsAllowAutoCorrect;
+	window["AscMath"].GetIsAllowAutoCorrect			= GetIsAllowAutoCorrect;
+	window["AscMath"].MathMetaData					= MathMetaData;
 })(window);

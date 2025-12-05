@@ -79,24 +79,33 @@
      * @property  {string} Url - A link to the shared file (can be replaced with the *Script* parameter).
      * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControlPropertiesAndContent.js
 	 */
-
-    /**
-     * @typedef {Object} ContentControlProperties
-	 * The content control properties.
-     * @property {string} Id - A unique identifier of the content control. It can be used to search for a certain content control and make reference to it in the code.
-     * @property {string} Tag - A tag assigned to the content control. The same tag can be assigned to several content controls so that it is possible to make reference to them in the code.
-     * @property {ContentControlLock} Lock - A value that defines if it is possible to delete and/or edit the content control or not.
-     * @property {string} InternalId - A unique internal identifier of the content control.
-	 * @property {string} Alias - The alias attribute.
-	 * @property {string} PlaceHolderText - The content control placeholder text.
-     * @property {number} Appearance - Defines if the content control is shown as the bounding box (**1**) or not (**2**).
-     * @property {object} Color - The color for the current content control in the RGB format.
-     * @property {number} Color.R - Red color component value.
-     * @property {number} Color.G - Green color component value.
-     * @property {number} Color.B - Blue color component value.
-     * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControlProperties.js
+	
+	/**
+	 * @typedef {Object} Color
+	 * @property {number} Color.R - Red color component value.
+	 * @property {number} Color.G - Green color component value.
+	 * @property {number} Color.B - Blue color component value.
+	 * @property {number} Color.A - Alpha color component value.
 	 */
 	
+	/**
+	 * @typedef {Object} ContentControlProperties
+	 * The content control properties.
+	 * @property {string} Id - A unique identifier of the content control. It can be used to search for a certain content control and make reference to it in the code.
+	 * @property {string} Tag - A tag assigned to the content control. The same tag can be assigned to several content controls so that it is possible to make reference to them in the code.
+	 * @property {ContentControlLock} Lock - A value that defines if it is possible to delete and/or edit the content control or not.
+	 * @property {string} InternalId - A unique internal identifier of the content control.
+	 * @property {string} Alias - The alias attribute.
+	 * @property {string} PlaceHolderText - The content control placeholder text.
+	 * @property {number} Appearance - Defines if the content control is shown as the bounding box (**1**) or not (**2**).
+	 * @property {Color} Color - The color for the current content control in RGBA format.
+	 * @property {Object} Shd - The background shading properties.
+	 * @property {Color} Shd.Color - The shading color in RGBA format.
+	 * @property {Object} Border - The border properties.
+	 * @property {Color} Border.Color - The border color in RGBA format.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControlProperties.js
+	 */
+
 	/**
 	 * @typedef {('none' | 'comments' | 'forms' | 'readOnly')} DocumentEditingRestrictions
 	 * The document editing restrictions:
@@ -116,6 +125,14 @@
 	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/TextPartType.js
 	 */
 
+	/**
+	 * The content control list element.
+	 * @typedef {Object} ContentControlListElement
+	 * @property {string} Display - The element display text.
+	 * @property {string} Value - The element value.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControlListElement.js
+	 */
+
     var Api = window["asc_docs_api"];
 
     /**
@@ -127,7 +144,7 @@
      * @param {string[]} fields - A list of field values.
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/OpenFile.js
 	 */
-    window["asc_docs_api"].prototype["pluginMethod_OpenFile"] = function(binaryFile, fields)
+    Api.prototype["pluginMethod_OpenFile"] = function(binaryFile, fields)
     {
         this.asc_CloseFile();
 
@@ -147,7 +164,7 @@
      * @returns {string[]} - A list of field values.
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetFields.js
 	 */
-    window["asc_docs_api"].prototype["pluginMethod_GetFields"] = function()
+    Api.prototype["pluginMethod_GetFields"] = function()
     {
         return this.asc_GetBlockChainData();
     };
@@ -160,7 +177,7 @@
      * @return {ContentControlProperties[]} - An array of created content control properties.
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/InsertAndReplaceContentControls.js
 	 */
-    window["asc_docs_api"].prototype["pluginMethod_InsertAndReplaceContentControls"] = function(arrDocuments)
+    Api.prototype["pluginMethod_InsertAndReplaceContentControls"] = function(arrDocuments)
     {
         var _worker = new AscCommon.CContentControlPluginWorker(this, arrDocuments);
         return _worker.start();
@@ -173,7 +190,7 @@
      * @param {ContentControl[]} arrDocuments - An array of content control internal IDs. Example: [{"InternalId": "5_556"}].
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveContentControls.js
 	 */
-    window["asc_docs_api"].prototype["pluginMethod_RemoveContentControls"] = function(arrDocuments)
+    Api.prototype["pluginMethod_RemoveContentControls"] = function(arrDocuments)
     {
         var _worker = new AscCommon.CContentControlPluginWorker(this, arrDocuments);
         return _worker.delete();
@@ -186,7 +203,7 @@
      * @returns {ContentControl[]} - An array of content control objects.
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetAllContentControls.js
 	 */
-    window["asc_docs_api"].prototype["pluginMethod_GetAllContentControls"] = function()
+    Api.prototype["pluginMethod_GetAllContentControls"] = function()
     {
         var _blocks = this.WordControl.m_oLogicDocument.GetAllContentControls();
         var _ret = [];
@@ -194,7 +211,7 @@
         for (var i = 0; i < _blocks.length; i++)
         {
             _obj = _blocks[i].GetContentControlPr();
-            _ret.push({"Tag" : _obj.Tag, "Id" : _obj.Id, "Lock" : _obj.Lock, "InternalId" : _obj.InternalId});
+            _ret.push(_obj.GetEventObject());
         }
         return _ret;
     };
@@ -217,7 +234,7 @@
      * @returns {ContentControlParentPr} - An object which contains the following values: Parent - content control parent, Pos - content control position within the parent object, Count - a number of elements in the parent object.
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveContentControl.js
 	 */
-    window["asc_docs_api"].prototype["pluginMethod_RemoveContentControl"] = function(InternalId)
+    Api.prototype["pluginMethod_RemoveContentControl"] = function(InternalId)
     {
         return this.asc_RemoveContentControlWrapper(InternalId);
     };
@@ -229,7 +246,7 @@
      * @returns {string} - The content control internal ID.
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetCurrentContentControl.js
 	 */
-    window["asc_docs_api"].prototype["pluginMethod_GetCurrentContentControl"] = function()
+    Api.prototype["pluginMethod_GetCurrentContentControl"] = function()
     {
         return this.asc_GetCurrentContentControl();
     };
@@ -242,7 +259,7 @@
      * @returns {ContentControlProperties} - The content control properties.
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetCurrentContentControlPr.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_GetCurrentContentControlPr"] = function(contentFormat)
+	Api.prototype["pluginMethod_GetCurrentContentControlPr"] = function(contentFormat)
 	{
 		var oLogicDocument = this.private_GetLogicDocument();
 
@@ -257,26 +274,7 @@
 			prop.CC.SelectContentControl();
 		}
 
-		var result =
-		{
-			"Tag"        : prop.Tag,
-			"Id"         : prop.Id,
-			"Lock"       : prop.Lock,
-			"Alias"      : prop.Alias,
-			"InternalId" : prop.InternalId,
-			"Appearance" : prop.Appearance,
-		};
-		
-		if (prop.Color)
-		{
-			result["Color"] =
-			{
-				"R" : prop.Color.r,
-				"G" : prop.Color.g,
-				"B" : prop.Color.b
-			}
-		}
-
+		var result = prop.GetEventObject();
 		if (contentFormat)
 		{
 			var copy_data = {
@@ -309,7 +307,7 @@
      * @param {string} id - A unique internal identifier of the content control.
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SelectContentControl.js
 	 */
-    window["asc_docs_api"].prototype["pluginMethod_SelectContentControl"] = function(id)
+    Api.prototype["pluginMethod_SelectContentControl"] = function(id)
     {
         var oLogicDocument = this.private_GetLogicDocument();
         if (!oLogicDocument)
@@ -326,7 +324,7 @@
      * @param {boolean} [isBegin = false] - Defines if the cursor position changes in the content control. By default, a cursor will be placed to the content control begin (**false**).
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/MoveCursorToContentControl.js
 	 */
-    window["asc_docs_api"].prototype["pluginMethod_MoveCursorToContentControl"] = function(id, isBegin)
+    Api.prototype["pluginMethod_MoveCursorToContentControl"] = function(id, isBegin)
     {
         var oLogicDocument = this.private_GetLogicDocument();
         if (!oLogicDocument)
@@ -341,18 +339,21 @@
      * @alias RemoveSelectedContent
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveSelectedContent.js
 	 */
-    window["asc_docs_api"].prototype["pluginMethod_RemoveSelectedContent"] = function()
+    Api.prototype["pluginMethod_RemoveSelectedContent"] = function()
     {
-        var oLogicDocument = this.private_GetLogicDocument();
-        if (!oLogicDocument || !oLogicDocument.IsSelectionUse())
-            return;
-
-        if (false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Remove, null, true, oLogicDocument.IsFormFieldEditing()))
-        {
-            oLogicDocument.StartAction(AscDFH.historydescription_Document_BackSpaceButton);
-            oLogicDocument.Remove(-1, true);
-            oLogicDocument.FinalizeAction();
-        }
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || !logicDocument.IsSelectionUse())
+			return;
+		
+		this.executeGroupActions(function()
+		{
+			if (!logicDocument.IsSelectionLocked(AscCommon.changestype_Remove, null, true, logicDocument.IsFormFieldEditing()))
+			{
+				logicDocument.StartAction(AscDFH.historydescription_Document_BackSpaceButton);
+				logicDocument.Remove(-1, true);
+				logicDocument.FinalizeAction();
+			}
+		});
     };
 
 	/**
@@ -384,7 +385,7 @@
 	 * @return {string | null} - The comment ID in the string format or null if the comment cannot be added.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddComment.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_AddComment"] = function(oCommentData)
+	Api.prototype["pluginMethod_AddComment"] = function(oCommentData)
 	{
 		var oCD = undefined;
 		if (oCommentData)
@@ -404,7 +405,7 @@
      * @param {boolean} isMoveToMainContent - This flag ignores the current position and always moves a cursor to the beginning of the document body.
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/MoveCursorToStart.js
 	 */
-    window["asc_docs_api"].prototype["pluginMethod_MoveCursorToStart"] = function(isMoveToMainContent)
+    Api.prototype["pluginMethod_MoveCursorToStart"] = function(isMoveToMainContent)
     {
         var oLogicDocument = this.private_GetLogicDocument();
         if (oLogicDocument)
@@ -424,7 +425,7 @@
      * @param {boolean} isMoveToMainContent - This flag ignores the current position and always moves a cursor to the end of the document body.
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/MoveCursorToEnd.js
 	 */
-    window["asc_docs_api"].prototype["pluginMethod_MoveCursorToEnd"] = function(isMoveToMainContent)
+    Api.prototype["pluginMethod_MoveCursorToEnd"] = function(isMoveToMainContent)
     {
         var oLogicDocument = this.private_GetLogicDocument();
         if (oLogicDocument)
@@ -446,7 +447,7 @@
      * @param {boolean} [oProperties.matchCase=true] - Case sensitive or not.
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SearchAndReplace.js
 	 */
-    window["asc_docs_api"].prototype["pluginMethod_SearchAndReplace"] = function(oProperties)
+    Api.prototype["pluginMethod_SearchAndReplace"] = function(oProperties)
     {
         var sReplace    = oProperties["replaceString"];
 
@@ -472,7 +473,7 @@
 	 * @returns {boolean} returns false if text was not found
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SearchNext.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_SearchNext"] = function(oProperties, isForward)
+	Api.prototype["pluginMethod_SearchNext"] = function(oProperties, isForward)
 	{
 		let logicDocument = this.WordControl.m_oLogicDocument;
 		if (!logicDocument)
@@ -498,7 +499,7 @@
      * @return {string} - The HTML file content in the string format.
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetFileHTML.js
 	 */
-    window["asc_docs_api"].prototype["pluginMethod_GetFileHTML"] = function()
+    Api.prototype["pluginMethod_GetFileHTML"] = function()
     {
         return this.ContentToHTML(true);
     };
@@ -510,7 +511,7 @@
 	 * @returns {comment[]} - An array of comment objects containing the comment data.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetAllComments.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_GetAllComments"] = function()
+	Api.prototype["pluginMethod_GetAllComments"] = function()
 	{
 		var oLogicDocument = this.private_GetLogicDocument();
 		if (!oLogicDocument)
@@ -535,7 +536,7 @@
 	 * @alias RemoveComments
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveComments.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_RemoveComments"] = function(arrIds)
+	Api.prototype["pluginMethod_RemoveComments"] = function(arrIds)
 	{
 		this.asc_RemoveAllComments(false, false, arrIds);
 	};
@@ -548,7 +549,7 @@
 	 * @param {CommentData} oCommentData - An object which contains the new comment data.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ChangeComment.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_ChangeComment"] = function(sId, oCommentData)
+	Api.prototype["pluginMethod_ChangeComment"] = function(sId, oCommentData)
 	{
 		var oCD = undefined;
 		if (oCommentData)
@@ -579,7 +580,7 @@
 	 * @param {string} sId - The comment ID.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/MoveToComment.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_MoveToComment"] = function(sId)
+	Api.prototype["pluginMethod_MoveToComment"] = function(sId)
 	{
 		this.asc_selectComment(sId);
 		this.asc_showComment(sId);
@@ -596,7 +597,7 @@
 	 * <b>original</b> - all rejected changes are displayed.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SetDisplayModeInReview.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_SetDisplayModeInReview"] = function(sMode)
+	Api.prototype["pluginMethod_SetDisplayModeInReview"] = function(sMode)
 	{
 		var oLogicDocument = this.private_GetLogicDocument();
 		if (!oLogicDocument)
@@ -621,9 +622,9 @@
 	 * @returns {ContentControl} - A JSON object containing the data about the created content control.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddContentControl.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_AddContentControl"] = function(type, commonPr)
+	Api.prototype["pluginMethod_AddContentControl"] = function(type, commonPr)
 	{
-		var _content_control_pr = private_ReadContentControlCommonPr(commonPr);
+		var _content_control_pr = readContentControlCommonPr(new AscCommon.CContentControlPr(), commonPr);
 
 		var _obj = this.asc_AddContentControl(type, _content_control_pr);
 		if (!_obj)
@@ -649,7 +650,7 @@
 	 * @param {ContentControlProperties}  [commonPr = {}] - The common content control properties.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddContentControlCheckBox.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_AddContentControlCheckBox"] = function(checkBoxPr, commonPr)
+	Api.prototype["pluginMethod_AddContentControlCheckBox"] = function(checkBoxPr, commonPr)
 	{
 		var oPr;
 		if (checkBoxPr)
@@ -676,7 +677,7 @@
 	 * @param {ContentControlProperties}  [commonPr = {}] - The common content control properties.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddContentControlPicture.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_AddContentControlPicture"] = function(commonPr)
+	Api.prototype["pluginMethod_AddContentControlPicture"] = function(commonPr)
 	{
 		var _content_control_pr = private_ReadContentControlCommonPr(commonPr);
 
@@ -688,11 +689,11 @@
 	 * @typeofeditors ["CDE"]
 	 * @alias AddContentControlList
 	 * @param {ContentControlType} type - A numeric value that specifies the content control type. It can have one of the following values: <b>1</b> (combo box), <b>0</b> (dropdown list).
-	 * @param {Array<String, String>}  [List = [{Display, Value}]] - A list of the content control elements that consists of two items: <b>Display</b> - an item that will be displayed to the user in the content control list, <b>Value</b> - a value of each item from the content control list.
+	 * @param {ContentControlListElement[]}  [List] - A list of the content control elements that consists of two items: <b>Display</b> - an item that will be displayed to the user in the content control list, <b>Value</b> - a value of each item from the content control list.
 	 * @param {ContentControlProperties}  [commonPr = {}] - The common content control properties.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddContentControlList.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_AddContentControlList"] = function(type, List, commonPr)
+	Api.prototype["pluginMethod_AddContentControlList"] = function(type, List, commonPr)
 	{
 		var oPr;
 		if (List)
@@ -726,7 +727,7 @@
 	 * @param {ContentControlProperties}  [commonPr = {}] - The common content control properties.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddContentControlDatePicker.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_AddContentControlDatePicker"] = function(datePickerPr, commonPr)
+	Api.prototype["pluginMethod_AddContentControlDatePicker"] = function(datePickerPr, commonPr)
 	{
 		var oPr;
 		if (datePickerPr)
@@ -779,7 +780,7 @@
 	 * @since 7.1.0
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetAllOleObjects.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_GetAllOleObjects"] = function (sPluginId)
+	Api.prototype["pluginMethod_GetAllOleObjects"] = function (sPluginId)
 	{
 		let aDataObjects = [];
 		let oLogicDocument = this.private_GetLogicDocument();
@@ -802,7 +803,7 @@
 	 * @since 7.1.0
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveOleObject.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_RemoveOleObject"] = function (sInternalId)
+	Api.prototype["pluginMethod_RemoveOleObject"] = function (sInternalId)
 	{
 		let oLogicDocument = this.private_GetLogicDocument();
 		if(!oLogicDocument)
@@ -821,7 +822,7 @@
 	 * @since 7.1.0
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveOleObjects.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_RemoveOleObjects"] = function (arrObjects)
+	Api.prototype["pluginMethod_RemoveOleObjects"] = function (arrObjects)
 	{
 		let oLogicDocument = this.private_GetLogicDocument();
 		if(!oLogicDocument)
@@ -846,7 +847,7 @@
 	 * @since 7.1.0
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SelectOleObject.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_SelectOleObject"] = function(id)
+	Api.prototype["pluginMethod_SelectOleObject"] = function(id)
 	{
 		var oLogicDocument = this.private_GetLogicDocument();
 		if (!oLogicDocument)
@@ -870,7 +871,7 @@
 	 * @since 7.1.0
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/InsertOleObject.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_InsertOleObject"] = function(NewObject, bSelect)
+	Api.prototype["pluginMethod_InsertOleObject"] = function(NewObject, bSelect)
 	{
 		var oPluginData = {};
 		oPluginData["imgSrc"] = NewObject["ImageData"];
@@ -881,8 +882,7 @@
 		oPluginData["data"] = NewObject["Data"];
 		oPluginData["guid"] = NewObject["ApplicationId"];
 		oPluginData["select"] = bSelect;
-		oPluginData["plugin"] = true;
-		this.asc_addOleObject(oPluginData);
+		this.asc_addOleObject(oPluginData, true);
 	};
 
 
@@ -895,7 +895,7 @@
 	 * @since 7.1.0
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ChangeOleObject.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_ChangeOleObject"] = function(ObjectData)
+	Api.prototype["pluginMethod_ChangeOleObject"] = function(ObjectData)
 	{
 		this["pluginMethod_ChangeOleObjects"]([ObjectData]);
 	};
@@ -908,7 +908,7 @@
 	 * @since 7.1.0
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ChangeOleObjects.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_ChangeOleObjects"] = function(arrObjectData)
+	Api.prototype["pluginMethod_ChangeOleObjects"] = function(arrObjectData)
 	{
 		let oLogicDocument = this.private_GetLogicDocument();
 		if (!oLogicDocument)
@@ -1004,7 +1004,7 @@
 	 * @since 7.2.1
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AcceptReviewChanges.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_AcceptReviewChanges"] = function(isAll)
+	Api.prototype["pluginMethod_AcceptReviewChanges"] = function(isAll)
 	{
 		if (isAll)
 			this.asc_AcceptAllChanges();
@@ -1020,7 +1020,7 @@
 	 * @since 7.2.1
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RejectReviewChanges.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_RejectReviewChanges"] = function(isAll)
+	Api.prototype["pluginMethod_RejectReviewChanges"] = function(isAll)
 	{
 		if (isAll)
 			this.asc_RejectAllChanges();
@@ -1036,7 +1036,7 @@
 	 * @since 7.2.1
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/MoveToNextReviewChange.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_MoveToNextReviewChange"] = function(isForward)
+	Api.prototype["pluginMethod_MoveToNextReviewChange"] = function(isForward)
 	{
 		if (undefined !== isForward && !isForward)
 			this.asc_GetPrevRevisionsChange();
@@ -1052,7 +1052,7 @@
 	 * @since 7.3.3
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetAllAddinFields.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_GetAllAddinFields"] = function()
+	Api.prototype["pluginMethod_GetAllAddinFields"] = function()
 	{
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument)
@@ -1078,7 +1078,7 @@
 	 * @since 7.3.3
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/UpdateAddinFields.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_UpdateAddinFields"] = function(arrData)
+	Api.prototype["pluginMethod_UpdateAddinFields"] = function(arrData)
 	{
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument || !Array.isArray(arrData))
@@ -1101,7 +1101,7 @@
 	 * @since 7.3.3
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddAddinField.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_AddAddinField"] = function(data)
+	Api.prototype["pluginMethod_AddAddinField"] = function(data)
 	{
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument)
@@ -1118,7 +1118,7 @@
 	 * @since 7.3.3
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveFieldWrapper.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_RemoveFieldWrapper"] = function(fieldId)
+	Api.prototype["pluginMethod_RemoveFieldWrapper"] = function(fieldId)
 	{
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument)
@@ -1135,7 +1135,7 @@
 	 * @since 7.3.3
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SetEditingRestrictions.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_SetEditingRestrictions"] = function(restrictions)
+	Api.prototype["pluginMethod_SetEditingRestrictions"] = function(restrictions)
 	{
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument)
@@ -1165,7 +1165,7 @@
 	 * @since 7.4.0
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetCurrentWord.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_GetCurrentWord"] = function(type)
+	Api.prototype["pluginMethod_GetCurrentWord"] = function(type)
 	{
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument)
@@ -1183,7 +1183,7 @@
 	 * @since 7.4.0
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ReplaceCurrentWord.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_ReplaceCurrentWord"] = function(replaceString, type)
+	Api.prototype["pluginMethod_ReplaceCurrentWord"] = function(replaceString, type)
 	{
 		let _replaceString = "" === replaceString ? "" : AscBuilder.GetStringParameter(replaceString, null);
 
@@ -1203,7 +1203,7 @@
 	 * @since 7.4.0
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetCurrentSentence.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_GetCurrentSentence"] = function(type)
+	Api.prototype["pluginMethod_GetCurrentSentence"] = function(type)
 	{
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument)
@@ -1221,7 +1221,7 @@
 	 * @since 7.4.0
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ReplaceCurrentSentence.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_ReplaceCurrentSentence"] = function(replaceString, type)
+	Api.prototype["pluginMethod_ReplaceCurrentSentence"] = function(replaceString, type)
 	{
 		let _replaceString = "" === replaceString ? "" : AscBuilder.GetStringParameter(replaceString, null);
 		
@@ -1240,7 +1240,7 @@
 	 * @since 8.2.0
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/Undo.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_Undo"] = function()
+	Api.prototype["pluginMethod_Undo"] = function()
 	{
 		this.Undo();
 	};
@@ -1252,7 +1252,7 @@
 	 * @since 8.2.0
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/Redo.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_Redo"] = function()
+	Api.prototype["pluginMethod_Redo"] = function()
 	{
 		this.Redo();
 	};
@@ -1261,10 +1261,11 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias CanUndo
+	 * @returns {boolean}
 	 * @since 8.2.0
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/CanUndo.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_CanUndo"] = function()
+	Api.prototype["pluginMethod_CanUndo"] = function()
 	{
 		return this.asc_getCanUndo();
 	};
@@ -1273,37 +1274,141 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias CanRedo
+	 * @returns {boolean}
 	 * @since 8.2.0
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/CanRedo.js
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_CanRedo"] = function()
+	Api.prototype["pluginMethod_CanRedo"] = function()
 	{
 		return this.asc_getCanRedo();
+	};
+	/**
+	 * Returns the current bookmark.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias GetCurrentBookmark
+	 * @returns {string | null} - The current bookmarks name or null.
+	 * @since 9.0.3
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetCurrentBookmark.js
+	 */
+	Api.prototype["pluginMethod_GetCurrentBookmark"] = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return null;
+		
+		let bookmarks = logicDocument.GetBookmarksManager();
+		let para = logicDocument.GetCurrentParagraph();
+		let topDocument = para ? para.GetTopDocumentContent() : null;
+		let docPos = topDocument && topDocument.GetContentPosition ? topDocument.GetContentPosition(false) : null;
+		return bookmarks.GetBookmarkByDocPos(docPos);
+	};
+	/**
+	 * Annotate the specified paragraph.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias AnnotateParagraph
+	 * @param {Object} obj - The response object containing annotation data
+	 * @param {string} obj.type - The type of annotation operation (e.g., "highlightText")
+	 * @param {string} [obj.name] - Optional name of the annotation
+	 * @param {string} obj.paragraphId - ID of the paragraph being annotated (for highlightText type)
+	 * @param {string} obj.recalcId - Recalculation ID for validation (for highlightText type)
+	 * @param {Array<{start: number, length: number, id: string}>} [obj.ranges] - Array of text ranges to highlight (for highlightText type)
+	 * @param {number} obj.ranges[].start - Starting index of the text range
+	 * @param {number} obj.ranges[].length - Length of the text range
+	 * @param {string} obj.ranges[].id - Unique identifier for the range
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AnnotateParagraph.js
+	 */
+	Api.prototype["pluginMethod_AnnotateParagraph"] = function(obj)
+	{
+		if (!obj)
+			return;
+		
+		obj["guid"] = window.g_asc_plugins.getCurrentPluginGuid();
+		this.getTextAnnotatorEventManager().onResponse(obj);
+	};
+	/**
+	 * Selects a specific annotation range in the document.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias AnnotateParagraph
+	 * @param {Object} obj - The range selection object
+	 * @param {string} obj.paragraphId - ID of the paragraph containing the annotation
+	 * @param {string} obj.rangeId - ID of the specific range to select
+	 * @param {string} [obj.name] - Optional name/type of the annotation (e.g., "grammar", "spelling", etc.)
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SelectAnnotationRange.js
+	 */
+	Api.prototype["pluginMethod_SelectAnnotationRange"] = function(obj)
+	{
+		if (!obj)
+			return;
+		
+		obj["guid"] = window.g_asc_plugins.getCurrentPluginGuid();
+		this.getTextAnnotatorEventManager().selectRange(obj);
+	};
+	/**
+	 * Remove a specific annotation range from the document.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias RemoveAnnotationRange
+	 * @param {Object} obj - The range removing object
+	 * @param {string} obj.paragraphId - ID of the paragraph containing the annotation
+	 * @param {string} obj.rangeId - ID of the specific range to remove
+	 * @param {string} [obj.name] - Optional name/type of the annotation (e.g., "grammar", "spelling", etc.)
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveAnnotationRange.js
+	 */
+	Api.prototype["pluginMethod_RemoveAnnotationRange"] = function(obj)
+	{
+		if (!obj)
+			return;
+		
+		obj["guid"] = window.g_asc_plugins.getCurrentPluginGuid();
+		this.getTextAnnotatorEventManager().removeRange(obj);
 	};
 
 	function private_ReadContentControlCommonPr(commonPr)
 	{
-		var resultPr;
-		if (commonPr)
+		if (!commonPr)
+			return undefined;
+		return readContentControlCommonPr(new AscCommon.CContentControlPr(), commonPr);
+	}
+	function readContentControlCommonPr(ccPr, commonPr)
+	{
+		if (!ccPr || !commonPr)
+			return ccPr;
+
+		ccPr.Id    = commonPr["Id"];
+		ccPr.Tag   = commonPr["Tag"];
+		ccPr.Lock  = commonPr["Lock"];
+		ccPr.Alias = commonPr["Alias"];
+		
+		if (undefined !== commonPr["Appearance"])
+			ccPr.Appearance = commonPr["Appearance"];
+		
+		if (undefined !== commonPr["Color"])
+			ccPr.Color = new Asc.asc_CColor(commonPr["Color"]["R"], commonPr["Color"]["G"], commonPr["Color"]["B"]);
+		
+		if (undefined !== commonPr["PlaceHolderText"])
+			ccPr.SetPlaceholderText(commonPr["PlaceHolderText"]);
+		
+		let shd = commonPr["Shd"];
+		if (shd)
 		{
-			resultPr = new AscCommon.CContentControlPr();
-
-			resultPr.Id    = commonPr["Id"];
-			resultPr.Tag   = commonPr["Tag"];
-			resultPr.Lock  = commonPr["Lock"];
-			resultPr.Alias = commonPr["Alias"];
-
-			if (undefined !== commonPr["Appearance"])
-				resultPr.Appearance = commonPr["Appearance"];
-
-			if (undefined !== commonPr["Color"])
-				resultPr.Color = new Asc.asc_CColor(commonPr["Color"]["R"], commonPr["Color"]["G"], commonPr["Color"]["B"]);
-
-			if (undefined !== commonPr["PlaceHolderText"])
-				resultPr.SetPlaceholderText(commonPr["PlaceHolderText"]);
+			if (undefined !== shd["Color"])
+				ccPr.ShdColor = new Asc.asc_CColor(shd["Color"]["R"], shd["Color"]["G"], shd["Color"]["B"], shd["Color"]["A"]);
+		}
+		
+		let border = commonPr["Border"];
+		if (border)
+		{
+			if (undefined !== border["Color"])
+				ccPr.BorderColor = new Asc.asc_CColor(border["Color"]["R"], border["Color"]["G"], border["Color"]["B"], border["Color"]["A"]);
 		}
 
-		return resultPr;
+		return ccPr;
 	}
 	function private_GetTextDirection(type)
 	{
@@ -1323,6 +1428,69 @@
 		}
 		return direction;
 	}
+
+	/**
+	 * Insert streamed content.
+	 * @undocumented
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias InsertStreamedContent
+	 * @returns {undefined}
+	 * @since 9.2.0
+	 */
+	Api.prototype["pluginMethod_InsertStreamedContent"] = function(streamObj)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return null;
+
+		if (streamObj["word"] && streamObj["word"]["removeSelection"])
+			logicDocument.RemoveSelection();
+
+		if (streamObj["undo"])
+			this["pluginMethod_EndAction"]("GroupActions", "", "cancel");
+		
+		let _t = this;
+		function startSilentMode()
+		{
+			window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
+			
+			logicDocument.TurnOff_Recalculate();
+			logicDocument.TurnOff_InterfaceEvents();
+		}
+		
+		function endSilentMode()
+		{
+			logicDocument.TurnOn_Recalculate();
+			logicDocument.TurnOn_InterfaceEvents();
+			
+			logicDocument.Recalculate();
+			window.g_asc_plugins && window.g_asc_plugins.onPluginMethodReturn(true);
+		}
+		
+		function pasteTail()
+		{
+			if (streamObj["tail"] !== "")
+			{
+				_t["pluginMethod_StartAction"]("GroupActions");
+				_t._pluginMethod_PasteHtml(streamObj["tail"], endSilentMode);
+			}
+			else
+			{
+				endSilentMode();
+			}
+		}
+		
+		startSilentMode();
+		
+		if (streamObj["stable"] !== "")
+			this._pluginMethod_PasteHtml(streamObj["stable"], pasteTail);
+		else
+			pasteTail();
+	};
+
+	window["AscCommon"] = window["AscCommon"] || {};
+	window["AscCommon"].readContentControlCommonPr = readContentControlCommonPr;
 	
 })(window);
 

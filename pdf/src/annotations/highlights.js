@@ -36,9 +36,9 @@
 	 * Class representing a base highlight annotation.
 	 * @constructor
     */
-    function CAnnotationTextMarkup(sName, nType, nPage, aRect, oDoc)
+    function CAnnotationTextMarkup(sName, nType, aRect, oDoc)
     {
-        AscPDF.CAnnotationBase.call(this, sName, nType, nPage, aRect, oDoc);
+        AscPDF.CAnnotationBase.call(this, sName, nType, aRect, oDoc);
 
         this._quads         = [];
         this._richContents  = undefined;
@@ -47,6 +47,27 @@
     }
     CAnnotationTextMarkup.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
 	CAnnotationTextMarkup.prototype.constructor = CAnnotationTextMarkup;
+
+    CAnnotationTextMarkup.prototype.select = AscFormat.CGraphicObjectBase.prototype.select;
+    CAnnotationTextMarkup.prototype.deselect = AscFormat.CGraphicObjectBase.prototype.deselect;
+    CAnnotationTextMarkup.prototype.canChangeAdjustments = function() {};
+    CAnnotationTextMarkup.prototype.hitToHandles = function() {};
+    CAnnotationTextMarkup.prototype.hitInBoundingRect = function() {};
+    CAnnotationTextMarkup.prototype.getNoChangeAspect = function() {};
+    CAnnotationTextMarkup.prototype.getMainGroup = function() {};
+    CAnnotationTextMarkup.prototype.getObjectName = function() {};
+    CAnnotationTextMarkup.prototype.isShape = function() {};
+    CAnnotationTextMarkup.prototype.isImage = function() {};
+    CAnnotationTextMarkup.prototype.createMoveTrack = function() {};
+    CAnnotationTextMarkup.prototype.canMove = function() {
+        return false;
+    };
+    CAnnotationTextMarkup.prototype.canResize = function() {
+        return false;
+    };
+    CAnnotationTextMarkup.prototype.canRotate = function() {
+        return false;
+    };
 
     CAnnotationTextMarkup.prototype.IsTextMarkup = function() {
         return true;
@@ -236,7 +257,9 @@
         }
 
         let aUnitedRegion = this.GetUnitedRegion();
-        oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
+        if (aUnitedRegion) {
+            oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
+        }
     };
         
     /**
@@ -260,6 +283,7 @@
         for (let i = 0; i < aQuads.length; i++) {
             let aPoints     = aQuads[i];
             
+            oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
             oGraphicsPDF.SetStrokeStyle(oRGBFill.r, oRGBFill.g, oRGBFill.b);
             oGraphicsPDF.BeginPath();
 
@@ -319,7 +343,9 @@
         }
 
         let aUnitedRegion = this.GetUnitedRegion();
-        oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
+        if (aUnitedRegion) {
+            oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
+        }
     };
     
     /**
@@ -396,7 +422,9 @@
         }
 
         let aUnitedRegion = this.GetUnitedRegion();
-        oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
+        if (aUnitedRegion) {
+            oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
+        }
     };
 
     /**
@@ -411,76 +439,101 @@
     AscFormat.InitClass(CAnnotationSquiggly, CAnnotationTextMarkup, AscDFH.historyitem_type_Pdf_Annot_Squiggly);
 
     CAnnotationSquiggly.prototype.Draw = function(oGraphicsPDF) {
-        if (this.IsHidden() == true)
+        if (this.IsHidden())
             return;
-
-        let aQuads      = this.GetQuads();
-        let oRGBFill    = this.GetRGBColor(this.GetStrokeColor());
-        
+    
+        let aQuads   = this.GetQuads();
+        let oRGBFill = this.GetRGBColor(this.GetStrokeColor());
+    
         for (let i = 0; i < aQuads.length; i++) {
-            let aPoints     = aQuads[i];
+            let aPoints = aQuads[i];
             
+            oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
             oGraphicsPDF.SetStrokeStyle(oRGBFill.r, oRGBFill.g, oRGBFill.b);
-            oGraphicsPDF.BeginPath();
-
-            let oPoint1 = {
-                x: aPoints[0],
-                y: aPoints[1]
-            }
-            let oPoint2 = {
-                x: aPoints[2],
-                y: aPoints[3]
-            }
-            let oPoint3 = {
-                x: aPoints[4],
-                y: aPoints[5]
-            }
-            let oPoint4 = {
-                x: aPoints[6],
-                y: aPoints[7]
-            }
-
-            let X1 = oPoint3.x
-            let Y1 = oPoint3.y;
-            let X2 = oPoint4.x;
-            let Y2 = oPoint4.y;
-
+            
+            let oPoint1 = { x: aPoints[0], y: aPoints[1] };
+            let oPoint2 = { x: aPoints[2], y: aPoints[3] };
+            let oPoint3 = { x: aPoints[4], y: aPoints[5] };
+            let oPoint4 = { x: aPoints[6], y: aPoints[7] };
+    
+            let X1 = oPoint3.x, Y1 = oPoint3.y;
+            let X2 = oPoint4.x, Y2 = oPoint4.y;
+    
             let dx1 = oPoint2.x - oPoint1.x;
             let dy1 = oPoint2.y - oPoint1.y;
-            let dx2 = oPoint4.x - oPoint3.x;
-            let dy2 = oPoint4.y - oPoint3.y;
-            let angle1          = Math.atan2(dy1, dx1);
-            let angle2          = Math.atan2(dy2, dx2);
-            let rotationAngle   = angle1;
-
-            let nSide;
-            if (rotationAngle == 0 || rotationAngle == 3/2 * Math.PI) {
-                nSide = Math.abs(oPoint3.y - oPoint1.y);
-                oGraphicsPDF.SetLineWidth(Math.max(1, nSide * 0.1 >> 0));
-            }
-            else {
-                nSide = findMaxSideWithRotation(oPoint1.x, oPoint1.y, oPoint2.x, oPoint2.y, oPoint3.x, oPoint3.y, oPoint4.x, oPoint4.y);
-                oGraphicsPDF.SetLineWidth(Math.max(1, nSide * 0.1 >> 0));
-            }
-
-            let nLineW      = oGraphicsPDF.GetLineWidth();
-            let nIndentX    = Math.sin(rotationAngle) * nLineW * 1.5;
-            let nIndentY    = Math.cos(rotationAngle) * nLineW * 1.5;
-
-            if (rotationAngle == 0 || rotationAngle == 3/2 * Math.PI) {
-                oGraphicsPDF.HorLine(X1, X2, Y2 - nIndentY);
-            }
-            else {
-                oGraphicsPDF.MoveTo(X1 + nIndentX, Y1 - nIndentY);
-                oGraphicsPDF.LineTo(X2 + nIndentX, Y2 - nIndentY);
-            }
+            let angle1 = Math.atan2(dy1, dx1);
             
-            oGraphicsPDF.Stroke();
+            let nSide = (angle1 == 0 || angle1 == 3/2 * Math.PI) 
+                ? Math.abs(oPoint3.y - oPoint1.y) 
+                : findMaxSideWithRotation(oPoint1.x, oPoint1.y, oPoint2.x, oPoint2.y, oPoint3.x, oPoint3.y, oPoint4.x, oPoint4.y);
+    
+            oGraphicsPDF.SetLineWidth(Math.max(1, nSide * 0.05 >> 0));
+            let nLineW   = oGraphicsPDF.GetLineWidth();
+            let nIndentX = Math.sin(angle1) * nLineW * 1.5;
+            let nIndentY = Math.cos(angle1) * nLineW * 1.5;
+    
+            let startX = (angle1 == 0 || angle1 == 3/2 * Math.PI) ? X1 : X1 + nIndentX;
+            let startY = (angle1 == 0 || angle1 == 3/2 * Math.PI) ? Y1 : Y1 - nIndentY;
+            let endX   = (angle1 == 0 || angle1 == 3/2 * Math.PI) ? X2 : X2 + nIndentX;
+            let endY   = (angle1 == 0 || angle1 == 3/2 * Math.PI) ? Y2 : Y2 - nIndentY;
+    
+            drawZigZagLine(oGraphicsPDF, startX, startY, endX, endY, nLineW);
         }
-
+    
         let aUnitedRegion = this.GetUnitedRegion();
-        oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
+        if (aUnitedRegion) {
+            oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
+        }
     };
+    
+    function drawZigZagLine(oGraphicsPDF, X1, Y1, X2, Y2, nLineW) {
+        let length = Math.sqrt(Math.pow(X2 - X1, 2) + Math.pow(Y2 - Y1, 2));
+        // Параметры волны
+        let wavelength = 2;          // длина одного "зубчика"
+        let amplitude = nLineW * 1;  // высота волны
+        let dx = (X2 - X1) / length;
+        let dy = (Y2 - Y1) / length;
+        let nx = -dy;
+        let ny = dx;
+    
+        // Сколько сегментов поместится на всей длине?
+        // Один период (полный зубчик - вверх-вниз) занимает 2 сегмента по wavelength/2 каждый,
+        // но для простоты возьмём wavelength как полный период.
+        let segments = Math.floor(length / wavelength);
+    
+        oGraphicsPDF.BeginPath();
+        oGraphicsPDF.MoveTo(X1, Y1);
+    
+        for (let i = 1; i <= segments; i++) {
+            // Чередуем направление сдвига: вверх-амплитуда, вниз-амплитуда
+            let isUp = (i % 2 === 1); 
+            let dist = i * wavelength;
+    
+            let offset = isUp ? amplitude : -amplitude;
+    
+            oGraphicsPDF.LineTo(
+                X1 + dx * dist + nx * offset,
+                Y1 + dy * dist + ny * offset
+            );
+        }
+    
+        // Если длина не делится ровно на сегменты, дойдём до конца
+        let remainder = length - segments * wavelength;
+        if (remainder > 0) {
+            let lastDist = length;
+            // Последний сегмент: продолжаем паттерн
+            let isUp = (segments % 2 === 0); 
+            let offset = isUp ? amplitude : -amplitude;
+            // Пропорционально оставшейся длине уменьшим offset, чтобы плавно закончить
+            let ratio = remainder / wavelength;
+            oGraphicsPDF.LineTo(
+                X1 + dx * lastDist + nx * (offset * ratio),
+                Y1 + dy * lastDist + ny * (offset * ratio)
+            );
+        }
+    
+        oGraphicsPDF.Stroke();
+    }
 
     let CARET_SYMBOL = {
         None:       0,
@@ -510,6 +563,7 @@
         for (let i = 0; i < aQuads.length; i++) {
             let aPoints     = aQuads[i];
             
+            oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
             oGraphicsPDF.SetStrokeStyle(oRGBFill.r, oRGBFill.g, oRGBFill.b);
             oGraphicsPDF.BeginPath();
 
@@ -569,7 +623,9 @@
         }
 
         let aUnitedRegion = this.GetUnitedRegion();
-        oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
+        if (aUnitedRegion) {
+            oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
+        }
     };
     CAnnotationCaret.prototype.SetCaretSymbol = function(nType) {
         this._caretSymbol = nType;
@@ -601,6 +657,225 @@
             memory.annotFlags |= (1 << 16);
             memory.WriteByte(nCaretSymbol);
         }
+
+        let nEndPos = memory.GetCurPosition();
+        memory.Seek(memory.posForFlags);
+        memory.WriteLong(memory.annotFlags);
+        
+        memory.Seek(nStartPos);
+        memory.WriteLong(nEndPos - nStartPos);
+        memory.Seek(nEndPos);
+    };
+
+    /**
+	 * Class representing a reduct annotation.
+	 * @constructor
+    */
+    function CAnnotationRedact(sName, nPage, aRect, oDoc) {
+        CAnnotationTextMarkup.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Redact, nPage, aRect, oDoc);
+    }
+    CAnnotationRedact.prototype.constructor = CAnnotationRedact;
+    AscFormat.InitClass(CAnnotationRedact, CAnnotationTextMarkup, AscDFH.historyitem_type_Pdf_Annot_Redact);
+
+    CAnnotationRedact.prototype.Copy = function() {
+        let oCopy = AscPDF.CAnnotationBase.prototype.Copy.call(this);
+
+        oCopy.SetRedactId(this.GetRedactId());
+        return oCopy;
+    };
+    CAnnotationRedact.prototype.IsRedact = function() {
+        return true;
+    };
+    CAnnotationRedact.prototype.SetHovered = function(isHovered) {
+        if (this._hovered != isHovered) {
+            this.AddToRedraw();
+        }
+
+        this._hovered = isHovered;
+    };
+    CAnnotationRedact.prototype.IsHovered = function() {
+        return this._hovered;
+    };
+    CAnnotationRedact.prototype.SetRedactId = function(sRedactId) {
+        AscCommon.History.Add(new CChangesPDFRedactAnnotRedactId(this, this._redactId, sRedactId));
+        this._redactId = sRedactId;
+
+        this.AddToRedraw();
+    };
+    CAnnotationRedact.prototype.GetRedactId = function() {
+        return this._redactId;
+    };
+    CAnnotationRedact.prototype.IsHidden = function() {
+        return AscPDF.CAnnotationBase.prototype.IsHidden.call(this) || !!this.GetRedactId();
+    };
+    CAnnotationRedact.prototype.Draw = function(oGraphicsPDF) {
+        let oDoc = Asc.editor.getPDFDoc();
+        let oPageInfo = oDoc.GetPageInfo(this.GetPage());
+        
+        let isNeedDrawApplied = false;
+        if (this.GetRedactId() && (oPageInfo.IsRecognized() || undefined == oPageInfo.GetOriginIndex())) {
+            isNeedDrawApplied = true;
+        }
+        
+        if (this.IsHidden() == true && !isNeedDrawApplied)
+            return;
+
+        if (this.IsHovered() || isNeedDrawApplied) {
+            this._DrawHovered(oGraphicsPDF);
+        }
+        else {
+            this._DrawRect(oGraphicsPDF);
+        }
+    };
+    CAnnotationRedact.prototype._DrawHovered = function(oGraphicsPDF) {
+        let oRGBFill = this.GetRGBColor(this.GetFillColor());
+
+        let aQuads = this.GetQuads();
+        for (let i = 0; i < aQuads.length; i++) {
+            let aPoints = aQuads[i];
+
+            let oPoint1 = {
+                x: aPoints[0],
+                y: aPoints[1]
+            }
+            let oPoint2 = {
+                x: aPoints[2],
+                y: aPoints[3]
+            }
+            let oPoint3 = {
+                x: aPoints[4],
+                y: aPoints[5]
+            }
+            let oPoint4 = {
+                x: aPoints[6],
+                y: aPoints[7]
+            }
+
+            let dx = oPoint2.x - oPoint1.x;
+            let dy = oPoint2.y - oPoint1.y;
+            let angle1          = Math.atan2(dy, dx);
+            let rotationAngle   = angle1;
+
+            oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
+
+            oGraphicsPDF.BeginPath();
+            oGraphicsPDF.SetFillStyle(oRGBFill.r, oRGBFill.g, oRGBFill.b);
+
+            if (rotationAngle == 0 || rotationAngle == 3/2 * Math.PI) {
+                let aMinRect = getMinRect(aPoints);
+
+                oGraphicsPDF.SetIntegerGrid(true);
+                oGraphicsPDF.Rect(aMinRect[0], aMinRect[1], aMinRect[2] - aMinRect[0], aMinRect[3] - aMinRect[1], true);
+                oGraphicsPDF.SetIntegerGrid(false);
+            }
+            else {
+                oGraphicsPDF.MoveTo(oPoint1.x, oPoint1.y);
+                oGraphicsPDF.LineTo(oPoint2.x, oPoint2.y);
+                oGraphicsPDF.LineTo(oPoint4.x, oPoint4.y);
+                oGraphicsPDF.LineTo(oPoint3.x, oPoint3.y);
+                oGraphicsPDF.ClosePath();
+            }
+
+            oGraphicsPDF.Fill();
+        }
+
+        let aUnitedRegion = this.GetUnitedRegion();
+        if (aUnitedRegion) {
+            oGraphicsPDF.DrawLockObjectRect(this.Lock.Get_Type(), aUnitedRegion.regions);
+        }
+    };
+    CAnnotationRedact.prototype._DrawRect = function(oGraphicsPDF) {
+        let oRGBStroke = this.GetRGBColor(this.GetStrokeColor());
+
+        oGraphicsPDF.SetLineWidth(1);
+        oGraphicsPDF.SetGlobalAlpha(1);
+        oGraphicsPDF.SetStrokeStyle(oRGBStroke.r, oRGBStroke.g, oRGBStroke.b, 255);
+        oGraphicsPDF.BeginPath();
+
+        this.private_fillRegion(this.GetUnitedRegion(), oGraphicsPDF);
+        oGraphicsPDF.Stroke();
+    };
+    CAnnotationRedact.prototype.private_fillRegion = function(polygon, oGraphicsPDF) {
+        if (!polygon) {
+            return;
+        }
+
+        for (let i = 0, countPolygons = polygon.regions.length; i < countPolygons; i++)
+        {
+            let region = polygon.regions[i];
+            let countPoints = region.length;
+
+            if (2 > countPoints)
+                continue;
+
+            let X = region[0][0];
+            let Y = region[0][1];
+
+            oGraphicsPDF.MoveTo((X), (Y));
+
+            for (let j = 1, countPoints = region.length; j < countPoints; j++)
+            {
+                X = region[j][0];
+                Y = region[j][1];
+
+                oGraphicsPDF.LineTo((X), (Y));
+            }
+
+            oGraphicsPDF.ClosePath();
+        }
+    };
+    CAnnotationRedact.prototype.onMouseExit = function() {
+        this.SetHovered(false);
+    };
+    CAnnotationRedact.prototype.onMouseEnter = function() {
+        this.SetHovered(true);
+    };
+    CAnnotationRedact.prototype.WriteToBinary = function(memory) {
+        memory.WriteByte(AscCommon.CommandType.ctAnnotField);
+
+        let nStartPos = memory.GetCurPosition();
+        memory.Skip(4);
+
+        this.WriteToBinaryBase(memory);
+        this.WriteToBinaryBase2(memory);
+        
+        // quads
+        let aQuads = this.GetQuads();
+        if (aQuads != null) {
+            memory.annotFlags |= (1 << 15);
+            
+            let nLen = 0;
+            for (let i = 0; i < aQuads.length; i++) {
+                nLen += aQuads[i].length;
+            }
+            memory.WriteLong(nLen);  
+            for (let i = 0; i < aQuads.length; i++) {
+                for (let j = 0; j < aQuads[i].length; j++) {
+                    memory.WriteDouble(aQuads[i][j]);
+                }
+            }
+        }
+
+        // fill
+        let aFill = this.GetFillColor();
+        if (aFill != null) {
+            memory.annotFlags |= (1 << 16);
+            memory.WriteLong(aFill.length);
+            for (let i = 0; i < aFill.length; i++)
+                memory.WriteDouble(aFill[i]);
+        }
+
+        // overlay text
+        //
+        //
+
+        // alignment
+        //
+        //
+
+        // font style
+        //
+        //
 
         let nEndPos = memory.GetCurPosition();
         memory.Seek(memory.posForFlags);
@@ -649,6 +924,10 @@
 
     function fillRegion(polygon, overlay, pageIndex)
     {
+        if (!polygon) {
+            return;
+        }
+        
         let oCtx    = overlay.m_oContext;
         let oViewer = Asc.editor.getDocumentRenderer();
         let nScale  = oViewer.zoom * oViewer.getDrawingPageScale(pageIndex) * AscCommon.AscBrowser.retinaPixelRatio;
@@ -700,6 +979,7 @@
             oCtx.closePath();
         }
     }
+
     function getMinRect(aPoints) {
         let xMax = aPoints[0], yMax = aPoints[1], xMin = xMax, yMin = yMax;
         for(let i = 1; i < aPoints.length; i++) {
@@ -786,6 +1066,9 @@
     window["AscPDF"].CAnnotationStrikeout   = CAnnotationStrikeout;
     window["AscPDF"].CAnnotationSquiggly    = CAnnotationSquiggly;
     window["AscPDF"].CAnnotationCaret       = CAnnotationCaret;
+    window["AscPDF"].CAnnotationRedact      = CAnnotationRedact;
+    window["AscPDF"].fillRegion             = fillRegion;
     window["AscPDF"].IsInQuads              = IsInQuads;
+    
 })();
 

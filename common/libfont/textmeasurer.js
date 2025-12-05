@@ -176,7 +176,7 @@
 
 			AscFonts.InitGrapheme(AscCommon.FontNameMap.GetId(sFontName), nFontStyle);
 			AscFonts.AddGlyphToGrapheme(nGID, oGlyph.fAdvanceX * 64, 0, 0, 0);
-			return AscFonts.GetGrapheme();
+			return AscFonts.GetGrapheme(getSingleCodePointCalculator(codePoint));
 		},
 
 		SetTextPr : function(textPr, theme)
@@ -561,6 +561,36 @@
 			SrcItalic   : bSrcItalic
 		};
 	}
+	
+	let singleCodePointCalculator = null;
+	function getSingleCodePointCalculator(codePoint)
+	{
+		if (!singleCodePointCalculator)
+		{
+			function SingleCodePointsCalculator()
+			{
+				this.codePoint = 0;
+			}
+			SingleCodePointsCalculator.prototype.set = function(codePoint)
+			{
+				this.codePoint = codePoint;
+			}
+			SingleCodePointsCalculator.prototype.get = function()
+			{
+				return this.codePoint;
+			};
+			SingleCodePointsCalculator.prototype.getCount = function()
+			{
+				return 1;
+			};
+			
+			singleCodePointCalculator = new SingleCodePointsCalculator();
+		}
+		
+		singleCodePointCalculator.set(codePoint);
+		return singleCodePointCalculator;
+	}
+	
 
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};

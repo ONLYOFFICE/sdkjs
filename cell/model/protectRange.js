@@ -206,6 +206,9 @@
 	CUserProtectedRange.prototype.contains2 = function (oCell) {
 		return this.ref && this.ref.contains2(oCell);
 	};
+	CUserProtectedRange.prototype.contains = function (c, r) {
+		return this.ref && this.ref.contains(c, r);
+	};
 	CUserProtectedRange.prototype.isUserCanDoByType = function (userId, type) {
 		let res = false;
 

@@ -34,14 +34,70 @@
 (function(){
 
 	window.AscEmbed = window.AscEmbed || {};
-	function ScrollLocker(frame)
+
+	function GlobalScrollLocker()
 	{
-		this.frame  = frame;
+		this.frames = [];
 		this.x = window.scrollX;
 		this.y = window.scrollY;
 		this.lockCounter = 0;
 
-		document.addEventListener("scroll", this.onScroll.bind(this), false);
+		window.addEventListener("scroll", this.onScroll.bind(this), true);
+	}
+
+	GlobalScrollLocker.prototype.onScroll = function()
+	{
+		let isPrevent = false;
+
+		if (0 !== this.lockCounter)
+			isPrevent = true;
+
+		if (!isPrevent)
+		{
+			for (let i = 0, len = this.frames.length; i < len; i++)
+			{
+				if (document.activeElement === this.frames[i])
+				{
+					isPrevent = true;
+					this.lockWithTimeout(500);
+					break;
+				}
+			}
+		}
+
+		if (isPrevent)
+		{
+			window.scrollTo(this.x, this.y);
+			return;
+		}
+
+		this.x = window.scrollX;
+		this.y = window.scrollY;
+	};
+
+	GlobalScrollLocker.prototype.push = function(frame)
+	{
+		this.frames.push(frame);
+	};
+
+	GlobalScrollLocker.prototype.lockWithTimeout = function(interval)
+	{
+		this.lockCounter++;
+		var _t = this;
+		setTimeout(function(){
+			_t.lockCounter--;
+		}, interval);
+	};
+
+	function ScrollLocker(frame)
+	{
+		this.frame  = frame;
+
+		if (!window.AscEmbed.AscEmbedGlobalScroller)
+			window.AscEmbed.AscEmbedGlobalScroller = new GlobalScrollLocker();
+
+		window.AscEmbed.AscEmbedGlobalScroller.push(this.frame);
+
 		window.addEventListener("blur", this.onBlur.bind(this), false);
 
 		window.addEventListener("pointermove", this.onMove.bind(this), false);
@@ -51,22 +107,11 @@
 		this.frame.addEventListener("pointerleave", this.onLeave.bind(this), false);
 	}
 
-	ScrollLocker.prototype.onScroll = function()
-	{
-		if (document.activeElement === this.frame || (0 !== this.lockCounter))
-		{
-			window.scrollTo(this.x, this.y);
-			return;
-		}
-		this.x = window.scrollX;
-		this.y = window.scrollY;
-	};
-
 	ScrollLocker.prototype.onBlur = function()
 	{
 		if (document.activeElement === this.frame)
 		{
-			this.lockWithTimeout(500);
+			window.AscEmbed.AscEmbedGlobalScroller.lockWithTimeout(500);
 		}
 	};
 
@@ -76,7 +121,7 @@
 
 	ScrollLocker.prototype.onLeave = function()
 	{
-		this.lockWithTimeout(100);
+		window.AscEmbed.AscEmbedGlobalScroller.lockWithTimeout(100);
 		this.frame.blur();
 	};
 
@@ -84,18 +129,9 @@
 	{
 		if (document.activeElement === this.frame)
 		{
-			this.lockWithTimeout(100);
+			window.AscEmbed.AscEmbedGlobalScroller.lockWithTimeout(100);
 			this.frame.blur();
 		}
-	};
-
-	ScrollLocker.prototype.lockWithTimeout = function(interval)
-	{
-		this.lockCounter++;
-		var _t = this;
-		setTimeout(function(){
-			_t.lockCounter--;
-		}, interval);
 	};
 
 	window.AscEmbed.initWorker = function(frame)

@@ -247,16 +247,16 @@
             this.parent.OnContentReDraw();
         }
     };
-    CTextBody.prototype.Get_StartPage_Absolute = function() {
+    CTextBody.prototype.GetAbsoluteStartPage = function() {
         return 0;//TODO;
     };
-    CTextBody.prototype.Get_AbsolutePage = function(CurPage) {
-        if(this.parent && this.parent.Get_AbsolutePage) {
-            return this.parent.Get_AbsolutePage(CurPage);
+    CTextBody.prototype.GetAbsolutePage = function(CurPage) {
+        if(this.parent && this.parent.GetAbsolutePage) {
+            return this.parent.GetAbsolutePage(CurPage);
         }
         return 0;//TODO;
     };
-    CTextBody.prototype.Get_AbsoluteColumn = function(CurPage) {
+    CTextBody.prototype.GetAbsoluteColumn = function(CurPage) {
         return 0;//TODO;
     };
     CTextBody.prototype.Get_TextBackGroundColor = function() {
@@ -277,7 +277,10 @@
 
         return false;
     };
-    CTextBody.prototype.Get_PageContentStartPos = function(pageNum) {
+    CTextBody.prototype.GetPageContentFrame = function(page, sectPr){
+        return {X: 0, Y: 0, XLimit: this.contentWidth, YLimit: 20000};
+    };
+    CTextBody.prototype.GetColumnContentFrame = function(page, column, sectPr){
         return {X: 0, Y: 0, XLimit: this.contentWidth, YLimit: 20000};
     };
     CTextBody.prototype.Get_Numbering = function() {
@@ -337,8 +340,16 @@
         else if(this.content) {
             if(!graphics.isSupportTextDraw()) {
                 let bEmpty = this.content.IsEmpty();
-                let _w = bEmpty ? 0.1 : this.content.XLimit;
-                let _h = this.content.GetSummaryHeight();
+								let _w;
+								let _h;
+								if (this.parent && this.parent.isControl()) {
+									const oBounds = this.content.GetContentBounds(this.GetAbsoluteStartPage());
+									_w = bEmpty ? 0.1 : oBounds.Right - oBounds.Left;
+									_h = oBounds.Bottom - oBounds.Top;
+								} else {
+									_w = bEmpty ? 0.1 : this.content.XLimit;
+									_h = this.content.GetSummaryHeight();
+								}
                 graphics.rect(this.content.X, this.content.Y, _w, _h);
 				return;
             }
@@ -457,15 +468,19 @@
     };
     CTextBody.prototype.checkContentFit = function(sText) {
         var oContent = this.content;
-        if(!oContent.Is_Empty()) {
-            var oFirstPara = oContent.Content[0];
-            oFirstPara.Content = [oFirstPara.Content[oFirstPara.Content.length - 1]];
-        }
-        AscFormat.AddToContentFromString(oContent, sText);
+        this.replaceContentFitText(sText);
         AscFormat.CShape.prototype.recalculateContent.call(this.parent);
         var oFirstParagraph = oContent.Content[0];
         return oFirstParagraph.Lines.length === 1;
     };
+	CTextBody.prototype.replaceContentFitText = function (sText) {
+		var oContent = this.content;
+		if(!oContent.Is_Empty()) {
+			var oFirstPara = oContent.Content[0];
+			oFirstPara.Content = [oFirstPara.Content[oFirstPara.Content.length - 1]];
+		}
+		AscFormat.AddToContentFromString(oContent, sText);
+	};
     CTextBody.prototype.recalculateOneString = function(sText) {
         if(this.checkContentFit(sText)) {
             this.bFit = true;
@@ -602,6 +617,9 @@
     };
     CTextBody.prototype.getDrawingDocument = function() {
         return Asc.editor.getDrawingDocument();
+    };
+    CTextBody.prototype.GetParent = function() {
+        return this.parent;
     };
 
     function GetContentOneStringSizes(oContent) {

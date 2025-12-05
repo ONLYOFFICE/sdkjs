@@ -118,7 +118,7 @@
 	{
 		this.updateMarks();
 		
-		if (!this._isValidRange(rangeId) || this._isEmptyRange(rangeId))
+		if (!this._isValidRange(rangeId) || (this.logicDocument.CanEdit() && this._isEmptyRange(rangeId)))
 			this.removeRange(rangeId);
 	};
 	PermRangesManager.prototype.removeRange = function(rangeId)
@@ -151,7 +151,7 @@
 		let startPos = start.getPositionInDocument();
 		let endPos   = end.getPositionInDocument();
 		
-		if (!startPos || !endPos)
+		if (!startPos || !endPos || !AscWord.isInSameTopDocContent(startPos, endPos))
 			return false;
 		
 		return AscWord.CompareDocumentPositions(startPos, endPos) <= 0;
@@ -165,8 +165,13 @@
 		let startPos = this.ranges[rangeId].start.getPositionInDocument();
 		let endPos   = this.ranges[rangeId].end.getPositionInDocument();
 		
-		this.logicDocument.SetSelectionByContentPositions(startPos, endPos);
-		let result = this.logicDocument.IsSelectionEmpty();
+		let topDocument = this.ranges[rangeId].start.getParagraph().GetTopDocumentContent();
+		if (!topDocument)
+			return true;
+		
+		topDocument.SetSelectionByContentPositions(startPos, endPos);
+		let result = topDocument.IsSelectionEmpty();
+		topDocument.RemoveSelection();
 		
 		this.logicDocument.LoadDocumentState(state);
 		

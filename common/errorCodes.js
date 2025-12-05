@@ -103,6 +103,7 @@
 			FTRangeIncludedOtherTables       : -57,
 			ChangeFilteredRangeError         : -58,
 
+			CopyDisabled: -62,
 			CanNotPasteImage: -63,
 			PasteMaxRangeError   : -64,
 			PastInMergeAreaError : -65,
@@ -136,6 +137,7 @@
 			UserDrop : -100,
 			Warning  : -101,
 			UpdateVersion : -102,
+			ForcedViewMode : -103,
 
 			PrintMaxPagesCount : -110,
 
@@ -144,6 +146,7 @@
 			SessionToken: -122,
 
 			LockedCellGoalSeek          : -200,
+			LockedCellSolver			: -201,
 
 			/* для формул */
 			FrmlMaxReference            : -297,
@@ -260,7 +263,14 @@
 
 			MustIntegerOrDecimalNumber: 1070,
 
-			DocumentAndChangeMismatch: 1080
+			DocumentAndChangeMismatch: 1080,
+			EditProtectedRange       : 1081,
+
+			MacroUnavailableWarning: 1082,
+
+
+			// pdf forms
+			PDFFormsLocked: -1200
 		}
 	};
 
@@ -327,6 +337,7 @@
 	prot['PasteSlicerError']                 = prot.PasteSlicerError;
 	prot['MoveSlicerError']                  = prot.MoveSlicerError;
 	prot['PasteMultiSelectError']            = prot.PasteMultiSelectError;
+	prot['CopyDisabled']                     = prot.CopyDisabled;
 	prot['CanNotPasteImage']                 = prot.CanNotPasteImage;
 	prot['DataRangeError']                   = prot.DataRangeError;
 	prot['MustSingleCell']                   = prot.MustSingleCell;
@@ -438,6 +449,10 @@
 	prot['TracePrecedentsNoValidReference']  = prot.TracePrecedentsNoValidReference;
 	prot['MustIntegerOrDecimalNumber']       = prot.MustIntegerOrDecimalNumber;
 	prot['DocumentAndChangeMismatch']        = prot.DocumentAndChangeMismatch;
+	prot['EditProtectedRange']               = prot.EditProtectedRange;
+	prot['PDFFormsLocked']                   = prot.PDFFormsLocked;
+
+	prot['MacroUnavailableWarning']                   = prot.MacroUnavailableWarning;
 
 
 

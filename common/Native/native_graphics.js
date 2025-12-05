@@ -73,7 +73,11 @@ CNativeGraphics.prototype.create = function(nativecontrol, width_px, height_px, 
 {
     this.TextureFillTransformScaleX = width_mm  / (width_px  >> 0);
     this.TextureFillTransformScaleY = height_mm / (height_px >> 0);
-    this.Native["create"](nativecontrol, width_px, height_px, width_mm, height_mm);
+
+    let native_object = nativecontrol;
+    if (window["IS_NATIVE_EDITOR"])
+        native_object = window["native"]["GetResourcesForGraphics"]();
+    this.Native["create"](native_object, width_px, height_px, width_mm, height_mm);
 };
 CNativeGraphics.prototype.put_GlobalAlpha = function(enable, alpha)
 {
@@ -135,7 +139,6 @@ CNativeGraphics.prototype._m = function(x, y)
     x = isNaN(x) ? 0 : x;
     y = isNaN(y) ? 0 : y;
     this.Native["_m"](x, y);
-
     if (false === this.GetIntegerGrid() && this.ArrayPoints != null)
         this.ArrayPoints[this.ArrayPoints.length] = {x: x, y: y};
 };
@@ -144,7 +147,6 @@ CNativeGraphics.prototype._l = function(x, y)
     x = isNaN(x) ? 0 : x;
     y = isNaN(y) ? 0 : y;
     this.Native["_l"](x, y);
-
     if (false === this.GetIntegerGrid() && this.ArrayPoints != null)
         this.ArrayPoints[this.ArrayPoints.length] = {x: x, y: y};
 };
@@ -157,7 +159,6 @@ CNativeGraphics.prototype._c = function(x1, y1, x2, y2, x3, y3)
     x3 = isNaN(x3) ? 0 : x3;
     y3 = isNaN(y3) ? 0 : y3;
     this.Native["_c"](x1, y1, x2, y2, x3, y3);
-
     if (false === this.GetIntegerGrid() && this.ArrayPoints != null)
     {
         this.ArrayPoints[this.ArrayPoints.length] = {x: x1, y: y1};
@@ -172,7 +173,6 @@ CNativeGraphics.prototype._c2 = function(x1, y1, x2, y2)
     x2 = isNaN(x2) ? 0 : x2;
     y2 = isNaN(y2) ? 0 : y2;
     this.Native["_c2"](x1, y1, x2, y2);
-
     if (false === this.GetIntegerGrid() && this.ArrayPoints != null)
     {
         this.ArrayPoints[this.ArrayPoints.length] = {x: x1, y: y1};
@@ -389,7 +389,6 @@ CNativeGraphics.prototype.DrawSpellingLine = function(y0, x0, x1, w)
 CNativeGraphics.prototype.drawHorLine = function(align, y, x, r, penW)
 {
     this.Native["drawHorLine"](align, y, x, r, penW);
-
     if (false === this.GetIntegerGrid() && this.ArrayPoints != null)
     {
         this.ArrayPoints[this.ArrayPoints.length] = {x: x, y: y};
@@ -399,12 +398,10 @@ CNativeGraphics.prototype.drawHorLine = function(align, y, x, r, penW)
 CNativeGraphics.prototype.drawHorLine2 = function(align, y, x, r, penW)
 {
     this.Native["drawHorLine2"](align, y, x, r, penW);
-
     if (false === this.GetIntegerGrid() && this.ArrayPoints != null)
     {
         var _y1 = y - penW / 2;
         var _y2 = _y1 + 2 * penW;
-
         this.ArrayPoints[this.ArrayPoints.length] = {x: x, y: _y1};
         this.ArrayPoints[this.ArrayPoints.length] = {x: r, y: _y1};
         this.ArrayPoints[this.ArrayPoints.length] = {x: x, y: _y2};
@@ -414,7 +411,6 @@ CNativeGraphics.prototype.drawHorLine2 = function(align, y, x, r, penW)
 CNativeGraphics.prototype.drawVerLine = function(align, x, y, b, penW)
 {
     this.Native["drawVerLine"](align, x, y, b, penW);
-
     if (false === this.GetIntegerGrid() && this.ArrayPoints != null)
     {
         this.ArrayPoints[this.ArrayPoints.length] = {x: x, y: y};
@@ -425,7 +421,6 @@ CNativeGraphics.prototype.drawVerLine = function(align, x, y, b, penW)
 CNativeGraphics.prototype.drawHorLineExt = function(align, y, x, r, penW, leftMW, rightMW)
 {
     this.Native["drawHorLineExt"](align, y, x, r, penW, leftMW, rightMW);
-
     if (false === this.GetIntegerGrid() && this.ArrayPoints != null)
     {
         this.ArrayPoints[this.ArrayPoints.length] = {x: x, y: y};

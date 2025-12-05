@@ -60,9 +60,20 @@ QUnit.config.autostart = false;
 		QUnit.start();
 	});
 
+	function UpdateView()
+	{
+		wsView._cleanCache(new Asc.Range(0, 0, wsView.cols.length - 1, wsView.rows.length - 1));
+		wsView.changeWorksheet("update", {reinitRanges: true});
+	}
+
+	function GetCellCacheText(column, row)
+	{
+		return wsView._getCellTextCache(column, row).state.chars.map((e) => String.fromCharCode(e)).join('');
+	}
+
 	function GetParagraphText(paragraph)
 	{
-		return paragraph.GetText({ParaEndToSpace: false});
+		return paragraph.GetText({ParaSeparator : ""});
 	}
 
 	function ClearShapeAndAddParagraph(sText)
@@ -102,7 +113,7 @@ QUnit.config.autostart = false;
 	function AddChart()
 	{
 		ws.getRange4(0, 0).fillData([['1']]);
-		const props = editor.asc_getChartObject(Asc.c_oAscChartTypeSettings.lineNormal);
+		const props = editor.asc_getChartSettings(Asc.c_oAscChartTypeSettings.lineNormal);
 		props.left = 0;
 		props.top = 0;
 		props.width = 100;
@@ -497,90 +508,90 @@ QUnit.config.autostart = false;
 		EnterText('Hello Hello');
 		cellEditor.selectAll();
 
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.setStrikethrough);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Strikeout);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getStrikeout()), 'Check cell editor strikeout format');
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.setStrikethrough);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Strikeout);
 		assert.false(cellEditor._getFragments(0, 11).every((e) => e.format.getStrikeout()), 'Check cell editor strikeout format');
 
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.setBold);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Bold);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getBold()), 'Check cell editor bold format');
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.setBold);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Bold);
 		assert.false(cellEditor._getFragments(0, 11).every((e) => e.format.getBold()), 'Check cell editor bold format');
 
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.setItalic);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Italic);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getItalic()), 'Check cell editor italic format');
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.setItalic);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Italic);
 		assert.false(cellEditor._getFragments(0, 11).every((e) => e.format.getItalic()), 'Check cell editor italic format');
 
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.setUnderline);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Underline);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getUnderline() === Asc.EUnderline.underlineSingle), 'Check cell editor underline format');
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.setUnderline);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Underline);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getUnderline() === Asc.EUnderline.underlineNone), 'Check cell editor underline format');
 
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 11), "Check init font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 12), "Check increase font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 14), "Check increase font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 16), "Check increase font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 18), "Check increase font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 20), "Check increase font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 22), "Check increase font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 24), "Check increase font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 26), "Check increase font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 28), "Check increase font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 36), "Check increase font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 48), "Check increase font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 72), "Check increase font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 72), "Check increase font size");
 
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 48), "Check decrease font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 36), "Check decrease font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 28), "Check decrease font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 26), "Check decrease font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 24), "Check decrease font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 22), "Check decrease font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 20), "Check decrease font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 18), "Check decrease font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 16), "Check decrease font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 14), "Check decrease font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 12), "Check decrease font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 11), "Check decrease font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 10), "Check decrease font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 9), "Check decrease font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 8), "Check decrease font size");
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 8), "Check decrease font size");
 
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.increaseFontSize);
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.increaseFontSize);
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getSize() === 11), "Check initial value");
 	});
 
@@ -589,27 +600,27 @@ QUnit.config.autostart = false;
 		Select(0, 0, 0, 0, 0, 0);
 		OpenCellEditor();
 
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addTime);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CellInsertTime);
 		CloseCellEditor(true);
 		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getTimeString(editor), 'Check add time');
 		EnterText('');
 
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addDate);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CellInsertDate);
 		CloseCellEditor(true);
 		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getDateString(editor), 'Check add date');
 		EnterText('');
 
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addTime, 1);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CellInsertTime);
 		CloseCellEditor(true);
 		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getTimeString(editor), 'Check add time');
 		EnterText('');
 
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addDate, 1);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CellInsertDate);
 		CloseCellEditor(true);
 		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getDateString(editor), 'Check add date');
 		EnterText('');
 
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addSeparator);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CellAddSeparator);
 		CloseCellEditor(true);
 		assert.strictEqual(GetCellText(0, 0), '.', 'Check add separator');
 		EnterText('');
@@ -625,17 +636,19 @@ QUnit.config.autostart = false;
 	QUnit.test('Check disabling shortcuts', (assert) =>
 	{
 		OpenCellEditor();
-		assert.true(ExecuteCellEditorHotkey(cellEditorHotkeyTypes.disableScrollLock));
-		assert.true(ExecuteCellEditorHotkey(cellEditorHotkeyTypes.disableNumLock));
-		assert.true(ExecuteCellEditorHotkey(cellEditorHotkeyTypes.disableF2));
-		assert.true(ExecuteCellEditorHotkey(cellEditorHotkeyTypes.disablePrint));
+		assert.strictEqual(ExecuteCellEditorHotkey(cellEditorHotkeyTypes.disableScrollLock) & keydownresult_PreventDefault, keydownresult_PreventDefault);
+		assert.strictEqual(ExecuteCellEditorHotkey(cellEditorHotkeyTypes.disableNumLock) & keydownresult_PreventDefault, keydownresult_PreventDefault);
+		AscCommon.AscBrowser.isOpera = true;
+		assert.strictEqual(ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.EditOpenCellEditor) & keydownresult_PreventDefault, keydownresult_PreventDefault);
+		AscCommon.AscBrowser.isOpera = false;
+		assert.strictEqual(ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.PrintPreviewAndPrint) & keydownresult_PreventDefault, keydownresult_PreventDefault);
 	});
 
 	QUnit.test('Check select all', (assert) =>
 	{
 		Select(0, 0, 0, 0, 0, 0);
 		EnterText('Hello');
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectAll)
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.EditSelectAll);
 		assert.strictEqual(GetSelectedCellEditorText(), 'Hello', 'Check select all');
 	});
 
@@ -647,16 +660,16 @@ QUnit.config.autostart = false;
 		EnterText('l');
 		EnterText('l');
 		EnterText('o');
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.undo);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.EditUndo);
 		assert.strictEqual(GetCellEditorText(), 'Hell', 'Check undo');
 
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.undo);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.EditUndo);
 		assert.strictEqual(GetCellEditorText(), 'Hel', 'Check undo');
 
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.redo);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.EditRedo);
 		assert.strictEqual(GetCellEditorText(), 'Hell', 'Check redo');
 
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.redo);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.EditRedo);
 		assert.strictEqual(GetCellEditorText(), 'Hello', 'Check redo');
 	});
 	QUnit.test('Check switch reference of formula', (assert) =>
@@ -664,16 +677,16 @@ QUnit.config.autostart = false;
 		Select(0, 0, 0, 0, 0, 0);
 		EnterText('=F4');
 
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.switchReference);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CellEditorSwitchReference);
 		assert.strictEqual(GetCellEditorText(), '=$F$4', 'Check switch to absolute reference');
 
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.switchReference);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CellEditorSwitchReference);
 		assert.strictEqual(GetCellEditorText(), '=F$4', 'Check switch to absolute row');
 
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.switchReference);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CellEditorSwitchReference);
 		assert.strictEqual(GetCellEditorText(), '=$F4', 'Check switch to absolute column');
 
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.switchReference);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CellEditorSwitchReference);
 		assert.strictEqual(GetCellEditorText(), '=F4', 'Check switch to relative reference');
 	});
 
@@ -699,7 +712,7 @@ QUnit.config.autostart = false;
 			editor.asc_unregisterCallback(sSendEvent, Check);
 		}
 
-		ExecuteTestWithCatchEvent('asc_onPrint', () => true, true, tableEvents[tableHotkeyTypes.print][0]);
+		ExecuteTestWithCatchEvent('asc_onPrint', () => true, true, Asc.c_oAscSpreadsheetShortcutType.PrintPreviewAndPrint);
 		ExecuteTestWithCatchEvent('asc_onContextMenu', () => true, true, tableEvents[tableHotkeyTypes.contextMenu][0]);
 
 
@@ -880,7 +893,7 @@ QUnit.config.autostart = false;
 		SelectDrawings([drawing2]);
 
 		ExecuteGraphicHotkey(graphicHotkeyTypes.selectAllAfterEnter);
-		assert.strictEqual(GetDrawingObjects().GetSelectedText(), 'Hello', 'Check select non empty content');
+		assert.strictEqual(GetDrawingObjects().GetSelectedText(), 'Hello\r\n', 'Check select non empty content');
 
 		ExecuteGraphicHotkey(graphicHotkeyTypes.resetTextSelection);
 		assert.true(GetDrawingObjects().selectedObjects[0] === drawing2, 'Check reset text selection');
@@ -1041,12 +1054,12 @@ QUnit.config.autostart = false;
 		CheckSelectedText('Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello Hello World Hello Hello World Hello Hello World Hello World Hello World', 'Select to start content');
 
 		ExecuteGraphicHotkey(graphicHotkeyTypes.selectToEndDocument);
-		CheckSelectedText('', 'Select to end content');
+		CheckSelectedText('\r\n', 'Select to end content');
 
 		GetDrawingObjects().cursorMoveToStartPos();
 
 		ExecuteGraphicHotkey(graphicHotkeyTypes.selectToEndDocument);
-		CheckSelectedText('Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello Hello World Hello Hello World Hello Hello World Hello World Hello World', 'Select to end content');
+		CheckSelectedText('Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello Hello World Hello Hello World Hello Hello World Hello World Hello World\r\n', 'Select to end content');
 	});
 
 	QUnit.test('Check paragraph property change', (assert) =>
@@ -1054,28 +1067,28 @@ QUnit.config.autostart = false;
 		ClearShapeAndAddParagraph('Hello world');
 
 		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Left, "Check align left");
-		ExecuteGraphicHotkey(graphicHotkeyTypes.centerAlign);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CenterPara);
 		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Center, "Check turn on center para");
-		ExecuteGraphicHotkey(graphicHotkeyTypes.centerAlign);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CenterPara);
 		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Left, "Check turn on center para");
 
-		ExecuteGraphicHotkey(graphicHotkeyTypes.justifyAlign);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.JustifyPara);
 		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Justify, "Check turn on justify para");
-		ExecuteGraphicHotkey(graphicHotkeyTypes.justifyAlign);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.JustifyPara);
 		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Left, "Check turn on justify para");
-		ExecuteGraphicHotkey(graphicHotkeyTypes.justifyAlign);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.JustifyPara);
 		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Justify, "Check turn on justify para");
 
-		ExecuteGraphicHotkey(graphicHotkeyTypes.leftAlign);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.LeftPara);
 		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Left, "Check turn on left para");
-		ExecuteGraphicHotkey(graphicHotkeyTypes.leftAlign);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.LeftPara);
 		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Justify, "Check turn on left para");
-		ExecuteGraphicHotkey(graphicHotkeyTypes.leftAlign);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.LeftPara);
 		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Left, "Check turn on left para");
 
-		ExecuteGraphicHotkey(graphicHotkeyTypes.rightAlign);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.RightPara);
 		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Right, "Check turn on right para");
-		ExecuteGraphicHotkey(graphicHotkeyTypes.rightAlign);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.RightPara);
 		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Left, "Check turn on right para");
 	});
 
@@ -1084,75 +1097,75 @@ QUnit.config.autostart = false;
 		ClearShapeAndAddParagraph('Hello world');
 		GetDrawingObjects().selectAll();
 
-		ExecuteGraphicHotkey(graphicHotkeyTypes.bold);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Bold);
 		assert.strictEqual(GetDirectGraphicTextPr().GetBold(), true, 'Check turn on bold');
-		ExecuteGraphicHotkey(graphicHotkeyTypes.bold);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Bold);
 		assert.strictEqual(GetDirectGraphicTextPr().GetBold(), false, 'Check turn off bold');
 
-		ExecuteGraphicHotkey(graphicHotkeyTypes.italic);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Italic);
 		assert.strictEqual(GetDirectGraphicTextPr().GetItalic(), true, 'Check turn on italic');
-		ExecuteGraphicHotkey(graphicHotkeyTypes.italic);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Italic);
 		assert.strictEqual(GetDirectGraphicTextPr().GetItalic(), false, 'Check turn off italic');
 
-		ExecuteGraphicHotkey(graphicHotkeyTypes.underline);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Underline);
 		assert.strictEqual(GetDirectGraphicTextPr().GetUnderline(), true, 'Check turn on underline');
-		ExecuteGraphicHotkey(graphicHotkeyTypes.underline);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Underline);
 		assert.strictEqual(GetDirectGraphicTextPr().GetUnderline(), false, 'Check turn off underline');
 
-		ExecuteGraphicHotkey(graphicHotkeyTypes.superscript);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Superscript);
 		assert.strictEqual(GetDirectGraphicTextPr().GetVertAlign(), AscCommon.vertalign_SuperScript, 'Check turn on superscript');
-		ExecuteGraphicHotkey(graphicHotkeyTypes.superscript);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Superscript);
 		assert.strictEqual(GetDirectGraphicTextPr().GetVertAlign(), AscCommon.vertalign_Baseline, 'Check turn off superscript');
 
-		ExecuteGraphicHotkey(graphicHotkeyTypes.subscript);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Subscript);
 		assert.strictEqual(GetDirectGraphicTextPr().GetVertAlign(), AscCommon.vertalign_SubScript, 'Check turn on subscript');
-		ExecuteGraphicHotkey(graphicHotkeyTypes.subscript);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Subscript);
 		assert.strictEqual(GetDirectGraphicTextPr().GetVertAlign(), AscCommon.vertalign_Baseline, 'Check turn off subscript');
 
 		// defaultSize = 10
 		// 10 -> 11 -> 12 -> 14 -> 16 -> 14 -> 12 -> 11 -> 10
-		ExecuteGraphicHotkey(graphicHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetDirectGraphicTextPr().GetFontSize(), 11, 'Check increase font size');
-		ExecuteGraphicHotkey(graphicHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetDirectGraphicTextPr().GetFontSize(), 12, 'Check increase font size');
-		ExecuteGraphicHotkey(graphicHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetDirectGraphicTextPr().GetFontSize(), 14, 'Check increase font size');
-		ExecuteGraphicHotkey(graphicHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetDirectGraphicTextPr().GetFontSize(), 16, 'Check increase font size');
 
-		ExecuteGraphicHotkey(graphicHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetDirectGraphicTextPr().GetFontSize(), 14, 'Check decrease font size');
-		ExecuteGraphicHotkey(graphicHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetDirectGraphicTextPr().GetFontSize(), 12, 'Check decrease font size');
-		ExecuteGraphicHotkey(graphicHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetDirectGraphicTextPr().GetFontSize(), 11, 'Check decrease font size');
-		ExecuteGraphicHotkey(graphicHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetDirectGraphicTextPr().GetFontSize(), 10, 'Check decrease font size');
 	});
 
 	QUnit.test('Check add various characters', (assert) =>
 	{
 		const {paragraph} = ClearShapeAndAddParagraph('');
-		ExecuteGraphicHotkey(graphicHotkeyTypes.enDash);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.EnDash);
 		assert.strictEqual(GetParagraphText(paragraph), String.fromCharCode(0x2013), 'Check add en dash');
 
-		ExecuteGraphicHotkey(graphicHotkeyTypes.enDash, 1);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.EnDash);
 		assert.strictEqual(GetParagraphText(paragraph), String.fromCharCode(0x2013, 0x2013), 'Check add en dash');
 	});
 
 	QUnit.test('Check select all', (assert) =>
 	{
 		const {paragraph, shape} = ClearShapeAndAddParagraph('Hello');
-		ExecuteGraphicHotkey(graphicHotkeyTypes.selectAllContent);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.EditSelectAll);
 
 		assert.true(shape.txBody.content.IsSelectionUse(), 'Check content selection');
 		assert.true(paragraph.IsSelectedAll(), 'Check paragraph selection');
-		assert.strictEqual(GetDrawingObjects().GetSelectedText(), 'Hello', 'Check selected text');
+		assert.strictEqual(GetDrawingObjects().GetSelectedText(), 'Hello\r\n', 'Check selected text');
 
 		const drawing2 = AddShape();
 
 		SelectDrawings([shape]);
-		ExecuteGraphicHotkey(graphicHotkeyTypes.selectAllDrawings);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.EditSelectAll);
 		assert.strictEqual(GetDrawingObjects().selectedObjects.length, 2, 'Check amount of selected shapes');
 		assert.true(GetDrawingObjects().selectedObjects[0] === drawing2, 'Check selected shape');
 		assert.true(GetDrawingObjects().selectedObjects[1] === shape, 'Check selected shape');
@@ -1167,7 +1180,7 @@ QUnit.config.autostart = false;
 		controller.selection.chartSelection = chart;
 		chart.selectTitle(titles[0], 0);
 		ExecuteGraphicHotkey(graphicHotkeyTypes.selectAllTitleAfterEnter);
-		assert.strictEqual(GetDrawingObjects().GetSelectedText(), 'Diagram Title', 'Check select all content in chart title');
+		assert.strictEqual(GetDrawingObjects().GetSelectedText(), 'Diagram Title\r\n', 'Check select all content in chart title');
 	});
 
 	QUnit.test('Check add tab symbol', (assert) =>
@@ -1269,6 +1282,9 @@ QUnit.config.autostart = false;
 		wbView.handlers.add("asc_onValidationListMenu", ShowDataValidations);
 		Select(0, 0, 0, 0, 0, 0);
 		ExecuteTableHotkey(tableHotkeyTypes.showDataValidation);
+		assert.true(check);
+		check = false;
+		ExecuteTableHotkey(tableHotkeyTypes.showDataValidation, 1);
 		assert.true(check);
 		ws.deleteDataValidationById(props.Get_Id());
 		wbView.handlers.remove("asc_onValidationListMenu", ShowDataValidations);
@@ -1495,7 +1511,7 @@ QUnit.config.autostart = false;
 		CheckActiveRange(0, 0, AscCommon.gc_nMaxRow0, AscCommon.gc_nMaxCol0, 'Check select sheet');
 
 		Select(0, 0, 0, 0, 0, 0);
-		ExecuteTableHotkey(tableHotkeyTypes.selectSheet, 1);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.EditSelectAll);
 		CheckActiveRange(0, 0, AscCommon.gc_nMaxRow0, AscCommon.gc_nMaxCol0, 'Check select sheet');
 	});
 
@@ -1507,12 +1523,12 @@ QUnit.config.autostart = false;
 		Select(0, 0, 0, 0, 0, 0);
 		editor.asc_SelectionCut();
 		ExecuteTableHotkey(tableHotkeyTypes.reset);
-		assert.strictEqual(wsView.copyCutRange, null, 'Check resetting cut range');
+		assert.strictEqual(wsView.getCutRange(), null, 'Check resetting cut range');
 
 		Select(0, 0, 0, 0, 0, 0);
 		editor.asc_Copy();
 		ExecuteTableHotkey(tableHotkeyTypes.reset);
-		assert.strictEqual(wsView.copyCutRange, null, 'Check resetting copy range');
+		assert.strictEqual(wsView.getCutRange(), null, 'Check resetting copy range');
 	});
 
 
@@ -1542,23 +1558,23 @@ QUnit.config.autostart = false;
 	QUnit.test('Check actions with filling cell', (assert) =>
 	{
 		Select(0, 0, 0, 0, 0, 0);
-		ExecuteTableHotkey(tableHotkeyTypes.addDate);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CellInsertDate);
 		CloseCellEditor(true);
 		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getDateString(editor), 'Check add date');
 
-		ExecuteTableHotkey(tableHotkeyTypes.addTime);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CellInsertTime);
 		CloseCellEditor(true);
 		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getTimeString(editor), 'Check add time');
 
-		ExecuteTableHotkey(tableHotkeyTypes.addDate, 1);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CellInsertDate);
 		CloseCellEditor(true);
 		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getDateString(editor), 'Check add date');
 
-		ExecuteTableHotkey(tableHotkeyTypes.addTime, 1);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CellInsertTime);
 		CloseCellEditor(true);
 		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getTimeString(editor), 'Check add time');
-		
-		ExecuteTableHotkey(tableHotkeyTypes.addSeparator);
+
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CellAddSeparator);
 		CloseCellEditor(true);
 		assert.strictEqual(GetCellText(0, 0), '.', 'Check add separator');
 	});
@@ -1567,21 +1583,21 @@ QUnit.config.autostart = false;
 	{
 		Select(0, 0, 0, 0, 0, 0);
 		FillActiveCell('0.1');
-		ExecuteTableHotkey(tableHotkeyTypes.setExponentialFormat);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CellExponentialFormat);
 		assert.strictEqual(GetCellText(0, 0), '1.00E-01', 'set exponential format');
-		ExecuteTableHotkey(tableHotkeyTypes.setPercentFormat);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CellPercentFormat);
 		assert.strictEqual(GetCellText(0, 0), '10.00%', 'set percent format');
 
 		FillActiveCell('49990');
-		ExecuteTableHotkey(tableHotkeyTypes.setCurrencyFormat);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CellCurrencyFormat);
 		assert.strictEqual(GetCellText(0, 0), '$49,990.00', 'set currency format');
-		ExecuteTableHotkey(tableHotkeyTypes.setTimeFormat);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CellTimeFormat);
 		assert.strictEqual(GetCellText(0, 0), '12:00:00 AM', 'set time format');
-		ExecuteTableHotkey(tableHotkeyTypes.setDateFormat);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CellDateFormat);
 		assert.strictEqual(GetCellText(0, 0), '11/11/2036', 'set date format');
-		ExecuteTableHotkey(tableHotkeyTypes.setNumberFormat);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CellNumberFormat);
 		assert.strictEqual(GetCellText(0, 0), '49990.00', 'set number format');
-		ExecuteTableHotkey(tableHotkeyTypes.setGeneralFormat);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CellGeneralFormat);
 		assert.strictEqual(GetCellText(0, 0), '49990', 'set general format');
 
 		function GetCellFormatting(row, column)
@@ -1589,90 +1605,90 @@ QUnit.config.autostart = false;
 			return ws.getRange4(row, column).getXfs();
 		}
 
-		ExecuteTableHotkey(tableHotkeyTypes.setStrikethrough);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Strikeout);
 		assert.true(GetCellFormatting(0, 0).asc_getFontStrikeout(), 'Check turn on strikeout format');
-		ExecuteTableHotkey(tableHotkeyTypes.setStrikethrough);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Strikeout);
 		assert.false(GetCellFormatting(0, 0).asc_getFontStrikeout(), 'Check turn of strikeout format');
 
-		ExecuteTableHotkey(tableHotkeyTypes.setBold);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Bold);
 		assert.true(GetCellFormatting(0, 0).asc_getFontBold(), 'Check turn on bold format');
-		ExecuteTableHotkey(tableHotkeyTypes.setBold);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Bold);
 		assert.false(GetCellFormatting(0, 0).asc_getFontBold(), 'Check turn off bold format');
 
-		ExecuteTableHotkey(tableHotkeyTypes.setItalic);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Italic);
 		assert.true(GetCellFormatting(0, 0).asc_getFontItalic(), 'Check turn on italic format');
-		ExecuteTableHotkey(tableHotkeyTypes.setItalic);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Italic);
 		assert.false(GetCellFormatting(0, 0).asc_getFontItalic(), 'Check turn off italic format');
 
-		ExecuteTableHotkey(tableHotkeyTypes.setUnderline);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Underline);
 		assert.true(GetCellFormatting(0, 0).asc_getFontUnderline(), 'Check turn on underline format');
-		ExecuteTableHotkey(tableHotkeyTypes.setUnderline);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Underline);
 		assert.false(GetCellFormatting(0, 0).asc_getFontUnderline(), 'Check turn off underline format');
 
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 11, "Check init font size");
-		ExecuteTableHotkey(tableHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 12, "Check increase font size");
-		ExecuteTableHotkey(tableHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 14, "Check increase font size");
-		ExecuteTableHotkey(tableHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 16, "Check increase font size");
-		ExecuteTableHotkey(tableHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 18, "Check increase font size");
-		ExecuteTableHotkey(tableHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 20, "Check increase font size");
-		ExecuteTableHotkey(tableHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 22, "Check increase font size");
-		ExecuteTableHotkey(tableHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 24, "Check increase font size");
-		ExecuteTableHotkey(tableHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 26, "Check increase font size");
-		ExecuteTableHotkey(tableHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 28, "Check increase font size");
-		ExecuteTableHotkey(tableHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 36, "Check increase font size");
-		ExecuteTableHotkey(tableHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 48, "Check increase font size");
-		ExecuteTableHotkey(tableHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 72, "Check increase font size");
-		ExecuteTableHotkey(tableHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 72, "Check increase font size");
 
-		ExecuteTableHotkey(tableHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 48, "Check decrease font size");
-		ExecuteTableHotkey(tableHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 36, "Check decrease font size");
-		ExecuteTableHotkey(tableHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 28, "Check decrease font size");
-		ExecuteTableHotkey(tableHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 26, "Check decrease font size");
-		ExecuteTableHotkey(tableHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 24, "Check decrease font size");
-		ExecuteTableHotkey(tableHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 22, "Check decrease font size");
-		ExecuteTableHotkey(tableHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 20, "Check decrease font size");
-		ExecuteTableHotkey(tableHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 18, "Check decrease font size");
-		ExecuteTableHotkey(tableHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 16, "Check decrease font size");
-		ExecuteTableHotkey(tableHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 14, "Check decrease font size");
-		ExecuteTableHotkey(tableHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 12, "Check decrease font size");
-		ExecuteTableHotkey(tableHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 11, "Check decrease font size");
-		ExecuteTableHotkey(tableHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 10, "Check decrease font size");
-		ExecuteTableHotkey(tableHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 9, "Check decrease font size");
-		ExecuteTableHotkey(tableHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 8, "Check decrease font size");
-		ExecuteTableHotkey(tableHotkeyTypes.decreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 8, "Check decrease font size");
 
-		ExecuteTableHotkey(tableHotkeyTypes.increaseFontSize);
-		ExecuteTableHotkey(tableHotkeyTypes.increaseFontSize);
-		ExecuteTableHotkey(tableHotkeyTypes.increaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 11, "Check initial value");
 	});
 
@@ -1683,27 +1699,45 @@ QUnit.config.autostart = false;
 		CloseCellEditor(true);
 
 		assert.strictEqual(GetCellText(0, 0), '0.1', 'Check cell value');
-		ExecuteTableHotkey(tableHotkeyTypes.undo);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.EditUndo);
 		assert.strictEqual(GetCellText(0, 0), '', 'Check undo');
-		ExecuteTableHotkey(tableHotkeyTypes.redo);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.EditRedo);
 		assert.strictEqual(GetCellText(0, 0), '0.1', 'Check redo');
 	});
 
 	QUnit.test('Check focus on cell editor', (assert) =>
 	{
 		Select(0, 0, 0, 0, 0, 0);
-		ExecuteTableHotkey(tableHotkeyTypes.focusOnCellEditor);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.EditOpenCellEditor);
 		assert.true(wsView.getCellEditMode(), 'Check open cell editor');
+		assert.strictEqual(cellEditor.textRender.getLinesCount(), 1, "Check lines count");
+		CloseCellEditor();
+
+		ExecuteTableHotkey(tableHotkeyTypes.openCellEditor);
+		assert.true(wsView.getCellEditMode(), 'Check open cell editor');
+		assert.strictEqual(cellEditor.textRender.getLinesCount(), 1, "Check lines count");
+		CloseCellEditor();
+
+		ExecuteTableHotkey(tableHotkeyTypes.openCellEditor, 1);
+		assert.true(wsView.getCellEditMode(), 'Check open cell editor');
+		assert.strictEqual(cellEditor.textRender.getLinesCount(), 1, "Check lines count");
+		CloseCellEditor();
+	});
+	QUnit.test('Check show formulas shortcut', (assert) =>
+	{
+		Select(0, 0, 0, 0, 0, 0);
+		FillActiveCell("=sum(1+2)");
+		UpdateView();
+		assert.strictEqual(GetCellCacheText(0, 0), "3", "Check show value");
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.ShowFormulas);
+		assert.strictEqual(GetCellCacheText(0, 0), "=SUM(1+2)", "Check show formula");
 	});
 
 	QUnit.test('Check prevent default in Opera', (assert) =>
 	{
 		Select(0, 0, 0, 0, 0, 0);
-		let isPreventDefaulted = ExecuteTableHotkey(tableHotkeyTypes.disableNumLock);
-		assert.true(isPreventDefaulted);
-
-		isPreventDefaulted = ExecuteTableHotkey(tableHotkeyTypes.disableScrollLock);
-		assert.true(isPreventDefaulted);
+		assert.strictEqual(ExecuteTableHotkey(tableHotkeyTypes.disableNumLock) & keydownresult_PreventDefault, keydownresult_PreventDefault);
+		assert.strictEqual(ExecuteTableHotkey(tableHotkeyTypes.disableScrollLock) & keydownresult_PreventDefault, keydownresult_PreventDefault);
 	});
 
 	QUnit.test('Check add sum formula', (assert) =>
@@ -1712,30 +1746,12 @@ QUnit.config.autostart = false;
 		EnterText('1');
 		Select(0, 1, 0, 1, 0, 1);
 		EnterText('2');
-		
+
 		Select(7, 7, 7, 7, 7, 7);
-		ExecuteTableHotkey(tableHotkeyTypes.addSum);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.CellInsertSumFunction);
 		EnterText('A1,B1');
 		CloseCellEditor(true);
 		assert.strictEqual(GetCellText(7, 7), "3", 'Check sum result');
-
-		Select(8, 8, 8, 8, 8, 8);
-		ExecuteTableHotkey(tableHotkeyTypes.addSum, 1);
-		EnterText('A1,B1');
-		CloseCellEditor(true);
-		assert.strictEqual(GetCellText(8, 8), "3", 'Check sum result');
-
-		Select(9, 9, 9, 9, 9, 9);
-		ExecuteTableHotkey(tableHotkeyTypes.addSum, 2);
-		EnterText('A1,B1');
-		CloseCellEditor(true);
-		assert.strictEqual(GetCellText(9, 9), "3", 'Check sum result');
-
-		Select(10, 10, 10, 10, 10, 10);
-		ExecuteTableHotkey(tableHotkeyTypes.addSum, 3);
-		EnterText('A1,B1');
-		CloseCellEditor(true);
-		assert.strictEqual(GetCellText(10, 10), "3", 'Check sum result');
 	});
 
 	QUnit.test('Check move on worksheets', (assert) =>
@@ -1746,17 +1762,17 @@ QUnit.config.autostart = false;
 		assert.strictEqual(wb.getActive(), 0, 'Check select first sheet');
 		assert.true(wb.getWorksheet(0) === ws1, 'Check select first sheet');
 
-		ExecuteTableHotkey(tableHotkeyTypes.moveToNextSheet);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.NextWorksheet);
 		assert.strictEqual(wb.getActive(), 1, 'Check select second sheet');
 		assert.true(wb.getWorksheet(1) === ws2, 'Check select second sheet');
-		ExecuteTableHotkey(tableHotkeyTypes.moveToNextSheet);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.NextWorksheet);
 		assert.strictEqual(wb.getActive(), 2, 'Check select third sheet');
 		assert.true(wb.getWorksheet(2) === ws, 'Check select third sheet');
 
-		ExecuteTableHotkey(tableHotkeyTypes.goToPreviousSheet);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.PreviousWorksheet);
 		assert.strictEqual(wb.getActive(), 1, 'Check select second sheet');
 		assert.true(wb.getWorksheet(1) === ws2, 'Check select second sheet');
-		ExecuteTableHotkey(tableHotkeyTypes.goToPreviousSheet);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.PreviousWorksheet);
 		assert.strictEqual(wb.getActive(), 0, 'Check select first sheet');
 		assert.true(wb.getWorksheet(0) === ws1, 'Check select first sheet');
 
@@ -1793,7 +1809,7 @@ QUnit.config.autostart = false;
 		EnterText('4');
 
 		Select(1, 2, 1, 2, 1, 2);
-		ExecuteTableHotkey(tableHotkeyTypes.refreshSelectedConnections);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.RefreshSelectedPivots);
 		assert.strictEqual(GetCellText(1, 2), '5', 'Check refresh selected connections');
 
 		Select(1, 3, 1, 3, 1, 3);
@@ -1803,7 +1819,7 @@ QUnit.config.autostart = false;
 		EnterText('5');
 
 		Select(1, 2, 1, 2, 1, 2);
-		ExecuteTableHotkey(tableHotkeyTypes.refreshAllConnections);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.RefreshAllPivots);
 		assert.strictEqual(GetCellText(1, 2), '6', 'Check refresh all connections');
 
 		Select(1, 3, 1, 3, 1, 3);
@@ -1846,7 +1862,7 @@ QUnit.config.autostart = false;
 
 		assert.strictEqual(ws.getRange4(0, 2).getValueWithFormat(), '0', 'Check non calculating values');
 		assert.strictEqual(wsName.getRange4(0, 2).getValueWithFormat(), '0', 'Check non calculating values');
-		ExecuteTableHotkey(tableHotkeyTypes.calculateActiveSheet);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.RecalculateActiveSheet);
 		assert.strictEqual(ws.getRange4(0, 2).getValueWithFormat(), '0', 'Check non calculating value');
 		assert.strictEqual(wsName.getRange4(0, 2).getValueWithFormat(), '3', 'Check calculating value');
 
@@ -1855,7 +1871,7 @@ QUnit.config.autostart = false;
 			cell.setValueNumberInternal(0);
 		});
 
-		ExecuteTableHotkey(tableHotkeyTypes.calculateAll);
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.RecalculateAll);
 		assert.strictEqual(ws.getRange4(0, 2).getValueWithFormat(), '3', 'Check calculating value');
 		assert.strictEqual(wsName.getRange4(0, 2).getValueWithFormat(), '2', 'Check calculating value');
 		RemoveWorksheets([0]);

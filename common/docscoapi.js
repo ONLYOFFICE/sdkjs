@@ -50,7 +50,7 @@
     this._onlineWork = false;
   }
 
-  CDocsCoApi.prototype.init = function(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey, wopiSrc, userSessionId, openCmd) {
+  CDocsCoApi.prototype.init = function(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey, wopiSrc, userSessionId, headingsColor, openCmd) {
     if (this._CoAuthoringApi && this._CoAuthoringApi.isRightURL()) {
       var t = this;
       this._CoAuthoringApi.onAuthParticipantsChanged = function(e, id) {
@@ -58,9 +58,6 @@
       };
       this._CoAuthoringApi.onParticipantsChanged = function(e) {
         t.callback_OnParticipantsChanged(e);
-      };
-      this._CoAuthoringApi.onParticipantsChangedOrigin = function(e) {
-        t.callback_OnParticipantsChangedOrigin(e);
       };
       this._CoAuthoringApi.onMessage = function(e, clear) {
         t.callback_OnMessage(e, clear);
@@ -143,9 +140,15 @@
       };
       this._CoAuthoringApi.onLicenseChanged = function(res) {
         t.callback_OnLicenseChanged(res);
-	  };
+      };
+      this._CoAuthoringApi.onAiPluginSettings = function(res) {
+        t.callback_OnAiPluginSettings(res);
+      };
+      this._CoAuthoringApi.onMiscEvent = function(res) {
+        t.callback_OnMiscEvent(res);
+      };
 
-      this._CoAuthoringApi.init(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey, wopiSrc, userSessionId, openCmd);
+      this._CoAuthoringApi.init(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey, wopiSrc, userSessionId, headingsColor, openCmd);
       this._onlineWork = true;
     } else {
       // Фиктивные вызовы
@@ -203,12 +206,6 @@
   CDocsCoApi.prototype.openDocument = function(data) {
     if (this._CoAuthoringApi && this._onlineWork) {
       this._CoAuthoringApi.openDocument(data);
-    }
-  };
-
-  CDocsCoApi.prototype.sendRawData = function(data) {
-    if (this._CoAuthoringApi && this._onlineWork) {
-      this._CoAuthoringApi.sendRawData(data);
     }
   };
 
@@ -394,12 +391,6 @@
     }
   };
 
-  CDocsCoApi.prototype.callback_OnParticipantsChangedOrigin = function(e) {
-    if (this.onParticipantsChangedOrigin) {
-      this.onParticipantsChangedOrigin(e);
-    }
-  };
-
   CDocsCoApi.prototype.callback_OnMessage = function(e, clear) {
     if (this.onMessage) {
       this.onMessage(e, clear);
@@ -558,6 +549,16 @@
       this.onLicenseChanged(res);
     }
   };
+  CDocsCoApi.prototype.callback_OnAiPluginSettings = function(res) {
+    if (this.onAiPluginSettings) {
+      this.onAiPluginSettings(res);
+    }
+  };
+  CDocsCoApi.prototype.callback_OnMiscEvent = function(res) {
+    if (this.onMiscEvent) {
+      this.onMiscEvent(res);
+    }
+  };
 
   function LockBufferElement(arrayBlockId, callback) {
     this._arrayBlockId = arrayBlockId ? arrayBlockId.slice() : null;
@@ -651,6 +652,7 @@
     this.encrypted = undefined;
     this.IsAnonymousUser = undefined;
     this.coEditingMode = undefined;
+    this.headingsColor = undefined;
     this._isReSaveAfterAuth = false;	// Флаг для сохранения после повторной авторизации (для разрыва соединения во время сохранения)
     this._lockBuffer = [];
     this._saveChangesChunks = [];
@@ -953,13 +955,12 @@
       callback(isTimeout, response);
     }
   };
+  DocsCoApi.prototype._onUpdateVersion = function() {
+    this._send({'type': 'updateVersion'});
+  };
 
   DocsCoApi.prototype.openDocument = function(data) {
     this._send({"type": "openDocument", "message": data});
-  };
-
-  DocsCoApi.prototype.sendRawData = function(data) {
-    this._sendRaw(data);
   };
 
   DocsCoApi.prototype.getMessages = function() {
@@ -990,7 +991,8 @@
   };
   DocsCoApi.prototype._sendPrebuffered = function() {
     for (var i = 0; i < this._msgBuffer.length; i++) {
-      this._sendRaw(this._msgBuffer[i]);
+      console.log(this._msgBuffer[i]);
+      this.socketio.emit("message", this._msgBuffer[i]);
     }
     this._msgBuffer = [];
   };
@@ -1000,16 +1002,6 @@
       return AscCommon.EncryptionWorker.sendChanges(this, data, AscCommon.EncryptionMessageType.Encrypt);
 
     if (data !== null && typeof data === "object") {
-      if (this._state > 0) {
-        this.socketio.emit("message", data);
-      } else {
-        this._msgBuffer.push(JSON.stringify(data));
-      }
-    }
-  };
-
-  DocsCoApi.prototype._sendRaw = function(data) {
-    if (data !== null && typeof data === "string") {
       if (this._state > 0) {
         this.socketio.emit("message", data);
       } else {
@@ -1091,7 +1083,7 @@
         } else if (code === c_oAscServerCommandErrors.NotModified) {
             this.onForceSave({type: c_oAscForceSaveTypes.Button, refuse: true});
 		} else {
-			this.onWarning(Asc.c_oAscError.ID.Unknown);
+			this.onWarning(AscCommon.c_oAscServerError.Unknown);
 		}
 	};
 	DocsCoApi.prototype._onForceSave = function(data) {
@@ -1433,7 +1425,6 @@
       if (this.onAuthParticipantsChanged) {
         this.onAuthParticipantsChanged(this._participants, this._userId);
       }
-      this.onParticipantsChangedOrigin(participants);
 
       // Посылаем эвент о совместном редактировании
       if (1 < this._countEditUsers) {
@@ -1464,8 +1455,6 @@
     if (this.onConnectionStateChanged && (!this._participantsTimestamp || this._participantsTimestamp <= data['participantsTimestamp'])) {
       this._participantsTimestamp = data['participantsTimestamp'];
       usersStateChanged = this._onParticipantsChanged(data['participants'], true);
-
-      this.onParticipantsChangedOrigin(data['participants']);
 
       if (isWaitAuth && !(usersStateChanged.length > 0 && 1 < this._countEditUsers)) {
         var errorMsg = 'Error: connection state changed waitAuth' +
@@ -1504,13 +1493,16 @@
   };
 
   DocsCoApi.prototype._onWarning = function(data) {
-    this.onWarning(Asc.c_oAscError.ID.Warning);
+    this.onWarning(data.code);
   };
 
   DocsCoApi.prototype._onLicense = function(data) {
     if (!this.isLicenseInit) {
       this.isLicenseInit = true;
       this.onLicense(data['license']);
+      if (this.onAiPluginSettings) {
+        this.onAiPluginSettings(data['aiPluginSettings']);
+      }
     }
   };
 
@@ -1642,7 +1634,7 @@
     this._authOtherChanges = [];
   };
 
-  DocsCoApi.prototype.init = function(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey, wopiSrc, userSessionId, openCmd) {
+  DocsCoApi.prototype.init = function(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey, wopiSrc, userSessionId, headingsColor, openCmd) {
     this._user = user;
     this._docid = null;
     this._documentCallbackUrl = documentCallbackUrl;
@@ -1666,6 +1658,7 @@
     this.shardKey = shardKey;
     this.wopiSrc = wopiSrc;
     this.userSessionId = userSessionId;
+    this.headingsColor = headingsColor;
 
     this.setDocId(docid);
     this._initSocksJs();
@@ -1718,6 +1711,7 @@
       'encrypted': this.encrypted,
       'IsAnonymousUser': this.IsAnonymousUser,
       'timezoneOffset': (new Date()).getTimezoneOffset(),
+      'headingsColor': this.headingsColor,
       'coEditingMode': this.coEditingMode,
       'jwtOpen': this.jwtOpen,
       'jwtSession': this.jwtSession,
@@ -1837,9 +1831,9 @@
         }
       });
       socket.io.on("reconnect_failed", function () {
-        //cases: connection restore, wrong socketio_url
+        //Fired when couldn't reconnect within reconnectionAttempts.
         t._onServerClose(true);
-        t.onDisconnect("reconnect_failed", c_oCloseCode.restore);
+        t.onDisconnect("reconnect_failed", c_oCloseCode.reconnectFailed);
       });
       socket.on("message", function (data) {
         t._onServerMessage(data);
@@ -1930,6 +1924,9 @@
 				break;
 			case 'rpc' :
 				this._onPRC(dataObject["responseKey"], false, dataObject["data"]);
+				break;
+			case 'updateVersion' :
+				this.onMiscEvent(dataObject);
 				break;
 		}
 	};

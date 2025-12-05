@@ -739,6 +739,29 @@ ParaMath.prototype.Add = function(Item)
 		NewElement.add(32);
 		Run.Add(NewElement, true);
 	}
+	else if (Item instanceof AscWord.ParaMath)
+	{
+		let contentPos = new AscWord.CParagraphContentPos();
+		
+		if (this.bSelectionUse)
+			this.Get_ParaContentPos(true, true, contentPos);
+		else
+			this.Get_ParaContentPos(false, false, contentPos);
+		
+		let rightRun = Run.Split2(Run.State.ContentPos);
+		
+		let pos = StartPos + 1;
+		for (let i = 0; i < Item.Root.Content.length; ++i, ++pos)
+		{
+			oContent.Internal_Content_Add(pos, Item.Root.Content[i], false);
+		}
+		
+		oContent.Internal_Content_Add(pos, rightRun, false);
+		oContent.CurPos = pos;
+		rightRun.MoveCursorToStartPos();
+		
+		oContent.Correct_ContentCurPos();
+	}
 	else if (para_Math === Type)
 	{
 		var ContentPos = new AscWord.CParagraphContentPos();
@@ -849,7 +872,7 @@ ParaMath.prototype.Get_AlignToLine = function(_CurLine, _CurRange, _Page, _X, _X
         XEnd   = _XLimit;
     }
 
-    var Page = this.Paragraph == null ? 0 : this.Paragraph.Get_AbsolutePage(_Page);
+    var Page = this.Paragraph == null ? 0 : this.Paragraph.GetAbsolutePage(_Page);
     var LineState = this.PageInfo.Get_LineState(_CurLine, Page);
     var StyleLine = LineState.StyleLine,
         WidthLine = LineState.Width,
@@ -1211,13 +1234,19 @@ ParaMath.prototype.Get_Layout = function(DrawingLayout, UseContentPos, ContentPo
 
 ParaMath.prototype.GetNextRunElements = function(oRunElements, isUseContentPos, nDepth)
 {
+	if (oRunElements.IsBreakOnMath())
+		return oRunElements.Stop();
+	
 	if (oRunElements.IsSkipMath())
 		return;
-
+	
 	this.Root.GetNextRunElements(oRunElements, isUseContentPos, nDepth);
 };
 ParaMath.prototype.GetPrevRunElements = function(oRunElements, isUseContentPos, nDepth)
 {
+	if (oRunElements.IsBreakOnMath())
+		return oRunElements.Stop();
+	
 	if (oRunElements.IsSkipMath())
 		return;
 
@@ -1363,7 +1392,7 @@ ParaMath.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
     var Para         = PRS.Paragraph;
     var ParaLine     = PRS.Line;
     var ParaRange    = PRS.Range;
-    var Page         = this.Paragraph == null ? 0 : this.Paragraph.Get_AbsolutePage(PRS.Page);
+    var Page         = this.Paragraph == null ? 0 : this.Paragraph.GetAbsolutePage(PRS.Page);
     var RelativePage = PRS.Page;
 
     var bStartRange  = this.Root.IsStartRange(ParaLine, ParaRange);
@@ -1530,6 +1559,18 @@ ParaMath.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 		{
 			// на случай когда у нас несколько неинлайновых формул в одном параграфе
 			PRS.SetMathRecalcInfoObject(null);
+			
+			// TODO: Вообще инлайновая формула должна вести себя как буква на строке, т.е. идти как часть слова, но
+			//       пока будем считать, что на ней всегда заканчивается слово
+			
+			PRS.X += PRS.WordLen + PRS.SpaceLen;
+			
+			PRS.Word            = false;
+			PRS.FirstItemOnLine = false;
+			PRS.EmptyLine       = false;
+			PRS.TextOnLine      = true;
+			PRS.SpaceLen        = 0;
+			PRS.WordLen         = 0;
 		}
 	}
 	else
@@ -1833,7 +1874,7 @@ ParaMath.prototype.private_UpdateXLimits = function(PRS)
     var MathSettings = Get_WordDocumentDefaultMathSettings();
     var WrapState = this.PageInfo.Get_CurrentWrapState();
 
-    var Page = this.Paragraph == null ? 0 : this.Paragraph.Get_AbsolutePage(PRS.Page);
+    var Page = this.Paragraph == null ? 0 : this.Paragraph.GetAbsolutePage(PRS.Page);
 
     PRS.X    += MathSettings.Get_LeftMargin(WrapState);
     PRS.XEnd -= MathSettings.Get_RightMargin(WrapState);
@@ -2500,7 +2541,9 @@ ParaMath.prototype.Draw_Elements = function(PDSE)
     this.Root.Draw_Elements(PDSE);
 
     PDSE.X = X + this.Root.GetWidth(PDSE.Line, PDSE.Range);
-
+		if (PDSE.Graphics.m_bIsTextDrawer) {
+			PDSE.Graphics.CheckSpaceDraw(null, true);
+		}
     /*PDSE.Graphics.p_color(255,0,0, 255);
      PDSE.Graphics.drawHorLine(0, PDSE.Y - this.Ascent + this.Height, PDSE.X - 30, PDSE.X + this.Width + 30 , 1);*/
 };
@@ -2554,8 +2597,10 @@ ParaMath.prototype.Draw_Lines = function(PDSL)
         var Bound = this.Root.Get_LineBound(PDSL.Line, PDSL.Range),
             Width = Bound.W;
 
-        if ( true === FirstRPrp.Underline )
-            aUnderline.Add( UnderlineY, UnderlineY, X, X + Width, LineW, CurColor.r, CurColor.g, CurColor.b );
+        if ( true === FirstRPrp.Underline ) {
+					aUnderline.set(UnderlineY, LineW);
+	        aUnderline.Add(X, X + Width, CurColor);
+        }
 
 
         this.Root.Draw_Lines(PDSL);
@@ -2841,7 +2886,7 @@ ParaMath.prototype.Get_ContentSelection = function()
                 Y:      oBound.Y,
                 W:      oBound.W,
                 H:      oBound.H,
-                Page:   this.Paragraph.Get_AbsolutePage(oBound.Page)
+                Page:   this.Paragraph.GetAbsolutePage(oBound.Page)
             };
         }
         else
@@ -3052,7 +3097,7 @@ ParaMath.prototype.private_GetBounds = function(Content)
                 Y:      Y,
                 W:      oBound.W,
                 H:      Height,
-                Page:   this.Paragraph.Get_AbsolutePage(oBound.Page)
+                Page:   this.Paragraph.GetAbsolutePage(oBound.Page)
             };
         }
     }
@@ -3150,18 +3195,59 @@ ParaMath.prototype.IsParentEquationPlaceholder = function()
 
 	return false;
 };
+ParaMath.prototype.GetSelectedLevelOfContent = function()
+{
+	let content = this.GetSelectContent();
+	return content.Content;
+};
 ParaMath.prototype.CalculateTextToTable = function(oEngine)
 {
 	this.Root.CalculateTextToTable(oEngine);
 };
-ParaMath.prototype.ConvertFromLaTeX = function()
+ParaMath.prototype.ConvertFromMathML = function(xml)
 {
-	let oLaTeX = this.GetTextOfElement(true, true);
-	this.Root.Remove_Content(0, this.Root.Content.length);
-	this.Root.CurPos = 0;
-	AscMath.ConvertLaTeXToTokensList(oLaTeX, this.Root);
+	let currentMath = this.GetSelectedLevelOfContent();
+	let math = ParaMath.fromMathML(xml);
+
+	let arrContentAfterConvert = [];
+	if (currentMath.Content[currentMath.CurPos] instanceof ParaRun)
+	{
+		arrContentAfterConvert = currentMath.SplitContentByPos(currentMath.CurPos, true);
+	}
+
+	for (let i = 0; i < math.Root.Content.length; i++)
+	{
+		currentMath.AddToContent(currentMath.Content.length, math.Root.Content[i], true);
+	}
+
+	this.SetParagraph(this.Paragraph);
+	math.SetParagraph(this.Paragraph);
+
+	currentMath.MoveCursorToEndPos(true);
+
+	for (let i = 0; i < arrContentAfterConvert.length; i++)
+	{
+		currentMath.AddToContent(currentMath.Content.length, arrContentAfterConvert[i], true);
+	}
+
 	this.Root.Correct_Content(true);
-    this.Root.CurPos++;
+    this.Root.Correct_ContentPos(1);
+};
+ParaMath.prototype.ConvertFromLaTeX = function(text)
+{
+	let math = this.IsSelectionUse() ? this.GetSelectedLevelOfContent() : this.Root;
+
+	if (!text)
+	{
+		text = this.GetTextOfElement(true, true);
+		this.Root.Remove_Content(0, this.Root.Content.length);
+		this.Root.CurPos = 0;
+	}
+
+	AscMath.ConvertLaTeXToTokensList(text, math);
+
+    this.Root.Correct_Content(true);
+    this.Root.Correct_ContentPos(1);
 };
 ParaMath.prototype.ConvertToLaTeX = function()
 {
@@ -3169,14 +3255,21 @@ ParaMath.prototype.ConvertToLaTeX = function()
 	this.Root.Remove_Content(0,this.Root.Content.length);
 	this.Root.AddDataFromFlatMathTextAndStyles(oLaTeXContent.Flat());
 };
-ParaMath.prototype.ConvertFromUnicodeMath = function()
+ParaMath.prototype.ConvertFromUnicodeMath = function(text)
 {
-	let oUnicode = this.GetTextOfElement(false);
-	this.Root.Remove_Content(0, this.Root.Content.length);
-	this.Root.CurPos = 0;
-	AscMath.CUnicodeConverter(oUnicode, this.Root);
-	this.Root.Correct_Content(true);
-	this.Root.CurPos++;
+	let math = this.IsSelectionUse() ? this.GetSelectedLevelOfContent() : this.Root;
+
+	if (!text)
+	{
+		text = this.GetTextOfElement(false);
+		this.Root.Remove_Content(0, this.Root.Content.length);
+		this.Root.CurPos = 0;
+	}
+
+	AscMath.CUnicodeConverter(text, math);
+
+    this.Root.Correct_Content(true);
+    this.Root.Correct_ContentPos(1);
 };
 ParaMath.prototype.ConvertToUnicodeMath = function()
 {
@@ -3185,11 +3278,11 @@ ParaMath.prototype.ConvertToUnicodeMath = function()
 	this.Root.AddDataFromFlatMathTextAndStyles(oUnicodeContent.Flat());
 	this.Paragraph.updateTrackRevisions();
 };
-ParaMath.prototype.ConvertView = function(isToLinear, nInputType)
+ParaMath.prototype.ConvertView = function(isToLinear, nInputType, inputData)
 {
 	AscCommon.executeNoRevisions(this._convertView, this.GetLogicDocument(), this, arguments);
 };
-ParaMath.prototype._convertView = function(isToLinear, nInputType)
+ParaMath.prototype._convertView = function(isToLinear, nInputType, inputData)
 {
 	if (undefined === nInputType)
 	{
@@ -3197,7 +3290,7 @@ ParaMath.prototype._convertView = function(isToLinear, nInputType)
 		nInputType = oApi ? oApi.getMathInputType() : Asc.c_oAscMathInputType.Unicode;
 	}
 
-	if (this.IsEmpty())
+	if (this.IsEmpty() && !inputData)
 		return;
 
 	if (isToLinear)
@@ -3211,11 +3304,15 @@ ParaMath.prototype._convertView = function(isToLinear, nInputType)
 	{
 		if (Asc.c_oAscMathInputType.Unicode === nInputType)
 		{
-			this.ConvertFromUnicodeMath();
+			this.ConvertFromUnicodeMath(inputData);
 		}
 		else if (Asc.c_oAscMathInputType.LaTeX === nInputType)
 		{
-			this.ConvertFromLaTeX();
+			this.ConvertFromLaTeX(inputData);
+		}
+		else if (Asc.c_oAscMathInputType.MathML === nInputType)
+		{
+			this.ConvertFromMathML(inputData);
 		}
 	}
 };
@@ -3284,6 +3381,44 @@ ParaMath.prototype.IsContentControlEquation = function()
 ParaMath.prototype.ProcessingOldEquationConvert = function()
 {
 	this.Root.ProcessingOldEquationConvert();
+};
+ParaMath.prototype.applyMathMLGlobalAttributes = function()
+{
+    if (!this.mathml_metadata)
+        return;
+
+    if (this.mathml_metadata['display'] === false)
+    {
+        this.ConvertToInlineMode();
+    }
+};
+ParaMath.fromMathML = function(mathML, textPr)
+{
+	return AscMath.MathML.toParaMath(mathML, textPr);
+};
+ParaMath.fromLatex = function(latex, textPr)
+{
+	let paraMath = new ParaMath();
+	latex = latex.replaceAll('&amp;', '&');
+	latex = latex.replaceAll('&lt;', '<');
+	latex = latex.replaceAll('&gt;', '>');
+	
+	let run = new AscWord.Run(null, true);
+	run.AddText(latex);
+	
+	paraMath.Root.addElementToContent(run);
+	paraMath.Root.Correct_Content();
+	paraMath.SetParagraph(null);
+	
+	paraMath.ConvertView(false, Asc.c_oAscMathInputType.LaTeX);
+	
+	if (textPr)
+	{
+		textPr.RFonts.SetAll("Cambria Math");
+		paraMath.ApplyTextPr(textPr, undefined, true);
+	}
+	
+	return paraMath;
 };
 
 function MatGetKoeffArgSize(FontSize, ArgSize)

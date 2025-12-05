@@ -173,6 +173,39 @@
         return GetNotesWidth();
     };
 
+	CNotes.prototype.createBodyShape = function () {
+		const oSp = new AscFormat.CShape();
+		oSp.setBDeleted(false);
+
+		const oNvSpPr = new AscFormat.UniNvPr();
+
+		const oCNvPr = oNvSpPr.cNvPr;
+		oCNvPr.setId(3);
+		oCNvPr.setName('Notes Placeholder 2');
+
+		const oPh = new AscFormat.Ph();
+		oPh.setType(AscFormat.phType_body);
+		oPh.setIdx(1 + "");
+
+		oNvSpPr.nvPr.setPh(oPh);
+		oSp.setNvSpPr(oNvSpPr);
+		oSp.setLockValue(AscFormat.LOCKS_MASKS.noGrp, true);
+		oSp.setSpPr(new AscFormat.CSpPr());
+		oSp.spPr.setParent(oSp);
+		oSp.createTextBody();
+
+		const oBodyPr = new AscFormat.CBodyPr();
+		oSp.txBody.setBodyPr(oBodyPr);
+
+		const oTxLstStyle = new AscFormat.TextListStyle();
+		oSp.txBody.setLstStyle(oTxLstStyle);
+
+		oSp.setParent(this);
+		this.addToSpTreeToPos(1, oSp);
+
+		return oSp;
+	};
+
     CNotes.prototype.getBodyShape = function(){
         var aSpTree = this.cSld.spTree;
         for(var i = 0; i < aSpTree.length; ++i){

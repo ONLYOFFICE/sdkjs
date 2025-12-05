@@ -134,10 +134,6 @@ CWrapPolygon.prototype =
         this.wordGraphicObject = AscFormat.readObject(reader);
     },
 
-    Load_LinkData: function(data)
-    {
-    },
-
     getIntersection: function(y)
     {
         var min_x = null;
@@ -787,6 +783,7 @@ CWrapPolygon.prototype =
     {
     }
 };
+CWrapPolygon.prototype.constructor = CWrapPolygon;
 
 
 function CPolygonPoint()

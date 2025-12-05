@@ -65,7 +65,8 @@
 		
 		this.bidiFlow = new AscWord.BidiFlow(this);
 		
-		this.checkEmptyRun = true;
+		this.emptyRun = null;
+		this.emptyRunHandler = {};
 		
 		// TODO: Unite with CRunWithPosition class
 		this.pos     = null;
@@ -93,7 +94,8 @@
 	ParagraphSearchPositionXY.prototype.reset = function()
 	{
 		this.bidiFlow.end();
-		this.checkEmptyRun = true;
+		this.emptyRun = null;
+		this.emptyRunHandler = {};
 	};
 	ParagraphSearchPositionXY.prototype.setDiff = function(diff)
 	{
@@ -131,14 +133,12 @@
 		this.curX = paraRange.XVisible;
 		this.curY = 0;
 		
-		this.checkNumbering();
+		let isRtl = para.isRtlDirection();
+		if (para.Numbering.checkRange(this.range, this.line) && !isRtl)
+			this.checkNumbering(isRtl);
 		
 		let startPos = paraRange.StartPos;
 		let endPos   = paraRange.EndPos;
-		
-		// Do not enter to the run containing paragraphMark if we don't want to
-		if (true !== this.stepEnd && endPos === para.Content.length - 1 && endPos > startPos)
-			--endPos;
 		
 		for (let pos = startPos; pos <= endPos; ++pos)
 		{
@@ -146,6 +146,9 @@
 		}
 		
 		this.bidiFlow.end();
+		
+		if (para.Numbering.checkRange(this.range, this.line) && isRtl)
+			this.checkNumbering(isRtl);
 		
 		this.checkRangeBounds(x, paraRange);
 		
@@ -159,15 +162,16 @@
 	};
 	ParagraphSearchPositionXY.prototype.handleRun = function(run)
 	{
-		if (!this.checkEmptyRun)
+		if (this.emptyRun)
 			return;
 		
 		if (!run.IsEmpty())
-		{
-			this.checkEmptyRun = false;
-			return;
-		}
-		
+			this.emptyRun = null;
+		else
+			this.emptyRun = run;
+	};
+	ParagraphSearchPositionXY.prototype.handleEmptyRun = function(run)
+	{
 		let curX = this.curX;
 		if (run.IsMathRun())
 		{
@@ -185,6 +189,12 @@
 	};
 	ParagraphSearchPositionXY.prototype.handleParaMath = function(math)
 	{
+		if (this.emptyRun)
+		{
+			this.handleEmptyRun(this.emptyRun);
+			this.emptyRun = null;
+		}
+		
 		let curX = this.curX;
 		let mathW = math.Root.GetWidth(this.line, this.range);
 		
@@ -221,6 +231,12 @@
 	};
 	ParagraphSearchPositionXY.prototype.handleMathBase = function(base)
 	{
+		if (this.emptyRun)
+		{
+			this.handleEmptyRun(this.emptyRun);
+			this.emptyRun = null;
+		}
+		
 		if (!base.Content.length)
 			return;
 		
@@ -285,6 +301,12 @@
 		if (!this.complexFields.checkRunElement(element))
 			return;
 		
+		if (this.emptyRun)
+		{
+			this.emptyRunHandler[element] = this.emptyRun;
+			this.emptyRun = null;
+		}
+		
 		this.bidiFlow.add([element, run, inRunPos], element.getBidiType());
 	};
 	ParagraphSearchPositionXY.prototype.handleBidiFlow = function(data, direction)
@@ -292,6 +314,12 @@
 		let item     = data[0];
 		let run      = data[1];
 		let inRunPos = data[2];
+		
+		if (this.emptyRunHandler[item] && direction === AscBidi.DIRECTION.L)
+		{
+			this.handleEmptyRun(this.emptyRunHandler[item]);
+			delete this.emptyRunHandler[item];
+		}
 		
 		let w = 0;
 		if (!item.IsDrawing() || item.IsInline())
@@ -344,8 +372,13 @@
 			}
 		}
 		
-		
 		this.curX += w;
+		
+		if (this.emptyRunHandler[item] && direction === AscBidi.DIRECTION.R)
+		{
+			this.handleEmptyRun(this.emptyRunHandler[item]);
+			delete this.emptyRunHandler[item];
+		}
 	};
 	ParagraphSearchPositionXY.prototype.getPos = function()
 	{
@@ -437,48 +470,82 @@
 			return 0;
 		
 		let range = 0;
-		for (; range < rangeCount - 1; ++range)
+		if (p.isRtlDirection())
 		{
-			let currRange = p.Lines[this.line].Ranges[range];
-			let nextRange = p.Lines[this.line].Ranges[range + 1];
-			if (x < (currRange.XEnd + nextRange.X) / 2 || currRange.WEnd > 0.001)
-				break;
+			for (; range < rangeCount - 1; ++range)
+			{
+				let currRange = p.Lines[this.line].Ranges[range];
+				let nextRange = p.Lines[this.line].Ranges[range + 1];
+				if (x > (currRange.X + nextRange.XEnd) / 2 || currRange.WEnd > 0.001)
+					break;
+			}
+		}
+		else
+		{
+			for (; range < rangeCount - 1; ++range)
+			{
+				let currRange = p.Lines[this.line].Ranges[range];
+				let nextRange = p.Lines[this.line].Ranges[range + 1];
+				if (x < (currRange.XEnd + nextRange.X) / 2 || currRange.WEnd > 0.001)
+					break;
+			}
 		}
 		
 		return Math.max(0, Math.min(range, rangeCount - 1));
 	};
-	ParagraphSearchPositionXY.prototype.checkNumbering = function()
+	ParagraphSearchPositionXY.prototype.checkNumbering = function(isRtl)
 	{
 		let p = this.paragraph;
-		if (!p.Numbering.checkRange(this.range, this.line))
-			return;
-		
 		let numPr = p.GetNumPr();
-		if (para_Numbering === p.Numbering.Type && numPr && numPr.IsValid())
+		let prevNumPr = p.GetPrChangeNumPr();
+		let numLvl = null;
+		if (numPr && numPr.IsValid())
+			numLvl = p.Parent.GetNumbering().GetNum(numPr.NumId).GetLvl(numPr.Lvl);
+		else if (prevNumPr && prevNumPr.IsValid())
+			numLvl = p.Parent.GetNumbering().GetNum(prevNumPr.NumId).GetLvl(undefined !== prevNumPr.Lvl && null !== prevNumPr.Lvl ? prevNumPr.Lvl : 0);
+		
+		let numWidthVisible = p.Numbering.WidthVisible;
+		if (para_Numbering === p.Numbering.Type && numLvl)
 		{
-			let numJc = p.Parent.GetNumbering().GetNum(numPr.NumId).GetLvl(numPr.Lvl).GetJc();
+			let numJc = numLvl.GetJc();
 			
 			let numX0 = this.curX;
 			let numX1 = this.curX;
 			
-			switch (numJc)
+			let numWidth = p.Numbering.WidthNum;
+			if (isRtl)
 			{
-				case align_Right:
+				numX0 += numWidthVisible;
+				numX1 += numWidthVisible;
+				
+				if (AscCommon.align_Right === numJc)
 				{
-					numX0 -= p.Numbering.WidthNum;
-					break;
+					numX1 += numWidth;
 				}
-				case align_Center:
+				else if (AscCommon.align_Center === numJc)
 				{
-					numX0 -= p.Numbering.WidthNum / 2;
-					numX1 += p.Numbering.WidthNum / 2;
-					break;
+					numX0 -= numWidth / 2;
+					numX1 += numWidth / 2;
 				}
-				case align_Left:
-				default:
+				else// if (AscCommon.align_Left === numJc)
 				{
-					numX1 += p.Numbering.WidthNum;
-					break;
+					numX0 -= numWidth;
+				}
+			}
+			else
+			{
+				if (AscCommon.align_Right === numJc)
+				{
+					numX0 -= numWidth;
+				}
+				else if (AscCommon.align_Center === numJc)
+				{
+					numX0 -= numWidth / 2;
+					numX1 += numWidth / 2;
+				}
+				else// if (AscCommon.align_Left === numJc)
+				{
+					numX1 += numWidth;
 				}
 			}
 			
@@ -486,7 +553,7 @@
 				this.numbering = true;
 		}
 		
-		this.curX += p.Numbering.WidthVisible;
+		this.curX += numWidthVisible;
 	};
 	ParagraphSearchPositionXY.prototype.checkPosition = function(diff)
 	{
@@ -504,14 +571,18 @@
 			if (x < range.XVisible)
 			{
 				this.setDiff(range.XVisible - x);
-				this.pos       = para.Get_EndRangePos2(this.line, this.range);
+				let pos = para.Get_EndRangePos2(this.line, this.range, false);
+				
+				this.pos       = para.GetCursorPlaceablePos(pos);
 				this.inTextPos = this.pos.Copy();
 				this.inTextX   = false;
 			}
 			else if (x > range.XEndVisible)
 			{
 				this.setDiff(range.XEndVisible - x);
-				this.pos       = para.Get_StartRangePos2(this.line, this.range);
+				let pos = para.Get_StartRangePos2(this.line, this.range);
+				
+				this.pos       = para.GetCursorPlaceablePos(pos);
 				this.inTextPos = this.pos.Copy();
 				this.inTextX   = false;
 			}
@@ -521,14 +592,18 @@
 			if (x < range.XVisible)
 			{
 				this.setDiff(range.XVisible - x);
-				this.pos       = para.Get_StartRangePos2(this.line, this.range);
+				let pos = para.Get_StartRangePos2(this.line, this.range);
+				
+				this.pos       = para.GetCursorPlaceablePos(pos);
 				this.inTextPos = this.pos.Copy();
 				this.inTextX   = false;
 			}
 			else if (x > range.XEndVisible)
 			{
 				this.setDiff(range.XEndVisible - x);
-				this.pos       = para.Get_EndRangePos2(this.line, this.range);
+				let pos = para.Get_EndRangePos2(this.line, this.range, false);
+				
+				this.pos       = para.GetCursorPlaceablePos(pos);
 				this.inTextPos = this.pos.Copy();
 				this.inTextX   = false;
 			}

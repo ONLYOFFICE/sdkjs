@@ -135,18 +135,7 @@ CAscSlideTransition.prototype.setDefaultParams = function()
 {
     this.TransitionType     = c_oAscSlideTransitionTypes.None;
     this.TransitionOption   = -1;
-    this.TransitionDuration = 2000;
-
-    this.SlideAdvanceOnMouseClick   = true;
-    this.SlideAdvanceAfter          = false;
-    this.SlideAdvanceDuration       = 10000;
-    this.ShowLoop                   = true;
-};
-CAscSlideTransition.prototype.setDefaultParams = function()
-{
-    this.TransitionType     = c_oAscSlideTransitionTypes.None;
-    this.TransitionOption   = -1;
-    this.TransitionDuration = 2000;
+    this.TransitionDuration = 500;
 
     this.SlideAdvanceOnMouseClick   = true;
     this.SlideAdvanceAfter          = false;

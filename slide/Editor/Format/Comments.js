@@ -618,6 +618,7 @@ function (window, undefined) {
 	CCommentData.prototype.Get_Solved = function () {
 		return this.GetSolved();
 	};
+	CCommentData.prototype.IsSolved = CCommentData.prototype.Get_Solved;
 
 	CCommentData.prototype.Set_Solved = function (Solved) {
 		this.SetSolved(Solved);
@@ -981,6 +982,10 @@ function (window, undefined) {
 		History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Comment_Position, new AscFormat.CDrawingBaseCoordsWritable(this.x, this.y), new AscFormat.CDrawingBaseCoordsWritable(x, y)));
 		this.x = x;
 		this.y = y;
+	};
+
+	CComment.prototype.getPosition = function () {
+		return { x: this.x, y: this.y };
 	};
 
 	CComment.prototype.draw = function (graphics) {

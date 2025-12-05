@@ -557,6 +557,13 @@ window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
 
 		return private_CompareDocumentPositions(oDocPos1, oDocPos2);
 	}
+	function isInSameTopDocContent(docPos1, docPos2)
+	{
+		if (!docPos1 || !docPos2 || !docPos1.length || !docPos2.length)
+			return false;
+		
+		return (docPos1[0].Class === docPos2[0].Class);
+	}
 	function AlignFontSize(nFontSize, nCoef)
 	{
 		if (1 === nCoef)
@@ -657,7 +664,9 @@ window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
 	window['AscWord'].codePointToRunElement    = codePointToRunElement;
 	window['AscWord'].sortByDocumentPosition   = sortByDocumentPosition;
 	window['AscWord'].checkAsYouTypeEnterText  = checkAsYouTypeEnterText;
+	window['AscWord'].isInSameTopDocContent    = isInSameTopDocContent;
 	
+	window['AscWord'].EPSILON                  = 0.001;
 	window['AscWord'].MAX_MM_VALUE             = 558.7;
 	window['AscWord'].Direction                = Direction;
 

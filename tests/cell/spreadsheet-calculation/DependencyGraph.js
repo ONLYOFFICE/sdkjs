@@ -462,7 +462,12 @@ $(function () {
 	let api = new Asc.spreadsheet_api({
 		'id-view': 'editor_sdk'
 	});
-	let wb = new AscCommonExcel.Workbook(new AscCommonExcel.asc_CHandlersList(), api);
+	api.FontLoader = {
+		LoadDocumentFonts: function () {
+		}
+	};
+	api.initCollaborativeEditing({});
+	let wb = new AscCommonExcel.Workbook(new AscCommonExcel.asc_CHandlersList(), api, true);
 	let ws = new AscCommonExcel.Worksheet(wb, 0);
 	let sheetId = ws.getId();
 	QUnit.test('DependencyGraph _broadcastCellsByCells', function (assert) {

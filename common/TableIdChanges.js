@@ -218,13 +218,13 @@
 		// console.log("----------------------------");
 		// console.log("FileCheckSum " + this.FileCheckSum);
 		// console.log("FileSize     " + this.FileSize);
-		// console.log("Description  " + this.Description + " " +
-		// 	AscDFH.GetHistoryPointStringDescription(this.Description));
+		// console.log("Description  " + this.Description + " " + AscDFH.GetHistoryPointStringDescription(this.Description));
 		// console.log("PointIndex   " + this.PointIndex);
 		// console.log("StartPoint   " + this.StartPoint);
 		// console.log("LastPoint    " + this.LastPoint);
 		// console.log("ItemsCount   " + this.ItemsCount);
 		// console.log("SumIndex     " + this.SumIndex);
+		// console.log("SDK build    " + this.VersionString);
 		// console.log("DeletedIndex " + (-10 === this.DeletedIndex ? null : this.DeletedIndex));
 		// // -1 Чтобы не учитывалось данное изменение
 		// CollaborativeEditing.m_nErrorLog_SavedPCC          = this.ItemsCount;

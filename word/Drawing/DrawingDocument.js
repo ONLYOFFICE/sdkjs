@@ -165,7 +165,7 @@ function CTableOutlineDr()
 			return _bounds;
 
 		var _boundsTmp = this.TableOutline.Table.Get_PageBounds(_pagesCount - 1);
-		_bounds.Page = this.TableOutline.Table.Get_AbsolutePage(_pagesCount - 1);
+		_bounds.Page = this.TableOutline.Table.GetAbsolutePage(_pagesCount - 1);
 		_bounds.X = _boundsTmp.Left;
 		_bounds.Y = _boundsTmp.Top;
 		_bounds.W = (_boundsTmp.Right - _boundsTmp.Left);
@@ -2177,6 +2177,10 @@ function CDrawingDocument()
 
 	this.CheckTargetDraw = function (x, y)
 	{
+		function roundPxForScale(value) {
+			return ((value * AscCommon.AscBrowser.retinaPixelRatio) >> 0) / AscCommon.AscBrowser.retinaPixelRatio;
+		}
+
 		var oldW = this.TargetHtmlElement.width_old;
 		var oldH = this.TargetHtmlElement.height_old;
 
@@ -2187,7 +2191,7 @@ function CDrawingDocument()
 
 		if (oldW !== newW || oldH !== newH)
 		{
-			var pixNewW = ((newW * AscCommon.AscBrowser.retinaPixelRatio) >> 0) / AscCommon.AscBrowser.retinaPixelRatio;
+			var pixNewW = roundPxForScale(newW);
 
 			this.TargetHtmlElement.style.width = pixNewW + "px";
 			this.TargetHtmlElement.style.height = newH + "px";
@@ -2215,15 +2219,15 @@ function CDrawingDocument()
 			}
 
 			var pos = this.ConvertCoordsToCursor4(x, y, this.m_lCurrentPage, true);
-			this.TargetHtmlElementLeft = pos.X >> 0;
-			this.TargetHtmlElementTop = (pos.Y + 0.5) >> 0;
+			this.TargetHtmlElementLeft = roundPxForScale(pos.X);
+			this.TargetHtmlElementTop = roundPxForScale(pos.Y + 0.5);
 
 			this.TargetHtmlElement.style["transform"] = "";
 			this.TargetHtmlElement.style["msTransform"] = "";
 			this.TargetHtmlElement.style["mozTransform"] = "";
 			this.TargetHtmlElement.style["webkitTransform"] = "";
 
-			if ((!this.m_oWordControl.MobileTouchManager && !AscCommon.AscBrowser.isSafariMacOs) || !AscCommon.AscBrowser.isWebkit)
+			if ((!this.m_oWordControl.m_oApi.isMobileVersion && !AscCommon.AscBrowser.isSafariMacOs) || !AscCommon.AscBrowser.isWebkit)
 			{
 				this.TargetHtmlElement.style.left = this.TargetHtmlElementLeft + "px";
 				this.TargetHtmlElement.style.top = this.TargetHtmlElementTop + "px";
@@ -2232,7 +2236,7 @@ function CDrawingDocument()
 			{
 				this.TargetHtmlElement.style.left = "0px";
 				this.TargetHtmlElement.style.top = "0px";
-				this.TargetHtmlElement.style["webkitTransform"] = "matrix(1, 0, 0, 1, " + oThis.TargetHtmlElementLeft + "," + oThis.TargetHtmlElementTop + ")";
+				this.TargetHtmlElement.style["webkitTransform"] = "matrix(1, 0, 0, 1, " + this.TargetHtmlElementLeft + "," + this.TargetHtmlElementTop + ")";
 			}
 		}
 		else
@@ -4189,6 +4193,29 @@ function CDrawingDocument()
 		return {X: _x, Y: _y, Error: false};
 	};
 
+	this.GetMainOffset = function(isUseRuler)
+	{
+		let result = {
+			x : 0,
+			y : 0
+		};
+
+		if (this.m_oWordControl.m_oApi.isMobileVersion)
+			return result;
+
+		if (this.m_oWordControl.m_oApi.isRtlInterface)
+			result.x += this.m_oWordControl.ScrollsWidthPx;
+
+		if (true === this.m_oWordControl.m_bIsRuler && isUseRuler !== false)
+		{
+			if (!this.m_oWordControl.m_oApi.isRtlInterface)
+				result.x += (5 * g_dKoef_mm_to_pix);
+
+			result.y += (7 * g_dKoef_mm_to_pix);
+		}
+		return result;
+	}
+
 	this.ConvertCoordsFromCursor2 = function (x, y, zoomVal, isRulers)
 	{
 		var _x = x;
@@ -4203,11 +4230,9 @@ function CDrawingDocument()
 			var _xOffset = this.m_oWordControl.X;
 			var _yOffset = this.m_oWordControl.Y;
 
-			if (true === this.m_oWordControl.m_bIsRuler)
-			{
-				_xOffset += (5 * g_dKoef_mm_to_pix);
-				_yOffset += (7 * g_dKoef_mm_to_pix);
-			}
+			let offsets = this.GetMainOffset();
+			_xOffset += offsets.x;
+			_yOffset += offsets.y;
 
 			_x = x - _xOffset;
 			_y = y - _yOffset;
@@ -4340,11 +4365,9 @@ function CDrawingDocument()
 			_x = this.m_oWordControl.X;
 			_y = this.m_oWordControl.Y;
 
-			if (this.m_oWordControl.m_bIsRuler)
-			{
-				_x += 5 * g_dKoef_mm_to_pix;
-				_y += 7 * g_dKoef_mm_to_pix;
-			}
+			let offsets = this.GetMainOffset();
+			_x += offsets.x;
+			_y += offsets.y;
 		}
 		return this.private_ConvertCoordsToCursor(x, y, pageIndex, true, _x + 0.5, _y + 0.5);
 	};
@@ -4358,11 +4381,10 @@ function CDrawingDocument()
 	{
 		var _x = 0;
 		var _y = 0;
-		if (true == this.m_oWordControl.m_bIsRuler && (id_ruler_no_use !== false))
-		{
-			_x = 5 * g_dKoef_mm_to_pix;
-			_y = 7 * g_dKoef_mm_to_pix;
-		}
+
+		let offsets = this.GetMainOffset(id_ruler_no_use);
+		_x += offsets.x;
+		_y += offsets.y;
 
 		return this.private_ConvertCoordsToCursor(x, y, pageIndex, true, _x, _y, transform);
 	};
@@ -4476,7 +4498,7 @@ function CDrawingDocument()
 
 		var dKoefX = (drawPage.right - drawPage.left) / page.width_mm;
 		var dKoefY = (drawPage.bottom - drawPage.top) / page.height_mm;
-		this.AutoShapesTrack.SetCurrentPage(pageIndex, true);
+		this.AutoShapesTrack.SetCurrentPage(pageIndex);
 		if (!this.IsTextMatrixUse)
 		{
 			var _x = ((drawPage.left + dKoefX * x) >> 0);
@@ -5036,12 +5058,37 @@ function CDrawingDocument()
 			ctx.beginPath();
 		}
 	};
-
-	this.OnDrawContentControl = function(obj, state, geom)
+	
+	this.startCollectContentControlTracks = function()
 	{
 		if (window["NATIVE_EDITOR_ENJINE"] === true)
 			return;
-		return this.contentControls.OnDrawContentControl(obj, state, geom);
+		
+		return this.contentControls.startCollectTracks();
+	};
+	this.endCollectContentControlTracks = function()
+	{
+		if (window["NATIVE_EDITOR_ENJINE"] === true)
+			return;
+		
+		return this.contentControls.endCollectTracks();
+	};
+	this.addContentControlTrack = function(obj, state, geom)
+	{
+		if (window["NATIVE_EDITOR_ENJINE"] === true)
+			return;
+		
+		if (AscCommon.ContentControlTrack.In === state)
+			return this.contentControls.addTrackIn(obj, geom);
+		else
+			return this.contentControls.addTrackHover(obj, geom);
+	};
+	this.removeContentControlTrackHover = function()
+	{
+		if (window["NATIVE_EDITOR_ENJINE"] === true)
+			return;
+		
+		return this.contentControls.removeTrackHover();
 	};
 
 	this.DrawMathTrack = function (overlay)
@@ -6572,10 +6619,6 @@ function CDrawingDocument()
 		this.m_lCurrentPage = -1;
 	};
 
-	this.InitViewer = function ()
-	{
-	};
-
 	this.IsMobileVersion = function ()
 	{
 		return this.m_oWordControl.m_oApi.isMobileVersion;
@@ -6838,7 +6881,7 @@ function CDrawingDocument()
 			return true;
 		}
 
-		if (this.InlineTextTrackEnabled && !this.contentControls.isInlineTrack())
+		if (this.InlineTextTrackEnabled && !this.contentControls.getInlineMoveTrack())
 		{
 			this.InlineTextTrack = oWordControl.m_oLogicDocument.Get_NearestPos(pos.Page, pos.X, pos.Y);
 			this.InlineTextTrackPage = pos.Page;

@@ -194,32 +194,14 @@
 	var oZipImages = null;
 	var sDownloadServiceLocalUrl = "../../../../downloadas";
 	var sUploadServiceLocalUrl = "../../../../upload";
-	var sUploadServiceLocalUrlOld = "../../../../uploadold";
 	var sSaveFileLocalUrl = "../../../../savefile";
 	var sDownloadFileLocalUrl = "../../../../downloadfile";
 	var nMaxRequestLength = 5242880;//5mb <requestLimits maxAllowedContentLength="30000000" /> default 30mb
 
 	function decimalNumberConversion(number, base) {
-		if (typeof number !== 'number') {
-			return;
-		}
-		var result = [];
-		if (number === 0)
-		{
-			return [0];
-		}
-		while (number > 0) {
-			var remainder = number % base;
-			if (remainder === 0) {
-				result.unshift(0);
-
-			} else {
-				result.unshift(remainder);
-				number = number - remainder;
-			}
-			number /= base;
-		}
-		return result;
+		return number.toString(base).split("").map(function (digit) {
+			return parseInt(digit, base);
+		});
 	}
 
 	function getSockJs()
@@ -392,6 +374,17 @@
 			for (var i in this.urls) {
 				if (0 == i.indexOf(this.mediaPrefix + filename + '.') && this.mediaPrefix + imageLocal !== i) {
 					res.push(this.urls[i]);
+				}
+			}
+			return res;
+		},
+		getImagesWithOtherExtension: function(imageLocal) {
+			var res = [];
+			var filename = GetFileName(imageLocal);
+			var prefix = this.mediaPrefix + filename + '.';
+			for (var i in this.urls) {
+				if (0 == i.indexOf(prefix) && !i.endsWith(imageLocal)) {
+					res.push(i.substring(this.mediaPrefix.length));
 				}
 			}
 			return res;
@@ -797,6 +790,8 @@
 					return AscCommon.c_oEditorId.Spreadsheet;
 				case "PPTY":
 					return AscCommon.c_oEditorId.Presentation;
+				case "VSDY":
+					return AscCommon.c_oEditorId.Visio;
 			}
 		}
 		return null;
@@ -832,7 +827,7 @@
 			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.presentation.macroEnabled.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.slideshow.macroEnabled.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.template.macroEnabled.main+xml");
-		let isDraw = -1 !== contentTypes.indexOf("application/vnd.ms-visio.drawing.main+xml") ||
+		let isVisio = -1 !== contentTypes.indexOf("application/vnd.ms-visio.drawing.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-visio.stencil.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-visio.template.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-visio.drawing.macroEnabled.main+xml") ||
@@ -844,8 +839,8 @@
 			return AscCommon.c_oEditorId.Spreadsheet;
 		} else if (isSlide) {
 			return AscCommon.c_oEditorId.Presentation;
-		} else if (isDraw) {
-			return AscCommon.c_oEditorId.Draw;
+		} else if (isVisio) {
+			return AscCommon.c_oEditorId.Visio;
 		} else {
 			return null;
 		}
@@ -1107,6 +1102,9 @@
 			case c_oAscServerError.ChangeDocInfo :
 				nRes = Asc.c_oAscError.ID.AccessDeny;
 				break;
+			case c_oAscServerError.ForcedViewMode :
+				nRes = Asc.c_oAscError.ID.ForcedViewMode;
+				break;
 			case c_oAscServerError.Storage :
 			case c_oAscServerError.StorageFileNoFound :
 			case c_oAscServerError.StorageRead :
@@ -1160,7 +1158,12 @@
 	function getFullImageSrc2(src)
 	{
 		if (window["NATIVE_EDITOR_ENJINE"])
+		{
+			let localUrl = g_oDocumentUrls.getImageUrl(src);
+			if (localUrl && localUrl.startsWith("blob:"))
+				return localUrl;
 			return src;
+		}
 
 		var start = src.slice(0, 6);
 		if (0 === start.indexOf('theme') && editor.ThemeLoader)
@@ -1294,13 +1297,9 @@
 
 	var UTF8Decoder = typeof TextDecoder !== "undefined" ? new TextDecoder("utf8") : undefined;
 	function UTF8ArrayToString(u8Array, idx, maxBytesToRead) {
-		var endIdx = idx + maxBytesToRead;
-		var endPtr = idx;
-		while (u8Array[endPtr] && !(endPtr >= endIdx)) {
-			++endPtr;
-		}
-		if (endPtr - idx > 16 && u8Array.subarray && UTF8Decoder) {
-			return UTF8Decoder.decode(u8Array.subarray(idx, endPtr));
+		var endPtr = idx + maxBytesToRead;
+		if (endPtr - idx > 16 && UTF8Decoder) {
+			return UTF8Decoder.decode(new Uint8Array(u8Array.buffer, u8Array.byteOffset + idx, endPtr - idx));
 		} else {
 			var str = "";
 			while (idx < endPtr) {
@@ -1466,6 +1465,7 @@
 		"uf": "#UNSUPPORTED_FUNCTION!",
 		"calc": "#CALC!",
 		"spill": "#SPILL!",
+		"busy": "#BUSY!",
 	};
 	var cErrorLocal = {};
 	let cCellFunctionLocal = {};
@@ -1492,14 +1492,14 @@
 
 	function build_rx_table_cur()
 	{
-		var loc_all                          = cStrucTableLocalColumns['a'],
+		let loc_all                          = cStrucTableLocalColumns['a'],
 			loc_headers                      = cStrucTableLocalColumns['h'],
 			loc_data                         = cStrucTableLocalColumns['d'],
 			loc_totals                       = cStrucTableLocalColumns['t'],
 			loc_this_row                     = cStrucTableLocalColumns['tr'],
 			structured_tables_headata        = new XRegExp('(?:\\[\\#' + loc_headers + '\\]\\' + FormulaSeparators.functionArgumentSeparator + '\\[\\#' + loc_data + '\\])'),
 			structured_tables_datals         = new XRegExp('(?:\\[\\#' + loc_data + '\\]\\' + FormulaSeparators.functionArgumentSeparator + '\\[\\#' + loc_totals + '\\])'),
-			structured_tables_userColumn     = new XRegExp('(?:\'\\[|\'\\]|[^[\\]])+'),
+			structured_tables_userColumn     = new XRegExp('\\s*\\[{0,1}(?:\'\\[|\'\\]|[^[\\]])+\\]{0,1}\\s*'),
 			structured_tables_reservedColumn = new XRegExp('\\#(?:' + loc_all + '|' + loc_headers + '|' + loc_totals + '|' + loc_data + /*'|' + loc_this_row + */')'),
 			structured_tables_thisRow        = new XRegExp('(?:\\#(?:' + loc_this_row +')|(?:\\@))');
 
@@ -1525,7 +1525,7 @@
 		let argsSeparator = FormulaSeparators.functionArgumentSeparator;
 		return XRegExp.build('^(?<tableName>{{tableName}})\\[(?<columnName1>{{columnName}})?\\]', {
 			"tableName":  new XRegExp("^(:?[" + str_namedRanges + "][" + str_namedRanges + "\\d.]*)"),
-			"columnName": XRegExp.build('(?<reservedColumn>{{reservedColumn}}|{{thisRow}})|(?<oneColumn>{{userColumn}})|(?<columnRange>{{userColumnRange}})|(?<hdtcc>{{hdtcc}})', {
+			"columnName": XRegExp.build('(?<hdtcc>{{hdtcc}})|(?<reservedColumn>{{reservedColumn}}|{{thisRow}})|(?<columnRange>{{userColumnRange}})|(?<oneColumn>{{userColumn}})', {
 				"userColumn":      structured_tables_userColumn,
 				"reservedColumn":  structured_tables_reservedColumn,
 				"thisRow": structured_tables_thisRow,
@@ -1573,7 +1573,8 @@
 			"getdata": "#GETTING_DATA",
 			"uf":      "#UNSUPPORTED_FUNCTION!",
 			"calc":    "#CALC!",
-			"spill":   "#SPILL!"
+			"spill":   "#SPILL!",
+			"busy":    "#BUSY!"
 		};
 		cErrorLocal['nil'] = local['nil'];
 		cErrorLocal['div'] = local['div'];
@@ -1586,6 +1587,7 @@
 		cErrorLocal['uf'] = local['uf'];
 		cErrorLocal['calc'] = local['calc'];
 		cErrorLocal['spill'] = local['spill'];
+		cErrorLocal['busy'] = local['busy'];
 
 		return new RegExp("^(" + cErrorLocal["nil"] + "|" +
 			cErrorLocal["div"] + "|" +
@@ -1597,7 +1599,8 @@
 			cErrorLocal["getdata"] + "|" +
 			cErrorLocal["uf"] + "|" +
 			cErrorLocal["calc"] + "|" +
-			cErrorLocal["spill"] + ")", "i")
+			cErrorLocal["spill"] + "|" +
+			cErrorLocal["busy"] + ")", "i")
 	}
 
 	function build_rx_cell_func(local)
@@ -1699,7 +1702,9 @@
 		VKeyKeyExpire:       -122,
 		VKeyUserCountExceed: -123,
 
-		Password: -180
+		Password: -180,
+
+		ForcedViewMode: -200
 	};
 
 	//todo get from server config
@@ -2118,6 +2123,8 @@
 				return c_oAscFileType.XLSY;
 			case 'pptt':
 				return c_oAscFileType.PPTY;
+			case 'vsdt':
+				return c_oAscFileType.VSDY;
 		}
 		return c_oAscFileType.UNKNOWN;
 	}
@@ -2278,48 +2285,7 @@
 	function ShowImageFileDialog(documentId, documentUserId, jwt, shardKey, wopiSrc, userSessionId, callback, callbackOld)
 	{
 		if (false === _ShowFileDialog(getAcceptByArray(c_oAscImageUploadProp.SupportedFormats), true, true, ValidateUploadImage, callback)) {
-			//todo remove this compatibility
-			var frameWindow = GetUploadIFrame();
-			let url = sUploadServiceLocalUrlOld + '/' + documentId;
-			let queryParams = [];
-			if (shardKey) {
-				queryParams.push(Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey));
-			}
-			if (wopiSrc) {
-				queryParams.push(Asc.c_sWopiSrcName + '=' + encodeURIComponent(wopiSrc));
-			}
-			if (userSessionId) {
-				queryParams.push(Asc.c_sUserSessionIdName + '=' + encodeURIComponent(userSessionId));
-			}
-			if (jwt) {
-				queryParams.push('token=' + encodeURIComponent(jwt));
-			}
-			if (queryParams.length > 0) {
-				url += '?' + queryParams.join('&');
-			}
-			var content = '<html><head></head><body><form action="' + url + '" method="POST" enctype="multipart/form-data"><input id="apiiuFile" name="apiiuFile" type="file" accept="image/*" size="1"><input id="apiiuSubmit" name="apiiuSubmit" type="submit" style="display:none;"></form></body></html>';
-			frameWindow.document.open();
-			frameWindow.document.write(content);
-			frameWindow.document.close();
-
-			var fileName = frameWindow.document.getElementById("apiiuFile");
-			var fileSubmit = frameWindow.document.getElementById("apiiuSubmit");
-
-			fileName.onchange = function (e)
-			{
-				if (e && e.target && e.target.files)
-				{
-					var nError = ValidateUploadImage(e.target.files);
-					if (c_oAscServerError.NoError != nError)
-					{
-						callbackOld(mapAscServerErrorToAscError(nError));
-						return;
-					}
-				}
-				callbackOld(Asc.c_oAscError.ID.No);
-				fileSubmit.click();
-			};
-			fileName.click();
+			callback(Asc.c_oAscError.ID.Unknown);
 		}
 	}
 	function ShowDocumentFileDialog(callback, isAllowMultiple) {
@@ -2736,31 +2702,14 @@
 					if (AscCommon.AscBrowser.isSafari)
 						return true;
 					
-					if (event.dataTransfer.items)
-					{
-						for (var j = 0, length2 = event.dataTransfer.items.length; j < length2; j++)
-						{
-							var item = event.dataTransfer.items[j];
-							if (item.type && item.kind && "file" == item.kind.toLowerCase())
-							{
-								bRes = false;
-								for (var k = 0,
-										 length3 = c_oAscImageUploadProp.SupportedFormats.length; k < length3; k++)
-								{
-									if (-1 != item.type.indexOf(c_oAscImageUploadProp.SupportedFormats[k]))
-									{
-										bRes = true;
-										break;
-									}
-								}
-								if (false == bRes)
-									break;
-							}
-						}
-					}
-					else
-						bRes = true;
-					break;
+  					if (event.dataTransfer.items)
+  					{
+ 						// Allow drop if at least one item looks like an image file (strictly validated on drop)
+ 						bRes = Array.prototype.some.call(event.dataTransfer.items, isValidImageDragItem);
+ 					}
+ 					else
+ 						bRes = true;
+ 					break;
 				}
 				else if (type == "text" || type == "text/plain" || type == "text/html")
 				{
@@ -2770,6 +2719,25 @@
 			}
 		}
 		return bRes;
+	}
+
+	/**
+	 * Validate drag item as an image file in dragover phase.
+	 * Prefer MIME check (image/*) when available; allow empty type and validate on drop.
+	 * @param {DataTransferItem} item Drag item to validate
+	 * @returns {boolean} True if item can be treated as an image candidate during dragover
+	 */
+	function isValidImageDragItem(item) {
+		if (!item || !item.kind || item.kind.toLowerCase() !== "file") {
+			return false;
+		}
+		const mime = item.type ? item.type.toLowerCase().trim() : "";
+		if (mime) {
+			// If browser provides MIME, accept only images
+			return mime.indexOf("image/") === 0;
+		}
+		// No MIME available (common in some environments): allow and validate strictly on drop
+		return true;
 	}
 
 	function GetUploadIFrame()
@@ -2946,7 +2914,7 @@
 		hostnameRe            = /^(((https?)|(ftps?)):\/\/)?([\-\wа-яё]*:?[\-\wа-яё]*@)?(([\-\wа-яё]+\.)+[\wа-яё\-]{2,}(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`'~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?)/i,
 		localRe               = /^(((https?)|(ftps?)):\/\/)([\-\wа-яё]*:?[\-\wа-яё]*@)?(([\-\wа-яё]+)(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`'~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?)/i,
 		fileRe                = /^((file):\/\/)[^'`"%^{}<>].*/i,//reserved symbols from word 2010
-		rx_allowedProtocols      = /(^((https?|ftps?|file|tessa|smb):\/\/)|(mailto:)).*/i,
+		rx_allowedProtocols      = /(^((https?|ftps?|file|tessa|joplin|smb):\/\/)|(mailto:)).*/i,
 
 		rx_table              = build_rx_table(null),
 		rx_table_local        = build_rx_table(null);
@@ -3010,6 +2978,74 @@
 		}
 
 		return null;
+	}
+
+	function isExternalShortLink (string) {
+		// short links that ms writes as [externalLink] + "!" + "Defname"
+		// strings come in "!"+"Defname" format only after external
+		if (string[0] !== "!") {
+			return null;
+		}
+
+		let secondPartOfString = string.slice(1);
+		let defname = XRegExp.exec(secondPartOfString, rx_name);
+
+		if (defname && defname["name"]) {
+			defname = defname["name"];
+		}
+
+		if (!defname || !AscCommon.rx_defName.test(defname)) {
+			return null;
+		}
+
+		return {
+			externalLink: "",
+			defname: defname,
+			fullString: "!" + defname,
+		}
+	}
+
+	function isExternalShortLinkLocal (string) {
+		// short links that user writes as "'externalLinkWithoutBrackets'" + "!" + "Defname"  -  "'DefTest.xlsx'!_s1"
+		// we split the string into two parts, where the separator is an exclamation point
+		if (!string) {
+			return null;
+		}
+
+		let shortLinkReg = /[\<\>\?\[\]\\\/\|\*\+\"\:\']/;	// reg contains special characters that are not allowed in the shortLink
+
+		let linkInQuotes;
+		let exclamationMarkIndex = string.indexOf("!");
+		let externalLink = exclamationMarkIndex !== -1 ? string.substring(0, exclamationMarkIndex) : null;
+		let secondPartOfString = exclamationMarkIndex !== -1 ? string.substring(exclamationMarkIndex + 1) : null;
+
+		let defname = null;
+		if (secondPartOfString && !parserHelp.isArea(secondPartOfString, 0) && !parserHelp.isRef(secondPartOfString, 0)) {
+			defname = XRegExp.exec(secondPartOfString, rx_name);
+			if (defname && defname["name"]) {
+				defname = defname["name"];
+			}
+		}
+
+		if (externalLink && externalLink[0] === "'" && externalLink[externalLink.length - 1] === "'") {
+			externalLink = externalLink.substring(1, externalLink.length - 1);
+			linkInQuotes = true;
+		}
+
+		if (!externalLink || !defname || shortLinkReg.test(externalLink) || !AscCommon.rx_defName.test(defname)) {
+			return null;
+		}
+
+		// external link without quotes is parsed using a regular parser for the name
+		if (!linkInQuotes && !rx_test_ws_name.test(externalLink)) {
+			return null;
+		}
+
+		return {
+			externalLink: externalLink,
+			defname: defname,
+			fullString: linkInQuotes ? ("'" + externalLink + "'" + "!" + defname) : (externalLink + "!" + defname)
+		}
 	}
 
 	function isValidFileUrl(url) {
@@ -3411,7 +3447,32 @@
 
 		return false;
 	};
-	parserHelper.prototype.is3DRef = function (formula, start_pos, support_digital_start)
+	/**
+	 * Checks if the provided formula is a 3D reference.
+	 *
+	 * A 3D reference in the context of formulas typically indicates a range of cells 
+	 * that can span multiple sheets in an Excel workbook. This function analyzes 
+	 * the formula to determine if it conforms to the format of a 3D reference.
+	 *
+	 * The function processes the formula starting from the specified position, 
+	 * handling external links, short links, and various formats of references.
+	 *
+	 * @param {string} formula - The formula to be checked for 3D reference.
+	 * @param {number} start_pos - The starting position in the formula for analysis.
+	 * @param {boolean} support_digital_start - Indicates whether the function 
+	 *     supports digital start references (e.g., "1Sheet").
+	 * @param {boolean} local - the flag that indicate is local context used or not, that may be used during 
+	 *     the analysis of the formula.
+	 * @returns {[boolean, (string|null), (string|null), (string|null), (number|Object|null), (string|null)]} 
+	 * Returns an array containing:
+	 * - A boolean indicating if the formula is a 3D reference.
+	 * - The name of the starting sheet or null if not applicable.
+	 * - The name of the ending sheet or null if not applicable.
+	 * - The external link if applicable, or null.
+	 * - The length of the external link if not applicable, or shortLink info object if it exists.
+	 * - The supposed defname or null.
+	 */
+	parserHelper.prototype.is3DRef = function (formula, start_pos, support_digital_start, local)
 	{
 		if (this instanceof parserHelper)
 		{
@@ -3432,8 +3493,14 @@
 			//необходимо вычленить имя файла и путь к нему, затем проверить путь
 			//если путь указан, то ссылка должна быть в одинарных кавычках, если указан просто название файла в [] - в мс это означает, что данный файл открыт, при его закрытии путь проставляется
 			//пока не реализовываем с открытыми файлами, работаем только с путями
+			//также ссылки типа [] + ! + Defname должны обрабатываться аналогично как [] + SheetName + ! + Defname
 			external = parseExternalLink(subSTR);
 			if (external) {
+				if (external.name && (external.name.indexOf("[") !== -1)) {
+					// if the link/path to the file inside brackets contains '[' then we return an error
+					return [false, null, null, external, externalLength];
+				}
+
 				externalLength = external.fullname.length;
 				subSTR = formula.substring(start_pos + externalLength);
 				const posQuote =  subSTR.indexOf("'");
@@ -3446,7 +3513,25 @@
 			}
 		}
 
-		var match  = XRegExp.exec(subSTR, rx_ref3D_quoted) || XRegExp.exec(subSTR, rx_ref3D_non_quoted);
+		/* current file check */
+		let currentFileName = window["Asc"]["editor"].DocInfo && window["Asc"]["editor"].DocInfo.get_Title();
+
+		/* shortlink return obj {fullstring, externalLink, defname} */
+		let shortLink = isExternalShortLink(subSTR) || (local && !external && isExternalShortLinkLocal(subSTR));
+
+		if (shortLink) {
+			if ((shortLink.externalLink && shortLink.externalLink === currentFileName) || external === "0") {
+				external = null;
+				shortLink.currentFile = true;
+			}
+
+			this.pCurrPos += shortLink.fullString.length + externalLength;
+			this.operand_str = shortLink.defname;
+			return [true, null, null, external, shortLink];
+		}
+
+		let match = XRegExp.exec(subSTR, rx_ref3D_quoted) || XRegExp.exec(subSTR, rx_ref3D_non_quoted);
+		
 		if(!match && support_digital_start) {
 			match = XRegExp.exec(subSTR, rx_ref3D_non_quoted_2);
 		}
@@ -3455,7 +3540,15 @@
 		{
 			this.pCurrPos += match[0].length + externalLength;
 			this.operand_str = match[1];
-			return [true, match["name_from"] ? match["name_from"].replace(/''/g, "'") : null, match["name_to"] ? match["name_to"].replace(/''/g, "'") : null, external];
+
+			let currentFileDefname;
+			if (external && external === currentFileName) {
+				let exclamationMarkIndex = subSTR.lastIndexOf("!");
+				let defname = exclamationMarkIndex !== -1 ? subSTR.slice(exclamationMarkIndex + 1) : null;
+				currentFileDefname = defname ? defname : null;
+			}
+
+			return [true, match["name_from"] ? match["name_from"].replace(/''/g, "'") : null, match["name_to"] ? match["name_to"].replace(/''/g, "'") : null, external, null, currentFileDefname];
 		}
 		return [false, null, null, external, externalLength];
 	};
@@ -3685,6 +3778,15 @@
 		}
 		return false;
 	};
+	parserHelper.prototype.isDefName = function(formula, start_pos) {
+		var _isArea = this.isArea(formula, start_pos);
+		var _isRef = !_isArea && this.isRef(formula, start_pos);
+		var _isName = !_isRef && !_isArea && this.isName(formula, start_pos);
+		if (_isName) {
+			return {defname: this.operand_str};
+		}
+		return false;
+	};
 	parserHelper.prototype.isName3D = function (formula, start_pos)
 	{
 		if (this instanceof parserHelper)
@@ -3693,12 +3795,17 @@
 		}
 
 		var _is3DRef = this.is3DRef(formula, start_pos);
-		if(_is3DRef && _is3DRef[0] && _is3DRef[1] && _is3DRef[1].length)
+		if(_is3DRef && _is3DRef[0])
 		{
-			var _startPos = this.pCurrPos;
-			var _isArea = this.isArea(formula, _startPos);
-			var _isRef = !_isArea && this.isRef(formula, _startPos);
-			return !_isRef && !_isArea && this.isName(formula, _startPos);
+			let _isName = false;
+			if (_is3DRef[1] && _is3DRef[1].length) {
+				_isName = this.isDefName(formula, this.pCurrPos);
+			} else {
+				_isName = _is3DRef[4];
+			}
+			if (_isName) {
+				return {defName: _isName.defname, sheet: _is3DRef[1], external: _is3DRef[3]};
+			}
 		}
 
 		return false;
@@ -3789,19 +3896,44 @@
 			return true;
 		}
 	};
-	parserHelper.prototype.isTable = function (formula, start_pos, local)
+	parserHelper.prototype.isTable = function (formula, start_pos, local, parserFormula)
 	{
 		if (this instanceof parserHelper)
 		{
 			this._reset();
 		}
-		let subSTR = formula.substring(start_pos),
-		match = XRegExp.exec(subSTR, local ? rx_table_local : rx_table);
+		let subSTR = formula.substring(start_pos);
+		/*
+			short notation can be used inside table cells
+			short entry - an entry without table name, but with the same syntax 
+		*/
+		let tableIntersection;
+		if (local && subSTR[0] === "[" && parserFormula.parent && parserFormula.ws && parserFormula.ws.TableParts) {
+			let col = parserFormula.parent.nCol;
+			let row = parserFormula.parent.nRow;
+			// go through each existing table and check intersection by col row
+			for (let i = 0; i < parserFormula.ws.TableParts.length; i++) {
+				let table = parserFormula.ws.TableParts[i];
+				let tableRef = table.Ref;
+				if (!tableRef.contains(col, row)) {
+					continue;
+				}
+				tableIntersection = table;
+				break;
+			}
 
-		if (match != null && match["tableName"])
-		{
-			this.operand_str = match[0];
-			this.pCurrPos += match[0].length;
+			if (tableIntersection) {
+				// add the table name to the beginning of the line for correct checking further  
+				subSTR = tableIntersection.DisplayName + subSTR;
+			}
+		}
+
+		const match = XRegExp.exec(subSTR, local ? rx_table_local : rx_table);
+
+		if (match != null && match["tableName"]) {
+			let colNameToInsert = match["columnName1"] ? match["columnName1"] : "";
+			this.operand_str = tableIntersection ? "[" + colNameToInsert + "]" : match[0];
+			this.pCurrPos += tableIntersection ? colNameToInsert.length + 2 : match[0].length;
 			return match;
 		}
 
@@ -3813,13 +3945,13 @@
 		{
 			this._reset();
 		}
-		// todo если строка подстрока другой
 		const subSTR = formula.substring(start_pos);
-		const fieldName = opt_namesList[0][0];
-		const itemNames = opt_namesList[1];
-		const fullPatterns = itemNames.map(function(name) {
-			return '^' + fieldName + '\\s*\\[\\s*(' + name + ')\\s*\\]'
-		});
+		const fullPatterns = [];
+		for (let i = 0; i < opt_namesList[0].length; i += 1) {
+			for (let j = 0; j < opt_namesList[1].length; j += 1) {
+				fullPatterns.push('^(' + XRegExp.escape(opt_namesList[0][i]) + ')\\s*\\[\\s*(' + XRegExp.escape(opt_namesList[1][j]) + ')\\s*\\]');
+			}
+		}
 		const fullRegs = fullPatterns.map(function(pattern) {
 			return new RegExp(pattern, 'i');
 		});
@@ -3828,11 +3960,11 @@
 			if (match !== null) {
 				this.operand_str = match[0];
 				this.pCurrPos += match[0].length;
-				return [fieldName, match[1]];
+				return [match[1], match[2]];
 			}
 		}
-		const shortPatterns = itemNames.map(function(name) {
-			return '^(' + name + ')(?:\\W|$)'
+		const shortPatterns = opt_namesList[1].map(function(name) {
+			return '^(' + XRegExp.escape(name) + ')(?:\\W|$)';
 		});
 		const shortRegs = shortPatterns.map(function(pattern) {
 			return new RegExp(pattern, 'i');
@@ -3842,7 +3974,7 @@
 			if (match !== null) {
 				this.operand_str = match[1];
 				this.pCurrPos += match[1].length;
-				return [null, match[1]];
+				return [null, match[2] ? match[2] : match[1]];
 			}
 		}
 		return false;
@@ -3854,7 +3986,16 @@
 			this._reset();
 		}
 		const subSTR = formula.substring(start_pos);
-		const reg = /^(\w+|(?:\'.+?\'(?!\')))\[(\w+|(?:\'.+?\'(?!\')))\]/;
+		const reg = XRegExp.build('(?x) ^({{fieldName}})\\[({{itemName}})\\]', {
+			'fieldName': XRegExp.build('{{simple}}|{{quotes}}', {
+				'simple': '[\\p{L}_][\\p{L}\\p{N}_]*',
+				'quotes': "\\'.+?\\'(?!\\')",
+			}),
+			'itemName': XRegExp.build('{{simple}}|{{quotes}}', {
+				'simple': '[\\p{L}\\p{N}_]+',
+				'quotes': "\\'.+?\\'(?!\\')",
+			})
+		});
 		const match = reg.exec(subSTR);
 		if (match !== null && match[1] && match[2]) {
 			this.operand_str = match[0];
@@ -3877,7 +4018,7 @@
 			if (this.isArea(formula, indexStartRange) || this.isRef(formula, indexStartRange))
 			{
 				if (this.operand_str.length == formula.substring(indexStartRange).length)
-					return {sheet: sheetName, sheet2: is3DRefResult[2], range: this.operand_str};
+					return {sheet: sheetName, sheet2: is3DRefResult[2], range: this.operand_str, external: is3DRefResult[3]};
 				else
 					return null;
 			}
@@ -3903,8 +4044,11 @@
 		}
 	};
 // Возвращает экранируемое название листа
-	parserHelper.prototype.getEscapeSheetName = function (sheet)
+	parserHelper.prototype.getEscapeSheetName = function (sheet, shortLink)
 	{
+		if (shortLink) {
+			return rx_test_ws_name.test(sheet) ? sheet : sheet.replace(/'/g, "''");
+		}
 		return rx_test_ws_name.test(sheet) ? sheet : "'" + sheet.replace(/'/g, "''") + "'";
 	};
 	/**
@@ -3982,6 +4126,12 @@
 		else
 		{
 			range = AscCommonExcel.g_oRangeCache.getAscRange(dataRange);
+			if (!range && model && cDialogType.FormatTable === dialogType && AscCommon.rx_defName.test(dataRange)) {
+				let aRanges = AscCommonExcel.getRangeByName(dataRange, model.getActiveWs());
+				if (aRanges && aRanges.length === 1) {
+					range = aRanges[0] && aRanges[0].bbox;
+				}
+			}
 		}
 
 		if (!range && cDialogType.DataValidation !== dialogType && cDialogType.ConditionalFormattingRule !== dialogType && cDialogType.GoalSeek_Cell !== dialogType &&
@@ -4089,13 +4239,25 @@
 					if (sheetModel)
 					{
 						range = AscCommonExcel.g_oRangeCache.getAscRange(result.range);
-		}
+					}
 				}
 
 				if (!sheetModel) {
 					sheetModel = model.getActiveWs();
 				}
 				return AscCommonExcel.CGoalSeek.prototype.isValidDataRef(sheetModel, range, dialogType);
+			} else if (cDialogType.Solver_ObjectiveCell) {
+				result = parserHelp.parse3DRef(dataRange);
+				if (result) {
+					sheetModel = model.getWorksheetByName(result.sheet);
+					if (sheetModel) {
+						range = AscCommonExcel.g_oRangeCache.getAscRange(result.range);
+					}
+				}
+				if (!sheetModel) {
+					sheetModel = model.getActiveWs();
+				}
+				return AscCommonExcel.CSolver.prototype.isValidDataRef(sheetModel, range, dialogType);
 			}
 		}
 
@@ -4203,6 +4365,19 @@
 			}
 		}
 		return null;
+	};
+	parserHelper.prototype.escapeTableCharacters = function (string, doEscape) {
+		if (!string) {
+			return "";
+		}
+		
+		// make escape for the special character inside the string
+		if (doEscape) {
+			return string.replace(/(['#@\[\]])/g, "'$1");
+		}
+
+		// return only the character from the capture group(without escaping)
+		return string.replace(/'(['#@\[\]])/g, "$1");
 	};
 
 	var parserHelp = new parserHelper();
@@ -4355,6 +4530,9 @@
 		this.m_nOFormLoadCounter = 0;
 		this.m_nOFormEditCounter = 0;
 		
+		this.m_nPdfNewFormCounter = 0;
+		this.m_nPdfRedactCounter = 0;
+
 		this.m_nTurnOffCounter = 0;
 	}
 
@@ -4382,6 +4560,10 @@
 	{
 		this.m_bLoad = bValue;
 	};
+	CIdCounter.prototype.IsLoad = function()
+	{
+		return this.m_bLoad;
+	};
 	CIdCounter.prototype.Clear = function ()
 	{
 		this.m_sUserId = null;
@@ -4391,6 +4573,9 @@
 
 		this.m_nOFormLoadCounter = 0;
 		this.m_nOFormEditCounter = 0;
+
+		this.m_nPdfNewFormCounter = 0;
+		this.m_nPdfRedactCounter = 0;
 	};
 	CIdCounter.prototype.GetNewIdForOForm = function()
 	{
@@ -4398,6 +4583,17 @@
 			return ("_oform_" + (++this.m_nOFormLoadCounter));
 		else
 			return ("" + this.m_sUserId + "_oform_" + (++this.m_nOFormEditCounter));
+	};
+	CIdCounter.prototype.GetNewIdForPdfForm = function()
+	{
+		return ++this.m_nPdfNewFormCounter;
+	};
+	CIdCounter.prototype.GetNewIdForPdfRedact = function()
+	{
+		if (true === this.m_bLoad || null === this.m_sUserId)
+			return ("_redact_" + (++this.m_nPdfRedactCounter));
+		else
+			return ("" + this.m_sUserId + "_redact_" + (++this.m_nPdfRedactCounter));
 	};
 
 	function CLock()
@@ -4418,7 +4614,7 @@
 		this.Type = NewType;
 
 		var oApi = editor;
-		var oLogicDocument = oApi.WordControl.m_oLogicDocument;
+		var oLogicDocument = oApi && oApi.WordControl && oApi.WordControl.m_oLogicDocument;
 		if (false != Redraw && oLogicDocument)
 		{
 			// TODO: переделать перерисовку тут
@@ -4459,7 +4655,7 @@
 				oLogicDocument.Document_UpdateInterfaceState(false);
 			}
 		}
-		let oCustomProperties = oApi.getCustomProperties && oApi.getCustomProperties();
+		let oCustomProperties = oApi && oApi.getCustomProperties && oApi.getCustomProperties();
 		if(oCustomProperties && oCustomProperties.Lock === this)
 		{
 			oApi.sendEvent("asc_onCustomPropertiesLocked", this.Is_Locked());
@@ -10692,8 +10888,12 @@
 	
 	function ExecuteNoHistory(f, oLogicDocument, oThis, args)
 	{
+		// TODO: Заменить на нормальное обращение Asc.editor.getLogicDocument
+		if (!oLogicDocument && editor && editor.WordControl)
+			oLogicDocument = editor.WordControl.m_oLogicDocument;
+		
+		
 		// TODO: Надо перевести все редакторы на StartNoHistoryMode/EndNoHistoryMode
-
 		let oState = null, isTableId = false;
 		if (oLogicDocument && oLogicDocument.IsDocumentEditor && oLogicDocument.IsDocumentEditor())
 		{
@@ -10703,7 +10903,7 @@
 		{
 			AscCommon.History.TurnOff && AscCommon.History.TurnOff();
 
-			if (AscCommon.g_oTableId && !AscCommon.g_oTableId.IsOn())
+			if (AscCommon.g_oTableId && AscCommon.g_oTableId.IsOn())
 			{
 				AscCommon.g_oTableId.TurnOff();
 				isTableId = true;
@@ -10738,6 +10938,20 @@
 		logicDocument.SetLocalTrackRevisions(false);
 		let result = f.apply(t, args);
 		logicDocument.SetLocalTrackRevisions(localFlag);
+		return result;
+	}
+	
+	function executeNoPreDelete(f, logicDocument, t, args)
+	{
+		if (!logicDocument
+			|| !logicDocument.IsDocumentEditor
+			|| !logicDocument.IsDocumentEditor())
+			return f.apply(t, args);
+		
+		let preventPreDelete = logicDocument.PreventPreDelete;
+		logicDocument.PreventPreDelete = true;
+		let result = f.apply(t, args);
+		logicDocument.PreventPreDelete = preventPreDelete;
 		return result;
 	}
 	
@@ -10834,7 +11048,7 @@
 		for (var oIterator = sWord.getUnicodeIterator(); oIterator.check(); oIterator.next())
 		{
 			var nCharCode = oIterator.value();
-			if (IsHangul(nCharCode) || IsCJKIdeographs(nCharCode))
+			if (IsHangul(nCharCode) || IsCJKIdeographs(nCharCode) || IsComplexScript(nCharCode))
 				return false;
 
 			if (0x73 === nCharCode)
@@ -10901,6 +11115,13 @@
 			return new CColor(0, 0, 0, 255);
 
 		return true === isDark ? res.Dark : res.Light;
+	}
+	function setUserColorById(userId, light, dark)
+	{
+		g_oUserColorById[userId] = {
+			Light : new CColor(light.r, light.g, light.b, 255),
+			Dark : new CColor(dark.r, dark.g, dark.b, 255),
+		};
 	}
 	function getUserColorById(userId, userName, isDark, isNumericValue)
 	{
@@ -11368,6 +11589,10 @@
 		loadScript('../../../../sdkjs/common/Charts/ChartStyles.js', onSuccess, onError);
 	}
 
+	function loadPathBoolean(onSuccess, onError) {
+		loadScript('../../../../sdkjs/common/Drawings/Format/path-boolean-min.js', onSuccess, onError);
+	}
+
 	function getAltGr(e)
 	{
 		if (true === e["altGraphKey"])
@@ -11523,6 +11748,14 @@
 		"Meiryo", "MS Gothic", "MS PGothic", "MS UI Gothic", "Yu Gothic",
 		"Dotum", "Gulim", "Malgun Gothic"
 	];
+	
+	// Символы, на которых работает <w:rFonts w:hint="eastAsia"/>
+	function isAmbiguousCharacter(codePoint)
+	{
+		return (0x00D7 === codePoint
+			|| (0x0370 <= codePoint && codePoint <= 0x03FF));
+	}
+	
 
 	function IsEastAsianFont(sName)
 	{
@@ -11544,10 +11777,19 @@
 
 	function isEastAsianScript(value)
 	{
+		// CJK Symbols and Punctuation (3000–303F)
+		// Hiragana (3040-309F)
+		// Katakana (30A0–30FF)
 		// Bopomofo (3100–312F)
+		// Hangul Compatibility Jamo (3130–318F)
+		// Kanbun (3190–319F)
 		// Bopomofo Extended (31A0–31BF)
-		// CJK Unified Ideographs (4E00–9FEA)
+		// CJK Strokes (31C0–31EF)
+		// Katakana Phonetic Extensions (31F0–31FF)
+		// Enclosed CJK Letters and Months (3200-32FF)
+		// CJK Compatibility (3300-33FF)
 		// CJK Unified Ideographs Extension A (3400–4DB5)
+		// CJK Unified Ideographs (4E00–9FEA)
 		// CJK Unified Ideographs Extension B (20000–2A6D6)
 		// CJK Unified Ideographs Extension C (2A700–2B734)
 		// CJK Unified Ideographs Extension D (2B740–2B81D)
@@ -11557,20 +11799,14 @@
 		// CJK Compatibility Ideographs Supplement (2F800–2FA1F)
 		// Kangxi Radicals (2F00–2FDF)
 		// CJK Radicals Supplement (2E80–2EFF)
-		// CJK Strokes (31C0–31EF)
 		// Ideographic Description Characters (2FF0–2FFF)
 		// Hangul Jamo (1100–11FF)
 		// Hangul Jamo Extended-A (A960–A97F)
 		// Hangul Jamo Extended-B (D7B0–D7FF)
-		// Hangul Compatibility Jamo (3130–318F)
 		// Halfwidth and Fullwidth Forms (FF00–FFEF)
 		// Hangul Syllables (AC00–D7AF)
-		// Hiragana (3040–309F)
 		// Kana Extended-A (1B100–1B12F)
 		// Kana Supplement (1B000–1B0FF)
-		// Kanbun (3190–319F)
-		// Katakana (30A0–30FF)
-		// Katakana Phonetic Extensions (31F0–31FF)
 		// Lisu (A4D0–A4FF)
 		// Miao (16F00–16F9F)
 		// Nushu (1B170–1B2FF)
@@ -11578,11 +11814,9 @@
 		// Tangut Components (18800–18AFF)
 		// Yi Syllables (A000–A48F)
 		// Yi Radicals (A490–A4CF)
-
-		return ((0x3100 <= value && value <= 0x312F)
-			|| (0x31A0 <= value && value <= 0x31BF)
+		
+		return ((0x3000 <= value && value <= 0x4DB5)
 			|| (0x4E00 <= value && value <= 0x9FEA)
-			|| (0x3400 <= value && value <= 0x4DB5)
 			|| (0x20000 <= value && value <= 0x2A6D6)
 			|| (0x2A700 <= value && value <= 0x2B734)
 			|| (0x2B740 <= value && value <= 0x2B81D)
@@ -11592,20 +11826,14 @@
 			|| (0x2F800 <= value && value <= 0x2FA1F)
 			|| (0x2F00 <= value && value <= 0x2FDF)
 			|| (0x2E80 <= value && value <= 0x2EFF)
-			|| (0x31C0 <= value && value <= 0x31EF)
 			|| (0x2FF0 <= value && value <= 0x2FFF)
 			|| (0x1100 <= value && value <= 0x11FF)
 			|| (0xA960 <= value && value <= 0xA97F)
 			|| (0xD7B0 <= value && value <= 0xD7FF)
-			|| (0x3130 <= value && value <= 0x318F)
 			|| (0xFF00 <= value && value <= 0xFFEF)
 			|| (0xAC00 <= value && value <= 0xD7AF)
-			|| (0x3040 <= value && value <= 0x309F)
 			|| (0x1B100 <= value && value <= 0x1B12F)
 			|| (0x1B000 <= value && value <= 0x1B0FF)
-			|| (0x3190 <= value && value <= 0x319F)
-			|| (0x30A0 <= value && value <= 0x30FF)
-			|| (0x31F0 <= value && value <= 0x31FF)
 			|| (0xA4D0 <= value && value <= 0xA4FF)
 			|| (0x16F00 <= value && value <= 0x16F9F)
 			|| (0x1B170 <= value && value <= 0x1B2FF)
@@ -11613,6 +11841,11 @@
 			|| (0x18800 <= value && value <= 0x18AFF)
 			|| (0xA000 <= value && value <= 0xA48F)
 			|| (0xA490 <= value && value <= 0xA4CF));
+	}
+	
+	function isEastAsianPunctuation(value)
+	{
+		return (0x3000 <= value && value <= 0x4DB5);
 	}
 
 	function IsHangul(nCharCode)
@@ -11978,32 +12211,34 @@
 		this.CustomCounter = 0;
 		this.CustomActions = {};
 	}
-	CShortcuts.prototype.Add = function(nType, nCode, isCtrl, isShift, isAlt)
-	{
-		this.List[this.private_GetIndex(nCode, isCtrl, isShift, isAlt)] = nType;
+	CShortcuts.GetShortcutIndex = function(nCode, isCtrl, isShift, isAlt, isCommand) {
+		return ((nCode << 16) | (isCtrl ? 8 : 0) | (isShift ? 4 : 0) | (isAlt ? 2 : 0) | (isCommand ? 1 : 0));
 	};
-	CShortcuts.prototype.Get = function(nCode, isCtrl, isShift, isAlt)
+	CShortcuts.prototype.Add = function(nType, nCode, isCtrl, isShift, isAlt, isCommand)
 	{
-		var nType = this.List[this.private_GetIndex(nCode, isCtrl, isShift, isAlt)];
+		this.List[CShortcuts.GetShortcutIndex(nCode, isCtrl, isShift, isAlt, isCommand)] = nType;
+	};
+	CShortcuts.prototype.Get = function(nCode, isCtrl, isShift, isAlt, isCommand)
+	{
+		var nType = this.List[CShortcuts.GetShortcutIndex(nCode, isCtrl, isShift, isAlt, isCommand)];
 		return (undefined !== nType ? nType : 0);
 	};
-	CShortcuts.prototype.private_GetIndex = function(nCode, isCtrl, isShift, isAlt)
-	{
-		return ((nCode << 8) | (isCtrl ? 4 : 0) | (isShift ? 2 : 0) | (isAlt ? 1 : 0));
-	}
+	CShortcuts.prototype.GetShortcutObject = function(nIndex) {
+		return {KeyCode : nIndex >>> 16, CtrlKey : !!(nIndex & 8), ShiftKey : !!(nIndex & 4), AltKey : !!(nIndex & 2), MacCmdKey : !!(nIndex & 1)};
+	};
 	CShortcuts.prototype.CheckType = function(nType)
 	{
 		for (var nIndex in this.List)
 		{
 			if (this.List[nIndex] === nType)
-				return {KeyCode : nIndex >>> 8, CtrlKey : !!(nIndex & 4), ShiftKey : !!(nIndex & 2), AltKey : !!(nIndex & 1)};
+				return this.GetShortcutObject(nIndex);
 		}
 
 		return null;
 	};
-	CShortcuts.prototype.Remove = function(nCode, isCtrl, isShift, isAlt)
+	CShortcuts.prototype.Remove = function(nCode, isCtrl, isShift, isAlt, isCommand)
 	{
-		delete this.List[this.private_GetIndex(nCode, isCtrl, isShift, isAlt)];
+		delete this.List[CShortcuts.GetShortcutIndex(nCode, isCtrl, isShift, isAlt, isCommand)];
 	};
 	CShortcuts.prototype.RemoveByType = function(nType)
 	{
@@ -12031,6 +12266,33 @@
 		this.CustomActions[nType] = new CCustomShortcutActionSymbol(nCharCode, sFont);
 		return nType;
 	};
+	CShortcuts.prototype.Reset = function()
+	{
+		this.List = {};
+	};
+	CShortcuts.prototype.ApplyFromStorage = function(oAscShortcut)
+	{
+		const arrKeyCodes = [oAscShortcut.keyCode];
+		const arrAddKeyCodes = Asc.c_oAscKeyCodeAnalogues[oAscShortcut.keyCode];
+		if (arrAddKeyCodes)
+		{
+			arrKeyCodes.push.apply(arrKeyCodes, arrAddKeyCodes);
+		}
+		if (oAscShortcut.isHidden)
+		{
+			for (let i = 0; i < arrKeyCodes.length; i += 1)
+			{
+				this.Remove(arrKeyCodes[i], oAscShortcut.ctrlKey, oAscShortcut.shiftKey, oAscShortcut.altKey, oAscShortcut.commandKey);
+			}
+		}
+		else
+		{
+			for (let i = 0; i < arrKeyCodes.length; i += 1)
+			{
+				this.Add(oAscShortcut.type, arrKeyCodes[i], oAscShortcut.ctrlKey, oAscShortcut.shiftKey, oAscShortcut.altKey, oAscShortcut.commandKey);
+			}
+		}
+	};
 
 	function CCustomShortcutActionSymbol(nCharCode, sFont)
 	{
@@ -12057,7 +12319,7 @@
         this.isChangesHandled = false;
 
         this.cryptoMode = 0; // start crypto mode
-		this.isChartEditor = false;
+		this.isFrameEditor = false;
 
         this.isExistDecryptedChanges = false; // был ли хоть один запрос на расшифровку данных (были ли чужие изменения)
 
@@ -12091,7 +12353,7 @@
             if (!window["AscDesktopEditor"])
                 return false;
 
-            if (this.isChartEditor)
+            if (this.isFrameEditor)
             	return false;
 
             if (2 == this.cryptoMode)
@@ -13657,6 +13919,11 @@
 	{
 		this.started = true;
 		this.endCallback = fEndCallback;
+		let drawingDocument = Asc.editor.getDrawingDocument();
+		if (drawingDocument)
+		{
+			drawingDocument.LockCursorType("eyedropper");
+		}
 	};
 	CEyedropper.prototype.cancel = function()
 	{
@@ -13669,6 +13936,12 @@
 		this.api.sendEvent("asc_onHideEyedropper");
 		this.clearColor();
 		this.clearImageData();
+
+		let drawingDocument = Asc.editor.getDrawingDocument();
+		if (drawingDocument)
+		{
+			drawingDocument.UnlockCursorType();
+		}
 	};
 	CEyedropper.prototype.clearImageData = function()
 	{
@@ -13817,90 +14090,123 @@
 		}
 	}
 	
+	/**
+	 * @param {string} text
+	 * @param {Asc.asc_CTextOptions} options
+	 * @param {boolean} bTrimSpaces - Whether to trim spaces when using space delimiter
+	 * @returns {Array<Array<string>>} Matrix of parsed CSV values
+	 */
 	function parseText(text, options, bTrimSpaces) {
-		var delimiterChar;
-		if (options.asc_getDelimiterChar()) {
-			delimiterChar = options.asc_getDelimiterChar();
-		} else {
-			switch (options.asc_getDelimiter()) {
-				case AscCommon.c_oAscCsvDelimiter.None:
-					delimiterChar = undefined;
-					break;
-				case AscCommon.c_oAscCsvDelimiter.Tab:
-					delimiterChar = "\t";
-					break;
-				case AscCommon.c_oAscCsvDelimiter.Semicolon:
-					delimiterChar = ";";
-					break;
-				case AscCommon.c_oAscCsvDelimiter.Colon:
-					delimiterChar = ":";
-					break;
-				case AscCommon.c_oAscCsvDelimiter.Comma:
-					delimiterChar = ",";
-					break;
-				case AscCommon.c_oAscCsvDelimiter.Space:
-					delimiterChar = " ";
-					break;
-			}
-		}
-
-		var textQualifier = options.asc_getTextQualifier();
-		var matrix = [];
-		//var rows = text.match(/[^\r\n]+/g);
-		var rows = text.split(/\r?\n/);
-		for (var i = 0; i < rows.length; ++i) {
-			var row = rows[i];
-			if(" " === delimiterChar && bTrimSpaces) {
-				var addSpace = false;
-				if(row[0] === delimiterChar) {
-					addSpace = true;
-				}
-				row = addSpace ? delimiterChar + row.trim() : row.trim();
-			}
-			//todo quotes
-			if (textQualifier) {
-				if (!row.length) {
-					matrix.push(row.split(delimiterChar));
-					continue;
-				}
-
-				var _text = "";
-				var startQualifier = false;
-				for (var j = 0; j < row.length; j++) {
-					if (!startQualifier && row[j] === textQualifier && (!row[j - 1] || (row[j - 1] && row[j - 1] === delimiterChar))) {
-						startQualifier = !startQualifier;
-						continue;
-					} else if (startQualifier && row[j] === textQualifier) {
-						startQualifier = !startQualifier;
-
-						if (j === row.length - 1) {
-							if (!matrix[i]) {
-								matrix[i] = [];
-							}
-							matrix[i].push(_text);
-						}
-
+		let delimiterMap = {};
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.None] = undefined;
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Tab] = "\t";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Semicolon] = ";";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Colon] = ":";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Comma] = ",";
+		delimiterMap[AscCommon.c_oAscCsvDelimiter.Space] = " ";
+		const delimiterChar = options.asc_getDelimiterChar() || delimiterMap[options.asc_getDelimiter()];
+		const textQualifier = options.asc_getTextQualifier();
+		const hasQualifier = !!textQualifier;
+		
+		if (!text.length) return [[]];
+		
+		let rows = delimiterChar === '\n' ? [text] : text.split(/\r\n|\r|\n/);
+		if (rows.length > 1 && rows[rows.length - 1] === '') rows.pop();
+		
+		const isSpace = delimiterChar === " ";
+		// Note: Using charCodeAt instead of codePointAt for performance.
+		// CSV delimiters are always basic ASCII chars (comma=44, semicolon=59, tab=9, etc.)
+		const delimiterCode = delimiterChar ? delimiterChar.charCodeAt(0) : 0;
+		const qualifierCode = hasQualifier ? textQualifier.charCodeAt(0) : 0;
+		
+		/**
+		 * Trim and normalize a row when space is the delimiter and trimming is enabled.
+		 * Preserves a single leading space delimiter when present to avoid data loss.
+		 * @param {string} row
+		 * @returns {string}
+		 */
+		const processSpaceRow = function(row) {
+			if (!isSpace || !bTrimSpaces) return row;
+			const hasLeadingSpace = row.length > 0 && row.charCodeAt(0) === delimiterCode;
+			row = row.trim();
+			return hasLeadingSpace ? delimiterChar + row : row;
+		};
+		
+		/**
+		 * Parse a logical CSV record that may span multiple pre-split rows.
+		 * @param {string} row - Row to parse
+		 * @param {number} startIndex - Index in rows array to start parsing from
+		 * @returns {{fields: Array<string>, curIndex: number}}
+		 */
+		const parseRowWithQualifiers = function(row, startIndex) {
+			const fields = [];
+			let idx = startIndex;
+			let rowLength = row.length;
+			let textParts = [];
+			let insideQualifier = false;
+			let j = 0;
+			
+			while (true) {
+				if (j >= rowLength) {
+					if (insideQualifier && idx + 1 < rows.length) {
+						// Continue to next line, adding normalized newline
+						textParts.push('\n');
+						idx++;
+						row = rows[idx] || "";
+						row = processSpaceRow(row);
+						rowLength = row.length;
+						j = 0;
 						continue;
 					}
-					
-					if (!startQualifier && row[j] === delimiterChar) {
-						if (!matrix[i]) {
-							matrix[i] = [];
-						}
-						matrix[i].push(_text);
-						_text = "";
-					} else {
-						_text += row[j];
-						if (j === row.length - 1) {
-							if (!matrix[i]) {
-								matrix[i] = [];
-							}
-							matrix[i].push(_text);
+					// End of record
+					fields.push(textParts.join(''));
+					return { fields: fields, curIndex: idx };
+				}
+
+				const charCode = row.charCodeAt(j);
+				if (charCode === qualifierCode) {
+					if (!insideQualifier && (j === 0 || row.charCodeAt(j - 1) === delimiterCode)) {
+						insideQualifier = true;
+						j++;
+						continue;
+					} else if (insideQualifier) {
+						if (j + 1 < rowLength && row.charCodeAt(j + 1) === qualifierCode) {
+							textParts.push(textQualifier);
+							j += 2;
+							continue;
+						} else {
+							insideQualifier = false;
+							j++;
+							continue;
 						}
 					}
 				}
+				
+				if (!insideQualifier && charCode === delimiterCode) {
+					fields.push(textParts.join(''));
+					textParts = [];
+				} else {
+					textParts.push(row[j]);
+				}
+				j++;
+			}
+		};
+		
+		const matrix = [];
+		for (let i = 0; i < rows.length; i++) {
+			let row = processSpaceRow(rows[i]);
+			
+			if (!row.length) {
+				matrix.push([""]);
+				continue;
+			}
+			
+			if (hasQualifier) {
+				const res = parseRowWithQualifiers(row, i);
+				matrix.push(res.fields);
+				i = res.curIndex;
 			} else {
-				matrix.push(row.split(delimiterChar));	
+				matrix.push(delimiterChar === undefined ? [row] : row.split(delimiterChar));
 			}
 		}
 		return matrix;
@@ -14754,31 +15060,6 @@
 		return aArray[Math.random() * aArray.length | 0];
 	}
 
-	function registerServiceWorker() {
-		if ('serviceWorker' in navigator) {
-			const serviceWorkerName = 'document_editor_service_worker.js';
-			const serviceWorkerPath = '../../../../' + serviceWorkerName;
-			let reg;
-			navigator.serviceWorker.register(serviceWorkerPath)
-				.then(function (registration) {
-					reg = registration;
-					return navigator.serviceWorker.getRegistrations();
-				})
-				.then(function (registrations) {
-					//delete stale service workers
-					for (const registration of registrations) {
-						if (registration !== reg && registration.active && registration.active.scriptURL.endsWith(serviceWorkerName)) {
-							registration.unregister();
-						}
-					}
-				})
-				.catch(function (err) {
-					console.error('Registration failed with ' + err);
-				});
-		}
-	}
-	registerServiceWorker();
-
 	function consoleLog(val) {
 		// console.log(val);
 		const showMessages = false;
@@ -14793,6 +15074,433 @@
 		for (let i = 0; i < arguments.length; i++) {
 			console.log(arguments[i]);
 		}
+	}
+
+
+	const LRI = '\u2066'; // LEFT-TO-RIGHT ISOLATE
+	const RLI = '\u2067'; // RIGHT-TO-LEFT ISOLATE
+	const PDI = '\u2069'; // POP DIRECTIONAL ISOLATE
+
+	function getLTRString(str) {
+		if (str.startsWith(LRI) && str.endsWith(PDI)) {
+			return str;
+		}
+
+		if (str.startsWith(RLI)) {
+			str = str.slice(1);
+		}
+		if (str.startsWith(LRI)) {
+			str = str.slice(1);
+		}
+		if (str.endsWith(PDI)) {
+			str = str.slice(0, -1);
+		}
+
+		return LRI + str + PDI;
+	}
+
+	function getRTLString(str) {
+		if (str.startsWith(RLI) && str.endsWith(PDI)) {
+			return str;
+		}
+
+		if (str.startsWith(LRI)) {
+			str = str.slice(1);
+		}
+		if (str.startsWith(RLI)) {
+			str = str.slice(1);
+		}
+		if (str.endsWith(PDI)) {
+			str = str.slice(0, -1);
+		}
+
+		return RLI + str + PDI;
+	}
+
+	function stripDirectionMarks(str) {
+		while (
+			str.startsWith('\u200E') ||
+			str.startsWith('\u200F') ||
+			str.startsWith(LRI) ||
+			str.startsWith(RLI)
+			) {
+			str = str.slice(1);
+		}
+
+		while (
+			str.endsWith('\u200E') ||
+			str.endsWith('\u200F') ||
+			str.endsWith(PDI)
+			) {
+			str = str.slice(0, -1);
+		}
+
+		return str;
+	}
+
+	function getCharStrongDir(char) {
+		let type = AscBidi.getType(char);
+		if (type & AscBidi.FLAG.STRONG) {
+			if (type & AscBidi.FLAG.RTL) {
+				return AscBidi.DIRECTION_FLAG.RTL;
+			} else {
+				return AscBidi.DIRECTION_FLAG.LTR;
+			}
+		}
+		return null;
+	}
+
+	function applyElementDirection(element) {
+		if (!element)
+			return;
+		const text = element.value || '';
+		let dir = 'ltr';
+		for (let iter = text.getUnicodeIterator(); iter.check(); iter.next()) {
+			let charDir = AscCommon.getCharStrongDir(iter.value());
+			if (charDir === AscBidi.DIRECTION_FLAG.RTL) {
+				dir = 'rtl';
+				break;
+			}
+		}
+		element.dir = dir;
+	}
+
+
+	function getFirstStrongDirection(text) {
+		if(!text) return null;
+		for (let iter = text.getUnicodeIterator(); iter.check(); iter.next()) {
+			let cp = iter.value();
+			let dir = getCharStrongDir(cp);
+			if (dir !== null) {
+				return dir;
+			}
+		}
+		return null;
+	}
+
+	function getGradientPoints(min_x, min_y, max_x, max_y, _angle, scale) {
+		let points = { x0 : 0, y0 : 0, x1 : 0, y1 : 0 };
+
+		let fAE = AscFormat.fApproxEqual;
+		if (fAE(min_x, max_x) && fAE(min_y, max_y)) {
+			points.x0 = min_x;
+			points.y0 = min_y;
+			points.x1 = min_x;
+			points.y1 = min_y;
+			return points;
+		}
+
+		if (fAE(min_x, max_x)) {
+			points.x0 = min_x;
+			points.y0 = min_y;
+			points.x1 = min_x;
+			points.y1 = max_y;
+			return points;
+		}
+
+		if (fAE(min_y, max_y)) {
+			points.x0 = min_x;
+			points.y0 = min_y;
+			points.x1 = max_x;
+			points.y1 = min_y;
+			return points;
+		}
+
+		let angle = _angle / 60000;
+		while (angle < 0)
+			angle += 360;
+		while (angle >= 360)
+			angle -= 360;
+
+		if (Math.abs(angle) < 1) {
+			points.x0 = min_x;
+			points.y0 = min_y;
+			points.x1 = max_x;
+			points.y1 = min_y;
+
+			return points;
+		}
+		else if (Math.abs(angle - 90) < 1) {
+			points.x0 = min_x;
+			points.y0 = min_y;
+			points.x1 = min_x;
+			points.y1 = max_y;
+
+			return points;
+		}
+		else if (Math.abs(angle - 180) < 1) {
+			points.x0 = max_x;
+			points.y0 = min_y;
+			points.x1 = min_x;
+			points.y1 = min_y;
+
+			return points;
+		}
+		else if (Math.abs(angle - 270) < 1) {
+			points.x0 = min_x;
+			points.y0 = max_y;
+			points.x1 = min_x;
+			points.y1 = min_y;
+
+			return points;
+		}
+
+		let grad_a = AscCommon.deg2rad(angle);
+		if (!scale) {
+			if (angle > 0 && angle < 90) {
+				let p = this.getNormalPoint(min_x, min_y, grad_a, max_x, max_y);
+
+				points.x0 = min_x;
+				points.y0 = min_y;
+				points.x1 = p.X;
+				points.y1 = p.Y;
+
+				return points;
+			}
+			if (angle > 90 && angle < 180) {
+				let p = this.getNormalPoint(max_x, min_y, grad_a, min_x, max_y);
+
+				points.x0 = max_x;
+				points.y0 = min_y;
+				points.x1 = p.X;
+				points.y1 = p.Y;
+
+				return points;
+			}
+			if (angle > 180 && angle < 270) {
+				let p = this.getNormalPoint(max_x, max_y, grad_a, min_x, min_y);
+
+				points.x0 = max_x;
+				points.y0 = max_y;
+				points.x1 = p.X;
+				points.y1 = p.Y;
+
+				return points;
+			}
+			if (angle > 270 && angle < 360) {
+				let p = this.getNormalPoint(min_x, max_y, grad_a, max_x, min_y);
+
+				points.x0 = min_x;
+				points.y0 = max_y;
+				points.x1 = p.X;
+				points.y1 = p.Y;
+
+				return points;
+			}
+			// никогда сюда не зайдем
+			return points;
+		}
+
+		// scale == true
+		let _grad_45 = (Math.PI / 2) - Math.atan2(max_y - min_y, max_x - min_x);
+		let _grad_90_45 = (Math.PI / 2) - _grad_45;
+		if (angle > 0 && angle < 90) {
+			if (angle <= 45)
+			{
+				grad_a = (_grad_45 * angle / 45);
+			}
+			else
+			{
+				grad_a = _grad_45 + _grad_90_45 * (angle - 45) / 45;
+			}
+
+			let p = this.getNormalPoint(min_x, min_y, grad_a, max_x, max_y);
+
+			points.x0 = min_x;
+			points.y0 = min_y;
+			points.x1 = p.X;
+			points.y1 = p.Y;
+
+			return points;
+		}
+		if (angle > 90 && angle < 180) {
+			if (angle <= 135) {
+				grad_a = Math.PI / 2 + _grad_90_45 * (angle - 90) / 45;
+			}
+			else {
+				grad_a = Math.PI / 2 + _grad_90_45 + _grad_45 * (angle - 135) / 45;
+			}
+
+			let p = this.getNormalPoint(max_x, min_y, grad_a, min_x, max_y);
+
+			points.x0 = max_x;
+			points.y0 = min_y;
+			points.x1 = p.X;
+			points.y1 = p.Y;
+
+			return points;
+		}
+		if (angle > 180 && angle < 270) {
+			if (angle <= 225)
+			{
+				grad_a = Math.PI + _grad_45 * (angle - 180) / 45;
+			}
+			else
+			{
+				grad_a = Math.PI + _grad_45 + _grad_90_45 * (angle - 225) / 45;
+			}
+
+			let p = this.getNormalPoint(max_x, max_y, grad_a, min_x, min_y);
+
+			points.x0 = max_x;
+			points.y0 = max_y;
+			points.x1 = p.X;
+			points.y1 = p.Y;
+
+			return points;
+		}
+		if (angle > 270 && angle < 360) {
+			if (angle <= 315)
+			{
+				grad_a = 3 * Math.PI / 2 + _grad_90_45 * (angle - 270) / 45;
+			}
+			else
+			{
+				grad_a = 3 * Math.PI / 2 + _grad_90_45 + _grad_45 * (angle - 315) / 45;
+			}
+
+			let p = this.getNormalPoint(min_x, max_y, grad_a, max_x, min_y);
+
+			points.x0 = min_x;
+			points.y0 = max_y;
+			points.x1 = p.X;
+			points.y1 = p.Y;
+
+			return points;
+		}
+		// никогда сюда не зайдем
+		return points;
+	}
+
+	function getNormalPoint(x0, y0, angle, x1, y1) {
+		// точка - пересечение прямой, проходящей через точку (x0, y0) под углом angle и
+		// перпендикуляра к первой прямой, проведенной из точки (x1, y1)
+		let ex1 = Math.cos(angle);
+		let ey1 = Math.sin(angle);
+
+		let ex2 = -ey1;
+		let ey2 = ex1;
+
+		let a = ex1 / ey1;
+		let b = ex2 / ey2;
+
+		let x = ((a * b * y1 - a * b * y0) - (a * x1 - b * x0)) / (b - a);
+		let y = (x - x0) / a + y0;
+
+		return { X : x, Y : y };
+	}
+	function CTree() {
+	}
+
+	CTree.prototype = {
+		constructor: CTree,
+		getChildren: function () {
+			return [];
+		},
+		fillObject: function (oCopy, oIdMap) {},
+		traverse: function (fCallback, bReverseOrder) {
+			if (fCallback(this)) {
+				return true;
+			}
+			let aChildren = this.getChildren();
+			if(bReverseOrder === undefined || bReverseOrder === true) {
+				for (let nChild = aChildren.length - 1; nChild > -1; --nChild) {
+					let oChild = aChildren[nChild];
+					if (oChild && oChild.traverse) {
+						if (oChild.traverse(fCallback, bReverseOrder)) {
+							return true;
+						}
+					}
+				}
+			}
+			else {
+				for (let nChild = 0; nChild < aChildren.length; ++nChild) {
+					let oChild = aChildren[nChild];
+					if (oChild && oChild.traverse) {
+						if (oChild.traverse(fCallback, bReverseOrder)) {
+							return true;
+						}
+					}
+				}
+			}
+			return false;
+		},
+		isEqual: function (oOther) {
+			if (!oOther) {
+				return false;
+			}
+			if (this.getObjectType() !== oOther.getObjectType()) {
+				return false;
+			}
+			var aThisChildren = this.getChildren();
+			var aOtherChildren = oOther.getChildren();
+			if (aThisChildren.length !== aOtherChildren.length) {
+				return false;
+			}
+			for (var nChild = 0; nChild < aThisChildren.length; ++nChild) {
+				var oThisChild = aThisChildren[nChild];
+				var oOtherChild = aOtherChildren[nChild];
+				if (oThisChild !== this.checkEqualChild(oThisChild, oOtherChild)) {
+					return false;
+				}
+			}
+			return true;
+		},
+		checkEqualChild: function (oThisChild, oOtherChild) {
+			if (AscCommon.isRealObject(oThisChild) && oThisChild.isEqual) {
+				if (!oThisChild.isEqual(oOtherChild)) {
+					return undefined;
+				}
+			} else {
+				if (oThisChild !== oOtherChild) {
+					return undefined;
+				}
+			}
+			return oThisChild;
+		},
+		preorderTraverse : function(nextLayerCallback, backtrackCallback, context) {
+			var stack = [];
+			var nodes = this.getChildren();
+			var i = 0;
+
+			while (i <= nodes.length) {
+				if (i === nodes.length) {
+					// backtrack
+					if (stack.length !== 0) {
+						let state = stack.pop();
+						nodes = state.nodes;
+						i = state.index + 1;
+						if (backtrackCallback) {
+							backtrackCallback();
+						}
+					} else {
+						break;
+					}
+				} else {
+					var node = nodes[i];
+
+					// Call the callback for the current node
+					if (nextLayerCallback) {
+						nextLayerCallback(context, node);
+					}
+
+					if (node.children && node.children.length > 0) {
+						// Save current state and go deeper
+						stack.push({ nodes: nodes, index: i });
+						nodes = node.children;
+						i = 0;
+					} else {
+						// Leaf node, move to next sibling
+						i++;
+					}
+				}
+			}
+		}
+	};
+
+	function clampNumber(value, min, max)
+	{
+		return value < min ? min : value > max ? max : value;
 	}
 
 	//------------------------------------------------------------export---------------------------------------------------
@@ -14811,6 +15519,7 @@
 	window["AscCommon"].openFileCommand = openFileCommand;
 	window["AscCommon"].sendCommand = sendCommand;
 	window["AscCommon"].sendSaveFile = sendSaveFile;
+	window["AscCommon"].c_oAscServerError = c_oAscServerError;
 	window["AscCommon"].mapAscServerErrorToAscError = mapAscServerErrorToAscError;
 	window["AscCommon"].joinUrls = joinUrls;
 	window["AscCommon"].getFullImageSrc2 = getFullImageSrc2;
@@ -14844,6 +15553,7 @@
 	window["AscCommon"].getUrlType = getUrlType;
 	window["AscCommon"].prepareUrl = prepareUrl;
 	window["AscCommon"].getUserColorById = getUserColorById;
+	window["AscCommon"].setUserColorById = setUserColorById;
 	window["AscCommon"].isNullOrEmptyString = isNullOrEmptyString;
 	window["AscCommon"].unleakString = unleakString;
 	window["AscCommon"].readValAttr = readValAttr;
@@ -14857,12 +15567,22 @@
 	window["AscCommon"].checkOOXMLSignature = checkOOXMLSignature;
 	window["AscCommon"].checkNativeViewerSignature = checkNativeViewerSignature;
 	window["AscCommon"].getEditorBySignature = getEditorBySignature;
+	window["AscCommon"].getLTRString = getLTRString;
+	window["AscCommon"].getRTLString = getRTLString;
+	window["AscCommon"].stripDirectionMarks = stripDirectionMarks;
+	window["AscCommon"].getCharStrongDir = getCharStrongDir;
+	window["AscCommon"].applyElementDirection = applyElementDirection;
+	window["AscCommon"].getFirstStrongDirection = getFirstStrongDirection;
+	window["AscCommon"].getGradientPoints = getGradientPoints;
+	window["AscCommon"].getNormalPoint = getNormalPoint;
+	window["AscCommon"].clampNumber = clampNumber;
 
 	window["AscCommon"].DocumentUrls = DocumentUrls;
 	window["AscCommon"].OpenFileResult = OpenFileResult;
 	window["AscCommon"].CLock = CLock;
 	window["AscCommon"].CContentChanges = CContentChanges;
 	window["AscCommon"].CContentChangesElement = CContentChangesElement;
+	window["AscCommon"].CTree = CTree;
 
 	window["AscCommon"].CorrectMMToTwips = CorrectMMToTwips;
 	window["AscCommon"].TwipsToMM = TwipsToMM;
@@ -14885,6 +15605,7 @@
 	window["AscCommon"].IsAscFontSupport = IsAscFontSupport;
 	window["AscCommon"].ExecuteNoHistory = ExecuteNoHistory;
 	window["AscCommon"].executeNoRevisions = executeNoRevisions;
+	window["AscCommon"].executeNoPreDelete = executeNoPreDelete;
 	window["AscCommon"].ExecuteEditorAction = ExecuteEditorAction;
 	window["AscCommon"].AddAndExecuteChange = AddAndExecuteChange;
 	window["AscCommon"].CompareStrings = CompareStrings;
@@ -14895,13 +15616,17 @@
 	window["AscCommon"].loadSdk = loadSdk;
     window["AscCommon"].loadScript = loadScript;
     window["AscCommon"].loadChartStyles = loadChartStyles;
+    window["AscCommon"].loadPathBoolean = loadPathBoolean;
 	window["AscCommon"].getAltGr = getAltGr;
 	window["AscCommon"].getColorSchemeByName = getColorSchemeByName;
 	window["AscCommon"].getColorSchemeByIdx = getColorSchemeByIdx;
 	window["AscCommon"].getAscColorScheme = getAscColorScheme;
 	window["AscCommon"].checkAddColorScheme = checkAddColorScheme;
 	window["AscCommon"].getIndexColorSchemeInArray = getIndexColorSchemeInArray;
+	window["AscCommon"].isAmbiguousCharacter = isAmbiguousCharacter;
 	window["AscCommon"].isEastAsianScript = isEastAsianScript;
+	window["AscCommon"].isEastAsianPunctuation = isEastAsianPunctuation;
+	window["AscCommon"].isHangul = IsHangul;
 	window["AscCommon"].IsEastAsianFont = IsEastAsianFont;
 	window["AscCommon"].IsComplexScript = IsComplexScript;
 	window["AscCommon"].IsGeorgianScript = IsGeorgianScript;
@@ -14993,7 +15718,7 @@
 	window["AscCommon"].fromModelCryptAlgorithmSid = fromModelCryptAlgorithmSid;
 	window["AscCommon"].getMemoryInfo = getMemoryInfo;
 	window["AscCommon"].getClientInfoString = getClientInfoString;
-	window["AscCommon"].sendClientLog = sendClientLog;
+	window["AscCommon"].sendClientLog = window["AscCommon"]["sendClientLog"] = sendClientLog;
 
 	window["AscCommon"].getNativePrintRanges = getNativePrintRanges;
 
@@ -15024,6 +15749,7 @@
 	window["AscCommon"].trimMinMaxValue = trimMinMaxValue;
 	window["AscCommon"].cStrucTableReservedWords = cStrucTableReservedWords;
 	window["AscCommon"].getArrayRandomElement = getArrayRandomElement;
+	window["AscCommon"].rx_error = rx_error;
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo, csv_data)
@@ -15235,6 +15961,9 @@ window["buildCryptoFile_End"] = function(url, error, hash, password)
 					break;
 				case AscCommon.c_oEditorId.Spreadsheet:
 					ext = ".xlsx";
+					break;
+				case AscCommon.c_oEditorId.Visio:
+					ext = ".vsdx";
 					break;
 				default:
 					break;

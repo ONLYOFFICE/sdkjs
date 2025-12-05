@@ -45,7 +45,10 @@ $(function () {
 		LoadDocumentFonts: function () {
 		}
 	};
-	api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
+	let docInfo = new Asc.asc_CDocInfo();
+	docInfo.asc_putTitle("TeSt.xlsx");
+	api.DocInfo = docInfo;
+	api.initCollaborativeEditing({});
 	window["Asc"]["editor"] = api;
 
 	waitLoadModules(function () {
@@ -94,9 +97,7 @@ $(function () {
 		}
 
 		api.isOpenOOXInBrowser = false;
-		api.openingEnd.xlsx = true;
-		api.openingEnd.data = AscCommon.Base64.decode(file["Editor.xlsx"]);
-		api._openDocument(AscCommon.Base64.decode(file["Editor.bin"]));
+		api.OpenDocumentFromBin(null, AscCommon.Base64.decode(file["Editor.bin"]));
 		api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
 			api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
 		return api.wbModel;
@@ -193,7 +194,7 @@ $(function () {
 		pivot = wb.getPivotTableById(pivot.Get_Id());
 		check(assert, pivot, valuesRedo, message);
 		let xmlDo = getXml(pivot, true);
-		let changes = wb.SerializeHistory();
+		let changes = wb.SerializeHistory()[0];
 
 		AscCommon.History.Undo();
 		pivot = wb.getPivotTableById(pivot.Get_Id());
@@ -804,7 +805,7 @@ $(function () {
 			for (let i = 2; i < 30; i += 1) {
 				let row = [];
 				for (let j = 0; j < 6; j += 1) {
-					row.push(pivot.asc_getFieldIndexByCell(i, j));
+					row.push(pivot.getFieldIndexByCell(i, j));
 				}
 				fieldIndexes.push(row);
 			}
@@ -871,7 +872,7 @@ $(function () {
 			for (let i = 2; i < 30; i += 1) {
 				let row = [];
 				for (let j = 0; j < 6; j += 1) {
-					row.push(pivot.asc_canChangeCalculatedItemByCell(i, j));
+					row.push(pivot.canChangeCalculatedItemByCell(i, j));
 				}
 				canAdd.push(row);
 			}

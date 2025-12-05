@@ -259,15 +259,14 @@
     };
 
     color["convert"] = color.convert;
-    window["AscPDF"].Api.Objects = {
-        border:     border,
-        position:   position,
-        scaleHow:   scaleHow,
-        scaleWhen:  scaleWhen,
-        display:    display,
-        style:      style,
-        highlight:  highlight,
-        color:      color
-    };
+    window["AscPDF"]["Api"]["Types"] = AscPDF.Api.Types = {};
+    window["AscPDF"]["Api"]["Types"]["border"]      = AscPDF.Api.Types.border       = border;
+    window["AscPDF"]["Api"]["Types"]["position"]    = AscPDF.Api.Types.position     = position;
+    window["AscPDF"]["Api"]["Types"]["scaleHow"]    = AscPDF.Api.Types.scaleHow     = scaleHow;
+    window["AscPDF"]["Api"]["Types"]["scaleWhen"]   = AscPDF.Api.Types.scaleWhen    = scaleWhen;
+    window["AscPDF"]["Api"]["Types"]["display"]     = AscPDF.Api.Types.display      = display;
+    window["AscPDF"]["Api"]["Types"]["style"]       = AscPDF.Api.Types.style        = style;
+    window["AscPDF"]["Api"]["Types"]["highlight"]   = AscPDF.Api.Types.highlight    = highlight;
+    window["AscPDF"]["Api"]["Types"]["color"]       = AscPDF.Api.Types.color        = color;
 })();
 

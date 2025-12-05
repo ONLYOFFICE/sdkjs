@@ -69,6 +69,10 @@
 	editor.sync_EndAddShape = Asc.asc_docs_api.prototype.sync_EndAddShape.bind(editor);
 	editor.asc_getShowGuides = Asc.asc_docs_api.prototype.asc_getShowGuides.bind(editor);
 	editor.sync_HyperlinkClickCallback = Asc.asc_docs_api.prototype.sync_HyperlinkClickCallback.bind(editor);
+	editor.getAnnotations = function () {return null;};
+	editor.EndDemonstration = Asc.asc_docs_api.prototype.EndDemonstration.bind(editor);
+	editor.closeDemonstration = Asc.asc_docs_api.prototype.closeDemonstration.bind(editor);
+	editor.endDemoMode = Asc.asc_docs_api.prototype.endDemoMode.bind(editor);
 	AscCommon.CDocsCoApi.prototype.askSaveChanges = function (callback)
 	{
 		window.setTimeout(function ()
@@ -90,7 +94,7 @@
 	function CleanPresentation()
 	{
 		editor.WordControl.Thumbnails.SelectAll();
-		logicDocument.deleteSlides(logicDocument.GetSelectedSlides());
+		logicDocument.deleteSlides(logicDocument.GetSelectedSlideObjects());
 	}
 
 	function AddShape(x, y, height, width)
@@ -100,7 +104,7 @@
 		shapeTrack.track({}, x+ width, y + height);
 		const shape = shapeTrack.getShape(false, AscTest.DrawingDocument, null);
 		shape.setBDeleted(false);
-		shape.setParent(logicDocument.Slides[0]);
+		shape.setParent(logicDocument.GetCurrentSlide());
 		shape.addToDrawingObjects();
 		shape.select(GetDrawingObjects(), 0);
 		return shape;
@@ -109,7 +113,7 @@
 	function AddChart()
 	{
 		const chart = editor.asc_getChartObject(Asc.c_oAscChartTypeSettings.lineNormal);
-		chart.setParent(logicDocument.Slides[0]);
+		chart.setParent(logicDocument.GetCurrentSlide());
 
 		chart.addToDrawingObjects();
 		chart.spPr.setXfrm(new AscFormat.CXfrm());
@@ -478,16 +482,16 @@
 		ExecuteTestWithCatchEvent('asc_onEndDemonstration', () => true, true, demonstrationEvents[demonstrationTypes.exitFromDemonstrationMode][0]);
 
 		Execute = ExecuteMainShortcut;
-		ExecuteTestWithCatchEvent('asc_onPrint', () => true, true, Asc.c_oAscPresentationShortcutType.Print);
-		ExecuteTestWithCatchEvent('asc_onContextMenu', () => true, true, Asc.c_oAscPresentationShortcutType.ShowContextMenu);
+		ExecuteTestWithCatchEvent('asc_onPrint', () => true, true, Asc.c_oAscPresentationShortcutType.PrintPreviewAndPrint);
+		ExecuteTestWithCatchEvent('asc_onContextMenu', () => true, true, Asc.c_oAscPresentationShortcutType.OpenContextMenu);
 
 		ClearShapeAndAddParagraph('')
-		ExecuteTestWithCatchEvent('asc_onDialogAddHyperlink', () => true, true, Asc.c_oAscPresentationShortcutType.AddHyperlink);
+		ExecuteTestWithCatchEvent('asc_onDialogAddHyperlink', () => true, true, Asc.c_oAscPresentationShortcutType.InsertHyperlink);
 
 		Execute = ExecuteThumbnailShortcut;
 		GoToSlide(0, FOCUS_OBJECT_THUMBNAILS);
-		ExecuteTestWithCatchEvent('asc_onPrint', () => true, true, Asc.c_oAscPresentationShortcutType.Print);
-		ExecuteTestWithCatchEvent('asc_onContextMenu', () => true, true, Asc.c_oAscPresentationShortcutType.ShowContextMenu);
+		ExecuteTestWithCatchEvent('asc_onPrint', () => true, true, Asc.c_oAscPresentationShortcutType.PrintPreviewAndPrint);
+		ExecuteTestWithCatchEvent('asc_onContextMenu', () => true, true, Asc.c_oAscPresentationShortcutType.OpenContextMenu);
 
 		GoToSlide(0, FOCUS_OBJECT_MAIN);
 	});
@@ -687,9 +691,9 @@
 		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Italic);
 		assert.strictEqual(GetDirectTextPr().GetItalic(), false, 'Check turn off italic');
 
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Strikethrough);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Strikeout);
 		assert.strictEqual(GetDirectTextPr().GetStrikeout(), true, 'Check turn on strikeout');
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Strikethrough);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Strikeout);
 		assert.strictEqual(GetDirectTextPr().GetStrikeout(), false, 'Check turn off strikeout');
 
 		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Underline);
@@ -709,22 +713,22 @@
 
 		// defaultSize = 10
 		// 10 -> 11 -> 12 -> 14 -> 16 -> 14 -> 12 -> 11 -> 10
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.IncreaseFont);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetDirectTextPr().GetFontSize(), 11, 'Check increase font size');
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.IncreaseFont);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetDirectTextPr().GetFontSize(), 12, 'Check increase font size');
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.IncreaseFont);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetDirectTextPr().GetFontSize(), 14, 'Check increase font size');
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.IncreaseFont);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.IncreaseFontSize);
 		assert.strictEqual(GetDirectTextPr().GetFontSize(), 16, 'Check increase font size');
 
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.DecreaseFont);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetDirectTextPr().GetFontSize(), 14, 'Check decrease font size');
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.DecreaseFont);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetDirectTextPr().GetFontSize(), 12, 'Check decrease font size');
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.DecreaseFont);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetDirectTextPr().GetFontSize(), 11, 'Check decrease font size');
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.DecreaseFont);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.DecreaseFontSize);
 		assert.strictEqual(GetDirectTextPr().GetFontSize(), 10, 'Check decrease font size');
 	});
 
@@ -733,16 +737,16 @@
 		const {paragraph} = ClearShapeAndAddParagraph('Hello world');
 
 		assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Left, "Check align left");
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.CenterAlign);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.CenterPara);
 		assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Center, "Check turn on center para");
 
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.JustifyAlign);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.JustifyPara);
 		assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Justify, "Check turn on justify para");
 
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.LeftAlign);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.LeftPara);
 		assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Left, "Check turn on left para");
 
-		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.RightAlign);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.RightPara);
 		assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Right, "Check turn on right para");
 
 
@@ -853,7 +857,7 @@
 		SelectDrawings([drawing2]);
 
 		ExecuteMainHotkey(mainShortcutTypes.checkSelectAllContentShape);
-		assert.strictEqual(logicDocument.GetSelectedText(), 'Hello', 'Check select non empty content');
+		assert.strictEqual(logicDocument.GetSelectedText(), 'Hello\r\n', 'Check select non empty content');
 
 		SelectDrawings([drawing1, drawing2]);
 
@@ -926,7 +930,7 @@
 		SelectDrawings([graphicFrame]);
 		ExecuteMainHotkey(mainShortcutTypes.checkSelectFirstCellContent);
 		CheckTablePosition(0, 0);
-		assert.strictEqual(logicDocument.GetSelectedText(), 'Hello Hello', 'Check select first cell content');
+		assert.strictEqual(logicDocument.GetSelectedText(), 'Hello Hello\r\n', 'Check select first cell content');
 
 		graphicFrame.MoveCursorToStartPos();
 		logicDocument.MoveCursorRight(true, true);
@@ -1012,7 +1016,7 @@
 		controller.selection.chartSelection = chart;
 		chart.selectTitle(titles[0], 0);
 		ExecuteMainHotkey(mainShortcutTypes.checkSelectAllContentChartTitle);
-		assert.strictEqual(logicDocument.GetSelectedText(), 'Diagram Title', 'Check select all content in chart title');
+		assert.strictEqual(logicDocument.GetSelectedText(), 'Diagram Title\r\n', 'Check select all content in chart title');
 		logicDocument.Remove();
 		AscTest.TurnOffRecalculate();
 	});
@@ -1159,7 +1163,7 @@
 
 		assert.true(shape.txBody.content.IsSelectionUse(), 'Check content selection');
 		assert.true(paragraph.IsSelectedAll(), 'Check paragraph selection');
-		assert.strictEqual(logicDocument.GetSelectedText(), 'Hello', 'Check selected text');
+		assert.strictEqual(logicDocument.GetSelectedText(), 'Hello\r\n', 'Check selected text');
 	});
 
 	QUnit.test('Check reset action with adding new shape', (assert) =>

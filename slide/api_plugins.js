@@ -43,6 +43,14 @@
 
     var Api = window["asc_docs_api"];
 
+	/**
+	 * @typedef {Object} comment
+	 * Comment object.
+	 * @property {string} Id - The comment ID.
+	 * @property {CommentData} Data - An object which contains the comment data.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/comment.js
+	 */
+	
     /**
 	 * @typedef {Object} CommentData
 	 * The comment data.
@@ -155,6 +163,22 @@
 	};
 
 	/**
+	 * Removes the OLE object from the presentation by its internal ID.
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @alias RemoveOleObject
+	 * @param {string} internalId - The OLE object identifier which is used to work with OLE object added to the presentation.
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveOleObject.js
+	 */
+	Api.prototype["pluginMethod_RemoveOleObject"] = function (internalId) {
+		let logicDocument = this.WordControl.m_oLogicDocument;
+		if (logicDocument) {
+			logicDocument.RemoveDrawingObjectById(internalId);
+		}
+	};
+
+	/**
 	 * Starts the presentation slide show.
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
@@ -246,6 +270,21 @@
 	Api.prototype["pluginMethod_GoToSlideInSlideShow"] = function(nSlideIndex)
 	{
 		this.DemonstrationGoToSlide(nSlideIndex - 1);
+	};
+
+	/**
+	 * Sets the active slide in the editor by its index.
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @alias GoToSlide
+	 * @param {number} slideNumber - The slide index.
+	 * @since 9.0.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GoToSlide.js
+	 */
+	Api.prototype["pluginMethod_GoToSlide"] = function (slideNumber) {
+		if (AscFormat.isRealNumber(slideNumber) || slideNumber > 0) {
+			this.goToPage(slideNumber - 1);
+		}
 	};
 
 })(window);

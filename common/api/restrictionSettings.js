@@ -40,8 +40,9 @@
 	 */
 	function CRestrictionSettings()
 	{
-		this.OFormRole = undefined;
-		this.ResetNone = false;
+		this.OFormRole   = undefined;
+		this.OFormNoRole = false;
+		this.ResetNone   = false;
 	}
 	CRestrictionSettings.prototype.GetOFormRole = function()
 	{
@@ -51,12 +52,22 @@
 	{
 		this.OFormRole = roleName;
 	};
+	CRestrictionSettings.prototype.IsOFormNoRole = function()
+	{
+		return this.OFormNoRole;
+	};
+	CRestrictionSettings.prototype.SetOFormNoRole = function(noRole)
+	{
+		this.OFormNoRole = noRole;
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].CRestrictionSettings    = CRestrictionSettings;
 	window['AscCommon']["CRestrictionSettings"] = CRestrictionSettings;
 	
-	CRestrictionSettings.prototype['get_OFormRole'] = CRestrictionSettings.prototype.GetOFormRole;
-	CRestrictionSettings.prototype['put_OFormRole'] = CRestrictionSettings.prototype.SetOFormRole;
+	CRestrictionSettings.prototype['get_OFormRole']   = CRestrictionSettings.prototype.GetOFormRole;
+	CRestrictionSettings.prototype['put_OFormRole']   = CRestrictionSettings.prototype.SetOFormRole;
+	CRestrictionSettings.prototype['get_OFormNoRole'] = CRestrictionSettings.prototype.IsOFormNoRole;
+	CRestrictionSettings.prototype['put_OFormNoRole'] = CRestrictionSettings.prototype.SetOFormNoRole;
 	
 })(window);

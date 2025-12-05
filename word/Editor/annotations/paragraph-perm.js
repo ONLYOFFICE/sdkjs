@@ -54,6 +54,14 @@
 	{
 		return this.Id;
 	};
+	ParagraphPermBase.prototype.isStart = function()
+	{
+		return false;
+	};
+	ParagraphPermBase.prototype.isEnd = function()
+	{
+		return false;
+	};
 	ParagraphPermBase.prototype.GetId = function()
 	{
 		return this.Id;
@@ -78,6 +86,35 @@
 	ParagraphPermBase.prototype.GetAllPermRangeMarks = function(marks)
 	{
 		marks.push(this);
+	};
+	ParagraphPermBase.prototype.IsAnnotationMark = function()
+	{
+		return true;
+	};
+	ParagraphPermBase.prototype.GetAllAnnotationMarks = function(marks)
+	{
+		marks.push(this);
+	};
+	ParagraphPermBase.prototype.IsCursorPlaceable = function()
+	{
+		return false;
+	};
+	ParagraphPermBase.prototype.CanPlaceCursorInside = function()
+	{
+		return false;
+	};
+	ParagraphPermBase.prototype.CorrectPosToPermRanges = function(state, paraPos, depth, isCurrent)
+	{
+		state.checkPermRange(this);
+	};
+	ParagraphPermBase.prototype.Draw_Lines = function(lineDrawState)
+	{
+		lineDrawState.handleAnnotationMark(this);
+	};
+	ParagraphPermBase.prototype.drawMark = function(x, y, h, graphics, isRTL, lineDrawState)
+	{
+		if (graphics && graphics.drawPermissionMark)
+			graphics.drawPermissionMark(x, y, h, isRTL ? !this.isStart() : this.isStart(), lineDrawState.isActivePermRanges());
 	};
 	/**
 	 * Очень важно, что в режимах комментирования и просмотра, мы проход через данный элемент считаем как перемещение курсора,
@@ -328,8 +365,70 @@
 		this.rangeId = reader.GetString2();
 	};
 	
+	/**
+	 * @constructor
+	 */
+	function ParagraphPosToPermRangeState()
+	{
+		this.forward    = true;
+		this.curPos     = new AscWord.CParagraphContentPos();
+		this.stopped    = false;
+		this.found      = false;
+		this.permRanges = [];
+	}
+	ParagraphPosToPermRangeState.prototype.isFound = function()
+	{
+		return this.found;
+	};
+	ParagraphPosToPermRangeState.prototype.setDirection = function(isForward)
+	{
+		this.forward    = isForward;
+		this.stopped    = false;
+		this.found      = false;
+		this.permRanges = [];
+	};
+	ParagraphPosToPermRangeState.prototype.isForward = function()
+	{
+		return this.forward;
+	};
+	ParagraphPosToPermRangeState.prototype.isStopped = function()
+	{
+		return this.stopped;
+	};
+	ParagraphPosToPermRangeState.prototype.inPermRange = function()
+	{
+		return (!!this.permRanges.length);
+	};
+	ParagraphPosToPermRangeState.prototype.stop = function(isFound)
+	{
+		this.stopped = true;
+		this.found   = isFound;
+	};
+	ParagraphPosToPermRangeState.prototype.checkPermRange = function(mark)
+	{
+		if ((mark.isEnd() && this.forward) || (mark.isStart() && !this.forward))
+		{
+			let rangeId = mark.getRangeId();
+			let pos = this.permRanges.indexOf(rangeId);
+			if (-1 !== pos)
+				this.permRanges.splice(pos, 1);
+		}
+		else
+		{
+			this.permRanges.push(mark.getRangeId());
+		}
+	};
+	ParagraphPosToPermRangeState.prototype.setPos = function(pos, depth)
+	{
+		this.curPos.Update(pos, depth);
+	};
+	ParagraphPosToPermRangeState.prototype.getCorrectedPos = function()
+	{
+		return this.curPos;
+	};
 	//--------------------------------------------------------export----------------------------------------------------
-	AscWord.ParagraphPermStart = ParagraphPermStart;
-	AscWord.ParagraphPermEnd   = ParagraphPermEnd;
+	AscWord.ParagraphPermStart           = ParagraphPermStart;
+	AscWord.ParagraphPermEnd             = ParagraphPermEnd;
+	AscWord.ParagraphPosToPermRangeState = ParagraphPosToPermRangeState;
 })();
 

@@ -1299,7 +1299,7 @@ function (window, undefined) {
 				ref = formulaParsed.ref,
 				coords = AscCommonExcel.getFromCellIndex(cellIndex, true),
 				row = coords.row, col = coords.col, shared, base,
-				length = formulaParsed.outStack.length, isPartOfFunc, numberOfArgs, funcReturnType, funcArrayIndexes;
+				length = formulaParsed.outStack.length, isPartOfFunc, numberOfArgs, funcReturnType, funcArray;
 
 			if (formulaParsed.shared !== null) {
 				shared = formulaParsed.getShared();
@@ -1312,7 +1312,7 @@ function (window, undefined) {
 					continue;
 				}
 				if (numberOfArgs <= 0) {
-					funcArrayIndexes = null;
+					funcArray = null;
 					isPartOfFunc = null;
 				}
 
@@ -1323,9 +1323,9 @@ function (window, undefined) {
 						if (funcReturnType === AscCommonExcel.cReturnFormulaType.array) {
 							// range refers to formula, add property inFormulaRef = true
 							inFormulaRef = true;
-						} else if (funcArrayIndexes) {
+						} else if (funcArray) {
 							// if have no returnType check for arrayIndexes and if element pass in raw form(as array, range) to argument
-							if (funcArrayIndexes[numberOfArgs - 1]) {
+							if (funcArray.getArrayIndex(numberOfArgs - 1)) {
 								inFormulaRef = true;
 							}
 						}
@@ -1336,7 +1336,7 @@ function (window, undefined) {
 					isPartOfFunc = true;
 					numberOfArgs = formulaParsed.outStack[i - 1];
 					funcReturnType = elem.returnValueType;
-					funcArrayIndexes = elem.arrayIndexes;
+					funcArray = elem;
 				}
 
 				let is3D = elemType === cElementType.cell3D || elemType === cElementType.cellsRange3D || elemType === cElementType.name3D,
@@ -1564,7 +1564,7 @@ function (window, undefined) {
 			}
 		}
 	};
-	TraceDependentsManager.prototype.changeDocument = function (prop, arg1, arg2) {
+	TraceDependentsManager.prototype.changeDocument = function (prop, arg1, arg2, fMergeCellIndex) {
 		switch (prop) {
 			case AscCommonExcel.docChangedType.cellValue:
 				if (this._lockChangeDocument) {
@@ -1595,23 +1595,31 @@ function (window, undefined) {
 					this._lockChangeDocument = true;
 				} else {
 					this._lockChangeDocument = null;
-					let t = this;
+					const t = this;
 					if (t.isHaveData() && arg2) {
 						if (Asc.c_oAscSelectionType.RangeMax === arg2.getType()) {
 							t.clearAll();
 							break;
 						}
 
-						let maxRowToClear = t.ws.nRowsCount ? Math.min(t.ws.nRowsCount, arg2.r2) : arg2.r2,
-							maxColToClear = t.ws.nColsCount ? Math.min(t.ws.nColsCount, arg2.c2) : arg2.c2;
+						let firstCellIndex = fMergeCellIndex !== undefined ? fMergeCellIndex : AscCommonExcel.getCellIndex(arg2.r1, arg2.c1);
 
-						for (let col = arg2.c1; col <= maxColToClear; col++) {
-							for (let row = arg2.r1; row <= maxRowToClear; row++) {
-								if (!(arg2.c1 === col && arg2.r1 === row)) {
-									t.clearCellTraces(row, col);
+						/* go through all existing dependencies and if they are in the merged range, delete them */
+						t.forEachDependents(function(i, precedents) {
+							for (let precedent in precedents) {
+								// delete everything except the first cell
+								if (precedent == firstCellIndex) {
+									continue;
+								}
+								
+								let cell = AscCommonExcel.getFromCellIndex(precedent, true);
+								if (arg2.contains2(cell)) {
+									if (!(arg2.c1 === cell.col && arg2.r1 === cell.row)) {
+										t.clearCellTraces(cell.row, cell.col);
+									}
 								}
 							}
-						}
+						})
 					}
 				}
 				break;

@@ -193,22 +193,8 @@
 		littleMoveGraphicObjectDown : 42,
 		removeFrontWord             : 43,
 		removeFrontChar             : 44,
-		selectAllContent            : 45,
-		selectAllDrawings           : 46,
-		bold                        : 47,
 		cleanSlicer                 : 48,
-		centerAlign                 : 49,
-		italic                      : 50,
-		justifyAlign                : 51,
-		leftAlign                   : 52,
-		rightAlign                  : 53,
 		invertMultiselectSlicer     : 54,
-		underline                   : 55,
-		superscript                 : 57,
-		enDash                      : 58,
-		subscript                   : 61,
-		increaseFontSize            : 62,
-		decreaseFontSize            : 63,
 		removeBackWord              : 64,
 		selectToStartLine           : 65,
 		moveCursorToStartLine       : 66,
@@ -408,80 +394,17 @@
 		new CNativeEvent(keyCodes.Delete, false, false, false, false)
 
 	];
-	graphicEvents[graphicHotkeyTypes.selectAllContent] = [
-		new CNativeEvent(keyCodes.A, true, false, false, false)
-
-	];
-	graphicEvents[graphicHotkeyTypes.selectAllDrawings] = [
-		new CNativeEvent(keyCodes.A, true, false, false, false)
-
-	];
-	graphicEvents[graphicHotkeyTypes.bold] = [
-		new CNativeEvent(keyCodes.B, true, false, false, false)
-
-	];
 	graphicEvents[graphicHotkeyTypes.cleanSlicer] = [
 		new CNativeEvent(keyCodes.C, true, false, true, false, testFlags.macOs),
 		new CNativeEvent(keyCodes.C, false, false, true, false)
-	];
-	graphicEvents[graphicHotkeyTypes.centerAlign] = [
-		new CNativeEvent(keyCodes.E, true, false, false, false)
-
-	];
-	graphicEvents[graphicHotkeyTypes.italic] = [
-		new CNativeEvent(keyCodes.I, true, false, false, false)
-
-	];
-	graphicEvents[graphicHotkeyTypes.justifyAlign] = [
-		new CNativeEvent(keyCodes.J, true, false, false, false)
-
-	];
-	graphicEvents[graphicHotkeyTypes.leftAlign] = [
-		new CNativeEvent(keyCodes.L, true, false, false, false)
-
-	];
-	graphicEvents[graphicHotkeyTypes.rightAlign] = [
-		new CNativeEvent(keyCodes.R, true, false, false, false)
 	];
 	graphicEvents[graphicHotkeyTypes.invertMultiselectSlicer] = [
 		new CNativeEvent(keyCodes.S, true, false, true, false, testFlags.macOs),
 		new CNativeEvent(keyCodes.S, false, false, true, false)
 	];
-	graphicEvents[graphicHotkeyTypes.underline] = [
-		new CNativeEvent(keyCodes.U, true, false, false, false)
-
-	];
-	graphicEvents[graphicHotkeyTypes.superscript] = [
-		new CNativeEvent(keyCodes.Comma, true, false, false, false)
-
-	];
-	graphicEvents[graphicHotkeyTypes.enDash] = [
-		new CNativeEvent(keyCodes.Minus, true, true, false, false),
-		new CNativeEvent(keyCodes.MinusFirefox, true, true, false, false),
-
-	];
-	graphicEvents[graphicHotkeyTypes.subscript] = [
-		new CNativeEvent(keyCodes.Period, true, false, false, false)
-
-	];
-	graphicEvents[graphicHotkeyTypes.increaseFontSize] = [
-		new CNativeEvent(keyCodes.BracketRight, true, false, false, false)
-
-	];
-	graphicEvents[graphicHotkeyTypes.decreaseFontSize] = [
-		new CNativeEvent(keyCodes.BracketLeft, true, false, false, false)
-
-	];
 
 	const tableHotkeyTypes = {
-		refreshAllConnections     : 0,
-		refreshSelectedConnections: 1,
 		changeFormatTableInfo     : 2,
-		calculateAll              : 3,
-		calculateActiveSheet      : 5,
-		focusOnCellEditor         : 7,
-		addDate                   : 8,
-		addTime                   : 9,
 		removeActiveCell          : 10,
 		emptyRange                : 11,
 		moveActiveCellToLeft      : 12,
@@ -494,10 +417,7 @@
 		selectColumn              : 19,
 		selectRow                 : 20,
 		selectSheet               : 21,
-		addSeparator              : 22,
-		goToPreviousSheet         : 23,
 		moveToTopCell             : 24,
-		moveToNextSheet           : 25,
 		moveToLeftEdgeCell        : 26,
 		selectToLeftEdgeCell      : 27,
 		moveToLeftCell            : 28,
@@ -519,21 +439,6 @@
 		selectToLeftEdgeTop       : 44,
 		moveToRightBottomEdge     : 45,
 		selectToRightBottomEdge   : 46,
-		setNumberFormat           : 47,
-		setTimeFormat             : 48,
-		setDateFormat             : 49,
-		setCurrencyFormat         : 50,
-		setPercentFormat          : 51,
-		setStrikethrough          : 52,
-		setExponentialFormat      : 53,
-		setBold                   : 54,
-		setItalic                 : 55,
-		setUnderline              : 56,
-		setGeneralFormat          : 57,
-		redo                      : 58,
-		undo                      : 59,
-		print                     : 60,
-		addSum                    : 61,
 		moveToUpperCell           : 62,
 		contextMenu               : 63,
 		moveToLowerCell           : 64,
@@ -542,39 +447,18 @@
 		showFilterOptions         : 67,
 		showAutoComplete          : 68,
 		showDataValidation        : 69,
-		increaseFontSize          : 70,
-		decreaseFontSize          : 71
-	};
+		openCellEditor            : 70,
+		increaseFontSize          : 71,
+		decreaseFontSize          : 72,
+		};
 
 	const tableEvents = {};
-	tableEvents[tableHotkeyTypes.refreshAllConnections] = [
-		new CNativeEvent(keyCodes.F5, true, false, true, false)
-	];
-	tableEvents[tableHotkeyTypes.refreshSelectedConnections] = [
-		new CNativeEvent(keyCodes.F5, false, false, true, false)
+	tableEvents[tableHotkeyTypes.openCellEditor] = [
+		new CNativeEvent(keyCodes.Enter, true, false, false, false),
+		new CNativeEvent(keyCodes.Enter, false, false, true, false)
 	];
 	tableEvents[tableHotkeyTypes.changeFormatTableInfo] = [
 		new CNativeEvent(keyCodes.R, true, true, false, false)
-	];
-	tableEvents[tableHotkeyTypes.calculateAll] = [
-		new CNativeEvent(keyCodes.F9, false, false, false, false)
-	];
-
-	tableEvents[tableHotkeyTypes.calculateActiveSheet] = [
-		new CNativeEvent(keyCodes.F9, false, true, false, false)
-
-	];
-
-	tableEvents[tableHotkeyTypes.focusOnCellEditor] = [
-		new CNativeEvent(keyCodes.F2, false, false, false, false)
-	];
-	tableEvents[tableHotkeyTypes.addDate] = [
-		new CNativeEvent(keyCodes.Semicolon, true, false, false, false),
-		new CNativeEvent(keyCodes.SemicolonFirefox, true, false, false, false),
-	];
-	tableEvents[tableHotkeyTypes.addTime] = [
-		new CNativeEvent(keyCodes.Semicolon, true, true, false, false),
-		new CNativeEvent(keyCodes.SemicolonFirefox, true, true, false, false),
 	];
 	tableEvents[tableHotkeyTypes.removeActiveCell] = [
 		new CNativeEvent(keyCodes.BackSpace, false, false, false, false)
@@ -613,12 +497,6 @@
 		new CNativeEvent(keyCodes.Space, true, true, false, false),
 		new CNativeEvent(keyCodes.A, true, false, false, false)
 	];
-	tableEvents[tableHotkeyTypes.addSeparator] = [
-		new CNativeEvent(keyCodes.NumpadDecimal, false, false, false, false)
-	];
-	tableEvents[tableHotkeyTypes.goToPreviousSheet] = [
-		new CNativeEvent(keyCodes.PageUp, false, false, true, false)
-	];
 	tableEvents[tableHotkeyTypes.moveToUpperCell] = [
 		new CNativeEvent(keyCodes.PageUp, false, false, false, false)
 	];
@@ -627,9 +505,6 @@
 	];
 	tableEvents[tableHotkeyTypes.moveToTopCell] = [
 		new CNativeEvent(keyCodes.ArrowTop, true, false, false, false)
-	];
-	tableEvents[tableHotkeyTypes.moveToNextSheet] = [
-		new CNativeEvent(keyCodes.PageDown, false, false, true, false)
 	];
 	tableEvents[tableHotkeyTypes.moveToBottomCell] = [
 		new CNativeEvent(keyCodes.ArrowBottom, true, false, false, false)
@@ -703,58 +578,13 @@
 	tableEvents[tableHotkeyTypes.selectToRightBottomEdge] = [
 		new CNativeEvent(keyCodes.End, true, true, false, false)
 	];
-	tableEvents[tableHotkeyTypes.setNumberFormat] = [
-		new CNativeEvent(keyCodes.Digit1, true, true, false, false)
-	];
-	tableEvents[tableHotkeyTypes.setTimeFormat] = [
-		new CNativeEvent(keyCodes.Digit2, true, true, false, false)
-	];
-	tableEvents[tableHotkeyTypes.setDateFormat] = [
-		new CNativeEvent(keyCodes.Digit3, true, true, false, false)
-	];
-	tableEvents[tableHotkeyTypes.setCurrencyFormat] = [
-		new CNativeEvent(keyCodes.Digit4, true, true, false, false)
-	];
-	tableEvents[tableHotkeyTypes.setPercentFormat] = [
-		new CNativeEvent(keyCodes.Digit5, true, true, false, false)
-	];
-	tableEvents[tableHotkeyTypes.setStrikethrough] = [
-		new CNativeEvent(keyCodes.Digit5, true, false, false, false)
-	];
-	tableEvents[tableHotkeyTypes.setExponentialFormat] = [
-		new CNativeEvent(keyCodes.Digit6, true, true, false, false)
-	];
-	tableEvents[tableHotkeyTypes.setBold] = [
-		new CNativeEvent(keyCodes.B, true, false, false, false)
-	];
-	tableEvents[tableHotkeyTypes.setItalic] = [
-		new CNativeEvent(keyCodes.I, true, false, false, false)
-	];
-	tableEvents[tableHotkeyTypes.setUnderline] = [
-		new CNativeEvent(keyCodes.U, true, false, false, false)
-	];
-	tableEvents[tableHotkeyTypes.setGeneralFormat] = [
-		new CNativeEvent(keyCodes.Backquote, true, true, false, false)
-	];
-	tableEvents[tableHotkeyTypes.redo] = [
-		new CNativeEvent(keyCodes.Y, true, false, false, false)
-	];
-	tableEvents[tableHotkeyTypes.undo] = [
-		new CNativeEvent(keyCodes.Z, true, false, false, false)
-	];
-	tableEvents[tableHotkeyTypes.print] = [
-		new CNativeEvent(keyCodes.P, true, false, false, false)
-	];
-	tableEvents[tableHotkeyTypes.addSum] = [
-		new CNativeEvent(keyCodes.EqualFirefox, false, false, true, false),
-		new CNativeEvent(keyCodes.EqualFirefox, true, false, true, false, testFlags.macOs),
-		new CNativeEvent(keyCodes.Equal, false, false, true, false),
-		new CNativeEvent(keyCodes.Equal, true, false, true, false, testFlags.macOs)
-	];
 	tableEvents[tableHotkeyTypes.contextMenu] = [new CNativeEvent(keyCodes.ContextMenu, false, false, false, false)];
 	tableEvents[tableHotkeyTypes.showFilterOptions] = [new CNativeEvent(keyCodes.ArrowBottom, false, false, true, false)];
 	tableEvents[tableHotkeyTypes.showAutoComplete] = [new CNativeEvent(keyCodes.ArrowBottom, false, false, true, false)];
-	tableEvents[tableHotkeyTypes.showDataValidation] = [new CNativeEvent(keyCodes.ArrowBottom, false, false, true, false)];
+	tableEvents[tableHotkeyTypes.showDataValidation] = [
+		new CNativeEvent(keyCodes.ArrowBottom, false, false, true, false),
+		new CNativeEvent(keyCodes.ArrowTop, false, false, true, false)
+	];
 	tableEvents[tableHotkeyTypes.increaseFontSize] = [new CNativeEvent(keyCodes.BracketRight, true, false, false, false)];
 	tableEvents[tableHotkeyTypes.decreaseFontSize] = [new CNativeEvent(keyCodes.BracketLeft, true, false, false, false)];
 
@@ -789,21 +619,9 @@
 		selectToDownLine     : 28,
 		deleteFrontChar      : 29,
 		deleteFrontWord      : 30,
-		setStrikethrough     : 31,
-		selectAll            : 32,
-		setBold              : 33,
-		setItalic            : 34,
-		setUnderline         : 35,
 		disableScrollLock    : 36,
 		disableNumLock       : 37,
-		disablePrint         : 38,
-		undo                 : 39,
-		redo                 : 40,
-		addSeparator         : 41,
 		disableF2            : 42,
-		switchReference      : 43,
-		addTime              : 44,
-		addDate              : 45,
 		increaseFontSize     : 46,
 		decreaseFontSize     : 47
 	};
@@ -909,56 +727,17 @@
 		new CNativeEvent(keyCodes.Delete, true, false, false, false),
 		new CNativeEvent(keyCodes.Delete, false, false, true, false, testFlags.macOs),
 	];
-	oCellEditorEvents[cellEditorHotkeyTypes.setStrikethrough] = [
-		new CNativeEvent(keyCodes.Digit5, true, false, false, false)
-	];
-	oCellEditorEvents[cellEditorHotkeyTypes.selectAll] = [
-		new CNativeEvent(keyCodes.A, true, false, false, false)
-	];
-	oCellEditorEvents[cellEditorHotkeyTypes.setBold] = [
-		new CNativeEvent(keyCodes.B, true, false, false, false)
-	];
-	oCellEditorEvents[cellEditorHotkeyTypes.setItalic] = [
-		new CNativeEvent(keyCodes.I, true, false, false, false)
-	];
-	oCellEditorEvents[cellEditorHotkeyTypes.setUnderline] = [
-		new CNativeEvent(keyCodes.U, true, false, false, false)
-	];
 	oCellEditorEvents[cellEditorHotkeyTypes.disableScrollLock] = [
 		new CNativeEvent(keyCodes.ScrollLock, false, false, false, false, testFlags.opera)
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.disableNumLock] = [
 		new CNativeEvent(keyCodes.NumLock, false, false, false, false, testFlags.opera)
 	];
-	oCellEditorEvents[cellEditorHotkeyTypes.disablePrint] = [
-		new CNativeEvent(keyCodes.P, true, false, false, false)
-	];
-	oCellEditorEvents[cellEditorHotkeyTypes.undo] = [
-		new CNativeEvent(keyCodes.Z, true, false, false, false)
-	];
-	oCellEditorEvents[cellEditorHotkeyTypes.redo] = [
-		new CNativeEvent(keyCodes.Y, true, false, false, false)
-	];
-	oCellEditorEvents[cellEditorHotkeyTypes.addSeparator] = [
-		new CNativeEvent(keyCodes.NumpadDecimal, false, false, false, false)
-	];
 	oCellEditorEvents[cellEditorHotkeyTypes.disableF2] = [
 		new CNativeEvent(keyCodes.F2, false, false, false, false, testFlags.opera)
 	];
-	oCellEditorEvents[cellEditorHotkeyTypes.switchReference] = [
-		new CNativeEvent(keyCodes.F4, false, false, false, false)
-	];
-	oCellEditorEvents[cellEditorHotkeyTypes.addTime] = [
-		new CNativeEvent(keyCodes.Semicolon, true, true, false, false),
-		new CNativeEvent(keyCodes.SemicolonFirefox, true, true, false, false),
-	];
-	oCellEditorEvents[cellEditorHotkeyTypes.addDate] = [
-		new CNativeEvent(keyCodes.Semicolon, true, false, false, false),
-		new CNativeEvent(keyCodes.SemicolonFirefox, true, false, false, false),
-	];
 	oCellEditorEvents[cellEditorHotkeyTypes.increaseFontSize] = [new CNativeEvent(keyCodes.BracketRight, true, false, false, false)];
 	oCellEditorEvents[cellEditorHotkeyTypes.decreaseFontSize] = [new CNativeEvent(keyCodes.BracketLeft, true, false, false, false)];
-
 	function ExecuteGraphicHotkey(type, eventIndex)
 	{
 		const event = graphicEvents[type][eventIndex || 0];
@@ -977,12 +756,24 @@
 		return ExecuteShortcut(event);
 	}
 
+	const MockShortcutEvent = {
+		nShortcutType: 0,
+		IsShift: function () {},
+		IsCtrl: function () {},
+		GetKeyCode: function () {}
+	};
 	function ExecuteShortcut(e)
 	{
+		if (AscFormat.isRealNumber(e))
+		{
+			MockShortcutEvent.nShortcutType = e;
+			return Asc.editor.wb.onKeyDown(MockShortcutEvent);
+		}
 		e.enableFlags();
-		Asc.editor.onKeyDown(e);
+		AscCommon.check_KeyboardEvent(e);
+		const res = Asc.editor.wb.onKeyDown(AscCommon.global_keyboardEvent);
 		e.disableFlags();
-		return e.isDefaultPrevented;
+		return res;
 	}
 
 	window.AscTestShortcut = {};

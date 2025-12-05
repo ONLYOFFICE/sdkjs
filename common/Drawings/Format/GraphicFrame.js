@@ -593,10 +593,10 @@
 
 		return false;
 	};
-	CGraphicFrame.prototype.resize = function (extX, extY) {
+	CGraphicFrame.prototype.resize = function (extX, extY, bForce) {
 		var newExtX = AscFormat.isRealNumber(extX) ? extX : this.extX;
 		var newExtY = AscFormat.isRealNumber(extY) ? extY : this.extY;
-		if (!AscFormat.fApproxEqual(newExtX, this.extX) || !AscFormat.fApproxEqual(newExtY, this.extY)) {
+		if (bForce || !AscFormat.fApproxEqual(newExtX, this.extX) || !AscFormat.fApproxEqual(newExtY, this.extY)) {
 			this.graphicObject.Resize(newExtX, newExtY);
 			this.recalculateTable();
 			this.recalculateSizes();
@@ -605,11 +605,11 @@
 		return false;
 	};
 	CGraphicFrame.prototype.setFrameTransform = function (oPr) {
-		var bResult = this.resize(oPr.FrameWidth, oPr.FrameHeight);
+		var bResult = this.resize(oPr.FrameWidth, oPr.FrameHeight, oPr.Force);
 		var newX = AscFormat.isRealNumber(oPr.FrameX) ? oPr.FrameX : this.x;
 		var newY = AscFormat.isRealNumber(oPr.FrameY) ? oPr.FrameY : this.y;
 		this.setNoChangeAspect(oPr.FrameLockAspect ? true : undefined);
-		if (!AscFormat.fApproxEqual(newX, this.x) || !AscFormat.fApproxEqual(newY, this.y)) {
+		if (oPr.Force || !AscFormat.fApproxEqual(newX, this.x) || !AscFormat.fApproxEqual(newY, this.y)) {
 			AscFormat.CheckSpPrXfrm(this, true);
 			var xfrm = this.spPr.xfrm;
 			xfrm.setOffX(newX);
@@ -722,11 +722,11 @@
 		}
 	};
 
-	CGraphicFrame.prototype.Get_AbsolutePage = function (CurPage) {
-		return this.Get_StartPage_Absolute();
+	CGraphicFrame.prototype.GetAbsolutePage = function (CurPage) {
+		return this.GetAbsoluteStartPage();
 	};
 
-	CGraphicFrame.prototype.Get_AbsoluteColumn = function (CurPage) {
+	CGraphicFrame.prototype.GetAbsoluteColumn = function (CurPage) {
 		return 0;
 	};
 
@@ -974,8 +974,11 @@
 			return this.Get_Styles(0);
 		}
 	};
-
-	CGraphicFrame.prototype.Get_PageContentStartPos = function (PageNum) {
+	
+	CGraphicFrame.prototype.GetPageContentFrame = function(page, sectPr){
+		return this.GetColumnContentFrame(page, 0, sectPr);
+	};
+	CGraphicFrame.prototype.GetColumnContentFrame = function(page, column, sectPr){
 		var presentation = editor.WordControl.m_oLogicDocument;
 		return {
 			X: 0,
@@ -985,11 +988,6 @@
 			MaxTopBorder: 0
 		};
 
-
-	};
-
-	CGraphicFrame.prototype.Get_PageContentStartPos2 = function () {
-		return this.Get_PageContentStartPos();
 	};
 
 	CGraphicFrame.prototype.Refresh_RecalcData = function () {
@@ -1224,6 +1222,9 @@
 	};
 	CGraphicFrame.prototype.Get_ShapeStyleForPara = function () {
 		return null;
+	};
+	CGraphicFrame.prototype.IsAllowSectionBreak = function () {
+		return false;
 	};
 
 	CGraphicFrame.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate, oMapPaired) {

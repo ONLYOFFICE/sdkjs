@@ -534,6 +534,9 @@ window.AscCommon.g_cIsBeta = "false";
 		VSSM : 0x4005,
 		VSTM : 0x4006,
 
+		VSDY : 0x1004,
+		CANVAS_DIAGRAM : 0x2005,
+
 		//image
 		IMG  : 0x0400,
 		JPG  : 0x0401,
@@ -636,11 +639,13 @@ window.AscCommon.g_cIsBeta = "false";
 	var c_oAscFrameDataType = {
 		SendImageUrls: 0,
 		GetLoadedImages: 1,
-		OpenFrame: 2,
-		ShowImageDialogInFrame: 3,
-		GetUrlsFromImageDialog: 4,
-		SkipStartEndAction: 5,
-		StartUploadImageAction: 6
+		ShowImageDialogInFrame: 2,
+		GetUrlsFromImageDialog: 3,
+		SkipStartEndAction: 4,
+		StartUploadImageAction: 5,
+		UpdateDiagramInGeneral: 6,
+		UpdateIsOpenOnClient: 7,
+		OpenLocalDesktopFileLink: 8
 	};
 
 	var CellValueType = {
@@ -694,21 +699,25 @@ window.AscCommon.g_cIsBeta = "false";
 	};
 
 	var c_oAscTypeSelectElement = {
-		Paragraph      : 0,
-		Table          : 1,
-		Image          : 2,
-		Header         : 3,
-		Hyperlink      : 4,
-		SpellCheck     : 5,
-		Shape          : 6,
-		Slide          : 7,
-		Chart          : 8,
-		Math           : 9,
-		MailMerge      : 10,
-		ContentControl : 11,
-		Animation      : 12,
-		Text           : 13, // viewer
-		Annot          : 14
+		Paragraph         : 0,
+		Table             : 1,
+		Image             : 2,
+		Header            : 3,
+		Hyperlink         : 4,
+		SpellCheck        : 5,
+		Shape             : 6,
+		Slide             : 7,
+		Chart             : 8,
+		Math              : 9,
+		MailMerge         : 10,
+		ContentControl    : 11,
+		Animation         : 12,
+		UnProtectedRegion : 13,
+		// viewer
+		Text              : 14,
+		Annot             : 15,
+		Field			  : 16,
+		PdfPage           : 17
 	};
 
 	var c_oAscLineDrawingRule = {
@@ -2298,7 +2307,20 @@ window.AscCommon.g_cIsBeta = "false";
 	g_aPunctuation[0x00BB] = PUNCTUATION_FLAG_BASE;                                     // »
 	g_aPunctuation[0x00BB] = PUNCTUATION_FLAG_BASE;                                     // »
 	g_aPunctuation[0x00BF] = PUNCTUATION_FLAG_BASE;                                     // ¿
-
+	
+	g_aPunctuation[0x0609] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x060A] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x060C] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x060D] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x061B] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x061E] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x061F] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x066A] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x066B] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x066C] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x066D] = PUNCTUATION_FLAG_BASE;
+	g_aPunctuation[0x06D4] = PUNCTUATION_FLAG_BASE;
+	
 	g_aPunctuation[0x2010] = PUNCTUATION_FLAG_BASE;                                     // ‐
 	g_aPunctuation[0x2011] = PUNCTUATION_FLAG_BASE;                                     // ‑
 	g_aPunctuation[0x2012] = PUNCTUATION_FLAG_BASE;                                     // ‒
@@ -2470,6 +2492,7 @@ window.AscCommon.g_cIsBeta = "false";
 
 	var offlineMode = '_offline_';
 	var chartMode = '_chart_';
+	var oleMode = '_ole_';
 	var dataMode = '_data_';
 
 	var c_oSpecialPasteProps = {
@@ -2506,7 +2529,12 @@ window.AscCommon.g_cIsBeta = "false";
 		useTextImport: 25,
 
 		comments: 26,
-		columnWidth: 27
+		columnWidth: 27,
+
+		sourceFormattingEmbedding: 28,
+		destinationFormattingEmbedding: 29,
+		sourceFormattingLink: 30,
+		destinationFormattingLink: 31
 	};
 
 	var c_oSpecialPasteOperation = {
@@ -3200,6 +3228,7 @@ window.AscCommon.g_cIsBeta = "false";
 
 		TOC          : 10,
 		Complex      : 11,
+		Signature    : 12,
 		
 		toString : function(type)
 		{
@@ -3221,6 +3250,8 @@ window.AscCommon.g_cIsBeta = "false";
 					return "toc";
 				case c_oAscContentControlSpecificType.Complex:
 					return "complex";
+				case c_oAscContentControlSpecificType.Signature:
+					return "signature";
 			}
 			
 			return "unknown";
@@ -3245,6 +3276,8 @@ window.AscCommon.g_cIsBeta = "false";
 					return c_oAscContentControlSpecificType.TOC;
 				case "complex":
 					return c_oAscContentControlSpecificType.Complex;
+				case "signature":
+					return c_oAscContentControlSpecificType.Signature;
 			}
 			
 			return c_oAscContentControlSpecificType.None;
@@ -3669,10 +3702,10 @@ window.AscCommon.g_cIsBeta = "false";
 	var availableIdeographLanguages = ['zh-CN', 'vi-VN', 'ko-KR', 'ja-JP', 'zh-Hans', 'zh-TW', 'zh-CN', 'zh-HK', 'zh-SG',
 		'zh-MO', 'zh-Hant', 'zh'];
 	var availableBidiLanguages = [];
-	var document_compatibility_mode_Word11 = 11;
+	var document_compatibility_mode_Word11 = 11; // 2003 (doc)
 	var document_compatibility_mode_Word12 = 12;
-	var document_compatibility_mode_Word14 = 14;
-	var document_compatibility_mode_Word15 = 15;
+	var document_compatibility_mode_Word14 = 14; // 2010
+	var document_compatibility_mode_Word15 = 15; // 2013/2015/2019
 
 	var document_compatibility_mode_Current = document_compatibility_mode_Word12;
 
@@ -3712,6 +3745,12 @@ window.AscCommon.g_cIsBeta = "false";
 			SzWidescreen: 16
 	};
 
+	const thumbnailsPositionMap = {
+		left: 0,
+		right: 1,
+		bottom: 2,
+	};
+
 	var c_oAscPictureFormScaleFlag = {
 		Always  : 0,
 		Bigger  : 1,
@@ -3728,7 +3767,8 @@ window.AscCommon.g_cIsBeta = "false";
 
 	var c_oAscMathInputType = {
 		Unicode : 0,
-		LaTeX   : 1
+		LaTeX   : 1,
+		MathML  : 2
 	};
 
 	const LigaturesFlags = {
@@ -3840,6 +3880,16 @@ window.AscCommon.g_cIsBeta = "false";
 	window['Asc']['ST_DisplacedByCustomXml'] = window['Asc'].ST_DisplacedByCustomXml = ST_DisplacedByCustomXml;
 	ST_DisplacedByCustomXml['next'] = ST_DisplacedByCustomXml.next;
 	ST_DisplacedByCustomXml['prev'] = ST_DisplacedByCustomXml.prev;
+	
+	const c_oNumeralType = {
+		arabic  : 0,
+		hindi   : 1,
+		context : 2
+	};
+	window['Asc']['c_oNumeralType'] = window['Asc'].c_oNumeralType = c_oNumeralType;
+	c_oNumeralType["arabic"]  = c_oNumeralType.arabic;
+	c_oNumeralType["hindi"]   = c_oNumeralType.hindi;
+	c_oNumeralType["context"] = c_oNumeralType.context;
 	
 	
 	var c_oAscDateTimeFormat = {};
@@ -4312,6 +4362,9 @@ window.AscCommon.g_cIsBeta = "false";
 		"dd.MM.yyyy",
 		"dddd, d MMMM yyyy 'г.'",
 		"d MMMM yyyy 'г.'",
+		"'«'d'»' MMMM yyyy 'года'",
+		"d MMMM yyyy 'года'",
+		"d MMMM yyyy",
 		"dd.MM.yy",
 		"yyyy-MM-dd",
 		"d-MMM-yy",
@@ -4460,6 +4513,25 @@ window.AscCommon.g_cIsBeta = "false";
 		"HH:mm",
 		"HH:mm:ss"
 	];
+	c_oAscDateTimeFormat[lcid_sqAL]     = [
+		"d.M.yyyy",
+		"dddd, d MMMM yyyy",
+		"d MMMM yyyy",
+		"d.M.yy",
+		"yyyy-MM-dd",
+		"d-MMM-yy",
+		"d/M/yyyy",
+		"d MMM. yy",
+		"d/M/yy",
+		"MMMM yy",
+		"MMM-yy",
+		"d.M.yyyy h:mm am/pm",
+		"d.M.yyyy h:mm:ss am/pm",
+		"h:mm am/pm",
+		"h:mm:ss am/pm",
+		"HH:mm",
+		"HH:mm:ss"
+	];
 	c_oAscDateTimeFormat[lcid_trTR]     = [
 		"d.MM.yyyy",
 		"d MMMM yyyy dddd",
@@ -4549,6 +4621,263 @@ window.AscCommon.g_cIsBeta = "false";
 		"HH:mm",
 		"HH:mm:ss"
 	];
+
+	const c_oAscKeyCodes = {
+		Digit0             : 48,
+		Digit1             : 49,
+		Digit2             : 50,
+		Digit3             : 51,
+		Digit4             : 52,
+		Digit5             : 53,
+		Digit6             : 54,
+		Digit7             : 55,
+		Digit8             : 56,
+		Digit9             : 57,
+		KeyA               : 65,
+		KeyB               : 66,
+		KeyC               : 67,
+		KeyD               : 68,
+		KeyE               : 69,
+		KeyF               : 70,
+		KeyG               : 71,
+		KeyH               : 72,
+		KeyI               : 73,
+		KeyJ               : 74,
+		KeyK               : 75,
+		KeyL               : 76,
+		KeyM               : 77,
+		KeyN               : 78,
+		KeyO               : 79,
+		KeyP               : 80,
+		KeyQ               : 81,
+		KeyR               : 82,
+		KeyS               : 83,
+		KeyT               : 84,
+		KeyU               : 85,
+		KeyV               : 86,
+		KeyW               : 87,
+		KeyX               : 88,
+		KeyY               : 89,
+		KeyZ               : 90,
+		KeyBackquote       : 192,
+		KeyMinus           : 189,
+		KeyFirefoxMinus    : 173,
+		KeyFirefoxEqual    : 61,
+		KeyEqual           : 187,
+		Tab                : 9,
+		Escape             : 27,
+		Enter              : 13,
+		Pause              : 19,
+		ScrollLock         : 145,
+		Backspace          : 8,
+		Delete             : 46,
+		Space              : 32,
+		Home               : 36,
+		End                : 35,
+		PageUp             : 33,
+		PageDown           : 34,
+		Insert             : 45,
+		ArrowLeft          : 37,
+		ArrowRight         : 39,
+		ArrowUp            : 38,
+		ArrowDown          : 40,
+		Period             : 190,
+		Comma              : 188,
+		BracketRight       : 221,
+		BracketLeft        : 219,
+		Numpad0            : 96,
+		Numpad1            : 97,
+		Numpad2            : 98,
+		Numpad3            : 99,
+		Numpad4            : 100,
+		Numpad5            : 101,
+		Numpad6            : 102,
+		Numpad7            : 103,
+		Numpad8            : 104,
+		Numpad9            : 105,
+		NumpadMultiply     : 106,
+		NumpadDivide       : 111,
+		NumpadDecimal      : 110,
+		NumpadPlus         : 107,
+		NumpadMinus        : 109,
+		F1                 : 112,
+		F2                 : 113,
+		F3                 : 114,
+		F4                 : 115,
+		F5                 : 116,
+		F6                 : 117,
+		F7                 : 118,
+		F8                 : 119,
+		F9                 : 120,
+		F10                : 121,
+		F11                : 122,
+		F12                : 123,
+		ContextMenu        : 93,
+		ContextMenuHigh    : 57351,
+		KeySemicolon       : 186,
+		KeyFirefoxSemicolon: 59
+	};
+
+	const c_oAscKeyCodeEquals = {};
+	c_oAscKeyCodeEquals[c_oAscKeyCodes.KeyFirefoxMinus] = c_oAscKeyCodes.KeyMinus;
+	c_oAscKeyCodeEquals[c_oAscKeyCodes.KeyFirefoxEqual] = c_oAscKeyCodes.KeyEqual;
+	c_oAscKeyCodeEquals[c_oAscKeyCodes.KeyFirefoxSemicolon] = c_oAscKeyCodes.KeySemicolon;
+	c_oAscKeyCodeEquals[c_oAscKeyCodes.ContextMenuHigh] = c_oAscKeyCodes.ContextMenu;
+	const c_oAscKeyCodeAnalogues = {};
+	for (let anotherKeyCode in c_oAscKeyCodeEquals) {
+		const normalKeyCode = c_oAscKeyCodeEquals[anotherKeyCode];
+		if (!c_oAscKeyCodeAnalogues[normalKeyCode]) {
+			c_oAscKeyCodeAnalogues[normalKeyCode] = [];
+		}
+		c_oAscKeyCodeAnalogues[normalKeyCode].push(parseInt(anotherKeyCode, 10));
+	}
+
+
+
+	const c_oAscExternalReferenceType = {
+		referenceData: 0,
+		link: 1,
+		path: 2
+	};
+
+	var c_oAscCalcMode = {
+		auto: 0,
+		autoNoTable: 1,
+		manual: 2
+	};
+	//поля worksheet header/footer
+	var c_oAscHeaderFooterField = {
+		pageNumber: 0,
+		pageCount: 1,
+		sheetName: 2,
+		fileName: 3,
+		filePath: 4,
+		date: 5,
+		time: 6,
+		lineBreak: 7,
+		picture: 8,
+		text: 9
+	};
+
+	var c_oAscPageHFType = {
+		firstHeader: 0,
+		oddHeader: 1,
+		evenHeader: 2,
+		firstFooter: 3,
+		oddFooter: 4,
+		evenFooter: 5
+	};
+
+	var c_oAscHeaderFooterType = {
+		first: 0,
+		odd: 1,
+		even: 2
+	};
+
+	var c_oAscHeaderFooterPresets = {
+		none: 0,
+		page: 1,
+		pageOfQuestion: 2,
+		sheet: 3,
+		confidential: 4,
+		bookName: 5,
+		//bookPath: 5
+		sheetPage: 6,
+		sheetConfidentialPage: 7,
+		bookNamePage: 8,
+		pageSheet: 9,
+		pageBook: 10,
+		//bookPathPage: 11;
+		pageBookName: 11,
+		userPageDate: 12,
+		//bookPathPagePathFile: 12;
+		preparedUserDatePage: 13,
+		custom: 14
+	};
+
+	var c_oAscPaneState = {
+		Frozen: "frozen",
+		FrozenSplit: "frozenSplit",
+		Split: "split"
+	};
+
+	/** @enum */
+	var c_oAscCustomAutoFilter = {
+		equals: 1,
+		isGreaterThan: 2,
+		isGreaterThanOrEqualTo: 3,
+		isLessThan: 4,
+		isLessThanOrEqualTo: 5,
+		doesNotEqual: 6,
+		beginsWith: 7,
+		doesNotBeginWith: 8,
+		endsWith: 9,
+		doesNotEndWith: 10,
+		contains: 11,
+		doesNotContain: 12
+	};
+
+	/** @enum */
+	var c_oAscDynamicAutoFilter = {
+		aboveAverage: 1,
+		belowAverage: 2,
+		lastMonth: 3,
+		lastQuarter: 4,
+		lastWeek: 5,
+		lastYear: 6,
+		m1: 7,
+		m10: 8,
+		m11: 9,
+		m12: 10,
+		m2: 11,
+		m3: 12,
+		m4: 13,
+		m5: 14,
+		m6: 15,
+		m7: 16,
+		m8: 17,
+		m9: 18,
+		nextMonth: 19,
+		nextQuarter: 20,
+		nextWeek: 21,
+		nextYear: 22,
+		nullType: 23,
+		q1: 24,
+		q2: 25,
+		q3: 26,
+		q4: 27,
+		thisMonth: 28,
+		thisQuarter: 29,
+		thisWeek: 30,
+		thisYear: 31,
+		today: 32,
+		tomorrow: 33,
+		yearToDate: 34,
+		yesterday: 35
+	};
+	var c_oAscSparklineType = {
+		Line: 0,
+		Column: 1,
+		Stacked: 2
+	};
+	var c_oAscEDispBlanksAs = {
+		Span: 0,
+		Gap: 1,
+		Zero: 2
+	};
+	var c_oAscSparklineAxisMinMax = {
+		Individual: 0,
+		Group: 1,
+		Custom: 2
+	};
+	var c_oAscSortOptions = {
+		Ascending: 1,
+		Descending: 2,
+		ByColorFill: 3,
+		ByColorFont: 4,
+		ByIcon: 5,
+		ByValue: 6
+	};
 
 
 	//------------------------------------------------------------export--------------------------------------------------
@@ -4713,22 +5042,27 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['BringForward']                     = prot.BringForward;
 	prot['SendBackward']                     = prot.SendBackward;
 	window['Asc']['c_oAscTypeSelectElement'] = window['Asc'].c_oAscTypeSelectElement = c_oAscTypeSelectElement;
-	prot                              = c_oAscTypeSelectElement;
-	prot['Paragraph']                 = prot.Paragraph;
-	prot['Table']                     = prot.Table;
-	prot['Image']                     = prot.Image;
-	prot['Header']                    = prot.Header;
-	prot['Hyperlink']                 = prot.Hyperlink;
-	prot['SpellCheck']                = prot.SpellCheck;
-	prot['Shape']                     = prot.Shape;
-	prot['Slide']                     = prot.Slide;
-	prot['Chart']                     = prot.Chart;
-	prot['Math']                      = prot.Math;
-	prot['MailMerge']                 = prot.MailMerge;
-	prot['ContentControl']            = prot.ContentControl;
-	prot['Animation']                 = prot.Animation;
-	prot['Text']                      = prot.Text;
-	prot['Annot']                     = prot.Annot;
+	
+	prot                      = c_oAscTypeSelectElement;
+	prot['Paragraph']         = prot.Paragraph;
+	prot['Table']             = prot.Table;
+	prot['Image']             = prot.Image;
+	prot['Header']            = prot.Header;
+	prot['Hyperlink']         = prot.Hyperlink;
+	prot['SpellCheck']        = prot.SpellCheck;
+	prot['Shape']             = prot.Shape;
+	prot['Slide']             = prot.Slide;
+	prot['Chart']             = prot.Chart;
+	prot['Math']              = prot.Math;
+	prot['MailMerge']         = prot.MailMerge;
+	prot['ContentControl']    = prot.ContentControl;
+	prot['Animation']         = prot.Animation;
+	prot['UnProtectedRegion'] = prot.UnProtectedRegion;
+	prot['Text']              = prot.Text;
+	prot['Annot']             = prot.Annot;
+	prot['Field']             = prot.Field;
+	prot['PdfPage']           = prot.PdfPage;
+	
 	window['Asc']['linerule_AtLeast'] = window['Asc'].linerule_AtLeast = linerule_AtLeast;
 	window['Asc']['linerule_Auto'] = window['Asc'].linerule_Auto = linerule_Auto;
 	window['Asc']['linerule_Exact'] = window['Asc'].linerule_Exact = linerule_Exact;
@@ -5368,6 +5702,7 @@ window.AscCommon.g_cIsBeta = "false";
 	window["AscCommon"].offlineMode = offlineMode;
 	window["AscCommon"].chartMode = chartMode;
 	window["AscCommon"].dataMode = dataMode;
+	window["AscCommon"].oleMode = oleMode;
 
 	window['AscCommon']['align_Right'] = window['AscCommon'].align_Right = align_Right;
 	window['AscCommon']['align_Left'] = window['AscCommon'].align_Left = align_Left;
@@ -5411,6 +5746,10 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['useTextImport'] = prot.useTextImport;
 	prot['comments'] = prot.comments;
 	prot['columnWidth'] = prot.columnWidth;
+	prot['sourceFormattingEmbedding'] = prot.sourceFormattingEmbedding;
+	prot['destinationFormattingEmbedding'] = prot.destinationFormattingEmbedding;
+	prot['sourceFormattingLink'] = prot.sourceFormattingLink;
+	prot['destinationFormattingLink'] = prot.destinationFormattingLink;
 
 	window['Asc']['c_oSpecialPasteOperation'] = window['Asc'].c_oSpecialPasteOperation = c_oSpecialPasteOperation;
 	prot = c_oSpecialPasteOperation;
@@ -5811,6 +6150,7 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['DateTime']     = c_oAscContentControlSpecificType.DateTime;
 	prot['TOC']          = c_oAscContentControlSpecificType.TOC;
 	prot['Complex']      = c_oAscContentControlSpecificType.Complex;
+	prot['Signature']    = c_oAscContentControlSpecificType.Signature;
 
 	window['Asc']['c_oAscDefNameType'] = window['Asc'].c_oAscDefNameType = c_oAscDefNameType;
 	prot = c_oAscDefNameType;
@@ -5862,6 +6202,11 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['SzScreen16x9'] = prot.SzScreen16x9;
 	prot['SzScreen4x3'] = prot.SzScreen4x3;
 	prot['SzWidescreen'] = prot.SzWidescreen;
+
+	prot = window['AscCommon']['thumbnailsPositionMap'] = window['AscCommon'].thumbnailsPositionMap = thumbnailsPositionMap;
+	prot['left']   = prot.left;
+	prot['right']  = prot.right;
+	prot['bottom'] = prot.bottom;
 
 	prot = window['Asc']['c_oAscPictureFormScaleFlag'] = window['Asc'].c_oAscPictureFormScaleFlag = c_oAscPictureFormScaleFlag;
 	prot['Always']  = prot.Always;
@@ -5986,6 +6331,7 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['ConfirmMaxChangesSize'] = prot.ConfirmMaxChangesSize;
 	prot['ConfirmAddCellWatches'] = prot.ConfirmAddCellWatches;
 	prot['ConfirmReplaceHeaderFooterPicture'] = prot.ConfirmReplaceHeaderFooterPicture;
+	prot['ConfirmReplaceFormulaInTable'] = prot.ConfirmReplaceFormulaInTable;
 
 	window['Asc']['c_oAscSmartArtSections'] = window['Asc'].c_oAscSmartArtSections = c_oAscSmartArtSections;
 
@@ -6000,5 +6346,241 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['OleObject'] = prot.OleObject;
 
 	window['Asc']['c_oAscDateTimeFormat'] = window['Asc'].c_oAscDateTimeFormat = c_oAscDateTimeFormat;
+
+	prot = window['Asc']['c_oAscExternalReferenceType'] = window['Asc'].c_oAscExternalReferenceType = c_oAscExternalReferenceType;
+	prot['referenceData'] = prot.referenceData;
+	prot['link'] = prot.link;
+	prot['path'] = prot.path;
+
+	prot = window['Asc']['c_oAscCalcMode'] = window['Asc'].c_oAscCalcMode = c_oAscCalcMode;
+	prot['auto'] = prot.auto;
+	prot['autoNoTable'] = prot.autoNoTable;
+	prot['manual'] = prot.manual;
+
+	prot = window['Asc']['c_oAscKeyCodes'] = window['Asc'].c_oAscKeyCodes = c_oAscKeyCodes;
+	prot["Digit0"] = prot.Digit0;
+	prot["Digit1"] = prot.Digit1;
+	prot["Digit2"] = prot.Digit2;
+	prot["Digit3"] = prot.Digit3;
+	prot["Digit4"] = prot.Digit4;
+	prot["Digit5"] = prot.Digit5;
+	prot["Digit6"] = prot.Digit6;
+	prot["Digit7"] = prot.Digit7;
+	prot["Digit8"] = prot.Digit8;
+	prot["Digit9"] = prot.Digit9;
+	prot["KeyA"] = prot.KeyA;
+	prot["KeyB"] = prot.KeyB;
+	prot["KeyC"] = prot.KeyC;
+	prot["KeyD"] = prot.KeyD;
+	prot["KeyE"] = prot.KeyE;
+	prot["KeyF"] = prot.KeyF;
+	prot["KeyG"] = prot.KeyG;
+	prot["KeyH"] = prot.KeyH;
+	prot["KeyI"] = prot.KeyI;
+	prot["KeyJ"] = prot.KeyJ;
+	prot["KeyK"] = prot.KeyK;
+	prot["KeyL"] = prot.KeyL;
+	prot["KeyM"] = prot.KeyM;
+	prot["KeyN"] = prot.KeyN;
+	prot["KeyO"] = prot.KeyO;
+	prot["KeyP"] = prot.KeyP;
+	prot["KeyQ"] = prot.KeyQ;
+	prot["KeyR"] = prot.KeyR;
+	prot["KeyS"] = prot.KeyS;
+	prot["KeyT"] = prot.KeyT;
+	prot["KeyU"] = prot.KeyU;
+	prot["KeyV"] = prot.KeyV;
+	prot["KeyW"] = prot.KeyW;
+	prot["KeyX"] = prot.KeyX;
+	prot["KeyY"] = prot.KeyY;
+	prot["KeyZ"] = prot.KeyZ;
+	prot["KeyBackquote"] = prot.KeyBackquote;
+	prot["KeyMinus"] = prot.KeyMinus;
+	prot["KeyFirefoxMinus"] = prot.KeyFirefoxMinus;
+	prot["KeyFirefoxEqual"] = prot.KeyFirefoxEqual;
+	prot["KeyEqual"] = prot.KeyEqual;
+	prot["Tab"] = prot.Tab;
+	prot["Escape"] = prot.Escape;
+	prot["Enter"] = prot.Enter;
+	prot["Pause"] = prot.Pause;
+	prot["ScrollLock"] = prot.ScrollLock;
+	prot["Backspace"] = prot.Backspace;
+	prot["Delete"] = prot.Delete;
+	prot["Space"] = prot.Space;
+	prot["Home"] = prot.Home;
+	prot["End"] = prot.End;
+	prot["PageUp"] = prot.PageUp;
+	prot["PageDown"] = prot.PageDown;
+	prot["Insert"] = prot.Insert;
+	prot["ArrowLeft"] = prot.ArrowLeft;
+	prot["ArrowRight"] = prot.ArrowRight;
+	prot["ArrowUp"] = prot.ArrowUp;
+	prot["ArrowDown"] = prot.ArrowDown;
+	prot["Period"] = prot.Period;
+	prot["Comma"] = prot.Comma;
+	prot["BracketRight"] = prot.BracketRight;
+	prot["BracketLeft"] = prot.BracketLeft;
+	prot["Numpad0"] = prot.Numpad0;
+	prot["Numpad1"] = prot.Numpad1;
+	prot["Numpad2"] = prot.Numpad2;
+	prot["Numpad3"] = prot.Numpad3;
+	prot["Numpad4"] = prot.Numpad4;
+	prot["Numpad5"] = prot.Numpad5;
+	prot["Numpad6"] = prot.Numpad6;
+	prot["Numpad7"] = prot.Numpad7;
+	prot["Numpad8"] = prot.Numpad8;
+	prot["Numpad9"] = prot.Numpad9;
+	prot["NumpadMultiply"] = prot.NumpadMultiply;
+	prot["NumpadDivide"] = prot.NumpadDivide;
+	prot["NumpadDecimal"] = prot.NumpadDecimal;
+	prot["NumpadPlus"] = prot.NumpadPlus;
+	prot["NumpadMinus"] = prot.NumpadMinus;
+	prot["F1"] = prot.F1;
+	prot["F2"] = prot.F2;
+	prot["F3"] = prot.F3;
+	prot["F4"] = prot.F4;
+	prot["F5"] = prot.F5;
+	prot["F6"] = prot.F6;
+	prot["F7"] = prot.F7;
+	prot["F8"] = prot.F8;
+	prot["F9"] = prot.F9;
+	prot["F10"] = prot.F10;
+	prot["F11"] = prot.F11;
+	prot["F12"] = prot.F12;
+	prot["ContextMenu"] = prot.ContextMenu;
+	prot["ContextMenuHigh"] = prot.ContextMenuHigh;
+	prot["KeySemicolon"] = prot.KeySemicolon;
+	prot["KeyFirefoxSemicolon"] = prot.KeyFirefoxSemicolon;
+
+	window['Asc']['c_oAscKeyCodeEquals'] = window['Asc'].c_oAscKeyCodeEquals = c_oAscKeyCodeEquals;
+	window['Asc']['c_oAscKeyCodeAnalogues'] = window['Asc'].c_oAscKeyCodeAnalogues = c_oAscKeyCodeAnalogues;
+
+	window['Asc']['c_oAscHeaderFooterField'] = window['Asc'].c_oAscHeaderFooterField = c_oAscHeaderFooterField;
+	prot = c_oAscHeaderFooterField;
+	prot['pageNumber'] = prot.pageNumber;
+	prot['pageCount'] = prot.pageCount;
+	prot['sheetName'] = prot.sheetName;
+	prot['fileName'] = prot.fileName;
+	prot['filePath'] = prot.filePath;
+	prot['date'] = prot.date;
+	prot['time'] = prot.time;
+	prot['lineBreak'] = prot.lineBreak;
+	prot['picture'] = prot.picture;
+	prot['text'] = prot.text;
+
+	window['Asc']['c_oAscPageHFType'] = window['Asc'].c_oAscPageHFType = c_oAscPageHFType;
+	prot = c_oAscPageHFType;
+	prot['firstHeader'] = prot.firstHeader;
+	prot['oddHeader'] = prot.oddHeader;
+	prot['evenHeader'] = prot.evenHeader;
+	prot['firstFooter'] = prot.firstFooter;
+	prot['oddFooter'] = prot.oddFooter;
+	prot['evenFooter'] = prot.evenFooter;
+
+	window['Asc']['c_oAscHeaderFooterType'] = window['Asc'].c_oAscHeaderFooterType = c_oAscHeaderFooterType;
+	prot = c_oAscHeaderFooterType;
+	prot['first'] = prot.first;
+	prot['odd'] = prot.odd;
+	prot['even'] = prot.even;
+
+	window['Asc']['c_oAscHeaderFooterPresets'] = window['Asc'].c_oAscHeaderFooterPresets = c_oAscHeaderFooterPresets;
+	prot = c_oAscHeaderFooterPresets;
+	prot['none'] = prot.none;
+	prot['page'] = prot.page;
+	prot['pageOfQuestion'] = prot.pageOfQuestion;
+	prot['sheet'] = prot.sheet;
+	prot['confidential'] = prot.confidential;
+	prot['bookName'] = prot.bookName;
+	prot['sheetPage'] = prot.sheetPage;
+	prot['sheetConfidentialPage'] = prot.sheetConfidentialPage;
+	prot['bookNamePage'] = prot.bookNamePage;
+	prot['pageSheet'] = prot.pageSheet;
+	prot['pageBook'] = prot.pageBook;
+	prot['pageBookName'] = prot.pageBookName;
+	prot['userPageDate'] = prot.userPageDate;
+	prot['preparedUserDatePage'] = prot.preparedUserDatePage;
+	prot['custom'] = prot.custom;
+
+	window['Asc']['c_oAscCustomAutoFilter'] = window['Asc'].c_oAscCustomAutoFilter = c_oAscCustomAutoFilter;
+	prot = c_oAscCustomAutoFilter;
+	prot['equals'] = prot.equals;
+	prot['isGreaterThan'] = prot.isGreaterThan;
+	prot['isGreaterThanOrEqualTo'] = prot.isGreaterThanOrEqualTo;
+	prot['isLessThan'] = prot.isLessThan;
+	prot['isLessThanOrEqualTo'] = prot.isLessThanOrEqualTo;
+	prot['doesNotEqual'] = prot.doesNotEqual;
+	prot['beginsWith'] = prot.beginsWith;
+	prot['doesNotBeginWith'] = prot.doesNotBeginWith;
+	prot['endsWith'] = prot.endsWith;
+	prot['doesNotEndWith'] = prot.doesNotEndWith;
+	prot['contains'] = prot.contains;
+	prot['doesNotContain'] = prot.doesNotContain;
+
+	window['Asc']['c_oAscDynamicAutoFilter'] = window['Asc'].c_oAscDynamicAutoFilter = c_oAscDynamicAutoFilter;
+	prot = c_oAscDynamicAutoFilter;
+	prot['aboveAverage'] = prot.aboveAverage;
+	prot['belowAverage'] = prot.belowAverage;
+	prot['lastMonth']    = prot.lastMonth;
+	prot['lastQuarter']  = prot.lastQuarter;
+	prot['lastWeek']     = prot.lastWeek;
+	prot['lastYear']     = prot.lastYear;
+	prot['m1']           = prot.m1;
+	prot['m11']          = prot.m11;
+	prot['m12']          = prot.m12;
+	prot['m2']           = prot.m2;
+	prot['m3']           = prot.m3;
+	prot['m4']           = prot.m4;
+	prot['m5']           = prot.m5;
+	prot['m6']           = prot.m6;
+	prot['m7']           = prot.m7;
+	prot['m8']           = prot.m8;
+	prot['m9']           = prot.m9;
+	prot['nextMonth']    = prot.nextMonth;
+	prot['nextQuarter']  = prot.nextQuarter;
+	prot['nextWeek']     = prot.nextWeek;
+	prot['nextYear']     = prot.nextYear;
+	prot['nullType']     = prot.nullType;
+	prot['q1']           = prot.q1;
+	prot['q2']           = prot.q2;
+	prot['q3']           = prot.q3;
+	prot['q4']           = prot.q4;
+	prot['thisMonth']    = prot.thisMonth;
+	prot['thisQuarter']  = prot.thisQuarter;
+	prot['thisWeek']     = prot.thisWeek;
+	prot['thisYear']     = prot.thisYear;
+	prot['today']        = prot.today;
+	prot['tomorrow']     = prot.tomorrow;
+	prot['yearToDate']   = prot.yearToDate;
+	prot['yesterday']    = prot.yesterday;
+
+	window['Asc']['c_oAscSparklineType'] = window['Asc'].c_oAscSparklineType = c_oAscSparklineType;
+	prot = c_oAscSparklineType;
+	prot['Line'] = prot.Line;
+	prot['Column'] = prot.Column;
+	prot['Stacked'] = prot.Stacked;
+
+	window['Asc']['c_oAscEDispBlanksAs'] = window['Asc'].c_oAscEDispBlanksAs = c_oAscEDispBlanksAs;
+	prot = c_oAscEDispBlanksAs;
+	prot['Span'] = prot.Span;
+	prot['Gap'] = prot.Gap;
+	prot['Zero'] = prot.Zero;
+
+	window['Asc']['c_oAscSparklineAxisMinMax'] = window['Asc'].c_oAscSparklineAxisMinMax = c_oAscSparklineAxisMinMax;
+	prot = c_oAscSparklineAxisMinMax;
+	prot['Individual'] = prot.Individual;
+	prot['Group'] = prot.Group;
+	prot['Custom'] = prot.Custom;
+
+	window['Asc']['c_oAscSortOptions'] = window['Asc'].c_oAscSortOptions = c_oAscSortOptions;
+	prot = c_oAscSortOptions;
+	prot['Ascending'] = prot.Ascending;
+	prot['Descending'] = prot.Descending;
+	prot['ByColorFill'] = prot.ByColorFill;
+	prot['ByColorFont'] = prot.ByColorFont;
+	prot['ByIcon'] = prot.ByIcon;
+	prot['ByValue'] = prot.ByValue;
+
+	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
+	window['AscCommonExcel'].c_oAscPaneState = c_oAscPaneState;
 
 })(window);

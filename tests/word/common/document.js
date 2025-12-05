@@ -162,14 +162,21 @@
 	}
 	function GetParagraphText(paragraph)
 	{
-		return paragraph.GetText({ParaEndToSpace : false});
+		return paragraph.GetText({
+			ParaSeparator : "",
+			TableCellSeparator : "",
+			TableRowSeparator : "",
+		});
 	}
 	function GetParagraphReviewText(paragraph)
 	{
 		let result = [];
 		paragraph.CheckRunContent(function(run)
 		{
-			let text = run.GetText();
+			let text = run.GetText({
+				ParaSeparator : "",
+				Text : ""
+			});
 			if (!text || !text.length)
 				return;
 			
@@ -195,7 +202,10 @@
 		let result = [];
 		cc.CheckRunContent(function(run)
 		{
-			let text = run.GetText();
+			let text = run.GetText({
+				ParaSeparator : "",
+				Text : ""
+			});
 			if (!text || !text.length)
 				return;
 			
@@ -241,9 +251,9 @@
 		editor.restrictions = Asc.c_oAscRestrictionType.OnlyForms;
 
 		if (isOForm)
-			editor.DocInfo = {Format : "oform"};
+			editor.DocInfo = {Format : "oform", isFormatWithForms : function() {return true;}};
 		else
-			editor.DocInfo = {Format : "docx"};
+			editor.DocInfo = {Format : "docx", isFormatWithForms : function() {return false;}};
 	}
 	function SetEditingMode()
 	{
@@ -371,6 +381,7 @@
 		let run = CreateRun();
 		p.AddToContentToEnd(run);
 		run.AddText(text);
+		return run;
 	}
 	function EnterText(text)
 	{
@@ -495,6 +506,14 @@
 		paragraph.SetSelectionContentPos(startPos, endPos, false);
 		paragraph.Document_SetThisElementCurrent();
 	}
+	function SelectParagraph(paragraph)
+	{
+		if (logicDocument)
+			logicDocument.RemoveSelection();
+		
+		paragraph.SelectAll();
+		paragraph.Document_SetThisElementCurrent();
+	}
 	function GetFinalSection()
 	{
 		if (!logicDocument)
@@ -533,6 +552,22 @@
 	function StopTextSpeaker()
 	{
 		AscCommon.EditorActionSpeaker.stop();
+	}
+	function SelectTableCells(table, startCell, startRow, endCell, endRow)
+	{
+		if (!logicDocument)
+			return;
+		
+		logicDocument.RemoveSelection();
+		// TODO: Get rid of double SelectRange
+		table.SelectRange(startCell, startRow, endCell, endRow);
+		table.Document_SetThisElementCurrent();
+		table.SelectRange(startCell, startRow, endCell, endRow);
+	}
+	function MergeTableCells(table, startCell, startRow, endCell, endRow)
+	{
+		SelectTableCells(table, startCell, startRow, endCell, endRow);
+		table.MergeTableCells(true);
 	}
 	
 	//--------------------------------------------------------export----------------------------------------------------
@@ -586,8 +621,11 @@
 	AscTest.SyncCollaboration                = SyncCollaboration;
 	AscTest.EndCollaboration                 = EndCollaboration;
 	AscTest.SelectParagraphRange             = SelectParagraphRange;
+	AscTest.SelectParagraph                  = SelectParagraph;
 	AscTest.StartTextSpeaker                 = StartTextSpeaker;
 	AscTest.StopTextSpeaker                  = StopTextSpeaker;
+	AscTest.SelectTableCells                 = SelectTableCells;
+	AscTest.MergeTableCells                  = MergeTableCells;
 
 })(window);
 

@@ -39,17 +39,26 @@
     function CPdfImage()
     {
         AscFormat.CImageShape.call(this);
+        AscPDF.CPdfDrawingPrototype.call(this);
     }
     
     CPdfImage.prototype.constructor = CPdfImage;
     CPdfImage.prototype = Object.create(AscFormat.CImageShape.prototype);
-    Object.assign(CPdfImage.prototype, AscPDF.PdfDrawingPrototype.prototype);
+    Object.assign(CPdfImage.prototype, AscPDF.CPdfDrawingPrototype.prototype);
 
     CPdfImage.prototype.IsImage = function() {
         return true;
     };
-    CPdfImage.prototype.copy = function () {
-        return this.convertToPdf();
+    CPdfImage.prototype.copy = function (oPr) {
+        let copy = this.convertToPdf();
+
+        if ((!oPr || !oPr.bSkipRedactsIds) && this.GetRedactIds) {
+            this.GetRedactIds().forEach(function(id) {
+                copy.AddRedactId(id);
+            });
+        }
+
+        return copy;
     };
     CPdfImage.prototype.IsInTextBox = function() {
         return false;

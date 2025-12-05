@@ -65,7 +65,8 @@ var AscBrowser = {
     isAndroidNativeApp : false,
 	safariVersion : 17004001,
 	isTelegramWebView : false,
-	maxTouchPoints : 0
+	maxTouchPoints : 0,
+	willReadFrequently : false
 };
 
 // user agent lower case
@@ -268,6 +269,40 @@ var UI = {
 			return element.offsetTop;
 		return element.offsetTop * AscBrowser.zoom;
 	}
+};
+
+if (AscBrowser.isChrome)
+{
+	try
+	{
+		let canvas = document.createElement("canvas");
+		let ctxGL = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+
+		if (ctxGL)
+		{
+			let debugInfo = ctxGL.getExtension('WEBGL_debug_renderer_info');
+			if (debugInfo)
+			{
+				let renderer = ctxGL.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+				if (renderer)
+				{
+					renderer = renderer.toLowerCase();
+					if (-1 !== renderer.indexOf("qualcomm") && -1 !== renderer.indexOf("adreno"))
+						AscBrowser.willReadFrequently = true;
+				}
+			}
+		}
+	}
+	catch (e)
+	{
+	}
+}
+
+AscBrowser.getContext2D = function(canvas)
+{
+	if (AscBrowser.willReadFrequently)
+		return canvas.getContext('2d', { willReadFrequently: true });
+	return canvas.getContext('2d');
 };
 
     //--------------------------------------------------------export----------------------------------------------------

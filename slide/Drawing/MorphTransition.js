@@ -532,7 +532,8 @@
             oGeometry1, oDrawData1.brush, oDrawData1.pen, oDrawData1.transform,
             oGeometry2, oDrawData2.brush, oDrawData2.pen, oDrawData2.transform, !!(oDrawData1.animParams || oDrawData2.animParams || oShape1.group || oShape2.group));
         if(oGeometryMorph.isValid()) {
-            this.addMorphObject(oGeometryMorph);
+					this.checkShadowMorph();
+					this.addMorphObject(oGeometryMorph);
         }
         else {
             this.addMorphObject(new CStretchTextureTransform(oTexturesCache, nRelH1, nRelH2, this.shape1, this.shape2, true));
@@ -561,6 +562,44 @@
         }
     }
     AscFormat.InitClassWithoutType(CShapeComplexMorph, CComplexMorphObject);
+	CShapeComplexMorph.prototype.getDrawingParamsWithoutRotate = function(shadowShape, nMainShapeRot) {
+		const oTransform = shadowShape.transform.CreateDublicate();
+		const oOldTransform = shadowShape.transform;
+		const oOldBounds = shadowShape.bounds;
+		const hc = shadowShape.extY / 2;
+		const wc = shadowShape.extX / 2;
+		AscCommon.global_MatrixTransformer.TranslateAppend(oTransform, -wc, -hc);
+		AscCommon.global_MatrixTransformer.RotateRadAppend(oTransform, nMainShapeRot);
+		AscCommon.global_MatrixTransformer.TranslateAppend(oTransform, wc, hc);
+		shadowShape.transform = oTransform;
+		shadowShape.recalculateBounds();
+		const oBounds = shadowShape.bounds.copy();
+		shadowShape.transform = oOldTransform;
+		shadowShape.bounds = oOldBounds;
+		return {bounds: oBounds, transform: oTransform};
+	};
+	CShapeComplexMorph.prototype.checkShadowMorph = function() {
+		const oFirstShdwSp = this.shape1.shdwSp;
+		if (oFirstShdwSp) {
+			const oOuterShdw = this.shape1.getOuterShdw();
+			if (oOuterShdw) {
+				const oStartTransform = oFirstShdwSp.getShdwTransform(oOuterShdw, this.shape1);
+				const oEndTransform = oFirstShdwSp.getShdwTransform(oOuterShdw, this.shape2);
+				oFirstShdwSp.transform = oStartTransform;
+				this.addMorphObject(new CMorphedTransformDisappearObject(this.cache, oFirstShdwSp, this.relHeight1, oStartTransform, oEndTransform, this.getDrawingParamsWithoutRotate(oFirstShdwSp, this.shape1.rot)));
+			}
+		}
+		const oSecondShdwSp = this.shape2.shdwSp;
+		if (oSecondShdwSp) {
+			const oOuterShdw = this.shape2.getOuterShdw();
+			if (oOuterShdw) {
+				const oStartTransform = oSecondShdwSp.getShdwTransform(oOuterShdw, this.shape1);
+				const oEndTransform = oSecondShdwSp.getShdwTransform(oOuterShdw, this.shape2);
+				oSecondShdwSp.transform = oEndTransform;
+				this.addMorphObject(new CMorphedTransformAppearObject(this.cache, oSecondShdwSp, this.relHeight2, oStartTransform, oEndTransform, this.getDrawingParamsWithoutRotate(oSecondShdwSp, this.shape2.rot)));
+			}
+		}
+	};
     CShapeComplexMorph.prototype.getDrawingData = function(oDrawing, oAnimPlayer) {
 
 
@@ -873,8 +912,10 @@
                         oBrush.fill.srcRect.b = this.getValBetween(b1, b2);
                     }
 
-                    const dTransparent1 = isN(oBrush1.transparent) ? oBrush1.transparent : 255;
-                    const dTransparent2 = isN(oBrush2.transparent) ? oBrush2.transparent : 255;
+                    let dTransparent1 = oBrush1.fill.getTransparent();
+										dTransparent1 = dTransparent1 === null ? 255 : dTransparent1;
+                    let dTransparent2 = oBrush2.fill.getTransparent();
+	                dTransparent2 = dTransparent2 === null ? 255 : dTransparent2;
                     const dTransparent = this.getValBetween(dTransparent1, dTransparent2);
                     oBrush.transparent = dTransparent;
                     return oBrush;
@@ -894,7 +935,7 @@
         this.textureShape1.bounds.reset(0, 0, dBoundsW, dBoundsH);
         this.textureShape1.extX = dBoundsW;
         this.textureShape1.extY = dBoundsH;
-        const oTexture1 = this.cache.checkMorphTexture(this.textureShape1.Id, dScale, oBrush1 && oBrush1.isBlipFill());
+        const oTexture1 = this.cache.checkMorphTexture(this.textureShape1, dScale, oBrush1 && oBrush1.isBlipFill());
         if(!oTexture1) {
             return null;
         }
@@ -905,7 +946,7 @@
         this.textureShape2.bounds.reset(0, 0, dBoundsW, dBoundsH);
         this.textureShape2.extX = dBoundsW;
         this.textureShape2.extY = dBoundsH;
-        const oTexture2 = this.cache.checkMorphTexture(this.textureShape2.Id, dScale, oBrush2 && oBrush2.isBlipFill());
+        const oTexture2 = this.cache.checkMorphTexture(this.textureShape2, dScale, oBrush2 && oBrush2.isBlipFill());
         if(!oTexture2) {
             return null;
         }
@@ -981,11 +1022,11 @@
     };
     CGeometryTextureMorph.prototype.draw = function (oGraphics) {
         const dScale = oGraphics.m_oCoordTransform.sx;
-        const oTexture1 = this.cache.checkMorphTexture(this.shape1.GetId(), dScale);
+        const oTexture1 = this.cache.checkMorphTexture(this.shape1, dScale);
         if(!oTexture1) {
             return;
         }
-        const oTexture2 = this.cache.checkMorphTexture(this.shape2.GetId(), dScale);
+        const oTexture2 = this.cache.checkMorphTexture(this.shape2, dScale);
         if(!oTexture2) {
             return;
         }
@@ -1065,7 +1106,7 @@
                         for(nText = 0; nText < aTextStructs1.length; ++nText) {
                             let oTextStruct1 = aTextStructs1[nText];
                             let oTextStruct2 = aTextStructs2[nText];
-                            if(!isN(oTextStruct1.Code) || oTextStruct1.Code !== oTextStruct2.Code) {
+                            if(!isN(oTextStruct1.getTextElementCode()) || oTextStruct1.getTextElementCode() !== oTextStruct2.getTextElementCode()) {
                                 break;
                             }
                         }
@@ -1091,12 +1132,17 @@
                             for(let nIdx = 0; nIdx < aContent1.length; ++nIdx) {
                                 let oLine = aContent1[nIdx];
                                 let aBg = oLine.m_aBackgrounds;
+                                let aHigh = oLine.m_aHighlights;
+                                let aUnderlines = oLine.m_aUnderlines;
+                                let aDUnderlines = oLine.m_aDUnderlines;
+	                            let aStrikeouts = oLine.m_aStrikeouts;
+	                            let aDStrikeouts = oLine.m_aDStrikeouts;
                                 let aBorders = oLine.m_aBorders;
                                 let aPBg = oLine.m_aParagraphBackgrounds;
-                                let aUS = oLine.m_aUnderlinesStrikeouts;
-                                let aDisappear = [].concat(aBg).concat(aBorders).concat(aPBg).concat(aUS);
+                                let aUS = oLine.m_aForegrounds;
+                                let aDisappear = [].concat(aBg, aBorders, aPBg, aUS, aHigh, aUnderlines, aDUnderlines, aStrikeouts, aDStrikeouts);
                                 for(let nObj = 0; nObj < aDisappear.length; ++nObj) {
-                                    let oWrapper = new CObjectForDrawWrapper(this.getMorph(), aDisappear[nObj], oTransform1, oContent1.Get_Theme(), oContent1.Get_ColorMap(), oContent1.Is_DrawingShape(true));
+                                    let oWrapper = new CMorphObjectForDrawWrapper(this.getMorph(), aDisappear[nObj], oTransform1, oContent1.Get_Theme(), oContent1.Get_ColorMap(), oContent1.Is_DrawingShape(true));
                                     this.addMorphObject(new CMorphedDisappearObject(oTexturesCache, oWrapper, nRelH1, false))
                                 }
                             }
@@ -1104,12 +1150,17 @@
                             for(let nIdx = 0; nIdx < aContent2.length; ++nIdx) {
                                 let oLine = aContent2[nIdx];
                                 let aBg = oLine.m_aBackgrounds;
+	                            let aHigh = oLine.m_aHighlights;
+	                            let aUnderlines = oLine.m_aUnderlines;
+	                            let aDUnderlines = oLine.m_aDUnderlines;
+	                            let aStrikeouts = oLine.m_aStrikeouts;
+	                            let aDStrikeouts = oLine.m_aDStrikeouts;
                                 let aBorders = oLine.m_aBorders;
                                 let aPBg = oLine.m_aParagraphBackgrounds;
-                                let aUS = oLine.m_aUnderlinesStrikeouts;
-                                let aAppear = [].concat(aBg).concat(aBorders).concat(aPBg).concat(aUS);
+                                let aUS = oLine.m_aForegrounds;
+                                let aAppear = [].concat(aBg, aBorders, aPBg, aUS, aHigh, aUnderlines, aDUnderlines, aStrikeouts, aDStrikeouts);
                                 for(let nObj = 0; nObj < aAppear.length; ++nObj) {
-                                    let oWrapper = new CObjectForDrawWrapper(this.getMorph(), aAppear[nObj], oTransform2, oContent2.Get_Theme(), oContent2.Get_ColorMap(), oContent2.Is_DrawingShape(true));
+                                    let oWrapper = new CMorphObjectForDrawWrapper(this.getMorph(), aAppear[nObj], oTransform2, oContent2.Get_Theme(), oContent2.Get_ColorMap(), oContent2.Is_DrawingShape(true));
                                     this.addMorphObject(new CMorphedAppearObject(oTexturesCache, oWrapper, nRelH2, false))
                                 }
                             }
@@ -1117,7 +1168,7 @@
                             for(nText = 0; nText < aTextStructs1.length; ++nText) {
                                 let oTextStruct1 = aTextStructs1[nText];
                                 let oTextStruct2 = aTextStructs2[nText];
-                                if(oTextStruct1.Code === oTextStruct2.Code) {
+                                if(oTextStruct1.getTextElementCode() === oTextStruct2.getTextElementCode()) {
                                     //let oGeomMorph = new CGeometryMorphObject(oTexturesCache, nRelH1, nRelH2,
                                     //    oTextStruct1.geometry, oTextStruct1.brush, oTextStruct1.pen, oTransform1,
                                     //    oTextStruct2.geometry, oTextStruct2.brush, oTextStruct2.pen, oTransform2);
@@ -1125,8 +1176,8 @@
                                     //    this.addMorphObject(oGeomMorph);
                                     //}
                                     //else {
-                                    let oWrapper1 = new CObjectForDrawWrapper(this.getMorph(), oTextStruct1, oTransform1, oContent1.Get_Theme(), oContent1.Get_ColorMap(), oContent1.Is_DrawingShape(true));
-                                    let oWrapper2 = new CObjectForDrawWrapper(this.getMorph(), oTextStruct2, oTransform2, oContent2.Get_Theme(), oContent2.Get_ColorMap(), oContent2.Is_DrawingShape(true));
+                                    let oWrapper1 = new CMorphObjectForDrawWrapper(this.getMorph(), oTextStruct1, oTransform1, oContent1.Get_Theme(), oContent1.Get_ColorMap(), oContent1.Is_DrawingShape(true));
+                                    let oWrapper2 = new CMorphObjectForDrawWrapper(this.getMorph(), oTextStruct2, oTransform2, oContent2.Get_Theme(), oContent2.Get_ColorMap(), oContent2.Is_DrawingShape(true));
                                     this.addMorphObject(new CStretchTextureTransform(oTexturesCache, nRelH1 + 0.5, nRelH2 + 0.5, oWrapper1, oWrapper2));
                                     //}
                                 }
@@ -1151,16 +1202,9 @@
     CMorphedFadeObject.prototype.morph = function(dRelTime) {
         CMorphObjectBase.prototype.morph.call(this, dRelTime);
     };
-    CMorphedFadeObject.prototype.drawWithAlpha = function(oGraphics, dAlpha) {
+    CMorphedFadeObject.prototype.drawWithAlpha = function(oGraphics, dAlpha, oTransform) {
         const dScale = oGraphics.m_oCoordTransform.sx;
-        const oOldTxBody = this.drawing.txBody;
-        if(this.bNoText) {
-            this.drawing.txBody = null;
-        }
-        const oTexture = this.cache.checkMorphTexture(this.drawing.GetId(), dScale);
-        if(this.bNoText) {
-            this.drawing.txBody = oOldTxBody;
-        }
+        const oTexture = this.cache.checkMorphTexture(this.drawing, dScale, undefined, undefined, this.bNoText);
         if(!oTexture) {
             return;
         }
@@ -1168,7 +1212,7 @@
         if(!oFadeTexture) {
             return;
         }
-        oFadeTexture.drawWithoutSaveState(oGraphics, null);
+        oFadeTexture.drawWithoutSaveState(oGraphics, oTransform);
     };
 
     function CMorphedAppearObject(oTexturesCache, oDrawing, nRelH, bNoText) {
@@ -1200,6 +1244,47 @@
         this.drawWithAlpha(oGraphics, dAlpha);
     };
 
+		function CMorphedTransformFadeObject(oTexturesCache, oDrawing, nRelH, oTransform1, oTransform2, oDrawingParams, bNoText) {
+			CMorphedFadeObject.call(this, oTexturesCache, oDrawing, nRelH, bNoText);
+			this.transform1 = oTransform1;
+			this.transform2 = oTransform2;
+			this.drawingParams = oDrawingParams;
+		}
+	AscFormat.InitClassWithoutType(CMorphedTransformFadeObject, CMorphedFadeObject);
+	CMorphedTransformFadeObject.prototype.draw = function(oGraphics) {
+		let oTransform = new AscCommon.CMatrix();
+		oTransform.tx = this.getValBetween(this.transform1.tx, this.transform2.tx);
+		oTransform.ty = this.getValBetween(this.transform1.ty, this.transform2.ty);
+		oTransform.sx = this.getValBetween(this.transform1.sx, this.transform2.sx);
+		oTransform.sy = this.getValBetween(this.transform1.sy, this.transform2.sy);
+		oTransform.shx = this.getValBetween(this.transform1.shx, this.transform2.shx);
+		oTransform.shy = this.getValBetween(this.transform1.shy, this.transform2.shy);
+
+		const oOldTransform = this.drawing.transform;
+		const oOldBounds = this.drawing.bounds;
+		this.drawing.transform = this.drawingParams.transform;
+		this.drawing.bounds = this.drawingParams.bounds;
+		this.drawWithAlpha(oGraphics, this.getAlpha(), oTransform);
+		this.drawing.transform = oOldTransform;
+		this.drawing.bounds = oOldBounds;
+	};
+	CMorphedTransformFadeObject.prototype.getAlpha = function() {
+		return 0;
+	};
+	function CMorphedTransformAppearObject(oTexturesCache, oDrawing, nRelH, oTransform1, oTransform2, oDrawingParams, bNoText) {
+		CMorphedTransformFadeObject.call(this, oTexturesCache, oDrawing, nRelH, oTransform1, oTransform2, oDrawingParams, bNoText);
+	}
+	AscFormat.InitClassWithoutType(CMorphedTransformAppearObject, CMorphedTransformFadeObject);
+	CMorphedTransformAppearObject.prototype.getAlpha = function() {
+		return this.relTime;
+	};
+	function CMorphedTransformDisappearObject(oTexturesCache, oDrawing, nRelH, oTransform1, oTransform2, oDrawingParams, bNoText) {
+		CMorphedTransformFadeObject.call(this, oTexturesCache, oDrawing, nRelH, oTransform1, oTransform2, oDrawingParams, bNoText);
+	}
+	AscFormat.InitClassWithoutType(CMorphedTransformDisappearObject, CMorphedTransformFadeObject);
+	CMorphedTransformDisappearObject.prototype.getAlpha = function() {
+		return 1 - this.relTime;
+	};
 
     function CStretchTextureTransform(oTexturesCache, nRelH1, nRelH2, oDrawing1, oDrawing2, bNoText) {
         CMorphObjectBase.call(this, oTexturesCache, nRelH1, nRelH2)
@@ -1232,7 +1317,7 @@
         let oAnimParams = oAnimPlayer.getDrawingParams(sFormatId, true);
         let oTexture, oBounds, dOpacity;
         if(!oAnimParams) {
-            oTexture = this.cache.checkMorphTexture(sId, dScale);
+            oTexture = this.cache.checkMorphTexture(oDrawing, dScale);
             oBounds = oDrawing.getBoundsByDrawing(true);
         }
         else {
@@ -1240,7 +1325,7 @@
             dOpacity = oAnimParams.opacity;
             oBounds = oDrawing.getBoundsByDrawing(true);
             oBounds.transformRect(oAnimParams.transform);
-            oTexture = this.cache.checkMorphTexture(sId, dScale, undefined, oAnimParams);
+            oTexture = this.cache.checkMorphTexture(oDrawing, dScale, undefined, oAnimParams);
         }
 
         if(this.bNoText) {
@@ -1310,8 +1395,8 @@
     }
     AscFormat.InitClassWithoutType(CGroupComplexMorph, CComplexMorphObject);
 
-    function CWrapperBase(oMorph, oTransform, oTheme, oColorMap, oFormatDrawing) {
-        this.morph = oMorph;
+    function CWrapperBase(oTransform, oTheme, oColorMap, oFormatDrawing) {
+
         this.theme = oTheme;
         this.colorMap = oColorMap;
         this.transform = oTransform;
@@ -1323,6 +1408,8 @@
     CWrapperBase.prototype.GetId = function() {
         return this.Id;
     };
+	CWrapperBase.prototype.Get_Id = CWrapperBase.prototype.GetId;
+	CWrapperBase.prototype.getPresentationSize = AscFormat.CGraphicObjectBase.prototype.getPresentationSize;
     CWrapperBase.prototype.registerId = function() {
         AscFormat.ExecuteNoHistory(function() {
             this.Id = AscCommon.g_oIdCounter.Get_NewId();
@@ -1330,7 +1417,6 @@
             AscCommon.g_oTableId.Add(this, this.Id);
             AscCommon.g_oTableId.TurnOff();
         }, this, []);
-        this.morph.registerWrapperObject(this);
     };
     CWrapperBase.prototype.recalculateBounds = function() {
         const oBoundsChecker = new AscFormat.CSlideBoundsChecker();
@@ -1344,14 +1430,9 @@
     };
     CWrapperBase.prototype.draw = function(oGraphics) {
     };
-    CWrapperBase.prototype.getAnimTexture = function (scale, bMorph, oAnimParams) {
-        return AscFormat.CGraphicObjectBase.prototype.getAnimTexture.call(this, scale, bMorph, oAnimParams);
-    };
+    CWrapperBase.prototype.getAnimTexture = AscFormat.CGraphicObjectBase.prototype.getAnimTexture;
     CWrapperBase.prototype.getBoundsByDrawing = function (bMorph) {
         return this.bounds;
-    };
-    CWrapperBase.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate) {
-        return oCurCandidate;
     };
     CWrapperBase.prototype.isShape = function () {
         return false;
@@ -1359,26 +1440,45 @@
     CWrapperBase.prototype.getObjectType = function () {
         return null;
     };
+		CWrapperBase.prototype.getBrush = function () {
+			return this.brush;
+		};
+	CWrapperBase.prototype.getPen = function () {
+		return this.pen;
+	};
+
+		function CWrapperMorphBase(oMorph, oTransform, oTheme, oColorMap, oFormatDrawing) {
+			this.morph = oMorph;
+			CWrapperBase.call(this, oTransform, oTheme, oColorMap, oFormatDrawing);
+		}
+	AscFormat.InitClassWithoutType(CWrapperMorphBase, CWrapperBase);
+	CWrapperMorphBase.prototype.registerId = function () {
+		CWrapperBase.prototype.registerId.call(this);
+		this.morph.registerWrapperObject(this);
+	};
+	CWrapperMorphBase.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate) {
+		return oCurCandidate;
+	};
 
     function CTextDrawerStructureWrapper(oMorph, oTextDrawerStructure, oTransform, oTheme, oColorMap, oDrawing) {
         this.textDrawerStructure = oTextDrawerStructure;
-        CWrapperBase.call(this, oMorph, oTransform, oTheme, oColorMap, oDrawing);
+        CWrapperMorphBase.call(this, oMorph, oTransform, oTheme, oColorMap, oDrawing);
     }
-    AscFormat.InitClassWithoutType(CTextDrawerStructureWrapper, CWrapperBase);
+    AscFormat.InitClassWithoutType(CTextDrawerStructureWrapper, CWrapperMorphBase);
     CTextDrawerStructureWrapper.prototype.draw = function(oGraphics) {
         this.textDrawerStructure.draw(oGraphics, this.transform, this.theme, this.colorMap);
     };
 
-    function CObjectForDrawWrapper(oMorph, oObjectForDraw, oTransform, oTheme, oColorMap, oDrawing) {
+    function CMorphObjectForDrawWrapper(oMorph, oObjectForDraw, oTransform, oTheme, oColorMap, oDrawing) {
         this.objectForDraw = oObjectForDraw;
-        CWrapperBase.call(this, oMorph, oTransform, oTheme, oColorMap, oDrawing);
+        CWrapperMorphBase.call(this, oMorph, oTransform, oTheme, oColorMap, oDrawing);
     }
-    AscFormat.InitClassWithoutType(CObjectForDrawWrapper, CWrapperBase);
-    CObjectForDrawWrapper.prototype.draw = function(oGraphics) {
+    AscFormat.InitClassWithoutType(CMorphObjectForDrawWrapper, CWrapperMorphBase);
+    CMorphObjectForDrawWrapper.prototype.draw = function(oGraphics) {
         this.objectForDraw.draw(oGraphics, undefined, this.transform, this.theme, this.colorMap);
     };
-    CObjectForDrawWrapper.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate) {
-        if(!(oDrawingToCheck instanceof CObjectForDrawWrapper)) {
+    CMorphObjectForDrawWrapper.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate) {
+        if(!(oDrawingToCheck instanceof CMorphObjectForDrawWrapper)) {
             return oCurCandidate;
         }
         if(this.objectForDraw.compareForMorph(oDrawingToCheck.objectForDraw) !== oDrawingToCheck.objectForDraw) {
@@ -1387,18 +1487,18 @@
         return oDrawingToCheck;
     };
 
-    function CObjectForDrawArrayWrapper(oMorph, aObjectForDraw, oTransform, oTheme, oColorMap, oDrawing) {
+    function CMorphObjectForDrawArrayWrapper(oMorph, aObjectForDraw, oTransform, oTheme, oColorMap, oDrawing) {
         this.objectsForDraw = aObjectForDraw;
-        CWrapperBase.call(this, oMorph, oTransform, oTheme, oColorMap, oDrawing);
+        CWrapperMorphBase.call(this, oMorph, oTransform, oTheme, oColorMap, oDrawing);
     }
-    AscFormat.InitClassWithoutType(CObjectForDrawArrayWrapper, CWrapperBase);
-    CObjectForDrawArrayWrapper.prototype.draw = function(oGraphics) {
+    AscFormat.InitClassWithoutType(CMorphObjectForDrawArrayWrapper, CWrapperMorphBase);
+    CMorphObjectForDrawArrayWrapper.prototype.draw = function(oGraphics) {
         for(let nIdx = 0; nIdx < this.objectsForDraw.length; ++nIdx) {
             this.objectsForDraw[nIdx].draw(oGraphics, undefined, this.transform, this.theme, this.colorMap);
         }
     };
-    CObjectForDrawArrayWrapper.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate) {
-        if(!(oDrawingToCheck instanceof CObjectForDrawArrayWrapper)) {
+    CMorphObjectForDrawArrayWrapper.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate) {
+        if(!(oDrawingToCheck instanceof CMorphObjectForDrawArrayWrapper)) {
             return oCurCandidate;
         }
         if(oDrawingToCheck.objectsForDraw.length !== this.objectsForDraw.length) {
@@ -1413,11 +1513,183 @@
         return oDrawingToCheck;
     };
 
+		function CObjectForDrawArrayWrapper(aContentObjects, oTransform, oTheme, oColorMap, oDrawing, aStrikeoutUnderlineObjects, aBackgroundObjects) {
+			this.strikeoutUnderlineObjects = aStrikeoutUnderlineObjects || [];
+			this.backgroundObjects = aBackgroundObjects || [];
+			this.contentObjects = aContentObjects || [];
+			CWrapperBase.call(this, oTransform, oTheme, oColorMap, oDrawing);
+		}
+	AscFormat.InitClassWithoutType(CObjectForDrawArrayWrapper, CWrapperBase);
+		CObjectForDrawArrayWrapper.prototype.forEachAnimationDrawing = function(fCallback) {
+			return !!fCallback(this);
+		};
+	CObjectForDrawArrayWrapper.prototype.drawBackground = function (oGraphics) {
+		for (let i = 0; i < this.backgroundObjects.length; i += 1) {
+			this.backgroundObjects[i].draw(oGraphics, undefined, this.transform, this.theme, this.colorMap);
+		}
+	};
+	CObjectForDrawArrayWrapper.prototype.drawContent = function (oGraphics) {
+		for (let i = 0; i < this.contentObjects.length; i += 1) {
+			this.contentObjects[i].draw(oGraphics, undefined, this.transform, this.theme, this.colorMap);
+		}
+	};
+	CObjectForDrawArrayWrapper.prototype.drawStrikeoutUnderlines = function (oGraphics) {
+		for (let i = 0; i < this.strikeoutUnderlineObjects.length; i += 1) {
+			this.strikeoutUnderlineObjects[i].draw(oGraphics, undefined, this.transform, this.theme, this.colorMap);
+		}
+	};
+	CObjectForDrawArrayWrapper.prototype.draw = function(oGraphics) {
+		const oThis = this;
+		this.forEachObjectToDraw(function(oObjectToDraw) {
+			const oOldBrush = oObjectToDraw.brush;
+			const oOldPen = oObjectToDraw.pen;
+			if (oThis.brush) {
+				oObjectToDraw.brush = oThis.brush;
+			}
+			if (oThis.pen) {
+				oObjectToDraw.pen = oThis.pen;
+			}
+			oObjectToDraw.draw(oGraphics, undefined, oThis.transform, oThis.theme, oThis.colorMap);
+			oObjectToDraw.brush = oOldBrush;
+			oObjectToDraw.pen = oOldPen;
+		});
+	};
+	CObjectForDrawArrayWrapper.prototype.recalculateBounds = function() {
+		let oTempBounds = null;
+		const oThis = this;
+		this.forEachObjectToDraw(function(oObjectToDraw) {
+			const oBoundsChecker = new AscFormat.CSlideBoundsChecker();
+			oObjectToDraw.check_bounds(oBoundsChecker);
+			const oBounds = oBoundsChecker.Bounds;
+			let maxY = oBounds.max_y;
+			let minY = oBounds.min_y;
+			if (oObjectToDraw.y !== undefined) {
+				const oLine = oObjectToDraw.lineStructure.m_oLine;
+				maxY = oObjectToDraw.y + oLine.Metrics.Descent;
+				minY = maxY - (oLine.Bottom - oLine.Top);
+			}
+
+			const arr_x = [
+				oThis.transform.TransformPointX(oBounds.min_x, minY),
+				oThis.transform.TransformPointX(oBounds.max_x, minY),
+				oThis.transform.TransformPointX(oBounds.min_x, maxY),
+				oThis.transform.TransformPointX(oBounds.max_x, maxY)
+			];
+			const arr_y = [
+				oThis.transform.TransformPointY(oBounds.min_x, minY),
+				oThis.transform.TransformPointY(oBounds.max_x, minY),
+				oThis.transform.TransformPointY(oBounds.min_x, maxY),
+				oThis.transform.TransformPointY(oBounds.max_x, maxY)
+			];
+			const l = Math.min.apply(Math, arr_x);
+			const r = Math.max.apply(Math, arr_x);
+			const t = Math.min.apply(Math, arr_y);
+			const b = Math.max.apply(Math, arr_y);
+			if (oTempBounds) {
+				if (l < oTempBounds.l) {
+					oTempBounds.l = l;
+				}
+				if (r > oTempBounds.r) {
+					oTempBounds.r = r;
+				}
+				if (t < oTempBounds.t) {
+					oTempBounds.t = t;
+				}
+				if (b > oTempBounds.b) {
+					oTempBounds.b = b;
+				}
+			} else {
+				oTempBounds = {l: l, t: t, r: r, b: b};
+			}
+		});
+		if (oTempBounds) {
+			this.bounds.reset(oTempBounds.l, oTempBounds.t, oTempBounds.r, oTempBounds.b);
+		}
+	};
+	CObjectForDrawArrayWrapper.prototype.forEachObjectToDraw = function(callback) {
+		for (let i = 0; i < this.backgroundObjects.length; i += 1) {
+			if (callback(this.backgroundObjects[i])) {
+				return true;
+			}
+		}
+		for (let i = 0; i < this.contentObjects.length; i += 1) {
+			if (callback(this.contentObjects[i])) {
+				return true;
+			}
+		}
+		for (let i = 0; i < this.strikeoutUnderlineObjects.length; i += 1) {
+			if (callback(this.strikeoutUnderlineObjects[i])) {
+				return true;
+			}
+		}
+		return false;
+	};
+	CObjectForDrawArrayWrapper.prototype.getParentObjects = function () {
+		return this.formatDrawing.getParentObjects();
+	};
+	CObjectForDrawArrayWrapper.prototype.getBrush = function() {
+		let oBrush;
+		this.forEachObjectToDraw(function(oObjectToDraw) {
+			oBrush = oObjectToDraw.brush;
+			return true;
+		});
+		return oBrush;
+	};
+	CObjectForDrawArrayWrapper.prototype.getPen = function() {
+		let oPen;
+		this.forEachObjectToDraw(function(oObjectToDraw) {
+			oPen = oObjectToDraw.pen;
+			return true;
+		});
+		return oPen;
+	};
+
+	function CWrapperDrawer(wrapperObjects) {
+		this.wrapperObjects = wrapperObjects || [];
+	}
+	CWrapperDrawer.prototype.draw = function(oGraphics) {
+		for (let i = 0; i < this.wrapperObjects.length; i += 1) {
+			this.wrapperObjects[i].draw(oGraphics);
+		}
+	}
+	CWrapperDrawer.prototype.forEachAnimationDrawing = function(fCallback) {
+		for (let i = 0; i < this.wrapperObjects.length; i += 1) {
+			if (fCallback(this.wrapperObjects[i])) {
+				return true;
+			}
+		}
+		return false;
+	};
+	CWrapperDrawer.prototype.forEachObjectToDraw = function(fCallback) {
+		for (let i = 0; i < this.wrapperObjects.length; i += 1) {
+			this.wrapperObjects[i].forEachObjectToDraw(fCallback);
+		}
+	};
+	CWrapperDrawer.prototype.addElement = function (oElement) {
+		this.wrapperObjects.push(oElement);
+	};
+	CWrapperDrawer.prototype.getBrush = function() {
+		for (let i = 0; i < this.wrapperObjects.length; i += 1) {
+			const oBrush = this.wrapperObjects[i].getBrush();
+			if (oBrush) {
+				return oBrush;
+			}
+		}
+	};
+	CWrapperDrawer.prototype.getPen = function() {
+		for (let i = 0; i < this.wrapperObjects.length; i += 1) {
+			const oPen = this.wrapperObjects[i].getPen();
+			if (oPen) {
+				return oPen;
+			}
+		}
+	};
+
     function CBackgroundWrapper(oMorph, oSlide) {
         this.slide = oSlide;
-        CWrapperBase.call(this, oMorph, new AscCommon.CMatrix(), oSlide.getTheme(), oSlide.getColorMap(), null);
+        CWrapperMorphBase.call(this, oMorph, new AscCommon.CMatrix(), oSlide.getTheme(), oSlide.getColorMap(), null);
     }
-    AscFormat.InitClassWithoutType(CBackgroundWrapper, CWrapperBase);
+    AscFormat.InitClassWithoutType(CBackgroundWrapper, CWrapperMorphBase);
     CBackgroundWrapper.prototype.draw = function(oGraphics) {
         oGraphics.SaveGrState();
         oGraphics.transform3(this.transform);
@@ -1707,17 +1979,17 @@
                         for(nIdx = 0; nIdx < oDocStruct.m_aParagraphBackgrounds.length; ++nIdx)
                         {
                             oObjectForDraw = oDocStruct.m_aParagraphBackgrounds[nIdx];
-                            aRet.push(new CObjectForDrawWrapper(this, oObjectForDraw, oTransform, oTheme, oColorMap, oSp));
+                            aRet.push(new CMorphObjectForDrawWrapper(this, oObjectForDraw, oTransform, oTheme, oColorMap, oSp));
                         }
                         for(nIdx = 0;nIdx< oDocStruct.m_aBorders.length; ++nIdx)
                         {
                             oObjectForDraw = oDocStruct.m_aBorders[nIdx];
-                            aRet.push(new CObjectForDrawWrapper(this, oObjectForDraw, oTransform, oTheme, oColorMap, oSp));
+                            aRet.push(new CMorphObjectForDrawWrapper(this, oObjectForDraw, oTransform, oTheme, oColorMap, oSp));
                         }
                         for(nIdx = 0; nIdx < oDocStruct.m_aBackgrounds.length; ++nIdx)
                         {
                             oObjectForDraw = oDocStruct.m_aBackgrounds[nIdx];
-                            aRet.push(new CObjectForDrawWrapper(this, oObjectForDraw, oTransform, oTheme, oColorMap, oSp));
+                            aRet.push(new CMorphObjectForDrawWrapper(this, oObjectForDraw, oTransform, oTheme, oColorMap, oSp));
                         }
 
                         for(nIdx = 0; nIdx < oDocStruct.m_aContent.length; ++nIdx) {
@@ -1727,11 +1999,11 @@
                                 let aWord = aWords[nWord];
                                 if(bLetter) {
                                     for(let nLetter = 0; nLetter < aWord.length; ++nLetter) {
-                                        aRet.push( new CObjectForDrawWrapper(this, aWord[nLetter], oTransform, oTheme, oColorMap, oSp));
+                                        aRet.push( new CMorphObjectForDrawWrapper(this, aWord[nLetter], oTransform, oTheme, oColorMap, oSp));
                                     }
                                 }
                                 else {
-                                    aRet.push( new CObjectForDrawArrayWrapper(this, aWord, oTransform, oTheme, oColorMap, oSp));
+                                    aRet.push( new CMorphObjectForDrawArrayWrapper(this, aWord, oTransform, oTheme, oColorMap, oSp));
                                 }
                             }
                         }
@@ -1777,4 +2049,6 @@
     };
     window['AscCommonSlide'] = window['AscCommonSlide'] || {};
     window['AscCommonSlide'].CSlideMorphEffect = CSlideMorphEffect;
+    window['AscCommonSlide'].CObjectForDrawArrayWrapper = CObjectForDrawArrayWrapper;
+    window['AscCommonSlide'].CWrapperDrawer = CWrapperDrawer;
 }) (window);

@@ -15,7 +15,9 @@
 			"vendor/string.js",
 			"vendor/array.js",
 			"common/editorscommon.js",
-            "common/BulletPreviewDrawer.js",
+			"common/externalChartCollector.js",
+			"common/frameManager.js",
+			"common/BulletPreviewDrawer.js",
 			"common/HistoryCommon.js",
 			"common/TableId.js",
 			"common/TableIdChanges.js",
@@ -28,16 +30,19 @@
 			"word/Editor/CollaborativeEditing.js",
 			"pdf/src/CollaborativeEditing.js",
 			"common/macros.js",
+			"common/macro-recorder.js",
 			"common/apiBase.js",
 			"common/apiBase_plugins.js",
 			"word/apiCommon.js",
 			"word/api.js",
 			"word/api_plugins.js",
 			"common/spell/spell.js",
+			"common/zlib/zlib.js",
 			"word/Editor/Table/TableLook.js",
 			"cell/utils/utils.js",
 			"pdf/src/defines.js",
-			"pdf/api.js"
+			"pdf/api.js",
+			"pdf/api_plugins.js"
 		],
 		"common": [
 			"common/api/actionOnTimer.js",
@@ -51,6 +56,8 @@
 			
 			"common/collaboration/deleted-text-recovery.js",
 			
+			"common/custom-xml/serialize-custom-xml.js",
+
 			"common/nameMap.js",
 			"common/downloaderfiles.js",
 			"common/NumFormat.js",
@@ -77,7 +84,7 @@
 			"common/Drawings/Metafile.js",
 			"common/libfont/textmeasurer.js",
 			"common/Drawings/WorkEvents.js",
-			
+
 			"word/Editor/History.js",
 
 			"common/Shapes/EditorSettings.js",
@@ -136,23 +143,27 @@
 			"common/Drawings/HatchPattern.js",
 			
 			"common/bidi/bidi-common.js",
+			"common/bidi/bidi-brackets.js",
 			"common/bidi/bidi-types.js",
 			"common/bidi/unicode-data.js",
 			
 			"common/scroll.js",
 			"vendor/iscroll.js",
 			"vendor/delta.js",
-			"vendor/minhash.js",
 			"common/Scrolls/mobileTouchManagerBase.js",
 			"word/Drawing/mobileTouchManager.js",
 
 			"common/wordcopypaste.js",
 			"common/intervalTree.js",
 
+			"cell/model/FormulaObjects/parserFormula.js",
+		  "cell/view/HandlerList.js",
+			"cell/model/SheetMemory.js",
 			"cell/model/WorkbookElems.js",
 			"cell/model/Workbook.js",
 			"cell/model/Serialize.js",
 			"cell/model/CellInfo.js",
+			"cell/model/HeaderFooter.js",
 			
 			"word/Editor/Paragraph/RunContent/Types.js",
 			"word/Math/mathTypes.js",
@@ -160,7 +171,7 @@
 			"word/Math/math-settings.js",
 			"word/Editor/StructuredDocumentTags/sdt-settings.js",
 			"word/Editor/DocumentSettings.js",
-			
+
 			"word/Editor/Paragraph/Run/FontClassification.js",
 			"word/Editor/Paragraph/Run/FontCalculator.js",
 			"word/Editor/Paragraph/Run/run-composite-input.js",
@@ -171,6 +182,7 @@
 			"word/Editor/GraphicObjects/Format/GroupPrototype.js",
 			"word/Editor/GraphicObjects/Format/ChartSpacePrototype.js",
 			"common/Drawings/Format/GraphicFrame.js",
+			"common/Drawings/Format/Controls.js",
 			"common/Drawings/Format/LockedCanvas.js",
 			"word/Editor/GraphicObjects/GraphicObjects.js",
 			"word/Editor/GraphicObjects/GraphicPage.js",
@@ -245,8 +257,6 @@
 			"word/Editor/Paragraph/draw/highlight-draw-state.js",
 			"word/Editor/Paragraph/draw/line-draw-state.js",
 			"word/Editor/Paragraph/draw/paragraph-draw-state.js",
-			"word/Editor/Sections.js",
-			"word/Editor/SectionsChanges.js",
 			"word/Editor/Numbering/NumberingApplicator.js",
 			"word/Editor/Numbering/NumberingCollection.js",
 			"word/Editor/Numbering/NumberingCommon.js",
@@ -263,6 +273,10 @@
 			"word/Editor/Layout/PrintView.js",
 			"word/Editor/Layout/ReadView.js",
 			"word/Editor/document/document-background.js",
+			"word/Editor/document/document-page.js",
+			"word/Editor/document/document-page-column.js",
+			"word/Editor/document/document-page-section.js",
+			"word/Editor/document/element-section.js",
 			"word/Editor/DocumentContentBase.js",
 			"word/Editor/Document.js",
 			"word/Editor/document-composite-input.js",
@@ -322,8 +336,26 @@
 			"word/Editor/DocumentProtection.js",
 			"word/Editor/Comparison.js",
 			"word/Editor/InsertDocumentFile.js",
-			"word/Editor/Revisions/TrackRevisionsManager.js",
+			"word/Editor/revisions/review-info.js",
+			"word/Editor/revisions/track-revisions-manager.js",
+			"word/Editor/custom-xml/custom-xml.js",
+			"word/Editor/custom-xml/custom-xml-changes.js",
+			"word/Editor/custom-xml/custom-xml-manager.js",
+			"word/Editor/custom-xml/data-binding.js",
 			"word/Editor/Merge.js",
+			"word/Editor/Shortcuts.js",
+
+			"word/Editor/sections/document-sections.js",
+			"word/Editor/sections/footnote-pr.js",
+			"word/Editor/sections/line-numbering.js",
+			"word/Editor/sections/sect-pr.js",
+			"word/Editor/sections/sect-pr-changes.js",
+			"word/Editor/sections/section-columns.js",
+			"word/Editor/sections/section-page.js",
+
+			"word/Editor/api/document-column-props.js",
+			"word/Editor/api/document-columns-props.js",
+			"word/Editor/api/document-section-props.js",
 
 			"word/Drawing/Graphics.js",
 			"word/Drawing/ShapeDrawer.js",
@@ -337,11 +369,11 @@
 			"word/Drawing/Rulers.js",
 			"word/Drawing/printpreview.js",
 			"word/Drawing/HtmlPage.js",
-			"word/Drawing/documentrenderer.js",
 			"pdf/src/thumbnails.js",
 			"pdf/src/viewer.js",
 			"pdf/src/file.js",
 			"pdf/src/pdfSearch.js",
+			"pdf/src/previews.js",
 			"pdf/src/forms/formActions.js",
 			"pdf/src/forms/base/base.js",
 			"pdf/src/forms/apiFunctions.js",
@@ -362,6 +394,7 @@
 			"pdf/src/drawings/image.js",
 			"pdf/src/drawings/chart.js",
 			"pdf/src/drawings/graphicFrame.js",
+			"pdf/src/drawings/groupShape.js",
 			"pdf/src/drawings/smartArt.js",
 			"pdf/src/annotations/base.js",
 			"pdf/src/annotations/text.js",
@@ -374,8 +407,9 @@
 			"pdf/src/annotations/stamp.js",
 			"pdf/src/annotations/polyLine.js",
 			"pdf/src/annotations/square.js",
+			"pdf/src/textSelectTrackHandler.js",
 			"pdf/src/annotations/textPrTrackHandler.js",
-			"pdf/src/annotations/textSelectTrackHandler.js",
+			"pdf/src/annotations/annot-track-handler.js",
 			"pdf/src/DrawingDocument.js",
 			"pdf/src/GraphicObjects.js",
 			"common/geometry/geometry.js",
@@ -403,15 +437,13 @@
 			"word/Math/operators.js",
 			"word/Math/accent.js",
 			"word/Math/borderBox.js",
+			"word/Math/math-ml.js",
 			"word/Math/mathTrackHandler.js",
-			
+
 			"word/Editor/Styles/style-cache.js",
 			"word/Editor/Styles/FixedFormDefaults.js",
 			"word/Editor/Styles/default-styles.js",
-
-			"word/apiBuilder.js",
-
-			"word/fromToJSON.js",
+			
 			"common/versionHistory.js",
 			"common/clipboard_base.js",
 			"common/text_input2.js",
@@ -421,7 +453,16 @@
 			"common/plugins.js",
 			
 			"common/Native/native_graphics.js",
-						
+
+			"word/Editor/document-visitor.js",
+			
+			"word/Editor/annotations/custom-text-annotator/custom-text-annotator.js",
+			"word/Editor/annotations/custom-text-annotator/range-marks.js",
+			"word/Editor/annotations/custom-text-annotator/text-annotator-manager.js",
+			
+			"word/apiBuilder.js",
+			"word/fromToJSON.js",
+
 			"vendor/easysax.js",
 			"common/openxml.js"
 		],

@@ -194,6 +194,10 @@ function (window, undefined) {
 				if (cElementType.array === arg1.type) {
 					arg1 = arg1.getElementRowCol(0, 0);
 				}
+				if (str === "contents") {
+					// Save ref for recursion check
+					AscCommonExcel.g_cCalcRecursion.saveFunctionResult(this.name, arg1);
+				}
 
 				let isRangeArg1 = cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type;
 				if (isRangeArg1 || cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
@@ -210,7 +214,16 @@ function (window, undefined) {
 				}
 			}
 
-			let _cCellFunctionLocal = window["AscCommon"].cCellFunctionLocal;
+			let api = window["Asc"]["editor"];
+			let printOptionsJson = api && api.wb && api.wb.getPrintOptionsJson && api.wb.getPrintOptionsJson();
+			let spreadsheetLayout = printOptionsJson && printOptionsJson["spreadsheetLayout"];
+			let _cCellFunctionLocal;
+			if (spreadsheetLayout && spreadsheetLayout["formulaProps"] && spreadsheetLayout["formulaProps"]["cellFunctionTypeTranslate"]) {
+				_cCellFunctionLocal = spreadsheetLayout["formulaProps"]["cellFunctionTypeTranslate"];
+			} else {
+				_cCellFunctionLocal = window["AscCommon"].cCellFunctionLocal;
+			}
+
 			let res, numFormat;
 			switch (str) {
 				case "col":
@@ -239,8 +252,14 @@ function (window, undefined) {
 				case "filename":
 				case _cCellFunctionLocal["filename"]: {
 					//TODO без пути
-					let docInfo = window["Asc"]["editor"].DocInfo;
-					let fileName = docInfo ? docInfo.get_Title() : "";
+					let fileName;
+					if (spreadsheetLayout && spreadsheetLayout["formulaProps"] && spreadsheetLayout["formulaProps"]["docTitle"]) {
+						fileName = spreadsheetLayout["formulaProps"]["docTitle"];
+					} else {
+						let docInfo = api.DocInfo;
+						fileName = docInfo ? docInfo.get_Title() : "";
+					}
+
 					let _ws = arg1.getWS();
 					let sheetName = _ws ? _ws.getName() : null;
 					if (sheetName) {

@@ -920,6 +920,11 @@ function (window, undefined) {
 			}
 
 			pos = arg2.getValue();
+
+			if (pos <= 0) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
 			pos = pos > 0 ? pos - 1 : pos;
 		}
 
@@ -939,9 +944,9 @@ function (window, undefined) {
 
 		str = arg1.toLocaleString();
 		// searchStr = RegExp.escape(arg0.toLocaleString()); // doesn't work with strings like """ String""" , it's return ""\ String"" instead "" String""
-		//TODO need review. bugs 50869; 68343
+		
 		searchStr = arg0.toLocaleString().replace(/\"\"/g, "\"");
-		searchStr = RegExp.escape(searchStr);
+		// searchStr = RegExp.escape(searchStr);
 
 		if (arg2) {
 
@@ -950,12 +955,13 @@ function (window, undefined) {
 			}
 
 			str = str.substring(pos);
-			res = str.search(searchStr);
+			// res = str.search(searchStr);	// invalid regular expression JS error (FIND("A"&REPT("Z",32766),"A"&REPT("Z",32766),1))
+			res = str.indexOf(searchStr);
 			if (res >= 0) {
 				res += pos;
 			}
 		} else {
-			res = str.search(searchStr);
+			res = str.indexOf(searchStr);
 		}
 
 		if (res < 0) {
@@ -1189,7 +1195,7 @@ function (window, undefined) {
 	cIMPORTRANGE.prototype.argumentsMin = 2;
 	cIMPORTRANGE.prototype.argumentsMax = 2;
 	cIMPORTRANGE.prototype.isXLUDF = true;
-	cIMPORTRANGE.prototype.argumentsType = [argType.reference, argType.text];
+	cIMPORTRANGE.prototype.argumentsType = [argType.text, argType.text];
 	cIMPORTRANGE.prototype.Calculate = function (arg) {
 		//gs -> allow array(get first element), cRef, cRef3D, cName, cName3d
 		//not allow area/area3d
@@ -1245,6 +1251,30 @@ function (window, undefined) {
 			AscCommonExcel.importRangeLinksState.importRangeLinks[linkName].push(is3DRef);
 		}
 
+		let checkHyperlink = function (string) {
+			if (!string) {
+				return false;
+			}
+			if (typeof string !== 'string') {
+				return false;
+			}
+
+			// protocol check
+			let protocols = ['http://', 'https://', 'ftp://'];
+			let hasValidProtocol = false;
+
+			for (let i = 0; i < protocols.length; i++) {
+				if (string.indexOf(protocols[i]) === 0) {
+					hasValidProtocol = true;
+					break;
+				}
+			}
+
+			// domain check
+			let hasDomain = string.indexOf('.') !== -1 && string.charAt(0) !== '.';
+			return hasValidProtocol && hasDomain;
+		}
+
 		let api = window["Asc"]["editor"];
 		let wb = api && api.wbModel;
 		let eR = wb && wb.getExternalLinkByName(arg0.toString());
@@ -1273,6 +1303,9 @@ function (window, undefined) {
 								let externalCell = row.getCell(j);
 								if (externalCell) {
 									let cellValue = externalCell.getFormulaValue();
+									if (cellValue && cellValue.value && checkHyperlink(cellValue.value)) {
+										cellValue.hyperlink = cellValue.value;
+									}
 									ret.addElement(cellValue);
 								}
 							}
@@ -1880,51 +1913,51 @@ function (window, undefined) {
 	cREPT.prototype.argumentsMax = 2;
 	cREPT.prototype.argumentsType = [argType.text, argType.number];
 	cREPT.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], res = "";
-		if (arg0 instanceof cError) {
+		const MAX_STR_LENGTH = 32767;
+		let arg0 = arg[0], arg1 = arg[1], res = "";
+
+		if (arg0.type === cElementType.error) {
 			return arg0;
 		}
-		if (arg1 instanceof cError) {
+		if (arg1.type === cElementType.error) {
 			return arg1;
 		}
 
-		if (arg0 instanceof cArray && arg1 instanceof cArray) {
+		if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElementRowCol(0, 0);
-			arg1 = arg1.getElementRowCol(0, 0);
-		} else if (arg0 instanceof cArray) {
-			arg0 = arg0.getElementRowCol(0, 0);
-		} else if (arg1 instanceof cArray) {
+		}
+		if (arg1.type === cElementType.array) {
 			arg1 = arg1.getElementRowCol(0, 0);
 		}
 
-
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
 		}
 		arg0 = arg0.tocString();
-		if (arg0 instanceof cError) {
+		if (arg0.type === cElementType.error) {
 			return arg0;
 		}
 
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
-			arg1 = arg1.cross(arguments[1]).tocNumber();
-		} else if (arg1 instanceof cRef || arg1 instanceof cRef3D) {
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
+			arg1 = arg1.cross(arguments[1]);
+		} else if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
 			arg1 = arg1.getValue();
 		}
 
-		if (arg1 instanceof cError) {
+		arg1 = arg1.tocNumber();
+
+		if (arg1.type === cElementType.error) {
 			return arg1;
-		} else if (arg1 instanceof cString) {
+		}
+		
+		arg0 = arg0.getValue();
+		arg1 = arg1.getValue();
+
+		if ((arg1 < 0 || arg1 > MAX_STR_LENGTH) || ((arg0.length * arg1) > MAX_STR_LENGTH)) {
 			return new cError(cErrorType.wrong_value_type);
-		} else {
-			arg1 = arg1.tocNumber();
 		}
 
-		if (arg1.getValue() < 0) {
-			return new cError(cErrorType.wrong_value_type);
-		}
-
-		return new cString(arg0.getValue().repeat(arg1.getValue()));
+		return new cString(arg0.repeat(arg1));
 	};
 
 	/**
@@ -2250,66 +2283,75 @@ function (window, undefined) {
 	cSUBSTITUTE.prototype.argumentsMax = 4;
 	cSUBSTITUTE.prototype.argumentsType = [argType.text, argType.text, argType.text, argType.text];
 	cSUBSTITUTE.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2], arg3 = arg[3] ? arg[3] : new cNumber(0);
+		const MAX_SIGNED_INT = 2147483647;
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2], arg3 = arg[3] ? arg[3] : new cNumber(0);
 
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]).tocString();
-		} else if (arg0 instanceof cArray) {
+		} else if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElement(0).tocString();
 		}
 
 		arg0 = arg0.tocString();
 
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
 			arg1 = arg1.cross(arguments[1]).tocString();
-		} else if (arg1 instanceof cArray) {
+		} else if (arg1.type === cElementType.array) {
 			arg1 = arg1.getElement(0).tocString();
 		}
 
 		arg1 = arg1.tocString();
 
-		if (arg2 instanceof cArea || arg2 instanceof cArea3D) {
+		if (arg2.type === cElementType.cellsRange || arg2.type === cElementType.cellsRange3D) {
 			arg2 = arg2.cross(arguments[1]).tocString();
-		} else if (arg2 instanceof cArray) {
+		} else if (arg2.type === cElementType.array) {
 			arg2 = arg2.getElement(0).tocString();
 		}
 
 		arg2 = arg2.tocString();
 
-		if (arg3 instanceof cArea || arg3 instanceof cArea3D) {
-			arg3 = arg3.cross(arguments[1]).tocNumber();
-		} else if (arg3 instanceof cArray) {
-			arg3 = arg3.getElement(0).tocNumber();
+		if (arg3.type === cElementType.cellsRange || arg3.type === cElementType.cellsRange3D) {
+			arg3 = arg3.cross(arguments[1]).tocString();
+		} else if (arg3.type === cElementType.array) {
+			arg3 = arg3.getElement(0).tocString();
 		}
 
 		arg3 = arg3.tocNumber();
 
-		if (arg0 instanceof cError) {
+		if (arg0.type === cElementType.error) {
 			return arg0;
 		}
-		if (arg1 instanceof cError) {
+		if (arg1.type === cElementType.error) {
 			return arg1;
 		}
-		if (arg2 instanceof cError) {
+		if (arg2.type === cElementType.error) {
 			return arg2;
 		}
-		if (arg3 instanceof cError) {
+		if (arg3.type === cElementType.error) {
 			return arg3;
 		}
 
-		if (arg3.getValue() < 0) {
+		let string = arg0.getValue(), old_string = arg1.getValue(), new_string = arg2.getValue(),
+			occurence = Math.floor(arg3.getValue()), index = 0, res;
+
+		if (old_string === "") {
+			return arg0;
+		}
+		
+		if ((arg[3] && occurence <= 0) || occurence >= MAX_SIGNED_INT) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		var string = arg0.getValue(), old_string = arg1.getValue(), new_string = arg2.getValue(),
-			occurence = arg3.getValue(), index = 0, res;
+		if (occurence > string.length) {
+			return arg0;
+		}
+
 		res = string.replace(new RegExp(RegExp.escape(old_string), "g"), function (equal, p1, source) {
 			index++;
-			if (occurence == 0 || occurence > source.length) {
-				return new_string;
-			} else if (occurence == index) {
+			if (occurence === 0 || occurence > source.length || occurence === index) {
 				return new_string;
 			}
+
 			return equal;
 		});
 
@@ -2442,34 +2484,45 @@ function (window, undefined) {
 	cTEXTJOIN.prototype.argumentsType = [argType.text, argType.logical, argType.text, [argType.text]];
 	//TODO все, кроме 2 аргумента - массивы
 	cTEXTJOIN.prototype.arrayIndexes = {0: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 8: 1};
+	cTEXTJOIN.prototype.getArrayIndex = function (index) {
+		if (index === 1) {
+			return undefined;
+		}
+		return 1;
+	};
 	cTEXTJOIN.prototype.Calculate = function (arg) {
 
-		var argClone = [arg[0], arg[1]];
-		argClone[1] = arg[1].tocBool();
+		let argClone = [arg[0], arg[1]];
 
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
+		
+		let ignore_empty = argClone[1].tocBool();
+		if (ignore_empty.type !== cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		}
 
-		var ignore_empty = argClone[1].toBool();
-		var delimiter = argClone[0];
-		var delimiterIter = 0;
-		//разделитель может быть в виде массива, где используются все его элементы
-		var delimiterArr = this._getOneDimensionalArray(delimiter);
-		//если хотя бы один элемент ошибка, то возвращаем ошибку
-		if (delimiterArr instanceof cError) {
+		ignore_empty = ignore_empty.toBool();
+
+		let delimiter = argClone[0];
+		let delimiterIter = 0;
+		// the separator can be in the form of an array where all its elements are used
+		let delimiterArr = this._getOneDimensionalArray(delimiter);
+		// if at least one element is error, then return an error
+		if (delimiterArr && delimiterArr.type === cElementType.error) {
 			return delimiterArr;
 		}
 
-		var concatString = function (string1, string2) {
-			var res = string1;
+		const concatString = function (string1, string2) {
+			let res = string1;
 			if ("" === string2 && ignore_empty) {
 				return res;
 			}
-			var isStartStr = string1 === "";
-			//выбираем разделитель из массива по порядку
-			var delimiterStr = isStartStr ? "" : delimiterArr[delimiterIter];
+			let isStartStr = string1 === "";
+			// select the separator from the array in order
+			let delimiterStr = isStartStr ? "" : delimiterArr[delimiterIter];
 			if (undefined === delimiterStr) {
 				delimiterIter = 0;
 				delimiterStr = delimiterArr[delimiterIter];
@@ -2482,35 +2535,35 @@ function (window, undefined) {
 			return res;
 		};
 
-		var arg0 = new cString(""), argI;
-		for (var i = 2; i < arg.length; i++) {
+		let arg0 = new cString(""), argI;
+		for (let i = 2; i < arg.length; i++) {
 			argI = arg[i];
 
-			var type = argI.type;
+			let type = argI.type;
 			if (cElementType.cellsRange === type || cElementType.cellsRange3D === type || cElementType.array === type) {
-				//получаем одномерный массив
+				// get a one-dimensional array
 				argI = this._getOneDimensionalArray(argI);
 
-				//если хотя бы один элемент с ошибкой, возвращаем ошибку
-				if (argI instanceof cError) {
+				// if at least one element has an error, return an error
+				if (argI && argI.type === cElementType.error) {
 					return argI;
 				}
 
-				for (var n = 0; n < argI.length; n++) {
+				for (let n = 0; n < argI.length; n++) {
 					arg0 = new cString(concatString(arg0.toString(), argI[n].toLocaleString()));
 				}
 
 			} else if (cElementType.cell === type || cElementType.cell3D === type) {
 				argI = argI.getValue();
 
-				if (argI instanceof cError) {
+				if (argI && argI.type === cElementType.error) {
 					return argI;
 				}
 
 				arg0 = new cString(concatString(arg0.toString(), argI.toLocaleString()));
 			} else {
 
-				if (argI instanceof cError) {
+				if (argI && argI.type === cElementType.error) {
 					return argI;
 				}
 

@@ -64,9 +64,9 @@
 		//todo more checks
 		return this.ranges && this.ranges.length > 0;
 	};
-	CConditionalFormatting.prototype.initRules = function () {
+	CConditionalFormatting.prototype.initRules = function (ws) {
 		for (var i = 0; i < this.aRules.length; ++i) {
-			this.aRules[i].updateConditionalFormatting(this);
+			this.aRules[i].updateConditionalFormatting(this, ws);
 		}
 	};
 
@@ -151,6 +151,56 @@
 		}
 		return res;
 	};
+
+	CConditionalFormattingRule.prototype.combineRangesToSingle = function () {
+		let ranges = this.ranges;
+		if (!ranges || !ranges.length) {
+			return null;
+		}
+		if (ranges.length === 1) {
+			return ranges[0];
+		}
+
+		// Sort ranges by position
+		let sortedRanges = ranges.slice().sort(function(a, b) {
+			// First compare by rows
+			if (a.r1 !== b.r1) {
+				return a.r1 - b.r1;
+			}
+			// Then by columns if rows are equal
+			return a.c1 - b.c1;
+		});
+
+		let result = sortedRanges[0].clone();
+		let canCombine = true;
+
+		for (let i = 1; i < sortedRanges.length; i++) {
+			let current = sortedRanges[i];
+
+			// Check if ranges can be combined horizontally (same rows)
+			if (current.r1 === result.r1 && current.r2 === result.r2 && current.c1 <= result.c2 + 1) {
+				// Extend range horizontally
+				result.c2 = Math.max(result.c2, current.c2);
+				continue;
+			}
+
+			// Check if ranges can be combined vertically (same columns)
+			if (current.c1 === result.c1 && current.c2 === result.c2 && current.r1 <= result.r2 + 1) {
+				// Extend range vertically
+				result.r2 = Math.max(result.r2, current.r2);
+				continue;
+			}
+
+			// Cannot combine - ranges are not continuous
+			canCombine = false;
+			break;
+		}
+
+		if (canCombine) {
+			this.ranges = [result];
+		}
+	};
+
 	CConditionalFormattingRule.prototype.merge = function (oRule) {
 		if (this.aboveAverage === true) {
 			this.aboveAverage = oRule.aboveAverage;
@@ -588,6 +638,17 @@
 		}
 	};
 
+	CConditionalFormattingRule.prototype.updateFormulas = function (ws) {
+		if (this.aRuleElements && this.aRuleElements.length) {
+			for (let i = 0; i < this.aRuleElements.length; i++) {
+				let _formula = this.aRuleElements[i] && this.aRuleElements[i]._f && this.aRuleElements[i].getFormula && this.aRuleElements[i].getFormula(ws);
+				if (_formula && _formula.Formula && this.aRuleElements[i] && this.aRuleElements[i].Text && this.aRuleElements[i].Text !== _formula.Formula) {
+					this.aRuleElements[i].Text = this.aRuleElements[i].getFormulaStr();
+				}
+			}
+		}
+	};
+
 	CConditionalFormattingRule.prototype.getUnionRange = function (opt_ranges) {
 		var res = null;
 
@@ -695,19 +756,31 @@
 		var res;
 		if (null !== this.text) {
 			res = new AscCommonExcel.cString(this.text);
+		} else if (this.aRuleElements[0] && (this.type === Asc.ECfType.notContainsText || this.type === Asc.ECfType.containsText)) {
+			//ms see on bool result of first formula
+			//formula1/formula2: true/false -> true, false/true -> false, false/false -> false
+			res = this.aRuleElements[0].getValue(ws, opt_parent, opt_bbox, opt_offset, opt_returnRaw);
 		} else if (this.aRuleElements[1]) {
 			res = this.aRuleElements[1].getValue(ws, opt_parent, opt_bbox, opt_offset, opt_returnRaw);
 		}
 		return res;
 	};
-	CConditionalFormattingRule.prototype.getFormulaCellIs = function () {
-		return null === this.text && this.aRuleElements[1];
+	CConditionalFormattingRule.prototype.getFormulaCellIs = function (opt_getFirstRule) {
+		return null === this.text && this.aRuleElements[opt_getFirstRule ? 0 : 1];
 	};
 	CConditionalFormattingRule.prototype.cellIs = function (operator, cell, v1, v2) {
 		if (operator === AscCommonExcel.ECfOperator.Operator_beginsWith ||
 			operator === AscCommonExcel.ECfOperator.Operator_endsWith ||
 			operator === AscCommonExcel.ECfOperator.Operator_containsText ||
 			operator === AscCommonExcel.ECfOperator.Operator_notContains) {
+			//ms see on bool result of first formula
+			//formula1/formula2: true/false -> true, false/true -> false, false/false -> false
+			if (v1 && v1.tocBool) {
+				let boolVal = v1.tocBool();
+				if (boolVal && (boolVal.value === false || boolVal.value === true)){
+					return boolVal.value;
+				}
+			}
 			return this._cellIsText(operator, cell, v1);
 		} else {
 			return this._cellIsNumber(operator, cell, v1, v2);
@@ -854,13 +927,20 @@
 	CConditionalFormattingRule.prototype.hasStdDev = function () {
 		return null !== this.stdDev;
 	};
-	CConditionalFormattingRule.prototype.updateConditionalFormatting = function (cf) {
+	CConditionalFormattingRule.prototype.updateConditionalFormatting = function (cf, ws) {
 		var i;
 		this.pivot = cf.pivot;
 		if (cf.ranges) {
 			this.ranges = [];
 			for (i = 0; i < cf.ranges.length; ++i) {
 				this.ranges.push(cf.ranges[i].clone());
+			}
+		}
+		if (ws) {
+			if (this.aRuleElements) {
+				for (let i = 0 ; i < this.aRuleElements.length; i++) {
+					this.aRuleElements[i] && this.aRuleElements[i].init && this.aRuleElements[i].init(ws);
+				}
 			}
 		}
 	};
@@ -1040,14 +1120,12 @@
 			var isActive = true, sheet;
 			for (var i = 0; i < wb.aWorksheets.length; i++) {
 				if (i !== wb.nActive) {
-					wb.aWorksheets[i].aConditionalFormattingRules.forEach(function (item) {
-						if (item.id === t.id) {
-							isActive = false;
-						}
-					});
+					if (wb.aWorksheets[i].getCFRuleById(t.id)) {
+						isActive = false;
+					}
 					if (!isActive) {
 						sheet = wb.aWorksheets[i];
-						break;
+						return true;
 					}
 				}
 			}
@@ -1206,7 +1284,7 @@
 			//генерируем массив
 			this.aRuleElements = [];
 			this.aRuleElements[0] = new CFormulaCF();
-			this.aRuleElements[0].Text = this.getFormulaByType(val);
+			this.aRuleElements[0].Text = this.getFormulaByType(val, true);
 			this.aRuleElements[1] = new CFormulaCF();
 			this.aRuleElements[1].Text = val;
 			this.text = null;
@@ -1218,7 +1296,7 @@
 		}
 	};
 
-	CConditionalFormattingRule.prototype.getFormulaByType = function (val) {
+	CConditionalFormattingRule.prototype.getFormulaByType = function (val, isFormulaVal) {
 		var t = this;
 		var _generateTimePeriodFunction = function () {
 			switch (t.timePeriod) {
@@ -1257,7 +1335,7 @@
 
 		var res = null;
 		var range;
-		if (val !== null && val !== undefined) {
+		if (val !== null && val !== undefined && !isFormulaVal) {
 			val = addQuotes(val);
 		}
 		if (this.ranges && this.ranges[0]) {
@@ -2093,7 +2171,12 @@
 	CFormulaCF.prototype.init = function (ws, opt_parent) {
 		if (!this._f) {
 			this._f = new AscCommonExcel.parserFormula(this.Text, opt_parent, ws);
-			this._f.parse();
+			var parseResult = new AscCommonExcel.ParseResult([]);
+			parseResult.needCorrect = true;
+			this._f.parse(null, null, parseResult);
+			if (parseResult.needAssemble) {
+				this.Text = this._f.assemble(true);
+			}
 			if (opt_parent) {
 				//todo realize removeDependencies
 				this._f.buildDependencies();

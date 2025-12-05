@@ -76,24 +76,28 @@
 	};
 	CMobileDelegateEditorPresentation.prototype.GetZoomFit = function()
 	{
-		var HtmlPage = this.HtmlPage;
-		var w = HtmlPage.m_oEditor.HtmlElement.width;
+		let HtmlPage = this.HtmlPage;
+		let w = HtmlPage.m_oEditor.HtmlElement.width;
 		w /= AscCommon.AscBrowser.retinaPixelRatio;
 
-		var h = (((HtmlPage.m_oBody.AbsolutePosition.B - HtmlPage.m_oBody.AbsolutePosition.T) -
+		let h = (((HtmlPage.m_oBody.AbsolutePosition.B - HtmlPage.m_oBody.AbsolutePosition.T) -
 			(HtmlPage.m_oTopRuler.AbsolutePosition.B - HtmlPage.m_oTopRuler.AbsolutePosition.T)) * g_dKoef_mm_to_pix) >> 0;
 
-		var _pageWidth  = this.LogicDocument.GetWidthMM() * g_dKoef_mm_to_pix;
-		var _pageHeight = this.LogicDocument.GetHeightMM() * g_dKoef_mm_to_pix;
+		if(Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom) {
+			h -= (HtmlPage.m_oThumbnails.AbsolutePosition.B - HtmlPage.m_oThumbnails.AbsolutePosition.T)
+		}
 
-		var _hor_Zoom = 100;
+		let _pageWidth  = this.LogicDocument.GetWidthMM() * g_dKoef_mm_to_pix;
+		let _pageHeight = this.LogicDocument.GetHeightMM() * g_dKoef_mm_to_pix;
+
+		let _hor_Zoom = 100;
 		if (0 != _pageWidth)
 			_hor_Zoom = (100 * (w - 2 * HtmlPage.SlideDrawer.CONST_BORDER)) / _pageWidth;
-		var _ver_Zoom = 100;
+		let _ver_Zoom = 100;
 		if (0 != _pageHeight)
 			_ver_Zoom = (100 * (h - 2 * HtmlPage.SlideDrawer.CONST_BORDER)) / _pageHeight;
 
-		var _new_value = (Math.min(_hor_Zoom, _ver_Zoom) - 0.5) >> 0;
+		let _new_value = (Math.min(_hor_Zoom, _ver_Zoom) - 0.5) >> 0;
 
 		if (_new_value < 5)
 			_new_value = 5;
@@ -1023,7 +1027,7 @@
 
 		this.removeHandlersOnClick();
 
-		if (!this.Api.asc_IsFocus())
+		if (!this.Api.asc_IsFocus() && !this.Api.isMobileVersion)
 			this.Api.asc_enableKeyEvents(true);
 
 		var oWordControl = this.Api.WordControl;
@@ -1130,12 +1134,19 @@
 	};
 	CMobileDelegateThumbnails.prototype.GetScrollerSize = function()
 	{
-		return { W : 1, H : AscCommon.AscBrowser.convertToRetinaValue(this.Thumbnails.ScrollerHeight) };
+		const isHorizontalThumbnails = Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom;
+		return isHorizontalThumbnails
+			? { H : 1, W : AscCommon.AscBrowser.convertToRetinaValue(this.Thumbnails.ScrollerWidth) }
+			: { W : 1, H : AscCommon.AscBrowser.convertToRetinaValue(this.Thumbnails.ScrollerHeight) };
 	};
 	CMobileDelegateThumbnails.prototype.ScrollTo = function(_scroll)
 	{
-		if (this.HtmlPage.m_oScrollThumbApi)
-			this.HtmlPage.m_oScrollThumbApi.scrollToY(-_scroll.y * AscCommon.AscBrowser.retinaPixelRatio);
+		if (this.HtmlPage.m_oScrollThumbApi) {
+			const isHorizontalThumbnails = Asc.editor.getThumbnailsPosition() === AscCommon.thumbnailsPositionMap.bottom;
+			isHorizontalThumbnails
+				? this.HtmlPage.m_oScrollThumbApi.scrollToX(-_scroll.x * AscCommon.AscBrowser.retinaPixelRatio)
+				: this.HtmlPage.m_oScrollThumbApi.scrollToY(-_scroll.y * AscCommon.AscBrowser.retinaPixelRatio);
+		}
 	};
 	CMobileDelegateThumbnails.prototype.ScrollEnd = function(_scroll)
 	{
@@ -1168,18 +1179,15 @@
 	};
 	CMobileDelegateThumbnails.prototype.GetContextMenuPosition = function()
 	{
-		var aSelected    = this.Thumbnails.GetSelectedArray();
-		var nSlideIndex  = Math.min.apply(Math, aSelected);
-		var ConvertedPos = this.Thumbnails.GetThumbnailPagePosition(nSlideIndex);
-
-		var _ret = { X : 0, Y : 0, Mode : AscCommon.MobileTouchContextMenuType.Slide };
-		if (ConvertedPos)
-		{
-			_ret.X = ConvertedPos.X + (ConvertedPos.W >> 1);
-			_ret.Y = ConvertedPos.Y;
-		}
-
-		return _ret;
+		let selectedIndexes = this.Thumbnails.GetSelectedArray();
+		let menuPos = this.Thumbnails.GetThumbnailPagePosition(Math.min.apply(Math, selectedIndexes));
+		let pos = { X : 0, Y : 0, Mode : AscCommon.MobileTouchContextMenuType.Slide };
+		if (!menuPos)
+			return pos;
+		let thCtrlPos = this.HtmlPage.m_oThumbnails.Parent.AbsolutePosition;
+		pos.X = menuPos.X + ((thCtrlPos.L * g_dKoef_mm_to_pix) >> 0) + this.HtmlPage.X;
+		pos.Y = menuPos.Y + ((thCtrlPos.T * g_dKoef_mm_to_pix) >> 0) + this.HtmlPage.Y;
+		return pos;
 	};
 
 	/**
@@ -1365,6 +1373,7 @@
 
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                          		= window['AscCommon'] || {};
+	window['AscCommon'].CMobileDelegateEditorPresentation = CMobileDelegateEditorPresentation;
 	window['AscCommon'].CMobileTouchManager      		= CMobileTouchManager;
 	window['AscCommon'].CMobileTouchManagerThumbnails   = CMobileTouchManagerThumbnails;
 })(window);

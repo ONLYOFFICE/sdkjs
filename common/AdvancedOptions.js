@@ -92,7 +92,7 @@
 			this.delimiter = delimiter;
 			this.delimiterChar = delimiterChar;
 
-			this.textQualifier = null;
+			this.textQualifier = '"';
 
 			this.numberDecimalSeparator = null;
 			this.numberGroupSeparator = null;
@@ -105,6 +105,13 @@
 		asc_CTextOptions.prototype.asc_getDelimiterChar = function(){return this.delimiterChar;};
 		asc_CTextOptions.prototype.asc_setDelimiterChar = function(v){this.delimiterChar = v;};
 		asc_CTextOptions.prototype.asc_getCodePage = function(){return this.codePage;};
+		asc_CTextOptions.prototype.asc_getCodePageOrDefault = function() {
+			//c_oAscCodePageNone is invalid codepage for convertion. undefined codepage cause repeated dialog
+			if (this.codePage === AscCommon.c_oAscCodePageNone || this.codePage === undefined || this.codePage === null) {
+				return AscCommon.c_oAscCodePageUtf8;
+			}
+			return this.codePage;
+		};
 		asc_CTextOptions.prototype.asc_setCodePage = function(v){this.codePage = v;};
 		asc_CTextOptions.prototype.asc_getNumberDecimalSeparator = function () {
 			return this.numberDecimalSeparator !== null ? this.numberDecimalSeparator : AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator;
@@ -232,6 +239,7 @@
 		prot["asc_getDelimiterChar"] = prot.asc_getDelimiterChar;
 		prot["asc_setDelimiterChar"] = prot.asc_setDelimiterChar;
 		prot["asc_getCodePage"] = prot.asc_getCodePage;
+		prot["asc_getCodePageOrDefault"] = prot.asc_getCodePageOrDefault;
 		prot["asc_setCodePage"] = prot.asc_setCodePage;
 		prot["asc_setNumberDecimalSeparator"] = prot.asc_setNumberDecimalSeparator;
 		prot["asc_setNumberGroupSeparator"] = prot.asc_setNumberGroupSeparator;

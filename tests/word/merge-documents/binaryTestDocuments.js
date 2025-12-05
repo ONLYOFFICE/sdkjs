@@ -296,7 +296,7 @@ CMathBase.prototype.getTestObject = function (arrParentContent)
 		oRun.getTestObject(oContentObject.content);
 	});
 }
-CDocumentSectionsInfo.prototype.getTestObject = function (arrParentContent)
+AscWord.DocumentSections.prototype.getTestObject = function (arrParentContent)
 {
 	const arrHeaders = this.GetAllHdrFtrs();
 	for (let index = 0, count = arrHeaders.length; index < count; ++index)
@@ -388,12 +388,14 @@ AscCommonWord.CParagraphBookmark.prototype.getTestObject = function (arrParentCo
 }
 ParaRun.prototype.getTestObject = function (oParentContent)
 {
-	if (this.Content.length === 0) return;
-	const oReviewInfo = this.GetReviewInfo();
-	const oPrevAdded = oReviewInfo.GetPrevAdded();
-	let nMainReviewType = this.GetReviewType && this.GetReviewType();
-	let sMainUserName = oReviewInfo.GetUserName();
-	let nMainDateTime = oReviewInfo.GetDateTime();
+	if (!this.Content.length)
+		return;
+	
+	let oReviewInfo = this.GetReviewInfo();
+	const oPrevAdded = oReviewInfo && oReviewInfo.GetPrevAdded();
+	let nMainReviewType = this.GetReviewType();
+	let sMainUserName = oReviewInfo && oReviewInfo.GetUserName();
+	let nMainDateTime = oReviewInfo && oReviewInfo.GetDateTime();
 
 	let nAdditionalReviewType;
 	let sAdditionalUserName;
@@ -430,8 +432,9 @@ ParaRun.prototype.getTestObject = function (oParentContent)
 	});
 };
 
-window['AscCommonWord']['CDocumentComparison'].prototype.setReviewInfo = function (oReviewInfo, sCustomReviewUserName, nCustomReviewDate)
+window['AscCommonWord']['CDocumentComparison'].prototype.getReviewInfo = function (sCustomReviewUserName, nCustomReviewDate)
 {
+	let oReviewInfo = new AscWord.ReviewInfo();
 	oReviewInfo.Editor = this.api;
 	oReviewInfo.UserId = "";
 	oReviewInfo.MoveType = Asc.c_oAscRevisionsMove.NoMove;
@@ -443,6 +446,7 @@ window['AscCommonWord']['CDocumentComparison'].prototype.setReviewInfo = functio
 	{
 		oReviewInfo.DateTime = nCustomReviewDate;
 	}
+	return oReviewInfo;
 };
 
 let GLOBAL_DOC_STYLES = null;
@@ -681,7 +685,7 @@ function createShapeInfo()
 function createReviewInfoFromOptions(oOptions)
 {
 	oOptions = oOptions || {};
-	const oReviewInfo = new CReviewInfo();
+	const oReviewInfo = new AscWord.ReviewInfo();
 
 	oReviewInfo.Editor = mockEditor;
 	oReviewInfo.UserId = "";

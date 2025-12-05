@@ -35,14 +35,25 @@ const path = require("path");
 const allTests = [
 	'cell/spreadsheet-calculation/FormulaTests.html',
 	'cell/spreadsheet-calculation/PivotTests.html',
-	'cell/spreadsheet-calculation/CopyPasteTests.html',
-	'cell/spreadsheet-calculation/AutoFilterTests.html',
+	'cell/spreadsheet-calculation/copy-paste-tests.html',
+	'cell/spreadsheet-calculation/SheetStructureTests.html',
+	'cell/spreadsheet-calculation/autoFilterTests.html',
+	'cell/spreadsheet-calculation/UserProtectedRangesTest.html',
+	'cell/spreadsheet-calculation/FormulaTrace.html',
+	'cell/spreadsheet-calculation/whatIfAnalysisTests.html',
+	'cell/spreadsheet-calculation/NumFormatParse.html',
+	'cell/spreadsheet-calculation/DataValidationTests.html',
+	'cell/spreadsheet-calculation/conditionalFormattingTests.html',
+	'cell/spreadsheet-calculation/ExternalReference.html',
+	'cell/spreadsheet-calculation/SheetMemoryTest.html',
+
 	'word/unit-tests/paragraphContentPos.html',
 	'word/unit-tests/deleted-text-recovery.html',
 	'word/content-control/block-level/cursorAndSelection.html',
 	'word/content-control/inline-level/checkbox.html',
 	'word/content-control/inline-level/cursorAndSelection.html',
 	'word/content-control/inline-level/date-time.html',
+	'word/custom-xml/custom-xml.html',
 	'word/document-calculation/floating-position/drawing.html',
 	'word/document-calculation/paragraph.html',
 	'word/document-calculation/table/correctBadTable.html',
@@ -69,13 +80,18 @@ const allTests = [
 	'word/revisions/paragraph.html',
 	'word/merge-documents/mergeDocuments.html',
 	'word/math-autocorrection/math-autocorrection.html',
+	'word/math-ml/math-ml.html',
 	'word/change-case/change-case.html',
+	'word/js-api/js-api.html',
+	'word/js-api/js-api-forms.html',
 
 	'cell/shortcuts/shortcuts.html',
 	'slide/shortcuts/shortcuts.html',
 	'word/shortcuts/shortcuts.html',
 
-	'oform/xml/oformXml.html'
+	//related ooxml tests
+	'oform/xml/oformXml.html',
+	'word/custom-xml/custom-xml-ooxml.html',
 ];
 
 const maxTestsAtOnce = require('events').defaultMaxListeners;

@@ -42,7 +42,6 @@
 		var c_oAscSizeRelFromH = AscCommon.c_oAscSizeRelFromH;
 		var c_oAscSizeRelFromV = AscCommon.c_oAscSizeRelFromV;
 		var isRealObject = AscCommon.isRealObject;
-		var History = AscCommon.History;
 		var global_MatrixTransformer = AscCommon.global_MatrixTransformer;
 
 		var CShape = AscFormat.CShape;
@@ -73,6 +72,10 @@
 			return oClass.spTree;
 		};
 
+		/**
+		 * @extends CGraphicObjectBase
+		 * @constructor
+		 */
 		function CGroupShape() {
 			AscFormat.CGraphicObjectBase.call(this);
 			this.nvGrpSpPr = null;
@@ -218,12 +221,12 @@
 		};
 
 		CGroupShape.prototype.setNvGrpSpPr = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GroupShapeSetNvGrpSpPr, this.nvGrpSpPr, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GroupShapeSetNvGrpSpPr, this.nvGrpSpPr, pr));
 			this.nvGrpSpPr = pr;
 		};
 
 		CGroupShape.prototype.setSpPr = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GroupShapeSetSpPr, this.spPr, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GroupShapeSetSpPr, this.spPr, pr));
 			this.spPr = pr;
 			if (pr) {
 				pr.setParent(this);
@@ -235,7 +238,7 @@
 		CGroupShape.prototype.addToSpTree = function (pos, item) {
 			if (!AscFormat.isRealNumber(pos))
 				pos = this.spTree.length;
-			History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_GroupShapeAddToSpTree, pos, [item], true));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_GroupShapeAddToSpTree, pos, [item], true));
 			this.handleUpdateSpTree();
 			if (item.group !== this) {
 				item.setGroup(this);
@@ -244,12 +247,12 @@
 		};
 
 		CGroupShape.prototype.setParent = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GroupShapeSetParent, this.parent, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GroupShapeSetParent, this.parent, pr));
 			this.parent = pr;
 		};
 
 		CGroupShape.prototype.setGroup = function (group) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GroupShapeSetGroup, this.group, group));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GroupShapeSetGroup, this.group, group));
 			this.group = group;
 		};
 
@@ -272,7 +275,7 @@
 
 		CGroupShape.prototype.removeFromSpTreeByPos = function (pos) {
 			var aSplicedShape = this.spTree.splice(pos, 1);
-			History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_GroupShapeRemoveFromSpTree, pos, aSplicedShape, false));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_GroupShapeRemoveFromSpTree, pos, aSplicedShape, false));
 			this.handleUpdateSpTree();
 			return aSplicedShape[0];
 		};
@@ -488,6 +491,54 @@
 					object.selected = false;
 					this.selectedObjects.splice(i, 1);
 					return;
+				}
+			}
+		};
+		CGroupShape.prototype.resetInternalSelectionObject = function (oSelectedObject) {
+			if (this.selection.textSelection === oSelectedObject) {
+				if (this.selection.textSelection.getObjectType() === AscDFH.historyitem_type_GraphicFrame) {
+					if (this.selection.textSelection.graphicObject) {
+						this.selection.textSelection.graphicObject.RemoveSelection();
+					}
+				} else {
+					const oContent = this.selection.textSelection.getDocContent();
+					oContent && oContent.RemoveSelection();
+				}
+			}
+			if (this.selection.chartSelection === oSelectedObject) {
+				this.selection.chartSelection.resetSelection();
+				this.selection.chartSelection = null;
+			}
+		};
+		CGroupShape.prototype.deselectInternal = function(oController) {
+			const oMainGroup = this.getMainGroup();
+			if (oMainGroup.selectedObjects.length) {
+				const oSelectedObjects = {};
+				for (let i = oMainGroup.selectedObjects.length - 1; i >= 0; i -= 1) {
+					const oSelectedObject = oMainGroup.selectedObjects[i];
+					if (oSelectedObject.bDeleted) {
+						oMainGroup.deselectObject(oSelectedObject);
+						oMainGroup.resetInternalSelectionObject(oSelectedObject);
+					} else {
+						oSelectedObjects[oSelectedObject.Get_Id()] = oSelectedObject;
+					}
+				}
+
+				const arrGroups = [this];
+				while (arrGroups.length) {
+					const oGroup = arrGroups.pop();
+					for (let i = 0; i < oGroup.spTree.length; i += 1) {
+						const oShape = oGroup.spTree[i];
+						if (oShape.isGroup()) {
+							arrGroups.push(oShape);
+						} else if (oSelectedObjects[oShape.Get_Id()]) {
+							oMainGroup.deselectObject(oShape);
+							oMainGroup.resetInternalSelectionObject(oShape);
+						}
+					}
+				}
+				if (!oMainGroup.selectedObjects.length) {
+					oController.selection.groupSelection = null;
 				}
 			}
 		};
@@ -1372,7 +1423,7 @@
 		};
 
 		CGroupShape.prototype.setNvSpPr = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GroupShapeSetNvGrpSpPr, this.nvGrpSpPr, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GroupShapeSetNvGrpSpPr, this.nvGrpSpPr, pr));
 			this.nvGrpSpPr = pr;
 		};
 
@@ -1441,7 +1492,12 @@
 		CGroupShape.prototype.Refresh_RecalcData = function (oData) {
 			if (oData) {
 				switch (oData.Type) {
-
+					case AscDFH.historyitem_AutoShapes_AddToDrawingObjects: {
+						if (!this.bDeleted) {
+							this.addToRecalculate();
+						}
+						break;
+					}
 					case AscDFH.historyitem_ShapeSetBDeleted: {
 						if (!this.bDeleted) {
 							this.addToRecalculate();
@@ -1715,6 +1771,31 @@
 			for (let i = 0; i < this.spTree.length; i += 1) {
 				this.spTree[i].generateSmartArtDrawingPart();
 			}
+		};
+		CGroupShape.prototype.isHaveOnlyInks = function () {
+			if (!this.spTree.length) {
+				return false;
+			}
+			for (let i = 0; i < this.spTree.length; i++) {
+				const oDrawing = this.spTree[i];
+				if (!(oDrawing.isInk() || oDrawing.isHaveOnlyInks())) {
+					return false;
+				}
+			}
+			return true;
+		};
+
+		CGroupShape.prototype.getAllInks = function (arrInks) {
+			arrInks = arrInks || [];
+			for (let i = this.spTree.length - 1; i >= 0; i -= 1) {
+				const oDrawing = this.spTree[i];
+				if (oDrawing.isInk() || oDrawing.isHaveOnlyInks()) {
+					arrInks.push(oDrawing);
+				} else {
+					oDrawing.getAllInks(arrInks);
+				}
+			}
+			return arrInks;
 		};
 
 		//--------------------------------------------------------export----------------------------------------------------

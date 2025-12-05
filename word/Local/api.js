@@ -145,10 +145,10 @@ Asc['asc_docs_api'].prototype._saveLocalCheck = function()
 };
 
 AscCommon.baseEditorsApi.prototype.asc_setCurrentPasswordBase = AscCommon.baseEditorsApi.prototype.asc_setCurrentPassword;
-AscCommon.baseEditorsApi.prototype.asc_setCurrentPassword = AscCommon.baseEditorsApi.prototype["asc_setCurrentPassword"] = function(password)
+AscCommon.baseEditorsApi.prototype.asc_setCurrentPassword = AscCommon.baseEditorsApi.prototype["asc_setCurrentPassword"] = function(password, isOnOpen)
 {
 	this.currentPasswordOld = this.currentPassword;
-	return this.asc_setCurrentPasswordBase(password);
+	return this.asc_setCurrentPasswordBase(password, isOnOpen);
 };
 
 var isSupportSaveInPDF = true; // Since 8.2.0
@@ -205,7 +205,8 @@ Asc['asc_docs_api'].prototype["getAdditionalSaveParams"] = function()
 {
 	return {
 		"documentLayout" : {
-			"openedAt" : this.openedAt
+			"openedAt" : this.openedAt,
+			"headingsColor" : this.headingsColor
 		},
 		"locale" : this.asc_getLocale(),
 		"translate" : AscCommon.translateManager.mapTranslate
@@ -331,6 +332,12 @@ Asc['asc_docs_api'].prototype.asc_isOffline = function()
 {
 	return true;
 };
+
+Asc['asc_docs_api'].prototype.asc_changeExternalReference = function(eR)
+{
+	this._changeDesktopChartExternalReference(eR);
+};
+Asc['asc_docs_api'].prototype["asc_changeExternalReference"] = Asc['asc_docs_api'].prototype.asc_changeExternalReference;
 
 
 Asc['asc_docs_api'].prototype["asc_addImage"] = Asc['asc_docs_api'].prototype.asc_addImage;

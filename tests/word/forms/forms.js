@@ -600,11 +600,11 @@ $(function () {
 		let radio2_2 = addRadioButton("Group2", "Choice2");
 		
 		assert.deepEqual(formsManager.GetAllFormsData(), [
-			{"key" : "TextForm1", "value" : "123", "tag" : "", "type" : "text"},
-			{"key" : "TextForm2", "value" : "222", "tag" : "", "type" : "text"},
-			{"key" : "TextForm3", "value" : "333", "tag" : "", "type" : "text"},
-			{"key" : "Group1", "value" : "", "tag" : "", "type" : "radio"},
-			{"key" : "Group2", "value" : "", "tag" : "", "type" : "radio"}
+			{"key" : "TextForm1", "value" : "123", "tag" : "", "type" : "text", "role" : "", "roleColor" : undefined},
+			{"key" : "TextForm2", "value" : "222", "tag" : "", "type" : "text", "role" : "", "roleColor" : undefined},
+			{"key" : "TextForm3", "value" : "333", "tag" : "", "type" : "text", "role" : "", "roleColor" : undefined},
+			{"key" : "Group1", "value" : "", "tag" : "", "type" : "radio", "role" : "", "roleColor" : undefined},
+			{"key" : "Group2", "value" : "", "tag" : "", "type" : "radio", "role" : "", "roleColor" : undefined}
 		], "Add text forms and check GetAllFormsData");
 		
 		AscTest.SetFillingFormMode();
@@ -627,11 +627,11 @@ $(function () {
 		assert.strictEqual(radio2_2.IsCheckBoxChecked(), true, "Check radio button 2. Group2");
 		
 		assert.deepEqual(formsManager.GetAllFormsData(), [
-			{"key" : "TextForm1", "value" : "text1", "tag" : "", "type" : "text"},
-			{"key" : "TextForm2", "value" : "another text", "tag" : "", "type" : "text"},
-			{"key" : "TextForm3", "value" : "333", "tag" : "", "type" : "text"},
-			{"key" : "Group1", "value" : "Last", "tag" : "", "type" : "radio"},
-			{"key" : "Group2", "value" : "Choice2", "tag" : "", "type" : "radio"}
+			{"key" : "TextForm1", "value" : "text1", "tag" : "", "type" : "text", "role" : "", "roleColor" : undefined},
+			{"key" : "TextForm2", "value" : "another text", "tag" : "", "type" : "text", "role" : "", "roleColor" : undefined},
+			{"key" : "TextForm3", "value" : "333", "tag" : "", "type" : "text", "role" : "", "roleColor" : undefined},
+			{"key" : "Group1", "value" : "Last", "tag" : "", "type" : "radio", "role" : "", "roleColor" : undefined},
+			{"key" : "Group2", "value" : "Choice2", "tag" : "", "type" : "radio", "role" : "", "roleColor" : undefined}
 		], "Add text forms and check GetAllFormsData");
 	});
 

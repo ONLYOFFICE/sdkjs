@@ -44,7 +44,7 @@
 	AscCommon.baseEditorsApi.prototype.onEndLoadFile2 = AscCommon.baseEditorsApi.prototype.onEndLoadFile;
 	AscCommon.baseEditorsApi.prototype.onEndLoadFile = function(result)
 	{
-		if (this.isFrameEditor())
+		if (this.isFrameEditor() || !window["AscDesktopEditor"])
 		{
 			return this.onEndLoadFile2(result);
 		}
@@ -102,6 +102,24 @@
 	AscCommon.baseEditorsApi.prototype["endExternalConvertation"] = function()
 	{
 		this.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
+	};
+
+	AscCommon.baseEditorsApi.prototype._changeDesktopChartExternalReference = function (eR) {
+		const chartCollector = this.externalChartCollector;
+		if (!chartCollector) {
+			return;
+		}
+		window["AscDesktopEditor"]["OpenFilenameDialog"]("cell", false, function(_file) {
+			let file = _file;
+			if (Array.isArray(file))
+				file = file[0];
+			if (!file)
+				return;
+
+			let obj = {};
+			obj["path"] = file;
+			chartCollector.changeExternalReference(eR, obj);
+		});
 	};
 })(window);
 
@@ -212,67 +230,92 @@ window["DesktopOfflineAppDocumentEndLoad"] = function(_url, _data, _len)
 /////////////////////////////////////////////////////////
 //////////////       IMAGES      ////////////////////////
 /////////////////////////////////////////////////////////
-var prot = AscCommon.DocumentUrls.prototype;
-prot.mediaPrefix = 'media/';
-prot.init = function(urls) {
-};
-prot.getUrls = function() {
-	return this.urls;
-};
-prot.addUrls = function(urls){
-};
-prot.addImageUrl = function(strPath, url){
-};
-prot.getImageUrl = function(strPath){
-	if (0 === strPath.indexOf('theme'))
-		return null;
 
-	if (window.editor && window.editor.ThemeLoader && window.editor.ThemeLoader.ThemesUrl != "" && strPath.indexOf(window.editor.ThemeLoader.ThemesUrl) == 0)
-		return null;
+let isOverrideDocumentUrls = true;//window['Asc']['VisioEditorApi'] ? false : true;
 
-	return this.documentUrl + "/media/" + strPath;
-};
-prot.getImageLocal = function(_url){
-	let url = _url.replaceAll("%20", " ");
-	var _first = this.documentUrl + "/media/";
-	if (0 === url.indexOf(_first))
-		return url.substring(_first.length);
-
-	if (window.editor && window.editor.ThemeLoader && 0 === url.indexOf(editor.ThemeLoader.ThemesUrlAbs)) {
-		return url.substring(editor.ThemeLoader.ThemesUrlAbs.length);
-	}
-
-	return null;
-};
-prot.imagePath2Local = function(imageLocal)
+function getCorrectImageUrl(path)
 {
-	if (imageLocal && this.mediaPrefix === imageLocal.substring(0, this.mediaPrefix.length))
-		imageLocal = imageLocal.substring(this.mediaPrefix.length);
-	return imageLocal;
-};
-prot.getUrl = function(strPath){
-	if (0 === strPath.indexOf('theme'))
-		return null;
+	if (!window['Asc']['VisioEditorApi'] || !window["AscDesktopEditor"])
+		return path;
 
-	if (window.editor && window.editor.ThemeLoader && window.editor.ThemeLoader.ThemesUrl != "" && strPath.indexOf(window.editor.ThemeLoader.ThemesUrl) == 0)
-		return null;
+	return window["AscDesktopEditor"]["LocalFileGetImageUrlCorrect"](path);
+}
 
-	if (strPath == "Editor.xlsx")
+if (isOverrideDocumentUrls)
+{
+	var prot = AscCommon.DocumentUrls.prototype;
+	prot.mediaPrefix = 'media/';
+	prot.init = function(urls)
 	{
-		var test = this.documentUrl + "/" + strPath;
-		if (window["AscDesktopEditor"]["IsLocalFileExist"](test))
-			return test;
-		return undefined;
-    }
+	};
+	prot.getUrls = function()
+	{
+		return this.urls;
+	};
+	prot.addUrls = function(urls)
+	{
+	};
+	prot.addImageUrl = function(strPath, url)
+	{
+	};
+	prot.getImageUrl = function(strPath)
+	{
+		if (0 === strPath.indexOf('theme'))
+			return null;
 
-	return this.documentUrl + "/media/" + strPath;
-};
-prot.getLocal = function(url){
-	return this.getImageLocal(url);
-};
-prot.isThemeUrl = function(sUrl){
-	return sUrl && (0 === sUrl.indexOf('theme'));
-};
+		if (window.editor && window.editor.ThemeLoader && window.editor.ThemeLoader.ThemesUrl != "" && strPath.indexOf(window.editor.ThemeLoader.ThemesUrl) == 0)
+			return null;
+
+		let url = this.documentUrl + "/media/" + strPath;
+		return getCorrectImageUrl(url);
+	};
+	prot.getImageLocal = function(_url)
+	{
+		let url = _url ? _url.replaceAll("%20", " ") : "";
+		var _first = this.documentUrl + "/media/";
+		if (0 === url.indexOf(_first))
+			return url.substring(_first.length);
+
+		if (window.editor && window.editor.ThemeLoader && 0 === url.indexOf(editor.ThemeLoader.ThemesUrlAbs))
+		{
+			return url.substring(editor.ThemeLoader.ThemesUrlAbs.length);
+		}
+
+		return null;
+	};
+	prot.imagePath2Local = function(imageLocal)
+	{
+		if (imageLocal && this.mediaPrefix === imageLocal.substring(0, this.mediaPrefix.length))
+			imageLocal = imageLocal.substring(this.mediaPrefix.length);
+		return imageLocal;
+	};
+	prot.getUrl = function(strPath)
+	{
+		if (0 === strPath.indexOf('theme'))
+			return null;
+
+		if (window.editor && window.editor.ThemeLoader && window.editor.ThemeLoader.ThemesUrl != "" && strPath.indexOf(window.editor.ThemeLoader.ThemesUrl) == 0)
+			return null;
+
+		if (strPath == "Editor.xlsx")
+		{
+			var test = this.documentUrl + "/" + strPath;
+			if (window["AscDesktopEditor"]["IsLocalFileExist"](test))
+				return test;
+			return undefined;
+		}
+
+		return this.documentUrl + "/media/" + strPath;
+	};
+	prot.getLocal = function(url)
+	{
+		return this.getImageLocal(url);
+	};
+	prot.isThemeUrl = function(sUrl)
+	{
+		return sUrl && (0 === sUrl.indexOf('theme'));
+	};
+}
 
 AscCommon.sendImgUrls = function(api, images, callback)
 {
@@ -400,6 +443,11 @@ window["UpdateInstallPlugins"] = function()
 			//_pluginsCur["pluginsData"][i]["isSystemInstall"] = (k == 0) ? true : false;
 			_pluginsCur["pluginsData"][i]["baseUrl"] = _pluginsCur["url"] + _pluginsCur["pluginsData"][i]["guid"].substring(4) + "/";
 			_plugins["pluginsData"].push(_pluginsCur["pluginsData"][i]);
+
+			if (_pluginsCur["pluginsData"][i]["onlyofficeScheme"])
+			{
+				_pluginsCur["pluginsData"][i]["baseUrl"] = "onlyoffice://plugin/" + _pluginsCur["pluginsData"][i]["baseUrl"];
+			}
 		}
 	}
 
@@ -407,6 +455,13 @@ window["UpdateInstallPlugins"] = function()
 	{
 		var _plugin = _plugins["pluginsData"][i];
 		//_plugin["baseUrl"] = _plugins["url"] + _plugin["guid"].substring(4) + "/";
+
+		if (!_plugin["variations"])
+		{
+			_plugins["pluginsData"].splice(i, 1);
+			--i;
+			continue;
+		}
 
 		var isSystem = false;
 		for (var j = 0; j < _plugin["variations"].length; j++)
@@ -559,34 +614,6 @@ window["DesktopOfflineAppDocumentSignatures"] = function(_json)
 		_images_loading.push(_add_sign.image);
 	}
 
-	if (!window.FirstSignaturesCall)
-	{
-		_editor.asc_registerCallback("asc_onAddSignature", function (guid)
-		{
-
-			var _api = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
-			_api.sendEvent("asc_onUpdateSignatures", _api.asc_getSignatures(), _api.asc_getRequestSignatures());
-
-		});
-		_editor.asc_registerCallback("asc_onRemoveSignature", function (guid)
-		{
-
-			var _api = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
-			_api.sendEvent("asc_onUpdateSignatures", _api.asc_getSignatures(), _api.asc_getRequestSignatures());
-
-		});
-		_editor.asc_registerCallback("asc_onUpdateSignatures", function (signatures, requested)
-		{
-			var _api = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
-
-			if (0 === signatures.length)
-				_api.asc_removeRestriction(Asc.c_oAscRestrictionType.OnlySignatures);
-			else
-				_api.asc_addRestriction(Asc.c_oAscRestrictionType.OnlySignatures);
-		});
-	}
-	window.FirstSignaturesCall = true;
-
 	_editor.ImageLoader.LoadImagesWithCallback(_images_loading, function() {
 		if (this.WordControl)
 			this.WordControl.OnRePaintAttack();
@@ -695,7 +722,7 @@ function getBinaryArray(_data, _len)
 }
 
 // encryption ----------------------------------
-var _proto = Asc['asc_docs_api'] ? Asc['asc_docs_api'] : Asc['spreadsheet_api'];
+var _proto = Asc['asc_docs_api'] || Asc['spreadsheet_api'] || Asc['VisioEditorApi'];
 _proto.prototype["pluginMethod_OnEncryption"] = function(obj)
 {
 	var _editor = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;

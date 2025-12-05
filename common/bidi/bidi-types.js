@@ -89,15 +89,24 @@
 		LRI : FLAG.NEUTRAL | FLAG.ISOLATE,
 		RLI : FLAG.NEUTRAL | FLAG.ISOLATE | FLAG.RTL,
 		FSI : FLAG.NEUTRAL | FLAG.ISOLATE | FLAG.FS,
-		PDI : FLAG.NEUTRAL | FLAG.WEAK | FLAG.ISOLATE
+		PDI : FLAG.NEUTRAL | FLAG.WEAK | FLAG.ISOLATE,
+		PM  : FLAG.STRONG // Paragraph end mark or strong with main direction of the text (tab/break)
 	};
 	
 	const DIRECTION = {
 		L : TYPE.L,
 		R : TYPE.R
 	};
+	
+	const DIRECTION_FLAG = {
+		None  : 0x00,
+		LTR   : 0x01,
+		RTL   : 0x02,
+		Other : 0x04
+	};
 	//--------------------------------------------------------export----------------------------------------------------
-	AscBidi.FLAG      = FLAG;
-	AscBidi.TYPE      = TYPE;
-	AscBidi.DIRECTION = DIRECTION;
+	AscBidi.FLAG           = FLAG;
+	AscBidi.TYPE           = TYPE;
+	AscBidi.DIRECTION      = DIRECTION;
+	AscBidi.DIRECTION_FLAG = DIRECTION_FLAG;
 })();

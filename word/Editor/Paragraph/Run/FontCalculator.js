@@ -44,6 +44,7 @@
 		this.Italic   = null;
 		this.FontSize = null;
 		this.FontName = null;
+		this.Lang     = null;
 
 		// Для случая, когда в выделение попали только элементы со слотом AscWord.fontslot_Unknown
 		// (например, только знак конца параграфа)
@@ -51,6 +52,7 @@
 		this.ItalicUnkown    = null;
 		this.FontSizeUnknown = null;
 		this.FontNameUnknown = null;
+		this.LangUnknown     = null;
 	}
 	CFontCalculator.prototype.Calculate = function(oDocContent, oTextPr)
 	{
@@ -69,6 +71,7 @@
 		oTextPr.Italic     = this.Italic;
 		oTextPr.FontSize   = this.FontSize;
 		oTextPr.FontFamily = {Name : this.FontName, Index : -1};
+		oTextPr.Lang.Val   = this.Lang;
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	CFontCalculator.prototype.Reset = function()
@@ -77,11 +80,13 @@
 		this.Italic   = null;
 		this.FontSize = null;
 		this.FontName = null;
+		this.Lang     = null;
 
 		this.BoldUnknown     = null;
 		this.ItalicUnkown    = null;
 		this.FontSizeUnknown = null;
 		this.FontNameUnknown = null;
+		this.LangUnknown     = null;
 	};
 	CFontCalculator.prototype.HandleNumberingSelection = function(docContent)
 	{
@@ -95,6 +100,7 @@
 		this.Italic   = textPr.Italic;
 		this.FontSize = textPr.FontSize;
 		this.FontName = textPr.RFonts.Ascii ? textPr.RFonts.Ascii.Name : null;
+		this.Lang     = textPr.Lang.Val;
 	};
 	CFontCalculator.prototype.HandleRegularSelection = function(oDocContent)
 	{
@@ -106,49 +112,62 @@
 
 			if (oRun.IsEmpty())
 				return false;
-
-			let nFontSlot = oRun.GetFontSlotInRange(nStartPos, nEndPos);
-			if (AscWord.fontslot_None === nFontSlot)
-				return false;
-
-			// TODO: Пока оставим эту проверку здесь. Проблема в том, что настройки в последнем ране не совпадают
-			//       с настройками конца параграфа (если это исправится, тогда здесь можно просто оставить
-			//       простое получение компилированных настроек рана)
+			
 			let oTextPr;
 			if (oRun.IsParaEndRun() && oRun.GetParagraph())
 				oTextPr = oRun.GetParagraph().GetParaEndCompiledPr();
 			else
 				oTextPr = oRun.Get_CompiledPr(false);
-
+			
 			let oParagraph = oRun.GetParagraph();
 			if (oParagraph)
 				oTextPr.ReplaceThemeFonts(oParagraph.GetTheme().themeElements.fontScheme);
-
-			nFontSlot = oThis.CheckUnknownFontSlot(nFontSlot, oTextPr);
-
-			if (nFontSlot & AscWord.fontslot_CS)
+			
+			let nFontSlot = oRun.GetFontSlotInRange(nStartPos, nEndPos);
+			if (AscWord.fontslot_None !== nFontSlot)
 			{
-				oThis.CheckBold(oTextPr.BoldCS);
-				oThis.CheckItalic(oTextPr.ItalicCS);
-				oThis.CheckFontSize(oTextPr.FontSizeCS);
-				oThis.CheckFontName(oTextPr.RFonts.CS.Name);
+				// TODO: Пока оставим эту проверку здесь. Проблема в том, что настройки в последнем ране не совпадают
+				//       с настройками конца параграфа (если это исправится, тогда здесь можно просто оставить
+				//       простое получение компилированных настроек рана)
+				nFontSlot = oThis.CheckUnknownFontSlot(nFontSlot, oTextPr);
+				
+				if (nFontSlot & AscWord.fontslot_CS)
+				{
+					oThis.CheckBold(oTextPr.BoldCS);
+					oThis.CheckItalic(oTextPr.ItalicCS);
+					oThis.CheckFontSize(oTextPr.FontSizeCS);
+					oThis.CheckFontName(oTextPr.RFonts.CS.Name);
+				}
+				
+				if (nFontSlot !== AscWord.fontslot_CS && nFontSlot !== AscWord.fontslot_None)
+				{
+					oThis.CheckBold(oTextPr.Bold);
+					oThis.CheckItalic(oTextPr.Italic);
+					oThis.CheckFontSize(oTextPr.FontSize);
+				}
+				
+				if (nFontSlot & AscWord.fontslot_ASCII)
+					oThis.CheckFontName(oTextPr.RFonts.Ascii.Name);
+				
+				if (nFontSlot & AscWord.fontslot_HAnsi)
+					oThis.CheckFontName(oTextPr.RFonts.HAnsi.Name);
+				
+				if (nFontSlot & AscWord.fontslot_EastAsia)
+					oThis.CheckFontName(oTextPr.RFonts.EastAsia.Name);
 			}
-
-			if (nFontSlot !== AscWord.fontslot_CS && nFontSlot !== AscWord.fontslot_None)
+			
+			let direction = oRun.GetDirectionFlagInRange(nStartPos, nEndPos);
+			if (AscBidi.DIRECTION_FLAG.None !== direction)
 			{
-				oThis.CheckBold(oTextPr.Bold);
-				oThis.CheckItalic(oTextPr.Italic);
-				oThis.CheckFontSize(oTextPr.FontSize);
+				if (direction & AscBidi.DIRECTION_FLAG.Other)
+					oThis.CheckLangUnknown(oParagraph && oParagraph.isRtlDirection() ? oTextPr.Lang.Bidi : oTextPr.Lang.Val);
+				
+				if (direction & AscBidi.DIRECTION_FLAG.LTR)
+					oThis.CheckLang(oTextPr.Lang.Val);
+				
+				if (direction & AscBidi.DIRECTION_FLAG.RTL)
+					oThis.CheckLang(oTextPr.Lang.Bidi);
 			}
-
-			if (nFontSlot & AscWord.fontslot_ASCII)
-				oThis.CheckFontName(oTextPr.RFonts.Ascii.Name);
-
-			if (nFontSlot & AscWord.fontslot_HAnsi)
-				oThis.CheckFontName(oTextPr.RFonts.HAnsi.Name);
-
-			if (nFontSlot & AscWord.fontslot_EastAsia)
-				oThis.CheckFontName(oTextPr.RFonts.EastAsia.Name);
 
 			return false;
 		});
@@ -198,13 +217,44 @@
 			this.Italic   = oTextPr.Italic;
 			this.FontSize = oTextPr.FontSize;
 		}
+		
+		let nextEl = oParagraph.GetNextRunElement();
+		let prevEl = oParagraph.GetPrevRunElement();
+		
+		let dir = AscBidi.DIRECTION_FLAG.None;
+		if (!nextEl && !prevEl)
+		{
+			// Use paragraph flag
+		}
+		else if (!nextEl || !prevEl)
+		{
+			let el = nextEl ? nextEl : prevEl;
+			dir = el.GetDirectionFlag();
+		}
+		else
+		{
+			let prevDir = prevEl.GetDirectionFlag();
+			let nextDir = nextEl.GetDirectionFlag();
+			if (prevDir === nextDir || prevDir === AscBidi.DIRECTION_FLAG.LTR || prevDir === AscBidi.DIRECTION_FLAG.RTL)
+				dir = prevDir;
+			else
+				dir = nextDir;
+		}
+		
+		if (AscBidi.DIRECTION_FLAG.LTR === dir)
+			this.Lang = oTextPr.Lang.Val;
+		else if (AscBidi.DIRECTION_FLAG.RTL === dir)
+			this.Lang = oTextPr.Lang.Bidi;
+		else
+			this.Lang = oParagraph.isRtlDirection() ? oTextPr.Lang.Bidi : oTextPr.Lang.Val;
 	};
 	CFontCalculator.prototype.IsStop = function()
 	{
 		return (undefined === this.Bold
 			&& undefined === this.Italic
 			&& undefined === this.FontSize
-			&& undefined === this.FontName);
+			&& undefined === this.FontName
+			&& undefined === this.Lang);
 	};
 	CFontCalculator.prototype.CheckBold = function(isBold)
 	{
@@ -246,6 +296,16 @@
 		else if (this.FontName !== sFontName)
 			this.FontName = undefined;
 	};
+	CFontCalculator.prototype.CheckLang = function(lang)
+	{
+		if (undefined === this.Lang)
+			return;
+		
+		if (null === this.Lang)
+			this.Lang = lang;
+		else if (this.Lang !== lang)
+			this.Lang = undefined;
+	};
 	CFontCalculator.prototype.CheckBoldUnknown = function(isBold)
 	{
 		if (null === this.BoldUnknown)
@@ -265,6 +325,16 @@
 	{
 		if (null === this.FontNameUnknown)
 			this.FontNameUnknown = sFontName;
+	};
+	CFontCalculator.prototype.CheckLangUnknown = function(lang)
+	{
+		if (undefined === this.LangUnknown)
+			return;
+		
+		if (null === this.LangUnknown)
+			this.LangUnknown = lang;
+		else if (lang !== this.LangUnknown)
+			this.LangUnknown = undefined;
 	};
 	CFontCalculator.prototype.CheckUnknownFontSlot = function(nFontSlot, oTextPr)
 	{
@@ -314,6 +384,9 @@
 				this.FontName = undefined;
 			}
 		}
+		
+		if (null === this.Lang)
+			this.Lang = this.LangUnknown ? this.LangUnknown : undefined;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};

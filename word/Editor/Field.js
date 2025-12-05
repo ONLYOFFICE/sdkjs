@@ -193,7 +193,7 @@ ParaField.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRang
 		X1           : X1,
 		Y0           : Y0,
 		Y1           : Y1,
-		PageIndex    : PRSA.Paragraph.Get_AbsolutePage(_CurPage),
+		PageIndex    : PRSA.Paragraph.GetAbsolutePage(_CurPage),
 		PageInternal : _CurPage
 	};
 };
@@ -475,7 +475,6 @@ ParaField.prototype.GetValue = function()
 {
 	var oText = new CParagraphGetText();
 	oText.SetBreakOnNonText(false);
-	oText.SetParaEndToSpace(true);
 
 	this.Get_Text(oText);
 
@@ -820,3 +819,4 @@ window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].ParaField = ParaField;
 
 window['AscWord'].CSimpleField = ParaField;
+window['AscWord'].FldSimple = ParaField;

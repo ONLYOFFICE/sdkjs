@@ -437,8 +437,8 @@ function (window, undefined)
 	window["AscCommon"].CDocumentMacros = CDocumentMacros;
 	window['AscCommon'].VbaProject = VbaProject;
 
-	var _safe_eval_closure = new Function("Function", "Api", "window", "alert", "document", "XMLHttpRequest", "self", "globalThis", "setTimeout", "setInterval", "value", "return eval(\"\\\"use strict\\\";\\r\\n\" + value)");
-	window['AscCommon'].safePluginEval = function(value) {
+	var _safe_eval_closure = new Function("Function", "Api", "window", "AscDesktopEditor", "alert", "document", "XMLHttpRequest", "self", "globalThis", "setTimeout", "setInterval", "value", "return eval(\"\\\"use strict\\\";\\r\\n\" + value)");
+	function _safePluginEval(value) {
 		let protoFunc = Object.getPrototypeOf(function(){});
 		// for minimization we use eval!!!
 		let protoFuncGen = null;
@@ -478,12 +478,27 @@ function (window, undefined)
 			if (Api.parsedJSDoc.length > countOfAdding)
 				Api.parsedJSDoc.length = countOfAdding;
 		}
-		const result = _safe_eval_closure.call(null, {}, Api, {}, function(){}, {}, customXMLHttpRequest, {}, {}, timeout, interval, value);
+		const result = _safe_eval_closure.call(null, {}, Api, {}, {}, function(){}, {}, customXMLHttpRequest, {}, {}, timeout, interval, value);
 		protoFunc.constructor = normalConstructor;
 		if (protoFuncGen)
 			protoFuncGen.prototype.next = generatorNext;
 		return result;
 	};
-
+	window['AscCommon'].safePluginEval = function(value){
+		let result;
+		let isCheckSymbols = AscFonts.IsCheckSymbols;
+		AscFonts.IsCheckSymbols = true;
+		try
+		{
+			result = _safePluginEval(value);
+		}
+		catch (err)
+		{
+			result = undefined;
+			console.error(err);
+		}
+		AscFonts.IsCheckSymbols = isCheckSymbols;
+		return result;
+	};
 
 })(window);

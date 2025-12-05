@@ -122,11 +122,66 @@
 		this.needRedrawDrawings		= true;
 		this.needRedrawAnnots		= true;
 
-		this.Lock = new AscCommon.CLock();
+		this.deleteLock = null;
+		this.rotateLock = null;
+		this.editPageLock = null;
+
+		this.SetLocks(new AscPDF.PropLocker(this.GetId()), new AscPDF.PropLocker(this.GetId()), new AscPDF.PropLocker(this.GetId()));
 	}
 	AscFormat.InitClass(CPageInfo, AscFormat.CBaseNoIdObject, AscDFH.historyitem_type_Pdf_Page);
 	CPageInfo.prototype.constructor = CPageInfo;
-	
+
+	Object.defineProperties(CPageInfo.prototype, {
+		PageNum: {
+			get: function () {
+				return this.GetIndex();
+			}
+		}
+	});
+
+	CPageInfo.prototype.RedrawDrawings = function() {
+		let oViewer = Asc.editor.getDocumentRenderer();
+		let _t = this;
+
+		let nIdx = _t.GetIndex();
+		function setRedrawPageOnRepaint() {
+            _t.needRedrawDrawings = true;
+			nIdx != -1 && oViewer.thumbnails && oViewer.thumbnails._repaintPage(nIdx);
+        }
+
+        oViewer.paint(setRedrawPageOnRepaint);
+	};
+	CPageInfo.prototype.RedrawForms = function() {
+		let oViewer = Asc.editor.getDocumentRenderer();
+		let _t = this;
+
+		let nIdx = _t.GetIndex();
+		function setRedrawPageOnRepaint() {
+            _t.needRedrawForms = true;
+			nIdx != -1 && oViewer.thumbnails && oViewer.thumbnails._repaintPage(nIdx);
+        }
+
+        oViewer.paint(setRedrawPageOnRepaint);
+	};
+	CPageInfo.prototype.RedrawAnnots = function(isTextMarkup) {
+		let oViewer = Asc.editor.getDocumentRenderer();
+		let _t = this;
+
+		let nIdx = _t.GetIndex();
+		function setRedrawPageOnRepaint() {
+			if (isTextMarkup) {
+				_t.needRedrawMarkups = true;
+			}
+			else {
+				_t.needRedrawAnnots = true;
+			}
+
+			nIdx != -1 && oViewer.thumbnails && oViewer.thumbnails._repaintPage(nIdx);
+        }
+
+        oViewer.paint(setRedrawPageOnRepaint);
+	};
+
 	CPageInfo.prototype.GetDocument = function() {
 		return Asc.editor.getPDFDoc();
 	};
@@ -161,11 +216,11 @@
         }
 
 		this.drawings.splice(nPos, 0, oDrawing);
+        oDrawing.SetParentPage(this);
+
 		AscCommon.History.Add(new CChangesPDFDocumentDrawingsContent(this, nPos, [oDrawing], true));
 
-		oDrawing.SetPage(this.GetIndex());
-        oDrawing.SetParentPage(this);
-        oDrawing.AddToRedraw();
+		this.RedrawDrawings();
 	};
 	CPageInfo.prototype.RemoveDrawing = function(sId) {
         let oDrawing = this.drawings.find(function(drawing) {
@@ -179,7 +234,7 @@
         this.drawings.splice(nPos, 1);
         
         AscCommon.History.Add(new CChangesPDFDocumentDrawingsContent(this, nPos, [oDrawing], false));
-		oDrawing.AddToRedraw();
+		this.RedrawDrawings();
 	};
 	CPageInfo.prototype.AddAnnot = function(oAnnot, nPos) {
 		if (nPos == undefined) {
@@ -187,10 +242,10 @@
         }
 
         this.annots.splice(nPos, 0, oAnnot);
+        oAnnot.SetParentPage(this);
 
         AscCommon.History.Add(new CChangesPDFDocumentAnnotsContent(this, nPos, [oAnnot], true));
-		oAnnot.SetParentPage(this);
-        oAnnot.AddToRedraw();
+		this.RedrawAnnots();
 	};
 	CPageInfo.prototype.RemoveAnnot = function(sId) {
 		let oAnnot = this.annots.find(function(annot) {
@@ -204,7 +259,7 @@
         this.annots.splice(nPos, 1);
         
         AscCommon.History.Add(new CChangesPDFDocumentAnnotsContent(this, nPos, [oAnnot], false));
-		oAnnot.AddToRedraw();
+		this.RedrawAnnots(oAnnot.IsTextMarkup());
 	};
 	CPageInfo.prototype.AddField = function(oField, nPos) {
 		if (nPos == undefined) {
@@ -212,13 +267,12 @@
         }
 
 		this.fields.splice(nPos, 0, oField);
+		oField.SetParentPage(this);
 
         AscCommon.History.Add(new CChangesPDFDocumentFieldsContent(this, nPos, [oField], true));
-		oField.SetParentPage(this);
-        oField.AddToRedraw();
+		this.RedrawForms();
 	};
-	CPageInfo.prototype.RemoveField = function(sId) {
-		let oDoc = this.GetDocument();
+	CPageInfo.prototype.RemoveField = function(sId, isOnMove) {
 		let oField = this.fields.find(function(field) {
             return field.GetId() === sId;
         });
@@ -233,15 +287,29 @@
 
 		// удаляем из родителя
         let oParent = oField.GetParent();
-        if (oParent) {
+        if (!isOnMove && oParent) {
             oParent.RemoveKid(oField);
-            oDoc.CheckParentForm(oParent); // проверяем родителя
         }
 
-		oField.AddToRedraw();
+		this.RedrawForms();
 	};
+	CPageInfo.prototype.SetLocks = function(deleteLock, rotateLock, editPageLock) {
+        this.deleteLock = deleteLock;
+        this.rotateLock = rotateLock;
+        this.editPageLock = editPageLock;
+       	AscCommon.History.Add(new CChangesPDFDocumentPageLocks(this, deleteLock, rotateLock, editPageLock));
+    };
 	CPageInfo.prototype.IsLocked = function() {
-		return false == [AscCommon.c_oAscLockTypes.kLockTypeNone, AscCommon.c_oAscLockTypes.kLockTypeMine].includes(this.Lock.Get_Type());
+		return this.IsDeleteLock() || this.IsRotateLock() || this.IsEditPageLock();
+	}
+	CPageInfo.prototype.IsDeleteLock = function() {
+		return false == [AscCommon.c_oAscLockTypes.kLockTypeNone, AscCommon.c_oAscLockTypes.kLockTypeMine].includes(this.deleteLock.Lock.Get_Type());
+	};
+	CPageInfo.prototype.IsRotateLock = function() {
+		return false == [AscCommon.c_oAscLockTypes.kLockTypeNone, AscCommon.c_oAscLockTypes.kLockTypeMine].includes(this.rotateLock.Lock.Get_Type());
+	};
+	CPageInfo.prototype.IsEditPageLock = function() {
+		return false == [AscCommon.c_oAscLockTypes.kLockTypeNone, AscCommon.c_oAscLockTypes.kLockTypeMine].includes(this.editPageLock.Lock.Get_Type());
 	};
 	CPageInfo.prototype.GetIndex = function() {
 		let oViewer = Asc.editor.getDocumentRenderer();
@@ -249,6 +317,16 @@
 
 		return oDocPages.pages.indexOf(this);
     };
+	CPageInfo.prototype.GetOriginIndex = function() {
+		let oFile = Asc.editor.getDocumentRenderer().file;
+
+		let nCurPageIdx = this.GetIndex();
+		if (nCurPageIdx == -1) {
+			return undefined;
+		}
+
+		return oFile.pages[nCurPageIdx].originIndex;
+	}
 	CPageInfo.prototype.SetRotate = function(nAngle) {
 		let oDoc		= this.GetDocument();
 		let oViewer     = oDoc.Viewer;
@@ -259,8 +337,14 @@
 			return;
 		}
 
-        oDoc.History.Add(new CChangesPDFDocumentRotatePage(this, oFile.pages[nIndex].Rotate, nAngle));
+        AscCommon.History.Add(new CChangesPDFDocumentRotatePage(this, oFile.pages[nIndex].Rotate, nAngle));
 		oFile.pages[nIndex].Rotate = nAngle;
+
+		if (oDoc.IsEditFieldsMode()) {
+			this.fields.forEach(function(field) {
+				field.UpdateEditShape();
+			});
+		}
 	};
 	CPageInfo.prototype.GetRotate = function() {
 		let oDoc		= this.GetDocument();
@@ -279,7 +363,7 @@
 			return;
 		}
 
-        oDoc.History.Add(new CChangesPDFDocumentRecognizePage(this, oFile.pages[nIndex].isRecognized, isRecognized));
+        AscCommon.History.Add(new CChangesPDFDocumentRecognizePage(this, oFile.pages[nIndex].isRecognized, isRecognized));
 		oFile.pages[nIndex].isRecognized = isRecognized;
 		delete oViewer.drawingPages[nIndex].Image;
 	};
@@ -288,9 +372,52 @@
 		let oFile       = oDoc.Viewer.file;
 		let nIndex		= this.GetIndex();
 
-		return oFile.pages[nIndex].Rotate;
+		return oFile.pages[nIndex].isRecognized;
 	};
 	CPageInfo.prototype.Is_Inline = function(){};
+
+	function PropLocker(objectId) {
+		this.objectId = null;
+		this.Lock = new AscCommon.CLock();
+		this.Id = AscCommon.g_oIdCounter.Get_NewId();
+		AscCommon.g_oTableId.Add(this, this.Id);
+
+		if (typeof objectId === "string") {
+			this.setObjectId(objectId);
+		}
+	}
+
+	PropLocker.prototype = {
+
+		getObjectType: function() {
+			return AscDFH.historyitem_type_Pdf_PropLocker;
+		},
+
+		setObjectId: function(id) {
+			AscCommon.History.Add(new CChangesPDFPropLockerObjectId(this, this.objectId, id));
+			this.objectId = id;
+		},
+
+		Get_Id: function() {
+			return this.Id;
+		},
+		GetId: function() {
+			return this.Get_Id();
+		},
+
+		Write_ToBinary2: function(w) {
+			w.WriteLong(AscDFH.historyitem_type_Pdf_PropLocker);
+			w.WriteString2(this.Id);
+		},
+
+		Read_FromBinary2: function(r) {
+			this.Id = r.GetString2();
+		},
+
+		Refresh_RecalcData: function()
+		{}
+	};
+
 	
 	function CDocumentPagesInfo()
 	{
@@ -427,8 +554,8 @@
 
 		var oThis = this;
 
-		this.onRepaintFormsCallbacks = [];
-		this.onRepaintAnnotsCallbacks = [];
+		this.onRepaintCallbacks = [];
+		this.onAfterPaintCallback = [];
 
 		this.updateSkin = function()
 		{
@@ -559,9 +686,13 @@
 			var isViewerTask = oThis.isRepaint;
 			if (oThis.isRepaint)
 			{
-				oThis._paint();
+				let res = oThis._paint();
 				oThis.onUpdateOverlay();
 				oThis.isRepaint = false;
+
+				if (res) {
+					oThis.afterPaintCallbacks();
+				}
 			}
 			else if (oThis.checkPagesLinks())
 			{
@@ -674,7 +805,8 @@
 						left: x,
 						top: y,
 						right: x + w,
-						bottom: y + h
+						bottom: y + h,
+						pageIndex: index
 					}
 				}
 			});
@@ -767,41 +899,41 @@
 			let oThumbnails = this.thumbnails;
 			for (var i = 0, len = pages.length; i < len; i++)
 			{
+				oThumbnails && oThumbnails._repaintPage(pages[i]);
 				if (pages[i] >= this.startVisiblePage && pages[i] <= this.endVisiblePage)
 				{
 					delete this.drawingPages[pages[i]].Image;
-					oThumbnails && oThumbnails._repaintPage(pages[i]);
 				}
 			}
 
 			this.scheduleRepaint();
 		};
-		this.scheduleRepaint = function(formsCallBack, annotsCallback) {
+		this.scheduleRepaint = function(onRepaintCallback, onAfterPaintCallback) {
 			let oThis = this;
 			if (this.scheduledRepaintTimer == null) {
 				this.scheduledRepaintTimer = setTimeout(function() {
-					oThis.isRepaint = true;
-	
-					oThis.onRepaintFormsCallbacks.forEach(function(callback) {
+					oThis.scheduledRepaintTimer = null;
+					oThis.isRepaint = false;
+
+					let nCallbacks = oThis.onRepaintCallbacks.length;
+
+					oThis.onRepaintCallbacks.forEach(function(callback) {
 						callback();
 					});
-					oThis.onRepaintAnnotsCallbacks.forEach(function(callback) {
-						callback();
-					});
-					oThis.onRepaintFormsCallbacks = [];
-					oThis.onRepaintAnnotsCallbacks = [];
+					
+					oThis.onRepaintCallbacks.splice(0, nCallbacks);
 
 					if (oThis.Api && oThis.Api.printPreview)
 						oThis.Api.printPreview.update();
 
-					oThis.scheduledRepaintTimer = null;
+					oThis.isRepaint = true;
 				});
 			}
 			
-			if (formsCallBack)
-				this.onRepaintFormsCallbacks.push(formsCallBack);
-			if (annotsCallback)
-				this.onRepaintAnnotsCallbacks.push(annotsCallback);
+			if (onRepaintCallback)
+				this.onRepaintCallbacks.push(onRepaintCallback);
+			if (onAfterPaintCallback)
+				this.onAfterPaintCallback.push(onAfterPaintCallback);
 		};
 
 		this.onRepaintForms = function(pages) {
@@ -814,7 +946,6 @@
 				{
 					this.pagesInfo.pages[pages[i]].needRedrawForms = true;
 					this.doc.ClearCacheForms(pages[i]);
-					break;
 				}
 			}
 
@@ -831,7 +962,6 @@
 					this.pagesInfo.pages[pages[i]].needRedrawAnnots = true;
 					this.pagesInfo.pages[pages[i]].needRedrawMarkups = true;
 					this.doc.ClearCacheAnnots(pages[i]);
-					break;
 				}
 			}
 
@@ -873,7 +1003,10 @@
 			{
 				if (!this.file.isNeedCMap())
 				{
-					this.onDocumentReady();
+					// can check CMap after merge -> dont call onDocumentReady
+					if (!this.isDocumentReady) {
+						this.onDocumentReady();
+					}
 					return;
 				}
 
@@ -936,6 +1069,10 @@
 					AscCommon.addMouseEvent(_t.canvasForms, "move", _t.onMouseMove);
 					AscCommon.addMouseEvent(_t.canvasForms, "up", _t.onMouseUp);
 
+					let targetElem = document.getElementById('id_target_cursor');
+					if (targetElem)
+						targetElem.style.pointerEvents = "none";
+
 					global_mouseEvent.Sender = _t.canvasForms;
 
 					_t.parent.onmousewheel = _t.onMouseWhell;
@@ -945,7 +1082,7 @@
 					_t.startTimer();
 				}
 
-				if (_t.isStarted && _t.pageDetector && !oDoc.fontLoader.isWorking() && _t.IsOpenFormsInProgress == false) {
+				if (_t.isStarted && _t.pageDetector && !oDoc.fontLoader.isWorking() && _t.IsOpenFormsInProgress == false && _t.initPaintDone) {
 					_t.sendEvent("onFileOpened");
 
 					_t.sendEvent("onPagesCount", _t.file.pages.length);
@@ -966,15 +1103,12 @@
 			this.checkReady();
 			this.file.onRepaintPages = this.onUpdatePages.bind(this);
 			this.file.onRepaintForms = this.onRepaintForms.bind(this);
-			this.file.onRepaintAnnots = this.onRepaintAnnots.bind(this);
+			this.file.onRepaintAnnotations = this.onRepaintAnnots.bind(this);
 			this.file.onUpdateStatistics = this.onUpdateStatistics.bind(this);
 			this.currentPage = -1;
 			this.structure = this.file.getStructure();
 
 			this.resize(true);
-			
-			this.openForms();
-			this.openAnnots();
 			
 			if (this.thumbnails)
 				this.thumbnails.init(this);
@@ -985,7 +1119,9 @@
 				this.navigateToPage(0, 0, this.scrollMaxX / 2);
 			}
 
-			this.doc.TurnOnHistory();
+			this.isDocumentReady = true;
+			
+			AscCommon.g_oIdCounter.Set_Load(false);
 		};
 
 		this.open = function(data, password)
@@ -1012,7 +1148,7 @@
 				if (this.file && this.file.isNeedPassword())
 				{
 					window["AscViewer"].setFilePassword(this.file, password);
-					this.Api.asc_setCurrentPassword(password);
+					this.Api.asc_setCurrentPassword(password, true);
 				}
 			}
 			else
@@ -1083,12 +1219,21 @@
 
 			this.checkLoadCMap();
 
-			AscCommon.g_oIdCounter.Set_Load(false); // to do возможно не тут стоит выключать флаг
-
 			if (this.file && !this.file.isNeedPassword() && !this.file.isValid())
 				this.Api.sendEvent("asc_onError", Asc.c_oAscError.ID.ConvertationOpenError, Asc.c_oAscError.Level.Critical);
 
 			this.Api.WordControl.m_oOverlayApi = this.overlay;
+
+			// TODO: Надо перенести в нормальное место
+			let isLoad = AscCommon.g_oIdCounter.IsLoad();
+			AscCommon.g_oIdCounter.Set_Load(true);
+
+			let nMaxIdx = this.file.nativeFile["getStartID"]();
+			this.openForms();
+			this.openAnnots();
+			oDoc.UpdateCurMaxApIdx(nMaxIdx);
+
+			AscCommon.g_oIdCounter.Set_Load(isLoad);
 		};
 
 		this.close = function()
@@ -1114,6 +1259,19 @@
 				process : false
 			};
 
+			this.SearchResults = null;
+			this.isClearPages = false;
+
+			this.isFullText = false;
+			this.isFullTextMessage = false;
+			this.fullTextMessageCallback = null;
+			this.fullTextMessageCallbackArgs = null;
+
+			this.isDocumentReady = false;
+			
+			let oDoc = this.getPDFDoc();
+			oDoc && oDoc.BlurActiveObject();
+
 			this._paint();
 			this.onUpdateOverlay();
 		};
@@ -1126,511 +1284,17 @@
 		};
 
 		this.openForms = function() {
-			let oThis = this;
-
+			let oDoc = this.getPDFDoc();
 			this.scrollCount = 0;
-			this.IsOpenFormsInProgress = true;
 
-			function ExtractActions(oPanentAction) {
-				let aActions = [];
-				const propToRemove = 'Next';
-			  
-				const keys = Object.keys(oPanentAction).filter(function(key) {
-					return key !== propToRemove;
-				});
-			  
-				const tempObject = {};
-			  
-				for (let i = 0; i < keys.length; i++) {
-					const key = keys[i];
-					tempObject[key] = oPanentAction[key];
-				}
-			  
-				aActions.push(tempObject);
-			  
-				if (oPanentAction["Next"]) {
-					const nextActions = ExtractActions(oPanentAction["Next"]);
-					aActions = aActions.concat(nextActions);
-				}
-			  
-				return aActions;
-			}
-			
-			let aActionsToCorrect = []; // параметры поля в actions указаны как ссылки на ap, после того, как все формы будут созданы, заменим их на ссылки на сами поля. 
-			let aFormsInfo = this.file.nativeFile["getInteractiveFormsInfo"]();
-			
-			let oFormInfo, oForm, oRect;
-			if (aFormsInfo["Fields"] == null) {
-				this.IsOpenFormsInProgress = false;
-				return;
-			}
-			
-			let aFontsToLoad = [];
-			for (let i = 0; i < aFormsInfo["Fields"].length; i++)
-			{
-				oFormInfo	= aFormsInfo["Fields"][i];
-				oRect		= oFormInfo["rect"];
-
-				oForm = this.doc.AddField(oFormInfo["name"], oFormInfo["type"], oFormInfo["page"], [oRect["x1"], oRect["y1"], oRect["x2"], oRect["y2"]]);
-				
-				if (!oForm) {
-					// console.log("Error while reading form, index " + oFormInfo["AP"]["i"]);
-					continue;
-				}
-
-				if (oFormInfo["AP"] != null) {
-					oForm.SetApIdx(oFormInfo["AP"]["i"]);
-					oForm.SetHasOriginView(Boolean(oFormInfo["AP"]["have"]));
-				}
-
-				oForm.SetOriginPage(oFormInfo["page"]);
-
-				if (oFormInfo["Parent"] != null)
-				{
-					oForm.AddToChildsMap(oFormInfo["Parent"]);
-				}
-
-				// appearance
-				if (oFormInfo["border"] != null)
-				{
-					oForm.SetBorderStyle(oFormInfo["border"]);
-				}
-
-				if (oFormInfo["borderWidth"] != null)
-				{
-					oForm.SetBorderWidth(oFormInfo["borderWidth"]);
-				}
-				if (oFormInfo["BC"] != null)
-				{
-					oForm.SetBorderColor(oFormInfo["BC"]);
-				}
-				if (oFormInfo["BG"] != null)
-					oForm.SetBackgroundColor(oFormInfo["BG"]);
-
-				// text form
-				if (oFormInfo["multiline"] != null)
-				{
-					oForm.SetMultiline(Boolean(oFormInfo["multiline"]));
-				}
-				if (oFormInfo["comb"])
-				{
-					oForm.SetComb(Boolean(oFormInfo["comb"]));
-				}
-				if (oFormInfo["richText"])
-				{
-					// to do
-					oForm.SetRichText(Boolean(oFormInfo["richText"]));
-				}
-				if (oFormInfo["password"])
-				{
-					// to do
-					oForm.SetPassword(Boolean(oFormInfo["password"]));
-				}
-
-				// button
-				if (oFormInfo["position"] != null) {
-					oForm.SetHeaderPosition(oFormInfo["position"]);
-				}
-				if (oFormInfo["caption"] != null && oForm["type"] == AscPDF.FIELD_TYPES.button) {
-					oForm.SetCaption(oFormInfo["caption"]);
-				}
-				if (oFormInfo["alternateCaption"] != null && oForm["type"] == AscPDF.FIELD_TYPES.button) {
-					oForm.SetCaption(oFormInfo["alternateCaption"], AscPDF.CAPTION_TYPES.mouseDown);
-				}
-				if (oFormInfo["rolloverCaption"] != null && oForm["type"] == AscPDF.FIELD_TYPES.button) {
-					oForm.SetCaption(oFormInfo["rolloverCaption"], AscPDF.CAPTION_TYPES.rollover);
-				}
-				
-				if (oFormInfo["highlight"] != null) {
-					oForm.SetHighlight(oFormInfo["highlight"]);
-				}
-				if (oFormInfo["IF"] != null) {
-					if (oFormInfo["IF"]["FB"] != null)
-						oForm.SetButtonFitBounds(Boolean(oFormInfo["IF"]["FB"]));
-					if (oFormInfo["IF"]["SW"] != null)
-						oForm.SetScaleWhen(oFormInfo["IF"]["SW"]);
-					if (oFormInfo["IF"]["A"] != null)
-						oForm.SetIconPosition(oFormInfo["IF"]["A"][0], oFormInfo["IF"]["A"][1]);
-					if (oFormInfo["IF"]["S"] != null)
-						oForm.SetScaleHow(oFormInfo["IF"]["S"]);
-				}
-
-				// combobox - listbox
-				if (oFormInfo["editable"])
-				{
-					oForm.SetEditable(Boolean(oFormInfo["editable"]));
-				}
-				if (oFormInfo["commitOnSelChange"])
-				{
-					// to do
-					oForm.SetCommitOnSelChange(Boolean(oFormInfo["commitOnSelChange"]));
-				}
-				if (oFormInfo["multipleSelection"])
-				{
-					oForm.SetMultipleSelection(Boolean(oFormInfo["multipleSelection"]));
-				}
-				if (oFormInfo["opt"])
-				{
-					oForm.SetOptions(oFormInfo["opt"]);
-				}
-
-				// checkbox - radiobutton
-				if (oFormInfo["ExportValue"])
-				{
-					oForm.SetExportValue(oFormInfo["ExportValue"]);
-				}
-				if (oFormInfo["radiosInUnison"])
-				{
-					oForm.SetRadiosInUnison(Boolean(oFormInfo["radiosInUnison"]));
-				}
-				if (oFormInfo["NoToggleToOff"] != null && oFormInfo["type"] != AscPDF.FIELD_TYPES.button)
-				{
-					oForm.SetNoToggleToOff(Boolean(oFormInfo["NoToggleToOff"]));
-				}
-				if (oFormInfo["style"] != null)
-				{
-					oForm.SetStyle(oFormInfo["style"]);
-				}
-
-				// signature
-				if (oFormInfo["Sig"] != null)
-				{
-					oForm.SetFilled(Boolean(oFormInfo["Sig"]));
-				}
-
-				// common
-				if (oFormInfo["alignment"] != null && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.listbox].includes(oFormInfo["type"]))
-				{
-					oForm.SetAlign(oFormInfo["alignment"]);
-				}
-				if (oFormInfo["maxLen"] != null)
-				{
-					oForm.SetCharLimit(oFormInfo["maxLen"]);
-				}
-				if (oFormInfo["doNotScroll"] != null)
-				{
-					oForm.SetDoNotScroll(Boolean(oFormInfo["doNotScroll"]));
-				}
-				if (oFormInfo["doNotSpellCheck"] != null && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oFormInfo["type"]))
-				{
-					// to do
-					oForm.SetDoNotSpellCheck(Boolean(oFormInfo["doNotSpellCheck"]));
-				}
-				if (oFormInfo["fileSelect"])
-				{
-					// to do
-					oForm.SetFileSelect(Boolean(oFormInfo["fileSelect"]));
-				}
-				if (oFormInfo["noexport"])
-				{
-					oForm.SetNoExport(Boolean(oFormInfo["noexport"]));
-				}
-				if (oFormInfo["readonly"])
-				{
-					// to do
-					oForm.SetReadOnly(Boolean(oFormInfo["readonly"]));
-				}
-				if (oFormInfo["required"])
-				{
-					// to do
-					oForm.SetRequired(Boolean(oFormInfo["required"]));
-				}
-				
-				if (oFormInfo["curIdxs"])
-				{
-					oForm.SetCurIdxs(oFormInfo["curIdxs"]);
-					if (oFormInfo["value"] != null)
-					{
-						oForm._value = oFormInfo["value"];
-					}
-				}
-				else if (oFormInfo["value"] != null && oForm.GetType() != AscPDF.FIELD_TYPES.button)
-				{
-					oForm.SetValue(oFormInfo["value"], true);
-				}
-
-				if (oFormInfo["display"])
-				{
-					// to do
-					oForm.SetDisplay(oFormInfo["display"]);
-				}
-				
-				if (oFormInfo["sort"] != null) {
-					// to do sort
-				}
-				if (oFormInfo["defaultValue"] != null) {
-					oForm.SetDefaultValue(oFormInfo["defaultValue"]);
-				}
-
-				if (oFormInfo["font"]) {
-					if (oFormInfo["font"]["color"] != null)
-						oForm.SetTextColor(oFormInfo["font"]["color"]);
-					if (oFormInfo["font"]["name"])
-						oForm.SetTextFont(oFormInfo["font"]["name"]);
-					if (oForm.GetType() == AscPDF.FIELD_TYPES.button && oFormInfo["font"]["AP"])
-						oForm.SetTextFontActual(oFormInfo["font"]["AP"]);
-					else if (oFormInfo["font"]["actual"]) {
-						oForm.SetTextFontActual(oFormInfo["font"]["actual"]);
-					}
-					else if (oFormInfo["font"]["name"]) {
-						oForm.SetTextFontActual(AscFonts.getEmbeddedFontPrefix() + oFormInfo["font"]["name"]);
-					}
-					else {
-						oForm.SetTextFontActual(AscPDF.DEFAULT_FIELD_FONT);
-					}
-
-					// внутренний ключ для пересылки обратно (зачем? - попросили)
-					oForm.SetFontKey(oFormInfo["font"]["key"]);
-
-					if (oFormInfo["font"]["size"] != null)
-						oForm.SetTextSize(oFormInfo["font"]["size"]);
-
-					if (oFormInfo["font"]["style"] != null) {
-						oForm.SetFontStyle({
-							bold: Boolean((oFormInfo["font"]["style"] >> 0) & 1),
-							italic: Boolean((oFormInfo["font"]["style"] >> 1) & 1),
-						});
-					}
-				}
-				// actions
-				if (oFormInfo["AA"] != null)
-				{
-					// mouseup 0
-					if (oFormInfo["AA"]["A"])
-					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.MouseUp, ExtractActions(oFormInfo["AA"]["A"])));
-					}
-					// mousedown 1
-					if (oFormInfo["AA"]["D"])
-					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown, ExtractActions(oFormInfo["AA"]["D"])));
-					}
-					// mouseenter 2
-					if (oFormInfo["AA"]["E"])
-					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter, ExtractActions(oFormInfo["AA"]["E"])));
-					}
-					// mouseexit 3
-					if (oFormInfo["AA"]["X"])
-					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.MouseExit, ExtractActions(oFormInfo["AA"]["X"])));
-					}
-					// onFocus 4
-					if (oFormInfo["AA"]["Fo"])
-					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus, ExtractActions(oFormInfo["AA"]["Fo"])));
-					}
-					// onBlur 5
-					if (oFormInfo["AA"]["Bl"])
-					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.OnBlur, ExtractActions(oFormInfo["AA"]["Bl"])));
-					}
-
-					// keystroke 6
-					if (oFormInfo["AA"]["K"])
-					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, ExtractActions(oFormInfo["AA"]["K"])));
-					}
-
-					// Validate 7
-					if (oFormInfo["AA"]["V"])
-					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.Validate, ExtractActions(oFormInfo["AA"]["V"])));
-					}
-
-					// Calculate 8
-					if (oFormInfo["AA"]["C"])
-					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.Calculate, ExtractActions(oFormInfo["AA"]["C"])));
-					}
-
-					// format 9
-					if (oFormInfo["AA"]["F"])
-					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.Format, ExtractActions(oFormInfo["AA"]["F"])));
-					}
-				}
-			}
-			
-			if (aFormsInfo["Parents"]) {
-				this.doc.FillFormsParents(aFormsInfo["Parents"]);
-				this.doc.OnAfterFillFormsParents();
-			}
-			
-			if (Array.isArray(aFormsInfo["CO"]) && aFormsInfo["CO"].length > 0)
-				this.doc.GetCalculateInfo().SetCalculateOrder(aFormsInfo["CO"]);
-			
-			// после открытия всех форм, заменяем apIdx в Actions на ссылки на сами поля.
-			aActionsToCorrect.forEach(function(action) {
-				if (action.fields) {
-					let aNewArrFields =  oThis.doc.widgets.filter(function(field) {
-						return action.fields.includes(field._apIdx);
-					});
-	
-					action.fields = aNewArrFields;
-				}
-			});
-
-			this.doc.FillButtonsIconsOnOpen();
+			let oFormsInfo	= this.file.nativeFile["getInteractiveFormsInfo"]();
+			oDoc.private_AddFormsByInfo(oFormsInfo);
 		};
 		this.openAnnots = function() {
-			let oAnnotsMap = {};
 			let oDoc = this.getPDFDoc();
 			let aAnnotsInfo = this.file.nativeFile["getAnnotationsInfo"]();
-			let nMaxIdx		= this.file.nativeFile["getStartID"]();
 
-			this.IsOpenAnnotsInProgress = true;
-
-			let oAnnotInfo, oAnnot, aRect;
-			for (let i = 0; i < aAnnotsInfo.length; i++) {
-				oAnnotInfo = aAnnotsInfo[i];
-
-				if (oAnnotInfo["Type"] == AscPDF.ANNOTATIONS_TYPES.Popup) {
-					continue;
-				}
-
-				aRect = [oAnnotInfo["rect"]["x1"], oAnnotInfo["rect"]["y1"], oAnnotInfo["rect"]["x2"], oAnnotInfo["rect"]["y2"]];
-
-				if (oAnnotInfo["RefTo"] == null || oAnnotInfo["Type"] != AscPDF.ANNOTATIONS_TYPES.Text) {
-					let creationDate	= oAnnotInfo["CreationDate"] ? AscPDF.ParsePDFDate(oAnnotInfo["CreationDate"]) : null;
-					let creationStamp	= creationDate ? creationDate.getTime() : undefined;
-					let modDate			= oAnnotInfo["LastModified"] ? AscPDF.ParsePDFDate(oAnnotInfo["LastModified"]) : null;
-					let modStamp		= modDate ? modDate.getTime() : undefined;
-
-					oAnnot = oDoc.AddAnnotByProps({
-						page:			oAnnotInfo["page"],
-						name:			oAnnotInfo["UniqueName"], 
-						creationDate:	creationStamp,
-						modDate:		modStamp,
-						contents:		oAnnotInfo["Contents"],
-						author:			oAnnotInfo["User"],
-						rect:			aRect,
-						type:			oAnnotInfo["Type"],
-						apIdx:			oAnnotInfo["AP"]["i"]
-					});
-	
-					oAnnot.SetDrawFromStream(Boolean(oAnnotInfo["AP"]["have"]));
-					oAnnot.SetOriginPage(oAnnotInfo["page"]);
-
-					if (oAnnotInfo["RefTo"] == null)
-						oAnnotsMap[oAnnotInfo["AP"]["i"]] = oAnnot;
-					
-					if (oAnnotInfo["IT"] != null)
-						oAnnot.SetIntent(oAnnotInfo["IT"]);
-
-					if (oAnnotInfo["InkList"]) {
-						oAnnot.SetInkPoints(oAnnotInfo["InkList"]);
-					}
-					else if (oAnnotInfo["L"]) {
-						oAnnot.SetLinePoints(oAnnotInfo["L"]);
-					}
-					else if (oAnnotInfo["Vertices"]) {
-						oAnnot.SetVertices(oAnnotInfo["Vertices"]);
-					}
-
-					if (oAnnotInfo["LE"] != null) {
-						if (Array.isArray(oAnnotInfo["LE"])) {
-							oAnnot.SetLineStart(oAnnotInfo["LE"][0]);
-							oAnnot.SetLineEnd(oAnnotInfo["LE"][1]);
-						}
-						else
-							oAnnot.SetLineEnd(oAnnotInfo["LE"]);
-					}
-
-					if (oAnnotInfo["Icon"] != null)
-                        oAnnot.SetIconType(oAnnotInfo["Icon"]);
-					if (oAnnotInfo["RefToReason"] != null)
-						oAnnot.SetRefType(oAnnotInfo["RefToReason"]);
-					if (oAnnotInfo["Popup"] != null)
-						oAnnot.SetPopupIdx(oAnnotInfo["Popup"]);
-					if (oAnnotInfo["Subj"])
-						oAnnot.SetSubject(oAnnotInfo["Subj"]);
-					if (oAnnotInfo["CL"])
-						oAnnot.SetCallout(oAnnotInfo["CL"]);
-					if (oAnnotInfo["RC"])
-						oAnnot.SetRichContents(oAnnotInfo["RC"]);
-					if (oAnnotInfo["RD"])
-						oAnnot.SetRectangleDiff(oAnnotInfo["RD"]);
-					if (oAnnotInfo["display"])
-						oAnnot.SetDisplay(oAnnotInfo["display"]);
-					if (oAnnotInfo["locked"] != null)
-						oAnnot.SetLock(Boolean(oAnnotInfo["locked"]));
-					if (oAnnotInfo["lockedC"] != null)
-						oAnnot.SetLockContent(Boolean(oAnnotInfo["lockedC"]));
-					if (oAnnotInfo["IC"] != null)
-						oAnnot.SetFillColor(oAnnotInfo["IC"]);
-					if (oAnnotInfo["dashed"] != null)
-						oAnnot.SetDash(oAnnotInfo["dashed"]);
-					if (oAnnotInfo["border"] != null)
-						oAnnot.SetBorder(oAnnotInfo["border"]);
-					if (oAnnotInfo["Icon"] != null)
-						oAnnot.SetIconType(oAnnotInfo["Icon"]);
-					if (oAnnotInfo["noRotate"] != null)
-						oAnnot.SetNoRotate(Boolean(oAnnotInfo["noRotate"]));
-					if (oAnnotInfo["noZoom"] != null)
-						oAnnot.SetNoZoom(Boolean(oAnnotInfo["noZoom"]));
-					if (oAnnotInfo["Sy"] != null)
-						oAnnot.SetCaretSymbol(oAnnotInfo["Sy"]);
-					if (oAnnotInfo["LL"] != null)
-						oAnnot.SetLeaderLength(oAnnotInfo["LL"]);
-					if (oAnnotInfo["LLE"] != null)
-						oAnnot.SetLeaderExtend(oAnnotInfo["LLE"]);
-					if (oAnnotInfo["Cap"] != null)
-						oAnnot.SetDoCaption(Boolean(oAnnotInfo["Cap"]));
-
-					// FreeText/Redact
-					if (oAnnotInfo["alignment"] != null)
-						oAnnot.SetAlign(oAnnotInfo["alignment"]);
-
-					// FreeText
-					if (oAnnotInfo["defaultStyle"] != null)
-						oAnnot.SetDefaultStyle(oAnnotInfo["defaultStyle"]);
-
-					if (oAnnotInfo["Rotate"] != null)
-						oAnnot.SetRotate(oAnnotInfo["Rotate"]);
-					if (oAnnotInfo["InRect"] != null)
-						oAnnot.SetInRect(oAnnotInfo["InRect"]);
-					
-					// border effect
-					if (oAnnotInfo["BE"] != null) {
-						if (oAnnotInfo["BE"]["I"] != null)
-							oAnnot.SetBorderEffectIntensity(oAnnotInfo["BE"]["I"]);
-						if (oAnnotInfo["BE"]["S"] != null)
-							oAnnot.SetBorderEffectStyle(oAnnotInfo["BE"]["S"]);
-					}
-					
-					oAnnot.SetStrokeColor(oAnnotInfo["C"]);
-					
-					if (oAnnotInfo["CA"] != null) {
-						oAnnot.SetOpacity(oAnnotInfo["CA"]);
-					}
-					if (oAnnotInfo["borderWidth"] != null) {
-						oAnnot.SetWidth(oAnnotInfo["borderWidth"]);
-					}
-					else {
-						oAnnot.SetWidth(1);
-					}
-
-					if (oAnnotInfo["QuadPoints"] != null) {
-						let aSepQuads = [];
-						for (let i = 0; i < oAnnotInfo["QuadPoints"].length; i+=8)
-							aSepQuads.push(oAnnotInfo["QuadPoints"].slice(i, i+8));
-
-						oAnnot.SetQuads(aSepQuads);
-					}
-				}
-				else {
-					if (oAnnotInfo["StateModel"] != AscPDF.TEXT_ANNOT_STATE_MODEL.Review && oAnnotsMap[oAnnotInfo["RefTo"]] && oAnnotsMap[oAnnotInfo["RefTo"]]._AddReplyOnOpen)
-						oAnnotsMap[oAnnotInfo["RefTo"]]._AddReplyOnOpen(oAnnotInfo);
-				}
-			}
-
-			for (let apIdx in oAnnotsMap) {
-				oDoc.CheckComment(oAnnotsMap[apIdx]);
-			}
-			
-			this.IsOpenAnnotsInProgress = false;
-			oDoc.UpdateMaxApIdx(nMaxIdx);
+			oDoc.private_AddAnnotsByInfo(aAnnotsInfo);
 		};
 		this.setZoom = function(value, isDisablePaint)
 		{
@@ -1829,7 +1493,7 @@
 			let nPage		= oActiveObj ? oActiveObj.GetPage() : undefined;
 
 			this.m_oScrollVerApi.scrollToY(posY);
-			this.m_oScrollVerApi.scrollToX(posX);
+			this.m_oScrollHorApi.scrollToX(posX);
 
 			this.checkVisiblePages();
 			// выход из активного объекта если сместились на другую страницу
@@ -1856,7 +1520,7 @@
 				var url = link["link"];
 				var typeUrl = AscCommon.getUrlType(url);
 				url = AscCommon.prepareUrl(url, typeUrl);
-				this.sendEvent("onHyperlinkClick", url);
+				Asc.editor.sync_HyperlinkClickCallback(url);
 			}
 
 			//console.log(link["link"]);
@@ -2000,17 +1664,26 @@
 		this.getPageFieldByCoords = function(x, y, pageIndex, bGetHidden)
 		{
 			var pageFields = this.pagesInfo.pages[pageIndex];
+
 			if (pageFields.fields)
 			{
 				for (var i = 0, len = pageFields.fields.length; i < len; i++)
 				{
-					if (x >= pageFields.fields[i]._origRect[0] && x <= pageFields.fields[i]._origRect[2] &&
-						y >= pageFields.fields[i]._origRect[1] && y <= pageFields.fields[i]._origRect[3]) {
+					let oField = pageFields.fields[i];
+					let aRect = oField.GetRect();
+					let oFieldEditShape = oField.GetEditShape();
+					let bHitToHandles = false;
+					if (oFieldEditShape) {
+						bHitToHandles = oFieldEditShape.hitToHandles(x * g_dKoef_pt_to_mm, y * g_dKoef_pt_to_mm) !== -1;
+					}
+					
+					if (x >= aRect[0] && x <= aRect[2] &&
+						y >= aRect[1] && y <= aRect[3] || bHitToHandles) {
 						if (bGetHidden) {
-							return pageFields.fields[i];
+							return oField;
 						}
-						else if (pageFields.fields[i].IsHidden() == false) {
-							return pageFields.fields[i];
+						else if (oField.IsHidden() == false || Asc.editor.IsEditFieldsMode()) {
+							return oField;
 						}
 					}
 				}
@@ -2051,7 +1724,9 @@
 					let oGeomEditSelection = oController.selection.geometrySelection ? oController.selection.geometrySelection : null;
 
 					if (oActiveAnnot == oDoc.GetShapeBasedAnnotById(this.DrawingObjects.getGraphicInfoUnderCursor(nAnnotPage, oPt.x, oPt.y).objectId)) {
-						if (oActiveAnnot.hitToHandles(oPt.x, oPt.y) != -1 || (oGeomEditSelection && oGeomEditSelection.hitToGeometryEdit(oPt.x, oPt.y))) {
+						let isHitted = oActiveAnnot.hitInBoundingRect(oPt.x, oPt.y) || oActiveAnnot.hitToHandles(oPt.x, oPt.y) != -1 || oActiveAnnot.hitInPath(oPt.x, oPt.y) || oActiveAnnot.hitInInnerArea(oPt.x, oPt.y) || oActiveAnnot.hitInTextRect(oPt.x, oPt.y) || oGeomEditSelection && oGeomEditSelection.hitToGeometryEdit(oPt.x, oPt.y);
+
+						if (isHitted) {
 							return oActiveAnnot;
 						}
 					}
@@ -2064,14 +1739,14 @@
 				for (let i = page.annots.length -1; i >= 0; i--)
 				{
 					let oAnnot = page.annots[i];
-					let nAnnotWidth		= AscCommon.AscBrowser.retinaPixelRatio * 16 / (this.zoom);
-					let nAnnotHeight	= AscCommon.AscBrowser.retinaPixelRatio * 16 / (this.zoom);
+					let nAnnotWidth		= 20 / (this.zoom);
+					let nAnnotHeight	= 20 / (this.zoom);
 					
 					if (true !== bGetHidden && oAnnot.IsHidden() == true || false == oAnnot.IsComment())
 						continue;
 					
-					if (pageObject.x >= oAnnot._origRect[0] && pageObject.x <= oAnnot._origRect[0] + nAnnotWidth &&
-					pageObject.y >= oAnnot._origRect[1] && pageObject.y <= oAnnot._origRect[1] + nAnnotHeight) {
+					if (pageObject.x >= oAnnot._rect[0] && pageObject.x <= oAnnot._rect[0] + nAnnotWidth &&
+					pageObject.y >= oAnnot._rect[1] && pageObject.y <= oAnnot._rect[1] + nAnnotHeight) {
 						if (bGetHidden) {
 							return oAnnot;
 						}
@@ -2084,8 +1759,8 @@
 				for (let i = page.annots.length -1; i >= 0; i--)
 				{
 					let oAnnot = page.annots[i];
-					let nAnnotWidth		= (oAnnot._origRect[2] - oAnnot._origRect[0]);
-					let nAnnotHeight	= (oAnnot._origRect[3] - oAnnot._origRect[1]);
+					let nAnnotWidth		= (oAnnot._rect[2] - oAnnot._rect[0]);
+					let nAnnotHeight	= (oAnnot._rect[3] - oAnnot._rect[1]);
 					
 					if (true !== bGetHidden && oAnnot.IsHidden() == true || oAnnot.IsComment())
 						continue;
@@ -2093,12 +1768,13 @@
 					// у draw аннотаций ищем по path
 					if (oAnnot.IsShapeBased())
 					{
-						if (oAnnot.hitInBoundingRect(pageObjectMM.x, pageObjectMM.y) || oAnnot.hitToHandles(pageObjectMM.x, pageObjectMM.y) != -1 || oAnnot.hitInPath(pageObjectMM.x, pageObjectMM.y) || oAnnot.hitInInnerArea(pageObjectMM.x, pageObjectMM.y))
+						let isHitted = oAnnot.hitToHandles(pageObjectMM.x, pageObjectMM.y) != -1 || oAnnot.hitInPath(pageObjectMM.x, pageObjectMM.y) || oAnnot.hitInInnerArea(pageObjectMM.x, pageObjectMM.y);
+						if (isHitted)
 							return oAnnot;
 					}
 
-					if (pageObject.x >= oAnnot._origRect[0] && pageObject.x <= oAnnot._origRect[0] + nAnnotWidth &&
-						pageObject.y >= oAnnot._origRect[1] && pageObject.y <= oAnnot._origRect[1] + nAnnotHeight)
+					if (pageObject.x >= oAnnot._rect[0] && pageObject.x <= oAnnot._rect[0] + nAnnotWidth &&
+						pageObject.y >= oAnnot._rect[1] && pageObject.y <= oAnnot._rect[1] + nAnnotHeight)
 					{
 						// у маркап аннотаций ищем по quads (т.к. rect too wide)
 						if (oAnnot.IsTextMarkup())
@@ -2113,7 +1789,8 @@
 		};
 		this.canInteract = function() {
 			// не даем взаимодействовать с документом пока не произошла отрисовка
-			return this.scheduledRepaintTimer == null && this.isRepaint != true;
+			return this.scheduledRepaintTimer == null && this.isRepaint != true && this.initPaintDone == true && !this.isCMapLoading &&
+				(!Asc.editor.getPDFDoc().CollaborativeEditing.Get_GlobalLock() || Asc.editor.isViewMode);
 		};
 		this.getPageDrawingByMouse = function()
 		{
@@ -2157,6 +1834,15 @@
 
 		this.onMouseDown = function(e)
 		{
+			let oDoc = oThis.getPDFDoc();
+			let oDrDoc = oDoc.GetDrawingDocument();
+
+			if (oThis.thumbnails && oThis.thumbnails.isInFocus) {
+				oThis.thumbnails.isInFocus = false;
+				Asc.editor.sendEvent('asc_onCanPastePage', true);
+			}
+
+			Asc.editor.checkInterfaceElementBlur();
 			Asc.editor.checkLastWork();
 
 			if (oThis.touchManager && oThis.touchManager.checkTouchEvent(e))
@@ -2173,11 +1859,21 @@
 			oThis.isFocusOnThumbnails = false;
 			AscCommon.stopEvent(e);
 
-			let oDoc = oThis.getPDFDoc();
 			oDoc.HideComments();
 
 			var mouseButton = AscCommon.getMouseButton(e || {});
 			AscCommon.check_MouseDownEvent(e, true);
+
+			// down inside drawing (placeholders)
+			if (Asc.editor.canEdit()) {
+				let pos = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+				if (pos.Page !== -1) {
+					let is_drawing = oDrDoc.checkMouseDown_Drawing(pos, e === undefined ? true : false);
+					if (is_drawing === true) {
+						return;
+					}
+				}
+			}
 
 			if (mouseButton !== 0)
 			{
@@ -2191,13 +1887,17 @@
 					if (oThis.overlay.m_oContext)
 					{
 						let pageCoords = oThis.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+						if (!pageCoords) {
+							return false;
+						}
+
 						let isSelectionUse = oThis.file.isSelectionUse();
 						let selection = oThis.file.getSelection();
 						let pageSelQuads = pageCoords ? selection.quads.find(function(pageQuads) {
 							return pageQuads.page == pageCoords.index;
 						}) : null;
 
-						if (oThis.canSelectPageText() && pageCoords && isSelectionUse && AscPDF.IsInQuads(pageSelQuads.quads, pageCoords.x, pageCoords.y))
+						if (oThis.canSelectPageText() && (pageCoords && isSelectionUse && pageSelQuads) && AscPDF.IsInQuads(pageSelQuads.quads, pageCoords.x, pageCoords.y))
 						{
 							isInSelection = true;
 						}
@@ -2259,10 +1959,15 @@
 				oThis.MouseHandObject.Active = true;
 				oThis.MouseHandObject.ScrollX = oThis.scrollX;
 				oThis.MouseHandObject.ScrollY = oThis.scrollY;
+
 				return;
 			}
 
-			var pageObjectLogic = this.getPageByCoords2(oThis.mouseDownCoords.X, oThis.mouseDownCoords.Y);
+			let pageObjectLogic = this.getPageByCoords2(oThis.mouseDownCoords.X, oThis.mouseDownCoords.Y);
+			if (!pageObjectLogic) {
+				return false;
+			}
+
 			if (e.ShiftKey) {
 				this.file.Selection.IsSelection = true;
 				this.file.onMouseMove(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
@@ -2322,28 +2027,57 @@
 			AscCommon.check_MouseUpEvent(e);
 
 			let oDoc = oThis.getPDFDoc();
+			let oDrDoc = oDoc.GetDrawingDocument();
+
+			// up inside drawing (placeholders)
+			if (Asc.editor.canEdit()) {
+				let pos = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+				if (pos.Page !== -1) {
+					let is_drawing = oDrDoc.checkMouseUp_Drawing(pos);
+					if (is_drawing === true)
+						return;
+				}
+			}
+
 			oDoc.OnMouseUp(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, AscCommon.global_mouseEvent);
 
-			if (oThis.canSelectPageText())
+			if (oThis.canSelectPageText() && !oThis.MouseHandObject && !oDoc.mouseDownAnnot && !oDoc.mouseDownField)
 			{
-				if (!oThis.MouseHandObject && global_mouseEvent.ClickCount == 2 && !oDoc.mouseDownAnnot && !oDoc.mouseDownField)
-				{
-					var pageObjectLogic = oThis.getPageByCoords2(oThis.mouseDownCoords.X, oThis.mouseDownCoords.Y);
-					oThis.file.selectWholeWord(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+				let pageObjectLogic = oThis.getPageByCoords2(oThis.mouseDownCoords.X, oThis.mouseDownCoords.Y);
+				if (!pageObjectLogic) {
+					return false;
 				}
-				else if (!oThis.MouseHandObject && global_mouseEvent.ClickCount == 3 && !oDoc.mouseDownAnnot && !oDoc.mouseDownField)
-				{
-					var pageObjectLogic = oThis.getPageByCoords2(oThis.mouseDownCoords.X, oThis.mouseDownCoords.Y);
+				
+				if (global_mouseEvent.ClickCount == 2) {
+					oThis.file.selectWholeWord(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+					return;
+				}
+				else if (global_mouseEvent.ClickCount == 3) {
 					oThis.file.selectWholeRow(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+					return;
+				}
+				else if (global_mouseEvent.ClickCount == 4) {
+					oThis.file.selectWholePage(pageObjectLogic.index);
+					return;
 				}
 			}
 
 			// если было нажатие - то отжимаем
-			if (oThis.isMouseMoveBetweenDownUp)
-				oThis.file.onMouseUp();
-
-			if (oThis.MouseHandObject)
+			if (oThis.isMouseMoveBetweenDownUp) {
+				let pageObjectLogic = oThis.getPageByCoords2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+				oThis.file.onMouseUp(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+			}
+				
+			if (oThis.MouseHandObject) {
 				oThis.MouseHandObject.Active = false;
+
+				if (oThis.MouseHandObject.X == AscCommon.global_mouseEvent.X && oThis.MouseHandObject.Y == AscCommon.global_mouseEvent.Y) {
+					oThis.file.removeSelection();
+					oThis.file.onUpdateSelection();
+					oThis.file.onUpdateOverlay();
+				}
+			}
+				
 			oThis.isMouseMoveBetweenDownUp = false;
 
 			if (-1 !== oThis.timerScrollSelect)
@@ -2369,10 +2103,24 @@
 				return;
 
 			let oDoc = oThis.getPDFDoc();
+			let oDrDoc = oDoc.GetDrawingDocument();
 			AscCommon.check_MouseMoveEvent(e);
 
 			if (e && e.preventDefault)
 				e.preventDefault();
+
+			// move inside drawing (placeholders)
+			if (Asc.editor.canEdit()) {
+				let pos = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+				if (pos.Page !== -1) {
+					let is_drawing = oDrDoc.checkMouseMove_Drawing(pos, e === undefined ? true : false);
+					if (is_drawing === true) {
+						oDoc.UpdateCursorType(pos.X, pos.Y, pos.Page, global_mouseEvent);
+						oDrDoc.checkMouseMove_Drawing(pos, e === undefined);
+						return;
+					}
+				}
+			}
 
 			if (oThis.MouseHandObject)
 			{
@@ -2432,7 +2180,11 @@
 						// нажатая мышка - курсор всегда default (так как за eps вышли)
 						oThis.setCursorType("default");
 
-						var pageObjectLogic = oThis.getPageByCoords2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+						let pageObjectLogic = oThis.getPageByCoords2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+						if (!pageObjectLogic) {
+							return false;
+						}
+
 						oThis.file.onMouseMove(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
 					}
 					else
@@ -2476,52 +2228,33 @@
 				return false;
 			}
 
-			var delta  = 0;
-			var deltaX = 0;
-			var deltaY = 0;
+			let values = AscCommon.checkMouseWhell(e, {
+				isSupportBidirectional : false,
+				isAllowHorizontal : oThis.isVisibleHorScroll,
+				isUseMaximumDelta : true
+			});
+			
+			let oField = oThis.getPageFieldByMouse();
+			let isFieldScrollable = oField && [AscPDF.FIELD_TYPES.listbox, AscPDF.FIELD_TYPES.text].includes(oField.GetType());
+			let scrollField = false;
 
-			if (undefined != e.wheelDelta && e.wheelDelta != 0)
-			{
-				//delta = (e.wheelDelta > 0) ? -45 : 45;
-				delta = -45 * e.wheelDelta / 120;
-			}
-			else if (undefined != e.detail && e.detail != 0)
-			{
-				//delta = (e.detail > 0) ? 45 : -45;
-				delta = 45 * e.detail / 3;
-			}
+			if (isFieldScrollable) {
+				let oScrollInfo = oField.GetScrollInfo();
+				let isVisible = oScrollInfo && oScrollInfo.docElem.style.display !== 'none';
 
-			// New school multidimensional scroll (touchpads) deltas
-			deltaY = delta;
-
-			if (oThis.isVisibleHorScroll)
-			{
-				if (e.axis !== undefined && e.axis === e.HORIZONTAL_AXIS)
-				{
-					deltaY = 0;
-					deltaX = delta;
-				}
-
-				// Webkit
-				if (undefined !== e.wheelDeltaY && 0 !== e.wheelDeltaY)
-				{
-					//deltaY = (e.wheelDeltaY > 0) ? -45 : 45;
-					deltaY = -45 * e.wheelDeltaY / 120;
-				}
-				if (undefined !== e.wheelDeltaX && 0 !== e.wheelDeltaX)
-				{
-					//deltaX = (e.wheelDeltaX > 0) ? -45 : 45;
-					deltaX = -45 * e.wheelDeltaX / 120;
+				if (isVisible) {
+					let isLandscape = oThis.isLandscapePage(oField.GetPage());
+					let nStep = isLandscape ? oScrollInfo.scroll.settings.hscrollStep * (e.deltaX < 0 ? -1 : 1) : oScrollInfo.scroll.settings.vscrollStep * (e.deltaY < 0 ? -1 : 1);
+					
+					isLandscape ? oScrollInfo.scroll.scrollByX(nStep) : oScrollInfo.scroll.scrollByY(nStep);
+					scrollField = true;
 				}
 			}
 
-			deltaX >>= 0;
-			deltaY >>= 0;
-
-			if (0 != deltaX)
-				oThis.m_oScrollHorApi.scrollBy(deltaX, 0, false);
-			else if (0 != deltaY)
-				oThis.m_oScrollVerApi.scrollBy(0, deltaY, false);
+			if (!scrollField) {
+				if (values.x) oThis.m_oScrollHorApi.scrollBy(values.x, 0, false);
+				if (values.y) oThis.m_oScrollVerApi.scrollBy(0, values.y, false);
+			}
 
 			// здесь - имитируем моус мув ---------------------------
 			var _e   = {};
@@ -2624,9 +2357,9 @@
 			}
 		};
 
-		this.paint = function(formsCallBack, annotsCallback)
+		this.paint = function(onRepaintCallback, onAfterPaintCallback)
 		{
-			this.scheduleRepaint(formsCallBack, annotsCallback);
+			this.scheduleRepaint(onRepaintCallback, onAfterPaintCallback);
 		};
 		
 		this.getStructure = function()
@@ -2738,149 +2471,147 @@
 			}
 		};
 
-		this.onUpdateOverlay = function()
-		{
+		this.onUpdateOverlay = function() {
 			Asc.editor.checkLastWork();
+			if (!this.overlay || this.scheduledRepaintTimer != null) return;
 			
-			if (!this.overlay || this.scheduledRepaintTimer != null)
-				return;
-
-			let oDoc = this.getPDFDoc();
-			let oDrDoc = oDoc.GetDrawingDocument();
-			if (oDoc.fontLoader.isWorking() || this.IsOpenFormsInProgress)
-				return;
-
-			this.overlay.Clear()
-
-			if (!this.file)
-				return;
-
-			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
-				return;
-
-			// seletion
-			var ctx = this.overlay.m_oContext;
+			const oDoc = this.getPDFDoc();
+			const oDrDoc = oDoc.GetDrawingDocument();
+			if (oDoc.fontLoader.isWorking() || this.IsOpenFormsInProgress) return;
+			
+			this.overlay.Clear();
+			oDrDoc.AutoShapesTrack.PageIndex = -1;
+			
+			if (!this.file || this.startVisiblePage < 0 || this.endVisiblePage < 0) return;
+			
+			const ctx = this.overlay.m_oContext;
 			ctx.globalAlpha = 0.2;
+			
+			if (this.IsSearch) {
+				this.drawSearchHighlights(ctx, oDoc, oDrDoc);
+				this.drawCurrentSearchHighlight(ctx, oDoc, oDrDoc);
+			}
+			
+			this.drawSelection(ctx, oDoc, oDrDoc);
+	        this.drawPlaceholders();
 
-			if (this.IsSearch)
-			{
-				if (oDoc.SearchEngine.Show)
-				{
-					ctx.globalAlpha = 0.5;
-					ctx.fillStyle = "rgba(255,200,0,1)";
-					ctx.beginPath();
+			if (oDrDoc.MathTrack.IsActive()) {
+				const prevAlpha = ctx.globalAlpha;
+				ctx.globalAlpha = 1.0;
+				oDrDoc.DrawMathTrack(this.overlay);
+				ctx.globalAlpha = prevAlpha;
+			}
+			
+			this.drawForeignSelections(oDoc, oDrDoc, ctx);
+		};
+		
+		this.drawPlaceholders = function() {
+			const oDoc = this.getPDFDoc();
+			const oDrDoc = oDoc.GetDrawingDocument();
 
-					for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
-					{
-						var pageMatches = oDoc.SearchEngine.GetPdfPageMatches(i);
-						if (0 != pageMatches.length) {
-							oDrDoc.AutoShapesTrack.SetCurrentPage(i, true);
-							this.drawSearch(i, pageMatches);
-						}
-							
-					}
-
-					ctx.fill();
-					ctx.globalAlpha = 0.2;
-				}
-				ctx.beginPath();
-
-				if (this.CurrentSearchNavi && oDoc.SearchEngine.Show)
-				{
-					if (!(this.CurrentSearchNavi instanceof AscWord.Paragraph)) {
-						var pageNum  = this.CurrentSearchNavi[0].PageNum;
-						ctx.fillStyle = "rgba(51,102,204,255)";
-						if (pageNum >= this.startVisiblePage && pageNum <= this.endVisiblePage)
-						{
-							oDrDoc.AutoShapesTrack.SetCurrentPage(pageNum, true);
-							ctx.globalAlpha = 0.2;
-							this.drawSearchCur(pageNum, this.CurrentSearchNavi);
-						}
-					}
+			if (oDrDoc.placeholders.objects.length > 0) {
+				for (let indP = oDrDoc.m_lDrawingFirst; indP <= oDrDoc.m_lDrawingEnd; indP++) {
+					const oPage = oDrDoc.m_arrPages[indP];
+					const oPixelRect = {};
+					oPixelRect.left = AscCommon.AscBrowser.convertToRetinaValue(oPage.drawingPage.left, true);
+					oPixelRect.right = AscCommon.AscBrowser.convertToRetinaValue(oPage.drawingPage.right, true);
+					oPixelRect.top = AscCommon.AscBrowser.convertToRetinaValue(oPage.drawingPage.top, true);
+					oPixelRect.bottom = AscCommon.AscBrowser.convertToRetinaValue(oPage.drawingPage.bottom, true);
+					oDrDoc.placeholders.draw(this.overlay, indP, oPixelRect, oPage.width_mm, oPage.height_mm);
 				}
 			}
-
+		};
+		this.drawSearchHighlights = function(ctx, oDoc, oDrDoc) {
+			if (!oDoc.SearchEngine.Show) return;
+			ctx.globalAlpha = 0.5;
+			ctx.fillStyle = "rgba(255,200,0,1)";
+			ctx.beginPath();
+			for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++) {
+				const matches = oDoc.SearchEngine.GetPdfPageMatches(i);
+				if (matches.length) {
+					oDrDoc.AutoShapesTrack.SetCurrentPage(i, true);
+					this.drawSearch(i, matches);
+				}
+			}
+			ctx.fill();
+			ctx.globalAlpha = 0.2;
+		};
+		
+		this.drawCurrentSearchHighlight = function(ctx, oDoc, oDrDoc) {
+			if (this.CurrentSearchNavi && oDoc.SearchEngine.Show && !(this.CurrentSearchNavi instanceof AscWord.Paragraph)) {
+				const pageNum = this.CurrentSearchNavi[0].PageNum;
+				if (pageNum >= this.startVisiblePage && pageNum <= this.endVisiblePage) {
+					ctx.fillStyle = "rgba(51,102,204,255)";
+					oDrDoc.AutoShapesTrack.SetCurrentPage(pageNum, true);
+					ctx.globalAlpha = 0.2;
+					this.drawSearchCur(pageNum, this.CurrentSearchNavi);
+				}
+			}
+		};
+		
+		this.drawSelection = function(ctx, oDoc, oDrDoc) {
 			oDrDoc.private_StartDrawSelection(this.overlay);
+
+			ctx.fillStyle = "rgba(51,102,204,255)";
+			ctx.beginPath();
+			if (this.file.isSelectionUse()) {
+				for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++) {
+					const pageCoords = this.pageDetector.pages[i - this.startVisiblePage];
+					ctx.beginPath();
+					oDrDoc.AutoShapesTrack.SetCurrentPage(i, true);
+					ctx.globalAlpha = 0.2;
+					this.file.drawSelection(i, this.overlay, pageCoords.x, pageCoords.y);
+					ctx.fill();
+				}
+			}
 			
-			//if (!this.MouseHandObject)
-			{
-				ctx.fillStyle = "rgba(51,102,204,255)";
-				ctx.beginPath();
+			this.DrawingObjects.updateSelectionState();
+			
+			if (this.DrawingObjects.needUpdateOverlay()) {
+				oDrDoc.AutoShapesTrack.PageIndex = -1;
+				this.DrawingObjects.drawOnOverlay(oDrDoc.AutoShapesTrack);
+				oDrDoc.AutoShapesTrack.CorrectOverlayBounds();
+			}
+			else if (oDoc.mouseDownAnnot) {
+				let oController = Asc.editor.getPDFDoc().GetController();
+				let oContent = oController.getTargetDocContent();
 
-				if (this.file.isSelectionUse())
-				{
-					for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
-					{
-						var pageCoords = this.pageDetector.pages[i - this.startVisiblePage];
-						ctx.beginPath();
-						oDrDoc.AutoShapesTrack.SetCurrentPage(i, true);
-						ctx.globalAlpha = 0.2;
-						this.file.drawSelection(i, this.overlay, pageCoords.x, pageCoords.y);
-						ctx.fill();
-					}
-				}
-
-				this.DrawingObjects.updateSelectionState();
-
-				if (this.DrawingObjects.needUpdateOverlay())
-				{
-					oDrDoc.AutoShapesTrack.PageIndex = -1;
-					this.DrawingObjects.drawOnOverlay(oDrDoc.AutoShapesTrack);
-					oDrDoc.AutoShapesTrack.CorrectOverlayBounds();
-				}
-				else if (oDoc.mouseDownAnnot)
-				{
-					if (oDoc.mouseDownAnnot.IsFreeText() && oDoc.mouseDownAnnot.IsInTextBox() && oDoc.mouseDownAnnot.GetDocContent().IsSelectionUse()) {
-						ctx.beginPath();
-						oDrDoc.SetTextSelectionOutline(true);
-						oDoc.mouseDownAnnot.GetDocContent().DrawSelectionOnPage(0);
-						oDrDoc.private_EndDrawSelection();
-					}
-					if (oDoc.mouseDownAnnot.IsTextMarkup())
-					{
-						oDrDoc.AutoShapesTrack.SetCurrentPage(oDoc.mouseDownAnnot.GetPage(), true);
-						oDoc.mouseDownAnnot.DrawSelected(this.overlay);
-					}
-					else if (oDoc.mouseDownAnnot.IsComment() == false)
-					{
-						let nPage = oDoc.mouseDownAnnot.GetPage();
-						oDrDoc.AutoShapesTrack.PageIndex = nPage;
-						this.DrawingObjects.drawSelect(nPage);
-					}
-				}
-				else if (oDoc.activeDrawing) {
-					let nPage = oDoc.activeDrawing.GetPage();
+				if (oContent && oContent.IsSelectionUse()) {
+					ctx.beginPath();
 					oDrDoc.SetTextSelectionOutline(true);
+					oContent.DrawSelectionOnPage(0);
 					oDrDoc.private_EndDrawSelection();
-					oDrDoc.AutoShapesTrack.PageIndex = nPage;
+				}
+				else {
+					const nPage = oDoc.mouseDownAnnot.GetPage();
+					oDrDoc.AutoShapesTrack.SetCurrentPage(nPage, true);
 					this.DrawingObjects.drawSelect(nPage);
 				}
 			}
-			if (oDoc.activeForm && oDoc.activeForm.content && oDoc.activeForm.content.IsSelectionUse() && oDoc.activeForm.content.IsSelectionEmpty() == false)
-			{
+			else if (oDoc.activeDrawing || (oDoc.activeForm && oDoc.IsEditFieldsMode())) {
+				let oObj = oDoc.activeDrawing || oDoc.activeForm;
+				const nPage = oObj.GetPage();
+				oDrDoc.SetTextSelectionOutline(true);
+				oDrDoc.private_EndDrawSelection();
+				oDrDoc.AutoShapesTrack.PageIndex = nPage;
+				this.DrawingObjects.drawSelect(nPage);
+			}
+			else if (oDoc.activeForm && oDoc.activeForm.content && oDoc.activeForm.content.IsSelectionUse() && !oDoc.activeForm.content.IsSelectionEmpty()) {
 				ctx.beginPath();
 				oDoc.activeForm.content.DrawSelectionOnPage(0);
 				oDrDoc.private_EndDrawSelection();
 			}
-
-			if (oDrDoc.MathTrack.IsActive())
-			{
-				var dGlobalAplpha = ctx.globalAlpha;
-				ctx.globalAlpha = 1.0;
-				oDrDoc.DrawMathTrack(this.overlay);
-				ctx.globalAlpha = dGlobalAplpha;
-			}
-			
-			ctx.globalAlpha = 1.0;
-
-			for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
-			{
+		};
+		
+		this.drawForeignSelections = function(oDoc, oDrDoc, ctx) {
+			for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++) {
 				oDrDoc.AutoShapesTrack.SetCurrentPage(i, true);
 				ctx.globalAlpha = 1.0;
 				oDoc.Draw_ForeingSelection(i);
 				oDoc.CollaborativeEditing.Update_ForeignSelectedObjectsLabelsPositions(i);
 			}
 		};
+		
 
 		this.checkVisiblePages = function()
 		{
@@ -2943,14 +2674,14 @@
 			let oDoc = this.getPDFDoc();
 			Asc.editor.checkLastWork();
 			
-			if (oDoc.fontLoader.isFontLoadInProgress() || this.IsOpenFormsInProgress || AscCommon.CollaborativeEditing.waitingImagesForLoad) {
+			if (oDoc.fontLoader.isFontLoadInProgress() || this.IsOpenFormsInProgress || AscCommon.CollaborativeEditing.waitingImagesForLoad || this.isCMapLoading) {
 				this.paint();
-				return;
+				return false;
 			}
 			
 			if (!this.file || !this.file.isValid() || !this.canvas) {
 				this.paint();
-				return;
+				return false;
 			}
 
 			oDoc.UpdatePagesTransform();
@@ -2969,7 +2700,7 @@
 			
 			if (this._checkFontsOnPages(this.startVisiblePage, this.endVisiblePage) == false) {
 				this.paint();
-				return;
+				return false;
 			}
 
 			this.canvas.width = this.canvas.width;
@@ -3105,13 +2836,22 @@
 				this.blitPageToCtx(ctx, oImageToDraw, i);
 				this.pagesInfo.setPainted(i);
 				
-				if (this.Api.watermarkDraw)
-					this.Api.watermarkDraw.Draw(ctx, x, y, w, h);
+				if (this.Api.watermarkDraw) {
+					let dx = x;
+
+					if (this.isLandscapePage(i)) {
+						dx += (w - h) / 2;
+						this.Api.watermarkDraw.Draw(ctx, dx, y, h, w);
+					}
+					else {
+						this.Api.watermarkDraw.Draw(ctx, dx, y, w, h);
+					}
+				}
 			}
 			
 			this.isClearPages = false;
 			this.updateCurrentPage(this.pageDetector.getCurrentPage(this.currentPage));
-			let oActiveObj = oDoc.GetActiveObject();
+			let oActiveObj	= oDoc.GetActiveObject();
 
 			// выход из активного объекта если сместились на другую страницу
 			if (oActiveObj && this.pageDetector.pages.map(function(item) {
@@ -3123,12 +2863,24 @@
 			this._paintAnnots();
 			this._paintForms();
 			this._paintFormsHighlight();
-			this._paintFormsMarkers();
-			oDoc.UpdateInterface();
-			
+			oDoc.UpdateInterface(true);
+			oDoc.UpdateInterfaceTracks();
+			oDoc.UpdateSearch();
+
 			// Обязательно делаем в конце, т.к. во время отрисовки происходит пересчет
 			this._checkTargetUpdate();
+
+			this.initPaintDone = true;
+			return true;
 		};
+		this.afterPaintCallbacks = function() {
+			this.onAfterPaintCallback.forEach(function(callback) {
+				callback();
+			});
+			
+			// clear used callbacks
+			this.onAfterPaintCallback.length = 0;
+		}
 		this.updatePageDetector = function() {
 			this.pageDetector = new CCurrentPageDetector(this.canvas.width, this.canvas.height);
 
@@ -3227,12 +2979,10 @@
 		};
 		this.isLandscapePage = function(nPage) {
 			const angle = this.getPageRotate(nPage);
-			// Углы поворота, указывающие на ландшафтную ориентацию
-			const landscapeAngles = [90, -90, 270, -270];
-			return landscapeAngles.includes(angle);
+			return (0 !== angle % 180);
 		};
 		this.Get_PageLimits = function(nPage) {
-			let oPage = this.file.pages[nPage];
+			let oPage = this.file.pages[nPage] || this.file.pages[0];
 
 			return {
 				X: 0,
@@ -3282,7 +3032,10 @@
 			{
 				if (null === this.file.pages[i].text)
 				{
-					this.file.pages[i].text = this.file.getText(this.file.pages[i].originIndex);
+					if (undefined !== this.file.pages[i].originIndex) {
+						this.file.pages[i].text = this.file.getText(this.file.pages[i].originIndex);
+					}
+					
 					isCommands = true;
 				}
 			}
@@ -3297,13 +3050,14 @@
 						this.pagesInfo.countTextPages++;
 						continue;
 					}
-					this.file.pages[this.pagesInfo.countTextPages].text = this.file.getText(this.file.pages[this.pagesInfo.countTextPages].originIndex);
-					if (null !== this.file.pages[this.pagesInfo.countTextPages].text)
-					{
-						this.pagesInfo.countTextPages++;
-						isCommands = true;
-					}
 
+					let page = this.file.pages[this.pagesInfo.countTextPages];
+					if (undefined !== page.originIndex) {
+						page.text = this.file.getText(page.originIndex);
+						isCommands = true;
+					} 
+					
+					this.pagesInfo.countTextPages++;
 					break;
 				}
 			}
@@ -3437,7 +3191,11 @@
 		};
 		this.removeSelection = function()
 		{
-			var pageObjectLogic = this.getPageByCoords2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+			let pageObjectLogic = this.getPageByCoords2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+			if (!pageObjectLogic) {
+				return false;
+			}
+
 			this.file.onMouseDown(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
 			this.file.onMouseUp(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
 		};
@@ -3559,16 +3317,22 @@
 		{
 			var bRetValue	= false;
 			let oDoc		= this.getPDFDoc();
+			let oController	= oDoc.GetController();
 			let oDrDoc		= oDoc.GetDrawingDocument();
-
-			if (e.KeyCode === 112 && e.CtrlKey == true) {
-				editor.AddStampAnnot();
+			let oThumbnails	= this.thumbnails;
+			
+			let shortcutType = this.Api.getShortcut(e);
+			if (oDoc.executeShortcut(shortcutType))
+			{
+				bRetValue = keydownresult_PreventAll;
 			}
-			if (e.KeyCode === 8) // BackSpace
+			else if (e.KeyCode === 8) // BackSpace
 			{
 				oDoc.DoAction(function() {
 					oDoc.Remove(-1, e.CtrlKey == true);
 				}, AscDFH.historydescription_Document_BackSpaceButton);
+
+				bRetValue = true;
 			}
 			else if (e.KeyCode === 9) // Tab
 			{
@@ -3596,11 +3360,14 @@
 					else
 						this.SelectNextForm();
 				}
+
+				bRetValue = true;
 			}
 			else if (e.KeyCode === 13) // Enter
 			{
 				window.event.stopPropagation();
 				oDoc.EnterDown(e.ShiftKey === true);
+				bRetValue = true;
 			}
 			else if (e.KeyCode === 27) // Esc
 			{
@@ -3615,29 +3382,23 @@
 				}
 				else if (this.Api.isStartAddShape)
 				{
+					this.DrawingObjects.endTrackNewShape();
 					this.Api.sync_StartAddShapeCallback(false);
 					this.Api.sync_EndAddShape();
-					this.DrawingObjects.endTrackNewShape();
+				}
+				else if (this.Api.isRedactTool) {
+					this.Api.SetRedactTool(false);
 				}
 				else {
 					const oController = oDoc.GetController();
 					oController.resetSelection();
 					this.onUpdateOverlay();
-				oDoc.EscapeForm();
-				oDoc.EscapeForm();
-				
 					oDoc.EscapeForm();
 				
 					editor.sync_HideComment();
 				}
-			}
-			else if (e.KeyCode === 32) // Space
-			{
-				if (oDoc.activeForm)
-				{
-					
-				}
-				// to do включить checkbox/radio
+
+				bRetValue = true;
 			}
 			else if ( e.KeyCode == 33 ) // PgUp
 			{
@@ -3656,6 +3417,8 @@
 					this.m_oScrollVerApi.scrollByY(-this.height, false);
 					this.timerSync();
 				}
+
+				bRetValue = true;
 			}
 			else if ( e.KeyCode == 34 ) // PgDn
 			{
@@ -3679,24 +3442,50 @@
 					this.m_oScrollVerApi.scrollByY(this.height, false);
 					this.timerSync();
 				}
+
+				bRetValue = true;
 			}
 			else if ( e.KeyCode == 35 ) // End
 			{
-				if ( true === e.CtrlKey ) // Ctrl + End
-				{
-					this.m_oScrollVerApi.scrollToY(this.m_oScrollVerApi.maxScrollY, false);
+				if (oController.getTargetDocContent()) {
+					if (e.CtrlKey) {
+						oController.cursorMoveToEndPos(e.ShiftKey);
+					}
+					else {
+						oController.cursorMoveEndOfLine(e.ShiftKey);
+					}
+
+					bRetValue = true;
+					this.timerSync();
 				}
-				this.timerSync();
-				bRetValue = true;
+				else {
+					if ( true === e.CtrlKey ) {
+						this.m_oScrollVerApi.scrollToY(this.m_oScrollVerApi.maxScrollY, false);
+					}
+					this.timerSync();
+					bRetValue = true;
+				}
 			}
 			else if ( e.KeyCode == 36 ) // клавиша Home
 			{
-				if ( true === e.CtrlKey ) // Ctrl + Home
-				{
-					this.m_oScrollVerApi.scrollToY(0, false);
+				if (oController.getTargetDocContent()) {
+					if (e.CtrlKey) {
+						oController.cursorMoveToStartPos(e.ShiftKey);
+					}
+					else {
+						oController.cursorMoveStartOfLine(e.ShiftKey);
+					}
+
+					bRetValue = true;
+					this.timerSync();
 				}
-				this.timerSync();
-				bRetValue = true;
+				else {
+					if ( true === e.CtrlKey ) {
+						this.m_oScrollVerApi.scrollToY(0, false);
+					}
+					this.timerSync();
+					bRetValue = true;
+				}
 			}
 			else if ( e.KeyCode == 37 ) // Left Arrow
 			{
@@ -3751,35 +3540,18 @@
 			}
 			else if (e.KeyCode === 46) // Delete
 			{
-				oDoc.DoAction(function() {
-					oDoc.Remove(1, e.CtrlKey == true);
-				}, AscDFH.historydescription_Document_DeleteButton);
-			}
-			else if ( e.KeyCode == 65 && true === e.CtrlKey ) // Ctrl + A
-			{
-				oDoc.SelectAll();
-			}
-			else if ( e.KeyCode == 80 && true === e.CtrlKey ) // Ctrl + P + ...
-			{
-				this.Api.onPrint();
-				bRetValue = true;
-			}
-			else if ( e.KeyCode == 83 && true === e.CtrlKey ) // Ctrl + S + ...
-			{
-				this.Api.asc_Save(false);
-				bRetValue = true;
-			}
-			else if ( e.KeyCode == 89 && true === e.CtrlKey ) // Ctrl + Y
-			{
-				this.doc.DoRedo();
-				bRetValue = true;
-			}
-			else if ( e.KeyCode == 90 && true === e.CtrlKey ) // Ctrl + Z
-			{
-				this.doc.DoUndo();
-				bRetValue = true;
-			}
+				if (oThumbnails && oThumbnails.isInFocus) {
+					Asc.editor.asc_RemovePage();
+				}
+				else {
+					oDoc.DoAction(function() {
+						oDoc.Remove(1, e.CtrlKey == true);
+					}, AscDFH.historydescription_Document_DeleteButton);
+				}
 
+				bRetValue = true;
+			}
+			
 			oDoc.UpdateCopyCutState();
 			return bRetValue;
 		};
@@ -3850,7 +3622,7 @@
 				delete page.Rotate;
 
 			this.resize();
-			this.thumbnails && this.thumbnails.resize();
+			this.thumbnails && this.thumbnails.setNeedResize(true);
 		};
 
 		this.getPageRotate = function(pageNum)
@@ -3952,34 +3724,30 @@
 
 			let aForms		= this.pagesInfo.pages[i].fields != null ? this.pagesInfo.pages[i].fields : [];
 			let aDrawings	= this.pagesInfo.pages[i].drawings != null ? this.pagesInfo.pages[i].drawings : [];
-			let aFreeText	= this.pagesInfo.pages[i].annots != null ? this.pagesInfo.pages[i].annots.filter(function(annot) {
-				return annot.IsFreeText();
+			let aAnnotsWithText	= this.pagesInfo.pages[i].annots != null ? this.pagesInfo.pages[i].annots.filter(function(annot) {
+				return annot.IsFreeText() || annot.IsStamp();
 			}): [];
 
-			if (this.pagesInfo.pages[i].needRedrawForms)
-			{
-				aForms.forEach(function(field) {
-					if (field.IsNeedDrawFromStream() == false) {
-						let sFont = field.GetTextFontActual();
-						if (sFont)
-							fontMap[sFont] = true;
+			aForms.forEach(function(field) {
+				if (field.IsNeedDrawFromStream() == false) {
+					let sFont = field.GetTextFontActual();
+					if (sFont)
+						fontMap[sFont] = true;
+
+					if (field.IsHindiDigits() && !oDoc.HindiFontLoaded) {
+						oDoc.HindiFontLoaded = true;
+						AscFonts.FontPickerByCharacter.getFontsByString(String.fromCodePoint(0x0660, 0x0661, 0x0662, 0x0663, 0x0664, 0x0665, 0x0666, 0x0667, 0x0668, 0x0669));
 					}
-				});
-			}
+				}
+			});
 			
-			if (this.pagesInfo.pages[i].needRedrawDrawings)
-			{
-				aDrawings.forEach(function(drawing) {
-					drawing.GetAllFonts(fontMap);
-				});
-			}
+			aDrawings.forEach(function(drawing) {
+				drawing.GetAllFonts(fontMap);
+			});
 			
-			if (this.pagesInfo.pages[i].needRedrawAnnots)
-			{
-				aFreeText.forEach(function(annot) {
-					annot.GetAllFonts(fontMap);
-				});
-			}
+			aAnnotsWithText.forEach(function(annot) {
+				annot.GetAllFonts(fontMap);
+			});
 		}
 
 		let oThis = this;
@@ -4160,39 +3928,13 @@
 					if (field.GetType() == AscPDF.FIELD_TYPES.combobox)
 						field.DrawMarker(oCtx);
 					else if (field.GetType() == AscPDF.FIELD_TYPES.text && field.IsDateFormat()) {
-						field.IsNeedDrawHighlight() == false && field.DrawDateMarker(oCtx);
+						field.IsNeedDrawHighlight() == false && field.DrawMarker(oCtx);
 					}
 				});
 			}
 		}
 
 		oCtx.restore();
-	};
-	CHtmlPage.prototype._paintFormsMarkers = function()
-	{
-		return;
-		let oCtx = this.canvasForms.getContext("2d");
-		for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
-		{
-			let page = this.drawingPages[i];
-			if (!page)
-				break;
-
-			let aForms = this.pagesInfo.pages[i].fields != null ? this.pagesInfo.pages[i].fields : null;
-			
-			if (!aForms)
-				continue;
-			
-			if (this.pagesInfo.pages[i].fields != null) {
-				this.pagesInfo.pages[i].fields.forEach(function(field) {
-					if (field.GetType() == AscPDF.FIELD_TYPES.combobox)
-						field.DrawMarker(oCtx);
-					else if (field.GetType() == AscPDF.FIELD_TYPES.text && field.IsDateFormat()) {
-						field.IsNeedDrawHighlight() == false && field.DrawDateMarker(oCtx);
-					}
-				});
-			}
-		}
 	};
 	// возвращает видимый рект страницы (процентах от полной), не учитывая поворот
 	CHtmlPage.prototype.getViewingRect = function(nPage) {
@@ -4294,6 +4036,9 @@
 		image.requestWidth = nWidthPx;
 		image.requestHeight = nHeightPx;
 
+		if (oFile.type !== 0)
+			return image;
+
 		let ctx = image.getContext('2d');
 
 		this._drawDrawingsOnCtx(nPage, ctx, true);
@@ -4329,7 +4074,7 @@
 		this._drawDrawingsOnCtx(nPage, ctx);
 		this._drawMarkupAnnotsOnCtx(nPage, ctx);
 		this._drawAnnotsOnCtx(nPage, ctx);
-		this._drawFieldsOnCtx(nPage, ctx);
+		this._drawFieldsOnCtx(nPage, ctx, false, true);
 
 		return ctx.canvas;
 	};
@@ -4363,14 +4108,14 @@
             });
         }
     };
-    CHtmlPage.prototype._drawFieldsOnCtx = function(nPage, ctx, isThumbnails) {
+    CHtmlPage.prototype._drawFieldsOnCtx = function(nPage, ctx, isThumbnails, isSkipEditShapes) {
 		let oDoc		= this.getPDFDoc();
         let widthPx		= ctx.canvas.width;
         let heightPx    = ctx.canvas.height;
         
         let oGraphicsPDF = new AscPDF.CPDFGraphics();
 		oGraphicsPDF.isThumbnails = isThumbnails;
-        oGraphicsPDF.Init(ctx, widthPx, heightPx, this.file.getPageWidth(nPage) , this.file.getPageHeight(nPage));
+		oGraphicsPDF.Init(ctx, widthPx, heightPx, this.file.getPageWidth(nPage) , this.file.getPageHeight(nPage));
         oGraphicsPDF.SetCurPage(nPage);
 
         let oGraphicsWord = new AscCommon.CGraphics();
@@ -4378,6 +4123,7 @@
         oGraphicsWord.m_oFontManager = AscCommon.g_fontManager;
         oGraphicsWord.setEndGlobalAlphaColor(255, 255, 255);
         oGraphicsWord.transform(1, 0, 0, 1, 0, 0);
+		oGraphicsWord.isSkipEditShapes = isSkipEditShapes;
         
         if (this.pagesInfo.pages[nPage].fields != null) {
             this.pagesInfo.pages[nPage].fields.forEach(function(field) {
@@ -4408,6 +4154,9 @@
 	};
 	CHtmlPage.prototype.createComponents = function()
 	{
+		if (AscCommon.g_inputContext)
+			AscCommon.g_inputContext = null;
+
 		var elements = "<div id=\"id_main\" class=\"block_elem\" style=\"touch-action:none;-ms-touch-action:none;-moz-user-select:none;user-select:none;-webkit-user-select:none;background-color:" + AscCommon.GlobalSkin.BackgroundColor + ";overflow:hidden;\" UNSELECTABLE=\"on\">";
 		elements += "<canvas id=\"id_viewer\" class=\"block_elem\" style=\"touch-action:none;-ms-touch-action:none;-moz-user-select:none;user-select:none;-webkit-user-select:none;left:0px;top:0px;width:100;height:100;\"></canvas>";
 		elements += "<canvas id=\"id_forms\" class=\"block_elem\" style=\"touch-action:none;-ms-touch-action:none;-moz-user-select:none;user-select:none;-webkit-user-select:none;left:0px;top:0px;width:100;height:100;\"></canvas>";
@@ -4458,6 +4207,9 @@
 			return;
 
 		AscCommon.AscBrowser.checkZoom();
+		if (isDisablePaint) {
+			this.disabledPaintOnScroll = true;
+		}
 
 		let oThis		= this;
 		let oEditorPage	= this.Api.WordControl;
@@ -4590,7 +4342,7 @@
 		}
 		
 		if (this.thumbnails)
-			this.thumbnails.resize();
+			this.thumbnails.setNeedResize(true);
 		
 		if (true !== isDisablePaint)
 			this.timerSync();
@@ -4608,6 +4360,10 @@
 		}
 		else {
 			this.getPDFDoc().UpdatePagesTransform();
+		}
+
+		if (isDisablePaint) {
+			this.disabledPaintOnScroll = false;
 		}
 	};
 	CHtmlPage.prototype.repaintFormsOnPage = function(pageIndex)
@@ -4658,19 +4414,40 @@
 		let oFile		= this.file;
 
 		// по информации аннотаций определим какие были удалены
-		let oDoc		= this.getPDFDoc();
+		let oDoc = this.getPDFDoc();
 		oDoc.BlurActiveObject();
+		oDoc.RecalculateAll();
 		
 		let aAnnotsInfo	= oFile.nativeFile["getAnnotationsInfo"]();
+		let aFormsInfo = this.file.nativeFile["getInteractiveFormsInfo"]();
+
 		let aDeleted	= [];
 		aAnnotsInfo.forEach(function(oInfo) {
 			if (oInfo["StateModel"] == AscPDF.TEXT_ANNOT_STATE_MODEL.Review)
 				return;
 			
-			let isInDoc = oDoc.annots.find(function(annot) {
+			let oAnnot = oDoc.annots.find(function(annot) {
 				return annot.GetApIdx() == oInfo["AP"]["i"] || annot._replies.find(function(reply) {
 					return reply.GetApIdx() == oInfo["AP"]["i"];
 				});
+			});
+
+			// delete applied annots
+			if (oAnnot && oAnnot.IsRedact() && oAnnot.GetRedactId()) {
+				oAnnot = null;
+			}
+
+			if (!oAnnot) {
+				if (aDeleted[oInfo["page"]] == null) {
+					aDeleted[oInfo["page"]] = [];
+				}
+
+				aDeleted[oInfo["page"]].push(oInfo["AP"]["i"]);
+			}
+		});
+		aFormsInfo["Fields"] && aFormsInfo["Fields"].forEach(function(oInfo) {
+			let isInDoc = oDoc.widgets.find(function(widget) {
+				return widget.GetApIdx() == oInfo["AP"]["i"];
 			});
 
 			if (!isInDoc) {
@@ -4682,13 +4459,8 @@
 			}
 		});
 
-		// edit		- 0
-		// add		- 1
-		// delete	- 2
-
-		function writePageInfo(nType, curIndex, originIndex) {
-			if (!oMemory)
-			{
+		function checkMemory() {
+			if (!oMemory) {
 				oMemory = new AscCommon.CMemory(true);
 				oMemory.Init(memoryInitSize);
 				oMemory.images = [];
@@ -4698,14 +4470,68 @@
 				oMemory.WriteByte("P".charCodeAt(0));
 				oMemory.WriteByte("D".charCodeAt(0));
 				oMemory.WriteByte("F".charCodeAt(0));
+
+				oMemory.isForSplit = false;
+				oMemory.isCopyPaste = false;
 			}
+		}
+
+		checkMemory();
+		
+		if (oDoc.HasAppliedRedact()) {
+			oMemory.WriteLong(1);
+			oMemory.WriteByte(AscPDF.CommandType.saveModeNew);
+		}
+		
+		if (oDoc.mergedPagesData.length != 0) {
+			checkMemory();
+
+			for (let i = 0; i < oDoc.mergedPagesData.length; i++) {
+				let oPrevData = oDoc.mergedPagesData[i - 1];
+				let oData = oDoc.mergedPagesData[i];
+				let aUint8Array = oData.binary;
+
+				let nMaxIdx = oData.maxId;
+				if (oPrevData && oPrevData.maxId == oData.maxId) {
+					nMaxIdx = 0; // means has no changes after prev merge
+				}
+
+				let nStartPos = oMemory.GetCurPosition();
+				oMemory.Skip(4);
+				oMemory.WriteByte(AscPDF.CommandType.mergePages);
+				oMemory.WriteLong(aUint8Array.length);
+				oMemory.WriteBuffer(aUint8Array, 0, aUint8Array.length);
+				oMemory.WriteLong(nMaxIdx);
+				oMemory.WriteString('Merged_' + i);
+				let nEndPos = oMemory.GetCurPosition();
+				oMemory.Seek(nStartPos);
+				oMemory.WriteLong(nEndPos - nStartPos);
+				oMemory.Seek(nEndPos);
+			}
+		}
+
+		// edit		- 0
+		// add		- 1
+		// delete	- 2
+
+		function writePageInfo(operation, originIndex) {
+			checkMemory();
+
+			let nCommandType = operation[0];
+			let curIndex = operation[1];
 
 			let nStartPos = oMemory.GetCurPosition();
 			oMemory.Skip(4);
-			oMemory.WriteByte(nType);
+			oMemory.WriteByte(nCommandType);
 			oMemory.WriteLong(originIndex != undefined ? originIndex : curIndex);
 			
-			if (nType == 0 || nType == 1) {
+			let oPageInfo = aPagesInfo[curIndex];
+
+			if ([AscPDF.CommandType.editPage, AscPDF.CommandType.addPage].includes(nCommandType)) {
+				if (checkNeedRedactPage(oPageInfo)) {
+					writePageRedactsInfo(oPageInfo);
+				}
+
 				let nRotAngle = this.getPageRotate(curIndex);
 				let bClearPage = !!oFile.pages[curIndex].isRecognized;
 				
@@ -4714,14 +4540,15 @@
 				oMemory.WriteLong(nRotAngle);
 
 				// edit page
-				if (nType == 0) {
+				if (nCommandType == AscPDF.CommandType.editPage) {
 					if (bClearPage) {
 						oMemory.WriteByte(AscCommon.CommandType.ctPageClear);
 						oMemory.WriteLong(4);
 					}
 				}
+				
 				// add page
-				if (nType == 1) {
+				if (nCommandType == AscPDF.CommandType.addPage) {
 					oMemory.WriteByte(AscCommon.CommandType.ctPageWidth);
 					oMemory.WriteDouble(oFile.pages[curIndex].W);
 					
@@ -4729,26 +4556,38 @@
 					oMemory.WriteDouble(oFile.pages[curIndex].H);
 				}
 			}
-			
-			// remove page
-			if (nType == 2) {
+			else if (nCommandType == AscPDF.CommandType.movePage) {
+				let nNewPos = operation[2];
+				oMemory.WriteLong(nNewPos);
 				let nEndPos = oMemory.GetCurPosition();
-				// длина комманд на стринице
+				oMemory.Seek(nStartPos);
+				oMemory.WriteLong(nEndPos - nStartPos);
+				oMemory.Seek(nEndPos);
+
+				return;
+			}
+			// remove page
+			else if (nCommandType == AscPDF.CommandType.removePage) {
+				let nEndPos = oMemory.GetCurPosition();
 				oMemory.Seek(nStartPos);
 				oMemory.WriteLong(nEndPos - nStartPos);
 				oMemory.Seek(nEndPos);
 				return;
 			}
 			
-			let oPageInfo = aPagesInfo[curIndex];
 			let oRenderer = this.InitDocRenderer(oMemory, curIndex);
 
 			// annots
 			if (oPageInfo.annots) {
 				for (let nAnnot = 0; nAnnot < oPageInfo.annots.length; nAnnot++) {
+					// dont write applied redact annots 
+					if (oPageInfo.annots[nAnnot].IsRedact() && oPageInfo.annots[nAnnot].GetRedactId()) {
+						continue;
+					}
+
 					oPageInfo.annots[nAnnot].IsChanged() && oPageInfo.annots[nAnnot].WriteToBinary(oMemory);
 					oPageInfo.annots[nAnnot].GetReplies().forEach(function(reply) {
-						reply.IsChanged() && reply.WriteToBinary(oMemory); 
+						(reply.IsChanged() || !oMemory.docRenderer) && reply.WriteToBinary(oMemory);
 					});
 				}
 			}
@@ -4809,6 +4648,12 @@
 					oMemory.WriteLong(nEndPos - nStrLengthPos - 4); // вычитаем 4 так как должна быть длина строки, без учета команды длины
 					oMemory.Seek(nEndPos);
 
+					let aRedactIds = oTextShape.GetRedactIds();
+					oMemory.WriteLong(aRedactIds.length);
+					aRedactIds.forEach(function(id) {
+						oMemory.WriteString(id);
+					});
+
 					// запись длины комманд
 					nEndPos = oMemory.GetCurPosition();
 					oMemory.Seek(nStartPos);
@@ -4824,41 +4669,135 @@
 			}
 
 			let nEndPos = oMemory.GetCurPosition();
-			// длина комманд на стринице
 			oMemory.Seek(nStartPos);
 			oMemory.WriteLong(nEndPos - nStartPos);
 			oMemory.Seek(nEndPos);
 		}
 
-		function generateOperations(originalPageCount, finalPages) {
-			const operations = [];
-			let currentPageCount = originalPageCount;
-		  
-			// Сначала обрабатываем удаления
-			const finalPageIndexes = finalPages.flatMap(function(page) {
-				return page.originIndex !== undefined ? [page.originIndex] : [];
+		function writePageRedactsInfo(oPageInfo) {
+			oMemory.WriteByte(AscCommon.CommandType.ctRedact);
+
+			let nStartPos = oMemory.GetCurPosition();
+			oMemory.Skip(4);
+			
+			let sPageId = oPageInfo.GetId();
+			let aPageRedactsData = oDoc.appliedRedactsData.filter(function(data) {
+				return sPageId == data.pageId;
 			});
-			let deletedCount = 0; // Считаем количество удаленных страниц для корректировки индексов
-			for (let i = 0; i < originalPageCount; i++) {
-				if (!finalPageIndexes.includes(i)) {
-					// Используем i - deletedCount для корректировки индекса страницы, учитывая уже удаленные страницы
-					operations.push([i - deletedCount, 2]);
-					deletedCount++;
-					currentPageCount--;
+
+			oMemory.WriteLong(aPageRedactsData.length);
+			
+			aPageRedactsData.forEach(function(data) {
+				// id
+				oMemory.WriteString(data.redactId);
+
+				// rects
+				oMemory.WriteLong(data.quads.length / 8);
+				data.quads.forEach(function(measure) {
+					oMemory.WriteDouble(measure);
+				});
+
+				// reserved flags
+				let nFlagsPos = oMemory.GetCurPosition();
+				let nFlags = 0;
+				oMemory.Skip(4);
+
+				// render
+				nFlags |= (1 << 0);
+				let nRenderLengthPos = oMemory.GetCurPosition();
+				oMemory.Skip(4);
+				oMemory.WriteBuffer(data.binary, 0, data.binary.length);
+
+				let nEndPos = oMemory.GetCurPosition();
+
+				// flags
+				oMemory.Seek(nFlagsPos);
+				oMemory.WriteLong(nFlags);
+				oMemory.Seek(nEndPos);
+
+				// render length
+				oMemory.Seek(nRenderLengthPos);
+				oMemory.WriteLong(nEndPos - nRenderLengthPos);
+				oMemory.Seek(nEndPos);
+			});
+			
+			// total command size
+			let nEndPos = oMemory.GetCurPosition();
+			oMemory.Seek(nStartPos);
+			oMemory.WriteLong(nEndPos - nStartPos);
+			oMemory.Seek(nEndPos);
+		}
+
+		function checkNeedRedactPage(oPageInfo) {
+			if (!oPageInfo) {
+				return false;
+			}
+			
+			if (oPageInfo.annots.find(function(annot) {
+				return annot.IsRedact() && annot.GetRedactId();
+			})) {
+				return true;
+			}
+
+			return false;
+		}
+
+		function generateOperations(originalPageCount, finalPages) {
+			var operations = [];
+		
+			// 1. Collect a list of old page indexes that are needed in the final document
+			var finalOriginIndexes = [];
+			for (var i = 0; i < finalPages.length; i++) {
+				if (finalPages[i].originIndex !== undefined) {
+					finalOriginIndexes.push(finalPages[i].originIndex);
 				}
 			}
-		  
-			// Обрабатываем добавления
-			// Учитываем, что после удалений индексы могут измениться, поэтому используем смещение
-			let addedPagesCount = 0; // Количество добавленных страниц для корректировки индекса вставки
-			finalPages.forEach(function(page, index) {
-				if (page.originIndex === undefined) { // Если страница новая (нет originIndex)
-					// Корректируем индекс для вставки, учитывая удаления и уже добавленные страницы
-					operations.push([index, 1]);
-					addedPagesCount++;
+		
+			// 2. Remove pages that are not present in the finalPages list
+			var deletedCount = 0;
+			for (var i = 0; i < originalPageCount; i++) {
+				if (finalOriginIndexes.indexOf(i) === -1) {
+					operations.push([AscPDF.CommandType.removePage, i - deletedCount]);
+					deletedCount++;
 				}
-			});
-		  
+			}
+		
+			// 3. Create an array of "remaining" old pages (after virtual deletion)
+			var remainingOriginPages = [];
+			for (var i = 0; i < originalPageCount; i++) {
+				if (finalOriginIndexes.indexOf(i) !== -1) {
+					remainingOriginPages.push(i);
+				}
+			}
+		
+			// 4. Determine the required order of old pages in the final document
+			var finalOldOrder = [];
+			for (var i = 0; i < finalPages.length; i++) {
+				if (finalPages[i].originIndex !== undefined) {
+					finalOldOrder.push(finalPages[i].originIndex);
+				}
+			}
+		
+			// 5. Rearrange old pages to match finalOldOrder
+			var pagesCopy = remainingOriginPages.slice();
+			for (var targetIndex = 0; targetIndex < finalOldOrder.length; targetIndex++) {
+				var pageNeeded = finalOldOrder[targetIndex];
+				var currentIndex = pagesCopy.indexOf(pageNeeded);
+		
+				if (currentIndex !== targetIndex) {
+					operations.push([AscPDF.CommandType.movePage, currentIndex, targetIndex]);
+					pagesCopy.splice(currentIndex, 1);
+					pagesCopy.splice(targetIndex, 0, pageNeeded);
+				}
+			}
+		
+			// 6. Insert new pages (where originIndex === undefined)
+			for (var i = 0; i < finalPages.length; i++) {
+				if (finalPages[i].originIndex === undefined) {
+					operations.push([AscPDF.CommandType.addPage, i]);
+				}
+			}
+		
 			return operations;
 		}
 
@@ -4866,18 +4805,37 @@
 			let aDrawings		= aPagesInfo[nPage].drawings;
 			let aAnnots			= aPagesInfo[nPage].annots;
 			let aForms			= aPagesInfo[nPage].fields;
-			let aPageDeleted	= aDeleted[nPage] || [];
 			let nOriginIndex	= oFile.pages[nPage].originIndex;
+			let aDeletedObj		= aDeleted[nOriginIndex] || [];
 			let nOrigRotAngle	= oFile.pages[nPage].originRotate;
 			let nRotAngle		= oFile.pages[nPage].Rotate;
 
-			return nOriginIndex != undefined && (nRotAngle != nOrigRotAngle || aDrawings.length != 0 || aAnnots.length != 0 || aForms.length != 0 || aPageDeleted.length != 0);
+			let bNeedEdit = false;
+
+			if (nOriginIndex == undefined) {
+				return false;
+			}
+
+			if (nRotAngle != nOrigRotAngle) bNeedEdit = true;
+			if (aDrawings.length != 0) bNeedEdit = true;
+			if (aAnnots.find(function(annot) {
+				let aReplies = annot.GetReplies();
+				return annot.IsChanged() || aReplies.find(function(reply) {
+					return reply.IsChanged();
+				});
+			})) bNeedEdit = true;
+			if (aForms.find(function(form) {
+				return form.IsChanged();
+			})) bNeedEdit = true;
+			if (aDeletedObj.length != 0) bNeedEdit = true;
+
+			return bNeedEdit;
 		}
 
 		// сначала edit исходных страниц
 		for (let i = 0; i < aPagesInfo.length; i++) {
 			if (checkNeedEditOrigPage(i)) {
-				writePageInfo.call(this, 0, i, oFile.pages[i].originIndex);
+				writePageInfo.call(this, [AscPDF.CommandType.editPage, i], oFile.pages[i].originIndex);
 			}
 		}
 
@@ -4886,7 +4844,30 @@
 
 		// пишем по порядку
 		for (let i = 0; i < aOrder.length; i++) {
-			writePageInfo.call(this, aOrder[i][1], aOrder[i][0], undefined);
+			writePageInfo.call(this, aOrder[i], undefined);
+		}
+
+		if (!oMemory) {
+			let isParentsChanged = false;
+			oDoc.widgets.forEach(function(widget) {
+				let oParent = widget.GetParent();
+				while (oParent) {
+					if (oParent.IsChanged()) {
+						isParentsChanged = true;
+						break;
+					}
+
+					oParent = oParent.GetParent();
+				}
+			});
+
+			if (isParentsChanged) {
+				checkMemory();
+			}
+		}
+
+		if (this.scheduledRepaintTimer == null) {
+			oDoc.UpdateInterface();
 		}
 
 		if (oMemory) {
@@ -4894,7 +4875,7 @@
 			oMemory.Skip(4);
 
 			// parents and CO (calculaction order)
-			oMemory.WriteByte(3);
+			oMemory.WriteByte(AscPDF.CommandType.widgetInfo);
 			oMemory.WriteByte(AscCommon.CommandType.ctWidgetsInfo);
 			let nPosForLenght = oMemory.GetCurPosition();
 			oMemory.Skip(4);
@@ -4908,10 +4889,442 @@
 			let nPosForParentLenght = oMemory.GetCurPosition();
 			oMemory.Skip(4);
 			let nParents = 0;
-			oDoc.widgetsParents.forEach(function(field) {
-				if (field.IsChanged()) {
-					nParents++;
-					field.WriteToBinaryAsParent(oMemory);
+
+			let aWritedParents = [];
+			oDoc.widgets.forEach(function(widget) {
+				let oParent = widget.GetParent();
+				while (oParent) {
+					if (oParent.IsChanged() && !aWritedParents.includes(oParent)) {
+						nParents++;
+						oParent.WriteToBinaryAsParent(oMemory);
+						aWritedParents.push(oParent);
+					}
+
+					oParent = oParent.GetParent();
+				}
+			});
+
+			let nEndPos = oMemory.GetCurPosition();
+			
+			// количество изменённых родителей
+			oMemory.Seek(nPosForParentLenght);
+			oMemory.WriteLong(nParents);
+			oMemory.Seek(nEndPos);
+
+			// пишем изображения
+			oMemory.WriteLong(oMemory.images.length);
+			for (let i = 0; i < oMemory.images.length; i++) {
+				oMemory.WriteStringA(oMemory.images[i]);
+			}
+
+			nEndPos = oMemory.GetCurPosition();
+
+			// длина комманд с информацией о родителях, CO и картинках
+			oMemory.Seek(nPosForLenght);
+			oMemory.WriteLong(nEndPos - nPosForLenght);
+			oMemory.Seek(nEndPos);
+
+			// Общая длина комманд
+			oMemory.Seek(nStartPos);
+			oMemory.WriteLong(nEndPos - nStartPos);
+			oMemory.Seek(nEndPos);
+			
+			return new Uint8Array(oMemory.data.buffer, 0, oMemory.GetCurPosition());
+		}
+			
+		return null;
+	};
+	CHtmlPage.prototype.SaveForSplit = function()
+	{
+		let memoryInitSize	= 1024 * 500; // 500Kb
+		let oMemory			= null;
+
+		let aPagesInfo	= this.pagesInfo.pages;
+		let oFile		= this.file;
+
+		// по информации аннотаций определим какие были удалены
+		let oDoc = this.getPDFDoc();
+		oDoc.BlurActiveObject();
+		
+		let aAnnotsInfo	= oFile.nativeFile["getAnnotationsInfo"]();
+		let aFormsInfo = this.file.nativeFile["getInteractiveFormsInfo"]();
+
+		let aDeleted	= [];
+		aAnnotsInfo.forEach(function(oInfo) {
+			if (oInfo["StateModel"] == AscPDF.TEXT_ANNOT_STATE_MODEL.Review)
+				return;
+			
+			let isInDoc = oDoc.annots.find(function(annot) {
+				return annot.GetApIdx() == oInfo["AP"]["i"] || annot._replies.find(function(reply) {
+					return reply.GetApIdx() == oInfo["AP"]["i"];
+				});
+			});
+
+			if (!isInDoc) {
+				if (aDeleted[oInfo["page"]] == null) {
+					aDeleted[oInfo["page"]] = [];
+				}
+
+				aDeleted[oInfo["page"]].push(oInfo["AP"]["i"]);
+			}
+		});
+		aFormsInfo["Fields"] && aFormsInfo["Fields"].forEach(function(oInfo) {
+			let isInDoc = oDoc.widgets.find(function(widget) {
+				return widget.GetApIdx() == oInfo["AP"]["i"];
+			});
+
+			if (!isInDoc) {
+				if (aDeleted[oInfo["page"]] == null) {
+					aDeleted[oInfo["page"]] = [];
+				}
+
+				aDeleted[oInfo["page"]].push(oInfo["AP"]["i"]);
+			}
+		});
+
+		function checkMemory() {
+			if (!oMemory) {
+				oMemory = new AscCommon.CMemory(true);
+				oMemory.Init(memoryInitSize);
+				oMemory.images = [];
+
+				// compiled changes signature
+				oMemory.WriteByte("%".charCodeAt(0));
+				oMemory.WriteByte("P".charCodeAt(0));
+				oMemory.WriteByte("D".charCodeAt(0));
+				oMemory.WriteByte("F".charCodeAt(0));
+
+				oMemory.isForSplit = true;
+				oMemory.isCopyPaste = false;
+			}
+		}
+
+		function checkNeedRedactPage(oPageInfo) {
+			if (!oPageInfo) {
+				return false;
+			}
+
+			if (oPageInfo.annots.find(function(annot) {
+				return annot.IsRedact() && annot.GetRedactId();
+			})) {
+				return true;
+			}
+
+			return false;
+		}
+
+		function writePageRedactsInfo(oPageInfo) {
+			oMemory.WriteByte(AscCommon.CommandType.ctRedact);
+
+			let nStartPos = oMemory.GetCurPosition();
+			oMemory.Skip(4);
+			
+			let sPageId = oPageInfo.GetId();
+			let aPageRedactsData = oDoc.appliedRedactsData.filter(function(data) {
+				return sPageId == data.pageId;
+			});
+
+			oMemory.WriteLong(aPageRedactsData.length);
+			
+			aPageRedactsData.forEach(function(data) {
+				// id
+				oMemory.WriteString(data.redactId);
+
+				// rects
+				oMemory.WriteLong(data.quads.length / 8);
+				data.quads.forEach(function(measure) {
+					oMemory.WriteDouble(measure);
+				});
+
+				// reserved flags
+				let nFlagsPos = oMemory.GetCurPosition();
+				let nFlags = 0;
+				oMemory.Skip(4);
+
+				// render
+				nFlags |= (1 << 0);
+				let nRenderLengthPos = oMemory.GetCurPosition();
+				oMemory.Skip(4);
+				oMemory.WriteBuffer(data.binary, 0, data.binary.length);
+
+				let nEndPos = oMemory.GetCurPosition();
+
+				// flags
+				oMemory.Seek(nFlagsPos);
+				oMemory.WriteLong(nFlags);
+				oMemory.Seek(nEndPos);
+
+				// render length
+				oMemory.Seek(nRenderLengthPos);
+				oMemory.WriteLong(nEndPos - nRenderLengthPos);
+				oMemory.Seek(nEndPos);
+			});
+			
+			// total command size
+			let nEndPos = oMemory.GetCurPosition();
+			oMemory.Seek(nStartPos);
+			oMemory.WriteLong(nEndPos - nStartPos);
+			oMemory.Seek(nEndPos);
+		}
+
+		// edit		- 0
+		// add		- 1
+		// delete	- 2
+
+		function writePageInfo(operation, originIndex) {
+			checkMemory();
+
+			let nCommandType = operation[0];
+			let curIndex = operation[1];
+
+			let nStartPos = oMemory.GetCurPosition();
+			oMemory.Skip(4);
+			oMemory.WriteByte(nCommandType);
+			oMemory.WriteLong(originIndex != undefined ? originIndex : curIndex);
+			
+			let oPageInfo = aPagesInfo[curIndex];
+			
+			if ([AscPDF.CommandType.editPage, AscPDF.CommandType.addPage].includes(nCommandType)) {
+				if (checkNeedRedactPage(oPageInfo)) {
+					writePageRedactsInfo(oPageInfo);
+				}
+
+				let nRotAngle = this.getPageRotate(curIndex);
+				let bClearPage = !!oFile.pages[curIndex].isRecognized;
+				
+				oMemory.WriteByte(AscCommon.CommandType.ctPageRotate);
+				oMemory.WriteLong(8);
+				oMemory.WriteLong(nRotAngle);
+
+				// edit page
+				if (nCommandType == AscPDF.CommandType.editPage) {
+					if (bClearPage) {
+						oMemory.WriteByte(AscCommon.CommandType.ctPageClear);
+						oMemory.WriteLong(4);
+					}
+				}
+				
+				// add page
+				if (nCommandType == AscPDF.CommandType.addPage) {
+					oMemory.WriteByte(AscCommon.CommandType.ctPageWidth);
+					oMemory.WriteDouble(oFile.pages[curIndex].W);
+					
+					oMemory.WriteByte(AscCommon.CommandType.ctPageHeight);
+					oMemory.WriteDouble(oFile.pages[curIndex].H);
+				}
+			}
+			else if (nCommandType == AscPDF.CommandType.movePage) {
+				let nNewPos = operation[2];
+				oMemory.WriteLong(nNewPos);
+				let nEndPos = oMemory.GetCurPosition();
+				oMemory.Seek(nStartPos);
+				oMemory.WriteLong(nEndPos - nStartPos);
+				oMemory.Seek(nEndPos);
+
+				return;
+			}
+			// remove page
+			else if (nCommandType == AscPDF.CommandType.removePage) {
+				let nEndPos = oMemory.GetCurPosition();
+				oMemory.Seek(nStartPos);
+				oMemory.WriteLong(nEndPos - nStartPos);
+				oMemory.Seek(nEndPos);
+				return;
+			}
+			
+			// annots
+			if (oPageInfo.annots) {
+				for (let nAnnot = 0; nAnnot < oPageInfo.annots.length; nAnnot++) {
+					let oAnnot = oPageInfo.annots[nAnnot];
+
+					oAnnot.IsChanged() && oAnnot.WriteToBinary(oMemory);
+					oAnnot.GetReplies().forEach(function(reply) {
+						(reply.IsChanged() || !oMemory.docRenderer) && reply.WriteToBinary(oMemory);
+					});
+				}
+			}
+			if (aDeleted[originIndex]) {
+				for (let j = 0; j < aDeleted[originIndex].length; j++) {
+					oMemory.WriteByte(AscCommon.CommandType.ctAnnotFieldDelete);
+					oMemory.WriteLong(8);
+					oMemory.WriteLong(aDeleted[originIndex][j]);
+				}
+			}
+
+			// forms
+			if (oPageInfo.fields) {
+				for (let nForm = 0; nForm < oPageInfo.fields.length; nForm++) {
+					if (oPageInfo.fields[nForm].IsChanged())
+						oPageInfo.fields[nForm].WriteToBinary(oMemory);
+				}
+			}
+			
+			let nEndPos = oMemory.GetCurPosition();
+			oMemory.Seek(nStartPos);
+			oMemory.WriteLong(nEndPos - nStartPos);
+			oMemory.Seek(nEndPos);
+		}
+
+		function generateOperations(originalPageCount, finalPages) {
+			var operations = [];
+		
+			// 1. Collect a list of old page indexes that are needed in the final document
+			var finalOriginIndexes = [];
+			for (var i = 0; i < finalPages.length; i++) {
+				if (finalPages[i].originIndex !== undefined) {
+					finalOriginIndexes.push(finalPages[i].originIndex);
+				}
+			}
+		
+			// 2. Remove pages that are not present in the finalPages list
+			var deletedCount = 0;
+			for (var i = 0; i < originalPageCount; i++) {
+				if (finalOriginIndexes.indexOf(i) === -1) {
+					operations.push([AscPDF.CommandType.removePage, i - deletedCount]);
+					deletedCount++;
+				}
+			}
+		
+			// 3. Create an array of "remaining" old pages (after virtual deletion)
+			var remainingOriginPages = [];
+			for (var i = 0; i < originalPageCount; i++) {
+				if (finalOriginIndexes.indexOf(i) !== -1) {
+					remainingOriginPages.push(i);
+				}
+			}
+		
+			// 4. Determine the required order of old pages in the final document
+			var finalOldOrder = [];
+			for (var i = 0; i < finalPages.length; i++) {
+				if (finalPages[i].originIndex !== undefined) {
+					finalOldOrder.push(finalPages[i].originIndex);
+				}
+			}
+		
+			// 5. Rearrange old pages to match finalOldOrder
+			var pagesCopy = remainingOriginPages.slice();
+			for (var targetIndex = 0; targetIndex < finalOldOrder.length; targetIndex++) {
+				var pageNeeded = finalOldOrder[targetIndex];
+				var currentIndex = pagesCopy.indexOf(pageNeeded);
+		
+				if (currentIndex !== targetIndex) {
+					operations.push([AscPDF.CommandType.movePage, currentIndex, targetIndex]);
+					pagesCopy.splice(currentIndex, 1);
+					pagesCopy.splice(targetIndex, 0, pageNeeded);
+				}
+			}
+		
+			// 6. Insert new pages (where originIndex === undefined)
+			for (var i = 0; i < finalPages.length; i++) {
+				if (finalPages[i].originIndex === undefined) {
+					operations.push([AscPDF.CommandType.addPage, i]);
+				}
+			}
+		
+			return operations;
+		}
+		
+
+		function checkNeedEditOrigPage(nPage) {
+			let aDrawings		= aPagesInfo[nPage].drawings;
+			let aAnnots			= aPagesInfo[nPage].annots;
+			let aForms			= aPagesInfo[nPage].fields;
+			let nOriginIndex	= oFile.pages[nPage].originIndex;
+			let aDeletedObj		= aDeleted[nOriginIndex] || [];
+			let nOrigRotAngle	= oFile.pages[nPage].originRotate;
+			let nRotAngle		= oFile.pages[nPage].Rotate;
+
+			let bNeedEdit = false;
+
+			if (nOriginIndex == undefined) {
+				return false;
+			}
+
+			if (nRotAngle != nOrigRotAngle) bNeedEdit = true;
+			if (aDrawings.length != 0) bNeedEdit = true;
+			if (aAnnots.some(function(annot) {
+				let aReplies = annot.GetReplies();
+				return annot.IsChanged() || aReplies.some(function(reply) {
+					return reply.IsChanged();
+				});
+			})) bNeedEdit = true;
+			if (aForms.some(function(form) {
+				return form.IsChanged();
+			})) bNeedEdit = true;
+			if (aDeletedObj.length != 0) bNeedEdit = true;
+
+			return bNeedEdit;
+		}
+
+		// сначала edit исходных страниц
+		for (let i = 0; i < aPagesInfo.length; i++) {
+			if (checkNeedEditOrigPage(i)) {
+				writePageInfo.call(this, [AscPDF.CommandType.editPage, i], oFile.pages[i].originIndex);
+			}
+		}
+
+		// составляем порядок операций удаления/добавления страниц
+		let aOrder = generateOperations(oFile.originalPagesCount, oFile.pages);
+
+		// пишем по порядку
+		for (let i = 0; i < aOrder.length; i++) {
+			writePageInfo.call(this, aOrder[i], undefined);
+		}
+
+		if (!oMemory) {
+			let isParentsChanged = false;
+			oDoc.widgets.forEach(function(widget) {
+				let oParent = widget.GetParent();
+				while (oParent) {
+					if (oParent.IsChanged()) {
+						isParentsChanged = true;
+						break;
+					}
+
+					oParent = oParent.GetParent();
+				}
+			});
+
+			if (isParentsChanged) {
+				checkMemory();
+			}
+		}
+
+		if (this.scheduledRepaintTimer == null) {
+			oDoc.UpdateInterface();
+		}
+
+		if (oMemory) {
+			let nStartPos = oMemory.GetCurPosition();
+			oMemory.Skip(4);
+
+			// parents and CO (calculaction order)
+			oMemory.WriteByte(AscPDF.CommandType.widgetInfo);
+			oMemory.WriteByte(AscCommon.CommandType.ctWidgetsInfo);
+			let nPosForLenght = oMemory.GetCurPosition();
+			oMemory.Skip(4);
+
+			let aCO = oDoc.GetCalculateInfo().ids;
+			oMemory.WriteLong(aCO.length);
+			for (let i = 0; i < aCO.length; i++) {
+				oMemory.WriteLong(aCO[i]);
+			}
+
+			let nPosForParentLenght = oMemory.GetCurPosition();
+			oMemory.Skip(4);
+			let nParents = 0;
+
+			let aWritedParents = [];
+			oDoc.widgets.forEach(function(widget) {
+				let oParent = widget.GetParent();
+				while (oParent) {
+					if (oParent.IsChanged() && !aWritedParents.includes(oParent)) {
+						nParents++;
+						oParent.WriteToBinaryAsParent(oMemory);
+						aWritedParents.push(oParent);
+					}
+
+					oParent = oParent.GetParent();
 				}
 			});
 
@@ -5027,5 +5440,6 @@
 	    window["AscPDF"] = {};
 
 	window["AscPDF"].CPageInfo = CPageInfo;
+	window["AscPDF"].PropLocker = PropLocker;
 
 })();

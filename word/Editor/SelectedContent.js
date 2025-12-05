@@ -101,6 +101,15 @@
 	{
 		this.Elements.push(oElement);
 	};
+	CSelectedContent.prototype.GetContentArray = function()
+	{
+		let content = [];
+		for (let i = 0, count = this.Elements.length; i < count; ++i)
+		{
+			content.push(this.Elements[i].Element);
+		}
+		return content;
+	};
 	CSelectedContent.prototype.EndCollect = function(oLogicDocument)
 	{
 		this.private_CollectObjects();
@@ -418,7 +427,7 @@
 	};
 	/**
 	 * Запоминаем секцию, на которой закончилось выделение (если оно было в основной части документа)
-	 * @param {CSectionPr} oSectPr
+	 * @param {AscWord.SectPr} oSectPr
 	 */
 	CSelectedContent.prototype.SetLastSection = function(oSectPr)
 	{
@@ -426,7 +435,7 @@
 	};
 	/**
 	 * Получаем секцию, на которой закончилось выделение
-	 * @returns {null|CSectionPr}
+	 * @returns {null | AscWord.SectPr}
 	 */
 	CSelectedContent.prototype.GetLastSection = function()
 	{
@@ -469,7 +478,7 @@
 		{
 			var oElement = this.Elements[nIndex].Element;
 			if (oElement.IsParagraph())
-				sText += oElement.GetText({ParaEndToSpace : false});
+				sText += oElement.GetText({ParaSeparator : ""});
 		}
 
 		var oRun = new ParaRun(oParagraph, null);
@@ -481,14 +490,28 @@
 	};
 	CSelectedContent.prototype.GetText = function(oPr)
 	{
-		var sText = "";
-		for (var nIndex = 0, nCount = this.Elements.length; nIndex < nCount; ++nIndex)
+		let text = "";
+		
+		if (1 === this.Elements.length
+			&& this.Elements[0].Element.IsParagraph()
+			&& this.Elements[0].Element.IsEmpty({SkipDrawing: true}))
 		{
-			var oElement = this.Elements[nIndex].Element;
-			if (oElement.IsParagraph())
-				sText += oElement.GetText(oPr);
+			let drawings = this.Elements[0].Element.GetAllDrawingObjects();
+			let graphicObj = 1 === drawings.length ? drawings[0].GraphicObj : null;
+			let docContent = graphicObj ? graphicObj.getDocContent() : null;
+			if (docContent)
+				text = docContent.GetText(oPr);
 		}
-		return sText;
+		else
+		{
+			for (var nIndex = 0, nCount = this.Elements.length; nIndex < nCount; ++nIndex)
+			{
+				var oElement = this.Elements[nIndex].Element;
+				if (oElement.IsParagraph() || oElement.IsTable() || oElement.IsBlockLevelSdt())
+					text += oElement.GetText(oPr);
+			}
+		}
+		return text;
 	};
 	CSelectedContent.prototype.ConvertToPresentation = function(Parent)
 	{
@@ -658,7 +681,7 @@
 				var oEndRun = oEndParagraph.GetParaEndRun();
 				oEndRun.AddAfterParaEnd(new AscWord.CRunRevisionMove(false, false, oLogicDocument.TrackMoveId));
 
-				var oInfo = new CReviewInfo();
+				var oInfo = new AscWord.ReviewInfo();
 				oInfo.Update();
 				oInfo.SetMove(Asc.c_oAscRevisionsMove.MoveTo);
 				oEndRun.SetReviewTypeWithInfo(reviewtype_Add, oInfo, false);
@@ -671,7 +694,7 @@
 			for (var nIndex = 0, nCount = this.MoveTrackRuns.length; nIndex < nCount; ++nIndex)
 			{
 				var oRun  = this.MoveTrackRuns[nIndex];
-				var oInfo = new CReviewInfo();
+				var oInfo = new AscWord.ReviewInfo();
 				oInfo.Update();
 				oInfo.SetMove(Asc.c_oAscRevisionsMove.MoveTo);
 				oRun.SetReviewTypeWithInfo(reviewtype_Add, oInfo);
@@ -935,13 +958,31 @@
 			return this.private_InsertInline();
 		}
 
-		if ((!oForm.IsTextForm() && !oForm.IsComboBox()))
+		if ((!oForm.IsTextForm() && !oForm.IsComboBox() && !oForm.IsDatePicker()))
 			return;
 
-		let sInsertedText = this.GetText({ParaEndToSpace : false});
+		let newLineSep = "";
+		if (oForm.IsMultiLineForm() || (oForm.IsTextForm() && !oForm.IsFixedForm()))
+			newLineSep = "\n";
+		
+		let sInsertedText = this.GetText({
+			ParaSeparator : newLineSep,
+			TableCellSeparator : newLineSep,
+			TableRowSeparator : newLineSep,
+			NewLineSeparator : newLineSep
+		});
+		
+		if (sInsertedText
+			&& sInsertedText.length
+			&& newLineSep
+			&& sInsertedText[sInsertedText.length - 1] === newLineSep)
+		{
+			sInsertedText = sInsertedText.slice(0, -1);
+		}
+
 		if (!sInsertedText || !sInsertedText.length)
 			return;
-
+		
 		var isPlaceHolder = oRun.GetParentForm().IsPlaceHolder();
 		if (isPlaceHolder && oRun.GetParent() instanceof CInlineLevelSdt)
 		{
