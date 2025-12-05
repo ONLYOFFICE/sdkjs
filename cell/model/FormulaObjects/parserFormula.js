@@ -50,7 +50,7 @@ function (window, undefined) {
   var CellAddress = AscCommon.CellAddress;
   var cDate = Asc.cDate;
   var bIsSupportArrayFormula = true;
-  var bIsSupportDynamicArrays = true;
+  var bIsSupportDynamicArrays = false;
 
   var c_oAscError = Asc.c_oAscError;
 
@@ -2991,9 +2991,20 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		if (typeof (action) !== 'function') {
 			return true;
 		}
-		for (var ir = 0; ir < this.rowCount; ir++) {
-			for (var ic = 0; ic < this.countElementInRow[ir]; ic++) {
-				if (action.call(this, this.array[ir][ic], ir, ic)) {
+		let realSize = this.getRealArraySize();
+		let rowCount = realSize ? realSize.row : this.rowCount;
+		let missedValue = this.getMissedValue();
+
+		for (var ir = 0; ir < rowCount; ir++) {
+			let colCount = realSize ? realSize.col : this.countElementInRow[ir];
+			for (var ic = 0; ic < colCount; ic++) {
+				let elem = this.array[ir] && this.array[ir][ic];
+				if (!elem && missedValue) {
+					elem = missedValue;
+				} else if (!elem) {
+					elem = new cEmpty();
+				}
+				if (action.call(this, elem, ir, ic)) {
 					return true;
 				}
 			}
@@ -3006,16 +3017,34 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 
 		let ir, ic;
+		let realSize = this.getRealArraySize();
+		let rowCount = realSize ? realSize.row : this.rowCount;
+		let colCount = realSize ? realSize.col : this.geMaxElementInRow();
+		let missedValue = this.getMissedValue();
+
 		if (byCol) {
-			for (ic = 0; ic < this.geMaxElementInRow(); ic++) {
-				for (ir = 0; ir < this.rowCount; ir++) {
-					action.call(this, this.array[ir][ic], ir, ic)
+			for (ic = 0; ic < colCount; ic++) {
+				for (ir = 0; ir < rowCount; ir++) {
+					let elem = this.array[ir] && this.array[ir][ic];
+					if (!elem && missedValue) {
+						elem = missedValue;
+					} else if (!elem) {
+						elem = new cEmpty();
+					}
+					action.call(this, elem, ir, ic);
 				}
 			}
 		} else {
-			for (ir = 0; ir < this.rowCount; ir++) {
-				for (ic = 0; ic < this.countElementInRow[ir]; ic++) {
-					action.call(this, this.array[ir][ic], ir, ic)
+			for (ir = 0; ir < rowCount; ir++) {
+				let currentColCount = realSize ? realSize.col : this.countElementInRow[ir];
+				for (ic = 0; ic < currentColCount; ic++) {
+					let elem = this.array[ir] && this.array[ir][ic];
+					if (!elem && missedValue) {
+						elem = missedValue;
+					} else if (!elem) {
+						elem = new cEmpty();
+					}
+					action.call(this, elem, ir, ic);
 				}
 			}
 		}
@@ -7769,7 +7798,7 @@ function parserFormula( formula, parent, _ws ) {
 					found_operator = cFormulaOperators['un_plus'].prototype;
 				} else if (' ' === ph.operand_str) {
 					return true;
-				} else if ('@' === ph.operand_str && local) {
+				} else if ('@' === ph.operand_str && local && AscCommonExcel.bIsSupportDynamicArrays) {
 					return true;
 				} else {
 					parseResult.setError(c_oAscError.ID.FrmlWrongOperator);
@@ -7970,7 +7999,7 @@ function parserFormula( formula, parent, _ws ) {
 
 				currentFuncLevel--;
 
-				if (atOperatorStack.length > 0 && atOperatorStack[atOperatorStack.length - 1] !== undefined) {
+				if (AscCommonExcel.bIsSupportDynamicArrays && atOperatorStack.length > 0 && atOperatorStack[atOperatorStack.length - 1] !== undefined) {
 					parseResult.addAtOperator(atOperatorStack[atOperatorStack.length - 1], ph.pCurrPos);
 					atOperatorStack.pop();
 				}
@@ -8261,7 +8290,7 @@ function parserFormula( formula, parent, _ws ) {
 					// Move to next part
 					currentPos += partLength;
 				}
-			}
+			};
 
 			if (wasRigthParentheses) {
 				parseResult.operand_expected = true;
@@ -8277,7 +8306,7 @@ function parserFormula( formula, parent, _ws ) {
 			var prevCurrPos = ph.pCurrPos;
 
 			let currentAtOperatorPos = null;
-			if ('@' === t.Formula[ph.pCurrPos] && local) {
+			if ('@' === t.Formula[ph.pCurrPos] && local && AscCommonExcel.bIsSupportDynamicArrays) {
 				currentAtOperatorPos = ph.pCurrPos;
 				ph.pCurrPos++;
 				if (ph.pCurrPos >= t.Formula.length) {
@@ -8888,7 +8917,7 @@ function parserFormula( formula, parent, _ws ) {
 					}
 					return false;
 				}
-			}/* Array */ else if (parserHelp.isLeftBrace.call(ph, this.Formula, ph.pCurrPos) || (isSingleStartPos != null && parserHelp.isLeftBrace.call(ph, this.Formula, ph.pCurrPos + 1))) {
+			}/* Array */ else if (parserHelp.isLeftBrace.call(ph, this.Formula, ph.pCurrPos) || (AscCommonExcel.bIsSupportDynamicArrays && isSingleStartPos != null && parserHelp.isLeftBrace.call(ph, this.Formula, ph.pCurrPos + 1))) {
 				if (isSingleStartPos != null) {
 					atOperatorStack.push(isSingleStartPos);
 				}
@@ -9924,7 +9953,9 @@ function parserFormula( formula, parent, _ws ) {
 				continue;
 			}
 			if(currentElement.type === cElementType.specialFunctionEnd){
-				//bIsSpecialFunction = false;
+				if (!AscCommonExcel.bIsSupportDynamicArrays) {
+					bIsSpecialFunction = false;
+				}
 				continue;
 			}
 			if("number" === typeof(currentElement)){
