@@ -1026,6 +1026,9 @@ ParaDrawing.prototype.Set_Props = function(Props)
 					break;
 			}
 
+			if (this.IsShape())
+				this.document.AddMacroData("SetDrawingWrapping", {type: this.wrappingType, style: Props.WrappingStyle, behind: this.behindDoc});
+
 			this.Set_BehindDoc(false);
 		}
 	}
@@ -1039,6 +1042,9 @@ ParaDrawing.prototype.Set_Props = function(Props)
 	if (undefined != Props.PositionH)
 	{
 		this.Set_PositionH(Props.PositionH.RelativeFrom, Props.PositionH.UseAlign, ( true === Props.PositionH.UseAlign ? Props.PositionH.Align : Props.PositionH.Value ), Props.PositionH.Percent);
+
+		if (this.IsShape())
+			this.document.AddMacroData("SetPositionH", {relativeFrom: Props.PositionH.RelativeFrom, useAlign: Props.PositionH.UseAlign, value: ( true === Props.PositionH.UseAlign ? Props.PositionH.Align : Props.PositionH.Value ), percent: Props.PositionH.Percent});
 	}
 	if (undefined != Props.PositionV)
 	{

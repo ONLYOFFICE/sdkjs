@@ -217,7 +217,7 @@ StartAddNewShape.prototype =
 						? undefined
 						: {
 							type: shape.getPresetGeom(),
-							pos: {x: drawing.X, t: drawing.Y},
+							pos: {x: drawing.X, y: drawing.Y},
 							extX: shape.spPr.xfrm.extX,
 							extY: shape.spPr.xfrm.extY,
 							fill: shape.brush,

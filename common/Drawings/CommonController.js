@@ -2402,6 +2402,10 @@
 					}
 					this.lastSelectedObject = null;
 					this.checkShowMediaControlOnSelect();
+
+					let shapes = this.selectedObjects.filter(function (drawing){return drawing instanceof CShape});
+					if (shapes.length)
+						this.document.AddMacroData("SelectShape", [shapes]);
 				},
 
 				deselectObject: function (object) {
@@ -3880,6 +3884,9 @@
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {
 							objects_by_type.shapes[i].changeLine(props.stroke);
 						}
+						if (objects_by_type.shapes)
+							this.document.AddMacroData('SetShapeLine', objects_by_type.shapes[0].getCompiledLine());
+
 						for (i = 0; i < objects_by_type.groups.length; ++i) {
 							objects_by_type.groups[i].changeLine(props.stroke);
 						}
@@ -3897,6 +3904,9 @@
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {
 							objects_by_type.shapes[i].changeFill(props.fill);
 						}
+						if (objects_by_type.shapes)
+							this.document.AddMacroData('SetShapeFill', objects_by_type.shapes[0].getFill().createDuplicate());
+
 						for (i = 0; i < objects_by_type.groups.length; ++i) {
 							objects_by_type.groups[i].changeFill(props.fill);
 						}
@@ -4244,6 +4254,18 @@
 						}
 					}
 
+					if (props.flipHInvert)
+					{
+						this.document.AddMacroData('SetShapeFlipHInvert', null);
+					}
+					if (props.flipVInvert)
+					{
+						this.document.AddMacroData('SetShapeFlipVInvert', null);
+					}
+					if (props.rotAdd)
+					{
+						this.document.AddMacroData('SetShapeAddRotation', props.rotAdd);
+					}
 					if (bCheckConnectors) {
 						this.updateConnectors(bMoveFlag);
 					}

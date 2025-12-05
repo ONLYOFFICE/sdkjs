@@ -18109,6 +18109,22 @@
 
 		return true;
 	};
+
+	ApiDrawing.prototype.GetFlipH = function()
+	{
+		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
+			return this.Drawing.spPr.xfrm.flipH;
+
+		return null;
+	};
+	ApiDrawing.prototype.GetFlipV = function()
+	{
+		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
+			return this.Drawing.spPr.xfrm.flipV;
+
+		return null;
+	};
+
 	/**
 	 * Flips the current drawing horizontally.
 	 * @memberof ApiDrawing
