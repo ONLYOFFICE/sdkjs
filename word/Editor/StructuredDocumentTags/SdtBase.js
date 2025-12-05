@@ -1430,3 +1430,17 @@ CSdtBase.prototype.OnChangePr = function()
 			logicDocument.OnChangeFormPr(this);
 	}
 };
+CSdtBase.prototype.SetRepeatingSectionItem = function(isRepeatingSectionItem)
+{
+	if (this.Pr.RepeatingSectionItem !== isRepeatingSectionItem)
+	{
+		History.Add(new CChangesSdtPrRepeatingSectionItem(this, this.Pr.RepeatingSectionItem, isRepeatingSectionItem));
+		this.Pr.RepeatingSectionItem = isRepeatingSectionItem;
+	}
+};
+CSdtBase.prototype.IsRepeatingSectionItem = function()
+{
+	if (this.Pr.RepeatingSectionItem !== false)
+		return true
+};
+
