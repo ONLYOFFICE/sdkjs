@@ -4197,11 +4197,6 @@ CInlineLevelSdt.prototype.GetDataBinding = function()
 {
 	return this.Pr.DataBinding;
 };
-CInlineLevelSdt.prototype.IsRepeatingSection = function()
-{
-	// RepeatingSection must be block content control
-	return false;
-};
 
 
 //--------------------------------------------------------export--------------------------------------------------------

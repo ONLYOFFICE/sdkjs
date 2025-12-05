@@ -671,7 +671,7 @@ function CChangesSdtPrRepeatingSection(Class, Old, New)
 }
 CChangesSdtPrRepeatingSection.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
 CChangesSdtPrRepeatingSection.prototype.constructor = CChangesSdtPrRepeatingSection;
-CChangesSdtPrRepeatingSection.prototype.Type = AscDFH.historyitem_SdtPr_ShowingPlcHdr;
+CChangesSdtPrRepeatingSection.prototype.Type = AscDFH.historyitem_SdtPr_RepeatingSection;
 CChangesSdtPrRepeatingSection.prototype.private_SetValue = function(Value)
 {
 	this.Class.Pr.RepeatingSection = Value;
@@ -687,7 +687,7 @@ function CChangesSdtPrRepeatingSectionItem(Class, Old, New)
 }
 CChangesSdtPrRepeatingSectionItem.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
 CChangesSdtPrRepeatingSectionItem.prototype.constructor = CChangesSdtPrRepeatingSectionItem;
-CChangesSdtPrRepeatingSectionItem.prototype.Type = AscDFH.historyitem_SdtPr_ShowingPlcHdr;
+CChangesSdtPrRepeatingSectionItem.prototype.Type = AscDFH.historyitem_SdtPr_RepeatingSectionItem;
 CChangesSdtPrRepeatingSectionItem.prototype.private_SetValue = function(Value)
 {
 	this.Class.Pr.RepeatingSectionItem = Value;

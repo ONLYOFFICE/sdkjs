@@ -1438,9 +1438,12 @@ CSdtBase.prototype.SetRepeatingSectionItem = function(isRepeatingSectionItem)
 		this.Pr.RepeatingSectionItem = isRepeatingSectionItem;
 	}
 };
+CSdtBase.prototype.IsRepeatingSection = function()
+{
+	return false;
+};
 CSdtBase.prototype.IsRepeatingSectionItem = function()
 {
-	if (this.Pr.RepeatingSectionItem !== false)
-		return true
+	return !!(this.Pr.RepeatingSectionItem);
 };
 
