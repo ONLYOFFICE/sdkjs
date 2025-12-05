@@ -2861,8 +2861,7 @@ CBlockLevelSdt.prototype.SetRepeatingSection = function(isRepeatingSection)
 };
 CBlockLevelSdt.prototype.IsRepeatingSection = function()
 {
-	if (this.Pr.RepeatingSection !== false)
-		return true;
+	return !!(this.Pr.RepeatingSection);
 };
 
 //--------------------------------------------------------export--------------------------------------------------------

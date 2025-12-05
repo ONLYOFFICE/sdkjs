@@ -1430,6 +1430,13 @@ CSdtBase.prototype.OnChangePr = function()
 			logicDocument.OnChangeFormPr(this);
 	}
 };
+CSdtBase.prototype.SetRepeatingSection = function(isRepeatingSection)
+{
+};
+CSdtBase.prototype.IsRepeatingSection = function()
+{
+	return false;
+};
 CSdtBase.prototype.SetRepeatingSectionItem = function(isRepeatingSectionItem)
 {
 	if (this.Pr.RepeatingSectionItem !== isRepeatingSectionItem)
@@ -1437,10 +1444,6 @@ CSdtBase.prototype.SetRepeatingSectionItem = function(isRepeatingSectionItem)
 		History.Add(new CChangesSdtPrRepeatingSectionItem(this, this.Pr.RepeatingSectionItem, isRepeatingSectionItem));
 		this.Pr.RepeatingSectionItem = isRepeatingSectionItem;
 	}
-};
-CSdtBase.prototype.IsRepeatingSection = function()
-{
-	return false;
 };
 CSdtBase.prototype.IsRepeatingSectionItem = function()
 {
