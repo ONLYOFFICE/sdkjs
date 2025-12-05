@@ -770,5 +770,37 @@
 	window['AscWord'].CRunText = CRunText;
 	window['AscWord'].CreateNonBreakingHyphen = CreateNonBreakingHyphen;
 	window['AscWord'].isCombiningMark = isCombiningMark;
+	
+	/**
+	 *
+	 * @param codePoint
+	 * @param width
+	 * @constructor
+	 */
+	function CPdfRunText(codePoint, width)
+	{
+		CRunText.call(this, codePoint);
+		
+		this.specWidth = width;
+	}
+	CPdfRunText.prototype = Object.create(CRunText.prototype);
+	CPdfRunText.prototype.constructor = CPdfRunText;
+	
+	CPdfRunText.prototype.GetWidth = function()
+	{
+		return this.specWidth;
+	};
+	CPdfRunText.prototype.GetWidthVisible = function()
+	{
+		return this.specWidth;
+	};
+	CPdfRunText.prototype.SetWidth = function()
+	{
+	};
+	CPdfRunText.prototype.SetWidthVisible = function()
+	{
+	};
+	
+	AscWord.CPdfRunText = CPdfRunText;
 
 })(window);
