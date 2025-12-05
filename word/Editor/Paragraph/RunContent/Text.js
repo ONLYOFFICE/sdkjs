@@ -840,8 +840,9 @@
 		this.originCoeff = fontCoeff;
 		
 		this.Flags = (this.Flags & 0xFFFF) | (((_fontSize * 64) & 0xFFFF) << 16);
-		
-		this.spacing = textPr.Spacing;
+
+		// this.spacing = textPr.Spacing; // wait for non spacing text width in pdf text info
+		this.spacing = 0;
 	};
 	
 	AscWord.CPdfRunText = CPdfRunText;

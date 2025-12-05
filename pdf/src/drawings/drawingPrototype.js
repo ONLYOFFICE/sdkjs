@@ -587,10 +587,69 @@
 		if (!doc || !content)
 			return false;
 		
+        let oPara = content.GetCurrentParagraph();
+        let oRun = oPara.IsSelectionUse() ? oPara.GetElement(oPara.Selection.StartPos) : oPara.GetElement(oPara.CurPos.ContentPos);
+        let oTextPr = oRun.GetTextPr();
+        let sFontName = oTextPr.GetFontFamily();
+
+        let oFontFile;
+        let prefix = AscFonts.getEmbeddedFontPrefix();
+
+        if (sFontName && sFontName.startsWith(prefix)) {
+            let oFontInfo = AscFonts.g_font_infos_embed[AscFonts.g_map_font_index_embed[sFontName]];
+            oFontFile = AscCommon.g_fontManager.LoadFont(AscCommon.g_font_loader.fontFiles[oFontInfo.indexR], oFontInfo.faceIndexR, oTextPr.GetFontSize() || AscFonts.MEASURE_FONTSIZE,
+                false,
+                false,
+                false, false);
+        }
+
         for (let nIdx = 0; nIdx < codePoints.length; ++nIdx) {
             let nCode = codePoints[nIdx];
-            let oItem = AscCommon.IsSpace(nCode) ? new AscWord.CRunSpace(nCode) : new AscWord.CRunText(nCode);
+
+            let oItem;
+            if (oFontFile) {
+                let nGid = oFontFile.GetGIDByUnicode(nCode);
+                if (nGid !== 0) {
+                    oItem = AscCommon.IsSpace(nCode) ? new AscWord.CPdfRunSpace(nGid, nCode, 0, 0) : new AscWord.CPdfRunText(nGid, nCode, 0, 0);
+                }
+                else {
+                    let oGidsMaps = doc.Viewer.file.getGIDByUnicode(sFontName.substr(prefix.length));
+                    nGid = oGidsMaps[nCode];
+                    if (nGid !== undefined) {
+                        oItem = AscCommon.IsSpace(nCode) ? new AscWord.CPdfRunSpace(nGid, nCode, 0, 0) : new AscWord.CPdfRunText(nGid, nCode, 0, 0);
+                    }
+                }
+            }
+
+            let sNewFont;
+            if (!oItem) {
+                if (oFontFile) {
+                    let oFont = AscFonts.g_fontApplication.GetFontInfo(sFontName.substr(prefix.length));
+                    sNewFont = oFont.Name;
+                }
+
+                oItem = AscCommon.IsSpace(nCode) ? new AscWord.CRunSpace(nCode) : new AscWord.CRunText(nCode);
+            }
+            
             controller.paragraphAdd(oItem, false);
+
+            // split run with new text pr
+            if (sNewFont) {
+                oRun = oRun.Paragraph.GetElement(oRun.Paragraph.CurPos.ContentPos);
+
+                let oNewTextPr = oTextPr.Copy();
+                oNewTextPr.RFonts.SetAll(sNewFont, -1);
+
+                oRun.State.Selection.Use = true;
+                oRun.State.Selection.StartPos = oRun.State.ContentPos - 1;
+                oRun.State.Selection.EndPos = oRun.State.ContentPos;
+                
+                oRun.Paragraph.Selection.Use = true;
+                oRun.Paragraph.Selection.StartPos = oRun.Paragraph.CurPos.ContentPos;
+                oRun.Paragraph.Selection.EndPos = oRun.Paragraph.CurPos.ContentPos;
+                
+                oRun.Paragraph.Apply_TextPr(oNewTextPr);
+            }
         }
 
 		return true;
