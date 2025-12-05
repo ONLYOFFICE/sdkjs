@@ -208,7 +208,7 @@
 		let inRunPos    = data[2];
 		let misspell    = data[3];
 		let marks       = data[4];
-		let customMarks = data[5]
+		let customMarks = data[5];
 		
 		this.handleRun(run);
 		

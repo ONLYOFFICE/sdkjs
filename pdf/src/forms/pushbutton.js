@@ -49,9 +49,9 @@
 	 * @constructor
      * @extends {CBaseField}
 	 */
-    function CPushButtonField(sName, aRect)
+    function CPushButtonField(sName, aRect, oDoc)
     {
-        AscPDF.CBaseField.call(this, sName, AscPDF.FIELD_TYPES.button, aRect);
+        AscPDF.CBaseField.call(this, sName, AscPDF.FIELD_TYPES.button, aRect, oDoc);
 
         this._buttonAlignX      = 0.5; // must be integer
         this._buttonAlignY      = 0.5; // must be integer
@@ -70,7 +70,7 @@
         this._hovered = false;
 
         AscCommon.History.StartNoHistoryMode();
-        this.content = new AscPDF.CTextBoxContent(this, Asc.editor.getPDFDoc());
+        this.content = new AscPDF.CTextBoxContent(this, oDoc);
 		this.content.SetAlign(AscPDF.ALIGN_TYPE.center);
         AscCommon.History.EndNoHistoryMode();
 

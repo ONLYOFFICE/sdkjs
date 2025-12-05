@@ -425,11 +425,59 @@
         this._borderEffectStyle = nStyle;
         this.SetWasChanged(true);
         this.SetNeedRecalc(true);
+        this.recalcGeometry();
+        if (nStyle == AscPDF.BORDER_EFFECT_STYLES.None) {
+            this.SetDefaultGeometry();
+        }
     };
     CAnnotationBase.prototype.GetBorderEffectStyle = function() {
         return this._borderEffectStyle;
     };
+    CAnnotationBase.prototype.SetDefaultGeometry = function() {};
+    CAnnotationBase.prototype.GetComplexBorderType = function() {
+        let nBorderStyle = this.GetBorder();
+        let aDash = this.GetDash();
+        let nBorderEffectStyle = this.GetBorderEffectStyle();
+        let nBorderEffectIntensity = this.GetBorderEffectIntensity();
 
+        let nComplexType = null;
+
+        if (AscPDF.BORDER_TYPES.solid == nBorderStyle) {
+            if (AscPDF.BORDER_EFFECT_STYLES.Cloud == nBorderEffectStyle) {
+                if (1 == nBorderEffectIntensity) {
+                    nComplexType = AscPDF.ANNOT_COMPLEX_BORDER_TYPES.cloud1;
+                }
+                else if (2 == nBorderEffectIntensity) {
+                    nComplexType = AscPDF.ANNOT_COMPLEX_BORDER_TYPES.cloud2;
+                }
+            }
+            else {
+                nComplexType = AscPDF.ANNOT_COMPLEX_BORDER_TYPES.solid;
+            }
+        }
+        else if (AscPDF.BORDER_TYPES.dashed == nBorderStyle) {
+            if (AscCommon.isEqualSortedArrays(aDash, AscPDF.ANNOT_BORDER_DASHED_VALUES.dash1)) {
+                nComplexType = AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash1;
+            }
+            else if (AscCommon.isEqualSortedArrays(aDash, AscPDF.ANNOT_BORDER_DASHED_VALUES.dash2)) {
+                nComplexType = AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash2;
+            }
+            else if (AscCommon.isEqualSortedArrays(aDash, AscPDF.ANNOT_BORDER_DASHED_VALUES.dash3)) {
+                nComplexType = AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash3;
+            }
+            else if (AscCommon.isEqualSortedArrays(aDash, AscPDF.ANNOT_BORDER_DASHED_VALUES.dash4)) {
+                nComplexType = AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash4;
+            }
+            else if (AscCommon.isEqualSortedArrays(aDash, AscPDF.ANNOT_BORDER_DASHED_VALUES.dash5)) {
+                nComplexType = AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash5;
+            }
+            else if (AscCommon.isEqualSortedArrays(aDash, AscPDF.ANNOT_BORDER_DASHED_VALUES.dash6)) {
+                nComplexType = AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash6;
+            }
+        }
+
+        return nComplexType;
+    };
     CAnnotationBase.prototype.DrawSelected = function() {};
     CAnnotationBase.prototype.SetName = function(sName) {
         if (sName == this._name) {

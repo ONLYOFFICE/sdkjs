@@ -2100,7 +2100,7 @@ TextAddState.prototype =
                 && this.majorObject.chart.getObjectType() === AscDFH.historyitem_type_ChartSpace) {
                 sId = this.majorObject.chart.Id;
             }
-            return {objectId: sId, cursorType: "text"};
+            return {objectId: sId, cursorType: "text", content: this.majorObject.getDocContent && this.majorObject.getDocContent()};
         }
     },
     onMouseMove: function(e, x, y, pageIndex)

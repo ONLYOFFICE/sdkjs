@@ -52,6 +52,9 @@
 		
 		this.curParagraph = null;
 		this.curRanges    = null;
+		
+		this.plugins = {};
+		this.startedPlugins = {}; // По ключу-гуиду плагину храним параграфы, которые нужно обработать после загрузки плагина
 	}
 	TextAnnotatorEventManager.prototype.init = function()
 	{
@@ -84,6 +87,9 @@
 	};
 	TextAnnotatorEventManager.prototype.send = function(paragraph)
 	{
+		if (!this.hasPluginListeners())
+			return;
+		
 		// TODO: Надо проверить, нужно ли вообще ивент отправлять
 		
 		// Чтобы не было моргания при быстром изменении параграфа, мы не чистим метки сразу при изменении.
@@ -95,6 +101,11 @@
 		let recalcId = this.sendPara[paraId];
 		
 		let text = obj.text;
+		
+		for (let pluginGuid in this.startedPlugins)
+		{
+			this.startedPlugins[pluginGuid].RemoveParagraph(paraId);
+		}
 		
 		let objByGuid = {};
 		for (let handlerId in obj.ranges)
@@ -161,7 +172,12 @@
 		
 		let name = obj["name"];
 		if (name)
+		{
+			if (this.plugins[obj["guid"]])
+				this.plugins[obj["guid"]][name] = true;
+			
 			obj["guid"] += "AnnotationName:" + name;
+		}
 		
 		switch (obj["type"])
 		{
@@ -316,6 +332,118 @@
 		else
 			return handlerId;
 	};
+	TextAnnotatorEventManager.prototype.addPluginListener = function(guid)
+	{
+		this.plugins[guid] = {};
+		
+		this.startedPlugins[guid] = new PluginStartupNotifier(this.textAnnotator, this, guid, this.sendPara);
+		this.startedPlugins[guid].Begin();
+	};
+	TextAnnotatorEventManager.prototype.removePluginListener = function(guid)
+	{
+		if (!this.plugins[guid])
+			return;
+		
+		for (let name in this.plugins[guid])
+		{
+			let handleId = this.getHandlerId({"name" : name, "guid" : guid});
+			this.textAnnotator.getMarks().removeAllMarks(handleId);
+		}
+		
+		delete this.plugins[guid];
+	};
+	TextAnnotatorEventManager.prototype.hasPluginListeners = function()
+	{
+		for (let guid in this.plugins)
+		{
+			return true;
+		}
+		
+		return false;
+	};
+	TextAnnotatorEventManager.prototype.onEndPluginStartup = function(guid)
+	{
+		delete this.startedPlugins[guid];
+	};
+	TextAnnotatorEventManager.prototype.getRecalcId = function(paraId)
+	{
+		return this.sendPara[paraId];
+	};
+	
+	/**
+	 * @param {AscWord.CustomTextAnnotator} textAnnotator
+	 * @param {TextAnnotatorEventManager} eventManager
+	 * @param {string} guid
+	 * @param {object} paragraphs
+	 * @constructor
+	 * @extends AscCommon.CActionOnTimerBase
+	 */
+	function PluginStartupNotifier(textAnnotator, eventManager, guid, paragraphs)
+	{
+		AscCommon.CActionOnTimerBase.call(this);
+		
+		this.guid          = guid;
+		this.textAnnotator = textAnnotator;
+		this.eventManager  = eventManager;
+		this.paragraphs    = {};
+		
+		for (let paraId in paragraphs)
+		{
+			let paragraph = AscCommon.g_oTableId.GetById(paraId);
+			if (paragraph)
+				this.paragraphs[paraId] = paragraph;
+		}
+	}
+	PluginStartupNotifier.prototype = Object.create(AscCommon.CActionOnTimerBase.prototype);
+	PluginStartupNotifier.prototype.constructor = PluginStartupNotifier;
+	PluginStartupNotifier.prototype.OnEnd = function()
+	{
+		this.eventManager.onEndPluginStartup(this.guid);
+	};
+	PluginStartupNotifier.prototype.IsContinue = function()
+	{
+		for (let paraId in this.paragraphs)
+		{
+			return true;
+		}
+		
+		return false;
+	};
+	PluginStartupNotifier.prototype.DoAction = function()
+	{
+		let paragraph = this.Pop();
+		
+		let obj = this.textAnnotator.getEventObject(paragraph);
+		let paraId = paragraph.GetId();
+		let recalcId = this.eventManager.getRecalcId(paraId);
+		
+		let text = obj.text;
+		
+		let _obj = {
+			"paragraphId" : paraId,
+			"recalcId"    : recalcId,
+			"text"        : text
+		};
+		
+		let guids = {}; guids[this.guid] = true;
+		window.g_asc_plugins.onPluginEvent2("onParagraphText", _obj, guids);
+	};
+	PluginStartupNotifier.prototype.Pop = function()
+	{
+		for (let paraId in this.paragraphs)
+		{
+			let paragraph = this.paragraphs[paraId];
+			delete this.paragraphs[paraId];
+			return paragraph;
+		}
+		
+		return null;
+	};
+	PluginStartupNotifier.prototype.RemoveParagraph = function(paraId)
+	{
+		delete this.paragraphs[paraId];
+	};
+	
 	//-------------------------------------------------------------export-----------------------------------------------
 	AscCommon.TextAnnotatorEventManager = TextAnnotatorEventManager;
 })(window);

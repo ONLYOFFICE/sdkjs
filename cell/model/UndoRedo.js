@@ -3083,7 +3083,7 @@ function (window, undefined) {
 				/* the first call is a search by referenceData, if we get null, we make a second call to search by Id below and then add or re-assign the link */
 				externalReferenceIndex = wb.getExternalReferenceByReferenceData(from.referenceData, true);
 				if (!externalReferenceIndex) {
-					externalReferenceIndex = wb.getExternalLinkIndexByName(from.Id);
+					externalReferenceIndex = wb.getExternalLinkIndexById(from._id);
 				}
 
 				if (externalReferenceIndex !== null) {
@@ -3095,7 +3095,7 @@ function (window, undefined) {
 				/* the first call is a search by referenceData, if we get null, we make a second call to search by Id below and then delete the link */
 				externalReferenceIndex = wb.getExternalReferenceByReferenceData(to.referenceData, true);
 				if (!externalReferenceIndex) {
-					externalReferenceIndex = wb.getExternalLinkIndexByName(to.Id);
+					externalReferenceIndex = wb.getExternalLinkIndexById(to._id);
 				}
 
 				if (externalReferenceIndex !== null) {
@@ -3106,7 +3106,7 @@ function (window, undefined) {
 				/* the first call is a search by referenceData, if we get null, we make a second call to search by Id below and then change the link */
 				externalReferenceIndex = wb.getExternalReferenceByReferenceData(to.referenceData, true);
 				if (!externalReferenceIndex) {
-					externalReferenceIndex = wb.getExternalLinkIndexByName(to.Id);
+					externalReferenceIndex = wb.getExternalLinkIndexById(to._id);
 				}
 
 				if (externalReferenceIndex !== null) {

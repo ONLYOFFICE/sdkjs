@@ -4212,7 +4212,7 @@
         var aChartRefsToChange = [];
         var aCharts = [];
 				let bHandled = false;
-        this.model.handleDrawings(function(oDrawing) {
+				const fDrawingCallback = function(oDrawing) {
 					switch (oDrawing.getObjectType()) {
 						case AscDFH.historyitem_type_ChartSpace: {
 							const nPrevLength = aChartRefsToChange.length;
@@ -4231,7 +4231,9 @@
 							break;
 						}
 					}
-        });
+				};
+			this.model.handleDrawings(fDrawingCallback);
+			this.Api.frameManager.handleMainDiagram(fDrawingCallback);
         if(aChartRefsToChange.length > 0) {
             for(var nRef = 0; nRef < aChartRefsToChange.length; ++nRef) {
                 aChartRefsToChange[nRef].updateCacheAndCat();
@@ -4244,7 +4246,6 @@
 				if (bHandled) {
 					this.onShowDrawingObjects();
 				}
-				this.Api.frameManager.updateGeneralDiagramCache(aRanges);
     };
     WorkbookView.prototype.handleChartsOnChangeSheetName = function (oWorksheet, sOldName, sNewName) {
         //change sheet name in chart references

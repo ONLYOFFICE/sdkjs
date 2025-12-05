@@ -11748,6 +11748,14 @@
 		"Meiryo", "MS Gothic", "MS PGothic", "MS UI Gothic", "Yu Gothic",
 		"Dotum", "Gulim", "Malgun Gothic"
 	];
+	
+	// Символы, на которых работает <w:rFonts w:hint="eastAsia"/>
+	function isAmbiguousCharacter(codePoint)
+	{
+		return (0x00D7 === codePoint
+			|| (0x0370 <= codePoint && codePoint <= 0x03FF));
+	}
+	
 
 	function IsEastAsianFont(sName)
 	{
@@ -11833,6 +11841,11 @@
 			|| (0x18800 <= value && value <= 0x18AFF)
 			|| (0xA000 <= value && value <= 0xA48F)
 			|| (0xA490 <= value && value <= 0xA4CF));
+	}
+	
+	function isEastAsianPunctuation(value)
+	{
+		return (0x3000 <= value && value <= 0x4DB5);
 	}
 
 	function IsHangul(nCharCode)
@@ -15610,7 +15623,10 @@
 	window["AscCommon"].getAscColorScheme = getAscColorScheme;
 	window["AscCommon"].checkAddColorScheme = checkAddColorScheme;
 	window["AscCommon"].getIndexColorSchemeInArray = getIndexColorSchemeInArray;
+	window["AscCommon"].isAmbiguousCharacter = isAmbiguousCharacter;
 	window["AscCommon"].isEastAsianScript = isEastAsianScript;
+	window["AscCommon"].isEastAsianPunctuation = isEastAsianPunctuation;
+	window["AscCommon"].isHangul = IsHangul;
 	window["AscCommon"].IsEastAsianFont = IsEastAsianFont;
 	window["AscCommon"].IsComplexScript = IsComplexScript;
 	window["AscCommon"].IsGeorgianScript = IsGeorgianScript;

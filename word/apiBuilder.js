@@ -1717,7 +1717,7 @@
 		let oDoc			= private_GetLogicDocument();
 		let oldSelectionInfo	= oDoc.SaveDocumentState();
 
-		this.Select(false);
+		this.Select(true);
 		private_TrackRangesPositions();
 
 		let SelectedContent = oDoc.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -1754,14 +1754,28 @@
 		
 		if (bUpdate === undefined)
 			bUpdate = true;
+		
+		if (bUpdate)
+		{
+			for (let i = this.StartPos.length - 1; i >= 0; --i)
+			{
+				let obj = this.StartPos[i].Class;
+				if ((obj instanceof AscWord.CDocument) || (obj instanceof AscWord.CDocumentContent))
+				{
+					obj.SetThisElementCurrent(true);
+					bUpdate = false;
+					break;
+				}
+			}
+		}
 
 		this.StartPos[0].Class.SetContentPosition(this.StartPos, 0, 0);
 		this.StartPos[0].Class.SetSelectionByContentPositions(this.StartPos, this.EndPos);
-
+		
 		if (bUpdate)
 		{
 			var controllerType;
-
+			
 			if (this.StartPos[0].Class.IsHdrFtr())
 			{
 				controllerType = docpostype_HdrFtr;
@@ -1774,7 +1788,7 @@
 			{
 				controllerType = docpostype_DrawingObjects;
 			}
-			else 
+			else
 			{
 				controllerType = docpostype_Content;
 			}
@@ -7691,6 +7705,10 @@
 		}
 
 		this.Document.LoadDocumentState(documentState);
+		
+		if (!StartPos || !EndPos || !StartPos.length || !EndPos.length)
+			return null;
+		
 		return new ApiRange(StartPos[0].Class, StartPos, EndPos);
 	};
 	/**
@@ -9448,6 +9466,115 @@
 		this.Document.MoveCursorToEndPos();
 		return true;
 	};
+
+	/**
+	 * Add text to the document on the cursor position.
+	 * @memberof ApiDocument
+	 * @param {string} sText - The text to add to document.
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/EnterText.js
+	 */
+	ApiDocument.prototype.EnterText = function(sText)
+	{
+		this.Document.EnterText(sText);
+		return true;
+	}
+
+	/**
+	 * Add paragraph to the document on the cursor position.
+	 * @memberof ApiDocument
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/InsertParagraphBreak.js
+	 */
+	ApiDocument.prototype.InsertParagraphBreak = function()
+	{
+		this.Document.AddNewParagraph();
+		return true;
+	}
+
+	/**
+	 * Moves a cursor to the left.
+	 * @memberof ApiDocument
+	 * @param {number} nCount - The number of characters to move left.
+	 * @param {boolean} isShift - Specifies whether to select text during the move.
+	 * @param {boolean} isCtl - Specifies whether to move by word instead of by character.
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorLeft.js
+	 */
+	ApiDocument.prototype.MoveCursorLeft = function(nCount, isShift, isCtl)
+	{
+		for(let i = 0; i < nCount; i++)
+		{
+			this.Document.MoveCursorLeft(!!isShift, !!isCtl);
+		}
+		return true;
+	};
+	/**
+	 * Moves a cursor to the right.
+	 * @memberof ApiDocument
+	 * @param {number} nCount - The number of characters to move right.
+	 * @param {boolean} isShift - Specifies whether to select text during the move.
+	 * @param {boolean} isCtl - Specifies whether to move by word instead of by character.
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorRight.js
+	 */
+	ApiDocument.prototype.MoveCursorRight = function(nCount, isShift, isCtl)
+	{
+		for(let i = 0; i < nCount; i++)
+		{
+			this.Document.MoveCursorRight(!!isShift, !!isCtl);
+		}
+		return true;
+	};
+
+	/**
+	 * Moves a cursor up.
+	 * @memberof ApiDocument
+	 * @param {number} nCount - The number of lines to move up.
+	 * @param {boolean} isShift - Specifies whether to select text during the move.
+	 * @param {boolean} isCtl - Specifies whether to move by paragraph instead of by line.
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorUp.js
+	 */
+	ApiDocument.prototype.MoveCursorUp = function(nCount, isShift, isCtl)
+	{
+		for(let i = 0; i < nCount; i++)
+		{
+			this.Document.MoveCursorUp(!!isShift, !!isCtl);
+		}
+		return true;
+	};
+
+	/**
+	 * Moves a cursor down.
+	 * @memberof ApiDocument
+	 * @param {number} nCount - The number of lines to move down.
+	 * @param {boolean} isShift - Specifies whether to select text during the move.
+	 * @param {boolean} isCtl - Specifies whether to move by paragraph instead of by line.
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorDown.js
+	 */
+	ApiDocument.prototype.MoveCursorDown = function(nCount, isShift, isCtl)
+	{
+		for(let i = 0; i < nCount; i++)
+		{
+			this.Document.MoveCursorDown(!!isShift, !!isCtl);
+		}
+		return true;
+	};
+
 	/**
 	 * Moves a cursor to the start of the specified page in the document.
 	 * @memberof ApiDocument
@@ -20705,13 +20832,19 @@
 	 * Adds a string label to the current inline text content control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sLabel - The label which will be added to the current inline text content control. Can be a positive or negative integer from <b>-2147483647</b> to <b>2147483647</b>.
+	 * @param {number} label - The label which will be added to the current inline text content control. Can be a positive or negative integer from <b>-2147483647</b> to <b>2147483647</b>.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetLabel.js
 	 */
-	ApiInlineLvlSdt.prototype.SetLabel = function(sLabel)
+	ApiInlineLvlSdt.prototype.SetLabel = function(label)
 	{
-		this.Sdt.SetLabel(sLabel);
+		label = AscBuilder.GetNumberParameter(label, null);
+		if (null === label)
+			throwException(new Error("Label must be a number"));
+		else if (label < -2147483647 || label > 2147483647)
+			throwException(new Error("Label must be in range from -2147483647 to 2147483647"));
+		
+		this.Sdt.SetLabel(label);
 		return true;
 	};
 
@@ -20719,7 +20852,7 @@
 	 * Returns the label attribute for the current container.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @returns {string}
+	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetLabel.js
 	 */
 	ApiInlineLvlSdt.prototype.GetLabel = function()
@@ -22265,12 +22398,18 @@
 	 * Sets the label attribute to the current container.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {string} label - The label which will be added to the current container. Can be a positive or negative integer from <b>-2147483647</b> to <b>2147483647</b>.
+	 * @param {number} label - The label which will be added to the current container. Can be a positive or negative integer from <b>-2147483647</b> to <b>2147483647</b>.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/SetLabel.js
 	 */
 	ApiBlockLvlSdt.prototype.SetLabel = function(label)
 	{
+		label = AscBuilder.GetNumberParameter(label, null);
+		if (null === label)
+			throwException(new Error("Label must be a number"));
+		else if (label < -2147483647 || label > 2147483647)
+			throwException(new Error("Label must be in range from -2147483647 to 2147483647"));
+		
 		this.Sdt.SetLabel(label);
 		return true;
 	};
@@ -22279,7 +22418,7 @@
 	 * Returns the label attribute for the current container.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @returns {string}
+	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/GetLabel.js
 	 */
 	ApiBlockLvlSdt.prototype.GetLabel = function()
@@ -25316,25 +25455,32 @@
 		else 
 		{
 			let oDocument = this.GetDocument();
+			let logicDocument = oDocument.Document;
+			let docState = logicDocument.SaveDocumentState(false);
+			
 			isTrackRevisions = oDocument && oDocument.IsTrackRevisions();
-			arrSelectedParas = oDocument.Document.GetSelectedParagraphs();
+			arrSelectedParas = logicDocument.GetSelectedParagraphs();
 			if(arrSelectedParas.length <= 0 )
 			{
 				return false;
 			}
+			
 			ReplaceInParas(arrSelectedParas);
 			
 			if (arrSelectedParas[0] && arrSelectedParas[0].Parent)
 				arrSelectedParas[0].Parent.RemoveSelection();
-			else 
-				oDocument.Document.RemoveSelection();
+			else
+				logicDocument.RemoveSelection();
 
 			// вставка оставшихся параграфов из textStrings
 			var oParaParent   = arrSelectedParas[0].Parent;
 			var nIndexToPaste = arrSelectedParas[arrSelectedParas.length - 1].Index + 1;
 			var isPres        = !arrSelectedParas[0].bFromDocument;
 			if (!oParaParent)
+			{
+				logicDocument.LoadDocumentState(docState);
 				return true;
+			}
 
 			for (var nPara = arrSelectedParas.length; nPara < textStrings.length; nPara++)
 			{
@@ -25346,6 +25492,8 @@
 
 				nIndexToPaste++;
 			}
+			
+			logicDocument.LoadDocumentState(docState, true);
 		}
 
 		return true;
@@ -27600,6 +27748,12 @@
 	ApiDocument.prototype["MoveCursorToEnd"]               = ApiDocument.prototype.MoveCursorToEnd;
 	ApiDocument.prototype["GoToPage"]                      = ApiDocument.prototype.GoToPage;
 	ApiDocument.prototype["GetDocumentVisitor"]            = ApiDocument.prototype.GetDocumentVisitor;
+	ApiDocument.prototype["EnterText"]                     = ApiDocument.prototype.EnterText;
+	ApiDocument.prototype["InsertParagraphBreak"]          = ApiDocument.prototype.InsertParagraphBreak;
+	ApiDocument.prototype["MoveCursorLeft"]                = ApiDocument.prototype.MoveCursorLeft;
+	ApiDocument.prototype["MoveCursorRight"]               = ApiDocument.prototype.MoveCursorRight;
+	ApiDocument.prototype["MoveCursorUp"]                  = ApiDocument.prototype.MoveCursorUp;
+	ApiDocument.prototype["MoveCursorDown"]                = ApiDocument.prototype.MoveCursorDown;
 	
 	
 	ApiParagraph.prototype["GetClassType"]           = ApiParagraph.prototype.GetClassType;
@@ -29911,6 +30065,19 @@
 		
 		logicDocument.ClearActionOnChangeForm();
 		logicDocument.GetFormsManager().OnChange(this.Sdt);
+	};
+	ApiCheckBoxForm.prototype.private_GetImpl = function()
+	{
+		let impl = ApiFormBase.prototype.private_GetImpl.call(this);
+		
+		if (impl === this.Sdt)
+		{
+			let mainForm = this.Sdt.GetMainForm();
+			if (mainForm && mainForm !== this.Sdt && mainForm.IsLabeledCheckBox())
+				return mainForm;
+		}
+		
+		return impl;
 	};
 	
 	ApiComment.prototype.private_OnChange = function()

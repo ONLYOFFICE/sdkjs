@@ -4626,7 +4626,7 @@ CMathContent.prototype.Draw_Lines = function(PDSL)
         PDSL.Baseline = Baseline;
     }
 };
-CMathContent.prototype.RemoveSelection = function()
+CMathContent.prototype.RemoveSelection = function(preserveCursorPosition)
 {
     var StartPos = this.Selection.StartPos;
     var EndPos   = this.Selection.EndPos;
@@ -4642,7 +4642,7 @@ CMathContent.prototype.RemoveSelection = function()
 
     for (var nPos = StartPos; nPos <= EndPos; nPos++)
     {
-        this.Content[nPos].RemoveSelection();
+        this.Content[nPos].RemoveSelection(preserveCursorPosition);
     }
 
     this.Selection.Use   = false;

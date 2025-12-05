@@ -3228,7 +3228,7 @@
 			return true;
         }, AscDFH.historydescription_Pdf_ChangeAnnot);
 	};
-	PDFEditorApi.prototype.SetAnnotStrokeStyle = function(nValue) {
+	PDFEditorApi.prototype.SetAnnotStrokeStyle = function(nComplexType) {
 		let oDoc = this.getPDFDoc();
 		let oController = oDoc.GetController();
 		let oMouseDownAnnot = oDoc.mouseDownAnnot;
@@ -3240,7 +3240,71 @@
 		return oDoc.DoAction(function() {
 			oController.selectedObjects.forEach(function(annot) {
 				if (annot.IsAnnot()) {
-					annot.SetWidth(nValue);
+					switch (nComplexType) {
+						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.solid: {
+							annot.SetBorder(AscPDF.BORDER_TYPES.solid);
+							annot.SetDash([]);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderEffectIntensity(0);
+							break;
+						}
+						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash1: {
+							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
+							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash1);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderEffectIntensity(0);
+							break;
+						}
+						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash2: {
+							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
+							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash2);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderEffectIntensity(0);
+							break;
+						}
+						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash3: {
+							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
+							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash3);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderEffectIntensity(0);
+							break;
+						}
+						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash4: {
+							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
+							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash4);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderEffectIntensity(0);
+							break;
+						}
+						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash5: {
+							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
+							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash5);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderEffectIntensity(0);
+							break;
+						}
+						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash6: {
+							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
+							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash6);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderEffectIntensity(0);
+							break;
+						}
+						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.cloud1: {
+							annot.SetBorder(AscPDF.BORDER_TYPES.solid);
+							annot.SetDash([]);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.Cloud);
+							annot.SetBorderEffectIntensity(1);
+							break;
+						}
+						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.cloud2: {
+							annot.SetBorder(AscPDF.BORDER_TYPES.solid);
+							annot.SetDash([]);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.Cloud);
+							annot.SetBorderEffectIntensity(2);
+							break;
+						}
+					}
 				}
 			});
 
@@ -3285,7 +3349,7 @@
 			return true;
         }, AscDFH.historydescription_Pdf_ChangeAnnot);
 	};
-
+	
 	PDFEditorApi.prototype.asc_CloseFile = function() {
 		AscCommon.History.Clear();
 		AscCommon.g_oIdCounter.Clear();
@@ -4903,6 +4967,16 @@
 		// NOW USE ALWAYS BINARY DATA
 		return "binary";
 	};
+
+	PDFEditorApi.prototype.asc_CheckEditPassword = function(password) {
+		let oDoc = this.getPDFDoc();
+
+		if (null == password) {
+			return oDoc.Viewer.file.nativeFile['CheckPerm'](AscPDF.USER_PERMISSIONS.edit);
+		}
+
+		return oDoc.Viewer.file.nativeFile['CheckOwnerPassword'](password);
+	};
 	
 	function CPdfContextMenuData(obj) {
 		if (obj) {
@@ -5073,17 +5147,17 @@
 	PDFEditorApi.prototype['asc_ConvertMathView']	= PDFEditorApi.prototype.asc_ConvertMathView;
 
 	// annots
-	PDFEditorApi.prototype['StartAddAnnot']			= PDFEditorApi.prototype.StartAddAnnot;
-	PDFEditorApi.prototype['SetAnnotFillColor']		= PDFEditorApi.prototype.SetAnnotFillColor;
-	PDFEditorApi.prototype['GetAnnotFillColor']		= PDFEditorApi.prototype.GetAnnotFillColor;
-	PDFEditorApi.prototype['SetAnnotStrokeColor']	= PDFEditorApi.prototype.SetAnnotStrokeColor;
-	PDFEditorApi.prototype['GetAnnotStrokeColor']	= PDFEditorApi.prototype.GetAnnotStrokeColor;
-	PDFEditorApi.prototype['SetAnnotOpacity']		= PDFEditorApi.prototype.SetAnnotOpacity;
-	PDFEditorApi.prototype['GetAnnotOpacity']		= PDFEditorApi.prototype.GetAnnotOpacity;
-	PDFEditorApi.prototype['SetAnnotStrokeWidth']	= PDFEditorApi.prototype.SetAnnotStrokeWidth;
-	PDFEditorApi.prototype['SetAnnotStrokeStyle']	= PDFEditorApi.prototype.SetAnnotStrokeStyle;
-	PDFEditorApi.prototype['SetAnnotLineStart']		= PDFEditorApi.prototype.SetAnnotLineStart;
-	PDFEditorApi.prototype['SetAnnotLineEnd']		= PDFEditorApi.prototype.SetAnnotLineEnd;
+	PDFEditorApi.prototype['StartAddAnnot']					= PDFEditorApi.prototype.StartAddAnnot;
+	PDFEditorApi.prototype['SetAnnotFillColor']				= PDFEditorApi.prototype.SetAnnotFillColor;
+	PDFEditorApi.prototype['GetAnnotFillColor']				= PDFEditorApi.prototype.GetAnnotFillColor;
+	PDFEditorApi.prototype['SetAnnotStrokeColor']			= PDFEditorApi.prototype.SetAnnotStrokeColor;
+	PDFEditorApi.prototype['GetAnnotStrokeColor']			= PDFEditorApi.prototype.GetAnnotStrokeColor;
+	PDFEditorApi.prototype['SetAnnotOpacity']				= PDFEditorApi.prototype.SetAnnotOpacity;
+	PDFEditorApi.prototype['GetAnnotOpacity']				= PDFEditorApi.prototype.GetAnnotOpacity;
+	PDFEditorApi.prototype['SetAnnotStrokeWidth']			= PDFEditorApi.prototype.SetAnnotStrokeWidth;
+	PDFEditorApi.prototype['SetAnnotStrokeStyle']			= PDFEditorApi.prototype.SetAnnotStrokeStyle;
+	PDFEditorApi.prototype['SetAnnotLineStart']				= PDFEditorApi.prototype.SetAnnotLineStart;
+	PDFEditorApi.prototype['SetAnnotLineEnd']				= PDFEditorApi.prototype.SetAnnotLineEnd;
 	
 	// stamp
 	PDFEditorApi.prototype['AddStampAnnot']					= PDFEditorApi.prototype.AddStampAnnot;
@@ -5217,6 +5291,8 @@
 	PDFEditorApi.prototype['asc_setPdfViewer']		        = PDFEditorApi.prototype.asc_setPdfViewer;
 
 	PDFEditorApi.prototype['asc_GetTableOfContentsPr']      = PDFEditorApi.prototype.asc_GetTableOfContentsPr;
+	
+	PDFEditorApi.prototype['asc_CheckEditPassword']			= PDFEditorApi.prototype.asc_CheckEditPassword;
 	
 	window["PDFEditorApi"] = PDFEditorApi;
 

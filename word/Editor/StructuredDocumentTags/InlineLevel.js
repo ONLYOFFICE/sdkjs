@@ -286,6 +286,7 @@ CInlineLevelSdt.prototype.private_CopyPrTo = function(oContentControl, oPr)
 		else
 		{
 			formPr.SetFieldMaster(undefined);
+			formPr.SetRole(this.GetFormRole());
 		}
 		
 		oContentControl.SetFormPr(formPr);
@@ -1461,46 +1462,59 @@ CInlineLevelSdt.prototype.RemoveContentControlWrapper = function()
 	if (-1 === nElementPos)
 		return {Parent : null, Pos : -1, Count : 0};
 
-	var nParentCurPos            = oParent instanceof Paragraph ? oParent.CurPos.ContentPos : oParent.State.ContentPos;
+	var nParentCurPos            = oParent instanceof AscWord.Paragraph ? oParent.CurPos.ContentPos : oParent.State.ContentPos;
 	var nParentSelectionStartPos = oParent.Selection.StartPos;
 	var nParentSelectionEndPos   = oParent.Selection.EndPos;
-
-	var nCount = this.Content.length;
-	oParent.Remove_FromContent(nElementPos, 1);
-	for (var nIndex = 0; nIndex < nCount; ++nIndex)
-	{
-		oParent.Add_ToContent(nElementPos + nIndex, this.Content[nIndex]);
-	}
-
+	
+	let curPos            = this.State.ContentPos;
+	let selectionStartPos = this.Selection.StartPos;
+	let selectionEndPos   = this.Selection.EndPos;
+	
+	let items = this.Content.slice();
+	let itemCount = items.length;
+	
+	let _t = this;
+	AscCommon.executeNoPreDelete(function(){
+		_t.RemoveFromContent(0, _t.Content.length);
+		oParent.RemoveFromContent(nElementPos, 1);
+		
+		for (var nIndex = 0; nIndex < itemCount; ++nIndex)
+		{
+			oParent.AddToContent(nElementPos + nIndex, items[nIndex]);
+		}
+	}, this.GetLogicDocument());
+	
 	if (nParentCurPos === nElementPos)
 	{
-		if (oParent instanceof Paragraph)
-			oParent.CurPos.ContentPos = nParentCurPos + this.State.ContentPos;
+		if (oParent instanceof AscWord.Paragraph)
+			oParent.CurPos.ContentPos = nParentCurPos + curPos;
 		else
-			oParent.State.ContentPos = nParentCurPos + this.State.ContentPos;
+			oParent.State.ContentPos = nParentCurPos + curPos;
 
 	}
 	else if (nParentCurPos > nElementPos)
 	{
-		if (oParent instanceof Paragraph)
-			oParent.CurPos.ContentPos = nParentCurPos + nCount - 1;
+		if (oParent instanceof AscWord.Paragraph)
+			oParent.CurPos.ContentPos = nParentCurPos + itemCount - 1;
 		else
-			oParent.State.ContentPos = nParentCurPos + nCount - 1;
+			oParent.State.ContentPos = nParentCurPos + itemCount - 1;
 	}
 
 	if (nParentSelectionStartPos === nElementPos)
-		oParent.Selection.StartPos = nParentSelectionStartPos + this.Selection.StartPos;
+		oParent.Selection.StartPos = nParentSelectionStartPos + selectionStartPos;
 	else if (nParentSelectionStartPos > nElementPos)
-		oParent.Selection.StartPos = nParentSelectionStartPos + nCount - 1;
+		oParent.Selection.StartPos = nParentSelectionStartPos + itemCount - 1;
 
 	if (nParentSelectionEndPos === nElementPos)
-		oParent.Selection.EndPos = nParentSelectionEndPos + this.Selection.EndPos;
+		oParent.Selection.EndPos = nParentSelectionEndPos + selectionEndPos;
 	else if (nParentSelectionEndPos > nElementPos)
-		oParent.Selection.EndPos = nParentSelectionEndPos + nCount - 1;
-
-	this.Remove_FromContent(0, this.Content.length);
-
-	return {Parent : oParent, Pos : nElementPos, Count : nCount};
+		oParent.Selection.EndPos = nParentSelectionEndPos + itemCount - 1;
+	
+	return {
+		Parent : oParent,
+		Pos    : nElementPos,
+		Count  : itemCount
+	};
 };
 CInlineLevelSdt.prototype.FindNextFillingForm = function(isNext, isCurrent, isStart)
 {
@@ -2090,7 +2104,7 @@ CInlineLevelSdt.prototype.SetLabel = function(sLabel)
 };
 CInlineLevelSdt.prototype.GetLabel = function()
 {
-	return (undefined !== this.Pr.Label ? this.Pr.Label : "");
+	return this.Pr.Label;
 };
 CInlineLevelSdt.prototype.SetDocPartObj = function(sCategory, sGallery, isUnique)
 {
@@ -2300,6 +2314,12 @@ CInlineLevelSdt.prototype.SetCheckBoxPr = function(oCheckBoxPr)
 {
 	if (undefined === this.Pr.CheckBox || !this.Pr.CheckBox.IsEqual(oCheckBoxPr))
 	{
+		if (oCheckBoxPr && AscFonts.IsCheckSymbols)
+		{
+			AscFonts.FontPickerByCharacter.getFontBySymbol(oCheckBoxPr.GetCheckedSymbol());
+			AscFonts.FontPickerByCharacter.getFontBySymbol(oCheckBoxPr.GetUncheckedSymbol());
+		}
+		
 		var _oCheckBox = oCheckBoxPr ? oCheckBoxPr.Copy() : undefined;
 		History.Add(new CChangesSdtPrCheckBox(this, this.Pr.CheckBox, _oCheckBox));
 		this.Pr.CheckBox = _oCheckBox;

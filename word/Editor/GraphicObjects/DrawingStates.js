@@ -2642,11 +2642,11 @@ TextAddState.prototype =
                 }
             }
             if(oCheckObject && oCheckObject.parent){
-                return {cursorType: "default", objectId: oCheckObject.Get_Id()};
+                return {cursorType: "default", objectId: oCheckObject.Get_Id(), content: this.majorObject.getDocContent && this.majorObject.getDocContent()};
             }
             else if (Asc.editor.isPdfEditor()) {
                 if (oCheckObject.IsShape()) {
-                    return {cursorType: "text", objectId: oCheckObject.Get_Id()};
+                    return {cursorType: "text", objectId: oCheckObject.Get_Id(), content: this.majorObject.getDocContent && this.majorObject.getDocContent()};
                 }   
             }
         }

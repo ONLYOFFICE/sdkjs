@@ -1229,6 +1229,10 @@ void main() {\n\
     CFile.prototype.drawSelection = function(pageIndex, overlay, x, y)
     {
         if (Asc.editor.isRedactTool && this.Selection.startPoint && this.Selection.endPoint) {
+            if (pageIndex < this.Selection.startPoint.page || pageIndex > this.Selection.endPoint.page) {
+                return;
+            }
+
             let width = AscCommon.AscBrowser.convertToRetinaValue(this.viewer.drawingPages[pageIndex].W, true) >> 0;
             let height = AscCommon.AscBrowser.convertToRetinaValue(this.viewer.drawingPages[pageIndex].H, true) >> 0;
 

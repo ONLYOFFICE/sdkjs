@@ -2291,14 +2291,14 @@ function (window, undefined) {
 		// Проверяем, находятся ли точки пересечения в пределах отрезка (t в диапазоне [0,1])
 		if (t1 >= 0 && t1 <= 1) {
 			intersections.push({
-				t: (t1 + t2) / 2,
+				t: t1,
 				x: x1 + t1 * dx,
 				y: y1 + t1 * dy
 			});
 		}
 		if (t2 >= 0 && t2 <= 1) {
 			intersections.push({
-				t: (t1 + t2) / 2,
+				t: t2,
 				x: x1 + t2 * dx,
 				y: y1 + t2 * dy
 			});

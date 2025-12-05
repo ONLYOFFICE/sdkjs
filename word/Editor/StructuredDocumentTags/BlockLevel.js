@@ -1614,7 +1614,7 @@ CBlockLevelSdt.prototype.SetLabel = function(sLabel)
 };
 CBlockLevelSdt.prototype.GetLabel = function()
 {
-	return (undefined !== this.Pr.Label ? this.Pr.Label : "");
+	return this.Pr.Label;
 };
 CBlockLevelSdt.prototype.SetAppearance = function(nType)
 {
@@ -2043,6 +2043,12 @@ CBlockLevelSdt.prototype.SetCheckBoxPr = function(oCheckBoxPr)
 {
 	if (undefined === this.Pr.CheckBox || !this.Pr.CheckBox.IsEqual(oCheckBoxPr))
 	{
+		if (oCheckBoxPr && AscFonts.IsCheckSymbols)
+		{
+			AscFonts.FontPickerByCharacter.getFontBySymbol(oCheckBoxPr.GetCheckedSymbol());
+			AscFonts.FontPickerByCharacter.getFontBySymbol(oCheckBoxPr.GetUncheckedSymbol());
+		}
+		
 		History.Add(new CChangesSdtPrCheckBox(this, this.Pr.CheckBox, oCheckBoxPr));
 		this.Pr.CheckBox = oCheckBoxPr;
 	}

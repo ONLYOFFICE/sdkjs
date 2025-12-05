@@ -473,13 +473,17 @@
 	{
 		return this.IsDigit();
 	};
-	CRunText.prototype.IsSpaceAfter = function()
+	CRunText.prototype.IsSpaceAfter = function(fontHint)
 	{
-		return !!(this.Flags & FLAGS_SPACEAFTER);
+		return ((this.Flags & FLAGS_SPACEAFTER)
+			|| (AscWord.fonthint_EastAsia === fontHint && AscCommon.isAmbiguousCharacter(this.Value)));
 	};
-	CRunText.prototype.IsSpaceBefore = function()
+	CRunText.prototype.IsSpaceBefore = function(fontHint)
 	{
-		return AscCommon.isEastAsianScript(this.Value);
+		return ((AscCommon.isEastAsianScript(this.Value)
+				&& !AscCommon.isHangul(this.Value)
+				&& !AscCommon.isEastAsianPunctuation(this.Value))
+			|| (AscWord.fonthint_EastAsia === fontHint && AscCommon.isAmbiguousCharacter(this.Value)));
 	};
 	CRunText.prototype.isHyphenAfter = function()
 	{
@@ -566,11 +570,11 @@
 		// Дефисы
 		if (0x002D === this.Value || 0x2014 === this.Value)
 			return true;
-
-		if (AscCommon.isEastAsianScript(this.Value) && this.CanBeAtEndOfLine())
-			return true;
-
-		return false;
+		
+		return (AscCommon.isEastAsianScript(this.Value)
+			&& this.CanBeAtEndOfLine()
+			&& !AscCommon.isHangul(this.Value)
+			&& !AscCommon.isEastAsianPunctuation(this.Value));
 	};
 	CRunText.prototype.CanBeAtBeginOfLine = function()
 	{

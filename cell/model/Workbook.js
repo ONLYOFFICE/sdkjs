@@ -5050,7 +5050,7 @@
 			aRanges.push(new AscCommonExcel.Range(oWorksheet, 0, 0, gc_nMaxRow0, gc_nMaxCol0));
 			aNames.push(parserHelp.getEscapeSheetName(oWorksheet.sName));
 		}
-		this.handleDrawings(function(oDrawing) {
+		const fDrawingCallback = function(oDrawing) {
 			if(oDrawing.getObjectType() === AscDFH.historyitem_type_ChartSpace) {
 				var nPrevLength = aRefsToChange.length;
 				oDrawing.collectIntersectionRefs(aRanges, aRefsToChange);
@@ -5058,7 +5058,9 @@
 					aId.push(oDrawing.Get_Id());
 				}
 			}
-		});
+		};
+		this.handleDrawings(fDrawingCallback);
+		this.oApi.frameManager.handleMainDiagram(fDrawingCallback);
 		this.checkObjectsLock(aId, function(bNoLock) {
 			if(bNoLock) {
 				for(var nRef = 0; nRef < aRefsToChange.length; ++nRef) {
@@ -5075,7 +5077,7 @@
 		var aId = [];
 		var aCharts = [];
 		var aRanges = [new AscCommonExcel.Range(oWorksheet, 0, 0, gc_nMaxRow0, gc_nMaxCol0)];
-		this.handleDrawings(function(oDrawing) {
+		const fDrawingCallback = function(oDrawing) {
 			if(oDrawing.getObjectType() === AscDFH.historyitem_type_ChartSpace) {
 				var nPrevLength = aRefsToChange.length;
 				oDrawing.clearDataRefs();
@@ -5086,7 +5088,9 @@
 					aId.push(oDrawing.Get_Id());
 				}
 			}
-		});
+		};
+		this.handleDrawings(fDrawingCallback);
+		this.oApi.frameManager.handleMainDiagram(fDrawingCallback);
 		return {refs: aRefsToChange, ids: aId, charts: aCharts};
 
 	};
@@ -5117,7 +5121,7 @@
 		var aRefsToResize = [];
 		var aRefsToReplace = [];
 		var aId = [];
-		this.handleDrawings(function(oDrawing) {
+		const fDrawingCallback = function(oDrawing) {
 			if(oDrawing.getObjectType() === AscDFH.historyitem_type_ChartSpace) {
 				var nPrevLength = aRefsToReplace.length;
 				let delta;
@@ -5144,7 +5148,9 @@
 					aId.push(oDrawing.Get_Id());
 				}
 			}
-		});
+		}
+		this.handleDrawings(fDrawingCallback);
+		this.oApi.frameManager.handleMainDiagram(fDrawingCallback);
 		this.checkObjectsLock(aId, function(bNoLock) {
 			if(bNoLock) {
 				for(var nRef = 0; nRef < aRefsToReplace.length; ++nRef) {
@@ -5500,6 +5506,15 @@
 	Workbook.prototype.getExternalLinkIndexByName = function (name) {
 		for (var i = 0; i < this.externalReferences.length; i++) {
 			if (this.externalReferences[i].Id === name) {
+				return i + 1;
+			}
+		}
+		return null;
+	};
+
+	Workbook.prototype.getExternalLinkIndexById = function (id) {
+		for (var i = 0; i < this.externalReferences.length; i++) {
+			if (this.externalReferences[i]._id === id) {
 				return i + 1;
 			}
 		}

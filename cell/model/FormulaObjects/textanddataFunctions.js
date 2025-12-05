@@ -920,6 +920,11 @@ function (window, undefined) {
 			}
 
 			pos = arg2.getValue();
+
+			if (pos <= 0) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
 			pos = pos > 0 ? pos - 1 : pos;
 		}
 
@@ -939,9 +944,9 @@ function (window, undefined) {
 
 		str = arg1.toLocaleString();
 		// searchStr = RegExp.escape(arg0.toLocaleString()); // doesn't work with strings like """ String""" , it's return ""\ String"" instead "" String""
-		//TODO need review. bugs 50869; 68343
+		
 		searchStr = arg0.toLocaleString().replace(/\"\"/g, "\"");
-		searchStr = RegExp.escape(searchStr);
+		// searchStr = RegExp.escape(searchStr);
 
 		if (arg2) {
 
@@ -950,12 +955,13 @@ function (window, undefined) {
 			}
 
 			str = str.substring(pos);
-			res = str.search(searchStr);
+			// res = str.search(searchStr);	// invalid regular expression JS error (FIND("A"&REPT("Z",32766),"A"&REPT("Z",32766),1))
+			res = str.indexOf(searchStr);
 			if (res >= 0) {
 				res += pos;
 			}
 		} else {
-			res = str.search(searchStr);
+			res = str.indexOf(searchStr);
 		}
 
 		if (res < 0) {

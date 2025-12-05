@@ -1277,6 +1277,9 @@ CChangesPDFAnnotBorderEffect.prototype.private_SetValue = function(Value)
 	let oAnnot = this.Class;
 	oAnnot._borderEffectStyle = Value;
 	oAnnot.AddToRedraw();
+	if (Value == AscPDF.BORDER_EFFECT_STYLES.None) {
+		oAnnot.SetDefaultGeometry();
+	}
 };
 
 /**

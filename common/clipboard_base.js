@@ -155,6 +155,11 @@
 		{
 			this._console_log("oncopy");
 
+			if (!this.isCopyEnabled()) {
+				this.SendCopyDisabledEvent();
+				return;
+			}
+
 			if (!this.Api.asc_IsFocus(true))
 				return;
 
@@ -182,6 +187,11 @@
 		_private_oncut : function(e)
 		{
 			this._console_log("oncut");
+
+			if (!this.isCopyEnabled()) {
+				this.SendCopyDisabledEvent();
+				return;
+			}
 
 			if (!this.Api.asc_IsFocus(true))
 				return;
@@ -724,14 +734,14 @@
 				ElemToSelect.style["-o-user-select"]      = "text";
 				ElemToSelect.style["user-select"]         = "text";
 				ElemToSelect.style["-webkit-user-select"] = "text";
-				ElemToSelect.setAttribute("contentEditable", this.isCopyOutEnabled());
+				ElemToSelect.setAttribute("contentEditable", this.isCopyOutEnabled() && this.isCopyEnabled());
 
 				var _parent = ("" == this.CommonDivIdParent) ? document.body : document.getElementById(this.CommonDivIdParent);
 				_parent.appendChild(ElemToSelect);
 			}
 			else
 			{
-				ElemToSelect.setAttribute("contentEditable", this.isCopyOutEnabled());
+				ElemToSelect.setAttribute("contentEditable", this.isCopyOutEnabled() && this.isCopyEnabled());
 			}
 			return ElemToSelect;
 		},
@@ -944,7 +954,7 @@
 
 			if (this.ClosureParams.isDivCopy === true)
 			{
-				if (!this.isCopyOutEnabled())
+				if (!this.isCopyOutEnabled() || !this.isCopyEnabled())
 					return;
 
 				if (_format == AscCommon.c_oAscClipboardDataFormat.Html)
@@ -975,7 +985,7 @@
 					break;
 			}
 
-			if (_data_format != "" && _data !== null && this.isCopyOutEnabled())
+			if (_data_format != "" && _data !== null && this.isCopyOutEnabled() && this.isCopyEnabled())
 			{
 				if (_data_format == "text/x-custom")
 					this.ClosureParams.setData(_data_format, "asc_internalData2;" + _data);
@@ -1023,7 +1033,7 @@
 
 		isUseNewPaste : function()
 		{
-			return false;
+			return true;
 		},
 
 		Button_Copy_New : function(isCut)
@@ -1034,6 +1044,10 @@
 		Copy_New : function(isCut)
 		{
 			let oThis = this;
+			if (!this.isCopyEnabled()) {
+				this.SendCopyDisabledEvent();
+				return true;
+			}
 			//todo add check on mobile version, because before all work without focus check
 			if (!this.Api.asc_IsFocus(true) && !this._isUseMobileNewCopy()) {
 				return;
@@ -1085,6 +1099,38 @@
 				}
 				catch (e)
 				{
+				}
+			}
+			return false;
+		},
+
+		Check_Paste_New : function(callback)
+		{
+			if (navigator.clipboard)
+			{
+				if (navigator.permissions && navigator.permissions.query)
+				{
+					navigator.permissions.query({ name: 'clipboard-read' })
+						.then(function(result) {
+							if (result.state === 'denied')
+							{
+								console.warn('Clipboard read permission denied');
+								return false;
+							}
+
+							callback(true);
+						})
+						.catch(function(error) {
+							console.error('Failed to query clipboard permissions:', error);
+							callback(false);
+						});
+
+					return true;
+				}
+				else
+				{
+					callback(false);
+					return true;
 				}
 			}
 			return false;
@@ -1151,6 +1197,7 @@
 
 								})
 								.catch(function(){});
+						}).catch(function(e){
 						});
 
 					return true;
@@ -1164,6 +1211,10 @@
 
 		Button_Copy : function(oldCopy)
 		{
+			if (!this.isCopyEnabled()) {
+				this.SendCopyDisabledEvent();
+				return;
+			}
 			if (window["AscDesktopEditor"])
 			{
 				window["asc_desktop_copypaste"](this.Api, "Copy");
@@ -1269,60 +1320,72 @@
 
 			if (window["NATIVE_EDITOR_ENJINE"])
 				return false;
-			
+
+			let oThis = this;
 			if (this.isUseNewPaste())
 			{
-				if (this.Button_Paste_New())
-					return true;
-			}
-
-			if (this.inputContext)
-			{
-				if (this.inputContext.isHardCheckKeyboard)
-					this.inputContext.enableVirtualKeyboard_Hard();
-
-                this.inputContext.HtmlArea.focus();
-            }
-			this.Api.asc_enableKeyEvents(true, true);
-
-			var _ret = false;
-			try
-			{
-				if (this.isSupportExecCommand("paste"))
-					_ret = document.execCommand("paste");
-			}
-			catch (err)
-			{
-				_ret = false;
-			}
-
-			if (!_ret && null != this.LastCopyBinary)
-			{
-				var _isInternal = false;
-				var _internal_data = null;
-				var _text_data = null;
-				for (var i = 0; i < this.LastCopyBinary.length; i++)
-				{
-					if (c_oAscClipboardDataFormat.Internal === this.LastCopyBinary[i].type)
-					{
-						_internal_data = this.LastCopyBinary[i].data;
-						_isInternal = true;
+				this.Check_Paste_New(function (success) {
+					if (success) {
+						if (!oThis.Button_Paste_New()) {
+							return doPaste();
+						}
+					} else {
+						return doPaste();
 					}
-					else if (c_oAscClipboardDataFormat.Text === this.LastCopyBinary[i].type)
+				})
+			} else {
+				return doPaste();
+			}
+
+			function doPaste() {
+				if (oThis.inputContext)
+				{
+					if (oThis.inputContext.isHardCheckKeyboard)
+						oThis.inputContext.enableVirtualKeyboard_Hard();
+
+					oThis.inputContext.HtmlArea.focus();
+				}
+				oThis.Api.asc_enableKeyEvents(true, true);
+
+				var _ret = false;
+				try
+				{
+					if (oThis.isSupportExecCommand("paste"))
+						_ret = document.execCommand("paste");
+				}
+				catch (err)
+				{
+					_ret = false;
+				}
+
+				if (!_ret && null != oThis.LastCopyBinary)
+				{
+					var _isInternal = false;
+					var _internal_data = null;
+					var _text_data = null;
+					for (var i = 0; i < oThis.LastCopyBinary.length; i++)
 					{
-						_text_data = this.LastCopyBinary[i].data;
+						if (c_oAscClipboardDataFormat.Internal === oThis.LastCopyBinary[i].type)
+						{
+							_internal_data = oThis.LastCopyBinary[i].data;
+							_isInternal = true;
+						}
+						else if (c_oAscClipboardDataFormat.Text === oThis.LastCopyBinary[i].type)
+						{
+							_text_data = oThis.LastCopyBinary[i].data;
+						}
+					}
+					if (_isInternal)
+					{
+						oThis.Api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Internal, _internal_data, null, _text_data);
+					}
+					else if (oThis.LastCopyBinary.length > 0)
+					{
+						oThis.Api.asc_PasteData(oThis.LastCopyBinary[0].type, oThis.LastCopyBinary[0].data, null, _text_data);
 					}
 				}
-				if (_isInternal)
-				{
-					this.Api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Internal, _internal_data, null, _text_data);
-				}
-				else if (this.LastCopyBinary.length > 0)
-				{
-					this.Api.asc_PasteData(this.LastCopyBinary[0].type, this.LastCopyBinary[0].data, null, _text_data);
-				}
+				return _ret;
 			}
-			return _ret;
 		},
 
 		ClearBuffer: function() {
@@ -1360,6 +1423,14 @@
 			return true;
 		},
 
+		isCopyEnabled : function()
+		{
+			if (this.Api && this.Api.isCopyEnabled)
+				return this.Api.isCopyEnabled();
+			return true;
+		},
+
+
 		ChangeLastCopy : function(arr)
 		{
 			if (arr) {
@@ -1371,7 +1442,7 @@
 		},
 
 		SendCopyEvent : function () {
-			if (this.Api && this.Api.broadcastChannel) {
+			if (this.Api && this.Api.broadcastChannel && this.isCopyOutEnabled()) {
 				let obj = {
 					type: "ClipboardChange",
 					data: this.LastCopyBinary,
@@ -1385,7 +1456,13 @@
 			if (null == this.LastCopyBinary)
 				this.LastCopyBinary = [];
 			this.LastCopyBinary.push({ type: _format, data : _data });
-		}
+		},
+
+		SendCopyDisabledEvent : function () {
+			if (this.Api) {
+				this.Api.sendEvent("asc_onError", c_oAscError.ID.CopyDisabled, c_oAscError.Level.NoCritical);
+			}
+		},
 	};
 
 	function definePastedFrom(doc)

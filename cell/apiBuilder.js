@@ -9024,11 +9024,15 @@
 	 * @param {EMU} nColOffset - The offset from the nFromCol column to the left part of the chart measured in English measure units.
 	 * @param {number} nFromRow - The number of the row where the beginning of the chart will be placed.
 	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the chart measured in English measure units.
-	 * @returns {ApiChart}
+	 * @returns {ApiChart | null}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/AddChart.js
 	 */
 	ApiWorksheet.prototype.AddChart =
 		function (sDataRange, bInRows, sType, nStyleIndex, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset) {
+			if (this.worksheet && this.worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
+				logError(new Error('Cannot modify protected sheet'));
+				return null;
+			}
 			const settings = new Asc.asc_ChartSettings();
 			settings.type = AscFormat.ChartBuilderTypeToInternal(sType);
 			settings.style = nStyleIndex;
@@ -9179,6 +9183,10 @@
 	ApiWorksheet.prototype.ReplaceCurrentImage = function (sImageUrl, nWidth, nHeight) {
 		let oWorksheet = Asc['editor'].wb.getWorksheet();
 		if (oWorksheet && oWorksheet.objectRender && oWorksheet.objectRender.controller) {
+			if (oWorksheet.model && oWorksheet.model.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
+				logError(new Error('Cannot modify protected sheet'));
+				return null;
+			}
 			let oController = oWorksheet.objectRender.controller;
 			let dK = 1 / 36000 / AscCommon.g_dKoef_pix_to_mm;
 			oController.putImageToSelection(sImageUrl, nWidth * dK, nHeight * dK);
@@ -10049,6 +10057,11 @@
 
 		let worksheet = this.range.worksheet;
 
+		if (worksheet.getSheetProtection() && worksheet.isIntersectLockedRanges([this.range.bbox])) {
+			//logError(new Error('Cannot modify protected sheet'));
+			return false;
+		}
+
 		if (Array.isArray(data)) {
 			let checkDepth = function (x) {
 				return Array.isArray(x) ? 1 + Math.max.apply(this, x.map(checkDepth)) : 0;
@@ -10216,6 +10229,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFontColor.js
 	 */
 	ApiRange.prototype.SetFontColor = function (oColor) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			return null;
+		}
 		this.range.setFontcolor(oColor.color);
 	};
 	Object.defineProperty(ApiRange.prototype, "FontColor", {
@@ -10405,6 +10421,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetAlignVertical.js
 	 */
 	ApiRange.prototype.SetAlignVertical = function (sAligment) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			return null;
+		}
 		switch (sAligment) {
 			case "center": {
 				this.range.setAlignVertical(Asc.c_oAscVAlign.Center);
@@ -10447,6 +10466,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetAlignHorizontal.js
 	 */
 	ApiRange.prototype.SetAlignHorizontal = function (sAlignment) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			return null;
+		}
 		switch (sAlignment) {
 			case "left": {
 				this.range.setAlignHorizontal(AscCommon.align_Left);
@@ -10506,6 +10528,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetBold.js
 	 */
 	ApiRange.prototype.SetBold = function (isBold) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			return null;
+		}
 		this.range.setBold(!!isBold);
 	};
 	Object.defineProperty(ApiRange.prototype, "Bold", {
@@ -10522,6 +10547,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetItalic.js
 	 */
 	ApiRange.prototype.SetItalic = function (isItalic) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			return null;
+		}
 		this.range.setItalic(!!isItalic);
 	};
 	Object.defineProperty(ApiRange.prototype, "Italic", {
@@ -10544,6 +10572,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetUnderline.js
 	 */
 	ApiRange.prototype.SetUnderline = function (undelineType) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			return null;
+		}
 		var val;
 		switch (undelineType) {
 			case 'single':
@@ -10579,6 +10610,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetStrikeout.js
 	 */
 	ApiRange.prototype.SetStrikeout = function (isStrikeout) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			return null;
+		}
 		this.range.setStrikeout(!!isStrikeout);
 	};
 	Object.defineProperty(ApiRange.prototype, "Strikeout", {
@@ -10595,6 +10629,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetWrap.js
 	 */
 	ApiRange.prototype.SetWrap = function (isWrap) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			return null;
+		}
 		this.range.setWrap(!!isWrap);
 	};
 
@@ -10626,6 +10663,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFillColor.js
 	 */
 	ApiRange.prototype.SetFillColor = function (oColor) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			return null;
+		}
 		this.range.setFillColor('No Fill' === oColor ? null : oColor.color);
 	};
 	/**
@@ -10679,6 +10719,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetNumberFormat.js
 	 */
 	ApiRange.prototype.SetNumberFormat = function (sFormat) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			return null;
+		}
 		this.range.setNumFormat(sFormat);
 	};
 	Object.defineProperty(ApiRange.prototype, "NumberFormat", {
@@ -10700,6 +10743,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetBorders.js
 	 */
 	ApiRange.prototype.SetBorders = function (bordersIndex, lineStyle, oColor) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			return null;
+		}
 		var borders = new AscCommonExcel.Border();
 		borders.initDefault();
 		switch (bordersIndex) {
@@ -10742,6 +10788,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Merge.js
 	 */
 	ApiRange.prototype.Merge = function (isAcross) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			return null;
+		}
 		if (isAcross) {
 			var ws = this.range.worksheet;
 			var bbox = this.range.getBBox0();
@@ -10760,6 +10809,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/UnMerge.js
 	 */
 	ApiRange.prototype.UnMerge = function () {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			return null;
+		}
 		this.range.unmerge();
 	};
 
@@ -10929,6 +10981,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetOrientation.js
 	 */
 	ApiRange.prototype.SetOrientation = function (angle) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			return null;
+		}
 		switch (angle) {
 			case 'xlDownward':
 				angle = -90;
@@ -10973,6 +11028,11 @@
 		var ws = this.range.worksheet;
 		var sortSettings = new Asc.CSortProperties(ws);
 		var range = this.range.bbox;
+
+		if (!this._checkProtection()) {
+			logError(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 
 		var aMerged = ws.mergeManager.get(range);
 		if (aMerged.outer.length > 0 || (aMerged.inner.length > 0 && null == window['AscCommonExcel']._isSameSizeMerged(range, aMerged.inner, true))) {
@@ -11134,6 +11194,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/AutoFit.js
 	 */
 	ApiRange.prototype.AutoFit = function (bRows, bCols) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			return null;
+		}
 		var index = this.range.worksheet.getIndex();
 		if (bRows)
 			this.range.worksheet.workbook.oApi.wb.getWorksheet(index).autoFitRowHeight(this.range.bbox.r1, this.range.bbox.r2);
@@ -11373,7 +11436,17 @@
 		}
 	});
 
+	ApiRange.prototype._checkProtection = function(type) {
+		let worksheet = this.range && this.range && this.range.worksheet;
+		if (!worksheet) {
+			return null;
+		}
 
+		if (worksheet.getSheetProtection(type)) {
+			return null;
+		}
+		return true;
+	};
 
 	/**
 	 * Search data type (formulas or values).
@@ -12019,6 +12092,10 @@
 		// 	test.SetAutoFilter(1, "xlFilterAboveAverage", "xlFilterDynamic");
 		// })();
 
+
+		if (!this._checkProtection()) {
+			return null;
+		}
 
 		if (Criteria2 && Array.isArray(Criteria2)) {
 			private_MakeError('Error! Criteria2 must be string!');
@@ -20263,6 +20340,11 @@
 			return null;
 		}
 
+		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			logError(new Error('Cannot modify protected sheet'));
+			return null;
+		}
+
 		let props = new window['AscCommonExcel'].CConditionalFormattingRule();
 		props.type = internalType;
 		props.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
@@ -20460,6 +20542,11 @@
 			return null;
 		}
 
+		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			logError(new Error('Cannot modify protected sheet'));
+			return null;
+		}
+
 		let props = new window['AscCommonExcel'].CConditionalFormattingRule();
 		props.type = Asc.ECfType.aboveAverage;
 		props.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
@@ -20502,6 +20589,11 @@
 	ApiFormatConditions.prototype.AddColorScale = function(ColorScaleType) {
 		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (!worksheet) {
+			return null;
+		}
+
+		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			logError(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 
@@ -20610,6 +20702,11 @@
 			return null;
 		}
 
+		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			logError(new Error('Cannot modify protected sheet'));
+			return null;
+		}
+
 		let props = new window['AscCommonExcel'].CConditionalFormattingRule();
 		props.type = Asc.ECfType.dataBar;
 		props.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
@@ -20672,6 +20769,11 @@
 	ApiFormatConditions.prototype.AddIconSetCondition = function() {
 		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (!worksheet) {
+			return null;
+		}
+
+		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			logError(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 
@@ -20750,6 +20852,11 @@
 			return null;
 		}
 
+		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			logError(new Error('Cannot modify protected sheet'));
+			return null;
+		}
+
 		let props = new window['AscCommonExcel'].CConditionalFormattingRule();
 		props.type = Asc.ECfType.top10;
 		props.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
@@ -20797,6 +20904,11 @@
 			return null;
 		}
 
+		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			logError(new Error('Cannot modify protected sheet'));
+			return null;
+		}
+
 		let props = new window['AscCommonExcel'].CConditionalFormattingRule();
 		props.type = Asc.ECfType.uniqueValues;
 		props.priority = worksheet.getNextCFPriority ? worksheet.getNextCFPriority() : 1;
@@ -20836,6 +20948,11 @@
 		let worksheet = this.range && this.range.range && this.range.range.worksheet;
 		if (!worksheet || !worksheet.aConditionalFormattingRules) {
 			return;
+		}
+
+		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			logError(new Error('Cannot modify protected sheet'));
+			return null;
 		}
 
 		let ranges = [];
@@ -23017,7 +23134,7 @@
 			if (internalType !== -1) {
 				let t = this;
 				this.parent.private_changeStyle(function (newRule) {
-					let index = t.GetIndex() - 1;
+					let index = t.GetIndex();
 					newRule.aRuleElements[0].aCFVOs[index].asc_setType(internalType);
 					newRule.aRuleElements[0].aCFVOs[index].formula = null;
 					newRule.aRuleElements[0].aCFVOs[index].formulaParent = null;
@@ -23067,7 +23184,7 @@
 		if (this.cfvo) {
 			let t = this;
 			this.parent.private_changeStyle(function (newRule) {
-				let index = t.GetIndex() - 1;
+				let index = t.GetIndex();
 				newRule.aRuleElements[0].aCFVOs[index].asc_setVal(value);
 				newRule.aRuleElements[0].aCFVOs[index].formula = null;
 				newRule.aRuleElements[0].aCFVOs[index].formulaParent = null;
@@ -23148,7 +23265,7 @@
 		if (this.color) {
 			let t = this;
 			this.parent.private_changeStyle(function (newRule) {
-				let index = t.GetIndex() - 1;
+				let index = t.GetIndex();
 				if (newRule.aRuleElements && newRule.aRuleElements[0] &&
 					newRule.aRuleElements[0].aColors &&
 					newRule.aRuleElements[0].aColors[index]) {

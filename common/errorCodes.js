@@ -103,6 +103,7 @@
 			FTRangeIncludedOtherTables       : -57,
 			ChangeFilteredRangeError         : -58,
 
+			CopyDisabled: -62,
 			CanNotPasteImage: -63,
 			PasteMaxRangeError   : -64,
 			PastInMergeAreaError : -65,
@@ -336,6 +337,7 @@
 	prot['PasteSlicerError']                 = prot.PasteSlicerError;
 	prot['MoveSlicerError']                  = prot.MoveSlicerError;
 	prot['PasteMultiSelectError']            = prot.PasteMultiSelectError;
+	prot['CopyDisabled']                     = prot.CopyDisabled;
 	prot['CanNotPasteImage']                 = prot.CanNotPasteImage;
 	prot['DataRangeError']                   = prot.DataRangeError;
 	prot['MustSingleCell']                   = prot.MustSingleCell;

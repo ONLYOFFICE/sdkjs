@@ -490,10 +490,12 @@ ParaRun.prototype.Get_Text = function(Text)
 
 				break;
 			}
-
-			case para_Text :
+			case para_Text:
+			case para_Space:
+			case para_Math_Text:
+			case para_Math_BreakOperator:
 			{
-				Text.Text += String.fromCharCode(Item.Value);
+				Text.Text += String.fromCharCode(Item.GetCodePoint());
 				break;
 			}
 			case para_NewLine:
@@ -504,11 +506,6 @@ ParaRun.prototype.Get_Text = function(Text)
 			case para_Tab:
 			{
 				Text.Text += undefined !== Text.TabSymbol ? Text.TabSymbol : " ";
-				break;
-			}
-			case para_Space:
-			{
-				Text.Text += " ";
 				break;
 			}
 		}
@@ -2224,7 +2221,7 @@ ParaRun.prototype.Get_ParaPosByContentPos = function(ContentPos, Depth)
         }
     }
 
-    return new CParaPos((LinesCount === 1 ? this.protected_GetRangesCount(0) - 1 + this.StartRange : this.protected_GetRangesCount(0) - 1), LinesCount - 1 + this.StartLine, 0, 0);
+    return new CParaPos((LinesCount === 1 ? this.protected_GetRangesCount(0) - 1 + this.StartRange : this.protected_GetRangesCount(LinesCount - 1) - 1), LinesCount - 1 + this.StartLine, 0, 0);
 };
 
 ParaRun.prototype.recalculateCursorPosition = function(positionCalculator, isCurrent)
@@ -3151,15 +3148,12 @@ ParaRun.prototype.GetSelectedText = function(bAll, bClearText, oPr)
 
                 break;
             }
-
-            case para_Text :
-            {
-                Str += AscCommon.encodeSurrogateChar(Item.Value);
-                break;
-            }
+			case para_Text :
 			case para_Space:
+			case para_Math_Text:
+			case para_Math_BreakOperator:
 			{
-				Str += " ";
+				Str += AscCommon.encodeSurrogateChar(Item.GetCodePoint());
 				break;
 			}
 			case para_Tab:
@@ -3167,12 +3161,6 @@ ParaRun.prototype.GetSelectedText = function(bAll, bClearText, oPr)
 				Str += oPr && undefined !== oPr.TabSymbol ? oPr.TabSymbol : ' ';
 				break;
 			}
-            case para_Math_Text:
-            case para_Math_BreakOperator:
-            {
-                Str += AscCommon.encodeSurrogateChar(Item.value);
-                break;
-            }
 			case para_NewLine:
 			{
 				Str += oPr && undefined !== oPr.NewLineSeparator ? oPr.NewLineSeparator : '\r';
@@ -3437,7 +3425,7 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 	this.RecalcInfo.Recalc = true;
 	this.RecalcInfo.ResetMeasure();
 };
-ParaRun.prototype.getTextMetrics = function()
+ParaRun.prototype.getTextMetrics = function(isForceEmpty)
 {
 	let textPr = this.Get_CompiledPr(false);
 	if (this.IsUseAscFont(textPr))
@@ -3453,7 +3441,7 @@ ParaRun.prototype.getTextMetrics = function()
 		fontSlot |= this.Content[nPos].GetFontSlot(textPr);
 	}
 	
-	if (AscWord.fontslot_Unknown === fontSlot)
+	if ((AscWord.fontslot_Unknown === fontSlot) || (AscWord.fontslot_None === fontSlot && isForceEmpty))
 		fontSlot = textPr.CS || textPr.RTL ? AscWord.fontslot_CS : AscWord.fontslot_ASCII;
 	
 	return textPr.GetTextMetrics(fontSlot, this.Paragraph.GetTheme());
@@ -3816,7 +3804,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 						}
 					}
 
-					let isBreakBefore = Item.IsSpaceBefore();
+					let isBreakBefore = Item.IsSpaceBefore(textPr.RFonts.Hint);
 					if (isBreakBefore
 						&& Word
 						&& PRS.LastItem.CanBeAtEndOfLine()
@@ -3838,7 +3826,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 					let isLigature  = Item.IsLigature();
 					let GraphemeLen = isLigature ? Item.GetLigatureWidth() : LetterLen;
 					
-					let isBreakAfter = Item.IsSpaceAfter() || textPr.RFonts.Hint === AscWord.fonthint_EastAsia;
+					let isBreakAfter = Item.IsSpaceAfter(textPr.RFonts.Hint);
 
 					if (FirstItemOnLine
 						&& (X + SpaceLen + WordLen + GraphemeLen > XEnd
@@ -4417,9 +4405,9 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                         {
                             LDRecalcInfo.Reset();
 
+							let continueCalc = false;
                             // Добавляем разрыв страницы. Если это первая страница, тогда ставим разрыв страницы в начале параграфа,
                             // если нет, тогда в начале текущей строки.
-
                             if (null != Para.Get_DocumentPrev() && true != Para.IsTableCellContent() && 0 === CurPage)
                             {
                                 Para.Recalculate_Drawing_AddPageBreak(0, 0, true);
@@ -4436,17 +4424,25 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                                     PRS.NewRange = true;
                                     return;
                                 }
-                                else
-                                {
-                                    RangeEndPos = Pos;
-                                    NewRange = true;
-                                    ForceNewPage = true;
-                                }
+                                else if (Para.IsStartFromNewPage())
+								{
+									// Делаем как MSWord перестаем учитывать обтекание данного объекта
+									continueCalc = true;
+									LDRecalcInfo.Set_FlowObject(Item, 0, recalcresult_NextElement, -1);
+									LDRecalcInfo.Set_PageBreakBefore(false);
+									LDRecalcInfo.SetForceNoWrap(true);
+									PRS.ForceNewPageAfter = true;
+								}
+								else
+								{
+									RangeEndPos  = Pos;
+									NewRange     = true;
+									ForceNewPage = true;
+								}
                             }
-
-
+							
                             // Если до этого было слово, тогда не надо проверять убирается ли оно
-                            if (true === Word || WordLen > 0)
+                            if (!continueCalc && (true === Word || WordLen > 0))
                             {
                                 // Добавляем длину пробелов до слова + длина самого слова. Не надо проверять
                                 // убирается ли слово, мы это проверяем при добавленнии букв.
@@ -5507,6 +5503,8 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
             }
             case para_Drawing:
             {
+				Item.SetForceNoWrap(false);
+				
                 var Para = PRSA.Paragraph;
                 var isInHdrFtr = Para.Parent.IsHdrFtr();
 
@@ -5716,6 +5714,12 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
                             // учета колонок, так делает и Word).
                             if ( Item.PageNum === PageAbs )
                             {
+								if (LDRecalcInfo.IsForceNoWrap())
+								{
+									Item.SetForceNoWrap(true);
+									Item.Update_Position(PRSA.Paragraph, new CParagraphLayout( PRSA.X, PRSA.Y , PageAbs, PRSA.LastW, ColumnStartX, ColumnEndX, X_Left_Margin, X_Right_Margin, Page_Width, Top_Margin, Bottom_Margin, Page_H, PageFields.X, PageFields.Y, Para.Pages[CurPage].Y + Para.Lines[_CurLine].Y - Para.Lines[_CurLine].Metrics.Ascent, Para.Pages[_CurPage].Y), PageLimits, PageLimitsOrigin, _CurLine, isInTable);
+								}
+								
                                 // Все нормально, можно продолжить пересчет
                                 LDRecalcInfo.Reset();
                                 Item.Reset_SavedPosition();
@@ -7491,11 +7495,12 @@ ParaRun.prototype.SkipAnchorsAtSelectionStart = function(Direction)
 	return true;
 };
 
-ParaRun.prototype.RemoveSelection = function()
+ParaRun.prototype.RemoveSelection = function(preserveCursorPosition)
 {
-	if (this.Selection.Use)
+	// TODO: По-хорошему, надо убрать выставление позиции здесь и проверить, что при отмене селекта она выставляется
+	if (this.Selection.Use && !preserveCursorPosition)
 		this.State.ContentPos = Math.min(this.Content.length, Math.max(0, this.Selection.EndPos));
-
+	
 	this.Selection.Use      = false;
 	this.Selection.StartPos = 0;
 	this.Selection.EndPos   = 0;

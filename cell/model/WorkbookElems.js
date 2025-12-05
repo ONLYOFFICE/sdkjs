@@ -3017,7 +3017,7 @@ var g_oFontProperties = {
 		var res = undefined;
 		switch (val) {
 			case "automatic":
-				res = AscCommonExcel.EDataBarAxisPosition.context;
+				res = AscCommonExcel.EDataBarAxisPosition.automatic;
 				break;
 			case "middle":
 				res = AscCommonExcel.EDataBarAxisPosition.middle;
@@ -13071,9 +13071,21 @@ function RangeDataManagerElem(bbox, data)
 	};
 	/**
 	 * Initialize with sharedStrings from file. rely on uniqines
+	 * Adds new shared strings to existing ones without removing existing data
 	 * @param {Array<string | Array<{text: string, format: CellXfs}>>} sharedStrings
 	 */
 	CSharedStrings.prototype.initWithSharedStrings = function(sharedStrings) {
+		if (this.all.length > 0) {
+			for (let i = 0; i < sharedStrings.length; i++) {
+				const item = sharedStrings[i];
+				if (typeof item === 'string') {
+					this.addText(item);
+				} else {
+					this.addMultiText(item);
+				}
+			}
+			return;
+		}
 		this.all = sharedStrings.slice(); //copy
 		this.text = Object.create(null);
 		this.multiTextMap = Object.create(null);
@@ -15048,7 +15060,6 @@ function RangeDataManagerElem(bbox, data)
 
 		//temp for update
 		this.sKey = null;
-
 	}
 	ExternalReferenceBase.prototype.getKey = function() {
 		return this.sKey;
@@ -15259,6 +15270,8 @@ function RangeDataManagerElem(bbox, data)
 		this.SheetNames = [];
 
 		this.worksheets = {};
+
+		this._id = AscCommon.g_oIdCounter.Get_NewId();
 	}
 	AscFormat.InitClassWithoutType(ExternalReference, ExternalReferenceBase);
 
@@ -15316,6 +15329,10 @@ function RangeDataManagerElem(bbox, data)
 				this.referenceData["instanceId"] = r.GetString2();
 			}
 		}
+
+		if (r.GetBool()) {
+			this._id = r.GetString2();
+		}
 	};
 	ExternalReference.prototype.Write_ToBinary2 = function(w) {
 		var i;
@@ -15371,6 +15388,13 @@ function RangeDataManagerElem(bbox, data)
 		} else {
 			w.WriteBool(false);
 		}
+
+		if (null != this._id) {
+			w.WriteBool(true);
+			w.WriteString2(this._id);
+		} else {
+			w.WriteBool(false);
+		}
 	};
 
 	ExternalReference.prototype.clone = function (needCloneSheets) {
@@ -15407,6 +15431,8 @@ function RangeDataManagerElem(bbox, data)
 				newObj.worksheets[i] = this.worksheets[i];
 			}
 		}
+
+		newObj._id = this._id;
 
 		return newObj;
 	};
