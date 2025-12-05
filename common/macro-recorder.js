@@ -933,16 +933,22 @@
 
 			return "\tdoc.AddMathEquation(\"" + obj.math + "\", \"" + type + "\");\n";
 		},
-		addBlockContentControl	: function(){
-			return "\tdoc.Push(Api.CreateBlockLvlSdt());\n";
+		addBlockContentControl	: function(strPlaceholder){
+			return "\tlet " + CounterStore.inc('block') + " = Api.CreateBlockLvlSdt();\n"
+				+ "\t" + CounterStore.get('block') + ".SetPlaceholderText(\"" + strPlaceholder + "\")\n"
+				+ "\tdoc.Push(" + CounterStore.get('block') + ");\n"
+				+ "\t" + CounterStore.get('block') + ".Select();\n";
 		},
-		addInlineContentControl	: function(){
-			return "\tdoc.GetCurrentParagraph().AddInlineLvlSdt((Api.CreateInlineLvlSdt()));\n";
+		addInlineContentControl	: function(strPlaceholder){
+				return "\tlet " + CounterStore.inc('inline') + " = Api.CreateInlineLvlSdt();\n"
+					+ "\t" + CounterStore.get('inline') + ".SetPlaceholderText(\"" + strPlaceholder + "\")\n"
+					+ "\tdoc.GetCurrentParagraph().Push(" + CounterStore.get('inline') + ");\n"
+					+ "\t" + CounterStore.get('inline') + ".Select();\n";
 		},
 		addContentControlList	: function(props){
-			if (props === true)
-				return "\tdoc.AddComboBoxContentControl();\n";
-			else if (props === false)
+			if (props.isComboBox === true)
+				return "\t doc.AddComboBoxContentControl();\n";
+			else if (props.isComboBox === false)
 				return "\tdoc.AddDropDownListContentControl();\n"
 		},
 		addContentControlCheckBox	: function(){
