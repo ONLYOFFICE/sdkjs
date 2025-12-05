@@ -9497,80 +9497,94 @@
 	}
 
 	/**
-	 * Moves a cursor to the left.
+	 * Moves the cursor to the left.
 	 * @memberof ApiDocument
-	 * @param {number} nCount - The number of characters to move left.
-	 * @param {boolean} isShift - Specifies whether to select text during the move.
-	 * @param {boolean} isCtl - Specifies whether to move by word instead of by character.
+	 * @param {number} [count=1] - Number of movements.
+	 * @param {boolean} [addToSelect=false] - Specifies whether to select text during the move.
+	 * @param {boolean} [byWords=false] - Specifies whether to move by words instead of by character.
 	 * @returns {boolean}
 	 * @typeofeditors ["CDE"]
 	 * @since 9.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorLeft.js
 	 */
-	ApiDocument.prototype.MoveCursorLeft = function(nCount, isShift, isCtl)
+	ApiDocument.prototype.MoveCursorLeft = function(count, addToSelect, byWords)
 	{
-		for(let i = 0; i < nCount; i++)
+		count = GetIntParameter(count, 1);
+		addToSelect = GetBoolParameter(addToSelect, false);
+		byWords = GetBoolParameter(byWords, false);
+		
+		for (let i = 0; i < count; ++i)
 		{
-			this.Document.MoveCursorLeft(!!isShift, !!isCtl);
+			this.Document.MoveCursorLeft(addToSelect, byWords);
 		}
 		return true;
 	};
 	/**
-	 * Moves a cursor to the right.
+	 * Moves the cursor to the right.
 	 * @memberof ApiDocument
-	 * @param {number} nCount - The number of characters to move right.
-	 * @param {boolean} isShift - Specifies whether to select text during the move.
-	 * @param {boolean} isCtl - Specifies whether to move by word instead of by character.
+	 * @param {number} [count=1] - Number of movements.
+	 * @param {boolean} [addToSelect=false] - Specifies whether to select text during the move.
+	 * @param {boolean} [byWords=false] - Specifies whether to move by words instead of by character.
 	 * @returns {boolean}
 	 * @typeofeditors ["CDE"]
 	 * @since 9.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorRight.js
 	 */
-	ApiDocument.prototype.MoveCursorRight = function(nCount, isShift, isCtl)
+	ApiDocument.prototype.MoveCursorRight = function(count, addToSelect, byWords)
 	{
-		for(let i = 0; i < nCount; i++)
+		count = GetIntParameter(count, 1);
+		addToSelect = GetBoolParameter(addToSelect, false);
+		byWords = GetBoolParameter(byWords, false);
+		
+		for (let i = 0; i < count; ++i)
 		{
-			this.Document.MoveCursorRight(!!isShift, !!isCtl);
+			this.Document.MoveCursorRight(addToSelect, byWords);
 		}
 		return true;
 	};
 
 	/**
-	 * Moves a cursor up.
+	 * Moves the cursor up.
 	 * @memberof ApiDocument
-	 * @param {number} nCount - The number of lines to move up.
-	 * @param {boolean} isShift - Specifies whether to select text during the move.
-	 * @param {boolean} isCtl - Specifies whether to move by paragraph instead of by line.
+	 * @param {number} [count=1] - Number of movements.
+	 * @param {boolean} [addToSelect=false] - Specifies whether to select text during the move.
 	 * @returns {boolean}
 	 * @typeofeditors ["CDE"]
 	 * @since 9.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorUp.js
 	 */
-	ApiDocument.prototype.MoveCursorUp = function(nCount, isShift, isCtl)
+	ApiDocument.prototype.MoveCursorUp = function(count, addToSelect)
 	{
-		for(let i = 0; i < nCount; i++)
+		count = GetIntParameter(count, 1);
+		addToSelect = GetBoolParameter(addToSelect, false);
+
+		this.ForceRecalculate(this.Document.GetCurPage());
+		for (let i = 0; i < count; ++i)
 		{
-			this.Document.MoveCursorUp(!!isShift, !!isCtl);
+			this.Document.MoveCursorUp(addToSelect);
 		}
 		return true;
 	};
 
 	/**
-	 * Moves a cursor down.
+	 * Moves the cursor down.
 	 * @memberof ApiDocument
-	 * @param {number} nCount - The number of lines to move down.
-	 * @param {boolean} isShift - Specifies whether to select text during the move.
-	 * @param {boolean} isCtl - Specifies whether to move by paragraph instead of by line.
+	 * @param {number} [count=1] - Number of movements.
+	 * @param {boolean} [addToSelect=false] - Specifies whether to select text during the move.
 	 * @returns {boolean}
 	 * @typeofeditors ["CDE"]
 	 * @since 9.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorDown.js
 	 */
-	ApiDocument.prototype.MoveCursorDown = function(nCount, isShift, isCtl)
+	ApiDocument.prototype.MoveCursorDown = function(count, addToSelect)
 	{
-		for(let i = 0; i < nCount; i++)
+		count = GetIntParameter(count, 1);
+		addToSelect = GetBoolParameter(addToSelect, false);
+		
+		this.ForceRecalculate(this.Document.GetCurPage() + 1);
+		for (let i = 0; i < count; ++i)
 		{
-			this.Document.MoveCursorDown(!!isShift, !!isCtl);
+			this.Document.MoveCursorDown(addToSelect);
 		}
 		return true;
 	};
@@ -24671,9 +24685,16 @@
 		return executeNoFormLockCheck(function() {
 			let mainForm = this.Sdt.GetMainForm();
 			if (mainForm && mainForm !== this.Sdt && mainForm.IsLabeledCheckBox())
+			{
 				mainForm.SetCheckBoxLabel(label);
+			}
 			else
+			{
 				this.Sdt.SetCheckBoxLabel(label);
+				let innerCheckBox = this.Sdt.IsLabeledCheckBox() ? this.Sdt.GetInnerCheckBox() : null;
+				if (innerCheckBox)
+					this.Sdt = innerCheckBox;
+			}
 			
 			return true;
 		}, this);

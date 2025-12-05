@@ -413,10 +413,10 @@
 			if (form.IsTextForm() && form.GetTextFormPr().IsComb())
 				combMax = form.GetTextFormPr().GetMaxCharacters();
 
-			if (!form.IsMainForm())
+			if (!form.IsMainForm() && form.GetMainForm() && !form.GetMainForm().IsLabeledCheckBox())
 				form = form.GetMainForm();
 			
-			if (form.IsFormRequired() && form.CheckOFormUserMaster() && this.logicDocument.IsHighlightRequiredFields() && !this.Graphics.isPrintMode)
+			if (form.IsFormRequired() && !form.IsLabeledCheckBox() && form.CheckOFormUserMaster() && this.logicDocument.IsHighlightRequiredFields() && !this.Graphics.isPrintMode)
 				formBorder = this.logicDocument.GetRequiredFieldsBorder();
 			else if (form.GetFormPr().GetBorder())
 				formBorder = form.GetFormPr().GetBorder();

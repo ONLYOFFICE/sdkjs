@@ -634,6 +634,7 @@
 	 * The passed function can be asynchronous (async function or function returning a Promise).
 	 * Inside the passed function, you can access the current cell address where the calculation is performed using *this.address*.
 	 * You can also access the addresses of function arguments using *this.args[0].address*, *this.args[1].address*, etc.
+	 * This method is not used in ONLYOFFICE Document Builder. Use AddCustomFunctionLibrary instead.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {Function} fCustom - A new function for calculating. Can be synchronous or asynchronous.

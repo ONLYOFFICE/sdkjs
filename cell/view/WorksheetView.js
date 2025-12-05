@@ -12712,6 +12712,7 @@ function isAllowPasteLink(pastedWb) {
           activeCell.row;
         var p = this._calcCellPosition(c, r, dc, dr);
         ar.assign(p.col, p.row, p.col, p.row);
+		this.workbook.MacrosAddData(AscDFH.historydescription_Spreadsheet_SelectRange, [ar]);
         selection.setActiveCell(p.row, p.col);
         this._fixSelectionOfHiddenCells(dc >= 0 ? +1 : -1, dr >= 0 ? +1 : -1, ar);
         this._fixSelectionOfMergedCells(undefined, undefined, customSelection);
@@ -19150,9 +19151,9 @@ function isAllowPasteLink(pastedWb) {
 			}
 
 			if (applyByArray)
-				this.workbook.StartAction(AscDFH.historydescription_Spreadsheet_SetCellFormula, AscCommonExcel.getFragmentsText(val));
+				this.workbook.MacrosAddData(AscDFH.historydescription_Spreadsheet_SetCellFormula, AscCommonExcel.getFragmentsText(val));
 			else
-				this.workbook.StartAction(AscDFH.historydescription_Spreadsheet_SetCellValue, AscCommonExcel.getFragmentsText(val));
+				this.workbook.MacrosAddData(AscDFH.historydescription_Spreadsheet_SetCellValue, AscCommonExcel.getFragmentsText(val));
 			
 			// set the value to the selected range
 			c.setValue(AscCommonExcel.getFragmentsText(val), function (r) {
@@ -19210,6 +19211,7 @@ function isAllowPasteLink(pastedWb) {
 				}
 			}
 
+			this.workbook.MacrosAddData(AscDFH.historydescription_Spreadsheet_SetCellValue, AscCommonExcel.getFragmentsText(val));
 			// set the value to the selected range
 			if (pivotTable) {
 				pivotTable.editCell(c.bbox, AscCommonExcel.getFragmentsText(val));
