@@ -1172,7 +1172,9 @@ var c_oSerSdt = {
 	ComplexFormPrType : 91,
 	OformMaster : 92,
 	Border : 93,
-	Shd : 94
+	Shd : 94,
+	RepeatingSection : 95,
+	RepeatingSectionItem : 96
 };
 var c_oSerFFData = {
 	CalcOnExit: 0,
@@ -6820,6 +6822,12 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 			border.Color = val.BorderColor;
 			border.Value = AscWord.BorderType.single;
 			oThis.bs.WriteItem(c_oSerSdt.Border, function(){oThis.bs.WriteBorder(border)});
+		}
+		if (oSdt.IsRepeatingSection()) {
+			oThis.bs.WriteItem(c_oSerSdt.RepeatingSection, function (){oThis.memory.WriteBool(true)});
+		}
+		if (oSdt.IsRepeatingSectionItem()) {
+			oThis.bs.WriteItem(c_oSerSdt.RepeatingSectionItem, function (){oThis.memory.WriteBool(true)});
 		}
 	};
 	this.WriteSdtCheckBox = function (val)
@@ -13245,6 +13253,10 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			ReadDocumentShd(length, this.bcr, shd);
 			if (shd.Color)
 				oSdt.setShdColor(shd.Color);
+		} else if (c_oSerSdt.RepeatingSection === type) {
+			oSdt.SetRepeatingSection(this.stream.GetBool());
+		} else if (c_oSerSdt.RepeatingSectionItem === type) {
+			oSdt.SetRepeatingSectionItem(this.stream.GetBool());
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}

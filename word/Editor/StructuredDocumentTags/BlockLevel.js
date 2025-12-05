@@ -2851,6 +2851,18 @@ CBlockLevelSdt.prototype.GetAllSectPrParagraphs = function(paragraphs)
 {
 	return this.Content.GetAllSectPrParagraphs(paragraphs);
 };
+CBlockLevelSdt.prototype.SetRepeatingSection = function(isRepeatingSection)
+{
+	if (this.Pr.RepeatingSection !== isRepeatingSection)
+	{
+		History.Add(new CChangesSdtPrRepeatingSection(this, this.Pr.RepeatingSection, isRepeatingSection));
+		this.Pr.RepeatingSection = isRepeatingSection;
+	}
+};
+CBlockLevelSdt.prototype.IsRepeatingSection = function()
+{
+	return !!(this.Pr.RepeatingSection);
+};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
