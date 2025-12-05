@@ -24593,7 +24593,7 @@
 				return false;
 			}
 
-			const tempDynamicSelectionRange = this.getRange3(formula.parent.nRow, formula.parent.nCol, newR2, newC2);
+			const tempDynamicSelectionRange = this.ws.getRange3(formula.parent.nRow, formula.parent.nCol, newR2, newC2);
 			tempDynamicSelectionRange._foreachNoEmpty(function (cell) {
 				const ref = cell.formulaParsed && cell.formulaParsed.ref ? cell.formulaParsed.ref : null;
 

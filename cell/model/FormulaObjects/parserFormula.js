@@ -9947,7 +9947,9 @@ function parserFormula( formula, parent, _ws ) {
 			if (currentElement.name === "(") {
 				continue;
 			}
-			bIsSpecialFunction = true;
+			if (AscCommonExcel.bIsSupportDynamicArrays) {
+				bIsSpecialFunction = true;
+			}
 			if(currentElement.type === cElementType.specialFunctionStart){
 				bIsSpecialFunction = true;
 				continue;
