@@ -713,6 +713,10 @@ CInlineLevelSdt.prototype.DrawPictureSign = function(graphics)
 	if (!this.IsPictureForm() || !logicDocument)
 		return;
 	
+	let oform = logicDocument.IsDocumentEditor() ? logicDocument.GetOFormDocument() : null;
+	if (oform && oform.isAllRolesFilled())
+		return;
+	
 	let _t = this;
 	
 	let parentShape = this.Paragraph && this.Paragraph.Parent ? this.Paragraph.Parent.Is_DrawingShape(true) : null;
