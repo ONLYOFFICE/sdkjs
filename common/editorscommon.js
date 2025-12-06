@@ -10955,6 +10955,18 @@
 		return result;
 	}
 	
+	function executeNoScroll(f, logicDocument, t, args)
+	{
+		if (!logicDocument || !logicDocument.GetApi)
+			return f.apply(t, args);;
+		
+		let editor = logicDocument.GetApi();
+		editor.asc_LockScrollToTarget(true);
+		let result = f.apply(t, args);
+		editor.asc_LockScrollToTarget(false);
+		return result;
+	}
+	
 	function ExecuteEditorAction(actionPr, f, logicDocument, t, args)
 	{
 		if (!logicDocument
@@ -15606,6 +15618,7 @@
 	window["AscCommon"].ExecuteNoHistory = ExecuteNoHistory;
 	window["AscCommon"].executeNoRevisions = executeNoRevisions;
 	window["AscCommon"].executeNoPreDelete = executeNoPreDelete;
+	window["AscCommon"].executeNoScroll = executeNoScroll;
 	window["AscCommon"].ExecuteEditorAction = ExecuteEditorAction;
 	window["AscCommon"].AddAndExecuteChange = AddAndExecuteChange;
 	window["AscCommon"].CompareStrings = CompareStrings;

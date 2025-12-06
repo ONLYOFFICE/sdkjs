@@ -10505,11 +10505,20 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 	{
 		this.CustomTextAnnotator.onClick(X, Y, this.CurPage, e);
 	}
-
-	this.private_CheckCursorPosInFillingFormMode();
-	this.private_UpdateCursorXY(true, true, isUpdateTarget);
 	
-	this.UpdateSelection();
+	let _t = this;
+	function _updateSelection()
+	{
+		_t.private_CheckCursorPosInFillingFormMode();
+		_t.private_UpdateCursorXY(true, true, isUpdateTarget);
+		_t.UpdateSelection();
+	}
+	
+	if (this.IsTextSelectionUse())
+		AscCommon.executeNoScroll(_updateSelection, this);
+	else
+		_updateSelection();
+	
 	this.UpdateInterface();
 	this.UpdateRulers();
 };
