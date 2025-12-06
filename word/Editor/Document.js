@@ -22978,9 +22978,11 @@ CDocument.prototype.SelectContentControl = function(sId)
 		this.UpdateRulers();
 		this.UpdateInterface();
 		this.UpdateTracks();
-
+		
 		this.private_UpdateCursorXY(true, true);
 		this.CheckFormPlaceHolder = true;
+		
+		this.DrawingDocument.scrollToTarget();
 	}
 };
 /**
