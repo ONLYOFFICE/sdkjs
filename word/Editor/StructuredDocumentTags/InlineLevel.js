@@ -615,7 +615,7 @@ CInlineLevelSdt.prototype.Draw_Lines = function(PDSL)
 CInlineLevelSdt.prototype.DrawSignatureSign = function(graphics)
 {
 	let logicDocument = this.GetLogicDocument();
-	if (!this.IsSignatureForm() || !logicDocument || !this.IsPlaceHolder())
+	if (!this.IsSignatureForm() || !logicDocument || !this.IsPlaceHolder() || graphics.isPrintMode)
 		return;
 	
 	let _t = this;
@@ -710,7 +710,7 @@ CInlineLevelSdt.prototype.DrawSignatureSign = function(graphics)
 CInlineLevelSdt.prototype.DrawPictureSign = function(graphics)
 {
 	let logicDocument = this.GetLogicDocument();
-	if (!this.IsPictureForm() || !logicDocument)
+	if (!this.IsPictureForm() || !logicDocument || graphics.isPrintMode)
 		return;
 	
 	let oform = logicDocument.IsDocumentEditor() ? logicDocument.GetOFormDocument() : null;
