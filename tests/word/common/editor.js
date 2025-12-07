@@ -73,6 +73,7 @@
 		ConvertCoordsToCursorWR : function() {return {X : 0, Y : 0};},
 		Set_RulerState_Table : function() {},
 		scrollToTarget : function() {},
+		GetVisibleRegion : function() {return [{Page : 0, Y : 0}, {Page : 0, Y : 0}]},
 	};
 
 	drawingDocument.CanvasHit = document.createElement('canvas');
