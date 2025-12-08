@@ -3223,6 +3223,229 @@ $(function () {
 		assert.strictEqual(dynamicRef.getHeight(), 2, "height dynamic array: " + formula);
 		assert.strictEqual(dynamicRef.getWidth(), 2, "width dynamic array: " + formula);
 
+		// Test 11: CHOOSE with multiple arguments
+		ws.getRange2("A25").setValue("1");
+		ws.getRange2("A26").setValue("2");
+		ws.getRange2("A27").setValue("3");
+		ws.getRange2("B25").setValue("10");
+		ws.getRange2("B26").setValue("20");
+		ws.getRange2("B27").setValue("30");
+		ws.getRange2("C25").setValue("100");
+		ws.getRange2("C26").setValue("200");
+		ws.getRange2("C27").setValue("300");
+		ws.getRange2("D25").setValue("1000");
+		ws.getRange2("D26").setValue("2000");
+		ws.getRange2("D27").setValue("3000");
+
+		formula = "=CHOOSE(A25:A27,B25:B27,C25:C27,D25:D27)";
+		fillRange = ws.getRange2("F25");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("F25").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("F25"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "CHOOSE(A25:A27,B25:B27,C25:C27,D25:D27)", "formula result -> CHOOSE(A25:A27,B25:B27,C25:C27,D25:D27)");
+		assert.strictEqual(dynamicRef.getHeight(), 3, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 1, "width dynamic array: " + formula);
+
+		// Test 12: IF with nested conditions and multiple ranges
+		ws.getRange2("A30").setValue("5");
+		ws.getRange2("A31").setValue("15");
+		ws.getRange2("A32").setValue("25");
+		ws.getRange2("B30").setValue("100");
+		ws.getRange2("B31").setValue("200");
+		ws.getRange2("B32").setValue("300");
+		ws.getRange2("C30").setValue("50");
+		ws.getRange2("C31").setValue("150");
+		ws.getRange2("C32").setValue("250");
+
+		formula = "=IF(A30:A32>10,B30:B32*2,C30:C32/2)";
+		fillRange = ws.getRange2("E30");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("E30").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("E30"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "IF(A30:A32>10,B30:B32*2,C30:C32/2)", "formula result -> IF(A30:A32>10,B30:B32*2,C30:C32/2)");
+		assert.strictEqual(dynamicRef.getHeight(), 3, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 1, "width dynamic array: " + formula);
+
+		// Test 13: SUM with multiple array operations
+		ws.getRange2("A35").setValue("2");
+		ws.getRange2("A36").setValue("4");
+		ws.getRange2("A37").setValue("6");
+		ws.getRange2("B35").setValue("3");
+		ws.getRange2("B36").setValue("5");
+		ws.getRange2("B37").setValue("7");
+		ws.getRange2("C35").setValue("10");
+		ws.getRange2("C36").setValue("20");
+		ws.getRange2("C37").setValue("30");
+
+		formula = "=(A35:A37+B35:B37)*C35:C37";
+		fillRange = ws.getRange2("E35");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("E35").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("E35"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "(A35:A37+B35:B37)*C35:C37", "formula result -> (A35:A37+B35:B37)*C35:C37");
+		assert.strictEqual(dynamicRef.getHeight(), 3, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 1, "width dynamic array: " + formula);
+
+		// Test 14: Multiple mathematical operations
+		ws.getRange2("A40").setValue("10");
+		ws.getRange2("A41").setValue("20");
+		ws.getRange2("A42").setValue("30");
+		ws.getRange2("B40").setValue("2");
+		ws.getRange2("B41").setValue("3");
+		ws.getRange2("B42").setValue("4");
+		ws.getRange2("C40").setValue("5");
+		ws.getRange2("C41").setValue("6");
+		ws.getRange2("C42").setValue("7");
+		ws.getRange2("D40").setValue("1");
+		ws.getRange2("D41").setValue("2");
+		ws.getRange2("D42").setValue("3");
+
+		formula = "=((A40:A42*B40:B42)+(C40:C42-D40:D42))/2";
+		fillRange = ws.getRange2("F40");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("F40").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("F40"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "((A40:A42*B40:B42)+(C40:C42-D40:D42))/2", "formula result -> ((A40:A42*B40:B42)+(C40:C42-D40:D42))/2");
+		assert.strictEqual(dynamicRef.getHeight(), 3, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 1, "width dynamic array: " + formula);
+
+		// Test 15: Complex nested functions with arrays
+		ws.getRange2("A45").setValue("1");
+		ws.getRange2("A46").setValue("2");
+		ws.getRange2("A47").setValue("3");
+		ws.getRange2("B45").setValue("4");
+		ws.getRange2("B46").setValue("5");
+		ws.getRange2("B47").setValue("6");
+
+		formula = "=ROUND(SQRT(A45:A47^2+B45:B47^2),2)";
+		fillRange = ws.getRange2("D45");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("D45").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("D45"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ROUND(SQRT(A45:A47^2+B45:B47^2),2)", "formula result -> ROUND(SQRT(A45:A47^2+B45:B47^2),2)");
+		assert.strictEqual(dynamicRef.getHeight(), 3, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 1, "width dynamic array: " + formula);
+
+		// Test 16: String concatenation with multiple ranges
+		ws.getRange2("A50").setValue("First");
+		ws.getRange2("A51").setValue("Second");
+		ws.getRange2("A52").setValue("Third");
+		ws.getRange2("B50").setValue("Name");
+		ws.getRange2("B51").setValue("Title");
+		ws.getRange2("B52").setValue("Label");
+		ws.getRange2("C50").setValue("2024");
+		ws.getRange2("C51").setValue("2025");
+		ws.getRange2("C52").setValue("2026");
+
+		formula = "=A50:A52&\" \"&B50:B52&\" \"&C50:C52";
+		fillRange = ws.getRange2("E50");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("E50").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("E50"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "A50:A52&\" \"&B50:B52&\" \"&C50:C52", "formula result -> A50:A52&\" \"&B50:B52&\" \"&C50:C52");
+		assert.strictEqual(dynamicRef.getHeight(), 3, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 1, "width dynamic array: " + formula);
+
+		// Test 17: Multiple comparison operations
+		ws.getRange2("A55").setValue("10");
+		ws.getRange2("A56").setValue("20");
+		ws.getRange2("A57").setValue("30");
+		ws.getRange2("B55").setValue("15");
+		ws.getRange2("B56").setValue("15");
+		ws.getRange2("B57").setValue("15");
+
+		formula = "=(A55:A57>B55:B57)*100+(A55:A57=B55:B57)*50+(A55:A57<B55:B57)*25";
+		fillRange = ws.getRange2("D55");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("D55").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("D55"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "(A55:A57>B55:B57)*100+(A55:A57=B55:B57)*50+(A55:A57<B55:B57)*25", "formula result -> (A55:A57>B55:B57)*100+(A55:A57=B55:B57)*50+(A55:A57<B55:B57)*25");
+		assert.strictEqual(dynamicRef.getHeight(), 3, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 1, "width dynamic array: " + formula);
+
+		// Test 18: Nested IF with multiple conditions
+		ws.getRange2("A60").setValue("A");
+		ws.getRange2("A61").setValue("B");
+		ws.getRange2("A62").setValue("C");
+		ws.getRange2("B60").setValue("10");
+		ws.getRange2("B61").setValue("20");
+		ws.getRange2("B62").setValue("30");
+
+		formula = "=IF(A60:A62=\"A\",B60:B62*1.5,IF(A60:A62=\"B\",B60:B62*2,B60:B62*2.5))";
+		fillRange = ws.getRange2("D60");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("D60").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("D60"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "IF(A60:A62=\"A\",B60:B62*1.5,IF(A60:A62=\"B\",B60:B62*2,B60:B62*2.5))", "formula result -> IF(A60:A62=\"A\",B60:B62*1.5,IF(A60:A62=\"B\",B60:B62*2,B60:B62*2.5))");
+		assert.strictEqual(dynamicRef.getHeight(), 3, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 1, "width dynamic array: " + formula);
+
+		// Test 19: Multi-dimensional array with 2D range
+		ws.getRange2("A65").setValue("1");
+		ws.getRange2("A66").setValue("2");
+		ws.getRange2("B65").setValue("3");
+		ws.getRange2("B66").setValue("4");
+		ws.getRange2("C65").setValue("5");
+		ws.getRange2("C66").setValue("6");
+
+		formula = "=A65:C66*10";
+		fillRange = ws.getRange2("E65");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("E65").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("E65"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "A65:C66*10", "formula result -> A65:C66*10");
+		assert.strictEqual(dynamicRef.getHeight(), 2, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 3, "width dynamic array: " + formula);
+
+		// Test 20: Complex formula with MOD and multiple conditions
+		ws.getRange2("A70").setValue("5");
+		ws.getRange2("A71").setValue("10");
+		ws.getRange2("A72").setValue("15");
+		ws.getRange2("A73").setValue("20");
+		ws.getRange2("B70").setValue("2");
+		ws.getRange2("B71").setValue("3");
+		ws.getRange2("B72").setValue("4");
+		ws.getRange2("B73").setValue("5");
+
+		formula = "=IF(MOD(A70:A73,B70:B73)=0,A70:A73/B70:B73,A70:A73*B70:B73)";
+		fillRange = ws.getRange2("D70");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("D70").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("D70"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "IF(MOD(A70:A73,B70:B73)=0,A70:A73/B70:B73,A70:A73*B70:B73)", "formula result -> IF(MOD(A70:A73,B70:B73)=0,A70:A73/B70:B73,A70:A73*B70:B73)");
+		assert.strictEqual(dynamicRef.getHeight(), 4, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 1, "width dynamic array: " + formula);
+
 		ws.getRange2("A1:Z30").cleanAll();
 
 	});
