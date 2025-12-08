@@ -8521,7 +8521,7 @@
 			else if (aSelectedInText[nDrawing].GraphicObj.isShape())
 				aResult.push(new ApiShape(aSelectedInText[nDrawing].GraphicObj));
 			else
-				aResult.push(new ApiDrawing(aSelected[nDrawing].GraphicObj));
+				aResult.push(new ApiDrawing(aSelectedInText[nDrawing].GraphicObj));
 		}
 
 		return aResult;
