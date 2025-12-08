@@ -1110,6 +1110,44 @@
 		logicDocument.AddAddinField(AscWord.CAddinFieldData.FromJson(data));
 	};
 	/**
+	 * Selects the specified add-in field.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias SelectAddinField
+	 * @param {string} fieldId - Field identifier.
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SelectAddinField.js
+	 */
+	Api.prototype["pluginMethod_SelectAddinField"] = function(fieldId)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return false;
+		
+		return logicDocument.SelectAddinField(fieldId);
+	};
+	/**
+	 * Removes the specified add-in field.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias RemoveAddinField
+	 * @param {string} fieldId - Field identifier.
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/pluginMethod_RemoveAddinField.js
+	 */
+	Api.prototype["pluginMethod_RemoveAddinField"] = function(fieldId)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return false;
+		
+		if (!logicDocument.SelectAddinField(fieldId))
+			return false;
+		
+		logicDocument.RemoveBeforePaste();
+		return true;
+	};
+	/**
 	 * Removes a field wrapper, leaving only the field content.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]

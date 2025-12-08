@@ -23925,6 +23925,28 @@ CDocument.prototype.UpdateAddinFieldsByData = function(arrData)
 	this.FinalizeAction();
 };
 /**
+ * Select add-in field
+ * @param {string} fieldId
+ */
+CDocument.prototype.SelectAddinField = function(fieldId)
+{
+	let field = null;
+	let allFields = this.GetAllFields();
+	for (let index = 0, count = allFields.length; index < count; ++index)
+	{
+		if (allFields[index] instanceof AscWord.CComplexField && allFields[index].GetFieldId() === fieldId)
+		{
+			field = allFields[index];
+			break;
+		}
+	}
+	if (!field || !field.IsValid())
+		return false;
+	
+	field.SelectField();
+	return true;
+};
+/**
  * Remove field wrapper
  * @param {string} [fieldId=undefined] if not specified then remove wrapper from current field
  */
