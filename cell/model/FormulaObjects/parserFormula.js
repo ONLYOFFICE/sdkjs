@@ -9673,6 +9673,9 @@ function parserFormula( formula, parent, _ws ) {
 			},
 			"ZTEST": {
 				"0": true
+			},
+			"SHEET": {
+				"0": true
 			}
 		}
 
@@ -10141,7 +10144,7 @@ function parserFormula( formula, parent, _ws ) {
 		if(checkMultiSelect && elemArr.length > 1 && this.parent && this.parent instanceof window['AscCommonExcel'].DefName /*&& this.parent.name === "_xlnm.Print_Area"*/) {
 			this.value = elemArr;
 
-			if (AscCommonExcel.bIsSupportDynamicArrays) {
+			if (AscCommonExcel.bIsSupportDynamicArrays && this.getDynamicRef()) {
 				// check further dynamic range
 				isRangeCanFitIntoCells =  this.ws.dynamicArrayManager.checkDynamicRangeByElement(this.value, opt_bbox);
 				if (!isRangeCanFitIntoCells) {
@@ -10183,7 +10186,7 @@ function parserFormula( formula, parent, _ws ) {
 			}
 			this.value = res;
 
-			if (AscCommonExcel.bIsSupportDynamicArrays) {
+			if (AscCommonExcel.bIsSupportDynamicArrays && this.getDynamicRef()) {
 				// check further dynamic range
 				isRangeCanFitIntoCells = this.ws.dynamicArrayManager.checkDynamicRangeByElement(this.value, opt_bbox);
 				if (!isRangeCanFitIntoCells) {
