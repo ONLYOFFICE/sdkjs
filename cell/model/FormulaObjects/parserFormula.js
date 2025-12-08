@@ -50,7 +50,7 @@ function (window, undefined) {
   var CellAddress = AscCommon.CellAddress;
   var cDate = Asc.cDate;
   var bIsSupportArrayFormula = true;
-  var bIsSupportDynamicArrays = false;
+  var bIsSupportDynamicArrays = true;
 
   var c_oAscError = Asc.c_oAscError;
 

@@ -1297,11 +1297,802 @@ $(function () {
 		fragment[0].setFragmentText(formula);
 		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
 		resCell = getCell(ws.getRange2("A1"));
-		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SIN(A1:B1)", "SIN(A1:B1) -> SIN(A1:B1)");
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SIN(A1:B1)", "SIN(@A1:B1) -> SIN(A1:B1)");
 		assembledVal = ws.getRange2("A1").getValueForEdit();
 		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
 
+		
+		formula = "=COS(@B1:B10)";
+		fillRange = ws.getRange2("A2");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A2").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A2"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COS(B1:B10)", "COS(@B1:B10) -> COS(B1:B10)");
+		assembledVal = ws.getRange2("A2").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
 
+		
+		formula = "=TAN(@C1:C5)";
+		fillRange = ws.getRange2("A3");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A3").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A3"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "TAN(C1:C5)", "TAN(@C1:C5) -> TAN(C1:C5)");
+		assembledVal = ws.getRange2("A3").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=SQRT(@D1:D10)";
+		fillRange = ws.getRange2("A4");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A4").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A4"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SQRT(D1:D10)", "SQRT(@D1:D10) -> SQRT(D1:D10)");
+		assembledVal = ws.getRange2("A4").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=ABS(@E1:E5)";
+		fillRange = ws.getRange2("A5");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A5").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A5"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ABS(E1:E5)", "ABS(@E1:E5) -> ABS(E1:E5)");
+		assembledVal = ws.getRange2("A5").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=EXP(@F1:F10)";
+		fillRange = ws.getRange2("A6");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A6").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A6"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "EXP(F1:F10)", "EXP(@F1:F10) -> EXP(F1:F10)");
+		assembledVal = ws.getRange2("A6").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=LN(@G1:G5)";
+		fillRange = ws.getRange2("A7");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A7").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A7"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "LN(G1:G5)", "LN(@G1:G5) -> LN(G1:G5)");
+		assembledVal = ws.getRange2("A7").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=LOG(@H1:H10)";
+		fillRange = ws.getRange2("A8");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A8").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A8"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "LOG(H1:H10)", "LOG(@H1:H10) -> LOG(H1:H10)");
+		assembledVal = ws.getRange2("A8").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=LOG10(@I1:I5)";
+		fillRange = ws.getRange2("A9");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A9").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A9"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "LOG10(I1:I5)", "LOG10(@I1:I5) -> LOG10(I1:I5)");
+		assembledVal = ws.getRange2("A9").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=ROUND(@J1:J10,2)";
+		fillRange = ws.getRange2("A10");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A10").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A10"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ROUND(J1:J10,2)", "ROUND(@J1:J10,2) -> ROUND(J1:J10,2)");
+		assembledVal = ws.getRange2("A10").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=ROUNDUP(@K1:K5,1)";
+		fillRange = ws.getRange2("A11");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A11").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A11"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ROUNDUP(K1:K5,1)", "ROUNDUP(@K1:K5,1) -> ROUNDUP(K1:K5,1)");
+		assembledVal = ws.getRange2("A11").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=ROUNDDOWN(@L1:L10,0)";
+		fillRange = ws.getRange2("A12");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A12").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A12"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ROUNDDOWN(L1:L10,0)", "ROUNDDOWN(@L1:L10,0) -> ROUNDDOWN(L1:L10,0)");
+		assembledVal = ws.getRange2("A12").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=INT(@M1:M5)";
+		fillRange = ws.getRange2("A13");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A13").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A13"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "INT(M1:M5)", "INT(@M1:M5) -> INT(M1:M5)");
+		assembledVal = ws.getRange2("A13").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=TRUNC(@N1:N10)";
+		fillRange = ws.getRange2("A14");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A14").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A14"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "TRUNC(N1:N10)", "TRUNC(@N1:N10) -> TRUNC(N1:N10)");
+		assembledVal = ws.getRange2("A14").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=CEILING(@O1:O5,1)";
+		fillRange = ws.getRange2("A15");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A15").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A15"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "CEILING(O1:O5,1)", "CEILING(@O1:O5,1) -> CEILING(O1:O5,1)");
+		assembledVal = ws.getRange2("A15").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=FLOOR(@P1:P10,1)";
+		fillRange = ws.getRange2("A16");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A16").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A16"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "FLOOR(P1:P10,1)", "FLOOR(@P1:P10,1) -> FLOOR(P1:P10,1)");
+		assembledVal = ws.getRange2("A16").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=SIGN(@Q1:Q5)";
+		fillRange = ws.getRange2("A17");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A17").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A17"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SIGN(Q1:Q5)", "SIGN(@Q1:Q5) -> SIGN(Q1:Q5)");
+		assembledVal = ws.getRange2("A17").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=FACT(@R1:R10)";
+		fillRange = ws.getRange2("A18");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A18").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A18"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "FACT(R1:R10)", "FACT(@R1:R10) -> FACT(R1:R10)");
+		assembledVal = ws.getRange2("A18").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=POWER(@S1:S5,2)";
+		fillRange = ws.getRange2("A19");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A19").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A19"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "POWER(S1:S5,2)", "POWER(@S1:S5,2) -> POWER(S1:S5,2)");
+		assembledVal = ws.getRange2("A19").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=RADIANS(@T1:T10)";
+		fillRange = ws.getRange2("A20");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A20").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A20"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "RADIANS(T1:T10)", "RADIANS(@T1:T10) -> RADIANS(T1:T10)");
+		assembledVal = ws.getRange2("A20").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=DEGREES(@U1:U5)";
+		fillRange = ws.getRange2("A21");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A21").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A21"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DEGREES(U1:U5)", "DEGREES(@U1:U5) -> DEGREES(U1:U5)");
+		assembledVal = ws.getRange2("A21").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=ASIN(@V1:V10)";
+		fillRange = ws.getRange2("A22");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A22").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A22"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ASIN(V1:V10)", "ASIN(@V1:V10) -> ASIN(V1:V10)");
+		assembledVal = ws.getRange2("A22").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=ACOS(@W1:W5)";
+		fillRange = ws.getRange2("A23");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A23").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A23"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ACOS(W1:W5)", "ACOS(@W1:W5) -> ACOS(W1:W5)");
+		assembledVal = ws.getRange2("A23").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=ATAN(@X1:X10)";
+		fillRange = ws.getRange2("A24");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A24").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A24"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ATAN(X1:X10)", "ATAN(@X1:X10) -> ATAN(X1:X10)");
+		assembledVal = ws.getRange2("A24").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=SINH(@Y1:Y5)";
+		fillRange = ws.getRange2("A25");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A25").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A25"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SINH(Y1:Y5)", "SINH(@Y1:Y5) -> SINH(Y1:Y5)");
+		assembledVal = ws.getRange2("A25").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=COSH(@Z1:Z10)";
+		fillRange = ws.getRange2("A26");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A26").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A26"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COSH(Z1:Z10)", "COSH(@Z1:Z10) -> COSH(Z1:Z10)");
+		assembledVal = ws.getRange2("A26").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=TANH(@A2:A10)";
+		fillRange = ws.getRange2("A27");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A27").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A27"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "TANH(A2:A10)", "TANH(@A2:A10) -> TANH(A2:A10)");
+		assembledVal = ws.getRange2("A27").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=LEFT(@B2:B10,3)";
+		fillRange = ws.getRange2("A28");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A28").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A28"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "LEFT(B2:B10,3)", "LEFT(@B2:B10,3) -> LEFT(B2:B10,3)");
+		assembledVal = ws.getRange2("A28").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=RIGHT(@C2:C10,2)";
+		fillRange = ws.getRange2("A29");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A29").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A29"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "RIGHT(C2:C10,2)", "RIGHT(@C2:C10,2) -> RIGHT(C2:C10,2)");
+		assembledVal = ws.getRange2("A29").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=MID(@D2:D10,2,3)";
+		fillRange = ws.getRange2("A30");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A30").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A30"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "MID(D2:D10,2,3)", "MID(@D2:D10,2,3) -> MID(D2:D10,2,3)");
+		assembledVal = ws.getRange2("A30").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=LEN(@E2:E10)";
+		fillRange = ws.getRange2("A31");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A31").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A31"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "LEN(E2:E10)", "LEN(@E2:E10) -> LEN(E2:E10)");
+		assembledVal = ws.getRange2("A31").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=UPPER(@F2:F10)";
+		fillRange = ws.getRange2("A32");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A32").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A32"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "UPPER(F2:F10)", "UPPER(@F2:F10) -> UPPER(F2:F10)");
+		assembledVal = ws.getRange2("A32").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=LOWER(@G2:G10)";
+		fillRange = ws.getRange2("A33");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A33").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A33"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "LOWER(G2:G10)", "LOWER(@G2:G10) -> LOWER(G2:G10)");
+		assembledVal = ws.getRange2("A33").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=PROPER(@H2:H10)";
+		fillRange = ws.getRange2("A34");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A34").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A34"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "PROPER(H2:H10)", "PROPER(@H2:H10) -> PROPER(H2:H10)");
+		assembledVal = ws.getRange2("A34").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=TRIM(@I2:I10)";
+		fillRange = ws.getRange2("A35");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A35").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A35"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "TRIM(I2:I10)", "TRIM(@I2:I10) -> TRIM(I2:I10)");
+		assembledVal = ws.getRange2("A35").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=CLEAN(@J2:J10)";
+		fillRange = ws.getRange2("A36");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A36").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A36"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "CLEAN(J2:J10)", "CLEAN(@J2:J10) -> CLEAN(J2:J10)");
+		assembledVal = ws.getRange2("A36").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=TEXT(@K2:K10,\"0.00\")";
+		fillRange = ws.getRange2("A37");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A37").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A37"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "TEXT(K2:K10,\"0.00\")", "TEXT(@K2:K10,\"0.00\") -> TEXT(K2:K10,\"0.00\")");
+		assembledVal = ws.getRange2("A37").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=VALUE(@L2:L10)";
+		fillRange = ws.getRange2("A38");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A38").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A38"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "VALUE(L2:L10)", "VALUE(@L2:L10) -> VALUE(L2:L10)");
+		assembledVal = ws.getRange2("A38").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=FIND(\"a\",@M2:M10)";
+		fillRange = ws.getRange2("A39");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A39").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A39"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "FIND(\"a\",M2:M10)", "FIND(\"a\",@M2:M10) -> FIND(\"a\",M2:M10)");
+		assembledVal = ws.getRange2("A39").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=SEARCH(\"test\",@N2:N10)";
+		fillRange = ws.getRange2("A40");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A40").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A40"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SEARCH(\"test\",N2:N10)", "SEARCH(\"test\",@N2:N10) -> SEARCH(\"test\",N2:N10)");
+		assembledVal = ws.getRange2("A40").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=REPLACE(@O2:O10,1,2,\"XX\")";
+		fillRange = ws.getRange2("A41");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A41").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A41"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "REPLACE(O2:O10,1,2,\"XX\")", "REPLACE(@O2:O10,1,2,\"XX\") -> REPLACE(O2:O10,1,2,\"XX\")");
+		assembledVal = ws.getRange2("A41").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=SUBSTITUTE(@P2:P10,\"old\",\"new\")";
+		fillRange = ws.getRange2("A42");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A42").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A42"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SUBSTITUTE(P2:P10,\"old\",\"new\")", "SUBSTITUTE(@P2:P10,\"old\",\"new\") -> SUBSTITUTE(P2:P10,\"old\",\"new\")");
+		assembledVal = ws.getRange2("A42").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=REPT(@Q2:Q10,3)";
+		fillRange = ws.getRange2("A43");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A43").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A43"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "REPT(Q2:Q10,3)", "REPT(@Q2:Q10,3) -> REPT(Q2:Q10,3)");
+		assembledVal = ws.getRange2("A43").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=CONCATENATE(@R2:R10,\"-\",@S2:S10)";
+		fillRange = ws.getRange2("A44");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A44").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A44"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "CONCATENATE(R2:R10,\"-\",S2:S10)", "CONCATENATE(@R2:R10,\"-\",@S2:S10) -> CONCATENATE(R2:R10,\"-\",S2:S10)");
+		assembledVal = ws.getRange2("A44").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=DATE(@T2:T10,@U2:U10,@V2:V10)";
+		fillRange = ws.getRange2("A45");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A45").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A45"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DATE(T2:T10,U2:U10,V2:V10)", "DATE(@T2:T10,@U2:U10,@V2:V10) -> DATE(T2:T10,U2:U10,V2:V10)");
+		assembledVal = ws.getRange2("A45").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=TIME(@W2:W10,@X2:X10,@Y2:Y10)";
+		fillRange = ws.getRange2("A46");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A46").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A46"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "TIME(W2:W10,X2:X10,Y2:Y10)", "TIME(@W2:W10,@X2:X10,@Y2:Y10) -> TIME(W2:W10,X2:X10,Y2:Y10)");
+		assembledVal = ws.getRange2("A46").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=YEAR(@Z2:Z10)";
+		fillRange = ws.getRange2("A47");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A47").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A47"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "YEAR(Z2:Z10)", "YEAR(@Z2:Z10) -> YEAR(Z2:Z10)");
+		assembledVal = ws.getRange2("A47").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=MONTH(@A3:A12)";
+		fillRange = ws.getRange2("A48");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A48").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A48"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "MONTH(A3:A12)", "MONTH(@A3:A12) -> MONTH(A3:A12)");
+		assembledVal = ws.getRange2("A48").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=DAY(@B3:B12)";
+		fillRange = ws.getRange2("A49");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A49").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A49"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DAY(B3:B12)", "DAY(@B3:B12) -> DAY(B3:B12)");
+		assembledVal = ws.getRange2("A49").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=HOUR(@C3:C12)";
+		fillRange = ws.getRange2("A50");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A50").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A50"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "HOUR(C3:C12)", "HOUR(@C3:C12) -> HOUR(C3:C12)");
+		assembledVal = ws.getRange2("A50").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=MINUTE(@D3:D12)";
+		fillRange = ws.getRange2("A51");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A51").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A51"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "MINUTE(D3:D12)", "MINUTE(@D3:D12) -> MINUTE(D3:D12)");
+		assembledVal = ws.getRange2("A51").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=SECOND(@E3:E12)";
+		fillRange = ws.getRange2("A52");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A52").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A52"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SECOND(E3:E12)", "SECOND(@E3:E12) -> SECOND(E3:E12)");
+		assembledVal = ws.getRange2("A52").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=WEEKDAY(@F3:F12)";
+		fillRange = ws.getRange2("A53");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A53").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A53"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "WEEKDAY(F3:F12)", "WEEKDAY(@F3:F12) -> WEEKDAY(F3:F12)");
+		assembledVal = ws.getRange2("A53").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=NOT(@G3:G12)";
+		fillRange = ws.getRange2("A54");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A54").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A54"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "NOT(G3:G12)", "NOT(@G3:G12) -> NOT(G3:G12)");
+		assembledVal = ws.getRange2("A54").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=ISBLANK(@H3:H12)";
+		fillRange = ws.getRange2("A55");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A55").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A55"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ISBLANK(H3:H12)", "ISBLANK(@H3:H12) -> ISBLANK(H3:H12)");
+		assembledVal = ws.getRange2("A55").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=ISERROR(@I3:I12)";
+		fillRange = ws.getRange2("A56");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A56").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A56"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ISERROR(I3:I12)", "ISERROR(@I3:I12) -> ISERROR(I3:I12)");
+		assembledVal = ws.getRange2("A56").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=ISNA(@J3:J12)";
+		fillRange = ws.getRange2("A57");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A57").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A57"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ISNA(J3:J12)", "ISNA(@J3:J12) -> ISNA(J3:J12)");
+		assembledVal = ws.getRange2("A57").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=ISNUMBER(@K3:K12)";
+		fillRange = ws.getRange2("A58");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A58").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A58"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ISNUMBER(K3:K12)", "ISNUMBER(@K3:K12) -> ISNUMBER(K3:K12)");
+		assembledVal = ws.getRange2("A58").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=ISTEXT(@L3:L12)";
+		fillRange = ws.getRange2("A59");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A59").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A59"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ISTEXT(L3:L12)", "ISTEXT(@L3:L12) -> ISTEXT(L3:L12)");
+		assembledVal = ws.getRange2("A59").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=ISNONTEXT(@M3:M12)";
+		fillRange = ws.getRange2("A60");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A60").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A60"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ISNONTEXT(M3:M12)", "ISNONTEXT(@M3:M12) -> ISNONTEXT(M3:M12)");
+		assembledVal = ws.getRange2("A60").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=ISLOGICAL(@N3:N12)";
+		fillRange = ws.getRange2("A61");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A61").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A61"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ISLOGICAL(N3:N12)", "ISLOGICAL(@N3:N12) -> ISLOGICAL(N3:N12)");
+		assembledVal = ws.getRange2("A61").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=MOD(@O3:O12,3)";
+		fillRange = ws.getRange2("A62");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A62").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A62"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "MOD(O3:O12,3)", "MOD(@O3:O12,3) -> MOD(O3:O12,3)");
+		assembledVal = ws.getRange2("A62").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=ATAN2(@P3:P12,@Q3:Q12)";
+		fillRange = ws.getRange2("A63");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A63").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A63"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ATAN2(P3:P12,Q3:Q12)", "ATAN2(@P3:P12,@Q3:Q12) -> ATAN2(P3:P12,Q3:Q12)");
+		assembledVal = ws.getRange2("A63").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=COMBIN(@R3:R12,@S3:S12)";
+		fillRange = ws.getRange2("A64");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A64").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A64"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COMBIN(R3:R12,S3:S12)", "COMBIN(@R3:R12,@S3:S12) -> COMBIN(R3:R12,S3:S12)");
+		assembledVal = ws.getRange2("A64").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=PERMUT(@T3:T12,@U3:U12)";
+		fillRange = ws.getRange2("A65");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A65").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A65"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "PERMUT(T3:T12,U3:U12)", "PERMUT(@T3:T12,@U3:U12) -> PERMUT(T3:T12,U3:U12)");
+		assembledVal = ws.getRange2("A65").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=EXACT(@V3:V12,@W3:W12)";
+		fillRange = ws.getRange2("A66");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A66").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A66"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "EXACT(V3:V12,W3:W12)", "EXACT(@V3:V12,@W3:W12) -> EXACT(V3:V12,W3:W12)");
+		assembledVal = ws.getRange2("A66").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+
+		
+		formula = "=CODE(@X3:X12)";
+		fillRange = ws.getRange2("A67");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A67").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("A67"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "CODE(X3:X12)", "CODE(@X3:X12) -> CODE(X3:X12)");
+		assembledVal = ws.getRange2("A67").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "result for edit: " + formula);
+		
 	});
 
 	QUnit.module("Sheet structure");
