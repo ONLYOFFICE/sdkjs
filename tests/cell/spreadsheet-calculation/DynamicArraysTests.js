@@ -3446,6 +3446,300 @@ $(function () {
 		assert.strictEqual(dynamicRef.getHeight(), 4, "height dynamic array: " + formula);
 		assert.strictEqual(dynamicRef.getWidth(), 1, "width dynamic array: " + formula);
 
+		// Test 21: Multiple nested array operations with different dimensions
+		ws.getRange2("A75").setValue("1");
+		ws.getRange2("A76").setValue("2");
+		ws.getRange2("A77").setValue("3");
+		ws.getRange2("B75").setValue("4");
+		ws.getRange2("B76").setValue("5");
+		ws.getRange2("B77").setValue("6");
+		ws.getRange2("C75").setValue("2");
+		ws.getRange2("C76").setValue("3");
+		ws.getRange2("C77").setValue("4");
+
+		formula = "=SQRT((A75:A77^2)+(B75:B77^2))/(C75:C77)";
+		fillRange = ws.getRange2("E75");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("E75").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("E75"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SQRT((A75:A77^2)+(B75:B77^2))/(C75:C77)", "formula result -> SQRT((A75:A77^2)+(B75:B77^2))/(C75:C77)");
+		assert.strictEqual(dynamicRef.getHeight(), 3, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 1, "width dynamic array: " + formula);
+
+		// Test 22: Array with mixed text and numeric operations
+		ws.getRange2("A80").setValue("100");
+		ws.getRange2("A81").setValue("200");
+		ws.getRange2("A82").setValue("300");
+		ws.getRange2("B80").setValue("USD");
+		ws.getRange2("B81").setValue("EUR");
+		ws.getRange2("B82").setValue("GBP");
+		ws.getRange2("C80").setValue("1.0");
+		ws.getRange2("C81").setValue("0.85");
+		ws.getRange2("C82").setValue("0.73");
+
+		formula = "=TEXT(A80:A82*C80:C82,\"#,##0.00\")&\" \"&B80:B82";
+		fillRange = ws.getRange2("E80");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("E80").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("E80"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "TEXT(A80:A82*C80:C82,\"#,##0.00\")&\" \"&B80:B82", "formula result -> TEXT(A80:A82*C80:C82,\"#,##0.00\")&\" \"&B80:B82");
+		assert.strictEqual(dynamicRef.getHeight(), 3, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 1, "width dynamic array: " + formula);
+
+		// Test 23: Complex conditional array with multiple IF levels
+		ws.getRange2("A85").setValue("10");
+		ws.getRange2("A86").setValue("50");
+		ws.getRange2("A87").setValue("100");
+		ws.getRange2("A88").setValue("150");
+
+		formula = "=IF(A85:A88<50,A85:A88*0.9,IF(A85:A88<100,A85:A88*0.85,IF(A85:A88<150,A85:A88*0.8,A85:A88*0.75)))";
+		fillRange = ws.getRange2("C85");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C85").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C85"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "IF(A85:A88<50,A85:A88*0.9,IF(A85:A88<100,A85:A88*0.85,IF(A85:A88<150,A85:A88*0.8,A85:A88*0.75)))", "formula result");
+		assert.strictEqual(dynamicRef.getHeight(), 4, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 1, "width dynamic array: " + formula);
+
+		// Test 24: 2D array with cross-multiplication
+		ws.getRange2("A90").setValue("1");
+		ws.getRange2("A91").setValue("2");
+		ws.getRange2("B90").setValue("3");
+		ws.getRange2("B91").setValue("4");
+		ws.getRange2("D90").setValue("10");
+		ws.getRange2("E90").setValue("20");
+
+		formula = "=A90:B91*D90:E90";
+		fillRange = ws.getRange2("G90");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("G90").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("G90"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "A90:B91*D90:E90", "formula result -> A90:B91*D90:E90");
+		assert.strictEqual(dynamicRef.getHeight(), 2, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 2, "width dynamic array: " + formula);
+
+		// Test 25: Array with date calculations
+		ws.getRange2("A95").setValue("2024-01-01");
+		ws.getRange2("A96").setValue("2024-02-01");
+		ws.getRange2("A97").setValue("2024-03-01");
+		ws.getRange2("B95").setValue("30");
+		ws.getRange2("B96").setValue("60");
+		ws.getRange2("B97").setValue("90");
+
+		formula = "=TEXT(A95:A97+B95:B97,\"YYYY-MM-DD\")";
+		fillRange = ws.getRange2("D95");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("D95").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("D95"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "TEXT(A95:A97+B95:B97,\"YYYY-MM-DD\")", "formula result");
+		assert.strictEqual(dynamicRef.getHeight(), 3, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 1, "width dynamic array: " + formula);
+
+		// Test 26: Complex array with SUMPRODUCT-like calculation
+		ws.getRange2("A100").setValue("10");
+		ws.getRange2("A101").setValue("20");
+		ws.getRange2("A102").setValue("30");
+		ws.getRange2("B100").setValue("5");
+		ws.getRange2("B101").setValue("4");
+		ws.getRange2("B102").setValue("3");
+		ws.getRange2("C100").setValue("1.1");
+		ws.getRange2("C101").setValue("1.2");
+		ws.getRange2("C102").setValue("1.3");
+
+		formula = "=(A100:A102*B100:B102)*C100:C102";
+		fillRange = ws.getRange2("E100");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("E100").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("E100"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "(A100:A102*B100:B102)*C100:C102", "formula result");
+		assert.strictEqual(dynamicRef.getHeight(), 3, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 1, "width dynamic array: " + formula);
+
+		// Test 27: Array with percentage calculations and formatting
+		ws.getRange2("A105").setValue("1000");
+		ws.getRange2("A106").setValue("2000");
+		ws.getRange2("A107").setValue("3000");
+		ws.getRange2("B105").setValue("10");
+		ws.getRange2("B106").setValue("15");
+		ws.getRange2("B107").setValue("20");
+
+		formula = "=A105:A107*(1+B105:B107/100)";
+		fillRange = ws.getRange2("D105");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("D105").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("D105"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "A105:A107*(1+B105:B107/100)", "formula result");
+		assert.strictEqual(dynamicRef.getHeight(), 3, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 1, "width dynamic array: " + formula);
+
+		// Test 28: Multi-condition array with AND/OR logic
+		ws.getRange2("A110").setValue("10");
+		ws.getRange2("A111").setValue("25");
+		ws.getRange2("A112").setValue("40");
+		ws.getRange2("B110").setValue("5");
+		ws.getRange2("B111").setValue("30");
+		ws.getRange2("B112").setValue("35");
+
+		formula = "=IF((A110:A112>20)*(B110:B112>30),\"High\",IF((A110:A112>10)+(B110:B112>20),\"Medium\",\"Low\"))";
+		fillRange = ws.getRange2("D110");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("D110").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("D110"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "IF((A110:A112>20)*(B110:B112>30),\"High\",IF((A110:A112>10)+(B110:B112>20),\"Medium\",\"Low\"))", "formula result");
+		assert.strictEqual(dynamicRef.getHeight(), 3, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 1, "width dynamic array: " + formula);
+
+		// Test 29: Array with exponential and logarithmic operations
+		ws.getRange2("A115").setValue("2");
+		ws.getRange2("A116").setValue("3");
+		ws.getRange2("A117").setValue("4");
+		ws.getRange2("B115").setValue("10");
+		ws.getRange2("B116").setValue("100");
+		ws.getRange2("B117").setValue("1000");
+
+		formula = "=ROUND(LOG(B115:B117,A115:A117),4)";
+		fillRange = ws.getRange2("D115");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("D115").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("D115"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ROUND(LOG(B115:B117,A115:A117),4)", "formula result");
+		assert.strictEqual(dynamicRef.getHeight(), 3, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 1, "width dynamic array: " + formula);
+
+		// Test 30: 3x3 matrix-like operations
+		ws.getRange2("A120").setValue("1");
+		ws.getRange2("A121").setValue("2");
+		ws.getRange2("A122").setValue("3");
+		ws.getRange2("B120").setValue("4");
+		ws.getRange2("B121").setValue("5");
+		ws.getRange2("B122").setValue("6");
+		ws.getRange2("C120").setValue("7");
+		ws.getRange2("C121").setValue("8");
+		ws.getRange2("C122").setValue("9");
+
+		formula = "=(A120:C122*2)+(A120:C122^2)";
+		fillRange = ws.getRange2("E120");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("E120").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("E120"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "(A120:C122*2)+(A120:C122^2)", "formula result");
+		assert.strictEqual(dynamicRef.getHeight(), 3, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 3, "width dynamic array: " + formula);
+
+		// Test 31: Array with IFERROR and complex error handling
+		ws.getRange2("A125").setValue("10");
+		ws.getRange2("A126").setValue("0");
+		ws.getRange2("A127").setValue("5");
+		ws.getRange2("B125").setValue("2");
+		ws.getRange2("B126").setValue("0");
+		ws.getRange2("B127").setValue("0");
+
+		formula = "=IFERROR(A125:A127/B125:B127,IF(B125:B127=0,\"Zero Division\",\"Error\"))";
+		fillRange = ws.getRange2("D125");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("D125").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("D125"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "IFERROR(A125:A127/B125:B127,IF(B125:B127=0,\"Zero Division\",\"Error\"))", "formula result");
+		assert.strictEqual(dynamicRef.getHeight(), 3, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 1, "width dynamic array: " + formula);
+
+		// Test 32: Compound interest calculation array
+		ws.getRange2("A130").setValue("1000");
+		ws.getRange2("A131").setValue("2000");
+		ws.getRange2("A132").setValue("3000");
+		ws.getRange2("B130").setValue("5");
+		ws.getRange2("B131").setValue("10");
+		ws.getRange2("B132").setValue("15");
+		ws.getRange2("C130").setValue("1");
+		ws.getRange2("C131").setValue("2");
+		ws.getRange2("C132").setValue("3");
+
+		formula = "=ROUND(A130:A132*((1+B130:B132/100)^C130:C132),2)";
+		fillRange = ws.getRange2("E130");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("E130").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("E130"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ROUND(A130:A132*((1+B130:B132/100)^C130:C132),2)", "formula result");
+		assert.strictEqual(dynamicRef.getHeight(), 3, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 1, "width dynamic array: " + formula);
+
+		// Test 33: Array with modulo and remainder operations
+		ws.getRange2("A135").setValue("23");
+		ws.getRange2("A136").setValue("45");
+		ws.getRange2("A137").setValue("67");
+		ws.getRange2("B135").setValue("5");
+		ws.getRange2("B136").setValue("7");
+		ws.getRange2("B137").setValue("9");
+
+		formula = "=A135:A137&\" mod \"&B135:B137&\" = \"&MOD(A135:A137,B135:B137)";
+		fillRange = ws.getRange2("D135");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("D135").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("D135"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "A135:A137&\" mod \"&B135:B137&\" = \"&MOD(A135:A137,B135:B137)", "formula result");
+		assert.strictEqual(dynamicRef.getHeight(), 3, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 1, "width dynamic array: " + formula);
+
+		// Test 34: Statistical array operations
+		ws.getRange2("A140").setValue("10");
+		ws.getRange2("A141").setValue("20");
+		ws.getRange2("A142").setValue("30");
+		ws.getRange2("B140").setValue("15");
+		ws.getRange2("B141").setValue("25");
+		ws.getRange2("B142").setValue("35");
+
+		formula = "=SQRT((A140:A142-AVERAGE(A140:A142))^2+(B140:B142-AVERAGE(B140:B142))^2)";
+		fillRange = ws.getRange2("D140");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("D140").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("D140"));
+		dynamicRef = resCell.getFormulaParsed().getDynamicRef();
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SQRT((A140:A142-AVERAGE(A140:A142))^2+(B140:B142-AVERAGE(B140:B142))^2)", "formula result");
+		assert.strictEqual(dynamicRef.getHeight(), 3, "height dynamic array: " + formula);
+		assert.strictEqual(dynamicRef.getWidth(), 1, "width dynamic array: " + formula);
+		
+
 		ws.getRange2("A1:Z30").cleanAll();
 
 	});
