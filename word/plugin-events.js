@@ -204,3 +204,55 @@
  * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onInsertOleObjects.js
  */
 
+/**
+ * Event: onBlurAnnotation
+ * @event Plugin#onBlurAnnotation
+ * @memberof Plugin
+ * @typeofeditors ["CDE"]
+ * @alias onBlurAnnotation
+ * @since 9.2.0
+ * @description The function called when an annotation loses focus.
+ * @param {TextAnnotation} annotation - The annotation that lost focus.
+ * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onBlurAnnotation.js
+ */
+
+/**
+ * Event: onFocusAnnotation
+ * @event Plugin#onFocusAnnotation
+ * @memberof Plugin
+ * @typeofeditors ["CDE"]
+ * @alias onFocusAnnotation
+ * @since 9.2.0
+ * @description The function called when an annotation receives focus.
+ * @param {TextAnnotation} annotation - The annotation that received focus.
+ * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onFocusAnnotation.js
+ */
+
+/**
+ * Event: onClickAnnotation
+ * @event Plugin#onClickAnnotation
+ * @memberof Plugin
+ * @typeofeditors ["CDE"]
+ * @alias onClickAnnotation
+ * @since 9.2.0
+ * @description The function called when the user clicks an annotation.
+ * @param {TextAnnotation} annotation - The annotation that was clicked.
+ * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onClickAnnotation.js
+ */
+
+/**
+ * Event: onParagraphText
+ * @event Plugin#onParagraphText
+ * @memberof Plugin
+ * @typeofeditors ["CDE"]
+ * @alias onParagraphText
+ * @since 9.2.0
+ * @description The function called when the paragraph text is updated in the document.
+ * @param {Object} data - Event data containing information about the updated paragraph.
+ * @property  {string} data.paragraphId  - ID of the paragraph whose content was changed.
+ * @property  {string} data.recalcId - ID of the last paragraph recalculation.
+ * @property  {string} data.text - The updated text content of the paragraph.
+ * @property  {TextAnnotationRange[]} data.annotations -  Array of updated annotation ranges.
+ * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onParagraphText.js
+ */
+
