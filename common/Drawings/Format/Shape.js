@@ -6398,6 +6398,16 @@
 			}
 			return false;
 		};
+		CShape.prototype.hitInRect = function (x, y) {
+			let invert_transform = this.getInvertTransform();
+			if (!invert_transform) {
+				return false;
+			}
+			let x_t = invert_transform.TransformPointX(x, y);
+			let y_t = invert_transform.TransformPointY(x, y);
+			
+			return x_t > 0 && x_t < this.extX && y_t > 0 && y_t < this.extY;
+		};
 
 		CShape.prototype.hitInBoundingRect = function (x, y) {
 			if (!AscFormat.canSelectDrawing(this)) {

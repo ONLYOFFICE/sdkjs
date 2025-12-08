@@ -602,34 +602,34 @@
         let nInternalType;
         switch (cTrigger) {
             case "MouseUp":
-                nInternalType = AscPDF.FORMS_TRIGGERS_TYPES.MouseUp;
+                nInternalType = AscPDF.PDF_TRIGGERS_TYPES.MouseUp;
                 break;
             case "MouseDown":
-                nInternalType = AscPDF.FORMS_TRIGGERS_TYPES.MouseDown;
+                nInternalType = AscPDF.PDF_TRIGGERS_TYPES.MouseDown;
                 break;
             case "MouseEnter":
-                nInternalType = AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter;
+                nInternalType = AscPDF.PDF_TRIGGERS_TYPES.MouseEnter;
                 break;
             case "MouseExit":
-                nInternalType = AscPDF.FORMS_TRIGGERS_TYPES.MouseExit;
+                nInternalType = AscPDF.PDF_TRIGGERS_TYPES.MouseExit;
                 break;
             case "OnFocus":
-                nInternalType = AscPDF.FORMS_TRIGGERS_TYPES.OnFocus;
+                nInternalType = AscPDF.PDF_TRIGGERS_TYPES.OnFocus;
                 break;
             case "OnBlur":
-                nInternalType = AscPDF.FORMS_TRIGGERS_TYPES.OnBlur;
+                nInternalType = AscPDF.PDF_TRIGGERS_TYPES.OnBlur;
                 break;
             case "Keystroke":
-                nInternalType = AscPDF.FORMS_TRIGGERS_TYPES.Keystroke;
+                nInternalType = AscPDF.PDF_TRIGGERS_TYPES.Keystroke;
                 break;
             case "Validate":
-                nInternalType = AscPDF.FORMS_TRIGGERS_TYPES.Validate;
+                nInternalType = AscPDF.PDF_TRIGGERS_TYPES.Validate;
                 break;
             case "Calculate":
-                nInternalType = AscPDF.FORMS_TRIGGERS_TYPES.Calculate;
+                nInternalType = AscPDF.PDF_TRIGGERS_TYPES.Calculate;
                 break;
             case "Format":
-                nInternalType = AscPDF.FORMS_TRIGGERS_TYPES.Format;
+                nInternalType = AscPDF.PDF_TRIGGERS_TYPES.Format;
                 break;
         }
 

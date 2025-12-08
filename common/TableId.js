@@ -473,6 +473,7 @@
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Polyline]	= AscPDF.CAnnotationPolyLine;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Square]		= AscPDF.CAnnotationSquare;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Stamp]		= AscPDF.CAnnotationStamp;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Link]		= AscPDF.CAnnotationLink;
 
 			//forms
 			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Checkbox_Field]	= AscPDF.CCheckBoxField;

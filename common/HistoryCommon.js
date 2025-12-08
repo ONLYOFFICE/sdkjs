@@ -1891,6 +1891,8 @@
 	window['AscDFH'].historyitem_type_Pdf_Signature_Field	= 2237 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Text_Field		= 2238 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Annot_Redact		= 2239 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Annot_Link		= 2240 << 16;
+	
 
 	window['AscDFH'].historyitem_type_CustomProperties      = 2301 << 16;
 
@@ -4223,6 +4225,7 @@
 	AscDFH.historyitem_Pdf_Annot_Comment_Data		= AscDFH.historyitem_type_Pdf_Annot | 32;
 	AscDFH.historyitem_type_Pdf_Annot_Reply			= AscDFH.historyitem_type_Pdf_Annot | 33;
 	AscDFH.historyitem_Pdf_Annot_Ap_Idx				= AscDFH.historyitem_type_Pdf_Annot | 34;
+	AscDFH.historyitem_Pdf_Annot_Actions			= AscDFH.historyitem_type_Pdf_Annot | 35;
 
 	// Sticky
 	AscDFH.historyitem_Pdf_Text_Annot_Icon			= AscDFH.historyitem_type_Pdf_Comment | 1;
@@ -4253,6 +4256,9 @@
 
 	// annot redact
 	AscDFH.historyitem_Pdf_Redact_Annot_Redact_Id = AscDFH.historyitem_type_Pdf_Annot_Redact | 1;
+	
+	// annot link
+	AscDFH.historyitem_Pdf_Link_Annot_Highlight_Type = AscDFH.historyitem_type_Pdf_Annot_Link | 1;
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в PDF drawing prototype

@@ -73,9 +73,9 @@ $(function ()
 		assert.strictEqual(textForm2.GetValue(), "2", "Check form2 value");
 		assert.strictEqual(textForm3.GetValue(), "3", "Check form3 value");
 		
-		AddJsAction(textForm1, AscPDF.FORMS_TRIGGERS_TYPES.Calculate, "this.getField('TextForm2').value += 1");
-		AddJsAction(textForm2, AscPDF.FORMS_TRIGGERS_TYPES.Calculate, "this.getField('TextForm3').value += 1");
-		AddJsAction(textForm3, AscPDF.FORMS_TRIGGERS_TYPES.Calculate, "this.getField('TextForm1').value += 1");
+		AddJsAction(textForm1, AscPDF.PDF_TRIGGERS_TYPES.Calculate, "this.getField('TextForm2').value += 1");
+		AddJsAction(textForm2, AscPDF.PDF_TRIGGERS_TYPES.Calculate, "this.getField('TextForm3').value += 1");
+		AddJsAction(textForm3, AscPDF.PDF_TRIGGERS_TYPES.Calculate, "this.getField('TextForm1').value += 1");
 		
 		textForm2.MoveCursorRight();
 		EnterTextToForm(textForm2, "2");
