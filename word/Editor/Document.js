@@ -23862,6 +23862,8 @@ CDocument.prototype.UpdateAddinFieldsByData = function(arrData)
 	if (!arrData || !Array.isArray(arrData))
 		return;
 	
+	let docState = this.SaveDocumentState();
+	
 	let allFields   = this.GetAllFields();
 	let paragraphs  = [];
 	let addinFields = {};
@@ -23895,7 +23897,10 @@ CDocument.prototype.UpdateAddinFieldsByData = function(arrData)
 		Elements  : paragraphs,
 		CheckType : AscCommon.changestype_Paragraph_Content
 	}))
+	{
+		this.LoadDocumentState(docState);
 		return;
+	}
 	
 	this.StartAction(AscDFH.historydescription_Document_UpdateAddinFields);
 	
@@ -23923,6 +23928,8 @@ CDocument.prototype.UpdateAddinFieldsByData = function(arrData)
 	this.UpdateInterface();
 	this.UpdateSelection();
 	this.FinalizeAction();
+	
+	this.LoadDocumentState(docState);
 };
 /**
  * Select add-in field
