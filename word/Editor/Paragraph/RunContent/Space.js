@@ -267,5 +267,37 @@
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CRunSpace = CRunSpace;
+	
+	/**
+	 *
+	 * @param codePoint
+	 * @param width
+	 * @constructor
+	 */
+	function CPdfRunSpace(codePoint, width)
+	{
+		CRunSpace.call(this, codePoint);
+		
+		this.specWidth = width;
+	}
+	CPdfRunSpace.prototype = Object.create(CRunSpace.prototype);
+	CPdfRunSpace.prototype.constructor = CPdfRunSpace;
+	
+	CPdfRunSpace.prototype.GetWidth = function()
+	{
+		return this.specWidth;
+	};
+	CPdfRunSpace.prototype.GetWidthVisible = function()
+	{
+		return this.specWidth;
+	};
+	CPdfRunSpace.prototype.SetWidth = function()
+	{
+	};
+	CPdfRunSpace.prototype.SetWidthVisible = function()
+	{
+	};
+	
+	AscWord.CPdfRunSpace = CPdfRunSpace;
 
 })(window);
