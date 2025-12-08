@@ -179,6 +179,35 @@
 		run.RemoveFromContent(inRunPos, 1, true);
 		return true;
 	};
+	CRunElementBase.prototype.SelectThisElement = function()
+	{
+		let run = this.GetRun();
+		if (!run || !run.IsUseInDocument())
+			return false;
+		
+		let paragraph = run.GetParagraph();
+		if (!paragraph)
+			return false;
+		
+		let docContent = paragraph.GetTopDocumentContent();
+		if (!docContent)
+			return false;
+		
+		docContent.RemoveSelection();
+		
+		let inRunPos = this.GetInRunPos();
+		
+		run.Make_ThisElementCurrent(false);
+		run.SetCursorPosition(inRunPos);
+		let startPos = docContent.GetContentPosition(false);
+		
+		run.SetCursorPosition(inRunPos + 1);
+		let endPos = docContent.GetContentPosition(false);
+		
+		docContent.RemoveSelection();
+		docContent.SetSelectionByContentPositions(startPos, endPos);
+		return true;
+	};
 	/**
 	 * Может ли строка начинаться с данного элемента
 	 * @returns {boolean}

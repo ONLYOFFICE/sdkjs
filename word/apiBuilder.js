@@ -6120,10 +6120,47 @@
 	{
 		return new ApiDocumentVisitor(this);
 	};
-
-	ApiDocumentContent.prototype.GetInternalId = function()
+	/**
+	 * Check if the current document content is a footnote.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @since 9.3.0
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/IsFootnote.js
+	 */
+	ApiDocumentContent.prototype.IsFootnote = function()
 	{
-		return this.Document.GetId();
+		let docContent = this.Document.IsFootnote(true);
+		return (docContent === this.Document && !docContent.IsEndnote());
+	};
+	/**
+	 * Check if the current document content is an endnote.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @since 9.3.0
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/IsEndnote.js
+	 */
+	ApiDocumentContent.prototype.IsEndnote = function()
+	{
+		let docContent = this.Document.IsFootnote(true);
+		return (docContent === this.Document && docContent.IsEndnote());
+	};
+	/**
+	 * Select the reference to this footnote/endnote. If this document content is not a footnote/endnote, do nothing.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @since 9.3.0
+	 * @returns {boolean} Returns true if the reference was selected successfully.
+	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/SelectNoteReference.js
+	 */
+	ApiDocumentContent.prototype.SelectNoteReference = function()
+	{
+		if (!this.IsFootnote() && !this.IsEndnote())
+			return false;
+		
+		let ref = this.Document.GetRef();
+		return ref && ref.SelectThisElement();
 	};
 
 	/**
@@ -9607,6 +9644,24 @@
 		
 		this.Document.GoToPage(index);
 		return true;
+	};
+	
+	/**
+	 * Moves a cursor to the start of the specified page in the document.
+	 * @memberof ApiDocument
+	 * @returns {?ApiDocumentContent}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetCurrentFootEndnote.js
+	 */
+	ApiDocument.prototype.GetCurrentFootEndnote = function()
+	{
+		let para = this.Document.GetCurrentParagraph();
+		if (!para || !para.GetParent())
+			return null;
+		
+		let docContent = para.GetParent().IsFootnote(true);
+		return docContent ? new ApiDocumentContent(docContent) : null;
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -27624,7 +27679,9 @@
 	ApiDocumentContent.prototype["GetCurrentRun"]            = ApiDocumentContent.prototype.GetCurrentRun;
 	ApiDocumentContent.prototype["GetCurrentContentControl"] = ApiDocumentContent.prototype.GetCurrentContentControl;
 	ApiDocumentContent.prototype["GetDocumentVisitor"]       = ApiDocumentContent.prototype.GetDocumentVisitor;
-	ApiDocumentContent.prototype["GetInternalId"]            = ApiDocumentContent.prototype.GetInternalId;
+	ApiDocumentContent.prototype["IsFootnote"]               = ApiDocumentContent.prototype.IsFootnote;
+	ApiDocumentContent.prototype["IsEndnote"]                = ApiDocumentContent.prototype.IsEndnote;
+	ApiDocumentContent.prototype["SelectNoteReference"]      = ApiDocumentContent.prototype.SelectNoteReference;
 
 	ApiRange.prototype["GetClassType"]               = ApiRange.prototype.GetClassType;
 	ApiRange.prototype["GetParagraph"]               = ApiRange.prototype.GetParagraph;
@@ -27775,6 +27832,7 @@
 	ApiDocument.prototype["MoveCursorRight"]               = ApiDocument.prototype.MoveCursorRight;
 	ApiDocument.prototype["MoveCursorUp"]                  = ApiDocument.prototype.MoveCursorUp;
 	ApiDocument.prototype["MoveCursorDown"]                = ApiDocument.prototype.MoveCursorDown;
+	ApiDocument.prototype["GetCurrentFootEndnote"]         = ApiDocument.prototype.GetCurrentFootEndnote;
 	
 	
 	ApiParagraph.prototype["GetClassType"]           = ApiParagraph.prototype.GetClassType;
