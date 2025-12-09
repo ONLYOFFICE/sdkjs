@@ -1784,6 +1784,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		if (!emptyReplaceOn) {
 			emptyReplaceOn = new cEmpty();
 		}
+		if (!bbox) {
+			bbox = this.getBBox0NoCheck();
+		}
 		for (let i = bbox.r1; i <= Math.min(bbox.r2, maxRowCount != null ? bbox.r1 + maxRowCount : bbox.r2); i++) {
 			if (!arr.array[i - bbox.r1]) {
 				arr.addRow();
