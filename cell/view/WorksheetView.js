@@ -19074,6 +19074,8 @@ function isAllowPasteLink(pastedWb) {
 						// array cannot expand
 						// set ref to the first(parent) cell
 						arrayCannotExpand = true;
+					} else if (!ws.dynamicArrayManager.isAutoExpandBBox(dynamicSelectionRange)) {
+						dynamicSelectionRange = new Asc.Range(dynamicSelectionRange.c1, dynamicSelectionRange.r1, dynamicSelectionRange.c1, dynamicSelectionRange.r1);
 					}
 				}
 			} else if (!applyByArray && !ctrlKey) {

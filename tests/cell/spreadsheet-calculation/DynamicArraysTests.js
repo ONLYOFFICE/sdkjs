@@ -3036,16 +3036,6 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"Check expand dynamic array test\"", function (assert) {
-		ws.getRange2("A1").setValue("1");
-		ws.getRange2("A2").setValue("2");
-		ws.getRange2("A3").setValue("3");
-		ws.getRange2("B1").setValue("4");
-		ws.getRange2("B2").setValue("str");
-		ws.getRange2("B3").setValue("6");
-		ws.getRange2("C1").setValue("1");
-		ws.getRange2("C2").setValue();
-		ws.getRange2("C3").setValue("1");
-
 		let fillRange, resCell, fragment;
 		let flags = wsView._getCellFlags(0, 0);
 		flags.ctrlKey = false;
@@ -3742,6 +3732,393 @@ $(function () {
 
 		ws.getRange2("A1:Z30").cleanAll();
 
+	});
+
+	QUnit.test("Test: \"Dynamic array blocked expansion (#SPILL! error)\"", function (assert) {
+		// Clean up the test area
+		ws.getRange2("A1:Z30").cleanAll();
+
+		let fillRange, fragment;
+		let flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		ws.getRange2("A1").setValue("1");
+		ws.getRange2("A2").setValue("2");
+		ws.getRange2("A3").setValue("3");
+		ws.getRange2("C2").setValue("Blocking cell");
+
+		let formula = "=A1:A3*10";
+		fillRange = ws.getRange2("C1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C1"));
+
+		let cellValue = ws.getRange2("C1").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "C1 should contain #SPILL! error when array expansion is blocked");
+
+		ws.getRange2("E1").setValue("5");
+		ws.getRange2("E2").setValue("10");
+		ws.getRange2("E3").setValue("15");
+		ws.getRange2("G3").setValue("Block");
+
+		formula = "=SIN(E1:E3)";
+		fillRange = ws.getRange2("G1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("G1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("G1"));
+		cellValue = ws.getRange2("G1").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "G1 #SPILL! with SIN function");
+
+		ws.getRange2("A5").setValue("100");
+		ws.getRange2("A6").setValue("200");
+		ws.getRange2("A7").setValue("300");
+		ws.getRange2("C6").setValue("X");
+
+		formula = "=A5:A7/10";
+		fillRange = ws.getRange2("C5");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C5").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("C5").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "C5 #SPILL! with division");
+
+		ws.getRange2("E5").setValue("2");
+		ws.getRange2("E6").setValue("4");
+		ws.getRange2("E7").setValue("6");
+		ws.getRange2("G6").setValue("Y");
+
+		formula = "=SQRT(E5:E7)";
+		fillRange = ws.getRange2("G5");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("G5").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("G5").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "G5 #SPILL! with SQRT");
+
+		ws.getRange2("A10").setValue("text1");
+		ws.getRange2("A11").setValue("text2");
+		ws.getRange2("A12").setValue("text3");
+		ws.getRange2("C11").setValue("Block");
+
+		formula = "=UPPER(A10:A12)";
+		fillRange = ws.getRange2("C10");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C10").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("C10").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "C10 #SPILL! with UPPER");
+
+		ws.getRange2("E10").setValue("5.5");
+		ws.getRange2("E11").setValue("10.8");
+		ws.getRange2("E12").setValue("15.3");
+		ws.getRange2("G11").setValue("Z");
+
+		formula = "=ROUND(E10:E12,0)";
+		fillRange = ws.getRange2("G10");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("G10").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("G10").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "G10 #SPILL! with ROUND");
+
+		ws.getRange2("A15").setValue("1");
+		ws.getRange2("A16").setValue("2");
+		ws.getRange2("B15").setValue("3");
+		ws.getRange2("B16").setValue("4");
+		ws.getRange2("D16").setValue("Block");
+
+		formula = "=A15:B16*2";
+		fillRange = ws.getRange2("D15");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("D15").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("D15").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "D15 #SPILL! with 2D array");
+
+		ws.getRange2("F15").setValue("10");
+		ws.getRange2("F16").setValue("20");
+		ws.getRange2("F17").setValue("30");
+		ws.getRange2("H16").setValue("X");
+
+		formula = "=ABS(F15:F17-15)";
+		fillRange = ws.getRange2("H15");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("H15").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("H15").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "H15 #SPILL! with ABS");
+
+		ws.getRange2("A20").setValue("5");
+		ws.getRange2("A21").setValue("10");
+		ws.getRange2("A22").setValue("15");
+		ws.getRange2("C21").setValue("Block");
+
+		formula = "=COS(A20:A22)";
+		fillRange = ws.getRange2("C20");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C20").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("C20").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "C20 #SPILL! with COS");
+
+		ws.getRange2("E20").setValue("2");
+		ws.getRange2("E21").setValue("3");
+		ws.getRange2("E22").setValue("4");
+		ws.getRange2("G21").setValue("Y");
+
+		formula = "=POWER(E20:E22,2)";
+		fillRange = ws.getRange2("G20");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("G20").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("G20").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "G20 #SPILL! with POWER");
+
+		ws.getRange2("A25").setValue("hello");
+		ws.getRange2("A26").setValue("world");
+		ws.getRange2("A27").setValue("test");
+		ws.getRange2("C26").setValue("Block");
+
+		formula = "=LEN(A25:A27)";
+		fillRange = ws.getRange2("C25");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C25").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("C25").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "C25 #SPILL! with LEN");
+
+		formula = "={10;20;30}+5";
+		ws.getRange2("E26").setValue("Block");
+		fillRange = ws.getRange2("E25");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("E25").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("E25").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "E25 #SPILL! with array constant");
+
+		formula = "=SIN({1;2;3})";
+		ws.getRange2("G26").setValue("X");
+		fillRange = ws.getRange2("G25");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("G25").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("G25").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "G25 #SPILL! with SIN array constant");
+
+		ws.getRange2("I1").setValue("1");
+		ws.getRange2("I2").setValue("2");
+		ws.getRange2("I3").setValue("3");
+		ws.getRange2("K2").setValue("Block");
+
+		formula = "=SQRT(I1:I3+10)";
+		fillRange = ws.getRange2("K1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("K1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("K1").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "K1 #SPILL! with SQRT and addition");
+
+		ws.getRange2("I5").setValue("10");
+		ws.getRange2("I6").setValue("20");
+		ws.getRange2("I7").setValue("30");
+		ws.getRange2("K6").setValue("Y");
+
+		formula = "=LOG(I5:I7,10)";
+		fillRange = ws.getRange2("K5");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("K5").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("K5").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "K5 #SPILL! with LOG");
+
+		ws.getRange2("I10").setValue("5");
+		ws.getRange2("I11").setValue("10");
+		ws.getRange2("I12").setValue("15");
+		ws.getRange2("K11").setValue("Block");
+
+		formula = "=MOD(I10:I12,3)";
+		fillRange = ws.getRange2("K10");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("K10").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("K10").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "K10 #SPILL! with MOD");
+
+		ws.getRange2("I15").setValue("text");
+		ws.getRange2("I16").setValue("data");
+		ws.getRange2("I17").setValue("info");
+		ws.getRange2("K16").setValue("X");
+
+		formula = "=LEFT(I15:I17,2)";
+		fillRange = ws.getRange2("K15");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("K15").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("K15").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "K15 #SPILL! with LEFT");
+
+		ws.getRange2("I20").setValue("3.14159");
+		ws.getRange2("I21").setValue("2.71828");
+		ws.getRange2("I22").setValue("1.41421");
+		ws.getRange2("K21").setValue("Block");
+
+		formula = "=ROUND(I20:I22,2)";
+		fillRange = ws.getRange2("K20");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("K20").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("K20").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "K20 #SPILL! with ROUND");
+
+		ws.getRange2("M1").setValue("1");
+		ws.getRange2("M2").setValue("2");
+		ws.getRange2("M3").setValue("3");
+		ws.getRange2("O2").setValue("Block");
+
+		formula = "=EXP(M1:M3)";
+		fillRange = ws.getRange2("O1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("O1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("O1").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "O1 #SPILL! with EXP");
+
+		ws.getRange2("M5").setValue("Hello");
+		ws.getRange2("M6").setValue("World");
+		ws.getRange2("M7").setValue("Test");
+		ws.getRange2("O6").setValue("Y");
+
+		formula = "=LOWER(M5:M7)";
+		fillRange = ws.getRange2("O5");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("O5").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("O5").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "O5 #SPILL! with LOWER");
+
+		ws.getRange2("M10").setValue("-5");
+		ws.getRange2("M11").setValue("-10");
+		ws.getRange2("M12").setValue("-15");
+		ws.getRange2("O11").setValue("Block");
+
+		formula = "=ABS(M10:M12)";
+		fillRange = ws.getRange2("O10");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("O10").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("O10").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "O10 #SPILL! with ABS");
+
+		ws.getRange2("M15").setValue("2");
+		ws.getRange2("M16").setValue("3");
+		ws.getRange2("M17").setValue("4");
+		ws.getRange2("O16").setValue("X");
+
+		formula = "=FACT(M15:M17)";
+		fillRange = ws.getRange2("O15");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("O15").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("O15").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "O15 #SPILL! with FACT");
+
+		ws.getRange2("Q1").setValue("1");
+		ws.getRange2("Q2").setValue("2");
+		ws.getRange2("R1").setValue("3");
+		ws.getRange2("R2").setValue("4");
+		ws.getRange2("T2").setValue("Block");
+
+		formula = "=Q1:R2+10";
+		fillRange = ws.getRange2("T1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("T1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("T1").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "T1 #SPILL! with 2D range addition");
+
+		ws.getRange2("Q5").setValue("10");
+		ws.getRange2("Q6").setValue("20");
+		ws.getRange2("Q7").setValue("30");
+		ws.getRange2("S6").setValue("Y");
+
+		formula = "=IF(Q5:Q7>15,Q5:Q7*2,Q5:Q7/2)";
+		fillRange = ws.getRange2("S5");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("S5").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("S5").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "S5 #SPILL! with IF");
+
+		ws.getRange2("Q10").setValue("5");
+		ws.getRange2("Q11").setValue("10");
+		ws.getRange2("Q12").setValue("15");
+		ws.getRange2("S11").setValue("Block");
+
+		formula = "=RADIANS(Q10:Q12)";
+		fillRange = ws.getRange2("S10");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("S10").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("S10").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "S10 #SPILL! with RADIANS");
+
+		ws.getRange2("Q15").setValue("data1");
+		ws.getRange2("Q16").setValue("data2");
+		ws.getRange2("Q17").setValue("data3");
+		ws.getRange2("S16").setValue("X");
+
+		formula = "=PROPER(Q15:Q17)";
+		fillRange = ws.getRange2("S15");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("S15").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("S15").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "S15 #SPILL! with PROPER");
+
+		ws.getRange2("Q20").setValue("100");
+		ws.getRange2("Q21").setValue("200");
+		ws.getRange2("Q22").setValue("300");
+		ws.getRange2("S21").setValue("Block");
+
+		formula = "=SQRT(Q20:Q22)/5";
+		fillRange = ws.getRange2("S20");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("S20").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		cellValue = ws.getRange2("S20").getValue();
+		assert.strictEqual(cellValue, "#SPILL!", "S20 #SPILL! with nested operations");
+
+		ws.getRange2("A1:Z30").cleanAll();
 	});
 
 	QUnit.module("Sheet structure");

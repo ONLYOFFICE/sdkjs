@@ -24795,7 +24795,7 @@
 			return true;
 		} else if (element.type === cElementType.array || element.type === cElementType.cellsRange || element.type === cElementType.cellsRange3D) {
 			// go through the range and see if the array can fit into it
-			let dimensions = element.getDimensions(), isHaveNonEmptyCell;
+			let dimensions = element.getDimensions();
 
 			if (element.isOneElement()) {
 				return true
@@ -24805,39 +24805,50 @@
 			const t = this;
 			let rangeRow = parentCell.r1,
 				rangeCol = parentCell.c1;
+			let rangeRow2 = (rangeRow + dimensions.row) - 1;
+			let rangeCol2 = (rangeCol + dimensions.col) - 1;
 
-			let supposedDynamicRange = this.ws.getRange3(rangeRow, rangeCol, (rangeRow + dimensions.row) - 1, (rangeCol + dimensions.col) - 1);
-			for (let i = rangeRow; i < (rangeRow + dimensions.row); i++) {
-				for (let j = rangeCol; j < (rangeCol + dimensions.col); j++) {
-					if (i === rangeRow && j === rangeCol) {
-						continue
-					}
-					this.ws._getCellNoEmpty(i, j, function(cell) {
-						if (cell) {
-							let formula = cell.getFormulaParsed();
-							let dynamicRangeFromCell = formula && /*formula.getDynamicRef()*/formula.getArrayFormulaRef();
-							if (formula && dynamicRangeFromCell) {
-								// check if cell belong to current dynamicRange
-								// this is necessary so that spill errors do not occur during the second check of the range (since the values ​​in it have already been entered earlier)
-								if (!supposedDynamicRange.bbox.isEqual(dynamicRangeFromCell)) {
-									// if the cell is part of another dynamic range, then the range that is in the area of ​​the previous range is displayed (except for the first cell, but we do not check it)
-									// that is, if one of the ranges is “lower” or “to the right” in the editor, then it will be displayed, and the other will receive a SPILL error
-									isHaveNonEmptyCell = true
-								}
-							} else if (cell.formulaParsed || !cell.isEmptyTextString()) {
-								isHaveNonEmptyCell = true
-							}
-						}
-					});
-					if (isHaveNonEmptyCell) {
-						return false
-					}
-				}
-			}
-			return true
+			return this.isAutoExpandBBox(new Asc.Range(rangeCol, rangeRow, rangeCol2, rangeRow2));
 		}
 
 		return false
+	};
+
+	CDynamicArrayManager.prototype.isAutoExpandBBox = function (bbox) {
+		if (this.ws.autoFilters.isIntersectionTable(bbox)) {
+			return false
+		}
+
+		let isHaveNonEmptyCell;
+		let supposedDynamicRange = this.ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2);
+		for (let i = bbox.r1; i <= bbox.r2; i++) {
+			for (let j = bbox.c1; j <= bbox.c2; j++) {
+				if (i === bbox.r1 && j === bbox.c1) {
+					continue
+				}
+				this.ws._getCellNoEmpty(i, j, function(cell) {
+					if (cell) {
+						let formula = cell.getFormulaParsed();
+						let dynamicRangeFromCell = formula && /*formula.getDynamicRef()*/formula.getArrayFormulaRef();
+						if (formula && dynamicRangeFromCell) {
+							// check if cell belong to current dynamicRange
+							// this is necessary so that spill errors do not occur during the second check of the range (since the values ​​in it have already been entered earlier)
+							if (!supposedDynamicRange.bbox.isEqual(dynamicRangeFromCell)) {
+								// if the cell is part of another dynamic range, then the range that is in the area of ​​the previous range is displayed (except for the first cell, but we do not check it)
+								// that is, if one of the ranges is “lower” or “to the right” in the editor, then it will be displayed, and the other will receive a SPILL error
+								isHaveNonEmptyCell = true
+							}
+						} else if (cell.formulaParsed || !cell.isEmptyTextString()) {
+							isHaveNonEmptyCell = true
+						}
+					}
+				});
+				if (isHaveNonEmptyCell) {
+					return false;
+				}
+			}
+		}
+		return true
 	};
 
 	/**
