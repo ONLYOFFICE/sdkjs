@@ -13395,7 +13395,7 @@
 	 */
 	ApiTable.prototype.GetRow = function(nPos)
 	{
-		if (nPos < 0 || nPos >= this.Table.Content.length)
+		if (typeof(nPos) !== "number" || nPos < 0 || nPos >= this.Table.Content.length)
 			return null;
 
 		return new ApiTableRow(this.Table.Content[nPos]);
