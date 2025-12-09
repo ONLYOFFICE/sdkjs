@@ -4697,7 +4697,6 @@
 		var oShape = oShapeTrack.getShape(true, oDrawingDocuemnt, null);
 		oShape.setParent(oDrawing);
 		oDrawing.Set_GraphicObject(oShape);
-		oShape.createTextBoxContent();
 		oShape.spPr.setFill(fill.UniFill);
 		oShape.spPr.setLn(stroke.Ln);
 		return new ApiShape(oShape);
@@ -18383,7 +18382,7 @@
 	/**
 	 * Returns the drawing inner contents where a paragraph or text runs can be inserted if it exists.
 	 * @memberof ApiDrawing
-	 * @typeofeditors ["CDE", "CSE"]
+	 * @typeofeditors ["CDE"]
 	 * @returns {?ApiDocumentContent}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetContent.js
 	 */
@@ -19266,7 +19265,7 @@
 	/**
 	 * Returns a type of the ApiShape class.
 	 * @memberof ApiShape
-	 * @typeofeditors ["CDE", "CSE"]
+	 * @typeofeditors ["CDE"]
 	 * @returns {"shape"}
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetClassType.js
 	 */
@@ -19277,13 +19276,22 @@
 	/**
 	 * Returns the shape inner contents where a paragraph or text runs can be inserted.
 	 * @memberof ApiShape
-	 * @typeofeditors ["CDE", "CSE"]
+	 * @typeofeditors ["CDE"]
 	 * @returns {?ApiDocumentContent}
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetDocContent.js
 	 */
 	ApiShape.prototype.GetDocContent = function()
 	{
-		if(this.Shape && this.Shape.textBoxContent && !this.Shape.isForm())
+		if (!this.Shape)
+			return null;
+		if (this.Shape.isForm())
+			return null;
+
+		if(!this.Shape.textBoxContent)
+		{
+			this.Shape.createTextBoxContent();
+		}
+		if(this.Shape.textBoxContent)
 		{
 			return new ApiDocumentContent(this.Shape.textBoxContent);
 		}
@@ -19293,7 +19301,7 @@
 	/**
 	 * Sets the vertical alignment to the shape content where a paragraph or text runs can be inserted.
 	 * @memberof ApiShape
-	 * @typeofeditors ["CDE", "CSE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {VerticalTextAlign} VerticalAlign - The type of the vertical alignment for the shape inner contents.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetVerticalTextAlign.js

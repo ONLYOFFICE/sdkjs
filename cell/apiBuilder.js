@@ -12889,8 +12889,15 @@
 	 */
 	ApiShape.prototype.GetContent = function () {
 		var oApi = Asc["editor"];
-		if (oApi && this.Drawing && this.Drawing.txBody && this.Drawing.txBody.content) {
-			return oApi.private_CreateApiDocContent(this.Drawing.txBody.content);
+		if (!oApi)
+			return null;
+		let docContent = this.Drawing.getDocContent();
+		if (!docContent) {
+			this.Drawing.createTextBody();
+		}
+		docContent = this.Drawing.getDocContent();
+		if (docContent) {
+			return oApi.private_CreateApiDocContent(docContent);
 		}
 		return null;
 	};
@@ -12903,11 +12910,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetDocContent.js
 	 */
 	ApiShape.prototype.GetDocContent = function () {
-		var oApi = Asc["editor"];
-		if (oApi && this.Drawing && this.Drawing.txBody && this.Drawing.txBody.content) {
-			return oApi.private_CreateApiDocContent(this.Drawing.txBody.content);
-		}
-		return null;
+		return this.GetContent();
 	};
 
 	/**

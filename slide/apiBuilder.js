@@ -4815,12 +4815,7 @@
 	 */
     ApiShape.prototype.GetDocContent = function()
     {
-        var oApi = private_GetApi();
-        if(oApi && this.Drawing && this.Drawing.txBody && this.Drawing.txBody.content)
-        {
-            return oApi.private_CreateApiDocContent(this.Drawing.txBody.content);
-        }
-        return null;
+        return this.GetContent();
     };
     
     /**
@@ -4831,12 +4826,20 @@
 	 */
     ApiShape.prototype.GetContent = function()
     {
-        var oApi = private_GetApi();
-        if(oApi && this.Drawing && this.Drawing.txBody && this.Drawing.txBody.content)
-        {
-            return oApi.private_CreateApiDocContent(this.Drawing.txBody.content);
-        }
-        return null;
+		var oApi = Asc["editor"];
+		if (!oApi)
+			return null;
+		let docContent = this.Drawing.getDocContent();
+		if (!docContent)
+		{
+			this.Drawing.createTextBody();
+		}
+		docContent = this.Drawing.getDocContent();
+		if (docContent)
+		{
+			return oApi.private_CreateApiDocContent(docContent);
+		}
+		return null;
     };
 
     /**

@@ -17150,11 +17150,6 @@
 			if (worksheet) {
 				oShape.setWorksheet(worksheet);
 			}
-			if (bWord) {
-				oShape.createTextBoxContent();
-			} else {
-				oShape.createTextBody();
-			}
 			oShape.spPr.setFill(oFill);
 			oShape.spPr.setLn(oStroke);
 			return oShape;

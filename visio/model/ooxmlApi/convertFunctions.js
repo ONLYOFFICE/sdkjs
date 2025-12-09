@@ -2932,6 +2932,7 @@
 		//let oDrawingDocument = new AscCommon.CDrawingDocument();
 		let shape = AscFormat.builder_CreateShape(sType, nWidth_mm, nHeight_mm,
 			oFill, oStroke, cVisioDocument, cVisioDocument.themes[0], null, false);
+		shape.createTextBody();
 		shape.spPr.xfrm.setOffX(x);
 		shape.spPr.xfrm.setOffY(y);
 		shape.spPr.xfrm.setRot(rot);
