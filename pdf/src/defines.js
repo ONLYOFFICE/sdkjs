@@ -342,6 +342,18 @@
     GOTO_TYPES["fitBH"] = GOTO_TYPES.fitBH;
     GOTO_TYPES["fitBV"] = GOTO_TYPES.fitBV;
 
+    const PRINT_CONTENT_TYPES = {
+        doc:                0,
+        docAndMarkups:      1,
+        docAndStamps:       2,
+        formsOnly:          3,
+    }
+
+    PRINT_CONTENT_TYPES["doc"]           = PRINT_CONTENT_TYPES.doc;
+    PRINT_CONTENT_TYPES["docAndMarkups"] = PRINT_CONTENT_TYPES.docAndMarkups;
+    PRINT_CONTENT_TYPES["docAndStamps"]  = PRINT_CONTENT_TYPES.docAndStamps;
+    PRINT_CONTENT_TYPES["formsOnly"]     = PRINT_CONTENT_TYPES.formsOnly;
+
     asc["FIELD_TYPES"]                  = asc.FIELD_TYPES               = FIELD_TYPES;
     asc["BORDER_EFFECT_STYLES"]         = asc.BORDER_EFFECT_STYLES      = BORDER_EFFECT_STYLES;
     asc["REF_TO_REASON"]                = asc.REF_TO_REASON             = REF_TO_REASON;
@@ -361,5 +373,6 @@
     asc["DIGITS_TYPES"]                = asc.DIGITS_TYPES               = DIGITS_TYPES;
     asc["USER_PERMISSIONS"]            = asc.USER_PERMISSIONS           = USER_PERMISSIONS;
     asc["GOTO_TYPES"]                  = asc.GOTO_TYPES                 = GOTO_TYPES;
+    asc["PRINT_CONTENT_TYPES"]         = asc.PRINT_CONTENT_TYPES        = PRINT_CONTENT_TYPES;
     asc.CommandType                    = CommandType;
 })();
