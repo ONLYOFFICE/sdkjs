@@ -15691,7 +15691,7 @@ CDocument.prototype.private_StoreViewPositions = function(state)
 	// TODO: Решить проблему, когда видно больше 2 страниц и курсор находится на средней странице
 	// Использовать положение курсора оказалось не всегда удачно, т.к. при многократном быстром расчете курсор может
 	// может попасть в поле экрана и тогда скролл потянется сразу за ним, что может быть неверным
-	if (false && -1 !== cursorPage
+	if (-1 !== cursorPage
 		&& ((viewPort[0].Page === cursorPage && cursorY + cursorH > viewPort[0].Y)
 			|| (viewPort[1].Page === cursorPage && cursorY < viewPort[1].Y)))
 	{
@@ -15779,6 +15779,43 @@ CDocument.prototype.private_StoreViewPositions = function(state)
 		state.AnchorPos      = anchorPos;
 		state.AnchorAlignTop = true;
 		state.AnchorDistance = xyInfo.Y - viewPort[0].Y;
+
+        let currentAnchorPage = state.AnchorPos ? this.private_GetXYByDocumentPosition(state.AnchorPos).Page : -1;
+        let topViewPage = viewPort[0].Page;
+
+        if (currentAnchorPage !== topViewPage)
+        {
+            // Calculate the desired Y position relative to viewPort[0].Page
+            let desiredY = state.AnchorDistance; // The distance from the top of the viewport
+            let pageHeight = this.Pages[topViewPage] ? this.Pages[topViewPage].Height : 297; // Default A4 height
+
+            // Clamp desiredY within the page's height
+            desiredY = Math.max(0, Math.min(desiredY, pageHeight));
+
+            // Find a new anchorPos on viewPort[0].Page at desiredY
+            let newAnchorPos = this.GetDocumentPositionByXY(topViewPage, 0, desiredY);
+            if (newAnchorPos)
+            {
+                state.AnchorPos = newAnchorPos;
+                let newXyInfo = this.private_GetXYByDocumentPosition(newAnchorPos);
+
+                // Update AnchorDistance with the new Y position
+                state.AnchorDistance = newXyInfo.Y - viewPort[0].Y;
+            }
+            else
+            {
+                // Fallback: Set anchorPos to the very top of viewPort[0].Page
+                newAnchorPos = this.GetDocumentPositionByXY(topViewPage, 0, 0);
+                if (newAnchorPos)
+                {
+                    state.AnchorPos = newAnchorPos;
+                    let fallbackXyInfo = this.private_GetXYByDocumentPosition(newAnchorPos);
+
+                    // Update AnchorDistance with the new Y position
+                    state.AnchorDistance = fallbackXyInfo.Y - viewPort[0].Y;
+                }
+            }
+        }
 	}
 };
 CDocument.prototype.Load_DocumentStateAfterLoadChanges = function(State, updateSelection)
