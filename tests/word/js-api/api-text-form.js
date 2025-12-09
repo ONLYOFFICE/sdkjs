@@ -39,7 +39,7 @@ $(function ()
 	function createApiTextForm(pr)
 	{
 		pr = pr ? pr : {"key": "Name", "placeholder": "Enter your name"};
-		return AscTest.Editor.CreateTextForm(pr);
+		return AscTest.JsApi.CreateTextForm(pr);
 	}
 	
 	QUnit.test("Placeholder", function (assert)
@@ -58,8 +58,8 @@ $(function ()
 	QUnit.test("Delete", function (assert)
 	{
 		AscTest.ClearDocument();
-		let document = AscTest.Editor.GetDocument();
-		let p = AscTest.Editor.CreateParagraph();
+		let document = AscTest.JsApi.GetDocument();
+		let p = AscTest.JsApi.CreateParagraph();
 		document.Push(p);
 		
 		let textForm = createApiTextForm();
@@ -83,5 +83,42 @@ $(function ()
 		textForm.Delete(true);
 		assert.strictEqual(textForm.Sdt.IsUseInDocument(), false, "Check if text form were deleted");
 		assert.strictEqual(p.GetText(), "BeforeInsideAfter\r\n", "Check paragraph text");
+	});
+	
+	QUnit.test('SetBorderColor, GetBorderColor', function (assert) 
+	{
+		const textForm = AscTest.JsApi.CreateTextForm();
+
+		assert.strictEqual(textForm.GetBorderColor(), null, 'Check border color for a newly created text form');
+
+		textForm.SetBorderColor(255, 122, 100);
+		assert.equalRgb(textForm.GetBorderColor(), { r: 255, g: 122, b: 100 }, 'Check border color after setting it with rgba components');
+
+		const hexColor = AscTest.JsApi.HexColor('a1b2c3');
+		textForm.SetBorderColor(hexColor);
+		assert.equalRgb(textForm.GetBorderColor(), { r: 161, g: 178, b: 195 }, 'Check border color after setting it with ApiColor (rgba)');
+
+		textForm.SetBorderColor(0, 0, 0, true);
+		assert.strictEqual(textForm.GetBorderColor(), null, 'Check border color after resetting it');
+	});
+
+	QUnit.test('SetBackgroundColor, GetBackgroundColor', function (assert) {
+		const textForm = AscTest.JsApi.CreateTextForm();
+
+		assert.strictEqual(textForm.GetBackgroundColor(), null, 'Check background color for a newly created text form');
+
+		textForm.SetBackgroundColor(255, 122, 100);
+		assert.equalRgb(textForm.GetBackgroundColor(), { r: 255, g: 122, b: 100 }, 'Check background color after setting it with rgba components');
+
+		const hexColor = AscTest.JsApi.HexColor('a1b2c3');
+		textForm.SetBackgroundColor(hexColor);
+		assert.equalRgb(textForm.GetBackgroundColor().GetRGB(), { r: 161, g: 178, b: 195 }, 'Check background color after setting it with ApiColor (rgba)');
+
+		const themeColor = AscTest.JsApi.ThemeColor('accent3');
+		textForm.SetBackgroundColor(themeColor);
+		assert.strictEqual(textForm.GetBackgroundColor().IsThemeColor(), true, 'Check background color after setting it with theme color');
+
+		textForm.SetBackgroundColor(0, 0, 0, true);
+		assert.strictEqual(textForm.GetBackgroundColor(), null, 'Check background color after resetting it');
 	});
 });

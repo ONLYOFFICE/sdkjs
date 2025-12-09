@@ -31,31 +31,31 @@
  */
 
 $(function () {
-	QUnit.module('Test the ApiInlineLevelSdt methods');
-
-	QUnit.test('SetBorderColor, GetBorderColor', function (assert) {
-		let apiInlineCC = AscTest.JsApi.CreateInlineLvlSdt();
-
-		assert.strictEqual(apiInlineCC.GetBorderColor(), null, 'Color border color for a newly created inline content control');
-
-		apiInlineCC.SetBorderColor(255, 122, 100, 255);
-		assert.equalRgba(apiInlineCC.GetBorderColor(), {r : 255, g : 122, b : 100, a : 255}, 'Check border color after setting it with rgba components');
-
-		const rgbaColor = AscTest.JsApi.RGBA(60, 120, 180, 240);
-		apiInlineCC.SetBorderColor(rgbaColor);
-		assert.equalRgba(apiInlineCC.GetBorderColor(), { r: 60, g: 120, b: 180, a: 240 }, 'Check border color after setting it with ApiColor (rgba)');
-	});
-
-	QUnit.test('SetBackgroundColor, GetBackgroundColor', function (assert) {
-		let apiInlineCC = AscTest.JsApi.CreateInlineLvlSdt();
-
-		assert.strictEqual(apiInlineCC.GetBackgroundColor(), null, 'Color background color for a newly created inline content control');
-
-		apiInlineCC.SetBackgroundColor(255, 122, 100, 255);
-		assert.equalRgba(apiInlineCC.GetBackgroundColor(), { r: 255, g: 122, b: 100, a: 255 }, 'Check background color after setting it with rgba components');
-
-		const rgbaColor = AscTest.JsApi.RGBA(60, 120, 180, 240);
-		apiInlineCC.SetBackgroundColor(rgbaColor);
-		assert.equalRgba(apiInlineCC.GetBackgroundColor(), { r: 60, g: 120, b: 180, a: 240 }, 'Check background color after setting it with ApiColor (rgba)');
+	QUnit.module('Test the ApiTableCell methods');
+	
+	QUnit.test('SetColor, GetColor', function(assert)
+	{
+		const table = AscTest.JsApi.CreateTable(2, 2);
+		const cell  = table.GetCell(0, 0);
+		
+		assert.strictEqual(cell.GetBackgroundColor(), null, 'Color check for a newly created table cell');
+		
+		cell.SetBackgroundColor(255, 127, 0);
+		assert.equalRgb(cell.GetBackgroundColor(), {
+			r : 255,
+			g : 127,
+			b : 0
+		}, 'Color check after setting color with RGB components');
+		
+		const hexColor = AscTest.JsApi.HexColor('bada55');
+		cell.SetBackgroundColor(hexColor);
+		assert.strictEqual(cell.GetBackgroundColor().GetHex(), '#BADA55', 'Color check after setting color with ApiColor (hex)');
+		
+		const themeColor = AscTest.JsApi.ThemeColor('accent2');
+		cell.SetBackgroundColor(themeColor);
+		assert.strictEqual(cell.GetBackgroundColor().IsThemeColor(), true, 'Color check after setting color with ApiColor (theme)');
+		
+		cell.SetBackgroundColor(0, 0, 0, true);
+		assert.strictEqual(cell.GetBackgroundColor(), null, 'Color check after resetting color');
 	});
 });

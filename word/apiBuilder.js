@@ -2033,69 +2033,85 @@
 	};
 
 	/**
-	 * Sets the text color to the current text Range in the RGB format.
+	 * Sets the text color to the current text Range.
+	 *
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then r,g,b parameters will be ignored.
+	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then (r, g, b) parameters will be ignored.
 	 * @returns {ApiRange | null} - returns null if can't apply color.
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetColor.js
 	 */
-	ApiRange.prototype.SetColor = function(r, g, b, isAuto)
-	{
+	/**
+	 * Sets the text color to the current text Range.
+	 *
+	 * @memberof ApiRange
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} color
+	 * @return {ApiRange | null} - returns null if can't apply color.
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetColor.js
+	 */
+	ApiRange.prototype.SetColor = function (color) {
+		let r, g, b;
+		let isAuto, isTheme;
+
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
+			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			isAuto = GetBoolParameter(arguments[3], false);
+			isTheme = false;
+		}
+
 		private_RefreshRangesPosition();
 
-		var Document			= private_GetLogicDocument();
-		var oldSelectionInfo	= Document.SaveDocumentState();
+		const logicDocument = private_GetLogicDocument();
+		const oldSelectionInfo = logicDocument.SaveDocumentState();
 
 		this.Select(false);
 		private_TrackRangesPositions();
 
-		var color = new Asc.asc_CColor();
-		color.r    = r;
-		color.g    = g;
-		color.b    = b;
-		color.Auto = isAuto;
-
-		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
-		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
-		{
-			Document.LoadDocumentState(oldSelectionInfo);
-			Document.UpdateSelection();
+		const selectedContent = logicDocument.GetSelectedElementsInfo({ CheckAllSelection: true });
+		if (!selectedContent.CanEditBlockSdts() || !selectedContent.CanDeleteInlineSdts()) {
+			logicDocument.LoadDocumentState(oldSelectionInfo);
+			logicDocument.UpdateSelection();
 
 			return null;
 		}
 
-		var ParaTextPr;
-		if (true === color.Auto)
-		{
-			ParaTextPr = new AscCommonWord.ParaTextPr({
-				Color      : {
-					Auto : true,
-					r    : 0,
-					g    : 0,
-					b    : 0
-				}, Unifill : undefined
-			});
-			Document.AddToParagraph(ParaTextPr);
-		}
-		else
-		{
-			ParaTextPr = new AscCommonWord.ParaTextPr({
-				Color      : {
-					Auto : false,
-					r    : r,
-					g    : g,
-					b    : b
-				}, Unifill : undefined
-			});
-			Document.AddToParagraph(ParaTextPr);
+		let paraTextPrOptions = {
+			Color: { Auto: isAuto, r: r, g: g, b: b },
+			Unifill: undefined,
+		};
+
+		if (!isAuto && isTheme) {
+			const unifill = new AscFormat.CUniFill();
+			unifill.fill = new AscFormat.CSolidFill();
+			unifill.fill.color = new AscFormat.CUniColor();
+			unifill.fill.color.color = new AscFormat.CSchemeColor();
+			unifill.fill.color.color.id = color.value;
+
+			paraTextPrOptions = { Unifill: unifill };
 		}
 
-		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
+		logicDocument.AddToParagraph(new AscCommonWord.ParaTextPr(paraTextPrOptions));
+		logicDocument.LoadDocumentState(oldSelectionInfo);
+		logicDocument.UpdateSelection();
 
 		return this;
 	};
@@ -2188,41 +2204,81 @@
 
 	/**
 	 * Specifies the shading applied to the contents of the current text Range.
+	 *
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {ShdType} sType - The shading type applied to the contents of the current text Range.
+	 *
+	 * @deprecated since 9.1.0 version.
+	 * @param {ShdType} type - The shading type applied to the contents of the current text Range.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {ApiRange | null} - returns null if can't apply shadow.
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetShd.js
 	 */
-	ApiRange.prototype.SetShd = function(sType, r, g, b)
+	/**
+	 * Specifies the shading applied to the contents of the current text Range.
+	 *
+	 * @memberof ApiRange
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ShdType} type - The shading type applied to the contents of the current text Range.
+	 * @param {ApiColor} color
+	 * @returns {ApiRange | null} - returns null if can't apply shadow.
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetShd.js
+	 */
+	ApiRange.prototype.SetShd = function (type, color)
 	{
+		let r, g, b;
+		let isAuto, isTheme;
+
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
+			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
+		} else {
+			r = GetIntParameter(arguments[1], 0);
+			g = GetIntParameter(arguments[2], 0);
+			b = GetIntParameter(arguments[3], 0);
+			isAuto = false;
+			isTheme = false;
+		}
+
 		private_RefreshRangesPosition();
 
-		var Document			= private_GetLogicDocument();
-		var oldSelectionInfo	= Document.SaveDocumentState();
+		const logicDocument = private_GetLogicDocument();
+		const oldSelectionInfo = logicDocument.SaveDocumentState();
 
 		this.Select(false);
 		private_TrackRangesPositions();
 
-		let oShd = private_GetShd(sType, r, g, b, false);
-
-		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
-		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
-		{
-			Document.LoadDocumentState(oldSelectionInfo);
-			Document.UpdateSelection();
+		const selectedContent = logicDocument.GetSelectedElementsInfo({ CheckAllSelection: true });
+		if (!selectedContent.CanEditBlockSdts() || !selectedContent.CanDeleteInlineSdts()) {
+			logicDocument.LoadDocumentState(oldSelectionInfo);
+			logicDocument.UpdateSelection();
 
 			return null;
 		}
 
-		Document.SetParagraphShd(oShd);
-		this.TextPr.Shd = oShd;
-		
-		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
+		const shd = private_GetShd(type, r, g, b, isAuto);
+
+		if (isTheme) {
+			const unifill = color.private_createUnifill();
+			shd.Unifill = unifill.createDuplicate();
+			shd.ThemeFill = unifill.createDuplicate();
+		}
+
+		logicDocument.SetParagraphShd(shd);
+		this.TextPr.Shd = shd;
+
+		logicDocument.LoadDocumentState(oldSelectionInfo);
+		logicDocument.UpdateSelection();
 
 		return this;
 	};
@@ -3778,6 +3834,21 @@
 	ApiPresetColor.prototype.constructor = ApiPresetColor;
 
 	/**
+	 * Represents a color that can be applied to text.
+	 * @constructor
+	 */
+	function ApiColor(type, value)
+	{
+		const allowedTypes = ['auto', 'rgb', 'rgba', 'hex', 'theme'];
+		if (!allowedTypes.includes(type)) {
+			throwException(new Error('Type ' + type + ' is not a valid color type. Allowed types are: ' + allowedTypes.join(', ')));
+		}
+
+		this.type = type;
+		this.value = value;
+	}
+
+	/**
 	 * Class representing a base class for fill.
 	 * @constructor
 	 */
@@ -3801,11 +3872,13 @@
 	 * Class representing gradient stop.
 	 * @constructor
 	 */
-	function ApiGradientStop(oApiUniColor, pos)
+	function ApiGradientStop(color, pos)
 	{
 		this.Gs = new AscFormat.CGs();
 		this.Gs.pos = pos;
-		this.Gs.color = oApiUniColor.Unicolor;
+		this.Gs.color = color instanceof ApiColor
+			? color.private_createUnifill().fill.color
+			: color.Unicolor; // color - ApiUniColor instance
 	}
 
 	/**
@@ -4801,16 +4874,129 @@
 	};
 
 	/**
-	 * Creates a solid fill to apply to the object using a selected solid color as the object background.
+	 * Creates an auto-color.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiColor} Instance of ApiColor with 'auto' type.
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/AutoColor.js
+	 */
+	Api.prototype.AutoColor = function () {
+		return new ApiColor('auto');
+	};
+
+	/**
+	 * Creates an RGB color from red, green and blue components.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {byte} r - Red component (0-255).
+	 * @param {byte} g - Green component (0-255).
+	 * @param {byte} b - Blue component (0-255).
+	 * @returns {ApiColor}
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/RGB.js
+	 */
+	Api.prototype.RGB = function (r, g, b) {
+		const intRgbColor = (r & 0xFF) << 16 | (g & 0xFF) << 8 | (b & 0xFF);
+		return new ApiColor('rgb', intRgbColor);
+	};
+
+	/**
+	 * Creates an RGBA color from red, green, blue and alpha components.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {byte} r - Red component (0-255).
+	 * @param {byte} g - Green component (0-255).
+	 * @param {byte} b - Blue component (0-255).
+	 * @param {byte} a - Alpha component (0-255).
+	 * @returns {ApiColor}
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/RGBA.js
+	 */
+	Api.prototype.RGBA = function (r, g, b, a) {
+		const intRgbColor = (r & 0xFF) << 24 | (g & 0xFF) << 16 | (b & 0xFF) << 8 | (a & 0xFF);
+		return new ApiColor('rgba', intRgbColor);
+	};
+
+	/**
+	 * Creates a color from a HEX string.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {string} hexString
+	 * @returns {ApiColor}
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/HexColor.js
+	 */
+	Api.prototype.HexColor = function (hexString) {
+		hexString = hexString.replace(/^#/, '');
+		let hexNumber = parseInt(hexString, 16);
+		if (isNaN(hexNumber))
+			hexNumber = 0;
+		return new ApiColor('hex', hexNumber);
+	};
+
+	/**
+	 * Creates a theme color.
+	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {ApiUniColor} uniColor - The color used for the element fill.
+	 * @param {"accent1" | "accent2" | "accent3" | "accent4" | "accent5" | "accent6" |
+	 * "bg1" | "bg2" | "dk1" | "dk2" | "lt1" | "lt2" | "tx1" | "tx2"} [name="tx1"]
+	 * @returns {ApiColor} Instance of ApiColor with 'theme' type.
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/ThemeColor.js
+	 */
+	Api.prototype.ThemeColor = function (name) {
+		const themeColorMap = {
+			'accent1': 0,
+			'accent2': 1,
+			'accent3': 2,
+			'accent4': 3,
+			'accent5': 4,
+			'accent6': 5,
+			'bg1': 6,
+			'bg2': 7,
+			'dk1': 8,
+			'dk2': 9,
+			'lt1': 12,
+			'lt2': 13,
+			'tx1': 15,
+			'tx2': 16,
+		};
+		const index = themeColorMap[name] !== undefined ? themeColorMap[name] : 15; // default is 'tx1' color
+		return new ApiColor('theme', index);
+	};
+
+	/**
+	 * Creates a solid fill to apply to the object using a selected solid color as the object background.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @deprecated since 9.1.0 version.
+	 * @param {ApiUniColor} color - The color used for the element fill.
 	 * @returns {ApiFill}
+	 *
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateSolidFill.js
 	 */
-	Api.prototype.CreateSolidFill = function(uniColor)
+	/**
+	 * Creates a solid fill to apply to the object using a selected solid color as the object background.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} color - The color used for the element fill.
+	 * @returns {ApiFill}
+	 *
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateSolidFill.js
+	 */
+	Api.prototype.CreateSolidFill = function (color)
 	{
-		return new ApiFill(AscFormat.CreateUniFillByUniColorCopy(uniColor.Unicolor));
+		const unifill = color instanceof ApiColor
+			? color.private_createUnifill()
+			: AscFormat.CreateUniFillByUniColorCopy(color.Unicolor);
+
+		return new ApiFill(unifill);
 	};
 
 	/**
@@ -4840,18 +5026,44 @@
 	{
 		return new ApiFill(AscFormat.builder_CreateRadialGradient(gradientStops));
 	};
+
 	/**
 	 * Creates a pattern fill to apply to the object using the selected pattern as the object background.
+	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {PatternType} patternType - The pattern type used for the fill selected from one of the available pattern types.
 	 * @param {ApiUniColor} bgColor - The background color used for the pattern creation.
 	 * @param {ApiUniColor} fgColor - The foreground color used for the pattern creation.
 	 * @returns {ApiFill}
+	 *
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreatePatternFill.js
 	 */
-	Api.prototype.CreatePatternFill = function(patternType, bgColor, fgColor)
+	/**
+	 * Creates a pattern fill to apply to the object using the selected pattern as the object background.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @since 9.1.0
+	 * @param {PatternType} patternType - The pattern type used for the fill selected from one of the available pattern types.
+	 * @param {ApiColor} bgColor - The background color used for the pattern creation.
+	 * @param {ApiColor} fgColor - The foreground color used for the pattern creation.
+	 * @returns {ApiFill}
+	 *
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreatePatternFill.js
+	 */
+	Api.prototype.CreatePatternFill = function (patternType, bgColor, fgColor)
 	{
+		if (bgColor instanceof ApiColor) {
+			bgColor = { Unicolor: bgColor.private_createUnifill().fill.color };
+		}
+		if (fgColor instanceof ApiColor) {
+			fgColor = { Unicolor: fgColor.private_createUnifill().fill.color };
+		}
+
 		return new ApiFill(AscFormat.builder_CreatePatternFill(patternType, bgColor, fgColor));
 	};
 
@@ -4897,17 +5109,34 @@
 
 	/**
 	 * Creates a gradient stop used for different types of gradients.
+	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {ApiUniColor} uniColor - The color used for the gradient stop.
+	 *
+	 * @deprecated since 9.1.0 version.
+	 * @param {ApiUniColor} color - The color used for the gradient stop.
 	 * @param {PositivePercentage} pos - The position of the gradient stop measured in 1000th of percent.
 	 * @returns {ApiGradientStop}
+	 *
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateGradientStop.js
 	 */
-	Api.prototype.CreateGradientStop = function(uniColor, pos)
+	/**
+	 * Creates a gradient stop used for different types of gradients.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} color - The color used for the gradient stop.
+	 * @param {PositivePercentage} pos - The position of the gradient stop measured in 1000th of percent.
+	 * @returns {ApiGradientStop}
+	 *
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateGradientStop.js
+	 */
+	Api.prototype.CreateGradientStop = function (color, pos)
 	{
 		let pos_ = AscCommon.clampNumber(pos, 0, 100000);
-		return new ApiGradientStop(uniColor, pos_);
+		return new ApiGradientStop(color, pos_);
 	};
 
 	/**
@@ -8295,17 +8524,49 @@
 
 	/**
 	 * Sets the highlight to the forms in the document.
+	 *
 	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE", "CFE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [bNone=false] - Defines that highlight will not be set.
-	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetFormsHighlight.js
 	 */
-	ApiDocument.prototype.SetFormsHighlight = function(r, g, b, bNone)
+	/**
+	 * Sets the highlight to the forms in the document.
+	 *
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE", "CFE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} color
+	 * @returns {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetFormsHighlight.js
+	 */
+	ApiDocument.prototype.SetFormsHighlight = function(color)
 	{
+		let r, g, b;
+		let bNone;
+
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
+			bNone = false;
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			bNone = GetBoolParameter(arguments[3], false);
+		}
+
 		if (bNone === true)
 			this.Document.SetSpecialFormsHighlight(null, null, null);
 		else
@@ -8677,17 +8938,49 @@
 
 	/**
 	 * Sets the highlight to the content controls from the current document.
+	 *
 	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [bNone=false] - Defines that highlight will not be set.
-	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetControlsHighlight.js
 	 */
-	ApiDocument.prototype.SetControlsHighlight = function(r, g, b, bNone)
+	/**
+	 * Sets the highlight to the content controls from the current document.
+	 *
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} color
+	 * @returns {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetControlsHighlight.js
+	 */
+	ApiDocument.prototype.SetControlsHighlight = function(color)
 	{
+		let r, g, b;
+		let bNone;
+
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
+			bNone = false;
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			bNone = GetBoolParameter(arguments[3], false);
+		}
+
 		if (bNone === true)
 			this.Document.SetSdtGlobalShowHighlight(false);
 		else
@@ -10309,51 +10602,72 @@
 		
 		return this;
 	};
+
 	/**
-	 * Sets the text color to the current paragraph in the RGB format.
+	 * Sets the text color to the current paragraph.
+	 *
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then r,g,b parameters will be ignored.
-	 * @returns {ApiParagraph} this
+	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then (r, g, b) parameters will be ignored.
+	 * @return {ApiParagraph} this
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetColor.js
 	 */
-	ApiParagraph.prototype.SetColor = function(r, g, b, isAuto)
+	/**
+	 * Sets the text color to the current paragraph.
+	 *
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} color
+	 * @return {ApiParagraph} this
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetColor.js
+	 */
+	ApiParagraph.prototype.SetColor = function (color)
 	{
-		var color = new Asc.asc_CColor();
-		color.r    = r;
-		color.g    = g;
-		color.b    = b;
-		color.Auto = isAuto;
+		let r, g, b;
+		let isAuto, isTheme;
+
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
+			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			isAuto = false;
+			isTheme = false;
+		}
+
+		let paraTextPrOptions = {
+			Color: { Auto: isAuto, r: r, g: g, b: b },
+			Unifill: undefined
+		};
+
+		if (!isAuto && isTheme) {
+			const unifill = new AscFormat.CUniFill();
+			unifill.fill = new AscFormat.CSolidFill();
+			unifill.fill.color = new AscFormat.CUniColor();
+			unifill.fill.color.color = new AscFormat.CSchemeColor();
+			unifill.fill.color.color.id = color.value;
+
+			paraTextPrOptions = { Unifill: unifill };
+		}
 
 		this.Paragraph.SetApplyToAll(true);
-		if (true === color.Auto)
-		{
-			this.Paragraph.Add(new AscCommonWord.ParaTextPr({
-				Color      : {
-					Auto : true,
-					r    : 0,
-					g    : 0,
-					b    : 0
-				}, Unifill : undefined
-			}));
-		}
-		else
-		{
-			this.Paragraph.Add(new AscCommonWord.ParaTextPr({
-				Color      : {
-					Auto : false,
-					r    : r,
-					g    : g,
-					b    : b
-				}, Unifill : undefined
-			}));
-			
-		}
+		this.Paragraph.Add(new AscCommonWord.ParaTextPr(paraTextPrOptions));
 		this.Paragraph.SetApplyToAll(false);
-		
 		return this;
 	};
 	/**
@@ -12038,22 +12352,37 @@
 		
 		return oTextPr;
 	};
+
 	/**
-	 * Sets the text color for the current text run in the RGB format.
+	 * Sets the text color for the current text run.
+	 *
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then r,g,b parameters will be ignored.
-	 * @returns {ApiTextPr}
+	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then (r, g, b) parameters will be ignored.
+	 * @return {ApiTextPr}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetColor.js
 	 */
-	ApiRun.prototype.SetColor = function(r, g, b, isAuto)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetColor(r, g, b, isAuto);
-		
+	/**
+	 * Sets the text color for the current text run.
+	 *
+	 * @memberof ApiRun
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} color
+	 * @return {ApiTextPr}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetColor.js
+	 */
+	ApiRun.prototype.SetColor = function (color) {
+		const oTextPr = this.GetTextPr();
+		oTextPr.SetColor.apply(oTextPr, arguments);
 		return oTextPr;
 	};
 	/**
@@ -12199,22 +12528,39 @@
 		
 		return oTextPr;
 	};
+
 	/**
 	 * Specifies the shading applied to the contents of the current text run.
+	 *
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {ShdType} sType - The shading type applied to the contents of the current text run.
+	 *
+	 * @deprecated since 9.1.0 version.
+	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {ApiTextPr}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetShd.js
 	 */
-	ApiRun.prototype.SetShd = function(sType, r, g, b)
+	/**
+	 * Specifies the shading applied to the contents of the current text run.
+	 *
+	 * @memberof ApiRun
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
+	 * @param {ApiColor} color
+	 * @returns {ApiTextPr}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetShd.js
+	 */
+	ApiRun.prototype.SetShd = function (type, color)
 	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetShd(sType, r, g, b);
-		
+		const oTextPr = this.GetTextPr();
+		oTextPr.SetShd.apply(oTextPr, arguments);
 		return oTextPr;
 	};
 	/**
@@ -13753,31 +14099,44 @@
 		
 		return true;
 	};
+
 	/**
 	 * Sets the background color to all cells in the current table.
+	 *
 	 * @memberof ApiTable
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} bNone - Defines that background color will not be set.
-	 * @typeofeditors ["CDE"]
+	 * @param {boolean} [bNone=false] - Defines that background color will not be set.
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetBackgroundColor.js
 	 */
-	ApiTable.prototype.SetBackgroundColor = function(r, g, b, bNone)
-	{
-		if ((typeof(r) == "number" && typeof(g) == "number" && typeof(b) == "number" && !bNone) || bNone)
-		{
-			var oRow;
-			for (var nRow = 0, nCount = this.GetRowsCount(); nRow < nCount; nRow++)
-			{
-				oRow = this.GetRow(nRow);
-				oRow.SetBackgroundColor(r, g, b, bNone);
-			}
-			return true;
+	/**
+	 * Sets the background color to all cells in the current table.
+	 *
+	 * @memberof ApiTable
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
+	 * @return {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetBackgroundColor.js
+	 */
+	ApiTable.prototype.SetBackgroundColor = function (color) {
+		let allRowsUpdated = true;
+	
+		for (let nRow = 0, nCount = this.GetRowsCount(); nRow < nCount; nRow++) {
+			const oRow = this.GetRow(nRow);
+			const rowUpdated = oRow.SetBackgroundColor.apply(oRow, arguments);
+			if (!rowUpdated) allRowsUpdated = false;
 		}
-		else
-			return false;
+
+		return allRowsUpdated;
 	};
 	
 	/**
@@ -14278,31 +14637,45 @@
 
 		return arrApiRanges;
 	};
+
 	/**
 	 * Sets the background color to all cells in the current table row.
+	 *
 	 * @memberof ApiTableRow
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} bNone - Defines that background color will not be set.
-	 * @typeofeditors ["CDE"]
+	 * @param {boolean} [bNone=false] - Defines that background color will not be set.
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/SetBackgroundColor.js
 	 */
-	ApiTableRow.prototype.SetBackgroundColor = function(r, g, b, bNone)
+	/**
+	 * Sets the background color to all cells in the current table row.
+	 *
+	 * @memberof ApiTableRow
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
+	 * @return {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/SetBackgroundColor.js
+	 */
+	ApiTableRow.prototype.SetBackgroundColor = function (color)
 	{
-		if ((typeof(r) == "number" && typeof(g) == "number" && typeof(b) == "number" && !bNone) || bNone)
-		{
-			var oCell;
-			for (var nCell = 0, nCount = this.GetCellsCount(); nCell < nCount; nCell++)
-			{
-				oCell = this.GetCell(nCell);
-				oCell.SetBackgroundColor(r, g, b, bNone);
-			}
-			return true;
+		let allCellsUpdated = true;
+
+		for (let nCell = 0, nCount = this.GetCellsCount(); nCell < nCount; nCell++) {
+			const oCell = this.GetCell(nCell);
+			const cellUpdated = oCell.SetBackgroundColor.apply(oCell, arguments);
+			if (!cellUpdated) allCellsUpdated = false;
 		}
-		else
-			return false;
+
+		return allCellsUpdated;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -14635,85 +15008,158 @@
 
 		return false;
 	};
+
 	/**
 	 * Sets the background color to the current table cell.
+	 *
 	 * @memberof ApiTableCell
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} bNone - Defines that background color will not be set.
-	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetBackgroundColor.js
 	 */
-	ApiTableCell.prototype.SetBackgroundColor = function(r, g, b, bNone)
+	/**
+	 * Sets the background color to the current table cell.
+	 *
+	 * @memberof ApiTableCell
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
+	 * @return {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetBackgroundColor.js
+	 */
+	ApiTableCell.prototype.SetBackgroundColor = function (color)
 	{
-		let oUnifill = new AscFormat.CUniFill();
-		oUnifill.setFill(new AscFormat.CSolidFill());
-		oUnifill.fill.setColor(new AscFormat.CUniColor());
-		oUnifill.fill.color.setColor(new AscFormat.CRGBColor());
+		let r, g, b;
+		let bNone;
+		let isAuto, isTheme;
 
-		if (r >=0 && g >=0 && b >=0)
-			oUnifill.fill.color.color.setColor(r, g, b);
-		else
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
+			bNone = false;
+			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			bNone = GetBoolParameter(arguments[3], false);
+			isAuto = false;
+			isTheme = false;
+		}
+
+		if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
 			return false;
 
-		var oNewShd = {
-			Value : bNone ? Asc.c_oAscShd.Nil : Asc.c_oAscShd.Clear,
-			Color : {
-				r    : r,
-				g    : g,
-				b    : b,
-				Auto : false
-			},
+		const oUnifill = isTheme
+			? color.private_createUnifill()
+			: Api.prototype.RGB(r, g, b).private_createUnifill();
 
-			Fill    : {
-				r    : r,
-				g    : g,
-				b    : b,
-				Auto : false
-			},
-			Unifill   : oUnifill.createDuplicate(),
-			ThemeFill : oUnifill.createDuplicate()
-		}
+		const oNewShd = {
+			Value: bNone ? Asc.c_oAscShd.Nil : Asc.c_oAscShd.Clear,
+			Fill: { r: r, g: g, b: b, Auto: isAuto },
+			// Color: { r: r, g: g, b: b, Auto: isAuto },
+			ThemeFill: isTheme ? oUnifill : undefined,
+			// Unifill: oUnifill.createDuplicate(),
+		};
 
 		this.Cell.Set_Shd(oNewShd);
 		return true;
 	};
+
+	/**
+	 * Returns the background color of the current table cell.
+	 *
+	 * @memberof ApiTableCell
+	 * @typeofeditors ["CDE"]
+	 * @return {?ApiColor}
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetBackgroundColor.js
+	 */
+	ApiTableCell.prototype.GetBackgroundColor = function () {
+		const shd = this.Cell.Get_Shd();
+		if (!shd || shd.Value === Asc.c_oAscShd.Nil)
+			return null;
+
+		const unifill = shd.ThemeFill;
+		const unifillColor = unifill && unifill.fill && unifill.fill.color && unifill.fill.color.color;
+		if (unifillColor) {
+			if (unifillColor instanceof AscFormat.CSchemeColor)
+				return new ApiColor('theme', unifillColor.id);
+
+			if (unifillColor instanceof AscFormat.CRGBColor)
+				return Api.prototype.RGB(unifillColor.r, unifillColor.g, unifillColor.b);
+		}
+
+		const color = shd.Fill;
+		if (color) {
+			const isAuto = color.Auto === true;
+			return isAuto
+				? Api.prototype.AutoColor()
+				: Api.prototype.RGB(color.r, color.g, color.b);
+		}
+
+		return null;
+	};
+
 	/**
 	 * Sets the background color to all cells in the column containing the current cell.
+	 *
 	 * @memberof ApiTableCell
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} bNone - Defines that background color will not be set.
-	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetColumnBackgroundColor.js
 	 */
-	ApiTableCell.prototype.SetColumnBackgroundColor = function(r, g, b, bNone)
+	/**
+	 * Sets the background color to all cells in the column containing the current cell.
+	 *
+	 * @memberof ApiTableCell
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
+	 * @return {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetColumnBackgroundColor.js
+	 */
+	ApiTableCell.prototype.SetColumnBackgroundColor = function(color)
 	{
-		if ((typeof(r) == "number" && typeof(g) == "number" && typeof(b) == "number" && !bNone) || bNone)
-		{
-			var oTable = this.GetParentTable();
-			var aColumnCells = oTable.Table.GetColumn(this.GetIndex(), this.GetParentRow().GetIndex());
-			var aCellsToFill = [];
-
-			for (var nCell = 0; nCell < aColumnCells.length; nCell++)
-				aCellsToFill[nCell] = new ApiTableCell(aColumnCells[nCell]);
-
-			if (aCellsToFill.length > 0)
-			{
-				for (nCell = 0; nCell < aCellsToFill.length; nCell++)
-				{
-					aCellsToFill[nCell].SetBackgroundColor(r, g, b, bNone);
-				}
-				return true;
-			}
+		const oTable = this.GetParentTable();
+		const aColumnCells = oTable.Table.GetColumn(this.GetIndex(), this.GetParentRow().GetIndex());
+		if (aColumnCells.length === 0)
 			return false;
+
+		let allCellsUpdated = true;
+
+		const aCellsToFill = aColumnCells.map(function (cell) {
+			return new ApiTableCell(cell);
+		});
+
+		for (let nCell = 0; nCell < aCellsToFill.length; nCell++) {
+			const apiCell = aCellsToFill[nCell];
+			const cellUpdated = apiCell.SetBackgroundColor.apply(apiCell, arguments);
+			if (!cellUpdated) allCellsUpdated = false;
 		}
-		else
-			return false;
+
+		return allCellsUpdated;
 	};
 	
 	//------------------------------------------------------------------------------------------------------------------
@@ -15266,19 +15712,59 @@
 	};
 
 	/**
-	 * Sets the text color to the current text run in the RGB format.
+	 * Sets the text color to the current text run.
+	 *
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then r,g,b parameters will be ignored.
+	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then (r, g, b) parameters will be ignored.
 	 * @return {ApiTextPr} - this text properties.
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetColor.js
 	 */
-	ApiTextPr.prototype.SetColor = function(r, g, b, isAuto)
-	{
-		this.TextPr.Color = private_GetColor(r, g, b, isAuto);
+	/**
+	 * Sets the text color to the current text run.
+	 *
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} color
+	 * @return {ApiTextPr} - this text properties.
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetColor.js
+	 */
+	ApiTextPr.prototype.SetColor = function(color) {
+		let r, g, b;
+		let isAuto, isTheme;
+
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
+			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			isAuto = GetBoolParameter(arguments[3], false);
+			isTheme = false;
+		}
+
+		if (isTheme) {
+			this.TextPr.Unifill = color.private_createUnifill();
+			this.TextPr.Color = undefined;
+		} else {
+			this.TextPr.Color = private_GetColor(r, g, b, isAuto);
+			this.TextPr.Unifill = undefined;
+		}
+
 		this.private_OnChange();
 		return this;
 	};
@@ -15287,15 +15773,28 @@
 	 * Gets the RGB color from the current text properties.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
-	 * @return {?ApiRGBColor}
+	 * @return {?ApiColor}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/GetColor.js
 	 */
-	ApiTextPr.prototype.GetColor = function()
+	ApiTextPr.prototype.GetColor = function ()
 	{
-		let oColor = this.TextPr.GetColor();
+		const unifill = this.TextPr.Unifill;
+		const unifillColor = unifill && unifill.fill && unifill.fill.color && unifill.fill.color.color;
+		if (unifillColor) {
+			if (unifillColor instanceof AscFormat.CSchemeColor)
+				return new ApiColor('theme', unifillColor.id);
+
+			if (unifillColor instanceof AscFormat.CRGBColor)
+				return Api.prototype.RGB(unifillColor.r, unifillColor.g, unifillColor.b);
+		}
+
+		const oColor = this.TextPr.GetColor();
 		if (oColor !== undefined) {
-			return new ApiRGBColor(oColor.r, oColor.g, oColor.b);
+			const isAuto = oColor.Auto === true;
+			return isAuto
+				? Api.prototype.AutoColor()
+				: Api.prototype.RGB(oColor.r, oColor.g, oColor.b);
 		}
 
 		return null;
@@ -15597,18 +16096,60 @@
 
 	/**
 	 * Specifies the shading applied to the contents of the current text run.
+	 *
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
-	 * @param {ShdType} sType - The shading type applied to the contents of the current text run.
+	 *
+	 * @deprecated since 9.1.0 version.
+	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @return {ApiTextPr} - this text properties.
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetShd.js
 	 */
-	ApiTextPr.prototype.SetShd = function(sType, r, g, b)
+	/**
+	 * Specifies the shading applied to the contents of the current text run.
+	 *
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
+	 * @param {ApiColor} color - The color or pattern used to fill the shading.
+	 * @return {ApiTextPr} - this text properties.
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetShd.js
+	 */
+	ApiTextPr.prototype.SetShd = function (type, color)
 	{
-		this.TextPr.Shd = private_GetShd(sType, r, g, b, false);
+		let r, g, b;
+		let isAuto, isTheme;
+
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
+			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
+		} else {
+			r = GetIntParameter(arguments[1], 0);
+			g = GetIntParameter(arguments[2], 0);
+			b = GetIntParameter(arguments[3], 0);
+			isAuto = false;
+			isTheme = false;
+		}
+
+		this.TextPr.Shd = private_GetShd(type, r, g, b, isAuto);
+
+		if (isTheme) {
+			const unifill = color.private_createUnifill();
+			this.TextPr.Shd.Unifill = unifill;
+			this.TextPr.Shd.ThemeFill = unifill;
+		}
+
 		this.private_OnChange();
 		return this;
 	};
@@ -15617,15 +16158,32 @@
 	 * Gets the text shading from the current text properties.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
-	 * @return {?ApiRGBColor}
+	 * @return {?ApiColor}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/GetShd.js
 	 */
-	ApiTextPr.prototype.GetShd = function()
+	ApiTextPr.prototype.GetShd = function ()
 	{
 		let oShd = this.TextPr.GetShd();
-		if (oShd) {
-			return new ApiRGBColor(oShd.Fill.r, oShd.Fill.g, oShd.Fill.b);
+		if (!oShd)
+			return null;
+
+		const unifill = oShd.Unifill || oShd.ThemeFill;
+		const unifillColor = unifill && unifill.fill && unifill.fill.color && unifill.fill.color.color;
+		if (unifillColor) {
+			if (unifillColor instanceof AscFormat.CSchemeColor)
+				return new ApiColor('theme', unifillColor.id);
+
+			if (unifillColor instanceof AscFormat.CRGBColor)
+				return Api.prototype.RGB(unifillColor.r, unifillColor.g, unifillColor.b);
+		}
+
+		const color = oShd.Color || oShd.Fill;
+		if (color) {
+			const isAuto = color.Auto === true;
+			return isAuto
+				? Api.prototype.AutoColor()
+				: Api.prototype.RGB(color.r, color.g, color.b);
 		}
 
 		return null;
@@ -16214,21 +16772,64 @@
 
 		return AscCommon.MMToTwips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Spacing.After);
 	};
+
 	/**
 	 * Specifies the shading applied to the contents of the paragraph.
+	 *
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
-	 * @param {ShdType} sType - The shading type which will be applied to the contents of the current paragraph.
+	 *
+	 * @deprecated since 9.1.0 version.
+	 * @param {ShdType} type - The shading type which will be applied to the contents of the current paragraph.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [isAuto=false] - The true value disables paragraph contents shading.
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetShd.js
 	 */
-	ApiParaPr.prototype.SetShd = function(sType, r, g, b, isAuto)
+	/**
+	 * Specifies the shading applied to the contents of the paragraph.
+	 *
+	 * @memberof ApiParaPr
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ShdType} type - The shading type which will be applied to the contents of the current paragraph.
+	 * @param {ApiColor} color - The color or pattern used to fill the shading.
+	 * @returns {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetShd.js
+	 */
+	ApiParaPr.prototype.SetShd = function(type, color)
 	{
-		this.ParaPr.Shd = private_GetShd(sType, r, g, b, isAuto);
+		let r, g, b;
+		let isAuto, isTheme;
+
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
+			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
+		} else {
+			r = GetIntParameter(arguments[1], 0);
+			g = GetIntParameter(arguments[2], 0);
+			b = GetIntParameter(arguments[3], 0);
+			isAuto = GetBoolParameter(arguments[4], false);
+			isTheme = false;
+		}
+
+		this.ParaPr.Shd = private_GetShd(type, r, g, b, isAuto);
+
+		if (isTheme) {
+			const unifill = color.private_createUnifill();
+			this.ParaPr.Shd.Unifill = unifill;
+			this.ParaPr.Shd.ThemeFill = unifill;
+		}
+
 		this.private_OnChange();
 		return true;
 	};
@@ -16236,33 +16837,40 @@
 	 * Returns the shading applied to the contents of the paragraph.
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
-	 * @returns {?ApiRGBColor}
+	 * @returns {?ApiColor}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/GetShd.js
 	 */
 	ApiParaPr.prototype.GetShd = function()
 	{
-		var oColor = null;
-		var oShd;
-		if (!this.Parent)
-		{
-			oShd = this.ParaPr.Shd;
-			if (!oShd)
-				return null;
-
-			oColor = this.ParaPr.Shd.Color;
-			if (oColor)
-				return new ApiRGBColor(oColor.r, oColor.g, oColor.b);
-			
-			return null;
-		}
-
-		oShd = this.ParaPr.Shd;
+		const oShd = this.ParaPr.Shd;
 		if (!oShd)
 			return null;
 
-		oColor = this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Shd.Color;
-		if (oColor)
-			return new ApiRGBColor(oColor.r, oColor.g, oColor.b);
+		let unifill, color;
+		if (this.Parent) {
+			const compiledShd = this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Shd;
+			unifill = compiledShd.Unifill || compiledShd.ThemeFill;
+			color = compiledShd.Color || compiledShd.Fill;
+		} else {
+			unifill = oShd.Unifill || oShd.ThemeFill;
+			color = oShd.Color || oShd.Fill;
+		}
+
+		const unifillColor = unifill && unifill.fill && unifill.fill.color && unifill.fill.color.color;
+		if (unifillColor) {
+			if (unifillColor instanceof AscFormat.CSchemeColor)
+				return new ApiColor('theme', unifillColor.id);
+
+			if (unifillColor instanceof AscFormat.CRGBColor)
+				return Api.prototype.RGB(unifillColor.r, unifillColor.g, unifillColor.b);
+		}
+
+		if (color) {
+			const isAuto = color.Auto === true;
+			return isAuto
+				? Api.prototype.AutoColor()
+				: Api.prototype.RGB(color.r, color.g, color.b);
+		}
 
 		return null;
 	};
@@ -20744,6 +21352,185 @@
 		return JSON.stringify(oWriter.SerColor(this.Unicolor));
 	};
 
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiColor
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	ApiColor.prototype.private_convertToRGBA = function () {
+		const colorMap = {
+			'rgba': this.value,
+			'rgb': (this.value << 8) | 0xFF,
+			'hex': (this.value << 8) | 0xFF,
+			'auto': this.private_resolveAutoColor(),
+			'theme': this.private_resolveThemeColor(),
+		};
+
+		return (this.type in colorMap)
+			? colorMap[this.type]
+			: 0x000000FF;
+	};
+
+	ApiColor.prototype.private_resolveThemeColor = function () {
+		if (this.type !== 'theme')
+			return null;
+
+		const theme = editor.getCurrentTheme();
+		if (!theme || !theme.themeElements || !theme.themeElements.clrScheme)
+			return null;
+
+		const unicolors = theme.themeElements.clrScheme.colors;
+		const unicolor = unicolors[this.value];
+		if (!unicolor || !unicolor.color || !unicolor.color.RGBA)
+			return null;
+
+		const rgba = unicolor.color.RGBA;
+
+		return (rgba.R & 0xFF) << 24 | (rgba.G & 0xFF) << 16 | (rgba.B & 0xFF) << 8 | (rgba.A & 0xFF);
+	};
+
+	ApiColor.prototype.private_resolveAutoColor = function () {
+		if (this.type !== 'auto')
+			return null;
+
+		return 0x000000FF;
+	};
+
+	ApiColor.prototype.private_createUnifill = function () {
+		const unifill = new AscFormat.CUniFill();
+		const solidfill = new AscFormat.CSolidFill();
+		const unicolor = new AscFormat.CUniColor();
+		let color;
+
+		const isTheme = this.IsThemeColor();
+		if (isTheme) {
+			color = new AscFormat.CSchemeColor();
+			color.id = this.value;
+		} else {
+			color = new AscFormat.CRGBColor();
+			const components = this.GetRGBA();
+			color.RGBA.R = components.r;
+			color.RGBA.G = components.g;
+			color.RGBA.B = components.b;
+			color.RGBA.A = components.a;
+		}
+
+		unicolor.setColor(color);
+		solidfill.setColor(unicolor);
+		unifill.setFill(solidfill);
+
+		return unifill;
+	};
+
+	/**
+	 * Returns a type of the ApiColor class.
+	 *
+	 * @memberof ApiColor
+	 * @typeofeditors ["CDE"]
+	 * @since 9.1.0
+	 * @returns {"color"}
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetClassType.js
+	 */
+	ApiColor.prototype.GetClassType = function () {
+		return 'color';
+	};
+
+	/**
+	 * Returns true if the color is set to auto.
+	 *
+	 * @memberof ApiColor
+	 * @typeofeditors ["CDE"]
+	 * @since 9.1.0
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/IsAutoColor.js
+	 */
+	ApiColor.prototype.IsAutoColor = function () {
+		return this.type === 'auto';
+	};
+
+	/**
+	 * Returns true if the color is a theme color.
+	 *
+	 * @memberof ApiColor
+	 * @typeofeditors ["CDE"]
+	 * @since 9.1.0
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/IsThemeColor.js
+	 */
+	ApiColor.prototype.IsThemeColor = function () {
+		return this.type === 'theme';
+	};
+
+	/**
+	 * Gets the RGB components of the color.
+	 *
+	 * @memberof ApiColor
+	 * @typeofeditors ["CDE"]
+	 * @since 9.1.0
+	 * @returns {{r: byte, g: byte, b: byte}}
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetRGB.js
+	 */
+	ApiColor.prototype.GetRGB = function () {
+		const packed = this.private_convertToRGBA();
+		return {
+			'r': (packed >> 24) & 0xFF,
+			'g': (packed >> 16) & 0xFF,
+			'b': (packed >> 8) & 0xFF
+		};
+	};
+
+	/**
+	 * Gets the RGBA components of the color.
+	 *
+	 * @memberof ApiColor
+	 * @typeofeditors ["CDE"]
+	 * @since 9.1.0
+	 * @returns {{r: byte, g: byte, b: byte, a: byte}}
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetRGBA.js
+	 */
+	ApiColor.prototype.GetRGBA = function () {
+		const packed = this.private_convertToRGBA();
+		return {
+			'r': (packed >> 24) & 0xFF,
+			'g': (packed >> 16) & 0xFF,
+			'b': (packed >> 8) & 0xFF,
+			'a': packed & 0xFF
+		};
+	};
+
+	/**
+	 * Gets the HEX string representation of the color.
+	 *
+	 * @memberof ApiColor
+	 * @typeofeditors ["CDE"]
+	 * @since 9.1.0
+	 * @returns {string} A six-digit uppercase hex string, e.g. "FF00AA".
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetHex.js
+	 */
+	ApiColor.prototype.GetHex = function () {
+		const packedRGBA = this.private_convertToRGBA();
+		const packedRGB = (packedRGBA >> 8) & 0xFFFFFF;
+		let hexStr = packedRGB.toString(16);
+		while (hexStr.length < 6)
+			hexStr = '0' + hexStr;
+		return "#" + hexStr.toUpperCase();
+	};
+
+	// Define properties for backwards compatibility
+	Object.defineProperties(ApiColor.prototype, {
+		"r": {get : function() {return this.GetRGBA()["r"];}},
+		"g": {get : function() {return this.GetRGBA()["g"];}},
+		"b": {get : function() {return this.GetRGBA()["b"];}},
+		"a": {get : function() {return this.GetRGBA()["a"];}}
+	});
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiBullet
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
 	/**
 	 * Returns a type of the ApiBullet class.
 	 * @memberof ApiBullet
@@ -21445,27 +22232,58 @@
 	
 	/**
 	 * Sets the border color to the current content control.
+	 *
 	 * @memberof ApiInlineLvlSdt
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {byte} a - Alpha color component value.
-	 * @typeofeditors ["CDE"]
-	 * @since 8.3.2
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetBorderColor.js
 	 */
-	ApiInlineLvlSdt.prototype.SetBorderColor = function(r, g, b, a)
+	/**
+	 * Sets the border color to the current content control.
+	 *
+	 * @memberof ApiInlineLvlSdt
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color]
+	 * @return {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetBorderColor.js
+	 */
+	ApiInlineLvlSdt.prototype.SetBorderColor = function (color)
 	{
+		let r, g, b, a;
+
+		if (color instanceof ApiColor) {
+			const rgba = color.GetRGBA();
+			r = rgba.r;
+			g = rgba.g;
+			b = rgba.b;
+			a = rgba.a;
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			a = GetIntParameter(arguments[3], 255);
+		}
+
 		this.Sdt.setBorderColor(new AscWord.CDocumentColorA(r, g, b, a));
 		return true;
 	};
 	/**
 	 * Returns the border color of the current content control.
+	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 8.3.2
-	 * @returns {null | {r:byte, g:byte, b:byte, a:byte}}
+	 * @returns {?ApiColor}
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetBorderColor.js
 	 */
 	ApiInlineLvlSdt.prototype.GetBorderColor = function()
@@ -21473,38 +22291,65 @@
 		let color = this.Sdt.getBorderColor();
 		if (!color)
 			return null;
-		
-		return {
-			"r" : color.r,
-			"g" : color.g,
-			"b" : color.b,
-			"a" : color.a
-		};
+
+		return Api.prototype.RGBA(color.r, color.g, color.b, color.a);
 	};
-	
+
 	/**
 	 * Sets the background color to the current content control.
+	 *
 	 * @memberof ApiInlineLvlSdt
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {byte} a - Alpha color component value.
-	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetBackgroundColor.js
 	 */
-	ApiInlineLvlSdt.prototype.SetBackgroundColor = function(r, g, b, a)
+	/**
+	 * Sets the background color to the current content control.
+	 *
+	 * @memberof ApiInlineLvlSdt
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color]
+	 * @return {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetBackgroundColor.js
+	 */
+	ApiInlineLvlSdt.prototype.SetBackgroundColor = function (color)
 	{
+		let r, g, b, a;
+
+		if (color instanceof ApiColor) {
+			const rgba = color.GetRGBA();
+			r = rgba.r;
+			g = rgba.g;
+			b = rgba.b;
+			a = rgba.a;
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			a = GetIntParameter(arguments[3], 255);
+		}
+
 		this.Sdt.setShdColor(new AscWord.CDocumentColorA(r, g, b, a));
 		return true;
 	};
 	
 	/**
 	 * Returns the background color of the current content control.
+	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 8.3.2
-	 * @returns {null | {r:byte, g:byte, b:byte, a:byte}}
+	 * @returns {?ApiColor}
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetBackgroundColor.js
 	 */
 	ApiInlineLvlSdt.prototype.GetBackgroundColor = function()
@@ -21512,13 +22357,8 @@
 		let color = this.Sdt.getShdColor();
 		if (!color)
 			return null;
-		
-		return {
-			"r" : color.r,
-			"g" : color.g,
-			"b" : color.b,
-			"a" : color.a
-		};
+
+		return Api.prototype.RGBA(color.r, color.g, color.b, color.a);
 	};
 
 	/**
@@ -23622,83 +24462,198 @@
 			return true;
 		}, this);
 	};
+
 	/**
 	 * Sets the border color to the current form.
+	 *
 	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} bNone - Defines that border color will not be set.
-	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBorderColor.js
 	 */
-	ApiFormBase.prototype.SetBorderColor = function(r, g, b, bNone)
+	/**
+	 * Sets the border color to the current form.
+	 *
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color]
+	 * @return {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBorderColor.js
+	 */
+	ApiFormBase.prototype.SetBorderColor = function(color)
 	{
-		return executeNoFormLockCheck(function() {
-			var oFormPr = this.Sdt.GetFormPr().Copy();
-			var oBorder;
-			if (typeof (r) == "number" && typeof (g) == "number" && typeof (b) == "number" && !bNone)
-			{
-				oBorder       = new CDocumentBorder();
-				oBorder.Color = new CDocumentColor(r, g, b);
+		let r, g, b;
+		let bNone;
+		let isAuto;
+
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
+			bNone = false;
+			isAuto = color.IsAutoColor();
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			bNone = GetBoolParameter(arguments[3], false);
+			isAuto = false;
+		}
+
+		return executeNoFormLockCheck(function () {
+			const formPrCopy = this.Sdt.GetFormPr().Copy();
+
+			let border;
+			if (bNone)
+				border = undefined;
+			else {
+				border = new CDocumentBorder();
+				border.Color = new CDocumentColor(r, g, b, isAuto);
+				border.Value = border_Single;
 			}
-			else if (bNone)
-				oBorder = undefined;
-			else
-				return false;
-			
-			oFormPr.Border = oBorder;
-			
-			this.Sdt.SetFormPr(oFormPr);
+
+			formPrCopy.Border = border;
+			this.Sdt.SetFormPr(formPrCopy);
+
 			return true;
 		}, this);
 	};
 	/**
-	 * Sets the background color to the current form.
+	 * Returns the border color of the current form.
+	 *
 	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @return {?ApiColor}
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/GetBorderColor.js
+	 */
+	ApiFormBase.prototype.GetBorderColor = function () {
+		const formPr = this.Sdt.GetFormPr();
+		if (!formPr || !formPr.Border || !formPr.Border.Color)
+			return null;
+
+		const color = formPr.Border.Color;
+		return (color.Auto === true)
+			? Api.prototype.AutoColor()
+			: Api.prototype.RGB(color.r, color.g, color.b);
+	};
+
+	/**
+	 * Sets the background color to the current form.
+	 *
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} bNone - Defines that background color will not be set.
-	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBackgroundColor.js
 	 */
-	ApiFormBase.prototype.SetBackgroundColor = function(r, g, b, bNone)
+	/**
+	 * Sets the background color to the current form.
+	 *
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color]
+	 * @return {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBackgroundColor.js
+	 */
+	ApiFormBase.prototype.SetBackgroundColor = function (color)
 	{
-		var oFormPr = this.Sdt.GetFormPr().Copy();
-		
-		let oUnifill = new AscFormat.CUniFill();
-		oUnifill.setFill(new AscFormat.CSolidFill());
-		oUnifill.fill.setColor(new AscFormat.CUniColor());
-		oUnifill.fill.color.setColor(new AscFormat.CRGBColor());
+		let r, g, b;
+		let bNone;
+		let isAuto, isTheme;
+		let unifill;
 
-		if (r >=0 && g >=0 && b >=0)
-			oUnifill.fill.color.color.setColor(r, g, b);
-		else
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
+			bNone = false;
+			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
+			unifill = color.private_createUnifill();
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+
+			bNone = GetBoolParameter(arguments[3], false);
+			isAuto = false;
+			isTheme = false;
+			unifill = Api.prototype.RGB(r, g, b).private_createUnifill();
+		}
+
+		if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
 			return false;
+
+		var oFormPr = this.Sdt.GetFormPr().Copy();
 
 		oFormPr.Shd = new CDocumentShd();
 		oFormPr.Shd.Set_FromObject({
-			Value: bNone ? Asc.c_oAscShd.Clear : Asc.c_oAscShd.Clear,
-			Color: {
-				r: r,
-				g: g,
-				b: b,
-				Auto: false
-			},
-			Fill: {
-				r: r,
-				g: g,
-				b: b,
-				Auto: false
-			},
-			Unifill: oUnifill
+			Value: bNone ? Asc.c_oAscShd.Nil : Asc.c_oAscShd.Clear,
+			Color: { r: r, g: g, b: b, Auto: isAuto },
+			Fill: { r: r, g: g, b: b, Auto: isAuto },
+			Unifill: isTheme ? unifill.createDuplicate() : undefined,
+			ThemeFill: isTheme ? unifill.createDuplicate() : undefined,
 		});
 
 		this.Sdt.SetFormPr(oFormPr);
 		return true;
+	};
+
+	/**
+	 * Returns the background color of the current form.
+	 *
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @return {?ApiColor}
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBorderColor.js
+	 */
+	ApiFormBase.prototype.GetBackgroundColor = function () {
+		const formPr = this.Sdt.GetFormPr();
+		if (!formPr || !formPr.Shd)
+			return null;
+
+		const unifill = formPr.Shd.ThemeFill || formPr.Shd.Unifill;
+		const unifillColor = unifill && unifill.fill && unifill.fill.color && unifill.fill.color.color;
+		if (unifillColor) {
+			if (unifillColor instanceof AscFormat.CSchemeColor)
+				return new ApiColor('theme', unifillColor.id);
+
+			if (unifillColor instanceof AscFormat.CRGBColor)
+				return Api.prototype.RGB(unifillColor.r, unifillColor.g, unifillColor.b);
+		}
+
+		const color = formPr.Shd.Fill || formPr.Shd.Color;
+		if (color) {
+			const isAuto = color.Auto === true;
+			return isAuto
+				? Api.prototype.AutoColor()
+				: Api.prototype.RGB(color.r, color.g, color.b);
+		}
+
+		return null;
 	};
 	/**
 	 * Returns the text from the current form.
@@ -27590,6 +28545,11 @@
 	Api.prototype["CreateRGBColor"]                   = Api.prototype.CreateRGBColor;
 	Api.prototype["CreateSchemeColor"]                = Api.prototype.CreateSchemeColor;
 	Api.prototype["CreatePresetColor"]                = Api.prototype.CreatePresetColor;
+	Api.prototype["AutoColor"]                        = Api.prototype.AutoColor;
+	Api.prototype["RGB"]                              = Api.prototype.RGB;
+	Api.prototype["RGBA"]                             = Api.prototype.RGBA;
+	Api.prototype["HexColor"]                         = Api.prototype.HexColor;
+	Api.prototype["ThemeColor"]                       = Api.prototype.ThemeColor;
 	Api.prototype["CreateSolidFill"]                  = Api.prototype.CreateSolidFill;
 	Api.prototype["CreateLinearGradientFill"]         = Api.prototype.CreateLinearGradientFill;
 	Api.prototype["CreateRadialGradientFill"]         = Api.prototype.CreateRadialGradientFill;
@@ -28080,6 +29040,7 @@
 	ApiTableCell.prototype["Clear"]    		           = ApiTableCell.prototype.Clear;
 	ApiTableCell.prototype["AddElement"]    		   = ApiTableCell.prototype.AddElement;
 	ApiTableCell.prototype["SetBackgroundColor"]       = ApiTableCell.prototype.SetBackgroundColor;
+	ApiTableCell.prototype["GetBackgroundColor"]       = ApiTableCell.prototype.GetBackgroundColor;
 	ApiTableCell.prototype["SetColumnBackgroundColor"] = ApiTableCell.prototype.SetColumnBackgroundColor;
 
 	ApiStyle.prototype["GetClassType"]               = ApiStyle.prototype.GetClassType;
@@ -28435,6 +29396,13 @@
 	ApiPresetColor.prototype["GetClassType"]         = ApiPresetColor.prototype.GetClassType;
 	ApiPresetColor.prototype["ToJSON"]               = ApiPresetColor.prototype.ToJSON;
 
+	ApiColor.prototype["GetClassType"] = ApiColor.prototype.GetClassType;
+	ApiColor.prototype["IsAutoColor"] = ApiColor.prototype.IsAutoColor;
+	ApiColor.prototype["IsThemeColor"] = ApiColor.prototype.IsThemeColor;
+	ApiColor.prototype["GetRGB"] = ApiColor.prototype.GetRGB;
+	ApiColor.prototype["GetRGBA"] = ApiColor.prototype.GetRGBA;
+	ApiColor.prototype["GetHex"] = ApiColor.prototype.GetHex;
+
 	ApiBullet.prototype["GetClassType"]              = ApiBullet.prototype.GetClassType;
 	ApiBullet.prototype["ToJSON"]                    = ApiBullet.prototype.ToJSON;
 
@@ -28585,7 +29553,9 @@
 	ApiFormBase.prototype["ToFixed"]            = ApiFormBase.prototype.ToFixed;
 	ApiFormBase.prototype["ToInline"]           = ApiFormBase.prototype.ToInline;
 	ApiFormBase.prototype["SetBorderColor"]     = ApiFormBase.prototype.SetBorderColor;
+	ApiFormBase.prototype["GetBorderColor"]     = ApiFormBase.prototype.GetBorderColor;
 	ApiFormBase.prototype["SetBackgroundColor"] = ApiFormBase.prototype.SetBackgroundColor;
+	ApiFormBase.prototype["GetBackgroundColor"] = ApiFormBase.prototype.GetBackgroundColor;
 	ApiFormBase.prototype["GetText"]            = ApiFormBase.prototype.GetText;
 	ApiFormBase.prototype["Clear"]              = ApiFormBase.prototype.Clear;
 	ApiFormBase.prototype["GetWrapperShape"]    = ApiFormBase.prototype.GetWrapperShape;
@@ -28845,6 +29815,7 @@
 	window['AscBuilder'].ApiCore             = ApiCore;
 	window['AscBuilder'].ApiCustomProperties = ApiCustomProperties;
 	window['AscBuilder'].ApiCustomXmlParts	 = ApiCustomXmlParts;
+	window['AscBuilder'].ApiColor            = ApiColor;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Area for internal usage
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

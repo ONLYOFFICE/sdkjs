@@ -34,10 +34,11 @@ $(function ()
 {
 	QUnit.module("Test the ApiParagraph methods");
 	
-	function createApiParagraph()
+	function createApiParagraph() 
 	{
-		return AscTest.Editor.CreateParagraph();
+		return AscTest.JsApi.CreateParagraph();
 	}
+	
 	QUnit.test("ParaId", function (assert)
 	{
 		let apiParagraph = createApiParagraph();
@@ -45,13 +46,51 @@ $(function ()
 		assert.strictEqual(apiParagraph.GetParaId(), 0x48151623, "Check paraId");
 	});
 	
-	QUnit.test("Color", function (assert)
-	{
-		let apiParagraph = createApiParagraph();
-		
-		assert.strictEqual(apiParagraph.GetShd(), null, "Color check for a newly created paragraph");
-		
-		apiParagraph.SetShd("clear", 255, 122, 100);
-		//assert.equalRgb(apiParagraph.GetShd(), {r : 255, g : 122, b : 100}, "Check shd color");
+	QUnit.test('SetShd, GetShd', function (assert) {
+		const apiParagraph = createApiParagraph();
+
+		assert.strictEqual(apiParagraph.GetShd(), null, 'Shading check for a newly created paragraph');
+
+		apiParagraph.SetShd('clear', 255, 122, 100);
+		assert.equalRgb(apiParagraph.GetShd(), { r: 255, g: 122, b: 100 }, 'Check shd color set with RGB components');
+
+		apiParagraph.SetShd('clear', AscTest.JsApi.HexColor('55aa00'));
+		assert.equalRgb(apiParagraph.GetShd(), { r: 85, g: 170, b: 0 }, 'Check shd color set with ApiColor (hex)');
+
+		apiParagraph.SetShd('clear', AscTest.JsApi.ThemeColor('accent2'));
+		assert.strictEqual(apiParagraph.GetShd().IsThemeColor(), true, 'Check shd color set with ApiColor (theme)');
+
+		apiParagraph.SetShd('clear', AscTest.JsApi.AutoColor());
+		assert.strictEqual(apiParagraph.GetShd().IsAutoColor(), true, 'Check shd color set with ApiColor (auto)');
+	});
+	
+	QUnit.test('SetColor, GetColor', function (assert) {
+		const hexColor = AscTest.JsApi.HexColor('#bada55');
+		const themeColor = AscTest.JsApi.ThemeColor('accent2');
+		const autoColor = AscTest.JsApi.AutoColor();
+
+		const apiParagraph = createApiParagraph();
+		apiParagraph.AddText('Run for testing paragraph color');
+
+		let apiRun;
+
+		apiRun = apiParagraph.GetElement(0);
+		assert.strictEqual(apiRun.GetColor(), null, 'Color check for a newly created paragraph');
+
+		apiParagraph.SetColor(80, 160, 240);
+		apiRun = apiParagraph.GetElement(0);
+		assert.equalRgb(apiRun.GetColor(), { r: 80, g: 160, b: 240 }, 'Color check after setting color with RGB components');
+
+		apiParagraph.SetColor(hexColor);
+		apiRun = apiParagraph.GetElement(0);
+		assert.strictEqual(apiRun.GetColor().GetHex(), '#BADA55', 'Color check after setting color with ApiColor (hex)');
+
+		apiParagraph.SetColor(themeColor);
+		apiRun = apiParagraph.GetElement(0);
+		assert.strictEqual(apiRun.GetColor().IsThemeColor(), true, 'Color check after setting color with ApiColor (theme)');
+
+		apiParagraph.SetColor(autoColor);
+		apiRun = apiParagraph.GetElement(0);
+		assert.strictEqual(apiRun.GetColor().IsAutoColor(), true, 'Color check after setting color with ApiColor (auto)');
 	});
 });
