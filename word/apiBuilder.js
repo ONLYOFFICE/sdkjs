@@ -1656,50 +1656,48 @@
 
 		return oHyperlink;
 	};
-
+	
 	/**
 	 * Returns a text from the specified range.
 	 * @memberof ApiRange
-	 * @param {object} oPr - The resulting string display properties.
-     * @param {boolean} [oPr.Numbering=false] - Defines if the resulting string will include numbering or not.
-     * @param {boolean} [oPr.Math=false] - Defines if the resulting string will include mathematical expressions or not.
-	 * @param {string} [oPr.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r".
-     * @param {string} [oPr.TableCellSeparator='\t'] - Defines how the table cell separator will be specified in the resulting string. Any symbol can be used. The default separator is "\t".
-     * @param {string} [oPr.TableRowSeparator='\r\n'] - Defines how the table row separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
-     * @param {string} [oPr.ParaSeparator='\r\n'] - Defines how the paragraph separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
-	 * @param {string} [oPr.TabSymbol=' '] - Defines how the tab will be specified in the resulting string (does not apply to numbering). Any symbol can be used. The default symbol is " ".
+	 * @param {object} [options] - Options for formatting the returned text.
+	 * @param {boolean} [options.Numbering=true] - Defines if the resulting string will include numbering or not.
+	 * @param {boolean} [options.Math=true] - Defines if the resulting string will include mathematical expressions or not.
+	 * @param {string} [options.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r".
+	 * @param {string} [options.TableCellSeparator='\t'] - Defines how the table cell separator will be specified in the resulting string. Any symbol can be used. The default separator is "\t".
+	 * @param {string} [options.TableRowSeparator='\r\n'] - Defines how the table row separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
+	 * @param {string} [options.ParaSeparator='\r\n'] - Defines how the paragraph separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
+	 * @param {string} [options.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string (does not apply to numbering). Any symbol can be used. The default symbol is "\t".
 	 * @typeofeditors ["CDE"]
-	 * @returns {String} - returns "" if range is empty.
+	 * @returns {string} Returns an empty string if range is empty.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetText.js
 	 */
-	ApiRange.prototype.GetText = function(oPr)
+	ApiRange.prototype.GetText = function(options)
 	{
-		if (!oPr) {
-			oPr = {};
-		}
+		options = options || {};
 		
-		let oProp = {
-			NewLineSeparator:	(oPr.hasOwnProperty("NewLineSeparator")) ? oPr["NewLineSeparator"] : "\r",
-			Numbering:			(oPr.hasOwnProperty("Numbering")) ? oPr["Numbering"] : true,
-			Math:				(oPr.hasOwnProperty("Math")) ? oPr["Math"] : true,
-			TableCellSeparator:	oPr["TableCellSeparator"],
-			TableRowSeparator:	oPr["TableRowSeparator"],
-			ParaSeparator:		oPr["ParaSeparator"],
-			TabSymbol:			oPr["TabSymbol"]
-		}
-
+		let _options = {
+			NewLineSeparator   : GetStringParameter(options["NewLineSeparator"], "\r"),
+			Numbering          : GetBoolParameter(options["Numbering"], true),
+			Math               : GetBoolParameter(options["Math"], true),
+			TableCellSeparator : GetStringParameter(options["TableCellSeparator"], "\t"),
+			TableRowSeparator  : GetStringParameter(options["TableRowSeparator"], "\r\n"),
+			ParaSeparator      : GetStringParameter(options["ParaSeparator"], "\r\n"),
+			TabSymbol          : GetStringParameter(options["TabSymbol"], "\t")
+		};
+		
 		private_RefreshRangesPosition();
-
-		var Document			= private_GetLogicDocument();
-		var oldSelectionInfo	= Document.SaveDocumentState();
-
+		
+		var Document = private_GetLogicDocument();
+		var oldSelectionInfo = Document.SaveDocumentState();
+		
 		this.Select(false);
 		private_TrackRangesPositions();
-
-		var Text = this.Controller.GetSelectedText(false, oProp); 
+		
+		var Text = this.Controller.GetSelectedText(false, _options);
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
-
+		
 		return Text;
 	};
 
@@ -6247,43 +6245,31 @@
 	 * Returns the inner text of the current document content object.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {object} oProps - The resulting string display properties.
-     * @param {boolean} oProps.Numbering - Defines if the resulting string will include numbering or not.
-     * @param {boolean} oProps.Math - Defines if the resulting string will include mathematical expressions or not.
-     * @param {string} [oProps.TableCellSeparator='\t'] - Defines how the table cell separator will be specified in the resulting string. Any symbol can be used. The default separator is "\t".
-     * @param {string} [oProps.TableRowSeparator='\r\n'] - Defines how the table row separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
-     * @param {string} [oProps.ParaSeparator='\r\n'] - Defines how the paragraph separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
-     * @param {string} [oProps.TabSymbol=' '] - Defines how the tab will be specified in the resulting string. Any symbol can be used. The default symbol is " ".
-     * @param {string} [oProps.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r".
+	 * @param {object} [options] - Options for formatting the returned text.
+	 * @param {boolean} [options.Numbering=true] - Defines if the resulting string will include numbering or not.
+	 * @param {boolean} [options.Math=true] - Defines if the resulting string will include mathematical expressions or not.
+	 * @param {string} [options.TableCellSeparator='\t'] - Defines how the table cell separator will be specified in the resulting string. Any symbol can be used. The default separator is "\t".
+	 * @param {string} [options.TableRowSeparator='\r\n'] - Defines how the table row separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
+	 * @param {string} [options.ParaSeparator='\r\n'] - Defines how the paragraph separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
+	 * @param {string} [options.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string. Any symbol can be used. The default symbol is "\t".
+	 * @param {string} [options.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r".
 	 * @return {string}
 	 * @since 8.3.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetText.js
 	 */
-	ApiDocumentContent.prototype.GetText = function(oProps)
+	ApiDocumentContent.prototype.GetText = function(options)
 	{
-		let oInnerProps;
-        if (typeof oProps === "object")
-        {
-            oInnerProps =
-            {
-                Numbering : (oProps.hasOwnProperty("Numbering")) ? oProps["Numbering"] : true,
-                Math : (oProps.hasOwnProperty("Math")) ? oProps["Math"] : true,
-                TableCellSeparator: oProps["TableCellSeparator"],
-                TableRowSeparator: oProps["TableRowSeparator"],
-                ParaSeparator: oProps["ParaSeparator"],
-                NewLineSeparator: oProps["NewLineSeparator"],
-                TabSymbol: oProps["TabSymbol"]
-            }
-        }
-        else
-        {
-            oInnerProps =
-            {
-                Numbering : true
-            }
-        }
-
-		return this.Document.GetText(oInnerProps);
+		options = options || {};
+		
+		return this.Document.GetText({
+			Numbering          : GetBoolParameter(options["Numbering"], true),
+			Math               : GetBoolParameter(options["Math"], true),
+			TableCellSeparator : GetStringParameter(options["TableCellSeparator"], '\t'),
+			TableRowSeparator  : GetStringParameter(options["TableRowSeparator"], '\r\n'),
+			ParaSeparator      : GetStringParameter(options["ParaSeparator"], '\r\n'),
+			TabSymbol          : GetStringParameter(options["TabSymbol"], '\t'),
+			NewLineSeparator   : GetStringParameter(options["NewLineSeparator"], '\r')
+		});
 	};
 
 	/**
@@ -11118,29 +11104,25 @@
 	/**
 	 * Returns the paragraph text.
 	 * @memberof ApiParagraph
-	 * @param {object} oPr - The resulting string display properties.
-     * @param {boolean} [oPr.Numbering=false] - Defines if the resulting string will include numbering or not.
-     * @param {boolean} [oPr.Math=false] - Defines if the resulting string will include mathematical expressions or not.
-	 * @param {string} [oPr.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r".
-	 * @param {string} [oPr.TabSymbol=' '] - Defines how the tab will be specified in the resulting string (does not apply to numbering). Any symbol can be used. The default symbol is " ".
+	 * @param {object} [options] - Options for formatting the returned text.
+	 * @param {boolean} [options.Numbering=false] - Defines if the resulting string will include numbering or not.
+	 * @param {boolean} [options.Math=false] - Defines if the resulting string will include mathematical expressions or not.
+	 * @param {string} [options.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string. Any string can be used. The default separator is "\r".
+	 * @param {string} [options.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string (does not apply to numbering). Any string can be used. The default symbol is "\t".
 	 * @typeofeditors ["CDE"]
 	 * @return {string}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetText.js
 	 */
-	ApiParagraph.prototype.GetText = function(oPr)
+	ApiParagraph.prototype.GetText = function(options)
 	{
-		if (!oPr) {
-			oPr = {};
-		}
-
-		let oProp =	{
-			NewLineSeparator:	(oPr.hasOwnProperty("NewLineSeparator")) ? oPr["NewLineSeparator"] : "\r",
-			Numbering:			(oPr.hasOwnProperty("Numbering")) ? oPr["Numbering"] : true,
-			Math:				(oPr.hasOwnProperty("Math")) ? oPr["Math"] : true,
-			TabSymbol:			oPr["TabSymbol"]
-		}
-
-		return this.Paragraph.GetText(oProp);
+		options = options || {};
+		
+		return this.Paragraph.GetText({
+			NewLineSeparator : GetStringParameter(options["NewLineSeparator"], "\r"),
+			Numbering        : GetBoolParameter(options["Numbering"], true),
+			Math             : GetBoolParameter(options["Math"], true),
+			TabSymbol        : GetStringParameter(options["TabSymbol"], "\t")
+		});
 	};
 	/**
 	 * Returns the text properties for a paragraph end mark.
@@ -12748,26 +12730,22 @@
 	/**
 	 * Returns a text from the text run.
 	 * @memberof ApiRun
-	 * @param {object} oPr - The resulting string display properties.
-	 * @param {string} [oPr.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r".
-	 * @param {string} [oPr.TabSymbol=' '] - Defines how the tab will be specified in the resulting string. Any symbol can be used. The default symbol is " ".
+	 * @param {object} [options] - Options for formatting the returned text.
+	 * @param {string} [options.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r".
+	 * @param {string} [options.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string. Any symbol can be used. The default symbol is "\t".
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/GetText.js
 	 */
-	ApiRun.prototype.GetText = function(oPr)
+	ApiRun.prototype.GetText = function(options)
 	{
-		if (!oPr)
-			oPr = {};
+		options = options || {};
 		
-		let oProp = {
+		return this.Run.GetText({
 			Text             : "",
-			NewLineSeparator : (oPr.hasOwnProperty("NewLineSeparator")) ? oPr["NewLineSeparator"] : "\r",
-			TabSymbol        : oPr["TabSymbol"],
-			ParaSeparator    : oPr["ParaSeparator"]
-		}
-		
-		return this.Run.GetText(oProp);
+			NewLineSeparator : GetStringParameter(options["NewLineSeparator"], "\r"),
+			TabSymbol        : GetStringParameter(options["TabSymbol"], "\t")
+		});
 	};
 	
 	/**
@@ -27790,44 +27768,43 @@
 		this.Document.LoadDocumentState(docState);
 		return true;
 	};
-
+	
 	/**
 	 * Returns the bookmark text.
 	 * @memberof ApiBookmark
 	 * @typeofeditors ["CDE"]
-	 * @param {object} oPr - The resulting string display properties.
-     * @param {boolean} [oPr.Numbering=false] - Defines if the resulting string will include numbering or not.
-     * @param {boolean} [oPr.Math=false] - Defines if the resulting string will include mathematical expressions or not.
-	 * @param {string} [oPr.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r".
-     * @param {string} [oPr.TableCellSeparator='\t'] - Defines how the table cell separator will be specified in the resulting string. Any symbol can be used. The default separator is "\t".
-     * @param {string} [oPr.TableRowSeparator='\r\n'] - Defines how the table row separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
-     * @param {string} [oPr.ParaSeparator='\r\n'] - Defines how the paragraph separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
-	 * @param {string} [oPr.TabSymbol=' '] - Defines how the tab will be specified in the resulting string (does not apply to numbering). Any symbol can be used. The default symbol is " ".
+	 * @param {object} [options] - Options for formatting the returned text.
+	 * @param {boolean} [options.Numbering=true] - Defines if the resulting string will include numbering or not.
+	 * @param {boolean} [options.Math=true] - Defines if the resulting string will include mathematical expressions or not.
+	 * @param {string} [options.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r".
+	 * @param {string} [options.TableCellSeparator='\t'] - Defines how the table cell separator will be specified in the resulting string. Any symbol can be used. The default separator is "\t".
+	 * @param {string} [options.TableRowSeparator='\r\n'] - Defines how the table row separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
+	 * @param {string} [options.ParaSeparator='\r\n'] - Defines how the paragraph separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
+	 * @param {string} [options.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string (does not apply to numbering). Any symbol can be used. The default symbol is "\t".
 	 * @returns {string}
 	 * @since 8.3.0
 	 * @see office-js-api/Examples/{Editor}/ApiBookmark/Methods/GetText.js
 	 */
-	ApiBookmark.prototype.GetText = function(oPr)
+	ApiBookmark.prototype.GetText = function(options)
 	{
 		if (!this.IsUseInDocument())
 			return "";
-
-		if (!oPr)
-			oPr = {};
 		
-		let oProp = {
-			NewLineSeparator:	(oPr.hasOwnProperty("NewLineSeparator")) ? oPr["NewLineSeparator"] : "\r",
-			Numbering:			(oPr.hasOwnProperty("Numbering")) ? oPr["Numbering"] : true,
-			Math:				(oPr.hasOwnProperty("Math")) ? oPr["Math"] : true,
-			TableCellSeparator:	oPr["TableCellSeparator"],
-			TableRowSeparator:	oPr["TableRowSeparator"],
-			ParaSeparator:		oPr["ParaSeparator"],
-			TabSymbol:			oPr["TabSymbol"]
+		options = options || {};
+		
+		let _options = {
+			NewLineSeparator   : GetStringParameter(options["NewLineSeparator"], "\r"),
+			Numbering          : GetBoolParameter(options["Numbering"], true),
+			Math               : GetBoolParameter(options["Math"], true),
+			TableCellSeparator : GetStringParameter(options["TableCellSeparator"], "\t"),
+			TableRowSeparator  : GetStringParameter(options["TableRowSeparator"], "\r\n"),
+			ParaSeparator      : GetStringParameter(options["ParaSeparator"], "\r\n"),
+			TabSymbol          : GetStringParameter(options["TabSymbol"], "\t")
 		};
 		
 		let docState = this.Document.SaveDocumentState();
 		this.Select();
-		let result = this.Document.GetSelectedText(false, oProp);
+		let result = this.Document.GetSelectedText(false, _options);
 		this.Document.LoadDocumentState(docState);
 		return result ? result : "";
 	};

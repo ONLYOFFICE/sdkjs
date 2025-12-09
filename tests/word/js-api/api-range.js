@@ -43,6 +43,24 @@ $(function () {
 		doc.Push(par);
 		return par;
 	}
+	
+	QUnit.test('GetText/AddText', function (assert)
+	{
+		let p = getFirstDocParagraph();
+		let run = p.AddText("1");
+		run.AddTabStop();
+		run.AddText("2");
+		run.AddLineBreak();
+		run.AddText("3");
+		
+		let range = run.GetRange();
+		
+		assert.strictEqual(range.GetText(), "1\t2\r3", "Check text");
+		assert.strictEqual(range.GetText({
+			"TabSymbol" : "_t_",
+			"NewLineSeparator" : "_nl_",
+		}), "1_t_2_nl_3", "Check text");
+	});
 
 	QUnit.test('SetColor, GetColor', function (assert) {
 		const rgbColor = AscTest.JsApi.RGB(255, 127, 0);

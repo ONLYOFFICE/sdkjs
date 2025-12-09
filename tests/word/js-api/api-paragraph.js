@@ -32,7 +32,7 @@
 
 $(function ()
 {
-	QUnit.module("Test the ApiParagraph methods");
+	QUnit.module("ApiParagraph");
 	
 	function createApiParagraph()
 	{
@@ -44,6 +44,21 @@ $(function ()
 		let apiParagraph = createApiParagraph();
 		apiParagraph.SetParaId(0x48151623);
 		assert.strictEqual(apiParagraph.GetParaId(), 0x48151623, "Check paraId");
+	});
+	
+	QUnit.test("GetText", function (assert)
+	{
+		let p = createApiParagraph();
+		let run = p.AddText("123");
+		run.AddTabStop();
+		run.AddText("456");
+		run.AddLineBreak();
+		run.AddText("789");
+		assert.strictEqual(p.GetText(), "123\t456\r789\r\n", "Check GetText");
+		assert.strictEqual(p.GetText({
+			"TabSymbol" : "_t_",
+			"NewLineSeparator" : "_nl_"
+		}), "123_t_456_nl_789\r\n", "Check GetText");
 	});
 	
 	QUnit.test('SetShd, GetShd', function (assert) {

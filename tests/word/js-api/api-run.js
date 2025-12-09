@@ -30,12 +30,31 @@
  *
  */
 
-$(function () {
-	QUnit.module('Test the ApiRun methods');
+$(function ()
+{
+	QUnit.module("ApiRun");
 
-	function createApiRun() {
+	function createApiRun()
+	{
 		return AscTest.JsApi.CreateRun();
 	}
+	
+	QUnit.test('GetText/AddText', function (assert)
+	{
+		let run = createApiRun();
+		
+		assert.strictEqual(run.GetText(), "", "Check text for an empty run");
+		run.AddText("1");
+		run.AddTabStop();
+		run.AddText("2");
+		run.AddLineBreak();
+		run.AddText("3");
+		assert.strictEqual(run.GetText(), "1\t2\r3", "Check text");
+		assert.strictEqual(run.GetText({
+			"TabSymbol" : "_t_",
+			"NewLineSeparator" : "_nl_",
+		}), "1_t_2_nl_3", "Check text");
+	});
 
 	QUnit.test('SetColor, GetColor', function (assert) {
 		const apiRun = createApiRun();
