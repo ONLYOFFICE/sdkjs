@@ -2615,7 +2615,7 @@ function (window, undefined) {
 					nPtCount += (oBBox.c2 - oBBox.c1 + 1);
 					nRows = Math.max(nRows, oBBox.r2 - oBBox.r1 + 1);
 				}
-				for (nLvl = 0; nLvl < nRows; ++nLvl) {
+				for (nLvl = nRows - 1; nLvl > -1 ; --nLvl) {
 					oLvl = this.createLvl();
 					if (!oLvl) {
 						return;
@@ -2648,7 +2648,7 @@ function (window, undefined) {
 					nPtCount += (oBBox.r2 - oBBox.r1 + 1);
 					nCols = Math.max(nCols, oBBox.c2 - oBBox.c1 + 1);
 				}
-				for (nLvl = 0; nLvl < nCols; ++nLvl) {
+				for (nLvl = nCols - 1; nLvl > -1; --nLvl) {
 					oLvl = this.createLvl();
 					nPtIdx = 0;
 					for (nRef = 0; nRef < aParsedRef.length; ++nRef) {
