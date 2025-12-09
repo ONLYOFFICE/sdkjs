@@ -16417,10 +16417,10 @@
 		if (!this.Parent)
 		{
 			if (this.ParaPr.Ind.Left !== undefined)
-				return AscCommon.MMToTwips(this.ParaPr.Ind.Left);
+				return private_MM2Twips(this.ParaPr.Ind.Left);
 			return undefined;
 		}
-		return AscCommon.MMToTwips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Ind.Left);
+		return private_MM2Twips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Ind.Left);
 	};
 	/**
 	 * Sets the paragraph right side indentation.
@@ -16448,11 +16448,11 @@
 		if (!this.Parent)
 		{
 			if (this.ParaPr.Ind.Right !== undefined)
-				return AscCommon.MMToTwips(this.ParaPr.Ind.Right);
+				return private_MM2Twips(this.ParaPr.Ind.Right);
 
 			return undefined;
 		}
-		return AscCommon.MMToTwips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Ind.Right);
+		return private_MM2Twips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Ind.Right);
 	};
 	/**
 	 * Sets the paragraph first line indentation.
@@ -16480,12 +16480,12 @@
 		if (!this.Parent)
 		{
 			if (this.ParaPr.Ind.FirstLine !== undefined)
-				return AscCommon.MMToTwips(this.ParaPr.Ind.FirstLine);
+				return private_MM2Twips(this.ParaPr.Ind.FirstLine);
 
 			return undefined;
 		}
 
-		return AscCommon.MMToTwips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Ind.FirstLine);
+		return private_MM2Twips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Ind.FirstLine);
 	};
 	/**
 	 * Sets the paragraph contents justification.
@@ -16638,7 +16638,7 @@
 					return oSpacing.Line * 240.0;
 				case Asc.linerule_AtLeast:
 				case Asc.linerule_Exact:
-					return AscCommon.MMToTwips(oSpacing.Line);
+					return private_MM2Twips(oSpacing.Line);
 			}
 
 			return undefined;
@@ -16723,12 +16723,12 @@
 		if (!this.Parent)
 		{
 			if (this.ParaPr.Spacing.Before !== undefined)
-				return AscCommon.MMToTwips(this.ParaPr.Spacing.Before);
+				return private_MM2Twips(this.ParaPr.Spacing.Before);
 
 			return undefined;
 		}
 
-		return AscCommon.MMToTwips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Spacing.Before);
+		return private_MM2Twips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Spacing.Before);
 	};
 	/**
 	 * Sets the spacing after the current paragraph. If the value of the isAfterAuto parameter is true, then 
@@ -16764,12 +16764,12 @@
 		if (!this.Parent)
 		{
 			if (this.ParaPr.Spacing.After !== undefined)
-				return AscCommon.MMToTwips(this.ParaPr.Spacing.After);
+				return private_MM2Twips(this.ParaPr.Spacing.After);
 
 			return undefined;
 		}
 
-		return AscCommon.MMToTwips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Spacing.After);
+		return private_MM2Twips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Spacing.After);
 	};
 
 	/**
@@ -30122,7 +30122,8 @@
 
 	function private_MM2Twips(mm)
 	{
-		return mm / (25.4 / 72.0 / 20);
+		// Convert to closest integer value in twips
+		return AscCommon.MMToTwips(mm, -1);
 	}
 
 	function private_EMU2MM(EMU)

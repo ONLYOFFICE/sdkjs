@@ -34,7 +34,7 @@ $(function ()
 {
 	QUnit.module("Test the ApiParagraph methods");
 	
-	function createApiParagraph() 
+	function createApiParagraph()
 	{
 		return AscTest.JsApi.CreateParagraph();
 	}
