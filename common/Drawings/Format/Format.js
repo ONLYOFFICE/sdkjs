@@ -16020,6 +16020,15 @@
 												case 4:
 													_author.Initials = s.GetString2();
 													break;
+												case 5:
+													let id__ = s.GetString2();
+													break;
+												case 6:
+													let userId__ = s.GetString2();
+													break;
+												case 7:
+													let providerId__ = s.GetString2();
+													break;
 												default:
 													break;
 											}

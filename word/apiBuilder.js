@@ -9961,7 +9961,7 @@
 	/**
 	 * Specifies a unique ID for the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @since 9.2.0
 	 * @param {number} paraId - The numerical ID which will be specified for the current paragraph. Value MUST be greater than 0 and less than 0x80000000.
 	 * @returns {boolean}
