@@ -3364,7 +3364,7 @@
             }
         }
 
-        // combobox/listbox
+        // combobox/listbox, checkbox/radiobutton
         let aOptions = [];
         if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox, AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(this.GetType())) {
             aOptions = this.GetOptions(false);
