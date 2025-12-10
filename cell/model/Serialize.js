@@ -9768,17 +9768,17 @@
                 }
                 this.oWorkbook.xmlMaps.push(oXmlMap);
             } else if (c_oSerWorkbookTypes.RdRichValue === type) {
-                this.oWorkbook.rdRichValue = new AscCommonExcel.CRdRichValue();
+                this.oWorkbook.rdRichValue = new AscCommonExcel.CRichValue();
                 res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadRichValueData(t, l, oThis.oWorkbook.rdRichValue);
                 });
             } else if (c_oSerWorkbookTypes.RdRichValueStructure === type) {
-                this.oWorkbook.rdRichValueStructure = new AscCommonExcel.CRdRichValueStructure();
+                this.oWorkbook.rdRichValueStructure = new AscCommonExcel.CRichValueStructure();
                 res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadRichValueStructure(t, l, oThis.oWorkbook.rdRichValueStructure);
                 });
             } else if (c_oSerWorkbookTypes.RdRichValueTypes === type) {
-                this.oWorkbook.readRichValueTypesInfo = new AscCommonExcel.CReadRichValueTypesInfo();
+                this.oWorkbook.readRichValueTypesInfo = new AscCommonExcel.CRichValueTypesInfo();
                 res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadRichValueTypesInfo(t, l, oThis.oWorkbook.readRichValueTypesInfo);
                 });
@@ -9984,11 +9984,11 @@
                 if (!richValueData.pData) {
                     richValueData.pData = [];
                 }
-                let pMetadataRecord = new AscCommonExcel.CRichValue();
+                let richValue = new AscCommonExcel.CRichValue();
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadRichValue(t, l, CRichValue);
+                    return oThis.ReadRichValue(t, l, richValue);
                 });
-                richValueData.pData.push(pMetadataRecord);
+                richValueData.pData.push(richValue);
             }
             else {
                 res = c_oSerConstants.ReadUnknown;
@@ -10010,7 +10010,7 @@
                 pValue.m_oS = this.stream.GetULong();
             }
             else if (c_oSer_RichValue.Value === type) {
-                let s = this.stream.GetString3(length);
+                let s = this.stream.GetString2LE(length);
                 pValue.m_arrV.push(s);
             }
             else if (c_oSer_RichValue.Fallback === type) {
@@ -10050,7 +10050,7 @@
             let oThis = this;
 
             if (c_oSer_RichStructures.Type === type) {
-                pStructure.m_oT = this.stream.GetString3(length);
+                pStructure.m_oT = this.stream.GetString2LE(length);
             }
             else if (c_oSer_RichStructures.ValueKey === type) {
                 let pValueKey = new AscCommonExcel.CRichValueKey();
@@ -10070,7 +10070,7 @@
             let res = c_oSerConstants.ReadOk;
 
             if (c_oSer_RichStructures.ValueKeyName === type) {
-                pValueKey.m_oN = this.stream.GetString3(length);
+                pValueKey.m_oN = this.stream.GetString2LE(length);
             }
             else if (c_oSer_RichStructures.ValueKeyType === type) {
                 pValueKey.m_oT = {};
@@ -10147,7 +10147,7 @@
             let oThis = this;
 
             if (c_oSer_RichValueTypesInfo.Name === type) {
-                pType.m_oName = this.stream.GetString3(length);
+                pType.m_oName = this.stream.GetString2LE(length);
             }
             else if (c_oSer_RichValueTypesInfo.KeyFlags === type) {
                 pType.m_oKeyFlags = {};
@@ -10188,7 +10188,7 @@
             let oThis = this;
 
             if (c_oSer_RichValueTypesInfo.ReservedKeyName === type) {
-                pReservedKey.m_oName = this.stream.GetString3(length);
+                pReservedKey.m_oName = this.stream.GetString2LE(length);
             }
             else if (c_oSer_RichValueTypesInfo.ReservedKeyFlags === type) {
                 let pFlag = new AscCommonExcel.CRichValueTypeReservedKeyFlag();
@@ -10211,7 +10211,7 @@
             let res = c_oSerConstants.ReadOk;
 
             if (c_oSer_RichValueTypesInfo.FlagName === type) {
-                pFlag.m_oName = this.stream.GetString3(length);
+                pFlag.m_oName = this.stream.GetString2LE(length);
             }
             else if (c_oSer_RichValueTypesInfo.FlagValue === type) {
                 pFlag.m_oValue = this.stream.GetBool();

@@ -20384,6 +20384,77 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 
+	// RichValue Types
+	function CRichValueTypeReservedKeyFlag() {
+		this.m_oValue = null;
+		this.m_oName = null;
+	}
+
+	function CRichValueTypeReservedKey() {
+		this.m_oName = null;
+		this.m_aChildren = []; //  CRichValueTypeReservedKeyFlag
+	}
+
+	function CRichValueTypeKeyFlags() {
+		this.m_aChildren = []; //  CRichValueTypeReservedKey
+	}
+
+	function CRichValueType() {
+		this.m_oName = null;
+		this.m_oKeyFlags = null; // CRichValueTypeKeyFlags
+		this.m_oExtLst = null;
+	}
+
+	function CRichValueTypes() {
+		this.m_aChildren = []; //  CRichValueType
+	}
+
+	function CRichValueGlobalType() {
+		this.m_oKeyFlags = null; // CRichValueTypeKeyFlags
+		this.m_oExtLst = null;
+	}
+
+	function CRichValueTypesInfo() {
+		this.m_oGlobal = null; // CRichValueGlobalType
+		this.m_oTypes = null; // CRichValueTypes
+		this.m_oExtLst = null;
+	}
+
+// RichValue Structures
+	function CRichValueKey() {
+		this.m_oT = null;
+		this.m_oN = null;
+	}
+
+	function CRichValueStructure() {
+		this.m_oT = null;
+		this.m_aChildren = []; //  CRichValueKey
+	}
+
+	function CRichValueStructures() {
+		this.m_oCount = null;
+		this.m_oExtLst = null;
+		this.m_aChildren = []; //  CRichValueStructure
+	}
+
+// RichValue Data
+	function CRichValueFallback() {
+		this.m_oT = null;
+		this.m_sContent = null;
+	}
+
+	function CRichValue() {
+		this.m_oS = null;
+		this.m_oFb = null; // CRichValueFallback
+		this.m_arrV = [];
+	}
+
+	function CRichValueData() {
+		this.m_oCount = null;
+		this.m_oExtLst = null;
+		this.m_aChildren = []; //CRichValue
+	}
+
 
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
@@ -20966,5 +21037,20 @@ function RangeDataManagerElem(bbox, data)
 	window['AscCommonExcel'].CXmlColumnPr = CXmlColumnPr;
 	window['AscCommonExcel'].CSingleXmlCells = CSingleXmlCells;
 
+	window["AscCommonExcel"].CRichValueTypeReservedKeyFlag = CRichValueTypeReservedKeyFlag;
+	window["AscCommonExcel"].CRichValueTypeReservedKey = CRichValueTypeReservedKey;
+	window["AscCommonExcel"].CRichValueTypeKeyFlags = CRichValueTypeKeyFlags;
+	window["AscCommonExcel"].CRichValueType = CRichValueType;
+	window["AscCommonExcel"].CRichValueTypes = CRichValueTypes;
+	window["AscCommonExcel"].CRichValueGlobalType = CRichValueGlobalType;
+	window["AscCommonExcel"].CRichValueTypesInfo = CRichValueTypesInfo;
+
+	window["AscCommonExcel"].CRichValueKey = CRichValueKey;
+	window["AscCommonExcel"].CRichValueStructure = CRichValueStructure;
+	window["AscCommonExcel"].CRichValueStructures = CRichValueStructures;
+
+	window["AscCommonExcel"].CRichValueFallback = CRichValueFallback;
+	window["AscCommonExcel"].CRichValue = CRichValue;
+	window["AscCommonExcel"].CRichValueData = CRichValueData;
 
 })(window);
