@@ -154,6 +154,11 @@
 				if (oItem.IsSpace())
 					this.private_HandleSpace(oItem);
 			}
+			else if (oItem.IsPdfText())
+			{
+				this.FlushWord();
+				this.private_HandlePdfText(oItem);
+			}
 			else if (oItem.IsNBSP())
 			{
 				this.FlushWord();
@@ -245,6 +250,28 @@
 		let nGrapheme = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(0x00B0, oFontInfo.Name, oFontInfo.Style);
 		let nSpace    = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(0x0020, oFontInfo.Name, oFontInfo.Style);
 		this.private_HandleItem(oItem, nGrapheme, AscFonts.GetGraphemeWidth(nSpace), oFontInfo.Size, AscWord.fontslot_ASCII, false, false, false);
+	};
+	CParagraphTextShaper.prototype.private_HandlePdfText = function(item)
+	{
+		let fontInfo = this.TextPr.GetFontInfo(AscWord.fontslot_ASCII);
+		let gid = item.GetGid();
+		
+		let grapheme;
+		if (gid)
+		{
+			let originWidth = item.GetOriginWidth(AscFonts.MEASURE_FONTSIZE);
+			AscFonts.InitGrapheme(AscCommon.FontNameMap.GetId(fontInfo.Name), fontInfo.Style);
+			AscFonts.AddGlyphToGrapheme(gid, originWidth * 64, 0, 0, 0);
+			grapheme = AscFonts.GetGrapheme(AscCommon.getSingleCodePointCalculator(item.GetCodePoint()));
+		}
+		else
+		{
+			grapheme = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(item.GetCodePoint(), fontInfo.Name, fontInfo.Style);
+		}
+		
+		item.SetGrapheme(grapheme);
+		item.SetMetrics(fontInfo.Size, AscWord.fontslot_ASCII, this.TextPr);
+		item.SetCodePointType(AscWord.CODEPOINT_TYPE.BASE);
 	};
 	CParagraphTextShaper.prototype.private_HandleItem = function(oItem, nGrapheme, nWidth, nFontSize, nFontSlot, nCodePointType)
 	{

@@ -772,27 +772,43 @@
 	window['AscWord'].isCombiningMark = isCombiningMark;
 	
 	/**
-	 *
-	 * @param codePoint
-	 * @param width
+	 * @param {number} gid
+	 * @param {number} codePoint
+	 * @param {number} width
+	 * @param {number} fontSize
 	 * @constructor
 	 */
-	function CPdfRunText(codePoint, width)
+	function CPdfRunText(gid, codePoint, width, fontSize)
 	{
 		CRunText.call(this, codePoint);
 		
-		this.specWidth = width;
+		this.charGid     = gid;
+		this.originWidth = width;
+		this.originSize  = (fontSize ? fontSize : 12);
+		this.originCoeff = 1;
 	}
 	CPdfRunText.prototype = Object.create(CRunText.prototype);
 	CPdfRunText.prototype.constructor = CPdfRunText;
 	
+	CPdfRunText.prototype.IsPdfText = function()
+	{
+		return true;
+	};
+	CPdfRunText.prototype.GetGid = function()
+	{
+		return this.charGid;
+	};
+	CPdfRunText.prototype.GetOriginWidth = function(fontSize)
+	{
+		return this.originWidth * fontSize / this.originSize;
+	};
 	CPdfRunText.prototype.GetWidth = function()
 	{
-		return this.specWidth;
+		return this.originWidth * this.originCoeff;
 	};
 	CPdfRunText.prototype.GetWidthVisible = function()
 	{
-		return this.specWidth;
+		return this.originWidth * this.originCoeff;
 	};
 	CPdfRunText.prototype.SetWidth = function()
 	{
@@ -800,7 +816,31 @@
 	CPdfRunText.prototype.SetWidthVisible = function()
 	{
 	};
+	CPdfRunText.prototype.SetMetrics = function(fontSize, fontSlot, textPr)
+	{
+		let fontCoeff = 1;
+		
+		if (!textPr.Caps
+			&& textPr.SmallCaps
+			&& this.Value
+			&& this.Value !== (String.fromCharCode(this.Value).toUpperCase()).charCodeAt(0))
+		{
+			fontCoeff *= smallcaps_Koef;
+		}
+		
+		if (textPr.VertAlign !== AscCommon.vertalign_Baseline)
+			fontCoeff *= AscCommon.vaKSize;
+		
+		let _fontSize = fontSize * fontCoeff;
+		
+		fontCoeff *= fontSize / this.originSize;
+		
+		this.originCoeff = fontCoeff;
+		
+		this.Flags = (this.Flags & 0xFFFF) | (((_fontSize * 64) & 0xFFFF) << 16);
+	};
 	
 	AscWord.CPdfRunText = CPdfRunText;
+	
 
 })(window);

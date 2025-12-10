@@ -377,6 +377,14 @@
 		return false;
 	};
 	/**
+	 * Является ли данный элемент специальным текстовым элементом для pdf
+	 * @returns {boolean}
+	 */
+	CRunElementBase.prototype.IsPdfText = function()
+	{
+		return false;
+	};
+	/**
 	 * Является ли данный элемент текстовым элементом внутри математического выражения
 	 * @returns {boolean}
 	 */

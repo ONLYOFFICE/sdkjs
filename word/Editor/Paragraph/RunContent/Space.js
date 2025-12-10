@@ -269,34 +269,29 @@
 	window['AscWord'].CRunSpace = CRunSpace;
 	
 	/**
-	 *
-	 * @param codePoint
-	 * @param width
+	 * @param {number} gid
+	 * @param {number} codePoint
+	 * @param {number} width
+	 * @param {number} fontSize
 	 * @constructor
 	 */
-	function CPdfRunSpace(codePoint, width)
+	function CPdfRunSpace(gid, codePoint, width, fontSize)
 	{
 		CRunSpace.call(this, codePoint);
 		
-		this.specWidth = width;
+		this.charGid     = gid;
+		this.originWidth = width;
+		this.originSize  = fontSize;
 	}
 	CPdfRunSpace.prototype = Object.create(CRunSpace.prototype);
 	CPdfRunSpace.prototype.constructor = CPdfRunSpace;
 	
-	CPdfRunSpace.prototype.GetWidth = function()
-	{
-		return this.specWidth;
-	};
-	CPdfRunSpace.prototype.GetWidthVisible = function()
-	{
-		return this.specWidth;
-	};
-	CPdfRunSpace.prototype.SetWidth = function()
-	{
-	};
-	CPdfRunSpace.prototype.SetWidthVisible = function()
-	{
-	};
+	CPdfRunSpace.prototype.IsPdfText       = AscWord.CPdfRunText.prototype.IsPdfText;
+	CPdfRunSpace.prototype.GetWidth        = AscWord.CPdfRunText.prototype.GetWidth;
+	CPdfRunSpace.prototype.GetWidthVisible = AscWord.CPdfRunText.prototype.GetWidthVisible;
+	CPdfRunSpace.prototype.SetWidth        = AscWord.CPdfRunText.prototype.SetWidth;
+	CPdfRunSpace.prototype.SetWidthVisible = AscWord.CPdfRunText.prototype.SetWidthVisible;
+	CPdfRunSpace.prototype.SetMetrics      = AscWord.CPdfRunText.prototype.SetMetrics;
 	
 	AscWord.CPdfRunSpace = CPdfRunSpace;
 

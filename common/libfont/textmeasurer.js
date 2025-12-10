@@ -597,4 +597,5 @@
 	window['AscCommon'].CTextMeasurer = CTextMeasurer;
 	window['AscCommon'].g_oTextMeasurer = g_oTextMeasurer;
 	window['AscCommon'].GetLoadInfoForMeasurer = GetLoadInfoForMeasurer;
+	window['AscCommon'].getSingleCodePointCalculator = getSingleCodePointCalculator;
 })(window);
