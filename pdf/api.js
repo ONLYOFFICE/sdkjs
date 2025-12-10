@@ -4278,7 +4278,10 @@
 		let oDoc = this.getPDFDoc();
 		oDoc.BlurActiveObject();
 
-		this.printContentType = printContentType;
+		if (this.printPreview) {
+			this.printPreview.printContentType = printContentType;
+		}
+		
 		AscCommon.DocumentEditorApi.prototype.asc_drawPrintPreview.call(this, index);
 	};
 	PDFEditorApi.prototype.initCollaborativeEditing = function() {
