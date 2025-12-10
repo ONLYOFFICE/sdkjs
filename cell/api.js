@@ -1816,7 +1816,8 @@ var editor;
 	this.isOpenOOXInBrowser = this["asc_isSupportFeature"]("ooxml") && AscCommon.checkOOXMLSignature(file.data);
 	if (this.isOpenOOXInBrowser) {
 		this.openOOXInBrowserZip = file.data;
-		this.OpenDocumentFromZip(file.data);
+		const twoStage = file.data.length > 0;//10*1024*1024;
+		this.OpenDocumentFromZip(file.data, twoStage);
 	} else {
 		this.OpenDocumentFromBin(file.url, file.data);
 	}
@@ -1876,14 +1877,14 @@ var editor;
 		this.OpenDocumentFromBinNoInit(gObject);
 		this._onEndOpen();
 	};
-	spreadsheet_api.prototype.OpenDocumentFromZip = function (data) {
+	spreadsheet_api.prototype.OpenDocumentFromZip = function (data, twoStage) {
 		this.wbModel = new AscCommonExcel.Workbook(this.handlers, this, true);
 		this.initGlobalObjects(this.wbModel, data.length);
-		let res =  this.OpenDocumentFromZipNoInit(data);
+		let res = this.OpenDocumentFromZipNoInit(data, twoStage);
 		this._onEndOpen();
 		return res;
 	};
-	spreadsheet_api.prototype.OpenDocumentFromZipNoInit = function (data) {
+	spreadsheet_api.prototype.OpenDocumentFromZipNoInit = function (data, twoStage) {
 		var t = this;
 		let wb = this.wbModel;
 		var openXml = AscCommon.openXml;
@@ -1898,6 +1899,10 @@ var editor;
 			return false;
 		}
 		xmlParserContext.zip = jsZlib;
+		if (twoStage) {
+			xmlParserContext.twoStage.ReadOnlyActive = true;
+			xmlParserContext.twoStage.ReadFirstRows = 40;
+		}
 
 		//check fonts inside
 		AscFonts.IsCheckSymbols = true;
@@ -2181,9 +2186,7 @@ var editor;
 						wsParts.push({wsPart: wsPart, id: wbSheetXml.id, name: wbSheetXml.name, bHidden: wbSheetXml.bHidden, sheetId: wbSheetXml.sheetId});
 					}
 				});
-				if(xmlParserContext.ReadOnlyActive){
-					wsParts = [wsParts[wb.nActive]];
-				}
+
 				wsParts.forEach(function (wbSheetXml) {
 					if (null !== wbSheetXml.id && wbSheetXml.name) {
 						var wsPart = wbSheetXml.wsPart;
@@ -2320,6 +2323,7 @@ var editor;
 			}
 
 			var readSheetDataExternal = function (bNoBuildDep) {
+				openInTwoStage(bNoBuildDep);
 				for (var i = 0; i < xmlParserContext.InitOpenManager.oReadResult.sheetData.length; ++i) {
 					var sheetDataElem = xmlParserContext.InitOpenManager.oReadResult.sheetData[i];
 					var ws = sheetDataElem.ws;
@@ -2380,8 +2384,49 @@ var editor;
 						}
 					}
 				}
+				//sharedString
+				var sharedStringPart = wbPart.getPartByRelationshipType(openXml.Types.sharedStringTable.relationType);
+				if (sharedStringPart) {
+					var contentSharedStrings = sharedStringPart.getDocumentContent();
+					if (contentSharedStrings) {
+						var sharedStrings = new AscCommonExcel.CT_SharedStrings();
+						reader = new StaxParser(contentSharedStrings, sharedStringPart, xmlParserContext);
+						sharedStrings.fromXml(reader);
+					}
+				}
 			};
+			function openInTwoStage(bNoBuildDep) {
+				if (xmlParserContext.twoStage.ReadOnlyActive) {
+					const ws = wb.aWorksheets[wb.nActive];
+					const sheetDatas = xmlParserContext.InitOpenManager.oReadResult.sheetData;
+					const curSheetData = [sheetDatas[wb.nActive]];
+					const delayedSheetData = sheetDatas;
+					const delayedSelection = ws.getSelection();
+					ws.selectionRange = new AscCommonExcel.SelectionRange(this)
+					xmlParserContext.InitOpenManager.oReadResult.sheetData = curSheetData;
 
+					let oldIsViewMode = t.isViewMode;
+					t.asc_setViewMode(true);
+					wb.dependencyFormulas.lockRecal();
+					t.asc_registerCallback('asc_onSelectionEnd', function() {
+						setTimeout(function(){
+							t.asc_unregisterCallback('asc_onSelectionEnd');
+							xmlParserContext.twoStage.ReadOnlyActive = false;
+							xmlParserContext.twoStage.ReadFirstRows = Number.MAX_VALUE;
+							xmlParserContext.InitOpenManager.oReadResult.sheetData = delayedSheetData;
+							readSheetDataExternal(bNoBuildDep);
+							if (xmlParserContext.twoStage.sharedStringsContinue) {
+								xmlParserContext.twoStage.sharedStringsContinue();
+							}
+							ws.selectionRange = delayedSelection;
+							wb.dependencyFormulas.unlockRecal();
+							t.asc_setViewMode(oldIsViewMode);
+							t.asc_setZoom(null);
+							t.asc_Resize();
+						}, 0);
+					});
+				}
+			}
 			//TODO общий код с serialize
 			//ReadSheetDataExternal
 			if (!initOpenManager.copyPasteObj.isCopyPaste || initOpenManager.copyPasteObj.selectAllSheet) {
@@ -2394,17 +2439,6 @@ var editor;
 				readSheetDataExternal(true);
 				if (Asc["editor"] && Asc["editor"].wb) {
 					wb.init(initOpenManager.oReadResult, true);
-				}
-			}
-
-			//sharedString
-			var sharedStringPart = wbPart.getPartByRelationshipType(openXml.Types.sharedStringTable.relationType);
-			if (sharedStringPart) {
-				var contentSharedStrings = sharedStringPart.getDocumentContent();
-				if (contentSharedStrings) {
-					var sharedStrings = new AscCommonExcel.CT_SharedStrings();
-					reader = new StaxParser(contentSharedStrings, sharedStringPart, xmlParserContext);
-					sharedStrings.fromXml(reader);
 				}
 			}
 

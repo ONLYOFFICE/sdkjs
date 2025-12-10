@@ -13101,6 +13101,9 @@ function RangeDataManagerElem(bbox, data)
 			}
 			return;
 		}
+		this.replaceSharedStrings(sharedStrings);
+	};
+	CSharedStrings.prototype.replaceSharedStrings = function(sharedStrings) {
 		this.all = sharedStrings.slice(); //copy
 		this.text = Object.create(null);
 		this.multiTextMap = Object.create(null);
