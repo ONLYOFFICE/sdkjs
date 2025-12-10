@@ -5042,21 +5042,21 @@
 
             let oThis = this;
 
-            if (pValues.m_oS != null) {
+            if (pValues.s != null) {
                 this.bs.WriteItem(c_oSer_RichValue.StructureIdx, function() {
-                    oThis.memory.WriteULong(pValues.m_oS);
+                    oThis.memory.WriteULong(pValues.s);
                 });
             }
 
-            for (let i = 0; i < pValues.m_arrV.length; ++i) {
+            for (let i = 0; i < pValues.arrV.length; ++i) {
                 this.bs.WriteItem(c_oSer_RichValue.Value, function() {
-                    oThis.memory.WriteString3(pValues.m_arrV[i]);
+                    oThis.memory.WriteString3(pValues.arrV[i]);
                 });
             }
 
-            if (pValues.m_oFb != null) {
+            if (pValues.fb != null) {
                 this.bs.WriteItem(c_oSer_RichValue.Fallback, function() {
-                    oThis.WriteRichValueFallback(pValues.m_oFb);
+                    oThis.WriteRichValueFallback(pValues.fb);
                 });
             }
         };
@@ -5067,12 +5067,12 @@
             let oThis = this;
 
             this.bs.WriteItem(c_oSer_RichValue.FallbackValue, function() {
-                oThis.memory.WriteString3(pFallback.m_sContent);
+                oThis.memory.WriteString3(pFallback.content);
             });
 
-            if (pFallback.m_oT != null) {
+            if (pFallback.t != null) {
                 this.bs.WriteItem(c_oSer_RichValue.FallbackType, function() {
-                    oThis.memory.WriteByte(pFallback.m_oT);
+                    oThis.memory.WriteByte(pFallback.t);
                 });
             }
         };
@@ -5093,25 +5093,25 @@
 
             let oThis = this;
 
-            if (pStructure.m_oT != null) {
+            if (pStructure.t != null) {
                 this.bs.WriteItem(c_oSer_RichStructures.Type, function() {
-                    oThis.memory.WriteString3(pStructure.m_oT);
+                    oThis.memory.WriteString3(pStructure.t);
                 });
             }
 
-            for (let i = 0; i < pStructure.m_arrItems.length; ++i) {
-                if (!pStructure.m_arrItems[i]) continue;
+            for (let i = 0; i < pStructure.arrItems.length; ++i) {
+                if (!pStructure.arrItems[i]) continue;
 
                 this.bs.WriteItem(c_oSer_RichStructures.ValueKey, function() {
-                    if (pStructure.m_arrItems[i].m_oT != null) {
+                    if (pStructure.arrItems[i].t != null) {
                         oThis.memory.WriteByte(c_oSer_RichStructures.ValueKeyType);
                         oThis.memory.WriteByte(c_oSerPropLenType.Byte);
-                        oThis.memory.WriteByte(pStructure.m_arrItems[i].m_oT);
+                        oThis.memory.WriteByte(pStructure.arrItems[i].t);
                     }
-                    if (pStructure.m_arrItems[i].m_oN != null) {
+                    if (pStructure.arrItems[i].n != null) {
                         oThis.memory.WriteByte(c_oSer_RichStructures.ValueKeyName);
                         oThis.memory.WriteByte(c_oSerPropLenType.Variable);
-                        oThis.memory.WriteString(pStructure.m_arrItems[i].m_oN);
+                        oThis.memory.WriteString(pStructure.arrItems[i].n);
                     }
                 });
             }
@@ -5122,19 +5122,19 @@
 
             let oThis = this;
 
-            if (pTypesInfo.m_oGlobal != null && pTypesInfo.m_oGlobal.m_oKeyFlags != null) {
+            if (pTypesInfo.global != null && pTypesInfo.global.keyFlags != null) {
                 this.bs.WriteItem(c_oSer_RichValueTypesInfo.Global, function() {
                     oThis.bs.WriteItem(c_oSer_RichValueTypesInfo.KeyFlags, function() {
-                        oThis.WriteRichValueTypeKeyFlags(pTypesInfo.m_oGlobal.m_oKeyFlags);
+                        oThis.WriteRichValueTypeKeyFlags(pTypesInfo.global.keyFlags);
                     });
                 });
             }
 
-            if (pTypesInfo.m_oTypes != null) {
+            if (pTypesInfo.types != null) {
                 this.bs.WriteItem(c_oSer_RichValueTypesInfo.Types, function() {
-                    for (let i = 0; i < pTypesInfo.m_oTypes.m_arrItems.length; ++i) {
+                    for (let i = 0; i < pTypesInfo.types.arrItems.length; ++i) {
                         oThis.bs.WriteItem(c_oSer_RichValueTypesInfo.Type, function() {
-                            oThis.WriteRichValueType(pTypesInfo.m_oTypes.m_arrItems[i]);
+                            oThis.WriteRichValueType(pTypesInfo.types.arrItems[i]);
                         });
                     }
                 });
@@ -5145,9 +5145,9 @@
             if (!pKeyFlags) return;
 
             let oThis = this;
-            for (let i = 0; i < pKeyFlags.m_arrItems.length; ++i) {
+            for (let i = 0; i < pKeyFlags.arrItems.length; ++i) {
                 this.bs.WriteItem(c_oSer_RichValueTypesInfo.ReservedKey, function() {
-                    oThis.WriteRichValueTypeReservedKey(pKeyFlags.m_arrItems[i]);
+                    oThis.WriteRichValueTypeReservedKey(pKeyFlags.arrItems[i]);
                 });
             }
         };
@@ -5157,25 +5157,25 @@
 
             let oThis = this;
 
-            if (pReservedKey.m_oName != null) {
+            if (pReservedKey.name != null) {
                 this.bs.WriteItem(c_oSer_RichValueTypesInfo.ReservedKeyName, function() {
-                    oThis.memory.WriteString3(pReservedKey.m_oName);
+                    oThis.memory.WriteString3(pReservedKey.name);
                 });
             }
 
-            for (let i = 0; i < pReservedKey.m_arrItems.length; ++i) {
-                if (!pReservedKey.m_arrItems[i]) continue;
+            for (let i = 0; i < pReservedKey.arrItems.length; ++i) {
+                if (!pReservedKey.arrItems[i]) continue;
 
                 this.bs.WriteItem(c_oSer_RichValueTypesInfo.ReservedKeyFlags, function() {
-                    if (pReservedKey.m_arrItems[i].m_oName != null) {
+                    if (pReservedKey.arrItems[i].name != null) {
                         oThis.memory.WriteByte(c_oSer_RichValueTypesInfo.FlagName);
                         oThis.memory.WriteByte(c_oSerPropLenType.Variable);
-                        oThis.memory.WriteString(pReservedKey.m_arrItems[i].m_oName);
+                        oThis.memory.WriteString(pReservedKey.arrItems[i].name);
                     }
-                    if (pReservedKey.m_arrItems[i].m_oValue != null) {
+                    if (pReservedKey.arrItems[i].value != null) {
                         oThis.memory.WriteByte(c_oSer_RichValueTypesInfo.FlagValue);
                         oThis.memory.WriteByte(c_oSerPropLenType.Byte);
-                        oThis.memory.WriteBool(pReservedKey.m_arrItems[i].m_oValue);
+                        oThis.memory.WriteBool(pReservedKey.arrItems[i].value);
                     }
                 });
             }
@@ -5186,15 +5186,15 @@
 
             let oThis = this;
 
-            if (pTypeInfo.m_oName != null) {
+            if (pTypeInfo.name != null) {
                 this.bs.WriteItem(c_oSer_RichValueTypesInfo.Name, function() {
-                    oThis.memory.WriteString3(pTypeInfo.m_oName);
+                    oThis.memory.WriteString3(pTypeInfo.name);
                 });
             }
 
-            if (pTypeInfo.m_oKeyFlags != null) {
+            if (pTypeInfo.keyFlags != null) {
                 this.bs.WriteItem(c_oSer_RichValueTypesInfo.KeyFlags, function() {
-                    oThis.WriteRichValueTypeKeyFlags(pTypeInfo.m_oKeyFlags);
+                    oThis.WriteRichValueTypeKeyFlags(pTypeInfo.keyFlags);
                 });
             }
         };
@@ -9768,19 +9768,19 @@
                 }
                 this.oWorkbook.xmlMaps.push(oXmlMap);
             } else if (c_oSerWorkbookTypes.RdRichValue === type) {
-                this.oWorkbook.rdRichValue = new AscCommonExcel.CRichValue();
+                this.oWorkbook.richValue = new AscCommonExcel.CRichValue();
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadRichValueData(t, l, oThis.oWorkbook.rdRichValue);
+                    return oThis.ReadRichValueData(t, l, oThis.oWorkbook.richValue);
                 });
             } else if (c_oSerWorkbookTypes.RdRichValueStructure === type) {
-                this.oWorkbook.rdRichValueStructure = new AscCommonExcel.CRichValueStructure();
+                this.oWorkbook.richValueStructure = new AscCommonExcel.CRichValueStructure();
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadRichValueStructure(t, l, oThis.oWorkbook.rdRichValueStructure);
+                    return oThis.ReadRichValueStructures(t, l, oThis.oWorkbook.richValueStructure);
                 });
             } else if (c_oSerWorkbookTypes.RdRichValueTypes === type) {
-                this.oWorkbook.readRichValueTypesInfo = new AscCommonExcel.CRichValueTypesInfo();
+                this.oWorkbook.richValueTypesInfo = new AscCommonExcel.CRichValueTypesInfo();
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadRichValueTypesInfo(t, l, oThis.oWorkbook.readRichValueTypesInfo);
+                    return oThis.ReadRichValueTypesInfo(t, l, oThis.oWorkbook.richValueTypesInfo);
                 });
             }
             else
@@ -10007,17 +10007,17 @@
             let res = c_oSerConstants.ReadOk;
 
             if (c_oSer_RichValue.StructureIdx === type) {
-                pValue.m_oS = this.stream.GetULong();
+                pValue.s = this.stream.GetULong();
             }
             else if (c_oSer_RichValue.Value === type) {
                 let s = this.stream.GetString2LE(length);
-                pValue.m_arrV.push(s);
+                pValue.arrV.push(s);
             }
             else if (c_oSer_RichValue.Fallback === type) {
-                pValue.m_oFb = {};
+                pValue.fb = {};
                 let oThis = this;
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadRichValueFallback(t, l, pValue.m_oFb);
+                    return oThis.ReadRichValueFallback(t, l, pValue.fb);
                 });
             }
             else {
@@ -10036,7 +10036,7 @@
                 res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadRichValueStructure(t, l, pStructure);
                 });
-                pStructures.m_arrItems.push(pStructure);
+                pStructures.children.push(pStructure);
             }
             else {
                 res = c_oSerConstants.ReadUnknown;
@@ -10050,14 +10050,14 @@
             let oThis = this;
 
             if (c_oSer_RichStructures.Type === type) {
-                pStructure.m_oT = this.stream.GetString2LE(length);
+                pStructure.t = this.stream.GetString2LE(length);
             }
             else if (c_oSer_RichStructures.ValueKey === type) {
                 let pValueKey = new AscCommonExcel.CRichValueKey();
                 res = this.bcr.Read2Spreadsheet(length, function (t, l) {
                     return oThis.ReadRichValueStructureValueKey(t, l, pValueKey);
                 });
-                pStructure.m_arrItems.push(pValueKey);
+                pStructure.children.push(pValueKey);
             }
             else {
                 res = c_oSerConstants.ReadUnknown;
@@ -10070,12 +10070,9 @@
             let res = c_oSerConstants.ReadOk;
 
             if (c_oSer_RichStructures.ValueKeyName === type) {
-                pValueKey.m_oN = this.stream.GetString2LE(length);
-            }
-            else if (c_oSer_RichStructures.ValueKeyType === type) {
-                pValueKey.m_oT = {};
-                pValueKey.m_oT.SetValueFromByte = function(val) { this.value = val; };
-                pValueKey.m_oT.SetValueFromByte(this.stream.GetUChar());
+                pValueKey.n = this.stream.GetString2LE(length);
+            } else if (c_oSer_RichStructures.ValueKeyType === type) {
+                pValueKey.t = this.stream.GetUChar();
             }
             return res;
         };
@@ -10086,15 +10083,15 @@
             let oThis = this;
 
             if (c_oSer_RichValueTypesInfo.Global === type) {
-                pTypesInfo.m_oGlobal = {};
+                pTypesInfo.global = {};
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadRichValueGlobal(t, l, pTypesInfo.m_oGlobal);
+                    return oThis.ReadRichValueGlobal(t, l, pTypesInfo.global);
                 });
             }
             else if (c_oSer_RichValueTypesInfo.Types === type) {
-                pTypesInfo.m_oTypes = {};
+                pTypesInfo.types = {};
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadRichValueTypes(t, l, pTypesInfo.m_oTypes);
+                    return oThis.ReadRichValueTypes(t, l, pTypesInfo.types);
                 });
             }
             else {
@@ -10109,9 +10106,9 @@
             let oThis = this;
 
             if (c_oSer_RichValueTypesInfo.KeyFlags === type) {
-                pGlobalType.m_oKeyFlags = {};
+                pGlobalType.keyFlags = {};
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadRichValueTypeKeyFlags(t, l, pGlobalType.m_oKeyFlags);
+                    return oThis.ReadRichValueTypeKeyFlags(t, l, pGlobalType.keyFlags);
                 });
             }
             else {
@@ -10130,10 +10127,10 @@
                 res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadRichValueType(t, l, pType);
                 });
-                if (!pTypes.m_arrItems) {
-                    pTypes.m_arrItems = [];
+                if (!pTypes.arrItems) {
+                    pTypes.arrItems = [];
                 }
-                pTypes.m_arrItems.push(pType);
+                pTypes.arrItems.push(pType);
             }
             else {
                 res = c_oSerConstants.ReadUnknown;
@@ -10147,12 +10144,12 @@
             let oThis = this;
 
             if (c_oSer_RichValueTypesInfo.Name === type) {
-                pType.m_oName = this.stream.GetString2LE(length);
+                pType.name = this.stream.GetString2LE(length);
             }
             else if (c_oSer_RichValueTypesInfo.KeyFlags === type) {
-                pType.m_oKeyFlags = {};
+                pType.keyFlags = {};
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadRichValueTypeKeyFlags(t, l, pType.m_oKeyFlags);
+                    return oThis.ReadRichValueTypeKeyFlags(t, l, pType.keyFlags);
                 });
             }
             else {
@@ -10171,10 +10168,10 @@
                 res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadRichValueReservedKey(t, l, pKey);
                 });
-                if (!pKeyFlags.m_arrItems) {
-                    pKeyFlags.m_arrItems = [];
+                if (!pKeyFlags.arrItems) {
+                    pKeyFlags.arrItems = [];
                 }
-                pKeyFlags.m_arrItems.push(pKey);
+                pKeyFlags.arrItems.push(pKey);
             }
             else {
                 res = c_oSerConstants.ReadUnknown;
@@ -10188,17 +10185,17 @@
             let oThis = this;
 
             if (c_oSer_RichValueTypesInfo.ReservedKeyName === type) {
-                pReservedKey.m_oName = this.stream.GetString2LE(length);
+                pReservedKey.name = this.stream.GetString2LE(length);
             }
             else if (c_oSer_RichValueTypesInfo.ReservedKeyFlags === type) {
                 let pFlag = new AscCommonExcel.CRichValueTypeReservedKeyFlag();
                 res = this.bcr.Read2Spreadsheet(length, function (t, l) {
                     return oThis.ReadRichValueReservedKeyFlags(t, l, pFlag);
                 });
-                if (!pReservedKey.m_arrItems) {
-                    pReservedKey.m_arrItems = [];
+                if (!pReservedKey.arrItems) {
+                    pReservedKey.arrItems = [];
                 }
-                pReservedKey.m_arrItems.push(pFlag);
+                pReservedKey.arrItems.push(pFlag);
             }
             else {
                 res = c_oSerConstants.ReadUnknown;
@@ -10211,10 +10208,10 @@
             let res = c_oSerConstants.ReadOk;
 
             if (c_oSer_RichValueTypesInfo.FlagName === type) {
-                pFlag.m_oName = this.stream.GetString2LE(length);
+                pFlag.name = this.stream.GetString2LE(length);
             }
             else if (c_oSer_RichValueTypesInfo.FlagValue === type) {
-                pFlag.m_oValue = this.stream.GetBool();
+                pFlag.value = this.stream.GetBool();
             }
             else {
                 res = c_oSerConstants.ReadUnknown;

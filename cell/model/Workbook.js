@@ -3218,6 +3218,10 @@
 		this.externalReferenceHelper = new CExternalReferenceHelper(this);
 		
 		this.fileCustomFunctions = null;
+
+		this.richValue = null;
+		this.richValueStructure = null;
+		this.richValueTypesInfo = null;
 	}
 	Workbook.prototype.init=function(oReadResult, bNoBuildDep, bSnapshot){
 		let tableCustomFunc = oReadResult.tableCustomFunc || {};

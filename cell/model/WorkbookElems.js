@@ -20386,73 +20386,73 @@ function RangeDataManagerElem(bbox, data)
 
 	// RichValue Types
 	function CRichValueTypeReservedKeyFlag() {
-		this.m_oValue = null;
-		this.m_oName = null;
+		this.value = null;
+		this.name = null;
 	}
 
 	function CRichValueTypeReservedKey() {
-		this.m_oName = null;
-		this.m_aChildren = []; //  CRichValueTypeReservedKeyFlag
+		this.name = null;
+		this.arrItems = []; //  CRichValueTypeReservedKeyFlag
 	}
 
 	function CRichValueTypeKeyFlags() {
-		this.m_aChildren = []; //  CRichValueTypeReservedKey
+		this.arrItems = []; //  CRichValueTypeReservedKey
 	}
 
 	function CRichValueType() {
-		this.m_oName = null;
-		this.m_oKeyFlags = null; // CRichValueTypeKeyFlags
-		this.m_oExtLst = null;
+		this.name = null;
+		this.keyFlags = null; // CRichValueTypeKeyFlags
+		this.extLst = null;
 	}
 
 	function CRichValueTypes() {
-		this.m_aChildren = []; //  CRichValueType
+		this.arrItems = []; //  CRichValueType
 	}
 
 	function CRichValueGlobalType() {
-		this.m_oKeyFlags = null; // CRichValueTypeKeyFlags
-		this.m_oExtLst = null;
+		this.keyFlags = null; // CRichValueTypeKeyFlags
+		this.extLst = null;
 	}
 
 	function CRichValueTypesInfo() {
-		this.m_oGlobal = null; // CRichValueGlobalType
-		this.m_oTypes = null; // CRichValueTypes
-		this.m_oExtLst = null;
+		this.global = null; // CRichValueGlobalType
+		this.types = null; // CRichValueTypes
+		this.extLst = null;
 	}
 
 // RichValue Structures
 	function CRichValueKey() {
-		this.m_oT = null;
-		this.m_oN = null;
+		this.t = null;
+		this.n = null;
 	}
 
 	function CRichValueStructure() {
-		this.m_oT = null;
-		this.m_aChildren = []; //  CRichValueKey
+		this.t = null;
+		this.children = []; //  CRichValueKey
 	}
 
 	function CRichValueStructures() {
-		this.m_oCount = null;
-		this.m_oExtLst = null;
-		this.m_aChildren = []; //  CRichValueStructure
+		this.count = null;
+		this.extLst = null;
+		this.children = []; //  CRichValueStructure
 	}
 
 // RichValue Data
 	function CRichValueFallback() {
-		this.m_oT = null;
-		this.m_sContent = null;
+		this.t = null;
+		this.content = null;
 	}
 
 	function CRichValue() {
-		this.m_oS = null;
-		this.m_oFb = null; // CRichValueFallback
-		this.m_arrV = [];
+		this.s = null;
+		this.fb = null; // CRichValueFallback
+		this.arrV = [];
 	}
 
 	function CRichValueData() {
-		this.m_oCount = null;
-		this.m_oExtLst = null;
-		this.m_aChildren = []; //CRichValue
+		this.count = null;
+		this.extLst = null;
+		this.children = []; //CRichValue
 	}
 
 
