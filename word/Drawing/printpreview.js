@@ -186,7 +186,7 @@
 						h = height;
 					}
 
-					this.pageImage = viewer.GetPrintPage(this.page, w, h);
+					this.pageImage = viewer.GetPrintPage(this.page, w, h, Asc.editor.printContentType);
 				}
 
 				break;

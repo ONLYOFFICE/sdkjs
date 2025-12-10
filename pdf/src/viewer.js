@@ -4062,9 +4062,9 @@
 
 		return ctx.canvas;
 	};
-	CHtmlPage.prototype.GetPrintPage = function(nPage, nWidthPx, nHeightPx) {
+	CHtmlPage.prototype.GetPrintPage = function(nPage, nWidthPx, nHeightPx, contentType) {
 		let oFile = this.file;
-		let image = !oFile.pages[nPage].isRecognized ? this.file.getPage(nPage, nWidthPx, nHeightPx, undefined, 0xFFFFFF) : null;
+		let image = !oFile.pages[nPage].isRecognized && contentType !== AscPDF.PRINT_CONTENT_TYPES.formsOnly ? this.file.getPage(nPage, nWidthPx, nHeightPx, undefined, 0xFFFFFF) : null;
 
 		if (!image) {
 			let pageColor = this.Api.getPageBackgroundColor();
@@ -4085,14 +4085,21 @@
 
 		let ctx = image.getContext('2d');
 
-		this._drawDrawingsOnCtx(nPage, ctx);
-		this._drawMarkupAnnotsOnCtx(nPage, ctx);
-		this._drawAnnotsOnCtx(nPage, ctx);
+		contentType !== AscPDF.PRINT_CONTENT_TYPES.formsOnly && this._drawDrawingsOnCtx(nPage, ctx);
+		contentType == AscPDF.PRINT_CONTENT_TYPES.docAndMarkups && this._drawMarkupAnnotsOnCtx(nPage, ctx);
+		this._drawAnnotsOnCtx(nPage, ctx, false, contentType);
 		this._drawFieldsOnCtx(nPage, ctx, false, true);
 
 		return ctx.canvas;
 	};
-    CHtmlPage.prototype._drawAnnotsOnCtx = function(nPage, ctx, isThumbnails) {
+    CHtmlPage.prototype._drawAnnotsOnCtx = function(nPage, ctx, isThumbnails, contentType) {
+		let isDrawAnnots = contentType == AscPDF.PRINT_CONTENT_TYPES.docAndMarkups;
+		let isOnlyStamps = contentType == AscPDF.PRINT_CONTENT_TYPES.docAndStamps;
+
+		if (!isDrawAnnots && !isOnlyStamps) {
+			return;
+		}
+
 		let oDoc		= this.getPDFDoc();
         let widthPx		= ctx.canvas.width;
         let heightPx	= ctx.canvas.height;
@@ -4110,7 +4117,11 @@
         
         if (this.pagesInfo.pages[nPage].annots != null) {
             this.pagesInfo.pages[nPage].annots.forEach(function(annot) {
-                if (annot.IsTextMarkup() == false) {
+				if (isOnlyStamps && !annot.IsStamp()) {
+					return;
+				}
+
+				if (annot.IsTextMarkup() == false) {
                     if (annot.IsNeedDrawFromStream() == false) {
                         annot.Draw(oGraphicsPDF, oGraphicsWord);
                     }
