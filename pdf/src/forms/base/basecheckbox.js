@@ -436,7 +436,7 @@
         oOverlay.max_y      = 0;
         oOverlay.ClearAll   = true;
 
-        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseUp);
+        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseUp);
         oViewer.onUpdateOverlay();
     };
     /**
