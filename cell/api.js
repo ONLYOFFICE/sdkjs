@@ -2397,20 +2397,30 @@ var editor;
 			};
 			function openInTwoStage(bNoBuildDep) {
 				if (xmlParserContext.twoStage.ReadOnlyActive) {
-					const ws = wb.aWorksheets[wb.nActive];
+					// Validate active sheet index
+					const activeIndex = wb.nActive;
+					const ws = wb.aWorksheets[activeIndex];
+					if (!ws) {
+						return;
+					}
 					const sheetDatas = xmlParserContext.InitOpenManager.oReadResult.sheetData;
-					const curSheetData = [sheetDatas[wb.nActive]];
+					if (!sheetDatas || activeIndex >= sheetDatas.length) {
+						return;
+					}
+					const curSheetData = [sheetDatas[activeIndex]];
 					const delayedSheetData = sheetDatas;
+					//save state
 					const delayedSelection = ws.getSelection();
-					ws.selectionRange = new AscCommonExcel.SelectionRange(this)
+					const delayedSheetViews = ws.sheetViews;
+					// ws.selectionRange = new AscCommonExcel.SelectionRange(ws);
+					// ws.sheetViews = []
 					xmlParserContext.InitOpenManager.oReadResult.sheetData = curSheetData;
-
-					let oldIsViewMode = t.isViewMode;
-					t.asc_setViewMode(true);
-					wb.dependencyFormulas.lockRecal();
 					t.asc_registerCallback('asc_onSelectionEnd', function() {
-						setTimeout(function(){
-							t.asc_unregisterCallback('asc_onSelectionEnd');
+						t.asc_unregisterCallback('asc_onSelectionEnd');
+						//todo own action type
+						t.sync_StartAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.Disconnect, Asc.c_oAscRestrictionType.View);
+						setTimeout(function() {
+							//Read remainings
 							xmlParserContext.twoStage.ReadOnlyActive = false;
 							xmlParserContext.twoStage.ReadFirstRows = Number.MAX_VALUE;
 							xmlParserContext.InitOpenManager.oReadResult.sheetData = delayedSheetData;
@@ -2418,16 +2428,18 @@ var editor;
 							if (xmlParserContext.twoStage.sharedStringsContinue) {
 								xmlParserContext.twoStage.sharedStringsContinue();
 							}
-							ws.selectionRange = delayedSelection;
-							wb.dependencyFormulas.unlockRecal();
-							t.asc_setViewMode(oldIsViewMode);
+							// Restore state
+							// ws.selectionRange = delayedSelection;
+							//ws.sheetViews = delayedSheetViews;
+							t.sync_EndAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.Disconnect, Asc.c_oAscRestrictionType.View);
+
 							t.asc_setZoom(null);
 							t.asc_Resize();
 						}, 0);
 					});
 				}
 			}
-			//TODO общий код с serialize
+			//TODO shared code with serialize
 			//ReadSheetDataExternal
 			if (!initOpenManager.copyPasteObj.isCopyPaste || initOpenManager.copyPasteObj.selectAllSheet) {
 				readSheetDataExternal(false);
