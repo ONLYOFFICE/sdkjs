@@ -4784,12 +4784,16 @@
 		}
 	};
 	CSeriesBase.prototype.supportsErrorBars = function () {
-		if (this instanceof AscFormat.CAreaSeries ||
-			this instanceof AscFormat.CBarSeries ||
-			this instanceof AscFormat.CBubbleSeries ||
-			this instanceof AscFormat.CScatterSeries ||
-			this instanceof AscFormat.CLineSeries) {
+		const objectType = this.getObjectType();
+		const supportedTypes = [
+			AscDFH.historyitem_type_AreaSeries,
+			AscDFH.historyitem_type_BarSeries,
+			AscDFH.historyitem_type_BubbleSeries,
+			AscDFH.historyitem_type_ScatterSer,
+			AscDFH.historyitem_type_LineSeries
+		];
 
+		if (supportedTypes.indexOf(objectType) >= 0) {
 			const chart = this.parent;
 			return !(chart && chart.b3D);
 		}
