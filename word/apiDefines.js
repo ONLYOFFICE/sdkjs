@@ -203,7 +203,16 @@ var c_oAscSdtCheckBoxDefaults = {
 	CheckedSymbol   : 0x2612,
 	UncheckedSymbol : 0x2610,
 	CheckedFont     : "MS Gothic",
-	UncheckedFont   : "MS Gothic"
+	UncheckedFont   : "MS Gothic",
+	
+	FormCheckedFont   : "Segoe UI Symbol",
+	FormUncheckedFont : "Segoe UI Symbol",
+	
+	FormCheckedSymbol   : 0x2611,
+	FormUncheckedSymbol : 0x2610,
+	
+	FormCheckedRadioSymbol   : 0x25C9,
+	FormUncheckedRadioSymbol : 0x25CB
 };
 
 window["flat_desine"] = false;
@@ -494,10 +503,16 @@ window['AscCommon'].c_oSerFormat   = c_oSerFormat;
 window['AscCommon'].CurFileVersion = c_oSerFormat.Version;
 
 prot = window['Asc']['c_oAscSdtCheckBoxDefaults'] = window['Asc'].c_oAscSdtCheckBoxDefaults = c_oAscSdtCheckBoxDefaults;
-prot['CheckedSymbol']   = prot.CheckedSymbol;
-prot['UncheckedSymbol'] = prot.UncheckedSymbol;
-prot['CheckedFont']     = prot.CheckedFont;
-prot['UncheckedFont']   = prot.UncheckedFont;
+prot['CheckedSymbol']            = prot.CheckedSymbol;
+prot['UncheckedSymbol']          = prot.UncheckedSymbol;
+prot['CheckedFont']              = prot.CheckedFont;
+prot['UncheckedFont']            = prot.UncheckedFont;
+prot['FormCheckedFont']          = prot.FormCheckedFont;
+prot['FormUncheckedFont']        = prot.FormUncheckedFont;
+prot['FormCheckedSymbol']        = prot.FormCheckedSymbol;
+prot['FormUncheckedSymbol']      = prot.FormUncheckedSymbol;
+prot['FormCheckedRadioSymbol']   = prot.FormCheckedRadioSymbol;
+prot['FormUncheckedRadioSymbol'] = prot.FormUncheckedRadioSymbol;
 
 window['Asc']['NoYLimit'] = window['Asc'].NoYLimit = 0x7FFFFFFF;
 

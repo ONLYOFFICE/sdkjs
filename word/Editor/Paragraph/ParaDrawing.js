@@ -190,6 +190,8 @@ function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 			this.graphicObjects.addGraphicObject(this);
 	}
 	this.bCellHF = false;
+	
+	this.forceNoWrap = false;
 }
 ParaDrawing.prototype = Object.create(AscWord.CRunElementBase.prototype);
 ParaDrawing.prototype.constructor = ParaDrawing;
@@ -1906,6 +1908,10 @@ ParaDrawing.prototype.GetInnerForm = function()
 {
 	return this.GraphicObj ? this.GraphicObj.getInnerForm() : null;
 };
+ParaDrawing.prototype.SetForceNoWrap = function(noWrap)
+{
+	this.forceNoWrap = noWrap;
+};
 ParaDrawing.prototype.Use_TextWrap = function()
 {
 	if (this.IsInline())
@@ -1916,6 +1922,9 @@ ParaDrawing.prototype.Use_TextWrap = function()
 	if (!this.Parent
 		|| !this.Parent.GetFramePr
 		|| (this.Parent.GetFramePr() && !this.Parent.GetFramePr().IsInline()))
+		return false;
+	
+	if (this.forceNoWrap)
 		return false;
 
 	// здесь должна быть проверка, нужно ли использовать обтекание относительно данного объекта,
@@ -2076,20 +2085,15 @@ ParaDrawing.prototype.Remove_FromDocument = function(bRecalculate)
 				oGrObject.setSignature(oGrObject.signatureLine);
 			}
 		}
-		var oPictureCC         = null;
-		var arrContentControls = oRun.GetParentContentControls();
-		for (var nIndex = arrContentControls.length - 1; nIndex >= 0; --nIndex)
+		
+		let parentContentControls = oRun.GetParentContentControls();
+		for (var nIndex = parentContentControls.length - 1; nIndex >= 0; --nIndex)
 		{
-			if (arrContentControls[nIndex].IsPicture())
-			{
-				oPictureCC = arrContentControls[nIndex];
-				break;
-			}
+			let cc = parentContentControls[nIndex];
+			if (cc.IsPicture() || cc.IsBuiltInWatermark())
+				cc.RemoveContentControlWrapper();
 		}
-
-		if (oPictureCC)
-			oPictureCC.RemoveContentControlWrapper();
-
+		
 		oRun.Remove_DrawingObject(this.Id);
 		if (oRun.IsInHyperlink())
 			oResult = new CTextPr();
@@ -3179,8 +3183,9 @@ ParaDrawing.prototype.SetDrawingPrFromDrawing = function(oAnotherDrawing)
 };
 ParaDrawing.prototype.OnContentReDraw = function()
 {
-	if (this.Parent && this.Parent.Parent)
-		this.Parent.Parent.OnContentReDraw(this.PageNum, this.PageNum);
+	let docContent = this.GetParentDocumentContent();
+	if (docContent)
+		docContent.OnContentReDraw(this.PageNum, this.PageNum);
 };
 ParaDrawing.prototype.getBase64Img = function()
 {

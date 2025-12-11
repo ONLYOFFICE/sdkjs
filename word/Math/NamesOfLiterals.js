@@ -7565,6 +7565,7 @@
 						}
 
 						oCurrentElement.State.ContentPos -= nEndRunContent - intRunContent;
+						oCurrentElement.State.ContentPos = Math.max(0, oCurrentElement.State.ContentPos);
 						oCurrentElement.Remove_FromContent(intRunContent, nEndRunContent - intRunContent, false);
 
 						if (oCurrentElement.Content.length === 0)

@@ -1608,20 +1608,27 @@
 	};
 
 	/**
-	 * Adds a hyperlink to the specified range. 
+	 * Adds a hyperlink to the specified range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sLink - The link address.
 	 * @param {string} sScreenTipText - The screen tip text.
-	 * @return {ApiHyperlink | null}  - returns null if range contains more than one paragraph or sLink is invalid. 
+	 * @param {string} sBookmarkName - name of a bookmark
+	 * @return {?ApiHyperlink }  - returns null if range contains more than one paragraph or sLink is invalid. 
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/AddHyperlink.js
 	 */
-	ApiRange.prototype.AddHyperlink = function(sLink, sScreenTipText)
+	ApiRange.prototype.AddHyperlink = function(sLink, sScreenTipText, sBookmarkName)
 	{
-		if (typeof(sLink) !== "string" || sLink === "" || sLink.length > Asc.c_nMaxHyperlinkLength)
+		sLink = GetStringParameter(sLink, "");
+		sScreenTipText = GetStringParameter(sScreenTipText, "");
+		sBookmarkName = GetStringParameter(sBookmarkName, "");
+
+		if ((!sLink && !sBookmarkName) || (sLink && sBookmarkName)) {
 			return null;
-		if (typeof(sScreenTipText) !== "string")
-			sScreenTipText = "";
+		}
+
+		if (sLink.length > Asc.c_nMaxHyperlinkLength)
+			return null;
 
 		this.GetAllParagraphs();
 		if (this.Paragraphs.length !== 1)
@@ -1637,7 +1644,7 @@
 		sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
 		hyperlinkPr.put_Value(sLink);
 		hyperlinkPr.put_ToolTip(sScreenTipText);
-		hyperlinkPr.put_Bookmark(null);
+		hyperlinkPr.put_Bookmark(sBookmarkName);
 
 		this.Select(false);
 		var oHyperlink = new ApiHyperlink(this.Paragraphs[0].Paragraph.AddHyperlink(hyperlinkPr));
@@ -1645,50 +1652,48 @@
 
 		return oHyperlink;
 	};
-
+	
 	/**
 	 * Returns a text from the specified range.
 	 * @memberof ApiRange
-	 * @param {object} oPr - The resulting string display properties.
-     * @param {boolean} [oPr.Numbering=false] - Defines if the resulting string will include numbering or not.
-     * @param {boolean} [oPr.Math=false] - Defines if the resulting string will include mathematical expressions or not.
-	 * @param {string} [oPr.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r".
-     * @param {string} [oPr.TableCellSeparator='\t'] - Defines how the table cell separator will be specified in the resulting string. Any symbol can be used. The default separator is "\t".
-     * @param {string} [oPr.TableRowSeparator='\r\n'] - Defines how the table row separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
-     * @param {string} [oPr.ParaSeparator='\r\n'] - Defines how the paragraph separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
-	 * @param {string} [oPr.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string (does not apply to numbering). Any symbol can be used. The default symbol is "\t".
+	 * @param {object} [options] - Options for formatting the returned text.
+	 * @param {boolean} [options.Numbering=true] - Defines if the resulting string will include numbering or not.
+	 * @param {boolean} [options.Math=true] - Defines if the resulting string will include mathematical expressions or not.
+	 * @param {string} [options.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r".
+	 * @param {string} [options.TableCellSeparator='\t'] - Defines how the table cell separator will be specified in the resulting string. Any symbol can be used. The default separator is "\t".
+	 * @param {string} [options.TableRowSeparator='\r\n'] - Defines how the table row separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
+	 * @param {string} [options.ParaSeparator='\r\n'] - Defines how the paragraph separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
+	 * @param {string} [options.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string (does not apply to numbering). Any symbol can be used. The default symbol is "\t".
 	 * @typeofeditors ["CDE"]
-	 * @returns {String} - returns "" if range is empty.
+	 * @returns {string} Returns an empty string if range is empty.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetText.js
 	 */
-	ApiRange.prototype.GetText = function(oPr)
+	ApiRange.prototype.GetText = function(options)
 	{
-		if (!oPr) {
-			oPr = {};
-		}
+		options = options || {};
 		
-		let oProp = {
-			NewLineSeparator:	(oPr.hasOwnProperty("NewLineSeparator")) ? oPr["NewLineSeparator"] : "\r",
-			Numbering:			(oPr.hasOwnProperty("Numbering")) ? oPr["Numbering"] : true,
-			Math:				(oPr.hasOwnProperty("Math")) ? oPr["Math"] : true,
-			TableCellSeparator:	oPr["TableCellSeparator"],
-			TableRowSeparator:	oPr["TableRowSeparator"],
-			ParaSeparator:		oPr["ParaSeparator"],
-			TabSymbol:			oPr["TabSymbol"]
-		}
-
+		let _options = {
+			NewLineSeparator   : GetStringParameter(options["NewLineSeparator"], "\r"),
+			Numbering          : GetBoolParameter(options["Numbering"], true),
+			Math               : GetBoolParameter(options["Math"], true),
+			TableCellSeparator : GetStringParameter(options["TableCellSeparator"], "\t"),
+			TableRowSeparator  : GetStringParameter(options["TableRowSeparator"], "\r\n"),
+			ParaSeparator      : GetStringParameter(options["ParaSeparator"], "\r\n"),
+			TabSymbol          : GetStringParameter(options["TabSymbol"], "\t")
+		};
+		
 		private_RefreshRangesPosition();
-
-		var Document			= private_GetLogicDocument();
-		var oldSelectionInfo	= Document.SaveDocumentState();
-
+		
+		var Document = private_GetLogicDocument();
+		var oldSelectionInfo = Document.SaveDocumentState();
+		
 		this.Select(false);
 		private_TrackRangesPositions();
-
-		var Text = this.Controller.GetSelectedText(false, oProp); 
+		
+		var Text = this.Controller.GetSelectedText(false, _options);
 		Document.LoadDocumentState(oldSelectionInfo);
 		Document.UpdateSelection();
-
+		
 		return Text;
 	};
 
@@ -1707,7 +1712,7 @@
 		let oDoc			= private_GetLogicDocument();
 		let oldSelectionInfo	= oDoc.SaveDocumentState();
 
-		this.Select(false);
+		this.Select(true);
 		private_TrackRangesPositions();
 
 		let SelectedContent = oDoc.GetSelectedElementsInfo({CheckAllSelection : true});
@@ -1744,14 +1749,28 @@
 		
 		if (bUpdate === undefined)
 			bUpdate = true;
+		
+		if (bUpdate)
+		{
+			for (let i = this.StartPos.length - 1; i >= 0; --i)
+			{
+				let obj = this.StartPos[i].Class;
+				if ((obj instanceof AscWord.CDocument) || (obj instanceof AscWord.CDocumentContent))
+				{
+					obj.SetThisElementCurrent(true);
+					bUpdate = false;
+					break;
+				}
+			}
+		}
 
 		this.StartPos[0].Class.SetContentPosition(this.StartPos, 0, 0);
 		this.StartPos[0].Class.SetSelectionByContentPositions(this.StartPos, this.EndPos);
-
+		
 		if (bUpdate)
 		{
 			var controllerType;
-
+			
 			if (this.StartPos[0].Class.IsHdrFtr())
 			{
 				controllerType = docpostype_HdrFtr;
@@ -1764,7 +1783,7 @@
 			{
 				controllerType = docpostype_DrawingObjects;
 			}
-			else 
+			else
 			{
 				controllerType = docpostype_Content;
 			}
@@ -2009,69 +2028,85 @@
 	};
 
 	/**
-	 * Sets the text color to the current text Range in the RGB format.
+	 * Sets the text color to the current text Range.
+	 *
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then r,g,b parameters will be ignored.
+	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then (r, g, b) parameters will be ignored.
 	 * @returns {ApiRange | null} - returns null if can't apply color.
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetColor.js
 	 */
-	ApiRange.prototype.SetColor = function(r, g, b, isAuto)
-	{
+	/**
+	 * Sets the text color to the current text Range.
+	 *
+	 * @memberof ApiRange
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} color
+	 * @return {ApiRange | null} - returns null if can't apply color.
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetColor.js
+	 */
+	ApiRange.prototype.SetColor = function (color) {
+		let r, g, b;
+		let isAuto, isTheme;
+
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
+			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			isAuto = GetBoolParameter(arguments[3], false);
+			isTheme = false;
+		}
+
 		private_RefreshRangesPosition();
 
-		var Document			= private_GetLogicDocument();
-		var oldSelectionInfo	= Document.SaveDocumentState();
+		const logicDocument = private_GetLogicDocument();
+		const oldSelectionInfo = logicDocument.SaveDocumentState();
 
 		this.Select(false);
 		private_TrackRangesPositions();
 
-		var color = new Asc.asc_CColor();
-		color.r    = r;
-		color.g    = g;
-		color.b    = b;
-		color.Auto = isAuto;
-
-		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
-		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
-		{
-			Document.LoadDocumentState(oldSelectionInfo);
-			Document.UpdateSelection();
+		const selectedContent = logicDocument.GetSelectedElementsInfo({ CheckAllSelection: true });
+		if (!selectedContent.CanEditBlockSdts() || !selectedContent.CanDeleteInlineSdts()) {
+			logicDocument.LoadDocumentState(oldSelectionInfo);
+			logicDocument.UpdateSelection();
 
 			return null;
 		}
 
-		var ParaTextPr;
-		if (true === color.Auto)
-		{
-			ParaTextPr = new AscCommonWord.ParaTextPr({
-				Color      : {
-					Auto : true,
-					r    : 0,
-					g    : 0,
-					b    : 0
-				}, Unifill : undefined
-			});
-			Document.AddToParagraph(ParaTextPr);
-		}
-		else
-		{
-			ParaTextPr = new AscCommonWord.ParaTextPr({
-				Color      : {
-					Auto : false,
-					r    : r,
-					g    : g,
-					b    : b
-				}, Unifill : undefined
-			});
-			Document.AddToParagraph(ParaTextPr);
+		let paraTextPrOptions = {
+			Color: { Auto: isAuto, r: r, g: g, b: b },
+			Unifill: undefined,
+		};
+
+		if (!isAuto && isTheme) {
+			const unifill = new AscFormat.CUniFill();
+			unifill.fill = new AscFormat.CSolidFill();
+			unifill.fill.color = new AscFormat.CUniColor();
+			unifill.fill.color.color = new AscFormat.CSchemeColor();
+			unifill.fill.color.color.id = color.value;
+
+			paraTextPrOptions = { Unifill: unifill };
 		}
 
-		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
+		logicDocument.AddToParagraph(new AscCommonWord.ParaTextPr(paraTextPrOptions));
+		logicDocument.LoadDocumentState(oldSelectionInfo);
+		logicDocument.UpdateSelection();
 
 		return this;
 	};
@@ -2164,41 +2199,81 @@
 
 	/**
 	 * Specifies the shading applied to the contents of the current text Range.
+	 *
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {ShdType} sType - The shading type applied to the contents of the current text Range.
+	 *
+	 * @deprecated since 9.1.0 version.
+	 * @param {ShdType} type - The shading type applied to the contents of the current text Range.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {ApiRange | null} - returns null if can't apply shadow.
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetShd.js
 	 */
-	ApiRange.prototype.SetShd = function(sType, r, g, b)
+	/**
+	 * Specifies the shading applied to the contents of the current text Range.
+	 *
+	 * @memberof ApiRange
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ShdType} type - The shading type applied to the contents of the current text Range.
+	 * @param {ApiColor} color
+	 * @returns {ApiRange | null} - returns null if can't apply shadow.
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetShd.js
+	 */
+	ApiRange.prototype.SetShd = function (type, color)
 	{
+		let r, g, b;
+		let isAuto, isTheme;
+
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
+			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
+		} else {
+			r = GetIntParameter(arguments[1], 0);
+			g = GetIntParameter(arguments[2], 0);
+			b = GetIntParameter(arguments[3], 0);
+			isAuto = false;
+			isTheme = false;
+		}
+
 		private_RefreshRangesPosition();
 
-		var Document			= private_GetLogicDocument();
-		var oldSelectionInfo	= Document.SaveDocumentState();
+		const logicDocument = private_GetLogicDocument();
+		const oldSelectionInfo = logicDocument.SaveDocumentState();
 
 		this.Select(false);
 		private_TrackRangesPositions();
 
-		let oShd = private_GetShd(sType, r, g, b, false);
-
-		var SelectedContent = Document.GetSelectedElementsInfo({CheckAllSelection : true});
-		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
-		{
-			Document.LoadDocumentState(oldSelectionInfo);
-			Document.UpdateSelection();
+		const selectedContent = logicDocument.GetSelectedElementsInfo({ CheckAllSelection: true });
+		if (!selectedContent.CanEditBlockSdts() || !selectedContent.CanDeleteInlineSdts()) {
+			logicDocument.LoadDocumentState(oldSelectionInfo);
+			logicDocument.UpdateSelection();
 
 			return null;
 		}
 
-		Document.SetParagraphShd(oShd);
-		this.TextPr.Shd = oShd;
-		
-		Document.LoadDocumentState(oldSelectionInfo);
-		Document.UpdateSelection();
+		const shd = private_GetShd(type, r, g, b, isAuto);
+
+		if (isTheme) {
+			const unifill = color.private_createUnifill();
+			shd.Unifill = unifill.createDuplicate();
+			shd.ThemeFill = unifill.createDuplicate();
+		}
+
+		logicDocument.SetParagraphShd(shd);
+		this.TextPr.Shd = shd;
+
+		logicDocument.LoadDocumentState(oldSelectionInfo);
+		logicDocument.UpdateSelection();
 
 		return this;
 	};
@@ -3754,6 +3829,21 @@
 	ApiPresetColor.prototype.constructor = ApiPresetColor;
 
 	/**
+	 * Represents a color that can be applied to text.
+	 * @constructor
+	 */
+	function ApiColor(type, value)
+	{
+		const allowedTypes = ['auto', 'rgb', 'rgba', 'hex', 'theme'];
+		if (!allowedTypes.includes(type)) {
+			throwException(new Error('Type ' + type + ' is not a valid color type. Allowed types are: ' + allowedTypes.join(', ')));
+		}
+
+		this.type = type;
+		this.value = value;
+	}
+
+	/**
 	 * Class representing a base class for fill.
 	 * @constructor
 	 */
@@ -3777,11 +3867,13 @@
 	 * Class representing gradient stop.
 	 * @constructor
 	 */
-	function ApiGradientStop(oApiUniColor, pos)
+	function ApiGradientStop(color, pos)
 	{
 		this.Gs = new AscFormat.CGs();
 		this.Gs.pos = pos;
-		this.Gs.color = oApiUniColor.Unicolor;
+		this.Gs.color = color instanceof ApiColor
+			? color.private_createUnifill().fill.color
+			: color.Unicolor; // color - ApiUniColor instance
 	}
 
 	/**
@@ -4437,10 +4529,20 @@
 		else if (obj instanceof AscWord.CDocumentContent)
 			return new ApiDocumentContent(obj);
 		else if (obj instanceof AscWord.CInlineLevelSdt)
-			return new ApiInlineLvlSdt(obj);
+			return obj.IsForm() ? ToApiForm(obj) : new ApiInlineLvlSdt(obj);
 		else if (obj instanceof AscWord.CBlockLevelSdt)
 			return new ApiBlockLvlSdt(obj);
-			
+		else if (obj instanceof AscWord.Paragraph)
+			return new ApiParagraph(obj);
+		else if (obj instanceof AscWord.Table)
+			return new ApiTable(obj);
+		else if (obj instanceof AscWord.TableRow)
+			return new ApiTableRow(obj);
+		else if (obj instanceof AscWord.TableCell)
+			return new ApiTableCell(obj);
+		else if (obj instanceof AscFormat.CGraphicObjectBase)
+			return new ApiDrawing(obj);
+
 		return null;
 	};
 	/**
@@ -4590,7 +4692,6 @@
 		var oShape = oShapeTrack.getShape(true, oDrawingDocuemnt, null);
 		oShape.setParent(oDrawing);
 		oDrawing.Set_GraphicObject(oShape);
-		oShape.createTextBoxContent();
 		oShape.spPr.setFill(fill.UniFill);
 		oShape.spPr.setLn(stroke.Ln);
 		return new ApiShape(oShape);
@@ -4607,12 +4708,16 @@
 	 */
 	Api.prototype.CreateGroup = function(drawings)
 	{
+		drawings = GetArrayParameter(drawings, []);
+		if (drawings.length == 0)
+			throwException(new Error("The drawings parameter must be a non empty array"));
+
 		let oDoc = private_GetLogicDocument();
 		let oDrDoc = private_GetDrawingDocument();
 		let oGraphicObjects = oDoc.getDrawingObjects();
 
 		if (drawings.find(function(drawing) { return drawing.Drawing.IsUseInDocument(); }))
-			return null;
+			throwException(new Error("All drawings must be in document"));
 		
 		drawings.forEach(function(drawing) { drawing.Drawing.recalculate(); })
 
@@ -4763,16 +4868,129 @@
 	};
 
 	/**
-	 * Creates a solid fill to apply to the object using a selected solid color as the object background.
+	 * Creates an auto-color.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiColor} Instance of ApiColor with 'auto' type.
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/AutoColor.js
+	 */
+	Api.prototype.AutoColor = function () {
+		return new ApiColor('auto');
+	};
+
+	/**
+	 * Creates an RGB color from red, green and blue components.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {byte} r - Red component (0-255).
+	 * @param {byte} g - Green component (0-255).
+	 * @param {byte} b - Blue component (0-255).
+	 * @returns {ApiColor}
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/RGB.js
+	 */
+	Api.prototype.RGB = function (r, g, b) {
+		const intRgbColor = (r & 0xFF) << 16 | (g & 0xFF) << 8 | (b & 0xFF);
+		return new ApiColor('rgb', intRgbColor);
+	};
+
+	/**
+	 * Creates an RGBA color from red, green, blue and alpha components.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {byte} r - Red component (0-255).
+	 * @param {byte} g - Green component (0-255).
+	 * @param {byte} b - Blue component (0-255).
+	 * @param {byte} a - Alpha component (0-255).
+	 * @returns {ApiColor}
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/RGBA.js
+	 */
+	Api.prototype.RGBA = function (r, g, b, a) {
+		const intRgbColor = (r & 0xFF) << 24 | (g & 0xFF) << 16 | (b & 0xFF) << 8 | (a & 0xFF);
+		return new ApiColor('rgba', intRgbColor);
+	};
+
+	/**
+	 * Creates a color from a HEX string.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {string} hexString
+	 * @returns {ApiColor}
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/HexColor.js
+	 */
+	Api.prototype.HexColor = function (hexString) {
+		hexString = hexString.replace(/^#/, '');
+		let hexNumber = parseInt(hexString, 16);
+		if (isNaN(hexNumber))
+			hexNumber = 0;
+		return new ApiColor('hex', hexNumber);
+	};
+
+	/**
+	 * Creates a theme color.
+	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {ApiUniColor} uniColor - The color used for the element fill.
+	 * @param {"accent1" | "accent2" | "accent3" | "accent4" | "accent5" | "accent6" |
+	 * "bg1" | "bg2" | "dk1" | "dk2" | "lt1" | "lt2" | "tx1" | "tx2"} [name="tx1"]
+	 * @returns {ApiColor} Instance of ApiColor with 'theme' type.
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/ThemeColor.js
+	 */
+	Api.prototype.ThemeColor = function (name) {
+		const themeColorMap = {
+			'accent1': 0,
+			'accent2': 1,
+			'accent3': 2,
+			'accent4': 3,
+			'accent5': 4,
+			'accent6': 5,
+			'bg1': 6,
+			'bg2': 7,
+			'dk1': 8,
+			'dk2': 9,
+			'lt1': 12,
+			'lt2': 13,
+			'tx1': 15,
+			'tx2': 16,
+		};
+		const index = themeColorMap[name] !== undefined ? themeColorMap[name] : 15; // default is 'tx1' color
+		return new ApiColor('theme', index);
+	};
+
+	/**
+	 * Creates a solid fill to apply to the object using a selected solid color as the object background.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @deprecated since 9.1.0 version.
+	 * @param {ApiUniColor} color - The color used for the element fill.
 	 * @returns {ApiFill}
+	 *
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateSolidFill.js
 	 */
-	Api.prototype.CreateSolidFill = function(uniColor)
+	/**
+	 * Creates a solid fill to apply to the object using a selected solid color as the object background.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} color - The color used for the element fill.
+	 * @returns {ApiFill}
+	 *
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateSolidFill.js
+	 */
+	Api.prototype.CreateSolidFill = function (color)
 	{
-		return new ApiFill(AscFormat.CreateUniFillByUniColorCopy(uniColor.Unicolor));
+		const unifill = color instanceof ApiColor
+			? color.private_createUnifill()
+			: AscFormat.CreateUniFillByUniColorCopy(color.Unicolor);
+
+		return new ApiFill(unifill);
 	};
 
 	/**
@@ -4802,18 +5020,44 @@
 	{
 		return new ApiFill(AscFormat.builder_CreateRadialGradient(gradientStops));
 	};
+
 	/**
 	 * Creates a pattern fill to apply to the object using the selected pattern as the object background.
+	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {PatternType} patternType - The pattern type used for the fill selected from one of the available pattern types.
 	 * @param {ApiUniColor} bgColor - The background color used for the pattern creation.
 	 * @param {ApiUniColor} fgColor - The foreground color used for the pattern creation.
 	 * @returns {ApiFill}
+	 *
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreatePatternFill.js
 	 */
-	Api.prototype.CreatePatternFill = function(patternType, bgColor, fgColor)
+	/**
+	 * Creates a pattern fill to apply to the object using the selected pattern as the object background.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @since 9.1.0
+	 * @param {PatternType} patternType - The pattern type used for the fill selected from one of the available pattern types.
+	 * @param {ApiColor} bgColor - The background color used for the pattern creation.
+	 * @param {ApiColor} fgColor - The foreground color used for the pattern creation.
+	 * @returns {ApiFill}
+	 *
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreatePatternFill.js
+	 */
+	Api.prototype.CreatePatternFill = function (patternType, bgColor, fgColor)
 	{
+		if (bgColor instanceof ApiColor) {
+			bgColor = { Unicolor: bgColor.private_createUnifill().fill.color };
+		}
+		if (fgColor instanceof ApiColor) {
+			fgColor = { Unicolor: fgColor.private_createUnifill().fill.color };
+		}
+
 		return new ApiFill(AscFormat.builder_CreatePatternFill(patternType, bgColor, fgColor));
 	};
 
@@ -4859,17 +5103,34 @@
 
 	/**
 	 * Creates a gradient stop used for different types of gradients.
+	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {ApiUniColor} uniColor - The color used for the gradient stop.
+	 *
+	 * @deprecated since 9.1.0 version.
+	 * @param {ApiUniColor} color - The color used for the gradient stop.
 	 * @param {PositivePercentage} pos - The position of the gradient stop measured in 1000th of percent.
 	 * @returns {ApiGradientStop}
+	 *
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateGradientStop.js
 	 */
-	Api.prototype.CreateGradientStop = function(uniColor, pos)
+	/**
+	 * Creates a gradient stop used for different types of gradients.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} color - The color used for the gradient stop.
+	 * @param {PositivePercentage} pos - The position of the gradient stop measured in 1000th of percent.
+	 * @returns {ApiGradientStop}
+	 *
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateGradientStop.js
+	 */
+	Api.prototype.CreateGradientStop = function (color, pos)
 	{
 		let pos_ = AscCommon.clampNumber(pos, 0, 100000);
-		return new ApiGradientStop(uniColor, pos_);
+		return new ApiGradientStop(color, pos_);
 	};
 
 	/**
@@ -5700,7 +5961,7 @@
 	 */
 	ApiDocumentContent.prototype.GetInternalId = function()
 	{
-		return this.Sdt.GetId();
+		return this.Document.GetId();
 	};
 	/**
 	 * Returns a number of elements in the current document.
@@ -5948,7 +6209,7 @@
 	/**
 	 * Returns an array of all paragraphs from the current document content.
 	 * @memberof ApiDocumentContent
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {ApiParagraph[]}
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetAllParagraphs.js
 	 */
@@ -5980,50 +6241,38 @@
 	/**
 	 * Returns the inner text of the current document content object.
 	 * @memberof ApiDocumentContent
-	 * @typeofeditors ["CDE"]
-	 * @param {object} oProps - The resulting string display properties.
-     * @param {boolean} oProps.Numbering - Defines if the resulting string will include numbering or not.
-     * @param {boolean} oProps.Math - Defines if the resulting string will include mathematical expressions or not.
-     * @param {string} [oProps.TableCellSeparator='\t'] - Defines how the table cell separator will be specified in the resulting string. Any symbol can be used. The default separator is "\t".
-     * @param {string} [oProps.TableRowSeparator='\r\n'] - Defines how the table row separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
-     * @param {string} [oProps.ParaSeparator='\r\n'] - Defines how the paragraph separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
-     * @param {string} [oProps.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string. Any symbol can be used. The default symbol is "\t".
-     * @param {string} [oProps.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r".
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {object} [options] - Options for formatting the returned text.
+	 * @param {boolean} [options.Numbering=true] - Defines if the resulting string will include numbering or not.
+	 * @param {boolean} [options.Math=true] - Defines if the resulting string will include mathematical expressions or not.
+	 * @param {string} [options.TableCellSeparator='\t'] - Defines how the table cell separator will be specified in the resulting string. Any symbol can be used. The default separator is "\t".
+	 * @param {string} [options.TableRowSeparator='\r\n'] - Defines how the table row separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
+	 * @param {string} [options.ParaSeparator='\r\n'] - Defines how the paragraph separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
+	 * @param {string} [options.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string. Any symbol can be used. The default symbol is "\t".
+	 * @param {string} [options.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r".
 	 * @return {string}
 	 * @since 8.3.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetText.js
 	 */
-	ApiDocumentContent.prototype.GetText = function(oProps)
+	ApiDocumentContent.prototype.GetText = function(options)
 	{
-		let oInnerProps;
-        if (typeof oProps === "object")
-        {
-            oInnerProps =
-            {
-                Numbering : (oProps.hasOwnProperty("Numbering")) ? oProps["Numbering"] : true,
-                Math : (oProps.hasOwnProperty("Math")) ? oProps["Math"] : true,
-                TableCellSeparator: oProps["TableCellSeparator"],
-                TableRowSeparator: oProps["TableRowSeparator"],
-                ParaSeparator: oProps["ParaSeparator"],
-                NewLineSeparator: oProps["NewLineSeparator"],
-                TabSymbol: oProps["TabSymbol"]
-            }
-        }
-        else
-        {
-            oInnerProps =
-            {
-                Numbering : true
-            }
-        }
-
-		return this.Document.GetText(oInnerProps);
+		options = options || {};
+		
+		return this.Document.GetText({
+			Numbering          : GetBoolParameter(options["Numbering"], true),
+			Math               : GetBoolParameter(options["Math"], true),
+			TableCellSeparator : GetStringParameter(options["TableCellSeparator"], '\t'),
+			TableRowSeparator  : GetStringParameter(options["TableRowSeparator"], '\r\n'),
+			ParaSeparator      : GetStringParameter(options["ParaSeparator"], '\r\n'),
+			TabSymbol          : GetStringParameter(options["TabSymbol"], '\t'),
+			NewLineSeparator   : GetStringParameter(options["NewLineSeparator"], '\r')
+		});
 	};
 
 	/**
 	 * Returns the current paragraph where the cursor is located.
 	 * @memberof ApiDocumentContent
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?ApiParagraph}
 	 * @since 9.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetCurrentParagraph.js
@@ -6041,7 +6290,7 @@
 	/**
 	 * Returns the current run where the cursor is located.
 	 * @memberof ApiDocumentContent
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?ApiRun}
 	 * @since 9.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetCurrentRun.js
@@ -6081,6 +6330,48 @@
 	ApiDocumentContent.prototype.GetDocumentVisitor = function()
 	{
 		return new ApiDocumentVisitor(this);
+	};
+	/**
+	 * Check if the current document content is a footnote.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @since 9.3.0
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/IsFootnote.js
+	 */
+	ApiDocumentContent.prototype.IsFootnote = function()
+	{
+		let docContent = this.Document.IsFootnote(true);
+		return (docContent === this.Document && !docContent.IsEndnote());
+	};
+	/**
+	 * Check if the current document content is an endnote.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @since 9.3.0
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/IsEndnote.js
+	 */
+	ApiDocumentContent.prototype.IsEndnote = function()
+	{
+		let docContent = this.Document.IsFootnote(true);
+		return (docContent === this.Document && docContent.IsEndnote());
+	};
+	/**
+	 * Select the reference to this footnote/endnote. If this document content is not a footnote/endnote, do nothing.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @since 9.3.0
+	 * @returns {boolean} Returns true if the reference was selected successfully.
+	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/SelectNoteReference.js
+	 */
+	ApiDocumentContent.prototype.SelectNoteReference = function()
+	{
+		if (!this.IsFootnote() && !this.IsEndnote())
+			return false;
+		
+		let ref = this.Document.GetRef();
+		return ref && ref.SelectThisElement();
 	};
 
 	/**
@@ -7662,6 +7953,10 @@
 		}
 
 		this.Document.LoadDocumentState(documentState);
+		
+		if (!StartPos || !EndPos || !StartPos.length || !EndPos.length)
+			return null;
+		
 		return new ApiRange(StartPos[0].Class, StartPos, EndPos);
 	};
 	/**
@@ -8211,17 +8506,49 @@
 
 	/**
 	 * Sets the highlight to the forms in the document.
+	 *
 	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE", "CFE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [bNone=false] - Defines that highlight will not be set.
-	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetFormsHighlight.js
 	 */
-	ApiDocument.prototype.SetFormsHighlight = function(r, g, b, bNone)
+	/**
+	 * Sets the highlight to the forms in the document.
+	 *
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE", "CFE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} color
+	 * @returns {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetFormsHighlight.js
+	 */
+	ApiDocument.prototype.SetFormsHighlight = function(color)
 	{
+		let r, g, b;
+		let bNone;
+
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
+			bNone = false;
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			bNone = GetBoolParameter(arguments[3], false);
+		}
+
 		if (bNone === true)
 			this.Document.SetSpecialFormsHighlight(null, null, null);
 		else
@@ -8593,17 +8920,49 @@
 
 	/**
 	 * Sets the highlight to the content controls from the current document.
+	 *
 	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [bNone=false] - Defines that highlight will not be set.
-	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetControlsHighlight.js
 	 */
-	ApiDocument.prototype.SetControlsHighlight = function(r, g, b, bNone)
+	/**
+	 * Sets the highlight to the content controls from the current document.
+	 *
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} color
+	 * @returns {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetControlsHighlight.js
+	 */
+	ApiDocument.prototype.SetControlsHighlight = function(color)
 	{
+		let r, g, b;
+		let bNone;
+
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
+			bNone = false;
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			bNone = GetBoolParameter(arguments[3], false);
+		}
+
 		if (bNone === true)
 			this.Document.SetSdtGlobalShowHighlight(false);
 		else
@@ -9419,6 +9778,129 @@
 		this.Document.MoveCursorToEndPos();
 		return true;
 	};
+
+	/**
+	 * Add text to the document on the cursor position.
+	 * @memberof ApiDocument
+	 * @param {string} sText - The text to add to document.
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/EnterText.js
+	 */
+	ApiDocument.prototype.EnterText = function(sText)
+	{
+		this.Document.EnterText(sText);
+		return true;
+	}
+
+	/**
+	 * Add paragraph to the document on the cursor position.
+	 * @memberof ApiDocument
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/InsertParagraphBreak.js
+	 */
+	ApiDocument.prototype.InsertParagraphBreak = function()
+	{
+		this.Document.AddNewParagraph();
+		return true;
+	}
+
+	/**
+	 * Moves the cursor to the left.
+	 * @memberof ApiDocument
+	 * @param {number} [count=1] - Number of movements.
+	 * @param {boolean} [addToSelect=false] - Specifies whether to select text during the move.
+	 * @param {boolean} [byWords=false] - Specifies whether to move by words instead of by character.
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorLeft.js
+	 */
+	ApiDocument.prototype.MoveCursorLeft = function(count, addToSelect, byWords)
+	{
+		count = GetIntParameter(count, 1);
+		addToSelect = GetBoolParameter(addToSelect, false);
+		byWords = GetBoolParameter(byWords, false);
+		
+		for (let i = 0; i < count; ++i)
+		{
+			this.Document.MoveCursorLeft(addToSelect, byWords);
+		}
+		return true;
+	};
+	/**
+	 * Moves the cursor to the right.
+	 * @memberof ApiDocument
+	 * @param {number} [count=1] - Number of movements.
+	 * @param {boolean} [addToSelect=false] - Specifies whether to select text during the move.
+	 * @param {boolean} [byWords=false] - Specifies whether to move by words instead of by character.
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorRight.js
+	 */
+	ApiDocument.prototype.MoveCursorRight = function(count, addToSelect, byWords)
+	{
+		count = GetIntParameter(count, 1);
+		addToSelect = GetBoolParameter(addToSelect, false);
+		byWords = GetBoolParameter(byWords, false);
+		
+		for (let i = 0; i < count; ++i)
+		{
+			this.Document.MoveCursorRight(addToSelect, byWords);
+		}
+		return true;
+	};
+
+	/**
+	 * Moves the cursor up.
+	 * @memberof ApiDocument
+	 * @param {number} [count=1] - Number of movements.
+	 * @param {boolean} [addToSelect=false] - Specifies whether to select text during the move.
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorUp.js
+	 */
+	ApiDocument.prototype.MoveCursorUp = function(count, addToSelect)
+	{
+		count = GetIntParameter(count, 1);
+		addToSelect = GetBoolParameter(addToSelect, false);
+
+		this.ForceRecalculate(this.Document.GetCurPage());
+		for (let i = 0; i < count; ++i)
+		{
+			this.Document.MoveCursorUp(addToSelect);
+		}
+		return true;
+	};
+
+	/**
+	 * Moves the cursor down.
+	 * @memberof ApiDocument
+	 * @param {number} [count=1] - Number of movements.
+	 * @param {boolean} [addToSelect=false] - Specifies whether to select text during the move.
+	 * @returns {boolean}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/MoveCursorDown.js
+	 */
+	ApiDocument.prototype.MoveCursorDown = function(count, addToSelect)
+	{
+		count = GetIntParameter(count, 1);
+		addToSelect = GetBoolParameter(addToSelect, false);
+		
+		this.ForceRecalculate(this.Document.GetCurPage() + 1);
+		for (let i = 0; i < count; ++i)
+		{
+			this.Document.MoveCursorDown(addToSelect);
+		}
+		return true;
+	};
+
 	/**
 	 * Moves a cursor to the start of the specified page in the document.
 	 * @memberof ApiDocument
@@ -9437,6 +9919,24 @@
 		
 		this.Document.GoToPage(index);
 		return true;
+	};
+	
+	/**
+	 * Moves a cursor to the start of the specified page in the document.
+	 * @memberof ApiDocument
+	 * @returns {?ApiDocumentContent}
+	 * @typeofeditors ["CDE"]
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetCurrentFootEndnote.js
+	 */
+	ApiDocument.prototype.GetCurrentFootEndnote = function()
+	{
+		let para = this.Document.GetCurrentParagraph();
+		if (!para || !para.GetParent())
+			return null;
+		
+		let docContent = para.GetParent().IsFootnote(true);
+		return docContent ? new ApiDocumentContent(docContent) : null;
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -9458,7 +9958,7 @@
 	/**
 	 * Specifies a unique ID for the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @since 9.2.0
 	 * @param {number} paraId - The numerical ID which will be specified for the current paragraph. Value MUST be greater than 0 and less than 0x80000000.
 	 * @returns {boolean}
@@ -9479,16 +9979,27 @@
 	 * Returns a unique ID for the current paragraph.
 	 * @memberof ApiParagraph
 	 * @returns {number} 0 if no identifier is specified for the current paragraph.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @since 9.2.0
-	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetParaId.js
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetParaId.js
 	 */
 	ApiParagraph.prototype.GetParaId = function()
 	{
 		let paraId = this.Paragraph.GetParaId();
 		return paraId ? paraId : 0;
 	};
-	
+	/**
+	 * Returns an internal ID of the current paragraph.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string}
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetInternalId.js
+	 */
+	ApiParagraph.prototype.GetInternalId = function()
+	{
+		return this.Paragraph.GetId();
+	};
 	/**
 	 * Adds some text to the current paragraph.
 	 * @memberof ApiParagraph
@@ -9920,15 +10431,22 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sLink - The link address.
 	 * @param {string} sScreenTipText - The screen tip text.
-	 * @return {ApiHyperlink | null} - returns null if params are invalid.
+	 * @param {string} sBookmarkName - name of a bookmark
+	 * @return {?ApiHyperlink } - returns null if params are invalid.
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/AddHyperlink.js
 	 */
-	ApiParagraph.prototype.AddHyperlink = function(sLink, sScreenTipText)
+	ApiParagraph.prototype.AddHyperlink = function(sLink, sScreenTipText, sBookmarkName)
 	{
-		if (typeof(sLink) !== "string" || sLink === "" || sLink.length > Asc.c_nMaxHyperlinkLength)
+		sLink = GetStringParameter(sLink, "");
+		sScreenTipText = GetStringParameter(sScreenTipText, "");
+		sBookmarkName = GetStringParameter(sBookmarkName, "");
+
+		if ((!sLink && !sBookmarkName) || (sLink && sBookmarkName)) {
 			return null;
-		if (typeof(sScreenTipText) !== "string")
-			sScreenTipText = "";
+		}
+
+		if (sLink.length > Asc.c_nMaxHyperlinkLength)
+			return null;
 		
 		var hyperlinkPr	= new Asc.CHyperlinkProperty();
 		var urlType		= AscCommon.getUrlType(sLink);
@@ -9941,7 +10459,7 @@
 		sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
 		hyperlinkPr.put_Value(sLink);
 		hyperlinkPr.put_ToolTip(sScreenTipText);
-		hyperlinkPr.put_Bookmark(null);
+		hyperlinkPr.put_Bookmark(sBookmarkName);
 		
 		oHyperlink = new ApiHyperlink(this.Paragraph.AddHyperlink(hyperlinkPr));
 		this.Paragraph.RemoveSelection();
@@ -9969,7 +10487,7 @@
 	/**
 	 * Adds an element to the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {ParagraphContent} oElement - The document element which will be added at the current position. Returns false if the
 	 * oElement type is not supported by a paragraph.
 	 * @returns {boolean} Returns <code>false</code> if the type of <code>oElement</code> is not supported by paragraph
@@ -10010,7 +10528,7 @@
 	/**
 	 * Returns the last Run with text in the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {ApiRun} Returns <code>false</code> if the paragraph doesn't containt the required run.
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetLastRunWithText.js
 	 */
@@ -10037,7 +10555,7 @@
 	/**
 	 * Sets the bold property to the text character.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} isBold - Specifies that the contents of this paragraph are displayed bold.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetBold.js
@@ -10053,7 +10571,7 @@
 	/**
 	 * Specifies that any lowercase characters in this paragraph are formatted for display only as their capital letter character equivalents.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} isCaps - Specifies that the contents of the current paragraph are displayed capitalized.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetCaps.js
@@ -10066,57 +10584,78 @@
 		
 		return this;
 	};
+
 	/**
-	 * Sets the text color to the current paragraph in the RGB format.
+	 * Sets the text color to the current paragraph.
+	 *
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then r,g,b parameters will be ignored.
-	 * @returns {ApiParagraph} this
+	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then (r, g, b) parameters will be ignored.
+	 * @return {ApiParagraph} this
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetColor.js
 	 */
-	ApiParagraph.prototype.SetColor = function(r, g, b, isAuto)
+	/**
+	 * Sets the text color to the current paragraph.
+	 *
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} color
+	 * @return {ApiParagraph} this
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetColor.js
+	 */
+	ApiParagraph.prototype.SetColor = function (color)
 	{
-		var color = new Asc.asc_CColor();
-		color.r    = r;
-		color.g    = g;
-		color.b    = b;
-		color.Auto = isAuto;
+		let r, g, b;
+		let isAuto, isTheme;
+
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
+			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			isAuto = false;
+			isTheme = false;
+		}
+
+		let paraTextPrOptions = {
+			Color: { Auto: isAuto, r: r, g: g, b: b },
+			Unifill: undefined
+		};
+
+		if (!isAuto && isTheme) {
+			const unifill = new AscFormat.CUniFill();
+			unifill.fill = new AscFormat.CSolidFill();
+			unifill.fill.color = new AscFormat.CUniColor();
+			unifill.fill.color.color = new AscFormat.CSchemeColor();
+			unifill.fill.color.color.id = color.value;
+
+			paraTextPrOptions = { Unifill: unifill };
+		}
 
 		this.Paragraph.SetApplyToAll(true);
-		if (true === color.Auto)
-		{
-			this.Paragraph.Add(new AscCommonWord.ParaTextPr({
-				Color      : {
-					Auto : true,
-					r    : 0,
-					g    : 0,
-					b    : 0
-				}, Unifill : undefined
-			}));
-		}
-		else
-		{
-			this.Paragraph.Add(new AscCommonWord.ParaTextPr({
-				Color      : {
-					Auto : false,
-					r    : r,
-					g    : g,
-					b    : b
-				}, Unifill : undefined
-			}));
-			
-		}
+		this.Paragraph.Add(new AscCommonWord.ParaTextPr(paraTextPrOptions));
 		this.Paragraph.SetApplyToAll(false);
-		
 		return this;
 	};
 	/**
 	 * Specifies that the contents of this paragraph are displayed with two horizontal lines through each character displayed on the line.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} isDoubleStrikeout - Specifies that the contents of the current paragraph are displayed double struck through.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetDoubleStrikeout.js
@@ -10132,7 +10671,7 @@
 	/**
 	 * Sets all 4 font slots with the specified font family.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} sFontFamily - The font family or families used for the current paragraph.
 	 * @returns {?ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetFontFamily.js
@@ -10156,7 +10695,7 @@
 	/**
 	 * Returns all font names from all elements inside the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {string[]} - The font names used for the current paragraph.
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetFontNames.js
 	 */
@@ -10180,7 +10719,7 @@
 	/**
 	 * Sets the font size to the characters of the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {hps} nSize - The text size value measured in half-points (1/144 of an inch).
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetFontSize.js
@@ -10235,7 +10774,7 @@
 	/**
 	 * Sets the italic property to the text character.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} isItalic - Specifies that the contents of the current paragraph are displayed italicized.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetItalic.js
@@ -10270,7 +10809,7 @@
 	 * Specifies that all the small letter characters in this paragraph are formatted for display only as their capital
 	 * letter character equivalents which are two points smaller than the actual font size specified for this text.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} isSmallCaps - Specifies if the contents of the current paragraph are displayed capitalized two points smaller or not.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetSmallCaps.js
@@ -10289,7 +10828,7 @@
 	/**
 	 * Sets the text spacing measured in twentieths of a point.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {twips} nSpacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch).
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetSpacing.js
@@ -10305,7 +10844,7 @@
 	/**
 	 * Specifies that the contents of this paragraph are displayed with a single horizontal line through the center of the line.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} isStrikeout - Specifies that the contents of the current paragraph are displayed struck through.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetStrikeout.js
@@ -10325,7 +10864,7 @@
 	 * Specifies that the contents of this paragraph are displayed along with a line appearing directly below the character
 	 * (less than all the spacing above and below the characters on the line).
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} isUnderline - Specifies that the contents of the current paragraph are displayed underlined.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetUnderline.js
@@ -10385,15 +10924,13 @@
 			'ltr': false,
 			'rtl': true
 		};
-		this.Paragraph.SetApplyToAll(true);
 		this.Paragraph.SetParagraphBidi(map[readingOrder]);
-		this.Paragraph.SetApplyToAll(false);
 		return this;
 	};
 	/**
 	 * Returns the last element of the paragraph which is not empty.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {?ParagraphContent}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/Last.js
 	 */
@@ -10564,29 +11101,25 @@
 	/**
 	 * Returns the paragraph text.
 	 * @memberof ApiParagraph
-	 * @param {object} oPr - The resulting string display properties.
-     * @param {boolean} [oPr.Numbering=false] - Defines if the resulting string will include numbering or not.
-     * @param {boolean} [oPr.Math=false] - Defines if the resulting string will include mathematical expressions or not.
-	 * @param {string} [oPr.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r".
-	 * @param {string} [oPr.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string (does not apply to numbering). Any symbol can be used. The default symbol is "\t".
+	 * @param {object} [options] - Options for formatting the returned text.
+	 * @param {boolean} [options.Numbering=false] - Defines if the resulting string will include numbering or not.
+	 * @param {boolean} [options.Math=false] - Defines if the resulting string will include mathematical expressions or not.
+	 * @param {string} [options.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string. Any string can be used. The default separator is "\r".
+	 * @param {string} [options.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string (does not apply to numbering). Any string can be used. The default symbol is "\t".
 	 * @typeofeditors ["CDE"]
 	 * @return {string}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetText.js
 	 */
-	ApiParagraph.prototype.GetText = function(oPr)
+	ApiParagraph.prototype.GetText = function(options)
 	{
-		if (!oPr) {
-			oPr = {};
-		}
-
-		let oProp =	{
-			NewLineSeparator:	(oPr.hasOwnProperty("NewLineSeparator")) ? oPr["NewLineSeparator"] : "\r",
-			Numbering:			(oPr.hasOwnProperty("Numbering")) ? oPr["Numbering"] : true,
-			Math:				(oPr.hasOwnProperty("Math")) ? oPr["Math"] : true,
-			TabSymbol:			oPr["TabSymbol"]
-		}
-
-		return this.Paragraph.GetText(oProp);
+		options = options || {};
+		
+		return this.Paragraph.GetText({
+			NewLineSeparator : GetStringParameter(options["NewLineSeparator"], "\r"),
+			Numbering        : GetBoolParameter(options["Numbering"], true),
+			Math             : GetBoolParameter(options["Math"], true),
+			TabSymbol        : GetStringParameter(options["TabSymbol"], "\t")
+		});
 	};
 	/**
 	 * Returns the text properties for a paragraph end mark.
@@ -10604,7 +11137,7 @@
 	/**
 	 * Sets the paragraph text properties.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {ApiTextPr} oTextPr - The paragraph text properties.
 	 * @return {boolean} - returns false if param is invalid.
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetTextPr.js
@@ -10657,7 +11190,7 @@
 	/**
 	 * Inserts a paragraph at the specified position.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string | ApiParagraph} paragraph - Text or paragraph.
 	 * @param {string} sPosition - The position where the text or paragraph will be inserted ("before" or "after" the paragraph specified).
 	 * @param {boolean} beRNewPara - Defines if this method returns a new paragraph (true) or the current paragraph (false).
@@ -11153,7 +11686,7 @@
 	/**
 	 * Converts the ApiParagraph object into the JSON object.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
 	 * @param {boolean} bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
 	 * @returns {JSON}
@@ -11352,6 +11885,19 @@
 
 		this.private_GetImpl().Set_SectionPr(oSectPr);
 		return true;
+	};
+
+
+	/**
+	 * Returns an internal ID of the current content paragraph.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetInternalId.js
+	 */
+	ApiParagraph.prototype.GetInternalId = function()
+	{
+		return this.Paragraph.GetId();
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -11566,15 +12112,22 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sLink - The link address.
 	 * @param {string} sScreenTipText - The screen tip text.
-	 * @return {ApiHyperlink | null} - returns false if params are invalid.
+	 * @param {string} sBookmarkName - name of a bookmark
+	 * @return {?ApiHyperlink } - returns false if params are invalid.
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/AddHyperlink.js
 	 */
-	ApiRun.prototype.AddHyperlink = function(sLink, sScreenTipText)
+	ApiRun.prototype.AddHyperlink = function(sLink, sScreenTipText, sBookmarkName)
 	{
-		if (typeof(sLink) !== "string" || sLink === "" || sLink.length > Asc.c_nMaxHyperlinkLength)
+		sLink = GetStringParameter(sLink, "");
+		sScreenTipText = GetStringParameter(sScreenTipText, "");
+		sBookmarkName = GetStringParameter(sBookmarkName, "");
+
+		if ((!sLink && !sBookmarkName) || (sLink && sBookmarkName)) {
 			return null;
-		if (typeof(sScreenTipText) !== "string")
-			sScreenTipText = "";
+		}
+
+		if (sLink.length > Asc.c_nMaxHyperlinkLength)
+			return null;
 
 		var parentPara	= this.Run.GetParagraph();
 		if (!parentPara || this.Run.Content.length === 0)
@@ -11608,7 +12161,7 @@
 		sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
 		hyperlinkPr.put_Value(sLink);
 		hyperlinkPr.put_ToolTip(sScreenTipText);
-		hyperlinkPr.put_Bookmark(null);
+		hyperlinkPr.put_Bookmark(sBookmarkName);
 
 		oHyperlink = new ApiHyperlink(parentPara.AddHyperlink(hyperlinkPr));
 		StartPos[parentParaDepth].Class.RemoveSelection();
@@ -11777,22 +12330,37 @@
 		
 		return oTextPr;
 	};
+
 	/**
-	 * Sets the text color for the current text run in the RGB format.
+	 * Sets the text color for the current text run.
+	 *
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then r,g,b parameters will be ignored.
-	 * @returns {ApiTextPr}
+	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then (r, g, b) parameters will be ignored.
+	 * @return {ApiTextPr}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetColor.js
 	 */
-	ApiRun.prototype.SetColor = function(r, g, b, isAuto)
-	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetColor(r, g, b, isAuto);
-		
+	/**
+	 * Sets the text color for the current text run.
+	 *
+	 * @memberof ApiRun
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} color
+	 * @return {ApiTextPr}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetColor.js
+	 */
+	ApiRun.prototype.SetColor = function (color) {
+		const oTextPr = this.GetTextPr();
+		oTextPr.SetColor.apply(oTextPr, arguments);
 		return oTextPr;
 	};
 	/**
@@ -11938,22 +12506,39 @@
 		
 		return oTextPr;
 	};
+
 	/**
 	 * Specifies the shading applied to the contents of the current text run.
+	 *
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {ShdType} sType - The shading type applied to the contents of the current text run.
+	 *
+	 * @deprecated since 9.1.0 version.
+	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {ApiTextPr}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetShd.js
 	 */
-	ApiRun.prototype.SetShd = function(sType, r, g, b)
+	/**
+	 * Specifies the shading applied to the contents of the current text run.
+	 *
+	 * @memberof ApiRun
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
+	 * @param {ApiColor} color
+	 * @returns {ApiTextPr}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetShd.js
+	 */
+	ApiRun.prototype.SetShd = function (type, color)
 	{
-		var oTextPr = this.GetTextPr();
-		oTextPr.SetShd(sType, r, g, b);
-		
+		const oTextPr = this.GetTextPr();
+		oTextPr.SetShd.apply(oTextPr, arguments);
 		return oTextPr;
 	};
 	/**
@@ -12142,26 +12727,22 @@
 	/**
 	 * Returns a text from the text run.
 	 * @memberof ApiRun
-	 * @param {object} oPr - The resulting string display properties.
-	 * @param {string} [oPr.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r".
-	 * @param {string} [oPr.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string. Any symbol can be used. The default symbol is "\t".
+	 * @param {object} [options] - Options for formatting the returned text.
+	 * @param {string} [options.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r".
+	 * @param {string} [options.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string. Any symbol can be used. The default symbol is "\t".
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/GetText.js
 	 */
-	ApiRun.prototype.GetText = function(oPr)
+	ApiRun.prototype.GetText = function(options)
 	{
-		if (!oPr)
-			oPr = {};
+		options = options || {};
 		
-		let oProp = {
+		return this.Run.GetText({
 			Text             : "",
-			NewLineSeparator : (oPr.hasOwnProperty("NewLineSeparator")) ? oPr["NewLineSeparator"] : "\r",
-			TabSymbol        : oPr["TabSymbol"],
-			ParaSeparator    : oPr["ParaSeparator"]
-		}
-		
-		return this.Run.GetText(oProp);
+			NewLineSeparator : GetStringParameter(options["NewLineSeparator"], "\r"),
+			TabSymbol        : GetStringParameter(options["TabSymbol"], "\t")
+		});
 	};
 	
 	/**
@@ -12756,6 +13337,18 @@
 		return "table";
 	};
 	/**
+	 * Returns an internal ID of the current table.
+	 * @memberof ApiTable
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {string}
+	 * @since 9.2.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetInternalId.js
+	 */
+	ApiTable.prototype.GetInternalId = function()
+	{
+		return this.Table.GetId();
+	};
+	/**
 	 * Returns a number of rows in the current table.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
@@ -12776,7 +13369,7 @@
 	 */
 	ApiTable.prototype.GetRow = function(nPos)
 	{
-		if (nPos < 0 || nPos >= this.Table.Content.length)
+		if (typeof(nPos) !== "number" || nPos < 0 || nPos >= this.Table.Content.length)
 			return null;
 
 		return new ApiTableRow(this.Table.Content[nPos]);
@@ -13480,31 +14073,44 @@
 		
 		return true;
 	};
+
 	/**
 	 * Sets the background color to all cells in the current table.
+	 *
 	 * @memberof ApiTable
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} bNone - Defines that background color will not be set.
-	 * @typeofeditors ["CDE"]
+	 * @param {boolean} [bNone=false] - Defines that background color will not be set.
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetBackgroundColor.js
 	 */
-	ApiTable.prototype.SetBackgroundColor = function(r, g, b, bNone)
-	{
-		if ((typeof(r) == "number" && typeof(g) == "number" && typeof(b) == "number" && !bNone) || bNone)
-		{
-			var oRow;
-			for (var nRow = 0, nCount = this.GetRowsCount(); nRow < nCount; nRow++)
-			{
-				oRow = this.GetRow(nRow);
-				oRow.SetBackgroundColor(r, g, b, bNone);
-			}
-			return true;
+	/**
+	 * Sets the background color to all cells in the current table.
+	 *
+	 * @memberof ApiTable
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
+	 * @return {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetBackgroundColor.js
+	 */
+	ApiTable.prototype.SetBackgroundColor = function (color) {
+		let allRowsUpdated = true;
+	
+		for (let nRow = 0, nCount = this.GetRowsCount(); nRow < nCount; nRow++) {
+			const oRow = this.GetRow(nRow);
+			const rowUpdated = oRow.SetBackgroundColor.apply(oRow, arguments);
+			if (!rowUpdated) allRowsUpdated = false;
 		}
-		else
-			return false;
+
+		return allRowsUpdated;
 	};
 	
 	/**
@@ -13717,6 +14323,18 @@
 	ApiTableRow.prototype.GetClassType = function()
 	{
 		return "tableRow";
+	};
+	/**
+	 * Returns an internal id of the current table row.
+	 * @memberof ApiTableRow
+	 * @typeofeditors ["CDE"]
+	 * @since 9.2.0
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/GetInternalId.js
+	 */
+	ApiTableRow.prototype.GetInternalId = function()
+	{
+		return this.Row.GetId();
 	};
 	/**
 	 * Returns a number of cells in the current row.
@@ -13993,31 +14611,45 @@
 
 		return arrApiRanges;
 	};
+
 	/**
 	 * Sets the background color to all cells in the current table row.
+	 *
 	 * @memberof ApiTableRow
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} bNone - Defines that background color will not be set.
-	 * @typeofeditors ["CDE"]
+	 * @param {boolean} [bNone=false] - Defines that background color will not be set.
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/SetBackgroundColor.js
 	 */
-	ApiTableRow.prototype.SetBackgroundColor = function(r, g, b, bNone)
+	/**
+	 * Sets the background color to all cells in the current table row.
+	 *
+	 * @memberof ApiTableRow
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
+	 * @return {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/SetBackgroundColor.js
+	 */
+	ApiTableRow.prototype.SetBackgroundColor = function (color)
 	{
-		if ((typeof(r) == "number" && typeof(g) == "number" && typeof(b) == "number" && !bNone) || bNone)
-		{
-			var oCell;
-			for (var nCell = 0, nCount = this.GetCellsCount(); nCell < nCount; nCell++)
-			{
-				oCell = this.GetCell(nCell);
-				oCell.SetBackgroundColor(r, g, b, bNone);
-			}
-			return true;
+		let allCellsUpdated = true;
+
+		for (let nCell = 0, nCount = this.GetCellsCount(); nCell < nCount; nCell++) {
+			const oCell = this.GetCell(nCell);
+			const cellUpdated = oCell.SetBackgroundColor.apply(oCell, arguments);
+			if (!cellUpdated) allCellsUpdated = false;
 		}
-		else
-			return false;
+
+		return allCellsUpdated;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -14036,6 +14668,18 @@
 	ApiTableCell.prototype.GetClassType = function()
 	{
 		return "tableCell";
+	};
+	/**
+	 * Returns an internal id of the current table cell.
+	 * @memberof ApiTableCell
+	 * @typeofeditors ["CDE"]
+	 * @since 9.2.0
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetInternalId.js
+	 */
+	ApiTableCell.prototype.GetInternalId = function()
+	{
+		return this.Cell.GetId();
 	};
 	/**
 	 * Returns the current cell content.
@@ -14338,85 +14982,158 @@
 
 		return false;
 	};
+
 	/**
 	 * Sets the background color to the current table cell.
+	 *
 	 * @memberof ApiTableCell
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} bNone - Defines that background color will not be set.
-	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetBackgroundColor.js
 	 */
-	ApiTableCell.prototype.SetBackgroundColor = function(r, g, b, bNone)
+	/**
+	 * Sets the background color to the current table cell.
+	 *
+	 * @memberof ApiTableCell
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
+	 * @return {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetBackgroundColor.js
+	 */
+	ApiTableCell.prototype.SetBackgroundColor = function (color)
 	{
-		let oUnifill = new AscFormat.CUniFill();
-		oUnifill.setFill(new AscFormat.CSolidFill());
-		oUnifill.fill.setColor(new AscFormat.CUniColor());
-		oUnifill.fill.color.setColor(new AscFormat.CRGBColor());
+		let r, g, b;
+		let bNone;
+		let isAuto, isTheme;
 
-		if (r >=0 && g >=0 && b >=0)
-			oUnifill.fill.color.color.setColor(r, g, b);
-		else
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
+			bNone = false;
+			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			bNone = GetBoolParameter(arguments[3], false);
+			isAuto = false;
+			isTheme = false;
+		}
+
+		if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
 			return false;
 
-		var oNewShd = {
-			Value : bNone ? Asc.c_oAscShd.Nil : Asc.c_oAscShd.Clear,
-			Color : {
-				r    : r,
-				g    : g,
-				b    : b,
-				Auto : false
-			},
+		const oUnifill = isTheme
+			? color.private_createUnifill()
+			: Api.prototype.RGB(r, g, b).private_createUnifill();
 
-			Fill    : {
-				r    : r,
-				g    : g,
-				b    : b,
-				Auto : false
-			},
-			Unifill   : oUnifill.createDuplicate(),
-			ThemeFill : oUnifill.createDuplicate()
-		}
+		const oNewShd = {
+			Value: bNone ? Asc.c_oAscShd.Nil : Asc.c_oAscShd.Clear,
+			Fill: { r: r, g: g, b: b, Auto: isAuto },
+			// Color: { r: r, g: g, b: b, Auto: isAuto },
+			ThemeFill: isTheme ? oUnifill : undefined,
+			// Unifill: oUnifill.createDuplicate(),
+		};
 
 		this.Cell.Set_Shd(oNewShd);
 		return true;
 	};
+
+	/**
+	 * Returns the background color of the current table cell.
+	 *
+	 * @memberof ApiTableCell
+	 * @typeofeditors ["CDE"]
+	 * @return {?ApiColor}
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetBackgroundColor.js
+	 */
+	ApiTableCell.prototype.GetBackgroundColor = function () {
+		const shd = this.Cell.Get_Shd();
+		if (!shd || shd.Value === Asc.c_oAscShd.Nil)
+			return null;
+
+		const unifill = shd.ThemeFill;
+		const unifillColor = unifill && unifill.fill && unifill.fill.color && unifill.fill.color.color;
+		if (unifillColor) {
+			if (unifillColor instanceof AscFormat.CSchemeColor)
+				return new ApiColor('theme', unifillColor.id);
+
+			if (unifillColor instanceof AscFormat.CRGBColor)
+				return Api.prototype.RGB(unifillColor.r, unifillColor.g, unifillColor.b);
+		}
+
+		const color = shd.Fill;
+		if (color) {
+			const isAuto = color.Auto === true;
+			return isAuto
+				? Api.prototype.AutoColor()
+				: Api.prototype.RGB(color.r, color.g, color.b);
+		}
+
+		return null;
+	};
+
 	/**
 	 * Sets the background color to all cells in the column containing the current cell.
+	 *
 	 * @memberof ApiTableCell
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} bNone - Defines that background color will not be set.
-	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetColumnBackgroundColor.js
 	 */
-	ApiTableCell.prototype.SetColumnBackgroundColor = function(r, g, b, bNone)
+	/**
+	 * Sets the background color to all cells in the column containing the current cell.
+	 *
+	 * @memberof ApiTableCell
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color] - If not passed, the background color will be cleared.
+	 * @return {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetColumnBackgroundColor.js
+	 */
+	ApiTableCell.prototype.SetColumnBackgroundColor = function(color)
 	{
-		if ((typeof(r) == "number" && typeof(g) == "number" && typeof(b) == "number" && !bNone) || bNone)
-		{
-			var oTable = this.GetParentTable();
-			var aColumnCells = oTable.Table.GetColumn(this.GetIndex(), this.GetParentRow().GetIndex());
-			var aCellsToFill = [];
-
-			for (var nCell = 0; nCell < aColumnCells.length; nCell++)
-				aCellsToFill[nCell] = new ApiTableCell(aColumnCells[nCell]);
-
-			if (aCellsToFill.length > 0)
-			{
-				for (nCell = 0; nCell < aCellsToFill.length; nCell++)
-				{
-					aCellsToFill[nCell].SetBackgroundColor(r, g, b, bNone);
-				}
-				return true;
-			}
+		const oTable = this.GetParentTable();
+		const aColumnCells = oTable.Table.GetColumn(this.GetIndex(), this.GetParentRow().GetIndex());
+		if (aColumnCells.length === 0)
 			return false;
+
+		let allCellsUpdated = true;
+
+		const aCellsToFill = aColumnCells.map(function (cell) {
+			return new ApiTableCell(cell);
+		});
+
+		for (let nCell = 0; nCell < aCellsToFill.length; nCell++) {
+			const apiCell = aCellsToFill[nCell];
+			const cellUpdated = apiCell.SetBackgroundColor.apply(apiCell, arguments);
+			if (!cellUpdated) allCellsUpdated = false;
 		}
-		else
-			return false;
+
+		return allCellsUpdated;
 	};
 	
 	//------------------------------------------------------------------------------------------------------------------
@@ -14497,13 +15214,16 @@
 	 * Sets the text properties to the current style.
 	 * @memberof ApiStyle
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiTextPr} oTextPr - The text properties that will be set.
+	 * @param {ApiTextPr} textPr - The text properties that will be set.
 	 * @returns {ApiStyle} - this
 	 * @see office-js-api/Examples/{Editor}/ApiStyle/Methods/SetTextPr.js
 	 */
-	ApiStyle.prototype.SetTextPr = function(oTextPr)
+	ApiStyle.prototype.SetTextPr = function(textPr)
 	{
-		this.OnChangeTextPr(oTextPr);
+		if (!textPr || !(textPr instanceof ApiTextPr))
+			throwException("The textPr parameter must be an instance of ApiTextPr");
+
+		this.OnChangeTextPr(textPr);
 		return this;
 	};
 	/**
@@ -14521,13 +15241,16 @@
 	 * Sets the paragraph properties to the current style.
 	 * @memberof ApiStyle
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiParaPr} oParaPr - The paragraph properties that will be set.
+	 * @param {ApiParaPr} paraPr - The paragraph properties that will be set.
 	 * @returns {ApiStyle} - this
 	 * @see office-js-api/Examples/{Editor}/ApiStyle/Methods/SetParaPr.js
 	 */
-	ApiStyle.prototype.SetParaPr = function(oParaPr)
+	ApiStyle.prototype.SetParaPr = function(paraPr)
 	{
-		this.OnChangeParaPr(oParaPr);
+		if (!paraPr || !(paraPr instanceof ApiParaPr))
+			throwException("The paraPr parameter must be an instance of ApiParaPr");
+
+		this.OnChangeParaPr(paraPr);
 		return this;
 	};
 	/**
@@ -14549,13 +15272,16 @@
 	 * Sets the table properties to the current style.
 	 * @memberof ApiStyle
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiTablePr} oTablePr - The table properties that will be set.
+	 * @param {ApiTablePr} tablePr - The table properties that will be set.
 	 * @returns {ApiStyle} - this
 	 * @see office-js-api/Examples/{Editor}/ApiStyle/Methods/SetTablePr.js
 	 */
-	ApiStyle.prototype.SetTablePr = function(oTablePr)
+	ApiStyle.prototype.SetTablePr = function(tablePr)
 	{
-		this.OnChangeTablePr(oTablePr);
+		if (!tablePr || !(tablePr instanceof ApiTablePr))
+			throwException("The tablePr parameter must be an instance of ApiTablePr");
+
+		this.OnChangeTablePr(tablePr);
 		return this;
 	};
 	/**
@@ -14577,13 +15303,16 @@
 	 * Sets the table row properties to the current style.
 	 * @memberof ApiStyle
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiTableRowPr} oTableRowPr - The table row properties that will be set.
+	 * @param {ApiTableRowPr} tableRowPr - The table row properties that will be set.
 	 * @returns {ApiStyle} - this
 	 * @see office-js-api/Examples/{Editor}/ApiStyle/Methods/SetTableRowPr.js
 	 */
-	ApiStyle.prototype.SetTableRowPr = function(oTableRowPr)
+	ApiStyle.prototype.SetTableRowPr = function(tableRowPr)
 	{
-		this.OnChangeTableRowPr(oTableRowPr);
+		if (!tableRowPr || !(tableRowPr instanceof ApiTableRowPr))
+			throwException("The tableRowPr parameter must be an instance of ApiTableRowPr");
+
+		this.OnChangeTableRowPr(tableRowPr);
 		return this;
 	};
 	/**
@@ -14604,13 +15333,16 @@
 	 * Sets the table cell properties to the current style.
 	 * @memberof ApiStyle
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiTableCellPr} oTableCellPr - The table cell properties that will be set.
+	 * @param {ApiTableCellPr} tableCellPr - The table cell properties that will be set.
 	 * @returns {ApiStyle} - this
 	 * @see office-js-api/Examples/{Editor}/ApiStyle/Methods/SetTableCellPr.js
 	 */
-	ApiStyle.prototype.SetTableCellPr = function(oTableCellPr)
+	ApiStyle.prototype.SetTableCellPr = function(tableCellPr)
 	{
-		this.OnChangeTableCellPr(oTableCellPr);
+		if (!tableCellPr || !(tableCellPr instanceof ApiTableCellPr))
+			throwException("The tableCellPr parameter must be an instance of ApiTableCellPr");
+
+		this.OnChangeTableCellPr(tableCellPr);
 		return this;
 	};
 	/**
@@ -14954,19 +15686,59 @@
 	};
 
 	/**
-	 * Sets the text color to the current text run in the RGB format.
+	 * Sets the text color to the current text run.
+	 *
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then r,g,b parameters will be ignored.
+	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then (r, g, b) parameters will be ignored.
 	 * @return {ApiTextPr} - this text properties.
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetColor.js
 	 */
-	ApiTextPr.prototype.SetColor = function(r, g, b, isAuto)
-	{
-		this.TextPr.Color = private_GetColor(r, g, b, isAuto);
+	/**
+	 * Sets the text color to the current text run.
+	 *
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} color
+	 * @return {ApiTextPr} - this text properties.
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetColor.js
+	 */
+	ApiTextPr.prototype.SetColor = function(color) {
+		let r, g, b;
+		let isAuto, isTheme;
+
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
+			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			isAuto = GetBoolParameter(arguments[3], false);
+			isTheme = false;
+		}
+
+		if (isTheme) {
+			this.TextPr.Unifill = color.private_createUnifill();
+			this.TextPr.Color = undefined;
+		} else {
+			this.TextPr.Color = private_GetColor(r, g, b, isAuto);
+			this.TextPr.Unifill = undefined;
+		}
+
 		this.private_OnChange();
 		return this;
 	};
@@ -14975,15 +15747,28 @@
 	 * Gets the RGB color from the current text properties.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
-	 * @return {?ApiRGBColor}
+	 * @return {?ApiColor}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/GetColor.js
 	 */
-	ApiTextPr.prototype.GetColor = function()
+	ApiTextPr.prototype.GetColor = function ()
 	{
-		let oColor = this.TextPr.GetColor();
+		const unifill = this.TextPr.Unifill;
+		const unifillColor = unifill && unifill.fill && unifill.fill.color && unifill.fill.color.color;
+		if (unifillColor) {
+			if (unifillColor instanceof AscFormat.CSchemeColor)
+				return new ApiColor('theme', unifillColor.id);
+
+			if (unifillColor instanceof AscFormat.CRGBColor)
+				return Api.prototype.RGB(unifillColor.r, unifillColor.g, unifillColor.b);
+		}
+
+		const oColor = this.TextPr.GetColor();
 		if (oColor !== undefined) {
-			return new ApiRGBColor(oColor.r, oColor.g, oColor.b);
+			const isAuto = oColor.Auto === true;
+			return isAuto
+				? Api.prototype.AutoColor()
+				: Api.prototype.RGB(oColor.r, oColor.g, oColor.b);
 		}
 
 		return null;
@@ -15285,18 +16070,60 @@
 
 	/**
 	 * Specifies the shading applied to the contents of the current text run.
+	 *
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
-	 * @param {ShdType} sType - The shading type applied to the contents of the current text run.
+	 *
+	 * @deprecated since 9.1.0 version.
+	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @return {ApiTextPr} - this text properties.
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetShd.js
 	 */
-	ApiTextPr.prototype.SetShd = function(sType, r, g, b)
+	/**
+	 * Specifies the shading applied to the contents of the current text run.
+	 *
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
+	 * @param {ApiColor} color - The color or pattern used to fill the shading.
+	 * @return {ApiTextPr} - this text properties.
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetShd.js
+	 */
+	ApiTextPr.prototype.SetShd = function (type, color)
 	{
-		this.TextPr.Shd = private_GetShd(sType, r, g, b, false);
+		let r, g, b;
+		let isAuto, isTheme;
+
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
+			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
+		} else {
+			r = GetIntParameter(arguments[1], 0);
+			g = GetIntParameter(arguments[2], 0);
+			b = GetIntParameter(arguments[3], 0);
+			isAuto = false;
+			isTheme = false;
+		}
+
+		this.TextPr.Shd = private_GetShd(type, r, g, b, isAuto);
+
+		if (isTheme) {
+			const unifill = color.private_createUnifill();
+			this.TextPr.Shd.Unifill = unifill;
+			this.TextPr.Shd.ThemeFill = unifill;
+		}
+
 		this.private_OnChange();
 		return this;
 	};
@@ -15305,15 +16132,32 @@
 	 * Gets the text shading from the current text properties.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
-	 * @return {?ApiRGBColor}
+	 * @return {?ApiColor}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/GetShd.js
 	 */
-	ApiTextPr.prototype.GetShd = function()
+	ApiTextPr.prototype.GetShd = function ()
 	{
 		let oShd = this.TextPr.GetShd();
-		if (oShd) {
-			return new ApiRGBColor(oShd.Fill.r, oShd.Fill.g, oShd.Fill.b);
+		if (!oShd)
+			return null;
+
+		const unifill = oShd.Unifill || oShd.ThemeFill;
+		const unifillColor = unifill && unifill.fill && unifill.fill.color && unifill.fill.color.color;
+		if (unifillColor) {
+			if (unifillColor instanceof AscFormat.CSchemeColor)
+				return new ApiColor('theme', unifillColor.id);
+
+			if (unifillColor instanceof AscFormat.CRGBColor)
+				return Api.prototype.RGB(unifillColor.r, unifillColor.g, unifillColor.b);
+		}
+
+		const color = oShd.Color || oShd.Fill;
+		if (color) {
+			const isAuto = color.Auto === true;
+			return isAuto
+				? Api.prototype.AutoColor()
+				: Api.prototype.RGB(color.r, color.g, color.b);
 		}
 
 		return null;
@@ -15548,10 +16392,10 @@
 		if (!this.Parent)
 		{
 			if (this.ParaPr.Ind.Left !== undefined)
-				return AscCommon.MMToTwips(this.ParaPr.Ind.Left);
+				return private_MM2Twips(this.ParaPr.Ind.Left);
 			return undefined;
 		}
-		return AscCommon.MMToTwips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Ind.Left);
+		return private_MM2Twips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Ind.Left);
 	};
 	/**
 	 * Sets the paragraph right side indentation.
@@ -15579,11 +16423,11 @@
 		if (!this.Parent)
 		{
 			if (this.ParaPr.Ind.Right !== undefined)
-				return AscCommon.MMToTwips(this.ParaPr.Ind.Right);
+				return private_MM2Twips(this.ParaPr.Ind.Right);
 
 			return undefined;
 		}
-		return AscCommon.MMToTwips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Ind.Right);
+		return private_MM2Twips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Ind.Right);
 	};
 	/**
 	 * Sets the paragraph first line indentation.
@@ -15611,12 +16455,12 @@
 		if (!this.Parent)
 		{
 			if (this.ParaPr.Ind.FirstLine !== undefined)
-				return AscCommon.MMToTwips(this.ParaPr.Ind.FirstLine);
+				return private_MM2Twips(this.ParaPr.Ind.FirstLine);
 
 			return undefined;
 		}
 
-		return AscCommon.MMToTwips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Ind.FirstLine);
+		return private_MM2Twips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Ind.FirstLine);
 	};
 	/**
 	 * Sets the paragraph contents justification.
@@ -15769,7 +16613,7 @@
 					return oSpacing.Line * 240.0;
 				case Asc.linerule_AtLeast:
 				case Asc.linerule_Exact:
-					return AscCommon.MMToTwips(oSpacing.Line);
+					return private_MM2Twips(oSpacing.Line);
 			}
 
 			return undefined;
@@ -15854,12 +16698,12 @@
 		if (!this.Parent)
 		{
 			if (this.ParaPr.Spacing.Before !== undefined)
-				return AscCommon.MMToTwips(this.ParaPr.Spacing.Before);
+				return private_MM2Twips(this.ParaPr.Spacing.Before);
 
 			return undefined;
 		}
 
-		return AscCommon.MMToTwips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Spacing.Before);
+		return private_MM2Twips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Spacing.Before);
 	};
 	/**
 	 * Sets the spacing after the current paragraph. If the value of the isAfterAuto parameter is true, then 
@@ -15895,28 +16739,71 @@
 		if (!this.Parent)
 		{
 			if (this.ParaPr.Spacing.After !== undefined)
-				return AscCommon.MMToTwips(this.ParaPr.Spacing.After);
+				return private_MM2Twips(this.ParaPr.Spacing.After);
 
 			return undefined;
 		}
 
-		return AscCommon.MMToTwips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Spacing.After);
+		return private_MM2Twips(this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Spacing.After);
 	};
+
 	/**
 	 * Specifies the shading applied to the contents of the paragraph.
+	 *
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
-	 * @param {ShdType} sType - The shading type which will be applied to the contents of the current paragraph.
+	 *
+	 * @deprecated since 9.1.0 version.
+	 * @param {ShdType} type - The shading type which will be applied to the contents of the current paragraph.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [isAuto=false] - The true value disables paragraph contents shading.
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetShd.js
 	 */
-	ApiParaPr.prototype.SetShd = function(sType, r, g, b, isAuto)
+	/**
+	 * Specifies the shading applied to the contents of the paragraph.
+	 *
+	 * @memberof ApiParaPr
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ShdType} type - The shading type which will be applied to the contents of the current paragraph.
+	 * @param {ApiColor} color - The color or pattern used to fill the shading.
+	 * @returns {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetShd.js
+	 */
+	ApiParaPr.prototype.SetShd = function(type, color)
 	{
-		this.ParaPr.Shd = private_GetShd(sType, r, g, b, isAuto);
+		let r, g, b;
+		let isAuto, isTheme;
+
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
+			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
+		} else {
+			r = GetIntParameter(arguments[1], 0);
+			g = GetIntParameter(arguments[2], 0);
+			b = GetIntParameter(arguments[3], 0);
+			isAuto = GetBoolParameter(arguments[4], false);
+			isTheme = false;
+		}
+
+		this.ParaPr.Shd = private_GetShd(type, r, g, b, isAuto);
+
+		if (isTheme) {
+			const unifill = color.private_createUnifill();
+			this.ParaPr.Shd.Unifill = unifill;
+			this.ParaPr.Shd.ThemeFill = unifill;
+		}
+
 		this.private_OnChange();
 		return true;
 	};
@@ -15924,33 +16811,40 @@
 	 * Returns the shading applied to the contents of the paragraph.
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
-	 * @returns {?ApiRGBColor}
+	 * @returns {?ApiColor}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/GetShd.js
 	 */
 	ApiParaPr.prototype.GetShd = function()
 	{
-		var oColor = null;
-		var oShd;
-		if (!this.Parent)
-		{
-			oShd = this.ParaPr.Shd;
-			if (!oShd)
-				return null;
-
-			oColor = this.ParaPr.Shd.Color;
-			if (oColor)
-				return new ApiRGBColor(oColor.r, oColor.g, oColor.b);
-			
-			return null;
-		}
-
-		oShd = this.ParaPr.Shd;
+		const oShd = this.ParaPr.Shd;
 		if (!oShd)
 			return null;
 
-		oColor = this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Shd.Color;
-		if (oColor)
-			return new ApiRGBColor(oColor.r, oColor.g, oColor.b);
+		let unifill, color;
+		if (this.Parent) {
+			const compiledShd = this.Parent.private_GetImpl().Get_CompiledPr2().ParaPr.Shd;
+			unifill = compiledShd.Unifill || compiledShd.ThemeFill;
+			color = compiledShd.Color || compiledShd.Fill;
+		} else {
+			unifill = oShd.Unifill || oShd.ThemeFill;
+			color = oShd.Color || oShd.Fill;
+		}
+
+		const unifillColor = unifill && unifill.fill && unifill.fill.color && unifill.fill.color.color;
+		if (unifillColor) {
+			if (unifillColor instanceof AscFormat.CSchemeColor)
+				return new ApiColor('theme', unifillColor.id);
+
+			if (unifillColor instanceof AscFormat.CRGBColor)
+				return Api.prototype.RGB(unifillColor.r, unifillColor.g, unifillColor.b);
+		}
+
+		if (color) {
+			const isAuto = color.Auto === true;
+			return isAuto
+				? Api.prototype.AutoColor()
+				: Api.prototype.RGB(color.r, color.g, color.b);
+		}
 
 		return null;
 	};
@@ -17463,7 +18357,7 @@
 	/**
 	 * Returns the drawing inner contents where a paragraph or text runs can be inserted if it exists.
 	 * @memberof ApiDrawing
-	 * @typeofeditors ["CDE", "CSE"]
+	 * @typeofeditors ["CDE"]
 	 * @returns {?ApiDocumentContent}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetContent.js
 	 */
@@ -18346,7 +19240,7 @@
 	/**
 	 * Returns a type of the ApiShape class.
 	 * @memberof ApiShape
-	 * @typeofeditors ["CDE", "CSE"]
+	 * @typeofeditors ["CDE"]
 	 * @returns {"shape"}
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetClassType.js
 	 */
@@ -18357,13 +19251,22 @@
 	/**
 	 * Returns the shape inner contents where a paragraph or text runs can be inserted.
 	 * @memberof ApiShape
-	 * @typeofeditors ["CDE", "CSE"]
+	 * @typeofeditors ["CDE"]
 	 * @returns {?ApiDocumentContent}
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetDocContent.js
 	 */
 	ApiShape.prototype.GetDocContent = function()
 	{
-		if(this.Shape && this.Shape.textBoxContent && !this.Shape.isForm())
+		if (!this.Shape)
+			return null;
+		if (this.Shape.isForm())
+			return null;
+
+		if(!this.Shape.textBoxContent)
+		{
+			this.Shape.createTextBoxContent();
+		}
+		if(this.Shape.textBoxContent)
 		{
 			return new ApiDocumentContent(this.Shape.textBoxContent);
 		}
@@ -18373,7 +19276,7 @@
 	/**
 	 * Sets the vertical alignment to the shape content where a paragraph or text runs can be inserted.
 	 * @memberof ApiShape
-	 * @typeofeditors ["CDE", "CSE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {VerticalTextAlign} VerticalAlign - The type of the vertical alignment for the shape inner contents.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetVerticalTextAlign.js
@@ -20432,6 +21335,185 @@
 		return JSON.stringify(oWriter.SerColor(this.Unicolor));
 	};
 
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiColor
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	ApiColor.prototype.private_convertToRGBA = function () {
+		const colorMap = {
+			'rgba': this.value,
+			'rgb': (this.value << 8) | 0xFF,
+			'hex': (this.value << 8) | 0xFF,
+			'auto': this.private_resolveAutoColor(),
+			'theme': this.private_resolveThemeColor(),
+		};
+
+		return (this.type in colorMap)
+			? colorMap[this.type]
+			: 0x000000FF;
+	};
+
+	ApiColor.prototype.private_resolveThemeColor = function () {
+		if (this.type !== 'theme')
+			return null;
+
+		const theme = editor.getCurrentTheme();
+		if (!theme || !theme.themeElements || !theme.themeElements.clrScheme)
+			return null;
+
+		const unicolors = theme.themeElements.clrScheme.colors;
+		const unicolor = unicolors[this.value];
+		if (!unicolor || !unicolor.color || !unicolor.color.RGBA)
+			return null;
+
+		const rgba = unicolor.color.RGBA;
+
+		return (rgba.R & 0xFF) << 24 | (rgba.G & 0xFF) << 16 | (rgba.B & 0xFF) << 8 | (rgba.A & 0xFF);
+	};
+
+	ApiColor.prototype.private_resolveAutoColor = function () {
+		if (this.type !== 'auto')
+			return null;
+
+		return 0x000000FF;
+	};
+
+	ApiColor.prototype.private_createUnifill = function () {
+		const unifill = new AscFormat.CUniFill();
+		const solidfill = new AscFormat.CSolidFill();
+		const unicolor = new AscFormat.CUniColor();
+		let color;
+
+		const isTheme = this.IsThemeColor();
+		if (isTheme) {
+			color = new AscFormat.CSchemeColor();
+			color.id = this.value;
+		} else {
+			color = new AscFormat.CRGBColor();
+			const components = this.GetRGBA();
+			color.RGBA.R = components.r;
+			color.RGBA.G = components.g;
+			color.RGBA.B = components.b;
+			color.RGBA.A = components.a;
+		}
+
+		unicolor.setColor(color);
+		solidfill.setColor(unicolor);
+		unifill.setFill(solidfill);
+
+		return unifill;
+	};
+
+	/**
+	 * Returns a type of the ApiColor class.
+	 *
+	 * @memberof ApiColor
+	 * @typeofeditors ["CDE"]
+	 * @since 9.1.0
+	 * @returns {"color"}
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetClassType.js
+	 */
+	ApiColor.prototype.GetClassType = function () {
+		return 'color';
+	};
+
+	/**
+	 * Returns true if the color is set to auto.
+	 *
+	 * @memberof ApiColor
+	 * @typeofeditors ["CDE"]
+	 * @since 9.1.0
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/IsAutoColor.js
+	 */
+	ApiColor.prototype.IsAutoColor = function () {
+		return this.type === 'auto';
+	};
+
+	/**
+	 * Returns true if the color is a theme color.
+	 *
+	 * @memberof ApiColor
+	 * @typeofeditors ["CDE"]
+	 * @since 9.1.0
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/IsThemeColor.js
+	 */
+	ApiColor.prototype.IsThemeColor = function () {
+		return this.type === 'theme';
+	};
+
+	/**
+	 * Gets the RGB components of the color.
+	 *
+	 * @memberof ApiColor
+	 * @typeofeditors ["CDE"]
+	 * @since 9.1.0
+	 * @returns {{r: byte, g: byte, b: byte}}
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetRGB.js
+	 */
+	ApiColor.prototype.GetRGB = function () {
+		const packed = this.private_convertToRGBA();
+		return {
+			'r': (packed >> 24) & 0xFF,
+			'g': (packed >> 16) & 0xFF,
+			'b': (packed >> 8) & 0xFF
+		};
+	};
+
+	/**
+	 * Gets the RGBA components of the color.
+	 *
+	 * @memberof ApiColor
+	 * @typeofeditors ["CDE"]
+	 * @since 9.1.0
+	 * @returns {{r: byte, g: byte, b: byte, a: byte}}
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetRGBA.js
+	 */
+	ApiColor.prototype.GetRGBA = function () {
+		const packed = this.private_convertToRGBA();
+		return {
+			'r': (packed >> 24) & 0xFF,
+			'g': (packed >> 16) & 0xFF,
+			'b': (packed >> 8) & 0xFF,
+			'a': packed & 0xFF
+		};
+	};
+
+	/**
+	 * Gets the HEX string representation of the color.
+	 *
+	 * @memberof ApiColor
+	 * @typeofeditors ["CDE"]
+	 * @since 9.1.0
+	 * @returns {string} A six-digit uppercase hex string, e.g. "FF00AA".
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetHex.js
+	 */
+	ApiColor.prototype.GetHex = function () {
+		const packedRGBA = this.private_convertToRGBA();
+		const packedRGB = (packedRGBA >> 8) & 0xFFFFFF;
+		let hexStr = packedRGB.toString(16);
+		while (hexStr.length < 6)
+			hexStr = '0' + hexStr;
+		return "#" + hexStr.toUpperCase();
+	};
+
+	// Define properties for backwards compatibility
+	Object.defineProperties(ApiColor.prototype, {
+		"r": {get : function() {return this.GetRGBA()["r"];}},
+		"g": {get : function() {return this.GetRGBA()["g"];}},
+		"b": {get : function() {return this.GetRGBA()["b"];}},
+		"a": {get : function() {return this.GetRGBA()["a"];}}
+	});
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiBullet
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
 	/**
 	 * Returns a type of the ApiBullet class.
 	 * @memberof ApiBullet
@@ -20589,13 +21671,19 @@
 	 * Adds a string label to the current inline text content control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sLabel - The label which will be added to the current inline text content control. Can be a positive or negative integer from <b>-2147483647</b> to <b>2147483647</b>.
+	 * @param {number} label - The label which will be added to the current inline text content control. Can be a positive or negative integer from <b>-2147483647</b> to <b>2147483647</b>.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetLabel.js
 	 */
-	ApiInlineLvlSdt.prototype.SetLabel = function(sLabel)
+	ApiInlineLvlSdt.prototype.SetLabel = function(label)
 	{
-		this.Sdt.SetLabel(sLabel);
+		label = AscBuilder.GetNumberParameter(label, null);
+		if (null === label)
+			throwException(new Error("Label must be a number"));
+		else if (label < -2147483647 || label > 2147483647)
+			throwException(new Error("Label must be in range from -2147483647 to 2147483647"));
+		
+		this.Sdt.SetLabel(label);
 		return true;
 	};
 
@@ -20603,7 +21691,7 @@
 	 * Returns the label attribute for the current container.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @returns {string}
+	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetLabel.js
 	 */
 	ApiInlineLvlSdt.prototype.GetLabel = function()
@@ -21127,27 +22215,58 @@
 	
 	/**
 	 * Sets the border color to the current content control.
+	 *
 	 * @memberof ApiInlineLvlSdt
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {byte} a - Alpha color component value.
-	 * @typeofeditors ["CDE"]
-	 * @since 8.3.2
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetBorderColor.js
 	 */
-	ApiInlineLvlSdt.prototype.SetBorderColor = function(r, g, b, a)
+	/**
+	 * Sets the border color to the current content control.
+	 *
+	 * @memberof ApiInlineLvlSdt
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color]
+	 * @return {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetBorderColor.js
+	 */
+	ApiInlineLvlSdt.prototype.SetBorderColor = function (color)
 	{
+		let r, g, b, a;
+
+		if (color instanceof ApiColor) {
+			const rgba = color.GetRGBA();
+			r = rgba.r;
+			g = rgba.g;
+			b = rgba.b;
+			a = rgba.a;
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			a = GetIntParameter(arguments[3], 255);
+		}
+
 		this.Sdt.setBorderColor(new AscWord.CDocumentColorA(r, g, b, a));
 		return true;
 	};
 	/**
 	 * Returns the border color of the current content control.
+	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 8.3.2
-	 * @returns {null | {r:byte, g:byte, b:byte, a:byte}}
+	 * @returns {?ApiColor}
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetBorderColor.js
 	 */
 	ApiInlineLvlSdt.prototype.GetBorderColor = function()
@@ -21155,38 +22274,65 @@
 		let color = this.Sdt.getBorderColor();
 		if (!color)
 			return null;
-		
-		return {
-			"r" : color.r,
-			"g" : color.g,
-			"b" : color.b,
-			"a" : color.a
-		};
+
+		return Api.prototype.RGBA(color.r, color.g, color.b, color.a);
 	};
-	
+
 	/**
 	 * Sets the background color to the current content control.
+	 *
 	 * @memberof ApiInlineLvlSdt
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {byte} a - Alpha color component value.
-	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetBackgroundColor.js
 	 */
-	ApiInlineLvlSdt.prototype.SetBackgroundColor = function(r, g, b, a)
+	/**
+	 * Sets the background color to the current content control.
+	 *
+	 * @memberof ApiInlineLvlSdt
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color]
+	 * @return {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetBackgroundColor.js
+	 */
+	ApiInlineLvlSdt.prototype.SetBackgroundColor = function (color)
 	{
+		let r, g, b, a;
+
+		if (color instanceof ApiColor) {
+			const rgba = color.GetRGBA();
+			r = rgba.r;
+			g = rgba.g;
+			b = rgba.b;
+			a = rgba.a;
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			a = GetIntParameter(arguments[3], 255);
+		}
+
 		this.Sdt.setShdColor(new AscWord.CDocumentColorA(r, g, b, a));
 		return true;
 	};
 	
 	/**
 	 * Returns the background color of the current content control.
+	 *
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 8.3.2
-	 * @returns {null | {r:byte, g:byte, b:byte, a:byte}}
+	 * @returns {?ApiColor}
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/GetBackgroundColor.js
 	 */
 	ApiInlineLvlSdt.prototype.GetBackgroundColor = function()
@@ -21194,13 +22340,8 @@
 		let color = this.Sdt.getShdColor();
 		if (!color)
 			return null;
-		
-		return {
-			"r" : color.r,
-			"g" : color.g,
-			"b" : color.b,
-			"a" : color.a
-		};
+
+		return Api.prototype.RGBA(color.r, color.g, color.b, color.a);
 	};
 
 	/**
@@ -22149,12 +23290,18 @@
 	 * Sets the label attribute to the current container.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {string} label - The label which will be added to the current container. Can be a positive or negative integer from <b>-2147483647</b> to <b>2147483647</b>.
+	 * @param {number} label - The label which will be added to the current container. Can be a positive or negative integer from <b>-2147483647</b> to <b>2147483647</b>.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/SetLabel.js
 	 */
 	ApiBlockLvlSdt.prototype.SetLabel = function(label)
 	{
+		label = AscBuilder.GetNumberParameter(label, null);
+		if (null === label)
+			throwException(new Error("Label must be a number"));
+		else if (label < -2147483647 || label > 2147483647)
+			throwException(new Error("Label must be in range from -2147483647 to 2147483647"));
+		
 		this.Sdt.SetLabel(label);
 		return true;
 	};
@@ -22163,7 +23310,7 @@
 	 * Returns the label attribute for the current container.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @returns {string}
+	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/GetLabel.js
 	 */
 	ApiBlockLvlSdt.prototype.GetLabel = function()
@@ -23089,6 +24236,18 @@
 		return "form";
 	};
 	/**
+	 * Returns an internal id of the current form.
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @since 9.2.0
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/GetInternalId.js
+	 */
+	ApiFormBase.prototype.GetInternalId = function()
+	{
+		return this.Sdt.GetId();
+	};
+	/**
 	 * Returns a type of the current form.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
@@ -23286,83 +24445,198 @@
 			return true;
 		}, this);
 	};
+
 	/**
 	 * Sets the border color to the current form.
+	 *
 	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} bNone - Defines that border color will not be set.
-	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBorderColor.js
 	 */
-	ApiFormBase.prototype.SetBorderColor = function(r, g, b, bNone)
+	/**
+	 * Sets the border color to the current form.
+	 *
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color]
+	 * @return {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBorderColor.js
+	 */
+	ApiFormBase.prototype.SetBorderColor = function(color)
 	{
-		return executeNoFormLockCheck(function() {
-			var oFormPr = this.Sdt.GetFormPr().Copy();
-			var oBorder;
-			if (typeof (r) == "number" && typeof (g) == "number" && typeof (b) == "number" && !bNone)
-			{
-				oBorder       = new CDocumentBorder();
-				oBorder.Color = new CDocumentColor(r, g, b);
+		let r, g, b;
+		let bNone;
+		let isAuto;
+
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
+			bNone = false;
+			isAuto = color.IsAutoColor();
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+			bNone = GetBoolParameter(arguments[3], false);
+			isAuto = false;
+		}
+
+		return executeNoFormLockCheck(function () {
+			const formPrCopy = this.Sdt.GetFormPr().Copy();
+
+			let border;
+			if (bNone)
+				border = undefined;
+			else {
+				border = new CDocumentBorder();
+				border.Color = new CDocumentColor(r, g, b, isAuto);
+				border.Value = border_Single;
 			}
-			else if (bNone)
-				oBorder = undefined;
-			else
-				return false;
-			
-			oFormPr.Border = oBorder;
-			
-			this.Sdt.SetFormPr(oFormPr);
+
+			formPrCopy.Border = border;
+			this.Sdt.SetFormPr(formPrCopy);
+
 			return true;
 		}, this);
 	};
 	/**
-	 * Sets the background color to the current form.
+	 * Returns the border color of the current form.
+	 *
 	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @return {?ApiColor}
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/GetBorderColor.js
+	 */
+	ApiFormBase.prototype.GetBorderColor = function () {
+		const formPr = this.Sdt.GetFormPr();
+		if (!formPr || !formPr.Border || !formPr.Border.Color)
+			return null;
+
+		const color = formPr.Border.Color;
+		return (color.Auto === true)
+			? Api.prototype.AutoColor()
+			: Api.prototype.RGB(color.r, color.g, color.b);
+	};
+
+	/**
+	 * Sets the background color to the current form.
+	 *
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 *
+	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} bNone - Defines that background color will not be set.
-	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBackgroundColor.js
 	 */
-	ApiFormBase.prototype.SetBackgroundColor = function(r, g, b, bNone)
+	/**
+	 * Sets the background color to the current form.
+	 *
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 *
+	 * @since 9.1.0
+	 * @param {ApiColor} [color]
+	 * @return {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBackgroundColor.js
+	 */
+	ApiFormBase.prototype.SetBackgroundColor = function (color)
 	{
-		var oFormPr = this.Sdt.GetFormPr().Copy();
-		
-		let oUnifill = new AscFormat.CUniFill();
-		oUnifill.setFill(new AscFormat.CSolidFill());
-		oUnifill.fill.setColor(new AscFormat.CUniColor());
-		oUnifill.fill.color.setColor(new AscFormat.CRGBColor());
+		let r, g, b;
+		let bNone;
+		let isAuto, isTheme;
+		let unifill;
 
-		if (r >=0 && g >=0 && b >=0)
-			oUnifill.fill.color.color.setColor(r, g, b);
-		else
+		if (color instanceof ApiColor) {
+			const rgb = color.GetRGB();
+			r = rgb['r'];
+			g = rgb['g'];
+			b = rgb['b'];
+			bNone = false;
+			isAuto = color.IsAutoColor();
+			isTheme = color.IsThemeColor();
+			unifill = color.private_createUnifill();
+		} else {
+			r = GetIntParameter(arguments[0], 0);
+			g = GetIntParameter(arguments[1], 0);
+			b = GetIntParameter(arguments[2], 0);
+
+			bNone = GetBoolParameter(arguments[3], false);
+			isAuto = false;
+			isTheme = false;
+			unifill = Api.prototype.RGB(r, g, b).private_createUnifill();
+		}
+
+		if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
 			return false;
+
+		var oFormPr = this.Sdt.GetFormPr().Copy();
 
 		oFormPr.Shd = new CDocumentShd();
 		oFormPr.Shd.Set_FromObject({
-			Value: bNone ? Asc.c_oAscShd.Clear : Asc.c_oAscShd.Clear,
-			Color: {
-				r: r,
-				g: g,
-				b: b,
-				Auto: false
-			},
-			Fill: {
-				r: r,
-				g: g,
-				b: b,
-				Auto: false
-			},
-			Unifill: oUnifill
+			Value: bNone ? Asc.c_oAscShd.Nil : Asc.c_oAscShd.Clear,
+			Color: { r: r, g: g, b: b, Auto: isAuto },
+			Fill: { r: r, g: g, b: b, Auto: isAuto },
+			Unifill: isTheme ? unifill.createDuplicate() : undefined,
+			ThemeFill: isTheme ? unifill.createDuplicate() : undefined,
 		});
 
 		this.Sdt.SetFormPr(oFormPr);
 		return true;
+	};
+
+	/**
+	 * Returns the background color of the current form.
+	 *
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @return {?ApiColor}
+	 * @since 9.1.0
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBorderColor.js
+	 */
+	ApiFormBase.prototype.GetBackgroundColor = function () {
+		const formPr = this.Sdt.GetFormPr();
+		if (!formPr || !formPr.Shd)
+			return null;
+
+		const unifill = formPr.Shd.ThemeFill || formPr.Shd.Unifill;
+		const unifillColor = unifill && unifill.fill && unifill.fill.color && unifill.fill.color.color;
+		if (unifillColor) {
+			if (unifillColor instanceof AscFormat.CSchemeColor)
+				return new ApiColor('theme', unifillColor.id);
+
+			if (unifillColor instanceof AscFormat.CRGBColor)
+				return Api.prototype.RGB(unifillColor.r, unifillColor.g, unifillColor.b);
+		}
+
+		const color = formPr.Shd.Fill || formPr.Shd.Color;
+		if (color) {
+			const isAuto = color.Auto === true;
+			return isAuto
+				? Api.prototype.AutoColor()
+				: Api.prototype.RGB(color.r, color.g, color.b);
+		}
+
+		return null;
 	};
 	/**
 	 * Returns the text from the current form.
@@ -23590,7 +24864,27 @@
 	ApiFormBase.prototype.Delete = function(keepContent)
 	{
 		return executeNoFormLockCheck(function(){
-			return ApiInlineLvlSdt.prototype.Delete.call(this, keepContent);
+			
+			let form = this.Sdt;
+			let mainForm = form.GetMainForm();
+			if (mainForm && mainForm.IsLabeledCheckBox())
+				form = mainForm;
+			
+			if (keepContent && form.IsComplexForm())
+			{
+				if (!this._canBeDeleted())
+					return false;
+				
+				form.GetAllContentControls().forEach(function(cc){
+					cc.RemoveContentControlWrapper();
+				});
+				
+				form.RemoveContentControlWrapper();
+			}
+			else
+			{
+				return ApiInlineLvlSdt.prototype.Delete.call(this, keepContent);
+			}
 		}, this);
 	};
 	
@@ -24384,9 +25678,16 @@
 		return executeNoFormLockCheck(function() {
 			let mainForm = this.Sdt.GetMainForm();
 			if (mainForm && mainForm !== this.Sdt && mainForm.IsLabeledCheckBox())
+			{
 				mainForm.SetCheckBoxLabel(label);
+			}
 			else
+			{
 				this.Sdt.SetCheckBoxLabel(label);
+				let innerCheckBox = this.Sdt.IsLabeledCheckBox() ? this.Sdt.GetInnerCheckBox() : null;
+				if (innerCheckBox)
+					this.Sdt = innerCheckBox;
+			}
 			
 			return true;
 		}, this);
@@ -25168,25 +26469,32 @@
 		else 
 		{
 			let oDocument = this.GetDocument();
+			let logicDocument = oDocument.Document;
+			let docState = logicDocument.SaveDocumentState(false);
+			
 			isTrackRevisions = oDocument && oDocument.IsTrackRevisions();
-			arrSelectedParas = oDocument.Document.GetSelectedParagraphs();
+			arrSelectedParas = logicDocument.GetSelectedParagraphs();
 			if(arrSelectedParas.length <= 0 )
 			{
 				return false;
 			}
+			
 			ReplaceInParas(arrSelectedParas);
 			
 			if (arrSelectedParas[0] && arrSelectedParas[0].Parent)
 				arrSelectedParas[0].Parent.RemoveSelection();
-			else 
-				oDocument.Document.RemoveSelection();
+			else
+				logicDocument.RemoveSelection();
 
 			// вставка оставшихся параграфов из textStrings
 			var oParaParent   = arrSelectedParas[0].Parent;
 			var nIndexToPaste = arrSelectedParas[arrSelectedParas.length - 1].Index + 1;
 			var isPres        = !arrSelectedParas[0].bFromDocument;
 			if (!oParaParent)
+			{
+				logicDocument.LoadDocumentState(docState);
 				return true;
+			}
 
 			for (var nPara = arrSelectedParas.length; nPara < textStrings.length; nPara++)
 			{
@@ -25198,6 +26506,8 @@
 
 				nIndexToPaste++;
 			}
+			
+			logicDocument.LoadDocumentState(docState, true);
 		}
 
 		return true;
@@ -26455,44 +27765,43 @@
 		this.Document.LoadDocumentState(docState);
 		return true;
 	};
-
+	
 	/**
 	 * Returns the bookmark text.
 	 * @memberof ApiBookmark
 	 * @typeofeditors ["CDE"]
-	 * @param {object} oPr - The resulting string display properties.
-     * @param {boolean} [oPr.Numbering=false] - Defines if the resulting string will include numbering or not.
-     * @param {boolean} [oPr.Math=false] - Defines if the resulting string will include mathematical expressions or not.
-	 * @param {string} [oPr.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r".
-     * @param {string} [oPr.TableCellSeparator='\t'] - Defines how the table cell separator will be specified in the resulting string. Any symbol can be used. The default separator is "\t".
-     * @param {string} [oPr.TableRowSeparator='\r\n'] - Defines how the table row separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
-     * @param {string} [oPr.ParaSeparator='\r\n'] - Defines how the paragraph separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
-	 * @param {string} [oPr.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string (does not apply to numbering). Any symbol can be used. The default symbol is "\t".
+	 * @param {object} [options] - Options for formatting the returned text.
+	 * @param {boolean} [options.Numbering=true] - Defines if the resulting string will include numbering or not.
+	 * @param {boolean} [options.Math=true] - Defines if the resulting string will include mathematical expressions or not.
+	 * @param {string} [options.NewLineSeparator='\r'] - Defines how the line separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r".
+	 * @param {string} [options.TableCellSeparator='\t'] - Defines how the table cell separator will be specified in the resulting string. Any symbol can be used. The default separator is "\t".
+	 * @param {string} [options.TableRowSeparator='\r\n'] - Defines how the table row separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
+	 * @param {string} [options.ParaSeparator='\r\n'] - Defines how the paragraph separator will be specified in the resulting string. Any symbol can be used. The default separator is "\r\n".
+	 * @param {string} [options.TabSymbol='\t'] - Defines how the tab will be specified in the resulting string (does not apply to numbering). Any symbol can be used. The default symbol is "\t".
 	 * @returns {string}
 	 * @since 8.3.0
 	 * @see office-js-api/Examples/{Editor}/ApiBookmark/Methods/GetText.js
 	 */
-	ApiBookmark.prototype.GetText = function(oPr)
+	ApiBookmark.prototype.GetText = function(options)
 	{
 		if (!this.IsUseInDocument())
 			return "";
-
-		if (!oPr)
-			oPr = {};
 		
-		let oProp = {
-			NewLineSeparator:	(oPr.hasOwnProperty("NewLineSeparator")) ? oPr["NewLineSeparator"] : "\r",
-			Numbering:			(oPr.hasOwnProperty("Numbering")) ? oPr["Numbering"] : true,
-			Math:				(oPr.hasOwnProperty("Math")) ? oPr["Math"] : true,
-			TableCellSeparator:	oPr["TableCellSeparator"],
-			TableRowSeparator:	oPr["TableRowSeparator"],
-			ParaSeparator:		oPr["ParaSeparator"],
-			TabSymbol:			oPr["TabSymbol"]
+		options = options || {};
+		
+		let _options = {
+			NewLineSeparator   : GetStringParameter(options["NewLineSeparator"], "\r"),
+			Numbering          : GetBoolParameter(options["Numbering"], true),
+			Math               : GetBoolParameter(options["Math"], true),
+			TableCellSeparator : GetStringParameter(options["TableCellSeparator"], "\t"),
+			TableRowSeparator  : GetStringParameter(options["TableRowSeparator"], "\r\n"),
+			ParaSeparator      : GetStringParameter(options["ParaSeparator"], "\r\n"),
+			TabSymbol          : GetStringParameter(options["TabSymbol"], "\t")
 		};
 		
 		let docState = this.Document.SaveDocumentState();
 		this.Select();
-		let result = this.Document.GetSelectedText(false, oProp);
+		let result = this.Document.GetSelectedText(false, _options);
 		this.Document.LoadDocumentState(docState);
 		return result ? result : "";
 	};
@@ -27218,6 +28527,11 @@
 	Api.prototype["CreateRGBColor"]                   = Api.prototype.CreateRGBColor;
 	Api.prototype["CreateSchemeColor"]                = Api.prototype.CreateSchemeColor;
 	Api.prototype["CreatePresetColor"]                = Api.prototype.CreatePresetColor;
+	Api.prototype["AutoColor"]                        = Api.prototype.AutoColor;
+	Api.prototype["RGB"]                              = Api.prototype.RGB;
+	Api.prototype["RGBA"]                             = Api.prototype.RGBA;
+	Api.prototype["HexColor"]                         = Api.prototype.HexColor;
+	Api.prototype["ThemeColor"]                       = Api.prototype.ThemeColor;
 	Api.prototype["CreateSolidFill"]                  = Api.prototype.CreateSolidFill;
 	Api.prototype["CreateLinearGradientFill"]         = Api.prototype.CreateLinearGradientFill;
 	Api.prototype["CreateRadialGradientFill"]         = Api.prototype.CreateRadialGradientFill;
@@ -27285,6 +28599,7 @@
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 	
 	ApiDocumentContent.prototype["GetClassType"]             = ApiDocumentContent.prototype.GetClassType;
+	ApiDocumentContent.prototype["GetInternalId"]            = ApiDocumentContent.prototype.GetInternalId;
 	ApiDocumentContent.prototype["GetElementsCount"]         = ApiDocumentContent.prototype.GetElementsCount;
 	ApiDocumentContent.prototype["GetElement"]               = ApiDocumentContent.prototype.GetElement;
 	ApiDocumentContent.prototype["AddElement"]               = ApiDocumentContent.prototype.AddElement;
@@ -27306,6 +28621,9 @@
 	ApiDocumentContent.prototype["GetCurrentRun"]            = ApiDocumentContent.prototype.GetCurrentRun;
 	ApiDocumentContent.prototype["GetCurrentContentControl"] = ApiDocumentContent.prototype.GetCurrentContentControl;
 	ApiDocumentContent.prototype["GetDocumentVisitor"]       = ApiDocumentContent.prototype.GetDocumentVisitor;
+	ApiDocumentContent.prototype["IsFootnote"]               = ApiDocumentContent.prototype.IsFootnote;
+	ApiDocumentContent.prototype["IsEndnote"]                = ApiDocumentContent.prototype.IsEndnote;
+	ApiDocumentContent.prototype["SelectNoteReference"]      = ApiDocumentContent.prototype.SelectNoteReference;
 
 	ApiRange.prototype["GetClassType"]               = ApiRange.prototype.GetClassType;
 	ApiRange.prototype["GetParagraph"]               = ApiRange.prototype.GetParagraph;
@@ -27349,6 +28667,7 @@
 	ApiRange.prototype["AddField"]                   = ApiRange.prototype.AddField;
 	
 	ApiDocument.prototype["GetClassType"]                  = ApiDocument.prototype.GetClassType;
+	ApiDocument.prototype["GetInternalId"]                 = ApiDocument.prototype.GetInternalId;
 	ApiDocument.prototype["CreateNewHistoryPoint"]         = ApiDocument.prototype.CreateNewHistoryPoint;
 	ApiDocument.prototype["GetDefaultTextPr"]              = ApiDocument.prototype.GetDefaultTextPr;
 	ApiDocument.prototype["GetDefaultParaPr"]              = ApiDocument.prototype.GetDefaultParaPr;
@@ -27449,11 +28768,19 @@
 	ApiDocument.prototype["MoveCursorToEnd"]               = ApiDocument.prototype.MoveCursorToEnd;
 	ApiDocument.prototype["GoToPage"]                      = ApiDocument.prototype.GoToPage;
 	ApiDocument.prototype["GetDocumentVisitor"]            = ApiDocument.prototype.GetDocumentVisitor;
+	ApiDocument.prototype["EnterText"]                     = ApiDocument.prototype.EnterText;
+	ApiDocument.prototype["InsertParagraphBreak"]          = ApiDocument.prototype.InsertParagraphBreak;
+	ApiDocument.prototype["MoveCursorLeft"]                = ApiDocument.prototype.MoveCursorLeft;
+	ApiDocument.prototype["MoveCursorRight"]               = ApiDocument.prototype.MoveCursorRight;
+	ApiDocument.prototype["MoveCursorUp"]                  = ApiDocument.prototype.MoveCursorUp;
+	ApiDocument.prototype["MoveCursorDown"]                = ApiDocument.prototype.MoveCursorDown;
+	ApiDocument.prototype["GetCurrentFootEndnote"]         = ApiDocument.prototype.GetCurrentFootEndnote;
 	
 	
 	ApiParagraph.prototype["GetClassType"]           = ApiParagraph.prototype.GetClassType;
 	ApiParagraph.prototype["SetParaId"]              = ApiParagraph.prototype.SetParaId;
 	ApiParagraph.prototype["GetParaId"]              = ApiParagraph.prototype.GetParaId;
+	ApiParagraph.prototype["GetInternalId"]          = ApiParagraph.prototype.GetInternalId;
 	ApiParagraph.prototype["AddText"]                = ApiParagraph.prototype.AddText;
 	ApiParagraph.prototype["AddPageBreak"]           = ApiParagraph.prototype.AddPageBreak;
 	ApiParagraph.prototype["AddLineBreak"]           = ApiParagraph.prototype.AddLineBreak;
@@ -27527,7 +28854,7 @@
 	ApiParagraph.prototype["AddCaption"]             = ApiParagraph.prototype.AddCaption;
 	ApiParagraph.prototype["SetSection"]             = ApiParagraph.prototype.SetSection;
 	ApiParagraph.prototype["GetSection"]             = ApiParagraph.prototype.GetSection;
-
+	ApiParagraph.prototype["GetInternalId"]          = ApiParagraph.prototype.GetInternalId;
 	ApiParagraph.prototype["ToJSON"]                 = ApiParagraph.prototype.ToJSON;
 
 
@@ -27618,6 +28945,7 @@
 	ApiSection.prototype["GetStartPageNumber"]       = ApiSection.prototype.GetStartPageNumber;
 	
 	ApiTable.prototype["GetClassType"]               = ApiTable.prototype.GetClassType;
+	ApiTable.prototype["GetInternalId"]              = ApiTable.prototype.GetInternalId;
 	ApiTable.prototype["SetJc"]                      = ApiTable.prototype.SetJc;
 	ApiTable.prototype["GetRowsCount"]               = ApiTable.prototype.GetRowsCount;
 	ApiTable.prototype["GetRow"]                     = ApiTable.prototype.GetRow;
@@ -27659,6 +28987,7 @@
 	ApiTable.prototype["AddCaption"]                 = ApiTable.prototype.AddCaption;
 
 	ApiTableRow.prototype["GetClassType"]            = ApiTableRow.prototype.GetClassType;
+	ApiTableRow.prototype["GetInternalId"]           = ApiTableRow.prototype.GetInternalId;
 	ApiTableRow.prototype["GetCellsCount"]           = ApiTableRow.prototype.GetCellsCount;
 	ApiTableRow.prototype["GetCell"]                 = ApiTableRow.prototype.GetCell;
 	ApiTableRow.prototype["GetIndex"]           	 = ApiTableRow.prototype.GetIndex;
@@ -27674,6 +29003,7 @@
 	ApiTableRow.prototype["SetBackgroundColor"]      = ApiTableRow.prototype.SetBackgroundColor;
 
 	ApiTableCell.prototype["GetClassType"]             = ApiTableCell.prototype.GetClassType;
+	ApiTableCell.prototype["GetInternalId"]            = ApiTableCell.prototype.GetInternalId;
 	ApiTableCell.prototype["GetContent"]               = ApiTableCell.prototype.GetContent;
 	ApiTableCell.prototype["GetIndex"]    			   = ApiTableCell.prototype.GetIndex;
 	ApiTableCell.prototype["GetRowIndex"]    		   = ApiTableCell.prototype.GetRowIndex;
@@ -27692,6 +29022,7 @@
 	ApiTableCell.prototype["Clear"]    		           = ApiTableCell.prototype.Clear;
 	ApiTableCell.prototype["AddElement"]    		   = ApiTableCell.prototype.AddElement;
 	ApiTableCell.prototype["SetBackgroundColor"]       = ApiTableCell.prototype.SetBackgroundColor;
+	ApiTableCell.prototype["GetBackgroundColor"]       = ApiTableCell.prototype.GetBackgroundColor;
 	ApiTableCell.prototype["SetColumnBackgroundColor"] = ApiTableCell.prototype.SetColumnBackgroundColor;
 
 	ApiStyle.prototype["GetClassType"]               = ApiStyle.prototype.GetClassType;
@@ -28047,6 +29378,13 @@
 	ApiPresetColor.prototype["GetClassType"]         = ApiPresetColor.prototype.GetClassType;
 	ApiPresetColor.prototype["ToJSON"]               = ApiPresetColor.prototype.ToJSON;
 
+	ApiColor.prototype["GetClassType"] = ApiColor.prototype.GetClassType;
+	ApiColor.prototype["IsAutoColor"] = ApiColor.prototype.IsAutoColor;
+	ApiColor.prototype["IsThemeColor"] = ApiColor.prototype.IsThemeColor;
+	ApiColor.prototype["GetRGB"] = ApiColor.prototype.GetRGB;
+	ApiColor.prototype["GetRGBA"] = ApiColor.prototype.GetRGBA;
+	ApiColor.prototype["GetHex"] = ApiColor.prototype.GetHex;
+
 	ApiBullet.prototype["GetClassType"]              = ApiBullet.prototype.GetClassType;
 	ApiBullet.prototype["ToJSON"]                    = ApiBullet.prototype.ToJSON;
 
@@ -28185,6 +29523,7 @@
 	
 	
 	ApiFormBase.prototype["GetClassType"]       = ApiFormBase.prototype.GetClassType;
+	ApiFormBase.prototype["GetInternalId"]      = ApiFormBase.prototype.GetInternalId;
 	ApiFormBase.prototype["GetFormType"]        = ApiFormBase.prototype.GetFormType;
 	ApiFormBase.prototype["GetFormKey"]         = ApiFormBase.prototype.GetFormKey;
 	ApiFormBase.prototype["SetFormKey"]         = ApiFormBase.prototype.SetFormKey;
@@ -28196,7 +29535,9 @@
 	ApiFormBase.prototype["ToFixed"]            = ApiFormBase.prototype.ToFixed;
 	ApiFormBase.prototype["ToInline"]           = ApiFormBase.prototype.ToInline;
 	ApiFormBase.prototype["SetBorderColor"]     = ApiFormBase.prototype.SetBorderColor;
+	ApiFormBase.prototype["GetBorderColor"]     = ApiFormBase.prototype.GetBorderColor;
 	ApiFormBase.prototype["SetBackgroundColor"] = ApiFormBase.prototype.SetBackgroundColor;
+	ApiFormBase.prototype["GetBackgroundColor"] = ApiFormBase.prototype.GetBackgroundColor;
 	ApiFormBase.prototype["GetText"]            = ApiFormBase.prototype.GetText;
 	ApiFormBase.prototype["Clear"]              = ApiFormBase.prototype.Clear;
 	ApiFormBase.prototype["GetWrapperShape"]    = ApiFormBase.prototype.GetWrapperShape;
@@ -28456,6 +29797,7 @@
 	window['AscBuilder'].ApiCore             = ApiCore;
 	window['AscBuilder'].ApiCustomProperties = ApiCustomProperties;
 	window['AscBuilder'].ApiCustomXmlParts	 = ApiCustomXmlParts;
+	window['AscBuilder'].ApiColor            = ApiColor;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Area for internal usage
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28516,6 +29858,7 @@
 	window['AscBuilder'].GetIntParameter        = GetIntParameter;
 	window['AscBuilder'].GetArrayParameter      = GetArrayParameter;
 	window['AscBuilder'].executeNoFormLockCheck = executeNoFormLockCheck;
+	window['AscBuilder'].throwException			= throwException;
 
 	window['AscBuilder'].GetApiDrawings         = GetApiDrawings;
 	window['AscBuilder'].GetApiDrawing          = GetApiDrawing;
@@ -28753,7 +30096,8 @@
 
 	function private_MM2Twips(mm)
 	{
-		return mm / (25.4 / 72.0 / 20);
+		// Convert to closest integer value in twips
+		return AscCommon.MMToTwips(mm, -1);
 	}
 
 	function private_EMU2MM(EMU)
@@ -29754,6 +31098,19 @@
 		
 		logicDocument.ClearActionOnChangeForm();
 		logicDocument.GetFormsManager().OnChange(this.Sdt);
+	};
+	ApiCheckBoxForm.prototype.private_GetImpl = function()
+	{
+		let impl = ApiFormBase.prototype.private_GetImpl.call(this);
+		
+		if (impl === this.Sdt)
+		{
+			let mainForm = this.Sdt.GetMainForm();
+			if (mainForm && mainForm !== this.Sdt && mainForm.IsLabeledCheckBox())
+				return mainForm;
+		}
+		
+		return impl;
 	};
 	
 	ApiComment.prototype.private_OnChange = function()

@@ -59,7 +59,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Changed_View]	= CChangesPDFAn
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Border_Effect]	= CChangesPDFAnnotBorderEffect;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Border_Intensity]= CChangesPDFAnnotBorderIntensity;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Border_Dash]		= CChangesPDFAnnotBorderDash;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Border_Type]		= CChangesPDFAnnotBorderDash;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Border_Type]		= CChangesPDFAnnotBorderType;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Meta]			= CChangesPDFAnnotMeta;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Subject]			= CChangesPDFAnnotSubject;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Line_Start]		= CChangesPDFAnnotLineStart;
@@ -69,6 +69,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Orig_Page]		= CChangesPDFAnno
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Comment_Data]	= CChangesPDFAnnotCommentData;
 AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_Reply]		= CChangesPDFAnnotReply;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Ap_Idx]			= CChangesPDFAnnotApIdx;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Actions]			= CChangesPDFAnnotActions;
 
 // text annot
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Annot_Icon]		= CChangesPDFTextAnnotIcon;
@@ -95,6 +96,9 @@ AscDFH.drawingsConstructorsMap[AscDFH.historyitem_Pdf_Stamp_RenderStructure] = A
 
 // redact
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Redact_Annot_Redact_Id] = CChangesPDFRedactAnnotRedactId;
+
+// link
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Link_Annot_Highlight_Type] = CChangesPDFLinkAnnotHighlight;
 
 /**
  * @constructor
@@ -864,7 +868,89 @@ CChangesPDFAnnotApIdx.prototype.private_SetValue = function(Value)
 	oAnnot._apIdx = Value;
 };
 
-// text annot
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesPDFAnnotActions(Class, oOldActionsInfo, oNewActionsInfo, nTriggerType, Color)
+{
+	AscDFH.CChangesBaseStringProperty.call(this, Class, JSON.stringify(oOldActionsInfo), JSON.stringify(oNewActionsInfo), Color);
+	this.TriggerType = nTriggerType;
+}
+CChangesPDFAnnotActions.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesPDFAnnotActions.prototype.constructor = CChangesPDFAnnotActions;
+CChangesPDFAnnotActions.prototype.Type = AscDFH.historyitem_Pdf_Annot_Actions;
+CChangesPDFAnnotActions.prototype.CreateReverseChange = function() {
+	return new this.constructor(this.Class, this.New, this.Old, this.TriggerType, this.Color);
+};
+CChangesPDFAnnotActions.prototype.private_SetValue = function(Value)
+{
+	let oField = this.Class;
+	oField.SetActions(this.TriggerType, JSON.parse(Value));
+};
+
+CChangesPDFAnnotActions.prototype.WriteToBinary = function(Writer)
+{
+	let nFlags = 0;
+
+	if (false !== this.Color)
+		nFlags |= 1;
+
+	if (undefined === this.TriggerType)
+		nFlags |= 2;
+
+	if (undefined === this.New)
+		nFlags |= 4;
+
+	if (undefined === this.Old)
+		nFlags |= 8;
+	
+
+	Writer.WriteLong(nFlags);
+
+	if (undefined !== this.TriggerType)
+		Writer.WriteLong(this.TriggerType);
+
+	if (undefined !== this.New)
+		Writer.WriteString2(this.New);
+
+	if (undefined !== this.Old)
+		Writer.WriteString2(this.Old);
+};
+CChangesPDFAnnotActions.prototype.ReadFromBinary = function(Reader)
+{
+	this.FromLoad = true;
+
+	// Long  : Flag
+	// 1-bit : Подсвечивать ли данные изменения
+	// 2-bit : IsUndefined New
+	// 3-bit : IsUndefined Old
+	// long : New
+	// long : Old
+
+
+	var nFlags = Reader.GetLong();
+
+	if (nFlags & 1)
+		this.Color = true;
+	else
+		this.Color = false;
+
+	if (nFlags & 2)
+		this.TriggerType = undefined;
+	else
+		this.TriggerType = Reader.GetLong();
+
+	if (nFlags & 4)
+		this.New = undefined;
+	else
+		this.New = Reader.GetString2();
+
+	if (nFlags & 8)
+		this.Old = undefined;
+	else
+		this.Old = Reader.GetString2();
+};// text annot
 
 /**
  * @constructor
@@ -1277,6 +1363,9 @@ CChangesPDFAnnotBorderEffect.prototype.private_SetValue = function(Value)
 	let oAnnot = this.Class;
 	oAnnot._borderEffectStyle = Value;
 	oAnnot.AddToRedraw();
+	if (Value == AscPDF.BORDER_EFFECT_STYLES.None) {
+		oAnnot.SetDefaultGeometry();
+	}
 };
 
 /**
@@ -1661,4 +1750,22 @@ CChangesPDFRedactAnnotRedactId.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
 	oAnnot._redactId = Value;
+};
+
+// link
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFLinkAnnotHighlight(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFLinkAnnotHighlight.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFLinkAnnotHighlight.prototype.constructor = CChangesPDFLinkAnnotHighlight;
+CChangesPDFLinkAnnotHighlight.prototype.Type = AscDFH.historyitem_Pdf_Link_Annot_Highlight_Type;
+CChangesPDFLinkAnnotHighlight.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot._highlight = Value;
 };

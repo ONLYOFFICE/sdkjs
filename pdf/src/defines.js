@@ -255,6 +255,37 @@
     BORDER_TYPES["inset"]       = BORDER_TYPES.inset;
     BORDER_TYPES["underline"]   = BORDER_TYPES.underline;
 
+    const ANNOT_COMPLEX_BORDER_TYPES = {
+        solid:  0,
+        dash1:  1,
+        dash2:  2,
+        dash3:  3,
+        dash4:  4,
+        dash5:  5,
+        dash6:  6,
+        cloud1: 7,
+        cloud2: 8
+    }
+
+    ANNOT_COMPLEX_BORDER_TYPES["solid"]   = ANNOT_COMPLEX_BORDER_TYPES.solid;
+    ANNOT_COMPLEX_BORDER_TYPES["dash1"]   = ANNOT_COMPLEX_BORDER_TYPES.dash1;
+    ANNOT_COMPLEX_BORDER_TYPES["dash2"]   = ANNOT_COMPLEX_BORDER_TYPES.dash2;
+    ANNOT_COMPLEX_BORDER_TYPES["dash3"]   = ANNOT_COMPLEX_BORDER_TYPES.dash3;
+    ANNOT_COMPLEX_BORDER_TYPES["dash4"]   = ANNOT_COMPLEX_BORDER_TYPES.dash4;
+    ANNOT_COMPLEX_BORDER_TYPES["dash5"]   = ANNOT_COMPLEX_BORDER_TYPES.dash5;
+    ANNOT_COMPLEX_BORDER_TYPES["dash6"]   = ANNOT_COMPLEX_BORDER_TYPES.dash6;
+    ANNOT_COMPLEX_BORDER_TYPES["cloud1"]  = ANNOT_COMPLEX_BORDER_TYPES.cloud1;
+    ANNOT_COMPLEX_BORDER_TYPES["cloud2"]  = ANNOT_COMPLEX_BORDER_TYPES.cloud2;
+    
+    const ANNOT_BORDER_DASHED_VALUES = {
+        dash1:  [2, 2],
+        dash2:  [3, 3],
+        dash3:  [4, 4],
+        dash4:  [4, 3, 2, 3],
+        dash5:  [4, 3, 16, 3],
+        dash6:  [8, 4, 4, 4],
+    }
+
     const BUTTON_HIGHLIGHT_TYPES = {
         none:       0,
         invert:     1,
@@ -284,21 +315,51 @@
 
     DIGITS_TYPES["arabic"]  = DIGITS_TYPES.arabic;
     DIGITS_TYPES["hindi"]   = DIGITS_TYPES.hindi;
+    
+    const USER_PERMISSIONS = {
+        edit:   4
+    };
+	
+	USER_PERMISSIONS["edit"]  = USER_PERMISSIONS.edit;
 
-    asc["FIELD_TYPES"]              = asc.FIELD_TYPES               = FIELD_TYPES;
-    asc["BORDER_EFFECT_STYLES"]     = asc.BORDER_EFFECT_STYLES      = BORDER_EFFECT_STYLES;
-    asc["REF_TO_REASON"]            = asc.REF_TO_REASON             = REF_TO_REASON;
-    asc["FormatType"]               = asc.FormatType                = FormatType;
-    asc["SpecialFormatType"]        = asc.SpecialFormatType         = SpecialFormatType;
-    asc["SeparatorStyle"]           = asc.SeparatorStyle            = SeparatorStyle;
-    asc["TimeFormatType"]           = asc.TimeFormatType            = TimeFormatType;
-    asc["NegativeStyle"]            = asc.NegativeStyle             = NegativeStyle;
-    asc["CalculateType"]            = asc.CalculateType             = CalculateType;
-    asc["ValidateType"]             = asc.ValidateType              = ValidateType;
-    asc["CHECKBOX_STYLES"]          = asc.CHECKBOX_STYLES           = CHECKBOX_STYLES;
-    asc["BORDER_TYPES"]             = asc.BORDER_TYPES              = BORDER_TYPES;
-    asc["BUTTON_HIGHLIGHT_TYPES"]   = asc.BUTTON_HIGHLIGHT_TYPES    = BUTTON_HIGHLIGHT_TYPES;
-    asc["APPEARANCE_TYPES"]         = asc.APPEARANCE_TYPES          = APPEARANCE_TYPES;
-    asc["DIGITS_TYPES"]             = asc.DIGITS_TYPES              = DIGITS_TYPES;
-    asc.CommandType                 = CommandType;
+    const GOTO_TYPES = { // see description in pdf specification (table 151 destination syntax)
+        xyz:    0,
+        fit:    1,
+        fitH:   2,
+        fitV:   3,
+        fitR:   4,
+        fitB:   5,
+        fitBH:  6,
+        fitBV:  7
+    }
+
+    GOTO_TYPES["xyz"]   = GOTO_TYPES.xyz;
+    GOTO_TYPES["fit"]   = GOTO_TYPES.fit;
+    GOTO_TYPES["fitH"]  = GOTO_TYPES.fitH;
+    GOTO_TYPES["fitV"]  = GOTO_TYPES.fitV;
+    GOTO_TYPES["fitR"]  = GOTO_TYPES.fitR;
+    GOTO_TYPES["fitB"]  = GOTO_TYPES.fitB;
+    GOTO_TYPES["fitBH"] = GOTO_TYPES.fitBH;
+    GOTO_TYPES["fitBV"] = GOTO_TYPES.fitBV;
+
+    asc["FIELD_TYPES"]                  = asc.FIELD_TYPES               = FIELD_TYPES;
+    asc["BORDER_EFFECT_STYLES"]         = asc.BORDER_EFFECT_STYLES      = BORDER_EFFECT_STYLES;
+    asc["REF_TO_REASON"]                = asc.REF_TO_REASON             = REF_TO_REASON;
+    asc["FormatType"]                   = asc.FormatType                = FormatType;
+    asc["SpecialFormatType"]            = asc.SpecialFormatType         = SpecialFormatType;
+    asc["SeparatorStyle"]               = asc.SeparatorStyle            = SeparatorStyle;
+    asc["TimeFormatType"]               = asc.TimeFormatType            = TimeFormatType;
+    asc["NegativeStyle"]                = asc.NegativeStyle             = NegativeStyle;
+    asc["CalculateType"]                = asc.CalculateType             = CalculateType;
+    asc["ValidateType"]                 = asc.ValidateType              = ValidateType;
+    asc["CHECKBOX_STYLES"]              = asc.CHECKBOX_STYLES           = CHECKBOX_STYLES;
+    asc["BORDER_TYPES"]                 = asc.BORDER_TYPES              = BORDER_TYPES;
+    asc["ANNOT_COMPLEX_BORDER_TYPES"]   = asc.ANNOT_COMPLEX_BORDER_TYPES= ANNOT_COMPLEX_BORDER_TYPES;
+    asc["ANNOT_BORDER_DASHED_VALUES"]   = asc.ANNOT_BORDER_DASHED_VALUES= ANNOT_BORDER_DASHED_VALUES;
+    asc["BUTTON_HIGHLIGHT_TYPES"]       = asc.BUTTON_HIGHLIGHT_TYPES    = BUTTON_HIGHLIGHT_TYPES;
+    asc["APPEARANCE_TYPES"]            = asc.APPEARANCE_TYPES           = APPEARANCE_TYPES;
+    asc["DIGITS_TYPES"]                = asc.DIGITS_TYPES               = DIGITS_TYPES;
+    asc["USER_PERMISSIONS"]            = asc.USER_PERMISSIONS           = USER_PERMISSIONS;
+    asc["GOTO_TYPES"]                  = asc.GOTO_TYPES                 = GOTO_TYPES;
+    asc.CommandType                    = CommandType;
 })();

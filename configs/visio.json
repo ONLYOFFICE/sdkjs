@@ -374,7 +374,11 @@
 			"visio/model/SerializeReader.js",
 			"visio/model/SerializeWriter.js",
 			
-			"word/Editor/document-visitor.js"
+			"word/Editor/document-visitor.js",
+			
+			"word/Editor/annotations/custom-text-annotator/custom-text-annotator.js",
+			"word/Editor/annotations/custom-text-annotator/range-marks.js",
+			"word/Editor/annotations/custom-text-annotator/text-annotator-manager.js"
 		],
 		"desktop": {
 			"min": [

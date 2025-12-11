@@ -304,6 +304,8 @@
 		if (!this.IsValidForm(oForm))
 			return;
 		
+		AscCommon.History.skipFormFillingLockCheck(true);
+		
 		if (oForm.IsComplexForm())
 			this.OnChangeComplexForm(oForm);
 		else if (oForm.IsCheckBox())
@@ -312,6 +314,8 @@
 			this.OnChangePictureForm(oForm);
 		else
 			this.OnChangeTextForm(oForm);
+		
+		AscCommon.History.skipFormFillingLockCheck(false);
 	};
 	/**
 	 * Sync all specific form properties for forms with the same key
@@ -319,6 +323,8 @@
 	 */
 	CFormsManager.prototype.OnChangeFormPr = function(form)
 	{
+		AscCommon.History.skipFormFillingLockCheck(true);
+		
 		let userMaster = this.GetUserMasterByForm(form);
 		let allForms;
 		if (form.IsRadioButton())
@@ -334,6 +340,8 @@
 			
 			_form.SyncFormPrWithSameKey(form);
 		}
+		
+		AscCommon.History.skipFormFillingLockCheck(false);
 	};
 	/**
 	 * Проверяем корректность изменения формы

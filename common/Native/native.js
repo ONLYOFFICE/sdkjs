@@ -343,7 +343,7 @@ var console = {
 	time: function (param) {},
 	timeEnd: function (param) {},
 	warn: function() {},
-	error: function() {}
+	error: function() { window.native && window.native.ConsoleLog("[error]: " + param); }
 };
 
 var performance = window.performance = (function(){

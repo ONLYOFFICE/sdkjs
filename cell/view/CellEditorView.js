@@ -1864,12 +1864,33 @@ function (window, undefined) {
 		this.newTextFormat = null;
 		var t = this;
 		this.sAutoComplete = null;
+
+		let getLineIndex = function (_curPos) {
+			if (!t.textRender || !t.textRender.lines) {
+				return;
+			}
+			for (var i = 0; i < t.textRender.lines.length; i++) {
+				var line = t.textRender.lines[i];
+				if (_curPos >= line.beg && _curPos <= line.end) {
+					return i;
+				}
+			}
+		};
+		let oldCursorPos = t.cursorPos, _lineIndex;
 		switch (kind) {
 			case kPrevChar:
+				_lineIndex = getLineIndex(oldCursorPos);
 				t.cursorPos = t.textRender.getPrevChar(t.cursorPos);
+				if (_lineIndex != null && oldCursorPos - 1 === t.cursorPos && t.textRender.lines[_lineIndex] && t.textRender.lines[_lineIndex].beg === t.cursorPos) {
+					lineIndex = _lineIndex;
+				}
 				break;
 			case kNextChar:
+				_lineIndex = getLineIndex(oldCursorPos);
 				t.cursorPos = t.textRender.getNextChar(t.cursorPos);
+				if (_lineIndex != null && oldCursorPos + 1 === t.cursorPos && t.textRender.lines[_lineIndex + 1] && t.textRender.lines[_lineIndex + 1].beg === t.cursorPos) {
+					lineIndex = _lineIndex + 1;
+				}
 				break;
 			case kPrevWord:
 				t.cursorPos = t.textRender.getPrevWord(t.cursorPos);

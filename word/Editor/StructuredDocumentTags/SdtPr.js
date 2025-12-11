@@ -75,6 +75,9 @@ function CSdtPr()
 	
 	this.BorderColor = undefined;
 	this.ShdColor    = undefined;
+
+	this.RepeatingSection = false;
+	this.RepeatingSectionItem = false;
 }
 
 CSdtPr.prototype.Copy = function()
@@ -127,6 +130,9 @@ CSdtPr.prototype.Copy = function()
 	oPr.Text      = this.Text;
 	oPr.Temporary = this.Temporary;
 
+	oPr.RepeatingSection = this.RepeatingSection;
+	oPr.RepeatingSectionItem = this.RepeatingSectionItem;
+
 	return oPr;
 };
 CSdtPr.prototype.Write_ToBinary = function(Writer)
@@ -157,7 +163,7 @@ CSdtPr.prototype.Write_ToBinary = function(Writer)
 
 	if (undefined !== this.Label)
 	{
-		Writer.WriteLong(this.Tag);
+		Writer.WriteLong(this.Label);
 		Flags |= 8;
 	}
 
@@ -292,6 +298,18 @@ CSdtPr.prototype.Write_ToBinary = function(Writer)
 		this.ShdColor.toBinary(Writer);
 		Flags |= (1 << 25);
 	}
+
+	if (undefined !== this.RepeatingSection)
+	{
+		Writer.WriteBool(this.RepeatingSection);
+		Flags |= (1 << 26);
+	}
+
+	if (undefined !== this.RepeatingSectionItem)
+	{
+		Writer.WriteBool(this.RepeatingSectionItem);
+		Flags |= (1 << 27);
+	}
 	
 	var EndPos = Writer.GetCurPosition();
 	Writer.Seek(StartPos);
@@ -315,7 +333,7 @@ CSdtPr.prototype.Read_FromBinary = function(Reader)
 		this.Tag = Reader.GetString2();
 
 	if (Flags & 8)
-		this.Tag = Reader.GetLong();
+		this.Label = Reader.GetLong();
 
 	if (Flags & 16)
 		this.Lock = Reader.GetLong();
@@ -406,6 +424,12 @@ CSdtPr.prototype.Read_FromBinary = function(Reader)
 	
 	if (Flags & (1 << 25))
 		this.ShdColor = AscWord.CDocumentColorA.fromBinary(Reader);
+
+	if (Flags & (1 << 26))
+		this.RepeatingSection = Reader.GetBool();
+
+	if (Flags & (1 << 27))
+		this.RepeatingSectionItem = Reader.GetBool();
 };
 CSdtPr.prototype.IsBuiltInDocPart = function()
 {

@@ -96,6 +96,11 @@
 
         oGeometry.preset = undefined;
     };
+    CAnnotationSquare.prototype.SetDefaultGeometry = function() {
+        AscCommon.History.StartNoHistoryMode();
+        this.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
+        AscCommon.History.EndNoHistoryMode();
+    };
     CAnnotationSquare.prototype.IsSquare = function() {
         return true;
     };

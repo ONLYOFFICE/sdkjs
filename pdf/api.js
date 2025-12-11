@@ -970,19 +970,33 @@
 			return AscPDF.CreateAscAnnotPropFromObj(annot);
 		});
 
+		if (aAnnots.length == 0) {
+			return;
+		}
+		
 		for (let i = 1; i < aAnnotsProps.length; i++) {
 			aAnnotsProps[0].compare(aAnnotsProps[i]);
 		}
 
-		var _len = this.SelectedObjectsStack.length;
-		if (_len > 0) {
-			if (this.SelectedObjectsStack[_len - 1].Type == Asc.c_oAscTypeSelectElement.Annot) {
-				this.SelectedObjectsStack[_len - 1].Value = aAnnotsProps[0];
-				return;
+		aAnnotsProps[0].asc_putIds(aAnnots.map(function(annot) {
+			return annot.GetId();
+		}));
+
+		let aLinkProps = [];
+		aAnnots.forEach(function(annot) {
+			if (annot.IsLink()) {
+				aLinkProps.push(AscPDF.CreateLinkPropFromLinkAnnot(annot));
 			}
+		})
+
+		for (let i = 1; i < aLinkProps.length; i++) {
+			aLinkProps[0].compare(aLinkProps[i]);
 		}
 
 		this.SelectedObjectsStack[this.SelectedObjectsStack.length] = new AscCommon.asc_CSelectedObject(Asc.c_oAscTypeSelectElement.Annot, aAnnotsProps[0]);
+		if (aLinkProps[0]) {
+			this.SelectedObjectsStack[this.SelectedObjectsStack.length] = new AscCommon.asc_CSelectedObject(Asc.c_oAscTypeSelectElement.Hyperlink, aLinkProps[0]);
+		}
 	};
 	PDFEditorApi.prototype.sync_fieldPropCallback = function(aFields) {
 		if (aFields.length == 0) {
@@ -1146,9 +1160,9 @@
 		let oDoc = this.getPDFDoc();
 		oDoc.RemoveHyperlink();
 	};
-	PDFEditorApi.prototype.change_Hyperlink = function(HyperProps) {
+	PDFEditorApi.prototype.change_Hyperlink = function(HyperProps, arrAnnotsIds) {
 		let oDoc = this.getPDFDoc();
-		oDoc.ModifyHyperlink(HyperProps);
+		oDoc.ModifyHyperlink(HyperProps, arrAnnotsIds);
 	};
 	PDFEditorApi.prototype.sync_HyperlinkClickCallback = function(Url) {
 		let oViewer		= this.getDocumentRenderer();
@@ -1193,16 +1207,16 @@
 
 		}, function() {});
 	};
-	PDFEditorApi.prototype.add_Hyperlink = function(HyperProps) {
+	PDFEditorApi.prototype.add_Hyperlink = function(HyperProps, arrAnnotsIds) {
 		let oDoc = this.getPDFDoc();
 
 		if (null != HyperProps.Text) {
 			AscFonts.FontPickerByCharacter.checkText(HyperProps.Text, this, function() {
-				oDoc.AddHyperlink(HyperProps);
+				oDoc.AddHyperlink(HyperProps, arrAnnotsIds);
 			});
 		}
 		else {
-			oDoc.AddHyperlink(HyperProps);
+			oDoc.AddHyperlink(HyperProps, arrAnnotsIds);
 		}
 	};
 	PDFEditorApi.prototype.sync_VerticalTextAlign = function(align) {
@@ -1318,6 +1332,7 @@
 		let sPreset;
 		switch (type) {
 			case AscPDF.ANNOTATIONS_TYPES.Square:
+			case AscPDF.ANNOTATIONS_TYPES.Link:
 				sPreset = "rect";
 				break;
 			case AscPDF.ANNOTATIONS_TYPES.Circle:
@@ -1465,6 +1480,61 @@
 				}
 			})
 		}, AscDFH.historydescription_Pdf_ContextMenuRemove);
+	};
+	PDFEditorApi.prototype.AddRedactBySelect = function() {
+		let oDoc = this.getPDFDoc();
+		oDoc.AddRedactAnnotBySelect();
+	}
+
+	PDFEditorApi.prototype.SetCanInteract = function(bCan) {
+		this.canInteract = bCan;
+	};
+
+	// link 
+	PDFEditorApi.prototype.SetLinkTool = function(bUse) {
+		let oDoc = this.getPDFDoc();
+		if (bUse) {
+			oDoc.BlurActiveObject();
+		}
+		
+		this.isLinkTool = bUse;
+		this.sendEvent("asc_onLinkToolState", bUse);
+	};
+	PDFEditorApi.prototype.IsLinkTool = function() {
+		return this.isLinkTool;
+	};
+	PDFEditorApi.prototype.SetLinkAnnotGoToAction = function(arrIds) {
+		let oDoc = this.getPDFDoc();
+
+		oDoc.DoAction(function() {
+			arrIds.forEach(function(id) {
+				let oLink = oDoc.GetAnnotById(id);
+
+				let nCurPage = oDoc.GetCurPage();
+				let nPageW = oDoc.GetPageWidth(nCurPage);
+				let nPageH = oDoc.GetPageHeight(nCurPage);
+				let oViewRect = oDoc.Viewer.getViewingRect(nCurPage);
+				
+				let oAction = {
+					"S":		AscPDF.ACTIONS_TYPES.GoTo,
+					"page":		nCurPage,
+					"top":		nPageH * oViewRect.y,
+					"right":	nPageW * oViewRect.r,
+					"bottom":	nPageH * oViewRect.b,
+					"left":		nPageW * oViewRect.x,
+					"kind":		AscPDF.GOTO_TYPES.fitR,
+					"zoom":		oDoc.Viewer.zoom,
+				};
+
+				oLink.SetActions(AscPDF.PDF_TRIGGERS_TYPES.MouseUp, [oAction]);
+			})
+		}, AscDFH.historydescription_Pdf_ContextMenuRemove);
+
+		this.SetCanInteract(true);
+	};
+	PDFEditorApi.prototype.OnAfterAddLinkAnnot = function(aIds) {
+		Asc.editor.sendEvent("asc_onDialogAddAnnotLink", aIds);
+		this.SetLinkTool(false);
 	};
 
 	/////////////////////////////////////////////////////////////
@@ -1660,13 +1730,13 @@
 					"S": AscPDF.ACTIONS_TYPES.JavaScript,
 					"JS": "AFNumber_Format(" + nDemical + "," + nSepStyle + "," + nNegStyle + "," + "0" + ',"' + sCurrency + '",' + bCurrencyPrepend + ");"
 				}];
-				oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Format, aActionsFormat);
 
 				let aActionsKeystroke = [{
 					"S": AscPDF.ACTIONS_TYPES.JavaScript,
 					"JS": "AFNumber_Keystroke(" + nDemical + "," + nSepStyle + "," + nNegStyle + "," + "0" + ',"' + sCurrency + '",' + bCurrencyPrepend + ");"
 				}];
-				oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 
 				if (oField.IsCanCommit()) {
 					oField.Commit();
@@ -1703,13 +1773,13 @@
 					"S": AscPDF.ACTIONS_TYPES.JavaScript,
 					"JS": "AFPercent_Format(" + nDemical + "," + nSepStyle + ");"
 				}]
-				oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Format, aActionsFormat);
 
 				let aActionsKeystroke = [{
 					"S": AscPDF.ACTIONS_TYPES.JavaScript,
 					"JS": "AFPercent_Keystroke(" + nDemical + "," + nSepStyle + ");"
 				}];
-				oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 				if (oField.IsCanCommit()) {
 					oField.Commit();
 				}
@@ -1748,13 +1818,13 @@
 					"S": AscPDF.ACTIONS_TYPES.JavaScript,
 					"JS": 'AFDate_FormatEx("' + sFormat + '");'
 				}]
-				oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Format, aActionsFormat);
 
 				let aActionsKeystroke = [{
 					"S": AscPDF.ACTIONS_TYPES.JavaScript,
 					"JS": 'AFDate_KeystrokeEx("' + sFormat + '");'
 				}];
-				oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 
 				if (oField.IsCanCommit()) {
 					oField.Commit();
@@ -1792,13 +1862,13 @@
 					"S": AscPDF.ACTIONS_TYPES.JavaScript,
 					"JS": 'AFTime_FormatEx(' + nFormat + ');'
 				}]
-				oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Format, aActionsFormat);
 
 				let aActionsKeystroke = [{
 					"S": AscPDF.ACTIONS_TYPES.JavaScript,
 					"JS": 'AFTime_KeystrokeEx(' + nFormat + ');'
 				}];
-				oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 				if (oField.IsCanCommit()) {
 					oField.Commit();
 				}
@@ -1835,13 +1905,13 @@
 					"S": AscPDF.ACTIONS_TYPES.JavaScript,
 					"JS": "AFSpecial_Format(" + nFormat + ");"
 				}]
-				oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, aActionsFormat);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Format, aActionsFormat);
 
 				let aActionsKeystroke = [{
 					"S": AscPDF.ACTIONS_TYPES.JavaScript,
 					"JS": "AFSpecial_Keystroke(" + nFormat + ");"
 				}];
-				oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
 				if (oField.IsCanCommit()) {
 					oField.Commit();
 				}
@@ -1947,7 +2017,7 @@
 					"S": AscPDF.ACTIONS_TYPES.JavaScript,
 					"JS": 'AFRange_Validate(' + bGreaterThan +  ',' + nGreaterThan + ',' + bLessThan + ',' + nLessThan +  ');'
 				}];
-				oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Validate, aActionsValidate);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Validate, aActionsValidate);
 				res = true;
 			});
 
@@ -1999,7 +2069,7 @@
 					"JS": sCalcFunc
 				}];
 
-				oField.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Calculate, aActions);
+				oField.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Calculate, aActions);
 
 				let oCalcInfo	= oDoc.GetCalculateInfo();
 				let aCalcOrder	= oCalcInfo.GetCalculateOrder();
@@ -3164,7 +3234,9 @@
 			return null;
 		}
 
-		let oColor = oMouseDownAnnot.GetRGBColor(oMouseDownAnnot.GetStrokeColor());
+		let aInnerColor = oMouseDownAnnot.IsRedact() ? oMouseDownAnnot.GetFillColor() : oMouseDownAnnot.GetStrokeColor();
+		let oColor = oMouseDownAnnot.GetRGBColor(aInnerColor);
+		
 		oColor["r"] = oColor.r;
         oColor["g"] = oColor.g;
         oColor["b"] = oColor.b;
@@ -3222,7 +3294,7 @@
 			return true;
         }, AscDFH.historydescription_Pdf_ChangeAnnot);
 	};
-	PDFEditorApi.prototype.SetAnnotStrokeStyle = function(nValue) {
+	PDFEditorApi.prototype.SetAnnotStrokeStyle = function(nComplexType) {
 		let oDoc = this.getPDFDoc();
 		let oController = oDoc.GetController();
 		let oMouseDownAnnot = oDoc.mouseDownAnnot;
@@ -3234,7 +3306,71 @@
 		return oDoc.DoAction(function() {
 			oController.selectedObjects.forEach(function(annot) {
 				if (annot.IsAnnot()) {
-					annot.SetWidth(nValue);
+					switch (nComplexType) {
+						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.solid: {
+							annot.SetBorder(AscPDF.BORDER_TYPES.solid);
+							annot.SetDash([]);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderEffectIntensity(0);
+							break;
+						}
+						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash1: {
+							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
+							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash1);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderEffectIntensity(0);
+							break;
+						}
+						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash2: {
+							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
+							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash2);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderEffectIntensity(0);
+							break;
+						}
+						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash3: {
+							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
+							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash3);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderEffectIntensity(0);
+							break;
+						}
+						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash4: {
+							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
+							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash4);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderEffectIntensity(0);
+							break;
+						}
+						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash5: {
+							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
+							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash5);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderEffectIntensity(0);
+							break;
+						}
+						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash6: {
+							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
+							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash6);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderEffectIntensity(0);
+							break;
+						}
+						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.cloud1: {
+							annot.SetBorder(AscPDF.BORDER_TYPES.solid);
+							annot.SetDash([]);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.Cloud);
+							annot.SetBorderEffectIntensity(1);
+							break;
+						}
+						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.cloud2: {
+							annot.SetBorder(AscPDF.BORDER_TYPES.solid);
+							annot.SetDash([]);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.Cloud);
+							annot.SetBorderEffectIntensity(2);
+							break;
+						}
+					}
 				}
 			});
 
@@ -3279,7 +3415,7 @@
 			return true;
         }, AscDFH.historydescription_Pdf_ChangeAnnot);
 	};
-
+	
 	PDFEditorApi.prototype.asc_CloseFile = function() {
 		AscCommon.History.Clear();
 		AscCommon.g_oIdCounter.Clear();
@@ -4472,6 +4608,14 @@
 			oDoc.Remove(1, false);
 		}, AscDFH.historydescription_Pdf_ContextMenuRemove);
 	};
+	PDFEditorApi.prototype.asc_removeAnnots = function(arrIds) {
+		let oDoc = this.getPDFDoc();
+		oDoc.DoAction(function() {
+			arrIds.forEach(function(id) {
+				oDoc.RemoveAnnot(id);
+			})
+		}, AscDFH.historydescription_Pdf_ContextMenuRemove);
+	};
 	PDFEditorApi.prototype.asc_changeComment = function(Id, AscCommentData)
 	{
 		var oDoc = this.getDocumentRenderer().getPDFDoc();
@@ -4897,6 +5041,16 @@
 		// NOW USE ALWAYS BINARY DATA
 		return "binary";
 	};
+
+	PDFEditorApi.prototype.asc_CheckEditPassword = function(password) {
+		let oDoc = this.getPDFDoc();
+
+		if (null == password) {
+			return oDoc.Viewer.file.nativeFile['CheckPerm'](AscPDF.USER_PERMISSIONS.edit);
+		}
+
+		return oDoc.Viewer.file.nativeFile['CheckOwnerPassword'](password);
+	};
 	
 	function CPdfContextMenuData(obj) {
 		if (obj) {
@@ -4995,6 +5149,7 @@
 	PDFEditorApi.prototype['asc_hideComments']             = PDFEditorApi.prototype.asc_hideComments;
 	PDFEditorApi.prototype['asc_removeComment']            = PDFEditorApi.prototype.asc_removeComment;
 	PDFEditorApi.prototype['asc_remove']            	   = PDFEditorApi.prototype.asc_remove;
+	PDFEditorApi.prototype['asc_removeAnnots']             = PDFEditorApi.prototype.asc_removeAnnots;
 	PDFEditorApi.prototype['asc_changeComment']            = PDFEditorApi.prototype.asc_changeComment;
 	PDFEditorApi.prototype['asc_selectComment']            = PDFEditorApi.prototype.asc_selectComment;
 	PDFEditorApi.prototype['asc_EditPage']                 = PDFEditorApi.prototype.asc_EditPage;
@@ -5067,17 +5222,17 @@
 	PDFEditorApi.prototype['asc_ConvertMathView']	= PDFEditorApi.prototype.asc_ConvertMathView;
 
 	// annots
-	PDFEditorApi.prototype['StartAddAnnot']			= PDFEditorApi.prototype.StartAddAnnot;
-	PDFEditorApi.prototype['SetAnnotFillColor']		= PDFEditorApi.prototype.SetAnnotFillColor;
-	PDFEditorApi.prototype['GetAnnotFillColor']		= PDFEditorApi.prototype.GetAnnotFillColor;
-	PDFEditorApi.prototype['SetAnnotStrokeColor']	= PDFEditorApi.prototype.SetAnnotStrokeColor;
-	PDFEditorApi.prototype['GetAnnotStrokeColor']	= PDFEditorApi.prototype.GetAnnotStrokeColor;
-	PDFEditorApi.prototype['SetAnnotOpacity']		= PDFEditorApi.prototype.SetAnnotOpacity;
-	PDFEditorApi.prototype['GetAnnotOpacity']		= PDFEditorApi.prototype.GetAnnotOpacity;
-	PDFEditorApi.prototype['SetAnnotStrokeWidth']	= PDFEditorApi.prototype.SetAnnotStrokeWidth;
-	PDFEditorApi.prototype['SetAnnotStrokeStyle']	= PDFEditorApi.prototype.SetAnnotStrokeStyle;
-	PDFEditorApi.prototype['SetAnnotLineStart']		= PDFEditorApi.prototype.SetAnnotLineStart;
-	PDFEditorApi.prototype['SetAnnotLineEnd']		= PDFEditorApi.prototype.SetAnnotLineEnd;
+	PDFEditorApi.prototype['StartAddAnnot']					= PDFEditorApi.prototype.StartAddAnnot;
+	PDFEditorApi.prototype['SetAnnotFillColor']				= PDFEditorApi.prototype.SetAnnotFillColor;
+	PDFEditorApi.prototype['GetAnnotFillColor']				= PDFEditorApi.prototype.GetAnnotFillColor;
+	PDFEditorApi.prototype['SetAnnotStrokeColor']			= PDFEditorApi.prototype.SetAnnotStrokeColor;
+	PDFEditorApi.prototype['GetAnnotStrokeColor']			= PDFEditorApi.prototype.GetAnnotStrokeColor;
+	PDFEditorApi.prototype['SetAnnotOpacity']				= PDFEditorApi.prototype.SetAnnotOpacity;
+	PDFEditorApi.prototype['GetAnnotOpacity']				= PDFEditorApi.prototype.GetAnnotOpacity;
+	PDFEditorApi.prototype['SetAnnotStrokeWidth']			= PDFEditorApi.prototype.SetAnnotStrokeWidth;
+	PDFEditorApi.prototype['SetAnnotStrokeStyle']			= PDFEditorApi.prototype.SetAnnotStrokeStyle;
+	PDFEditorApi.prototype['SetAnnotLineStart']				= PDFEditorApi.prototype.SetAnnotLineStart;
+	PDFEditorApi.prototype['SetAnnotLineEnd']				= PDFEditorApi.prototype.SetAnnotLineEnd;
 	
 	// stamp
 	PDFEditorApi.prototype['AddStampAnnot']					= PDFEditorApi.prototype.AddStampAnnot;
@@ -5093,6 +5248,14 @@
 	PDFEditorApi.prototype['ApplyRedact']		= PDFEditorApi.prototype.ApplyRedact;
 	PDFEditorApi.prototype['HasRedact']			= PDFEditorApi.prototype.HasRedact;
 	PDFEditorApi.prototype['RemoveAllRedact']	= PDFEditorApi.prototype.RemoveAllRedact;
+	PDFEditorApi.prototype['AddRedactBySelect']	= PDFEditorApi.prototype.AddRedactBySelect;
+
+	PDFEditorApi.prototype['SetCanInteract']				= PDFEditorApi.prototype.SetCanInteract;
+
+	// link
+	PDFEditorApi.prototype['SetLinkTool']					= PDFEditorApi.prototype.SetLinkTool;
+	PDFEditorApi.prototype['IsLinkTool']					= PDFEditorApi.prototype.IsLinkTool;
+	PDFEditorApi.prototype['SetLinkAnnotGoToAction']		= PDFEditorApi.prototype.SetLinkAnnotGoToAction;
 
 	// forms
 	PDFEditorApi.prototype['IsEditFieldsMode']			= PDFEditorApi.prototype.IsEditFieldsMode;
@@ -5210,6 +5373,8 @@
 	PDFEditorApi.prototype['asc_setPdfViewer']		        = PDFEditorApi.prototype.asc_setPdfViewer;
 
 	PDFEditorApi.prototype['asc_GetTableOfContentsPr']      = PDFEditorApi.prototype.asc_GetTableOfContentsPr;
+	
+	PDFEditorApi.prototype['asc_CheckEditPassword']			= PDFEditorApi.prototype.asc_CheckEditPassword;
 	
 	window["PDFEditorApi"] = PDFEditorApi;
 

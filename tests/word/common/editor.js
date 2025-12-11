@@ -73,6 +73,7 @@
 		ConvertCoordsToCursorWR : function() {return {X : 0, Y : 0};},
 		Set_RulerState_Table : function() {},
 		scrollToTarget : function() {},
+		GetVisibleRegion : function() {return [{Page : 0, Y : 0}, {Page : 0, Y : 0}]},
 	};
 
 	drawingDocument.CanvasHit = document.createElement('canvas');
@@ -158,6 +159,10 @@
 	editor.pre_Paste = function(_fonts, _images, callback)
 	{
 		callback(true);
+	};
+	editor.getCurrentTheme = function()
+	{
+		return AscTest.GetLogicDocument().Get_Theme();
 	};
 	editor._addRemoveSpaceBeforeAfterParagraph = AscCommon.DocumentEditorApi.prototype._addRemoveSpaceBeforeAfterParagraph.bind(editor);
 	editor.asc_addSpaceBeforeParagraph = AscCommon.DocumentEditorApi.prototype.asc_addSpaceBeforeParagraph.bind(editor);

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
@@ -3017,7 +3017,7 @@ var g_oFontProperties = {
 		var res = undefined;
 		switch (val) {
 			case "automatic":
-				res = AscCommonExcel.EDataBarAxisPosition.context;
+				res = AscCommonExcel.EDataBarAxisPosition.automatic;
 				break;
 			case "middle":
 				res = AscCommonExcel.EDataBarAxisPosition.middle;
@@ -6081,6 +6081,8 @@ StyleManager.prototype =
 		this.bVisited = false;
 
 		this.bHyperlinkFunction = null;
+		
+		this._tempLocation = null;
 	}
 
 	Hyperlink.prototype.clone = function (oNewWs) {
@@ -6147,6 +6149,9 @@ StyleManager.prototype =
 			}
 		}
 		this._updateLocation();
+		if (Location && !this.Location) {
+			this._tempLocation = Location;
+		}
 	};
 	Hyperlink.prototype.getLocation = function () {
 		if (this.bUpdateLocation)
@@ -6287,6 +6292,14 @@ StyleManager.prototype =
 	Hyperlink.prototype.getHyperlinkFunction = function () {
 		return this.bHyperlinkFunction;
 	};
+	Hyperlink.prototype.checkAfterOpen = function () {
+		let type = this.getHyperlinkType();
+		if (type === Asc.c_oAscHyperlinkType.WebLink && this._tempLocation) {
+			this.Location = this._tempLocation;
+		}
+		this._tempLocation = null;
+	};
+	
 
 	/** @constructor */
 	function SheetFormatPr() {
@@ -13058,9 +13071,21 @@ function RangeDataManagerElem(bbox, data)
 	};
 	/**
 	 * Initialize with sharedStrings from file. rely on uniqines
+	 * Adds new shared strings to existing ones without removing existing data
 	 * @param {Array<string | Array<{text: string, format: CellXfs}>>} sharedStrings
 	 */
 	CSharedStrings.prototype.initWithSharedStrings = function(sharedStrings) {
+		if (this.all.length > 0) {
+			for (let i = 0; i < sharedStrings.length; i++) {
+				const item = sharedStrings[i];
+				if (typeof item === 'string') {
+					this.addText(item);
+				} else {
+					this.addMultiText(item);
+				}
+			}
+			return;
+		}
 		this.all = sharedStrings.slice(); //copy
 		this.text = Object.create(null);
 		this.multiTextMap = Object.create(null);
@@ -15035,7 +15060,6 @@ function RangeDataManagerElem(bbox, data)
 
 		//temp for update
 		this.sKey = null;
-
 	}
 	ExternalReferenceBase.prototype.getKey = function() {
 		return this.sKey;
@@ -15246,6 +15270,8 @@ function RangeDataManagerElem(bbox, data)
 		this.SheetNames = [];
 
 		this.worksheets = {};
+
+		this._id = AscCommon.g_oIdCounter.Get_NewId();
 	}
 	AscFormat.InitClassWithoutType(ExternalReference, ExternalReferenceBase);
 
@@ -15303,6 +15329,10 @@ function RangeDataManagerElem(bbox, data)
 				this.referenceData["instanceId"] = r.GetString2();
 			}
 		}
+
+		if (r.GetBool()) {
+			this._id = r.GetString2();
+		}
 	};
 	ExternalReference.prototype.Write_ToBinary2 = function(w) {
 		var i;
@@ -15358,6 +15388,13 @@ function RangeDataManagerElem(bbox, data)
 		} else {
 			w.WriteBool(false);
 		}
+
+		if (null != this._id) {
+			w.WriteBool(true);
+			w.WriteString2(this._id);
+		} else {
+			w.WriteBool(false);
+		}
 	};
 
 	ExternalReference.prototype.clone = function (needCloneSheets) {
@@ -15394,6 +15431,8 @@ function RangeDataManagerElem(bbox, data)
 				newObj.worksheets[i] = this.worksheets[i];
 			}
 		}
+
+		newObj._id = this._id;
 
 		return newObj;
 	};
@@ -17966,6 +18005,7 @@ function RangeDataManagerElem(bbox, data)
 		this.HidePivotFieldList = null;
 		this.ShowPivotChartFilter = null;
 		this.UpdateLinks = null;
+		this.CodeName = null;
 	}
 	/**
 	 * Method clones calculation options
@@ -17980,6 +18020,7 @@ function RangeDataManagerElem(bbox, data)
 		res.HidePivotFieldList = this.HidePivotFieldList;
 		res.ShowPivotChartFilter = this.ShowPivotChartFilter;
 		res.UpdateLinks = this.UpdateLinks;
+		res.CodeName = this.CodeName;
 
 		return res;
 	};
@@ -18069,6 +18110,22 @@ function RangeDataManagerElem(bbox, data)
 			val = Asc.EUpdateLinksType.updatelinksNever;
 		}
 		this.UpdateLinks = val;
+	};
+	/**
+	 * Method returns "CodeName" value
+	 * @memberof CWorkbookPr
+	 * @returns {string|null}
+	 */
+	CWorkbookPr.prototype.getCodeName = function () {
+		return this.CodeName;
+	};
+	/**
+	 * Method set "CodeName" value
+	 * @memberof CWorkbookPr
+	 * @param {string} val - CodeName value
+	 */
+	CWorkbookPr.prototype.setCodeName = function (val) {
+		this.CodeName = val;
 	};
 
 

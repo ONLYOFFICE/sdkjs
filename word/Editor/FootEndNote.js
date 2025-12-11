@@ -68,6 +68,14 @@ function CFootEndnote(DocumentController)
 CFootEndnote.prototype = Object.create(CDocumentContent.prototype);
 CFootEndnote.prototype.constructor = CFootEndnote;
 
+CFootEndnote.prototype.IsFootnote = function(bReturnFootnote)
+{
+	return bReturnFootnote ? this : true;
+};
+CFootEndnote.prototype.IsEndnote = function()
+{
+	return (this.Parent instanceof CEndnotesController);
+};
 CFootEndnote.prototype.Copy = function(oDocumentController)
 {
 	var oNote = new CFootEndnote(oDocumentController);

@@ -163,11 +163,9 @@ CChartSpace.prototype.setRecalculateInfo = function()
         recalculateUpDownBars: true,
         recalculateLegend: true,
         recalculateReferences: true,
-        recalculateFormulas: true,
         recalculatePenBrush: true,
-        recalculateTextPr : true,
-        recalculateBBoxRange: true
-    };
+        recalculateTextPr : true
+		};
     this.chartObj = null;
     this.rectGeometry = AscFormat.ExecuteNoHistory(function(){return  AscFormat.CreateGeometry("rect");},  this, []);
     this.lockType = AscCommon.c_oAscLockTypes.kLockTypeNone;

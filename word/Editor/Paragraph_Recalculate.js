@@ -1282,11 +1282,41 @@ Paragraph.prototype.private_RecalculateLineMetrics     = function(CurLine, CurPa
     // текста, на котором закончилась данная строка.
     if ( true === PRS.EmptyLine || (PRS.LineAscent < 0.001 && PRS.LineDescent < 0.001) || (true === PRS.End && true !== PRS.TextOnLine))
 	{
-		var LastItem = (true === PRS.End ? this.Content[this.Content.length - 1] : this.Content[this.Lines[CurLine].Ranges[this.Lines[CurLine].Ranges.length - 1].EndPos]);
-
-		if (true === PRS.End)
+		let useParaEnd = true;
+		if (true !== PRS.End)
 		{
-			// TODO: Как только переделаем para_End переделать тут
+			let lastRange = this.Lines[CurLine].Ranges.length - 1;
+			let lastItem  = this.Content[this.Lines[CurLine].Ranges[lastRange].EndPos];
+			let lastRun   = lastItem.Get_LastRunInRange(CurLine, lastRange);
+			if (lastRun && lastRun instanceof AscWord.CRun)
+			{
+				let metrics = lastRun.getTextMetrics(true);
+				
+				let textDescent = metrics.Descent;
+				let textAscent  = metrics.Ascent + metrics.LineGap;
+				let textAscent2 = metrics.Ascent;
+				
+				if (PRS.LineTextAscent < textAscent)
+					PRS.LineTextAscent = textAscent;
+				
+				if (PRS.LineTextAscent2 < textAscent2)
+					PRS.LineTextAscent2 = textAscent2;
+				
+				if (PRS.LineTextDescent < textDescent)
+					PRS.LineTextDescent = textDescent;
+				
+				if (PRS.LineAscent < textAscent)
+					PRS.LineAscent = textAscent;
+				
+				if (PRS.LineDescent < textDescent)
+					PRS.LineDescent = textDescent;
+				
+				useParaEnd = false;
+			}
+		}
+		
+		if (useParaEnd || (PRS.LineAscent < 0.001 && PRS.LineDescent < 0.001))
+		{
 			let oTextPr  = this.GetParaEndCompiledPr();
 			let oMetrics = oTextPr.GetTextMetrics(oTextPr.CS || oTextPr.RTL ? AscWord.fontslot_CS : AscWord.fontslot_ASCII, this.GetTheme());
 
@@ -1303,33 +1333,6 @@ Paragraph.prototype.private_RecalculateLineMetrics     = function(CurLine, CurPa
 
 			if (PRS.LineDescent < EndTextDescent)
 				PRS.LineDescent = EndTextDescent;
-		}
-		else if (undefined !== LastItem)
-		{
-			let lastRun = LastItem.Get_LastRunInRange(PRS.Line, PRS.Range);
-			if (lastRun && lastRun instanceof AscWord.CRun)
-			{
-				let metrics = lastRun.getTextMetrics();
-				
-				let textDescent = metrics.Descent;
-				let textAscent  = metrics.Ascent + metrics.LineGap;
-				let textAscent2 = metrics.Ascent;
-				
-				if (PRS.LineTextAscent < textAscent)
-					PRS.LineTextAscent = textAscent;
-
-				if (PRS.LineTextAscent2 < textAscent2)
-					PRS.LineTextAscent2 = textAscent2;
-
-				if (PRS.LineTextDescent < textDescent)
-					PRS.LineTextDescent = textDescent;
-
-				if (PRS.LineAscent < textAscent)
-					PRS.LineAscent = textAscent;
-
-				if (PRS.LineDescent < textDescent)
-					PRS.LineDescent = textDescent;
-			}
 		}
 	}
 
@@ -1812,7 +1815,14 @@ Paragraph.prototype.private_RecalculateLineEnd         = function(CurLine, CurPa
 
     if (true !== PRS.End)
     {
-        if ( true === PRS.ForceNewPage )
+		if (PRS.ForceNewPageAfter)
+		{
+			this.Pages[CurPage].Set_EndLine(CurLine);
+			this.Pages[CurPage].Bounds.Bottom = AscWord.MAX_MM_VALUE;
+			PRS.RecalcResult = recalcresult_NextPage;
+			return false;
+		}
+        else if (PRS.ForceNewPage)
         {
             this.Pages[CurPage].Set_EndLine( CurLine - 1 );
 
@@ -1825,6 +1835,9 @@ Paragraph.prototype.private_RecalculateLineEnd         = function(CurLine, CurPa
     }
     else
     {
+		if (PRS.ForceNewPageAfter)
+			this.Pages[CurPage].Bounds.Bottom = AscWord.MAX_MM_VALUE;
+		
         // В последней строке могут быть заполнены не все отрезки обтекания. Удаляем лишние.
         if (PRS.Range < PRS.RangesCount)
             this.Lines[CurLine].Ranges.length = PRS.Range + 1;
@@ -3536,6 +3549,7 @@ CParagraphRecalculateStateWrap.prototype.Reset_Line = function()
 	this.NewPage      = false;
 	this.ForceNewPage = false;
 	this.ForceNewLine = false;
+	this.ForceNewPageAfter = false;
 	
 	this.bMath_OneLine    = false;
 	this.bMathWordLarge   = false;
@@ -4329,6 +4343,7 @@ CParagraphRecalculateStateWrap.prototype.getAutoHyphenWidth = function(item, run
 CParagraphRecalculateStateWrap.prototype.isForceLineBreak = function()
 {
 	return (this.ForceNewPage
+		|| this.ForceNewPageAfter
 		|| this.NewPage
 		|| this.ForceNewLine
 		|| this.LastHyphenItem);
@@ -4470,6 +4485,10 @@ CParagraphRecalculateStateAlign.prototype.getLineBottom = function()
 {
 	let p = this.Paragraph;
 	return p.Pages[this.wrapState.Page].Y + p.Lines[this.wrapState.Line].Bottom;
+};
+CParagraphRecalculateStateAlign.prototype.isParagraphStartFromNewPage = function()
+{
+	return this.Paragraph.IsStartFromNewPage();
 };
 
 

@@ -6964,7 +6964,7 @@
 		return arrResults;
 	};
 
-	WriterToJSON.prototype.SetSrcRect = function(srcRect) {
+	WriterToJSON.prototype.SerSrcRect = function(srcRect) {
 		if (!srcRect) return srcRect;
 		return {
 			"b": srcRect.b,
@@ -6984,7 +6984,7 @@
 		return {
 			"blip": this.SerEffects(oBlipFill.Effects),
 
-			"srcRect": this.SetSrcRect(oBlipFill.srcRect),
+			"srcRect": this.SerSrcRect(oBlipFill.srcRect),
 
 			"tile": oBlipFill.tile ? {
 				"algn": GetRectAlgnStrType(oBlipFill.tile.algn),
@@ -6996,7 +6996,7 @@
 			} : oBlipFill.tile,
 
 			"stretch":  oBlipFill.stretch ? {
-				"fillRect": this.SetSrcRect(oBlipFill.stretch.fillRect),
+				"fillRect": this.SerSrcRect(oBlipFill.stretch.fillRect),
 			} : oBlipFill.stretch,
 			"rotWithShape":  oBlipFill.rotWithShape,
 			"rasterImageId": rasterImageId,
@@ -11919,7 +11919,7 @@
 
 		if (oParsedFill["stretch"])
 		{
-			oBlipFill.stretch = AscFormat.CBlipFillStretch();
+			oBlipFill.stretch = new AscFormat.CBlipFillStretch();
 			oBlipFill.stretch.fillRect = this.SrcRectFromJSON(oParsedFill["stretch"]["fillRect"]);
 		}
 
@@ -16884,13 +16884,13 @@
 			{
 				switch (this.VertAlign)
 				{
-					case 0:
+					case AscCommon.vertalign_Baseline:
 						sVAlign = "baseline";
 						break;
-					case 1:
+					case AscCommon.vertalign_SuperScript:
 						sVAlign = "superscript";
 						break;
-					case 2:
+					case AscCommon.vertalign_SubScript:
 						sVAlign = "subscript";
 						break;
 				}
@@ -17143,13 +17143,13 @@
 				switch (oParsedJson["vertAlign"])
 				{
 					case "baseline":
-						nVAlign = 0;
+						nVAlign = AscCommon.vertalign_Baseline;
 						break;
 					case "superscript":
-						nVAlign = 1;
+						nVAlign = AscCommon.vertalign_SuperScript;
 						break;
 					case "subscript":
-						nVAlign = 2;
+						nVAlign = AscCommon.vertalign_SubScript;
 						break;
 				}
 			}

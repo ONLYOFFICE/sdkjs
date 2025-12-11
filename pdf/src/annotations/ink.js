@@ -527,6 +527,7 @@
         return [xMin, yMin, xMax, yMax];
     }
 
+    window["AscPDF"].generateGeometry  = generateGeometry;
     window["AscPDF"].fillShapeByPoints  = fillShapeByPoints;
     window["AscPDF"].initShape  = initShape;
     window["AscPDF"].CAnnotationInk     = CAnnotationInk;

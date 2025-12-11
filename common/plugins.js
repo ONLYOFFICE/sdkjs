@@ -165,6 +165,8 @@
 		this.mainEvents = {};
 
 		this.dockCallbacks = {};
+
+		this.pluginsWindows = {};
 	}
 
 	CPluginsManager.prototype =
@@ -399,12 +401,14 @@
 		{
 			for (let i in this.runnedPluginsMap)
 			{
-				let oPlugin = this.pluginsMap[i];
+				let pluginInfo = this.runnedPluginsMap[i];
+				let plugin = this.pluginsMap[i];
+				let pluginVariation = plugin.variations[pluginInfo.currentVariation];
 
-				let pluginType = oPlugin ? oPlugin.type : -1;
+				let pluginType = pluginVariation ? pluginVariation.type : -1;
 				if (pluginType !== Asc.PluginType.System &&
 					pluginType !== Asc.PluginType.Background &&
-					!(oPlugin && oPlugin.isConnector))
+					!(plugin && plugin.isConnector))
 				{
 					this.close(i);
 				}
@@ -650,8 +654,8 @@
 
 			return this.onPluginEvent2(name, data, undefined, isExclusive);
 		},
-
-		onPluginEvent2 : function(name, data, guids, isExclusive, isOnlyCheck)
+		
+		onPluginEvent2 : function(name, data, guids, isExclusive, isOnlyCheck, excludedGuids)
 		{
 			let needsGuids = [];
 			for (let guid in this.runnedPluginsMap)
@@ -659,6 +663,9 @@
 				if (guids && !guids[guid])
 					continue;
 
+				if (excludedGuids && excludedGuids[guid])
+					continue;
+				
 				if (guid === this.currentPluginEvent)
 					continue;
 
@@ -912,6 +919,46 @@
 					return;
 				}
 			}
+		},
+
+		addPluginWindow : function(id)
+		{
+			let guid = this.getCurrentPluginGuid();
+			if (!this.pluginsWindows[guid])
+				this.pluginsWindows[guid] = [];
+
+			this.pluginsWindows[guid].push(id);
+		},
+
+		removePluginWindow : function(id)
+		{
+			let guid = this.getCurrentPluginGuid();
+			if (!this.pluginsWindows[guid])
+				return;
+
+			let windows = this.pluginsWindows[guid];
+			for (let i = 0, len = windows.length; i < len; i++)
+			{
+				if (id === windows[i])
+				{
+					windows.splice(i, 1);
+					return;
+				}
+			}
+		},
+
+		closeAllWindows : function(guid)
+		{
+			if (!this.pluginsWindows[guid])
+				return;
+
+			let windows = this.pluginsWindows[guid];
+			for (let i = 0, len = windows.length; i < len; i++)
+			{
+				this.api.sendEvent("asc_onPluginWindowClose", windows[i]);
+			}
+
+			delete this.pluginsWindows[guid];
 		},
 
 		run : function(guid, variation, data, isOnlyResize)
@@ -1190,6 +1237,9 @@
 			}
 
 			delete this.runnedPluginsMap[guid];
+
+			this.closeAllWindows(guid);
+
 			this.api.onPluginClose(guid);
 
 			if (this.runAndCloseData)

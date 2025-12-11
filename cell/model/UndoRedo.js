@@ -1979,14 +1979,15 @@ function (window, undefined) {
 		}
 	};
 
-	function UndoRedoData_SheetRemove(index, sheetId, sheet) {
+	function UndoRedoData_SheetRemove(index, sheetId, sheet, moveSheet) {
 		this.index = index;
 		this.sheetId = sheetId;
 		this.sheet = sheet;
+		this.moveSheet = moveSheet;
 	}
 
 	UndoRedoData_SheetRemove.prototype.Properties = {
-		index: 0, sheetId: 1, sheet: 2
+		index: 0, sheetId: 1, sheet: 2, moveSheet: 3
 	};
 	UndoRedoData_SheetRemove.prototype.getType = function () {
 		return UndoRedoDataTypes.SheetRemove;
@@ -2002,6 +2003,8 @@ function (window, undefined) {
 				return this.sheetId;
 			case this.Properties.sheet:
 				return this.sheet;
+			case this.Properties.moveSheet:
+				return this.moveSheet;
 		}
 		return null;
 	};
@@ -2015,6 +2018,9 @@ function (window, undefined) {
 				break;
 			case this.Properties.sheet:
 				this.sheet = value;
+				break;
+			case this.Properties.moveSheet:
+				this.moveSheet = value;
 				break;
 		}
 	};
@@ -3024,7 +3030,7 @@ function (window, undefined) {
 					}
 				}
 				if (null != nIndex) {
-					wb.removeWorksheet(nIndex);
+					wb.removeWorksheet(nIndex, null, Data.moveSheet);
 				}
 			}
 			wb.handlers.trigger("updateWorksheetByModel");
@@ -3077,7 +3083,7 @@ function (window, undefined) {
 				/* the first call is a search by referenceData, if we get null, we make a second call to search by Id below and then add or re-assign the link */
 				externalReferenceIndex = wb.getExternalReferenceByReferenceData(from.referenceData, true);
 				if (!externalReferenceIndex) {
-					externalReferenceIndex = wb.getExternalLinkIndexByName(from.Id);
+					externalReferenceIndex = wb.getExternalLinkIndexById(from._id);
 				}
 
 				if (externalReferenceIndex !== null) {
@@ -3089,7 +3095,7 @@ function (window, undefined) {
 				/* the first call is a search by referenceData, if we get null, we make a second call to search by Id below and then delete the link */
 				externalReferenceIndex = wb.getExternalReferenceByReferenceData(to.referenceData, true);
 				if (!externalReferenceIndex) {
-					externalReferenceIndex = wb.getExternalLinkIndexByName(to.Id);
+					externalReferenceIndex = wb.getExternalLinkIndexById(to._id);
 				}
 
 				if (externalReferenceIndex !== null) {
@@ -3100,7 +3106,7 @@ function (window, undefined) {
 				/* the first call is a search by referenceData, if we get null, we make a second call to search by Id below and then change the link */
 				externalReferenceIndex = wb.getExternalReferenceByReferenceData(to.referenceData, true);
 				if (!externalReferenceIndex) {
-					externalReferenceIndex = wb.getExternalLinkIndexByName(to.Id);
+					externalReferenceIndex = wb.getExternalLinkIndexById(to._id);
 				}
 
 				if (externalReferenceIndex !== null) {

@@ -411,6 +411,7 @@
      * @see office-js-api/Examples/Enumerations/SelectionType.js
 	 *
 	 */
+	
 
     //------------------------------------------------------------------------------------------------------------------
     //
@@ -431,6 +432,34 @@
         }
         return null;
     };
+
+	Api.prototype.GetByInternalId = function(id)
+	{
+		let obj = AscCommon.g_oTableId.Get_ById(id);
+		if (!obj)
+			return null;
+
+		if (obj instanceof AscWord.CDocument)
+			return new AscBuilder.ApiDocument(obj);
+		else if (obj instanceof AscWord.CDocumentContent)
+			return new AscBuilder.ApiDocumentContent(obj);
+		else if (obj instanceof AscWord.Paragraph)
+			return new AscBuilder.ApiParagraph(obj);
+		else if (obj instanceof AscFormat.CGraphicFrame) {
+			return new ApiTable(obj);
+		}
+		else if (obj instanceof AscFormat.CShape) {
+			return new ApiShape(obj);
+		}
+		else if (obj instanceof AscFormat.CGraphicObjectBase) {
+			return new ApiDrawing(obj);
+		}
+		else if (obj instanceof AscCommonSlide.MasterSlide) {
+			return new ApiMaster(obj);
+		}
+
+		return null;
+	};
 
     /**
      * Creates a new slide master.
@@ -471,6 +500,13 @@
         return oMaster;
     };
 
+
+	Api.prototype.CreateDefaultMasterSlide = function () {
+        let master = AscCommonSlide.CreateDefaultMaster();
+        let pres = private_GetPresentation()
+        pres.pushSlideMaster(master);
+		return new ApiMaster(master);
+	};
     /**
      * Creates a new slide layout and adds it to the slide master if it is specified.
      * @typeofeditors ["CPE"]
@@ -556,22 +592,36 @@
         return new ApiTheme(oThemeLoadInfo);
     };
 
-    /**
-     * Creates a new theme color scheme.
-     * @typeofeditors ["CPE"]
-     * @memberof Api
-     * @param {(ApiUniColor[] | ApiRGBColor[])} arrColors - Set of colors which are referred to as a color scheme.
-     * The color scheme is responsible for defining a list of twelve colors.
-     * The array should contain a sequence of colors: 2 dark, 2 light, 6 primary, a color for a hyperlink and a color for the followed hyperlink.
-     * @param {string} sName - Theme color scheme name.
-     * @returns {?ApiThemeColorScheme}
-     * @see office-js-api/Examples/{Editor}/Api/Methods/CreateThemeColorScheme.js
+	/**
+	 * Creates a new theme color scheme.
+	 *
+	 * @typeofeditors ["CPE"]
+	 * @memberof Api
+	 *
+	 * @param {(ApiUniColor[] | ApiRGBColor[] | ApiColor[])} arrColors - Set of colors which are referred to as a color scheme.
+	 * The color scheme is responsible for defining a list of twelve colors.
+	 * The array should contain a sequence of colors: 2 dark, 2 light, 6 primary, a color for a hyperlink and a color for the followed hyperlink.
+	 * @param {string} sName - Theme color scheme name.
+	 * @returns {?ApiThemeColorScheme}
+	 *
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateThemeColorScheme.js
 	 */
     Api.prototype.CreateThemeColorScheme = function(arrColors, sName){
         if (typeof(sName) !== "string")
             sName = "New theme's color scheme";
         if (!Array.isArray(arrColors) || arrColors.length !== 12)
             return null;
+
+		arrColors = arrColors.map(function (color) {
+			if (color instanceof AscBuilder.ApiColor) {
+				const rgb = color.GetRGB();
+				const safeCopy = new AscBuilder.Api.prototype.RGB(rgb['r'], rgb['g'], rgb['b']);
+				const unifill = safeCopy.private_createUnifill();
+				return { Unicolor: unifill.fill.color };
+			}
+
+			return color;
+		});
 
         var oClrScheme = new AscFormat.ClrScheme();
         oClrScheme.setName(sName);
@@ -737,14 +787,15 @@
      * @see office-js-api/Examples/{Editor}/Api/Methods/CreateShape.js
 	 */
 	Api.prototype.CreateShape = function(sType, nWidth, nHeight, oFill, oStroke){
-        var oCurrentSlide = private_GetCurrentSlide();
+        let curSlide = private_GetCurrentSlide();
+		let presentation = private_GetPresentation();
         sType   = sType   || "rect";
         nWidth  = nWidth  || 914400;
 	    nHeight = nHeight || 914400;
-	    oFill   = oFill   || editor.CreateNoFill();
-	    oStroke = oStroke || editor.CreateStroke(0, editor.CreateNoFill());
-        var oTheme = oCurrentSlide && oCurrentSlide.Layout && oCurrentSlide.Layout.Master && oCurrentSlide.Layout.Master.Theme;
-        return new ApiShape(AscFormat.builder_CreateShape(sType, nWidth/36000, nHeight/36000, oFill.UniFill, oStroke.Ln, oCurrentSlide, oTheme, private_GetDrawingDocument(), false));
+	    oFill   = oFill   || Asc.editor.CreateNoFill();
+	    oStroke = oStroke || Asc.editor.CreateStroke(0, Asc.editor.CreateNoFill());
+        let theme = presentation.Get_Theme();
+        return new ApiShape(AscFormat.builder_CreateShape(sType, nWidth/36000, nHeight/36000, oFill.UniFill, oStroke.Ln, curSlide, theme, private_GetDrawingDocument(), false));
     };
 
     
@@ -776,22 +827,26 @@
      * Creates a group of drawings.
      * @memberof Api
      * @typeofeditors ["CPE"]
-     * @param {DrawingForGroup[]} aDrawings - An array of drawings to group.
+     * @param {DrawingForGroup[]} drawings - An array of drawings to group.
      * @returns {ApiGroup}
      * @since 8.3.0
      * @see office-js-api/Examples/{Editor}/Api/Methods/CreateGroup.js
 	 */
-    Api.prototype.CreateGroup = function(aDrawings) {
+    Api.prototype.CreateGroup = function(drawings) {
+        drawings = AscBuilder.GetArrayParameter(drawings, []);
+		if (drawings.length == 0)
+			AscBuilder.throwException(new Error("The drawings parameter must be a non empty array"));
+
         let oSlide = private_GetCurrentSlide();
         if (oSlide) {
-            if (aDrawings.find(function(drawing) {
+            if (drawings.find(function(drawing) {
                 return drawing.Drawing.IsUseInDocument();
             }))
-                return null;
+               AscBuilder.throwException(new Error("All drawings must be in document"));
 
-            aDrawings.forEach(function(drawing) { drawing.Drawing.recalculate(); })
+            drawings.forEach(function(drawing) { drawing.Drawing.recalculate(); })
 
-            let oGroup = AscFormat.builder_CreateGroup(aDrawings, oSlide.graphicObjects);
+            let oGroup = AscFormat.builder_CreateGroup(drawings, oSlide.graphicObjects);
             if (oGroup) {
                 return new ApiGroup(oGroup);
             }
@@ -1192,6 +1247,8 @@
 				index = nIndex;
 			}
             this.Presentation.insertSlide(index, oSlide.Slide);
+			this.Presentation.CurPage = index;
+			this.Presentation.bGoToPage = true;
         }
     };
 
@@ -1389,10 +1446,46 @@
         {
             if (AscFormat.isRealNumber(nCount) && nCount > 0)
             {
+				let curSlide = this.Presentation.CurPage;
                 nCount = Math.min(nCount, this.GetSlidesCount());
                 for (var nSlide = 0; nSlide < nCount; nSlide++)
                     this.Presentation.removeSlide(nStart);
 
+				if (!this.Presentation.IsMasterMode())
+				{
+					if (this.GetSlidesCount() === 0)
+					{
+						curSlide = -1;
+					}
+					else
+					{
+						if (curSlide < nStart)
+						{
+						}
+						else if (curSlide >= nStart + nCount)
+						{
+							curSlide -= nCount;
+						}
+						else
+						{
+							curSlide = nStart - 1;
+						}
+
+						if (curSlide < 0)
+						{
+							curSlide = 0;
+						}
+						if (curSlide >= this.GetSlidesCount())
+						{
+							curSlide = this.GetSlidesCount() - 1;
+						}
+					}
+					if (curSlide !== this.Presentation.CurPage)
+					{
+						this.Presentation.CurPage = curSlide;
+						this.Presentation.bGoToPage = true;
+					}
+				}
                 return true;
             }
         }
@@ -1795,6 +1888,11 @@
         return "master";
     };
 
+    ApiMaster.prototype.GetInternalId = function()
+    {
+        return this.Master.Get_Id();
+    };
+
 	/**
 	 * Returns all layouts from the slide master.
 	 * @typeofeditors ["CPE"]
@@ -1820,7 +1918,7 @@
 	 */
     ApiMaster.prototype.GetLayout = function(nPos)
     {
-        if (nPos < 0 || nPos > this.Master.sldLayoutLst.length)
+        if (nPos < 0 || nPos > this.Master.sldLayoutLst.length || typeof (nPos) !== 'number')
             return null;
         
         return new ApiLayout(this.Master.sldLayoutLst[nPos])
@@ -1836,7 +1934,7 @@
     ApiMaster.prototype.GetLayoutByType = function(sType)
     {
 		let type = AscCommonSlide.LAYOUT_TYPE_MAP[sType];
-		let layout = this.Master.getMatchingLayout(type)
+		let layout = this.Master.getMatchingLayout(type, undefined, undefined, true);
 		if(!layout) return null;
 		return new ApiLayout(layout)
     };
@@ -3517,12 +3615,12 @@
         if (!this.Slide)
             return false;
         
-        let oPresentation = private_GetPresentation();
+        let presentation = private_GetApi().GetPresentation();
         let nPosToDelete  = this.GetSlideIndex();
 
         if (nPosToDelete > -1)
         {
-            oPresentation.removeSlide(nPosToDelete);
+			presentation.RemoveSlides(nPosToDelete, 1);
             return true;
         }
 
@@ -3696,7 +3794,7 @@
             }
         }
         if (i === oPresentation.slideMasters.length) {
-            oPresentation.addSlideMaster(oPresentation.slideMasters.length, oApiTheme.ThemeInfo.Master);
+            oPresentation.pushSlideMaster(oApiTheme.ThemeInfo.Master);
         }
         var oldMaster = this.Slide && this.Slide.Layout && this.Slide.Layout.Master;
         var _new_master = oApiTheme.ThemeInfo.Master;
@@ -4059,7 +4157,7 @@
 		}
 		return false;
 	}
-
+	
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiNotesPage
@@ -4147,6 +4245,21 @@
 		return '';
 	};
 
+    ApiNotesPage.prototype.GetTheme = function(){
+            if (this.NotesPage && this.NotesPage.Master && this.NotesPage.Master.Theme)
+            {
+                var oThemeLoadInfo     = new AscCommonSlide.CThemeLoadInfo();
+                oThemeLoadInfo.Master  = this.NotesPage.Master;
+                oThemeLoadInfo.Layouts = [];
+                oThemeLoadInfo.Theme   = this.NotesPage.Master.Theme;
+
+                return new ApiTheme(oThemeLoadInfo);
+            }
+            
+            return null;
+        };
+
+
     //------------------------------------------------------------------------------------------------------------------
     //
     // ApiDrawing
@@ -4174,10 +4287,13 @@
     {
         var fWidth = private_EMU2MM(nWidth);
         var fHeight = private_EMU2MM(nHeight);
-        if(this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
+        
+        this.Drawing.checkTransformBeforeApply();
+		let xfrm = this.Drawing.getXfrm();
+        if(xfrm)
         {
-            this.Drawing.spPr.xfrm.setExtX(fWidth);
-            this.Drawing.spPr.xfrm.setExtY(fHeight);
+            xfrm.setExtX(fWidth);
+            xfrm.setExtY(fHeight);
         }
     };
 
@@ -4518,7 +4634,8 @@
 		if (!this.Drawing.canRotate()) {
 			return false;
 		}
-
+        
+        this.Drawing.checkTransformBeforeApply();
 		let oXfrm = this.Drawing.getXfrm();
 		oXfrm.setRot(nRotAngle * Math.PI / 180);
 
@@ -4534,14 +4651,74 @@
 	 */
 	ApiDrawing.prototype.GetRotation = function()
 	{
-		if (!this.Drawing.canRotate()) {
-			return 0;
-		}
+		this.Drawing.checkRecalculateTransform();
+		return this.Drawing.rot * 180 / Math.PI
+	};
 
+
+    
+	ApiDrawing.prototype.GetPosX = function()
+	{
+		return private_MM2EMU(this.Drawing.GetPosX());
+	};
+
+    
+	ApiDrawing.prototype.GetPosY = function()
+	{
+		return private_MM2EMU(this.Drawing.GetPosY());
+	};
+
+
+    
+    
+	ApiDrawing.prototype.SetPosX = function(posX)
+	{
+        
+        this.Drawing.checkTransformBeforeApply();
 		let oXfrm = this.Drawing.getXfrm();
-		let nRad = oXfrm.getRot();
+		oXfrm.setOffX(private_EMU2MM(posX));
+	};
 
-		return nRad * 180 / Math.PI
+    
+	ApiDrawing.prototype.SetPosY = function(posY)
+	{
+        this.Drawing.checkTransformBeforeApply();
+		let oXfrm = this.Drawing.getXfrm();
+		oXfrm.setOffY(private_EMU2MM(posY));
+	};
+
+	ApiDrawing.prototype.ReplacePlaceholder = function(oDrawing)
+	{
+		let ph = this.GetPlaceholder();
+		if (!ph) return false;
+
+		let slide = this.Drawing.parent;
+		if (!slide || !slide.graphicObjects) return false;
+
+        
+		slide.replaceSp(this.Drawing, oDrawing.Drawing);
+
+        
+		oDrawing.Drawing.setSpPr(this.Drawing.spPr.createDuplicate());
+        if(oDrawing.GetClassType() === "table")
+        {
+            let pr = {};
+            pr.FrameX = this.GetPosX() / 36000;
+            pr.FrameY = this.GetPosY() / 36000;
+            pr.FrameWidth = this.GetWidth() / 36000;
+            pr.FrameHeight = this.GetHeight() / 36000;
+            pr.Force = true;
+            oDrawing.Drawing.recalculate();
+            
+            oDrawing.Drawing.setFrameTransform(pr);
+        }
+        return true;
+	};
+
+
+	ApiDrawing.prototype.GetInternalId = function()
+	{
+		return this.Drawing.GetId();
 	};
 
     //------------------------------------------------------------------------------------------------------------------
@@ -4638,12 +4815,7 @@
 	 */
     ApiShape.prototype.GetDocContent = function()
     {
-        var oApi = private_GetApi();
-        if(oApi && this.Drawing && this.Drawing.txBody && this.Drawing.txBody.content)
-        {
-            return oApi.private_CreateApiDocContent(this.Drawing.txBody.content);
-        }
-        return null;
+        return this.GetContent();
     };
     
     /**
@@ -4654,12 +4826,20 @@
 	 */
     ApiShape.prototype.GetContent = function()
     {
-        var oApi = private_GetApi();
-        if(oApi && this.Drawing && this.Drawing.txBody && this.Drawing.txBody.content)
-        {
-            return oApi.private_CreateApiDocContent(this.Drawing.txBody.content);
-        }
-        return null;
+		var oApi = Asc["editor"];
+		if (!oApi)
+			return null;
+		let docContent = this.Drawing.getDocContent();
+		if (!docContent)
+		{
+			this.Drawing.createTextBody();
+		}
+		docContent = this.Drawing.getDocContent();
+		if (docContent)
+		{
+			return oApi.private_CreateApiDocContent(docContent);
+		}
+		return null;
     };
 
     /**
@@ -5505,6 +5685,7 @@
     Api.prototype["CreateParagraph"]                      = Api.prototype.CreateParagraph;
     Api.prototype["Save"]                                 = Api.prototype.Save;
     Api.prototype["CreateMaster"]                         = Api.prototype.CreateMaster;
+    Api.prototype["CreateDefaultMasterSlide"]             = Api.prototype.CreateDefaultMasterSlide;
     Api.prototype["CreateLayout"]                         = Api.prototype.CreateLayout;
     Api.prototype["CreatePlaceholder"]                    = Api.prototype.CreatePlaceholder;
     Api.prototype["CreateTheme"]                          = Api.prototype.CreateTheme;
@@ -5514,6 +5695,7 @@
     Api.prototype["CreateWordArt"]                        = Api.prototype.CreateWordArt;
 	Api.prototype["FromJSON"]                             = Api.prototype.FromJSON;
 	Api.prototype["GetSelection"]                         = Api.prototype.GetSelection;
+	Api.prototype["GetByInternalId"]                      = Api.prototype.GetByInternalId;
 
 
     ApiPresentation.prototype["GetClassType"]             = ApiPresentation.prototype.GetClassType;
@@ -5552,6 +5734,7 @@
     ApiPresentation.prototype["GetCustomXmlParts"]        = ApiPresentation.prototype.GetCustomXmlParts;
 
     ApiMaster.prototype["GetClassType"]                   = ApiMaster.prototype.GetClassType;
+    ApiMaster.prototype["GetInternalId"]                  = ApiMaster.prototype.GetInternalId;
     ApiMaster.prototype["GetAllLayouts"]                  = ApiMaster.prototype.GetAllLayouts;
     ApiMaster.prototype["GetLayout"]                      = ApiMaster.prototype.GetLayout;
     ApiMaster.prototype["GetLayoutByType"]                = ApiMaster.prototype.GetLayoutByType;
@@ -5676,7 +5859,8 @@
 	ApiNotesPage.prototype["GetBodyShape"]                = ApiNotesPage.prototype.GetBodyShape;
 	ApiNotesPage.prototype["AddBodyShapeText"]            = ApiNotesPage.prototype.AddBodyShapeText;
 	ApiNotesPage.prototype["GetBodyShapeText"]            = ApiNotesPage.prototype.GetBodyShapeText;
-
+	ApiNotesPage.prototype["GetTheme"]                    = ApiNotesPage.prototype.GetTheme;
+    
     ApiDrawing.prototype["GetClassType"]                  = ApiDrawing.prototype.GetClassType;
     ApiDrawing.prototype["SetSize"]                       = ApiDrawing.prototype.SetSize;
     ApiDrawing.prototype["SetPosition"]                   = ApiDrawing.prototype.SetPosition;
@@ -5695,6 +5879,13 @@
     ApiDrawing.prototype["Select"]                        = ApiDrawing.prototype.Select;
     ApiDrawing.prototype["SetRotation"]                   = ApiDrawing.prototype.SetRotation;
     ApiDrawing.prototype["GetRotation"]                   = ApiDrawing.prototype.GetRotation;
+    ApiDrawing.prototype["GetPosX"]                       = ApiDrawing.prototype.GetPosX;
+    ApiDrawing.prototype["GetPosY"]                       = ApiDrawing.prototype.GetPosY;
+    ApiDrawing.prototype["SetPosX"]                       = ApiDrawing.prototype.SetPosX;
+    ApiDrawing.prototype["SetPosY"]                       = ApiDrawing.prototype.SetPosY;
+  
+    ApiDrawing.prototype["ReplacePlaceholder"]            = ApiDrawing.prototype.ReplacePlaceholder;
+    ApiDrawing.prototype["GetInternalId"]                 = ApiDrawing.prototype.GetInternalId;
 
     ApiGroup.prototype["GetClassType"]	= ApiGroup.prototype.GetClassType;
 	ApiGroup.prototype["Ungroup"]		= ApiGroup.prototype.Ungroup;
@@ -6168,6 +6359,7 @@
 		return position;
 	}
 
+	
 	window['AscBuilder'] = window['AscBuilder'] || {};
 	window['AscBuilder'].ApiShape = ApiShape;
 	window['AscBuilder'].ApiImage = ApiImage;

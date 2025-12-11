@@ -10955,6 +10955,18 @@
 		return result;
 	}
 	
+	function executeNoScroll(f, logicDocument, t, args)
+	{
+		if (!logicDocument || !logicDocument.GetApi)
+			return f.apply(t, args);;
+		
+		let editor = logicDocument.GetApi();
+		editor.asc_LockScrollToTarget(true);
+		let result = f.apply(t, args);
+		editor.asc_LockScrollToTarget(false);
+		return result;
+	}
+	
 	function ExecuteEditorAction(actionPr, f, logicDocument, t, args)
 	{
 		if (!logicDocument
@@ -11748,6 +11760,14 @@
 		"Meiryo", "MS Gothic", "MS PGothic", "MS UI Gothic", "Yu Gothic",
 		"Dotum", "Gulim", "Malgun Gothic"
 	];
+	
+	// Символы, на которых работает <w:rFonts w:hint="eastAsia"/>
+	function isAmbiguousCharacter(codePoint)
+	{
+		return (0x00D7 === codePoint
+			|| (0x0370 <= codePoint && codePoint <= 0x03FF));
+	}
+	
 
 	function IsEastAsianFont(sName)
 	{
@@ -11833,6 +11853,11 @@
 			|| (0x18800 <= value && value <= 0x18AFF)
 			|| (0xA000 <= value && value <= 0xA48F)
 			|| (0xA490 <= value && value <= 0xA4CF));
+	}
+	
+	function isEastAsianPunctuation(value)
+	{
+		return (0x3000 <= value && value <= 0x4DB5);
 	}
 
 	function IsHangul(nCharCode)
@@ -14091,19 +14116,54 @@
 		delimiterMap[AscCommon.c_oAscCsvDelimiter.Colon] = ":";
 		delimiterMap[AscCommon.c_oAscCsvDelimiter.Comma] = ",";
 		delimiterMap[AscCommon.c_oAscCsvDelimiter.Space] = " ";
-		const delimiterChar = options.asc_getDelimiterChar() || delimiterMap[options.asc_getDelimiter()];
+
+		const delimiterChar = options.asc_getDelimiterChar();
+		const delimiter = options.asc_getDelimiter();
+		const delimiterArray = [];
+
+		if (delimiterChar) {
+			if (Array.isArray(delimiterChar)) {
+				for (let i = 0; i < delimiterChar.length; i++) {
+					delimiterArray.push(delimiterChar[i]);
+				}
+			} else {
+				delimiterArray.push(delimiterChar);
+			}
+		}
+
+		if (delimiter !== undefined && delimiter !== null) {
+			if (delimiter) {
+				if (Array.isArray(delimiter)) {
+					for (let i = 0; i < delimiter.length; i++) {
+						let delimeterValue = delimiterMap[delimiter[i]];
+						if (delimiterArray.indexOf(delimeterValue) === -1) {
+							delimiterArray.push(delimeterValue);
+						}
+					}
+				} else {
+					let delimeterValue = delimiterMap[delimiter];
+					if (delimiterArray.indexOf(delimeterValue) === -1) {
+						delimiterArray.push(delimeterValue);
+					}
+				}
+			}
+		}
+
 		const textQualifier = options.asc_getTextQualifier();
 		const hasQualifier = !!textQualifier;
 		
 		if (!text.length) return [[]];
 		
-		let rows = delimiterChar === '\n' ? [text] : text.split(/\r\n|\r|\n/);
+		let rows = (delimiterArray.length === 1 && delimiterArray[0] === '\n') ? [text] : text.split(/\r\n|\r|\n/);
 		if (rows.length > 1 && rows[rows.length - 1] === '') rows.pop();
-		
-		const isSpace = delimiterChar === " ";
+
+		const isSpace = delimiterArray.length > 0 && delimiterArray.indexOf(" ") !== -1;
 		// Note: Using charCodeAt instead of codePointAt for performance.
 		// CSV delimiters are always basic ASCII chars (comma=44, semicolon=59, tab=9, etc.)
-		const delimiterCode = delimiterChar ? delimiterChar.charCodeAt(0) : 0;
+		const delimiterCodes = [];
+		for (let i = 0; i < delimiterArray.length; i++) {
+			delimiterCodes.push(delimiterArray[i].charCodeAt(0));
+		}
 		const qualifierCode = hasQualifier ? textQualifier.charCodeAt(0) : 0;
 		
 		/**
@@ -14114,9 +14174,9 @@
 		 */
 		const processSpaceRow = function(row) {
 			if (!isSpace || !bTrimSpaces) return row;
-			const hasLeadingSpace = row.length > 0 && row.charCodeAt(0) === delimiterCode;
+			const hasLeadingSpace = row.length > 0 && delimiterCodes.indexOf(row.charCodeAt(0)) !== -1;
 			row = row.trim();
-			return hasLeadingSpace ? delimiterChar + row : row;
+			return hasLeadingSpace ? delimiterArray[0] + row : row;
 		};
 		
 		/**
@@ -14152,7 +14212,7 @@
 
 				const charCode = row.charCodeAt(j);
 				if (charCode === qualifierCode) {
-					if (!insideQualifier && (j === 0 || row.charCodeAt(j - 1) === delimiterCode)) {
+					if (!insideQualifier && (j === 0 || delimiterCodes.indexOf(row.charCodeAt(j - 1)) !== -1)) {
 						insideQualifier = true;
 						j++;
 						continue;
@@ -14169,7 +14229,7 @@
 					}
 				}
 				
-				if (!insideQualifier && charCode === delimiterCode) {
+				if (!insideQualifier && delimiterCodes.indexOf(charCode) !== -1) {
 					fields.push(textParts.join(''));
 					textParts = [];
 				} else {
@@ -14193,7 +14253,22 @@
 				matrix.push(res.fields);
 				i = res.curIndex;
 			} else {
-				matrix.push(delimiterChar === undefined ? [row] : row.split(delimiterChar));
+				if (delimiterArray.length === 0) {
+					matrix.push([row]);
+				} else {
+					const parts = [];
+					let currentPart = "";
+					for (let j = 0; j < row.length; j++) {
+						if (delimiterCodes.indexOf(row.charCodeAt(j)) !== -1) {
+							parts.push(currentPart);
+							currentPart = "";
+						} else {
+							currentPart += row[j];
+						}
+					}
+					parts.push(currentPart);
+					matrix.push(parts);
+				}
 			}
 		}
 		return matrix;
@@ -15593,6 +15668,7 @@
 	window["AscCommon"].ExecuteNoHistory = ExecuteNoHistory;
 	window["AscCommon"].executeNoRevisions = executeNoRevisions;
 	window["AscCommon"].executeNoPreDelete = executeNoPreDelete;
+	window["AscCommon"].executeNoScroll = executeNoScroll;
 	window["AscCommon"].ExecuteEditorAction = ExecuteEditorAction;
 	window["AscCommon"].AddAndExecuteChange = AddAndExecuteChange;
 	window["AscCommon"].CompareStrings = CompareStrings;
@@ -15610,7 +15686,10 @@
 	window["AscCommon"].getAscColorScheme = getAscColorScheme;
 	window["AscCommon"].checkAddColorScheme = checkAddColorScheme;
 	window["AscCommon"].getIndexColorSchemeInArray = getIndexColorSchemeInArray;
+	window["AscCommon"].isAmbiguousCharacter = isAmbiguousCharacter;
 	window["AscCommon"].isEastAsianScript = isEastAsianScript;
+	window["AscCommon"].isEastAsianPunctuation = isEastAsianPunctuation;
+	window["AscCommon"].isHangul = IsHangul;
 	window["AscCommon"].IsEastAsianFont = IsEastAsianFont;
 	window["AscCommon"].IsComplexScript = IsComplexScript;
 	window["AscCommon"].IsGeorgianScript = IsGeorgianScript;
@@ -15702,7 +15781,7 @@
 	window["AscCommon"].fromModelCryptAlgorithmSid = fromModelCryptAlgorithmSid;
 	window["AscCommon"].getMemoryInfo = getMemoryInfo;
 	window["AscCommon"].getClientInfoString = getClientInfoString;
-	window["AscCommon"].sendClientLog = sendClientLog;
+	window["AscCommon"].sendClientLog = window["AscCommon"]["sendClientLog"] = sendClientLog;
 
 	window["AscCommon"].getNativePrintRanges = getNativePrintRanges;
 

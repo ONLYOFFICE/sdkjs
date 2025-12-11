@@ -1925,7 +1925,7 @@ function (window, undefined) {
 					break;
 				}
 				case close: {
-					if (!bConvertCurvesOnly & oLastMoveTo) {
+					if (!bConvertCurvesOnly && oLastMoveTo) {
 						let dXM = oTransform.TransformPointX(oLastMoveTo.X, oLastMoveTo.Y);
 						let dYM = oTransform.TransformPointY(oLastMoveTo.X, oLastMoveTo.Y);
 						let dLastXM = oTransform.TransformPointX(dLastX, dLastY);
@@ -1941,6 +1941,93 @@ function (window, undefined) {
 					oPath.close();
 					break;
 				}
+
+
+				case ellipticalArcTo: {
+					let oPathAccumulator = new AscFormat.PathAccumulator();
+					ArcToCurvers(oPathAccumulator, oCmd.stX, oCmd.stY, oCmd.wR, oCmd.hR, oCmd.stAng, oCmd.swAng, oCmd.ellipseRotation);
+					let aArcToCommands = oPathAccumulator.pathCommand;
+					for (let nArcCmd = 0; nArcCmd < aArcToCommands.length; ++nArcCmd) {
+						let oArcToCmd = aArcToCommands[nArcCmd];
+						switch (oArcToCmd.id) {
+							case AscFormat.moveTo: {
+								break;
+							}
+							case AscFormat.bezier4: {
+								dX0 = oTransform.TransformPointX(oArcToCmd.X0, oArcToCmd.Y0) * 36000 >> 0;
+								dY0 = oTransform.TransformPointY(oArcToCmd.X0, oArcToCmd.Y0) * 36000 >> 0;
+								dX1 = oTransform.TransformPointX(oArcToCmd.X1, oArcToCmd.Y1) * 36000 >> 0;
+								dY1 = oTransform.TransformPointY(oArcToCmd.X1, oArcToCmd.Y1) * 36000 >> 0;
+								dX2 = oTransform.TransformPointX(oArcToCmd.X2, oArcToCmd.Y2) * 36000 >> 0;
+								dY2 = oTransform.TransformPointY(oArcToCmd.X2, oArcToCmd.Y2) * 36000 >> 0;
+								oPath.cubicBezTo(dX0, dY0, dX1, dY1, dX2, dY2);
+
+								dLastX = oArcToCmd.X2;
+								dLastY = oArcToCmd.Y2;
+								break;
+							}
+						}
+					}
+					break;
+				}
+				case nurbsTo: {
+					oCmd.bezierArray.forEach(function (bezier) {
+							if (oCmd.degree === 2) {
+								let cp1x = bezier.controlPoints[0].x;
+								let cp1y = bezier.controlPoints[0].y;
+								let endx = bezier.endPoint.x;
+								let endy = bezier.endPoint.y;
+
+								dX0 = oTransform.TransformPointX(cp1x, cp1y) * 36000 >> 0;
+								dY0 = oTransform.TransformPointY(cp1x, cp1y) * 36000 >> 0;
+								dX1 = oTransform.TransformPointX(endx, endy) * 36000 >> 0;
+								dY1 = oTransform.TransformPointY(endx, endy) * 36000 >> 0;
+								oPath.cubicBezTo(dX0, dY0, dX1, dY1, dX1, dY1);
+								dLastX = endx;
+								dLastY = endy;
+							}
+							else if (oCmd.degree === 3) {
+								let cp1x = bezier.controlPoints[0].x;
+								let cp1y = bezier.controlPoints[0].y;
+								let cp2x = bezier.controlPoints[1].x;
+								let cp2y = bezier.controlPoints[1].y;
+								let endx = bezier.endPoint.x;
+								let endy = bezier.endPoint.y;
+
+
+								dX0 = oTransform.TransformPointX(cp1x, cp1y) * 36000 >> 0;
+								dY0 = oTransform.TransformPointY(cp1x, cp1y) * 36000 >> 0;
+								dX1 = oTransform.TransformPointX(cp2x, cp2y) * 36000 >> 0;
+								dY1 = oTransform.TransformPointY(cp2x, cp2y) * 36000 >> 0;
+								dX2 = oTransform.TransformPointX(endx, endy) * 36000 >> 0;
+								dY2 = oTransform.TransformPointY(endx, endy) * 36000 >> 0;
+								oPath.cubicBezTo(dX0, dY0, dX1, dY1, dX2, dY2);
+								dLastX = endx;
+								dLastY = endy;
+							}
+							else {
+								let startPoint = bezier.startPoint;
+								let controlPoints = bezier.controlPoints;
+								let endPoint = bezier.endPoint;
+								let pointsToCheck = controlPoints.concat(endPoint);
+								pointsToCheck = pointsToCheck.concat(startPoint);
+								for (let pt = 0; pt < pointsToCheck.length; ++pt) {
+									let oPt = pointsToCheck[pt];
+									dX0 = oTransform.TransformPointX(dLastX + (oPt.x - dLastX) * (1 / 3), dLastY + (oPt.y - dLastY) * (1 / 3)) * 36000 >> 0;
+									dY0 = oTransform.TransformPointY(dLastX + (oPt.x - dLastX) * (1 / 3), dLastY + (oPt.y - dLastY) * (1 / 3)) * 36000 >> 0;
+									dX1 = oTransform.TransformPointX(dLastX + (oPt.x - dLastX) * (2 / 3), dLastY + (oPt.y - dLastY) * (2 / 3)) * 36000 >> 0;
+									dY1 = oTransform.TransformPointY(dLastX + (oPt.x - dLastX) * (2 / 3), dLastY + (oPt.y - dLastY) * (2 / 3)) * 36000 >> 0;
+									dX2 = oTransform.TransformPointX(oPt.x, oPt.y) * 36000 >> 0;
+									dY2 = oTransform.TransformPointY(oPt.x, oPt.y) * 36000 >> 0;
+									(bConvertCurvesOnly) ? oPath.lnTo(dX2, dY2) : oPath.cubicBezTo(dX0, dY0, dX1, dY1, dX2, dY2);
+									dLastX = oPt.x;
+									dLastY = oPt.y;
+								}
+							}
+						});
+					break;
+				}
+
 			}
 		}
 		oPath.recalculate({}, true);
@@ -2048,6 +2135,321 @@ function (window, undefined) {
 		return true;
 	};
 
+
+
+	function getNonDuplicateCommands(path) {
+		const commands = [];
+		let prevCommand = null;
+
+		function isDuplicate(cmd1, cmd2) {
+			if (cmd1.id !== cmd2.id)
+				return false;
+
+			if (cmd1.id === AscFormat.moveTo || cmd1.id === AscFormat.lineTo)
+				return cmd1.X === cmd2.X && cmd1.Y === cmd2.Y;
+
+			if (cmd1.id === AscFormat.bezier3)
+				return cmd1.X0 === cmd2.X0 && cmd1.Y0 === cmd2.Y0 &&
+					cmd1.X1 === cmd2.X1 && cmd1.Y1 === cmd2.Y1;
+
+			if (cmd1.id === AscFormat.bezier4)
+				return cmd1.X0 === cmd2.X0 && cmd1.Y0 === cmd2.Y0 &&
+					cmd1.X1 === cmd2.X1 && cmd1.Y1 === cmd2.Y1 &&
+					cmd1.X2 === cmd2.X2 && cmd1.Y2 === cmd2.Y2;
+
+			if (cmd1.id === AscFormat.arcTo)
+				return cmd1.wR === cmd2.wR && cmd1.hR === cmd2.hR &&
+					cmd1.stAng === cmd2.stAng && cmd1.swAng === cmd2.swAng;
+
+			return false;
+		}
+
+		path.ArrPathCommand.forEach(function (command) {
+			if (prevCommand) {
+				if (command.id === AscFormat.moveTo && prevCommand.id === AscFormat.moveTo) {
+					prevCommand = command;
+					return;
+				}
+
+				if (isDuplicate(prevCommand, command)) {
+					return;
+				}
+			}
+
+			commands.push(command);
+			prevCommand = command;
+		});
+
+		return commands;
+	}
+
+	Path.prototype.getContinuousSubpaths = function () {
+		const convertedPath = new AscFormat.Path();
+		const transform = new AscCommon.CMatrix();
+		AscFormat.ExecuteNoHistory(this.convertToBezierCurves, this, [convertedPath, transform, true]);
+		// convertedPath contains cubicBezierTo, lineTo, and moveTo commands only
+
+		const subpaths = [];
+		let currentSubpath;
+
+		// Since we only draw geometries that start with a "moveTo" command,
+		// the first command in the 'commands' array is guaranteed to be "moveTo"
+		const commands = getNonDuplicateCommands(convertedPath);
+		commands.forEach(function (command, index) {
+			if (command.id === AscFormat.moveTo) {
+				if (currentSubpath) {
+					subpaths.push(currentSubpath);
+				}
+				currentSubpath = new Path();
+			}
+			currentSubpath.ArrPathCommand.push(command);
+		});
+
+		if (currentSubpath) {
+			subpaths.push(currentSubpath);
+		}
+
+		return subpaths;
+	};
+
+	function getClosestIntersectionWithPath(circleCenter, circleRadius, pathCommands, searchFromEnd) {
+		let prevPoint;
+		const allIntersections = [];
+
+		for (let i = 0; i < pathCommands.length; i++) {
+			const command = pathCommands[i];
+			let intersections = [];
+
+			if (command.id === AscFormat.moveTo) {
+				prevPoint = { x: command.X, y: command.Y };
+				continue;
+			}
+
+			if (command.id === AscFormat.lineTo) {
+				intersections = getCircleIntersectionsWithLine(circleCenter, circleRadius, prevPoint, { x: command.X, y: command.Y });
+				prevPoint = { x: command.X, y: command.Y };
+			}
+
+			if (command.id === AscFormat.bezier4) {
+				intersections = getCircleIntersectionsWithBezierCurve(
+					circleCenter, circleRadius,
+					prevPoint,
+					{ x: command.X0, y: command.Y0 },
+					{ x: command.X1, y: command.Y1 },
+					{ x: command.X2, y: command.Y2 },
+				);
+				prevPoint = { x: command.X2, y: command.Y2 };
+			}
+
+			if (intersections.length > 0) {
+				allIntersections.push(intersections);
+			}
+		}
+
+		if (allIntersections.length === 0) {
+			return null;
+		}
+
+		const targetIntersections = searchFromEnd
+			? allIntersections[allIntersections.length - 1]
+			: allIntersections[0];
+
+		const closestPoint = targetIntersections.reduce(function (best, current) {
+			const isCurrentBetter = searchFromEnd
+				? current.t > best.t
+				: current.t < best.t;
+			return isCurrentBetter ? current : best;
+		}, targetIntersections[0]);
+
+		return closestPoint;
+	}
+
+	function getCircleIntersectionsWithLine(circleCenter, circleRadius, lineStart, lineEnd) {
+		const cx = circleCenter.x, cy = circleCenter.y;
+		const x1 = lineStart.x, y1 = lineStart.y;
+		const x2 = lineEnd.x, y2 = lineEnd.y;
+
+		const dx = x2 - x1;
+		const dy = y2 - y1;
+
+		// At² + Bt + C = 0
+		const A = Math.pow(dx, 2) + Math.pow(dy, 2);
+		const B = 2 * (dx * (x1 - cx) + dy * (y1 - cy));
+		const C = (x1 - cx) * (x1 - cx) + (y1 - cy) * (y1 - cy) - Math.pow(circleRadius, 2);
+
+		const D = Math.pow(B, 2) - 4 * A * C;
+		if (D < 0) {
+			return [];
+		}
+
+		const sqrtD = Math.sqrt(D);
+		const t1 = (-B - sqrtD) / (2 * A);
+		const t2 = (-B + sqrtD) / (2 * A);
+
+		const intersections = [];
+
+		// Проверяем, находятся ли точки пересечения в пределах отрезка (t в диапазоне [0,1])
+		if (t1 >= 0 && t1 <= 1) {
+			intersections.push({
+				t: t1,
+				x: x1 + t1 * dx,
+				y: y1 + t1 * dy
+			});
+		}
+		if (t2 >= 0 && t2 <= 1) {
+			intersections.push({
+				t: t2,
+				x: x1 + t2 * dx,
+				y: y1 + t2 * dy
+			});
+		}
+
+		return intersections;
+	}
+
+	function getCircleIntersectionsWithBezierCurve(circleCenter, circleRadius, p0, p1, p2, p3) {
+
+		// Method of Newton-Raphson (keldysh.ru/comma/html/nonlinear/newton.html)
+		function findIntersection() {
+			const intersections = [];
+			const epsilon = 1e-6;
+			const maxIterations = 100;
+			const step = 0.01;
+
+			for (let t = 0; t <= 1; t += step) {
+				const tLow = t;
+				const tHigh = t + step;
+
+				const lowPoint = getBezierCurvePointAt(tLow, p0, p1, p2, p3);
+				const highPoint = getBezierCurvePointAt(tHigh, p0, p1, p2, p3);
+
+				const lowDist = getLineLength(lowPoint, circleCenter) - circleRadius;
+				const highDist = getLineLength(highPoint, circleCenter) - circleRadius;
+
+				if (Math.abs(lowDist) < epsilon) {
+					intersections.push(lowPoint);
+				}
+				if (Math.abs(highDist) < epsilon) {
+					intersections.push(highPoint);
+				}
+
+				if (lowDist * highDist < 0) {
+					let tNew = (tLow + tHigh) / 2;
+
+					for (let i = 0; i < maxIterations; i++) {
+						const point = getBezierCurvePointAt(tNew, p0, p1, p2, p3);
+						const dist = getLineLength(point, circleCenter) - circleRadius;
+
+						if (Math.abs(dist) < epsilon) {
+							intersections.push(point);
+							break;
+						}
+
+						const dt = 1e-4;
+						const pointDt = getBezierCurvePointAt(tNew + dt, p0, p1, p2, p3);
+						const distDt = getLineLength(pointDt, circleCenter) - circleRadius;
+						const derivative = (distDt - dist) / dt;
+
+						if (Math.abs(derivative) < epsilon) {
+							break;
+						}
+
+						tNew = tNew - dist / derivative;
+
+						if (tNew < 0 || tNew > 1) {
+							break;
+						};
+					}
+				}
+			}
+			return intersections;
+		}
+
+		return findIntersection();
+	}
+
+	function getBezierCurvePointAt(t, p0, p1, p2, p3) {
+		const x = Math.pow(1 - t, 3) * p0.x + 3 * Math.pow(1 - t, 2) * t * p1.x + 3 * (1 - t) * Math.pow(t, 2) * p2.x + Math.pow(t, 3) * p3.x;
+		const y = Math.pow(1 - t, 3) * p0.y + 3 * Math.pow(1 - t, 2) * t * p1.y + 3 * (1 - t) * Math.pow(t, 2) * p2.y + Math.pow(t, 3) * p3.y;
+		return { x: x, y: y, t: t };
+	}
+
+	Path.prototype.getHeadArrowAngle = function (arrowLength) {
+		// This path should contain cubicBezierTo, lineTo, and moveTo commands only,
+		// describe a continuous curve and start with the "moveTo" command
+
+		if (!AscFormat.isRealNumber(arrowLength)) {
+			arrowLength = 0.01;
+		}
+
+		const commands = this.ArrPathCommand;
+		if (commands.length <= 1) {
+			return null;
+		}
+
+		const arrowTipPoint = { x: commands[0].X, y: commands[0].Y };
+		const arrowBasePoint = getClosestIntersectionWithPath(arrowTipPoint, arrowLength, commands, false);
+
+		if (!arrowBasePoint) {
+			return null;
+		}
+
+		const diffX = arrowTipPoint.x - arrowBasePoint.x;
+		const diffY = arrowTipPoint.y - arrowBasePoint.y;
+
+		const angleInRadians = Math.atan2(diffY, diffX);
+		const angleInDegrees = angleInRadians * 180 / Math.PI;
+		return angleInDegrees;
+	};
+	Path.prototype.getTailArrowAngle = function (arrowLength) {
+		// This path should contain cubicBezierTo, lineTo, and moveTo commands only,
+		// describe a continuous curve and start with the "moveTo" command
+
+		if (!AscFormat.isRealNumber(arrowLength)) {
+			arrowLength = 0.01;
+		}
+
+		const commands = this.ArrPathCommand;
+		if (commands.length <= 1) {
+			return null;
+		}
+
+		function getPathEndPoint(commands) {
+			for (let i = commands.length - 1; i >= 0; i--) {
+				const command = commands[i];
+				if (command.id === AscFormat.lineTo) {
+					return { x: command.X, y: command.Y };
+				}
+				if (command.id === AscFormat.bezier4) {
+					return { x: command.X2, y: command.Y2 };
+				}
+			}
+			return null;
+		}
+
+		const pathEndPoint = getPathEndPoint(commands);
+
+		const arrowTipPoint = { x: pathEndPoint.x, y: pathEndPoint.y };
+		const arrowBasePoint = getClosestIntersectionWithPath(arrowTipPoint, arrowLength, commands, true);
+
+		if (!arrowBasePoint) {
+			return null;
+		}
+
+		const diffX = arrowTipPoint.x - arrowBasePoint.x;
+		const diffY = arrowTipPoint.y - arrowBasePoint.y;
+
+		const angleInRadians = Math.atan2(diffY, diffX);
+		const angleInDegrees = angleInRadians * 180 / Math.PI;
+		return angleInDegrees;
+	};
+	Path.prototype.isValid = function () {
+		if(this.ArrPathCommand.length === 0) return false;
+		let oFirstCmd = this.ArrPathCommand[0];
+		return oFirstCmd.id === moveTo;
+	};
+
+
 	Path.prototype.clear = function () {};
 	function CPathCmd() {
 		AscFormat.CBaseNoIdObject.call(this);
@@ -2091,6 +2493,9 @@ function (window, undefined) {
 		this.lastY = null;
 	}
 
+	Path2.prototype.setParent = function (oParent) {
+		this.parent = oParent;
+	};
 	Path2.prototype.getMemoryLength = function () {
 		return this.getArrPathCommand()[this.startPos];
 	};
@@ -2719,10 +3124,6 @@ function (window, undefined) {
 						}
 						_ctx.moveTo(_x, _y);
 
-						if (_graphics.ArrayPoints != null) {
-							_graphics.ArrayPoints.push({x: X, y: Y});
-						}
-
 						i += 3;
 						break;
 					}
@@ -2737,10 +3138,6 @@ function (window, undefined) {
 							_y -= 0.5;
 						}
 						_ctx.lineTo(_x, _y);
-
-						if (_graphics.ArrayPoints != null) {
-							_graphics.ArrayPoints.push({x: X, y: Y});
-						}
 
 						i += 3;
 						break;
@@ -3183,6 +3580,90 @@ function (window, undefined) {
 		oPath.recalculate({}, true);
 	};
 
+	Path2.prototype.isValid = function () {
+		if(this.isEmpty()) return false;
+		let path = this.getArrPathCommand();
+		return path[this.startPos + 1] === moveTo;
+	};
+	Path2.prototype.getArrPathCommandObjects = function () {
+		let i = 0;
+		let len = this.getMemoryLength();
+		let path = this.getArrPathCommand();
+		let arrPathCommand = [];
+		while (i < len) {
+			let cmd = path[this.startPos + i + 1];
+			switch (cmd) {
+				case moveTo: {
+					arrPathCommand.push({id:moveTo, X: path[this.startPos + i + 2], Y: path[this.startPos + i + 3]});
+					i += 3;
+					break;
+				}
+				case lineTo: {
+					arrPathCommand.push({id:lineTo, X: path[this.startPos + i + 2], Y: path[this.startPos + i + 3]});
+					i += 3;
+					break;
+				}
+				case bezier3: {
+
+					arrPathCommand.push({
+						id:bezier3,
+						X0: path[this.startPos + i + 2],
+						Y0: path[this.startPos + i + 3],
+						X1: path[this.startPos + i + 4],
+						Y1: path[this.startPos + i + 5]
+					});
+					i += 5;
+					break;
+				}
+				case bezier4: {
+					arrPathCommand.push({
+						id:bezier4,
+						X0: path[this.startPos + i + 2],
+						Y0: path[this.startPos + i + 3],
+						X1: path[this.startPos + i + 4],
+						Y1: path[this.startPos + i + 5],
+						X2: path[this.startPos + i + 6],
+						Y2: path[this.startPos + i + 7]
+					});
+					i += 7;
+					break;
+				}
+				case arcTo: {
+					arrPathCommand.push({
+						id:arcTo,
+						stX: path[this.startPos + i + 2],
+						stY: path[this.startPos + i + 3],
+						wR: path[this.startPos + i + 4],
+						hR: path[this.startPos + i + 5],
+						stAng: path[this.startPos + i + 6],
+						swAng: path[this.startPos + i + 7]
+					});
+					i += 7;
+					break;
+				}
+				case close: {
+					i += 1;
+					break;
+				}
+			}
+		}
+
+	};
+	Path2.prototype.executeWithPathCommands = function(fMethod, params) {
+		this.ArrPathCommand = this.getArrPathCommand();
+		let result = fMethod.apply(this, params);
+		this.ArrPathCommand = undefined;
+		return result;
+	};
+	Path2.prototype.getContinuousSubpaths = function () {
+		return this.executeWithPathCommands(Path.prototype.getContinuousSubpaths, []);
+	};
+	Path2.prototype.getHeadArrowAngle = function (arrowLength) {
+		return this.executeWithPathCommands(Path.prototype.getHeadArrowAngle, [arrowLength]);
+	};
+	Path2.prototype.getTailArrowAngle = function (arrowLength) {
+		return this.executeWithPathCommands(Path.prototype.getTailArrowAngle, [arrowLength]);
+	};
 	Path2.prototype.Write_ToBinary = function(writer) {
 		AscFormat.writeBool(writer, this.extrusionOk);
 		AscFormat.writeString(writer, this.fill);

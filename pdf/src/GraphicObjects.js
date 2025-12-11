@@ -564,7 +564,7 @@
                         if (arr[i].getDocContent) {
                             if (arr[i].IsDrawing() && arr[i].IsEditFieldShape()) {
                                 let oField = arr[i].GetEditField();
-                                let oContent = oField.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format) ? oField.contentFormat : oField.content;
+                                let oContent = oField.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) ? oField.contentFormat : oField.content;
                                 let oCalcedTextPr = oContent ? oContent.GetCalculatedTextPr() : null;
 
                                 cur_pr = new AscWord.CTextPr();
@@ -1218,7 +1218,7 @@
             return true;
     
         } else {
-            var ret = { objectId: object.Get_Id(), cursorType: "text" };
+            var ret = { objectId: object.Get_Id(), cursorType: "text", content: object.getDocContent && object.getDocContent() };
             content = object.getDocContent();
             invert_transform_text = object.invertTransformText;
             if (content && invert_transform_text) {
@@ -1767,7 +1767,7 @@
                                 oField.SetAlign(AscPDF.getPdfTypeAlignByInternal(args[0]));
                             }
                             else if (f == CDocumentContent.prototype.IncreaseDecreaseFontSize) {
-                                let oContent = oField.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format) ? oField.contentFormat : oField.content;
+                                let oContent = oField.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) ? oField.contentFormat : oField.content;
                                 let oCalcedTextPr = oContent.GetCalculatedTextPr();
                                 
                                 let nCurFontSize = oCalcedTextPr.GetFontSize();
@@ -2051,6 +2051,42 @@
         Asc.editor.sendEvent("asc_onSingleChartSelectionChanged", chartSpaceRect || null);
     };
 
+    CGraphicObjects.prototype.remove = function (dir, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord, bNoCheck) {
+        let target_text_object = AscFormat.getTargetTextObject(this);
+        if (target_text_object) {
+            if (target_text_object.getObjectType() === AscDFH.historyitem_type_GraphicFrame) {
+                target_text_object.graphicObject.Remove(dir, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord);
+            } else {
+                let content = this.getTargetDocContent(true);
+                if (content) {
+                    content.Remove(dir, true, bRemoveOnlySelection, bOnTextAdd, isWord)
+                }
+
+                bNoCheck !== true && target_text_object.checkExtentsByDocContent && target_text_object.checkExtentsByDocContent();
+            }
+        } else if (this.selectedObjects.length > 0) {
+            if (this.selection.groupSelection) {
+                if (this.selection.groupSelection.selection.chartSelection) {
+                    this.selection.groupSelection.selection.chartSelection.remove();
+                } else {
+                    if (this.removeInGroup(this.selection.groupSelection, this.selection.groupSelection.selectedObjects, [])) {
+                        return;
+                    }
+                }
+            } else if (this.selection.chartSelection) {
+                this.selection.chartSelection.remove();
+            } else {
+                this.resetConnectors(this.selectedObjects);
+                for (let i = 0; i < this.selectedObjects.length; ++i) {
+                    let oSp = this.selectedObjects[i];
+                    oSp.deleteDrawingBase();
+                    oSp.setBDeleted(true);
+                }
+                this.resetSelection();
+            }
+        }
+    };
+
     // import
     CGraphicObjects.prototype.setEquationTrack          = AscFormat.DrawingObjectsController.prototype.setEquationTrack;
     CGraphicObjects.prototype.alignLeft                 = AscFormat.DrawingObjectsController.prototype.alignLeft;
@@ -2065,7 +2101,6 @@
     CGraphicObjects.prototype.changeTextCase            = AscFormat.DrawingObjectsController.prototype.changeTextCase;
     CGraphicObjects.prototype.handleDblClickEmptyShape  = AscFormat.DrawingObjectsController.prototype.handleDblClickEmptyShape;
     CGraphicObjects.prototype.getDrawingsPasteShift     = AscFormat.DrawingObjectsController.prototype.getDrawingsPasteShift;
-    CGraphicObjects.prototype.removeCallback            = AscFormat.DrawingObjectsController.prototype.removeCallback;
     CGraphicObjects.prototype.getAllSingularDrawings    = AscFormat.DrawingObjectsController.prototype.getAllSingularDrawings;
     CGraphicObjects.prototype.setParagraphBidi          = AscFormat.DrawingObjectsController.prototype.setParagraphBidi;
     CGraphicObjects.prototype.loadDocumentStateAfterLoadChanges = AscFormat.DrawingObjectsController.prototype.loadDocumentStateAfterLoadChanges;

@@ -3638,7 +3638,7 @@
 					AscCommon.g_oTableId.Add(oWsFrom, oWsFrom.getId())
 				}, this, [], true);
 			}
-			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_SheetRemove, null, null, new AscCommonExcel.UndoRedoData_SheetRemove(indexFrom, oWsFrom.getId(), oWsFrom));
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_SheetRemove, null, null, new AscCommonExcel.UndoRedoData_SheetRemove(indexFrom, oWsFrom.getId(), oWsFrom, true));
 			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_SheetAdd, null, null, new UndoRedoData_SheetAdd(indexTo, oWsFrom.getName(), null, oWsFrom.getId(), null, null, oWsFrom.getId()));
 			this.dependencyFormulas.unlockRecal();
 
@@ -3669,7 +3669,7 @@
 		}
 		return oRes;
 	};
-	Workbook.prototype.removeWorksheet=function(nIndex, outputParams){
+	Workbook.prototype.removeWorksheet=function(nIndex, outputParams, moveSheet){
 		//проверяем останется ли хоть один нескрытый sheet
 		var bEmpty = true;
 		for(var i = 0, length = this.aWorksheets.length; i < length; ++i)
@@ -3689,7 +3689,7 @@
 		{
 			var removedSheetId = removedSheet.getId();
 			this.dependencyFormulas.lockRecal();
-			var prepared = this.dependencyFormulas.prepareRemoveSheet(removedSheetId, removedSheet.getTableNames());
+			var prepared = !moveSheet && this.dependencyFormulas.prepareRemoveSheet(removedSheetId, removedSheet.getTableNames());
 
 			//remove timeline
 			if (removedSheet.timelines) {
@@ -3726,7 +3726,7 @@
 				outputParams.sheet = removedSheet;
 			}
 			this._updateWorksheetIndexes(wsActive);
-			this.dependencyFormulas.removeSheet(prepared);
+			!moveSheet && this.dependencyFormulas.removeSheet(prepared);
 			this.dependencyFormulas.unlockRecal();
 			this.handlers && this.handlers.trigger("asc_onSheetDeleted", nIndex);
 			this.handlers && this.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetRemove, nIndex);
@@ -5047,7 +5047,7 @@
 			aRanges.push(new AscCommonExcel.Range(oWorksheet, 0, 0, gc_nMaxRow0, gc_nMaxCol0));
 			aNames.push(parserHelp.getEscapeSheetName(oWorksheet.sName));
 		}
-		this.handleDrawings(function(oDrawing) {
+		const fDrawingCallback = function(oDrawing) {
 			if(oDrawing.getObjectType() === AscDFH.historyitem_type_ChartSpace) {
 				var nPrevLength = aRefsToChange.length;
 				oDrawing.collectIntersectionRefs(aRanges, aRefsToChange);
@@ -5055,7 +5055,9 @@
 					aId.push(oDrawing.Get_Id());
 				}
 			}
-		});
+		};
+		this.handleDrawings(fDrawingCallback);
+		this.oApi.frameManager.handleMainDiagram(fDrawingCallback);
 		this.checkObjectsLock(aId, function(bNoLock) {
 			if(bNoLock) {
 				for(var nRef = 0; nRef < aRefsToChange.length; ++nRef) {
@@ -5072,7 +5074,7 @@
 		var aId = [];
 		var aCharts = [];
 		var aRanges = [new AscCommonExcel.Range(oWorksheet, 0, 0, gc_nMaxRow0, gc_nMaxCol0)];
-		this.handleDrawings(function(oDrawing) {
+		const fDrawingCallback = function(oDrawing) {
 			if(oDrawing.getObjectType() === AscDFH.historyitem_type_ChartSpace) {
 				var nPrevLength = aRefsToChange.length;
 				oDrawing.clearDataRefs();
@@ -5083,7 +5085,9 @@
 					aId.push(oDrawing.Get_Id());
 				}
 			}
-		});
+		};
+		this.handleDrawings(fDrawingCallback);
+		this.oApi.frameManager.handleMainDiagram(fDrawingCallback);
 		return {refs: aRefsToChange, ids: aId, charts: aCharts};
 
 	};
@@ -5114,7 +5118,7 @@
 		var aRefsToResize = [];
 		var aRefsToReplace = [];
 		var aId = [];
-		this.handleDrawings(function(oDrawing) {
+		const fDrawingCallback = function(oDrawing) {
 			if(oDrawing.getObjectType() === AscDFH.historyitem_type_ChartSpace) {
 				var nPrevLength = aRefsToReplace.length;
 				let delta;
@@ -5141,7 +5145,9 @@
 					aId.push(oDrawing.Get_Id());
 				}
 			}
-		});
+		}
+		this.handleDrawings(fDrawingCallback);
+		this.oApi.frameManager.handleMainDiagram(fDrawingCallback);
 		this.checkObjectsLock(aId, function(bNoLock) {
 			if(bNoLock) {
 				for(var nRef = 0; nRef < aRefsToReplace.length; ++nRef) {
@@ -5497,6 +5503,15 @@
 	Workbook.prototype.getExternalLinkIndexByName = function (name) {
 		for (var i = 0; i < this.externalReferences.length; i++) {
 			if (this.externalReferences[i].Id === name) {
+				return i + 1;
+			}
+		}
+		return null;
+	};
+
+	Workbook.prototype.getExternalLinkIndexById = function (id) {
+		for (var i = 0; i < this.externalReferences.length; i++) {
+			if (this.externalReferences[i]._id === id) {
 				return i + 1;
 			}
 		}
@@ -12477,7 +12492,7 @@
 		}
 	};
 
-	Worksheet.prototype.getDataValidationProps = function (doExtend, ranges) {
+	Worksheet.prototype.getDataValidationProps = function (doExtend, ranges, isArray) {
 		var _selection = ranges ? ranges : this.getSelection().ranges;
 		
 		if (!this.dataValidations) {
@@ -12485,9 +12500,13 @@
 			newDataValidation.showErrorMessage = true;
 			newDataValidation.showInputMessage = true;
 			newDataValidation.allowBlank = true;
-			return newDataValidation;
+			return isArray ? [newDataValidation] : newDataValidation;
 		} else {
-			return this.dataValidations.getProps(_selection, doExtend, this);
+            if (isArray) {
+                return this.dataValidations.getSelectedRangeValidations(_selection, this);
+            } else {
+                return this.dataValidations.getProps(_selection, doExtend, this);
+            }
 		}
 	};
 
@@ -16155,6 +16174,9 @@
 			} else {
 				oRange = oRefElement.getRange();
 			}
+			if (!oRange) {
+				continue;
+			}
 			let oRes = fAction(oRange, i, nLastIndex);
 			if (oRes != null) {
 				return;
@@ -16648,9 +16670,9 @@
 			}
 
 			this.ws.workbook.dependencyFormulas.addToCleanCellCache(this.ws.getId(), this.nRow, this.nCol);
-			AscCommonExcel.g_oLOOKUPCache.remove(this);
-			AscCommonExcel.g_oVLOOKUPCache.remove(this);
-			AscCommonExcel.g_oHLOOKUPCache.remove(this);
+			AscCommonExcel.g_oLOOKUPCache.remove(this, DataOld, res);
+			AscCommonExcel.g_oVLOOKUPCache.remove(this, DataOld, res);
+			AscCommonExcel.g_oHLOOKUPCache.remove(this), DataOld, res;
 			AscCommonExcel.g_oMatchCache.remove(this);
 			AscCommonExcel.g_oSUMIFSCache.remove(this);
 			AscCommonExcel.g_oFormulaRangesCache.remove(this);

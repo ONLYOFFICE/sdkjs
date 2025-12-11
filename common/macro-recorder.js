@@ -34,6 +34,8 @@
 
 (function (window)
 {
+	let oMacroRecorderContext = {};
+
 	/**
 	 * @param editor
 	 * @constructor
@@ -51,6 +53,8 @@
 		this.actionCount = 0;
 		this.isFirstAction = null;
 		this.currentDescription = null;
+
+		oMacroRecorderContext = this;
 	}
 	
 	MacroRecorder.prototype.start = function(macroName)
@@ -64,13 +68,139 @@
 		this.inProgress = true;
 		this.isFirstAction = true;
 
+		this.initEvents();
+		this.editor.asc_registerCallback('asc_onKeyDown', this.onKeyDown);
+
 		this.editor.sendEvent("asc_onMacroRecordingStart");
+	};
+	MacroRecorder.prototype.initEvents = function()
+	{
+		let _t = this;
+
+		_t.onKeyDown = function(e)
+		{
+			if (e.KeyCode === 8) // BackSpace
+			{
+				if (_t.editor.editorId !== AscCommon.c_oEditorId.Word)
+					return;
+
+				_t.addStepData("remove", 1);
+				// TODO when we have:
+				// * Selection.Delete
+				// * Selection.TypeBackspace
+			}
+			else if (e.KeyCode === 9) // Tab
+			{
+				if (_t.editor.editorId !== AscCommon.c_oEditorId.Word)
+					return;
+
+				let doc = _t.editor.getLogicDocument();
+				if (doc.GetCurrentTable())
+				{
+					_t.addStepData("moveCursorRight", [{
+						isRtl:			false,
+						isAddSelect:	e.IsShift(),
+						isWord:			e.IsCtrl()
+					}]);
+				}
+			}
+			else if (e.KeyCode === 13) // Enter
+			{
+			}
+			else if (e.KeyCode === 27) // Esc
+			{
+			}
+			else if (e.KeyCode === 32) // Space
+			{
+			}
+			else if (e.KeyCode === 33) // PgUp
+			{
+			}
+			else if (e.KeyCode === 34) // PgDn
+			{
+			}
+			else if (e.KeyCode === 35) // End
+			{
+			}
+			else if (e.KeyCode === 36) // Home
+			{
+			}
+			else if (e.KeyCode === 37) // Left Arrow
+			{
+				if (_t.editor.editorId !== AscCommon.c_oEditorId.Word)
+					return;
+
+				let doc = _t.editor.getLogicDocument();
+				let curPara = doc.GetCurrentParagraph(true);
+				let isRtl = (curPara ? curPara.isRtlDirection() : false);
+
+				let type = isRtl
+					? "moveCursorRight"
+					: "moveCursorLeft"
+
+				_t.addStepData(type, [{
+					isRtl:			isRtl,
+					isAddSelect:	e.IsShift(),
+					isWord:			e.IsCtrl()
+				}]);
+			}
+			else if (e.KeyCode === 38) // Top Arrow
+			{
+				if (_t.editor.editorId !== AscCommon.c_oEditorId.Word)
+					return;
+
+				_t.addStepData('moveCursorUp', [{
+					isAddSelect:	e.IsShift(),
+					isWord:			e.IsCtrl()
+				}]);
+			}
+			else if (e.KeyCode === 39) // Right Arrow
+			{
+				if (_t.editor.editorId !== AscCommon.c_oEditorId.Word)
+					return;
+
+				let doc = _t.editor.getLogicDocument();
+				let curPara = doc.GetCurrentParagraph(true);
+				let isRtl = (curPara ? curPara.isRtlDirection() : false);
+
+				let type = isRtl
+					? "moveCursorLeft"
+					: "moveCursorRight"
+
+				_t.addStepData(type, [{
+					isRtl:			isRtl,
+					isAddSelect:	e.IsShift(),
+					isWord:			e.IsCtrl()
+				}]);
+			}
+			else if (e.KeyCode === 40) // Bottom Arrow
+			{
+				if (_t.editor.editorId !== AscCommon.c_oEditorId.Word)
+					return;
+
+				_t.addStepData('moveCursorDown', [{
+					isAddSelect:	e.IsShift(),
+					isWord:			e.IsCtrl()
+				}]);
+			}
+			else if (e.KeyCode === 46) // Delete
+			{
+			}
+			else if (e.KeyCode === 144) // Num Lock
+			{
+			}
+			else if (e.KeyCode === 145) // Scroll Lock
+			{
+			}
+		};
 	};
 	MacroRecorder.prototype.stop = function()
 	{
 		if (!this.inProgress)
 			return;
-		
+
+		this.editor.asc_unregisterCallback('asc_onKeyDown', this.onKeyDown);
+
 		this.inProgress = false;
 		this.paused = false;
 
@@ -170,6 +300,13 @@
 
 		return actionsMacros;
 	}
+	MacroRecorder.prototype.onFinalizeAction = function()
+	{
+		// todo implement onFinalizeAction
+		this.getResultByType(this.prevChangeType, this.prevData);
+		this.prevChangeType	= null;
+		this.prevData		= undefined;
+	};
 	MacroRecorder.prototype.onAction = function(type, additional, isStart)
 	{
 		if (isStart === true)
@@ -200,15 +337,50 @@
 			this.isFirstAction = false;
 		}
 	};
+	// for now duplicate, leter we delete onAction
+	MacroRecorder.prototype.addStepData = function(type, additional)
+	{
+		if (!this.isInProgress() || this.isPaused() || undefined === additional)
+			return;
+
+		// for meta action
+		if (type === 'remove')
+		{
+			this.getResultByType(type, additional);
+			return;
+		}
+
+		if (this.prevChangeType === type)
+		{
+			this.prevData = this.joinDataForMacros(this.prevData, additional);
+		}
+		else if (additional !== undefined)
+		{
+			this.getResultByType(this.prevChangeType, this.prevData);
+			this.prevChangeType	= type;
+			this.prevData		= additional;
+		}
+
+		if (this.isFirstAction)
+		{
+			this.addDefualtVaribalesForEditor();
+			this.isFirstAction = false;
+		}
+	};
 	MacroRecorder.prototype.getResultByType = function(type, additional)
 	{
 		let actionsMacros = this.getMacrosListForEditor();
 		let actionMacroFunction = actionsMacros[type];
 		if (actionMacroFunction)
 		{
-			if (Array.isArray(additional) 
+			if (Array.isArray(additional)
 				&& type !== AscDFH.historydescription_Document_AddLetter
-				&& type !== AscDFH.historydescription_Presentation_ParagraphAdd)
+				&& type !== AscDFH.historydescription_Presentation_ParagraphAdd
+				&& type !== 'moveCursorLeft'
+				&& type !== 'moveCursorRight'
+				&& type !== 'moveCursorUp'
+				&& type !== 'moveCursorDown'
+			)
 			{
 				for (let i = 0; i < additional.length; i++)
 				{
@@ -479,6 +651,53 @@
 		return "unknown";
 	}
 
+	function sameConditional(a, b, ignoreRtl) {
+		if (a.isAddSelect !== b.isAddSelect) return false;
+		if (a.isWord !== b.isWord) return false;
+
+		if (!ignoreRtl) {
+			var aHas = a.hasOwnProperty('isRtl');
+			var bHas = b.hasOwnProperty('isRtl');
+			if (aHas && bHas && a.isRtl !== b.isRtl) return false;
+		}
+		return true;
+	}
+
+	function pickPattern(obj, ignoreRtl) {
+		var p = {
+			isAddSelect: obj.isAddSelect,
+			isWord: obj.isWord
+		};
+		if (!ignoreRtl && obj.hasOwnProperty('isRtl')) p.isRtl = obj.isRtl;
+		return p;
+	}
+
+	function groupDataForCursor(arr, ignoreRtl) {
+		if (!arr || arr.length === 0) return [];
+		var ignoreRtl = !!ignoreRtl;
+
+		var runs = [];
+		var current = pickPattern(arr[0], ignoreRtl);
+		var count = 1;
+
+		for (var i = 1; i < arr.length; i++) {
+			var item = arr[i];
+			var view = pickPattern(item, ignoreRtl);
+
+			if (sameConditional(view, current, ignoreRtl)) {
+				count++;
+			} else {
+				runs.push({ pattern: current, count: count });
+				current = view;
+				count = 1;
+			}
+		}
+		runs.push({ pattern: current, count: count });
+
+		return runs;
+	}
+
+
 	const wordActions = {
 		setTextBold				: function(bold){return "\tdoc.GetRangeBySelect().SetBold(" + bold + ");\n"},
 		setTextItalic			: function(italic){return "\tdoc.GetRangeBySelect().SetItalic(" + italic + ");\n"},
@@ -490,7 +709,7 @@
 			let highlightColor = "";
 			if (highlight)
 			{
-				let color = new CDocumentColor(highlight.r, highlight.g, highlight.b);
+				let color = new AscCommonWord.CDocumentColor(highlight.r, highlight.g, highlight.b);
 				highlightColor = color.ToHighlightColor();
 			}
 
@@ -515,8 +734,8 @@
 		setStyleHeading			: function(name){return "\tdoc.GetRangeBySelect().SetStyle(doc.GetStyle(\"" + name + "\"));\n"},
 		clearFormat				: function(){return "\tdoc.GetRangeBySelect().ClearFormating()\n"},
 		cut						: function(){return "\tdoc.GetRangeBySelect().Cut();\n"},
-		changeTextCase			: function(changeType){return "\tdoc.GetRangeBySelect().SetTextCase(\"" + changeType + "\");\n"},
-		incFontSize				: function(){return "\tdoc.GetRangeBySelect().Grow();\n"},
+		changeTextCase			: function(changeType){return ""; return "\tdoc.GetRangeBySelect().SetTextCase(\"" + changeType + "\");\n"},
+		incFontSize				: function(){return ""; return "\tdoc.GetRangeBySelect().Grow();\n"},
 		addLetter				: function(textArr){
 			let textStr = "";
 			for (let i = 0; i < textArr.length; ++i)
@@ -524,7 +743,7 @@
 				textStr += String.fromCodePoint(textArr[i]);
 			}
 
-			return "\tdoc.GetCurrentParagraph().AddText(\"" + textStr + "\");\n"
+			return "\tdoc.EnterText(\"" + textStr + "\");\n"
 		},
 		setAlign				: function(align){
 			switch (align) {
@@ -561,13 +780,7 @@
 				+ "\tdoc.GetRangeBySelect().GetAllParagraphs().forEach(para => {\n\t\tpara.SetNumbering(" + CounterStore.get('numbering') + ".GetLevel(0));\n\t\tpara.SetContextualSpacing(true)\n\t});\n"
 		},
 		addParagraph			: function(){
-			return "\t(function () {\n"
-				+ "\t\tlet para = Api.CreateParagraph();\n"
-				+ "\t\tdoc.Push(para);\n"
-				+ "\t\tlet range = para.GetRange();\n"
-				+ "\t\tlet endpos = range.GetEndPos();\n"
-				+ "\t\tdoc.MoveCursorToPos(endpos);\n"
-			+ "\t}());\n";
+			return "\tdoc.InsertParagraphBreak();\n";
 		},
 		addBlankPage			: function(){return "\tdoc.InsertBlankPage();\n"},
 		addPageBreak			: function(type){
@@ -576,29 +789,36 @@
 			else if (type === AscWord.break_Column)
 				return "\tdoc.GetCurrentParagraph().AddColumnBreak();\n" // to api selection
 		},
-		addSectionBreak			: function(type){ //todo check
-			if (type === c_oAscSectionBreakType.NextPage)
+		addSectionBreak			: function(type){
+			if (type === Asc.c_oAscSectionBreakType.NextPage)
 				return "\tdoc.CreateSection(doc.GetCurrentParagraph()).SetType(\"nextPage\");\n";
-			else if (type === c_oAscSectionBreakType.Column)
+			else if (type === Asc.c_oAscSectionBreakType.Column)
 				return "\tdoc.CreateSection(doc.GetCurrentParagraph()).SetType(\"nextColumn\");\n";
-			else if (type === c_oAscSectionBreakType.Continuous)
+			else if (type === Asc.c_oAscSectionBreakType.Continuous)
 				return "\tdoc.CreateSection(doc.GetCurrentParagraph()).SetType(\"continuous\");\n";
-			else if (type === c_oAscSectionBreakType.EvenPage)
+			else if (type === Asc.c_oAscSectionBreakType.EvenPage)
 				return "\tdoc.CreateSection(doc.GetCurrentParagraph()).SetType(\"evenPage\");\n";
-			else if (type === c_oAscSectionBreakType.OddPage)
+			else if (type === Asc.c_oAscSectionBreakType.OddPage)
 				return "\tdoc.CreateSection(doc.GetCurrentParagraph()).SetType(\"oddPage\");\n";
 		},
 		addTable				: function(prop){
-			 // todo check style
 			return "\t(function () {\n"
-			+ "\t\tlet tableStyle = doc.GetStyle(\"" + (prop.style ? prop.style : "") + "\");\n"
-			+ "\t\tlet table = Api.CreateTable(" + prop.col + ", " + prop.row + ");\n"
-			+ "\t\tif (tableStyle) {\n"
-			+	"\t\t\ttable.SetStyle(tableStyle);\n"
-			+ "\t\t}\n"
-			+ "\t\ttable.SetWidth(\"percent\", 100);\n"
-			+ "\t\tdoc.Push(table);\n"
+				+ "\t\tlet tableStyle = doc.GetStyle(\"" + (prop.style ? prop.style : "") + "\");\n"
+				+ "\t\tlet table = Api.CreateTable(" + prop.col + ", " + prop.row + ");\n"
+				+ "\t\tif (tableStyle)\n"
+				+	"\t\t\ttable.SetStyle(tableStyle);\n"
+				+ "\t\ttable.SetWidth(\"percent\", 100);\n"
+				+ "\t\tdoc.Push(table);\n"
+				+ "\t\ttable.GetRange(0, 0).Select();\n"
 			+ "\t}());\n";
+		},
+		applyTablePr			: function(style)
+		{
+			return "\t(function () {\n"
+					+ "\t\tlet table = doc.GetCurrentParagraph().GetParentTable();\n"
+					+ "\t\tlet tableStyle = doc.GetStyle(\"" + style + "\");\n"
+					+ "\t\t(table && tableStyle) && table.SetStyle(tableStyle);\n"
+				+ "\t}());\n";
 		},
 		addImage				: function(image){
 			function PxToEMU96(px){ return px * 9525; }
@@ -713,16 +933,22 @@
 
 			return "\tdoc.AddMathEquation(\"" + obj.math + "\", \"" + type + "\");\n";
 		},
-		addBlockContentControl	: function(){
-			return "\tdoc.Push(Api.CreateBlockLvlSdt());\n";
+		addBlockContentControl	: function(strPlaceholder){
+			return "\tlet " + CounterStore.inc('block') + " = Api.CreateBlockLvlSdt();\n"
+				+ "\t" + CounterStore.get('block') + ".SetPlaceholderText(\"" + strPlaceholder + "\")\n"
+				+ "\tdoc.Push(" + CounterStore.get('block') + ");\n"
+				+ "\t" + CounterStore.get('block') + ".Select();\n";
 		},
-		addInlineContentControl	: function(){
-			return "\tdoc.GetCurrentParagraph().AddInlineLvlSdt((Api.CreateInlineLvlSdt()));\n";
+		addInlineContentControl	: function(strPlaceholder){
+				return "\tlet " + CounterStore.inc('inline') + " = Api.CreateInlineLvlSdt();\n"
+					+ "\t" + CounterStore.get('inline') + ".SetPlaceholderText(\"" + strPlaceholder + "\")\n"
+					+ "\tdoc.GetCurrentParagraph().Push(" + CounterStore.get('inline') + ");\n"
+					+ "\t" + CounterStore.get('inline') + ".Select();\n";
 		},
 		addContentControlList	: function(props){
-			if (props === true)
-				return "\tdoc.AddComboBoxContentControl();\n";
-			else if (props === false)
+			if (props.isComboBox === true)
+				return "\t doc.AddComboBoxContentControl();\n";
+			else if (props.isComboBox === false)
 				return "\tdoc.AddDropDownListContentControl();\n"
 		},
 		addContentControlCheckBox	: function(){
@@ -734,26 +960,79 @@
 		addContentControlPicture: function(){
 			return "\tdoc.AddPictureContentControl(180 * 10000, 180 * 10000);\n";
 		},
-		moveCursorLeft			: function(isRtl, isSelect){
-			return "";
-			return isRtl ? "Selection.MoveRight()" : "Selection.MoveLeft()";
+		moveCursorLeft			: function(arrData){
+			let data = groupDataForCursor(arrData);
+			let text = "";
+
+			for (let i = 0; i < data.length; i++)
+			{
+				let currentChange = data[i];
+				let nCount = currentChange.count;
+				let pattern = currentChange.pattern;
+
+				if (pattern.isRtl)
+					text += "\tdoc.MoveCursorRight(" + nCount + ", " + pattern.isAddSelect + ", " + pattern.isWord + ");\n";
+				else
+					text += "\tdoc.MoveCursorLeft(" + nCount + ", " + pattern.isAddSelect + ", " + pattern.isWord + ");\n";
+			}
+
+			return text;
 		},
-		moveCursorRight			: function(isRtl, isSelect){
-			return "";
-			return isRtl ? "Selection.MoveLeft()" : "Selection.MoveRight()";
+		moveCursorRight			: function(arrData){
+			let data = groupDataForCursor(arrData);
+			let text = "";
+
+			for (let i = 0; i < data.length; i++)
+			{
+				let currentChange	= data[i];
+				let nCount			= currentChange.count;
+				let pattern			= currentChange.pattern;
+
+				if (pattern.isRtl)
+					text += "\tdoc.MoveCursorLeft(" + nCount + ", " + pattern.isAddSelect + ", " + pattern.isWord + ");\n";
+				else
+					text += "\tdoc.MoveCursorRight(" + nCount + ", " + pattern.isAddSelect + ", " + pattern.isWord + ");\n";
+			}
+
+			return text;
 		},
-		moveCursorUp			: function(isSelect){
-			return "";
-			return "Selection.MoveUp()"
+		moveCursorUp			: function(arrData){
+			let data = groupDataForCursor(arrData, true);
+			let text = "";
+
+			for (let i = 0; i < data.length; i++)
+			{
+				let currentChange	= data[i];
+				let nCount			= currentChange.count;
+				let pattern			= currentChange.pattern;
+
+				text += "\tdoc.MoveCursorUp(" + nCount + ", " + pattern.isAddSelect + ", " + pattern.isWord + ");\n";
+			}
+			return text;
 		},
-		moveCursorDown			: function(isSelect){
-			return "";
-			return "Selection.MoveDownt()"
+		moveCursorDown			: function(arrData){
+			let data = groupDataForCursor(arrData, true);
+			let text = "";
+
+			for (let i = 0; i < data.length; i++)
+			{
+				let currentChange	= data[i];
+				let nCount			= currentChange.count;
+				let pattern			= currentChange.pattern;
+
+				text += "\tdoc.MoveCursorDown(" + nCount + ", " + pattern.isAddSelect + ", " + pattern.isWord + ");\n";
+			}
+			return text;
 		},
 		backSpaceButton			: function(){
 			return "";
 		},
 		deleteButton			: function(){
+			return "";
+		},
+		remove					: function(){
+			if (oMacroRecorderContext.prevChangeType === AscDFH.historydescription_Document_AddLetter && oMacroRecorderContext.prevData.length)
+				oMacroRecorderContext.prevData.pop();
 			return "";
 		}
 	};
@@ -799,9 +1078,13 @@
 	// WordActionsMacroList[AscDFH.historydescription_Document_PasteHotKey]				= wordActions;
 	// WordActionsMacroList[AscDFH.historydescription_Document_PasteSafariHotKey]		= wordActions;
 	// WordActionsMacroList[AscDFH.historydescription_Document_CutHotKey]				= wordActions;
-	// WordActionsMacroList[AscDFH.historydescription_Document_MoveCursorLeft]			= wordActions.moveCursorLeft;
-	// WordActionsMacroList[AscDFH.historydescription_Document_MoveCursorRight]			= wordActions.moveCursorRight;
-	// WordActionsMacroList[AscDFH.historydescription_Document_BackSpaceButton]			= wordActions.backSpaceButton;
+	WordActionsMacroList['moveCursorLeft']												= wordActions.moveCursorLeft;
+	WordActionsMacroList['moveCursorRight']												= wordActions.moveCursorRight;
+	WordActionsMacroList['moveCursorUp']												= wordActions.moveCursorUp;
+	WordActionsMacroList['moveCursorDown']												= wordActions.moveCursorDown;
+	WordActionsMacroList['remove']														= wordActions.remove;
+
+	//WordActionsMacroList[AscDFH.historydescription_Document_BackSpaceButton]			= wordActions.backSpaceButton;
 	// WordActionsMacroList[AscDFH.historydescription_Document_DeleteButton]			= wordActions.deleteButton;
 	
 	// input tab
@@ -809,15 +1092,12 @@
 	WordActionsMacroList[AscDFH.historydescription_Document_AddPageBreak]				= wordActions.addPageBreak;
 	WordActionsMacroList[AscDFH.historydescription_Document_AddSectionBreak]			= wordActions.addSectionBreak;
 	WordActionsMacroList[AscDFH.historydescription_Document_AddTable]					= wordActions.addTable;
+	WordActionsMacroList[AscDFH.historydescription_Document_ApplyTablePr]				= wordActions.applyTablePr;
 	WordActionsMacroList[AscDFH.historydescription_Document_AddChart]					= wordActions.addChart;
 	WordActionsMacroList[AscDFH.historydescription_Document_AddImages]					= wordActions.addImage;
 	WordActionsMacroList[AscDFH.historydescription_Document_AddHyperlink]				= wordActions.addHyperlink;
 	WordActionsMacroList[AscDFH.historydescription_Document_AddNewShape]				= wordActions.addShape;
 	WordActionsMacroList[AscDFH.historydescription_Document_RemoveHdrFtr]				= wordActions.removeHdr;
-	//WordActionsMacroList[moveLeft]													= wordActions.moveLeft;
-	//WordActionsMacroList[moveRight]													= wordActions.moveRight;
-	//WordActionsMacroList[moveUp]														= wordActions.moveUp;
-	//WordActionsMacroList[moveDown]													= wordActions.moveDown;
 	WordActionsMacroList[AscDFH.historydescription_Document_AddComment]					= wordActions.addComment;
 	//WordActionsMacroList[AscDFH.AscDFH.historydescription_Document_AddTextArt]		= wordActions.addTextArt;
 	//WordActionsMacroList[AscDFH.AscDFH.historydescription_Document_AddDropCap]		= wordActions.addDropCap;
@@ -909,7 +1189,7 @@
 			else
 				value = value.toString();
 
-			return "\tApi.GetSelection().SetValue(" + value + ");\n"
+			return "\tworksheet.GetActiveCell().SetValue(" + value + ");\n"
 		},
 		setCellFormula 			: function(value){
 			if (typeof value === 'string')
@@ -917,7 +1197,7 @@
 			else
 				value = value.toString();
 
-			return "\tApi.GetSelection().SetFormulaArray(" + value + ");\n"
+			return "\tworksheet.GetActiveCell().SetFormulaArray(" + value + ");\n"
 		},
 		setCellAngle			: function(angle){
 			switch (angle) {
@@ -932,6 +1212,7 @@
 		setCellChangeTextCase	: function(textCase){return "\tApi.GetSelection().ChangeTextCase(" + textCase + ");\n"},
 		setCellChangeFontSize	: function(isInc){
 			// todo create api
+			return "";
 			return isInc ? "\tApi.asc_increaseFontSize();\n" : "\tApi.asc_decreaseFontSize();\n";
 		},
 		setCellBorder			: function(borderArray){
@@ -1003,13 +1284,12 @@
 		// setCellHyperlinkModify	: function(additional) {return (additional && additional.url) ? "" : ""},
 		// setCellHyperlinkRemove	: function(additional) {return (additional && additional.url) ? "" : ""},
 		// cut						: function(){return "ApiApi.GetSelection().Cut();\n"},
-		cellChangeValue			: function(value){return "\tApi.GetSelection().SetValue(\"" + value + "\");\n"},
-		setCellStyle			: function(style){},
+		setCellStyle			: function(style){return ""},
 		setCellFormat			: function(format){
 			return "\tlet " + CounterStore.inc('format') + " = Api.Format(worksheet.GetActiveCell().GetValue(), \'" + format + "\')\n"
 			+ "\tworksheet.GetActiveCell().SetValue(" + CounterStore.get('format') + ");\n";
 		},
-		setCellHyperlinkRemove	: function(data){console.log(data)},
+		setCellHyperlinkRemove	: function(data){return ""},
 		setCellMerge			: function(data){
 			if (data === Asc.c_oAscMergeOptions.MergeCenter)
 				return "\tApi.GetSelection().Merge(false);\n"; // + set shrink / indent
@@ -1131,7 +1411,7 @@
 	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_AddImageUrls]				= cellActions.addImageUrls;
 	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_AddAutoFilter]				= cellActions.addAutoFilter;
 	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_RemoveAutoFilter]			= cellActions.removeAutoFilter;
-	//CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SelectRange]					= cellActions.selectRange;
+	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SelectRange]					= cellActions.selectRange;
 	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellFormula]				= cellActions.setCellFormula;
 
 	const presActions = {
@@ -1213,7 +1493,7 @@
 			let highlightColor = "";
 			if (highlight)
 			{
-				let color = new CDocumentColor(highlight.r, highlight.g, highlight.b);
+				let color = new AscCommonWord.CDocumentColor(highlight.r, highlight.g, highlight.b);
 				highlightColor = color.ToHighlightColor();
 			}
 
@@ -1225,7 +1505,6 @@
 		},
 		clearFormatting			: function(isClear){return "\tApi.GetSelection().GetShapes().forEach(shape => {\n\t\tshape.GetDocContent().GetContent().forEach(para => para.ClearFormating(" + isClear + "));\n\t})\n";},
 		putTextPrLineSpacing	: function(lineSpacing){
-
 			let type = lineSpacing.type;
 			let value = lineSpacing.value;
 

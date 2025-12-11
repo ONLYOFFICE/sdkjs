@@ -307,10 +307,10 @@
 	{
 		return true;
 	};
-	SpellMarkStart.prototype.onAdd = function(pos)
+	SpellMarkStart.prototype.onAdd = function(pos, count)
 	{
 		if (this.Element.startInRunPos >= pos)
-			++this.Element.startInRunPos;
+			this.Element.startInRunPos += count;
 	};
 	SpellMarkStart.prototype.onRemove = function(pos, count)
 	{
@@ -347,10 +347,10 @@
 	{
 		return false;
 	};
-	SpellMarkEnd.prototype.onAdd = function(pos)
+	SpellMarkEnd.prototype.onAdd = function(pos, count)
 	{
 		if (this.Element.endInRunPos >= pos)
-			++this.Element.endInRunPos;
+			this.Element.endInRunPos += count;
 	};
 	SpellMarkEnd.prototype.onRemove = function(pos, count)
 	{

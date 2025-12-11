@@ -63,6 +63,9 @@
         return true;
     };
     CAnnotationCircle.prototype.RefillGeometry = function(oGeometry, aShapeRectInMM) {
+        if (this.GetBorderEffectStyle() !== AscPDF.BORDER_EFFECT_STYLES.Cloud)
+            return;
+
         let aRD         = this.GetRectangleDiff() || [0, 0, 0, 0];
         let aOrigRect   = this.GetRect();
 
@@ -77,12 +80,12 @@
         }
         
         AscCommon.History.StartNoHistoryMode();
-        if (this.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.Cloud) {
-            generateCloudyGeometry(undefined, aShapeRectInMM, oGeometry, this.GetBorderEffectIntensity());
-        }
-        else {
-            oGeometry.Recalculate(aShapeRectInMM[2] - aShapeRectInMM[0], aShapeRectInMM[3] - aShapeRectInMM[1]);
-        }
+        generateCloudyGeometry(undefined, aShapeRectInMM, oGeometry, this.GetBorderEffectIntensity());
+        AscCommon.History.EndNoHistoryMode();
+    };
+    CAnnotationCircle.prototype.SetDefaultGeometry = function() {
+        AscCommon.History.StartNoHistoryMode();
+        this.spPr.setGeometry(AscFormat.CreateGeometry("ellipse"));
         AscCommon.History.EndNoHistoryMode();
     };
     CAnnotationCircle.prototype.WriteToBinary = function(memory) {

@@ -584,7 +584,7 @@ CHistory.prototype.UndoRedoPrepare = function (oRedoObjectParam, bUndo, bKeepTur
 	else
 		this.workbook.bRedoChanges = true;
 
-	if (!window["NATIVE_EDITOR_ENJINE"]) {
+	if (!window["NATIVE_EDITOR_ENJINE"] || window["IS_NATIVE_EDITOR"]) {
 		if(Asc["editor"].wb) {
 			var wsViews = Asc["editor"].wb.wsViews;
 			for (var i = 0; i < wsViews.length; ++i) {
@@ -1549,6 +1549,7 @@ CHistory.prototype.GetSerializeArray = function()
 	CHistory.prototype._CheckCanNotAddChanges = function() {
 		try {
 			if (this.CanNotAddChanges && !this.CollectChanges) {
+				this.CanNotAddChanges = false;
 				var tmpErr = new Error();
 				if (tmpErr.stack) {
 					AscCommon.sendClientLog("error", "changesError: " + tmpErr.stack, this.workbook.oApi);

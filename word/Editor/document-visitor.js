@@ -71,6 +71,10 @@
 	{
 		this.visitDocContent(docContent.Content);
 	};
+	DocumentVisitor.prototype.traverseParagraph = function(paragraph)
+	{
+		paragraph.visit(this);
+	};
 	DocumentVisitor.prototype.stop = function()
 	{
 		this.stopped = true;

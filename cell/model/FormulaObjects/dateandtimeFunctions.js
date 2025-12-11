@@ -626,7 +626,7 @@ function (window, undefined) {
 			res = new cNumber(60);
 		} else {
 			var _num = Math.round(new cDate(Date.UTC(year, month - 1, day)).getExcelDate());
-			if (_num < 0) {
+			if (_num < 0 || _num > 2958465) {
 				return new cError(cErrorType.not_numeric);
 			}
 			res = new cNumber(_num);

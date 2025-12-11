@@ -521,7 +521,10 @@ void main() {\n\
         return this.Selection;
     };
     CFile.prototype.onMouseDown = function(pageIndex, x, y) {
-        if (this.pages[pageIndex].isRecognized && !Asc.editor.IsRedactTool())
+        let isRedactTool = Asc.editor.IsRedactTool();
+        let isLinkTool   = Asc.editor.IsLinkTool();
+
+        if (this.pages[pageIndex].isRecognized && !isRedactTool && !isLinkTool)
             return;
         
         let ret = this.getNearestPos(pageIndex, x, y);
@@ -529,7 +532,7 @@ void main() {\n\
 
         let isTextSel = ret.Glyph >= 0 && ret.Line >= 0;
 
-        if (Asc.editor.isRedactTool && !isTextSel) {
+        if ((isRedactTool || isLinkTool) && !isTextSel) {
             sel.startPoint = {
                 page: pageIndex,
                 x: x,
@@ -562,7 +565,7 @@ void main() {\n\
         let sel = this.Selection;
         sel.IsSelection = true;
         
-        if (Asc.editor.isRedactTool && this.Selection.startPoint) {
+        if ((Asc.editor.IsRedactTool() || Asc.editor.IsLinkTool()) && this.Selection.startPoint) {
             sel.endPoint = {
                 page: pageIndex,
                 x: x,
@@ -581,7 +584,7 @@ void main() {\n\
         let ret = this.getNearestPos(pageIndex, x, y);
         
         if (ret.Glyph < 0 || ret.Line < 0) {
-            if (Asc.editor.isRedactTool) {
+            if (Asc.editor.IsRedactTool() || Asc.editor.IsLinkTool()) {
                 this.viewer.setCursorType("crosshair");
             }
             else {
@@ -601,12 +604,15 @@ void main() {\n\
         let oDoc    = this.viewer.getPDFDoc();
         let oViewer = this.viewer;
 
+        let isRedactTool = Asc.editor.IsRedactTool();
+        let isLinkTool   = Asc.editor.IsLinkTool();
+
         let ret = this.getNearestPos(pageIndex, x, y);
         let sel = this.Selection;
         
         let isTextSel = ret.Glyph >= 0 && ret.Line >= 0;
 
-        if (Asc.editor.isRedactTool && !isTextSel) {
+        if ((isRedactTool || isLinkTool) && !isTextSel) {
             sel.endPoint = {
                 page: pageIndex,
                 x: x,
@@ -642,11 +648,23 @@ void main() {\n\
                 }
             }, AscDFH.historydescription_Pdf_AddAnnot);
         }
-        else if (oViewer.Api.isRedactTool) {
+        else if (isRedactTool || isLinkTool) {
             oDoc.DoAction(function() {
                 let aSelQuads = _t.getSelectionQuads();
 
-                oDoc.AddRedactAnnot(aSelQuads);
+                if (isRedactTool) {
+                    oDoc.AddRedactAnnot(aSelQuads)
+                }
+                else {
+                    let isTextSelection = !(_t.Selection.startPoint && _t.Selection.endPoint);
+                    let aAnnots = oDoc.AddLinkAnnotByQuads(aSelQuads, isTextSelection);
+                    if (aAnnots.length > 0) {
+                        Asc.editor.OnAfterAddLinkAnnot(aAnnots.map(function(annot) {
+                            return annot.GetId();
+                        }));
+                    }
+                }
+                
             }, AscDFH.historydescription_Pdf_AddAnnot);
         }
     };
@@ -865,7 +883,9 @@ void main() {\n\
             return;
         }
 
+        let oViewer = this.viewer;
         let oDoc = this.viewer.getPDFDoc();
+        let _t = this;
 
         stream.pos = ret.LinePos;
 
@@ -930,6 +950,31 @@ void main() {\n\
         oDoc.TextSelectTrackHandler.Update(true);
         this.onUpdateSelection();
         this.onUpdateOverlay();
+
+        if (oViewer.Api.isMarkerFormat) {
+            let oColor = oDoc.GetMarkerColor(oViewer.Api.curMarkerType);
+
+            oDoc.DoAction(function() {
+                switch (oViewer.Api.curMarkerType) {
+                    case AscPDF.ANNOTATIONS_TYPES.Highlight:
+                        oViewer.Api.SetHighlight(oColor.r, oColor.g, oColor.b, oColor.a);
+                        break;
+                    case AscPDF.ANNOTATIONS_TYPES.Underline:
+                        oViewer.Api.SetUnderline(oColor.r, oColor.g, oColor.b, oColor.a);
+                        break;
+                    case AscPDF.ANNOTATIONS_TYPES.Strikeout:
+                        oViewer.Api.SetStrikeout(oColor.r, oColor.g, oColor.b, oColor.a);
+                        break;
+                }
+            }, AscDFH.historydescription_Pdf_AddAnnot);
+        }
+        else if (oViewer.Api.isRedactTool) {
+            oDoc.DoAction(function() {
+                let aSelQuads = _t.getSelectionQuads();
+
+                oDoc.AddRedactAnnot(aSelQuads);
+            }, AscDFH.historydescription_Pdf_AddAnnot);
+        }
     };
     CFile.prototype.selectWholeRow = function(pageIndex, x, y) {
         let ret = this.getNearestPos(pageIndex, x, y);
@@ -1201,7 +1246,11 @@ void main() {\n\
     };
     CFile.prototype.drawSelection = function(pageIndex, overlay, x, y)
     {
-        if (Asc.editor.isRedactTool && this.Selection.startPoint && this.Selection.endPoint) {
+        if ((Asc.editor.IsRedactTool() || Asc.editor.IsLinkTool()) && this.Selection.startPoint && this.Selection.endPoint) {
+            if (pageIndex < this.Selection.startPoint.page || pageIndex > this.Selection.endPoint.page) {
+                return;
+            }
+
             let width = AscCommon.AscBrowser.convertToRetinaValue(this.viewer.drawingPages[pageIndex].W, true) >> 0;
             let height = AscCommon.AscBrowser.convertToRetinaValue(this.viewer.drawingPages[pageIndex].H, true) >> 0;
 
