@@ -1100,12 +1100,21 @@ var editor;
     ws.applyAutoFilterByType(autoFilterObject);
   };
 
-  spreadsheet_api.prototype.asc_reapplyAutoFilter = function(displayName) {
+  spreadsheet_api.prototype.asc_reapplyAutoFilter = function(displayName, sheetId) {
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return false;
     }
-    var ws = this.wb.getWorksheet();
-    ws.reapplyAutoFilter(displayName);
+
+    let ws;
+    if (sheetId) {
+        ws = this.wb.getWorksheetById(sheetId)
+    } else {
+        ws = this.wb.getWorksheet();
+    }
+
+    if (ws) {
+        ws.reapplyAutoFilter(displayName);
+    }
   };
 
   spreadsheet_api.prototype.asc_sortColFilter = function(type, cellId, displayName, color, bIsExpandRange) {
@@ -1121,12 +1130,21 @@ var editor;
     return ws.getAddFormatTableOptions(range);
   };
 
-  spreadsheet_api.prototype.asc_clearFilter = function() {
+  spreadsheet_api.prototype.asc_clearFilter = function(sheetId) {
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return false;
     }
-  	var ws = this.wb.getWorksheet();
-    return ws.clearFilter();
+  	// var ws = this.wb.getWorksheet();
+    let ws;
+    if (sheetId) {
+        ws = this.wb.getWorksheetById(sheetId)
+    } else {
+        ws = this.wb.getWorksheet();
+    }
+
+    if (ws) {
+        return ws.clearFilter();
+    }
   };
 
   spreadsheet_api.prototype.asc_clearFilterColumn = function(cellId, displayName) {

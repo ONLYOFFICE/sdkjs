@@ -5154,9 +5154,15 @@ CDocument.prototype.CheckTargetUpdate = function()
 			this.NeedUpdateTarget = this.DrawingDocument.UpdateTargetCheck;
 		this.DrawingDocument.UpdateTargetCheck = false;
 	}
-
+	
 	if (!this.NeedUpdateTarget)
 		return;
+	
+	if (this._isSelectionVisible())
+	{
+		this.NeedUpdateTarget = false;
+		return;
+	}
 
 	if (this.ViewPosition)
 	{
@@ -10505,11 +10511,20 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 	{
 		this.CustomTextAnnotator.onClick(X, Y, this.CurPage, e);
 	}
-
-	this.private_CheckCursorPosInFillingFormMode();
-	this.private_UpdateCursorXY(true, true, isUpdateTarget);
 	
-	this.UpdateSelection();
+	let _t = this;
+	function _updateSelection()
+	{
+		_t.private_CheckCursorPosInFillingFormMode();
+		_t.private_UpdateCursorXY(true, true, isUpdateTarget);
+		_t.UpdateSelection();
+	}
+	
+	if (this.IsTextSelectionUse())
+		AscCommon.executeNoScroll(_updateSelection, this);
+	else
+		_updateSelection();
+	
 	this.UpdateInterface();
 	this.UpdateRulers();
 };
@@ -14782,11 +14797,35 @@ CDocument.prototype.private_UpdateCurPage = function()
 
 	this.private_CheckCurPage();
 };
+CDocument.prototype._isSelectionVisible = function()
+{
+	if (!this.IsTextSelectionUse())
+		return false;
+	
+	let viewPort = this.DrawingDocument.GetVisibleRegion();
+	if (!viewPort)
+		return false;
+	
+	let selectionBounds = this.GetSelectionBounds();
+	
+	let topY    = selectionBounds.Start.Y;
+	let topPage = selectionBounds.Start.Page;
+	let botY    = selectionBounds.End.Y + selectionBounds.End.H;
+	let botPage = selectionBounds.End.Page;
+	
+	return !((viewPort[0].Page > botPage
+		|| (viewPort[0].Page === botPage && viewPort[0].Y > botY)
+		|| viewPort[1].Page < topPage
+		|| (viewPort[1].Page === topPage && viewPort[1].Y < topY)));
+};
 CDocument.prototype.UpdateCursorOnRecalculate = function()
 {
 	let isLockScroll = false;
 	if ((this.FullRecalc.Id && !this.FullRecalc.ScrollToTarget) || this.ViewPosition)
 		isLockScroll = true;
+	
+	if (!isLockScroll && this.IsTextSelectionUse())
+		isLockScroll = this._isSelectionVisible();
 
 	if (isLockScroll)
 		this.Api.asc_LockScrollToTarget(true);
@@ -22978,9 +23017,11 @@ CDocument.prototype.SelectContentControl = function(sId)
 		this.UpdateRulers();
 		this.UpdateInterface();
 		this.UpdateTracks();
-
+		
 		this.private_UpdateCursorXY(true, true);
 		this.CheckFormPlaceHolder = true;
+		
+		this.DrawingDocument.scrollToTarget();
 	}
 };
 /**
@@ -23821,6 +23862,8 @@ CDocument.prototype.UpdateAddinFieldsByData = function(arrData)
 	if (!arrData || !Array.isArray(arrData))
 		return;
 	
+	let docState = this.SaveDocumentState();
+	
 	let allFields   = this.GetAllFields();
 	let paragraphs  = [];
 	let addinFields = {};
@@ -23854,7 +23897,10 @@ CDocument.prototype.UpdateAddinFieldsByData = function(arrData)
 		Elements  : paragraphs,
 		CheckType : AscCommon.changestype_Paragraph_Content
 	}))
+	{
+		this.LoadDocumentState(docState);
 		return;
+	}
 	
 	this.StartAction(AscDFH.historydescription_Document_UpdateAddinFields);
 	
@@ -23882,6 +23928,30 @@ CDocument.prototype.UpdateAddinFieldsByData = function(arrData)
 	this.UpdateInterface();
 	this.UpdateSelection();
 	this.FinalizeAction();
+	
+	this.LoadDocumentState(docState);
+};
+/**
+ * Select add-in field
+ * @param {string} fieldId
+ */
+CDocument.prototype.SelectAddinField = function(fieldId)
+{
+	let field = null;
+	let allFields = this.GetAllFields();
+	for (let index = 0, count = allFields.length; index < count; ++index)
+	{
+		if (allFields[index] instanceof AscWord.CComplexField && allFields[index].GetFieldId() === fieldId)
+		{
+			field = allFields[index];
+			break;
+		}
+	}
+	if (!field || !field.IsValid())
+		return false;
+	
+	field.SelectField();
+	return true;
 };
 /**
  * Remove field wrapper

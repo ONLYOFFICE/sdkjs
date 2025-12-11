@@ -584,7 +584,7 @@ CHistory.prototype.UndoRedoPrepare = function (oRedoObjectParam, bUndo, bKeepTur
 	else
 		this.workbook.bRedoChanges = true;
 
-	if (!window["NATIVE_EDITOR_ENJINE"]) {
+	if (!window["NATIVE_EDITOR_ENJINE"] || window["IS_NATIVE_EDITOR"]) {
 		if(Asc["editor"].wb) {
 			var wsViews = Asc["editor"].wb.wsViews;
 			for (var i = 0; i < wsViews.length; ++i) {

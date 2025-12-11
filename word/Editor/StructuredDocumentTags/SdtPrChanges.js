@@ -32,34 +32,36 @@
 
 "use strict";
 
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Alias]            = CChangesSdtPrAlias;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Id]               = CChangesSdtPrId;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Tag]              = CChangesSdtPrTag;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Label]            = CChangesSdtPrLabel;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Lock]             = CChangesSdtPrLock;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_DocPartObj]       = CChangesSdtPrDocPartObj;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Appearance]       = CChangesSdtPrAppearance;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Color]            = CChangesSdtPrColor;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_CheckBox]         = CChangesSdtPrCheckBox;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_CheckBox_Checked] = CChangesSdtPrCheckBoxChecked;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Picture]          = CChangesSdtPrPicture;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_ComboBox]         = CChangesSdtPrComboBox;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_DropDownList]     = CChangesSdtPrDropDownList;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_DatePicker]       = CChangesSdtPrDatePicker;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_TextPr]           = CChangesSdtPrTextPr;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Placeholder]      = CChangesSdtPrPlaceholder;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_ShowingPlcHdr]    = CChangesSdtPrShowingPlcHdr;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Equation]         = CChangesSdtPrEquation;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Text]             = CChangesSdtPrText;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Temporary]        = CChangesSdtPrTemporary;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_TextForm]         = CChangesSdtPrTextForm;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_FormPr]           = CChangesSdtPrFormPr;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_PictureFormPr]    = CChangesSdtPrPictureFormPr;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_ComplexFormPr]    = CChangesSdtPrComplexFormPr;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_OForm]            = CChangesSdtPrOForm;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_DataBinding]      = CChangesSdtPrDataBinding;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_ShdColor]         = CChangesSdtPrShdColor;
-AscDFH.changesFactory[AscDFH.historyitem_SdtPr_BorderColor]      = CChangesSdtPrBorderColor;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Alias]					= CChangesSdtPrAlias;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Id]						= CChangesSdtPrId;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Tag]						= CChangesSdtPrTag;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Label]					= CChangesSdtPrLabel;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Lock]					= CChangesSdtPrLock;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_DocPartObj]				= CChangesSdtPrDocPartObj;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Appearance]				= CChangesSdtPrAppearance;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Color]					= CChangesSdtPrColor;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_CheckBox]				= CChangesSdtPrCheckBox;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_CheckBox_Checked]		= CChangesSdtPrCheckBoxChecked;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Picture]					= CChangesSdtPrPicture;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_ComboBox]				= CChangesSdtPrComboBox;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_DropDownList]			= CChangesSdtPrDropDownList;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_DatePicker]				= CChangesSdtPrDatePicker;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_TextPr]					= CChangesSdtPrTextPr;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Placeholder]				= CChangesSdtPrPlaceholder;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_ShowingPlcHdr]			= CChangesSdtPrShowingPlcHdr;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_RepeatingSection]		= CChangesSdtPrRepeatingSection;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_RepeatingSectionItem]	= CChangesSdtPrRepeatingSectionItem;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Equation]				= CChangesSdtPrEquation;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Text]					= CChangesSdtPrText;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Temporary]				= CChangesSdtPrTemporary;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_TextForm]				= CChangesSdtPrTextForm;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_FormPr]					= CChangesSdtPrFormPr;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_PictureFormPr]			= CChangesSdtPrPictureFormPr;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_ComplexFormPr]			= CChangesSdtPrComplexFormPr;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_OForm]					= CChangesSdtPrOForm;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_DataBinding]				= CChangesSdtPrDataBinding;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_ShdColor]				= CChangesSdtPrShdColor;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_BorderColor]				= CChangesSdtPrBorderColor;
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
 //----------------------------------------------------------------------------------------------------------------------
@@ -118,6 +120,12 @@ AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_Placeholder] = [
 ];
 AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_ShowingPlcHdr] = [
 	AscDFH.historyitem_SdtPr_ShowingPlcHdr
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_RepeatingSection] = [
+	AscDFH.historyitem_SdtPr_RepeatingSection
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_RepeatingSectionItem] = [
+	AscDFH.historyitem_SdtPr_RepeatingSectionItem
 ];
 AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_Equation] = [
 	AscDFH.historyitem_SdtPr_Equation
@@ -653,6 +661,38 @@ CChangesSdtPrShowingPlcHdr.prototype.private_SetValue = function(Value)
 	this.Class.Pr.ShowingPlcHdr = Value;
 };
 CChangesSdtPrShowingPlcHdr.prototype.CheckLock = private_SdtPrChangesCheckLock;
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesSdtPrRepeatingSection(Class, Old, New)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New);
+}
+CChangesSdtPrRepeatingSection.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesSdtPrRepeatingSection.prototype.constructor = CChangesSdtPrRepeatingSection;
+CChangesSdtPrRepeatingSection.prototype.Type = AscDFH.historyitem_SdtPr_RepeatingSection;
+CChangesSdtPrRepeatingSection.prototype.private_SetValue = function(Value)
+{
+	this.Class.Pr.RepeatingSection = Value;
+};
+CChangesSdtPrRepeatingSection.prototype.CheckLock = private_SdtPrChangesCheckLock;
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesSdtPrRepeatingSectionItem(Class, Old, New)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New);
+}
+CChangesSdtPrRepeatingSectionItem.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesSdtPrRepeatingSectionItem.prototype.constructor = CChangesSdtPrRepeatingSectionItem;
+CChangesSdtPrRepeatingSectionItem.prototype.Type = AscDFH.historyitem_SdtPr_RepeatingSectionItem;
+CChangesSdtPrRepeatingSectionItem.prototype.private_SetValue = function(Value)
+{
+	this.Class.Pr.RepeatingSectionItem = Value;
+};
+CChangesSdtPrRepeatingSectionItem.prototype.CheckLock = private_SdtPrChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseBoolProperty}

@@ -10274,7 +10274,7 @@ background-repeat: no-repeat;\
 		{
 			if (false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_ContentControl_Add, null, true, false, null, AscDFH.historydescription_Document_AddBlockLevelContentControl))
 			{
-				oLogicDocument.StartAction(AscDFH.historydescription_Document_AddBlockLevelContentControl, undefined, undefined, true);
+				oLogicDocument.StartAction(AscDFH.historydescription_Document_AddBlockLevelContentControl);
 
 				var oContentControl = oLogicDocument.AddContentControl(c_oAscSdtLevelType.Block);
 				if (oContentControl)
@@ -10289,6 +10289,7 @@ background-repeat: no-repeat;\
 					oResult = oContentControl.GetContentControlPr();
 				}
 
+				oLogicDocument.AddMacroData(AscDFH.historydescription_Document_AddBlockLevelContentControl, oResult.PlaceholderText);
 				oLogicDocument.FinalizeAction();
 			}
 		}
@@ -10296,7 +10297,7 @@ background-repeat: no-repeat;\
 		{
 			if (false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_ContentControl_Add, null, true, false, null, AscDFH.historydescription_Document_AddInlineLevelContentControl))
 			{
-				oLogicDocument.StartAction(AscDFH.historydescription_Document_AddInlineLevelContentControl, undefined, undefined, true);
+				oLogicDocument.StartAction(AscDFH.historydescription_Document_AddInlineLevelContentControl);
 
 				var oContentControl = oLogicDocument.AddContentControl(c_oAscSdtLevelType.Inline);
 				if (oContentControl)
@@ -10311,6 +10312,7 @@ background-repeat: no-repeat;\
 					oResult = oContentControl.GetContentControlPr();
 				}
 
+				oLogicDocument.AddMacroData(AscDFH.historydescription_Document_AddInlineLevelContentControl, oResult.PlaceholderText);
 				oLogicDocument.FinalizeAction();
 			}
 		}
@@ -10412,6 +10414,7 @@ background-repeat: no-repeat;\
 			if (oCC && oCommonPr)
 				oCC.SetContentControlPr(oCommonPr);
 
+			oLogicDocument.AddMacroData(AscDFH.historydescription_Document_AddContentControlList, {isComboBox : isComboBox});
 			oLogicDocument.Recalculate();
 			oLogicDocument.UpdateInterface();
 			oLogicDocument.UpdateSelection();

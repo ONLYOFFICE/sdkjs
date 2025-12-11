@@ -1510,7 +1510,7 @@
     // Проверим, нужно ли отсылать информацию о ячейке
     var ar = ws.model.selectionRange.getLast();
     var isSelectOnShape = ws.getSelectionShape();
-	//this.StartAction(AscDFH.historydescription_Spreadsheet_SelectRange, [ar]);
+	this.MacrosAddData(AscDFH.historydescription_Spreadsheet_SelectRange, [ar]);
 
     if (!this._isEqualRange(ws.model.selectionRange, isSelectOnShape)) {
       this._onWSSelectionChanged();
@@ -6732,7 +6732,10 @@
 		this.Api.sendEvent("asc_onUserActionStart");
 		this.Api.getMacroRecorder().onAction(nDescription, additional);
 	};
-
+	WorkbookView.prototype.MacrosAddData = function(nDescription, additional)
+	{
+		this.Api.getMacroRecorder().addStepData(nDescription, additional);
+	};
 	WorkbookView.prototype.FinalizeAction = function(nDescription, additional)
 	{
 		this.Api.sendEvent("asc_onUserActionEnd");

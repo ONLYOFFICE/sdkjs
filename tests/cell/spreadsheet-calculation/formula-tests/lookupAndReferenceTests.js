@@ -2100,15 +2100,13 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 6);
 		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), 'h');
 
-		//TODO ms calc error
 		oParser = new parserFormula("DROP(A1:D5,100,100)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getValue(), "#CALC!");
 
-		//TODO ms calc error
 		oParser = new parserFormula("DROP(A1:D5,-1,-4)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getValue(), "#CALC!");
 
 		oParser = new parserFormula("DROP(A1:D5,,-2)", "A1", ws);
 		assert.ok(oParser.parse());
@@ -2161,11 +2159,10 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), 'hhh');
 
 		// Positive cases:
-
 		// Case #1: Number, Empty. Return 1
 		oParser = new parserFormula('DROP(1,)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula DROP(1,) is parsed.')
-		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1, 'Test: Positive case: Number, Empty. Return 1');
+		assert.ok(oParser.parse(), 'Test: Formula DROP(1,) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: Number, Empty. Return 1');
 		// Case #2: Area, Number. Drop 1 row from the beginning of vertical array. 2 of 3 arguments used.
 		oParser = new parserFormula('DROP(A100:A103,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(A100:A103,1) is parsed.');
@@ -2177,7 +2174,9 @@ $(function () {
 		// Case #4: Area, Number(2). Drop 1 row, columns argument is 0. 3 of 3 arguments used.
 		oParser = new parserFormula('DROP(A100:A103,1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(A100:A103,1,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 2, 'Test: Positive case: Area, Number(2). Drop 1 row, columns argument is 0. 3 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 2, 'Test: Positive case: Area, Number(2). Drop 1 row, columns argument is 0. 3 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 3, 'Test: Positive case: Area, Number(2). Drop 1 row, columns argument is 0. 3 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(2,0).getValue(), 1, 'Test: Positive case: Area, Number(2). Drop 1 row, columns argument is 0. 3 of 3 arguments used.');
 		// Case #5: Area, String. Rows argument as numeric string converted to number. 2 of 3 arguments used.
 		oParser = new parserFormula('DROP(A100:A103,"1")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(A100:A103,"1") is parsed.');
@@ -2193,7 +2192,8 @@ $(function () {
 		// Case #8: Area, Reference link(2). Both rows and columns as reference links. 3 of 3 arguments used.
 		oParser = new parserFormula('DROP(A100:A102,A103,A104)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(A100:A102,A103,A104) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 2, 'Test: Positive case: Area, Reference link(2). Both rows and columns as reference links. 3 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 2, 'Test: Positive case: Area, Reference link(2). Both rows and columns as reference links. 3 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 0).getValue(), 3, 'Test: Positive case: Area, Reference link(2). Both rows and columns as reference links. 3 of 3 arguments used.');
 		// Case #9: Name, Number. Array argument as defined name. 2 of 3 arguments used.
 		oParser = new parserFormula('DROP(TestNameArea,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(TestNameArea,1) is parsed.');
@@ -2201,22 +2201,21 @@ $(function () {
 		// Case #10: Ref3D, Number. Array argument as 3D reference. 2 of 3 arguments used.
 		oParser = new parserFormula('DROP(Sheet2!A1:A3,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(Sheet2!A1:A3,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 0, 'Test: Positive case: Ref3D, Number. Array argument as 3D reference. 2 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 2, 'Test: Positive case: Ref3D, Number. Array argument as 3D reference. 2 of 3 arguments used.');
 		// Case #11: Table, Number. Array argument as table reference. 2 of 3 arguments used.
 		oParser = new parserFormula('DROP(Table1[Column1],1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(Table1[Column1],1) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 2, 'Test: Positive case: Table, Number. Array argument as table reference. 2 of 3 arguments used.');
 
 		// Negative cases:
-
 		// Case #1: Area, Number. Rows value exceeds array size, returns #CALC! error. 2 of 3 arguments used.
 		oParser = new parserFormula('DROP(A100:A103,5)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(A100:A103,5) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: Area, Number. Rows value exceeds array size, returns #CALC! error. 2 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: Area, Number. Rows value exceeds array size, returns #CALC! error. 2 of 3 arguments used.');
 		// Case #2: Area, Number. Negative rows value exceeds array size, returns #CALC! error. 2 of 3 arguments used.
 		oParser = new parserFormula('DROP(A100:A103,-5)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(A100:A103,-5) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: Area, Number. Negative rows value exceeds array size, returns #CALC! error. 2 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: Area, Number. Negative rows value exceeds array size, returns #CALC! error. 2 of 3 arguments used.');
 		// Case #3: Area, String. Non-numeric string for rows returns #VALUE! error. 2 of 3 arguments used.
 		oParser = new parserFormula('DROP(A100:A103,"text")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(A100:A103,"text") is parsed.');
@@ -2237,30 +2236,36 @@ $(function () {
 		oParser = new parserFormula('DROP(#VALUE!,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(#VALUE!,1) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Error, Number. Array argument as error returns #VALUE!. 2 of 3 arguments used.');
-		// Case #8: String, Number. Array argument as text string returns #VALUE! error. 2 of 3 arguments used.
+		// Case #8: String, Number. Array argument as text string returns #CALC! error. 2 of 3 arguments used.
 		oParser = new parserFormula('DROP("text",1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP("text",1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: String, Number. Array argument as text string returns #VALUE! error. 2 of 3 arguments used.');
-		// Case #9: Area, Reference link. Rows argument reference to cell with text returns #VALUE!. 2 of 3 arguments used.
+		assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: String, Number. Array argument as text string returns #VALUE! error. 2 of 3 arguments used.');
+		// Case #9: Area, Reference link. Rows argument reference to cell with error. 2 of 3 arguments used.
 		oParser = new parserFormula('DROP(A100:A103,A106)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(A100:A103,A106) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#NULL!', 'Test: Negative case: Area, Reference link. Rows argument reference to cell with text returns #VALUE!. 2 of 3 arguments used.');
-		// Case #10: Area, Reference link. Rows argument reference to cell with error returns #NULL!. 2 of 3 arguments used.
-		oParser = new parserFormula('DROP(A100:A103,A107)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: Formula DROP(A100:A103,A107) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Area, Reference link. Rows argument reference to cell with error returns #NULL!. 2 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NULL!', 'Test: Negative case: Area, Reference link. Rows argument reference to cell with error. 2 of 3 arguments used.');
+		// Case #10: Area, Reference link. First argument reference to area with error returns area. 2 of 3 arguments used.
+		oParser = new parserFormula('DROP(A100:A106,A107)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: Formula DROP(A100:A106,A107) is parsed.');
+		assert.strictEqual(oParser.calculate().getValueByRowCol(0,0).getValue(), 1, 'Test: Negative case: Area, Reference link. First argument reference to area with error returns area. 2 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValueByRowCol(1,0).getValue(), 2, 'Test: Negative case: Area, Reference link. First argument reference to area with error returns area. 2 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValueByRowCol(2,0).getValue(), 3, 'Test: Negative case: Area, Reference link. First argument reference to area with error returns area. 2 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValueByRowCol(3,0).getValue(), 1, 'Test: Negative case: Area, Reference link. First argument reference to area with error returns area. 2 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValueByRowCol(4,0).getValue(), 0, 'Test: Negative case: Area, Reference link. First argument reference to area with error returns area. 2 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValueByRowCol(5,0).getValue(), 'text', 'Test: Negative case: Area, Reference link. First argument reference to area with error returns area. 2 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValueByRowCol(6,0).getValue(), '#NULL!', 'Test: Negative case: Area, Reference link. First argument reference to area with error returns area. 2 of 3 arguments used.');
 		// Case #11: Area, Number(2). Dropping all rows returns #CALC! error. 3 of 3 arguments used.
 		oParser = new parserFormula('DROP(A100:A103,4,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(A100:A103,4,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: Area, Number(2). Dropping all rows returns #CALC! error. 3 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: Area, Number(2). Dropping all rows returns #CALC! error. 3 of 3 arguments used.');
 		// Case #12: Empty, Number. Empty array argument returns #VALUE! error. 2 of 3 arguments used.
 		oParser = new parserFormula('DROP(,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(,1) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Empty, Number. Empty array argument returns #VALUE! error. 2 of 3 arguments used.');
-		// Case #13: Boolean, Number. Array argument as boolean returns #VALUE! error. 2 of 3 arguments used.
+		// Case #13: Boolean, Number. Array argument as boolean returns #CALC! error. 2 of 3 arguments used.
 		oParser = new parserFormula('DROP(TRUE,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(TRUE,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: Boolean, Number. Array argument as boolean returns #VALUE! error. 2 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: Boolean, Number. Array argument as boolean returns #CALC! error. 2 of 3 arguments used.');
 		// Case #14: Area, String. Empty string for rows returns #VALUE! error. 2 of 3 arguments used.
 		oParser = new parserFormula('DROP(A100:A103,"")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(A100:A103,"") is parsed.');
@@ -2269,18 +2274,18 @@ $(function () {
 		oParser = new parserFormula('DROP(A100:A103,TRUE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(A100:A103,TRUE) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 2, 'Test: Negative case: Area, Boolean. Boolean TRUE in rows converted to 1, valid positive case behavior. 2 of 3 arguments used.');
-		// Case #16: Number(2). Return #VALUE!
+		// Case #16: Number(2). Return #CALC!
 		oParser = new parserFormula('DROP(1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(1,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: Number(2). Return #VALUE!');
-		// Case #17: String, Number. Return #VALUE!
+		assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: Number(2). Return #CALC!');
+		// Case #17: String, Number. Return #CALC!
 		oParser = new parserFormula('DROP("test",1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP("test",1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: String, Number. Return #VALUE!');
-		// Case #18: Boolean, Number. Return #VALUE!
+		assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: String, Number. Return #CALC!');
+		// Case #18: Boolean, Number. Return #CALC!
 		oParser = new parserFormula('DROP(true,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(true,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: Boolean, Number. Return #VALUE!');
+		assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: Boolean, Number. Return #CALC!');
 		// Case #19: Error, Number. Return #VALUE!
 		oParser = new parserFormula('DROP(#VALUE!,3)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(#VALUE!,3) is parsed.');
@@ -2289,41 +2294,42 @@ $(function () {
 		oParser = new parserFormula('DROP(,2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(,2) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Empty, Number. Return #VALUE!');
-		// Case #21: Reference link,  Number. Return #VALUE!
+		// Case #21: Reference link,  Number. Return #CALC!
 		oParser = new parserFormula('DROP(B1, 1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(B1, 1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: Reference link,  Number. Return #VALUE!');
-		// Case #22: Array, Number. Return #VALUE!
+		assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: Reference link,  Number. Return #CALC!');
+		// Case #22: Array, Number. Return #CALC!
 		oParser = new parserFormula('DROP({2;"";"test"},3)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP({2;"";"test"},3) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: Array, Number. Return #VALUE!');
+		assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: Array, Number. Return #CALC!');
 		// Case #23: Number, String. Return #VALUE!
 		oParser = new parserFormula('DROP(1,"test")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(1,"test") is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, String. Return #VALUE!');
-		// Case #24: Number, Boolean. Return #VALUE!
+		// Case #24: Number, Boolean. Return #CALC!
 		oParser = new parserFormula('DROP(1,true)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(1,true) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: Number, Boolean. Return #VALUE!');
+		assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: Number, Boolean. Return #CALC!');
 		// Case #25: Number, Error. Return #N/A
 		oParser = new parserFormula('DROP(1, #N/A)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(1, #N/A) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number, Error. Return #N/A');
-		// Case #26: Number, Reference link. Return #VALUE!
+		// Case #26: Number, Reference link. Return #CALC!
 		oParser = new parserFormula('DROP(1,A1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(1,A1) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Reference link. Return #VALUE!');
-		// Case #27: Number, Area. Return #VALUE!
+		assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: Number, Reference link. Return #CALC!');
+		// Case #27: Number, Area. Return array
 		oParser = new parserFormula('DROP(1,A1:B5)', 'A2', ws);
+		oParser.setArrayFormulaRef(ws.getRange2("A1:B5").bbox);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(1,A1:B5) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: Number, Area. Return #VALUE!');
-		// Case #28: Number, Array. Return #VALUE!
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), '#CALC!', 'Test: Negative case: Number, Area. Return #CALC! in the first cell of arr');
+		// Case #28: Number, Array. Return array
 		oParser = new parserFormula('DROP(1,{2;"";"test"})', 'A2', ws);
+		oParser.setArrayFormulaRef(ws.getRange2("A1:B5").bbox);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(1,{2;"";"test"}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: Number, Array. Return #VALUE!');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), '#CALC!', 'Test: Negative case: Number, Array. Return #CALC! in the first cell of arr');
 
 		// Bounded cases:
-
 		// Case #1: Area, Number. Minimum array size (2 cells), drop 1 row. 2 of 3 arguments used.
 		oParser = new parserFormula('DROP(A100:A101,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(A100:A101,1) is parsed.');
@@ -2339,28 +2345,7 @@ $(function () {
 		// Case #4: Area, Number. Whole column reference, drop 0 rows. 2 of 3 arguments used.
 		oParser = new parserFormula('DROP(A:A,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DROP(A:A,0) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Bounded case: Area, Number. Whole column reference, drop 0 rows. 2 of 3 arguments used.');
-
-		// Need to fix: #CALC error diff, ms result difference
-		// Case #4: Area, Number(2). Drop 1 row, columns argument is 0. 3 of 3 arguments used.
-		// Case #8: Area, Reference link(2). Both rows and columns as reference links. 3 of 3 arguments used.
-		// Case #10: Ref3D, Number. Array argument as 3D reference. 2 of 3 arguments used.
-		// Case #11: Table, Number. Array argument as table reference. 2 of 3 arguments used.
-		// Case #1: Area, Number. Rows value exceeds array size, returns #CALC! error. 2 of 3 arguments used.
-		// Case #2: Area, Number. Negative rows value exceeds array size, returns #CALC! error. 2 of 3 arguments used.
-		// Case #8: String, Number. Array argument as text string returns #VALUE! error. 2 of 3 arguments used.
-		// Case #10: Area, Reference link. Rows argument reference to cell with error returns #NULL!. 2 of 3 arguments used.
-		// Case #11: Area, Number(2). Dropping all rows returns #CALC! error. 3 of 3 arguments used.
-		// Case #13: Boolean, Number. Array argument as boolean returns #VALUE! error. 2 of 3 arguments used.
-		// Case #15: Area, Boolean. Boolean TRUE in rows converted to 1, valid positive case behavior. 2 of 3 arguments used.
-		// Case #16: Number(2). Return #VALUE!
-		// Case #17: String, Number. Return #VALUE!
-		// Case #18: Boolean, Number. Return #VALUE!
-		// Case #21: Reference link,  Number. Return #VALUE!
-		// Case #22: Array, Number. Return #VALUE!
-		// Case #24: Number, Boolean. Return #VALUE!
-		// Case #27: Number, Area. Return #VALUE!
-		// Case #28: Number, Array. Return #VALUE!
+		assert.strictEqual(oParser.calculate().getValueByRowCol(0,0).getValue(), 1, 'Test: Bounded case: Area, Number. Whole column reference, drop 0 rows. 2 of 3 arguments used.');
 
 
 	});
@@ -10903,7 +10888,7 @@ $(function () {
 		//2.5 аргумент - empty
 		oParser = new parserFormula("TAKE(1,)", "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getValue(), 1);
 
 		//2.6 аргумент - cellsRange
 		//2.7 аргумент - cell
@@ -11054,66 +11039,66 @@ $(function () {
 		oParser = new parserFormula('TAKE({1,2,3},-1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: TAKE({1,2,3},-1,1) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Negative case: Number. Negative rows returns #NUM!. 3 of 3 arguments used.');
-		// Case #3: Number. Columns = 0 returns #NUM!. 3 of 3 arguments used.
+		// Case #3: Number. Columns = 0 returns #CALC!. 3 of 3 arguments used.
 		oParser = new parserFormula('TAKE({1,2,3},1,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: TAKE({1,2,3},1,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: Number. Columns = 0 returns #NUM!. 3 of 3 arguments used.');
-		// Case #4: Number. Negative columns returns #NUM!. 3 of 3 arguments used.
+		assert.strictEqual(oParser.calculate().getValue(), '#CALC!', 'Test: Negative case: Number. Columns = 0 returns #CALC!. 3 of 3 arguments used.');
+		// Case #4: Number. Negative columns returns part of array. 3 of 3 arguments used.
 		oParser = new parserFormula('TAKE({1,2,3},1,-1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: TAKE({1,2,3},1,-1) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 3, 'Test: Negative case: Number. Negative columns returns #NUM!. 3 of 3 arguments used.');
-		// Case #5: String. Non-array string returns #VALUE!. 3 of 3 arguments used.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 3, 'Test: Negative case: Number. Negative columns returns part of array. 3 of 3 arguments used.');
+		// Case #5: String. Non-array string returns string if we have row and col. 3 of 3 arguments used.
 		oParser = new parserFormula('TAKE("abc",1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: TAKE("abc",1,1) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 'abc', 'Test: Negative case: String. Non-array string returns #VALUE!. 3 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 'abc', 'Test: Negative case: String. Non-array string returns string if we have row and col. 3 of 3 arguments used.');
 		// Case #6: Error, Number. Propagates #N/A error. 3 of 3 arguments used.
 		oParser = new parserFormula('TAKE(NA(),1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: TAKE(NA(),1,1) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Error, Number. Propagates #N/A error. 3 of 3 arguments used.');
-		// Case #7: Area, Number. Multi-cell range exceeding array size returns #NUM!. 3 of 3 arguments used.
-		oParser = new parserFormula('TAKE(A100:A102,3,1)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: TAKE(A100:A102,3,1) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0.5, 'Test: Negative case: Area, Number. Multi-cell range exceeding array size returns #NUM!. 3 of 3 arguments used.');
+		// Case #7: Area, Number. Multi-cell range exceeding array size returns full array. 3 of 3 arguments used.
+		oParser = new parserFormula('TAKE(A100:A102,4,1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: TAKE(A100:A102,4,1) is parsed.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0.5, 'Test: Negative case: Area, Number. Multi-cell range exceeding array size returns full array. 3 of 3 arguments used.');
 		// Case #8: Empty, Number. Empty reference returns #VALUE!. 3 of 3 arguments used.
 		oParser = new parserFormula('TAKE(A103,1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: TAKE(A103,1,1) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), "", 'Test: Negative case: Empty, Number. Empty reference returns #VALUE!. 3 of 3 arguments used.');
-		// Case #9: Boolean, Number. Boolean input returns #VALUE!. 3 of 3 arguments used.
+		// Case #9: Boolean, Number. Boolean first argument. 3 of 3 arguments used.
 		oParser = new parserFormula('TAKE(FALSE,1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: TAKE(FALSE,1,1) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 'FALSE', 'Test: Negative case: Boolean, Number. Boolean input returns #VALUE!. 3 of 3 arguments used.');
-		// Case #10: Ref3D, Number. 3D ref to text returns #VALUE!. 3 of 3 arguments used.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 'FALSE', 'Test: Negative case: Boolean, Number. Boolean first argument. 3 of 3 arguments used.');
+		// Case #10: Ref3D, Number. 3D ref to text. 3 of 3 arguments used.
 		oParser = new parserFormula('TAKE(Sheet2!A2,1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: TAKE(Sheet2!A2,1,1) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 2, 'Test: Negative case: Ref3D, Number. 3D ref to text returns #VALUE!. 3 of 3 arguments used.');
-		// Case #11: Name, Number. Named range with text returns #VALUE!. 3 of 3 arguments used.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 2, 'Test: Negative case: Ref3D, Number. 3D ref to text. 3 of 3 arguments used.');
+		// Case #11: Name, Number. Named range with text. 3 of 3 arguments used.
 		oParser = new parserFormula('TAKE(TestNameArea2,1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: TAKE(TestNameArea2,1,1) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0.8, 'Test: Negative case: Name, Number. Named range with text returns #VALUE!. 3 of 3 arguments used.');
-		// Case #12: Table, Number. Table column with text returns #VALUE!. 3 of 3 arguments used.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0.8, 'Test: Negative case: Name, Number. Named range with text. 3 of 3 arguments used.');
+		// Case #12: Table, Number. Table column with text. 3 of 3 arguments used.
 		oParser = new parserFormula('TAKE(Table1[Column2],1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: TAKE(Table1[Column2],1,1) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), '1s', 'Test: Negative case: Table, Number. Table column with text returns #VALUE!. 3 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), '1s', 'Test: Negative case: Table, Number. Table column with text. 3 of 3 arguments used.');
 		// Case #13: Formula, Number. Formula resulting in #NUM! error. 3 of 3 arguments used.
 		oParser = new parserFormula('TAKE(SQRT(-1),1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: TAKE(SQRT(-1),1,1) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Formula, Number. Formula resulting in #NUM! error. 3 of 3 arguments used.');
-		// Case #14: Number, String. Non-numeric rows argument returns #VALUE!. 3 of 3 arguments used.
+		// Case #14: Number, String. Non-numeric rows argument. 3 of 3 arguments used.
 		oParser = new parserFormula('TAKE({1,2,3},"1",1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: TAKE({1,2,3},"1",1) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Negative case: Number, String. Non-numeric rows argument returns #VALUE!. 3 of 3 arguments used.');
-		// Case #15: Number, Number, String. Non-numeric columns argument returns #VALUE!. 3 of 3 arguments used.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Negative case: Number, String. Non-numeric rows argument. 3 of 3 arguments used.');
+		// Case #15: Number, Number, String. Non-numeric columns argument. 3 of 3 arguments used.
 		oParser = new parserFormula('TAKE({1,2,3},1,"1")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: TAKE({1,2,3},1,"1") is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Negative case: Number, Number, String. Non-numeric columns argument returns #VALUE!. 3 of 3 arguments used.');
-		// Case #16: Array, Number. Array with boolean returns #VALUE!. 3 of 3 arguments used.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Negative case: Number, Number, String. Non-numeric columns argument. 3 of 3 arguments used.');
+		// Case #16: Array, Number. Array with boolean. 3 of 3 arguments used.
 		oParser = new parserFormula('TAKE({FALSE},1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: TAKE({FALSE},1,1) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 'FALSE', 'Test: Negative case: Array, Number. Array with boolean returns #VALUE!. 3 of 3 arguments used.');
-		// Case #17: Area3D, Number. 3D multi-cell range exceeding array size returns #NUM!. 3 of 3 arguments used.
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 'FALSE', 'Test: Negative case: Array, Number. Array with boolean . 3 of 3 arguments used.');
+		// Case #17: Area3D, Number. 3D multi-cell range. 3 of 3 arguments used.
 		oParser = new parserFormula('TAKE(Sheet2!A1:A3,3,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: TAKE(Sheet2!A1:A3,3,1) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Negative case: Area3D, Number. 3D multi-cell range exceeding array size returns #NUM!. 3 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Negative case: Area3D, Number. 3D multi-cell range. 3 of 3 arguments used.');
 		// Case #18: Number, Formula. Rows formula resulting in #NUM! error. 3 of 3 arguments used.
 		oParser = new parserFormula('TAKE({1,2,3},SQRT(-1),1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: TAKE({1,2,3},SQRT(-1),1) is parsed.');
@@ -11122,10 +11107,10 @@ $(function () {
 		oParser = new parserFormula('TAKE({1,2,3},1,SQRT(-1))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: TAKE({1,2,3},1,SQRT(-1)) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Number, Number, Formula. Columns formula resulting in #NUM! error. 3 of 3 arguments used.');
-		// Case #20: Name3D, Number. 3D named range with text returns #VALUE!. 3 of 3 arguments used.
-		oParser = new parserFormula('TAKE(TestName3DArea,1,1)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: TAKE(TestName3DArea,1,1) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#NAME?', 'Test: Negative case: Name3D, Number. 3D named range with text returns #VALUE!. 3 of 3 arguments used.');
+		// Case #20: Name3D, Number. 3D named range. 3 of 3 arguments used.
+		oParser = new parserFormula('TAKE(TestNameArea3D2,1,1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: TAKE(TestNameArea3D2,1,1) is parsed.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0.8, 'Test: Negative case: Name3D, Number. 3D named range. 3 of 3 arguments used.');
 
 		// Bounded cases:
 		// Case #1: Number. Minimum valid rows and columns (1). 3 of 3 arguments used.

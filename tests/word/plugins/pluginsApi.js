@@ -91,12 +91,27 @@ $(function () {
 			],
 			"Change the first adding and check get function");
 		
+		PluginsApi.pluginMethod_SelectAddinField("1");
+		assert.strictEqual(logicDocument.GetSelectedText(), "This is the first addin field", "Check addin field selection");
+		
+		PluginsApi.pluginMethod_SelectAddinField("25");
+		assert.strictEqual(logicDocument.GetSelectedText(), "This is the first addin field", "Check addin field selection");
+		
+		PluginsApi.pluginMethod_SelectAddinField("3");
+		assert.strictEqual(logicDocument.GetSelectedText(), "This is the second addin field", "Check addin field selection");
+		
 		logicDocument.RemoveFromContent(1, 1);
 		assert.deepEqual(PluginsApi.pluginMethod_GetAllAddinFields(),
 			[
 				{"FieldId" : "3", "Value" : "Addin №2", "Content" : "This is the second addin field"}
 			],
 			"Remove the paragraph with the first field and check get addin function");
+		
+		PluginsApi.pluginMethod_RemoveAddinField("3");
+		assert.deepEqual(PluginsApi.pluginMethod_GetAllAddinFields(),
+			[],
+			"Remove the first add-in field");
+		
 	});
 	
 	QUnit.test("Test RemoveFieldWrapper", function(assert)

@@ -120,12 +120,12 @@
                 oCopy = new AscPDF.CAnnotationInk(AscCommon.CreateGUID(), this.GetRect().slice(), this.GetDocument());
                 break;
             }
-            case AscPDF.ANNOTATIONS_TYPES.Ink: {
-                oCopy = new AscPDF.CAnnotationInk(AscCommon.CreateGUID(), this.GetRect().slice(), this.GetDocument());
-                break;
-            }
             case AscPDF.ANNOTATIONS_TYPES.Line: {
                 oCopy = new AscPDF.CAnnotationLine(AscCommon.CreateGUID(), this.GetRect().slice(), this.GetDocument());
+                break;
+            }
+            case AscPDF.ANNOTATIONS_TYPES.Link: {
+                oCopy = new AscPDF.CAnnotationLink(AscCommon.CreateGUID(), this.GetRect().slice(), this.GetDocument());
                 break;
             }
             case AscPDF.ANNOTATIONS_TYPES.Polygon: {
@@ -164,6 +164,7 @@
         let aFillColor      = this.GetFillColor();
         let aRD             = this.GetRectangleDiff();
         let aDash           = this.GetDash();
+        let aQuads          = this.GetQuads && this.GetQuads();
 
         oCopy.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
         oCopy.SetUserId(this.GetUserId());
@@ -182,7 +183,8 @@
         aFillColor && oCopy.SetFillColor(aFillColor.slice());
         aDash && oCopy.SetDash(aDash.slice());
         aRD && oCopy.SetRectangleDiff(aRD.slice());
-        
+        aQuads && oCopy.SetQuads(aQuads);
+
         // copy replies
         let oAscCommData = this.GetAscCommentData();
         if (oAscCommData) {
@@ -841,6 +843,9 @@
     CAnnotationBase.prototype.IsStamp = function() {
         return false;
     };
+    CAnnotationBase.prototype.IsLink = function() {
+        return false;
+    };
     CAnnotationBase.prototype.SetNeedRecalc = function(bRecalc, bSkipAddToRedraw) {
         if (bRecalc == false) {
             this._needRecalc = false;
@@ -972,8 +977,8 @@
     CAnnotationBase.prototype.GetDisplay = function() {
         return this._display;
     };
-    CAnnotationBase.prototype.onMouseUp = function(e) {
-        if (e.button != 2) {
+    CAnnotationBase.prototype.onMouseUp = function(x, y, e) {
+        if (e.Button != 2) {
             this.GetDocument().ShowComment([this.GetId()]);
         }
     };

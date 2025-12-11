@@ -16884,13 +16884,13 @@
 			{
 				switch (this.VertAlign)
 				{
-					case 0:
+					case AscCommon.vertalign_Baseline:
 						sVAlign = "baseline";
 						break;
-					case 1:
+					case AscCommon.vertalign_SuperScript:
 						sVAlign = "superscript";
 						break;
-					case 2:
+					case AscCommon.vertalign_SubScript:
 						sVAlign = "subscript";
 						break;
 				}
@@ -17143,13 +17143,13 @@
 				switch (oParsedJson["vertAlign"])
 				{
 					case "baseline":
-						nVAlign = 0;
+						nVAlign = AscCommon.vertalign_Baseline;
 						break;
 					case "superscript":
-						nVAlign = 1;
+						nVAlign = AscCommon.vertalign_SuperScript;
 						break;
 					case "subscript":
-						nVAlign = 2;
+						nVAlign = AscCommon.vertalign_SubScript;
 						break;
 				}
 			}

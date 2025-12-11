@@ -73,7 +73,7 @@
 		
 		let paraId = paragraph.GetId();
 		
-		this.sendPara[paraId] = this.logicDocument.GetRecalcId();
+		this.sendPara[paraId] = "" + this.logicDocument.GetRecalcId();
 		
 		// Не посылаем сразу сообщение, чтобы не посылать их на каждое действие при быстром наборе
 		if (this.waitPara[paraId])
@@ -189,7 +189,7 @@
 				let ranges   = obj["ranges"];
 				
 				if (undefined === guid
-					|| this.sendPara[paraId] !== recalcId
+					|| this.sendPara[paraId] !== "" + recalcId
 					|| !ranges
 					|| !Array.isArray(ranges))
 					return;
@@ -349,6 +349,8 @@
 			let handleId = this.getHandlerId({"name" : name, "guid" : guid});
 			this.textAnnotator.getMarks().removeAllMarks(handleId);
 		}
+		
+		this.textAnnotator.getMarks().removeAllMarks(guid);
 		
 		delete this.plugins[guid];
 	};

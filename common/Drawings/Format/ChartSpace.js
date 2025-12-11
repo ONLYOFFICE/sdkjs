@@ -2914,11 +2914,11 @@ function(window, undefined) {
 		}
 		return [];
 	};
-	CChartSpace.prototype.getCachedData = function () {
+	CChartSpace.prototype.getCachedData = function (isMultiSeries) {
 		if (!this.chart || !this.chart.plotArea || !this.chart.plotArea.plotAreaRegion) {
 			return null;
 		}
-		return this.chart.plotArea.plotAreaRegion.getCachedData();
+		return this.chart.plotArea.plotAreaRegion.getCachedData(isMultiSeries);
 	}
 	CChartSpace.prototype._getSeriesArrayIdx = function (oChart, nSeriesIdx) {
 		if (oChart.series[nSeriesIdx] && oChart.series[nSeriesIdx].idx === nSeriesIdx) {
@@ -5678,7 +5678,7 @@ function(window, undefined) {
 	CChartSpace.prototype.calculateDLblsForChartEx = function () {
 		const size = this.chart.plotArea.plotAreaRegion.series.length;
 		const seria = this.chart.plotArea.plotAreaRegion.series[size - 1];
-		const cachedData = this.chart.plotArea.plotAreaRegion.cachedData;
+		const cachedData = this.chart.plotArea.plotAreaRegion.getCachedData();
 
 		//seria.dataLabels.visibility optional
 		if (cachedData && seria && seria.dataLabels) {
@@ -6105,14 +6105,15 @@ function(window, undefined) {
 				}
 				const strSeria = this.chart.plotArea.plotAreaRegion && this.chart.plotArea.plotAreaRegion.series ? this.chart.plotArea.plotAreaRegion.series[0] : null;
 				if (strSeria) {
-					const cachedData = this.chart.plotArea.plotAreaRegion.cachedData;
 					const type = this.chart.plotArea.plotAreaRegion.series[0].layoutId;
+					const cachedDatas = this.chart.plotArea.plotAreaRegion.getCachedData(true);
 					const strCache = strSeria.getCatLit(type);
-					if (!cachedData || !oAxis.scale) {
+					if (!cachedDatas.length || !oAxis.scale) {
 						return [];
 					}
 
 					if (type === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN) {
+						const cachedData = cachedDatas[0];
 						const isAggregated = cachedData.subTypeAggr;
 						if (isAggregated) {
 							for (let i = 0; i < cachedData.data.length; i++) {
@@ -6133,7 +6134,16 @@ function(window, undefined) {
 								}
 							}
 						}
-					} else if (strCache && (type === AscFormat.SERIES_LAYOUT_WATERFALL || type === AscFormat.SERIES_LAYOUT_BOX_WHISKER)) {
+					} else if (strCache && type === AscFormat.SERIES_LAYOUT_BOX_WHISKER) {
+						let prevLabel = "";
+						for (let i = 0; i < strCache.pts.length; i++) {
+							if (prevLabel !== strCache.pts[i].val) {
+								aStrings.push(strCache.pts[i].val);
+								prevLabel = strCache.pts[i].val;
+							}
+						}
+					} else if (strCache && (type === AscFormat.SERIES_LAYOUT_WATERFALL)) {
+						const cachedData = cachedDatas[0];
 						let j = 0;
 						for ( let i = 0; i < cachedData.data.length; i++) {
 							if (j < strCache.pts.length && strCache.pts[j].idx === i) {
@@ -6144,6 +6154,7 @@ function(window, undefined) {
 							}
 						}
 					} else if (strCache && type === AscFormat.SERIES_LAYOUT_FUNNEL) {
+						const cachedData = cachedDatas[0];
 						let j = strCache.pts.length - 1;
 						for ( let i = cachedData.data.length - 1; i >= 0; i--) {
 							if (j >= 0 && strCache.pts[j].idx === i) {

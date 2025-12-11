@@ -267,5 +267,36 @@
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CRunSpace = CRunSpace;
+	
+	/**
+	 * @param {number} gid
+	 * @param {number} codePoint
+	 * @param {number} width
+	 * @param {number} fontSize
+	 * @constructor
+	 */
+	function CPdfRunSpace(gid, codePoint, width, fontSize)
+	{
+		CRunSpace.call(this, codePoint);
+		
+		this.charGid     = gid;
+		this.originWidth = width;
+		this.originSize  = fontSize;
+	}
+	CPdfRunSpace.prototype = Object.create(CRunSpace.prototype);
+	CPdfRunSpace.prototype.constructor = CPdfRunSpace;
+	
+	CPdfRunSpace.prototype.IsPdfText       = AscWord.CPdfRunText.prototype.IsPdfText;
+	CPdfRunSpace.prototype.GetGid          = AscWord.CPdfRunText.prototype.GetGid;
+	CPdfRunSpace.prototype.GetOriginWidth  = AscWord.CPdfRunText.prototype.GetOriginWidth;
+	CPdfRunSpace.prototype.GetWidth        = AscWord.CPdfRunText.prototype.GetWidth;
+	CPdfRunSpace.prototype.GetWidthVisible = AscWord.CPdfRunText.prototype.GetWidthVisible;
+	CPdfRunSpace.prototype.SetMetrics      = AscWord.CPdfRunText.prototype.SetMetrics;
+	CPdfRunSpace.prototype.SetGrapheme = function()
+	{
+		this.Grapheme = AscFonts.NO_GRAPHEME;
+	};
+	
+	AscWord.CPdfRunSpace = CPdfRunSpace;
 
 })(window);
