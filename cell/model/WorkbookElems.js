@@ -18334,6 +18334,81 @@ function RangeDataManagerElem(bbox, data)
 		return null;
 	};
 
+	CMetadata.prototype.getRvIndex = function (vmIndex) {
+		if (!cmIndex || !this.cellMetadata) {
+			return null;
+		}
+
+		const cellMetadataBlocks = this.cellMetadata;
+		if (!cellMetadataBlocks || cmIndex > cellMetadataBlocks.length) {
+			return null;
+		}
+
+		const cellMetadataBlock = cellMetadataBlocks[cmIndex - 1];
+		if (!cellMetadataBlock) {
+			return null;
+		}
+
+		const typeIndex = cellMetadataBlock.t - 1;
+		const valueIndex = cellMetadataBlock.v;
+
+		const metadataTypes = this.metadataTypes && this.metadataTypes;
+		if (!metadataTypes || typeIndex >= metadataTypes.length) {
+			return null;
+		}
+
+		const metadataType = metadataTypes[typeIndex];
+		if (!metadataType || metadataType.name !== 'XLDAPR') {
+			return null;
+		}
+
+		if (!this.aFutureMetadata) {
+			return null;
+		}
+
+		let xldaprFutureMetadata = null;
+		for (let i = 0; i < this.aFutureMetadata.length; i++) {
+			if (this.aFutureMetadata[i].name === 'XLDAPR') {
+				xldaprFutureMetadata = this.aFutureMetadata[i];
+				break;
+			}
+		}
+
+		if (!xldaprFutureMetadata || !xldaprFutureMetadata.futureMetadataBlocks) {
+			return null;
+		}
+
+		const futureBlocks = xldaprFutureMetadata.futureMetadataBlocks;
+		if (!futureBlocks || valueIndex >= futureBlocks.length) {
+			return null;
+		}
+
+		const futureBlock = futureBlocks[valueIndex];
+		if (!futureBlock) {
+			return null;
+		}
+
+		const extBlocks = futureBlock.extLst;
+		if (!extBlocks) {
+			return null;
+		}
+
+		for (let i = 0; i < extBlocks.length; i++) {
+			const extBlock = extBlocks[i];
+			//if (extBlock.uri === '{bdbb8cdc-fa1e-496e-a857-3c3f30c029c3}') {
+			const dynamicArrayProps = extBlock.dynamicArrayProperties;
+			if (dynamicArrayProps) {
+				return dynamicArrayProps;
+				/*{
+					fDynamic: dynamicArrayProps.fDynamic === true,
+					fCollapsed: dynamicArrayProps.fCollapsed === true
+				};*/
+			}
+			//}
+		}
+
+		return null;
+	};
 
 
 	function CFutureMetadata() {
