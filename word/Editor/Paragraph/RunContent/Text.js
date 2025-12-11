@@ -783,9 +783,10 @@
 		CRunText.call(this, codePoint);
 		
 		this.charGid     = gid;
-		this.originWidth = width;
-		this.originSize  = (fontSize ? fontSize : 12);
+		this.originWidth = width ? width : 0;
+		this.originSize  = fontSize ? fontSize : 0;
 		this.originCoeff = 1;
+		this.fontSize    = this.originSize;
 	}
 	CPdfRunText.prototype = Object.create(CRunText.prototype);
 	CPdfRunText.prototype.constructor = CPdfRunText;
@@ -804,17 +805,15 @@
 	};
 	CPdfRunText.prototype.GetWidth = function()
 	{
-		return this.originWidth * this.originCoeff;
+		return this.originSize ? this.originWidth * this.originCoeff : this.Width / AscWord.TEXTWIDTH_DIVIDER;
 	};
 	CPdfRunText.prototype.GetWidthVisible = function()
 	{
-		return this.originWidth * this.originCoeff;
-	};
-	CPdfRunText.prototype.SetWidth = function()
-	{
+		return this.originSize ? this.originWidth * this.originCoeff : this.Width / AscWord.TEXTWIDTH_DIVIDER;
 	};
 	CPdfRunText.prototype.SetWidthVisible = function()
 	{
+	
 	};
 	CPdfRunText.prototype.SetMetrics = function(fontSize, fontSlot, textPr)
 	{
@@ -832,6 +831,8 @@
 			fontCoeff *= AscCommon.vaKSize;
 		
 		let _fontSize = fontSize * fontCoeff;
+		
+	 	this.fontSize = _fontSize;
 		
 		fontCoeff *= fontSize / this.originSize;
 		

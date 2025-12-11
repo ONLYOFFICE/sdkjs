@@ -287,11 +287,15 @@
 	CPdfRunSpace.prototype.constructor = CPdfRunSpace;
 	
 	CPdfRunSpace.prototype.IsPdfText       = AscWord.CPdfRunText.prototype.IsPdfText;
+	CPdfRunSpace.prototype.GetGid          = AscWord.CPdfRunText.prototype.GetGid;
+	CPdfRunSpace.prototype.GetOriginWidth  = AscWord.CPdfRunText.prototype.GetOriginWidth;
 	CPdfRunSpace.prototype.GetWidth        = AscWord.CPdfRunText.prototype.GetWidth;
 	CPdfRunSpace.prototype.GetWidthVisible = AscWord.CPdfRunText.prototype.GetWidthVisible;
-	CPdfRunSpace.prototype.SetWidth        = AscWord.CPdfRunText.prototype.SetWidth;
-	CPdfRunSpace.prototype.SetWidthVisible = AscWord.CPdfRunText.prototype.SetWidthVisible;
 	CPdfRunSpace.prototype.SetMetrics      = AscWord.CPdfRunText.prototype.SetMetrics;
+	CPdfRunSpace.prototype.SetGrapheme = function()
+	{
+		this.Grapheme = AscFonts.NO_GRAPHEME;
+	};
 	
 	AscWord.CPdfRunSpace = CPdfRunSpace;
 

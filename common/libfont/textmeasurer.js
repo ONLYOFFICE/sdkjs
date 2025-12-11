@@ -178,6 +178,37 @@
 			AscFonts.AddGlyphToGrapheme(nGID, oGlyph.fAdvanceX * 64, 0, 0, 0);
 			return AscFonts.GetGrapheme(getSingleCodePointCalculator(codePoint));
 		},
+		
+		GetGraphemeByGid : function(gid, fontName, fontStyle, codePoint)
+		{
+			this.SetFontInternal(fontName, AscFonts.MEASURE_FONTSIZE, fontStyle);
+			
+			let font = this.m_oManager.m_oFont;
+			if (!font)
+			{
+				font = this.GetFontBySymbol(gid).Font;
+				//return AscFonts.NO_GRAPHEME;
+			}
+			
+			let stringGid = true;
+			if (!font.GetStringGID())
+			{
+				font.SetStringGID(true);
+				stringGid = false;
+			}
+			
+			let glyph = font.GetChar(gid);
+			
+			if (!stringGid)
+				font.SetStringGID(false);
+			
+			if (!glyph)
+				return AscFonts.NO_GRAPHEME;
+			
+			AscFonts.InitGrapheme(AscCommon.FontNameMap.GetId(fontName), fontStyle);
+			AscFonts.AddGlyphToGrapheme(gid, glyph.fAdvanceX * 64, 0, 0, 0);
+			return AscFonts.GetGrapheme(getSingleCodePointCalculator(codePoint));
+		},
 
 		SetTextPr : function(textPr, theme)
 		{
@@ -597,5 +628,4 @@
 	window['AscCommon'].CTextMeasurer = CTextMeasurer;
 	window['AscCommon'].g_oTextMeasurer = g_oTextMeasurer;
 	window['AscCommon'].GetLoadInfoForMeasurer = GetLoadInfoForMeasurer;
-	window['AscCommon'].getSingleCodePointCalculator = getSingleCodePointCalculator;
 })(window);
