@@ -6842,8 +6842,14 @@ function isAllowPasteLink(pastedWb) {
 		let ref = this.getDynamicArrayFirstCell();
 		if (ref) {
 			//TODO need highlight uncollapsed range -> read rich data
-			if (this.model.dynamicArrayManager.isCollapsed(ref.r1, ref.c1)) {
-
+			if (!this.model.dynamicArrayManager.isCollapsed(ref.r1, ref.c1)) {
+				let offset = this.model.dynamicArrayManager.getRichValueOffset(ref.r1, ref.c1);
+				if (offset) {
+					const lineColor = new CColor(78, 128, 245);
+					let _ref = new Asc.Range(ref.c1, ref.r1, ref.c1 + offset.col, ref.r1 + offset.row);
+					this._drawElements(this._drawSelectionElement, _ref, AscCommonExcel.selectionLineType.Dash, lineColor);
+				}
+				return;
 			}
 			const lineColor = new CColor(78, 128, 245);
 			this._drawElements(this._drawSelectionElement, ref, AscCommonExcel.selectionLineType.None, lineColor);

@@ -3219,8 +3219,8 @@
 		
 		this.fileCustomFunctions = null;
 
-		this.richValue = null;
-		this.richValueStructure = null;
+		this.richValueData = null;
+		this.richValueStructures = null;
 		this.richValueTypesInfo = null;
 	}
 	Workbook.prototype.init=function(oReadResult, bNoBuildDep, bSnapshot){
@@ -24885,6 +24885,43 @@
 		}
 
 		return dynamicArrayProps.fCollapsed === true;
+	};
+
+	CDynamicArrayManager.prototype.getRichValueOffset = function (row, col) {
+		let richValueBlock = this.getRichValueBlock(row, col);
+		if (richValueBlock != null) {
+			const richValueData = this.ws.workbook.richValueData;
+			if (richValueData) {
+				let rvIndex = richValueBlock.i;
+				let richValue = richValueData.getRichValue(rvIndex);
+				let offsetRow = richValue.getRowOffset(this.ws.workbook.richValueStructures && this.ws.workbook.richValueStructures.getValueStructure(0));
+				let offsetCol = richValue.getColOffset(this.ws.workbook.richValueStructures && this.ws.workbook.richValueStructures.getValueStructure(0));
+				if (offsetRow != null && offsetCol != null) {
+					return new AscCommon.CellBase(offsetRow - 0, offsetCol - 0);
+				}
+			}
+		}
+		return null;
+	};
+
+	CDynamicArrayManager.prototype.getRichValueBlock = function(row, col) {
+		let vmIndex;
+		this.ws._getCellNoEmpty(row, col, function(cell) {
+			if (cell && cell.formulaParsed) {
+				vmIndex = cell.formulaParsed.getVm();
+			}
+		});
+
+		if (vmIndex == null) {
+			return null;
+		}
+
+		const metadata = this.ws.workbook.metadata;
+		if (!metadata) {
+			return null;
+		}
+
+		return metadata.getRichValueBlock(vmIndex - 1);
 	};
 
 

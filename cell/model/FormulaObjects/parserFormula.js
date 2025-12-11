@@ -11455,6 +11455,9 @@ function parserFormula( formula, parent, _ws ) {
 	parserFormula.prototype.getCm = function() {
 		return this.cm;
 	};
+	parserFormula.prototype.getVm = function() {
+		return this.vm;
+	};
 
 	/**
 	 * Class representative an iterative calculations logic

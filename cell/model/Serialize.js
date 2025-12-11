@@ -9768,14 +9768,14 @@
                 }
                 this.oWorkbook.xmlMaps.push(oXmlMap);
             } else if (c_oSerWorkbookTypes.RdRichValue === type) {
-                this.oWorkbook.richValue = new AscCommonExcel.CRichValue();
+                this.oWorkbook.richValueData = new AscCommonExcel.CRichValueData();
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadRichValueData(t, l, oThis.oWorkbook.richValue);
+                    return oThis.ReadRichValueData(t, l, oThis.oWorkbook.richValueData);
                 });
             } else if (c_oSerWorkbookTypes.RdRichValueStructure === type) {
-                this.oWorkbook.richValueStructure = new AscCommonExcel.CRichValueStructure();
+                this.oWorkbook.richValueStructures = new AscCommonExcel.CRichValueStructures();
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadRichValueStructures(t, l, oThis.oWorkbook.richValueStructure);
+                    return oThis.ReadRichValueStructures(t, l, oThis.oWorkbook.richValueStructures);
                 });
             } else if (c_oSerWorkbookTypes.RdRichValueTypes === type) {
                 this.oWorkbook.richValueTypesInfo = new AscCommonExcel.CRichValueTypesInfo();

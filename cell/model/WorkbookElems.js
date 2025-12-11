@@ -18334,81 +18334,45 @@ function RangeDataManagerElem(bbox, data)
 		return null;
 	};
 
-	CMetadata.prototype.getRvIndex = function (vmIndex) {
-		if (!cmIndex || !this.cellMetadata) {
-			return null;
-		}
-
-		const cellMetadataBlocks = this.cellMetadata;
-		if (!cellMetadataBlocks || cmIndex > cellMetadataBlocks.length) {
-			return null;
-		}
-
-		const cellMetadataBlock = cellMetadataBlocks[cmIndex - 1];
-		if (!cellMetadataBlock) {
-			return null;
-		}
-
-		const typeIndex = cellMetadataBlock.t - 1;
-		const valueIndex = cellMetadataBlock.v;
-
-		const metadataTypes = this.metadataTypes && this.metadataTypes;
-		if (!metadataTypes || typeIndex >= metadataTypes.length) {
-			return null;
-		}
-
-		const metadataType = metadataTypes[typeIndex];
-		if (!metadataType || metadataType.name !== 'XLDAPR') {
-			return null;
-		}
-
-		if (!this.aFutureMetadata) {
-			return null;
-		}
-
-		let xldaprFutureMetadata = null;
-		for (let i = 0; i < this.aFutureMetadata.length; i++) {
-			if (this.aFutureMetadata[i].name === 'XLDAPR') {
-				xldaprFutureMetadata = this.aFutureMetadata[i];
-				break;
+	CMetadata.prototype.getRichValueBlock = function (vmIndex) {
+		let metaDataType = this.getMetaDataType("XLRICHVALUE");
+		if (metaDataType) {
+			let valueFutureMetadata = this.getFutureMetadataByType("XLRICHVALUE");
+			if (valueFutureMetadata && valueFutureMetadata.futureMetadataBlocks && valueFutureMetadata.futureMetadataBlocks[vmIndex] &&
+				valueFutureMetadata.futureMetadataBlocks[vmIndex].extLst && valueFutureMetadata.futureMetadataBlocks[vmIndex].extLst[0] &&
+				valueFutureMetadata.futureMetadataBlocks[vmIndex].extLst[0].richValueBlock) {
+				return valueFutureMetadata.futureMetadataBlocks[vmIndex].extLst[0].richValueBlock;
 			}
-		}
-
-		if (!xldaprFutureMetadata || !xldaprFutureMetadata.futureMetadataBlocks) {
-			return null;
-		}
-
-		const futureBlocks = xldaprFutureMetadata.futureMetadataBlocks;
-		if (!futureBlocks || valueIndex >= futureBlocks.length) {
-			return null;
-		}
-
-		const futureBlock = futureBlocks[valueIndex];
-		if (!futureBlock) {
-			return null;
-		}
-
-		const extBlocks = futureBlock.extLst;
-		if (!extBlocks) {
-			return null;
-		}
-
-		for (let i = 0; i < extBlocks.length; i++) {
-			const extBlock = extBlocks[i];
-			//if (extBlock.uri === '{bdbb8cdc-fa1e-496e-a857-3c3f30c029c3}') {
-			const dynamicArrayProps = extBlock.dynamicArrayProperties;
-			if (dynamicArrayProps) {
-				return dynamicArrayProps;
-				/*{
-					fDynamic: dynamicArrayProps.fDynamic === true,
-					fCollapsed: dynamicArrayProps.fCollapsed === true
-				};*/
-			}
-			//}
 		}
 
 		return null;
 	};
+
+	CMetadata.prototype.getMetaDataType = function (sType) {
+		const metadataTypes = this.metadataTypes;
+		if (metadataTypes) {
+			for (let i = 0; i < metadataTypes.length; i++) {
+				if (metadataTypes[i].name === sType) {
+					return this.aFutureMetadata[i];
+				}
+			}
+		}
+		return null;
+	};
+
+	CMetadata.prototype.getFutureMetadataByType = function (sType) {
+		let valueFutureMetadata = null;
+		if (this.aFutureMetadata) {
+			for (let i = 0; i < this.aFutureMetadata.length; i++) {
+				if (this.aFutureMetadata[i].name === sType) {
+					return this.aFutureMetadata[i];
+				}
+			}
+		}
+		return null;
+	};
+
+
 
 
 	function CFutureMetadata() {
@@ -20506,11 +20470,23 @@ function RangeDataManagerElem(bbox, data)
 		this.children = []; //  CRichValueKey
 	}
 
+	CRichValueStructure.prototype.getOptionByName = function(val) {
+		for (let i = 0; i < this.children.length; i++) {
+			if (this.children[i].n === val) {
+				return {obj: this.children[i], index: i};
+			}
+		}
+	};
+
 	function CRichValueStructures() {
 		this.count = null;
 		this.extLst = null;
 		this.children = []; //  CRichValueStructure
 	}
+
+	CRichValueStructures.prototype.getValueStructure = function(index) {
+		return this.children && this.children[index];
+	};
 
 // RichValue Data
 	function CRichValueFallback() {
@@ -20524,10 +20500,32 @@ function RangeDataManagerElem(bbox, data)
 		this.arrV = [];
 	}
 
+	CRichValue.prototype.getRowOffset = function(structure) {
+		if (structure) {
+			let oOffsetRowStr = structure.getOptionByName('rwOffset');
+			if (oOffsetRowStr) {
+				return this.arrV && this.arrV[oOffsetRowStr.index];
+			}
+		}
+		return null;
+	};
+
+	CRichValue.prototype.getColOffset = function(structure) {
+		if (structure) {
+			let oOffsetRowStr = structure.getOptionByName('colOffset');
+			if (oOffsetRowStr) {
+				return this.arrV && this.arrV[oOffsetRowStr.index];
+			}
+		}
+		return null;
+	};
+
 	function CRichValueData() {
-		this.count = null;
-		this.extLst = null;
-		this.children = []; //CRichValue
+		this.pData = []; //CRichValue
+	}
+
+	CRichValueData.prototype.getRichValue = function(index) {
+		return this.pData && this.pData[index];
 	}
 
 
