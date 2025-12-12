@@ -787,6 +787,7 @@
 		this.originSize  = fontSize ? fontSize : 0;
 		this.originCoeff = 1;
 		this.fontSize    = this.originSize;
+		this.spacing     = 0;
 	}
 	CPdfRunText.prototype = Object.create(CRunText.prototype);
 	CPdfRunText.prototype.constructor = CPdfRunText;
@@ -805,11 +806,11 @@
 	};
 	CPdfRunText.prototype.GetWidth = function()
 	{
-		return this.originSize ? this.originWidth * this.originCoeff : this.Width / AscWord.TEXTWIDTH_DIVIDER;
+		return (this.originSize ? this.originWidth * this.originCoeff : this.Width / AscWord.TEXTWIDTH_DIVIDER) + this.spacing;
 	};
 	CPdfRunText.prototype.GetWidthVisible = function()
 	{
-		return this.originSize ? this.originWidth * this.originCoeff : this.Width / AscWord.TEXTWIDTH_DIVIDER;
+		return (this.originSize ? this.originWidth * this.originCoeff : this.Width / AscWord.TEXTWIDTH_DIVIDER) + this.spacing;
 	};
 	CPdfRunText.prototype.SetWidthVisible = function()
 	{
@@ -839,6 +840,8 @@
 		this.originCoeff = fontCoeff;
 		
 		this.Flags = (this.Flags & 0xFFFF) | (((_fontSize * 64) & 0xFFFF) << 16);
+		
+		this.spacing = textPr.Spacing;
 	};
 	
 	AscWord.CPdfRunText = CPdfRunText;
