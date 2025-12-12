@@ -436,6 +436,10 @@ CTableCell.prototype =
 
         if ( null === CellPr.TableCellMar && undefined != this.Pr.TableCellMar && null != this.Pr.TableCellMar )
             CellPr.TableCellMar = {};
+		
+		// Направление текста берем ТОЛЬКО из прямых настроек, MSWord делает также
+		CellPr.TextDirection = textdirection_LRTB;
+		
         // Полученные настройки совместим с прямыми настройками ячейки
         CellPr.Merge( this.Pr );
 
