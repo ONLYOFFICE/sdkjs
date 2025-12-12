@@ -297,11 +297,11 @@
 	CPdfRunSpace.prototype.SetMetrics      = AscWord.CPdfRunText.prototype.SetMetrics;
 	CPdfRunSpace.prototype.GetWidth = function()
 	{
-		return (this.originSize ? this.originWidth * this.originCoeff + this.spacing : this.Width / AscWord.TEXTWIDTH_DIVIDER);
+		return (this.originSize && this.originWidth ? this.originWidth * this.originCoeff + this.spacing : this.Width / AscWord.TEXTWIDTH_DIVIDER);
 	};
 	CPdfRunSpace.prototype.GetWidthVisible = function()
 	{
-		return (this.originSize ? this.originWidth * this.originCoeff + this.spacing : this.Width / AscWord.TEXTWIDTH_DIVIDER);
+		return (this.originSize && this.originWidth ? this.originWidth * this.originCoeff + this.spacing : this.Width / AscWord.TEXTWIDTH_DIVIDER);
 	};
 	CPdfRunSpace.prototype.SetGrapheme = function()
 	{

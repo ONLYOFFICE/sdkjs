@@ -806,11 +806,11 @@
 	};
 	CPdfRunText.prototype.GetWidth = function()
 	{
-		return (this.originSize ? this.originWidth * this.originCoeff : this.Width / AscWord.TEXTWIDTH_DIVIDER) + this.spacing;
+		return (this.originSize && this.originWidth ? this.originWidth * this.originCoeff : this.Width / AscWord.TEXTWIDTH_DIVIDER) + this.spacing;
 	};
 	CPdfRunText.prototype.GetWidthVisible = function()
 	{
-		return (this.originSize ? this.originWidth * this.originCoeff : this.Width / AscWord.TEXTWIDTH_DIVIDER) + this.spacing;
+		return (this.originSize && this.originWidth ? this.originWidth * this.originCoeff : this.Width / AscWord.TEXTWIDTH_DIVIDER) + this.spacing;
 	};
 	CPdfRunText.prototype.SetWidthVisible = function()
 	{
