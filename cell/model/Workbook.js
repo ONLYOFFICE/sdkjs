@@ -24628,7 +24628,8 @@
 
 	CDynamicArrayManager.prototype.getDynamicArrayFirstCell = function (col, row) {
 		const c = this.ws.getCell3(row, col);
-		const t = this.ws;
+		let t = this;
+		const ws = this.ws;
 		let res = null;
 
 		c._foreachNoEmpty(function (cell) {
@@ -24641,15 +24642,19 @@
 				return;
 			}
 
-			if (cell.formulaParsed.getCm()) {
+			let cmIndex = cell.formulaParsed.getCm();
+			let dynamicProps = t.getDynamicArrayPropertiesByIndex(cmIndex);
+			if (dynamicProps && dynamicProps.fDynamic) {
 				res = ref;
 			} else if (!(cell.nCol === ref.c1 && cell.nRow === ref.r1)) {
 				//check first cell
-				const firstArrayRange = t.getCell3(ref.r1, ref.c1);
+				const firstArrayRange = ws.getCell3(ref.r1, ref.c1);
 				if (firstArrayRange) {
 					firstArrayRange._foreachNoEmpty(function (_cell) {
 						const firstArrayCellRef = _cell.formulaParsed && _cell.formulaParsed.getArrayFormulaRef();
-						if (_cell.formulaParsed && _cell.formulaParsed.getCm()) {
+						cmIndex = _cell.formulaParsed && _cell.formulaParsed.getCm();
+						dynamicProps = t.getDynamicArrayPropertiesByIndex(cmIndex);
+						if (dynamicProps && dynamicProps.fDynamic) {
 							res = firstArrayCellRef;
 						}
 					});
@@ -24751,13 +24756,6 @@
 		}
 
 		this.clearChangedArrayList();
-	};
-
-	CDynamicArrayManager.prototype._getDynamicArrayProperties = function () {
-		const getDynamicArrayProperties = this.ws.workbook.metadata && this.ws.workbook.metadata.getDynamicArrayProperties(1);
-		if (getDynamicArrayProperties) {
-			console.log(" getDynamicArrayProperties.fCollapsed: " + getDynamicArrayProperties.fCollapsed + " getDynamicArrayProperties.fDynamic: " + getDynamicArrayProperties.fDynamic);
-		}
 	};
 
 	CDynamicArrayManager.prototype.putChangedArrayByCell = function (cell) {
@@ -24863,14 +24861,26 @@
 	 * @returns {boolean|null} Returns true if collapsed, false if expanded, null if not a dynamic array
 	 */
 	CDynamicArrayManager.prototype.isCollapsed = function(row, col) {
-		let cmIndex;
+		const dynamicArrayProps = this.getDynamicArrayProperties(row, col);
+		if (!dynamicArrayProps) {
+			return null;
+		}
+
+		return dynamicArrayProps.fCollapsed === true;
+	};
+
+	CDynamicArrayManager.prototype.getDynamicArrayProperties = function(row, col) {
+		let cmIndex = null;
 		this.ws._getCellNoEmpty(row, col, function(cell) {
 			if (cell && cell.formulaParsed) {
 				cmIndex = cell.formulaParsed.getCm();
 			}
 		});
+		return this.getDynamicArrayPropertiesByIndex(cmIndex);
+	};
 
-		if (cmIndex == null) {
+	CDynamicArrayManager.prototype.getDynamicArrayPropertiesByIndex = function(index) {
+		if (index == null) {
 			return null;
 		}
 
@@ -24879,16 +24889,21 @@
 			return null;
 		}
 
-		const dynamicArrayProps = metadata.getDynamicArrayProperties(cmIndex);
-		if (!dynamicArrayProps) {
-			return null;
-		}
-
-		return dynamicArrayProps.fCollapsed === true;
+		const dynamicArrayProps = metadata.getDynamicArrayProperties(index);
+		return dynamicArrayProps;
 	};
 
 	CDynamicArrayManager.prototype.getRichValueOffset = function (row, col) {
 		let richValueBlock = this.getRichValueBlock(row, col);
+		return this._getRichValueOffset(richValueBlock);
+	};
+
+	CDynamicArrayManager.prototype.getRichValueOffsetByIndex = function (index) {
+		let richValueBlock = this.getRichValueBlockByIndex(index);
+		return this._getRichValueOffset(richValueBlock);
+	};
+
+	CDynamicArrayManager.prototype._getRichValueOffset = function (richValueBlock) {
 		if (richValueBlock != null) {
 			const richValueData = this.ws.workbook.richValueData;
 			if (richValueData) {
@@ -24912,7 +24927,11 @@
 			}
 		});
 
-		if (vmIndex == null) {
+		return this.getRichValueBlockByIndex(vmIndex);
+	};
+
+	CDynamicArrayManager.prototype.getRichValueBlockByIndex = function(index) {
+		if (index == null) {
 			return null;
 		}
 
@@ -24921,7 +24940,7 @@
 			return null;
 		}
 
-		return metadata.getRichValueBlock(vmIndex - 1);
+		return metadata.getRichValueBlock(index - 1);
 	};
 
 
