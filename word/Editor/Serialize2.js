@@ -4871,19 +4871,18 @@ Binary_tblPrWriter.prototype =
 			this.memory.WriteByte(c_oSerPropLenType.Byte);
 			this.memory.WriteByte(cellPr.HMerge);
 		}
-        var textDirection = cell ? cell.Get_TextDirection() : null;
-        if(null != textDirection)
+		// write textDirection only for direct cell properties
+        if(null != cellPr.TextDirection && cell)
         {
             this.memory.WriteByte(c_oSerProp_cellPrType.textDirection);
             this.memory.WriteByte(c_oSerPropLenType.Byte);
-            this.memory.WriteByte(textDirection);
+            this.memory.WriteByte(cellPr.TextDirection);
         }
-        var noWrap = cell ? cell.GetNoWrap() : null;
-        if(null != noWrap)
+        if(null != cellPr.NoWrap)
         {
             this.memory.WriteByte(c_oSerProp_cellPrType.noWrap);
             this.memory.WriteByte(c_oSerPropLenType.Byte);
-            this.memory.WriteBool(noWrap);
+            this.memory.WriteBool(cellPr.NoWrap);
 		}
 		if (cellPr.PrChange && cellPr.ReviewInfo) {
 			this.memory.WriteByte(c_oSerProp_cellPrType.tcPrChange);

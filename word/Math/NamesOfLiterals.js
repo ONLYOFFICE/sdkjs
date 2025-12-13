@@ -6127,7 +6127,7 @@
 	};
 	ProceedTokens.prototype.CorrectWord = function ()
 	{
-		if (this.Tokens.brackets.NoPair.length > 1)
+		if (this.Tokens.brackets.NoPair.length > 1 || !AscCommonWord.b_DoAutoCorrectMathSymbols)
 			return true;
 
 		let oAbsoluteLastId 		= this.GetAbsoluteLast();

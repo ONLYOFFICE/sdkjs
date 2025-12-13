@@ -280,8 +280,11 @@
 		CRunSpace.call(this, codePoint);
 		
 		this.charGid     = gid;
-		this.originWidth = width;
-		this.originSize  = fontSize;
+		this.originWidth = width ? width : 0;
+		this.originSize  = fontSize ? fontSize : 0;
+		this.originCoeff = 1;
+		this.fontSize    = this.originSize;
+		this.spacing     = 0;
 	}
 	CPdfRunSpace.prototype = Object.create(CRunSpace.prototype);
 	CPdfRunSpace.prototype.constructor = CPdfRunSpace;
@@ -292,6 +295,14 @@
 	CPdfRunSpace.prototype.GetWidth        = AscWord.CPdfRunText.prototype.GetWidth;
 	CPdfRunSpace.prototype.GetWidthVisible = AscWord.CPdfRunText.prototype.GetWidthVisible;
 	CPdfRunSpace.prototype.SetMetrics      = AscWord.CPdfRunText.prototype.SetMetrics;
+	CPdfRunSpace.prototype.GetWidth = function()
+	{
+		return (this.originSize && this.originWidth ? this.originWidth * this.originCoeff + this.spacing : this.Width / AscWord.TEXTWIDTH_DIVIDER);
+	};
+	CPdfRunSpace.prototype.GetWidthVisible = function()
+	{
+		return (this.originSize && this.originWidth ? this.originWidth * this.originCoeff + this.spacing : this.Width / AscWord.TEXTWIDTH_DIVIDER);
+	};
 	CPdfRunSpace.prototype.SetGrapheme = function()
 	{
 		this.Grapheme = AscFonts.NO_GRAPHEME;

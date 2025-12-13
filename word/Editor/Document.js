@@ -1466,6 +1466,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.SmartParagraphSelection   = true;  // Выделять ли автоматически знак параграфа, когда все содержимое параграфа выделено
 	this.PreventPreDelete          = false; // Заглушка на случай, когда удаляемые объекты, не удаляются, а переносятся
 	this.ClearNotesOnPreDelete     = true;  // Очищать ли сноски при удалении (выключаем, при сплите параграфа) // TODO: Объединить с PreventPreDelete
+	this.ForceScrollToSelectionEnd = false; // При некоторых действиях (переход стрелками), нужно переместиться к концу селекта, даже если часть селекта видна
 
 	this.DrawTableMode = {
 		Start  : false,
@@ -5158,12 +5159,14 @@ CDocument.prototype.CheckTargetUpdate = function()
 	if (!this.NeedUpdateTarget)
 		return;
 	
-	if (this._isSelectionVisible())
+	if (this._isSelectionVisible() && !this.ForceScrollToSelectionEnd)
 	{
 		this.NeedUpdateTarget = false;
 		return;
 	}
-
+	
+	this.ForceScrollToSelectionEnd = false;
+	
 	if (this.ViewPosition)
 	{
 		this.CheckViewPosition();
@@ -6469,6 +6472,7 @@ CDocument.prototype.MoveCursorToStartPos = function(AddToSelect)
 	this.Controller.MoveCursorToStartPos(AddToSelect);
 
 	this.private_UpdateCursorXY(true, true);
+	this.ScrollToTarget();
 };
 CDocument.prototype.MoveCursorToEndPos = function(AddToSelect)
 {
@@ -6481,6 +6485,7 @@ CDocument.prototype.MoveCursorToEndPos = function(AddToSelect)
 	this.Controller.MoveCursorToEndPos(AddToSelect);
 
 	this.private_UpdateCursorXY(true, true);
+	this.ScrollToTarget();
 };
 CDocument.prototype.MoveCursorLeft = function(AddToSelect, Word)
 {
@@ -6509,6 +6514,7 @@ CDocument.prototype.MoveCursorLeft = function(AddToSelect, Word)
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateRulersState();
 	this.private_UpdateCursorXY(true, true);
+	this.ScrollToTarget();
 };
 CDocument.prototype.MoveCursorRight = function(AddToSelect, Word, FromPaste)
 {
@@ -6537,6 +6543,7 @@ CDocument.prototype.MoveCursorRight = function(AddToSelect, Word, FromPaste)
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateSelectionState();
 	this.private_UpdateCursorXY(true, true);
+	this.ScrollToTarget();
 };
 CDocument.prototype.MoveCursorUp = function(AddToSelect, CtrlKey)
 {
@@ -6546,6 +6553,7 @@ CDocument.prototype.MoveCursorUp = function(AddToSelect, CtrlKey)
 	this.ResetTextSelectionType();
 	this.private_UpdateTargetForCollaboration();
 	this.Controller.MoveCursorUp(AddToSelect, CtrlKey);
+	this.ScrollToTarget();
 };
 CDocument.prototype.MoveCursorDown = function(AddToSelect, CtrlKey)
 {
@@ -6555,6 +6563,7 @@ CDocument.prototype.MoveCursorDown = function(AddToSelect, CtrlKey)
 	this.ResetTextSelectionType();
 	this.private_UpdateTargetForCollaboration();
 	this.Controller.MoveCursorDown(AddToSelect, CtrlKey);
+	this.ScrollToTarget();
 };
 CDocument.prototype.MoveCursorToEndOfLine = function(AddToSelect)
 {
@@ -6568,6 +6577,7 @@ CDocument.prototype.MoveCursorToEndOfLine = function(AddToSelect)
 
 	this.Document_UpdateInterfaceState();
 	this.private_UpdateCursorXY(true, true);
+	this.ScrollToTarget();
 };
 CDocument.prototype.MoveCursorToStartOfLine = function(AddToSelect)
 {
@@ -6581,6 +6591,7 @@ CDocument.prototype.MoveCursorToStartOfLine = function(AddToSelect)
 
 	this.Document_UpdateInterfaceState();
 	this.private_UpdateCursorXY(true, true);
+	this.ScrollToTarget();
 };
 CDocument.prototype.MoveCursorToXY = function(X, Y, AddToSelect)
 {
@@ -6590,6 +6601,7 @@ CDocument.prototype.MoveCursorToXY = function(X, Y, AddToSelect)
 	this.ResetTextSelectionType();
 	this.private_UpdateTargetForCollaboration();
 	this.Controller.MoveCursorToXY(X, Y, this.CurPage, AddToSelect);
+	this.ScrollToTarget();
 };
 CDocument.prototype.MoveCursorToCell = function(bNext)
 {
@@ -14797,9 +14809,14 @@ CDocument.prototype.private_UpdateCurPage = function()
 
 	this.private_CheckCurPage();
 };
+CDocument.prototype.ScrollToTarget = function()
+{
+	this.ForceScrollToSelectionEnd = true;
+	this.DrawingDocument.scrollToTarget();
+};
 CDocument.prototype._isSelectionVisible = function()
 {
-	if (!this.IsTextSelectionUse())
+	if (!this.IsTextSelectionUse() || this.IsSelectionEmpty())
 		return false;
 	
 	let viewPort = this.DrawingDocument.GetVisibleRegion();
