@@ -3156,6 +3156,8 @@ function (window, undefined) {
 			wb.setShowHorizontalScroll(bUndo ? Data.from : Data.to);
 		} else if (AscCH.historyitem_Workbook_SetCustomFunctions === Type) {
 			wb.oApi["pluginMethod_SetCustomFunctions"] && wb.oApi["pluginMethod_SetCustomFunctions"](bUndo ? Data.from : Data.to);
+		} else if (AscCH.historyitem_Workbook_Metadata === Type) {
+			wb.metadata = bUndo ? Data.from : Data.to;
 		}
 	};
 	UndoRedoWorkbook.prototype.forwardTransformationIsAffect = function (Type) {

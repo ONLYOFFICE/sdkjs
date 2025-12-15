@@ -24953,6 +24953,8 @@
 			}
 		}
 		if (generateNewStructure) {
+			const oldMetadata = this.ws.workbook.metadata ? this.ws.workbook.metadata.clone() : null;
+
 			if (!this.ws.workbook.metadata) {
 				this.ws.workbook.metadata = new AscCommonExcel.CMetadata();
 			}
@@ -25011,6 +25013,10 @@
 			cellMetadataBlock.t = meta.metadataTypes.length;
 			cellMetadataBlock.v = futureMetadata.futureMetadataBlocks.length - 1;
 			meta.cellMetadata.push(cellMetadataBlock);
+
+			const newMetadata = this.ws.workbook.metadata.clone();
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_Metadata,
+				null, null, new UndoRedoData_FromTo(oldMetadata, newMetadata));
 
 			return meta.cellMetadata.length;
 		}

@@ -18241,13 +18241,47 @@ function RangeDataManagerElem(bbox, data)
 	CMetadata.prototype.clone = function () {
 		let res = new CMetadata();
 
-		res.metadataTypes = this.metadataTypes && this.metadataTypes.clone();
-		res.metadataStrings = this.metadataStrings && this.metadataStrings.clone();
-		res.mdxMetadata = this.mdxMetadata && this.mdxMetadata.clone();
-		res.cellMetadata = this.cellMetadata && this.cellMetadata.clone();	// CMetadataRecord.clone
-		res.valueMetadata = this.valueMetadata && this.valueMetadata.clone();	// CMetadataRecord.clone
+		if (this.metadataTypes) {
+			res.metadataTypes = [];
+			for (let i = 0; i < this.metadataTypes.length; i++) {
+				res.metadataTypes.push(this.metadataTypes[i].clone());
+			}
+		}
+		
+		if (this.metadataStrings) {
+			res.metadataStrings = [];
+			for (let i = 0; i < this.metadataStrings.length; i++) {
+				res.metadataStrings.push(this.metadataStrings[i].clone());
+			}
+		}
+		
+		if (this.mdxMetadata) {
+			res.mdxMetadata = [];
+			for (let i = 0; i < this.mdxMetadata.length; i++) {
+				res.mdxMetadata.push(this.mdxMetadata[i].clone());
+			}
+		}
+		
+		if (this.cellMetadata) {
+			res.cellMetadata = [];
+			for (let i = 0; i < this.cellMetadata.length; i++) {
+				res.cellMetadata.push(this.cellMetadata[i].clone());
+			}
+		}
+		
+		if (this.valueMetadata) {
+			res.valueMetadata = [];
+			for (let i = 0; i < this.valueMetadata.length; i++) {
+				res.valueMetadata.push(this.valueMetadata[i].clone());
+			}
+		}
 
-		res.aFutureMetadata = this.aFutureMetadata && this.aFutureMetadata.clone();
+		if (this.aFutureMetadata) {
+			res.aFutureMetadata = [];
+			for (let i = 0; i < this.aFutureMetadata.length; i++) {
+				res.aFutureMetadata.push(this.aFutureMetadata[i].clone());
+			}
+		}
 
 		return res;
 	};
@@ -18457,12 +18491,18 @@ function RangeDataManagerElem(bbox, data)
 		let res = new CFutureMetadata();
 
 		res.name = this.name;
-		res.futureMetadataBlocks = this.futureMetadataBlocks && this.futureMetadataBlocks.clone();
+		if (this.futureMetadataBlocks) {
+			res.futureMetadataBlocks = [];
+			for (let i = 0; i < this.futureMetadataBlocks.length; i++) {
+				res.futureMetadataBlocks.push(this.futureMetadataBlocks[i].clone());
+			}
+		}
 
 		return res;
 	};
 
 	function CMetadataType() {
+		this.name = null;
 		this.minSupportedVersion = null;
 		this.ghostRow = null;
 		this.ghostCol = null;
@@ -18493,6 +18533,7 @@ function RangeDataManagerElem(bbox, data)
 	CMetadataType.prototype.clone = function () {
 		let res = new CMetadataType();
 
+		res.name = this.name;
 		res.minSupportedVersion = this.minSupportedVersion;
 		res.ghostRow = this.ghostRow;
 		res.ghostCol = this.ghostCol;
@@ -18586,7 +18627,12 @@ function RangeDataManagerElem(bbox, data)
 		res.st = this.st;
 		res.b = this.b;
 
-		res.metadataStringIndexes = this.metadataStringIndexes && this.metadataStringIndexes.clone();
+		if (this.metadataStringIndexes) {
+			res.metadataStringIndexes = [];
+			for (let i = 0; i < this.metadataStringIndexes.length; i++) {
+				res.metadataStringIndexes.push(this.metadataStringIndexes[i].clone());
+			}
+		}
 
 		return res;
 	};
@@ -18605,7 +18651,12 @@ function RangeDataManagerElem(bbox, data)
 		res.c = this.c;
 		res.o = this.o;
 
-		res.metadataStringIndexes = this.metadataStringIndexes && this.metadataStringIndexes.clone();
+		if (this.metadataStringIndexes) {
+			res.metadataStringIndexes = [];
+			for (let i = 0; i < this.metadataStringIndexes.length; i++) {
+				res.metadataStringIndexes.push(this.metadataStringIndexes[i].clone());
+			}
+		}
 
 		return res;
 	};
@@ -18683,7 +18734,12 @@ function RangeDataManagerElem(bbox, data)
 	CFutureMetadataBlock.prototype.clone = function () {
 		let res = new CFutureMetadataBlock();
 
-		res.extLst = this.extLst && this.extLst.clone();
+		if (this.extLst) {
+			res.extLst = [];
+			for (let i = 0; i < this.extLst.length; i++) {
+				res.extLst.push(this.extLst[i].clone());
+			}
+		}
 
 		return res;
 	};

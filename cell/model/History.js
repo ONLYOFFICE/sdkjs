@@ -59,6 +59,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Workbook_ShowVerticalScroll = 18;
 	window['AscCH'].historyitem_Workbook_ShowHorizontalScroll = 19;
 	window['AscCH'].historyitem_Workbook_SetCustomFunctions = 20;
+	window['AscCH'].historyitem_Workbook_Metadata = 21;
 
 	window['AscCH'].historyitem_Worksheet_RemoveCell = 1;
 	window['AscCH'].historyitem_Worksheet_RemoveRows = 2;
