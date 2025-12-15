@@ -18500,6 +18500,37 @@ function RangeDataManagerElem(bbox, data)
 
 		return res;
 	};
+	CFutureMetadata.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.name = r.GetString2();
+		}
+		if (r.GetBool()) {
+			var length = r.GetLong();
+			this.futureMetadataBlocks = [];
+			for (var i = 0; i < length; ++i) {
+				var elem = new CFutureMetadataBlock();
+				elem.Read_FromBinary2(r);
+				this.futureMetadataBlocks.push(elem);
+			}
+		}
+	};
+	CFutureMetadata.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.name) {
+			w.WriteBool(true);
+			w.WriteString2(this.name);
+		} else {
+			w.WriteBool(false);
+		}
+		if (this.futureMetadataBlocks) {
+			w.WriteBool(true);
+			w.WriteLong(this.futureMetadataBlocks.length);
+			for (var i = 0; i < this.futureMetadataBlocks.length; ++i) {
+				this.futureMetadataBlocks[i].Write_ToBinary2(w);
+			}
+		} else {
+			w.WriteBool(false);
+		}
+	};
 
 	function CMetadataType() {
 		this.name = null;
@@ -18563,6 +18594,253 @@ function RangeDataManagerElem(bbox, data)
 
 		return res;
 	};
+	CMetadataType.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.name = r.GetString2();
+		}
+		if (r.GetBool()) {
+			this.minSupportedVersion = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.ghostRow = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.ghostCol = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.edit = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.delete = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.copy = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.pasteAll = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.pasteFormulas = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.pasteValues = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.pasteFormats = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.pasteComments = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.pasteDataValidation = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.pasteBorders = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.pasteColWidths = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.pasteNumberFormats = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.merge = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.splitFirst = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.splitAll = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.rowColShift = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.clearAll = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.clearFormats = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.clearContents = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.clearComments = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.assign = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.coerce = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.cellMeta = r.GetBool();
+		}
+	};
+	CMetadataType.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.name) {
+			w.WriteBool(true);
+			w.WriteString2(this.name);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.minSupportedVersion) {
+			w.WriteBool(true);
+			w.WriteLong(this.minSupportedVersion);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.ghostRow) {
+			w.WriteBool(true);
+			w.WriteBool(this.ghostRow);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.ghostCol) {
+			w.WriteBool(true);
+			w.WriteBool(this.ghostCol);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.edit) {
+			w.WriteBool(true);
+			w.WriteBool(this.edit);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.delete) {
+			w.WriteBool(true);
+			w.WriteBool(this.delete);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.copy) {
+			w.WriteBool(true);
+			w.WriteBool(this.copy);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.pasteAll) {
+			w.WriteBool(true);
+			w.WriteBool(this.pasteAll);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.pasteFormulas) {
+			w.WriteBool(true);
+			w.WriteBool(this.pasteFormulas);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.pasteValues) {
+			w.WriteBool(true);
+			w.WriteBool(this.pasteValues);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.pasteFormats) {
+			w.WriteBool(true);
+			w.WriteBool(this.pasteFormats);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.pasteComments) {
+			w.WriteBool(true);
+			w.WriteBool(this.pasteComments);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.pasteDataValidation) {
+			w.WriteBool(true);
+			w.WriteBool(this.pasteDataValidation);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.pasteBorders) {
+			w.WriteBool(true);
+			w.WriteBool(this.pasteBorders);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.pasteColWidths) {
+			w.WriteBool(true);
+			w.WriteBool(this.pasteColWidths);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.pasteNumberFormats) {
+			w.WriteBool(true);
+			w.WriteBool(this.pasteNumberFormats);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.merge) {
+			w.WriteBool(true);
+			w.WriteBool(this.merge);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.splitFirst) {
+			w.WriteBool(true);
+			w.WriteBool(this.splitFirst);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.splitAll) {
+			w.WriteBool(true);
+			w.WriteBool(this.splitAll);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.rowColShift) {
+			w.WriteBool(true);
+			w.WriteBool(this.rowColShift);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.clearAll) {
+			w.WriteBool(true);
+			w.WriteBool(this.clearAll);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.clearFormats) {
+			w.WriteBool(true);
+			w.WriteBool(this.clearFormats);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.clearContents) {
+			w.WriteBool(true);
+			w.WriteBool(this.clearContents);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.clearComments) {
+			w.WriteBool(true);
+			w.WriteBool(this.clearComments);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.assign) {
+			w.WriteBool(true);
+			w.WriteBool(this.assign);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.coerce) {
+			w.WriteBool(true);
+			w.WriteBool(this.coerce);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.cellMeta) {
+			w.WriteBool(true);
+			w.WriteBool(this.cellMeta);
+		} else {
+			w.WriteBool(false);
+		}
+	};
 
 	function CMetadataString() {
 		this.v = null;
@@ -18573,6 +18851,19 @@ function RangeDataManagerElem(bbox, data)
 		res.v = this.v;
 
 		return res;
+	};
+	CMetadataString.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.v = r.GetString2();
+		}
+	};
+	CMetadataString.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.v) {
+			w.WriteBool(true);
+			w.WriteString2(this.v);
+		} else {
+			w.WriteBool(false);
+		}
 	};
 
 	function CMdx() {
@@ -18597,6 +18888,68 @@ function RangeDataManagerElem(bbox, data)
 		res.f = this.f;
 
 		return res;
+	};
+	CMdx.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.mdxTuple = new CMdxTuple();
+			this.mdxTuple.Read_FromBinary2(r);
+		}
+		if (r.GetBool()) {
+			this.mdxSet = new CMdxSet();
+			this.mdxSet.Read_FromBinary2(r);
+		}
+		if (r.GetBool()) {
+			this.mdxKPI = new CMdxKPI();
+			this.mdxKPI.Read_FromBinary2(r);
+		}
+		if (r.GetBool()) {
+			this.mdxMemeberProp = new CMdxMemeberProp();
+			this.mdxMemeberProp.Read_FromBinary2(r);
+		}
+		if (r.GetBool()) {
+			this.n = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.f = r.GetBool();
+		}
+	};
+	CMdx.prototype.Write_ToBinary2 = function(w) {
+		if (this.mdxTuple) {
+			w.WriteBool(true);
+			this.mdxTuple.Write_ToBinary2(w);
+		} else {
+			w.WriteBool(false);
+		}
+		if (this.mdxSet) {
+			w.WriteBool(true);
+			this.mdxSet.Write_ToBinary2(w);
+		} else {
+			w.WriteBool(false);
+		}
+		if (this.mdxKPI) {
+			w.WriteBool(true);
+			this.mdxKPI.Write_ToBinary2(w);
+		} else {
+			w.WriteBool(false);
+		}
+		if (this.mdxMemeberProp) {
+			w.WriteBool(true);
+			this.mdxMemeberProp.Write_ToBinary2(w);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.n) {
+			w.WriteBool(true);
+			w.WriteLong(this.n);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.f) {
+			w.WriteBool(true);
+			w.WriteBool(this.f);
+		} else {
+			w.WriteBool(false);
+		}
 	};
 
 	function CMdxTuple() {
@@ -18636,6 +18989,118 @@ function RangeDataManagerElem(bbox, data)
 
 		return res;
 	};
+	CMdxTuple.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.c = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.ct = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.si = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.fi = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.bc = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.fc = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.i = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.u = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.st = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.b = r.GetBool();
+		}
+		if (r.GetBool()) {
+			var length = r.GetLong();
+			this.metadataStringIndexes = [];
+			for (var i = 0; i < length; ++i) {
+				var elem = new CMetadataStringIndex();
+				elem.Read_FromBinary2(r);
+				this.metadataStringIndexes.push(elem);
+			}
+		}
+	};
+	CMdxTuple.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.c) {
+			w.WriteBool(true);
+			w.WriteLong(this.c);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.ct) {
+			w.WriteBool(true);
+			w.WriteLong(this.ct);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.si) {
+			w.WriteBool(true);
+			w.WriteLong(this.si);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.fi) {
+			w.WriteBool(true);
+			w.WriteLong(this.fi);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.bc) {
+			w.WriteBool(true);
+			w.WriteLong(this.bc);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.fc) {
+			w.WriteBool(true);
+			w.WriteLong(this.fc);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.i) {
+			w.WriteBool(true);
+			w.WriteBool(this.i);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.u) {
+			w.WriteBool(true);
+			w.WriteBool(this.u);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.st) {
+			w.WriteBool(true);
+			w.WriteBool(this.st);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.b) {
+			w.WriteBool(true);
+			w.WriteBool(this.b);
+		} else {
+			w.WriteBool(false);
+		}
+		if (this.metadataStringIndexes) {
+			w.WriteBool(true);
+			w.WriteLong(this.metadataStringIndexes.length);
+			for (var i = 0; i < this.metadataStringIndexes.length; ++i) {
+				this.metadataStringIndexes[i].Write_ToBinary2(w);
+			}
+		} else {
+			w.WriteBool(false);
+		}
+	};
 
 	function CMdxSet() {
 		this.ns = null;
@@ -18660,6 +19125,55 @@ function RangeDataManagerElem(bbox, data)
 
 		return res;
 	};
+	CMdxSet.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.ns = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.c = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.o = r.GetLong();
+		}
+		if (r.GetBool()) {
+			var length = r.GetLong();
+			this.metadataStringIndexes = [];
+			for (var i = 0; i < length; ++i) {
+				var elem = new CMetadataStringIndex();
+				elem.Read_FromBinary2(r);
+				this.metadataStringIndexes.push(elem);
+			}
+		}
+	};
+	CMdxSet.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.ns) {
+			w.WriteBool(true);
+			w.WriteLong(this.ns);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.c) {
+			w.WriteBool(true);
+			w.WriteLong(this.c);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.o) {
+			w.WriteBool(true);
+			w.WriteLong(this.o);
+		} else {
+			w.WriteBool(false);
+		}
+		if (this.metadataStringIndexes) {
+			w.WriteBool(true);
+			w.WriteLong(this.metadataStringIndexes.length);
+			for (var i = 0; i < this.metadataStringIndexes.length; ++i) {
+				this.metadataStringIndexes[i].Write_ToBinary2(w);
+			}
+		} else {
+			w.WriteBool(false);
+		}
+	};
 
 	function CMetadataStringIndex() {
 		this.x = null;
@@ -18674,6 +19188,28 @@ function RangeDataManagerElem(bbox, data)
 
 		return res;
 	};
+	CMetadataStringIndex.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.x = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.s = r.GetBool();
+		}
+	};
+	CMetadataStringIndex.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.x) {
+			w.WriteBool(true);
+			w.WriteLong(this.x);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.s) {
+			w.WriteBool(true);
+			w.WriteBool(this.s);
+		} else {
+			w.WriteBool(false);
+		}
+	};
 
 	function CMdxMemeberProp() {
 		this.n = null;
@@ -18687,6 +19223,28 @@ function RangeDataManagerElem(bbox, data)
 		res.np = this.np;
 
 		return res;
+	};
+	CMdxMemeberProp.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.n = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.np = r.GetLong();
+		}
+	};
+	CMdxMemeberProp.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.n) {
+			w.WriteBool(true);
+			w.WriteLong(this.n);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.np) {
+			w.WriteBool(true);
+			w.WriteLong(this.np);
+		} else {
+			w.WriteBool(false);
+		}
 	};
 
 	function CMdxKPI() {
@@ -18703,6 +19261,37 @@ function RangeDataManagerElem(bbox, data)
 
 		return res;
 	};
+	CMdxKPI.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.n = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.np = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.p = r.GetLong();
+		}
+	};
+	CMdxKPI.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.n) {
+			w.WriteBool(true);
+			w.WriteLong(this.n);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.np) {
+			w.WriteBool(true);
+			w.WriteLong(this.np);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.p) {
+			w.WriteBool(true);
+			w.WriteLong(this.p);
+		} else {
+			w.WriteBool(false);
+		}
+	};
 
 	function CMetadataBlock() {
 		this.elems = null;
@@ -18713,6 +19302,19 @@ function RangeDataManagerElem(bbox, data)
 		res.elems = this.elems;
 
 		return res;
+	};
+	CMetadataBlock.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.elems = r.GetLong();
+		}
+	};
+	CMetadataBlock.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.elems) {
+			w.WriteBool(true);
+			w.WriteLong(this.elems);
+		} else {
+			w.WriteBool(false);
+		}
 	};
 
 	function CMetadataRecord() {
@@ -18726,6 +19328,28 @@ function RangeDataManagerElem(bbox, data)
 		res.v = this.v;
 
 		return res;
+	};
+	CMetadataRecord.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.t = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.v = r.GetLong();
+		}
+	};
+	CMetadataRecord.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.t) {
+			w.WriteBool(true);
+			w.WriteLong(this.t);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.v) {
+			w.WriteBool(true);
+			w.WriteLong(this.v);
+		} else {
+			w.WriteBool(false);
+		}
 	};
 
 	function CFutureMetadataBlock() {
@@ -18743,6 +19367,28 @@ function RangeDataManagerElem(bbox, data)
 
 		return res;
 	};
+	CFutureMetadataBlock.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			var length = r.GetLong();
+			this.extLst = [];
+			for (var i = 0; i < length; ++i) {
+				var elem = new CMetadataBlockExt();
+				elem.Read_FromBinary2(r);
+				this.extLst.push(elem);
+			}
+		}
+	};
+	CFutureMetadataBlock.prototype.Write_ToBinary2 = function(w) {
+		if (this.extLst) {
+			w.WriteBool(true);
+			w.WriteLong(this.extLst.length);
+			for (var i = 0; i < this.extLst.length; ++i) {
+				this.extLst[i].Write_ToBinary2(w);
+			}
+		} else {
+			w.WriteBool(false);
+		}
+	};
 
 	function CMetadataBlockExt() {
 		this.richValueBlock = null;
@@ -18751,10 +19397,35 @@ function RangeDataManagerElem(bbox, data)
 	CMetadataBlockExt.prototype.clone = function () {
 		let res = new CMetadataBlockExt();
 
+
 		res.richValueBlock = this.richValueBlock && this.richValueBlock.clone();
 		res.dynamicArrayProperties = this.dynamicArrayProperties && this.dynamicArrayProperties.clone();
 
 		return res;
+	};
+	CMetadataBlockExt.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.richValueBlock = new CRichValueBlock();
+			this.richValueBlock.Read_FromBinary2(r);
+		}
+		if (r.GetBool()) {
+			this.dynamicArrayProperties = new CDynamicArrayProperties();
+			this.dynamicArrayProperties.Read_FromBinary2(r);
+		}
+	};
+	CMetadataBlockExt.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.richValueBlock) {
+			w.WriteBool(true);
+			this.richValueBlock.Write_ToBinary2(w);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.dynamicArrayProperties) {
+			w.WriteBool(true);
+			this.dynamicArrayProperties.Write_ToBinary2(w);
+		} else {
+			w.WriteBool(false);
+		}
 	};
 	//TODO move to extensions?
 	function CDynamicArrayProperties() {
@@ -18769,6 +19440,28 @@ function RangeDataManagerElem(bbox, data)
 
 		return res;
 	};
+	CDynamicArrayProperties.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.fDynamic = r.GetBool();
+		}
+		if (r.GetBool()) {
+			this.fCollapsed = r.GetBool();
+		}
+	};
+	CDynamicArrayProperties.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.fDynamic) {
+			w.WriteBool(true);
+			w.WriteBool(this.fDynamic);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.fCollapsed) {
+			w.WriteBool(true);
+			w.WriteBool(this.fCollapsed);
+		} else {
+			w.WriteBool(false);
+		}
+	};
 
 	function CRichValueBlock() {
 		this.i = null;
@@ -18779,6 +19472,19 @@ function RangeDataManagerElem(bbox, data)
 		res.i = this.i;
 
 		return res;
+	};
+	CRichValueBlock.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.i = r.GetLong();
+		}
+	};
+	CRichValueBlock.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.i) {
+			w.WriteBool(true);
+			w.WriteLong(this.i);
+		} else {
+			w.WriteBool(false);
+		}
 	};
 
 	function CCustomFunctionEngine(wb) {
