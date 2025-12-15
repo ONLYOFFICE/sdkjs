@@ -14721,7 +14721,8 @@
 			if(byRef) {
 				if(isFirstArrayFormulaCell) {
 					if (dynamicRange) {
-						newFP.setCm(1);
+						let cmIndex = this.ws.dynamicArrayManager.getNextCmIndex(true);
+						newFP.setCm(cmIndex);
 					}
 					wb.dependencyFormulas.addToBuildDependencyArray(newFP);
 				}
@@ -24941,6 +24942,78 @@
 		}
 
 		return metadata.getRichValueBlock(index - 1);
+	};
+
+	CDynamicArrayManager.prototype.getNextCmIndex = function(generateNewStructure) {
+		const metadata = this.ws.workbook.metadata;
+		if (metadata) {
+			let oDynamicProps = metadata.getLastDynamicArrayPropertiesByType("XLDAPR");
+			if (oDynamicProps && oDynamicProps.dynamicArrayProperties && oDynamicProps.dynamicArrayProperties.fDynamic) {
+				return oDynamicProps.cmIndex;
+			}
+		}
+		if (generateNewStructure) {
+			if (!this.ws.workbook.metadata) {
+				this.ws.workbook.metadata = new AscCommonExcel.CMetadata();
+			}
+			const meta = this.ws.workbook.metadata;
+
+			if (!meta.metadataTypes) {
+				meta.metadataTypes = [];
+			}
+			let metadataType = meta.getMetaDataType("XLDAPR");
+			if (!metadataType) {
+				metadataType = new AscCommonExcel.CMetadataType();
+				metadataType.name = "XLDAPR";
+				metadataType.minSupportedVersion = 120000;
+				metadataType.copy = 1;
+				metadataType.pasteAll = 1;
+				metadataType.pasteValues = 1;
+				metadataType.merge = 1;
+				metadataType.splitFirst = 1;
+				metadataType.rowColShift = 1;
+				metadataType.clearFormats = 1;
+				metadataType.clearComments = 1;
+				metadataType.assign = 1;
+				metadataType.coerce = 1;
+				metadataType.cellMeta = 1;
+				meta.metadataTypes.push(metadataType);
+			}
+
+			if (!meta.aFutureMetadata) {
+				meta.aFutureMetadata = [];
+			}
+			let futureMetadata = meta.getFutureMetadataByType("XLDAPR");
+			if (!futureMetadata) {
+				futureMetadata = new AscCommonExcel.CFutureMetadata();
+				futureMetadata.name = "XLDAPR";
+				futureMetadata.futureMetadataBlocks = [];
+				meta.aFutureMetadata.push(futureMetadata);
+			}
+
+			const dynamicArrayProps = new AscCommonExcel.CDynamicArrayProperties();
+			dynamicArrayProps.fDynamic = true;
+			dynamicArrayProps.fCollapsed = false;
+
+			const extBlock = new AscCommonExcel.CMetadataBlockExt();
+			extBlock.uri = "{bdbb8cdc-fa1e-496e-a857-3c3f30c029c3}";
+			extBlock.dynamicArrayProperties = dynamicArrayProps;
+
+			const futureBlock = new AscCommonExcel.CFutureMetadataBlock();
+			futureBlock.extLst = [extBlock];
+			futureMetadata.futureMetadataBlocks.push(futureBlock);
+
+			if (!meta.cellMetadata) {
+				meta.cellMetadata = [];
+			}
+
+			const cellMetadataBlock = new AscCommonExcel.CMetadataBlock();
+			cellMetadataBlock.t = meta.metadataTypes.length;
+			cellMetadataBlock.v = futureMetadata.futureMetadataBlocks.length - 1;
+			meta.cellMetadata.push(cellMetadataBlock);
+
+			return meta.cellMetadata.length;
+		}
 	};
 
 

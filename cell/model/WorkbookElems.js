@@ -18334,6 +18334,80 @@ function RangeDataManagerElem(bbox, data)
 		return null;
 	};
 
+	CMetadata.prototype.getLastDynamicArrayPropertiesByType = function (sType) {
+		if (!sType || !this.aFutureMetadata || !this.metadataTypes || !this.cellMetadata) {
+			return null;
+		}
+
+		let targetFutureMetadata = null;
+		for (let i = 0; i < this.aFutureMetadata.length; i++) {
+			if (this.aFutureMetadata[i].name === sType) {
+				targetFutureMetadata = this.aFutureMetadata[i];
+				break;
+			}
+		}
+
+		if (!targetFutureMetadata || !targetFutureMetadata.futureMetadataBlocks) {
+			return null;
+		}
+
+		const futureBlocks = targetFutureMetadata.futureMetadataBlocks;
+		if (!futureBlocks || futureBlocks.length === 0) {
+			return null;
+		}
+
+		const lastBlockIndex = futureBlocks.length - 1;
+		const lastBlock = futureBlocks[lastBlockIndex];
+		if (!lastBlock) {
+			return null;
+		}
+
+		const extBlocks = lastBlock.extLst;
+		if (!extBlocks) {
+			return null;
+		}
+
+		let dynamicArrayProps = null;
+		for (let i = 0; i < extBlocks.length; i++) {
+			const extBlock = extBlocks[i];
+			if (extBlock.dynamicArrayProperties) {
+				dynamicArrayProps = extBlock.dynamicArrayProperties;
+				break;
+			}
+		}
+
+		if (!dynamicArrayProps) {
+			return null;
+		}
+
+		let typeIndex = -1;
+		for (let i = 0; i < this.metadataTypes.length; i++) {
+			if (this.metadataTypes[i].name === sType) {
+				typeIndex = i;
+				break;
+			}
+		}
+
+		if (typeIndex === -1) {
+			return null;
+		}
+
+		let cmIndex = null;
+		for (let i = 0; i < this.cellMetadata.length; i++) {
+			const cellMetadataBlock = this.cellMetadata[i];
+			// t - 1 = typeIndex (0-based), v = valueIndex in futureBlocks (0-based)
+			if (cellMetadataBlock.t - 1 === typeIndex && cellMetadataBlock.v === lastBlockIndex) {
+				cmIndex = i + 1; // 1-based
+				break;
+			}
+		}
+
+		return {
+			index: cmIndex,
+			dynamicArrayProperties: dynamicArrayProps
+		};
+	};
+
 	CMetadata.prototype.getRichValueBlock = function (vmIndex) {
 		let metaDataType = this.getMetaDataType("XLRICHVALUE");
 		if (metaDataType) {
