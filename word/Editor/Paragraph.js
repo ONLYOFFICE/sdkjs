@@ -8404,11 +8404,11 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 	
 	let startPos = this.Get_ParaContentPos(true, true);
 	
-	if (logicDocument.IsWordSelection())
+	if (logicDocument && logicDocument.IsWordSelection())
 		pos = this.getClosestWordPos(pos, SearchPosXY2.getLine(), SearchPosXY2.getRange());
 	
 	// Выставим в полученном месте текущую позицию курсора
-	if (!logicDocument.IsWordSelection())
+	if (!logicDocument || !logicDocument.IsWordSelection())
 		this.Set_ParaContentPos(pos2, true, SearchPosXY2.getLine(), SearchPosXY2.getRange());
 
 	if (!isFixedForm
@@ -8419,10 +8419,10 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 	// Выставляем селект
 	this.Set_SelectionContentPos(startPos, pos, true, this.Selection.StartLine, this.Selection.StartRange, SearchPosXY2.getLine(), SearchPosXY2.getRange());
 	
-	if (logicDocument.IsWordSelection())
+	if (logicDocument && logicDocument.IsWordSelection())
 		this.checkWordSelection();
 	
-	if (logicDocument.IsParagraphSelection())
+	if (logicDocument && logicDocument.IsParagraphSelection())
 		this.SelectAll(logicDocument.GetSelectDirection());
 	
 	if (!this.GetPlaceHolderObject())
