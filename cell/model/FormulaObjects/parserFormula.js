@@ -6816,6 +6816,7 @@ function parserFormula( formula, parent, _ws ) {
 		const aCriteriaRanges = [];
 		let oCalcRange = null;
 		let aArgs = null;
+		let bCalcRangeSkipped = false;
 
 		if (sFunctionName !== "COUNTIFS") { // COUNTIFS doesn't need to oCalcRange.
 			oCalcRange = _getCalcRange(aOutStack, nCountArgs, sFunctionName);
@@ -6826,7 +6827,8 @@ function parserFormula( formula, parent, _ws ) {
 			if (!aOutStack[i]) {
 				continue;
 			}
-			if (oCalcRange && oCalcRange.value === aOutStack[i].value) {
+			if (oCalcRange && oCalcRange.value === aOutStack[i].value && !bCalcRangeSkipped) {
+				bCalcRangeSkipped = true;
 				continue;
 			}
 			if (bEvenIndex && !Array.isArray(aOutStack[i])) {
@@ -7042,6 +7044,7 @@ function parserFormula( formula, parent, _ws ) {
 	 * @private
 	 */
 	parserFormula.prototype._checkRangeByCriteria = function (aRangeArgs, nCountArgs) {
+		const aAvailableTypes = [cElementType.name, cElementType.name3D, cElementType.cellsRange, cElementType.cellsRange3D];
 		let oCalcRange = aRangeArgs[0];
 		const aCriteriaRanges = aRangeArgs[1];
 		const aConditions = aRangeArgs[2];
@@ -7055,6 +7058,9 @@ function parserFormula( formula, parent, _ws ) {
 		let bMatch = false;
 
 		for (let i = 0; i < nLen; i++) {
+			if (!aAvailableTypes.includes(aCriteriaRanges[i].type)) {
+				return bMatch;
+			}
 			if (this._criteriaCellHasFormula(aCriteriaRanges[i])) {
 				return bMatch;
 			}
@@ -7300,6 +7306,7 @@ function parserFormula( formula, parent, _ws ) {
 
 		if (bRange) {
 			const aAreaType = [cElementType.cellsRange, cElementType.cellsRange3D];
+			const aAvailableTypes = aNameType.concat(aAreaType);
 			// For formulas like SUMIF, COUNTIF, etc. with 2 arguments, check the range has the cycle link without criteria.
 			if (nCountArgs === 2) {
 				bRecursiveCell = this._isAreaContainCell(aOutStack[0]);
@@ -7316,6 +7323,9 @@ function parserFormula( formula, parent, _ws ) {
 			const aConditions = aRangeArgs[2];
 			let bHasRecursiveCriteria = false;
 
+			if (oCalcRange && !aAvailableTypes.includes(oCalcRange.type)) {
+				return false;
+			}
 			if (aConditions.length) {
 				for (let i = 0, length = aConditions.length; i < length; i++) {
 					if (this._isAreaContainCell(aConditions[i])) {

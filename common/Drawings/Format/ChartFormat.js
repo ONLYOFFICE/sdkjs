@@ -4784,24 +4784,32 @@
 		}
 	};
 	CSeriesBase.prototype.supportsErrorBars = function () {
-		if (this instanceof AscFormat.CAreaSeries ||
-			this instanceof AscFormat.CBarSeries ||
-			this instanceof AscFormat.CBubbleSeries ||
-			this instanceof AscFormat.CScatterSeries ||
-			this instanceof AscFormat.CLineSeries) {
+		const objectType = this.getObjectType();
+		const supportedTypes = [
+			AscDFH.historyitem_type_AreaSeries,
+			AscDFH.historyitem_type_BarSeries,
+			AscDFH.historyitem_type_BubbleSeries,
+			AscDFH.historyitem_type_ScatterSer,
+			AscDFH.historyitem_type_LineSeries
+		];
 
+		if (supportedTypes.indexOf(objectType) >= 0) {
 			const chart = this.parent;
 			return !(chart && chart.b3D);
 		}
 		return false;
 	};
 	CSeriesBase.prototype.supportsTrendlines = function () {
-		if (this instanceof AscFormat.CAreaSeries ||
-			this instanceof AscFormat.CBarSeries ||
-			this instanceof AscFormat.CBubbleSeries ||
-			this instanceof AscFormat.CScatterSeries ||
-			this instanceof AscFormat.CLineSeries) {
+		const objectType = this.getObjectType();
+		const supportedTypes = [
+			AscDFH.historyitem_type_AreaSeries,
+			AscDFH.historyitem_type_BarSeries,
+			AscDFH.historyitem_type_BubbleSeries,
+			AscDFH.historyitem_type_ScatterSer,
+			AscDFH.historyitem_type_LineSeries
+		];
 
+		if (supportedTypes.indexOf(objectType) >= 0) {
 			const chart = this.parent;
 			return !(chart && chart.b3D);
 		}
@@ -4824,8 +4832,7 @@
 		if (!Array.isArray(trendlines) || trendlines.length === 0)
 			return;
 
-		const allowedTypes = [AscFormat.CAreaSeries, AscFormat.CBarSeries, AscFormat.CBubbleSeries, AscFormat.CLineSeries, AscFormat.CScatterSeries];
-		const canAddTrendlines = allowedTypes.some(function (seriesType) { return this instanceof seriesType; }, this);
+		const canAddTrendlines = this.supportsTrendlines();
 		if (!canAddTrendlines)
 			return;
 
