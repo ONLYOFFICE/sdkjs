@@ -3913,7 +3913,15 @@
                     });
                 }
             }
-
+			if (this.wb.richValueData) {
+				this.bs.WriteItem(c_oSerWorkbookTypes.RdRichValue, function () {oThis.WriteRichValueData(oThis.wb.richValueData.pData);});
+			}
+			if (this.wb.richValueStructures) {
+				this.bs.WriteItem(c_oSerWorkbookTypes.RdRichValueStructure, function () {oThis.WriteRichValueStructures(oThis.wb.richValueStructures.children);});
+			}
+			if (this.wb.richValueTypesInfo) {
+				this.bs.WriteItem(c_oSerWorkbookTypes.RdRichValueTypes, function () {oThis.WriteRichValueTypes(oThis.wb.richValueTypesInfo);});
+			}
         };
         this.WriteWorkbookPr = function()
         {
@@ -5099,19 +5107,21 @@
                 });
             }
 
-            for (let i = 0; i < pStructure.arrItems.length; ++i) {
-                if (!pStructure.arrItems[i]) continue;
+            for (let i = 0; i < pStructure.children.length; ++i) {
+                if (!pStructure.children[i]) {
+                    continue;
+                }
 
                 this.bs.WriteItem(c_oSer_RichStructures.ValueKey, function() {
-                    if (pStructure.arrItems[i].t != null) {
+                    if (pStructure.children[i].t != null) {
                         oThis.memory.WriteByte(c_oSer_RichStructures.ValueKeyType);
                         oThis.memory.WriteByte(c_oSerPropLenType.Byte);
-                        oThis.memory.WriteByte(pStructure.arrItems[i].t);
+                        oThis.memory.WriteByte(pStructure.children[i].t);
                     }
-                    if (pStructure.arrItems[i].n != null) {
+                    if (pStructure.children[i].n != null) {
                         oThis.memory.WriteByte(c_oSer_RichStructures.ValueKeyName);
                         oThis.memory.WriteByte(c_oSerPropLenType.Variable);
-                        oThis.memory.WriteString(pStructure.arrItems[i].n);
+                        oThis.memory.WriteString2(pStructure.children[i].n);
                     }
                 });
             }
@@ -5170,7 +5180,7 @@
                     if (pReservedKey.arrItems[i].name != null) {
                         oThis.memory.WriteByte(c_oSer_RichValueTypesInfo.FlagName);
                         oThis.memory.WriteByte(c_oSerPropLenType.Variable);
-                        oThis.memory.WriteString(pReservedKey.arrItems[i].name);
+                        oThis.memory.WriteString2(pReservedKey.arrItems[i].name);
                     }
                     if (pReservedKey.arrItems[i].value != null) {
                         oThis.memory.WriteByte(c_oSer_RichValueTypesInfo.FlagValue);
