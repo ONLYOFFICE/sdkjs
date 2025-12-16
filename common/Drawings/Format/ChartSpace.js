@@ -2647,6 +2647,14 @@ function(window, undefined) {
 			ret.smooth = oFirstChart.isSmooth();
 			ret.showMarker = oFirstChart.isMarkerChart();
 		}
+
+		if (targetSeries && targetSeries.errBars && targetSeries.errBars.length > 0) {
+			const firstErrBar = targetSeries.errBars[0];
+			if (firstErrBar && AscFormat.isRealNumber(firstErrBar.errValType)) {
+				ret.errorBarsValueType = firstErrBar.errValType;
+			}
+		}
+
 		ret.putView3d(this.getView3d());
 		return ret;
 	};

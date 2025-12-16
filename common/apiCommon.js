@@ -1522,6 +1522,9 @@ function (window, undefined) {
 	asc_ChartSettings.prototype.getDataLabelsPos = function () {
 		return this.dataLabelsPos;
 	};
+	asc_ChartSettings.prototype.getErrorBarsValueType = function () {
+		return this.errorBarsValueType;
+	};
 	asc_ChartSettings.prototype.getType = function () {
 		if (this.chartSpace) {
 			return this.chartSpace.getChartType();
@@ -8405,6 +8408,7 @@ function (window, undefined) {
 	prot["getVertAxisLabel"] = prot.getVertAxisLabel;
 	prot["getLegendPos"] = prot.getLegendPos;
 	prot["getDataLabelsPos"] = prot.getDataLabelsPos;
+	prot["getErrorBarsValueType"] = prot.getErrorBarsValueType;
 	prot["getHorGridLines"] = prot.getHorGridLines;
 	prot["putHorGridLines"] = prot.putHorGridLines;
 	prot["getVertGridLines"] = prot.getVertGridLines;
