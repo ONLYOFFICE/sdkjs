@@ -1793,7 +1793,8 @@ function (window, undefined) {
 	asc_ChartSettings.prototype.setDisplayDataLabels = function (bDisplay, nDataLabelPos) {
 		if (this.chartSpace) {
 			AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-			this.chartSpace.showDataLabels(bDisplay, nDataLabelPos);
+			const selectedSeriesOnly = true;
+			this.chartSpace.showDataLabels(bDisplay, nDataLabelPos, selectedSeriesOnly);
 			this.updateChart();
 			const oLogicDocument = Asc.editor.getLogicDocument();
 			if (oLogicDocument) {
