@@ -19467,29 +19467,6 @@ function RangeDataManagerElem(bbox, data)
 		}
 	};
 
-	function CRichValueBlock() {
-		this.i = null;
-	}
-	CRichValueBlock.prototype.clone = function () {
-		let res = new CRichValueBlock();
-
-		res.i = this.i;
-
-		return res;
-	};
-	CRichValueBlock.prototype.Read_FromBinary2 = function(r) {
-		if (r.GetBool()) {
-			this.i = r.GetLong();
-		}
-	};
-	CRichValueBlock.prototype.Write_ToBinary2 = function(w) {
-		if (null != this.i) {
-			w.WriteBool(true);
-			w.WriteLong(this.i);
-		} else {
-			w.WriteBool(false);
-		}
-	};
 
 	function CCustomFunctionEngine(wb) {
 		this.wb = wb;
@@ -21268,42 +21245,269 @@ function RangeDataManagerElem(bbox, data)
 		this.value = null;
 		this.name = null;
 	}
+	CRichValueTypeReservedKeyFlag.prototype.clone = function() {
+		let res = new CRichValueTypeReservedKeyFlag();
+		res.value = this.value;
+		res.name = this.name;
+		return res;
+	};
+	CRichValueTypeReservedKeyFlag.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.name = r.GetString2();
+		}
+		if (r.GetBool()) {
+			this.value = r.GetBool();
+		}
+	};
+	CRichValueTypeReservedKeyFlag.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.name) {
+			w.WriteBool(true);
+			w.WriteString2(this.name);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.value) {
+			w.WriteBool(true);
+			w.WriteBool(this.value);
+		} else {
+			w.WriteBool(false);
+		}
+	};
 
 	function CRichValueTypeReservedKey() {
 		this.name = null;
 		this.arrItems = []; //  CRichValueTypeReservedKeyFlag
 	}
+	CRichValueTypeReservedKey.prototype.clone = function() {
+		let res = new CRichValueTypeReservedKey();
+		res.name = this.name;
+		if (this.arrItems) {
+			res.arrItems = [];
+			for (let i = 0; i < this.arrItems.length; ++i) {
+				res.arrItems.push(this.arrItems[i].clone());
+			}
+		}
+		return res;
+	};
+	CRichValueTypeReservedKey.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.name = r.GetString2();
+		}
+		let length = r.GetLong();
+		for (let i = 0; i < length; ++i) {
+			let item = new CRichValueTypeReservedKeyFlag();
+			item.Read_FromBinary2(r);
+			this.arrItems.push(item);
+		}
+	};
+	CRichValueTypeReservedKey.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.name) {
+			w.WriteBool(true);
+			w.WriteString2(this.name);
+		} else {
+			w.WriteBool(false);
+		}
+		w.WriteLong(this.arrItems ? this.arrItems.length : 0);
+		for (let i = 0; i < (this.arrItems ? this.arrItems.length : 0); ++i) {
+			this.arrItems[i].Write_ToBinary2(w);
+		}
+	};
 
 	function CRichValueTypeKeyFlags() {
 		this.arrItems = []; //  CRichValueTypeReservedKey
 	}
+	CRichValueTypeKeyFlags.prototype.clone = function() {
+		let res = new CRichValueTypeKeyFlags();
+		if (this.arrItems) {
+			res.arrItems = [];
+			for (let i = 0; i < this.arrItems.length; ++i) {
+				res.arrItems.push(this.arrItems[i].clone());
+			}
+		}
+		return res;
+	};
+	CRichValueTypeKeyFlags.prototype.Read_FromBinary2 = function(r) {
+		let length = r.GetLong();
+		for (let i = 0; i < length; ++i) {
+			let item = new CRichValueTypeReservedKey();
+			item.Read_FromBinary2(r);
+			this.arrItems.push(item);
+		}
+	};
+	CRichValueTypeKeyFlags.prototype.Write_ToBinary2 = function(w) {
+		w.WriteLong(this.arrItems ? this.arrItems.length : 0);
+		for (let i = 0; i < (this.arrItems ? this.arrItems.length : 0); ++i) {
+			this.arrItems[i].Write_ToBinary2(w);
+		}
+	};
 
 	function CRichValueType() {
 		this.name = null;
 		this.keyFlags = null; // CRichValueTypeKeyFlags
 		this.extLst = null;
 	}
+	CRichValueType.prototype.clone = function() {
+		let res = new CRichValueType();
+		res.name = this.name;
+		if (this.keyFlags) {
+			res.keyFlags = this.keyFlags.clone();
+		}
+		res.extLst = this.extLst;
+		return res;
+	};
+	CRichValueType.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.name = r.GetString2();
+		}
+		if (r.GetBool()) {
+			this.keyFlags = new CRichValueTypeKeyFlags();
+			this.keyFlags.Read_FromBinary2(r);
+		}
+	};
+	CRichValueType.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.name) {
+			w.WriteBool(true);
+			w.WriteString2(this.name);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.keyFlags) {
+			w.WriteBool(true);
+			this.keyFlags.Write_ToBinary2(w);
+		} else {
+			w.WriteBool(false);
+		}
+	};
 
 	function CRichValueTypes() {
 		this.arrItems = []; //  CRichValueType
 	}
+	CRichValueTypes.prototype.clone = function() {
+		let res = new CRichValueTypes();
+		if (this.arrItems) {
+			res.arrItems = [];
+			for (let i = 0; i < this.arrItems.length; ++i) {
+				res.arrItems.push(this.arrItems[i].clone());
+			}
+		}
+		return res;
+	};
+	CRichValueTypes.prototype.Read_FromBinary2 = function(r) {
+		let length = r.GetLong();
+		for (let i = 0; i < length; ++i) {
+			let item = new CRichValueType();
+			item.Read_FromBinary2(r);
+			this.arrItems.push(item);
+		}
+	};
+	CRichValueTypes.prototype.Write_ToBinary2 = function(w) {
+		w.WriteLong(this.arrItems ? this.arrItems.length : 0);
+		for (let i = 0; i < (this.arrItems ? this.arrItems.length : 0); ++i) {
+			this.arrItems[i].Write_ToBinary2(w);
+		}
+	};
 
 	function CRichValueGlobalType() {
 		this.keyFlags = null; // CRichValueTypeKeyFlags
 		this.extLst = null;
 	}
+	CRichValueGlobalType.prototype.clone = function() {
+		let res = new CRichValueGlobalType();
+		if (this.keyFlags) {
+			res.keyFlags = this.keyFlags.clone();
+		}
+		res.extLst = this.extLst;
+		return res;
+	};
+	CRichValueGlobalType.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.keyFlags = new CRichValueTypeKeyFlags();
+			this.keyFlags.Read_FromBinary2(r);
+		}
+	};
+	CRichValueGlobalType.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.keyFlags) {
+			w.WriteBool(true);
+			this.keyFlags.Write_ToBinary2(w);
+		} else {
+			w.WriteBool(false);
+		}
+	};
 
 	function CRichValueTypesInfo() {
 		this.global = null; // CRichValueGlobalType
 		this.types = null; // CRichValueTypes
 		this.extLst = null;
 	}
+	CRichValueTypesInfo.prototype.clone = function() {
+		let res = new CRichValueTypesInfo();
+		if (this.global) {
+			res.global = this.global.clone();
+		}
+		if (this.types) {
+			res.types = this.types.clone();
+		}
+		res.extLst = this.extLst;
+		return res;
+	};
+	CRichValueTypesInfo.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.global = new CRichValueGlobalType();
+			this.global.Read_FromBinary2(r);
+		}
+		if (r.GetBool()) {
+			this.types = new CRichValueTypes();
+			this.types.Read_FromBinary2(r);
+		}
+	};
+	CRichValueTypesInfo.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.global) {
+			w.WriteBool(true);
+			this.global.Write_ToBinary2(w);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.types) {
+			w.WriteBool(true);
+			this.types.Write_ToBinary2(w);
+		} else {
+			w.WriteBool(false);
+		}
+	};
 
 // RichValue Structures
 	function CRichValueKey() {
 		this.t = null;
 		this.n = null;
 	}
+	CRichValueKey.prototype.clone = function() {
+		let res = new CRichValueKey();
+		res.t = this.t;
+		res.n = this.n;
+		return res;
+	};
+	CRichValueKey.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.t = r.GetByte();
+		}
+		if (r.GetBool()) {
+			this.n = r.GetString2();
+		}
+	};
+	CRichValueKey.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.t) {
+			w.WriteBool(true);
+			w.WriteByte(this.t);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.n) {
+			w.WriteBool(true);
+			w.WriteString2(this.n);
+		} else {
+			w.WriteBool(false);
+		}
+	};
 
 	function CRichValueStructure() {
 		this.t = null;
@@ -21317,6 +21521,40 @@ function RangeDataManagerElem(bbox, data)
 			}
 		}
 	};
+	CRichValueStructure.prototype.clone = function() {
+		let res = new CRichValueStructure();
+		res.t = this.t;
+		if (this.children) {
+			res.children = [];
+			for (let i = 0; i < this.children.length; ++i) {
+				res.children.push(this.children[i].clone());
+			}
+		}
+		return res;
+	};
+	CRichValueStructure.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.t = r.GetString2();
+		}
+		let length = r.GetLong();
+		for (let i = 0; i < length; ++i) {
+			let item = new CRichValueKey();
+			item.Read_FromBinary2(r);
+			this.children.push(item);
+		}
+	};
+	CRichValueStructure.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.t) {
+			w.WriteBool(true);
+			w.WriteString2(this.t);
+		} else {
+			w.WriteBool(false);
+		}
+		w.WriteLong(this.children ? this.children.length : 0);
+		for (let i = 0; i < (this.children ? this.children.length : 0); ++i) {
+			this.children[i].Write_ToBinary2(w);
+		}
+	};
 
 	function CRichValueStructures() {
 		this.count = null;
@@ -21327,12 +21565,75 @@ function RangeDataManagerElem(bbox, data)
 	CRichValueStructures.prototype.getValueStructure = function(index) {
 		return this.children && this.children[index];
 	};
+	CRichValueStructures.prototype.clone = function() {
+		let res = new CRichValueStructures();
+		res.count = this.count;
+		res.extLst = this.extLst;
+		if (this.children) {
+			res.children = [];
+			for (let i = 0; i < this.children.length; ++i) {
+				res.children.push(this.children[i].clone());
+			}
+		}
+		return res;
+	};
+	CRichValueStructures.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.count = r.GetLong();
+		}
+		let length = r.GetLong();
+		for (let i = 0; i < length; ++i) {
+			let item = new CRichValueStructure();
+			item.Read_FromBinary2(r);
+			this.children.push(item);
+		}
+	};
+	CRichValueStructures.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.count) {
+			w.WriteBool(true);
+			w.WriteLong(this.count);
+		} else {
+			w.WriteBool(false);
+		}
+		w.WriteLong(this.children ? this.children.length : 0);
+		for (let i = 0; i < (this.children ? this.children.length : 0); ++i) {
+			this.children[i].Write_ToBinary2(w);
+		}
+	};
 
 // RichValue Data
 	function CRichValueFallback() {
 		this.t = null;
 		this.content = null;
 	}
+	CRichValueFallback.prototype.clone = function() {
+		let res = new CRichValueFallback();
+		res.t = this.t;
+		res.content = this.content;
+		return res;
+	};
+	CRichValueFallback.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.content = r.GetString2();
+		}
+		if (r.GetBool()) {
+			this.t = r.GetByte();
+		}
+	};
+	CRichValueFallback.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.content) {
+			w.WriteBool(true);
+			w.WriteString2(this.content);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.t) {
+			w.WriteBool(true);
+			w.WriteByte(this.t);
+		} else {
+			w.WriteBool(false);
+		}
+	};
 
 	function CRichValue() {
 		this.s = null;
@@ -21359,6 +21660,66 @@ function RangeDataManagerElem(bbox, data)
 		}
 		return null;
 	};
+	CRichValue.prototype.clone = function() {
+		let res = new CRichValue();
+		res.s = this.s;
+		if (this.arrV) {
+			res.arrV = this.arrV.slice();
+		}
+		if (this.fb) {
+			res.fb = new CRichValueFallback();
+			res.fb.t = this.fb.t;
+			res.fb.content = this.fb.content;
+		}
+		return res;
+	};
+	CRichValue.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.s = r.GetULong();
+		}
+		let length = r.GetLong();
+		for (let i = 0; i < length; ++i) {
+			this.arrV.push(r.GetString2());
+		}
+		if (r.GetBool()) {
+			this.fb = new CRichValueFallback();
+			if (r.GetBool()) {
+				this.fb.content = r.GetString2();
+			}
+			if (r.GetBool()) {
+				this.fb.t = r.GetByte();
+			}
+		}
+	};
+	CRichValue.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.s) {
+			w.WriteBool(true);
+			w.WriteULong(this.s);
+		} else {
+			w.WriteBool(false);
+		}
+		w.WriteLong(this.arrV ? this.arrV.length : 0);
+		for (let i = 0; i < (this.arrV ? this.arrV.length : 0); ++i) {
+			w.WriteString2(this.arrV[i]);
+		}
+		if (null != this.fb) {
+			w.WriteBool(true);
+			if (null != this.fb.content) {
+				w.WriteBool(true);
+				w.WriteString2(this.fb.content);
+			} else {
+				w.WriteBool(false);
+			}
+			if (null != this.fb.t) {
+				w.WriteBool(true);
+				w.WriteByte(this.fb.t);
+			} else {
+				w.WriteBool(false);
+			}
+		} else {
+			w.WriteBool(false);
+		}
+	};
 
 	function CRichValueData() {
 		this.pData = []; //CRichValue
@@ -21367,6 +21728,54 @@ function RangeDataManagerElem(bbox, data)
 	CRichValueData.prototype.getRichValue = function(index) {
 		return this.pData && this.pData[index];
 	}
+	CRichValueData.prototype.clone = function() {
+		let res = new CRichValueData();
+		if (this.pData) {
+			res.pData = [];
+			for (let i = 0; i < this.pData.length; ++i) {
+				res.pData.push(this.pData[i].clone());
+			}
+		}
+		return res;
+	};
+	CRichValueData.prototype.Read_FromBinary2 = function(r) {
+		let length = r.GetLong();
+		for (let i = 0; i < length; ++i) {
+			let item = new CRichValue();
+			item.Read_FromBinary2(r);
+			this.pData.push(item);
+		}
+	};
+	CRichValueData.prototype.Write_ToBinary2 = function(w) {
+		w.WriteLong(this.pData ? this.pData.length : 0);
+		for (let i = 0; i < (this.pData ? this.pData.length : 0); ++i) {
+			this.pData[i].Write_ToBinary2(w);
+		}
+	};
+
+	function CRichValueBlock() {
+		this.i = null;
+	}
+	CRichValueBlock.prototype.clone = function () {
+		let res = new CRichValueBlock();
+
+		res.i = this.i;
+
+		return res;
+	};
+	CRichValueBlock.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.i = r.GetLong();
+		}
+	};
+	CRichValueBlock.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.i) {
+			w.WriteBool(true);
+			w.WriteLong(this.i);
+		} else {
+			w.WriteBool(false);
+		}
+	};
 
 
 	//----------------------------------------------------------export----------------------------------------------------
