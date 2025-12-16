@@ -22249,10 +22249,10 @@
 
 		if (color instanceof ApiColor) {
 			const rgba = color.GetRGBA();
-			r = rgba.r;
-			g = rgba.g;
-			b = rgba.b;
-			a = rgba.a;
+			r = rgba['r'];
+			g = rgba['g'];
+			b = rgba['b'];
+			a = rgba['a'];
 		} else {
 			r = GetIntParameter(arguments[0], 0);
 			g = GetIntParameter(arguments[1], 0);
@@ -22314,10 +22314,10 @@
 
 		if (color instanceof ApiColor) {
 			const rgba = color.GetRGBA();
-			r = rgba.r;
-			g = rgba.g;
-			b = rgba.b;
-			a = rgba.a;
+			r = rgba['r'];
+			g = rgba['g'];
+			b = rgba['b'];
+			a = rgba['a'];
 		} else {
 			r = GetIntParameter(arguments[0], 0);
 			g = GetIntParameter(arguments[1], 0);
