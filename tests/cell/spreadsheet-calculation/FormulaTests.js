@@ -19271,13 +19271,11 @@ $(function () {
 		// Case #40: Area, String. Empty cells check
 		oParser = new parserFormula('COUNTIF(A200:B205,"<>"&"*")', "C2", ws);
 		assert.ok(oParser.parse());
-		debugger;
 		assert.strictEqual(oParser.calculate().getValue(), 10);
 
 		// Case #41: Area, String. Find empty cells check
 		oParser = new parserFormula('COUNTIF(A200:B205,"")', "C2", ws);
 		assert.ok(oParser.parse());
-		debugger;
 		assert.strictEqual(oParser.calculate().getValue(), 8);
 
 		// Case #42: Area, Ref. second arg as cell
@@ -19348,7 +19346,6 @@ $(function () {
 		// Case #49: Area, Formula. Formula test
 		oParser = new parserFormula('COUNTIF(A311:A314,2+1)', "C2", ws);
 		assert.ok(oParser.parse());
-		debugger;
 		assert.strictEqual(oParser.calculate().getValue(), 1);
 
 		const defName3D = new Asc.asc_CDefName('COUNTIFTestName3D', ws.getName() + '!$A$315');

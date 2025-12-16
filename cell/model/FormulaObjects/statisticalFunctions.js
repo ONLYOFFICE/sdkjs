@@ -12079,11 +12079,11 @@ function (window, undefined) {
 			if (!indexes[i]) {
 				indexes[i] = [];
 			}
-			indexes[i] = valueToUnshift.concat(data[i]);
+			indexes[i] = valueToUnshift.concat(indexes[i]);
 		}
 	};
 
-	CountIfTypedCache.prototype.updateDataBerofe = function(range, column, startIndex) {
+	CountIfTypedCache.prototype.updateDataBefore = function(range, column, startIndex) {
 		column.start = startIndex;
 		const unshiftDataArrays = {};
 		const unshiftIndexesArrays = {};
@@ -12145,7 +12145,7 @@ function (window, undefined) {
 			const r1 = startIndex;
 			const r2 = column.start - 1;
 			const fullRange = ws.getRange3(r1, columnIndex, r2, columnIndex);
-			this.updateDataBerofe(fullRange, column, startIndex);
+			this.updateDataBefore(fullRange, column, startIndex);
 		}
 		if (endIndex > column.end) {
 			const r1 = column.end + 1;
@@ -12256,12 +12256,7 @@ function (window, undefined) {
 				const indexesArray = column.indexes[newType];
 				const dataArray = column.data[newType];
 				if (dataArray && indexesArray) {
-					let insertIndex = 0;
-					for (let i = 0; i < indexesArray.length; i += 1) {
-						if (indexesArray[i] < changedIndex) {
-							insertIndex = i + 1;
-						}
-					}
+					const insertIndex = this.findHigherIndexInTyped(changedIndex - 1, indexesArray);
 					dataArray.splice(insertIndex, 0, newValue);
 					indexesArray.splice(insertIndex, 0, changedIndex);
 				} else {
@@ -12286,7 +12281,7 @@ function (window, undefined) {
 					oldValue = oldValue.toLowerCase();
 				}
 				if (oldValue && oldType === cElementType.error) {
-					oldValue = oldValue.errorType;
+					oldValue = new cError(oldValue).errorType;
 				}
 			}
 			let newValue = null;
@@ -12304,10 +12299,7 @@ function (window, undefined) {
 			if (oldType === newType && newValue === oldValue) {
 				return;
 			}
-			if (oldType === cElementType.error) {
-				oldValue
-			}
-			this.changeColumnsData(wsId,cell, oldValue, oldType, newValue, newType);
+			this.changeColumnsData(wsId, cell, oldValue, oldType, newValue, newType);
 		}
 	};
 
