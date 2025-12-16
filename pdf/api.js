@@ -2845,7 +2845,7 @@
 			oController.selectedObjects.forEach(function(shape) {
 				let field = shape.GetEditField();
 				if (AscPDF.FIELD_TYPES.button == field.GetType()) {
-					field.SetButtonFitBounds(bValue);
+					field.SetFitBounds(bValue);
 				}
 			});
 
@@ -3302,7 +3302,7 @@
 		return oDoc.DoAction(function() {
 			oController.selectedObjects.forEach(function(annot) {
 				if (annot.IsAnnot()) {
-					annot.SetWidth(nValue);
+					annot.SetBorderWidth(nValue);
 				}
 			});
 
@@ -3323,65 +3323,65 @@
 				if (annot.IsAnnot()) {
 					switch (nComplexType) {
 						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.solid: {
-							annot.SetBorder(AscPDF.BORDER_TYPES.solid);
+							annot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
 							annot.SetDash([]);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
 							annot.SetBorderEffectIntensity(0);
 							break;
 						}
 						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash1: {
-							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
+							annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
 							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash1);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
 							annot.SetBorderEffectIntensity(0);
 							break;
 						}
 						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash2: {
-							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
+							annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
 							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash2);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
 							annot.SetBorderEffectIntensity(0);
 							break;
 						}
 						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash3: {
-							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
+							annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
 							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash3);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
 							annot.SetBorderEffectIntensity(0);
 							break;
 						}
 						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash4: {
-							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
+							annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
 							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash4);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
 							annot.SetBorderEffectIntensity(0);
 							break;
 						}
 						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash5: {
-							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
+							annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
 							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash5);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
 							annot.SetBorderEffectIntensity(0);
 							break;
 						}
 						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash6: {
-							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
+							annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
 							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash6);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
 							annot.SetBorderEffectIntensity(0);
 							break;
 						}
 						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.cloud1: {
-							annot.SetBorder(AscPDF.BORDER_TYPES.solid);
+							annot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
 							annot.SetDash([]);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.Cloud);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.cloud);
 							annot.SetBorderEffectIntensity(1);
 							break;
 						}
 						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.cloud2: {
-							annot.SetBorder(AscPDF.BORDER_TYPES.solid);
+							annot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
 							annot.SetDash([]);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.Cloud);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.cloud);
 							annot.SetBorderEffectIntensity(2);
 							break;
 						}

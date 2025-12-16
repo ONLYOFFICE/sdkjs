@@ -77,7 +77,6 @@
         this._rotate        = undefined;
         this._state         = undefined;
         this._stateModel    = undefined;
-        this._width         = undefined;
         this._points        = undefined;
         this._doCaption     = undefined;
         this._intent        = undefined;
@@ -451,7 +450,7 @@
         return true;
     };
     CAnnotationLine.prototype.private_CalcBoundingRect = function() {
-        let nLineWidth  = this.GetWidth();
+        let nLineWidth  = this.GetBorderWidth();
         let aPoints     = this.GetLinePoints();
 
         let shapeSizeAtStart    = getFigureSize(this.GetLineStart(), nLineWidth);
@@ -548,7 +547,7 @@
         this.SetNeedRecalcSizes(true);
         this.Recalculate(true);
 
-        let nLineW = this.GetWidth() * g_dKoef_pt_to_mm;
+        let nLineW = this.GetBorderWidth() * g_dKoef_pt_to_mm;
 
         let oGrBounds = this.bounds;
 

@@ -66,7 +66,6 @@
         this._rotate        = 0;
         this._state         = undefined;
         this._stateModel    = undefined;
-        this._width         = undefined;
         this._points        = undefined;
         this._intent        = undefined;
         this._lineEnd       = undefined;
@@ -167,7 +166,7 @@
         if (!aCallout && !aArrowPts)
             return undefined;
 
-        let nLineWidth = this.GetWidth();
+        let nLineWidth = this.GetBorderWidth();
 
         let oLine = {
             x1: aArrowPts ? aArrowPts[0] : aCallout[1 * 2],
@@ -300,7 +299,7 @@
 				
 				let oTxBoxShape = this.GetTextBoxShape();
 				let oLine = oTxBoxShape.spPr.ln;
-				if (this.GetWidth() == 0) {
+				if (this.GetBorderWidth() == 0) {
 					oLine.setFill(AscFormat.CreateNoFillUniFill());
 				}
 				else {
@@ -327,7 +326,7 @@
 				}
 			}
 	
-			let nWidthPt = this.GetWidth();
+			let nWidthPt = this.GetBorderWidth();
 			for (let i = 0; i < this.spTree.length; i++) {
 				let oLine = this.spTree[i].spPr.ln;
 				if (nWidthPt == 0 && this.GetTextBoxShape() !== this.spTree[i]) {
@@ -368,7 +367,7 @@
         return this._callout;
     };
     CAnnotationFreeText.prototype.private_UpdateLn = function() {
-        let nWidthPt = this.GetWidth();
+        let nWidthPt = this.GetBorderWidth();
         
         AscCommon.ExecuteNoHistory(function() {
 			for (let i = 1; i < this.spTree.length; i++) {
@@ -400,7 +399,7 @@
 			
 			let oTxBoxShape = this.GetTextBoxShape();
 			let oLine       = oTxBoxShape.spPr.ln;
-			if (this.GetWidth() == 0) {
+			if (this.GetBorderWidth() == 0) {
 				oLine.setFill(AscFormat.CreateNoFillUniFill());
 			}
 			else {
@@ -1146,8 +1145,8 @@
             let aNewTextBoxRect = [xMin, yMin, xMax, yMax];
     
             // расширяем рект на ширину линии (или на радиус cloud бордера)
-            let nLineWidth = this.GetWidth();
-            if (this.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.Cloud) {
+            let nLineWidth = this.GetBorderWidth();
+            if (this.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.cloud) {
                 aNewTextBoxRect[0] -= this.GetBorderEffectIntensity() * 12;
                 aNewTextBoxRect[1] -= this.GetBorderEffectIntensity() * 12;
                 aNewTextBoxRect[2] += this.GetBorderEffectIntensity() * 12;
@@ -1798,7 +1797,7 @@
         oShape.updateTransformMatrix();
         oShape.brush = AscFormat.CreateNoFillUniFill();
 
-        let bCloudy = oParentAnnot.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.Cloud && aPoints.length == 4;
+        let bCloudy = oParentAnnot.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.cloud && aPoints.length == 4;
 
         let geometry = bCloudy ? AscPDF.generateCloudyGeometry(aPoints, aShapeBounds, null, oParentAnnot.GetBorderEffectIntensity()) : generateGeometry(aPoints, [xMin, yMin, xMax, yMax]);
         oShape.spPr.setGeometry(geometry);

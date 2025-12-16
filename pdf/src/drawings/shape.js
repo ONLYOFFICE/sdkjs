@@ -436,14 +436,14 @@
         }
 
         oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
-        oAnnot.SetWidth(nLineW);
+        oAnnot.SetBorderWidth(nLineW);
         oAnnot.SetStrokeColor(aStrokeColor);
         aFillColor && oAnnot.SetFillColor(aFillColor);
 
         switch (oAnnot.GetType()) {
             case AscPDF.ANNOTATIONS_TYPES.Square:
             case AscPDF.ANNOTATIONS_TYPES.Circle: {
-                let nLineW = oAnnot.GetWidth() * g_dKoef_pt_to_mm;
+                let nLineW = oAnnot.GetBorderWidth() * g_dKoef_pt_to_mm;
                 oAnnot.recalcBounds();
                 oAnnot.recalcGeometry();
                 oAnnot.Recalculate(true);

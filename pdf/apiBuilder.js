@@ -158,6 +158,29 @@
 	 * - "12HR_MM_SS" — 12-hour format with AM/PM, hours, minutes, and seconds (e.g., "2:30:15 PM")
 	 */
 
+	/**
+	 * The available annotation border styles.
+	 * @typedef {("solid" |"dashed")} AnnotBorderStyle
+	 */
+
+	/**
+	 * Axis-aligned rectangle represented as a tuple.
+	 * Invariants:
+	 *  - rect[0] < rect[2] (x1 < x2)
+	 *  - rect[1] < rect[3] (y1 < y2)
+	 *
+	 * @typedef {[number, number, number, number]} Rect
+	 * @property {number} 0 - x1 (left)
+	 * @property {number} 1 - y1 (top)
+	 * @property {number} 2 - x2 (right)
+	 * @property {number} 3 - y2 (bottom)
+	 */
+
+	/**
+	 * The available display types.
+	 * @typedef {("visible" | "hidden" | "noPrint" | "noView")} DisplayType
+	 */
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// Api
@@ -543,6 +566,22 @@
 		return this.Page.fields.map(private_GetWidgetApi);
 	};
 
+	/**
+	 * Adds to
+	 * @typeofeditors ["PDFE"]
+	 * @param {ApiBaseAnnotation} annot
+	 * @returns {ApiBaseAnnotation} - returns this
+	 * @see office-js-api/Examples/PDF/ApiPage/Methods/AddAnnot.js
+	 */
+	ApiPage.prototype.AddAnnot = function(annot) {
+		if (!(annot instanceof ApiBaseAnnotation)) {
+			AscBuilder.throwException("The annot parameter must be an annotation");
+		}
+
+		this.Page.AddAnnot(annot);
+		return annot;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiBaseField
@@ -557,6 +596,36 @@
 	function ApiBaseField(oField) {
 		this.Field = oField;
 	}
+
+	ApiBaseField.prototype.private_GetImpl = function() {
+		return this.Field;
+	};
+
+	/**
+	 * Sets field rect.
+	 * @typeofeditors ["PDFE"]
+	 * @param {Rect} rect
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiBaseField/Methods/SetRect.js
+	 */
+	ApiBaseField.prototype.SetRect = function(rect) {
+		if (!prviate_IsValidRect(rect)) {
+			AscBuilder.throwException("The rect parameter must be a valid rect");
+		}
+
+		this.Field.SetRect(rect);
+		return true;
+	};
+
+	/**
+	 * Sets field rect.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {Rect}
+	 * @see office-js-api/Examples/PDF/ApiBaseField/Methods/GetRect.js
+	 */
+	ApiBaseField.prototype.GetRect = function() {
+		return this.Field.GetRect();
+	};
 
 	/**
 	 * Sets new field name if possible.
@@ -2422,7 +2491,7 @@
 			return null;
 		}
 
-		return this.Field.GetCaption(private_GetInnerButtonApType(sApType));;
+		return this.Field.GetCaption(private_GetInnerButtonApType(sApType));
 	};
 
 	/**
@@ -2549,6 +2618,538 @@
 		}
 	});
 	
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiBaseAnnotation
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a base annotation.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 */
+	function ApiBaseAnnotation(oAnnot) {
+		this.Annot = oAnnot;
+	}
+
+	ApiBaseAnnotation.prototype.private_GetImpl = function() {
+		return this.Annot;
+	};
+
+	/**
+	 * Sets annotation rect.
+	 * @typeofeditors ["PDFE"]
+	 * @param {Rect} rect
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/SetRect.js
+	 */
+	ApiBaseAnnotation.prototype.SetRect = function(rect) {
+		if (!prviate_IsValidRect(rect)) {
+			AscBuilder.throwException("The rect parameter must be a valid rect");
+		}
+
+		this.Annot.SetRect(rect);
+		return true;
+	};
+
+	/**
+	 * Sets annotation rect.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {Rect}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/GetRect.js
+	 */
+	ApiBaseAnnotation.prototype.GetRect = function() {
+		return this.Annot.GetRect();
+	};
+
+	/**
+	 * Sets annotation border color.
+	 * @typeofeditors ["PDFE"]
+	 * @param {ApiRGBColor} color
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/SetBorderColor.js
+	 */
+	ApiBaseAnnotation.prototype.SetBorderColor = function(color) {
+		if (!(color instanceof ApiRGBColor)) {
+			return false;
+		}
+
+		this.Annot.SetStrokeColor(private_GetInnerColorByRGB(color.R, color.G, color.B));
+		return true;
+	};
+
+	/**
+	 * Gets annotation border color.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {?ApiRGBColor}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/GetBorderColor.js
+	 */
+	ApiBaseAnnotation.prototype.GetBorderColor = function() {
+		let aInnerColor = this.Annot.GetStrokeColor();
+		if (!aInnerColor) {
+			return null;
+		}
+
+		let oRGB = this.Annot.GetRGBColor(aInnerColor);
+
+		return new ApiRGBColor(oRGB.r, oRGB.g, oRGB.b);
+	};
+
+	/**
+	 * Sets annotation fill color.
+	 * @typeofeditors ["PDFE"]
+	 * @param {ApiRGBColor} color
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/SetFillColor.js
+	 */
+	ApiBaseAnnotation.prototype.SetFillColor = function(color) {
+		if (!(color instanceof ApiRGBColor)) {
+			return false;
+		}
+
+		this.Annot.SetFillColor(private_GetInnerColorByRGB(color.R, color.G, color.B));
+		return true;
+	};
+
+	/**
+	 * Gets annotation fill color.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {?ApiRGBColor}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/GetFillColor.js
+	 */
+	ApiBaseAnnotation.prototype.GetFillColor = function() {
+		let aInnerColor = this.Annot.GetFillColor();
+		if (!aInnerColor) {
+			return null;
+		}
+
+		let oRGB = this.Annot.GetRGBColor(aInnerColor);
+
+		return new ApiRGBColor(oRGB.r, oRGB.g, oRGB.b);
+	};
+
+	/**
+	 * Sets annotation border width.
+	 * @typeofeditors ["PDFE"]
+	 * @param {pt} width
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/SetBorderWidth.js
+	 */
+	ApiBaseAnnotation.prototype.SetBorderWidth = function(width) {
+		width = AscBuilder.GetNumberParameter(width, 0);
+		this.Annot.SetBorderWidth(width);
+		return true;
+	};
+
+	/**
+	 * Gets annotation border width.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {pt}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/GetBorderWidth.js
+	 */
+	ApiBaseAnnotation.prototype.GetBorderWidth = function() {
+		return this.Annot.GetBorderWidth();
+	};
+
+	/**
+	 * Sets annotation border style.
+	 * @typeofeditors ["PDFE"]
+	 * @param {AnnotBorderStyle} borderStyle
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/SetBorderStyle.js
+	 */
+	ApiBaseAnnotation.prototype.SetBorderStyle = function(borderStyle) {
+		if (borderStyle !== "solid" && borderStyle !== "dashed") {
+			return false;
+		}
+
+		this.Annot.SetBorderStyle(private_GetInnerBorderStyle(borderStyle));
+		return true;
+	};
+
+	/**
+	 * Gets annotation border style.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {AnnotBorderStyle}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/GetBorderStyle.js
+	 */
+	ApiBaseAnnotation.prototype.GetBorderStyle = function() {
+		return private_GetStrBorderStyle(this.Annot.GetBorderStyle());
+	};
+	
+	/**
+	 * Sets annotation author name.
+	 * @typeofeditors ["PDFE"]
+	 * @param {string} name
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/SetAuthorName.js
+	 */
+	ApiBaseAnnotation.prototype.SetAuthorName = function(name) {
+		name = AscBuilder.GetStringParameter(name, null);
+		if (!name) {
+			AscBuilder.throwException("The name parameter must be a non emptry string");
+		}
+
+		this.Annot.SetAuthor(name);
+		return true;
+	};
+
+	/**
+	 * Gets annotation author name.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/GetAuthorName.js
+	 */
+	ApiBaseAnnotation.prototype.GetAuthorName = function() {
+		return this.Annot.GetAuthor();
+	};
+
+	/**
+	 * Sets annotation contents.
+	 * @typeofeditors ["PDFE"]
+	 * @param {?string} contents
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/SetContents.js
+	 */
+	ApiBaseAnnotation.prototype.SetContents = function(contents) {
+		contents = AscBuilder.GetStringParameter(contents, null);
+		this.Annot.SetContents(contents);
+		return true;
+	};
+
+	/**
+	 * Gets annotation contents.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {?string}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/GetContents.js
+	 */
+	ApiBaseAnnotation.prototype.GetContents = function() {
+		return this.Annot.GetContents();
+	};
+
+	/**
+	 * Sets annotation creation date.
+	 * @typeofeditors ["PDFE"]
+	 * @param {number} timeStamp
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/SetCreationDate.js
+	 */
+	ApiBaseAnnotation.prototype.SetCreationDate = function(timeStamp) {
+		timeStamp = AscBuilder.GetNumberParameter(timeStamp, null);
+		if (!timeStamp) {
+			AscBuilder.throwException("The timeStamp parameter must be number");
+		}
+
+		this.Annot.SetCreationDate(timeStamp);
+		return true;
+	};
+
+	/**
+	 * Gets annotation creation date.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {number}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/GetCreationDate.js
+	 */
+	ApiBaseAnnotation.prototype.GetCreationDate = function() {
+		return this.Annot.GetCreationDate();
+	};
+
+	/**
+	 * Sets annotation last modification date.
+	 * @typeofeditors ["PDFE"]
+	 * @param {number} timeStamp
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/SetModDate.js
+	 */
+	ApiBaseAnnotation.prototype.SetModDate = function(timeStamp) {
+		timeStamp = AscBuilder.GetNumberParameter(timeStamp, null);
+		if (!timeStamp) {
+			AscBuilder.throwException("The timeStamp parameter must be number");
+		}
+
+		this.Annot.SetModDate(timeStamp);
+		return true;
+	};
+
+	/**
+	 * Gets annotation last modification date.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {number}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/GetModDate.js
+	 */
+	ApiBaseAnnotation.prototype.GetModDate = function() {
+		return this.Annot.GetModDate();
+	};
+
+	/**
+	 * Sets annotation unique name.
+	 * @typeofeditors ["PDFE"]
+	 * @param {string} name
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/SetUniqueName.js
+	 */
+	ApiBaseAnnotation.prototype.SetUniqueName = function(name) {
+		name = AscBuilder.GetStringParameter(name, null);
+		if (!name) {
+			AscBuilder.throwException("The name parameter must be a non empty string");
+		}
+
+		if (Object.values(AscCommon.g_oTableId.m_aPairs).find(function(obj) {obj.IsAnnot && obj.IsAnnot() && obj.GetName() == name})) {
+			if (!name) {
+				AscBuilder.throwException("This name is busy");
+			}
+		}
+
+		this.Annot.SetName(name);
+		return true;
+	};
+
+	/**
+	 * Gets annotation unique name.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/GetUniqueName.js
+	 */
+	ApiBaseAnnotation.prototype.GetUniqueName = function() {
+		return this.Annot.GetName();
+	};
+
+	/**
+	 * Sets annotation opacity.
+	 * @typeofeditors ["PDFE"]
+	 * @param {percentage} name
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/SetOpacity.js
+	 */
+	ApiBaseAnnotation.prototype.SetOpacity = function(value) {
+		value = AscBuilder.GetNumberParameter(value, null);
+		if (!value || value < 0 || value > 100) {
+			AscBuilder.throwException("The value parameter must be number from 0 to 100");
+		}
+
+		this.Annot.SetOpacity(value / 100);
+		return true;
+	};
+
+	/**
+	 * Gets annotation opacity.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/GetOpacity.js
+	 */
+	ApiBaseAnnotation.prototype.GetOpacity = function() {
+		return this.Annot.GetOpacity();
+	};
+
+	/**
+	 * Sets annotation subject.
+	 * @typeofeditors ["PDFE"]
+	 * @param {?string} subject
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/SetSubject.js
+	 */
+	ApiBaseAnnotation.prototype.SetSubject = function(subject) {
+		subject = AscBuilder.GetStringParameter(subject, null);
+		if (!subject) {
+			AscBuilder.throwException("The subject parameter must be a non empty string");
+		}
+
+		this.Annot.SetSubject(subject);
+		return true;
+	};
+
+	/**
+	 * Gets annotation subject.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {?string}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/GetSubject.js
+	 */
+	ApiBaseAnnotation.prototype.GetSubject = function() {
+		return this.Annot.GetSubject();
+	};
+
+	/**
+	 * Sets annotation display type.
+	 * @typeofeditors ["PDFE"]
+	 * @param {DisplayType} display
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/SetDisplay.js
+	 */
+	ApiBaseAnnotation.prototype.SetDisplay = function(display) {
+		if (AscPDF.Api.Types.display[display] == undefined) {
+			AscBuilder.throwException("The display parameter must be a one of DisplayType");
+		}
+
+		this.Annot.SetDisplay(AscPDF.Api.Types.display[display]);
+		return true;
+	};
+
+	/**
+	 * Gets annotation display type.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {DisplayType}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/GetDisplay.js
+	 */
+	ApiBaseAnnotation.prototype.GetDisplay = function() {
+		let nDisplay = this.Annot.GetDisplay();
+
+		for (const key in AscPDF.Api.Types.display) {
+			if (AscPDF.Api.Types.display[key] === nDisplay) {
+				return key;
+			}
+		}
+	};
+
+	/**
+	 * Sets annotation dash pattern.
+	 * <note> The border style property must be set to "dashed". </note>
+	 * @typeofeditors ["PDFE"]
+	 * @param {number[]} pattern - A dash array defining a pattern of dashes and gaps to be used in drawing a dashed border. For example, a value of [3, 2] specifies a border drawn with 3-point dashes alternating with 2-point gaps.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/SetDashPattern.js
+	 */
+	ApiBaseAnnotation.prototype.SetDashPattern = function(pattern) {
+		if (pattern.find(function(value) { value = AscBuilder.GetNumberParameter(value, null); if (!value) return true})) {
+			AscBuilder.throwException("The pattern parameter must be an array with numbers");
+		}
+
+		this.Annot.SetDash(pattern);
+		return true;
+	};
+
+	/**
+	 * Gets annotation dash pattern.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {number[]}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/GetDashPattern.js
+	 */
+	ApiBaseAnnotation.prototype.GetDashPattern = function() {
+		return this.Annot.GetDashPattern();
+	};
+
+	/**
+	 * Sets annotation border effect style.
+	 * <note> Can be applied to circle, square, freeText and polygon annotations </note>
+	 * @typeofeditors ["PDFE"]
+	 * @param {AnnotBorderEffectStyle} style
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/SetBorderEffectStyle.js
+	 */
+	ApiBaseAnnotation.prototype.SetBorderEffectStyle = function(style) {
+		if (!AscPDF.BORDER_EFFECT_STYLES[style]) {
+			AscBuilder.throwException("The style parameter must be one of available");
+		}
+
+		this.Annot.SetBorderEffectStyle(style);
+		return true;
+	};
+
+	/**
+	 * Gets annotation border effect style.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {AnnotBorderEffectStyle}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/GetBorderEffectStyle.js
+	 */
+	ApiBaseAnnotation.prototype.GetBorderEffectStyle = function() {
+		let nBorderEffectStyle = this.Annot.GetBorderEffectStyle();
+
+		switch (nBorderEffectStyle) {
+			case AscBuilder.BORDER_EFFECT_STYLES.none: {
+				return "none";
+			}
+			case AscBuilder.BORDER_EFFECT_STYLES.cloud: {
+				return "cloud";
+			}
+		}
+	};
+
+	/**
+	 * Sets annotation border effect intensity.
+	 * <note> Can be applied to circle, square, freeText and polygon annotations </note>
+	 * @typeofeditors ["PDFE"]
+	 * @param {number} value
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/SetBorderEffectIntensity.js
+	 */
+	ApiBaseAnnotation.prototype.SetBorderEffectIntensity = function(value) {
+		value = AscBuilder.GetNumberParameter(value, null);
+
+		if (!value || value < 0) {
+			AscBuilder.throwException("The value parameter must be number greater than 0");
+		}
+
+		this.Annot.SetBorderEffectIntensity(value);
+		return true;
+	};
+
+	/**
+	 * Gets annotation border effect intensity.
+	 * @typeofeditors ["PDFE"]
+	 * @param {number} value
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/GetBorderEffectIntensity.js
+	 */
+	ApiBaseAnnotation.prototype.GetBorderEffectIntensity = function() {
+		return this.Annot.GetBorderEffectIntensity();
+	};
+	
+	/**
+	 * Adds reply on this annot.
+	 * @typeofeditors ["PDFE"]
+	 * @param {ApiTextAnnotation} textAnnot
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/AddReply.js
+	 */
+	ApiBaseAnnotation.prototype.AddReply = function(textAnnot) {
+		if (!(textAnnot instanceof ApiTextAnnotation)) {
+			AscBuilder.throwException("The textAnnot parameter must be an ApiTextAnnotation class object");
+		}
+
+		this.Annot.AddReply(textAnnot.private_GetImpl());
+		return true;
+	};
+
+	/**
+	 * Gets replies on this annot.
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiTextAnnotation[]}
+	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/GetReplies.js
+	 */
+	ApiBaseAnnotation.prototype.GetReplies = function() {
+		return this.Annot.GetReplies().map(private_GetAnnotApi);
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiTextAnnotation
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a text annotation.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 * @extends {ApiBaseAnnotation}
+	 */
+	function ApiTextAnnotation(oAnnot) {
+		ApiBaseAnnotation.call(this, oAnnot);
+	}
+
+	ApiTextAnnotation.prototype = Object.create(ApiBaseAnnotation.prototype);
+	ApiTextAnnotation.prototype.constructor = ApiTextAnnotation;
+
+	/**
+	 * Returns a type of the ApiTextAnnotation class.
+	 * @memberof ApiTextAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"textAnnot"}
+	 * @see office-js-api/Examples/PDF/ApiTextAnnotation/Methods/GetClassType.js
+	 */
+	ApiTextAnnotation.prototype.GetClassType = function() {
+		return "textAnnot";
+	};
+
 	function private_GetLogicDocument() {
 		return Asc.editor.getPDFDoc();
 	}
@@ -2931,6 +3532,28 @@
 		return [r / 255, g / 255, b / 255];
 	}
 
+	function private_GetAnnotApi(field) {
+		if (!field) {
+			return null;
+		}
+
+		switch (field.GetType()) {
+			case AscPDF.ANNOTATIONS_TYPES.Text: {
+				return new ApiTextAnnotation(field);
+			}
+		}
+	}
+
+	function prviate_IsValidRect(value) {
+		return (
+			Array.isArray(value) &&
+			value.length === 4 &&
+			value.every(Number.isFinite) &&
+			value[0] < value[2] &&
+			value[1] < value[3]
+		);
+	}
+
 	// Api
 	Api.prototype["GetDocument"]						= Api.prototype.GetDocument
 	Api.prototype["CreateRGBColor"]						= Api.prototype.CreateRGBColor
@@ -2957,8 +3580,11 @@
 	ApiPage.prototype["GetRotate"]						= ApiPage.prototype.GetRotate;
 	ApiPage.prototype["GetIndex"]						= ApiPage.prototype.GetIndex;
 	ApiPage.prototype["GetAllWidgets"]					= ApiPage.prototype.GetAllWidgets;
+	ApiPage.prototype["AddAnnot"]						= ApiPage.prototype.AddAnnot;
 
 	// ApiBaseField
+	ApiBaseField.prototype["SetRect"]					= ApiBaseField.prototype.SetRect;
+	ApiBaseField.prototype["GetRect"]					= ApiBaseField.prototype.GetRect;
 	ApiBaseField.prototype["SetFullName"]				= ApiBaseField.prototype.SetFullName;
 	ApiBaseField.prototype["GetFullName"]				= ApiBaseField.prototype.GetFullName;
 	ApiBaseField.prototype["SetPartialName"]			= ApiBaseField.prototype.SetPartialName;
@@ -3094,5 +3720,42 @@
 
 	// ApiRGBColor
 	ApiRGBColor.prototype["GetClassType"]				= ApiRGBColor.prototype.GetClassType;
+
+	// ApiBaseAnnotation
+	ApiBaseAnnotation.prototype["SetRect"]					= ApiBaseAnnotation.prototype.SetRect;
+	ApiBaseAnnotation.prototype["GetRect"]					= ApiBaseAnnotation.prototype.GetRect;
+	ApiBaseAnnotation.prototype["SetBorderColor"]			= ApiBaseAnnotation.prototype.SetBorderColor;
+	ApiBaseAnnotation.prototype["GetBorderColor"]			= ApiBaseAnnotation.prototype.GetBorderColor;
+	ApiBaseAnnotation.prototype["SetFillColor"]				= ApiBaseAnnotation.prototype.SetFillColor;
+	ApiBaseAnnotation.prototype["GetFillColor"]				= ApiBaseAnnotation.prototype.GetFillColor;
+	ApiBaseAnnotation.prototype["SetBorderWidth"]			= ApiBaseAnnotation.prototype.SetBorderWidth;
+	ApiBaseAnnotation.prototype["GetBorderWidth"]			= ApiBaseAnnotation.prototype.GetBorderWidth;
+	ApiBaseAnnotation.prototype["SetBorderStyle"]			= ApiBaseAnnotation.prototype.SetBorderStyle;
+	ApiBaseAnnotation.prototype["GetBorderStyle"]			= ApiBaseAnnotation.prototype.GetBorderStyle;
+	ApiBaseAnnotation.prototype["SetAuthorName"]			= ApiBaseAnnotation.prototype.SetAuthorName;
+	ApiBaseAnnotation.prototype["GetAuthorName"]			= ApiBaseAnnotation.prototype.GetAuthorName;
+	ApiBaseAnnotation.prototype["SetContents"]				= ApiBaseAnnotation.prototype.SetContents;
+	ApiBaseAnnotation.prototype["GetContents"]				= ApiBaseAnnotation.prototype.GetContents;
+	ApiBaseAnnotation.prototype["SetCreationDate"]			= ApiBaseAnnotation.prototype.SetCreationDate;
+	ApiBaseAnnotation.prototype["GetCreationDate"]			= ApiBaseAnnotation.prototype.GetCreationDate;
+	ApiBaseAnnotation.prototype["SetModDate"]				= ApiBaseAnnotation.prototype.SetModDate;
+	ApiBaseAnnotation.prototype["GetModDate"]				= ApiBaseAnnotation.prototype.GetModDate;
+	ApiBaseAnnotation.prototype["SetUniqueName"]			= ApiBaseAnnotation.prototype.SetUniqueName;
+	ApiBaseAnnotation.prototype["GetUniqueName"]			= ApiBaseAnnotation.prototype.GetUniqueName;
+	ApiBaseAnnotation.prototype["SetOpacity"]				= ApiBaseAnnotation.prototype.SetOpacity;
+	ApiBaseAnnotation.prototype["GetOpacity"]				= ApiBaseAnnotation.prototype.GetOpacity;
+	ApiBaseAnnotation.prototype["SetSubject"]				= ApiBaseAnnotation.prototype.SetSubject;
+	ApiBaseAnnotation.prototype["GetSubject"]				= ApiBaseAnnotation.prototype.GetSubject;
+	ApiBaseAnnotation.prototype["SetDisplay"]				= ApiBaseAnnotation.prototype.SetDisplay;
+	ApiBaseAnnotation.prototype["GetDisplay"]				= ApiBaseAnnotation.prototype.GetDisplay;
+	ApiBaseAnnotation.prototype["SetDashPattern"]			= ApiBaseAnnotation.prototype.SetDashPattern;
+	ApiBaseAnnotation.prototype["GetDashPattern"]			= ApiBaseAnnotation.prototype.GetDashPattern;
+	ApiBaseAnnotation.prototype["SetBorderEffectStyle"]		= ApiBaseAnnotation.prototype.SetBorderEffectStyle;
+	ApiBaseAnnotation.prototype["GetBorderEffectStyle"]		= ApiBaseAnnotation.prototype.GetBorderEffectStyle;
+	ApiBaseAnnotation.prototype["SetBorderEffectIntensity"]	= ApiBaseAnnotation.prototype.SetBorderEffectIntensity;
+	ApiBaseAnnotation.prototype["GetBorderEffectIntensity"]	= ApiBaseAnnotation.prototype.GetBorderEffectIntensity;
+	ApiBaseAnnotation.prototype["AddReply"]					= ApiBaseAnnotation.prototype.AddReply;
+	ApiBaseAnnotation.prototype["GetReplies"]				= ApiBaseAnnotation.prototype.GetReplies;
+
 }(window, null));
 

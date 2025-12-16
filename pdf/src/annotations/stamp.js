@@ -543,7 +543,7 @@
         memory.WriteDouble(this.GetRotate());
         
         let aInRect = this.GetInRect();
-        let nBorderW = this.GetWidth();
+        let nBorderW = this.GetBorderWidth();
         let nScale = this.GetOriginViewScale();
 
         // original rect (save)

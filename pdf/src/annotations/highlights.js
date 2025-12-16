@@ -43,7 +43,6 @@
         this._quads         = [];
         this._richContents  = undefined;
         this._rotate        = undefined;
-        this._width         = undefined;
     }
     CAnnotationTextMarkup.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
 	CAnnotationTextMarkup.prototype.constructor = CAnnotationTextMarkup;

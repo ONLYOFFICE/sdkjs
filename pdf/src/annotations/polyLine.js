@@ -56,11 +56,9 @@
         this._rotate        = undefined;
         this._state         = undefined;
         this._stateModel    = undefined;
-        this._width         = undefined;
         this._lineStart     = AscPDF.LINE_END_TYPE.None;
         this._lineEnd       = AscPDF.LINE_END_TYPE.None;
         this._vertices      = undefined;
-        this._width         = undefined;
     }
     CAnnotationPolyLine.prototype.constructor = CAnnotationPolyLine;
     AscFormat.InitClass(CAnnotationPolyLine, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Polyline);
@@ -174,7 +172,7 @@
         return this._lineEnd;
     };
     CAnnotationPolyLine.prototype.private_CalcBoundingRect = function() {
-        let nLineWidth  = this.GetWidth();
+        let nLineWidth  = this.GetBorderWidth();
         let aVertices   = this.GetVertices();
 
         let shapeSizeAtStart    = getFigureSize(this.GetLineStart(), nLineWidth);

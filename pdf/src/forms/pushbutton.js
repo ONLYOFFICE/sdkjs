@@ -102,7 +102,7 @@
 
         let oIconPos = this.GetIconPosition();
         oCopy.SetIconPosition(oIconPos.X, oIconPos.Y);
-        oCopy.SetButtonFitBounds(this.IsButtonFitBounds());
+        oCopy.SetFitBounds(this.IsButtonFitBounds());
         oCopy.SetLayout(this.GetLayout());
         oCopy.SetScaleHow(this.GetScaleHow());
         oCopy.SetScaleWhen(this.GetScaleWhen());

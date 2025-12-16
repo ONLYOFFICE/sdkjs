@@ -49,7 +49,6 @@
         this._stateModel    = undefined;
         this._gestures      = [];
         this._relativePaths = [];
-        this._width         = 1;
     }
     
 	CAnnotationInk.prototype.constructor = CAnnotationInk;
@@ -119,7 +118,7 @@
             return null;
         }
     
-        let nLineW = this.GetWidth();
+        let nLineW = this.GetBorderWidth();
 
         let minX = Infinity;
         let minY = Infinity;
@@ -231,7 +230,7 @@
         let aRelPointsPos   = this._relativePaths;
         let aShapePaths     = [];
         
-        let nLineW = this.GetWidth() * g_dKoef_pt_to_mm;
+        let nLineW = this.GetBorderWidth() * g_dKoef_pt_to_mm;
 
         let xMin = aBounds[0] + nLineW;
         let yMin = aBounds[1] + nLineW;
@@ -271,7 +270,7 @@
         let aRelPointsPos   = this._relativePaths;
         let aGestures       = [];
         
-        let nLineW = this.GetWidth();
+        let nLineW = this.GetBorderWidth();
 
         let xMin = aBounds[0] + nLineW;
         let yMin = aBounds[1] + nLineW;

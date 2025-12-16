@@ -5927,14 +5927,14 @@ var CPresentation = CPresentation || function(){};
 
                 oAnnot.SetStrokeColor([0, 0, 1]);
                 oAnnot.SetOpacity(1);
-                oAnnot.SetWidth(1);
+                oAnnot.SetBorderWidth(1);
 
                 if (isTextSelection) {
                     oAnnot.SetQuads(aQuads);
-                    oAnnot.SetBorder(AscPDF.BORDER_TYPES.underline);
+                    oAnnot.SetBorderStyle(AscPDF.BORDER_TYPES.underline);
                 }
                 else {
-                    oAnnot.SetBorder(AscPDF.BORDER_TYPES.solid);
+                    oAnnot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
                 }
 
                 aAnnots.push(oAnnot);
@@ -6953,7 +6953,7 @@ var CPresentation = CPresentation || function(){};
         
         oFreeText.SetFillColor([1, 1, 1]);
         oFreeText.SetStrokeColor([0, 0, 0]);
-        oFreeText.SetWidth(1);
+        oFreeText.SetBorderWidth(1);
         oFreeText.SetAlign(AscPDF.ALIGN_TYPE.left);
         oFreeText.SetIntent(nType);
         
@@ -7114,7 +7114,7 @@ var CPresentation = CPresentation || function(){};
         let oStamp = this.AddAnnotByProps(oProps);
         let oXfrm = oStamp.getXfrm();
         oStamp.SetIconType(sType);
-        oStamp.SetWidth(nLineW);
+        oStamp.SetBorderWidth(nLineW);
         oXfrm.setRot(-nRotAngle * (Math.PI / 180));
         
         if (oStampRender) {
@@ -9476,7 +9476,7 @@ var CPresentation = CPresentation || function(){};
         if (annotJson["dashed"] != null)
             oAnnot.SetDash(annotJson["dashed"]);
         if (annotJson["border"] != null)
-            oAnnot.SetBorder(annotJson["border"]);
+            oAnnot.SetBorderStyle(annotJson["border"]);
         if (annotJson["Icon"] != null)
             oAnnot.SetIconType(annotJson["Icon"]);
         if (annotJson["noRotate"] != null)
@@ -9529,10 +9529,10 @@ var CPresentation = CPresentation || function(){};
             oAnnot.SetOpacity(annotJson["CA"]);
         }
         if (annotJson["borderWidth"] != null) {
-            oAnnot.SetWidth(annotJson["borderWidth"]);
+            oAnnot.SetBorderWidth(annotJson["borderWidth"]);
         }
         else {
-            oAnnot.SetWidth(1);
+            oAnnot.SetBorderWidth(1);
         }
 
         if (annotJson["QuadPoints"] != null) {
@@ -9649,7 +9649,7 @@ var CPresentation = CPresentation || function(){};
         }
         if (formJson["IF"] != null) {
             if (formJson["IF"]["FB"] != null)
-                oForm.SetButtonFitBounds(Boolean(formJson["IF"]["FB"]));
+                oForm.SetFitBounds(Boolean(formJson["IF"]["FB"]));
             if (formJson["IF"]["SW"] != null)
                 oForm.SetScaleWhen(formJson["IF"]["SW"]);
             if (formJson["IF"]["A"] != null)
@@ -9824,7 +9824,7 @@ var CPresentation = CPresentation || function(){};
         switch (annot.GetType()) {
             case AscPDF.ANNOTATIONS_TYPES.FreeText: {
                 oAnnotProps = new Asc.asc_CFreeTextAnnotProperty();
-                oAnnotProps.asc_putBorderWidth(annot.GetWidth());
+                oAnnotProps.asc_putBorderWidth(annot.GetBorderWidth());
                 oAnnotProps.asc_putLineEnd(annot.GetLineEnd());
                 oAnnotProps.asc_putBorderStyle(annot.GetComplexBorderType());
                 oAnnotProps.asc_putCanEditText(annot.IsInTextBox());
@@ -9833,7 +9833,7 @@ var CPresentation = CPresentation || function(){};
             case AscPDF.ANNOTATIONS_TYPES.Line: {
                 oAnnotProps = new Asc.asc_CLineAnnotProperty();
                 oAnnotProps.asc_putBorderStyle(annot.GetComplexBorderType());
-                oAnnotProps.asc_putBorderWidth(annot.GetWidth());
+                oAnnotProps.asc_putBorderWidth(annot.GetBorderWidth());
                 oAnnotProps.asc_putLineEnd(annot.GetLineEnd());
                 oAnnotProps.asc_putLineStart(annot.GetLineStart());
                 oAnnotProps.asc_putCanEditText(annot.IsDoCaption());
@@ -9842,7 +9842,7 @@ var CPresentation = CPresentation || function(){};
             case AscPDF.ANNOTATIONS_TYPES.PolyLine: {
                 oAnnotProps = new Asc.asc_CPolyLineAnnotProperty();
                 oAnnotProps.asc_putBorderStyle(annot.GetComplexBorderType());
-                oAnnotProps.asc_putBorderWidth(annot.GetWidth());
+                oAnnotProps.asc_putBorderWidth(annot.GetBorderWidth());
                 oAnnotProps.asc_putLineEnd(annot.GetLineEnd());
                 oAnnotProps.asc_putLineStart(annot.GetLineStart());
                 break;
@@ -9852,7 +9852,7 @@ var CPresentation = CPresentation || function(){};
             case AscPDF.ANNOTATIONS_TYPES.Circle: {
                 oAnnotProps = new Asc.asc_CClosedAnnotProperty();
                 oAnnotProps.asc_putBorderStyle(annot.GetComplexBorderType());
-                oAnnotProps.asc_putBorderWidth(annot.GetWidth());
+                oAnnotProps.asc_putBorderWidth(annot.GetBorderWidth());
                 break;
             }
         }

@@ -65,10 +65,13 @@
         Redact:         25
     };
 
-    let BORDER_EFFECT_STYLES = {
-        None:   0,
-        Cloud:  1
+    const BORDER_EFFECT_STYLES = {
+        none:   0,
+        cloud:  1
     }
+
+    BORDER_EFFECT_STYLES["none"]    = BORDER_EFFECT_STYLES.none;
+    BORDER_EFFECT_STYLES["cloud"]   = BORDER_EFFECT_STYLES.cloud;
 
     let REF_TO_REASON = {
         Reply: 0,
