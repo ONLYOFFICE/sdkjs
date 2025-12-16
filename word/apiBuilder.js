@@ -21362,16 +21362,32 @@
 		if (this.type !== 'theme')
 			return null;
 
-		const theme = editor.getCurrentTheme();
-		if (!theme || !theme.themeElements || !theme.themeElements.clrScheme)
+		const logicDocument = private_GetLogicDocument();
+		if (!logicDocument)
 			return null;
 
-		const unicolors = theme.themeElements.clrScheme.colors;
-		const unicolor = unicolors[this.value];
-		if (!unicolor || !unicolor.color || !unicolor.color.RGBA)
+		const theme = logicDocument.GetTheme();
+		const colorMap = logicDocument.GetColorMap();
+		const canResolveThemeColors = colorMap && colorMap.color_map &&
+			theme && theme.themeElements && theme.themeElements.clrScheme;
+		if (!canResolveThemeColors)
 			return null;
 
-		const rgba = unicolor.color.RGBA;
+		let rgba;
+		const colors = theme.themeElements.clrScheme.colors;
+		const colorMapArray = colorMap ? colorMap.color_map : null;
+
+		const resolveFromMap = colorMapArray && colorMapArray[this.value] != null && colors[colorMapArray[this.value]] != null;
+		if (resolveFromMap) {
+			const mappedId = colorMapArray[this.value];
+			rgba = colors[mappedId].color.RGBA;
+		} else if (colors[this.value] != null) {
+			rgba = colors[this.value].color.RGBA;
+		}
+
+		if (!rgba) {
+			rgba = { R: 0, G: 0, B: 0, A: 255 };
+		}
 
 		return (rgba.R & 0xFF) << 24 | (rgba.G & 0xFF) << 16 | (rgba.B & 0xFF) << 8 | (rgba.A & 0xFF);
 	};
