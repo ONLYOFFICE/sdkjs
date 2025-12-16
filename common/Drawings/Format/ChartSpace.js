@@ -10321,9 +10321,10 @@ function(window, undefined) {
 			aSeries[nSer].recalculateTrendlines();
 		}
 	};
-	CChartSpace.prototype.showTrendlines = function (bShow, nTrendlineType, nForecastForward, nForecastBackward) {
-		const allSeries = this.getAllSeries();
-		allSeries.forEach(function (ser) {
+	CChartSpace.prototype.showTrendlines = function (bShow, nTrendlineType, nForecastForward, nForecastBackward, useSeriesSelection) {
+		const selectedSeries = useSeriesSelection && this.getSelectedSeries();
+		const seriesToProcess = selectedSeries ? [selectedSeries] : this.getAllSeries();
+		seriesToProcess.forEach(function (ser) {
 			ser.removeAllTrendlines();
 			if (bShow) {
 				const newTrendline = createTrendline(ser, nTrendlineType, nForecastForward, nForecastBackward);
