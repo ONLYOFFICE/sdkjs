@@ -19295,11 +19295,15 @@ function RangeDataManagerElem(bbox, data)
 
 	function CMetadataBlock() {
 		this.elems = null;
+		this.t = null;
+		this.v = null;
 	}
 	CMetadataBlock.prototype.clone = function () {
 		let res = new CMetadataBlock();
 
 		res.elems = this.elems;
+		res.t = this.t;
+		res.v = this.v;
 
 		return res;
 	};

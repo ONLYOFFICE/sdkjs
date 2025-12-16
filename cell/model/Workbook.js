@@ -15050,6 +15050,9 @@
 		if (caProps && caProps.ca) {
 			parser.ca = caProps.ca;
 		}
+		if (caProps && caProps.cm) {
+			parser.setCm(caProps.cm);
+		}
 		if(formulaRef) {
 			/* when merging, the formulaRef is taken with the old data, we need to shift ref to topLeftCell */
 			// parser.setArrayFormulaRef(formulaRef);
@@ -15625,20 +15628,23 @@
 		var formula = this.isFormula() ? this.getFormula() : null;
 		var formulaRef;
 		let ca;
+		let cm;
 		if(formula) {
 			var parser = this.getFormulaParsed();
 			if(parser) {
 				formulaRef = parser.getArrayFormulaRef();
 				ca = parser.ca;
+				cm = parser.getCm();
 			}
 		}
-		return new UndoRedoData_CellValueData(formula, new AscCommonExcel.CCellValue(this), formulaRef, ca);
+		return new UndoRedoData_CellValueData(formula, new AscCommonExcel.CCellValue(this), formulaRef, ca, cm);
 	};
 	Cell.prototype.setValueData = function(Val){
 		//значения устанавляваются через setValue, чтобы пересчитались формулы
 		if (null != Val.formula) {
 			let caProps = {
 				ca: Val.ca,
+				cm: Val.cm,
 				oldValue: Val.value.number,
 				oldValueText: Val.value.text
 			};
@@ -18218,6 +18224,7 @@
 				activeCell = _selection.activeCell;
 			}
 		}
+		let cmIndex = null;
 		this._foreach(function(cell){
 			if (cell.ws.isUserProtectedRangesIntersectionCell(cell)) {
 				return;
@@ -18232,13 +18239,16 @@
 			}
 			// when creating new array formulas, it is necessary to transfer information about the dynamic array because regular ref is used
 			cell.setValue(_val, callback, isCopyPaste, byRef, ignoreHyperlink, dynamicRange);
+			if (dynamicRange && cmIndex == null) {
+				cmIndex = cell.formulaParsed && cell.formulaParsed.getCm();
+			}
 		});
 
 		//***array-formula***
 		let _sFormula = this.getFormula();
 		if(_sFormula && byRef) {
 			History.Add(AscCommonExcel.g_oUndoRedoArrayFormula, AscCH.historyitem_ArrayFromula_AddFormula, this.worksheet.getId(),
-				new Asc.Range(this.bbox.c1, this.bbox.r1, this.bbox.c2, this.bbox.r2), new AscCommonExcel.UndoRedoData_ArrayFormula(this.bbox, "=" + _sFormula));
+				new Asc.Range(this.bbox.c1, this.bbox.r1, this.bbox.c2, this.bbox.r2), new AscCommonExcel.UndoRedoData_ArrayFormula(this.bbox, "=" + _sFormula, cmIndex));
 		}
 
 		AscCommon.History.EndTransaction();
@@ -24949,7 +24959,7 @@
 		if (metadata) {
 			let oDynamicProps = metadata.getLastDynamicArrayPropertiesByType("XLDAPR");
 			if (oDynamicProps && oDynamicProps.dynamicArrayProperties && oDynamicProps.dynamicArrayProperties.fDynamic) {
-				return oDynamicProps.cmIndex;
+				return oDynamicProps.index;
 			}
 		}
 		if (generateNewStructure) {

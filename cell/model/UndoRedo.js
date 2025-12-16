@@ -949,15 +949,16 @@ function (window, undefined) {
 		}
 	};
 
-	function UndoRedoData_CellValueData(sFormula, oValue, formulaRef, bCa) {
+	function UndoRedoData_CellValueData(sFormula, oValue, formulaRef, bCa, nCm) {
 		this.formula = sFormula;
 		this.formulaRef = formulaRef;
 		this.value = oValue;
 		this.ca = bCa;
+		this.cm = nCm;
 	}
 
 	UndoRedoData_CellValueData.prototype.Properties = {
-		formula: 0, value: 1, formulaRef: 2, ca: 3
+		formula: 0, value: 1, formulaRef: 2, ca: 3, cm: 4
 	};
 	UndoRedoData_CellValueData.prototype.isEqual = function (val) {
 		if (null == val) {
@@ -969,6 +970,9 @@ function (window, undefined) {
 		if ((this.formulaRef && val.formulaRef &&
 			!(this.formulaRef.r1 === val.formulaRef.r1 && this.formulaRef.c1 === val.formulaRef.c1 && this.formulaRef.r2 === val.formulaRef.r2 &&
 				this.formulaRef.c2 === val.formulaRef.c2)) || (this.formulaRef !== val.formulaRef)) {
+			return false;
+		}
+		if (this.cm != val.cm) {
 			return false;
 		}
 		if (this.value.isEqual(val.value)) {
@@ -992,6 +996,8 @@ function (window, undefined) {
 				return this.formulaRef ? new UndoRedoData_BBox(this.formulaRef) : null;
 			case this.Properties.ca:
 				return this.ca;
+			case this.Properties.cm:
+				return this.cm;
 		}
 		return null;
 	};
@@ -1008,6 +1014,9 @@ function (window, undefined) {
 				break;
 			case this.Properties.ca:
 				this.ca = value;
+				break;
+			case this.Properties.cm:
+				this.cm = value;
 				break;
 		}
 	};
@@ -2370,14 +2379,16 @@ function (window, undefined) {
 	};
 
 	//***array-formula***
-	function UndoRedoData_ArrayFormula(range, formula) {
+	function UndoRedoData_ArrayFormula(range, formula, cmIndex) {
 		this.range = range;
 		this.formula = formula;
+		this.cmIndex = cmIndex;
 	}
 
 	UndoRedoData_ArrayFormula.prototype.Properties = {
 		range: 0,
-		formula: 1
+		formula: 1,
+		cmIndex: 2
 	};
 	UndoRedoData_ArrayFormula.prototype.getType = function () {
 		return UndoRedoDataTypes.ArrayFormula;
@@ -2391,6 +2402,8 @@ function (window, undefined) {
 				return new UndoRedoData_BBox(this.range);
 			case this.Properties.formula:
 				return this.formula;
+			case this.Properties.cmIndex:
+				return this.cmIndex;
 		}
 
 		return null;
@@ -2402,6 +2415,9 @@ function (window, undefined) {
 				break;
 			case this.Properties.formula:
 				this.formula = value;
+				break;
+			case this.Properties.cmIndex:
+				this.cmIndex = value;
 				break;
 		}
 		return null;
@@ -5121,12 +5137,20 @@ function (window, undefined) {
 
 		var bbox = Data.range;
 		var formula = Data.formula;
+		let cmIndex = Data.cmIndex;
 		var range = ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2);
 		switch (Type) {
 			case AscCH.historyitem_ArrayFromula_AddFormula:
 				if (!bUndo) {
 					AscCommonExcel.executeInR1C1Mode(false, function () {
-						range.setValue(formula, null, null, bbox);
+						range.setValue(formula, null, null, bbox, null, cmIndex != null ? bbox :  null);
+						if (cmIndex != null) {
+							ws.getRange3(bbox.r1, bbox.c1, bbox.r1, bbox.c1)._foreach(function(cell) {
+								if (cell && cell.formulaParsed) {
+									cell.formulaParsed.setCm(cmIndex);
+								}
+							});
+						}
 					});
 				}
 				break;
