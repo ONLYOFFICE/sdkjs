@@ -2322,17 +2322,9 @@ CShapeDrawer.prototype =
                         }
                         else
                         {
-                            if (this.IsRectShape)
-                            {
-	                            this.Graphics.put_brushTexture(getFullImageSrc2(this.UniFill.fill.RasterImageId), 0);
-	                            const fillRect = this.Graphics.getFillRect(this.min_x, this.min_y, (this.max_x - this.min_x), (this.max_y - this.min_y), this.UniFill.fill.srcRect);
-								this.Graphics.put_TextureBounds(fillRect.x, fillRect.y, fillRect.w, fillRect.h);
-                            }
-                            else
-                            {
-                                // TODO: support srcRect
-                                this.Graphics.put_brushTexture(getFullImageSrc2(this.UniFill.fill.RasterImageId), 0);
-                            }
+	                        this.Graphics.put_brushTexture(getFullImageSrc2(this.UniFill.fill.RasterImageId), 0);
+	                        const fillRect = this.Graphics.getFillRect(this.min_x, this.min_y, (this.max_x - this.min_x), (this.max_y - this.min_y), this.UniFill.fill.srcRect);
+	                        this.Graphics.put_TextureBounds(fillRect.x, fillRect.y, fillRect.w, fillRect.h);
                         }
 
                         const fillRect = AscCommon.isRealObject(this.UniFill.fill.stretch.fillRect)
