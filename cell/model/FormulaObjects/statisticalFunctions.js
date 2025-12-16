@@ -12056,47 +12056,308 @@ function (window, undefined) {
 	FormulaRangesCache.prototype.remove = function () {
 	};
 
+	function CountIfTypedCache() {
+		this.data = {};
+	}
+
+	CountIfTypedCache.prototype.clean = function() {
+		this.data = {};
+	};
+
+	CountIfTypedCache.prototype.unshiftValues = function(column, unshiftDataArrays, unshiftIndexesArrays) {
+		const data = column.data;
+		const indexes = column.indexes;
+		for (let i in unshiftDataArrays) {
+			const valueToUnshift = unshiftDataArrays[i];
+			if (!data[i]) {
+				data[i] = [];
+			}
+			data[i] = valueToUnshift.concat(data[i]);
+		}
+		for (let i in unshiftIndexesArrays) {
+			const valueToUnshift = unshiftIndexesArrays[i];
+			if (!indexes[i]) {
+				indexes[i] = [];
+			}
+			indexes[i] = valueToUnshift.concat(data[i]);
+		}
+	};
+
+	CountIfTypedCache.prototype.updateDataBerofe = function(range, column, startIndex) {
+		column.start = startIndex;
+		const unshiftDataArrays = {};
+		const unshiftIndexesArrays = {};
+		range._foreachNoEmpty(function (cell, r, c) {
+			const value = checkTypeCell(cell, true);
+			if (value.type !== cElementType.empty) {
+				if (!unshiftDataArrays[value.type]) {
+					unshiftDataArrays[value.type] = [];
+				}
+				if(!unshiftIndexesArrays[value.type]) {
+					unshiftIndexesArrays[value.type] = [];
+				}
+				const unshiftDataArray = unshiftDataArrays[value.type];
+				const unshiftIndexesArray = unshiftIndexesArrays[value.type];
+				let valueToAdd = value.value;
+				if (value.type === cElementType.error) {
+					valueToAdd = value.errorType;
+				}
+				unshiftDataArray.push(valueToAdd);
+				unshiftIndexesArray.push(r);
+			}
+		});
+		this.unshiftValues(column, unshiftDataArrays, unshiftIndexesArrays);
+	};
+
+	CountIfTypedCache.prototype.pushValue = function (column, value, index) {
+		const data = column.data;
+		const indexes = column.indexes;
+		if (!data[value.type]) {
+			data[value.type] = [];
+		}
+		if (!indexes[value.type]) {
+			indexes[value.type] = [];
+		}
+		let valueToAdd = value.value;
+		if (value.type === cElementType.error) {
+			valueToAdd = value.errorType;
+		}
+		data[value.type].push(valueToAdd);
+		indexes[value.type].push(index);
+	};
+
+	CountIfTypedCache.prototype.updateDataAfter = function (range, column, endIndex) {
+		const t = this;
+		range._foreachNoEmpty(function (cell, r, c) {
+			const value = checkTypeCell(cell, true);
+			if (r > column.end) {
+				if (value.type !== cElementType.empty) {
+					t.pushValue(column, value, r)
+				}
+				column.end = r;
+			}
+		});
+		column.end = endIndex;
+	};
+
+	CountIfTypedCache.prototype.updateColumnData = function (ws, columnIndex, column, startIndex, endIndex) {
+		if (startIndex < column.start) {
+			const r1 = startIndex;
+			const r2 = column.start - 1;
+			const fullRange = ws.getRange3(r1, columnIndex, r2, columnIndex);
+			this.updateDataBerofe(fullRange, column, startIndex);
+		}
+		if (endIndex > column.end) {
+			const r1 = column.end + 1;
+			const r2 = endIndex;
+			const fullRange = ws.getRange3(r1, columnIndex, r2, columnIndex);
+			this.updateDataAfter(fullRange, column, endIndex);
+		}
+	};
+
+	CountIfTypedCache.prototype.findLowerIndexInTyped = function(lowerIndex, typedIndexesArray) {
+		let i = 0;
+		let j = typedIndexesArray.length;
+		while (i < j) {
+			let k = Math.floor((i + j) / 2);
+			if (typedIndexesArray[k] < lowerIndex) {
+				i = k + 1;
+			} else {
+				j = k;
+			}
+		}
+		return i;
+	};
+
+	CountIfTypedCache.prototype.findHigherIndexInTyped = function(higherIndex, typedIndexesArray) {
+		let i = 0;
+		let j = typedIndexesArray.length;
+		while (i < j) {
+			let k = Math.floor((i + j) / 2);
+			if (typedIndexesArray[k] <= higherIndex) {
+				i = k + 1;
+			} else {
+				j = k;
+			}
+		}
+		return i;
+	};
+
+	CountIfTypedCache.prototype.forEachInTyped = function(range, type, callback) {
+		const ws = range.getWS();
+		const bbox = range.getBBox0();
+		const wsId = ws.getId();
+		if (!this.data[wsId]) {
+			this.data[wsId] = {};
+		}
+		for (let i = bbox.c1; i <= bbox.c2; i += 1) {
+			if (!this.data[wsId][i]) {
+				this.data[wsId][i] = {start: bbox.r1, end: bbox.r1 - 1, data: {}, indexes: {}};
+			}
+			const column = this.data[wsId][i];
+			this.updateColumnData(ws, i, column, bbox.r1, bbox.r2);
+			if (column.data[type]) {
+				const typedData = column.data[type];
+				const typedIndexes = column.indexes[type];
+				const firstIndex = this.findLowerIndexInTyped(bbox.r1, typedIndexes)
+				for (let j = firstIndex; j < typedData.length; j += 1) {
+					if (typedIndexes[j] > bbox.r2) {
+						break;
+					}
+					const value = typedData[j];
+					callback(value);
+				}
+			}
+		}
+	};
+
+	CountIfTypedCache.prototype.getElemsCount = function(range) {
+		let result = 0;
+		const ws = range.getWS();
+		const bbox = range.getBBox0();
+		const wsId = ws.getId();
+		if (!this.data[wsId]) {
+			this.data[wsId] = {};
+		}
+		for (let i = bbox.c1; i <= bbox.c2; i += 1) {
+			if (!this.data[wsId][i]) {
+				this.data[wsId][i] = {start: bbox.r1, end: bbox.r1 - 1, data: {}, indexes: {}};
+			}
+			const column = this.data[wsId][i];
+			this.updateColumnData(ws, i, column, bbox.r1, bbox.r2);
+			for (let type in column.indexes) {
+				const typedIndexes = column.indexes[type];
+				const firstIndex = this.findLowerIndexInTyped(bbox.r1, typedIndexes);
+				const lastIndex = this.findHigherIndexInTyped(bbox.r2, typedIndexes);
+				result += lastIndex - firstIndex;
+			}
+		}
+		return result;
+	};
+
+	CountIfTypedCache.prototype.changeColumnsData = function(wsId, cell, oldValue, oldType, newValue, newType) {
+		const columnIndex = cell.nCol;
+		const changedIndex = cell.nRow;
+		const data = this.data[wsId];
+		const column = data[columnIndex];
+		if (column && changedIndex >= column.start && changedIndex <= column.end) {
+			if (oldValue !== null) {
+				const indexesArray = column.indexes[oldType];
+				const dataArray = column.data[oldType];
+				if (dataArray && indexesArray) {
+					const removeIndex = indexesArray.indexOf(changedIndex);
+					if (removeIndex !== -1) {
+						dataArray.splice(removeIndex, 1);
+						indexesArray.splice(removeIndex, 1);
+					}
+				}
+			}
+			if (newValue !== null && newType !== cElementType.empty) {
+				const indexesArray = column.indexes[newType];
+				const dataArray = column.data[newType];
+				if (dataArray && indexesArray) {
+					let insertIndex = 0;
+					for (let i = 0; i < indexesArray.length; i += 1) {
+						if (indexesArray[i] < changedIndex) {
+							insertIndex = i + 1;
+						}
+					}
+					dataArray.splice(insertIndex, 0, newValue);
+					indexesArray.splice(insertIndex, 0, changedIndex);
+				} else {
+					column.data[newType] = [newValue];
+					column.indexes[newType] = [changedIndex];
+				}
+			}
+		}
+	};
+
+	CountIfTypedCache.prototype.changeData = function (cell, dataOld, dataNew) {
+		const wsId = cell.ws.getId();
+		const data = this.data[wsId];
+		if (data) {
+			let oldValue = null;
+			let oldType = null;
+			if (dataOld) {
+				const oldCellValue = dataOld && dataOld.value;
+				oldType = oldCellValue && oldCellValue.type;
+				oldValue = oldType === cElementType.number ? oldCellValue.number : oldCellValue.text;
+				if (oldValue && oldType === cElementType.string) {
+					oldValue = oldValue.toLowerCase();
+				}
+				if (oldValue && oldType === cElementType.error) {
+					oldValue = oldValue.errorType;
+				}
+			}
+			let newValue = null;
+			let newType = null;
+			if (dataNew) {
+				newType = dataNew.type;
+				newValue = dataNew.value;
+				if (newValue && newType === cElementType.string) {
+					newValue = newValue.toLowerCase();
+				}
+				if (newValue && newType === cElementType.error) {
+					newValue = new cError(newValue).errorType;
+				}
+			}
+			if (oldType === newType && newValue === oldValue) {
+				return;
+			}
+			if (oldType === cElementType.error) {
+				oldValue
+			}
+			this.changeColumnsData(wsId,cell, oldValue, oldType, newValue, newType);
+		}
+	};
+
 	/**
 	 * @constructor
 	 */
 	function CountIfCache() {
 		this.cacheId = {};
 		this.cacheRanges = {};
+		this.typedCache = new CountIfTypedCache();
 	}
 	CountIfCache.prototype.constructor = CountIfCache;
-	/**
-	 * Extracts and categorizes all values from a range into a universal array structure
-	 * @private
-	 * @param {cArea} range - The range object to extract values from
-	 * @returns {Object.<cElementType, Array|number>} Object where keys are cElementType constants and values are arrays of cell values or count for empty cells
-	 */
-	CountIfCache.prototype._getUniversalArrayFromRange = function(range) {
-		const res = {};
-		const bbox = range.getBBox0();
-		let emptyCount = (bbox.c2 - bbox.c1 + 1) * (bbox.r2 - bbox.r1 + 1);
-		range.foreach2(function(cell) {
-			const type = cell.type;
-			if (type !== cElementType.empty) {
-				if (!res[type]) {
-					res[type] = [];
-				}
-				let value = cell;
-				if (type === cElementType.error) {
-					value = cell.errorType;
-				} else if (type === cElementType.string) {
-					value = value.value.toLowerCase();
-				} else {
-					value = value.value;
-				}
-				res[type].push(value);
-			}
-		});
-		for (let i in res) {
-			emptyCount -= res[i].length;
+
+	CountIfCache.prototype.calculateSingeValue = function(value, arg1) {
+		let matchingInfo = AscCommonExcel.matchingValue(arg1);
+		let type = matchingInfo.val.type;
+		let searchValue = matchingInfo.val;
+		if (type === cElementType.string) {
+			searchValue = searchValue.toString().toLowerCase();
+		} else {
+			searchValue = searchValue.value;
 		}
-		res[cElementType.empty] = emptyCount;
-		return res;
+		if (type === cElementType.string) {
+			const checkErr = new cError(matchingInfo.val.value.toUpperCase());
+			if (checkErr.errorType !== -1) {
+				type = cElementType.error;
+				searchValue = checkErr.errorType;
+			}
+		}
+		if (searchValue === "") {
+			if  (matchingInfo.op === null || matchingInfo.op === '=') {
+				return value.type === cElementType.empty ? new cNumber(1) : new cNumber(0);
+			}
+			if (matchingInfo.op === "<>") {
+				return value.type === cElementType.empty ? new cNumber(0) : new cNumber(1);
+			}
+			return new cNumber(0);
+		}
+
+		if (type !== value.type) {
+			return matchingInfo.op === "<>" ? new cNumber(1) : new cNumber(0);
+		}
+		const isWildcard = type === cElementType.string && (searchValue.indexOf('*') !== -1 || searchValue.indexOf('?') !== -1);
+		const matchingFunction = getMatchingFunction(type, matchingInfo.op, isWildcard);
+		if (matchingFunction(value.value, searchValue)) {
+			return new cNumber(1);
+		}
+		return new cNumber(0);
 	};
+
 	CountIfCache.prototype.calculate = function (arg, _arg1) {
 		let arg0 = arg[0], arg1 = arg[1];
 
@@ -12110,16 +12371,8 @@ function (window, undefined) {
 		const t = this;
 		function calculateOne(rangeOrCell, condition) {
 			if (cElementType.cell === rangeOrCell.type || cElementType.cell3D === rangeOrCell.type) {
-				const arr = {};
 				const value = arg0.getValue();
-				if (value.type === cElementType.empty) {
-					arr[value.type] = 1;
-				} else if (value.type === cElementType.error) {
-					arr[value.type] = [value.errorType];
-				} else {
-					arr[value.type] = [value.value];
-				}
-				return t._calculate(arr, condition);
+				return t.calculateSingeValue(value, condition);
 			}
 			else if (cElementType.cellsRange === rangeOrCell.type || cElementType.cellsRange3D === rangeOrCell.type) {
 				return t._get(rangeOrCell, condition);
@@ -12160,12 +12413,13 @@ function (window, undefined) {
 		return calculateOne(arg0, arg1);
 	};
 	CountIfCache.prototype._get = function (range, arg1) {
-		let res, wsId = range.getWS().getId(),
+		const ws = range.getWS();
+		let res, wsId = ws.getId(),
 			sRangeName = wsId + g_cCharDelimiter + range.getBBox0().getName(), cacheElem = this.cacheId[sRangeName],
 			valueForSearching = arg1.getValue();
 
 		if (!cacheElem) {
-			cacheElem = {elements: this._getUniversalArrayFromRange(range), results: {}};
+			cacheElem = {elements: {}, results: {}};
 			this.cacheId[sRangeName] = cacheElem;
 			let cacheRange = this.cacheRanges[wsId];
 			if (!cacheRange) {
@@ -12178,11 +12432,12 @@ function (window, undefined) {
 		res = cacheElem.results[sInputKey];
 
 		if (!res) {
-			cacheElem.results[sInputKey] = res = this._calculate(cacheElem.elements, arg1);
+			cacheElem.results[sInputKey] = res = this._calculate(range, arg1);
 		}
 		return res;
 	};
-	CountIfCache.prototype._calculate = function (arr, arg1) {
+	CountIfCache.prototype._calculate = function (range, arg1) {
+		const ws = range.getWS();
 		let _count = 0;
 		let matchingInfo = AscCommonExcel.matchingValue(arg1);
 		let type = matchingInfo.val.type;
@@ -12199,30 +12454,39 @@ function (window, undefined) {
 				searchValue = checkErr.errorType;
 			}
 		}
-		if (matchingInfo.op === "<>") {
-			for (let i in arr) {
-				if (i !== String(type)) {
-					_count += arr[i].length ? arr[i].length : arr[i];
-				}
+		if (searchValue === "") {
+			if (matchingInfo.op === "=" || matchingInfo.op === null) {
+				const bbox = range.getBBox0();
+				const cellsCount = (bbox.c2 - bbox.c1 + 1) * (bbox.r2 - bbox.r1 + 1);
+				const elemsCount = this.typedCache.getElemsCount(range);
+				const emptyCount = cellsCount - elemsCount;
+				return new cNumber(emptyCount);
 			}
-		}
-		const typedArr = arr[type];
-		if (searchValue === "" && matchingInfo.op !== "<>") {
-			if (arr[cElementType.empty]) {
-				return new cNumber(arr[cElementType.empty]);
+			if (matchingInfo.op === "<>") {
+				const bbox = range.getBBox0();
+				const elemsCount = this.typedCache.getElemsCount(range);
+				return new cNumber(elemsCount);
 			}
 			return new cNumber(0);
 		}
 		const isWildcard = type === cElementType.string && (searchValue.indexOf('*') !== -1 || searchValue.indexOf('?') !== -1);
-		const matchingFunction = getMatchingFunction(type, matchingInfo.op, isWildcard);
-		if (typedArr) {
-			for (let i = 0; i < typedArr.length; i += 1) {
-				_count += matchingFunction(typedArr[i], searchValue);
-			}
+		if (matchingInfo.op === '<>') {
+			const bbox = range.getBBox0();
+			const cellsCount = (bbox.c2 - bbox.c1 + 1) * (bbox.r2 - bbox.r1 + 1);
+			const matchingFunction = getMatchingFunction(type, '=', isWildcard);
+			this.typedCache.forEachInTyped(range, type, function(value) {
+				_count += matchingFunction(value, searchValue);
+			});
+			_count = cellsCount - _count;
+		} else {
+			const matchingFunction = getMatchingFunction(type, matchingInfo.op, isWildcard);
+			this.typedCache.forEachInTyped(range, type, function(value) {
+				_count += matchingFunction(value, searchValue);
+			});
 		}
 		return new cNumber(_count);
 	};
-	CountIfCache.prototype.remove = function (cell) {
+	CountIfCache.prototype.remove = function (cell, dataOld, dataNew) {
 		var wsId = cell.ws.getId();
 		var cacheRange = this.cacheRanges[wsId];
 		if (cacheRange) {
@@ -12232,10 +12496,12 @@ function (window, undefined) {
 				elem.data.results = {};
 			}
 		}
+		this.typedCache.changeData(cell, dataOld, dataNew);
 	};
 	CountIfCache.prototype.clean = function () {
 		this.cacheId = {};
 		this.cacheRanges = {};
+		this.typedCache.clean();
 	};
 
 

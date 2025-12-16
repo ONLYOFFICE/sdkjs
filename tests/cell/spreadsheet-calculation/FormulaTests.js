@@ -19240,6 +19240,7 @@ $(function () {
 		ws.getRange2("B103").setValue("12");
 		ws.getRange2("B104").setValue("23");
 		ws.getRange2("B105").setValue("55");
+		AscCommonExcel.g_oCountIfCache.clean();
 
 		// Case #32: Formula, String. Count values greater than 80 in XLOOKUP result (Math). For bug 62491
 		oParser = new parserFormula('COUNTIF(XLOOKUP(A100,A100:B100,A101:B105),">80")', "C2", ws);
@@ -19265,15 +19266,18 @@ $(function () {
 		ws.getRange2("B205").setValue("asd");
 		ws.getRange2("B206").setValue('123');
 		ws.getRange2("B207").setValue('ASD');
+		AscCommonExcel.g_oCountIfCache.clean();
 
 		// Case #40: Area, String. Empty cells check
 		oParser = new parserFormula('COUNTIF(A200:B205,"<>"&"*")', "C2", ws);
 		assert.ok(oParser.parse());
+		debugger;
 		assert.strictEqual(oParser.calculate().getValue(), 10);
 
 		// Case #41: Area, String. Find empty cells check
 		oParser = new parserFormula('COUNTIF(A200:B205,"")', "C2", ws);
 		assert.ok(oParser.parse());
+		debugger;
 		assert.strictEqual(oParser.calculate().getValue(), 8);
 
 		// Case #42: Area, Ref. second arg as cell
@@ -19297,6 +19301,7 @@ $(function () {
 		ws.getRange2("A303").setValue("a**c");
 		ws.getRange2("A304").setValue("");
 		ws.getRange2("A305").setValue("");
+		AscCommonExcel.g_oCountIfCache.clean();
 
 		// Case #45: Area, String. wildcard test with ~
 		oParser = new parserFormula('COUNTIF(A300:A305,"a~*c")', "C2", ws);
@@ -19308,6 +19313,7 @@ $(function () {
 		ws.getRange2("A313").setValue("3");
 		ws.getRange2("A314").setValue("4");
 		ws.getRange2("A315").setValue(">3");
+		AscCommonExcel.g_oCountIfCache.clean();
 
 		const currentSheet = ws.getName();
 		// Case #46: Area3D, Ref3D. Ref3D and Ared3D test
@@ -19320,6 +19326,7 @@ $(function () {
 		ws.getRange2("A308").setValue("A");
 		ws.getRange2("A309").setValue("b");
 		ws.getRange2("A310").setValue(">a");
+		AscCommonExcel.g_oCountIfCache.clean();
 
 		// Case #47: Area, Ref. diactric signs tests
 		oParser = new parserFormula('COUNTIF(A306:A309,A310)', "C2", ws);
@@ -19331,6 +19338,7 @@ $(function () {
 		ws.getRange2("A318").setValue("a");
 		ws.getRange2("A319").setValue("あ");
 		ws.getRange2("A320").setValue(">a");
+		AscCommonExcel.g_oCountIfCache.clean();
 
 		// Case #48: Area, Ref. Hieroglyphs test
 		oParser = new parserFormula('COUNTIF(A316:A319,A320)', "C2", ws);
@@ -19340,6 +19348,7 @@ $(function () {
 		// Case #49: Area, Formula. Formula test
 		oParser = new parserFormula('COUNTIF(A311:A314,2+1)', "C2", ws);
 		assert.ok(oParser.parse());
+		debugger;
 		assert.strictEqual(oParser.calculate().getValue(), 1);
 
 		const defName3D = new Asc.asc_CDefName('COUNTIFTestName3D', ws.getName() + '!$A$315');
@@ -19416,6 +19425,7 @@ $(function () {
 		ws.getRange2("AB2").setValue("#DIV/0!");
 		ws.getRange2("AB3").setValue("#VALUE!");
 		ws.getRange2("AB4").setValue("5");
+		AscCommonExcel.g_oCountIfCache.clean();
 		oParser = new parserFormula('COUNTIF(AB1:AB4,">#N/A")', "AC1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 0);
@@ -19440,6 +19450,7 @@ $(function () {
 		ws.getRange2("AD2").setValue("10");
 		ws.getRange2("AD3").setValue("20");
 		ws.getRange2("AD4").setValue("text");
+		AscCommonExcel.g_oCountIfCache.clean();
 		oParser = new parserFormula('COUNTIF(AD1:AD4,"<#N/A")', "AC6", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 0);
@@ -19449,6 +19460,7 @@ $(function () {
 		ws.getRange2("AE2").setValue("#DIV/0!");
 		ws.getRange2("AE3").setValue("#N/A");
 		ws.getRange2("AE4").setValue("42");
+		AscCommonExcel.g_oCountIfCache.clean();
 		oParser = new parserFormula('COUNTIF(AE1:AE4,"=#N/A")', "AC7", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 2);
@@ -19458,6 +19470,7 @@ $(function () {
 		ws.getRange2("AF2").setValue("#DIV/0!");
 		ws.getRange2("AF3").setValue("#VALUE!");
 		ws.getRange2("AF4").setValue("42");
+		AscCommonExcel.g_oCountIfCache.clean();
 		oParser = new parserFormula('COUNTIF(AF1:AF4,"<#N/A")', "AC7", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 3);
