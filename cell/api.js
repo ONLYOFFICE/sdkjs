@@ -9179,34 +9179,49 @@ var editor;
 	};
 
 	/**
+	 * Calls logic for closing "Solver Params" and "Solver Results" dialogue windows.
 	 * @memberof spreadsheet_api
 	 * @param {boolean} isSave - true - save result of calculation, false - discard changes.
-	 * @param {asc_CSolverParams} solverParams
 	 */
-	spreadsheet_api.prototype.asc_CloseSolver = function (isSave, solverParams) {
+	spreadsheet_api.prototype.asc_CloseSolver = function (isSave) {
 		if (!this.wb) {
 			return;
 		}
 
-		this.wb.closeSolver(isSave, solverParams);
+		this.wb.closeSolver(isSave);
 	};
 
 	/**
-	 * Start solver logic in "Show iteration results" mode.
+	 * Continues Solver's calculation.
+	 * Uses for "Continue" button of "Show trial Solution" window.
 	 * @memberof spreadsheet_api
 	 */
-	spreadsheet_api.prototype.asc_StepSolver = function () {
+	spreadsheet_api.prototype.asc_ContinueSolver = function () {
 		if (!this.wb) {
 			return;
 		}
 
-		this.wb.stepSolver();
+		this.wb.continueSolver();
 	};
+
+	/**
+	 * Stops solver calculation by user's request.
+	 * Uses for "Stop" button or closing window of "Show Trial Solution" dialogue window.
+	 * @memberof spreadsheet_api
+	 */
+	spreadsheet_api.prototype.asc_StopSolver = function () {
+		if (!this.wb) {
+			return;
+		}
+
+		this.wb.stopSolver();
+	}
 
 	/**
 	 * Returns solver parameters object.
+	 * Uses for open "Solver" dialogue window.
 	 * @memberof spreadsheet_api
-	 * @returns {asc_CSolverParams|null}
+	 * @returns {asc_CSolverParams}
 	 */
 	spreadsheet_api.prototype.asc_GetSolverParams = function () {
 		if (!this.wb) {
@@ -9214,15 +9229,6 @@ var editor;
 		}
 
 		return this.wb.getSolverParams();
-	};
-
-	/**
-	 * Returns solver results object.
-	 * @memberof spreadsheet_api
-	 * @returns {asc_CSolverResults}
-	 */
-	spreadsheet_api.prototype.asc_GetSolverResults = function () {
-		return new AscCommonExcel.asc_CSolverResults();
 	};
 
 	spreadsheet_api.prototype.asc_TracePrecedents = function() {

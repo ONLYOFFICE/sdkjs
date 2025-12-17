@@ -3204,6 +3204,7 @@
 
 		this.oGoalSeek = null;
 		this.oSolver = null;
+		this.oSolverParams = null;
 
 		this.timelineCaches = [];
 		this.TimelineStyles = null;
@@ -6173,21 +6174,43 @@
 	};
 
 	/**
-	 * Sets Solver object
+	 * Sets Solver object.
+	 * Uses for interacting with Solver logic for apis asc_StartSolver, asc_CloseSolver.
 	 * @memberof Workbook
-	 * @param {CSolver} oSolver
+	 * @param {CSolver|null} oSolver
 	 */
 	Workbook.prototype.setSolver = function(oSolver) {
 		this.oSolver = oSolver;
 	};
 
 	/**
-	 * Returns Solver object
+	 * Returns Solver object.
+	 * Uses for interacting with Solver logic for apis asc_StartSolver, asc_CloseSolver.
 	 * @memberof Workbook
 	 * @returns {CSolver}
 	 */
 	Workbook.prototype.getSolver = function() {
 		return this.oSolver;
+	};
+
+	/**
+	 * Sets SolverParams object.
+	 * Uses for saving Solver parameters for API asc_CloseSolver.
+	 * @memberof Workbook
+	 * @param {asc_CSolverParams|null} oSolverParams
+	 */
+	Workbook.prototype.setSolverParams = function(oSolverParams) {
+		this.oSolverParams = oSolverParams;
+	};
+
+	/**
+	 * Returns SolverParams object.
+	 * Uses for saving Solver parameters for API asc_CloseSolver.
+	 * @memberof Workbook
+	 * @returns {asc_CSolverParams}
+	 */
+	Workbook.prototype.getSolverParams = function() {
+		return this.oSolverParams;
 	};
 
 	Workbook.prototype.setDefaultDirection = function(val) {

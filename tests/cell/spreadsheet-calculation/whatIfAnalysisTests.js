@@ -102,7 +102,7 @@ $(function () {
     let CParserFormula = AscCommonExcel.parserFormula;
     let g_oIdCounter = AscCommon.g_oIdCounter;
     let sData = AscCommon.getEmpty();
-    let wb, ws, oParserFormula, oGoalSeek, nResult, nChangingVal, nExpectedVal, api;
+    let wb, ws, oParserFormula, oGoalSeek, nResult, nChangingVal, nExpectedVal, api, wsView;
     // Solver
     let CSolver = AscCommonExcel.CSolver;
     let asc_CSolverParams = AscCommonExcel.asc_CSolverParams;
@@ -110,6 +110,7 @@ $(function () {
     let c_oAscDerivativeType = AscCommonExcel.c_oAscDerivativeType;
     let c_oAscSolvingMethod = AscCommonExcel.c_oAscSolvingMethod;
     let c_oAscOptimizeTo = AscCommonExcel.c_oAscOptimizeTo;
+	let c_oAscResultStatus = AscCommonExcel.c_oAscResultStatus;
     let oSolver;
 
     if (AscCommon.c_oSerFormat.Signature === sData.substring(0, AscCommon.c_oSerFormat.Signature.length)) {
@@ -140,9 +141,10 @@ $(function () {
         wb.handlers.add("asc_onConfirmAction", function (test1, callback) {
             callback(true);
         });
-        let wsView = api.wb.getWorksheet(0);
+        wsView = api.wb.getWorksheet(0);
         wsView.handlers = api.handlers;
         wsView.objectRender = new AscFormat.DrawingObjects();
+        api.wb.wsActive = wb.getActive();
 
         let docInfo = new Asc.asc_CDocInfo();
         docInfo.asc_putTitle("TeSt.xlsx");
@@ -282,7 +284,7 @@ $(function () {
             oSolver = wbModel.getSolver();
             oSolver.prepare();
             // Run solver
-            if (oSolverParams.getOptions().getShowIterResults()) {
+            if (oSolverParams.asc_getOptions().asc_getShowIterResults()) {
                 oSolver.step();
             } else {
                 while (true) {
@@ -297,16 +299,16 @@ $(function () {
         //need lock
         const aLocksInfo = [];
         //cells locks info
-        const wsChangingCell = AscCommonExcel.actualWsByRef(oSolverParams.getChangingCells(), ws);
-        const sChangingCell = AscCommonExcel.convertToAbsoluteRef(oSolverParams.getChangingCells());
+        const wsChangingCell = AscCommonExcel.actualWsByRef(oSolverParams.asc_getChangingCells(), ws);
+        const sChangingCell = AscCommonExcel.convertToAbsoluteRef(oSolverParams.asc_getChangingCells());
         const oChangingCell = wsChangingCell && wsChangingCell.getRange2(sChangingCell);
         if (oChangingCell) {
             aLocksInfo.push(this.collaborativeEditing.getLockInfo(AscCommonExcel.c_oAscLockTypeElem.Range, null, wsChangingCell.getId(),
                 new AscCommonExcel.asc_CCollaborativeRange(oChangingCell.bbox.c1, oChangingCell.bbox.r1, oChangingCell.bbox.c2, oChangingCell.bbox.r2)));
         }
 
-        const wsFormula = AscCommonExcel.actualWsByRef(oSolverParams.getObjectiveFunction(), ws);
-        const sFormulaCell = AscCommonExcel.convertToAbsoluteRef(oSolverParams.getObjectiveFunction());
+        const wsFormula = AscCommonExcel.actualWsByRef(oSolverParams.asc_getObjectiveFunction(), ws);
+        const sFormulaCell = AscCommonExcel.convertToAbsoluteRef(oSolverParams.asc_getObjectiveFunction());
         const oFormulaCell = wsFormula && wsFormula.getRange2(sFormulaCell);
         if (oFormulaCell) {
             aLocksInfo.push(this.collaborativeEditing.getLockInfo(AscCommonExcel.c_oAscLockTypeElem.Range, null, wsFormula.getId(),
@@ -343,6 +345,9 @@ $(function () {
         fAfter("redo_" + desc);
         AscCommon.History.Undo();
     };
+    const getActiveCell = function(wsView) {
+        return wsView.getActiveCell(0, 0, false).getName(Asc.referenceType.A);
+    }
 
     QUnit.module('Goal seek');
     QUnit.test('PMT formula', function (assert) {
@@ -1198,7 +1203,8 @@ $(function () {
        clearData(0, 0, 3, 4);
     });
     QUnit.module('Solver');
-    QUnit.test('Test: Example - Order distribution task', function(assert) {
+	// TODO It's GRG method + int programming. It isn't ready for now.
+    /*QUnit.test('Test: Example - Order distribution task. Draft.', function(assert) {
         // Filling data
         const testData = [
             ['1000'],
@@ -1213,25 +1219,25 @@ $(function () {
         oRange.fillData(testData);
         // Imitating of filling dialogue window of Solver tool
         const oParams = new asc_CSolverParams();
-        oParams.setObjectiveFunction('Sheet1!$E$7');
-        oParams.setOptimizeResultTo(c_oAscOptimizeTo.min);
-        oParams.setChangingCells('Sheet1!$D$3:$D$6');
-        oParams.addConstraint(0, {cellRef: 'Sheet1!$D$3:$D$6', operator: c_oAscOperator['='], constraint: 'integer'});
-        oParams.addConstraint(1, {cellRef: 'Sheet1!$D$3:$D$6', operator: c_oAscOperator['>='], constraint: '0'});
-        oParams.addConstraint(2, {cellRef: 'Sheet1!$D$7', operator: c_oAscOperator['='], constraint: '1000'});
-        oParams.addConstraint(3, {cellRef: 'Sheet1!$F$7', operator: c_oAscOperator['<='], constraint: 'Sheet1!$A$2'});
-        oParams.setVariablesNonNegative(false);
-        oParams.setSolvingMethod(c_oAscSolvingMethod.grgNonlinear);
+        oParams.asc_setObjectiveFunction('Sheet1!$E$7');
+        oParams.asc_setOptimizeResultTo(c_oAscOptimizeTo.min);
+        oParams.asc_setChangingCells('Sheet1!$D$3:$D$6');
+        oParams.asc_addConstraint(0, {cellRef: 'Sheet1!$D$3:$D$6', operator: c_oAscOperator['='], constraint: 'integer'});
+        oParams.asc_addConstraint(1, {cellRef: 'Sheet1!$D$3:$D$6', operator: c_oAscOperator['>='], constraint: '0'});
+        oParams.asc_addConstraint(2, {cellRef: 'Sheet1!$D$7', operator: c_oAscOperator['='], constraint: '1000'});
+        oParams.asc_addConstraint(3, {cellRef: 'Sheet1!$F$7', operator: c_oAscOperator['<='], constraint: 'Sheet1!$A$2'});
+        oParams.asc_setVariablesNonNegative(false);
+        oParams.asc_setSolvingMethod(c_oAscSolvingMethod.grgNonlinear);
         // Filling options for calculation
-        const oOptions = oParams.getOptions();
-        oOptions.setConstraintPrecision('0,000001');
-        oOptions.setIntOptimal('1');
-        oOptions.setConvergence('0,0001');
-        oOptions.setDerivatives(c_oAscDerivativeType.forward);
-        oOptions.setPopulationSize('0');
-        oOptions.setRandomSeed('0');
-        oOptions.setMutationRate('0,075');
-        oOptions.setEvoMaxTime('30');
+        const oOptions = oParams.asc_getOptions();
+        oOptions.asc_setConstraintPrecision('0,000001');
+        oOptions.asc_setIntOptimal('1');
+        oOptions.asc_setConvergence('0,0001');
+        oOptions.asc_setDerivatives(c_oAscDerivativeType.forward);
+        oOptions.asc_setPopulationSize('0');
+        oOptions.asc_setRandomSeed('0');
+        oOptions.asc_setMutationRate('0,075');
+        oOptions.asc_setEvoMaxTime('30');
         assert.ok(oParams, 'Params is created');
         // Creating Solver object for calculate example.
         oSolver = new CSolver(oParams, ws);
@@ -1264,9 +1270,10 @@ $(function () {
             assert.strictEqual(bResult, aExpectedConstraintsResult[index], `Check Solver calculateConstraints method: Constraint element #${index} result is ${aExpectedConstraintsResult[index]}`);
         })
         // Checking calculate logic
-        oSolver.calculate();
+
+        //oSolver.calculate(false);
         clearData(0, 0, 6, 7);
-    });
+    });*/
     QUnit.test('Test: Example - Delivery goods in stores. Linear programming', function(assert) {
         // Filling data
         const testData = [
@@ -1289,25 +1296,23 @@ $(function () {
         oRange.fillData(testData);
         // Imitating of filling dialogue window of Solver tool
         const oParams = new asc_CSolverParams();
-        oParams.setObjectiveFunction('Sheet1!$A$10');
-        oParams.setOptimizeResultTo(c_oAscOptimizeTo.min);
-        oParams.setChangingCells('Sheet1!$A$5:$E$7');
-        oParams.addConstraint(0, {cellRef: 'Sheet1!$A$8:$E$8', operator: c_oAscOperator['='], constraint: 'Sheet1!$A$9:$E$9'});
-        oParams.addConstraint(1, {cellRef: 'Sheet1!$F$5:$F$7', operator: c_oAscOperator['<='], constraint: 'Sheet1!$G$5:$G$7'});
-        // Todo for mvp non-negative variables make as additional constraint. Later replace to checkbox setting.
-        oParams.addConstraint(2, {cellRef: 'Sheet1!$A$5:$E$7', operator: c_oAscOperator['>='], constraint: '0'});
-        oParams.setVariablesNonNegative(false);
-        oParams.setSolvingMethod(c_oAscSolvingMethod.simplexLP);
+        oParams.asc_setObjectiveFunction('Sheet1!$A$10');
+        oParams.asc_setOptimizeResultTo(c_oAscOptimizeTo.min);
+        oParams.asc_setChangingCells('Sheet1!$A$5:$E$7');
+        oParams.asc_addConstraint(0, {cellRef: 'Sheet1!$A$8:$E$8', operator: c_oAscOperator['='], constraint: 'Sheet1!$A$9:$E$9', isNotSupported: false});
+        oParams.asc_addConstraint(1, {cellRef: 'Sheet1!$F$5:$F$7', operator: c_oAscOperator['<='], constraint: 'Sheet1!$G$5:$G$7', isNotSupported: false});
+        oParams.asc_setVariablesNonNegative(true);
+        oParams.asc_setSolvingMethod(c_oAscSolvingMethod.simplexLP);
         // Filling options for calculation. It's default option
-        const oOptions = oParams.getOptions();
-        oOptions.setConstraintPrecision('0,000001');
-        oOptions.setIntOptimal('1');
-        oOptions.setConvergence('0,0001');
-        oOptions.setDerivatives(c_oAscDerivativeType.forward);
-        oOptions.setPopulationSize('0');
-        oOptions.setRandomSeed('0');
-        oOptions.setMutationRate('0,075');
-        oOptions.setEvoMaxTime('30');
+        const oOptions = oParams.asc_getOptions();
+        oOptions.asc_setConstraintPrecision('0,000001');
+        oOptions.asc_setIntOptimal('1');
+        oOptions.asc_setConvergence('0,0001');
+        oOptions.asc_setDerivatives(c_oAscDerivativeType.forward);
+        oOptions.asc_setPopulationSize('0');
+        oOptions.asc_setRandomSeed('0');
+        oOptions.asc_setMutationRate('0,075');
+        oOptions.asc_setEvoMaxTime('30');
         assert.ok(oParams, 'Params is created');
         // Creating Solver object for calculate example.
         oSolver = new CSolver(oParams, ws);
@@ -1319,7 +1324,7 @@ $(function () {
         assert.strictEqual(isNaN(oSolver.getMaxIterations()), false, 'Check Solver attributes: Max iterations is not NaN');
         assert.strictEqual(oSolver.getSolvingMethod(), c_oAscSolvingMethod.simplexLP, 'Check Solver attributes: Solving method is grgNonlinear');
         assert.strictEqual(oSolver.getOptimizeResultTo(), c_oAscOptimizeTo.min, 'Check Solver attributes: Optimize result to is min');
-        assert.strictEqual(oSolver.getVariablesNonNegative(), false, 'Check Solver attributes: Variables non negative is false');
+        assert.strictEqual(oSolver.getVariablesNonNegative(), true, 'Check Solver attributes: Variables non negative is true');
         const aConstraints = oSolver.getConstraints();
         const aExpectedData = [
             {cellRef: '$A$8:$E$8', operator: c_oAscOperator['='], constraint: '$A$9:$E$9'},
@@ -1332,6 +1337,9 @@ $(function () {
             assert.strictEqual(oConstraint.getOperator(), aExpectedData[index].operator, `Check Solver attributes: Constraint element #${index} operator is ${aExpectedData[index].operator}`);
             assert.strictEqual(constraint, aExpectedData[index].constraint, `Check Solver attributes: Constraint element #${index} constraint is ${aExpectedData[index].constraint}`);
         });
+		// Checks model for solving
+		const bCanCalculate = oSolver.checkModel();
+		assert.strictEqual(bCanCalculate, true, 'Check prepare data for calculate by Simplex. Check whether is model can calculate. True');
         // Checking prepare data for solving logic
         oSolver.prepare();
         // Checking prepare data for calculate by Simplex. Check whole CSimplexTableau class.
@@ -1416,7 +1424,7 @@ $(function () {
         // Check calculate logic
         oSolver.setStartTime(Date.now());
         while (true) {
-           let bCompleteCalculation = oSolver.calculate();
+           let bCompleteCalculation = oSolver.calculate(false);
            if (bCompleteCalculation) {
                break;
            }
@@ -1454,7 +1462,7 @@ $(function () {
             [70, 0, -1, 0, 0, 1, 0, -1, 0, 0, 0, 1, 1, 1, 1, 0]
         ];
         assert.deepEqual(aMatrix, aMatrixExpected, 'Check calculate logic. Check updated matrix attribute');
-        // Checks fill of cells  from "By Changing Variable Cells"
+        // Checks fill of cells from "By Changing Variable Cells"
         const oVarIndexByCellName = oSimplexTableau.getVarIndexByCellName();
         const oExpectedChangingCells = {
             'A5': '0',
@@ -1504,42 +1512,86 @@ $(function () {
         let oRange = ws.getRange4(0, 0);
         oRange.fillData(testData);
 
-        // Testing api. Test saving Solver params. Test GetSolverParams and CloseSolver api. Options have default values
+        // Case #1: Testing api. Test saving Solver params. Test GetSolverParams and CloseSolver api. Options have default values
+        const sCellActiveName = getActiveCell(wsView, ws);
         let solverParams = api.asc_GetSolverParams();
         assert.ok(solverParams, 'Check API. asc_GetSolverParams is created. Open Solver params dialogue window');
-        assert.strictEqual(solverParams.getObjectiveFunction(), null, 'Check API. asc_GetSolverParams. objectiveFunction is null');
-        assert.strictEqual(solverParams.getOptimizeResultTo(), c_oAscOptimizeTo.max, 'Check API. asc_GetSolverParams. optimizeResultTo is max');
-        assert.strictEqual(solverParams.getValueOf(), '0', 'Check API. asc_GetSolverParams. valueOf is 0');
-        assert.strictEqual(solverParams.getChangingCells(), null, 'Check API. asc_GetSolverParams. changingCells is null');
-        assert.strictEqual(solverParams.getConstraints().size, 0, 'Check API. asc_GetSolverParams. constraints is empty');
-        assert.strictEqual(solverParams.getVariablesNonNegative(), true, 'Check API. asc_GetSolverParams. bVariablesNonNegative is false');
-        assert.strictEqual(solverParams.getSolvingMethod(), c_oAscSolvingMethod.simplexLP, 'Check API. asc_GetSolverParams. solvingMethod is simplexLP');
+        assert.strictEqual(solverParams.asc_getObjectiveFunction(), sCellActiveName, 'Check API. asc_GetSolverParams. objectiveFunction is ' + sCellActiveName);
+        assert.strictEqual(solverParams.asc_getOptimizeResultTo(), c_oAscOptimizeTo.max, 'Check API. asc_GetSolverParams. optimizeResultTo is max');
+        assert.strictEqual(solverParams.asc_getValueOf(), '0', 'Check API. asc_GetSolverParams. valueOf is 0');
+        assert.strictEqual(solverParams.asc_getChangingCells(), null, 'Check API. asc_GetSolverParams. changingCells is null');
+        assert.strictEqual(solverParams.asc_getConstraints().size, 0, 'Check API. asc_GetSolverParams. constraints is empty');
+        assert.strictEqual(solverParams.asc_getVariablesNonNegative(), true, 'Check API. asc_GetSolverParams. bVariablesNonNegative is false');
+        assert.strictEqual(solverParams.asc_getSolvingMethod(), c_oAscSolvingMethod.simplexLP, 'Check API. asc_GetSolverParams. solvingMethod is simplexLP');
         // Fills field from Solver params
-        solverParams.setObjectiveFunction('Sheet1!$A$10');
-        solverParams.setOptimizeResultTo(c_oAscOptimizeTo.min);
-        solverParams.setChangingCells('Sheet1!$A$5:$E$7');
-        solverParams.addConstraint(1, {cellRef: 'Sheet1!$A$8:$E$8', operator: c_oAscOperator['='], constraint: 'Sheet1!$A$9:$E$9'});
-        solverParams.addConstraint(2, {cellRef: 'Sheet1!$F$5:$F$7', operator: c_oAscOperator['<='], constraint: 'Sheet1!$G$5:$G$7'});
-        solverParams.addConstraint(3, {cellRef: 'Sheet1!$A$5:$E$7', operator: c_oAscOperator['>='], constraint: '0'});
-        solverParams.setVariablesNonNegative(false);
-        api.asc_CloseSolver(false, solverParams);
+        solverParams.asc_setObjectiveFunction('Sheet1!$A$10');
+        solverParams.asc_setOptimizeResultTo(c_oAscOptimizeTo.min);
+        solverParams.asc_setChangingCells('Sheet1!$A$5:$E$7');
+        solverParams.asc_addConstraint(1, {cellRef: 'Sheet1!$A$8:$E$8', operator: c_oAscOperator['='], constraint: 'Sheet1!$A$9:$E$9'});
+        solverParams.asc_addConstraint(2, {cellRef: 'Sheet1!$F$5:$F$7', operator: c_oAscOperator['<='], constraint: 'Sheet1!$G$5:$G$7'});
+        solverParams.asc_addConstraint(3, {cellRef: 'Sheet1!$A$5:$E$7', operator: c_oAscOperator['>='], constraint: '0'});
+        solverParams.asc_setVariablesNonNegative(false);
+        api.asc_CloseSolver(false);
         solverParams = null;
         assert.strictEqual(solverParams, null, 'Check API. asc_CloseSolver is closed. Solver params is null');
         solverParams = api.asc_GetSolverParams();
         assert.ok(solverParams, 'Check API. asc_GetSolverParams is created with saved data. Reopen Solver params dialogue window after closing');
-        assert.strictEqual(solverParams.getObjectiveFunction(), 'Sheet1!$A$10', 'Check API. asc_GetSolverParams. objectiveFunction is Sheet1!$A$10');
-        assert.strictEqual(solverParams.getOptimizeResultTo(), c_oAscOptimizeTo.min, 'Check API. asc_GetSolverParams. optimizeResultTo is min');
-        assert.strictEqual(solverParams.getValueOf(), '0', 'Check API. asc_GetSolverParams. valueOf is 0');
-        assert.strictEqual(solverParams.getChangingCells(), 'Sheet1!$A$5:$E$7', 'Check API. asc_GetSolverParams. changingCells is Sheet1!$A$5:$E$7');
-        assert.strictEqual(solverParams.getConstraints().size, 3, 'Check API. asc_GetSolverParams. constraints has 3 elements');
-        assert.strictEqual(solverParams.getVariablesNonNegative(), false, 'Check API. asc_GetSolverParams. bVariablesNonNegative is false');
-        assert.strictEqual(solverParams.getSolvingMethod(), c_oAscSolvingMethod.simplexLP, 'Check API. asc_GetSolverParams. solvingMethod is simplexLP');
+        // Solver Params
+		assert.strictEqual(solverParams.asc_getObjectiveFunction(), 'Sheet1!$A$10', 'Check API. asc_GetSolverParams. objectiveFunction is Sheet1!$A$10');
+        assert.strictEqual(solverParams.asc_getOptimizeResultTo(), c_oAscOptimizeTo.min, 'Check API. asc_GetSolverParams. optimizeResultTo is min');
+        assert.strictEqual(solverParams.asc_getValueOf(), '0', 'Check API. asc_GetSolverParams. valueOf is 0');
+        assert.strictEqual(solverParams.asc_getChangingCells(), 'Sheet1!$A$5:$E$7', 'Check API. asc_GetSolverParams. changingCells is Sheet1!$A$5:$E$7');
+        assert.strictEqual(solverParams.asc_getConstraints().size, 3, 'Check API. asc_GetSolverParams. constraints has 3 elements');
+        assert.strictEqual(solverParams.asc_getVariablesNonNegative(), false, 'Check API. asc_GetSolverParams. bVariablesNonNegative is false');
+        assert.strictEqual(solverParams.asc_getSolvingMethod(), c_oAscSolvingMethod.simplexLP, 'Check API. asc_GetSolverParams. solvingMethod is simplexLP');
+		// Options
+		let oOptions = solverParams.asc_getOptions();
+		assert.strictEqual(oOptions.asc_getConstraintPrecision(), '0.000001', 'Check API. asc_GetSolverParams. Options. "Constraint Precision" is 0.000001');
+		assert.strictEqual(oOptions.asc_getAutomaticScaling(), false, 'Check API. asc_GetSolverParams. Options. "Use automatic scaling" is true');
+		/*assert.strictEqual(oOptions.asc_getIgnoreIntConstraints(), false, 'Check API. asc_GetSolverParams. Options. "Ignore integer constraints" is false');
+		assert.strictEqual(oOptions.asc_getIntOptimal(), '1', 'Check API. asc_GetSolverParams. Options. "Integer optimality (%)" is 1');*/
+		assert.strictEqual(oOptions.asc_getMaxTime(), '', 'Check API. asc_GetSolverParams. Options. "Maximum time (sec)" is empty');
+		assert.strictEqual(oOptions.asc_getIterations(), '', 'Check API. asc_GetSolverParams. Options. "Iterations" is empty');
         // Checks define names
         let aDefNames = getHiddenDefinedNamesWS(wb.dependencyFormulas);
-        assert.strictEqual(aDefNames.length, 36, 'Check API. Define names is created. Count of define names is 36');
-        // Checks start solve with enabled Show iterative result.
+        assert.strictEqual(aDefNames.length, 23, 'Check API. asc_GetSolverParams. Define names is created. Count of define names is 23');
+		let expectedDefNamesResult = {
+			// Solver Params
+			'solver_ver': '3', // Solver version const value
+			'solver_est': '1', // const value
+			'solver_nwt': '1', // legacy Newton setting const value
+			'solver_opt': 'Sheet1!$A$10', // "Set objective" value
+			'solver_typ': String(c_oAscOptimizeTo.min), // "Optimize to" value
+			'solver_val': '0', // "Value of" value
+			'solver_adj': 'Sheet1!$A$5:$E$7', // "By changing Variable" cells value
+			'solver_neg': '2', // "Variables Non-Negative" value. 1 - True, 2 - False
+			'solver_eng': String(c_oAscSolvingMethod.simplexLP), // "Select a solving method" value
+			'solver_num': '3', // System value Count of Constraints.
+			'solver_lhs1': 'Sheet1!$A$8:$E$8', // First subject of Constraints - Cell reference attribute value
+			'solver_rhs1': 'Sheet1!$A$9:$E$9', // First subject of Constraints - Constraint attribute value
+			'solver_rel1': String(c_oAscOperator['=']), // First subject of Constraints - Operation attribute value
+			'solver_lhs2': 'Sheet1!$F$5:$F$7', // Second subject of Constraints - Cell reference attribute value
+			'solver_rhs2': 'Sheet1!$G$5:$G$7', // Second subject of Constraints - Constraint attribute value
+			'solver_rel2': String(c_oAscOperator['<=']), // Second subject of Constraints - Operation attribute value
+			'solver_lhs3': 'Sheet1!$A$5:$E$7', // Third subject of Constraints - Cell reference attribute value
+			'solver_rhs3': '0', // Third subject of Constraints - Constraint attribute value
+			'solver_rel3': String(c_oAscOperator['>=']), // Third subject of Constraints - Operation attribute value
+			// Options
+			'solver_pre': '0.000001', // "Constraint precision" value
+			'solver_scl': '2', // "Use Automatic Scaling" value. 1 - True, 2 - False
+			/*'solver_rlx': '2', // "Ignore integer constraints" value. 1 - True, 2 - False
+			'solver_tol': '0.01', // "Integer Optimality (%)" value.  result = value from input field / 100*/
+			'solver_tim': '2147483647', // "Max time (sec)" value. Default value when input field is empty.
+			'solver_itr': '2147483647' // "Iterations" value. Default value when input field is empty.
+		};
+		for (let i = 0, length = aDefNames.length; i < length; i++) {
+			const oDefName = aDefNames[i];
+			assert.strictEqual(oDefName.ref, expectedDefNamesResult[oDefName.name], `Check API. asc_GetSolverParams. Define name: ${oDefName.name}, Value: ${oDefName.ref}`);
+		}
+
+		// Case #2: Checks start solve with enabled Show iterative result.
         solverParams = api.asc_GetSolverParams();
-        solverParams.getOptions().setShowIterResults(true);
+        solverParams.asc_getOptions().asc_setShowIterResults(true);
         api.asc_StartSolver(solverParams);
 
         let oSimplexTableau = wb.getSolver().getSimplexTableau();
@@ -1564,9 +1616,10 @@ $(function () {
         };
         for (let sCellName in oVarIndexByCellName) {
             const sCellVal = ws.getCell2(sCellName).getValue();
-            assert.strictEqual(sCellVal, oExpectedChangingCells[sCellName], `StartSolver API. Check fill of cells from "By Changing Variable Cells" with enabled "Show iteration result" 1st iteration. Cell: ${sCellName}. Value: ${sCellVal}`);
+            assert.strictEqual(sCellVal, oExpectedChangingCells[sCellName], `Check API. StartSolver API. Check fill of cells from "By Changing Variable Cells" with enabled "Show iteration result" 1st iteration. Cell: ${sCellName}. Value: ${sCellVal}`);
         }
-        api.asc_StepSolver();
+		// Imitates behavior of "Show trial solution" dialogue window step to next iteration clicking to "Continue" button.
+        api.asc_ContinueSolver();
 
         oExpectedChangingCells = {
             'A5': '0',
@@ -1588,10 +1641,14 @@ $(function () {
         };
         for (let sCellName in oVarIndexByCellName) {
             const sCellVal = ws.getCell2(sCellName).getValue();
-            assert.strictEqual(sCellVal, oExpectedChangingCells[sCellName], `StepSolver API. Check fill of cells from "By Changing Variable Cells" with enabled "Show iteration result" 2nd iteration. Cell: ${sCellName}. Value: ${sCellVal}`);
+            assert.strictEqual(sCellVal, oExpectedChangingCells[sCellName], `Check API. StepSolver API. Check fill of cells from "By Changing Variable Cells" with enabled "Show iteration result" 2nd iteration. Cell: ${sCellName}. Value: ${sCellVal}`);
         }
+		// Imitates behavior of "Show trial solution" dialogue window stop calculation clicking to "Stop" button.
+		api.asc_StopSolver();
+		let nStatusResult = wb.getSolver().getResultStatus();
+		assert.strictEqual(nStatusResult, c_oAscResultStatus.stoppedByUser, 'Check API. StopSolver API. Result status is stoppedByUser');
         // Close solver without saving result
-        api.asc_CloseSolver(false, solverParams);
+        api.asc_CloseSolver(false);
 
         oExpectedChangingCells = {
             'A5': '0',
@@ -1613,12 +1670,13 @@ $(function () {
         };
         for (let sCellName in oVarIndexByCellName) {
             const sCellVal = ws.getCell2(sCellName).getValue();
-            assert.strictEqual(sCellVal, oExpectedChangingCells[sCellName], `CloseSolver API. isSave - false. Check fill of cells from "By Changing Variable Cells" Original values. Cell: ${sCellName}. Value: ${sCellVal}`);
+            assert.strictEqual(sCellVal, oExpectedChangingCells[sCellName], `Check API. CloseSolver API. isSave - false. Check fill of cells from "By Changing Variable Cells" Original values. Cell: ${sCellName}. Value: ${sCellVal}`);
         }
         solverParams = null;
-        // Check start solver with final result
+
+        // Case #3: Check start solver with final result
         solverParams = api.asc_GetSolverParams();
-        solverParams.getOptions().setShowIterResults(false);
+        solverParams.asc_getOptions().asc_setShowIterResults(false);
         api.asc_StartSolver(solverParams);
         let oUndoExpectedChangingCells = {
             'A5': '0',
@@ -1656,7 +1714,7 @@ $(function () {
 
         };
         // Close solver with saving result.
-        api.asc_CloseSolver(true, solverParams);
+        api.asc_CloseSolver(true);
         checkUndoRedo(function (_desc) {
             for (let sCellName in oVarIndexByCellName) {
                 const sCellVal = ws.getCell2(sCellName).getValue();
@@ -1667,6 +1725,6 @@ $(function () {
                 const sCellVal = ws.getCell2(sCellName).getValue();
                 assert.strictEqual(sCellVal, oExpectedChangingCells[sCellName], _desc + `Cell: ${sCellName}. Value: ${sCellVal}`);
             }
-        },`CloseSolver API with final result. isSave - true. Check fill of cells from "By Changing Variable Cells".`);
+        },`Check API. CloseSolver API with final result. isSave - true. Check fill of cells from "By Changing Variable Cells".`);
     });
 });

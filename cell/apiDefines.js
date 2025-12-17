@@ -103,7 +103,9 @@ var c_oAscSelectionDialogType = {
   ImportXml: 12,
   GoalSeek_Cell: 13,
   GoalSeek_ChangingCell: 14,
-  Solver_ObjectiveCell: 15
+  Solver_ObjectiveCell: 15,
+  Solver_VariableCell: 16,
+  Solver_Constraint: 17
 };
 
 var c_oAscScrollType = {
