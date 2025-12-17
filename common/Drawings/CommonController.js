@@ -731,6 +731,15 @@
 						return;
 					}
 
+					const docContent = drawing.getDocContent && drawing.getDocContent();
+					if (docContent) {
+						const selectedObjects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects;
+						for (let i = 0; i < selectedObjects.length; i++) {
+							if (selectedObjects[i] === drawing) {
+								return;
+							}
+						}
+					}
 
 					//
 					// if( this.document || (this.drawingObjects.cSld && !(this.noNeedUpdateCursorType === true)) )
