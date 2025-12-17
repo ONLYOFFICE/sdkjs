@@ -6316,8 +6316,8 @@ var CPresentation = CPresentation || function(){};
                 for (let nIdx = 0; nIdx < data.length; ++nIdx) {
                     _file.nativeFile["changeImageUrl"](allImages[nIdx], AscCommon.g_oDocumentUrls.imagePath2Local(data[nIdx].path));
                 }
-                Asc.editor.pre_Paste(aFonts, oLoadUrls, fEndCallback);
 
+                Asc.editor.pre_Paste(aFonts, oLoadUrls, fEndCallback);
             });
         }
         else {
