@@ -11232,6 +11232,9 @@ function parserFormula( formula, parent, _ws ) {
 		//возвращаем ТОЛЬКО главную ячейку
 		var res = null;
 		if(this.ref) {
+			if (!cell) {
+				cell = this.parent;
+			}
 			if(this.parent && cell.nCol === this.ref.c1 && cell.nRow === this.ref.r1) {
 				res = true;
 			}

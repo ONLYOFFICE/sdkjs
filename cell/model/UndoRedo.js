@@ -3304,7 +3304,12 @@ function (window, undefined) {
 				cell.setValueMultiTextInternal(multiText);
 			} else if (AscCH.historyitem_Cell_ChangeValue === Type || AscCH.historyitem_Cell_ChangeValueUndo === Type) {
 				if (bUndo || AscCH.historyitem_Cell_ChangeValueUndo !== Type) {
+					var oldFormula = cell.formulaParsed;
 					cell.setValueData(Val);
+					var newFormula = cell.formulaParsed;
+					if (ws && ws.dynamicArrayManager && (oldFormula || newFormula)) {
+						ws.dynamicArrayManager.changeFormula(newFormula, oldFormula, cell);
+					}
 				}
 			} else if (AscCH.historyitem_Cell_SetStyle == Type) {
 				if (null != Val) {

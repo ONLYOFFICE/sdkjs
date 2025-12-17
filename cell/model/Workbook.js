@@ -3292,6 +3292,99 @@
 	Workbook.prototype.Get_CollaborativeEditing = function() {
 		return this.oApi.collaborativeEditing
 	};
+	Workbook.prototype.checkRemoveMetadataByCmIndex = function(cmIndex) {
+		let isHaveReference = false;
+		this.forEach(function(ws) {
+			if (ws && ws.dynamicArrayManager && ws.dynamicArrayManager.getDynamicFormulaCount()) {
+				isHaveReference = true;
+			}
+		});
+		return !isHaveReference ? this.removeMetadataByCmIndex(cmIndex) : null;
+	};
+	Workbook.prototype.removeMetadataByCmIndex = function(cmIndex) {
+		if (!this.metadata || !this.metadata.cellMetadata || !cmIndex || cmIndex < 1 || cmIndex > this.metadata.cellMetadata.length) {
+			return;
+		}
+
+		const oldMetadata = this.metadata.clone();
+		const meta = this.metadata;
+		const cellMetadataBlock = meta.cellMetadata[cmIndex - 1];
+		
+		if (!cellMetadataBlock) {
+			return;
+		}
+
+		const typeIndex = cellMetadataBlock.t - 1;
+		const valueIndex = cellMetadataBlock.v;
+
+		meta.cellMetadata.splice(cmIndex - 1, 1);
+
+		if (typeIndex >= 0 && meta.metadataTypes && typeIndex < meta.metadataTypes.length) {
+			const metadataType = meta.metadataTypes[typeIndex];
+			if (metadataType && meta.aFutureMetadata) {
+				for (let i = 0; i < meta.aFutureMetadata.length; i++) {
+					const futureMetadata = meta.aFutureMetadata[i];
+					if (futureMetadata.name === metadataType.name && futureMetadata.futureMetadataBlocks) {
+						if (valueIndex >= 0 && valueIndex < futureMetadata.futureMetadataBlocks.length) {
+							futureMetadata.futureMetadataBlocks.splice(valueIndex, 1);
+
+							for (let j = 0; j < meta.cellMetadata.length; j++) {
+								const block = meta.cellMetadata[j];
+								if (block.t === cellMetadataBlock.t && block.v > valueIndex) {
+									block.v--;
+								}
+							}
+
+							if (futureMetadata.futureMetadataBlocks.length === 0) {
+								meta.aFutureMetadata.splice(i, 1);
+							}
+							break;
+						}
+					}
+				}
+			}
+
+			let hasTypeReferences = false;
+			for (let j = 0; j < meta.cellMetadata.length; j++) {
+				if (meta.cellMetadata[j].t === cellMetadataBlock.t) {
+					hasTypeReferences = true;
+					break;
+				}
+			}
+
+			if (!hasTypeReferences) {
+				meta.metadataTypes.splice(typeIndex, 1);
+
+				for (let j = 0; j < meta.cellMetadata.length; j++) {
+					const block = meta.cellMetadata[j];
+					if (block.t > cellMetadataBlock.t) {
+						block.t--;
+					}
+				}
+
+				if (meta.metadataTypes.length === 0) {
+					meta.metadataTypes = null;
+				}
+			}
+		}
+
+		if (meta.cellMetadata.length === 0) {
+			meta.cellMetadata = null;
+		}
+
+		if (meta.aFutureMetadata && meta.aFutureMetadata.length === 0) {
+			meta.aFutureMetadata = null;
+		}
+
+		const newMetadata = meta.cellMetadata || meta.aFutureMetadata || meta.metadataTypes ? meta.clone() : null;
+		
+		if (!newMetadata) {
+			this.metadata = null;
+		}
+
+		AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_Metadata,
+			null, null, new UndoRedoData_FromTo(oldMetadata, newMetadata));
+	};
 	Workbook.prototype.addImages = function (aImages, obj) {
 		const oApi = Asc.editor;
 		if (obj && undefined !== obj.id && aImages.length === 1 && aImages[0].Image) {
@@ -8654,6 +8747,7 @@
 						oUndoRedoData_CellData.style = cell.xfs.clone();
 					if (cell.formulaParsed) {
 						cell.checkRemoveExternalReferences(null, cell.formulaParsed);
+						t.dynamicArrayManager.changeFormula(null, cell.formulaParsed, cell);
 					}
 					cell.setFormulaInternal(null);
 					let oUndoRedoData_CellData_New = ignoreNoEmpty ? new AscCommonExcel.UndoRedoData_CellData(cell.getValueData(), null) : null;
@@ -14723,6 +14817,7 @@
 					if (dynamicRange) {
 						let cmIndex = this.ws.dynamicArrayManager.getNextCmIndex(true);
 						newFP.setCm(cmIndex);
+						//this.ws.dynamicArrayManager.addDynamicFormula(cmIndex);
 					}
 					wb.dependencyFormulas.addToBuildDependencyArray(newFP);
 				}
@@ -14745,6 +14840,10 @@
 				// we check here and add the range with daf to the dependency sheet
 				if (isFirstArrayFormulaCell) {
 					wb.dependencyFormulas.addToChangedRange2(oldFP.getWs().getId(), oldFP.getDynamicRef());
+					let cmIndex = oldFP.getCm();
+					if (cmIndex != null) {
+						//this.ws.dynamicArrayManager.deleteDynamicFormula(cmIndex);
+					}
 				}
 			} else {
 				wb.dependencyFormulas.addToChangedCell(this);
@@ -14782,6 +14881,7 @@
 		if (!skipExternalCheck) {
 			this.checkRemoveExternalReferences(newFP, oldFP);
 		}
+		this.ws.dynamicArrayManager.changeFormula(newFP, oldFP, this);
 	};
 
 	Cell.prototype.checkRemoveExternalReferences=function(fNew, fOld) {
@@ -15006,6 +15106,7 @@
 			cell.removeHyperlink();
 		}
 		this.checkRemoveExternalReferences(this.formulaParsed, oldFP);
+		this.ws.dynamicArrayManager.changeFormula(this.formulaParsed, oldFP, this);
 	};
 	Cell.prototype.setValueForValidation = function(array, formula, callback, isCopyPaste, byRef) {
 		this.setFormulaInternal(null, true);
@@ -24531,6 +24632,18 @@
 		this.allFormulasCountMap = null;
 	}
 
+	CDynamicArrayManager.prototype.changeFormula = function (to, from, parent) {
+		let fromCmIndex = from && from.getCm();
+		let toCmIndex = to && to.getCm();
+		if (fromCmIndex != toCmIndex) {
+			if (fromCmIndex != null && from.checkFirstCellArray(parent)) {
+				this.deleteDynamicFormula(fromCmIndex);
+			}
+			if (toCmIndex != null && to.checkFirstCellArray(parent)) {
+				this.addDynamicFormula(toCmIndex);
+			}
+		}
+	};
 
 	CDynamicArrayManager.prototype.addDynamicFormula = function (cmIndex) {
 		//add special structure - it help remove metadata/richdata after delete all dynamic formulas
@@ -24541,16 +24654,21 @@
 			this.allFormulasCountMap[cmIndex] = 0;
 		}
 		this.allFormulasCountMap[cmIndex]++;
+		console.log("addDynamicFormula : " + this.getDynamicFormulaCount(cmIndex))
 	};
 
 	CDynamicArrayManager.prototype.deleteDynamicFormula = function (cmIndex) {
 		if (this.allFormulasCountMap && this.allFormulasCountMap[cmIndex]) {
 			this.allFormulasCountMap[cmIndex]--;
 		}
+		if (this.allFormulasCountMap[cmIndex] < 1) {
+			this.ws.workbook.checkRemoveMetadataByCmIndex(cmIndex);
+		}
+		console.log("deleteDynamicFormula : " + this.getDynamicFormulaCount(cmIndex))
 	};
 
 	CDynamicArrayManager.prototype.getDynamicFormulaCount = function (cmIndex) {
-		return this.allFormulasCountMap[cmIndex];
+		return this.allFormulasCountMap && this.allFormulasCountMap[cmIndex];
 	};
 	
 	CDynamicArrayManager.prototype.recalculateVolatileArrays = function () {

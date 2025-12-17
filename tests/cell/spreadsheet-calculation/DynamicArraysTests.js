@@ -4121,7 +4121,66 @@ $(function () {
 		ws.getRange2("A1:Z30").cleanAll();
 	});
 
+	QUnit.test("Test: \"Metadata add test\"", function (assert) {
+		clearData(0, 0, 10, 20);
+		var getMetadata = function () {
+			return ws.workbook.metadata;
+		};
+
+		var getCellMetadata = function (r, c) {
+			var _cell;
+			ws.getRange3(r, c, r, c)._foreachNoEmpty(function(cell, row, col) {
+				_cell = cell;
+			});
+			return _cell && _cell.formulaParsed && _cell.formulaParsed.getCm();
+		};
+
+		var flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		var formula = "=SEQUENCE(3,2)";
+		var fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		var fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		var metadata = getMetadata();
+		assert.ok(metadata.cellMetadata && metadata.cellMetadata.length > 0, "cellMetadata created");
+		assert.ok(metadata.metadataTypes && metadata.metadataTypes.length > 0, "metadataTypes created");
+		assert.ok(metadata.aFutureMetadata && metadata.aFutureMetadata.length > 0, "aFutureMetadata created");
+
+		var cmIndex = getCellMetadata(0, 0);
+		assert.ok(cmIndex > 0, "A1 has metadata");
+
+		var cellMetadataBlock = metadata.cellMetadata[cmIndex - 1];
+		assert.ok(cellMetadataBlock, "cellMetadata block exists");
+		assert.ok(cellMetadataBlock.t > 0, "cellMetadata has type");
+
+		var typeIndex = cellMetadataBlock.t;
+		var metadataType = metadata.metadataTypes[typeIndex - 1];
+		assert.ok(metadataType, "metadataType exists");
+		assert.strictEqual(metadataType.name, "XLDAPR", "XLDAPR check type");
+
+		var valueIndex = cellMetadataBlock.v;
+		var futureBlock = metadata.aFutureMetadata[valueIndex];
+		assert.ok(futureBlock, "futureMetadataBlock exists");
+		assert.strictEqual(futureBlock.name, "XLDAPR", "XLDAPR check type");
+
+		fillRange =  ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText("");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		var cmIndexAfterDelete = getCellMetadata(0, 0);
+		assert.ok(!cmIndexAfterDelete || cmIndexAfterDelete === 0, "A1 metadata removed after deletion");
+		metadata = getMetadata();
+		assert.ok(metadata == null, "cellMetadata removed");
+
+		clearData(0, 0, 10, 20);
+	});
+
 	QUnit.module("Sheet structure");
 });
-
-
