@@ -1789,6 +1789,9 @@
 							var currentRange = worksheet.model.getCell3(row, col);
 							var textRange = currentRange.getValueWithFormat();
 							if (textRange !== '' && textRange !== undefined) {
+								if (textRange.indexOf('\n') !== -1) {
+									textRange = '"' + textRange.replace(/"/g, '""') + '"';
+								}
 								if (!addByStr(textRange)) {
 									return null;
 								}
