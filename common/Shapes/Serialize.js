@@ -11032,6 +11032,7 @@ function BinaryPPTYLoader()
 		this.ReadHyperlink = function (reader, stream) {
 			const oThis = this;
 			return this.ReadPPTXElement(reader, stream, function () {
+				oThis.stream.GetUChar(); // skip PPTX record type (must always be 0)
 				return oThis.Reader.ReadHyperlink();
 			});
 		};

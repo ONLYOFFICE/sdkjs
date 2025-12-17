@@ -12667,7 +12667,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			}
 		} else if (c_oSerDocPr.HlinkHover === type) {
 			if (length > 0) {
-				var hyperlink = pptx_content_loader.ReadHyperlink(this, this.stream);
+				const hyperlink = pptx_content_loader.ReadHyperlink(this, this.stream);
 				hyperlink && docPr.setHlinkHover(hyperlink);
 			}
 		} else {
