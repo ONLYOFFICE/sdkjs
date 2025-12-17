@@ -15018,6 +15018,9 @@
         }
         if (curFormula) {
             cell.setFormulaInternal(curFormula.parsed);
+            if (curFormula.parsed && curFormula.parsed.cm != null) {
+                tmp.ws.dynamicArrayManager && tmp.ws.dynamicArrayManager.addDynamicFormula(curFormula.parsed.cm);
+            }
             if (curFormula.parsed.ca || cell.isNullTextString()) {
                 tmp.ws.workbook.dependencyFormulas.addToChangedCell(cell);
             }

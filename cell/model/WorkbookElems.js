@@ -21727,7 +21727,7 @@ function RangeDataManagerElem(bbox, data)
 
 	CRichValueData.prototype.getRichValue = function(index) {
 		return this.pData && this.pData[index];
-	}
+	};
 	CRichValueData.prototype.clone = function() {
 		let res = new CRichValueData();
 		if (this.pData) {

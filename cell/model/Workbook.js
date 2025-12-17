@@ -24528,8 +24528,31 @@
 	function CDynamicArrayManager(ws) {
 		this.ws = ws;
 		this.changedArrays = null;
+		this.allFormulasCountMap = null;
 	}
 
+
+	CDynamicArrayManager.prototype.addDynamicFormula = function (cmIndex) {
+		//add special structure - it help remove metadata/richdata after delete all dynamic formulas
+		if (!this.allFormulasCountMap) {
+			this.allFormulasCountMap = {};
+		}
+		if (!this.allFormulasCountMap[cmIndex]) {
+			this.allFormulasCountMap[cmIndex] = 0;
+		}
+		this.allFormulasCountMap[cmIndex]++;
+	};
+
+	CDynamicArrayManager.prototype.deleteDynamicFormula = function (cmIndex) {
+		if (this.allFormulasCountMap && this.allFormulasCountMap[cmIndex]) {
+			this.allFormulasCountMap[cmIndex]--;
+		}
+	};
+
+	CDynamicArrayManager.prototype.getDynamicFormulaCount = function (cmIndex) {
+		return this.allFormulasCountMap[cmIndex];
+	};
+	
 	CDynamicArrayManager.prototype.recalculateVolatileArrays = function () {
 		const ws = this.ws;
 
