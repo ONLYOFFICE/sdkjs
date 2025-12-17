@@ -1759,7 +1759,11 @@ CopyProcessor.prototype =
 			for (var i = 0; i < selected_layouts.length; ++i) {
 				oThis.CopyLayout(selected_layouts[i]);
 			}
-
+			if (elementsContent.SlideObjects.length === 0 &&
+				elementsContent.Masters.length === 0 &&
+				elementsContent.Layouts.length > 0) {
+				oThis.AddObjectImageToElement(oDomTarget, selected_layouts[0]);
+			}
 		};
 
 		var copyMasters = function(){
@@ -1770,6 +1774,9 @@ CopyProcessor.prototype =
 
 			for (var i = 0; i < selected_masters.length; ++i) {
 				oThis.oPresentationWriter.WriteSlideMaster(selected_masters[i]);
+			}
+			if (elementsContent.SlideObjects.length === 0 && elementsContent.Masters.length > 0) {
+				oThis.AddObjectImageToElement(oDomTarget, selected_masters[0]);
 			}
 		};
 
@@ -2060,18 +2067,23 @@ CopyProcessor.prototype =
 	},
 
 
-	CopySlide: function (oDomTarget, slide) {
-		if (oDomTarget) {
-			var sSrc = slide.getBase64Img();
-			var _bounds_cheker = new AscFormat.CSlideBoundsChecker();
-			slide.draw(_bounds_cheker, 0);
-			var oImg = new CopyElement("img");
-			oImg.oAttributes["width"] = Math.round((_bounds_cheker.Bounds.max_x - _bounds_cheker.Bounds.min_x + 1) * g_dKoef_mm_to_pix);
-			oImg.oAttributes["height"] = Math.round((_bounds_cheker.Bounds.max_y - _bounds_cheker.Bounds.min_y + 1) * g_dKoef_mm_to_pix);
-			oImg.oAttributes["src"] = sSrc;
-			oDomTarget.addChild(oImg);
+	AddObjectImageToElement: function (element, drawing) {
+		if (element && drawing) {
+			let imageSrc = drawing.getBase64Img();
+			let boundsChecker = new AscFormat.CSlideBoundsChecker();
+			drawing.draw(boundsChecker, 0);
+			let image = new CopyElement("img");
+			let attr = image.oAttributes;
+			let bds = boundsChecker.Bounds;
+			attr["width"] = Math.round((bds.max_x - bds.min_x + 1) * g_dKoef_mm_to_pix);
+			attr["height"] = Math.round((bds.max_y - bds.min_y + 1) * g_dKoef_mm_to_pix);
+			attr["src"] = imageSrc;
+			element.addChild(image);
 		}
+	},
 
+	CopySlide: function (oDomTarget, slide) {
+		this.AddObjectImageToElement(oDomTarget, slide);
 		//пока записываю для копирования/вставки ссылку на стиль
 		//TODO в дальнейшем необходимо пересмотреть и писать стили вместе со слайдом
 		// - аналогично тому как это реализовано при записи таблицы
