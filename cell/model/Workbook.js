@@ -15202,7 +15202,7 @@
 				var fText = "=" + this.formulaParsed.getFormula();
 				this.formulaParsed.removeDependencies();
 				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoArrayFormula, AscCH.historyitem_ArrayFromula_DeleteFormula, this.ws.getId(),
-					new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new AscCommonExcel.UndoRedoData_ArrayFormula(arrayFormula, fText), true);
+					new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new AscCommonExcel.UndoRedoData_ArrayFormula(arrayFormula, fText, this.formulaParsed.getCm()), true);
 			} else {
 				this.formulaParsed.removeDependencies();
 			}
@@ -24900,7 +24900,7 @@
 				let arrayFormula = arrayData.formula.getArrayFormulaRef();
 				//this.formulaParsed.removeDependencies();
 				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoArrayFormula, AscCH.historyitem_ArrayFromula_DeleteFormula, this.ws.getId(),
-					new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new AscCommonExcel.UndoRedoData_ArrayFormula(arrayFormula, fText), true);
+					new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new AscCommonExcel.UndoRedoData_ArrayFormula(arrayFormula, fText, arrayData.formula.getCm()), true);
 
 				// add to volatile
 				ws.workbook.dependencyFormulas.addToVolatileArrays(formula);
