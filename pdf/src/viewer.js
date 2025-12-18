@@ -4093,7 +4093,7 @@
 		return ctx.canvas;
 	};
     CHtmlPage.prototype._drawAnnotsOnCtx = function(nPage, ctx, isThumbnails, contentType) {
-		let isDrawAnnots = contentType == AscPDF.PRINT_CONTENT_TYPES.docAndMarkups;
+		let isDrawAnnots = contentType == undefined || contentType == AscPDF.PRINT_CONTENT_TYPES.docAndMarkups;
 		let isOnlyStamps = contentType == AscPDF.PRINT_CONTENT_TYPES.docAndStamps;
 
 		if (!isDrawAnnots && !isOnlyStamps) {
