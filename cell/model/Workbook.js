@@ -25380,7 +25380,6 @@
 			let colOffset = "0";
 			let rwOffset = "0";
 			if (beforeSpillRange && typeof beforeSpillRange === 'object') {
-				// If beforeSpillRange is a Range object, calculate dimensions
 				if (beforeSpillRange.c1 != null && beforeSpillRange.c2 != null) {
 					colOffset = (beforeSpillRange.c2 - beforeSpillRange.c1) + "" ;
 				}
@@ -25389,47 +25388,90 @@
 				}
 			}
 
-			// Create rich value with error data
-			const richValue = new AscCommonExcel.CRichValue();
-			richValue.s = 0;
-			richValue.fb = null;
-			richValue.arrV = [colOffset, "8", rwOffset, "1"]; // colOffset, errorType=8 (#SPILL!), rwOffset, subType=1
-			this.ws.workbook.richValueData.pData.push(richValue);
+			// Try to find an existing value metadata that matches the same richValue offsets
+			if (meta.valueMetadata && meta.valueMetadata.length) {
+				for (let vi = 0; vi < meta.valueMetadata.length; vi++) {
+					const vmb = meta.valueMetadata[vi];
+					// validate metadata type index
+					if (!meta.metadataTypes || !meta.metadataTypes[vmb.t - 1]) {
+						continue;
+					}
+					if (meta.metadataTypes[vmb.t - 1].name !== "XLRICHVALUE") {
+						continue;
+					}
 
-			// Get current richValue index (0-based)
-			const rvIndex = this.ws.workbook.richValueData.pData.length - 1;
-
-			// Create rich value block
-			const richValueBlock = new AscCommonExcel.CRichValueBlock();
-			richValueBlock.i = rvIndex;
-
-			// Create extension block
-			const extBlock = new AscCommonExcel.CMetadataBlockExt();
-			extBlock.uri = "{3e2802c4-a4d2-4d8b-9148-e3be6c30e623}";
-			extBlock.richValueBlock = richValueBlock;
-
-			// Create future metadata block
-			const futureBlock = new AscCommonExcel.CFutureMetadataBlock();
-			futureBlock.extLst = [extBlock];
-			futureMetadata.futureMetadataBlocks.push(futureBlock);
-
-			// Initialize value metadata if needed
-			if (!meta.valueMetadata) {
-				meta.valueMetadata = [];
+					// get corresponding future metadata block for XLRICHVALUE
+					const xlrFuture = meta.getFutureMetadataByType("XLRICHVALUE");
+					if (!xlrFuture || !xlrFuture.futureMetadataBlocks) {
+						continue;
+					}
+					const fb = xlrFuture.futureMetadataBlocks[vmb.v];
+					if (!fb || !fb.extLst || !fb.extLst.length) {
+						continue;
+					}
+					const ext = fb.extLst[0];
+					if (!ext || !ext.richValueBlock) {
+						continue;
+					}
+					const rvIdx = ext.richValueBlock.i;
+					const rv = this.ws.workbook.richValueData && this.ws.workbook.richValueData.pData && this.ws.workbook.richValueData.pData[rvIdx];
+					if (!rv || !rv.arrV) {
+						continue;
+					}
+					// arrV: [colOffset, errorType, rwOffset, subType]
+					if (rv.arrV[0] === colOffset && rv.arrV[2] === rwOffset) {
+						// found existing match — reuse its vmIndex (1-based)
+						vmIndex = vi + 1;
+						needGenerateVm = false;
+						break;
+					}
+				}
 			}
 
-			// Create value metadata record
-			const valueMetadataBlock = new AscCommonExcel.CMetadataBlock();
-			valueMetadataBlock.t = meta.metadataTypes.length;
-			valueMetadataBlock.v = futureMetadata.futureMetadataBlocks.length - 1;
-			meta.valueMetadata.push(valueMetadataBlock);
+			// If not found — create new rich value and metadata as before
+			if (needGenerateVm) {
+				// Create rich value with error data
+				const richValue = new AscCommonExcel.CRichValue();
+				richValue.s = 0;
+				richValue.fb = null;
+				richValue.arrV = [colOffset, "8", rwOffset, "1"]; // colOffset, errorType=8 (#SPILL!), rwOffset, subType=1
+				this.ws.workbook.richValueData.pData.push(richValue);
 
-			// Add to history
-			const newMetadata = this.ws.workbook.metadata.clone();
-			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_Metadata,
-				null, null, new UndoRedoData_FromTo(oldMetadata, newMetadata));
+				// Get current richValue index (0-based)
+				const rvIndex = this.ws.workbook.richValueData.pData.length - 1;
 
-			vmIndex = meta.valueMetadata.length;
+				// Create rich value block
+				const richValueBlock = new AscCommonExcel.CRichValueBlock();
+				richValueBlock.i = rvIndex;
+
+				// Create extension block
+				const extBlock = new AscCommonExcel.CMetadataBlockExt();
+				extBlock.uri = "{3e2802c4-a4d2-4d8b-9148-e3be6c30e623}";
+				extBlock.richValueBlock = richValueBlock;
+
+				// Create future metadata block
+				const futureBlock = new AscCommonExcel.CFutureMetadataBlock();
+				futureBlock.extLst = [extBlock];
+				futureMetadata.futureMetadataBlocks.push(futureBlock);
+
+				// Initialize value metadata if needed
+				if (!meta.valueMetadata) {
+					meta.valueMetadata = [];
+				}
+
+				// Create value metadata record
+				const valueMetadataBlock = new AscCommonExcel.CMetadataBlock();
+				valueMetadataBlock.t = meta.metadataTypes.length;
+				valueMetadataBlock.v = futureMetadata.futureMetadataBlocks.length - 1;
+				meta.valueMetadata.push(valueMetadataBlock);
+
+				// Add to history
+				const newMetadata = this.ws.workbook.metadata.clone();
+				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_Metadata,
+					null, null, new UndoRedoData_FromTo(oldMetadata, newMetadata));
+
+				vmIndex = meta.valueMetadata.length;
+			}
 		}
 
 		return {
