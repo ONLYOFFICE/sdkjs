@@ -2402,10 +2402,7 @@
 					}
 					this.lastSelectedObject = null;
 					this.checkShowMediaControlOnSelect();
-
-					let shapes = this.selectedObjects.filter(function (drawing){return drawing instanceof CShape});
-					if (shapes.length)
-						this.document.AddMacroData("SelectShape", [shapes]);
+					Asc.editor.addMacroStepData("SelectShape", [this.selectedObjects.filter(function (drawing){return drawing instanceof AscFormat.CShape})]);
 				},
 
 				deselectObject: function (object) {
@@ -3839,6 +3836,8 @@
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {
 							objects_by_type.shapes[i].setPaddings(props.paddings);
 						}
+						Asc.editor.addMacroStepData('SetShapeInnerPadding', props.paddings);
+
 						for (i = 0; i < objects_by_type.groups.length; ++i) {
 							objects_by_type.groups[i].setPaddings(props.paddings);
 						}
@@ -3870,6 +3869,8 @@
 								aShapes.push(objects_by_type.shapes[i]);
 							}
 						}
+						Asc.editor.addMacroStepData('SetGeometry', props.type);
+
 						for (i = 0; i < objects_by_type.groups.length; ++i) {
 							objects_by_type.groups[i].changePresetGeom(props.type);
 							objects_by_type.groups[i].getAllShapes(objects_by_type.groups[i].spTree, aShapes);
@@ -3885,7 +3886,7 @@
 							objects_by_type.shapes[i].changeLine(props.stroke);
 						}
 						if (objects_by_type.shapes)
-							this.document.AddMacroData('SetShapeLine', objects_by_type.shapes[0].getCompiledLine());
+							Asc.editor.addMacroStepData('SetShapeLine', objects_by_type.shapes[0].getCompiledLine());
 
 						for (i = 0; i < objects_by_type.groups.length; ++i) {
 							objects_by_type.groups[i].changeLine(props.stroke);
@@ -3905,7 +3906,7 @@
 							objects_by_type.shapes[i].changeFill(props.fill);
 						}
 						if (objects_by_type.shapes)
-							this.document.AddMacroData('SetShapeFill', objects_by_type.shapes[0].getFill().createDuplicate());
+							Asc.editor.addMacroStepData('SetShapeFill', objects_by_type.shapes[0].getFill().createDuplicate());
 
 						for (i = 0; i < objects_by_type.groups.length; ++i) {
 							objects_by_type.groups[i].changeFill(props.fill);
@@ -4175,6 +4176,7 @@
 								oDrawing.callPluginOnResize();
 							}
 						}
+						Asc.editor.addMacroStepData('SetShapeSize', {width: props.Width, height: props.Height});
 						if (editorId === AscCommon.c_oEditorId.Presentation || editorId === AscCommon.c_oEditorId.Spreadsheet) {
 							bCheckConnectors = true;
 							bMoveFlag = false;
@@ -4254,17 +4256,42 @@
 						}
 					}
 
+					if (AscFormat.isRealBool(props.flipH))
+					{
+						Asc.editor.addMacroStepData('SetShapeFlipH', props.flipH);
+					}
+					if (AscFormat.isRealBool(props.flipV))
+					{
+						Asc.editor.addMacroStepData('SetShapeFlipV', props.flipV);
+					}
 					if (props.flipHInvert)
 					{
-						this.document.AddMacroData('SetShapeFlipHInvert', null);
+						Asc.editor.addMacroStepData('SetShapeFlipHInvert', null);
 					}
 					if (props.flipVInvert)
 					{
-						this.document.AddMacroData('SetShapeFlipVInvert', null);
+						Asc.editor.addMacroStepData('SetShapeFlipVInvert', null);
 					}
 					if (props.rotAdd)
 					{
-						this.document.AddMacroData('SetShapeAddRotation', props.rotAdd);
+						Asc.editor.addMacroStepData('SetShapeAddRotation', props.rotAdd);
+					}
+					if (props.rot)
+					{
+						Asc.editor.addMacroStepData('SetShapeRotation', props.rot)
+					}
+
+					if (props.flipHInvert)
+					{
+						Asc.editor.addMacroStepData('SetShapeFlipHInvert', null);
+					}
+					if (props.flipVInvert)
+					{
+						Asc.editor.addMacroStepData('SetShapeFlipVInvert', null);
+					}
+					if (props.rotAdd)
+					{
+						Asc.editor.addMacroStepData('SetShapeAddRotation', props.rotAdd);
 					}
 					if (bCheckConnectors) {
 						this.updateConnectors(bMoveFlag);

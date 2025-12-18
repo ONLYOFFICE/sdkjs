@@ -340,7 +340,10 @@
 	// for now duplicate, leter we delete onAction
 	MacroRecorder.prototype.addStepData = function(type, additional)
 	{
-		if (!this.isInProgress() || this.isPaused() || undefined === additional)
+		if (!this.isInProgress()
+			|| this.isPaused()
+			|| undefined === additional
+			|| (Array.isArray(additional) && additional.length === 0))
 			return;
 
 		// for meta action
@@ -926,7 +929,7 @@
 			let borderColor = border.Fill.getRGBAColor();
 			return "\t(function () {\n" +
 					"\t\tlet fill = Api.CreateSolidFill(Api.CreateRGBColor("+ fill.R +", " + fill.G + ", " + fill.B + "));\n" +
-					"\t\tlet stroke = Api.CreateStroke(" + borderwidth +"* 36000, Api.CreateSolidFill(Api.CreateRGBColor("+ borderColor.R +", " + borderColor.G + ", " + borderColor.B + ")));\n" +
+					"\t\tlet stroke = Api.CreateStroke(" + borderwidth +" * 36000, Api.CreateSolidFill(Api.CreateRGBColor("+ borderColor.R +", " + borderColor.G + ", " + borderColor.B + ")));\n" +
 					"\t\tlet shape = Api.CreateShape(\"" + shapeProps.type + "\", " + shapeProps.extX + " * 36000, " + shapeProps.extY + " * 36000, fill, stroke);\n" +
 					"\t\tshape.SetWrappingStyle(\"inFront\");\n" +
 					"\t\tshape.SetVerPosition(\"page\", " + shapeProps.pos.y + " * 36000.0);\n" +
@@ -1089,11 +1092,9 @@
 				{
 					let gs = colors[nColor];
 					let color = gs.color.color.RGBA;
-					
 					strColor += (nColor !== 0)
 						? ",\n\t\t\t\t"
 						: "\n\t\t\t\t";
-	
 					strColor += "Api.CreateGradientStop(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "), " + gs.pos + ")";
 				}
 
@@ -1123,7 +1124,7 @@
 				let fgClr = unifill.fill.fgClr.color.RGBA;
 				let ftype = unifill.fill.ftype;
 				let type = AscCommon.global_hatch_names[ftype];
-				
+
 				let blipFill = "\n\t\t\tApi.CreatePatternFill(\n\t\t\t\t\"" + type + "\",\n\t\t\t\t" + "Api.CreateRGBColor(" + bgClr.R + ", " + bgClr.G + ", " + bgClr.B + "),\n\t\t\t\tApi.CreateRGBColor(" + fgClr.R + ", " + fgClr.G + ", " + fgClr.B + ")";
 				return "\tdoc.GetSelectedDrawings()\n"
 						+ "\t\t.filter(item => item.GetClassType() === \"shape\")\n"
@@ -1138,10 +1139,30 @@
 		},
 		setShapeLine			: function(line)
 		{
+			let strStrokeShape = "\t(function () {\n";
+			let type = AscFormat.CLn.prototype.GetDashByCode(line.prstDash);
 			let color = line.Fill.fill.color.color.RGBA;
+
+			strStrokeShape += "\t\tlet stroke = Api.CreateStroke(\n" +
+					"\t\t\t" + line.w / 12700.0 + " * 12700.0,\n" +
+					"\t\t\t" + "Api.CreateSolidFill(Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + ")),\n" +
+					"\t\t\t\"" + type + "\"\n" +
+				"\t\t);\n";
+
+			strStrokeShape += "\t\tdoc.GetSelectedDrawings()\n"
+				+ "\t\t\t.filter(item => item.GetClassType() === \"shape\")\n"
+				+ "\t\t\t.forEach(shape => shape.SetOutLine(stroke));\n";
+
+			strStrokeShape += "\t}());\n";
+
+			return strStrokeShape;
+		},
+		setShapeRotation		: function(nRot)
+		{
 			return "\tdoc.GetSelectedDrawings()\n"
 				+ "\t\t.filter(item => item.GetClassType() === \"shape\")\n"
-				+ "\t\t.forEach(shape => shape.SetOutLine(Api.CreateStroke(" + line.w + ", Api.CreateRGBColor(" + color.R + ", " + color.G + ", " + color.B + "))));\n";
+				+ "\t\t.forEach(shape => {shape.SetRotation(" + nRot * 180 / Math.PI + ")});\n";
+
 		},
 		setShapeAddRot			: function(nAddRot)
 		{
@@ -1161,6 +1182,20 @@
 				+ "\t\t.filter(item => item.GetClassType() === \"shape\")\n"
 				+ "\t\t.forEach(shape => {shape.SetVertFlip(!shape.GetFlipV())});\n";
 		},
+		setShapeFlipH			: function(isFlip)
+		{
+			return "\tdoc.GetSelectedDrawings()\n"
+				+ "\t\t.filter(item => item.GetClassType() === \"shape\")\n"
+				+ "\t\t.forEach(shape => {shape.SetHorFlip(" + isFlip +")});\n";
+
+		},
+		setShapeFlipV			: function(isFlip)
+		{
+			return "\tdoc.GetSelectedDrawings()\n"
+				+ "\t\t.filter(item => item.GetClassType() === \"shape\")\n"
+				+ "\t\t.forEach(shape => {shape.SetVertFlip(" + isFlip + ")});\n";
+
+		},
 		setDrawingWrapping		: function(props)
 		{
 			return "\tdoc.GetSelectedDrawings().forEach(draw => draw.SetWrappingStyle(\"" + getWrappingStyleName(props) + "\"))\n"
@@ -1174,24 +1209,133 @@
 		},
 		setPositionH			: function(data)
 		{
-			if (data.percent)
-				return "";
+			let relative = "";
+			switch(data.relativeFrom)
+			{
+				 case Asc.c_oAscRelativeFromH.Character:	relative = "character";		break;
+				 case Asc.c_oAscRelativeFromH.Column:		relative = "column";		break;
+				 case Asc.c_oAscRelativeFromH.LeftMargin:	relative = "leftMargin";	break;
+				 case Asc.c_oAscRelativeFromH.Margin:		relative = "margin";		break;
+				 case Asc.c_oAscRelativeFromH.RightMargin:	relative = "rightMargin";	break;
+				 case Asc.c_oAscRelativeFromH.Page:			relative = "page";			break;
+				 default:									relative = "page";
+			}
 
-			 let relative = ""
-			 switch(data.relativeFrom)
-			 {
-				 case 0: relative = "character"; break;
-				 case 1: relative = "column"; break;
-				 case 3: relative = "leftMargin"; break;
-				 case 4: relative = "margin"; break;
-				 case 7: relative = "rightMargin"; break;
-				 case 6: relative = "page"; break;
-				 default: relative = "page";
-			 }
+			if (data.useAlign)
+			{
+				let useAlign = "";
+				switch (data.value) {
+					case Asc.c_oAscAlignH.Center:	useAlign = "center";	break;
+					case Asc.c_oAscAlignH.Left:		useAlign = "left";		break;
+					case Asc.c_oAscAlignH.Right:	useAlign = "right";		break;
+					default:						useAlign = "center";
+				}
+
+				return "\tdoc.GetSelectedDrawings().forEach(draw => {" +
+					"draw.SetHorAlign(\"" + relative + "\", \"" + useAlign + "\")" +
+				"});\n"
+			}
 
 			return "\tdoc.GetSelectedDrawings().forEach(draw => {" +
-				"draw.SetHorPosition(\"" + relative + "\", " + data.value + " * 36000.0)" +
+				"draw.SetHorPosition(\"" + relative + "\", " + data.value + " * 36000.0, " + data.percent + ")" +
+			"});\n"
+		},
+		setPositionV			: function(data)
+		{
+			let relative = "";
+			switch(data.relativeFrom)
+			{
+				 case Asc.c_oAscRelativeFromH.Character:	relative = "character";		break;
+				 case Asc.c_oAscRelativeFromH.Column:		relative = "column";		break;
+				 case Asc.c_oAscRelativeFromH.LeftMargin:	relative = "leftMargin";	break;
+				 case Asc.c_oAscRelativeFromH.Margin:		relative = "margin";		break;
+				 case Asc.c_oAscRelativeFromH.RightMargin:	relative = "rightMargin";	break;
+				 case Asc.c_oAscRelativeFromH.Page:			relative = "page";			break;
+				 default:									relative = "page";
+			}
+
+			if (data.useAlign)
+			{
+				let useAlign = "";
+				switch (data.value) {
+					case Asc.c_oAscAlignV.Bottom:	useAlign = "bottom";	break;
+					case Asc.c_oAscAlignV.Center:	useAlign = "center";	break;
+					case Asc.c_oAscAlignV.Top:		useAlign = "top";		break;
+					default:						useAlign = "center";
+				}
+
+				return "\tdoc.GetSelectedDrawings().forEach(draw => {" +
+					"draw.SetVerAlign(\"" + relative + "\", \"" + useAlign + "\")" +
 				"});\n"
+			}
+
+			return "\tdoc.GetSelectedDrawings().forEach(draw => {" +
+				"draw.SetVerPosition(\"" + relative + "\", " + data.value + " * 36000.0, " + data.percent + ")" +
+			"});\n"
+		},
+		setShapeSize			: function(oSize)
+		{
+			return "\tdoc.GetSelectedDrawings().forEach(draw => {" +
+				"draw.SetSize(" + oSize.width + " * 36000.0, " + oSize.height + " * 36000.0)" +
+			"});\n"
+		},
+		setDrawingDistances		: function(oDistances)
+		{
+			return "\tdoc.GetSelectedDrawings().forEach(draw => {\n"
+					+ "\t\t\tdraw.SetDistances(" + oDistances.Left + " * 36000.0, " + oDistances.Top + " * 36000.0, " + oDistances.Right + " * 36000.0, " + oDistances.Bottom + " * 36000.0)\n"
+				+ "\t});\n"
+
+		},
+		setShapeInnerPadding	: function(oPadding)
+		{
+			return "\tdoc.GetSelectedDrawings()\n"
+				+ "\t\t.filter(item => item.GetClassType() === \"shape\")\n"
+				+ "\t\t.forEach(draw => {\n"
+					+ "\t\t\tdraw.SetPaddings(" + oPadding.Left + " * 36000.0, " + oPadding.Top + " * 36000.0, " + oPadding.Right + " * 36000.0, " + oPadding.Bottom + " * 36000.0)\n"
+				+ "\t\t});\n"
+
+		},
+		setShapeRelSizeH		: function(oSize)
+		{
+			let relative = "";
+			switch(oSize.RelativeFrom)
+			{
+				 case Asc.c_oAscRelativeFromH.Character:	relative = "character";		break;
+				 case Asc.c_oAscRelativeFromH.Column:		relative = "column";		break;
+				 case Asc.c_oAscRelativeFromH.LeftMargin:	relative = "leftMargin";	break;
+				 case Asc.c_oAscRelativeFromH.Margin:		relative = "margin";		break;
+				 case Asc.c_oAscRelativeFromH.RightMargin:	relative = "rightMargin";	break;
+				 case Asc.c_oAscRelativeFromH.Page:			relative = "page";			break;
+				 default:									relative = "page";
+			}
+			return "\tdoc.GetSelectedDrawings().forEach(draw => {" +
+				"draw.SetRelativeWidth(\"" + relative + "\", " + oSize.Value + ")" +
+			"});\n"
+		},
+		setShapeRelSizeV		: function(oSize)
+		{
+			let relative = "";
+			switch(oSize.RelativeFrom)
+			{
+				 case Asc.c_oAscRelativeFromV.BottomMargin:	relative = "bottomMargin";		break;
+				 case Asc.c_oAscRelativeFromV.Line:			relative = "line";				break;
+				 case Asc.c_oAscRelativeFromV.TopMargin:	relative = "topMargin";			break;
+				 case Asc.c_oAscRelativeFromV.Margin:		relative = "margin";			break;
+				 case Asc.c_oAscRelativeFromV.Paragraph:	relative = "paragraph";			break;
+				 case Asc.c_oAscRelativeFromV.Page:			relative = "page";				break;
+				 default:									relative = "page";
+			}
+			return "\tdoc.GetSelectedDrawings().forEach(draw => {" +
+				"draw.SetRelativeHeight(\"" + relative + "\", " + oSize.Value + ")" +
+			"});\n"
+		},
+		setGeometry			: function(type)
+		{
+			return "\tdoc.GetSelectedDrawings()\n"
+				+ "\t\t.filter(item => item.GetClassType() === \"shape\")\n"
+				+ "\t\t.forEach(draw => {\n"
+					+ "\t\t\tdraw.SetGeometry(Api.CreatePresetGeometry(\""+ type +"\"))\n"
+				+ "\t\t});\n"
 		}
 	};
 
@@ -1259,11 +1403,21 @@
 	WordActionsMacroList['SetShapeFill']												= wordActions.setShapeFill;
 	WordActionsMacroList['SetShapeLine']												= wordActions.setShapeLine;
 	WordActionsMacroList['SetShapeAddRotation']											= wordActions.setShapeAddRot;
+	WordActionsMacroList['SetShapeRotation']											= wordActions.setShapeRotation;
 	WordActionsMacroList['SetShapeFlipHInvert']											= wordActions.setShapeFlipHInvert;
 	WordActionsMacroList['SetShapeFlipVInvert']											= wordActions.setShapeFlipVInvert;
+	WordActionsMacroList['SetShapeFlipH']												= wordActions.setShapeFlipH;
+	WordActionsMacroList['SetShapeFlipV']												= wordActions.setShapeFlipV;
 	WordActionsMacroList['SetDrawingWrapping']											= wordActions.setDrawingWrapping;
-	WordActionsMacroList['SetDrawingPos']											    = wordActions.setDrawingPos;
-	WordActionsMacroList['SetPositionH']											    = wordActions.setPositionH;
+	WordActionsMacroList['SetDrawingPos']												= wordActions.setDrawingPos;
+	WordActionsMacroList['SetPositionH']												= wordActions.setPositionH;
+	WordActionsMacroList['SetPositionV']												= wordActions.setPositionV;
+	WordActionsMacroList['SetShapeSize']												= wordActions.setShapeSize;
+	WordActionsMacroList['SetDrawingDistances']											= wordActions.setDrawingDistances;
+	WordActionsMacroList['SetShapeInnerPadding']										= wordActions.setShapeInnerPadding;
+	WordActionsMacroList['SetRelSizeH']													= wordActions.setShapeRelSizeH;
+	WordActionsMacroList['SetRelSizeV']													= wordActions.setShapeRelSizeV;
+	WordActionsMacroList['SetGeometry']													= wordActions.setGeometry;
 	WordActionsMacroList[AscDFH.historydescription_Document_RemoveHdrFtr]				= wordActions.removeHdr;
 	WordActionsMacroList[AscDFH.historydescription_Document_AddComment]					= wordActions.addComment;
 	//WordActionsMacroList[AscDFH.AscDFH.historydescription_Document_AddTextArt]		= wordActions.addTextArt;

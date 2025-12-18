@@ -6119,6 +6119,10 @@
 	{
 		return this.macroRecorder;
 	};
+	baseEditorsApi.prototype.addMacroStepData = function(type, additional)
+	{
+		return this.macroRecorder.addStepData(type, additional);
+	};
 
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
@@ -6255,5 +6259,6 @@
 	prot['asc_markAsFinal'] = prot.asc_markAsFinal = prot.markAsFinal;
 	prot['asc_isFinal'] = prot.asc_isFinal = prot.isFinal;
 	prot["getMacroRecorder"] = prot.getMacroRecorder;
+	prot["addMacroStepData"] = prot.addMacroStepData;
 
 })(window);

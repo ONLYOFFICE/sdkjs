@@ -17514,13 +17514,14 @@
 			return oUniFill;
 		}
 
-		function builder_CreateLine(nWidth, oFill) {
+		function builder_CreateLine(nWidth, oFill, prstDash) {
 			if (nWidth === 0) {
 				return new AscFormat.CreateNoFillLine();
 			}
 			var oLn = new AscFormat.CLn();
 			oLn.w = nWidth;
 			oLn.Fill = oFill.UniFill;
+			oLn.prstDash = (prstDash === undefined) ? null : prstDash;
 			return oLn;
 		}
 

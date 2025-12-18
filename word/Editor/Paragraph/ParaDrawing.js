@@ -1034,7 +1034,11 @@ ParaDrawing.prototype.Set_Props = function(Props)
 	}
 
 	if (undefined != Props.Paddings)
+	{
 		this.Set_Distance(Props.Paddings.Left, Props.Paddings.Top, Props.Paddings.Right, Props.Paddings.Bottom);
+		if (this.IsShape())
+			this.document.AddMacroData("SetDrawingDistances", {Left: Props.Paddings.Left, Top: Props.Paddings.Top, Right: Props.Paddings.Right, Bottom: Props.Paddings.Bottom});
+	}
 
 	if (undefined != Props.AllowOverlap)
 		this.Set_AllowOverlap(Props.AllowOverlap);
@@ -1049,6 +1053,8 @@ ParaDrawing.prototype.Set_Props = function(Props)
 	if (undefined != Props.PositionV)
 	{
 		this.Set_PositionV(Props.PositionV.RelativeFrom, Props.PositionV.UseAlign, ( true === Props.PositionV.UseAlign ? Props.PositionV.Align : Props.PositionV.Value ), Props.PositionV.Percent);
+		if (this.IsShape())
+			this.document.AddMacroData("SetPositionV", {relativeFrom: Props.PositionV.RelativeFrom, useAlign: Props.PositionV.UseAlign, value: ( true === Props.PositionV.UseAlign ? Props.PositionV.Align : Props.PositionV.Value ), percent: Props.PositionV.Percent});
 	}
 	if (undefined != Props.SizeRelH)
 	{
@@ -1056,6 +1062,10 @@ ParaDrawing.prototype.Set_Props = function(Props)
 			RelativeFrom : AscFormat.ConvertRelPositionHToRelSize(Props.SizeRelH.RelativeFrom),
 			Percent      : Props.SizeRelH.Value / 100.0
 		});
+
+		if (this.IsShape())
+			this.document.AddMacroData("SetRelSizeH", Props.SizeRelH);
+
 	}
 
 	if (undefined != Props.SizeRelV)
@@ -1064,6 +1074,10 @@ ParaDrawing.prototype.Set_Props = function(Props)
 			RelativeFrom : AscFormat.ConvertRelPositionVToRelSize(Props.SizeRelV.RelativeFrom),
 			Percent      : Props.SizeRelV.Value / 100.0
 		});
+
+		if (this.IsShape())
+			this.document.AddMacroData("SetRelSizeV", Props.SizeRelH);
+
 	}
 
 	if (this.SizeRelH && !this.SizeRelV)

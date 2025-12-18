@@ -4265,6 +4265,13 @@
 	 * @see office-js-api/Examples/Enumerations/highlightColor.js
 	 */
 
+	/**
+	 * Available dash type for line.
+	 * @typedef {"dash" | "dashDot" | "dot" | "lgDash" | "lgDashDot" | "lgDashDotDot" |
+	 * "solid" | "sysDash" | "sysDashDot" | "sysDashDotDot" | "sysDot"} DashType
+	 * @see office-js-api/Examples/Enumerations/LineDash.js
+	 */
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// Cross-reference
@@ -5092,16 +5099,35 @@
 
 	/**
 	 * Creates a stroke adding shadows to the element.
+	 *
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @deprecated since 9.3.0 version.
 	 * @param {EMU} width - The width of the shadow measured in English measure units.
 	 * @param {ApiFill} fill - The fill type used to create the shadow.
 	 * @returns {ApiStroke}
+	 *
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateStroke.js
 	 */
-	Api.prototype.CreateStroke = function(width, fill)
+	/**
+	 * Creates a stroke adding shadows to the element.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @since 9.3.0
+	 * @param {EMU} width - The width of the shadow measured in English measure units.
+	 * @param {ApiFill} fill - The fill type used to create the shadow.
+	 * @param {DashType} [sDash="solid"] - The type of line dash.
+	 * @returns {ApiStroke}
+	 *
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateStroke.js
+	 */
+	Api.prototype.CreateStroke = function(width, fill, sDash)
 	{
-		return new ApiStroke(AscFormat.builder_CreateLine(width, fill));
+		let strDashType = AscFormat.CLn.prototype.GetDashCode(sDash);
+		return new ApiStroke(AscFormat.builder_CreateLine(width, fill, strDashType));
 	};
 
 	/**
@@ -18388,7 +18414,54 @@
 		{
 			this.Drawing.spPr.xfrm.setExtX(fWidth);
 			this.Drawing.spPr.xfrm.setExtY(fHeight);
+			this.getParaDrawing().SetSizeRelV(undefined);
+			this.getParaDrawing().SetSizeRelH(undefined);
 		}
+
+		
+		return true;
+	};
+	/**
+	 * Sets the relative height of the object (image, shape, chart) bounding box.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @param {RelFromV} [sRelativeFrom="page"] - The document element which will be taken as a countdown point for the object height.
+	 * @param {percentage} nPercent
+	 * @since 9.3.0
+	 * @returns {boolean}
+	 * 
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetRelativeHeight.js
+	 */
+	ApiDrawing.prototype.SetRelativeHeight = function(sRelativeFrom, nPercent)
+	{
+		let nRelativeFrom = private_GetRelativeFromV(sRelativeFrom);
+		let nRelSize = AscFormat.ConvertRelPositionVToRelSize(nRelativeFrom);
+
+		this.getParaDrawing().SetSizeRelV({
+			RelativeFrom: nRelSize,
+			Percent: nPercent / 100
+		});
+		return true;
+	};
+	/**
+	 * Sets the relative width of the object (image, shape, chart) bounding box.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @param {RelFromV} [sRelativeFrom="page"] - The document element which will be taken as a countdown point for the object width.
+	 * @param {percentage} nPercent
+	 * @since 9.3.0
+	 * @returns {boolean}
+	 * 
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetRelativeWidth.js
+	 */
+	ApiDrawing.prototype.SetRelativeWidth = function(sRelativeFrom, nPercent)
+	{
+		let nRelativeFrom = private_GetRelativeFromH(sRelativeFrom);
+		let nRelSize = AscFormat.ConvertRelPositionVToRelSize(nRelativeFrom);
+		this.getParaDrawing().SetSizeRelH({
+			RelativeFrom: nRelSize,
+			Percent: nPercent / 100
+		});
 		return true;
 	};
 	/**
@@ -18479,9 +18552,9 @@
 	 */
 	ApiDrawing.prototype.SetHorAlign = function(sRelativeFrom, sAlign)
 	{
-		let nAlign        = private_GetAlignH(sAlign);
+		let nAlign = private_GetAlignH(sAlign);
 		let nRelativeFrom = private_GetRelativeFromH(sRelativeFrom);
-		this.getParaDrawing().Set_PositionH(nRelativeFrom, true, nAlign, false);
+		this.getParaDrawing().Set_PositionH(nRelativeFrom, true, nAlign);
 		return true;
 	};
 	/**
@@ -18495,41 +18568,77 @@
 	 */
 	ApiDrawing.prototype.SetVerAlign = function(sRelativeFrom, sAlign)
 	{
-		let nAlign        = private_GetAlignV(sAlign);
+		let nAlign = private_GetAlignV(sAlign);
 		let nRelativeFrom = private_GetRelativeFromV(sRelativeFrom);
-		this.getParaDrawing().Set_PositionV(nRelativeFrom, true, nAlign, false);
+		this.getParaDrawing().Set_PositionV(nRelativeFrom, true, nAlign);
 		return true;
 	};
 	/**
 	 * Sets the absolute measurement for the horizontal positioning of the floating object.
+	 *
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
+	 *
+	 * @deprecated since 9.3.0 version.
 	 * @param {RelFromH} sRelativeFrom - The document element which will be taken as a countdown point for the object horizontal alignment.
 	 * @param {EMU} nDistance - The distance from the right side of the document element to the floating object measured in English measure units.
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetHorPosition.js
 	 */
-	ApiDrawing.prototype.SetHorPosition = function(sRelativeFrom, nDistance)
+	/**
+	 * Sets the absolute measurement for the horizontal positioning of the floating object.
+	 *
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.3.0
+	 * @param {RelFromH} sRelativeFrom - The document element which will be taken as a countdown point for the object horizontal alignment.
+	 * @param {EMU} nDistance - The distance from the right side of the document element to the floating object measured in English measure units.
+	 * @param {boolean} [bPercent=false] - The option defining whether the vertical alignment offset is specified in percent.
+	 * @returns {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetHorPosition.js
+	 */
+	ApiDrawing.prototype.SetHorPosition = function(sRelativeFrom, nDistance, bPercent)
 	{
-		let nValue        = private_EMU2MM(nDistance);
-		let nRelativeFrom = private_GetRelativeFromH(sRelativeFrom);
-		this.getParaDrawing().Set_PositionH(nRelativeFrom, false, nValue, false);
+		let nValue			= private_EMU2MM(nDistance);
+		let nRelativeFrom	= private_GetRelativeFromH(sRelativeFrom);
+		this.getParaDrawing().Set_PositionH(nRelativeFrom, false, !!bPercent ? nDistance : nValue, !!bPercent);
 		return true;
 	};
 	/**
 	 * Sets the absolute measurement for the vertical positioning of the floating object.
+	 *
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
-	 * @param {RelFromV} sRelativeFrom - The document element which will be taken as a countdown point for the object vertical alignment.
+	 *
+	 * @deprecated since 9.3.0 version.
+	 * @param {RelFromH} sRelativeFrom - The document element which will be taken as a countdown point for the object vertical alignment.
 	 * @param {EMU} nDistance - The distance from the bottom part of the document element to the floating object measured in English measure units.
 	 * @returns {boolean}
+	 *
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetVerPosition.js
 	 */
-	ApiDrawing.prototype.SetVerPosition = function(sRelativeFrom, nDistance)
+	/**
+	 * Sets the absolute measurement for the vertical positioning of the floating object.
+	 *
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 *
+	 * @since 9.3.0
+	 * @param {RelFromH} sRelativeFrom - The document element which will be taken as a countdown point for the object vertical alignment.
+	 * @param {EMU} nDistance - The distance from the bottom part of the document element to the floating object measured in English measure units.
+	 * @param {boolean} [bPercent=false] - The option defining whether the vertical alignment offset is specified in percent.
+	 * @returns {boolean}
+	 *
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetVerPosition.js
+	 */
+	ApiDrawing.prototype.SetVerPosition = function(sRelativeFrom, nDistance, bPercent)
 	{
 		let nValue        = private_EMU2MM(nDistance);
 		let nRelativeFrom = private_GetRelativeFromV(sRelativeFrom);
-		this.getParaDrawing().Set_PositionV(nRelativeFrom, false, nValue, false);
+		this.getParaDrawing().Set_PositionV(nRelativeFrom, false, nValue, !!bPercent);
 		return true;
 	};
 	/**
