@@ -17285,7 +17285,12 @@
 		} else if (AscCommonExcel.XLSB.rt_CELL_ISST === type) {
 			this.setTypeInternal(CellValueType.String);
 			this.setValueTextInternal("");//without text textIndex is ignored
-			this.textIndex = stream.GetULongLE() + 1;// 1-based indexing
+			const textIndex = stream.GetULongLE();
+			if (tmp.sharedStringIndexMap) {
+				this.textIndex = tmp.sharedStringIndexMap[textIndex];
+			} else {
+				this.textIndex = textIndex + 1;// 1-based indexing
+			}
 		} else if (AscCommonExcel.XLSB.rt_CELL_ST === type || AscCommonExcel.XLSB.rt_FMLA_STRING === type) {
 			this.setTypeInternal(CellValueType.String);
 			this.setValueTextInternal(stream.GetString());

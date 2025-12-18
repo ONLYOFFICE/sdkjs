@@ -8471,7 +8471,7 @@
 		};
     }
     /** @constructor */
-    function Binary_SharedStringTableReader(stream, wb)
+    function Binary_SharedStringTableReader(stream, wb, opt_sharedStringIndexMap)
     {
         this.stream = stream;
         this.wb = wb;
@@ -8495,6 +8495,7 @@
                 const subStream = new AscCommon.FT_Stream2(data, data.length);
                 let bssr = new Binary_SharedStringTableReader(subStream, this.wb);
                 bssr.offsets = offsets;
+                //todo opt_sharedStringIndexMap
                 this.wb.sharedStrings.initWithBinaryReader(bssr);
             } else {
                 const sharedStrings = [];
@@ -8503,7 +8504,7 @@
                     sharedStrings.push(oThis._getSharedStringFormTemp());
                     return res;
                 });
-                this.wb.sharedStrings.initWithSharedStrings(sharedStrings);
+                this.wb.sharedStrings.initWithSharedStrings(sharedStrings, opt_sharedStringIndexMap);
             }
             return res;
         };
@@ -10511,13 +10512,15 @@
 			var oldPos = this.stream.GetCurPos();
 			for (var i = 0; i < this.InitOpenManager.oReadResult.sheetData.length; ++i) {
 				var sheetDataElem = this.InitOpenManager.oReadResult.sheetData[i];
+				let sharedStringIndexMap = this.InitOpenManager.sharedStringIndexMap;
 				var ws = sheetDataElem.ws;
 				this.stream.Seek2(sheetDataElem.pos);
 
 				var tmp = {
 					pos: null, len: null, bNoBuildDep: bNoBuildDep, ws: ws, row: new AscCommonExcel.Row(ws),
 					cell: new AscCommonExcel.Cell(ws), formula: new OpenFormula(), sharedFormulas: {},
-					prevFormulas: {}, siFormulas: {}, prevRow: -1, prevCol: -1, formulaArray: []
+					prevFormulas: {}, siFormulas: {}, prevRow: -1, prevCol: -1, formulaArray: [],
+					sharedStringIndexMap: sharedStringIndexMap
 				};
 
 
@@ -11891,7 +11894,11 @@
 				var val = this.stream.GetDoubleLE();
 				if (CellValueType.String === oCell.getType() || CellValueType.Error === oCell.getType()) {
 					oCell.setValueTextInternal("");//without text textIndex is ignored
-					oCell.textIndex = val + 1;// 1-based indexing
+					if (tmp.sharedStringIndexMap) {
+						oCell.textIndex = tmp.sharedStringIndexMap[val];
+					} else {
+						oCell.textIndex = val + 1;// 1-based indexing
+					}
 				} else {
 					oCell.setValueNumberInternal(val);
 				}
@@ -13392,8 +13399,11 @@
             if(null != nSharedStringTableOffset)
             {
                 res = this.stream.Seek(nSharedStringTableOffset);
-                if(c_oSerConstants.ReadOk == res)
-                    res = (new Binary_SharedStringTableReader(this.stream, wb)).Read();
+                if(c_oSerConstants.ReadOk == res) {
+                    let sharedStringIndexMap = wb.sharedStrings.getCount() > 0 ? [] : null;
+                    this.InitOpenManager.sharedStringIndexMap = sharedStringIndexMap;
+                    res = (new Binary_SharedStringTableReader(this.stream, wb, sharedStringIndexMap)).Read();
+                }
             }
 
             //aCellXfs - внутри уже не нужна, поскольку вынес функцию InitStyleManager в InitOpenManager
@@ -14353,6 +14363,7 @@
         };
         this.wb = wb;
         this.Dxfs = [];
+        this.sharedStringIndexMap = null;
 
         //при чтении из xml
         this.legacyDrawingId = null;
