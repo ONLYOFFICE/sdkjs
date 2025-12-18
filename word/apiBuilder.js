@@ -18366,8 +18366,20 @@
 	 */
 	ApiDrawing.prototype.GetContent = function()
 	{
-		if (this.Drawing && this.Drawing.textBoxContent && !this.Drawing.isForm())
+
+		if (!this.Drawing)
+			return null;
+		if (this.Drawing.isForm())
+			return null;
+
+		if(!this.Drawing.textBoxContent)
+		{
+			this.Drawing.createTextBoxContent();
+		}
+		if(this.Drawing.textBoxContent)
+		{
 			return new ApiDocumentContent(this.Drawing.textBoxContent);
+		}
 		return null;
 	};
 	/**
@@ -19260,20 +19272,7 @@
 	 */
 	ApiShape.prototype.GetDocContent = function()
 	{
-		if (!this.Shape)
-			return null;
-		if (this.Shape.isForm())
-			return null;
-
-		if(!this.Shape.textBoxContent)
-		{
-			this.Shape.createTextBoxContent();
-		}
-		if(this.Shape.textBoxContent)
-		{
-			return new ApiDocumentContent(this.Shape.textBoxContent);
-		}
-		return null;
+		return this.GetContent();
 	};
 	
 	/**
