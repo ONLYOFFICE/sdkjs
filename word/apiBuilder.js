@@ -10007,21 +10007,33 @@
 	 * Adds some text to the current paragraph.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {string} [sText=""] - The text that we want to insert into the current document element.
+	 * @param {string} text - The text that we want to insert into the current document element.
 	 * @returns {ApiRun}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/AddText.js
 	 */
-	ApiParagraph.prototype.AddText = function(sText)
+	ApiParagraph.prototype.AddText = function(text)
 	{
-		var oRun = new ParaRun(this.Paragraph, false);
+		text = GetStringParameter(text, null);
+		if (!text)
+			throwException("The text parameter must be a non empty string");
 
-		if (!sText || !sText.length)
-			return new ApiRun(oRun);
+		let oRun = new ParaRun(this.Paragraph, false);
+		oRun.AddText(text);
 
-		oRun.AddText(sText);
+		// copy props from previous non empty run
+		let oPrevRun;
+		for (let i = this.GetElementsCount() - 1; i >= 0; i--)
+		{
+			oPrevRun = this.GetElement(i);
+			if (oPrevRun.GetText() !== "")
+				break;
+		}
+		
+		let oApiRun = new ApiRun(oRun);
+		oApiRun.SetTextPr(oPrevRun.GetTextPr());
 
 		private_PushElementToParagraph(this.Paragraph, oRun);
-		return new ApiRun(oRun);
+		return oApiRun;
 	};
 	/**
 	 * Adds a page break and starts the next element from the next page.
@@ -11980,16 +11992,18 @@
 	 * Adds some text to the current run.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {string} sText - The text which will be added to the current run.
+	 * @param {string} text - The text which will be added to the current run.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/AddText.js
 	 */
-	ApiRun.prototype.AddText = function(sText)
+	ApiRun.prototype.AddText = function(text)
 	{
-		if (!sText || !sText.length)
-			return false;
+		text = GetStringParameter(text, null);
+		if (!text) {
+			throwException("The text parameter must be a non empty string");
+		}
 
-		this.Run.AddText(sText);
+		this.Run.AddText(text);
 		return true;
 	};
 	/**
@@ -21900,31 +21914,30 @@
 	 * Adds text to the current content control. 
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {String} sText - The text which will be added to the content control.
+	 * @param {String} text - The text which will be added to the content control.
 	 * @returns {boolean} - returns false if param is invalid.
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/AddText.js
 	 */
-	ApiInlineLvlSdt.prototype.AddText = function(sText)
+	ApiInlineLvlSdt.prototype.AddText = function(text)
 	{
 		if (!this._canBeEdited())
 			return false;
 		
-		if (typeof sText === "string")
+		text = GetStringParameter(text, null);
+		if (!text)
+			throwException("The text parameter must be a non empty string");
+
+		if (this.Sdt.IsShowingPlcHdr())
 		{
-			if (this.Sdt.IsShowingPlcHdr())
-			{
-				this.Sdt.RemoveFromContent(0, this.Sdt.GetElementsCount(), false);
-				this.Sdt.SetShowingPlcHdr(false);
-			}
-
-			var newRun = editor.CreateRun();
-			newRun.AddText(sText);
-			this.AddElement(newRun, this.GetElementsCount())
-
-			return true;
+			this.Sdt.RemoveFromContent(0, this.Sdt.GetElementsCount(), false);
+			this.Sdt.SetShowingPlcHdr(false);
 		}
 
-		return false;
+		var newRun = editor.CreateRun();
+		newRun.AddText(text);
+		this.AddElement(newRun, this.GetElementsCount())
+
+		return true;
 	};
 
 	/**
@@ -23796,9 +23809,9 @@
 		if (!this._canBeEdited())
 			return false;
 		
-		let _sText = GetStringParameter(text, null);
-		if (null === _sText)
-			return false;
+		text = GetStringParameter(text, null);
+		if (!text)
+			throwException("The text parameter must be a non empty string");
 
 		let oParagraph;
 		if (this.Sdt.IsPlaceHolder())
@@ -23815,7 +23828,7 @@
 			this.GetContent().Push(oParagraph);
 		}
 
-		oParagraph.AddText(_sText);
+		oParagraph.AddText(text);
 		return true;
 	};
 
