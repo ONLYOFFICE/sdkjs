@@ -18919,6 +18919,7 @@ function isAllowPasteLink(pastedWb) {
 		//t.model.workbook.dependencyFormulas.lockRecal();
 
 		let arrayCannotExpand; 	// flag, needed to avoid selecting the entire expected dynamic range in situations where the array cannot open
+		let beforeSpillRange;
 
 		//***array-formula***
 		const changeRangesIfArrayFormula = function() {
@@ -19078,6 +19079,7 @@ function isAllowPasteLink(pastedWb) {
 						// set ref to the first(parent) cell
 						arrayCannotExpand = true;
 					} else if (!ws.dynamicArrayManager.isAutoExpandBBox(dynamicSelectionRange)) {
+						beforeSpillRange = dynamicSelectionRange;
 						dynamicSelectionRange = new Asc.Range(dynamicSelectionRange.c1, dynamicSelectionRange.r1, dynamicSelectionRange.c1, dynamicSelectionRange.r1);
 					}
 				}
@@ -19149,11 +19151,13 @@ function isAllowPasteLink(pastedWb) {
 				this.workbook.StartAction(AscDFH.historydescription_Spreadsheet_SetCellFormula, AscCommonExcel.getFragmentsText(val));
 			else
 				this.workbook.StartAction(AscDFH.historydescription_Spreadsheet_SetCellValue, AscCommonExcel.getFragmentsText(val));
-			
+
+			//beforeSpillRange
+
 			// set the value to the selected range
 			c.setValue(AscCommonExcel.getFragmentsText(val), function (r) {
 				ret = r;
-			}, null, applyByArray ? bbox : ((!applyByArray && ctrlKey) ? null : undefined), null, AscCommonExcel.bIsSupportDynamicArrays ? dynamicSelectionRange : null);
+			}, null, applyByArray ? bbox : ((!applyByArray && ctrlKey) ? null : undefined), null, AscCommonExcel.bIsSupportDynamicArrays ? {range: dynamicSelectionRange, beforeSpillRange: beforeSpillRange} : null);
 
 			this.workbook.FinalizeAction();
 			// recalc all volatile arrays on page

@@ -949,16 +949,17 @@ function (window, undefined) {
 		}
 	};
 
-	function UndoRedoData_CellValueData(sFormula, oValue, formulaRef, bCa, nCm) {
+	function UndoRedoData_CellValueData(sFormula, oValue, formulaRef, bCa, nCm, nVm) {
 		this.formula = sFormula;
 		this.formulaRef = formulaRef;
 		this.value = oValue;
 		this.ca = bCa;
 		this.cm = nCm;
+		this.vm = nVm;
 	}
 
 	UndoRedoData_CellValueData.prototype.Properties = {
-		formula: 0, value: 1, formulaRef: 2, ca: 3, cm: 4
+		formula: 0, value: 1, formulaRef: 2, ca: 3, cm: 4, vm: 5
 	};
 	UndoRedoData_CellValueData.prototype.isEqual = function (val) {
 		if (null == val) {
@@ -973,6 +974,9 @@ function (window, undefined) {
 			return false;
 		}
 		if (this.cm != val.cm) {
+			return false;
+		}
+		if (this.vm != val.vm) {
 			return false;
 		}
 		if (this.value.isEqual(val.value)) {
@@ -998,6 +1002,8 @@ function (window, undefined) {
 				return this.ca;
 			case this.Properties.cm:
 				return this.cm;
+			case this.Properties.vm:
+				return this.vm;
 		}
 		return null;
 	};
@@ -1017,6 +1023,9 @@ function (window, undefined) {
 				break;
 			case this.Properties.cm:
 				this.cm = value;
+				break;
+			case this.Properties.vm:
+				this.vm = value;
 				break;
 		}
 	};
