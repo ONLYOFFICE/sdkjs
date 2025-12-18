@@ -244,6 +244,7 @@
 		this.isBlurEditor = false;
 		
 		this.builderFonts = {};
+		this.builderEndActions = [];
 
 		this.formatPainter = new AscCommon.CFormatPainter(this);
 		this.eyedropper = new AscCommon.CEyedropper(this);
@@ -3781,6 +3782,8 @@
 		let _t = this;
 		this.loadBuilderFonts(function()
 		{
+			_t._executeBuilderEndActions();
+			
 			let result = _t._onEndBuilderScript(callback);
 
 			if (_t.SaveAfterMacros)
@@ -3816,6 +3819,18 @@
 		
 		this.executeGroupActionsEnd();
 		return true;
+	};
+	baseEditorsApi.prototype.addBuilderEndAction = function(func)
+	{
+		this.builderEndActions.push(func);
+	};
+	baseEditorsApi.prototype._executeBuilderEndActions = function()
+	{
+		this.builderEndActions.forEach(function(f)
+		{
+			f.call();
+		})
+		this.builderEndActions.length = 0;
 	};
 
 	// Native

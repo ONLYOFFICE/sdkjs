@@ -25337,47 +25337,65 @@
 	/**
 	 * Sets an image to the current picture form.
 	 * @memberof ApiPictureForm
-	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently, only internet URL or base64 encoded images are supported).
-	 * @param {EMU} nWidth - The image width in English measure units.
-	 * @param {EMU} nHeight - The image height in English measure units.
+	 * @param {string} imageSrc - The image source where the image to be inserted should be taken from (currently, only internet URL or base64 encoded images are supported).
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiPictureForm/Methods/SetImage.js
 	 */
-	ApiPictureForm.prototype.SetImage = function(sImageSrc, nWidth, nHeight)
+	ApiPictureForm.prototype.SetImage = function(imageSrc)
 	{
-		if (!AscFormat.isRealNumber(nWidth) || !AscFormat.isRealNumber(nHeight)) {
+		imageSrc = GetStringParameter(imageSrc, "");
+		if (!imageSrc)
 			return false;
+		
+		let _t = this;
+		function getImg()
+		{
+			let allDrawings = _t.Sdt.GetAllDrawingObjects();
+			for (let i = 0; i < allDrawings.length; ++i)
+			{
+				if (allDrawings[i].IsPicture())
+					return allDrawings[i].GraphicObj;
+			}
+			return null;
 		}
-
+		
 		return executeNoFormLockCheck(function(){
-			if (typeof(sImageSrc) !== "string" || sImageSrc === "")
+			let img = getImg();
+			if (!img)
 				return false;
 			
-			var oImg, paraDrawing;
-			var allDrawings = this.Sdt.GetAllDrawingObjects();
-			for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++)
+			let logicDocument = private_GetLogicDocument();
+			let sdt = this.Sdt;
+			AddEndScriptAction(function()
 			{
-				if (allDrawings[nDrawing].IsPicture())
-				{
-					oImg = allDrawings[nDrawing].GraphicObj;
-					paraDrawing = allDrawings[nDrawing];
-					break;
-				}
-			}
-	
-			if (oImg)
-			{
-				let spPr = oImg.spPr;
+				if (getImg() !== img)
+					return;
+				
+				let drawingProps = logicDocument.GetDrawingObjects().getDrawingPropsFromArray([img]);
+				if (!drawingProps || !drawingProps.imageProps)
+					return;
+
+				let imgProps = new Asc.asc_CImgProperty();
+				imgProps.ImageUrl = drawingProps.imageProps.ImageUrl;
+
+				let imgSize = imgProps.asc_getOriginSize(logicDocument.GetApi());
+				if (!imgSize.asc_getIsCorrect())
+					return;
+
+				let w = imgSize.asc_getImageWidth();
+				let h = imgSize.asc_getImageHeight();
+				
+				let spPr = img.spPr;
 				if (!spPr)
 				{
 					spPr = new AscFormat.CSpPr();
-					oImg.setSpPr(spPr);
-					spPr.setParent(oImg);
+					img.setSpPr(spPr);
+					spPr.setParent(img);
 				}
-				
+
 				spPr.setGeometry(AscFormat.CreateGeometry("rect"));
-				
+
 				let xfrm = spPr.xfrm;
 				if (!xfrm)
 				{
@@ -25386,30 +25404,25 @@
 					xfrm.setParent(spPr);
 				}
 				
-				if (undefined !== nWidth && undefined !== nHeight)
-				{
-					let w = private_EMU2MM(nWidth);
-					let h = private_EMU2MM(nHeight);
-					xfrm.setOffX(0);
-					xfrm.setOffY(0);
-					xfrm.setExtX(w);
-					xfrm.setExtY(h);
-				}
+				xfrm.setOffX(0);
+				xfrm.setOffY(0);
+				xfrm.setExtX(w);
+				xfrm.setExtY(h);
 				
-				oImg.setBlipFill(AscFormat.CreateBlipFillRasterImageId(sImageSrc));
-				
-				let paragraph   = this.Sdt.GetParagraph();
+				let paragraph   = sdt.GetParagraph();
 				let parentShape = paragraph && paragraph.GetParent() ? paragraph.GetParent().Is_DrawingShape(true) : null;
 				if (parentShape && parentShape.recalculate)
 					parentShape.recalculate();
 				
-				this.OnChangeValue();
-				this.Sdt.SetShowingPlcHdr(false);
-				this.Sdt.UpdatePictureFormLayout(private_EMU2MM(nWidth), private_EMU2MM(nHeight));
-				return true;
-			}
-	
-			return false;
+				sdt.UpdatePictureFormLayout(w, h);
+			});
+			
+			img.setBlipFill(AscFormat.CreateBlipFillRasterImageId(imageSrc));
+			
+			this.OnChangeValue();
+			this.Sdt.SetShowingPlcHdr(false);
+			
+			return true;
 		}, this);
 	};
 
@@ -30105,6 +30118,15 @@
 			return;
 		
 		api.addBuilderFont(fontName);
+	}
+	
+	function AddEndScriptAction(f)
+	{
+		let api = Asc.editor ? Asc.editor : editor;
+		if (!api)
+			return;
+		
+		api.addBuilderEndAction(f);
 	}
 
 	function private_Twips2MM(twips)
