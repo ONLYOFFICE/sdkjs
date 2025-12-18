@@ -25159,8 +25159,8 @@
 				const oDynamicProps = metadata.getLastDynamicArrayPropertiesByType("XLDAPR");
 				if (oDynamicProps && oDynamicProps.dynamicArrayProperties) {
 					// Check if it's a dynamic array (not collapsed)
-					if (oDynamicProps.dynamicArrayProperties.fDynamic === true && 
-						oDynamicProps.dynamicArrayProperties.fCollapsed === beforeSpillRange) {
+					if (oDynamicProps.dynamicArrayProperties.fDynamic === true /*&&
+						oDynamicProps.dynamicArrayProperties.fCollapsed === beforeSpillRange*/) {
 						cmIndex = oDynamicProps.index;
 						needGenerateCm = false;
 					}
