@@ -25369,7 +25369,7 @@
 			let sdt = this.Sdt;
 			AddEndScriptAction(function()
 			{
-				if (getImg() !== img)
+				if (getImg() !== img || sdt.IsPlaceHolder())
 					return;
 				
 				let drawingProps = logicDocument.GetDrawingObjects().getDrawingPropsFromArray([img]);
