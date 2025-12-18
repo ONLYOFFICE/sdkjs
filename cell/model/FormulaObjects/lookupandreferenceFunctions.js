@@ -2934,7 +2934,6 @@ function (window, undefined) {
 
 	TypedCache.prototype.getData = function (ws, rowCol, type, startIndex, endIndex, bHor) {
 		const wsId = ws.getId();
-		const t = this;
 		if (!this.data[wsId]) {
 			this.data[wsId] = {vertical: {}, horizontal: {}};
 		}
@@ -2948,7 +2947,7 @@ function (window, undefined) {
 			const c2 = bHor ? axisData[rowCol].start - 1: rowCol;
 			const r2 = bHor ? rowCol : axisData[rowCol].start - 1;
 			const fullRange = ws.getRange3(r1, c1, r2, c2);
-			t.updateDataBerofe(fullRange, axisData[rowCol], bHor, startIndex);
+			this.updateDataBerofe(fullRange, axisData[rowCol], bHor, startIndex);
 		}
 		if (endIndex > axisData[rowCol].end) {
 			const c1 = bHor ? axisData[rowCol].end + 1: rowCol;
@@ -2956,7 +2955,7 @@ function (window, undefined) {
 			const c2 = bHor ? endIndex : rowCol;
 			const r2 = bHor ? rowCol : endIndex;
 			const fullRange = ws.getRange3(r1, c1, r2, c2);
-			t.updateDataAfter(fullRange, axisData[rowCol], bHor, endIndex);
+			this.updateDataAfter(fullRange, axisData[rowCol], bHor, endIndex);
 		}
 		return axisData[rowCol].data[type];
 	};
@@ -3076,7 +3075,7 @@ function (window, undefined) {
 			}
 		});
 		rowColAxisData.end = endIndex;
-	}
+	};
 
 	function TypedMapCache() {
 		TypedCache.call(this);
@@ -3213,7 +3212,6 @@ function (window, undefined) {
 		this.bHor = bHor;
 		this.typedCache = new TypedCache();
 		this.sortedCache = new TypedMapCache();
-		// this.typedCacheValuesMap = new TypedValuesCache();
 	}
 
 	VHLOOKUPCache.prototype.calculate = function (arg, argument1) {
@@ -3872,7 +3870,6 @@ function (window, undefined) {
 			}
 		} else if (lookup) {
 			const typedCache = this.typedCache.getData(ws, rowCol, valueForSearching.type, startIndex, endIndex, this.bHor);
-			// const typedCacheValuesMap = this._getTypedCacheValuesMap(ws, rowCol, valueForSearching.type, startIndex, endIndex, this.bHor);
 			if (typedCache) {
 				res = this._defaultBinarySearch(valueForSearching, startIndex, endIndex, ws, rowCol, typedCache);
 			}
@@ -3906,7 +3903,6 @@ function (window, undefined) {
 		this.cacheRanges = {};
 		this.sortedCache.clean();
 		this.typedCache.clean();
-		// this.typedCacheValuesMap.clean();
 	};
 	function MatchCache() {
 		VHLOOKUPCache.call(this);

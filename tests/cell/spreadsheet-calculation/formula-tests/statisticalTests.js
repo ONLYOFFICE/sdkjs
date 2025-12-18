@@ -9365,6 +9365,7 @@ $(function () {
 		ws.getRange2("B8").setValue("oranges");
 		ws.getRange2("C8").setValue("grapes");
 		ws.getRange2("D8").setValue("melons");
+		AscCommonExcel.g_oCountIfCache.clean();
 
 		// Positive Cases:
 		// Case #1: Area, String. Find equal number in Area
@@ -9407,6 +9408,7 @@ $(function () {
 		ws.getRange2("CC6").setValue("=true()");
 		ws.getRange2("CC7").setValue("'true'");
 		ws.getRange2("CC8").setValue("");
+		AscCommonExcel.g_oCountIfCache.clean();
 
 		// Case #7: Area, Formula. Count TRUE values using TRUE() function
 		oParser = new parserFormula("COUNTIF(CC1:CC7, TRUE())", "C2", ws);
@@ -9490,6 +9492,7 @@ $(function () {
 		ws.getRange2("A25").setValue("peaches");
 		ws.getRange2("A26").setValue("");
 		ws.getRange2("A27").setValue("apples");
+		AscCommonExcel.g_oCountIfCache.clean();
 
 		// Case #21: Area, String. Count text ending with pattern using wildcard
 		oParser = new parserFormula('COUNTIF(A22:A27,"*es")', "C2", ws);
@@ -9524,6 +9527,7 @@ $(function () {
 		// Case #27: Area, String. Count exact date string match
 		ws.getRange2("A1").setValue("12/1");
 		ws.getRange2("A2").setValue("12/1");
+		AscCommonExcel.g_oCountIfCache.clean();
 		oParser = new parserFormula('COUNTIF(A1:A2,"12/1")', "C2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 2);
@@ -9545,6 +9549,7 @@ $(function () {
 		ws.getRange2("B103").setValue("12");
 		ws.getRange2("B104").setValue("23");
 		ws.getRange2("B105").setValue("55");
+		AscCommonExcel.g_oCountIfCache.clean();
 
 		// Case #32: Formula, String. Count values greater than 80 in XLOOKUP result (Math). For bug 62491
 		oParser = new parserFormula('COUNTIF(XLOOKUP(A100,A100:B100,A101:B105),">80")', "C2", ws);
@@ -9650,6 +9655,7 @@ $(function () {
 		ws.getRange2("A2004").setValue("oranges");
 		ws.getRange2("A2005").setValue("peaches");
 		ws.getRange2("A2007").setValue("apples");
+		AscCommonExcel.g_oCountIfCache.clean();
 
 
 		// Table type. Use A601:L6**
@@ -9679,7 +9685,7 @@ $(function () {
 		ws.getRange2("B208").setValue("0.8"); // TestNameArea2
 		ws2.getRange2("A18").setValue("0.8"); // TestNameArea3D2
 		ws2.getRange2("B18").setValue("0.8"); // TestNameArea3D2
-
+		AscCommonExcel.g_oCountIfCache.clean();
 
 		// Positive cases:
 		// Case #1: Area, String. Find equal number in Area
@@ -9953,6 +9959,7 @@ $(function () {
 		ws.getRange2("B205").setValue("asd");
 		ws.getRange2("B206").setValue('123');
 		ws.getRange2("B207").setValue('ASD');
+		AscCommonExcel.g_oCountIfCache.clean();
 
 		// Case #40: Area, String. Empty cells check
 		oParser = new parserFormula('COUNTIF(A200:B205,"<>"&"*")', "C2", ws);
@@ -9985,6 +9992,7 @@ $(function () {
 		ws.getRange2("A303").setValue("a**c");
 		ws.getRange2("A304").setValue("");
 		ws.getRange2("A305").setValue("");
+		AscCommonExcel.g_oCountIfCache.clean();
 
 		// Case #45: Area, String. wildcard test with ~
 		oParser = new parserFormula('COUNTIF(A300:A305,"a~*c")', "C2", ws);
@@ -9996,6 +10004,7 @@ $(function () {
 		ws.getRange2("A313").setValue("3");
 		ws.getRange2("A314").setValue("4");
 		ws.getRange2("A315").setValue(">3");
+		AscCommonExcel.g_oCountIfCache.clean();
 
 		const currentSheet = ws.getName();
 		// Case #46: Area3D, Ref3D. Ref3D and Ared3D test
@@ -10008,6 +10017,7 @@ $(function () {
 		ws.getRange2("A308").setValue("A");
 		ws.getRange2("A309").setValue("b");
 		ws.getRange2("A310").setValue(">a");
+		AscCommonExcel.g_oCountIfCache.clean();
 
 		// Case #47: Area, Ref. diactric signs tests
 		oParser = new parserFormula('COUNTIF(A306:A309,A310)', "C2", ws);
@@ -10019,6 +10029,7 @@ $(function () {
 		ws.getRange2("A318").setValue("a");
 		ws.getRange2("A319").setValue("あ");
 		ws.getRange2("A320").setValue(">a");
+		AscCommonExcel.g_oCountIfCache.clean();
 
 		// Case #48: Area, Ref. Hieroglyphs test
 		oParser = new parserFormula('COUNTIF(A316:A319,A320)', "C2", ws);
@@ -10040,6 +10051,7 @@ $(function () {
 		oParser = new parserFormula('COUNTIF(COUNTIFTestNameArea3D,COUNTIFTestName3D)', "C2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 1);
+		AscCommonExcel.g_oCountIfCache.clean();
 
 		wb.delDefinesNames(defName3D);
 		wb.delDefinesNames(defNameArea3D);
@@ -10104,6 +10116,7 @@ $(function () {
 		ws.getRange2("AB2").setValue("#DIV/0!");
 		ws.getRange2("AB3").setValue("#VALUE!");
 		ws.getRange2("AB4").setValue("5");
+		AscCommonExcel.g_oCountIfCache.clean();
 		oParser = new parserFormula('COUNTIF(AB1:AB4,">#N/A")', "AC1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 0);
@@ -10128,6 +10141,7 @@ $(function () {
 		ws.getRange2("AD2").setValue("10");
 		ws.getRange2("AD3").setValue("20");
 		ws.getRange2("AD4").setValue("text");
+		AscCommonExcel.g_oCountIfCache.clean();
 		oParser = new parserFormula('COUNTIF(AD1:AD4,"<#N/A")', "AC6", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 0);
@@ -10137,6 +10151,7 @@ $(function () {
 		ws.getRange2("AE2").setValue("#DIV/0!");
 		ws.getRange2("AE3").setValue("#N/A");
 		ws.getRange2("AE4").setValue("42");
+		AscCommonExcel.g_oCountIfCache.clean();
 		oParser = new parserFormula('COUNTIF(AE1:AE4,"=#N/A")', "AC7", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 2);
@@ -10146,6 +10161,7 @@ $(function () {
 		ws.getRange2("AF2").setValue("#DIV/0!");
 		ws.getRange2("AF3").setValue("#VALUE!");
 		ws.getRange2("AF4").setValue("42");
+		AscCommonExcel.g_oCountIfCache.clean();
 		oParser = new parserFormula('COUNTIF(AF1:AF4,"<#N/A")', "AC7", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 3);
