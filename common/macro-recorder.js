@@ -1245,13 +1245,13 @@
 			let relative = "";
 			switch(data.relativeFrom)
 			{
-				 case Asc.c_oAscRelativeFromH.Character:	relative = "character";		break;
-				 case Asc.c_oAscRelativeFromH.Column:		relative = "column";		break;
-				 case Asc.c_oAscRelativeFromH.LeftMargin:	relative = "leftMargin";	break;
-				 case Asc.c_oAscRelativeFromH.Margin:		relative = "margin";		break;
-				 case Asc.c_oAscRelativeFromH.RightMargin:	relative = "rightMargin";	break;
-				 case Asc.c_oAscRelativeFromH.Page:			relative = "page";			break;
-				 default:									relative = "page";
+				 case Asc.c_oAscRelativeFromV.BottomMargin:	relative = "bottomMargin";	break;
+				 case Asc.c_oAscRelativeFromV.TopMargin:	relative = "topMargin";		break;
+				 case Asc.c_oAscRelativeFromV.Margin:		relative = "margin";		break;
+				 case Asc.c_oAscRelativeFromV.Page:			relative = "page";			break;
+				 case Asc.c_oAscRelativeFromV.Line:			relative = "line";			break;
+				 case Asc.c_oAscRelativeFromV.Paragraph:	relative = "paragraph";		break;
+				 default:									relative = "paragraph";
 			}
 
 			if (data.useAlign)
@@ -1409,7 +1409,6 @@
 	WordActionsMacroList['SetShapeFlipH']												= wordActions.setShapeFlipH;
 	WordActionsMacroList['SetShapeFlipV']												= wordActions.setShapeFlipV;
 	WordActionsMacroList['SetDrawingWrapping']											= wordActions.setDrawingWrapping;
-	WordActionsMacroList['SetDrawingPos']												= wordActions.setDrawingPos;
 	WordActionsMacroList['SetPositionH']												= wordActions.setPositionH;
 	WordActionsMacroList['SetPositionV']												= wordActions.setPositionV;
 	WordActionsMacroList['SetShapeSize']												= wordActions.setShapeSize;

@@ -18627,7 +18627,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @since 9.3.0
-	 * @param {RelFromH} sRelativeFrom - The document element which will be taken as a countdown point for the object vertical alignment.
+	 * @param {RelFromV} sRelativeFrom - The document element which will be taken as a countdown point for the object vertical alignment.
 	 * @param {EMU} nDistance - The distance from the bottom part of the document element to the floating object measured in English measure units.
 	 * @param {boolean} [bPercent=false] - The option defining whether the vertical alignment offset is specified in percent.
 	 * @returns {boolean}
@@ -29364,6 +29364,8 @@
 	ApiDrawing.prototype["SetDrawingPrFromDrawing"]  = ApiDrawing.prototype.SetDrawingPrFromDrawing;
 	ApiDrawing.prototype["SetRotation"]  			 = ApiDrawing.prototype.SetRotation;
 	ApiDrawing.prototype["GetRotation"]  			 = ApiDrawing.prototype.GetRotation;
+	ApiDrawing.prototype["SetRelativeHeight"]		 = ApiDrawing.prototype.SetRelativeHeight;
+	ApiDrawing.prototype["SetRelativeWidth"]		 = ApiDrawing.prototype.SetRelativeWidth;
 
 	ApiDrawing.prototype["ToJSON"]                   = ApiDrawing.prototype.ToJSON;
 

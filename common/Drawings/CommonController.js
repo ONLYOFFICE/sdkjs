@@ -4264,14 +4264,6 @@
 					{
 						Asc.editor.addMacroStepData('SetShapeFlipV', props.flipV);
 					}
-					if (props.flipHInvert)
-					{
-						Asc.editor.addMacroStepData('SetShapeFlipHInvert', null);
-					}
-					if (props.flipVInvert)
-					{
-						Asc.editor.addMacroStepData('SetShapeFlipVInvert', null);
-					}
 					if (props.rotAdd)
 					{
 						Asc.editor.addMacroStepData('SetShapeAddRotation', props.rotAdd);
