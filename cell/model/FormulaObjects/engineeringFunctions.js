@@ -4400,9 +4400,14 @@ function (window, undefined) {
 			return c;
 		}
 
+		let r;
 		var method = Complex.methodsMap[methodName];
 		if (method) {
-			method.call(c);
+			r = method.call(c);
+		}
+
+		if (r && r.type === cElementType.error) {
+			return r;
 		}
 
 		if (!Number.isFinite(c.img) || !Number.isFinite(c.real)) {
@@ -6259,29 +6264,7 @@ function (window, undefined) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		arg0 = arg0.tocString();
-		if (arg0.type === cElementType.error) {
-			return arg0;
-		}
-
-		let c = new Complex(arg0.toString());
-		if (c.type === cElementType.error) {
-			return c;
-		}
-
-
-		let r = c.Ln();
-		if (r && r.type === cElementType.error) {
-			return r;
-		}
-
-		if (!Number.isFinite(c.img) || !Number.isFinite(c.real)) {
-			return new cError(cErrorType.not_numeric);
-		}
-
-		let res = new cString(c.toString());
-		res.numFormat = 0;
-
+		let res = IMFUNC(arg0, "Ln");
 		return res;
 
 	};
@@ -6319,28 +6302,7 @@ function (window, undefined) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		arg0 = arg0.tocString();
-		if (arg0.type === cElementType.error) {
-			return arg0;
-		}
-
-		let c = new Complex(arg0.toString());
-		if (c.type === cElementType.error) {
-			return c;
-		}
-
-		let r = c.Log10();
-		if (r && r.type === cElementType.error) {
-			return r;
-		}
-
-		if (!Number.isFinite(c.img) || !Number.isFinite(c.real)) {
-			return new cError(cErrorType.not_numeric);
-		}
-
-		let res = new cString(c.toString());
-		res.numFormat = 0;
-
+		let res = IMFUNC(arg0, "Log10");
 		return res;
 
 	};
@@ -6378,30 +6340,8 @@ function (window, undefined) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		arg0 = arg0.tocString();
-		if (arg0.type === cElementType.error) {
-			return arg0;
-		}
-
-		let c = new Complex(arg0.toString());
-		if (c.type === cElementType.error) {
-			return c;
-		}
-
-		let r = c.Log2();
-		if (r && r.type === cElementType.error) {
-			return r;
-		}
-
-		if (!Number.isFinite(c.img) || !Number.isFinite(c.real)) {
-			return new cError(cErrorType.not_numeric);
-		}
-
-		let res = new cString(c.toString());
-		res.numFormat = 0;
-
+		let res = IMFUNC(arg0, "Log2");
 		return res;
-
 	};
 
 	/**
