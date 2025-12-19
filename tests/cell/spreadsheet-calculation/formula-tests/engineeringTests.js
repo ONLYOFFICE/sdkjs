@@ -7307,6 +7307,8 @@ $(function () {
 		ws.getRange2("A108").setValue("0.9");
 		ws.getRange2("A109").setValue("1");
 		ws.getRange2("A110").setValue("2");
+		ws.getRange2("A111").setValue("TRUE");
+		ws.getRange2("A112").setValue("FALSE");
 
 		// Table type. Use A601:L6**
 		getTableType(599, 0, 600, 2);
@@ -7442,7 +7444,7 @@ $(function () {
 		// Case #2: Error. Propagates #N/A error. 1 argument used.
 		oParser = new parserFormula('HEX2BIN(NA())', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2BIN(NA()) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Error. Propagates #N/A error. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Error. Propagates #N/A error. 1 argument used.');
 		// Case #3: Empty. Empty reference for number returns #VALUE!. 1 argument used.
 		oParser = new parserFormula('HEX2BIN(A102)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2BIN(A102) is parsed.');
@@ -7458,11 +7460,11 @@ $(function () {
 		// Case #6: Boolean. Boolean TRUE treated as invalid hex, returns #NUM!. 1 argument used.
 		oParser = new parserFormula('HEX2BIN(TRUE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2BIN(TRUE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean TRUE treated as invalid hex, returns #NUM!. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean TRUE treated as invalid hex, returns #NUM!. 1 argument used.');
 		// Case #7: Boolean, Number. Boolean FALSE treated as invalid hex, returns #NUM!. 2 arguments used.
 		oParser = new parserFormula('HEX2BIN(FALSE,8)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2BIN(FALSE,8) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean, Number. Boolean FALSE treated as invalid hex, returns #NUM!. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean, Number. Boolean FALSE treated as invalid hex, returns #NUM!. 2 arguments used.');
 		// Case #8: Area. Multi-cell range for number returns #VALUE!. 1 argument used.
 		oParser = new parserFormula('HEX2BIN(A100:A101)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2BIN(A100:A101) is parsed.');
@@ -7494,7 +7496,7 @@ $(function () {
 		// Case #15: Formula. Formula resulting in #NUM! error. 1 argument used.
 		oParser = new parserFormula('HEX2BIN(SQRT(-1))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2BIN(SQRT(-1)) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Formula. Formula resulting in #NUM! error. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Formula. Formula resulting in #NUM! error. 1 argument used.');
 		// Case #16: Number. Positive hex > 1FF returns #NUM!. 1 argument used.
 		oParser = new parserFormula('HEX2BIN(200)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2BIN(200) is parsed.');
@@ -7515,6 +7517,23 @@ $(function () {
 		oParser = new parserFormula('HEX2BIN("1FF","abc")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2BIN("1FF","abc") is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, String. Non-numeric places returns #VALUE!. 2 arguments used.');
+		// Case #21: Ref, Number. Non-numeric number returns #VALUE!. 2 arguments used.
+		oParser = new parserFormula('HEX2BIN(A111,1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: HEX2BIN(A111,1) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Ref, Number. Non-numeric number returns #VALUE!. 2 arguments used.');
+		// Case #22: Ref, Number. Non-numeric number returns #VALUE!. 2 arguments used.
+		oParser = new parserFormula('HEX2BIN(A112,1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: HEX2BIN(A112,1) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Ref, Number. Non-numeric number returns #VALUE!. 2 arguments used.');
+		// Case #23: Number, Ref. Non-numeric number returns #VALUE!. 2 arguments used.
+		oParser = new parserFormula('HEX2BIN(1,A111)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: HEX2BIN(1,A111) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Ref. Non-numeric number returns #VALUE!. 2 arguments used.');
+		// Case #24: Number, Ref. Non-numeric number returns #VALUE!. 2 arguments used.
+		oParser = new parserFormula('HEX2BIN(1,A112)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: HEX2BIN(1,A112) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Ref. Non-numeric number returns #VALUE!. 2 arguments used.');
+
 
 		// Bounded cases:
 		// Case #1: Number. Minimum positive hex number (0). 1 argument used.
@@ -7538,11 +7557,6 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: HEX2BIN("1FF",1E+307) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number, Number. Maximum places for 1FF (9 bits needed, 10 allowed). 2 arguments used.');
 
-		// Need to fix: error and boolean handle
-		// Case #2: Error. Propagates #N/A error. 1 argument used.
-		// Case #6: Boolean. Boolean TRUE treated as invalid hex, returns #NUM!. 1 argument used.
-		// Case #7: Boolean, Number. Boolean FALSE treated as invalid hex, returns #NUM!. 2 arguments used.
-		// Case #15: Formula. Formula resulting in #NUM! error. 1 argument used.
 
 		testArrayFormula2(assert, "HEX2BIN", 1, 2, true);
 	});
@@ -7603,6 +7617,8 @@ $(function () {
 		ws.getRange2("A108").setValue("0.9");
 		ws.getRange2("A109").setValue("1");
 		ws.getRange2("A110").setValue("2");
+		ws.getRange2("A111").setValue("TRUE");
+		ws.getRange2("A112").setValue("FALSE");
 
 		// Table type. Use A601:L6**
 		getTableType(599, 0, 600, 2);
@@ -7654,10 +7670,10 @@ $(function () {
 		oParser = new parserFormula('HEX2DEC({"1FF"})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2DEC({"1FF"}) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 511, 'Test: Positive case: Array. Array with single valid hex element. 1 argument used.');
-		// Case #6: Name. Named range with valid hex number. 1 argument used.
+		// Case #6: Name. Named range with number. 1 argument used.
 		oParser = new parserFormula('HEX2DEC(TestName)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2DEC(TestName) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Positive case: Name. Named range with valid hex number. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Positive case: Name. Named range with number. 1 argument used.');
 		// Case #7: Name3D. 3D named range with valid hex number. 1 argument used.
 		oParser = new parserFormula('HEX2DEC(TestName3D)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2DEC(TestName3D) is parsed.');
@@ -7739,11 +7755,11 @@ $(function () {
 		// Case #4: Boolean. Boolean TRUE treated as invalid hex, returns #NUM!. 1 argument used.
 		oParser = new parserFormula('HEX2DEC(TRUE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2DEC(TRUE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean TRUE treated as invalid hex, returns #NUM!. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean TRUE treated as invalid hex, returns #NUM!. 1 argument used.');
 		// Case #5: Boolean. Boolean FALSE treated as invalid hex, returns #NUM!. 1 argument used.
 		oParser = new parserFormula('HEX2DEC(FALSE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2DEC(FALSE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean FALSE treated as invalid hex, returns #NUM!. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean FALSE treated as invalid hex, returns #NUM!. 1 argument used.');
 		// Case #6: Area. Multi-cell range returns #VALUE!. 1 argument used.
 		oParser = new parserFormula('HEX2DEC(A100:A101)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2DEC(A100:A101) is parsed.');
@@ -7760,46 +7776,54 @@ $(function () {
 		oParser = new parserFormula('HEX2DEC(Sheet2!A3)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2DEC(Sheet2!A3) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Ref3D. 3D reference to text cell returns #NUM!. 1 argument used.');
-		// Case #10: Table. Table column with text returns #NUM!. 1 argument used.
+		// Case #10: Table. Table column with text. 1 argument used.
 		oParser = new parserFormula('HEX2DEC(Table1[Column3])', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2DEC(Table1[Column3]) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 31, 'Test: Negative case: Table. Table column with text returns #NUM!. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), 31, 'Test: Negative case: Table. Table column with text. 1 argument used.');
 		// Case #11: Formula. Formula resulting in #NUM! error. 1 argument used.
 		oParser = new parserFormula('HEX2DEC(SQRT(-1))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2DEC(SQRT(-1)) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Formula. Formula resulting in #NUM! error. 1 argument used.');
-		// Case #12: Number. Hex number > 7FFFFFFFFF returns #NUM!. 1 argument used.
+		// Case #12: Number. Hex number > 7FFFFFFFFF. 1 argument used.
 		oParser = new parserFormula('HEX2DEC(8000000000)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2DEC(8000000000) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), -549756000000, 'Test: Negative case: Number. Hex number > 7FFFFFFFFF returns #NUM!. 1 argument used.');
-		// Case #13: String. String for hex number > 7FFFFFFFFF returns #NUM!. 1 argument used.
+		assert.strictEqual(oParser.calculate().getValue(), -549755813888, 'Test: Negative case: Number. Hex number > 7FFFFFFFFF. 1 argument used.');
+		// Case #13: String. String for hex number > 7FFFFFFFFF. 1 argument used.
 		oParser = new parserFormula('HEX2DEC("8000000000")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2DEC("8000000000") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), -549756000000, 'Test: Negative case: String. String for hex number > 7FFFFFFFFF returns #NUM!. 1 argument used.');
-		// Case #14: Array. Multi-element array returns #VALUE!. 1 argument used.
+		assert.strictEqual(oParser.calculate().getValue(), -549755813888, 'Test: Negative case: String. String for hex number > 7FFFFFFFFF. 1 argument used.');
+		// Case #14: Array. Multi-element array. 1 argument used.
 		oParser = new parserFormula('HEX2DEC({"1FF","FFFFFFFFFF"})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2DEC({"1FF","FFFFFFFFFF"}) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 511, 'Test: Negative case: Array. Multi-element array returns #VALUE!. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), 511, 'Test: Negative case: Array. Multi-element array. 1 argument used.');
 		// Case #15: Array. Array with invalid hex element returns #NUM!. 1 argument used.
 		oParser = new parserFormula('HEX2DEC({"XYZ"})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2DEC({"XYZ"}) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Array. Array with invalid hex element returns #NUM!. 1 argument used.');
-		// Case #16: Reference link. Reference to cell with invalid hex returns #NUM!. 1 argument used.
+		// Case #16: Reference link. Reference to cell. 1 argument used.
 		oParser = new parserFormula('HEX2DEC(A103)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2DEC(A103) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Negative case: Reference link. Reference to cell with invalid hex returns #NUM!. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Negative case: Reference link. Reference to cell. 1 argument used.');
 		// Case #17: Name. Named range with invalid hex returns #NUM!. 1 argument used.
 		oParser = new parserFormula('HEX2DEC(TestName2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2DEC(TestName2) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Name. Named range with invalid hex returns #NUM!. 1 argument used.');
-		// Case #18: Ref3D. 3D reference to invalid hex cell returns #NUM!. 1 argument used.
+		// Case #18: Ref3D. 3D reference. 1 argument used.
 		oParser = new parserFormula('HEX2DEC(Sheet2!A4)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2DEC(Sheet2!A4) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: Ref3D. 3D reference to invalid hex cell returns #NUM!. 1 argument used.');
-		// Case #20: String. Empty string returns #NUM!. 1 argument used.
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: Ref3D. 3D reference. 1 argument used.');
+		// Case #20: String. Empty string returns 0. 1 argument used.
 		oParser = new parserFormula('HEX2DEC("")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2DEC("") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: String. Empty string returns #NUM!. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: String. Empty string returns 0. 1 argument used.');
+		// Case #21: Ref. Boolean returns #VALUE!. 1 argument used.
+		oParser = new parserFormula('HEX2DEC(A111)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: HEX2DEC(A111) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Test: Negative case: Ref. Boolean returns #VALUE!. 1 argument used.');
+		// Case #22: Ref. Boolean returns #VALUE!. 1 argument used.
+		oParser = new parserFormula('HEX2DEC(A112)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: HEX2DEC(A112) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Test: Negative case: Ref. Boolean returns #VALUE!. 1 argument used.');
 
 		// Bounded cases:
 		// Case #1: Number. Minimum positive hex number (0 decimal). 1 argument used.
@@ -7809,23 +7833,16 @@ $(function () {
 		// Case #2: Number. Maximum positive hex number (549,755,813,887 decimal). 1 argument used.
 		oParser = new parserFormula('HEX2DEC("7FFFFFFFFF")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2DEC("7FFFFFFFFF") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 549756000000, 'Test: Bounded case: Number. Maximum positive hex number (549,755,813,887 decimal). 1 argument used.');
-		// Case #3: Number. Maximum negative hex number (-1 decimal). 1 argument used.
+		assert.strictEqual(oParser.calculate().getValue(), 549755813887, 'Test: Bounded case: Number. Maximum positive hex number (549,755,813,887 decimal). 1 argument used.');
+		// Case #3: Number. Too big hex number. 1 argument used.
 		oParser = new parserFormula('HEX2DEC("FFFFFFFFFFFFFF")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2DEC("FFFFFFFFFFFFFF") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number. Maximum negative hex number (-1 decimal). 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number. Too big hex number. 1 argument used.');
 		// Case #4: Number. Minimum negative hex number (-549,755,813,888 decimal). 1 argument used.
 		oParser = new parserFormula('HEX2DEC(8000000000)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2DEC(8000000000) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), -549756000000, 'Test: Bounded case: Number. Minimum negative hex number (-549,755,813,888 decimal). 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), -549755813888, 'Test: Bounded case: Number. Minimum negative hex number (-549,755,813,888 decimal). 1 argument used.');
 
-		// Need to fix: boolean and error handle, different results with big numbers
-		// Case #4: Boolean. Boolean TRUE treated as invalid hex, returns #NUM!. 1 argument used.
-		// Case #5: Boolean. Boolean FALSE treated as invalid hex, returns #NUM!. 1 argument used.
-		// Case #12: Number. Hex number > 7FFFFFFFFF returns #NUM!. 1 argument used.
-		// Case #13: String. String for hex number > 7FFFFFFFFF returns #NUM!. 1 argument used.
-		// Case #2: Number. Maximum positive hex number (549,755,813,887 decimal). 1 argument used.
-		// Case #4: Number. Minimum negative hex number (-549,755,813,888 decimal). 1 argument used.
 
 		testArrayFormula2(assert, "HEX2DEC", 1, 1, true);
 	});
@@ -7906,6 +7923,8 @@ $(function () {
 		ws.getRange2("A108").setValue("0.9");
 		ws.getRange2("A109").setValue("1");
 		ws.getRange2("A110").setValue("2");
+		ws.getRange2("A111").setValue("TRUE");
+		ws.getRange2("A112").setValue("FALSE");
 
 		// Table type. Use A601:L6**
 		getTableType(599, 0, 600, 1);
@@ -8040,7 +8059,7 @@ $(function () {
 		// Case #2: Error. Propagates #N/A error. 1 argument used.
 		oParser = new parserFormula('HEX2OCT(NA())', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2OCT(NA()) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Error. Propagates #N/A error. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Error. Propagates #N/A error. 1 argument used.');
 		// Case #3: Empty. Empty reference for number returns #VALUE!. 1 argument used.
 		oParser = new parserFormula('HEX2OCT(A102)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2OCT(A102) is parsed.');
@@ -8056,11 +8075,11 @@ $(function () {
 		// Case #6: Boolean. Boolean TRUE treated as invalid hex, returns #NUM!. 1 argument used.
 		oParser = new parserFormula('HEX2OCT(TRUE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2OCT(TRUE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean TRUE treated as invalid hex, returns #NUM!. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean TRUE treated as invalid hex, returns #NUM!. 1 argument used.');
 		// Case #7: Boolean, Number. Boolean FALSE treated as invalid hex, returns #NUM!. 2 arguments used.
 		oParser = new parserFormula('HEX2OCT(FALSE,8)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2OCT(FALSE,8) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean, Number. Boolean FALSE treated as invalid hex, returns #NUM!. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean, Number. Boolean FALSE treated as invalid hex, returns #NUM!. 2 arguments used.');
 		// Case #8: Area. Multi-cell range for number returns #VALUE!. 1 argument used.
 		oParser = new parserFormula('HEX2OCT(A100:A101)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2OCT(A100:A101) is parsed.');
@@ -8088,7 +8107,7 @@ $(function () {
 		// Case #15: Formula. Formula resulting in #NUM! error. 1 argument used.
 		oParser = new parserFormula('HEX2OCT(SQRT(-1))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2OCT(SQRT(-1)) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Formula. Formula resulting in #NUM! error. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Formula. Formula resulting in #NUM! error. 1 argument used.');
 		// Case #16: Number. Positive hex > 1FF returns #NUM!. 1 argument used.
 		oParser = new parserFormula('HEX2OCT(200)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2OCT(200) is parsed.');
@@ -8109,6 +8128,23 @@ $(function () {
 		oParser = new parserFormula('HEX2OCT("1FF","abc")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2OCT("1FF","abc") is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, String. Non-numeric places returns #VALUE!. 2 arguments used.');
+		// Case #21: Ref, Number. Non-numeric number returns #VALUE!. 2 arguments used.
+		oParser = new parserFormula('HEX2OCT(A111,1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: HEX2OCT(A111,1) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Ref, Number. Non-numeric number returns #VALUE!. 2 arguments used.');
+		// Case #22: Ref, Number. Non-numeric number returns #VALUE!. 2 arguments used.
+		oParser = new parserFormula('HEX2OCT(A112,1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: HEX2OCT(A112,1) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Ref, Number. Non-numeric number returns #VALUE!. 2 arguments used.');
+		// Case #23: Number, Ref. Non-numeric number returns #VALUE!. 2 arguments used.
+		oParser = new parserFormula('HEX2OCT(1,A111)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: HEX2OCT(1,A111) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Ref. Non-numeric number returns #VALUE!. 2 arguments used.');
+		// Case #24: Number, Ref. Non-numeric number returns #VALUE!. 2 arguments used.
+		oParser = new parserFormula('HEX2OCT(1,A112)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: HEX2OCT(1,A112) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Ref. Non-numeric number returns #VALUE!. 2 arguments used.');
+
 
 		// Bounded cases:
 		// Case #1: Number. Minimum positive hex number (0). 1 argument used.
@@ -8131,12 +8167,7 @@ $(function () {
 		oParser = new parserFormula('HEX2OCT("1FF",1E+307)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: HEX2OCT("1FF",1E+307) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number, Number. Maximum places for 1FF (9 bits needed, 10 allowed). 2 arguments used.');
-
-		// Need to fix: error and boolean handle
-		// Case #2: Error. Propagates #N/A error. 1 argument used.
-		// Case #6: Boolean. Boolean TRUE treated as invalid hex, returns #NUM!. 1 argument used.
-		// Case #7: Boolean, Number. Boolean FALSE treated as invalid hex, returns #NUM!. 2 arguments used.
-		// Case #15: Formula. Formula resulting in #NUM! error. 1 argument used.
+		
 
 		testArrayFormula2(assert, "HEX2OCT", 1, 2, true);
 	});
