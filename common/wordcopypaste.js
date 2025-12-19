@@ -13546,6 +13546,23 @@ PasteProcessor.prototype =
 			}
 			if (null != comment.m_sQuoteText) {
 				oCommentObj.m_sQuoteText = comment.m_sQuoteText;
+			} else {
+				/*var QuotedText = this.GetSelectedText(false);
+				if (null === QuotedText || "" === QuotedText)
+				{
+					var oParagraph = this.GetCurrentParagraph();
+					if (oParagraph && oParagraph.SelectCurrentWord())
+					{
+						QuotedText = this.GetSelectedText(false);
+						if (null === QuotedText)
+							QuotedText = "";
+					}
+					else
+					{
+						QuotedText = "";
+					}
+				}*/
+				//oCommentObj.m_sQuoteText = QuotedText;
 			}
 			if (null != comment.Text) {
 				oCommentObj.m_sText = comment.Text;
