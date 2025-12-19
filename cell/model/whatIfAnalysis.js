@@ -3426,8 +3426,41 @@ function (window, undefined) {
 	window['AscCommonExcel'].c_oAscSolverResult = c_oAscSolverResult;
 	window['AscCommonExcel'].c_oAscResultStatus = c_oAscResultStatus;
 
+	let prot = c_oAscOptimizeTo;
+	prot["max"] = prot.max;
+	prot["min"] = prot.min;
+	prot["valueOf"] = prot.valueOf;
+
+	prot = c_oAscSolvingMethod;
+	prot["grgNonlinear"] = prot.grgNonlinear;
+	prot["simplexLP"] = prot.simplexLP;
+	prot["evolutionary"] = prot.evolutionary;
+
+	prot = c_oAscOperator;
+	prot["integer"] = prot.integer;
+	prot["bin"] = prot.bin;
+	prot["diff"] = prot.diff;
+
+	prot = c_oAscResultStatus;
+	prot["foundOptimalSolution"] = prot.foundOptimalSolution;
+	prot["solutionHasConverged"] = prot.solutionHasConverged;
+	prot["cannotImproveSolution"] = prot.cannotImproveSolution;
+	prot["maxIterationsReached"] = prot.maxIterationsReached;
+	prot["objectiveCellNotConverge"] = prot.objectiveCellNotConverge;
+	prot["notFindFeasibleSolution"] = prot.notFindFeasibleSolution;
+	prot["stoppedByUser"] = prot.stoppedByUser;
+	prot["linearityConditionsNotSatisfied"] = prot.linearityConditionsNotSatisfied;
+	prot["errorValInObjectiveOrConstraintCell"] = prot.errorValInObjectiveOrConstraintCell;
+	prot["maxTimeReached"] = prot.maxTimeReached;
+	prot["notEnoughMemory"] = prot.notEnoughMemory;
+	prot["errorInModel"] = prot.errorInModel;
+	prot["foundIntegerSolution"] = prot.foundIntegerSolution;
+	prot["maxFeasibleSolutionReached"] = prot.maxFeasibleSolutionReached;
+	prot["maxSubproblemSolutionReached"] = prot.maxSubproblemSolutionReached;
+	prot["iterationMode"] = prot.iterationMode;
+
 	window['AscCommonExcel'].asc_CSolverParams = asc_CSolverParams;
-	let prot = asc_CSolverParams.prototype;
+	prot = asc_CSolverParams.prototype;
 	prot['asc_getObjectiveFunction'] = prot.asc_getObjectiveFunction;
 	prot['asc_getChangingCells'] = prot.asc_getChangingCells;
 	prot['asc_getOptimizeResultTo'] = prot.asc_getOptimizeResultTo;

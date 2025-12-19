@@ -10225,6 +10225,12 @@ var editor;
   prot["asc_ContinueGoalSeek"] = prot.asc_ContinueGoalSeek;
   prot["asc_StepGoalSeek"] = prot.asc_StepGoalSeek;
 
+  prot["asc_StartSolver"] = prot.asc_StartSolver;
+  prot["asc_CloseSolver"] = prot.asc_CloseSolver;
+  prot["asc_ContinueSolver"] = prot.asc_ContinueSolver;
+  prot["asc_StopSolver"] = prot.asc_StopSolver;
+  prot["asc_GetSolverParams"] = prot.asc_GetSolverParams;
+
   prot["asc_GetSeriesSettings"] = prot.asc_GetSeriesSettings;
   prot["asc_FillCells"] = prot.asc_FillCells;
   prot["asc_CancelFillCells"] = prot.asc_CancelFillCells;
