@@ -12285,7 +12285,7 @@ function (window, undefined) {
 		}
 		return i;
 	};
-	CountIfTypedCache.prototype.forEachInTyped = function(range, type, matchingFunction, searchValue) {
+	CountIfTypedCache.prototype.forEachInTyped = function(range, type, matchingFunction, searchValue, convertToNumber) {
 		let count = 0;
 		const ws = range.getWS();
 		const bbox = range.getBBox0();
@@ -12304,8 +12304,17 @@ function (window, undefined) {
 				const typedIndexes = column.indexes[type];
 				const firstIndex = this.findLowerIndexInTyped(bbox.r1, typedIndexes);
 				const lastIndex = this.findHigherIndexInTyped(bbox.r2, typedIndexes);
-				for (let j = firstIndex; j < lastIndex; j += 1) {
-					count += matchingFunction(typedData[j], searchValue);
+				if (convertToNumber) {
+					for (let j = firstIndex; j < lastIndex; j += 1) {
+						let value = Number(typedData[j]);
+						if (!isNaN(value)) {
+							count += matchingFunction(value, searchValue);
+						}
+					}
+				} else {
+					for (let j = firstIndex; j < lastIndex; j += 1) {
+						count += matchingFunction( typedData[j], searchValue);
+					}
 				}
 			}
 		}
@@ -12459,11 +12468,7 @@ function (window, undefined) {
 		}
 		const t = this;
 		function calculateOne(rangeOrCell, condition) {
-			if (cElementType.cell === rangeOrCell.type || cElementType.cell3D === rangeOrCell.type) {
-				const value = arg0.getValue();
-				return t.calculateSingeValue(value, condition);
-			}
-			else if (cElementType.cellsRange === rangeOrCell.type || cElementType.cellsRange3D === rangeOrCell.type) {
+			if (cElementType.cell === rangeOrCell.type || cElementType.cell3D === rangeOrCell.type || cElementType.cellsRange === rangeOrCell.type || cElementType.cellsRange3D === rangeOrCell.type) {
 				return t._get(rangeOrCell, condition);
 			} else {
 				return new cError(cErrorType.wrong_value_type);
@@ -12536,6 +12541,9 @@ function (window, undefined) {
 		} else {
 			searchValue = searchValue.value;
 		}
+		if (type === cElementType.error) {
+			searchValue = arg1.errorType;
+		}
 		if (type === cElementType.string) {
 			const checkErr = new cError(matchingInfo.val.value.toUpperCase());
 			if (checkErr.errorType !== -1) {
@@ -12558,7 +12566,11 @@ function (window, undefined) {
 			}
 		}
 		const isWildcard = type === cElementType.string && (searchValue.indexOf('*') !== -1 || searchValue.indexOf('?') !== -1);
-		if (matchingInfo.op === '<>') {
+		if ((matchingInfo.op === '=' || matchingInfo.op === null) && type === cElementType.number) {
+			const matchingFunction = getMatchingFunction(type, matchingInfo.op, isWildcard);
+			_count = this.typedCache.forEachInTyped(range, type, matchingFunction, searchValue);
+			_count += this.typedCache.forEachInTyped(range, cElementType.string, matchingFunction, searchValue, true);
+		} else if (matchingInfo.op === '<>') {
 			const bbox = range.getBBox0();
 			const cellsCount = (bbox.c2 - bbox.c1 + 1) * (bbox.r2 - bbox.r1 + 1);
 			const matchingFunction = getMatchingFunction(type, '=', isWildcard);
