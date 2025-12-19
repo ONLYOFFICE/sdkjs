@@ -12285,7 +12285,8 @@ function (window, undefined) {
 		}
 		return i;
 	};
-	CountIfTypedCache.prototype.forEachInTyped = function(range, type, callback) {
+	CountIfTypedCache.prototype.forEachInTyped = function(range, type, matchingFunction, searchValue) {
+		let count = 0;
 		const ws = range.getWS();
 		const bbox = range.getBBox0();
 		const wsId = ws.getId();
@@ -12298,19 +12299,17 @@ function (window, undefined) {
 			}
 			const column = this.data[wsId][i];
 			this.updateColumnData(ws, i, column, bbox.r1, bbox.r2);
-			if (column.data[type]) {
-				const typedData = column.data[type];
+			const typedData = column.data[type];
+			if (typedData) {
 				const typedIndexes = column.indexes[type];
-				const firstIndex = this.findLowerIndexInTyped(bbox.r1, typedIndexes)
-				for (let j = firstIndex; j < typedData.length; j += 1) {
-					if (typedIndexes[j] > bbox.r2) {
-						break;
-					}
-					const value = typedData[j];
-					callback(value);
+				const firstIndex = this.findLowerIndexInTyped(bbox.r1, typedIndexes);
+				const lastIndex = this.findHigherIndexInTyped(bbox.r2, typedIndexes);
+				for (let j = firstIndex; j < lastIndex; j += 1) {
+					count += matchingFunction(typedData[j], searchValue);
 				}
 			}
 		}
+		return count;
 	};
 	CountIfTypedCache.prototype.getElemsCount = function(range) {
 		let result = 0;
@@ -12563,15 +12562,11 @@ function (window, undefined) {
 			const bbox = range.getBBox0();
 			const cellsCount = (bbox.c2 - bbox.c1 + 1) * (bbox.r2 - bbox.r1 + 1);
 			const matchingFunction = getMatchingFunction(type, '=', isWildcard);
-			this.typedCache.forEachInTyped(range, type, function(value) {
-				_count += matchingFunction(value, searchValue);
-			});
+			_count = this.typedCache.forEachInTyped(range, type, matchingFunction, searchValue);
 			_count = cellsCount - _count;
 		} else {
 			const matchingFunction = getMatchingFunction(type, matchingInfo.op, isWildcard);
-			this.typedCache.forEachInTyped(range, type, function(value) {
-				_count += matchingFunction(value, searchValue);
-			});
+			_count = this.typedCache.forEachInTyped(range, type, matchingFunction, searchValue);
 		}
 		return new cNumber(_count);
 	};
