@@ -4122,14 +4122,14 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"Metadata add test\"", function (assert) {
-		clearData(0, 0, 10, 20);
+		clearData(0, 0, 100, 200);
 		var getMetadata = function () {
 			return ws.workbook.metadata;
 		};
 
 		var getCellMetadata = function (r, c) {
 			var _cell;
-			ws.getRange3(r, c, r, c)._foreachNoEmpty(function(cell, row, col) {
+			ws.getRange3(r, c, r, c)._foreachNoEmpty(function(cell) {
 				_cell = cell;
 			});
 			return _cell && _cell.formulaParsed && _cell.formulaParsed.getCm();
@@ -4139,22 +4139,40 @@ $(function () {
 		flags.ctrlKey = false;
 		flags.shiftKey = false;
 
-		var formula = "=SEQUENCE(3,2)";
+		// Add first array formula
+		var formula1 = "=SEQUENCE(3,2)";
 		var fillRange = ws.getRange2("A1");
 		wsView.setSelection(fillRange.bbox);
 		var fragment = ws.getRange2("A1").getValueForEdit2();
-		fragment[0].setFragmentText(formula);
+		fragment[0].setFragmentText(formula1);
 		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
 
 		var metadata = getMetadata();
-		assert.ok(metadata.cellMetadata && metadata.cellMetadata.length > 0, "cellMetadata created");
+		assert.ok(metadata.cellMetadata && metadata.cellMetadata.length > 0, "cellMetadata created after first formula");
 		assert.ok(metadata.metadataTypes && metadata.metadataTypes.length > 0, "metadataTypes created");
 		assert.ok(metadata.aFutureMetadata && metadata.aFutureMetadata.length > 0, "aFutureMetadata created");
 
-		var cmIndex = getCellMetadata(0, 0);
-		assert.ok(cmIndex > 0, "A1 has metadata");
+		var cmIndex1 = getCellMetadata(0, 0);
+		assert.ok(cmIndex1 > 0, "A1 has metadata");
 
-		var cellMetadataBlock = metadata.cellMetadata[cmIndex - 1];
+		var initialMetadataCount = metadata.aFutureMetadata.length;
+
+		// Add second array formula
+		var formula2 = "=SEQUENCE(2,3)";
+		fillRange = ws.getRange2("D1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("D1").getValueForEdit2();
+		fragment[0].setFragmentText(formula2);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		var cmIndex2 = getCellMetadata(0, 3);
+		assert.ok(cmIndex2 > 0, "D1 has metadata");
+
+		metadata = getMetadata();
+		// Check that metadata count hasn't increased (metadata is shared)
+		assert.strictEqual(metadata.aFutureMetadata.length, initialMetadataCount, "Metadata is shared between formulas");
+
+		var cellMetadataBlock = metadata.cellMetadata[cmIndex1 - 1];
 		assert.ok(cellMetadataBlock, "cellMetadata block exists");
 		assert.ok(cellMetadataBlock.t > 0, "cellMetadata has type");
 
@@ -4168,16 +4186,37 @@ $(function () {
 		assert.ok(futureBlock, "futureMetadataBlock exists");
 		assert.strictEqual(futureBlock.name, "XLDAPR", "XLDAPR check type");
 
-		fillRange =  ws.getRange2("A1");
+		// Delete first formula
+		fillRange = ws.getRange2("A1");
 		wsView.setSelection(fillRange.bbox);
 		fragment = ws.getRange2("A1").getValueForEdit2();
 		fragment[0].setFragmentText("");
 		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
 
-		var cmIndexAfterDelete = getCellMetadata(0, 0);
-		assert.ok(!cmIndexAfterDelete || cmIndexAfterDelete === 0, "A1 metadata removed after deletion");
+		var cmIndexAfterFirstDelete = getCellMetadata(0, 0);
+		assert.ok(!cmIndexAfterFirstDelete || cmIndexAfterFirstDelete === 0, "A1 metadata removed after deletion");
+		
 		metadata = getMetadata();
-		assert.ok(metadata == null, "cellMetadata removed");
+		// Metadata should remain as the second formula still uses it
+		assert.ok(metadata != null, "Metadata still exists after first formula deletion");
+		assert.ok(metadata.aFutureMetadata && metadata.aFutureMetadata.length > 0, "aFutureMetadata still exists");
+
+		var cmIndex2AfterFirstDelete = getCellMetadata(0, 3);
+		assert.ok(cmIndex2AfterFirstDelete > 0, "D1 still has metadata");
+
+		// Delete second formula
+		fillRange = ws.getRange2("D1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("D1").getValueForEdit2();
+		fragment[0].setFragmentText("");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		var cmIndexAfterSecondDelete = getCellMetadata(0, 3);
+		assert.ok(!cmIndexAfterSecondDelete || cmIndexAfterSecondDelete === 0, "D1 metadata removed after deletion");
+		
+		metadata = getMetadata();
+		// Now metadata should be removed as both formulas are deleted
+		assert.ok(metadata == null, "Metadata removed after all formulas deleted");
 
 		clearData(0, 0, 10, 20);
 	});

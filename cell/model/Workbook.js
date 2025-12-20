@@ -3368,6 +3368,94 @@
 			}
 		}
 
+		// Remove XLRICHVALUE metadata if no more dynamic formulas exist
+		if (meta.aFutureMetadata) {
+			for (let i = meta.aFutureMetadata.length - 1; i >= 0; i--) {
+				const futureMetadata = meta.aFutureMetadata[i];
+				if (futureMetadata.name === "XLRICHVALUE") {
+					// Check if there are any XLDAPR references left
+					let hasXLDAPRReferences = false;
+					if (meta.metadataTypes) {
+						for (let j = 0; j < meta.metadataTypes.length; j++) {
+							if (meta.metadataTypes[j].name === "XLDAPR") {
+								hasXLDAPRReferences = true;
+								break;
+							}
+						}
+					}
+					
+					// If no XLDAPR references, remove XLRICHVALUE and related data
+					if (!hasXLDAPRReferences) {
+						// Collect richValue indices to remove from futureMetadataBlocks
+						const rvIndicesToRemove = [];
+						if (futureMetadata.futureMetadataBlocks) {
+							for (let k = 0; k < futureMetadata.futureMetadataBlocks.length; k++) {
+								const fb = futureMetadata.futureMetadataBlocks[k];
+								if (fb && fb.extLst && fb.extLst.length > 0) {
+									const ext = fb.extLst[0];
+									if (ext && ext.richValueBlock && ext.richValueBlock.i != null) {
+										rvIndicesToRemove.push(ext.richValueBlock.i);
+									}
+								}
+							}
+						}
+						
+						// Remove richValue entries from richValueData
+						if (this.richValueData && this.richValueData.pData && rvIndicesToRemove.length > 0) {
+							// Sort indices in descending order to remove from end to start
+							rvIndicesToRemove.sort(function(a, b) { return b - a; });
+							for (let k = 0; k < rvIndicesToRemove.length; k++) {
+								const rvIdx = rvIndicesToRemove[k];
+								if (rvIdx >= 0 && rvIdx < this.richValueData.pData.length) {
+									this.richValueData.pData.splice(rvIdx, 1);
+									
+									// Update indices in remaining richValueBlocks
+									if (meta.aFutureMetadata) {
+										for (let m = 0; m < meta.aFutureMetadata.length; m++) {
+											const fm = meta.aFutureMetadata[m];
+											if (fm.futureMetadataBlocks) {
+												for (let n = 0; n < fm.futureMetadataBlocks.length; n++) {
+													const fb = fm.futureMetadataBlocks[n];
+													if (fb && fb.extLst && fb.extLst.length > 0) {
+														const ext = fb.extLst[0];
+														if (ext && ext.richValueBlock && ext.richValueBlock.i != null && ext.richValueBlock.i > rvIdx) {
+															ext.richValueBlock.i--;
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+							
+							// If richValueData is now empty, clear all richValue structures
+							if (this.richValueData.pData.length === 0) {
+								this.richValueData = null;
+								this.richValueStructures = null;
+								this.richValueTypesInfo = null;
+							}
+						}
+						
+						meta.aFutureMetadata.splice(i, 1);
+						
+						// Remove corresponding metadataType
+						if (meta.metadataTypes) {
+							for (let j = meta.metadataTypes.length - 1; j >= 0; j--) {
+								if (meta.metadataTypes[j].name === "XLRICHVALUE") {
+									meta.metadataTypes.splice(j, 1);
+									break;
+								}
+							}
+							if (meta.metadataTypes.length === 0) {
+								meta.metadataTypes = null;
+							}
+						}
+					}
+				}
+			}
+		}
+
 		if (meta.cellMetadata.length === 0) {
 			meta.cellMetadata = null;
 		}
