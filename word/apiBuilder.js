@@ -13404,7 +13404,7 @@
 	{
 		var Row = this.Table.GetRow(nRow);
 
-		if (Row && nCell >= 0 && nCell <= Row.Content.length)
+		if (Row && nCell >= 0 && nCell < Row.Content.length)
 		{
 			return new ApiTableCell(Row.GetCell(nCell));
 		}
