@@ -10029,6 +10029,9 @@
 				break;
 		}
 		
+		if (!oPrevRun)
+			oPrevRun = new ApiRun(this.Paragraph.GetParaEndRun());
+		
 		let oApiRun = new ApiRun(oRun);
 		oApiRun.SetTextPr(oPrevRun.GetTextPr());
 
