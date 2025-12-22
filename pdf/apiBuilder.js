@@ -303,6 +303,41 @@
 
 		return new ApiCircleAnnotation(oAnnot);
 	};
+	
+	/**
+	 * Creates square annotation.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {Rect} rect - annotation rect.
+	 * @param {string} [name] - unique annotation name.
+	 * @returns {ApiSquareAnnotation}
+	 * @see office-js-api/Examples/PDF/Api/Methods/CreateSquareAnnot.js
+	 */
+	Api.prototype.CreateSquareAnnot = function(rect, name) {
+		let oDoc = private_GetLogicDocument();
+
+		if (!prviate_IsValidRect(rect)) {
+			AscBuilder.throwException("The rect parameter must be a valid rect");
+		}
+
+		name = AscBuilder.GetStringParameter(name, null);
+		if (!name) {
+			AscBuilder.throwException("The name parameter must be a non empty string");
+		}
+
+		let oProps = {
+			rect:           rect,
+			name:           name ? name : AscCommon.CreateGUID(),
+			type:           AscPDF.ANNOTATIONS_TYPES.Square,
+			creationDate:   (new Date().getTime()).toString(),
+			modDate:        (new Date().getTime()).toString(),
+			hidden:         false
+		}
+
+		let oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
+
+		return new ApiSquareAnnotation(oAnnot);
+	};
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -3349,6 +3384,36 @@
 		return "circleAnnot";
 	};
 
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiSquareAnnotation
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a circle annotation.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 * @extends {ApiBaseAnnotation}
+	 */
+	function ApiSquareAnnotation(oAnnot) {
+		ApiBaseAnnotation.call(this, oAnnot);
+	}
+
+	ApiSquareAnnotation.prototype = Object.create(ApiBaseAnnotation.prototype);
+	ApiSquareAnnotation.prototype.constructor = ApiSquareAnnotation;
+
+	/**
+	 * Returns a type of the ApiSquareAnnotation class.
+	 * @memberof ApiSquareAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"squareAnnot"}
+	 * @see office-js-api/Examples/PDF/ApiSquareAnnotation/Methods/GetClassType.js
+	 */
+	ApiSquareAnnotation.prototype.GetClassType = function() {
+		return "squareAnnot";
+	};
+
 	function private_GetLogicDocument() {
 		return Asc.editor.getPDFDoc();
 	}
@@ -3743,6 +3808,9 @@
 			case AscPDF.ANNOTATIONS_TYPES.Circle: {
 				return new ApiCircleAnnotation(annot);
 			}
+			case AscPDF.ANNOTATIONS_TYPES.Square: {
+				return new ApiSquareAnnotation(annot);
+			}
 		}
 	}
 
@@ -3761,6 +3829,7 @@
 	Api.prototype["CreateRGBColor"]							= Api.prototype.CreateRGBColor;
 	Api.prototype["CreateTextAnnot"]						= Api.prototype.CreateTextAnnot;
 	Api.prototype["CreateCircleAnnot"]						= Api.prototype.CreateCircleAnnot;
+	Api.prototype["CreateSquareAnnot"]						= Api.prototype.CreateSquareAnnot;
 
 	// ApiDocument
 	ApiDocument.prototype["GetClassType"]					= ApiDocument.prototype.GetClassType;
