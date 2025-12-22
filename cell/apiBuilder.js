@@ -19601,7 +19601,7 @@
 		// If there are multiple validations, we cannot set type
 		let internalType = FromXlValidationTypeTo(Type);
 		if (internalType !== -1) {
-			validation.asc_setType(internalType);
+			validation.setType(internalType);
 		}
 	};
 
@@ -19634,7 +19634,7 @@
 		}
 		let internalAlertStyle = FromXlValidationAlertStyleTo(AlertStyle);
 		if (internalAlertStyle !== -1) {
-			validation.asc_setErrorStyle(internalAlertStyle);
+			validation.setErrorStyle(internalAlertStyle);
 		}
 	};
 
@@ -19665,7 +19665,7 @@
 		if (!validation) {
 			return;
 		}
-		validation.asc_setAllowBlank(IgnoreBlank);
+		validation.setAllowBlank(IgnoreBlank);
 	};
 
 	/**
@@ -19695,7 +19695,7 @@
 		if (!validation) {
 			return;
 		}
-		validation.asc_setShowDropDown(!InCellDropdown);
+		validation.setShowDropDown(!InCellDropdown);
 	};
 
 	/**
@@ -19725,7 +19725,7 @@
 		if (!validation) {
 			return;
 		}
-		validation.asc_setShowInputMessage(ShowInput);
+		validation.setShowInputMessage(ShowInput);
 	};
 
 	/**
@@ -19755,7 +19755,7 @@
 		if (!validation) {
 			return;
 		}
-		validation.asc_setShowErrorMessage(ShowError);
+		validation.setShowErrorMessage(ShowError);
 	};
 
 	/**
@@ -19785,7 +19785,7 @@
 		if (!validation) {
 			return;
 		}
-		validation.asc_setPromptTitle(InputTitle);
+		validation.setPromptTitle(InputTitle);
 	};
 
 	/**
@@ -19815,7 +19815,7 @@
 		if (!validation) {
 			return;
 		}
-		validation.asc_setPrompt(InputMessage);
+		validation.setPrompt(InputMessage);
 	};
 
 	/**
@@ -19845,7 +19845,7 @@
 		if (!validation) {
 			return;
 		}
-		validation.asc_setErrorTitle(ErrorTitle);
+		validation.setErrorTitle(ErrorTitle);
 	};
 
 	/**
@@ -19875,7 +19875,7 @@
 		if (!validation) {
 			return;
 		}
-		validation.asc_setError(ErrorMessage);
+		validation.setError(ErrorMessage);
 	};
 
 	/**
@@ -19907,7 +19907,7 @@
 			return;
 		}
 		let formula = new window['Asc'].CDataFormula(Formula1);
-		validation.asc_setFormula1(formula);
+		validation.setFormula1(formula);
 	};
 
 	/**
@@ -19939,7 +19939,7 @@
 			return;
 		}
 		let formula = new window['Asc'].CDataFormula(Formula2);
-		validation.asc_setFormula2(formula);
+		validation.setFormula2(formula);
 	};
 
 	/**
@@ -19971,7 +19971,7 @@
 		}
 		let internalOperator = FromXlValidationOperatorTo(Operator);
 		if (internalOperator !== -1) {
-			validation.asc_setOperator(internalOperator);
+			validation.setOperator(internalOperator);
 		}
 	};
 
