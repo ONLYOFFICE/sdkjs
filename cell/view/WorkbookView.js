@@ -6299,7 +6299,7 @@
 		solverParams.getDefNames(wbModel);
 		if (!solverParams.hasSolverDefNames(wbModel)) {
 			const wsView = this.getWorksheet();
-			const activeCell = wsView.getActiveCell(0, 0, false).getName(Asc.referenceType.A);
+			const activeCell = wsView.getActiveCell(0, 0, false).getName(AscCommonExcel.referenceType.A);
 			solverParams.asc_setObjectiveFunction(activeCell);
 		}
 		wbModel.setSolverParams(solverParams);

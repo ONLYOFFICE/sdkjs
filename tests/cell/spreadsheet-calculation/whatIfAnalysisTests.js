@@ -346,7 +346,7 @@ $(function () {
         AscCommon.History.Undo();
     };
     const getActiveCell = function(wsView) {
-        return wsView.getActiveCell(0, 0, false).getName(Asc.referenceType.A);
+        return wsView.getActiveCell(0, 0, false).getName(AscCommonExcel.referenceType.A);
     }
 
     QUnit.module('Goal seek');
