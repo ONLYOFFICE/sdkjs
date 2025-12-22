@@ -8004,15 +8004,20 @@
 		if (typeof(sName) !== "string")
 			return null;
 		
-		var Document = private_GetLogicDocument();
+		let oManager = this.Document.GetBookmarksManager();
+		let bookmarkMarks = oManager.GetBookmarkByName(sName);
+		if (!bookmarkMarks ||oManager.IsInternalUseBookmark(sName) || oManager.IsHiddenBookmark(sName))
+			return null;
+
+		let oDocument = private_GetLogicDocument();
 		private_RefreshRangesPosition();
-		var oldSelectionInfo = Document.SaveDocumentState();
+		let oldSelectionInfo = oDocument.SaveDocumentState();
 		
 		private_TrackRangesPositions();
 
 		this.Document.GoToBookmark(sName, true);
 
-		var oRange = this.GetRangeBySelect();
+		let oRange = this.GetRangeBySelect();
 
 		this.Document.LoadDocumentState(oldSelectionInfo);
 		this.Document.UpdateSelection();
