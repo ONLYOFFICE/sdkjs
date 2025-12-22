@@ -357,6 +357,45 @@
     GOTO_TYPES["fitBH"] = GOTO_TYPES.fitBH;
     GOTO_TYPES["fitBV"] = GOTO_TYPES.fitBV;
 
+    const TEXT_ICONS_TYPES = {
+        check1:         0,
+        check2:         1,
+        circle:         2,
+        comment:        3,
+        cross:          4,
+        crossH:         5,
+        help:           6,
+        insert:         7,
+        key:            8,
+        newParagraph:   9,
+        note:           10,
+        paragraph:      11,
+        rightArrow:     12,
+        rightPointer:   13,
+        star:           14,
+        upArrow:        15,
+        upLeftArrow:    16
+    }
+
+    TEXT_ICONS_TYPES["check"]           = TEXT_ICONS_TYPES.check1;
+    TEXT_ICONS_TYPES["check1"]          = TEXT_ICONS_TYPES.check1;
+    TEXT_ICONS_TYPES["check2"]          = TEXT_ICONS_TYPES.check2;
+    TEXT_ICONS_TYPES["circle"]          = TEXT_ICONS_TYPES.circle;
+    TEXT_ICONS_TYPES["comment"]         = TEXT_ICONS_TYPES.comment;
+    TEXT_ICONS_TYPES["cross"]           = TEXT_ICONS_TYPES.cross;
+    TEXT_ICONS_TYPES["crossH"]          = TEXT_ICONS_TYPES.crossH;
+    TEXT_ICONS_TYPES["help"]            = TEXT_ICONS_TYPES.help;
+    TEXT_ICONS_TYPES["insert"]          = TEXT_ICONS_TYPES.insert;
+    TEXT_ICONS_TYPES["key"]             = TEXT_ICONS_TYPES.key;
+    TEXT_ICONS_TYPES["newParagraph"]    = TEXT_ICONS_TYPES.newParagraph;
+    TEXT_ICONS_TYPES["note"]            = TEXT_ICONS_TYPES.note;
+    TEXT_ICONS_TYPES["paragraph"]       = TEXT_ICONS_TYPES.paragraph;
+    TEXT_ICONS_TYPES["rightArrow"]      = TEXT_ICONS_TYPES.rightArrow;
+    TEXT_ICONS_TYPES["rightPointer"]    = TEXT_ICONS_TYPES.rightPointer;
+    TEXT_ICONS_TYPES["star"]            = TEXT_ICONS_TYPES.star;
+    TEXT_ICONS_TYPES["upArrow"]         = TEXT_ICONS_TYPES.upArrow;
+    TEXT_ICONS_TYPES["upLeftArrow"]     = TEXT_ICONS_TYPES.upLeftArrow;
+
     asc["FIELD_TYPES"]                  = asc.FIELD_TYPES               = FIELD_TYPES;
     asc["BORDER_EFFECT_STYLES"]         = asc.BORDER_EFFECT_STYLES      = BORDER_EFFECT_STYLES;
     asc["REF_TO_REASON"]                = asc.REF_TO_REASON             = REF_TO_REASON;
@@ -376,5 +415,6 @@
     asc["DIGITS_TYPES"]                = asc.DIGITS_TYPES               = DIGITS_TYPES;
     asc["USER_PERMISSIONS"]            = asc.USER_PERMISSIONS           = USER_PERMISSIONS;
     asc["GOTO_TYPES"]                  = asc.GOTO_TYPES                 = GOTO_TYPES;
+    asc["TEXT_ICONS_TYPES"]            = asc.TEXT_ICONS_TYPES           = TEXT_ICONS_TYPES;
     asc.CommandType                    = CommandType;
 })();

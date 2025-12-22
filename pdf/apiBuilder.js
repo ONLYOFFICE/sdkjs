@@ -181,6 +181,16 @@
 	 * @typedef {("visible" | "hidden" | "noPrint" | "noView")} DisplayType
 	 */
 
+	/**
+	 * The available text annot icon types.
+	 * @typedef {("check" | "circle" | "comment" | "cross" | "crossH" | "help" | "insert" | "key" | "newParagraph" | "note" | "paragraph" | "rightArrow" | "rightPointer" | "star" | "upArrow" | "upLeftArrow")} TextIconType
+	 */
+
+	/**
+	 * The available annotation border effect style.
+	 * @typedef {("none" | "cloud")} AnnotBorderEffectStyle
+	 */
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// Api
@@ -222,6 +232,41 @@
 	 */
 	Api.prototype.CreateRGBColor = function(r, g, b) {
 		return new ApiRGBColor(r, g, b);
+	};
+
+	/**
+	 * Creates text annotation.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {Rect} rect - annotation rect.
+	 * @param {string} [name] - unique annotation name.
+	 * @returns {ApiTextAnnotation}
+	 * @see office-js-api/Examples/PDF/Api/Methods/CreateTextAnnot.js
+	 */
+	Api.prototype.CreateTextAnnot = function(rect, name) {
+		let oDoc = private_GetLogicDocument();
+
+		if (!prviate_IsValidRect(rect)) {
+			AscBuilder.throwException("The rect parameter must be a valid rect");
+		}
+
+		name = AscBuilder.GetStringParameter(name, null);
+		if (!name) {
+			AscBuilder.throwException("The name parameter must be a non empty string");
+		}
+
+		let oProps = {
+			rect:           rect,
+			name:           name ? name : AscCommon.CreateGUID(),
+			type:           AscPDF.ANNOTATIONS_TYPES.Text,
+			creationDate:   (new Date().getTime()).toString(),
+			modDate:        (new Date().getTime()).toString(),
+			hidden:         false
+		}
+
+		let oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
+
+		return new ApiTextAnnotation(oAnnot);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -2994,9 +3039,18 @@
 	ApiBaseAnnotation.prototype.GetDisplay = function() {
 		let nDisplay = this.Annot.GetDisplay();
 
-		for (const key in AscPDF.Api.Types.display) {
-			if (AscPDF.Api.Types.display[key] === nDisplay) {
-				return key;
+		switch (nDisplay) {
+			case AscPDF.Api.Types.display.visible: {
+				return "visible";
+			}
+			case AscPDF.Api.Types.display.hidden: {
+				return "hidden";
+			}
+			case AscPDF.Api.Types.display.noPrint: {
+				return "noPrint";
+			}
+			case AscPDF.Api.Types.display.noView: {
+				return "noView";
 			}
 		}
 	};
@@ -3148,6 +3202,86 @@
 	 */
 	ApiTextAnnotation.prototype.GetClassType = function() {
 		return "textAnnot";
+	};
+
+	/**
+	 * Sets icon type for this annotation.
+	 * @memberof ApiTextAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @param {TextIconType} iconType
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiTextAnnotation/Methods/SetIconType.js
+	 */
+	ApiTextAnnotation.prototype.SetIconType = function(iconType) {
+		if (!AscPDF.TEXT_ICONS_TYPES[iconType]) {
+			AscBuilder.throwException("The iconType parameter must be one of available");
+		}
+
+		this.Annot.SetIconType(iconType);
+		return true;
+	};
+
+	/**
+	 * Gets icon type of this annotation.
+	 * @memberof ApiTextAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {TextIconType}
+	 * @see office-js-api/Examples/PDF/ApiTextAnnotation/Methods/GetIconType.js
+	 */
+	ApiTextAnnotation.prototype.GetIconType = function() {
+		let nIconType = this.Annot.GetIconType();
+
+		switch (nIconType) {
+			case AscPDF.TEXT_ICONS_TYPES.check1:
+			case AscPDF.TEXT_ICONS_TYPES.check2: {
+				return "check";
+			}
+			case AscPDF.TEXT_ICONS_TYPES.circle: {
+				return "circle";
+			}
+			case AscPDF.TEXT_ICONS_TYPES.comment: {
+				return "comment";
+			}
+			case AscPDF.TEXT_ICONS_TYPES.cross: {
+				return "cross";
+			}
+			case AscPDF.TEXT_ICONS_TYPES.crossH: {
+				return "crossH";
+			}
+			case AscPDF.TEXT_ICONS_TYPES.help: {
+				return "help";
+			}
+			case AscPDF.TEXT_ICONS_TYPES.insert: {
+				return "insert";
+			}
+			case AscPDF.TEXT_ICONS_TYPES.key: {
+				return "key";
+			}
+			case AscPDF.TEXT_ICONS_TYPES.newParagraph: {
+				return "newParagraph";
+			}
+			case AscPDF.TEXT_ICONS_TYPES.note: {
+				return "note";
+			}
+			case AscPDF.TEXT_ICONS_TYPES.paragraph: {
+				return "paragraph";
+			}
+			case AscPDF.TEXT_ICONS_TYPES.rightArrow: {
+				return "rightArrow";
+			}
+			case AscPDF.TEXT_ICONS_TYPES.rightPointer: {
+				return "rightPointer";
+			}
+			case AscPDF.TEXT_ICONS_TYPES.star: {
+				return "star";
+			}
+			case AscPDF.TEXT_ICONS_TYPES.upArrow: {
+				return "upArrow";
+			}
+			case AscPDF.TEXT_ICONS_TYPES.upLeftArrow: {
+				return "upLeftArrow";
+			}
+		}
 	};
 
 	function private_GetLogicDocument() {
@@ -3555,171 +3689,172 @@
 	}
 
 	// Api
-	Api.prototype["GetDocument"]						= Api.prototype.GetDocument
-	Api.prototype["CreateRGBColor"]						= Api.prototype.CreateRGBColor
+	Api.prototype["GetDocument"]							= Api.prototype.GetDocument;
+	Api.prototype["CreateRGBColor"]							= Api.prototype.CreateRGBColor;
+	Api.prototype["CreateTextAnnot"]						= Api.prototype.CreateTextAnnot;
 
 	// ApiDocument
-	ApiDocument.prototype["GetClassType"]				= ApiDocument.prototype.GetClassType;
-	ApiDocument.prototype["AddPage"]					= ApiDocument.prototype.AddPage;
-	ApiDocument.prototype["GetPage"]					= ApiDocument.prototype.GetPage;
-	ApiDocument.prototype["RemovePage"]					= ApiDocument.prototype.RemovePage;
-	ApiDocument.prototype["GetPagesCount"]				= ApiDocument.prototype.GetPagesCount;
-	ApiDocument.prototype["AddTextField"]				= ApiDocument.prototype.AddTextField;
-	ApiDocument.prototype["AddDateField"]				= ApiDocument.prototype.AddDateField;
-	ApiDocument.prototype["AddImageField"]				= ApiDocument.prototype.AddImageField;
-	ApiDocument.prototype["AddCheckboxField"]			= ApiDocument.prototype.AddCheckboxField;
-	ApiDocument.prototype["AddRadiobuttonField"]		= ApiDocument.prototype.AddRadiobuttonField;
-	ApiDocument.prototype["AddComboboxField"]			= ApiDocument.prototype.AddComboboxField;
-	ApiDocument.prototype["AddListboxField"]			= ApiDocument.prototype.AddListboxField;
-	ApiDocument.prototype["GetAllFields"]				= ApiDocument.prototype.GetAllFields;
-	ApiDocument.prototype["GetFieldByName"]				= ApiDocument.prototype.GetFieldByName;
+	ApiDocument.prototype["GetClassType"]					= ApiDocument.prototype.GetClassType;
+	ApiDocument.prototype["AddPage"]						= ApiDocument.prototype.AddPage;
+	ApiDocument.prototype["GetPage"]						= ApiDocument.prototype.GetPage;
+	ApiDocument.prototype["RemovePage"]						= ApiDocument.prototype.RemovePage;
+	ApiDocument.prototype["GetPagesCount"]					= ApiDocument.prototype.GetPagesCount;
+	ApiDocument.prototype["AddTextField"]					= ApiDocument.prototype.AddTextField;
+	ApiDocument.prototype["AddDateField"]					= ApiDocument.prototype.AddDateField;
+	ApiDocument.prototype["AddImageField"]					= ApiDocument.prototype.AddImageField;
+	ApiDocument.prototype["AddCheckboxField"]				= ApiDocument.prototype.AddCheckboxField;
+	ApiDocument.prototype["AddRadiobuttonField"]			= ApiDocument.prototype.AddRadiobuttonField;
+	ApiDocument.prototype["AddComboboxField"]				= ApiDocument.prototype.AddComboboxField;
+	ApiDocument.prototype["AddListboxField"]				= ApiDocument.prototype.AddListboxField;
+	ApiDocument.prototype["GetAllFields"]					= ApiDocument.prototype.GetAllFields;
+	ApiDocument.prototype["GetFieldByName"]					= ApiDocument.prototype.GetFieldByName;
 
 	// ApiPage
-	ApiPage.prototype["GetClassType"]					= ApiPage.prototype.GetClassType;
-	ApiPage.prototype["SetRotate"]						= ApiPage.prototype.SetRotate;
-	ApiPage.prototype["GetRotate"]						= ApiPage.prototype.GetRotate;
-	ApiPage.prototype["GetIndex"]						= ApiPage.prototype.GetIndex;
-	ApiPage.prototype["GetAllWidgets"]					= ApiPage.prototype.GetAllWidgets;
-	ApiPage.prototype["AddAnnot"]						= ApiPage.prototype.AddAnnot;
+	ApiPage.prototype["GetClassType"]						= ApiPage.prototype.GetClassType;
+	ApiPage.prototype["SetRotate"]							= ApiPage.prototype.SetRotate;
+	ApiPage.prototype["GetRotate"]							= ApiPage.prototype.GetRotate;
+	ApiPage.prototype["GetIndex"]							= ApiPage.prototype.GetIndex;
+	ApiPage.prototype["GetAllWidgets"]						= ApiPage.prototype.GetAllWidgets;
+	ApiPage.prototype["AddAnnot"]							= ApiPage.prototype.AddAnnot;
 
 	// ApiBaseField
-	ApiBaseField.prototype["SetRect"]					= ApiBaseField.prototype.SetRect;
-	ApiBaseField.prototype["GetRect"]					= ApiBaseField.prototype.GetRect;
-	ApiBaseField.prototype["SetFullName"]				= ApiBaseField.prototype.SetFullName;
-	ApiBaseField.prototype["GetFullName"]				= ApiBaseField.prototype.GetFullName;
-	ApiBaseField.prototype["SetPartialName"]			= ApiBaseField.prototype.SetPartialName;
-	ApiBaseField.prototype["GetPartialName"]			= ApiBaseField.prototype.GetPartialName;
-	ApiBaseField.prototype["SetRequired"]				= ApiBaseField.prototype.SetRequired;
-	ApiBaseField.prototype["IsRequired"]				= ApiBaseField.prototype.IsRequired;
-	ApiBaseField.prototype["SetReadOnly"]				= ApiBaseField.prototype.SetReadOnly;
-	ApiBaseField.prototype["IsReadOnly"]				= ApiBaseField.prototype.IsReadOnly;
-	ApiBaseField.prototype["SetValue"]					= ApiBaseField.prototype.SetValue;
-	ApiBaseField.prototype["GetValue"]					= ApiBaseField.prototype.GetValue;
-	ApiBaseField.prototype["AddWidget"]					= ApiBaseField.prototype.AddWidget;
-	ApiBaseField.prototype["GetAllWidgets"]				= ApiBaseField.prototype.GetAllWidgets;
+	ApiBaseField.prototype["SetRect"]						= ApiBaseField.prototype.SetRect;
+	ApiBaseField.prototype["GetRect"]						= ApiBaseField.prototype.GetRect;
+	ApiBaseField.prototype["SetFullName"]					= ApiBaseField.prototype.SetFullName;
+	ApiBaseField.prototype["GetFullName"]					= ApiBaseField.prototype.GetFullName;
+	ApiBaseField.prototype["SetPartialName"]				= ApiBaseField.prototype.SetPartialName;
+	ApiBaseField.prototype["GetPartialName"]				= ApiBaseField.prototype.GetPartialName;
+	ApiBaseField.prototype["SetRequired"]					= ApiBaseField.prototype.SetRequired;
+	ApiBaseField.prototype["IsRequired"]					= ApiBaseField.prototype.IsRequired;
+	ApiBaseField.prototype["SetReadOnly"]					= ApiBaseField.prototype.SetReadOnly;
+	ApiBaseField.prototype["IsReadOnly"]					= ApiBaseField.prototype.IsReadOnly;
+	ApiBaseField.prototype["SetValue"]						= ApiBaseField.prototype.SetValue;
+	ApiBaseField.prototype["GetValue"]						= ApiBaseField.prototype.GetValue;
+	ApiBaseField.prototype["AddWidget"]						= ApiBaseField.prototype.AddWidget;
+	ApiBaseField.prototype["GetAllWidgets"]					= ApiBaseField.prototype.GetAllWidgets;
 
 	// ApiBaseWidget
-	ApiBaseWidget.prototype["GetClassType"]				= ApiBaseWidget.prototype.GetClassType;
-	ApiBaseWidget.prototype["SetBorderColor"]			= ApiBaseWidget.prototype.SetBorderColor;
-	ApiBaseWidget.prototype["GetBorderColor"]			= ApiBaseWidget.prototype.GetBorderColor;
-	ApiBaseWidget.prototype["SetBorderWidth"]			= ApiBaseWidget.prototype.SetBorderWidth;
-	ApiBaseWidget.prototype["GetBorderWidth"]			= ApiBaseWidget.prototype.GetBorderWidth;
-	ApiBaseWidget.prototype["SetBorderStyle"]			= ApiBaseWidget.prototype.SetBorderStyle;
-	ApiBaseWidget.prototype["GetBorderStyle"]			= ApiBaseWidget.prototype.GetBorderStyle;
-	ApiBaseWidget.prototype["SetBackgroundColor"]		= ApiBaseWidget.prototype.SetBackgroundColor;
-	ApiBaseWidget.prototype["GetBackgroundColor"]		= ApiBaseWidget.prototype.GetBackgroundColor;
-	ApiBaseWidget.prototype["SetTextColor"]				= ApiBaseWidget.prototype.SetTextColor;
-	ApiBaseWidget.prototype["GetTextColor"]				= ApiBaseWidget.prototype.GetTextColor;
-	ApiBaseWidget.prototype["SetTextSize"]				= ApiBaseWidget.prototype.SetTextSize;
-	ApiBaseWidget.prototype["GetTextSize"]				= ApiBaseWidget.prototype.GetTextSize;
-	ApiBaseWidget.prototype["SetAutoFit"]				= ApiBaseWidget.prototype.SetAutoFit;
-	ApiBaseWidget.prototype["IsAutoFit"]				= ApiBaseWidget.prototype.IsAutoFit;
-	ApiBaseWidget.prototype["Remove"]					= ApiBaseWidget.prototype.Remove;
+	ApiBaseWidget.prototype["GetClassType"]					= ApiBaseWidget.prototype.GetClassType;
+	ApiBaseWidget.prototype["SetBorderColor"]				= ApiBaseWidget.prototype.SetBorderColor;
+	ApiBaseWidget.prototype["GetBorderColor"]				= ApiBaseWidget.prototype.GetBorderColor;
+	ApiBaseWidget.prototype["SetBorderWidth"]				= ApiBaseWidget.prototype.SetBorderWidth;
+	ApiBaseWidget.prototype["GetBorderWidth"]				= ApiBaseWidget.prototype.GetBorderWidth;
+	ApiBaseWidget.prototype["SetBorderStyle"]				= ApiBaseWidget.prototype.SetBorderStyle;
+	ApiBaseWidget.prototype["GetBorderStyle"]				= ApiBaseWidget.prototype.GetBorderStyle;
+	ApiBaseWidget.prototype["SetBackgroundColor"]			= ApiBaseWidget.prototype.SetBackgroundColor;
+	ApiBaseWidget.prototype["GetBackgroundColor"]			= ApiBaseWidget.prototype.GetBackgroundColor;
+	ApiBaseWidget.prototype["SetTextColor"]					= ApiBaseWidget.prototype.SetTextColor;
+	ApiBaseWidget.prototype["GetTextColor"]					= ApiBaseWidget.prototype.GetTextColor;
+	ApiBaseWidget.prototype["SetTextSize"]					= ApiBaseWidget.prototype.SetTextSize;
+	ApiBaseWidget.prototype["GetTextSize"]					= ApiBaseWidget.prototype.GetTextSize;
+	ApiBaseWidget.prototype["SetAutoFit"]					= ApiBaseWidget.prototype.SetAutoFit;
+	ApiBaseWidget.prototype["IsAutoFit"]					= ApiBaseWidget.prototype.IsAutoFit;
+	ApiBaseWidget.prototype["Remove"]						= ApiBaseWidget.prototype.Remove;
 
 	// ApiTextField
-	ApiTextField.prototype["GetClassType"]				= ApiTextField.prototype.GetClassType;
-	ApiTextField.prototype["SetMultiline"]				= ApiTextField.prototype.SetMultiline;
-	ApiTextField.prototype["IsMultiline"]				= ApiTextField.prototype.IsMultiline;
-	ApiTextField.prototype["SetCharLimit"]				= ApiTextField.prototype.SetCharLimit;
-	ApiTextField.prototype["GetCharLimit"]				= ApiTextField.prototype.GetCharLimit;
-	ApiTextField.prototype["SetComb"]					= ApiTextField.prototype.SetComb;
-	ApiTextField.prototype["IsComb"]					= ApiTextField.prototype.IsComb;
-	ApiTextField.prototype["SetScrollLongText"]			= ApiTextField.prototype.SetScrollLongText;
-	ApiTextField.prototype["IsScrollLongText"]			= ApiTextField.prototype.IsScrollLongText;
-	ApiTextField.prototype["SetNumberFormat"]			= ApiTextField.prototype.SetNumberFormat;
-	ApiTextField.prototype["SetPercentageFormat"]		= ApiTextField.prototype.SetPercentageFormat;
-	ApiTextField.prototype["SetDateFormat"]				= ApiTextField.prototype.SetDateFormat;
-	ApiTextField.prototype["SetTimeFormat"]				= ApiTextField.prototype.SetTimeFormat;
-	ApiTextField.prototype["SetSpecialFormat"]			= ApiTextField.prototype.SetSpecialFormat;
-	ApiTextField.prototype["SetMask"]					= ApiTextField.prototype.SetMask;
-	ApiTextField.prototype["SetRegularExp"]				= ApiTextField.prototype.SetRegularExp;
-	ApiTextField.prototype["ClearFormat"]				= ApiTextField.prototype.ClearFormat;
-	ApiTextField.prototype["SetValidateRange"]			= ApiTextField.prototype.SetValidateRange;
+	ApiTextField.prototype["GetClassType"]					= ApiTextField.prototype.GetClassType;
+	ApiTextField.prototype["SetMultiline"]					= ApiTextField.prototype.SetMultiline;
+	ApiTextField.prototype["IsMultiline"]					= ApiTextField.prototype.IsMultiline;
+	ApiTextField.prototype["SetCharLimit"]					= ApiTextField.prototype.SetCharLimit;
+	ApiTextField.prototype["GetCharLimit"]					= ApiTextField.prototype.GetCharLimit;
+	ApiTextField.prototype["SetComb"]						= ApiTextField.prototype.SetComb;
+	ApiTextField.prototype["IsComb"]						= ApiTextField.prototype.IsComb;
+	ApiTextField.prototype["SetScrollLongText"]				= ApiTextField.prototype.SetScrollLongText;
+	ApiTextField.prototype["IsScrollLongText"]				= ApiTextField.prototype.IsScrollLongText;
+	ApiTextField.prototype["SetNumberFormat"]				= ApiTextField.prototype.SetNumberFormat;
+	ApiTextField.prototype["SetPercentageFormat"]			= ApiTextField.prototype.SetPercentageFormat;
+	ApiTextField.prototype["SetDateFormat"]					= ApiTextField.prototype.SetDateFormat;
+	ApiTextField.prototype["SetTimeFormat"]					= ApiTextField.prototype.SetTimeFormat;
+	ApiTextField.prototype["SetSpecialFormat"]				= ApiTextField.prototype.SetSpecialFormat;
+	ApiTextField.prototype["SetMask"]						= ApiTextField.prototype.SetMask;
+	ApiTextField.prototype["SetRegularExp"]					= ApiTextField.prototype.SetRegularExp;
+	ApiTextField.prototype["ClearFormat"]					= ApiTextField.prototype.ClearFormat;
+	ApiTextField.prototype["SetValidateRange"]				= ApiTextField.prototype.SetValidateRange;
 
 	// ApiTextWidget
-	ApiTextWidget.prototype["GetClassType"]				= ApiTextWidget.prototype.GetClassType;
-	ApiTextWidget.prototype["SetPlaceholder"]			= ApiTextWidget.prototype.SetPlaceholder;
-	ApiTextWidget.prototype["GetPlaceholder"]			= ApiTextWidget.prototype.GetPlaceholder;
-	ApiTextWidget.prototype["SetRegularExp"]			= ApiTextWidget.prototype.SetRegularExp;
-	ApiTextWidget.prototype["GetRegularExp"]			= ApiTextWidget.prototype.GetRegularExp;
+	ApiTextWidget.prototype["GetClassType"]					= ApiTextWidget.prototype.GetClassType;
+	ApiTextWidget.prototype["SetPlaceholder"]				= ApiTextWidget.prototype.SetPlaceholder;
+	ApiTextWidget.prototype["GetPlaceholder"]				= ApiTextWidget.prototype.GetPlaceholder;
+	ApiTextWidget.prototype["SetRegularExp"]				= ApiTextWidget.prototype.SetRegularExp;
+	ApiTextWidget.prototype["GetRegularExp"]				= ApiTextWidget.prototype.GetRegularExp;
 
 	// ApiBaseListField
-	ApiBaseListField.prototype["AddOption"]				= ApiBaseListField.prototype.AddOption;
-	ApiBaseListField.prototype["RemoveOption"]			= ApiBaseListField.prototype.RemoveOption;
-	ApiBaseListField.prototype["MoveOption"]			= ApiBaseListField.prototype.MoveOption;
-	ApiBaseListField.prototype["GetOption"]				= ApiBaseListField.prototype.GetOption;
-	ApiBaseListField.prototype["GetOptions"]			= ApiBaseListField.prototype.GetOptions;
-	ApiBaseListField.prototype["SetCommitOnSelChange"]	= ApiBaseListField.prototype.SetCommitOnSelChange;
-	ApiBaseListField.prototype["IsCommitOnSelChange"]	= ApiBaseListField.prototype.IsCommitOnSelChange;
-	ApiBaseListField.prototype["SetValueIndexes"]		= ApiBaseListField.prototype.SetValueIndexes;
-	ApiBaseListField.prototype["GetValueIndexes"]		= ApiBaseListField.prototype.GetValueIndexes;
+	ApiBaseListField.prototype["AddOption"]					= ApiBaseListField.prototype.AddOption;
+	ApiBaseListField.prototype["RemoveOption"]				= ApiBaseListField.prototype.RemoveOption;
+	ApiBaseListField.prototype["MoveOption"]				= ApiBaseListField.prototype.MoveOption;
+	ApiBaseListField.prototype["GetOption"]					= ApiBaseListField.prototype.GetOption;
+	ApiBaseListField.prototype["GetOptions"]				= ApiBaseListField.prototype.GetOptions;
+	ApiBaseListField.prototype["SetCommitOnSelChange"]		= ApiBaseListField.prototype.SetCommitOnSelChange;
+	ApiBaseListField.prototype["IsCommitOnSelChange"]		= ApiBaseListField.prototype.IsCommitOnSelChange;
+	ApiBaseListField.prototype["SetValueIndexes"]			= ApiBaseListField.prototype.SetValueIndexes;
+	ApiBaseListField.prototype["GetValueIndexes"]			= ApiBaseListField.prototype.GetValueIndexes;
 
 	// ApiComboboxField
-	ApiComboboxField.prototype["GetClassType"]			= ApiComboboxField.prototype.GetClassType;
-	ApiComboboxField.prototype["SetEditable"]			= ApiComboboxField.prototype.SetEditable;
-	ApiComboboxField.prototype["IsEditable"]			= ApiComboboxField.prototype.IsEditable;
-	ApiComboboxField.prototype["SetNumberFormat"]		= ApiComboboxField.prototype.SetNumberFormat;
-	ApiComboboxField.prototype["SetPercentageFormat"]	= ApiComboboxField.prototype.SetPercentageFormat;
-	ApiComboboxField.prototype["SetDateFormat"]			= ApiComboboxField.prototype.SetDateFormat;
-	ApiComboboxField.prototype["SetTimeFormat"]			= ApiComboboxField.prototype.SetTimeFormat;
-	ApiComboboxField.prototype["SetSpecialFormat"]		= ApiComboboxField.prototype.SetSpecialFormat;
-	ApiComboboxField.prototype["SetMask"]				= ApiComboboxField.prototype.SetMask;
-	ApiComboboxField.prototype["SetRegularExp"]			= ApiComboboxField.prototype.SetRegularExp;
-	ApiComboboxField.prototype["ClearFormat"]			= ApiComboboxField.prototype.ClearFormat;
-	ApiComboboxField.prototype["SetValidateRange"]		= ApiComboboxField.prototype.SetValidateRange;
+	ApiComboboxField.prototype["GetClassType"]				= ApiComboboxField.prototype.GetClassType;
+	ApiComboboxField.prototype["SetEditable"]				= ApiComboboxField.prototype.SetEditable;
+	ApiComboboxField.prototype["IsEditable"]				= ApiComboboxField.prototype.IsEditable;
+	ApiComboboxField.prototype["SetNumberFormat"]			= ApiComboboxField.prototype.SetNumberFormat;
+	ApiComboboxField.prototype["SetPercentageFormat"]		= ApiComboboxField.prototype.SetPercentageFormat;
+	ApiComboboxField.prototype["SetDateFormat"]				= ApiComboboxField.prototype.SetDateFormat;
+	ApiComboboxField.prototype["SetTimeFormat"]				= ApiComboboxField.prototype.SetTimeFormat;
+	ApiComboboxField.prototype["SetSpecialFormat"]			= ApiComboboxField.prototype.SetSpecialFormat;
+	ApiComboboxField.prototype["SetMask"]					= ApiComboboxField.prototype.SetMask;
+	ApiComboboxField.prototype["SetRegularExp"]				= ApiComboboxField.prototype.SetRegularExp;
+	ApiComboboxField.prototype["ClearFormat"]				= ApiComboboxField.prototype.ClearFormat;
+	ApiComboboxField.prototype["SetValidateRange"]			= ApiComboboxField.prototype.SetValidateRange;
 
 	// ApiListboxField
-	ApiListboxField.prototype["GetClassType"]			= ApiListboxField.prototype.GetClassType;
-	ApiListboxField.prototype["SetMultipleSelection"]	= ApiListboxField.prototype.SetMultipleSelection;
-	ApiListboxField.prototype["IsMultipleSelection"]	= ApiListboxField.prototype.IsMultipleSelection;
+	ApiListboxField.prototype["GetClassType"]				= ApiListboxField.prototype.GetClassType;
+	ApiListboxField.prototype["SetMultipleSelection"]		= ApiListboxField.prototype.SetMultipleSelection;
+	ApiListboxField.prototype["IsMultipleSelection"]		= ApiListboxField.prototype.IsMultipleSelection;
 
 	// ApiCheckboxField
-	ApiCheckboxField.prototype["GetClassType"]			= ApiCheckboxField.prototype.GetClassType;
-	ApiCheckboxField.prototype["SetToggleToOff"]		= ApiCheckboxField.prototype.SetToggleToOff;
-	ApiCheckboxField.prototype["IsToggleToOff"]			= ApiCheckboxField.prototype.IsToggleToOff;
-	ApiCheckboxField.prototype["AddOption"]				= ApiCheckboxField.prototype.AddOption;
+	ApiCheckboxField.prototype["GetClassType"]				= ApiCheckboxField.prototype.GetClassType;
+	ApiCheckboxField.prototype["SetToggleToOff"]			= ApiCheckboxField.prototype.SetToggleToOff;
+	ApiCheckboxField.prototype["IsToggleToOff"]				= ApiCheckboxField.prototype.IsToggleToOff;
+	ApiCheckboxField.prototype["AddOption"]					= ApiCheckboxField.prototype.AddOption;
 
 	// ApiRadiobuttonField
-	ApiRadiobuttonField.prototype["GetClassType"]		= ApiRadiobuttonField.prototype.GetClassType;
-	ApiRadiobuttonField.prototype["SetCheckInUnison"]	= ApiRadiobuttonField.prototype.SetCheckInUnison;
-	ApiRadiobuttonField.prototype["IsCheckInUnison"]	= ApiRadiobuttonField.prototype.IsCheckInUnison;
+	ApiRadiobuttonField.prototype["GetClassType"]			= ApiRadiobuttonField.prototype.GetClassType;
+	ApiRadiobuttonField.prototype["SetCheckInUnison"]		= ApiRadiobuttonField.prototype.SetCheckInUnison;
+	ApiRadiobuttonField.prototype["IsCheckInUnison"]		= ApiRadiobuttonField.prototype.IsCheckInUnison;
 
 	// ApiCheckboxWidget
-	ApiCheckboxWidget.prototype["GetClassType"]			= ApiCheckboxWidget.prototype.GetClassType;
-	ApiCheckboxWidget.prototype["SetChecked"]			= ApiCheckboxWidget.prototype.SetChecked;
-	ApiCheckboxWidget.prototype["IsChecked"]			= ApiCheckboxWidget.prototype.IsChecked;
-	ApiCheckboxWidget.prototype["SetCheckStyle"]		= ApiCheckboxWidget.prototype.SetCheckStyle;
-	ApiCheckboxWidget.prototype["GetCheckStyle"]		= ApiCheckboxWidget.prototype.GetCheckStyle;
-	ApiCheckboxWidget.prototype["SetExportValue"]		= ApiCheckboxWidget.prototype.SetExportValue;
-	ApiCheckboxWidget.prototype["GetExportValue"]		= ApiCheckboxWidget.prototype.GetExportValue;
-	ApiCheckboxWidget.prototype["SetCheckedByDefault"]	= ApiCheckboxWidget.prototype.SetCheckedByDefault;
-	ApiCheckboxWidget.prototype["IsCheckedByDefault"]	= ApiCheckboxWidget.prototype.IsCheckedByDefault;
+	ApiCheckboxWidget.prototype["GetClassType"]				= ApiCheckboxWidget.prototype.GetClassType;
+	ApiCheckboxWidget.prototype["SetChecked"]				= ApiCheckboxWidget.prototype.SetChecked;
+	ApiCheckboxWidget.prototype["IsChecked"]				= ApiCheckboxWidget.prototype.IsChecked;
+	ApiCheckboxWidget.prototype["SetCheckStyle"]			= ApiCheckboxWidget.prototype.SetCheckStyle;
+	ApiCheckboxWidget.prototype["GetCheckStyle"]			= ApiCheckboxWidget.prototype.GetCheckStyle;
+	ApiCheckboxWidget.prototype["SetExportValue"]			= ApiCheckboxWidget.prototype.SetExportValue;
+	ApiCheckboxWidget.prototype["GetExportValue"]			= ApiCheckboxWidget.prototype.GetExportValue;
+	ApiCheckboxWidget.prototype["SetCheckedByDefault"]		= ApiCheckboxWidget.prototype.SetCheckedByDefault;
+	ApiCheckboxWidget.prototype["IsCheckedByDefault"]		= ApiCheckboxWidget.prototype.IsCheckedByDefault;
 
 	// ApiButtonField
-	ApiButtonField.prototype["GetClassType"]			= ApiButtonField.prototype.GetClassType;
+	ApiButtonField.prototype["GetClassType"]				= ApiButtonField.prototype.GetClassType;
 
 	// ApiButtonWidget
-	ApiButtonWidget.prototype["GetClassType"]			= ApiButtonWidget.prototype.GetClassType;
-	ApiButtonWidget.prototype["SetLayout"]				= ApiButtonWidget.prototype.SetLayout;
-	ApiButtonWidget.prototype["GetLayout"]				= ApiButtonWidget.prototype.GetLayout;
-	ApiButtonWidget.prototype["SetScaleWhen"]			= ApiButtonWidget.prototype.SetScaleWhen;
-	ApiButtonWidget.prototype["GetScaleWhen"]			= ApiButtonWidget.prototype.GetScaleWhen;
-	ApiButtonWidget.prototype["SetScaleHow"]			= ApiButtonWidget.prototype.SetScaleHow;
-	ApiButtonWidget.prototype["GetScaleHow"]			= ApiButtonWidget.prototype.GetScaleHow;
-	ApiButtonWidget.prototype["SetFitBounds"]			= ApiButtonWidget.prototype.SetFitBounds;
-	ApiButtonWidget.prototype["IsFitBounds"]			= ApiButtonWidget.prototype.IsFitBounds;
-	ApiButtonWidget.prototype["SetIconXPos"]			= ApiButtonWidget.prototype.SetIconXPos;
-	ApiButtonWidget.prototype["GetIconXPos"]			= ApiButtonWidget.prototype.GetIconXPos;
-	ApiButtonWidget.prototype["SetIconYPos"]			= ApiButtonWidget.prototype.SetIconYPos;
-	ApiButtonWidget.prototype["GetIconYPos"]			= ApiButtonWidget.prototype.GetIconYPos;
-	ApiButtonWidget.prototype["SetBehavior"]			= ApiButtonWidget.prototype.SetBehavior;
-	ApiButtonWidget.prototype["GetBehavior"]			= ApiButtonWidget.prototype.GetBehavior;
-	ApiButtonWidget.prototype["SetLabel"]				= ApiButtonWidget.prototype.SetLabel;
-	ApiButtonWidget.prototype["GetLabel"]				= ApiButtonWidget.prototype.GetLabel;
-	ApiButtonWidget.prototype["SetImage"]				= ApiButtonWidget.prototype.SetImage;
+	ApiButtonWidget.prototype["GetClassType"]				= ApiButtonWidget.prototype.GetClassType;
+	ApiButtonWidget.prototype["SetLayout"]					= ApiButtonWidget.prototype.SetLayout;
+	ApiButtonWidget.prototype["GetLayout"]					= ApiButtonWidget.prototype.GetLayout;
+	ApiButtonWidget.prototype["SetScaleWhen"]				= ApiButtonWidget.prototype.SetScaleWhen;
+	ApiButtonWidget.prototype["GetScaleWhen"]				= ApiButtonWidget.prototype.GetScaleWhen;
+	ApiButtonWidget.prototype["SetScaleHow"]				= ApiButtonWidget.prototype.SetScaleHow;
+	ApiButtonWidget.prototype["GetScaleHow"]				= ApiButtonWidget.prototype.GetScaleHow;
+	ApiButtonWidget.prototype["SetFitBounds"]				= ApiButtonWidget.prototype.SetFitBounds;
+	ApiButtonWidget.prototype["IsFitBounds"]				= ApiButtonWidget.prototype.IsFitBounds;
+	ApiButtonWidget.prototype["SetIconXPos"]				= ApiButtonWidget.prototype.SetIconXPos;
+	ApiButtonWidget.prototype["GetIconXPos"]				= ApiButtonWidget.prototype.GetIconXPos;
+	ApiButtonWidget.prototype["SetIconYPos"]				= ApiButtonWidget.prototype.SetIconYPos;
+	ApiButtonWidget.prototype["GetIconYPos"]				= ApiButtonWidget.prototype.GetIconYPos;
+	ApiButtonWidget.prototype["SetBehavior"]				= ApiButtonWidget.prototype.SetBehavior;
+	ApiButtonWidget.prototype["GetBehavior"]				= ApiButtonWidget.prototype.GetBehavior;
+	ApiButtonWidget.prototype["SetLabel"]					= ApiButtonWidget.prototype.SetLabel;
+	ApiButtonWidget.prototype["GetLabel"]					= ApiButtonWidget.prototype.GetLabel;
+	ApiButtonWidget.prototype["SetImage"]					= ApiButtonWidget.prototype.SetImage;
 
 	// ApiRGBColor
-	ApiRGBColor.prototype["GetClassType"]				= ApiRGBColor.prototype.GetClassType;
+	ApiRGBColor.prototype["GetClassType"]					= ApiRGBColor.prototype.GetClassType;
 
 	// ApiBaseAnnotation
 	ApiBaseAnnotation.prototype["SetRect"]					= ApiBaseAnnotation.prototype.SetRect;
@@ -3756,6 +3891,11 @@
 	ApiBaseAnnotation.prototype["GetBorderEffectIntensity"]	= ApiBaseAnnotation.prototype.GetBorderEffectIntensity;
 	ApiBaseAnnotation.prototype["AddReply"]					= ApiBaseAnnotation.prototype.AddReply;
 	ApiBaseAnnotation.prototype["GetReplies"]				= ApiBaseAnnotation.prototype.GetReplies;
+
+	// ApiTextAnnotation
+	ApiTextAnnotation.prototype["GetClassType"]					= ApiTextAnnotation.prototype.GetClassType;
+	ApiTextAnnotation.prototype["SetIconType"]					= ApiTextAnnotation.prototype.SetIconType;
+	ApiTextAnnotation.prototype["GetIconType"]					= ApiTextAnnotation.prototype.GetIconType;
 
 }(window, null));
 

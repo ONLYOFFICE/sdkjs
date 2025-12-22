@@ -49,26 +49,6 @@
         Unknown:    2
     }
 
-    let NOTE_ICONS_TYPES = {
-        Check1:         0,
-        Check2:         1,
-        Circle:         2,
-        Comment:        3,
-        Cross:          4,
-        CrossH:         5,
-        Help:           6,
-        Insert:         7,
-        Key:            8,
-        NewParagraph:   9,
-        Note:           10,
-        Paragraph:      11,
-        RightArrow:     12,
-        RightPointer:   13,
-        Star:           14,
-        UpArrow:        15,
-        UpLeftArrow:    16
-    }
-
     let HALF_SIZE = 11;
     
     /**
@@ -79,7 +59,7 @@
     {
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Text, aOrigRect, oDoc);
 
-        this._noteIcon      = NOTE_ICONS_TYPES.Comment;
+        this._noteIcon      = AscPDF.TEXT_ICONS_TYPES.comment;
         this._point         = undefined;
         this._popupOpen     = false;
         this._popupRect     = undefined;
@@ -88,8 +68,6 @@
         this._state         = undefined;
         this._stateModel    = undefined;
         this._fillColor     = [1, 0.82, 0];
-
-        this._replies = [];
     }
     AscFormat.InitClass(CAnnotationText, AscPDF.CAnnotationBase, AscDFH.historyitem_type_Pdf_Annot_Text);
 	CAnnotationText.prototype.constructor = CAnnotationText;
@@ -189,38 +167,38 @@
     CAnnotationText.prototype.GetIconDrawFunc = function() {
         let nType = this.GetIconType();
         switch (nType) {
-            case NOTE_ICONS_TYPES.Check1:
-            case NOTE_ICONS_TYPES.Check2:
+            case AscPDF.TEXT_ICONS_TYPES.check1:
+            case AscPDF.TEXT_ICONS_TYPES.check2:
                 return drawIconCheck;
-            case NOTE_ICONS_TYPES.Circle:
+            case AscPDF.TEXT_ICONS_TYPES.circle:
                 return drawIconCircle;
-            case NOTE_ICONS_TYPES.Comment:
+            case AscPDF.TEXT_ICONS_TYPES.comment:
                 return drawIconComment;
-            case NOTE_ICONS_TYPES.Cross:
+            case AscPDF.TEXT_ICONS_TYPES.cross:
                 return drawIconCross;
-            case NOTE_ICONS_TYPES.CrossH:
+            case AscPDF.TEXT_ICONS_TYPES.crossH:
                 return drawIconCrossHairs;
-            case NOTE_ICONS_TYPES.Help:
+            case AscPDF.TEXT_ICONS_TYPES.help:
                 return drawIconHelp;
-            case NOTE_ICONS_TYPES.Insert:
+            case AscPDF.TEXT_ICONS_TYPES.insert:
                 return drawIconInsert;
-            case NOTE_ICONS_TYPES.Key:
+            case AscPDF.TEXT_ICONS_TYPES.key:
                 return drawIconKey;
-            case NOTE_ICONS_TYPES.NewParagraph:
+            case AscPDF.TEXT_ICONS_TYPES.newParagraph:
                 return drawIconNewParagraph;
-            case NOTE_ICONS_TYPES.Note:
+            case AscPDF.TEXT_ICONS_TYPES.note:
                 return drawIconNote;
-            case NOTE_ICONS_TYPES.Paragraph:
+            case AscPDF.TEXT_ICONS_TYPES.paragraph:
                 return drawIconParagraph;
-            case NOTE_ICONS_TYPES.RightArrow:
+            case AscPDF.TEXT_ICONS_TYPES.rightArrow:
                 return drawIconRightArrow;
-            case NOTE_ICONS_TYPES.RightPointer:
+            case AscPDF.TEXT_ICONS_TYPES.rightPointer:
                 return drawIconRightPointer;
-            case NOTE_ICONS_TYPES.Star:
+            case AscPDF.TEXT_ICONS_TYPES.star:
                 return drawIconStar;
-            case NOTE_ICONS_TYPES.UpArrow:
+            case AscPDF.TEXT_ICONS_TYPES.upArrow:
                 return drawIconUpArrow;
-            case NOTE_ICONS_TYPES.UpLeftArrow:
+            case AscPDF.TEXT_ICONS_TYPES.upLeftArrow:
                 return drawIconUpLeftArrow;
         }
 
