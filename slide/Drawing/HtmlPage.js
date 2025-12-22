@@ -328,6 +328,17 @@
 		this.m_oBottomPanesContainer.Anchor = (g_anchor_left | g_anchor_right | g_anchor_bottom);
 		this.m_oMainParent.AddControl(this.m_oBottomPanesContainer);
 
+		this.m_oBottomPanesContainer.HtmlElement.addEventListener('mouseleave', function () {
+			console.log('mouseleave');
+			setTimeout(function () {
+				console.log('timeout');
+				const data = new AscCommon.CMouseMoveData();
+				Asc.editor.sync_MouseMoveStartCallback();
+				Asc.editor.sync_MouseMoveCallback(data);
+				Asc.editor.sync_MouseMoveEndCallback();
+			}, 1000);
+		});
+
 		this.initNotes();
 		this.initAnimationPane();
 
