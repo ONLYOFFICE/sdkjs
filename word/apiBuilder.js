@@ -8004,15 +8004,20 @@
 		if (typeof(sName) !== "string")
 			return null;
 		
-		var Document = private_GetLogicDocument();
+		let oManager = this.Document.GetBookmarksManager();
+		let bookmarkMarks = oManager.GetBookmarkByName(sName);
+		if (!bookmarkMarks ||oManager.IsInternalUseBookmark(sName) || oManager.IsHiddenBookmark(sName))
+			return null;
+
+		let oDocument = private_GetLogicDocument();
 		private_RefreshRangesPosition();
-		var oldSelectionInfo = Document.SaveDocumentState();
+		let oldSelectionInfo = oDocument.SaveDocumentState();
 		
 		private_TrackRangesPositions();
 
 		this.Document.GoToBookmark(sName, true);
 
-		var oRange = this.GetRangeBySelect();
+		let oRange = this.GetRangeBySelect();
 
 		this.Document.LoadDocumentState(oldSelectionInfo);
 		this.Document.UpdateSelection();
@@ -10028,6 +10033,9 @@
 			if (oPrevRun.GetText() !== "")
 				break;
 		}
+		
+		if (!oPrevRun)
+			oPrevRun = new ApiRun(this.Paragraph.GetParaEndRun());
 		
 		let oApiRun = new ApiRun(oRun);
 		oApiRun.SetTextPr(oPrevRun.GetTextPr());
@@ -13404,7 +13412,7 @@
 	{
 		var Row = this.Table.GetRow(nRow);
 
-		if (Row && nCell >= 0 && nCell <= Row.Content.length)
+		if (Row && nCell >= 0 && nCell < Row.Content.length)
 		{
 			return new ApiTableCell(Row.GetCell(nCell));
 		}
