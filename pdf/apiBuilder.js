@@ -269,6 +269,41 @@
 		return new ApiTextAnnotation(oAnnot);
 	};
 
+	/**
+	 * Creates circle annotation.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {Rect} rect - annotation rect.
+	 * @param {string} [name] - unique annotation name.
+	 * @returns {ApiCircleAnnotation}
+	 * @see office-js-api/Examples/PDF/Api/Methods/CreateCircleAnnot.js
+	 */
+	Api.prototype.CreateCircleAnnot = function(rect, name) {
+		let oDoc = private_GetLogicDocument();
+
+		if (!prviate_IsValidRect(rect)) {
+			AscBuilder.throwException("The rect parameter must be a valid rect");
+		}
+
+		name = AscBuilder.GetStringParameter(name, null);
+		if (!name) {
+			AscBuilder.throwException("The name parameter must be a non empty string");
+		}
+
+		let oProps = {
+			rect:           rect,
+			name:           name ? name : AscCommon.CreateGUID(),
+			type:           AscPDF.ANNOTATIONS_TYPES.Circle,
+			creationDate:   (new Date().getTime()).toString(),
+			modDate:        (new Date().getTime()).toString(),
+			hidden:         false
+		}
+
+		let oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
+
+		return new ApiCircleAnnotation(oAnnot);
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiDocument
@@ -3284,6 +3319,36 @@
 		}
 	};
 
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiCircleAnnotation
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a circle annotation.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 * @extends {ApiBaseAnnotation}
+	 */
+	function ApiCircleAnnotation(oAnnot) {
+		ApiBaseAnnotation.call(this, oAnnot);
+	}
+
+	ApiCircleAnnotation.prototype = Object.create(ApiBaseAnnotation.prototype);
+	ApiCircleAnnotation.prototype.constructor = ApiCircleAnnotation;
+
+	/**
+	 * Returns a type of the ApiCircleAnnotation class.
+	 * @memberof ApiCircleAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"circleAnnot"}
+	 * @see office-js-api/Examples/PDF/ApiCircleAnnotation/Methods/GetClassType.js
+	 */
+	ApiCircleAnnotation.prototype.GetClassType = function() {
+		return "circleAnnot";
+	};
+
 	function private_GetLogicDocument() {
 		return Asc.editor.getPDFDoc();
 	}
@@ -3666,14 +3731,17 @@
 		return [r / 255, g / 255, b / 255];
 	}
 
-	function private_GetAnnotApi(field) {
-		if (!field) {
+	function private_GetAnnotApi(annot) {
+		if (!annot) {
 			return null;
 		}
 
-		switch (field.GetType()) {
+		switch (annot.GetType()) {
 			case AscPDF.ANNOTATIONS_TYPES.Text: {
-				return new ApiTextAnnotation(field);
+				return new ApiTextAnnotation(annot);
+			}
+			case AscPDF.ANNOTATIONS_TYPES.Circle: {
+				return new ApiCircleAnnotation(annot);
 			}
 		}
 	}
@@ -3692,6 +3760,7 @@
 	Api.prototype["GetDocument"]							= Api.prototype.GetDocument;
 	Api.prototype["CreateRGBColor"]							= Api.prototype.CreateRGBColor;
 	Api.prototype["CreateTextAnnot"]						= Api.prototype.CreateTextAnnot;
+	Api.prototype["CreateCircleAnnot"]						= Api.prototype.CreateCircleAnnot;
 
 	// ApiDocument
 	ApiDocument.prototype["GetClassType"]					= ApiDocument.prototype.GetClassType;
@@ -3896,6 +3965,9 @@
 	ApiTextAnnotation.prototype["GetClassType"]					= ApiTextAnnotation.prototype.GetClassType;
 	ApiTextAnnotation.prototype["SetIconType"]					= ApiTextAnnotation.prototype.SetIconType;
 	ApiTextAnnotation.prototype["GetIconType"]					= ApiTextAnnotation.prototype.GetIconType;
+	
+	// ApiCircleAnnotation
+	ApiCircleAnnotation.prototype["GetClassType"]					= ApiCircleAnnotation.prototype.GetClassType;
 
 }(window, null));
 

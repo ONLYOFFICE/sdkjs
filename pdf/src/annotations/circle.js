@@ -45,14 +45,7 @@
         this.spPr.setGeometry(AscFormat.CreateGeometry("ellipse"));
         this.setStyle(AscFormat.CreateDefaultShapeStyle("ellipse"));
 
-        this._point         = undefined;
-        this._popupOpen     = false;
-        this._popupRect     = undefined;
-        this._richContents  = undefined;
-        this._rotate        = undefined;
-        this._state         = undefined;
-        this._stateModel    = undefined;
-        this._rectDiff      = [0, 0, 0, 0];
+        this._rectDiff = [0, 0, 0, 0];
     }
 	CAnnotationCircle.prototype.constructor = CAnnotationCircle;
     AscFormat.InitClass(CAnnotationCircle, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Circle);
