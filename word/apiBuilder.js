@@ -21433,10 +21433,10 @@
 		} else {
 			color = new AscFormat.CRGBColor();
 			const components = this.GetRGBA();
-			color.RGBA.R = components.r;
-			color.RGBA.G = components.g;
-			color.RGBA.B = components.b;
-			color.RGBA.A = components.a;
+			color.RGBA.R = components['r'];
+			color.RGBA.G = components['g'];
+			color.RGBA.B = components['b'];
+			color.RGBA.A = components['a'];
 		}
 
 		unicolor.setColor(color);
