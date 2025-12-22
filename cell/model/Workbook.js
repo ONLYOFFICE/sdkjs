@@ -3295,7 +3295,7 @@
 	Workbook.prototype.checkRemoveMetadataByCmIndex = function(cmIndex) {
 		let isHaveReference = false;
 		this.forEach(function(ws) {
-			if (ws && ws.dynamicArrayManager && ws.dynamicArrayManager.getDynamicFormulaCount()) {
+			if (ws && ws.dynamicArrayManager && ws.dynamicArrayManager.getDynamicFormulaCount(cmIndex)) {
 				isHaveReference = true;
 			}
 		});
@@ -24779,6 +24779,7 @@
 	};
 	
 	CDynamicArrayManager.prototype.recalculateVolatileArrays = function () {
+		//return;
 		const ws = this.ws;
 
 		// recalculate all volatile arrays on page
@@ -25005,9 +25006,26 @@
 
 				var fText = "=" + arrayData.formula.getFormula();
 				let arrayFormula = arrayData.formula.getArrayFormulaRef();
-				//this.formulaParsed.removeDependencies();
+
+				//remove old formula
 				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoArrayFormula, AscCH.historyitem_ArrayFromula_DeleteFormula, this.ws.getId(),
 					new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new AscCommonExcel.UndoRedoData_ArrayFormula(arrayFormula, fText, arrayData.formula.getCm()), true);
+
+				//set vm/cm/aca by first cell in range
+				let dynamicProps = this.generateDynamicProps(arrayData.formula, arrayFormula);
+				let cmIndex = arrayData.formula.getCm();
+				let vmIndex;
+				if (dynamicProps) {
+					cmIndex = dynamicProps.cmIndex;
+					vmIndex = dynamicProps.vmIndex;
+
+					arrayData.formula.setVm(vmIndex);
+				}
+				arrayData.formula.setAca(true);
+
+				//add new 1-cell-dimention formula
+				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoArrayFormula, AscCH.historyitem_ArrayFromula_AddFormula, this.ws.getId(),
+					new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new AscCommonExcel.UndoRedoData_ArrayFormula(new Asc.Range(arrayFormula.c1, arrayFormula.r1, arrayFormula.c1, arrayFormula.r1), fText, cmIndex, vmIndex), true);
 
 				// add to volatile
 				ws.workbook.dependencyFormulas.addToVolatileArrays(formula);
@@ -25387,6 +25405,8 @@
 
 			// Initialize richValueStructures if needed
 			if (!this.ws.workbook.richValueStructures) {
+				const oldRichValueStructures = null;
+				
 				this.ws.workbook.richValueStructures = new AscCommonExcel.CRichValueStructures();
 				this.ws.workbook.richValueStructures.children = [];
 				
@@ -25417,10 +25437,17 @@
 				errorStructure.children.push(subTypeKey);
 				
 				this.ws.workbook.richValueStructures.children.push(errorStructure);
+				
+				// Add to history
+				const newRichValueStructures = this.ws.workbook.richValueStructures.clone();
+				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_RichValueStructures,
+					null, null, new UndoRedoData_FromTo(oldRichValueStructures, newRichValueStructures));
 			}
 
 			// Initialize richValueTypesInfo if needed
 			if (!this.ws.workbook.richValueTypesInfo) {
+				const oldRichValueTypesInfo = null;
+				
 				this.ws.workbook.richValueTypesInfo = new AscCommonExcel.CRichValueTypesInfo();
 				
 				// Create global type
@@ -25456,12 +25483,24 @@
 					
 					this.ws.workbook.richValueTypesInfo.global.keyFlags.arrItems.push(reservedKey);
 				}
+				
+				// Add to history
+				const newRichValueTypesInfo = this.ws.workbook.richValueTypesInfo.clone();
+				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_RichValueTypesInfo,
+					null, null, new UndoRedoData_FromTo(oldRichValueTypesInfo, newRichValueTypesInfo));
 			}
 
 			// Initialize richValueData if needed
 			if (!this.ws.workbook.richValueData) {
+				const oldRichValueData = null;
+				
 				this.ws.workbook.richValueData = new AscCommonExcel.CRichValueData();
 				this.ws.workbook.richValueData.pData = [];
+				
+				// Add to history
+				const newRichValueData = this.ws.workbook.richValueData.clone();
+				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_RichValueData,
+					null, null, new UndoRedoData_FromTo(oldRichValueData, newRichValueData));
 			}
 
 			// Calculate offsets from beforeSpillRange
@@ -25518,6 +25557,8 @@
 
 			// If not found — create new rich value and metadata as before
 			if (needGenerateVm) {
+				const oldRichValueData = this.ws.workbook.richValueData ? this.ws.workbook.richValueData.clone() : null;
+				
 				// Create rich value with error data
 				const richValue = new AscCommonExcel.CRichValue();
 				richValue.s = 0;
@@ -25557,6 +25598,10 @@
 				const newMetadata = this.ws.workbook.metadata.clone();
 				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_Metadata,
 					null, null, new UndoRedoData_FromTo(oldMetadata, newMetadata));
+				
+				const newRichValueData = this.ws.workbook.richValueData.clone();
+				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_RichValueData,
+					null, null, new UndoRedoData_FromTo(oldRichValueData, newRichValueData));
 
 				vmIndex = meta.valueMetadata.length;
 			}

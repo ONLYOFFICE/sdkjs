@@ -2388,16 +2388,18 @@ function (window, undefined) {
 	};
 
 	//***array-formula***
-	function UndoRedoData_ArrayFormula(range, formula, cmIndex) {
+	function UndoRedoData_ArrayFormula(range, formula, cmIndex, vmIndex) {
 		this.range = range;
 		this.formula = formula;
 		this.cmIndex = cmIndex;
+		this.vmIndex = vmIndex;
 	}
 
 	UndoRedoData_ArrayFormula.prototype.Properties = {
 		range: 0,
 		formula: 1,
-		cmIndex: 2
+		cmIndex: 2,
+		vmIndex: 3
 	};
 	UndoRedoData_ArrayFormula.prototype.getType = function () {
 		return UndoRedoDataTypes.ArrayFormula;
@@ -2413,6 +2415,8 @@ function (window, undefined) {
 				return this.formula;
 			case this.Properties.cmIndex:
 				return this.cmIndex;
+			case this.Properties.vmIndex:
+				return this.vmIndex;
 		}
 
 		return null;
@@ -2427,6 +2431,9 @@ function (window, undefined) {
 				break;
 			case this.Properties.cmIndex:
 				this.cmIndex = value;
+				break;
+			case this.Properties.vmIndex:
+				this.vmIndex = value;
 				break;
 		}
 		return null;
@@ -3183,6 +3190,12 @@ function (window, undefined) {
 			wb.oApi["pluginMethod_SetCustomFunctions"] && wb.oApi["pluginMethod_SetCustomFunctions"](bUndo ? Data.from : Data.to);
 		} else if (AscCH.historyitem_Workbook_Metadata === Type) {
 			wb.metadata = bUndo ? Data.from : Data.to;
+		} else if (AscCH.historyitem_Workbook_RichValueStructures === Type) {
+			wb.richValueStructures = bUndo ? Data.from : Data.to;
+		} else if (AscCH.historyitem_Workbook_RichValueTypesInfo === Type) {
+			wb.richValueTypesInfo = bUndo ? Data.from : Data.to;
+		} else if (AscCH.historyitem_Workbook_RichValueData === Type) {
+			wb.richValueData = bUndo ? Data.from : Data.to;
 		}
 	};
 	UndoRedoWorkbook.prototype.forwardTransformationIsAffect = function (Type) {
@@ -5152,6 +5165,7 @@ function (window, undefined) {
 		var bbox = Data.range;
 		var formula = Data.formula;
 		let cmIndex = Data.cmIndex;
+		let vmIndex = Data.vmIndex;
 		var range = ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2);
 		switch (Type) {
 			case AscCH.historyitem_ArrayFromula_AddFormula:
@@ -5162,6 +5176,7 @@ function (window, undefined) {
 							ws.getRange3(bbox.r1, bbox.c1, bbox.r1, bbox.c1)._foreach(function(cell) {
 								if (cell && cell.formulaParsed) {
 									cell.formulaParsed.setCm(cmIndex);
+									cell.formulaParsed.setVm(vmIndex);
 								}
 							});
 						}

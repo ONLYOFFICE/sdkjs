@@ -60,6 +60,9 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Workbook_ShowHorizontalScroll = 19;
 	window['AscCH'].historyitem_Workbook_SetCustomFunctions = 20;
 	window['AscCH'].historyitem_Workbook_Metadata = 21;
+	window['AscCH'].historyitem_Workbook_RichValueStructures = 22;
+	window['AscCH'].historyitem_Workbook_RichValueTypesInfo = 23;
+	window['AscCH'].historyitem_Workbook_RichValueData = 24;
 
 	window['AscCH'].historyitem_Worksheet_RemoveCell = 1;
 	window['AscCH'].historyitem_Worksheet_RemoveRows = 2;
