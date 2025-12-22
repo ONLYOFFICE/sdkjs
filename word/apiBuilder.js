@@ -3838,12 +3838,14 @@
 	function ApiColor(type, value)
 	{
 		const allowedTypes = ['auto', 'rgb', 'rgba', 'hex', 'theme'];
-		if (!allowedTypes.includes(type)) {
+		if (allowedTypes.indexOf(type) === -1) {
 			throwException(new Error('Type ' + type + ' is not a valid color type. Allowed types are: ' + allowedTypes.join(', ')));
 		}
 
 		this.type = type;
-		this.value = value;
+		if (type !== 'auto') {
+			this.value = value;
+		}
 	}
 
 	/**
@@ -5765,6 +5767,9 @@
 				break;
 			case "uniColor":
 				oResult = new ApiUniColor(oReader.ColorFromJSON(oParsedObj));
+				break;
+			case "color":
+				oResult = ApiColor.prototype.FromJSON(oParsedObj);
 				break;
 			case "style":
 				var oStyle = oReader.StyleFromJSON(oParsedObj);
@@ -21548,6 +21553,57 @@
 		"a": {get : function() {return this.GetRGBA()["a"];}}
 	});
 
+	/**
+	 * Converts the ApiColor object into the JSON object.
+	 *
+	 * @memberof ApiColor
+	 * @typeofeditors ["CDE"]
+	 * @since 9.3.0
+	 * @returns {string} JSON string representation of the color.
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/ToJSON.js
+	 */
+	ApiColor.prototype.ToJSON = function () {
+		const oJSON = {
+			'type': this.GetClassType(),
+			'color': {
+				'type': this.type,
+				'value': this.value
+			}
+		};
+		return JSON.stringify(oJSON);
+	};
+
+	/**
+	 * Converts the JSON object into the ApiColor object.
+	 *
+	 * @memberof ApiColor
+	 * @typeofeditors ["CDE"]
+	 * @since 9.3.0
+	 * @param {string} jsonObject - JSON representation of the color.
+	 * @returns {ApiColor|null} - new ApiColor object if the conversion was successful, null otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/FromJSON.js
+	 */
+	ApiColor.prototype.FromJSON = function (jsonObject) {
+		if (!jsonObject || jsonObject.type !== 'color' || !jsonObject.color) {
+			return null;
+		}
+
+		const allowedTypes = ['auto', 'rgb', 'rgba', 'hex', 'theme'];
+		const isValidType = typeof jsonObject.color.type === 'string' &&
+			allowedTypes.indexOf(jsonObject.color.type) !== -1;
+		if (!isValidType) {
+			return null;
+		}
+
+		const isValidValue = (jsonObject.color.type === 'auto') ||
+			(jsonObject.color.type !== 'auto' && AscFormat.isRealNumber(jsonObject.color.value));
+		if (!isValidValue) {
+			return null;
+		}
+
+		return new ApiColor(jsonObject.color.type, jsonObject.color.value);
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiBullet
@@ -29436,6 +29492,8 @@
 	ApiColor.prototype["GetRGB"] = ApiColor.prototype.GetRGB;
 	ApiColor.prototype["GetRGBA"] = ApiColor.prototype.GetRGBA;
 	ApiColor.prototype["GetHex"] = ApiColor.prototype.GetHex;
+	ApiColor.prototype["ToJSON"] = ApiColor.prototype.ToJSON;
+	ApiColor.prototype["FromJSON"] = ApiColor.prototype.FromJSON;
 
 	ApiBullet.prototype["GetClassType"]              = ApiBullet.prototype.GetClassType;
 	ApiBullet.prototype["ToJSON"]                    = ApiBullet.prototype.ToJSON;
