@@ -339,6 +339,41 @@
 		return new ApiSquareAnnotation(oAnnot);
 	};
 
+	/**
+	 * Creates freeText annotation.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {Rect} rect - annotation rect.
+	 * @param {string} [name] - unique annotation name.
+	 * @returns {ApiFreeTextAnnotation}
+	 * @see office-js-api/Examples/PDF/Api/Methods/CreateFreeTextAnnot.js
+	 */
+	Api.prototype.CreateFreeTextAnnot = function(rect, name) {
+		let oDoc = private_GetLogicDocument();
+
+		if (!prviate_IsValidRect(rect)) {
+			AscBuilder.throwException("The rect parameter must be a valid rect");
+		}
+
+		name = AscBuilder.GetStringParameter(name, null);
+		if (!name) {
+			AscBuilder.throwException("The name parameter must be a non empty string");
+		}
+
+		let oProps = {
+			rect:           rect,
+			name:           name ? name : AscCommon.CreateGUID(),
+			type:           AscPDF.ANNOTATIONS_TYPES.FreeText,
+			creationDate:   (new Date().getTime()).toString(),
+			modDate:        (new Date().getTime()).toString(),
+			hidden:         false
+		}
+
+		let oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
+
+		return new ApiFreeTextAnnotation(oAnnot);
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiDocument
@@ -3391,7 +3426,7 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Class representing a circle annotation.
+	 * Class representing a square annotation.
 	 * @constructor
 	 * @typeofeditors ["PDFE"]
 	 * @extends {ApiBaseAnnotation}
@@ -3412,6 +3447,36 @@
 	 */
 	ApiSquareAnnotation.prototype.GetClassType = function() {
 		return "squareAnnot";
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiFreeTextAnnotation
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a freeText annotation.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 * @extends {ApiBaseAnnotation}
+	 */
+	function ApiFreeTextAnnotation(oAnnot) {
+		ApiBaseAnnotation.call(this, oAnnot);
+	}
+
+	ApiFreeTextAnnotation.prototype = Object.create(ApiBaseAnnotation.prototype);
+	ApiFreeTextAnnotation.prototype.constructor = ApiFreeTextAnnotation;
+
+	/**
+	 * Returns a type of the ApiFreeTextAnnotation class.
+	 * @memberof ApiFreeTextAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"freeTextAnnot"}
+	 * @see office-js-api/Examples/PDF/ApiFreeTextAnnotation/Methods/GetClassType.js
+	 */
+	ApiFreeTextAnnotation.prototype.GetClassType = function() {
+		return "freeTextAnnot";
 	};
 
 	function private_GetLogicDocument() {
@@ -3811,6 +3876,9 @@
 			case AscPDF.ANNOTATIONS_TYPES.Square: {
 				return new ApiSquareAnnotation(annot);
 			}
+			case AscPDF.ANNOTATIONS_TYPES.FreeText: {
+				return new ApiFreeTextAnnotation(annot);
+			}
 		}
 	}
 
@@ -3830,6 +3898,7 @@
 	Api.prototype["CreateTextAnnot"]						= Api.prototype.CreateTextAnnot;
 	Api.prototype["CreateCircleAnnot"]						= Api.prototype.CreateCircleAnnot;
 	Api.prototype["CreateSquareAnnot"]						= Api.prototype.CreateSquareAnnot;
+	Api.prototype["CreateFreeTextAnnot"]					= Api.prototype.CreateFreeTextAnnot;
 
 	// ApiDocument
 	ApiDocument.prototype["GetClassType"]					= ApiDocument.prototype.GetClassType;
