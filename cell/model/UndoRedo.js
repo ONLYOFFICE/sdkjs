@@ -5181,6 +5181,13 @@ function (window, undefined) {
 							});
 						}
 					});
+				} else {
+					ws.getRange3(bbox.r1, bbox.c1, bbox.r1, bbox.c1)._foreach(function(cell) {
+						if (cell && cell.formulaParsed) {
+							//cell.formulaParsed.setCm(null);
+							//cell.formulaParsed.setVm(null);
+						}
+					});
 				}
 				break;
 			case AscCH.historyitem_ArrayFromula_DeleteFormula:

@@ -3301,6 +3301,31 @@
 		});
 		return !isHaveReference ? this.removeMetadataByCmIndex(cmIndex) : null;
 	};
+	Workbook.prototype.checkRemoveMetadataByVmIndex = function(vmIndex) {
+		if (!vmIndex || vmIndex < 1) {
+			return null;
+		}
+		
+		let isHaveReference = false;
+		
+		this.forEach(function(ws) {
+			if (!ws || isHaveReference) {
+				return;
+			}
+			
+			ws.forEachFormula(function(cell) {
+				if (cell && cell.formulaParsed) {
+					const formulaVm = cell.formulaParsed.getVm ? cell.formulaParsed.getVm() : null;
+					if (formulaVm === vmIndex) {
+						isHaveReference = true;
+						return true;
+					}
+				}
+			});
+		});
+		
+		return !isHaveReference ? this.removeMetadataByVmIndex(vmIndex) : null;
+	};
 	Workbook.prototype.removeMetadataByCmIndex = function(cmIndex) {
 		if (!this.metadata || !this.metadata.cellMetadata || !cmIndex || cmIndex < 1 || cmIndex > this.metadata.cellMetadata.length) {
 			return;
@@ -3472,6 +3497,151 @@
 
 		AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_Metadata,
 			null, null, new UndoRedoData_FromTo(oldMetadata, newMetadata));
+	};
+	Workbook.prototype.removeMetadataByVmIndex = function(vmIndex) {
+		if (!this.metadata || !this.metadata.valueMetadata || !vmIndex || vmIndex < 1 || vmIndex > this.metadata.valueMetadata.length) {
+			return;
+		}
+
+		const oldMetadata = this.metadata.clone();
+		const oldRichValueData = this.richValueData ? this.richValueData.clone() : null;
+		const meta = this.metadata;
+		const valueMetadataBlock = meta.valueMetadata[vmIndex - 1];
+		
+		if (!valueMetadataBlock) {
+			return;
+		}
+
+		const typeIndex = valueMetadataBlock.t - 1;
+		const valueIndex = valueMetadataBlock.v;
+
+		meta.valueMetadata.splice(vmIndex - 1, 1);
+
+		if (typeIndex >= 0 && meta.metadataTypes && typeIndex < meta.metadataTypes.length) {
+			const metadataType = meta.metadataTypes[typeIndex];
+			
+			if (metadataType && metadataType.name === "XLRICHVALUE" && meta.aFutureMetadata) {
+				for (let i = 0; i < meta.aFutureMetadata.length; i++) {
+					const futureMetadata = meta.aFutureMetadata[i];
+					if (futureMetadata.name === "XLRICHVALUE" && futureMetadata.futureMetadataBlocks) {
+						if (valueIndex >= 0 && valueIndex < futureMetadata.futureMetadataBlocks.length) {
+							const futureBlock = futureMetadata.futureMetadataBlocks[valueIndex];
+							
+							let rvIndex = null;
+							if (futureBlock && futureBlock.extLst && futureBlock.extLst.length > 0) {
+								const ext = futureBlock.extLst[0];
+								if (ext && ext.richValueBlock && ext.richValueBlock.i != null) {
+									rvIndex = ext.richValueBlock.i;
+								}
+							}
+							
+							futureMetadata.futureMetadataBlocks.splice(valueIndex, 1);
+
+							for (let j = 0; j < meta.valueMetadata.length; j++) {
+								const block = meta.valueMetadata[j];
+								if (block.t === valueMetadataBlock.t && block.v > valueIndex) {
+									block.v--;
+								}
+							}
+
+							if (rvIndex != null && this.richValueData && this.richValueData.pData && 
+								rvIndex >= 0 && rvIndex < this.richValueData.pData.length) {
+								this.richValueData.pData.splice(rvIndex, 1);
+								
+								if (meta.aFutureMetadata) {
+									for (let m = 0; m < meta.aFutureMetadata.length; m++) {
+										const fm = meta.aFutureMetadata[m];
+										if (fm.futureMetadataBlocks) {
+											for (let n = 0; n < fm.futureMetadataBlocks.length; n++) {
+												const fb = fm.futureMetadataBlocks[n];
+												if (fb && fb.extLst && fb.extLst.length > 0) {
+													const ext = fb.extLst[0];
+													if (ext && ext.richValueBlock && ext.richValueBlock.i != null && ext.richValueBlock.i > rvIndex) {
+														ext.richValueBlock.i--;
+													}
+												}
+											}
+										}
+									}
+								}
+								
+								if (this.richValueData.pData.length === 0) {
+									this.richValueData = null;
+									this.richValueStructures = null;
+									this.richValueTypesInfo = null;
+								}
+							}
+
+							if (futureMetadata.futureMetadataBlocks.length === 0) {
+								meta.aFutureMetadata.splice(i, 1);
+								
+								let hasTypeReferences = false;
+								for (let j = 0; j < meta.valueMetadata.length; j++) {
+									if (meta.valueMetadata[j].t === valueMetadataBlock.t) {
+										hasTypeReferences = true;
+										break;
+									}
+								}
+								if (!hasTypeReferences && meta.cellMetadata) {
+									for (let j = 0; j < meta.cellMetadata.length; j++) {
+										if (meta.cellMetadata[j].t === valueMetadataBlock.t) {
+											hasTypeReferences = true;
+											break;
+										}
+									}
+								}
+								
+								if (!hasTypeReferences) {
+									meta.metadataTypes.splice(typeIndex, 1);
+									
+									if (meta.valueMetadata) {
+										for (let j = 0; j < meta.valueMetadata.length; j++) {
+											if (meta.valueMetadata[j].t > valueMetadataBlock.t) {
+												meta.valueMetadata[j].t--;
+											}
+										}
+									}
+									if (meta.cellMetadata) {
+										for (let j = 0; j < meta.cellMetadata.length; j++) {
+											if (meta.cellMetadata[j].t > valueMetadataBlock.t) {
+												meta.cellMetadata[j].t--;
+											}
+										}
+									}
+									
+									if (meta.metadataTypes.length === 0) {
+										meta.metadataTypes = null;
+									}
+								}
+							}
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		if (meta.valueMetadata.length === 0) {
+			meta.valueMetadata = null;
+		}
+
+		if (meta.aFutureMetadata && meta.aFutureMetadata.length === 0) {
+			meta.aFutureMetadata = null;
+		}
+
+		const newMetadata = meta.cellMetadata || meta.valueMetadata || meta.aFutureMetadata || meta.metadataTypes ? meta.clone() : null;
+		
+		if (!newMetadata) {
+			this.metadata = null;
+		}
+
+		const newRichValueData = this.richValueData ? this.richValueData.clone() : null;
+
+		AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_Metadata,
+			null, null, new UndoRedoData_FromTo(oldMetadata, newMetadata));
+		
+		AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_RichValueData,
+			null, null, new UndoRedoData_FromTo(oldRichValueData, newRichValueData));
 	};
 	Workbook.prototype.addImages = function (aImages, obj) {
 		const oApi = Asc.editor;
@@ -15306,7 +15476,7 @@
 				var fText = "=" + this.formulaParsed.getFormula();
 				this.formulaParsed.removeDependencies();
 				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoArrayFormula, AscCH.historyitem_ArrayFromula_DeleteFormula, this.ws.getId(),
-					new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new AscCommonExcel.UndoRedoData_ArrayFormula(arrayFormula, fText, this.formulaParsed.getCm()), true);
+					new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new AscCommonExcel.UndoRedoData_ArrayFormula(arrayFormula, fText, this.formulaParsed.getCm(), this.formulaParsed.getVm()), true);
 			} else {
 				this.formulaParsed.removeDependencies();
 			}
@@ -24815,7 +24985,11 @@
 						for (let col = newRef.c1; col <= newRef.c2; col++) {
 							// get cell and setPF to it
 							ws._getCell(row, col, function(cell) {
-								cell && cell.setFormulaInternal(formula);
+								if (cell) {
+									ws.workbook.checkRemoveMetadataByVmIndex(formula.getVm());
+									formula.setVm(null);
+									cell.setFormulaInternal(formula);
+								}
 							});
 						}
 					}
