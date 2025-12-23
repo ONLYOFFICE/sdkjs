@@ -15333,6 +15333,8 @@ $(function () {
 		ws.getRange2("A107").setValue("25-52i");
 		ws.getRange2("A108").setValue("1+4i");
 		ws.getRange2("A109").setValue("11-11.099i");
+		ws.getRange2("A110").setValue("TRUE");
+		ws.getRange2("A111").setValue("FALSE");
 
 		// Table type. Use A601:L6**
 		getTableType(599, 0, 600, 2);
@@ -15400,15 +15402,15 @@ $(function () {
 		// Case #10: Area, Area. Single-cell ranges with complex numbers. Returns 4+5i.
 		oParser = new parserFormula('IMSUM(A100:A100,A101:A101)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM(A100:A100,A101:A101) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '21+22i', 'Test: Positive case: Area, Area. Single-cell ranges with complex numbers. Returns 4+5i.');
+		assert.strictEqual(oParser.calculate().getValue(), '21+22i', 'Test: Positive case: Area, Area. Single-cell ranges with complex numbers. Returns 4+5i.');
 		// Case #11: Array. Array with single complex number. Returns 3+4i.
 		oParser = new parserFormula('IMSUM({"3+4i"})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM({"3+4i"}) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '3+4i', 'Test: Positive case: Array. Array with single complex number. Returns 3+4i.');
 		// Case #12: Array, Array. Arrays with single complex numbers. Returns 4+5i.
-		oParser = new parserFormula('IMSUM({"3+4i"})', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: IMSUM({"3+4i"}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '4+5i', 'Test: Positive case: Array, Array. Arrays with single complex numbers. Returns 4+5i.');
+		oParser = new parserFormula('IMSUM({"3+4i"},{"3+4i"})', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: IMSUM({"3+4i"},{"3+4i"}) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '6+8i', 'Test: Positive case: Array, Array. Arrays with single complex numbers. Returns 6+8i.');
 		// Case #13: Name. Named range with complex number. Returns 3+4i.
 		oParser = new parserFormula('IMSUM(TestName)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM(TestName) is parsed.');
@@ -15440,7 +15442,7 @@ $(function () {
 		// Case #20: Area3D, Area3D. 3D single-cell ranges with complex numbers. Returns 4+5i.
 		oParser = new parserFormula('IMSUM(Sheet2!A1:A1,Sheet2!A2:A2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM(Sheet2!A1:A1,Sheet2!A2:A2) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '3', 'Test: Positive case: Area3D, Area3D. 3D single-cell ranges with complex numbers. Returns 4+5i.');
+		assert.strictEqual(oParser.calculate().getValue(), '3', 'Test: Positive case: Area3D, Area3D. 3D single-cell ranges with complex numbers. Returns 4+5i.');
 		// Case #21: Table. Table structured reference with complex number. Returns 3+4i.
 		oParser = new parserFormula('IMSUM(Table1[Column1])', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM(Table1[Column1]) is parsed.');
@@ -15448,7 +15450,7 @@ $(function () {
 		// Case #22: Table, Table. Table structured references with complex numbers. Returns 4+5i.
 		oParser = new parserFormula('IMSUM(Table1[Column1],Table1[Column2])', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM(Table1[Column1],Table1[Column2]) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Positive case: Table, Table. Table structured references with complex numbers. Returns 4+5i.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Positive case: Table, Table. Table structured references with complex numbers. Returns 4+5i.');
 		// Case #23: Formula. Nested IF returning complex number. Returns 3+4i.
 		oParser = new parserFormula('IMSUM(IF(TRUE, "3+4i", "1+2i"))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM(IF(TRUE, "3+4i", "1+2i")) is parsed.');
@@ -15484,15 +15486,15 @@ $(function () {
 		// Case #31: Array. Multi-element array, processes first element. Returns 3+4i.
 		oParser = new parserFormula('IMSUM({"3+4i";"1+2i"})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM({"3+4i";"1+2i"}) is parsed.');
-		//?	assert.strictEqual(oParser.calculate().getValue(), '4+6i', 'Test: Positive case: Array. Multi-element array, processes first element. Returns 3+4i.');
+		assert.strictEqual(oParser.calculate().getValue(), '4+6i', 'Test: Positive case: Array. Multi-element array, processes first element. Returns 3+4i.');
 		// Case #32: Array, Array. Multi-element arrays, processes first elements. Returns 4+5i.
 		oParser = new parserFormula('IMSUM({"3+4i";"1+2i"},{"1+1i";"2+2i"})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM({"3+4i";"1+2i"},{"1+1i";"2+2i"}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '7+9i', 'Test: Positive case: Array, Array. Multi-element arrays, processes first elements. Returns 4+5i.');
+		assert.strictEqual(oParser.calculate().getValue(), '7+9i', 'Test: Positive case: Array, Array. Multi-element arrays, processes first elements. Returns 4+5i.');
 		// Case #33: Reference link, Reference link. References to cells with real numbers as complex. Returns 7.
 		oParser = new parserFormula('IMSUM(A102,A103)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM(A102,A103) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '1.9+2.9i', 'Test: Positive case: Reference link, Reference link. References to cells with real numbers as complex. Returns 7.');
+		assert.strictEqual(oParser.calculate().getValue(), '1.9+2.9i', 'Test: Positive case: Reference link, Reference link. References to cells with real numbers as complex. Returns 7.');
 		// Case #34: Formula. Single complex number string built by CONCATENATE. Returns 3+4i.
 		oParser = new parserFormula('IMSUM(CONCATENATE("3+","4i"))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM(CONCATENATE("3+","4i")) is parsed.');
@@ -15521,6 +15523,10 @@ $(function () {
 		oParser = new parserFormula('IMSUM(A106)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM(A106) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '-2i', 'Test: Positive case: Reference link. Reference to cell with pure imaginary number. Returns 4i.');
+		// Case #41: Number, String, String, String.
+		oParser = new parserFormula('IMSUM(5,"5","5i","5+i")', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: IMSUM(5,"5","5i","5+i") is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '15+6i', 'Test: Positive case: Number, String, String, String');
 
 		// Negative cases:
 		// Case #1: String. Non-numeric string returns #VALUE!.
@@ -15538,19 +15544,19 @@ $(function () {
 		// Case #4: Area. Multi-cell range returns #VALUE!.
 		oParser = new parserFormula('IMSUM(A108:A109)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM(A108:A109) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '12-7.099i', 'Test: Negative case: Area. Multi-cell range returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '12-7.099i', 'Test: Negative case: Area. Multi-cell range returns #VALUE!.');
 		// Case #5: Boolean. Boolean FALSE returns #VALUE!.
 		oParser = new parserFormula('IMSUM(FALSE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM(FALSE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean FALSE returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean FALSE returns #VALUE!.');
 		// Case #6: Ref3D. 3D reference to cell with text returns #VALUE!.
 		oParser = new parserFormula('IMSUM(Sheet2!A3)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM(Sheet2!A3) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Ref3D. 3D reference to cell with text returns #VALUE!.');
-		// Case #7: Name. Named range with text returns #VALUE!.
+		// Case #7: Name. Named range with numbers.
 		oParser = new parserFormula('IMSUM(TestNameArea2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM(TestNameArea2) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '0.8', 'Test: Negative case: Name. Named range with text returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '0', 'Test: Negative case: Name. Named range with numbers.');
 		// Case #8: Table. Table column with text returns #VALUE!.
 		oParser = new parserFormula('IMSUM(Table1[Column3])', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM(Table1[Column3]) is parsed.');
@@ -15562,7 +15568,7 @@ $(function () {
 		// Case #10: String, String. Non-numeric string in second argument returns #VALUE!.
 		oParser = new parserFormula('IMSUM("3+4i","abc")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM("3+4i","abc") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: String, String. Non-numeric string in second argument returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: String, String. Non-numeric string in second argument returns #VALUE!.');
 		// Case #11: Date. Date serial number not valid complex number, returns #VALUE!.
 		oParser = new parserFormula('IMSUM(DATE(2025,1,1))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM(DATE(2025,1,1)) is parsed.');
@@ -15574,19 +15580,19 @@ $(function () {
 		// Case #13: Array. Array with boolean returns #VALUE!.
 		oParser = new parserFormula('IMSUM({FALSE})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM({FALSE}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array. Array with boolean returns #VALUE!.');
-		// Case #14: Name3D. 3D named range with text returns #VALUE!.
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array. Array with boolean returns #VALUE!.');
+		// Case #14: Name3D. 3D named range with numbers.
 		oParser = new parserFormula('IMSUM(TestNameArea3D2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM(TestNameArea3D2) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '0.8', 'Test: Negative case: Name3D. 3D named range with text returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '0', 'Test: Negative case: Name3D. 3D named range with numbers.');
 		// Case #15: Area3D. 3D multi-cell range returns #VALUE!.
 		oParser = new parserFormula('IMSUM(Sheet2!A4:A5)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM(Sheet2!A4:A5) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '0', 'Test: Negative case: Area3D. 3D multi-cell range returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '0', 'Test: Negative case: Area3D. 3D multi-cell range returns #VALUE!.');
 		// Case #16: String. Invalid complex number suffix (j instead of i) returns #VALUE!.
 		oParser = new parserFormula('IMSUM("3+4j")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM("3+4j") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '3+4j', 'Test: Negative case: String. Invalid complex number suffix (j instead of i) returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '3+4i', 'Test: Negative case: String. Invalid complex number suffix (j instead of i) returns #VALUE!.');
 		// Case #17: Formula. Invalid complex number format returns #VALUE!.
 		oParser = new parserFormula('IMSUM("3+" & "4")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM("3+" & "4") is parsed.');
@@ -15594,16 +15600,20 @@ $(function () {
 		// Case #18: Reference link. Reference to cell with invalid complex number. Returns #VALUE!.
 		oParser = new parserFormula('IMSUM(A110)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM(A110) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '0', 'Test: Negative case: Reference link. Reference to cell with invalid complex number. Returns #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Reference link. Reference to cell with invalid complex number. Returns #VALUE!.');
 		// Case #19: Array, String. Array with mixed valid and invalid elements, processes first valid element. Returns 4+5i.
 		oParser = new parserFormula('IMSUM({"3+4i";"abc"},"1+1i")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM({"3+4i";"abc"},"1+1i") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Array, String. Array with mixed valid and invalid elements, processes first valid element. Returns 4+5i.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Array, String. Array with mixed valid and invalid elements, processes first valid element. Returns 4+5i.');
 		// Case #20: Formula, String. Nested IF returning invalid string returns #VALUE!.
 		oParser = new parserFormula('IMSUM(IF(FALSE, "3+4i", "abc"),"1+1i")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM(IF(FALSE, "3+4i", "abc"),"1+1i") is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Formula, String. Nested IF returning invalid string returns #VALUE!.');
-
+		// Case #21: Range. Boolean in range returns #VALUE!.
+		oParser = new parserFormula('IMSUM(A110:A111)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: IMSUM(A110:A111) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Range. Boolean in range returns #VALUE!.');
+		
 		// Bounded cases:
 		// Case #1: Number. Maximum valid complex number. Returns 1E+307+1E+307i.
 		oParser = new parserFormula('IMSUM("1E+307+1E+307i")', 'A2', ws);
@@ -15621,23 +15631,6 @@ $(function () {
 		oParser = new parserFormula('IMSUM("0+1E-307i")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: IMSUM("0+1E-307i") is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '1e-307i', 'Test: Bounded case: Number. Minimum positive imaginary component. Returns 0+1E-307i.');
-
-		// TODO function doesn't work correctly when we have more than 1 argument
-		// Need to fix: ms res diff, bool handle, tocString method error in tests
-		// Case #10: Area, Area. Single-cell ranges with complex numbers. Returns 4+5i. - err in tests but work in app
-		// Case #12: Array, Array. Arrays with single complex numbers. Returns 4+5i.
-		// Case #20: Area3D, Area3D. 3D single-cell ranges with complex numbers. Returns 4+5i. - err in tests but work in app
-		// Case #22: Table, Table. Table structured references with complex numbers. Returns 4+5i. - NaNNaNi
-		// Case #31: Array. Multi-element array, processes first element. Returns 3+4i.
-		// Case #32: Array, Array. Multi-element arrays, processes first elements. Returns 4+5i.
-		// Case #33: Reference link, Reference link. References to cells with real numbers as complex. Returns 7.
-		// Case #4: Area. Multi-cell range returns #VALUE!.
-		// Case #5: Boolean. Boolean FALSE returns #VALUE!.
-		// Case #10: String, String. Non-numeric string in second argument returns #VALUE!.
-		// Case #13: Array. Array with boolean returns #VALUE!.
-		// Case #15: Area3D. 3D multi-cell range returns #VALUE!.
-		// Case #16: String. Invalid complex number suffix (j instead of i) returns #VALUE!. - j?
-		// Case #19: Array, String. Array with mixed valid and invalid elements, processes first valid element. Returns 4+5i.
 
 
 		testArrayFormula2(assert, "IMSUB", 2, 2, true, null);

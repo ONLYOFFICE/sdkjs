@@ -6856,42 +6856,40 @@ function (window, undefined) {
 	cIMSUM.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cIMSUM.prototype.argumentsType = [[argType.any]];
 	cIMSUM.prototype.Calculate = function (arg) {
+		
+		const t = this;
+		let c = new Complex("0"), c1;
 
-		var arg0 = arg[0], t = this;
+		for (let i = 0; i < arg.length; i++) {
 
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
-			arg0 = arg0.cross(arguments[1]);
-		} else if (arg0 instanceof cArray) {
-			arg0 = arg0.getElementRowCol(0, 0);
-		}
+			let argI = arg[i];
 
-		arg0 = arg0.tocString();
+			if (argI.type === cElementType.cell || argI.type === cElementType.cell3D) {
+				argI = argI.getValue();
+			}
 
-		if (arg0 instanceof cError) {
-			return arg0;
-		}
+			if (argI.type === cElementType.error) {
+				return argI;
+			} else if (argI.type === cElementType.bool) {
+				return new cError(cErrorType.wrong_value_type);
+			}
 
-		var c = new Complex(arg0.toString()), c1;
+			if (argI.type === cElementType.cellsRange || argI.type === cElementType.cellsRange3D) {
+				let argIArr = argI.getValue(), _arg;
+				for (let j = 0; j < argIArr.length; j++) {
+					if (argIArr[j].type === cElementType.bool) {
+						return new cError(cErrorType.wrong_value_type);
+					}
 
-		if (c instanceof cError) {
-			return c;
-		}
+					_arg = argIArr[j].tocString();
 
-		for (var i = 1; i < arg.length; i++) {
-
-			var argI = arg[i];
-			if (argI instanceof cArea || argI instanceof cArea3D) {
-				var argIArr = argI.getValue(), _arg;
-				for (var j = 0; j < argIArr.length; j++) {
-					_arg = argIArr[i].tocString();
-
-					if (_arg instanceof cError) {
+					if (_arg.type === cElementType.error) {
 						return _arg;
 					}
 
 					c1 = new Complex(_arg.toString());
 
-					if (c1 instanceof cError) {
+					if (c1.type === cElementType.error) {
 						return c1;
 					}
 
@@ -6899,39 +6897,51 @@ function (window, undefined) {
 
 				}
 				continue;
-			} else if (argI instanceof cArray) {
-				argI.foreach(function (elem) {
-					var e = elem.tocString();
-					if (e instanceof cError) {
-						return e;
+			} else if (argI.type === cElementType.array) {
+				let dimensions = argI.getDimensions();
+
+				for (let row = 0; row < dimensions.row; row++) {
+					for (let col = 0; col < dimensions.col; col++) {
+						let elem = argI.getValue2(row, col);
+						if (elem.type === cElementType.bool) {
+							return new cError(cErrorType.wrong_value_type);
+						}
+
+						elem = elem.tocString();
+						if (elem.type === cElementType.error) {
+							return elem;
+						}
+
+						c1 = new Complex(elem.toString());
+						if (c1.type === cElementType.error) {
+							return c1;
+						}
+
+						c.Sum(c1);
 					}
+				}
 
-					c1 = new Complex(e.toString());
-
-					if (c1 instanceof cError) {
-						return c1;
-					}
-
-					c.Sum(c1);
-
-				});
 				continue;
 			}
 
 			argI = argI.tocString();
 
-			if (argI instanceof cError) {
+			if (argI.type === cElementType.error) {
 				return argI;
 			}
 
 			c1 = new Complex(argI.toString());
 
+			if (c1.type === cElementType.error) {
+				return c1;
+			}
+
 			c.Sum(c1);
 
 		}
 
-		var res;
-		if (c instanceof cError) {
+		let res;
+		if (c.type === cElementType.error) {
 			res = c;
 		} else {
 			res = new cString(c.toString());
