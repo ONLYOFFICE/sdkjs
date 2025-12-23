@@ -10031,14 +10031,7 @@
 		oRun.AddText(text);
 
 		// copy props from previous non empty run
-		let oPrevRun;
-		for (let i = this.GetElementsCount() - 1; i >= 0; i--)
-		{
-			oPrevRun = this.GetElement(i);
-			if (oPrevRun.GetText() !== "")
-				break;
-		}
-		
+		let oPrevRun = this.GetLastRunWithText();
 		if (!oPrevRun)
 			oPrevRun = new ApiRun(this.Paragraph.GetParaEndRun());
 		
@@ -10562,23 +10555,27 @@
 	 */
 	ApiParagraph.prototype.GetLastRunWithText = function()
 	{
-		for (var curElement = this.GetElementsCount() - 1; curElement >= 0; curElement--)
+		function getLastRunOfElement(oElm)
 		{
-			var Element = this.GetElement(curElement);
-
-			if (Element instanceof ApiRun)
+			for (let i = oElm.GetElementsCount() - 1; i >= 0; i--)
 			{
-				for (var Index = 0; Index < Element.Run.GetElementsCount(); Index++)
+				let oItem = oElm.GetElement(i);
+
+				if (oItem instanceof ApiRun)
 				{
-					if (Element.Run.GetElement(Index).IsText())
+					if (oItem.GetText() !== "")
 					{
-						return Element;
+						return oItem;
 					}
+				}
+				else if (oItem.GetElement && oItem.GetElementsCount)
+				{
+					return getLastRunOfElement(oItem)
 				}
 			}
 		}
 
-		return this.GetElement(this.GetElementsCount() - 1);
+		return getLastRunOfElement(this);
 	};
 	/**
 	 * Sets the bold property to the text character.
