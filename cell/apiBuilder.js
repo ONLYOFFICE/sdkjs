@@ -19486,7 +19486,8 @@
 		}
 		dataValidation.ranges = ranges;
 
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let apiWorksheet = this.range && this.range.GetWorksheet();
+		let worksheet = apiWorksheet && apiWorksheet.worksheet;
 		if (!worksheet) {
 			return null;
 		}
@@ -19521,7 +19522,8 @@
 			return;
 		}
 
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let apiWorksheet = this.range && this.range.GetWorksheet();
+		let worksheet = apiWorksheet && apiWorksheet.worksheet;
 		if (!worksheet || !worksheet.dataValidations) {
 			return;
 		}
@@ -19559,7 +19561,8 @@
 			return null;
 		}
 
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let apiWorksheet = this.range && this.range.GetWorksheet();
+		let worksheet = apiWorksheet && apiWorksheet.worksheet;
 		if (!worksheet || !worksheet.dataValidations) {
 			return null;
 		}
