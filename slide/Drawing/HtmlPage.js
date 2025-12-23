@@ -329,14 +329,10 @@
 		this.m_oMainParent.AddControl(this.m_oBottomPanesContainer);
 
 		this.m_oBottomPanesContainer.HtmlElement.addEventListener('mouseleave', function () {
-			console.log('mouseleave');
-			setTimeout(function () {
-				console.log('timeout');
-				const data = new AscCommon.CMouseMoveData();
-				Asc.editor.sync_MouseMoveStartCallback();
-				Asc.editor.sync_MouseMoveCallback(data);
-				Asc.editor.sync_MouseMoveEndCallback();
-			}, 1000);
+			const data = new AscCommon.CMouseMoveData();
+			Asc.editor.sync_MouseMoveStartCallback();
+			Asc.editor.sync_MouseMoveCallback(data);
+			Asc.editor.sync_MouseMoveEndCallback();
 		});
 
 		this.initNotes();
