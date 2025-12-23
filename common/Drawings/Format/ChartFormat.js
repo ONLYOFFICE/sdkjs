@@ -18954,6 +18954,11 @@
             for(nHorRef = 0; nHorRef < aValHorRefs.length; ++nHorRef) {
                 oValHorRef = aValHorRefs[nHorRef];
                 for(nCol = oValHorRef.bbox.c1; nCol <= oValHorRef.bbox.c2; ++nCol) {
+                    // fix: Skip hidden columns
+                    if (oValHorRef.worksheet.aCols[nCol]?.hd){
+                      continue;
+                    }
+
                     oSeriesData = new CSeriesDataRefs(null);
                     aData.push(oSeriesData);
                     for(nVertRef = 0; nVertRef < aValVertRefs.length; ++nVertRef) {
