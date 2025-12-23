@@ -3419,12 +3419,12 @@ function (window, undefined) {
 	window['AscCommonExcel'].convertToAbsoluteRef = convertToAbsoluteRef;
 
 	// Collections and classes for UI part
-	window['AscCommonExcel'].c_oAscDerivativeType = c_oAscDerivativeType;
-	window['AscCommonExcel'].c_oAscOperator = c_oAscOperator;
-	window['AscCommonExcel'].c_oAscOptimizeTo = c_oAscOptimizeTo;
-	window['AscCommonExcel'].c_oAscSolvingMethod = c_oAscSolvingMethod;
-	window['AscCommonExcel'].c_oAscSolverResult = c_oAscSolverResult;
-	window['AscCommonExcel'].c_oAscResultStatus = c_oAscResultStatus;
+	window["AscCommonExcel"]["c_oAscDerivativeType"] = window["AscCommonExcel"].c_oAscDerivativeType = c_oAscDerivativeType;
+	window["AscCommonExcel"]["c_oAscOperator"] = window["AscCommonExcel"].c_oAscOperator = c_oAscOperator;
+	window["AscCommonExcel"]["c_oAscOptimizeTo"] = window["AscCommonExcel"].c_oAscOptimizeTo = c_oAscOptimizeTo;
+	window["AscCommonExcel"]["c_oAscSolvingMethod"] = window["AscCommonExcel"].c_oAscSolvingMethod = c_oAscSolvingMethod;
+	window["AscCommonExcel"]["c_oAscSolverResult"] = window["AscCommonExcel"].c_oAscSolverResult = c_oAscSolverResult;
+	window["AscCommonExcel"]["c_oAscResultStatus"] = window["AscCommonExcel"].c_oAscResultStatus = c_oAscResultStatus;
 
 	let prot = c_oAscOptimizeTo;
 	prot["max"] = prot.max;
