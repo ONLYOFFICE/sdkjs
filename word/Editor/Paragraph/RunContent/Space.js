@@ -288,7 +288,8 @@
 	}
 	CPdfRunSpace.prototype = Object.create(CRunSpace.prototype);
 	CPdfRunSpace.prototype.constructor = CPdfRunSpace;
-	
+	CRunSpace.prototype.Type = para_PdfSpace;
+
 	CPdfRunSpace.prototype.IsPdfText       = AscWord.CPdfRunText.prototype.IsPdfText;
 	CPdfRunSpace.prototype.GetGid          = AscWord.CPdfRunText.prototype.GetGid;
 	CPdfRunSpace.prototype.GetOriginWidth  = AscWord.CPdfRunText.prototype.GetOriginWidth;
@@ -306,6 +307,27 @@
 	CPdfRunSpace.prototype.SetGrapheme = function()
 	{
 		this.Grapheme = AscFonts.NO_GRAPHEME;
+	};
+	CPdfRunSpace.prototype.Write_ToBinary = function(Writer)
+	{
+		// Long : Type
+		// Long : Value
+		// Bool : SpaceAfter
+
+		Writer.WriteLong(para_PdfSpace);
+		Writer.WriteLong(this.Value);
+		Writer.WriteLong(this.charGid);
+		Writer.WriteLong(this.originWidth);
+		Writer.WriteLong(this.fontSize);
+
+	};
+	CPdfRunSpace.prototype.Read_FromBinary = function(Reader)
+	{
+		this.SetCharCode(Reader.GetLong());
+		
+		this.charGid = Reader.GetLong();
+		this.originWidth = Reader.GetLong();
+		this.fontSize = Reader.GetLong();
 	};
 	
 	AscWord.CPdfRunSpace = CPdfRunSpace;
