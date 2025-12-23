@@ -279,7 +279,8 @@ StartAddNewShape.prototype =
                         oInkAnnot.AddInkPath(aInkPath);
                         oInkAnnot.SetStrokeColor([oRGBPen.R / 255, oRGBPen.G / 255, oRGBPen.B / 255]);
                         oInkAnnot.SetOpacity(oTrack.pen.Fill.transparent / 255);
-                        
+						oInkAnnot.SetRect(oInkAnnot.private_CalculateBoundingBox());
+
                         // запомнили добавленную Ink фигуру, к ней будем добавлять новые path пока рисование не закончится
                         oLogicDocument.currInkInDrawingProcess = oInkAnnot;
                     }, AscDFH.historydescription_Pdf_AddAnnot, this);

@@ -203,6 +203,16 @@
 	 * @typedef {("square" | "circle" | "diamond" | "openArrow" | "closedArrow" | "none" | "butt" | "rOpenArrow" | "rClosedArrow" | "slash")} LineEndStyle
 	 */
 
+	/**
+	 * An array of points representing a continuous path.
+	 * @typedef {Array<Point>} InkPath
+	 */
+
+	/**
+	 * An array of InkPath paths.
+	 * @typedef {Array<InkPath>} InkPathList
+	 */
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// Api
@@ -296,6 +306,9 @@
 		}
 
 		let oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
+		oAnnot.SetBorderWidth(1);
+		oAnnot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
+		oAnnot.SetBorderColor([0, 0, 0]);
 
 		return new ApiCircleAnnotation(oAnnot);
 	};
@@ -325,6 +338,9 @@
 		}
 
 		let oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
+		oAnnot.SetBorderWidth(1);
+		oAnnot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
+		oAnnot.SetBorderColor([0, 0, 0]);
 
 		return new ApiSquareAnnotation(oAnnot);
 	};
@@ -354,6 +370,9 @@
 		}
 
 		let oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
+		oAnnot.SetBorderWidth(1);
+		oAnnot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
+		oAnnot.SetBorderColor([0, 0, 0]);
 
 		return new ApiFreeTextAnnotation(oAnnot);
 	};
@@ -389,8 +408,67 @@
 
 		let oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
 		oAnnot.SetLinePoints([startPoint['x'], startPoint['y'], endPoint['x'], endPoint['y']]);
+		oAnnot.SetBorderWidth(1);
+		oAnnot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
+		oAnnot.SetBorderColor([0, 0, 0]);
 
 		return new ApiLineAnnotation(oAnnot);
+	};
+
+	/**
+	 * Creates ink annotation.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {Rect} rect - annotation rect.
+	 * @param {InkPathList} pathList - ink path list
+	 * @returns {ApiInkAnnotation}
+	 * @see office-js-api/Examples/PDF/Api/Methods/CreateInkAnnot.js
+	 */
+	Api.prototype.CreateInkAnnot = function(rect, inkPaths) {
+		let oDoc = private_GetLogicDocument();
+
+		inkPaths = AscBuilder.GetArrayParameter(inkPaths, []);
+		if (inkPaths.length == 0)
+			throwException(new Error("The inkPaths parameter must be a non empty array"));
+
+		inkPaths.forEach(function(path) {
+			path = AscBuilder.GetArrayParameter(path, []);
+			if (path.length == 0)
+				throwException(new Error("The ink path parameter must be a non empty array"));
+
+			path.forEach(function(point) {
+				private_CheckPoint(point);
+			});
+		});
+
+		if (!private_IsValidRect(rect)) {
+			AscBuilder.throwException("The rect parameter must be a valid rect");
+		}
+
+		let oProps = {
+			rect:           rect,
+			name:           AscCommon.CreateGUID(),
+			type:           AscPDF.ANNOTATIONS_TYPES.Ink,
+			creationDate:   (new Date().getTime()).toString(),
+			modDate:        (new Date().getTime()).toString(),
+			hidden:         false
+		}
+
+		let oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
+
+		oAnnot.SetBorderWidth(1);
+		oAnnot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
+		oAnnot.SetBorderColor([0, 0, 0]);
+		oAnnot.SetInkPoints(inkPaths.map(function(path) {
+			let flatPath = [];
+			path.forEach(function(point) {
+				flatPath.push(point["x"], point["y"]);
+			});
+
+			return flatPath;
+		}));
+
+		return new ApiInkAnnotation(oAnnot);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -3668,6 +3746,94 @@
 		return private_GetStrLineEndType(nStyle);
 	};
 
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiInkAnnotation
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a ink annotation.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 * @extends {ApiBaseAnnotation}
+	 */
+	function ApiInkAnnotation(oAnnot) {
+		ApiBaseAnnotation.call(this, oAnnot);
+	}
+
+	ApiInkAnnotation.prototype = Object.create(ApiBaseAnnotation.prototype);
+	ApiInkAnnotation.prototype.constructor = ApiInkAnnotation;
+
+	/**
+	 * Returns a type of the ApiInkAnnotation class.
+	 * @memberof ApiInkAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"inkAnnot"}
+	 * @see office-js-api/Examples/PDF/ApiInkAnnotation/Methods/GetClassType.js
+	 */
+	ApiInkAnnotation.prototype.GetClassType = function() {
+		return "inkAnnot";
+	};
+
+	/**
+	 * Sets ink path list.
+	 * @memberof ApiInkAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @param {InkPathList} inkPaths - ink path list
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiInkAnnotation/Methods/SetInkPathList.js
+	 */
+	ApiInkAnnotation.prototype.SetInkPathList = function(inkPaths) {
+		inkPaths = AscBuilder.GetArrayParameter(inkPaths, []);
+		if (inkPaths.length == 0)
+			throwException(new Error("The inkPaths parameter must be a non empty array"));
+
+		inkPaths.forEach(function(path) {
+			path = AscBuilder.GetArrayParameter(path, []);
+			if (path.length == 0)
+				throwException(new Error("The ink path parameter must be a non empty array"));
+
+			path.forEach(function(point) {
+				private_CheckPoint(point);
+			});
+		});
+
+		this.Annot.SetInkPoints(inkPaths.map(function(path) {
+			let flatPath = [];
+			path.forEach(function(point) {
+				flatPath.push(point["x"], point["y"]);
+			});
+
+			return flatPath;
+		}));
+
+		return true;
+	};
+
+	/**
+	 * Gets ink path list.
+	 * @memberof ApiInkAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {InkPathList}
+	 * @see office-js-api/Examples/PDF/ApiInkAnnotation/Methods/GetInkPathList.js
+	 */
+	ApiInkAnnotation.prototype.GetInkPathList = function() {
+		let aInkPaths = this.Annot.GetInkPoints();
+
+		return aInkPaths.map(function(path) {
+			let aPath = [];
+			for (let i = 0; i < path.length - 1; i+= 2) {
+				aPath.push({
+					"x": path[i],
+					"y": path[i+1]
+				});
+			}
+
+			return aPath;
+		});
+	};
+
 	function private_GetLogicDocument() {
 		return Asc.editor.getPDFDoc();
 	}
@@ -4071,6 +4237,9 @@
 			case AscPDF.ANNOTATIONS_TYPES.Line: {
 				return new ApiLineAnnotation(annot);
 			}
+			case AscPDF.ANNOTATIONS_TYPES.Ink: {
+				return new ApiInkAnnotation(annot);
+			}
 		}
 	}
 
@@ -4147,6 +4316,7 @@
 	Api.prototype["CreateSquareAnnot"]						= Api.prototype.CreateSquareAnnot;
 	Api.prototype["CreateFreeTextAnnot"]					= Api.prototype.CreateFreeTextAnnot;
 	Api.prototype["CreateLineAnnot"]						= Api.prototype.CreateLineAnnot;
+	Api.prototype["CreateInkAnnot"]							= Api.prototype.CreateInkAnnot;
 
 	// ApiDocument
 	ApiDocument.prototype["GetClassType"]					= ApiDocument.prototype.GetClassType;
@@ -4348,12 +4518,34 @@
 	ApiBaseAnnotation.prototype["GetReplies"]				= ApiBaseAnnotation.prototype.GetReplies;
 
 	// ApiTextAnnotation
-	ApiTextAnnotation.prototype["GetClassType"]					= ApiTextAnnotation.prototype.GetClassType;
-	ApiTextAnnotation.prototype["SetIconType"]					= ApiTextAnnotation.prototype.SetIconType;
-	ApiTextAnnotation.prototype["GetIconType"]					= ApiTextAnnotation.prototype.GetIconType;
+	ApiTextAnnotation.prototype["GetClassType"]				= ApiTextAnnotation.prototype.GetClassType;
+	ApiTextAnnotation.prototype["SetIconType"]				= ApiTextAnnotation.prototype.SetIconType;
+	ApiTextAnnotation.prototype["GetIconType"]				= ApiTextAnnotation.prototype.GetIconType;
 	
 	// ApiCircleAnnotation
-	ApiCircleAnnotation.prototype["GetClassType"]					= ApiCircleAnnotation.prototype.GetClassType;
+	ApiCircleAnnotation.prototype["GetClassType"]			= ApiCircleAnnotation.prototype.GetClassType;
+
+	// ApiSquareAnnotation
+	ApiSquareAnnotation.prototype["GetClassType"]			= ApiSquareAnnotation.prototype.GetClassType;
+
+	// ApiFreeTextAnnotation
+	ApiFreeTextAnnotation.prototype["GetClassType"]			= ApiFreeTextAnnotation.prototype.GetClassType;
+
+	// ApiLineAnnotation
+	ApiLineAnnotation.prototype["GetClassType"]				= ApiLineAnnotation.prototype.GetClassType;
+	ApiLineAnnotation.prototype["SetStartPoint"]			= ApiLineAnnotation.prototype.SetStartPoint;
+	ApiLineAnnotation.prototype["GetStartPoint"]			= ApiLineAnnotation.prototype.GetStartPoint;
+	ApiLineAnnotation.prototype["SetEndPoint"]				= ApiLineAnnotation.prototype.SetEndPoint;
+	ApiLineAnnotation.prototype["GetEndPoint"]				= ApiLineAnnotation.prototype.GetEndPoint;
+	ApiLineAnnotation.prototype["SetStartStyle"]			= ApiLineAnnotation.prototype.SetStartStyle;
+	ApiLineAnnotation.prototype["GetStartStyle"]			= ApiLineAnnotation.prototype.GetStartStyle;
+	ApiLineAnnotation.prototype["SetEndStyle"]				= ApiLineAnnotation.prototype.SetEndStyle;
+	ApiLineAnnotation.prototype["GetEndStyle"]				= ApiLineAnnotation.prototype.GetEndStyle;
+
+	// ApiInkAnnotation
+	ApiInkAnnotation.prototype["GetClassType"]				= ApiInkAnnotation.prototype.GetClassType;
+	ApiInkAnnotation.prototype["SetInkPathList"]			= ApiInkAnnotation.prototype.SetInkPathList;
+	ApiInkAnnotation.prototype["GetInkPathList"]			= ApiInkAnnotation.prototype.GetInkPathList;
 
 }(window, null));
 
