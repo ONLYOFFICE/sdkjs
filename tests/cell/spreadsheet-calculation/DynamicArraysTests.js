@@ -4221,5 +4221,384 @@ $(function () {
 		clearData(0, 0, 10, 20);
 	});
 
+	var getMetadata = function () {
+		return ws.workbook.metadata;
+	};
+
+	var getRichValueData = function () {
+		return ws.workbook.richValueData;
+	};
+
+	var getRichValueStructures = function () {
+		return ws.workbook.richValueStructures;
+	};
+
+	var getRichValueTypesInfo = function () {
+		return ws.workbook.richValueStructures;
+	};
+
+	var getCellMetadata = function (r, c) {
+		var _cell;
+		ws.getRange3(r, c, r, c)._foreachNoEmpty(function(cell) {
+			_cell = cell;
+		});
+		return _cell && _cell.formulaParsed && _cell.formulaParsed.getCm();
+	};
+
+	var getCellRichValueIndex = function (r, c) {
+		var _cell;
+		ws.getRange3(r, c, r, c)._foreachNoEmpty(function(cell) {
+			_cell = cell;
+		});
+		return _cell && _cell.formulaParsed && _cell.formulaParsed.getVm();
+	};
+
+	QUnit.test("Test: \"Richdata add test\"", function (assert) {
+		clearData(0, 0, 100, 200);
+
+		var flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// Add first array formula
+		var formula1 = "=SEQUENCE(3,2)";
+		var fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		var fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText(formula1);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		var metadata = getMetadata();
+		assert.ok(metadata.cellMetadata && metadata.cellMetadata.length > 0, "cellMetadata created after first formula");
+		assert.ok(metadata.metadataTypes && metadata.metadataTypes.length > 0, "metadataTypes created");
+		assert.ok(metadata.aFutureMetadata && metadata.aFutureMetadata.length > 0, "aFutureMetadata created");
+
+		var cmIndex1 = getCellMetadata(0, 0);
+		assert.ok(cmIndex1 > 0, "A1 has metadata");
+
+		fillRange = ws.getRange2("A2");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A2").getValueForEdit2();
+		fragment[0].setFragmentText("test");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		cmIndex1 = getCellMetadata(0, 0);
+		assert.ok(cmIndex1 === 1, "A1 has metadata");
+
+		vmIndex1 = getCellRichValueIndex(0, 0);
+		assert.ok(vmIndex1 === 1, "A1 has richdata");
+
+		// Check RichValueData
+		var richValueData = getRichValueData();
+		assert.ok(richValueData != null, "richValueData exists");
+		assert.ok(richValueData.pData && richValueData.pData.length > 0, "richValueData has pData array");
+		var richValue = richValueData.getRichValue(vmIndex1 - 1);
+		assert.ok(richValue != null, "richValue exists at index 1");
+		assert.ok(richValue.s != null, "richValue has structure index");
+		assert.ok(richValue.arrV && richValue.arrV.length > 0, "richValue has values array");
+
+		// Check RichValueStructures
+		var richValueStructures = getRichValueStructures();
+		assert.ok(richValueStructures != null, "richValueStructures exists");
+		assert.ok(richValueStructures.children && richValueStructures.children.length > 0, "richValueStructures has children");
+		var structure = richValueStructures.getValueStructure(richValue.s);
+		assert.ok(structure != null, "structure exists");
+		assert.ok(structure.t != null, "structure has type");
+		assert.ok(structure.children && structure.children.length > 0, "structure has children keys");
+
+		// Check RichValueTypesInfo
+		var richValueTypesInfo = getRichValueTypesInfo();
+		assert.ok(richValueTypesInfo != null, "richValueTypesInfo exists");
+
+		ws.getRange2("A2").setValue("");
+		cmIndex1 = getCellMetadata(0, 0);
+		assert.ok(cmIndex1 === 1, "A1 has metadata after remove A1 value");
+
+		vmIndex1 = getCellRichValueIndex(0, 0);
+		assert.ok(vmIndex1 == null, "A1 don't has richdata after remove A1 value");
+
+		richValueData = getRichValueData();
+		assert.ok(richValueData == null, "richValueData removed");
+
+		richValueStructures = getRichValueStructures();
+		assert.ok(richValueStructures == null, "richValueStructures removed");
+
+		richValueTypesInfo = getRichValueTypesInfo();
+		assert.ok(richValueTypesInfo == null, "richValueTypesInfo removed");
+
+		clearData(0, 0, 10, 20);
+	});
+
+	QUnit.test("Test: \"Multiple richdata formulas collapse and delete\"", function (assert) {
+		clearData(0, 0, 100, 200);
+
+		var flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// Add first array formula
+		var formula1 = "=SEQUENCE(3,2)";
+		var fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		var fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText(formula1);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		// Add second array formula
+		var formula2 = "=SEQUENCE(2,3)";
+		fillRange = ws.getRange2("D1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("D1").getValueForEdit2();
+		fragment[0].setFragmentText(formula2);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		// Add third array formula
+		var formula3 = "=SEQUENCE(4,1)";
+		fillRange = ws.getRange2("G1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("G1").getValueForEdit2();
+		fragment[0].setFragmentText(formula3);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		var metadata = getMetadata();
+		assert.ok(metadata != null, "Metadata exists after adding formulas");
+		assert.ok(metadata.cellMetadata && metadata.cellMetadata.length > 0, "cellMetadata created");
+		assert.ok(metadata.metadataTypes && metadata.metadataTypes.length > 0, "metadataTypes created");
+		assert.ok(metadata.aFutureMetadata && metadata.aFutureMetadata.length > 0, "aFutureMetadata created");
+
+		var cmIndex1 = getCellMetadata(0, 0);
+		var cmIndex2 = getCellMetadata(0, 3);
+		var cmIndex3 = getCellMetadata(0, 6);
+		assert.ok(cmIndex1 > 0, "A1 has metadata");
+		assert.ok(cmIndex2 > 0, "D1 has metadata");
+		assert.ok(cmIndex3 > 0, "G1 has metadata");
+
+		// Collapse formulas by adding data
+		fillRange = ws.getRange2("A2");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A2").getValueForEdit2();
+		fragment[0].setFragmentText("test1");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		fillRange = ws.getRange2("D2");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("D2").getValueForEdit2();
+		fragment[0].setFragmentText("test2");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		fillRange = ws.getRange2("G2");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("G2").getValueForEdit2();
+		fragment[0].setFragmentText("test3");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		var vmIndex1 = getCellRichValueIndex(0, 0);
+		var vmIndex2 = getCellRichValueIndex(0, 3);
+		var vmIndex3 = getCellRichValueIndex(0, 6);
+		assert.ok(vmIndex1 > 0, "A1 has richdata after collapse");
+		assert.ok(vmIndex2 > 0, "D1 has richdata after collapse");
+		assert.ok(vmIndex3 > 0, "G1 has richdata after collapse");
+
+		var richValueData = getRichValueData();
+		assert.ok(richValueData != null, "richValueData exists");
+		assert.ok(richValueData.pData && richValueData.pData.length >= 3, "richValueData has multiple entries");
+
+		var richValueStructures = getRichValueStructures();
+		assert.ok(richValueStructures != null, "richValueStructures exists");
+		assert.ok(richValueStructures.children && richValueStructures.children.length > 0, "richValueStructures has children");
+
+		// Delete first formula by setting empty value to head cell
+		fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText("");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		vmIndex1 = getCellRichValueIndex(0, 0);
+		vmIndex2 = getCellRichValueIndex(0, 3);
+		vmIndex3 = getCellRichValueIndex(0, 6);
+		assert.ok(!vmIndex1 || vmIndex1 === 0, "A1 richdata removed");
+		assert.ok(vmIndex2 > 0, "D1 still has richdata");
+		assert.ok(vmIndex3 > 0, "G1 still has richdata");
+
+		richValueData = getRichValueData();
+		assert.ok(richValueData != null, "richValueData still exists");
+		assert.ok(richValueData.pData && richValueData.pData.length >= 2, "richValueData has remaining entries");
+
+		// Delete second formula by setting empty value to head cell
+		fillRange = ws.getRange2("D1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("D1").getValueForEdit2();
+		fragment[0].setFragmentText("");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		vmIndex2 = getCellRichValueIndex(0, 3);
+		vmIndex3 = getCellRichValueIndex(0, 6);
+		assert.ok(!vmIndex2 || vmIndex2 === 0, "D1 richdata removed");
+		assert.ok(vmIndex3 > 0, "G1 still has richdata");
+
+		richValueData = getRichValueData();
+		assert.ok(richValueData != null, "richValueData still exists after second deletion");
+
+		// Delete third (last) formula by setting empty value to head cell
+		fillRange = ws.getRange2("G1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("G1").getValueForEdit2();
+		fragment[0].setFragmentText("");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		vmIndex3 = getCellRichValueIndex(0, 6);
+		assert.ok(!vmIndex3 || vmIndex3 === 0, "G1 richdata removed");
+
+		richValueData = getRichValueData();
+		assert.ok(richValueData == null, "richValueData removed after all formulas deleted");
+
+		richValueStructures = getRichValueStructures();
+		assert.ok(richValueStructures == null, "richValueStructures removed after all formulas deleted");
+
+		richValueTypesInfo = getRichValueTypesInfo();
+		assert.ok(richValueTypesInfo == null, "richValueTypesInfo removed after all formulas deleted");
+
+		metadata = getMetadata();
+		assert.ok(metadata == null, "Metadata removed after all formulas deleted");
+
+		clearData(0, 0, 10, 20);
+	});
+
+	QUnit.test("Test: \"Delete head cell of expanded and collapsed array\"", function (assert) {
+		clearData(0, 0, 100, 200);
+
+		var flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// Test 1: Delete head cell of expanded array
+		var formula1 = "=SEQUENCE(3,2)";
+		var fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		var fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText(formula1);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		// Check that array is expanded
+		var cellValueA1 = ws.getRange2("A1").getValue();
+		var cellValueA2 = ws.getRange2("A2").getValue();
+		var cellValueA3 = ws.getRange2("A3").getValue();
+		var cellValueB1 = ws.getRange2("B1").getValue();
+		var cellValueB2 = ws.getRange2("B2").getValue();
+		var cellValueB3 = ws.getRange2("B3").getValue();
+		assert.strictEqual(cellValueA1, "1", "A1 has value 1");
+		assert.strictEqual(cellValueA2, "3", "A2 has value 2");
+		assert.strictEqual(cellValueA3, "5", "A3 has value 3");
+		assert.strictEqual(cellValueB1, "2", "B1 has value 1");
+		assert.strictEqual(cellValueB2, "4", "B2 has value 2");
+		assert.strictEqual(cellValueB3, "6", "B3 has value 3");
+
+		var metadata = getMetadata();
+		assert.ok(metadata != null, "Metadata exists for expanded array");
+		assert.ok(metadata.cellMetadata && metadata.cellMetadata.length > 0, "cellMetadata exists");
+		assert.ok(metadata.metadataTypes && metadata.metadataTypes.length > 0, "metadataTypes exists");
+		assert.ok(metadata.aFutureMetadata && metadata.aFutureMetadata.length > 0, "aFutureMetadata exists");
+
+		var cmIndex1 = getCellMetadata(0, 0);
+		assert.ok(cmIndex1 > 0, "A1 has metadata");
+
+		// Delete head cell by setting empty value
+		fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText("");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		// Check that all array cells are cleared
+		cellValueA1 = ws.getRange2("A1").getValue();
+		cellValueA2 = ws.getRange2("A2").getValue();
+		cellValueA3 = ws.getRange2("A3").getValue();
+		cellValueB1 = ws.getRange2("B1").getValue();
+		cellValueB2 = ws.getRange2("B2").getValue();
+		cellValueB3 = ws.getRange2("B3").getValue();
+		assert.strictEqual(cellValueA1, "", "A1 is empty after deletion");
+		assert.strictEqual(cellValueA2, "", "A2 is empty after deletion");
+		assert.strictEqual(cellValueA3, "", "A3 is empty after deletion");
+		assert.strictEqual(cellValueB1, "", "B1 is empty after deletion");
+		assert.strictEqual(cellValueB2, "", "B2 is empty after deletion");
+		assert.strictEqual(cellValueB3, "", "B3 is empty after deletion");
+
+		cmIndex1 = getCellMetadata(0, 0);
+		assert.ok(!cmIndex1 || cmIndex1 === 0, "A1 metadata removed after deletion");
+
+		metadata = getMetadata();
+		assert.ok(metadata == null, "Metadata removed after expanded array deletion");
+
+		// Test 2: Delete head cell of collapsed array
+		var formula2 = "=SEQUENCE(3,2)";
+		fillRange = ws.getRange2("D1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("D1").getValueForEdit2();
+		fragment[0].setFragmentText(formula2);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		// Collapse array by adding blocking data
+		fillRange = ws.getRange2("D2");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("D2").getValueForEdit2();
+		fragment[0].setFragmentText("block");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		// Check that array is collapsed
+		var cellValueD1 = ws.getRange2("D1").getValue();
+		var cellValueD2 = ws.getRange2("D2").getValue();
+		assert.strictEqual(cellValueD1, "#SPILL!", "D1 has value 1 (collapsed)");
+		assert.strictEqual(cellValueD2, "block", "D2 has blocking value");
+
+		var vmIndex = getCellRichValueIndex(0, 3);
+		assert.ok(vmIndex > 0, "D1 has richdata after collapse");
+
+		var richValueData = getRichValueData();
+		assert.ok(richValueData != null, "richValueData exists for collapsed array");
+
+		var richValueStructures = getRichValueStructures();
+		assert.ok(richValueStructures != null, "richValueStructures exists for collapsed array");
+
+		metadata = getMetadata();
+		assert.ok(metadata != null, "Metadata exists for collapsed array");
+
+		var cmIndex2 = getCellMetadata(0, 3);
+		assert.ok(cmIndex2 > 0, "D1 has metadata");
+
+		// Delete head cell of collapsed array
+		fillRange = ws.getRange2("D1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("D1").getValueForEdit2();
+		fragment[0].setFragmentText("");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		// Check that head cell is cleared
+		cellValueD1 = ws.getRange2("D1").getValue();
+		cellValueD2 = ws.getRange2("D2").getValue();
+		assert.strictEqual(cellValueD1, "", "D1 is empty after deletion");
+		assert.strictEqual(cellValueD2, "block", "D2 still has blocking value");
+
+		vmIndex = getCellRichValueIndex(0, 3);
+		assert.ok(!vmIndex || vmIndex === 0, "D1 richdata removed after deletion");
+
+		cmIndex2 = getCellMetadata(0, 3);
+		assert.ok(!cmIndex2 || cmIndex2 === 0, "D1 metadata removed after deletion");
+
+		richValueData = getRichValueData();
+		assert.ok(richValueData == null, "richValueData removed after collapsed array deletion");
+
+		richValueStructures = getRichValueStructures();
+		assert.ok(richValueStructures == null, "richValueStructures removed after collapsed array deletion");
+
+		var richValueTypesInfo = getRichValueTypesInfo();
+		assert.ok(richValueTypesInfo == null, "richValueTypesInfo removed after collapsed array deletion");
+
+		metadata = getMetadata();
+		assert.ok(metadata == null, "Metadata removed after collapsed array deletion");
+
+		clearData(0, 0, 10, 20);
+	});
+
 	QUnit.module("Sheet structure");
 });

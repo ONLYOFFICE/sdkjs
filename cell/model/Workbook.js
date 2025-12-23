@@ -9013,6 +9013,10 @@
 				}
 				t.workbook.dependencyFormulas.addToChangedCell(cell);
 
+				if (AscCommonExcel.bIsSupportDynamicArrays) {
+					t.dynamicArrayManager.putChangedArrayByCell(cell);
+				}
+
 				cell.clearData();
 				cell.saveContent(true);
 			}
@@ -15057,6 +15061,11 @@
 		if (AscCommon.History.Is_On()) {
 			DataOld = this.getValueData();
 		}
+
+		if (AscCommonExcel.bIsSupportDynamicArrays) {
+			//this.ws.dynamicArrayManager.changeCell(this);
+		}
+
 		var isFirstArrayFormulaCell = byRef && this.nCol === byRef.c1 && this.nRow === byRef.r1;
 		var newFP = this.setValueGetParsed(val, callback, isCopyPaste, byRef, dynamicRangeProps);
 		if (undefined === newFP) {
@@ -15064,7 +15073,6 @@
 		}
 
 		var oldFP = this.formulaParsed;
-		//удаляем старые значения
 		this.cleanText();
 		this.setFormulaInternal(null);
 
@@ -15356,7 +15364,11 @@
 		var DataOld = null;
 		if(AscCommon.History.Is_On())
 			DataOld = this.getValueData();
-		//[{text:"",format:TextFormat},{}...]
+
+		if (AscCommonExcel.bIsSupportDynamicArrays) {
+			//this.ws.dynamicArrayManager.changeCell(this);
+		}
+
 		var xfTableAndCond = this.getCompiledStyleCustom(true, false, true);
 		var oldFP = this.formulaParsed;
 		this.setFormulaInternal(null);
@@ -18602,6 +18614,12 @@
 				activeCell = _selection.activeCell;
 			}
 		}
+
+
+		this._foreach(function(cell){
+			t.worksheet.dynamicArrayManager.changeCell(cell);
+		});
+
 		let cmIndex = null;
 		this._foreach(function(cell){
 			if (cell.ws.isUserProtectedRangesIntersectionCell(cell)) {
@@ -18629,6 +18647,8 @@
 				new Asc.Range(this.bbox.c1, this.bbox.r1, this.bbox.c2, this.bbox.r2), new AscCommonExcel.UndoRedoData_ArrayFormula(this.bbox, "=" + _sFormula, cmIndex));
 		}
 
+		t.worksheet.dynamicArrayManager.recalculateVolatileArrays();
+
 		AscCommon.History.EndTransaction();
 		this.onWorksheetChange();
 	};
@@ -18639,7 +18659,13 @@
 		/*
 		 Устанавливаем значение в Range ячеек. В отличае от setValue, сюда мы попадаем только в случае ввода значения отличного от формулы. Таким образом, если в ячейке была формула, то для нее в графе очищается список ячеек от которых зависела. После чего выставляем флаг о необходимости пересчета.
 		 */
+
 		let t = this;
+		this._foreach(function(cell){
+			t.worksheet.dynamicArrayManager.changeCell(cell);
+		});
+
+
 		this._foreach(function(cell){
 			if (pushOnlyFirstMergedCell) {
 				let merged = t.worksheet.getMergedByCell(cell.nRow, cell.nCol);
@@ -18652,6 +18678,7 @@
 			// if(cell.isEmpty())
 			// cell.Remove();
 		});
+		t.worksheet.dynamicArrayManager.recalculateVolatileArrays();
 		AscCommon.History.EndTransaction();
 		this.onWorksheetChange();
 	};
@@ -25060,17 +25087,13 @@
 		};
 	};
 
-	CDynamicArrayManager.prototype.getDynamicArrayFirstCell = function (col, row) {
+	CDynamicArrayManager.prototype.getDynamicArrayFirstCell = function (col, row, opt_cell) {
 		const c = this.ws.getCell3(row, col);
 		let t = this;
 		const ws = this.ws;
 		let res = null;
 
-		c._foreachNoEmpty(function (cell) {
-			if (!cell) {
-				return;
-			}
-
+		let callback = function (cell) {
 			const ref = cell.formulaParsed && cell.formulaParsed.getArrayFormulaRef();
 			if (!ref) {
 				return;
@@ -25094,7 +25117,20 @@
 					});
 				}
 			}
-		});
+		};
+
+		if (opt_cell) {
+			callback(opt_cell);
+		} else {
+			c._foreachNoEmpty(function (cell) {
+				if (!cell) {
+					return;
+				}
+				callback(cell);
+			});
+		}
+
+
 		return res;
 	};
 
@@ -25209,13 +25245,17 @@
 		this.clearChangedArrayList();
 	};
 
-	CDynamicArrayManager.prototype.putChangedArrayByCell = function (cell) {
+	CDynamicArrayManager.prototype.putChangedArrayByCell = function (cell, test) {
 		const formula = cell.formulaParsed;
 		const arrayFormulaRef = formula && formula.getArrayFormulaRef();
 
 		const ref = formula && arrayFormulaRef ? arrayFormulaRef : null;
 		const dynamicRange = ref && this.getDynamicArrayFirstCell(ref.c1, ref.r1);
 		const isDynamicRef = !!(formula && dynamicRange);
+
+		if (test) {
+			return {ref: ref, isDynamicRef: isDynamicRef};
+		}
 
 		if (isDynamicRef && AscCommonExcel.bIsSupportDynamicArrays) {
 			const name = dynamicRange.getName(AscCommonExcel.referenceType.R);
@@ -25236,6 +25276,76 @@
 		}
 
 		return {ref: ref, isDynamicRef: isDynamicRef};
+	};
+
+	CDynamicArrayManager.prototype.changeCell = function (cell) {
+		const ws = this.ws;
+		let formula = cell.formulaParsed;
+		const arrayFormulaRef = formula && formula.getArrayFormulaRef();
+
+		const ref = formula && arrayFormulaRef ? arrayFormulaRef : null;
+		const dynamicRange = ref && this.getDynamicArrayFirstCell(ref.c1, ref.r1, cell);
+		const isDynamicRef = !!(formula && dynamicRange);
+
+		if (isDynamicRef && AscCommonExcel.bIsSupportDynamicArrays) {
+			const name = dynamicRange.getName(AscCommonExcel.referenceType.R);
+			const arrayInfo = {
+				range: dynamicRange,
+				doDelete: false,
+				doRecalc: true,
+				formula: formula
+			};
+
+			// check this cell. If this is the first cell of dynamic range, delete this range, else delete all elements except the first
+			if (cell.nRow === dynamicRange.r1 && cell.nCol === dynamicRange.c1) {
+				arrayInfo.doRecalc = false;
+				arrayInfo.doDelete = true;
+			}
+
+			const arrayData = arrayInfo;
+			const dynamicbbox = arrayData.range;
+			const range = (formula && formula.aca && formula.ca) ?
+				ws.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r1, dynamicbbox.c1) :
+				ws.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
+
+			if (arrayData.doDelete) {
+				// delete all cells
+				range.cleanText();
+
+				// remove listener
+				const listenerId = arrayData.formula && arrayData.formula.getListenerId();
+				ws.workbook.dependencyFormulas.endListeningVolatileArray(listenerId);
+			} else if (arrayData.doRecalc) {
+				// delete all cells except the first one
+				range.cleanTextExceptFirst();
+
+				var fText = "=" + arrayData.formula.getFormula();
+				let arrayFormula = arrayData.formula.getArrayFormulaRef();
+
+				//remove old formula
+				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoArrayFormula, AscCH.historyitem_ArrayFromula_DeleteFormula, this.ws.getId(),
+					new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new AscCommonExcel.UndoRedoData_ArrayFormula(arrayFormula, fText, arrayData.formula.getCm()), true);
+
+				//set vm/cm/aca by first cell in range
+				let dynamicProps = this.generateDynamicProps(arrayData.formula, arrayFormula);
+				let cmIndex = arrayData.formula.getCm();
+				let vmIndex;
+				if (dynamicProps) {
+					cmIndex = dynamicProps.cmIndex;
+					vmIndex = dynamicProps.vmIndex;
+
+					arrayData.formula.setVm(vmIndex);
+				}
+				arrayData.formula.setAca(true);
+
+				//add new 1-cell-dimention formula
+				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoArrayFormula, AscCH.historyitem_ArrayFromula_AddFormula, this.ws.getId(),
+					new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new AscCommonExcel.UndoRedoData_ArrayFormula(new Asc.Range(arrayFormula.c1, arrayFormula.r1, arrayFormula.c1, arrayFormula.r1), fText, cmIndex, vmIndex), true);
+
+				// add to volatile
+				ws.workbook.dependencyFormulas.addToVolatileArrays(formula);
+			}
+		}
 	};
 
 	CDynamicArrayManager.prototype.checkDynamicRangeByElement = function (element, parentCell) {

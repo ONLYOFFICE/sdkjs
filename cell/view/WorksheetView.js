@@ -19522,7 +19522,7 @@ function isAllowPasteLink(pastedWb) {
 					// check activeCell for the presence of an array formula
 					c._foreachNoEmpty(function (cell) {
 						if (cell) {
-							let oRef = t.model.dynamicArrayManager.putChangedArrayByCell(cell);
+							let oRef = t.model.dynamicArrayManager.putChangedArrayByCell(cell, true);
 							if (oRef) {
 								ref = oRef.ref;
 								isDynamicRef = oRef.isDynamicRef;
