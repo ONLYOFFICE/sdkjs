@@ -1617,6 +1617,7 @@
 		this.ctBrushRectableEnabled = 30;
 		this.ctBrushGradient        = 31;
 		this.ctBrushTexturePath     = 32;
+		this.ctResetRotation        = 33;
 
 		// font
 		this.ctFontXML       = 40;
@@ -1663,6 +1664,8 @@
 		this.ctPathCommandGetCurrentPoint = 101;
 		this.ctPathCommandText            = 102;
 		this.ctPathCommandTextEx          = 103;
+		this.ctPathCommandOffset          = 104;
+		this.ctPathCommandScale           = 105;
 
 		// image
 		this.ctDrawImage         = 110;
@@ -2112,6 +2115,25 @@
 
 			this.Memory.WriteByte(CommandType.ctBrushTextureAlpha);
 			this.Memory.WriteByte(write);
+		},
+
+		put_PathOffset : function(tx, ty)
+		{
+			this.Memory.WriteByte(CommandType.ctPathCommandOffset);
+			this.Memory.WriteDouble(tx);
+			this.Memory.WriteDouble(ty);
+		},
+
+		put_PathScale : function(sx, sy)
+		{
+			this.Memory.WriteByte(CommandType.ctPathCommandScale);
+			this.Memory.WriteDouble(sx);
+			this.Memory.WriteDouble(sy);
+		},
+
+		ResetRotation : function()
+		{
+			this.Memory.WriteByte(CommandType.ctResetRotation);
 		},
 
 		put_BrushGradient : function(gradFill, points, transparent)
@@ -3211,6 +3233,73 @@
 			this.m_arrayPages[this.m_lPagesCount - 1].drawpath(type);
 	};
 
+	CDocumentRenderer.prototype.getFillRect = function(x, y, w, h, srcRect)
+	{
+		var __w   = w;
+		var __h   = h;
+		var _delW = Math.max(0, -srcRect.l) + Math.max(0, srcRect.r - 100) + 100;
+		var _delH = Math.max(0, -srcRect.t) + Math.max(0, srcRect.b - 100) + 100;
+
+		if (srcRect.l < 0)
+		{
+			var _off = ((-srcRect.l / _delW) * __w);
+			x += _off;
+			w -= _off;
+		}
+		if (srcRect.t < 0)
+		{
+			var _off = ((-srcRect.t / _delH) * __h);
+			y += _off;
+			h -= _off;
+		}
+		if (srcRect.r > 100)
+		{
+			var _off = ((srcRect.r - 100) / _delW) * __w;
+			w -= _off;
+		}
+		if (srcRect.b > 100)
+		{
+			var _off = ((srcRect.b - 100) / _delH) * __h;
+			h -= _off;
+		}
+
+		var _wk = 100;
+		if (srcRect.l > 0)
+			_wk -= srcRect.l;
+		if (srcRect.r < 100)
+			_wk -= (100 - srcRect.r);
+		_wk = 100 / _wk;
+
+		var _hk = 100;
+		if (srcRect.t > 0)
+			_hk -= srcRect.t;
+		if (srcRect.b < 100)
+			_hk -= (100 - srcRect.b);
+		_hk = 100 / _hk;
+
+		var _r = x + w;
+		var _b = y + h;
+
+		if (srcRect.l > 0)
+		{
+			x -= ((srcRect.l * _wk * w) / 100);
+		}
+		if (srcRect.t > 0)
+		{
+			y -= ((srcRect.t * _hk * h) / 100);
+		}
+		if (srcRect.r < 100)
+		{
+			_r += (((100 - srcRect.r) * _wk * w) / 100);
+		}
+		if (srcRect.b < 100)
+		{
+			_b += (((100 - srcRect.b) * _hk * h) / 100);
+		}
+
+		return {x: x, y: y, w: _r - x, h: _b - y};
+	};
+
 	// images
 	CDocumentRenderer.prototype.drawImage = function(img, x, y, w, h, alpha, srcRect)
 	{
@@ -3263,69 +3352,9 @@
 					this.AddClipRect(x, y, w, h);
 				}
 
-				var __w   = w;
-				var __h   = h;
-				var _delW = Math.max(0, -srcRect.l) + Math.max(0, srcRect.r - 100) + 100;
-				var _delH = Math.max(0, -srcRect.t) + Math.max(0, srcRect.b - 100) + 100;
+				const fillRect = this.getFillRect(x, y, w, h, srcRect);
 
-				if (srcRect.l < 0)
-				{
-					var _off = ((-srcRect.l / _delW) * __w);
-					x += _off;
-					w -= _off;
-				}
-				if (srcRect.t < 0)
-				{
-					var _off = ((-srcRect.t / _delH) * __h);
-					y += _off;
-					h -= _off;
-				}
-				if (srcRect.r > 100)
-				{
-					var _off = ((srcRect.r - 100) / _delW) * __w;
-					w -= _off;
-				}
-				if (srcRect.b > 100)
-				{
-					var _off = ((srcRect.b - 100) / _delH) * __h;
-					h -= _off;
-				}
-
-				var _wk = 100;
-				if (srcRect.l > 0)
-					_wk -= srcRect.l;
-				if (srcRect.r < 100)
-					_wk -= (100 - srcRect.r);
-				_wk = 100 / _wk;
-
-				var _hk = 100;
-				if (srcRect.t > 0)
-					_hk -= srcRect.t;
-				if (srcRect.b < 100)
-					_hk -= (100 - srcRect.b);
-				_hk = 100 / _hk;
-
-				var _r = x + w;
-				var _b = y + h;
-
-				if (srcRect.l > 0)
-				{
-					x -= ((srcRect.l * _wk * w) / 100);
-				}
-				if (srcRect.t > 0)
-				{
-					y -= ((srcRect.t * _hk * h) / 100);
-				}
-				if (srcRect.r < 100)
-				{
-					_r += (((100 - srcRect.r) * _wk * w) / 100);
-				}
-				if (srcRect.b < 100)
-				{
-					_b += (((100 - srcRect.b) * _hk * h) / 100);
-				}
-
-				this.m_arrayPages[this.m_lPagesCount - 1].drawImage(img, x, y, _r - x, _b - y);
+				this.m_arrayPages[this.m_lPagesCount - 1].drawImage(img, fillRect.x, fillRect.y, fillRect.w, fillRect.h);
 
 				if (bIsClip)
 				{
@@ -3394,6 +3423,21 @@
 	{
 		if (0 != this.m_lPagesCount)
 			this.m_arrayPages[this.m_lPagesCount - 1].put_BrushTextureAlpha(alpha);
+	};
+	CDocumentRenderer.prototype.put_PathOffset = function (tx, ty)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].put_PathOffset(tx, ty);
+	};
+	CDocumentRenderer.prototype.put_PathScale = function(sx, sy)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].put_PathScale(sx, sy);
+	};
+	CDocumentRenderer.prototype.ResetRotation = function()
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].ResetRotation();
 	};
 	CDocumentRenderer.prototype.put_BrushGradient = function(gradFill, points, transparent)
 	{
