@@ -1424,7 +1424,7 @@
             let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
             let oLine   = this.spPr.ln;
             oLine.setFill(oFill);
-            this.SetNeedRecalc(true);
+            this.handleUpdateLn();
             this.SetNeedUpdateOpacity(true);
         }
         else {

@@ -396,25 +396,50 @@
     TEXT_ICONS_TYPES["upArrow"]         = TEXT_ICONS_TYPES.upArrow;
     TEXT_ICONS_TYPES["upLeftArrow"]     = TEXT_ICONS_TYPES.upLeftArrow;
 
-    asc["FIELD_TYPES"]                  = asc.FIELD_TYPES               = FIELD_TYPES;
-    asc["BORDER_EFFECT_STYLES"]         = asc.BORDER_EFFECT_STYLES      = BORDER_EFFECT_STYLES;
-    asc["REF_TO_REASON"]                = asc.REF_TO_REASON             = REF_TO_REASON;
-    asc["FormatType"]                   = asc.FormatType                = FormatType;
-    asc["SpecialFormatType"]            = asc.SpecialFormatType         = SpecialFormatType;
-    asc["SeparatorStyle"]               = asc.SeparatorStyle            = SeparatorStyle;
-    asc["TimeFormatType"]               = asc.TimeFormatType            = TimeFormatType;
-    asc["NegativeStyle"]                = asc.NegativeStyle             = NegativeStyle;
-    asc["CalculateType"]                = asc.CalculateType             = CalculateType;
-    asc["ValidateType"]                 = asc.ValidateType              = ValidateType;
-    asc["CHECKBOX_STYLES"]              = asc.CHECKBOX_STYLES           = CHECKBOX_STYLES;
-    asc["BORDER_TYPES"]                 = asc.BORDER_TYPES              = BORDER_TYPES;
-    asc["ANNOT_COMPLEX_BORDER_TYPES"]   = asc.ANNOT_COMPLEX_BORDER_TYPES= ANNOT_COMPLEX_BORDER_TYPES;
-    asc["ANNOT_BORDER_DASHED_VALUES"]   = asc.ANNOT_BORDER_DASHED_VALUES= ANNOT_BORDER_DASHED_VALUES;
-    asc["BUTTON_HIGHLIGHT_TYPES"]       = asc.BUTTON_HIGHLIGHT_TYPES    = BUTTON_HIGHLIGHT_TYPES;
-    asc["APPEARANCE_TYPES"]            = asc.APPEARANCE_TYPES           = APPEARANCE_TYPES;
-    asc["DIGITS_TYPES"]                = asc.DIGITS_TYPES               = DIGITS_TYPES;
-    asc["USER_PERMISSIONS"]            = asc.USER_PERMISSIONS           = USER_PERMISSIONS;
-    asc["GOTO_TYPES"]                  = asc.GOTO_TYPES                 = GOTO_TYPES;
-    asc["TEXT_ICONS_TYPES"]            = asc.TEXT_ICONS_TYPES           = TEXT_ICONS_TYPES;
-    asc.CommandType                    = CommandType;
+    const LINE_END_TYPE = {
+        square:         0,
+        circle:         1,
+        diamond:        2,
+        openArrow:      3,
+        closedArrow:    4,
+        none:           5,
+        butt:           6,
+        rOpenArrow:     7,
+        rClosedArrow:   8,
+        slash:          9
+    }
+
+    LINE_END_TYPE["square"]         = LINE_END_TYPE.square;
+    LINE_END_TYPE["circle"]         = LINE_END_TYPE.circle;
+    LINE_END_TYPE["diamond"]        = LINE_END_TYPE.diamond;
+    LINE_END_TYPE["openArrow"]      = LINE_END_TYPE.openArrow;
+    LINE_END_TYPE["closedArrow"]    = LINE_END_TYPE.closedArrow;
+    LINE_END_TYPE["none"]           = LINE_END_TYPE.none;
+    LINE_END_TYPE["butt"]           = LINE_END_TYPE.butt;
+    LINE_END_TYPE["rOpenArrow"]     = LINE_END_TYPE.rOpenArrow;
+    LINE_END_TYPE["rClosedArrow"]   = LINE_END_TYPE.rClosedArrow;
+    LINE_END_TYPE["slash"]          = LINE_END_TYPE.slash;
+
+    asc["FIELD_TYPES"]                  = asc.FIELD_TYPES                = FIELD_TYPES;
+    asc["BORDER_EFFECT_STYLES"]         = asc.BORDER_EFFECT_STYLES       = BORDER_EFFECT_STYLES;
+    asc["REF_TO_REASON"]                = asc.REF_TO_REASON              = REF_TO_REASON;
+    asc["FormatType"]                   = asc.FormatType                 = FormatType;
+    asc["SpecialFormatType"]            = asc.SpecialFormatType          = SpecialFormatType;
+    asc["SeparatorStyle"]               = asc.SeparatorStyle             = SeparatorStyle;
+    asc["TimeFormatType"]               = asc.TimeFormatType             = TimeFormatType;
+    asc["NegativeStyle"]                = asc.NegativeStyle              = NegativeStyle;
+    asc["CalculateType"]                = asc.CalculateType              = CalculateType;
+    asc["ValidateType"]                 = asc.ValidateType               = ValidateType;
+    asc["CHECKBOX_STYLES"]              = asc.CHECKBOX_STYLES            = CHECKBOX_STYLES;
+    asc["BORDER_TYPES"]                 = asc.BORDER_TYPES               = BORDER_TYPES;
+    asc["ANNOT_COMPLEX_BORDER_TYPES"]   = asc.ANNOT_COMPLEX_BORDER_TYPES = ANNOT_COMPLEX_BORDER_TYPES;
+    asc["ANNOT_BORDER_DASHED_VALUES"]   = asc.ANNOT_BORDER_DASHED_VALUES = ANNOT_BORDER_DASHED_VALUES;
+    asc["BUTTON_HIGHLIGHT_TYPES"]       = asc.BUTTON_HIGHLIGHT_TYPES     = BUTTON_HIGHLIGHT_TYPES;
+    asc["APPEARANCE_TYPES"]             = asc.APPEARANCE_TYPES           = APPEARANCE_TYPES;
+    asc["DIGITS_TYPES"]                 = asc.DIGITS_TYPES               = DIGITS_TYPES;
+    asc["USER_PERMISSIONS"]             = asc.USER_PERMISSIONS           = USER_PERMISSIONS;
+    asc["GOTO_TYPES"]                   = asc.GOTO_TYPES                 = GOTO_TYPES;
+    asc["TEXT_ICONS_TYPES"]             = asc.TEXT_ICONS_TYPES           = TEXT_ICONS_TYPES;
+    asc["LINE_END_TYPE"]                = asc.LINE_END_TYPE              = LINE_END_TYPE;
+    asc.CommandType                     = CommandType;
 })();

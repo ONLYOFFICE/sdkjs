@@ -466,7 +466,7 @@
                 break;
             }
             case AscPDF.ANNOTATIONS_TYPES.Line: {
-                oAnnot.SetLineEnd(AscPDF.LINE_END_TYPE.OpenArrow);
+                oAnnot.SetLineEnd(AscPDF.LINE_END_TYPE.openArrow);
                 let aCommands = oGeometry.pathLst[0].ArrPathCommand;
                 let oPt1 = { X: aCommands[0].X, Y: aCommands[0].Y };
                 let oPt2 = { X: aCommands[1].X, Y: aCommands[1].Y };

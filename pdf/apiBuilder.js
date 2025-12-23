@@ -191,15 +191,23 @@
 	 * @typedef {("none" | "cloud")} AnnotBorderEffectStyle
 	 */
 
+	/**
+	 * Axis-aligned point.
+	 * @typedef {object} Point
+	 * @property {number} x
+	 * @property {number} y
+	 */
+
+	/**
+	 * The available line end styles.
+	 * @typedef {("square" | "circle" | "diamond" | "openArrow" | "closedArrow" | "none" | "butt" | "rOpenArrow" | "rClosedArrow" | "slash")} LineEndStyle
+	 */
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// Api
 	//
 	//------------------------------------------------------------------------------------------------------------------
-
-	let position    = AscPDF.Api.Types.position;
-    let scaleWhen   = AscPDF.Api.Types.scaleWhen;
-    let scaleHow    = AscPDF.Api.Types.scaleHow;
 
 	/**
 	 * Base class
@@ -239,25 +247,19 @@
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
 	 * @param {Rect} rect - annotation rect.
-	 * @param {string} [name] - unique annotation name.
 	 * @returns {ApiTextAnnotation}
 	 * @see office-js-api/Examples/PDF/Api/Methods/CreateTextAnnot.js
 	 */
-	Api.prototype.CreateTextAnnot = function(rect, name) {
+	Api.prototype.CreateTextAnnot = function(rect) {
 		let oDoc = private_GetLogicDocument();
 
-		if (!prviate_IsValidRect(rect)) {
+		if (!private_IsValidRect(rect)) {
 			AscBuilder.throwException("The rect parameter must be a valid rect");
-		}
-
-		name = AscBuilder.GetStringParameter(name, null);
-		if (!name) {
-			AscBuilder.throwException("The name parameter must be a non empty string");
 		}
 
 		let oProps = {
 			rect:           rect,
-			name:           name ? name : AscCommon.CreateGUID(),
+			name:           AscCommon.CreateGUID(),
 			type:           AscPDF.ANNOTATIONS_TYPES.Text,
 			creationDate:   (new Date().getTime()).toString(),
 			modDate:        (new Date().getTime()).toString(),
@@ -274,25 +276,19 @@
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
 	 * @param {Rect} rect - annotation rect.
-	 * @param {string} [name] - unique annotation name.
 	 * @returns {ApiCircleAnnotation}
 	 * @see office-js-api/Examples/PDF/Api/Methods/CreateCircleAnnot.js
 	 */
-	Api.prototype.CreateCircleAnnot = function(rect, name) {
+	Api.prototype.CreateCircleAnnot = function(rect) {
 		let oDoc = private_GetLogicDocument();
 
-		if (!prviate_IsValidRect(rect)) {
+		if (!private_IsValidRect(rect)) {
 			AscBuilder.throwException("The rect parameter must be a valid rect");
-		}
-
-		name = AscBuilder.GetStringParameter(name, null);
-		if (!name) {
-			AscBuilder.throwException("The name parameter must be a non empty string");
 		}
 
 		let oProps = {
 			rect:           rect,
-			name:           name ? name : AscCommon.CreateGUID(),
+			name:           AscCommon.CreateGUID(),
 			type:           AscPDF.ANNOTATIONS_TYPES.Circle,
 			creationDate:   (new Date().getTime()).toString(),
 			modDate:        (new Date().getTime()).toString(),
@@ -309,25 +305,19 @@
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
 	 * @param {Rect} rect - annotation rect.
-	 * @param {string} [name] - unique annotation name.
 	 * @returns {ApiSquareAnnotation}
 	 * @see office-js-api/Examples/PDF/Api/Methods/CreateSquareAnnot.js
 	 */
-	Api.prototype.CreateSquareAnnot = function(rect, name) {
+	Api.prototype.CreateSquareAnnot = function(rect) {
 		let oDoc = private_GetLogicDocument();
 
-		if (!prviate_IsValidRect(rect)) {
+		if (!private_IsValidRect(rect)) {
 			AscBuilder.throwException("The rect parameter must be a valid rect");
-		}
-
-		name = AscBuilder.GetStringParameter(name, null);
-		if (!name) {
-			AscBuilder.throwException("The name parameter must be a non empty string");
 		}
 
 		let oProps = {
 			rect:           rect,
-			name:           name ? name : AscCommon.CreateGUID(),
+			name:           AscCommon.CreateGUID(),
 			type:           AscPDF.ANNOTATIONS_TYPES.Square,
 			creationDate:   (new Date().getTime()).toString(),
 			modDate:        (new Date().getTime()).toString(),
@@ -344,25 +334,19 @@
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
 	 * @param {Rect} rect - annotation rect.
-	 * @param {string} [name] - unique annotation name.
 	 * @returns {ApiFreeTextAnnotation}
 	 * @see office-js-api/Examples/PDF/Api/Methods/CreateFreeTextAnnot.js
 	 */
-	Api.prototype.CreateFreeTextAnnot = function(rect, name) {
+	Api.prototype.CreateFreeTextAnnot = function(rect) {
 		let oDoc = private_GetLogicDocument();
 
-		if (!prviate_IsValidRect(rect)) {
+		if (!private_IsValidRect(rect)) {
 			AscBuilder.throwException("The rect parameter must be a valid rect");
-		}
-
-		name = AscBuilder.GetStringParameter(name, null);
-		if (!name) {
-			AscBuilder.throwException("The name parameter must be a non empty string");
 		}
 
 		let oProps = {
 			rect:           rect,
-			name:           name ? name : AscCommon.CreateGUID(),
+			name:           AscCommon.CreateGUID(),
 			type:           AscPDF.ANNOTATIONS_TYPES.FreeText,
 			creationDate:   (new Date().getTime()).toString(),
 			modDate:        (new Date().getTime()).toString(),
@@ -372,6 +356,41 @@
 		let oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
 
 		return new ApiFreeTextAnnotation(oAnnot);
+	};
+	
+	/**
+	 * Creates line annotation.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {Rect} rect - annotation rect.
+	 * @param {Point} startPoint - start line point
+	 * @param {Point} endPoint - end line point
+	 * @returns {ApiLineAnnotation}
+	 * @see office-js-api/Examples/PDF/Api/Methods/CreateLineAnnot.js
+	 */
+	Api.prototype.CreateLineAnnot = function(rect, startPoint, endPoint) {
+		let oDoc = private_GetLogicDocument();
+
+		if (!private_IsValidRect(rect)) {
+			AscBuilder.throwException("The rect parameter must be a valid rect");
+		}
+
+		private_CheckPoint(startPoint);
+		private_CheckPoint(endPoint);
+
+		let oProps = {
+			rect:           rect,
+			name:           AscCommon.CreateGUID(),
+			type:           AscPDF.ANNOTATIONS_TYPES.Line,
+			creationDate:   (new Date().getTime()).toString(),
+			modDate:        (new Date().getTime()).toString(),
+			hidden:         false
+		}
+
+		let oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
+		oAnnot.SetLinePoints([startPoint['x'], startPoint['y'], endPoint['x'], endPoint['y']]);
+
+		return new ApiLineAnnotation(oAnnot);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -717,7 +736,7 @@
 	};
 
 	/**
-	 * Adds to
+	 * Adds annot to page
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiBaseAnnotation} annot
 	 * @returns {ApiBaseAnnotation} - returns this
@@ -728,8 +747,18 @@
 			AscBuilder.throwException("The annot parameter must be an annotation");
 		}
 
-		this.Page.AddAnnot(annot);
+		this.Page.AddAnnot(annot.private_GetImpl());
 		return annot;
+	};
+
+	/**
+	 * Gets all annots on page
+	 * @typeofeditors ["PDFE"]
+	 * @returns {ApiBaseAnnotation} - returns this
+	 * @see office-js-api/Examples/PDF/ApiPage/Methods/GetAnnots.js
+	 */
+	ApiPage.prototype.GetAnnots = function() {
+		return this.Page.annots.map(private_GetAnnotApi);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -759,7 +788,7 @@
 	 * @see office-js-api/Examples/PDF/ApiBaseField/Methods/SetRect.js
 	 */
 	ApiBaseField.prototype.SetRect = function(rect) {
-		if (!prviate_IsValidRect(rect)) {
+		if (!private_IsValidRect(rect)) {
 			AscBuilder.throwException("The rect parameter must be a valid rect");
 		}
 
@@ -2394,11 +2423,11 @@
 	 * @see office-js-api/Examples/PDF/ApiButtonWidget/Methods/SetLayout.js
 	 */
 	ApiButtonWidget.prototype.SetLayout = function(sType) {
-		if (false == Object.keys(position).includes(sType)) {
+		if (false == Object.keys(AscPDF.Api.Types.position).includes(sType)) {
 			return false;
 		}
 
-		this.Field.SetLayout(position[sType]);
+		this.Field.SetLayout(AscPDF.Api.Types.position[sType]);
 		return true;
 	};
 
@@ -2411,8 +2440,8 @@
 	 */
 	ApiButtonWidget.prototype.GetLayout = function() {
 		let nType = this.Field.GetLayout();
-		return Object.keys(position).find(function(key) {
-			return position[key] === nType;
+		return Object.keys(AscPDF.Api.Types.position).find(function(key) {
+			return AscPDF.Api.Types.position[key] === nType;
 		});
 	};
 
@@ -2425,11 +2454,11 @@
 	 * @see office-js-api/Examples/PDF/ApiButtonWidget/Methods/SetScaleWhen.js
 	 */
 	ApiButtonWidget.prototype.SetScaleWhen = function(sType) {
-		if (false == Object.keys(scaleWhen).includes(sType)) {
+		if (false == Object.keys(AscPDF.Api.Types.scaleWhen).includes(sType)) {
 			return false;
 		}
 
-		this.Field.SetScaleWhen(scaleWhen[sType]);
+		this.Field.SetScaleWhen(AscPDF.Api.Types.scaleWhen[sType]);
 		return true;
 	};
 
@@ -2442,8 +2471,8 @@
 	 */
 	ApiButtonWidget.prototype.GetScaleWhen = function() {
 		let nType = this.Field.GetScaleWhen();
-		return Object.keys(scaleWhen).find(function(key) {
-			return scaleWhen[key] === nType;
+		return Object.keys(AscPDF.Api.Types.scaleWhen).find(function(key) {
+			return AscPDF.Api.Types.scaleWhen[key] === nType;
 		});
 	};
 
@@ -2456,11 +2485,11 @@
 	 * @see office-js-api/Examples/PDF/ApiButtonWidget/Methods/SetScaleHow.js
 	 */
 	ApiButtonWidget.prototype.SetScaleHow = function(sType) {
-		if (false == Object.keys(scaleHow).includes(sType)) {
+		if (false == Object.keys(AscPDF.Api.Types.scaleHow).includes(sType)) {
 			return false;
 		}
 
-		this.Field.SetScaleHow(scaleHow[sType]);
+		this.Field.SetScaleHow(AscPDF.Api.Types.scaleHow[sType]);
 		return true;
 	};
 
@@ -2473,8 +2502,8 @@
 	 */
 	ApiButtonWidget.prototype.GetScaleHow = function() {
 		let nType = this.Field.GetScaleHow();
-		return Object.keys(scaleHow).find(function(key) {
-			return scaleHow[key] === nType;
+		return Object.keys(AscPDF.Api.Types.scaleHow).find(function(key) {
+			return AscPDF.Api.Types.scaleHow[key] === nType;
 		});
 	};
 
@@ -2604,7 +2633,7 @@
 	 * @see office-js-api/Examples/PDF/ApiButtonWidget/Methods/SetLabel.js
 	 */
 	ApiButtonWidget.prototype.SetLabel = function(sLabel, sApType) {
-		if (this.Field.GetLayout() == position["iconOnly"]) {
+		if (this.Field.GetLayout() == AscPDF.Api.Types.position["iconOnly"]) {
 			return false;
 		}
 
@@ -2629,7 +2658,7 @@
 	 * @see office-js-api/Examples/PDF/ApiButtonWidget/Methods/GetLabel.js
 	 */
 	ApiButtonWidget.prototype.GetLabel = function(sApType) {
-		if (this.Field.GetLayout() == position["iconOnly"]) {
+		if (this.Field.GetLayout() == AscPDF.Api.Types.position["iconOnly"]) {
 			return null;
 		}
 
@@ -2654,7 +2683,7 @@
 	 * @see office-js-api/Examples/PDF/ApiButtonWidget/Methods/SetImage.js
 	 */
 	ApiButtonWidget.prototype.SetImage = function(sImageUrl, sApType) {
-		if (this.Field.GetLayout() == position["textOnly"]) {
+		if (this.Field.GetLayout() == AscPDF.Api.Types.position["textOnly"]) {
 			return false;
 		}
 
@@ -2795,7 +2824,7 @@
 	 * @see office-js-api/Examples/PDF/ApiBaseAnnotation/Methods/SetRect.js
 	 */
 	ApiBaseAnnotation.prototype.SetRect = function(rect) {
-		if (!prviate_IsValidRect(rect)) {
+		if (!private_IsValidRect(rect)) {
 			AscBuilder.throwException("The rect parameter must be a valid rect");
 		}
 
@@ -3478,6 +3507,166 @@
 	ApiFreeTextAnnotation.prototype.GetClassType = function() {
 		return "freeTextAnnot";
 	};
+	
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiLineAnnotation
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a line annotation.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 * @extends {ApiBaseAnnotation}
+	 */
+	function ApiLineAnnotation(oAnnot) {
+		ApiBaseAnnotation.call(this, oAnnot);
+	}
+
+	ApiLineAnnotation.prototype = Object.create(ApiBaseAnnotation.prototype);
+	ApiLineAnnotation.prototype.constructor = ApiLineAnnotation;
+
+	/**
+	 * Returns a type of the ApiLineAnnotation class.
+	 * @memberof ApiLineAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"lineAnnot"}
+	 * @see office-js-api/Examples/PDF/ApiLineAnnotation/Methods/GetClassType.js
+	 */
+	ApiLineAnnotation.prototype.GetClassType = function() {
+		return "lineAnnot";
+	};
+
+	/**
+	 * Sets a line start point.
+	 * @memberof ApiLineAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @param {Point} point
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiLineAnnotation/Methods/SetStartPoint.js
+	 */
+	ApiLineAnnotation.prototype.SetStartPoint = function(point) {
+		private_CheckPoint(point);
+
+		let aCurPoints = this.Annot.GetLinePoints();
+		let aNewPoints = aCurPoints.slice();
+
+		aNewPoints[0] = point['x'];
+		aNewPoints[1] = point['y'];
+
+		this.Annot.SetLinePoints(aNewPoints);
+		return true;
+	};
+
+	/**
+	 * Gets a line start point.
+	 * @memberof ApiLineAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {Point}
+	 * @see office-js-api/Examples/PDF/ApiLineAnnotation/Methods/GetStartPoint.js
+	 */
+	ApiLineAnnotation.prototype.GetStartPoint = function() {
+		let aPoints = this.Annot.GetLinePoints();
+		return {
+			"x": aPoints[0],
+			"y": aPoints[1]
+		}
+	};
+
+	/**
+	 * Sets a line end point.
+	 * @memberof ApiLineAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @param {Point} point
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiLineAnnotation/Methods/SetEndPoint.js
+	 */
+	ApiLineAnnotation.prototype.SetEndPoint = function(point) {
+		private_CheckPoint(point);
+
+		let aCurPoints = this.Annot.GetLinePoints();
+		let aNewPoints = aCurPoints.slice();
+
+		aNewPoints[2] = point['x'];
+		aNewPoints[3] = point['y'];
+
+		this.Annot.SetLinePoints(aNewPoints);
+		return true;
+	};
+
+	/**
+	 * Gets a line end point.
+	 * @memberof ApiLineAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {Point}
+	 * @see office-js-api/Examples/PDF/ApiLineAnnotation/Methods/GetEndPoint.js
+	 */
+	ApiLineAnnotation.prototype.GetEndPoint = function() {
+		let aPoints = this.Annot.GetLinePoints();
+		return {
+			"x": aPoints[2],
+			"y": aPoints[3]
+		}
+	};
+
+	/**
+	 * Sets a line start style.
+	 * @memberof ApiLineAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @param {LineEndStyle} style
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiLineAnnotation/Methods/SetStartStyle.js
+	 */
+	ApiLineAnnotation.prototype.SetStartStyle = function(style) {
+		if (!private_GetInnerLineEndType(style)) {
+			AscBuilder.throwException("The style parameter must be one of available");
+		}
+
+		this.Annot.SetLineStart(private_GetInnerLineEndType(style));
+		return true;
+	};
+
+	/**
+	 * Gets a line start style.
+	 * @memberof ApiLineAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {LineEndStyle}
+	 * @see office-js-api/Examples/PDF/ApiLineAnnotation/Methods/GetStartStyle.js
+	 */
+	ApiLineAnnotation.prototype.GetStartStyle = function() {
+		let nStyle = this.Annot.GetLineStart();
+		return private_GetStrLineEndType(nStyle);
+	};
+
+	/**
+	 * Sets a line end style.
+	 * @memberof ApiLineAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @param {LineEndStyle} style
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiLineAnnotation/Methods/SetEndStyle.js
+	 */
+	ApiLineAnnotation.prototype.SetEndStyle = function(style) {
+		if (!private_GetInnerLineEndType(style)) {
+			AscBuilder.throwException("The style parameter must be one of available");
+		}
+
+		this.Annot.SetLineEnd(private_GetInnerLineEndType(style));
+		return true;
+	};
+
+	/**
+	 * Gets a line end style.
+	 * @memberof ApiLineAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {LineEndStyle}
+	 * @see office-js-api/Examples/PDF/ApiLineAnnotation/Methods/GetEndStyle.js
+	 */
+	ApiLineAnnotation.prototype.GetEndStyle = function() {
+		let nStyle = this.Annot.GetLineEnd();
+		return private_GetStrLineEndType(nStyle);
+	};
 
 	function private_GetLogicDocument() {
 		return Asc.editor.getPDFDoc();
@@ -3879,10 +4068,13 @@
 			case AscPDF.ANNOTATIONS_TYPES.FreeText: {
 				return new ApiFreeTextAnnotation(annot);
 			}
+			case AscPDF.ANNOTATIONS_TYPES.Line: {
+				return new ApiLineAnnotation(annot);
+			}
 		}
 	}
 
-	function prviate_IsValidRect(value) {
+	function private_IsValidRect(value) {
 		return (
 			Array.isArray(value) &&
 			value.length === 4 &&
@@ -3892,6 +4084,61 @@
 		);
 	}
 
+	function private_CheckPoint(point) {
+		if (!point) {
+			AscBuilder.throwException("The point must be an object");
+		}
+
+		let x = AscBuilder.GetNumberParameter(point['x'], null);
+		if (!x) {
+			AscBuilder.throwException("The x coordinate of a point must be a number");
+		}
+
+		let y = AscBuilder.GetNumberParameter(point['y'], null);
+		if (!y) {
+			AscBuilder.throwException("The y coordinate of a point must be a number");
+		}
+	}
+
+	function private_GetInnerLineEndType(type) {
+		return AscPDF.LINE_END_TYPE[type];
+	}
+
+	function private_GetStrLineEndType(type) {
+		switch (type) {
+			case AscPDF.LINE_END_TYPE.square: {
+				return "square";
+			}
+			case AscPDF.LINE_END_TYPE.circle: {
+				return "circle";
+			}
+			case AscPDF.LINE_END_TYPE.diamond: {
+				return "diamond";
+			}
+			case AscPDF.LINE_END_TYPE.openArrow: {
+				return "openArrow";
+			}
+			case AscPDF.LINE_END_TYPE.closedArrow: {
+				return "closedArrow";
+			}
+			case AscPDF.LINE_END_TYPE.none: {
+				return "none";
+			}
+			case AscPDF.LINE_END_TYPE.butt: {
+				return "butt";
+			}
+			case AscPDF.LINE_END_TYPE.rOpenArrow: {
+				return "rOpenArrow";
+			}
+			case AscPDF.LINE_END_TYPE.rClosedArrow: {
+				return "rClosedArrow";
+			}
+			case AscPDF.LINE_END_TYPE.slash: {
+				return "slash";
+			}
+		}
+	}
+
 	// Api
 	Api.prototype["GetDocument"]							= Api.prototype.GetDocument;
 	Api.prototype["CreateRGBColor"]							= Api.prototype.CreateRGBColor;
@@ -3899,6 +4146,7 @@
 	Api.prototype["CreateCircleAnnot"]						= Api.prototype.CreateCircleAnnot;
 	Api.prototype["CreateSquareAnnot"]						= Api.prototype.CreateSquareAnnot;
 	Api.prototype["CreateFreeTextAnnot"]					= Api.prototype.CreateFreeTextAnnot;
+	Api.prototype["CreateLineAnnot"]						= Api.prototype.CreateLineAnnot;
 
 	// ApiDocument
 	ApiDocument.prototype["GetClassType"]					= ApiDocument.prototype.GetClassType;

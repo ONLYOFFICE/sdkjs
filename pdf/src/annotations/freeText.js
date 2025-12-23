@@ -1672,36 +1672,36 @@
         let oSize = {width: 0, height: 0};
 
         switch (nType) {
-            case AscPDF.LINE_END_TYPE.None:
+            case AscPDF.LINE_END_TYPE.none:
                 oSize.width = nLineW;
                 oSize.height = nLineW;
-            case AscPDF.LINE_END_TYPE.OpenArrow:
-            case AscPDF.LINE_END_TYPE.ClosedArrow:
+            case AscPDF.LINE_END_TYPE.openArrow:
+            case AscPDF.LINE_END_TYPE.closedArrow:
                 oSize.width = 6 * nLineW;
                 oSize.height = 3 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.Diamond:
-            case AscPDF.LINE_END_TYPE.Square:
+            case AscPDF.LINE_END_TYPE.diamond:
+            case AscPDF.LINE_END_TYPE.square:
                 oSize.width = 4 * nLineW;
                 oSize.height = 4 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.Circle:
+            case AscPDF.LINE_END_TYPE.circle:
                 oSize.width = 4 * nLineW;
                 oSize.height = 4 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.RClosedArrow:
+            case AscPDF.LINE_END_TYPE.rClosedArrow:
                 oSize.width = 6 * nLineW;
                 oSize.height = 6 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.ROpenArrow:
+            case AscPDF.LINE_END_TYPE.rOpenArrow:
                 oSize.width = 6 * nLineW;
                 oSize.height = 6 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.Butt:
+            case AscPDF.LINE_END_TYPE.butt:
                 oSize.width = 5 * nLineW;
                 oSize.height = 1.5 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.Slash:
+            case AscPDF.LINE_END_TYPE.slash:
                 oSize.width = 6 * nLineW;
                 oSize.height = 3 * nLineW;
                 break;

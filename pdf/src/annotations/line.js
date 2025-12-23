@@ -43,19 +43,6 @@
         Arrow:      1
     }
 
-    let LINE_END_TYPE = {
-        Square:         0,
-        Circle:         1,
-        Diamond:        2,
-        OpenArrow:      3,
-        ClosedArrow:    4,
-        None:           5,
-        Butt:           6,
-        ROpenArrow:     7,
-        RClosedArrow:   8,
-        Slash:          9
-    }
-
     let CAPTION_POSITIONING = {
         Inline: 0,
         Top:    1
@@ -80,8 +67,8 @@
         this._points        = undefined;
         this._doCaption     = undefined;
         this._intent        = undefined;
-        this._lineStart     = AscPDF.LINE_END_TYPE.None;
-        this._lineEnd       = AscPDF.LINE_END_TYPE.None;
+        this._lineStart     = AscPDF.LINE_END_TYPE.none;
+        this._lineEnd       = AscPDF.LINE_END_TYPE.none;
         this._leaderLength  = undefined; // LL
         this._leaderExtend  = undefined; // LLE
         this._leaderLineOffset  = undefined; // LLO
@@ -510,17 +497,6 @@
         }
 
         return calculateBoundingRectangle({x1: aPoints[0], y1: aPoints[1], x2: aPoints[2], y2: aPoints[3]}, shapeSizeAtStart, shapeSizeAtEnd);
-    };
-    CAnnotationLine.prototype.SetStrokeColor = function(aColor) {
-        AscCommon.History.Add(new CChangesPDFAnnotStroke(this, this.GetStrokeColor(), aColor));
-
-        this._strokeColor = aColor;
-
-        let oRGB    = this.GetRGBColor(aColor);
-        let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-        let oLine   = this.spPr.ln;
-        oLine.setFill(oFill);
-        this.handleUpdateLn();
     };
     CAnnotationLine.prototype.GetDrawing = function() {
         return this.content.GetAllDrawingObjects()[0];
@@ -969,36 +945,36 @@
         let oSize = {width: 0, height: 0};
 
         switch (nType) {
-            case AscPDF.LINE_END_TYPE.None:
+            case AscPDF.LINE_END_TYPE.none:
                 oSize.width = nLineW;
                 oSize.height = nLineW;
-            case AscPDF.LINE_END_TYPE.OpenArrow:
-            case AscPDF.LINE_END_TYPE.ClosedArrow:
+            case AscPDF.LINE_END_TYPE.openArrow:
+            case AscPDF.LINE_END_TYPE.closedArrow:
                 oSize.width = 6 * nLineW;
                 oSize.height = 6 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.Diamond:
-            case AscPDF.LINE_END_TYPE.Square:
+            case AscPDF.LINE_END_TYPE.diamond:
+            case AscPDF.LINE_END_TYPE.square:
                 oSize.width = 6 * nLineW;
                 oSize.height = 6 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.Circle:
+            case AscPDF.LINE_END_TYPE.circle:
                 oSize.width = 6 * nLineW;
                 oSize.height = 6 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.RClosedArrow:
+            case AscPDF.LINE_END_TYPE.rClosedArrow:
                 oSize.width = 8 * nLineW;
                 oSize.height = 8 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.ROpenArrow:
+            case AscPDF.LINE_END_TYPE.rOpenArrow:
                 oSize.width = 8 * nLineW;
                 oSize.height = 8 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.Butt:
+            case AscPDF.LINE_END_TYPE.butt:
                 oSize.width = 6 * nLineW;
                 oSize.height = 6 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.Slash:
+            case AscPDF.LINE_END_TYPE.slash:
                 oSize.width = 6 * nLineW;
                 oSize.height = 6 * nLineW;
                 break;
@@ -1010,34 +986,34 @@
     function getInnerLineEndType(nPdfType) {
         let nInnerType;
         switch (nPdfType) {
-            case AscPDF.LINE_END_TYPE.None:
+            case AscPDF.LINE_END_TYPE.none:
                 nInnerType = AscFormat.LineEndType.None;
                 break;
-            case AscPDF.LINE_END_TYPE.OpenArrow:
+            case AscPDF.LINE_END_TYPE.openArrow:
                 nInnerType = AscFormat.LineEndType.Arrow;
                 break;
-            case AscPDF.LINE_END_TYPE.Diamond:
+            case AscPDF.LINE_END_TYPE.diamond:
                 nInnerType = AscFormat.LineEndType.Diamond;
                 break;
-            case AscPDF.LINE_END_TYPE.Circle:
+            case AscPDF.LINE_END_TYPE.circle:
                 nInnerType = AscFormat.LineEndType.Oval;
                 break;
-            case AscPDF.LINE_END_TYPE.ClosedArrow:
+            case AscPDF.LINE_END_TYPE.closedArrow:
                 nInnerType = AscFormat.LineEndType.Triangle;
                 break;
-            case AscPDF.LINE_END_TYPE.ROpenArrow:
+            case AscPDF.LINE_END_TYPE.rOpenArrow:
                 nInnerType = AscFormat.LineEndType.ReverseArrow;
                 break;
-            case AscPDF.LINE_END_TYPE.RClosedArrow:
+            case AscPDF.LINE_END_TYPE.rClosedArrow:
                 nInnerType = AscFormat.LineEndType.ReverseTriangle;
                 break;
-            case AscPDF.LINE_END_TYPE.Butt:
+            case AscPDF.LINE_END_TYPE.butt:
                 nInnerType = AscFormat.LineEndType.Butt;
                 break;
-            case AscPDF.LINE_END_TYPE.Square:
+            case AscPDF.LINE_END_TYPE.square:
                 nInnerType = AscFormat.LineEndType.Square;
                 break;
-            case AscPDF.LINE_END_TYPE.Slash:
+            case AscPDF.LINE_END_TYPE.slash:
                 nInnerType = AscFormat.LineEndType.Slash;
                 break;
             default:
@@ -1049,7 +1025,6 @@
     }
 
     window["AscPDF"].CAnnotationLine    = CAnnotationLine;
-    window["AscPDF"].LINE_END_TYPE      = LINE_END_TYPE;
     window["AscPDF"].getInnerLineEndType= getInnerLineEndType;
 })();
 

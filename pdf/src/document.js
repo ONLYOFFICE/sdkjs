@@ -6974,7 +6974,7 @@ var CPresentation = CPresentation || function(){};
             // прописываем RD и Callout
             case AscPDF.FREE_TEXT_INTENT_TYPE.FreeTextCallout: {
                 oFreeText.SetIntent(AscPDF.FREE_TEXT_INTENT_TYPE.FreeTextCallout);
-                oFreeText.SetLineEnd(AscPDF.LINE_END_TYPE.OpenArrow);
+                oFreeText.SetLineEnd(AscPDF.LINE_END_TYPE.openArrow);
                 oFreeText.SetSubject('Text callout');
                 
                 let oTxBoxRect;

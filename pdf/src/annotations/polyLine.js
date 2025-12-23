@@ -56,8 +56,8 @@
         this._rotate        = undefined;
         this._state         = undefined;
         this._stateModel    = undefined;
-        this._lineStart     = AscPDF.LINE_END_TYPE.None;
-        this._lineEnd       = AscPDF.LINE_END_TYPE.None;
+        this._lineStart     = AscPDF.LINE_END_TYPE.none;
+        this._lineEnd       = AscPDF.LINE_END_TYPE.none;
         this._vertices      = undefined;
     }
     CAnnotationPolyLine.prototype.constructor = CAnnotationPolyLine;
@@ -419,36 +419,36 @@
         let oSize = {width: 0, height: 0};
 
         switch (nType) {
-            case AscPDF.LINE_END_TYPE.None:
+            case AscPDF.LINE_END_TYPE.none:
                 oSize.width = nLineW;
                 oSize.height = nLineW;
-            case AscPDF.LINE_END_TYPE.OpenArrow:
-            case AscPDF.LINE_END_TYPE.ClosedArrow:
+            case AscPDF.LINE_END_TYPE.openArrow:
+            case AscPDF.LINE_END_TYPE.closedArrow:
                 oSize.width = 6 * nLineW;
                 oSize.height = 6 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.Diamond:
-            case AscPDF.LINE_END_TYPE.Square:
+            case AscPDF.LINE_END_TYPE.diamond:
+            case AscPDF.LINE_END_TYPE.square:
                 oSize.width = 6 * nLineW;
                 oSize.height = 6 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.Circle:
+            case AscPDF.LINE_END_TYPE.circle:
                 oSize.width = 6 * nLineW;
                 oSize.height = 6 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.RClosedArrow:
+            case AscPDF.LINE_END_TYPE.rClosedArrow:
                 oSize.width = 8 * nLineW;
                 oSize.height = 8 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.ROpenArrow:
+            case AscPDF.LINE_END_TYPE.rOpenArrow:
                 oSize.width = 8 * nLineW;
                 oSize.height = 8 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.Butt:
+            case AscPDF.LINE_END_TYPE.butt:
                 oSize.width = 6 * nLineW;
                 oSize.height = 6 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.Slash:
+            case AscPDF.LINE_END_TYPE.slash:
                 oSize.width = 6 * nLineW;
                 oSize.height = 6 * nLineW;
                 break;
