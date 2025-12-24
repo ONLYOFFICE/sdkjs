@@ -205,12 +205,12 @@
 
 	/**
 	 * An array of points representing a continuous path.
-	 * @typedef {Array<Point>} InkPath
+	 * @typedef {Array<Point>} Path
 	 */
 
 	/**
 	 * An array of InkPath paths.
-	 * @typedef {Array<InkPath>} InkPathList
+	 * @typedef {Array<Path>} PathList
 	 */
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -420,7 +420,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
 	 * @param {Rect} rect - annotation rect.
-	 * @param {InkPathList} pathList - ink path list
+	 * @param {PathList} pathList - ink path list
 	 * @returns {ApiInkAnnotation}
 	 * @see office-js-api/Examples/PDF/Api/Methods/CreateInkAnnot.js
 	 */
@@ -429,12 +429,12 @@
 
 		inkPaths = AscBuilder.GetArrayParameter(inkPaths, []);
 		if (inkPaths.length == 0)
-			throwException(new Error("The inkPaths parameter must be a non empty array"));
+			AscBuilder.throwException(new Error("The inkPaths parameter must be a non empty array"));
 
 		inkPaths.forEach(function(path) {
 			path = AscBuilder.GetArrayParameter(path, []);
 			if (path.length == 0)
-				throwException(new Error("The ink path parameter must be a non empty array"));
+				AscBuilder.throwException(new Error("The ink path parameter must be a non empty array"));
 
 			path.forEach(function(point) {
 				private_CheckPoint(point);
@@ -469,6 +469,54 @@
 		}));
 
 		return new ApiInkAnnotation(oAnnot);
+	};
+
+	/**
+	 * Creates polygon annotation.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {Rect} rect - annotation rect.
+	 * @param {Path} path - polygon path
+	 * @returns {ApiPolygonAnnotation}
+	 * @see office-js-api/Examples/PDF/Api/Methods/CreatePolygonAnnot.js
+	 */
+	Api.prototype.CreatePolygonAnnot = function(rect, path) {
+		let oDoc = private_GetLogicDocument();
+
+		path = AscBuilder.GetArrayParameter(path, []);
+		if (path.length == 0)
+			AscBuilder.throwException(new Error("The path parameter must be a non empty array"));
+
+		path.forEach(function(point) {
+			private_CheckPoint(point);
+		});
+
+		if (!private_IsValidRect(rect)) {
+			AscBuilder.throwException("The rect parameter must be a valid rect");
+		}
+
+		let aVertices = [];
+		path.forEach(function(point) {
+			aVertices.push(point["x"], point["y"]);
+		});
+
+		let oProps = {
+			rect:           rect,
+			name:           AscCommon.CreateGUID(),
+			type:           AscPDF.ANNOTATIONS_TYPES.Polygon,
+			creationDate:   (new Date().getTime()).toString(),
+			modDate:        (new Date().getTime()).toString(),
+			hidden:         false
+		}
+
+		let oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
+
+		oAnnot.SetBorderWidth(1);
+		oAnnot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
+		oAnnot.SetBorderColor([0, 0, 0]);
+		oAnnot.SetVertices(aVertices);
+
+		return new ApiPolygonAnnotation(oAnnot);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -3780,19 +3828,19 @@
 	 * Sets ink path list.
 	 * @memberof ApiInkAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @param {InkPathList} inkPaths - ink path list
+	 * @param {PathList} inkPaths - ink path list
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/PDF/ApiInkAnnotation/Methods/SetInkPathList.js
+	 * @see office-js-api/Examples/PDF/ApiInkAnnotation/Methods/SetPathList.js
 	 */
-	ApiInkAnnotation.prototype.SetInkPathList = function(inkPaths) {
+	ApiInkAnnotation.prototype.SetPathList = function(inkPaths) {
 		inkPaths = AscBuilder.GetArrayParameter(inkPaths, []);
 		if (inkPaths.length == 0)
-			throwException(new Error("The inkPaths parameter must be a non empty array"));
+			AscBuilder.throwException(new Error("The inkPaths parameter must be a non empty array"));
 
 		inkPaths.forEach(function(path) {
 			path = AscBuilder.GetArrayParameter(path, []);
 			if (path.length == 0)
-				throwException(new Error("The ink path parameter must be a non empty array"));
+				AscBuilder.throwException(new Error("The ink path parameter must be a non empty array"));
 
 			path.forEach(function(point) {
 				private_CheckPoint(point);
@@ -3815,10 +3863,10 @@
 	 * Gets ink path list.
 	 * @memberof ApiInkAnnotation
 	 * @typeofeditors ["PDFE"]
-	 * @returns {InkPathList}
-	 * @see office-js-api/Examples/PDF/ApiInkAnnotation/Methods/GetInkPathList.js
+	 * @returns {PathList}
+	 * @see office-js-api/Examples/PDF/ApiInkAnnotation/Methods/GetPathList.js
 	 */
-	ApiInkAnnotation.prototype.GetInkPathList = function() {
+	ApiInkAnnotation.prototype.GetPathList = function() {
 		let aInkPaths = this.Annot.GetInkPoints();
 
 		return aInkPaths.map(function(path) {
@@ -3832,6 +3880,83 @@
 
 			return aPath;
 		});
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiPolygonAnnotation
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a polygon annotation.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 * @extends {ApiBaseAnnotation}
+	 */
+	function ApiPolygonAnnotation(oAnnot) {
+		ApiBaseAnnotation.call(this, oAnnot);
+	}
+
+	ApiPolygonAnnotation.prototype = Object.create(ApiBaseAnnotation.prototype);
+	ApiPolygonAnnotation.prototype.constructor = ApiPolygonAnnotation;
+
+	/**
+	 * Returns a type of the ApiPolygonAnnotation class.
+	 * @memberof ApiPolygonAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"polygonAnnot"}
+	 * @see office-js-api/Examples/PDF/ApiPolygonAnnotation/Methods/GetClassType.js
+	 */
+	ApiPolygonAnnotation.prototype.GetClassType = function() {
+		return "polygonAnnot";
+	};
+
+	/**
+	 * Sets vertices to polygon annot.
+	 * @memberof ApiPolygonAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @param {Path} path - polygon path
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiPolygonAnnotation/Methods/SetVertices.js
+	 */
+	ApiPolygonAnnotation.prototype.SetVertices = function(path) {
+		path = AscBuilder.GetArrayParameter(path, []);
+		if (path.length == 0)
+			AscBuilder.throwException(new Error("The path parameter must be a non empty array"));
+
+		path.forEach(function(point) {
+			private_CheckPoint(point);
+		});
+
+		let aVertices = [];
+		path.forEach(function(point) {
+			aVertices.push(point["x"], point["y"]);
+		});
+
+		this.Annot.SetVertices(aVertices);
+		return true;
+	};
+
+	/**
+	 * Gets ink path list.
+	 * @memberof ApiPolygonAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {Path}
+	 * @see office-js-api/Examples/PDF/ApiPolygonAnnotation/Methods/GetVertices.js
+	 */
+	ApiPolygonAnnotation.prototype.GetVertices = function() {
+		let aVertices = this.Annot.GetInkPoints();
+
+		let aPath = [];
+		for (let i = 0; i < aVertices.length - 1; i+= 2) {
+			aPath.push({
+				"x": aVertices[i],
+				"y": aVertices[i+1]
+			});
+		}
+
+		return aPath;
 	};
 
 	function private_GetLogicDocument() {
@@ -4240,6 +4365,9 @@
 			case AscPDF.ANNOTATIONS_TYPES.Ink: {
 				return new ApiInkAnnotation(annot);
 			}
+			case AscPDF.ANNOTATIONS_TYPES.Polygon: {
+				return new ApiPolygonAnnotation(annot);
+			}
 		}
 	}
 
@@ -4317,6 +4445,7 @@
 	Api.prototype["CreateFreeTextAnnot"]					= Api.prototype.CreateFreeTextAnnot;
 	Api.prototype["CreateLineAnnot"]						= Api.prototype.CreateLineAnnot;
 	Api.prototype["CreateInkAnnot"]							= Api.prototype.CreateInkAnnot;
+	Api.prototype["CreatePolygonAnnot"]						= Api.prototype.CreatePolygonAnnot;
 
 	// ApiDocument
 	ApiDocument.prototype["GetClassType"]					= ApiDocument.prototype.GetClassType;
@@ -4544,8 +4673,13 @@
 
 	// ApiInkAnnotation
 	ApiInkAnnotation.prototype["GetClassType"]				= ApiInkAnnotation.prototype.GetClassType;
-	ApiInkAnnotation.prototype["SetInkPathList"]			= ApiInkAnnotation.prototype.SetInkPathList;
-	ApiInkAnnotation.prototype["GetInkPathList"]			= ApiInkAnnotation.prototype.GetInkPathList;
+	ApiInkAnnotation.prototype["SetPathList"]				= ApiInkAnnotation.prototype.SetPathList;
+	ApiInkAnnotation.prototype["GetPathList"]				= ApiInkAnnotation.prototype.GetPathList;
+
+	// ApiPolygonAnnotation
+	ApiPolygonAnnotation.prototype["GetClassType"]			= ApiPolygonAnnotation.prototype.GetClassType;
+	ApiPolygonAnnotation.prototype["SetVertices"]			= ApiPolygonAnnotation.prototype.SetVertices;
+	ApiPolygonAnnotation.prototype["GetVertices"]			= ApiPolygonAnnotation.prototype.GetVertices;
 
 }(window, null));
 

@@ -73,10 +73,12 @@
         return oCopy;
     };
     CAnnotationPolygon.prototype.SetVertices = function(aVertices) {
-        this.recalcGeometry();
         AscCommon.History.Add(new CChangesPDFAnnotVertices(this, this.GetVertices(), aVertices));
 
         this._vertices = aVertices;
+		this.recalcGeometry();
+		this.SetWasChanged(true);
+		this.SetNeedRecalc(true);
     };
     CAnnotationPolygon.prototype.GetVertices = function() {
         return this._vertices;
