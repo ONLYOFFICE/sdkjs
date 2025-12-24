@@ -16520,6 +16520,7 @@ function isAllowPasteLink(pastedWb) {
 								doByAllRange (range, function (_range, ignoreNoEmpty) {
 									_range.cleanAll(ignoreNoEmpty);
 								});
+								t.model.dynamicArrayManager.applyChangedArrayList();
 								t.model.deletePivotTables(range.bbox);
 								t.model.removeSparklines(range.bbox);
 								t.model.clearDataValidation([range.bbox], true);

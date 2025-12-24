@@ -9003,6 +9003,7 @@
 					var oUndoRedoData_CellData = new AscCommonExcel.UndoRedoData_CellData(cell.getValueData(), null);
 					if (null != cell.xfs)
 						oUndoRedoData_CellData.style = cell.xfs.clone();
+					t.dynamicArrayManager.changeCell(cell);
 					if (cell.formulaParsed) {
 						cell.checkRemoveExternalReferences(null, cell.formulaParsed);
 						t.dynamicArrayManager.changeFormula(null, cell.formulaParsed, cell);
@@ -20708,8 +20709,12 @@
 	Range.prototype.cleanText = function () {
 		AscCommon.History.Create_NewPoint();
 		AscCommon.History.StartTransaction();
+		let t = this;
+
+
 		this._setPropertyNoEmpty(null, null,
 			function (cell, nRow0, nCol0, nRowStart, nColStart) {
+				t.worksheet.dynamicArrayManager.changeCell(cell);
 				cell.setValue("");
 				// if(cell.isEmpty())
 				// cell.Remove();
@@ -25310,7 +25315,10 @@
 
 			if (arrayData.doDelete) {
 				// delete all cells
-				range.cleanText();
+				range._setPropertyNoEmpty(null, null,
+					function (cell) {
+						cell.setValue("");
+					});
 
 				// remove listener
 				const listenerId = arrayData.formula && arrayData.formula.getListenerId();

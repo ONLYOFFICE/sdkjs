@@ -4932,5 +4932,113 @@ $(function () {
 		clearData(0, 0, 10, 20);
 	});
 
+	QUnit.test("Test: \"Dynamic array add/delete with undo/redo\"", function (assert) {
+		clearData(0, 0, 100, 200);
+
+		var flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// Helper function to check empty state
+		var checkEmptyState = function (desc) {
+			var cellValueA1 = ws.getRange2("A1").getValue();
+			var cellValueA2 = ws.getRange2("A2").getValue();
+			var cellValueB2 = ws.getRange2("B2").getValue();
+			assert.strictEqual(cellValueA1, "", desc + ": A1 is empty");
+			assert.strictEqual(cellValueA2, "", desc + ": A2 is empty");
+			assert.strictEqual(cellValueB2, "", desc + ": B2 is empty");
+			
+			var cmIndexA1 = getCellMetadata(0, 0);
+			assert.ok(!cmIndexA1 || cmIndexA1 === 0, desc + ": A1 has no metadata");
+			
+			var vmIndexA1 = getCellRichValueIndex(0, 0);
+			assert.ok(!vmIndexA1 || vmIndexA1 === 0, desc + ": A1 has no richdata");
+		};
+
+		// Helper function to check array state
+		var checkArrayState = function (desc) {
+			var cellValueA1 = ws.getRange2("A1").getValue();
+			var cellValueA2 = ws.getRange2("A2").getValue();
+			var cellValueB1 = ws.getRange2("B1").getValue();
+			var cellValueB2 = ws.getRange2("B2").getValue();
+			assert.strictEqual(cellValueA1, "1", desc + ": A1 has value 1");
+			assert.strictEqual(cellValueA2, "3", desc + ": A2 has value 3");
+			assert.strictEqual(cellValueB1, "2", desc + ": B1 has value 2");
+			assert.strictEqual(cellValueB2, "4", desc + ": B2 has value 4");
+			
+			var cmIndexA1 = getCellMetadata(0, 0);
+			assert.ok(cmIndexA1 > 0, desc + ": A1 has metadata");
+			
+			var vmIndexA1 = getCellRichValueIndex(0, 0);
+			assert.ok(!vmIndexA1 || vmIndexA1 === 0, desc + ": A1 has no richdata (expanded)");
+			
+			var arrayRef = _getArrayFormulaRef("A1");
+			assert.ok(arrayRef != null, desc + ": A1 has array reference");
+			assert.strictEqual(arrayRef.r1, 0, desc + ": Array starts at row 0");
+			assert.strictEqual(arrayRef.c1, 0, desc + ": Array starts at col 0");
+			assert.strictEqual(arrayRef.r2, 1, desc + ": Array ends at row 1");
+			assert.strictEqual(arrayRef.c2, 1, desc + ": Array ends at col 1");
+		};
+
+		// Initial state - empty
+		checkEmptyState("Initial state");
+
+		// Add dynamic array
+		var formula = "=SEQUENCE(2,2)";
+		var fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		var fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		// Check array is expanded
+		checkArrayState("After adding array");
+
+		// Delete dynamic array
+		fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText("");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		// Test undo/redo
+		checkUndoRedo(checkArrayState, checkEmptyState, "Dynamic array add/delete");
+
+		// Delete dynamic array
+		fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		wsView.emptySelection(Asc.c_oAscCleanOptions.Text);
+
+		// Test undo/redo
+		checkUndoRedo(checkArrayState, checkEmptyState, "Dynamic array add/delete with emptySelection text option");
+
+		// Delete dynamic array
+		fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		wsView.emptySelection(Asc.c_oAscCleanOptions.All);
+
+		// Test undo/redo
+		checkUndoRedo(checkArrayState, checkEmptyState, "Dynamic array add/delete with emptySelection all option");
+
+		// Delete dynamic array
+		fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		wsView.emptySelection(Asc.c_oAscCleanOptions.Formula);
+
+		// Test undo/redo
+		checkUndoRedo(checkArrayState, checkEmptyState, "Dynamic array add/delete with emptySelection Formula option");
+
+		// Delete only format
+		fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		wsView.emptySelection(Asc.c_oAscCleanOptions.Format);
+
+		// Test undo/redo
+		checkUndoRedo(checkEmptyState, checkArrayState, "Dynamic array add/delete with emptySelection Format option");
+
+
+		clearData(0, 0, 10, 20);
+	});
+
 	QUnit.module("Sheet structure");
 });
