@@ -791,7 +791,8 @@
 	}
 	CPdfRunText.prototype = Object.create(CRunText.prototype);
 	CPdfRunText.prototype.constructor = CPdfRunText;
-	
+	CPdfRunText.prototype.Type = para_PdfText;
+
 	CPdfRunText.prototype.IsPdfText = function()
 	{
 		return true;
@@ -844,7 +845,29 @@
 		// this.spacing = textPr.Spacing; // wait for non spacing text width in pdf text info
 		this.spacing = 0;
 	};
-	
+	CPdfRunText.prototype.Write_ToBinary = function(Writer)
+	{
+		// Long : Type
+		// Long : Value
+		// Bool : SpaceAfter
+
+		Writer.WriteLong(para_PdfText);
+		Writer.WriteLong(this.Value);
+		Writer.WriteBool(this.IsSpaceAfter());
+		Writer.WriteLong(this.charGid);
+		Writer.WriteLong(this.originWidth);
+		Writer.WriteLong(this.fontSize);
+
+	};
+	CPdfRunText.prototype.Read_FromBinary = function(Reader)
+	{
+		this.SetCharCode(Reader.GetLong());
+		this.SetSpaceAfter(Reader.GetBool());
+		
+		this.charGid = Reader.GetLong();
+		this.originWidth = Reader.GetLong();
+		this.fontSize = Reader.GetLong();
+	};
 	AscWord.CPdfRunText = CPdfRunText;
 	
 

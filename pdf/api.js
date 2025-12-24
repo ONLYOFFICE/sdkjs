@@ -4281,6 +4281,21 @@
 	PDFEditorApi.prototype.pre_Save = function(_images) {
 		this.isSaveFonts_Images = true;
 		this.saveImageMap       = _images;
+
+		let oDoc = this.getPDFDoc();
+		let fontMap = {};
+		oDoc.drawings.forEach(function(drawing) {
+			drawing.GetAllFonts(fontMap);
+		});
+
+		let aEmbedFonts = [];
+		let prefix = AscFonts.getEmbeddedFontPrefix();
+		Object.keys(fontMap).forEach(function(fontName) {
+			if (fontName.startsWith(prefix))
+				aEmbedFonts.push(fontName.substr(prefix.length));
+		});
+		AscFonts.initEmbeddedFonts(aEmbedFonts, true);
+
 		this.FontLoader.LoadDocumentFonts2([]);
 	};
 	PDFEditorApi.prototype.asc_Print = function (options) {
