@@ -4932,6 +4932,145 @@ $(function () {
 		clearData(0, 0, 10, 20);
 	});
 
+	QUnit.test("Test: \"Paste with clipboard collision - dynamic array collapse/delete\"", function (assert) {
+		clearData(0, 0, 100, 200);
+
+		var flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		var fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		var fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText("=SEQUENCE(3,3)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		var cellValueA1 = ws.getRange2("A1").getValue();
+		var cellValueC3 = ws.getRange2("C3").getValue();
+		assert.strictEqual(cellValueA1, "1", "A1 = 1 before paste");
+		assert.strictEqual(cellValueC3, "9", "C3 = 9 before paste");
+
+		var cmIndexA1 = getCellMetadata(0, 0);
+		assert.ok(cmIndexA1 > 0, "A1 has metadata before paste");
+
+		var arrayRef = _getArrayFormulaRef("A1");
+		assert.ok(arrayRef != null, "A1 has array reference");
+		assert.strictEqual(arrayRef.r1, 0, "Array starts at row 0");
+		assert.strictEqual(arrayRef.c1, 0, "Array starts at col 0");
+		assert.strictEqual(arrayRef.r2, 2, "Array ends at row 2");
+		assert.strictEqual(arrayRef.c2, 2, "Array ends at col 2");
+
+		ws.getRange2("Z1").setValue("100");
+		ws.selectionRange.ranges = [getRange(25, 0, 25, 0)];
+		var base64 = AscCommonExcel.g_clipboardExcel.copyProcessor.getBinaryForCopy(ws, wsView.objectRender);
+
+		ws.selectionRange.ranges = [getRange(1, 1, 1, 1)];
+		AscCommonExcel.g_clipboardExcel.pasteData(wsView, AscCommon.c_oAscClipboardDataFormat.Internal, base64);
+
+		var cellValueA1After = ws.getRange2("A1").getValue();
+		var cellValueB2After = ws.getRange2("B2").getValue();
+		assert.strictEqual(cellValueB2After, "100", "B2 = 100 after paste");
+
+		var vmIndexA1After = getCellRichValueIndex(0, 0);
+		assert.ok(vmIndexA1After > 0, "A1 has richdata after paste (collapsed)");
+
+		var cmIndexA1After = getCellMetadata(0, 0);
+		assert.ok(cmIndexA1After > 0, "A1 still has metadata after paste");
+
+		var richValueData = getRichValueData();
+		assert.ok(richValueData != null, "richValueData exists due to collapsed array");
+
+		clearData(0, 0, 100, 200);
+
+		fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText("=SEQUENCE(2,2)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		cellValueA1 = ws.getRange2("A1").getValue();
+		var cellValueB2Before = ws.getRange2("B2").getValue();
+		assert.strictEqual(cellValueA1, "1", "A1 = 1 before second paste");
+		assert.strictEqual(cellValueB2Before, "4", "B2 = 4 before second paste");
+
+		ws.getRange2("Z1").setValue("100");
+		ws.selectionRange.ranges = [getRange(25, 0, 25, 0)];
+		base64 = AscCommonExcel.g_clipboardExcel.copyProcessor.getBinaryForCopy(ws, wsView.objectRender);
+
+		ws.selectionRange.ranges = [getRange(0, 0, 0, 0)];
+		AscCommonExcel.g_clipboardExcel.pasteData(wsView, AscCommon.c_oAscClipboardDataFormat.Internal, base64);
+
+		var cellValueA1AfterOverwrite = ws.getRange2("A1").getValue();
+		var cellValueB2AfterDelete = ws.getRange2("B2").getValue();
+		assert.strictEqual(cellValueA1AfterOverwrite, "100", "A1 = 100 after paste on formula cell");
+		assert.strictEqual(cellValueB2AfterDelete, "", "B2 is empty after array deletion");
+
+		var cmIndexA1Deleted = getCellMetadata(0, 0);
+		assert.ok(!cmIndexA1Deleted || cmIndexA1Deleted === 0, "A1 has no metadata after overwrite");
+
+		var vmIndexA1Deleted = getCellRichValueIndex(0, 0);
+		assert.ok(!vmIndexA1Deleted || vmIndexA1Deleted === 0, "A1 has no richdata after overwrite");
+
+		clearData(0, 0, 100, 200);
+
+		fillRange = ws.getRange2("D5");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("D5").getValueForEdit2();
+		fragment[0].setFragmentText("=SEQUENCE(4,4)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		var cellValueD5 = ws.getRange2("D5").getValue();
+		var cellValueG8 = ws.getRange2("G8").getValue();
+		assert.strictEqual(cellValueD5, "1", "D5 = 1 before paste");
+		assert.strictEqual(cellValueG8, "16", "G8 = 16 before paste");
+
+		ws.getRange2("Z1").setValue("200");
+		ws.getRange2("Z2").setValue("201");
+		ws.getRange2("AA1").setValue("202");
+		ws.getRange2("AA2").setValue("203");
+		ws.selectionRange.ranges = [getRange(25, 0, 26, 1)];
+		base64 = AscCommonExcel.g_clipboardExcel.copyProcessor.getBinaryForCopy(ws, wsView.objectRender);
+
+		ws.selectionRange.ranges = [getRange(4, 5, 5, 6)];
+		AscCommonExcel.g_clipboardExcel.pasteData(wsView, AscCommon.c_oAscClipboardDataFormat.Internal, base64);
+
+		var cellValueE6 = ws.getRange2("E6").getValue();
+		var cellValueF7 = ws.getRange2("F7").getValue();
+		assert.strictEqual(cellValueE6, "200", "E6 = 200 after paste");
+		assert.strictEqual(cellValueF7, "203", "F7 = 203 after paste");
+
+		var vmIndexD5Collapsed = getCellRichValueIndex(4, 3);
+		assert.ok(vmIndexD5Collapsed > 0, "D5 has richdata after multi-cell paste (collapsed)");
+
+		clearData(0, 0, 100, 200);
+
+		fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText("=SEQUENCE(3,2)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		cellValueA1 = ws.getRange2("A1").getValue();
+		var cellValueB3Formula = ws.getRange2("B3").getValue();
+		assert.strictEqual(cellValueA1, "1", "A1 = 1 before formula paste");
+		assert.strictEqual(cellValueB3Formula, "6", "B3 = 6 before formula paste");
+
+		ws.getRange2("Z1").setValue("=2+2");
+		ws.selectionRange.ranges = [getRange(25, 0, 25, 0)];
+		base64 = AscCommonExcel.g_clipboardExcel.copyProcessor.getBinaryForCopy(ws, wsView.objectRender);
+
+		ws.selectionRange.ranges = [getRange(1, 1, 1, 1)];
+		AscCommonExcel.g_clipboardExcel.pasteData(wsView, AscCommon.c_oAscClipboardDataFormat.Internal, base64);
+
+		var cellValueB2Formula = ws.getRange2("B2").getValue();
+		assert.strictEqual(cellValueB2Formula, "4", "B2 = 4 after formula paste");
+
+		var vmIndexA1Formula = getCellRichValueIndex(0, 0);
+		assert.ok(vmIndexA1Formula > 0, "A1 has richdata after formula paste (collapsed)");
+
+		clearData(0, 0, 100, 200);
+	});
+
 	QUnit.test("Test: \"Dynamic array add/delete with undo/redo\"", function (assert) {
 		clearData(0, 0, 100, 200);
 

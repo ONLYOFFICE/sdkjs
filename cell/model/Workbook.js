@@ -18698,6 +18698,7 @@
 		this._foreach(function(cell){
 			cell.setValueData(val);
 		});
+		t.worksheet.dynamicArrayManager.recalculateVolatileArrays();
 		AscCommon.History.EndTransaction();
 	};
 	Range.prototype.setCellStyle=function(val){

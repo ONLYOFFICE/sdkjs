@@ -22597,7 +22597,7 @@ function isAllowPasteLink(pastedWb) {
 			if(cell.isFormula()) {
 				var formulaParsed = cell.getFormulaParsed();
 				var arrayFormulaRef = formulaParsed && formulaParsed.getArrayFormulaRef();
-				if (arrayFormulaRef && ignoreFirstDynamicCell && formulaParsed.getCm() != null && range.contains(arrayFormulaRef.c1, arrayFormulaRef.r1)) {
+				if (arrayFormulaRef && ignoreFirstDynamicCell && formulaParsed.getCm() != null/* && range.contains(arrayFormulaRef.c1, arrayFormulaRef.r1)*/) {
 					return;
 				}
 				if(arrayFormulaRef && (!checkOneCellArray || (checkOneCellArray && !arrayFormulaRef.isOneCell()))) {
