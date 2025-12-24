@@ -20936,6 +20936,7 @@ $(function () {
 		ws2.getRange2("A1").setValue("1");
 		ws2.getRange2("A2").setValue("2");
 		ws2.getRange2("A3").setValue("Text");
+		ws2.getRange2("A4").setValue("");
 		ws2.getRange2("B1").setValue("3");
 		ws2.getRange2("B2").setValue("4");
 		ws2.getRange2("C1").setValue("1");
@@ -20971,7 +20972,7 @@ $(function () {
 		// Case #5: Reference link. Reference to cells with valid numbers. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT(A100,A101)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT(A100,A101) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Reference link. Reference to cells with valid numbers. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Reference link. Reference to cells with valid numbers. 2 arguments used.');
 		// Case #6: Area. Single-cell ranges. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT(A100:A101,A102:A103)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT(A100:A101,A102:A103) is parsed.');
@@ -20983,15 +20984,15 @@ $(function () {
 		// Case #8: Name. Named ranges with valid numbers. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT(TestName,TestName1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT(TestName,TestName1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Name. Named ranges with valid numbers. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Name. Named ranges with valid numbers. 2 arguments used.');
 		// Case #9: Name3D. 3D named ranges. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT(TestName3D,TestName3D)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT(TestName3D,TestName3D) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Name3D. 3D named ranges. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Name3D. 3D named ranges. 2 arguments used.');
 		// Case #10: Ref3D. 3D reference to cells. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT(Sheet2!A1,Sheet2!A2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT(Sheet2!A1,Sheet2!A2) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Ref3D. 3D reference to cells. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Ref3D. 3D reference to cells. 2 arguments used.');
 		// Case #11: Area3D. 3D single-cell ranges. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT(Sheet2!A1:A1,Sheet2!A2:A2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT(Sheet2!A1:A1,Sheet2!A2:A2) is parsed.');
@@ -20999,11 +21000,12 @@ $(function () {
 		// Case #12: Table. Table structured references. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT(Table1[Column1],Table1[Column3])', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT(Table1[Column1],Table1[Column3]) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Positive case: Table. Table structured references. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Table. Table structured references. 2 arguments used.');
 		// Case #13: Formula. Nested IF formulas in arrays. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT(IF(TRUE,{1,2,3},{-1,0,1}),{20,25,35})', 'A2', ws);
+		oParser.setArrayFormulaRef(ws.getRange2("A1:B2").bbox);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT(IF(TRUE,{1,2,3},{-1,0,1}),{20,25,35}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), -1.428571429, 'Test: Positive case: Formula. Nested IF formulas in arrays. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), -1.4285714285714293, 'Test: Positive case: Formula. Nested IF formulas in arrays. 2 arguments used.');
 		// Case #14: Number. Arrays with ignored text and logical values. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT({1,2,3,TRUE,"text"},{4,5,6,FALSE,"abc"})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT({1,2,3,TRUE,"text"},{4,5,6,FALSE,"abc"}) is parsed.');
@@ -21024,14 +21026,14 @@ $(function () {
 		oParser = new parserFormula('INTERCEPT({1,2,3,4},{5,6,7,8})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT({1,2,3,4},{5,6,7,8}) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), -4, 'Test: Positive case: Array. Larger arrays with valid numbers. 2 arguments used.');
-		// Case #19: Formula. Nested ROUND formulas. 2 arguments used.
+		// Case #19: Array, Array. Two arrays with numbers. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT({2,2,2},{4,6,6})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT({2,2,2},{4,6,6}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 2, 'Test: Positive case: Formula. Nested ROUND formulas. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 2, 'Test: Positive case: Array, Array. Two arrays with numbers. 2 arguments used.');
 		// Case #20: Reference link. Reference to cells with mixed data (text ignored). 2 arguments used.
 		oParser = new parserFormula('INTERCEPT(A104,A105)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT(A104,A105) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Reference link. Reference to cells with mixed data (text ignored). 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Positive case: Reference link. Reference to cells with mixed data (text ignored). 2 arguments used.');
 		// Case #21: Area. Multi-cell ranges with valid numbers. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT(A100:A102,A103:A105)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT(A100:A102,A103:A105) is parsed.');
@@ -21041,67 +21043,67 @@ $(function () {
 		// Case #1: Number. Mismatched array sizes return #N/A. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT({1,2},{3,4,5})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT({1,2},{3,4,5}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number. Mismatched array sizes return #N/A. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number. Mismatched array sizes return #N/A. 2 arguments used.');
 		// Case #2: Number. Collinear data (all y’s = 0) returns #DIV/0!. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT({0,0,0},{1,1,1})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT({0,0,0},{1,1,1}) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Number. Collinear data (all ys = 0) returns #DIV/0!. 2 arguments used.');
-		// Case #3: String. Non-numeric strings return #VALUE!. 2 arguments used.
+		// Case #3: String. Non-numeric strings return #DIV/0!. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT({"abc","def"},{"ghi","jkl"})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT({"abc","def"},{"ghi","jkl"}) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: String. Non-numeric strings return #VALUE!. 2 arguments used.');
-		// Case #4: Error. Propagates #N/A error. 2 arguments used.
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: String. Non-numeric strings return #DIV/0!. 2 arguments used.');
+		// Case #4: Error. Propagates #DIV/0 error. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT(1/0,{4,5,6})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT(1/0,{4,5,6}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Error. Propagates #N/A error. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Error. Propagates #DIV/0 error. 2 arguments used.');
 		// Case #5: Area. Mismatched range sizes return #N/A. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT(A100:A102,A103:A104)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT(A100:A102,A103:A104) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Area. Mismatched range sizes return #N/A. 2 arguments used.');
-		// Case #6: Empty. Empty cell references return #N/A. 2 arguments used.
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Area. Mismatched range sizes return #N/A. 2 arguments used.');
+		// Case #6: Cell. Cell references. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT(A106,A107)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT(A106,A107) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Empty. Empty cell references return #N/A. 2 arguments used.');
-		// Case #7: Boolean. Boolean values ignored, no valid data returns #N/A. 2 arguments used.
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Empty. Cell references. 2 arguments used.');
+		// Case #7: Boolean. Boolean values ignored, no valid data returns #DIV/0. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT({TRUE,FALSE},{TRUE,FALSE})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT({TRUE,FALSE},{TRUE,FALSE}) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Boolean. Boolean values ignored, no valid data returns #N/A. 2 arguments used.');
-		// Case #8: String. Empty strings ignored, no valid data returns #N/A. 2 arguments used.
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Boolean. Boolean values ignored, no valid data returns #DIV/0. 2 arguments used.');
+		// Case #8: String. Empty strings ignored, no valid data returns #DIV/0. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT({"",""},{"",""})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT({"",""},{"",""}) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: String. Empty strings ignored, no valid data returns #N/A. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: String. Empty strings ignored, no valid data returns #DIV/0. 2 arguments used.');
 		// Case #9: Ref3D. 3D ref to text cells returns #VALUE!. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT(Sheet2!A3,Sheet2!A4)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT(Sheet2!A3,Sheet2!A4) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Ref3D. 3D ref to text cells returns #VALUE!. 2 arguments used.');
-		// Case #10: Name. Named ranges with text return #VALUE!. 2 arguments used.
+		// Case #10: Name. Named ranges. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT(TestNameArea2,TestNameArea2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT(TestNameArea2,TestNameArea2) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: Name. Named ranges with text return #VALUE!. 2 arguments used.');
-		// Case #11: Table. Table columns with text/logical values return #VALUE!. 2 arguments used.
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: Name. Named ranges. 2 arguments used.');
+		// Case #11: Table. Table columns with text/logical values. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT(Table1[Column2],Table1[Column3])', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT(Table1[Column2],Table1[Column3]) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Table. Table columns with text/logical values return #VALUE!. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Table. Table columns with text/logical values. 2 arguments used.');
 		// Case #12: Formula. Formula resulting in #NUM! propagates error. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT({4,5,6},SQRT(-1))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT({4,5,6},SQRT(-1)) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Formula. Formula resulting in #NUM! propagates error. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Formula. Formula resulting in #NUM! propagates error. 2 arguments used.');
 		// Case #13: Number. All zeros return #DIV/0!. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT({0,0,0},{0,0,0})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT({0,0,0},{0,0,0}) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Number. All zeros return #DIV/0!. 2 arguments used.');
-		// Case #14: Array. Single-element arrays return #N/A. 2 arguments used.
+		// Case #14: Array. Single-element arrays. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT({1},{2})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT({1},{2}) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Array. Single-element arrays return #N/A. 2 arguments used.');
-		// Case #15: Number. Logical values ignored in x’s, no valid data returns #N/A. 2 arguments used.
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Array. Single-element arrays. 2 arguments used.');
+		// Case #15: Number. Logical values. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT({1,2,3},{TRUE,TRUE,TRUE})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT({1,2,3},{TRUE,TRUE,TRUE}) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Number. Logical values ignored in xs, no valid data returns #N/A. 2 arguments used.');
-		// Case #16: Area3D. Mismatched 3D ranges return #N/A. 2 arguments used.
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Number. Logical values. 2 arguments used.');
+		// Case #16: Area3D. 3D ranges. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT(Sheet2!A1:A2,Sheet2!A3:A4)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT(Sheet2!A1:A2,Sheet2!A3:A4) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area3D. Mismatched 3D ranges return #N/A. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Negative case: Area3D. 3D ranges. 2 arguments used.');
 		// Case #17: Date. Valid dates as numbers, but testing large values. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT({45658,45659},{45717,45748})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT({45658,45659},{45717,45748}) is parsed.');
@@ -21117,7 +21119,7 @@ $(function () {
 		// Case #20: Formula. Nested IF with #N/A propagates error. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT(IF(FALSE,1,NA()),{3,4})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT(IF(FALSE,1,NA()),{3,4}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Formula. Nested IF with #N/A propagates error. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Formula. Nested IF with #N/A propagates error. 2 arguments used.');
 
 		// Bounded cases:
 		// Case #1: Number. Minimum positive values supported by Excel. 2 arguments used.
@@ -21126,28 +21128,20 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Bounded case: Number. Minimum positive values supported by Excel. 2 arguments used.');
 		// Case #2: Number. Maximum Excel values, collinear case. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT({9.99999999999999E+307,9.99999999999999E+307},{9.99999999999999E+307,9.99999999999999E+307})', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: INTERCEPT({9.99999999999999E+307,9.99999999999999E+307},{9.99999999999999E+307,9.99999999999999E+307}) is parsed.');
+		assert.ok(oParser.parse(), 'Test: INTERCEPT({9.99999999999999E+307,9.99999999999999E+307},{9.99999999999999E+307,9.99999999999999E+307}) is parsed.');debugger
 		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number. Maximum Excel values, collinear case. 2 arguments used.');
 		// Case #3: Number. Collinear x’s (all same) return #DIV/0!. 2 arguments used.
 		oParser = new parserFormula('INTERCEPT({1,2,3},{1,1,1})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: INTERCEPT({1,2,3},{1,1,1}) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#DIV/0!', 'Test: Bounded case: Number. Collinear x (all same) return #DIV/0!. 2 arguments used.');
-
-		// Need to fix: area handle, error handle, ms result diff
-		// Case #5: Reference link. Reference to cells with valid numbers. 2 arguments used.
-		// Case #8: Name. Named ranges with valid numbers. 2 arguments used.
-		// Case #9: Name3D. 3D named ranges. 2 arguments used.
-		// Case #10: Ref3D. 3D reference to cells. 2 arguments used.
-		// Case #13: Formula. Nested IF formulas in arrays. 2 arguments used. - result diff
-		// Case #19: Formula. Nested ROUND formulas. 2 arguments used. - result diff
-		// Case #20: Reference link. Reference to cells with mixed data (text ignored). 2 arguments used.
-		// Case #1: Number. Mismatched array sizes return #N/A. 2 arguments used. - array size diff
-		// Case #4: Error. Propagates #N/A error. 2 arguments used. - error handle
-		// Case #5: Area. Mismatched range sizes return #N/A. 2 arguments used. - array size diff
-		// Case #6: Empty. Empty cell references return #N/A. 2 arguments used.
-		// Case #12: Formula. Formula resulting in #NUM! propagates error. 2 arguments used. - error handle
-		// Case #20: Formula. Nested IF with #N/A propagates error. 2 arguments used. - error handle
-
+		// Case #4: Array, Array. Maximum number boundary check. 2 arguments used.
+		oParser = new parserFormula('INTERCEPT({1E+154,1E+154},{1E+154,2E+154})', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: INTERCEPT({1E+154,1E+154},{1E+154,2E+154}) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 1e+154, 'Test: Bounded case: Array, Array. Maximum number boundary check. 2 arguments used.');
+		// Case #5: Array, Array. Maximum number boundary check. 2 arguments used.
+		oParser = new parserFormula('INTERCEPT({1E+155,1E+155},{1E+155,2E+155})', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: INTERCEPT({1E+155,1E+155},{1E+155,2E+155}) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Array, Array. Maximum number boundary check. 2 arguments used.');
 
 
 		testArrayFormula2(assert, "INTERCEPT", 2, 2, null, true);

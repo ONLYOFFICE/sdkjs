@@ -7455,63 +7455,101 @@ function (window, undefined) {
 	cINTERCEPT.prototype.Calculate = function (arg) {
 		function intercept(y, x) {
 
-			var fSumDeltaXDeltaY = 0, fSumSqrDeltaX = 0, _x = 0, _y = 0, xLength = 0, i;
+			let fSumDeltaXDeltaY = 0, fSumSqrDeltaX = 0, _x = 0, _y = 0, xLength = 0, i, xVal, yVal;
 			for (i = 0; i < x.length; i++) {
 
-				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
+				if (!(x[i].type === cElementType.number && y[i].type === cElementType.number)) {
 					continue;
 				}
 
-				_x += x[i].getValue();
-				_y += y[i].getValue();
+				xVal = x[i].getValue();
+				yVal = y[i].getValue();
+				if (xVal >= max_num || yVal >= max_num) {
+					return new cError(cErrorType.not_numeric);
+				}
+
+				_x += xVal;
+				_y += yVal;
 				xLength++;
 			}
 
 			_x /= xLength;
 			_y /= xLength;
 
+			if (Number.isNaN(_x) || Number.isNaN(_y)) {
+				return new cError(cErrorType.division_by_zero);
+			}
+
 			for (i = 0; i < x.length; i++) {
 
-				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
+				if (!(x[i].type === cElementType.number && y[i].type === cElementType.number)) {
 					continue;
 				}
 
-				var fValX = x[i].getValue();
-				var fValY = y[i].getValue();
+				let fValX = x[i].getValue();
+				let fValY = y[i].getValue();
 
 				fSumDeltaXDeltaY += (fValX - _x) * (fValY - _y);
 				fSumSqrDeltaX += (fValX - _x) * (fValX - _x);
 
 			}
 
-			if (fSumDeltaXDeltaY == 0) {
+			let res = _y - fSumDeltaXDeltaY / fSumSqrDeltaX * _x;
+			if (Number.isNaN(res)) {
 				return new cError(cErrorType.division_by_zero);
 			} else {
-				return new cNumber(_y - fSumDeltaXDeltaY / fSumSqrDeltaX * _x);
+				return new cNumber(res);
 			}
 
 		}
 
-		var arg0 = arg[0], arg1 = arg[1], arr0 = [], arr1 = [];
 
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		const max_num = 1 * Math.pow(10,155); // 1E+155 - max number in this function (ms reference)
+		let arg0 = arg[0], arg1 = arg[1], arr0 = [], arr1 = [];
+
+		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
+			arg0 = arg0.getValue();
+		}
+
+		if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+			arg1 = arg1.getValue();
+		}
+
+		if (arg0.type === cElementType.error) {
+			return arg0;
+		} else if (arg0.type === cElementType.empty) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+			
+		if (arg1.type === cElementType.error) {
+			return arg1;
+		} else if (arg1.type === cElementType.empty) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arr0 = arg0.getValue();
-		} else if (arg0 instanceof cArray) {
+		} else if (arg0.type === cElementType.array) {
 			arg0.foreach(function (elem) {
 				arr0.push(elem);
 			});
 		} else {
-			return new cError(cErrorType.wrong_value_type);
+			arr0.push(arg0);
 		}
 
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
+
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
 			arr1 = arg1.getValue();
-		} else if (arg1 instanceof cArray) {
+		} else if (arg0.type === cElementType.array) {
 			arg1.foreach(function (elem) {
 				arr1.push(elem);
 			});
 		} else {
-			return new cError(cErrorType.wrong_value_type);
+			arr1.push(arg1);
+		}
+
+		if (arr0.length !== arr1.length) {
+			return new cError(cErrorType.not_available);
 		}
 
 		return intercept(arr0, arr1);
