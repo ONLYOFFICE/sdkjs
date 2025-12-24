@@ -25383,16 +25383,24 @@
 		}
 
 		let isHaveNonEmptyCell;
-		let supposedDynamicRange = this.ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2);
-		let skipRange;
+		let skipRanges = [];
 		for (let i = bbox.r1; i <= bbox.r2; i++) {
 			for (let j = bbox.c1; j <= bbox.c2; j++) {
 				if (i === bbox.r1 && j === bbox.c1) {
 					continue
 				}
 
-				if (skipRange && skipRange.contains(j, i)) {
-					continue;
+				if (skipRanges && skipRanges.length) {
+					let isSkip = false;
+					for (let k = 0; k < skipRanges.length; k++) {
+						if (skipRanges[k].contains(j, i)) {
+							isSkip = true;
+							break;
+						}
+					}
+					if (isSkip) {
+						continue;
+					}
 				}
 
 				this.ws._getCellNoEmpty(i, j, function(cell) {
@@ -25402,11 +25410,14 @@
 						if (formula && dynamicRangeFromCell) {
 							// check if cell belong to current dynamicRange
 							// this is necessary so that spill errors do not occur during the second check of the range (since the values ​​in it have already been entered earlier)
-							if (dynamicRangeFromCell.r1 === bbox.r1 && dynamicRangeFromCell.c1 === bbox.c1 && formula.getCm() != null && formula.getVm() == null) {
-								// if the cell is part of another dynamic range, then the range that is in the area of ​​the previous range is displayed (except for the first cell, but we do not check it)
-								// that is, if one of the ranges is “lower” or “to the right” in the editor, then it will be displayed, and the other will receive a SPILL error
-								skipRange = dynamicRangeFromCell;
-								return;
+							if (formula.getCm() != null && formula.getVm() == null) {
+								if (dynamicRangeFromCell.r1 === bbox.r1 && dynamicRangeFromCell.c1 === bbox.c1) {
+									skipRanges.push(dynamicRangeFromCell);
+									return;
+								} else if (dynamicRangeFromCell.contains(bbox.c1, bbox.r1)) {
+									skipRanges.push(dynamicRangeFromCell);
+									return;
+								}
 							}
 						}
 						if (cell.formulaParsed || !cell.isEmptyTextString()) {

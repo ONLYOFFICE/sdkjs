@@ -4862,5 +4862,75 @@ $(function () {
 		clearData(0, 0, 10, 20);
 	});
 
+	QUnit.test("Test: \"Insert dynamic array into existing spill range\"", function (assert) {
+		clearData(0, 0, 100, 200);
+
+		var flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// Create initial expanded array in A1 (spills to A1:B3)
+		var formula1 = "=SEQUENCE(3,2)";
+		var fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		var fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText(formula1);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		// Sanity check initial spill
+		var cellValueA1 = ws.getRange2("A1").getValue();
+		var cellValueB3 = ws.getRange2("B3").getValue();
+		assert.strictEqual(cellValueA1, "1", "A1 has value 1");
+		assert.strictEqual(cellValueB3, "6", "B3 has value 6");
+
+		var cmIndexA1 = getCellMetadata(0, 0);
+		assert.ok(cmIndexA1 > 0, "A1 has metadata");
+
+		// Insert a new dynamic array with head inside the existing spill (B2)
+		var formula2 = "=SEQUENCE(2,2)"; // spills to B2:C3
+		fillRange = ws.getRange2("B2");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("B2").getValueForEdit2();
+		fragment[0].setFragmentText(formula2);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		// Previous head (A1) should collapse with #SPILL!
+		cellValueA1 = ws.getRange2("A1").getValue();
+		assert.strictEqual(cellValueA1, "#SPILL!", "Previous head A1 collapsed to SPILL");
+
+		// New array should be expanded from B2 to C3
+		var cellValueB2 = ws.getRange2("B2").getValue();
+		var cellValueC2 = ws.getRange2("C2").getValue();
+		var cellValueB3n = ws.getRange2("B3").getValue();
+		var cellValueC3 = ws.getRange2("C3").getValue();
+		assert.strictEqual(cellValueB2, "1", "B2 new array value 1");
+		assert.strictEqual(cellValueC2, "2", "C2 new array value 2");
+		assert.strictEqual(cellValueB3n, "3", "B3 new array value 3");
+		assert.strictEqual(cellValueC3, "4", "C3 new array value 4");
+
+		// Metadata/richdata expectations
+		var cmIndexB2 = getCellMetadata(1, 1);
+		assert.ok(cmIndexB2 > 0, "B2 has metadata as new array head");
+
+		var vmIndexA1 = getCellRichValueIndex(0, 0);
+		assert.ok(vmIndexA1 > 0, "A1 has richdata after collapse");
+
+		var vmIndexB2 = getCellRichValueIndex(1, 1);
+		assert.ok(!vmIndexB2 || vmIndexB2 === 0, "B2 has no richdata (expanded)");
+
+		// Range reference for new array
+		var arrayRefB2 = _getArrayFormulaRef("B2");
+		assert.ok(arrayRefB2 != null, "B2 has array reference");
+		assert.strictEqual(arrayRefB2.r1, 1, "Array starts at row 1 (B2)");
+		assert.strictEqual(arrayRefB2.c1, 1, "Array starts at col 1 (B)");
+		assert.strictEqual(arrayRefB2.r2, 2, "Array ends at row 2 (B3)");
+		assert.strictEqual(arrayRefB2.c2, 2, "Array ends at col 2 (C)");
+
+		var richValueData = getRichValueData();
+		assert.ok(richValueData != null, "richValueData exists due to collapsed A1");
+
+		clearData(0, 0, 10, 20);
+	});
+
 	QUnit.module("Sheet structure");
 });

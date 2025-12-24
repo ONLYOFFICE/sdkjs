@@ -16791,7 +16791,7 @@ function isAllowPasteLink(pastedWb) {
 				c_oAscError.Level.NoCritical);
 			return;
 		}
-		if ("empty" === prop && this.intersectionFormulaArray(arn)) {
+		if ("empty" === prop && this.intersectionFormulaArray(arn, null, null, true)) {
 			t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
 			return;
 		}
@@ -22587,7 +22587,7 @@ function isAllowPasteLink(pastedWb) {
 		return res;
 	};
 
-	WorksheetView.prototype.intersectionFormulaArray = function(range, notCheckContains, checkOneCellArray) {
+	WorksheetView.prototype.intersectionFormulaArray = function(range, notCheckContains, checkOneCellArray, ignoreFirstDynamicCell) {
 		//checkOneCellArray - ф/т можно добавить поверх формулы массива, которая содержит 1 ячейку, если более - то ошибка
 		//notCheckContains - ф/т нельзя добавить, если мы пересекаемся или содержим ф/т
 
@@ -22595,7 +22595,10 @@ function isAllowPasteLink(pastedWb) {
 		this.model.getRange3(range.r1, range.c1, range.r2, range.c2)._foreachNoEmpty(function(cell) {
 			if(cell.isFormula()) {
 				var formulaParsed = cell.getFormulaParsed();
-				var arrayFormulaRef = formulaParsed.getArrayFormulaRef();
+				var arrayFormulaRef = formulaParsed && formulaParsed.getArrayFormulaRef();
+				if (arrayFormulaRef && ignoreFirstDynamicCell && formulaParsed.getCm() != null && range.contains(arrayFormulaRef.c1, arrayFormulaRef.r1)) {
+					return;
+				}
 				if(arrayFormulaRef && (!checkOneCellArray || (checkOneCellArray && !arrayFormulaRef.isOneCell()))) {
 					if(notCheckContains) {
 						res = true;
