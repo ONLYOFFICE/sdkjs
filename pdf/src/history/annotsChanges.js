@@ -432,7 +432,7 @@ CChangesPDFAnnotStroke.prototype.Type = AscDFH.historyitem_Pdf_Annot_Stroke;
 CChangesPDFAnnotStroke.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
-	oAnnot.SetStrokeColor(Value);
+	oAnnot.SetBorderColor(Value);
 };
 
 /**

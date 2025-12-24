@@ -263,8 +263,8 @@ StartAddNewShape.prototype =
                             page:       this.pageIndex,
                             contents:   null,
                             type:       AscPDF.ANNOTATIONS_TYPES.Ink,
-                            creationDate:   (new Date().getTime()).toString(),
-                            modDate:        (new Date().getTime()).toString()
+                            creationDate:   new Date().getTime(),
+                            modDate:        new Date().getTime()
                         });
     
                         let oRGBPen = oTrack.pen.Fill.getRGBAColor();
@@ -277,7 +277,7 @@ StartAddNewShape.prototype =
 
                         oInkAnnot.SetBorderWidth(nLineW);
                         oInkAnnot.AddInkPath(aInkPath);
-                        oInkAnnot.SetStrokeColor([oRGBPen.R / 255, oRGBPen.G / 255, oRGBPen.B / 255]);
+                        oInkAnnot.SetBorderColor([oRGBPen.R / 255, oRGBPen.G / 255, oRGBPen.B / 255]);
                         oInkAnnot.SetOpacity(oTrack.pen.Fill.transparent / 255);
 						oInkAnnot.SetRect(oInkAnnot.private_CalculateBoundingBox());
 

@@ -3232,7 +3232,7 @@
 						annot.SetFillColor(aColor);
 					}
 					else {
-						annot.SetStrokeColor(aColor);
+						annot.SetBorderColor(aColor);
 					}
 				}
 			});

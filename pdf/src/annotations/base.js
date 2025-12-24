@@ -179,7 +179,7 @@
         oCopy.SetBorderWidth(this.GetBorderWidth());
         oCopy.SetMeta(JSON.parse(JSON.stringify(this.GetMeta())));
 
-        aStrokeColor && oCopy.SetStrokeColor(aStrokeColor.slice());
+        aStrokeColor && oCopy.SetBorderColor(aStrokeColor.slice());
         aFillColor && oCopy.SetFillColor(aFillColor.slice());
         aDash && oCopy.SetDash(aDash.slice());
         aRD && oCopy.SetRectangleDiff(aRD.slice());
@@ -347,7 +347,7 @@
             }
             else {
                 AscCommon.History.StartNoHistoryMode();
-                this.SetStrokeColor(this.GetStrokeColor());
+                this.SetBorderColor(this.GetStrokeColor());
                 AscCommon.History.EndNoHistoryMode();
             }
 
@@ -1409,7 +1409,7 @@
         return new AscFormat.MoveAnnotationTrack(this);
     };
 
-    CAnnotationBase.prototype.SetStrokeColor = function(aColor) {
+    CAnnotationBase.prototype.SetBorderColor = function(aColor) {
         AscCommon.History.Add(new CChangesPDFAnnotStroke(this, this.GetStrokeColor(), aColor));
 
         this._strokeColor = aColor;
@@ -1666,7 +1666,7 @@
             for (let i = 0; i < colorLength; i++) {
                 aStrokeColor.push(memory.GetDouble());
             }
-            this.SetStrokeColor(aStrokeColor);
+            this.SetBorderColor(aStrokeColor);
         }
     
         // border

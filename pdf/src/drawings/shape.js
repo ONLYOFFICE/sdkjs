@@ -339,7 +339,7 @@
 
         let oAnnot;
         let aRect = [oXfrm.offX * g_dKoef_mm_to_pt, oXfrm.offY * g_dKoef_mm_to_pt, (oXfrm.offX + oXfrm.extX) * g_dKoef_mm_to_pt, (oXfrm.offY + oXfrm.extY) * g_dKoef_mm_to_pt];
-        let sCreationDate = (new Date().getTime()).toString();
+        let sCreationDate = new Date().getTime();
         let nLineW = this.pen.w / 36000.0 * g_dKoef_mm_to_pt;
         let oRGAStroke = this.pen.Fill.fill.color.RGBA;
         let aStrokeColor = [oRGAStroke.R / 255, oRGAStroke.G / 255, oRGAStroke.B / 255];
@@ -437,7 +437,7 @@
 
         oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
         oAnnot.SetBorderWidth(nLineW);
-        oAnnot.SetStrokeColor(aStrokeColor);
+        oAnnot.SetBorderColor(aStrokeColor);
         aFillColor && oAnnot.SetFillColor(aFillColor);
 
         switch (oAnnot.GetType()) {

@@ -380,7 +380,7 @@
 						oLine.setFill(AscFormat.CreateNoFillUniFill());
 					}
 					else {
-						this.SetStrokeColor(this.GetStrokeColor());
+						this.SetBorderColor(this.GetStrokeColor());
 					}
 					
 					oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
@@ -388,7 +388,7 @@
 			}
 		}, undefined, this);
     };
-	CAnnotationFreeText.prototype.SetStrokeColor = function(aColor) {
+	CAnnotationFreeText.prototype.SetBorderColor = function(aColor) {
 		AscCommon.History.Add(new CChangesPDFAnnotStroke(this, this.GetStrokeColor(), aColor));
 		
 		this._strokeColor = aColor;

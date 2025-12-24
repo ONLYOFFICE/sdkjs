@@ -213,6 +213,11 @@
 	 * @typedef {Array<Path>} PathList
 	 */
 
+	/**
+	 * The available stamp types.
+	 * @typedef {("D_Approved" | "D_Revised" | "D_Reviewed" | "D_Received" | "SB_Approved" | "SB_NotApproved" | "SB_Revised" | "SB_Confidential" | "SB_ForComment" | "SB_ForPublicRelease" | "SB_NotForPublicRelease" | "SB_PreliminaryResults" | "SB_InformationOnly" | "SB_Draft" | "SB_Completed" | "SB_Final" | "SB_Void" | "SH_SignHere" | "SH_Witness" | "SH_InitialHere" | "Expired")} StampType
+	 */
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// Api
@@ -271,8 +276,8 @@
 			rect:           rect,
 			name:           AscCommon.CreateGUID(),
 			type:           AscPDF.ANNOTATIONS_TYPES.Text,
-			creationDate:   (new Date().getTime()).toString(),
-			modDate:        (new Date().getTime()).toString(),
+			creationDate:   new Date().getTime(),
+			modDate:        new Date().getTime(),
 			hidden:         false
 		}
 
@@ -300,8 +305,8 @@
 			rect:           rect,
 			name:           AscCommon.CreateGUID(),
 			type:           AscPDF.ANNOTATIONS_TYPES.Circle,
-			creationDate:   (new Date().getTime()).toString(),
-			modDate:        (new Date().getTime()).toString(),
+			creationDate:   new Date().getTime(),
+			modDate:        new Date().getTime(),
 			hidden:         false
 		}
 
@@ -332,8 +337,8 @@
 			rect:           rect,
 			name:           AscCommon.CreateGUID(),
 			type:           AscPDF.ANNOTATIONS_TYPES.Square,
-			creationDate:   (new Date().getTime()).toString(),
-			modDate:        (new Date().getTime()).toString(),
+			creationDate:   new Date().getTime(),
+			modDate:        new Date().getTime(),
 			hidden:         false
 		}
 
@@ -364,8 +369,8 @@
 			rect:           rect,
 			name:           AscCommon.CreateGUID(),
 			type:           AscPDF.ANNOTATIONS_TYPES.FreeText,
-			creationDate:   (new Date().getTime()).toString(),
-			modDate:        (new Date().getTime()).toString(),
+			creationDate:   new Date().getTime(),
+			modDate:        new Date().getTime(),
 			hidden:         false
 		}
 
@@ -401,8 +406,8 @@
 			rect:           rect,
 			name:           AscCommon.CreateGUID(),
 			type:           AscPDF.ANNOTATIONS_TYPES.Line,
-			creationDate:   (new Date().getTime()).toString(),
-			modDate:        (new Date().getTime()).toString(),
+			creationDate:   new Date().getTime(),
+			modDate:        new Date().getTime(),
 			hidden:         false
 		}
 
@@ -429,12 +434,12 @@
 
 		inkPaths = AscBuilder.GetArrayParameter(inkPaths, []);
 		if (inkPaths.length == 0)
-			AscBuilder.throwException(new Error("The inkPaths parameter must be a non empty array"));
+			AscBuilder.throwException("The inkPaths parameter must be a non empty array");
 
 		inkPaths.forEach(function(path) {
 			path = AscBuilder.GetArrayParameter(path, []);
 			if (path.length == 0)
-				AscBuilder.throwException(new Error("The ink path parameter must be a non empty array"));
+				AscBuilder.throwException("The ink path parameter must be a non empty array");
 
 			path.forEach(function(point) {
 				private_CheckPoint(point);
@@ -449,8 +454,8 @@
 			rect:           rect,
 			name:           AscCommon.CreateGUID(),
 			type:           AscPDF.ANNOTATIONS_TYPES.Ink,
-			creationDate:   (new Date().getTime()).toString(),
-			modDate:        (new Date().getTime()).toString(),
+			creationDate:   new Date().getTime(),
+			modDate:        new Date().getTime(),
 			hidden:         false
 		}
 
@@ -485,7 +490,7 @@
 
 		path = AscBuilder.GetArrayParameter(path, []);
 		if (path.length == 0)
-			AscBuilder.throwException(new Error("The path parameter must be a non empty array"));
+			AscBuilder.throwException("The path parameter must be a non empty array");
 
 		path.forEach(function(point) {
 			private_CheckPoint(point);
@@ -504,8 +509,8 @@
 			rect:           rect,
 			name:           AscCommon.CreateGUID(),
 			type:           AscPDF.ANNOTATIONS_TYPES.Polygon,
-			creationDate:   (new Date().getTime()).toString(),
-			modDate:        (new Date().getTime()).toString(),
+			creationDate:   new Date().getTime(),
+			modDate:        new Date().getTime(),
 			hidden:         false
 		}
 
@@ -533,7 +538,7 @@
 
 		path = AscBuilder.GetArrayParameter(path, []);
 		if (path.length == 0)
-			AscBuilder.throwException(new Error("The path parameter must be a non empty array"));
+			AscBuilder.throwException("The path parameter must be a non empty array");
 
 		path.forEach(function(point) {
 			private_CheckPoint(point);
@@ -552,8 +557,8 @@
 			rect:           rect,
 			name:           AscCommon.CreateGUID(),
 			type:           AscPDF.ANNOTATIONS_TYPES.PolyLine,
-			creationDate:   (new Date().getTime()).toString(),
-			modDate:        (new Date().getTime()).toString(),
+			creationDate:   new Date().getTime(),
+			modDate:        new Date().getTime(),
 			hidden:         false
 		}
 
@@ -565,6 +570,77 @@
 		oAnnot.SetVertices(aVertices);
 
 		return new ApiPolyLineAnnotation(oAnnot);
+	};
+
+	/**
+	 * Creates stamp annotation.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {Rect} rect - annotation rect (only x1, y1 coordinates will be used, since the stamp dimensions are reserved).
+	 * @param {StampType} type - stamp type
+	 * @param {string} [author] - name of the author
+	 * @param {number} [creationDate] - creation date (timeStamp)
+	 * @returns {ApiStampAnnotation}
+	 * @see office-js-api/Examples/PDF/Api/Methods/CreateStampAnnot.js
+	 */
+	Api.prototype.CreateStampAnnot = function(rect, type, author, creationDate) {
+		let oDoc = private_GetLogicDocument();
+
+		if (!private_IsValidRect(rect)) {
+			AscBuilder.throwException("The rect parameter must be a valid rect");
+		}
+
+		if (!Object.values(AscPDF.STAMP_TYPES).includes(type)) {
+			AscBuilder.throwException("The type parameter must be one of available");
+		}
+
+		if (author != null) {
+			author = AscBuilder.GetStringParameter(author, null);
+			if (!author) {
+				AscBuilder.throwException("The author parameter must be a non emptry string");
+			}
+		}
+		else {
+			author = Asc.editor.User.asc_getUserName();
+		}
+
+		if (creationDate != null) {
+			creationDate = AscBuilder.GetNumberParameter(creationDate, null);
+			if (!creationDate) {
+				AscBuilder.throwException("The creationDate parameter must be a number");
+			}
+		}
+		
+		let oStampRender = oDoc.CreateStampRender(type, author, creationDate);
+		let nExtX = oStampRender.Width * g_dKoef_mm_to_pt;
+		let nExtY = oStampRender.Height * g_dKoef_mm_to_pt;
+		let nLineW = oStampRender.m_oPen.Size * g_dKoef_mm_to_pt;
+
+		let X1 = rect[0];
+		let Y1 = rect[1];
+		let X2 = X1 + nExtX;
+		let Y2 = Y1 + nExtY;
+
+		let oProps = {
+			rect:			[X1, Y1, X2, Y2],
+			name:           AscCommon.CreateGUID(),
+			type:           AscPDF.ANNOTATIONS_TYPES.Stamp,
+			creationDate:   creationDate ? new Date().getTime() : creationDate,
+			modDate:        creationDate ? new Date().getTime() : creationDate,
+			hidden:         false
+		}
+
+		let oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
+
+		oAnnot.SetIconType(type);
+		oAnnot.SetBorderWidth(nLineW);
+		oAnnot.SetBorderColor([0, 0, 0]);
+		oAnnot.SetRenderStructure(oStampRender.m_aStack[0]);
+		oAnnot.SetInRect([X1, Y2, X1, Y1, X2, Y1, X2, Y2]);
+		let oXfrm = oAnnot.getXfrm();
+		oXfrm.setRot(0);
+
+		return new ApiStampAnnotation(oAnnot);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -919,6 +995,10 @@
 	ApiPage.prototype.AddAnnot = function(annot) {
 		if (!(annot instanceof ApiBaseAnnotation)) {
 			AscBuilder.throwException("The annot parameter must be an annotation");
+		}
+
+		if (annot.Annot.IsUseInDocument()) {
+			AscBuilder.throwException("The annot already in the document");
 		}
 
 		this.Page.AddAnnot(annot.private_GetImpl());
@@ -3028,7 +3108,7 @@
 			return false;
 		}
 
-		this.Annot.SetStrokeColor(private_GetInnerColorByRGB(color.R, color.G, color.B));
+		this.Annot.SetBorderColor(private_GetInnerColorByRGB(color.R, color.G, color.B));
 		return true;
 	};
 
@@ -3883,12 +3963,12 @@
 	ApiInkAnnotation.prototype.SetPathList = function(inkPaths) {
 		inkPaths = AscBuilder.GetArrayParameter(inkPaths, []);
 		if (inkPaths.length == 0)
-			AscBuilder.throwException(new Error("The inkPaths parameter must be a non empty array"));
+			AscBuilder.throwException("The inkPaths parameter must be a non empty array");
 
 		inkPaths.forEach(function(path) {
 			path = AscBuilder.GetArrayParameter(path, []);
 			if (path.length == 0)
-				AscBuilder.throwException(new Error("The ink path parameter must be a non empty array"));
+				AscBuilder.throwException("The ink path parameter must be a non empty array");
 
 			path.forEach(function(point) {
 				private_CheckPoint(point);
@@ -3971,7 +4051,7 @@
 	ApiPolygonAnnotation.prototype.SetVertices = function(path) {
 		path = AscBuilder.GetArrayParameter(path, []);
 		if (path.length == 0)
-			AscBuilder.throwException(new Error("The path parameter must be a non empty array"));
+			AscBuilder.throwException("The path parameter must be a non empty array");
 
 		path.forEach(function(point) {
 			private_CheckPoint(point);
@@ -4048,7 +4128,7 @@
 	ApiPolyLineAnnotation.prototype.SetVertices = function(path) {
 		path = AscBuilder.GetArrayParameter(path, []);
 		if (path.length == 0)
-			AscBuilder.throwException(new Error("The path parameter must be a non empty array"));
+			AscBuilder.throwException("The path parameter must be a non empty array");
 
 		path.forEach(function(point) {
 			private_CheckPoint(point);
@@ -4082,6 +4162,124 @@
 		}
 
 		return aPath;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiStampAnnotation
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a stamp annotation.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 * @extends {ApiBaseAnnotation}
+	 */
+	function ApiStampAnnotation(oAnnot) {
+		ApiBaseAnnotation.call(this, oAnnot);
+	}
+
+	ApiStampAnnotation.prototype = Object.create(ApiBaseAnnotation.prototype);
+	ApiStampAnnotation.prototype.constructor = ApiStampAnnotation;
+
+	/**
+	 * Returns a type of the ApiStampAnnotation class.
+	 * @memberof ApiStampAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"stampAnnot"}
+	 * @see office-js-api/Examples/PDF/ApiStampAnnotation/Methods/GetClassType.js
+	 */
+	ApiStampAnnotation.prototype.GetClassType = function() {
+		return "stampAnnot";
+	};
+
+	/**
+	 * Gets stamp type.
+	 * @memberof ApiStampAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {StampType}
+	 * @see office-js-api/Examples/PDF/ApiStampAnnotation/Methods/GetType.js
+	 */
+	ApiStampAnnotation.prototype.GetType = function() {
+		return this.Annot.GetIconType();
+	};
+
+	/**
+	 * Sets stamp size scale.
+	 * @memberof ApiStampAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @param {number} scale - size scale
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiStampAnnotation/Methods/SetScale.js
+	 */
+	ApiStampAnnotation.prototype.SetScale = function(scale) {
+		let aInRect = this.Annot.GetInRect();
+		let nInRectRot = AscPDF.getQuadsRot([aInRect[0], aInRect[3], aInRect[4], aInRect[3], aInRect[4], aInRect[1], aInRect[0], aInRect[1]]);
+		let aInRectNoRot = AscPDF.rotateRect([aInRect[0], aInRect[3], aInRect[4], aInRect[3], aInRect[4], aInRect[1], aInRect[0], aInRect[1]], -nInRectRot);
+
+		let minX = Infinity, maxX = -Infinity;
+		let minY = Infinity, maxY = -Infinity;
+
+		for (let i = 0; i < aInRectNoRot.length; i += 2) {
+			let x = aInRectNoRot[i];
+			let y = aInRectNoRot[i + 1];
+
+			if (x < minX) minX = x;
+			if (x > maxX) maxX = x;
+			if (y < minY) minY = y;
+			if (y > maxY) maxY = y;
+		}
+
+		let nOrigExtX = maxX - minX;
+		let nOrigExtY = maxY - minY;
+
+		AscCommon.History.StartNoHistoryMode();
+		let aCurRect = this.Annot.GetRect().slice();
+		let oCurXfrm = this.Annot.getXfrm();
+
+		let nCurExtX = this.Annot.getXfrmExtX();
+		let nCurExtY = this.Annot.getXfrmExtY();
+		let nCurOffX = this.Annot.getXfrmOffX();
+		let nCurOffY = this.Annot.getXfrmOffY();
+
+		let aNewRect = [minX, minY, minX + nOrigExtX * scale, minY + nOrigExtY * scale];
+
+		this.Annot.recalcBounds();
+		this.Annot.recalcGeometry();
+		
+		this.Annot.SetRect(aNewRect);
+		AscPDF.CAnnotationBase.prototype.RecalcSizes.call(this.Annot);
+		this.Annot.recalculate();
+		
+		AscCommon.History.EndNoHistoryMode();
+		
+		let oGrBounds = this.Annot.bounds;
+		aNewRect[0] = oGrBounds.l * g_dKoef_mm_to_pt;
+		aNewRect[1] = oGrBounds.t * g_dKoef_mm_to_pt;
+		aNewRect[2] = oGrBounds.r * g_dKoef_mm_to_pt;
+		aNewRect[3] = oGrBounds.b * g_dKoef_mm_to_pt;
+
+		this.Annot._rect = aCurRect;
+		oCurXfrm.extX = nCurExtX;
+		oCurXfrm.extY = nCurExtY;
+		oCurXfrm.offX = nCurOffX;
+		oCurXfrm.offY = nCurOffY;
+
+		this.Annot.SetRect(aNewRect);
+
+		return true;
+	};
+
+	/**
+	 * Gets stamp size scale.
+	 * @memberof ApiStampAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {number}
+	 * @see office-js-api/Examples/PDF/ApiStampAnnotation/Methods/GetScale.js
+	 */
+	ApiStampAnnotation.prototype.GetScale = function() {
+		return this.Annot.GetOriginViewScale();
 	};
 
 	function private_GetLogicDocument() {
@@ -4496,6 +4694,9 @@
 			case AscPDF.ANNOTATIONS_TYPES.PolyLine: {
 				return new ApiPolyLineAnnotation(annot);
 			}
+			case AscPDF.ANNOTATIONS_TYPES.Stamp: {
+				return new ApiStampAnnotation(annot);
+			}
 		}
 	}
 
@@ -4575,6 +4776,7 @@
 	Api.prototype["CreateInkAnnot"]							= Api.prototype.CreateInkAnnot;
 	Api.prototype["CreatePolygonAnnot"]						= Api.prototype.CreatePolygonAnnot;
 	Api.prototype["CreatePolyLineAnnot"]					= Api.prototype.CreatePolyLineAnnot;
+	Api.prototype["CreateStampAnnot"]						= Api.prototype.CreateStampAnnot;
 
 	// ApiDocument
 	ApiDocument.prototype["GetClassType"]					= ApiDocument.prototype.GetClassType;
@@ -4814,6 +5016,12 @@
 	ApiPolyLineAnnotation.prototype["GetClassType"]			= ApiPolyLineAnnotation.prototype.GetClassType;
 	ApiPolyLineAnnotation.prototype["SetVertices"]			= ApiPolyLineAnnotation.prototype.SetVertices;
 	ApiPolyLineAnnotation.prototype["GetVertices"]			= ApiPolyLineAnnotation.prototype.GetVertices;
+
+	// ApiStampAnnotation
+	ApiStampAnnotation.prototype["GetClassType"]			= ApiStampAnnotation.prototype.GetClassType;
+	ApiStampAnnotation.prototype["GetType"]					= ApiStampAnnotation.prototype.GetType;
+	ApiStampAnnotation.prototype["SetScale"]				= ApiStampAnnotation.prototype.SetScale;
+	ApiStampAnnotation.prototype["GetScale"]				= ApiStampAnnotation.prototype.GetScale;
 
 }(window, null));
 
