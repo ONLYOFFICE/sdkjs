@@ -1900,8 +1900,8 @@ var editor;
 		}
 		xmlParserContext.zip = jsZlib;
 		if (twoStage) {
-			xmlParserContext.twoStage.ReadOnlyActive = true;
-			xmlParserContext.twoStage.ReadFirstRows = 40;
+			xmlParserContext.twoStage.readOnlyActive = true;
+			xmlParserContext.twoStage.readNextRows = 100;
 		}
 
 		//check fonts inside
@@ -2322,81 +2322,173 @@ var editor;
 				xmlParserContext.InitOpenManager.PostLoadPrepareDefNames(wb);
 			}
 
+			/**
+			 * Reads single sheet data from XML
+			 * @param {Object} sheetDataElem - sheet data element with ws and reader
+			 * @param {boolean} bNoBuildDep - whether to skip dependency building
+			 * @returns {Object} processing context with parsed data
+			 */
+			function readSingleSheetData(sheetDataElem, bNoBuildDep) {
+				var ws = sheetDataElem.ws;
+				var tmp = {
+					pos: null,
+					len: null,
+					bNoBuildDep: bNoBuildDep,
+					ws: ws,
+					row: new AscCommonExcel.Row(ws),
+					cell: new AscCommonExcel.Cell(ws),
+					formula: new AscCommonExcel.OpenFormula(),
+					sharedFormulas: {},
+					prevFormulas: {},
+					siFormulas: {},
+					prevRow: -1,
+					prevCol: -1,
+					formulaArray: []
+				};
+				var sheetData = new AscCommonExcel.CT_SheetData();
+				
+				xmlParserContext.InitOpenManager.tmp = tmp;
+				//TODO пересмотреть фунцию fromXml
+				sheetData.fromXmlPart(sheetDataElem);
+				
+				return tmp;
+			}
+
+			/**
+			 * Builds all formula dependencies for processed sheet data
+			 * @param {Object} tmp - processing context
+			 */
+			function buildSheetDependencies(tmp) {
+				if (tmp.bNoBuildDep) {
+					return;
+				}
+				
+				//TODO возможно стоит делать это в worksheet после полного чтения
+				//***array-formula***
+				//добавление ко всем ячейкам массива головной формулы
+				for (var j = 0; j < tmp.formulaArray.length; j++) {
+					var curFormula = tmp.formulaArray[j];
+					var ref = curFormula.ref;
+					if (ref) {
+						var rangeFormulaArray = tmp.ws.getRange3(ref.r1, ref.c1, ref.r2, ref.c2);
+						rangeFormulaArray._foreach(function (cell) {
+							cell.setFormulaInternal(curFormula);
+							if (curFormula.ca || cell.isNullTextString()) {
+								tmp.ws.workbook.dependencyFormulas.addToChangedCell(cell);
+							}
+						});
+					}
+				}
+				
+				// Previous formulas dependencies
+				for (var nCol in tmp.prevFormulas) {
+					if (tmp.prevFormulas.hasOwnProperty(nCol)) {
+						var prevFormula = tmp.prevFormulas[nCol];
+						if (!tmp.siFormulas[prevFormula.parsed.getListenerId()]) {
+							prevFormula.parsed.buildDependencies();
+						}
+					}
+				}
+				
+				// SI formulas dependencies
+				for (var listenerId in tmp.siFormulas) {
+					if (tmp.siFormulas.hasOwnProperty(listenerId)) {
+						tmp.siFormulas[listenerId].buildDependencies();
+					}
+				}
+			}
+
+			/**
+			 * Processes shared strings from workbook part
+			 */
+			function processSharedStrings() {
+				if (xmlParserContext.twoStage.sharedStringsState.sharedStrings) {
+					const state = xmlParserContext.twoStage.sharedStringsState;
+					state.sharedStrings.fromXmlSi(state.reader);
+				} else {
+					//sharedString
+					var sharedStringPart = wbPart.getPartByRelationshipType(openXml.Types.sharedStringTable.relationType);
+					if (sharedStringPart) {
+						var contentSharedStrings = sharedStringPart.getDocumentContent();
+						if (contentSharedStrings) {
+							var sharedStrings = new AscCommonExcel.CT_SharedStrings();
+							xmlParserContext.twoStage.sharedStringsState.sharedStrings = sharedStrings;
+							reader = new StaxParser(contentSharedStrings, sharedStringPart, xmlParserContext);
+							sharedStrings.fromXml(reader);
+						}
+					}
+				}
+			}
+
+			/**
+			 * Reads all sheets data with dependencies
+			 * @param {boolean} bNoBuildDep - whether to skip dependency building
+			 */
+			function readAllSheetsData(bNoBuildDep) {
+				var sheetDataArray = xmlParserContext.InitOpenManager.oReadResult.sheetData;
+				
+				for (var i = 0; i < sheetDataArray.length; i++) {
+					var tmp = readSingleSheetData(sheetDataArray[i], bNoBuildDep);
+					buildSheetDependencies(tmp);
+				}
+			}
 			var readSheetDataExternal = function (bNoBuildDep) {
 				openInTwoStage(bNoBuildDep);
-				for (var i = 0; i < xmlParserContext.InitOpenManager.oReadResult.sheetData.length; ++i) {
-					var sheetDataElem = xmlParserContext.InitOpenManager.oReadResult.sheetData[i];
-					var ws = sheetDataElem.ws;
-
-					var tmp = {
-						pos: null,
-						len: null,
-						bNoBuildDep: bNoBuildDep,
-						ws: ws,
-						row: new AscCommonExcel.Row(ws),
-						cell: new AscCommonExcel.Cell(ws),
-						formula: new AscCommonExcel.OpenFormula(),
-						sharedFormulas: {},
-						prevFormulas: {},
-						siFormulas: {},
-						prevRow: -1,
-						prevCol: -1,
-						formulaArray: []
-					};
-
-
-					var sheetData = new AscCommonExcel.CT_SheetData();
-					xmlParserContext.InitOpenManager.tmp = tmp;
-
-					sheetDataElem.reader.setState(sheetDataElem.state);
-					//TODO пересмотреть фунцию fromXml
-					sheetData.fromXml2(sheetDataElem.reader);
-
-					if (!bNoBuildDep) {
-						//TODO возможно стоит делать это в worksheet после полного чтения
-						//***array-formula***
-						//добавление ко всем ячейкам массива головной формулы
-						for (var j = 0; j < tmp.formulaArray.length; j++) {
-							var curFormula = tmp.formulaArray[j];
-							var ref = curFormula.ref;
-							if (ref) {
-								var rangeFormulaArray = tmp.ws.getRange3(ref.r1, ref.c1, ref.r2, ref.c2);
-								rangeFormulaArray._foreach(function (cell) {
-									cell.setFormulaInternal(curFormula);
-									if (curFormula.ca || cell.isNullTextString()) {
-										tmp.ws.workbook.dependencyFormulas.addToChangedCell(cell);
-									}
-								});
-							}
-						}
-						for (var nCol in tmp.prevFormulas) {
-							if (tmp.prevFormulas.hasOwnProperty(nCol)) {
-								var prevFormula = tmp.prevFormulas[nCol];
-								if (!tmp.siFormulas[prevFormula.parsed.getListenerId()]) {
-									prevFormula.parsed.buildDependencies();
-								}
-							}
-						}
-						for (var listenerId in tmp.siFormulas) {
-							if (tmp.siFormulas.hasOwnProperty(listenerId)) {
-								tmp.siFormulas[listenerId].buildDependencies();
-							}
-						}
-					}
-				}
-				//sharedString
-				var sharedStringPart = wbPart.getPartByRelationshipType(openXml.Types.sharedStringTable.relationType);
-				if (sharedStringPart) {
-					var contentSharedStrings = sharedStringPart.getDocumentContent();
-					if (contentSharedStrings) {
-						var sharedStrings = new AscCommonExcel.CT_SharedStrings();
-						reader = new StaxParser(contentSharedStrings, sharedStringPart, xmlParserContext);
-						sharedStrings.fromXml(reader);
-					}
-				}
+				readAllSheetsData(bNoBuildDep);
+				processSharedStrings();
 			};
+
+			function readRemainings(ws, bNoBuildDep, curSheetData, delayedSheetData, startAction) {
+				if (startAction && t.asc_checkNeedCallback("asc_onStartAction")) {
+					startAction = false;
+					t.sync_StartAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.Disconnect, Asc.c_oAscRestrictionType.View);
+				}
+				//Read remainings
+				if (curSheetData[0].state) {
+					xmlParserContext.InitOpenManager.oReadResult.sheetData = curSheetData;
+					readSheetDataExternal(bNoBuildDep);
+					const sheetDataElem = curSheetData[0];
+					const updateRigion = new Asc.Range(0, sheetDataElem.r1, AscCommon.gc_nMaxCol0, sheetDataElem.r2);
+					// console.log('updateRigion:'+updateRigion.r1+"-"+updateRigion.r2);
+					t.handlers.trigger("cleanCellCache", sheetDataElem.ws.getId(), [updateRigion], null, false);
+					sheetDataElem.ws.updateSlicersByRange(updateRigion, true);
+					// t.wb.getWorksheet(sheetDataElem.ws.getIndex()).updateRanges([updateRigion], true);
+					t.handlers.trigger("drawWS");
+				} else {
+					let sheetDataElem = delayedSheetData.find(function (item) {
+						return !!item.state;
+					});
+					if (!sheetDataElem) {
+						//restore state
+						AscCommon.CollaborativeEditing.Set_GlobalLock(false);
+						t.wbModel.dependencyFormulas.unlockRecal();
+
+						sheetDataElem = curSheetData[0];
+						// Asc["editor"].wb.recalculateDrawingObjects(null, true);
+						const updateRigion = new Asc.Range(0, 0, AscCommon.gc_nMaxCol0, AscCommon.gc_nMaxRow0);
+						t.handlers.trigger("cleanCellCache", sheetDataElem.ws.getId(), [updateRigion], null, false);
+						sheetDataElem.ws.updateSlicersByRange(updateRigion);
+						// t.wb.getWorksheet(sheetDataElem.ws.getIndex()).updateRanges([updateRigion], true);
+						t.handlers.trigger("drawWS");
+						t.sync_EndAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.Disconnect, Asc.c_oAscRestrictionType.View);
+						AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onDocumentContentReady2", performance.now(), AscCommon.getMemoryInfo()), t);
+						return;
+					}
+					xmlParserContext.InitOpenManager.oReadResult.sheetData = [sheetDataElem];
+					readSheetDataExternal(bNoBuildDep);
+					// const updateRigion = new Asc.Range(0, sheetDataElem.r1, AscCommon.gc_nMaxCol0, sheetDataElem.r2);
+					// console.log('updateRigion:'+updateRigion.r1+"-"+updateRigion.r2);
+					// t.handlers.trigger("cleanCellCache", sheetDataElem.ws.getId(), [updateRigion], null, false);
+					// sheetDataElem.ws.updateSlicersByRange(updateRigion);
+					// t.wb.getWorksheet(sheetDataElem.ws.getIndex()).updateRanges([updateRigion], true);
+				}
+				setTimeout(function() {
+					readRemainings(ws, bNoBuildDep, curSheetData, delayedSheetData, startAction)
+				}, 10);
+			}
+
 			function openInTwoStage(bNoBuildDep) {
-				if (xmlParserContext.twoStage.ReadOnlyActive) {
+				if (xmlParserContext.twoStage.readOnlyActive) {
 					// Validate active sheet index
 					const activeIndex = wb.nActive;
 					const ws = wb.aWorksheets[activeIndex];
@@ -2410,32 +2502,20 @@ var editor;
 					const curSheetData = [sheetDatas[activeIndex]];
 					const delayedSheetData = sheetDatas;
 					//save state
-					const delayedSelection = ws.getSelection();
-					const delayedSheetViews = ws.sheetViews;
-					// ws.selectionRange = new AscCommonExcel.SelectionRange(ws);
-					// ws.sheetViews = []
+					ws.selectionRange = new AscCommonExcel.SelectionRange(ws);
+					ws.sheetViews = [];
 					xmlParserContext.InitOpenManager.oReadResult.sheetData = curSheetData;
+
+					t.wbModel.dependencyFormulas.lockRecal();
+					AscCommon.CollaborativeEditing.Set_GlobalLock(true);
 					t.asc_registerCallback('asc_onSelectionEnd', function() {
 						t.asc_unregisterCallback('asc_onSelectionEnd');
 						//todo own action type
-						t.sync_StartAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.Disconnect, Asc.c_oAscRestrictionType.View);
+						xmlParserContext.twoStage.readOnlyActive = false;
+						xmlParserContext.twoStage.readNextRows = 10000;
 						setTimeout(function() {
-							//Read remainings
-							xmlParserContext.twoStage.ReadOnlyActive = false;
-							xmlParserContext.twoStage.ReadFirstRows = Number.MAX_VALUE;
-							xmlParserContext.InitOpenManager.oReadResult.sheetData = delayedSheetData;
-							readSheetDataExternal(bNoBuildDep);
-							if (xmlParserContext.twoStage.sharedStringsContinue) {
-								xmlParserContext.twoStage.sharedStringsContinue();
-							}
-							// Restore state
-							// ws.selectionRange = delayedSelection;
-							//ws.sheetViews = delayedSheetViews;
-							t.sync_EndAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.Disconnect, Asc.c_oAscRestrictionType.View);
-
-							t.asc_setZoom(null);
-							t.asc_Resize();
-						}, 0);
+							readRemainings(ws, bNoBuildDep, curSheetData, delayedSheetData, true)
+						}, 10);
 					});
 				}
 			}

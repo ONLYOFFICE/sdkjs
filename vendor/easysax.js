@@ -1156,6 +1156,7 @@ function StaxParser(xml, rels, context) {
     this.value = null;
     this.stop = false;
     this.depth = 0;
+    this.siblingDepth = 0;
 }
 StaxParser.prototype.hasNext = function() {
     return !this.stop;
@@ -1388,6 +1389,31 @@ StaxParser.prototype.ReadNextSiblingNode = function(depth) {
             return false;
         }
     }
+    return false;
+};
+StaxParser.prototype.ReadNextSiblingNode2 = function() {
+    const depth = this.siblingDepth = this.siblingDepth || this.depth;
+    var targetDepth = depth + 1;
+    var type;
+    
+    while (this.hasNext()) {
+        type = this.next();
+        var curDepth = this.depth;
+        
+        if (curDepth < depth) {
+            break;
+        }
+        
+        if (type === EasySAXEvent.START_ELEMENT && curDepth === targetDepth) {
+            return true;
+        }
+        
+        if (type === EasySAXEvent.END_ELEMENT && curDepth === depth) {
+            this.siblingDepth = 0;
+            return false;
+        }
+    }
+    this.siblingDepth = 0;
     return false;
 };
 StaxParser.prototype.ReadTillEnd = function (opt_depth) {
@@ -1754,10 +1780,10 @@ function XmlParserContext(){
     this.cellBase = null;
     this.drawingId = null;
     this.twoStage = {
-        ReadOnlyActive: false,
-        ReadFirstRows: Number.MAX_VALUE,
-        MaxTextIndex: 0,
-        sharedStringsContinue: null
+        readOnlyActive: false,
+        readNextRows: Number.MAX_VALUE,
+        maxTextIndex: 0,
+        sharedStringsState: {sharedStrings: null, reader: null, state: null}
     };
     //pptx
     this.layoutsMap = {};
