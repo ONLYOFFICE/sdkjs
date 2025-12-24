@@ -16738,7 +16738,7 @@ function isAllowPasteLink(pastedWb) {
 
 				for (let j = 0; j < checkPasteRange.length; j++) {
 					let _checkRange = checkPasteRange[j];
-					if (this.intersectionFormulaArray(_checkRange)) {
+					if (this.intersectionFormulaArray(_checkRange, null, null, true)) {
 						t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
 						revertSelection();
 						return false;

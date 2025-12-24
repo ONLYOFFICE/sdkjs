@@ -18479,6 +18479,60 @@ function RangeDataManagerElem(bbox, data)
 		}
 		return null;
 	};
+	CMetadata.prototype.ensureInitialized = function () {
+		if (!this.metadataTypes) {
+			this.metadataTypes = [];
+		}
+		if (!this.aFutureMetadata) {
+			this.aFutureMetadata = [];
+		}
+	};
+	CMetadata.prototype.getOrCreateMetadataType = function (sType) {
+		this.ensureInitialized();
+		let metadataType = this.getMetaDataType(sType);
+		if (!metadataType) {
+			if (sType === "XLDAPR") {
+				metadataType = CMetadataType.createXLDAPRType();
+			} else if (sType === "XLRICHVALUE") {
+				metadataType = CMetadataType.createXLRICHVALUEType();
+			}
+			if (metadataType) {
+				this.metadataTypes.push(metadataType);
+			}
+		}
+		return metadataType;
+	};
+	CMetadata.prototype.getOrCreateFutureMetadata = function (sType) {
+		this.ensureInitialized();
+		let futureMetadata = this.getFutureMetadataByType(sType);
+		if (!futureMetadata) {
+			futureMetadata = new CFutureMetadata();
+			futureMetadata.name = sType;
+			futureMetadata.futureMetadataBlocks = [];
+			this.aFutureMetadata.push(futureMetadata);
+		}
+		return futureMetadata;
+	};
+	CMetadata.prototype.addCellMetadataBlock = function (metadataType, futureMetadata) {
+		if (!this.cellMetadata) {
+			this.cellMetadata = [];
+		}
+		const cellMetadataBlock = new CMetadataBlock();
+		cellMetadataBlock.t = this.metadataTypes.length;
+		cellMetadataBlock.v = futureMetadata.futureMetadataBlocks.length - 1;
+		this.cellMetadata.push(cellMetadataBlock);
+		return cellMetadataBlock;
+	};
+	CMetadata.prototype.addValueMetadataBlock = function (metadataType, futureMetadata) {
+		if (!this.valueMetadata) {
+			this.valueMetadata = [];
+		}
+		const valueMetadataBlock = new CMetadataBlock();
+		valueMetadataBlock.t = this.metadataTypes.length;
+		valueMetadataBlock.v = futureMetadata.futureMetadataBlocks.length - 1;
+		this.valueMetadata.push(valueMetadataBlock);
+		return valueMetadataBlock;
+	};
 
 
 
@@ -18593,6 +18647,39 @@ function RangeDataManagerElem(bbox, data)
 		res.cellMeta = this.cellMeta;
 
 		return res;
+	};
+	CMetadataType.createXLDAPRType = function () {
+		const metadataType = new CMetadataType();
+		metadataType.name = "XLDAPR";
+		metadataType.minSupportedVersion = 120000;
+		metadataType.copy = 1;
+		metadataType.pasteAll = 1;
+		metadataType.pasteValues = 1;
+		metadataType.merge = 1;
+		metadataType.splitFirst = 1;
+		metadataType.rowColShift = 1;
+		metadataType.clearFormats = 1;
+		metadataType.clearComments = 1;
+		metadataType.assign = 1;
+		metadataType.coerce = 1;
+		metadataType.cellMeta = 1;
+		return metadataType;
+	};
+	CMetadataType.createXLRICHVALUEType = function () {
+		const metadataType = new CMetadataType();
+		metadataType.name = "XLRICHVALUE";
+		metadataType.minSupportedVersion = 120000;
+		metadataType.copy = 1;
+		metadataType.pasteAll = 1;
+		metadataType.pasteValues = 1;
+		metadataType.merge = 1;
+		metadataType.splitFirst = 1;
+		metadataType.rowColShift = 1;
+		metadataType.clearFormats = 1;
+		metadataType.clearComments = 1;
+		metadataType.assign = 1;
+		metadataType.coerce = 1;
+		return metadataType;
 	};
 	CMetadataType.prototype.Read_FromBinary2 = function(r) {
 		if (r.GetBool()) {

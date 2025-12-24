@@ -15161,6 +15161,7 @@
 		if (!skipExternalCheck) {
 			this.checkRemoveExternalReferences(newFP, oldFP);
 		}
+		
 		this.ws.dynamicArrayManager.changeFormula(newFP, oldFP, this);
 	};
 
@@ -18622,6 +18623,7 @@
 		});
 
 		let cmIndex = null;
+		let vmIndex = null;
 		this._foreach(function(cell){
 			if (cell.ws.isUserProtectedRangesIntersectionCell(cell)) {
 				return;
@@ -18638,6 +18640,7 @@
 			cell.setValue(_val, callback, isCopyPaste, byRef, ignoreHyperlink, dynamicRangeProps);
 			if (dynamicRangeProps && cmIndex == null) {
 				cmIndex = cell.formulaParsed && cell.formulaParsed.getCm();
+				vmIndex = cell.formulaParsed && cell.formulaParsed.getVm();
 			}
 		});
 
@@ -18645,7 +18648,7 @@
 		let _sFormula = this.getFormula();
 		if(_sFormula && byRef) {
 			History.Add(AscCommonExcel.g_oUndoRedoArrayFormula, AscCH.historyitem_ArrayFromula_AddFormula, this.worksheet.getId(),
-				new Asc.Range(this.bbox.c1, this.bbox.r1, this.bbox.c2, this.bbox.r2), new AscCommonExcel.UndoRedoData_ArrayFormula(this.bbox, "=" + _sFormula, cmIndex));
+				new Asc.Range(this.bbox.c1, this.bbox.r1, this.bbox.c2, this.bbox.r2), new AscCommonExcel.UndoRedoData_ArrayFormula(this.bbox, "=" + _sFormula, cmIndex, vmIndex));
 		}
 
 		t.worksheet.dynamicArrayManager.recalculateVolatileArrays();
@@ -18686,6 +18689,11 @@
 	Range.prototype.setValueData = function(val){
 		AscCommon.History.Create_NewPoint();
 		AscCommon.History.StartTransaction();
+
+		let t = this;
+		this._foreach(function(cell){
+			t.worksheet.dynamicArrayManager.changeCell(cell);
+		});
 
 		this._foreach(function(cell){
 			cell.setValueData(val);
@@ -25531,6 +25539,94 @@
 		return metadata.getRichValueBlock(index - 1);
 	};
 
+	CDynamicArrayManager.prototype._ensureWorkbookMetadata = function () {
+		if (!this.ws.workbook.metadata) {
+			this.ws.workbook.metadata = new AscCommonExcel.CMetadata();
+		}
+		return this.ws.workbook.metadata;
+	};
+
+	CDynamicArrayManager.prototype._addDynamicArrayMetadata = function (fCollapsed) {
+		const oldMetadata = this.ws.workbook.metadata ? this.ws.workbook.metadata.clone() : null;
+		const meta = this._ensureWorkbookMetadata();
+
+		const metadataType = meta.getOrCreateMetadataType("XLDAPR");
+		const futureMetadata = meta.getOrCreateFutureMetadata("XLDAPR");
+
+		const dynamicArrayProps = new AscCommonExcel.CDynamicArrayProperties();
+		dynamicArrayProps.fDynamic = true;
+		dynamicArrayProps.fCollapsed = fCollapsed;
+
+		const extBlock = new AscCommonExcel.CMetadataBlockExt();
+		extBlock.dynamicArrayProperties = dynamicArrayProps;
+
+		const futureBlock = new AscCommonExcel.CFutureMetadataBlock();
+		futureBlock.extLst = [extBlock];
+		futureMetadata.futureMetadataBlocks.push(futureBlock);
+
+		meta.addCellMetadataBlock(metadataType, futureMetadata);
+
+		const newMetadata = this.ws.workbook.metadata.clone();
+		AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_Metadata,
+			null, null, new UndoRedoData_FromTo(oldMetadata, newMetadata));
+
+		return meta.cellMetadata.length;
+	};
+
+	CDynamicArrayManager.prototype._addRichValueMetadata = function (rvIndex) {
+		const oldMetadata = this.ws.workbook.metadata ? this.ws.workbook.metadata.clone() : null;
+		const meta = this._ensureWorkbookMetadata();
+
+		const metadataType = meta.getOrCreateMetadataType("XLRICHVALUE");
+		const futureMetadata = meta.getOrCreateFutureMetadata("XLRICHVALUE");
+
+		const richValueBlock = new AscCommonExcel.CRichValueBlock();
+		richValueBlock.i = rvIndex;
+
+		const extBlock = new AscCommonExcel.CMetadataBlockExt();
+		extBlock.uri = "{3e2802c4-a4d2-4d8b-9148-e3be6c30e623}";
+		extBlock.richValueBlock = richValueBlock;
+
+		const futureBlock = new AscCommonExcel.CFutureMetadataBlock();
+		futureBlock.extLst = [extBlock];
+		futureMetadata.futureMetadataBlocks.push(futureBlock);
+
+		meta.addValueMetadataBlock(metadataType, futureMetadata);
+
+		const newMetadata = this.ws.workbook.metadata.clone();
+		AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_Metadata,
+			null, null, new UndoRedoData_FromTo(oldMetadata, newMetadata));
+
+		return meta.valueMetadata.length;
+	};
+
+	CDynamicArrayManager.prototype._addRichValueMetadataForGeneric = function () {
+		const oldMetadata = this.ws.workbook.metadata ? this.ws.workbook.metadata.clone() : null;
+		const meta = this._ensureWorkbookMetadata();
+
+		const metadataType = meta.getOrCreateMetadataType("XLRICHVALUE");
+		const futureMetadata = meta.getOrCreateFutureMetadata("XLRICHVALUE");
+
+		const richValueBlock = new AscCommonExcel.CRichValueBlock();
+		richValueBlock._rv = 0;
+
+		const extBlock = new AscCommonExcel.CMetadataBlockExt();
+		extBlock.uri = "{3e2802c4-a4d2-4d8b-9148-e3be6c30e623}";
+		extBlock.richValueBlock = richValueBlock;
+
+		const futureBlock = new AscCommonExcel.CFutureMetadataBlock();
+		futureBlock.extLst = [extBlock];
+		futureMetadata.futureMetadataBlocks.push(futureBlock);
+
+		meta.addValueMetadataBlock(metadataType, futureMetadata);
+
+		const newMetadata = this.ws.workbook.metadata.clone();
+		AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_Metadata,
+			null, null, new UndoRedoData_FromTo(oldMetadata, newMetadata));
+
+		return meta.valueMetadata.length;
+	};
+
 	/**
 	 * Generate dynamic array properties (metadata and richdata) for a formula
 	 * @param {Object} oldFP - old formula parsed object, may contain cm/vm indexes
@@ -25585,134 +25681,16 @@
 			}
 
 			if (needGenerateCm) {
-				// Generate new metadata structure
-				const oldMetadata = this.ws.workbook.metadata ? this.ws.workbook.metadata.clone() : null;
-
-				if (!this.ws.workbook.metadata) {
-					this.ws.workbook.metadata = new AscCommonExcel.CMetadata();
-				}
-				const meta = this.ws.workbook.metadata;
-
-				// Initialize metadataTypes if needed
-				if (!meta.metadataTypes) {
-					meta.metadataTypes = [];
-				}
-
-				// Get or create XLDAPR metadata type
-				let metadataType = meta.getMetaDataType("XLDAPR");
-				if (!metadataType) {
-					metadataType = new AscCommonExcel.CMetadataType();
-					metadataType.name = "XLDAPR";
-					metadataType.minSupportedVersion = 120000;
-					metadataType.copy = 1;
-					metadataType.pasteAll = 1;
-					metadataType.pasteValues = 1;
-					metadataType.merge = 1;
-					metadataType.splitFirst = 1;
-					metadataType.rowColShift = 1;
-					metadataType.clearFormats = 1;
-					metadataType.clearComments = 1;
-					metadataType.assign = 1;
-					metadataType.coerce = 1;
-					metadataType.cellMeta = 1;
-					meta.metadataTypes.push(metadataType);
-				}
-
-				// Initialize future metadata array if needed
-				if (!meta.aFutureMetadata) {
-					meta.aFutureMetadata = [];
-				}
-
-				// Get or create XLDAPR future metadata
-				let futureMetadata = meta.getFutureMetadataByType("XLDAPR");
-				if (!futureMetadata) {
-					futureMetadata = new AscCommonExcel.CFutureMetadata();
-					futureMetadata.name = "XLDAPR";
-					futureMetadata.futureMetadataBlocks = [];
-					meta.aFutureMetadata.push(futureMetadata);
-				}
-
-				// Create dynamic array properties
-				const dynamicArrayProps = new AscCommonExcel.CDynamicArrayProperties();
-				dynamicArrayProps.fDynamic = true;
-				dynamicArrayProps.fCollapsed = /*beforeSpillRange ? true :*/ false;
-
-				// Create extension block
-				const extBlock = new AscCommonExcel.CMetadataBlockExt();
-				//extBlock.uri = "{bdbb8cdc-fa1e-496e-a857-3c3f30c029c3}";
-				extBlock.dynamicArrayProperties = dynamicArrayProps;
-
-				// Create future metadata block
-				const futureBlock = new AscCommonExcel.CFutureMetadataBlock();
-				futureBlock.extLst = [extBlock];
-				futureMetadata.futureMetadataBlocks.push(futureBlock);
-
-				// Initialize cell metadata if needed
-				if (!meta.cellMetadata) {
-					meta.cellMetadata = [];
-				}
-
-				// Create cell metadata record
-				const cellMetadataBlock = new AscCommonExcel.CMetadataBlock();
-				cellMetadataBlock.t = meta.metadataTypes.length;
-				cellMetadataBlock.v = futureMetadata.futureMetadataBlocks.length - 1;
-				meta.cellMetadata.push(cellMetadataBlock);
-
-				// Add to history
-				const newMetadata = this.ws.workbook.metadata.clone();
-				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_Metadata,
-					null, null, new UndoRedoData_FromTo(oldMetadata, newMetadata));
-
-				cmIndex = meta.cellMetadata.length;
+				cmIndex = this._addDynamicArrayMetadata(false);
 			}
 		}
 
 		// Generate vmIndex if needed (for collapsed arrays)
 		if (needGenerateVm && beforeSpillRange) {
-			const oldMetadata = this.ws.workbook.metadata ? this.ws.workbook.metadata.clone() : null;
+			const meta = this._ensureWorkbookMetadata();
 
-			if (!this.ws.workbook.metadata) {
-				this.ws.workbook.metadata = new AscCommonExcel.CMetadata();
-			}
-			const meta = this.ws.workbook.metadata;
-
-			// Initialize metadataTypes if needed
-			if (!meta.metadataTypes) {
-				meta.metadataTypes = [];
-			}
-
-			// Get or create XLRICHVALUE metadata type
-			let metadataType = meta.getMetaDataType("XLRICHVALUE");
-			if (!metadataType) {
-				metadataType = new AscCommonExcel.CMetadataType();
-				metadataType.name = "XLRICHVALUE";
-				metadataType.minSupportedVersion = 120000;
-				metadataType.copy = 1;
-				metadataType.pasteAll = 1;
-				metadataType.pasteValues = 1;
-				metadataType.merge = 1;
-				metadataType.splitFirst = 1;
-				metadataType.rowColShift = 1;
-				metadataType.clearFormats = 1;
-				metadataType.clearComments = 1;
-				metadataType.assign = 1;
-				metadataType.coerce = 1;
-				meta.metadataTypes.push(metadataType);
-			}
-
-			// Initialize future metadata array if needed
-			if (!meta.aFutureMetadata) {
-				meta.aFutureMetadata = [];
-			}
-
-			// Get or create XLRICHVALUE future metadata
-			let futureMetadata = meta.getFutureMetadataByType("XLRICHVALUE");
-			if (!futureMetadata) {
-				futureMetadata = new AscCommonExcel.CFutureMetadata();
-				futureMetadata.name = "XLRICHVALUE";
-				futureMetadata.futureMetadataBlocks = [];
-				meta.aFutureMetadata.push(futureMetadata);
-			}
+			const metadataType = meta.getOrCreateMetadataType("XLRICHVALUE");
+			const futureMetadata = meta.getOrCreateFutureMetadata("XLRICHVALUE");
 
 			// Initialize richValueStructures if needed
 			if (!this.ws.workbook.richValueStructures) {
@@ -25874,47 +25852,16 @@
 				const richValue = new AscCommonExcel.CRichValue();
 				richValue.s = 0;
 				richValue.fb = null;
-				richValue.arrV = [colOffset, "8", rwOffset, "1"]; // colOffset, errorType=8 (#SPILL!), rwOffset, subType=1
+				richValue.arrV = [colOffset, "8", rwOffset, "1"];
 				this.ws.workbook.richValueData.pData.push(richValue);
 
-				// Get current richValue index (0-based)
 				const rvIndex = this.ws.workbook.richValueData.pData.length - 1;
 
-				// Create rich value block
-				const richValueBlock = new AscCommonExcel.CRichValueBlock();
-				richValueBlock.i = rvIndex;
-
-				// Create extension block
-				const extBlock = new AscCommonExcel.CMetadataBlockExt();
-				extBlock.uri = "{3e2802c4-a4d2-4d8b-9148-e3be6c30e623}";
-				extBlock.richValueBlock = richValueBlock;
-
-				// Create future metadata block
-				const futureBlock = new AscCommonExcel.CFutureMetadataBlock();
-				futureBlock.extLst = [extBlock];
-				futureMetadata.futureMetadataBlocks.push(futureBlock);
-
-				// Initialize value metadata if needed
-				if (!meta.valueMetadata) {
-					meta.valueMetadata = [];
-				}
-
-				// Create value metadata record
-				const valueMetadataBlock = new AscCommonExcel.CMetadataBlock();
-				valueMetadataBlock.t = meta.metadataTypes.length;
-				valueMetadataBlock.v = futureMetadata.futureMetadataBlocks.length - 1;
-				meta.valueMetadata.push(valueMetadataBlock);
-
-				// Add to history
-				const newMetadata = this.ws.workbook.metadata.clone();
-				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_Metadata,
-					null, null, new UndoRedoData_FromTo(oldMetadata, newMetadata));
+				vmIndex = this._addRichValueMetadata(rvIndex);
 				
 				const newRichValueData = this.ws.workbook.richValueData.clone();
 				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_RichValueData,
 					null, null, new UndoRedoData_FromTo(oldRichValueData, newRichValueData));
-
-				vmIndex = meta.valueMetadata.length;
 			}
 		}
 
@@ -25926,70 +25873,7 @@
 
 	CDynamicArrayManager.prototype.getNextVmIndex = function(generateNewStructure) {
 		if (generateNewStructure) {
-			const oldMetadata = this.ws.workbook.metadata ? this.ws.workbook.metadata.clone() : null;
-
-			if (!this.ws.workbook.metadata) {
-				this.ws.workbook.metadata = new AscCommonExcel.CMetadata();
-			}
-			const meta = this.ws.workbook.metadata;
-
-			if (!meta.metadataTypes) {
-				meta.metadataTypes = [];
-			}
-			let metadataType = meta.getMetaDataType("XLRICHVALUE");
-			if (!metadataType) {
-				metadataType = new AscCommonExcel.CMetadataType();
-				metadataType.name = "XLRICHVALUE";
-				metadataType.minSupportedVersion = 120000;
-				metadataType.copy = 1;
-				metadataType.pasteAll = 1;
-				metadataType.pasteValues = 1;
-				metadataType.merge = 1;
-				metadataType.splitFirst = 1;
-				metadataType.rowColShift = 1;
-				metadataType.clearFormats = 1;
-				metadataType.clearComments = 1;
-				metadataType.assign = 1;
-				metadataType.coerce = 1;
-				meta.metadataTypes.push(metadataType);
-			}
-
-			if (!meta.aFutureMetadata) {
-				meta.aFutureMetadata = [];
-			}
-			let futureMetadata = meta.getFutureMetadataByType("XLRICHVALUE");
-			if (!futureMetadata) {
-				futureMetadata = new AscCommonExcel.CFutureMetadata();
-				futureMetadata.name = "XLRICHVALUE";
-				futureMetadata.futureMetadataBlocks = [];
-				meta.aFutureMetadata.push(futureMetadata);
-			}
-
-			const richValueBlock = new AscCommonExcel.CRichValueBlock();
-			richValueBlock._rv = 0;
-
-			const extBlock = new AscCommonExcel.CMetadataBlockExt();
-			extBlock.uri = "{3e2802c4-a4d2-4d8b-9148-e3be6c30e623}";
-			extBlock.richValueBlock = richValueBlock;
-
-			const futureBlock = new AscCommonExcel.CFutureMetadataBlock();
-			futureBlock.extLst = [extBlock];
-			futureMetadata.futureMetadataBlocks.push(futureBlock);
-
-			if (!meta.valueMetadata) {
-				meta.valueMetadata = [];
-			}
-
-			const valueMetadataBlock = new AscCommonExcel.CMetadataBlock();
-			valueMetadataBlock.t = meta.metadataTypes.length;
-			valueMetadataBlock.v = futureMetadata.futureMetadataBlocks.length - 1;
-			meta.valueMetadata.push(valueMetadataBlock);
-
-			const newMetadata = this.ws.workbook.metadata.clone();
-			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_Metadata,
-				null, null, new UndoRedoData_FromTo(oldMetadata, newMetadata));
-
-			return meta.valueMetadata.length;
+			return this._addRichValueMetadataForGeneric();
 		}
 	};
 
@@ -26002,72 +25886,7 @@
 			}
 		}
 		if (generateNewStructure) {
-			const oldMetadata = this.ws.workbook.metadata ? this.ws.workbook.metadata.clone() : null;
-
-			if (!this.ws.workbook.metadata) {
-				this.ws.workbook.metadata = new AscCommonExcel.CMetadata();
-			}
-			const meta = this.ws.workbook.metadata;
-
-			if (!meta.metadataTypes) {
-				meta.metadataTypes = [];
-			}
-			let metadataType = meta.getMetaDataType("XLDAPR");
-			if (!metadataType) {
-				metadataType = new AscCommonExcel.CMetadataType();
-				metadataType.name = "XLDAPR";
-				metadataType.minSupportedVersion = 120000;
-				metadataType.copy = 1;
-				metadataType.pasteAll = 1;
-				metadataType.pasteValues = 1;
-				metadataType.merge = 1;
-				metadataType.splitFirst = 1;
-				metadataType.rowColShift = 1;
-				metadataType.clearFormats = 1;
-				metadataType.clearComments = 1;
-				metadataType.assign = 1;
-				metadataType.coerce = 1;
-				metadataType.cellMeta = 1;
-				meta.metadataTypes.push(metadataType);
-			}
-
-			if (!meta.aFutureMetadata) {
-				meta.aFutureMetadata = [];
-			}
-			let futureMetadata = meta.getFutureMetadataByType("XLDAPR");
-			if (!futureMetadata) {
-				futureMetadata = new AscCommonExcel.CFutureMetadata();
-				futureMetadata.name = "XLDAPR";
-				futureMetadata.futureMetadataBlocks = [];
-				meta.aFutureMetadata.push(futureMetadata);
-			}
-
-			const dynamicArrayProps = new AscCommonExcel.CDynamicArrayProperties();
-			dynamicArrayProps.fDynamic = true;
-			dynamicArrayProps.fCollapsed = false;
-
-			const extBlock = new AscCommonExcel.CMetadataBlockExt();
-			extBlock.uri = "{bdbb8cdc-fa1e-496e-a857-3c3f30c029c3}";
-			extBlock.dynamicArrayProperties = dynamicArrayProps;
-
-			const futureBlock = new AscCommonExcel.CFutureMetadataBlock();
-			futureBlock.extLst = [extBlock];
-			futureMetadata.futureMetadataBlocks.push(futureBlock);
-
-			if (!meta.cellMetadata) {
-				meta.cellMetadata = [];
-			}
-
-			const cellMetadataBlock = new AscCommonExcel.CMetadataBlock();
-			cellMetadataBlock.t = meta.metadataTypes.length;
-			cellMetadataBlock.v = futureMetadata.futureMetadataBlocks.length - 1;
-			meta.cellMetadata.push(cellMetadataBlock);
-
-			const newMetadata = this.ws.workbook.metadata.clone();
-			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_Metadata,
-				null, null, new UndoRedoData_FromTo(oldMetadata, newMetadata));
-
-			return meta.cellMetadata.length;
+			return this._addDynamicArrayMetadata(false);
 		}
 	};
 
