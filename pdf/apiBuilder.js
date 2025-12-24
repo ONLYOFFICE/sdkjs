@@ -519,6 +519,54 @@
 		return new ApiPolygonAnnotation(oAnnot);
 	};
 
+	/**
+	 * Creates polyline annotation.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {Rect} rect - annotation rect.
+	 * @param {Path} path - polyline path
+	 * @returns {ApiPolyLineAnnotation}
+	 * @see office-js-api/Examples/PDF/Api/Methods/CreatePolyLineAnnot.js
+	 */
+	Api.prototype.CreatePolyLineAnnot = function(rect, path) {
+		let oDoc = private_GetLogicDocument();
+
+		path = AscBuilder.GetArrayParameter(path, []);
+		if (path.length == 0)
+			AscBuilder.throwException(new Error("The path parameter must be a non empty array"));
+
+		path.forEach(function(point) {
+			private_CheckPoint(point);
+		});
+
+		if (!private_IsValidRect(rect)) {
+			AscBuilder.throwException("The rect parameter must be a valid rect");
+		}
+
+		let aVertices = [];
+		path.forEach(function(point) {
+			aVertices.push(point["x"], point["y"]);
+		});
+
+		let oProps = {
+			rect:           rect,
+			name:           AscCommon.CreateGUID(),
+			type:           AscPDF.ANNOTATIONS_TYPES.PolyLine,
+			creationDate:   (new Date().getTime()).toString(),
+			modDate:        (new Date().getTime()).toString(),
+			hidden:         false
+		}
+
+		let oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
+
+		oAnnot.SetBorderWidth(1);
+		oAnnot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
+		oAnnot.SetBorderColor([0, 0, 0]);
+		oAnnot.SetVertices(aVertices);
+
+		return new ApiPolyLineAnnotation(oAnnot);
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiDocument
@@ -3959,6 +4007,83 @@
 		return aPath;
 	};
 
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiPolyLineAnnotation
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a polyline annotation.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 * @extends {ApiBaseAnnotation}
+	 */
+	function ApiPolyLineAnnotation(oAnnot) {
+		ApiBaseAnnotation.call(this, oAnnot);
+	}
+
+	ApiPolyLineAnnotation.prototype = Object.create(ApiBaseAnnotation.prototype);
+	ApiPolyLineAnnotation.prototype.constructor = ApiPolyLineAnnotation;
+
+	/**
+	 * Returns a type of the ApiPolyLineAnnotation class.
+	 * @memberof ApiPolyLineAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"polyLineAnnot"}
+	 * @see office-js-api/Examples/PDF/ApiPolyLineAnnotation/Methods/GetClassType.js
+	 */
+	ApiPolyLineAnnotation.prototype.GetClassType = function() {
+		return "polyLineAnnot";
+	};
+
+	/**
+	 * Sets vertices to polyline annot.
+	 * @memberof ApiPolyLineAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @param {Path} path - polyline path
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiPolyLineAnnotation/Methods/SetVertices.js
+	 */
+	ApiPolyLineAnnotation.prototype.SetVertices = function(path) {
+		path = AscBuilder.GetArrayParameter(path, []);
+		if (path.length == 0)
+			AscBuilder.throwException(new Error("The path parameter must be a non empty array"));
+
+		path.forEach(function(point) {
+			private_CheckPoint(point);
+		});
+
+		let aVertices = [];
+		path.forEach(function(point) {
+			aVertices.push(point["x"], point["y"]);
+		});
+
+		this.Annot.SetVertices(aVertices);
+		return true;
+	};
+
+	/**
+	 * Gets ink path list.
+	 * @memberof ApiPolyLineAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {Path}
+	 * @see office-js-api/Examples/PDF/ApiPolyLineAnnotation/Methods/GetVertices.js
+	 */
+	ApiPolyLineAnnotation.prototype.GetVertices = function() {
+		let aVertices = this.Annot.GetInkPoints();
+
+		let aPath = [];
+		for (let i = 0; i < aVertices.length - 1; i+= 2) {
+			aPath.push({
+				"x": aVertices[i],
+				"y": aVertices[i+1]
+			});
+		}
+
+		return aPath;
+	};
+
 	function private_GetLogicDocument() {
 		return Asc.editor.getPDFDoc();
 	}
@@ -4368,6 +4493,9 @@
 			case AscPDF.ANNOTATIONS_TYPES.Polygon: {
 				return new ApiPolygonAnnotation(annot);
 			}
+			case AscPDF.ANNOTATIONS_TYPES.PolyLine: {
+				return new ApiPolyLineAnnotation(annot);
+			}
 		}
 	}
 
@@ -4446,6 +4574,7 @@
 	Api.prototype["CreateLineAnnot"]						= Api.prototype.CreateLineAnnot;
 	Api.prototype["CreateInkAnnot"]							= Api.prototype.CreateInkAnnot;
 	Api.prototype["CreatePolygonAnnot"]						= Api.prototype.CreatePolygonAnnot;
+	Api.prototype["CreatePolyLineAnnot"]					= Api.prototype.CreatePolyLineAnnot;
 
 	// ApiDocument
 	ApiDocument.prototype["GetClassType"]					= ApiDocument.prototype.GetClassType;
@@ -4680,6 +4809,11 @@
 	ApiPolygonAnnotation.prototype["GetClassType"]			= ApiPolygonAnnotation.prototype.GetClassType;
 	ApiPolygonAnnotation.prototype["SetVertices"]			= ApiPolygonAnnotation.prototype.SetVertices;
 	ApiPolygonAnnotation.prototype["GetVertices"]			= ApiPolygonAnnotation.prototype.GetVertices;
+
+	// ApiPolyLineAnnotation
+	ApiPolyLineAnnotation.prototype["GetClassType"]			= ApiPolyLineAnnotation.prototype.GetClassType;
+	ApiPolyLineAnnotation.prototype["SetVertices"]			= ApiPolyLineAnnotation.prototype.SetVertices;
+	ApiPolyLineAnnotation.prototype["GetVertices"]			= ApiPolyLineAnnotation.prototype.GetVertices;
 
 }(window, null));
 

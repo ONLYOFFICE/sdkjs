@@ -65,10 +65,12 @@
     Object.assign(CAnnotationPolyLine.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationPolyLine.prototype.SetVertices = function(aVertices) {
-        this.recalcGeometry();
         AscCommon.History.Add(new CChangesPDFAnnotVertices(this, this.GetVertices(), aVertices));
 
         this._vertices = aVertices;
+		this.recalcGeometry();
+		this.SetWasChanged(true);
+		this.SetNeedRecalc(true);
     };
     CAnnotationPolyLine.prototype.GetVertices = function() {
         return this._vertices;
