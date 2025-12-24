@@ -417,14 +417,33 @@
 		};
 
 		// disable mousewheel on macOS
-		if (AscCommon.AscBrowser.isMacOs)
-		{
-			document.body.onmousewheel = function(e) {
-				if (e.stopPropagation)
-					e.stopPropagation();
-				e.returnValue = false;
-				return false;
-			};
+		if (AscCommon.AscBrowser.isMacOs) {
+			let passiveIfSupported = false;
+			try {
+				document.body.addEventListener('test', null, Object.defineProperty({}, "passive", {
+					get: function () {
+						passiveIfSupported = {
+							passive = false
+						}
+					}
+				}));
+			} catch (err) { }
+			if (document.body.addEventListener) {
+				document.body.addEventListener('mousewheel', function (e) {
+					if (e.stopPropagation)
+						e.stopPropagation();
+					if (passiveIfSupported) {
+						e.preventDefault()
+					}
+				}, passiveIfSupported);
+			} else {
+				document.body.onmousewheel =  function (e) {
+					if (e.stopPropagation)
+						e.stopPropagation();
+					e.returnValue = false;
+					return false;
+				};
+			}
 		}
 
 		this.initBroadcastChannel();
