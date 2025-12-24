@@ -3417,9 +3417,9 @@
 							let aSelectedObjects = this.getSelectedArray();
 							if(aSelectedObjects.length === 1) {
 								let oDrawing = aSelectedObjects[0];
-								const isGroup = oDrawing.isGroup();
-								const isShapeDrawing = oDrawing.isShape();
-								const isImageDrawing = oDrawing.isImage();
+								const isGroup = oDrawing.isGroup && oDrawing.isGroup();
+								const isShapeDrawing = oDrawing.isShape && oDrawing.isShape();
+								const isImageDrawing = oDrawing.isImage && oDrawing.isImage();
 								if (isGroup || isShapeDrawing || isImageDrawing) {
 									if (bCheckInHyperlink) {
 										let nvProps = this.hyperlinkCollectNonVisualProperties(oDrawing);
@@ -3455,9 +3455,9 @@
 							let aSelectedObjects = this.getSelectedArray();
 							if(aSelectedObjects.length === 1) {
 								let oDrawing = aSelectedObjects[0];
-								const isGroup = oDrawing.isGroup();
-								const isImageDrawing = oDrawing.isImage();
-								const isShapeDrawing = oDrawing.isShape();
+								const isGroup = oDrawing.isGroup && oDrawing.isGroup();
+								const isImageDrawing = oDrawing.isImage && oDrawing.isImage();
+								const isShapeDrawing = oDrawing.isShape && oDrawing.isShape();
 								if (isGroup || isShapeDrawing || isImageDrawing) {
 									let nvProps = this.hyperlinkCollectNonVisualProperties(oDrawing);
 									nvProps.forEach(function (oNvPr) {
@@ -3490,9 +3490,9 @@
 								let aSelectedObjects = this.getSelectedArray();
 								if(aSelectedObjects.length === 1) {
 									let oDrawing = aSelectedObjects[0];
-									const isGroup = oDrawing.isGroup();
-									const isShapeDrawing = oDrawing.isShape();
-									const isImageDrawing = oDrawing.isImage();
+									const isGroup = oDrawing.isGroup && oDrawing.isGroup();
+									const isShapeDrawing = oDrawing.isShape && oDrawing.isShape();
+									const isImageDrawing = oDrawing.isImage && oDrawing.isImage();
 									if (isGroup || isShapeDrawing || isImageDrawing) {
 										let nvProps = this.hyperlinkCollectNonVisualProperties(oDrawing);
 										nvProps.forEach(function (oNvPr) {
@@ -3539,9 +3539,9 @@
 								let aSelectedObjects = this.getSelectedArray();
 								if(aSelectedObjects.length === 1) {
 									let oDrawing = aSelectedObjects[0];
-									const isGroup = oDrawing.isGroup();
-									const isShapeDrawing = oDrawing.isShape();
-									const isImageDrawing = oDrawing.isImage();
+									const isGroup = oDrawing.isGroup && oDrawing.isGroup();
+									const isShapeDrawing = oDrawing.isShape && oDrawing.isShape();
+									const isImageDrawing = oDrawing.isImage && oDrawing.isImage();
 									if (isGroup || isShapeDrawing || isImageDrawing) {
 										let nvProps = this.hyperlinkCollectNonVisualProperties(oDrawing);
 										nvProps.forEach(function (oNvPr) {
@@ -8157,13 +8157,11 @@
 						const oDrawingObjectsController = oDrawing.getDrawingObjectsController && oDrawing.getDrawingObjectsController();
 						const oTargetDocContent = oDrawingObjectsController && oDrawingObjectsController.getTargetDocContent();
 
-						const isGroup = oDrawing.isGroup();
-						const isShapeDrawing = oDrawing.isShape();
-						const isImageDrawing = oDrawing.isImage();
-						const isStickyNote = oDrawing.IsAnnot && oDrawing.IsAnnot() && oDrawing.IsComment() ||
-							drawing.IsEditFieldShape && oDrawing.IsEditFieldShape(); // skip pdf text annot and form
+						const isGroup = oDrawing.isGroup && oDrawing.isGroup();
+						const isShapeDrawing = oDrawing.isShape && oDrawing.isShape();
+						const isImageDrawing = oDrawing.isImage && oDrawing.isImage();
 
-						if (!isStickyNote && (isGroup || isShapeDrawing || isImageDrawing)) {
+						if (isGroup || isShapeDrawing || isImageDrawing) {
 							const isWordEditor = editorId === AscCommon.c_oEditorId.Word;
 							const nvProps = this.hyperlinkCollectNonVisualProperties(oDrawing);
 							const oNvPr = nvProps[0];
