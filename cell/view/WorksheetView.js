@@ -19025,9 +19025,21 @@ function isAllowPasteLink(pastedWb) {
 				}
 			}
 
+			// we check for new links to external data
+			if (parseResult.externalReferenesNeedAdd) {
+				t.model.workbook.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
+				// then we parse the formula again to obtain the correct outStack and external link indexes
+				newFP = new AscCommonExcel.parserFormula(valText.substring(1), cellWithFormula, this.model);
+				if (!newFP.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep, parseResult)) {
+					this.model.workbook.handlers.trigger("asc_onError", parseResult.error, c_oAscError.Level.NoCritical);
+					endTransaction();
+					return;
+				}
+			}
+
 			//reparse if single operators included - @
-			let notReplaceDefaultSingle;
 			if (!isFormulaFromVal && parseResult.atOperators && parseResult.atOperators.length > 0) {
+				let notReplaceDefaultSingle;
 				let sBefore = newFP.Formula;
 				let atOperatorsFormula = newFP._assembleWithAtOperators(parseResult.atOperators, parseResult);
 				newFP.Formula = atOperatorsFormula.formula;
@@ -19045,31 +19057,23 @@ function isAllowPasteLink(pastedWb) {
 					}
 					val[0].setFragmentText("=" + newFP.Formula);
 				}
-			}
-
-			// we check for new links to external data
-			if (parseResult.externalReferenesNeedAdd) {
-				t.model.workbook.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
-				// then we parse the formula again to obtain the correct outStack and external link indexes
-				newFP = new AscCommonExcel.parserFormula(valText.substring(1), cellWithFormula, this.model);
-				if (!newFP.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep, parseResult)) {
-					this.model.workbook.handlers.trigger("asc_onError", parseResult.error, c_oAscError.Level.NoCritical);
-					endTransaction();
-					return;
+				if (AscCommonExcel.bIsSupportDynamicArrays) {
+					if (notReplaceDefaultSingle && notReplaceDefaultSingle !== newFP.Formula) {
+						let atOperatorsFormula = newFP._assembleWithAtOperators(parseResult.atOperators, parseResult, true);
+						let _parseResult = new AscCommonExcel.ParseResult();
+						newFP.Formula = atOperatorsFormula.formula;
+						newFP.isParsed = false;
+						newFP.outStack = [];
+						newFP.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep, _parseResult);
+					}
 				}
 			}
+
+
 
 			if (!applyByArray && AscCommonExcel.bIsSupportDynamicArrays) {
 				/* if we write not through cse, then check the formula for the presence of ref */
 				/* if ref exists, write the formula as an array formula and also find its dimensions for further expansion */
-				if (notReplaceDefaultSingle && notReplaceDefaultSingle !== newFP.Formula) {
-					let atOperatorsFormula = newFP._assembleWithAtOperators(parseResult.atOperators, parseResult, true);
-					let _parseResult = new AscCommonExcel.ParseResult();
-					newFP.Formula = atOperatorsFormula.formula;
-					newFP.isParsed = false;
-					newFP.outStack = [];
-					newFP.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep, _parseResult);
-				}
 				dynamicSelectionRange = t.model.dynamicArrayManager.getDynamicRangeByFormula(newFP, calculateResult, true);
 				if (dynamicSelectionRange) {
 					applyByArray = true;
@@ -19145,7 +19149,7 @@ function isAllowPasteLink(pastedWb) {
 			// collect a list of all affected arrays and go through each of them
 			// if the main cell was affected, then need to clear the entire array (we will also need to update the DepGraph dependency list)
 			// if the main cell has NOT been affected, we need to execute cell.setValue("") or Range.setValue("") for all child cells of the array, and set the aca=true flag for the main cell
-			ws.dynamicArrayManager.applyChangedArrayList();
+			//ws.dynamicArrayManager.applyChangedArrayList();
 
 			if (applyByArray)
 				this.workbook.StartAction(AscDFH.historydescription_Spreadsheet_SetCellFormula, AscCommonExcel.getFragmentsText(val));
@@ -19161,7 +19165,7 @@ function isAllowPasteLink(pastedWb) {
 
 			this.workbook.FinalizeAction();
 			// recalc all volatile arrays on page
-			t.model.dynamicArrayManager.recalculateVolatileArrays();
+			//t.model.dynamicArrayManager.recalculateVolatileArrays();
 
 			//***array-formula***
 			if(ctrlKey) {
@@ -19182,7 +19186,7 @@ function isAllowPasteLink(pastedWb) {
 
 			if (AscCommonExcel.bIsSupportDynamicArrays) {
 				//***dynamic array-formula***
-				ws.dynamicArrayManager.applyChangedArrayList();
+				//ws.dynamicArrayManager.applyChangedArrayList();
 			}
 
 			// set the value to the selected range
@@ -19192,7 +19196,7 @@ function isAllowPasteLink(pastedWb) {
 				c.setValue2(val, true);
 			}
 			// recalculate all volatile arrays on page
-			t.model.dynamicArrayManager.recalculateVolatileArrays();
+			//t.model.dynamicArrayManager.recalculateVolatileArrays();
 
 			// Вызываем функцию пересчета для заголовков форматированной таблицы
 			this.model.checkChangeTablesContent(bbox);

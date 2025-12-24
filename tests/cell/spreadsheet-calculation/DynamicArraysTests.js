@@ -4600,5 +4600,267 @@ $(function () {
 		clearData(0, 0, 10, 20);
 	});
 
+	function _getArrayFormulaRef(sAddr) {
+		let resCell = getCell(ws.getRange2(sAddr));
+		let pF = resCell && resCell.getFormulaParsed();
+		return pF && pF.getArrayFormulaRef();
+	}
+
+	QUnit.test("Test: \"Replace dynamic array with different sizes\"", function (assert) {
+		clearData(0, 0, 100, 200);
+
+		var flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// Test 1: Replace with larger array
+		var formula1 = "=SEQUENCE(3,2)";
+		var fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		var fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText(formula1);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		// Check initial array
+		var cellValueA1 = ws.getRange2("A1").getValue();
+		var cellValueA3 = ws.getRange2("A3").getValue();
+		var cellValueB3 = ws.getRange2("B3").getValue();
+		assert.strictEqual(cellValueA1, "1", "A1 has value 1");
+		assert.strictEqual(cellValueA3, "5", "A3 has value 5");
+		assert.strictEqual(cellValueB3, "6", "B3 has value 6");
+
+		var cmIndex1 = getCellMetadata(0, 0);
+		assert.ok(cmIndex1 > 0, "A1 has metadata");
+
+		// Replace with larger array (4x3 instead of 3x2)
+		var formula2 = "=SEQUENCE(4,3)";
+		fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText(formula2);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		// Check that new larger array is expanded correctly
+		cellValueA1 = ws.getRange2("A1").getValue();
+		var cellValueA4 = ws.getRange2("A4").getValue();
+		var cellValueC4 = ws.getRange2("C4").getValue();
+		assert.strictEqual(cellValueA1, "1", "A1 has value 1 after replacement");
+		assert.strictEqual(cellValueA4, "10", "A4 has value 10");
+		assert.strictEqual(cellValueC4, "12", "C4 has value 12");
+
+		// Check array range for larger array (4x3)
+		var arrayRef1 = _getArrayFormulaRef("A1");
+		assert.ok(arrayRef1 != null, "A1 has array reference");
+		assert.strictEqual(arrayRef1.r1, 0, "Array starts at row 0");
+		assert.strictEqual(arrayRef1.c1, 0, "Array starts at col 0");
+		assert.strictEqual(arrayRef1.r2, 3, "Array ends at row 3 (4 rows)");
+		assert.strictEqual(arrayRef1.c2, 2, "Array ends at col 2 (3 cols)");
+
+		var metadata = getMetadata();
+		assert.ok(metadata != null, "Metadata exists after replacement with larger array");
+
+		cmIndex1 = getCellMetadata(0, 0);
+		assert.ok(cmIndex1 > 0, "A1 still has metadata after replacement");
+
+		// Test 2: Replace with smaller array
+		var formula3 = "=SEQUENCE(2,1)";
+		fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText(formula3);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		// Check that smaller array is correct and old cells are cleared
+		cellValueA1 = ws.getRange2("A1").getValue();
+		var cellValueA2 = ws.getRange2("A2").getValue();
+		var cellValueA3 = ws.getRange2("A3").getValue();
+		cellValueA4 = ws.getRange2("A4").getValue();
+		var cellValueB1 = ws.getRange2("B1").getValue();
+		var cellValueC1 = ws.getRange2("C1").getValue();
+		assert.strictEqual(cellValueA1, "1", "A1 has value 1");
+		assert.strictEqual(cellValueA2, "2", "A2 has value 2");
+		assert.strictEqual(cellValueA3, "", "A3 is empty (old array cleared)");
+		assert.strictEqual(cellValueA4, "", "A4 is empty (old array cleared)");
+		assert.strictEqual(cellValueB1, "", "B1 is empty (old array cleared)");
+		assert.strictEqual(cellValueC1, "", "C1 is empty (old array cleared)");
+
+		// Check array range for smaller array (2x1)
+		var arrayRef2 = _getArrayFormulaRef("A1");
+		assert.ok(arrayRef2 != null, "A1 has array reference after replacement");
+		assert.strictEqual(arrayRef2.r1, 0, "Array starts at row 0");
+		assert.strictEqual(arrayRef2.c1, 0, "Array starts at col 0");
+		assert.strictEqual(arrayRef2.r2, 1, "Array ends at row 1 (2 rows)");
+		assert.strictEqual(arrayRef2.c2, 0, "Array ends at col 0 (1 col)");
+
+		cmIndex1 = getCellMetadata(0, 0);
+		assert.ok(cmIndex1 > 0, "A1 still has metadata after replacement with smaller array");
+
+		// Test 3: Replace with equal size array
+		var formula4 = "=SEQUENCE(2,1,10,5)";
+		fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText(formula4);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		// Check that equal size array replaced correctly
+		cellValueA1 = ws.getRange2("A1").getValue();
+		cellValueA2 = ws.getRange2("A2").getValue();
+		assert.strictEqual(cellValueA1, "10", "A1 has value 10 (new formula)");
+		assert.strictEqual(cellValueA2, "15", "A2 has value 15 (new formula)");
+
+		// Check array range for equal size array (2x1)
+		var arrayRef3 = _getArrayFormulaRef("A1");
+		assert.ok(arrayRef3 != null, "A1 has array reference after equal size replacement");
+		assert.strictEqual(arrayRef3.r1, 0, "Array starts at row 0");
+		assert.strictEqual(arrayRef3.c1, 0, "Array starts at col 0");
+		assert.strictEqual(arrayRef3.r2, 1, "Array ends at row 1 (2 rows)");
+		assert.strictEqual(arrayRef3.c2, 0, "Array ends at col 0 (1 col)");
+
+		cmIndex1 = getCellMetadata(0, 0);
+		assert.ok(cmIndex1 > 0, "A1 still has metadata after replacement with equal size array");
+
+		metadata = getMetadata();
+		assert.ok(metadata != null, "Metadata exists after all replacements");
+
+		clearData(0, 0, 10, 20);
+	});
+
+	QUnit.test("Test: \"Add dynamic array in previous cell when next cell has array\"", function (assert) {
+		clearData(0, 0, 100, 200);
+
+		var flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// Create array in A2 first
+		var formula1 = "=SEQUENCE(3,2)";
+		var fillRange = ws.getRange2("A2");
+		wsView.setSelection(fillRange.bbox);
+		var fragment = ws.getRange2("A2").getValueForEdit2();
+		fragment[0].setFragmentText(formula1);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		// Check that array in A2 is expanded
+		var cellValueA2 = ws.getRange2("A2").getValue();
+		var cellValueA3 = ws.getRange2("A3").getValue();
+		var cellValueA4 = ws.getRange2("A4").getValue();
+		var cellValueB2 = ws.getRange2("B2").getValue();
+		assert.strictEqual(cellValueA2, "1", "A2 has value 1");
+		assert.strictEqual(cellValueA3, "3", "A3 has value 3");
+		assert.strictEqual(cellValueA4, "5", "A4 has value 5");
+		assert.strictEqual(cellValueB2, "2", "B2 has value 2");
+
+		// Check array range for A2 array
+		var arrayRefA2 = _getArrayFormulaRef("A2");
+		assert.ok(arrayRefA2 != null, "A2 has array reference");
+		assert.strictEqual(arrayRefA2.r1, 1, "Array starts at row 1 (A2)");
+		assert.strictEqual(arrayRefA2.c1, 0, "Array starts at col 0");
+		assert.strictEqual(arrayRefA2.r2, 3, "Array ends at row 3 (A4)");
+		assert.strictEqual(arrayRefA2.c2, 1, "Array ends at col 1 (B)");
+
+		var cmIndexA2 = getCellMetadata(1, 0);
+		assert.ok(cmIndexA2 > 0, "A2 has metadata");
+
+		// Try to add array in A1 that would overlap with A2 array
+		var formula2 = "=SEQUENCE(3,2)";
+		fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText(formula2);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		// Check that A1 shows SPILL error because A2 is occupied
+		var cellValueA1 = ws.getRange2("A1").getValue();
+		assert.strictEqual(cellValueA1, "#SPILL!", "A1 shows SPILL error");
+
+		// Check that A1 has metadata and richdata (collapsed array)
+		var cmIndexA1 = getCellMetadata(0, 0);
+		assert.ok(cmIndexA1 > 0, "A1 has metadata even with SPILL error");
+
+		var vmIndexA1 = getCellRichValueIndex(0, 0);
+		assert.ok(vmIndexA1 > 0, "A1 has richdata (collapsed array)");
+
+		// Check RichValueData for collapsed array
+		var richValueData = getRichValueData();
+		assert.ok(richValueData != null, "richValueData exists for collapsed array");
+		assert.ok(richValueData.pData && richValueData.pData.length > 0, "richValueData has pData array");
+		var richValue = richValueData.getRichValue(vmIndexA1 - 1);
+		assert.ok(richValue != null, "richValue exists for A1");
+		assert.ok(richValue.s != null, "richValue has structure index");
+		assert.ok(richValue.arrV && richValue.arrV.length > 0, "richValue has values array");
+
+		// Check RichValueStructures
+		var richValueStructures = getRichValueStructures();
+		assert.ok(richValueStructures != null, "richValueStructures exists for collapsed array");
+		assert.ok(richValueStructures.children && richValueStructures.children.length > 0, "richValueStructures has children");
+		var structure = richValueStructures.getValueStructure(richValue.s);
+		assert.ok(structure != null, "structure exists");
+		assert.ok(structure.t != null, "structure has type");
+
+		// Check that A2 array is still expanded and intact
+		cellValueA2 = ws.getRange2("A2").getValue();
+		cellValueA3 = ws.getRange2("A3").getValue();
+		assert.strictEqual(cellValueA2, "1", "A2 still has value 1");
+		assert.strictEqual(cellValueA3, "3", "A3 still has value 3");
+
+		cmIndexA2 = getCellMetadata(1, 0);
+		assert.ok(cmIndexA2 > 0, "A2 still has metadata");
+
+		var vmIndexA2 = getCellRichValueIndex(1, 0);
+		assert.ok(!vmIndexA2 || vmIndexA2 === 0, "A2 has no richdata (expanded array)");
+
+		var metadata = getMetadata();
+		assert.ok(metadata != null, "Metadata exists for both arrays");
+
+		// Test 2: Delete A2 array to allow A1 array to expand
+		fillRange = ws.getRange2("A2");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A2").getValueForEdit2();
+		fragment[0].setFragmentText("");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		// Check that A1 array now expands
+		cellValueA1 = ws.getRange2("A1").getValue();
+		cellValueA2 = ws.getRange2("A2").getValue();
+		cellValueA3 = ws.getRange2("A3").getValue();
+		var cellValueB1 = ws.getRange2("B1").getValue();
+		var cellValueB3 = ws.getRange2("B3").getValue();
+		assert.strictEqual(cellValueA1, "1", "A1 has value 1 (expanded)");
+		assert.strictEqual(cellValueA2, "3", "A2 has value 3 from A1 array");
+		assert.strictEqual(cellValueA3, "5", "A3 has value 5 from A1 array");
+		assert.strictEqual(cellValueB1, "2", "B1 has value 2 from A1 array");
+		assert.strictEqual(cellValueB3, "6", "B3 has value 6 from A1 array");
+
+		// Check array range for expanded A1 array
+		var arrayRefA1 = _getArrayFormulaRef("A1");
+		assert.ok(arrayRefA1 != null, "A1 has array reference after expansion");
+		assert.strictEqual(arrayRefA1.r1, 0, "Array starts at row 0 (A1)");
+		assert.strictEqual(arrayRefA1.c1, 0, "Array starts at col 0");
+		assert.strictEqual(arrayRefA1.r2, 2, "Array ends at row 2 (A3)");
+		assert.strictEqual(arrayRefA1.c2, 1, "Array ends at col 1 (B)");
+
+		// Check that A1 no longer has richdata (expanded)
+		vmIndexA1 = getCellRichValueIndex(0, 0);
+		assert.ok(!vmIndexA1 || vmIndexA1 === 0, "A1 no longer has richdata (expanded)");
+
+		richValueData = getRichValueData();
+		assert.ok(richValueData == null, "richValueData removed after array expanded");
+
+		richValueStructures = getRichValueStructures();
+		assert.ok(richValueStructures == null, "richValueStructures removed after array expanded");
+
+		var richValueTypesInfo = getRichValueTypesInfo();
+		assert.ok(richValueTypesInfo == null, "richValueTypesInfo removed after array expanded");
+
+		cmIndexA1 = getCellMetadata(0, 0);
+		assert.ok(cmIndexA1 > 0, "A1 still has metadata after expansion");
+
+		metadata = getMetadata();
+		assert.ok(metadata != null, "Metadata still exists");
+
+		clearData(0, 0, 10, 20);
+	});
+
 	QUnit.module("Sheet structure");
 });
