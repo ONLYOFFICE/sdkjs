@@ -3473,7 +3473,7 @@ function (window, undefined) {
 	prot['asc_setObjectiveFunction'] = prot.asc_setObjectiveFunction;
 	prot['asc_setChangingCells'] = prot.asc_setChangingCells;
 	prot['asc_setOptimizeResultTo'] = prot.asc_setOptimizeResultTo;
-	prot['asc_setVariablesNonNegative'] = prot.asc_setVariablesNonNegative;
+	prot['asc_setValueOf'] = prot.asc_setValueOf;
 	prot['asc_setVariablesNonNegative'] = prot.asc_setVariablesNonNegative;
 	prot['asc_setSolvingMethod'] = prot.asc_setSolvingMethod;
 
