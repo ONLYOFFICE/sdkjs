@@ -21563,11 +21563,38 @@
 		const oJSON = {
 			'type': this.GetClassType(),
 			'color': {
-				'type': this.type,
-				'value': this.value
+				'type': this.type
 			}
 		};
-		return JSON.stringify(oJSON);
+
+		if (this.type === 'auto') {
+			return JSON.stringify(oJSON);
+		}
+
+		if (this.type === 'theme') {
+			oJSON['color']['value'] = this.value;
+			return JSON.stringify(oJSON);
+		}
+
+		if (this.type === 'hex') {
+			oJSON['color']['value'] = this.GetHex();
+			return JSON.stringify(oJSON);
+		}
+
+		if (this.type === 'rgb' || this.type === 'rgba') {
+			const rgba = this.GetRGBA();
+			oJSON['color']['value'] = {
+				'red': rgba['r'],
+				'green': rgba['g'],
+				'blue': rgba['b']
+			}
+			if (this.type === 'rgba') {
+				oJSON['color']['value']['alpha'] = rgba['a'];
+			}
+			return JSON.stringify(oJSON);
+		}
+
+		return null;
 	};
 
 	/**
@@ -21586,19 +21613,59 @@
 		}
 
 		const allowedTypes = ['auto', 'rgb', 'rgba', 'hex', 'theme'];
-		const isValidType = typeof jsonObject.color.type === 'string' &&
-			allowedTypes.indexOf(jsonObject.color.type) !== -1;
-		if (!isValidType) {
+		const colorType = jsonObject.color.type;
+		
+		if (typeof colorType !== 'string' || allowedTypes.indexOf(colorType) === -1) {
 			return null;
 		}
 
-		const isValidValue = (jsonObject.color.type === 'auto') ||
-			(jsonObject.color.type !== 'auto' && AscFormat.isRealNumber(jsonObject.color.value));
-		if (!isValidValue) {
-			return null;
+		if (colorType === 'auto') {
+			return new ApiColor('auto');
 		}
 
-		return new ApiColor(jsonObject.color.type, jsonObject.color.value);
+		const value = jsonObject.color.value;
+
+		if (colorType === 'theme') {
+			if (AscFormat.isRealNumber(value)) {
+				return new ApiColor('theme', value);
+			}
+		}
+
+		if (colorType === 'hex') {
+			if (typeof value === 'string') {
+				const cleanedValue = value.startsWith('#') ? value.slice(1) : value;
+				const hexNumber = parseInt(cleanedValue, 16);
+				if (AscFormat.isRealNumber(hexNumber)) {
+					return new ApiColor('hex', hexNumber);
+				}
+			}
+		}
+
+		if (colorType === 'rgb' || colorType === 'rgba') {
+			if (value && typeof value === 'object') {
+				const r = value.red;
+				const g = value.green;
+				const b = value.blue;
+
+				if (AscFormat.isRealNumber(r) && AscFormat.isRealNumber(g) && AscFormat.isRealNumber(b)) {
+
+					if (colorType === 'rgb') {
+						const rgbValue = ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF);
+						return new ApiColor('rgb', rgbValue);
+					}
+
+					if (colorType === 'rgba') {
+						const a = value.alpha;
+						if (AscFormat.isRealNumber(a)) {
+							const rgbaValue = ((r & 0xFF) << 24) | ((g & 0xFF) << 16) | ((b & 0xFF) << 8) | (a & 0xFF);
+							return new ApiColor('rgba', rgbaValue);
+						}
+					}
+				}
+			}
+		}
+
+		return null;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
