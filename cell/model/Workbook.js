@@ -15102,15 +15102,29 @@
 			if(byRef) {
 				if(isFirstArrayFormulaCell) {
 					if (dynamicRangeProps) {
-						let dynamicProps = this.ws.dynamicArrayManager.generateDynamicProps(oldFP, dynamicRangeProps.beforeSpillRange);
-						if (dynamicProps) {
-							if (dynamicProps.cmIndex) {
-								newFP.setCm(dynamicProps.cmIndex);
+						if (dynamicRangeProps.cmIndex != null) {
+							if (dynamicRangeProps.cmIndex != null) {
+								newFP.setCm(dynamicRangeProps.cmIndex);
 							}
-							if (dynamicProps.vmIndex) {
-								newFP.setVm(dynamicProps.vmIndex);
+							if (dynamicRangeProps.vmIndex != null) {
+								newFP.setVm(dynamicRangeProps.vmIndex);
+								newFP.setAca(true);
+								newFP.setCa(true);
+							}
+						} else {
+							let dynamicProps = this.ws.dynamicArrayManager.generateDynamicProps(oldFP, dynamicRangeProps.beforeSpillRange);
+							if (dynamicProps) {
+								if (dynamicProps.cmIndex != null) {
+									newFP.setCm(dynamicProps.cmIndex);
+								}
+								if (dynamicProps.vmIndex != null) {
+									newFP.setVm(dynamicProps.vmIndex);
+									newFP.setAca(true);
+									newFP.setCa(true);
+								}
 							}
 						}
+
 						/*let cmIndex = this.ws.dynamicArrayManager.getNextCmIndex(true);
 						newFP.setCm(cmIndex);
 						if (dynamicRangeProps.beforeSpillRange) {
@@ -15455,6 +15469,9 @@
 		var parser = new parserFormula(formula, cellWithFormula, this.ws);
 		if (caProps && caProps.ca) {
 			parser.ca = caProps.ca;
+		}
+		if (caProps && caProps.aca) {
+			parser.aca = caProps.aca;
 		}
 		if (caProps && caProps.cm) {
 			parser.setCm(caProps.cm);
@@ -16039,6 +16056,7 @@
 		let ca;
 		let cm;
 		let vm;
+		let aca;
 		if(formula) {
 			var parser = this.getFormulaParsed();
 			if(parser) {
@@ -16046,9 +16064,10 @@
 				ca = parser.ca;
 				cm = parser.getCm();
 				vm = parser.getVm();
+				aca = parser.getAca();
 			}
 		}
-		return new UndoRedoData_CellValueData(formula, new AscCommonExcel.CCellValue(this), formulaRef, ca, cm, vm);
+		return new UndoRedoData_CellValueData(formula, new AscCommonExcel.CCellValue(this), formulaRef, ca, cm, vm, aca);
 	};
 	Cell.prototype.setValueData = function(Val){
 		//значения устанавляваются через setValue, чтобы пересчитались формулы
@@ -16057,6 +16076,7 @@
 				ca: Val.ca,
 				cm: Val.cm,
 				vm: Val.vm,
+				aca: Val.aca,
 				oldValue: Val.value.number,
 				oldValueText: Val.value.text
 			};
@@ -18643,9 +18663,11 @@
 		}
 
 
-		this._foreach(function(cell){
-			t.worksheet.dynamicArrayManager.changeCell(cell);
-		});
+		if(false == this.worksheet.workbook.bUndoChanges && false == this.worksheet.workbook.bRedoChanges) {
+			this._foreach(function(cell){
+				t.worksheet.dynamicArrayManager.changeCell(cell);
+			});
+		}
 
 		let cmIndex = null;
 		let vmIndex = null;
@@ -18690,9 +18712,11 @@
 		 */
 
 		let t = this;
-		this._foreach(function(cell){
-			t.worksheet.dynamicArrayManager.changeCell(cell);
-		});
+		if(false == this.worksheet.workbook.bUndoChanges && false == this.worksheet.workbook.bRedoChanges) {
+			this._foreach(function (cell) {
+				t.worksheet.dynamicArrayManager.changeCell(cell);
+			});
+		}
 
 
 		this._foreach(function(cell){
@@ -18716,9 +18740,11 @@
 		AscCommon.History.StartTransaction();
 
 		let t = this;
-		this._foreach(function(cell){
-			t.worksheet.dynamicArrayManager.changeCell(cell);
-		});
+		if(false == this.worksheet.workbook.bUndoChanges && false == this.worksheet.workbook.bRedoChanges) {
+			this._foreach(function (cell) {
+				t.worksheet.dynamicArrayManager.changeCell(cell);
+			});
+		}
 
 		this._foreach(function(cell){
 			cell.setValueData(val);
@@ -20748,7 +20774,9 @@
 
 		this._setPropertyNoEmpty(null, null,
 			function (cell, nRow0, nCol0, nRowStart, nColStart) {
-				t.worksheet.dynamicArrayManager.changeCell(cell);
+				if(false == t.worksheet.workbook.bUndoChanges && false == t.worksheet.workbook.bRedoChanges) {
+					t.worksheet.dynamicArrayManager.changeCell(cell);
+				}
 				cell.setValue("");
 				// if(cell.isEmpty())
 				// cell.Remove();
@@ -24982,9 +25010,16 @@
 		if (fromCmIndex != toCmIndex) {
 			if (fromCmIndex != null && from.checkFirstCellArray(parent)) {
 				this.deleteDynamicFormula(fromCmIndex);
+				let listenerId = from && from.getListenerId();
+				if (from.getVm() != null) {
+					this.ws.workbook.dependencyFormulas.endListeningVolatileArray(listenerId);
+				}
 			}
 			if (toCmIndex != null && to.checkFirstCellArray(parent)) {
 				this.addDynamicFormula(toCmIndex);
+				if (to.getVm() != null) {
+					this.ws.workbook.dependencyFormulas.addToVolatileArrays(to);
+				}
 			}
 		}
 	};
@@ -25804,19 +25839,6 @@
 					null, null, new UndoRedoData_FromTo(oldRichValueTypesInfo, newRichValueTypesInfo));
 			}
 
-			// Initialize richValueData if needed
-			if (!this.ws.workbook.richValueData) {
-				const oldRichValueData = null;
-				
-				this.ws.workbook.richValueData = new AscCommonExcel.CRichValueData();
-				this.ws.workbook.richValueData.pData = [];
-				
-				// Add to history
-				const newRichValueData = this.ws.workbook.richValueData.clone();
-				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_RichValueData,
-					null, null, new UndoRedoData_FromTo(oldRichValueData, newRichValueData));
-			}
-
 			// Calculate offsets from beforeSpillRange
 			let colOffset = "0";
 			let rwOffset = "0";
@@ -25871,6 +25893,14 @@
 
 			// If not found — create new rich value and metadata as before
 			if (needGenerateVm) {
+				// Initialize richValueData if needed
+				if (!this.ws.workbook.richValueData) {
+					const oldRichValueData = null;
+
+					this.ws.workbook.richValueData = new AscCommonExcel.CRichValueData();
+					this.ws.workbook.richValueData.pData = [];
+				}
+
 				const oldRichValueData = this.ws.workbook.richValueData ? this.ws.workbook.richValueData.clone() : null;
 				
 				// Create rich value with error data

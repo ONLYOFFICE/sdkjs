@@ -949,17 +949,18 @@ function (window, undefined) {
 		}
 	};
 
-	function UndoRedoData_CellValueData(sFormula, oValue, formulaRef, bCa, nCm, nVm) {
+	function UndoRedoData_CellValueData(sFormula, oValue, formulaRef, bCa, nCm, nVm, bAca) {
 		this.formula = sFormula;
 		this.formulaRef = formulaRef;
 		this.value = oValue;
 		this.ca = bCa;
 		this.cm = nCm;
 		this.vm = nVm;
+		this.aca = bAca;
 	}
 
 	UndoRedoData_CellValueData.prototype.Properties = {
-		formula: 0, value: 1, formulaRef: 2, ca: 3, cm: 4, vm: 5
+		formula: 0, value: 1, formulaRef: 2, ca: 3, cm: 4, vm: 5, aca: 6
 	};
 	UndoRedoData_CellValueData.prototype.isEqual = function (val) {
 		if (null == val) {
@@ -977,6 +978,9 @@ function (window, undefined) {
 			return false;
 		}
 		if (this.vm != val.vm) {
+			return false;
+		}
+		if (this.aca != val.aca) {
 			return false;
 		}
 		if (this.value.isEqual(val.value)) {
@@ -1004,6 +1008,8 @@ function (window, undefined) {
 				return this.cm;
 			case this.Properties.vm:
 				return this.vm;
+			case this.Properties.aca:
+				return this.aca;
 		}
 		return null;
 	};
@@ -1026,6 +1032,9 @@ function (window, undefined) {
 				break;
 			case this.Properties.vm:
 				this.vm = value;
+				break;
+			case this.Properties.aca:
+				this.aca = value;
 				break;
 		}
 	};
@@ -3189,13 +3198,13 @@ function (window, undefined) {
 		} else if (AscCH.historyitem_Workbook_SetCustomFunctions === Type) {
 			wb.oApi["pluginMethod_SetCustomFunctions"] && wb.oApi["pluginMethod_SetCustomFunctions"](bUndo ? Data.from : Data.to);
 		} else if (AscCH.historyitem_Workbook_Metadata === Type) {
-			wb.metadata = bUndo ? Data.from : Data.to;
+			wb.metadata = bUndo ? (Data.from ? Data.from.clone(): null) : (Data.to ? Data.to.clone(): null);
 		} else if (AscCH.historyitem_Workbook_RichValueStructures === Type) {
-			wb.richValueStructures = bUndo ? Data.from : Data.to;
+			wb.richValueStructures = bUndo ? (Data.from ? Data.from.clone(): null) : (Data.to ? Data.to.clone(): null);
 		} else if (AscCH.historyitem_Workbook_RichValueTypesInfo === Type) {
-			wb.richValueTypesInfo = bUndo ? Data.from : Data.to;
+			wb.richValueTypesInfo = bUndo ? (Data.from ? Data.from.clone(): null) : (Data.to ? Data.to.clone(): null);
 		} else if (AscCH.historyitem_Workbook_RichValueData === Type) {
-			wb.richValueData = bUndo ? Data.from : Data.to;
+			wb.richValueData = bUndo ? (Data.from ? Data.from.clone(): null) : (Data.to ? Data.to.clone(): null);
 		}
 	};
 	UndoRedoWorkbook.prototype.forwardTransformationIsAffect = function (Type) {
@@ -5171,7 +5180,7 @@ function (window, undefined) {
 			case AscCH.historyitem_ArrayFromula_AddFormula:
 				if (!bUndo) {
 					AscCommonExcel.executeInR1C1Mode(false, function () {
-						range.setValue(formula, null, null, bbox, null, cmIndex != null ? bbox :  null);
+						range.setValue(formula, null, null, bbox, null, {cmIndex: cmIndex, vmIndex: vmIndex, range: bbox});
 						if (cmIndex != null) {
 							ws.getRange3(bbox.r1, bbox.c1, bbox.r1, bbox.c1)._foreach(function(cell) {
 								if (cell && cell.formulaParsed) {
