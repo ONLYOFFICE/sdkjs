@@ -288,7 +288,7 @@
 	}
 	CPdfRunSpace.prototype = Object.create(CRunSpace.prototype);
 	CPdfRunSpace.prototype.constructor = CPdfRunSpace;
-	CRunSpace.prototype.Type = para_PdfSpace;
+	CPdfRunSpace.prototype.Type = para_PdfSpace;
 
 	CPdfRunSpace.prototype.IsPdfText       = AscWord.CPdfRunText.prototype.IsPdfText;
 	CPdfRunSpace.prototype.GetGid          = AscWord.CPdfRunText.prototype.GetGid;
