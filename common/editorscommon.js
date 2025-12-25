@@ -14978,6 +14978,9 @@
 		if (!api) {
 			return;
 		}
+		if (level === "error") {
+			console.error(msg);
+		}
 		if (api.documentOpenOptions && api.documentOpenOptions["debug"]) {
 			console.log("[speed]: "+ msg);
 		}
