@@ -5440,34 +5440,85 @@ function (window, undefined) {
 	cERF.prototype.argumentsMax = 2;
 	cERF.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cERF.prototype.argumentsType = [argType.any, argType.any];
+	/**
+	 * @param {number} lower_limit: The lower bound for integrating ERF.
+	 * @param {number} upper_limit(optional): The upper bound for integrating ERF. If omitted, ERF integrates between zero and lower_limit.
+	 * @return {number} Returns the error function integrated between lower_limit and upper_limit.
+	 */
 	cERF.prototype.Calculate = function (arg) {
 
-		var oArguments = this._prepareArguments(arg, arguments[1], true);
-		var argClone = oArguments.args;
+		const calcErf = function (lower_limit, upper_limit) {
 
-		argClone[0] = argClone[0].tocNumber();
-		argClone[1] = argClone[1] ? argClone[1].tocNumber() : new cUndefined();
-
-		var argError;
-		if (argError = this._checkErrorArg(argClone)) {
-			return argError;
-		}
-
-		var calcErf = function (argArray) {
-			var a = argArray[0];
-			var b = argArray[1];
-
-			var res;
-			if (undefined !== b) {
-				res = new cNumber(rtl_math_erf(b) - rtl_math_erf(a));
+			let res;
+			if (upper_limit === undefined) {
+				res = new cNumber(rtl_math_erf(lower_limit));
 			} else {
-				res = new cNumber(rtl_math_erf(a));
+				res = new cNumber(rtl_math_erf(upper_limit) - rtl_math_erf(lower_limit));
 			}
 
 			return res;
 		};
 
-		return this._findArrayInNumberArguments(oArguments, calcErf);
+		let arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cNumber(0);
+
+		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
+			arg0 = arg0.getValue();
+		}
+
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
+			if (arg0.isOneElement()) {
+				arg0 = arg0.getFirstElement();
+			} else {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		}
+
+		if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+			arg1 = arg1.getValue();
+		}
+
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
+			if (arg1.isOneElement()) {
+				arg1 = arg1.getFirstElement();
+			} else {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		}
+
+		let argError;
+		if (argError = this._checkErrorArg([arg0, arg1])) {
+			return argError;
+		}
+
+		if (arg0.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (arg0.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
+		}
+
+		arg0 = arg0.tocNumber();
+		if (arg0.type === cElementType.error) {
+			return arg0;
+		}
+
+
+		if (arg1.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (arg1.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
+		}
+
+		arg1 = arg1.tocNumber();
+		if (arg1.type === cElementType.error) {
+			return arg1;
+		}
+
+		let lower_limit = arg0.getValue(),
+			upper_limit = arg[1] ? arg1.getValue() : undefined;
+
+		let res = calcErf(lower_limit, upper_limit);
+
+		return new cNumber(res);
 	};
 
 	/**
@@ -5486,20 +5537,28 @@ function (window, undefined) {
 	cERF_PRECISE.prototype.isXLFN = true;
 	cERF_PRECISE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cERF_PRECISE.prototype.argumentsType = [argType.any];
+	/**
+	 * @param {number} X: The lower bound for integrating ERF.PRECISE.
+	 * @return {number} Returns the error function.
+	 */
 	cERF_PRECISE.prototype.Calculate = function (arg) {
 
-		var oArguments = this._prepareArguments(arg, arguments[1], true);
-		var argClone = oArguments.args;
+		let oArguments = this._prepareArguments(arg, arguments[1], true);
+		let argClone = oArguments.args;
+
+		if (argClone[0].type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		}
 
 		argClone[0] = argClone[0].tocNumber();
 
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		var calcErf = function (argArray) {
-			var a = argArray[0];
+		const calcErf = function (argArray) {
+			let a = argArray[0];
 			return new cNumber(rtl_math_erf(a));
 		};
 
@@ -5521,17 +5580,27 @@ function (window, undefined) {
 	cERFC.prototype.argumentsMax = 1;
 	cERFC.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cERFC.prototype.argumentsType = [argType.any];
+	/**
+	 * @param {number} X: The lower bound for integrating ERF.
+	 * @return {number} Returns the complementary ERF function integrated between x and infinity.
+	 */
 	cERFC.prototype.Calculate = function (arg) {
 
-		var a = arg[0];
-		if (a instanceof cArea || a instanceof cArea3D) {
+		let a = arg[0];
+		if (a.type === cElementType.cellsRange || a.type === cElementType.cellsRange3D) {
 			a = a.cross(arguments[1]);
-		} else if (a instanceof cArray) {
+		} else if (a.type === cElementType.array) {
 			a = a.getElement(0);
+		} else if (a.type === cElementType.cell || a.type === cElementType.cell3D) {
+			a = a.getValue();
+		}
+
+		if (a.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
 		}
 
 		a = a.tocNumber();
-		if (a instanceof cError) {
+		if (a.type === cElementType.error) {
 			return a;
 		}
 

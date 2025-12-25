@@ -6056,12 +6056,14 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), 0.15262147206923782, 'Test: Positive case: Area, Area. Single-cell ranges for both limits. 2 arguments used.');
 		// Case #11: Array. Array with single element for lower_limit. 1 argument used.
 		oParser = new parserFormula('ERF({0.5})', 'A2', ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:H107").bbox);
 		assert.ok(oParser.parse(), 'Test: ERF({0.5}) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 0.5204998778130466, 'Test: Positive case: Array. Array with single element for lower_limit. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0.5204998778130466, 'Test: Positive case: Array. Array with single element for lower_limit. 1 argument used.');
 		// Case #12: Array, Array. Arrays with single elements for both limits. 2 arguments used.
 		oParser = new parserFormula('ERF({0.5},{1})', 'A2', ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:H107").bbox);
 		assert.ok(oParser.parse(), 'Test: ERF({0.5},{1}) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 0.32220091513666826, 'Test: Positive case: Array, Array. Arrays with single elements for both limits. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0.32220091513666826, 'Test: Positive case: Array, Array. Arrays with single elements for both limits. 2 arguments used.');
 		// Case #13: Name. Named range for lower_limit. 1 argument used.
 		oParser = new parserFormula('ERF(TestName)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ERF(TestName) is parsed.');
@@ -6151,21 +6153,23 @@ $(function () {
 		// Case #10: Boolean. Boolean lower_limit returns #VALUE!. 1 argument used.
 		oParser = new parserFormula('ERF(FALSE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ERF(FALSE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean lower_limit returns #VALUE!. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean lower_limit returns #VALUE!. 1 argument used.');
 		// Case #11: Boolean, Number. Boolean lower_limit returns #VALUE!. 2 arguments used.
 		oParser = new parserFormula('ERF(FALSE,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ERF(FALSE,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean, Number. Boolean lower_limit returns #VALUE!. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean, Number. Boolean lower_limit returns #VALUE!. 2 arguments used.');
 		// Case #12: Number, Boolean. Boolean upper_limit returns #VALUE!. 2 arguments used.
 		oParser = new parserFormula('ERF(0.5,FALSE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ERF(0.5,FALSE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Boolean. Boolean upper_limit returns #VALUE!. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Boolean. Boolean upper_limit returns #VALUE!. 2 arguments used.');
 		// Case #13: Area. Multi-cell range for lower_limit returns #VALUE!. 1 argument used.
 		oParser = new parserFormula('ERF(A100:A102)', 'A2', ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:H107").bbox);
 		assert.ok(oParser.parse(), 'Test: ERF(A100:A102) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Area. Multi-cell range for lower_limit returns #VALUE!. 1 argument used.');
 		// Case #14: Area, Number. Multi-cell range for lower_limit returns #VALUE!. 2 arguments used.
 		oParser = new parserFormula('ERF(A100:A102,1)', 'A2', ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:H107").bbox);
 		assert.ok(oParser.parse(), 'Test: ERF(A100:A102,1) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Area, Number. Multi-cell range for lower_limit returns #VALUE!. 2 arguments used.');
 		// Case #15: Name. Named range with text returns #VALUE!. 1 argument used.
@@ -6187,11 +6191,24 @@ $(function () {
 		// Case #19: Area3D. 3D multi-cell range for lower_limit returns #VALUE!. 1 argument used.
 		oParser = new parserFormula('ERF(Sheet2!A1:B1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ERF(Sheet2!A1:B1) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 0.8427007929497149, 'Test: Negative case: Area3D. 3D multi-cell range for lower_limit returns #VALUE!. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Test: Negative case: Area3D. 3D multi-cell range for lower_limit returns #VALUE!. 1 argument used.');
 		// Case #20: Area3D, Number. 3D multi-cell range for lower_limit returns #VALUE!. 2 arguments used.
 		oParser = new parserFormula('ERF(Sheet2!A1:B1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ERF(Sheet2!A1:B1,1) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: Area3D, Number. 3D multi-cell range for lower_limit returns #VALUE!. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Test: Negative case: Area3D, Number. 3D multi-cell range for lower_limit returns #VALUE!. 2 arguments used.');
+		// Case #21: Number, Empty. Empty check in second value.
+		oParser = new parserFormula('ERF(1,)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: ERF(1,) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Test: Negative case: Number, Empty. Empty check in second value.');
+		// Case #22: Empty, Number. Empty check in first value.
+		oParser = new parserFormula('ERF(,1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: ERF(,1) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Test: Negative case: Empty, Number. Empty check in first value.');
+		// Case #23: Empty, Empty. Empty check in both valued.
+		oParser = new parserFormula('ERF(,)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: ERF(,) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Test: Negative case: Empty, Empty. Empty check in both valued.');
+
 
 		// Bounded cases:
 		// Case #1: Number. Minimum valid numeric lower_limit. 1 argument used.
@@ -6211,11 +6228,6 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: ERF(9.99999999999999E+307,9.99999999999999E+307) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Bounded case: Number, Number. Maximum valid numeric values for both limits. 2 arguments used.');
 
-		// TODO
-		// Need to fix: different results from ms
-		// Case #10: Boolean. Boolean lower_limit returns #VALUE!. 1 argument used.
-		// Case #11: Boolean, Number. Boolean lower_limit returns #VALUE!. 2 arguments used.
-		// Case #12: Number, Boolean. Boolean upper_limit returns #VALUE!. 2 arguments used.
 
 		testArrayFormula2(assert, "ERF", 1, 2, true);
 	});
@@ -6387,11 +6399,11 @@ $(function () {
 		// Case #5: Boolean. Boolean x returns #VALUE!. 1 argument used.
 		oParser = new parserFormula('ERF.PRECISE(FALSE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ERF.PRECISE(FALSE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean x returns #VALUE!. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean x returns #VALUE!. 1 argument used.');
 		// Case #6: Boolean. Boolean x returns #VALUE!. 1 argument used.
 		oParser = new parserFormula('ERF.PRECISE(TRUE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ERF.PRECISE(TRUE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean x returns #VALUE!. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean x returns #VALUE!. 1 argument used.');
 		// Case #7: Area. Multi-cell range for x returns #VALUE!. 1 argument used.
 		oParser = new parserFormula('ERF.PRECISE(A100:A102)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ERF.PRECISE(A100:A102) is parsed.');
@@ -6439,7 +6451,7 @@ $(function () {
 		// Case #20: Array. Array with boolean returns #VALUE!. 1 argument used.
 		oParser = new parserFormula('ERF.PRECISE({FALSE})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ERF.PRECISE({FALSE}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array. Array with boolean returns #VALUE!. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array. Array with boolean returns #VALUE!. 1 argument used.');
 
 		// Bounded cases:
 		// Case #1: Number. Minimum valid numeric x. 1 argument used.
@@ -6451,10 +6463,6 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: ERF.PRECISE(9.99999999999999E+307) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Bounded case: Number. Maximum valid numeric x. 1 argument used.');
 
-		// Need to fix: boolean handle
-		// Case #5: Boolean. Boolean x returns #VALUE!. 1 argument used.
-		// Case #6: Boolean. Boolean x returns #VALUE!. 1 argument used.
-		// Case #20: Array. Array with boolean returns #VALUE!. 1 argument used.
 
 		testArrayFormula2(assert, "ERF.PRECISE", 1, 1, true);
 	});
@@ -6626,11 +6634,11 @@ $(function () {
 		// Case #5: Boolean. Boolean x returns #VALUE!. 1 argument used.
 		oParser = new parserFormula('ERFC(FALSE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ERFC(FALSE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean x returns #VALUE!. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean x returns #VALUE!. 1 argument used.');
 		// Case #6: Boolean. Boolean x returns #VALUE!. 1 argument used.
 		oParser = new parserFormula('ERFC(TRUE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ERFC(TRUE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean x returns #VALUE!. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean x returns #VALUE!. 1 argument used.');
 		// Case #7: Area. Multi-cell range for x returns #VALUE!. 1 argument used.
 		oParser = new parserFormula('ERFC(A100:A102)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ERFC(A100:A102) is parsed.');
@@ -6678,7 +6686,7 @@ $(function () {
 		// Case #20: Array. Array with boolean returns #VALUE!. 1 argument used.
 		oParser = new parserFormula('ERFC({FALSE})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ERFC({FALSE}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array. Array with boolean returns #VALUE!. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array. Array with boolean returns #VALUE!. 1 argument used.');
 
 		// Bounded cases:
 		// Case #1: Number. Minimum valid numeric x. 1 argument used.
@@ -6690,10 +6698,6 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: ERFC(9.99999999999999E+307) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Bounded case: Number. Maximum valid numeric x. 1 argument used.');
 
-		// Need to fix: boolean handle
-		// Case #5: Boolean. Boolean x returns #VALUE!. 1 argument used.
-		// Case #6: Boolean. Boolean x returns #VALUE!. 1 argument used.
-		// Case #20: Array. Array with boolean returns #VALUE!. 1 argument used.
 
 		testArrayFormula2(assert, "ERFC", 1, 1, true);
 	});
@@ -6865,11 +6869,11 @@ $(function () {
 		// Case #5: Boolean. Boolean x returns #VALUE!. 1 argument used.
 		oParser = new parserFormula('ERFC.PRECISE(FALSE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ERFC.PRECISE(FALSE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean x returns #VALUE!. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean x returns #VALUE!. 1 argument used.');
 		// Case #6: Boolean. Boolean x returns #VALUE!. 1 argument used.
 		oParser = new parserFormula('ERFC.PRECISE(TRUE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ERFC.PRECISE(TRUE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean x returns #VALUE!. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean x returns #VALUE!. 1 argument used.');
 		// Case #7: Area. Multi-cell range for x returns #VALUE!. 1 argument used.
 		oParser = new parserFormula('ERFC.PRECISE(A100:A102)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ERFC.PRECISE(A100:A102) is parsed.');
@@ -6917,7 +6921,7 @@ $(function () {
 		// Case #20: Array. Array with boolean returns #VALUE!. 1 argument used.
 		oParser = new parserFormula('ERFC.PRECISE({FALSE})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ERFC.PRECISE({FALSE}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array. Array with boolean returns #VALUE!. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array. Array with boolean returns #VALUE!. 1 argument used.');
 
 		// Bounded cases:
 		// Case #1: Number. Minimum valid numeric x. 1 argument used.
@@ -6929,10 +6933,6 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: ERFC.PRECISE(9.99999999999999E+307) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Bounded case: Number. Maximum valid numeric x. 1 argument used.');
 
-		// Need to fix: boolean handle
-		// Case #5: Boolean. Boolean x returns #VALUE!. 1 argument used.
-		// Case #6: Boolean. Boolean x returns #VALUE!. 1 argument used.
-		// Case #20: Array. Array with boolean returns #VALUE!. 1 argument used.
 
 	});
 
@@ -12204,7 +12204,7 @@ $(function () {
 		// Bounded cases:
 		// Case #1: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).
 		oParser = new parserFormula('IMLOG2("1E+307+1E+307i")', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: IMLOG2("1E+307+1E+307i") is parsed.');debugger
+		assert.ok(oParser.parse(), 'Test: IMLOG2("1E+307+1E+307i") is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number. Maximum valid complex number. Returns modulus sqrt(1E+307^2 + 1E+307^2).');
 		// Case #2: Number. Minimum positive complex number. Returns modulus sqrt(1E-307^2 + 1E-307^2).
 		oParser = new parserFormula('IMLOG2("1E-307+1E-307i")', 'A2', ws);
