@@ -791,7 +791,6 @@
 	}
 	CPdfRunText.prototype = Object.create(CRunText.prototype);
 	CPdfRunText.prototype.constructor = CPdfRunText;
-	CPdfRunText.prototype.Type = para_PdfText;
 
 	CPdfRunText.prototype.IsPdfText = function()
 	{
