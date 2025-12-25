@@ -70,7 +70,7 @@
         }
 
         aFullQuads.forEach(function(aQuads) {
-            oThis.AddQuads(aQuads);
+            oThis.AddQuad(aQuads);
         });
 
         if (aFullQuads.length == 1) {
@@ -133,7 +133,7 @@
         AscCommon.History.EndNoHistoryMode();
         this.SetNeedRecalcSizes(false);
     };
-    CAnnotationLink.prototype.AddQuads = function(aQuads) {
+    CAnnotationLink.prototype.AddQuad = function(aQuads) {
         AscCommon.History.Add(new CChangesPDFAnnotQuads(this, this._quads.length, aQuads, true));
         this._quads.push(aQuads);
     };

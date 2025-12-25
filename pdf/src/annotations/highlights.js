@@ -74,16 +74,30 @@
 
     CAnnotationTextMarkup.prototype.SetQuads = function(aFullQuads) {
         let oThis = this;
+
+		for (let i = 0, nCount = this._quads.length; i < nCount; i++) {
+            this.RemoveQuad(0);
+        }
+
         aFullQuads.forEach(function(aQuads) {
-            oThis.AddQuads(aQuads);
+            oThis.AddQuad(aQuads);
         });
     };
     CAnnotationTextMarkup.prototype.GetQuads = function() {
         return this._quads;
     };
-    CAnnotationTextMarkup.prototype.AddQuads = function(aQuads) {
-        AscCommon.History.Add(new CChangesPDFAnnotQuads(this, this._quads.length, aQuads, true));
-        this._quads.push(aQuads);
+	CAnnotationTextMarkup.prototype.RemoveQuad = function(nIdx) {
+        AscCommon.History.Add(new CChangesPDFAnnotQuads(this, nIdx, this._quads[nIdx], false));
+        this._quads.splice(nIdx, 1);
+
+		this.SetWasChanged(true);
+		this.SetNeedRecalc(true);
+    };
+    CAnnotationTextMarkup.prototype.AddQuad = function(aQuad) {
+        AscCommon.History.Add(new CChangesPDFAnnotQuads(this, this._quads.length, aQuad, true));
+        this._quads.push(aQuad);
+
+		this.SetWasChanged(true);
         this.SetNeedRecalc(true);
     };
     

@@ -218,6 +218,28 @@
 	 * @typedef {("D_Approved" | "D_Revised" | "D_Reviewed" | "D_Received" | "SB_Approved" | "SB_NotApproved" | "SB_Revised" | "SB_Confidential" | "SB_ForComment" | "SB_ForPublicRelease" | "SB_NotForPublicRelease" | "SB_PreliminaryResults" | "SB_InformationOnly" | "SB_Draft" | "SB_Completed" | "SB_Final" | "SB_Void" | "SH_SignHere" | "SH_Witness" | "SH_InitialHere" | "Expired")} StampType
 	 */
 
+	/**
+	 * Quadrilateral represented as a flat tuple of vertices.
+	 * Vertices order is fixed:
+	 *  · left-top → right-top → left-bottom → right-bottom
+	 *
+	 * Invariants:
+	 *  · x1 <= x2 (top edge goes left → right)
+	 *  · x3 <= x4 (bottom edge goes left → right)
+	 *  · y1 <= y3 (left edge goes top → bottom)
+	 *  · y2 <= y4 (right edge goes top → bottom)
+	 *
+	 * @typedef {[number, number, number, number, number, number, number, number]} Quad
+	 * @property {number} 0 - x1 (left top)
+	 * @property {number} 1 - y1 (left top)
+	 * @property {number} 2 - x2 (right top)
+	 * @property {number} 3 - y2 (right top)
+	 * @property {number} 4 - x3 (left bottom)
+	 * @property {number} 5 - y3 (left bottom)
+	 * @property {number} 6 - x4 (right bottom)
+	 * @property {number} 7 - y4 (right bottom)
+	 */
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// Api
@@ -643,6 +665,242 @@
 		return new ApiStampAnnotation(oAnnot);
 	};
 
+	/**
+	 * Creates highlight annotation.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {Rect | Quad[]} rect - region to apply highlight.
+	 * @returns {ApiHighlightAnnotation}
+	 * @see office-js-api/Examples/PDF/Api/Methods/CreateHighlightAnnot.js
+	 */
+	Api.prototype.CreateHighlightAnnot = function(rect) {
+		let oDoc = private_GetLogicDocument();
+		rect = AscBuilder.GetArrayParameter(rect, []);
+
+		if (!private_IsValidRect(rect) && !rect.find(function(quad) {return private_IsValidQuad(quad)})) {
+			AscBuilder.throwException("The rect parameter must be a valid rect or quad");
+		}
+
+		let aQuads;
+		let _rect;
+		if (private_IsValidRect(rect)) {
+			aQuads = [private_ConvertRectToQuad(rect)];
+			_rect = rect;
+		}
+		else if (private_IsValidQuad(rect)) {
+			let minX = Infinity, maxX = -Infinity;
+			let minY = Infinity, maxY = -Infinity;
+
+			for (let i = 0; i < rect.length; i++) {
+				for (let j = 0; j < rect.length; j += 2) {
+					let x = rect[i][j];
+					let y = rect[i][j + 1];
+
+					if (x < minX) minX = x;
+					if (x > maxX) maxX = x;
+					if (y < minY) minY = y;
+					if (y > maxY) maxY = y;
+				}
+			}
+
+			aQuads = rect;
+			_rect = [minX, minY, maxX, maxY];
+		}
+
+		let oProps = {
+			rect:           _rect,
+			name:           AscCommon.CreateGUID(),
+			type:           AscPDF.ANNOTATIONS_TYPES.Highlight,
+			creationDate:   new Date().getTime(),
+			modDate:        new Date().getTime(),
+			hidden:         false
+		}
+
+		let oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
+
+		oAnnot.SetBorderColor([255, 255, 255]);
+		oAnnot.SetQuads(aQuads);
+
+		return new ApiHighlightAnnotation(oAnnot);
+	};
+
+	/**
+	 * Creates strikeout annotation.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {Rect | Quad[]} rect - region to apply strikeout.
+	 * @returns {ApiStrikeoutAnnotation}
+	 * @see office-js-api/Examples/PDF/Api/Methods/CreateStrikeoutAnnot.js
+	 */
+	Api.prototype.CreateStrikeoutAnnot = function(rect) {
+		let oDoc = private_GetLogicDocument();
+		rect = AscBuilder.GetArrayParameter(rect, []);
+
+		if (!private_IsValidRect(rect) && !rect.find(function(quad) {return private_IsValidQuad(quad)})) {
+			AscBuilder.throwException("The rect parameter must be a valid rect or quad");
+		}
+
+		let aQuads;
+		let _rect;
+		if (private_IsValidRect(rect)) {
+			aQuads = [private_ConvertRectToQuad(rect)];
+			_rect = rect;
+		}
+		else if (private_IsValidQuad(rect)) {
+			let minX = Infinity, maxX = -Infinity;
+			let minY = Infinity, maxY = -Infinity;
+
+			for (let i = 0; i < rect.length; i++) {
+				for (let j = 0; j < rect.length; j += 2) {
+					let x = rect[i][j];
+					let y = rect[i][j + 1];
+
+					if (x < minX) minX = x;
+					if (x > maxX) maxX = x;
+					if (y < minY) minY = y;
+					if (y > maxY) maxY = y;
+				}
+			}
+
+			aQuads = rect;
+			_rect = [minX, minY, maxX, maxY];
+		}
+
+		let oProps = {
+			rect:           _rect,
+			name:           AscCommon.CreateGUID(),
+			type:           AscPDF.ANNOTATIONS_TYPES.Strikeout,
+			creationDate:   new Date().getTime(),
+			modDate:        new Date().getTime(),
+			hidden:         false
+		}
+
+		let oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
+
+		oAnnot.SetBorderColor([255, 255, 255]);
+		oAnnot.SetQuads(aQuads);
+
+		return new ApiStrikeoutAnnotation(oAnnot);
+	};
+
+	/**
+	 * Creates underline annotation.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {Rect | Quad[]} rect - region to apply underline.
+	 * @returns {ApiUnderlineAnnotation}
+	 * @see office-js-api/Examples/PDF/Api/Methods/CreateUnderlineAnnot.js
+	 */
+	Api.prototype.CreateUnderlineAnnot = function(rect) {
+		let oDoc = private_GetLogicDocument();
+		rect = AscBuilder.GetArrayParameter(rect, []);
+
+		if (!private_IsValidRect(rect) && !rect.find(function(quad) {return private_IsValidQuad(quad)})) {
+			AscBuilder.throwException("The rect parameter must be a valid rect or quad");
+		}
+
+		let aQuads;
+		let _rect;
+		if (private_IsValidRect(rect)) {
+			aQuads = [private_ConvertRectToQuad(rect)];
+			_rect = rect;
+		}
+		else if (private_IsValidQuad(rect)) {
+			let minX = Infinity, maxX = -Infinity;
+			let minY = Infinity, maxY = -Infinity;
+
+			for (let i = 0; i < rect.length; i++) {
+				for (let j = 0; j < rect.length; j += 2) {
+					let x = rect[i][j];
+					let y = rect[i][j + 1];
+
+					if (x < minX) minX = x;
+					if (x > maxX) maxX = x;
+					if (y < minY) minY = y;
+					if (y > maxY) maxY = y;
+				}
+			}
+
+			aQuads = rect;
+			_rect = [minX, minY, maxX, maxY];
+		}
+
+		let oProps = {
+			rect:           _rect,
+			name:           AscCommon.CreateGUID(),
+			type:           AscPDF.ANNOTATIONS_TYPES.Underline,
+			creationDate:   new Date().getTime(),
+			modDate:        new Date().getTime(),
+			hidden:         false
+		}
+
+		let oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
+
+		oAnnot.SetBorderColor([255, 255, 255]);
+		oAnnot.SetQuads(aQuads);
+
+		return new ApiUnderlineAnnotation(oAnnot);
+	};
+
+	/**
+	 * Creates caret annotation.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {Rect | Quad[]} rect - region to apply caret.
+	 * @returns {ApiCaretAnnotation}
+	 * @see office-js-api/Examples/PDF/Api/Methods/CreateCaretAnnot.js
+	 */
+	Api.prototype.CreateCaretAnnot = function(rect) {
+		let oDoc = private_GetLogicDocument();
+		rect = AscBuilder.GetArrayParameter(rect, []);
+
+		if (!private_IsValidRect(rect) && !rect.find(function(quad) {return private_IsValidQuad(quad)})) {
+			AscBuilder.throwException("The rect parameter must be a valid rect or quad");
+		}
+
+		let aQuads;
+		let _rect;
+		if (private_IsValidRect(rect)) {
+			aQuads = [private_ConvertRectToQuad(rect)];
+			_rect = rect;
+		}
+		else if (private_IsValidQuad(rect)) {
+			let minX = Infinity, maxX = -Infinity;
+			let minY = Infinity, maxY = -Infinity;
+
+			for (let i = 0; i < rect.length; i++) {
+				for (let j = 0; j < rect.length; j += 2) {
+					let x = rect[i][j];
+					let y = rect[i][j + 1];
+
+					if (x < minX) minX = x;
+					if (x > maxX) maxX = x;
+					if (y < minY) minY = y;
+					if (y > maxY) maxY = y;
+				}
+			}
+
+			aQuads = rect;
+			_rect = [minX, minY, maxX, maxY];
+		}
+
+		let oProps = {
+			rect:           _rect,
+			name:           AscCommon.CreateGUID(),
+			type:           AscPDF.ANNOTATIONS_TYPES.Caret,
+			creationDate:   new Date().getTime(),
+			modDate:        new Date().getTime(),
+			hidden:         false
+		}
+
+		let oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
+
+		oAnnot.SetBorderColor([255, 255, 255]);
+		oAnnot.SetQuads(aQuads);
+
+		return new ApiCaretAnnotation(oAnnot);
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiDocument
@@ -662,7 +920,7 @@
 	 * Returns a type of the ApiDocument class.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["PDFE"]
-	 * @returns {"page"}
+	 * @returns {"document"}
 	 * @see office-js-api/Examples/PDF/ApiDocument/Methods/GetClassType.js
 	 */
 	ApiDocument.prototype.GetClassType = function() {
@@ -722,7 +980,7 @@
 	 * @see office-js-api/Examples/PDF/ApiDocument/Methods/RemovePage.js
 	 */
 	ApiDocument.prototype.RemovePage = function(nPos) {
-		let oFile = this.Document.Viewer.file;
+		let oFile = this.Document.GetFile();
 		if (!oFile.pages[nPos]) {
 			return false;
 		}
@@ -738,7 +996,7 @@
 	 * @see office-js-api/Examples/PDF/ApiDocument/Methods/GetPagesCount.js
 	 */
 	ApiDocument.prototype.GetPagesCount = function() {
-		let oFile = this.Document.Viewer.file;
+		let oFile = this.Document.GetFile();
 		return oFile.pages.length;
 	};
 
@@ -989,7 +1247,7 @@
 	 * Adds annot to page
 	 * @typeofeditors ["PDFE"]
 	 * @param {ApiBaseAnnotation} annot
-	 * @returns {ApiBaseAnnotation} - returns this
+	 * @returns {ApiBaseAnnotation}
 	 * @see office-js-api/Examples/PDF/ApiPage/Methods/AddAnnot.js
 	 */
 	ApiPage.prototype.AddAnnot = function(annot) {
@@ -1008,11 +1266,33 @@
 	/**
 	 * Gets all annots on page
 	 * @typeofeditors ["PDFE"]
-	 * @returns {ApiBaseAnnotation} - returns this
+	 * @returns {ApiBaseAnnotation}
 	 * @see office-js-api/Examples/PDF/ApiPage/Methods/GetAnnots.js
 	 */
 	ApiPage.prototype.GetAnnots = function() {
 		return this.Page.annots.map(private_GetAnnotApi);
+	};
+
+	/**
+	 * Gets page selection quads
+	 * @typeofeditors ["PDFE"]
+	 * @returns {Quad[]}
+	 * @see office-js-api/Examples/PDF/ApiPage/Methods/GetSelectionQuads.js
+	 */
+	ApiPage.prototype.GetSelectionQuads = function() {
+		let oDoc = private_GetLogicDocument();
+		let nPageIdx = this.GetIndex();
+		let aDocQuads = oDoc.GetFile().getSelectionQuads();
+
+		let aPageQuads = [];
+		for (let i = 0; i < aDocQuads.length; i++) {
+			if (aDocQuads[i].page == nPageIdx) {
+				aPageQuads = aDocQuads[i].quads;
+				break;
+			}
+		}
+
+		return aPageQuads;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -4282,6 +4562,180 @@
 		return this.Annot.GetOriginViewScale();
 	};
 
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiBaseMarkupAnnotation
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a base markup annotation.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 * @extends {ApiBaseAnnotation}
+	 */
+	function ApiBaseMarkupAnnotation(oAnnot) {
+		ApiBaseAnnotation.call(this, oAnnot);
+	}
+
+	ApiBaseMarkupAnnotation.prototype = Object.create(ApiBaseAnnotation.prototype);
+	ApiBaseMarkupAnnotation.prototype.constructor = ApiBaseMarkupAnnotation;
+
+	/**
+	 * Sets quads to current markup annotation.
+	 * @memberof ApiBaseMarkupAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @param {Quad[]} quads
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiBaseMarkupAnnotation/Methods/SetQuads.js
+	 */
+	ApiBaseMarkupAnnotation.prototype.SetQuads = function(quads) {
+		quads = AscBuilder.GetArrayParameter(quads, null);
+		if (!quads) {
+			AscBuilder.throwException("The quads parameter must be a valid array");
+		}
+
+		quads.forEach(function(quad) {
+			if (!private_IsValidQuad(quad)) {
+				AscBuilder.throwException("The quad must be a valid quad");
+			}
+		});
+
+		this.Annot.SetQuads(quads);
+		return true;
+	};
+
+	/**
+	 * Gets quads from current markup annotation.
+	 * @memberof ApiBaseMarkupAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {Quad[]}
+	 * @see office-js-api/Examples/PDF/ApiBaseMarkupAnnotation/Methods/GetQuads.js
+	 */
+	ApiBaseMarkupAnnotation.prototype.GetQuads = function() {
+		return this.Annot.GetQuads(quads);
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiHighlightAnnotation
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a highlight annotation.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 * @extends {ApiBaseMarkupAnnotation}
+	 */
+	function ApiHighlightAnnotation(oAnnot) {
+		ApiBaseMarkupAnnotation.call(this, oAnnot);
+	}
+
+	ApiHighlightAnnotation.prototype = Object.create(ApiBaseMarkupAnnotation.prototype);
+	ApiHighlightAnnotation.prototype.constructor = ApiHighlightAnnotation;
+
+	/**
+	 * Returns a type of the ApiHighlightAnnotation class.
+	 * @memberof ApiHighlightAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"highlightAnnot"}
+	 * @see office-js-api/Examples/PDF/ApiHighlightAnnotation/Methods/GetClassType.js
+	 */
+	ApiHighlightAnnotation.prototype.GetClassType = function() {
+		return "highlightAnnot";
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiStrikeoutAnnotation
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a strikeout annotation.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 * @extends {ApiBaseMarkupAnnotation}
+	 */
+	function ApiStrikeoutAnnotation(oAnnot) {
+		ApiBaseMarkupAnnotation.call(this, oAnnot);
+	}
+
+	ApiStrikeoutAnnotation.prototype = Object.create(ApiBaseMarkupAnnotation.prototype);
+	ApiStrikeoutAnnotation.prototype.constructor = ApiStrikeoutAnnotation;
+
+	/**
+	 * Returns a type of the ApiStrikeoutAnnotation class.
+	 * @memberof ApiStrikeoutAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"strikeoutAnnot"}
+	 * @see office-js-api/Examples/PDF/ApiStrikeoutAnnotation/Methods/GetClassType.js
+	 */
+	ApiStrikeoutAnnotation.prototype.GetClassType = function() {
+		return "strikeoutAnnot";
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiUnderlineAnnotation
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a underline annotation.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 * @extends {ApiBaseMarkupAnnotation}
+	 */
+	function ApiUnderlineAnnotation(oAnnot) {
+		ApiBaseMarkupAnnotation.call(this, oAnnot);
+	}
+
+	ApiUnderlineAnnotation.prototype = Object.create(ApiBaseMarkupAnnotation.prototype);
+	ApiUnderlineAnnotation.prototype.constructor = ApiUnderlineAnnotation;
+
+	/**
+	 * Returns a type of the ApiUnderlineAnnotation class.
+	 * @memberof ApiUnderlineAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"underlineAnnot"}
+	 * @see office-js-api/Examples/PDF/ApiUnderlineAnnotation/Methods/GetClassType.js
+	 */
+	ApiUnderlineAnnotation.prototype.GetClassType = function() {
+		return "underlineAnnot";
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiCaretAnnotation
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a caret annotation.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 * @extends {ApiBaseMarkupAnnotation}
+	 */
+	function ApiCaretAnnotation(oAnnot) {
+		ApiBaseMarkupAnnotation.call(this, oAnnot);
+	}
+
+	ApiCaretAnnotation.prototype = Object.create(ApiBaseMarkupAnnotation.prototype);
+	ApiCaretAnnotation.prototype.constructor = ApiCaretAnnotation;
+
+	/**
+	 * Returns a type of the ApiCaretAnnotation class.
+	 * @memberof ApiCaretAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"caretAnnot"}
+	 * @see office-js-api/Examples/PDF/ApiCaretAnnotation/Methods/GetClassType.js
+	 */
+	ApiCaretAnnotation.prototype.GetClassType = function() {
+		return "caretAnnot";
+	};
+
 	function private_GetLogicDocument() {
 		return Asc.editor.getPDFDoc();
 	}
@@ -4697,6 +5151,18 @@
 			case AscPDF.ANNOTATIONS_TYPES.Stamp: {
 				return new ApiStampAnnotation(annot);
 			}
+			case AscPDF.ANNOTATIONS_TYPES.Highlight: {
+				return new ApiHighlightAnnotation(annot);
+			}
+			case AscPDF.ANNOTATIONS_TYPES.Strikeout: {
+				return new ApiStrikeoutAnnotation(annot);
+			}
+			case AscPDF.ANNOTATIONS_TYPES.Underline: {
+				return new ApiUnderlineAnnotation(annot);
+			}
+			case AscPDF.ANNOTATIONS_TYPES.Caret: {
+				return new ApiCaretAnnotation(annot);
+			}
 		}
 	}
 
@@ -4765,6 +5231,40 @@
 		}
 	}
 
+	function private_IsValidQuad(quad) {
+		if (!quad || quad.length !== 8) return false;
+
+		var i, v;
+
+		for (i = 0; i < 8; i++) {
+			v = quad[i];
+			if (typeof v !== 'number' || !isFinite(v)) {
+				return false;
+			}
+		}
+
+		return (
+			quad[0] <= quad[2] && // x1 <= x2
+			quad[4] <= quad[6] && // x3 <= x4
+			quad[1] <= quad[5] && // y1 <= y3
+			quad[3] <= quad[7]    // y2 <= y4
+		);
+	}
+
+	function private_ConvertRectToQuad(rect) {
+		var x1 = rect[0];
+		var y1 = rect[1];
+		var x2 = rect[2];
+		var y2 = rect[3];
+
+		return [
+			x1, y1, // left top
+			x2, y1, // right top
+			x1, y2, // left bottom
+			x2, y2  // right bottom
+		];
+	}
+
 	// Api
 	Api.prototype["GetDocument"]							= Api.prototype.GetDocument;
 	Api.prototype["CreateRGBColor"]							= Api.prototype.CreateRGBColor;
@@ -4777,6 +5277,10 @@
 	Api.prototype["CreatePolygonAnnot"]						= Api.prototype.CreatePolygonAnnot;
 	Api.prototype["CreatePolyLineAnnot"]					= Api.prototype.CreatePolyLineAnnot;
 	Api.prototype["CreateStampAnnot"]						= Api.prototype.CreateStampAnnot;
+	Api.prototype["CreateHighlightAnnot"]					= Api.prototype.CreateHighlightAnnot;
+	Api.prototype["CreateStrikeoutAnnot"]					= Api.prototype.CreateStrikeoutAnnot;
+	Api.prototype["CreateUnderlineAnnot"]					= Api.prototype.CreateUnderlineAnnot;
+	Api.prototype["CreateCaretAnnot"]						= Api.prototype.CreateCaretAnnot;
 
 	// ApiDocument
 	ApiDocument.prototype["GetClassType"]					= ApiDocument.prototype.GetClassType;
@@ -4801,6 +5305,8 @@
 	ApiPage.prototype["GetIndex"]							= ApiPage.prototype.GetIndex;
 	ApiPage.prototype["GetAllWidgets"]						= ApiPage.prototype.GetAllWidgets;
 	ApiPage.prototype["AddAnnot"]							= ApiPage.prototype.AddAnnot;
+	ApiPage.prototype["GetAnnots"]							= ApiPage.prototype.GetAnnots;
+	ApiPage.prototype["GetSelectionQuads"]					= ApiPage.prototype.GetSelectionQuads;
 
 	// ApiBaseField
 	ApiBaseField.prototype["SetRect"]						= ApiBaseField.prototype.SetRect;
@@ -5022,6 +5528,23 @@
 	ApiStampAnnotation.prototype["GetType"]					= ApiStampAnnotation.prototype.GetType;
 	ApiStampAnnotation.prototype["SetScale"]				= ApiStampAnnotation.prototype.SetScale;
 	ApiStampAnnotation.prototype["GetScale"]				= ApiStampAnnotation.prototype.GetScale;
+
+	// ApiBaseMarkupAnnotation
+	ApiBaseMarkupAnnotation.prototype["GetClassType"]		= ApiBaseMarkupAnnotation.prototype.GetClassType;
+	ApiBaseMarkupAnnotation.prototype["SetQuads"]			= ApiBaseMarkupAnnotation.prototype.SetQuads;
+	ApiBaseMarkupAnnotation.prototype["GetQuads"]			= ApiBaseMarkupAnnotation.prototype.GetQuads;
+
+	// ApiHighlightAnnotation
+	ApiHighlightAnnotation.prototype["GetClassType"]		= ApiHighlightAnnotation.prototype.GetClassType;
+
+	// ApiStrikeoutAnnotation
+	ApiStrikeoutAnnotation.prototype["GetClassType"]		= ApiStrikeoutAnnotation.prototype.GetClassType;
+
+	// ApiUnderlineAnnotation
+	ApiUnderlineAnnotation.prototype["GetClassType"]		= ApiUnderlineAnnotation.prototype.GetClassType;
+
+	// ApiCaretAnnotation
+	ApiCaretAnnotation.prototype["GetClassType"]			= ApiCaretAnnotation.prototype.GetClassType;
 
 }(window, null));
 
