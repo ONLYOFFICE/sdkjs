@@ -782,6 +782,9 @@ var c_oAscPopUpSelectorType = {
   prot['ConditionalFormattingRule'] = prot.ConditionalFormattingRule;
   prot['GoalSeek_Cell'] = prot.GoalSeek_Cell;
   prot['GoalSeek_ChangingCell'] = prot.GoalSeek_ChangingCell;
+  prot['Solver_ObjectiveCell'] = prot.Solver_ObjectiveCell;
+  prot['Solver_VariableCell'] = prot.Solver_VariableCell;
+  prot['Solver_Constraint'] = prot.Solver_Constraint;
 
 
   window['Asc']['c_oAscHyperlinkType'] = window['Asc'].c_oAscHyperlinkType = c_oAscHyperlinkType;
