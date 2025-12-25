@@ -15069,7 +15069,7 @@ function isAllowPasteLink(pastedWb) {
 			}
 
 
-			if (this.intersectionFormulaArray(changedRange)) {
+			if (this.intersectionFormulaArray(changedRange, null, null, true)) {
 				// Сбрасываем параметры автозаполнения
 				this.activeFillHandle = null;
 				this.fillHandleDirection = -1;

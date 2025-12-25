@@ -5179,5 +5179,99 @@ $(function () {
 		clearData(0, 0, 10, 20);
 	});
 
+	QUnit.test("Test: \"Autofill with collision - dynamic array collapse/delete\"", function (assert) {
+		clearData(0, 0, 100, 200);
+
+		var flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		var fillRange = ws.getRange2("A2");
+		wsView.setSelection(fillRange.bbox);
+		var fragment = ws.getRange2("A2").getValueForEdit2();
+		fragment[0].setFragmentText("=SEQUENCE(1,3)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		var checkExpandedState = function(desc) {
+			var cellValueA2 = ws.getRange2("A2").getValue();
+			var cellValueB2 = ws.getRange2("B2").getValue();
+			var cellValueC2 = ws.getRange2("C2").getValue();
+			assert.strictEqual(cellValueA2, "1", desc + ": A2 = 1");
+			assert.strictEqual(cellValueB2, "2", desc + ": B2 = 2");
+			assert.strictEqual(cellValueC2, "3", desc + ": C2 = 3");
+
+			var vmIndexA2 = getCellRichValueIndex(1, 0);
+			assert.ok(!vmIndexA2 || vmIndexA2 === 0, desc + ": A2 has no richdata (expanded)");
+		};
+
+		var checkCollapsedState = function(desc) {
+			var cellValueB2 = ws.getRange2("B2").getValue();
+			assert.strictEqual(cellValueB2, "100", desc + ": B2 = 100");
+
+			var vmIndexA2 = getCellRichValueIndex(1, 0);
+			assert.ok(vmIndexA2 > 0, desc + ": A2 has richdata (collapsed)");
+
+			var cmIndexA2 = getCellMetadata(1, 0);
+			assert.ok(cmIndexA2 > 0, desc + ": A2 has metadata");
+		};
+
+		ws.getRange2("B1").setValue("100");
+		ws.selectionRange.ranges = [getRange(1, 0, 1, 0)];
+		wsView.fillHandleArea = 1;
+		wsView.fillHandleDirection = 1;
+		wsView.activeFillHandle = getRange(1, 0, 1, 1);
+		wsView.applyFillHandle(0, 0, false);
+
+		checkUndoRedo(checkExpandedState, checkCollapsedState, "Autofill collision - array collapse");
+
+		// Test 2: Autofill over head cell - array should be deleted
+		clearData(0, 0, 100, 200);
+
+		fillRange = ws.getRange2("A2");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A2").getValueForEdit2();
+		fragment[0].setFragmentText("=SEQUENCE(1,3)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		var checkExpandedState2 = function(desc) {
+			var cellValueA2 = ws.getRange2("A2").getValue();
+			var cellValueB2 = ws.getRange2("B2").getValue();
+			var cellValueC2 = ws.getRange2("C2").getValue();
+			assert.strictEqual(cellValueA2, "1", desc + ": A2 = 1");
+			assert.strictEqual(cellValueB2, "2", desc + ": B2 = 2");
+			assert.strictEqual(cellValueC2, "3", desc + ": C2 = 3");
+
+			var vmIndexA2 = getCellRichValueIndex(1, 0);
+			assert.ok(!vmIndexA2 || vmIndexA2 === 0, desc + ": A2 has no richdata (expanded)");
+
+			var cmIndexA2 = getCellMetadata(1, 0);
+			assert.ok(cmIndexA2 > 0, desc + ": A2 has metadata");
+		};
+
+		var checkDeletedState = function(desc) {
+			var cellValueA1 = ws.getRange2("A1").getValue();
+			var cellValueA2 = ws.getRange2("A2").getValue();
+			var cellValueB2 = ws.getRange2("B2").getValue();
+			assert.strictEqual(cellValueA1, "200", desc + ": A1 = 200 (overwritten)");
+			assert.strictEqual(cellValueA2, "200", desc + ": A1 = 200 (overwritten)");
+			assert.strictEqual(cellValueB2, "", desc + ": B2 = empty");
+
+			var vmIndexA2 = getCellRichValueIndex(1, 0);
+			assert.ok(!vmIndexA2 || vmIndexA2 === 0, desc + ": A2 has no richdata (deleted)");
+
+			var cmIndexA2 = getCellMetadata(1, 0);
+			assert.ok(!cmIndexA2 || cmIndexA2 === 0, desc + ": A2 has no metadata (deleted)");
+		};
+
+		ws.getRange2("A1").setValue("200");
+		ws.selectionRange.ranges = [getRange(0, 0, 0, 0)];
+		wsView.fillHandleArea = 1;
+		wsView.fillHandleDirection = 1;
+		wsView.activeFillHandle = getRange(0, 0, 0, 1);
+		wsView.applyFillHandle(0, 0, false);
+
+		checkUndoRedo(checkExpandedState2, checkDeletedState, "Autofill over head cell - array delete");
+	});
+
 	QUnit.module("Sheet structure");
 });

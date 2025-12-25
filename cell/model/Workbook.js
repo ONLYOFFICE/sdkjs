@@ -3429,6 +3429,7 @@
 						if (this.richValueData && this.richValueData.pData && rvIndicesToRemove.length > 0) {
 							// Sort indices in descending order to remove from end to start
 							rvIndicesToRemove.sort(function(a, b) { return b - a; });
+							const oldRichValueData = this.richValueData.clone();
 							for (let k = 0; k < rvIndicesToRemove.length; k++) {
 								const rvIdx = rvIndicesToRemove[k];
 								if (rvIdx >= 0 && rvIdx < this.richValueData.pData.length) {
@@ -3460,6 +3461,9 @@
 								this.richValueStructures = null;
 								this.richValueTypesInfo = null;
 							}
+							const newRichValueData = this.richValueData ? this.richValueData.clone() : null;
+							AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_RichValueData,
+								null, null, new UndoRedoData_FromTo(oldRichValueData, newRichValueData));
 						}
 						
 						meta.aFutureMetadata.splice(i, 1);
@@ -3544,8 +3548,8 @@
 								}
 							}
 
-							if (rvIndex != null && this.richValueData && this.richValueData.pData && 
-								rvIndex >= 0 && rvIndex < this.richValueData.pData.length) {
+							if (rvIndex != null && rvIndex >= 0 && this.richValueData && this.richValueData.pData && 
+								rvIndex < this.richValueData.pData.length) {
 								this.richValueData.pData.splice(rvIndex, 1);
 								
 								if (meta.aFutureMetadata) {
@@ -22346,6 +22350,7 @@
 			}
 		}
 
+		wsTo.dynamicArrayManager.recalculateVolatileArrays();
 		wsFrom.excludeHiddenRows(oldExcludeHiddenRows);
 		AscCommon.History.EndTransaction();
 		wb.dependencyFormulas.unlockRecal();
@@ -24972,7 +24977,6 @@
 			this.allFormulasCountMap[cmIndex] = 0;
 		}
 		this.allFormulasCountMap[cmIndex]++;
-		console.log("addDynamicFormula : " + this.getDynamicFormulaCount(cmIndex))
 	};
 
 	CDynamicArrayManager.prototype.deleteDynamicFormula = function (cmIndex) {
@@ -24982,7 +24986,6 @@
 		if (this.allFormulasCountMap[cmIndex] < 1) {
 			this.ws.workbook.checkRemoveMetadataByCmIndex(cmIndex);
 		}
-		console.log("deleteDynamicFormula : " + this.getDynamicFormulaCount(cmIndex))
 	};
 
 	CDynamicArrayManager.prototype.getDynamicFormulaCount = function (cmIndex) {
