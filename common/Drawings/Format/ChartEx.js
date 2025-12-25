@@ -3032,12 +3032,38 @@ function (window, undefined) {
 		}
 	}
 
-	CPlotAreaRegion.prototype.getCachedData = function () {
-		return this.cachedData;
+	CPlotAreaRegion.prototype.getCachedData = function (isMultiSeries) {
+		if (isMultiSeries) {
+			return this.cachedDatas || [];
+		}
+		if (Array.isArray(this.cachedDatas) && this.cachedDatas.length > 0) {
+			return this.cachedDatas[0];
+		}
+		return null;
 	};
 
 	CPlotAreaRegion.prototype.setCachedData = function (cachedData) {
-		this.cachedData = cachedData;
+		if (!cachedData) {
+			return;
+		}
+		if (!this.cachedDatas) {
+			this.cachedDatas = [];
+		}
+		for (let i = 0; i < this.cachedDatas.length; i++) {
+			if (this.cachedDatas[i].Id === cachedData.Id) {
+				return;
+			}
+		}
+		this.cachedDatas.push(cachedData);
+	}
+
+	CPlotAreaRegion.prototype.getSeriaById = function (id) {
+		for (let i = 0; i < this.series.length; i++) {
+			if (this.series[i].Id === id) {
+				return this.series[i];
+			}
+		}
+		return null;
 	}
 
 	CPlotAreaRegion.prototype.getMaxSeriesIdx = function () {

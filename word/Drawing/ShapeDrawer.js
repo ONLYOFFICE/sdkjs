@@ -2299,6 +2299,7 @@ CShapeDrawer.prototype =
             {
                 if (this.bIsTexture)
                 {
+					const rotWithShape = this.UniFill.fill.rotWithShape;
                     if (null == this.UniFill.fill.tile)
                     {
                         if (null == this.UniFill.fill.srcRect)
@@ -2321,30 +2322,97 @@ CShapeDrawer.prototype =
                         }
                         else
                         {
-                            if (this.IsRectShape)
+	                        this.Graphics.put_brushTexture(getFullImageSrc2(this.UniFill.fill.RasterImageId), 0);
+	                        const fillRect = this.Graphics.getFillRect(this.min_x, this.min_y, (this.max_x - this.min_x), (this.max_y - this.min_y), this.UniFill.fill.srcRect);
+	                        this.Graphics.put_TextureBounds(fillRect.x, fillRect.y, fillRect.w, fillRect.h);
+                        }
+
+                        const fillRect = AscCommon.isRealObject(this.UniFill.fill.stretch.fillRect)
+                            ? this.UniFill.fill.stretch.fillRect
+                            : null;
+
+                        if (null != fillRect)
+                        {
+                            let x, y, r, b;
+                            if (rotWithShape)
                             {
-                                this.Graphics.drawImage(getFullImageSrc2(this.UniFill.fill.RasterImageId), this.min_x, this.min_y, (this.max_x - this.min_x), (this.max_y - this.min_y), undefined, this.UniFill.fill.srcRect);
-                                bIsFill = false;
+                                x = this.min_x + (this.max_x - this.min_x) * fillRect.l / 100;
+                                y = this.min_y + (this.max_y - this.min_y) * fillRect.t / 100;
+                                r = this.max_x - (this.max_x - this.min_x) * (100 - fillRect.r) / 100;
+                                b = this.max_y - (this.max_y - this.min_y) * (100 - fillRect.b) / 100;
                             }
                             else
                             {
-                                // TODO: support srcRect
-                                this.Graphics.put_brushTexture(getFullImageSrc2(this.UniFill.fill.RasterImageId), 0);
+                                const shapeBounds = this.Shape.getBounds();
+
+                                x = shapeBounds.x + shapeBounds.w * (fillRect.l / 100);
+                                y = shapeBounds.y + shapeBounds.h * (fillRect.t / 100);
+                                r = shapeBounds.x + shapeBounds.w - shapeBounds.w * (100 - fillRect.r) / 100;
+                                b = shapeBounds.y + shapeBounds.h - shapeBounds.h * (100 - fillRect.b) / 100;
                             }
+                            this.Graphics.put_TextureBounds(x, y, r - x, b - y);
                         }
                     }
                     else
                     {
+                        const type = this.UniFill.fill.tile.flip + 1;
+                        let imageUrl;
                         if (this.UniFill.fill.canvas)
                         {
-                            this.Graphics.put_brushTexture(this.UniFill.fill.canvas.toDataURL("image/png"), 1);
+                            imageUrl = this.UniFill.fill.canvas.toDataURL("image/png");
                         }
                         else
                         {
-                            this.Graphics.put_brushTexture(getFullImageSrc2(this.UniFill.fill.RasterImageId), 1);
+                            imageUrl = getFullImageSrc2(this.UniFill.fill.RasterImageId);
                         }
+
+                        this.Graphics.put_brushTexture(imageUrl, type);
+                        const imageData = Asc.editor.ImageLoader.map_image_index[imageUrl];
+
+                        const sx = this.UniFill.fill.tile.sx ? (this.UniFill.fill.tile.sx / 1000) / 100 : 1;
+                        const sy = this.UniFill.fill.tile.sy ? (this.UniFill.fill.tile.sy / 1000) / 100 : 1;
+
+                        function getAlignment(key) {
+                            switch (key) {
+                                case AscCommon.c_oAscRectAlignType.tl: return [0, 0];
+                                case AscCommon.c_oAscRectAlignType.t: return [0.5, 0];
+                                case AscCommon.c_oAscRectAlignType.tr: return [1, 0];
+                                case AscCommon.c_oAscRectAlignType.l: return [0, 0.5];
+                                case AscCommon.c_oAscRectAlignType.ctr: return [0.5, 0.5];
+                                case AscCommon.c_oAscRectAlignType.r: return [1, 0.5];
+                                case AscCommon.c_oAscRectAlignType.bl: return [0, 1];
+                                case AscCommon.c_oAscRectAlignType.b: return [0.5, 1];
+                                case AscCommon.c_oAscRectAlignType.br: return [1, 1];
+                                default: return [0, 0];
+                            }
+                        }
+
+                        const align = AscFormat.isRealNumber(this.UniFill.fill.tile.algn) && this.UniFill.fill.tile.algn >= 0 && this.UniFill.fill.tile.algn <= 8
+                            ? this.UniFill.fill.tile.algn
+                            : AscCommon.c_oAscRectAlignType.tl;
+
+                        let alignOffsetX, alignOffsetY;
+                        if (rotWithShape)
+                        {
+                            alignOffsetX = getAlignment(align)[0] * (this.max_x - this.min_x - imageData.Image.width * sx * AscCommon.g_dKoef_pix_to_mm)
+                            alignOffsetY = getAlignment(align)[1] * (this.max_y - this.min_y - imageData.Image.height * sy * AscCommon.g_dKoef_pix_to_mm)
+                        }
+                        else
+                        {
+                            const shapeBounds = this.Shape.getBounds();
+
+                            alignOffsetX = shapeBounds.x + getAlignment(align)[0] * (shapeBounds.w - imageData.Image.width * sx * AscCommon.g_dKoef_pix_to_mm);
+                            alignOffsetY = shapeBounds.y + getAlignment(align)[1] * (shapeBounds.h - imageData.Image.height * sy * AscCommon.g_dKoef_pix_to_mm);
+                        }
+
+                        const tx = this.UniFill.fill.tile.tx ? this.UniFill.fill.tile.tx * AscCommonWord.g_dKoef_emu_to_mm : 0;
+                        const ty = this.UniFill.fill.tile.ty ? this.UniFill.fill.tile.ty * AscCommonWord.g_dKoef_emu_to_mm : 0;
+                        this.Graphics.put_PathOffset(tx + alignOffsetX, ty + alignOffsetY);
+                        this.Graphics.put_PathScale(sx, sy);
                     }
                     this.Graphics.put_BrushTextureAlpha(this.UniFill.transparent);
+                    if (!rotWithShape || rotWithShape === null)
+                        this.Graphics.ResetRotation();
                 }
                 else
                 {

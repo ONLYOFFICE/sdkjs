@@ -6130,6 +6130,9 @@
 		if (this.Tokens.brackets.NoPair.length > 1)
 			return true;
 
+		if (!AscCommonWord.b_DoAutoCorrectMathSymbols)
+			return false;
+
 		let oAbsoluteLastId 		= this.GetAbsoluteLast();
 		let nInputType = 0;
 
@@ -7565,6 +7568,7 @@
 						}
 
 						oCurrentElement.State.ContentPos -= nEndRunContent - intRunContent;
+						oCurrentElement.State.ContentPos = Math.max(0, oCurrentElement.State.ContentPos);
 						oCurrentElement.Remove_FromContent(intRunContent, nEndRunContent - intRunContent, false);
 
 						if (oCurrentElement.Content.length === 0)

@@ -134,7 +134,7 @@
         //It can also be used as a user-friendly name, instead of the field name, when generating error messages.
 
         // internal
-        this._triggers = new AscPDF.CFormTriggers();
+        this._triggers = new AscPDF.CPdfTriggers();
         this._curShiftView = { // смещение, когда мы скролим, т.е. активное смещение
             x: 0,
             y: 0
@@ -548,16 +548,16 @@
 	 * Sets the action of the field for a given trigger.
      * Note: This method will overwrite any action already defined for the chosen trigger.
 	 * @memberof CBaseField
-     * @param {number} nTriggerType - A string that sets the trigger for the action. (FORMS_TRIGGERS_TYPES)
+     * @param {number} nTriggerType - A string that sets the trigger for the action. (PDF_TRIGGERS_TYPES)
 	 * @param {Array} aActionsInfo - array with actions info for specified trigger. (info from openForms method)
      * @typeofeditors ["PDF"]
 	 */
     CBaseField.prototype.SetActions = function(nTriggerType, aActionsInfo) {
         switch (nTriggerType) {
-            case AscPDF.FORMS_TRIGGERS_TYPES.Keystroke:
-            case AscPDF.FORMS_TRIGGERS_TYPES.Validate:
-            case AscPDF.FORMS_TRIGGERS_TYPES.Calculate:
-            case AscPDF.FORMS_TRIGGERS_TYPES.Format: {
+            case AscPDF.PDF_TRIGGERS_TYPES.Keystroke:
+            case AscPDF.PDF_TRIGGERS_TYPES.Validate:
+            case AscPDF.PDF_TRIGGERS_TYPES.Calculate:
+            case AscPDF.PDF_TRIGGERS_TYPES.Format: {
                 let oParent = this.GetParent(true);
                 if (oParent)
                     return oParent.SetActions(nTriggerType, aActionsInfo);
@@ -592,12 +592,21 @@
                             bottom: aActionsInfo[i]["bottom"],
                             left:   aActionsInfo[i]["left"]
                         }
-                        if (aActionsInfo[i]["bottom"] != null && aActionsInfo[i]["top"] != null) {
-                            oRect.top = aActionsInfo[i]["bottom"];
-                            oRect.bottom = aActionsInfo[i]["top"];
-                        }
     
-                        oAction = new AscPDF.CActionGoTo(aActionsInfo[i]["page"], aActionsInfo[i]["kind"], aActionsInfo[i]["zoom"], oRect);
+                        let oDoc = Asc.editor.getPDFDoc();
+                        let oPageInfo;
+                        if (aActionsInfo[i]["pageId"]) {
+                            oPageInfo = AscCommon.g_oTableId.GetById(aActionsInfo[i]["pageId"]);
+                        }
+                        else {
+                            oPageInfo = oDoc.GetPageInfo(aActionsInfo[i]["page"]);
+                        }
+
+                        if (!oPageInfo) {
+                            break;
+                        }
+                        
+                        oAction = new AscPDF.CActionGoTo(oPageInfo.GetId(), aActionsInfo[i]["kind"], aActionsInfo[i]["zoom"], oRect);
                         aActions.push(oAction);
                         break;
                     case AscPDF.ACTIONS_TYPES.Named:
@@ -608,7 +617,7 @@
             }
         }
         
-        const oNewTrigger = aActions.length != 0 ? new AscPDF.CFormTrigger(nTriggerType, aActions) : null;
+        const oNewTrigger = aActions.length != 0 ? new AscPDF.CPdfTrigger(nTriggerType, aActions) : null;
         if (oNewTrigger) {
             oNewTrigger.SetParentField(this);
         }
@@ -617,34 +626,34 @@
         AscCommon.History.Add(new CChangesPDFFormActions(this, aCurActionsInfo, aActionsInfo, nTriggerType));
 
         switch (nTriggerType) {
-            case AscPDF.FORMS_TRIGGERS_TYPES.MouseUp:
+            case AscPDF.PDF_TRIGGERS_TYPES.MouseUp:
                 this._triggers.MouseUp = oNewTrigger;
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.MouseDown:
+            case AscPDF.PDF_TRIGGERS_TYPES.MouseDown:
                 this._triggers.MouseDown = oNewTrigger;
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter:
+            case AscPDF.PDF_TRIGGERS_TYPES.MouseEnter:
                 this._triggers.MouseEnter = oNewTrigger;
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.MouseExit:
+            case AscPDF.PDF_TRIGGERS_TYPES.MouseExit:
                 this._triggers.MouseExit = oNewTrigger;
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.OnFocus:
+            case AscPDF.PDF_TRIGGERS_TYPES.OnFocus:
                 this._triggers.OnFocus = oNewTrigger;
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.OnBlur:
+            case AscPDF.PDF_TRIGGERS_TYPES.OnBlur:
                 this._triggers.OnBlur = oNewTrigger;
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.Keystroke:
+            case AscPDF.PDF_TRIGGERS_TYPES.Keystroke:
                 this._triggers.Keystroke = oNewTrigger;
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.Validate:
+            case AscPDF.PDF_TRIGGERS_TYPES.Validate:
                 this._triggers.Validate = oNewTrigger;
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.Calculate:
+            case AscPDF.PDF_TRIGGERS_TYPES.Calculate:
                 this._triggers.Calculate = oNewTrigger;
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.Format:
+            case AscPDF.PDF_TRIGGERS_TYPES.Format:
                 this._triggers.Format = oNewTrigger;
                 break;
         }
@@ -653,10 +662,10 @@
     };
     CBaseField.prototype.GetActions = function(nTriggerType) {
         switch (nTriggerType) {
-            case AscPDF.FORMS_TRIGGERS_TYPES.Keystroke:
-            case AscPDF.FORMS_TRIGGERS_TYPES.Validate:
-            case AscPDF.FORMS_TRIGGERS_TYPES.Calculate:
-            case AscPDF.FORMS_TRIGGERS_TYPES.Format: {
+            case AscPDF.PDF_TRIGGERS_TYPES.Keystroke:
+            case AscPDF.PDF_TRIGGERS_TYPES.Validate:
+            case AscPDF.PDF_TRIGGERS_TYPES.Calculate:
+            case AscPDF.PDF_TRIGGERS_TYPES.Format: {
                 let oParent = this.GetParent(true);
                 if (oParent)
                     return oParent.GetActions(nTriggerType);
@@ -697,7 +706,8 @@
                     break;
                 case AscPDF.ACTIONS_TYPES.GoTo:
                     actionInfo["S"] = AscPDF.ACTIONS_TYPES.GoTo;
-                    actionInfo["page"] = oAction.GetPage();
+                    actionInfo["page"] = oAction.GetPageIdx();
+                    actionInfo["pageId"] = oAction.GetPageId();
                     actionInfo["kind"] = oAction.GetKind();
                     actionInfo["zoom"] = oAction.GetZoom();
                     let oRect = oAction.GetRect();
@@ -708,7 +718,7 @@
                     break;
                 case AscPDF.ACTIONS_TYPES.Named:
                     actionInfo["S"] = AscPDF.ACTIONS_TYPES.Named;
-                    actionInfo["N"] = oAction.GetName();
+                    actionInfo["N"] = oAction.GetNameStrType();
                     break;
                 default:
                     // If the type is not recognized, add handling or skip
@@ -735,40 +745,40 @@
         let oCalcInfo   = oDoc.GetCalculateInfo();
         let oAction     = new AscPDF.CActionRunScript(sScript);
 
-        let oTrigger = new AscPDF.CFormTrigger(nTriggerType, [oAction]);
+        let oTrigger = new AscPDF.CPdfTrigger(nTriggerType, [oAction]);
         oTrigger.SetParentField(this);
 
         switch (nTriggerType) {
-            case AscPDF.FORMS_TRIGGERS_TYPES.MouseUp:
+            case AscPDF.PDF_TRIGGERS_TYPES.MouseUp:
                 this._triggers.MouseUp = oTrigger;
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.MouseDown:
+            case AscPDF.PDF_TRIGGERS_TYPES.MouseDown:
                 this._triggers.MouseDown = oTrigger;
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter:
+            case AscPDF.PDF_TRIGGERS_TYPES.MouseEnter:
                 this._triggers.MouseEnter = oTrigger;
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.MouseExit:
+            case AscPDF.PDF_TRIGGERS_TYPES.MouseExit:
                 this._triggers.MouseExit = oTrigger;
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.OnFocus:
+            case AscPDF.PDF_TRIGGERS_TYPES.OnFocus:
                 this._triggers.OnFocus = oTrigger;
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.OnBlur:
+            case AscPDF.PDF_TRIGGERS_TYPES.OnBlur:
                 this._triggers.OnBlur = oTrigger;
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.Keystroke:
+            case AscPDF.PDF_TRIGGERS_TYPES.Keystroke:
                 this._triggers.Keystroke = oTrigger;
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.Validate:
+            case AscPDF.PDF_TRIGGERS_TYPES.Validate:
                 this._triggers.Validate = oTrigger;
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.Calculate:
+            case AscPDF.PDF_TRIGGERS_TYPES.Calculate:
                 this._triggers.Calculate = oTrigger;
                 oCalcInfo.RemoveFieldFromOrder(this.GetFullName());
                 oCalcInfo.AddFieldToOrder(oDoc.GetField(this.GetFullName()).GetApIdx());
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.Format:
+            case AscPDF.PDF_TRIGGERS_TYPES.Format:
                 this._triggers.Format = oTrigger;
                 break;
         }
@@ -790,16 +800,16 @@
     /**
 	 * Gets the JavaScript action of the field for a given trigger.
 	 * @memberof CBaseField
-     * @param {number} nType - A string that sets the trigger for the action. (FORMS_TRIGGERS_TYPES)
+     * @param {number} nType - A string that sets the trigger for the action. (PDF_TRIGGERS_TYPES)
 	 * @typeofeditors ["PDF"]
-     * @returns {CFormTrigger}
+     * @returns {CPdfTrigger}
 	 */
     CBaseField.prototype.GetTrigger = function(nType, bInherit) {
         switch (nType) {
-            case AscPDF.FORMS_TRIGGERS_TYPES.Keystroke:
-            case AscPDF.FORMS_TRIGGERS_TYPES.Validate:
-            case AscPDF.FORMS_TRIGGERS_TYPES.Calculate:
-            case AscPDF.FORMS_TRIGGERS_TYPES.Format: {
+            case AscPDF.PDF_TRIGGERS_TYPES.Keystroke:
+            case AscPDF.PDF_TRIGGERS_TYPES.Validate:
+            case AscPDF.PDF_TRIGGERS_TYPES.Calculate:
+            case AscPDF.PDF_TRIGGERS_TYPES.Format: {
                 let oParent = this.GetParent(true);
                 if (bInherit !== false && oParent)
                     return oParent.GetTrigger(nType);
@@ -807,25 +817,25 @@
         }
 
         switch (nType) {
-            case AscPDF.FORMS_TRIGGERS_TYPES.MouseUp:
+            case AscPDF.PDF_TRIGGERS_TYPES.MouseUp:
                 return this._triggers.MouseUp;
-            case AscPDF.FORMS_TRIGGERS_TYPES.MouseDown:
+            case AscPDF.PDF_TRIGGERS_TYPES.MouseDown:
                 return this._triggers.MouseDown;
-            case AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter:
+            case AscPDF.PDF_TRIGGERS_TYPES.MouseEnter:
                 return this._triggers.MouseEnter;
-            case AscPDF.FORMS_TRIGGERS_TYPES.MouseExit:
+            case AscPDF.PDF_TRIGGERS_TYPES.MouseExit:
                 return this._triggers.MouseExit;
-            case AscPDF.FORMS_TRIGGERS_TYPES.OnFocus:
+            case AscPDF.PDF_TRIGGERS_TYPES.OnFocus:
                 return this._triggers.OnFocus;
-            case AscPDF.FORMS_TRIGGERS_TYPES.OnBlur:
+            case AscPDF.PDF_TRIGGERS_TYPES.OnBlur:
                 return this._triggers.OnBlur;
-            case AscPDF.FORMS_TRIGGERS_TYPES.Keystroke:
+            case AscPDF.PDF_TRIGGERS_TYPES.Keystroke:
                 return this._triggers.Keystroke;
-            case AscPDF.FORMS_TRIGGERS_TYPES.Validate:
+            case AscPDF.PDF_TRIGGERS_TYPES.Validate:
                 return this._triggers.Validate;
-            case AscPDF.FORMS_TRIGGERS_TYPES.Calculate:
+            case AscPDF.PDF_TRIGGERS_TYPES.Calculate:
                 return this._triggers.Calculate;
-            case AscPDF.FORMS_TRIGGERS_TYPES.Format:
+            case AscPDF.PDF_TRIGGERS_TYPES.Format:
                 return this._triggers.Format;
         }
 
@@ -834,52 +844,52 @@
     CBaseField.prototype.GetListActions = function(bInherit) {
         let aActions = [];
 
-        let oAction = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.MouseUp);
+        let oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.MouseUp);
         if (oAction) {
             aActions.push(oAction);
         }
         
-        oAction = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
+        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.MouseDown);
         if (oAction) {
             aActions.push(oAction);
         }
 
-        oAction = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter);
+        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.MouseEnter);
         if (oAction) {
             aActions.push(oAction);
         }
 
-        oAction = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.MouseExit);
+        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.MouseExit);
         if (oAction) {
             aActions.push(oAction);
         }
 
-        oAction = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
+        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
         if (oAction) {
             aActions.push(oAction);
         }
 
-        oAction = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.OnBlur);
+        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.OnBlur);
         if (oAction) {
             aActions.push(oAction);
         }
 
-        oAction = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, bInherit);
+        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, bInherit);
         if (oAction) {
             aActions.push(oAction);
         }
 
-        oAction = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Validate, bInherit);
+        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Validate, bInherit);
         if (oAction) {
             aActions.push(oAction);
         }
 
-        oAction = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Calculate, bInherit);
+        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Calculate, bInherit);
         if (oAction) {
             aActions.push(oAction);
         }
 
-        oAction = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format, bInherit);
+        oAction = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format, bInherit);
         if (oAction) {
             aActions.push(oAction);
         }
@@ -931,12 +941,12 @@
         let _t = this;
 
         let aActions = [
-            AscPDF.FORMS_TRIGGERS_TYPES.MouseUp,
-            AscPDF.FORMS_TRIGGERS_TYPES.MouseDown,
-            AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter,
-            AscPDF.FORMS_TRIGGERS_TYPES.MouseExit,
-            AscPDF.FORMS_TRIGGERS_TYPES.OnFocus,
-            AscPDF.FORMS_TRIGGERS_TYPES.OnBlur,
+            AscPDF.PDF_TRIGGERS_TYPES.MouseUp,
+            AscPDF.PDF_TRIGGERS_TYPES.MouseDown,
+            AscPDF.PDF_TRIGGERS_TYPES.MouseEnter,
+            AscPDF.PDF_TRIGGERS_TYPES.MouseExit,
+            AscPDF.PDF_TRIGGERS_TYPES.OnFocus,
+            AscPDF.PDF_TRIGGERS_TYPES.OnBlur,
         ]
 
         Object.values(aActions).forEach(function(type) {
@@ -1607,10 +1617,10 @@
         let _t = this;
 
         let aLogicActions = [
-            AscPDF.FORMS_TRIGGERS_TYPES.Keystroke,
-            AscPDF.FORMS_TRIGGERS_TYPES.Validate,
-            AscPDF.FORMS_TRIGGERS_TYPES.Calculate,
-            AscPDF.FORMS_TRIGGERS_TYPES.Format
+            AscPDF.PDF_TRIGGERS_TYPES.Keystroke,
+            AscPDF.PDF_TRIGGERS_TYPES.Validate,
+            AscPDF.PDF_TRIGGERS_TYPES.Calculate,
+            AscPDF.PDF_TRIGGERS_TYPES.Format
         ]
 
         Object.values(aLogicActions).forEach(function(type) {
@@ -2739,19 +2749,19 @@
 
     // common triggers
     CBaseField.prototype.onMouseEnter = function() {
-        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter);
+        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseEnter);
     };
     CBaseField.prototype.onMouseExit = function() {
-        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseExit);
+        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseExit);
     };
     CBaseField.prototype.onFocus = function() {
-        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
+        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
     };
     CBaseField.prototype.onBlur = function() {
-        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.OnBlur);
+        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.OnBlur);
     };
     CBaseField.prototype.onMouseUp = function() {
-        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseUp);
+        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseUp);
     };
     /**
 	 * Escape from form.
@@ -3354,7 +3364,7 @@
             }
         }
 
-        // combobox/listbox
+        // combobox/listbox, checkbox/radiobutton
         let aOptions = [];
         if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox, AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(this.GetType())) {
             aOptions = this.GetOptions(false);
@@ -3482,7 +3492,7 @@
         let nStartPos = memory.GetCurPosition();
         memory.Skip(4);
 
-        let oContentToDraw = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format) ? this.contentFormat : this.content;
+        let oContentToDraw = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) ? this.contentFormat : this.content;
         let oldTrMatrix = oContentToDraw.transform;
         oContentToDraw.transform = new AscCommon.CMatrix();
         memory.docRenderer.ClearLastFont();

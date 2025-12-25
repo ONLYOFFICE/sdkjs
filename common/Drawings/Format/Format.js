@@ -8096,7 +8096,6 @@
 
 
 		function CNvPr() {
-
 			CBaseFormatObject.call(this);
 			this.id = 0;
 			this.name = "";
@@ -8168,6 +8167,8 @@
 			if (oOther.title) {
 				this.setTitle(oOther.title);
 			}
+			oOther.hlinkClick && this.setHlinkClick(oOther.hlinkClick.createDuplicate());
+			oOther.hlinkHover && this.setHlinkHover(oOther.hlinkHover.createDuplicate());
 		};
 		CNvPr.prototype.hasSameNameAndId = function (oPr) {
 			if (!oPr) {
@@ -16020,6 +16021,15 @@
 												case 4:
 													_author.Initials = s.GetString2();
 													break;
+												case 5:
+													let id__ = s.GetString2();
+													break;
+												case 6:
+													let userId__ = s.GetString2();
+													break;
+												case 7:
+													let providerId__ = s.GetString2();
+													break;
 												default:
 													break;
 											}
@@ -17149,11 +17159,6 @@
 			oShape.setParent(oParent);
 			if (worksheet) {
 				oShape.setWorksheet(worksheet);
-			}
-			if (bWord) {
-				oShape.createTextBoxContent();
-			} else {
-				oShape.createTextBody();
 			}
 			oShape.spPr.setFill(oFill);
 			oShape.spPr.setLn(oStroke);

@@ -267,5 +267,69 @@
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CRunSpace = CRunSpace;
+	
+	/**
+	 * @param {number} gid
+	 * @param {number} codePoint
+	 * @param {number} width
+	 * @param {number} fontSize
+	 * @constructor
+	 */
+	function CPdfRunSpace(gid, codePoint, width, fontSize)
+	{
+		CRunSpace.call(this, codePoint);
+		
+		this.charGid     = gid;
+		this.originWidth = width ? width : 0;
+		this.originSize  = fontSize ? fontSize : 0;
+		this.originCoeff = 1;
+		this.fontSize    = this.originSize;
+		this.spacing     = 0;
+	}
+	CPdfRunSpace.prototype = Object.create(CRunSpace.prototype);
+	CPdfRunSpace.prototype.constructor = CPdfRunSpace;
+	CRunSpace.prototype.Type = para_PdfSpace;
+
+	CPdfRunSpace.prototype.IsPdfText       = AscWord.CPdfRunText.prototype.IsPdfText;
+	CPdfRunSpace.prototype.GetGid          = AscWord.CPdfRunText.prototype.GetGid;
+	CPdfRunSpace.prototype.GetOriginWidth  = AscWord.CPdfRunText.prototype.GetOriginWidth;
+	CPdfRunSpace.prototype.GetWidth        = AscWord.CPdfRunText.prototype.GetWidth;
+	CPdfRunSpace.prototype.GetWidthVisible = AscWord.CPdfRunText.prototype.GetWidthVisible;
+	CPdfRunSpace.prototype.SetMetrics      = AscWord.CPdfRunText.prototype.SetMetrics;
+	CPdfRunSpace.prototype.GetWidth = function()
+	{
+		return (this.originSize && this.originWidth ? this.originWidth * this.originCoeff + this.spacing : this.Width / AscWord.TEXTWIDTH_DIVIDER);
+	};
+	CPdfRunSpace.prototype.GetWidthVisible = function()
+	{
+		return (this.originSize && this.originWidth ? this.originWidth * this.originCoeff + this.spacing : this.Width / AscWord.TEXTWIDTH_DIVIDER);
+	};
+	CPdfRunSpace.prototype.SetGrapheme = function()
+	{
+		this.Grapheme = AscFonts.NO_GRAPHEME;
+	};
+	CPdfRunSpace.prototype.Write_ToBinary = function(Writer)
+	{
+		// Long : Type
+		// Long : Value
+		// Bool : SpaceAfter
+
+		Writer.WriteLong(para_PdfSpace);
+		Writer.WriteLong(this.Value);
+		Writer.WriteLong(this.charGid);
+		Writer.WriteLong(this.originWidth);
+		Writer.WriteLong(this.fontSize);
+
+	};
+	CPdfRunSpace.prototype.Read_FromBinary = function(Reader)
+	{
+		this.SetCharCode(Reader.GetLong());
+		
+		this.charGid = Reader.GetLong();
+		this.originWidth = Reader.GetLong();
+		this.fontSize = Reader.GetLong();
+	};
+	
+	AscWord.CPdfRunSpace = CPdfRunSpace;
 
 })(window);

@@ -8067,6 +8067,11 @@ CPresentation.prototype.GetSelectedContent2 = function () {
 										oMaster = oSld;
 										fAddMaster();
 									}
+									if (nIdx === 0) {
+										let sRasterImageId = oSld.getBase64Img();
+										oImage = AscFormat.DrawingObjectsController.prototype.createImage(sRasterImageId, 0, 0, this.GetWidthMM() / 2.0, this.GetHeightMM() / 2.0);
+										oImagesSelectedContent.Drawings.push(new DrawingCopyObject(oImage, 0, 0, this.GetWidthMM() / 2.0, this.GetHeightMM() / 2.0, sRasterImageId));
+									}
 								}
 							}
 							else {
@@ -8074,6 +8079,11 @@ CPresentation.prototype.GetSelectedContent2 = function () {
 									let oSld = aSelectedSlides[nIdx];
 									if(oSld.isLayout()) {
 										oSourceFormattingContent.Layouts.push(oSld);
+									}
+									if (nIdx === 0) {
+										let sRasterImageId = oSld.getBase64Img();
+										oImage = AscFormat.DrawingObjectsController.prototype.createImage(sRasterImageId, 0, 0, this.GetWidthMM() / 2.0, this.GetHeightMM() / 2.0);
+										oImagesSelectedContent.Drawings.push(new DrawingCopyObject(oImage, 0, 0, this.GetWidthMM() / 2.0, this.GetHeightMM() / 2.0, sRasterImageId));
 									}
 								}
 							}

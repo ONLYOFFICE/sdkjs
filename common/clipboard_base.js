@@ -1033,7 +1033,7 @@
 
 		isUseNewPaste : function()
 		{
-			return true;
+			return window["TestUseNewPaste"];
 		},
 
 		Button_Copy_New : function(isCut)

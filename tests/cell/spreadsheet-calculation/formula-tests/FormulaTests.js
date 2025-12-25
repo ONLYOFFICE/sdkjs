@@ -1943,6 +1943,24 @@ $(function () {
 		}, true);
 		oCellNeedEnableRecalc = selectCell("B1000");
 		assert.strictEqual(oCellNeedEnableRecalc.getIsDirty(), true, "Test: changeLinkedCell. After: Cell B1000 isDirty - true");
+		// - Case: SUMIF. 3 args. Non-recursion formula with disabled setting. Range argument has an Error type. Bug-78980
+		ws.getRange2("A1136").setValue('=SUMIF(#REF!,">"&TODAY(), $A$1136:$A$1136)');
+		oCell = selectCell("A1136");
+		bCellHasRecursion = !!getStartCellForIterCalc(oCell);
+		assert.strictEqual(bCellHasRecursion, false, "Test: SUMIF. 3 args. Non-recursion formula with disabled setting. Range argument has Error type. Bug-78980. A1136 - false");
+		bCellHasRecursion = null;
+		// - Case: SUMIF. 3 args. Non-recursion formula with disabled setting. Sum_range argument has an Error type. Bug-78980
+		ws.getRange2("B1136").setValue('=SUMIF($B$1136:$B$1136,">"&TODAY(), #REF!)');
+		oCell = selectCell("B1136");
+		bCellHasRecursion = !!getStartCellForIterCalc(oCell);
+		assert.strictEqual(bCellHasRecursion, false, "Test: SUMIF. 3 args. Non-recursion formula with disabled setting. Sum_range argument has Error type. Bug-78980. B1136 - false");
+		bCellHasRecursion = null;
+		// - Case: SUMIF. 3 args. Recursion formula with disabled setting. Criteria argument has an Error type. Bug-78980
+		ws.getRange2("C1136").setValue('=SUMIF($C$1136:$C$1136,#REF!,$C$1136:$C$1136)');
+		oCell = selectCell("C1136");
+		bCellHasRecursion = !!getStartCellForIterCalc(oCell);
+		assert.strictEqual(bCellHasRecursion, true, "Test: SUMIF. 3 args. Recursion formula with disabled setting. Criteria argument has Error type. Bug-78980. C1136 - true");
+		bCellHasRecursion = null;
 		// -- Test initStartCellForIterCalc method
 		// - Case: Sequence chain A1000 -> B1000 -> C1000
 		nExpectedCellIndex = AscCommonExcel.getCellIndex(999, 0);

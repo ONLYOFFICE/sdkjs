@@ -346,6 +346,7 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
             case AscDFH.historyitem_type_Pdf_Annot_Polygon:
             case AscDFH.historyitem_type_Pdf_Annot_Polyline:
             case AscDFH.historyitem_type_Pdf_Annot_Stamp:
+            case AscDFH.historyitem_type_Pdf_Annot_Link:
             {
                 ret = handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord);
                 break;
@@ -530,10 +531,16 @@ function handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pag
     if (drawing.group && drawing.group.IsFreeText && drawing.group.IsFreeText() && drawing.group.IsInTextBox() == false) {
         hit_in_text_rect = false;
     }
-    else if (drawing.IsLine && drawing.IsLine()) {
+    else if (drawing.IsAnnot && drawing.IsAnnot() && drawing.IsShapeBased()) {
         let oDoc = Asc.editor.getPDFDoc();
-        if (oDoc.GetActiveObject() != drawing) {
-            hit_in_text_rect = false;
+
+        if (drawing.IsLine()) {
+            if (oDoc.GetActiveObject() != drawing) {
+                hit_in_text_rect = false;
+            }
+        }
+        else if (drawing.IsLink()) {
+            hit_in_inner_area = drawing.hitInRect(x, y);
         }
     }
 
@@ -697,6 +704,14 @@ function handleShapeImageInGroup(drawingObjectsController, drawing, shape, e, x,
 
 function handleGroup(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord)
 {
+	let bHit = drawing.hit && drawing.hit(x, y);
+	if (bHit) {
+		const oCheckResult = drawingObjectsController.checkDrawingHyperlinkAndMacro(drawing, e, false, x, y, pageIndex);
+		if (oCheckResult) {
+			return oCheckResult;
+		}
+	}
+
     var grouped_objects = drawing.getArrGraphicObjects();
     var ret;
     for(var j = grouped_objects.length - 1; j > -1; --j)
@@ -2038,6 +2053,14 @@ function handleInlineShapeImage(drawing, drawingObjectsController, e, x, y, page
     var _hit = drawing.hit && drawing.hit(x, y);
     var _hit_to_path = drawing.hitInPath && drawing.hitInPath(x, y);
     var b_hit_to_text = drawing.hitInTextRect && drawing.hitInTextRect(x, y);
+
+	if (_hit || _hit_to_path || b_hit_to_text) {
+		let oCheckResult = drawingObjectsController.checkDrawingHyperlinkAndMacro(drawing, e, b_hit_to_text, x, y, pageIndex);
+		if (oCheckResult) {
+			return oCheckResult;
+		}
+	}
+
     if((_hit && !b_hit_to_text) || _hit_to_path)
     {
         return handleInlineHitNoText(drawing, drawingObjectsController, e, x, y, pageIndex, false);

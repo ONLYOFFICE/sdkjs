@@ -319,8 +319,28 @@
     const USER_PERMISSIONS = {
         edit:   4
     };
+	
+	USER_PERMISSIONS["edit"]  = USER_PERMISSIONS.edit;
 
-    USER_PERMISSIONS["edit"]  = USER_PERMISSIONS.edit;
+    const GOTO_TYPES = { // see description in pdf specification (table 151 destination syntax)
+        xyz:    0,
+        fit:    1,
+        fitH:   2,
+        fitV:   3,
+        fitR:   4,
+        fitB:   5,
+        fitBH:  6,
+        fitBV:  7
+    }
+
+    GOTO_TYPES["xyz"]   = GOTO_TYPES.xyz;
+    GOTO_TYPES["fit"]   = GOTO_TYPES.fit;
+    GOTO_TYPES["fitH"]  = GOTO_TYPES.fitH;
+    GOTO_TYPES["fitV"]  = GOTO_TYPES.fitV;
+    GOTO_TYPES["fitR"]  = GOTO_TYPES.fitR;
+    GOTO_TYPES["fitB"]  = GOTO_TYPES.fitB;
+    GOTO_TYPES["fitBH"] = GOTO_TYPES.fitBH;
+    GOTO_TYPES["fitBV"] = GOTO_TYPES.fitBV;
 
     asc["FIELD_TYPES"]                  = asc.FIELD_TYPES               = FIELD_TYPES;
     asc["BORDER_EFFECT_STYLES"]         = asc.BORDER_EFFECT_STYLES      = BORDER_EFFECT_STYLES;
@@ -337,8 +357,9 @@
     asc["ANNOT_COMPLEX_BORDER_TYPES"]   = asc.ANNOT_COMPLEX_BORDER_TYPES= ANNOT_COMPLEX_BORDER_TYPES;
     asc["ANNOT_BORDER_DASHED_VALUES"]   = asc.ANNOT_BORDER_DASHED_VALUES= ANNOT_BORDER_DASHED_VALUES;
     asc["BUTTON_HIGHLIGHT_TYPES"]       = asc.BUTTON_HIGHLIGHT_TYPES    = BUTTON_HIGHLIGHT_TYPES;
-    asc["APPEARANCE_TYPES"]             = asc.APPEARANCE_TYPES          = APPEARANCE_TYPES;
-    asc["DIGITS_TYPES"]                 = asc.DIGITS_TYPES              = DIGITS_TYPES;
-    asc["USER_PERMISSIONS"]             = asc.USER_PERMISSIONS          = USER_PERMISSIONS;
-    asc.CommandType                     = CommandType;
+    asc["APPEARANCE_TYPES"]            = asc.APPEARANCE_TYPES           = APPEARANCE_TYPES;
+    asc["DIGITS_TYPES"]                = asc.DIGITS_TYPES               = DIGITS_TYPES;
+    asc["USER_PERMISSIONS"]            = asc.USER_PERMISSIONS           = USER_PERMISSIONS;
+    asc["GOTO_TYPES"]                  = asc.GOTO_TYPES                 = GOTO_TYPES;
+    asc.CommandType                    = CommandType;
 })();

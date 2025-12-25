@@ -43,7 +43,7 @@ AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetType]           = AscDFH.
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetBg]             = AscDFH.CChangesDrawingsObjectNoId;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetCSldName]       = AscDFH.CChangesDrawingsString;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetShow]           = AscDFH.CChangesDrawingsBool;
-AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetPreserve]           = AscDFH.CChangesDrawingsBool;
+AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetPreserve]       = AscDFH.CChangesDrawingsBool;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetShowPhAnim]     = AscDFH.CChangesDrawingsBool;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetShowMasterSp]   = AscDFH.CChangesDrawingsBool;
 AscDFH.changesFactory[AscDFH.historyitem_SlideLayoutSetClrMapOverride] = AscDFH.CChangesDrawingsObject;
@@ -450,6 +450,7 @@ SlideLayout.prototype.getMaster = function(){
     SlideLayout.prototype.checkImageDraw = Slide.prototype.checkImageDraw;
     SlideLayout.prototype.openChartEditor = Slide.prototype.openChartEditor;
     SlideLayout.prototype.openOleEditor = Slide.prototype.openOleEditor;
+    SlideLayout.prototype.getBase64Img = Slide.prototype.getBase64Img;
 
     SlideLayout.prototype.recalculateBackground = function()
     {

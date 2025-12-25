@@ -1768,7 +1768,14 @@
 					// у draw аннотаций ищем по path
 					if (oAnnot.IsShapeBased())
 					{
-						let isHitted = oAnnot.hitToHandles(pageObjectMM.x, pageObjectMM.y) != -1 || oAnnot.hitInPath(pageObjectMM.x, pageObjectMM.y) || oAnnot.hitInInnerArea(pageObjectMM.x, pageObjectMM.y);
+						let isHitted = false;
+						if (oAnnot.IsLink()) {
+							isHitted = oAnnot.hitInRect(pageObjectMM.x, pageObjectMM.y)
+						}
+						else {
+							isHitted = oAnnot.hitToHandles(pageObjectMM.x, pageObjectMM.y) != -1 || oAnnot.hitInPath(pageObjectMM.x, pageObjectMM.y) || oAnnot.hitInInnerArea(pageObjectMM.x, pageObjectMM.y);
+						}
+						
 						if (isHitted)
 							return oAnnot;
 					}
@@ -1788,6 +1795,10 @@
 			return null;
 		};
 		this.canInteract = function() {
+			if (false === Asc.editor.canInteract) {
+				return false;
+			}
+
 			// не даем взаимодействовать с документом пока не произошла отрисовка
 			return this.scheduledRepaintTimer == null && this.isRepaint != true && this.initPaintDone == true && !this.isCMapLoading &&
 				(!Asc.editor.getPDFDoc().CollaborativeEditing.Get_GlobalLock() || Asc.editor.isViewMode);
@@ -3386,8 +3397,11 @@
 					this.Api.sync_StartAddShapeCallback(false);
 					this.Api.sync_EndAddShape();
 				}
-				else if (this.Api.isRedactTool) {
+				else if (Asc.editor.IsRedactTool()) {
 					this.Api.SetRedactTool(false);
+				}
+				else if (Asc.editor.IsLinkTool()) {
+					this.Api.SetLinkTool(false);
 				}
 				else {
 					const oController = oDoc.GetController();

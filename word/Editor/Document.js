@@ -1466,6 +1466,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.SmartParagraphSelection   = true;  // Выделять ли автоматически знак параграфа, когда все содержимое параграфа выделено
 	this.PreventPreDelete          = false; // Заглушка на случай, когда удаляемые объекты, не удаляются, а переносятся
 	this.ClearNotesOnPreDelete     = true;  // Очищать ли сноски при удалении (выключаем, при сплите параграфа) // TODO: Объединить с PreventPreDelete
+	this.ForceScrollToSelectionEnd = false; // При некоторых действиях (переход стрелками), нужно переместиться к концу селекта, даже если часть селекта видна
 
 	this.DrawTableMode = {
 		Start  : false,
@@ -5154,10 +5155,18 @@ CDocument.prototype.CheckTargetUpdate = function()
 			this.NeedUpdateTarget = this.DrawingDocument.UpdateTargetCheck;
 		this.DrawingDocument.UpdateTargetCheck = false;
 	}
-
+	
 	if (!this.NeedUpdateTarget)
 		return;
-
+	
+	if (this._isSelectionVisible() && !this.ForceScrollToSelectionEnd)
+	{
+		this.NeedUpdateTarget = false;
+		return;
+	}
+	
+	this.ForceScrollToSelectionEnd = false;
+	
 	if (this.ViewPosition)
 	{
 		this.CheckViewPosition();
@@ -6463,6 +6472,7 @@ CDocument.prototype.MoveCursorToStartPos = function(AddToSelect)
 	this.Controller.MoveCursorToStartPos(AddToSelect);
 
 	this.private_UpdateCursorXY(true, true);
+	this.ScrollToTarget();
 };
 CDocument.prototype.MoveCursorToEndPos = function(AddToSelect)
 {
@@ -6475,6 +6485,7 @@ CDocument.prototype.MoveCursorToEndPos = function(AddToSelect)
 	this.Controller.MoveCursorToEndPos(AddToSelect);
 
 	this.private_UpdateCursorXY(true, true);
+	this.ScrollToTarget();
 };
 CDocument.prototype.MoveCursorLeft = function(AddToSelect, Word)
 {
@@ -6503,6 +6514,7 @@ CDocument.prototype.MoveCursorLeft = function(AddToSelect, Word)
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateRulersState();
 	this.private_UpdateCursorXY(true, true);
+	this.ScrollToTarget();
 };
 CDocument.prototype.MoveCursorRight = function(AddToSelect, Word, FromPaste)
 {
@@ -6531,6 +6543,7 @@ CDocument.prototype.MoveCursorRight = function(AddToSelect, Word, FromPaste)
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateSelectionState();
 	this.private_UpdateCursorXY(true, true);
+	this.ScrollToTarget();
 };
 CDocument.prototype.MoveCursorUp = function(AddToSelect, CtrlKey)
 {
@@ -6540,6 +6553,7 @@ CDocument.prototype.MoveCursorUp = function(AddToSelect, CtrlKey)
 	this.ResetTextSelectionType();
 	this.private_UpdateTargetForCollaboration();
 	this.Controller.MoveCursorUp(AddToSelect, CtrlKey);
+	this.ScrollToTarget();
 };
 CDocument.prototype.MoveCursorDown = function(AddToSelect, CtrlKey)
 {
@@ -6549,6 +6563,7 @@ CDocument.prototype.MoveCursorDown = function(AddToSelect, CtrlKey)
 	this.ResetTextSelectionType();
 	this.private_UpdateTargetForCollaboration();
 	this.Controller.MoveCursorDown(AddToSelect, CtrlKey);
+	this.ScrollToTarget();
 };
 CDocument.prototype.MoveCursorToEndOfLine = function(AddToSelect)
 {
@@ -6562,6 +6577,7 @@ CDocument.prototype.MoveCursorToEndOfLine = function(AddToSelect)
 
 	this.Document_UpdateInterfaceState();
 	this.private_UpdateCursorXY(true, true);
+	this.ScrollToTarget();
 };
 CDocument.prototype.MoveCursorToStartOfLine = function(AddToSelect)
 {
@@ -6575,6 +6591,7 @@ CDocument.prototype.MoveCursorToStartOfLine = function(AddToSelect)
 
 	this.Document_UpdateInterfaceState();
 	this.private_UpdateCursorXY(true, true);
+	this.ScrollToTarget();
 };
 CDocument.prototype.MoveCursorToXY = function(X, Y, AddToSelect)
 {
@@ -6584,6 +6601,7 @@ CDocument.prototype.MoveCursorToXY = function(X, Y, AddToSelect)
 	this.ResetTextSelectionType();
 	this.private_UpdateTargetForCollaboration();
 	this.Controller.MoveCursorToXY(X, Y, this.CurPage, AddToSelect);
+	this.ScrollToTarget();
 };
 CDocument.prototype.MoveCursorToCell = function(bNext)
 {
@@ -7216,7 +7234,11 @@ CDocument.prototype.Interface_Update_DrawingPr = function(Flag)
 		if (this.Api)
 		{
 			for (var i = 0; i < DrawingPr.length; ++i)
-				this.Api.sync_ImgPropCallback(DrawingPr[i]);
+			{
+				DrawingPr[i] instanceof Asc.CHyperlinkProperty
+					? this.Api.sync_HyperlinkPropCallback(DrawingPr[i])
+					: this.Api.sync_ImgPropCallback(DrawingPr[i]);
+			}
 		}
 	}
 	if (Flag)
@@ -10505,11 +10527,20 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 	{
 		this.CustomTextAnnotator.onClick(X, Y, this.CurPage, e);
 	}
-
-	this.private_CheckCursorPosInFillingFormMode();
-	this.private_UpdateCursorXY(true, true, isUpdateTarget);
 	
-	this.UpdateSelection();
+	let _t = this;
+	function _updateSelection()
+	{
+		_t.private_CheckCursorPosInFillingFormMode();
+		_t.private_UpdateCursorXY(true, true, isUpdateTarget);
+		_t.UpdateSelection();
+	}
+	
+	if (this.IsTextSelectionUse())
+		AscCommon.executeNoScroll(_updateSelection, this);
+	else
+		_updateSelection();
+	
 	this.UpdateInterface();
 	this.UpdateRulers();
 };
@@ -13142,6 +13173,13 @@ CDocument.prototype.ModifyHyperlink = function(oHyperProps)
 			oComplexField.MoveCursorOutsideElement(false);
 		}
 	}
+	else if (!oClass)
+	{
+		// shape/image hyperlink
+		if (docpostype_DrawingObjects === this.GetDocPosType())
+			return this.DrawingObjects.hyperlinkModify(oHyperProps);
+		return;
+	}
 	else
 	{
 		return;
@@ -13204,6 +13242,13 @@ CDocument.prototype.RemoveHyperlink = function(oHyperProps)
 
 			oComplexField.RemoveFieldWrap();
 		}
+	}
+	else if (!oClass)
+	{
+		// shape/image hyperlink
+		if (docpostype_DrawingObjects === this.GetDocPosType())
+			return this.DrawingObjects.hyperlinkModify(oHyperProps);
+		return;
 	}
 	else
 	{
@@ -14782,11 +14827,40 @@ CDocument.prototype.private_UpdateCurPage = function()
 
 	this.private_CheckCurPage();
 };
+CDocument.prototype.ScrollToTarget = function()
+{
+	this.ForceScrollToSelectionEnd = true;
+	this.DrawingDocument.scrollToTarget();
+};
+CDocument.prototype._isSelectionVisible = function()
+{
+	if (!this.IsTextSelectionUse() || this.IsSelectionEmpty())
+		return false;
+	
+	let viewPort = this.DrawingDocument.GetVisibleRegion();
+	if (!viewPort)
+		return false;
+	
+	let selectionBounds = this.GetSelectionBounds();
+	
+	let topY    = selectionBounds.Start.Y;
+	let topPage = selectionBounds.Start.Page;
+	let botY    = selectionBounds.End.Y + selectionBounds.End.H;
+	let botPage = selectionBounds.End.Page;
+	
+	return !((viewPort[0].Page > botPage
+		|| (viewPort[0].Page === botPage && viewPort[0].Y > botY)
+		|| viewPort[1].Page < topPage
+		|| (viewPort[1].Page === topPage && viewPort[1].Y < topY)));
+};
 CDocument.prototype.UpdateCursorOnRecalculate = function()
 {
 	let isLockScroll = false;
 	if ((this.FullRecalc.Id && !this.FullRecalc.ScrollToTarget) || this.ViewPosition)
 		isLockScroll = true;
+	
+	if (!isLockScroll && this.IsTextSelectionUse())
+		isLockScroll = this._isSelectionVisible();
 
 	if (isLockScroll)
 		this.Api.asc_LockScrollToTarget(true);
@@ -22978,9 +23052,11 @@ CDocument.prototype.SelectContentControl = function(sId)
 		this.UpdateRulers();
 		this.UpdateInterface();
 		this.UpdateTracks();
-
+		
 		this.private_UpdateCursorXY(true, true);
 		this.CheckFormPlaceHolder = true;
+		
+		this.DrawingDocument.scrollToTarget();
 	}
 };
 /**
@@ -23821,6 +23897,8 @@ CDocument.prototype.UpdateAddinFieldsByData = function(arrData)
 	if (!arrData || !Array.isArray(arrData))
 		return;
 	
+	let docState = this.SaveDocumentState();
+	
 	let allFields   = this.GetAllFields();
 	let paragraphs  = [];
 	let addinFields = {};
@@ -23854,7 +23932,10 @@ CDocument.prototype.UpdateAddinFieldsByData = function(arrData)
 		Elements  : paragraphs,
 		CheckType : AscCommon.changestype_Paragraph_Content
 	}))
+	{
+		this.LoadDocumentState(docState);
 		return;
+	}
 	
 	this.StartAction(AscDFH.historydescription_Document_UpdateAddinFields);
 	
@@ -23882,6 +23963,30 @@ CDocument.prototype.UpdateAddinFieldsByData = function(arrData)
 	this.UpdateInterface();
 	this.UpdateSelection();
 	this.FinalizeAction();
+	
+	this.LoadDocumentState(docState);
+};
+/**
+ * Select add-in field
+ * @param {string} fieldId
+ */
+CDocument.prototype.SelectAddinField = function(fieldId)
+{
+	let field = null;
+	let allFields = this.GetAllFields();
+	for (let index = 0, count = allFields.length; index < count; ++index)
+	{
+		if (allFields[index] instanceof AscWord.CComplexField && allFields[index].GetFieldId() === fieldId)
+		{
+			field = allFields[index];
+			break;
+		}
+	}
+	if (!field || !field.IsValid())
+		return false;
+	
+	field.SelectField();
+	return true;
 };
 /**
  * Remove field wrapper

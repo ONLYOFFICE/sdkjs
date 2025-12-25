@@ -3207,6 +3207,7 @@
 
 		this.oGoalSeek = null;
 		this.oSolver = null;
+		this.oSolverParams = null;
 
 		this.timelineCaches = [];
 		this.TimelineStyles = null;
@@ -6535,21 +6536,43 @@
 	};
 
 	/**
-	 * Sets Solver object
+	 * Sets Solver object.
+	 * Uses for interacting with Solver logic for apis asc_StartSolver, asc_CloseSolver.
 	 * @memberof Workbook
-	 * @param {CSolver} oSolver
+	 * @param {CSolver|null} oSolver
 	 */
 	Workbook.prototype.setSolver = function(oSolver) {
 		this.oSolver = oSolver;
 	};
 
 	/**
-	 * Returns Solver object
+	 * Returns Solver object.
+	 * Uses for interacting with Solver logic for apis asc_StartSolver, asc_CloseSolver.
 	 * @memberof Workbook
 	 * @returns {CSolver}
 	 */
 	Workbook.prototype.getSolver = function() {
 		return this.oSolver;
+	};
+
+	/**
+	 * Sets SolverParams object.
+	 * Uses for saving Solver parameters for API asc_CloseSolver.
+	 * @memberof Workbook
+	 * @param {asc_CSolverParams|null} oSolverParams
+	 */
+	Workbook.prototype.setSolverParams = function(oSolverParams) {
+		this.oSolverParams = oSolverParams;
+	};
+
+	/**
+	 * Returns SolverParams object.
+	 * Uses for saving Solver parameters for API asc_CloseSolver.
+	 * @memberof Workbook
+	 * @returns {asc_CSolverParams}
+	 */
+	Workbook.prototype.getSolverParams = function() {
+		return this.oSolverParams;
 	};
 
 	Workbook.prototype.setDefaultDirection = function(val) {
@@ -16973,9 +16996,9 @@
 			}
 
 			this.ws.workbook.dependencyFormulas.addToCleanCellCache(this.ws.getId(), this.nRow, this.nCol);
-			AscCommonExcel.g_oLOOKUPCache.remove(this);
+			AscCommonExcel.g_oLOOKUPCache.remove(this, DataOld, res);
 			AscCommonExcel.g_oVLOOKUPCache.remove(this, DataOld, res);
-			AscCommonExcel.g_oHLOOKUPCache.remove(this);
+			AscCommonExcel.g_oHLOOKUPCache.remove(this), DataOld, res;
 			AscCommonExcel.g_oMatchCache.remove(this);
 			AscCommonExcel.g_oSUMIFSCache.remove(this);
 			AscCommonExcel.g_oFormulaRangesCache.remove(this);
@@ -17565,7 +17588,12 @@
 		} else if (AscCommonExcel.XLSB.rt_CELL_ISST === type) {
 			this.setTypeInternal(CellValueType.String);
 			this.setValueTextInternal("");//without text textIndex is ignored
-			this.textIndex = stream.GetULongLE() + 1;// 1-based indexing
+			const textIndex = stream.GetULongLE();
+			if (tmp.sharedStringIndexMap) {
+				this.textIndex = tmp.sharedStringIndexMap[textIndex];
+			} else {
+				this.textIndex = textIndex + 1;// 1-based indexing
+			}
 		} else if (AscCommonExcel.XLSB.rt_CELL_ST === type || AscCommonExcel.XLSB.rt_FMLA_STRING === type) {
 			this.setTypeInternal(CellValueType.String);
 			this.setValueTextInternal(stream.GetString());

@@ -1100,12 +1100,21 @@ var editor;
     ws.applyAutoFilterByType(autoFilterObject);
   };
 
-  spreadsheet_api.prototype.asc_reapplyAutoFilter = function(displayName) {
+  spreadsheet_api.prototype.asc_reapplyAutoFilter = function(displayName, sheetId) {
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return false;
     }
-    var ws = this.wb.getWorksheet();
-    ws.reapplyAutoFilter(displayName);
+
+    let ws;
+    if (sheetId) {
+        ws = this.wb.getWorksheetById(sheetId)
+    } else {
+        ws = this.wb.getWorksheet();
+    }
+
+    if (ws) {
+        ws.reapplyAutoFilter(displayName);
+    }
   };
 
   spreadsheet_api.prototype.asc_sortColFilter = function(type, cellId, displayName, color, bIsExpandRange) {
@@ -1121,12 +1130,21 @@ var editor;
     return ws.getAddFormatTableOptions(range);
   };
 
-  spreadsheet_api.prototype.asc_clearFilter = function() {
+  spreadsheet_api.prototype.asc_clearFilter = function(sheetId) {
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return false;
     }
-  	var ws = this.wb.getWorksheet();
-    return ws.clearFilter();
+  	// var ws = this.wb.getWorksheet();
+    let ws;
+    if (sheetId) {
+        ws = this.wb.getWorksheetById(sheetId)
+    } else {
+        ws = this.wb.getWorksheet();
+    }
+
+    if (ws) {
+        return ws.clearFilter();
+    }
   };
 
   spreadsheet_api.prototype.asc_clearFilterColumn = function(cellId, displayName) {
@@ -9267,34 +9285,49 @@ var editor;
 	};
 
 	/**
+	 * Calls logic for closing "Solver Params" and "Solver Results" dialogue windows.
 	 * @memberof spreadsheet_api
 	 * @param {boolean} isSave - true - save result of calculation, false - discard changes.
-	 * @param {asc_CSolverParams} solverParams
 	 */
-	spreadsheet_api.prototype.asc_CloseSolver = function (isSave, solverParams) {
+	spreadsheet_api.prototype.asc_CloseSolver = function (isSave) {
 		if (!this.wb) {
 			return;
 		}
 
-		this.wb.closeSolver(isSave, solverParams);
+		this.wb.closeSolver(isSave);
 	};
 
 	/**
-	 * Start solver logic in "Show iteration results" mode.
+	 * Continues Solver's calculation.
+	 * Uses for "Continue" button of "Show trial Solution" window.
 	 * @memberof spreadsheet_api
 	 */
-	spreadsheet_api.prototype.asc_StepSolver = function () {
+	spreadsheet_api.prototype.asc_ContinueSolver = function () {
 		if (!this.wb) {
 			return;
 		}
 
-		this.wb.stepSolver();
+		this.wb.continueSolver();
 	};
+
+	/**
+	 * Stops solver calculation by user's request.
+	 * Uses for "Stop" button or closing window of "Show Trial Solution" dialogue window.
+	 * @memberof spreadsheet_api
+	 */
+	spreadsheet_api.prototype.asc_StopSolver = function () {
+		if (!this.wb) {
+			return;
+		}
+
+		this.wb.stopSolver();
+	}
 
 	/**
 	 * Returns solver parameters object.
+	 * Uses for open "Solver" dialogue window.
 	 * @memberof spreadsheet_api
-	 * @returns {asc_CSolverParams|null}
+	 * @returns {asc_CSolverParams}
 	 */
 	spreadsheet_api.prototype.asc_GetSolverParams = function () {
 		if (!this.wb) {
@@ -9302,15 +9335,6 @@ var editor;
 		}
 
 		return this.wb.getSolverParams();
-	};
-
-	/**
-	 * Returns solver results object.
-	 * @memberof spreadsheet_api
-	 * @returns {asc_CSolverResults}
-	 */
-	spreadsheet_api.prototype.asc_GetSolverResults = function () {
-		return new AscCommonExcel.asc_CSolverResults();
 	};
 
 	spreadsheet_api.prototype.asc_TracePrecedents = function() {
@@ -10306,6 +10330,12 @@ var editor;
   prot["asc_PauseGoalSeek"] = prot.asc_PauseGoalSeek;
   prot["asc_ContinueGoalSeek"] = prot.asc_ContinueGoalSeek;
   prot["asc_StepGoalSeek"] = prot.asc_StepGoalSeek;
+
+  prot["asc_StartSolver"] = prot.asc_StartSolver;
+  prot["asc_CloseSolver"] = prot.asc_CloseSolver;
+  prot["asc_ContinueSolver"] = prot.asc_ContinueSolver;
+  prot["asc_StopSolver"] = prot.asc_StopSolver;
+  prot["asc_GetSolverParams"] = prot.asc_GetSolverParams;
 
   prot["asc_GetSeriesSettings"] = prot.asc_GetSeriesSettings;
   prot["asc_FillCells"] = prot.asc_FillCells;

@@ -1675,6 +1675,14 @@ CDocumentContentBase.prototype.IsFootnote = function(bReturnFootnote)
 	return false;
 };
 /**
+ * Находимся ли мы в концевой сноске
+ * @returns {boolean}
+ */
+CDocumentContentBase.prototype.IsEndnote = function()
+{
+	return false;
+};
+/**
  * Проверяем находимся ли мы в последней ячейке таблицы
  * @param {boolean} isSelection
  * @returns {boolean}

@@ -132,6 +132,21 @@
 	 * @property {string} Value - The element value.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControlListElement.js
 	 */
+	
+	/**
+	 * @typedef {Object} TextAnnotation
+	 * @property  {string} paragraphId  - ID of the paragraph containing the annotation.
+	 * @property  {string} rangeId - ID of the annotation range.
+	 * @property  {string} [name] -  Annotation type (e.g., `"grammar"`).
+	 */
+	
+	/**
+	 * @typedef {Object} TextAnnotationRange
+	 * @property  {string} id  - Unique identifier for the range.
+	 * @property  {number} start - Starting index of the text range.
+	 * @property  {number} length - Length of the text range.
+	 * @property  {string} [name] -  Annotation type (e.g., `"grammar"`).
+	 */
 
     var Api = window["asc_docs_api"];
 
@@ -1110,6 +1125,44 @@
 		logicDocument.AddAddinField(AscWord.CAddinFieldData.FromJson(data));
 	};
 	/**
+	 * Selects the specified add-in field.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias SelectAddinField
+	 * @param {string} fieldId - Field identifier.
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SelectAddinField.js
+	 */
+	Api.prototype["pluginMethod_SelectAddinField"] = function(fieldId)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return false;
+		
+		return logicDocument.SelectAddinField(fieldId);
+	};
+	/**
+	 * Removes the specified add-in field.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias RemoveAddinField
+	 * @param {string} fieldId - Field identifier.
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/pluginMethod_RemoveAddinField.js
+	 */
+	Api.prototype["pluginMethod_RemoveAddinField"] = function(fieldId)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return false;
+		
+		if (!logicDocument.SelectAddinField(fieldId))
+			return false;
+		
+		logicDocument.RemoveBeforePaste();
+		return true;
+	};
+	/**
 	 * Removes a field wrapper, leaving only the field content.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
@@ -1304,69 +1357,61 @@
 		return bookmarks.GetBookmarkByDocPos(docPos);
 	};
 	/**
-	 * Annotate the specified paragraph.
+	 * Adds annotations to the specified paragraph.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias AnnotateParagraph
-	 * @param {Object} obj - The response object containing annotation data
-	 * @param {string} obj.type - The type of annotation operation (e.g., "highlightText")
-	 * @param {string} [obj.name] - Optional name of the annotation
-	 * @param {string} obj.paragraphId - ID of the paragraph being annotated (for highlightText type)
-	 * @param {string} obj.recalcId - Recalculation ID for validation (for highlightText type)
-	 * @param {Array<{start: number, length: number, id: string}>} [obj.ranges] - Array of text ranges to highlight (for highlightText type)
-	 * @param {number} obj.ranges[].start - Starting index of the text range
-	 * @param {number} obj.ranges[].length - Length of the text range
-	 * @param {string} obj.ranges[].id - Unique identifier for the range
+	 * @param {Object} data - Annotation data specifying what to annotate.
+	 * @param {string} data.type - The type of annotation operation (e.g., `"highlightText"`).
+	 * @param {string} [data.name] - Optional name of the annotation.
+	 * @param {string} data.paragraphId - ID of the paragraph being annotated.
+	 * @param {string} data.recalcId - Paragraph recalculation ID.
+	 * @param {Array<TextAnnotationRange>} [data.ranges] - Array of text ranges to highlight (for highlightText type)
 	 * @since 9.2.0
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AnnotateParagraph.js
 	 */
-	Api.prototype["pluginMethod_AnnotateParagraph"] = function(obj)
+	Api.prototype["pluginMethod_AnnotateParagraph"] = function(data)
 	{
-		if (!obj)
+		if (!data)
 			return;
 		
-		obj["guid"] = window.g_asc_plugins.getCurrentPluginGuid();
-		this.getTextAnnotatorEventManager().onResponse(obj);
+		data["guid"] = window.g_asc_plugins.getCurrentPluginGuid();
+		this.getTextAnnotatorEventManager().onResponse(data);
 	};
 	/**
-	 * Selects a specific annotation range in the document.
+	 * Selects text in a document using a given annotation.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @alias AnnotateParagraph
-	 * @param {Object} obj - The range selection object
-	 * @param {string} obj.paragraphId - ID of the paragraph containing the annotation
-	 * @param {string} obj.rangeId - ID of the specific range to select
-	 * @param {string} [obj.name] - Optional name/type of the annotation (e.g., "grammar", "spelling", etc.)
+	 * @alias SelectAnnotationRange
+	 * @param {TextAnnotation} annotation - The annotation selection object.
 	 * @since 9.2.0
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SelectAnnotationRange.js
 	 */
-	Api.prototype["pluginMethod_SelectAnnotationRange"] = function(obj)
+	Api.prototype["pluginMethod_SelectAnnotationRange"] = function(annotation)
 	{
-		if (!obj)
+		if (!annotation)
 			return;
 		
-		obj["guid"] = window.g_asc_plugins.getCurrentPluginGuid();
-		this.getTextAnnotatorEventManager().selectRange(obj);
+		annotation["guid"] = window.g_asc_plugins.getCurrentPluginGuid();
+		this.getTextAnnotatorEventManager().selectRange(annotation);
 	};
 	/**
 	 * Remove a specific annotation range from the document.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias RemoveAnnotationRange
-	 * @param {Object} obj - The range removing object
-	 * @param {string} obj.paragraphId - ID of the paragraph containing the annotation
-	 * @param {string} obj.rangeId - ID of the specific range to remove
-	 * @param {string} [obj.name] - Optional name/type of the annotation (e.g., "grammar", "spelling", etc.)
+	 * @param {TextAnnotation} annotation - The annotation removing object.
+	 * @param {boolean} [annotation.all=false] - Optional parameter, flag to remove all annotations for the current paragraph.
 	 * @since 9.2.0
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveAnnotationRange.js
 	 */
-	Api.prototype["pluginMethod_RemoveAnnotationRange"] = function(obj)
+	Api.prototype["pluginMethod_RemoveAnnotationRange"] = function(annotation)
 	{
-		if (!obj)
+		if (!annotation)
 			return;
 		
-		obj["guid"] = window.g_asc_plugins.getCurrentPluginGuid();
-		this.getTextAnnotatorEventManager().removeRange(obj);
+		annotation["guid"] = window.g_asc_plugins.getCurrentPluginGuid();
+		this.getTextAnnotatorEventManager().removeRange(annotation);
 	};
 
 	function private_ReadContentControlCommonPr(commonPr)

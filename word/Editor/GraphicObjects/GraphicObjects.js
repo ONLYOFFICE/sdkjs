@@ -843,7 +843,7 @@ CGraphicObjects.prototype =
         {
             para_drawing_props = this.selectedObjects[i].parent.Get_Props(para_drawing_props);
         }
-        var chart_props, shape_props, image_props;
+        let chart_props, shape_props, image_props, hyperlink_props;
         if(para_drawing_props)
         {
             if(props_by_types.shapeProps)
@@ -905,6 +905,10 @@ CGraphicObjects.prototype =
                     chart_props.fromGroup = true;
                 }
             }
+			if (props_by_types.hyperlinkProps)
+			{
+				hyperlink_props = props_by_types.hyperlinkProps;
+			}
         }
 
         if(props_by_types.shapeProps)
@@ -932,11 +936,15 @@ CGraphicObjects.prototype =
         {
             ret.push(image_props);
         }
-
         if(isRealObject(chart_props))
         {
             ret.push(chart_props);
         }
+		if (isRealObject(hyperlink_props))
+		{
+			ret.push(hyperlink_props);
+		}
+
         return ret;
     },
 
@@ -2021,6 +2029,8 @@ CGraphicObjects.prototype =
         var content = this.getTargetDocContent();
         return content && content.AddComment(commentData, true, true);
     },
+
+    hyperlinkCollectNonVisualProperties: DrawingObjectsController.prototype.hyperlinkCollectNonVisualProperties,
 
     hyperlinkCheck: DrawingObjectsController.prototype.hyperlinkCheck,
 

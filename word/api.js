@@ -6831,12 +6831,58 @@ background-repeat: no-repeat;\
 	//-----------------------------------------------------------------
 	// Функции для работы с гиперссылками
 	//-----------------------------------------------------------------
-	asc_docs_api.prototype.can_AddHyperlink = function()
+	asc_docs_api.prototype.can_AddHyperlink = function ()
 	{
-		if (!this.WordControl.m_oLogicDocument.CanAddHyperlink(true))
+		const logicDocument = this.WordControl.m_oLogicDocument;
+		if (!logicDocument)
+		{
 			return false;
-
-		return this.WordControl.m_oLogicDocument.GetSelectedText(true, {Numbering : false});
+		}
+		
+		const controller = logicDocument.getDrawingObjects();
+		if (!controller)
+		{
+			return false;
+		}
+		
+		const targetContent = controller.getTargetDocContent();
+		const selectedArray = controller.getSelectedArray();
+		
+		if (targetContent || selectedArray.length === 1)
+		{
+			const bCheckInHyperlink = AscCommon.isRealObject(targetContent);
+			const bCanAdd = logicDocument.CanAddHyperlink(bCheckInHyperlink);
+			
+			if (!bCanAdd)
+			{
+				return false;
+			}
+			
+			if (targetContent)
+			{
+				return logicDocument.GetSelectedText(true, { Numbering: false });
+			}
+			
+			const drawing = selectedArray[0];
+			if (drawing)
+			{
+				const isGroup = drawing.isGroup && drawing.isGroup();
+				const isShapeDrawing = drawing.isShape && drawing.isShape(); 
+				const isImageDrawing = drawing.isImage && drawing.isImage();
+				if (isGroup || isShapeDrawing || isImageDrawing)
+				{
+					const cNvProps = controller.hyperlinkCollectNonVisualProperties(drawing)[0];
+					return cNvProps && AscCommon.isRealObject(cNvProps.hlinkClick) ? false : null;
+				}
+			}
+		}
+		
+		if (!logicDocument.CanAddHyperlink(true))
+		{
+			return false;
+		}
+		
+		return logicDocument.GetSelectedText(true, { Numbering: false });
 	};
 	/**
 	 * Добавляем гиперссылку
@@ -6929,7 +6975,7 @@ background-repeat: no-repeat;\
 	 */
 	asc_docs_api.prototype.change_Hyperlink = function(oHyperProps)
 	{
-		if (!oHyperProps || !oHyperProps.get_InternalHyperlink())
+		if (!oHyperProps)
 			return;
 
 		var sBookmarkName = this.private_CheckHeadingHyperlinkProps(oHyperProps);
@@ -6950,10 +6996,11 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.private_ChangeHyperlink = function(hyperProps, bookmarkName)
 	{
 		let logicDocument = this.private_GetLogicDocument();
-		if (!logicDocument
-			|| !hyperProps
-			|| !hyperProps.get_InternalHyperlink()
-			|| !hyperProps.get_InternalHyperlink().IsUseInDocument())
+		if (!logicDocument || !hyperProps)
+			return;
+		
+		let oInternalHyperlink = hyperProps.get_InternalHyperlink();
+		if (oInternalHyperlink && !oInternalHyperlink.IsUseInDocument())
 			return;
 		
 		let additionalCheck = bookmarkName ? {
@@ -6980,10 +7027,11 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.remove_Hyperlink = function(hyperProps)
 	{
 		let logicDocument = this.private_GetLogicDocument();
-		if (!logicDocument
-			|| !hyperProps
-			|| !hyperProps.get_InternalHyperlink()
-			|| !hyperProps.get_InternalHyperlink().IsUseInDocument())
+		if (!logicDocument || !hyperProps)
+			return;
+		
+		let oInternalHyperlink = hyperProps.get_InternalHyperlink();
+		if (oInternalHyperlink && !oInternalHyperlink.IsUseInDocument())
 			return;
 		
 		if (logicDocument.IsSelectionLocked(changestype_Paragraph_Content))
@@ -10274,7 +10322,7 @@ background-repeat: no-repeat;\
 		{
 			if (false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_ContentControl_Add, null, true, false, null, AscDFH.historydescription_Document_AddBlockLevelContentControl))
 			{
-				oLogicDocument.StartAction(AscDFH.historydescription_Document_AddBlockLevelContentControl, undefined, undefined, true);
+				oLogicDocument.StartAction(AscDFH.historydescription_Document_AddBlockLevelContentControl);
 
 				var oContentControl = oLogicDocument.AddContentControl(c_oAscSdtLevelType.Block);
 				if (oContentControl)
@@ -10289,6 +10337,7 @@ background-repeat: no-repeat;\
 					oResult = oContentControl.GetContentControlPr();
 				}
 
+				oLogicDocument.AddMacroData(AscDFH.historydescription_Document_AddBlockLevelContentControl, oResult.PlaceholderText);
 				oLogicDocument.FinalizeAction();
 			}
 		}
@@ -10296,7 +10345,7 @@ background-repeat: no-repeat;\
 		{
 			if (false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_ContentControl_Add, null, true, false, null, AscDFH.historydescription_Document_AddInlineLevelContentControl))
 			{
-				oLogicDocument.StartAction(AscDFH.historydescription_Document_AddInlineLevelContentControl, undefined, undefined, true);
+				oLogicDocument.StartAction(AscDFH.historydescription_Document_AddInlineLevelContentControl);
 
 				var oContentControl = oLogicDocument.AddContentControl(c_oAscSdtLevelType.Inline);
 				if (oContentControl)
@@ -10311,6 +10360,7 @@ background-repeat: no-repeat;\
 					oResult = oContentControl.GetContentControlPr();
 				}
 
+				oLogicDocument.AddMacroData(AscDFH.historydescription_Document_AddInlineLevelContentControl, oResult.PlaceholderText);
 				oLogicDocument.FinalizeAction();
 			}
 		}
@@ -10412,6 +10462,7 @@ background-repeat: no-repeat;\
 			if (oCC && oCommonPr)
 				oCC.SetContentControlPr(oCommonPr);
 
+			oLogicDocument.AddMacroData(AscDFH.historydescription_Document_AddContentControlList, {isComboBox : isComboBox});
 			oLogicDocument.Recalculate();
 			oLogicDocument.UpdateInterface();
 			oLogicDocument.UpdateSelection();

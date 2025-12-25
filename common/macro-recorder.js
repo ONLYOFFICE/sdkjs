@@ -81,6 +81,9 @@
 		{
 			if (e.KeyCode === 8) // BackSpace
 			{
+				if (_t.editor.editorId !== AscCommon.c_oEditorId.Word)
+					return;
+
 				_t.addStepData("remove", 1);
 				// TODO when we have:
 				// * Selection.Delete
@@ -88,6 +91,18 @@
 			}
 			else if (e.KeyCode === 9) // Tab
 			{
+				if (_t.editor.editorId !== AscCommon.c_oEditorId.Word)
+					return;
+
+				let doc = _t.editor.getLogicDocument();
+				if (doc.GetCurrentTable())
+				{
+					_t.addStepData("moveCursorRight", [{
+						isRtl:			false,
+						isAddSelect:	e.IsShift(),
+						isWord:			e.IsCtrl()
+					}]);
+				}
 			}
 			else if (e.KeyCode === 13) // Enter
 			{
@@ -918,16 +933,22 @@
 
 			return "\tdoc.AddMathEquation(\"" + obj.math + "\", \"" + type + "\");\n";
 		},
-		addBlockContentControl	: function(){
-			return "\tdoc.Push(Api.CreateBlockLvlSdt());\n";
+		addBlockContentControl	: function(strPlaceholder){
+			return "\tlet " + CounterStore.inc('block') + " = Api.CreateBlockLvlSdt();\n"
+				+ "\t" + CounterStore.get('block') + ".SetPlaceholderText(\"" + strPlaceholder + "\")\n"
+				+ "\tdoc.Push(" + CounterStore.get('block') + ");\n"
+				+ "\t" + CounterStore.get('block') + ".Select();\n";
 		},
-		addInlineContentControl	: function(){
-			return "\tdoc.GetCurrentParagraph().AddInlineLvlSdt((Api.CreateInlineLvlSdt()));\n";
+		addInlineContentControl	: function(strPlaceholder){
+				return "\tlet " + CounterStore.inc('inline') + " = Api.CreateInlineLvlSdt();\n"
+					+ "\t" + CounterStore.get('inline') + ".SetPlaceholderText(\"" + strPlaceholder + "\")\n"
+					+ "\tdoc.GetCurrentParagraph().Push(" + CounterStore.get('inline') + ");\n"
+					+ "\t" + CounterStore.get('inline') + ".Select();\n";
 		},
 		addContentControlList	: function(props){
-			if (props === true)
-				return "\tdoc.AddComboBoxContentControl();\n";
-			else if (props === false)
+			if (props.isComboBox === true)
+				return "\t doc.AddComboBoxContentControl();\n";
+			else if (props.isComboBox === false)
 				return "\tdoc.AddDropDownListContentControl();\n"
 		},
 		addContentControlCheckBox	: function(){
@@ -1168,7 +1189,7 @@
 			else
 				value = value.toString();
 
-			return "\tApi.GetSelection().SetValue(" + value + ");\n"
+			return "\tworksheet.GetActiveCell().SetValue(" + value + ");\n"
 		},
 		setCellFormula 			: function(value){
 			if (typeof value === 'string')
@@ -1176,7 +1197,7 @@
 			else
 				value = value.toString();
 
-			return "\tApi.GetSelection().SetFormulaArray(" + value + ");\n"
+			return "\tworksheet.GetActiveCell().SetFormulaArray(" + value + ");\n"
 		},
 		setCellAngle			: function(angle){
 			switch (angle) {
@@ -1263,7 +1284,6 @@
 		// setCellHyperlinkModify	: function(additional) {return (additional && additional.url) ? "" : ""},
 		// setCellHyperlinkRemove	: function(additional) {return (additional && additional.url) ? "" : ""},
 		// cut						: function(){return "ApiApi.GetSelection().Cut();\n"},
-		cellChangeValue			: function(value){return "\tApi.GetSelection().SetValue(\"" + value + "\");\n"},
 		setCellStyle			: function(style){return ""},
 		setCellFormat			: function(format){
 			return "\tlet " + CounterStore.inc('format') + " = Api.Format(worksheet.GetActiveCell().GetValue(), \'" + format + "\')\n"
@@ -1391,7 +1411,7 @@
 	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_AddImageUrls]				= cellActions.addImageUrls;
 	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_AddAutoFilter]				= cellActions.addAutoFilter;
 	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_RemoveAutoFilter]			= cellActions.removeAutoFilter;
-	//CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SelectRange]					= cellActions.selectRange;
+	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SelectRange]					= cellActions.selectRange;
 	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellFormula]				= cellActions.setCellFormula;
 
 	const presActions = {

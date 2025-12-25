@@ -32,20 +32,71 @@
 
 $(function ()
 {
-	QUnit.module("Test the ApiRun methods");
-	
+	QUnit.module("ApiRun");
+
 	function createApiRun()
 	{
-		return AscTest.Editor.CreateRun();
+		return AscTest.JsApi.CreateRun();
 	}
 	
-	QUnit.test("Color", function (assert)
+	QUnit.test('GetText/AddText', function (assert)
 	{
-		let apiRun = createApiRun();
+		let run = createApiRun();
 		
-		assert.strictEqual(apiRun.GetColor(), null, "Color check for a newly created run");
-		
-		apiRun.SetColor(255, 0, 0);
-		//assert.equalRgb(apiRun.GetColor(), {r : 255, g : 0, b : 0}, "Color check for a newly created run");
+		assert.strictEqual(run.GetText(), "", "Check text for an empty run");
+		run.AddText("1");
+		run.AddTabStop();
+		run.AddText("2");
+		run.AddLineBreak();
+		run.AddText("3");
+		assert.strictEqual(run.GetText(), "1\t2\r3", "Check text");
+		assert.strictEqual(run.GetText({
+			"TabSymbol" : "_t_",
+			"NewLineSeparator" : "_nl_",
+		}), "1_t_2_nl_3", "Check text");
+	});
+
+	QUnit.test('SetColor, GetColor', function (assert) {
+		const apiRun = createApiRun();
+
+		const hexColor = AscTest.JsApi.HexColor('#bada55');
+		const themeColor = AscTest.JsApi.ThemeColor('accent2');
+		const autoColor = AscTest.JsApi.AutoColor();
+
+		assert.strictEqual(apiRun.GetColor(), null, 'Color check for a newly created run');
+
+		apiRun.SetColor(255, 127, 0);
+		assert.equalRgb(apiRun.GetColor(), { r: 255, g: 127, b: 0 }, 'Color check after setting color with RGB components');
+
+		apiRun.SetColor(hexColor);
+		assert.equalRgba(apiRun.GetColor(), { r: 186, g: 218, b: 85, a: 255 }, 'Color check after setting color with ApiColor (hex)');
+
+		apiRun.SetColor(themeColor);
+		assert.strictEqual(apiRun.GetColor().IsThemeColor(), true, 'Color check after setting color with ApiColor (theme)');
+
+		apiRun.SetColor(autoColor);
+		assert.strictEqual(apiRun.GetColor().IsAutoColor(), true, 'Color check after setting color with ApiColor (auto)');
+	});
+
+	QUnit.test('SetShd, GetShd', function (assert) {
+		const apiRun = createApiRun();
+
+		const hexColor = AscTest.JsApi.HexColor('#bada55');
+		const themeColor = AscTest.JsApi.ThemeColor('accent2');
+		const autoColor = AscTest.JsApi.AutoColor();
+
+		assert.strictEqual(apiRun.GetShd(), null, 'Shading (Shd) check for a newly created run');
+
+		apiRun.SetShd('clear', 255, 127, 0);
+		assert.equalRgb(apiRun.GetShd(), { r: 255, g: 127, b: 0 }, 'Shading check after setting shading with RGB components');
+
+		apiRun.SetShd('clear', hexColor);
+		assert.equalRgba(apiRun.GetShd(), { r: 186, g: 218, b: 85, a: 255 }, 'Shading check after setting shading with ApiColor (hex)');
+
+		apiRun.SetShd('clear', themeColor);
+		assert.strictEqual(apiRun.GetShd().IsThemeColor(), true, 'Shading check after setting shading with ApiColor (theme)');
+
+		apiRun.SetShd('clear', autoColor);
+		assert.strictEqual(apiRun.GetShd().IsAutoColor(), true, 'Shading check after setting shading with ApiColor (auto)');
 	});
 });

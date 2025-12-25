@@ -592,22 +592,36 @@
         return new ApiTheme(oThemeLoadInfo);
     };
 
-    /**
-     * Creates a new theme color scheme.
-     * @typeofeditors ["CPE"]
-     * @memberof Api
-     * @param {(ApiUniColor[] | ApiRGBColor[])} arrColors - Set of colors which are referred to as a color scheme.
-     * The color scheme is responsible for defining a list of twelve colors.
-     * The array should contain a sequence of colors: 2 dark, 2 light, 6 primary, a color for a hyperlink and a color for the followed hyperlink.
-     * @param {string} sName - Theme color scheme name.
-     * @returns {?ApiThemeColorScheme}
-     * @see office-js-api/Examples/{Editor}/Api/Methods/CreateThemeColorScheme.js
+	/**
+	 * Creates a new theme color scheme.
+	 *
+	 * @typeofeditors ["CPE"]
+	 * @memberof Api
+	 *
+	 * @param {(ApiUniColor[] | ApiRGBColor[] | ApiColor[])} arrColors - Set of colors which are referred to as a color scheme.
+	 * The color scheme is responsible for defining a list of twelve colors.
+	 * The array should contain a sequence of colors: 2 dark, 2 light, 6 primary, a color for a hyperlink and a color for the followed hyperlink.
+	 * @param {string} sName - Theme color scheme name.
+	 * @returns {?ApiThemeColorScheme}
+	 *
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateThemeColorScheme.js
 	 */
     Api.prototype.CreateThemeColorScheme = function(arrColors, sName){
         if (typeof(sName) !== "string")
             sName = "New theme's color scheme";
         if (!Array.isArray(arrColors) || arrColors.length !== 12)
             return null;
+
+		arrColors = arrColors.map(function (color) {
+			if (color instanceof AscBuilder.ApiColor) {
+				const rgb = color.GetRGB();
+				const safeCopy = new AscBuilder.Api.prototype.RGB(rgb['r'], rgb['g'], rgb['b']);
+				const unifill = safeCopy.private_createUnifill();
+				return { Unicolor: unifill.fill.color };
+			}
+
+			return color;
+		});
 
         var oClrScheme = new AscFormat.ClrScheme();
         oClrScheme.setName(sName);
@@ -773,14 +787,15 @@
      * @see office-js-api/Examples/{Editor}/Api/Methods/CreateShape.js
 	 */
 	Api.prototype.CreateShape = function(sType, nWidth, nHeight, oFill, oStroke){
-        var oCurrentSlide = private_GetCurrentSlide();
+        let curSlide = private_GetCurrentSlide();
+		let presentation = private_GetPresentation();
         sType   = sType   || "rect";
         nWidth  = nWidth  || 914400;
 	    nHeight = nHeight || 914400;
-	    oFill   = oFill   || editor.CreateNoFill();
-	    oStroke = oStroke || editor.CreateStroke(0, editor.CreateNoFill());
-        var oTheme = oCurrentSlide && oCurrentSlide.Layout && oCurrentSlide.Layout.Master && oCurrentSlide.Layout.Master.Theme;
-        return new ApiShape(AscFormat.builder_CreateShape(sType, nWidth/36000, nHeight/36000, oFill.UniFill, oStroke.Ln, oCurrentSlide, oTheme, private_GetDrawingDocument(), false));
+	    oFill   = oFill   || Asc.editor.CreateNoFill();
+	    oStroke = oStroke || Asc.editor.CreateStroke(0, Asc.editor.CreateNoFill());
+        let theme = presentation.Get_Theme();
+        return new ApiShape(AscFormat.builder_CreateShape(sType, nWidth/36000, nHeight/36000, oFill.UniFill, oStroke.Ln, curSlide, theme, private_GetDrawingDocument(), false));
     };
 
     
@@ -1431,10 +1446,46 @@
         {
             if (AscFormat.isRealNumber(nCount) && nCount > 0)
             {
+				let curSlide = this.Presentation.CurPage;
                 nCount = Math.min(nCount, this.GetSlidesCount());
                 for (var nSlide = 0; nSlide < nCount; nSlide++)
                     this.Presentation.removeSlide(nStart);
 
+				if (!this.Presentation.IsMasterMode())
+				{
+					if (this.GetSlidesCount() === 0)
+					{
+						curSlide = -1;
+					}
+					else
+					{
+						if (curSlide < nStart)
+						{
+						}
+						else if (curSlide >= nStart + nCount)
+						{
+							curSlide -= nCount;
+						}
+						else
+						{
+							curSlide = nStart - 1;
+						}
+
+						if (curSlide < 0)
+						{
+							curSlide = 0;
+						}
+						if (curSlide >= this.GetSlidesCount())
+						{
+							curSlide = this.GetSlidesCount() - 1;
+						}
+					}
+					if (curSlide !== this.Presentation.CurPage)
+					{
+						this.Presentation.CurPage = curSlide;
+						this.Presentation.bGoToPage = true;
+					}
+				}
                 return true;
             }
         }
@@ -3564,12 +3615,12 @@
         if (!this.Slide)
             return false;
         
-        let oPresentation = private_GetPresentation();
+        let presentation = private_GetApi().GetPresentation();
         let nPosToDelete  = this.GetSlideIndex();
 
         if (nPosToDelete > -1)
         {
-            oPresentation.removeSlide(nPosToDelete);
+			presentation.RemoveSlides(nPosToDelete, 1);
             return true;
         }
 
@@ -4764,12 +4815,7 @@
 	 */
     ApiShape.prototype.GetDocContent = function()
     {
-        var oApi = private_GetApi();
-        if(oApi && this.Drawing && this.Drawing.txBody && this.Drawing.txBody.content)
-        {
-            return oApi.private_CreateApiDocContent(this.Drawing.txBody.content);
-        }
-        return null;
+        return this.GetContent();
     };
     
     /**
@@ -4780,12 +4826,20 @@
 	 */
     ApiShape.prototype.GetContent = function()
     {
-        var oApi = private_GetApi();
-        if(oApi && this.Drawing && this.Drawing.txBody && this.Drawing.txBody.content)
-        {
-            return oApi.private_CreateApiDocContent(this.Drawing.txBody.content);
-        }
-        return null;
+		var oApi = Asc["editor"];
+		if (!oApi)
+			return null;
+		let docContent = this.Drawing.getDocContent();
+		if (!docContent)
+		{
+			this.Drawing.createTextBody();
+		}
+		docContent = this.Drawing.getDocContent();
+		if (docContent)
+		{
+			return oApi.private_CreateApiDocContent(docContent);
+		}
+		return null;
     };
 
     /**

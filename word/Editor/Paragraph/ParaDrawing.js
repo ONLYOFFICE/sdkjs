@@ -3183,8 +3183,9 @@ ParaDrawing.prototype.SetDrawingPrFromDrawing = function(oAnotherDrawing)
 };
 ParaDrawing.prototype.OnContentReDraw = function()
 {
-	if (this.Parent && this.Parent.Parent)
-		this.Parent.Parent.OnContentReDraw(this.PageNum, this.PageNum);
+	let docContent = this.GetParentDocumentContent();
+	if (docContent)
+		docContent.OnContentReDraw(this.PageNum, this.PageNum);
 };
 ParaDrawing.prototype.getBase64Img = function()
 {

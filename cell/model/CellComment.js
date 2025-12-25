@@ -519,6 +519,7 @@ function CCellCommentator(currentSheet) {
 	// Drawing settings
 	this.commentIconColor = new AscCommon.CColor(255, 144, 0);
 	this.commentFillColor = new AscCommon.CColor(255, 255, 0);
+	this.commentSolvedIconColor = new AscCommon.CColor(202, 202, 202);
 
 	this.lastSelectedId = null;
 	this.bSaveHistory = true;
@@ -640,12 +641,12 @@ CCellCommentator.prototype.isLockedComment = function(oComment, callbackFunc) {
 			return;
 		}
 
-		this.drawingCtx.setFillStyle(this.commentIconColor);
 		var commentCell, mergedRange, nCol, nRow, x, y, metrics;
 		var aComments = this.model.aComments;
 		var zoom = this.worksheet.getZoom();
 		var size = AscCommon.AscBrowser.convertToRetinaValue(6, true) * zoom;
 		var borderW = 1;
+		var currentColor = null;
 		for (var i = 0; i < aComments.length; ++i) {
 			commentCell = aComments[i];
 			if (this._checkHidden(commentCell) || !AscCommon.UserInfoParser.canViewComment(commentCell.sUserName)) {
@@ -659,6 +660,12 @@ CCellCommentator.prototype.isLockedComment = function(oComment, callbackFunc) {
 			if (metrics = this.worksheet.getCellMetrics(nCol, nRow, true)) {
 				if (0 === metrics.width || 0 === metrics.height) {
 					continue;
+				}
+
+				var newColor = commentCell.bSolved ? this.commentSolvedIconColor : this.commentIconColor;
+				if (currentColor !== newColor) {
+					this.drawingCtx.setFillStyle(newColor);
+					currentColor = newColor;
 				}
 
 				let isClip = false;

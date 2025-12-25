@@ -8219,6 +8219,7 @@ function (window, undefined) {
 	cMAXIFS.prototype.argumentsMin = 3;
 	cMAXIFS.prototype.isXLFN = true;
 	cMAXIFS.prototype.arrayIndexes = {0: 1, 1: 1, 3: 1, 5: 1, 7: 1, 9: 1};
+	cMAXIFS.prototype.argumentsType = [argType.reference, [argType.reference, argType.any]];
 	cMAXIFS.prototype.getArrayIndex = function (index) {
 		if (index === 0) {
 			return 1;
@@ -8331,6 +8332,7 @@ function (window, undefined) {
 	cMINIFS.prototype.argumentsMin = 3;
 	cMINIFS.prototype.isXLFN = true;
 	cMINIFS.prototype.arrayIndexes = {0: 1, 1: 1, 3: 1, 5: 1, 7: 1, 9: 1};
+	cMINIFS.prototype.argumentsType = [argType.reference, [argType.reference, argType.any]];
 	cMINIFS.prototype.getArrayIndex = function (index) {
 		if (index === 0) {
 			return 1;
