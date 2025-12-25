@@ -971,7 +971,7 @@
 						}
 					}
 
-					return this.handleEventMode !== HANDLE_EVENT_MODE_HANDLE;
+					return this.handleEventMode === HANDLE_EVENT_MODE_HANDLE ? false : null;
 				},
 
 				getAllSignatures: function () {
