@@ -14800,15 +14800,8 @@
 				sheetMemory.setInt32(this.nRow, 0, xfSave | (flags << 24));
 				sheetMemory.setInt32(this.nRow, 4, formulaSave);
 				sheetMemory.setFloat64(this.nRow, 8, this.number);
-			} else if (null != this.text) {
+			} else if (null != this.text || null != this.multiText) {
 				flagValue = 2;
-				const flags = this._toFlags(flagValue);
-				sheetMemory.setInt32(this.nRow, 0, xfSave | (flags << 24));
-				sheetMemory.setInt32(this.nRow, 4, formulaSave);
-				numberSave = this.getTextIndex();
-				sheetMemory.setInt32(this.nRow, 8, numberSave);
-			} else if (null != this.multiText) {
-				flagValue = 3;
 				const flags = this._toFlags(flagValue);
 				sheetMemory.setInt32(this.nRow, 0, xfSave | (flags << 24));
 				sheetMemory.setInt32(this.nRow, 4, formulaSave);

@@ -5071,6 +5071,71 @@ $(function () {
 		clearData(0, 0, 100, 200);
 	});
 
+
+	QUnit.test("Test: \"Copy-paste dynamic array - expand vs blocked\"", function (assert) {
+		clearData(0, 0, 100, 200);
+
+		var flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// Create a 2x2 dynamic array in A1 and copy it
+		var fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		var fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText("=SEQUENCE(2,2)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		ws.selectionRange.ranges = [getRange(0, 0, 0, 0)];
+		var base64 = AscCommonExcel.g_clipboardExcel.copyProcessor.getBinaryForCopy(ws, wsView.objectRender);
+
+		// 1) Paste into a free area (E1) - array should expand
+		ws.selectionRange.ranges = [getRange(4, 0, 4, 0)];
+		AscCommonExcel.g_clipboardExcel.pasteData(wsView, AscCommon.c_oAscClipboardDataFormat.Internal, base64);
+
+		assert.strictEqual(ws.getRange2("E1").getValue(), "1", "E1 = 1 after paste into free space");
+		assert.strictEqual(ws.getRange2("F1").getValue(), "2", "F1 = 2 after paste into free space");
+		assert.strictEqual(ws.getRange2("E2").getValue(), "3", "E2 = 3 after paste into free space");
+		assert.strictEqual(ws.getRange2("F2").getValue(), "4", "F2 = 4 after paste into free space");
+
+		var vmIndexE1 = getCellRichValueIndex(0, 4);
+		assert.ok(!vmIndexE1 || vmIndexE1 === 0, "E1 has no richdata (expanded)");
+
+		var cmIndexE1 = getCellMetadata(0, 4);
+		assert.ok(cmIndexE1 > 0, "E1 has metadata after paste (expanded)");
+
+		// Clean and prepare blocked scenario
+		clearData(0, 0, 100, 200);
+
+		// Recreate original array to copy again
+		fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText("=SEQUENCE(2,2)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		ws.selectionRange.ranges = [getRange(0, 0, 0, 0)];
+		base64 = AscCommonExcel.g_clipboardExcel.copyProcessor.getBinaryForCopy(ws, wsView.objectRender);
+
+		// Block the right cell so pasted array cannot expand to the right
+		ws.getRange2("H1").setValue("X");
+
+		// 2) Paste into G1 where H1 blocks expansion - should collapse / show SPILL or richdata
+		ws.selectionRange.ranges = [getRange(6, 0, 6, 0)];
+		AscCommonExcel.g_clipboardExcel.pasteData(wsView, AscCommon.c_oAscClipboardDataFormat.Internal, base64);
+
+		var cellValueG1 = ws.getRange2("G1").getValue();
+		assert.ok(cellValueG1 === "#SPILL!" || cellValueG1 === "1", "G1 shows SPILL or collapsed representation when blocked");
+
+		var vmIndexG1 = getCellRichValueIndex(0, 6);
+		assert.ok(vmIndexG1 > 0, "G1 has richdata after paste into blocked area (collapsed)");
+
+		var cmIndexG1 = getCellMetadata(0, 6);
+		assert.ok(cmIndexG1 > 0, "G1 has metadata after collapsed paste");
+
+		clearData(0, 0, 100, 200);
+	});
+
 	QUnit.test("Test: \"Dynamic array add/delete with undo/redo\"", function (assert) {
 		clearData(0, 0, 100, 200);
 

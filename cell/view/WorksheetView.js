@@ -28342,16 +28342,26 @@ function isAllowPasteLink(pastedWb) {
 			var rangeF = arrFormula[i].range;
 			var valF = arrFormula[i].val;
 			var arrayRef = arrFormula[i].arrayRef;
+			let cmIndex = arrFormula[i].cm;
+			let dynamicRangeProps;
+			if (cmIndex != null && arrayRef && AscCommonExcel.bIsSupportDynamicArrays) {
+				let beforeSpillRange = null;
+				if(!ws.model.dynamicArrayManager.isAutoExpandBBox(arrayRef)) {
+					beforeSpillRange = arrayRef;
+					arrayRef = new Asc.Range(arrayRef.c1, arrayRef.r1, arrayRef.c1, arrayRef.r1);
+				}
+				dynamicRangeProps = {range: arrayRef, beforeSpillRange: beforeSpillRange};
+			}
 
 			if (arrFormula[i].ca) {
 				AscCommonExcel.g_cCalcRecursion.setCellPasteValue(arrFormula[i].oldValue);
 			}
 			//***array-formula***
 			if (arrayRef && window['AscCommonExcel'].bIsSupportArrayFormula) {
-				var rangeFormulaArray = ws.model.getRange3(arrayRef.r1, arrayRef.c1, arrayRef.r2, arrayRef.c2);
+				var rangeFormulaArray = ws.model.getRange3(arrayRef.r1, arrayRef.c1,  arrayRef.r2, arrayRef.c2);
 				rangeFormulaArray.setValue(valF, function (r) {
 					//ret = r;
-				}, true, arrayRef);
+				}, true, arrayRef, null, dynamicRangeProps);
 				History.Add(AscCommonExcel.g_oUndoRedoArrayFormula, AscCH.historyitem_ArrayFromula_AddFormula,
 					ws.model.getId(), new Asc.Range(arrayRef.c1, arrayRef.r1, arrayRef.c2, arrayRef.r2),
 					new AscCommonExcel.UndoRedoData_ArrayFormula(arrayRef, valF));
@@ -29566,6 +29576,7 @@ function isAllowPasteLink(pastedWb) {
 					var offset, arrayOffset;
 					var arrayFormulaRef = needOperation === null && formulaProps.cell && formulaProps.cell.formulaParsed ? formulaProps.cell.formulaParsed.getArrayFormulaRef() :
 						null;
+					let cmIndex = arrayFormulaRef ? formulaProps.cell.formulaParsed.cm : null;
 					var cellAddress = new AscCommon.CellAddress(sId);
 					if (specialPasteProps.transpose && transposeRange) {
 						//для transpose необходимо брать offset перевернутого range
@@ -29590,7 +29601,7 @@ function isAllowPasteLink(pastedWb) {
 						if (arrayFormulaRef) {
 							arrayFormulaRef = arrayFormulaRef.clone();
 
-							if (!formulaProps.fromRange.containsRange(arrayFormulaRef)) {
+							if (cmIndex == null && !formulaProps.fromRange.containsRange(arrayFormulaRef)) {
 								arrayFormulaRef = arrayFormulaRef.intersection(formulaProps.fromRange);
 							}
 
@@ -29634,7 +29645,8 @@ function isAllowPasteLink(pastedWb) {
 								val: "=" + assemb,
 								arrayRef: arrayFormulaRef,
 								ca: oFromCell.getFormulaParsed().ca,
-								oldValue: oFromCell.getNumberValue()
+								oldValue: oFromCell.getNumberValue(),
+								cm: cmIndex
 							};
 						}
 					}
