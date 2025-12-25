@@ -901,6 +901,66 @@
 		return new ApiCaretAnnotation(oAnnot);
 	};
 
+	/**
+	 * Creates redact annotation.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @param {Rect | Quad[]} rect - region to apply redact.
+	 * @returns {ApiRedactAnnotation}
+	 * @see office-js-api/Examples/PDF/Api/Methods/CreateRedactAnnot.js
+	 */
+	Api.prototype.CreateRedactAnnot = function(rect) {
+		let oDoc = private_GetLogicDocument();
+		rect = AscBuilder.GetArrayParameter(rect, []);
+
+		if (!private_IsValidRect(rect) && !rect.find(function(quad) {return private_IsValidQuad(quad)})) {
+			AscBuilder.throwException("The rect parameter must be a valid rect or quad");
+		}
+
+		let aQuads;
+		let _rect;
+		if (private_IsValidRect(rect)) {
+			aQuads = [private_ConvertRectToQuad(rect)];
+			_rect = rect;
+		}
+		else if (private_IsValidQuad(rect)) {
+			let minX = Infinity, maxX = -Infinity;
+			let minY = Infinity, maxY = -Infinity;
+
+			for (let i = 0; i < rect.length; i++) {
+				for (let j = 0; j < rect.length; j += 2) {
+					let x = rect[i][j];
+					let y = rect[i][j + 1];
+
+					if (x < minX) minX = x;
+					if (x > maxX) maxX = x;
+					if (y < minY) minY = y;
+					if (y > maxY) maxY = y;
+				}
+			}
+
+			aQuads = rect;
+			_rect = [minX, minY, maxX, maxY];
+		}
+
+		let oProps = {
+			rect:           _rect,
+			name:           AscCommon.CreateGUID(),
+			type:           AscPDF.ANNOTATIONS_TYPES.Redact,
+			creationDate:   new Date().getTime(),
+			modDate:        new Date().getTime(),
+			hidden:         false
+		}
+
+		let oAnnot = AscPDF.CreateAnnotByProps(oProps, oDoc);
+
+		oAnnot.SetQuads(aQuads);
+		oAnnot.SetFillColor([0, 0, 0]);
+		oAnnot.SetBorderColor([1, 0, 0]);
+
+		return new ApiRedactAnnotation(oAnnot);
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiDocument
@@ -1170,6 +1230,26 @@
 		}
 	};
 
+	/**
+	 * Applies added redact.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/PDF/ApiDocument/Methods/ApplyRedact.js
+	 */
+	ApiDocument.prototype.ApplyRedact = function() {
+		let hasRedact = !!this.Document.annots.find(function(annot) {
+			return annot.IsRedact() && !annot.GetRedactId();
+		});
+
+		if (!hasRedact) {
+			AscBuilder.throwException("Has no redact to apply");
+		}
+
+		this.Document.ApplyRedact();
+		return true;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiPage
@@ -1270,7 +1350,18 @@
 	 * @see office-js-api/Examples/PDF/ApiPage/Methods/GetAnnots.js
 	 */
 	ApiPage.prototype.GetAnnots = function() {
-		return this.Page.annots.map(private_GetAnnotApi);
+		let aAnnots = this.Page.GetAnnots();
+
+		let aResult = [];
+		for (let i = 0; i < aAnnots.length; i++) {
+			if (aAnnots[i].IsRedact() && aAnnots[i].GetRedactId()) {
+				continue;
+			}
+
+			aResult.push(private_GetAnnotApi(aAnnots[i]));
+		}
+		
+		return aResult;
 	};
 
 	/**
@@ -4736,6 +4827,42 @@
 		return "caretAnnot";
 	};
 
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiRedactAnnotation
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a redact annotation.
+	 * @constructor
+	 * @typeofeditors ["PDFE"]
+	 * @extends {ApiBaseMarkupAnnotation}
+	 */
+	function ApiRedactAnnotation(oAnnot) {
+		ApiBaseMarkupAnnotation.call(this, oAnnot);
+	}
+
+	ApiRedactAnnotation.prototype = Object.create(ApiBaseMarkupAnnotation.prototype);
+	ApiRedactAnnotation.prototype.constructor = ApiRedactAnnotation;
+
+	/**
+	 * Returns a type of the ApiRedactAnnotation class.
+	 * @memberof ApiRedactAnnotation
+	 * @typeofeditors ["PDFE"]
+	 * @returns {"redactAnnot"}
+	 * @see office-js-api/Examples/PDF/ApiRedactAnnotation/Methods/GetClassType.js
+	 */
+	ApiRedactAnnotation.prototype.GetClassType = function() {
+		return "redactAnnot";
+	};
+
+	private_WrapClassMethods(ApiRedactAnnotation, function(method, args) {
+		if (this.Annot.GetRedactId()) {
+			AscBuilder.throwException("This Redact annot is already applied and can't be used");
+		}
+	});
+
 	function private_GetLogicDocument() {
 		return Asc.editor.getPDFDoc();
 	}
@@ -5163,6 +5290,9 @@
 			case AscPDF.ANNOTATIONS_TYPES.Caret: {
 				return new ApiCaretAnnotation(annot);
 			}
+			case AscPDF.ANNOTATIONS_TYPES.Redact: {
+				return new ApiRedactAnnotation(annot);
+			}
 		}
 	}
 
@@ -5265,6 +5395,43 @@
 		];
 	}
 
+	function private_WrapClassMethods(Class, before) {
+		let target = Class.prototype;
+		let proto = target;
+		let seen = Object.create(null);
+
+		while (proto && proto !== Object.prototype) {
+			Object.getOwnPropertyNames(proto).forEach(function(key) {
+				if (key === 'constructor') return;
+				if (seen[key]) return;
+				seen[key] = true;
+
+				let desc = Object.getOwnPropertyDescriptor(proto, key);
+				if (!desc || typeof desc.value !== 'function') return;
+
+				let own = Object.getOwnPropertyDescriptor(target, key);
+				if (own && typeof own.value === 'function' && own.value.__wrapped__) return;
+
+				let original = desc.value;
+
+				function wrapped() {
+					if (before && before.call(this, key, arguments) === false) return;
+					return original.apply(this, arguments);
+				}
+				wrapped.__wrapped__ = true;
+
+				Object.defineProperty(target, key, {
+					value: wrapped,
+					writable: true,
+					enumerable: desc.enumerable,
+					configurable: true
+				});
+			});
+
+			proto = Object.getPrototypeOf(proto);
+		}
+	}
+
 	// Api
 	Api.prototype["GetDocument"]							= Api.prototype.GetDocument;
 	Api.prototype["CreateRGBColor"]							= Api.prototype.CreateRGBColor;
@@ -5281,6 +5448,7 @@
 	Api.prototype["CreateStrikeoutAnnot"]					= Api.prototype.CreateStrikeoutAnnot;
 	Api.prototype["CreateUnderlineAnnot"]					= Api.prototype.CreateUnderlineAnnot;
 	Api.prototype["CreateCaretAnnot"]						= Api.prototype.CreateCaretAnnot;
+	Api.prototype["CreateRedactAnnot"]						= Api.prototype.CreateRedactAnnot;
 
 	// ApiDocument
 	ApiDocument.prototype["GetClassType"]					= ApiDocument.prototype.GetClassType;
@@ -5297,6 +5465,7 @@
 	ApiDocument.prototype["AddListboxField"]				= ApiDocument.prototype.AddListboxField;
 	ApiDocument.prototype["GetAllFields"]					= ApiDocument.prototype.GetAllFields;
 	ApiDocument.prototype["GetFieldByName"]					= ApiDocument.prototype.GetFieldByName;
+	ApiDocument.prototype["ApplyRedact"]					= ApiDocument.prototype.ApplyRedact;
 
 	// ApiPage
 	ApiPage.prototype["GetClassType"]						= ApiPage.prototype.GetClassType;
@@ -5545,6 +5714,9 @@
 
 	// ApiCaretAnnotation
 	ApiCaretAnnotation.prototype["GetClassType"]			= ApiCaretAnnotation.prototype.GetClassType;
+
+	// ApiRedactAnnotation
+	ApiRedactAnnotation.prototype["GetClassType"]			= ApiRedactAnnotation.prototype.GetClassType;
 
 }(window, null));
 

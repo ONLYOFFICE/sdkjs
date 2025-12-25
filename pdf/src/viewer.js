@@ -261,6 +261,9 @@
         AscCommon.History.Add(new CChangesPDFDocumentAnnotsContent(this, nPos, [oAnnot], false));
 		this.RedrawAnnots(oAnnot.IsTextMarkup());
 	};
+	CPageInfo.prototype.GetAnnots = function() {
+		return this.annots;
+	};
 	CPageInfo.prototype.AddField = function(oField, nPos) {
 		if (nPos == undefined) {
             nPos = this.fields.length;
