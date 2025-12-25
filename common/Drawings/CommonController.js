@@ -898,63 +898,80 @@
 							}
 						}
 					} else if (this.drawingObjects && this.drawingObjects.getWorksheetModel) {
+						const bCheckTextHyperlink = true;
+
+						let textHyperlinkId = null;
+						let textHyperlinkTooltip = "";
+						if (bCheckTextHyperlink) {
+							const oTextHyperlink = fCheckObjectHyperlink(drawing, x, y);
+							if (oTextHyperlink && typeof oTextHyperlink.Value === "string" && oTextHyperlink.Value.length > 0) {
+								textHyperlinkId = oTextHyperlink.GetValue();
+								textHyperlinkTooltip = oTextHyperlink.GetToolTip() || "";
+							}
+						}
+
 						oNvPr = drawing.getCNvProps();
-						var bHasLink = oNvPr && oNvPr.hlinkClick && oNvPr.hlinkClick.id !== null;
-						if (!drawing.selected && !e.CtrlKey && (bHasLink || drawing.hasJSAMacro())) {
+						let shapeHyperlinkId = null;
+						let shapeHyperlinkTooltip = "";
+						if (oNvPr && oNvPr.hlinkClick) {
+							shapeHyperlinkId = oNvPr.hlinkClick.id;
+							shapeHyperlinkTooltip = oNvPr.hlinkClick.tooltip;
+						}
+
+						if (!drawing.selected && !e.CtrlKey && (textHyperlinkId || shapeHyperlinkId || drawing.hasJSAMacro())) {
 							if (this.handleEventMode === HANDLE_EVENT_MODE_HANDLE) {
-								if (e.Button === AscCommon.g_mouse_button_right) {
-									return false;
-								}
-								return true;
-							} else {
-								if (bHasLink) {
-									var _link = oNvPr.hlinkClick.id;
-									var sLink2;
-									if (_link.search('#') === 0) {
-										sLink2 = _link.replace('#', '');
-									} else {
-										sLink2 = _link;
-									}
-									var oHyperlink = AscFormat.ExecuteNoHistory(function () {
-										return new ParaHyperlink();
-									}, this, []);
-									oHyperlink.Value = sLink2;
-									oHyperlink.ToolTip = oNvPr.hlinkClick.tooltip;
-									if (hit_in_text_rect) {
-										return {
-											objectId: drawing.Get_Id(),
-											cursorType: "text",
-											content: drawing.getDocContent ? drawing.getDocContent() : null,
-											bMarker: false,
-											hyperlink: oHyperlink,
-											macro: null
-										};
-									} else {
-										return {
-											objectId: drawing.Get_Id(),
-											cursorType: "move",
-											bMarker: false,
-											hyperlink: oHyperlink,
-											macro: null
-										};
-									}
-								} else if (drawing.hasJSAMacro()) {
-									return {
-										objectId: drawing.Get_Id(),
-										cursorType: "pointer",
-										bMarker: false,
-										hyperlink: null,
-										macro: drawing.getJSAMacroId()
-									};
-								}
+								return e.Button !== AscCommon.g_mouse_button_right;
+							}
+
+							if (textHyperlinkId) {
+								const hyperlink = AscFormat.ExecuteNoHistory(function () {
+									return new ParaHyperlink();
+								}, this, []);
+								hyperlink.Value = textHyperlinkId;
+								hyperlink.ToolTip = textHyperlinkTooltip;
+
+								return {
+									objectId: drawing.Get_Id(),
+									cursorType: hit_in_text_rect ? "text" : "move",
+									content: drawing.getDocContent ? drawing.getDocContent() : null,
+									bMarker: false,
+									hyperlink: hyperlink,
+									macro: null
+								};
+							}
+
+							if (shapeHyperlinkId) {
+								const hyperlink = AscFormat.ExecuteNoHistory(function () {
+									return new ParaHyperlink();
+								}, this, []);
+								hyperlink.Value = shapeHyperlinkId.search('#') === 0
+									? shapeHyperlinkId.replace('#', '')
+									: shapeHyperlinkId;
+								hyperlink.ToolTip = shapeHyperlinkTooltip;
+
+								return {
+									objectId: drawing.Get_Id(),
+									cursorType: hit_in_text_rect ? "text" : "move",
+									content: hit_in_text_rect && drawing.getDocContent ? drawing.getDocContent() : null,
+									bMarker: false,
+									hyperlink: hyperlink,
+									macro: null
+								};
+							}
+
+							if (drawing.hasJSAMacro()) {
+								return {
+									objectId: drawing.Get_Id(),
+									cursorType: "pointer",
+									bMarker: false,
+									hyperlink: null,
+									macro: drawing.getJSAMacroId()
+								};
 							}
 						}
 					}
-					if (this.handleEventMode === HANDLE_EVENT_MODE_HANDLE) {
-						return false;
-					} else {
-						return null;
-					}
+
+					return this.handleEventMode !== HANDLE_EVENT_MODE_HANDLE;
 				},
 
 				getAllSignatures: function () {
@@ -3413,7 +3430,10 @@
 					}
 					else {
 						const editorId = Asc.editor.getEditorId();
-						if (editorId === AscCommon.c_oEditorId.Presentation || editorId === AscCommon.c_oEditorId.Word) {
+						const isSupportedEditor = editorId === AscCommon.c_oEditorId.Presentation ||
+							editorId === AscCommon.c_oEditorId.Word ||
+							editorId === AscCommon.c_oEditorId.Spreadsheet;
+						if (isSupportedEditor) {
 							let aSelectedObjects = this.getSelectedArray();
 							if(aSelectedObjects.length === 1) {
 								let oDrawing = aSelectedObjects[0];
@@ -3451,7 +3471,10 @@
 					}
 					else {
 						const editorId = Asc.editor.getEditorId();
-						if (editorId === AscCommon.c_oEditorId.Presentation || editorId === AscCommon.c_oEditorId.Word) {
+						const isSupportedEditor = editorId === AscCommon.c_oEditorId.Presentation ||
+							editorId === AscCommon.c_oEditorId.Word ||
+							editorId === AscCommon.c_oEditorId.Spreadsheet;
+						if (isSupportedEditor) {
 							let aSelectedObjects = this.getSelectedArray();
 							if(aSelectedObjects.length === 1) {
 								let oDrawing = aSelectedObjects[0];
@@ -3485,7 +3508,10 @@
 					}
 					else {
 						const editorId = Asc.editor.getEditorId();
-						if (editorId === AscCommon.c_oEditorId.Presentation || editorId === AscCommon.c_oEditorId.Word) {
+						const isSupportedEditor = editorId === AscCommon.c_oEditorId.Presentation ||
+							editorId === AscCommon.c_oEditorId.Word ||
+							editorId === AscCommon.c_oEditorId.Spreadsheet;
+						if (isSupportedEditor) {
 							if(HyperProps.Value) {
 								let aSelectedObjects = this.getSelectedArray();
 								if(aSelectedObjects.length === 1) {
@@ -3534,7 +3560,10 @@
 					}
 					else {
 						const editorId = Asc.editor.getEditorId();
-						if (editorId === AscCommon.c_oEditorId.Presentation || editorId === AscCommon.c_oEditorId.Word) {
+						const isSupportedEditor = editorId === AscCommon.c_oEditorId.Presentation ||
+							editorId === AscCommon.c_oEditorId.Word ||
+							editorId === AscCommon.c_oEditorId.Spreadsheet;
+						if (isSupportedEditor) {
 							if(HyperProps.Value) {
 								let aSelectedObjects = this.getSelectedArray();
 								if(aSelectedObjects.length === 1) {

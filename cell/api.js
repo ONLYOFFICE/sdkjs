@@ -5111,11 +5111,6 @@ var editor;
 		oController.onInkDrawerChangeState();
 	};
 
-  spreadsheet_api.prototype.asc_canAddShapeHyperlink = function() {
-    var ws = this.wb.getWorksheet();
-    return ws.objectRender.controller.canAddHyperlink();
-  };
-
   spreadsheet_api.prototype.asc_canGroupGraphicsObjects = function() {
     var ws = this.wb.getWorksheet();
     return ws.objectRender.controller.canGroup();
@@ -6351,15 +6346,20 @@ var editor;
 
   };
 
+	spreadsheet_api.prototype.asc_canAddShapeHyperlink = function () {
+		const ws = this.wb.getWorksheet();
+		return ws.objectRender.controller.canAddHyperlink();
+	};
+
 	spreadsheet_api.prototype.asc_insertHyperlink = function (options) {
 		AscFonts.FontPickerByCharacter.checkText(options.text, this, function () {
 			this.wb.insertHyperlink(options);
 		});
 	};
 
-  spreadsheet_api.prototype.asc_removeHyperlink = function() {
-    this.wb.removeHyperlink();
-  };
+	spreadsheet_api.prototype.asc_removeHyperlink = function () {
+		this.wb.removeHyperlink();
+	};
 
   spreadsheet_api.prototype.asc_getFullHyperlinkLength = function(str) {
     return window["AscCommonExcel"].getFullHyperlinkLength(str);
