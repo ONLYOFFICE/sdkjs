@@ -13809,6 +13809,7 @@ function isAllowPasteLink(pastedWb) {
 		if (!objectInfo.hyperlink && !oDocContent) {
 			const selectedObject = graphicObjects && graphicObjects.length > 0 ? graphicObjects[0] : null;
 			if (selectedObject) {
+				objectInfo.lockText = true;
 				const cNvProps = selectedObject.getCNvProps && selectedObject.getCNvProps();
 				const hasHyperlink = cNvProps && cNvProps.hlinkClick && typeof cNvProps.hlinkClick.id === "string" && cNvProps.hlinkClick.id.length > 0;
 				if (hasHyperlink) {
