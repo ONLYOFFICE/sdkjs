@@ -6734,8 +6734,8 @@ PasteProcessor.prototype =
 					let oXfrm = oTableFrame.spPr.xfrm;
 					oXfrm.setExtX(dWidth);
 					oXfrm.setExtY(dHeight);
-					oXfrm.setOffX(0);
-					oXfrm.setOffY(0);
+					oXfrm.setOffX((oPresentation.GetWidthMM() - dWidth) / 2.0);
+					oXfrm.setOffY((oPresentation.GetHeightMM() - dHeight) / 2.0);
 					aCopyObjects.push(new DrawingCopyObject(oTableFrame, 0, 0, dWidth, dHeight));
 				}
 
@@ -6745,8 +6745,8 @@ PasteProcessor.prototype =
 					let oXfrm = oImage.spPr.xfrm;
 					let dWidth = oXfrm.extX;
 					let dHeight = oXfrm.extY;
-					oXfrm.setOffX(0);
-					oXfrm.setOffY(0);
+					oXfrm.setOffX((oPresentation.GetWidthMM() - dWidth) / 2.0);
+					oXfrm.setOffY((oPresentation.GetHeightMM() - dHeight) / 2.0);
 					aCopyObjects.push(new DrawingCopyObject(oImage, 0, 0, dWidth, dHeight));
 				}
 
@@ -12426,7 +12426,24 @@ PasteProcessor.prototype =
 				if (nWidth && nHeight && sSrc) {
 					sSrc = oThis.oImages[sSrc];
 					if (sSrc) {
-						var image = AscFormat.DrawingObjectsController.prototype.createImage(sSrc, 0, 0, nWidth,
+
+						let presentation = Asc.editor.getLogicDocument();
+						let posX = 0;
+						let posY = 0;
+						if (presentation && presentation.GetWidthMM && presentation.GetHeightMM) {
+							let slideW = presentation.GetWidthMM();
+							let slideH = presentation.GetHeightMM();
+							let scaleX = slideW / nWidth;
+							let scaleY = slideH / nHeight;
+							let scale = Math.min(scaleX, scaleY, 1);
+							nWidth = nWidth * scale;
+							nHeight = nHeight * scale;
+
+							posX = (slideW - nWidth) / 2;
+							posY = (slideH - nHeight) / 2;
+
+						}
+						var image = AscFormat.DrawingObjectsController.prototype.createImage(sSrc, posX, posY, nWidth,
 							nHeight);
 						arrImages.push(image);
 						oThis.arrDrawingsPasteOrder.push(image);
