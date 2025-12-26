@@ -5201,7 +5201,7 @@ function (window, undefined) {
 				break;
 			case AscCH.historyitem_ArrayFromula_DeleteFormula:
 				if (bUndo) {
-					range.setValue(formula, null, null, bbox, null, cmIndex != null ? bbox : null);
+					range.setValue(formula, null, null, bbox, null, {cmIndex: cmIndex, vmIndex: vmIndex, range: bbox});
 				}
 				break;
 		}

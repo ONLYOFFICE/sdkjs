@@ -3333,6 +3333,9 @@
 		}
 
 		const oldMetadata = this.metadata.clone();
+		const oldRichValueData = this.richValueData ? this.richValueData.clone() : null;
+		const oldRichValueStructures = this.richValueStructures ? this.richValueStructures.clone() : null;
+		const oldRichValueTypesInfo = this.richValueTypesInfo ? this.richValueTypesInfo.clone() : null;
 		const meta = this.metadata;
 		const cellMetadataBlock = meta.cellMetadata[cmIndex - 1];
 		
@@ -3463,8 +3466,14 @@
 								this.richValueTypesInfo = null;
 							}
 							const newRichValueData = this.richValueData ? this.richValueData.clone() : null;
+							const newRichValueStructures = this.richValueStructures ? this.richValueStructures.clone() : null;
+							const newRichValueTypesInfo = this.richValueTypesInfo ? this.richValueTypesInfo.clone() : null;
 							AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_RichValueData,
 								null, null, new UndoRedoData_FromTo(oldRichValueData, newRichValueData));
+							AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_RichValueStructures,
+								null, null, new UndoRedoData_FromTo(oldRichValueStructures, newRichValueStructures));
+							AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_RichValueTypesInfo,
+								null, null, new UndoRedoData_FromTo(oldRichValueTypesInfo, newRichValueTypesInfo));
 						}
 						
 						meta.aFutureMetadata.splice(i, 1);
@@ -3510,6 +3519,8 @@
 
 		const oldMetadata = this.metadata.clone();
 		const oldRichValueData = this.richValueData ? this.richValueData.clone() : null;
+		const oldRichValueStructures = this.richValueStructures ? this.richValueStructures.clone() : null;
+		const oldRichValueTypesInfo = this.richValueTypesInfo ? this.richValueTypesInfo.clone() : null;
 		const meta = this.metadata;
 		const valueMetadataBlock = meta.valueMetadata[vmIndex - 1];
 		
@@ -3575,11 +3586,18 @@
 									this.richValueStructures = null;
 									this.richValueTypesInfo = null;
 								}
+								const newRichValueData = this.richValueData ? this.richValueData.clone() : null;
+								const newRichValueStructures = this.richValueStructures ? this.richValueStructures.clone() : null;
+								const newRichValueTypesInfo = this.richValueTypesInfo ? this.richValueTypesInfo.clone() : null;
+								AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_RichValueData,
+									null, null, new UndoRedoData_FromTo(oldRichValueData, newRichValueData));
+								AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_RichValueStructures,
+									null, null, new UndoRedoData_FromTo(oldRichValueStructures, newRichValueStructures));
+								AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_RichValueTypesInfo,
+									null, null, new UndoRedoData_FromTo(oldRichValueTypesInfo, newRichValueTypesInfo));
 							}
 
 							if (futureMetadata.futureMetadataBlocks.length === 0) {
-								meta.aFutureMetadata.splice(i, 1);
-								
 								let hasTypeReferences = false;
 								for (let j = 0; j < meta.valueMetadata.length; j++) {
 									if (meta.valueMetadata[j].t === valueMetadataBlock.t) {
@@ -3640,13 +3658,8 @@
 			this.metadata = null;
 		}
 
-		const newRichValueData = this.richValueData ? this.richValueData.clone() : null;
-
 		AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_Metadata,
 			null, null, new UndoRedoData_FromTo(oldMetadata, newMetadata));
-		
-		AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_RichValueData,
-			null, null, new UndoRedoData_FromTo(oldRichValueData, newRichValueData));
 	};
 	Workbook.prototype.addImages = function (aImages, obj) {
 		const oApi = Asc.editor;
