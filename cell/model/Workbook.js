@@ -25893,6 +25893,7 @@
 
 			// If not found — create new rich value and metadata as before
 			if (needGenerateVm) {
+				const oldRichValueData = this.ws.workbook.richValueData ? this.ws.workbook.richValueData.clone() : null;
 				// Initialize richValueData if needed
 				if (!this.ws.workbook.richValueData) {
 					const oldRichValueData = null;
@@ -25900,8 +25901,6 @@
 					this.ws.workbook.richValueData = new AscCommonExcel.CRichValueData();
 					this.ws.workbook.richValueData.pData = [];
 				}
-
-				const oldRichValueData = this.ws.workbook.richValueData ? this.ws.workbook.richValueData.clone() : null;
 				
 				// Create rich value with error data
 				const richValue = new AscCommonExcel.CRichValue();

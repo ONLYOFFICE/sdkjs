@@ -235,13 +235,15 @@ $(function () {
 		ws.removeCols(c1, c2);
 	};
 
-	function checkUndoRedo(fBefore, fAfter, desc) {
+	function checkUndoRedo(fBefore, fAfter, desc, skipLastUndo) {
 		fAfter("after_" + desc);
 		AscCommon.History.Undo();
 		fBefore("undo_" + desc);
 		AscCommon.History.Redo();
 		fAfter("redo_" + desc);
-		AscCommon.History.Undo();
+		if (!skipLastUndo) {
+			AscCommon.History.Undo();
+		}
 	}
 
 	function compareData (assert, range, data, desc) {
@@ -5336,6 +5338,240 @@ $(function () {
 		wsView.applyFillHandle(0, 0, false);
 
 		checkUndoRedo(checkExpandedState2, checkDeletedState, "Autofill over head cell - array delete");
+	});
+
+	QUnit.test("Test: \"Dynamic array undo/redo with expand, collapse, and blocked states\"", function (assert) {
+		clearData(0, 0, 100, 200);
+
+		var flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		var checkEmptyState = function (desc) {
+			var cellValueA1 = ws.getRange2("A1").getValue();
+			var cellValueA2 = ws.getRange2("A2").getValue();
+			var cellValueB1 = ws.getRange2("B1").getValue();
+			assert.strictEqual(cellValueA1, "", desc + ": A1 is empty");
+			assert.strictEqual(cellValueA2, "", desc + ": A2 is empty");
+			assert.strictEqual(cellValueB1, "", desc + ": B1 is empty");
+
+			var cmIndexA1 = getCellMetadata(0, 0);
+			assert.ok(!cmIndexA1 || cmIndexA1 === 0, desc + ": A1 has no metadata");
+
+			var vmIndexA1 = getCellRichValueIndex(0, 0);
+			assert.ok(!vmIndexA1 || vmIndexA1 === 0, desc + ": A1 has no richdata");
+
+			var metadata = getMetadata();
+			assert.ok(metadata == null, desc + ": metadata is null");
+
+			var richValueData = getRichValueData();
+			assert.ok(richValueData == null, desc + ": richValueData is null");
+
+			var richValueStructures = getRichValueStructures();
+			assert.ok(richValueStructures == null, desc + ": richValueStructures is null");
+
+			var richValueTypesInfo = getRichValueTypesInfo();
+			assert.ok(richValueTypesInfo == null, desc + ": richValueTypesInfo is null");
+		};
+
+		var checkExpandedState = function (desc) {
+			var cellValueA1 = ws.getRange2("A1").getValue();
+			var cellValueA2 = ws.getRange2("A2").getValue();
+			var cellValueB1 = ws.getRange2("B1").getValue();
+			var cellValueB2 = ws.getRange2("B2").getValue();
+			assert.strictEqual(cellValueA1, "1", desc + ": A1 has value 1");
+			assert.strictEqual(cellValueA2, "3", desc + ": A2 has value 3");
+			assert.strictEqual(cellValueB1, "2", desc + ": B1 has value 2");
+			assert.strictEqual(cellValueB2, "4", desc + ": B2 has value 4");
+
+			var cmIndexA1 = getCellMetadata(0, 0);
+			assert.ok(cmIndexA1 > 0, desc + ": A1 has metadata");
+
+			var vmIndexA1 = getCellRichValueIndex(0, 0);
+			assert.ok(!vmIndexA1 || vmIndexA1 === 0, desc + ": A1 has no richdata (expanded)");
+
+			var arrayRef = _getArrayFormulaRef("A1");
+			assert.ok(arrayRef != null, desc + ": A1 has array reference");
+			assert.strictEqual(arrayRef.r1, 0, desc + ": Array starts at row 0");
+			assert.strictEqual(arrayRef.c1, 0, desc + ": Array starts at col 0");
+			assert.strictEqual(arrayRef.r2, 1, desc + ": Array ends at row 1");
+			assert.strictEqual(arrayRef.c2, 1, desc + ": Array ends at col 1");
+
+			var metadata = getMetadata();
+			assert.ok(metadata != null, desc + ": metadata exists");
+
+			var richValueData = getRichValueData();
+			assert.ok(richValueData == null, desc + ": richValueData is null (expanded)");
+
+			var richValueStructures = getRichValueStructures();
+			assert.ok(richValueStructures == null, desc + ": richValueStructures is null (expanded)");
+
+			var richValueTypesInfo = getRichValueTypesInfo();
+			assert.ok(richValueTypesInfo == null, desc + ": richValueTypesInfo is null (expanded)");
+		};
+
+		var checkCollapsedState = function (desc) {
+			var cellValueA1 = ws.getRange2("A1").getValue();
+			var cellValueB1 = ws.getRange2("B1").getValue();
+			assert.strictEqual(cellValueA1, "#SPILL!", desc + ": A1 shows SPILL error");
+			assert.strictEqual(cellValueB1, "block", desc + ": B1 has blocking value");
+
+			var cmIndexA1 = getCellMetadata(0, 0);
+			assert.ok(cmIndexA1 > 0, desc + ": A1 has metadata");
+
+			var vmIndexA1 = getCellRichValueIndex(0, 0);
+			assert.ok(vmIndexA1 > 0, desc + ": A1 has richdata (collapsed)");
+
+			var metadata = getMetadata();
+			assert.ok(metadata != null, desc + ": metadata exists");
+
+			var richValueData = getRichValueData();
+			assert.ok(richValueData != null, desc + ": richValueData exists (collapsed)");
+			assert.ok(richValueData.pData && richValueData.pData.length > 0, desc + ": richValueData has pData array");
+			var richValue = richValueData.getRichValue(vmIndexA1 - 1);
+			assert.ok(richValue != null, desc + ": richValue exists for A1");
+			assert.ok(richValue.s != null, desc + ": richValue has structure index");
+			assert.ok(richValue.arrV && richValue.arrV.length > 0, desc + ": richValue has values array");
+
+			var richValueStructures = getRichValueStructures();
+			assert.ok(richValueStructures != null, desc + ": richValueStructures exists (collapsed)");
+			assert.ok(richValueStructures.children && richValueStructures.children.length > 0, desc + ": richValueStructures has children");
+			var structure = richValueStructures.getValueStructure(richValue.s);
+			assert.ok(structure != null, desc + ": structure exists");
+			assert.ok(structure.t != null, desc + ": structure has type");
+
+			var richValueTypesInfo = getRichValueTypesInfo();
+			assert.ok(richValueTypesInfo != null, desc + ": richValueTypesInfo exists (collapsed)");
+		};
+
+		var checkBlockedState = function (desc) {
+			var cellValueA1 = ws.getRange2("A1").getValue();
+			var cellValueB1 = ws.getRange2("B1").getValue();
+			assert.strictEqual(cellValueA1, "#SPILL!", desc + ": A1 shows SPILL error");
+			assert.strictEqual(cellValueB1, "block", desc + ": B1 has blocking value");
+
+			var cmIndexA1 = getCellMetadata(0, 0);
+			assert.ok(cmIndexA1 > 0, desc + ": A1 has metadata");
+
+			var vmIndexA1 = getCellRichValueIndex(0, 0);
+			assert.ok(vmIndexA1 > 0, desc + ": A1 has richdata (blocked from start)");
+
+			var metadata = getMetadata();
+			assert.ok(metadata != null, desc + ": metadata exists");
+
+			var richValueData = getRichValueData();
+			assert.ok(richValueData != null, desc + ": richValueData exists (blocked)");
+
+			var richValueStructures = getRichValueStructures();
+			assert.ok(richValueStructures != null, desc + ": richValueStructures exists (blocked)");
+
+			var richValueTypesInfo = getRichValueTypesInfo();
+			assert.ok(richValueTypesInfo != null, desc + ": richValueTypesInfo exists (blocked)");
+		};
+
+		var checkBlockedEmptyState = function (desc) {
+			var cellValueA1 = ws.getRange2("A1").getValue();
+			var cellValueB1 = ws.getRange2("B1").getValue();
+			assert.strictEqual(cellValueA1, "", desc + ": A1 is empty");
+			assert.strictEqual(cellValueB1, "block", desc + ": B1 still has blocking value");
+
+			var cmIndexA1 = getCellMetadata(0, 0);
+			assert.ok(!cmIndexA1 || cmIndexA1 === 0, desc + ": A1 has no metadata");
+
+			var vmIndexA1 = getCellRichValueIndex(0, 0);
+			assert.ok(!vmIndexA1 || vmIndexA1 === 0, desc + ": A1 has no richdata");
+
+			var metadata = getMetadata();
+			assert.ok(metadata == null, desc + ": metadata is null");
+
+			var richValueData = getRichValueData();
+			assert.ok(richValueData == null, desc + ": richValueData is null");
+		};
+
+		checkEmptyState("Initial state");
+
+		var formula = "=SEQUENCE(2,2)";
+		var fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		var fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		checkExpandedState("After adding array");
+
+		checkUndoRedo(checkEmptyState, checkExpandedState, "Array expand", true);
+
+		ws.getRange2("B1").setValue("block");
+
+		checkCollapsedState("After blocking B1");
+
+		checkUndoRedo(checkExpandedState, checkCollapsedState, "Array collapse");
+
+		var checkSecondBlockedState = function (desc) {
+			var cellValueE1 = ws.getRange2("E1").getValue();
+			var cellValueF1 = ws.getRange2("F1").getValue();
+			assert.strictEqual(cellValueE1, "#SPILL!", desc + ": E1 shows SPILL error");
+			assert.strictEqual(cellValueF1, "data", desc + ": F1 has blocking value");
+
+			var cmIndexE1 = getCellMetadata(0, 4);
+			assert.ok(cmIndexE1 > 0, desc + ": E1 has metadata");
+
+			var vmIndexE1 = getCellRichValueIndex(0, 4);
+			assert.ok(vmIndexE1 > 0, desc + ": E1 has richdata (collapsed)");
+
+			var metadata = getMetadata();
+			assert.ok(metadata != null, desc + ": metadata exists");
+
+			var richValueData = getRichValueData();
+			assert.ok(richValueData != null, desc + ": richValueData exists (collapsed)");
+		};
+
+		var checkSecondBlockedEmptyState = function (desc) {
+			var cellValueE1 = ws.getRange2("E1").getValue();
+			var cellValueF1 = ws.getRange2("F1").getValue();
+			assert.strictEqual(cellValueE1, "", desc + ": E1 is empty");
+			assert.strictEqual(cellValueF1, "data", desc + ": F1 still has blocking value");
+
+			var cmIndexE1 = getCellMetadata(0, 4);
+			assert.ok(!cmIndexE1 || cmIndexE1 === 0, desc + ": E1 has no metadata");
+
+			var vmIndexE1 = getCellRichValueIndex(0, 4);
+			assert.ok(!vmIndexE1 || vmIndexE1 === 0, desc + ": E1 has no richdata");
+
+			var metadata = getMetadata();
+			assert.ok(metadata != null, desc + ": metadata is no null");
+
+			var richValueData = getRichValueData();
+			assert.ok(richValueData == null, desc + ": richValueData is null");
+		};
+
+		ws.getRange2("F1").setValue("data");
+		fillRange = ws.getRange2("E1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("E1").getValueForEdit2();
+		fragment[0].setFragmentText("=SEQUENCE(1,2)");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		checkSecondBlockedState("Second blocked insert");
+
+
+		checkUndoRedo(checkSecondBlockedEmptyState, checkSecondBlockedState, "Second blocked insert undo/redo");
+
+		clearData(0, 0, 100, 200);
+
+		ws.getRange2("B1").setValue("block");
+
+		fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		checkBlockedState("After adding blocked array");
+
+		checkUndoRedo(checkBlockedEmptyState, checkBlockedState, "Blocked array add");
+
+		clearData(0, 0, 10, 20);
 	});
 
 	QUnit.module("Sheet structure");

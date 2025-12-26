@@ -16554,9 +16554,6 @@ function isAllowPasteLink(pastedWb) {
 								break;
                         }
 
-						// recalculate all volatile arrays on page
-						t.model.dynamicArrayManager.recalculateVolatileArrays();
-
 
 						t.model.excludeHiddenRows(false);
 
@@ -16573,6 +16570,9 @@ function isAllowPasteLink(pastedWb) {
                         if (val === c_oAscCleanOptions.All || val === c_oAscCleanOptions.Text) {
                             t.model.checkChangeTablesContent(range.bbox);
                         }
+
+						// recalculate all volatile arrays on page
+						t.model.dynamicArrayManager.recalculateVolatileArrays();
 
                         /* возвращаем отрисовку. и перерисовываем ячейки с предварительным пересчетом */
                         t.model.workbook.dependencyFormulas.unlockRecal();
