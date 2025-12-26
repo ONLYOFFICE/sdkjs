@@ -13806,6 +13806,22 @@ function isAllowPasteLink(pastedWb) {
             }
         }
 
+		if (!objectInfo.hyperlink && !oDocContent) {
+			const selectedObject = graphicObjects && graphicObjects.length > 0 ? graphicObjects[0] : null;
+			if (selectedObject) {
+				const cNvProps = selectedObject.getCNvProps && selectedObject.getCNvProps();
+				const hasHyperlink = cNvProps && cNvProps.hlinkClick && typeof cNvProps.hlinkClick.id === "string" && cNvProps.hlinkClick.id.length > 0;
+				if (hasHyperlink) {
+					const hyperlink = new AscCommonExcel.Hyperlink();
+					hyperlink.Hyperlink = cNvProps.hlinkClick.id;
+					if (cNvProps.hlinkClick.tooltip) {
+						hyperlink.Tooltip = cNvProps.hlinkClick.tooltip;
+					}
+					objectInfo.hyperlink = new asc_CHyperlink(hyperlink);
+				}
+			}
+		}
+
         var align = new AscCommonExcel.Align();
         align.setAlignHorizontal(horAlign);
         align.setReadingOrder(readingOrder);
