@@ -1892,7 +1892,7 @@ RotateState.prototype =
                                         aDrawingsToSelect.push({drawing: original.GraphicObj, pageIndex: pageIndex});
                                     }
                                 }
-                                this.drawingObjects.document.Recalculate();
+                                this.drawingObjects.document.Recalculate(true);
                             }
                             for(let drawingIdx = 0; drawingIdx < aDrawingsToSelect.length; ++drawingIdx)
                             {
