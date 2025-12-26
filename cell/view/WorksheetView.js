@@ -19157,9 +19157,7 @@ function isAllowPasteLink(pastedWb) {
 				this.workbook.MacrosAddData(AscDFH.historydescription_Spreadsheet_SetCellFormula, AscCommonExcel.getFragmentsText(val));
 			else
 				this.workbook.MacrosAddData(AscDFH.historydescription_Spreadsheet_SetCellValue, AscCommonExcel.getFragmentsText(val));
-
-			//beforeSpillRange
-
+			
 			// set the value to the selected range
 			c.setValue(AscCommonExcel.getFragmentsText(val), function (r) {
 				ret = r;
@@ -19408,11 +19406,6 @@ function isAllowPasteLink(pastedWb) {
 					//vm="1"  + aca + ca -> not collapsed + not autoExpand
 					//cm="1" vm="1" -> collapsed + autoExpand (after open and save -> aca + ca automatically added)
 
-					t.model._getCell(c.bbox.r1, c.bbox.c1, function (cell) {
-						let test = 1;
-					});
-
-
 					// let beforeExternalReferences = t.getExternalReferencesByCell(c, null, true);
 					let bRes = t._saveCellValueAfterEdit(c, val, flags, /*isNotHistory*/false, /*lockDraw*/false);
 
@@ -19483,7 +19476,6 @@ function isAllowPasteLink(pastedWb) {
 						temporarySetValue();
 					}
 				}
-
 
 				//***array-formula***
 				let ref = null;

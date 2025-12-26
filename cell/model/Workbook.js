@@ -14853,7 +14853,6 @@
 				if (formulaIndex > 0) {
 					this.formulaParsed = wb.workbookFormulas.get(formulaIndex);
 				}
-
 				if (1 === flagValue) {
 					this.number = sheetMemory.getFloat64(this.nRow, 8);
 				} else if (2 === flagValue) {
