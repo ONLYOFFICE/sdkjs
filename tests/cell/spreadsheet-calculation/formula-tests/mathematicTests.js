@@ -10370,7 +10370,7 @@ $(function () {
 
 		oParser = new parserFormula("LCM(0,39,52)", "A1", ws);
 		assert.ok(oParser.parse());
-		//? assert.strictEqual(oParser.calculate().getValue(), 0);
+		assert.strictEqual(oParser.calculate().getValue(), 0);
 
 		oParser = new parserFormula("LCM(24,36,15)", "A1", ws);
 		assert.ok(oParser.parse());
@@ -10406,7 +10406,6 @@ $(function () {
 		ws2.getRange2("B18").setValue("-0.8"); // TestNameArea3D2
 
 		// Positive cases:
-
 		// Case #1: Number(2). Basic case with two positive integers. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM(12,18)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM(12,18) is parsed.');
@@ -10418,7 +10417,7 @@ $(function () {
 		// Case #3: Number, Empty. Second argument is empty. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM(8,)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM(8,) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 8, 'Test: Positive case 3: Number, Empty. Second argument is empty. 2 of 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 8, 'Test: Positive case 3: Number, Empty. Second argument is empty. 2 of 2 arguments used.');
 		// Case #4: Number, Formula. Second argument is a formula. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM(20, SQRT(100))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM(20, SQRT(100)) is parsed.');
@@ -10430,11 +10429,11 @@ $(function () {
 		// Case #6: Reference link(2). Arguments as reference links. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM(A100,A101)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM(A100,A101) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Positive case 6: Reference link(2). Arguments as reference links. 2 of 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Positive case 6: Reference link(2). Arguments as reference links. 2 of 2 arguments used.');
 		// Case #7: Area(2). Arguments as single-cell areas. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM(A102:A102,A103:A103)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM(A102:A102,A103:A103) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Positive case 7: Area(2). Arguments as single-cell areas. 2 of 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Positive case 7: Area(2). Arguments as single-cell areas. 2 of 2 arguments used.');
 		// Case #8: Array(2). Arguments as single-element arrays. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM({12},{18})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM({12},{18}) is parsed.');
@@ -10448,13 +10447,13 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: LCM(TestName1,TestName2) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Positive case 10: Name(2). Arguments as named ranges. 2 of 2 arguments used.');
 		// Case #11: Name3D(2). Arguments as 3D-named ranges. 2 of 2 arguments used.
-		oParser = new parserFormula('LCM(TestName3D1,TestName3D2)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: LCM(TestName3D1,TestName3D2) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Positive case 11: Name3D(2). Arguments as 3D-named ranges. 2 of 2 arguments used.');
+		oParser = new parserFormula('LCM(TestName3D,TestName3D2)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: LCM(TestName3D,TestName3D2) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Test: Positive case 11: Name3D(2). Arguments as 3D-named ranges. 2 of 2 arguments used.');
 		// Case #12: Ref3D(2). Arguments as 3D references. 2 of 2 arguments used.
 		oParser = new parserFormula("LCM(Sheet2!A1,Sheet2!A2)", 'A2', ws);
 		assert.ok(oParser.parse(), "Test: LCM(Sheet2!A1,Sheet2!A2) is parsed.");
-		//? assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Positive case 12: Ref3D(2). Arguments as 3D references. 2 of 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Positive case 12: Ref3D(2). Arguments as 3D references. 2 of 2 arguments used.');
 		// Case #13: Area3D(2). Arguments as 3D-area references. 2 of 2 arguments used.
 		oParser = new parserFormula("LCM(Sheet2!A1:A1,Sheet2!A2:A2)", 'A2', ws);
 		assert.ok(oParser.parse(), "Test: LCM(Sheet2!A1:A1,Sheet2!A2:A2) is parsed.");
@@ -10466,7 +10465,7 @@ $(function () {
 		// Case #15: Number(2). One argument is zero. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM(0,5)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM(0,5) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Positive case 15: Number(2). One argument is zero. 2 of 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Positive case 15: Number(2). One argument is zero. 2 of 2 arguments used.');
 		// Case #16: Number(2). Arguments are ones. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM(1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM(1,1) is parsed.');
@@ -10474,11 +10473,11 @@ $(function () {
 		// Case #17: Number(2). Large numbers. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM(1E+100,1E+100)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM(1E+100,1E+100) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Test: Positive case 17: Number(2). Large numbers. 2 of 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Test: Positive case 17: Number(2). Large numbers. 2 of 2 arguments used.');
 		// Case #18: Number(2). Very small numbers. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM(1E-100,1E-100)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM(1E-100,1E-100) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Positive case 18: Number(2). Very small numbers. 2 of 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Positive case 18: Number(2). Very small numbers. 2 of 2 arguments used.');
 		// Case #19: Formula(2). Arguments as formulas. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM(2*3,3*4)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM(2*3,3*4) is parsed.');
@@ -10492,11 +10491,11 @@ $(function () {
 		// Case #1: String, Boolean. Second argument is boolean. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM("12",TRUE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM("12",TRUE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case 1: String, Boolean. Second argument is boolean. 2 of 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case 1: String, Boolean. Second argument is boolean. 2 of 2 arguments used.');
 		// Case #2: Boolean, Number. First argument is boolean. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM(FALSE,12)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM(FALSE,12) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case 2: Boolean, Number. First argument is boolean. 2 of 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case 2: Boolean, Number. First argument is boolean. 2 of 2 arguments used.');
 		// Case #3: String(2). Non-numeric strings. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM("A","B")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM("A","B") is parsed.');
@@ -10504,7 +10503,7 @@ $(function () {
 		// Case #4: Empty, String. First argument empty, second non-numeric. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM(,"ABC")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM(,"ABC") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case 4: Empty, String. First argument empty, second non-numeric. 2 of 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case 4: Empty, String. First argument empty, second non-numeric. 2 of 2 arguments used.');
 		// Case #5: Number, Error. Second argument is an error. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM(12,#N/A)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM(12,#N/A) is parsed.');
@@ -10540,11 +10539,11 @@ $(function () {
 		// Case #13: Array, Boolean. Array with boolean. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM({TRUE},12)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM({TRUE},12) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case 13: Array, Boolean. Array with boolean. 2 of 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case 13: Array, Boolean. Array with boolean. 2 of 2 arguments used.');
 		// Case #14: Area, Boolean. Area with boolean. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM(A110:A111,12)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM(A110:A111,12) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Test: Negative case 14: Area, Boolean. Area with boolean. 2 of 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Test: Negative case 14: Area, Boolean. Area with boolean. 2 of 2 arguments used.');
 		// Case #15: Name, Boolean. Named range with boolean. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM(TestNameBool,12)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM(TestNameBool,12) is parsed.');
@@ -10564,21 +10563,21 @@ $(function () {
 		// Case #19: Number(2). Numbers exceeding Excel\'s limit. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM(1E+307,1E+307)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM(1E+307,1E+307) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case 19: Number(2). Numbers exceeding Excel\'s limit. 2 of 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case 19: Number(2). Numbers exceeding Excel\'s limit. 2 of 2 arguments used.');
 
 		// Bounded cases:
 		// Case #1: Number(2). Maximum allowed number. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM(1,1E+307)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM(1,1E+307) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case 1: Number(2). Maximum allowed number. 2 of 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case 1: Number(2). Maximum allowed number. 2 of 2 arguments used.');
 		// Case #2: Number(2). Minimum allowed number. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM(1E-307,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM(1E-307,1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Bounded case 2: Number(2). Minimum allowed number. 2 of 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Bounded case 2: Number(2). Minimum allowed number. 2 of 2 arguments used.');
 		// Case #3: Number(2). Both arguments zero. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM(0,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM(0,0) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Bounded case 3: Number(2). Both arguments zero. 2 of 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Bounded case 3: Number(2). Both arguments zero. 2 of 2 arguments used.');
 		// Case #4: Number(2). Large but valid integers. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM(2^20,2^20)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM(2^20,2^20) is parsed.');
@@ -10586,14 +10585,19 @@ $(function () {
 		// Case #5: Number(2). Extremely small numbers. 2 of 2 arguments used.
 		oParser = new parserFormula('LCM(1E-100,1E-100)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: LCM(1E-100,1E-100) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Bounded case 5: Number(2). Extremely small numbers. 2 of 2 arguments used.');
-
-		// TODO Note: Fix are ready, it will remove the bugs after merge
-		// Need to fix: error check, empty check, zero and negative val check, array and cellsRange internal checks
-		// Different result with MS
-		// Case #3: Number, Empty. Case #6: Reference link(2). Case #7: Area(2) Case #11: Name3D(2). Case #12: Ref3D(2). Case #15: Number(2). Case #17: Number(2).
-		// Case #1: String, Boolean. Case #2: Boolean, Number. Case #4: Empty, String. Case #13: Array, Boolean. Case #14: Area, Boolean. Case #19: Number(2).
-		// Case #1: Number(2). Case #2: Number(2). Case #3: Number(2).  Case #5: Number(2).
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Bounded case 5: Number(2). Extremely small numbers. 2 of 2 arguments used.');
+		// Case #6: Number. Large integer near MAX
+		oParser = new parserFormula('LCM(2^53)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: LCM(2^53) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), Math.pow(2,53), 'Test: Bounded case 5: Number. Large integer near MAX');
+		// Case #7: Number. Large MAX integer
+		oParser = new parserFormula('LCM(2^53+1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: LCM(2^53+1) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), Math.pow(2,53) + 1, 'Test: Bounded case 5: Number. Large MAX integer');
+		// Case #8: Number(2). More than large MAX integer
+		oParser = new parserFormula('LCM(2^53+2)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: LCM(2^53+2) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Test: Bounded case 5: Number. More than large MAX integer.');
 
 
 		testArrayFormula2(assert, "LCM", 1, 8, null, true);
