@@ -36,9 +36,9 @@
 	 * @constructor
      * @extends {CBaseField}
 	 */
-    function CTextField(sName, aRect)
+    function CTextField(sName, aRect, oDoc)
     {
-        AscPDF.CBaseField.call(this, sName, AscPDF.FIELD_TYPES.text, aRect);
+        AscPDF.CBaseField.call(this, sName, AscPDF.FIELD_TYPES.text, aRect, oDoc);
         
         this._alignment         = AscPDF.ALIGN_TYPE.left;
         this._charLimit         = 0;
@@ -58,10 +58,10 @@
 
         // internal
         AscCommon.History.StartNoHistoryMode();
-		this.content = new AscPDF.CTextBoxContent(this, Asc.editor.getPDFDoc());
+		this.content = new AscPDF.CTextBoxContent(this, oDoc);
         // content for formatting value
         // Note: draw this content instead of main if form has a "format" action
-		this.contentFormat = new AscPDF.CTextBoxContent(this, Asc.editor.getPDFDoc(), true);
+		this.contentFormat = new AscPDF.CTextBoxContent(this, oDoc, true);
         AscCommon.History.EndNoHistoryMode();
 
         this._scrollInfo = null;
@@ -71,8 +71,8 @@
     AscFormat.InitClass(CTextField, AscPDF.CBaseField, AscDFH.historyitem_type_Pdf_Text_Field);
 
     CTextField.prototype.SetComb = function(bComb) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (oParent) {
             return oParent.SetComb(bComb);
         }
 
@@ -119,8 +119,8 @@
         return true;
     };
     CTextField.prototype.IsComb = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent) {
             return oParent.IsComb();
         }
 
@@ -134,8 +134,8 @@
         return false;
     };
     CTextField.prototype.SetCharLimit = function(nChars) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (oParent) {
             oParent.SetCharLimit(nChars);
             return false;
         }
@@ -170,16 +170,16 @@
         return true;
     };
     CTextField.prototype.GetCharLimit = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent) {
             return oParent.GetCharLimit();
         }
 
         return this._charLimit;
     };
     CTextField.prototype.SetDoNotScroll = function(bNot) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (oParent) {
             oParent.SetDoNotScroll(bNot);
             return;
         }
@@ -191,15 +191,15 @@
         this.SetNeedRecalc(true);
     };
     CTextField.prototype.IsDoNotScroll = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
             return oParent.IsDoNotScroll();
 
         return this._doNotScroll;
     };
     CTextField.prototype.SetDoNotSpellCheck = function(bNot) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (oParent) {
             oParent.SetDoNotSpellCheck(bNot);
             return;
         }
@@ -211,15 +211,15 @@
         this.SetNeedRecalc(true);
     };
     CTextField.prototype.IsDoNotSpellCheck = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
             return oParent.IsDoNotSpellCheck();
 
         return this._doNotSpellCheck;
     };
     CTextField.prototype.SetFileSelect = function(bFileSelect) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (oParent) {
             oParent.SetFileSelect(bFileSelect);
             return;
         }
@@ -242,15 +242,15 @@
         this.SetNeedRecalc(true);
     };
     CTextField.prototype.IsFileSelect = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
             return oParent.IsFileSelect();
 
         return this._fileSelect;
     };
     CTextField.prototype.SetMultiline = function(bMultiline) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (oParent) {
             oParent.SetMultiline(bMultiline);
             return;
         }
@@ -298,15 +298,15 @@
         this.SetNeedRecalc(true);
     };
     CTextField.prototype.IsMultiline = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
             return oParent.IsMultiline();
 
         return this._multiline;
     };
     CTextField.prototype.SetPassword = function(bPassword) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (oParent)
             return oParent.SetPassword(bPassword);
         
         if (this.IsPassword() == bPassword || (bPassword && (this.IsMultiline() || this.IsComb()))) {
@@ -329,8 +329,8 @@
         this.SetWasChanged(true);
     };
     CTextField.prototype.IsPassword = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
             return oParent.IsPassword();
 
         return this._password;
@@ -350,7 +350,7 @@
 			if (isOnOpen != true)
 				this.SetWasChanged(true);
 			
-			if (isOnOpen == true && !this.GetParent())
+			if (isOnOpen == true && !this.GetParent(true))
 				this.SetParentValue(sValue);
 			
 			this.UpdateDisplayValue(sValue);
@@ -457,7 +457,7 @@
         if (this.IsWidget() || this.IsAllKidsWidgets()) {
             oWidget = this.GetKid(0) || this;
         }
-        let oCalcTrigget = oWidget.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Calculate);
+        let oCalcTrigget = oWidget.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Calculate);
         if (oCalcTrigget == null || nIdx < 0)
             return false;
 
@@ -496,7 +496,7 @@
         this.Recalculate();
         this.DrawBackground(oGraphicsPDF);
                 
-        let oContentToDraw = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format) && this.IsNeedDrawHighlight() ? this.contentFormat : this.content;
+        let oContentToDraw = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) && this.IsNeedDrawHighlight() ? this.contentFormat : this.content;
         this.curContent = oContentToDraw; // запоминаем текущий контент
 
         if (this.IsMultiline() == true) {
@@ -672,7 +672,7 @@
         };
     };
     CTextField.prototype.IsDateFormat = function() {
-        let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
+        let oFormatTrigger      = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format);
         let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
         if (oActionRunScript && (oActionRunScript.script.startsWith('AFDate_Format') || oActionRunScript.script.startsWith('AFDate_FormatEx'))) {
             return true;
@@ -681,7 +681,7 @@
         return false;
     };
     CTextField.prototype.IsNumberFormat = function() {
-        let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
+        let oFormatTrigger      = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format);
         let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
         let sScript             = oActionRunScript ? oActionRunScript.GetScript() : "";
 
@@ -692,7 +692,7 @@
         return false;
     };
     CTextField.prototype.GetDateFormat = function() {
-        let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
+        let oFormatTrigger      = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format);
         let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
         if (oActionRunScript && oActionRunScript.script.startsWith('AFDate_Format')) {
             const regex = /(AFDate_Format|AFDate_FormatEx)\(["']([^"']+)["']\)/;
@@ -708,9 +708,9 @@
         return "";
     };
     CTextField.prototype.ClearFormat = function() {
-        this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, []);
-        this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, []);
-        this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Validate, []);
+        this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Format, []);
+        this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, []);
+        this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Validate, []);
 
         const oCurMeta = this.GetMeta();
         if (oCurMeta['regular']) {
@@ -721,8 +721,8 @@
         this.SetFormatValue(undefined);
     };
     CTextField.prototype.GetFormatType = function() {
-        let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
-        let oKeystrokeTrigger   = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke);
+        let oFormatTrigger      = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format);
+        let oKeystrokeTrigger   = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Keystroke);
         let oFormatScript       = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
         let oKeystrokeScript    = oKeystrokeTrigger ? oKeystrokeTrigger.GetActions()[0] : null;
         let sFormatScript       = oFormatScript ? oFormatScript.GetScript(): "";
@@ -867,8 +867,8 @@
         }
         
         if (false == [AscPDF.FormatType.NONE, AscPDF.FormatType.CUSTOM].includes(this.GetFormatType())) {
-            let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
-            let oKeystrokeTrigger   = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke);
+            let oFormatTrigger      = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format);
+            let oKeystrokeTrigger   = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Keystroke);
             let oFormatScript       = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
             let oKeystrokeScript    = oKeystrokeTrigger ? oKeystrokeTrigger.GetActions()[0] : null;
             let sFormatScript       = oFormatScript ? oFormatScript.GetScript(): "";
@@ -879,7 +879,7 @@
         }
     };
     CTextField.prototype.GetValidateType = function() {
-        let oValidateTrigger     = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Validate);
+        let oValidateTrigger     = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Validate);
         let oActionRunScript    = oValidateTrigger ? oValidateTrigger.GetActions()[0] : null;
         let sScript             = oActionRunScript ? oActionRunScript.GetScript(): "";
         if (!sScript) {
@@ -934,7 +934,7 @@
         }
 
         if (false == [AscPDF.ValidateType.NONE, AscPDF.ValidateType.CUSTOM].includes(this.GetValidateType())) {
-            let oValidateTrigger    = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Validate);
+            let oValidateTrigger    = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Validate);
             let oActionRunScript    = oValidateTrigger.GetActions()[0]
             let sScript             = oActionRunScript.GetScript();
 
@@ -955,7 +955,7 @@
         if (sPlaceholder) {
             if (sPrevPlaceholder) {
                 // start on blur action to apply placeholder
-                let oFocusTrigger = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
+                let oFocusTrigger = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
                 let oRunScriptAction = oFocusTrigger.GetActions()[0];
                 oRunScriptAction.Do();
             }
@@ -981,11 +981,11 @@
                 "S": AscPDF.ACTIONS_TYPES.JavaScript,
                 "JS": sBlurScript
             }];
-            this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus, aActionsFocus);
-            this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.OnBlur, aActionsBlur);
+            this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.OnFocus, aActionsFocus);
+            this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.OnBlur, aActionsBlur);
 
             // start on blur action to apply placeholder
-            let oBlurTrigger = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.OnBlur);
+            let oBlurTrigger = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.OnBlur);
             let oRunScriptAction = oBlurTrigger.GetActions()[0];
             oRunScriptAction.Do();
         }
@@ -1000,14 +1000,14 @@
                 "JS": sBlurScript
             }];
 
-            this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.OnBlur, aActionsBlur);
+            this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.OnBlur, aActionsBlur);
             // start on blur action to apply placeholder
-            let oBlurTrigger = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.OnBlur);
+            let oBlurTrigger = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.OnBlur);
             let oRunScriptAction = oBlurTrigger.GetActions()[0];
             oRunScriptAction.Do();
 
-            this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus, []);
-            this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.OnBlur, []);
+            this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.OnFocus, []);
+            this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.OnBlur, []);
         }
     };
     CTextField.prototype.SetRegularExp = function(sReg) {
@@ -1030,12 +1030,12 @@
                 "JS": sValidateScript
             }];
             
-            this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Validate, aActionsFocus);
-            this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, []);
-            this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, []);
+            this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Validate, aActionsFocus);
+            this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Format, []);
+            this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, []);
         }
         else {
-            this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Validate, []);
+            this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Validate, []);
         }
     };
     CTextField.prototype.SetArbitaryMask = function(sMask) {
@@ -1044,15 +1044,15 @@
                 "S": AscPDF.ACTIONS_TYPES.JavaScript,
                 "JS": 'AFSpecial_KeystrokeEx("' + sMask + '");'
             }];
-            this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
-            this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Format, []);
+            this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, aActionsKeystroke);
+            this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Format, []);
         }
         else {
-            this.SetActions(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, []);
+            this.SetActions(AscPDF.PDF_TRIGGERS_TYPES.Keystroke, []);
         }
     };
     CTextField.prototype.IsSpecialKeystroke = function() {
-        let oKeystrokeTrigger   = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke);
+        let oKeystrokeTrigger   = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Keystroke);
         let oKeystrokeScript    = oKeystrokeTrigger ? oKeystrokeTrigger.GetActions()[0] : null;
         let sKeystrokeScript    = oKeystrokeScript ? oKeystrokeScript.GetScript(): "";
         
@@ -1344,7 +1344,7 @@
             }
         }
 
-        let oOnFocus = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
+        let oOnFocus = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
         // вызываем выставление курсора после onFocus. Если уже в фокусе, тогда сразу.
         if (false == isInFocus && oOnFocus && oOnFocus.Actions.length > 0)
             oActionsQueue.callbackAfterFocus = callbackAfterFocus.bind(this, x, y, e);
@@ -1352,10 +1352,10 @@
             callbackAfterFocus.bind(this, x, y, e)();
 
         if (isInFocus) {
-            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
+            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseDown);
         }
         else {
-            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown, AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
+            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseDown, AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
         }
     };
     CTextField.prototype.onMouseUp = function(x, y, e) {
@@ -1374,7 +1374,7 @@
             }
         }
 
-        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseUp);
+        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseUp);
         oDoc.Viewer.onUpdateOverlay();
     };
     CTextField.prototype.ScrollVertical = function(scrollY, maxYscroll) {
@@ -1717,7 +1717,7 @@
         if (!oKeystrokeEvent["rc"])
 			return false;
 		
-        let oKeystrokeTrigger = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke);
+        let oKeystrokeTrigger = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Keystroke);
         if (oKeystrokeTrigger) {
             aChars = AscWord.CTextFormFormat.prototype.GetBuffer(oKeystrokeEvent["change"]);
         }
@@ -1893,7 +1893,7 @@
         this.SetNeedCommit(false);
     };
 	CTextField.prototype.DoFormatAction = function() {
-        let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
+        let oFormatTrigger      = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format);
         let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
 
         // set invoker field
@@ -1913,7 +1913,7 @@
 			aChars = aChars.codePointsArray();
 
         let oDoc = this.GetDocument();
-        let oKeystrokeTrigger = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke);
+        let oKeystrokeTrigger = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Keystroke);
         let oActionRunScript = oKeystrokeTrigger ? oKeystrokeTrigger.GetActions()[0] : null;
         
         function GetSelectionRange(p)
@@ -1962,7 +1962,7 @@
         }
 
         let oEventPr = {
-            "name":         AscPDF.CFormTrigger.GetName(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke),
+            "name":         AscPDF.CPdfTrigger.GetName(AscPDF.PDF_TRIGGERS_TYPES.Keystroke),
             "target":       this.GetFormApi(),
             "value":        sValue,
             "change":       aChars.map(function(char) {
@@ -1989,7 +1989,7 @@
     CTextField.prototype.DoValidateAction = function(value) {
         let oDoc = this.GetDocument();
 
-        let oValidateTrigger = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Validate);
+        let oValidateTrigger = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Validate);
         let oValidateScript = oValidateTrigger ? oValidateTrigger.GetActions()[0] : null;
 
         if (oValidateScript == null)
@@ -1997,7 +1997,7 @@
 
         oDoc.isOnValidate = true;
         const oEvent = oValidateScript.RunScript({
-            "name": AscPDF.CFormTrigger.GetName(AscPDF.FORMS_TRIGGERS_TYPES.Validate),
+            "name": AscPDF.CPdfTrigger.GetName(AscPDF.PDF_TRIGGERS_TYPES.Validate),
             "target": this.GetFormApi(),
             "rc": true,
             "value": value
@@ -2066,7 +2066,7 @@
         this.content.Remove(nDirection, true, false, false, isCtrlKey);
 
         // скрипт keystroke мог поменять change значение, поэтому
-        let oKeystrokeTrigger = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke);
+        let oKeystrokeTrigger = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Keystroke);
         if (oKeystrokeTrigger) {
             this.InsertChars(AscWord.CTextFormFormat.prototype.GetBuffer(oKeystrokeEvent["change"].toString()));
         }

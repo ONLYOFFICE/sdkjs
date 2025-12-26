@@ -120,12 +120,12 @@
                 oCopy = new AscPDF.CAnnotationInk(AscCommon.CreateGUID(), this.GetRect().slice(), this.GetDocument());
                 break;
             }
-            case AscPDF.ANNOTATIONS_TYPES.Ink: {
-                oCopy = new AscPDF.CAnnotationInk(AscCommon.CreateGUID(), this.GetRect().slice(), this.GetDocument());
-                break;
-            }
             case AscPDF.ANNOTATIONS_TYPES.Line: {
                 oCopy = new AscPDF.CAnnotationLine(AscCommon.CreateGUID(), this.GetRect().slice(), this.GetDocument());
+                break;
+            }
+            case AscPDF.ANNOTATIONS_TYPES.Link: {
+                oCopy = new AscPDF.CAnnotationLink(AscCommon.CreateGUID(), this.GetRect().slice(), this.GetDocument());
                 break;
             }
             case AscPDF.ANNOTATIONS_TYPES.Polygon: {
@@ -164,6 +164,7 @@
         let aFillColor      = this.GetFillColor();
         let aRD             = this.GetRectangleDiff();
         let aDash           = this.GetDash();
+        let aQuads          = this.GetQuads && this.GetQuads();
 
         oCopy.SetAuthor(AscCommon.UserInfoParser.getCurrentName());
         oCopy.SetUserId(this.GetUserId());
@@ -182,7 +183,8 @@
         aFillColor && oCopy.SetFillColor(aFillColor.slice());
         aDash && oCopy.SetDash(aDash.slice());
         aRD && oCopy.SetRectangleDiff(aRD.slice());
-        
+        aQuads && oCopy.SetQuads(aQuads);
+
         // copy replies
         let oAscCommData = this.GetAscCommentData();
         if (oAscCommData) {
@@ -425,11 +427,59 @@
         this._borderEffectStyle = nStyle;
         this.SetWasChanged(true);
         this.SetNeedRecalc(true);
+        this.recalcGeometry();
+        if (nStyle == AscPDF.BORDER_EFFECT_STYLES.None) {
+            this.SetDefaultGeometry();
+        }
     };
     CAnnotationBase.prototype.GetBorderEffectStyle = function() {
         return this._borderEffectStyle;
     };
+    CAnnotationBase.prototype.SetDefaultGeometry = function() {};
+    CAnnotationBase.prototype.GetComplexBorderType = function() {
+        let nBorderStyle = this.GetBorder();
+        let aDash = this.GetDash();
+        let nBorderEffectStyle = this.GetBorderEffectStyle();
+        let nBorderEffectIntensity = this.GetBorderEffectIntensity();
 
+        let nComplexType = null;
+
+        if (AscPDF.BORDER_TYPES.solid == nBorderStyle) {
+            if (AscPDF.BORDER_EFFECT_STYLES.Cloud == nBorderEffectStyle) {
+                if (1 == nBorderEffectIntensity) {
+                    nComplexType = AscPDF.ANNOT_COMPLEX_BORDER_TYPES.cloud1;
+                }
+                else if (2 == nBorderEffectIntensity) {
+                    nComplexType = AscPDF.ANNOT_COMPLEX_BORDER_TYPES.cloud2;
+                }
+            }
+            else {
+                nComplexType = AscPDF.ANNOT_COMPLEX_BORDER_TYPES.solid;
+            }
+        }
+        else if (AscPDF.BORDER_TYPES.dashed == nBorderStyle) {
+            if (AscCommon.isEqualSortedArrays(aDash, AscPDF.ANNOT_BORDER_DASHED_VALUES.dash1)) {
+                nComplexType = AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash1;
+            }
+            else if (AscCommon.isEqualSortedArrays(aDash, AscPDF.ANNOT_BORDER_DASHED_VALUES.dash2)) {
+                nComplexType = AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash2;
+            }
+            else if (AscCommon.isEqualSortedArrays(aDash, AscPDF.ANNOT_BORDER_DASHED_VALUES.dash3)) {
+                nComplexType = AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash3;
+            }
+            else if (AscCommon.isEqualSortedArrays(aDash, AscPDF.ANNOT_BORDER_DASHED_VALUES.dash4)) {
+                nComplexType = AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash4;
+            }
+            else if (AscCommon.isEqualSortedArrays(aDash, AscPDF.ANNOT_BORDER_DASHED_VALUES.dash5)) {
+                nComplexType = AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash5;
+            }
+            else if (AscCommon.isEqualSortedArrays(aDash, AscPDF.ANNOT_BORDER_DASHED_VALUES.dash6)) {
+                nComplexType = AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash6;
+            }
+        }
+
+        return nComplexType;
+    };
     CAnnotationBase.prototype.DrawSelected = function() {};
     CAnnotationBase.prototype.SetName = function(sName) {
         if (sName == this._name) {
@@ -514,8 +564,9 @@
         return this._origPage;
     };
     CAnnotationBase.prototype.SetWasChanged = function(isChanged, viewSync) {
-        let oViewer   = Asc.editor.getDocumentRenderer();
-        let canChange = !oViewer.IsOpenAnnotsInProgress && AscCommon.History.CanAddChanges();
+        let oDoc        = Asc.editor.getPDFDoc();
+        let oViewer     = Asc.editor.getDocumentRenderer();
+        let canChange   = !oViewer.IsOpenAnnotsInProgress && oDoc.LocalHistory !== AscCommon.History && AscCommon.History.CanAddChanges();
 
         let prev    = this._wasChanged;
         let changed = prev !== isChanged && canChange;
@@ -792,6 +843,9 @@
     CAnnotationBase.prototype.IsStamp = function() {
         return false;
     };
+    CAnnotationBase.prototype.IsLink = function() {
+        return false;
+    };
     CAnnotationBase.prototype.SetNeedRecalc = function(bRecalc, bSkipAddToRedraw) {
         if (bRecalc == false) {
             this._needRecalc = false;
@@ -923,8 +977,8 @@
     CAnnotationBase.prototype.GetDisplay = function() {
         return this._display;
     };
-    CAnnotationBase.prototype.onMouseUp = function(e) {
-        if (e.button != 2) {
+    CAnnotationBase.prototype.onMouseUp = function(x, y, e) {
+        if (e.Button != 2) {
             this.GetDocument().ShowComment([this.GetId()]);
         }
     };
@@ -1007,7 +1061,11 @@
             return;
 
         this.Recalculate();
+        let aRect = this.GetRect();
+
+        oGraphicsWord.AddClipRect(aRect[0] * g_dKoef_pt_to_mm, aRect[1] * g_dKoef_pt_to_mm, (aRect[2] - aRect[0]) * g_dKoef_pt_to_mm, (aRect[3] - aRect[1]) * g_dKoef_pt_to_mm);
         this.draw(oGraphicsWord);
+        oGraphicsWord.RemoveLastClip();
 
         // draw annot rect
         // if (oGraphicsPDF) {
@@ -1236,6 +1294,12 @@
         return false;
     };
     CAnnotationBase.prototype.SetApIdx = function(nIdx) {
+        if (undefined != this._apIdx) {
+            return;
+        }
+
+        AscCommon.History.Add(new CChangesPDFAnnotApIdx(this, this._apIdx, nIdx));
+        
         this._apIdx = nIdx;
     };
     CAnnotationBase.prototype.GetApIdx = function() {
@@ -1275,14 +1339,14 @@
      * @returns {object}
 	 */
     CAnnotationBase.prototype.GetRGBColor = function(aInternalColor) {
-        let oColor = {};
+        let oColor = {
+            r: 255,
+            g: 255,
+            b: 255
+        };
 
         if (!aInternalColor || aInternalColor.length == 0) {
-            return {
-                r: 255,
-                g: 255,
-                b: 255
-            }
+            return oColor;
         }
         
         if (aInternalColor.length == 1) {
@@ -1309,6 +1373,9 @@
             }
 
             oColor = cmykToRgb(aInternalColor[0], aInternalColor[1], aInternalColor[2], aInternalColor[3]);
+        }
+        else if (aInternalColor.length > 4) {
+            return this.GetRGBColor(aInternalColor.slice(0, 3));
         }
 
         return oColor;
@@ -1415,11 +1482,13 @@
         // rect
         let aOrigRect = this.GetRect();
         if (this.IsStamp() && memory.docRenderer) {
+            let nScale = this.GetOriginViewScale();
+
             // for not clipping by half border width
-            memory.WriteDouble(aOrigRect[0] - nBorderW / 2); // x1
-            memory.WriteDouble(aOrigRect[1] - nBorderW / 2); // y1
-            memory.WriteDouble(aOrigRect[2] + nBorderW / 2); // x2
-            memory.WriteDouble(aOrigRect[3] + nBorderW / 2); // y2
+            memory.WriteDouble(aOrigRect[0] - (nBorderW / 2) * nScale); // x1
+            memory.WriteDouble(aOrigRect[1] - (nBorderW / 2) * nScale); // y1
+            memory.WriteDouble(aOrigRect[2] + (nBorderW / 2) * nScale); // x2
+            memory.WriteDouble(aOrigRect[3] + (nBorderW / 2) * nScale); // y2
         }
         else {
             memory.WriteDouble(aOrigRect[0]); // x1
@@ -1681,6 +1750,9 @@
                     if (aRC[i]["actual"]) {
                         nStyle |= (1 << 6);
                         memory.WriteString(aRC[i]["actual"]);
+                    }
+                    if (aRC[i]["rtl"]) {
+                        nStyle |= (1 << 7);
                     }
                     // запись флагов настроек шрифта
                     let nEndPos = memory.GetCurPosition();

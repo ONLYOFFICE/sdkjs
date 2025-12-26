@@ -203,7 +203,16 @@ var c_oAscSdtCheckBoxDefaults = {
 	CheckedSymbol   : 0x2612,
 	UncheckedSymbol : 0x2610,
 	CheckedFont     : "MS Gothic",
-	UncheckedFont   : "MS Gothic"
+	UncheckedFont   : "MS Gothic",
+	
+	FormCheckedFont   : "Segoe UI Symbol",
+	FormUncheckedFont : "Segoe UI Symbol",
+	
+	FormCheckedSymbol   : 0x2611,
+	FormUncheckedSymbol : 0x2610,
+	
+	FormCheckedRadioSymbol   : 0x25C9,
+	FormUncheckedRadioSymbol : 0x25CB
 };
 
 window["flat_desine"] = false;
@@ -350,7 +359,6 @@ var c_oAscDocumentShortcutType = {
 	TrademarkSign                 : 139,
 	HorizontalEllipsis            : 140,
 	ReplaceUnicodeToSymbol        : 141,
-	SoftHyphen                    : 142,
 	SpeechWorker                  : 143,
 	EditChart                     : 144,
 	InsertLineBreakMultilineForm  : 145,
@@ -495,10 +503,16 @@ window['AscCommon'].c_oSerFormat   = c_oSerFormat;
 window['AscCommon'].CurFileVersion = c_oSerFormat.Version;
 
 prot = window['Asc']['c_oAscSdtCheckBoxDefaults'] = window['Asc'].c_oAscSdtCheckBoxDefaults = c_oAscSdtCheckBoxDefaults;
-prot['CheckedSymbol']   = prot.CheckedSymbol;
-prot['UncheckedSymbol'] = prot.UncheckedSymbol;
-prot['CheckedFont']     = prot.CheckedFont;
-prot['UncheckedFont']   = prot.UncheckedFont;
+prot['CheckedSymbol']            = prot.CheckedSymbol;
+prot['UncheckedSymbol']          = prot.UncheckedSymbol;
+prot['CheckedFont']              = prot.CheckedFont;
+prot['UncheckedFont']            = prot.UncheckedFont;
+prot['FormCheckedFont']          = prot.FormCheckedFont;
+prot['FormUncheckedFont']        = prot.FormUncheckedFont;
+prot['FormCheckedSymbol']        = prot.FormCheckedSymbol;
+prot['FormUncheckedSymbol']      = prot.FormUncheckedSymbol;
+prot['FormCheckedRadioSymbol']   = prot.FormCheckedRadioSymbol;
+prot['FormUncheckedRadioSymbol'] = prot.FormUncheckedRadioSymbol;
 
 window['Asc']['NoYLimit'] = window['Asc'].NoYLimit = 0x7FFFFFFF;
 
@@ -648,7 +662,6 @@ prot['RegisteredSign']                = prot.RegisteredSign;
 prot['TrademarkSign']                 = prot.TrademarkSign;
 prot['HorizontalEllipsis']            = prot.HorizontalEllipsis;
 prot['ReplaceUnicodeToSymbol']        = prot.ReplaceUnicodeToSymbol;
-prot['SoftHyphen']                    = prot.SoftHyphen;
 prot['SpeechWorker']                  = prot.SpeechWorker;
 
 prot = window['Asc']['c_oAscDocumentRefenceToType'] = window['Asc'].c_oAscDocumentRefenceToType = c_oAscDocumentRefenceToType;

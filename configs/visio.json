@@ -28,6 +28,7 @@
 			"common/CollaborativeEditingBase.js",
 			"slide/Editor/CollaborativeEditing.js",
 			"common/macros.js",
+			"common/macro-recorder.js",
 			"common/apiBase.js",
 			"common/apiBase_plugins.js",
 			"word/apiCommon.js",
@@ -373,7 +374,11 @@
 			"visio/model/SerializeReader.js",
 			"visio/model/SerializeWriter.js",
 			
-			"word/Editor/document-visitor.js"
+			"word/Editor/document-visitor.js",
+			
+			"word/Editor/annotations/custom-text-annotator/custom-text-annotator.js",
+			"word/Editor/annotations/custom-text-annotator/range-marks.js",
+			"word/Editor/annotations/custom-text-annotator/text-annotator-manager.js"
 		],
 		"desktop": {
 			"min": [

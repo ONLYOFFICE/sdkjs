@@ -2046,7 +2046,7 @@ function CDrawingDocument()
 		}
 		else
 		{
-			if(_img.Status === ImageLoadStatus.Loading)
+			if(_img && _img.Status === ImageLoadStatus.Loading)
 			{
 
 			}
@@ -4375,7 +4375,7 @@ function CThumbnailsManager(editorPage)
 	// events
 	this.onMouseDown = function (e) {
 		const mobileTouchManager = oThis.m_oWordControl ? oThis.m_oWordControl.MobileTouchManagerThumbnails : null;
-		if (mobileTouchManager && mobileTouchManager.checkTouchEvent(e)) {
+		if (mobileTouchManager && mobileTouchManager.checkTouchEvent(e, true)) {
 			mobileTouchManager.startTouchingInProcess();
 			const res = mobileTouchManager.mainOnTouchStart(e);
 			mobileTouchManager.stopTouchingInProcess();
@@ -4563,7 +4563,7 @@ function CThumbnailsManager(editorPage)
 	this.onMouseMove = function(e)
 	{
 		let mobileTouchManager = oThis.m_oWordControl ? oThis.m_oWordControl.MobileTouchManagerThumbnails : null;
-		if (mobileTouchManager && mobileTouchManager.checkTouchEvent(e))
+		if (mobileTouchManager && mobileTouchManager.checkTouchEvent(e, true))
 		{
 			mobileTouchManager.startTouchingInProcess();
 			let res = mobileTouchManager.mainOnTouchMove(e);
@@ -4678,7 +4678,7 @@ function CThumbnailsManager(editorPage)
 	this.onMouseUp = function(e, bIsWindow)
 	{
 		let mobileTouchManager = oThis.m_oWordControl ? oThis.m_oWordControl.MobileTouchManagerThumbnails : null;
-		if (mobileTouchManager && mobileTouchManager.checkTouchEvent(e))
+		if (mobileTouchManager && mobileTouchManager.checkTouchEvent(e, true))
 		{
 			mobileTouchManager.startTouchingInProcess();
 			let res = mobileTouchManager.mainOnTouchEnd(e);
@@ -4821,14 +4821,6 @@ function CThumbnailsManager(editorPage)
 				bPreventDefault = false;
 				break;
 			}
-			case Asc.c_oAscPresentationShortcutType.Cut:
-			case Asc.c_oAscPresentationShortcutType.Copy:
-			case Asc.c_oAscPresentationShortcutType.Paste:
-			{
-				bReturnValue = undefined;
-				bPreventDefault = false;
-				break;
-			}
 			case Asc.c_oAscPresentationShortcutType.Duplicate:
 			{
 				if (oPresentation.CanEdit())
@@ -4870,6 +4862,9 @@ function CThumbnailsManager(editorPage)
 		}
 		if (!nShortCutAction)
 		{
+			if (AscCommon.isCopyPasteEvent(oEvent)) {
+				return;
+			}
 			switch (oEvent.KeyCode)
 			{
 				case 13: // enter

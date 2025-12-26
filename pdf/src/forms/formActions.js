@@ -31,7 +31,7 @@
  */
 
 (function(){
-    let FORMS_TRIGGERS_TYPES = {
+    let PDF_TRIGGERS_TYPES = {
         MouseUp:    0,
         MouseDown:  1,
         MouseEnter: 2,
@@ -72,18 +72,7 @@
         LastPage:   3
     }
 
-    let GOTO_TYPES = { // see description in pdf specification (table 151 destination syntax)
-        xyz:    0,
-        fit:    1,
-        fitH:   2,
-        fitV:   3,
-        fitR:   4,
-        fitB:   5,
-        fitBH:  6,
-        fitBV:  7
-    }
-
-    function CFormTriggers() {
+    function CPdfTriggers() {
         this.MouseUp = null; 
         this.MouseDown = null; 
         this.MouseEnter = null; 
@@ -96,8 +85,8 @@
         this.Format = null;
     }
     
-    CFormTriggers.prototype.Copy = function(oParentField) {
-        let oCopy = new CFormTriggers();
+    CPdfTriggers.prototype.Copy = function(oParentField) {
+        let oCopy = new CPdfTriggers();
         if (this.MouseUp != null)
             oCopy.MouseUp = this.MouseUp.Copy(oParentField); 
         if (this.MouseDown != null)
@@ -122,7 +111,7 @@
         return oCopy;
     }
 
-    function CFormTrigger(type, aActions) {
+    function CPdfTrigger(type, aActions) {
         this.type = type;
         this.parentField = null;
 
@@ -134,101 +123,101 @@
             action.SetParent(_t);
         });
     }
-    CFormTrigger.GetName = function(nType) {
+    CPdfTrigger.GetName = function(nType) {
         switch (nType) {
-            case AscPDF.FORMS_TRIGGERS_TYPES.MouseUp: {
+            case AscPDF.PDF_TRIGGERS_TYPES.MouseUp: {
                 return "Mouse Up";
             }
-            case AscPDF.FORMS_TRIGGERS_TYPES.MouseDown: {
+            case AscPDF.PDF_TRIGGERS_TYPES.MouseDown: {
                 return "Mouse Down";
             }
-            case AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter: {
+            case AscPDF.PDF_TRIGGERS_TYPES.MouseEnter: {
                 return "Mouse Enter";
             }
-            case AscPDF.FORMS_TRIGGERS_TYPES.MouseExit: {
+            case AscPDF.PDF_TRIGGERS_TYPES.MouseExit: {
                 return "Mouse Exit";
             }
-            case AscPDF.FORMS_TRIGGERS_TYPES.OnFocus: {
+            case AscPDF.PDF_TRIGGERS_TYPES.OnFocus: {
                 return "Focus";
             }
-            case AscPDF.FORMS_TRIGGERS_TYPES.OnBlur: {
+            case AscPDF.PDF_TRIGGERS_TYPES.OnBlur: {
                 return "Blur";
             }
-            case AscPDF.FORMS_TRIGGERS_TYPES.Keystroke: {
+            case AscPDF.PDF_TRIGGERS_TYPES.Keystroke: {
                 return "Keystroke";
             }
-            case AscPDF.FORMS_TRIGGERS_TYPES.Validate: {
+            case AscPDF.PDF_TRIGGERS_TYPES.Validate: {
                 return "Validate";
             }
-            case AscPDF.FORMS_TRIGGERS_TYPES.Calculate: {
+            case AscPDF.PDF_TRIGGERS_TYPES.Calculate: {
                 return "Calculate";
             }
-            case AscPDF.FORMS_TRIGGERS_TYPES.Format: {
+            case AscPDF.PDF_TRIGGERS_TYPES.Format: {
                 return "Format";
             }
         }
     };
-    CFormTrigger.prototype.Copy = function(oParentField) {
+    CPdfTrigger.prototype.Copy = function(oParentField) {
         let aActionsCopies = [];
         for (let i = 0; i < this.Actions.length; i++) {
             let action = this.Actions[i];
             aActionsCopies.push(action.Copy());
         }
 
-        let oCopy = new CFormTrigger(this.type, aActionsCopies);
+        let oCopy = new CPdfTrigger(this.type, aActionsCopies);
         oCopy.SetParentField(oParentField); 
 
         return oCopy;
     };
-    CFormTrigger.prototype.GetActions = function() {
+    CPdfTrigger.prototype.GetActions = function() {
         return this.Actions;
     };
-    CFormTrigger.prototype.GetType = function() {
+    CPdfTrigger.prototype.GetType = function() {
         return this.type;
     };
-    CFormTrigger.prototype.SetParentField = function(oField) {
+    CPdfTrigger.prototype.SetParentField = function(oField) {
         this.parentField = oField;
     };
-    CFormTrigger.prototype.GetParentField = function() {
+    CPdfTrigger.prototype.GetParentField = function() {
         return this.parentField;
     };
-    CFormTrigger.prototype.SetCallerField = function(oField) {
+    CPdfTrigger.prototype.SetCallerField = function(oField) {
         this.callerField = oField;
     };
-    CFormTrigger.prototype.GetCallerFiled = function() {
+    CPdfTrigger.prototype.GetCallerFiled = function() {
         return this.callerField || this.GetParentField();
     };
-    CFormTrigger.prototype.WriteToBinary = function(memory) {
+    CPdfTrigger.prototype.WriteToBinary = function(memory) {
         let nType = this.GetType();
         switch (nType) {
-            case AscPDF.FORMS_TRIGGERS_TYPES.MouseUp:
+            case AscPDF.PDF_TRIGGERS_TYPES.MouseUp:
                 memory.WriteString("A");
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.MouseDown:
+            case AscPDF.PDF_TRIGGERS_TYPES.MouseDown:
                 memory.WriteString("D");
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter:
+            case AscPDF.PDF_TRIGGERS_TYPES.MouseEnter:
                 memory.WriteString("E");
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.MouseExit:
+            case AscPDF.PDF_TRIGGERS_TYPES.MouseExit:
                 memory.WriteString("X");
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.OnFocus:
+            case AscPDF.PDF_TRIGGERS_TYPES.OnFocus:
                 memory.WriteString("Fo");
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.OnBlur:
+            case AscPDF.PDF_TRIGGERS_TYPES.OnBlur:
                 memory.WriteString("Bl");
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.Keystroke:
+            case AscPDF.PDF_TRIGGERS_TYPES.Keystroke:
                 memory.WriteString("K");
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.Validate:
+            case AscPDF.PDF_TRIGGERS_TYPES.Validate:
                 memory.WriteString("V");
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.Calculate:
+            case AscPDF.PDF_TRIGGERS_TYPES.Calculate:
                 memory.WriteString("C");
                 break;
-            case AscPDF.FORMS_TRIGGERS_TYPES.Format:
+            case AscPDF.PDF_TRIGGERS_TYPES.Format:
                 memory.WriteString("F");
                 break;
         }
@@ -270,13 +259,13 @@
     CActionBase.prototype.GetTriggerName = function() {
         let oTrigger = this.GetParent();
         if (oTrigger) {
-            return CFormTrigger.GetName(oTrigger.GetType());
+            return CPdfTrigger.GetName(oTrigger.GetType());
         }
     };
 
-    function CActionGoTo(nPage, nGoToType, nZoom, oRect) {
+    function CActionGoTo(sPageId, nGoToType, nZoom, oRect) {
         CActionBase.call(this, ACTIONS_TYPES.GoTo);
-        this.page       = nPage;
+        this.pageId     = sPageId;
         this.goToType   = nGoToType;
         this.zoom       = nZoom;
         this.rect       = oRect; // top right bottom left
@@ -285,41 +274,42 @@
 	CActionGoTo.prototype.constructor = CActionGoTo;
 
     CActionGoTo.prototype.Copy = function() {
-        return new CActionGoTo(this.GetPage(), this.GetKind(), this.GetZoom(true), this.GetRect().slice());
+        return new CActionGoTo(this.GetPageId(), this.GetKind(), this.GetZoom(true), this.GetRect().slice());
     };
     CActionGoTo.prototype.GetZoom = function(bSource) {
         if (this.zoom != null || bSource)
             return this.zoom;
 
+        let nPageIdx    = this.GetPageIdx();
         let oViewer     = editor.getDocumentRenderer();
-        let nNoZoomH    = oViewer.drawingPages[this.page].H / oViewer.zoom;
-        let nNoZoomW    = oViewer.drawingPages[this.page].W / oViewer.zoom;
+        let nNoZoomH    = oViewer.drawingPages[nPageIdx].H / oViewer.zoom;
+        let nNoZoomW    = oViewer.drawingPages[nPageIdx].W / oViewer.zoom;
 
-        let nScaleY = oViewer.drawingPages[this.page].H / oViewer.file.pages[this.page].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[this.page].W / oViewer.file.pages[this.page].W / oViewer.zoom;
+        let nScaleY = oViewer.drawingPages[nPageIdx].H / oViewer.file.pages[nPageIdx].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPageIdx].W / oViewer.file.pages[nPageIdx].W / oViewer.zoom;
 
         switch (this.goToType) {
-            case GOTO_TYPES.xyz: // inherit zoom
+            case AscPDF.GOTO_TYPES.xyz: // inherit zoom
                 break;
-            case GOTO_TYPES.fit:
-            case GOTO_TYPES.fitB: { // fit to max of heigth/width
+            case AscPDF.GOTO_TYPES.fit:
+            case AscPDF.GOTO_TYPES.fitB: { // fit to max of heigth/width
                 let nVerZoom = ((oViewer.canvas.height / (nNoZoomH * AscCommon.AscBrowser.retinaPixelRatio)) * 100 >> 0) / 100;
                 let nHorZoom = ((oViewer.canvas.width / (nNoZoomW * AscCommon.AscBrowser.retinaPixelRatio)) * 100 >> 0) / 100;
 
                 this.zoom = Math.min(nHorZoom, nVerZoom);
                 break;
             }
-            case GOTO_TYPES.fitH:
-            case GOTO_TYPES.fitBH: { // fit to width
+            case AscPDF.GOTO_TYPES.fitH:
+            case AscPDF.GOTO_TYPES.fitBH: { // fit to width
                 this.zoom = ((oViewer.canvas.width / (nNoZoomW * AscCommon.AscBrowser.retinaPixelRatio)) * 100 >> 0) / 100;
                 break;
             }
-            case GOTO_TYPES.fitV:
-            case GOTO_TYPES.fitBV: { // fit to heigth
+            case AscPDF.GOTO_TYPES.fitV:
+            case AscPDF.GOTO_TYPES.fitBV: { // fit to heigth
                 this.zoom = ((oViewer.canvas.height / (nNoZoomH * AscCommon.AscBrowser.retinaPixelRatio)) * 100 >> 0) / 100;
                 break;
             }
-            case GOTO_TYPES.fitR: { // fit to rect
+            case AscPDF.GOTO_TYPES.fitR: { // fit to rect
                 let nRectW = (this.rect.right - this.rect.left) * nScaleX * AscCommon.AscBrowser.retinaPixelRatio;
                 let nRectH = (this.rect.bottom - this.rect.top) * nScaleY * AscCommon.AscBrowser.retinaPixelRatio;
 
@@ -330,7 +320,7 @@
                 
                 // далее вычисляем ширину с новым потенциальным зумом,
                 // если при данных размерах будет добавлен скролл, то вычитаем его ширину и пересчитываем zoom
-                let nNewPageW = oViewer.drawingPages[this.page].W = (oViewer.file.pages[this.page].W * 96 * nMinZoom / oViewer.file.pages[this.page].Dpi) >> 0;
+                let nNewPageW = oViewer.drawingPages[nPageIdx].W = (oViewer.file.pages[nPageIdx].W * 96 * nMinZoom / oViewer.file.pages[nPageIdx].Dpi) >> 0;
                 if (nNewPageW > oViewer.width) {
                     nVerZoom = (((oViewer.canvas.height - oViewer.scrollWidth) / (nRectH)) * 100 >> 0) / 100;
                 }
@@ -342,8 +332,12 @@
         return this.zoom;
     };
 
-    CActionGoTo.prototype.GetPage = function() {
-        return this.page;
+    CActionGoTo.prototype.GetPageId = function() {
+        return this.pageId;
+    };
+    CActionGoTo.prototype.GetPageIdx = function() {
+        let oPageInfo = AscCommon.g_oTableId.GetById(this.GetPageId());
+        return oPageInfo.GetIndex();
     };
 
     CActionGoTo.prototype.GetKind = function() {
@@ -363,12 +357,13 @@
         oActionsQueue.SetCurAction(this);
         
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.GetTriggerType() == FORMS_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
+        if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
         }
-            
-        if (this.page >= oViewer.pagesInfo.countTextPages) {
+        
+        let nPageIdx = this.GetPageIdx();
+        if (nPageIdx == -1) {
             oActionsQueue.Continue();
             return;
         }
@@ -381,8 +376,8 @@
         let yOffset = this.rect.top != null ? this.rect.top : 0;
         let xOffset = this.rect.left != null ? this.rect.left : 0;
 
-        if ((nZoom && oViewer.zoom != nZoom) || yOffset != undefined && xOffset != undefined || oViewer.currentPage != this.page) {
-            let oTr = oDoc.pagesTransform[this.page].invert;
+        if ((nZoom && oViewer.zoom != nZoom) || yOffset != undefined && xOffset != undefined || oViewer.currentPage != nPageIdx) {
+            let oTr = oDoc.pagesTransform[nPageIdx].invert;
             let oPos = oTr.TransformPoint(xOffset, yOffset);
 
             oViewer.disabledPaintOnScroll = true; // вырубаем отрисовку на скроле
@@ -396,7 +391,7 @@
     
     CActionGoTo.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(this.GetType());
-        memory.WriteLong(this.GetPage());
+        memory.WriteLong(this.GetPageIdx());
 
         let nKind = this.GetKind();
         memory.WriteByte(nKind);
@@ -496,7 +491,7 @@
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.GetTriggerType() == FORMS_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
+        if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
         }
@@ -545,7 +540,7 @@
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.GetTriggerType() == FORMS_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
+        if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
         }
@@ -588,7 +583,7 @@
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.GetTriggerType() == FORMS_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
+        if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
         }
@@ -637,7 +632,7 @@
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.GetTriggerType() == FORMS_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
+        if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
         }
@@ -687,7 +682,7 @@
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.GetTriggerType() == FORMS_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
+        if (this.GetTriggerType() == PDF_TRIGGERS_TYPES.OnFocus && oField != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
         }
@@ -840,8 +835,8 @@
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
     
-    window["AscPDF"].CFormTriggers      = CFormTriggers;
-    window["AscPDF"].CFormTrigger       = CFormTrigger;
+    window["AscPDF"].CPdfTriggers      = CPdfTriggers;
+    window["AscPDF"].CPdfTrigger       = CPdfTrigger;
     window["AscPDF"].CActionGoTo        = CActionGoTo;
     window["AscPDF"].CActionNamed       = CActionNamed;
     window["AscPDF"].CActionURI         = CActionURI;
@@ -850,7 +845,7 @@
     window["AscPDF"].CActionRunScript   = CActionRunScript;
     
     window["AscPDF"].ACTIONS_TYPES          = ACTIONS_TYPES;
-    window["AscPDF"].FORMS_TRIGGERS_TYPES   = FORMS_TRIGGERS_TYPES;
+    window["AscPDF"].PDF_TRIGGERS_TYPES   = PDF_TRIGGERS_TYPES;
 
 })();
 

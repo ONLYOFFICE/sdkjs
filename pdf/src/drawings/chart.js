@@ -215,7 +215,7 @@
 			copy.cachedPixW = this.cachedPixW;
 		}
 
-		if (!oPr || !oPr.bSkipRedactsIds) {
+		if ((!oPr || !oPr.bSkipRedactsIds) && this.GetRedactIds) {
             this.GetRedactIds().forEach(function(id) {
                 copy.AddRedactId(id);
             });
@@ -223,6 +223,10 @@
 		
 		return copy;
 	};
+		CPdfChartSpace.prototype.applySpecialPasteProps = function() {
+			this.setExternalReference(null);
+			this.setXLSX(new Uint8Array(0));
+		};
 
     window["AscPDF"].CPdfChartSpace = CPdfChartSpace;
 })();

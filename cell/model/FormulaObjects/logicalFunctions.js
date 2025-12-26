@@ -88,6 +88,9 @@ function (window, undefined) {
 					}
 				}
 			} else {
+				if (arg[i].type === cElementType.cell || arg[i].type === cElementType.cell3D) {
+					arg[i] = arg[i].getValue();
+				}
 				if (arg[i] instanceof cString) {
 					return new cError(cErrorType.wrong_value_type);
 				} else if (arg[i] instanceof cError) {
@@ -265,6 +268,7 @@ function (window, undefined) {
 	cIFS.prototype.name = 'IFS';
 	cIFS.prototype.argumentsMin = 2;
 	cIFS.prototype.isXLFN = true;
+	cIFS.prototype.argumentsType = [[argType.logical, argType.any]];
 	cIFS.prototype.Calculate = function (arg) {
 		var oArguments = this._prepareArguments(arg, arguments[1], true);
 		var argClone = oArguments.args;

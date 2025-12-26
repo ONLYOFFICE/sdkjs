@@ -889,10 +889,10 @@
 					var maxRow = 0;
 					var maxCol = 0;
 					range3._foreachNoEmpty(function (cell) {
-						if (cell.nCol > maxCol) {
+						if (cell.nCol > maxCol && !cell.ws.getColHidden(cell.nCol)) {
 							maxCol = cell.nCol;
 						}
-						if (cell.nRow > maxRow) {
+						if (cell.nRow > maxRow && !cell.ws.getRowHidden(cell.nRow)) {
 							maxRow = cell.nRow;
 						}
 					});

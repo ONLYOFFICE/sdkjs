@@ -37,7 +37,7 @@
  * @typeofeditors ["CSE"]
  * @alias onChangeCurrentSheet
  * @description The function called when the current sheet has changed.
- * @param {number} index - new current sheet index.
+ * @param {number} index - The index of the newly activated worksheet.
  * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onChangeCurrentSheet.js
  */
 

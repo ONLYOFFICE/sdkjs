@@ -49,9 +49,9 @@
 	 * @constructor
      * @extends {CBaseField}
 	 */
-    function CPushButtonField(sName, aRect)
+    function CPushButtonField(sName, aRect, oDoc)
     {
-        AscPDF.CBaseField.call(this, sName, AscPDF.FIELD_TYPES.button, aRect);
+        AscPDF.CBaseField.call(this, sName, AscPDF.FIELD_TYPES.button, aRect, oDoc);
 
         this._buttonAlignX      = 0.5; // must be integer
         this._buttonAlignY      = 0.5; // must be integer
@@ -70,7 +70,7 @@
         this._hovered = false;
 
         AscCommon.History.StartNoHistoryMode();
-        this.content = new AscPDF.CTextBoxContent(this, Asc.editor.getPDFDoc());
+        this.content = new AscPDF.CTextBoxContent(this, oDoc);
 		this.content.SetAlign(AscPDF.ALIGN_TYPE.center);
         AscCommon.History.EndNoHistoryMode();
 
@@ -1405,7 +1405,7 @@
         
         this.DrawPressed();
         
-        let oOnFocus = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
+        let oOnFocus = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
         // вызываем выставление курсора после onFocus. Если уже в фокусе, тогда сразу.
         if (false == isInFocus && oOnFocus && oOnFocus.Actions.length > 0)
             oActionsQueue.callbackAfterFocus = callbackAfterFocus.bind(this);
@@ -1413,10 +1413,10 @@
             callbackAfterFocus.bind(this)();
 
         if (isInFocus) {
-            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
+            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseDown);
         }
         else {
-            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown, AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
+            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseDown, AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
         }
     };
     CPushButtonField.prototype.onMouseUp = function() {
@@ -1426,15 +1426,15 @@
             this.DrawUnpressed();
         }
 
-        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseUp);
+        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseUp);
     };
     CPushButtonField.prototype.onMouseEnter = function() {
-        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter);
+        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseEnter);
         this.DrawRollover();
     };
 
     CPushButtonField.prototype.onMouseExit = function() {
-        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseExit);
+        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseExit);
         this.OnEndRollover();
     };
     CPushButtonField.prototype.buttonImportIcon = function() {
@@ -2156,8 +2156,11 @@
             let sPathToImg = AscCommon.getFullImageSrc2(this.GetImageRasterId(nImgType));
             let nExistIdx = memory.images.indexOf(sPathToImg);
             if ((memory.isForSplit || memory.isCopyPaste) && sPathToImg) {
-                let oImageElm = Asc.editor.ImageLoader.map_image_index[sPathToImg].Image;
-                sPathToImg = getBase64FromImage(oImageElm);
+                let mapItem = Asc.editor.ImageLoader.map_image_index[sPathToImg];
+                if (mapItem) {
+                    let oImageElm = mapItem.Image;
+                    sPathToImg = getBase64FromImage(oImageElm);
+                }
             }
             
             if (nExistIdx === -1) {

@@ -148,8 +148,6 @@
 
 		this.m_oBaseTransform   = null;
 
-		this.ArrayPoints = null;
-
 		this.m_oCurFont =
 		{
 			Name        : "",
@@ -458,9 +456,6 @@
 		if (false === this.m_bIntegerGrid)
 		{
 			this.m_oContext.moveTo(x,y);
-
-			if (this.ArrayPoints != null)
-				this.ArrayPoints[this.ArrayPoints.length] = {x: x, y: y};
 		}
 		else
 		{
@@ -474,9 +469,6 @@
 		if (false === this.m_bIntegerGrid)
 		{
 			this.m_oContext.lineTo(x,y);
-
-			if (this.ArrayPoints != null)
-				this.ArrayPoints[this.ArrayPoints.length] = {x: x, y: y};
 		}
 		else
 		{
@@ -490,13 +482,6 @@
 		if (false === this.m_bIntegerGrid)
 		{
 			this.m_oContext.bezierCurveTo(x1,y1,x2,y2,x3,y3);
-
-			if (this.ArrayPoints != null)
-			{
-				this.ArrayPoints[this.ArrayPoints.length] = {x: x1, y: y1};
-				this.ArrayPoints[this.ArrayPoints.length] = {x: x2, y: y2};
-				this.ArrayPoints[this.ArrayPoints.length] = {x: x3, y: y3};
-			}
 		}
 		else
 		{
@@ -516,12 +501,6 @@
 		 if (false === this.m_bIntegerGrid)
 		 {
 			 this.m_oContext.quadraticCurveTo(x1,y1,x2,y2);
-
-			 if (this.ArrayPoints != null)
-			 {
-				 this.ArrayPoints[this.ArrayPoints.length] = {x: x1, y: y1};
-				 this.ArrayPoints[this.ArrayPoints.length] = {x: x2, y: y2};
-			 }
 		 }
 		else
 		{
@@ -691,18 +670,7 @@
 					if (_sy >= _sb || _sy >= _h || _sb <= 0 || h <= 0)
 						return;
 
-					if (this.isVectorImage(img)) {
-						const canvas = this.m_oContext.canvas;
-						const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
-						this.m_oContext.drawImage(
-							img,
-							_sx * scale, _sy * scale,
-							(_sr - _sx) * scale, (_sb - _sy) * scale,
-							x, y, w, h
-						);
-					} else {
-						this.m_oContext.drawImage(img, _sx, _sy, _sr - _sx, _sb - _sy, x, y, w, h);
-					}
+					this.m_oContext.drawImage(img, _sx, _sy, _sr - _sx, _sb - _sy, x, y, w, h);
 				}
 				else
 				{
@@ -2169,6 +2137,29 @@
 	{
 		if (!Asc.editor.isViewMode)
 			this.drawHorLine(0, y0, x0, x1, w );
+	};
+	
+	CGraphics.prototype.drawCustomRange = function(handlerId, rangeId, x0, y0, w, h, baseLine)
+	{
+		if (Asc.editor.isViewMode)
+			return;
+		
+		let color = AscCommon.getUserColorById(handlerId, null, false);
+		let underlineY = 0.1 * (baseLine - y0) + baseLine;
+		
+		if (-1 !== handlerId.indexOf("spelling"))
+		{
+			color = new AscCommon.CColor(239, 68, 68, 255);
+		}
+		else if (-1 !== handlerId.indexOf("grammar"))
+		{
+			color = new AscCommon.CColor(59, 130, 246, 255);
+			underlineY = 0.2 * (baseLine - y0) + baseLine;
+		}
+		
+		this.p_color(color.r, color.g, color.b, 255);
+		this.p_width(0.25 * 1000);
+		this.drawHorLine(0, underlineY, x0, x0 + w, 0.25 );
 	};
 
 	// smart methods for horizontal / vertical lines

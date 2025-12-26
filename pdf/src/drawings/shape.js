@@ -333,7 +333,7 @@
 
 		return AscFormat.CGraphicObjectBase.prototype.canResize.call(this);
 	};
-    CPdfShape.prototype.ConvertToAnnot = function() {
+    CPdfShape.prototype.ConvertToAnnot = function(nAnnotType) {
         let oDoc = Asc.editor.getPDFDoc();
         let oXfrm = this.getXfrm();
 
@@ -363,72 +363,75 @@
             contents:       null,
             creationDate:   sCreationDate,
             modDate:        sCreationDate,
-            hidden:         false
+            hidden:         false,
+            type:           nAnnotType
         }
 
         let oGeometry = this.getGeometry();
-        switch (oGeometry.preset) {
-            case "rect":
-                oProps.type = AscPDF.ANNOTATIONS_TYPES.Square;
-                break;
-            case "ellipse":
-                oProps.type = AscPDF.ANNOTATIONS_TYPES.Circle;
-                break;
-            case "line":
-                oProps.type = AscPDF.ANNOTATIONS_TYPES.Line;
-                break;
-            default: {
-                let aCommands = oGeometry.pathLst[0].ArrPathCommand;
-                
-                function isPolyLine(commands) {
-                    let count0 = 0;
+        if (!nAnnotType) {
+            switch (oGeometry.preset) {
+                case "rect":
+                    oProps.type = AscPDF.ANNOTATIONS_TYPES.Square;
+                    break;
+                case "ellipse":
+                    oProps.type = AscPDF.ANNOTATIONS_TYPES.Circle;
+                    break;
+                case "line":
+                    oProps.type = AscPDF.ANNOTATIONS_TYPES.Line;
+                    break;
+                default: {
+                    let aCommands = oGeometry.pathLst[0].ArrPathCommand;
+                    
+                    function isPolyLine(commands) {
+                        let count0 = 0;
 
-                    for (let i = 0; i < commands.length; i++) {
-                        if (commands[i].id === AscFormat.moveTo) {
-                            count0++;
+                        for (let i = 0; i < commands.length; i++) {
+                            if (commands[i].id === AscFormat.moveTo) {
+                                count0++;
 
-                            if (count0 > 1) {
+                                if (count0 > 1) {
+                                    return false;
+                                }
+                            }
+                            else if (commands[i].id !== AscFormat.lineTo) {
                                 return false;
                             }
                         }
-                        else if (commands[i].id !== AscFormat.lineTo) {
-                            return false;
-                        }
-                    }
 
-                    return count0 === 1;
-                };
+                        return count0 === 1;
+                    };
 
-                function isPolygon(commands) {
-                    let count0 = 0;
+                    function isPolygon(commands) {
+                        let count0 = 0;
 
-                    for (let i = 0; i < commands.length; i++) {
-                        if (commands[i].id === AscFormat.moveTo) {
-                            count0++;
+                        for (let i = 0; i < commands.length; i++) {
+                            if (commands[i].id === AscFormat.moveTo) {
+                                count0++;
 
-                            if (count0 > 1) {
+                                if (count0 > 1) {
+                                    return false;
+                                }
+                            }
+                            else if (commands[i].id !== AscFormat.lineTo && commands[i].id !== AscFormat.close) {
                                 return false;
                             }
                         }
-                        else if (commands[i].id !== AscFormat.lineTo && commands[i].id !== AscFormat.close) {
-                            return false;
-                        }
+
+                        return count0 === 1;
+                    };
+
+                    let isCanConvert = oGeometry.pathLst.length == 1;
+                    if (!isCanConvert) {
+                        return null;
                     }
-
-                    return count0 === 1;
-                };
-
-                let isCanConvert = oGeometry.pathLst.length == 1;
-                if (!isCanConvert) {
-                    return null;
+                    else if (isPolyLine(aCommands)) {
+                        oProps.type = AscPDF.ANNOTATIONS_TYPES.PolyLine;
+                    }
+                    else if (isPolygon(aCommands)) {
+                        oProps.type = AscPDF.ANNOTATIONS_TYPES.Polygon;
+                    }
+                    break;
                 }
-                else if (isPolyLine(aCommands)) {
-                    oProps.type = AscPDF.ANNOTATIONS_TYPES.PolyLine;
-                }
-                else if (isPolygon(aCommands)) {
-                    oProps.type = AscPDF.ANNOTATIONS_TYPES.Polygon;
-                }
-                break;
             }
         }
 
@@ -625,7 +628,7 @@
         let copy = new CPdfShape();
         this.fillObject(copy, oPr);
 
-        if (!oPr || !oPr.bSkipRedactsIds) {
+        if ((!oPr || !oPr.bSkipRedactsIds) && this.GetRedactIds) {
             this.GetRedactIds().forEach(function(id) {
                 copy.AddRedactId(id);
             });

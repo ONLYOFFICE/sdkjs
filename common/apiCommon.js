@@ -116,6 +116,8 @@ function (window, undefined) {
 				uuid[d2 & 0x3f | 0x80] + uuid[d2 >> 8 & 0xff] + "-" + uuid[d2 >> 16 & 0xff] + uuid[d2 >> 24 & 0xff] +
 				uuid[d3 & 0xff] + uuid[d3 >> 8 & 0xff] + uuid[d3 >> 16 & 0xff] + uuid[d3 >> 24 & 0xff];
 	}
+	
+	
 
 	function CreateGUID() {
 		function s4() {
@@ -1882,189 +1884,10 @@ function (window, undefined) {
 		}
 
 		AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-		bShow
-			? this.chartSpace.chart.createLegend(nLegendPosition)
-			: this.chartSpace.chart.setLegend(null);
-
-		this.updateChart();
-		const oLogicDocument = Asc.editor.getLogicDocument();
-		if (oLogicDocument) {
-			oLogicDocument.Recalculate();
-		}
-	};
-	// asc_ChartSettings.prototype.setDisplayLines = function (bShow, nLineType) {};
-	asc_ChartSettings.prototype.setDisplayTrendlines = function (bShow, nTrendlineType, nForecastForward, nForecastBackward) {
-		if (!this.chartSpace) {
-			return;
-		}
-
-		AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-		this.chartSpace.showTrendlines(bShow, nTrendlineType, nForecastForward, nForecastBackward);
-		this.updateChart();
-		const oLogicDocument = Asc.editor.getLogicDocument();
-		if (oLogicDocument) {
-			oLogicDocument.Recalculate();
-		}
-	};
-	asc_ChartSettings.prototype.setDisplayUpDownBars = function (bShow) {
-		if (!this.chartSpace) {
-			return;
-		}
-
-		const plotArea = this.chartSpace.getPlotArea();
-		if (!plotArea) {
-			return;
-		}
-
-		const chart = plotArea.chart;
-		const isAllowedChartType = chart instanceof AscFormat.CLineChart || chart instanceof AscFormat.CStockChart;
-		if (!chart || !isAllowedChartType) {
-			return;
-		}
-
-		AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-		bShow
-			? chart.createUpDownBars()
-			: chart.setUpDownBars(null);
-
-		this.chartSpace.recalculateUpDownBars();
-		this.updateChart();
-		const oLogicDocument = Asc.editor.getLogicDocument();
-		if (oLogicDocument) {
-			oLogicDocument.Recalculate();
-		}
-	};
-
-	asc_ChartSettings.prototype.setDisplayAxes = function (bShowPrimaryCatAx, bShowSecondaryCatAx, bShowPrimaryValAx, bShowSecondaryValAx, bShowSerAx) {
-		if (this.chartSpace) {
-			AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-			this.chartSpace.showAxesByTypes(bShowPrimaryCatAx, bShowSecondaryCatAx, bShowPrimaryValAx, bShowSecondaryValAx, bShowSerAx);
-			this.updateChart();
-			const oLogicDocument = Asc.editor.getLogicDocument();
-			if (oLogicDocument) {
-				oLogicDocument.Recalculate();
-			}
-		}
-	};
-	asc_ChartSettings.prototype.setDisplayAxisTitles = function (bShowPrimaryCatAx, bShowSecondaryCatAx, bShowPrimaryValAx, bShowSecondaryValAx, bShowSerAx) {
-		if (this.chartSpace) {
-			AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-			this.chartSpace.showAxisTitlesByTypes(bShowPrimaryCatAx, bShowSecondaryCatAx, bShowPrimaryValAx, bShowSecondaryValAx, bShowSerAx);
-			this.updateChart();
-			const oLogicDocument = Asc.editor.getLogicDocument();
-			if (oLogicDocument) {
-				oLogicDocument.Recalculate();
-			}
-		}
-	};
-	asc_ChartSettings.prototype.setDisplayChartTitle = function (bDisplay, bOverlay) {
-		if (this.chartSpace) {
-			AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-			this.chartSpace.showChartTitle(bDisplay, bOverlay);
-			this.updateChart();
-			const oLogicDocument = Asc.editor.getLogicDocument();
-			if (oLogicDocument) {
-				oLogicDocument.Recalculate();
-			}
-		}
-	};
-	asc_ChartSettings.prototype.setDisplayDataLabels = function (bDisplay, nDataLabelPos) {
-		if (this.chartSpace) {
-			AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-			this.chartSpace.showDataLabels(bDisplay, nDataLabelPos);
-			this.updateChart();
-			const oLogicDocument = Asc.editor.getLogicDocument();
-			if (oLogicDocument) {
-				oLogicDocument.Recalculate();
-			}
-		}
-	};
-	asc_ChartSettings.prototype.setDisplayDataTable = function (bDisplayDataTable, bDisplayLegendKeys) {
-		if (this.chartSpace) {
-			AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-			this.chartSpace.showDataTable(bDisplayDataTable, bDisplayLegendKeys);
-			this.updateChart();
-			const oLogicDocument = Asc.editor.getLogicDocument();
-			if (oLogicDocument) {
-				oLogicDocument.Recalculate();
-			}
-		}
-	};
-	asc_ChartSettings.prototype.setDisplayErrorBars = function (bShowErrorBars, nErrorValueType) {
-		if (!this.chartSpace) {
-			return;
-		}
-
-		const series = this.chartSpace.getAllSeries();
-		if (!series.length) {
-			return;
-		}
-
-		AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-		series.forEach(function (ser) {
-			bShowErrorBars
-				? ser.createAllErrBars(nErrorValueType)
-				: ser.removeAllErrBars();
-		});
-
-		this.updateChart();
-		const oLogicDocument = Asc.editor.getLogicDocument();
-		if (oLogicDocument) {
-			oLogicDocument.Recalculate();
-		}
-	};
-	asc_ChartSettings.prototype.setDisplayGridlines = function (bShowHorMajor, bShowVerMajor, bShowHorMinor, bShowVerMinor) {
-		if (!this.chartSpace) {
-			return;
-		}
-
-		const plotArea = this.chartSpace.getPlotArea();
-		if (!plotArea) {
-			return;
-		}
-
-		function getGridlinesSetting(displayMajor, displayMinor) {
-			if (displayMajor && displayMinor) {
-				return Asc.c_oAscGridLinesSettings.majorMinor;
-			} else if (displayMajor) {
-				return Asc.c_oAscGridLinesSettings.major;
-			} else if (displayMinor) {
-				return Asc.c_oAscGridLinesSettings.minor;
-			} else {
-				return Asc.c_oAscGridLinesSettings.none;
-			}
-		}
-
-		const categoryAxis = plotArea.catAx;
-		const valueAxis = plotArea.valAx;
-
-		if (categoryAxis || valueAxis) {
-			AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-			if (categoryAxis) {
-				const catAxSettings = getGridlinesSetting(bShowVerMajor, bShowVerMinor);
-				categoryAxis.setGridlinesSetting(catAxSettings);
-			}
-			if (valueAxis) {
-				const valAxSettings = getGridlinesSetting(bShowHorMajor, bShowHorMinor);
-				valueAxis.setGridlinesSetting(valAxSettings);
-			}
-		}
-
-		this.updateChart();
-		const oLogicDocument = Asc.editor.getLogicDocument();
-		if (oLogicDocument) {
-			oLogicDocument.Recalculate();
-		}
-	};
-	asc_ChartSettings.prototype.setDisplayLegend = function (bShow, nLegendPosition) {
-		if (!this.chartSpace || !this.chartSpace.chart) {
-			return;
-		}
-
-		AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-		bShow
-			? this.chartSpace.chart.createLegend(nLegendPosition)
-			: this.chartSpace.chart.setLegend(null);
+		const clearLegend = !bShow || nLegendPosition == null || nLegendPosition == Asc.c_oAscChartLegendShowSettings.none;
+		clearLegend
+			? this.chartSpace.chart.setLegend(null)
+			: this.chartSpace.chart.createLegend(nLegendPosition);
 
 		this.updateChart();
 		const oLogicDocument = Asc.editor.getLogicDocument();
@@ -3847,6 +3670,8 @@ function (window, undefined) {
 
 	/** @constructor */
 	function asc_CAnnotProperty() {
+		this.ids = null;
+
 		this.type = null;
 
 		this.fill	= null;
@@ -3857,6 +3682,12 @@ function (window, undefined) {
 		this.annotProps = null;
 	}
 
+	asc_CAnnotProperty.prototype.asc_getIds = function () {
+		return this.ids;
+	};
+	asc_CAnnotProperty.prototype.asc_putIds = function (v) {
+		this.ids = v;
+	};
 	asc_CAnnotProperty.prototype.asc_getType = function () {
 		return this.type;
 	};
@@ -6279,6 +6110,7 @@ function (window, undefined) {
 			this.Class = (undefined !== obj.Class) ? obj.Class : null;
 			this.Anchor = (undefined !== obj.Anchor) ? obj.Anchor : null;
 			this.Heading = (obj.Heading ? obj.Heading : null);
+			this.NoCtrl = (obj.NoCtrl ? obj.NoCtrl : false);
 		}
 		else {
 			this.Text = null;
@@ -6287,6 +6119,10 @@ function (window, undefined) {
 			this.Class = null;
 			this.Anchor = null;
 			this.Heading = null;
+
+			// pdf
+			this.NoCtrl = false;
+			this.IsPageView = false;
 		}
 	}
 
@@ -6335,6 +6171,41 @@ function (window, undefined) {
 	CHyperlinkProperty.prototype.get_Heading = function () {
 		return this.Heading;
 	};
+	CHyperlinkProperty.prototype.put_NoCtrl = function (bNoCtrl) {
+		this.NoCtrl = bNoCtrl;
+	};
+	CHyperlinkProperty.prototype.get_NoCtrl = function () {
+		return this.NoCtrl;
+	};
+	CHyperlinkProperty.prototype.put_PageView = function (isPageView) {
+		this.IsPageView = isPageView;
+	};
+	CHyperlinkProperty.prototype.get_PageView = function () {
+		return this.IsPageView;
+	};
+	CHyperlinkProperty.prototype.compare = function(pr) {
+		if (this.Text !== pr.Text) {
+			this.Text = null;
+		}
+		if (this.Value !== pr.Value) {
+			this.Value = null;
+		}
+		if (this.ToolTip !== pr.ToolTip) {
+			this.ToolTip = null;
+		}
+		if (this.Class !== pr.Class) {
+			this.Class = null;
+		}
+		if (this.Anchor !== pr.Anchor) {
+			this.Anchor = null;
+		}
+		if (this.Heading !== pr.Heading) {
+			this.Heading = null;
+		}
+		if (this.IsPageView !== pr.IsPageView) {
+			this.IsPageView = null;
+		}
+	};
 
 	window['Asc']['CHyperlinkProperty'] = window['Asc'].CHyperlinkProperty = CHyperlinkProperty;
 	CHyperlinkProperty.prototype['get_Value'] = CHyperlinkProperty.prototype.get_Value;
@@ -6352,7 +6223,10 @@ function (window, undefined) {
 	CHyperlinkProperty.prototype['is_Heading'] = CHyperlinkProperty.prototype.is_Heading;
 	CHyperlinkProperty.prototype['put_Heading'] = CHyperlinkProperty.prototype.put_Heading;
 	CHyperlinkProperty.prototype['get_Heading'] = CHyperlinkProperty.prototype.get_Heading;
-
+	CHyperlinkProperty.prototype['put_NoCtrl'] = CHyperlinkProperty.prototype.put_NoCtrl;
+	CHyperlinkProperty.prototype['get_NoCtrl'] = CHyperlinkProperty.prototype.get_NoCtrl;
+	CHyperlinkProperty.prototype['put_PageView'] = CHyperlinkProperty.prototype.put_PageView;
+	CHyperlinkProperty.prototype['get_PageView'] = CHyperlinkProperty.prototype.get_PageView;
 
 	/**
 	 * @property {string|null} Id
@@ -7063,7 +6937,9 @@ function (window, undefined) {
 				}
 				else if (this.imageBackground) {
 					oApi.ImageLoader.map_image_index[this.imageBackgroundUrl] = {
-						Image: this.imageBackground, Status: AscFonts.ImageLoadStatus.Complete
+						Image: this.imageBackground,
+						Status: AscFonts.ImageLoadStatus.Complete,
+						src: this.imageBackground.src
 					};
 					oShape.spPr.setFill(AscFormat.builder_CreateBlipFill(this.imageBackgroundUrl, "stretch"));
 				}
@@ -8960,6 +8836,8 @@ function (window, undefined) {
 
 	window["Asc"]["asc_CAnnotProperty"] = window["Asc"].asc_CAnnotProperty = asc_CAnnotProperty;
 	prot = asc_CAnnotProperty.prototype;
+	prot["asc_getIds"]				= prot.asc_getIds;
+	prot["asc_putIds"]				= prot.asc_putIds;
 	prot["asc_getType"]				= prot.asc_getType;
 	prot["asc_putType"]				= prot.asc_putType;
 	prot["asc_getFill"]				= prot.asc_getFill;

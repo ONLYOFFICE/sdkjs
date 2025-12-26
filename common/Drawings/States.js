@@ -290,7 +290,21 @@ StartAddNewShape.prototype =
             {
                 if(bLock)
                 {
-                    History.Create_NewPoint(AscDFH.historydescription_CommonStatesAddNewShape);
+                    let oApi = oThis.drawingObjects.getEditorApi();
+                    let oDoc = null;
+
+                    if (oApi.editorId === AscCommon.c_oEditorId.Presentation)
+                    {
+                        oDoc = oApi.WordControl && oApi.WordControl.m_oLogicDocument;
+                        oDoc.StartAction(AscDFH.historydescription_Presentation_AddShape);
+                    }
+                    else if (oApi.wb)
+                    {
+                        History.Create_NewPoint(AscDFH.historydescription_CommonStatesAddNewShape);
+                        oDoc = oApi.wb;
+                        oDoc.StartAction(AscDFH.historydescription_Spreadsheet_AddShape);
+                    }
+
                     var shape = track.getShape(false, oThis.drawingObjects.getDrawingDocument(), oThis.drawingObjects.drawingObjects, isClickMouseEvent);
 
                     if(!(oThis.drawingObjects.drawingObjects && oThis.drawingObjects.drawingObjects.cSld))
@@ -371,6 +385,27 @@ StartAddNewShape.prototype =
                         }
                     }
 
+                    let pos = (oAPI.editorId === AscCommon.c_oEditorId.Presentation)
+                        ? {x: shape.x, y: shape.y}
+                        : {x: track.x, y: track.y};
+
+					// for now don't create macro for polyline
+					let macroData = (oThis instanceof PolyLineAddState2)
+                        ? undefined
+                        : {
+                            type: track.presetGeom,
+                            pos: pos,
+                            extX: track.extX,
+                            extY: track.extY,
+                            fill: track.overlayObject.brush,
+                            border: track.overlayObject.pen,
+                            base: shape.drawingBase ? shape.drawingBase : null
+                        };
+
+                    if (oAPI.editorId === AscCommon.c_oEditorId.Presentation)
+                        oDoc.FinalizeAction(AscDFH.historydescription_Presentation_AddShape, undefined, macroData);
+                    else
+                        oDoc.FinalizeAction(AscDFH.historydescription_Spreadsheet_AddShape, macroData);
                 }
 	            oThis.drawingObjects.updateOverlay();
             };
@@ -2065,7 +2100,7 @@ TextAddState.prototype =
                 && this.majorObject.chart.getObjectType() === AscDFH.historyitem_type_ChartSpace) {
                 sId = this.majorObject.chart.Id;
             }
-            return {objectId: sId, cursorType: "text"};
+            return {objectId: sId, cursorType: "text", content: this.majorObject.getDocContent && this.majorObject.getDocContent()};
         }
     },
     onMouseMove: function(e, x, y, pageIndex)

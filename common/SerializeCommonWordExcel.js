@@ -816,7 +816,7 @@ FT_Stream2.prototype.GetString2 = function() {
 	return this.GetString2LE(Len);
 };
 //String
-const global_string_decoder_le = (typeof TextDecoder !== "undefined") ? new TextDecoder('utf-16le') : null;
+const global_string_decoder_le = (typeof TextDecoder !== "undefined") ? new TextDecoder('utf-16le', { ignoreBOM: true }) : null;
 FT_Stream2.prototype.GetString2LE = function(len)
 {
 	if (this.cur + len > this.size)

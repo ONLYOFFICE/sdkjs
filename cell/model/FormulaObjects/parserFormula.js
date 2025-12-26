@@ -1642,7 +1642,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return generate3DLink(exPath, wsFrom !== wsTo ? (wsFrom + ':' + wsTo) : wsFrom, name);
 	};
 	cArea3D.prototype.tocNumber = function () {
-		return this.getValue()[0].tocNumber();
+		let val = this.getValue()[0];
+		if (!val) {
+			return new cNumber(0);
+		}
+		return val.tocNumber();
 	};
 	cArea3D.prototype.tocString = function () {
 		let val = this.getValue()[0];
@@ -1779,6 +1783,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		let bbox = this.getBBox0();
 		if (!emptyReplaceOn) {
 			emptyReplaceOn = new cEmpty();
+		}
+		if (!bbox) {
+			bbox = this.getBBox0NoCheck();
 		}
 		for (let i = bbox.r1; i <= Math.min(bbox.r2, maxRowCount != null ? bbox.r1 + maxRowCount : bbox.r2); i++) {
 			if (!arr.array[i - bbox.r1]) {
@@ -6193,6 +6200,9 @@ _func[cElementType.cell3D] = _func[cElementType.cell];
 		//в процессе добавления формулы может найтись ссылка на внешний источник, который ещё не добавлен
 		//сюда добавляем индексы и после парсинга формулы, добавляем новую структуру
 		this.externalReferenesNeedAdd = null;
+
+		this.needAssemble = null;
+		this.needCorrect = null;
 	}
 
 	ParseResult.prototype.addRefPos = function(start, end, index, oper, isName) {
@@ -7139,7 +7149,13 @@ function parserFormula( formula, parent, _ws ) {
 				let oRange = aArg[i].getRange();
 				oRange._foreachNoEmpty(function (oCell) {
 					if (!bRecursiveCell) {
-						bRecursiveCell = oCell.checkRecursiveFormula(oThis.getParent());
+						const sCellKey = oCell.ws.getId() + '_' + oCell.nRow + '_' + oCell.nCol;
+						if (g_cCalcRecursion.isCellChecked(sCellKey)) {
+							bRecursiveCell = g_cCalcRecursion.getCheckedCell(sCellKey);
+						} else {
+							bRecursiveCell = oCell.checkRecursiveFormula(oThis.getParent());
+							g_cCalcRecursion.addCheckedCell(sCellKey, bRecursiveCell);
+						}
 					}
 				});
 
@@ -7870,7 +7886,18 @@ function parserFormula( formula, parent, _ws ) {
 							bError = true;
 						}
 					} else {
-						bError = true;
+						if (parseResult.needCorrect && func.name === "IF" && top_elem_arg_count === 1) {
+							t.outStack.push(new cBool(true));
+							top_elem_arg_count++;
+							t.outStack.push(null !== startArrayArg && startArrayArg < currentFuncLevel ? -top_elem_arg_count : top_elem_arg_count);
+							if (!func.checkArguments(top_elem_arg_count)) {
+								bError = true;
+							} else {
+								parseResult.needAssemble = true;
+							}
+						} else {
+							bError = true;
+						}
 					}
 
 					if (bError) {
@@ -10535,6 +10562,7 @@ function parserFormula( formula, parent, _ws ) {
 		this.bIsProcessRecursion = false;
 		this.aElems = [];
 		this.aElemsPart = [];
+		this.oCheckedCells = null;
 
 		this.nIterStep = 1;
 		this.oStartCellIndex = null;
@@ -11340,6 +11368,46 @@ function parserFormula( formula, parent, _ws ) {
 	 */
 	CalcRecursion.prototype.clearCycleCells = function () {
 		this.aCycleCell = [];
+	};
+	/**
+	 * Method adds the result of the checked cell to the object.
+	 * @memberof CalcRecursion
+	 * @param {string} sCellKey
+	 * @param {boolean} bCheckResult
+	 */
+	CalcRecursion.prototype.addCheckedCell = function (sCellKey, bCheckResult) {
+		if (this.oCheckedCells == null) {
+			this.oCheckedCells = {};
+		}
+
+		this.oCheckedCells[sCellKey] = bCheckResult;
+	};
+	/**
+	 * Method clears oCheckedCells attribute.
+	 * @memberof CalcResursion
+	 */
+	CalcRecursion.prototype.clearCheckedCells = function () {
+		if (this.oCheckedCells) {
+			this.oCheckedCells = null;
+		}
+	};
+	/**
+	 * Method checks whether the cell has already been checked for a cycle.
+	 * @memberof CalcRecursion
+	 * @param {string} sCellKey
+	 * @returns {boolean}
+	 */
+	CalcRecursion.prototype.isCellChecked = function (sCellKey) {
+		return !!(this.oCheckedCells && this.oCheckedCells.hasOwnProperty(sCellKey));
+	};
+	/**
+	 * Method returns result of checked cell.
+	 * @memberof CalcRecursion
+	 * @param {string} sCellKey
+	 * @returns {boolean}
+	 */
+	CalcRecursion.prototype.getCheckedCell = function (sCellKey) {
+		return this.oCheckedCells && this.oCheckedCells[sCellKey];
 	};
 
 	const g_cCalcRecursion = new CalcRecursion();

@@ -793,8 +793,28 @@
 				return null;
 		}
 	}
+
+	function isTypeEvent(nType, oKeyboardEvent) {
+		const arrShortcuts = c_oAscDefaultShortcuts[nType];
+		if (arrShortcuts) {
+			const nKeyboardIndex = AscCommon.CShortcuts.GetShortcutIndex(oKeyboardEvent.GetKeyCode(), oKeyboardEvent.IsShortcutCtrl(), oKeyboardEvent.IsShift(), oKeyboardEvent.IsAlt(), oKeyboardEvent.IsCmd());
+			for (let i = 0; i < arrShortcuts.length; i += 1) {
+				const nShortcutIndex = arrShortcuts[i].asc_GetShortcutIndex();
+				if (nShortcutIndex === nKeyboardIndex) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	function isCopyPasteEvent(oKeyboardEvent) {
+		return isTypeEvent(Asc.c_oAscPresentationShortcutType.Cut, oKeyboardEvent) ||
+			isTypeEvent(Asc.c_oAscPresentationShortcutType.Copy, oKeyboardEvent) ||
+			isTypeEvent(Asc.c_oAscPresentationShortcutType.Paste, oKeyboardEvent);
+	}
 	window["Asc"]["c_oAscDefaultShortcuts"] = window["Asc"].c_oAscDefaultShortcuts = c_oAscDefaultShortcuts;
 	window["Asc"]["c_oAscUnlockedShortcutActionTypes"] = window["Asc"].c_oAscUnlockedShortcutActionTypes = c_oAscUnlockedShortcutActionTypes;
 	window["AscCommon"].getStringFromShortcutType = getStringFromShortcutType;
 	window["AscCommon"].getShortcutTypeFromString = getShortcutTypeFromString;
+	window["AscCommon"].isCopyPasteEvent = isCopyPasteEvent;
 })();

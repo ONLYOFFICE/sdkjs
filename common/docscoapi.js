@@ -209,12 +209,6 @@
     }
   };
 
-  CDocsCoApi.prototype.sendRawData = function(data) {
-    if (this._CoAuthoringApi && this._onlineWork) {
-      this._CoAuthoringApi.sendRawData(data);
-    }
-  };
-
   CDocsCoApi.prototype.getMessages = function() {
     if (this._CoAuthoringApi && this._onlineWork) {
       this._CoAuthoringApi.getMessages();
@@ -969,10 +963,6 @@
     this._send({"type": "openDocument", "message": data});
   };
 
-  DocsCoApi.prototype.sendRawData = function(data) {
-    this._sendRaw(data);
-  };
-
   DocsCoApi.prototype.getMessages = function() {
     this._send({"type": "getMessages"});
   };
@@ -1001,7 +991,8 @@
   };
   DocsCoApi.prototype._sendPrebuffered = function() {
     for (var i = 0; i < this._msgBuffer.length; i++) {
-      this._sendRaw(this._msgBuffer[i]);
+      console.log(this._msgBuffer[i]);
+      this.socketio.emit("message", this._msgBuffer[i]);
     }
     this._msgBuffer = [];
   };
@@ -1011,16 +1002,6 @@
       return AscCommon.EncryptionWorker.sendChanges(this, data, AscCommon.EncryptionMessageType.Encrypt);
 
     if (data !== null && typeof data === "object") {
-      if (this._state > 0) {
-        this.socketio.emit("message", data);
-      } else {
-        this._msgBuffer.push(JSON.stringify(data));
-      }
-    }
-  };
-
-  DocsCoApi.prototype._sendRaw = function(data) {
-    if (data !== null && typeof data === "string") {
       if (this._state > 0) {
         this.socketio.emit("message", data);
       } else {

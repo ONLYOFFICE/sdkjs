@@ -200,4 +200,65 @@
 			writable: true
 		});
 	}
+
+	// ONLY FOR OLD CHROMIUM/V8
+	if (window &&
+		window.AscCommon &&
+		window.AscCommon.AscBrowser &&
+		window.AscCommon.AscBrowser.isChrome)
+	{
+		let typeOfValues = typeof Object.values;
+		let isOld = typeOfValues === "undefined";
+		if (!isOld && typeOfValues === "function")
+		{
+			if (Object.values.toString().indexOf("[native code]") === -1)
+				isOld = true;
+		}
+
+		if (isOld)
+		{
+			(function() {
+				var _sort = Array.prototype.sort;
+				Array.prototype.sort = function(compareFn) {
+					var len = this.length;
+
+					var cmp = compareFn || function(a, b) {
+						var sa = String(a);
+						var sb = String(b);
+						return sa < sb ? -1 : sa > sb ? 1 : 0;
+					};
+
+					var indexed = [];
+					for (var i = 0; i < len; i++) {
+						indexed.push({ v: this[i], i: i });
+					}
+
+					_sort.call(indexed, function(a, b) {
+						var aVal = a.v;
+						var bVal = b.v;
+
+						var aIsUndefined = aVal === undefined;
+						var bIsUndefined = bVal === undefined;
+
+						if (aIsUndefined && bIsUndefined) return a.i - b.i;
+						if (aIsUndefined) return 1;
+						if (bIsUndefined) return -1;
+
+						var r = cmp(aVal, bVal);
+
+						if (typeof r !== 'number' || r !== r)
+							r = 0;
+
+						return r !== 0 ? r : a.i - b.i;
+					});
+
+					for (var i = 0; i < indexed.length; i++) {
+						this[i] = indexed[i].v;
+					}
+
+					return this;
+				};
+			})();
+		}
+	}
 })();

@@ -70,10 +70,8 @@
         this.DrawEdit(oGraphicsWord);
     };
     CBaseCheckBoxField.prototype.SetDefaultValue = function(value) {
-        let oParent = this.GetParent();
-        let hasSameKids = oParent && oParent.IsAllKidsWidgets();
-
-        if (hasSameKids || this.IsWidget()) {
+        let oParent = this.GetParent(true);
+        if (oParent || this.IsWidget()) {
             const shouldUpdate = value && !this.GetParentValue() || this.GetParentValue() !== value;
 
             if (shouldUpdate) {
@@ -81,7 +79,7 @@
                 this.Commit();
             }
 
-            if (hasSameKids) {
+            if (oParent) {
                 return oParent.SetDefaultValue(value);
             }
         }
@@ -366,7 +364,7 @@
         this.SetDrawHighlight(false);
         this.DrawPressed();
         
-        let oOnFocus = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
+        let oOnFocus = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
         // вызываем выставление курсора после onFocus. Если уже в фокусе, тогда сразу.
         if (false == isInFocus && oOnFocus && oOnFocus.Actions.length > 0)
             oActionsQueue.callbackAfterFocus = callbackAfterFocus.bind(this);
@@ -374,19 +372,19 @@
             callbackAfterFocus.bind(this)();
 
         if (isInFocus) {
-            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
+            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseDown);
         }
         else {
-            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown, AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
+            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseDown, AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
         }
     };
     CBaseCheckBoxField.prototype.onMouseEnter = function() {
-        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter);
+        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseEnter);
 
         this.SetHovered(true);
     };
     CBaseCheckBoxField.prototype.onMouseExit = function() {
-        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseExit);
+        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseExit);
 
         this.SetHovered(false);
     };
@@ -438,6 +436,7 @@
         oOverlay.max_y      = 0;
         oOverlay.ClearAll   = true;
 
+        this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseUp);
         oViewer.onUpdateOverlay();
     };
     /**
@@ -449,8 +448,8 @@
     CBaseCheckBoxField.prototype.Commit = function() {
         this.SetNeedCommit(false);
 
-        let oParent = this.GetParent();
-        let aOpt    = oParent ? oParent.GetOptions() : undefined;
+        let oParent = this.GetParent(true);
+        let aOpt    = this.GetOptions();
         let aKids   = oParent ? oParent.GetKids() : undefined;
         if (this.IsChecked()) {
             if (aOpt && aKids) {
@@ -472,8 +471,8 @@
         this.Commit2();
     };
     CBaseCheckBoxField.prototype.SetNoToggleToOff = function(bValue) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (oParent) {
             return oParent.SetNoToggleToOff(bValue);
         }
 
@@ -489,15 +488,15 @@
         return true;
     };
     CBaseCheckBoxField.prototype.IsNoToggleToOff = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
             return oParent.IsNoToggleToOff();
 
         return this._noToggleToOff;
     };
     CBaseCheckBoxField.prototype.SetOptions = function(aOpt) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (oParent) {
             oParent.SetOptions(aOpt);
         }
         
@@ -533,18 +532,23 @@
         return true;
     };
     CBaseCheckBoxField.prototype.GetOptions = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
             return oParent.GetOptions();
 
         return this._options;
     };
     CBaseCheckBoxField.prototype.GetOptionsIndex = function() {
-        let oParent = this.GetParent();
-        let aOptions = oParent ? oParent.GetOptions() : null;
+        let oParent = this.GetParent(true);
+        let aOptions = this.GetOptions();
         if (aOptions) {
-            let aKids = oParent.GetKids();
-            return aKids.indexOf(this);
+            if (oParent) {
+                let aKids = oParent.GetKids();
+                return aKids.indexOf(this);
+            }
+            else {
+                return 0;
+            }
         }
 
         return -1;
@@ -617,13 +621,13 @@
         return false;
     };
     CBaseCheckBoxField.prototype.SetExportValue = function(sValue) {
-        let oParent = this.GetParent();
+        let oParent = this.GetParent(true);
     
         if (oParent && sValue !== undefined) {
             let aWidgets        = oParent.GetAllWidgets();
             let nIndex          = aWidgets.indexOf(this);
             let aExpValues      = aWidgets.map(function(w) { return w.GetExportValue() });
-            let aCurOptions     = oParent.GetOptions();
+            let aCurOptions     = this.GetOptions();
 
             const newValues = aExpValues.slice();
             newValues[nIndex] = sValue;
@@ -644,11 +648,16 @@
     };
     CBaseCheckBoxField.prototype.GetExportValue = function(bInherit) {
         if (bInherit !== false) {
-            let oParent = this.GetParent();
-            let aParentOpt = oParent ? oParent.GetOptions() : null;
+            let oParent = this.GetParent(true);
+            let aOptions = this.GetOptions();
 
-            if (aParentOpt) {
-                return aParentOpt[oParent.GetKids().indexOf(this)];
+            if (aOptions) {
+                if (oParent) {
+                    return aOptions[oParent.GetKids().indexOf(this)];
+                }
+                else {
+                    return aOptions[0];
+                }
             }
         }
 
@@ -671,12 +680,12 @@
         return this._chStyle;
     };
     CBaseCheckBoxField.prototype.SetValue = function(value) {
-        let oParent     = this.GetParent();
-        let aParentOpt  = oParent ? oParent.GetOptions() : undefined;
+        let oParent     = this.GetParent(true);
+        let aOptions    = this.GetOptions();
 
         let sExportValue;
-        if (aParentOpt && aParentOpt[value]) {
-            sExportValue = aParentOpt[value];
+        if (aOptions && aOptions[value]) {
+            sExportValue = aOptions[value];
         }
         else {
             sExportValue = value;
@@ -687,7 +696,7 @@
         else
             this.SetChecked(false);
         
-        if (editor.getDocumentRenderer().IsOpenFormsInProgress && this.GetParent() == null)
+        if (Asc.editor.getDocumentRenderer().IsOpenFormsInProgress && oParent == null)
             this.SetParentValue(value);
     };
     CBaseCheckBoxField.prototype.private_SetValue = CBaseCheckBoxField.prototype.SetValue;
@@ -768,8 +777,8 @@
         let isChecked = this.IsChecked();
         // не пишем значение, если есть родитель с такими же видджет полями,
         // т.к. значение будет хранить родитель
-        let oParent = this.GetParent();
-        if (oParent == null || oParent.IsAllKidsWidgets() == false) {
+        let oParent = this.GetParent(true);
+        if (oParent == null) {
             memory.fieldDataFlags |= (1 << 9);
             if (isChecked) {
                 memory.WriteString("Yes");
@@ -780,6 +789,17 @@
         
         // check symbol
         memory.WriteByte(this.GetStyle());
+
+        let aOptions = this.GetOptions(false);
+        if (aOptions) {
+            memory.fieldDataFlags |= (1 << 10);
+
+            memory.WriteLong(aOptions.length);
+            for (let i = 0; i < aOptions.length; i++) {
+                memory.WriteString(Array.isArray(aOptions[i]) ? aOptions[i][1] : "");
+                memory.WriteString(Array.isArray(aOptions[i]) ? aOptions[i][0] : aOptions[i]);
+            }
+        }
 
         let sExportValue = this.GetExportValue(memory.isCopyPaste);
         if (sExportValue != null) {

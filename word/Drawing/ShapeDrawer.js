@@ -1373,10 +1373,6 @@ CShapeDrawer.prototype =
         if (this.Ln == null || this.Ln.Fill == null || this.Ln.Fill.fill == null)
         {
             this.bIsNoStrokeAttack = true;
-            if (graphics.isTrack())
-                graphics.Graphics.ArrayPoints = null;
-            else
-                graphics.ArrayPoints = null;
         }
         else
         {
@@ -1453,14 +1449,7 @@ CShapeDrawer.prototype =
             if (graphics.isBoundsChecker() && !this.bIsNoStrokeAttack)
                 graphics.LineWidth = this.StrokeWidth;
 
-            var isUseArrayPoints = false;
-            if ((this.Ln.headEnd != null && this.Ln.headEnd.type != null) || (this.Ln.tailEnd != null && this.Ln.tailEnd.type != null))
-                isUseArrayPoints = true;
 
-            if (graphics.isTrack() && graphics.Graphics)
-                graphics.Graphics.ArrayPoints = isUseArrayPoints ? [] : null;
-            else
-                graphics.ArrayPoints = isUseArrayPoints ? [] : null;
 
             if (this.Graphics.m_oContext != null && this.Ln.Join != null && this.Ln.Join.type != null)
                 this.OldLineJoin = this.Graphics.m_oContext.lineJoin;
@@ -1508,7 +1497,6 @@ CShapeDrawer.prototype =
             this.drawFillStroke(true, "norm", true && !this.bIsNoStrokeAttack);
             this._e();
         }
-        this.Graphics.ArrayPoints = null;
 
         if (this.isPdf() && (this.bIsTexture || bIsPatt))
         {
@@ -1614,15 +1602,11 @@ CShapeDrawer.prototype =
     {
         this.IsCurrentPathCanArrows = true;
         this.Graphics._s();
-        if (this.Graphics.ArrayPoints != null)
-            this.Graphics.ArrayPoints = [];
     },
     _e : function()
     {
         this.IsCurrentPathCanArrows = true;
         this.Graphics._e();
-        if (this.Graphics.ArrayPoints != null)
-            this.Graphics.ArrayPoints = [];
     },
 
     drawTransitionTextures : function(oCanvas1, dAlpha1, oCanvas2, dAlpha2)
@@ -1639,10 +1623,129 @@ CShapeDrawer.prototype =
         this.Graphics.m_oContext.globalAlpha = dOldGlobalAlpha;
     },
 
+	drawArrows: function (bIsSaveToPdfMode) {
+		this.IsArrowsDrawing = true;
+		this.Graphics.p_dash(null);
+
+		const graphicsCtx = this.Graphics.isTrack() && !bIsSaveToPdfMode
+			? this.Graphics.Graphics
+			: this.Graphics;
+
+
+		const fullTransform = bIsSaveToPdfMode
+			? (this.isPdf() ? this.Graphics.GetTransform() : this.Graphics.m_oFullTransform)
+			: graphicsCtx.m_oFullTransform;
+		const inverseTransform = AscCommon.global_MatrixTransformer.Invert(fullTransform);
+
+		const point1 = { x: fullTransform.TransformPointX(0, 0), y: fullTransform.TransformPointY(0, 0) };
+		const point2 = { x: fullTransform.TransformPointX(1, 1), y: fullTransform.TransformPointY(1, 1) };
+		const transformScaleFactor = Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2)) / Math.sqrt(2);
+
+		const lineSize = bIsSaveToPdfMode
+			? (this.isPdf() ? this.Graphics.GetLineWidth() : graphicsCtx.m_oContext.lineWidth)
+			: graphicsCtx.m_oContext.lineWidth;
+
+		const penWidth = lineSize * transformScaleFactor;
+		const maxWidth = bIsSaveToPdfMode
+			? 2.5 / AscCommon.g_dKoef_mm_to_pix
+			: (graphicsCtx.IsThumbnail === true ? 2 : undefined);
+
+		const arrCoef = bIsSaveToPdfMode
+			? 1
+			: this.isArrPix ? (1 / AscCommon.g_dKoef_mm_to_pix) : 1;
+
+		const geometry = this.Shape.getGeometry();
+		const paths = geometry.getContinuousSubpaths ? geometry.getContinuousSubpaths() : [];
+
+		if (this.Ln.headEnd != null) {
+			const arrowLength = this.Ln.headEnd.GetLen(penWidth, maxWidth) / transformScaleFactor;
+
+			for (let i = 0; i < paths.length; i++) {
+				const path = paths[i];
+				const headAngle = path.getHeadArrowAngle(arrowLength);
+
+				if (AscFormat.isRealNumber(headAngle)) {
+					// Each continuous subpath starts with a moveTo command
+					// so we can use the first point of the path as the arrow tip point
+
+					const arrowEndPoint = {
+						x: fullTransform.TransformPointX(path.ArrPathCommand[0].X, path.ArrPathCommand[0].Y),
+						y: fullTransform.TransformPointY(path.ArrPathCommand[0].X, path.ArrPathCommand[0].Y)
+					};
+					const arrowStartPoint = {
+						x: fullTransform.TransformPointX(path.ArrPathCommand[0].X - Math.cos(headAngle * Math.PI / 180), path.ArrPathCommand[0].Y - Math.sin(headAngle * Math.PI / 180)),
+						y: fullTransform.TransformPointY(path.ArrPathCommand[0].X - Math.cos(headAngle * Math.PI / 180), path.ArrPathCommand[0].Y - Math.sin(headAngle * Math.PI / 180))
+					};
+
+					DrawLineEnd(
+						arrowEndPoint.x, arrowEndPoint.y,
+						arrowStartPoint.x, arrowStartPoint.y,
+						this.Ln.headEnd.type,
+						arrCoef * this.Ln.headEnd.GetWidth(penWidth, maxWidth),
+						arrCoef * this.Ln.headEnd.GetLen(penWidth, maxWidth),
+						this, inverseTransform
+					);
+				}
+			}
+		}
+
+		if (this.Ln.tailEnd != null) {
+			const arrowLength = this.Ln.tailEnd.GetLen(penWidth, maxWidth) / transformScaleFactor;
+
+			for (let i = 0; i < paths.length; i++) {
+				const path = paths[i];
+				const tailAngle = path.getTailArrowAngle(arrowLength);
+
+				if (AscFormat.isRealNumber(tailAngle)) {
+					// Each continuous subpath starts with a moveTo command
+					// so we can use the first point of the path as the arrow tip point
+
+					function getPathEndPoint(commands) {
+						for (let i = commands.length - 1; i >= 0; i--) {
+							const command = commands[i];
+							if (command.id === AscFormat.lineTo) {
+								return { x: command.X, y: command.Y };
+							}
+							if (command.id === AscFormat.bezier4) {
+								return { x: command.X2, y: command.Y2 };
+							}
+						}
+						return null;
+					}
+
+					const pathEndPoint = getPathEndPoint(path.ArrPathCommand);
+					if (!pathEndPoint) {
+						continue;
+					}
+
+					const arrowEndPoint = {
+						x: fullTransform.TransformPointX(pathEndPoint.x, pathEndPoint.y),
+						y: fullTransform.TransformPointY(pathEndPoint.x, pathEndPoint.y)
+					};
+					const arrowStartPoint = {
+						x: fullTransform.TransformPointX(pathEndPoint.x - Math.cos(tailAngle * Math.PI / 180), pathEndPoint.y - Math.sin(tailAngle * Math.PI / 180)),
+						y: fullTransform.TransformPointY(pathEndPoint.x - Math.cos(tailAngle * Math.PI / 180), pathEndPoint.y - Math.sin(tailAngle * Math.PI / 180))
+					};
+
+					DrawLineEnd(
+						arrowEndPoint.x, arrowEndPoint.y,
+						arrowStartPoint.x, arrowStartPoint.y,
+						this.Ln.tailEnd.type,
+						arrCoef * this.Ln.tailEnd.GetWidth(penWidth, maxWidth),
+						arrCoef * this.Ln.tailEnd.GetLen(penWidth, maxWidth),
+						this, inverseTransform
+					);
+				}
+			}
+		}
+
+		this.IsArrowsDrawing = false;
+		this.CheckDash();
+	},
+
 	drawBlipFill: function () {
 		const graphics = this.Graphics.isTrack() ? this.Graphics.Graphics : this.Graphics;
 		if (!graphics) return;
-
 		const imageName = this.UniFill.fill.RasterImageId;
 		const imageUrl = AscCommon.getFullImageSrc2(imageName);
 		const imageData = Asc.editor.ImageLoader.map_image_index[imageUrl];
@@ -2070,6 +2173,13 @@ CShapeDrawer.prototype =
         this.Graphics.df();
     },
 
+    isArrowPresent: function()
+    {
+        if(this.IsCurrentPathCanArrows && this.Ln && this.Ln.isArrowPresent() && !this.IsArrowsDrawing)
+            return true;
+        return false;
+    },
+
     ds : function()
     {
         if (this.bIsNoStrokeAttack)
@@ -2105,8 +2215,7 @@ CShapeDrawer.prototype =
             }
         }
 
-		var arr = this.Graphics.isTrack() ? this.Graphics.Graphics.ArrayPoints : this.Graphics.ArrayPoints;
-        var isArrowsPresent = (arr != null && arr.length > 1 && this.IsCurrentPathCanArrows === true) ? true : false;
+        var isArrowsPresent = this.isArrowPresent();
 
         var rgba = this.StrokeUniColor;
         let nAlpha = 0xFF;
@@ -2135,92 +2244,11 @@ CShapeDrawer.prototype =
             this.Graphics.m_oContext.lineJoin = this.OldLineJoin;
         }
 
-        if (isArrowsPresent)
-        {
-            this.IsArrowsDrawing = true;
-            this.Graphics.p_dash(null);
-            // значит стрелки есть. теперь:
-            // определяем толщину линии "как есть"
-            // трансформируем точки в окончательные.
-            // и отправляем на отрисовку (с матрицей)
-
-			var _graphicsCtx = this.Graphics.isTrack() ? this.Graphics.Graphics : this.Graphics;
-
-			var trans = _graphicsCtx.m_oFullTransform;
-            var trans1 = AscCommon.global_MatrixTransformer.Invert(trans);
-
-            var x1 = trans.TransformPointX(0, 0);
-            var y1 = trans.TransformPointY(0, 0);
-            var x2 = trans.TransformPointX(1, 1);
-            var y2 = trans.TransformPointY(1, 1);
-            var dKoef = Math.sqrt(((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1))/2);
-            var _pen_w = this.Graphics.isTrack() ? (this.Graphics.Graphics.m_oContext.lineWidth * dKoef) : (this.Graphics.m_oContext.lineWidth * dKoef);
-			var _max_w = undefined;
-			if (_graphicsCtx.IsThumbnail === true)
-			    _max_w = 2;
-
-            var _max_delta_eps2 = 0.001;
-
-            var arrKoef = this.isArrPix ? (1 / AscCommon.g_dKoef_mm_to_pix) : 1;
-
-            if (this.Ln.headEnd != null)
-            {
-                var _x1 = trans.TransformPointX(arr[0].x, arr[0].y);
-                var _y1 = trans.TransformPointY(arr[0].x, arr[0].y);
-                var _x2 = trans.TransformPointX(arr[1].x, arr[1].y);
-                var _y2 = trans.TransformPointY(arr[1].x, arr[1].y);
-
-                var _max_delta_eps = Math.max(this.Ln.headEnd.GetLen(_pen_w), 5);
-
-                var _max_delta = Math.max(Math.abs(_x1 - _x2), Math.abs(_y1 - _y2));
-                var cur_point = 2;
-                while (_max_delta < _max_delta_eps && cur_point < arr.length)
-                {
-                    _x2 = trans.TransformPointX(arr[cur_point].x, arr[cur_point].y);
-                    _y2 = trans.TransformPointY(arr[cur_point].x, arr[cur_point].y);
-                    _max_delta = Math.max(Math.abs(_x1 - _x2), Math.abs(_y1 - _y2));
-                    cur_point++;
-                }
-
-                if (_max_delta > _max_delta_eps2)
-                {
-					_graphicsCtx.ArrayPoints = null;
-					DrawLineEnd(_x1, _y1, _x2, _y2, this.Ln.headEnd.type, arrKoef * this.Ln.headEnd.GetWidth(_pen_w, _max_w), arrKoef * this.Ln.headEnd.GetLen(_pen_w, _max_w), this, trans1);
-					_graphicsCtx.ArrayPoints = arr;
-                }
-            }
-            if (this.Ln.tailEnd != null)
-            {
-                var _1 = arr.length-1;
-                var _2 = arr.length-2;
-                var _x1 = trans.TransformPointX(arr[_1].x, arr[_1].y);
-                var _y1 = trans.TransformPointY(arr[_1].x, arr[_1].y);
-                var _x2 = trans.TransformPointX(arr[_2].x, arr[_2].y);
-                var _y2 = trans.TransformPointY(arr[_2].x, arr[_2].y);
-
-                var _max_delta_eps = Math.max(this.Ln.tailEnd.GetLen(_pen_w), 5);
-
-                var _max_delta = Math.max(Math.abs(_x1 - _x2), Math.abs(_y1 - _y2));
-                var cur_point = _2 - 1;
-                while (_max_delta < _max_delta_eps && cur_point >= 0)
-                {
-                    _x2 = trans.TransformPointX(arr[cur_point].x, arr[cur_point].y);
-                    _y2 = trans.TransformPointY(arr[cur_point].x, arr[cur_point].y);
-                    _max_delta = Math.max(Math.abs(_x1 - _x2), Math.abs(_y1 - _y2));
-                    cur_point--;
-                }
-
-                if (_max_delta > _max_delta_eps2)
-                {
-					_graphicsCtx.ArrayPoints = null;
-					DrawLineEnd(_x1, _y1, _x2, _y2, this.Ln.tailEnd.type, arrKoef * this.Ln.tailEnd.GetWidth(_pen_w, _max_w), arrKoef * this.Ln.tailEnd.GetLen(_pen_w, _max_w), this, trans1);
-					_graphicsCtx.ArrayPoints = arr;
-                }
-            }
-            this.IsArrowsDrawing = false;
-            this.CheckDash();
-        }
-    },
+		if (isArrowsPresent) {
+			const bIsSaveToPdfMode = false;
+			this.drawArrows(bIsSaveToPdfMode);
+		}
+	},
 
     drawFillStroke : function(bIsFill, fill_mode, bIsStroke)
     {
@@ -2241,8 +2269,7 @@ CShapeDrawer.prototype =
             if (this.bIsNoStrokeAttack)
                 bIsStroke = false;
 
-			var arr = this.Graphics.ArrayPoints;
-			var isArrowsPresent = (arr != null && arr.length > 1 && this.IsCurrentPathCanArrows === true) ? true : false;
+			var isArrowsPresent = this.isArrowPresent();
 
             if (bIsStroke)
             {
@@ -2272,6 +2299,7 @@ CShapeDrawer.prototype =
             {
                 if (this.bIsTexture)
                 {
+					const rotWithShape = this.UniFill.fill.rotWithShape;
                     if (null == this.UniFill.fill.tile)
                     {
                         if (null == this.UniFill.fill.srcRect)
@@ -2294,30 +2322,97 @@ CShapeDrawer.prototype =
                         }
                         else
                         {
-                            if (this.IsRectShape)
+	                        this.Graphics.put_brushTexture(getFullImageSrc2(this.UniFill.fill.RasterImageId), 0);
+	                        const fillRect = this.Graphics.getFillRect(this.min_x, this.min_y, (this.max_x - this.min_x), (this.max_y - this.min_y), this.UniFill.fill.srcRect);
+	                        this.Graphics.put_TextureBounds(fillRect.x, fillRect.y, fillRect.w, fillRect.h);
+                        }
+
+                        const fillRect = AscCommon.isRealObject(this.UniFill.fill.stretch.fillRect)
+                            ? this.UniFill.fill.stretch.fillRect
+                            : null;
+
+                        if (null != fillRect)
+                        {
+                            let x, y, r, b;
+                            if (rotWithShape)
                             {
-                                this.Graphics.drawImage(getFullImageSrc2(this.UniFill.fill.RasterImageId), this.min_x, this.min_y, (this.max_x - this.min_x), (this.max_y - this.min_y), undefined, this.UniFill.fill.srcRect);
-                                bIsFill = false;
+                                x = this.min_x + (this.max_x - this.min_x) * fillRect.l / 100;
+                                y = this.min_y + (this.max_y - this.min_y) * fillRect.t / 100;
+                                r = this.max_x - (this.max_x - this.min_x) * (100 - fillRect.r) / 100;
+                                b = this.max_y - (this.max_y - this.min_y) * (100 - fillRect.b) / 100;
                             }
                             else
                             {
-                                // TODO: support srcRect
-                                this.Graphics.put_brushTexture(getFullImageSrc2(this.UniFill.fill.RasterImageId), 0);
+                                const shapeBounds = this.Shape.getBounds();
+
+                                x = shapeBounds.x + shapeBounds.w * (fillRect.l / 100);
+                                y = shapeBounds.y + shapeBounds.h * (fillRect.t / 100);
+                                r = shapeBounds.x + shapeBounds.w - shapeBounds.w * (100 - fillRect.r) / 100;
+                                b = shapeBounds.y + shapeBounds.h - shapeBounds.h * (100 - fillRect.b) / 100;
                             }
+                            this.Graphics.put_TextureBounds(x, y, r - x, b - y);
                         }
                     }
                     else
                     {
+                        const type = this.UniFill.fill.tile.flip + 1;
+                        let imageUrl;
                         if (this.UniFill.fill.canvas)
                         {
-                            this.Graphics.put_brushTexture(this.UniFill.fill.canvas.toDataURL("image/png"), 1);
+                            imageUrl = this.UniFill.fill.canvas.toDataURL("image/png");
                         }
                         else
                         {
-                            this.Graphics.put_brushTexture(getFullImageSrc2(this.UniFill.fill.RasterImageId), 1);
+                            imageUrl = getFullImageSrc2(this.UniFill.fill.RasterImageId);
                         }
+
+                        this.Graphics.put_brushTexture(imageUrl, type);
+                        const imageData = Asc.editor.ImageLoader.map_image_index[imageUrl];
+
+                        const sx = this.UniFill.fill.tile.sx ? (this.UniFill.fill.tile.sx / 1000) / 100 : 1;
+                        const sy = this.UniFill.fill.tile.sy ? (this.UniFill.fill.tile.sy / 1000) / 100 : 1;
+
+                        function getAlignment(key) {
+                            switch (key) {
+                                case AscCommon.c_oAscRectAlignType.tl: return [0, 0];
+                                case AscCommon.c_oAscRectAlignType.t: return [0.5, 0];
+                                case AscCommon.c_oAscRectAlignType.tr: return [1, 0];
+                                case AscCommon.c_oAscRectAlignType.l: return [0, 0.5];
+                                case AscCommon.c_oAscRectAlignType.ctr: return [0.5, 0.5];
+                                case AscCommon.c_oAscRectAlignType.r: return [1, 0.5];
+                                case AscCommon.c_oAscRectAlignType.bl: return [0, 1];
+                                case AscCommon.c_oAscRectAlignType.b: return [0.5, 1];
+                                case AscCommon.c_oAscRectAlignType.br: return [1, 1];
+                                default: return [0, 0];
+                            }
+                        }
+
+                        const align = AscFormat.isRealNumber(this.UniFill.fill.tile.algn) && this.UniFill.fill.tile.algn >= 0 && this.UniFill.fill.tile.algn <= 8
+                            ? this.UniFill.fill.tile.algn
+                            : AscCommon.c_oAscRectAlignType.tl;
+
+                        let alignOffsetX, alignOffsetY;
+                        if (rotWithShape)
+                        {
+                            alignOffsetX = getAlignment(align)[0] * (this.max_x - this.min_x - imageData.Image.width * sx * AscCommon.g_dKoef_pix_to_mm)
+                            alignOffsetY = getAlignment(align)[1] * (this.max_y - this.min_y - imageData.Image.height * sy * AscCommon.g_dKoef_pix_to_mm)
+                        }
+                        else
+                        {
+                            const shapeBounds = this.Shape.getBounds();
+
+                            alignOffsetX = shapeBounds.x + getAlignment(align)[0] * (shapeBounds.w - imageData.Image.width * sx * AscCommon.g_dKoef_pix_to_mm);
+                            alignOffsetY = shapeBounds.y + getAlignment(align)[1] * (shapeBounds.h - imageData.Image.height * sy * AscCommon.g_dKoef_pix_to_mm);
+                        }
+
+                        const tx = this.UniFill.fill.tile.tx ? this.UniFill.fill.tile.tx * AscCommonWord.g_dKoef_emu_to_mm : 0;
+                        const ty = this.UniFill.fill.tile.ty ? this.UniFill.fill.tile.ty * AscCommonWord.g_dKoef_emu_to_mm : 0;
+                        this.Graphics.put_PathOffset(tx + alignOffsetX, ty + alignOffsetY);
+                        this.Graphics.put_PathScale(sx, sy);
                     }
                     this.Graphics.put_BrushTextureAlpha(this.UniFill.transparent);
+                    if (!rotWithShape || rotWithShape === null)
+                        this.Graphics.ResetRotation();
                 }
                 else
                 {
@@ -2448,82 +2543,10 @@ CShapeDrawer.prototype =
                 this.Graphics.drawpath(256);
             }
 
-            if (isArrowsPresent)
-            {
-                this.IsArrowsDrawing = true;
-                this.Graphics.p_dash(null);
-                // значит стрелки есть. теперь:
-                // определяем толщину линии "как есть"
-                // трансформируем точки в окончательные.
-                // и отправляем на отрисовку (с матрицей)
-
-                var trans = (!this.isPdf()) ? this.Graphics.m_oFullTransform : this.Graphics.GetTransform();
-                var trans1 = AscCommon.global_MatrixTransformer.Invert(trans);
-
-                var lineSize = (!this.isPdf()) ? this.Graphics.m_oContext.lineWidth : this.Graphics.GetLineWidth();
-
-                var x1 = trans.TransformPointX(0, 0);
-                var y1 = trans.TransformPointY(0, 0);
-                var x2 = trans.TransformPointX(1, 1);
-                var y2 = trans.TransformPointY(1, 1);
-                var dKoef = Math.sqrt(((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1))/2);
-                var _pen_w = lineSize * dKoef;
-
-                var _pen_w_max = 2.5 / AscCommon.g_dKoef_mm_to_pix;
-
-                if (this.Ln.headEnd != null)
-                {
-                    var _x1 = trans.TransformPointX(arr[0].x, arr[0].y);
-                    var _y1 = trans.TransformPointY(arr[0].x, arr[0].y);
-                    var _x2 = trans.TransformPointX(arr[1].x, arr[1].y);
-                    var _y2 = trans.TransformPointY(arr[1].x, arr[1].y);
-
-                    var _max_delta = Math.max(Math.abs(_x1 - _x2), Math.abs(_y1 - _y2));
-                    var cur_point = 2;
-                    while (_max_delta < 0.001 && cur_point < arr.length)
-                    {
-                        _x2 = trans.TransformPointX(arr[cur_point].x, arr[cur_point].y);
-                        _y2 = trans.TransformPointY(arr[cur_point].x, arr[cur_point].y);
-                        _max_delta = Math.max(Math.abs(_x1 - _x2), Math.abs(_y1 - _y2));
-                        cur_point++;
-                    }
-
-                    if (_max_delta > 0.001)
-                    {
-                        this.Graphics.ArrayPoints = null;
-                        DrawLineEnd(_x1, _y1, _x2, _y2, this.Ln.headEnd.type, this.Ln.headEnd.GetWidth(_pen_w, _pen_w_max), this.Ln.headEnd.GetLen(_pen_w, _pen_w_max), this, trans1);
-                        this.Graphics.ArrayPoints = arr;
-                    }
-                }
-                if (this.Ln.tailEnd != null)
-                {
-                    var _1 = arr.length-1;
-                    var _2 = arr.length-2;
-                    var _x1 = trans.TransformPointX(arr[_1].x, arr[_1].y);
-                    var _y1 = trans.TransformPointY(arr[_1].x, arr[_1].y);
-                    var _x2 = trans.TransformPointX(arr[_2].x, arr[_2].y);
-                    var _y2 = trans.TransformPointY(arr[_2].x, arr[_2].y);
-
-                    var _max_delta = Math.max(Math.abs(_x1 - _x2), Math.abs(_y1 - _y2));
-                    var cur_point = _2 - 1;
-                    while (_max_delta < 0.001 && cur_point >= 0)
-                    {
-                        _x2 = trans.TransformPointX(arr[cur_point].x, arr[cur_point].y);
-                        _y2 = trans.TransformPointY(arr[cur_point].x, arr[cur_point].y);
-                        _max_delta = Math.max(Math.abs(_x1 - _x2), Math.abs(_y1 - _y2));
-                        cur_point--;
-                    }
-
-                    if (_max_delta > 0.001)
-                    {
-                        this.Graphics.ArrayPoints = null;
-                        DrawLineEnd(_x1, _y1, _x2, _y2, this.Ln.tailEnd.type, this.Ln.tailEnd.GetWidth(_pen_w, _pen_w_max), this.Ln.tailEnd.GetLen(_pen_w, _pen_w_max), this, trans1);
-                        this.Graphics.ArrayPoints = arr;
-                    }
-                }
-                this.IsArrowsDrawing = false;
-                this.CheckDash();
-            }
+			if (isArrowsPresent) {
+				const bIsSaveToPdfMode = true;
+				this.drawArrows(bIsSaveToPdfMode);
+			}
         }
     },
 
@@ -2693,3 +2716,4 @@ window['AscCommon'].ShapeToImageConverter = ShapeToImageConverter;
 window['AscCommon'].IsShapeToImageConverter = false;
 window['AscCommon'].DrawLineEnd = DrawLineEnd;
 })(window);
+

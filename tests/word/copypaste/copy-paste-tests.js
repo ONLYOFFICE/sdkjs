@@ -819,7 +819,7 @@ $(function () {
 		const result = ToJsonString(logicDocument);
 		const expected = {
 			type: "document",
-			textPr: "Cell 1\tCell 2\t\r\n",
+			textPr: "Cell 1\tCell 2\r\n\r\n",
 			content: [
 				{
 					bPresentation: false,

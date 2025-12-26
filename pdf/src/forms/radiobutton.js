@@ -55,8 +55,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CRadioButtonField.prototype.UpdateAll = function() {
-        let oParent     = this.GetParent();
-        let aParentOpt  = oParent ? oParent.GetOptions() : undefined;
+        let aOptions    = this.GetOptions();
         let aFields     = this.GetDocument().GetAllWidgets(this.GetFullName());
         let value       = this.GetParentValue();
 
@@ -64,8 +63,8 @@
         let sExportValue;
         
         // если есть массив опт, то value в 99% случаев - это индекс в массиве opt (export values)
-        if (aParentOpt && aParentOpt[value]) {
-            sExportValue = aParentOpt[value];
+        if (aOptions && aOptions[value]) {
+            sExportValue = aOptions[value];
             bFromOpt = true;
         }
         else {
@@ -155,8 +154,8 @@
     };
     
     CRadioButtonField.prototype.SetRadiosInUnison = function(bValue) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (oParent)
             return oParent.SetRadiosInUnison(bValue);
 
         if (this._radiosInUnison === bValue) {
@@ -171,8 +170,8 @@
         return true;
     };
     CRadioButtonField.prototype.IsRadiosInUnison = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
             return oParent.IsRadiosInUnison();
 
         return this._radiosInUnison;

@@ -2204,6 +2204,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype._saveCheck = function() {
 		return (!this.isLongAction()
 			&& !this.isGroupActions()
+			&& !this.isOpenedFrameEditor
 			&& !(this.isSlideShow())
 		);
 	};
@@ -2252,6 +2253,7 @@ background-repeat: no-repeat;\
 					"c": "reopen",
 					"title": this.documentTitle,
 					"password": option.asc_getPassword(),
+					"lcid": this.asc_getLocaleLCID(),
 					"nobase64": true
 				};
 
@@ -2539,7 +2541,7 @@ background-repeat: no-repeat;\
 		{
 			if (editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
 			{
-				this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_ParagraphAdd);
+				this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_PutTextPrFontName, name);
 				this.WordControl.m_oLogicDocument.AddToParagraph(new AscCommonWord.ParaTextPr({
 					FontFamily : {
 						Name  : name,
@@ -2557,7 +2559,7 @@ background-repeat: no-repeat;\
 		}
 		if (this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
 		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_ParagraphAdd);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_PutTextPrFontSize, size);
 			this.WordControl.m_oLogicDocument.AddToParagraph(new AscCommonWord.ParaTextPr({FontSize : Math.min(size, 300)}), false);
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 			// для мобильной версии это важно
@@ -2584,7 +2586,7 @@ background-repeat: no-repeat;\
 	{
 		if (editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
 		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_ParagraphAdd);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_PutTextPrBold, value);
 			this.WordControl.m_oLogicDocument.AddToParagraph(new AscCommonWord.ParaTextPr({Bold : value}), false);
 			this.WordControl.m_oLogicDocument.FinalizeAction()
 		}
@@ -2593,7 +2595,7 @@ background-repeat: no-repeat;\
 	{
 		if (editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
 		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_ParagraphAdd);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_PutTextPrItalic, value);
 			this.WordControl.m_oLogicDocument.AddToParagraph(new AscCommonWord.ParaTextPr({Italic : value}), false);
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
@@ -2602,7 +2604,7 @@ background-repeat: no-repeat;\
 	{
 		if (editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
 		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_ParagraphAdd);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_PutTextPrUnderline, value);
 			this.WordControl.m_oLogicDocument.AddToParagraph(new AscCommonWord.ParaTextPr({Underline : value}), false);
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
@@ -2611,7 +2613,7 @@ background-repeat: no-repeat;\
 	{
 		if (editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
 		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_ParagraphAdd);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_PutTextPrStrikeout, value);
 			this.WordControl.m_oLogicDocument.AddToParagraph(new AscCommonWord.ParaTextPr({
                 Strikeout  : value,
                 DStrikeout : false
@@ -2621,7 +2623,9 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.put_PrLineSpacing          = function(Type, Value)
 	{
+		this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_PutTextPrLineSpacing, {type: Type, value: Value});
 		this.WordControl.m_oLogicDocument.SetParagraphSpacing({LineRule : Type, Line : Value});
+		this.WordControl.m_oLogicDocument.FinalizeAction();
 	};
 	asc_docs_api.prototype.put_LineSpacingBeforeAfter = function(type, value)//"type == 0" means "Before", "type == 1" means "After"
 	{
@@ -2833,7 +2837,7 @@ background-repeat: no-repeat;\
 	{
 		if (editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
 		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_ParagraphAdd);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_SetTextVertAlign, value);
 			this.WordControl.m_oLogicDocument.AddToParagraph(new AscCommonWord.ParaTextPr({VertAlign : value}), false);
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
@@ -3505,7 +3509,7 @@ background-repeat: no-repeat;\
 	{
 		if (editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
 		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_ParagraphAdd);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Presentation_PutTextColor, color);
 			var _unifill        = new AscFormat.CUniFill();
 			_unifill.fill       = new AscFormat.CSolidFill();
 			_unifill.fill.color = AscFormat.CorrectUniColor(color, _unifill.fill.color, 0);
@@ -5902,7 +5906,7 @@ background-repeat: no-repeat;\
 		if (false === logicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Content))
 		{
 			let textPr = logicDocument.GetDirectTextPr();
-			logicDocument.StartAction(AscDFH.historydescription_Document_AddMath);
+			logicDocument.StartAction(AscDFH.historydescription_Document_AddMath, Type);
 			var MathElement = new AscCommonWord.MathMenu(Type, textPr ? textPr.Copy() : null);
 			logicDocument.AddToParagraph(MathElement, false);
 			logicDocument.FinalizeAction();
@@ -7908,13 +7912,6 @@ background-repeat: no-repeat;\
 			this.sendToReporter("{ \"main_command\" : true, \"go_to_slide\" : " + slideNum + " }");
 	};
 
-
-	asc_docs_api.prototype.getFocusElement = function() {
-		if (!this.isSlideShow())
-			return window['AscCommon'].g_inputContext.HtmlArea;
-		return document.body;
-	};
-
 	asc_docs_api.prototype.SetDemonstrationModeOnly = function()
 	{
 		this.isOnlyDemonstration = true;
@@ -8085,9 +8082,14 @@ background-repeat: no-repeat;\
 	{
 		this.asc_onCloseFrameEditor();
 		// Находим выделенную диаграмму и накатываем бинарник
-		if (AscCommon.isRealObject(chartBinary))
+		const oLogicDocument = this.WordControl.m_oLogicDocument;
+		if (oLogicDocument)
 		{
-			this.WordControl.m_oLogicDocument.FinalizeEditChart(chartBinary);
+			if (AscCommon.isRealObject(chartBinary))
+			{
+				oLogicDocument.FinalizeEditChart(chartBinary);
+			}
+			oLogicDocument.Document_UpdateUndoRedoState();
 		}
 	};
 

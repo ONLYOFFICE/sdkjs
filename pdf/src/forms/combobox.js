@@ -67,7 +67,7 @@
         this.Recalculate();
         this.DrawBackground(oGraphicsPDF);
         
-        let oContentToDraw = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format) && this.IsNeedDrawHighlight() ? this.contentFormat : this.content;
+        let oContentToDraw = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) && this.IsNeedDrawHighlight() ? this.contentFormat : this.content;
         this.curContent = oContentToDraw; // запоминаем текущий контент
 
         if (oDoc.activeForm == this)
@@ -237,7 +237,7 @@
             }
         }
 
-        let oOnFocus = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
+        let oOnFocus = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
         // вызываем выставление курсора после onFocus. Если уже в фокусе, тогда сразу.
         if (false == isInFocus && oOnFocus && oOnFocus.Actions.length > 0)
             oActionsQueue.callbackAfterFocus = callbackAfterFocus.bind(this, x, y, e);
@@ -245,10 +245,10 @@
             callbackAfterFocus.bind(this, x, y, e)();
 
         if (isInFocus) {
-            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
+            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseDown);
         }
         else {
-            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown, AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
+            this.AddActionsToQueue(AscPDF.PDF_TRIGGERS_TYPES.MouseDown, AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
         }
     };
     
@@ -416,7 +416,7 @@
 		if (!oKeystrokeEvent["rc"])
 			return false;
 		
-		let oKeystrokeTrigger = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke);
+		let oKeystrokeTrigger = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Keystroke);
         if (oKeystrokeTrigger) {
             aChars = AscWord.CTextFormFormat.prototype.GetBuffer(oKeystrokeEvent["change"]);
         }
@@ -540,8 +540,8 @@
     };
     
     CComboBoxField.prototype.SetEditable = function(bValue) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets()) {
+        let oParent = this.GetParent(true);
+        if (oParent) {
             oParent.SetEditable(bValue);
         }
         else {
@@ -552,8 +552,8 @@
         this.SetWasChanged(true);
     };
     CComboBoxField.prototype.IsEditable = function(bInherit) {
-        let oParent = this.GetParent();
-        if (bInherit !== false && oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (bInherit !== false && oParent)
             return oParent.IsEditable();
 
         return this._editable;
@@ -566,8 +566,8 @@
         return false;
     };
     CComboBoxField.prototype.AddOption = function(option, nPos) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (oParent)
             return oParent.AddOption(option, nPos);
 
         if (option == null) return;
@@ -596,8 +596,8 @@
         this.SetNeedRecalc(true);
     };
     CComboBoxField.prototype.RemoveOption = function(nPos) {
-        let oParent = this.GetParent();
-        if (oParent && oParent.IsAllKidsWidgets())
+        let oParent = this.GetParent(true);
+        if (oParent)
             return oParent.RemoveOption(nPos);
 
         if (Number.isInteger(nPos) && nPos >= 0 && nPos < this._options.length) {
@@ -817,7 +817,6 @@
 	CComboBoxField.prototype.SelectionSetStart      = AscPDF.CTextField.prototype.SelectionSetStart;
 	CComboBoxField.prototype.SelectionSetEnd        = AscPDF.CTextField.prototype.SelectionSetEnd;
 	CComboBoxField.prototype.CheckFormViewWindow    = AscPDF.CTextField.prototype.CheckFormViewWindow;
-	CComboBoxField.prototype.SetAlign               = AscPDF.CTextField.prototype.SetAlign;
 	CComboBoxField.prototype.CheckAlignInternal     = AscPDF.CTextField.prototype.CheckAlignInternal;
 	CComboBoxField.prototype.IsTextOutOfForm        = AscPDF.CTextField.prototype.IsTextOutOfForm;
 	CComboBoxField.prototype.SetDoNotSpellCheck     = AscPDF.CTextField.prototype.SetDoNotSpellCheck;

@@ -190,6 +190,8 @@ function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 			this.graphicObjects.addGraphicObject(this);
 	}
 	this.bCellHF = false;
+	
+	this.forceNoWrap = false;
 }
 ParaDrawing.prototype = Object.create(AscWord.CRunElementBase.prototype);
 ParaDrawing.prototype.constructor = ParaDrawing;
@@ -1444,7 +1446,7 @@ ParaDrawing.prototype.SetVerticalClip = function(Top, Bottom)
 	this.LineTop = Top;
 	this.LineBottom = Bottom;
 };
-ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimits, PageLimitsOrigin, LineNum)
+ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimits, PageLimitsOrigin, LineNum, isInTable)
 {
 	if (undefined != this.PositionH_Old)
 	{
@@ -1472,7 +1474,7 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	this.Internal_Position.SetScaleFactor(this.GetScaleCoefficient());
 	this.Internal_Position.Set(this.GraphicObj.extX, this.GraphicObj.extY, this.getXfrmRot(), this.EffectExtent, this.YOffset, ParaLayout, PageLimits);
 	this.Internal_Position.Calculate_X(bInline, this.PositionH.RelativeFrom, this.PositionH.Align, this.PositionH.Value, this.PositionH.Percent);
-	this.Internal_Position.Calculate_Y(bInline, this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value, this.PositionV.Percent);
+	this.Internal_Position.Calculate_Y(bInline, this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value, this.PositionV.Percent, isInTable);
 
 
 	let bCorrect = false;
@@ -1520,10 +1522,10 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 		this.PositionV.Percent      = this.PositionV_Old.Percent;
 
 		// Рассчитаем сдвиг с учетом старой привязки
-		var Value = this.Internal_Position.Calculate_Y_Value(this.PositionV_Old.RelativeFrom);
+		var Value = this.Internal_Position.Calculate_Y_Value(this.PositionV_Old.RelativeFrom, isInTable);
 		this.Set_PositionV(this.PositionV_Old.RelativeFrom, false, Value, false);
 		// На всякий случай пересчитаем заново координату
-		this.Y = this.Internal_Position.Calculate_Y(bInline, this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value, this.PositionV.Percent);
+		this.Y = this.Internal_Position.Calculate_Y(bInline, this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value, this.PositionV.Percent, isInTable);
 	}
 	this.OrigX = this.X;
 	this.OrigY = this.Y;
@@ -1906,6 +1908,10 @@ ParaDrawing.prototype.GetInnerForm = function()
 {
 	return this.GraphicObj ? this.GraphicObj.getInnerForm() : null;
 };
+ParaDrawing.prototype.SetForceNoWrap = function(noWrap)
+{
+	this.forceNoWrap = noWrap;
+};
 ParaDrawing.prototype.Use_TextWrap = function()
 {
 	if (this.IsInline())
@@ -1916,6 +1922,9 @@ ParaDrawing.prototype.Use_TextWrap = function()
 	if (!this.Parent
 		|| !this.Parent.GetFramePr
 		|| (this.Parent.GetFramePr() && !this.Parent.GetFramePr().IsInline()))
+		return false;
+	
+	if (this.forceNoWrap)
 		return false;
 
 	// здесь должна быть проверка, нужно ли использовать обтекание относительно данного объекта,
@@ -2076,20 +2085,15 @@ ParaDrawing.prototype.Remove_FromDocument = function(bRecalculate)
 				oGrObject.setSignature(oGrObject.signatureLine);
 			}
 		}
-		var oPictureCC         = null;
-		var arrContentControls = oRun.GetParentContentControls();
-		for (var nIndex = arrContentControls.length - 1; nIndex >= 0; --nIndex)
+		
+		let parentContentControls = oRun.GetParentContentControls();
+		for (var nIndex = parentContentControls.length - 1; nIndex >= 0; --nIndex)
 		{
-			if (arrContentControls[nIndex].IsPicture())
-			{
-				oPictureCC = arrContentControls[nIndex];
-				break;
-			}
+			let cc = parentContentControls[nIndex];
+			if (cc.IsPicture() || cc.IsBuiltInWatermark())
+				cc.RemoveContentControlWrapper();
 		}
-
-		if (oPictureCC)
-			oPictureCC.RemoveContentControlWrapper();
-
+		
 		oRun.Remove_DrawingObject(this.Id);
 		if (oRun.IsInHyperlink())
 			oResult = new CTextPr();
@@ -3179,8 +3183,9 @@ ParaDrawing.prototype.SetDrawingPrFromDrawing = function(oAnotherDrawing)
 };
 ParaDrawing.prototype.OnContentReDraw = function()
 {
-	if (this.Parent && this.Parent.Parent)
-		this.Parent.Parent.OnContentReDraw(this.PageNum, this.PageNum);
+	let docContent = this.GetParentDocumentContent();
+	if (docContent)
+		docContent.OnContentReDraw(this.PageNum, this.PageNum);
 };
 ParaDrawing.prototype.getBase64Img = function()
 {
@@ -3860,7 +3865,7 @@ CAnchorPosition.prototype.Calculate_X = function(bInline, RelativeFrom, bAlign, 
 
 	return this.CalcX;
 };
-CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, Value, bPercent)
+CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, Value, bPercent, isInTable)
 {
 	var _H;
 	if(AscFormat.checkNormalRotate(this.Rot))
@@ -3873,6 +3878,31 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 	}
 	var Height = this.EffectExtentB + _H + this.EffectExtentT;
 	var Shift = this.EffectExtentT + _H / 2.0 - this.H / 2.0;
+	
+	if (isInTable
+		&& (c_oAscRelativeFromV.BottomMargin === RelativeFrom
+			|| c_oAscRelativeFromV.InsideMargin === RelativeFrom
+			|| c_oAscRelativeFromV.OutsideMargin === RelativeFrom
+			|| c_oAscRelativeFromV.Margin === RelativeFrom
+			|| c_oAscRelativeFromV.TopMargin === RelativeFrom))
+	{
+		RelativeFrom = c_oAscRelativeFromV.Margin;
+		if (bAlign)
+		{
+			Value = c_oAscAlignV.Top;
+			Shift = Math.max(0, Shift);
+		}
+		else if (bPercent)
+		{
+			bPercent = 0;
+			Value = 0;
+		}
+		else
+		{
+			Value = Math.max(0, Value);
+		}
+	}
+	
 	if (true === bInline)
 	{
 		this.CalcY = this.Y - this.YOffset - Height + Shift;
@@ -4255,8 +4285,18 @@ CAnchorPosition.prototype.Calculate_X_Value = function(RelativeFrom)
 
 	return Value;
 };
-CAnchorPosition.prototype.Calculate_Y_Value = function(RelativeFrom)
+CAnchorPosition.prototype.Calculate_Y_Value = function(RelativeFrom, isInTable)
 {
+	if (isInTable
+		&& (c_oAscRelativeFromV.BottomMargin === RelativeFrom
+			|| c_oAscRelativeFromV.InsideMargin === RelativeFrom
+			|| c_oAscRelativeFromV.OutsideMargin === RelativeFrom
+			|| c_oAscRelativeFromV.Margin === RelativeFrom
+			|| c_oAscRelativeFromV.TopMargin === RelativeFrom))
+	{
+		RelativeFrom = c_oAscRelativeFromV.Margin;
+	}
+	
 	var Value = 0;
 
 	switch (RelativeFrom)

@@ -296,14 +296,7 @@ function MoveShapeImageTrack(originalObject)
         }
         else
         {
-            if(!this.originalObject.group)
-            {
-                AscFormat.CheckSpPrXfrm3(this.originalObject, true);
-            }
-            else
-            {
-                AscFormat.CheckSpPrXfrm(this.originalObject, true);
-            }
+            this.originalObject.checkTransformBeforeApply();
         }
         if(this.originalObject.group)
         {
@@ -767,6 +760,7 @@ function MoveAnnotationTrack(originalObject)
         {
             case AscPDF.ANNOTATIONS_TYPES.Ink:
             case AscPDF.ANNOTATIONS_TYPES.Line:
+            case AscPDF.ANNOTATIONS_TYPES.Link:
             case AscPDF.ANNOTATIONS_TYPES.Square:
             case AscPDF.ANNOTATIONS_TYPES.Polygon:
             case AscPDF.ANNOTATIONS_TYPES.PolyLine:

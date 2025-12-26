@@ -2062,6 +2062,9 @@
 	};
 	CContentControlTrack.prototype.addPluginButtons = function(buttons, pluginGuid, baseUrl)
 	{
+		if (!this.base || this.base.IsForm())
+			return 0;
+		
 		let result = 0;
 		for (let i = 0; i < buttons.length; ++i)
 		{
@@ -3685,7 +3688,8 @@
 				break;
 		}
 
-		if (object.parent.document.m_oWordControl.m_oApi.isViewMode)
+		if ((object.parent.document.m_oWordControl.m_oApi.isViewMode)
+			|| (object.parent.document.m_oLogicDocument && object.parent.document.m_oLogicDocument.IsEditSignaturesMode()))
 		{
 			this.isUseMoveRect = false;
 			this.isCombobox = false;

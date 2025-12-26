@@ -2768,6 +2768,7 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
     this.oCurHyperlink = null;
     this.oCurHyperlinkContentPos = 0;
     this.oCur_rPr = new CTextPr();
+    this._lastCommitedRunId = null;
 
 	//Br копятся потомы что есть случаи когда не надо вывобить br, хотя он и присутствует.
     this.nBrCount = 0;
@@ -2877,7 +2878,7 @@ PasteProcessor.prototype =
 		const grid = table.TableGrid;
 
 		let nGridBefore = 0;
-		if (row.Pr !== null && row.Pr.GridBefore !== null) {
+		if (row.Pr != null && row.Pr.GridBefore != null) {
 			nGridBefore = row.Pr.GridBefore;
 		}
 
@@ -3016,7 +3017,7 @@ PasteProcessor.prototype =
     let bCheckOneGraphicObjectSpecialProps = false;
 	    if (aNewContent.length === 1)
 	    {
-		    bCheckOneGraphicObjectSpecialProps = true;
+		    bCheckOneGraphicObjectSpecialProps = this._specialPasteGetElemType(aNewContent[0]) === para_Drawing;
 	    }
 		if (oTable && !aNewContent[0].IsTable() && oTable.IsCellSelection())
 		{
@@ -3156,7 +3157,7 @@ PasteProcessor.prototype =
 					this.pasteTypeContent = null;
 					bCheckOneGraphicObjectSpecialProps = false;
 				}
-				this.checkWordGraphicSpecialPasteProps(aNewContent[i], bCheckOneGraphicObjectSpecialProps);
+				this.checkWordGraphicSpecialPasteProps(NewElem, bCheckOneGraphicObjectSpecialProps);
 
 				oSelectedElement.SelectedAll = false;
 				oSelectedContent.Add(oSelectedElement);
@@ -3303,11 +3304,11 @@ PasteProcessor.prototype =
 
     },
 
-	checkWordGraphicSpecialPasteProps: function (oNewContent, bSkipGettingPasteProps)
+	checkWordGraphicSpecialPasteProps: function (oNewContent, bCheckGettingPasteProps)
 	{
 		const arrDrawings = [];
 		oNewContent.GetAllDrawingObjects(arrDrawings);
-		if (bSkipGettingPasteProps && (arrDrawings.length === 1))
+		if (bCheckGettingPasteProps && (arrDrawings.length === 1))
 		{
 			const oGraphicObj = arrDrawings[0].GraphicObj;
 			this.specificPasteProps = oGraphicObj.getSpecialPasteProps();
@@ -3394,23 +3395,25 @@ PasteProcessor.prototype =
 		//для формул параметры как и при обычной вставке. но нужно уметь их преобразовывать в текст при вставке только текста
 		//особые параметры при вставке таблиц из EXCEL
 
+		let specialPasteHelper = window['AscCommon'].g_specialPasteHelper;
 
 		//если вставляются только изображения, пока не показываем параметры специальной
-		if(para_Drawing === this.pasteTypeContent && !(this.aContent.length === 1 && this.specificPasteProps))
+		if(para_Drawing === this.pasteTypeContent && !(this.aContent.length === 1 && this.specificPasteProps) && !specialPasteHelper.specialPasteStart)
 		{
-			window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
-			if(window['AscCommon'].g_specialPasteHelper.buttonInfo)
+			specialPasteHelper.SpecialPasteButton_Hide();
+			if(specialPasteHelper.buttonInfo)
 			{
-				window['AscCommon'].g_specialPasteHelper.showButtonIdParagraph = null;
-				window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
+				specialPasteHelper.showButtonIdParagraph = null;
+				specialPasteHelper.CleanButtonInfo();
 			}
 			return;
 		}
 
-		var specialPasteShowOptions = !window['AscCommon'].g_specialPasteHelper.buttonInfo.isClean() ? window['AscCommon'].g_specialPasteHelper.buttonInfo : null;
-		if(!window['AscCommon'].g_specialPasteHelper.specialPasteStart)
+
+		var specialPasteShowOptions = !specialPasteHelper.buttonInfo.isClean() ? specialPasteHelper.buttonInfo : null;
+		if(!specialPasteHelper.specialPasteStart)
 		{
-			specialPasteShowOptions = window['AscCommon'].g_specialPasteHelper.buttonInfo;
+			specialPasteShowOptions = specialPasteHelper.buttonInfo;
 
 			var sProps = Asc.c_oSpecialPasteProps;
 			var aContent = this.aContent;
@@ -3443,14 +3446,21 @@ PasteProcessor.prototype =
 				props = [sProps.sourceformatting/*, sProps.mergeFormatting*/, sProps.keepTextOnly];
 			}
 
+			if (specialPasteHelper.specialPasteData && specialPasteHelper.specialPasteData.images && specialPasteHelper.specialPasteData.images.length && !(window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor)) {
+				if (!props) {
+					props = [];
+				}
+				props.push(sProps.picture);
+			}
+
 			if(null !== props)
 			{
 				specialPasteShowOptions.asc_setOptions(props);
 			}
 			else
 			{
-				window['AscCommon'].g_specialPasteHelper.showButtonIdParagraph = null;
-				window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
+				specialPasteHelper.showButtonIdParagraph = null;
+				specialPasteHelper.CleanButtonInfo();
 			}
 		}
 
@@ -3458,8 +3468,8 @@ PasteProcessor.prototype =
 		{
 			//SpecialPasteButtonById_Show вызываю здесь, если пересчет документа завершился раньше, чем мы попали сюда и сгенерировали параметры вставки
 			//в противном случае вызываю SpecialPasteButtonById_Show в drawingDocument->OnEndRecalculate
-			if (window['AscCommon'].g_specialPasteHelper.endRecalcDocument) {
-				window['AscCommon'].g_specialPasteHelper.SpecialPasteButtonById_Show();
+			if (specialPasteHelper.endRecalcDocument) {
+				specialPasteHelper.SpecialPasteButtonById_Show();
 			}
 		}
 	},
@@ -8427,6 +8437,28 @@ PasteProcessor.prototype =
 						Index: -1
 					};
 				}
+			} else if ("w:sdt" === nodeName && node.getAttribute && node.getAttribute("checkbox")) {
+				let isForm = node && node.attributes && "t" === node.getAttribute("form");
+				
+				let checkedFont = node.getAttribute("checkboxfontchecked");
+				if (!checkedFont) {
+					checkedFont = isForm ? Asc.c_oAscSdtCheckBoxDefaults.FormCheckedFont : Asc.c_oAscSdtCheckBoxDefaults.CheckedFont;
+				}
+				
+				this.oFonts[checkedFont] = {
+					Name: g_fontApplication.GetFontNameDictionary(checkedFont, true),
+					Index: -1
+				};
+				
+				let uncheckedFont = node.getAttribute("checkboxfontunchecked");
+				if (!uncheckedFont) {
+					uncheckedFont = isForm ? Asc.c_oAscSdtCheckBoxDefaults.FormUncheckedFont : Asc.c_oAscSdtCheckBoxDefaults.UncheckedFont;
+				}
+				
+				this.oFonts[uncheckedFont] = {
+					Name: g_fontApplication.GetFontNameDictionary(uncheckedFont, true),
+					Index: -1
+				};
 			} else {
 				var src = node.getAttribute("src");
 				if (src && !this._checkSkipMath(node))
@@ -9850,16 +9882,96 @@ PasteProcessor.prototype =
 					nType = Asc.c_oAscNumberingFormat.Bullet;
 				} else if ("decimal" === sType) {
 					nType = Asc.c_oAscNumberingFormat.Decimal;
-				} else if ("roman-lower" === sType) {
+				} else if ("roman-lower" === sType || "lower-roman" === sType) {
 					nType = Asc.c_oAscNumberingFormat.LowerRoman;
-				} else if ("roman-upper" === sType) {
+				} else if ("roman-upper" === sType || "upper-roman" === sType) {
 					nType = Asc.c_oAscNumberingFormat.UpperRoman;
-				} else if ("letter-lower" === sType || "alpha-lower" === sType) {
+				} else if ("letter-lower" === sType || "alpha-lower" === sType || "lower-alpha" === sType) {
 					nType = Asc.c_oAscNumberingFormat.LowerLetter;
-				} else if ("letter-upper" === sType || "alpha-upper" === sType) {
+				} else if ("letter-upper" === sType || "alpha-upper" === sType || "upper-alpha" === sType) {
 					nType = Asc.c_oAscNumberingFormat.UpperLetter;
-				} else if ("decimal-zero" === sType) {
+				} else if ("decimal-zero" === sType || "arabic-leading-zero" === sType) {
 					nType = Asc.c_oAscNumberingFormat.DecimalZero;
+				} else if ("aiueo" === sType) {
+					nType = Asc.c_oAscNumberingFormat.Aiueo;
+				} else if ("aiueo-full-width" === sType) {
+					nType = Asc.c_oAscNumberingFormat.AiueoFullWidth;
+				} else if ("arabic-abjad" === sType) {
+					nType = Asc.c_oAscNumberingFormat.ArabicAbjad;
+				} else if ("arabic-alpha" === sType) {
+					nType = Asc.c_oAscNumberingFormat.ArabicAlpha;
+				} else if ("cardinal-text" === sType) {
+					nType = Asc.c_oAscNumberingFormat.CardinalText;
+				} else if ("chicago" === sType) {
+					nType = Asc.c_oAscNumberingFormat.Chicago;
+				} else if ("chinese-counting" === sType) {
+					nType = Asc.c_oAscNumberingFormat.ChineseCounting;
+				} else if ("chinese-counting-thousand" === sType) {
+					nType = Asc.c_oAscNumberingFormat.ChineseCountingThousand;
+				} else if ("chinese-legal-simplified" === sType) {
+					nType = Asc.c_oAscNumberingFormat.ChineseLegalSimplified;
+				} else if ("chosung" === sType) {
+					nType = Asc.c_oAscNumberingFormat.Chosung;
+				} else if ("decimal-enclosed-circle" === sType) {
+					nType = Asc.c_oAscNumberingFormat.DecimalEnclosedCircle;
+				} else if ("decimal-enclosed-circle-chinese" === sType) {
+					nType = Asc.c_oAscNumberingFormat.DecimalEnclosedCircleChinese;
+				} else if ("decimal-enclosed-fullstop" === sType) {
+					nType = Asc.c_oAscNumberingFormat.DecimalEnclosedFullstop;
+				} else if ("decimal-enclosed-paren" === sType) {
+					nType = Asc.c_oAscNumberingFormat.DecimalEnclosedParen;
+				} else if ("decimal-full-width" === sType) {
+					nType = Asc.c_oAscNumberingFormat.DecimalFullWidth;
+				} else if ("decimal-half-width" === sType) {
+					nType = Asc.c_oAscNumberingFormat.DecimalHalfWidth;
+				} else if ("ganada" === sType) {
+					nType = Asc.c_oAscNumberingFormat.Ganada;
+				} else if ("hangul-digital" === sType) {
+					nType = Asc.c_oAscNumberingFormat.KoreanDigital;
+				} else if ("hebrew-1" === sType) {
+					nType = Asc.c_oAscNumberingFormat.Hebrew1;
+				} else if ("hebrew-2" === sType) {
+					nType = Asc.c_oAscNumberingFormat.Hebrew2;
+				} else if ("hexadecimal" === sType) {
+					nType = Asc.c_oAscNumberingFormat.Hex;
+				} else if ("ideograph-digital" === sType) {
+					nType = Asc.c_oAscNumberingFormat.IdeographDigital;
+				} else if ("ideograph-enclosed-circle" === sType) {
+					nType = Asc.c_oAscNumberingFormat.IdeographEnclosedCircle;
+				} else if ("ideograph-legal-traditional" === sType) {
+					nType = Asc.c_oAscNumberingFormat.IdeographLegalTraditional;
+				} else if ("ideograph-traditional" === sType) {
+					nType = Asc.c_oAscNumberingFormat.IdeographTraditional;
+				} else if ("ideograph-zodiak" === sType) {
+					nType = Asc.c_oAscNumberingFormat.IdeographZodiac;
+				} else if ("ideograph-zodiak-traditional" === sType) {
+					nType = Asc.c_oAscNumberingFormat.IdeographZodiacTraditional;
+				} else if ("iroha" === sType) {
+					nType = Asc.c_oAscNumberingFormat.Iroha;
+				} else if ("iroha-full-width" === sType) {
+					nType = Asc.c_oAscNumberingFormat.IrohaFullWidth;
+				} else if ("japanese-counting" === sType) {
+					nType = Asc.c_oAscNumberingFormat.JapaneseCounting;
+				} else if ("japanese-digital-ten-thousand" === sType) {
+					nType = Asc.c_oAscNumberingFormat.JapaneseDigitalTenThousand;
+				} else if ("japanese-legal" === sType) {
+					nType = Asc.c_oAscNumberingFormat.JapaneseLegal;
+				} else if ("korean-counting" === sType) {
+					nType = Asc.c_oAscNumberingFormat.KoreanCounting;
+				} else if ("korean-digital" === sType) {
+					nType = Asc.c_oAscNumberingFormat.KoreanDigital;
+				} else if ("korean-legal" === sType) {
+					nType = Asc.c_oAscNumberingFormat.KoreanLegal;
+				} else if ("ordinal" === sType) {
+					nType = Asc.c_oAscNumberingFormat.Ordinal;
+				} else if ("ordinal-text" === sType) {
+					nType = Asc.c_oAscNumberingFormat.OrdinalText;
+				} else if ("taiwanese-counting" === sType) {
+					nType = Asc.c_oAscNumberingFormat.TaiwaneseCounting;
+				} else if ("taiwanese-counting-thousand" === sType) {
+					nType = Asc.c_oAscNumberingFormat.TaiwaneseCountingThousand;
+				} else if ("taiwanese-digital" === sType) {
+					nType = Asc.c_oAscNumberingFormat.TaiwaneseDigital;
 				} else {
 					nType = Asc.c_oAscNumberingFormat.Decimal;
 				}
@@ -10316,8 +10428,10 @@ PasteProcessor.prototype =
 
 				this.oCurRun.Add_ToContent(this.oCurRunContentPos, elem, false);
 				this.oCurRunContentPos++;
-				if (1 === this.oCurRun.Content.length)
+				if (1 === this.oCurRun.Content.length) {
 					this._CommitElemToParagraph(this.oCurRun);
+					this._lastCommitedRunId =  this.oCurRun && this.oCurRun.Id;
+				}
 			}
 		}
 	},
@@ -10525,10 +10639,10 @@ PasteProcessor.prototype =
 		if (nRowCount > 0 && nMaxColCount > 0) {
 			var bUseScaleKoef = this.bUseScaleKoef;
 			var dScaleKoef = this.dScaleKoef;
-			/*if (dMaxSum * dScaleKoef > this.dMaxWidth) {
+			if (dMaxSum * dScaleKoef > this.dMaxWidth) {
 				dScaleKoef = dScaleKoef * this.dMaxWidth / dMaxSum;
 				bUseScaleKoef = true;
-			}*/
+			}
 			//строим Grid
 			var aGrid = [];
 			var nPrevIndex = null;
@@ -10610,7 +10724,7 @@ PasteProcessor.prototype =
 		}
 	},
 
-	_ExecuteBlockLevelStd : function (node, pPr) {
+	_ExecuteBlockLevelStd: function (node, pPr) {
 
 		//1. plain text (CInlineLevelSdt)
 // 		<body lang=EN-US style='tab-interval:.5in;word-wrap:break-word'>
@@ -10686,28 +10800,223 @@ PasteProcessor.prototype =
 
 
 
+		//form examples:
+		//1.DropDown
+		// <html>
+		// 	<head/>
+		// 	<body lang=EN-US style='tab-interval:.5in;word-wrap:break-word'>
+		// 	<!--StartFragment-->
+		// 	<p style=''>
+		// 		<w:Sdt ShowingPlcHdr="t" DocPart="8522AE221F8D4E7AB041C6FBDCFFDADA" DropDown="t" Title="Title" Form="t" Key="DropDown1" Border="red" Shd="blue" HelpText="HelpText" Required="t" RoleName="RoleName" RoleColor="#7FB5B5" sdttag="Tag" Label="Label" ID="-1395741881">
+		// 			<w:ListItem ListValue="ListValue1" DataValue="DataValue1"/></w:ListItem>
+		// 			<w:ListItem ListValue="ListValue2" DataValue="DataValue2"/></w:ListItem>DropDown_example
+		// 		</w:Sdt>
+		// 	</p>
+		// 	<!--EndFragment-->
+		// </body>
+		// </html>
 
-		//w:Sdt -> ориентируемся по первому внутреннему тегу
-		//если параграф - то оборачиваем в CBlockLevelSdt, если текст с настройками - в CInlineLevelSdt
+		//2.CheckBox
+		// <html>
+		// 	<head/>
+		// 	<body lang=EN-US style='tab-interval:.5in;word-wrap:break-word'>
+		// 	<!--StartFragment-->
+		// 	<p style=''>
+		// 		<w:Sdt ShowingPlcHdr="t" CheckBox="t" CheckBoxIsChecked="f" CheckBoxValueChecked="☑‘" CheckBoxValueUnchecked="☐" CheckBoxFontChecked="Segoe UI Symbol" CheckBoxFontUnchecked="Segoe UI Symbol"  Title="Title" Form="t" Key="DropDown1" Border="red" Shd="blue" HelpText="HelpText" Required="t" RoleName="RoleName" RoleColor="#7FB5B5" sdttag="Tag" Label="Label" ID="-1395741881" Text="Checkbox label"/>
+		// 		</w:Sdt>
+		// 	</p>
+		// 	<!--EndFragment-->
+		// 	</body>
+		// </html>
+
+		//3.ComboBox
+		// <html>
+		// <head/>
+		// <body lang=EN-US style='tab-interval:.5in;word-wrap:break-word'>
+		// <span>
+		// 	<w:Sdt Title="Title" Form="t" Key="ComboBox2" Border="red" Shd="blue" HelpText="HelpText" Required="t" RoleName="RoleName" RoleColor="#7FB5B5" sdttag="Tag" Label="Label" ComboBox="t" ID="1837335014">
+		// 		<w:ListItem ListValue="Choose an item1" DataValue="Choose an item1"/>test
+		// 	</w:Sdt>
+		// </span>
+		// </body>
+		// </html>
+
+		//4.TextInline
+		// <html>
+		// <head/>
+		// <body lang=EN-US style='tab-interval:.5in;word-wrap:break-word'>
+		// <span>
+		// 	<w:Sdt Title="Title" Form="t" Key="DropDown1" Border="red" Shd="blue" HelpText="HelpText" Required="t" RoleName="RoleName" RoleColor="#7FB5B5" sdttag="Tag" Label="Label" ID="1837335014">
+		// 		inline
+		// 	</w:Sdt>
+		// </span>
+		// </body>
+		// </html>
+
+		//4. TextFixed - TODO see add from api
+		// <html>
+		// <head/>
+		// <body lang=EN-US style='tab-interval:.5in;word-wrap:break-word'>
+		// <p>
+		// 	<w:Sdt Title="Title" Form="t" Key="DropDown1" Border="red" Shd="blue" HelpText="HelpText" Required="t" RoleName="RoleName" RoleColor="#7FB5B5" sdttag="Tag" Label="Label" ID="1837335014" Fixed="t" FixedWidth="20" FixedHeight="10">
+		// 		fixed
+		// 	</w:Sdt>
+		// </p>
+		// </body>
+		// </html>
+
+		//5. RadioButton
+		// <html>
+		// <head/>
+		// <body lang=EN-US style='tab-interval:.5in;word-wrap:break-word'>
+		// <!--StartFragment-->
+		// <p style=''>
+		// 	<w:Sdt CheckBox="t" CheckBoxIsChecked="f" CheckBoxValueChecked="◙" CheckBoxValueUnchecked="○" CheckBoxFontChecked="Segoe UI Symbol" CheckBoxFontUnchecked="Segoe UI Symbol" GroupKey="Group 1" Form="t" Key="Choice1" ContentLocked="t" ID="123456789" Text="Choice 1"></w:Sdt>
+		// </p>
+		// <!--EndFragment-->
+		// </body>
+		// </html>
+
+
+		//6. Signature - fixed form (TODO see add from api)
+
+		//7. Email address - TextInline + properties. TODO symbols!
+		// <html>
+		// <head/>
+		// <body lang=EN-US style='tab-interval:.5in;word-wrap:break-word'>
+		// <span>
+		//  <w:Sdt Title="Email Address" Form="t" Key="EmailAddress1" Border="red" Shd="blue" HelpText="Enter your email" Required="t" RoleName="Recipient" RoleColor="#7FB5B5" sdttag="EmailTag" Label="Email" ID="1837335015">
+		// <w:TextForm MaxCharacters="-1" Comb="f" WidthRule="1" MultiLine="f" AutoFit="f" FormatType="regexp" RegExp="\S+@\S+\.\S+" Symbols="49,50,51"/>
+		// user111@example.com
+		//  </w:Sdt>
+		// </span>
+		// </body>
+		// </html>
+
+		//8. date
+		// <html>
+		// <head/>
+		// <body lang=EN-US style='tab-interval:.5in;word-wrap:break-word'>
+		// <span>
+		// <w:Sdt DocPart="0D4FD865761947FCBA0D9229E17016DB" Calendar="t" MapToDateTime="t" CalendarType="Gregorian" Date="2022-10-24" DateFormat="dd.MM.yyyy" Lang="EN-US" Title="Date Picker" Form="t" Key="DatePicker1" Border="blue" Shd="yellow" HelpText="Select a date" Required="t" RoleName="DateRole" RoleColor="#FF5733" sdttag="DateTag" Label="DateLabel" ID="-291673853">24.10.2022</w:Sdt>
+		// </span>
+		// </body>
+		// </html>
+
+		//9. zipcode TODO need test
+		// <html>
+		// <head/>
+		// <body lang=EN-US style='tab-interval:.5in;word-wrap:break-word'>
+		// <span>
+		// <w:Sdt Title="Zip Code" Form="t" Key="ZipCode1" Border="blue" Shd="yellow" HelpText="Enter zip code" Required="t" RoleName="User" RoleColor="#7FB5B5" sdttag="ZipCodeTag" Label="ZipCodeLabel" ID="1837335020" PlcHdr="PlaceholderText" showingplchdr ="t">
+		// <w:TextForm AutoFit="f" FormatType="mask" Mask="99999-9999" Symbols="57"/>
+		// 99999-9999
+		// </w:Sdt>
+		// </span>
+		// </body>
+		// </html>
+
+		//10. credit card type
+		// <html>
+		// <head/>
+		// <body lang=EN-US style='tab-interval:.5in;word-wrap:break-word'>
+		// <!--StartFragment-->
+		// <span>
+		//  <w:Sdt Form="t" Key="CreditCard1" HelpText="Enter credit card number" Required="t" sdttag="CreditCardTag" Label="CreditCardLabel" ID="1837335025" PlcHdr="PlaceholderText" showingplchdr ="t">
+		// 	 <w:TextForm MaxCharacters="-1" Comb="f" WidthRule="1" MultiLine="f" AutoFit="f" FormatType="mask" Mask="9999-9999-9999-9999"/>
+		// 1234-5678-9012-3456
+		// </w:Sdt>
+		// </span>
+		// <!--EndFragment-->
+		// </body>
+		// </html>
+
+		//11. complex
+		// <html>
+		// <head/>
+		// <body lang=EN-US style='tab-interval:.5in;word-wrap:break-word'>
+		// <!--StartFragment-->
+		// <p style=''>
+		// 	<w:Sdt ComplexForm="t" ComplexFormType="0" Title="" sdttag="tag" Label="" ContentLocked="t" ShowingPlcHdr="t" Temporary="f" Form="t" Key="Complex1" HelpText="tip" Fixed="f" ID="123456789">
+		// 		Complex form content
+		// 	</w:Sdt>
+		// </p>
+		// <!--EndFragment-->
+		// </body>
+		// </html>
+
+		let checkBoolAttr = function (attr) {
+			return attr && attr.value && attr.value === "t";
+		};
+
+		let getType = function (attrs) {
+			let res = null;
+			if (checkBoolAttr(attrs["checkbox"])) {
+				res = "checkbox";
+			} else if (checkBoolAttr(attrs["dropdown"])) {
+				res = "dropdown";
+			} else if (checkBoolAttr(attrs["combobox"])) {
+				res = "combobox";
+			} else if (checkBoolAttr(attrs["maptodatetime"])) {
+				res = "datetime";
+			} else if (checkBoolAttr(attrs["complexform"])) {
+				res = "complexform";
+			} else {
+				res = "text";
+			}
+			return res;
+		};
+
+		let getCharCode = function (text) {
+			let charCode;
+			for (let oIterator = text.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
+				charCode = oIterator.value();
+			}
+			return charCode;
+		};
+
+		let setListItems = function (addFunc) {
+			for (let i = 0, length = node.childNodes.length; i < length; i++) {
+				let child = node.childNodes[i];
+				if (child && "w:listitem" === child.nodeName.toLowerCase()) {
+					if (child.attributes) {
+						let listvalue = child.attributes["listvalue"] && child.attributes["listvalue"].value;
+						let datavalue = child.attributes["datavalue"] && child.attributes["datavalue"].value;
+						if (datavalue) {
+							addFunc(datavalue, listvalue ? listvalue : undefined);
+						}
+					}
+				}
+			}
+		};
+
+		let isForm = node && node.attributes && checkBoolAttr(node.attributes["form"]);
 		let isBlockLevelSdt = node.getElementsByTagName("p").length > 0;
-		let levelSdt = isBlockLevelSdt ? new CBlockLevelSdt(this.oLogicDocument, this.oDocument) : new CInlineLevelSdt();
+		let levelSdt = isBlockLevelSdt && !isForm ?
+			new CBlockLevelSdt(this.oLogicDocument, this.oDocument) :
+			new CInlineLevelSdt();
 
-		//ms в буфер записывает только lock контента
 		let checkBox, dropdown, comboBox;
+		let isContentAdded = false;
+		let plcHdrText;
+
 		if (node && node.attributes) {
+			let _type = getType(node.attributes);
 			let contentLocked = node.attributes["contentlocked"];
-			if (contentLocked /*&& contentLocked.value === "t"*/) {
+			if (contentLocked) {
 				levelSdt.SetContentControlLock(c_oAscSdtLockType.SdtContentLocked);
 			}
-			//далее тег и титульник, цвета нет
+
 			let alias = node.attributes["title"];
 			if (alias && alias.value) {
 				levelSdt.SetAlias(alias.value);
 			}
+
 			let tag = node.attributes["sdttag"];
 			if (tag && tag.value) {
 				levelSdt.SetTag(tag.value);
 			}
+
 			let temporary = node.attributes["temporary"];
 			if (temporary && temporary.value) {
 				levelSdt.SetContentControlTemporary(temporary.value === "t");
@@ -10715,137 +11024,431 @@ PasteProcessor.prototype =
 
 			let placeHolder = node.attributes["showingplchdr"];
 			if (placeHolder && placeHolder.value === "t") {
-				levelSdt.SetPlaceholder(c_oAscDefaultPlaceholderName.Text);
+				plcHdrText = node.attributes["plchdr"] ?
+					node.attributes["plchdr"].value :
+					c_oAscDefaultPlaceholderName.Text;
+				levelSdt.SetPlaceholderText(plcHdrText);
+				levelSdt.SetShowingPlcHdr(true);
 			}
 
-			//TODO поддержать Picture CC
-			/*let aspicture = node.attributes["displayaspicture"];
-			if (aspicture) {
-				blockLevelSdt.SetPicturePr(aspicture.value === "t");
-			}*/
-
-
-			let getCharCode = function (text) {
-				let charCode;
-				for (let oIterator = text.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
-					charCode = oIterator.value();
-				}
-				return charCode;
-			};
-
-			let setListItems = function (addFunc) {
-				for (let i = 0, length = node.childNodes.length; i < length; i++) {
-					let child = node.childNodes[i];
-					if (child && "w:listitem" === child.nodeName.toLowerCase()) {
-						if (child.attributes) {
-							let listvalue = child.attributes["listvalue"] && child.attributes["listvalue"].value;
-							let datavalue = child.attributes["datavalue"] && child.attributes["datavalue"].value;
-							if (datavalue) {
-								addFunc(datavalue, listvalue ? listvalue : undefined);
-							}
-						}
-					}
-				}
-			};
+			if (AscCommon.IsSupportOFormFeature() && isForm) {
+				this._applyFormProperties(node, levelSdt);
+			}
 
 			let oPr;
-			checkBox = node.attributes["checkbox"];
-			if (checkBox && checkBox.value === "t") {
-				oPr = new AscWord.CSdtCheckBoxPr();
-				let checked = node.attributes["checkboxischecked"];
-				if (checked) {
-					oPr.Checked = checked.value === "t";
-				}
-				let checkedFont = node.attributes["checkboxfontchecked"];
-				if (checkedFont) {
-					oPr.CheckedFont = checkedFont.value;
-				}
-				let checkedSymbol = node.attributes["checkboxvaluechecked"];
-				if (checkedSymbol) {
-					oPr.CheckedSymbol = getCharCode(checkedSymbol.value);
-				}
-				let uncheckedFont = node.attributes["checkboxfontunchecked"];
-				if (uncheckedFont) {
-					oPr.UncheckedFont = uncheckedFont.value;
-				}
-				let uncheckedSymbol = node.attributes["checkboxvalueunchecked"];
-				if (checkedSymbol) {
-					oPr.UncheckedSymbol = getCharCode(uncheckedSymbol.value);
-				}
-
+			checkBox = _type === "checkbox";
+			if (checkBox) {
+				oPr = this._createCheckBoxPr(node, getCharCode, isForm);
 				levelSdt.ApplyCheckBoxPr(oPr);
+				isContentAdded = true;
+				if (node.attributes["text"]) {
+					levelSdt.SetCheckBoxLabel(node.attributes["text"].value);
+				}
 			}
 
 			let id = node.attributes["id"];
-			if (id) {
-				levelSdt.Pr.Id = id;
+			if (id && id.value) {
+				levelSdt.SetContentControlId(id.value);
 			}
 
-			comboBox = node.attributes["combobox"];
-			if (comboBox && comboBox.value === "t") {
-				oPr = new AscWord.CSdtComboBoxPr();
-			}
-
-			dropdown = node.attributes["dropdown"];
-			if (dropdown && dropdown.value === "t") {
-				oPr = new AscWord.CSdtComboBoxPr();
-			}
+			comboBox = _type === "combobox";
+			dropdown = _type === "dropdown";
 
 			if (comboBox || dropdown) {
-				//TODO по грамотному нужно пропарсить всё содержимое и отдать все свойства
-				//пока только для listitem делаю
+				oPr = new AscWord.CSdtComboBoxPr();
 				setListItems(function (sDisplay, sValue) {
 					oPr.AddItem(sDisplay, sValue);
 				});
 				levelSdt.ApplyComboBoxPr(oPr);
 			}
-		}
 
-		//content
-		if (!checkBox && !comboBox && !dropdown) {
-			let oPasteProcessor = new PasteProcessor(this.api, false, false, true);
-			oPasteProcessor.AddedFootEndNotes = this.AddedFootEndNotes;
-			oPasteProcessor.msoComments = this.msoComments;
-			oPasteProcessor.oFonts = this.oFonts;
-			oPasteProcessor.oImages = this.oImages;
-			oPasteProcessor.bIsForFootEndnote = this.bIsForFootEndnote;
-			oPasteProcessor.oDocument = isBlockLevelSdt ? levelSdt.Content : this.oDocument;
-			oPasteProcessor.bIgnoreNoBlockText = true;
-			oPasteProcessor.aMsoHeadStylesStr = this.aMsoHeadStylesStr;
-			oPasteProcessor.oMsoHeadStylesListMap = this.oMsoHeadStylesListMap;
-			oPasteProcessor.msoListMap = this.msoListMap;
-			oPasteProcessor.pasteInExcel = this.pasteInExcel;
-			oPasteProcessor._Execute(node, pPr, true, true, false);
-			oPasteProcessor._PrepareContent();
-			oPasteProcessor._AddNextPrevToContent(levelSdt.Content);
+			if (_type === "complexform" && AscCommon.IsSupportOFormFeature()) {
+				this._applyComplexFormPr(node, levelSdt);
+			}
 
-			//добавляем новый параграфы
-			let i, j, length, length2;
-			if (isBlockLevelSdt) {
-				for (i = 0, length = oPasteProcessor.aContent.length; i < length; ++i) {
-					if (i === length - 1) {
-						levelSdt.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], true);
-					} else {
-						levelSdt.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], false);
-					}
+			if (_type === "text" && AscCommon.IsSupportOFormFeature()) {
+				this._applyTextFormPr(node, levelSdt);
+			}
+
+			if (_type === "datetime" && AscCommon.IsSupportOFormFeature()) {
+				let datePickerPr = this._createDatePickerPr(node);
+				if (datePickerPr.hasDate) {
+					isContentAdded = true;
 				}
-				levelSdt.Content.Internal_Content_Remove(0, 1);
-			} else {
-				for (i = 0, length = oPasteProcessor.aContent.length; i < length; ++i) {
-					if (oPasteProcessor.aContent[i] && oPasteProcessor.aContent[i].Content) {
-						for (j = 0, length2 = oPasteProcessor.aContent[i].Content.length - 1; j < length2; ++j) {
-							levelSdt.AddToContent(j, oPasteProcessor.aContent[i].Content[j]);
-						}
-					}
-				}
+				levelSdt.ApplyDatePickerPr(datePickerPr.pr);
 			}
 		}
 
-		if (isBlockLevelSdt) {
+		if (!isContentAdded) {
+			this._fillSdtContent(node, levelSdt, isBlockLevelSdt, pPr, plcHdrText);
+		}
+
+		if (isForm && AscCommon.IsSupportOFormFeature() &&
+			node.attributes["fixed"] && node.attributes["fixed"].value === "t") {
+			let width = node.attributes["fixedwidth"] && node.attributes["fixedwidth"].value;
+			let height = node.attributes["fixedheight"] && node.attributes["fixedheight"].value;
+			levelSdt = levelSdt.ConvertFormToFixed(width, height);
+			this._AddToParagraph(levelSdt);
+		} else if (isBlockLevelSdt) {
 			this.aContent.push(levelSdt);
 		} else {
 			this._CommitElemToParagraph(levelSdt);
 			this.oCur_rPr = new CTextPr();
+		}
+	},
+
+	_applyFormProperties: function (node, levelSdt) {
+		let formPr = new AscWord.CSdtFormPr();
+
+		let key = node.attributes["key"];
+		if (key && key.value) {
+			formPr.SetKey(key.value);
+		}
+
+		let label = node.attributes["label"];
+		if (label && label.value) {
+			formPr.SetLabel(label.value);
+		}
+
+		let helpText = node.attributes["helptext"];
+		if (helpText && helpText.value) {
+			formPr.SetHelpText(helpText.value);
+		}
+
+		let required = node.attributes["required"];
+		if (required && required.value) {
+			formPr.SetRequired(required.value === "t");
+		}
+
+		let fixed = node.attributes["fixed"];
+		if (fixed && fixed.value) {
+			formPr.SetFixed(fixed.value === "t");
+		}
+
+		let border = node.attributes["border"];
+		if (border && border.value) {
+			let brd = new Asc.asc_CTextBorder();
+			brd.put_Value(1);
+			let borderColor = this._ParseColor(border.value);
+			if (borderColor) {
+				let ascColor = new Asc.asc_CColor();
+				ascColor.asc_putR(borderColor.r);
+				ascColor.asc_putG(borderColor.g);
+				ascColor.asc_putB(borderColor.b);
+				brd.put_Color(ascColor);
+			}
+			formPr.put_Border(brd);
+		}
+
+		let shd = node.attributes["shd"];
+		if (shd && shd.value) {
+			let shdColor = this._ParseColor(shd.value);
+			if (shdColor) {
+				let ascColor = new Asc.asc_CColor();
+				ascColor.asc_putR(shdColor.r);
+				ascColor.asc_putG(shdColor.g);
+				ascColor.asc_putB(shdColor.b);
+				formPr.SetAscShd(true, ascColor);
+			}
+		}
+
+		let roleName = node.attributes["rolename"];
+		if (roleName && roleName.value) {
+			let oform = this.oLogicDocument ? this.oLogicDocument.GetOFormDocument() : null;
+			if (oform && oform.haveRole(roleName.value)) {
+				formPr.SetRole(roleName.value);
+			} else {
+				const role = new AscCommon.CRoleSettings();
+				role.asc_putName(roleName.value);
+				let roleColor = node.attributes["rolecolor"];
+				roleColor = roleColor && roleColor.value && this._ParseColor(roleColor.value);
+				let ascRoleColor;
+				if (roleColor) {
+					ascRoleColor = new Asc.asc_CColor();
+					ascRoleColor.asc_putR(roleColor.r);
+					ascRoleColor.asc_putG(roleColor.g);
+					ascRoleColor.asc_putB(roleColor.b);
+				} else {
+					ascRoleColor = new Asc.asc_CColor();
+					ascRoleColor.asc_putR(228);
+					ascRoleColor.asc_putG(205);
+					ascRoleColor.asc_putB(219);
+				}
+				role.asc_putColor(ascRoleColor);
+				if (oform) {
+					oform.asc_addRole(role);
+					formPr.SetRole(roleName.value);
+				}
+			}
+		}
+
+		levelSdt.SetFormPr(formPr);
+	},
+
+	_createCheckBoxPr: function (node, getCharCode, isForm) {
+		let oPr = new AscWord.CSdtCheckBoxPr();
+
+		let checked = node.attributes["checkboxischecked"];
+		if (checked) {
+			oPr.Checked = checked.value === "t";
+		}
+		
+		let groupKey = node.attributes["groupkey"];
+		if (groupKey && groupKey.value) {
+			oPr.GroupKey = groupKey.value;
+		}
+		
+		let checkedFont = node.attributes["checkboxfontchecked"];
+		if (checkedFont) {
+			oPr.CheckedFont = checkedFont.value;
+		} else if (isForm) {
+			oPr.CheckedFont = Asc.c_oAscSdtCheckBoxDefaults.FormCheckedFont;
+		}
+
+		let checkedSymbol = node.attributes["checkboxvaluechecked"];
+		if (checkedSymbol) {
+			oPr.CheckedSymbol = getCharCode(checkedSymbol.value);
+		} else if (isForm) {
+			oPr.CheckedSymbol = oPr.GroupKey ? Asc.c_oAscSdtCheckBoxDefaults.FormCheckedRadioSymbol : Asc.c_oAscSdtCheckBoxDefaults.FormCheckedSymbol;
+		}
+
+		let uncheckedFont = node.attributes["checkboxfontunchecked"];
+		if (uncheckedFont) {
+			oPr.UncheckedFont = uncheckedFont.value;
+		} else if (isForm) {
+			oPr.UncheckedFont = Asc.c_oAscSdtCheckBoxDefaults.FormUncheckedFont;
+		}
+
+		let uncheckedSymbol = node.attributes["checkboxvalueunchecked"];
+		if (uncheckedSymbol) {
+			oPr.UncheckedSymbol = getCharCode(uncheckedSymbol.value);
+		} else if (isForm) {
+			oPr.UncheckedSymbol = oPr.GroupKey ? Asc.c_oAscSdtCheckBoxDefaults.FormUncheckedRadioSymbol : Asc.c_oAscSdtCheckBoxDefaults.FormUncheckedSymbol;
+		}
+
+		return oPr;
+	},
+
+	_applyComplexFormPr: function (node, levelSdt) {
+		let complexFormType = node.attributes["complexformtype"];
+		if (complexFormType && complexFormType.value) {
+			let nType = parseInt(complexFormType.value);
+			if (!isNaN(nType)) {
+				let complexFormPr = new AscWord.CSdtComplexFormPr(nType);
+				levelSdt.SetComplexFormPr(complexFormPr);
+			}
+		}
+	},
+
+	_applyTextFormPr: function (node, levelSdt) {
+		let textFormNode = null;
+		for (let i = 0; i < node.childNodes.length; i++) {
+			let childNode = node.childNodes[i];
+			if (childNode.nodeName && childNode.nodeName.toLowerCase() === "w:textform") {
+				textFormNode = childNode;
+				break;
+			}
+		}
+
+		if (!textFormNode) {
+			return;
+		}
+
+		let textFormPr = new AscWord.CSdtTextFormPr();
+
+		let maxCharacters = textFormNode.attributes["maxcharacters"];
+		if (maxCharacters && maxCharacters.value) {
+			textFormPr.SetMaxCharacters(parseInt(maxCharacters.value));
+		}
+
+		let comb = textFormNode.attributes["comb"];
+		if (comb && comb.value) {
+			textFormPr.SetComb(comb.value === "t");
+		}
+
+		let width = textFormNode.attributes["width"];
+		if (width && width.value) {
+			textFormPr.SetWidth(parseInt(width.value));
+		}
+
+		let widthRule = textFormNode.attributes["widthrule"];
+		if (widthRule && widthRule.value) {
+			textFormPr.SetWidthRule(parseInt(widthRule.value));
+		}
+
+		let placeholderSymbol = textFormNode.attributes["placeholdersymbol"];
+		if (placeholderSymbol && placeholderSymbol.value) {
+			textFormPr.SetPlaceHolderSymbol(parseInt(placeholderSymbol.value));
+		}
+
+		let placeholderFont = textFormNode.attributes["placeholderfont"];
+		if (placeholderFont && placeholderFont.value) {
+			textFormPr.SetPlaceHolderFont(placeholderFont.value);
+		}
+
+		let combBorder = textFormNode.attributes["combborder"];
+		if (combBorder && combBorder.value) {
+			let borderColor = this._ParseColor(combBorder.value);
+			if (borderColor) {
+				let brd = new Asc.asc_CTextBorder();
+				brd.put_Value(1);
+				let ascColor = new Asc.asc_CColor();
+				ascColor.asc_putR(borderColor.r);
+				ascColor.asc_putG(borderColor.g);
+				ascColor.asc_putB(borderColor.b);
+				brd.put_Color(ascColor);
+				textFormPr.SetAscCombBorder(brd);
+			}
+		}
+
+		let multiLine = textFormNode.attributes["multiline"];
+		if (multiLine && multiLine.value) {
+			textFormPr.SetMultiLine(multiLine.value === "t");
+		}
+
+		let autoFit = textFormNode.attributes["autofit"];
+		if (autoFit && autoFit.value) {
+			textFormPr.SetAutoFit(autoFit.value === "t");
+		}
+
+		let formatType = textFormNode.attributes["formattype"];
+		if (formatType && formatType.value) {
+			switch(formatType.value) {
+				case "none":
+					textFormPr.SetNoneFormat();
+					break;
+				case "digit":
+					textFormPr.SetDigitFormat();
+					break;
+				case "letter":
+					textFormPr.SetLetterFormat();
+					break;
+				case "mask":
+					let mask = textFormNode.attributes["mask"];
+					if (mask && mask.value) {
+						textFormPr.SetMaskFormat(mask.value);
+					}
+					break;
+				case "regexp":
+					let regexp = textFormNode.attributes["regexp"];
+					if (regexp && regexp.value) {
+						textFormPr.SetRegExpFormat(regexp.value);
+					}
+					break;
+			}
+		}
+
+		levelSdt.ApplyTextFormPr(textFormPr);
+	},
+
+	_createDatePickerPr: function (node) {
+		let datePickerPr = new AscWord.CSdtDatePickerPr();
+		let hasDate = false;
+
+		let date = node.attributes["date"];
+		if (date && date.value) {
+			hasDate = true;
+			datePickerPr.SetFullDate(date.value);
+		} else {
+			datePickerPr.SetNullFullDate(true);
+		}
+
+		let dateFormat = node.attributes["dateformat"];
+		if (dateFormat && dateFormat.value) {
+			datePickerPr.SetDateFormat(dateFormat.value);
+		}
+
+		let lang = node.attributes["lang"];
+		if (lang && lang.value) {
+			let langId = Asc.g_oLcidNameToIdMap[lang.value];
+			if (langId) {
+				datePickerPr.SetLangId(langId);
+			}
+		}
+
+		let calendarType = node.attributes["calendartype"];
+		if (calendarType && calendarType.value) {
+			let calendar = this._getCalendarType(calendarType.value);
+			datePickerPr.SetCalendar(calendar);
+		}
+
+		return {pr: datePickerPr, hasDate: hasDate};
+	},
+
+	_getCalendarType: function (calendarTypeStr) {
+		switch(calendarTypeStr.toLowerCase()) {
+			case "gregorian":
+				return Asc.c_oAscCalendarType.Gregorian;
+			case "gregorianme":
+				return Asc.c_oAscCalendarType.GregorianMeFrench;
+			case "gregorianarabic":
+				return Asc.c_oAscCalendarType.GregorianArabic;
+			case "hijri":
+				return Asc.c_oAscCalendarType.Hijri;
+			case "hebrew":
+				return Asc.c_oAscCalendarType.Hebrew;
+			case "taiwan":
+				return Asc.c_oAscCalendarType.Taiwan;
+			case "japan":
+				return Asc.c_oAscCalendarType.Japan;
+			case "thai":
+				return Asc.c_oAscCalendarType.Thai;
+			case "korea":
+				return Asc.c_oAscCalendarType.Korea;
+			case "saka":
+				return Asc.c_oAscCalendarType.Saka;
+			case "gregorianusfr":
+				return Asc.c_oAscCalendarType.GregorianXlitEnglish;
+			case "gregorianusfrench":
+				return Asc.c_oAscCalendarType.GregorianXlitFrench;
+			default:
+				return Asc.c_oAscCalendarType.Gregorian;
+		}
+	},
+
+	_fillSdtContent: function (node, levelSdt, isBlockLevelSdt, pPr, plcHdrText) {
+		let oPasteProcessor = new PasteProcessor(this.api, false, false, true);
+		oPasteProcessor.AddedFootEndNotes = this.AddedFootEndNotes;
+		oPasteProcessor.msoComments = this.msoComments;
+		oPasteProcessor.oFonts = this.oFonts;
+		oPasteProcessor.oImages = this.oImages;
+		oPasteProcessor.bIsForFootEndnote = this.bIsForFootEndnote;
+		oPasteProcessor.oDocument = isBlockLevelSdt ? levelSdt.Content : this.oDocument;
+		oPasteProcessor.bIgnoreNoBlockText = true;
+		oPasteProcessor.aMsoHeadStylesStr = this.aMsoHeadStylesStr;
+		oPasteProcessor.oMsoHeadStylesListMap = this.oMsoHeadStylesListMap;
+		oPasteProcessor.msoListMap = this.msoListMap;
+		oPasteProcessor.pasteInExcel = this.pasteInExcel;
+
+		oPasteProcessor._Execute(node, pPr, true, true, false);
+
+		oPasteProcessor._PrepareContent();
+
+		let i, j, length, length2;
+		if (isBlockLevelSdt) {
+			for (i = 0, length = oPasteProcessor.aContent.length; i < length; ++i) {
+				if (i === length - 1) {
+					levelSdt.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], true);
+				} else {
+					levelSdt.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], false);
+				}
+			}
+			levelSdt.Content.Internal_Content_Remove(0, 1);
+		} else {
+			if (oPasteProcessor.aContent.length) {
+				levelSdt.RemoveAll();
+			}
+			for (i = 0, length = oPasteProcessor.aContent.length; i < length; ++i) {
+				if (oPasteProcessor.aContent[i] && oPasteProcessor.aContent[i].Content) {
+					for (j = 0, length2 = oPasteProcessor.aContent[i].Content.length - 1; j < length2; ++j) {
+						levelSdt.AddToContentToEnd(oPasteProcessor.aContent[i].Content[j]);
+					}
+				}
+			}
+			
+			if (levelSdt.IsEmpty()) {
+				levelSdt.ReplaceContentWithPlaceHolder(false, true);
+			}
 		}
 	},
 
@@ -11170,6 +11773,7 @@ PasteProcessor.prototype =
 					row.Set_After(nColSpan);
 				else {
 					var oCurCell = row.Add_Cell(row.Get_CellsCount(), row, null, false);
+					oCurCell.SetIndex(row.Get_CellsCount() - 1);
 					if (nColSpan > 1)
 						oCurCell.Set_GridSpan(nColSpan);
 					if (Shd) {
@@ -11372,7 +11976,6 @@ PasteProcessor.prototype =
 			}
 			oPasteProcessor._Execute(node, {}, true, true, false);
 			oPasteProcessor._PrepareContent(indent);
-			oPasteProcessor._AddNextPrevToContent(cell.Content);
 			if (0 === oPasteProcessor.aContent.length) {
 				var oDocContent = cell.Content;
 				var oNewPar = new AscWord.Paragraph(oDocContent);
@@ -11587,6 +12190,12 @@ PasteProcessor.prototype =
 				var ignoreFirstSpaces = false;
 				if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Excel && !(node.parentNode && node.parentNode.nodeName.toLowerCase() === "font")) {
 					ignoreFirstSpaces = true;
+				}
+
+				//TODO added special conditional. need add common spaces/tabs/new line calculating
+				if (value === " " && ((node.nextElementSibling && node.nextElementSibling.nodeName && node.nextElementSibling.nodeName.toLowerCase() === "w:sdt")
+					|| (node.previousElementSibling && node.previousElementSibling.nodeName && node.previousElementSibling.nodeName.toLowerCase() === "w:sdt"))) {
+					value = "";
 				}
 
 				//bIsPreviousSpace - игнорируем несколько пробелов подряд
@@ -11838,7 +12447,9 @@ PasteProcessor.prototype =
 							if (oTargetDocument && oDrawingDocument) {
 								//если добавляем изображение в гиперссылку, то кладём его в отдельный ран и делаем не подчёркнутым
 								if (oThis.oCurHyperlink) {
-									oThis._CommitElemToParagraph(oThis.oCurRun);
+									if (!(oThis._lastCommitedRunId && oThis.oCurRun && oThis._lastCommitedRunId && oThis.oCurRun.Id === oThis._lastCommitedRunId)) {
+										oThis._CommitElemToParagraph(oThis.oCurRun);
+									}
 									oThis.oCurRun = new ParaRun(oThis.oCurPar);
 									oThis.oCurRun.Pr.Underline = false;
 								}
@@ -12108,6 +12719,18 @@ PasteProcessor.prototype =
 					}
 					return;
 				}
+
+				if (sChildNodeName === "math") {
+					let paraMath = ParaMath.fromMathML(child.outerHTML);
+					let oAddedParaMath = paraMath;
+					let oCurPar = oShapeContent.GetLastParagraph();
+					oAddedParaMath.SetParagraph && oAddedParaMath.SetParagraph(oCurPar);
+					oCurPar.Internal_Content_Add(oCurPar.Content.length - 1, oAddedParaMath, false);
+					oCurPar.CorrectContent();
+					oCurPar.CheckParaEnd();
+					return;
+				}
+
 				//попускам элеметы состоящие только из \t,\n,\r
 				if (Node.TEXT_NODE === child.nodeType) {
 					value = child.nodeValue;
@@ -12129,28 +12752,14 @@ PasteProcessor.prototype =
 					oThis.bInBlock = true;
 				}
 
-				var bHyperlink = false;
 				var isPasteHyperlink = null;
 				if ("a" === sChildNodeName) {
 					href = child.href;
 					if (null != href) {
-						/*var sDecoded;
-						//decodeURI может выдавать malformed exception, потому что наш сайт в utf8, а некоторые сайты могут кодировать url в своей кодировке(например windows-1251)
-						try {
-							sDecoded = decodeURI(href);
-						} catch (e) {
-							sDecoded = href;
-						}
-						href = sDecoded;*/
-						bHyperlink = true;
 						title = child.getAttribute("title");
 
-						oThis.oDocument = shape.txBody.content;
 
-						var Pos = (true === oThis.oDocument.Selection.Use ? oThis.oDocument.Selection.StartPos :
-							oThis.oDocument.CurPos.ContentPos);
 						isPasteHyperlink = node.getElementsByTagName('img');
-
 						var text = null;
 						if (isPasteHyperlink && isPasteHyperlink.length) {
 							isPasteHyperlink = null;
@@ -12162,8 +12771,10 @@ PasteProcessor.prototype =
 							isPasteHyperlink = false;
 						}
 						if (isPasteHyperlink) {
-							var HyperProps = new Asc.CHyperlinkProperty({Text: text, Value: href, ToolTip: title});
-							oThis.oDocument.Content[Pos].AddHyperlink(HyperProps);
+							let HyperProps = new Asc.CHyperlinkProperty({Text: text, Value: href, ToolTip: title});
+							let oCurPar = oShapeContent.GetLastParagraph();
+							oCurPar.MoveCursorToEndPos();
+							oCurPar.AddHyperlink(HyperProps);
 						}
 					}
 				}
@@ -12614,6 +13225,7 @@ PasteProcessor.prototype =
 				//CBlockLevelSdt
 				bAddParagraph = this._Decide_AddParagraph(node, pPr, bAddParagraph);
 				this._ExecuteBlockLevelStd(node, pPr);
+				this._Set_Run_Pr(this.oCurRun.Pr.Copy());
 				return bAddParagraph;
 			}
 

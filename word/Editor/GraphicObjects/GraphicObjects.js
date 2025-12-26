@@ -790,6 +790,7 @@ CGraphicObjects.prototype =
 		getChartSettings: DrawingObjectsController.prototype.getChartSettings,
 		editChartDrawingObjects: DrawingObjectsController.prototype.editChartDrawingObjects,
 		editChartCallback: DrawingObjectsController.prototype.editChartCallback,
+	getSelectedSingleChart: DrawingObjectsController.prototype.getSelectedSingleChart,
 
 
     getPageSizesByDrawingObjects: function()
@@ -3820,7 +3821,7 @@ CGraphicObjects.prototype =
         return false;
     },
 
-
+	getParagraphByXY: DrawingObjectsController.prototype.getParagraphByXY,
 
     checkTargetSelection: function()
     {
@@ -4788,6 +4789,7 @@ CGraphicObjects.prototype =
     },
     endTrackNewShape: DrawingObjectsController.prototype.endTrackNewShape
 };
+CGraphicObjects.prototype.constructor = CGraphicObjects;
 CGraphicObjects.prototype.saveDocumentState = function() {
 	this.startDocState = null;
 	if(!this.document) {

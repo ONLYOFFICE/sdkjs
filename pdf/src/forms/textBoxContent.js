@@ -159,7 +159,7 @@
 				let isOnOpen    = Asc.editor.getDocumentRenderer().IsOpenFormsInProgress;
 				let nCharLimit	= this.ParentPDF.GetCharLimit();
 				
-				if (false == isOnOpen && bIgnoreCount !== true) {
+				if (false == isOnOpen && bIgnoreCount !== true && Asc.editor.isDocumentLoadComplete) {
 					let nCharsCount = AscWord.GraphemesCounter.GetCount(codePoints, this.GetCalculatedTextPr());
 					
 					if (nCharsCount > nCharLimit)
@@ -265,6 +265,9 @@
 				break;
 			case AscPDF.ALIGN_TYPE.right:
 				nInternalType = AscCommon.align_Right;
+				break;
+			case AscPDF.ALIGN_TYPE.justify:
+				nInternalType = AscCommon.align_Justify;
 				break;
 		}
 

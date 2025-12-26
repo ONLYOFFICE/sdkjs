@@ -1295,12 +1295,14 @@ CCellCommentator.prototype._addComment = function (oComment, bChange, bIsNotUpda
 	// Add new comment
 	if (!bChange) {
 		History.Create_NewPoint();
+		this.worksheet.workbook.StartAction(AscDFH.historydescription_Spreadsheet_AddComment, oComment);
 		History.Add(AscCommonExcel.g_oUndoRedoComment, AscCH.historyitem_Comment_Add, this.model.getId(), null, oComment.clone());
 		if (!oComment.bDocument) {
 			this.updateAreaComment(oComment);
 		}
 
 		this.model.aComments.push(oComment);
+		this.worksheet.workbook.FinalizeAction();
 
 		if (!bIsNotUpdate)
 			this.drawCommentCells();

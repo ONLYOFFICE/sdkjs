@@ -211,4 +211,56 @@
 	CDocumentSectionProps.prototype["get_MirrorMargins"]  = CDocumentSectionProps.prototype.get_MirrorMargins;
 	CDocumentSectionProps.prototype["put_MirrorMargins"]  = CDocumentSectionProps.prototype.put_MirrorMargins;
 	
+	/**
+	 * @constructor
+	 */
+	function SectionPageNumProps()
+	{
+		this.Start     = undefined;
+		this.Format    = undefined;
+		this.ChapStyle = undefined;
+		this.ChapSep   = undefined;
+	}
+	SectionPageNumProps.prototype.get_Start = function()
+	{
+		return this.Start;
+	};
+	SectionPageNumProps.prototype.put_Start = function(v)
+	{
+		this.Start = v;
+	};
+	SectionPageNumProps.prototype.get_Format = function()
+	{
+		return this.Format;
+	};
+	SectionPageNumProps.prototype.put_Format = function(v)
+	{
+		this.Format = v;
+	};
+	SectionPageNumProps.prototype.get_ChapStyle = function()
+	{
+		return this.ChapStyle;
+	};
+	SectionPageNumProps.prototype.put_ChapStyle = function(v)
+	{
+		this.ChapStyle = v;
+	};
+	SectionPageNumProps.prototype.get_ChapSep = function()
+	{
+		return this.ChapSep;
+	};
+	SectionPageNumProps.prototype.put_ChapSep = function(v)
+	{
+		this.ChapSep = v;
+	};
+	//--------------------------------------------------------export----------------------------------------------------
+	window['Asc']['SectionPageNumProps'] = window['Asc'].SectionPageNumProps = SectionPageNumProps;
+	SectionPageNumProps.prototype["get_Start"]     = SectionPageNumProps.prototype.get_Start;
+	SectionPageNumProps.prototype["put_Start"]     = SectionPageNumProps.prototype.put_Start;
+	SectionPageNumProps.prototype["get_Format"]    = SectionPageNumProps.prototype.get_Format;
+	SectionPageNumProps.prototype["put_Format"]    = SectionPageNumProps.prototype.put_Format;
+	SectionPageNumProps.prototype["get_ChapStyle"] = SectionPageNumProps.prototype.get_ChapStyle;
+	SectionPageNumProps.prototype["put_ChapStyle"] = SectionPageNumProps.prototype.put_ChapStyle;
+	SectionPageNumProps.prototype["get_ChapSep"]   = SectionPageNumProps.prototype.get_ChapSep;
+	SectionPageNumProps.prototype["put_ChapSep"]   = SectionPageNumProps.prototype.put_ChapSep;
 })(window);

@@ -316,7 +316,8 @@
         DateCompatibility: 1,
 		HidePivotFieldList: 2,
 		ShowPivotChartFilter: 3,
-        UpdateLinks: 4
+        UpdateLinks: 4,
+		CodeName: 5
     };
     /** @enum */
     var c_oSerWorkbookViewTypes =
@@ -1798,6 +1799,72 @@
         updatelinksNever:  1,
         updatelinksUserSet:  2
     };
+
+	var EDataValidationType = {
+		None: 0,
+		Custom: 1,
+		Date: 2,
+		Decimal: 3,
+		List: 4,
+		TextLength: 5,
+		Time: 6,
+		Whole: 7
+	};
+	var EDataValidationErrorStyle = {
+		Stop: 0,
+		Warning: 1,
+		Information: 2
+	};
+	var EDataValidationImeMode = {
+		NoControl: 0,
+		Off: 1,
+		On: 2,
+		Disabled: 3,
+		Hiragana: 4,
+		FullKatakana: 5,
+		HalfKatakana: 6,
+		FullAlpha: 7,
+		HalfAlpha: 8,
+		FullHangul: 9,
+		HalfHangul: 10
+	};
+	var EDataValidationOperator = {
+		Between: 0,
+		NotBetween: 1,
+		Equal: 2,
+		NotEqual: 3,
+		LessThan: 4,
+		LessThanOrEqual: 5,
+		GreaterThan: 6,
+		GreaterThanOrEqual: 7
+	};
+
+	var ST_olapSlicerCacheSortOrder = {
+		Natural: 0,
+		Ascending: 1,
+		Descending: 2
+	};
+	var ST_tabularSlicerCacheSortOrder = {
+		Ascending: 0,
+		Descending: 1
+	};
+
+	var ST_slicerCacheCrossFilter = {
+		None: 0,
+		ShowItemsWithDataAtTop: 1,
+		ShowItemsWithNoData: 2
+	};
+
+	var ST_slicerStyleType = {
+		unselectedItemWithData: 0,
+		selectedItemWithData: 1,
+		unselectedItemWithNoData: 2,
+		selectedItemWithNoData: 3,
+		hoveredUnselectedItemWithData: 4,
+		hoveredSelectedItemWithData: 5,
+		hoveredUnselectedItemWithNoData: 6,
+		hoveredSelectedItemWithNoData: 7
+	};
 
 		 const c_oSerControlTypes = {
 			 Control: 10,
@@ -3832,6 +3899,11 @@
                     this.memory.WriteByte(c_oSerWorkbookPrTypes.UpdateLinks);
                     this.memory.WriteByte(c_oSerPropLenType.Byte);
                     this.memory.WriteByte(oWorkbookPr.UpdateLinks);
+                }
+                if (null != oWorkbookPr.CodeName) {
+                    this.memory.WriteByte(c_oSerWorkbookPrTypes.CodeName);
+                    this.memory.WriteByte(c_oSerPropLenType.Variable);
+                    this.memory.WriteString2(oWorkbookPr.CodeName);
                 }
 			}
         };
@@ -5979,8 +6051,55 @@
             {
                 var elem = oHyperlinks[i];
                 //write only active hyperlink, if copy/paste
-                if(!this.isCopyPaste || (this.isCopyPaste && elem && elem.bbox && this.isCopyPaste.containsRange(elem.bbox)))
-                    this.bs.WriteItem(c_oSerWorksheetsTypes.Hyperlink, function(){oThis.WriteHyperlink(elem.data);});
+                if(!this.isCopyPaste || (this.isCopyPaste && elem && elem.bbox && this.isCopyPaste.isIntersect(elem.bbox))) {
+                    if(this.isCopyPaste && ws.bExcludeHiddenRows && elem.data && elem.data.Ref && elem.data.Ref.bbox) {
+                        let isHidden = false;
+                        ws.bExcludeHiddenRows = false;
+                        let _range = ws.getRange3(this.isCopyPaste.r1, this.isCopyPaste.c1, elem.bbox.r2, elem.bbox.c2)
+                        let newRef = elem.data.Ref.bbox;
+                        let beforeOffset = 0;
+                        let insideOffset = 0;
+                        _range._foreachRowNoEmpty(function (row) {
+                            if(row.getHidden()) {
+                                if (row.index === newRef.r1 && newRef.r1 === newRef.r2) {
+                                    isHidden = true;
+                                    return true;
+                                } else if (row.index < newRef.r1) {
+                                    beforeOffset++;
+                                } else if (row.index >= newRef.r1 && row.index <= newRef.r2) {
+                                    insideOffset++;
+                                }
+                            }
+                        });
+                        if (beforeOffset || insideOffset) {
+                            newRef = newRef.clone();
+                        }
+                        if (beforeOffset) {
+                            newRef.r1 -= beforeOffset;
+                            newRef.r2 -= beforeOffset;
+                        }
+                        if (insideOffset) {
+                            newRef.r2 -= insideOffset;
+                        }
+                        if (newRef.r2 < newRef.r1) {
+                            isHidden = true;
+                        }
+                        ws.bExcludeHiddenRows = true;
+
+                        if (!isHidden) {
+                            if (!newRef.isEqual(elem.data.Ref.bbox)) {
+                                let oldRef = elem.data.Ref.bbox;
+                                elem.data.Ref.bbox = newRef;
+                                this.bs.WriteItem(c_oSerWorksheetsTypes.Hyperlink, function(){oThis.WriteHyperlink(elem.data);});
+                                elem.data.Ref.bbox = oldRef;
+                            } else {
+                                this.bs.WriteItem(c_oSerWorksheetsTypes.Hyperlink, function(){oThis.WriteHyperlink(elem.data);});
+                            }
+                        }
+                    } else {
+                        this.bs.WriteItem(c_oSerWorksheetsTypes.Hyperlink, function(){oThis.WriteHyperlink(elem.data);});
+                    }
+                }
             }
         };
         this.WriteHyperlink = function (oHyperlink) {
@@ -10039,6 +10158,8 @@
 				WorkbookPr.setShowPivotChartFilter(this.stream.GetBool());
 			} else if ( c_oSerWorkbookPrTypes.UpdateLinks === type ) {
                 WorkbookPr.setUpdateLinks(this.stream.GetUChar());
+            } else if ( c_oSerWorkbookPrTypes.CodeName === type ) {
+                WorkbookPr.setCodeName(this.stream.GetString2LE(length));
             } else
                 res = c_oSerConstants.ReadUnknown;
             return res;
@@ -10448,12 +10569,6 @@
             var oThis = this;
             if ( c_oSerWorksheetsTypes.Worksheet === type )
             {
-                // Shift by deterministic pseudo-random offset to make document changes unique
-                if (AscCommon.g_oIdCounter.IsLoad()) {
-                    for (let i = 0; i < length % 100; i++) {
-                        AscCommon.g_oIdCounter.Get_NewId();
-                    }
-                }
                 this.aMerged = [];
                 this.aHyperlinks = [];
                 var oNewWorksheet = new AscCommonExcel.Worksheet(this.wb, wb.aWorksheets.length);
@@ -11585,9 +11700,10 @@
                 oHyperlink.Ref = ws.getRange2(this.stream.GetString2LE(length));
             else if ( c_oSerHyperlinkTypes.Hyperlink == type )
                 oHyperlink.Hyperlink = this.stream.GetString2LE(length);
-            else if ( c_oSerHyperlinkTypes.Location == type )
+            else if ( c_oSerHyperlinkTypes.Location == type ) {
                 oHyperlink.setLocation(this.stream.GetString2LE(length));
-            else if ( c_oSerHyperlinkTypes.Tooltip == type )
+                oHyperlink.checkAfterOpen();
+            } else if ( c_oSerHyperlinkTypes.Tooltip == type )
                 oHyperlink.Tooltip = this.stream.GetString2LE(length);
             else
                 res = c_oSerConstants.ReadUnknown;
@@ -14367,7 +14483,11 @@
                 var newFormulaParent = new AscCommonExcel.CCellWithFormula(cell.ws, cell.nRow, cell.nCol);
                 var parsed = new AscCommonExcel.parserFormula(formula.v, newFormulaParent, cell.ws);
                 parsed.ca = formula.ca;
+                parseResult.needCorrect = true;
                 parsed.parse(undefined, undefined, parseResult);
+                if (parseResult.needAssemble) {
+                    parsed.Formula = parsed.assemble(true);
+                }
                 if (parseResult.error === Asc.c_oAscError.ID.FrmlMaxReference) {
                     tmp.ws.workbook.openErrors.push(cell.getName());
                     return;
@@ -14835,7 +14955,7 @@
     };
     InitOpenManager.prototype.prepareConditionalFormatting = function (oWorksheet, oConditionalFormatting) {
         if (oConditionalFormatting && oConditionalFormatting.isValid()) {
-            oConditionalFormatting.initRules();
+            oConditionalFormatting.initRules(oWorksheet);
             for (let i = 0; i < oConditionalFormatting.aRules.length; i++) {
                 oWorksheet.addConditionalFormattingRule(oConditionalFormatting.aRules[i]);
             }
@@ -15659,4 +15779,61 @@
     prot['updatelinksNever'] = prot.updatelinksNever;
     prot['updatelinksUserSet'] = prot.updatelinksUserSet;
 
+	window['Asc']['c_oAscEDataValidationType'] = window['Asc'].EDataValidationType = EDataValidationType;
+	prot = EDataValidationType;
+	prot['None'] = prot.None;
+	prot['Custom'] = prot.Custom;
+	prot['Date'] = prot.Date;
+	prot['Decimal'] = prot.Decimal;
+	prot['List'] = prot.List;
+	prot['TextLength'] = prot.TextLength;
+	prot['Time'] = prot.Time;
+	prot['Whole'] = prot.Whole;
+
+	window['Asc']['c_oAscEDataValidationErrorStyle'] = window['Asc'].EDataValidationErrorStyle = EDataValidationErrorStyle;
+	prot = EDataValidationErrorStyle;
+	prot['Stop'] = prot.Stop;
+	prot['Warning'] = prot.Warning;
+	prot['Information'] = prot.Information;
+
+	window['Asc'].EDataValidationImeMode = EDataValidationImeMode;
+
+	window['Asc']['EDataValidationOperator'] = window['Asc'].EDataValidationOperator = EDataValidationOperator;
+	prot = EDataValidationOperator;
+	prot['Between'] = prot.Between;
+	prot['NotBetween'] = prot.NotBetween;
+	prot['Equal'] = prot.Equal;
+	prot['NotEqual'] = prot.NotEqual;
+	prot['LessThan'] = prot.LessThan;
+	prot['LessThanOrEqual'] = prot.LessThanOrEqual;
+	prot['GreaterThan'] = prot.GreaterThan;
+	prot['GreaterThanOrEqual'] = prot.GreaterThanOrEqual;
+
+	window['Asc']['ST_olapSlicerCacheSortOrder'] = window['AscCommonExcel'].ST_olapSlicerCacheSortOrder = ST_olapSlicerCacheSortOrder;
+	prot = ST_olapSlicerCacheSortOrder;
+	prot['Natural'] = prot.Natural;
+	prot['Ascending'] = prot.Ascending;
+	prot['Descending'] = prot.Descending;
+
+	window['Asc']['ST_tabularSlicerCacheSortOrder'] = window['Asc'].ST_tabularSlicerCacheSortOrder = ST_tabularSlicerCacheSortOrder;
+	prot = ST_tabularSlicerCacheSortOrder;
+	prot['Ascending'] = prot.Ascending;
+	prot['Descending'] = prot.Descending;
+
+	window['Asc']['ST_slicerCacheCrossFilter'] = window['Asc'].ST_slicerCacheCrossFilter = ST_slicerCacheCrossFilter;
+	prot = ST_slicerCacheCrossFilter;
+	prot['None'] = prot.None;
+	prot['ShowItemsWithDataAtTop'] = prot.ShowItemsWithDataAtTop;
+	prot['ShowItemsWithNoData'] = prot.ShowItemsWithNoData;
+
+	window['Asc']['ST_slicerStyleType'] = window['Asc'].ST_slicerStyleType = ST_slicerStyleType;
+	prot = ST_slicerStyleType;
+	prot['unselectedItemWithData'] = prot.unselectedItemWithData;
+	prot['selectedItemWithData'] = prot.selectedItemWithData;
+	prot['unselectedItemWithNoData'] = prot.unselectedItemWithNoData;
+	prot['selectedItemWithNoData'] = prot.selectedItemWithNoData;
+	prot['hoveredUnselectedItemWithData'] = prot.hoveredUnselectedItemWithData;
+	prot['hoveredSelectedItemWithData'] = prot.hoveredSelectedItemWithData;
+	prot['hoveredUnselectedItemWithNoData'] = prot.hoveredUnselectedItemWithNoData;
+	prot['hoveredSelectedItemWithNoData'] = prot.hoveredSelectedItemWithNoData;
 })(window);

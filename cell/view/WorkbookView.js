@@ -1145,6 +1145,9 @@
         }
       }
     });
+	if (this.cellCommentator && this.cellCommentator.worksheet && !this.cellCommentator.worksheet.workbook) {
+		this.cellCommentator.worksheet.workbook = this;
+	}
     if (0 < this.model.aComments.length) {
       this.handlers.trigger("asc_onAddComments", this.model.aComments);
     }
@@ -1507,6 +1510,8 @@
     // Проверим, нужно ли отсылать информацию о ячейке
     var ar = ws.model.selectionRange.getLast();
     var isSelectOnShape = ws.getSelectionShape();
+	this.MacrosAddData(AscDFH.historydescription_Spreadsheet_SelectRange, [ar]);
+
     if (!this._isEqualRange(ws.model.selectionRange, isSelectOnShape)) {
       this._onWSSelectionChanged();
       let t = this;
@@ -1593,6 +1598,7 @@
             }
         }
     }
+	//this.FinalizeAction();
     this.timerEnd = false;
   };
 
@@ -2703,6 +2709,7 @@
       }
       this.drawWorksheet();
 	  this.checkScrollRtl(this.getWorksheet().getRightToLeft());
+	  Asc.editor.toggleChartElementsCallback();
     } else {
       // ToDo не должно происходить ничего, но нам приходит resize сверху, поэтому проверим отрисовывали ли мы
       if (-1 === this.wsActive || this.wsMustDraw) {
@@ -2871,6 +2878,8 @@
         //ToDo item.drawDepCells();
       }
     }
+
+	Asc.editor.toggleChartElementsCallback();
 
     this._onScrollReinitialize(AscCommonExcel.c_oAscScrollType.ScrollVertical | AscCommonExcel.c_oAscScrollType.ScrollHorizontal);
     this.handlers.trigger("asc_onZoomChanged", this.getZoom());
@@ -4144,7 +4153,9 @@
       	this._calcPagesPrintSheet(i, printPagesData, false, adjustPrint);
       }
     } else if (printType === Asc.c_oAscPrintType.Selection) {
-      this._calcPagesPrintSheet(nActive, printPagesData, true, adjustPrint);
+		let _activeSheetsArray = adjustPrint && adjustPrint.asc_getActiveSheetsArray && adjustPrint.asc_getActiveSheetsArray();
+		let activeSheet = _activeSheetsArray && _activeSheetsArray[0] != null ? _activeSheetsArray[0] : null;
+		this._calcPagesPrintSheet(activeSheet != null ? activeSheet : nActive, printPagesData, true, adjustPrint);
     }
 
     if (this.printPreviewState.isNeedShowError(AscCommonExcel.c_kMaxPrintPages === printPagesData.arrPages.length)) {
@@ -4201,7 +4212,7 @@
         var aChartRefsToChange = [];
         var aCharts = [];
 				let bHandled = false;
-        this.model.handleDrawings(function(oDrawing) {
+				const fDrawingCallback = function(oDrawing) {
 					switch (oDrawing.getObjectType()) {
 						case AscDFH.historyitem_type_ChartSpace: {
 							const nPrevLength = aChartRefsToChange.length;
@@ -4220,7 +4231,9 @@
 							break;
 						}
 					}
-        });
+				};
+			this.model.handleDrawings(fDrawingCallback);
+			this.Api.frameManager.handleMainDiagram(fDrawingCallback);
         if(aChartRefsToChange.length > 0) {
             for(var nRef = 0; nRef < aChartRefsToChange.length; ++nRef) {
                 aChartRefsToChange[nRef].updateCacheAndCat();
@@ -4233,7 +4246,6 @@
 				if (bHandled) {
 					this.onShowDrawingObjects();
 				}
-				this.Api.frameManager.updateGeneralDiagramCache(aRanges);
     };
     WorkbookView.prototype.handleChartsOnChangeSheetName = function (oWorksheet, sOldName, sNewName) {
         //change sheet name in chart references
@@ -6715,7 +6727,20 @@
 			}
 		}
 	};
-
+	WorkbookView.prototype.StartAction = function(nDescription, additional)
+	{
+		this.Api.sendEvent("asc_onUserActionStart");
+		this.Api.getMacroRecorder().onAction(nDescription, additional);
+	};
+	WorkbookView.prototype.MacrosAddData = function(nDescription, additional)
+	{
+		this.Api.getMacroRecorder().addStepData(nDescription, additional);
+	};
+	WorkbookView.prototype.FinalizeAction = function(nDescription, additional)
+	{
+		this.Api.sendEvent("asc_onUserActionEnd");
+		this.Api.getMacroRecorder().onAction(nDescription, additional);
+	};
 
 
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
@@ -7619,9 +7644,6 @@
 			return;
 		}
 		if (!this._checkDesktop()) {
-			return;
-		}
-		if (!this.externalFormulaEditMode) {
 			return;
 		}
 

@@ -913,6 +913,7 @@
 										return {
 											objectId: drawing.Get_Id(),
 											cursorType: "text",
+											content: drawing.getDocContent ? drawing.getDocContent() : null,
 											bMarker: false,
 											hyperlink: oHyperlink,
 											macro: null
@@ -1878,8 +1879,8 @@
 						this.changeCurrentState(new AscFormat.TextAddState(this, object, x, y, e.Button));
 						return true;
 					} else {
-						var ret = {objectId: object.Get_Id(), cursorType: "text"};
 						content = object.getDocContent();
+						var ret = {objectId: object.Get_Id(), cursorType: "text", content: content};
 						invert_transform_text = object.invertTransformText;
 						if (content && invert_transform_text) {
 							tx = invert_transform_text.TransformPointX(x, y);
@@ -1928,6 +1929,29 @@
 					}
 				},
 
+
+
+				getParagraphByXY: function (x, y, pageIndex) {
+					let ret;
+					this.handleEventMode = HANDLE_EVENT_MODE_CURSOR;
+					ret = this.curState.onMouseDown(AscCommon.global_mouseEvent, x, y, pageIndex);
+					this.handleEventMode = HANDLE_EVENT_MODE_HANDLE;
+					if (ret && ret.content) {
+						let _x = x;
+						let _y = y;
+						let transform = ret.content.GetFullTransform();
+						if (transform) {
+							let invertTransform = AscCommon.global_MatrixTransformer.Invert(transform);
+							_x = invertTransform.TransformPointX(x, y);
+							_y = invertTransform.TransformPointY(x, y);
+						}
+						let index = ret.content.Internal_GetContentPosByXY(_x, _y, 0);
+						if (!AscFormat.isRealNumber(index))
+							return null;
+						return ret.content.GetElement(index);
+					}
+					return null;
+				},
 
 				isSlideShow: function () {
 					if (this.drawingObjects && this.drawingObjects.cSld) {
@@ -4371,7 +4395,11 @@
 				getAllowedDataLabelsPosition: function (chartType, position) {
 					const types = Asc.c_oAscChartTypeSettings;
 					const positions = Asc.c_oAscChartDataLabelsPos;
-					
+
+					if (position === positions.none) {
+						return position;
+					}
+
 					let allowedPositions;
 					switch (chartType) {
 						case types.barNormal:
@@ -4397,14 +4425,21 @@
 
 						case types.pie:
 						case types.pie3d:
+						case types.doughnut:
 							allowedPositions = [positions.ctr, positions.inEnd, positions.outEnd, positions.bestFit];
 							break;
 
+						case types.barNormal3d:
+						case types.barStacked3d:
+						case types.barStackedPer3d:
+						case types.barNormal3dPerspective:
+						case types.hBarNormal3d:
+						case types.hBarStacked3d:
+						case types.hBarStackedPer3d:
+						case types.line3d:
 						case types.areaNormal:
 						case types.areaStacked:
 						case types.areaStackedPer:
-						case types.doughnut:
-						case types.stock:
 						case types.radar:
 						case types.radarMarker:
 						case types.radarFilled:
@@ -4418,17 +4453,10 @@
 						case types.scatterNone:
 						case types.scatterSmooth:
 						case types.scatterSmoothMarker:
+						case types.stock:
 							allowedPositions = [positions.ctr, positions.l, positions.r, positions.t, positions.b];
 							break;
 
-						case types.barNormal3d:
-						case types.barStacked3d:
-						case types.barStackedPer3d:
-						case types.barNormal3dPerspective:
-						case types.line3d:
-						case types.hBarNormal3d:
-						case types.hBarStacked3d:
-						case types.hBarStackedPer3d:
 						case types.surfaceNormal:
 						case types.surfaceWireframe:
 						case types.contourNormal:
@@ -4444,9 +4472,13 @@
 						default: allowedPositions = [];
 					}
 
-					return allowedPositions.indexOf(position) > -1
-						? position
-						: allowedPositions[0] || null;
+					if (allowedPositions.indexOf(position) > -1) {
+						return position;
+					} else if (AscFormat.isRealNumber(allowedPositions[0])) {
+						return allowedPositions[0];
+					} else {
+						return positions.none;
+					}
 				},
 
 				checkDlblsPosition: function (chart, chart_type, position) {
@@ -4506,6 +4538,20 @@
 					return finish_dlbl_pos;
 				},
 
+
+				getSelectedSingleChart: function() {
+					let selectedObjects = this.getSelectedArray();
+					let singleChart = null;
+					for (let drawing = 0; drawing < selectedObjects.length; ++drawing) {
+						if (selectedObjects[drawing].getObjectType() === AscDFH.historyitem_type_ChartSpace) {
+							if (singleChart) {
+								return null;
+							}
+							singleChart = selectedObjects[drawing];
+						}
+					}
+					return singleChart;
+				},
 				checkSingleChartSelection: function () {
 					const controller = Asc.editor.getGraphicController();
 					if (!controller) return;
@@ -4553,11 +4599,12 @@
 
 								const ppi = ws._getPPIX();
 								const mmToPx = Asc.getCvtRatio(3, 0, ppi);
+								const freezeOffset = ws.getFrozenPaneOffset(false, false);
 
-								const left = AscCommon.AscBrowser.convertToRetinaValue(bounds.l * mmToPx - ws._getOffsetX() + ws.cellsLeft);
-								const top = AscCommon.AscBrowser.convertToRetinaValue(bounds.t * mmToPx - ws._getOffsetY() + ws.cellsTop);
-								const right = AscCommon.AscBrowser.convertToRetinaValue(bounds.r * mmToPx - ws._getOffsetX() + ws.cellsLeft);
-								const bottom = AscCommon.AscBrowser.convertToRetinaValue(bounds.b * mmToPx - ws._getOffsetY() + ws.cellsTop);
+								const left = AscCommon.AscBrowser.convertToRetinaValue(bounds.l * mmToPx - ws._getOffsetX() + ws.cellsLeft + freezeOffset.offsetX);
+								const top = AscCommon.AscBrowser.convertToRetinaValue(bounds.t * mmToPx - ws._getOffsetY() + ws.cellsTop + freezeOffset.offsetY);
+								const right = AscCommon.AscBrowser.convertToRetinaValue(bounds.r * mmToPx - ws._getOffsetX() + ws.cellsLeft + freezeOffset.offsetX);
+								const bottom = AscCommon.AscBrowser.convertToRetinaValue(bounds.b * mmToPx - ws._getOffsetY() + ws.cellsTop + freezeOffset.offsetY);
 
 								return new AscCommon.asc_CRect(left, top, right - left, bottom - top);
 							};
@@ -4593,6 +4640,13 @@
 					}
 
 					const chartObjects = selectedObjects.filter(isChart);
+					let singleChart = this.getSelectedSingleChart();
+					if (singleChart && chartObjects.length !== 1) {
+						return;
+					}
+					if (chartObjects.length === 1 && !singleChart) {
+						return;
+					}
 					if (chartObjects.length !== 1) {
 						Asc.editor.sendEvent("asc_onSingleChartSelectionChanged", null);
 						return;

@@ -763,6 +763,23 @@
 			oWriter.EndRecord();
 		}
 	};
+	CGraphicObjectBase.prototype.ReadRedactIds = function (oReader) {
+		oReader.GetULong();//length
+
+		let nRedacts = oReader.GetULong();
+        for (let i = 0; i < nRedacts; i++) {
+            let sId = oReader.GetString2();
+
+            if (Asc.editor.isPdfEditor()) {
+                this.AddRedactId(sId);
+            }
+        }
+	};
+	CGraphicObjectBase.prototype.WriteRedactIds = function(oWriter) {
+        oWriter.StartRecord(0xFF);
+        oWriter.WriteULong(0);
+        oWriter.EndRecord();
+	};
 	CGraphicObjectBase.prototype.setMacro = function (sMacroName) {
 		AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ShapeSetMacro, this.macro, sMacroName));
 		this.macro = sMacroName;
@@ -1031,7 +1048,7 @@
 	CGraphicObjectBase.prototype.Reassign_ImageUrls = function (mapUrl) {
 		var blip_fill;
 		if (this.blipFill) {
-			if (mapUrl[this.blipFill.RasterImageId] && mapUrl[this.blipFill.RasterImageId] !== this.blipFill.RasterImageId) {
+			if (mapUrl[this.blipFill.RasterImageId]) {
 				if (this.setBlipFill) {
 					blip_fill = this.blipFill.createDuplicate();
 					blip_fill.setRasterImageId(mapUrl[this.blipFill.RasterImageId]);
@@ -3631,11 +3648,37 @@
 		var sTrText = AscCommon.translateManager.getValue(sText);
 		return sTrText;
 	};
+    CGraphicObjectBase.prototype.checkRecalculateTransform = function() {
+        if(this.recalcInfo.recalcTransform) {
+            this.recalculateTransform();
+            this.recalcInfo.recalcTransform = false;
+        }
+    };
+    CGraphicObjectBase.prototype.checkTransformBeforeApply = function() {
+        this.checkRecalculateTransform();
+        if(!this.group) {
+                AscFormat.CheckSpPrXfrm3(this, true);
+        }
+        else {
+                AscFormat.CheckSpPrXfrm(this, true);
+        }
+    };
 	CGraphicObjectBase.prototype.GetWidth = function () {
-		return this.getXfrmExtX();
+        this.checkRecalculateTransform();
+		return this.extX;
 	};
 	CGraphicObjectBase.prototype.GetHeight = function () {
-		return this.getXfrmExtY();
+        this.checkRecalculateTransform();
+		return this.extY;
+	};
+    
+	CGraphicObjectBase.prototype.GetPosX = function () {
+        this.checkRecalculateTransform();
+		return this.x;
+	};
+	CGraphicObjectBase.prototype.GetPosY = function () {
+        this.checkRecalculateTransform();
+		return this.y;
 	};
 	CGraphicObjectBase.prototype.getXfrm = function () {
 		if (this.spPr && this.spPr.xfrm)

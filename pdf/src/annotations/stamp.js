@@ -544,12 +544,14 @@
         
         let aInRect = this.GetInRect();
         let nBorderW = this.GetWidth();
+        let nScale = this.GetOriginViewScale();
+
         // original rect (save)
         if (memory.docRenderer) {
-            memory.WriteDouble(aInRect[0] - nBorderW / 2); // x1
-            memory.WriteDouble(aInRect[3] - nBorderW / 2); // y1
-            memory.WriteDouble(aInRect[4] + nBorderW / 2); // x2
-            memory.WriteDouble(aInRect[1] + nBorderW / 2); // y2
+            memory.WriteDouble(aInRect[0] - (nBorderW / 2) * nScale); // x1
+            memory.WriteDouble(aInRect[3] - (nBorderW / 2) * nScale); // y1
+            memory.WriteDouble(aInRect[4] + (nBorderW / 2) * nScale); // x2
+            memory.WriteDouble(aInRect[1] + (nBorderW / 2) * nScale); // y2
         }
         else { // copying
             aInRect.forEach(function(measure) {
@@ -568,6 +570,7 @@
     CAnnotationStamp.prototype.SetDrawFromStream = function(bDraw, bForce) {
         let oViewer = editor.getDocumentRenderer();
         if (oViewer.IsOpenAnnotsInProgress || bForce) {
+            AscCommon.History.Add(new CChangesPDFAnnotChangedView(this, this._bDrawFromStream, bDraw));
             this._bDrawFromStream = bDraw;
         }
     };

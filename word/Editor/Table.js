@@ -15254,9 +15254,11 @@ CTable.prototype.Internal_UpdateCellW = function(Col)
  * @param oBorder2 {CDocumentBorder}
  * @param [isTableBorder1=false] {boolean} является ли граница границей всей таблицы
  * @param [isTableBorder2=false] {boolean} является ли граница границей всей таблицы
+ * @param [isTopMergedCell1=true] {boolean} является ли граница границей текущей ячейки
+ * @param [isTopMergedCell2=true] {boolean} является ли граница границей текущей ячейки
  * @returns {CDocumentBorder}
  */
-CTable.prototype.private_ResolveBordersConflict = function(oBorder1, oBorder2, isTableBorder1, isTableBorder2)
+CTable.prototype.private_ResolveBordersConflict = function(oBorder1, oBorder2, isTableBorder1, isTableBorder2, isTopMergedCell1, isTopMergedCell2)
 {
 	if (undefined === isTableBorder1)
 		isTableBorder1 = false;
@@ -15277,6 +15279,24 @@ CTable.prototype.private_ResolveBordersConflict = function(oBorder1, oBorder2, i
 
 	if (oBorder2.IsNone())
 		return oBorder1;
+
+	if (this.bPresentation)
+	{
+		if (undefined === isTopMergedCell1)
+			isTopMergedCell1 = true;
+
+		if (!isTopMergedCell1)
+		{
+			return oBorder2;
+		}
+		if (undefined === isTopMergedCell2)
+			isTopMergedCell2 = true;
+
+		if (!isTopMergedCell2)
+		{
+			return oBorder1;
+		}
+	}
 
 	// TODO: Как только мы реализуем рисование не только простых границ,
 	//       сделать здесь обработку. W_b = Border.Size * Border_Num,

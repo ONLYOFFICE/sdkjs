@@ -1750,15 +1750,6 @@ function CBinaryFileWriter()
                 break;
             }
         }
-
-        if (Asc.editor.isPdfEditor()) {
-            let aRedactIds = oSp.GetRedactIds();
-            
-            oThis.WriteULong(aRedactIds.length);
-            aRedactIds.forEach(function(id) {
-                oThis.WriteString2(id);
-            });
-        }
     };
     this.WriteAnnotTreeElem = function(oAnnot) {
         oThis.WriteByMemory(function(memory) {
@@ -3678,6 +3669,10 @@ function CBinaryFileWriter()
 
         shape.spPr.WriteXfrm = null;
 
+        if (Asc.editor.isPdfEditor()) {
+            shape.WriteRedactIds(oThis);
+        }
+
         oThis.EndRecord();
     };
 
@@ -3737,6 +3732,10 @@ function CBinaryFileWriter()
         oThis.WriteRecord2(3, image.style, oThis.WriteShapeStyle);
         image.writeMacro(oThis);
         image.spPr.WriteXfrm = null;
+
+        if (Asc.editor.isPdfEditor()) {
+            image.WriteRedactIds(oThis);
+        }
 
         oThis.EndRecord();
     };
@@ -3836,6 +3835,11 @@ function CBinaryFileWriter()
             }
         }
         grObj.writeMacro(oThis);
+
+        if (Asc.editor.isPdfEditor()) {
+            grObj.WriteRedactIds(oThis);
+        }
+
         oThis.EndRecord();
     };
 
@@ -4172,6 +4176,10 @@ function CBinaryFileWriter()
         if (0 != _len)
         {
             oThis.WriteSpTree(spTree);
+        }
+
+        if (Asc.editor.isPdfEditor()) {
+            group.WriteRedactIds(oThis);
         }
 
         oThis.EndRecord();

@@ -6369,6 +6369,7 @@ CStyle.prototype =
         }
     }
 };
+CStyle.prototype.constructor = CStyle;
 CStyle.fromObject = function(obj)
 {
 	if (!obj || !obj.Name)
@@ -8610,6 +8611,7 @@ CStyles.prototype =
         }
     }
 };
+CStyles.prototype.constructor = CStyles;
 /**
  * Получаем стиль по идентификатору
  * @param sStyleId {string}

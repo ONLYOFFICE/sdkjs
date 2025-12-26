@@ -1133,6 +1133,7 @@
 		function(Value)
 		{
 			this.Class.PageNumType.Format = Value;
+			this.Class.CheckPageNumSymbols();
 		}
 	);
 	AscDFH.CChangesSectionPageNumTypeFormat = CChangesSectionPageNumTypeFormat;

@@ -47,6 +47,7 @@
 		this.UncheckedFont   = Asc.c_oAscSdtCheckBoxDefaults.UncheckedFont;
 		this.GroupKey        = undefined;
 		this.ChoiceName      = undefined;
+		this.Label           = undefined;
 	}
 	CSdtCheckBoxPr.prototype.Copy = function()
 	{
@@ -170,6 +171,14 @@
 		
 		return this.ChoiceName ? this.ChoiceName : "";
 	};
+	CSdtCheckBoxPr.prototype.SetLabel = function(text)
+	{
+		this.Label = text;
+	};
+	CSdtCheckBoxPr.prototype.GetLabel = function()
+	{
+		return this.Label ? this.Label : "";
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'].CSdtCheckBoxPr    = CSdtCheckBoxPr;
 	window['AscCommon']['CSdtCheckBoxPr'] = CSdtCheckBoxPr;
@@ -191,5 +200,7 @@
 	CSdtCheckBoxPr.prototype['put_GroupKey']        = CSdtCheckBoxPr.prototype.SetGroupKey;
 	CSdtCheckBoxPr.prototype['get_ChoiceName']      = CSdtCheckBoxPr.prototype.GetChoiceName;
 	CSdtCheckBoxPr.prototype['put_ChoiceName']      = CSdtCheckBoxPr.prototype.SetChoiceName;
-
+	CSdtCheckBoxPr.prototype['get_Label']           = CSdtCheckBoxPr.prototype.GetLabel;
+	CSdtCheckBoxPr.prototype['put_Label']           = CSdtCheckBoxPr.prototype.SetLabel;
+	
 })(window);
