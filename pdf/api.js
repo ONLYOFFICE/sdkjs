@@ -425,7 +425,7 @@
 			});
 		}
 
-		AscFonts.initEmbeddedFonts(aEmbedFonts);
+		AscFonts.initEmbeddedFonts(aEmbedFonts, true);
 		return AscCommon.DocumentEditorApi.prototype.pre_Paste.call(this, _fonts, _images, callback);
 	};
 	PDFEditorApi.prototype.asc_PasteData = function(_format, data1, data2, text_data, useCurrentPoint, callback, checkLocks) {

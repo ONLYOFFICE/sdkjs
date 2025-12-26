@@ -322,7 +322,7 @@
 	};
 	CPdfRunSpace.prototype.Read_FromBinary = function(Reader)
 	{
-		this.SetCharCode(Reader.GetLong());
+		this.Value = Reader.GetLong();
 		
 		this.charGid = Reader.GetLong();
 		this.originWidth = Reader.GetLong();
