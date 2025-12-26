@@ -2570,11 +2570,15 @@
 		}
 		const nativeOptions = options.advancedOptions && options.advancedOptions.asc_getNativeOptions();
 		if (nativeOptions) {
-			jsonparams["nativeOptions"] = nativeOptions;
-			if (this.getCurrentPage) {
-				jsonparams["nativeOptions"]["currentPage"] = this.getCurrentPage() + 1;
+			jsonparams["printPages"] = nativeOptions["pages"];
+		}
+
+		if (Asc.editor.isPdfEditor() && options.advancedOptions) {
+			jsonparams["pdfLayout"] = {
+				"content": options.advancedOptions.asc_getPdfContent()
 			}
 		}
+
 		if (Object.keys(jsonparams).length > 0) {
 			oAdditionalData["jsonparams"] = jsonparams;
 		}

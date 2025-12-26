@@ -343,10 +343,10 @@
     GOTO_TYPES["fitBV"] = GOTO_TYPES.fitBV;
 
     const PRINT_CONTENT_TYPES = {
-        doc:                0,
-        docAndMarkups:      1,
-        docAndStamps:       2,
-        formsOnly:          3,
+        doc:                "doc",
+        docAndMarkups:      "docAndMarkups",
+        docAndStamps:       "docAndStamps",
+        formsOnly:          "formsOnly",
     }
 
     PRINT_CONTENT_TYPES["doc"]           = PRINT_CONTENT_TYPES.doc;
