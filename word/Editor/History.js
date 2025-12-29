@@ -99,6 +99,8 @@
 	this.StoredData = [];
 
 	this.PosInCurPoint = null;
+
+    this.evalCommand = false;
 }
 
 CHistory.prototype =
@@ -1957,6 +1959,16 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 
 	CHistory.prototype.StartTransaction = function () {};
 	CHistory.prototype.EndTransaction = function () {};
+    
+	CHistory.prototype.onStartEvalCommand = function ()
+    {
+        this.evalCommand = true;
+    };
+    CHistory.prototype.onEndEvalCommand = function ()
+    {
+        this.evalCommand = false;
+        
+    };
 
 	//----------------------------------------------------------export--------------------------------------------------
 	window['AscCommon']          = window['AscCommon'] || {};

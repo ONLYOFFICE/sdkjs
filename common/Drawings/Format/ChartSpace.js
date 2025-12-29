@@ -372,39 +372,11 @@ function(window, undefined) {
 	var CChangesDrawingsObject = AscDFH.CChangesDrawingsObject;
 	var CChangesDrawingsObjectNoId = AscDFH.CChangesDrawingsObjectNoId;
 	var CChangesDrawingsContent = AscDFH.CChangesDrawingsContent;
+    var CChangesChartSpaceBinary = AscDFH.CChangesChartSpaceBinary;
 
 
 	var drawingsChangesMap = window['AscDFH'].drawingsChangesMap;
 
-
-	function CChangesStartChartSpaceBinary(Class, Old, New, Color) {
-		AscDFH.CChangesStartBinaryData.call(this, Class, Old, New, AscDFH.historyitem_ChartSpace_SetStartBinaryData, Color);
-	}
-	CChangesStartChartSpaceBinary.prototype = Object.create(AscDFH.CChangesStartBinaryData.prototype);
-	CChangesStartChartSpaceBinary.prototype.constructor = CChangesStartChartSpaceBinary;
-	CChangesStartChartSpaceBinary.prototype.setBinaryDataToClass = function (oPr)
-	{
-		this.Class.XLSX = oPr;
-	}
-
-	function CChangesPartChartSpaceBinary(Class, Old, New, Color) {
-		AscDFH.CChangesPartBinaryData.call(this, Class, Old, New, AscDFH.historyitem_ChartSpace_SetPartBinaryData, Color);
-	}
-	CChangesPartChartSpaceBinary.prototype = Object.create(AscDFH.CChangesPartBinaryData.prototype);
-	CChangesPartChartSpaceBinary.prototype.constructor = CChangesPartChartSpaceBinary;
-
-	function CChangesEndChartSpaceBinary(Class, Old, New, Color) {
-		AscDFH.CChangesEndBinaryData.call(this, Class, Old, New, AscDFH.historyitem_ChartSpace_SetEndBinaryData, Color);
-	}
-	CChangesEndChartSpaceBinary.prototype = Object.create(AscDFH.CChangesEndBinaryData.prototype);
-	CChangesEndChartSpaceBinary.prototype.constructor = CChangesEndChartSpaceBinary;
-	CChangesEndChartSpaceBinary.prototype.setBinaryDataToClass = function (oPr)
-	{
-		this.Class.XLSX = oPr;
-	}
-	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetStartBinaryData] = CChangesStartChartSpaceBinary;
-	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetPartBinaryData] = CChangesPartChartSpaceBinary;
-	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetEndBinaryData] = CChangesEndChartSpaceBinary;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetNvGrFrProps] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetThemeOverride] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetBDeleted] = CChangesDrawingsBool;
@@ -424,11 +396,11 @@ function(window, undefined) {
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetStyle] = CChangesDrawingsLong;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetTxPr] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetGroup] = CChangesDrawingsObject;
-
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_AddUserShape] = CChangesDrawingsContent;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_RemoveUserShape] = CChangesDrawingsContent;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_ChartStyle] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_ChartColors] = CChangesDrawingsObjectNoId;
+	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetBinaryData] = CChangesChartSpaceBinary;
 
 
 	AscDFH.drawingContentChanges[AscDFH.historyitem_ChartSpace_RemoveUserShape] =
@@ -5329,7 +5301,7 @@ function(window, undefined) {
 	};
 	CChartSpace.prototype.setXLSX = function (arrData)
 	{
-		AscDFH.addBinaryDataToHistory(this, this.XLSX, arrData, CChangesStartChartSpaceBinary, CChangesPartChartSpaceBinary, CChangesEndChartSpaceBinary);
+        AscCommon.History.Add(new CChangesChartSpaceBinary(this, this.XLSX, arrData));
 		this.XLSX = arrData;
 	};
 	CChartSpace.prototype.setExternalReference = function (oExternalReference)
