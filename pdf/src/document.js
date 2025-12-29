@@ -1166,6 +1166,11 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.SetNeedUpdateSearch = function(bUpdate) {
         this.needUpdateSearch = bUpdate;
+
+        if (bUpdate && this.SearchEngine.TextAroundTimer != null) {
+            clearTimeout(this.SearchEngine.TextAroundTimer);
+            this.SearchEngine.TextAroundTimer = null;
+        }
     };
     CPDFDoc.prototype.IsNeedUpdateSearch = function() {
         return this.needUpdateSearch;
