@@ -156,6 +156,10 @@
       if(this.onLicense && !this._standaloneApp){
         this.onLicense(null);
       }
+      const s = this
+      this._CoAuthoringApi.onDocumentOpenStandalone = function(data) {
+        s.callback_OnDocumentOpen(data);
+      };
     }
   };
 
@@ -222,6 +226,26 @@
   CDocsCoApi.prototype.openDocument = function(data) {
     if (this._CoAuthoringApi && this._onlineWork) {
       this._CoAuthoringApi.openDocument(data);
+    }
+
+    if (data.c === "imgurls" && this._standaloneApp) {
+      const imagePayload = {
+        type: "documentOpen",
+        data: {
+          type: "imgurls",
+          status: "ok",
+          data: {
+            error: 0,
+            urls: (data?.data ?? [])?.map((t) => ({
+              url: t,
+              path: `media/${Date.now()}`,
+            })),
+          },
+        },
+      };
+      if (this._CoAuthoringApi) {
+        this._CoAuthoringApi.openForStandalone(imagePayload);
+      }
     }
   };
 
@@ -1213,6 +1237,10 @@
   DocsCoApi.prototype._documentOpen = function(data) {
     this.onDocumentOpen(data);
   };
+
+    DocsCoApi.prototype.openForStandalone = function (data) {
+      this.onDocumentOpenStandalone(data);
+    };
 
   DocsCoApi.prototype._onSaveChanges = function(data, useEncryption) {
     if (!this.check_state()) {
