@@ -8026,12 +8026,23 @@
 		CLn.prototype.fillDocumentBorder = function(oBorder) {
 			if(this.Fill) {
 				oBorder.Unifill = this.Fill;
+				if(this.isNoFillLine()) {
+					oBorder.Value = AscCommonWord.border_None;
+					return;
+				}
 			}
 			oBorder.Size = (this.w === null) ? 12700 : ((this.w) >> 0);
 			oBorder.Size /= 36000;
 			oBorder.Value = AscCommonWord.border_Single;
 		};
 		CLn.prototype.fromDocumentBorder = function(oBorder) {
+			if(oBorder.Value === AscCommonWord.border_None) {
+				this.Fill = new CUniFill();
+				this.Fill.fill = new CNoFill();
+				this.w = null;
+				this.cmpd = 1;
+				return;
+			}
 			this.Fill = oBorder.Unifill;
 			this.w = null;
 			if(AscFormat.isRealNumber(oBorder.Size)) {
