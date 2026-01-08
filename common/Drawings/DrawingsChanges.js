@@ -316,7 +316,47 @@
         }
         return null;
     };
-
+    CChangesDrawingsObjectNoId.prototype.IsNotLocalImageChange = function() {
+        let imageId = this.GetImageId();
+        if (!imageId) return false;
+        return AscCommon.g_oDocumentUrls.isNotLocal(imageId);
+	};
+	CChangesDrawingsObjectNoId.prototype.private_GetBlipFill = function() {
+        if (this.New instanceof AscFormat.CBlipFill)
+            return this.New;
+        if (this.New instanceof AscFormat.CUniFill
+            && this.New.fill instanceof AscFormat.CBlipFill) {
+            return this.New.fill;
+        }
+	};
+	CChangesDrawingsObjectNoId.prototype.GetImageId = function() {
+        let blipFill = this.private_GetBlipFill();
+        if (!blipFill) return null;
+        return blipFill.RasterImageId;
+	};
+	CChangesDrawingsObjectNoId.prototype.ReplaceImageId = function(imageMap) {
+		let blipFill = this.private_GetBlipFill();
+        if (!blipFill) return;
+        let replaceId = imageMap[blipFill.RasterImageId];
+        if (replaceId) {
+            blipFill.RasterImageId = replaceId;
+            return true;
+        }
+        return false;
+	};
+    
+	CChangesDrawingsObjectNoId.prototype.RefreshImageChange = function(imageMap) {
+		if (this.ReplaceImageId(imageMap)) {
+            this.Redo();
+            return true;
+        }
+        return false;
+	};
+    CChangesDrawingsObjectNoId.prototype.UpdateImageMap = function(imageMap) {
+        let imageId = this.GetImageId();
+        if (!imageId) return;
+        imageMap[imageId] = true;
+    };
     function CChangesDrawingsObject(Class, Type, OldPr, NewPr) {
         this.Type = Type;
         var _OldPr = OldPr && OldPr.Get_Id ? OldPr.Get_Id() : undefined;

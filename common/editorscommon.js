@@ -392,6 +392,10 @@
 
 		isThemeUrl: function(sUrl) {
 			return sUrl && (0 === sUrl.indexOf('theme'));
+		},
+
+		isNotLoacal: function(src) {
+			return !this.getImageUrl(src) && !this.getImageLocal(src) && !this.isThemeUrl(src);
 		}
 	};
 	var g_oDocumentUrls = new DocumentUrls();
@@ -4769,16 +4773,9 @@
 
 	CContentChangesElement.prototype.Refresh_BinaryData = function ()
 	{
-		var Binary_Writer = AscCommon.History.BinaryWriter;
-		var Binary_Pos = Binary_Writer.GetCurPosition();
-
 		this.m_pData.Data.UseArray = true;
 		this.m_pData.Data.PosArray = this.m_aPositions;
-		AscCommon.writeHistoryItem(this.m_pData.Data, this.m_pData.Class, Binary_Writer);
-		var Binary_Len = Binary_Writer.GetCurPosition() - Binary_Pos;
-
-		this.m_pData.Binary.Pos = Binary_Pos;
-		this.m_pData.Binary.Len = Binary_Len;
+		AscCommon.writeHistoryItemData(this.m_pData, AscCommon.History.BinaryWriter);
 	};
 	CContentChangesElement.prototype.Check_Changes = function (Type, Pos, checkPos)
 	{

@@ -13811,7 +13811,7 @@ function Check_LoadingDataBeforePrepaste(_api, _fonts, _images, _callback)
         {
             _images[image] = window["native"]["GetImageUrl"](_images[image]);
         }
-        else if (!g_oDocumentUrls.getImageUrl(src) && !g_oDocumentUrls.getImageLocal(src) && !g_oDocumentUrls.isThemeUrl(src))
+        else if (g_oDocumentUrls.isNotLocal(src))
         {
 			aImagesToDownload.push(src);
         }

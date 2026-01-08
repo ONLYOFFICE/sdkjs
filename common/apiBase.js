@@ -4600,15 +4600,9 @@
 					return;
 				}
 
-				var _imagesArray = oLogicDocument.Get_AllImageUrls();
-				var _images = {};
-				for (var i = 0; i < _imagesArray.length; i++)
-					_images[_imagesArray[i]] = _imagesArray[i];
-
+				var _images = AscCommon.History.GetImageMap();
 				AscCommon.Check_LoadingDataBeforePrepaste(this, oLogicDocument.Document_Get_AllFontNames(), _images, function() {
-					if (oLogicDocument.Reassign_ImageUrls)
-						oLogicDocument.Reassign_ImageUrls(_images);
-
+					AscCommon.History.RefreshImageChanges(_images);
 					if (AscCommon.c_oEditorId.Word === oApi.editorId)
 					{
 						oLogicDocument.UnlockPanelStyles(true);
@@ -4622,13 +4616,10 @@
 			case AscCommon.c_oEditorId.Spreadsheet:
 			{
 				var oModel = this.wbModel;
-				var _imagesArray = oModel.getAllImageUrls();
-				var _images = {};
-				for (var i = 0; i < _imagesArray.length; i++)
-					_images[_imagesArray[i]] = _imagesArray[i];
+				var _images = AscCommon.History.GetImageMap();
 
 				AscCommon.Check_LoadingDataBeforePrepaste(this, oModel._generateFontMap(), _images, function() {
-					oModel.reassignImageUrls(_images);
+					AscCommon.History.RefreshImageChanges(_images);
 					oApi.asc_Recalculate(true);
 					var wsView = oApi.wb && oApi.wb.getWorksheet();
 					if (wsView && wsView.objectRender && wsView.objectRender.controller)

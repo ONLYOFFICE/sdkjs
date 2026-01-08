@@ -980,18 +980,17 @@
 			if (!oLogicDocument.IsSelectionLocked(AscCommon.changestype_Drawing_Props))
 			{
 				oLogicDocument.StartAction()
-				let oImagesMap = {};
 				for(nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing)
 				{
 					oDrawing = aDrawings[nDrawing];
 					oData = oDataMap[oDrawing.Id];
 					oDrawing.editExternal(oData["Data"], oData["ImageData"], oData["Width"], oData["Height"], oData["WidthPix"], oData["HeightPix"]);
-					oImagesMap[oData["ImageData"]] = oData["ImageData"];
 				}
 
+				let oImagesMap = AscCommon.History.GetImageMap();;
 				window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
 				AscCommon.Check_LoadingDataBeforePrepaste(this, {}, oImagesMap, function() {
-					oLogicDocument.Reassign_ImageUrls(oImagesMap);
+					AscCommon.History.RefreshImageChanges(oImagesMap);
 					oLogicDocument.Recalculate();
 					oLogicDocument.End_SilentMode();
 					oLogicDocument.LoadDocumentState(oStartState);

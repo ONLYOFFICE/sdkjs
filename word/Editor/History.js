@@ -1694,9 +1694,7 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 						let simpleChange = simpleChanges[simpleIndex];
 						
 						let dataPos = writer.GetCurPosition();
-						writer.WriteString2(object.GetId());
-						writer.WriteLong(simpleChange.Type);
-						simpleChange.WriteToBinary(writer);
+						writeObjectChange(simpleChange, object, writer);
 						let dataLen = writer.GetCurPosition() - dataPos;
 						
 						point.Items.push({
@@ -1955,7 +1953,7 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 			return;
 
 		let change = item.Class;
-		if (change.IsImageChange())
+		if (change.IsNotLocalImageChange())
 		{
 			this.ImageChanges.push(item);
 		}
@@ -1974,11 +1972,29 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		}
 		return imagesMap;
 	};
-	CHistory.prototype.RefreshImageChanges = function ()
+	CHistory.prototype.RefreshImageChanges = function (imageMap)
 	{
-		this.ImageChanges.length = 0;
+		for (let changeIdx = 0; changeIdx < this.ImageChanges.length; ++changeIdx)
+		{
+			let imageChangeData = this.ImageChanges[changeIdx];
+			let change = imageChangeData.Class;
+			if (change.RefreshImageChange(imagesMap))
+			{
+				AscCommon.writeHistoryItemData(imageChangeData, this.BinaryWriter);
+			}
+		}
+		this.ClearImageChanges();
 	};
 
+
+	function writeHistoryItemData(data, writer)
+	{
+		let binaryPos = writer.GetCurPosition();
+		AscCommon.writeHistoryItem(data.Data, data.Class, writer);
+        let binaryLen = writer.GetCurPosition() - binaryPos;
+		data.Binary.Pos = binaryPos;
+		data.Binary.Len = binaryLen;
+	}
 
 	function writeHistoryItem(change, changedObject, writer)
 	{
@@ -2012,4 +2028,6 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 	window['AscCommon'].History  = new CHistory();
 	
 	window['AscCommon'].writeHistoryItem = writeHistoryItem;
+	window['AscCommon'].writeHistoryItemData = writeHistoryItemData;
+	
 })(window);

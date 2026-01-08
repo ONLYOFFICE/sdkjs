@@ -4917,7 +4917,7 @@
 	{
 		return false;
 	};
-	CChangesBase.prototype.IsImageIdChange = function()
+	CChangesBase.prototype.IsNotLocalImageChange = function()
 	{
 		return false;
 	};
@@ -4925,9 +4925,16 @@
 	{
 		return null;
 	};
-	CChangesBase.prototype.ReplaceImageId = function()
+	CChangesBase.prototype.ReplaceImageId = function(imageMap)
 	{
 		return null;
+	};
+	CChangesBase.prototype.RefreshImageChange = function(imageMap)
+	{
+		return false;
+	};
+	CChangesBase.prototype.UpdateImageMap = function(imageMap)
+	{
 	};
 	CChangesBase.prototype.CreateReverseChange = function()
 	{
@@ -4976,10 +4983,6 @@
 		let obj = this.GetClass();
 		if (obj && obj.SetIsRecalculated)
 			obj.SetIsRecalculated(false);
-	};
-	CChangesBase.prototype.IsImageChange = function()
-	{
-		return false;
 	};
 	window['AscDFH'].CChangesBase = CChangesBase;
 	/**
