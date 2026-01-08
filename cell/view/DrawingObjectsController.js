@@ -63,19 +63,8 @@ AscCommon.CContentChangesElement.prototype.Refresh_BinaryData = function()
 		var Binary_Pos = Binary_Writer.GetCurPosition();
 
         this.m_pData.Data.UseArray = true;
-        this.m_pData.Data.PosArray = this.m_aPositions;
-
-        if ((Asc.editor || editor).binaryChanges) {
-            Binary_Writer.WriteWithLen(this, function() {
-                Binary_Writer.WriteString2(this.m_pData.Class.Get_Id());
-                Binary_Writer.WriteLong(this.m_pData.Data.Type);
-                this.m_pData.Data.WriteToBinary(Binary_Writer);
-            });
-        } else {
-            Binary_Writer.WriteString2(this.m_pData.Class.Get_Id());
-            Binary_Writer.WriteLong(this.m_pData.Data.Type);
-            this.m_pData.Data.WriteToBinary(Binary_Writer);
-        }
+        this.m_pData.Data.PosArray = this.m_aPositions;        
+		writeHistoryItem(this.m_pData.Data, this.m_pData.Class, Binary_Writer);
         var Binary_Len = Binary_Writer.GetCurPosition() - Binary_Pos;
 
 		this.m_pData.Binary.Pos = Binary_Pos;

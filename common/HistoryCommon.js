@@ -4977,6 +4977,10 @@
 		if (obj && obj.SetIsRecalculated)
 			obj.SetIsRecalculated(false);
 	};
+	CChangesBase.prototype.IsImageChange = function()
+	{
+		return false;
+	};
 	window['AscDFH'].CChangesBase = CChangesBase;
 	/**
 	 * Базовый класс для изменений, которые меняют содержимое родительского класса.*

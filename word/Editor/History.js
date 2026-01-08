@@ -100,7 +100,7 @@
 
 	this.PosInCurPoint = null;
 
-    this.evalCommand = false;
+	this.ImageChanges = [];
 }
 
 CHistory.prototype =
@@ -155,18 +155,7 @@ CHistory.prototype =
 			);
 
 			var Binary_Pos = this.BinaryWriter.GetCurPosition();
-			if ((Asc.editor || editor).binaryChanges) {
-				this.BinaryWriter.WriteWithLen(this, function(){
-					this.BinaryWriter.WriteString2(Class.Get_Id());
-					this.BinaryWriter.WriteLong(Data.Type);
-					Data.WriteToBinary(this.BinaryWriter);
-				});
-			} else {
-				this.BinaryWriter.WriteString2(Class.Get_Id());
-				this.BinaryWriter.WriteLong(Data.Type);
-				Data.WriteToBinary(this.BinaryWriter);
-			}
-
+			writeHistoryItem(Data, Class, this.BinaryWriter);
 			var Binary_Len = this.BinaryWriter.GetCurPosition() - Binary_Pos;
 
 			var Item = {
@@ -469,11 +458,9 @@ CHistory.prototype =
 		let Class = _Class ? _Class.GetClass() : undefined;
 		if (_Class)
 		{
-            Data = _Class;
-            this.BinaryWriter.WriteString2(Class.Get_Id());
-            this.BinaryWriter.WriteLong(_Class.Type);
-            _Class.WriteToBinary(this.BinaryWriter);
-        }
+			Data = _Class;
+			writeObjectChange(_Class, Class, this.BinaryWriter);
+		}
 
 		var Binary_Len = this.BinaryWriter.GetCurPosition() - Binary_Pos;
 		var Item       = {
@@ -489,6 +476,7 @@ CHistory.prototype =
 
 		this.Points[this.Index].Items.push(Item);
 
+		this.CheckImageChangeOnEvalCommand(Item);
 		if (!this.CollaborativeEditing || !_Class)
 			return;
 		
@@ -1959,20 +1947,69 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 
 	CHistory.prototype.StartTransaction = function () {};
 	CHistory.prototype.EndTransaction = function () {};
-    
-	CHistory.prototype.onStartEvalCommand = function ()
-    {
-        this.evalCommand = true;
-    };
-    CHistory.prototype.onEndEvalCommand = function ()
-    {
-        this.evalCommand = false;
-        
-    };
+
+
+	CHistory.prototype.CheckImageChangeOnEvalCommand = function (item)
+	{
+		if (!this.Api.evalCommand)
+			return;
+
+		let change = item.Class;
+		if (change.IsImageChange())
+		{
+			this.ImageChanges.push(item);
+		}
+	};
+	CHistory.prototype.ClearImageChanges = function (change)
+	{
+		this.ImageChanges.length = 0;
+	};
+	CHistory.prototype.GetImageMap = function ()
+	{
+		let imagesMap = {};
+		for (let changeIdx = 0; changeIdx < this.ImageChanges.length; ++changeIdx)
+		{
+			let change = this.ImageChanges[changeIdx].Class;
+			change.UpdateImageMap(imagesMap);
+		}
+		return imagesMap;
+	};
+	CHistory.prototype.RefreshImageChanges = function ()
+	{
+		this.ImageChanges.length = 0;
+	};
+
+
+	function writeHistoryItem(change, changedObject, writer)
+	{
+		if (Asc.editor.binaryChanges)
+		{
+			writer.WriteWithLen(writer, 
+				function()
+				{
+					writeObjectChange(change, changedObject, writer);
+				}
+			);
+		}
+		else
+		{
+			writeObjectChange(change, changedObject, writer);
+		}
+	}
+
+
+	function writeObjectChange(change, changedObject, writer)
+	{
+		writer.WriteString2(changedObject.Get_Id());
+		writer.WriteLong(change.Type);
+		change.WriteToBinary(writer);
+	}
 
 	//----------------------------------------------------------export--------------------------------------------------
 	window['AscCommon']          = window['AscCommon'] || {};
 	window['AscCommon'].CHistory = CHistory;
 	window['AscCommon'].RecalcData = RecalcData;
 	window['AscCommon'].History  = new CHistory();
+	
+	window['AscCommon'].writeHistoryItem = writeHistoryItem;
 })(window);

@@ -504,18 +504,7 @@ CCollaborativeEditing.prototype.RewritePosExtChanges = function(changesArr, scal
         data.Old *= scale;
 		let Binary_Writer = AscCommon.History.BinaryWriter;
 		let Binary_Pos    = Binary_Writer.GetCurPosition();
-		if (Asc.editor.binaryChanges) {
-			Binary_Writer.WriteWithLen(this, function () {
-				Binary_Writer.WriteString2(changes.Class.Get_Id());
-				Binary_Writer.WriteLong(changes.Data.Type);
-				changes.Data.WriteToBinary(Binary_Writer);
-			});
-		} else {
-			Binary_Writer.WriteString2(changes.Class.Get_Id());
-			Binary_Writer.WriteLong(changes.Data.Type);
-			changes.Data.WriteToBinary(Binary_Writer);
-		}
-
+		AscCommon.writeHistoryItem(changes.Data, changes.Class, Binary_Writer);
 		let Binary_Len = Binary_Writer.GetCurPosition() - Binary_Pos;
 
         changes.Binary.Pos = Binary_Pos;
