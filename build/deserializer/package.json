@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.405.0",
+    "@aws-sdk/client-s3": "^3.965.0",
     "jszip": "^3.10.1",
     "node-fetch": "^3.3.2"
   }
