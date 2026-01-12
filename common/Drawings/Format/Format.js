@@ -9450,8 +9450,7 @@
 			this.handleUpdateGeometry();
 		};
 		CSpPr.prototype.setFill = function (pr) {
-			if(!pr || !pr.isBlipFill() || !Asc.editor.evalCommand)
-				AscCommon.History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SpPr_SetFill, this.Fill, pr));
+			AscCommon.History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SpPr_SetFill, this.Fill, pr));
 			this.Fill = pr;
 			if (this.parent && this.parent.handleUpdateFill) {
 				this.parent.handleUpdateFill();

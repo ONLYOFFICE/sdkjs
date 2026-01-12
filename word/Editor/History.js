@@ -1952,7 +1952,7 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		if (!this.Api.evalCommand)
 			return;
 
-		let change = item.Class;
+		let change = item.Data;
 		if (change.IsNotLocalImageChange())
 		{
 			this.ImageChanges.push(item);

@@ -394,7 +394,7 @@
 			return sUrl && (0 === sUrl.indexOf('theme'));
 		},
 
-		isNotLoacal: function(src) {
+		isNotLocal: function(src) {
 			return !this.getImageUrl(src) && !this.getImageLocal(src) && !this.isThemeUrl(src);
 		}
 	};
