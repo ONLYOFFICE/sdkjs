@@ -644,7 +644,7 @@ CHistory.prototype.RedoAdd = function(oRedoObjectParam, Class, Type, sheetid, ra
 							let color = null;
 							if (AscCommon.CollaborativeEditing.isCollaboration())
 								color = new CDocumentColor(255, 255, 255);
-							
+
 							var oChange = new fChangesClass(changedObject);
 							oChange.ReadFromBinary(Data.oBinaryReader);
 							oChange.Load(color);
@@ -1281,8 +1281,54 @@ CHistory.prototype.Add = function(Class, Type, sheetid, range, Data, LocalChange
 		if(Class.IsPosExtChange && Class.IsPosExtChange()){
 			this.CollaborativeEditing.AddPosExtChanges(Item, Class);
 		}
+		this.CheckImageChangeOnEvalCommand(Item);
 	}
 };
+
+
+	CHistory.prototype.CheckImageChangeOnEvalCommand = function (item)
+	{
+		if (!this.Api)
+			return;
+		if (!this.Api.evalCommand)
+			return;
+
+		let change = item.Class;
+		if (!change || !change.IsNotLocalImageChange)
+			return;
+
+		if (change.IsNotLocalImageChange())
+		{
+			this.ImageChanges.push(item);
+		}
+	};
+	CHistory.prototype.ClearImageChanges = function (change)
+	{
+		this.ImageChanges.length = 0;
+	};
+	CHistory.prototype.GetImageMap = function ()
+	{
+		let imagesMap = {};
+		for (let changeIdx = 0; changeIdx < this.ImageChanges.length; ++changeIdx)
+		{
+			let change = this.ImageChanges[changeIdx].Class;
+			change.UpdateImageMap(imagesMap);
+		}
+		return imagesMap;
+	};
+	CHistory.prototype.RefreshImageChanges = function (imageMap)
+	{
+		for (let changeIdx = 0; changeIdx < this.ImageChanges.length; ++changeIdx)
+		{
+			let imageChangeData = this.ImageChanges[changeIdx];
+			let change = imageChangeData.Class;
+			if (change.RefreshImageChange(imageMap))
+			{
+				this.Refresh_SpreadsheetChanges(imageChangeData);
+			}
+		}
+		this.ClearImageChanges();
+	};
 	CHistory.prototype.Item_ToSerializable = function(item)
 	{
 		return new AscCommonExcel.UndoRedoItemSerializable(item.Class, item.Type, item.SheetId, item.Range, item.Data, item.LocalChange);

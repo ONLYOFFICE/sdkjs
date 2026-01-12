@@ -1949,6 +1949,8 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 
 	CHistory.prototype.CheckImageChangeOnEvalCommand = function (item)
 	{
+		if (!this.Api)
+			return;
 		if (!this.Api.evalCommand)
 			return;
 
