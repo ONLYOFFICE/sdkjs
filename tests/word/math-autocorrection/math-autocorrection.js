@@ -33,6 +33,7 @@
 $(function () {
 
     let Root, MathContent, logicDocument, p1;
+	AscCommonWord.b_DoAutoCorrectMathSymbols = true;
 
     function Init() {
 		logicDocument = AscTest.CreateLogicDocument();

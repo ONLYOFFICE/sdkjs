@@ -704,6 +704,14 @@ function handleShapeImageInGroup(drawingObjectsController, drawing, shape, e, x,
 
 function handleGroup(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord)
 {
+	let bHit = drawing.hit && drawing.hit(x, y);
+	if (bHit) {
+		const oCheckResult = drawingObjectsController.checkDrawingHyperlinkAndMacro(drawing, e, false, x, y, pageIndex);
+		if (oCheckResult) {
+			return oCheckResult;
+		}
+	}
+
     var grouped_objects = drawing.getArrGraphicObjects();
     var ret;
     for(var j = grouped_objects.length - 1; j > -1; --j)
@@ -2045,6 +2053,14 @@ function handleInlineShapeImage(drawing, drawingObjectsController, e, x, y, page
     var _hit = drawing.hit && drawing.hit(x, y);
     var _hit_to_path = drawing.hitInPath && drawing.hitInPath(x, y);
     var b_hit_to_text = drawing.hitInTextRect && drawing.hitInTextRect(x, y);
+
+	if (_hit || _hit_to_path || b_hit_to_text) {
+		let oCheckResult = drawingObjectsController.checkDrawingHyperlinkAndMacro(drawing, e, b_hit_to_text, x, y, pageIndex);
+		if (oCheckResult) {
+			return oCheckResult;
+		}
+	}
+
     if((_hit && !b_hit_to_text) || _hit_to_path)
     {
         return handleInlineHitNoText(drawing, drawingObjectsController, e, x, y, pageIndex, false);

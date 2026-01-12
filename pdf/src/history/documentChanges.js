@@ -1060,6 +1060,10 @@ CChangesPDFDocumentRecognizePage.prototype.private_SetValue = function(bRecogniz
 	
     if (-1 !== nPageIdx) {
         oFile.pages[nPageIdx].isRecognized = bRecognize;
+		if (bRecognize) {
+			oFile.nativeFile["scanPageFonts"](oPage.GetOriginIndex());
+		}
+
         if (oDoc.Viewer.drawingPages[nPageIdx]) {
             delete oDoc.Viewer.drawingPages[nPageIdx].Image;
         }

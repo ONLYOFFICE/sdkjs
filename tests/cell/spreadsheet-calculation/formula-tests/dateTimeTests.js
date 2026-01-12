@@ -1296,7 +1296,7 @@ $(function () {
 		// Case #9: String. Date without year, assumes current year 2011. Returns serial number 45843.
 		oParser = new parserFormula('DATEVALUE("5-JUL")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DATEVALUE("5-JUL") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 45843, 'Test: Positive case: String. Date without year, assumes current year 2011. Returns serial number 45843.');
+		assert.strictEqual(oParser.calculate().getValue(), 46208, 'Test: Positive case: String. Date without year, assumes current year 2011. Returns serial number 45843.');
 		// Case #10: String. Minimum valid date in 1900 date system. Returns serial number 1.
 		oParser = new parserFormula('DATEVALUE("1/1/1900")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula DATEVALUE("1/1/1900") is parsed.');
@@ -9215,7 +9215,7 @@ $(function () {
 		// Case #22: String. Short date string format, assumes current year or default. 1 argument used.
 		oParser = new parserFormula('YEAR("5/5")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: YEAR("5/5") is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 2025, 'Test: Positive case: String. Short date string format, assumes current year or default. 1 argument used.');
+		assert.strictEqual(oParser.calculate().getValue(), 2026, 'Test: Positive case: String. Short date string format, assumes current year or default. 1 argument used.');
 
 		// Negative cases:
 

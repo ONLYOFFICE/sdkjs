@@ -660,7 +660,7 @@
 		const isValidJsDoc = parsedJSDoc ? private_ValidateParamsForCustomFunction(parsedJSDoc) : false;
 		//const isValidOptions = options ? private_ValidateParamsForCustomFunction(options) : false;
 		if (!isValidJsDoc/* && !isValidOptions*/) {
-			logError(new Error('Invalid parameters type in JSDOC or options.'));
+			throwException(new Error('Invalid parameters type in JSDOC or options.'));
 			return null;
 		}
 		// remove it from this class and use it from the variable (only if it was the last)
@@ -959,12 +959,12 @@
 		if (Range1.GetWorksheet().Id === Range2.GetWorksheet().Id) {
 			var res = Range1.range.bbox.intersection(Range2.range.bbox);
 			if (!res) {
-				logError(new Error('Ranges do not intersect.'));
+				throwException(new Error('Ranges do not intersect.'));
 			} else {
 				result = new ApiRange(this.GetActiveSheet().worksheet.getRange3(res.r1, res.c1, res.r2, res.c2));
 			}
 		} else {
-			logError(new Error('Ranges should be from one worksheet.'));
+			throwException(new Error('Ranges should be from one worksheet.'));
 		}
 		return result;
 	};
@@ -7916,7 +7916,7 @@
 				this.asc_freezePane(type);
 
 		} else {
-			logError(new Error('Invalid parameter "FreezePaneType".'));
+			throwException(new Error('Invalid parameter "FreezePaneType".'));
 		}
 	};
 
@@ -7993,7 +7993,7 @@
 		if (bReferenceMode !== null) {
 			this.asc_setR1C1Mode(bReferenceMode);
 		} else {
-			logError(new Error('Invalid parameter "ReferenceStyle"'));
+			throwException(new Error('Invalid parameter "ReferenceStyle"'));
 		}
 	};
 
@@ -8344,7 +8344,7 @@
 		let result;
 		if (typeof col == "number" && typeof row == "number") {
 			if (col < 1 || row < 1 || col > AscCommon.gc_nMaxCol0 || row > AscCommon.gc_nMaxRow0) {
-				logError(new Error('Invalid paremert "row" or "col".'));
+				throwException(new Error('Invalid paremert "row" or "col".'));
 				result = null;
 			} else {
 				row--;
@@ -8353,7 +8353,7 @@
 			}
 		} else if (typeof row == "number") {
 			if (row < 1 || row > AscCommon.gc_nMaxRow0) {
-				logError(new Error('Invalid paremert "row".'));
+				throwException(new Error('Invalid paremert "row".'));
 				result = null;
 			} else {
 				row--;
@@ -8365,7 +8365,7 @@
 
 		} else if (typeof col == "number") {
 			if (col < 1 || col > AscCommon.gc_nMaxCol0) {
-				logError(new Error('Invalid paremert "col".'));
+				throwException(new Error('Invalid paremert "col".'));
 				result = null;
 			} else {
 				col--;
@@ -8404,7 +8404,7 @@
 			if (value > 0 && value <= AscCommon.gc_nMaxRow0 + 1 && value[0] !== NaN) {
 				value--;
 			} else {
-				logError(new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
+				throwException(new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
 				return null;
 			}
 			return new ApiRange(this.worksheet.getRange3(value, 0, value, AscCommon.gc_nMaxCol0));
@@ -8420,7 +8420,7 @@
 				}
 			}
 			if (isError) {
-				logError(new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
+				throwException(new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
 				return null;
 			} else {
 				return new ApiRange(this.worksheet.getRange3(value[0], 0, value[1], AscCommon.gc_nMaxCol0));
@@ -8429,11 +8429,11 @@
 	};
 
     /**
-     * Returns the ApiRange object that represents all the cells on the columns range.
+     * Returns the instante of ApiAutoFilter object that represents the worksheet AutoFilter.
      * @memberof ApiWorksheet
      * @typeofeditors ["CSE"]
-     * @returns {number}
-     * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetCols.js
+     * @returns {ApiAutoFilter}
+     * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetAutoFilter.js
      */
     ApiWorksheet.prototype.GetAutoFilter = function () {
 		return new ApiAutoFilter(this);
@@ -8554,7 +8554,7 @@
 		Range1 = (Range1 instanceof ApiRange) ? Range1.range : (typeof Range1 == 'string') ? this.worksheet.getRange2(Range1) : null;
 
 		if (!Range1) {
-			logError(new Error('Incorrect "Range1" or it is empty.'));
+			throwException(new Error('Incorrect "Range1" or it is empty.'));
 			return null;
 		}
 
@@ -9048,7 +9048,7 @@
 	ApiWorksheet.prototype.AddChart =
 		function (sDataRange, bInRows, sType, nStyleIndex, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset) {
 			if (this.worksheet && this.worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
-				logError(new Error('Cannot modify protected sheet'));
+				throwException(new Error('Cannot modify protected sheet'));
 				return null;
 			}
 			const settings = new Asc.asc_ChartSettings();
@@ -9202,7 +9202,7 @@
 		let oWorksheet = Asc['editor'].wb.getWorksheet();
 		if (oWorksheet && oWorksheet.objectRender && oWorksheet.objectRender.controller) {
 			if (oWorksheet.model && oWorksheet.model.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
-				logError(new Error('Cannot modify protected sheet'));
+				throwException(new Error('Cannot modify protected sheet'));
 				return null;
 			}
 			let oController = oWorksheet.objectRender.controller;
@@ -9429,10 +9429,10 @@
 			if (typeof editRes === "object") {
 				result = new ApiProtectedRange(editRes);
 			} else {
-				logError(new Error('Protected range cannot be added.'));
+				throwException(new Error('Protected range cannot be added.'));
 			}
 		} else {
-			logError(new Error('The title or dataRange is invalid'));
+			throwException(new Error('The title or dataRange is invalid'));
 		}
 
 		return result;
@@ -9455,10 +9455,10 @@
 			let protectedRange = this.worksheet.getUserProtectedRangeByName(sTitle);
 			result = protectedRange && protectedRange.obj ? new ApiProtectedRange(protectedRange.obj.clone(protectedRange.obj._ws, true)) : null;
 			if (result === null) {
-				logError(new Error('The range not found'));
+				throwException(new Error('The range not found'));
 			}
 		} else {
-			logError(new Error('The title is invalid'));
+			throwException(new Error('The title is invalid'));
 		}
 
 		return result;
@@ -9481,7 +9481,7 @@
 				result.push(new ApiProtectedRange(protectedRanges[i].clone(protectedRanges[i]._ws, true)));
 			}
 		} else {
-			logError(new Error('Ranges not found'));
+			throwException(new Error('Ranges not found'));
 		}
 
 		return result;
@@ -9510,7 +9510,7 @@
 					oApi && oApi.asc_Paste();
 				});
 			} else {
-				logError(new Error('Invalid destination'));
+				throwException(new Error('Invalid destination'));
 			}
 		} else {
 			AscCommon.g_specialPasteHelper && AscCommon.g_specialPasteHelper.Special_Paste_Hide_Button();
@@ -9706,7 +9706,7 @@
 			if (r < 0) r = 0;
 			result = new ApiRange(this.range.worksheet.getRange3(r, this.range.bbox.c1, r, this.range.bbox.c2));
 		} else {
-			logError(new Error('The nRow must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
+			throwException(new Error('The nRow must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
 		}
 		return result;
 	};
@@ -9799,7 +9799,7 @@
 			if (c < 0) c = 0;
 			result = new ApiRange(this.range.worksheet.getRange3(this.range.bbox.r1, c, this.range.bbox.r2, c));
 		} else {
-			logError(new Error('The nCol must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxCol0 + 1)));
+			throwException(new Error('The nCol must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxCol0 + 1)));
 		}
 		return result;
 	};
@@ -10076,7 +10076,7 @@
 		let worksheet = this.range.worksheet;
 
 		if (worksheet.getSheetProtection() && worksheet.isIntersectLockedRanges([this.range.bbox])) {
-			//logError(new Error('Cannot modify protected sheet'));
+			//throwException(new Error('Cannot modify protected sheet'));
 			return false;
 		}
 
@@ -10846,7 +10846,7 @@
 				var bb = this.range.hasMerged();
 				result = new ApiRange((bb) ? AscCommonExcel.Range.prototype.createFromBBox(this.range.worksheet, bb) : this.range);
 			} else {
-				logError(new Error('Range must be is one cell.'));
+				throwException(new Error('Range must be is one cell.'));
 			}
 			return result;
 		}
@@ -11048,7 +11048,7 @@
 		var range = this.range.bbox;
 
 		if (!this._checkProtection()) {
-			logError(new Error('Cannot modify protected sheet'));
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 
@@ -11258,7 +11258,7 @@
 				this.range.move(range.bbox, true, destination.range.worksheet);
 				//AscCommon.g_clipboardBase && AscCommon.g_clipboardBase.ClearBuffer();
 			} else {
-				logError(new Error('Invalid destination'));
+				throwException(new Error('Invalid destination'));
 			}
 		} else {
 			let ws =  this.range.worksheet;
@@ -11289,7 +11289,7 @@
 				this.range.move(range.bbox, false, destination.range.worksheet);
 				//AscCommon.g_clipboardBase && AscCommon.g_clipboardBase.ClearBuffer();
 			} else {
-				logError(new Error('Invalid destination'));
+				throwException(new Error('Invalid destination'));
 			}
 		} else {
 			let ws =  this.range.worksheet;
@@ -11318,7 +11318,7 @@
 			let range = this.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
 			rangeFrom.range.move(range.bbox, true, range.worksheet);
 		} else {
-			logError(new Error('Invalid range'));
+			throwException(new Error('Invalid range'));
 		}
 	};
 
@@ -11335,11 +11335,11 @@
 	 */
 	ApiRange.prototype.PasteSpecial = function (sPasteType, sPasteSpecialOperation, bSkipBlanks, bTranspose) {
 		if (sPasteType && typeof sPasteType !== 'string') {
-			logError(new Error('Invalid type of parameter "sPasteType".'));
+			throwException(new Error('Invalid type of parameter "sPasteType".'));
 			return;
 		}
 		if (sPasteSpecialOperation && typeof sPasteSpecialOperation !== 'string') {
-			logError(new Error('Invalid type of parameter "sPasteSpecialOperation".'));
+			throwException(new Error('Invalid type of parameter "sPasteSpecialOperation".'));
 			return;
 		}
 
@@ -11577,7 +11577,7 @@
 			this._searchOptions = options;
 			return res;
 		} else {
-			logError(new Error('Invalid parametr "What".'));
+			throwException(new Error('Invalid parametr "What".'));
 			return null;
 		}
 	};
@@ -11618,7 +11618,7 @@
 			}
 			return res;
 		} else {
-			logError(new Error('You should use "Find" method before this.'));
+			throwException(new Error('You should use "Find" method before this.'));
 			return null;
 		}
 	};
@@ -11659,7 +11659,7 @@
 			}
 			return res;
 		} else {
-			logError(new Error('You should use "Find" method before this.'));
+			throwException(new Error('You should use "Find" method before this.'));
 			return null;
 		}
 	};
@@ -11727,7 +11727,7 @@
 				this.range.worksheet.workbook.oApi.wb.replaceCellText(options);
 			}
 		} else {
-			logError(new Error('Invalid type of parametr "What" or "Replacement".'));
+			throwException(new Error('Invalid type of parametr "What" or "Replacement".'));
 		}
 	};
 
@@ -13333,12 +13333,12 @@
 	 */
 	ApiName.prototype.SetName = function (sName) {
 		if (!sName || typeof sName !== 'string' || !this.DefName) {
-			logError(new Error('Invalid name or Defname is undefined.'));
+			throwException(new Error('Invalid name or Defname is undefined.'));
 			return false;
 		}
 		var res = this.DefName.wb.checkDefName(sName);
 		if (!res.status) {
-			logError(new Error('Invalid name.')); // invalid name
+			throwException(new Error('Invalid name.')); // invalid name
 			return false;
 		}
 		var oldName = this.DefName.getAscCDefName(false);
@@ -14181,7 +14181,7 @@
 			if (excess) {
 				length -= excess;
 				if (!length) {
-					logError(new Error('Max symbols in one cell.'));
+					throwException(new Error('Max symbols in one cell.'));
 					return;
 				}
 				String = String.slice(0, length);
@@ -14410,7 +14410,7 @@
 	 */
 	ApiFont.prototype.SetBold = function (isBold) {
 		if (typeof isBold !== 'boolean') {
-			logError(new Error('Invalid type of parametr "isBold".'));
+			throwException(new Error('Invalid type of parametr "isBold".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -14509,7 +14509,7 @@
 	 */
 	ApiFont.prototype.SetItalic = function (isItalic) {
 		if (typeof isItalic !== 'boolean') {
-			logError(new Error('Invalid type of parametr "isItalic".'));
+			throwException(new Error('Invalid type of parametr "isItalic".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -14609,7 +14609,7 @@
 	 */
 	ApiFont.prototype.SetSize = function (Size) {
 		if (typeof Size !== 'number' || Size < 0 || Size > 409) {
-			logError(new Error('Invalid type of parametr "Size".'));
+			throwException(new Error('Invalid type of parametr "Size".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -14708,7 +14708,7 @@
 	 */
 	ApiFont.prototype.SetStrikethrough = function (isStrikethrough) {
 		if (typeof isStrikethrough !== 'boolean') {
-			logError(new Error('Invalid type of parametr "isStrikethrough".'));
+			throwException(new Error('Invalid type of parametr "isStrikethrough".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -14852,7 +14852,7 @@
 	 */
 	ApiFont.prototype.SetUnderline = function (Underline) {
 		if (typeof Underline !== 'string') {
-			logError(new Error('Invalid type of parametr "isUnderline".'));
+			throwException(new Error('Invalid type of parametr "isUnderline".'));
 			return;
 		}
 		switch (Underline) {
@@ -14974,7 +14974,7 @@
 	 */
 	ApiFont.prototype.SetSubscript = function (isSubscript) {
 		if (typeof isSubscript !== 'boolean') {
-			logError(new Error('Invalid type of parametr "isSubscript".'));
+			throwException(new Error('Invalid type of parametr "isSubscript".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -15074,7 +15074,7 @@
 	 */
 	ApiFont.prototype.SetSuperscript = function (isSuperscript) {
 		if (typeof isSuperscript !== 'boolean') {
-			logError(new Error('Invalid type of parametr "isSuperscript".'));
+			throwException(new Error('Invalid type of parametr "isSuperscript".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -15174,7 +15174,7 @@
 	 */
 	ApiFont.prototype.SetName = function (FontName) {
 		if (typeof FontName !== 'string') {
-			logError(new Error('Invalid type of parametr "FontName".'));
+			throwException(new Error('Invalid type of parametr "FontName".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -15274,7 +15274,7 @@
 	 */
 	ApiFont.prototype.SetColor = function (Color) {
 		if (!Color instanceof ApiColor) {
-			logError(new Error('Invalid type of parametr "Color".'));
+			throwException(new Error('Invalid type of parametr "Color".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -15350,7 +15350,7 @@
 			let c = bbox.c2 < AscCommon.gc_nMaxCol0 ? bbox.c2 + 1 : bbox.c2;
 			api.asc_freezePane(null, c, r);
 		} else {
-			logError(new Error('Invalid parametr "frozenRange".'));
+			throwException(new Error('Invalid parametr "frozenRange".'));
 		}
 	};
 
@@ -15370,7 +15370,7 @@
 		} else if (!!api.wb.getWorksheet().topLeftFrozenCell && count === 0) {
 			api.asc_freezePane(undefined);
 		} else {
-			logError(new Error('Invalid parametr "count".'));
+			throwException(new Error('Invalid parametr "count".'));
 		}
 	};
 
@@ -15390,7 +15390,7 @@
 		} else if (!!api.wb.getWorksheet().topLeftFrozenCell && count === 0) {
 			api.asc_freezePane(undefined);
 		} else {
-			logError(new Error('Invalid parametr "count".'));
+			throwException(new Error('Invalid parametr "count".'));
 		}
 	};
 
@@ -19380,7 +19380,7 @@
 			return apiValidation.validations[0];
 		}
 		if (apiValidation.validations.length > 1) {
-			logError(new Error('Multiple validations exist'));
+			throwException(new Error('Multiple validations exist'));
 			return null;
 		}
 		return apiValidation.validations[0];
@@ -19431,7 +19431,7 @@
 		}
 
 		if (this.validations && Array.isArray(this.validations) && this.validations.length > 0 && this.validations[0].ranges) {
-			logError(new Error('Validation already exists.'));
+			throwException(new Error('Validation already exists.'));
 			return null;
 		}
 
@@ -19486,13 +19486,14 @@
 		}
 		dataValidation.ranges = ranges;
 
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let apiWorksheet = this.range && this.range.GetWorksheet();
+		let worksheet = apiWorksheet && apiWorksheet.worksheet;
 		if (!worksheet) {
 			return null;
 		}
 
 		if (Asc.c_oAscError.ID.No !== dataValidation.asc_checkValid()) {
-			logError(new Error('Check params error.'));
+			throwException(new Error('Check params error.'));
 			return null;
 		}
 
@@ -19521,7 +19522,8 @@
 			return;
 		}
 
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let apiWorksheet = this.range && this.range.GetWorksheet();
+		let worksheet = apiWorksheet && apiWorksheet.worksheet;
 		if (!worksheet || !worksheet.dataValidations) {
 			return;
 		}
@@ -19550,16 +19552,17 @@
 	 */
 	ApiValidation.prototype.Modify = function(Type, AlertStyle, Operator, Formula1, Formula2) {
 		if (!this.validations || !Array.isArray(this.validations) || !this.validations.length) {
-			logError(new Error('No validation to modify.'));
+			throwException(new Error('No validation to modify.'));
 			return null;
 		}
 
 		if (this.validations.length > 0 && !this.validations[0].ranges) {
-			logError(new Error('No ranges to modify.'));
+			throwException(new Error('No ranges to modify.'));
 			return null;
 		}
 
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let apiWorksheet = this.range && this.range.GetWorksheet();
+		let worksheet = apiWorksheet && apiWorksheet.worksheet;
 		if (!worksheet || !worksheet.dataValidations) {
 			return null;
 		}
@@ -19587,25 +19590,6 @@
 	};
 
 	/**
-	 * Sets the validation type.
-	 * @memberof ApiValidation
-	 * @typeofeditors ["CSE"]
-	 * @param {ValidationType} Type - The validation type.
-	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetType.js
-	 */
-	ApiValidation.prototype.SetType = function(Type) {
-		const validation = getSingleValidation(this);
-		if (!validation) {
-			return;
-		}
-		// If there are multiple validations, we cannot set type
-		let internalType = FromXlValidationTypeTo(Type);
-		if (internalType !== -1) {
-			validation.asc_setType(internalType);
-		}
-	};
-
-	/**
 	 * Returns the validation alert style.
 	 * @memberof ApiValidation
 	 * @typeofeditors ["CSE"]
@@ -19618,24 +19602,6 @@
 			return;
 		}
 		return ToXlValidationAlertStyleFrom(validation.getErrorStyle());
-	};
-
-	/**
-	 * Sets the validation alert style.
-	 * @memberof ApiValidation
-	 * @typeofeditors ["CSE"]
-	 * @param {ValidationAlertStyle} AlertStyle - The validation alert style.
-	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetAlertStyle.js
-	 */
-	ApiValidation.prototype.SetAlertStyle = function(AlertStyle) {
-		const validation = getSingleValidation(this);
-		if (!validation) {
-			return;
-		}
-		let internalAlertStyle = FromXlValidationAlertStyleTo(AlertStyle);
-		if (internalAlertStyle !== -1) {
-			validation.asc_setErrorStyle(internalAlertStyle);
-		}
 	};
 
 	/**
@@ -19665,7 +19631,7 @@
 		if (!validation) {
 			return;
 		}
-		validation.asc_setAllowBlank(IgnoreBlank);
+		validation.setAllowBlank(IgnoreBlank);
 	};
 
 	/**
@@ -19695,7 +19661,7 @@
 		if (!validation) {
 			return;
 		}
-		validation.asc_setShowDropDown(!InCellDropdown);
+		validation.setShowDropDown(!InCellDropdown);
 	};
 
 	/**
@@ -19725,7 +19691,7 @@
 		if (!validation) {
 			return;
 		}
-		validation.asc_setShowInputMessage(ShowInput);
+		validation.setShowInputMessage(ShowInput);
 	};
 
 	/**
@@ -19755,7 +19721,7 @@
 		if (!validation) {
 			return;
 		}
-		validation.asc_setShowErrorMessage(ShowError);
+		validation.setShowErrorMessage(ShowError);
 	};
 
 	/**
@@ -19770,7 +19736,8 @@
 		if (!validation) {
 			return;
 		}
-		return validation.getPromptTitle();
+        const promptTitle = validation.getPromptTitle();
+        return promptTitle === null ? "" : promptTitle;
 	};
 
 	/**
@@ -19785,7 +19752,7 @@
 		if (!validation) {
 			return;
 		}
-		validation.asc_setPromptTitle(InputTitle);
+		validation.setPromptTitle(InputTitle);
 	};
 
 	/**
@@ -19800,7 +19767,8 @@
 		if (!validation) {
 			return;
 		}
-		return validation.getPrompt();
+        const promptMessage = validation.getPrompt();
+        return promptMessage === null ? "" : promptMessage;
 	};
 
 	/**
@@ -19815,7 +19783,7 @@
 		if (!validation) {
 			return;
 		}
-		validation.asc_setPrompt(InputMessage);
+		validation.setPrompt(InputMessage);
 	};
 
 	/**
@@ -19830,7 +19798,9 @@
 		if (!validation) {
 			return;
 		}
-		return validation.getErrorTitle();
+
+        const errorTitle = validation.getErrorTitle();
+        return errorTitle === null ? "" : errorTitle;
 	};
 
 	/**
@@ -19845,7 +19815,7 @@
 		if (!validation) {
 			return;
 		}
-		validation.asc_setErrorTitle(ErrorTitle);
+		validation.setErrorTitle(ErrorTitle);
 	};
 
 	/**
@@ -19860,7 +19830,9 @@
 		if (!validation) {
 			return;
 		}
-		return validation.getError();
+
+        const errorMessage= validation.getError();
+        return errorMessage === null ? "" : errorMessage;
 	};
 
 	/**
@@ -19875,7 +19847,7 @@
 		if (!validation) {
 			return;
 		}
-		validation.asc_setError(ErrorMessage);
+		validation.setError(ErrorMessage);
 	};
 
 	/**
@@ -19895,22 +19867,6 @@
 	};
 
 	/**
-	 * Sets the first formula in the data validation.
-	 * @memberof ApiValidation
-	 * @typeofeditors ["CSE"]
-	 * @param {string} Formula1 - The first formula.
-	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetFormula1.js
-	 */
-	ApiValidation.prototype.SetFormula1 = function(Formula1) {
-		const validation = getSingleValidation(this);
-		if (!validation) {
-			return;
-		}
-		let formula = new window['Asc'].CDataFormula(Formula1);
-		validation.asc_setFormula1(formula);
-	};
-
-	/**
 	 * Returns the second formula in the data validation.
 	 * @memberof ApiValidation
 	 * @typeofeditors ["CSE"]
@@ -19924,22 +19880,6 @@
 		}
 		let formula2 = validation.getFormula2();
 		return formula2 ? formula2.asc_getValue() : "";
-	};
-
-	/**
-	 * Sets the second formula in the data validation.
-	 * @memberof ApiValidation
-	 * @typeofeditors ["CSE"]
-	 * @param {string} Formula2 - The second formula.
-	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetFormula2.js
-	 */
-	ApiValidation.prototype.SetFormula2 = function(Formula2) {
-		const validation = getSingleValidation(this);
-		if (!validation) {
-			return;
-		}
-		let formula = new window['Asc'].CDataFormula(Formula2);
-		validation.asc_setFormula2(formula);
 	};
 
 	/**
@@ -19958,24 +19898,6 @@
 	};
 
 	/**
-	 * Sets the data validation operator.
-	 * @memberof ApiValidation
-	 * @typeofeditors ["CSE"]
-	 * @param {ValidationOperator} Operator - The validation operator.
-	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetOperator.js
-	 */
-	ApiValidation.prototype.SetOperator = function(Operator) {
-		const validation = getSingleValidation(this);
-		if (!validation) {
-			return;
-		}
-		let internalOperator = FromXlValidationOperatorTo(Operator);
-		if (internalOperator !== -1) {
-			validation.asc_setOperator(internalOperator);
-		}
-	};
-
-	/**
 	 * Returns the parent range object.
 	 * @memberof ApiValidation
 	 * @typeofeditors ["CSE"]
@@ -19990,18 +19912,12 @@
 	Object.defineProperty(ApiValidation.prototype, "Type", {
 		get: function() {
 			return this.GetType();
-		},
-		set: function(value) {
-			this.SetType(value);
 		}
 	});
 
 	Object.defineProperty(ApiValidation.prototype, "AlertStyle", {
 		get: function() {
 			return this.GetAlertStyle();
-		},
-		set: function(value) {
-			this.SetAlertStyle(value);
 		}
 	});
 
@@ -20081,27 +19997,18 @@
 		get: function() {
 			return this.GetFormula1();
 		},
-		set: function(value) {
-			this.SetFormula1(value);
-		}
 	});
 
 	Object.defineProperty(ApiValidation.prototype, "Formula2", {
 		get: function() {
 			return this.GetFormula2();
 		},
-		set: function(value) {
-			this.SetFormula2(value);
-		}
 	});
 
 	Object.defineProperty(ApiValidation.prototype, "Operator", {
 		get: function() {
 			return this.GetOperator();
 		},
-		set: function(value) {
-			this.SetOperator(value);
-		}
 	});
 
 	Object.defineProperty(ApiValidation.prototype, "Parent", {
@@ -20113,9 +20020,6 @@
 	Object.defineProperty(ApiValidation.prototype, "Value", {
 		get: function() {
 			return this.GetFormula1();
-		},
-		set: function(value) {
-			this.SetFormula1(value);
 		}
 	});
 
@@ -20459,7 +20363,7 @@
 		}
 
 		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			logError(new Error('Cannot modify protected sheet'));
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 
@@ -20661,7 +20565,7 @@
 		}
 
 		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			logError(new Error('Cannot modify protected sheet'));
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 
@@ -20711,7 +20615,7 @@
 		}
 
 		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			logError(new Error('Cannot modify protected sheet'));
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 
@@ -20722,7 +20626,7 @@
 
 		// Validate ColorScaleType parameter
 		if (ColorScaleType !== 2 && ColorScaleType !== 3) {
-			logError(new Error("Invalid ColorScaleType. Must be 2 (two-color scale) or 3 (three-color scale)."));
+			throwException(new Error("Invalid ColorScaleType. Must be 2 (two-color scale) or 3 (three-color scale)."));
 			return null;
 		}
 
@@ -20821,7 +20725,7 @@
 		}
 
 		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			logError(new Error('Cannot modify protected sheet'));
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 
@@ -20891,7 +20795,7 @@
 		}
 
 		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			logError(new Error('Cannot modify protected sheet'));
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 
@@ -20971,7 +20875,7 @@
 		}
 
 		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			logError(new Error('Cannot modify protected sheet'));
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 
@@ -21023,7 +20927,7 @@
 		}
 
 		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			logError(new Error('Cannot modify protected sheet'));
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 
@@ -21069,7 +20973,7 @@
 		}
 
 		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			logError(new Error('Cannot modify protected sheet'));
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 
@@ -21958,7 +21862,7 @@
 		});
 
 		if (isContains) {
-			logError(new Error("Priority already exists in the worksheet."));
+			throwException(new Error("Priority already exists in the worksheet."));
 			return;
 		}
 
@@ -22200,7 +22104,7 @@
 			this.rule.type === Asc.ECfType.notContainsText ||
 			this.rule.type === Asc.ECfType.beginsWith ||
 			this.rule.type === Asc.ECfType.endsWith)) {
-			logError(new Error('Type must be one of the text-based types: containsText, notContainsText, beginsWith, endsWith'));
+			throwException(new Error('Type must be one of the text-based types: containsText, notContainsText, beginsWith, endsWith'));
 			return;
 		}
 
@@ -22236,7 +22140,7 @@
 			this.rule.type === Asc.ECfType.notContainsText ||
 			this.rule.type === Asc.ECfType.beginsWith ||
 			this.rule.type === Asc.ECfType.endsWith)) {
-			logError(new Error('Type must be one of the text-based types: containsText, notContainsText, beginsWith, endsWith'));
+			throwException(new Error('Type must be one of the text-based types: containsText, notContainsText, beginsWith, endsWith'));
 			return;
 		}
 
@@ -28235,9 +28139,7 @@
 	ApiValidation.prototype["Delete"]               = ApiValidation.prototype.Delete;
 	ApiValidation.prototype["Modify"]               = ApiValidation.prototype.Modify;
 	ApiValidation.prototype["GetType"]              = ApiValidation.prototype.GetType;
-	ApiValidation.prototype["SetType"]              = ApiValidation.prototype.SetType;
 	ApiValidation.prototype["GetAlertStyle"]        = ApiValidation.prototype.GetAlertStyle;
-	ApiValidation.prototype["SetAlertStyle"]        = ApiValidation.prototype.SetAlertStyle;
 	ApiValidation.prototype["GetIgnoreBlank"]       = ApiValidation.prototype.GetIgnoreBlank;
 	ApiValidation.prototype["SetIgnoreBlank"]       = ApiValidation.prototype.SetIgnoreBlank;
 	ApiValidation.prototype["GetInCellDropdown"]    = ApiValidation.prototype.GetInCellDropdown;
@@ -28255,11 +28157,8 @@
 	ApiValidation.prototype["GetErrorMessage"]      = ApiValidation.prototype.GetErrorMessage;
 	ApiValidation.prototype["SetErrorMessage"]      = ApiValidation.prototype.SetErrorMessage;
 	ApiValidation.prototype["GetFormula1"]          = ApiValidation.prototype.GetFormula1;
-	ApiValidation.prototype["SetFormula1"]          = ApiValidation.prototype.SetFormula1;
 	ApiValidation.prototype["GetFormula2"]          = ApiValidation.prototype.GetFormula2;
-	ApiValidation.prototype["SetFormula2"]          = ApiValidation.prototype.SetFormula2;
 	ApiValidation.prototype["GetOperator"]          = ApiValidation.prototype.GetOperator;
-	ApiValidation.prototype["SetOperator"]          = ApiValidation.prototype.SetOperator;
 	ApiValidation.prototype["GetParent"]            = ApiValidation.prototype.GetParent;
 
 	ApiFormatConditions.prototype["Add"] = ApiFormatConditions.prototype.Add;
@@ -28581,12 +28480,12 @@
 	function private_AddDefName(wb, name, ref, sheetInd, hidden) {
 		let res = wb.checkDefName(name);
 		if (!res.status) {
-			logError(new Error('Invalid name.'));
+			throwException(new Error('Invalid name.'));
 			return false;
 		}
 		res = wb.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.Chart, ref, false);
 		if (res === Asc.c_oAscError.ID.DataRangeError) {
-			logError(new Error('Invalid range.'));
+			throwException(new Error('Invalid range.'));
 			return false;
 		}
 		if (sheetInd) {
@@ -28752,7 +28651,7 @@
     }
 
 	function private_MakeError(message) {
-		console.error(new Error(message) );
+		throwException(new Error(message));
 	}
 	window['AscBuilder'] = window['AscBuilder'] || {};
 	window['AscBuilder'].ApiShape           = ApiShape;

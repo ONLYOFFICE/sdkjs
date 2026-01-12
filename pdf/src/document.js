@@ -1166,6 +1166,11 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.SetNeedUpdateSearch = function(bUpdate) {
         this.needUpdateSearch = bUpdate;
+
+        if (bUpdate && this.SearchEngine.TextAroundTimer != null) {
+            clearTimeout(this.SearchEngine.TextAroundTimer);
+            this.SearchEngine.TextAroundTimer = null;
+        }
     };
     CPDFDoc.prototype.IsNeedUpdateSearch = function() {
         return this.needUpdateSearch;
@@ -6316,8 +6321,8 @@ var CPresentation = CPresentation || function(){};
                 for (let nIdx = 0; nIdx < data.length; ++nIdx) {
                     _file.nativeFile["changeImageUrl"](allImages[nIdx], AscCommon.g_oDocumentUrls.imagePath2Local(data[nIdx].path));
                 }
-                Asc.editor.pre_Paste(aFonts, oLoadUrls, fEndCallback);
 
+                Asc.editor.pre_Paste(aFonts, oLoadUrls, fEndCallback);
             });
         }
         else {

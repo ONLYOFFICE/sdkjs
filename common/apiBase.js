@@ -244,6 +244,7 @@
 		this.isBlurEditor = false;
 		
 		this.builderFonts = {};
+		this.builderEndActions = [];
 
 		this.formatPainter = new AscCommon.CFormatPainter(this);
 		this.eyedropper = new AscCommon.CEyedropper(this);
@@ -2526,6 +2527,7 @@
 			oAdditionalData["withoutPassword"] = true;
 			oAdditionalData["inline"] = 1;
 		}
+		const jsonparams = {};
 		if (Asc.c_oAscFileType.JPG === options.fileType || Asc.c_oAscFileType.TIFF === options.fileType
 			|| Asc.c_oAscFileType.TGA === options.fileType || Asc.c_oAscFileType.GIF === options.fileType
 			|| Asc.c_oAscFileType.PNG === options.fileType || Asc.c_oAscFileType.EMF === options.fileType
@@ -2554,7 +2556,6 @@
 			oAdditionalData["outputformat"] = Asc.c_oAscFileType.IMG;
 			oAdditionalData["title"] = AscCommon.changeFileExtention(this.documentTitle, "zip", Asc.c_nMaxDownloadTitleLen);
 
-			let jsonparams = {};
 			//todo convert from asc_CAdjustPrint
 			jsonparams["spreadsheetLayout"] = {"ignorePrintArea": true, "scale": 100};
 			jsonparams["locale"] = this.asc_getLocale();
@@ -2564,11 +2565,22 @@
 			if (this.watermarkDraw && this.watermarkDraw.inputContentSrc) {
 				jsonparams["watermark"] = JSON.parse(this.watermarkDraw.inputContentSrc);
 			}
-			oAdditionalData["jsonparams"] = jsonparams;
 		} else if ((Asc.c_oAscFileType.PDF === options.fileType || Asc.c_oAscFileType.PDFA === options.fileType) &&
 			this.watermarkDraw && this.watermarkDraw.inputContentSrc) {
-			let jsonparams = {};
 			jsonparams["watermark"] = JSON.parse(this.watermarkDraw.getCorrectedInputContentSrc());
+		}
+		const nativeOptions = options.advancedOptions && options.advancedOptions.asc_getNativeOptions();
+		if (nativeOptions) {
+			jsonparams["printPages"] = nativeOptions["pages"];
+		}
+
+		if (Asc.editor.isPdfEditor() && options.advancedOptions) {
+			jsonparams["pdfLayout"] = {
+				"content": options.advancedOptions.asc_getPdfContent()
+			}
+		}
+
+		if (Object.keys(jsonparams).length > 0) {
 			oAdditionalData["jsonparams"] = jsonparams;
 		}
 		if (options.textParams && undefined !== options.textParams.asc_getAssociation()) {
@@ -3781,6 +3793,8 @@
 		let _t = this;
 		this.loadBuilderFonts(function()
 		{
+			_t._executeBuilderEndActions();
+			
 			let result = _t._onEndBuilderScript(callback);
 
 			if (_t.SaveAfterMacros)
@@ -3816,6 +3830,18 @@
 		
 		this.executeGroupActionsEnd();
 		return true;
+	};
+	baseEditorsApi.prototype.addBuilderEndAction = function(func)
+	{
+		this.builderEndActions.push(func);
+	};
+	baseEditorsApi.prototype._executeBuilderEndActions = function()
+	{
+		this.builderEndActions.forEach(function(f)
+		{
+			f.call();
+		})
+		this.builderEndActions.length = 0;
 	};
 
 	// Native

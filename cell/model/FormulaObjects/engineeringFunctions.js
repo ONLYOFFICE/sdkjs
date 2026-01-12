@@ -5440,34 +5440,85 @@ function (window, undefined) {
 	cERF.prototype.argumentsMax = 2;
 	cERF.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cERF.prototype.argumentsType = [argType.any, argType.any];
+	/**
+	 * @param {number} lower_limit: The lower bound for integrating ERF.
+	 * @param {number} upper_limit(optional): The upper bound for integrating ERF. If omitted, ERF integrates between zero and lower_limit.
+	 * @return {number} Returns the error function integrated between lower_limit and upper_limit.
+	 */
 	cERF.prototype.Calculate = function (arg) {
 
-		var oArguments = this._prepareArguments(arg, arguments[1], true);
-		var argClone = oArguments.args;
+		const calcErf = function (lower_limit, upper_limit) {
 
-		argClone[0] = argClone[0].tocNumber();
-		argClone[1] = argClone[1] ? argClone[1].tocNumber() : new cUndefined();
-
-		var argError;
-		if (argError = this._checkErrorArg(argClone)) {
-			return argError;
-		}
-
-		var calcErf = function (argArray) {
-			var a = argArray[0];
-			var b = argArray[1];
-
-			var res;
-			if (undefined !== b) {
-				res = new cNumber(rtl_math_erf(b) - rtl_math_erf(a));
+			let res;
+			if (upper_limit === undefined) {
+				res = new cNumber(rtl_math_erf(lower_limit));
 			} else {
-				res = new cNumber(rtl_math_erf(a));
+				res = new cNumber(rtl_math_erf(upper_limit) - rtl_math_erf(lower_limit));
 			}
 
 			return res;
 		};
 
-		return this._findArrayInNumberArguments(oArguments, calcErf);
+		let arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cNumber(0);
+
+		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
+			arg0 = arg0.getValue();
+		}
+
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
+			if (arg0.isOneElement()) {
+				arg0 = arg0.getFirstElement();
+			} else {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		}
+
+		if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+			arg1 = arg1.getValue();
+		}
+
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
+			if (arg1.isOneElement()) {
+				arg1 = arg1.getFirstElement();
+			} else {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		}
+
+		let argError;
+		if (argError = this._checkErrorArg([arg0, arg1])) {
+			return argError;
+		}
+
+		if (arg0.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (arg0.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
+		}
+
+		arg0 = arg0.tocNumber();
+		if (arg0.type === cElementType.error) {
+			return arg0;
+		}
+
+
+		if (arg1.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (arg1.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
+		}
+
+		arg1 = arg1.tocNumber();
+		if (arg1.type === cElementType.error) {
+			return arg1;
+		}
+
+		let lower_limit = arg0.getValue(),
+			upper_limit = arg[1] ? arg1.getValue() : undefined;
+
+		let res = calcErf(lower_limit, upper_limit);
+
+		return new cNumber(res);
 	};
 
 	/**
@@ -5486,20 +5537,28 @@ function (window, undefined) {
 	cERF_PRECISE.prototype.isXLFN = true;
 	cERF_PRECISE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cERF_PRECISE.prototype.argumentsType = [argType.any];
+	/**
+	 * @param {number} X: The lower bound for integrating ERF.PRECISE.
+	 * @return {number} Returns the error function.
+	 */
 	cERF_PRECISE.prototype.Calculate = function (arg) {
 
-		var oArguments = this._prepareArguments(arg, arguments[1], true);
-		var argClone = oArguments.args;
+		let oArguments = this._prepareArguments(arg, arguments[1], true);
+		let argClone = oArguments.args;
+
+		if (argClone[0].type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		}
 
 		argClone[0] = argClone[0].tocNumber();
 
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		var calcErf = function (argArray) {
-			var a = argArray[0];
+		const calcErf = function (argArray) {
+			let a = argArray[0];
 			return new cNumber(rtl_math_erf(a));
 		};
 
@@ -5521,17 +5580,27 @@ function (window, undefined) {
 	cERFC.prototype.argumentsMax = 1;
 	cERFC.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cERFC.prototype.argumentsType = [argType.any];
+	/**
+	 * @param {number} X: The lower bound for integrating ERF.
+	 * @return {number} Returns the complementary ERF function integrated between x and infinity.
+	 */
 	cERFC.prototype.Calculate = function (arg) {
 
-		var a = arg[0];
-		if (a instanceof cArea || a instanceof cArea3D) {
+		let a = arg[0];
+		if (a.type === cElementType.cellsRange || a.type === cElementType.cellsRange3D) {
 			a = a.cross(arguments[1]);
-		} else if (a instanceof cArray) {
+		} else if (a.type === cElementType.array) {
 			a = a.getElement(0);
+		} else if (a.type === cElementType.cell || a.type === cElementType.cell3D) {
+			a = a.getValue();
+		}
+
+		if (a.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
 		}
 
 		a = a.tocNumber();
-		if (a instanceof cError) {
+		if (a.type === cElementType.error) {
 			return a;
 		}
 
@@ -5617,50 +5686,65 @@ function (window, undefined) {
 	cHEX2BIN.prototype.argumentsType = [argType.any, argType.any];
 	cHEX2BIN.prototype.Calculate = function (arg) {
 
-		var arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cUndefined();
+		const MAX_POSITIVE_NUMBER = Math.pow(2,9); // 9 bit number, and 1 bit for sign = 10 bit
+		const MIN_NEGATIVE_NUMBER = -Math.pow(2,9); // 9 bit number, and 1 bit for sign = 10 bit
 
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		let arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cUndefined();
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
-		} else if (arg0 instanceof cArray) {
+		} else if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElementRowCol(0, 0);
+		} else if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
+			arg0 = arg0.getValue();
 		}
 
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
+		if (arg0.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
 			arg1 = arg1.cross(arguments[1]);
-		} else if (arg1 instanceof cArray) {
+		} else if (arg1.type === cElementType.array) {
 			arg1 = arg1.getElementRowCol(0, 0);
+		} else if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+			arg1 = arg1.getValue();
+		}
+
+		if (arg1.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
 		}
 
 		arg0 = arg0.tocString();
-		if (arg0 instanceof cError) {
-			return new cError(cErrorType.wrong_value_type);
+		if (arg0.type === cElementType.error) {
+			return arg0;
 		}
 		arg0 = arg0.getValue();
 
-		if (arg0.length == 0) {
+		if (arg0.length === 0) {
 			arg0 = 0;
 		}
 
 		if (!(arg1 instanceof cUndefined)) {
 			arg1 = arg1.tocNumber();
-			if (arg1 instanceof cError) {
-				return new cError(cErrorType.wrong_value_type);
+			if (arg1.type === cElementType.error) {
+				return arg1;
 			}
 		}
 		arg1 = arg1.getValue();
 
-		var res;
-		if (validHEXNumber(arg0) && (arg1 > 0 && arg1 <= 10 || arg1 == undefined)) {
+		let res;
+		if (validHEXNumber(arg0) && (arg1 > 0 && arg1 <= 10 || arg1 === undefined)) {
 
-			var negative = (arg0.length === 10 && arg0.substring(0, 1).toUpperCase() === 'F'),
+			let negative = (arg0.length === 10 && arg0.substring(0, 1).toUpperCase() === 'F'),
 				arg0DEC = (negative) ? parseInt(arg0, NumberBase.HEX) - 1099511627776 : parseInt(arg0, NumberBase.HEX);
 
-			if (arg0DEC < -512 || arg0DEC > 511) {
+			if (arg0DEC < MIN_NEGATIVE_NUMBER || arg0DEC >= MAX_POSITIVE_NUMBER) {
 				res = new cError(cErrorType.not_numeric)
 			} else {
 
 				if (negative) {
-					var str = (512 + arg0DEC).toString(NumberBase.BIN);
+					let str = (MAX_POSITIVE_NUMBER + arg0DEC).toString(NumberBase.BIN);
 					res = new cString('1' + '0'.repeat(9 - str.length) + str);
 				} else {
 					res = convertFromTo(arg0DEC, NumberBase.DEC, NumberBase.BIN, arg1);
@@ -5692,31 +5776,40 @@ function (window, undefined) {
 	cHEX2DEC.prototype.argumentsType = [argType.any];
 	cHEX2DEC.prototype.Calculate = function (arg) {
 
-		var arg0 = arg[0];
+		const MAX_40BIT_NUMBER = Math.pow(2,39); // 2^(40 - 1) -> 1 bit is for sign
+		const NORMALIZE_NUMBER = Math.pow(2,40);
 
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		let arg0 = arg[0];
+
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
-		} else if (arg0 instanceof cArray) {
+		} else if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElementRowCol(0, 0);
+		} else if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
+			arg0 = arg0.getValue();
+		}
+
+		if (arg0.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
 		}
 
 		arg0 = arg0.tocString();
 
-		if (arg0 instanceof cError) {
+		if (arg0.type === cElementType.error) {
 			return arg0;
 		}
 
 		arg0 = arg0.getValue();
 
-		if (arg0.length == 0) {
+		if (arg0.length === 0) {
 			arg0 = 0;
 		}
 
-		var res;
+		let res;
 		if (validHEXNumber(arg0)) {
 
 			arg0 = parseInt(arg0, NumberBase.HEX);
-			res = new cNumber((arg0 >= 549755813888) ? arg0 - 1099511627776 : arg0);
+			res = new cNumber(arg0 >= MAX_40BIT_NUMBER ? arg0 - NORMALIZE_NUMBER : arg0);
 
 		} else {
 			res = new cError(cErrorType.not_numeric);
@@ -5743,44 +5836,59 @@ function (window, undefined) {
 	cHEX2OCT.prototype.argumentsType = [argType.any, argType.any];
 	cHEX2OCT.prototype.Calculate = function (arg) {
 
-		var arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cUndefined();
+		const MAX_POSITIVE_NUMBER = 536870911;	// 1FFFFFFF
+		const MIN_NEGATIVE_NUMBER = -536870912;	// FFE0000000
 
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		let arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cUndefined();
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
-		} else if (arg0 instanceof cArray) {
+		} else if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElementRowCol(0, 0);
+		} else if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
+			arg0 = arg0.getValue();
 		}
 
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
+		if (arg0.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
 			arg1 = arg1.cross(arguments[1]);
-		} else if (arg1 instanceof cArray) {
+		} else if (arg1.type === cElementType.array) {
 			arg1 = arg1.getElementRowCol(0, 0);
+		} else if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+			arg1 = arg1.getValue();
+		}
+
+		if (arg1.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
 		}
 
 		arg0 = arg0.tocString();
-		if (arg0 instanceof cError) {
-			return new cError(cErrorType.wrong_value_type);
+		if (arg0.type === cElementType.error) {
+			return arg0;
 		}
 		arg0 = arg0.getValue();
 
-		if (arg0.length == 0) {
+		if (arg0.length === 0) {
 			arg0 = 0;
 		}
 
 		if (!(arg1 instanceof cUndefined)) {
 			arg1 = arg1.tocNumber();
-			if (arg1 instanceof cError) {
-				return new cError(cErrorType.wrong_value_type);
+			if (arg1.type === cElementType.error) {
+				return arg1;
 			}
 		}
 		arg1 = arg1.getValue();
 
-		var res;
-		if (validHEXNumber(arg0) && (arg1 > 0 && arg1 <= 10 || arg1 == undefined)) {
+		let res;
+		if (validHEXNumber(arg0) && (arg1 > 0 && arg1 <= 10 || arg1 === undefined)) {
 
 			arg0 = parseInt(arg0, NumberBase.HEX);
 
-			if (arg0 > 536870911 && arg0 < 1098974756864) {
+			if (arg0 > MAX_POSITIVE_NUMBER && arg0 < 1098974756864) {
 				res = new cError(cErrorType.not_numeric);
 			} else {
 
@@ -6817,42 +6925,40 @@ function (window, undefined) {
 	cIMSUM.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cIMSUM.prototype.argumentsType = [[argType.any]];
 	cIMSUM.prototype.Calculate = function (arg) {
+		
+		const t = this;
+		let c = new Complex("0"), c1;
 
-		var arg0 = arg[0], t = this;
+		for (let i = 0; i < arg.length; i++) {
 
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
-			arg0 = arg0.cross(arguments[1]);
-		} else if (arg0 instanceof cArray) {
-			arg0 = arg0.getElementRowCol(0, 0);
-		}
+			let argI = arg[i];
 
-		arg0 = arg0.tocString();
+			if (argI.type === cElementType.cell || argI.type === cElementType.cell3D) {
+				argI = argI.getValue();
+			}
 
-		if (arg0 instanceof cError) {
-			return arg0;
-		}
+			if (argI.type === cElementType.error) {
+				return argI;
+			} else if (argI.type === cElementType.bool) {
+				return new cError(cErrorType.wrong_value_type);
+			}
 
-		var c = new Complex(arg0.toString()), c1;
+			if (argI.type === cElementType.cellsRange || argI.type === cElementType.cellsRange3D) {
+				let argIArr = argI.getValue(), _arg;
+				for (let j = 0; j < argIArr.length; j++) {
+					if (argIArr[j].type === cElementType.bool) {
+						return new cError(cErrorType.wrong_value_type);
+					}
 
-		if (c instanceof cError) {
-			return c;
-		}
+					_arg = argIArr[j].tocString();
 
-		for (var i = 1; i < arg.length; i++) {
-
-			var argI = arg[i];
-			if (argI instanceof cArea || argI instanceof cArea3D) {
-				var argIArr = argI.getValue(), _arg;
-				for (var j = 0; j < argIArr.length; j++) {
-					_arg = argIArr[i].tocString();
-
-					if (_arg instanceof cError) {
+					if (_arg.type === cElementType.error) {
 						return _arg;
 					}
 
 					c1 = new Complex(_arg.toString());
 
-					if (c1 instanceof cError) {
+					if (c1.type === cElementType.error) {
 						return c1;
 					}
 
@@ -6860,39 +6966,51 @@ function (window, undefined) {
 
 				}
 				continue;
-			} else if (argI instanceof cArray) {
-				argI.foreach(function (elem) {
-					var e = elem.tocString();
-					if (e instanceof cError) {
-						return e;
+			} else if (argI.type === cElementType.array) {
+				let dimensions = argI.getDimensions();
+
+				for (let row = 0; row < dimensions.row; row++) {
+					for (let col = 0; col < dimensions.col; col++) {
+						let elem = argI.getValue2(row, col);
+						if (elem.type === cElementType.bool) {
+							return new cError(cErrorType.wrong_value_type);
+						}
+
+						elem = elem.tocString();
+						if (elem.type === cElementType.error) {
+							return elem;
+						}
+
+						c1 = new Complex(elem.toString());
+						if (c1.type === cElementType.error) {
+							return c1;
+						}
+
+						c.Sum(c1);
 					}
+				}
 
-					c1 = new Complex(e.toString());
-
-					if (c1 instanceof cError) {
-						return c1;
-					}
-
-					c.Sum(c1);
-
-				});
 				continue;
 			}
 
 			argI = argI.tocString();
 
-			if (argI instanceof cError) {
+			if (argI.type === cElementType.error) {
 				return argI;
 			}
 
 			c1 = new Complex(argI.toString());
 
+			if (c1.type === cElementType.error) {
+				return c1;
+			}
+
 			c.Sum(c1);
 
 		}
 
-		var res;
-		if (c instanceof cError) {
+		let res;
+		if (c.type === cElementType.error) {
 			res = c;
 		} else {
 			res = new cString(c.toString());

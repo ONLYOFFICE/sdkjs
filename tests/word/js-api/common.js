@@ -47,6 +47,7 @@ $(function()
 	AscTest.JsApi.AutoColor = AscCommon.DocumentEditorApi.prototype.AutoColor.bind(AscTest.Editor);
 	AscTest.JsApi.RGBA = AscCommon.DocumentEditorApi.prototype.RGBA.bind(AscTest.Editor);
 	AscTest.JsApi.RGB = AscCommon.DocumentEditorApi.prototype.RGB.bind(AscTest.Editor);
+	AscTest.JsApi.FromJSON = AscCommon.DocumentEditorApi.prototype.FromJSON.bind(AscTest.Editor);
 	
 	AscTest.JsApi.CreateDocContent = function()
 	{

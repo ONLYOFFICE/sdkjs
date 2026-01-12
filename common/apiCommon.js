@@ -1522,6 +1522,9 @@ function (window, undefined) {
 	asc_ChartSettings.prototype.getDataLabelsPos = function () {
 		return this.dataLabelsPos;
 	};
+	asc_ChartSettings.prototype.getErrorBarsValueType = function () {
+		return this.errorBarsValueType;
+	};
 	asc_ChartSettings.prototype.getType = function () {
 		if (this.chartSpace) {
 			return this.chartSpace.getChartType();
@@ -1793,7 +1796,8 @@ function (window, undefined) {
 	asc_ChartSettings.prototype.setDisplayDataLabels = function (bDisplay, nDataLabelPos) {
 		if (this.chartSpace) {
 			AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-			this.chartSpace.showDataLabels(bDisplay, nDataLabelPos);
+			const selectedSeriesOnly = true;
+			this.chartSpace.showDataLabels(bDisplay, nDataLabelPos, selectedSeriesOnly);
 			this.updateChart();
 			const oLogicDocument = Asc.editor.getLogicDocument();
 			if (oLogicDocument) {
@@ -1817,13 +1821,15 @@ function (window, undefined) {
 			return;
 		}
 
-		const series = this.chartSpace.getAllSeries();
-		if (!series.length) {
+		const selectedSeriesOnly = true;
+		const selectedSeries = selectedSeriesOnly && this.chartSpace.getSelectedSeries();
+		const seriesToProcess = selectedSeries ? [selectedSeries] : this.chartSpace.getAllSeries();
+		if (!seriesToProcess.length) {
 			return;
 		}
 
 		AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-		series.forEach(function (ser) {
+		seriesToProcess.forEach(function (ser) {
 			bShowErrorBars
 				? ser.createAllErrBars(nErrorValueType)
 				: ser.removeAllErrBars();
@@ -1902,7 +1908,8 @@ function (window, undefined) {
 		}
 
 		AscCommon.History.Create_NewPoint(AscDFH.historyitem_type_ChartSpace);
-		this.chartSpace.showTrendlines(bShow, nTrendlineType, nForecastForward, nForecastBackward);
+		const selectedSeriesOnly = true;
+		this.chartSpace.showTrendlines(bShow, nTrendlineType, nForecastForward, nForecastBackward, selectedSeriesOnly);
 		this.updateChart();
 		const oLogicDocument = Asc.editor.getLogicDocument();
 		if (oLogicDocument) {
@@ -8401,6 +8408,7 @@ function (window, undefined) {
 	prot["getVertAxisLabel"] = prot.getVertAxisLabel;
 	prot["getLegendPos"] = prot.getLegendPos;
 	prot["getDataLabelsPos"] = prot.getDataLabelsPos;
+	prot["getErrorBarsValueType"] = prot.getErrorBarsValueType;
 	prot["getHorGridLines"] = prot.getHorGridLines;
 	prot["putHorGridLines"] = prot.putHorGridLines;
 	prot["getVertGridLines"] = prot.getVertGridLines;

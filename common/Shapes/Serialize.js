@@ -9162,6 +9162,64 @@ function BinaryPPTYLoader()
         //checkTextPr(rPr);
         return rPr;
     };
+    this.ReadPdfRunFontInfo = function()
+    {
+        let oPdfFontInfo = {};
+
+        let s = this.stream;
+        let _end_rec = s.cur + s.GetULong() + 4;
+
+        s.Skip2(1); // start attributes
+
+        while (true)
+        {
+            var _at = s.GetUChar();
+            if (_at == g_nodeAttributeEnd)
+                break;
+
+            switch (_at)
+            {
+                case 0:
+                {
+                    oPdfFontInfo.name = s.GetString2();
+                    break;
+                }
+                case 1:
+                {
+                    oPdfFontInfo.index = s.GetLong();
+                    break;
+                }
+                case 2:
+                {
+                    oPdfFontInfo.left = s.GetULong();
+                    break;
+                }
+                case 3:
+                {
+                    oPdfFontInfo.right = s.GetULong();
+                    break;
+                }
+                case 4:
+                {
+                    oPdfFontInfo.gids = s.GetString2();
+                    break;
+                }
+                case 5:
+                {
+                    oPdfFontInfo.lefts = s.GetString2();
+                    break;
+                }
+                case 6:
+                {
+                    oPdfFontInfo.isActual = s.GetBool();
+                    break;
+                }
+            }
+        }
+
+        s.Seek2(_end_rec);
+        return oPdfFontInfo;
+    };
 
 	this.CorrectHyperlink = function (hyper) {
 		if (hyper.action == null || hyper.action == "") {
@@ -10404,14 +10462,24 @@ function BinaryPPTYLoader()
                                 }
 
                                 var _run = null;
+
+                                // for pdf only
+                                let oPdfFontInfo;
+
                                 while (s.cur < _end)
                                 {
                                     var _rec = s.GetUChar();
 
                                     if (0 == _rec)
                                         _run = this.ReadRunProperties();
+                                    else if (111 == _rec)
+                                        oPdfFontInfo = this.ReadPdfRunFontInfo();
                                     else
                                         s.SkipRecord();
+                                }
+
+                                if (oPdfFontInfo && _run) {
+                                    _run.RFonts.SetAll((!oPdfFontInfo.isActual ? AscFonts.getEmbeddedFontPrefix() : "") + oPdfFontInfo.name, -1);
                                 }
 
                                 s.Seek2(_end);
@@ -10457,7 +10525,21 @@ function BinaryPPTYLoader()
                                     }
                                 }
 
-                                new_run.AddText(_text);
+                                if (oPdfFontInfo) {
+                                    let aPoses = oPdfFontInfo.lefts.split(";").map(function(posX) {
+                                        return posX * g_dKoef_emu_to_mm;
+                                    });
+
+                                    let aWidths = [];
+                                    for (let i = 0; i < aPoses.length - 2; i++) {
+                                        aWidths.push(aPoses[i + 1] - aPoses[i]);
+                                    }
+
+                                    new_run.AddPdfOriginText(oPdfFontInfo.gids.split(";").slice(0, -1), _text, aWidths, text_pr.GetFontSize());
+                                }
+                                else {
+                                    new_run.AddText(_text);
+                                }
 
                                 if (hyperlink !== null)
                                 {
@@ -10753,8 +10835,6 @@ function BinaryPPTYLoader()
                 return oThis.Reader.ReadColorMod();
             });
         };
-
-
         this.ReadTheme = function(reader, stream) {
             var oThis = this;
             return this.ReadPPTXElement(reader, stream, function() {
@@ -10949,6 +11029,13 @@ function BinaryPPTYLoader()
             });
         };
 
+		this.ReadHyperlink = function (reader, stream) {
+			const oThis = this;
+			return this.ReadPPTXElement(reader, stream, function () {
+				oThis.stream.GetUChar(); // skip PPTX record type (must always be 0)
+				return oThis.Reader.ReadHyperlink();
+			});
+		};
 		this.ReadRunProperties = function(stream, type) {
             var oThis = this;
             return this.ReadPPTXElement(undefined, stream, function() {

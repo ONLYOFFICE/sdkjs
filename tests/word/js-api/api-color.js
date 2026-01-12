@@ -79,4 +79,39 @@ $(function () {
 		assert.equalRgba(autoColor.GetRGBA(), {r : 0, g : 0, b : 0, a : 255}, 'AutoColor is black in RGBA');
 		assert.strictEqual(autoColor.GetHex(), '#000000', 'AutoColor is black in Hex');
 	});
+
+	QUnit.test('ToJSON, FromJSON', function(assert)
+	{
+		const autoColor = AscTest.JsApi.AutoColor();
+		const autoColorJson = autoColor.ToJSON();
+		const autoColorRestored = AscTest.JsApi.FromJSON(autoColorJson);
+		assert.strictEqual(autoColorRestored.IsAutoColor(), true, 'Restored AutoColor should be auto color');
+		assert.equalRgba(autoColorRestored.GetRGBA(), autoColor.GetRGBA(), 'Restored AutoColor should have same RGBA');
+		assert.strictEqual(autoColorRestored.GetHex(), autoColor.GetHex(), 'Restored AutoColor should have same Hex');
+
+		const themeColor = AscTest.JsApi.ThemeColor('accent4');
+		const themeColorJson = themeColor.ToJSON();
+		const themeColorRestored = AscTest.JsApi.FromJSON(themeColorJson);
+		assert.strictEqual(themeColorRestored.IsThemeColor(), true, 'Restored ThemeColor should be theme color');
+		assert.equalRgba(themeColorRestored.GetRGBA(), themeColor.GetRGBA(), 'Restored ThemeColor should have same RGBA');
+		assert.strictEqual(themeColorRestored.GetHex(), themeColor.GetHex(), 'Restored ThemeColor should have same Hex');
+
+		const hexColor = AscTest.JsApi.HexColor('#f5a355');
+		const hexColorJson = hexColor.ToJSON();
+		const hexColorRestored = AscTest.JsApi.FromJSON(hexColorJson);
+		assert.equalRgba(hexColorRestored.GetRGBA(), hexColor.GetRGBA(), 'Restored HexColor should have same RGBA');
+		assert.strictEqual(hexColorRestored.GetHex(), hexColor.GetHex(), 'Restored HexColor should have same Hex');
+
+		const rgbColor = AscTest.JsApi.RGB(156, 13, 88);
+		const rgbColorJson = rgbColor.ToJSON();
+		const rgbColorRestored = AscTest.JsApi.FromJSON(rgbColorJson);
+		assert.equalRgba(rgbColorRestored.GetRGBA(), rgbColor.GetRGBA(), 'Restored RGB should have same RGBA');
+		assert.strictEqual(rgbColorRestored.GetHex(), rgbColor.GetHex(), 'Restored RGB should have same Hex');
+
+		const rgbaColor = AscTest.JsApi.RGBA(34, 139, 34, 120);
+		const rgbaColorJson = rgbaColor.ToJSON();
+		const rgbaColorRestored = AscTest.JsApi.FromJSON(rgbaColorJson);
+		assert.equalRgba(rgbaColorRestored.GetRGBA(), rgbaColor.GetRGBA(), 'Restored RGBA should have same RGBA');
+		assert.strictEqual(rgbaColorRestored.GetHex(), rgbaColor.GetHex(), 'Restored RGBA should have same Hex');
+	});
 });

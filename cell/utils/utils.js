@@ -3292,6 +3292,12 @@
 		asc_CAdjustPrint.prototype.asc_setEndPageIndex = function (val) {
 			this.endPageIndex = val;
 		};
+		asc_CAdjustPrint.prototype.asc_getPdfContent = function () {
+			return this.pdfContent;
+		};
+		asc_CAdjustPrint.prototype.asc_setPdfContent = function (val) {
+			this.pdfContent = val;
+		};
 
 		/** @constructor */
 		function asc_CLockInfo() {
@@ -4260,6 +4266,8 @@
 		prot["asc_setStartPageIndex"] = prot.asc_setStartPageIndex;
 		prot["asc_getEndPageIndex"] = prot.asc_getEndPageIndex;
 		prot["asc_setEndPageIndex"] = prot.asc_setEndPageIndex;
+		prot["asc_getPdfContent"] = prot.asc_getPdfContent;
+		prot["asc_setPdfContent"] = prot.asc_setPdfContent;
 
 		window["AscCommonExcel"].asc_CLockInfo = asc_CLockInfo;
 

@@ -8096,7 +8096,6 @@
 
 
 		function CNvPr() {
-
 			CBaseFormatObject.call(this);
 			this.id = 0;
 			this.name = "";
@@ -8168,6 +8167,8 @@
 			if (oOther.title) {
 				this.setTitle(oOther.title);
 			}
+			oOther.hlinkClick && this.setHlinkClick(oOther.hlinkClick.createDuplicate());
+			oOther.hlinkHover && this.setHlinkHover(oOther.hlinkHover.createDuplicate());
 		};
 		CNvPr.prototype.hasSameNameAndId = function (oPr) {
 			if (!oPr) {

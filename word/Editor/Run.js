@@ -2124,6 +2124,41 @@ ParaRun.prototype.AddText = function(sString, nPos)
 	}
 	return nCharPos;
 };
+ParaRun.prototype.AddPdfOriginText = function(aGids, sString, aWidths, nFontSize, nPos)
+{
+	let nCharPos = undefined !== nPos && null !== nPos && -1 !== nPos ? nPos : this.Content.length;
+
+	if (this.IsMathRun())
+	{
+		for (let oIterator = sString.getUnicodeIterator(); oIterator.check(); oIterator.next())
+		{
+			let nCharCode = oIterator.value();
+
+			let oMathText = new CMathText();
+			oMathText.add(nCharCode);
+			this.AddToContent(nCharPos++, oMathText);
+		}
+	}
+	else
+	{
+		for (let oIterator = sString.getUnicodeIterator(); oIterator.check(); oIterator.next())
+		{
+			let nCharCode = oIterator.value();
+
+			if (9 === nCharCode) // \t
+				this.AddToContent(nCharPos++, new AscWord.CRunTab(), true);
+			else if (10 === nCharCode) // \n
+				this.AddToContent(nCharPos++, new AscWord.CRunBreak(AscWord.break_Line), true);
+			else if (13 === nCharCode) // \r
+				continue;
+			else if (AscCommon.IsSpace(nCharCode)) // space
+				this.AddToContent(nCharPos++, new AscWord.CPdfRunSpace(aGids[oIterator.position()], nCharCode, aWidths[oIterator.position()], nFontSize), true);
+			else
+				this.AddToContent(nCharPos++, new AscWord.CPdfRunText(aGids[oIterator.position()], nCharCode, aWidths[oIterator.position()], nFontSize), true);
+		}
+	}
+	return nCharPos;
+};
 /**
  * Добавляем в конец рана заданную инструкцию для сложного поля
  * @param {string} sString
@@ -7992,7 +8027,12 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
             this.AddPrChange();
 
 		if (undefined === IncFontSize)
+		{
+			if (Asc.editor.isPdfEditor())
+				checkRunPdf(this, TextPr);
+
 			this.Apply_Pr(TextPr);
+		}
 		else
 			this.IncreaseDecreaseFontSize(IncFontSize);
 
@@ -8095,7 +8135,12 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 					CRun.AddPrChange();
 
 				if (undefined === IncFontSize)
+				{
+					if (Asc.editor.isPdfEditor())
+						checkRunPdf(CRun, TextPr);
+
 					CRun.Apply_Pr(TextPr);
+				}
 				else
 					CRun.IncreaseDecreaseFontSize(IncFontSize);
 
@@ -8181,7 +8226,12 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
                 CRun.AddPrChange();
 
 			if (undefined === IncFontSize)
+			{
+				if (Asc.editor.isPdfEditor())
+					checkRunPdf(CRun, TextPr);
+
 				CRun.Apply_Pr(TextPr);
+			}
 			else
 				CRun.IncreaseDecreaseFontSize(IncFontSize);
 
@@ -8197,6 +8247,29 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 		this.OnTextPrChange();
         return Result;
     }
+
+	function checkRunPdf(run, textPr) {
+		if (!!run.Pr.Bold !== !!textPr.Bold || !!run.Pr.Italic !== !!textPr.Italic)
+		{
+			for (let i = 0; i < run.Content.length; i++)
+			{
+				let oItem = run.Content[i];
+				if (oItem.IsPdfText())
+				{
+					run.Remove_FromContent(i, 1);
+					run.Add_ToContent(i, oItem.IsSpace() ? new AscWord.CRunSpace(oItem.Value) : new AscWord.CRunText(oItem.Value));
+				}
+			}
+
+			let fontName = run.Pr.GetFontFamily();
+			let prefix = AscFonts.getEmbeddedFontPrefix();
+
+			if (fontName && fontName.startsWith(prefix)) {
+				let fontInfo = AscFonts.g_fontApplication.GetFontInfo(fontName.substr(prefix.length));
+				textPr.RFonts.SetAll(fontInfo.Name, -1);
+			}
+		}
+	}
 };
 
 ParaRun.prototype.Split_Run = function(Pos)

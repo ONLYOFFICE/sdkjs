@@ -2184,32 +2184,37 @@ function (window, undefined) {
 	}
 
 	Path.prototype.getContinuousSubpaths = function () {
-		const convertedPath = new AscFormat.Path();
-		const transform = new AscCommon.CMatrix();
-		AscFormat.ExecuteNoHistory(this.convertToBezierCurves, this, [convertedPath, transform, true]);
-		// convertedPath contains cubicBezierTo, lineTo, and moveTo commands only
+		return AscFormat.ExecuteNoHistory(
+			function () {
 
-		const subpaths = [];
-		let currentSubpath;
+				const convertedPath = new AscFormat.Path();
+				const transform = new AscCommon.CMatrix();
+				this.convertToBezierCurves(convertedPath, transform, true);
+				// convertedPath contains cubicBezierTo, lineTo, and moveTo commands only
 
-		// Since we only draw geometries that start with a "moveTo" command,
-		// the first command in the 'commands' array is guaranteed to be "moveTo"
-		const commands = getNonDuplicateCommands(convertedPath);
-		commands.forEach(function (command, index) {
-			if (command.id === AscFormat.moveTo) {
+				const subpaths = [];
+				let currentSubpath;
+
+				// Since we only draw geometries that start with a "moveTo" command,
+				// the first command in the 'commands' array is guaranteed to be "moveTo"
+				const commands = getNonDuplicateCommands(convertedPath);
+				commands.forEach(function (command, index) {
+					if (command.id === AscFormat.moveTo) {
+						if (currentSubpath) {
+							subpaths.push(currentSubpath);
+						}
+						currentSubpath = new Path();
+					}
+					currentSubpath.ArrPathCommand.push(command);
+				});
+
 				if (currentSubpath) {
 					subpaths.push(currentSubpath);
 				}
-				currentSubpath = new Path();
-			}
-			currentSubpath.ArrPathCommand.push(command);
-		});
 
-		if (currentSubpath) {
-			subpaths.push(currentSubpath);
-		}
-
-		return subpaths;
+				return subpaths;
+			}, this, []
+		);
 	};
 
 	function getClosestIntersectionWithPath(circleCenter, circleRadius, pathCommands, searchFromEnd) {

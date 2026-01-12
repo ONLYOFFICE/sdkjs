@@ -75,6 +75,7 @@
     	this.cacheManager = null;
     	this.logging = true;
         this.type = -1;
+        this.fontsGidsMaps = {};
 
     	this.Selection = {
             Page1 : 0,
@@ -140,6 +141,14 @@
     {
         if (this.nativeFile)
             this.nativeFile["setCMap"](data);
+    };
+    CFile.prototype.getGIDByUnicode = function(fontName) {
+        if (this.fontsGidsMaps[fontName]) {
+            return this.fontsGidsMaps[fontName];
+        }
+
+        this.fontsGidsMaps[fontName] = this.nativeFile["getGIDByUnicode"](fontName);
+        return this.fontsGidsMaps[fontName];
     };
 
     CFile.prototype.getPage = function(pageIndex, width, height, isNoUseCacheManager, backgroundColor)

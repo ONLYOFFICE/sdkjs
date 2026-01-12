@@ -2610,18 +2610,20 @@ function(window, undefined) {
 		const nDefaultDatalabelsPos = aPositions[0];
 		const oFirstChart = plot_area.isChartEx() ? plot_area.plotAreaRegion : plot_area.charts[0];
 		const aSeries = oFirstChart.series;
-		const oFirstSeries = aSeries[0];
-		const data_labels = oFirstChart.dLbls;
 
+		const selectedSeries = this.getSelectedSeries();
+		const targetSeries = selectedSeries || aSeries[0];
+
+		const data_labels = oFirstChart.dLbls;
 		if (data_labels) {
-			if (oFirstSeries && oFirstSeries.dLbls) {
-				ret._collectPropsFromDLbls(nDefaultDatalabelsPos, oFirstSeries.dLbls);
+			if (targetSeries && targetSeries.dLbls) {
+				ret._collectPropsFromDLbls(nDefaultDatalabelsPos, targetSeries.dLbls);
 			} else {
 				ret._collectPropsFromDLbls(nDefaultDatalabelsPos, data_labels);
 			}
 		} else {
-			if (oFirstSeries && oFirstSeries.dLbls) {
-				ret._collectPropsFromDLbls(nDefaultDatalabelsPos, oFirstSeries.dLbls);
+			if (targetSeries && targetSeries.dLbls) {
+				ret._collectPropsFromDLbls(nDefaultDatalabelsPos, targetSeries.dLbls);
 			} else {
 				ret.putShowSerName(false);
 				ret.putShowCatName(false);
@@ -2645,6 +2647,14 @@ function(window, undefined) {
 			ret.smooth = oFirstChart.isSmooth();
 			ret.showMarker = oFirstChart.isMarkerChart();
 		}
+
+		if (targetSeries && targetSeries.errBars && targetSeries.errBars.length > 0) {
+			const firstErrBar = targetSeries.errBars[0];
+			if (firstErrBar && AscFormat.isRealNumber(firstErrBar.errValType)) {
+				ret.errorBarsValueType = firstErrBar.errValType;
+			}
+		}
+
 		ret.putView3d(this.getView3d());
 		return ret;
 	};
@@ -8966,7 +8976,7 @@ function(window, undefined) {
 			this.chartObj.preCalculateData(this);
 		}
 	};
-	CChartSpace.prototype.showDataLabels = function (bDisplay, nDataLabelPos) {
+	CChartSpace.prototype.showDataLabels = function (bDisplay, nDataLabelPos, useSeriesSelection) {
 		const plotArea = this.getPlotArea();
 		if (!plotArea) {
 			return;
@@ -8985,9 +8995,14 @@ function(window, undefined) {
 			bDisplay = false;
 		}
 
+		const selectedSeries = useSeriesSelection && this.getSelectedSeries();
+		const seriesToProcess = selectedSeries ? [selectedSeries] : this.getAllSeries();
+
 		if (!bDisplay) {
-			chart.setDLbls(null);
-			chart.series.forEach(function (ser) {
+			if (!selectedSeries) {
+				chart.setDLbls(null);
+			}
+			seriesToProcess.forEach(function (ser) {
 				ser.setDLbls(null);
 			});
 			return;
@@ -9004,8 +9019,8 @@ function(window, undefined) {
 			chart.dLbls.setDLblPos(nDataLabelPos);
 		}
 
-		for (let i = 0; i < chart.series.length; i++) {
-			const seria = chart.series[i];
+		for (let i = 0; i < seriesToProcess.length; i++) {
+			const seria = seriesToProcess[i];
 
 			if (!seria.dLbls) {
 				const dLbls = createDefaultDlbls();
@@ -10321,9 +10336,10 @@ function(window, undefined) {
 			aSeries[nSer].recalculateTrendlines();
 		}
 	};
-	CChartSpace.prototype.showTrendlines = function (bShow, nTrendlineType, nForecastForward, nForecastBackward) {
-		const allSeries = this.getAllSeries();
-		allSeries.forEach(function (ser) {
+	CChartSpace.prototype.showTrendlines = function (bShow, nTrendlineType, nForecastForward, nForecastBackward, useSeriesSelection) {
+		const selectedSeries = useSeriesSelection && this.getSelectedSeries();
+		const seriesToProcess = selectedSeries ? [selectedSeries] : this.getAllSeries();
+		seriesToProcess.forEach(function (ser) {
 			ser.removeAllTrendlines();
 			if (bShow) {
 				const newTrendline = createTrendline(ser, nTrendlineType, nForecastForward, nForecastBackward);

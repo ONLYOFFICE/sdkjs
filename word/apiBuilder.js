@@ -3835,12 +3835,14 @@
 	function ApiColor(type, value)
 	{
 		const allowedTypes = ['auto', 'rgb', 'rgba', 'hex', 'theme'];
-		if (!allowedTypes.includes(type)) {
+		if (allowedTypes.indexOf(type) === -1) {
 			throwException(new Error('Type ' + type + ' is not a valid color type. Allowed types are: ' + allowedTypes.join(', ')));
 		}
 
 		this.type = type;
-		this.value = value;
+		if (type !== 'auto') {
+			this.value = value;
+		}
 	}
 
 	/**
@@ -5762,6 +5764,9 @@
 				break;
 			case "uniColor":
 				oResult = new ApiUniColor(oReader.ColorFromJSON(oParsedObj));
+				break;
+			case "color":
+				oResult = ApiColor.prototype.FromJSON(oParsedObj);
 				break;
 			case "style":
 				var oStyle = oReader.StyleFromJSON(oParsedObj);
@@ -8001,15 +8006,20 @@
 		if (typeof(sName) !== "string")
 			return null;
 		
-		var Document = private_GetLogicDocument();
+		let oManager = this.Document.GetBookmarksManager();
+		let bookmarkMarks = oManager.GetBookmarkByName(sName);
+		if (!bookmarkMarks ||oManager.IsInternalUseBookmark(sName) || oManager.IsHiddenBookmark(sName))
+			return null;
+
+		let oDocument = private_GetLogicDocument();
 		private_RefreshRangesPosition();
-		var oldSelectionInfo = Document.SaveDocumentState();
+		let oldSelectionInfo = oDocument.SaveDocumentState();
 		
 		private_TrackRangesPositions();
 
 		this.Document.GoToBookmark(sName, true);
 
-		var oRange = this.GetRangeBySelect();
+		let oRange = this.GetRangeBySelect();
 
 		this.Document.LoadDocumentState(oldSelectionInfo);
 		this.Document.UpdateSelection();
@@ -10004,21 +10014,29 @@
 	 * Adds some text to the current paragraph.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {string} [sText=""] - The text that we want to insert into the current document element.
+	 * @param {string} text - The text that we want to insert into the current document element.
 	 * @returns {ApiRun}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/AddText.js
 	 */
-	ApiParagraph.prototype.AddText = function(sText)
+	ApiParagraph.prototype.AddText = function(text)
 	{
-		var oRun = new ParaRun(this.Paragraph, false);
+		text = GetStringParameter(text, null);
+		if (!text)
+			throwException("The text parameter must be a non empty string");
 
-		if (!sText || !sText.length)
-			return new ApiRun(oRun);
+		let oRun = new ParaRun(this.Paragraph, false);
+		oRun.AddText(text);
 
-		oRun.AddText(sText);
+		// copy props from previous non empty run
+		let oPrevRun = this.GetLastRunWithText();
+		if (!oPrevRun)
+			oPrevRun = new ApiRun(this.Paragraph.GetParaEndRun());
+		
+		let oApiRun = new ApiRun(oRun);
+		oApiRun.SetTextPr(oPrevRun.GetTextPr());
 
 		private_PushElementToParagraph(this.Paragraph, oRun);
-		return new ApiRun(oRun);
+		return oApiRun;
 	};
 	/**
 	 * Adds a page break and starts the next element from the next page.
@@ -10534,23 +10552,27 @@
 	 */
 	ApiParagraph.prototype.GetLastRunWithText = function()
 	{
-		for (var curElement = this.GetElementsCount() - 1; curElement >= 0; curElement--)
+		function getLastRunOfElement(oElm)
 		{
-			var Element = this.GetElement(curElement);
-
-			if (Element instanceof ApiRun)
+			for (let i = oElm.GetElementsCount() - 1; i >= 0; i--)
 			{
-				for (var Index = 0; Index < Element.Run.GetElementsCount(); Index++)
+				let oItem = oElm.GetElement(i);
+
+				if (oItem instanceof ApiRun)
 				{
-					if (Element.Run.GetElement(Index).IsText())
+					if (oItem.GetText() !== "")
 					{
-						return Element;
+						return oItem;
 					}
+				}
+				else if (oItem.GetElement && oItem.GetElementsCount)
+				{
+					return getLastRunOfElement(oItem)
 				}
 			}
 		}
 
-		return this.GetElement(this.GetElementsCount() - 1);
+		return getLastRunOfElement(this);
 	};
 	/**
 	 * Sets the bold property to the text character.
@@ -11977,16 +11999,18 @@
 	 * Adds some text to the current run.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {string} sText - The text which will be added to the current run.
+	 * @param {string} text - The text which will be added to the current run.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/AddText.js
 	 */
-	ApiRun.prototype.AddText = function(sText)
+	ApiRun.prototype.AddText = function(text)
 	{
-		if (!sText || !sText.length)
-			return false;
+		text = GetStringParameter(text, null);
+		if (!text) {
+			throwException("The text parameter must be a non empty string");
+		}
 
-		this.Run.AddText(sText);
+		this.Run.AddText(text);
 		return true;
 	};
 	/**
@@ -13387,7 +13411,7 @@
 	{
 		var Row = this.Table.GetRow(nRow);
 
-		if (Row && nCell >= 0 && nCell <= Row.Content.length)
+		if (Row && nCell >= 0 && nCell < Row.Content.length)
 		{
 			return new ApiTableCell(Row.GetCell(nCell));
 		}
@@ -18363,8 +18387,20 @@
 	 */
 	ApiDrawing.prototype.GetContent = function()
 	{
-		if (this.Drawing && this.Drawing.textBoxContent && !this.Drawing.isForm())
+
+		if (!this.Drawing)
+			return null;
+		if (this.Drawing.isForm())
+			return null;
+
+		if(!this.Drawing.textBoxContent)
+		{
+			this.Drawing.createTextBoxContent();
+		}
+		if(this.Drawing.textBoxContent)
+		{
 			return new ApiDocumentContent(this.Drawing.textBoxContent);
+		}
 		return null;
 	};
 	/**
@@ -19257,20 +19293,7 @@
 	 */
 	ApiShape.prototype.GetDocContent = function()
 	{
-		if (!this.Shape)
-			return null;
-		if (this.Shape.isForm())
-			return null;
-
-		if(!this.Shape.textBoxContent)
-		{
-			this.Shape.createTextBoxContent();
-		}
-		if(this.Shape.textBoxContent)
-		{
-			return new ApiDocumentContent(this.Shape.textBoxContent);
-		}
-		return null;
+		return this.GetContent();
 	};
 	
 	/**
@@ -21359,16 +21382,32 @@
 		if (this.type !== 'theme')
 			return null;
 
-		const theme = editor.getCurrentTheme();
-		if (!theme || !theme.themeElements || !theme.themeElements.clrScheme)
+		const logicDocument = private_GetLogicDocument();
+		if (!logicDocument)
 			return null;
 
-		const unicolors = theme.themeElements.clrScheme.colors;
-		const unicolor = unicolors[this.value];
-		if (!unicolor || !unicolor.color || !unicolor.color.RGBA)
+		const theme = logicDocument.GetTheme();
+		const colorMap = logicDocument.GetColorMap();
+		const canResolveThemeColors = colorMap && colorMap.color_map &&
+			theme && theme.themeElements && theme.themeElements.clrScheme;
+		if (!canResolveThemeColors)
 			return null;
 
-		const rgba = unicolor.color.RGBA;
+		let rgba;
+		const colors = theme.themeElements.clrScheme.colors;
+		const colorMapArray = colorMap ? colorMap.color_map : null;
+
+		const resolveFromMap = colorMapArray && colorMapArray[this.value] != null && colors[colorMapArray[this.value]] != null;
+		if (resolveFromMap) {
+			const mappedId = colorMapArray[this.value];
+			rgba = colors[mappedId].color.RGBA;
+		} else if (colors[this.value] != null) {
+			rgba = colors[this.value].color.RGBA;
+		}
+
+		if (!rgba) {
+			rgba = { R: 0, G: 0, B: 0, A: 255 };
+		}
 
 		return (rgba.R & 0xFF) << 24 | (rgba.G & 0xFF) << 16 | (rgba.B & 0xFF) << 8 | (rgba.A & 0xFF);
 	};
@@ -21393,10 +21432,10 @@
 		} else {
 			color = new AscFormat.CRGBColor();
 			const components = this.GetRGBA();
-			color.RGBA.R = components.r;
-			color.RGBA.G = components.g;
-			color.RGBA.B = components.b;
-			color.RGBA.A = components.a;
+			color.RGBA.R = components['r'];
+			color.RGBA.G = components['g'];
+			color.RGBA.B = components['b'];
+			color.RGBA.A = components['a'];
 		}
 
 		unicolor.setColor(color);
@@ -21507,6 +21546,124 @@
 		"b": {get : function() {return this.GetRGBA()["b"];}},
 		"a": {get : function() {return this.GetRGBA()["a"];}}
 	});
+
+	/**
+	 * Converts the ApiColor object into the JSON object.
+	 *
+	 * @memberof ApiColor
+	 * @typeofeditors ["CDE"]
+	 * @since 9.3.0
+	 * @returns {string} JSON string representation of the color.
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/ToJSON.js
+	 */
+	ApiColor.prototype.ToJSON = function () {
+		const oJSON = {
+			'type': this.GetClassType(),
+			'color': {
+				'type': this.type
+			}
+		};
+
+		if (this.type === 'auto') {
+			return JSON.stringify(oJSON);
+		}
+
+		if (this.type === 'theme') {
+			oJSON['color']['value'] = this.value;
+			return JSON.stringify(oJSON);
+		}
+
+		if (this.type === 'hex') {
+			oJSON['color']['value'] = this.GetHex();
+			return JSON.stringify(oJSON);
+		}
+
+		if (this.type === 'rgb' || this.type === 'rgba') {
+			const rgba = this.GetRGBA();
+			oJSON['color']['value'] = {
+				'red': rgba['r'],
+				'green': rgba['g'],
+				'blue': rgba['b']
+			}
+			if (this.type === 'rgba') {
+				oJSON['color']['value']['alpha'] = rgba['a'];
+			}
+			return JSON.stringify(oJSON);
+		}
+
+		return null;
+	};
+
+	/**
+	 * Converts the JSON object into the ApiColor object.
+	 *
+	 * @memberof ApiColor
+	 * @typeofeditors ["CDE"]
+	 * @since 9.3.0
+	 * @param {string} jsonObject - JSON representation of the color.
+	 * @returns {ApiColor|null} - new ApiColor object if the conversion was successful, null otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/FromJSON.js
+	 */
+	ApiColor.prototype.FromJSON = function (jsonObject) {
+		if (!jsonObject || jsonObject.type !== 'color' || !jsonObject.color) {
+			return null;
+		}
+
+		const allowedTypes = ['auto', 'rgb', 'rgba', 'hex', 'theme'];
+		const colorType = jsonObject.color.type;
+		
+		if (typeof colorType !== 'string' || allowedTypes.indexOf(colorType) === -1) {
+			return null;
+		}
+
+		if (colorType === 'auto') {
+			return new ApiColor('auto');
+		}
+
+		const value = jsonObject.color.value;
+
+		if (colorType === 'theme') {
+			if (AscFormat.isRealNumber(value)) {
+				return new ApiColor('theme', value);
+			}
+		}
+
+		if (colorType === 'hex') {
+			if (typeof value === 'string') {
+				const cleanedValue = value.startsWith('#') ? value.slice(1) : value;
+				const hexNumber = parseInt(cleanedValue, 16);
+				if (AscFormat.isRealNumber(hexNumber)) {
+					return new ApiColor('hex', hexNumber);
+				}
+			}
+		}
+
+		if (colorType === 'rgb' || colorType === 'rgba') {
+			if (value && typeof value === 'object') {
+				const r = value.red;
+				const g = value.green;
+				const b = value.blue;
+
+				if (AscFormat.isRealNumber(r) && AscFormat.isRealNumber(g) && AscFormat.isRealNumber(b)) {
+
+					if (colorType === 'rgb') {
+						const rgbValue = ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF);
+						return new ApiColor('rgb', rgbValue);
+					}
+
+					if (colorType === 'rgba') {
+						const a = value.alpha;
+						if (AscFormat.isRealNumber(a)) {
+							const rgbaValue = ((r & 0xFF) << 24) | ((g & 0xFF) << 16) | ((b & 0xFF) << 8) | (a & 0xFF);
+							return new ApiColor('rgba', rgbaValue);
+						}
+					}
+				}
+			}
+		}
+
+		return null;
+	};
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -21882,31 +22039,30 @@
 	 * Adds text to the current content control. 
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {String} sText - The text which will be added to the content control.
+	 * @param {String} text - The text which will be added to the content control.
 	 * @returns {boolean} - returns false if param is invalid.
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/AddText.js
 	 */
-	ApiInlineLvlSdt.prototype.AddText = function(sText)
+	ApiInlineLvlSdt.prototype.AddText = function(text)
 	{
 		if (!this._canBeEdited())
 			return false;
 		
-		if (typeof sText === "string")
+		text = GetStringParameter(text, null);
+		if (!text)
+			throwException("The text parameter must be a non empty string");
+
+		if (this.Sdt.IsShowingPlcHdr())
 		{
-			if (this.Sdt.IsShowingPlcHdr())
-			{
-				this.Sdt.RemoveFromContent(0, this.Sdt.GetElementsCount(), false);
-				this.Sdt.SetShowingPlcHdr(false);
-			}
-
-			var newRun = editor.CreateRun();
-			newRun.AddText(sText);
-			this.AddElement(newRun, this.GetElementsCount())
-
-			return true;
+			this.Sdt.RemoveFromContent(0, this.Sdt.GetElementsCount(), false);
+			this.Sdt.SetShowingPlcHdr(false);
 		}
 
-		return false;
+		var newRun = editor.CreateRun();
+		newRun.AddText(text);
+		this.AddElement(newRun, this.GetElementsCount())
+
+		return true;
 	};
 
 	/**
@@ -22246,10 +22402,10 @@
 
 		if (color instanceof ApiColor) {
 			const rgba = color.GetRGBA();
-			r = rgba.r;
-			g = rgba.g;
-			b = rgba.b;
-			a = rgba.a;
+			r = rgba['r'];
+			g = rgba['g'];
+			b = rgba['b'];
+			a = rgba['a'];
 		} else {
 			r = GetIntParameter(arguments[0], 0);
 			g = GetIntParameter(arguments[1], 0);
@@ -22311,10 +22467,10 @@
 
 		if (color instanceof ApiColor) {
 			const rgba = color.GetRGBA();
-			r = rgba.r;
-			g = rgba.g;
-			b = rgba.b;
-			a = rgba.a;
+			r = rgba['r'];
+			g = rgba['g'];
+			b = rgba['b'];
+			a = rgba['a'];
 		} else {
 			r = GetIntParameter(arguments[0], 0);
 			g = GetIntParameter(arguments[1], 0);
@@ -23778,9 +23934,9 @@
 		if (!this._canBeEdited())
 			return false;
 		
-		let _sText = GetStringParameter(text, null);
-		if (null === _sText)
-			return false;
+		text = GetStringParameter(text, null);
+		if (!text)
+			throwException("The text parameter must be a non empty string");
 
 		let oParagraph;
 		if (this.Sdt.IsPlaceHolder())
@@ -23797,7 +23953,7 @@
 			this.GetContent().Push(oParagraph);
 		}
 
-		oParagraph.AddText(_sText);
+		oParagraph.AddText(text);
 		return true;
 	};
 
@@ -25319,47 +25475,65 @@
 	/**
 	 * Sets an image to the current picture form.
 	 * @memberof ApiPictureForm
-	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently, only internet URL or base64 encoded images are supported).
-	 * @param {EMU} nWidth - The image width in English measure units.
-	 * @param {EMU} nHeight - The image height in English measure units.
+	 * @param {string} imageSrc - The image source where the image to be inserted should be taken from (currently, only internet URL or base64 encoded images are supported).
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiPictureForm/Methods/SetImage.js
 	 */
-	ApiPictureForm.prototype.SetImage = function(sImageSrc, nWidth, nHeight)
+	ApiPictureForm.prototype.SetImage = function(imageSrc)
 	{
-		if (!AscFormat.isRealNumber(nWidth) || !AscFormat.isRealNumber(nHeight)) {
+		imageSrc = GetStringParameter(imageSrc, "");
+		if (!imageSrc)
 			return false;
+		
+		let _t = this;
+		function getImg()
+		{
+			let allDrawings = _t.Sdt.GetAllDrawingObjects();
+			for (let i = 0; i < allDrawings.length; ++i)
+			{
+				if (allDrawings[i].IsPicture())
+					return allDrawings[i].GraphicObj;
+			}
+			return null;
 		}
-
+		
 		return executeNoFormLockCheck(function(){
-			if (typeof(sImageSrc) !== "string" || sImageSrc === "")
+			let img = getImg();
+			if (!img)
 				return false;
 			
-			var oImg, paraDrawing;
-			var allDrawings = this.Sdt.GetAllDrawingObjects();
-			for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++)
+			let logicDocument = private_GetLogicDocument();
+			let sdt = this.Sdt;
+			AddEndScriptAction(function()
 			{
-				if (allDrawings[nDrawing].IsPicture())
-				{
-					oImg = allDrawings[nDrawing].GraphicObj;
-					paraDrawing = allDrawings[nDrawing];
-					break;
-				}
-			}
-	
-			if (oImg)
-			{
-				let spPr = oImg.spPr;
+				if (getImg() !== img || sdt.IsPlaceHolder())
+					return;
+				
+				let drawingProps = logicDocument.GetDrawingObjects().getDrawingPropsFromArray([img]);
+				if (!drawingProps || !drawingProps.imageProps)
+					return;
+
+				let imgProps = new Asc.asc_CImgProperty();
+				imgProps.ImageUrl = drawingProps.imageProps.ImageUrl;
+
+				let imgSize = imgProps.asc_getOriginSize(logicDocument.GetApi());
+				if (!imgSize.asc_getIsCorrect())
+					return;
+
+				let w = imgSize.asc_getImageWidth();
+				let h = imgSize.asc_getImageHeight();
+				
+				let spPr = img.spPr;
 				if (!spPr)
 				{
 					spPr = new AscFormat.CSpPr();
-					oImg.setSpPr(spPr);
-					spPr.setParent(oImg);
+					img.setSpPr(spPr);
+					spPr.setParent(img);
 				}
-				
+
 				spPr.setGeometry(AscFormat.CreateGeometry("rect"));
-				
+
 				let xfrm = spPr.xfrm;
 				if (!xfrm)
 				{
@@ -25368,30 +25542,25 @@
 					xfrm.setParent(spPr);
 				}
 				
-				if (undefined !== nWidth && undefined !== nHeight)
-				{
-					let w = private_EMU2MM(nWidth);
-					let h = private_EMU2MM(nHeight);
-					xfrm.setOffX(0);
-					xfrm.setOffY(0);
-					xfrm.setExtX(w);
-					xfrm.setExtY(h);
-				}
+				xfrm.setOffX(0);
+				xfrm.setOffY(0);
+				xfrm.setExtX(w);
+				xfrm.setExtY(h);
 				
-				oImg.setBlipFill(AscFormat.CreateBlipFillRasterImageId(sImageSrc));
-				
-				let paragraph   = this.Sdt.GetParagraph();
+				let paragraph   = sdt.GetParagraph();
 				let parentShape = paragraph && paragraph.GetParent() ? paragraph.GetParent().Is_DrawingShape(true) : null;
 				if (parentShape && parentShape.recalculate)
 					parentShape.recalculate();
 				
-				this.OnChangeValue();
-				this.Sdt.SetShowingPlcHdr(false);
-				this.Sdt.UpdatePictureFormLayout(private_EMU2MM(nWidth), private_EMU2MM(nHeight));
-				return true;
-			}
-	
-			return false;
+				sdt.UpdatePictureFormLayout(w, h);
+			});
+			
+			img.setBlipFill(AscFormat.CreateBlipFillRasterImageId(imageSrc));
+			
+			this.OnChangeValue();
+			this.Sdt.SetShowingPlcHdr(false);
+			
+			return true;
 		}, this);
 	};
 
@@ -29384,6 +29553,8 @@
 	ApiColor.prototype["GetRGB"] = ApiColor.prototype.GetRGB;
 	ApiColor.prototype["GetRGBA"] = ApiColor.prototype.GetRGBA;
 	ApiColor.prototype["GetHex"] = ApiColor.prototype.GetHex;
+	ApiColor.prototype["ToJSON"] = ApiColor.prototype.ToJSON;
+	ApiColor.prototype["FromJSON"] = ApiColor.prototype.FromJSON;
 
 	ApiBullet.prototype["GetClassType"]              = ApiBullet.prototype.GetClassType;
 	ApiBullet.prototype["ToJSON"]                    = ApiBullet.prototype.ToJSON;
@@ -30087,6 +30258,15 @@
 			return;
 		
 		api.addBuilderFont(fontName);
+	}
+	
+	function AddEndScriptAction(f)
+	{
+		let api = Asc.editor ? Asc.editor : editor;
+		if (!api)
+			return;
+		
+		api.addBuilderEndAction(f);
 	}
 
 	function private_Twips2MM(twips)
