@@ -1978,7 +1978,7 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		{
 			let imageChangeData = this.ImageChanges[changeIdx];
 			let change = imageChangeData.Class;
-			if (change.RefreshImageChange(imagesMap))
+			if (change.RefreshImageChange(imageMap))
 			{
 				AscCommon.writeHistoryItemData(imageChangeData, this.BinaryWriter);
 			}
