@@ -346,16 +346,12 @@
 	};
     
 	CChangesDrawingsObjectNoId.prototype.RefreshImageChange = function(imageMap) {
-		if (this.ReplaceImageId(imageMap)) {
-            this.Redo();
-            return true;
-        }
-        return false;
+		return this.ReplaceImageId(imageMap);
 	};
     CChangesDrawingsObjectNoId.prototype.UpdateImageMap = function(imageMap) {
         let imageId = this.GetImageId();
         if (!imageId) return;
-        imageMap[imageId] = true;
+        imageMap[imageId] = imageId;
     };
     function CChangesDrawingsObject(Class, Type, OldPr, NewPr) {
         this.Type = Type;

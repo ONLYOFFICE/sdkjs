@@ -1967,7 +1967,7 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		let imagesMap = {};
 		for (let changeIdx = 0; changeIdx < this.ImageChanges.length; ++changeIdx)
 		{
-			let change = this.ImageChanges[changeIdx].Class;
+			let change = this.ImageChanges[changeIdx].Data;
 			change.UpdateImageMap(imagesMap);
 		}
 		return imagesMap;
@@ -1977,7 +1977,7 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		for (let changeIdx = 0; changeIdx < this.ImageChanges.length; ++changeIdx)
 		{
 			let imageChangeData = this.ImageChanges[changeIdx];
-			let change = imageChangeData.Class;
+			let change = imageChangeData.Data;
 			if (change.RefreshImageChange(imageMap))
 			{
 				AscCommon.writeHistoryItemData(imageChangeData, this.BinaryWriter);
@@ -1991,7 +1991,7 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 	{
 		let binaryPos = writer.GetCurPosition();
 		AscCommon.writeHistoryItem(data.Data, data.Class, writer);
-        let binaryLen = writer.GetCurPosition() - binaryPos;
+		let binaryLen = writer.GetCurPosition() - binaryPos;
 		data.Binary.Pos = binaryPos;
 		data.Binary.Len = binaryLen;
 	}
