@@ -1276,6 +1276,8 @@
     function CChangesChartSpaceBinary(Class, Old, New, Color) {
 		CChangesBinaryDataBase.call(this, Class, Old, New, AscDFH.historyitem_ChartSpace_SetBinaryData, Color);
     }
+    CChangesChartSpaceBinary.prototype = Object.create(AscDFH.CChangesBinaryDataBase.prototype);
+    CChangesChartSpaceBinary.prototype.constructor = CChangesChartSpaceBinary;
     CChangesChartSpaceBinary.prototype.private_SetValue = function (Value) {
         if (!this.Class)
             return;
@@ -1288,6 +1290,8 @@
     function CChangesOleObjectBinary(Class, Old, New, Color) {
 		CChangesBinaryDataBase.call(this, Class, Old, New, AscDFH.historyitem_ImageShapeSetBinaryData, Color);
     }
+    CChangesOleObjectBinary.prototype = Object.create(AscDFH.CChangesBinaryDataBase.prototype);
+    CChangesOleObjectBinary.prototype.constructor = CChangesOleObjectBinary;
     CChangesOleObjectBinary.prototype.private_SetValue = function (Value) {
         if (!this.Class)
             return;

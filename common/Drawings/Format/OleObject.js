@@ -183,7 +183,7 @@ function (window, undefined) {
     };
     COleObject.prototype.setBinaryData = function(aBinaryData)
     {
-	    AscCommon.History.Add(new CChangesOleObjectBinary(this, this.m_aBinaryData, aBinaryData));
+	    AscCommon.History.Add(new AscDFH.CChangesOleObjectBinary(this, this.m_aBinaryData, aBinaryData));
         this.m_aBinaryData = aBinaryData;
     };
     COleObject.prototype.setMathObject = function(oMath)
