@@ -22212,6 +22212,9 @@ CDocument.prototype.controller_UpdateSelectionState = function()
 };
 CDocument.prototype.controller_GetSelectionState = function()
 {
+	if (!this.Content.length)
+		return [];
+	
 	var State;
 	if (true === this.Selection.Use)
 	{

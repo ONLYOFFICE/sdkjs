@@ -55,10 +55,20 @@ $(function()
 		return new AscBuilder.ApiDocumentContent(docContent);
 	};
 
+	let firstRun = true;
 	QUnit.testStart(function()
 	{
+		// We need to turn on History for ApiRange
+		if (!firstRun)
+			AscTest.Editor.onEndBuilderScript();
+		
 		AscTest.CreateLogicDocument();
 		AscCommon.History.Clear();
+		
+		AscTest.Editor.canRunBuilderScript();
 		AscTest.ClearDocument();
+		
+		firstRun = false;
 	});
+	
 });

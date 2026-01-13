@@ -178,6 +178,12 @@
 		onUpdateExternalList: function () {},
 		checkChart          : function () {}
 	};
+	editor.canRunBuilderScript = AscCommon.DocumentEditorApi.prototype.canRunBuilderScript.bind(editor);
+	editor._onEndBuilderScript = AscCommon.DocumentEditorApi.prototype._onEndBuilderScript.bind(editor);
+	editor.getLogicDocument = function()
+	{
+		return AscTest.CreateLogicDocument();
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.DrawingDocument = drawingDocument;
 	AscTest.Editor          = editor;

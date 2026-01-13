@@ -32,7 +32,7 @@
 
 $(function () {
 	QUnit.module('Test the ApiRange methods');
-
+	
 	function getFirstDocParagraph() {
 		const doc = AscTest.JsApi.GetDocument();
 		let par = doc.GetElement(0);
@@ -60,6 +60,12 @@ $(function () {
 			"TabSymbol" : "_t_",
 			"NewLineSeparator" : "_nl_",
 		}), "1_t_2_nl_3", "Check text");
+		
+		range.AddText("Before", "before");
+		range.AddText("After", "after");
+		
+		assert.strictEqual(p.GetText(), "Before1\t2\r3After\r\n", "Check paragraph text");
+		assert.strictEqual(range.GetText(), "Before1\t2\r3After", "Check range text");
 	});
 
 	QUnit.test('SetColor, GetColor', function (assert) {
