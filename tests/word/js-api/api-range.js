@@ -44,6 +44,15 @@ $(function () {
 		return par;
 	}
 	
+	QUnit.test('GetClassType', function (assert)
+	{
+		const para = getFirstDocParagraph();
+		para.AddText('Test text for range');
+		const range = para.GetRange();
+		
+		assert.strictEqual(range.GetClassType(), 'range', 'Check range class type');
+	});
+	
 	QUnit.test('GetText/AddText', function (assert)
 	{
 		let p = getFirstDocParagraph();
@@ -66,6 +75,74 @@ $(function () {
 		
 		assert.strictEqual(p.GetText(), "Before1\t2\r3After\r\n", "Check paragraph text");
 		assert.strictEqual(range.GetText(), "Before1\t2\r3After", "Check range text");
+	});
+	
+	QUnit.test('GetParagraph', function (assert)
+	{
+		const para = getFirstDocParagraph();
+		para.AddText('Test paragraph text');
+		const range = para.GetRange();
+		
+		const firstPara = range.GetParagraph(0);
+		assert.strictEqual(firstPara.private_GetImpl(), para.private_GetImpl(), 'Check para range paragraph');
+		
+		const invalidPara = range.GetParagraph(10);
+		assert.strictEqual(invalidPara, null, 'GetParagraph with invalid index should return null');
+		
+		const negativePara = range.GetParagraph(-1);
+		assert.strictEqual(negativePara, null, 'GetParagraph with negative index should return null');
+		
+		let run = para.AddText("123");
+		let runRange = run.GetRange();
+		assert.strictEqual(runRange.GetRange().GetParagraph().private_GetImpl(), para.private_GetImpl(), 'Check run range paragraph');
+	});
+	
+	QUnit.test('GetAllParagraphs', function (assert)
+	{
+		const doc = AscTest.JsApi.GetDocument();
+		doc.RemoveAllElements();
+		
+		// Add first paragraph
+		const para1 = AscTest.JsApi.CreateParagraph();
+		para1.AddText('First paragraph');
+		doc.Push(para1);
+		
+		// Add second paragraph
+		const para2 = AscTest.JsApi.CreateParagraph();
+		para2.AddText('Second paragraph');
+		doc.Push(para2);
+		
+		// Add third paragraph
+		const para3 = AscTest.JsApi.CreateParagraph();
+		para3.AddText('Third paragraph');
+		doc.Push(para3);
+		
+		// Test range for single paragraph
+		const singleRange = para1.GetRange();
+		const singleParagraphs = singleRange.GetAllParagraphs();
+		assert.ok(Array.isArray(singleParagraphs), 'GetAllParagraphs should return an array');
+		assert.strictEqual(singleParagraphs.length, 1, 'Single paragraph range should contain 1 paragraph');
+		assert.strictEqual(singleParagraphs[0].private_GetImpl(), para1.private_GetImpl(), 'Check single paragraph range');
+		
+		// Test range for entire document
+		const docRange = doc.GetRange();
+		const allParagraphs = docRange.GetAllParagraphs();
+		assert.ok(Array.isArray(allParagraphs), 'Document range should return an array');
+		assert.strictEqual(allParagraphs.length, 3, 'Document range should contain 3 paragraphs');
+		
+		// Verify each paragraph
+		assert.strictEqual(allParagraphs[0].private_GetImpl(), para1.private_GetImpl(), 'Check first paragraph in document range');
+		assert.strictEqual(allParagraphs[1].private_GetImpl(), para2.private_GetImpl(), 'Check second paragraph in document range');
+		assert.strictEqual(allParagraphs[2].private_GetImpl(), para3.private_GetImpl(), 'Check third paragraph in document range');
+		
+		// Test range spanning multiple paragraphs
+		const para2Range = para2.GetRange();
+		const para3Range = para3.GetRange();
+		const multiRange = para2Range.ExpandTo(para3Range);
+		const multiParagraphs = multiRange.GetAllParagraphs();
+		assert.strictEqual(multiParagraphs.length, 2, 'Multi-paragraph range should contain 2 paragraphs');
+		assert.strictEqual(multiParagraphs[0].private_GetImpl(), para2.private_GetImpl(), 'Check first paragraph in multi range');
+		assert.strictEqual(multiParagraphs[1].private_GetImpl(), para3.private_GetImpl(), 'Check second paragraph in multi range');
 	});
 
 	QUnit.test('SetColor, GetColor', function (assert) {

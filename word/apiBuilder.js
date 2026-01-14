@@ -1201,6 +1201,7 @@
 		this.Paragraphs 	= [];
 		this.Text 			= undefined;
 		this.oDocument		= editor.GetDocument();
+		this.logicDocument  = this.oDocument.Document;
 		this.EndPos			= null;
 		this.StartPos		= null;
 		this.TextPr 		= new CTextPr();
@@ -1485,21 +1486,21 @@
 	/**
 	 * Returns a paragraph from all the paragraphs that are in the range.
 	 * @typeofeditors ["CDE"]
-	 * @param {Number} nPos - The paragraph position in the range.
-	 * @return {ApiParagraph | null} - returns null if position is invalid.
+	 * @param {Number} [pos=0] - The paragraph position in the range.
+	 * @return {ApiParagraph | null} - returns null if there are no paragraphs in the range or if position is out of bounds.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetParagraph.js
 	 */	
-	ApiRange.prototype.GetParagraph = function(nPos)
+	ApiRange.prototype.GetParagraph = function(pos)
 	{
 		this.GetAllParagraphs();
-
-		if (nPos > this.Paragraphs.length - 1 || nPos < 0)
+		if (this.Paragraphs.length <= 0)
 			return null;
 		
-		if (this.Paragraphs[nPos])
-			return this.Paragraphs[nPos];
-		else 
+		pos = GetIntParameter(pos, 0);
+		if (pos < 0 || pos >= this.Paragraphs.length)
 			return null;
+		
+		return (this.Paragraphs[pos] ? this.Paragraphs[pos] : null);
 	};
 
 	/**
@@ -1707,30 +1708,27 @@
 	ApiRange.prototype.GetAllParagraphs = function()
 	{
 		this._updatePositions();
-		private_RefreshRangesPosition();
-
-		let oDoc			= private_GetLogicDocument();
-		let oldSelectionInfo	= oDoc.SaveDocumentState();
-
+		
+		let logicDocument = this.logicDocument;
+		let docState = logicDocument.SaveDocumentState();
+		
 		this.Select(true);
-		private_TrackRangesPositions();
+		this._trackPositions();
 
-		let SelectedContent = oDoc.GetSelectedElementsInfo({CheckAllSelection : true});
+		let SelectedContent = logicDocument.GetSelectedElementsInfo({CheckAllSelection : true});
 		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
 		{
-			oDoc.LoadDocumentState(oldSelectionInfo);
-			oDoc.UpdateSelection();
-
-			return null;
+			logicDocument.LoadDocumentState(docState);
+			logicDocument.UpdateSelection();
+			return [];
 		}
 
-		this.Paragraphs = oDoc.GetSelectedParagraphs().map(function(para) {
+		this.Paragraphs = logicDocument.GetSelectedParagraphs().map(function(para) {
 			return new ApiParagraph(para);
 		});
-
-		oDoc.LoadDocumentState(oldSelectionInfo);
-		oDoc.UpdateSelection();
-
+		
+		logicDocument.LoadDocumentState(docState);
+		logicDocument.UpdateSelection();
 		return this.Paragraphs;
 	};
 
