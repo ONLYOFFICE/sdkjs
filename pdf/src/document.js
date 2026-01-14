@@ -177,7 +177,6 @@ var CPresentation = CPresentation || function(){};
         }
 
 		this.LocalHistory   = new AscPDF.History(this);
-		AscCommon.History = this.History;
 
 		this.Spelling   = new AscWord.CDocumentSpellChecker();
         this.Viewer     = viewer;
@@ -3118,7 +3117,7 @@ var CPresentation = CPresentation || function(){};
         }
         // to history
         else {
-            oPageInfo = new AscPDF.CPageInfo();
+            oPageInfo = new AscPDF.CPageInfo(this);
             oPage.Id = oPageInfo.Id;
         }
 

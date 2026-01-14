@@ -101,14 +101,16 @@
 	// так как нет смысла запрашивать ссылки у невидимых страниц и у страниц, которые мы в данный момент не можем отрисовать
 	// text - текстовые команды. они запрашиваются всегда, если есть какая-то страница без текстовых команд
 	// страницы на экране в приоритете.
-	function CPageInfo()
+	function CPageInfo(document)
 	{
 		this.Id = null;
 		if ((AscCommon.g_oIdCounter.m_bLoad || AscCommon.History.CanAddChanges())) {
 			this.Id = AscCommon.g_oIdCounter.Get_NewId();
 			AscCommon.g_oTableId.Add(this, this.Id);
 		}
-		
+	
+		this.Document = document;
+
 		this.annotsContentChanges = new AscCommon.CContentChanges(); // список изменений(добавление/удаление элементов)
         this.fieldsContentChanges = new AscCommon.CContentChanges(); // список изменений(добавление/удаление элементов)
         this.drawingsContentChanges = new AscCommon.CContentChanges(); // список изменений(добавление/удаление элементов)
@@ -140,7 +142,7 @@
 	});
 
 	CPageInfo.prototype.RedrawDrawings = function() {
-		let oViewer = Asc.editor.getDocumentRenderer();
+		let oViewer = this.Document.Viewer;
 		let _t = this;
 
 		let nIdx = _t.GetIndex();
@@ -152,7 +154,7 @@
         oViewer.paint(setRedrawPageOnRepaint);
 	};
 	CPageInfo.prototype.RedrawForms = function() {
-		let oViewer = Asc.editor.getDocumentRenderer();
+		let oViewer = this.Document.Viewer;
 		let _t = this;
 
 		let nIdx = _t.GetIndex();
@@ -164,7 +166,7 @@
         oViewer.paint(setRedrawPageOnRepaint);
 	};
 	CPageInfo.prototype.RedrawAnnots = function(isTextMarkup) {
-		let oViewer = Asc.editor.getDocumentRenderer();
+		let oViewer = this.Document.Viewer;
 		let _t = this;
 
 		let nIdx = _t.GetIndex();
@@ -183,7 +185,7 @@
 	};
 
 	CPageInfo.prototype.GetDocument = function() {
-		return Asc.editor.getPDFDoc();
+		return this.Document;
 	};
 	CPageInfo.prototype.Clear_ContentChanges = function() {
         this.annotsContentChanges.Clear();
@@ -312,13 +314,13 @@
 		return false == [AscCommon.c_oAscLockTypes.kLockTypeNone, AscCommon.c_oAscLockTypes.kLockTypeMine].includes(this.editPageLock.Lock.Get_Type());
 	};
 	CPageInfo.prototype.GetIndex = function() {
-		let oViewer = Asc.editor.getDocumentRenderer();
+		let oViewer = this.Document.Viewer;
 		let oDocPages = oViewer.pagesInfo;
 
 		return oDocPages.pages.indexOf(this);
     };
 	CPageInfo.prototype.GetOriginIndex = function() {
-		let oFile = Asc.editor.getDocumentRenderer().file;
+		let oFile = this.Document.Viewer.file;
 
 		let nCurPageIdx = this.GetIndex();
 		if (nCurPageIdx == -1) {
@@ -419,8 +421,9 @@
 	};
 
 	
-	function CDocumentPagesInfo()
+	function CDocumentPagesInfo(viewer)
 	{
+		this.Viewer = viewer;
 		this.pages = [];
 
 		// все страницы ДО this.countCurrentPage должны иметь текстовые команды
@@ -429,9 +432,11 @@
 	CDocumentPagesInfo.prototype.setCount = function(count)
 	{
 		this.pages = new Array(count);
+		let oDoc = this.Viewer.getPDFDoc();
+
 		for (var i = 0; i < count; i++)
 		{
-			this.pages[i] = new CPageInfo();
+			this.pages[i] = new CPageInfo(oDoc);
 		}
 		this.countTextPages = 0;
 	};
@@ -500,7 +505,7 @@
 
 		this.startVisiblePage = -1;
 		this.endVisiblePage = -1;
-		this.pagesInfo = new CDocumentPagesInfo();
+		this.pagesInfo = new CDocumentPagesInfo(this);
 
 		this.statistics = {
 			paragraph : 0,
@@ -532,14 +537,9 @@
 		this.isDocumentContentReady = false;
 
 		this.doc = new AscPDF.CPDFDoc(this);
-		AscCommon.History.Document = this.doc;
 
-		this.drawingDocument		= Asc.editor.WordControl.m_oDrawingDocument;
-		this.DrawingObjects			= new AscPDF.CGraphicObjects(this.doc, this.drawingDocument, this.Api);
-		this.doc.DrawingObjects		= this.DrawingObjects;
-		this.doc.DrawingDocument	= this.drawingDocument;
-		Asc.editor.WordControl.m_oLogicDocument = this.doc;
-		Asc.editor.WordControl.m_oDrawingDocument.m_oLogicDocument = this.doc;
+		this.DrawingObjects = new AscPDF.CGraphicObjects(this.doc, Asc.editor.WordControl.m_oDrawingDocument, this.Api);
+		this.doc.DrawingObjects = this.DrawingObjects;
 		this.touchManager = null;
 
 		this.isXP = ((AscCommon.AscBrowser.userAgent.indexOf("windowsxp") > -1) || (AscCommon.AscBrowser.userAgent.indexOf("chrome/49") > -1)) ? true : false;
@@ -999,6 +999,10 @@
 
 		this.checkLoadCMap = function()
 		{
+			if (this.isTemp) {
+				return;
+			}
+			
 			if (false === this.isCMapLoading)
 			{
 				if (!this.file.isNeedCMap())
@@ -1194,8 +1198,21 @@
 		{
 			this.pagesInfo.setCount(this.file.pages.length);
 			let oDoc = this.getPDFDoc();
-			oDoc.GetDrawingDocument().m_lPagesCount = this.file.pages.length;
 
+			if (true !== this.isTemp) {
+				this.drawingDocument		= Asc.editor.WordControl.m_oDrawingDocument;
+				this.doc.DrawingDocument	= this.drawingDocument;
+				Asc.editor.WordControl.m_oLogicDocument = this.doc;
+				Asc.editor.WordControl.m_oDrawingDocument.m_oLogicDocument = this.doc;
+				this.DrawingObjects.drawingDocument.AutoShapesTrack.m_oOverlay = this.overlay;
+				this.DrawingObjects.drawingDocument.AutoShapesTrack.m_oContext = this.overlay.m_oContext;
+
+				this.drawingDocument.m_lPagesCount = this.file.pages.length;
+
+				AscCommon.History.Document = this.doc;
+				AscCommon.History = this.doc.History;
+			}
+			
 			for (let i = 0; i < this.file.pages.length; i++) {
 				this.DrawingObjects.mergeDrawings(i);
 			}
@@ -1248,7 +1265,7 @@
 
 			this.startVisiblePage = -1;
 			this.endVisiblePage = -1;
-			this.pagesInfo = new CDocumentPagesInfo();
+			this.pagesInfo = new CDocumentPagesInfo(this);
 			this.drawingPages = [];
 
 			this.statistics = {
@@ -1845,6 +1862,59 @@
 
 		this.onMouseDown = function(e)
 		{
+			if (e.ctrlKey) {
+				AscCommon.ShowPdfFileDialog(function (error, files) {
+					if (Asc.c_oAscError.ID.No !== error) {
+						t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
+						return;
+					}
+
+					function openAndPaste(data) {
+						AscCommon.History.StartNoHistoryMode();
+
+						let oViewer = new AscCommon.CViewer(null, Asc.editor);
+						oViewer.isTemp = true;
+						oViewer.moduleState = oThis.moduleState;
+						oViewer.open(data);
+
+						let oDoc = oViewer.getPDFDoc();
+						oViewer.thumbnails = {
+							selectedPages: []
+						};
+						
+						oViewer.thumbnails.isInFocus = true;
+						
+						let nPagesCount = oDoc.GetPagesCount();
+						for (var i = 0; i < nPagesCount; i++) {
+							oViewer.thumbnails.selectedPages.push(i);
+						}
+
+						let oCopyProcessor = new AscCommon.CopyProcessor(Asc.editor);
+						oCopyProcessor.oDocument = oDoc;
+						let sBase64 = oCopyProcessor.Start();
+
+						AscCommon.History.EndNoHistoryMode();
+
+						let oldState = oThis.thumbnails.isInFocus;
+						oThis.thumbnails.isInFocus = true;
+						Asc.editor.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Internal, sBase64, null, null, null, function() {
+							oThis.thumbnails.isInFocus = oldState;
+						});
+					}
+
+					let reader = new FileReader();
+					reader.onload = function (e) {
+						openAndPaste(e.target.result);
+					};
+					reader.onerror = function () {
+						t.sendEvent("asc_onError", Asc.c_oAscError.ID.Unknown, Asc.c_oAscError.Level.NoCritical);
+					};
+
+					reader.readAsArrayBuffer(files[0]);
+				}, false);
+				return;
+			}
+
 			let oDoc = oThis.getPDFDoc();
 			let oDrDoc = oDoc.GetDrawingDocument();
 
@@ -2370,6 +2440,11 @@
 
 		this.paint = function(onRepaintCallback, onAfterPaintCallback)
 		{
+			// isTemp == true when paste other pdf to current
+			if (this.isTemp) {
+				return;
+			}
+			
 			this.scheduleRepaint(onRepaintCallback, onAfterPaintCallback);
 		};
 		
@@ -4179,6 +4254,10 @@
 	};
 	CHtmlPage.prototype.createComponents = function()
 	{
+		if (!this.parent) {
+			return;
+		}
+
 		if (AscCommon.g_inputContext)
 			AscCommon.g_inputContext = null;
 
@@ -4219,9 +4298,7 @@
 		this.overlay = new AscCommon.COverlay();
 		this.overlay.m_oControl = { HtmlElement : this.canvasOverlay };
 		this.overlay.m_bIsShow = true;
-		this.DrawingObjects.drawingDocument.AutoShapesTrack.m_oOverlay = this.overlay;
 		this.overlay.Clear();
-		this.DrawingObjects.drawingDocument.AutoShapesTrack.m_oContext = this.overlay.m_oContext;
 		this.overlay.m_oHtmlPage = this.Api.WordControl;
 		this.Api.WordControl.m_bIsRuler = false;
 		this.updateSkin();

@@ -1410,7 +1410,7 @@ CopyProcessor.prototype =
 	_writePDFSelectedContent: function(elementsContent, oDomTarget){
 
 		let oThis = this;
-		let oDoc = Asc.editor.getPDFDoc();
+		let oDoc = this.oDocument;
 		
 		let copyDocContent = function(){
 			let docContent = elementsContent.DocContent;
