@@ -123,7 +123,6 @@ var CPresentation = CPresentation || function(){};
 
         this.maxApIdx               = -1;
         this.CollaborativeEditing   = AscCommon.CollaborativeEditing;
-        this.CollaborativeEditing.SetLogicDocument(this);
         this.NeedUpdateTargetForCollaboration = true;
         this.LastUpdateTargetTime = 0;
 
@@ -3125,6 +3124,8 @@ var CPresentation = CPresentation || function(){};
             oViewer.pagesInfo.setCount(1);
         else
             oViewer.pagesInfo.pages.splice(nPos, 0, oPageInfo);
+
+		oPageInfo.Document = this;
 
         // can be uninitialized on Apply_Changes
         if (oViewer.thumbnails) {

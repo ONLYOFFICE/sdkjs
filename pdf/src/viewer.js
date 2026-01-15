@@ -1211,6 +1211,8 @@
 
 				AscCommon.History.Document = this.doc;
 				AscCommon.History = this.doc.History;
+
+				oDoc.CollaborativeEditing.SetLogicDocument(oDoc);
 			}
 			
 			for (let i = 0; i < this.file.pages.length; i++) {
