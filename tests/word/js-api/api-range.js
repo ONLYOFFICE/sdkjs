@@ -56,6 +56,7 @@ $(function () {
 	QUnit.test('GetText/AddText', function (assert)
 	{
 		let p = getFirstDocParagraph();
+		let runBefore = p.AddText("QQQ");
 		let run = p.AddText("1");
 		run.AddTabStop();
 		run.AddText("2");
@@ -73,7 +74,14 @@ $(function () {
 		range.AddText("Before", "before");
 		range.AddText("After", "after");
 		
-		assert.strictEqual(p.GetText(), "Before1\t2\r3After\r\n", "Check paragraph text");
+		assert.strictEqual(p.GetText(), "QQQBefore1\t2\r3After\r\n", "Check paragraph text");
+		assert.strictEqual(range.GetText(), "Before1\t2\r3After", "Check range text");
+		
+		runBefore = AscTest.JsApi.CreateRun();
+		p.AddElement(runBefore, 0);
+		runBefore.AddText("123");
+		
+		assert.strictEqual(p.GetText(), "123QQQBefore1\t2\r3After\r\n", "Check paragraph text");
 		assert.strictEqual(range.GetText(), "Before1\t2\r3After", "Check range text");
 	});
 	

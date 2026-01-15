@@ -1407,6 +1407,8 @@
 		if (!logicDocument || !logicDocument.IsDocumentEditor())
 			return;
 		
+		this._untrackPositions();
+		
 		if (this.StartPos)
 			logicDocument.CollaborativeEditing.Add_DocumentPosition(this.StartPos);
 		
@@ -1683,13 +1685,14 @@
 			TabSymbol          : GetStringParameter(options["TabSymbol"], "\t")
 		};
 		
-		private_RefreshRangesPosition();
+		this._updatePositions();
 		
 		var Document = private_GetLogicDocument();
 		var oldSelectionInfo = Document.SaveDocumentState();
 		
 		this.Select(false);
-		private_TrackRangesPositions();
+		
+		this._trackPositions();
 		
 		var Text = this.Controller.GetSelectedText(false, _options);
 		Document.LoadDocumentState(oldSelectionInfo);
