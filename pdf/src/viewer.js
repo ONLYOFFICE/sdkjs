@@ -1867,7 +1867,7 @@
 			if (e.ctrlKey) {
 				AscCommon.ShowPdfFileDialog(function (error, files) {
 					if (Asc.c_oAscError.ID.No !== error) {
-						t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
+						Asc.editor.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
 						return;
 					}
 
@@ -1898,9 +1898,14 @@
 						AscCommon.History.EndNoHistoryMode();
 
 						let oldState = oThis.thumbnails.isInFocus;
+						let oldSelectedPages = oThis.thumbnails.selectedPages;
+
 						oThis.thumbnails.isInFocus = true;
+						oThis.thumbnails.selectedPages = [nPagesCount - 1];
+
 						Asc.editor.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Internal, sBase64, null, null, null, function() {
 							oThis.thumbnails.isInFocus = oldState;
+							oThis.thumbnails.selectedPages = oldSelectedPages;
 						});
 					}
 
