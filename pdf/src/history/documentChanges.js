@@ -1284,6 +1284,10 @@ CChangesPDFDocumentEndMergePages.prototype.Redo = function()
         binary: oDoc.unitedBinary
     });
 
+	let standardFonts = oFile.nativeFile["getInteractiveFormsStandardFonts"]();
+	let embeddedFonts = oFile.nativeFile["getInteractiveFormsEmbeddedFonts"]();
+	AscFonts.initEmbeddedFonts(standardFonts.concat(embeddedFonts), true);
+
     oDoc.Viewer.checkLoadCMap();
 };
 CChangesPDFDocumentEndMergePages.prototype.WriteToBinary = function(Writer)
