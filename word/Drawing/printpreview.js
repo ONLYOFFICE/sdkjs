@@ -36,23 +36,20 @@
 
 	var AscCommon = window['AscCommon'];
 
-	function CPrintPreview(api, parentElementId)
-	{
+	function CPrintPreviewBase(api, parentElementId) {
 		this.api = api;
 		this.parentElementId = parentElementId;
 		this.page = null;
-
-		let parentElem = document.getElementById(this.parentElementId);
-		this.canvas = document.createElement("canvas");
-		parentElem.appendChild(this.canvas);
-
 		this.pageImage = null;
-
-		this.resize();
+		this.canvas = document.createElement("canvas");
+		this.init();
 	}
-
-	CPrintPreview.prototype.resize = function(parentElemSrc)
-	{
+	CPrintPreviewBase.prototype.init = function () {
+		let parentElem = document.getElementById(this.parentElementId);
+		parentElem.appendChild(this.canvas);
+		this.resize();
+	};
+	CPrintPreviewBase.prototype.resize = function (parentElemSrc) {
 		let parentElem = parentElemSrc ? parentElemSrc : document.getElementById(this.parentElementId);
 
 		this.canvas.style.width  = parentElem.offsetWidth + "px";
@@ -60,9 +57,7 @@
 
 		AscCommon.calculateCanvasSize(this.canvas);
 	};
-
-	CPrintPreview.prototype.checkGraphics = function(width, height, w_mm, h_mm)
-	{
+	CPrintPreviewBase.prototype.checkGraphics = function(width, height, w_mm, h_mm) {
 		let aspectMM = w_mm / h_mm;
 		let aspect = width / height;
 
@@ -101,10 +96,7 @@
 
 		return g;
 	};
-
-	CPrintPreview.prototype.update = function(paperSize)
-	{
-		// clear canvas
+	CPrintPreviewBase.prototype.update = function(paperSize) {
 		let width_canvas = this.canvas.width;
 		let height_canvas = this.canvas.height;
 
@@ -123,133 +115,7 @@
 
 		let ctx = this.canvas.getContext("2d");
 
-		let strokeRect = null;
-
-		switch (this.api.editorId)
-		{
-			case AscCommon.c_oEditorId.Word:
-			{
-				let isPdf = this.api.isPdfEditor();
-				if (!isPdf)
-				{
-					if (this.api.WordControl.m_oDrawingDocument.IsFreezePage(this.page))
-						return;
-
-					let page = this.api.WordControl.m_oDrawingDocument.m_arrPages[this.page];
-					let w_mm = page.width_mm;
-					let h_mm = page.height_mm;
-
-					let g = this.checkGraphics(width, height, w_mm, h_mm);
-
-					let oldViewMode = this.api.isViewMode;
-					let oldShowMarks = this.api.ShowParaMarks;
-
-					this.api.isViewMode = true;
-					this.api.ShowParaMarks = false;
-
-					this.api.WordControl.m_oLogicDocument.SetupBeforeNativePrint({
-						"drawPlaceHolders" : false,
-						"drawFormHighlight" : false,
-						"isPrint" : true
-					}, g);
-					this.api.WordControl.m_oLogicDocument.DrawPage(this.page, g);
-					this.api.WordControl.m_oLogicDocument.RestoreAfterNativePrint();
-
-					this.api.isViewMode = oldViewMode;
-					this.api.ShowParaMarks = oldShowMarks;
-				}
-				else
-				{
-					let viewer = this.api.WordControl.m_oDrawingDocument.m_oDocumentRenderer;
-					let file = viewer.file;
-					
-					if (!file)
-						return;
-
-					let page = file.pages[this.page];
-
-					let w_mm = page.W * 25.4 / page.Dpi;
-					let h_mm = page.H * 25.4 / page.Dpi;
-
-					let aspectMM = w_mm / h_mm;
-					let aspect = width / height;
-					let w, h;
-
-					if (aspectMM > aspect)
-					{
-						w = width;
-						h = (width * h_mm / w_mm) >> 0;
-					}
-					else
-					{
-						w = (height * w_mm / h_mm) >> 0;
-						h = height;
-					}
-
-					this.pageImage = viewer.GetPrintPage(this.page, w, h, this.printContentType);
-				}
-
-				break;
-			}
-			case AscCommon.c_oEditorId.Visio:
-			case AscCommon.c_oEditorId.Presentation:
-			{
-				let w_mm = this.api.WordControl.m_oLogicDocument.GetWidthMM();
-				let h_mm = this.api.WordControl.m_oLogicDocument.GetHeightMM();
-
-				if (undefined !== paperSize)
-				{
-					let paperW = paperSize[0];
-					let paperH = paperSize[1];
-
-					if ((paperW > paperH && w_mm < h_mm) ||
-						(paperW < paperH && w_mm > h_mm))
-					{
-						let tmp = paperW;
-						paperW = paperH;
-						paperH = tmp;
-					}
-
-					let aspectMM = paperW / paperH;
-					let aspect = width / height;
-
-					let w, h;
-
-					if (aspectMM > aspect)
-					{
-						w = width;
-						h = (width * paperH / paperW) >> 0;
-					}
-					else
-					{
-						w = (height * paperW / paperH) >> 0;
-						h = height;
-					}
-
-					let x = (width_canvas - w) >> 1;
-					let y = (height_canvas - h) >> 1;
-
-					strokeRect = {
-						x : x,
-						y : y,
-						w : w,
-						h : h
-					};
-
-					ctx.fillStyle = "#FFFFFF";
-					ctx.fillRect(x, y, w, h);
-					ctx.beginPath();
-
-					width = w;
-					height = h;
-				}
-
-				let g = this.checkGraphics(width, height, w_mm, h_mm);
-				this.api.WordControl.m_oLogicDocument.DrawPage(this.page, g);
-
-				break;
-			}
-		}
+		let strokeRect = this.drawPrintPreview(width, height, paperSize);
 
 		if (this.pageImage)
 		{
@@ -279,9 +145,7 @@
 			}
 		}
 	};
-
-	CPrintPreview.prototype.close = function()
-	{
+	CPrintPreviewBase.prototype.close = function() {
 		if (this.canvas)
 		{
 			let parentElem = document.getElementById(this.parentElementId);
@@ -289,7 +153,144 @@
 			this.canvas = null;
 		}
 	};
+	CPrintPreviewBase.prototype.drawPrintPreview = function(width, height, paperSize) {};
 
-	AscCommon.CPrintPreview = CPrintPreview;
+	function CDocumentPrintPreview(api, parentElementId) {
+		CPrintPreviewBase.call(this, api, parentElementId);
+	}
+	AscFormat.InitClassWithoutType(CDocumentPrintPreview, CPrintPreviewBase);
+	CDocumentPrintPreview.prototype.drawPrintPreview = function (width, height, paperSize) {
+		if (this.api.WordControl.m_oDrawingDocument.IsFreezePage(this.page))
+			return;
 
+		let page = this.api.WordControl.m_oDrawingDocument.m_arrPages[this.page];
+		let w_mm = page.width_mm;
+		let h_mm = page.height_mm;
+
+		let g = this.checkGraphics(width, height, w_mm, h_mm);
+
+		let oldViewMode = this.api.isViewMode;
+		let oldShowMarks = this.api.ShowParaMarks;
+
+		this.api.isViewMode = true;
+		this.api.ShowParaMarks = false;
+
+		this.api.WordControl.m_oLogicDocument.SetupBeforeNativePrint({
+			"drawPlaceHolders" : false,
+			"drawFormHighlight" : false,
+			"isPrint" : true
+		}, g);
+		this.api.WordControl.m_oLogicDocument.DrawPage(this.page, g);
+		this.api.WordControl.m_oLogicDocument.RestoreAfterNativePrint();
+
+		this.api.isViewMode = oldViewMode;
+		this.api.ShowParaMarks = oldShowMarks;
+	};
+
+	function CPdfPrintPreview(api, parentElementId) {
+		CPrintPreviewBase.call(this, api, parentElementId);
+	}
+	AscFormat.InitClassWithoutType(CPdfPrintPreview, CPrintPreviewBase);
+	CPdfPrintPreview.prototype.drawPrintPreview = function (width, height, paperSize) {
+		let viewer = this.api.WordControl.m_oDrawingDocument.m_oDocumentRenderer;
+		let file = viewer.file;
+
+		if (!file)
+			return;
+
+		let page = file.pages[this.page];
+
+		let w_mm = page.W * 25.4 / page.Dpi;
+		let h_mm = page.H * 25.4 / page.Dpi;
+
+		let aspectMM = w_mm / h_mm;
+		let aspect = width / height;
+		let w, h;
+
+		if (aspectMM > aspect)
+		{
+			w = width;
+			h = (width * h_mm / w_mm) >> 0;
+		}
+		else
+		{
+			w = (height * w_mm / h_mm) >> 0;
+			h = height;
+		}
+
+		this.pageImage = viewer.GetPrintPage(this.page, w, h, this.printContentType);
+	};
+	
+	function CPresentationPrintPreview(api, parentElementId) {
+		CPrintPreviewBase.call(this, api, parentElementId);
+	}
+	AscFormat.InitClassWithoutType(CPresentationPrintPreview, CPrintPreviewBase);
+	CPresentationPrintPreview.prototype.drawPrintPreview = function (width, height, paperSize) {
+		let w_mm = this.api.WordControl.m_oLogicDocument.GetWidthMM();
+		let h_mm = this.api.WordControl.m_oLogicDocument.GetHeightMM();
+		let strokeRect;
+		if (undefined !== paperSize)
+		{
+			let ctx = this.canvas.getContext("2d");
+			let paperW = paperSize[0];
+			let paperH = paperSize[1];
+
+			if ((paperW > paperH && w_mm < h_mm) ||
+				(paperW < paperH && w_mm > h_mm))
+			{
+				let tmp = paperW;
+				paperW = paperH;
+				paperH = tmp;
+			}
+
+			let aspectMM = paperW / paperH;
+			let aspect = width / height;
+
+			let w, h;
+
+			if (aspectMM > aspect)
+			{
+				w = width;
+				h = (width * paperH / paperW) >> 0;
+			}
+			else
+			{
+				w = (height * paperW / paperH) >> 0;
+				h = height;
+			}
+
+			let width_canvas = this.canvas.width;
+			let height_canvas = this.canvas.height;
+			let x = (width_canvas - w) >> 1;
+			let y = (height_canvas - h) >> 1;
+
+			strokeRect = {
+				x : x,
+				y : y,
+				w : w,
+				h : h
+			};
+
+			ctx.fillStyle = "#FFFFFF";
+			ctx.fillRect(x, y, w, h);
+			ctx.beginPath();
+
+			width = w;
+			height = h;
+		}
+
+		let g = this.checkGraphics(width, height, w_mm, h_mm);
+		this.drawPage(this.page, g);
+		return strokeRect;
+	};
+	CPresentationPrintPreview.prototype.drawPage = function (index, graphics, options) {
+		// const m = new AscCommon.CMatrix();
+		// m.Scale(0.2,0.2);
+		// graphics.SetBaseTransform(m);
+		this.api.WordControl.m_oLogicDocument.DrawPage(index, graphics);
+	};
+
+	AscCommon.CDocumentPrintPreview = CDocumentPrintPreview;
+	AscCommon.CPdfPrintPreview = CPdfPrintPreview;
+	AscCommon.CPresentationPrintPreview = CPresentationPrintPreview;
 })(window);

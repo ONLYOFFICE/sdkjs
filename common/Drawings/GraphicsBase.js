@@ -93,6 +93,8 @@
 		this.IsDrawSmart = false;
 		this.IsPrintMode = false;
 		this.IsPrintPreview = false;
+		this.IsDrawSlideBackground = true;
+		// this.
 
 		if (true === isUseGrState)
 		{

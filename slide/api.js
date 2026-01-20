@@ -5062,6 +5062,11 @@ background-repeat: no-repeat;\
 		this.WordControl.m_nZoomValue = 100;
 		this.WordControl.zoom_Fire();
 	};
+	asc_docs_api.prototype.zoomn        = function(n)
+	{
+		this.WordControl.m_nZoomValue = 100;
+		this.WordControl.zoom_Fire();
+	};
 	asc_docs_api.prototype.zoom           = function(percent)
 	{
 		this.WordControl.m_nZoomValue = percent;
@@ -9211,7 +9216,7 @@ background-repeat: no-repeat;\
 	{
 		if (this.printPreview)
 			return;
-		this.printPreview = new AscCommon.CPrintPreview(this, containerId);
+		this.printPreview = new AscCommon.CPresentationPrintPreview(this, containerId);
 	};
 	asc_docs_api.prototype.asc_drawPrintPreview = function(index, paperSize)
 	{

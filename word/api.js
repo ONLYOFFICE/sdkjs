@@ -14474,7 +14474,7 @@ background-repeat: no-repeat;\
 	{
 		if (this.printPreview)
 			return;
-		this.printPreview = new AscCommon.CPrintPreview(this, containerId);
+		this.printPreview = this.isPdfEditor() ? new AscCommon.CPdfPrintPreview(this, containerId) : new AscCommon.CDocumentPrintPreview(this, containerId);
 	};
 	asc_docs_api.prototype.asc_drawPrintPreview = function(index)
 	{

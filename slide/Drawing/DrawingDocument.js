@@ -2939,7 +2939,7 @@ function CDrawingDocument()
 		return ret;
 	};
 
-	this.ToRendererPart = function(noBase64, isSelection)
+	this.ToRendererPart = function(noBase64, printerOptions)
 	{
 		var watermark = this.m_oWordControl.m_oApi.watermarkDraw;
 		let oPresentation = this.m_oWordControl.m_oLogicDocument;

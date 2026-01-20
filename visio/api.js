@@ -1005,7 +1005,7 @@
 	{
 		if (this.printPreview)
 			return;
-		this.printPreview = new AscCommon.CPrintPreview(this, containerId);
+		this.printPreview = new AscCommon.CPresentationPrintPreview(this, containerId);
 	};
 	VisioEditorApi.prototype.asc_drawPrintPreview = function(index, paperSize)
 	{
