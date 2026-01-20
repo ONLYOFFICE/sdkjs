@@ -820,15 +820,16 @@ function (window, undefined) {
 
 	function fTest(pMat1, pMat2) {
 
-		var getMatrixValues = function (matrix) {
-			var mfFirst = 1;
-			var mfFirstSqr = 1;
-			var mfRest = 0;
-			var mfRestSqr = 0;
-			var mnCount = 0;
-			var bFirst = false;
-			for (var i = 0; i < matrix.length; i++) {
-				for (var j = 0; j < matrix[i].length; j++) {
+		const getMatrixValues = function (matrix) {
+			let mfFirst = 1,
+				mfFirstSqr = 1,
+				mfRest = 0,
+				mfRestSqr = 0,
+				mnCount = 0,
+				bFirst = false;
+
+			for (let i = 0; i < matrix.length; i++) {
+				for (let j = 0; j < matrix[i].length; j++) {
 					if (cElementType.number !== matrix[i][j].type) {
 						continue;
 					}
@@ -847,26 +848,26 @@ function (window, undefined) {
 			return {mfFirst: mfFirst, mfRest: mfRest, mfRestSqr: mfRestSqr, mnCount: mnCount, mfFirstSqr: mfFirstSqr};
 		};
 
-		var matVals1 = getMatrixValues(pMat1);
-		var fSum1 = matVals1.mfFirst + matVals1.mfRest;
-		var fSumSqr1 = matVals1.mfFirstSqr + matVals1.mfRestSqr;
-		var fCount1 = matVals1.mnCount;
+		let matVals1 = getMatrixValues(pMat1);
+		let fSum1 = matVals1.mfFirst + matVals1.mfRest;
+		let fSumSqr1 = matVals1.mfFirstSqr + matVals1.mfRestSqr;
+		let fCount1 = matVals1.mnCount;
 
-		var matVals2 = getMatrixValues(pMat2);
-		var fSum2 = matVals2.mfFirst + matVals2.mfRest;
-		var fSumSqr2 = matVals2.mfFirstSqr + matVals2.mfRestSqr;
-		var fCount2 = matVals2.mnCount;
+		let matVals2 = getMatrixValues(pMat2);
+		let fSum2 = matVals2.mfFirst + matVals2.mfRest;
+		let fSumSqr2 = matVals2.mfFirstSqr + matVals2.mfRestSqr;
+		let fCount2 = matVals2.mnCount;
 
 		if (fCount1 < 2.0 || fCount2 < 2.0) {
 			return new cError(cErrorType.division_by_zero);
 		}
-		var fS1 = (fSumSqr1 - fSum1 * fSum1 / fCount1) / (fCount1 - 1.0);
-		var fS2 = (fSumSqr2 - fSum2 * fSum2 / fCount2) / (fCount2 - 1.0);
+		let fS1 = (fSumSqr1 - fSum1 * fSum1 / fCount1) / (fCount1 - 1.0);
+		let fS2 = (fSumSqr2 - fSum2 * fSum2 / fCount2) / (fCount2 - 1.0);
 		if (fS1 === 0.0 || fS2 === 0.0) {
 			return new cError(cErrorType.division_by_zero);
 		}
 
-		var fF, fF1, fF2;
+		let fF, fF1, fF2;
 		if (fS1 > fS2) {
 			fF = fS1 / fS2;
 			fF1 = fCount1 - 1.0;
@@ -877,8 +878,8 @@ function (window, undefined) {
 			fF2 = fCount1 - 1.0;
 		}
 
-		var fFcdf = getFDist(fF, fF1, fF2);
-		var res = 2.0 * Math.min(fFcdf, 1.0 - fFcdf);
+		let fFcdf = getFDist(fF, fF1, fF2);
+		let res = 2.0 * Math.min(fFcdf, 1.0 - fFcdf);
 
 		return null !== res && !isNaN(res) ? new cNumber(res) : new cError(cErrorType.wrong_value_type);
 	}
@@ -6777,19 +6778,31 @@ function (window, undefined) {
 	cFTEST.prototype.argumentsMax = 2;
 	cFTEST.prototype.arrayIndexes = {0: 1, 1: 1};
 	cFTEST.prototype.argumentsType = [argType.array, argType.array];
+	/**
+	 * An F-test returns the two-tailed probability that the variances in array1 and array2 are not significantly different
+	 * 
+	 * @private
+	 * @param {array} array1 - The first array or range of data.
+	 * @param {array} array2 - The second array or range of data.
+	 * @return {number} Returns the result of an F-test.
+	 */
 	cFTEST.prototype.Calculate = function (arg) {
+		
+		if (arg[0].type === cElementType.empty || arg[1].type === cElementType.empty) {
+			return new cError(cErrorType.wrong_value_type);
+		}
 
-		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, cElementType.array]);
-		var argClone = oArguments.args;
+		const oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, cElementType.array]);
+		let argClone = oArguments.args;
 
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		var calcFTest = function (argArray) {
-			var arg0 = argArray[0];
-			var arg1 = argArray[1];
+		const calcFTest = function (argArray) {
+			let arg0 = argArray[0];
+			let arg1 = argArray[1];
 
 			return fTest(arg0, arg1);
 		};
@@ -9000,7 +9013,7 @@ function (window, undefined) {
 	cNORMDIST.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.logical];
 	cNORMDIST.prototype.Calculate = function (arg) {
 
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2], arg3 = arg[3];
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2], arg3 = arg[3];
 
 		function normdist(x, mue, sigma, kum) {
 			if (sigma <= 0) {
@@ -9015,27 +9028,27 @@ function (window, undefined) {
 
 		}
 
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
-		} else if (arg0 instanceof cArray) {
+		} else if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElement(0);
 		}
 
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
 			arg1 = arg1.cross(arguments[1]);
-		} else if (arg1 instanceof cArray) {
+		} else if (arg1.type === cElementType.array) {
 			arg1 = arg1.getElement(0);
 		}
 
-		if (arg2 instanceof cArea || arg2 instanceof cArea3D) {
+		if (arg2.type === cElementType.cellsRange || arg2.type === cElementType.cellsRange3D) {
 			arg2 = arg2.cross(arguments[1]);
-		} else if (arg2 instanceof cArray) {
+		} else if (arg2.type === cElementType.array) {
 			arg2 = arg2.getElement(0);
 		}
 
-		if (arg3 instanceof cArea || arg3 instanceof cArea3D) {
+		if (arg3.type === cElementType.cellsRange || arg3.type === cElementType.cellsRange3D) {
 			arg3 = arg3.cross(arguments[1]);
-		} else if (arg3 instanceof cArray) {
+		} else if (arg3.type === cElementType.array) {
 			arg3 = arg3.getElement(0);
 		}
 
@@ -9044,17 +9057,19 @@ function (window, undefined) {
 		arg2 = arg2.tocNumber();
 		arg3 = arg3.tocBool();
 
-		if (arg0 instanceof cError) {
+		if (arg0.type === cElementType.error) {
 			return arg0;
 		}
-		if (arg1 instanceof cError) {
+		if (arg1.type === cElementType.error) {
 			return arg1;
 		}
-		if (arg2 instanceof cError) {
+		if (arg2.type === cElementType.error) {
 			return arg2;
 		}
-		if (arg3 instanceof cError) {
+		if (arg3.type === cElementType.error) {
 			return arg3;
+		} else if (arg3.type === cElementType.string) {
+			return new cError(cErrorType.wrong_value_type);
 		}
 
 

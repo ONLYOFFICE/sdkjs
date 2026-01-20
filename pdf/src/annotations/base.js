@@ -1322,6 +1322,9 @@
             return undefined;
         }
     };
+    CAnnotationBase.prototype.IsFromOO = function() {
+        return this._apIdx == undefined;
+    };
     CAnnotationBase.prototype.AddToRedraw = function() {
         let oViewer = editor.getDocumentRenderer();
         let nPage   = this.GetPage();
@@ -1578,13 +1581,10 @@
             if (memory.isForSplit || memory.isCopyPaste) {
                 if (this.IsStamp()) {
                     if (this.GetRenderStructure()) {
-                        oMeta["isOO"] = true;
                         oMeta["InRect"] = this.GetInRect();
                     }
                 }
-                if (this.GetOriginPage() == undefined) {
-                    oMeta["isOO"] = true;
-
+                else if (this.IsFromOO()) {
                     if (this.IsRedact()) {
                         let sRedactId = this.GetRedactId();
                         if (sRedactId) {

@@ -220,15 +220,6 @@
 	function ApiSlideShowTransition(transition) {
 		this.Transition = transition;
 	}
-	/**
-	 * Class representing a hyperlink for presentation editor.
-	 * @constructor
-	 */
-	function ApiHyperlink(link, tooltip) {
-		this.link = link || "";
-		this.tooltip = tooltip || "";
-	}
-	ApiHyperlink.prototype.constructor = ApiHyperlink;
 
     /**
      * Twentieths of a point (equivalent to 1/1440th of an inch).
@@ -1246,7 +1237,12 @@
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateHyperlink.js
 	 */
 	Api.prototype.CreateHyperlink = function (link, tooltip) {
-		const apiHyperlink = new ApiHyperlink(link, tooltip);
+		const paraHyperlink   = new AscCommonWord.ParaHyperlink();
+		const apiHyperlink = new AscBuilder.ApiHyperlink(paraHyperlink);
+
+		apiHyperlink.SetLink(link);
+		apiHyperlink.SetScreenTipText(tooltip);
+
 		return apiHyperlink;
 	};
 
@@ -4663,6 +4659,12 @@
 		'effectWipeRight': { tag: 'p:wipe', attrNames: ['dir'], attrValues: ['r'] },
 		'effectWipeUp':    { tag: 'p:wipe', attrNames: ['dir'], attrValues: ['u'] },
 
+		// Default 'p159:morph' effect attribute is: option='byObject'
+		// Attribute must be specified explicitly - <p159:morph/> without 'option' attribute is forbidden
+		'effectMorphByObject': { tag: 'p159:morph', attrNames: ['option'], attrValues: ['byObject'] },
+		'effectMorphByWord':   { tag: 'p159:morph', attrNames: ['option'], attrValues: ['byWord'] },
+		'effectMorphByChar':   { tag: 'p159:morph', attrNames: ['option'], attrValues: ['byChar'] },
+
 		'effectNone': {}
 
 		// effectCrawlFromDown
@@ -5491,13 +5493,14 @@
 
 	/**
 	 * Sets a hyperlink to the current drawing object (shape or image).
+	 * Pass null to remove the hyperlink.
 	 *
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
 	 *
-	 * @param {ApiHyperlink} hyperlink - The hyperlink object to be set to the drawing.
+	 * @param {ApiHyperlink | null} hyperlink - The hyperlink object to be set to the drawing, or null to remove the hyperlink.
 	 *
-	 * @returns {boolean} - Returns true if the hyperlink was set successfully.
+	 * @returns {boolean} - Returns true if the hyperlink was set or removed successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetHyperlink.js
 	 */
 	ApiDrawing.prototype.SetHyperlink = function (hyperlink) {
@@ -5513,14 +5516,68 @@
 		const controller = this.Drawing.getDrawingObjectsController();
 		const nonVisualProperties = controller.hyperlinkCollectNonVisualProperties(this.Drawing);
 
+		if (hyperlink === null) {
+			nonVisualProperties.forEach(function (oNvPr) {
+				oNvPr.setHlinkClick(null);
+			});
+			return true;
+		}
+
+		let link = null;
+		let tooltip = null;
+		if (hyperlink && hyperlink.ParaHyperlink) {
+			link = hyperlink.ParaHyperlink.GetValue();
+			tooltip = hyperlink.ParaHyperlink.GetToolTip();
+		}
+
 		nonVisualProperties.forEach(function (oNvPr) {
 			const oHyperlink = new AscFormat.CT_Hyperlink();
-			oHyperlink.id = hyperlink.link;
-			oHyperlink.tooltip = hyperlink.tooltip;
+			oHyperlink.id = link;
+			oHyperlink.tooltip = tooltip;
 			oNvPr.setHlinkClick(oHyperlink);
 		});
 
 		return true;
+	};
+
+	/**
+	 * Returns the hyperlink from the current drawing object (shape or image).
+	 *
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 *
+	 * @returns {ApiHyperlink | null} - Returns the hyperlink object or null if no hyperlink is set.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetHyperlink.js
+	 */
+	ApiDrawing.prototype.GetHyperlink = function () {
+		const classType = this.GetClassType();
+		if (classType !== 'shape' && classType !== 'image') {
+			return null;
+		}
+
+		if (!this.Drawing) {
+			return null;
+		}
+
+		const controller = this.Drawing.getDrawingObjectsController();
+		const nonVisualProperties = controller.hyperlinkCollectNonVisualProperties(this.Drawing);
+
+		if (nonVisualProperties.length === 0) {
+			return null;
+		}
+
+		const oNvPr = nonVisualProperties[0];
+		if (!oNvPr || !oNvPr.hlinkClick) {
+			return null;
+		}
+
+		const paraHyperlink = new AscCommonWord.ParaHyperlink();
+		const apiHyperlink = new AscBuilder.ApiHyperlink(paraHyperlink);
+
+		apiHyperlink.SetLink(oNvPr.hlinkClick.id);
+		apiHyperlink.SetScreenTipText(oNvPr.hlinkClick.tooltip);
+
+		return apiHyperlink;
 	};
 
     //------------------------------------------------------------------------------------------------------------------
@@ -6471,23 +6528,6 @@
         this.Cell.Set_Pr(oPr);
     };
 
-	//------------------------------------------------------------------------------------------------------------------
-	//
-	// ApiHyperlink
-	//
-	//------------------------------------------------------------------------------------------------------------------
-
-	/**
-	 * Returns the type of the ApiHyperlink class.
-	 *
-	 * @typeofeditors ["CPE"]
-	 * @returns {"hyperlink"}
-	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetClassType.js
-	 */
-	ApiHyperlink.prototype.GetClassType = function () {
-		return "hyperlink";
-	};
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Export
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -6721,6 +6761,7 @@
     ApiDrawing.prototype["SetPosX"]                       = ApiDrawing.prototype.SetPosX;
     ApiDrawing.prototype["SetPosY"]                       = ApiDrawing.prototype.SetPosY;
     ApiDrawing.prototype["SetHyperlink"]                  = ApiDrawing.prototype.SetHyperlink;
+    ApiDrawing.prototype["GetHyperlink"]                  = ApiDrawing.prototype.GetHyperlink;
   
     ApiDrawing.prototype["ReplacePlaceholder"]            = ApiDrawing.prototype.ReplacePlaceholder;
     ApiDrawing.prototype["GetInternalId"]                 = ApiDrawing.prototype.GetInternalId;
@@ -6790,8 +6831,6 @@
     ApiTableCell.prototype["SetCellBorderTop"]            = ApiTableCell.prototype.SetCellBorderTop;
     ApiTableCell.prototype["SetVerticalAlign"]            = ApiTableCell.prototype.SetVerticalAlign;
     ApiTableCell.prototype["SetTextDirection"]            = ApiTableCell.prototype.SetTextDirection;
-
-	ApiHyperlink.prototype["GetClassType"]                = ApiHyperlink.prototype.GetClassType;
 
     Api.prototype.private_CreateApiSlide = function(oSlide){
         return new ApiSlide(oSlide);

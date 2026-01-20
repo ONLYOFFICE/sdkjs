@@ -64,7 +64,6 @@
 		this.Content[0].LogicDocument = pdfDocument;
 		
 		this.ParentPDF 			= parent;
-		this.PdfDoc    			= pdfDocument;
 		this.isFormatContent	= !!isFormatContent;
 		
 		this.transform = new AscCommon.CMatrix();
@@ -76,7 +75,7 @@
 	CTextBoxContent.prototype.constructor = CTextBoxContent;
 	
 	CTextBoxContent.prototype.GetLogicDocument = function() {
-		return this.PdfDoc;
+		return this.ParentPDF && this.ParentPDF.GetDocument();
 	};
 	CTextBoxContent.prototype.SetAlign = function(alignType) {
 		let _alignType = getInternalAlignByPdfType(alignType);

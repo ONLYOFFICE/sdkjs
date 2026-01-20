@@ -1781,7 +1781,7 @@ function (window, undefined) {
 		// Step 1: Find pivot row. Selecting leaving variable (feasibility condition). Basic variable with most negative value.
 		for (let i = 1; i <= nLastRowId; i++) {
 			bHasUnrestrictedVar = !!(oUnrestrictedVars && oUnrestrictedVars[aVarIndexByRow[i]]);
-			const nValue = aMatrix[i][nRhsColumnId];
+			const nValue = bHasUnrestrictedVar ? -aMatrix[i][nRhsColumnId] : aMatrix[i][nRhsColumnId];
 			if (nValue < nRhsValue) {
 				nRhsValue = nValue;
 				nLeavingRowIndex = i;
@@ -2152,8 +2152,9 @@ function (window, undefined) {
 			const sCellKey = oVariableCell.ws.getName() + '_' + oVariableCell.getName();
 			const bConstraintsHasVarCell = aSimplexConstraints.some(function (oConstraint) {
 				const oRefCell = oConstraint.getCell();
+				const nOperator = oConstraint.getOperator();
 				const sRefCellKey = oRefCell.ws.getName() + '_' + oRefCell.getName();
-				return sCellKey === sRefCellKey;
+				return sCellKey === sRefCellKey && nOperator === c_oAscOperator['>='];
 			});
 			if (!bConstraintsHasVarCell) {
 				const nVarIndex = oVarIndexByCellName[oVariableCell.getName()];
@@ -2360,7 +2361,8 @@ function (window, undefined) {
 				fillObjectiveFuncRow(nValue, nIndex, nVarIndex);
 			}, oObjectiveFunc)
 		} else { // For one variable - calculates the objective function with a constant variable.
-			nObjectiveResult = oModel.calculateFormula(nCoeff, oVariables);
+			const DEFAULT_VALUE = 1;
+			nObjectiveResult = oModel.calculateFormula(DEFAULT_VALUE, oVariables);
 			oVariables.setValue("0");
 			let nVarIndex = aVariablesIndexes[FIRST_COLUMN_INDEX];
 			fillObjectiveFuncRow(nObjectiveResult, FIRST_COLUMN_INDEX, nVarIndex);

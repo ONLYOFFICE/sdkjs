@@ -9626,6 +9626,8 @@ $(function () {
 		ws2.getRange2("A1").setValue("0.5");
 		ws2.getRange2("A2").setValue("1.5");
 		ws2.getRange2("A3").setValue("Text");
+		ws2.getRange2("A4").setValue("0");
+		ws2.getRange2("A5").setValue("10");
 		ws2.getRange2("B1").setValue("-1");
 		ws2.getRange2("C1").setValue("1");
 		// DefNames.
@@ -9635,7 +9637,7 @@ $(function () {
 		ws.getRange2("A203").setValue("10.5"); // TestName2
 		ws2.getRange2("A11").setValue("-0.5"); // TestName3D
 		ws.getRange2("A208").setValue("0.8"); // TestNameArea2
-		ws.getRange2("B208").setValue("0.8"); // TestNameArea2
+		ws.getRange2("B208").setValue("0.8s"); // TestNameArea2
 		ws2.getRange2("A18").setValue("0.8"); // TestNameArea3D2
 		ws2.getRange2("B18").setValue("0.8"); // TestNameArea3D2
 
@@ -9733,7 +9735,28 @@ $(function () {
 		oParser = new parserFormula('GCD(A100,A101,A102,A103,A104)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: GCD(A100,A101,A102,A103,A104) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Positive case: Reference link. References to cells with valid numbers (6, 12, 1, 2, 6). 5 of 255 arguments used.');
-
+		// Case #23: Area3D. 3D multi-cell range. 2 of 255 arguments used.
+		oParser = new parserFormula('GCD(Sheet2!A4:A5,12)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: GCD(Sheet2!A4:A5,12) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 2, 'Test: Negative case: Area3D. 3D multi-cell range. 2 of 255 arguments used.');
+		// Case #24: Empty, Number. Empty reference and Number. 2 of 255 arguments used.
+		oParser = new parserFormula('GCD(A105,12)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: GCD(A105,12) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 12, 'Test: Negative case: Empty, Number. Empty reference and Number. 2 of 255 arguments used.');
+		// Case #25: Area, Number. Multi-cell range for first argument. 2 of 255 arguments used.
+		oParser = new parserFormula('GCD(A100:A101,12)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: GCD(A100:A101,12) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 12, 'Test: Negative case: Area, Number. Multi-cell range for first argument. 2 of 255 arguments used.');
+		// Case #26: Number, Area. Multi-cell range for second argument. 2 of 255 arguments used.
+		oParser = new parserFormula('GCD(12,A100:A101)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: GCD(12,A100:A101) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 12, 'Test: Negative case: Area. Multi-cell range for second argument. 2 of 255 arguments used.');
+		// Case #28: Name. Named range with valid arguments. 2 of 255 arguments used.
+		oParser = new parserFormula('GCD(TestNameArea3D2,12)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: GCD(TestNameArea3D2,12) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 12, 'Test: Negative case: Name. Named range with valid arguments. 2 of 255 arguments used.');
+		
+		
 		// Negative cases:
 		// Case #1: Number. Negative number returns #NUM!. 2 of 255 arguments used.
 		oParser = new parserFormula('GCD(-6,12)', 'A2', ws);
@@ -9742,7 +9765,7 @@ $(function () {
 		// Case #2: Number. Number ? 2^53 returns #NUM!. 2 of 255 arguments used.
 		oParser = new parserFormula('GCD(2^53,12)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: GCD(2^53,12) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 4, 'Test: Negative case: Number. Number ? 2^53 returns #NUM!. 2 of 255 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Test: Negative case: Number. Number ? 2^53 returns #NUM!. 2 of 255 arguments used.');
 		// Case #3: String. Non-numeric string returns #VALUE!. 2 of 255 arguments used.
 		oParser = new parserFormula('GCD("abc",12)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: GCD("abc",12) is parsed.');
@@ -9755,26 +9778,10 @@ $(function () {
 		oParser = new parserFormula('GCD(NA(),12)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: GCD(NA(),12) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Error. Propagates #N/A error. 2 of 255 arguments used.');
-		// Case #6: Empty. Empty reference returns #VALUE!. 2 of 255 arguments used.
-		oParser = new parserFormula('GCD(A105,12)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: GCD(A105,12) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 12, 'Test: Negative case: Empty. Empty reference returns #VALUE!. 2 of 255 arguments used.');
-		// Case #7: Area. Multi-cell range returns #NUM!. 2 of 255 arguments used.
-		oParser = new parserFormula('GCD(A100:A101,12)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: GCD(A100:A101,12) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 12, 'Test: Negative case: Area. Multi-cell range returns #NUM!. 2 of 255 arguments used.');
-		// Case #8: Area. Multi-cell range for second argument returns #NUM!. 2 of 255 arguments used.
-		oParser = new parserFormula('GCD(12,A100:A101)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: GCD(12,A100:A101) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 12, 'Test: Negative case: Area. Multi-cell range for second argument returns #NUM!. 2 of 255 arguments used.');
-		// Case #9: Ref3D. 3D reference to text (abc) returns #VALUE!. 2 of 255 arguments used.
+		// Case #6: Ref3D. 3D reference to text (abc) returns #VALUE!. 2 of 255 arguments used.
 		oParser = new parserFormula('GCD(Sheet2!A3,12)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: GCD(Sheet2!A3,12) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Ref3D. 3D reference to text (abc) returns #VALUE!. 2 of 255 arguments used.');
-		// Case #10: Name. Named range with text (invalid) returns #VALUE!. 2 of 255 arguments used.
-		oParser = new parserFormula('GCD(TestNameArea2,12)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: GCD(TestNameArea2,12) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 12, 'Test: Negative case: Name. Named range with text (invalid) returns #VALUE!. 2 of 255 arguments used.');
 		// Case #11: Table. Table column with text (error) returns #VALUE!. 2 of 255 arguments used.
 		oParser = new parserFormula('GCD(Table1[Column2],12)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: GCD(Table1[Column2],12) is parsed.');
@@ -9783,18 +9790,14 @@ $(function () {
 		oParser = new parserFormula('GCD(SQRT(-1),12)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: GCD(SQRT(-1),12) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Formula. Formula resulting in #NUM! error. 2 of 255 arguments used.');
-		// Case #13: Array. Array with boolean returns #NUM!. 2 of 255 arguments used.
+		// Case #13: Array. Array with boolean returns #VALUE!. 2 of 255 arguments used.
 		oParser = new parserFormula('GCD({FALSE},12)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: GCD({FALSE},12) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array. Array with boolean returns #NUM!. 2 of 255 arguments used.');
-		// Case #14: Area3D. 3D multi-cell range returns #NUM!. 2 of 255 arguments used.
-		oParser = new parserFormula('GCD(Sheet2!A4:A5,12)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: GCD(Sheet2!A4:A5,12) is parsed.');
-		//!! assert.strictEqual(oParser.calculate().getValue(), 12, 'Test: Negative case: Area3D. 3D multi-cell range returns #NUM!. 2 of 255 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array. Array with boolean returns #VALUE!. 2 of 255 arguments used.');
 		// Case #15: Name3D. 3D named range with text (invalid) returns #VALUE!. 2 of 255 arguments used.
-		oParser = new parserFormula('GCD(TestNameArea3D2,12)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: GCD(TestNameArea3D2,12) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 12, 'Test: Negative case: Name3D. 3D named range with text (invalid) returns #VALUE!. 2 of 255 arguments used.');
+		oParser = new parserFormula('GCD(TestNameArea2,12)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: GCD(TestNameArea2,12) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Test: Negative case: Name3D. 3D named range with text (invalid) returns #VALUE!. 2 of 255 arguments used.');
 		// Case #16: Number. Negative number in first argument returns #NUM!. 2 of 255 arguments used.
 		oParser = new parserFormula('GCD(-12,18)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: GCD(-12,18) is parsed.');
@@ -9802,7 +9805,7 @@ $(function () {
 		// Case #17: Number. Number = 2^53 returns #NUM!. 2 of 255 arguments used.
 		oParser = new parserFormula('GCD(9007199254740992,12)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: GCD(9007199254740992,12) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 6, 'Test: Negative case: Number. Number = 2^53 returns #NUM!. 2 of 255 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Test: Negative case: Number. Number = 2^53 returns #NUM!. 2 of 255 arguments used.');
 		// Case #18: String. String convertible to 0 returns #NUM!. 2 of 255 arguments used.
 		oParser = new parserFormula('GCD("0",12)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: GCD("0",12) is parsed.');
@@ -9810,33 +9813,34 @@ $(function () {
 		// Case #19: Boolean. Boolean TRUE (1) is valid, but testing for clarity. 2 of 255 arguments used.
 		oParser = new parserFormula('GCD(TRUE,12)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: GCD(TRUE,12) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean TRUE (1) is valid, but testing for clarity. 2 of 255 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean. Boolean TRUE (1) is valid, but testing for clarity. 2 of 255 arguments used.');
 		// Case #20: Number. Number > 2^53 returns #NUM!. 2 of 255 arguments used.
 		oParser = new parserFormula('GCD(2^53+1,12)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: GCD(2^53+1,12) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 4, 'Test: Negative case: Number. Number > 2^53 returns #NUM!. 2 of 255 arguments used.');
-
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Test: Negative case: Number. Number > 2^53 returns #NUM!. 2 of 255 arguments used.');
+		// Case #21: Array. Array with values. 2 of 255 arguments used.
+		oParser = new parserFormula('GCD({1,"1",FALSE},12)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: GCD({1,"1",FALSE},12) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Array. Array with values. 2 of 255 arguments used. 2 of 255 arguments used.');
+		
 		// Bounded cases:
+		const MAX_USED_VALUE = Math.pow(2,53);
 		// Case #1: Number. Minimum positive integer. 1 of 255 arguments used.
-		oParser = new parserFormula('GCD(1)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: GCD(1) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Bounded case: Number. Minimum positive integer. 1 of 255 arguments used.');
+		oParser = new parserFormula('GCD(1/10000000000000)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: GCD(1/10000000000000) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Bounded case: Number. Minimum positive integer. 1 of 255 arguments used.');
 		// Case #2: Number. Maximum integer < 2^53. 1 of 255 arguments used.
-		oParser = new parserFormula('GCD(9007199254740991)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: GCD(9007199254740991) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 9007200000000000, 'Test: Bounded case: Number. Maximum integer < 2^53. 1 of 255 arguments used.');
+		oParser = new parserFormula('GCD('+ (MAX_USED_VALUE - 1) +')', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: GCD(9007199254740990) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), MAX_USED_VALUE - 1, 'Test: Bounded case: Number. Maximum integer < 2^53. 1 of 255 arguments used.');
 		// Case #3: Number. Maximum integer < 2^53 with another number. 2 of 255 arguments used.
-		oParser = new parserFormula('GCD(2,9007199254740991)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Test: GCD(2,9007199254740991) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 2, 'Test: Bounded case: Number. Maximum integer < 2^53 with another number. 2 of 255 arguments used.');
-
-		// TODO Case #14: Area3D. 3D multi-cell range returns #NUM!. 2 of 255 arguments used. - critical problem in while loop
-		// Need to fix: ms result diff in some cases
-		// Case #13: Array. Array with boolean returns #NUM!. 2 of 255 arguments used.
-		// Case #17: Number. Number = 2^53 returns #NUM!. 2 of 255 arguments used. - calc diff
-		// Case #19: Boolean. Boolean TRUE (1) is valid, but testing for clarity. 2 of 255 arguments used. - calc diff
-		// Case #2: Number. Maximum integer < 2^53. 1 of 255 arguments used.
-		// Case #3: Number. Maximum integer < 2^53 with another number. 2 of 255 arguments used.
+		oParser = new parserFormula('GCD(2,2^53-1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: GCD(2,2^53-1) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Bounded case: Number. Maximum integer < 2^53 with another number. 2 of 255 arguments used.');
+		// Case #4: Number. More than maximum integer > 2^53 with another number. 2 of 255 arguments used.
+		oParser = new parserFormula('GCD(2,2^53+1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: GCD(2,2^53+1) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Test: Bounded case: Number. More than maximum integer > 2^53 with another number. 2 of 255 arguments used.');
 
 
 		testArrayFormula2(assert, "GCD", 1, 8, null, true);

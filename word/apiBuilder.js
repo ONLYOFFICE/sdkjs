@@ -1622,7 +1622,7 @@
 	{
 		sLink = GetStringParameter(sLink, "");
 		sScreenTipText = GetStringParameter(sScreenTipText, "");
-		sBookmarkName = GetStringParameter(sBookmarkName, "");
+		sBookmarkName = GetStringParameter(sBookmarkName, null);
 
 		if ((!sLink && !sBookmarkName) || (sLink && sBookmarkName)) {
 			return null;
@@ -3368,7 +3368,7 @@
 	};
 	/**
 	 * Sets the hyperlink display text.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {string} sDisplay - The text to display the hyperlink.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/SetDisplayedText.js
@@ -3427,18 +3427,11 @@
 	 */
 	ApiHyperlink.prototype.GetLinkedText = function()
 	{
-		var sText = null;
-
-		if (this.ParaHyperlink.Content.length !== 0)
-		{
-			sText = this.ParaHyperlink.GetValue();
-		}
-
-		return sText;
+		return this.ParaHyperlink.GetValue();
 	};
 	/**
 	 * Returns the hyperlink display text.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @returns {string} 
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetDisplayedText.js
 	 */
@@ -3461,14 +3454,7 @@
 	 */
 	ApiHyperlink.prototype.GetScreenTipText = function()
 	{
-		var sText = null;
-
-		if (this.ParaHyperlink.Content.length !== 0)
-		{
-			sText = this.ParaHyperlink.GetToolTip();
-		}
-
-		return sText;
+		return this.ParaHyperlink.GetToolTip();
 	};
 	/**
 	 * Returns the hyperlink element using the position specified.
@@ -3499,7 +3485,7 @@
 	};
 	/**
 	 * Sets the default hyperlink style.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/SetDefaultStyle.js
 	 */
@@ -10498,7 +10484,7 @@
 	{
 		sLink = GetStringParameter(sLink, "");
 		sScreenTipText = GetStringParameter(sScreenTipText, "");
-		sBookmarkName = GetStringParameter(sBookmarkName, "");
+		sBookmarkName = GetStringParameter(sBookmarkName, null);
 
 		if ((!sLink && !sBookmarkName) || (sLink && sBookmarkName)) {
 			return null;
@@ -12181,7 +12167,7 @@
 	{
 		sLink = GetStringParameter(sLink, "");
 		sScreenTipText = GetStringParameter(sScreenTipText, "");
-		sBookmarkName = GetStringParameter(sBookmarkName, "");
+		sBookmarkName = GetStringParameter(sBookmarkName, null);
 
 		if ((!sLink && !sBookmarkName) || (sLink && sBookmarkName)) {
 			return null;

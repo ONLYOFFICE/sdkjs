@@ -1693,7 +1693,39 @@ $(function () {
 			assert.strictEqual(nResult.toFixed(), '80000', _desc + 'Objective cell: ' + nResult.toFixed());
 		},'Case #1: Checking result after found solution. Result: ');
 
-		// Case #2: Finding quantity of products for total profit.
+		// Case #2: Finding coefficient for prize. One variable cells, but value of is negative value -80000
+		oRange.fillData(testData);
+		// Filling Solver Parameters
+		oSolverParams = api.asc_GetSolverParams();
+		assert.ok(oSolverParams, 'Case #2: solverParams is created. Open Solver params dialogue window');
+		oSolverParams.asc_resetAll(); // Reset all previous field data
+		oSolverParams.asc_setObjectiveFunction('Sheet1!$B$6');
+		assert.strictEqual(oSolverParams.asc_getObjectiveFunction(), 'Sheet1!$B$6', 'Case #2: Checking fill "Set Objective" field. Result: ' + oSolverParams.asc_getObjectiveFunction());
+		oSolverParams.asc_setOptimizeResultTo(c_oAscOptimizeTo.valueOf);
+		assert.strictEqual(oSolverParams.asc_getOptimizeResultTo(), c_oAscOptimizeTo.valueOf, 'Case #2: Checking fill "Optimize to" field. Result: Value of (' + oSolverParams.asc_getOptimizeResultTo() + ')');
+		oSolverParams.asc_setValueOf('-80000');
+		assert.strictEqual(oSolverParams.asc_getValueOf(), '-80000', 'Case #2: Checking fill "Value of" field. Result: ' + oSolverParams.asc_getValueOf());
+		oSolverParams.asc_setChangingCells('Sheet1!$C$1');
+		assert.strictEqual(oSolverParams.asc_getChangingCells(), 'Sheet1!$C$1', 'Case #2: Checking fill "By changing Variable" cells field. Result: ' + oSolverParams.asc_getChangingCells());
+		assert.strictEqual(oSolverParams.asc_getConstraints().size, 0, 'Case #2: Checking count elements of "Constraints" field. Result: ' + oSolverParams.asc_getConstraints().size);
+		oSolverParams.asc_setVariablesNonNegative(false);
+		assert.strictEqual(oSolverParams.asc_getVariablesNonNegative(), false, 'Case #2: Checking fill "Variables Non-Negative" field. Result: ' + oSolverParams.asc_getVariablesNonNegative());
+		assert.strictEqual(oSolverParams.asc_getSolvingMethod(), c_oAscSolvingMethod.simplexLP, 'Case #2: Checking fill "Select a solving method" field. Result: Simplex LP(' + oSolverParams.asc_getSolvingMethod() + ')');
+		// Finding solution
+		api.asc_StartSolver(oSolverParams);
+		api.asc_CloseSolver(true);
+		checkUndoRedo(function (_desc) {
+			let nVarCellVal = +ws.getCell2('C1').getValue();
+			assert.strictEqual(nVarCellVal, 28, _desc + 'Variable cell: ' + nVarCellVal);
+			let nResult = +ws.getCell2('B6').getValue();
+			assert.strictEqual(nResult, 0, _desc + 'Objective cell: ' + nResult);
+		}, function (_desc) {
+			let nVarCellVal = +ws.getCell2('C1').getValue();
+			assert.strictEqual(nVarCellVal.toFixed(5), '-0.47619',  _desc + 'Variable cell: ' + nVarCellVal.toFixed(5));
+			let nResult = +ws.getCell2('B6').getValue();
+			assert.strictEqual(nResult.toFixed(), '-80000', _desc + 'Objective cell: ' + nResult.toFixed());
+		},'Case #2: Checking result after found solution. Result: ');
+		// Case #3: Finding quantity of products for total profit.
 		// Filling data
 		testData = [
 			// Product Flavour: Vanilla, Chocolate, Banana
@@ -1707,33 +1739,33 @@ $(function () {
 		oRange.fillData(testData);
 		// Filling Solver Parameters
 		oSolverParams = api.asc_GetSolverParams();
-		assert.ok(oSolverParams, 'Case #2: solverParams is created. Open Solver params dialogue window');
+		assert.ok(oSolverParams, 'Case #3: solverParams is created. Open Solver params dialogue window');
 		oSolverParams.asc_resetAll(); // Reset all previous field data
 		oSolverParams.asc_setObjectiveFunction('Sheet1!$B$5');
-		assert.strictEqual(oSolverParams.asc_getObjectiveFunction(), 'Sheet1!$B$5', 'Case #2: Checking fill "Set Objective" field. Result: ' + oSolverParams.asc_getObjectiveFunction());
+		assert.strictEqual(oSolverParams.asc_getObjectiveFunction(), 'Sheet1!$B$5', 'Case #3: Checking fill "Set Objective" field. Result: ' + oSolverParams.asc_getObjectiveFunction());
 		oSolverParams.asc_setOptimizeResultTo(c_oAscOptimizeTo.valueOf);
-		assert.strictEqual(oSolverParams.asc_getOptimizeResultTo(), c_oAscOptimizeTo.valueOf, 'Case #2: Checking fill "Optimize to" field. Result: Value of (' + oSolverParams.asc_getOptimizeResultTo() + ')');
+		assert.strictEqual(oSolverParams.asc_getOptimizeResultTo(), c_oAscOptimizeTo.valueOf, 'Case #3: Checking fill "Optimize to" field. Result: Value of (' + oSolverParams.asc_getOptimizeResultTo() + ')');
 		oSolverParams.asc_setValueOf('900');
-		assert.strictEqual(oSolverParams.asc_getValueOf(), '900', 'Case #2: Checking fill "Value of" field. Result: ' + oSolverParams.asc_getValueOf());
+		assert.strictEqual(oSolverParams.asc_getValueOf(), '900', 'Case #3: Checking fill "Value of" field. Result: ' + oSolverParams.asc_getValueOf());
 		oSolverParams.asc_setChangingCells('Sheet1!$A$1:$C$1');
-		assert.strictEqual(oSolverParams.asc_getChangingCells(), 'Sheet1!$A$1:$C$1', 'Case #2: Checking fill "By changing Variable" cells field. Result: ' + oSolverParams.asc_getChangingCells());
+		assert.strictEqual(oSolverParams.asc_getChangingCells(), 'Sheet1!$A$1:$C$1', 'Case #3: Checking fill "By changing Variable" cells field. Result: ' + oSolverParams.asc_getChangingCells());
 		oSolverParams.asc_addConstraint(1, {cellRef: 'Sheet1!$A$1', operator: c_oAscOperator['<='], constraint: '150'});
 		oSolverParams.asc_addConstraint(2, {cellRef: 'Sheet1!$B$1', operator: c_oAscOperator['<='], constraint: '125'});
 		oSolverParams.asc_addConstraint(3, {cellRef: 'Sheet1!$C$1', operator: c_oAscOperator['<='], constraint: '75'});
-		assert.strictEqual(oSolverParams.asc_getConstraints().size, 3, 'Case #2: Checking count elements of "Constraints" field. Result: ' + oSolverParams.asc_getConstraints().size);
-		assert.strictEqual(oSolverParams.asc_getVariablesNonNegative(), true, 'Case #2: Checking fill "Variables Non-Negative" field. Result: ' + oSolverParams.asc_getVariablesNonNegative());
-		assert.strictEqual(oSolverParams.asc_getSolvingMethod(), c_oAscSolvingMethod.simplexLP, 'Case #2: Checking fill "Select a solving method" field. Result: Simplex LP(' + oSolverParams.asc_getSolvingMethod() + ')');
+		assert.strictEqual(oSolverParams.asc_getConstraints().size, 3, 'Case #3: Checking count elements of "Constraints" field. Result: ' + oSolverParams.asc_getConstraints().size);
+		assert.strictEqual(oSolverParams.asc_getVariablesNonNegative(), true, 'Case #3: Checking fill "Variables Non-Negative" field. Result: ' + oSolverParams.asc_getVariablesNonNegative());
+		assert.strictEqual(oSolverParams.asc_getSolvingMethod(), c_oAscSolvingMethod.simplexLP, 'Case #3: Checking fill "Select a solving method" field. Result: Simplex LP(' + oSolverParams.asc_getSolvingMethod() + ')');
 		// Finding solution
 		api.asc_StartSolver(oSolverParams);
 		let oSimplexTableau = wb.getSolver().getSimplexTableau();
 		let oVarIndexByCellName = oSimplexTableau.getVarIndexByCellName();
 		api.asc_CloseSolver(true);
-		const undoExpectedVariableCells = {
+		let undoExpectedVariableCells = {
 			'A1': '55',
 			'B1': '41',
 			'C1': '28'
 		};
-		const expectedVariableCells = {
+		let expectedVariableCells = {
 			'A1': '150',
 			'B1': '125',
 			'C1': '66.66666666666667'
@@ -1752,7 +1784,59 @@ $(function () {
 			}
 			let nResult = +ws.getCell2('B5').getValue();
 			assert.strictEqual(nResult.toFixed(), '900', _desc + 'Objective cell: ' + nResult.toFixed());
-		}, 'Case #2: Checking result after found solution. Result: ');
+		}, 'Case #3: Checking result after found solution. Result: ');
+
+		// Case #4: Finding quantity of products for total profit, but Value of is negative value -900
+		oRange.fillData(testData);
+		// Filling Solver Parameters
+		oSolverParams = api.asc_GetSolverParams();
+		assert.ok(oSolverParams, 'Case #4: solverParams is created. Open Solver params dialogue window');
+		oSolverParams.asc_resetAll(); // Reset all previous field data
+		oSolverParams.asc_setObjectiveFunction('Sheet1!$B$5');
+		assert.strictEqual(oSolverParams.asc_getObjectiveFunction(), 'Sheet1!$B$5', 'Case #4: Checking fill "Set Objective" field. Result: ' + oSolverParams.asc_getObjectiveFunction());
+		oSolverParams.asc_setOptimizeResultTo(c_oAscOptimizeTo.valueOf);
+		assert.strictEqual(oSolverParams.asc_getOptimizeResultTo(), c_oAscOptimizeTo.valueOf, 'Case #4: Checking fill "Optimize to" field. Result: Value of (' + oSolverParams.asc_getOptimizeResultTo() + ')');
+		oSolverParams.asc_setValueOf('-900');
+		assert.strictEqual(oSolverParams.asc_getValueOf(), '-900', 'Case #4: Checking fill "Value of" field. Result: ' + oSolverParams.asc_getValueOf());
+		oSolverParams.asc_setChangingCells('Sheet1!$A$1:$C$1');
+		assert.strictEqual(oSolverParams.asc_getChangingCells(), 'Sheet1!$A$1:$C$1', 'Case #4: Checking fill "By changing Variable" cells field. Result: ' + oSolverParams.asc_getChangingCells());
+		oSolverParams.asc_addConstraint(1, {cellRef: 'Sheet1!$A$1', operator: c_oAscOperator['<='], constraint: '150'});
+		oSolverParams.asc_addConstraint(2, {cellRef: 'Sheet1!$B$1', operator: c_oAscOperator['<='], constraint: '125'});
+		oSolverParams.asc_addConstraint(3, {cellRef: 'Sheet1!$C$1', operator: c_oAscOperator['<='], constraint: '75'});
+		assert.strictEqual(oSolverParams.asc_getConstraints().size, 3, 'Case #4: Checking count elements of "Constraints" field. Result: ' + oSolverParams.asc_getConstraints().size);
+		oSolverParams.asc_setVariablesNonNegative(false);
+		assert.strictEqual(oSolverParams.asc_getVariablesNonNegative(), false, 'Case #4: Checking fill "Variables Non-Negative" field. Result: ' + oSolverParams.asc_getVariablesNonNegative());
+		assert.strictEqual(oSolverParams.asc_getSolvingMethod(), c_oAscSolvingMethod.simplexLP, 'Case #4: Checking fill "Select a solving method" field. Result: Simplex LP(' + oSolverParams.asc_getSolvingMethod() + ')');
+		// Finding solution
+		api.asc_StartSolver(oSolverParams);
+		oSimplexTableau = wb.getSolver().getSimplexTableau();
+		oVarIndexByCellName = oSimplexTableau.getVarIndexByCellName();
+		api.asc_CloseSolver(true);
+		undoExpectedVariableCells = {
+			'A1': '55',
+			'B1': '41',
+			'C1': '28'
+		};
+		expectedVariableCells = {
+			'A1': '-300',
+			'B1': '0',
+			'C1': '0'
+		};
+		checkUndoRedo(function (_desc) {
+			for (let sCellName in oVarIndexByCellName) {
+				let sVarCellVal = ws.getCell2(sCellName).getValue();
+				assert.strictEqual(sVarCellVal, undoExpectedVariableCells[sCellName], _desc + 'Variable cell: ' + sVarCellVal);
+			}
+			let nResult = +ws.getCell2('B5').getValue();
+			assert.strictEqual(nResult, 0, _desc + 'Objective cell: ' + nResult);
+		}, function (_desc) {
+			for (let sCellName in oVarIndexByCellName) {
+				let sVarCellVal = ws.getCell2(sCellName).getValue();
+				assert.strictEqual(sVarCellVal, expectedVariableCells[sCellName], _desc + 'Variable cell: ' + sVarCellVal);
+			}
+			let nResult = +ws.getCell2('B5').getValue();
+			assert.strictEqual(nResult.toFixed(), '-900', _desc + 'Objective cell: ' + nResult.toFixed());
+		}, 'Case #4: Checking result after found solution. Result: ');
 	});
 	QUnit.test('Test: Check calculate by Simplex method. Maximize.', function (assert) {
 		// Case #1: Finding summary of share.
