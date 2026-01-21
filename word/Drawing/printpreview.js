@@ -225,62 +225,117 @@
 		CPrintPreviewBase.call(this, api, parentElementId);
 	}
 	AscFormat.InitClassWithoutType(CPresentationPrintPreview, CPrintPreviewBase);
-	CPresentationPrintPreview.prototype.drawPrintPreview = function (width, height, paperSize) {
+	CPresentationPrintPreview.prototype.initGraphicsFlags = function() {
+
+	};
+	CPresentationPrintPreview.prototype.restoreGraphicsFlags = function() {
+
+	};
+	CPresentationPrintPreview.prototype.getPrintPreviewGraphics = function() {
+		let g = new AscCommon.CGraphics();
+		g.init(this.canvas.getContext("2d"), this.canvas.width, this.canvas.height, this.canvas.width * AscCommon.g_dKoef_pix_to_mm, this.canvas.height * AscCommon.g_dKoef_pix_to_mm);
+		g.m_oFontManager = AscCommon.g_fontManager;
+		g.transform(1, 0, 0, 1, 0, 0);
+		return g;
+	};
+	CPresentationPrintPreview.prototype.getGraphics = function() {
+		let g = this.getPrintPreviewGraphics();
+		g.IsNoDrawingEmptyPlaceholderText = true;
+		g.IsNoDrawingEmptyPlaceholder = true;
+		g.isPrintMode = true;
+		g.isSupportEditFeatures = function() { return false; };
+		return g;
+	};
+	CPresentationPrintPreview.prototype.update = function(paperSize) {
+		if (null === this.page)
+			return;
+
+		let width_canvas = parseInt(this.canvas.style.width, 10);
+		let height_canvas = parseInt(this.canvas.style.height, 10);
+
+		let offset = 20;
+		if (width_canvas < offset || height_canvas < offset)
+			return;
+
+		const graphics = this.getGraphics();
+
+
+		let strokeRect = this.drawPrintPreview(width_canvas, height_canvas, offset, paperSize, graphics);
+		if (this.pageImage)
+		{
+			let x = (width_canvas - this.pageImage.width) >> 1;
+			let y = (height_canvas - this.pageImage.height) >> 1;
+
+
+			if (undefined === paperSize)
+			{
+				strokeRect = {
+					x : x,
+					y : y,
+					w : this.pageImage.width,
+					h : this.pageImage.height
+				};
+			}
+
+			if (null != strokeRect)
+			{
+				const color = AscCommon.GlobalSkin.PageOutline;
+				graphics.p_color((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, 0xFF);
+				graphics.p_width(0);
+				graphics._s();
+				graphics._m(strokeRect.x + 1 / 2, strokeRect.y + 1 / 2);
+				graphics._l(strokeRect.x + strokeRect.w - 1, strokeRect.y + 1 / 2);
+				graphics._l(strokeRect.x + strokeRect.w - 1, strokeRect.y + strokeRect.h - 1);
+				graphics._l(strokeRect.x + 1 / 2, strokeRect.y + strokeRect.h - 1);
+				graphics._z();
+				graphics.ds();
+			}
+		}
+	};
+	CPresentationPrintPreview.prototype.drawPrintPreview = function (widthCanvas, heightCanvas, offset, paperSize, graphics) {
 		let w_mm = this.api.WordControl.m_oLogicDocument.GetWidthMM();
 		let h_mm = this.api.WordControl.m_oLogicDocument.GetHeightMM();
+
+
 		let strokeRect;
+		let coef = 1;
+		let width = widthCanvas - offset / 2;
+		let height = heightCanvas - offset / 2;
+		let x = 0;
+		let y = 0;
+		let w = width;
+		let h = height;
+
 		if (undefined !== paperSize)
 		{
-			let ctx = this.canvas.getContext("2d");
 			let paperW = paperSize[0];
 			let paperH = paperSize[1];
+			width *= AscCommon.g_dKoef_pix_to_mm;
+			height *= AscCommon.g_dKoef_pix_to_mm;
+			coef = Math.min((width / w_mm), (height / h_mm));
+			w = w_mm * coef;
+			h = h_mm * coef;
+			x = (widthCanvas - w) / 2;
+			y = (heightCanvas - h) / 2;
 
-			if ((paperW > paperH && w_mm < h_mm) ||
-				(paperW < paperH && w_mm > h_mm))
-			{
-				let tmp = paperW;
-				paperW = paperH;
-				paperH = tmp;
-			}
 
-			let aspectMM = paperW / paperH;
-			let aspect = width / height;
 
-			let w, h;
-
-			if (aspectMM > aspect)
-			{
-				w = width;
-				h = (width * paperH / paperW) >> 0;
-			}
-			else
-			{
-				w = (height * paperW / paperH) >> 0;
-				h = height;
-			}
-
-			let width_canvas = this.canvas.width;
-			let height_canvas = this.canvas.height;
-			let x = (width_canvas - w) >> 1;
-			let y = (height_canvas - h) >> 1;
-
-			strokeRect = {
-				x : x,
-				y : y,
-				w : w,
-				h : h
-			};
-
-			ctx.fillStyle = "#FFFFFF";
-			ctx.fillRect(x, y, w, h);
-			ctx.beginPath();
-
-			width = w;
-			height = h;
 		}
+		strokeRect = {
+			x : x,
+			y : y,
+			w : w,
+			h : h
+		};
 
-		let g = this.checkGraphics(width, height, w_mm, h_mm);
-		this.drawPage(this.page, g);
+		const m = new AscCommon.CMatrix();
+		m.Scale(coef, coef);
+		m.Translate(0, 0);
+		graphics.SetBaseTransform(m);
+		graphics.b_color1(255, 255, 255, 255);
+		graphics.rect(0, 0, w_mm, h_mm);
+		this.drawPage(this.page, graphics);
+		graphics.ResetBaseTransform();
 		return strokeRect;
 	};
 	CPresentationPrintPreview.prototype.drawPage = function (index, graphics, options) {

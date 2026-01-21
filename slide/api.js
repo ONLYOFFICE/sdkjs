@@ -5062,11 +5062,6 @@ background-repeat: no-repeat;\
 		this.WordControl.m_nZoomValue = 100;
 		this.WordControl.zoom_Fire();
 	};
-	asc_docs_api.prototype.zoomn        = function(n)
-	{
-		this.WordControl.m_nZoomValue = 100;
-		this.WordControl.zoom_Fire();
-	};
 	asc_docs_api.prototype.zoom           = function(percent)
 	{
 		this.WordControl.m_nZoomValue = percent;

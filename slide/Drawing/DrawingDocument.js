@@ -2970,7 +2970,7 @@ function CDrawingDocument()
 
 		for (var i = start; i <= end; i++)
 		{
-			if ((true === isSelection && !this.m_oLogicDocument.IsMasterMode()) && !this.m_oWordControl.Thumbnails.isSelectedPage(i))
+			if ((true === printerOptions && !this.m_oLogicDocument.IsMasterMode()) && !this.m_oWordControl.Thumbnails.isSelectedPage(i))
 				continue;
 
 			if (oPresentation.IsVisioEditor())
