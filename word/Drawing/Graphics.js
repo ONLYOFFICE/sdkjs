@@ -2841,7 +2841,11 @@
 				}
 			}
 
-			var _pen_w = (pen_w * this.m_oCoordTransform.sx + 0.5) >> 0;
+			var _pen_w = pen_w * this.m_oCoordTransform.sx;
+			if (this.m_oBaseTransform) {
+				_pen_w *= this.m_oBaseTransform.sx;
+			}
+			_pen_w = (_pen_w + 0.5) >> 0;
 			if (0 >= _pen_w)
 				_pen_w = 1;
 
@@ -2892,7 +2896,11 @@
 			}
 		}
 
-		var _pen_w = (pen_w * this.m_oCoordTransform.sx + 0.5) >> 0;
+		var _pen_w = pen_w * this.m_oCoordTransform.sx;
+		if (this.m_oBaseTransform) {
+			_pen_w *= this.m_oBaseTransform.sx;
+		}
+		_pen_w = (_pen_w + 0.5) >> 0;
 		if (0 >= _pen_w)
 			_pen_w = 1;
 
