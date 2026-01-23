@@ -2986,8 +2986,12 @@ function CDrawingDocument()
 
 				if (!oSlide.isVisible())
 					continue;
-
-				renderer.BeginPage(this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
+				// todo change that
+				renderer.BeginPage(297, 210);
+				this.m_oWordControl.m_oApi.printPreview.drawOnPaper(i, {width:297, height:210, offset: 0}, {
+					width:  297,
+					height: 210
+				}, renderer, this.m_oWordControl.m_oApi.printPreview.drawFullPageSlide.bind(this.m_oWordControl.m_oApi.printPreview));
 				oSlide.draw(renderer);
 				renderer.EndPage();
 			}
