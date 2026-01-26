@@ -5299,61 +5299,349 @@ function (window, undefined) {
 	cSUMIF.prototype.exactTypes = {0: 1};
 	cSUMIF.prototype.argumentsType = [argType.reference, argType.any, argType.reference];
 	cSUMIF.prototype.Calculate = function (arg) {
-		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : arg[0], _sum = 0, matchingInfo;
-		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
-			cElementType.cellsRange !== arg0.type) {
-			if (cElementType.cellsRange3D === arg0.type) {
-				arg0 = arg0.tocArea();
-				if (!arg0) {
-					return new cError(cErrorType.wrong_value_type);
+		return g_oSumIfCache.calculate(arg, arguments[1])
+	};
+
+	function SumIfSumRangeCache() {
+		AscCommonExcel.CountIfTypedCache.call(this);
+	}
+
+	SumIfSumRangeCache.prototype = Object.create(AscCommonExcel.CountIfTypedCache.prototype);
+	SumIfSumRangeCache.prototype.constructor = SumIfSumRangeCache;
+
+	SumIfSumRangeCache.prototype.updateDataBefore  = function(range, column, startIndex) {
+		column.start = startIndex;
+		const unshiftDataArrays = {};
+		const unshiftIndexesArrays = {};
+		range._foreachNoEmpty(function (cell, r, c) {
+			const value = AscCommonExcel.checkTypeCell(cell, true);
+			if (value.type === cElementType.number || value.type === cElementType.error) {
+				if (!unshiftDataArrays[value.type]) {
+					unshiftDataArrays[value.type] = [];
 				}
-			} else {
-				return new cError(cErrorType.wrong_value_type);
+				if(!unshiftIndexesArrays[value.type]) {
+					unshiftIndexesArrays[value.type] = [];
+				}
+				const unshiftDataArray = unshiftDataArrays[value.type];
+				const unshiftIndexesArray = unshiftIndexesArrays[value.type];
+				let valueToAdd = value.value;
+				if (value.type === cElementType.error) {
+					valueToAdd = value.errorType;
+				}
+				unshiftDataArray.push(valueToAdd);
+				unshiftIndexesArray.push(r);
+			}
+		});
+		this.unshiftValues(column, unshiftDataArrays, unshiftIndexesArrays);
+	};
+
+	SumIfSumRangeCache.prototype.updateDataAfter = function (range, column, endIndex) {
+		const t = this;
+		range._foreachNoEmpty(function (cell, r, c) {
+			const value = AscCommonExcel.checkTypeCell(cell, true);
+			if (r > column.end) {
+				if (value.type === cElementType.number || value.type === cElementType.error) {
+					t.pushValue(column, value, r)
+				}
+				column.end = r;
+			}
+		});
+		column.end = endIndex;
+	};
+
+	SumIfSumRangeCache.prototype.changeData = function (cell, dataOld, dataNew) {
+		const wsId = cell.ws.getId();
+		const data = this.data[wsId];
+		if (data) {
+			let oldValue = null;
+			let oldType = null;
+			if (dataOld) {
+				const oldCellValue = dataOld && dataOld.value;
+				oldType = oldCellValue && oldCellValue.type;
+				oldValue = oldType === cElementType.number ? oldCellValue.number : oldCellValue.text;
+				if (oldValue && oldType === cElementType.error) {
+					oldValue = new cError(oldValue).errorType;
+				}
+			}
+			let newValue = null;
+			let newType = null;
+			if (dataNew) {
+				newType = dataNew.type;
+				newValue = dataNew.value;
+				if (newType !== cElementType.error && newType !== cElementType.number) {
+					return;
+				}
+				if (newValue && newType === cElementType.error) {
+					newValue = new cError(newValue).errorType;
+				}
+			}
+			if (oldType === newType && newValue === oldValue) {
+				return;
+			}
+			this.changeColumnsData(wsId, cell, oldValue, oldType, newValue, newType);
+		}
+	};
+
+	function SumIfTypedCache() {
+		AscCommonExcel.CountIfTypedCache.call(this);
+	}
+
+	SumIfTypedCache.prototype = Object.create(AscCommonExcel.CountIfTypedCache.prototype);
+	SumIfTypedCache.prototype.constructor = SumIfTypedCache;
+
+	SumIfTypedCache.prototype.calculate = function(searchRange, sumRange, sumCache, type, matchingFunction, searchValue, convertToNumber) {
+		let sum = 0;
+
+		const searchRangeWs = searchRange.getWS();
+		const searchRangeWsId = searchRangeWs.getId();
+		const searchRangeBbox = searchRange.getBBox0();
+		const sumRangeWs = sumRange.getWS();
+		const sumRangeWsId = sumRangeWs.getId();
+		const sumRangeBbox = sumRange.getBBox0();
+
+		const columnsOffset = sumRangeBbox.c1 - searchRangeBbox.c1;
+
+		for (let i = searchRangeBbox.c1; i <= searchRangeBbox.c2; i += 1) {
+			const sumColumnIndex = columnsOffset + i;
+
+			this.updateColumnData(searchRangeWs, i, searchRangeBbox.r1, searchRangeBbox.r2);
+			sumCache.updateColumnData(sumRangeWs, sumColumnIndex, sumRangeBbox.r1, sumRangeBbox.r2);
+
+			const searchColumn = this.data[searchRangeWsId][i];
+			const sumColumn = sumCache.data[sumRangeWsId][sumColumnIndex];
+
+			const searchTypedData = searchColumn.data[type];
+			const searchTypedIndexes = searchColumn.indexes[type];
+
+			const sumData = sumColumn.data[cElementType.number];
+			const sumIndexes = sumColumn.indexes[cElementType.number];
+
+			const errorData = sumColumn.data[cElementType.error];
+			const errorIndexes = sumColumn.indexes[cElementType.error];
+
+			if (searchTypedData && sumData) {
+				const rowSumOffset = sumRangeBbox.r1 - searchRangeBbox.r1;
+
+				const firstIndex = this.findLowerIndexInTyped(searchRangeBbox.r1, searchTypedIndexes);
+				const lastIndex = this.findHigherIndexInTyped(searchRangeBbox.r2, searchTypedIndexes);
+
+				let currentSumIndex = sumCache.findLowerIndexInTyped(searchTypedIndexes[firstIndex], sumIndexes);
+
+				if (errorIndexes && errorIndexes.length > 0) {
+					const firstErrorIndex = sumCache.findLowerIndexInTyped(sumRangeBbox.r1, errorIndexes);
+					if (errorIndexes[firstErrorIndex] >= firstIndex && errorIndexes[firstErrorIndex] < lastIndex) {
+						return {result: null, error: errorData[firstErrorIndex]}
+					}
+				}
+
+				if (convertToNumber) {
+					for (let j = firstIndex; j < lastIndex; j += 1) {
+						if (searchTypedIndexes[j] > sumIndexes[currentSumIndex]) {
+							currentSumIndex += 1;
+						}
+						let value = AscCommon.g_oFormatParser.parseLocaleNumber(searchTypedData[j]);
+						if (!isNaN(value) && matchingFunction(value, searchValue)) {
+							if (sumIndexes[currentSumIndex] + rowSumOffset === searchTypedIndexes[j]) {
+								sum += sumData[currentSumIndex];
+							}
+							currentSumIndex += 1;
+						}
+					}
+				} else {
+					for (let j = firstIndex; j < lastIndex; j += 1) {
+						if (searchTypedIndexes[j] > sumIndexes[currentSumIndex]) {
+							currentSumIndex += 1;
+						}
+						if (matchingFunction(searchTypedData[j], searchValue)) {
+							if (sumIndexes[currentSumIndex] + rowSumOffset === searchTypedIndexes[j]) {
+								sum += sumData[currentSumIndex];
+							}
+						}
+					}
+				}
 			}
 		}
+		return {result: sum, error: null};
+	};
 
+	/**
+	 * @constructor
+	 */
+	function SumIfCache() {
+		this.cacheId = {};
+		this.cacheRanges = {};
+		this.typedCache = new SumIfTypedCache();
+		this.sumRangeCache = new SumIfSumRangeCache();
+	}
+	SumIfCache.prototype.constructor = SumIfCache;
+
+	SumIfCache.prototype.calculate = function (arg, _arg1) {
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : arg[0];
+
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		if (arg2 && cElementType.error === arg2.type) {
+			return arg2;
+		}
+		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
+			cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type) {
+			return new cError(cErrorType.wrong_value_type);
+		}
 		if (cElementType.cell !== arg2.type && cElementType.cell3D !== arg2.type &&
-			cElementType.cellsRange !== arg2.type) {
-			if (cElementType.cellsRange3D === arg2.type) {
-				arg2 = arg2.tocArea();
-				if (!arg2) {
-					return new cError(cErrorType.wrong_value_type);
-				}
+			cElementType.cellsRange !== arg2.type && cElementType.cellsRange3D !== arg2.type) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		const t = this;
+		function calculateOne(rangeOrCell, condition, sumRangeOrCell) {
+
+			const bbox = rangeOrCell.getBBox0();
+			const sumBbox = sumRangeOrCell.getBBox0();
+
+			if ((bbox.c2 - bbox.c1) !== (sumBbox.c2 - sumBbox.c1) ||
+				(bbox.r2 - bbox.r1) !== (sumBbox.r2 - sumBbox.r1)) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+			if (cElementType.cell === rangeOrCell.type || cElementType.cell3D === rangeOrCell.type ||
+				cElementType.cellsRange === rangeOrCell.type || cElementType.cellsRange3D === rangeOrCell.type) {
+				return t._get(rangeOrCell, condition, sumRangeOrCell);
 			} else {
 				return new cError(cErrorType.wrong_value_type);
 			}
 		}
 
 		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
-			arg1 = arg1.cross(arguments[1]);
-		} else if (arg1 instanceof cArray) {
-			arg1 = arg1.getElementRowCol(0, 0);
-		}
-
-		if (cElementType.string !== arg1.type) {
-			arg1 = arg1.tocString();
-		}
-
-		if (cElementType.string !== arg1.type) {
-			return new cError(cErrorType.wrong_value_type);
-		}
-
-		matchingInfo = AscCommonExcel.matchingValue(arg1);
-		if (cElementType.cellsRange === arg0.type || cElementType.cell === arg0.type) {
-			let arg0Matrix = arg0.getMatrix(), arg2Matrix = arg[2] ? arg2.getMatrix() : arg0Matrix, valMatrix2;
-			for (let i = 0; i < arg0Matrix.length; i++) {
-				for (let j = 0; j < arg0Matrix[i].length; j++) {
-					if (arg2Matrix[i] && (valMatrix2 = arg2Matrix[i][j]) && cElementType.number === valMatrix2.type &&
-						AscCommonExcel.matching(arg0Matrix[i][j], matchingInfo)) {
-						_sum += valMatrix2.getValue();
-					}
+			let matrix = arg1.getMatrix();
+			if (cElementType.cellsRange3D === arg1.type) {
+				matrix = matrix[0];
+			}
+			const result = new cArray();
+			for (let row = 0; row < matrix.length; row += 1) {
+				result.addRow();
+				for (let col = 0; col < matrix[row].length; col += 1) {
+					const condition = matrix[row][col];
+					const calculateResult = calculateOne(arg0, condition, arg2);
+					result.addElementInRow(calculateResult, row);
 				}
 			}
+			return result;
+		} else if (cElementType.array === arg1.type) {
+			const dimensions = arg1.getDimensions();
+			const colCount = dimensions.col;
+			const rowCount = dimensions.row;
+			const result = new cArray();
+			for (let row = 0; row < rowCount; row += 1) {
+				result.addRow();
+				for (let col = 0; col < colCount; col += 1) {
+					const condition = arg1.getElementRowCol(row, col);
+					const calculateResult = calculateOne(arg0, condition, arg2);
+					result.addElementInRow(calculateResult, row);
+				}
+			}
+			return result;
+		} else if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
+			arg1 = arg1.getValue();
+		}
+		return calculateOne(arg0, arg1, arg2);
+	};
+
+	SumIfCache.prototype._get = function (range, arg1, sumRange) {
+		const ws = range.getWS();
+		let res, wsId = ws.getId(),
+			sRangeName = wsId + AscCommon.g_cCharDelimiter + range.getBBox0().getName(),
+			sSumRangeName = wsId + AscCommon.g_cCharDelimiter + sumRange.getBBox0().getName(),
+			cacheElem = this.cacheId[sRangeName],
+			valueForSearching = arg1.getValue();
+
+		if (!cacheElem) {
+			cacheElem = {elements: {}, results: {}};
+			this.cacheId[sRangeName] = cacheElem;
+			let cacheRange = this.cacheRanges[wsId];
+			if (!cacheRange) {
+				cacheRange = new AscCommonExcel.RangeDataManager(null);
+				this.cacheRanges[wsId] = cacheRange;
+			}
+			cacheRange.add(range.getBBox0(), cacheElem);
+		}
+		let sInputKey = valueForSearching + AscCommon.g_cCharDelimiter + sSumRangeName;
+		res = cacheElem.results[sInputKey];
+
+		if (!res) {
+			cacheElem.results[sInputKey] = res = this._calculate(range, arg1, sumRange);
+		}
+		return res;
+	};
+
+	SumIfCache.prototype._calculate = function (range, arg1, sumRange) {
+		let _sum = 0;
+		let matchingInfo = AscCommonExcel.matchingValue(arg1, AscCommonExcel.parseStringToCElement);
+		let type = matchingInfo.val.type;
+		let searchValue = matchingInfo.val;
+		if (type === cElementType.string) {
+			searchValue = searchValue.toString().toLowerCase();
+		} else if (type === cElementType.error) {
+			searchValue = searchValue.errorType;
 		} else {
-			return new cError(cErrorType.wrong_value_type);
+			searchValue = searchValue.value;
 		}
 
+		if (searchValue === "") {
+			if (matchingInfo.op === "=" || matchingInfo.op === null) {
+				// todo
+			}
+			if (matchingInfo.op === "<>") {
+				// todo
+			}
+		}
+		const isWildcard = type === cElementType.string && (searchValue.indexOf('*') !== -1 || searchValue.indexOf('?') !== -1);
+		if ((matchingInfo.op === '=' || matchingInfo.op === null) && !isWildcard) {
+			const matchingFunction = AscCommonExcel.getMatchingFunction(type, matchingInfo.op, isWildcard);
+			let calculatingResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, type, matchingFunction, searchValue);
+			if (calculatingResult.error !== null) {
+				return calculatingResult.error;
+			}
+			_sum = calculatingResult.result;
+			if (type === cElementType.number) {
+				calculatingResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, cElementType.string, matchingFunction, searchValue, true);
+				if (calculatingResult.error !== null) {
+					return calculatingResult.error;
+				}
+				_sum += calculatingResult.result;
+			}
+		} else if (matchingInfo.op === '<>') {
+			// todo
+		} else {
+			const matchingFunction = AscCommonExcel.getMatchingFunction(type, matchingInfo.op, isWildcard);
+			let calculatingResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, type, matchingFunction, searchValue);
+			if (calculatingResult.error !== null) {
+				return calculatingResult.error;
+			}
+			_sum = calculatingResult.result;
+		}
 		return new cNumber(_sum);
+	};
+
+	SumIfCache.prototype.remove = function (cell, dataOld, dataNew) {
+		var wsId = cell.ws.getId();
+		var cacheRange = this.cacheRanges[wsId];
+		if (cacheRange) {
+			var oGetRes = cacheRange.get(new Asc.Range(cell.nCol, cell.nRow, cell.nCol, cell.nRow));
+			for (var i = 0, length = oGetRes.all.length; i < length; ++i) {
+				var elem = oGetRes.all[i];
+				elem.data.results = {};
+			}
+		}
+		this.typedCache.changeData(cell, dataOld, dataNew);
+		this.sumRangeCache.changeData(cell, dataOld, dataNew);
+	};
+
+	SumIfCache.prototype.clean = function () {
+		this.cacheId = {};
+		this.cacheRanges = {};
+		this.typedCache.clean();
+		this.sumRangeCache.clean();
 	};
 
 	/**
@@ -6151,6 +6439,7 @@ function (window, undefined) {
 
 
 	var g_oSUMIFSCache = new SUMIFSCache();
+	var g_oSumIfCache = new SumIfCache();
 
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
@@ -6158,5 +6447,7 @@ function (window, undefined) {
 	window['AscCommonExcel'].cPRODUCT = cPRODUCT;
 	window['AscCommonExcel'].cSUBTOTAL = cSUBTOTAL;
 	window['AscCommonExcel'].cSUM = cSUM;
+	window['AscCommonExcel'].g_oSumIfCache = g_oSumIfCache;
 	window['AscCommonExcel'].g_oSUMIFSCache = g_oSUMIFSCache;
+
 })(window);
