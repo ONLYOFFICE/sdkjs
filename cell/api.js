@@ -615,6 +615,175 @@ var editor;
 		});
 	};
 
+	spreadsheet_api.prototype.asc_JsonFromFileOrUrl = function (options, callback, url) {
+		if (this.canEdit()) {
+			this._getJsonFromFile(options, callback);
+		}
+	};
+
+	spreadsheet_api.prototype._getJsonFromFile = function (options, callback) {
+		var t = this;
+
+		function wrapper_callback(data) {
+			try {
+				var text = new TextDecoder('utf-8').decode(data);
+				var jsonData = JSON.parse(text);
+				var tableData = t._convertJsonToTable(jsonData);
+				callback(tableData);
+			} catch (e) {
+				t.sendEvent("asc_onError", Asc.c_oAscError.ID.Unknown, Asc.c_oAscError.Level.NoCritical);
+			}
+		}
+
+		if (window["AscDesktopEditor"]) {
+			window["AscDesktopEditor"]["OpenFilenameDialog"]("json", false, function (_file) {
+				var file = _file;
+				if (Array.isArray(file))
+					file = file[0];
+				if (!file)
+					return;
+
+				window["AscDesktopEditor"]["loadLocalFile"](file, function(uint8Array) {
+					if (!uint8Array)
+						return;
+
+					wrapper_callback(uint8Array);
+				});
+			});
+			return;
+		}
+
+		AscCommon.ShowJsonFileDialog(function (error, files) {
+			if (Asc.c_oAscError.ID.No !== error) {
+				t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
+				return;
+			}
+
+			var reader = new FileReader();
+			reader.onload = function () {
+				wrapper_callback(new Uint8Array(reader.result));
+			};
+
+			reader.onerror = function () {
+				t.sendEvent("asc_onError", Asc.c_oAscError.ID.Unknown, Asc.c_oAscError.Level.NoCritical);
+			};
+
+			reader.readAsArrayBuffer(files[0]);
+		});
+	};
+
+	spreadsheet_api.prototype._convertJsonToTable = function (jsonData) {
+		var result = [];
+
+		if (Array.isArray(jsonData)) {
+			if (jsonData.length > 0 && typeof jsonData[0] === 'object' && !Array.isArray(jsonData[0])) {
+				var allKeys = new Set();
+				for (var i = 0; i < jsonData.length; i++) {
+					var item = jsonData[i];
+					if (typeof item === 'object' && item !== null) {
+						var itemKeys = Object.keys(item);
+						for (var j = 0; j < itemKeys.length; j++) {
+							allKeys.add(itemKeys[j]);
+						}
+					}
+				}
+				var keys = Array.from(allKeys);
+
+				result.push(keys);
+
+				for (var i = 0; i < jsonData.length; i++) {
+					var item = jsonData[i];
+					var row = [];
+					for (var k = 0; k < keys.length; k++) {
+						var key = keys[k];
+						var value = item[key];
+						if (value === undefined || value === null) {
+							row.push('');
+						} else if (typeof value === 'object') {
+							row.push(JSON.stringify(value));
+						} else {
+							row.push(String(value));
+						}
+					}
+					result.push(row);
+				}
+			} else {
+				for (var i = 0; i < jsonData.length; i++) {
+					var item = jsonData[i];
+					if (typeof item === 'object') {
+						result.push([JSON.stringify(item)]);
+					} else {
+						result.push([String(item)]);
+					}
+				}
+			}
+		} else if (typeof jsonData === 'object' && jsonData !== null) {
+			var keys = Object.keys(jsonData);
+			result.push(['Key', 'Value']);
+			for (var i = 0; i < keys.length; i++) {
+				var key = keys[i];
+				var value = jsonData[key];
+				if (typeof value === 'object') {
+					result.push([key, JSON.stringify(value)]);
+				} else {
+					result.push([key, String(value)]);
+				}
+			}
+		} else {
+			result.push([String(jsonData)]);
+		}
+
+		return result;
+	};
+
+	spreadsheet_api.prototype.asc_JsonToTable = function (tableData, opt_activeRange) {
+		if (this.canEdit() && tableData && tableData.length > 0) {
+			var ws = this.wb.getWorksheet();
+			var selectionRange;
+			var activeSheet = null;
+
+			if (opt_activeRange) {
+				var is3dRef = parserHelp.parse3DRef(opt_activeRange);
+				var range, sheetModel;
+				if (is3dRef) {
+					sheetModel = this.wb.model.getWorksheetByName(is3dRef.sheet);
+					if (sheetModel) {
+						range = AscCommonExcel.g_oRangeCache.getAscRange(is3dRef.range);
+					}
+				} else {
+					range = AscCommonExcel.g_oRangeCache.getAscRange(opt_activeRange);
+				}
+				if (sheetModel && sheetModel !== ws.model) {
+					activeSheet = sheetModel;
+					this.wb.model.nActive = sheetModel.index;
+				}
+				if (range) {
+					if (activeSheet) {
+						selectionRange = activeSheet.selectionRange.clone();
+						activeSheet.selectionRange.ranges = [range.clone()];
+					} else {
+						selectionRange = ws.model.selectionRange.clone();
+						ws.model.selectionRange.ranges = [range.clone()];
+					}
+				}
+			}
+
+			this.wb.pasteData(AscCommon.c_oAscClipboardDataFormat.Text, tableData, null, null, true);
+
+			if (selectionRange) {
+				if (activeSheet !== null) {
+					activeSheet.selectionRange = selectionRange;
+					this.wb.model.nActive = ws.model.index;
+					ws.draw();
+				} else {
+					ws.cleanSelection();
+					ws.model.selectionRange = selectionRange;
+					ws._drawSelection();
+				}
+			}
+		}
+	};
+
 	spreadsheet_api.prototype.asc_ImportXmlStart = function (callback) {
 		let t = this;
 
@@ -6165,6 +6334,10 @@ var editor;
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
 		return;
     }
+
+	this.asc_JsonFromFileOrUrl();
+	return;
+
     let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
@@ -9871,6 +10044,8 @@ var editor;
   prot["asc_TextToColumns"] = prot.asc_TextToColumns;
   prot["asc_TextFromFileOrUrl"] = prot.asc_TextFromFileOrUrl;
   prot["asc_getCSVDelimiter"] = prot.asc_getCSVDelimiter;
+  prot["asc_JsonFromFileOrUrl"] = prot.asc_JsonFromFileOrUrl;
+  prot["asc_JsonToTable"] = prot.asc_JsonToTable;
 
   prot["asc_initPrintPreview"] = prot.asc_initPrintPreview;
   prot["asc_updatePrintPreview"] = prot.asc_updatePrintPreview;

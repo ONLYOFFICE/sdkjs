@@ -1731,6 +1731,10 @@
 		MaxFileSize:      25000000, //25 mb
 		SupportedFormats: ["xml"]
 	};
+	var c_oAscJsonUploadProp = {
+		MaxFileSize:      25000000, //25 mb
+		SupportedFormats: ["json"]
+	};
 
 	/**
 	 *
@@ -2308,6 +2312,11 @@
 			callback(Asc.c_oAscError.ID.Unknown);
 		}
 	}
+	function ShowJsonFileDialog(callback) {
+		if (false === _ShowFileDialog(getAcceptByArray(c_oAscJsonUploadProp.SupportedFormats), false, false, ValidateUploadJson, callback)) {
+			callback(Asc.c_oAscError.ID.Unknown);
+		}
+	}
 
 	function InitDragAndDrop(oHtmlElement, callback)
 	{
@@ -2682,6 +2691,10 @@
 	function ValidateUploadXml(files)
 	{
 		return ValidateUpload(files, c_oAscServerError.UploadDocumentExtension, c_oAscServerError.UploadDocumentContentLength, c_oAscServerError.UploadDocumentCountFiles, c_oAscXmlUploadProp);
+	}
+	function ValidateUploadJson(files)
+	{
+		return ValidateUpload(files, c_oAscServerError.UploadDocumentExtension, c_oAscServerError.UploadDocumentContentLength, c_oAscServerError.UploadDocumentCountFiles, c_oAscJsonUploadProp);
 	}
 
 	function CanDropFiles(event)
@@ -15609,6 +15622,7 @@
 	window["AscCommon"].ShowSpreadsheetFileDialog = ShowSpreadsheetFileDialog;
 	window["AscCommon"].ShowTextFileDialog = ShowTextFileDialog;
 	window["AscCommon"].ShowXmlFileDialog = ShowXmlFileDialog;
+	window["AscCommon"].ShowJsonFileDialog = ShowJsonFileDialog;
 	window["AscCommon"].InitDragAndDrop = InitDragAndDrop;
 	window["AscCommon"].UploadImageFiles = UploadImageFiles;
     window["AscCommon"].UploadImageUrls = UploadImageUrls;
