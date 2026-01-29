@@ -14595,6 +14595,8 @@ function RangeDataManagerElem(bbox, data)
 		this.activeArgPos = null;
 		this.activeArgsCount = null;
 
+		this.argHelpList = null;
+
 		this._init(name);
 
 		return this;
@@ -14644,6 +14646,9 @@ function RangeDataManagerElem(bbox, data)
 	};
 	CFunctionInfo.prototype.asc_getActiveArgsCount = function () {
 		return this.activeArgsCount;
+	};
+	CFunctionInfo.prototype.asc_getActiveArgHelpList = function () {
+		return this.argHelpList;
 	};
 
 
@@ -22386,6 +22391,7 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_setArguments"] = prot.asc_setArguments;
 	prot["asc_getActiveArgPos"] = prot.asc_getActiveArgPos;
 	prot["asc_getActiveArgsCount"] = prot.asc_getActiveArgsCount
+	prot["asc_getActiveArgHelpList"] = prot.asc_getActiveArgHelpList
 
 
 	window["Asc"]["asc_CExternalReference"] = window["Asc"].asc_CExternalReference = asc_CExternalReference;

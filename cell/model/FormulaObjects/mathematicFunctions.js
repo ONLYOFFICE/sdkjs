@@ -76,6 +76,33 @@ function (window, undefined) {
 	var AGGREGATE_FUNC_PERCEXC = 18;
 	var AGGREGATE_FUNC_QRTEXC  = 19;
 
+	var AGGREGATE_FUNC_MAP = null;
+	function getAggregateFuncMap() {
+		if (AGGREGATE_FUNC_MAP === null) {
+			AGGREGATE_FUNC_MAP = {};
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_AVE]     = AscCommonExcel.cAVERAGE.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_CNT]     = AscCommonExcel.cCOUNT.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_CNTA]    = AscCommonExcel.cCOUNTA.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_MAX]     = AscCommonExcel.cMAX.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_MIN]     = AscCommonExcel.cMIN.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_PROD]    = AscCommonExcel.cPRODUCT.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_STD]     = AscCommonExcel.cSTDEV_S.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_STDP]    = AscCommonExcel.cSTDEV_P.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_SUM]     = AscCommonExcel.cSUM.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_VAR]     = AscCommonExcel.cVAR_S.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_VARP]    = AscCommonExcel.cVAR_P.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_MEDIAN]  = AscCommonExcel.cMEDIAN.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_MODSNGL] = AscCommonExcel.cMODE_SNGL.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_LARGE]   = AscCommonExcel.cLARGE.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_SMALL]   = AscCommonExcel.cSMALL.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_PERCINC] = AscCommonExcel.cPERCENTILE_INC.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_QRTINC]  = AscCommonExcel.cQUARTILE_INC.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_PERCEXC] = AscCommonExcel.cPERCENTILE_EXC.prototype;
+			AGGREGATE_FUNC_MAP[AGGREGATE_FUNC_QRTEXC]  = AscCommonExcel.cQUARTILE_EXC.prototype;
+		}
+		return AGGREGATE_FUNC_MAP;
+	}
+
 	cFormulaFunctionGroup['Mathematic'] = cFormulaFunctionGroup['Mathematic'] || [];
 	cFormulaFunctionGroup['Mathematic'].push(cABS, cACOS, cACOSH, cACOT, cACOTH, cAGGREGATE, cARABIC, cASIN, cASINH,
 		cATAN, cATAN2, cATANH, cBASE, cCEILING, cCEILING_MATH, cCEILING_PRECISE, cCOMBIN, cCOMBINA, cCOS, cCOSH, cCOT,
@@ -395,6 +422,21 @@ function (window, undefined) {
 		}
 		return 1;
 	};
+	cAGGREGATE.prototype.getArgHelpList = function (index) {
+		if (index === 0) {
+			var result = [];
+			let _AGGREGATE_FUNC_MAP = getAggregateFuncMap();
+			for (var key in _AGGREGATE_FUNC_MAP) {
+				if (_AGGREGATE_FUNC_MAP.hasOwnProperty(key)) {
+					let name = _AGGREGATE_FUNC_MAP[key].name;
+					name = AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale[name] : name;
+					result.push([parseInt(key), name]);
+				}
+			}
+			return result;
+		}
+		return null;
+	};
 	cAGGREGATE.prototype.Calculate = function (arg) {
 		let oArguments = this._prepareArguments([arg[0], arg[1]], arguments[1]);
 		let argClone = oArguments.args;
@@ -408,79 +450,16 @@ function (window, undefined) {
 		}
 
 		let nFunc = Math.floor(argClone[0].getValue());
-		let f = null;
-		switch (nFunc) {
-			case AGGREGATE_FUNC_AVE:
-				f = AscCommonExcel.cAVERAGE.prototype;
-				break;
-			case AGGREGATE_FUNC_CNT:
-				f = AscCommonExcel.cCOUNT.prototype;
-				break;
-			case AGGREGATE_FUNC_CNTA:
-				f = AscCommonExcel.cCOUNTA.prototype;
-				break;
-			case AGGREGATE_FUNC_MAX:
-				f = AscCommonExcel.cMAX.prototype;
-				break;
-			case AGGREGATE_FUNC_MIN:
-				f = AscCommonExcel.cMIN.prototype;
-				break;
-			case AGGREGATE_FUNC_PROD:
-				f = AscCommonExcel.cPRODUCT.prototype;
-				break;
-			case AGGREGATE_FUNC_STD:
-				f = AscCommonExcel.cSTDEV_S.prototype;
-				break;
-			case AGGREGATE_FUNC_STDP:
-				f = AscCommonExcel.cSTDEV_P.prototype;
-				break;
-			case AGGREGATE_FUNC_SUM:
-				f = AscCommonExcel.cSUM.prototype;
-				break;
-			case AGGREGATE_FUNC_VAR:
-				f = AscCommonExcel.cVAR_S.prototype;
-				break;
-			case AGGREGATE_FUNC_VARP:
-				f = AscCommonExcel.cVAR_P.prototype;
-				break;
-			case AGGREGATE_FUNC_MEDIAN:
-				f = AscCommonExcel.cMEDIAN.prototype;
-				break;
-			case AGGREGATE_FUNC_MODSNGL:
-				f = AscCommonExcel.cMODE_SNGL.prototype;
-				break;
-			case AGGREGATE_FUNC_LARGE:
-				if (arg[3]) {
-					f = AscCommonExcel.cLARGE.prototype;
-				}
-				break;
-			case AGGREGATE_FUNC_SMALL:
-				if (arg[3]) {
-					f = AscCommonExcel.cSMALL.prototype;
-				}
-				break;
-			case AGGREGATE_FUNC_PERCINC:
-				if (arg[3]) {
-					f = AscCommonExcel.cPERCENTILE_INC.prototype;
-				}
-				break;
-			case AGGREGATE_FUNC_QRTINC:
-				if (arg[3]) {
-					f = AscCommonExcel.cQUARTILE_INC.prototype;
-				}
-				break;
-			case AGGREGATE_FUNC_PERCEXC:
-				if (arg[3]) {
-					f = AscCommonExcel.cPERCENTILE_EXC.prototype;
-				}
-				break;
-			case AGGREGATE_FUNC_QRTEXC:
-				if (arg[3]) {
-					f = AscCommonExcel.cQUARTILE_EXC.prototype;
-				}
-				break;
-			default:
-				return new cError(cErrorType.not_numeric);
+		let f = getAggregateFuncMap()[nFunc];
+		
+		if (!f) {
+			return new cError(cErrorType.not_numeric);
+		}
+		
+		if (nFunc >= 14 && nFunc <= 19) {
+			if (!arg[3]) {
+				f = null;
+			}
 		}
 
 		if (null === f) {
