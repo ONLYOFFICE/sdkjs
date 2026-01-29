@@ -272,7 +272,7 @@
 			return;
 
 		const graphics = this.getGraphics();
-		let callback = this.drawFullPageSlide.bind(this);
+		let callback = this.drawHandouts.bind(this);
 		graphics.b_color1(255, 255, 255, 255);
 		graphics.rect(0, 0, width_canvas, height_canvas);
 		graphics.df();
@@ -305,11 +305,12 @@
 		let height = drawAreaSizes.height - drawAreaSizes.offset;
 		let x = 0;
 		let y = 0;
+		let paperScale = 1;
 		if (paperSize)
 		{
 			let paperW = paperSize.width;
 			let paperH = paperSize.height;
-			const paperScale = Math.min(width / paperW, height / paperH);
+			paperScale = Math.min(width / paperW, height / paperH);
 			width = paperW * paperScale;
 			height = paperH * paperScale;
 			x = (widthCanvas - width) / 2;
@@ -321,7 +322,7 @@
 			width : width,
 			height : height
 		};
-		callback(pageIndex, adaptPaperSizes, graphics);
+		callback(pageIndex, adaptPaperSizes, paperScale, graphics);
 		return adaptPaperSizes;
 	}
 	CPresentationPrintPreview.prototype.getCanvasHeightMM = function() {
@@ -348,7 +349,7 @@
 		}
 		return this.calculatedValues.presentationWidth;
 	};
-	CPresentationPrintPreview.prototype.drawFullPageSlide = function (pageIndex, paperSizes, graphics) {
+	CPresentationPrintPreview.prototype.drawFullPageSlide = function (pageIndex, paperSizes, paperScale, graphics) {
 		const w_mm = this.getPresentationWidthMM();
 		const h_mm = this.getPresentationHeightMM();
 
@@ -357,6 +358,65 @@
 		const slideY = paperSizes.y + (paperSizes.height - h_mm * slideScale) / 2;
 		this.drawPage(pageIndex, slideX, slideY, slideScale, graphics);
 	};
+
+	const gap = 10;
+	const maxGap = 30;
+	const horizontalField = 20;
+	const verticalField = horizontalField * 2;
+
+	CPresentationPrintPreview.prototype.drawHandouts = function (pageIndex, paperSizes, paperScale, graphics, options) {
+		const slidesCount = 6;
+		const align = 0;
+		const countSlidesOnRow = this.getSlidesCountOnRow(slidesCount);
+		const rowsCount = Math.floor(slidesCount / countSlidesOnRow);
+		const w_mm = this.getPresentationWidthMM();
+		const h_mm = this.getPresentationHeightMM();
+		const paperWidth = paperSizes.width - horizontalField * paperScale * 2;
+		const paperHeight = paperSizes.height - verticalField * paperScale * 2;
+		const slidesWidth = w_mm * countSlidesOnRow;
+		const slidesHeight = h_mm * rowsCount;
+		const resultWidthWithMaxGap = slidesWidth + (countSlidesOnRow - 1) * maxGap;
+		const resultHeightWithMaxGap = slidesHeight + (rowsCount - 1) * maxGap;
+
+
+
+		let slideScale = Math.min(paperWidth / resultWidthWithMaxGap, paperHeight / resultHeightWithMaxGap);
+		let horizontalGap = this.getGap(paperWidth, w_mm, slideScale, countSlidesOnRow);
+		let verticalGap = this.getGap(paperHeight, h_mm, slideScale, rowsCount);
+		if (horizontalGap < gap || verticalGap < gap) {
+			const paperWidthWithoutMinGap = paperWidth - gap * (countSlidesOnRow - 1);
+			const paperHeightWithoutMinGap = paperHeight - gap * (rowsCount - 1);
+			slideScale = Math.min(paperWidthWithoutMinGap / slidesWidth, paperHeightWithoutMinGap / slidesHeight);
+			horizontalGap = this.getGap(paperWidth, w_mm, slideScale, countSlidesOnRow);
+			verticalGap = this.getGap(paperHeight, h_mm, slideScale, rowsCount);
+		}
+
+		const resultWidth = countSlidesOnRow * w_mm * slideScale + (countSlidesOnRow - 1) * horizontalGap;
+		const resultHeight = rowsCount * h_mm * slideScale + (rowsCount - 1) * verticalGap;
+		const startX = paperSizes.x + horizontalField * paperScale + (paperWidth - resultWidth) / 2;
+		const startY = paperSizes.y + verticalField * paperScale + (paperHeight - resultHeight) / 2;
+
+		for (let i = 0; i < rowsCount; i += 1) {
+			const slideY = startY + i * verticalGap + h_mm * i * slideScale;
+			for (let j = 0; j < countSlidesOnRow; j += 1) {
+				const pageIndex = i * countSlidesOnRow + j;
+				const slideX = startX + j * w_mm * slideScale + j * horizontalGap;
+				this.drawPage(pageIndex, slideX, slideY, slideScale, graphics);
+			}
+		}
+	};
+	CPresentationPrintPreview.prototype.getGap = function(paperSize, slideSize, scale, repeatCount) {
+		return repeatCount === 1 ? 0: (paperSize - slideSize * repeatCount * scale) / (repeatCount - 1);
+	}
+	CPresentationPrintPreview.prototype.getSlidesCountOnRow = function(slidesCount) {
+		if (slidesCount % 3 === 0) {
+			return 3;
+		} else if (slidesCount % 2) {
+			return 2;
+		}
+		return 1;
+	}
+
 
 	CPresentationPrintPreview.prototype.drawPage = function (pageIndex, slideX, slideY, slideScale, graphics) {
 		const w_mm = this.getPresentationWidthMM();
@@ -370,8 +430,8 @@
 		graphics.reset();
 		graphics.AddClipRect(0, 0, w_mm, h_mm);
 		this.api.WordControl.m_oLogicDocument.DrawPage(pageIndex, graphics);
-		// graphics.ResetBaseTransform();
-		// graphics.reset();
+		graphics.ResetBaseTransform();
+		graphics.reset();
 		graphics.RestoreGrState();
 	};
 

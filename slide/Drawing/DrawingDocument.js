@@ -2991,8 +2991,7 @@ function CDrawingDocument()
 				this.m_oWordControl.m_oApi.printPreview.drawOnPaper(i, {width:297, height:210, offset: 0}, {
 					width:  297,
 					height: 210
-				}, renderer, this.m_oWordControl.m_oApi.printPreview.drawFullPageSlide.bind(this.m_oWordControl.m_oApi.printPreview));
-				oSlide.draw(renderer);
+				}, renderer, this.m_oWordControl.m_oApi.printPreview.drawHandouts.bind(this.m_oWordControl.m_oApi.printPreview));
 				renderer.EndPage();
 			}
 
