@@ -3043,20 +3043,21 @@
 					streamInfos.push(null);
 				}, function () {
 					for (let i = 0; i < streamInfos.length; i++) {
+						
 						let parsed = _promises[i].parserFormula;
-
 						if (!parsed.promiseResult) {
 							parsed.promiseResult = [];
 						}
+
 						let resStreamInfo;
 						if (streamInfos[i] == null) {
 							resStreamInfo = new cError(cErrorType.wrong_value_type);
 						} else {
 							resStreamInfo = _promises[i].callback(streamInfos[i]);
 						}
+
 						parsed.promiseResult[_promises[i].index] = resStreamInfo;
 
-						// let parsed = _promises[i].parserFormula;
 						if (parsed && !parsed.ref && resStreamInfo.type === cElementType.array) {
 							/*
 							 - we are getting formula result and set ref to the formula

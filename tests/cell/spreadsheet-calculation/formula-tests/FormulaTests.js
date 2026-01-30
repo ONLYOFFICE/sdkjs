@@ -6671,64 +6671,701 @@ $(function () {
 		});
 	});
 
-	// QUnit.test('Async formula - Mixed data types in array', function(assert) {
-	// 	const done = assert.async();
-	// 	const asyncFunc = function() {
-	// 		return new Promise((resolve) => {
-	// 			setTimeout(() => {
-	// 				resolve([[100,"text",true],[200,"#N/A",false]]);
-	// 			}, 1);
-	// 		});
-	// 	};
+	QUnit.test('Async formula - Mixed data types in array', function(assert) {
+		const done = assert.async();
+		const asyncFunc = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve([[100,"text",true],[200,"#N/A",false]]);
+				}, 1);
+			});
+		};
 
-	// 	initParamsCustomFunction(null, "any[][]");
+		initParamsCustomFunction(null, "any[][]");
 
-	// 	executeCustomFunction(function (callback) {
-	// 		let api = window["Asc"]["editor"];
-	// 		let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
-	// 		api.addCustomFunction(asyncFunc, oJsDoc[0]);
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+			api.addCustomFunction(asyncFunc, oJsDoc[0]);
 
-	// 		wb.asyncFormulasManager.endCallback = function () {
-	// 			let resCell = getCell(ws.getRange2("A1"));
-	// 			let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+			wb.asyncFormulasManager.endCallback = function () {
+				let resCell = getCell(ws.getRange2("A1"));
+				let ref = resCell.getFormulaParsed().getArrayFormulaRef();
 
-	// 			assert.ok(ref !== null, "A1: Formula has ref after promise resolution");
-	// 			assert.strictEqual(ref && ref.getHeight(), 2, "A1: Array height is 2");
-	// 			assert.strictEqual(ref && ref.getWidth(), 3, "A1: Array width is 3");
+				assert.ok(ref !== null, "A1: Formula has ref after promise resolution");
+				assert.strictEqual(ref && ref.getHeight(), 2, "A1: Array height is 2");
+				assert.strictEqual(ref && ref.getWidth(), 3, "A1: Array width is 3");
 				
-	// 			// Check mixed data types
-	// 			assert.strictEqual(ws.getRange2("A1").getValue(), "100", "A1: Number value 100");
-	// 			assert.strictEqual(ws.getRange2("B1").getValue(), "text", "B1: String value");
-	// 			assert.strictEqual(ws.getRange2("C1").getValue(), "TRUE", "C1: Boolean TRUE");
-	// 			assert.strictEqual(ws.getRange2("A2").getValue(), "200", "A2: Number value 200");
-	// 			assert.strictEqual(ws.getRange2("B2").getValue(), "#N/A", "B2: Error value");
-	// 			assert.strictEqual(ws.getRange2("C2").getValue(), "FALSE", "C2: Boolean FALSE");
+				// Check mixed data types
+				assert.strictEqual(ws.getRange2("A1").getValue(), "100", "A1: Number value 100");
+				assert.strictEqual(ws.getRange2("B1").getValue(), "text", "B1: String value");
+				assert.strictEqual(ws.getRange2("C1").getValue(), "TRUE", "C1: Boolean TRUE");
+				assert.strictEqual(ws.getRange2("A2").getValue(), "200", "A2: Number value 200");
+				assert.strictEqual(ws.getRange2("B2").getValue(), "#N/A", "B2: Error value");
+				assert.strictEqual(ws.getRange2("C2").getValue(), "FALSE", "C2: Boolean FALSE");
 
-	// 			callback();
-	// 			wb.asyncFormulasManager.endCallback = null;
-	// 		};
+				callback();
+				wb.asyncFormulasManager.endCallback = null;
+			};
 
-	// 		let fillRange = ws.getRange2("A1");
-	// 		let flags = wsView._getCellFlags(0, 0);
-	// 		flags.ctrlKey = false;
-	// 		flags.shiftKey = false;
+			let fillRange = ws.getRange2("A1");
+			let flags = wsView._getCellFlags(0, 0);
+			flags.ctrlKey = false;
+			flags.shiftKey = false;
 
-	// 		wsView.setSelection(fillRange.bbox);
-	// 		let fragment = ws.getRange2("A1").getValueForEdit2();
-	// 		fragment[0].setFragmentText("=ASYNCFUNC()");
-	// 		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+			wsView.setSelection(fillRange.bbox);
+			let fragment = ws.getRange2("A1").getValueForEdit2();
+			fragment[0].setFragmentText("=ASYNCFUNC()");
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
 
-	// 		let resCell = getCell(ws.getRange2("A1"));
-	// 		let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+			let resCell = getCell(ws.getRange2("A1"));
+			let ref = resCell.getFormulaParsed().getArrayFormulaRef();
 
-	// 		assert.ok(ref === null, "A1: No ref before promise resolution");
-	// 		assert.strictEqual(ws.getRange2("A1").getValue(), "#BUSY!", "A1: Shows #BUSY!");
+			assert.ok(ref === null, "A1: No ref before promise resolution");
+			assert.strictEqual(ws.getRange2("A1").getValue(), "#BUSY!", "A1: Shows #BUSY!");
 
-	// 	}, function () {
-	// 		done();
-	// 		ws.getRange2("A1:Z10000").cleanAll();
-	// 	});
-	// });
+		}, function () {
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+	QUnit.test('Async formula - Mixed numbers and strings', function(assert) {
+		const done = assert.async();
+		
+		const asyncFunc = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve([
+						[100, "text1", 200],
+						["text2", 300, "text3"],
+						[400, "text4", 500]
+					]);
+				}, 1);
+			});
+		};
+
+		initParamsCustomFunction(null, "any[][]");
+
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+			api.addCustomFunction(asyncFunc, oJsDoc[0]);
+
+			wb.asyncFormulasManager.endCallback = function () {
+				let resCell = getCell(ws.getRange2("A1"));
+				let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+				assert.ok(ref !== null, "A1: Formula has ref after promise resolution");
+				assert.strictEqual(ref.getHeight(), 3, "A1: Array height is 3");
+				assert.strictEqual(ref.getWidth(), 3, "A1: Array width is 3");
+				
+				// Check mixed values
+				assert.strictEqual(ws.getRange2("A1").getValue(), "100", "A1: Number 100");
+				assert.strictEqual(ws.getRange2("B1").getValue(), "text1", "B1: String text1");
+				assert.strictEqual(ws.getRange2("C1").getValue(), "200", "C1: Number 200");
+				
+				assert.strictEqual(ws.getRange2("A2").getValue(), "text2", "A2: String text2");
+				assert.strictEqual(ws.getRange2("B2").getValue(), "300", "B2: Number 300");
+				assert.strictEqual(ws.getRange2("C2").getValue(), "text3", "C2: String text3");
+				
+				assert.strictEqual(ws.getRange2("A3").getValue(), "400", "A3: Number 400");
+				assert.strictEqual(ws.getRange2("B3").getValue(), "text4", "B3: String text4");
+				assert.strictEqual(ws.getRange2("C3").getValue(), "500", "C3: Number 500");
+
+				callback();
+				wb.asyncFormulasManager.endCallback = null;
+			};
+
+			let fillRange = ws.getRange2("A1");
+			let flags = wsView._getCellFlags(0, 0);
+			flags.ctrlKey = false;
+			flags.shiftKey = false;
+
+			wsView.setSelection(fillRange.bbox);
+			let fragment = ws.getRange2("A1").getValueForEdit2();
+			fragment[0].setFragmentText("=ASYNCFUNC()");
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+			assert.strictEqual(ws.getRange2("A1").getValue(), "#BUSY!", "A1: Shows #BUSY! before resolution");
+
+		}, function () {
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+	QUnit.test('Async formula - Mixed booleans and numbers', function(assert) {
+		const done = assert.async();
+		
+		const asyncFunc = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve([
+						[true, 100, false],
+						[200, false, 300],
+						[true, 400, true]
+					]);
+				}, 1);
+			});
+		};
+
+		initParamsCustomFunction(null, "any[][]");
+
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+			api.addCustomFunction(asyncFunc, oJsDoc[0]);
+
+			wb.asyncFormulasManager.endCallback = function () {
+				let resCell = getCell(ws.getRange2("A1"));
+				let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+				assert.ok(ref !== null, "A1: Formula has ref");
+				assert.strictEqual(ref.getHeight(), 3, "A1: Array height is 3");
+				assert.strictEqual(ref.getWidth(), 3, "A1: Array width is 3");
+				
+				// Check mixed boolean/number values
+				assert.strictEqual(ws.getRange2("A1").getValue(), "TRUE", "A1: Boolean TRUE");
+				assert.strictEqual(ws.getRange2("B1").getValue(), "100", "B1: Number 100");
+				assert.strictEqual(ws.getRange2("C1").getValue(), "FALSE", "C1: Boolean FALSE");
+				
+				assert.strictEqual(ws.getRange2("A2").getValue(), "200", "A2: Number 200");
+				assert.strictEqual(ws.getRange2("B2").getValue(), "FALSE", "B2: Boolean FALSE");
+				assert.strictEqual(ws.getRange2("C2").getValue(), "300", "C2: Number 300");
+				
+				assert.strictEqual(ws.getRange2("A3").getValue(), "TRUE", "A3: Boolean TRUE");
+				assert.strictEqual(ws.getRange2("B3").getValue(), "400", "B3: Number 400");
+				assert.strictEqual(ws.getRange2("C3").getValue(), "TRUE", "C3: Boolean TRUE");
+
+				callback();
+				wb.asyncFormulasManager.endCallback = null;
+			};
+
+			let fillRange = ws.getRange2("A1");
+			let flags = wsView._getCellFlags(0, 0);
+			flags.ctrlKey = false;
+			flags.shiftKey = false;
+
+			wsView.setSelection(fillRange.bbox);
+			let fragment = ws.getRange2("A1").getValueForEdit2();
+			fragment[0].setFragmentText("=ASYNCFUNC()");
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		}, function () {
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+	QUnit.test('Async formula - Mixed with error values', function(assert) {
+		const done = assert.async();
+		
+		const asyncFunc = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve([
+						[100, "#DIV/0!", 200],
+						["#N/A", 300, "#REF!"],
+						["#VALUE!", "#NUM!", 400]
+					]);
+				}, 1);
+			});
+		};
+
+		initParamsCustomFunction(null, "any[][]");
+
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+			api.addCustomFunction(asyncFunc, oJsDoc[0]);
+
+			wb.asyncFormulasManager.endCallback = function () {
+				let resCell = getCell(ws.getRange2("A1"));
+				let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+				assert.ok(ref !== null, "A1: Formula has ref");
+				
+				// Check mixed values with errors
+				assert.strictEqual(ws.getRange2("A1").getValue(), "100", "A1: Number 100");
+				assert.strictEqual(ws.getRange2("B1").getValue(), "#DIV/0!", "B1: Error #DIV/0!");
+				assert.strictEqual(ws.getRange2("C1").getValue(), "200", "C1: Number 200");
+				
+				assert.strictEqual(ws.getRange2("A2").getValue(), "#N/A", "A2: Error #N/A");
+				assert.strictEqual(ws.getRange2("B2").getValue(), "300", "B2: Number 300");
+				assert.strictEqual(ws.getRange2("C2").getValue(), "#REF!", "C2: Error #REF!");
+				
+				assert.strictEqual(ws.getRange2("A3").getValue(), "#VALUE!", "A3: Error #VALUE!");
+				assert.strictEqual(ws.getRange2("B3").getValue(), "#NUM!", "B3: Error #NUM!");
+				assert.strictEqual(ws.getRange2("C3").getValue(), "400", "C3: Number 400");
+
+				callback();
+				wb.asyncFormulasManager.endCallback = null;
+			};
+
+			let fillRange = ws.getRange2("A1");
+			let flags = wsView._getCellFlags(0, 0);
+			flags.ctrlKey = false;
+			flags.shiftKey = false;
+
+			wsView.setSelection(fillRange.bbox);
+			let fragment = ws.getRange2("A1").getValueForEdit2();
+			fragment[0].setFragmentText("=ASYNCFUNC()");
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		}, function () {
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+	QUnit.test('Async formula - Mixed with empty/null values', function(assert) {
+		const done = assert.async();
+		
+		const asyncFunc = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve([
+						[100, null, 200],
+						["", 300, undefined],
+						[null, 400, ""]
+					]);
+				}, 1);
+			});
+		};
+
+		initParamsCustomFunction(null, "any[][]");
+
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+			api.addCustomFunction(asyncFunc, oJsDoc[0]);
+
+			wb.asyncFormulasManager.endCallback = function () {
+				let resCell = getCell(ws.getRange2("A1"));
+				let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+				assert.ok(ref !== null, "A1: Formula has ref");
+				
+				// Check values with nulls/empty strings
+				assert.strictEqual(ws.getRange2("A1").getValue(), "100", "A1: Number 100");
+				assert.ok(ws.getRange2("B1").getValue() === "" || ws.getRange2("B1").getValue() === "0", "B1: Empty/null converted");
+				assert.strictEqual(ws.getRange2("C1").getValue(), "200", "C1: Number 200");
+				
+				assert.ok(ws.getRange2("A2").getValue() === "", "A2: Empty string");
+				assert.strictEqual(ws.getRange2("B2").getValue(), "300", "B2: Number 300");
+				assert.ok(ws.getRange2("C2").getValue() === "" || ws.getRange2("C2").getValue() === "0", "C2: Undefined converted");
+				
+				assert.ok(ws.getRange2("A3").getValue() === "" || ws.getRange2("A3").getValue() === "0", "A3: Null converted");
+				assert.strictEqual(ws.getRange2("B3").getValue(), "400", "B3: Number 400");
+				assert.strictEqual(ws.getRange2("C3").getValue(), "", "C3: Empty string");
+
+				callback();
+				wb.asyncFormulasManager.endCallback = null;
+			};
+
+			let fillRange = ws.getRange2("A1");
+			let flags = wsView._getCellFlags(0, 0);
+			flags.ctrlKey = false;
+			flags.shiftKey = false;
+
+			wsView.setSelection(fillRange.bbox);
+			let fragment = ws.getRange2("A1").getValueForEdit2();
+			fragment[0].setFragmentText("=ASYNCFUNC()");
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		}, function () {
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+	QUnit.test('Async formula - All data types mixed', function(assert) {
+		const done = assert.async();
+		
+		const asyncFunc = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve([
+						[100, "text", true, "#N/A"],
+						[false, 200, "#REF!", "string"],
+						["", null, 300, true],
+						[400, "#DIV/0!", false, "end"]
+					]);
+				}, 1);
+			});
+		};
+
+		initParamsCustomFunction(null, "any[][]");
+
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+			api.addCustomFunction(asyncFunc, oJsDoc[0]);
+
+			wb.asyncFormulasManager.endCallback = function () {
+				let resCell = getCell(ws.getRange2("A1"));
+				let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+				assert.ok(ref !== null, "A1: Formula has ref");
+				assert.strictEqual(ref.getHeight(), 4, "A1: Array height is 4");
+				assert.strictEqual(ref.getWidth(), 4, "A1: Array width is 4");
+				
+				// Row 1: number, string, boolean, error
+				assert.strictEqual(ws.getRange2("A1").getValue(), "100", "A1: Number");
+				assert.strictEqual(ws.getRange2("B1").getValue(), "text", "B1: String");
+				assert.strictEqual(ws.getRange2("C1").getValue(), "TRUE", "C1: Boolean");
+				assert.strictEqual(ws.getRange2("D1").getValue(), "#N/A", "D1: Error");
+				
+				// Row 2: boolean, number, error, string
+				assert.strictEqual(ws.getRange2("A2").getValue(), "FALSE", "A2: Boolean");
+				assert.strictEqual(ws.getRange2("B2").getValue(), "200", "B2: Number");
+				assert.strictEqual(ws.getRange2("C2").getValue(), "#REF!", "C2: Error");
+				assert.strictEqual(ws.getRange2("D2").getValue(), "string", "D2: String");
+				
+				// Row 3: empty, null, number, boolean
+				assert.strictEqual(ws.getRange2("A3").getValue(), "", "A3: Empty");
+				assert.ok(ws.getRange2("B3").getValue() === "" || ws.getRange2("B3").getValue() === "0", "B3: Null");
+				assert.strictEqual(ws.getRange2("C3").getValue(), "300", "C3: Number");
+				assert.strictEqual(ws.getRange2("D3").getValue(), "TRUE", "D3: Boolean");
+				
+				// Row 4: number, error, boolean, string
+				assert.strictEqual(ws.getRange2("A4").getValue(), "400", "A4: Number");
+				assert.strictEqual(ws.getRange2("B4").getValue(), "#DIV/0!", "B4: Error");
+				assert.strictEqual(ws.getRange2("C4").getValue(), "FALSE", "C4: Boolean");
+				assert.strictEqual(ws.getRange2("D4").getValue(), "end", "D4: String");
+
+				callback();
+				wb.asyncFormulasManager.endCallback = null;
+			};
+
+			let fillRange = ws.getRange2("A1");
+			let flags = wsView._getCellFlags(0, 0);
+			flags.ctrlKey = false;
+			flags.shiftKey = false;
+
+			wsView.setSelection(fillRange.bbox);
+			let fragment = ws.getRange2("A1").getValueForEdit2();
+			fragment[0].setFragmentText("=ASYNCFUNC()");
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		}, function () {
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+	QUnit.test('Async formula - Mixed types in single row', function(assert) {
+		const done = assert.async();
+		
+		const asyncFunc = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve([[100, "text", true, "#N/A", 200, false, "end"]]);
+				}, 1);
+			});
+		};
+
+		initParamsCustomFunction(null, "any[][]");
+
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+			api.addCustomFunction(asyncFunc, oJsDoc[0]);
+
+			wb.asyncFormulasManager.endCallback = function () {
+				let resCell = getCell(ws.getRange2("A1"));
+				let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+				assert.ok(ref !== null, "A1: Formula has ref");
+				assert.strictEqual(ref.getHeight(), 1, "A1: Array height is 1");
+				assert.strictEqual(ref.getWidth(), 7, "A1: Array width is 7");
+				
+				assert.strictEqual(ws.getRange2("A1").getValue(), "100", "A1: Number");
+				assert.strictEqual(ws.getRange2("B1").getValue(), "text", "B1: String");
+				assert.strictEqual(ws.getRange2("C1").getValue(), "TRUE", "C1: Boolean");
+				assert.strictEqual(ws.getRange2("D1").getValue(), "#N/A", "D1: Error");
+				assert.strictEqual(ws.getRange2("E1").getValue(), "200", "E1: Number");
+				assert.strictEqual(ws.getRange2("F1").getValue(), "FALSE", "F1: Boolean");
+				assert.strictEqual(ws.getRange2("G1").getValue(), "end", "G1: String");
+				
+				assert.strictEqual(ws.getRange2("A2").getValue(), "", "A2: Empty (outside array)");
+
+				callback();
+				wb.asyncFormulasManager.endCallback = null;
+			};
+
+			let fillRange = ws.getRange2("A1");
+			let flags = wsView._getCellFlags(0, 0);
+			flags.ctrlKey = false;
+			flags.shiftKey = false;
+
+			wsView.setSelection(fillRange.bbox);
+			let fragment = ws.getRange2("A1").getValueForEdit2();
+			fragment[0].setFragmentText("=ASYNCFUNC()");
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		}, function () {
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+	QUnit.test('Async formula - Mixed types in single column', function(assert) {
+		const done = assert.async();
+		
+		const asyncFunc = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve([
+						[100],
+						["text"],
+						[true],
+						["#N/A"],
+						[false],
+						[200],
+						["end"]
+					]);
+				}, 1);
+			});
+		};
+
+		initParamsCustomFunction(null, "any[][]");
+
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+			api.addCustomFunction(asyncFunc, oJsDoc[0]);
+
+			wb.asyncFormulasManager.endCallback = function () {
+				let resCell = getCell(ws.getRange2("A1"));
+				let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+				assert.ok(ref !== null, "A1: Formula has ref");
+				assert.strictEqual(ref.getHeight(), 7, "A1: Array height is 7");
+				assert.strictEqual(ref.getWidth(), 1, "A1: Array width is 1");
+				
+				assert.strictEqual(ws.getRange2("A1").getValue(), "100", "A1: Number");
+				assert.strictEqual(ws.getRange2("A2").getValue(), "text", "A2: String");
+				assert.strictEqual(ws.getRange2("A3").getValue(), "TRUE", "A3: Boolean");
+				assert.strictEqual(ws.getRange2("A4").getValue(), "#N/A", "A4: Error");
+				assert.strictEqual(ws.getRange2("A5").getValue(), "FALSE", "A5: Boolean");
+				assert.strictEqual(ws.getRange2("A6").getValue(), "200", "A6: Number");
+				assert.strictEqual(ws.getRange2("A7").getValue(), "end", "A7: String");
+				
+				assert.strictEqual(ws.getRange2("B1").getValue(), "", "B1: Empty (outside array)");
+
+				callback();
+				wb.asyncFormulasManager.endCallback = null;
+			};
+
+			let fillRange = ws.getRange2("A1");
+			let flags = wsView._getCellFlags(0, 0);
+			flags.ctrlKey = false;
+			flags.shiftKey = false;
+
+			wsView.setSelection(fillRange.bbox);
+			let fragment = ws.getRange2("A1").getValueForEdit2();
+			fragment[0].setFragmentText("=ASYNCFUNC()");
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		}, function () {
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+	QUnit.test('Async formula - CSE with mixed data types', function(assert) {
+		const done = assert.async();
+		
+		const asyncFunc = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve([
+						[100, "text1", true],
+						["text2", 200, false],
+						[true, "#N/A", 300]
+					]);
+				}, 1);
+			});
+		};
+
+		initParamsCustomFunction(null, "any[][]");
+
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+			api.addCustomFunction(asyncFunc, oJsDoc[0]);
+
+			wb.asyncFormulasManager.endCallback = function () {
+				let resCell = getCell(ws.getRange2("A1"));
+				let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+				assert.ok(ref !== null, "A1: Formula has ref");
+				assert.strictEqual(ref.getHeight(), 2, "A1: Array height constrained to 2 (CSE)");
+				assert.strictEqual(ref.getWidth(), 2, "A1: Array width constrained to 2 (CSE)");
+				
+				// Check values within CSE selection
+				assert.strictEqual(ws.getRange2("A1").getValue(), "100", "A1: Number");
+				assert.strictEqual(ws.getRange2("B1").getValue(), "text1", "B1: String");
+				assert.strictEqual(ws.getRange2("A2").getValue(), "text2", "A2: String");
+				assert.strictEqual(ws.getRange2("B2").getValue(), "200", "B2: Number");
+				
+				// Values outside CSE should be empty
+				assert.strictEqual(ws.getRange2("C1").getValue(), "", "C1: Empty (outside CSE)");
+				assert.strictEqual(ws.getRange2("A3").getValue(), "", "A3: Empty (outside CSE)");
+
+				callback();
+				wb.asyncFormulasManager.endCallback = null;
+			};
+
+			let fillRange = ws.getRange2("A1:B2");
+			let flags = wsView._getCellFlags(0, 0);
+			flags.ctrlKey = true;
+			flags.shiftKey = true;
+
+			wsView.setSelection(fillRange.bbox);
+			let fragment = ws.getRange2("A1:B2").getValueForEdit2();
+			fragment[0].setFragmentText("=ASYNCFUNC()");
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		}, function () {
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+	QUnit.test('Async formula - All errors array', function(assert) {
+		const done = assert.async();
+		
+		const asyncFunc = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve([
+						["#N/A", "#REF!", "#DIV/0!"],
+						["#VALUE!", "#NUM!", "#NAME?"],
+						["#NULL!", "#N/A", "#REF!"]
+					]);
+				}, 1);
+			});
+		};
+
+		initParamsCustomFunction(null, "any[][]");
+
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+			api.addCustomFunction(asyncFunc, oJsDoc[0]);
+
+			wb.asyncFormulasManager.endCallback = function () {
+				let resCell = getCell(ws.getRange2("A1"));
+				let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+				assert.ok(ref !== null, "A1: Formula has ref");
+				
+				// All cells should contain errors
+				assert.strictEqual(ws.getRange2("A1").getValue(), "#N/A", "A1: Error");
+				assert.strictEqual(ws.getRange2("B1").getValue(), "#REF!", "B1: Error");
+				assert.strictEqual(ws.getRange2("C1").getValue(), "#DIV/0!", "C1: Error");
+				
+				assert.strictEqual(ws.getRange2("A2").getValue(), "#VALUE!", "A2: Error");
+				assert.strictEqual(ws.getRange2("B2").getValue(), "#NUM!", "B2: Error");
+				assert.strictEqual(ws.getRange2("C2").getValue(), "#NAME?", "C2: Error");
+				
+				assert.strictEqual(ws.getRange2("A3").getValue(), "#NULL!", "A3: Error");
+				assert.strictEqual(ws.getRange2("B3").getValue(), "#N/A", "B3: Error");
+				assert.strictEqual(ws.getRange2("C3").getValue(), "#REF!", "C3: Error");
+
+				callback();
+				wb.asyncFormulasManager.endCallback = null;
+			};
+
+			let fillRange = ws.getRange2("A1");
+			let flags = wsView._getCellFlags(0, 0);
+			flags.ctrlKey = false;
+			flags.shiftKey = false;
+
+			wsView.setSelection(fillRange.bbox);
+			let fragment = ws.getRange2("A1").getValueForEdit2();
+			fragment[0].setFragmentText("=ASYNCFUNC()");
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		}, function () {
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+	QUnit.test('Async formula - Sparse mixed array (many nulls)', function(assert) {
+		const done = assert.async();
+		
+		const asyncFunc = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve([
+						[100, null, null, "text"],
+						[null, true, null, null],
+						[null, null, "#N/A", null],
+						["end", null, null, 200]
+					]);
+				}, 1);
+			});
+		};
+
+		initParamsCustomFunction(null, "any[][]");
+
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+			api.addCustomFunction(asyncFunc, oJsDoc[0]);
+
+			wb.asyncFormulasManager.endCallback = function () {
+				let resCell = getCell(ws.getRange2("A1"));
+				let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+				assert.ok(ref !== null, "A1: Formula has ref");
+				
+				// Check sparse array with nulls
+				assert.strictEqual(ws.getRange2("A1").getValue(), "100", "A1: Number");
+				assert.ok(ws.getRange2("B1").getValue() === "" || ws.getRange2("B1").getValue() === "0", "B1: Null");
+				assert.ok(ws.getRange2("C1").getValue() === "" || ws.getRange2("C1").getValue() === "0", "C1: Null");
+				assert.strictEqual(ws.getRange2("D1").getValue(), "text", "D1: String");
+				
+				assert.ok(ws.getRange2("A2").getValue() === "" || ws.getRange2("A2").getValue() === "0", "A2: Null");
+				assert.strictEqual(ws.getRange2("B2").getValue(), "TRUE", "B2: Boolean");
+				assert.ok(ws.getRange2("C2").getValue() === "" || ws.getRange2("C2").getValue() === "0", "C2: Null");
+				assert.ok(ws.getRange2("D2").getValue() === "" || ws.getRange2("D2").getValue() === "0", "D2: Null");
+				
+				assert.ok(ws.getRange2("A3").getValue() === "" || ws.getRange2("A3").getValue() === "0", "A3: Null");
+				assert.ok(ws.getRange2("B3").getValue() === "" || ws.getRange2("B3").getValue() === "0", "B3: Null");
+				assert.strictEqual(ws.getRange2("C3").getValue(), "#N/A", "C3: Error");
+				assert.ok(ws.getRange2("D3").getValue() === "" || ws.getRange2("D3").getValue() === "0", "D3: Null");
+				
+				assert.strictEqual(ws.getRange2("A4").getValue(), "end", "A4: String");
+				assert.ok(ws.getRange2("B4").getValue() === "" || ws.getRange2("B4").getValue() === "0", "B4: Null");
+				assert.ok(ws.getRange2("C4").getValue() === "" || ws.getRange2("C4").getValue() === "0", "C4: Null");
+				assert.strictEqual(ws.getRange2("D4").getValue(), "200", "D4: Number");
+
+				callback();
+				wb.asyncFormulasManager.endCallback = null;
+			};
+
+			let fillRange = ws.getRange2("A1");
+			let flags = wsView._getCellFlags(0, 0);
+			flags.ctrlKey = false;
+			flags.shiftKey = false;
+
+			wsView.setSelection(fillRange.bbox);
+			let fragment = ws.getRange2("A1").getValueForEdit2();
+			fragment[0].setFragmentText("=ASYNCFUNC()");
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		}, function () {
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
 
 	QUnit.test('Async formula - Empty array handling', function(assert) {
 		const done = assert.async();

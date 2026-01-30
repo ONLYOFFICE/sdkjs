@@ -1,4 +1,4 @@
-/*
+﻿/*
  * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
@@ -20257,6 +20257,9 @@ function RangeDataManagerElem(bbox, data)
 			this.promises.push(oPromise);
 			return oPromise;
 		}
+		
+		let checkOnError = true; // by default
+
 		switch (_type) {
 			case "number":
 				if (typeof val === "object") {
@@ -20290,28 +20293,30 @@ function RangeDataManagerElem(bbox, data)
 				if (Asc.typeOf(val) !== "array" || !val[0]) {
 					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
 				} else {
-					res = this._tocArray(val, AscCommonExcel.cElementType.number, true);
+					res = this._tocArray(val, AscCommonExcel.cElementType.number, checkOnError);
 				}
 				break;
 			case "string[][]":
+				checkOnError = false;
 				if (Asc.typeOf(val) !== "array" || !val[0]) {
 					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
 				} else {
-					res = this._tocArray(val, AscCommonExcel.cElementType.string, true);
+					res = this._tocArray(val, AscCommonExcel.cElementType.string, checkOnError);
 				}
 				break;
 			case "boolean[][]":
 				if (Asc.typeOf(val) !== "array" || !val[0]) {
 					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
 				} else {
-					res = this._tocArray(val, AscCommonExcel.cElementType.bool, true);
+					res = this._tocArray(val, AscCommonExcel.cElementType.bool, checkOnError);
 				}
 				break;
 			case "any[][]":
 				if (Asc.typeOf(val) !== "array" || !val[0]) {
 					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
 				} else {
-					res = this._tocArray(val, null, true);
+					checkOnError = false;
+					res = this._tocArray(val, null, checkOnError);
 				}
 				break;
 			default:
@@ -20384,6 +20389,10 @@ function RangeDataManagerElem(bbox, data)
 
 		for (var i = 0; i < array.length; i++) {
 			for (var j = 0; j < array[i].length; j++) {
+				if (array[i][j] === null || array[i][j] === undefined) {
+					array[i][j] = 0;
+				}
+
 				if (typeof array[i][j] === "object") {
 					return new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
 				}
