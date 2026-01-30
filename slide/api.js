@@ -753,17 +753,26 @@
 		}
 	};
 
-	asc_docs_api.prototype.isMasterMode = function() {
+	asc_docs_api.prototype.IsMasterSlideMode = function() {
 		return this.presentationViewMode === Asc.c_oAscPresentationViewMode.masterSlide && !this.isSlideShow();
 	};
-	asc_docs_api.prototype.isNormalMode = function() {
+	asc_docs_api.prototype.IsSlidePageMode = function() {
 		return this.presentationViewMode === Asc.c_oAscPresentationViewMode.normal && !this.isSlideShow();
 	};
-	asc_docs_api.prototype.asc_IsMasterMode = function() {
-		return this.isMasterMode();
+	asc_docs_api.prototype.IsNotesPageMode = function() {
+		return this.presentationViewMode === Asc.c_oAscPresentationViewMode.notesPage && !this.isSlideShow();
+	};
+	asc_docs_api.prototype.IsNotesMasterMode = function() {
+		return this.presentationViewMode === Asc.c_oAscPresentationViewMode.notesMaster && !this.isSlideShow();
+	};
+	asc_docs_api.prototype.IsHandoutMasterMode = function() {
+		return this.presentationViewMode === Asc.c_oAscPresentationViewMode.notesMaster && !this.isSlideShow();
+	};
+	asc_docs_api.prototype.asc_IsMasterSlideMode = function() {
+		return this.IsMasterSlideMode();
 	};
 	asc_docs_api.prototype.asc_AddMasterSlide = function() {
-		if(!this.isMasterMode()) return;
+		if(!this.IsMasterSlideMode()) return;
 
 
 		let oLogicDocument = this.private_GetLogicDocument();
@@ -771,13 +780,13 @@
 		oLogicDocument.AddNewMasterSlide();
 	};
 	asc_docs_api.prototype.asc_AddSlideLayout = function() {
-		if(!this.isMasterMode()) return;
+		if(!this.IsMasterSlideMode()) return;
 		let oLogicDocument = this.private_GetLogicDocument();
 		if(!oLogicDocument) return;
 		oLogicDocument.AddNewLayout();
 	};
 	asc_docs_api.prototype.asc_StartAddPlaceholder = function(nType, bVertical, bStart) {
-		if(!this.isMasterMode()) return;
+		if(!this.IsMasterSlideMode()) return;
 
 		let oLogicDocument = this.private_GetLogicDocument();
 		if(!oLogicDocument) return;
@@ -786,7 +795,7 @@
 		oLogicDocument.StartAddShape("textRect", bStart, nType, bVertical);
 	};
 	asc_docs_api.prototype.asc_setLayoutTitle = function(bVal) {
-		if(!this.isMasterMode()) return;
+		if(!this.IsMasterSlideMode()) return;
 
 		let oLogicDocument = this.private_GetLogicDocument();
 		if(!oLogicDocument) return;
@@ -795,7 +804,7 @@
 		oLogicDocument.SetLayoutTitle(bVal);
 	};
 	asc_docs_api.prototype.asc_setLayoutFooter = function(bVal) {
-		if(!this.isMasterMode()) return;
+		if(!this.IsMasterSlideMode()) return;
 
 		let oLogicDocument = this.private_GetLogicDocument();
 		if(!oLogicDocument) return;
@@ -7942,7 +7951,7 @@ background-repeat: no-repeat;\
 	{
 		if(!oTransition)
 			return;
-		if(this.isMasterMode()) return;
+		if(this.IsMasterSlideMode()) return;
 
 		const oPresentation = this.private_GetLogicDocument();
 		if(!oPresentation)
@@ -7980,7 +7989,7 @@ background-repeat: no-repeat;\
 		if(oPresentation.IsEmpty())
 			return;
 
-		if(this.isMasterMode())
+		if(this.IsMasterSlideMode())
 			return;
 		const oCurSlide = oPresentation.GetCurrentSlide();
 		if(!oCurSlide)
@@ -9988,7 +9997,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_DuplicateLayout"] = asc_docs_api.prototype.asc_DuplicateLayout;
 	asc_docs_api.prototype["asc_CanDeleteMaster"] = asc_docs_api.prototype.asc_CanDeleteMaster;
 	asc_docs_api.prototype["asc_CanDeleteLayout"] = asc_docs_api.prototype.asc_CanDeleteLayout;
-	asc_docs_api.prototype["asc_IsMasterMode"] = asc_docs_api.prototype.asc_IsMasterMode;
+	asc_docs_api.prototype["asc_IsMasterSlideMode"] = asc_docs_api.prototype.asc_IsMasterSlideMode;
 
 	asc_docs_api.prototype["asc_setViewerTargetType"] = asc_docs_api.prototype.asc_setViewerTargetType;
 

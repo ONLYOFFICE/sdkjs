@@ -5630,7 +5630,16 @@
 	baseEditorsApi.prototype.getAnnotations = function() {
 		return null;
 	};
-	baseEditorsApi.prototype.isMasterMode = function(){
+	baseEditorsApi.prototype.IsMasterSlideMode = function(){
+		return false;
+	};
+	baseEditorsApi.prototype.IsNotesPageMode = function() {
+		return false;
+	};
+	baseEditorsApi.prototype.IsNotesMasterMode = function() {
+		return false;
+	};
+	baseEditorsApi.prototype.IsHandoutMasterMode = function() {
 		return false;
 	};
 	baseEditorsApi.prototype.getSelectionState = function() {

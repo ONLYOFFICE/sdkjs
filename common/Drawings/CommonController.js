@@ -3424,7 +3424,7 @@
 						if (this.document && content.Parent && content.Parent instanceof AscFormat.CTextBody)
 							return false;
 
-						if(Asc.editor.isMasterMode()) {
+						if(Asc.editor.IsMasterSlideMode()) {
 							return false;
 						}
 						return content.CanAddHyperlink(bCheckInHyperlink);

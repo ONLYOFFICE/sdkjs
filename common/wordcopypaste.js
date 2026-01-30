@@ -3895,7 +3895,7 @@ PasteProcessor.prototype =
 
 	_setSpecialPasteShowOptionsPresentation: function(props){
 		let presentation = editor.WordControl.m_oLogicDocument;
-		if(presentation.IsMasterMode()) return;
+		if(presentation.IsMasterSlideMode()) return;
 		let stateSelection = presentation.GetSelectionState();
 		let curPage = stateSelection.CurPage;
 		let pos = presentation.GetTargetPosition();

@@ -2972,7 +2972,7 @@ function CDemonstrationManager(htmlpage)
     this.Start = function(main_div_id, start_slide_num, is_play_mode, is_no_fullscreen)
     {
         let nStartSlideNum = start_slide_num;
-        if(Asc.editor.isMasterMode())
+        if(Asc.editor.IsMasterSlideMode())
         {
             nStartSlideNum = 0;
             this.StartSlideNum = nStartSlideNum;
@@ -3499,7 +3499,7 @@ function CDemonstrationManager(htmlpage)
 		}
 
 		this.StartSlideNum = -1;
-        if(this.HtmlPage.m_oApi.isMasterMode())
+        if(this.HtmlPage.m_oApi.IsMasterSlideMode())
         {
             if(this.StartSlideObject)
             {

@@ -4746,7 +4746,7 @@
 		this.m_oAnimPaneApi.timeline.Control.timeline.changeTimelineScale(bZoomOut);
 	};
 	CEditorPage.prototype.IsAnimPaneSupported = function () {
-		return this.IsSupportAnimPane && !this.m_oApi.isMasterMode();
+		return this.IsSupportAnimPane && !this.m_oApi.IsMasterSlideMode();
 	};
 
 	// Notes
@@ -4780,7 +4780,7 @@
 	CEditorPage.prototype.setAnimPaneEnable = function (bEnabled) {
 	};
 	CEditorPage.prototype.IsNotesSupported = function () {
-		return this.IsSupportNotes && !this.m_oApi.isMasterMode();
+		return this.IsSupportNotes && !this.m_oApi.IsMasterSlideMode();
 	};
 
 	// Media player

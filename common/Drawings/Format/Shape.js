@@ -5669,8 +5669,7 @@
 			//}
 
 			let bMasterPh = false;
-			if(Asc.editor.isMasterMode &&
-				Asc.editor.isMasterMode() &&
+			if(Asc.editor.IsMasterSlideMode() &&
 				this.isPlaceholder && this.isPlaceholder()) {
 				bMasterPh = true;
 			}

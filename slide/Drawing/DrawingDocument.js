@@ -2970,7 +2970,7 @@ function CDrawingDocument()
 
 		for (var i = start; i <= end; i++)
 		{
-			if ((true === printerOptions && !this.m_oLogicDocument.IsMasterMode()) && !this.m_oWordControl.Thumbnails.isSelectedPage(i))
+			if ((true === printerOptions && !this.m_oLogicDocument.IsMasterSlideMode()) && !this.m_oWordControl.Thumbnails.isSelectedPage(i))
 				continue;
 
 			if (oPresentation.IsVisioEditor())
@@ -4211,8 +4211,8 @@ function CThumbnailsManager(editorPage)
 	this.m_oWordControl = editorPage;
 	var oThis = this;
 
-	this.IsMasterMode = function() {
-		return Asc.editor.isMasterMode();
+	this.IsMasterSlideMode = function() {
+		return Asc.editor.IsMasterSlideMode();
 	};
 	// init
 	this.Init = function()
@@ -6377,7 +6377,7 @@ function CThumbnailsManager(editorPage)
 				cumulativeThumbnailLength += additionalLength;
 			}
 
-		} else if (this.IsMasterMode()) {
+		} else if (this.IsMasterSlideMode()) {
 			for (let nIdx = 0; nIdx < oPresentation.slideMasters.length; ++nIdx) {
 				const oMaster = oPresentation.slideMasters[nIdx];
 				const additionalLength = isHorizontalOrientation

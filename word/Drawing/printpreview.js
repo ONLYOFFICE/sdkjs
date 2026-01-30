@@ -361,24 +361,24 @@
 
 	const gap = 10;
 	const maxGap = 30;
-	const horizontalField = 20;
-	const verticalField = horizontalField * 2;
-
+	const fieldSize = 20;
 	CPresentationPrintPreview.prototype.drawHandouts = function (pageIndex, paperSizes, paperScale, graphics, options) {
-		const slidesCount = 6;
-		const align = 0;
+		const slidesCount = 9;
+		const align = 1;
+		const isDrawFrame = true;
+		const isDrawSlideNumber = true;
+
+		const scaledFieldSize = fieldSize * paperScale;
 		const countSlidesOnRow = this.getSlidesCountOnRow(slidesCount);
 		const rowsCount = Math.floor(slidesCount / countSlidesOnRow);
 		const w_mm = this.getPresentationWidthMM();
 		const h_mm = this.getPresentationHeightMM();
-		const paperWidth = paperSizes.width - horizontalField * paperScale * 2;
-		const paperHeight = paperSizes.height - verticalField * paperScale * 2;
+		const paperWidth = paperSizes.width - scaledFieldSize * 2;
+		const paperHeight = paperSizes.height - scaledFieldSize * 2;
 		const slidesWidth = w_mm * countSlidesOnRow;
 		const slidesHeight = h_mm * rowsCount;
 		const resultWidthWithMaxGap = slidesWidth + (countSlidesOnRow - 1) * maxGap;
 		const resultHeightWithMaxGap = slidesHeight + (rowsCount - 1) * maxGap;
-
-
 
 		let slideScale = Math.min(paperWidth / resultWidthWithMaxGap, paperHeight / resultHeightWithMaxGap);
 		let horizontalGap = this.getGap(paperWidth, w_mm, slideScale, countSlidesOnRow);
@@ -393,17 +393,71 @@
 
 		const resultWidth = countSlidesOnRow * w_mm * slideScale + (countSlidesOnRow - 1) * horizontalGap;
 		const resultHeight = rowsCount * h_mm * slideScale + (rowsCount - 1) * verticalGap;
-		const startX = paperSizes.x + horizontalField * paperScale + (paperWidth - resultWidth) / 2;
-		const startY = paperSizes.y + verticalField * paperScale + (paperHeight - resultHeight) / 2;
+		const startX = paperSizes.x + scaledFieldSize + (paperWidth - resultWidth) / 2;
+		const startY = paperSizes.y + scaledFieldSize + (paperHeight - resultHeight) / 2;
 
-		for (let i = 0; i < rowsCount; i += 1) {
-			const slideY = startY + i * verticalGap + h_mm * i * slideScale;
-			for (let j = 0; j < countSlidesOnRow; j += 1) {
-				const pageIndex = i * countSlidesOnRow + j;
-				const slideX = startX + j * w_mm * slideScale + j * horizontalGap;
-				this.drawPage(pageIndex, slideX, slideY, slideScale, graphics);
+		if (align === 0) {
+			for (let i = 0; i < rowsCount; i += 1) {
+				const slideY = startY + i * verticalGap + h_mm * i * slideScale;
+				for (let j = 0; j < countSlidesOnRow; j += 1) {
+					const pageIndex = i * countSlidesOnRow + j;
+					const slideX = startX + j * w_mm * slideScale + j * horizontalGap;
+					this.drawPage(pageIndex, slideX, slideY, slideScale, graphics);
+					if (isDrawFrame) {
+						this.drawFrame(graphics, slideX, slideY, w_mm * slideScale, h_mm * slideScale, {R: 0, G: 0, B: 0, A: 255});
+					}
+				}
+			}
+		} else {
+			for (let i = 0; i < countSlidesOnRow; i += 1) {
+				const slideX = startX + i * horizontalGap + w_mm * i * slideScale;
+				for (let j = 0; j < rowsCount; j += 1) {
+					const pageIndex = i * rowsCount + j;
+					const slideY = startY + j * h_mm * slideScale + j * verticalGap;
+					this.drawPage(pageIndex, slideX, slideY, slideScale, graphics);
+					if (isDrawFrame) {
+						this.drawFrame(graphics, slideX, slideY, w_mm * slideScale, h_mm * slideScale, {R: 0, G: 0, B: 0, A: 255});
+					}
+					if (isDrawSlideNumber) {
+
+					}
+				}
 			}
 		}
+	};
+	CPresentationPrintPreview.prototype.drawFrame = function(graphics, x, y, w, h, color) {
+		graphics.p_color(color.R, color.G, color.B, color.A);
+		graphics.p_width(0);
+		graphics._s();
+		graphics._m(x, y);
+		graphics._l(x + w, y);
+		graphics._l(x + w, y + h);
+		graphics._l(x, y + h);
+		graphics._z();
+		graphics.ds();
+	};
+	CPresentationPrintPreview.prototype.drawText = function(graphics, text, x, y, w, h) {
+		AscFormat.ExecuteNoHistory(function() {
+			const shape = new AscFormat.CShape();
+			shape.setBDeleted(false);
+			shape.extX = w;
+			shape.extY = h;
+			shape.createTextBody();
+			const bodyPr = new AscFormat.CBodyPr();
+			bodyPr.setInsets(0, 0, 0, 0);
+			shape.txBody.setBodyPr(bodyPr);
+			const content = shape.txBody.content;
+			shape.txBody.replaceContentFitText(text);
+			content.ApplyToAll = true;
+			content.AddToParagraph(new AscCommonWord.ParaTextPr({
+				FontSize  : 12,
+				FontFamily: {Name: "Arial", Index: -1},
+				Color     : AscWord.BLACK_COLOR
+			}), false);
+			content.ApplyToAll = false;
+			shape.recalculateContent();
+			shape.draw(graphics, );
+		}, this, []);
 	};
 	CPresentationPrintPreview.prototype.getGap = function(paperSize, slideSize, scale, repeatCount) {
 		return repeatCount === 1 ? 0: (paperSize - slideSize * repeatCount * scale) / (repeatCount - 1);
