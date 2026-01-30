@@ -3043,8 +3043,10 @@
 					streamInfos.push(null);
 				}, function () {
 					for (let i = 0; i < streamInfos.length; i++) {
-						if (!_promises[i].parserFormula.promiseResult) {
-							_promises[i].parserFormula.promiseResult = [];
+						let parsed = _promises[i].parserFormula;
+
+						if (!parsed.promiseResult) {
+							parsed.promiseResult = [];
 						}
 						let resStreamInfo;
 						if (streamInfos[i] == null) {
@@ -3052,11 +3054,42 @@
 						} else {
 							resStreamInfo = _promises[i].callback(streamInfos[i]);
 						}
-						_promises[i].parserFormula.promiseResult[_promises[i].index] = resStreamInfo;
-						if (_promises[i].parserFormula.parent) {
-							t.wb.dependencyFormulas.addToChangedCell(_promises[i].parserFormula.parent);
+						parsed.promiseResult[_promises[i].index] = resStreamInfo;
+
+						// let parsed = _promises[i].parserFormula;
+						if (parsed && !parsed.ref && resStreamInfo.type === cElementType.array) {
+							/*
+							 - we are getting formula result and set ref to the formula
+							 - although do .setValue to affected cells(ref)
+							 - the shift comes from the starting cell with the formula
+							*/
+							const arraySize = resStreamInfo.getDimensions();
+							const currentRow = parsed.parent.nRow;
+							const currentCol = parsed.parent.nCol;
+
+							const newR2 = (currentRow + arraySize.row) > AscCommon.gc_nMaxRow ? AscCommon.gc_nMaxRow - 1 : (currentRow + arraySize.row - 1);
+							const newC2 = (currentCol + arraySize.col) > AscCommon.gc_nMaxCol ? AscCommon.gc_nMaxCol - 1 : (currentCol + arraySize.col - 1);
+
+							let refRange = new Asc.Range(currentCol, currentRow, newC2, newR2);
+							let refRangeWS = new Range(parsed.ws, currentRow, currentCol, newR2, newC2);
+
+							parsed.setArrayFormulaRef(refRange);
+
+							t.wb.dependencyFormulas.lockRecal();
+
+							refRangeWS.setValue("=" + parsed.getFormula(), function (r) {
+								ret = r;
+							}, null, refRange, null, null);
+
+							t.wb.dependencyFormulas.unlockRecal(true);
 						}
-						t.addPromiseParserFormula(_promises[i].parserFormula);
+
+						if (parsed.ref) {
+							t.wb.dependencyFormulas.addToChangedRange2(parsed.getWs().getId(), parsed.ref);
+						} else if (parsed.parent) {
+							t.wb.dependencyFormulas.addToChangedCell(parsed.parent);
+						}
+						t.addPromiseParserFormula(parsed);
 					}
 					//t.wb.buildDependency();
 					//t.wb.sortDependency();
@@ -3085,8 +3118,6 @@
 				});
 			};
 			doPromises(promises);
-		} else {
-			//t.endCallback && t.endCallback()
 		}
 	};
 

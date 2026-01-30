@@ -321,7 +321,7 @@ $(function () {
 		ParseResult = AscCommonExcel.ParseResult,
 		c_oAscError = Asc.c_oAscError;
 
-	let oParser, wb, ws, dif = 1e-9, sData = AscCommon.getEmpty(), tmp, array, parseResult
+	let oParser, wb, ws, wsView, dif = 1e-9, sData = AscCommon.getEmpty(), tmp, array, parseResult
 	if (AscCommon.c_oSerFormat.Signature === sData.substring(0, AscCommon.c_oSerFormat.Signature.length)) {
 
 		Asc.spreadsheet_api.prototype._init = function() {
@@ -378,6 +378,11 @@ $(function () {
 		oBinaryFileReader.Read(sData, wb);
 		ws = wb.getWorksheet(wb.getActive());
 		AscCommonExcel.getFormulasInfo();
+	
+		wsView = api.wb.getWorksheet(0);
+		wsView.handlers = api.handlers;
+		wsView.objectRender = new AscFormat.DrawingObjects();
+
 	}
 	wb.dependencyFormulas.lockRecal();
 	getTableType(599, 0, 599, 0); // Init table
@@ -6183,6 +6188,718 @@ $(function () {
 			ws.getRange2("A1:Z10000").cleanAll();
 		});
 	});
+
+	const getCell = function (oRange) {
+		let oCell = null;
+		oRange._foreach2(function (cell) {
+			oCell = cell;
+		})
+		return oCell;
+	};
+
+	QUnit.test('Async formula calculation. Arrays and dimension sizes.', function(assert) {
+
+		const done = assert.async(); 
+		const asyncFunc = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve([[5,4],[3,2]]);
+				}, 1);
+			});
+		};
+
+		let formula = "=ASYNCFUNC()";
+		// Register async functions
+		initParamsCustomFunction(null, "number[][]");
+
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+			let ref;
+			
+			api.addCustomFunction(asyncFunc, oJsDoc[0]);
+
+			wb.asyncFormulasManager.endCallback = function () {
+				// Check final calculated values
+				resCell = getCell(ws.getRange2("A1"));
+				ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+				assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ASYNCFUNC()", "formula result -> ASYNCFUNC()");
+				assert.ok(ref !== null, "Formula have ref after getting promise result");
+				assert.strictEqual(ref.getHeight(), 2, "Height of array: 2x2 after resolve promise");
+				assert.strictEqual(ref.getWidth(), 2, "Width of array: 2x2 after resolve promise");
+
+				assert.strictEqual(ws.getRange2("A1").getValue(), "5", "A1 shows value after resolve promise");
+				assert.strictEqual(ws.getRange2("B1").getValue(), "4", "B1 shows value after resolve promise");
+				assert.strictEqual(ws.getRange2("A2").getValue(), "3", "A2 shows value after resolve promise");
+				assert.strictEqual(ws.getRange2("B2").getValue(), "2", "B2 shows value after resolve promise");
+
+
+				// CSE call in A3:A4 cells with async formula
+				resCell = getCell(ws.getRange2("A3"));
+				ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+				assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ASYNCFUNC()", "formula result -> ASYNCFUNC()");
+				assert.ok(ref !== null, "Formula have ref after getting promise result");
+				assert.strictEqual(ref.getHeight(), 2, "Height of array: 2x2 after resolve promise");
+				assert.strictEqual(ref.getWidth(), 1, "Width of array: 2x2 after resolve promise");
+
+				assert.strictEqual(ws.getRange2("A3").getValue(), "5", "A3 shows value after resolve promise");
+				assert.strictEqual(ws.getRange2("A4").getValue(), "3", "A4 shows value after resolve promise");
+
+				callback();
+				wb.asyncFormulasManager.endCallback = null;				
+			};
+
+			let fillRange, resCell, fragment;
+			let flags = wsView._getCellFlags(0, 0);
+			flags.ctrlKey = false;
+			flags.shiftKey = false;
+			
+			// regular call in A1 cell
+			fillRange = ws.getRange2("A1");
+			wsView.setSelection(fillRange.bbox);
+			fragment = ws.getRange2("A1").getValueForEdit2();
+			fragment[0].setFragmentText(formula);
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+			resCell = getCell(ws.getRange2("A1"));
+			ref = resCell.getFormulaParsed().getArrayFormulaRef();
+			assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ASYNCFUNC()", "formula result -> ASYNCFUNC()");
+			assert.ok(ref === null, "Formula don't have ref before getting promise result");
+
+			// Check initial state before getting Promise
+			assert.strictEqual(ws.getRange2("A1").getValue(), "#BUSY!", "A1 shows loading state");
+			assert.strictEqual(ws.getRange2("B1").getValue(), "", "B1 is empty");
+			assert.strictEqual(ws.getRange2("A2").getValue(), "", "A2 is empty");
+			assert.strictEqual(ws.getRange2("B2").getValue(), "", "B2 is empty");
+
+			// CSE call in A3:A4 cells with async formula
+			flags.ctrlKey = true;
+			flags.shiftKey = true;
+			fillRange = ws.getRange2("A3:A4");
+			wsView.setSelection(fillRange.bbox);
+			fragment = ws.getRange2("A3:A4").getValueForEdit2();
+			fragment[0].setFragmentText(formula);
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+			resCell = getCell(ws.getRange2("A3"));
+			ref = resCell.getFormulaParsed().getArrayFormulaRef();
+			assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ASYNCFUNC()", "formula result -> ASYNCFUNC()");
+			assert.ok(ref !== null, "Formula have ref before getting promise result because we use CSE method");
+
+			// Check initial state before getting Promise
+			assert.strictEqual(ws.getRange2("A3").getValue(), "#BUSY!", "A3 shows loading state");
+			assert.strictEqual(ws.getRange2("A4").getValue(), "#BUSY!", "A4 shows loading state");
+
+
+		}, function () {
+			done(); // Complete async test
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+
+	QUnit.test('Async formula - Single cell array (1x1)', function(assert) {
+		const done = assert.async();
+		
+		const asyncFunc = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve([[42]]);
+				}, 1);
+			});
+		};
+
+		initParamsCustomFunction(null, "number[][]");
+
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+			api.addCustomFunction(asyncFunc, oJsDoc[0]);
+
+			wb.asyncFormulasManager.endCallback = function () {
+				// Check after promise resolution
+				let resCell = getCell(ws.getRange2("A1"));
+				let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+				assert.ok(ref !== null, "A1: Formula has ref after promise resolution");
+				assert.strictEqual(ref.getHeight(), 1, "A1: Array height is 1");
+				assert.strictEqual(ref.getWidth(), 1, "A1: Array width is 1");
+				assert.strictEqual(ws.getRange2("A1").getValue(), "42", "A1: Value is 42");
+				assert.strictEqual(ws.getRange2("B1").getValue(), "", "B1: Empty (no spill)");
+				assert.strictEqual(ws.getRange2("A2").getValue(), "", "A2: Empty (no spill)");
+
+				callback();
+				wb.asyncFormulasManager.endCallback = null;
+			};
+
+			let fillRange = ws.getRange2("A1");
+			let flags = wsView._getCellFlags(0, 0);
+			flags.ctrlKey = false;
+			flags.shiftKey = false;
+
+			wsView.setSelection(fillRange.bbox);
+			let fragment = ws.getRange2("A1").getValueForEdit2();
+			fragment[0].setFragmentText("=ASYNCFUNC()");
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+			// Check before promise resolution
+			let resCell = getCell(ws.getRange2("A1"));
+			let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+			assert.ok(ref === null, "A1: No ref before promise resolution");
+			assert.strictEqual(ws.getRange2("A1").getValue(), "#BUSY!", "A1: Shows #BUSY! before resolution");
+
+		}, function () {
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+	QUnit.test('Async formula - 3x3 array', function(assert) {
+		const done = assert.async();
+		
+		const asyncFunc = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve([[1,2,3],[4,5,6],[7,8,9]]);
+				}, 1);
+			});
+		};
+
+		initParamsCustomFunction(null, "number[][]");
+
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+			api.addCustomFunction(asyncFunc, oJsDoc[0]);
+
+			wb.asyncFormulasManager.endCallback = function () {
+				let resCell = getCell(ws.getRange2("A1"));
+				let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+				assert.ok(ref !== null, "A1: Formula has ref after promise resolution");
+				assert.strictEqual(ref.getHeight(), 3, "A1: Array height is 3");
+				assert.strictEqual(ref.getWidth(), 3, "A1: Array width is 3");
+				
+				// Check all values
+				assert.strictEqual(ws.getRange2("A1").getValue(), "1", "A1: Value is 1");
+				assert.strictEqual(ws.getRange2("B1").getValue(), "2", "B1: Value is 2");
+				assert.strictEqual(ws.getRange2("C1").getValue(), "3", "C1: Value is 3");
+				assert.strictEqual(ws.getRange2("A2").getValue(), "4", "A2: Value is 4");
+				assert.strictEqual(ws.getRange2("B2").getValue(), "5", "B2: Value is 5");
+				assert.strictEqual(ws.getRange2("C2").getValue(), "6", "C2: Value is 6");
+				assert.strictEqual(ws.getRange2("A3").getValue(), "7", "A3: Value is 7");
+				assert.strictEqual(ws.getRange2("B3").getValue(), "8", "B3: Value is 8");
+				assert.strictEqual(ws.getRange2("C3").getValue(), "9", "C3: Value is 9");
+				
+				// Check no spill outside array
+				assert.strictEqual(ws.getRange2("D1").getValue(), "", "D1: Empty (outside array)");
+				assert.strictEqual(ws.getRange2("A4").getValue(), "", "A4: Empty (outside array)");
+
+				callback();
+				wb.asyncFormulasManager.endCallback = null;
+			};
+
+			let fillRange = ws.getRange2("A1");
+			let flags = wsView._getCellFlags(0, 0);
+			flags.ctrlKey = false;
+			flags.shiftKey = false;
+
+			wsView.setSelection(fillRange.bbox);
+			let fragment = ws.getRange2("A1").getValueForEdit2();
+			fragment[0].setFragmentText("=ASYNCFUNC()");
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+			let resCell = getCell(ws.getRange2("A1"));
+			let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+			assert.ok(ref === null, "A1: No ref before promise resolution");
+			assert.strictEqual(ws.getRange2("A1").getValue(), "#BUSY!", "A1: Shows #BUSY!");
+
+		}, function () {
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+	QUnit.test('Async formula - CSE call with 2x3 array', function(assert) {
+		const done = assert.async();
+		
+		const asyncFunc = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve([[10,20,30],[40,50,60]]);
+				}, 1);
+			});
+		};
+
+		initParamsCustomFunction(null, "number[][]");
+
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+			api.addCustomFunction(asyncFunc, oJsDoc[0]);
+
+			wb.asyncFormulasManager.endCallback = function () {
+				let resCell = getCell(ws.getRange2("A1"));
+				let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+				assert.ok(ref !== null, "A1: Formula has ref after promise resolution");
+				assert.strictEqual(ref.getHeight(), 2, "A1: Array height is 2");
+				assert.strictEqual(ref.getWidth(), 2, "A1: Array width is 2 (constrained by CSE selection)");
+				
+				// Check values within CSE selection
+				assert.strictEqual(ws.getRange2("A1").getValue(), "10", "A1: Value is 10");
+				assert.strictEqual(ws.getRange2("B1").getValue(), "20", "B1: Value is 20");
+				assert.strictEqual(ws.getRange2("A2").getValue(), "40", "A2: Value is 40");
+				assert.strictEqual(ws.getRange2("B2").getValue(), "50", "B2: Value is 50");
+				
+				// Third column should be empty (outside CSE selection)
+				assert.strictEqual(ws.getRange2("C1").getValue(), "", "C1: Empty (outside CSE selection)");
+
+				callback();
+				wb.asyncFormulasManager.endCallback = null;
+			};
+
+			let fillRange = ws.getRange2("A1:B2");
+			let flags = wsView._getCellFlags(0, 0);
+			flags.ctrlKey = true;
+			flags.shiftKey = true;
+
+			wsView.setSelection(fillRange.bbox);
+			let fragment = ws.getRange2("A1:B2").getValueForEdit2();
+			fragment[0].setFragmentText("=ASYNCFUNC()");
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+			let resCell = getCell(ws.getRange2("A1"));
+			let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+			assert.ok(ref !== null, "A1: Has ref before promise (CSE method sets it immediately)");
+			assert.strictEqual(ref.getHeight(), 2, "A1: Initial height is 2 (CSE selection)");
+			assert.strictEqual(ref.getWidth(), 2, "A1: Initial width is 2 (CSE selection)");
+			assert.strictEqual(ws.getRange2("A1").getValue(), "#BUSY!", "A1: Shows #BUSY!");
+			assert.strictEqual(ws.getRange2("B2").getValue(), "#BUSY!", "B2: Shows #BUSY!");
+
+		}, function () {
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+	QUnit.test('Async formula - Horizontal array (1x5)', function(assert) {
+		const done = assert.async();
+		
+		const asyncFunc = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve([[100,200,300,400,500]]);
+				}, 1);
+			});
+		};
+
+		initParamsCustomFunction(null, "number[][]");
+
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+			api.addCustomFunction(asyncFunc, oJsDoc[0]);
+
+			wb.asyncFormulasManager.endCallback = function () {
+				let resCell = getCell(ws.getRange2("A1"));
+				let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+				assert.ok(ref !== null, "A1: Formula has ref after promise resolution");
+				assert.strictEqual(ref.getHeight(), 1, "A1: Array height is 1");
+				assert.strictEqual(ref.getWidth(), 5, "A1: Array width is 5");
+				
+				assert.strictEqual(ws.getRange2("A1").getValue(), "100", "A1: Value is 100");
+				assert.strictEqual(ws.getRange2("B1").getValue(), "200", "B1: Value is 200");
+				assert.strictEqual(ws.getRange2("C1").getValue(), "300", "C1: Value is 300");
+				assert.strictEqual(ws.getRange2("D1").getValue(), "400", "D1: Value is 400");
+				assert.strictEqual(ws.getRange2("E1").getValue(), "500", "E1: Value is 500");
+				assert.strictEqual(ws.getRange2("F1").getValue(), "", "F1: Empty (outside array)");
+				assert.strictEqual(ws.getRange2("A2").getValue(), "", "A2: Empty (outside array)");
+
+				callback();
+				wb.asyncFormulasManager.endCallback = null;
+			};
+
+			let fillRange = ws.getRange2("A1");
+			let flags = wsView._getCellFlags(0, 0);
+			flags.ctrlKey = false;
+			flags.shiftKey = false;
+
+			wsView.setSelection(fillRange.bbox);
+			let fragment = ws.getRange2("A1").getValueForEdit2();
+			fragment[0].setFragmentText("=ASYNCFUNC()");
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+			let resCell = getCell(ws.getRange2("A1"));
+			let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+			assert.ok(ref === null, "A1: No ref before promise resolution");
+			assert.strictEqual(ws.getRange2("A1").getValue(), "#BUSY!", "A1: Shows #BUSY!");
+
+		}, function () {
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+	QUnit.test('Async formula - Vertical array (5x1)', function(assert) {
+		const done = assert.async();
+		
+		const asyncFunc = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve([[11],[22],[33],[44],[55]]);
+				}, 1);
+			});
+		};
+
+		initParamsCustomFunction(null, "number[][]");
+
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+			api.addCustomFunction(asyncFunc, oJsDoc[0]);
+
+			wb.asyncFormulasManager.endCallback = function () {
+				let resCell = getCell(ws.getRange2("A1"));
+				let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+				assert.ok(ref !== null, "A1: Formula has ref after promise resolution");
+				assert.strictEqual(ref.getHeight(), 5, "A1: Array height is 5");
+				assert.strictEqual(ref.getWidth(), 1, "A1: Array width is 1");
+				
+				assert.strictEqual(ws.getRange2("A1").getValue(), "11", "A1: Value is 11");
+				assert.strictEqual(ws.getRange2("A2").getValue(), "22", "A2: Value is 22");
+				assert.strictEqual(ws.getRange2("A3").getValue(), "33", "A3: Value is 33");
+				assert.strictEqual(ws.getRange2("A4").getValue(), "44", "A4: Value is 44");
+				assert.strictEqual(ws.getRange2("A5").getValue(), "55", "A5: Value is 55");
+				assert.strictEqual(ws.getRange2("A6").getValue(), "", "A6: Empty (outside array)");
+				assert.strictEqual(ws.getRange2("B1").getValue(), "", "B1: Empty (outside array)");
+
+				callback();
+				wb.asyncFormulasManager.endCallback = null;
+			};
+
+			let fillRange = ws.getRange2("A1");
+			let flags = wsView._getCellFlags(0, 0);
+			flags.ctrlKey = false;
+			flags.shiftKey = false;
+
+			wsView.setSelection(fillRange.bbox);
+			let fragment = ws.getRange2("A1").getValueForEdit2();
+			fragment[0].setFragmentText("=ASYNCFUNC()");
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+			let resCell = getCell(ws.getRange2("A1"));
+			let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+			assert.ok(ref === null, "A1: No ref before promise resolution");
+			assert.strictEqual(ws.getRange2("A1").getValue(), "#BUSY!", "A1: Shows #BUSY!");
+
+		}, function () {
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+	QUnit.test('Async formula - CSE with partial array coverage', function(assert) {
+		const done = assert.async();
+		
+		const asyncFunc = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve([[1,2],[3,4],[5,6]]);
+				}, 1);
+			});
+		};
+
+		initParamsCustomFunction(null, "number[][]");
+
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+			api.addCustomFunction(asyncFunc, oJsDoc[0]);
+
+			wb.asyncFormulasManager.endCallback = function () {
+				let resCell = getCell(ws.getRange2("A1"));
+				let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+				assert.ok(ref !== null, "A1: Formula has ref after promise resolution");
+				assert.strictEqual(ref.getHeight(), 2, "A1: Array height is 2 (CSE selection)");
+				assert.strictEqual(ref.getWidth(), 2, "A1: Array width is 2 (CSE selection)");
+				
+				// Only first 2 rows shown (CSE selection A1:B2)
+				assert.strictEqual(ws.getRange2("A1").getValue(), "1", "A1: Value is 1");
+				assert.strictEqual(ws.getRange2("B1").getValue(), "2", "B1: Value is 2");
+				assert.strictEqual(ws.getRange2("A2").getValue(), "3", "A2: Value is 3");
+				assert.strictEqual(ws.getRange2("B2").getValue(), "4", "B2: Value is 4");
+				
+				// Third row not shown (outside CSE)
+				assert.strictEqual(ws.getRange2("A3").getValue(), "", "A3: Empty (outside CSE)");
+				assert.strictEqual(ws.getRange2("B3").getValue(), "", "B3: Empty (outside CSE)");
+
+				callback();
+				wb.asyncFormulasManager.endCallback = null;
+			};
+
+			let fillRange = ws.getRange2("A1:B2");
+			let flags = wsView._getCellFlags(0, 0);
+			flags.ctrlKey = true;
+			flags.shiftKey = true;
+
+			wsView.setSelection(fillRange.bbox);
+			let fragment = ws.getRange2("A1:B2").getValueForEdit2();
+			fragment[0].setFragmentText("=ASYNCFUNC()");
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+			let resCell = getCell(ws.getRange2("A1"));
+			let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+			assert.ok(ref !== null, "A1: Has ref before promise (CSE)");
+			assert.strictEqual(ref.getHeight(), 2, "A1: Initial height is 2");
+			assert.strictEqual(ref.getWidth(), 2, "A1: Initial width is 2");
+			assert.strictEqual(ws.getRange2("A1").getValue(), "#BUSY!", "A1: Shows #BUSY!");
+			assert.strictEqual(ws.getRange2("B2").getValue(), "#BUSY!", "B2: Shows #BUSY!");
+
+		}, function () {
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+	// QUnit.test('Async formula - Mixed data types in array', function(assert) {
+	// 	const done = assert.async();
+	// 	const asyncFunc = function() {
+	// 		return new Promise((resolve) => {
+	// 			setTimeout(() => {
+	// 				resolve([[100,"text",true],[200,"#N/A",false]]);
+	// 			}, 1);
+	// 		});
+	// 	};
+
+	// 	initParamsCustomFunction(null, "any[][]");
+
+	// 	executeCustomFunction(function (callback) {
+	// 		let api = window["Asc"]["editor"];
+	// 		let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+	// 		api.addCustomFunction(asyncFunc, oJsDoc[0]);
+
+	// 		wb.asyncFormulasManager.endCallback = function () {
+	// 			let resCell = getCell(ws.getRange2("A1"));
+	// 			let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+	// 			assert.ok(ref !== null, "A1: Formula has ref after promise resolution");
+	// 			assert.strictEqual(ref && ref.getHeight(), 2, "A1: Array height is 2");
+	// 			assert.strictEqual(ref && ref.getWidth(), 3, "A1: Array width is 3");
+				
+	// 			// Check mixed data types
+	// 			assert.strictEqual(ws.getRange2("A1").getValue(), "100", "A1: Number value 100");
+	// 			assert.strictEqual(ws.getRange2("B1").getValue(), "text", "B1: String value");
+	// 			assert.strictEqual(ws.getRange2("C1").getValue(), "TRUE", "C1: Boolean TRUE");
+	// 			assert.strictEqual(ws.getRange2("A2").getValue(), "200", "A2: Number value 200");
+	// 			assert.strictEqual(ws.getRange2("B2").getValue(), "#N/A", "B2: Error value");
+	// 			assert.strictEqual(ws.getRange2("C2").getValue(), "FALSE", "C2: Boolean FALSE");
+
+	// 			callback();
+	// 			wb.asyncFormulasManager.endCallback = null;
+	// 		};
+
+	// 		let fillRange = ws.getRange2("A1");
+	// 		let flags = wsView._getCellFlags(0, 0);
+	// 		flags.ctrlKey = false;
+	// 		flags.shiftKey = false;
+
+	// 		wsView.setSelection(fillRange.bbox);
+	// 		let fragment = ws.getRange2("A1").getValueForEdit2();
+	// 		fragment[0].setFragmentText("=ASYNCFUNC()");
+	// 		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+	// 		let resCell = getCell(ws.getRange2("A1"));
+	// 		let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+	// 		assert.ok(ref === null, "A1: No ref before promise resolution");
+	// 		assert.strictEqual(ws.getRange2("A1").getValue(), "#BUSY!", "A1: Shows #BUSY!");
+
+	// 	}, function () {
+	// 		done();
+	// 		ws.getRange2("A1:Z10000").cleanAll();
+	// 	});
+	// });
+
+	QUnit.test('Async formula - Empty array handling', function(assert) {
+		const done = assert.async();
+		
+		const asyncFunc = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve([[]]);
+				}, 1);
+			});
+		};
+
+		initParamsCustomFunction(null, "number[][]");
+
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+			api.addCustomFunction(asyncFunc, oJsDoc[0]);
+
+			wb.asyncFormulasManager.endCallback = function () {
+				let resCell = getCell(ws.getRange2("A1"));
+				let value = ws.getRange2("A1").getValue();
+
+				// Empty array should result in empty cell or error
+				assert.ok(value === "" || value === "#N/A" || value === "#VALUE!", 
+					"A1: Empty array handled correctly (value: " + value + ")");
+
+				callback();
+				wb.asyncFormulasManager.endCallback = null;
+			};
+
+			let fillRange = ws.getRange2("A1");
+			let flags = wsView._getCellFlags(0, 0);
+			flags.ctrlKey = false;
+			flags.shiftKey = false;
+
+			wsView.setSelection(fillRange.bbox);
+			let fragment = ws.getRange2("A1").getValueForEdit2();
+			fragment[0].setFragmentText("=ASYNCFUNC()");
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+			assert.strictEqual(ws.getRange2("A1").getValue(), "#BUSY!", "A1: Shows #BUSY!");
+
+		}, function () {
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+	QUnit.test('Async formula - Large arrays. Entire row. LONG EXEC', function(assert) {
+		const done = assert.async();
+		const asyncFuncGetEntireRow = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					let arr = new Array(AscCommon.gc_nMaxCol0 + 1).fill(20);
+					resolve([arr]);
+				}, 1);
+			});
+		};
+
+		initParamsCustomFunction(null, "number[][]");
+
+		// entire row
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+			api.addCustomFunction(asyncFuncGetEntireRow, oJsDoc[0]);
+
+			wb.asyncFormulasManager.endCallback = function () {
+				let resCell = getCell(ws.getRange2("A1"));
+				let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+				assert.ok(ref !== null, "A1: Formula has ref after promise resolution");
+				assert.strictEqual(ref.getHeight(), 1, "A1: Array height is 1 row");
+				assert.strictEqual(ref.getWidth(), AscCommon.gc_nMaxCol0 + 1, "A1: Array width is entire row length");
+				
+				// Check values inside
+				assert.strictEqual(ws.getRange2("A1").getValue(), "20", "A1: First value");
+				assert.strictEqual(ws.getRange2("J1").getValue(), "20", "J1: Top-right is 10");
+				assert.strictEqual(ws.getRange2("ZZ1").getValue(), "20", "A10: Bottom-left is 91");
+				
+				// Check outside array
+				assert.strictEqual(ws.getRange2("A2").getValue(), "", "A2: Empty (outside)");
+
+				callback();
+				wb.asyncFormulasManager.endCallback = null;
+			};
+
+			let fillRange = ws.getRange2("A1");
+			let flags = wsView._getCellFlags(0, 0);
+			flags.ctrlKey = false;
+			flags.shiftKey = false;
+
+			wsView.setSelection(fillRange.bbox);
+			let fragment = ws.getRange2("A1").getValueForEdit2();
+			fragment[0].setFragmentText("=asyncFuncGetEntireRow()");
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+			let resCell = getCell(ws.getRange2("A1"));
+			let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+			assert.ok(ref === null, "A1: No ref before promise resolution");
+			assert.strictEqual(ws.getRange2("A1").getValue(), "#BUSY!", "A1: Shows #BUSY!");
+
+		}, function () {
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+
+	});
+
+	QUnit.test('Async formula - Large arrays. Entire col. LONG EXEC', function(assert) {
+		const done = assert.async();
+		const asyncFuncGetEntireCol = function() {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					let arr = new Array(AscCommon.gc_nMaxRow0 + 1).fill([20]);
+					resolve(arr);
+				}, 1);
+			});
+		};
+
+		initParamsCustomFunction(null, "number[][]");
+
+		// entire col
+		executeCustomFunction(function (callback) {
+			let api = window["Asc"]["editor"];
+			let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+			api.addCustomFunction(asyncFuncGetEntireCol, oJsDoc[0]);
+
+			wb.asyncFormulasManager.endCallback = function () {
+				let resCell = getCell(ws.getRange2("A1"));
+				let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+				assert.ok(ref !== null, "A1: Formula has ref after promise resolution");
+				assert.strictEqual(ref.getHeight(), AscCommon.gc_nMaxRow0 + 1, "A1: Array entire col length");
+				assert.strictEqual(ref.getWidth(), 1, "A1: Array width");
+				
+				// Check values inside
+				assert.strictEqual(ws.getRange2("A1").getValue(), "20", "A1: First value");
+				assert.strictEqual(ws.getRange2("A10").getValue(), "20", "A2 value inside");
+
+				assert.strictEqual(ws.getRange2("C10").getValue(), "", "C10 value outside");
+
+				callback();
+				wb.asyncFormulasManager.endCallback = null;
+			};
+
+			let fillRange = ws.getRange2("A1");
+			let flags = wsView._getCellFlags(0, 0);
+			flags.ctrlKey = false;
+			flags.shiftKey = false;
+
+			wsView.setSelection(fillRange.bbox);
+			let fragment = ws.getRange2("A1").getValueForEdit2();
+			fragment[0].setFragmentText("=asyncFuncGetEntireCol()");
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+			let resCell = getCell(ws.getRange2("A1"));
+			let ref = resCell.getFormulaParsed().getArrayFormulaRef();
+
+			assert.ok(ref === null, "A1: No ref before promise resolution");
+			assert.strictEqual(ws.getRange2("A1").getValue(), "#BUSY!", "A1: Shows #BUSY!");
+
+		}, function () {
+			done();
+			ws.getRange2("A1:Z10000").cleanAll();
+		});
+	});
+
+
 	QUnit.test("Test: \"3d_ref_tests\"", function (assert) {
 		let cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 1, 0);
 		let wsName = "हरियाणवी";
