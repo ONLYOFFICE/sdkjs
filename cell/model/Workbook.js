@@ -3078,9 +3078,7 @@
 
 							t.wb.dependencyFormulas.lockRecal();
 
-							refRangeWS.setValue("=" + parsed.getFormula(), function (r) {
-								ret = r;
-							}, null, refRange, null, null);
+							refRangeWS.setValue("=" + parsed.getFormula(), null, null, refRange, null, null);
 
 							t.wb.dependencyFormulas.unlockRecal(true);
 						}
