@@ -1402,10 +1402,19 @@ $(function () {
 		oParser = new parserFormula('ISBLANK(Sheet2!A3:A3)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISBLANK(Sheet2!A3:A3) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 'FALSE', 'Test: Positive case: Area3D. 3D single-cell range with string, returns FALSE');
+		
+		//Changed tests: dynmamic arrays
 		// Case #20: Area3D. 3D multi-cell range, returns FALSE
+		oParser = new parserFormula('ISBLANK(SINGLE(Sheet2!A4:A5))', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: ISBLANK(SINGLE(Sheet2!A4:A5)) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 'FALSE', 'Test: Positive case: SINGLE Area3D. 3D multi-cell range, returns FALSE');
+
+		let _res = AscCommonExcel.bIsSupportDynamicArrays ? 'TRUE' : 'FALSE';
 		oParser = new parserFormula('ISBLANK(Sheet2!A4:A5)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISBLANK(Sheet2!A4:A5) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 'FALSE', 'Test: Positive case: Area3D. 3D multi-cell range, returns FALSE');
+		assert.strictEqual(oParser.calculate(null, null, null, null, null, null, true).getValue(), _res, 'Test: Positive case: Area3D. 3D multi-cell range, returns TRUE');
+
+
 		// Case #21: Table. Table column with empty cell, returns TRUE
 		oParser = new parserFormula('ISBLANK(Table1[Column1])', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISBLANK(Table1[Column1]) is parsed.');
@@ -1456,10 +1465,18 @@ $(function () {
 		oParser = new parserFormula('ISBLANK(A106)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISBLANK(A106) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 'TRUE', 'Test: Negative case: Reference link. Reference to cell with error, returns FALSE');
+
+		//Changed tests: dynmamic arrays
 		// Case #8: Area. Multi-cell range with mixed values, returns FALSE
+		oParser = new parserFormula('ISBLANK(SINGLE(A107:A108))', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: ISBLANK(SINGLE(A107:A108)) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 'FALSE', 'Test: Negative case: SINGLE Area. Multi-cell range with mixed values, returns FALSE');
+
+		let res = AscCommonExcel.bIsSupportDynamicArrays ? 'TRUE' : 'FALSE';
 		oParser = new parserFormula('ISBLANK(A107:A108)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISBLANK(A107:A108) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 'FALSE', 'Test: Negative case: Area. Multi-cell range with mixed values, returns FALSE');
+		assert.strictEqual(oParser.calculate(null, null, null, null, null, null, true).getValue(), res, 'Test: Negative case: Area. Multi-cell range with mixed values, returns FALSE');
+
 		// Case #9: Array. Multi-element array, returns FALSE
 		oParser = new parserFormula('ISBLANK({FALSE,TRUE})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISBLANK({FALSE,TRUE}) is parsed.');
@@ -1480,10 +1497,18 @@ $(function () {
 		oParser = new parserFormula('ISBLANK(Sheet2!A6)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISBLANK(Sheet2!A6) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 'TRUE', 'Test: Negative case: Ref3D. 3D reference to cell with error, returns FALSE');
+
+		//Changed tests: dynmamic arrays
 		// Case #14: Area3D. 3D multi-cell range with mixed values, returns FALSE
+		oParser = new parserFormula('ISBLANK(SINGLE(Sheet2!A7:A8))', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: ISBLANK(SINGLE(Sheet2!A7:A8)) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 'FALSE', 'Test: Negative case: SINGLE Area3D. 3D multi-cell range with mixed values, returns FALSE');
+
+		_res = AscCommonExcel.bIsSupportDynamicArrays ? 'TRUE' : 'FALSE';
 		oParser = new parserFormula('ISBLANK(Sheet2!A7:A8)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISBLANK(Sheet2!A7:A8) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), 'FALSE', 'Test: Negative case: Area3D. 3D multi-cell range with mixed values, returns FALSE');
+		assert.strictEqual(oParser.calculate(null, null, null, null, null, null, true).getValue(), _res, 'Test: Negative case: Area3D. 3D multi-cell range with mixed values, returns FALSE');
+
 		// Case #15: Table. Table column with string, returns FALSE
 		oParser = new parserFormula('ISBLANK(Table1[Column3])', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: ISBLANK(Table1[Column3]) is parsed.');

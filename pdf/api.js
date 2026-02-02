@@ -1417,7 +1417,7 @@
 		this.sendEvent("asc_onRedactState", bUse);
 	};
 	PDFEditorApi.prototype.IsRedactTool = function() {
-		return this.isRedactTool;
+		return !!this.isRedactTool;
 	};
 	PDFEditorApi.prototype.RedactPages = function(aIdxs) {
 		let oDoc = this.getPDFDoc();
@@ -1484,7 +1484,7 @@
 		this.sendEvent("asc_onLinkToolState", bUse);
 	};
 	PDFEditorApi.prototype.IsLinkTool = function() {
-		return this.isLinkTool;
+		return !!this.isLinkTool;
 	};
 	PDFEditorApi.prototype.SetLinkAnnotGoToAction = function(arrIds) {
 		let oDoc = this.getPDFDoc();
@@ -3999,11 +3999,13 @@
 			}
 		}
 	};
-	PDFEditorApi.prototype.asc_Save = function (isAutoSave, isIdle, isResaveAttack) {
+	PDFEditorApi.prototype.asc_Save = function () {
 		let oDoc = this.getPDFDoc();
-		if (!isAutoSave)
+		// is auto save
+		if (!arguments[0])
 			oDoc.BlurActiveObject();
-		return AscCommon.DocumentEditorApi.prototype.asc_Save.call(this, isAutoSave, isIdle, isResaveAttack);
+		
+		return AscCommon.DocumentEditorApi.prototype.asc_Save.apply(this, arguments);
 	};
 	PDFEditorApi.prototype._onEndLoadSdk = function() {
 		AscCommon.DocumentEditorApi.prototype._onEndLoadSdk.call(this);

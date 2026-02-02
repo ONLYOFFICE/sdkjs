@@ -240,7 +240,15 @@ window["DesktopOfflineAppDocumentStartSave"] = function(isSaveAs, password, isFo
 			jsonOptions["isPrint"] = true;
 			jsonOptions["nativeOptions"] = nativeOptions;
 			jsonOptions["nativeOptions"]["currentPage"] = editor.getCurrentPage() + 1;
+			jsonOptions["printPages"] = nativeOptions["pages"];
  		}
+
+		if (Asc.editor.isPdfEditor() && options.advancedOptions)
+		{
+			jsonOptions["pdfLayout"] = {
+				"content" : options.advancedOptions.asc_getPdfContent()
+			}
+		}
 	}
 
 	if (!isSupportSaveInPDF && editor.isUseNativeViewer && editor.isDocumentRenderer())

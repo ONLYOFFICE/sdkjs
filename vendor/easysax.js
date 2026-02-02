@@ -1156,6 +1156,7 @@ function StaxParser(xml, rels, context) {
     this.value = null;
     this.stop = false;
     this.depth = 0;
+    this.siblingDepth = 0;
 }
 StaxParser.prototype.hasNext = function() {
     return !this.stop;
@@ -1368,7 +1369,7 @@ StaxParser.prototype.ReadNextNode = function() {
     }
     return EasySAXEvent.START_ELEMENT === type;
 };
-StaxParser.prototype.ReadNextSiblingNode = function(depth) {
+StaxParser.prototype._readNextSiblingNodeInternal = function(depth) {
     var targetDepth = depth + 1;
     var type;
     
@@ -1389,6 +1390,17 @@ StaxParser.prototype.ReadNextSiblingNode = function(depth) {
         }
     }
     return false;
+};
+StaxParser.prototype.ReadNextSiblingNode = function(depth) {
+    return this._readNextSiblingNodeInternal(depth);
+};
+StaxParser.prototype.ReadNextSiblingNode2 = function() {
+    var depth = this.siblingDepth = this.siblingDepth || this.depth;
+    var res = this._readNextSiblingNodeInternal(depth);
+    if (!res) {
+        this.siblingDepth = 0;
+    }
+    return res;
 };
 StaxParser.prototype.ReadTillEnd = function (opt_depth) {
     var depth = opt_depth;
@@ -1678,20 +1690,20 @@ StaxParser.prototype.GetOformContext = function() {
 	
 	return this.context.getOformContext();
 };
-StaxParser.prototype.getState = function() {
-    return {
-        depth: this.depth,
-        eventType: this.eventType,
-        index: this.index,
-        isInAttr: this.isInAttr,
-        isTagEnd: this.isTagEnd,
-        isTagStart: this.isTagStart,
-        length: this.length,
-        name: this.name,
-        stop: this.stop,
-        text: this.text,
-        value: this.value
-    };
+StaxParser.prototype.getState = function(state) {
+    if (!state) state = {};
+    state.depth = this.depth;
+    state.eventType = this.eventType;
+    state.index = this.index;
+    state.isInAttr = this.isInAttr;
+    state.isTagEnd = this.isTagEnd;
+    state.isTagStart = this.isTagStart;
+    state.length = this.length;
+    state.name = this.name;
+    state.stop = this.stop;
+    state.text = this.text;
+    state.value = this.value;
+    return state;
 };
 StaxParser.prototype.setState = function(state) {
     this.depth = state.depth;
@@ -1705,6 +1717,14 @@ StaxParser.prototype.setState = function(state) {
     this.stop = state.stop;
     this.text = state.text;
     this.value = state.value;
+};
+StaxParser.prototype.saveState = function() {
+    var s = this._ss || (this._ss = []);
+    var i = this._si = (this._si === undefined ? 0 : this._si + 1);
+    this.getState(s[i] || (s[i] = {}));
+};
+StaxParser.prototype.restoreState = function() {
+    this.setState(this._ss[this._si--]);
 };
 StaxParser.prototype.readXmlArray = function(childName, func) {
     if (this.IsEmptyNode()) {
@@ -1753,6 +1773,13 @@ function XmlParserContext(){
     this.cellValue = null;
     this.cellBase = null;
     this.drawingId = null;
+    this.backgroundOpen = {
+        readOnlyActive: false,
+        readNextRows: Number.MAX_VALUE,
+        maxTextIndex: 0,
+        maxTextIndexReadBy: 10000,
+        sharedStringsState: {sharedStrings: null, reader: null, state: null}
+    };
     //pptx
     this.layoutsMap = {};
     this.notesMastersMap = {};

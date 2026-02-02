@@ -41,4 +41,48 @@
  * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onChangeCurrentSlide.js
  */
 
+/**
+ * Event: onSlideShowBegin
+ * @event Plugin#onSlideShowBegin
+ * @memberof Plugin
+ * @typeofeditors ["CPE"]
+ * @alias onSlideShowBegin
+ * @description The function called when a slide show presentation starts.
+ * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onSlideShowBegin.js
+ */
+
+/**
+ * Event: onSlideShowEnd
+ * @event Plugin#onSlideShowEnd
+ * @memberof Plugin
+ * @typeofeditors ["CPE"]
+ * @alias onSlideShowEnd
+ * @description The function called when a slide show presentation ends.
+ * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onSlideShowEnd.js
+ */
+
+/**
+ * Event: onSlideShowNextSlide
+ * @event Plugin#onSlideShowNextSlide
+ * @memberof Plugin
+ * @typeofeditors ["CPE"]
+ * @alias onSlideShowNextSlide
+ * @description The function called after a slide has been changed and displayed during a slide show presentation.
+ * Fires before the slide content is actually displayed.
+ * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onSlideShowNextSlide.js
+ */
+
+/**
+ * Event: onSlideShowSlideChanged
+ * @event Plugin#onSlideShowSlideChanged
+ * @memberof Plugin
+ * @typeofeditors ["CPE"]
+ * @alias onSlideShowSlideChanged
+ * @description The function called when slide changes during a slide show presentation. Provides information about both the current and previous slide.
+ * @param {Object} data - The object containing slide information.
+ * @param {number} data.slideIndex - The index of the new slide.
+ * @param {number} data.previousSlideIndex - The index of the previous slide (-1 if it's the first slide).
+ * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Events/onSlideShowSlideChanged.js
+ */
+
 "use strict";

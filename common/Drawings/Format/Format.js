@@ -7308,8 +7308,8 @@
 		EndArrow.prototype.IsIdentical = function (arrow) {
 			return arrow && arrow.type === this.type && arrow.len === this.len && arrow.w === this.w;
 		};
-		EndArrow.prototype.GetWidth = function (_size, _max) {
-			var size = Math.min(_size, _max ? _max : 2);
+		EndArrow.prototype.GetWidth = function (_size, _minSize) {
+			const size = Math.max(_size, _minSize ? _minSize : 2);
 			var _ret = 3 * size;
 			let startSizeInch;
 			let inchSize;
@@ -7364,8 +7364,8 @@
 			}
 			return _ret;
 		};
-		EndArrow.prototype.GetLen = function (_size, _max) {
-			var size = Math.min(_size, _max ? _max : 2);
+		EndArrow.prototype.GetLen = function (_size, _minSize) {
+			const size = Math.max(_size, _minSize ? _minSize : 2);
 			var _ret = 3 * size;
 			let startSizeInch;
 			let inchSize;

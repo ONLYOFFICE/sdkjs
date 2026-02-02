@@ -2187,10 +2187,12 @@
 	CGraphicObjectBase.prototype.getInvertTransform = function () {
 		return this.invertTransform;
 	};
-	CGraphicObjectBase.prototype.getResizeCoefficients = function (numHandle, x, y, aDrawings, oController) {
+	CGraphicObjectBase.prototype.getResizeCoefficients = function (numHandle, x, y, aDrawings, oController, bShiftKey) {
 		var cx, cy;
 		cx = this.extX > 0 ? this.extX : 0.01;
 		cy = this.extY > 0 ? this.extY : 0.01;
+		const ignoreExtX = bShiftKey && (this.extX <= 0);
+		const ignoreExtY = bShiftKey && (this.extY <= 0);
 
 		var invert_transform = this.getInvertTransform();
 		if (!invert_transform) {
@@ -2297,8 +2299,8 @@
 		switch (numHandle) {
 			case 0:
 				return {
-					kd1: (cx - t_x) / cx,
-					kd2: (cy - t_y) / cy,
+					kd1: ignoreExtX ? 0 : (cx - t_x) / cx,
+					kd2: ignoreExtY ? 0 : (cy - t_y) / cy,
 					snapH: bSnapH,
 					snapV: bSnapV,
 					snapX: dSnapX,
@@ -2341,8 +2343,8 @@
 				};
 			case 4:
 				return {
-					kd1: t_x / cx,
-					kd2: t_y / cy,
+					kd1: ignoreExtX ? 0 : t_x / cx,
+					kd2: ignoreExtY ? 0 : t_y / cy,
 					snapH: bSnapH,
 					snapV: bSnapV,
 					snapX: dSnapX,
@@ -3658,9 +3660,9 @@
 		return sTrText;
 	};
     CGraphicObjectBase.prototype.checkRecalculateTransform = function() {
-        if(this.recalcInfo.recalcTransform) {
+        if(this.recalcInfo.recalculateTransform) {
             this.recalculateTransform();
-            this.recalcInfo.recalcTransform = false;
+            this.recalcInfo.recalculateTransform = false;
         }
     };
     CGraphicObjectBase.prototype.checkTransformBeforeApply = function() {

@@ -1445,62 +1445,49 @@ function CBinaryFileWriter()
         }
     };
 
-    this.WriteSlideTransition = function(_transition)
-    {
-        oThis.WriteUChar(g_nodeAttributeStart);
-        oThis._WriteBool1(0, _transition.SlideAdvanceOnMouseClick);
+	this.WriteSlideTransition = function (_transition) {
+		oThis.WriteUChar(g_nodeAttributeStart);
+		oThis._WriteBool1(0, _transition.SlideAdvanceOnMouseClick);
 
-        if (_transition.SlideAdvanceAfter)
-        {
-            oThis._WriteInt1(1, _transition.SlideAdvanceDuration);
+		if (_transition.SlideAdvanceAfter)
+			oThis._WriteInt1(1, _transition.SlideAdvanceDuration);
 
-            if (_transition.TransitionType == c_oAscSlideTransitionTypes.None)
-            {
-                oThis._WriteInt1(2, 0);
-            }
-        }
-        else if (_transition.TransitionType == c_oAscSlideTransitionTypes.None)
-        {
-            oThis._WriteInt1(2, 2000);
-        }
+		const isDurationValid = AscFormat.isRealNumber(_transition.TransitionDuration) && _transition.TransitionDuration >= 0;
+		const duration = isDurationValid ? _transition.TransitionDuration : 2000;
+		oThis._WriteInt1(2, duration);
 
-        if (_transition.TransitionType != c_oAscSlideTransitionTypes.None)
-        {
-            oThis._WriteInt1(2, _transition.TransitionDuration);
+		if (_transition.TransitionType != c_oAscSlideTransitionTypes.None) {
 
-            if (_transition.TransitionDuration < 250)
-                oThis._WriteUChar1(3, 0);
-            else if (_transition.TransitionDuration > 1000)
-                oThis._WriteUChar1(3, 2);
-            else
-                oThis._WriteUChar1(3, 1);
+			if (duration <= 500)
+				oThis._WriteUChar1(3, 0);
+			else if (duration <= 750)
+				oThis._WriteUChar1(3, 1);
+			else
+				oThis._WriteUChar1(3, 2);
 
-            oThis.WriteUChar(g_nodeAttributeEnd);
+			oThis.WriteUChar(g_nodeAttributeEnd);
 
-            oThis.StartRecord(0);
+			oThis.StartRecord(0);
+			oThis.WriteUChar(g_nodeAttributeStart);
 
-            oThis.WriteUChar(g_nodeAttributeStart);
+			let sNodeName = null, aAttrNames = [], aAttrValues = [];
+			sNodeName = _transition.fillXmlParams(aAttrNames, aAttrValues);
+			if (sNodeName) {
+				oThis._WriteString2(0, sNodeName);
+				for (let nAttr = 0; nAttr < aAttrNames.length; ++nAttr) {
+					oThis._WriteString2(1, aAttrNames[nAttr]);
+				}
+				for (let nAttr = 0; nAttr < aAttrValues.length; ++nAttr) {
+					oThis._WriteString2(2, aAttrValues[nAttr]);
+				}
+			}
 
-            let sNodeName = null, aAttrNames = [], aAttrValues = [];
-            sNodeName = _transition.fillXmlParams(aAttrNames, aAttrValues);
-            if(sNodeName) {
-                oThis._WriteString2(0, sNodeName);
-                for(let nAttr = 0; nAttr < aAttrNames.length; ++nAttr) {
-                    oThis._WriteString2(1, aAttrNames[nAttr]);
-                }
-                for(let nAttr = 0; nAttr < aAttrValues.length; ++nAttr) {
-                    oThis._WriteString2(2, aAttrValues[nAttr]);
-                }
-            }
-            oThis.WriteUChar(g_nodeAttributeEnd);
-
-            oThis.EndRecord();
-        }
-        else
-        {
-            oThis.WriteUChar(g_nodeAttributeEnd);
-        }
-    };
+			oThis.WriteUChar(g_nodeAttributeEnd);
+			oThis.EndRecord();
+		} else {
+			oThis.WriteUChar(g_nodeAttributeEnd);
+		}
+	};
 
     this.WriteSlideNote = function(_note)
     {
@@ -4842,7 +4829,17 @@ function CBinaryFileWriter()
             this._WriteBool2(0, _path.extrusionOk);
             if (_path.fill != null && _path.fill !== undefined)
             {
-                this._WriteLimit1(1, (_path.fill == "none") ? 4 : 5);
+				let fillValue;
+				switch (_path.fill) {
+					case "darken":      fillValue = Asc.c_oAscPathFillMode.DARKEN; break;
+					case "darkenLess":  fillValue = Asc.c_oAscPathFillMode.DARKEN_LESS; break;
+					case "lighten":     fillValue = Asc.c_oAscPathFillMode.LIGHTEN; break;
+					case "lightenLess": fillValue = Asc.c_oAscPathFillMode.LIGHTEN_LESS; break;
+					case "none":        fillValue = Asc.c_oAscPathFillMode.NONE; break;
+					case "norm":        fillValue = Asc.c_oAscPathFillMode.NORM; break;
+					default:            fillValue = Asc.c_oAscPathFillMode.NORM;
+				}
+				this._WriteLimit1(1, fillValue);
             }
             this._WriteInt2(2, _path.pathH);
             this._WriteBool2(3, _path.stroke);

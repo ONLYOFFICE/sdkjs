@@ -58,6 +58,7 @@
 	 * @property {string} QuoteText - The quote comment text.
 	 * @property {string} Text - The comment text.
 	 * @property {string} Time - The time when the comment was posted (in milliseconds).
+	 * @property {string} UserId - The user ID of the comment author.
 	 * @property {boolean} Solved - Specifies if the comment is resolved (**true**) or not (**false**).
 	 * @property {CommentData[]} Replies - An array containing the comment replies represented as the *CommentData* object.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/CommentData.js

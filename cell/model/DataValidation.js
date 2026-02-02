@@ -121,35 +121,53 @@
 	};
 
 	CDataFormula.prototype.correctToInterface = function (ws, oValidation){
-		var _val = this.text;
+		let data = {
+			val : this.text,
+			isNum: isNum(this.text),
+		}
 
-		//если формула
-		var _isNum = isNum(_val);
-		if (_val[0] === '"' || _isNum) {
-			if (!_isNum) {
-				_val = this.text = _val.slice(1, -1);
-				_isNum = isNum(_val);
+		const normalizeText = function (data) {
+			const isQuote = typeof data.val === "string" && data.val.length >=2 && data.val[0] === '"';
+
+			if (isQuote) {
+				let _val = data.val;
+
+				_val = _val.slice(1, -1);
+				let _isNum = isNum(_val);
+
+				// _val is not number, so we need to replace double quotes to single ones
 				if (!_isNum) {
-					_val = this.text = _val.replace(/\"\"/g, "\"");
+					_val = _val.replace(/\"\"/g, "\"")
 				}
+
+				data = { val: _val, isNum: _isNum  };
 			}
 
-			if (_isNum) {
-				//переводим в дату
-				var _format;
-				if (oValidation.type === Asc.EDataValidationType.Date) {
-					_format = AscCommon.oNumFormatCache.get("m/d/yyyy");
-				} else if (oValidation.type === Asc.EDataValidationType.Time) {
-					_format = AscCommon.oNumFormatCache.get("h:mm:ss AM/PM");
-				}
-				if (_format) {
-					var dateVal = _format.format(_val);
-					if (dateVal && dateVal[0] && dateVal[0].text) {
-						this.text = dateVal[0].text;
-					}
-				}
+			return data;
+		}
+
+		const t = this;
+		const fromNumberToString = function (data) {
+			let _format;
+			if (oValidation.type === Asc.EDataValidationType.Date) {
+				_format = AscCommon.oNumFormatCache.get("m/d/yyyy");
+			} else if (oValidation.type === Asc.EDataValidationType.Time) {
+				_format = AscCommon.oNumFormatCache.get("h:mm:ss AM/PM");
 			}
 
+			// convert to corresponding string
+			if (_format) {
+				let formatVal = _format.format(data.val);
+				if (formatVal && formatVal[0] && formatVal[0].text) {
+					t.asc_setValue(formatVal[0].text);
+				}
+			}
+		}
+
+		// fix the text from quotes
+		data = normalizeText(data)
+		if (data.isNum) {
+			fromNumberToString(data);
 		} else {
 			if (this && this._formula) {
 				//если формула содержит ссылки на диапазоны, то в зависимости от активной области нужно их сдвинуть
@@ -157,9 +175,9 @@
 				if (offset) {
 					this._formula.changeOffset(offset);
 				}
-				this.text = "=" + this._formula.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale);
-			} else {
-				this.text = "=" + _val;
+
+				const formulaVal = this._formula.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale);
+				this.asc_setValue("=" + formulaVal);
 			}
 		}
 	};
@@ -1475,7 +1493,6 @@
 
 		for (let i = 0; i < res.length; i++) {
 			res[i]._init(ws);
-			res[i].correctToInterface(ws);
 		}
 		return res;
 	}

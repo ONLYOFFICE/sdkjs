@@ -2566,9 +2566,9 @@
                 this.recalculateContent();
                 //this.recalcInfo.recalculateContent = false;
             }
-            if(this.recalcInfo.recalcTransform) {
+            if(this.recalcInfo.recalculateTransform) {
                 this.recalculateTransform();
-                //this.recalcInfo.recalcTransform = false;
+                //this.recalcInfo.recalculateTransform = false;
             }
             if(this.recalcInfo.recalculateTransformText) {
                 this.recalculateTransformText();
@@ -14477,7 +14477,7 @@
     };
     CTitle.prototype.Refresh_RecalcData2 = function(pageIndex) {
         this.recalcInfo.recalculateTxBody = true;
-        this.recalcInfo.recalcTransform = true;
+        this.recalcInfo.recalculateTransform = true;
         this.recalcInfo.recalculateTransformText = true;
         this.recalcInfo.recalculateContent = true;
         this.recalcInfo.recalculateGeometry = true;
@@ -14732,7 +14732,7 @@
     };
     CTitle.prototype.resetRecalcFlags = function() {
         this.recalcInfo.recalculateTxBody = true;
-        this.recalcInfo.recalcTransform = true;
+        this.recalcInfo.recalculateTransform = true;
         this.recalcInfo.recalculateTransformText = true;
         this.recalcInfo.recalculateContent = true;
         this.recalcInfo.recalculateGeometry = true;
@@ -14809,9 +14809,9 @@
                 this.recalculateContent();
                 this.recalcInfo.recalculateContent = false;
             }
-            if(this.recalcInfo.recalcTransform) {
+            if(this.recalcInfo.recalculateTransform) {
                 this.recalculateTransform();
-                this.recalcInfo.recalcTransform = false;
+                this.recalcInfo.recalculateTransform = false;
             }
             if(this.recalcInfo.recalculateGeometry) {
                 this.recalculateGeometry && this.recalculateGeometry();
@@ -18095,6 +18095,18 @@
             }
         }
     };
+	CDataRefs.prototype.collectInsideAndIntersectionRefs = function(aRanges, aCollectedRefs) {
+		if(this.ref) {
+			for(var nRange = 0; nRange < aRanges.length; ++nRange) {
+				const oInsideRange = aRanges[nRange].insideRange;
+				const oIntersectionRange = aRanges[nRange].intersectionRange;
+				if(this.isInside(oInsideRange) && this.hasIntersection(oIntersectionRange)) {
+					aCollectedRefs.push(this.ref);
+					break;
+				}
+			}
+		}
+	};
 
     var SERIES_COMPARE_RESULT_NONE = 0;
     var SERIES_COMPARE_RESULT_RIGHT = 1;
@@ -18306,6 +18318,17 @@
             this.errBarsPlus[nIdx].collectIntersectionRefs(aRanges, aCollectedRefs);
         }
     };
+	CSeriesDataRefs.prototype.collectInsideAndIntersectionRefs = function(aRanges, aCollectedRefs) {
+		this.val.collectInsideAndIntersectionRefs(aRanges, aCollectedRefs);
+		this.cat.collectInsideAndIntersectionRefs(aRanges, aCollectedRefs);
+		this.tx.collectInsideAndIntersectionRefs(aRanges, aCollectedRefs);
+		for(let nIdx = 0; nIdx < this.errBarsMinus.length; ++nIdx) {
+			this.errBarsMinus[nIdx].collectInsideAndIntersectionRefs(aRanges, aCollectedRefs);
+		}
+		for(let nIdx = 0; nIdx < this.errBarsPlus.length; ++nIdx) {
+			this.errBarsPlus[nIdx].collectInsideAndIntersectionRefs(aRanges, aCollectedRefs);
+		}
+	};
     CSeriesDataRefs.prototype.collectIntersectionRefsForInsertColRow = function(oRange, aCollectedRefs, isInsertCol) {
         this.val.collectRefsIntersectsForInsertColRow(oRange, aCollectedRefs, isInsertCol);
     };
@@ -19201,6 +19224,28 @@
             }
         }
     };
+	CChartDataRefs.prototype.collectInsideAndIntersectionRefs = function(aRanges, aCollectedRefs) {
+		if(!Array.isArray(aRanges) || aRanges.length === 0) {
+			return;
+		}
+		var aIntersectionRanges = [];
+		var oRange;
+		for(var nRange = 0; nRange < aRanges.length; ++nRange) {
+			oRange = aRanges[nRange];
+			const oIntersectionRange = oRange.intersectionRange;
+			if(this.hasIntersection(oIntersectionRange)) {
+				aIntersectionRanges.push(oRange);
+			}
+		}
+		if(aIntersectionRanges.length > 0) {
+			for(var nSeries = 0; nSeries < this.seriesRefs.length; ++nSeries) {
+				this.seriesRefs[nSeries].collectInsideAndIntersectionRefs(aIntersectionRanges, aCollectedRefs);
+			}
+			for(var nLblRef = 0; nLblRef < this.labelsRefs.length; ++nLblRef) {
+				this.labelsRefs[nLblRef].collectInsideAndIntersectionRefs(aIntersectionRanges, aCollectedRefs);
+			}
+		}
+	};
 
     function isValidChartRange(sRange) {
         if(sRange === "") {

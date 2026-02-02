@@ -1964,6 +1964,8 @@
 
 		oDoc.RemoveAnnot(this.GetId());
 	};
+	
+	CAnnotationBase.prototype.setBDeleted = AscFormat.CGraphicObjectBase.prototype.setBDeleted;
     
     function formatTimestampToPDF(timestamp) {
         const date = new Date(parseInt(timestamp));

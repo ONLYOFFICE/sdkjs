@@ -6884,6 +6884,17 @@ CPresentation.prototype.Reassign_ImageUrls = function (images_rename) {
 	}
 };
 
+CPresentation.prototype.GetAllGIFImageUrls = function() {
+	let allURLs = this.Get_AllImageUrls();
+	let gifURLs = [];
+	for (let imageIndex = 0; imageIndex < allURLs.length; ++imageIndex) {
+		let imageUrl = allURLs[imageIndex];
+		if (imageUrl.toLowerCase().endsWith(".gif")) {
+			gifURLs.push(imageUrl);
+		}
+	}
+	return gifURLs;
+};
 
 CPresentation.prototype.Get_GraphicObjectsProps = function () {
 	let oController = this.GetCurrentController();

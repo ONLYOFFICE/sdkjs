@@ -2026,6 +2026,12 @@ function (window, undefined) {
 	STANDART_COLORS_MAP[0x993300] = "Brown";
 	STANDART_COLORS_MAP[0x333399] = "Indigo";
 	STANDART_COLORS_MAP[0x333333] = "Dark Gray";
+	STANDART_COLORS_MAP[0x404040] = "Dark Gray";
+	STANDART_COLORS_MAP[0x606060] = "Gray";
+	STANDART_COLORS_MAP[0xA0A0A0] = "Gray";
+	STANDART_COLORS_MAP[0xE0E0E0] = "Light Gray";
+	STANDART_COLORS_MAP[0xE6F5E6] = "Light Green";
+	STANDART_COLORS_MAP[0xDCF0DC] = "Light Green";
 
 
 	/**
@@ -2289,9 +2295,9 @@ function (window, undefined) {
 		let eps = 216.0 / 24389.0;
 		let k = 24389.0 / 27.0;
 
-		let Xr = 0.964221;  // reference white D50
+		let Xr = 0.95047;  // reference white D65
 		let Yr = 1.0;
-		let Zr = 0.825211;
+		let Zr = 1.08883;
 
 		// RGB to XYZ
 		r = R / 255; //R 0..1
@@ -2299,16 +2305,16 @@ function (window, undefined) {
 		b = B / 255; //B 0..1
 
 		// assuming sRGB (D65)
-		if (r <= 0.04045) r = r / 12; else r = Math.pow((r + 0.055) / 1.055, 2.4);
+		if (r <= 0.04045) r = r / 12.92; else r = Math.pow((r + 0.055) / 1.055, 2.4);
 
-		if (g <= 0.04045) g = g / 12; else g = Math.pow((g + 0.055) / 1.055, 2.4);
+		if (g <= 0.04045) g = g / 12.92; else g = Math.pow((g + 0.055) / 1.055, 2.4);
 
-		if (b <= 0.04045) b = b / 12; else b = Math.pow((b + 0.055) / 1.055, 2.4);
+		if (b <= 0.04045) b = b / 12.92; else b = Math.pow((b + 0.055) / 1.055, 2.4);
 
 
-		X = 0.436052025 * r + 0.385081593 * g + 0.143087414 * b;
-		Y = 0.222491598 * r + 0.71688606 * g + 0.060621486 * b;
-		Z = 0.013929122 * r + 0.097097002 * g + 0.71418547 * b;
+		X = 0.4124564 * r + 0.3575761 * g + 0.1804375 * b;
+		Y = 0.2126729 * r + 0.7151522 * g + 0.0721750 * b;
+		Z = 0.0193339 * r + 0.1191920 * g + 0.9503041 * b;
 
 		// XYZ to Lab
 		xr = X / Xr;

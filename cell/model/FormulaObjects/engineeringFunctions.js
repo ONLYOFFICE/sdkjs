@@ -67,6 +67,8 @@ function (window, undefined) {
 	var f_PI_DIV_4 = Math.PI / 4;
 	var f_2_DIV_PI = 2 / Math.PI;
 
+	const BESSEL_MAX_USED_VALUE = 1.5E+08;
+
 	function BesselJ(x, N) {
 		if (N < 0) {
 			return new cError(cErrorType.not_numeric);
@@ -148,7 +150,12 @@ function (window, undefined) {
 	}
 
 	function BesselI(x, n) {
-		var nMaxIteration = 2000, fXHalf = x / 2, fResult = 0, fEpsilon = 1.0E-30;
+		const nMaxIteration = 2000;
+		const fXHalf = x / 2;
+		const fEpsilon = 1.0e-15;
+
+		n = Math.trunc(n);
+
 		if (n < 0) {
 			return new cError(cErrorType.not_numeric);
 		}
@@ -157,19 +164,20 @@ function (window, undefined) {
 
 		 TERM(n,0) = (x/2)^n / n!
 		 */
-		var nK = 0, fTerm = 1;
-		// avoid overflow in Fak(n)
-		for (nK = 1; nK <= n; ++nK) {
+		let fResult = 0,
+			nK = 0, 
+			fTerm = 1;
+
+		// Avoid overflow by calculating incrementally
+		for (nK = 1; nK <= n; nK++) {
 			fTerm = fTerm / nK * fXHalf;
 		}
-
-		fTerm = Math.pow(fXHalf, n) / Math.fact(n);
 
 		fResult = fTerm;    // Start result with TERM(n,0).
 		if (fTerm !== 0) {
 			nK = 1;
 			do {
-				fTerm = Math.pow(fXHalf, n + 2 * nK) / (Math.fact(nK) * Math.fact(n + nK));
+				// fTerm = Math.pow(fXHalf, n + 2 * nK) / (Math.fact(nK) * Math.fact(n + nK));
 
 				/*  Calculation of TERM(n,k) from TERM(n,k-1):
 
@@ -189,8 +197,8 @@ function (window, undefined) {
 				 =  -------- TERM(n,k-1)
 				 k(n+k)
 				 */
-//            fTerm = fTerm * fXHalf / nK * fXHalf / (nK + n);
-				fResult = fResult + fTerm;
+           		fTerm = fTerm * fXHalf / nK * fXHalf / (nK + n);
+				fResult += fTerm;
 				nK++;
 			} while ((Math.abs(fTerm) > Math.abs(fResult) * fEpsilon) && (nK < nMaxIteration));
 
@@ -451,7 +459,9 @@ function (window, undefined) {
 			case 1:
 				return _Bessely1(fNum);
 			default: {
-				var fByp, fTox = 2 / fNum, fBym = _Bessely0(fNum), fBy = _Bessely1(fNum);
+				let fTox = 2 / fNum,
+					fBym = _Bessely0(fNum),
+					fBy = _Bessely1(fNum);
 
 				if (fBym instanceof cError) {
 					return fBym;
@@ -463,8 +473,8 @@ function (window, undefined) {
 				fBym = fBym.getValue();
 				fBy = fBy.getValue();
 
-				for (var n = 1; n < nOrder; n++) {
-					fByp = n * fTox * fBy - fBym;
+				for (let n = 1; n < nOrder; n++) {
+					const fByp = n * fTox * fBy - fBym;
 					fBym = fBy;
 					fBy = fByp;
 				}
@@ -472,6 +482,49 @@ function (window, undefined) {
 				return new cNumber(fBy);
 			}
 		}
+	}
+
+	function besselFunctionsCalc (x, n, funcAction) {
+		// X    Required. The value at which to evaluate the function.
+		// N    Required. The order of the function. If n is not an integer, it is truncated.
+		// funcAction - func to calculate bessel function. It can be besselY/J/I
+
+		if (!x || !n || !funcAction) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		if (x.type === cElementType.empty || n.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
+		}
+
+		if (x.type === cElementType.cell || x.type === cElementType.cell3D) {
+			x = x.getValue();
+		}
+		if (n.type === cElementType.cell || n.type === cElementType.cell3D) {
+			n = n.getValue();
+		}
+
+		if (x.type === cElementType.bool || n.type === cElementType.bool ||
+			(x.type === cElementType.cellsRange || x.type === cElementType.cellsRange3D) && !x.isOneElement() ||
+			(n.type === cElementType.cellsRange || n.type === cElementType.cellsRange3D) && !n.isOneElement()) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		x = x.tocNumber();
+		n = n.tocNumber();
+
+		if (x.type === cElementType.error) {
+			return x;
+		}
+
+		if (n.type === cElementType.error) {
+			return n;
+		}
+
+		x = x.getValue();
+		n = n.getValue();
+
+		return funcAction(x, n);
 	}
 
 	function validBINNumber(n) {
@@ -4444,34 +4497,26 @@ function (window, undefined) {
 	cBESSELI.prototype.argumentsMax = 2;
 	cBESSELI.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cBESSELI.prototype.argumentsType = [argType.any, argType.any];
+	/**
+	 * @param {number} X: The value at which to evaluate the function.
+	 * @param {number} N: The order of the Bessel function. If n is not an integer, it is truncated.
+	 * @return {number} Returns the modified Bessel function, which is equivalent to the Bessel function evaluated for purely imaginary arguments.
+	 */
 	cBESSELI.prototype.Calculate = function (arg) {
-		var oArguments = this._prepareArguments(arg, arguments[1], true);
-		var argClone = oArguments.args;
 
-		argClone[0] = argClone[0].tocNumber();
-		argClone[1] = argClone[1].tocNumber();
+		let arg0 = arg[0], arg1 = arg[1];
 
-		var argError;
-		if (argError = this._checkErrorArg(argClone)) {
-			return argError;
-		}
-
-		var calcFunc = function (argArray) {
-			var x = argArray[0];
-			var n = argArray[1];
-
-			if (n < 0) {
+		const calcFunc = function (x, n) {
+			if (n < 0 || n >= BESSEL_MAX_USED_VALUE || x >= BESSEL_MAX_USED_VALUE) {
 				return new cError(cErrorType.not_numeric);
 			}
-			if (x < 0) {
-				x = Math.abs(x);
-			}
+
 			n = Math.floor(n);
 
 			return BesselI(x, n);
 		};
 
-		return this._findArrayInNumberArguments(oArguments, calcFunc);
+		return besselFunctionsCalc(arg0, arg1, calcFunc);
 	};
 
 	/**
@@ -4489,24 +4534,17 @@ function (window, undefined) {
 	cBESSELJ.prototype.argumentsMax = 2;
 	cBESSELJ.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cBESSELJ.prototype.argumentsType = [argType.any, argType.any];
+	/**
+	 * @param {number} X: The value at which to evaluate the function.
+	 * @param {number} N: The order of the Bessel function. If n is not an integer, it is truncated.
+	 * @return {number} Returns the Bessel function.
+	 */
 	cBESSELJ.prototype.Calculate = function (arg) {
-		//результаты вычислений как в LO
-		var oArguments = this._prepareArguments(arg, arguments[1], true);
-		var argClone = oArguments.args;
+		// calculation results as in LO
+		let arg0 = arg[0], arg1 = arg[1];
 
-		argClone[0] = argClone[0].tocNumber();
-		argClone[1] = argClone[1].tocNumber();
-
-		var argError;
-		if (argError = this._checkErrorArg(argClone)) {
-			return argError;
-		}
-
-		var calcFunc = function (argArray) {
-			var x = argArray[0];
-			var n = argArray[1];
-
-			if (n < 0) {
+		const calcFunc = function (x, n) {
+			if (n < 0 || n >= BESSEL_MAX_USED_VALUE || x <= -BESSEL_MAX_USED_VALUE || x >= BESSEL_MAX_USED_VALUE) {
 				return new cError(cErrorType.not_numeric);
 			}
 			if (x < 0) {
@@ -4517,7 +4555,7 @@ function (window, undefined) {
 			return BesselJ(x, n);
 		};
 
-		return this._findArrayInNumberArguments(oArguments, calcFunc);
+		return besselFunctionsCalc(arg0, arg1, calcFunc);
 	};
 
 
@@ -4536,24 +4574,17 @@ function (window, undefined) {
 	cBESSELK.prototype.argumentsMax = 2;
 	cBESSELK.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cBESSELK.prototype.argumentsType = [argType.any, argType.any];
+	/**
+	 * @param {number} X: The value at which to evaluate the function.
+	 * @param {number} N: The order of the function. If n is not an integer, it is truncated.
+	 * @return {number} Returns the modified Bessel function, which is equivalent to the Bessel functions evaluated for purely imaginary arguments.
+	 */
 	cBESSELK.prototype.Calculate = function (arg) {
-		//результаты вычислений как в LO
-		var oArguments = this._prepareArguments(arg, arguments[1], true);
-		var argClone = oArguments.args;
+		// calculation results as in LO
+		let arg0 = arg[0], arg1 = arg[1];
 
-		argClone[0] = argClone[0].tocNumber();
-		argClone[1] = argClone[1].tocNumber();
-
-		var argError;
-		if (argError = this._checkErrorArg(argClone)) {
-			return argError;
-		}
-
-		var calcFunc = function (argArray) {
-			var x = argArray[0];
-			var n = argArray[1];
-
-			if (n < 0 || x < 0) {
+		const calcFunc = function (x, n) {
+			if (n < 0 || x < 0 || n >= BESSEL_MAX_USED_VALUE || n >= BESSEL_MAX_USED_VALUE) {
 				return new cError(cErrorType.not_numeric);
 			}
 
@@ -4562,7 +4593,7 @@ function (window, undefined) {
 			return BesselK(x, n);
 		};
 
-		return this._findArrayInNumberArguments(oArguments, calcFunc);
+		return besselFunctionsCalc(arg0, arg1, calcFunc);
 	};
 
 
@@ -4581,24 +4612,17 @@ function (window, undefined) {
 	cBESSELY.prototype.argumentsMax = 2;
 	cBESSELY.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cBESSELY.prototype.argumentsType = [argType.any, argType.any];
+	/**
+	 * @param {number} X: The value at which to evaluate the function.
+	 * @param {number} N: The order of the function. If n is not an integer, it is truncated.
+	 * @return {number} Returns the Bessel function, which is also called the Weber function or the Neumann function.
+	 */
 	cBESSELY.prototype.Calculate = function (arg) {
-		//результаты вычислений как в LO
-		var oArguments = this._prepareArguments(arg, arguments[1], true);
-		var argClone = oArguments.args;
+		// calculation results as in LO
+		let arg0 = arg[0], arg1 = arg[1];
 
-		argClone[0] = argClone[0].tocNumber();
-		argClone[1] = argClone[1].tocNumber();
-
-		var argError;
-		if (argError = this._checkErrorArg(argClone)) {
-			return argError;
-		}
-
-		var calcFunc = function (argArray) {
-			var x = argArray[0];
-			var n = argArray[1];
-
-			if (n < 0 || x < 0) {
+		const calcFunc = function (x, n) {
+			if (n < 0 || x < 0 || n >= BESSEL_MAX_USED_VALUE || x >= BESSEL_MAX_USED_VALUE) {
 				return new cError(cErrorType.not_numeric);
 			}
 
@@ -4607,7 +4631,7 @@ function (window, undefined) {
 			return BesselY(x, n);
 		};
 
-		return this._findArrayInNumberArguments(oArguments, calcFunc);
+		return besselFunctionsCalc(arg0, arg1, calcFunc);
 	};
 
 

@@ -161,7 +161,7 @@
 			"cell/model/CellInfo.js",
 			"cell/model/HeaderFooter.js",
 			"cell/view/DrawingObjectsController.js",
-		  "cell/view/HandlerList.js",
+			"cell/view/HandlerList.js",
 			
 			"word/Editor/Paragraph/RunContent/Types.js",
 			"word/Math/mathTypes.js",
@@ -408,7 +408,16 @@
 			"common/Native/native_graphics.js",
 			
 			"vendor/easysax.js",
-			"common/openxml.js"
+			"common/openxml.js",
+			
+			
+			"common/Drawings/gif-player.js",
+		
+			"vendor/gifuct-js/bytestream.js",
+			"vendor/gifuct-js/dataparser.js",
+			"vendor/gifuct-js/gif.js",
+			"vendor/gifuct-js/parsers.js",
+			"vendor/gifuct-js/schema.js"
 		],
 		"desktop": {
 			"min": [

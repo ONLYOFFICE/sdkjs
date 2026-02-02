@@ -554,6 +554,12 @@
             oActionsQueue.Start();
         }
     };
+    CAnnotationLink.prototype.Copy = function(isForMove) {
+        let oCopy = AscPDF.CAnnotationBase.prototype.Copy.call(this, isForMove);
+
+        oCopy.SetActions(AscPDF.PDF_TRIGGERS_TYPES.MouseUp, this.GetActions(AscPDF.PDF_TRIGGERS_TYPES.MouseUp));
+        return oCopy;
+    };
 
     /**
      * Defines how a button reacts when a user clicks it. The four highlight modes supported are:

@@ -87,7 +87,22 @@ var gc_nMaxMantissa = Math.pow(10, gc_nMaxDigCount);
 var gc_aTimeFormats = ['[$-F400]h:mm:ss AM/PM', 'h:mm;@', 'h:mm AM/PM;@', 'h:mm:ss;@', 'h:mm:ss AM/PM;@', 'mm:ss.0;@',
 	'[h]:mm:ss;@'];
 var gc_aFractionFormats = ['# ?/?', '# ??/??', '# ???/???', '# ?/2', '# ?/4', '# ?/8', '# ??/16', '# ?/10', '# ??/100'];
+//important for shortcuts
+var gc_oParseDateOverrideFormats = {
+    "d-mmm": 1,
+    "d-mmm-yy": 1,
+    "mmm-yy": 1,
+    "h:mm": 1,
+    "h:mm AM/PM": 1,
+    "h:mm:ss": 1,
+    "h:mm:ss AM/PM": 1,
+    "mm:ss.0": 1,
+    "[h]:mm:ss": 1
+};
 const dBNum1Numbers = ['\u3007','\u4E00','\u4E8C','\u4E09','\u56DB','\u4E94','\u516D','\u4E03','\u516B','\u4E5D'];
+const interfaceFormatScientific = '0.00E+00';
+const interfaceFormatPercent = '0.00%';
+let interfaceShortDateFormat = 'm/d/yyyy';
 
 var NumComporationOperators =
 {
@@ -1939,7 +1954,7 @@ NumFormat.prototype =
         }
     },
     setFormat: function(format, cultureInfo, formatType, useLocaleFormat) {
-		if (null == cultureInfo) {
+        if (null == cultureInfo) {
             cultureInfo = g_oDefaultCultureInfo;
         }
         this.formatString = format;
@@ -3640,29 +3655,231 @@ FormatParser.prototype =
         }
         return val - 0;
     },
-    parse: function (value, cultureInfo)
+    /**
+     * Get cached regex for number parsing
+     * @private
+     */
+    _getNumberRegex: function (cultureInfo) {
+        // Cache key based on culture-specific separators
+        var cacheKey = cultureInfo.NumberGroupSeparator + "|" + 
+                       cultureInfo.NumberDecimalSeparator + "|" + 
+                       cultureInfo.CurrencySymbol;
+        
+        if (!this._numberRegexCache) {
+            this._numberRegexCache = {};
+        }
+        let regex = this._numberRegexCache[cacheKey];
+        if (!regex) {
+            regex = new RegExp(
+                "^(([ \\+\\-%\\$€£¥\\(]|" + escapeRegExp(cultureInfo.CurrencySymbol) + 
+                ")*)((?:\\d+(?:" + escapeRegExp(cultureInfo.NumberGroupSeparator) + 
+                "\\d+)*(?:" + escapeRegExp(cultureInfo.NumberDecimalSeparator) + 
+                "\\d*)?)?(?:\\s*\\d+/\\d+)?)(([ %\\)]|р.|" + 
+                escapeRegExp(cultureInfo.CurrencySymbol) + ")*)$"
+            );
+            this._numberRegexCache[cacheKey] = regex;
+        }
+        return regex;
+    },
+    /**
+     * Check if format should be preserved (not auto-detected from input)
+     * @private
+     */
+    _shouldPreserveFormat: function (currentFormat, stringFormat) {
+        switch (currentFormat) {
+            case Asc.c_oAscNumFormatType.Number:
+            case Asc.c_oAscNumFormatType.Currency:
+            case Asc.c_oAscNumFormatType.Accounting:
+            case Asc.c_oAscNumFormatType.Date:
+            case Asc.c_oAscNumFormatType.Time:
+            case Asc.c_oAscNumFormatType.LongDate:
+                return true;
+            case Asc.c_oAscNumFormatType.Fraction:
+                // Preserve unless it's a "detect" format like "# ?/?"
+                return -1 === stringFormat.indexOf('/?');
+            case Asc.c_oAscNumFormatType.Percent:
+                return stringFormat !== interfaceFormatPercent;
+            case Asc.c_oAscNumFormatType.Scientific:
+                return stringFormat !== interfaceFormatScientific;
+            default:
+                return false;
+        }
+    },
+    /**
+     * Check if format is numeric (for simple fraction "1/2" disambiguation with dates)
+     * @private
+     */
+    _isNumericFormat: function (currentFormat) {
+        switch (currentFormat) {
+			case Asc.c_oAscNumFormatType.Number:
+			case Asc.c_oAscNumFormatType.Currency:
+			case Asc.c_oAscNumFormatType.Accounting:
+			case Asc.c_oAscNumFormatType.Fraction:
+			case Asc.c_oAscNumFormatType.Percent:
+			case Asc.c_oAscNumFormatType.Scientific:
+                return true;
+            default:
+                return false;
+        }
+    },
+    /**
+     * Build currency format string based on pattern
+     * @private
+     */
+    _buildCurrencyFormat: function (sCurrency, sFracFormat, nPattern) {
+        var sNumberFormat = "#" + gc_sFormatThousandSeparator + "##0" + sFracFormat;
+        var sCurrencyFormat = (sCurrency.length > 1) ? "\"" + sCurrency + "\"" : "\\" + sCurrency;
+        var sPositivePattern, sNegativePattern;
+
+        switch (nPattern) {
+            case 0:
+                sPositivePattern = sCurrencyFormat + sNumberFormat + "_)";
+                sNegativePattern = "[Red](" + sCurrencyFormat + sNumberFormat + ")";
+                break;
+            case 1:
+                sPositivePattern = sCurrencyFormat + sNumberFormat;
+                sNegativePattern = "[Red]-" + sCurrencyFormat + sNumberFormat;
+                break;
+            case 2:
+                sPositivePattern = sCurrencyFormat + sNumberFormat;
+                sNegativePattern = "[Red]" + sCurrencyFormat + "-" + sNumberFormat;
+                break;
+            case 3:
+                sPositivePattern = sCurrencyFormat + sNumberFormat + "_-";
+                sNegativePattern = "[Red]" + sCurrencyFormat + sNumberFormat + "-";
+                break;
+            case 4:
+                sPositivePattern = sNumberFormat + sCurrencyFormat + "_)";
+                sNegativePattern = "[Red](" + sNumberFormat + sCurrencyFormat + ")";
+                break;
+            case 5:
+                sPositivePattern = sNumberFormat + sCurrencyFormat;
+                sNegativePattern = "[Red]-" + sNumberFormat + sCurrencyFormat;
+                break;
+            case 6:
+                sPositivePattern = sNumberFormat + "-" + sCurrencyFormat;
+                sNegativePattern = "[Red]" + sNumberFormat + "-" + sCurrencyFormat;
+                break;
+            case 7:
+                sPositivePattern = sNumberFormat + sCurrencyFormat + "_-";
+                sNegativePattern = "[Red]" + sNumberFormat + sCurrencyFormat + "-";
+                break;
+            case 8:
+                sPositivePattern = sNumberFormat + " " + sCurrencyFormat;
+                sNegativePattern = "[Red]-" + sNumberFormat + " " + sCurrencyFormat;
+                break;
+            case 9:
+                sPositivePattern = sCurrencyFormat + " " + sNumberFormat;
+                sNegativePattern = "[Red]-" + sCurrencyFormat + " " + sNumberFormat;
+                break;
+            case 10:
+                sPositivePattern = sNumberFormat + " " + sCurrencyFormat + "_-";
+                sNegativePattern = "[Red]" + sNumberFormat + " " + sCurrencyFormat + "-";
+                break;
+            case 11:
+                sPositivePattern = sCurrencyFormat + " " + sNumberFormat + "_-";
+                sNegativePattern = "[Red]" + sCurrencyFormat + " " + sNumberFormat + "-";
+                break;
+            case 12:
+                sPositivePattern = sCurrencyFormat + " " + sNumberFormat;
+                sNegativePattern = "[Red]" + sCurrencyFormat + " -" + sNumberFormat;
+                break;
+            case 13:
+                sPositivePattern = sNumberFormat + " " + sCurrencyFormat;
+                sNegativePattern = "[Red]" + sNumberFormat + "- " + sCurrencyFormat;
+                break;
+            case 14:
+                sPositivePattern = sCurrencyFormat + " " + sNumberFormat + "_)";
+                sNegativePattern = "[Red](" + sCurrencyFormat + " " + sNumberFormat + ")";
+                break;
+            case 15:
+                sPositivePattern = sNumberFormat + " " + sCurrencyFormat + "_)";
+                sNegativePattern = "[Red](" + sNumberFormat + " " + sCurrencyFormat + ")";
+                break;
+            default:
+                sPositivePattern = sCurrencyFormat + sNumberFormat;
+                sNegativePattern = "[Red]-" + sCurrencyFormat + sNumberFormat;
+        }
+        return sPositivePattern + ";" + sNegativePattern;
+    },
+    parse: function (value, cultureInfo, currentFormat, stringFormat)
     {
+        if (currentFormat === Asc.c_oAscNumFormatType.Text)
+            return null;
         if (null == cultureInfo)
             cultureInfo = g_oDefaultCultureInfo;
+        if (!stringFormat)
+            stringFormat = AscCommon.g_cGeneralFormat;
+
+        // Replace Non-breaking space (0xA0) with White-space (0x20)
+        if (" " == cultureInfo.NumberGroupSeparator)
+            value = value.replace(new RegExp(String.fromCharCode(0xA0), "g"), "");
+
+        var shouldPreserveFormat = this._shouldPreserveFormat(currentFormat, stringFormat);
+		const isDateOverrideFormat = stringFormat in gc_oParseDateOverrideFormats || stringFormat === interfaceShortDateFormat;
+
+        // Regex that matches numbers, mixed fractions ("1 1/2"), and simple fractions ("1/2")
+        // Cached per cultureInfo to avoid recompilation on every call
+        var rx_thouthand = this._getNumberRegex(cultureInfo);
+        var match = value.match(rx_thouthand);
+
+        // Variables for fraction parsing
+        var sVal = null;
+        var sNumerator = null;
+        var sDenominator = null;
+        var sBefore = null;
+        var sAfter = null;
         var res = null;
         var bError = false;
-        //replace Non-breaking space(0xA0) with White-space(0x20)
-        if (" " == cultureInfo.NumberGroupSeparator)
-            value = value.replace(new RegExp(String.fromCharCode(0xA0), "g"));
-        var rx_thouthand = new RegExp("^(([ \\+\\-%\\$€£¥\\(]|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)((\\d+" + escapeRegExp(cultureInfo.NumberGroupSeparator) + "\\d+)*\\d*" + escapeRegExp(cultureInfo.NumberDecimalSeparator) + "?\\d*)(([ %\\)]|р.|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)$");
-        var match = value.match(rx_thouthand);
+
         if (null != match) {
-            var sBefore = match[1];
-            var sVal = match[3];
-            var sAfter = match[5];
-			var oChartCount = {};
-			if(null != sBefore)
-			    this._parseStringLetters(sBefore, cultureInfo.CurrencySymbol, true, oChartCount);
-			if(null != sAfter)
-			    this._parseStringLetters(sAfter, cultureInfo.CurrencySymbol, false, oChartCount);
-			var bMinus = false;
-			var bPercent = false;
-			var sCurrency = null;
+            // If the third group has "/" symbol parse it like a fraction
+            if (match[3] && match[3].indexOf('/') !== -1) {
+                // Find fraction at end: must be at start OR after space
+                // This rejects "0.5/2" (no space before 5) but accepts "1 1/2", "1,234 1/2"
+                var fractionMatch = match[3].match(/(?:^|\s)(\d+)\/(\d+)$/);
+                if (!fractionMatch) {
+                    match = null;
+                } else {
+                    sNumerator = fractionMatch[1];
+                    sDenominator = fractionMatch[2];
+                    
+                    // Get part before fraction - let existing locale-aware parsing handle it
+                    var beforeFraction = match[3].substring(0, fractionMatch.index).trim();
+                    
+                    if (beforeFraction === '') {
+                        // Simple fraction like "1/2"
+                        if (!this._isNumericFormat(currentFormat)) {
+                            // Let parseDate handle it (could be date like "1/2" = Jan 2)
+                            match = null;
+                        } else {
+                            sVal = '0';
+                        }
+                    } else {
+                        // Mixed fraction - whole part validated by _parseThouthand (locale-aware)
+                        sVal = beforeFraction;
+                    }
+                }
+            } else {
+                sVal = match[3];
+            }
+        }
+
+        if (null != match) {
+            sBefore = match[1];
+            sAfter = match[4];
+
+            var oChartCount = {};
+            if (null != sBefore)
+                this._parseStringLetters(sBefore, cultureInfo.CurrencySymbol, true, oChartCount);
+            if (null != sAfter)
+                this._parseStringLetters(sAfter, cultureInfo.CurrencySymbol, false, oChartCount);
+            if (sNumerator && sDenominator)
+                this._parseStringLetters('/', cultureInfo.CurrencySymbol, false, oChartCount);
+            var bMinus = false;
+            var bPercent = false;
+            var bFraction = false;
+            var sCurrency = null;
 			var oCurrencyElem = null;
 			var nBracket = 0;
 			for(var sChar in oChartCount){
@@ -3672,12 +3889,6 @@ FormatParser.prototype =
 				else if("+" == sChar){
 					if(elem.all > 1)
 						bError = true;
-				}
-				else if("-" == sChar){
-					if(elem.all > 1)
-						bError = true;
-					else
-						bMinus = true;
 				}
 				else if("-" == sChar){
 					if(elem.all > 1)
@@ -3703,6 +3914,17 @@ FormatParser.prototype =
 					else
 						bError = true;
 				}
+                else if ('/' == sChar) {
+                    if (sVal) {
+                        if (1 == elem.all)
+                            bFraction = true;
+                        else
+                            bError = true;
+                    } else {
+                        // "/" without value - treat as error
+                        bError = true;
+                    }
+                }
 				else{
 					if(null == sCurrency && 1 == elem.all){
 						sCurrency = sChar;
@@ -3747,8 +3969,9 @@ FormatParser.prototype =
 				    bError = true;
 			}
 			if(!bError){
-				var oVal = this._parseThouthand(sVal, cultureInfo);
-				if (oVal) {
+				var oVal = this._parseThouthand(sVal, sNumerator, sDenominator, cultureInfo);
+
+                if (oVal) {
 					res = {format: null, value: null, bDateTime: false, bDate: false, bTime: false, bPercent: false, bCurrency: false};
 					var dVal = oVal.number;
 					if (bMinus)
@@ -3757,101 +3980,47 @@ FormatParser.prototype =
 					if (parseInt(dVal) != dVal)
 						sFracFormat = gc_sFormatDecimalPoint + "00";
 					var sFormat = null;
+					
+					// Percent: always divide by 100, but only change format for non-preserving types
 					if (bPercent) {
 						res.bPercent = true;
 						dVal /= 100;
-						sFormat = "0" + sFracFormat + "%";
+						if (shouldPreserveFormat && !isDateOverrideFormat) {
+							sFormat = stringFormat;
+						} else {
+							sFormat = "0" + sFracFormat + "%";
+						}
 					}
-					else if (sCurrency) {
+                    else if (bFraction) 
+                    {
+                        res.bFraction = true;
+                        sFormat = this._selectFractionFormat(sNumerator, sDenominator, shouldPreserveFormat, isDateOverrideFormat, currentFormat, stringFormat);
+                    }
+					else if (sCurrency && !(shouldPreserveFormat && !isDateOverrideFormat)) {
 						res.bCurrency = true;
-					    var sNumberFormat = "#" + gc_sFormatThousandSeparator + "##0" + sFracFormat;
-					    var sCurrencyFormat;
-					    if(sCurrency.length > 1)
-					        sCurrencyFormat = "\"" + sCurrency + "\"";
-					    else
-					        sCurrencyFormat = "\\" + sCurrency;
-					    var sPositivePattern;
-					    var sNegativePattern;
-					    switch (CurrencyNegativePattern) {
-					        case 0:
-					            sPositivePattern = sCurrencyFormat + sNumberFormat + "_)";
-					            sNegativePattern = "[Red](" + sCurrencyFormat + sNumberFormat + ")";
-					            break;
-					        case 1:
-					            sPositivePattern = sCurrencyFormat + sNumberFormat;
-					            sNegativePattern = "[Red]-" + sCurrencyFormat + sNumberFormat;
-					            break;
-					        case 2:
-					            sPositivePattern = sCurrencyFormat + sNumberFormat;
-					            sNegativePattern = "[Red]" + sCurrencyFormat + "-" + sNumberFormat;
-					            break;
-					        case 3:
-					            sPositivePattern = sCurrencyFormat + sNumberFormat + "_-";
-					            sNegativePattern = "[Red]" + sCurrencyFormat + sNumberFormat + "-";
-					            break;
-					        case 4:
-					            sPositivePattern = sNumberFormat + sCurrencyFormat + "_)";
-					            sNegativePattern = "[Red](" + sNumberFormat + sCurrencyFormat + ")";
-					            break;
-					        case 5:
-					            sPositivePattern = sNumberFormat + sCurrencyFormat;
-					            sNegativePattern = "[Red]-" + sNumberFormat + sCurrencyFormat;
-					            break;
-					        case 6:
-					            sPositivePattern = sNumberFormat + "-" + sCurrencyFormat;
-					            sNegativePattern = "[Red]" + sNumberFormat + "-" + sCurrencyFormat;
-					            break;
-					        case 7:
-					            sPositivePattern = sNumberFormat + sCurrencyFormat + "_-";
-					            sNegativePattern = "[Red]" + sNumberFormat + sCurrencyFormat + "-";
-					            break;
-					        case 8:
-					            sPositivePattern = sNumberFormat + " " + sCurrencyFormat;
-					            sNegativePattern = "[Red]-" + sNumberFormat + " " + sCurrencyFormat;
-					            break;
-					        case 9:
-					            sPositivePattern = sCurrencyFormat + " " + sNumberFormat;
-					            sNegativePattern = "[Red]-" + sCurrencyFormat + " " + sNumberFormat;
-					            break;
-					        case 10:
-					            sPositivePattern = sNumberFormat + " " + sCurrencyFormat + "_-";
-					            sNegativePattern = "[Red]" + sNumberFormat + " " + sCurrencyFormat + "-";
-					            break;
-					        case 11:
-					            sPositivePattern = sCurrencyFormat + " " + sNumberFormat + "_-";
-					            sNegativePattern = "[Red]" + sCurrencyFormat + " " + sNumberFormat + "-";
-					            break;
-					        case 12:
-					            sPositivePattern = sCurrencyFormat + " " + sNumberFormat;
-					            sNegativePattern = "[Red]" + sCurrencyFormat + " -" + sNumberFormat;
-					            break;
-					        case 13:
-					            sPositivePattern = sNumberFormat + " " + sCurrencyFormat;
-					            sNegativePattern = "[Red]" + sNumberFormat + "- " + sCurrencyFormat;
-					            break;
-					        case 14:
-					            sPositivePattern = sCurrencyFormat + " " + sNumberFormat + "_)";
-					            sNegativePattern = "[Red](" + sCurrencyFormat + " " + sNumberFormat + ")";
-					            break;
-					        case 15:
-					            sPositivePattern = sNumberFormat + " " + sCurrencyFormat + "_)";
-					            sNegativePattern = "[Red](" + sNumberFormat + " " + sCurrencyFormat + ")";
-					            break;
-					    }
-					    sFormat = sPositivePattern + ";" + sNegativePattern;
+						sFormat = this._buildCurrencyFormat(sCurrency, sFracFormat, CurrencyNegativePattern);
 					}
-					else if (oVal.thouthand) {
+					else if (oVal.thouthand && (currentFormat === undefined || currentFormat == Asc.c_oAscNumFormatType.General)) {
+						// Only apply thousand-separator format for General format type (or when no format specified)
 						sFormat = "#" + gc_sFormatThousandSeparator + "##0" + sFracFormat;
 					}
 					else
-						sFormat = AscCommon.g_cGeneralFormat;
+						sFormat = stringFormat;
 					res.format = sFormat;
 					res.value = dVal;
+                    if (!sFormat) 
+                        res = null;
 				}
 			}
         }
-        if (null == res && !bError)
-            res = this.parseDate(value, cultureInfo);
+        // Handle special cases after main parsing
+        if (res == null && value[0] == ' ') {
+            return null;
+        }
+        if (res == null && !bError) {
+            res = this.parseDate(value, cultureInfo, shouldPreserveFormat, isDateOverrideFormat, currentFormat, stringFormat);
+        }
+
         return res;
     },
     _parseStringLetters: function (sVal, currencySymbol, bBefore, oRes) {
@@ -3878,21 +4047,56 @@ FormatParser.prototype =
                 elem.all += nCount;
             }
         }
-		for(var i = 0, length = sVal.length; i < length; i++){
-			var sChar = sVal[i];
-			var elem = oRes[sChar];
-			if(!elem){
-				elem = {before: 0, after: 0, all: 0};
-				oRes[sChar] = elem;
-			}
-			if(bBefore)
-				elem.before++;
-			else
-				elem.after++;
-			elem.all++;
-		}
-	},
-    _parseThouthand: function (val, cultureInfo)
+        for (var i = 0, length = sVal.length; i < length; i++) {
+            var sChar = sVal[i];
+            var elem = oRes[sChar];
+            if (!elem) {
+                elem = {before: 0, after: 0, all: 0};
+                oRes[sChar] = elem;
+            }
+            if (bBefore)
+                elem.before++;
+            else
+                elem.after++;
+            elem.all++;
+        }
+    },
+    /**
+     * Select appropriate fraction format based on numerator/denominator lengths and current format
+     * @param {string} sNumerator - numerator string
+     * @param {string} sDenominator - denominator string
+	 * @param {boolean} shouldPreserveFormat - true if format should be preserved
+	 * @param {boolean} isDateOverrideFormat - true if format is a date override format
+     * @param {number} currentFormat - current cell format type
+	 * @param {string} stringFormat - current format string
+     * @returns {string|null} - fraction format string or null
+     */
+    _selectFractionFormat: function (sNumerator, sDenominator, shouldPreserveFormat, isDateOverrideFormat, currentFormat, stringFormat) {
+        var numLength = sNumerator.length;
+        var denomLength = sDenominator.length;
+        var maxLength = Math.max(numLength, denomLength);
+        if ((shouldPreserveFormat && !isDateOverrideFormat) || currentFormat == Asc.c_oAscNumFormatType.Fraction) {
+            return stringFormat;
+        }
+        
+        // Limit to 3 digits max - larger fractions return null (will be treated as text)
+        if (numLength > 3 || denomLength > 3) {
+            return null;
+        }
+        
+        // Simple rule: single digit denominators use "# ?/?", otherwise "# ??/??"
+        // Exception: when current format is already fraction-like, prefer simpler format
+        if (maxLength <= 1) {
+            return "# ?/?";
+        } else if (denomLength <= 1) {
+            // Denominator is single digit - use simpler format
+            return "# ?/?";
+        } else {
+            // Multi-digit denominator - use double-digit format
+            return "# ??/??";
+        }
+    },
+    _parseThouthand: function (val, sNumerator, sDenominator, cultureInfo)
     {
         var oRes = null;
         var bThouthand = false;
@@ -3927,7 +4131,16 @@ FormatParser.prototype =
             }
 			if (g_oFormatParser.isLocaleNumber(val, cultureInfo)) {
 				var dNumber = g_oFormatParser.parseLocaleNumber(val, cultureInfo);
-				oRes = { number: dNumber, thouthand: bThouthand };
+                if(sNumerator && sDenominator) {
+                    // Mixed fractions must have integer whole part (e.g., "0.5 1/2" is invalid)
+                    if (Number.isInteger(dNumber)) {
+                        oRes = { number: dNumber + (sNumerator / sDenominator), thouthand: bThouthand };
+                    }
+                    // else oRes stays null - invalid mixed fraction
+                }
+				else {
+                    oRes = { number: dNumber, thouthand: bThouthand };
+                }
 			}
         }
 		return oRes;
@@ -4002,7 +4215,7 @@ FormatParser.prototype =
                                 prev.date = true;
                         }
                         if (i + 1 < length) {
-                            let next = match[i + 1]
+                            let next = match[i + 1];
                             // processing the option when the date is given as the format "October 11, 2008"
                             if (i === 0 && i + 2 < length) {
                                 let afterNext = match[i + 2];
@@ -4385,7 +4598,7 @@ FormatParser.prototype =
         }
         return length === 0 ? false: bRes;
     },
-	parseDate: function (value, cultureInfo)
+	parseDate: function (value, cultureInfo, shouldPreserveFormat, isDateOverrideFormat, currentFormat, stringFormat)
 	{
 		//todo "11: AM" should fail
 		var res = null;
@@ -4613,7 +4826,15 @@ FormatParser.prototype =
 					if(dValue >= 0)
 					{
 						var sFormat = "";
-						if (bDate) {
+
+						const needOverrideFormat = isDateOverrideFormat &&
+							((currentFormat === Asc.c_oAscNumFormatType.Date && !bDate) ||
+							 (currentFormat === Asc.c_oAscNumFormatType.LongDate && bTime) ||
+							 (currentFormat === Asc.c_oAscNumFormatType.Time && bDate));
+                        // Check if current format should be preserved (not converted to date)
+                        if (shouldPreserveFormat && !needOverrideFormat) {
+                            sFormat = stringFormat;
+                        } else if (bDate) {
 							if (bTime && nHour > 23) {
 								sFormat = AscCommon.g_cGeneralFormat;
 							} else {
@@ -4643,6 +4864,8 @@ FormatParser.prototype =
 	},
 	parseDatePDF: function (value, cultureInfo, oFormat)
 	{
+		if (null == cultureInfo)
+			cultureInfo = g_oDefaultCultureInfo;
 		let res = null;
 		let match = [];
 		let sCurValue = null;
@@ -4941,6 +5164,7 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 		if (LCID !== g_oLCID) {
 			g_oLCID = LCID;
 			AscCommon.g_oDefaultCultureInfo = g_oDefaultCultureInfo = JSON.parse(JSON.stringify(cultureInfoNew)); // ToDo clone
+			interfaceShortDateFormat = getShortDateFormat(g_oDefaultCultureInfo);	
 			res = true;
 		}
 		ParseLocalFormatSymbol(g_oDefaultCultureInfo.Name);
@@ -5540,10 +5764,10 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 			} else {
 				res.push(AscCommon.g_cGeneralFormat);
 				res.push('0.00');
-				res.push('0.00E+00');
+				res.push(interfaceFormatScientific);
 				res.push(getCurrencyFormat(cultureInfo, 2, hasCurrency, true, currencySymbol));
 				res.push(getCurrencyFormatSimple2(cultureInfo, 2, hasCurrency, currencySymbol, false));
-				res.push(getShortDateFormat(cultureInfo));
+				res.push(interfaceShortDateFormat);
 				res.push('[$-F800]' + cultureInfo.LongDatePattern);
 				//todo F400
 				if (AscCommon.is12HourTimeFormat(cultureInfo)) {
@@ -5551,7 +5775,7 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 				} else {
 					res.push('[$-F400]h:mm:ss');
 				}
-				res.push('0.00%');
+				res.push(interfaceFormatPercent);
 				res.push('# ?/?');
 				res.push('@');
 			}

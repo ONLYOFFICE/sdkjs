@@ -10829,8 +10829,8 @@ Paragraph.prototype.Get_CompiledPr = function()
 			Pr.ParaPr.Spacing.Before = 0;
 		else
 		{
-			Cur_Before = this.Internal_CalculateAutoSpacing(Cur_Before, Cur_BeforeAuto, this);
-			Prev_After = this.Internal_CalculateAutoSpacing(Prev_After, Prev_AfterAuto, this);
+			Cur_Before = Pr.ParaPr.Spacing.CalculateBefore();
+			Prev_After = Prev_Pr.Spacing.CalculateAfter();
 
 			if ((true === Prev_Pr.ContextualSpacing
 				&& PrevStyle === StyleId)
@@ -10884,13 +10884,14 @@ Paragraph.prototype.Get_CompiledPr = function()
 		{
 			Pr.ParaPr.Spacing.Before = 0;
 		}
+		else
+		{
+			Pr.ParaPr.Spacing.Before = Pr.ParaPr.Spacing.CalculateBefore()
+		}
 	}
 	else if (type_Table === PrevEl.GetType())
 	{
-		if (true === Pr.ParaPr.Spacing.BeforeAutoSpacing)
-		{
-			Pr.ParaPr.Spacing.Before = 14 * g_dKoef_pt_to_mm;
-		}
+		Pr.ParaPr.Spacing.Before = Pr.ParaPr.Spacing.CalculateBefore()
 	}
 
 	var oTempNextEl = NextEl;
@@ -10924,7 +10925,7 @@ Paragraph.prototype.Get_CompiledPr = function()
 			if (true === Cur_AfterAuto && NextStyle === StyleId && undefined != Next_NumPr && undefined != NumPr && Next_NumPr.NumId === NumPr.NumId)
 				Pr.ParaPr.Spacing.After = 0;
 			else
-				Pr.ParaPr.Spacing.After = this.Internal_CalculateAutoSpacing(Cur_After, Cur_AfterAuto, this);
+				Pr.ParaPr.Spacing.After = Pr.ParaPr.Spacing.CalculateAfter();
 		}
 		else if (NextEl.IsTable() || NextEl.IsBlockLevelSdt())
 		{
@@ -10932,20 +10933,20 @@ Paragraph.prototype.Get_CompiledPr = function()
 			if (oNextElFirstParagraph)
 			{
 				var NextStyle       = oNextElFirstParagraph.Style_Get();
+				let Next_Pr         = oNextElFirstParagraph.Get_CompiledPr2(false).ParaPr;
 				var Next_Before     = oNextElFirstParagraph.Get_CompiledPr2(false).ParaPr.Spacing.Before;
-				var Next_BeforeAuto = oNextElFirstParagraph.Get_CompiledPr2(false).ParaPr.Spacing.BeforeAutoSpacing;
 				var Cur_After       = Pr.ParaPr.Spacing.After;
 				var Cur_AfterAuto   = Pr.ParaPr.Spacing.AfterAutoSpacing;
 				if (NextStyle === StyleId && true === Pr.ParaPr.ContextualSpacing)
 				{
-					Cur_After   = this.Internal_CalculateAutoSpacing(Cur_After, Cur_AfterAuto, this);
-					Next_Before = this.Internal_CalculateAutoSpacing(Next_Before, Next_BeforeAuto, this);
+					Cur_After   = Pr.ParaPr.Spacing.CalculateAfter();
+					Next_Before = Next_Pr.Spacing.CalculateBefore();
 
 					Pr.ParaPr.Spacing.After = Math.max(Next_Before, Cur_After) - Cur_After;
 				}
 				else
 				{
-					Pr.ParaPr.Spacing.After = this.Internal_CalculateAutoSpacing(Pr.ParaPr.Spacing.After, Cur_AfterAuto, this);
+					Pr.ParaPr.Spacing.After = Pr.ParaPr.Spacing.CalculateAfter();
 				}
 			}
 		}
@@ -10996,7 +10997,7 @@ Paragraph.prototype.Get_CompiledPr = function()
 		}
 		else
 		{
-			Pr.ParaPr.Spacing.After = this.Internal_CalculateAutoSpacing(Pr.ParaPr.Spacing.After, Pr.ParaPr.Spacing.AfterAutoSpacing, this);
+			Pr.ParaPr.Spacing.After = Pr.ParaPr.Spacing.CalculateAfter();
 		}
 	}
 
@@ -11288,14 +11289,6 @@ Paragraph.prototype.Recalc_CompileParaPr = function()
 Paragraph.prototype.IsParaPrCompiled = function()
 {
 	return !this.CompiledPr.NeedRecalc;
-};
-Paragraph.prototype.Internal_CalculateAutoSpacing = function(Value, UseAuto, Para)
-{
-	var Result = Value;
-	if (true === UseAuto)
-		Result = 14 * g_dKoef_pt_to_mm;
-
-	return Result;
 };
 Paragraph.prototype.GetDirectTextPr = function()
 {
@@ -11747,6 +11740,32 @@ Paragraph.prototype.Set_Spacing = function(Spacing, bDeleteUndefined)
 		this.private_AddPrChange();
 		AscCommon.History.Add(new CChangesParagraphSpacingBeforeAutoSpacing(this, this.Pr.Spacing.BeforeAutoSpacing, Spacing.BeforeAutoSpacing));
 		this.Pr.Spacing.BeforeAutoSpacing = Spacing.BeforeAutoSpacing;
+	}
+	
+	if (null === Spacing.BeforeLines || (bDeleteUndefined && undefined === Spacing.BeforeLines))
+	{
+		this.private_AddPrChange();
+		AscCommon.History.Add(new CChangesParagraphSpacingBeforeLines(this, this.Pr.Spacing.BeforeLines, undefined));
+		this.Pr.Spacing.BeforeLines = Spacing.BeforeLines;
+	}
+	else if (undefined !== Spacing.BeforeLines && Spacing.BeforeLines !== this.Pr.Spacing.BeforeLines)
+	{
+		this.private_AddPrChange();
+		AscCommon.History.Add(new CChangesParagraphSpacingBeforeLines(this, this.Pr.Spacing.BeforeLines, Spacing.BeforeLines));
+		this.Pr.Spacing.BeforeLines = Spacing.BeforeLines;
+	}
+
+	if (null === Spacing.AfterLines || (bDeleteUndefined && undefined === Spacing.AfterLines))
+	{
+		this.private_AddPrChange();
+		AscCommon.History.Add(new CChangesParagraphSpacingAfterLines(this, this.Pr.Spacing.AfterLines, undefined));
+		this.Pr.Spacing.AfterLines = Spacing.AfterLines;
+	}
+	else if (undefined !== Spacing.AfterLines && Spacing.AfterLines !== this.Pr.Spacing.AfterLines)
+	{
+		this.private_AddPrChange();
+		AscCommon.History.Add(new CChangesParagraphSpacingAfterLines(this, this.Pr.Spacing.AfterLines, Spacing.AfterLines));
+		this.Pr.Spacing.AfterLines = Spacing.AfterLines;
 	}
 
 	// Надо пересчитать конечный стиль

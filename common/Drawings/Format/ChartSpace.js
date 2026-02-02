@@ -860,7 +860,6 @@ function(window, undefined) {
 			bNeedMaxWidth = true;
 		}
 		if (Array.isArray(this.aLabels) && this.aLabels.length > 0) {
-			let loopsCount = 0;
 			let jump = 0;
 			const end = this.aLabels.length > 0 && scaler ? this.aLabels.length - 1 : this.aLabels.length;
 			for (let i = 0; i < end; i += jump) {
@@ -901,9 +900,8 @@ function(window, undefined) {
 					}
 				}
 
-				jump = skipCond(oLabelParams, loopsCount);
+				jump = skipCond(oLabelParams);
 				fCurX += (jump * (fInterval * (scaler ? scaler : 1)));
-				loopsCount++;
 			}
 		}
 
@@ -994,10 +992,29 @@ function(window, undefined) {
 		}
 	};
 	CLabelsBox.prototype.layoutHorRotated2 = function (aLabels, fAxisY, fDistance, fXStart, fInterval, bOnTickMark, oLabelParams) {
+
+		const sanitizeLabels = function (aLabels, userDefinedTickStip) {
+			if (userDefinedTickStip) {
+				return aLabels;
+			}
+			const sanitized = [];
+			for (let i = 0; i < aLabels.length; i++) {
+				if (aLabels[i]) {
+					sanitized.push(aLabels[i]);
+				}
+			}
+			return sanitized;
+		}
+
+		this.aLabels = aLabels;
+		const sanitizedLabels = sanitizeLabels(aLabels, oLabelParams && oLabelParams.valid && oLabelParams.isUserDefinedTickSkip);
+		const fNewInterval = (aLabels.length * fInterval) / (sanitizedLabels.length > 0 ? sanitizedLabels.length : 1);
+
+
 		this.bRotated = true;
 		this.align = (fDistance >= 0);
 		var fMaxHeight = 0.0;
-		var fCurX = bOnTickMark ? fXStart : fXStart + fInterval / 2.0;
+		var fCurX = bOnTickMark ? fXStart : fXStart + fNewInterval / 2.0;
 		let fAngle = oLabelParams && oLabelParams.valid ? Math.PI : Math.PI / 4.0;
 		const fMultiplier = Math.sin(fAngle);
 		let sinAlpha = null;
@@ -1013,7 +1030,7 @@ function(window, undefined) {
 			cosAlpha = Math.abs(Math.cos(fAngle));
 			rotatedMaxWidth = (cosAlpha + sinAlpha) * oLabelParams.maxHeight;
 			// 20000 is default for height
-			const rotatedContentWidth = AscFormat.isRealNumber(fInterval) ? fInterval : 20000;
+			const rotatedContentWidth = AscFormat.isRealNumber(fNewInterval) ? fNewInterval : 20000;
 			const oneLineHeight = oLabelParams.getSingleLineHeight(aLabels);
 			rotatedMaxHeight = (oLabelParams.rot === oLabelParams.range || oLabelParams.rot === -oLabelParams.range) ? rotatedContentWidth : oneLineHeight;
 			// bDirection indecates whether angle is positive or negative.
@@ -1258,18 +1275,17 @@ function(window, undefined) {
 			}
 			return dotWidth;
 		}
-		if (Array.isArray(aLabels) && aLabels.length > 0) {
-			let loopsCount = 0;
+
+		if (Array.isArray(sanitizedLabels) && sanitizedLabels.length > 0) {
 			let jump = 0;
 			// find width of three dots
-			const nThreeDotWidth = findDotWidth(aLabels) * 3;
-			for (let i = 0; i < aLabels.length; i += jump) {
-				if (aLabels[i]) {
-					const oLabel = aLabels[i];
+			const nThreeDotWidth = findDotWidth(sanitizedLabels) * 3;
+			for (let i = 0; i < sanitizedLabels.length; i += jump) {
+				if (sanitizedLabels[i]) {
+					const oLabel = sanitizedLabels[i];
 
 					//adjust text settings such as slicing and aligning
 					const oSize = resizeLabel(oLabel, rotatedMaxWidth, rotatedMaxHeight, nThreeDotWidth);
-
 					// find the width of the squaredPivot point
 					const nSquaredPivotWidth = getSquaredPivotWidth(bDirection, oLabel, oSize.h);
 
@@ -1314,17 +1330,15 @@ function(window, undefined) {
 					}
 				}
 
-				jump = skipCond(oLabelParams, loopsCount);
-				fCurX += (jump * fInterval);
-				loopsCount++;
+				jump = skipCond(oLabelParams);
+				fCurX += (jump * fNewInterval);
 			}
 		}
 
-		this.aLabels = aLabels;
 		var aPoints = [];
 		aPoints.push(fXStart);
-		var nIntervalCount = bOnTickMark ? aLabels.length - 1 : aLabels.length;
-		aPoints.push(fXStart + fInterval * nIntervalCount);
+		var nIntervalCount = bOnTickMark ? sanitizedLabels.length - 1 : sanitizedLabels.length;
+		aPoints.push(fXStart + fNewInterval * nIntervalCount);
 		if (null !== fMinLeft) {
 			aPoints.push(fMinLeft);
 		}
@@ -1608,7 +1622,7 @@ function(window, undefined) {
 		return isRot && rot >= -halfRange && rot <= halfRange ? - (Math.PI * rot) / fullRange : Math.PI / 4.0;
 	}
 
-	function skipCond (oLabelParams, loopsCount) {
+	function skipCond (oLabelParams) {
 		if (!oLabelParams) {
 			return 1;
 		}
@@ -1624,7 +1638,6 @@ function(window, undefined) {
 
 		const nLblTickSkip = oLabelParams.nLblTickSkip;
 		const nAxisType = oLabelParams.nAxisType;
-		const sDataType = oLabelParams.sDataType;
 		const oStartingDate = oLabelParams.oStartingDate;
 		const currentDay = oLabelParams.oStartingDate ? oStartingDate.getDate() : 0;
 		const currentMonth = oLabelParams.oStartingDate ? oStartingDate.getMonth() : 0;
@@ -1747,6 +1760,7 @@ function(window, undefined) {
 
 			// oLabelParams indicates necessary stuff such as label rotation, label skip, label format
 			const oLabelParams = oLabelsBox && oLabelsBox.axis && oLabelsBox.axis.params ? oLabelsBox.axis.params : new CLabelsParameters(nAxisType, sDataType);
+
 			oLabelParams.calculate(oLabelsBox, fAxisLength, fRectHeight,  nIndex);
 
 			//check whether rotation is applied or not
@@ -10563,6 +10577,13 @@ function(window, undefined) {
 		var oDataRange = this.getDataRefs();
 		oDataRange.collectIntersectionRefs(aRanges, aRefs);
 	};
+	CChartSpace.prototype.collectInsideAndIntersectionRefs = function (aRanges, aRefs) {
+		if (!Array.isArray(aRanges) || aRanges.length === 0) {
+			return;
+		}
+		var oDataRange = this.getDataRefs();
+		oDataRange.collectInsideAndIntersectionRefs(aRanges, aRefs);
+	};
 	CChartSpace.prototype.getCommonRange = function () {
 		var oDataRange = this.getDataRefs();
 		return oDataRange.getRange();
@@ -13353,7 +13374,7 @@ function(window, undefined) {
 
 			if (isStandard) {
 				const labelMaxHeight = fTrueRectHeight - (fTrueRectStart + fRectHeight);
-				this.maxHeight = labelMaxHeight > margin ? labelMaxHeight - margin : labelMaxHeight;
+				this.maxHeight = labelMaxHeight > margin ? labelMaxHeight - (margin / 2) : labelMaxHeight;
 			} else {
 				const labelMaxHeight = fTrueRectStart;
 				this.maxHeight = labelMaxHeight > ((3 * margin) / 4) ? labelMaxHeight - ((3 * margin) / 4) : labelMaxHeight;

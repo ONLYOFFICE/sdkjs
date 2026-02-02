@@ -1595,6 +1595,7 @@ var CPresentation = CPresentation || function(){};
         if (IsOnRedact || IsOnLink) {
             oViewer.isMouseMoveBetweenDownUp = true;
             if (null == oMouseDownDrawing) {
+                this.BlurActiveObject();
                 oViewer.onMouseDownEpsilon(e);
                 return;
             }
@@ -1673,6 +1674,13 @@ var CPresentation = CPresentation || function(){};
             // всегда даём кликнуть по лкм, пкм даем кликнуть один раз, при первом попадании в объект
             if (AscCommon.getMouseButton(e || {}) != 2 || (AscCommon.getMouseButton(e || {}) == 2 && oCurObject != oMouseDownObject)) {
                 oMouseDownObject.onMouseDown(x, y, e, nPage);
+
+                // if no text select, then do mousedown in file
+                if ((IsOnRedact || IsOnLink) && null == oController.getTargetTextObject()) {
+                    this.BlurActiveObject();
+                    oViewer.onMouseDownEpsilon(e);
+                    return;
+				}
             }
             
             if ((oMouseDownObject.IsDrawing() || (oMouseDownObject.IsAnnot() && oMouseDownObject.IsFreeText())) && false == oMouseDownObject.IsInTextBox()) {
@@ -2509,24 +2517,6 @@ var CPresentation = CPresentation || function(){};
                 this.mouseMoveAnnot = oMouseMoveAnnot;
                 if (oMouseMoveAnnot)
                     oMouseMoveAnnot.onMouseEnter();
-            }
-
-            if (oMouseMoveLink && !oMouseMoveField && !oMouseMoveAnnot && !oMouseMoveDrawing) {
-                if (oMouseMoveLink["link"]) {
-                    let oMMData   = new AscCommon.CMouseMoveData();
-                    let oCoords   = AscPDF.GetGlobalCoordsByPageCoords(pageObjectOrig.x, pageObjectOrig.y, pageObjectOrig.index);
-                    oMMData.X_abs = oCoords.X - 5;
-                    oMMData.Y_abs = oCoords.Y;
-                    oMMData.Type = Asc.c_oAscMouseMoveDataTypes.Hyperlink;
-                    oMMData.Hyperlink = new Asc.CHyperlinkProperty({
-                        Text: null,
-                        Value: oMouseMoveLink["link"],
-                        ToolTip: oMouseMoveLink["link"],
-                        Class: null,
-                        NoCtrl: true
-                    });
-                    Asc.editor.sync_MouseMoveCallback(oMMData);
-                }
             }
         }
 
@@ -4074,6 +4064,11 @@ var CPresentation = CPresentation || function(){};
     };
 
     CPDFDoc.prototype.FinalizeAction = function(checkEmptyAction) {
+		let oActionsQueue = this.GetActionsQueue();
+		if (this.Action.Description == AscDFH.historydescription_Pdf_ExecActions && oActionsQueue.IsInProgress()) {
+			return;
+		}
+
 		Asc.editor.htmlPasteSepParagraphs = true;
 		Asc.editor.htmlPastePageIdx = undefined;
 		this.Action.PasteHtmlAction = false;
@@ -4674,8 +4669,6 @@ var CPresentation = CPresentation || function(){};
                     oThis.AddFieldToCommit(field);
                 }
             });
-            if (this.widgets.length > 0)
-                AscCommon.History.Clear()
         }
 
         this.CommitFields();
@@ -8251,7 +8244,8 @@ var CPresentation = CPresentation || function(){};
         let isRestrictionView   = Asc.editor.isRestrictionView();
         let oDoc                = this;
 
-        if (true === this.CollaborativeEditing.Get_GlobalLock()) {
+		// allow do pdf actions in all modes
+        if (true === this.CollaborativeEditing.Get_GlobalLock() && nCheckType !== AscDFH.historydescription_Pdf_ExecActions) {
             return true;
         }
 
@@ -8813,7 +8807,7 @@ var CPresentation = CPresentation || function(){};
 		return this.Api.canEdit();
 	};
     CPDFDoc.prototype.IsShowShapeAdjustments = function() {
-        return this.Api.canEdit() && false == this.Api.IsCommentMarker();
+        return this.Api.canEdit() && false == this.Api.IsCommentMarker() && false == this.Api.IsRedactTool() && false == this.Api.IsLinkTool();
     };
     CPDFDoc.prototype.IsShowTableAdjustments = function() {
         return this.Api.canEdit() && false == this.Api.IsCommentMarker();
@@ -9086,6 +9080,7 @@ var CPresentation = CPresentation || function(){};
         Asc.editor.canSave = true;
 
         this.SetInProgress(false);
+        this.doc.FinalizeAction(true);
     };
     CActionQueue.prototype.IsInProgress = function() {
         return this.isInProgress;
@@ -9690,13 +9685,13 @@ var CPresentation = CPresentation || function(){};
         }
 
         let oTrigger = annot.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.MouseUp);
-        let oAction = oTrigger.Actions[0];
 
         let oProps = new Asc.CHyperlinkProperty(this);
-        if (!oAction) {
+        if (!oTrigger || !oTrigger.Actions[0]) {
             return oProps;
         }
-        
+
+        let oAction = oTrigger.Actions[0];
         switch (oAction.GetType()) {
             case AscPDF.ACTIONS_TYPES.Named: {
                 switch (oAction.GetNameStrType()) {

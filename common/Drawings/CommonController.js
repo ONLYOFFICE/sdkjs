@@ -781,6 +781,7 @@
 						var sTooltip = "";
 						var oTextHyperlink;
 						var bRedrawFrame = false;
+						let isNoCtrl = false;
 						if (bCheckTextHyperlink) {
 							if (hit_in_text_rect) {
 								oTextHyperlink = fCheckObjectHyperlink(drawing, x, y);
@@ -795,6 +796,17 @@
 										if (!bOldVisitedValue) {
 											bRedrawFrame = true;
 										}
+									}
+								}
+							}
+							else if (drawing.IsAnnot && drawing.IsAnnot() && drawing.IsLink()) {
+								let aActions = drawing.GetActions(AscPDF.PDF_TRIGGERS_TYPES.MouseUp);
+								
+								for (let i = 0; i < aActions.length; i++) {
+									if (aActions[i]["S"] == AscPDF.ACTIONS_TYPES.URI) {
+										sHyperlink = sHyperlink ? sHyperlink + "\r" + aActions[i]["URI"] : aActions[i]["URI"];
+										sTooltip = sTooltip ? sTooltip + "\r" + aActions[i]["URI"] : aActions[i]["URI"];
+										isNoCtrl = true;
 									}
 								}
 							}
@@ -859,7 +871,8 @@
 											Text: null,
 											Value: sHyperlink,
 											ToolTip: sTooltip,
-											Class: null
+											Class: null,
+											NoCtrl: isNoCtrl
 										});
 										if (this.isSlideShow()) {
 											ret.cursorType = "pointer";

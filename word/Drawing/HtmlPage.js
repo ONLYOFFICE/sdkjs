@@ -4045,3 +4045,5 @@ window['AscCommon'].X_Left_Margin   = X_Left_Margin;
 window['AscCommon'].X_Right_Margin  = X_Right_Margin;
 window['AscCommon'].Y_Bottom_Margin = Y_Bottom_Margin;
 window['AscCommon'].Y_Top_Margin    = Y_Top_Margin;
+
+window['AscCommonWord'].EditorPageViewMode = EditorPageViewMode;

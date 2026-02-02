@@ -180,7 +180,7 @@ $(function () {
         const src = ws.GetRange("F1:F2"); src.SetValue('x');
         const r3 = ws.GetRange("G1:G2");
         r3.GetValidation().Add('xlValidateList', 'xlValidAlertWarning', undefined, ws.GetRange('F1:F2'));
-        assert.strictEqual(r3.GetValidation().GetFormula1(), '\"F1:F2\"', "Formula1 from ApiRange address");
+        assert.strictEqual(r3.GetValidation().GetFormula1(), 'F1:F2', "Formula1 from ApiRange address");
     });
 
     QUnit.test("Add fails when type is invalid", function (assert) {
@@ -402,5 +402,121 @@ $(function () {
         }
     });
 
-    QUnit.module("Enum conversion helpers — sanity");
+    QUnit.module("ApiValidation.Add — per-type coverage");
+
+    QUnit.test("xlValidateWholeNumber: Between 1 and 10 (numbers)", function (assert) {
+        initializeTest();
+        const r = ws.GetRange("J1:J3");
+        r.GetValidation().Add("xlValidateWholeNumber", "xlValidAlertStop", "xlBetween", 1, 10);
+
+        const v = r.GetValidation();
+        assert.strictEqual(v.GetType(), "xlValidateWholeNumber", "Type");
+        assert.strictEqual(v.GetOperator(), "xlBetween", "Operator");
+        assert.strictEqual(v.GetFormula1(), "1", "Formula1");
+        assert.strictEqual(v.GetFormula2(), "10", "Formula2");
+
+        // internal: must be stored
+        assert.strictEqual(countValidations(), 1, "Stored validation exists");
+    });
+
+    QUnit.test("xlValidateDecimal: Greater than 0.5 (string/decimal)", function (assert) {
+        initializeTest();
+        const r = ws.GetRange("K1:K3");
+        r.GetValidation().Add("xlValidateDecimal", "xlValidAlertWarning", "xlGreater", "0.5");
+
+        const v = r.GetValidation();
+        assert.strictEqual(v.GetType(), "xlValidateDecimal", "Type");
+        assert.strictEqual(v.GetOperator(), "xlGreater", "Operator");
+        assert.strictEqual(v.GetFormula1(), "0.5", "Formula1");
+
+        assert.strictEqual(countValidations(), 1, "Stored validation exists");
+    });
+
+    QUnit.test("xlValidateList: Array literal => stored as quoted list string, not empty", function (assert) {
+        initializeTest();
+        const r = ws.GetRange("L1:L3");
+        r.GetValidation().Add("xlValidateList", "xlValidAlertWarning", "xlBetween", ["3", "4"]);
+
+        const v = r.GetValidation();
+        assert.strictEqual(v.GetType(), "xlValidateList", "Type");
+
+        // Expected per your engine: correctFromInterface() wraps list literal in quotes
+        // Example: "3,4" (quotes are part of returned string)
+        assert.strictEqual(v.GetFormula1(), "\"3,4\"", "Formula1 is quoted list literal");
+
+        // Ensure it isn't empty internally
+        const dv = getAllValidations()[0];
+        assert.ok(dv && dv.formula1 && dv.formula1.text, "Internal formula1 exists");
+    });
+
+    QUnit.test("xlValidateList: ApiRange source => keeps reference (no quotes), no leading = in GetFormula1", function (assert) {
+        initializeTest();
+
+        // Source values
+        ws.GetRange("M1").SetValue("AA");
+        ws.GetRange("M2").SetValue("BB");
+
+        const r = ws.GetRange("N1:N3");
+        r.GetValidation().Add("xlValidateList", "xlValidAlertStop", "xlBetween", ws.GetRange("M1:M2"));
+
+        const v = r.GetValidation();
+        assert.strictEqual(v.GetType(), "xlValidateList", "Type");
+        assert.strictEqual(v.GetFormula1(), "M1:M2", "Formula1 returns range address (no quotes, no '=')");
+    });
+
+    QUnit.test("xlValidateDate: Greater than 01/31/2027 => stored numerically (no '=' drift)", function (assert) {
+        initializeTest();
+        const r = ws.GetRange("O1:O3");
+        r.GetValidation().Add("xlValidateDate", "xlValidAlertInformation", "xlGreater", "01/31/2027");
+
+        const v = r.GetValidation();
+        assert.strictEqual(v.GetType(), "xlValidateDate", "Type");
+        assert.strictEqual(v.GetOperator(), "xlGreater", "Operator");
+
+        const f1 = v.GetFormula1();
+        assert.ok(f1 && f1[0] !== "=", "GetFormula1 is not a formula string starting with '='");
+
+        // Internal: after correctFromInterface(), date should be stored as number-like (Excel serial)
+        const dv = getAllValidations()[0];
+        assert.ok(dv && dv.formula1, "Internal formula1 exists");
+        assert.ok(
+            typeof dv.formula1.text === "number" || (typeof dv.formula1.text === "string" && isNum(dv.formula1.text)),
+            "Internal stored date is numeric (serial)"
+        );
+    });
+
+    QUnit.test("xlValidateTime: Between 12:00 and 13:00 => stored numerically (time serial)", function (assert) {
+        initializeTest();
+        const r = ws.GetRange("P1:P3");
+        r.GetValidation().Add("xlValidateTime", "xlValidAlertWarning", "xlBetween", "12:00", "13:00");
+
+        const v = r.GetValidation();
+        assert.strictEqual(v.GetType(), "xlValidateTime", "Type");
+        assert.strictEqual(v.GetOperator(), "xlBetween", "Operator");
+
+        // Internal: time should also normalize to numeric serial (fraction of a day)
+        const dv = getAllValidations()[0];
+        assert.ok(dv && dv.formula1 && dv.formula2, "Internal formula1/2 exist");
+        assert.ok(
+            typeof dv.formula1.text === "number" || (typeof dv.formula1.text === "string" && isNum(dv.formula1.text)),
+            "Internal stored time (formula1) is numeric"
+        );
+        assert.ok(
+            typeof dv.formula2.text === "number" || (typeof dv.formula2.text === "string" && isNum(dv.formula2.text)),
+            "Internal stored time (formula2) is numeric"
+        );
+    });
+
+    QUnit.test("xlValidateTextLength: Between 1 and 5", function (assert) {
+        initializeTest();
+        const r = ws.GetRange("Q1:Q3");
+        r.GetValidation().Add("xlValidateTextLength", "xlValidAlertStop", "xlBetween", 1, 5);
+
+        const v = r.GetValidation();
+        assert.strictEqual(v.GetType(), "xlValidateTextLength", "Type");
+        assert.strictEqual(v.GetOperator(), "xlBetween", "Operator");
+        assert.strictEqual(v.GetFormula1(), "1", "Formula1");
+        assert.strictEqual(v.GetFormula2(), "5", "Formula2");
+    });
+
 });

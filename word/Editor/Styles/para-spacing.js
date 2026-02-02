@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -303,7 +303,27 @@
 		else
 			this.Line = g_dKoef_twips_to_mm * val;
 	};
+	ParaSpacing.prototype.CalculateBefore = function()
+	{
+		if (true === this.BeforeAutoSpacing)
+			return 14 * g_dKoef_pt_to_mm;
+		else if (undefined !== this.BeforeLines && null !== this.BeforeLines)
+			return this.BeforeLines * 240 / 100 * g_dKoef_twips_to_mm;
+		
+		return this.Before;
+	};
+	ParaSpacing.prototype.CalculateAfter = function()
+	{
+		if (true === this.AfterAutoSpacing)
+			return 14 * g_dKoef_pt_to_mm;
+		else if (undefined !== this.AfterLines && null !== this.AfterLines)
+			return this.AfterLines * 240 / 100 * g_dKoef_twips_to_mm;
+		
+		return this.After;
+	};
 	//--------------------------------------------------------export----------------------------------------------------
-	AscWord.ParaSpacing = ParaSpacing;
+
+	window['AscWord'] = window['AscWord'] || {};
+	window['AscWord'].ParaSpacing = ParaSpacing;
 
 })(window);

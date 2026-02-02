@@ -11955,7 +11955,7 @@ ParaRun.prototype.CollectTextToUnicode = function(ListForUnicode, oSettings)
 				break;
 		}
 	}
-	else
+	else if (startPos < endPos)
 	{
 		oSettings.nDirection = 1;
 		for (let pos = startPos; pos < endPos; ++pos)

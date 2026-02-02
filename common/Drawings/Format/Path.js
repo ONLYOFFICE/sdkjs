@@ -3674,15 +3674,16 @@ function (window, undefined) {
 					break;
 				}
 				case close: {
+					arrPathCommand.push({id: close});
 					i += 1;
 					break;
 				}
 			}
 		}
-
+		return arrPathCommand;
 	};
 	Path2.prototype.executeWithPathCommands = function(fMethod, params) {
-		this.ArrPathCommand = this.getArrPathCommand();
+		this.ArrPathCommand = this.getArrPathCommandObjects();
 		let result = fMethod.apply(this, params);
 		this.ArrPathCommand = undefined;
 		return result;
@@ -3695,6 +3696,9 @@ function (window, undefined) {
 	};
 	Path2.prototype.getTailArrowAngle = function (arrowLength) {
 		return this.executeWithPathCommands(Path.prototype.getTailArrowAngle, [arrowLength]);
+	};
+	Path2.prototype.isClosed = function (epsilon) {
+		return this.executeWithPathCommands(Path.prototype.isClosed, [epsilon]);
 	};
 	Path2.prototype.Write_ToBinary = function(writer) {
 		AscFormat.writeBool(writer, this.extrusionOk);

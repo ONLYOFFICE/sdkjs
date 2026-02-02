@@ -6458,7 +6458,18 @@ function BinaryPPTYLoader()
                 }
             }
 
-            geom.AddPathCommand(0, extrusionOk, (fill == 4) ? "none" : "norm", stroke, w, h);
+			let fillMode;
+			switch (fill) {
+				case Asc.c_oAscPathFillMode.DARKEN:       fillMode = "darken"; break;
+				case Asc.c_oAscPathFillMode.DARKEN_LESS:  fillMode = "darkenLess"; break;
+				case Asc.c_oAscPathFillMode.LIGHTEN:      fillMode = "lighten"; break;
+				case Asc.c_oAscPathFillMode.LIGHTEN_LESS: fillMode = "lightenLess"; break;
+				case Asc.c_oAscPathFillMode.NONE:         fillMode = "none"; break;
+				case Asc.c_oAscPathFillMode.NORM:         fillMode = "norm"; break;
+				default:                                  fillMode = "norm";
+			}
+
+			geom.AddPathCommand(0, extrusionOk, fillMode, stroke, w, h);
             var isKoords = false;
 
             while (s.cur < _e)
