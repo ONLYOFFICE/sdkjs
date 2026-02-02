@@ -4450,9 +4450,9 @@
 					oThis.WriteMetadataTypes(pMetadata.metadataTypes);
 				});
 			}
-			if (pMetadata.metadataTypes) {
+			if (pMetadata.metadataStrings) {
 				this.bs.WriteItem(c_oSer_Metadata.MetadataStrings, function () {
-					oThis.WriteMetadataStrings(pMetadata.metadataTypes);
+					oThis.WriteMetadataStrings(pMetadata.metadataStrings);
 				});
 			}
 			if (pMetadata.mdxMetadata) {
@@ -10394,23 +10394,24 @@
                 //pMdx.F.SetValueFromByte(this.stream.GetUChar());
                 pMdx.f = this.stream.GetUChar();
             } else if (c_oSer_MdxMetadata.MdxTuple === type) {
-                //READ1_DEF(length, res, this.ReadMdxTuple, pMdx.MdxTuple.GetPovarer());
+                pMdx.mdxTuple = new AscCommonExcel.CMdxTuple();
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadMdx(t, l, pMdx.mdxTuple);
+                    return oThis.ReadMdxTuple(t, l, pMdx.mdxTuple);
                 });
             } else if (c_oSer_MdxMetadata.MdxSet === type) {
-                //READ1_DEF(length, res, this.ReadMdxSet, pMdx.MdxSet.GetPovarer());
+                pMdx.mdxSet = new AscCommonExcel.CMdxSet();
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadMdx(t, l, pMdx.mdxSet);
+                    return oThis.ReadMdxSet(t, l, pMdx.mdxSet);
                 });
             } else if (c_oSer_MdxMetadata.MdxKPI === type) {
+                pMdx.mdxKPI = new AscCommonExcel.CMdxKPI();
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadMdx(t, l, pMdx.mdxKPI);
+                    return oThis.ReadMdxKPI(t, l, pMdx.mdxKPI);
                 });
             } else if (c_oSer_MdxMetadata.MdxMemeberProp === type) {
-                //READ1_DEF(length, res, this.ReadMdxMemeberProp, pMdx.MdxMemeberProp.GetPovarer());
+                pMdx.mdxMemeberProp = new AscCommonExcel.CMdxMemeberProp();
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadMdx(t, l, pMdx.mdxMemeberProp);
+                    return oThis.WriteMdxMemeberProp(t, l, pMdx.mdxMemeberProp);
                 });
             } else {
                 res = c_oSerConstants.ReadUnknown;
