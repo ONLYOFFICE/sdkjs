@@ -76,7 +76,7 @@
     AscDFH.drawingContentChanges[AscDFH.historyitem_NotesMasterAddToNotesLst]  = function(oClass){return oClass.notesLst;};
 
     function CNotesMaster() {
-        AscFormat.CBaseFormatObject.call(this);
+        AscCommonSlide.SlideBase.call(this);
         this.clrMap = new AscFormat.ClrMap();
         this.cSld =  new AscFormat.CSld(this);
         this.hf = null;
@@ -89,7 +89,7 @@
 
         this.m_oContentChanges = new AscCommon.CContentChanges(); // список изменений(добавление/удаление элементов)
     }
-    AscFormat.InitClass(CNotesMaster, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_NotesMaster);
+    AscFormat.InitClass(CNotesMaster, AscCommonSlide.SlideBase, AscDFH.historyitem_type_NotesMaster);
 
 
     CNotesMaster.prototype.getObjectType = function(){
@@ -234,6 +234,32 @@
     CNotesMaster.prototype.Refresh_RecalcData = function()
     {
     };
+	CNotesMaster.prototype.getThemeIndex = function() {
+		let aMasters = Asc.editor.WordControl.m_oLogicDocument.notesMasters;
+		for(let nIdx = 0; nIdx < aMasters.length; ++nIdx) {
+			if(aMasters[nIdx] === this) {
+				return -nIdx - 1;
+			}
+		}
+		return 0;
+	};
+	CNotesMaster.prototype.getTheme = function() {
+		return this.Theme || null;
+	};
+	//todo
+	CNotesMaster.prototype.getColorMap = function() {
+		return AscFormat.GetDefaultColorMap();
+	};
+	CNotesMaster.prototype.drawNoPlaceholders = function(graphics, slide) {
+
+	};
+	CNotesMaster.prototype.drawNoPlaceholdersShapesOnly = function(graphics, slide) {
+
+	};
+	CNotesMaster.prototype.draw = function(graphics, slide) {
+
+	};
+
 
 
     function CreateNotesMaster(){

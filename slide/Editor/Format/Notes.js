@@ -79,7 +79,7 @@
     }
 
     function CNotes() {
-        AscFormat.CBaseFormatObject.call(this);
+        AscCommonSlide.SlideBase.call(this);
         this.clrMap = null;
         this.cSld = new AscFormat.CSld(this);
         this.showMasterPhAnim = null;
@@ -87,15 +87,27 @@
         this.slide            = null;
 
         this.Master      = null;
-
+			this.recalcInfo =
+				{
+					recalculateBackground: true,
+					recalculateSpTree: true,
+					recalculateBounds: true,
+					recalculateSlideLayouts: true
+				};
 
         this.m_oContentChanges = new AscCommon.CContentChanges(); // список изменений(добавление/удаление элементов)
         this.kind = AscFormat.TYPE_KIND.NOTES;
 
         this.Lock = new AscCommon.CLock();
         this.graphicObjects = new AscFormat.DrawingObjectsController(this);
+			this.deleteLock = new PropLocker(this.Id);
+			this.backgroundLock = new PropLocker(this.Id);
+			this.timingLock = new PropLocker(this.Id);
+			this.transitionLock = new PropLocker(this.Id);
+			this.layoutLock = new PropLocker(this.Id);
+			this.showLock = new PropLocker(this.Id);
     }
-    AscFormat.InitClass(CNotes, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_Notes);
+    AscFormat.InitClass(CNotes, AscCommonSlide.SlideBase, AscDFH.historyitem_type_Notes);
 
     CNotes.prototype.Clear_ContentChanges = function()
     {
@@ -226,12 +238,7 @@
         var aSpTree = this.cSld.spTree;
         for(var i = 0; i < aSpTree.length; ++i){
             var sp = aSpTree[i];
-            if(sp.isPlaceholder()){
-                if(sp.getPlaceholderType() === AscFormat.phType_body){
-                    sp.draw(graphics);
-                    return;
-                }
-            }
+						sp.draw(graphics);
         }
     };
 
@@ -246,13 +253,8 @@
         }
     };
 
-    CNotes.prototype.getDrawingDocument = function()
-    {
-        return editor.WordControl.m_oDrawingDocument;
-    };
-
     CNotes.prototype.getTheme = function(){
-        return this.Master.Theme;
+        return this.Master && this.Master.getTheme() || null;
     };
 
 
@@ -316,19 +318,18 @@
         return oBodyShape.isEmptyPlaceholder();
     };
 
+		//todo think about it
     CNotes.prototype.showDrawingObjects = function(){
         var oPresentation = editor.WordControl.m_oLogicDocument;
-        if(this.slide){
+				if (oPresentation.IsNotesPageMode()) {
+					AscFormat.SlideBase.prototype.showDrawingObjects.call(this);
+				}else if(this.slide){
             if(oPresentation.CurPage === this.slide.num){
                 editor.WordControl.m_oDrawingDocument.Notes_OnRecalculate(this.slide.num, this.slide.NotesWidth, this.slide.getNotesHeight());
             }
         }
     };
 
-    CNotes.prototype.OnUpdateOverlay = function()
-    {
-        editor.WordControl.OnUpdateOverlay();
-    };
     CNotes.prototype.getDrawingsForController = function()
     {
         var _ret = [];
@@ -337,10 +338,6 @@
             _ret.push(oBodyShape);
         }
         return _ret;
-    };
-    CNotes.prototype.sendGraphicObjectProps = function()
-    {
-        editor.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
     };
     CNotes.prototype.isViewerMode = function()
     {
@@ -380,6 +377,11 @@
         }
         return false;
     };
+	CNotes.prototype.drawViewPrMarks = function(oGraphics) {
+		if(oGraphics.isSupportTextDraw && !oGraphics.isSupportTextDraw()) return;
+		return AscCommonSlide.Slide.prototype.drawViewPrMarks.call(this, oGraphics);
+	};
+
 
     function CreateNotes(){
         var oN = new CNotes();

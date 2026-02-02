@@ -1902,6 +1902,8 @@
 	window['AscDFH'].historyitem_type_ControlPr    = 2304 << 16;
 	window['AscDFH'].historyitem_type_FormControlPr= 2305 << 16;
 
+	window['AscDFH'].historyitem_type_HandoutMaster = 2306 << 16;
+
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2433,6 +2435,7 @@
 	window['AscDFH'].historyitem_Presentation_RemoveSlideMaster           = window['AscDFH'].historyitem_type_Presentation | 13;
 	window['AscDFH'].historyitem_Presentation_ViewPr                      = window['AscDFH'].historyitem_type_Presentation | 14;
 	window['AscDFH'].historyitem_Presentation_NotesSz                     = window['AscDFH'].historyitem_type_Presentation | 15;
+	window['AscDFH'].historyitem_Presentation_AddHandoutMaster            = window['AscDFH'].historyitem_type_Presentation | 16;
 
 	window['AscDFH'].historyitem_ColorMod_SetName = window['AscDFH'].historyitem_type_ColorMod | 1;
 	window['AscDFH'].historyitem_ColorMod_SetVal  = window['AscDFH'].historyitem_type_ColorMod | 2;
@@ -3366,6 +3369,14 @@
 	window['AscDFH'].historyitem_AbsSizeAnchorExtY    = window['AscDFH'].historyitem_type_AbsSizeAnchor | 4;
 	window['AscDFH'].historyitem_AbsSizeAnchorObject  = window['AscDFH'].historyitem_type_AbsSizeAnchor | 5;
 	window['AscDFH'].historyitem_AbsSizeAnchorParent  = window['AscDFH'].historyitem_type_AbsSizeAnchor | 6;
+
+	window['AscDFH'].historyitem_HandoutMasterSetHF          = window['AscDFH'].historyitem_type_HandoutMaster | 1;
+	window['AscDFH'].historyitem_HandoutMasterSetTheme       = window['AscDFH'].historyitem_type_HandoutMaster | 2;
+	window['AscDFH'].historyitem_HandoutMasterAddToSpTree    = window['AscDFH'].historyitem_type_HandoutMaster | 3;
+	window['AscDFH'].historyitem_HandoutMasterRemoveFromTree = window['AscDFH'].historyitem_type_HandoutMaster | 4;
+	window['AscDFH'].historyitem_HandoutMasterSetBg          = window['AscDFH'].historyitem_type_HandoutMaster | 5;
+	window['AscDFH'].historyitem_HandoutMasterSetName        = window['AscDFH'].historyitem_type_HandoutMaster | 6;
+	window['AscDFH'].historyitem_HandoutMasterSetClrMap      = window['AscDFH'].historyitem_type_HandoutMaster | 7;
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений класса CDocumentMacros

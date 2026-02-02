@@ -391,6 +391,9 @@
 			verticalGap = this.getGap(paperHeight, h_mm, slideScale, rowsCount);
 		}
 
+		const scaledPresentationWidth = w_mm * slideScale;
+		const scaledPresentationHeight = h_mm * slideScale;
+
 		const resultWidth = countSlidesOnRow * w_mm * slideScale + (countSlidesOnRow - 1) * horizontalGap;
 		const resultHeight = rowsCount * h_mm * slideScale + (rowsCount - 1) * verticalGap;
 		const startX = paperSizes.x + scaledFieldSize + (paperWidth - resultWidth) / 2;
@@ -406,6 +409,9 @@
 					if (isDrawFrame) {
 						this.drawFrame(graphics, slideX, slideY, w_mm * slideScale, h_mm * slideScale, {R: 0, G: 0, B: 0, A: 255});
 					}
+					if (isDrawSlideNumber) {
+						this.drawText(graphics, pageIndex + 1 + "", slideX, slideY + scaledPresentationHeight + gap / 3, scaledPresentationWidth, gap);
+					}
 				}
 			}
 		} else {
@@ -419,7 +425,7 @@
 						this.drawFrame(graphics, slideX, slideY, w_mm * slideScale, h_mm * slideScale, {R: 0, G: 0, B: 0, A: 255});
 					}
 					if (isDrawSlideNumber) {
-
+						this.drawText(graphics, pageIndex + 1 + "", slideX, slideY + scaledPresentationHeight + gap / 3, scaledPresentationWidth, gap);
 					}
 				}
 			}
@@ -450,13 +456,16 @@
 			shape.txBody.replaceContentFitText(text);
 			content.ApplyToAll = true;
 			content.AddToParagraph(new AscCommonWord.ParaTextPr({
-				FontSize  : 12,
+				FontSize  : 22,
 				FontFamily: {Name: "Arial", Index: -1},
 				Color     : AscWord.BLACK_COLOR
 			}), false);
 			content.ApplyToAll = false;
 			shape.recalculateContent();
-			shape.draw(graphics, );
+			const transform = shape.transformText;
+			transform.tx = x;
+			transform.ty = y;
+			shape.draw(graphics);
 		}, this, []);
 	};
 	CPresentationPrintPreview.prototype.getGap = function(paperSize, slideSize, scale, repeatCount) {

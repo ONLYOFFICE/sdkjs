@@ -226,6 +226,8 @@
 			"slide/Editor/DrawingObjectsController.js",
 			"slide/Editor/Format/Timing.js",
 			"slide/Drawing/anim-pane.js",
+			"slide/Editor/Format/SlideBase.js",
+			"slide/Editor/Format/HandoutMaster.js",
 			"slide/Editor/Format/Slide.js",
 			"slide/Editor/Format/SlideMaster.js",
 			"slide/Editor/Format/Layout.js",

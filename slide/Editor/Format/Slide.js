@@ -153,10 +153,9 @@ AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideSetTransition        ] = 
 
 function Slide(presentation, slideLayout, slideNum)
 {
-    AscFormat.CBaseFormatObject.call(this);
+    AscCommonSlide.SlideBase.call(this);
     this.kind = AscFormat.TYPE_KIND.SLIDE;
 
-    this.presentation = editor && editor.WordControl && editor.WordControl.m_oLogicDocument;
     this.graphicObjects = new AscFormat.DrawingObjectsController(this);
     this.cSld = new AscFormat.CSld(this);
     this.collaborativeMarks = new CRunCollaborativeMarks();
@@ -180,8 +179,6 @@ function Slide(presentation, slideLayout, slideNum)
         recalculateBackground: true,
         recalculateSpTree: true
     };
-    this.Width = 254;
-    this.Height = 190.5;
 
     this.searchingArray = [];  // массив объектов для селекта
     this.selectionArray = [];  // массив объектов для поиска
@@ -231,33 +228,7 @@ function Slide(presentation, slideLayout, slideNum)
         this.setSlideNum(slideNum);
     }
 }
-AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_Slide);
-
-    Slide.prototype.getDrawingDocument = function()
-    {
-        return editor.WordControl.m_oLogicDocument.DrawingDocument;
-    };
-    Slide.prototype.Reassign_ImageUrls = function(images_rename){
-	    this.cSld.forEachSp(function(oSp) {
-		    oSp.Reassign_ImageUrls(images_rename);
-	    });
-        let bg = this.cSld && this.cSld.Bg;
-        let bgPr = bg && bg.bgPr;
-        let fill = bgPr && bgPr.Fill && bgPr.Fill.fill;
-
-        if (fill instanceof AscFormat.CBlipFill &&
-            typeof fill.RasterImageId === "string" &&
-            images_rename[fill.RasterImageId])
-        {
-            let oBg = bg.createFullCopy();
-            oBg.bgPr.Fill.fill.RasterImageId = images_rename[oBg.bgPr.Fill.fill.RasterImageId];
-            this.changeBackground(oBg);
-
-            if (this.recalculateBackground) {
-                this.recalculateBackground();
-            }
-        }
-    };
+AscFormat.InitClass(Slide, AscCommonSlide.SlideBase, AscDFH.historyitem_type_Slide);
     Slide.prototype.Clear_CollaborativeMarks = function()
     {
         this.collaborativeMarks.Clear();
@@ -328,253 +299,16 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         }
         return copy;
     };
-    Slide.prototype.handleAllContents = function(fCallback){
-        this.cSld.handleAllContents(fCallback);
-        if(this.notesShape){
-            this.notesShape.handleAllContents(fCallback);
-        }
-    };
+
 	Slide.prototype.refreshAllContentsFields = function() {
 		this.cSld.refreshAllContentsFields();
 		if(this.notesShape){
 			this.notesShape.handleAllContents(AscFormat.RefreshContentAllFields);
 		}
 	};
-    Slide.prototype.Search = function(Engine, Type ){
-        var sp_tree = this.cSld.spTree;
-        for(var i = 0; i < sp_tree.length; ++i){
-            if (sp_tree[i].Search){
-                sp_tree[i].Search(Engine, Type);
-            }
-        }
-        if(this.notesShape){
-            this.notesShape.Search(Engine, Type);
-        }
-    };
-	Slide.prototype.GetSearchElementId = function(isNext, StartPos)
-    {
-        var sp_tree = this.cSld.spTree, i, Id;
-        if(isNext)
-        {
-            for(i = StartPos; i < sp_tree.length; ++i)
-            {
-                if(sp_tree[i].GetSearchElementId)
-                {
-                    Id = sp_tree[i].GetSearchElementId(isNext, false);
-                    if(Id !== null)
-                    {
-                        return Id;
-                    }
-                }
-            }
-        }
-        else
-        {
-            for(i = StartPos; i > -1; --i)
-            {
-                if(sp_tree[i].GetSearchElementId)
-                {
-                    Id = sp_tree[i].GetSearchElementId(isNext, false);
-                    if(Id !== null)
-                    {
-                        return Id;
-                    }
-                }
-            }
-        }
-        return null;
-    };
-    Slide.prototype.getMatchingShape = function(type, idx, bSingleBody, info)
-    {
-        var _input_reduced_type;
-        if(type == null)
-        {
-            _input_reduced_type = AscFormat.phType_body;
-        }
-        else
-        {
-            if(type == AscFormat.phType_ctrTitle)
-            {
-                _input_reduced_type = AscFormat.phType_title;
-            }
-            else
-            {
-                _input_reduced_type = type;
-            }
-        }
-
-        var _input_reduced_index;
-        if(idx == null)
-        {
-            _input_reduced_index = 0;
-        }
-        else
-        {
-            _input_reduced_index = idx;
-        }
-
-        var _sp_tree = this.cSld.spTree;
-        var _shape_index;
-        var _index, _type;
-        var _final_index, _final_type;
-        var _glyph;
-        var body_count = 0;
-        var last_body;
-        var oNvObjPr;
-        for(_shape_index = 0; _shape_index < _sp_tree.length; ++_shape_index)
-        {
-            _glyph = _sp_tree[_shape_index];
-            if(_glyph.isPlaceholder())
-            {
-                oNvObjPr = _glyph.getUniNvProps();
-                if(oNvObjPr)
-                {
-                    _index = oNvObjPr.nvPr.ph.idx;
-                    _type = oNvObjPr.nvPr.ph.type;
-                    if(_type == null)
-                    {
-                        _final_type = AscFormat.phType_body;
-                    }
-                    else
-                    {
-                        if(_type == AscFormat.phType_ctrTitle)
-                        {
-                            _final_type = AscFormat.phType_title;
-                        }
-                        else
-                        {
-                            _final_type = _type;
-                        }
-                    }
-
-                    if(_index == null)
-                    {
-                        _final_index = 0;
-                    }
-                    else
-                    {
-                        _final_index = _index;
-                    }
-
-                    if(_input_reduced_type == _final_type && _input_reduced_index == _final_index)
-                    {
-                        if(info){
-                            info.bBadMatch = !(_type === type && _index === idx);
-                        }
-                        return _glyph;
-                    }
-                    if(_input_reduced_type == AscFormat.phType_title && _input_reduced_type == _final_type)
-                    {
-                        if(info){
-                            info.bBadMatch = !(_type === type && _index === idx);
-                        }
-                        return _glyph;
-                    }
-                    if(AscFormat.phType_body === _type)
-                    {
-                        ++body_count;
-                        last_body = _glyph;
-                    }
-                }
-            }
-        }
-
-
-        if(_input_reduced_type == AscFormat.phType_sldNum || _input_reduced_type == AscFormat.phType_dt || _input_reduced_type == AscFormat.phType_ftr || _input_reduced_type == AscFormat.phType_hdr)
-        {
-            for(_shape_index = 0; _shape_index < _sp_tree.length; ++_shape_index)
-            {
-                _glyph = _sp_tree[_shape_index];
-                if(_glyph.isPlaceholder())
-                {
-                    oNvObjPr = _glyph.getUniNvProps();
-                    if(oNvObjPr)
-                    {
-                        _type = oNvObjPr.nvPr.ph.type;
-                        if(_input_reduced_type == _type)
-                        {
-                            if(info){
-                                info.bBadMatch = !(_type === type && _index === idx);
-                            }
-                            return _glyph;
-                        }
-                    }
-                }
-            }
-        }
-
-        if(info){
-            return null;
-        }
-        if(body_count === 1 && _input_reduced_type === AscFormat.phType_body && bSingleBody)
-        {
-            if(info){
-                info.bBadMatch = !(_type === type && _index === idx);
-            }
-            return last_body;
-        }
-
-        for(_shape_index = 0; _shape_index < _sp_tree.length; ++_shape_index)
-        {
-            _glyph = _sp_tree[_shape_index];
-            if(_glyph.isPlaceholder())
-            {
-                if(_glyph instanceof AscFormat.CShape)
-                {
-                    _index = _glyph.nvSpPr.nvPr.ph.idx;
-                    _type = _glyph.nvSpPr.nvPr.ph.type;
-                }
-                if(_glyph instanceof AscFormat.CImageShape)
-                {
-                    _index = _glyph.nvPicPr.nvPr.ph.idx;
-                    _type = _glyph.nvPicPr.nvPr.ph.type;
-                }
-                if(_glyph instanceof  AscFormat.CGroupShape)
-                {
-                    _index = _glyph.nvGrpSpPr.nvPr.ph.idx;
-                    _type = _glyph.nvGrpSpPr.nvPr.ph.type;
-                }
-
-                if(_index == null)
-                {
-                    _final_index = 0;
-                }
-                else
-                {
-                    _final_index = _index;
-                }
-
-                if(_input_reduced_index == _final_index)
-                {
-                    if(info){
-                        info.bBadMatch = true;
-                    }
-                    return _glyph;
-                }
-            }
-        }
-
-
-        if(body_count === 1 && bSingleBody)
-        {
-            if(info){
-                info.bBadMatch = !(_type === type && _index === idx);
-            }
-            return last_body;
-        }
-
-        return null;
-    };
     Slide.prototype.changeNum = function(num)
     {
         this.num = num;
-    };
-    Slide.prototype.recalcText = function()
-    {
-        this.recalcInfo.recalculateSpTree = true;
-		this.cSld.forEachSp(function(oSp) {
-			oSp.recalcText();
-		});
     };
     Slide.prototype.addComment = function(comment)
     {
@@ -610,10 +344,6 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         {
             this.slideComments.removeComment(id, bForce);
         }
-    };
-    Slide.prototype.addToRecalculate = function()
-    {
-        History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, Object: this});
     };
     Slide.prototype.getAllMyComments = function(aAllComments)
     {
@@ -887,15 +617,6 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         return this.show !== false;
     };
 
-    Slide.prototype.checkDrawingUniNvPr = function(drawing)
-    {
-        var nv_sp_pr;
-        if(drawing)
-        {
-            drawing.checkDrawingUniNvPr();
-        }
-    };
-
 
     Slide.prototype.CheckLayout = function(){
         var bRet = true;
@@ -988,25 +709,6 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         return null;
     };
 
-    Slide.prototype.removeFromSpTreeById = function(id)
-    {
-        var sp_tree = this.cSld.spTree;
-        for(var i = 0; i < sp_tree.length; ++i)
-        {
-            if(sp_tree[i].Get_Id() === id)
-            {
-                this.removeFromSpTreeByPos(i);
-                return i;
-            }
-        }
-        return null;
-    };
-
-    Slide.prototype.addToSpTreeToPos = function(pos, obj)
-    {
-        this.shapeAdd(pos, obj);
-    };
-
     Slide.prototype.replaceSp = function(oPh, oObject)
     {
         var aSpTree = this.cSld.spTree;
@@ -1067,49 +769,6 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         return oRet;
     };
 
-    Slide.prototype.copySelectedObjects = function(){
-        var aSelectedObjects, i, fShift = 5.0;
-        var oSelector = this.graphicObjects.selection.groupSelection ? this.graphicObjects.selection.groupSelection : this.graphicObjects;
-        aSelectedObjects = [].concat(oSelector.selectedObjects);
-        oSelector.resetSelection(undefined, false);
-        var bGroup = this.graphicObjects.selection.groupSelection ? true : false;
-        if(bGroup){
-            oSelector.normalize();
-        }
-        for(i = 0; i < aSelectedObjects.length; ++i){
-            var oCopy = aSelectedObjects[i].copy(undefined);
-            oCopy.x = aSelectedObjects[i].x;
-            oCopy.y = aSelectedObjects[i].y;
-            oCopy.extX = aSelectedObjects[i].extX;
-            oCopy.extY = aSelectedObjects[i].extY;
-            AscFormat.CheckSpPrXfrm(oCopy, true);
-            oCopy.spPr.xfrm.setOffX(oCopy.x + fShift);
-            oCopy.spPr.xfrm.setOffY(oCopy.y + fShift);
-            oCopy.setParent(this);
-            if(!bGroup){
-                this.addToSpTreeToPos(undefined, oCopy);
-            }
-            else{
-                oCopy.setGroup(aSelectedObjects[i].group);
-                aSelectedObjects[i].group.addToSpTree(undefined, oCopy);
-            }
-            oSelector.selectObject(oCopy, 0);
-        }
-        if(bGroup){
-            oSelector.updateCoordinatesAfterInternalResize();
-        }
-    };
-
-    Slide.prototype.getAllRasterImages = function(images) {
-		let oBgPr = this.cSld.Bg && this.cSld.Bg.bgPr;
-        if(oBgPr) {
-	        oBgPr.checkBlipFillRasterImage(images);
-        }
-		this.cSld.forEachSp(function(oSp) {
-			oSp.getAllRasterImages(images);
-		});
-    };
-
 	Slide.prototype.getAllRasterImagesOnSlide = function (aImages) {
 		aImages = aImages || [];
 		this.getAllRasterImages(aImages);
@@ -1123,78 +782,6 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 		}
 		return aImages;
 	};
-
-
-    Slide.prototype.getAllRasterImagesForDraw = function(images) {
-        let aImages = images;
-        if(!aImages) {
-            aImages = [];
-        }
-
-        if(this.recalcInfo.recalculateBackground)
-        {
-            this.recalculateBackground();
-            this.recalcInfo.recalculateBackground = false;
-        }
-        if(this.backgroundFill) {
-            let sImageId = this.backgroundFill.checkRasterImageId();
-            if(sImageId) {
-                aImages.push(sImageId);
-            }
-        }
-        this.cSld.forEachSp(function(oSp) {
-            oSp.getAllRasterImages(aImages);
-        });
-        if(this.Layout) {
-            if(this.needLayoutSpDraw()) {
-                this.Layout.getAllRasterImagesForDraw(aImages);
-            }
-            if(this.Layout.Master) {
-                if(this.needMasterSpDraw()) {
-                    this.Layout.Master.getAllRasterImagesForDraw(aImages);
-                }
-            }
-        }
-        return aImages;
-    };
-    Slide.prototype.checkImageDraw = function(sImageSrc) {
-        const aImages = this.getAllRasterImagesForDraw();
-        for(let nIdx = 0; nIdx < aImages.length; ++nIdx) {
-            let sImage = aImages[nIdx];
-            if(AscCommon.getFullImageSrc2(sImage) === sImageSrc) {
-                return true;
-            }
-        }
-        return false;
-    };
-
-    Slide.prototype.changeSize = function(width, height)
-    {
-        var kw = width/this.Width, kh = height/this.Height;
-        this.setSlideSize(width, height);
-	    this.cSld.forEachSp(function(oSp) {
-		    oSp.changeSize(kw, kh);
-	    });
-    };
-
-    Slide.prototype.checkSlideSize = function()
-    {
-        this.recalcInfo.recalculateSpTree = true;
-	    this.cSld.forEachSp(function(oSp) {
-		    oSp.handleUpdateExtents();
-	    });
-    };
-
-    Slide.prototype.checkSlideTheme = function()
-    {
-
-        this.bChangeLayout = undefined;
-        this.recalcInfo.recalculateSpTree = true;
-        this.recalcInfo.recalculateBackground = true;
-		this.cSld.forEachSp(function(oSp) {
-			oSp.handleUpdateTheme();
-		});
-    };
     Slide.prototype.checkPlaceholders = function(aPlaceholders)
     {
         let bResult = false;
@@ -1679,36 +1266,6 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         oGraphics.df();
         oGraphics.RestoreGrState();
     };
-    Slide.prototype.drawViewPrMarks = function(oGraphics) {
-	    let oContext = oGraphics.m_oContext;
-	    if( !oContext ||
-			AscCommon.IsShapeToImageConverter ||
-		    oGraphics.animationDrawer ||
-		    oGraphics.IsThumbnail ||
-		    oGraphics.IsDemonstrationMode ||
-		    oGraphics.isBoundsChecker() ||
-			oGraphics.IsNoDrawingEmptyPlaceholder) {
-		    return;
-	    }
-
-	    let oApi = editor;
-        if(!oApi) {
-            return;
-        }
-        if(!oApi.WordControl) {
-            return;
-        }
-        let oPresentation = oApi.WordControl.m_oLogicDocument;
-        if(!oPresentation) {
-            return;
-        }
-        if(oApi.asc_getShowGridlines()) {
-            oPresentation.checkGridCache(oGraphics);
-        }
-        if(oApi.asc_getShowGuides()) {
-            oPresentation.drawGuides(oGraphics);
-        }
-    };
     Slide.prototype.drawNotes = function (g) {
         if(this.notesShape) {
             this.notesShape.draw(g);
@@ -1746,22 +1303,9 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
     Slide.prototype.getTheme = function(){
         return this.Layout && this.Layout.getTheme() || null;
     };
-    Slide.prototype.getMaster = function(){
-        return this.getParentObjects().master;
-    };
-
-    Slide.prototype.drawSelect = function(_type)
-    {
-        if (_type === undefined)
-        {
-            this.graphicObjects.drawTextSelection(this.num);
-            this.graphicObjects.drawSelect(0, this.presentation.DrawingDocument);
-        }
-        else if (_type == 1)
-            this.graphicObjects.drawTextSelection(this.num);
-        else if (_type == 2)
-            this.graphicObjects.drawSelect(0, this.presentation.DrawingDocument);
-    };
+		Slide.prototype.getNum = function() {
+			return this.num;
+		}
 
     Slide.prototype.drawNotesSelect = function(){
 
@@ -1787,19 +1331,9 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         }
     };
 
-    Slide.prototype.getDrawingObjects = function()
-    {
-        return this.cSld.spTree;
-    };
-
     Slide.prototype.paragraphAdd = function(paraItem, bRecalculate)
     {
         this.graphicObjects.paragraphAdd(paraItem, bRecalculate);
-    };
-
-    Slide.prototype.OnUpdateOverlay = function()
-    {
-        this.presentation.DrawingDocument.m_oWordControl.OnUpdateOverlay();
     };
 
     Slide.prototype.sendGraphicObjectProps = function()
@@ -1858,12 +1392,6 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         return AscFormat.GetDefaultColorMap();
     };
 
-
-    Slide.prototype.showDrawingObjects = function()
-    {
-        editor.WordControl.m_oDrawingDocument.OnRecalculateSlide(this.num);
-    };
-
     Slide.prototype.showComment = function(Id, x, y)
     {
         //editor.sync_HideComment();
@@ -1875,21 +1403,6 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
     {
         return this.num;
     };
-
-
-    Slide.prototype.getWorksheet = function()
-    {
-        return null;
-    };
-
-Slide.prototype.openChartEditor = function()
-{
-	this.graphicObjects.openChartEditor();
-};
-Slide.prototype.openOleEditor = function()
-{
-	this.graphicObjects.openOleEditor();
-};
 
     Slide.prototype.Clear_ContentChanges  = function()
     {
@@ -1904,103 +1417,6 @@ Slide.prototype.openOleEditor = function()
     Slide.prototype.Refresh_ContentChanges  = function()
     {
         this.m_oContentChanges.Refresh();
-    };
-
-
-    Slide.prototype.isLockedObject = function()
-    {
-      //  var sp_tree = this.cSld.spTree;
-      //  for(var i = 0; i < sp_tree.length; ++i)
-      //  {
-      //      if(sp_tree[i].Lock.Type !== AscCommon.c_oAscLockTypes.kLockTypeMine && sp_tree[i].Lock.Type !== AscCommon.c_oAscLockTypes.kLockTypeNone)
-      //          return true;
-      //  }
-        return false;
-    };
-
-    Slide.prototype.getPlaceholdersControls = function()
-    {
-        var ret = [];
-        var aSpTree = this.cSld.spTree;
-        for(var i = 0; i < aSpTree.length; ++i)
-        {
-            var oSp = aSpTree[i];
-            oSp.createPlaceholderControl(ret);
-        }
-        return ret;
-    };
-
-    Slide.prototype.convertPixToMM = function(pix)
-    {
-        return editor.WordControl.m_oDrawingDocument.GetMMPerDot(pix);
-    };
-
-    Slide.prototype.getBase64Img = function()
-    {
-        if(window["NATIVE_EDITOR_ENJINE"])
-        {
-           return "";
-        }
-        if(typeof this.cachedImage === "string" && this.cachedImage.length > 0)
-            return this.cachedImage;
-
-        AscCommon.IsShapeToImageConverter = true;
-
-        var dKoef = AscCommon.g_dKoef_mm_to_pix;
-        var _need_pix_width     = ((this.Width*dKoef/3.0 + 0.5) >> 0);
-        var _need_pix_height    = ((this.Height*dKoef/3.0 + 0.5) >> 0);
-
-        if (_need_pix_width <= 0 || _need_pix_height <= 0)
-            return null;
-
-        /*
-         if (shape.pen)
-         {
-         var _w_pen = (shape.pen.w == null) ? 12700 : parseInt(shape.pen.w);
-         _w_pen /= 36000.0;
-         _w_pen *= g_dKoef_mm_to_pix;
-
-         _need_pix_width += (2 * _w_pen);
-         _need_pix_height += (2 * _w_pen);
-
-         _bounds_cheker.Bounds.min_x -= _w_pen;
-         _bounds_cheker.Bounds.min_y -= _w_pen;
-         }*/
-
-        var _canvas = document.createElement('canvas');
-        _canvas.width = _need_pix_width;
-        _canvas.height = _need_pix_height;
-
-        var _ctx = _canvas.getContext('2d');
-
-        var g = new AscCommon.CGraphics();
-        g.init(_ctx, _need_pix_width, _need_pix_height, this.Width, this.Height);
-        g.m_oFontManager = AscCommon.g_fontManager;
-
-        g.m_oCoordTransform.tx = 0.0;
-        g.m_oCoordTransform.ty = 0.0;
-        g.transform(1,0,0,1,0,0);
-
-        this.draw(g, /*pageIndex*/0);
-
-        if (AscCommon.g_fontManager) {
-            AscCommon.g_fontManager.m_pFont = null;
-        }
-        if (AscCommon.g_fontManager2) {
-            AscCommon.g_fontManager2.m_pFont = null;
-        }
-        AscCommon.IsShapeToImageConverter = false;
-
-        var _ret = { ImageNative : _canvas, ImageUrl : "" };
-        try
-        {
-            _ret.ImageUrl = _canvas.toDataURL("image/png");
-        }
-        catch (err)
-        {
-            _ret.ImageUrl = "";
-        }
-        return _ret.ImageUrl;
     };
 
     Slide.prototype.checkNoTransformPlaceholder = function()
@@ -2056,23 +1472,6 @@ Slide.prototype.openOleEditor = function()
     Slide.prototype.Load_Comments  = function(authors)
     {
         AscCommonSlide.fLoadComments(this, authors);
-    };
-
-
-	Slide.prototype.RestartSpellCheck = function()
-    {
-        for(var i = 0; i < this.cSld.spTree.length; ++i)
-        {
-            this.cSld.spTree[i].RestartSpellCheck();
-        }
-        if(this.notes)
-        {
-            var spTree = this.notes.cSld.spTree;
-            for(i = 0; i < spTree.length; ++i)
-            {
-                spTree[i].RestartSpellCheck();
-            }
-        }
     };
 
     Slide.prototype.getDrawingsForController = function(){
@@ -2132,12 +1531,6 @@ Slide.prototype.openOleEditor = function()
     Slide.prototype.isSlide = function () {
         return true;
     };
-    Slide.prototype.isLayout = function () {
-        return false;
-    };
-    Slide.prototype.isMaster = function () {
-        return false;
-    };
 
     Slide.prototype.IsUseInDocument = function() {
         let oPresentation = Asc.editor.private_GetLogicDocument();
@@ -2151,17 +1544,6 @@ Slide.prototype.openOleEditor = function()
     };
 Slide.prototype.IsUseInSlides = function() {
 	return this.IsUseInDocument();
-};
-Slide.prototype.removeAllInks = function () {
-	this.cSld.removeAllInks();
-};
-Slide.prototype.getAllInks = function (arrInks) {
-	arrInks = arrInks || [];
-	this.cSld.getAllInks(arrInks);
-	return arrInks;
-};
-Slide.prototype.isPreserve = function() {
-	return false;
 };
 
 function fLoadComments(oObject, authors)

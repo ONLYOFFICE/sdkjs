@@ -399,6 +399,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Presentation_SetDefaultTextStyle] = Asc
 AscDFH.changesFactory[AscDFH.historyitem_Presentation_SetFirstSlideNum] = AscDFH.CChangesDrawingsLong;
 AscDFH.changesFactory[AscDFH.historyitem_Presentation_SetShowSpecialPlsOnTitleSld] = AscDFH.CChangesDrawingsBool;
 AscDFH.changesFactory[AscDFH.historyitem_Presentation_RemoveSlideMaster] = AscDFH.CChangesDrawingsContent;
+AscDFH.changesFactory[AscDFH.historyitem_Presentation_AddHandoutMaster] = AscDFH.CChangesDrawingsContent;
 
 
 AscDFH.changesFactory[AscDFH.historyitem_PresentationSectionSetName] = AscDFH.CChangesDrawingsString;
@@ -461,6 +462,9 @@ AscDFH.drawingContentChanges[AscDFH.historyitem_Presentation_AddSlideMaster] = f
 };
 AscDFH.drawingContentChanges[AscDFH.historyitem_Presentation_RemoveSlideMaster] = function (oClass) {
 	return oClass.slideMasters;
+};
+AscDFH.drawingContentChanges[AscDFH.historyitem_Presentation_AddHandoutMaster] = function (oClass) {
+	return oClass.handoutMasters;
 };
 
 AscDFH.drawingsConstructorsMap[AscDFH.historyitem_Presentation_SetShowPr] = CShowPr;
@@ -2505,6 +2509,10 @@ CPresentation.prototype.addSlideMaster = function (pos, master) {
 CPresentation.prototype.addNotesMaster = function (pos, master) {
 	//History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_Presentation_AddSlideMaster, pos, [master], true));
 	this.notesMasters.splice(pos, 0, master);
+};
+CPresentation.prototype.addHandoutMaster = function (pos, master) {
+	History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_Presentation_AddHandoutMaster, pos, [master], true));
+	this.handoutMasters.splice(pos, 0, master);
 };
 
 CPresentation.prototype.removeSlideMaster = function (pos, count) {
@@ -11449,6 +11457,14 @@ CPresentation.prototype.createNecessaryObjectsIfNoPresent = function () {
 		if (!oSlide.notes.Master) {
 			oSlide.notes.setNotesMaster(this.notesMasters[0]);
 		}
+	}
+
+	if (this.handoutMasters.length === 0) {
+		let oHandoutMaster = AscCommonSlide.CreateHandoutMaster();
+		this.addHandoutMaster(0, oHandoutMaster);
+		let oHandoutTheme = this.slideMasters[0].Theme.createDuplicate();
+		oHandoutTheme.presentation = this;
+		oHandoutMaster.setTheme(oHandoutTheme);
 	}
 
 	if (!this.canClearGuides()) {

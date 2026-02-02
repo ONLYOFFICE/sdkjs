@@ -754,19 +754,19 @@
 	};
 
 	asc_docs_api.prototype.IsMasterSlideMode = function() {
-		return this.presentationViewMode === Asc.c_oAscPresentationViewMode.masterSlide && !this.isSlideShow();
+		return false;
 	};
 	asc_docs_api.prototype.IsSlidePageMode = function() {
-		return this.presentationViewMode === Asc.c_oAscPresentationViewMode.normal && !this.isSlideShow();
+		return false;
 	};
 	asc_docs_api.prototype.IsNotesPageMode = function() {
-		return this.presentationViewMode === Asc.c_oAscPresentationViewMode.notesPage && !this.isSlideShow();
+		return false;
 	};
 	asc_docs_api.prototype.IsNotesMasterMode = function() {
-		return this.presentationViewMode === Asc.c_oAscPresentationViewMode.notesMaster && !this.isSlideShow();
+		return false;
 	};
 	asc_docs_api.prototype.IsHandoutMasterMode = function() {
-		return this.presentationViewMode === Asc.c_oAscPresentationViewMode.notesMaster && !this.isSlideShow();
+		return true;
 	};
 	asc_docs_api.prototype.asc_IsMasterSlideMode = function() {
 		return this.IsMasterSlideMode();

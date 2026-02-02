@@ -1611,7 +1611,8 @@
 			LAYOUT: 1,
 			MASTER: 2,
 			NOTES: 3,
-			NOTES_MASTER: 4
+			NOTES_MASTER: 4,
+			HANDOUT_MASTER: 5
 		};
 
 
