@@ -2367,7 +2367,7 @@ ParaMath.prototype.MathToImageConverter = function(bCopy, _canvasInput, _widthPx
     _ind.Right = 0;
     par.Set_Ind(_ind, false);
 
-    var _sp = new CParaSpacing();
+    var _sp = new AscWord.ParaSpacing();
     _sp.Line              = 1;
     _sp.LineRule          = Asc.linerule_Auto;
     _sp.Before            = 0;

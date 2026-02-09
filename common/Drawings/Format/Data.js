@@ -7339,7 +7339,21 @@ Because of this, the display is sometimes not correct.
     SmartArt.prototype.getName = function () {
       return 'SmartArt';
     };
-
+		SmartArt.prototype.isCorretDataModel = function() {
+			const data = this.getDataModel();
+			if (!data) {
+				return false;
+			}
+			const dataModel = data.getDataModel();
+			if (!dataModel) {
+				return false;
+			}
+			const docPoint = dataModel.getMainPoint();
+			if (!docPoint) {
+				return false;
+			}
+			return true;
+		};
 		SmartArt.prototype.isCanGenerateSmartArt = function () {
 			const smartartType = this.getTypeOfSmartArt();
 			switch (smartartType) {

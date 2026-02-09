@@ -411,6 +411,9 @@
 				oLine.setFill(oFill);
 			}
 		}, undefined, this);
+
+		this.SetWasChanged(true);
+		this.SetNeedRecalc(true);
 	};
 	CAnnotationFreeText.prototype.SetFillColor = function(aColor) {
 		AscCommon.History.Add(new CChangesPDFAnnotFill(this, this.GetFillColor(), aColor));
@@ -425,6 +428,9 @@
 				this.spTree[i].setFill(oFill);
 			}
 		}, undefined, this);
+
+		this.SetWasChanged(true);
+		this.SetNeedRecalc(true);
 	};
     CAnnotationFreeText.prototype.GetTextBoxRect = function() {
         let aOrigRect   = this.GetRect();
@@ -923,26 +929,26 @@
             }
         }
         else {
-            let pageObject = oDoc.Viewer.getPageByCoords2(x, y);
-            if (!pageObject)
+            let pageObjectMM = oDoc.Viewer.getPageByCoords2(x, y);
+            if (!pageObjectMM)
                 return false;
 
             let oTextBoxShape = this.GetTextBoxShape();
-            if (false == oTextBoxShape.hitInTextRect(pageObject.x, pageObject.y)) {
+            if (false == oTextBoxShape.hitInTextRect(pageObjectMM.x, pageObjectMM.y)) {
                 this.Blur();
                 return;
             }
 
             if (e.ShiftKey) {
                 this.GetDocContent().StartSelectionFromCurPos();
-                oDoc.SelectionSetEnd(x, y, e);
+                this.selectionSetEnd(e, pageObjectMM.x, pageObjectMM.y);
             }
             else {
-                oDoc.SelectionSetStart(x, y, e);
+                this.selectionSetStart(e, pageObjectMM.x, pageObjectMM.y);
             }
         }
     };
-    CAnnotationFreeText.prototype.SelectionSetStart = function(X, Y, e) {
+    CAnnotationFreeText.prototype.selectionSetStart = function(e, X, Y) {
         this.selectStartPage = this.GetPage();
 
         let oTextBoxShape   = this.GetTextBoxShape();
@@ -955,7 +961,7 @@
         oContent.Selection_SetStart(xContent, yContent, 0, e);
         oContent.RecalculateCurPos();
     };
-    CAnnotationFreeText.prototype.SelectionSetEnd = function(X, Y, e) {
+    CAnnotationFreeText.prototype.selectionSetEnd = function(e, X, Y) {
         let oTextBoxShape   = this.GetTextBoxShape();
         let oContent        = this.GetDocContent();
         

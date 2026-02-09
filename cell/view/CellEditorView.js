@@ -497,7 +497,7 @@ function (window, undefined) {
 		this.handlers.trigger("doEditorFocus");
 	};
 
-	CellEditor.prototype.setTextStyle = function (prop, val) {
+	CellEditor.prototype.setTextStyle = function (prop, val, isToggle) {
 		if (this.isFormula()) {
 			return;
 		}
@@ -527,7 +527,7 @@ function (window, undefined) {
 
 			if (first && last) {
 				for (i = first.index; i <= last.index; ++i) {
-					var valTmp = t._setFormatProperty(opt.fragments[i].format, prop, val);
+					var valTmp = t._setFormatProperty(opt.fragments[i].format, prop, val, isToggle);
 					// For hotkeys only
 					if (null === val) {
 						val = valTmp;
@@ -552,7 +552,7 @@ function (window, undefined) {
 				if (!t.newTextFormat) {
 					t.newTextFormat = opt.fragments[first.index].format.clone();
 				}
-				t._setFormatProperty(t.newTextFormat, prop, val);
+				t._setFormatProperty(t.newTextFormat, prop, val, isToggle);
 				t._update();
 			}
 		}
@@ -2467,7 +2467,7 @@ function (window, undefined) {
 		}
 	};
 
-	CellEditor.prototype._setFormatProperty = function (format, prop, val) {
+	CellEditor.prototype._setFormatProperty = function (format, prop, val, isToggle) {
 		switch (prop) {
 			case "fn":
 				format.setName(val);
@@ -2498,6 +2498,12 @@ function (window, undefined) {
 				format.setStrikeout(val);
 				break;
 			case "fa":
+				if (isToggle) {
+					const vertAlign = format.getVerticalAlign();
+					if (vertAlign === val) {
+						val = null;
+					}
+				}
 				format.setVerticalAlign(val);
 				break;
 			case "c":
@@ -2646,6 +2652,20 @@ function (window, undefined) {
 					this._syncEditors();
 				}
 				this.setTextStyle("u", null);
+				break;
+			}
+			case Asc.c_oAscSpreadsheetShortcutType.Subscript: {
+				if (bHieroglyph) {
+					this._syncEditors();
+				}
+				this.setTextStyle("fa", AscCommon.vertalign_SubScript, true);
+				break;
+			}
+			case Asc.c_oAscSpreadsheetShortcutType.Superscript: {
+				if (bHieroglyph) {
+					this._syncEditors();
+				}
+				this.setTextStyle("fa", AscCommon.vertalign_SuperScript, true);
 				break;
 			}
 			case Asc.c_oAscSpreadsheetShortcutType.EditSelectAll: {

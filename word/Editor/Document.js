@@ -3108,7 +3108,6 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 				this.UpdatePlaceholders();
 				return document_recalcresult_LongRecalc;
 			}
-
 			clearTimeout(this.FullRecalc.Id);
 			this.FullRecalc.Id = null;
 			this.DrawingDocument.OnEndRecalculate(false);
@@ -3179,36 +3178,52 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 	
 	if (isUseTimeout && !isForceStrictRecalc)
 	{
-		let _t = this;
-		this.FullRecalc.Id = setTimeout(function(){_t.ContinueRecalculationLoop();}, 0);
+		this.FullRecalc.Id = this.ContinueRecalculationLoopTimer();
 	}
 	else
 	{
-		this.ContinueRecalculationLoop();
+		this.ContinueRecalculationLoop(null);
 	}
 	
 	this.UpdatePlaceholders();
-    return document_recalcresult_LongRecalc;
+	return document_recalcresult_LongRecalc;
 };
-CDocument.prototype.ContinueRecalculationLoop = function()
+CDocument.prototype.ContinueRecalculationLoopTimer = function(noTimer)
 {
+	if (noTimer)
+	{
+		this.ContinueRecalculationLoop(null);
+		return null;
+	}
+	
+	let _t = this;
+	let timerId = setTimeout(function(){
+		_t.ContinueRecalculationLoop(timerId);
+	}, 10);
+	return timerId;
+};
+CDocument.prototype.ContinueRecalculationLoop = function(timerId)
+{
+	this.FullRecalc.TimerStartTime = performance.now();
+	this.FullRecalc.TimerStartPage = this.FullRecalc.PageIndex;
+	
 	while (true)
 	{
 		this.FullRecalc.Continue = false;
 		
 		this.Recalculate_Page();
 		
+		// Такое возможно, если пересчет сам вызвал пересчет, и у нас крутится несколько таких циклов
+		// завершаем все неактуальные
+		if (this.FullRecalc.Id !== timerId)
+			break;
+		
 		if (!this.FullRecalc.Continue)
 			break;
 		
 		if (this.IsContinueRecalculateOnTimer())
 		{
-			let _t = this;
-			this.FullRecalc.TimerStartPage = this.FullRecalc.PageIndex;
-			this.FullRecalc.Id = setTimeout(function(){
-				_t.FullRecalc.TimerStartTime = performance.now();
-				_t.ContinueRecalculationLoop();
-			}, 10);
+			this.FullRecalc.Id = this.ContinueRecalculationLoopTimer();
 			break;
 		}
 	}
@@ -3471,7 +3486,7 @@ CDocument.prototype.Recalculate_Page = function()
             if (OldPage.EndPos >= Count - 1 && PageIndex - this.Content[Count - 1].GetAbsoluteStartPage() >= this.Content[Count - 1].GetPagesCount() - 1)
             {
 				// // Recalculation LOG
-				// console.log("HdrFtr Recalculation " + PageIndex);
+				//  console.log("HdrFtr Recalculation " + PageIndex);
 
                 this.Pages[PageIndex] = OldPage;
                 this.DrawingDocument.OnRecalculatePage(PageIndex, this.Pages[PageIndex]);
@@ -3493,8 +3508,8 @@ CDocument.prototype.Recalculate_Page = function()
             }
             else if (undefined !== this.Pages[PageIndex + 1])
             {
-				// // Recalculation LOG
-				// console.log("HdrFtr Recalculation " + PageIndex);
+				// // // Recalculation LOG
+				//  console.log("HdrFtr Recalculation " + PageIndex);
 
                 // Переходим к следующей странице
                 this.Pages[PageIndex] = OldPage;
@@ -3520,8 +3535,8 @@ CDocument.prototype.Recalculate_Page = function()
             }
         }
 
-		// // Recalculation LOG
-		// console.log("Regular Recalculation" + PageIndex);
+		// // // Recalculation LOG
+		//  console.log("Regular Recalculation" + PageIndex);
 
         let pageFrame = this.GetPageContentFrame(PageIndex);
 		this.Footnotes.Reset(PageIndex, SectPr);
@@ -4287,11 +4302,6 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 				}
 			}
 		}
-    }
-
-	if (this.NeedUpdateTracksOnRecalc)
-	{
-		this.private_UpdateTracks(this.NeedUpdateTracksParams.Selection, this.NeedUpdateTracksParams.EmptySelection);
 	}
 	
 	if (true === bContinue)
@@ -4312,6 +4322,10 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 	{
 		this.UpdatePlaceholders();
 	}
+	
+	// Обновление треков может вызывать пересчет, обязательно в самом конце вызываем, чтобы все параметры FullRecalc были высталены актуально
+	if (this.NeedUpdateTracksOnRecalc)
+		this.private_UpdateTracks(this.NeedUpdateTracksParams.Selection, this.NeedUpdateTracksParams.EmptySelection);
 };
 CDocument.prototype.IsContinueRecalculateOnTimer = function()
 {
@@ -4985,7 +4999,7 @@ CDocument.prototype.private_RecalculateHdrFtrPageCountUpdate = function()
 			this.FullRecalc.MainStartPos      = this.Pages[nPageAbs].Pos;
 
 			this.DrawingDocument.OnStartRecalculate(nPageAbs);
-			this.ContinueRecalculationLoop();
+			this.ContinueRecalculationLoop(null);
 			return;
 		}
 	}
@@ -5127,8 +5141,7 @@ CDocument.prototype.ResumeRecalculate = function()
 	
 	if (this.RecalcInfo.PausedMain)
 	{
-		let _t = this;
-		this.FullRecalc.Id = setTimeout(function(){_t.ContinueRecalculationLoop();}, 10);
+		this.FullRecalc.Id = this.ContinueRecalculationLoopTimer();
 	}
 	else
 	{
@@ -7220,29 +7233,24 @@ CDocument.prototype.CanAddDropCap = function()
 };
 /**
  * Обновляем данные в интерфейсе о свойствах графики (картинки, автофигуры).
- * @param Flag
  * @returns {*}
  */
-CDocument.prototype.Interface_Update_DrawingPr = function(Flag)
+CDocument.prototype.Interface_Update_DrawingPr = function()
 {
-	var DrawingPr = this.DrawingObjects.Get_Props();
-
-	if (true === Flag)
-		return DrawingPr;
-	else
+	if (!this.Api)
+		return;
+	
+	let showHyperlinks = docpostype_DrawingObjects === this.GetDocPosType() && !this.DrawingObjects.getTargetDocContent();
+	let drawingProps = this.DrawingObjects.Get_Props();
+	for (let i = 0; i < drawingProps.length; ++i)
 	{
-		if (this.Api)
-		{
-			for (var i = 0; i < DrawingPr.length; ++i)
-			{
-				DrawingPr[i] instanceof Asc.CHyperlinkProperty
-					? this.Api.sync_HyperlinkPropCallback(DrawingPr[i])
-					: this.Api.sync_ImgPropCallback(DrawingPr[i]);
-			}
-		}
+		let pr = drawingProps[i];
+		
+		if (!(pr instanceof Asc.CHyperlinkProperty))
+			this.Api.sync_ImgPropCallback(pr);
+		else if (showHyperlinks)
+			this.Api.sync_HyperlinkPropCallback(pr);
 	}
-	if (Flag)
-		return null;
 };
 /**
  * Обновляем данные в интерфейсе о свойствах таблицы.
@@ -9244,8 +9252,15 @@ CDocument.prototype.OnKeyDown = function(e)
 										}
 									}
 									ListForUnicode[0].oRun.Selection.Use = true;
-									ListForUnicode[0].oRun.Selection.StartPos = ListForUnicode[0].currentPos;
-									ListForUnicode[0].oRun.Selection.EndPos = ListForUnicode[0].currentPos + 1;
+									const nStartPos = ListForUnicode[0].currentPos;
+									const nEndPos = ListForUnicode[0].currentPos + 1;
+									if (oSettings.nDirection !== -1) {
+										ListForUnicode[0].oRun.Selection.StartPos = nStartPos;
+										ListForUnicode[0].oRun.Selection.EndPos = nEndPos;
+									} else {
+										ListForUnicode[0].oRun.Selection.StartPos = nEndPos;
+										ListForUnicode[0].oRun.Selection.EndPos = nStartPos;
+									}
 								}
 
 								this.UpdateSelection();
@@ -9329,8 +9344,15 @@ CDocument.prototype.OnKeyDown = function(e)
 								}
 								
 								ListForUnicode[0].oRun.Selection.Use = true;
-								ListForUnicode[0].oRun.Selection.StartPos = ListForUnicode[0].currentPos;
-								ListForUnicode[0].oRun.Selection.EndPos = ListForUnicode[0].currentPos + textAfterChange.length;
+								const nStartPos = ListForUnicode[0].currentPos;
+								const nEndPos = ListForUnicode[0].currentPos + textAfterChange.length;
+								if (oSettings.nDirection !== -1) {
+									ListForUnicode[0].oRun.Selection.StartPos = nStartPos;
+									ListForUnicode[0].oRun.Selection.EndPos = nEndPos;
+								} else {
+									ListForUnicode[0].oRun.Selection.StartPos = nEndPos;
+									ListForUnicode[0].oRun.Selection.EndPos = nStartPos;
+								}
 							}
 
 							this.UpdateSelection();
@@ -13175,19 +13197,17 @@ CDocument.prototype.ModifyHyperlink = function(oHyperProps)
 	}
 	else if (!oClass)
 	{
-		// shape/image hyperlink
 		if (docpostype_DrawingObjects === this.GetDocPosType())
-			return this.DrawingObjects.hyperlinkModify(oHyperProps);
-		return;
+			this.DrawingObjects.hyperlinkModify(oHyperProps);
 	}
 	else
 	{
 		return;
 	}
-
+	
 	this.Recalculate();
-    this.Document_UpdateSelectionState();
-    this.Document_UpdateInterfaceState();
+	this.UpdateSelection();
+	this.UpdateInterface();
 };
 CDocument.prototype.RemoveHyperlink = function(oHyperProps)
 {
@@ -13245,17 +13265,14 @@ CDocument.prototype.RemoveHyperlink = function(oHyperProps)
 	}
 	else if (!oClass)
 	{
-		// shape/image hyperlink
 		if (docpostype_DrawingObjects === this.GetDocPosType())
-			return this.DrawingObjects.hyperlinkModify(oHyperProps);
-		return;
+			this.DrawingObjects.hyperlinkRemove();
 	}
 	else
 	{
 		return;
 	}
-
-	//this.Controller.RemoveHyperlink();
+	
 	this.Recalculate();
 	this.Document_UpdateSelectionState();
 	this.Document_UpdateInterfaceState();
@@ -14437,7 +14454,7 @@ CDocument.prototype.AddSectionBreak = function(sectionBreakType)
 	sectPr.Copy(curSectPr);
 	curSectPr.Set_Type(sectionBreakType);
 	curSectPr.SetPageNumStart(-1);
-	curSectPr.Clear_AllHdrFtr();
+	curSectPr.RemoveAllHdrFtr();
 
 	this.History.MinorChanges = false;
 	
@@ -14867,8 +14884,11 @@ CDocument.prototype.UpdateCursorOnRecalculate = function()
 
 	this.private_UpdateCursorXY(true, true);
 
+	// Если во время пересчета изменилась текущая позиция, и нам надо скроллится, то скроллимся каждый раз
 	if (isLockScroll)
 		this.Api.asc_LockScrollToTarget(false);
+	else
+		this.DrawingDocument.scrollToTarget();
 };
 CDocument.prototype.private_UpdateCursorXY = function(bUpdateX, bUpdateY, isUpdateTarget)
 {
@@ -22604,6 +22624,11 @@ CDocument.prototype.IsFillingOFormMode = function()
 
 	let api = this.GetApi();
 	return !!(api.DocInfo && api.DocInfo.isFormatWithForms());
+};
+CDocument.prototype.IsEditingOFormMode = function()
+{
+	let api = this.GetApi();
+	return (api.DocInfo && api.DocInfo.isFormatWithForms() && !this.IsFillingOFormMode());
 };
 CDocument.prototype.CheckOFormUserMaster = function(form)
 {

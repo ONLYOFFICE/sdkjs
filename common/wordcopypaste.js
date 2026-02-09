@@ -8832,7 +8832,7 @@ PasteProcessor.prototype =
 			_applyTextAlign();
 
 			//для случая <td>br<span></span></td> без текста в ячейке
-			var oNewSpacing = new CParaSpacing();
+			var oNewSpacing = new AscWord.ParaSpacing();
 			oNewSpacing.Set_FromObject({After: 0, Before: 0, Line: Asc.linerule_Auto});
 			Para.Set_Spacing(oNewSpacing);
 			return;
@@ -8975,7 +8975,7 @@ PasteProcessor.prototype =
 			//Spacing
 			//use not computedStyle -> html often comes with the font size set by the parent, the browser calculate
 			//the font to margin-top/margin-bottom
-			var Spacing = new CParaSpacing();
+			var Spacing = new AscWord.ParaSpacing();
 			var margin_top = node.style.getPropertyValue("margin-top")/*this._getStyle(node, computedStyle, "margin-top")*/;
 			if (margin_top && null != (margin_top = AscCommon.valueToMm(margin_top)) && margin_top >= 0) {
 				Spacing.Before = margin_top;
@@ -11992,7 +11992,7 @@ PasteProcessor.prototype =
 				var oDocContent = cell.Content;
 				var oNewPar = new AscWord.Paragraph(oDocContent);
 				//выставляем единичные настройки - важно для копирования из таблиц и других мест где встречаются пустые ячейки
-				var oNewSpacing = new CParaSpacing();
+				var oNewSpacing = new AscWord.ParaSpacing();
 				oNewSpacing.Set_FromObject({After: 0, Before: 0, Line: Asc.linerule_Auto});
 				oNewPar.Set_Spacing(oNewSpacing);
 				oPasteProcessor.aContent.push(oNewPar);

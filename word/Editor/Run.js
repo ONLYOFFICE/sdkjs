@@ -8249,7 +8249,7 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
     }
 
 	function checkRunPdf(run, textPr) {
-		if (!!run.Pr.Bold !== !!textPr.Bold || !!run.Pr.Italic !== !!textPr.Italic)
+		if (!!run.Pr.Bold !== !!textPr.Bold || !!run.Pr.Italic !== !!textPr.Italic || run.Pr.GetFontFamily() !== textPr.GetFontFamily())
 		{
 			for (let i = 0; i < run.Content.length; i++)
 			{
@@ -11955,7 +11955,7 @@ ParaRun.prototype.CollectTextToUnicode = function(ListForUnicode, oSettings)
 				break;
 		}
 	}
-	else
+	else if (startPos < endPos)
 	{
 		oSettings.nDirection = 1;
 		for (let pos = startPos; pos < endPos; ++pos)

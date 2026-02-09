@@ -508,7 +508,7 @@
             this.CheckFormViewWindow();
 
         oGraphicsWord.AddClipRect(this.contentClipRect.X, this.contentClipRect.Y, this.contentClipRect.W, this.contentClipRect.H);
-        oContentToDraw.Draw(0, oGraphicsWord);
+        oContentToDraw.Draw(oContentToDraw.GetAbsolutePage(), oGraphicsWord);
         
         oGraphicsWord.RemoveLastClip();
         this.DrawBorders(oGraphicsPDF, oGraphicsWord);
@@ -1296,6 +1296,7 @@
     CTextField.prototype.onMouseDown = function(x, y, e) {
         let oViewer         = editor.getDocumentRenderer();
         let oDoc            = this.GetDocument();
+		let oController		= oDoc.GetController();
         let oActionsQueue   = oDoc.GetActionsQueue();
 
         let isInFocus   = oDoc.activeForm === this;
@@ -1309,16 +1310,13 @@
         }
 
         function callbackAfterFocus(x, y, e) {
+			let pageObjectMM = oDoc.Viewer.getPageByCoords2(x, y);
+			if (!pageObjectMM)
+				return false;
+
             this.SetInForm(true);
             oDoc.SetLocalHistory();
-            if (false == e.ShiftKey) {
-                oDoc.SelectionSetStart(x, y, e);
-				oDoc.SelectionSetEnd(x, y, e);
-            }
-            else {
-                this.content.StartSelectionFromCurPos();
-                oDoc.SelectionSetEnd(x, y, e);
-            }
+            oController.OnMouseDown(e, pageObjectMM.x, pageObjectMM.y, pageObjectMM.index);
             
             let pageObject = oViewer.getPageByCoords(x, y);
 
@@ -1605,11 +1603,11 @@
         }
     };
 
-    CTextField.prototype.SelectionSetStart = function(X, Y, e) {
+    CTextField.prototype.selectionSetStart = function(e, X, Y) {
         this.content.Selection_SetStart(X, Y, 0, e);
         this.content.RecalculateCurPos();
     };
-    CTextField.prototype.SelectionSetEnd = function(X, Y, e) {
+    CTextField.prototype.selectionSetEnd = function(e, X, Y) {
         this.content.Selection_SetEnd(X, Y, 0, e);
     };
     CTextField.prototype.MoveCursorLeft = function(isShiftKey, isCtrlKey) {

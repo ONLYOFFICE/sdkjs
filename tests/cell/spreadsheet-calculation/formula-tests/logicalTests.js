@@ -798,17 +798,17 @@ $(function () {
 		assert.ok(oParser.parse(), 'IF(TRUE, A1:A3, A1:A2)');
 		oParser.setArrayFormulaRef(ws.getRange2("C10:E12").bbox);
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 0);
-		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 1);
-		assert.strictEqual(array.getElementRowCol(2,0).getValue(), 2);
+		assert.strictEqual(array.getValueByRowCol(0,0).getValue(), 0);
+		assert.strictEqual(array.getValueByRowCol(1,0).getValue(), 1);
+		assert.strictEqual(array.getValueByRowCol(2,0).getValue(), 2);
 
 		oParser = new parserFormula('IF(FALSE, A1:A3, A1:A2)', "AA2", ws);
 		assert.ok(oParser.parse(), 'IF(FALSE, A1:A3, A1:A2)');
 		oParser.setArrayFormulaRef(ws.getRange2("C10:E12").bbox);
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 0);
-		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 1);
-		assert.strictEqual(array.getElementRowCol(2,0).getValue(), "#N/A");
+		assert.strictEqual(array.getValueByRowCol(0,0).getValue(), 0);
+		assert.strictEqual(array.getValueByRowCol(1,0).getValue(), 1);
+		assert.strictEqual(array.getValueByRowCol(2,0).getValue(), "#N/A");
 
 		oParser = new parserFormula('IF({1,0,1}, {"A","B","C"}, {"X","Y","Z"})', "AA2", ws);
 		assert.ok(oParser.parse(), 'IF({1,0,1}, {"A","B","C"}, {"X","Y","Z"})');

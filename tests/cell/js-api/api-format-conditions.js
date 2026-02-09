@@ -36,75 +36,22 @@ const DecToHex = function (n) {
 };
 
 $(function () {
-    // ====== REQUIRED ENVIRONMENT SETUP (preserve these stubs/settings) ======
-    Asc.spreadsheet_api.prototype._init = function () {};
-    Asc.spreadsheet_api.prototype._loadFonts = function (fonts, callback) {
-        callback();
-    };
-    AscCommonExcel.WorkbookView.prototype._calcMaxDigitWidth = function () {};
-    AscCommonExcel.WorkbookView.prototype._init = function () {};
-    AscCommonExcel.WorkbookView.prototype._onWSSelectionChanged =
-        function () {};
-    AscCommonExcel.WorkbookView.prototype.showWorksheet = function () {};
-    AscCommonExcel.WorksheetView.prototype._init = function () {};
-    AscCommonExcel.WorksheetView.prototype._onUpdateFormatTable =
-        function () {};
-    AscCommonExcel.WorksheetView.prototype.setSelection = function () {};
-    AscCommonExcel.WorksheetView.prototype.draw = function () {};
-    AscCommonExcel.WorksheetView.prototype._prepareDrawingObjects =
-        function () {};
-    AscCommonExcel.WorksheetView.prototype._reinitializeScroll = function () {};
-    AscCommonExcel.WorksheetView.prototype.getZoom = function () {};
-    AscCommonExcel.WorksheetView.prototype._getPPIY = function () {};
-    AscCommonExcel.WorksheetView.prototype._getPPIX = function () {};
-    AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function () {};
-    Asc.ReadDefTableStyles = function () {};
-
-    var api = new Asc.spreadsheet_api({ "id-view": "editor_sdk" });
-
-    api.FontLoader = { LoadDocumentFonts: function () {} };
-    window["Asc"]["editor"] = api;
-    AscCommon.g_oTableId.init();
-    api._onEndLoadSdk();
-    api.isOpenOOXInBrowser = false;
-    api.OpenDocumentFromBin(null, AscCommon.getEmpty());
-    api.initCollaborativeEditing({});
-    api.wb = new AscCommonExcel.WorkbookView(
-        api.wbModel,
-        api.controller,
-        api.handlers,
-        api.HtmlElement,
-        api.topLineEditorElement,
-        api,
-        api.collaborativeEditing,
-        api.fontRenderingMode
-    );
-
-    var wsView = api.wb.getWorksheet(0);
-    wsView.handlers = api.handlers;
-    wsView.objectRender = new AscFormat.DrawingObjects();
-    wsView.objectRender.controller = new AscFormat.DrawingObjectsController(
-        wsView.objectRender
-    );
-    var ws = api.GetActiveSheet();
-
-    // ====== TEST UTILITIES ======
-
-    // MUST-HAVE helper: clear all conditional formats in A1:Z100 before each test
+	let ws = AscTest.JsApi.GetActiveSheet();
     window.initializeTest = function () {
         var r = ws.GetRange("A1:Z100");
         r.ClearFormats();
+		seedValues();
     };
 
     function color(r, g, b) {
-        return api.CreateColorFromRGB(r, g, b);
+        return AscTest.JsApi.CreateColorFromRGB(r, g, b);
     }
     function fullRange() {
         return ws.GetRange("A1:Z100");
     }
 
     // Seed some values that a few rules might reference
-    (function seedValues() {
+    function seedValues() {
         var vals = [10, 20, 30, 40, 50];
         for (var i = 0; i < vals.length; i++) {
             ws.GetRange("A" + (i + 1)).SetValue(vals[i]);
@@ -121,7 +68,7 @@ $(function () {
             ws.GetRange("H" + r).SetValue(100 - r);
             ws.GetRange("I" + r).SetValue(r * -1);
         }
-    })();
+    };
 
     // ====== TESTS ======
 
@@ -440,9 +387,10 @@ $(function () {
             assert.strictEqual(t.GetNumberFormat(), "0", "Top10 NumberFormat roundtrips");
 
             // applies-to expansion
-            var rMulti = ws.GetRange("G1:G5,H1:H5");
-            t.ModifyAppliesToRange(rMulti);
-            assert.ok(t.GetAppliesTo(), "AppliesTo after modify");
+            //While don't have methods for multiselect
+            // var rMulti = ws.GetRange("G1:G5,H1:H5");
+            // t.ModifyAppliesToRange(rMulti);
+            // assert.ok(t.GetAppliesTo(), "AppliesTo after modify");
         });
 
         QUnit.test("UniqueValues and Delete()", function (assert) {

@@ -92,6 +92,18 @@
 		this.YLimit2 = oFrame.Bottom;
 		this.Index   = nSectionIndex;
 		this.SectPr  = oSectPr;
+		
+		this.ResetBottomLimitCalculation();
+	};
+	DocumentPageSection.prototype.ResetBottomLimitCalculation = function()
+	{
+		this.IterationsCount       = 0;
+		this.CurrentY              = 0;
+		this.RecalculateBottomLine = true;
+		this.CanDecrease           = true;
+		this.WasIncrease           = false;
+		this.IterationStep         = 10;
+		this.IterationDirection    = 0;
 	};
 	DocumentPageSection.prototype.GetIndex = function()
 	{

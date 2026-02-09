@@ -2484,7 +2484,7 @@ CGraphicObjects.prototype =
        // );
        // editor.UpdateTextPr(oTextPr);
 		editor.Update_ParaTab(AscCommonWord.Default_Tab_Stop, new CParaTabs());
-        editor.sync_ParaSpacingLine( new CParaSpacing() );
+        editor.sync_ParaSpacingLine( new AscWord.ParaSpacing() );
         editor.Update_ParaInd(new CParaInd(), false);
         editor.sync_PrAlignCallBack(null);
         editor.sync_ParaStyleName(null);

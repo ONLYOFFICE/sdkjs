@@ -46,7 +46,8 @@ const allTests = [
 	'cell/spreadsheet-calculation/conditionalFormattingTests.html',
 	'cell/spreadsheet-calculation/ExternalReference.html',
 	'cell/spreadsheet-calculation/SheetMemoryTest.html',
-
+	'cell/js-api/js-api.html',
+	
 	'word/unit-tests/paragraphContentPos.html',
 	'word/unit-tests/deleted-text-recovery.html',
 	'word/content-control/block-level/cursorAndSelection.html',

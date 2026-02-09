@@ -4136,7 +4136,7 @@
 
 		if (!range && cDialogType.DataValidation !== dialogType && cDialogType.ConditionalFormattingRule !== dialogType && cDialogType.GoalSeek_Cell !== dialogType &&
 			cDialogType.GoalSeek_ChangingCell !== dialogType && cDialogType.Solver_ObjectiveCell !== dialogType && cDialogType.Solver_VariableCell !== dialogType &&
-			cDialogType.Solver_Constraint !== dialogType)
+			cDialogType.Solver_Constraint !== dialogType && cDialogType.Solver_CellReference !== dialogType)
 		{
 			return Asc.c_oAscError.ID.DataRangeError;
 		}
@@ -4247,7 +4247,8 @@
 					sheetModel = model.getActiveWs();
 				}
 				return AscCommonExcel.CGoalSeek.prototype.isValidDataRef(sheetModel, range, dialogType);
-			} else if (cDialogType.Solver_ObjectiveCell === dialogType || cDialogType.Solver_VariableCell === dialogType || cDialogType.Solver_Constraint === dialogType) {
+			} else if (cDialogType.Solver_ObjectiveCell === dialogType || cDialogType.Solver_VariableCell === dialogType || cDialogType.Solver_Constraint === dialogType ||
+					cDialogType.Solver_CellReference === dialogType) {
 				result = parserHelp.parse3DRef(dataRange);
 				if (result) {
 					sheetModel = model.getWorksheetByName(result.sheet);
@@ -11127,7 +11128,7 @@
 		if (!res)
 			return new CColor(0, 0, 0, 255);
 
-		return true === isDark ? res.Dark : res.Light;
+		return -1 === isDark ? res.Light : true === isDark || 1 === isDark ? res.Dark : res.Normal;
 	}
 	function setUserColorById(userId, light, dark)
 	{
@@ -11508,8 +11509,9 @@
 
 	function CUserCacheColor(nColor)
 	{
-		this.Light = null;
-		this.Dark = null;
+		this.Light  = null;
+		this.Dark   = null;
+		this.Normal = null;
 		this.init(nColor);
 	}
 
@@ -11522,16 +11524,23 @@
 		var Y = Math.max(0, Math.min(255, 0.299 * r + 0.587 * g + 0.114 * b));
 		var Cb = Math.max(0, Math.min(255, 128 - 0.168736 * r - 0.331264 * g + 0.5 * b));
 		var Cr = Math.max(0, Math.min(255, 128 + 0.5 * r - 0.418688 * g - 0.081312 * b));
-
+		
+		var Y_light = Math.min(255, Y + (255 - Y) * 0.6);
+		
 		if (Y > 63)
 			Y = 63;
+		
+		var R_dark = Math.max(0, Math.min(255, Y + 1.402 * (Cr - 128))) | 0;
+		var G_dark = Math.max(0, Math.min(255, Y - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128))) | 0;
+		var B_dark = Math.max(0, Math.min(255, Y + 1.772 * (Cb - 128))) | 0;
+		
+		var R_light = Math.max(0, Math.min(255, Y_light + 1.402 * (Cr - 128))) | 0;
+		var G_light = Math.max(0, Math.min(255, Y_light - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128))) | 0;
+		var B_light = Math.max(0, Math.min(255, Y_light + 1.772 * (Cb - 128))) | 0;
 
-		var R = Math.max(0, Math.min(255, Y + 1.402 * (Cr - 128))) | 0;
-		var G = Math.max(0, Math.min(255, Y - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128))) | 0;
-		var B = Math.max(0, Math.min(255, Y + 1.772 * (Cb - 128))) | 0;
-
-		this.Light = new CColor(r, g, b, 255);
-		this.Dark = new CColor(R, G, B, 255);
+		this.Light  = new CColor(R_light, G_light, B_light, 255);
+		this.Normal = new CColor(r, g, b, 255);
+		this.Dark   = new CColor(R_dark, G_dark, B_dark, 255);
 	};
 
 	function loadScript(url, onSuccess, onError)

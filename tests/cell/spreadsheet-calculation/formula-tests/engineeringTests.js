@@ -458,8 +458,7 @@ $(function () {
 		ws2.getRange2("A17").setValue("10"); // TestNameArea3D
 
 		// Positive cases:
-
-		// Has differents in comparison with excel with some formulas (inaccuracy in the 7th digit after the decimal)
+		// The formula calc has differents in comparison with excel with some data (inaccuracy in the 7th digit after the decimal)
 		// Case #1: Number(2). Example from documentation. Bessel 1.5 order 1.
 		oParser = new parserFormula('BESSELI(1.5, 1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELI(1.5, 1) is parsed.');
@@ -560,9 +559,16 @@ $(function () {
 		oParser = new parserFormula('BESSELI(A105, 2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELI(A105, 2) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Positive case: Reference link, Number. X is a reference to an empty cell, treated as 0');
+		// Case #23: Number, Number. X negative number.
+		oParser = new parserFormula('BESSELI(-10,1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: Formula BESSELI(-10,1) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), -2670.988303701255, 'Test: Positive case: Reference link, Number. X negative number.');
+		// Case #24: Number, Number. X negative number.
+		oParser = new parserFormula('BESSELI(-10,3)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: Formula BESSELI(-10,3) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), -1758.3807166108534, 'Test: Positive case: Reference link, Number. X negative number.');
 
 		// Negative cases:
-
 		// Case #1: Number(2). Bessel function with incorrect order (< 0)
 		oParser = new parserFormula('BESSELI(1,-2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELI(1,-2) is parsed.');
@@ -586,19 +592,19 @@ $(function () {
 		// Case #6: Boolean, Number. X is a boolean value, results in #VALUE!.
 		oParser = new parserFormula('BESSELI(TRUE, 2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELI(TRUE, 2) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean, Number. X is a boolean value, results in #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean, Number. X is a boolean value, results in #VALUE!.');
 		// Case #7: Number, Boolean. N is a boolean value, results in #VALUE!.
 		oParser = new parserFormula('BESSELI(2, FALSE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELI(2, FALSE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Boolean. N is a boolean value, results in #VALUE!.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Boolean. N is a boolean value, results in #VALUE!.');
 		// Case #8: Error, Number. X is a reference to an error, results in #N/A.
 		oParser = new parserFormula('BESSELI(A108, 2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELI(A108, 2) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Error, Number. X is a reference to an error, results in #N/A.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Error, Number. X is a reference to an error, results in #N/A.');
 		// Case #9: Number, Error. N is a reference to an error, results in #N/A.
 		oParser = new parserFormula('BESSELI(2, A108)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELI(2, A108) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Error. N is a reference to an error, results in #N/A.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number, Error. N is a reference to an error, results in #N/A.');
 		// Case #10: Reference link, Number. X is a reference to a non-numeric string.
 		oParser = new parserFormula('BESSELI(A106, 2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELI(A106, 2) is parsed.');
@@ -606,7 +612,7 @@ $(function () {
 		// Case #11: Number, Reference link. N is a reference to a boolean value.
 		oParser = new parserFormula('BESSELI(2, A107)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELI(2, A107) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Reference link. N is a reference to a boolean value.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Reference link. N is a reference to a boolean value.');
 		// Case #12: Area, Number. X is a multi-cell range, results in #VALUE!.
 		oParser = new parserFormula('BESSELI(A100:A101, 2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELI(A100:A101, 2) is parsed.');
@@ -626,11 +632,11 @@ $(function () {
 		// Case #16: Area3D, Number. X is a 3D multi-cell range.
 		oParser = new parserFormula('BESSELI(Sheet2!A1:A2, 2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELI(Sheet2!A1:A2, 2) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Area3D, Number. X is a 3D multi-cell range.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Area3D, Number. X is a 3D multi-cell range.');
 		// Case #17: Number, Area3D. N is a 3D multi-cell range.
 		oParser = new parserFormula('BESSELI(2, Sheet2!A1:A2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELI(2, Sheet2!A1:A2) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Area3D. N is a 3D multi-cell range.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Area3D. N is a 3D multi-cell range.');
 		// Case #18: Number, Name3D. N is a 3D named range referring to multiple cells.
 		oParser = new parserFormula('BESSELI(2, TestNameArea3D)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELI(2, TestNameArea3D) is parsed.');
@@ -638,22 +644,21 @@ $(function () {
 		// Case #19: Empty, Number. X is Empty.
 		oParser = new parserFormula('BESSELI(, 2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELI(, 2) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty, Number. X is Empty.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty, Number. X is Empty.');
 		// Case #20: Empty, Empty. Missing both arguments.
 		oParser = new parserFormula('BESSELI(,)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELI(,) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty, Empty. Missing both arguments.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty, Empty. Missing both arguments.');
 		// Case #21: Number, Empty. Missing argument N.
 		oParser = new parserFormula('BESSELI(2,)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELI(2,) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number, Empty. Missing argument N.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number, Empty. Missing argument N.');
 		// Case #22: Ref3D, Number. N is a reference to a negative number, but X is valid.
 		oParser = new parserFormula('BESSELI(2, Sheet2!A3)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELI(2, Sheet2!A3) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Ref3D, Number. N is a reference to a negative number, but X is valid.');
 
 		// Bounded cases:
-
 		// Case #1: Number, Number. Minimum valid value for N (N=0).
 		oParser = new parserFormula('BESSELI(10, 0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELI(10, 0) is parsed.');
@@ -662,33 +667,23 @@ $(function () {
 		oParser = new parserFormula('BESSELI(10, 0.9999)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELI(10, 0.9999) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 2815.716628466255, 'Test: Bounded case: Number, Number. Float value for N that is truncated to the minimum valid value 0.');
-		// Case #3: Number, Number. Maximum value for X (with N=1) that does not result in a #NUM! error.
+		// Case #3: Number, Number. Maximum value for X (with N=1).
 		oParser = new parserFormula('BESSELI(709, 1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELI(709, 1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1.2307e+306, 'Test: Bounded case: Number, Number. Maximum value for X (with N=1) that does not result in a #NUM! error.');
+		assert.strictEqual(oParser.calculate().getValue(), 1.2306788896524705e+306, 'Test: Bounded case: Number, Number. Maximum value for X (with N=1) that does not result in a #NUM! error.');
 		// Case #4: Number, Number. Large negative value for X that is processed without error.
+		oParser = new parserFormula('BESSELI(-709, 1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: Formula BESSELI(-709, 1) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), -1.2306788896524705e+306, 'Test: Bounded case: Number, Number. Large negative value for X that is processed without error.');
+		// Case #5: Number, Number. A combination of large X and large N that does not cause an overflow error.
 		oParser = new parserFormula('BESSELI(-709, 2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELI(-709, 2) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1.2305e+306, 'Test: Bounded case: Number, Number. Large negative value for X that is processed without error.');
-		// Case #5: Number, Number. A combination of large X and large N that does not cause an overflow error.
+		assert.strictEqual(oParser.calculate().getValue(), 1.2280761160397274e+306, 'Test: Bounded case: Number, Number. A combination of large X and large N that does not cause an overflow error.');
+		// Case #6: Number, Number. A combination of large X and large N that does not cause an overflow error.
 		oParser = new parserFormula('BESSELI(10, 244)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELI(10, 244) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 2.7848e-308, 'Test: Bounded case: Number, Number. A combination of large X and large N that does not cause an overflow error.');
+		assert.strictEqual(oParser.calculate().getValue(), 2.7847769865682407e-308, 'Test: Bounded case: Number, Number. A combination of large X and large N that does not cause an overflow error.');
 
-        // Need to fix: diff results in boundary cases, empty handle, error type diff, diff results from ms
-        // Case #6: Boolean, Number. X is a boolean value, results in #VALUE!.
-        // Case #7: Number, Boolean. N is a boolean value, results in #VALUE!.
-        // Case #8: Error, Number. X is a reference to an error, results in #N/A.
-        // Case #9: Number, Error. N is a reference to an error, results in #N/A.
-        // Case #11: Number, Reference link. N is a reference to a boolean value.
-        // Case #16: Area3D, Number. X is a 3D multi-cell range.
-        // Case #17: Number, Area3D. N is a 3D multi-cell range.
-        // Case #19: Empty, Number. X is Empty.
-        // Case #20: Empty, Empty. Missing both arguments.
-        // Case #21: Number, Empty. Missing argument N.
-        // Case #3: Number, Number. Maximum value for X (with N=1) that does not result in a #NUM! error.
-        // Case #4: Number, Number. Large negative value for X that is processed without error.
-        // Case #5: Number, Number. A combination of large X and large N that does not cause an overflow error.
 
 		testArrayFormula2(assert, "BESSELI", 2, 2, true, null);
 	});
@@ -716,7 +711,6 @@ $(function () {
 		ws2.getRange2("A12").setValue("3") // TestName3D1
 
 		// Positive cases:
-
 		// Case #1: Number(2). Example fron documentation.
 		oParser = new parserFormula('BESSELJ(1.9, 2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELJ(1.9, 2) is parsed.');
@@ -859,7 +853,6 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue().toFixed(9) - 0, 0.440050586, 'Test: Positive case: Number, Array. Second argument is array with multiple elements. 2 arguments used.');
 
 		// Negative cases:
-
 		// Case #1: Number(2). N negative number
 		oParser = new parserFormula('BESSELJ(-1.9, -2.4)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELJ(-1.9, -2.4) is parsed.');
@@ -867,11 +860,11 @@ $(function () {
 		// Case #2: Empty, Number. First argument is empty. 2 arguments used.
 		oParser = new parserFormula('BESSELJ(, 1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELJ(, 1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty, Number. First argument is empty. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty, Number. First argument is empty. 2 arguments used.');
 		// Case #3: Number, Empty. Second argument is empty. 2 arguments used.
 		oParser = new parserFormula('BESSELJ(1, )', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELJ(1, ) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number, Empty. Second argument is empty. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number, Empty. Second argument is empty. 2 arguments used.');
 		// Case #4: String, Number. First argument is non-numeric string. 2 arguments used.
 		oParser = new parserFormula('BESSELJ("abc", 1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELJ("abc", 1) is parsed.');
@@ -931,7 +924,7 @@ $(function () {
 		// Case #18: Number(2). Very large negative x value. 2 arguments used.
 		oParser = new parserFormula('BESSELJ(-1E+307, 1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELJ(-1E+307, 1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Number(2). Very large negative x value. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Number(2). Very large negative x value. 2 arguments used.');
 		// Case #19: Number(2). Very large negative n value. 2 arguments used.
 		oParser = new parserFormula('BESSELJ(1, -1E+307)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELJ(1, -1E+307) is parsed.');
@@ -942,7 +935,6 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: String(2). Both arguments are empty strings. 2 arguments used.');
 
 		// Bounded cases:
-
 		// Case #1: Number(2). Minimum positive x value, n=0. 2 arguments used.
 		oParser = new parserFormula('BESSELJ(1E-307, 0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELJ(1E-307, 0) is parsed.');
@@ -955,16 +947,16 @@ $(function () {
 		oParser = new parserFormula('BESSELJ(100000000, 0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELJ(100000000, 0) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue().toFixed(9) - 0, 0.00003206, 'Test: Bounded case: Number(2). Maximum positive x value, n=0. 2 arguments used.');
-		// Case #4: Number(2). x=1, maximum positive n value. 2 arguments used.
+		// Case #4: Number(2), Positive n value. 2 arguments used.
 		oParser = new parserFormula('BESSELJ(10000000, 10000000)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELJ(10000000, 10000000) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0.000038477, 'Test: Bounded case: Number(2). x=1, maximum positive n value. 2 arguments used.');
+		//? assert.strictEqual(oParser.calculate().getValue(), 0.002076217, 'Test: Bounded case: Number(2). x=1, maximum positive n value. 2 arguments used.');
+		// Case #5: Number(2). Big integer values. 2 arguments used.
+		oParser = new parserFormula('BESSELJ(1E+15, 1E+307)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: Formula BESSELJ(1E+15, 1E+307) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Test: Bounded case: Number(2). Big integer values. 2 arguments used.');
 
-        // Need to fix: empty handle, results diff from MS
-        // Case #2: Empty, Number. First argument is empty. 2 arguments used.
-        // Case #3: Number, Empty. Second argument is empty. 2 arguments used.
-        // Case #18: Number(2). Very large negative x value. 2 arguments used.
-        // Case #4: Number(2). x=1, maximum positive n value. 2 arguments used.
+		// todo BESSELJ(10000000, 10000000) diff results from MS, but same as LO
 
 		testArrayFormula2(assert, "BESSELJ", 2, 2, true, null);
 	});
@@ -999,7 +991,6 @@ $(function () {
 		ws2.getRange2("A13").setValue("") // TestName3D2
 
 		// Positive cases:
-
 		// Case #1: Number(2). Example from documentation
 		oParser = new parserFormula('BESSELK(1.5, 1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELK(1.5, 1) is parsed.');
@@ -1082,7 +1073,6 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue().toFixed(8) - 0, 23.14178245, 'Test: Positive case: Number(2). Very small positive x. 2 arguments used.');
 
 		// Negative cases:
-
 		// Case #1: Number(2). X is negative number
 		oParser = new parserFormula('BESSELK(-1.123,2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELK(-1.123,2) is parsed.');
@@ -1118,15 +1108,15 @@ $(function () {
 		// Case #7: Empty(2). Both arguments empty returns #N/A. 2 arguments used.
 		oParser = new parserFormula('BESSELK(,)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELK(,) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty(2). Both arguments empty returns #N/A. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty(2). Both arguments empty returns #N/A. 2 arguments used.');
 		// Case #8: Empty, Number. x empty returns #N/A. 2 arguments used.
 		oParser = new parserFormula('BESSELK(, 1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELK(, 1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty, Number. x empty returns #N/A. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty, Number. x empty returns #N/A. 2 arguments used.');
 		// Case #9: Number, Empty. n empty returns #N/A. 2 arguments used.
 		oParser = new parserFormula('BESSELK(1,)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELK(1,) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number, Empty. n empty returns #N/A. 2 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number, Empty. n empty returns #N/A. 2 arguments used.');
 		// Case #10: Reference link(2). Ref to cell with text for x returns #VALUE!. 2 arguments used.
 		oParser = new parserFormula('BESSELK(A104, A101)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELK(A104, A101) is parsed.');
@@ -1173,7 +1163,6 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Array(2). Array with negative n returns #NUM!. 2 arguments used.');
 
 		// Bounded cases:
-
 		// Case #1: Number(2). Min positive x (double-precision float min). n=0. 2 arguments used.
 		oParser = new parserFormula('BESSELK(2.2250738585072E-307, 0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELK(2.2250738585072E-307, 0) is parsed.');
@@ -1186,11 +1175,10 @@ $(function () {
 		oParser = new parserFormula('BESSELK(1, 0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELK(1, 0) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue().toFixed(6) - 0, 0.421024, 'Test: Bounded case: Number(2). x=1, n=0. 2 arguments used.');
-
-        // Need to fix: empty handle
-        // Case #7: Empty(2). Both arguments empty returns #N/A. 2 arguments used.
-        // Case #8: Empty, Number. x empty returns #N/A. 2 arguments used.
-        // Case #9: Number, Empty. n empty returns #N/A. 2 arguments used.
+		// Case #5: Number(2). Big integers. 2 arguments used.
+		oParser = new parserFormula('BESSELK(1E+100, 1E+20)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: Formula BESSELK(1E+100, 1E+20) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Test: Bounded case: Number(2). Big integers. 2 arguments used.');
 
 		testArrayFormula2(assert, "BESSELK", 2, 2, true, null);
 
@@ -1225,7 +1213,6 @@ $(function () {
 		ws2.getRange2("A17").setValue("2"); // TestNameArea3D
 
 		// Positive cases:
-
 		// Case #1: Number(2). Example from documentation
 		oParser = new parserFormula('BESSELY(2.5, 1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELY(2.5, 1) is parsed.');
@@ -1277,7 +1264,7 @@ $(function () {
 		// Case #12: Number, Area. N is a reference to a single-cell area with a float number.
 		oParser = new parserFormula('BESSELY(6, A104:A104)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELY(6, A104:A104) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue().toFixed(8) - 0, -0.28819469, 'Test: Positive case: Number, Area. N is a reference to a single-cell area with a float number.');
+		assert.strictEqual(oParser.calculate().getValue(), -0.28819469364182315, 'Test: Positive case: Number, Area. N is a reference to a single-cell area with a float number.');
 		// Case #13: Name, Number. X is a reference to a named range (Name).
 		oParser = new parserFormula('BESSELY(TestName, 1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELY(TestName, 1) is parsed.');
@@ -1320,11 +1307,10 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue().toFixed(9) - 0, 0.001619508, 'Test: Positive case: String, String. A date string for X');
 
 		// Negative cases:
-
 		// Case #1: Number, Boolean. Boolean TRUE for the order N.
 		oParser = new parserFormula('BESSELY(5, TRUE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELY(5, TRUE) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Boolean. Boolean TRUE for the order N.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number, Boolean. Boolean TRUE for the order N.');
 		// Case #2: Number(2). N is negative number
 		oParser = new parserFormula('BESSELY(1,-2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELY(1,-2) is parsed.');
@@ -1388,7 +1374,7 @@ $(function () {
 		// Case #17: Area3D, Number. 3D Reference to a multi-cell area.
 		oParser = new parserFormula('BESSELY(Sheet2!A1:A2, 1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELY(Sheet2!A1:A2, 1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Area3D, Number. 3D Reference to a multi-cell area.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Area3D, Number. 3D Reference to a multi-cell area.');
 		// Case #18: Name3D, Number. Name3D referring to a multi-cell area.
 		oParser = new parserFormula('BESSELY(TestNameArea3D, 1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELY(TestNameArea3D, 1) is parsed.');
@@ -1397,9 +1383,17 @@ $(function () {
 		oParser = new parserFormula('BESSELY(-1, 2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELY(-1, 2) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Number, Number. X must be non-negative. A negative X returns #NUM! error.');
+        // Case #20: Number, Empty. Empty arg test.
+        oParser = new parserFormula('BESSELY(10,)', 'A2', ws);
+        assert.ok(oParser.parse(), 'Test: Formula BESSELY(10, ) is parsed.');
+        assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number, Empty. Empty arg test.');
+        // Case #21: Empty, Number. Empty arg test.
+        oParser = new parserFormula('BESSELY(,10)', 'A2', ws);
+        assert.ok(oParser.parse(), 'Test: Formula BESSELY(,10) is parsed.');
+        assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty, Number. Empty arg test.');
 
 		// Bounded cases:
-
+        const MAX_USED_VALUE = 1.5E+08;
 		// Case #1: Number, Number. Minimum valid integer for N is 0.
 		oParser = new parserFormula('BESSELY(1, 0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELY(1, 0) is parsed.');
@@ -1412,15 +1406,23 @@ $(function () {
 		oParser = new parserFormula('BESSELY(9.99E-307, 1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELY(9.99E-307, 1) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), -6.3725702902902906e+305, 'Test: Bounded case: Number, Number. Approaching the minimum positive float number (closest to zero) for X.');
-		// Case #4: Number, Formula. Using a very large integer for the order N.
+		// Case #4: Number, Number. Using a very large integer for the order N.
 		oParser = new parserFormula('BESSELY(1, 2147483647)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula BESSELY(1, 2147483647) is parsed.');
-		//?! assert.strictEqual(oParser.calculate().getValue(), -5.1999e+307, 'Test: Bounded case: Number, Formula. Using a very large integer for the order N.');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Test: Bounded case: Number, Formula. Using a very large integer for the order N.');
+        // Case #5: Number, Number. Using a very large integer for the order N.
+        oParser = new parserFormula('BESSELY(1, '+MAX_USED_VALUE+')', 'A2', ws);
+        assert.ok(oParser.parse(), 'Test: Formula BESSELY(1, '+MAX_USED_VALUE+') is parsed.');
+        assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Test: Bounded case: Number, Formula. Using a very large integer for the order N.');
+        // Case #6: Number, Formula. Using a very large integer for the X.
+        oParser = new parserFormula('BESSELY('+MAX_USED_VALUE+', 1000)', 'A2', ws);
+        assert.ok(oParser.parse(), 'Test: Formula BESSELY(MAX_USED_VALUE, 1000) is parsed.');
+        assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Test: Bounded case: Number, Formula. Using a very large integer for the X.');
+        // Case #7: Number, Formula. Using a very large integer for the both arguments.
+        oParser = new parserFormula('BESSELY('+MAX_USED_VALUE+', '+MAX_USED_VALUE+')', 'A2', ws);
+        assert.ok(oParser.parse(), 'Test: Formula BESSELY(MAX_USED_VALUE, MAX_USED_VALUE) is parsed.');
+        assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Test: Bounded case: Number, Formula. Using a very large integer for the both arguments.');
 
-        // Need to fix: long calculation in boundary test, boolean handle, results diff from MS
-        // Case #1: Number, Boolean. Boolean TRUE for the order N.
-        // Case #17: Area3D, Number. 3D Reference to a multi-cell area.
-        // Case #4: Number, Formula. Using a very large integer for the order N. - long calc
 
 		testArrayFormula2(assert, "BESSELY", 2, 2, true, null);
 

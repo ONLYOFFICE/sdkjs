@@ -85,7 +85,7 @@
         }
 
         oGraphicsWord.AddClipRect(this.contentClipRect.X, this.contentClipRect.Y, this.contentClipRect.W, this.contentClipRect.H);
-        this.content.Draw(0, oGraphicsWord);
+        this.content.Draw(this.content.GetAbsolutePage(), oGraphicsWord);
         oGraphicsWord.RemoveLastClip();
 
         this.DrawBorders(oGraphicsPDF);

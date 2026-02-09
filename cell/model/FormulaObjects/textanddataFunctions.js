@@ -2810,7 +2810,7 @@ function (window, undefined) {
 	cSEARCH.prototype.name = 'SEARCH';
 	cSEARCH.prototype.argumentsMin = 2;
 	cSEARCH.prototype.argumentsMax = 3;
-	cSEARCH.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
+	//cSEARCH.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
 	cSEARCH.prototype.argumentsType = [argType.text, argType.text, argType.number];
 	cSEARCH.prototype.Calculate = function (arg) {
 

@@ -72,6 +72,9 @@
     CPdfDrawingPrototype.prototype.IsEditFieldShape = function() {
         return false;
     };
+	CPdfDrawingPrototype.prototype.GetEditField = function() {
+		return null;
+	};
     CPdfDrawingPrototype.prototype.OnContentChange = function() {
         return this.SetNeedRecalc(true);
     };
@@ -339,7 +342,7 @@
         let oNewPage    = oDoc.GetPageInfo(nPage);
 
         if (oNewPage) {
-            oDoc.RemoveDrawing(this.GetId(), true);
+            oDoc.RemoveDrawing(this.GetId());
             oDoc.AddDrawing(this, nPage);
             this.selectStartPage = nPage;
         }
@@ -576,6 +579,11 @@
 		let oDoc = this.GetDocument();
 		if (!oDoc) {
 			return;
+		}
+
+		let oEditField = this.GetEditField();
+		if (oEditField && !oEditField.IsLocked()) {
+			oDoc.RemoveField(oEditField.GetId());
 		}
 
 		oDoc.RemoveDrawing(this.GetId());

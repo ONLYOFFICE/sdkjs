@@ -728,7 +728,7 @@
                 oDrawing.GraphicObj.draw(oGraphicsWord);
         }
 
-        this.content.Draw(0, oGraphicsWord);
+        this.content.Draw(this.content.GetAbsolutePage(), oGraphicsWord);
         oGraphicsWord.RemoveLastClip();
 
         if (this.IsPressed()) {

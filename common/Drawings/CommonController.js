@@ -781,6 +781,7 @@
 						var sTooltip = "";
 						var oTextHyperlink;
 						var bRedrawFrame = false;
+						let isNoCtrl = false;
 						if (bCheckTextHyperlink) {
 							if (hit_in_text_rect) {
 								oTextHyperlink = fCheckObjectHyperlink(drawing, x, y);
@@ -795,6 +796,17 @@
 										if (!bOldVisitedValue) {
 											bRedrawFrame = true;
 										}
+									}
+								}
+							}
+							else if (drawing.IsAnnot && drawing.IsAnnot() && drawing.IsLink()) {
+								let aActions = drawing.GetActions(AscPDF.PDF_TRIGGERS_TYPES.MouseUp);
+								
+								for (let i = 0; i < aActions.length; i++) {
+									if (aActions[i]["S"] == AscPDF.ACTIONS_TYPES.URI) {
+										sHyperlink = sHyperlink ? sHyperlink + "\r" + aActions[i]["URI"] : aActions[i]["URI"];
+										sTooltip = sTooltip ? sTooltip + "\r" + aActions[i]["URI"] : aActions[i]["URI"];
+										isNoCtrl = true;
 									}
 								}
 							}
@@ -835,7 +847,11 @@
 											}
 										}
 									}
-									editor.sync_HyperlinkClickCallback(sHyperlink);
+									if (Asc.editor.isPdfEditor() && Asc.editor.canEdit() && drawing.IsAnnot() && drawing.IsLink()) {
+										return false;
+									}
+
+									Asc.editor.sync_HyperlinkClickCallback(sHyperlink);
 									return true;
 								}
 							} else {
@@ -859,7 +875,8 @@
 											Text: null,
 											Value: sHyperlink,
 											ToolTip: sTooltip,
-											Class: null
+											Class: null,
+											NoCtrl: isNoCtrl
 										});
 										if (this.isSlideShow()) {
 											ret.cursorType = "pointer";
@@ -2430,6 +2447,7 @@
 					}
 					this.lastSelectedObject = null;
 					this.checkShowMediaControlOnSelect();
+					Asc.editor.addMacroStepData("SelectShape", [this.selectedObjects.filter(function (drawing){return drawing instanceof AscFormat.CShape})]);
 				},
 
 				deselectObject: function (object) {
@@ -3913,6 +3931,9 @@
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {
 							objects_by_type.shapes[i].setPaddings(props.paddings);
 						}
+						if (objects_by_type.shapes.length)
+							Asc.editor.addMacroStepData('SetShapeInnerPadding', {set: props.paddings, original: objects_by_type.shapes[0].getPaddings()});
+
 						for (i = 0; i < objects_by_type.groups.length; ++i) {
 							objects_by_type.groups[i].setPaddings(props.paddings);
 						}
@@ -3944,6 +3965,9 @@
 								aShapes.push(objects_by_type.shapes[i]);
 							}
 						}
+						if (objects_by_type.shapes.length)
+							Asc.editor.addMacroStepData('SetGeometry', props.type);
+
 						for (i = 0; i < objects_by_type.groups.length; ++i) {
 							objects_by_type.groups[i].changePresetGeom(props.type);
 							objects_by_type.groups[i].getAllShapes(objects_by_type.groups[i].spTree, aShapes);
@@ -3958,6 +3982,9 @@
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {
 							objects_by_type.shapes[i].changeLine(props.stroke);
 						}
+						if (objects_by_type.shapes.length)
+							Asc.editor.addMacroStepData('SetDrawingLine', objects_by_type.shapes[0].getCompiledLine());
+
 						for (i = 0; i < objects_by_type.groups.length; ++i) {
 							objects_by_type.groups[i].changeLine(props.stroke);
 						}
@@ -3967,6 +3994,9 @@
 						for (i = 0; i < objects_by_type.images.length; ++i) {
 							objects_by_type.images[i].changeLine(props.stroke);
 						}
+						if (objects_by_type.images.length)
+							Asc.editor.addMacroStepData('SetDrawingLine', objects_by_type.images[0].spPr.ln.createDuplicate(true));
+
 						for (i = 0; i < objects_by_type.smartArts.length; ++i) {
 							objects_by_type.smartArts[i].changeLine(props.stroke);
 						}
@@ -3975,6 +4005,9 @@
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {
 							objects_by_type.shapes[i].changeFill(props.fill);
 						}
+						if (objects_by_type.shapes.length)
+							Asc.editor.addMacroStepData('SetDrawingFill', objects_by_type.shapes[0].getFill().createDuplicate());
+
 						for (i = 0; i < objects_by_type.groups.length; ++i) {
 							objects_by_type.groups[i].changeFill(props.fill);
 						}
@@ -3987,6 +4020,9 @@
 						for (i = 0; i < objects_by_type.images.length; ++i) {
 							objects_by_type.images[i].changeFill(props.fill);
 						}
+
+						if (objects_by_type.images.length)
+							Asc.editor.addMacroStepData('SetDrawingFill', objects_by_type.images[0].getFill().createDuplicate());
 					}
 					if (isRealObject(props.shadow) || props.shadow === null) {
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {
@@ -4243,6 +4279,7 @@
 								oDrawing.callPluginOnResize();
 							}
 						}
+						Asc.editor.addMacroStepData('SetShapeSize', {width: props.Width, height: props.Height});
 						if (editorId === AscCommon.c_oEditorId.Presentation || editorId === AscCommon.c_oEditorId.Spreadsheet) {
 							bCheckConnectors = true;
 							bMoveFlag = false;
@@ -4316,6 +4353,14 @@
 							}
 							oDrawing.checkDrawingBaseCoords();
 							oDrawing.recalculate();
+						}
+						if (bPosition && editorId === AscCommon.c_oEditorId.Presentation)
+						{
+							if (AscFormat.isRealNumber(props.Position.X))
+								Asc.editor.addMacroStepData('SetShapeX', props.Position.X);
+							if (AscFormat.isRealNumber(props.Position.Y))
+								Asc.editor.addMacroStepData('SetShapeY', props.Position.Y);
+
 						}
 						if (editorId === AscCommon.c_oEditorId.Presentation || editorId === AscCommon.c_oEditorId.Spreadsheet) {
 							bCheckConnectors = true;

@@ -42,6 +42,8 @@
 	const FLAG_SHD           = 0x0040;
 	const FLAG_PERM_RANGE    = 0x0080;
 	
+	const DEFAULT_COMMENT_COLOR = new AscCommon.CColor(248, 231, 195, 255);
+	
 	/**
 	 * Class for storing the current draw state of paragraph highlight (text/paragraph/field/etc. background)
 	 * @param {AscWord.ParagraphDrawState} drawState
@@ -57,6 +59,7 @@
 		
 		this.CurPos = new AscWord.CParagraphContentPos();
 		
+		this.DrawShd   = true;
 		this.DrawColl     = false;
 		this.DrawMMFields = false;
 		
@@ -100,6 +103,7 @@
 		this.run       = null;
 		this.highlight = highlight_None;
 		this.shdColor  = null;
+		this.shdAlpha  = 255;
 		this.shd       = null;
 		
 		this.permColor = null;
@@ -112,6 +116,7 @@
 		let logicDocument = paragraph.GetLogicDocument();
 		let commentManager = logicDocument && logicDocument.IsDocumentEditor() ? logicDocument.GetCommentsManager() : null;
 		
+		this.DrawShd            = logicDocument && logicDocument.IsDocumentEditor();
 		this.DrawColl           = !graphics.isPdf();
 		this.DrawSearch         = logicDocument && logicDocument.IsDocumentEditor() && logicDocument.SearchEngine.Selection;
 		this.DrawComments       = commentManager && commentManager.isUse();
@@ -186,6 +191,7 @@
 		this.run       = null;
 		this.highlight = highlight_None;
 		this.shdColor  = null;
+		this.shdAlpha  = 255;
 		this.shd       = null;
 	};
 	ParagraphHighlightDrawState.prototype.endRange = function()
@@ -441,20 +447,30 @@
 		this.run = run;
 		
 		let textPr = run.getCompiledPr();
-		let shd    = textPr.Shd;
-		
-		this.shd = textPr.Shd;
-		this.shdColor = shd && !shd.IsNil() ? shd.GetSimpleColor(this.drawState.getTheme(), this.drawState.getColorMap()) : null;
-		if (!this.shdColor || this.shdColor.IsAuto() || (run.IsMathRun() && run.IsPlaceholder()))
-			this.shdColor = null;
-		
-		this.highlight = textPr.HighLight;
+		let shd = null;
+		if (this.DrawShd)
+		{
+			shd = textPr.Shd;
+		}
 		if (textPr.HighlightColor)
 		{
-			textPr.HighlightColor.check(this.drawState.getTheme(), this.drawState.getColorMap());
-			let RGBA = textPr.HighlightColor.RGBA;
-			this.highlight = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B, RGBA.A);
+			shd = new CDocumentShd();
+			shd.Value = Asc.c_oAscShd.Clear;
+			shd.ThemeFill = AscFormat.CreateUniFillByUniColor(textPr.HighlightColor);
 		}
+		this.shd = shd;
+		this.shdColor = null;
+		this.shdAlpha = 255;
+		if (shd && !shd.IsNil())
+		{
+			this.shdColor = shd.GetSimpleColor(this.drawState.getTheme(), this.drawState.getColorMap());
+			this.shdAlpha = shd.GetAlpha(this.drawState.getTheme(), this.drawState.getColorMap());
+			if (!this.shdColor || this.shdColor.IsAuto() || (run.IsMathRun() && run.IsPlaceholder()))
+				this.shdColor = null;
+		}
+
+
+		this.highlight = textPr.HighLight;
 	};
 	/**
 	 *
@@ -465,7 +481,7 @@
 		let endY   = this.Y1;
 		
 		if ((flags & FLAG_SHD) && this.shdColor)
-			this.Shd.Add(startY, endY, startX, endX, 0, this.shdColor.r, this.shdColor.g, this.shdColor.b, undefined, this.shd);
+			this.Shd.addWithAlpha(startY, endY, startX, endX, 0, this.shdColor.r, this.shdColor.g, this.shdColor.b, this.shdAlpha, this.shd);
 		
 		if (hyperlink)
 			this.HyperCF.Add(startY, endY, startX, endX, 0, 0, 0, 0, {HyperlinkCF : hyperlink});
@@ -474,7 +490,13 @@
 			this.CFields.Add(startY, endY, startX, endX, 0, 0, 0, 0);
 		
 		if (flags & FLAG_COMMENT && comments.length)
-			this.Comm.Add(startY, endY, startX, endX, 0, 0, 0, 0, {Active : curComment, CommentId : comments});
+		{
+			let commentColor = this.getCommentColor(comments[0], curComment);
+			this.Comm.Add(startY, endY, startX, endX, 0, commentColor.r, commentColor.g, commentColor.b, {
+				Active    : curComment,
+				CommentId : comments
+			});
+		}
 		
 		if ((flags & FLAG_HIGHLIGHT) && (this.highlight && highlight_None !== this.highlight))
 			this.High.Add(startY, endY, startX, endX, 0, this.highlight.r, this.highlight.g, this.highlight.b, highlightAdditional, this.highlight);
@@ -609,6 +631,24 @@
 		}
 		
 		return flags;
+	};
+	ParagraphHighlightDrawState.prototype.getCommentColor = function(commentId, isCurrent)
+	{
+		if (!this.Paragraph)
+			return DEFAULT_COMMENT_COLOR;
+		
+		let logicDocument  = this.Paragraph.GetLogicDocument();
+		let commentManager = logicDocument && logicDocument.IsDocumentEditor() ? logicDocument.GetCommentsManager() : null;
+		if (!commentManager)
+			return DEFAULT_COMMENT_COLOR;
+		
+		let comment = commentManager.GetById(commentId);
+		if (!comment)
+			return DEFAULT_COMMENT_COLOR;
+		
+		let userId   = comment.GetUserId();
+		let userName = comment.GetUserName();
+		return AscCommon.getUserColorById(userId, userName, isCurrent ? 0 : -1, false);
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.ParagraphHighlightDrawState = ParagraphHighlightDrawState;

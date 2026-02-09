@@ -430,7 +430,10 @@
 			return new AscFormat.CGraphicBounds(bounds.min_x, bounds.min_y, bounds.max_x, bounds.max_y);
 		}
 		return new AscFormat.CGraphicBounds(0, 0, 0, 0);
-	}
+	};
+	ObjectToDraw.prototype.getGeometry = function () {
+		return this.geometry;
+	};
 
 
 	function RotateTrackShapeImage(originalObject)

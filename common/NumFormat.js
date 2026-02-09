@@ -87,7 +87,22 @@ var gc_nMaxMantissa = Math.pow(10, gc_nMaxDigCount);
 var gc_aTimeFormats = ['[$-F400]h:mm:ss AM/PM', 'h:mm;@', 'h:mm AM/PM;@', 'h:mm:ss;@', 'h:mm:ss AM/PM;@', 'mm:ss.0;@',
 	'[h]:mm:ss;@'];
 var gc_aFractionFormats = ['# ?/?', '# ??/??', '# ???/???', '# ?/2', '# ?/4', '# ?/8', '# ??/16', '# ?/10', '# ??/100'];
+//important for shortcuts
+var gc_oParseDateOverrideFormats = {
+    "d-mmm": 1,
+    "d-mmm-yy": 1,
+    "mmm-yy": 1,
+    "h:mm": 1,
+    "h:mm AM/PM": 1,
+    "h:mm:ss": 1,
+    "h:mm:ss AM/PM": 1,
+    "mm:ss.0": 1,
+    "[h]:mm:ss": 1
+};
 const dBNum1Numbers = ['\u3007','\u4E00','\u4E8C','\u4E09','\u56DB','\u4E94','\u516D','\u4E03','\u516B','\u4E5D'];
+const interfaceFormatScientific = '0.00E+00';
+const interfaceFormatPercent = '0.00%';
+let interfaceShortDateFormat = 'm/d/yyyy';
 
 var NumComporationOperators =
 {
@@ -1939,7 +1954,7 @@ NumFormat.prototype =
         }
     },
     setFormat: function(format, cultureInfo, formatType, useLocaleFormat) {
-		if (null == cultureInfo) {
+        if (null == cultureInfo) {
             cultureInfo = g_oDefaultCultureInfo;
         }
         this.formatString = format;
@@ -3640,29 +3655,231 @@ FormatParser.prototype =
         }
         return val - 0;
     },
-    parse: function (value, cultureInfo)
+    /**
+     * Get cached regex for number parsing
+     * @private
+     */
+    _getNumberRegex: function (cultureInfo) {
+        // Cache key based on culture-specific separators
+        var cacheKey = cultureInfo.NumberGroupSeparator + "|" + 
+                       cultureInfo.NumberDecimalSeparator + "|" + 
+                       cultureInfo.CurrencySymbol;
+        
+        if (!this._numberRegexCache) {
+            this._numberRegexCache = {};
+        }
+        let regex = this._numberRegexCache[cacheKey];
+        if (!regex) {
+            regex = new RegExp(
+                "^(([ \\+\\-%\\$€£¥\\(]|" + escapeRegExp(cultureInfo.CurrencySymbol) + 
+                ")*)((?:\\d+(?:" + escapeRegExp(cultureInfo.NumberGroupSeparator) + 
+                "\\d+)*(?:" + escapeRegExp(cultureInfo.NumberDecimalSeparator) + 
+                "\\d*)?)?(?:\\s*\\d+/\\d+)?)(([ %\\)]|р.|" + 
+                escapeRegExp(cultureInfo.CurrencySymbol) + ")*)$"
+            );
+            this._numberRegexCache[cacheKey] = regex;
+        }
+        return regex;
+    },
+    /**
+     * Check if format should be preserved (not auto-detected from input)
+     * @private
+     */
+    _shouldPreserveFormat: function (currentFormat, stringFormat) {
+        switch (currentFormat) {
+            case Asc.c_oAscNumFormatType.Number:
+            case Asc.c_oAscNumFormatType.Currency:
+            case Asc.c_oAscNumFormatType.Accounting:
+            case Asc.c_oAscNumFormatType.Date:
+            case Asc.c_oAscNumFormatType.Time:
+            case Asc.c_oAscNumFormatType.LongDate:
+                return true;
+            case Asc.c_oAscNumFormatType.Fraction:
+                // Preserve unless it's a "detect" format like "# ?/?"
+                return -1 === stringFormat.indexOf('/?');
+            case Asc.c_oAscNumFormatType.Percent:
+                return stringFormat !== interfaceFormatPercent;
+            case Asc.c_oAscNumFormatType.Scientific:
+                return stringFormat !== interfaceFormatScientific;
+            default:
+                return false;
+        }
+    },
+    /**
+     * Check if format is numeric (for simple fraction "1/2" disambiguation with dates)
+     * @private
+     */
+    _isNumericFormat: function (currentFormat) {
+        switch (currentFormat) {
+			case Asc.c_oAscNumFormatType.Number:
+			case Asc.c_oAscNumFormatType.Currency:
+			case Asc.c_oAscNumFormatType.Accounting:
+			case Asc.c_oAscNumFormatType.Fraction:
+			case Asc.c_oAscNumFormatType.Percent:
+			case Asc.c_oAscNumFormatType.Scientific:
+                return true;
+            default:
+                return false;
+        }
+    },
+    /**
+     * Build currency format string based on pattern
+     * @private
+     */
+    _buildCurrencyFormat: function (sCurrency, sFracFormat, nPattern) {
+        var sNumberFormat = "#" + gc_sFormatThousandSeparator + "##0" + sFracFormat;
+        var sCurrencyFormat = (sCurrency.length > 1) ? "\"" + sCurrency + "\"" : "\\" + sCurrency;
+        var sPositivePattern, sNegativePattern;
+
+        switch (nPattern) {
+            case 0:
+                sPositivePattern = sCurrencyFormat + sNumberFormat + "_)";
+                sNegativePattern = "[Red](" + sCurrencyFormat + sNumberFormat + ")";
+                break;
+            case 1:
+                sPositivePattern = sCurrencyFormat + sNumberFormat;
+                sNegativePattern = "[Red]-" + sCurrencyFormat + sNumberFormat;
+                break;
+            case 2:
+                sPositivePattern = sCurrencyFormat + sNumberFormat;
+                sNegativePattern = "[Red]" + sCurrencyFormat + "-" + sNumberFormat;
+                break;
+            case 3:
+                sPositivePattern = sCurrencyFormat + sNumberFormat + "_-";
+                sNegativePattern = "[Red]" + sCurrencyFormat + sNumberFormat + "-";
+                break;
+            case 4:
+                sPositivePattern = sNumberFormat + sCurrencyFormat + "_)";
+                sNegativePattern = "[Red](" + sNumberFormat + sCurrencyFormat + ")";
+                break;
+            case 5:
+                sPositivePattern = sNumberFormat + sCurrencyFormat;
+                sNegativePattern = "[Red]-" + sNumberFormat + sCurrencyFormat;
+                break;
+            case 6:
+                sPositivePattern = sNumberFormat + "-" + sCurrencyFormat;
+                sNegativePattern = "[Red]" + sNumberFormat + "-" + sCurrencyFormat;
+                break;
+            case 7:
+                sPositivePattern = sNumberFormat + sCurrencyFormat + "_-";
+                sNegativePattern = "[Red]" + sNumberFormat + sCurrencyFormat + "-";
+                break;
+            case 8:
+                sPositivePattern = sNumberFormat + " " + sCurrencyFormat;
+                sNegativePattern = "[Red]-" + sNumberFormat + " " + sCurrencyFormat;
+                break;
+            case 9:
+                sPositivePattern = sCurrencyFormat + " " + sNumberFormat;
+                sNegativePattern = "[Red]-" + sCurrencyFormat + " " + sNumberFormat;
+                break;
+            case 10:
+                sPositivePattern = sNumberFormat + " " + sCurrencyFormat + "_-";
+                sNegativePattern = "[Red]" + sNumberFormat + " " + sCurrencyFormat + "-";
+                break;
+            case 11:
+                sPositivePattern = sCurrencyFormat + " " + sNumberFormat + "_-";
+                sNegativePattern = "[Red]" + sCurrencyFormat + " " + sNumberFormat + "-";
+                break;
+            case 12:
+                sPositivePattern = sCurrencyFormat + " " + sNumberFormat;
+                sNegativePattern = "[Red]" + sCurrencyFormat + " -" + sNumberFormat;
+                break;
+            case 13:
+                sPositivePattern = sNumberFormat + " " + sCurrencyFormat;
+                sNegativePattern = "[Red]" + sNumberFormat + "- " + sCurrencyFormat;
+                break;
+            case 14:
+                sPositivePattern = sCurrencyFormat + " " + sNumberFormat + "_)";
+                sNegativePattern = "[Red](" + sCurrencyFormat + " " + sNumberFormat + ")";
+                break;
+            case 15:
+                sPositivePattern = sNumberFormat + " " + sCurrencyFormat + "_)";
+                sNegativePattern = "[Red](" + sNumberFormat + " " + sCurrencyFormat + ")";
+                break;
+            default:
+                sPositivePattern = sCurrencyFormat + sNumberFormat;
+                sNegativePattern = "[Red]-" + sCurrencyFormat + sNumberFormat;
+        }
+        return sPositivePattern + ";" + sNegativePattern;
+    },
+    parse: function (value, cultureInfo, currentFormat, stringFormat)
     {
+        if (currentFormat === Asc.c_oAscNumFormatType.Text)
+            return null;
         if (null == cultureInfo)
             cultureInfo = g_oDefaultCultureInfo;
+        if (!stringFormat)
+            stringFormat = AscCommon.g_cGeneralFormat;
+
+        // Replace Non-breaking space (0xA0) with White-space (0x20)
+        if (" " == cultureInfo.NumberGroupSeparator)
+            value = value.replace(new RegExp(String.fromCharCode(0xA0), "g"), "");
+
+        var shouldPreserveFormat = this._shouldPreserveFormat(currentFormat, stringFormat);
+		const isDateOverrideFormat = stringFormat in gc_oParseDateOverrideFormats || stringFormat === interfaceShortDateFormat;
+
+        // Regex that matches numbers, mixed fractions ("1 1/2"), and simple fractions ("1/2")
+        // Cached per cultureInfo to avoid recompilation on every call
+        var rx_thouthand = this._getNumberRegex(cultureInfo);
+        var match = value.match(rx_thouthand);
+
+        // Variables for fraction parsing
+        var sVal = null;
+        var sNumerator = null;
+        var sDenominator = null;
+        var sBefore = null;
+        var sAfter = null;
         var res = null;
         var bError = false;
-        //replace Non-breaking space(0xA0) with White-space(0x20)
-        if (" " == cultureInfo.NumberGroupSeparator)
-            value = value.replace(new RegExp(String.fromCharCode(0xA0), "g"));
-        var rx_thouthand = new RegExp("^(([ \\+\\-%\\$€£¥\\(]|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)((\\d+" + escapeRegExp(cultureInfo.NumberGroupSeparator) + "\\d+)*\\d*" + escapeRegExp(cultureInfo.NumberDecimalSeparator) + "?\\d*)(([ %\\)]|р.|" + escapeRegExp(cultureInfo.CurrencySymbol) + ")*)$");
-        var match = value.match(rx_thouthand);
+
         if (null != match) {
-            var sBefore = match[1];
-            var sVal = match[3];
-            var sAfter = match[5];
-			var oChartCount = {};
-			if(null != sBefore)
-			    this._parseStringLetters(sBefore, cultureInfo.CurrencySymbol, true, oChartCount);
-			if(null != sAfter)
-			    this._parseStringLetters(sAfter, cultureInfo.CurrencySymbol, false, oChartCount);
-			var bMinus = false;
-			var bPercent = false;
-			var sCurrency = null;
+            // If the third group has "/" symbol parse it like a fraction
+            if (match[3] && match[3].indexOf('/') !== -1) {
+                // Find fraction at end: must be at start OR after space
+                // This rejects "0.5/2" (no space before 5) but accepts "1 1/2", "1,234 1/2"
+                var fractionMatch = match[3].match(/(?:^|\s)(\d+)\/(\d+)$/);
+                if (!fractionMatch) {
+                    match = null;
+                } else {
+                    sNumerator = fractionMatch[1];
+                    sDenominator = fractionMatch[2];
+                    
+                    // Get part before fraction - let existing locale-aware parsing handle it
+                    var beforeFraction = match[3].substring(0, fractionMatch.index).trim();
+                    
+                    if (beforeFraction === '') {
+                        // Simple fraction like "1/2"
+                        if (!this._isNumericFormat(currentFormat)) {
+                            // Let parseDate handle it (could be date like "1/2" = Jan 2)
+                            match = null;
+                        } else {
+                            sVal = '0';
+                        }
+                    } else {
+                        // Mixed fraction - whole part validated by _parseThouthand (locale-aware)
+                        sVal = beforeFraction;
+                    }
+                }
+            } else {
+                sVal = match[3];
+            }
+        }
+
+        if (null != match) {
+            sBefore = match[1];
+            sAfter = match[4];
+
+            var oChartCount = {};
+            if (null != sBefore)
+                this._parseStringLetters(sBefore, cultureInfo.CurrencySymbol, true, oChartCount);
+            if (null != sAfter)
+                this._parseStringLetters(sAfter, cultureInfo.CurrencySymbol, false, oChartCount);
+            if (sNumerator && sDenominator)
+                this._parseStringLetters('/', cultureInfo.CurrencySymbol, false, oChartCount);
+            var bMinus = false;
+            var bPercent = false;
+            var bFraction = false;
+            var sCurrency = null;
 			var oCurrencyElem = null;
 			var nBracket = 0;
 			for(var sChar in oChartCount){
@@ -3672,12 +3889,6 @@ FormatParser.prototype =
 				else if("+" == sChar){
 					if(elem.all > 1)
 						bError = true;
-				}
-				else if("-" == sChar){
-					if(elem.all > 1)
-						bError = true;
-					else
-						bMinus = true;
 				}
 				else if("-" == sChar){
 					if(elem.all > 1)
@@ -3703,6 +3914,17 @@ FormatParser.prototype =
 					else
 						bError = true;
 				}
+                else if ('/' == sChar) {
+                    if (sVal) {
+                        if (1 == elem.all)
+                            bFraction = true;
+                        else
+                            bError = true;
+                    } else {
+                        // "/" without value - treat as error
+                        bError = true;
+                    }
+                }
 				else{
 					if(null == sCurrency && 1 == elem.all){
 						sCurrency = sChar;
@@ -3747,8 +3969,9 @@ FormatParser.prototype =
 				    bError = true;
 			}
 			if(!bError){
-				var oVal = this._parseThouthand(sVal, cultureInfo);
-				if (oVal) {
+				var oVal = this._parseThouthand(sVal, sNumerator, sDenominator, cultureInfo);
+
+                if (oVal) {
 					res = {format: null, value: null, bDateTime: false, bDate: false, bTime: false, bPercent: false, bCurrency: false};
 					var dVal = oVal.number;
 					if (bMinus)
@@ -3757,101 +3980,47 @@ FormatParser.prototype =
 					if (parseInt(dVal) != dVal)
 						sFracFormat = gc_sFormatDecimalPoint + "00";
 					var sFormat = null;
+					
+					// Percent: always divide by 100, but only change format for non-preserving types
 					if (bPercent) {
 						res.bPercent = true;
 						dVal /= 100;
-						sFormat = "0" + sFracFormat + "%";
+						if (shouldPreserveFormat && !isDateOverrideFormat) {
+							sFormat = stringFormat;
+						} else {
+							sFormat = "0" + sFracFormat + "%";
+						}
 					}
-					else if (sCurrency) {
+                    else if (bFraction) 
+                    {
+                        res.bFraction = true;
+                        sFormat = this._selectFractionFormat(sNumerator, sDenominator, shouldPreserveFormat, isDateOverrideFormat, currentFormat, stringFormat);
+                    }
+					else if (sCurrency && !(shouldPreserveFormat && !isDateOverrideFormat)) {
 						res.bCurrency = true;
-					    var sNumberFormat = "#" + gc_sFormatThousandSeparator + "##0" + sFracFormat;
-					    var sCurrencyFormat;
-					    if(sCurrency.length > 1)
-					        sCurrencyFormat = "\"" + sCurrency + "\"";
-					    else
-					        sCurrencyFormat = "\\" + sCurrency;
-					    var sPositivePattern;
-					    var sNegativePattern;
-					    switch (CurrencyNegativePattern) {
-					        case 0:
-					            sPositivePattern = sCurrencyFormat + sNumberFormat + "_)";
-					            sNegativePattern = "[Red](" + sCurrencyFormat + sNumberFormat + ")";
-					            break;
-					        case 1:
-					            sPositivePattern = sCurrencyFormat + sNumberFormat;
-					            sNegativePattern = "[Red]-" + sCurrencyFormat + sNumberFormat;
-					            break;
-					        case 2:
-					            sPositivePattern = sCurrencyFormat + sNumberFormat;
-					            sNegativePattern = "[Red]" + sCurrencyFormat + "-" + sNumberFormat;
-					            break;
-					        case 3:
-					            sPositivePattern = sCurrencyFormat + sNumberFormat + "_-";
-					            sNegativePattern = "[Red]" + sCurrencyFormat + sNumberFormat + "-";
-					            break;
-					        case 4:
-					            sPositivePattern = sNumberFormat + sCurrencyFormat + "_)";
-					            sNegativePattern = "[Red](" + sNumberFormat + sCurrencyFormat + ")";
-					            break;
-					        case 5:
-					            sPositivePattern = sNumberFormat + sCurrencyFormat;
-					            sNegativePattern = "[Red]-" + sNumberFormat + sCurrencyFormat;
-					            break;
-					        case 6:
-					            sPositivePattern = sNumberFormat + "-" + sCurrencyFormat;
-					            sNegativePattern = "[Red]" + sNumberFormat + "-" + sCurrencyFormat;
-					            break;
-					        case 7:
-					            sPositivePattern = sNumberFormat + sCurrencyFormat + "_-";
-					            sNegativePattern = "[Red]" + sNumberFormat + sCurrencyFormat + "-";
-					            break;
-					        case 8:
-					            sPositivePattern = sNumberFormat + " " + sCurrencyFormat;
-					            sNegativePattern = "[Red]-" + sNumberFormat + " " + sCurrencyFormat;
-					            break;
-					        case 9:
-					            sPositivePattern = sCurrencyFormat + " " + sNumberFormat;
-					            sNegativePattern = "[Red]-" + sCurrencyFormat + " " + sNumberFormat;
-					            break;
-					        case 10:
-					            sPositivePattern = sNumberFormat + " " + sCurrencyFormat + "_-";
-					            sNegativePattern = "[Red]" + sNumberFormat + " " + sCurrencyFormat + "-";
-					            break;
-					        case 11:
-					            sPositivePattern = sCurrencyFormat + " " + sNumberFormat + "_-";
-					            sNegativePattern = "[Red]" + sCurrencyFormat + " " + sNumberFormat + "-";
-					            break;
-					        case 12:
-					            sPositivePattern = sCurrencyFormat + " " + sNumberFormat;
-					            sNegativePattern = "[Red]" + sCurrencyFormat + " -" + sNumberFormat;
-					            break;
-					        case 13:
-					            sPositivePattern = sNumberFormat + " " + sCurrencyFormat;
-					            sNegativePattern = "[Red]" + sNumberFormat + "- " + sCurrencyFormat;
-					            break;
-					        case 14:
-					            sPositivePattern = sCurrencyFormat + " " + sNumberFormat + "_)";
-					            sNegativePattern = "[Red](" + sCurrencyFormat + " " + sNumberFormat + ")";
-					            break;
-					        case 15:
-					            sPositivePattern = sNumberFormat + " " + sCurrencyFormat + "_)";
-					            sNegativePattern = "[Red](" + sNumberFormat + " " + sCurrencyFormat + ")";
-					            break;
-					    }
-					    sFormat = sPositivePattern + ";" + sNegativePattern;
+						sFormat = this._buildCurrencyFormat(sCurrency, sFracFormat, CurrencyNegativePattern);
 					}
-					else if (oVal.thouthand) {
+					else if (oVal.thouthand && (currentFormat === undefined || currentFormat == Asc.c_oAscNumFormatType.General)) {
+						// Only apply thousand-separator format for General format type (or when no format specified)
 						sFormat = "#" + gc_sFormatThousandSeparator + "##0" + sFracFormat;
 					}
 					else
-						sFormat = AscCommon.g_cGeneralFormat;
+						sFormat = stringFormat;
 					res.format = sFormat;
 					res.value = dVal;
+                    if (!sFormat) 
+                        res = null;
 				}
 			}
         }
-        if (null == res && !bError)
-            res = this.parseDate(value, cultureInfo);
+        // Handle special cases after main parsing
+        if (res == null && value[0] == ' ') {
+            return null;
+        }
+        if (res == null && !bError) {
+            res = this.parseDate(value, cultureInfo, shouldPreserveFormat, isDateOverrideFormat, currentFormat, stringFormat);
+        }
+
         return res;
     },
     _parseStringLetters: function (sVal, currencySymbol, bBefore, oRes) {
@@ -3878,21 +4047,56 @@ FormatParser.prototype =
                 elem.all += nCount;
             }
         }
-		for(var i = 0, length = sVal.length; i < length; i++){
-			var sChar = sVal[i];
-			var elem = oRes[sChar];
-			if(!elem){
-				elem = {before: 0, after: 0, all: 0};
-				oRes[sChar] = elem;
-			}
-			if(bBefore)
-				elem.before++;
-			else
-				elem.after++;
-			elem.all++;
-		}
-	},
-    _parseThouthand: function (val, cultureInfo)
+        for (var i = 0, length = sVal.length; i < length; i++) {
+            var sChar = sVal[i];
+            var elem = oRes[sChar];
+            if (!elem) {
+                elem = {before: 0, after: 0, all: 0};
+                oRes[sChar] = elem;
+            }
+            if (bBefore)
+                elem.before++;
+            else
+                elem.after++;
+            elem.all++;
+        }
+    },
+    /**
+     * Select appropriate fraction format based on numerator/denominator lengths and current format
+     * @param {string} sNumerator - numerator string
+     * @param {string} sDenominator - denominator string
+	 * @param {boolean} shouldPreserveFormat - true if format should be preserved
+	 * @param {boolean} isDateOverrideFormat - true if format is a date override format
+     * @param {number} currentFormat - current cell format type
+	 * @param {string} stringFormat - current format string
+     * @returns {string|null} - fraction format string or null
+     */
+    _selectFractionFormat: function (sNumerator, sDenominator, shouldPreserveFormat, isDateOverrideFormat, currentFormat, stringFormat) {
+        var numLength = sNumerator.length;
+        var denomLength = sDenominator.length;
+        var maxLength = Math.max(numLength, denomLength);
+        if ((shouldPreserveFormat && !isDateOverrideFormat) || currentFormat == Asc.c_oAscNumFormatType.Fraction) {
+            return stringFormat;
+        }
+        
+        // Limit to 3 digits max - larger fractions return null (will be treated as text)
+        if (numLength > 3 || denomLength > 3) {
+            return null;
+        }
+        
+        // Simple rule: single digit denominators use "# ?/?", otherwise "# ??/??"
+        // Exception: when current format is already fraction-like, prefer simpler format
+        if (maxLength <= 1) {
+            return "# ?/?";
+        } else if (denomLength <= 1) {
+            // Denominator is single digit - use simpler format
+            return "# ?/?";
+        } else {
+            // Multi-digit denominator - use double-digit format
+            return "# ??/??";
+        }
+    },
+    _parseThouthand: function (val, sNumerator, sDenominator, cultureInfo)
     {
         var oRes = null;
         var bThouthand = false;
@@ -3927,7 +4131,16 @@ FormatParser.prototype =
             }
 			if (g_oFormatParser.isLocaleNumber(val, cultureInfo)) {
 				var dNumber = g_oFormatParser.parseLocaleNumber(val, cultureInfo);
-				oRes = { number: dNumber, thouthand: bThouthand };
+                if(sNumerator && sDenominator) {
+                    // Mixed fractions must have integer whole part (e.g., "0.5 1/2" is invalid)
+                    if (Number.isInteger(dNumber)) {
+                        oRes = { number: dNumber + (sNumerator / sDenominator), thouthand: bThouthand };
+                    }
+                    // else oRes stays null - invalid mixed fraction
+                }
+				else {
+                    oRes = { number: dNumber, thouthand: bThouthand };
+                }
 			}
         }
 		return oRes;
@@ -4002,7 +4215,7 @@ FormatParser.prototype =
                                 prev.date = true;
                         }
                         if (i + 1 < length) {
-                            let next = match[i + 1]
+                            let next = match[i + 1];
                             // processing the option when the date is given as the format "October 11, 2008"
                             if (i === 0 && i + 2 < length) {
                                 let afterNext = match[i + 2];
@@ -4385,7 +4598,7 @@ FormatParser.prototype =
         }
         return length === 0 ? false: bRes;
     },
-	parseDate: function (value, cultureInfo)
+	parseDate: function (value, cultureInfo, shouldPreserveFormat, isDateOverrideFormat, currentFormat, stringFormat)
 	{
 		//todo "11: AM" should fail
 		var res = null;
@@ -4613,7 +4826,15 @@ FormatParser.prototype =
 					if(dValue >= 0)
 					{
 						var sFormat = "";
-						if (bDate) {
+
+						const needOverrideFormat = isDateOverrideFormat &&
+							((currentFormat === Asc.c_oAscNumFormatType.Date && !bDate) ||
+							 (currentFormat === Asc.c_oAscNumFormatType.LongDate && bTime) ||
+							 (currentFormat === Asc.c_oAscNumFormatType.Time && bDate));
+                        // Check if current format should be preserved (not converted to date)
+                        if (shouldPreserveFormat && !needOverrideFormat) {
+                            sFormat = stringFormat;
+                        } else if (bDate) {
 							if (bTime && nHour > 23) {
 								sFormat = AscCommon.g_cGeneralFormat;
 							} else {
@@ -4643,6 +4864,8 @@ FormatParser.prototype =
 	},
 	parseDatePDF: function (value, cultureInfo, oFormat)
 	{
+		if (null == cultureInfo)
+			cultureInfo = g_oDefaultCultureInfo;
 		let res = null;
 		let match = [];
 		let sCurValue = null;
@@ -4941,6 +5164,7 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 		if (LCID !== g_oLCID) {
 			g_oLCID = LCID;
 			AscCommon.g_oDefaultCultureInfo = g_oDefaultCultureInfo = JSON.parse(JSON.stringify(cultureInfoNew)); // ToDo clone
+			interfaceShortDateFormat = getShortDateFormat(g_oDefaultCultureInfo);	
 			res = true;
 		}
 		ParseLocalFormatSymbol(g_oDefaultCultureInfo.Name);
@@ -5540,10 +5764,10 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 			} else {
 				res.push(AscCommon.g_cGeneralFormat);
 				res.push('0.00');
-				res.push('0.00E+00');
+				res.push(interfaceFormatScientific);
 				res.push(getCurrencyFormat(cultureInfo, 2, hasCurrency, true, currencySymbol));
 				res.push(getCurrencyFormatSimple2(cultureInfo, 2, hasCurrency, currencySymbol, false));
-				res.push(getShortDateFormat(cultureInfo));
+				res.push(interfaceShortDateFormat);
 				res.push('[$-F800]' + cultureInfo.LongDatePattern);
 				//todo F400
 				if (AscCommon.is12HourTimeFormat(cultureInfo)) {
@@ -5551,7 +5775,7 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 				} else {
 					res.push('[$-F400]h:mm:ss');
 				}
-				res.push('0.00%');
+				res.push(interfaceFormatPercent);
 				res.push('# ?/?');
 				res.push('@');
 			}
@@ -5809,6 +6033,7 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 	}
 
 	//Excel uses DateSeparator with 2 letters only in date patterns
+	//todo fi-FI locale use a dot as a time separator, but Excel still wouldn’t display or recognize it
 var g_aCultureInfos = {
 	1: {LCID: 1, Name: "ar", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "ر.س.‏", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], AbbreviatedDayNames: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], MonthNames: ["محرم", "صفر", "ربيع الأول", "ربيع الثاني", "جمادى الأولى", "جمادى الثانية", "رجب", "شعبان", "رمضان", "شوال", "ذو القعدة", "ذو الحجة", ""], AbbreviatedMonthNames: ["محرم", "صفر", "ربيع الأول", "ربيع الثاني", "جمادى الأولى", "جمادى الثانية", "رجب", "شعبان", "رمضان", "شوال", "ذو القعدة", "ذو الحجة", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ص", PMDesignator: "م", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "134", LongDatePattern: "dd/mmmm/yyyy"},
 	4: {LCID: 4, Name: "zh-Hans", CurrencyPositivePattern: 0, CurrencyNegativePattern: 2, CurrencySymbol: "¥", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"], AbbreviatedDayNames: ["周日", "周一", "周二", "周三", "周四", "周五", "周六"], MonthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月", ""], AbbreviatedMonthNames: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "上午", PMDesignator: "下午", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "520", LongDatePattern: "yyyy\"年\"m\"月\"d\"日\""},
@@ -5818,7 +6043,7 @@ var g_aCultureInfos = {
 	8: {LCID: 8, Name: "el", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Κυριακή", "Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο"], AbbreviatedDayNames: ["Κυρ", "Δευ", "Τρι", "Τετ", "Πεμ", "Παρ", "Σαβ"], MonthNames: ["Ιανουάριος", "Φεβρουάριος", "Μάρτιος", "Απρίλιος", "Μάιος", "Ιούνιος", "Ιούλιος", "Αύγουστος", "Σεπτέμβριος", "Οκτώβριος", "Νοέμβριος", "Δεκέμβριος", ""], AbbreviatedMonthNames: ["Ιαν", "Φεβ", "Μαρ", "Απρ", "Μαϊ", "Ιουν", "Ιουλ", "Αυγ", "Σεπ", "Οκτ", "Νοε", "Δεκ", ""], MonthGenitiveNames: ["Ιανουαρίου", "Φεβρουαρίου", "Μαρτίου", "Απριλίου", "Μαΐου", "Ιουνίου", "Ιουλίου", "Αυγούστου", "Σεπτεμβρίου", "Οκτωβρίου", "Νοεμβρίου", "Δεκεμβρίου", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "πμ", PMDesignator: "μμ", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\,\\ d\\ mmmm\\ yyyy"},
 	9: {LCID: 9, Name: "en", CurrencyPositivePattern: 0, CurrencyNegativePattern: 0, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "205", LongDatePattern: "dddd\\,\\ mmmm\\ d\\,\\ yyyy"},
 	10: {LCID: 10, Name: "es", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], AbbreviatedDayNames: ["do.", "lu.", "ma.", "mi.", "ju.", "vi.", "sá."], MonthNames: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre", ""], AbbreviatedMonthNames: ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ d\" de \"mmmm\" de \"yyyy"},
-	11: {LCID: 11, Name: "fi", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["sunnuntai", "maanantai", "tiistai", "keskiviikko", "torstai", "perjantai", "lauantai"], AbbreviatedDayNames: ["su", "ma", "ti", "ke", "to", "pe", "la"], MonthNames: ["tammikuu", "helmikuu", "maaliskuu", "huhtikuu", "toukokuu", "kesäkuu", "heinäkuu", "elokuu", "syyskuu", "lokakuu", "marraskuu", "joulukuu", ""], AbbreviatedMonthNames: ["tammi", "helmi", "maalis", "huhti", "touko", "kesä", "heinä", "elo", "syys", "loka", "marras", "joulu", ""], MonthGenitiveNames: ["tammikuuta", "helmikuuta", "maaliskuuta", "huhtikuuta", "toukokuuta", "kesäkuuta", "heinäkuuta", "elokuuta", "syyskuuta", "lokakuuta", "marraskuuta", "joulukuuta", ""], AbbreviatedMonthGenitiveNames: ["tammik.", "helmik.", "maalisk.", "huhtik.", "toukok.", "kesäk.", "heinäk.", "elok.", "syysk.", "lokak.", "marrask.", "jouluk.", ""], AMDesignator: "ap.", PMDesignator: "ip.", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ".", ShortDatePattern: "025", LongDatePattern: "dddd\\ d\\.\\ mmmm\\ yyyy"},
+	11: {LCID: 11, Name: "fi", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["sunnuntai", "maanantai", "tiistai", "keskiviikko", "torstai", "perjantai", "lauantai"], AbbreviatedDayNames: ["su", "ma", "ti", "ke", "to", "pe", "la"], MonthNames: ["tammikuu", "helmikuu", "maaliskuu", "huhtikuu", "toukokuu", "kesäkuu", "heinäkuu", "elokuu", "syyskuu", "lokakuu", "marraskuu", "joulukuu", ""], AbbreviatedMonthNames: ["tammi", "helmi", "maalis", "huhti", "touko", "kesä", "heinä", "elo", "syys", "loka", "marras", "joulu", ""], MonthGenitiveNames: ["tammikuuta", "helmikuuta", "maaliskuuta", "huhtikuuta", "toukokuuta", "kesäkuuta", "heinäkuuta", "elokuuta", "syyskuuta", "lokakuuta", "marraskuuta", "joulukuuta", ""], AbbreviatedMonthGenitiveNames: ["tammik.", "helmik.", "maalisk.", "huhtik.", "toukok.", "kesäk.", "heinäk.", "elok.", "syysk.", "lokak.", "marrask.", "jouluk.", ""], AMDesignator: "ap.", PMDesignator: "ip.", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\ d\\.\\ mmmm\\ yyyy"},
 	12: {LCID: 12, Name: "fr", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\ d\\ mmmm\\ yyyy"},
 	14: {LCID: 14, Name: "hu", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "Ft", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["vasárnap", "hétfő", "kedd", "szerda", "csütörtök", "péntek", "szombat"], AbbreviatedDayNames: ["V", "H", "K", "Sze", "Cs", "P", "Szo"], MonthNames: ["január", "február", "március", "április", "május", "június", "július", "augusztus", "szeptember", "október", "november", "december", ""], AbbreviatedMonthNames: ["jan.", "febr.", "márc.", "ápr.", "máj.", "jún.", "júl.", "aug.", "szept.", "okt.", "nov.", "dec.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "de.", PMDesignator: "du.", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "531", LongDatePattern: "yyyy\\.\\ mmmm\\ d\\.\\,\\ dddd"},
 	16: {LCID: 16, Name: "it", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"], AbbreviatedDayNames: ["dom", "lun", "mar", "mer", "gio", "ven", "sab"], MonthNames: ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre", ""], AbbreviatedMonthNames: ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\ d\\ mmmm\\ yyyy"},
@@ -5846,7 +6071,7 @@ var g_aCultureInfos = {
 	1031: {LCID: 1031, Name: "de-DE", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"], AbbreviatedDayNames: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"], MonthNames: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mrz", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ d\\.\\ mmmm\\ yyyy"},
 	1032: {LCID: 1032, Name: "el-GR", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Κυριακή", "Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο"], AbbreviatedDayNames: ["Κυρ", "Δευ", "Τρι", "Τετ", "Πεμ", "Παρ", "Σαβ"], MonthNames: ["Ιανουάριος", "Φεβρουάριος", "Μάρτιος", "Απρίλιος", "Μάιος", "Ιούνιος", "Ιούλιος", "Αύγουστος", "Σεπτέμβριος", "Οκτώβριος", "Νοέμβριος", "Δεκέμβριος", ""], AbbreviatedMonthNames: ["Ιαν", "Φεβ", "Μαρ", "Απρ", "Μαϊ", "Ιουν", "Ιουλ", "Αυγ", "Σεπ", "Οκτ", "Νοε", "Δεκ", ""], MonthGenitiveNames: ["Ιανουαρίου", "Φεβρουαρίου", "Μαρτίου", "Απριλίου", "Μαΐου", "Ιουνίου", "Ιουλίου", "Αυγούστου", "Σεπτεμβρίου", "Οκτωβρίου", "Νοεμβρίου", "Δεκεμβρίου", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "πμ", PMDesignator: "μμ", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\,\\ d\\ mmmm\\ yyyy"},
 	1033: {LCID: 1033, Name: "en-US", CurrencyPositivePattern: 0, CurrencyNegativePattern: 0, CurrencySymbol: "$", NumberDecimalSeparator: ".", NumberGroupSeparator: ",", NumberGroupSizes: [3], DayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], AbbreviatedDayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MonthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 1, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "205", LongDatePattern: "dddd\\,\\ mmmm\\ d\\,\\ yyyy"},
-	1035: {LCID: 1035, Name: "fi-FI", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["sunnuntai", "maanantai", "tiistai", "keskiviikko", "torstai", "perjantai", "lauantai"], AbbreviatedDayNames: ["su", "ma", "ti", "ke", "to", "pe", "la"], MonthNames: ["tammikuu", "helmikuu", "maaliskuu", "huhtikuu", "toukokuu", "kesäkuu", "heinäkuu", "elokuu", "syyskuu", "lokakuu", "marraskuu", "joulukuu", ""], AbbreviatedMonthNames: ["tammi", "helmi", "maalis", "huhti", "touko", "kesä", "heinä", "elo", "syys", "loka", "marras", "joulu", ""], MonthGenitiveNames: ["tammikuuta", "helmikuuta", "maaliskuuta", "huhtikuuta", "toukokuuta", "kesäkuuta", "heinäkuuta", "elokuuta", "syyskuuta", "lokakuuta", "marraskuuta", "joulukuuta", ""], AbbreviatedMonthGenitiveNames: ["tammik.", "helmik.", "maalisk.", "huhtik.", "toukok.", "kesäk.", "heinäk.", "elok.", "syysk.", "lokak.", "marrask.", "jouluk.", ""], AMDesignator: "ap.", PMDesignator: "ip.", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ".", ShortDatePattern: "025", LongDatePattern: "dddd\\ d\\.\\ mmmm\\ yyyy"},
+	1035: {LCID: 1035, Name: "fi-FI", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["sunnuntai", "maanantai", "tiistai", "keskiviikko", "torstai", "perjantai", "lauantai"], AbbreviatedDayNames: ["su", "ma", "ti", "ke", "to", "pe", "la"], MonthNames: ["tammikuu", "helmikuu", "maaliskuu", "huhtikuu", "toukokuu", "kesäkuu", "heinäkuu", "elokuu", "syyskuu", "lokakuu", "marraskuu", "joulukuu", ""], AbbreviatedMonthNames: ["tammi", "helmi", "maalis", "huhti", "touko", "kesä", "heinä", "elo", "syys", "loka", "marras", "joulu", ""], MonthGenitiveNames: ["tammikuuta", "helmikuuta", "maaliskuuta", "huhtikuuta", "toukokuuta", "kesäkuuta", "heinäkuuta", "elokuuta", "syyskuuta", "lokakuuta", "marraskuuta", "joulukuuta", ""], AbbreviatedMonthGenitiveNames: ["tammik.", "helmik.", "maalisk.", "huhtik.", "toukok.", "kesäk.", "heinäk.", "elok.", "syysk.", "lokak.", "marrask.", "jouluk.", ""], AMDesignator: "ap.", PMDesignator: "ip.", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\ d\\.\\ mmmm\\ yyyy"},
 	1036: {LCID: 1036, Name: "fr-FR", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"], AbbreviatedDayNames: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], MonthNames: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre", ""], AbbreviatedMonthNames: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\ d\\ mmmm\\ yyyy"},
 	1038: {LCID: 1038, Name: "hu-HU", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "Ft", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["vasárnap", "hétfő", "kedd", "szerda", "csütörtök", "péntek", "szombat"], AbbreviatedDayNames: ["V", "H", "K", "Sze", "Cs", "P", "Szo"], MonthNames: ["január", "február", "március", "április", "május", "június", "július", "augusztus", "szeptember", "október", "november", "december", ""], AbbreviatedMonthNames: ["jan.", "febr.", "márc.", "ápr.", "máj.", "jún.", "júl.", "aug.", "szept.", "okt.", "nov.", "dec.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "de.", PMDesignator: "du.", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "531", LongDatePattern: "yyyy\\.\\ mmmm\\ d\\.\\,\\ dddd"},
 	1040: {LCID: 1040, Name: "it-IT", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"], AbbreviatedDayNames: ["dom", "lun", "mar", "mer", "gio", "ven", "sab"], MonthNames: ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre", ""], AbbreviatedMonthNames: ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\ d\\ mmmm\\ yyyy"},
@@ -5984,33 +6209,33 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 
 	let c_oAscDateFormatExcel = {
 		"1025": [
-			"[$-1170000]B2dd/mm/yyyy;@",
-			"[$-1170000]B2dd/mm/yy;@",
-			"[$-1170000]B2yyyy-mm-dd;@",
-			"[$-2170000]B2dd/mm/yyyy;@",
-			"[$-2170000]B2dd/mm/yy;@",
-			"[$-2170000]B2yyyy-mm-dd;@",
-			"[$-1170401]B2dd mmmm, yyyy;@",
-			"[$-1170401]B2dddd, dd mmmm, yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-1010000]d/m/yyyy;@",
+			"[$-1010000]yyyy/mm/dd;@",
+			"[$-1010401]d/m/yyyy\\ h:mm\\ AM/PM;@",
+			"[$-1010409]d/m/yyyy\\ h:mm\\ AM/PM;@",
+			"[$-2010000]d/mm/yyyy;@",
+			"[$-2010000]yyyy/mm/dd;@",
+			"[$-2010401]d/mm/yyyy\\ h:mm\\ AM/PM;@"
 		],
 		"1026": [
-			"dd.m.yyyy \"г.\";@",
-			"d.m.yyyy \"г.\";@",
-			"dd.mm.yyyy \"г.\";@",
-			"yyyy-mm-dd;@",
-			"[$-402]dd mmmm yyyy \"г.\";@",
-			"[$-402]dddd, dd mmmm yyyy \"г.\";@"
+			"dd\\.m\\.yyyy\\ \"г.\";@",
+			"d\\.m\\.yyyy\\ \"г.\";@",
+			"dd\\.mm\\.yyyy\\ \"г.\";@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-402]dd\\ mmmm\\ yyyy\\ \"г.\";@",
+			"[$-402]dddd\\,\\ dd\\ mmmm\\ yyyy\\ \"г.\";@"
 		],
 		"1027": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
-			"yyyy-mm-dd;@",
-			"[$-403]dddd, d mmmm\" de \"yyyy;@",
-			"[$-403]d mmmm\" de \"yyyy;@",
-			"[$-403]mmmm\" de \"yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-403]dddd\\,\\ d\" de \"mmmm\" de \"yyyy;@",
+			"[$-403]d\" de \"mmmm\" de \"yyyy;@",
+			"[$-403]d\" \"mmmm\" \"yyyy;@"
 		],
 		"1028": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"yyyy\"年\"m\"月\"d\"日\";@",
 			"m\"月\"d\"日\";@",
 			"[DBNum1][$-404]yyyy\"年\"m\"月\"d\"日\";@",
@@ -6018,228 +6243,209 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 			"[$-404]aaaa;@",
 			"[$-404]aaa;@",
 			"yyyy/m/d;@",
-			"yyyy/m/d h:mm;@",
-			"[$-409]yyyy/m/d h:mm AM/PM;@",
+			"yyyy/m/d\\ h:mm;@",
+			"[$-409]yyyy/m/d\\ h:mm\\ AM/PM;@",
 			"m/d;@",
 			"m/d/yy;@",
 			"mm/dd/yy;@",
-			"[$-409]d-mmm;@",
-			"[$-409]d-mmm-yy;@",
+			"[$-409]d\\-mmm;@",
+			"[$-409]d\\-mmm\\-yy;@",
 			"[$-409]mmmmm;@",
-			"[$-409]mmmmm-yy;@"
+			"[$-409]mmmmm\\-yy;@"
 		],
 		"1029": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"d/m;@",
 			"d/m/yy;@",
 			"dd/mm/yy;@",
-			"[$-405]d-mmm.;@",
+			"[$-405]d\\-mmm\\.;@",
 			"[$-405]d/mmm/yy;@",
-			"[$-405]dd-mmm-yy;@",
-			"[$-405]mmm-yy;@",
-			"[$-405]mmmm yy;@",
-			"[$-405]d. mmmm yyyy;@",
-			"[$-409]d/m/yy h:mm AM/PM;@",
-			"d/m/yy h:mm;@",
+			"[$-405]dd\\-mmm\\-yy;@",
+			"[$-405]mmm\\-yy;@",
+			"[$-405]mmmm\\ yy;@",
+			"[$-405]d\\.\\ mmmm\\ yyyy;@",
+			"[$-409]d/m/yy\\ h:mm\\ AM/PM;@",
+			"d/m/yy\\ h:mm;@",
 			"[$-405]mmmmm;@",
-			"[$-405]mmmmm-yy;@",
+			"[$-405]mmmmm\\-yy;@",
 			"d/m/yyyy;@",
-			"[$-405]d-mmm-yyyy;@"
+			"[$-405]d\\-mmm\\-yyyy;@"
 		],
 		"1030": [
-			"dd-mm-yy;@",
-			"[$-406]d. mmmm yyyy;@",
-			"yyyy-mm-dd;@",
-			"yyyy.mm.dd;@",
-			"yy-mm-dd;@",
-			"[$-406]mmmm yyyy;@",
-			"d.m.yy;@",
-			"d/m yyyy;@",
-			"dd-mm-yy hh:mm;@",
-			"dd-mm-yy hh:mm:ss;@",
-			"yyyy-mm-dd hh:mm;@",
-			"[$-406]mmmm yy;@",
-			"dd.mm.yyyy;@",
-			"d.m.yyyy;@",
-			"dd.mm.yy;@",
-			"dd/mm yyyy;@",
-			"dd/mm yy;@",
-			"d/m yy;@",
+			"dd\\-mm\\-yy;@",
+			"[$-406]d\\.\\ mmmm\\ yyyy;@",
+			"yyyy\\-mm\\-dd;@",
+			"yyyy\\.mm\\.dd;@",
+			"yy\\-mm\\-dd;@",
+			"[$-406]mmmm\\ yyyy;@",
+			"d\\.m\\.yy;@",
+			"d/m\\ yyyy;@",
+			"dd\\-mm\\-yy\\ hh:mm;@",
+			"dd\\-mm\\-yy\\ hh:mm:ss;@",
+			"yyyy\\-mm\\-dd\\ hh:mm;@",
+			"[$-406]mmmm\\ yy;@",
+			"dd\\.mm\\.yyyy;@",
+			"d\\.m\\.yyyy;@",
+			"dd\\.mm\\.yy;@",
+			"dd/mm\\ yyyy;@",
+			"dd/mm\\ yy;@",
+			"d/m\\ yy;@",
 			"[$-406]mmmmm;@",
-			"[$-406]mmmmm-yy;@"
+			"[$-406]mmmmm\\-yy;@"
 		],
 		"1031": [
-			"yyyy-mm-dd;@",
-			"d.m;@",
-			"d.m.yy;@",
-			"dd.mm.yy;@",
-			"[$-407]d. mmm.;@",
-			"[$-407]d. mmm. yy;@",
-			"[$-407]d. mmm yy;@",
-			"[$-407]mmm. yy;@",
-			"[$-407]mmmm yy;@",
-			"[$-407]d. mmmm yyyy;@",
-			"[$-409]d/m/yy h:mm AM/PM;@",
-			"d.m.yy h:mm;@",
+			"yyyy\\-mm\\-dd;@",
+			"d\\.m;@",
+			"d\\.m\\.yy;@",
+			"dd\\.mm\\.yy;@",
+			"[$-407]d\\.\\ mmm\\.;@",
+			"[$-407]d\\.\\ mmm\\.\\ yy;@",
+			"[$-407]d\\.\\ mmm\\ yy;@",
+			"[$-407]mmm\\.\\ yy;@",
+			"[$-407]mmmm\\ yy;@",
+			"[$-407]d\\.\\ mmmm\\ yyyy;@",
+			"[$-409]d/m/yy\\ h:mm\\ AM/PM;@",
+			"d\\.m\\.yy\\ h:mm;@",
 			"[$-407]mmmmm;@",
-			"[$-407]mmmmm yy;@",
-			"d.m.yyyy;@",
-			"[$-407]d. mmm. yyyy;@"
+			"[$-407]mmmmm\\ yy;@",
+			"d\\.m\\.yyyy;@",
+			"[$-407]d\\.\\ mmm\\.\\ yyyy;@"
 		],
 		"1032": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"d/m;@",
 			"d/m/yy;@",
 			"dd/mm/yy;@",
 			"d/m/yyyy;@",
-			"[$-408]d-mmm;@",
-			"[$-408]d-mmm-yy;@",
-			"[$-408]dd-mmm-yy;@",
-			"[$-408]mmm-yy;@",
-			"[$-408]d mmmm yyyy;@",
-			"[$-408]d/m/yy h:mm AM/PM;@",
-			"d/m/yy h:mm;@",
+			"[$-408]d\\-mmm;@",
+			"[$-408]d\\-mmm\\-yy;@",
+			"[$-408]dd\\-mmm\\-yy;@",
+			"[$-408]mmm\\-yy;@",
+			"[$-408]d\\ mmmm\\ yyyy;@",
+			"[$-408]d/m/yy\\ h:mm\\ AM/PM;@",
+			"d/m/yy\\ h:mm;@",
 			"[$-408]mmmmm;@",
-			"[$-408]mmmmm-yy;@",
-			"[$-408]d-mmm-yyyy;@"
+			"[$-408]mmmmm\\-yy;@",
+			"[$-408]d\\-mmm\\-yyyy;@"
 		],
 		"1033": [
-			"yyyy-mm-dd;@",
-			"m/d;@",
-			"m/d/yy;@",
-			"mm/dd/yy;@",
-			"[$-409]d-mmm;@",
-			"[$-409]d-mmm-yy;@",
-			"[$-409]dd-mmm-yy;@",
-			"[$-409]mmm-yy;@",
-			"[$-409]mmmm-yy;@",
-			"[$-409]mmmm d, yyyy;@",
-			"[$-409]m/d/yy h:mm AM/PM;@",
-			"m/d/yy h:mm;@",
-			"[$-409]mmmmm;@",
-			"[$-409]mmmmm-yy;@",
-			"m/d/yyyy;@",
-			"[$-409]d-mmm-yyyy;@"
+			"[$-1070000]d/m/yy;@",
+			"[$-1070000]d/mm/yyyy;@",
+			"[$-1070000]d/mm/yyyy\\ h:mm\\ \"น.\";@",
+			"[$-1070409]d/mm/yyyy\\ h:mm\\ AM/PM;@",
+			"[$-D070000]d/m/yy;@",
+			"[$-D070000]d/mm/yyyy;@",
+			"[$-D070000]d/mm/yyyy\\ h:mm\\ \"น.\";@",
+			"[$-D07041E]d\\ mmm\\ yy;@",
+			"[$-D07041E]d\\ mmmm\\ yyyy;@",
+			"[$-107041E]d\\ mmm\\ yy;@",
+			"[$-107041E]d\\ mmmm\\ yyyy;@"
 		],
 		"1034": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
 			"d/mm/yy;@",
 			"d/m/yy;@",
-			"dd-mm-yy;@",
-			"dd.mm.yy;@",
-			"yyyy-mm-dd;@",
-			"[$-40A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
-			"[$-40A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"dd\\-mm\\-yy;@",
+			"dd\\.mm\\.yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-40A]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-40A]dddd\\ d\" de \"mmmm\" de \"yyyy;@",
 			"[$-40A]d\" de \"mmmm\" de \"yyyy;@"
 		],
 		"1035": [
-			"d.m.;@",
-			"d.m.yy;@",
-			"d.m.yyyy;@",
-			"[$-40B]d. mmmmt\\a;@",
-			"[$-40B]d. mmmmt\\a yy;@",
-			"[$-40B]d. mmmmt\\a yyyy;@",
-			"[$-40B]mmmm yy;@",
-			"[$-40B]mmmm yyyy;@",
-			"[$-40B]d. mmmmt\\a yyyy h:mm;@",
-			"d.m.yyyy h:mm;@",
-			"d.m.yy h:mm;@",
+			"d\\.m\\.;@",
+			"d\\.m\\.yy;@",
+			"d\\.m\\.yyyy;@",
+			"[$-40B]d\\.\\ mmmm\\t\\a;@",
+			"[$-40B]d\\.\\ mmmm\\t\\a\\ yy;@",
+			"[$-40B]d\\.\\ mmmm\\t\\a\\ yyyy;@",
+			"[$-40B]mmmm\\ yy;@",
+			"[$-40B]mmmm\\ yyyy;@",
+			"[$-40B]d\\.\\ mmmm\\t\\a\\ yyyy\\ h:mm;@",
+			"d\\.m\\.yyyy\\ h:mm;@",
+			"d\\.m\\.yy\\ h:mm;@",
 			"[$-40B]mmmmm;@",
-			"[$-40B]mmmmm yy;@",
-			"yyyy-mm-dd;@",
-			"yyyy-mm-dd hh:mm;@"
+			"[$-40B]mmmmm\\ yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"yyyy\\-mm\\-dd\\ hh:mm;@"
 		],
 		"1036": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"d/m;@",
 			"d/m/yy;@",
 			"dd/mm/yy;@",
-			"[$-40C]d-mmm;@",
-			"[$-40C]d-mmm-yy;@",
-			"[$-40C]dd-mmm-yy;@",
-			"[$-40C]mmm-yy;@",
-			"[$-40C]mmmm-yy;@",
-			"[$-40C]d mmmm yyyy;@",
-			"[$-409]d/m/yy h:mm AM/PM;@",
-			"d/m/yy h:mm;@",
+			"[$-40C]d\\-mmm;@",
+			"[$-40C]d\\-mmm\\-yy;@",
+			"[$-40C]dd\\-mmm\\-yy;@",
+			"[$-40C]mmm\\-yy;@",
+			"[$-40C]mmmm\\-yy;@",
+			"[$-40C]d\\ mmmm\\ yyyy;@",
+			"[$-409]d/m/yy\\ h:mm\\ AM/PM;@",
+			"d/m/yy\\ h:mm;@",
 			"[$-40C]mmmmm;@",
-			"[$-40C]mmmmm-yy;@",
+			"[$-40C]mmmmm\\-yy;@",
 			"m/d/yyyy;@",
-			"[$-40C]d-mmm-yyyy;@"
-		],
-		"1037": [
-			"yyyy-mm-dd;@",
-			"[$-1010000]d/m/yy;@",
-			"[$-1010000]d/m/yyyy;@",
-			"[$-1010000]d.m.yy;@",
-			"[$-1010000]d.m.yyyy;@",
-			"[$-1010000]m/d/yyyy;@",
-			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
-			"[$-1010409]d/m/yyyy h:mm;@",
-			"[$-101040D]d mmm yy;@",
-			"[$-101040D]d mmmm yyyy;@",
-			"[$-1010409]d mmm yy;@",
-			"[$-1010409]d mmmm yyyy;@"
+			"[$-40C]d\\-mmm\\-yyyy;@"
 		],
 		"1038": [
-			"m. d.;@",
-			"yyyy/ m/ d.;@",
+			"m\\.\\ d\\.;@",
+			"yyyy/\\ m/\\ d\\.;@",
 			"yyyy/mm/dd;@",
-			"[$-40E]yyyy/ mmm/ d.;@",
-			"[$-40E]yy/ mmmm d.;@",
-			"[$-40E]mmmm d.;@",
-			"[$-40E]yyyy/ mmm.;@",
-			"[$-40E]yyyy/ mmmm;@",
-			"[$-40E]yyyy/ mmmm d.;@",
-			"[$-40E]yyyy/ m/ d. h:mm AM/PM;@",
-			"yyyy/ m/ d. h:mm;@",
-			"[$-40E]mmm/ d.;@",
-			"yyyy-mm-dd;@",
-			"yyyy mm dd;@",
-			"yyyy.mm.dd;@",
-			"[$-40E]mmmmm.;@",
-			"[$-40E]yy-mmmmm.;@",
-			"[$-40E]yy/ mmmm;@"
+			"[$-40E]yyyy/\\ mmm/\\ d\\.;@",
+			"[$-40E]yy/\\ mmmm\\ d\\.;@",
+			"[$-40E]mmmm\\ d\\.;@",
+			"[$-40E]yyyy/\\ mmm\\.;@",
+			"[$-40E]yyyy/\\ mmmm;@",
+			"[$-40E]yyyy/\\ mmmm\\ d\\.;@",
+			"[$-40E]yyyy/\\ m/\\ d\\.\\ h:mm\\ AM/PM;@",
+			"yyyy/\\ m/\\ d\\.\\ h:mm;@",
+			"[$-40E]mmm/\\ d\\.;@",
+			"yyyy\\-mm\\-dd;@",
+			"yyyy\\ mm\\ dd;@",
+			"yyyy\\.mm\\.dd;@",
+			"[$-40E]mmmmm\\.;@",
+			"[$-40E]yy\\-mmmmm\\.;@",
+			"[$-40E]yy/\\ mmmm;@"
 		],
 		"1039": [
-			"d.m.yyyy;@",
-			"dd.mm.yy;@",
-			"d. m. yyyy.;@",
-			"d. m. \"'\"yy.;@",
-			"yyyy-mm-dd;@",
-			"yy mm dd;@",
-			"[$-40F]d. mmmm yyyy;@",
-			"[$-40F]dd. mmmm yyyy;@"
+			"d\\.m\\.yyyy;@",
+			"dd\\.mm\\.yy;@",
+			"d\\.\\ m\\.\\ yyyy\\.;@",
+			"d\\.\\ m\\.\\ \"'\"yy\\.;@",
+			"yyyy\\-mm\\-dd;@",
+			"yy\\ mm\\ dd;@",
+			"[$-40F]d\\.\\ mmmm\\ yyyy;@",
+			"[$-40F]dd\\.\\ mmmm\\ yyyy;@"
 		],
 		"1040": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"d/m;@",
 			"d/m/yy;@",
 			"dd/mm/yy;@",
-			"[$-410]d-mmm;@",
-			"[$-410]d-mmm-yy;@",
-			"[$-410]dd-mmm-yy;@",
-			"[$-410]mmm-yy;@",
-			"[$-410]mmmm-yy;@",
-			"[$-410]d mmmm yyyy;@",
-			"[$-409]d/m/yy h.mm AM/PM;@",
-			"d/m/yy h.mm;@",
+			"[$-410]d\\-mmm;@",
+			"[$-410]d\\-mmm\\-yy;@",
+			"[$-410]dd\\-mmm\\-yy;@",
+			"[$-410]mmm\\-yy;@",
+			"[$-410]mmmm\\-yy;@",
+			"[$-410]d\\ mmmm\\ yyyy;@",
+			"[$-409]d/m/yy\\ h\\.mm\\ AM/PM;@",
+			"d/m/yy\\ h\\.mm;@",
 			"[$-410]mmmmm;@",
-			"[$-410]mmmmm-yy;@",
+			"[$-410]mmmmm\\-yy;@",
 			"d/m/yyyy;@",
-			"[$-410]d-mmm-yyyy;@"
+			"[$-410]d\\-mmm\\-yyyy;@"
 		],
 		"1042": [
-			"yyyy-mm-dd;@",
-			"yyyy\"년\" m\"월\" d\"일\";@",
-			"yy\"年\" m\"月\" d\"日\";@",
-			"yyyy\"년\" m\"월\";@",
-			"m\"월\" d\"일\";@",
+			"yyyy\\-mm\\-dd;@",
+			"yyyy\"년\"\\ m\"월\"\\ d\"일\";@",
+			"yy\"年\"\\ m\"月\"\\ d\"日\";@",
+			"yyyy\"년\"\\ m\"월\";@",
+			"m\"월\"\\ d\"일\";@",
 			"yy\"-\"m\"-\"d;@",
-			"yy\"-\"m\"-\"d h:mm;@",
-			"[$-412]yy\"-\"m\"-\"d AM/PM h:mm;@",
-			"[$-409]yy\"-\"m\"-\"d h:mm AM/PM;@",
+			"yy\"-\"m\"-\"d\\ h:mm;@",
+			"[$-412]yy\"-\"m\"-\"d\\ AM/PM\\ h:mm;@",
+			"[$-409]yy\"-\"m\"-\"d\\ h:mm\\ AM/PM;@",
 			"yy\"/\"m\"/\"d;@",
 			"yyyy\"-\"m\"-\"d;@",
 			"yyyy\"/\"m\"/\"d;@",
@@ -6251,25 +6457,25 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 			"[$-409]mmm\"-\"yy;@",
 			"[$-409]mmmm\"-\"yy;@",
 			"[$-409]mmmmm;@",
-			"[$-409]mmmmm-yy;@"
+			"[$-409]mmmmm\\-yy;@"
 		],
 		"1043": [
-			"yyyy-mm-dd;@",
-			"d-m;@",
-			"d-mm-yy;@",
-			"dd-mm-yy;@",
-			"[$-413]d-mmm;@",
-			"[$-413]d-mmm-yy;@",
-			"[$-413]dd-mmm-yy;@",
-			"[$-413]mmm-yy;@",
-			"[$-413]mmmm-yy;@",
-			"[$-413]d mmmm yyyy;@",
-			"[$-409]d-mm-yy h:mm AM/PM;@",
-			"d-mm-yy h:mm;@",
+			"yyyy\\-mm\\-dd;@",
+			"d\\-m;@",
+			"d\\-mm\\-yy;@",
+			"dd\\-mm\\-yy;@",
+			"[$-413]d\\-mmm;@",
+			"[$-413]d\\-mmm\\-yy;@",
+			"[$-413]dd\\-mmm\\-yy;@",
+			"[$-413]mmm\\-yy;@",
+			"[$-413]mmmm\\-yy;@",
+			"[$-413]d\\ mmmm\\ yyyy;@",
+			"[$-409]d\\-mm\\-yy\\ h:mm\\ AM/PM;@",
+			"d\\-mm\\-yy\\ h:mm;@",
 			"[$-413]mmmmm;@",
-			"[$-413]mmmmm-yy;@",
+			"[$-413]mmmmm\\-yy;@",
 			"m/d/yyyy;@",
-			"[$-413]d-mmm-yyyy;@"
+			"[$-413]d\\-mmm\\-yyyy;@"
 		],
 		"1044": [
 			"d/m/;@",
@@ -6277,446 +6483,428 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 			"d/m/yyyy;@",
 			"dd/mm/yy;@",
 			"dd/mm/yyyy;@",
-			"[$-414]d/ mmm.;@",
-			"[$-414]d/ mmmm;@",
-			"[$-414]d/ mmm. yyyy;@",
-			"[$-414]d/ mmmm yyyy;@",
-			"[$-414]mmm. yy;@",
-			"[$-414]mmmm yy;@",
-			"[$-414]mmmm yyyy;@",
-			"yyyy-mm-dd;@",
-			"dd/mm/yy h:mm;@",
-			"[$-409]m/d/yy h:mm AM/PM;@",
-			"m/d/yy h:mm;@"
+			"[$-414]d/\\ mmm\\.;@",
+			"[$-414]d/\\ mmmm;@",
+			"[$-414]d/\\ mmm\\.\\ yyyy;@",
+			"[$-414]d/\\ mmmm\\ yyyy;@",
+			"[$-414]mmm\\.\\ yy;@",
+			"[$-414]mmmm\\ yy;@",
+			"[$-414]mmmm\\ yyyy;@",
+			"yyyy\\-mm\\-dd;@",
+			"dd/mm/yy\\ h:mm;@",
+			"[$-409]m/d/yy\\ h:mm\\ AM/PM;@",
+			"m/d/yy\\ h:mm;@"
 		],
 		"1045": [
-			"d-mm;@",
-			"yyyy-mm-dd;@",
-			"yy-mm-dd;@",
-			"[$-415]d mmm;@",
-			"[$-415]d mmm yy;@",
-			"[$-415]dd mmm yy;@",
-			"[$-415]mmm yy;@",
-			"[$-415]mmmm yy;@",
-			"[$-415]d mmmm yyyy;@",
-			"[$-409]dd-mm-yy h:mm AM/PM;@",
-			"dd-mm-yy h:mm;@",
+			"d\\-mm;@",
+			"yyyy\\-mm\\-dd;@",
+			"yy\\-mm\\-dd;@",
+			"[$-415]d\\ mmm;@",
+			"[$-415]d\\ mmm\\ yy;@",
+			"[$-415]dd\\ mmm\\ yy;@",
+			"[$-415]mmm\\ yy;@",
+			"[$-415]mmmm\\ yy;@",
+			"[$-415]d\\ mmmm\\ yyyy;@",
+			"[$-409]dd\\-mm\\-yy\\ h:mm\\ AM/PM;@",
+			"dd\\-mm\\-yy\\ h:mm;@",
 			"[$-415]mmmmm;@",
-			"[$-415]mmmmm.yy;@",
-			"d-m-yyyy;@",
-			"[$-415]d-mmm-yyyy;@"
+			"[$-415]mmmmm\\.yy;@",
+			"d\\-m\\-yyyy;@",
+			"[$-415]d\\-mmm\\-yyyy;@"
 		],
 		"1046": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"d/m;@",
 			"d/m/yy;@",
 			"dd/mm/yy;@",
-			"[$-416]d-mmm;@",
-			"[$-416]d-mmm-yy;@",
-			"[$-416]dd-mmm-yy;@",
-			"[$-416]mmm-yy;@",
-			"[$-416]mmmm-yy;@",
+			"[$-416]d\\-mmm;@",
+			"[$-416]d\\-mmm\\-yy;@",
+			"[$-416]dd\\-mmm\\-yy;@",
+			"[$-416]mmm\\-yy;@",
+			"[$-416]mmmm\\-yy;@",
 			"[$-416]d;@",
-			"mmmm, yyyy;@",
-			"[$-409]d/m/yy h:mm AM/PM;@",
-			"d/m/yy h:mm;@"
+			"mmmm\\,\\ yyyy;@",
+			"[$-409]d/m/yy\\ h:mm\\ AM/PM;@",
+			"d/m/yy\\ h:mm;@"
 		],
 		"1047": [
-			"yyyy-mm-dd;@",
-			"[$-10417]dd-mm-yyyy;@",
-			"[$-10417]dd-mm-yy;@",
-			"[$-10417]dddd, \"ils’\" d. mmmm, yyyy;@",
-			"[$-10417]dddd, \"ils\" d mmmm yyyy;@",
-			"[$-10417]d mmmm yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-10417]dd\\-mm\\-yyyy;@",
+			"[$-10417]dd\\-mm\\-yy;@",
+			"[$-10417]dddd\\,\\ \"ils’\"\\ d\\.\\ mmmm\\,\\ yyyy;@",
+			"[$-10417]dddd\\,\\ \"ils\"\\ d\\ mmmm\\ yyyy;@",
+			"[$-10417]d\\ mmmm\\ yyyy;@"
 		],
 		"1048": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"d/m;@",
 			"d/m/yy;@",
 			"dd/mm/yy;@",
-			"[$-418]d-mmm;@",
-			"[$-418]d-mmm-yy;@",
-			"[$-418]dd-mmm-yy;@",
-			"[$-418]mmm-yy;@",
-			"[$-418]mmmm-yy;@",
-			"[$-418]d mmmm yyyy;@",
-			"[$-409]d/m/yy h:mm AM/PM;@",
-			"d/m/yy h:mm;@",
+			"[$-418]d\\-mmm;@",
+			"[$-418]d\\-mmm\\-yy;@",
+			"[$-418]dd\\-mmm\\-yy;@",
+			"[$-418]mmm\\-yy;@",
+			"[$-418]mmmm\\-yy;@",
+			"[$-418]d\\ mmmm\\ yyyy;@",
+			"[$-409]d/m/yy\\ h:mm\\ AM/PM;@",
+			"d/m/yy\\ h:mm;@",
 			"[$-418]mmmmm;@",
-			"[$-418]mmmmm-yy;@",
+			"[$-418]mmmmm\\-yy;@",
 			"d/m/yyyy;@",
-			"[$-418]d-mmm-yyyy;@"
+			"[$-418]d\\-mmm\\-yyyy;@"
 		],
 		"1049": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"d/m;@",
 			"d/m/yy;@",
 			"dd/mm/yy;@",
-			"[$-419]d mmm;@",
-			"[$-419]d mmm yy;@",
-			"[$-419]dd mmm yy;@",
-			"[$-F419]yyyy, mmmm;@",
-			"[$-419]mmmm yyyy;@",
-			"[$-FC19]dd mmmm yyyy г.;@",
-			"[$-409]dd/mm/yy h:mm AM/PM;@",
-			"dd/mm/yy h:mm;@",
+			"[$-419]d\\ mmm;@",
+			"[$-419]d\\ mmm\\ yy;@",
+			"[$-419]dd\\ mmm\\ yy;@",
+			"[$-F419]yyyy\\,\\ mmmm;@",
+			"[$-419]mmmm\\ yyyy;@",
+			"[$-FC19]dd\\ mmmm\\ yyyy\\ \\г\\.;@",
+			"[$-409]dd/mm/yy\\ h:mm\\ AM/PM;@",
+			"dd/mm/yy\\ h:mm;@",
 			"[$-419]mmmm;@",
-			"[$-FC19]yyyy, dd mmmm;@",
+			"[$-FC19]yyyy\\,\\ dd\\ mmmm;@",
 			"d/m/yyyy;@",
-			"[$-419]d-mmm-yyyy;@"
+			"[$-419]d\\-mmm\\-yyyy;@"
 		],
 		"1050": [
-			"yyyy-mm-dd;@",
-			"d.m.;@",
-			"d.m.yy.;@",
-			"dd.mm.yy.;@",
-			"[$-41A]d-mmm;@",
-			"[$-41A]d-mmm-yy;@",
-			"[$-41A]dd-mmm-yy;@",
-			"[$-41A]mmm-yy;@",
-			"[$-41A]mmmm-yy;@",
-			"[$-41A]d. mmmm yyyy.;@",
-			"[$-409]d.m.yy. h:mm AM/PM;@",
-			"d.m.yy. h:mm;@",
+			"yyyy\\-mm\\-dd;@",
+			"d\\.m\\.;@",
+			"d\\.m\\.yy\\.;@",
+			"dd\\.mm\\.yy\\.;@",
+			"[$-41A]d\\-mmm;@",
+			"[$-41A]d\\-mmm\\-yy;@",
+			"[$-41A]dd\\-mmm\\-yy;@",
+			"[$-41A]mmm\\-yy;@",
+			"[$-41A]mmmm\\-yy;@",
+			"[$-41A]d\\.\\ mmmm\\ yyyy\\.;@",
+			"[$-409]d\\.m\\.yy\\.\\ h:mm\\ AM/PM;@",
+			"d\\.m\\.yy\\.\\ h:mm;@",
 			"[$-41A]mmmmm;@",
-			"[$-41A]mmmmm-yy.;@",
-			"d.m.yyyy.;@",
-			"[$-41A]d-mmm-yyyy.;@"
+			"[$-41A]mmmmm\\-yy\\.;@",
+			"d\\.m\\.yyyy\\.;@",
+			"[$-41A]d\\-mmm\\-yyyy\\.;@"
 		],
 		"1051": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"d/m;@",
 			"d/m/yy;@",
 			"dd/mm/yy;@",
-			"[$-41B]d-mmm.;@",
+			"[$-41B]d\\-mmm\\.;@",
 			"[$-41B]d/mmm/yy;@",
-			"[$-41B]dd-mmm-yy;@",
-			"[$-41B]mmm-yy;@",
-			"[$-41B]mmmm yy;@",
-			"[$-41B]d. mmmm yyyy;@",
-			"[$-409]d/m/yy h:mm AM/PM;@",
-			"d/m/yy h:mm;@",
+			"[$-41B]dd\\-mmm\\-yy;@",
+			"[$-41B]mmm\\-yy;@",
+			"[$-41B]mmmm\\ yy;@",
+			"[$-41B]d\\.\\ mmmm\\ yyyy;@",
+			"[$-409]d/m/yy\\ h:mm\\ AM/PM;@",
+			"d/m/yy\\ h:mm;@",
 			"[$-41B]mmmmm;@",
-			"[$-41B]mmmmm-yy;@",
+			"[$-41B]mmmmm\\-yy;@",
 			"d/m/yyyy;@",
 			"[$-41B]d/mmm/yyyy;@"
 		],
-		"1052": [
-			"yyyy-mm-dd;@",
-			"dddd, d mmmm yyyy;@",
-			"d.m.yyyy;@"
-		],
 		"1053": [
-			"yyyy-mm-dd;@",
-			"yyyy-mm-dd hh:mm;@",
-			"yy-mm-dd;@",
-			"yy-mm-dd hh:mm;@",
-			"d/m yyyy;@",
-			"d/m -yy;@",
-			"d/m yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"yyyy\\-mm\\-dd\\ hh:mm;@",
+			"yy\\-mm\\-dd;@",
+			"yy\\-mm\\-dd\\ hh:mm;@",
+			"d/m\\ yyyy;@",
+			"d/m\\ \\-yy;@",
+			"d/m\\ yy;@",
 			"d/m/yy;@",
-			"[$-41D]\"den \" d mmmm yyyy;@",
-			"[$-41D]d mmmm yyyy;@",
-			"[$-41D]d mmmm -yy;@",
+			"[$-41D]\"den \"\\ d\\ mmmm\\ yyyy;@",
+			"[$-41D]d\\ mmmm\\ yyyy;@",
+			"[$-41D]d\\ mmmm\\ \\-yy;@",
 			"[$-41D]mmmmm;@",
-			"[$-41D]mmmmm-yy;@",
-			"yyyy mm dd;@",
+			"[$-41D]mmmmm\\-yy;@",
+			"yyyy\\ mm\\ dd;@",
 			"[$-41D]mmmm;@",
-			"[$-41D]dd-mmm;@",
-			"[$-41D]mmmm yyyy;@",
-			"[$-41D]mmmm -yy;@",
-			"[$-41D]mmm-yy;@",
+			"[$-41D]dd\\-mmm;@",
+			"[$-41D]mmmm\\ yyyy;@",
+			"[$-41D]mmmm\\ \\-yy;@",
+			"[$-41D]mmm\\-yy;@",
 			"yyyy;@"
 		],
-		"1054": [
-			"[$-1070000]d/m/yy;@",
-			"[$-1070000]d/mm/yyyy;@",
-			"[$-1070000]d/mm/yyyy h:mm \"น.\";@",
-			"[$-1070409]d/mm/yyyy h:mm AM/PM;@",
-			"[$-D070000]d/m/yy;@",
-			"[$-D070000]d/mm/yyyy;@",
-			"[$-D070000]d/mm/yyyy h:mm \"น.\";@",
-			"[$-D07041E]d mmm yy;@",
-			"[$-D07041E]d mmmm yyyy;@",
-			"[$-107041E]d mmm yy;@",
-			"[$-107041E]d mmmm yyyy;@"
-		],
 		"1055": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"d/m;@",
 			"d/m/yy;@",
 			"dd/mm/yy;@",
-			"[$-41F]d mmmm;@",
-			"[$-41F]d mmmm yy;@",
-			"[$-41F]dd mmmm yy;@",
+			"[$-41F]d\\ mmmm;@",
+			"[$-41F]d\\ mmmm\\ yy;@",
+			"[$-41F]dd\\ mmmm\\ yy;@",
 			"dd/mm/yyyy;@",
-			"[$-41F]mmmm yy;@",
-			"[$-41F]d mmmm yyyy;@",
-			"d/m/yy h:mm;@",
-			"[$-41F]d mmmm yyyy h:mm;@",
+			"[$-41F]mmmm\\ yy;@",
+			"[$-41F]d\\ mmmm\\ yyyy;@",
+			"d/m/yy\\ h:mm;@",
+			"[$-41F]d\\ mmmm\\ yyyy\\ h:mm;@",
 			"[$-41F]mmmmm;@",
-			"[$-41F]mmmmm yy;@",
+			"[$-41F]mmmmm\\ yy;@",
 			"m/d/yyyy;@",
-			"[$-41F]d mmm yyyy;@"
+			"[$-41F]d\\ mmm\\ yyyy;@"
 		],
 		"1056": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"m/d/yyyy;@",
 			"m/d/yy;@",
 			"mm/dd/yy;@",
 			"mm/dd/yyyy;@",
-			"[$-420]dd mmmm, yyyy;@",
-			"[$-420]dddd, dd mmmm, yyyy;@",
-			"[$-420]dddd, mmmm dd, yyyy;@",
-			"[$-420]mmmm dd, yyyy;@",
+			"[$-420]dd\\ mmmm\\,\\ yyyy;@",
+			"[$-420]dddd\\,\\ dd\\ mmmm\\,\\ yyyy;@",
+			"[$-420]dddd\\,\\ mmmm\\ dd\\,\\ yyyy;@",
+			"[$-420]mmmm\\ dd\\,\\ yyyy;@",
 			"[$-420]dd/mmmm/yyyy;@"
 		],
 		"1057": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
-			"yyyy-mm-dd;@",
-			"[$-421]dd mmmm yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-421]dd\\ mmmm\\ yyyy;@"
 		],
 		"1060": [
-			"d.m.yyyy;@",
-			"d.m.yy;@",
-			"d. m. yyyy;@",
-			"dd.mm.yyyy;@",
-			"d. m. yy;@",
-			"dd.mm.yy;@",
-			"dd. mm. yy;@",
-			"yyyy-mm-dd;@",
-			"[$-424]d. mmmm yyyy;@",
-			"[$-424]dd. mmmm yyyy;@",
-			"[$-424]dddd, d. mmmm yyyy;@"
+			"d\\.m\\.yyyy;@",
+			"d\\.m\\.yy;@",
+			"d\\.\\ m\\.\\ yyyy;@",
+			"dd\\.mm\\.yyyy;@",
+			"d\\.\\ m\\.\\ yy;@",
+			"dd\\.mm\\.yy;@",
+			"dd\\.\\ mm\\.\\ yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-424]d\\.\\ mmmm\\ yyyy;@",
+			"[$-424]dd\\.\\ mmmm\\ yyyy;@",
+			"[$-424]dddd\\,\\ d\\.\\ mmmm\\ yyyy;@"
 		],
 		"1061": [
-			"d.mm.yyyy;@",
-			"dd.mm.yyyy;@",
-			"dd.mm.yy;@",
-			"yyyy-mm-dd;@",
-			"[$-425]d. mmmm yyyy\". a.\";@",
-			"[$-425]dd. mmmm yyyy\". a.\";@",
-			"[$-425]dddd, d. mmmm yyyy;@"
+			"d\\.mm\\.yyyy;@",
+			"dd\\.mm\\.yyyy;@",
+			"dd\\.mm\\.yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-425]d\\.\\ mmmm\\ yyyy\". a.\";@",
+			"[$-425]dd\\.\\ mmmm\\ yyyy\". a.\";@",
+			"[$-425]dddd\\,\\ d\\.\\ mmmm\\ yyyy;@"
 		],
 		"1062": [
-			"yyyy.mm.dd.;@",
-			"yy.mm.dd.;@",
-			"yyyy-mm-dd;@",
-			"[$-426]dddd, yyyy\". gada \"d. mmmm;@"
+			"yyyy\\.mm\\.dd\\.;@",
+			"yy\\.mm\\.dd\\.;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-426]dddd\\,\\ yyyy\". gada \"d\\.\\ mmmm;@"
 		],
 		"1064": [
-			"yyyy-mm-dd;@",
-			"[$-10428]dd.mm.yyyy;@",
-			"[$-10428]dd.mm.yy;@",
-			"[$-10428]d.m.yy;@",
-			"[$-10428]dd-mm-yyyy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-10428]dd\\.mm\\.yyyy;@",
+			"[$-10428]dd\\.mm\\.yy;@",
+			"[$-10428]d\\.m\\.yy;@",
+			"[$-10428]dd\\-mm\\-yyyy;@",
 			"[$-10428]dd/mm/yy;@",
-			"[$-10428]d mmmm yyyy\" с.\";@",
-			"[$-10428]dd mmmm yyyy\" с.\";@",
-			"[$-10428]dddd, dd mmmm yyyy;@"
+			"[$-10428]d\\ mmmm\\ yyyy\" с.\";@",
+			"[$-10428]dd\\ mmmm\\ yyyy\" с.\";@",
+			"[$-10428]dddd\\,\\ dd\\ mmmm\\ yyyy;@"
 		],
 		"1065": [
-			"yyyy-mm-dd;@",
-			"[$-1010000]dd/m/yyyy;@",
-			"[$-1010429]dd/m/yyyy hh:mm AM/PM;@",
-			"[$-1010409]d/m/yyyy hh:mm AM/PM;@",
-			"[$-3010000]d/mm/yyyy;@",
-			"[$-3010429]d/mm/yyyy h:mm AM/PM;@"
+			"[$-160429]dd/mm/yyyy;@",
+			"[$-160429]dd/mm/yy;@",
+			"[$-160429]dddd\\,\\ d\\ mmmm\\ yyyy;@",
+			"[$-160429]d\\ mmmm\\ yyyy;@"
 		],
 		"1066": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1010000]d/m/yy;@",
 			"[$-1010000]d/m/yyyy;@",
-			"[$-101042A]d/m/yyyy h:mm AM/PM;@",
-			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
-			"[$-101042A]d mmm yy;@",
-			"[$-101042A]d mmmm yyyy;@",
-			"[$-101040C]d mmm yy;@",
-			"[$-101040C]d mmmm yyyy;@",
-			"[$-1010409]d mmm yy;@",
-			"[$-1010409]d mmmm yyyy;@"
+			"[$-101042A]d/m/yyyy\\ h:mm\\ AM/PM;@",
+			"[$-1010409]d/m/yyyy\\ h:mm\\ AM/PM;@",
+			"[$-101042A]d\\ mmm\\ yy;@",
+			"[$-101042A]d\\ mmmm\\ yyyy;@",
+			"[$-101040C]d\\ mmm\\ yy;@",
+			"[$-101040C]d\\ mmmm\\ yyyy;@",
+			"[$-1010409]d\\ mmm\\ yy;@",
+			"[$-1010409]d\\ mmmm\\ yyyy;@"
 		],
 		"1067": [
-			"dd.mm.yyyy;@",
-			"dd.mm.yy;@",
+			"dd\\.mm\\.yyyy;@",
+			"dd\\.mm\\.yy;@",
 			"d/mm/yyyy;@",
 			"dd/mm/yyyy;@",
 			"[$-42B]d/mmm/yyyy;@",
 			"[$-42B]dd/mmm/yyyy;@",
-			"yyyy-mm-dd;@",
-			"[$-42B]d mmmm, yyyy;@",
-			"[$-42B]dddd, d mmmm yyyy;@",
-			"[$-42B]dddd, dd mmmm yyyy;@",
-			"[$-42B]dd mmmm yyyy;@",
-			"[$-42B]d-mmm-yyyy;@",
-			"[$-42B]dd-mmm-yyyy;@",
-			"[$-42B]ddd, d-mmmm-yyyy;@",
-			"[$-42B]ddd, dd-mmmm-yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-42B]d\\ mmmm\\,\\ yyyy;@",
+			"[$-42B]dddd\\,\\ d\\ mmmm\\ yyyy;@",
+			"[$-42B]dddd\\,\\ dd\\ mmmm\\ yyyy;@",
+			"[$-42B]dd\\ mmmm\\ yyyy;@",
+			"[$-42B]d\\-mmm\\-yyyy;@",
+			"[$-42B]dd\\-mmm\\-yyyy;@",
+			"[$-42B]ddd\\,\\ d\\-mmmm\\-yyyy;@",
+			"[$-42B]ddd\\,\\ dd\\-mmmm\\-yyyy;@"
 		],
 		"1068": [
-			"dd.mm.yyyy;@",
-			"dd.mm.yy;@",
-			"d.m.yy;@",
+			"dd\\.mm\\.yyyy;@",
+			"dd\\.mm\\.yy;@",
+			"d\\.m\\.yy;@",
 			"dd/mm/yy;@",
-			"yyyy-mm-dd;@",
-			"[$-42C]d mmmm yyyy;@",
-			"[$-42C]dd mmmm yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-42C]d\\ mmmm\\ yyyy;@",
+			"[$-42C]dd\\ mmmm\\ yyyy;@"
 		],
 		"1069": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"m/d;@",
 			"yy/m/d;@",
 			"yy/mm/dd;@",
-			"[$-42D]mmm-d;@",
-			"[$-42D]yy-mmm-d;@",
-			"[$-42D]yy-mmm-dd;@",
-			"[$-42D]yy-mmm;@",
-			"[$-42D]yy-mmmm;@",
-			"[$-42D]yyyy\"(e)ko\" mmmm\"ren\" d\"(a)\";@",
-			"[$-42D]yy/mm/dd/ h:mm AM/PM;@",
-			"yy/m/d/ h:mm;@",
+			"[$-42D]mmm\\-d;@",
+			"[$-42D]yy\\-mmm\\-d;@",
+			"[$-42D]yy\\-mmm\\-dd;@",
+			"[$-42D]yy\\-mmm;@",
+			"[$-42D]yy\\-mmmm;@",
+			"[$-42D]yyyy\"(e)ko\"\\ mmmm\"ren\"\\ d\"(a)\";@",
+			"[$-42D]yy/mm/dd/\\ h:mm\\ AM/PM;@",
+			"yy/m/d/\\ h:mm;@",
 			"[$-42D]mmmmm;@",
-			"[$-42D]yy-mmmmm;@",
+			"[$-42D]yy\\-mmmmm;@",
 			"yyyy/m/d;@",
-			"[$-42D]yyyy-mmm-d;@",
-			"yyyy.mm.dd;@",
-			"[$-42D]yyyy\"(e)ko\" mmmm\"ren\" d\"(a)\";@",
-			"[$-42D]yyyy\"(e)ko\" mmmm\"k\" d\"(a)\";@",
-			"[$-42D]yyyy\"(e)ko\" mmmm;@"
+			"[$-42D]yyyy\\-mmm\\-d;@",
+			"yyyy\\.mm\\.dd;@",
+			"[$-42D]yyyy\"(e)ko\"\\ mmmm\"ren\"\\ d\"(a)\";@",
+			"[$-42D]yyyy\"(e)ko\"\\ mmmm\"k\"\\ d\"(a)\";@",
+			"[$-42D]yyyy\"(e)ko\"\\ mmmm;@"
 		],
 		"1070": [
-			"yyyy-mm-dd;@",
-			"[$-1042E]d.m.yyyy;@",
-			"[$-1042E]d.m.yy;@",
-			"[$-1042E]dddd, d. mmmm yyyy;@",
-			"[$-1042E]d. mmmm yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-1042E]d\\.m\\.yyyy;@",
+			"[$-1042E]d\\.m\\.yy;@",
+			"[$-1042E]dddd\\,\\ d\\.\\ mmmm\\ yyyy;@",
+			"[$-1042E]d\\.\\ mmmm\\ yyyy;@"
 		],
 		"1071": [
-			"dd.mm.yyyy;@",
-			"dd.mm.yy;@",
-			"yyyy-mm-dd;@",
-			"[$-42F]dddd, dd mmmm yyyy;@"
+			"dd\\.mm\\.yyyy;@",
+			"dd\\.mm\\.yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-42F]dddd\\,\\ dd\\ mmmm\\ yyyy;@"
 		],
 		"1072": [
-			"[$-10430]yyyy-mm-dd;@",
-			"[$-10430]yyyy mmm d;@",
-			"[$-10430]yyyy mmmm d, dddd;@",
-			"[$-10430]yyyy mmmm d;@"
+			"[$-10430]yyyy\\-mm\\-dd;@",
+			"[$-10430]yyyy\\ mmm\\ d;@",
+			"[$-10430]yyyy\\ mmmm\\ d\\,\\ dddd;@",
+			"[$-10430]yyyy\\ mmmm\\ d;@"
 		],
 		"1073": [
-			"[$-10431]yyyy-mm-dd;@",
-			"[$-10431]yyyy mmm d;@",
-			"[$-10431]yyyy mmmm d, dddd;@",
-			"[$-10431]yyyy mmmm d;@"
+			"[$-10431]yyyy\\-mm\\-dd;@",
+			"[$-10431]yyyy\\ mmm\\ d;@",
+			"[$-10431]yyyy\\ mmmm\\ d\\,\\ dddd;@",
+			"[$-10431]yyyy\\ mmmm\\ d;@"
 		],
 		"1074": [
-			"[$-10432]yyyy-mm-dd;@",
-			"[$-10432]yyyy mmm d;@",
-			"[$-10432]dd mmmm yyyy;@",
-			"[$-10432]yyyy mmmm d, dddd;@",
-			"[$-10432]yyyy mmmm d;@"
+			"[$-10432]yyyy\\-mm\\-dd;@",
+			"[$-10432]yyyy\\ mmm\\ d;@",
+			"[$-10432]dd\\ mmmm\\ yyyy;@",
+			"[$-10432]yyyy\\ mmmm\\ d\\,\\ dddd;@",
+			"[$-10432]yyyy\\ mmmm\\ d;@"
 		],
 		"1075": [
-			"[$-10433]yyyy-mm-dd;@",
-			"[$-10433]yyyy mmm d;@",
-			"[$-10433]yyyy mmmm d, dddd;@",
-			"[$-10433]yyyy mmmm d;@"
+			"[$-10433]yyyy\\-mm\\-dd;@",
+			"[$-10433]yyyy\\ mmm\\ d;@",
+			"[$-10433]yyyy\\ mmmm\\ d\\,\\ dddd;@",
+			"[$-10433]yyyy\\ mmmm\\ d;@"
 		],
 		"1076": [
-			"[$-10434]yyyy-mm-dd;@",
-			"[$-10434]yyyy mmm d;@",
-			"[$-10434]yyyy mmmm d, dddd;@",
-			"[$-10434]yyyy mmmm d;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-10434]m/d/yyyy;@",
+			"[$-10434]m/d/yy;@",
+			"[$-10434]mmm\\ d\\,\\ yyyy;@",
+			"[$-10434]dddd\\,\\ mmmm\\ d\\,\\ yyyy;@",
+			"[$-10434]mmmm\\ d\\,\\ yyyy;@"
 		],
 		"1077": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10435]m/d/yyyy;@",
 			"[$-10435]m/d/yy;@",
-			"[$-10435]mmm d, yyyy;@",
-			"[$-10435]dddd, mmmm d, yyyy;@",
-			"[$-10435]mmmm d, yyyy;@"
+			"[$-10435]mmm\\ d\\,\\ yyyy;@",
+			"[$-10435]dddd\\,\\ mmmm\\ d\\,\\ yyyy;@",
+			"[$-10435]mmmm\\ d\\,\\ yyyy;@"
 		],
 		"1078": [
 			"yyyy/mm/dd;@",
 			"yy/mm/dd;@",
-			"yyyy-mm-dd;@",
-			"[$-436]dd mmmm yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-436]dd\\ mmmm\\ yyyy;@"
 		],
 		"1079": [
-			"dd.mm.yyyy;@",
-			"dd.mm.yy;@",
-			"d.m.yy;@",
+			"dd\\.mm\\.yyyy;@",
+			"dd\\.mm\\.yy;@",
+			"d\\.m\\.yy;@",
 			"dd/mm/yy;@",
-			"yyyy-mm-dd;@",
-			"[$-437]dddd, d mmmm, yyyy \"წელი\";@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-437]dddd\\,\\ d\\ mmmm\\,\\ yyyy\\ \"წელი\";@"
 		],
 		"1080": [
-			"dd-mm-yyyy;@",
-			"dd-mm-yy;@",
-			"yyyy-mm-dd;@",
-			"[$-438]d. mmmm yyyy;@"
+			"dd\\-mm\\-yyyy;@",
+			"dd\\-mm\\-yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-438]d\\.\\ mmmm\\ yyyy;@"
 		],
 		"1081": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-4010000]d/m/yy;@",
 			"[$-4010000]d/m/yyyy;@",
-			"[$-4010439]d/m/yyyy h:mm AM/PM;@",
-			"[$-4010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-4010439]d/m/yyyy\\ h:mm\\ AM/PM;@",
+			"[$-4010409]d/m/yyyy\\ h:mm\\ AM/PM;@",
 			"[$-1010000]d/m/yy;@",
 			"[$-1010000]d/m/yyyy;@",
-			"[$-1010439]d/m/yyyy h:mm AM/PM;@",
-			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
-			"[$-1010439]d mmm yy;@",
-			"[$-1010439]d mmmm yyyy;@",
-			"[$-4010439]d mmm yy;@",
-			"[$-4010439]d mmmm yyyy;@",
-			"[$-1010409]d mmm yy;@",
-			"[$-1010409]d mmmm yyyy;@"
+			"[$-1010439]d/m/yyyy\\ h:mm\\ AM/PM;@",
+			"[$-1010409]d/m/yyyy\\ h:mm\\ AM/PM;@",
+			"[$-1010439]d\\ mmm\\ yy;@",
+			"[$-1010439]d\\ mmmm\\ yyyy;@",
+			"[$-4010439]d\\ mmm\\ yy;@",
+			"[$-4010439]d\\ mmmm\\ yyyy;@",
+			"[$-1010409]d\\ mmm\\ yy;@",
+			"[$-1010409]d\\ mmmm\\ yyyy;@"
 		],
 		"1082": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1043A]dd/mm/yyyy;@",
-			"[$-1043A]dd mmm yyyy;@",
-			"[$-1043A]dddd, d \"ta\"’ mmmm yyyy;@",
-			"[$-1043A]d \"ta\"’ mmmm yyyy;@"
+			"[$-1043A]dd\\ mmm\\ yyyy;@",
+			"[$-1043A]dddd\\,\\ d\\ \"ta\"\\’\\ mmmm\\ yyyy;@",
+			"[$-1043A]d\\ \"ta\"\\’\\ mmmm\\ yyyy;@"
 		],
 		"1083": [
-			"[$-1043B]yyyy-mm-dd;@",
-			"[$-1043B]yyyy mmm d;@",
-			"[$-1043B]dddd, mmmm d\". b. \"yyyy;@",
-			"[$-1043B]yyyy mmmm d, dddd;@",
-			"[$-1043B]yyyy mmmm d;@"
+			"[$-1043B]yyyy\\-mm\\-dd;@",
+			"[$-1043B]yyyy\\ mmm\\ d;@",
+			"[$-1043B]dddd\\,\\ mmmm\\ d\". b. \"yyyy;@",
+			"[$-1043B]yyyy\\ mmmm\\ d\\,\\ dddd;@",
+			"[$-1043B]yyyy\\ mmmm\\ d;@"
 		],
 		"1085": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1043D]dd/mm/yyyy;@",
 			"[$-1043D]dd/mm/yy;@",
-			"[$-1043D]dטן mmm yyyy;@",
-			"[$-1043D]dddd, dטן mmmm yyyy;@",
-			"[$-1043D]dטן mmmm yyyy;@"
+			"[$-1043D]d\\ט\\ן\\ mmm\\ yyyy;@",
+			"[$-1043D]dddd\\,\\ d\\ט\\ן\\ mmmm\\ yyyy;@",
+			"[$-1043D]d\\ט\\ן\\ mmmm\\ yyyy;@"
 		],
 		"1086": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
-			"yyyy-mm-dd;@",
-			"[$-43E]dd mmmm yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-43E]dd\\ mmmm\\ yyyy;@"
 		],
 		"1087": [
-			"dd.mm.yyyy;@",
-			"dd.mm.yy;@",
-			"d.m.yy;@",
+			"dd\\.mm\\.yyyy;@",
+			"dd\\.mm\\.yy;@",
+			"d\\.m\\.yy;@",
 			"dd/mm/yy;@",
-			"yyyy-mm-dd;@",
-			"[$-43F]d mmmm yyyy \"ж.\";@",
-			"[$-43F]dd mmmm yyyy \"ж.\";@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-43F]d\\ mmmm\\ yyyy\\ \"ж.\";@",
+			"[$-43F]dd\\ mmmm\\ yyyy\\ \"ж.\";@"
 		],
 		"1088": [
-			"yyyy-mm-dd;@",
-			"dd.mm.yy;@",
-			"[$-440]d\"-\"mmmm yyyy\"-ж.\";@"
+			"yyyy\\-mm\\-dd;@",
+			"dd\\.mm\\.yy;@",
+			"[$-440]d\"-\"mmmm\\ yyyy\"-ж.\";@"
 		],
 		"1089": [
 			"m/d/yyyy;@",
@@ -6724,276 +6912,276 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 			"mm/dd/yy;@",
 			"mm/dd/yyyy;@",
 			"yy/mm/dd;@",
-			"yyyy-mm-dd;@",
-			"[$-441]dd-mmm-yy;@",
-			"[$-441]dddd, mmmm dd, yyyy;@",
-			"[$-441]mmmm dd, yyyy;@",
-			"[$-441]dddd, dd mmmm, yyyy;@",
-			"[$-441]dd mmmm, yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-441]dd\\-mmm\\-yy;@",
+			"[$-441]dddd\\,\\ mmmm\\ dd\\,\\ yyyy;@",
+			"[$-441]mmmm\\ dd\\,\\ yyyy;@",
+			"[$-441]dddd\\,\\ dd\\ mmmm\\,\\ yyyy;@",
+			"[$-441]dd\\ mmmm\\,\\ yyyy;@"
 		],
 		"1090": [
-			"yyyy-mm-dd;@",
-			"[$-10442]dd.mm.yy \"ý.\";@",
-			"[$-10442]dd.mm.yyyy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-10442]dd\\.mm\\.yy\\ \"ý.\";@",
+			"[$-10442]dd\\.mm\\.yyyy;@",
 			"[$-10442]yyyy\"-nji ýylyň \"d\"-nji \"mmmm;@",
-			"[$-10442]d mmmm yyyy dddd;@"
+			"[$-10442]d\\ mmmm\\ yyyy\\ dddd;@"
 		],
 		"1091": [
-			"dd/mm yyyy;@",
-			"dd.mm.yy;@",
-			"d.m.yy;@",
+			"dd/mm\\ yyyy;@",
+			"dd\\.mm\\.yy;@",
+			"d\\.m\\.yy;@",
 			"dd/mm/yy;@",
-			"yyyy-mm-dd;@",
-			"[$-443]yyyy \"yil\" d-mmmm;@",
-			"[$-443]d mmmm yyyy;@",
-			"[$-443]dd mmmm yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-443]yyyy\\ \"yil\"\\ d\\-mmmm;@",
+			"[$-443]d\\ mmmm\\ yyyy;@",
+			"[$-443]dd\\ mmmm\\ yyyy;@"
 		],
 		"1092": [
-			"dd.mm.yyyy;@",
-			"dd.mm.yy;@",
-			"d.m.yy;@",
+			"dd\\.mm\\.yyyy;@",
+			"dd\\.mm\\.yy;@",
+			"d\\.m\\.yy;@",
 			"dd/mm/yy;@",
-			"yyyy-mm-dd;@",
-			"[$-444]d mmmm yyyy;@",
-			"[$-444]dd mmmm yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-444]d\\ mmmm\\ yyyy;@",
+			"[$-444]dd\\ mmmm\\ yyyy;@"
 		],
 		"1093": [
-			"dd-mm-yyyy;@",
-			"dd-mm-yy;@",
-			"d-m-yy;@",
-			"d.m.yy;@",
-			"yyyy-mm-dd;@",
-			"[$-445]dd mmmm yyyy;@",
-			"[$-445]d mmmm yyyy;@",
-			"[$-5000445]dd-mm-yyyy;@",
-			"[$-5000445]dd-mm-yy;@",
-			"[$-5000445]d-m-yy;@",
-			"[$-5000445]d.m.yy;@",
-			"[$-5000445]yyyy-mm-dd;@",
-			"[$-5000445]dd mmmm yyyy;@",
-			"[$-5000445]d mmmm yyyy;@"
+			"dd\\-mm\\-yyyy;@",
+			"dd\\-mm\\-yy;@",
+			"d\\-m\\-yy;@",
+			"d\\.m\\.yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-445]dd\\ mmmm\\ yyyy;@",
+			"[$-445]d\\ mmmm\\ yyyy;@",
+			"[$-5000445]dd\\-mm\\-yyyy;@",
+			"[$-5000445]dd\\-mm\\-yy;@",
+			"[$-5000445]d\\-m\\-yy;@",
+			"[$-5000445]d\\.m\\.yy;@",
+			"[$-5000445]yyyy\\-mm\\-dd;@",
+			"[$-5000445]dd\\ mmmm\\ yyyy;@",
+			"[$-5000445]d\\ mmmm\\ yyyy;@"
 		],
 		"1094": [
-			"dd-mm-yy;@",
-			"d-m-yy;@",
-			"d.m.yy;@",
-			"dd-mm-yyyy;@",
-			"yyyy-mm-dd;@",
-			"[$-446]dd mmmm yyyy dddd;@",
-			"[$-446]d mmmm yyyy;@",
-			"[$-6000446]dd-mm-yy;@",
-			"[$-6000446]d-m-yy;@",
-			"[$-6000446]d.m.yy;@",
-			"[$-6000446]dd-mm-yyyy;@",
-			"[$-6000446]yyyy-mm-dd;@",
-			"[$-6000446]dd mmmm yyyy dddd;@",
-			"[$-6000446]d mmmm yyyy;@"
+			"dd\\-mm\\-yy;@",
+			"d\\-m\\-yy;@",
+			"d\\.m\\.yy;@",
+			"dd\\-mm\\-yyyy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-446]dd\\ mmmm\\ yyyy\\ dddd;@",
+			"[$-446]d\\ mmmm\\ yyyy;@",
+			"[$-6000446]dd\\-mm\\-yy;@",
+			"[$-6000446]d\\-m\\-yy;@",
+			"[$-6000446]d\\.m\\.yy;@",
+			"[$-6000446]dd\\-mm\\-yyyy;@",
+			"[$-6000446]yyyy\\-mm\\-dd;@",
+			"[$-6000446]dd\\ mmmm\\ yyyy\\ dddd;@",
+			"[$-6000446]d\\ mmmm\\ yyyy;@"
 		],
 		"1095": [
-			"dd-mm-yy;@",
-			"d-m-yy;@",
-			"d.m.yy;@",
-			"dd-mm-yyyy;@",
-			"yyyy-mm-dd;@",
-			"[$-447]dd mmmm yyyy;@",
-			"[$-447]d mmmm yyyy;@",
-			"[$-7000447]dd-mm-yy;@",
-			"[$-7000447]d-m-yy;@",
-			"[$-7000447]d.m.yy;@",
-			"[$-7000447]dd-mm-yyyy;@",
-			"[$-7000447]yyyy-mm-dd;@",
-			"[$-7000447]dd mmmm yyyy;@",
-			"[$-7000447]d mmmm yyyy;@"
+			"dd\\-mm\\-yy;@",
+			"d\\-m\\-yy;@",
+			"d\\.m\\.yy;@",
+			"dd\\-mm\\-yyyy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-447]dd\\ mmmm\\ yyyy;@",
+			"[$-447]d\\ mmmm\\ yyyy;@",
+			"[$-7000447]dd\\-mm\\-yy;@",
+			"[$-7000447]d\\-m\\-yy;@",
+			"[$-7000447]d\\.m\\.yy;@",
+			"[$-7000447]dd\\-mm\\-yyyy;@",
+			"[$-7000447]yyyy\\-mm\\-dd;@",
+			"[$-7000447]dd\\ mmmm\\ yyyy;@",
+			"[$-7000447]d\\ mmmm\\ yyyy;@"
 		],
 		"1096": [
-			"[$-10448]dd-mm-yy;@",
-			"[$-10448]d-m-yy;@",
-			"[$-10448]d.m.yy;@",
-			"[$-10448]dd-mm-yyyy;@",
-			"[$-10448]yyyy-mm-dd;@",
-			"[$-10448]dd mmmm yyyy;@",
-			"[$-10448]d mmmm yyyy;@",
-			"[$-10448]dddd, mmmm d, yyyy;@"
+			"[$-10448]dd\\-mm\\-yy;@",
+			"[$-10448]d\\-m\\-yy;@",
+			"[$-10448]d\\.m\\.yy;@",
+			"[$-10448]dd\\-mm\\-yyyy;@",
+			"[$-10448]yyyy\\-mm\\-dd;@",
+			"[$-10448]dd\\ mmmm\\ yyyy;@",
+			"[$-10448]d\\ mmmm\\ yyyy;@",
+			"[$-10448]dddd\\,\\ mmmm\\ d\\,\\ yyyy;@"
 		],
 		"1097": [
-			"dd-mm-yyyy;@",
-			"dd-mm-yy;@",
-			"d-m-yy;@",
-			"d.m.yy;@",
-			"yyyy-mm-dd;@",
-			"[$-449]dd mmmm yyyy;@",
-			"[$-449]d mmmm yyyy;@",
-			"[$-9000449]dd-mm-yyyy;@",
-			"[$-9000449]dd-mm-yy;@",
-			"[$-9000449]d-m-yy;@",
-			"[$-9000449]d.m.yy;@",
-			"[$-9000449]yyyy-mm-dd;@",
-			"[$-9000449]dd mmmm yyyy;@",
-			"[$-9000449]d mmmm yyyy;@"
+			"dd\\-mm\\-yyyy;@",
+			"dd\\-mm\\-yy;@",
+			"d\\-m\\-yy;@",
+			"d\\.m\\.yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-449]dd\\ mmmm\\ yyyy;@",
+			"[$-449]d\\ mmmm\\ yyyy;@",
+			"[$-9000449]dd\\-mm\\-yyyy;@",
+			"[$-9000449]dd\\-mm\\-yy;@",
+			"[$-9000449]d\\-m\\-yy;@",
+			"[$-9000449]d\\.m\\.yy;@",
+			"[$-9000449]yyyy\\-mm\\-dd;@",
+			"[$-9000449]dd\\ mmmm\\ yyyy;@",
+			"[$-9000449]d\\ mmmm\\ yyyy;@"
 		],
 		"1098": [
-			"dd-mm-yy;@",
-			"d-m-yy;@",
-			"d.m.yy;@",
-			"dd-mm-yyyy;@",
-			"yyyy-mm-dd;@",
-			"[$-44A]dd mmmm yyyy;@",
-			"[$-44A]d mmmm yyyy;@",
-			"[$-A00044A]dd-mm-yy;@",
-			"[$-A00044A]d-m-yy;@",
-			"[$-A00044A]d.m.yy;@",
-			"[$-A00044A]dd-mm-yyyy;@",
-			"[$-A00044A]yyyy-mm-dd;@",
-			"[$-A00044A]dd mmmm yyyy;@",
-			"[$-A00044A]d mmmm yyyy;@"
+			"dd\\-mm\\-yy;@",
+			"d\\-m\\-yy;@",
+			"d\\.m\\.yy;@",
+			"dd\\-mm\\-yyyy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-44A]dd\\ mmmm\\ yyyy;@",
+			"[$-44A]d\\ mmmm\\ yyyy;@",
+			"[$-A00044A]dd\\-mm\\-yy;@",
+			"[$-A00044A]d\\-m\\-yy;@",
+			"[$-A00044A]d\\.m\\.yy;@",
+			"[$-A00044A]dd\\-mm\\-yyyy;@",
+			"[$-A00044A]yyyy\\-mm\\-dd;@",
+			"[$-A00044A]dd\\ mmmm\\ yyyy;@",
+			"[$-A00044A]d\\ mmmm\\ yyyy;@"
 		],
 		"1099": [
-			"dd-mm-yy;@",
-			"d-m-yy;@",
-			"d.m.yy;@",
-			"dd-mm-yyyy;@",
-			"yyyy-mm-dd;@",
-			"[$-44B]dd mmmm yyyy;@",
-			"[$-44B]d mmmm yyyy;@"
+			"dd\\-mm\\-yy;@",
+			"d\\-m\\-yy;@",
+			"d\\.m\\.yy;@",
+			"dd\\-mm\\-yyyy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-44B]dd\\ mmmm\\ yyyy;@",
+			"[$-44B]d\\ mmmm\\ yyyy;@"
 		],
 		"1100": [
-			"dd-mm-yyyy;@",
-			"dd-mm-yy;@",
-			"d-m-yy;@",
-			"d.m.yy;@",
-			"yyyy-mm-dd;@",
-			"[$-44C]dd mmmm yyyy;@",
-			"[$-44C]d mmmm yyyy;@",
-			"[$-C00044C]dd-mm-yyyy;@",
-			"[$-C00044C]dd-mm-yy;@",
-			"[$-C00044C]d-m-yy;@",
-			"[$-C00044C]d.m.yy;@",
-			"[$-C00044C]yyyy-mm-dd;@",
-			"[$-C00044C]dd mmmm yyyy;@",
-			"[$-C00044C]d mmmm yyyy;@"
+			"dd\\-mm\\-yyyy;@",
+			"dd\\-mm\\-yy;@",
+			"d\\-m\\-yy;@",
+			"d\\.m\\.yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-44C]dd\\ mmmm\\ yyyy;@",
+			"[$-44C]d\\ mmmm\\ yyyy;@",
+			"[$-C00044C]dd\\-mm\\-yyyy;@",
+			"[$-C00044C]dd\\-mm\\-yy;@",
+			"[$-C00044C]d\\-m\\-yy;@",
+			"[$-C00044C]d\\.m\\.yy;@",
+			"[$-C00044C]yyyy\\-mm\\-dd;@",
+			"[$-C00044C]dd\\ mmmm\\ yyyy;@",
+			"[$-C00044C]d\\ mmmm\\ yyyy;@"
 		],
 		"1101": [
-			"yyyy-mm-dd;@",
-			"[$-1044D]dd-mm-yyyy;@",
-			"[$-1044D]yyyy,mmmm dd, dddd;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-1044D]dd\\-mm\\-yyyy;@",
+			"[$-1044D]yyyy\\,mmmm\\ dd\\,\\ dddd;@"
 		],
 		"1102": [
-			"dd-mm-yyyy;@",
-			"dd-mm-yy;@",
-			"d-m-yy;@",
-			"d.m.yy;@",
-			"yyyy-mm-dd;@",
-			"[$-44E]dd mmmm yyyy;@",
-			"[$-44E]d mmmm yyyy;@"
+			"dd\\-mm\\-yyyy;@",
+			"dd\\-mm\\-yy;@",
+			"d\\-m\\-yy;@",
+			"d\\.m\\.yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-44E]dd\\ mmmm\\ yyyy;@",
+			"[$-44E]d\\ mmmm\\ yyyy;@"
 		],
 		"1103": [
-			"dd-mm-yyyy;@",
-			"dd-mm-yy;@",
-			"d-m-yy;@",
-			"d.m.yy;@",
-			"yyyy-mm-dd;@",
-			"[$-44F]dd mmmm yyyy dddd;@",
-			"[$-44F]d mmmm yyyy;@"
+			"dd\\-mm\\-yyyy;@",
+			"dd\\-mm\\-yy;@",
+			"d\\-m\\-yy;@",
+			"d\\.m\\.yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-44F]dd\\ mmmm\\ yyyy\\ dddd;@",
+			"[$-44F]d\\ mmmm\\ yyyy;@"
 		],
 		"1104": [
-			"yyyy-mm-dd;@",
-			"yy.mm.dd;@",
-			"[$-450]yyyy \"оны\" mmmm d;@"
+			"yyyy\\-mm\\-dd;@",
+			"yy\\.mm\\.dd;@",
+			"[$-450]yyyy\\ \"оны\"\\ mmmm\\ d;@"
 		],
 		"1105": [
 			"[$-10451]yyyy/m/d;@",
-			"[$-10451]yyyy-m-d;@",
-			"[$-10451]yyyy.m.d;@",
-			"[$-10451]yyyy.mm.dd;@",
-			"[$-10451]yyyy-mm-dd;@",
+			"[$-10451]yyyy\\-m\\-d;@",
+			"[$-10451]yyyy\\.m\\.d;@",
+			"[$-10451]yyyy\\.mm\\.dd;@",
+			"[$-10451]yyyy\\-mm\\-dd;@",
 			"[$-10451]yyyy/mm/dd;@",
-			"[$-10451]yy-m-d;@",
+			"[$-10451]yy\\-m\\-d;@",
 			"[$-10451]yy/m/d;@",
-			"[$-10451]yy.m.d;@",
-			"[$-10451]yyyy\"ལོའི་ཟླ\" m\"ཚེས\" d;@",
-			"[$-10451]yyyy\"ལོའི་ཟླ\" m\"ཚེས\" d dddd;@",
-			"[$-10451]yyyyལོའི་ཟླ mmm d;@",
-			"[$-10451]yyyyལོའི་ཟླ mmm d dddd;@"
+			"[$-10451]yy\\.m\\.d;@",
+			"[$-10451]yyyy\"ལོའི་ཟླ\"\\ m\"ཚེས\"\\ d;@",
+			"[$-10451]yyyy\"ལོའི་ཟླ\"\\ m\"ཚེས\"\\ d\\ dddd;@",
+			"[$-10451]yyyy\\ལ\\ོ\\འ\\ི\\་\\ཟ\\ླ\\ mmm\\ d;@",
+			"[$-10451]yyyy\\ལ\\ོ\\འ\\ི\\་\\ཟ\\ླ\\ mmm\\ d\\ dddd;@"
 		],
 		"1106": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10452]dd/mm/yyyy;@",
 			"[$-10452]dd/mm/yy;@",
-			"[$-10452]d mmm yyyy;@",
-			"[$-10452]dddd, d mmmm yyyy;@",
-			"[$-10452]d mmmm yyyy;@"
+			"[$-10452]d\\ mmm\\ yyyy;@",
+			"[$-10452]dddd\\,\\ d\\ mmmm\\ yyyy;@",
+			"[$-10452]d\\ mmmm\\ yyyy;@"
 		],
 		"1107": [
 			"[$-10453]dd/mm/yy;@",
-			"[$-10453]yyyy-mm-dd;@",
-			"[$-10453]d mmmm yyyy;@",
-			"[$-10453]ddd d mmmm yyyy;@",
-			"[$-10453]dddd d mmmm yyyy;@"
+			"[$-10453]yyyy\\-mm\\-dd;@",
+			"[$-10453]d\\ mmmm\\ yyyy;@",
+			"[$-10453]ddd\\ d\\ mmmm\\ yyyy;@",
+			"[$-10453]dddd\\ d\\ mmmm\\ yyyy;@"
 		],
 		"1108": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10454]d/m/yyyy;@",
-			"[$-10454]d mmm yyyy;@",
-			"[$-10454]dddd ທີ d mmmm gg yyyy;@",
-			"[$-10454]d mmmm yyyy;@"
+			"[$-10454]d\\ mmm\\ yyyy;@",
+			"[$-10454]dddd\\ \\ທ\\ີ\\ d\\ mmmm\\ gg\\ yyyy;@",
+			"[$-10454]d\\ mmmm\\ yyyy;@"
 		],
 		"1109": [
-			"yyyy-mm-dd;@",
-			"[$-10455]dd-mm-yyyy;@",
-			"[$-10455]dd-mm-yy;@",
-			"[$-10455]yyyy၊ mmm d;@",
-			"[$-10455]yyyy၊ mmmm d၊ dddd;@",
-			"[$-10455]yyyy၊ d mmmm;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-10455]d/m/yyyy;@",
+			"[$-10455]d/m/yy;@",
+			"[$-10455]yyyy\\၊\\ mmm\\ d;@",
+			"[$-10455]yyyy\\၊\\ mmmm\\ d\\၊\\ dddd;@",
+			"[$-10455]yyyy\\၊\\ mmmm\\ d;@"
 		],
 		"1110": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"dd/mm/yy;@",
 			"d/mm/yy;@",
 			"d/m/yy;@",
-			"dd-mm-yy;@",
-			"dd.mm.yy;@",
+			"dd\\-mm\\-yy;@",
+			"dd\\.mm\\.yy;@",
 			"dd/mm/yyyy;@",
-			"[$-456]dddd, dd\" de \"mmmm\" de \"yyyy;@",
-			"[$-456]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-456]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-456]dddd\\ d\" de \"mmmm\" de \"yyyy;@",
 			"[$-456]d\" de \"mmmm\" de \"yyyy;@"
 		],
 		"1111": [
-			"dd-mm-yyyy;@",
-			"dd-mm-yy;@",
-			"d-m-yy;@",
-			"d.m.yy;@",
-			"yyyy-mm-dd;@",
-			"[$-457]dd mmmm yyyy;@",
-			"[$-457]d mmmm yyyy;@"
+			"dd\\-mm\\-yyyy;@",
+			"dd\\-mm\\-yy;@",
+			"d\\-m\\-yy;@",
+			"d\\.m\\.yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-457]dd\\ mmmm\\ yyyy;@",
+			"[$-457]d\\ mmmm\\ yyyy;@"
 		],
 		"1112": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10458]d/m/yyyy;@",
 			"[$-10458]d/m/yy;@",
-			"[$-10458]mmm d, yyyy;@",
-			"[$-10458]mmmm d, yyyy, dddd;@",
-			"[$-10458]mmmm d, yyyy;@"
+			"[$-10458]mmm\\ d\\,\\ yyyy;@",
+			"[$-10458]mmmm\\ d\\,\\ yyyy\\,\\ dddd;@",
+			"[$-10458]mmmm\\ d\\,\\ yyyy;@"
 		],
 		"1113": [
-			"yyyy-mm-dd;@",
-			"[$-10459]d/m/yyyy;@",
-			"[$-10459]d/m/yy;@",
-			"[$-10459]d mmm yyyy;@",
-			"[$-10459]dddd, d mmmm yyyy;@",
-			"[$-10459]d mmmm yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-10459]m/d/yyyy;@",
+			"[$-10459]m/d/yy;@",
+			"[$-10459]mmm\\ d\\,\\ yyyy;@",
+			"[$-10459]dddd\\,\\ mmmm\\ d\\,\\ yyyy;@",
+			"[$-10459]mmmm\\ d\\,\\ yyyy;@"
 		],
 		"1114": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
-			"yyyy-mm-dd;@",
-			"[$-45A]dd mmmm, yyyy;@",
-			"[$-45A]dddd, dd mmmm, yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-45A]dd\\ mmmm\\,\\ yyyy;@",
+			"[$-45A]dddd\\,\\ dd\\ mmmm\\,\\ yyyy;@"
 		],
 		"1115": [
-			"[$-1045B]yyyy-mm-dd;@",
-			"[$-1045B]yyyy mmm d;@",
-			"[$-1045B]yyyy mmmm d, dddd;@",
-			"[$-1045B]yyyy mmmm d;@"
+			"[$-1045B]yyyy\\-mm\\-dd;@",
+			"[$-1045B]yyyy\\ mmm\\ d;@",
+			"[$-1045B]yyyy\\ mmmm\\ d\\,\\ dddd;@",
+			"[$-1045B]yyyy\\ mmmm\\ d;@"
 		],
 		"1116": [
 			"[$-1045C]m/d/yyyy;@",
@@ -7001,46 +7189,46 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 			"[$-1045C]mm/dd/yy;@",
 			"[$-1045C]mm/dd/yyyy;@",
 			"[$-1045C]yy/mm/dd;@",
-			"[$-1045C]yyyy-mm-dd;@",
-			"[$-1045C]dd-mmm-yy;@",
-			"[$-1045C]dddd, mmmm dd,yyyy;@",
-			"[$-1045C]mmmm dd,yyyy;@",
-			"[$-1045C]dddd, dd mmmm, yyyy;@",
-			"[$-1045C]dd mmmm, yyyy;@"
+			"[$-1045C]yyyy\\-mm\\-dd;@",
+			"[$-1045C]dd\\-mmm\\-yy;@",
+			"[$-1045C]dddd\\,\\ mmmm\\ dd\\,yyyy;@",
+			"[$-1045C]mmmm\\ dd\\,yyyy;@",
+			"[$-1045C]dddd\\,\\ dd\\ mmmm\\,\\ yyyy;@",
+			"[$-1045C]dd\\ mmmm\\,\\ yyyy;@"
 		],
 		"1117": [
 			"[$-1045D]d/m/yyyy;@",
 			"[$-1045D]d/m/yy;@",
 			"[$-1045D]dd/mm/yy;@",
 			"[$-1045D]yy/mm/dd;@",
-			"[$-1045D]yyyy-mm-dd;@",
-			"[$-1045D]dd-mmm-yy;@",
-			"[$-1045D]dddd,mmmm dd,yyyy;@",
-			"[$-1045D]mmmm dd,yyyy;@",
-			"[$-1045D]dddd, dd mmmm, yyyy;@",
-			"[$-1045D]dd mmmm, yyyy;@"
+			"[$-1045D]yyyy\\-mm\\-dd;@",
+			"[$-1045D]dd\\-mmm\\-yy;@",
+			"[$-1045D]dddd\\,mmmm\\ dd\\,yyyy;@",
+			"[$-1045D]mmmm\\ dd\\,yyyy;@",
+			"[$-1045D]dddd\\,\\ dd\\ mmmm\\,\\ yyyy;@",
+			"[$-1045D]dd\\ mmmm\\,\\ yyyy;@"
 		],
 		"1118": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1045E]dd/mm/yyyy;@",
-			"[$-1045E]d mmm yyyy;@",
-			"[$-1045E]yyyy mmmm d, dddd;@",
-			"[$-1045E]d mmmm yyyy;@"
+			"[$-1045E]d\\ mmm\\ yyyy;@",
+			"[$-1045E]yyyy\\ mmmm\\ d\\,\\ dddd;@",
+			"[$-1045E]d\\ mmmm\\ yyyy;@"
 		],
 		"1119": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1045F]d/m/yyyy;@",
 			"[$-1045F]dd/mm/yyyy;@",
-			"[$-1045F]dddd، d mmmm yyyy;@",
-			"[$-1045F]d mmmm yyyy;@"
+			"[$-1045F]dddd\\،\\ d\\ mmmm\\ yyyy;@",
+			"[$-1045F]d\\ mmmm\\ yyyy;@"
 		],
 		"1120": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10460]m/d/yyyy;@",
 			"[$-10460]m/d/yy;@",
-			"[$-10460]mmm d, yyyy;@",
-			"[$-10460]dddd, mmmm d, yyyy;@",
-			"[$-10460]mmmm d, yyyy;@"
+			"[$-10460]mmm\\ d\\,\\ yyyy;@",
+			"[$-10460]dddd\\,\\ mmmm\\ d\\,\\ yyyy;@",
+			"[$-10460]mmmm\\ d\\,\\ yyyy;@"
 		],
 		"1121": [
 			"[$-10461]m/d/yyyy;@",
@@ -7048,225 +7236,225 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 			"[$-10461]mm/dd/yy;@",
 			"[$-10461]mm/dd/yyyy;@",
 			"[$-10461]yy/mm/dd;@",
-			"[$-10461]yyyy-mm-dd;@",
-			"[$-10461]dd-mmm-yy;@",
-			"[$-10461]dddd, mmmm dd, yyyy;@",
-			"[$-10461]mmmm dd, yyyy;@",
-			"[$-10461]dddd, dd mmmm, yyyy;@",
-			"[$-10461]dd mmmm, yyyy;@"
+			"[$-10461]yyyy\\-mm\\-dd;@",
+			"[$-10461]dd\\-mmm\\-yy;@",
+			"[$-10461]dddd\\,\\ mmmm\\ dd\\,\\ yyyy;@",
+			"[$-10461]mmmm\\ dd\\,\\ yyyy;@",
+			"[$-10461]dddd\\,\\ dd\\ mmmm\\,\\ yyyy;@",
+			"[$-10461]dd\\ mmmm\\,\\ yyyy;@"
 		],
 		"1122": [
-			"yyyy-mm-dd;@",
-			"[$-10462]dd-mm-yyyy;@",
-			"[$-10462]dd-mm-yy;@",
-			"[$-10462]d mmm yyyy;@",
-			"[$-10462]dddd d mmmm yyyy;@",
-			"[$-10462]d mmmm yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-10462]dd\\-mm\\-yyyy;@",
+			"[$-10462]dd\\-mm\\-yy;@",
+			"[$-10462]d\\ mmm\\ yyyy;@",
+			"[$-10462]dddd\\ d\\ mmmm\\ yyyy;@",
+			"[$-10462]d\\ mmmm\\ yyyy;@"
 		],
 		"1123": [
 			"[$-160463]yyyy/m/d;@",
-			"[$-160463]yyyy-mm-dd;@",
-			"[$-160463]d mmmm yyyy;@",
-			"[$-160463]dddd d mmmm yyyy;@"
+			"[$-160463]yyyy\\-mm\\-dd;@",
+			"[$-160463]d\\ mmmm\\ yyyy;@",
+			"[$-160463]dddd\\ d\\ mmmm\\ yyyy;@"
 		],
 		"1124": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10464]m/d/yyyy;@",
 			"[$-10464]m/d/yy;@",
-			"[$-10464]mmm d, yyyy;@",
-			"[$-10464]dddd, mmmm d, yyyy;@",
-			"[$-10464]mmmm d, yyyy;@"
+			"[$-10464]mmm\\ d\\,\\ yyyy;@",
+			"[$-10464]dddd\\,\\ mmmm\\ d\\,\\ yyyy;@",
+			"[$-10464]mmmm\\ d\\,\\ yyyy;@"
 		],
 		"1125": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1010000]dd/mm/yy;@",
 			"[$-1010000]dd/mm/yyyy;@",
-			"[$-1010000]dd mm yyyy;@",
-			"[$-1010465]dd mmm yyyy;@",
-			"[$-1010465]dd mmmm yyyy;@",
-			"[$-1010465]ddd, dd mmmm yyyy;@",
-			"[$-1010465]ddd, dd mmm yyyy;@",
-			"[$-1010465]dddd, dd mmm yyyy;@",
-			"[$-1010465]dddd, dd mmmm yyyy;@"
+			"[$-1010000]dd\\ mm\\ yyyy;@",
+			"[$-1010465]dd\\ mmm\\ yyyy;@",
+			"[$-1010465]dd\\ mmmm\\ yyyy;@",
+			"[$-1010465]ddd\\,\\ dd\\ mmmm\\ yyyy;@",
+			"[$-1010465]ddd\\,\\ dd\\ mmm\\ yyyy;@",
+			"[$-1010465]dddd\\,\\ dd\\ mmm\\ yyyy;@",
+			"[$-1010465]dddd\\,\\ dd\\ mmmm\\ yyyy;@"
 		],
 		"1126": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10466]d/m/yyyy;@",
-			"[$-10466]d mmm yyyy;@",
-			"[$-10466]dddd, mmmm dd, yyyy;@",
-			"[$-10466]mmmm dd, yyyy;@"
+			"[$-10466]d\\ mmm\\ yyyy;@",
+			"[$-10466]dddd\\,\\ mmmm\\ dd\\,\\ yyyy;@",
+			"[$-10466]mmmm\\ dd\\,\\ yyyy;@"
 		],
 		"1127": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10467]d/m/yyyy;@",
-			"[$-10467]d mmm, yyyy;@",
-			"[$-10467]dddd d mmmm yyyy;@",
-			"[$-10467]d mmmm yyyy;@"
+			"[$-10467]d\\ mmm\\,\\ yyyy;@",
+			"[$-10467]dddd\\ d\\ mmmm\\ yyyy;@",
+			"[$-10467]d\\ mmmm\\ yyyy;@"
 		],
 		"1128": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10468]d/m/yyyy;@",
 			"[$-10468]d/m/yy;@",
-			"[$-10468]d mmm, yyyy;@",
-			"[$-10468]dddd d mmmm, yyyy;@",
-			"[$-10468]d mmmm, yyyy;@"
+			"[$-10468]d\\ mmm\\,\\ yyyy;@",
+			"[$-10468]dddd\\ d\\ mmmm\\,\\ yyyy;@",
+			"[$-10468]d\\ mmmm\\,\\ yyyy;@"
 		],
 		"1129": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10469]d/m/yyyy;@",
-			"[$-10469]d mmm yyyy;@",
-			"[$-10469]dddd, mmmm dd, yyyy;@",
-			"[$-10469]mmmm dd, yyyy;@"
+			"[$-10469]d\\ mmm\\ yyyy;@",
+			"[$-10469]dddd\\,\\ mmmm\\ dd\\,\\ yyyy;@",
+			"[$-10469]mmmm\\ dd\\,\\ yyyy;@"
 		],
 		"1130": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1046A]d/m/yyyy;@",
-			"[$-1046A]d mm yyyy;@",
-			"[$-1046A]dddd, d mmm yyyy;@",
-			"[$-1046A]d mmm yyyy;@"
+			"[$-1046A]d\\ mm\\ yyyy;@",
+			"[$-1046A]dddd\\,\\ d\\ mmm\\ yyyy;@",
+			"[$-1046A]d\\ mmm\\ yyyy;@"
 		],
 		"1131": [
 			"[$-1046B]dd/mm/yyyy;@",
 			"[$-1046B]dd/mm/yy;@",
 			"[$-1046B]d/m/yy;@",
-			"[$-1046B]dd-mm-yy;@",
-			"[$-1046B]yyyy-mm-dd;@",
-			"[$-1046B]dddd, dd\" de \"mmmm\" de \"yyyy;@",
-			"[$-1046B]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-1046B]dd\\-mm\\-yy;@",
+			"[$-1046B]yyyy\\-mm\\-dd;@",
+			"[$-1046B]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-1046B]dddd\\ d\" de \"mmmm\" de \"yyyy;@",
 			"[$-1046B]d\" de \"mmmm\" de \"yyyy;@"
 		],
 		"1132": [
-			"[$-1046C]yyyy-mm-dd;@",
-			"[$-1046C]yyyy mmm d;@",
-			"[$-1046C]yyyy mmmm d, dddd;@",
-			"[$-1046C]yyyy mmmm d;@"
+			"[$-1046C]yyyy\\-mm\\-dd;@",
+			"[$-1046C]yyyy\\ mmm\\ d;@",
+			"[$-1046C]yyyy\\ mmmm\\ d\\,\\ dddd;@",
+			"[$-1046C]yyyy\\ mmmm\\ d;@"
 		],
 		"1133": [
-			"[$-1046D]dd.mm.yy;@",
-			"[$-1046D]yyyy-mm-dd;@",
-			"[$-1046D]d mmmm yyyy \"й\";@",
-			"[$-1046D]dddd mmmm yyyy \"й\";@"
+			"[$-1046D]dd\\.mm\\.yy;@",
+			"[$-1046D]yyyy\\-mm\\-dd;@",
+			"[$-1046D]d\\ mmmm\\ yyyy\\ \"й\";@",
+			"[$-1046D]dddd\\ mmmm\\ yyyy\\ \"й\";@"
 		],
 		"1134": [
-			"yyyy-mm-dd;@",
-			"[$-1046E]dd.mm.yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-1046E]dd\\.mm\\.yy;@",
 			"[$-1046E]dd/mm/yy;@",
-			"[$-1046E]dd-mm-yy;@",
-			"[$-1046E]d. mmmm yyyy;@",
-			"[$-1046E]dd. mmmmyyyy;@",
-			"[$-1046E]dddd, d. mmmm yyyy;@",
-			"[$-1046E]dddd, dd. mmmm yyyy;@",
-			"[$-1046E]dddd,\" den \"d. mmmm yyyy;@",
-			"[$-1046E]dddd,\" den \"dd. mmmm yyyy;@"
+			"[$-1046E]dd\\-mm\\-yy;@",
+			"[$-1046E]d\\.\\ mmmm\\ yyyy;@",
+			"[$-1046E]dd\\.\\ mmmmyyyy;@",
+			"[$-1046E]dddd\\,\\ d\\.\\ mmmm\\ yyyy;@",
+			"[$-1046E]dddd\\,\\ dd\\.\\ mmmm\\ yyyy;@",
+			"[$-1046E]dddd\\,\" den \"d\\.\\ mmmm\\ yyyy;@",
+			"[$-1046E]dddd\\,\" den \"dd\\.\\ mmmm\\ yyyy;@"
 		],
 		"1135": [
-			"[$-1046F]dd-mm-yyyy;@",
-			"[$-1046F]dd-mm-yy;@",
-			"[$-1046F]yyyy-mm-dd;@",
-			"[$-1046F]yyyy mm dd;@",
-			"[$-1046F]mmmm d\".-at, \"yyyy;@",
-			"[$-1046F]d. mmmm yyyy;@",
-			"[$-1046F]dd. mmmm yyyy;@",
-			"[$-1046F]dddd dd mmmm yyyy;@"
+			"[$-1046F]dd\\-mm\\-yyyy;@",
+			"[$-1046F]dd\\-mm\\-yy;@",
+			"[$-1046F]yyyy\\-mm\\-dd;@",
+			"[$-1046F]yyyy\\ mm\\ dd;@",
+			"[$-1046F]mmmm\\ d\".-at, \"yyyy;@",
+			"[$-1046F]d\\.\\ mmmm\\ yyyy;@",
+			"[$-1046F]dd\\.\\ mmmm\\ yyyy;@",
+			"[$-1046F]dddd\\ dd\\ mmmm\\ yyyy;@"
 		],
 		"1136": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10470]d/m/yyyy;@",
 			"[$-10470]d/m/yy;@",
-			"[$-10470]d mmm yyyy;@",
-			"[$-10470]dddd, d mmmm yyyy;@",
-			"[$-10470]d mmmm yyyy;@"
+			"[$-10470]d\\ mmm\\ yyyy;@",
+			"[$-10470]dddd\\,\\ d\\ mmmm\\ yyyy;@",
+			"[$-10470]d\\ mmmm\\ yyyy;@"
 		],
 		"1137": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10471]d/m/yyyy;@",
-			"[$-10471]mmm d, yyyy;@",
-			"[$-10471]dddd, mmmm dd, yyyy;@",
-			"[$-10471]mmmm dd, yyyy;@"
+			"[$-10471]mmm\\ d\\,\\ yyyy;@",
+			"[$-10471]dddd\\,\\ mmmm\\ dd\\,\\ yyyy;@",
+			"[$-10471]mmmm\\ dd\\,\\ yyyy;@"
 		],
 		"1138": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10472]dd/mm/yyyy;@",
 			"[$-10472]dd/mm/yy;@",
-			"[$-10472]dd-mmm-yyyy;@",
-			"[$-10472]dddd, mmmm d, yyyy;@",
-			"[$-10472]dd mmmm yyyy;@"
+			"[$-10472]dd\\-mmm\\-yyyy;@",
+			"[$-10472]dddd\\,\\ mmmm\\ d\\,\\ yyyy;@",
+			"[$-10472]dd\\ mmmm\\ yyyy;@"
 		],
 		"1139": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10473]d/m/yyyy;@",
 			"[$-10473]dd/mm/yyyy;@",
 			"[$-10473]dd/mm/yy;@",
-			"[$-10473]dd-mmm-yyyy;@",
-			"[$-10473]dddd \"፣\" mmmm d \"መዓልቲ\" yyyy;@",
-			"[$-10473]dddd\\፣ dd mmmm መዓልቲ yyyy gg;@",
-			"[$-10473]dd mmmm yyyy;@"
+			"[$-10473]d\\ mmm\\ yyyy;@",
+			"[$-10473]dddd\\ \"፣\"\\ mmmm\\ d\\ \"መዓልቲ\"\\ yyyy;@",
+			"[$-10473]dddd\\፣\\ d\\ mmmm\\ yyyy;@",
+			"[$-10473]d\\ mmmm\\ yyyy;@"
 		],
 		"1140": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10474]dd/mm/yyyy;@",
 			"[$-10474]dd/mm/yy;@",
-			"[$-10474]dd-mm-yyyy;@",
-			"[$-10474]dd-mm-yy;@",
-			"[$-10474]dddd, dd mmmm, yyyy;@",
-			"[$-10474]dddd, d mmmm, yyyy;@",
+			"[$-10474]dd\\-mm\\-yyyy;@",
+			"[$-10474]dd\\-mm\\-yy;@",
+			"[$-10474]dddd\\,\\ dd\\ mmmm\\,\\ yyyy;@",
+			"[$-10474]dddd\\,\\ d\\ mmmm\\,\\ yyyy;@",
 			"[$-10474]dd/mmmm/yyyy;@",
 			"[$-10474]d/mmmm/yyyy;@",
-			"[$-10474]dd mmmm, yyyy;@",
-			"[$-10474]d mmmm, yyyy;@"
+			"[$-10474]dd\\ mmmm\\,\\ yyyy;@",
+			"[$-10474]d\\ mmmm\\,\\ yyyy;@"
 		],
 		"1141": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10475]d/m/yyyy;@",
 			"[$-10475]d/m/yy;@",
-			"[$-10475]d mmm yyyy;@",
-			"[$-10475]dddd, d mmmm yyyy;@",
-			"[$-10475]d mmmm yyyy;@"
+			"[$-10475]d\\ mmm\\ yyyy;@",
+			"[$-10475]dddd\\,\\ d\\ mmmm\\ yyyy;@",
+			"[$-10475]d\\ mmmm\\ yyyy;@"
 		],
 		"1142": [
-			"yyyy-mm-dd;@",
-			"[$-10476]d m yyyy gg;@",
-			"[$-10476]\"die\" d mmm yyyy gg;@",
-			"[$-10476]dddd, \"die\" d mmmm yyyy gg;@",
-			"[$-10476]\"die\" d mmmm yyyy gg;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-10476]d\\ m\\ yyyy\\ gg;@",
+			"[$-10476]\"die\"\\ d\\ mmm\\ yyyy\\ gg;@",
+			"[$-10476]dddd\\,\\ \"die\"\\ d\\ mmmm\\ yyyy\\ gg;@",
+			"[$-10476]\"die\"\\ d\\ mmmm\\ yyyy\\ gg;@"
 		],
 		"1143": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10477]dd/mm/yyyy;@",
 			"[$-10477]dd/mm/yy;@",
-			"[$-10477]dd-mmm-yyyy;@",
-			"[$-10477]dddd, mmmm dd, yyyy;@",
-			"[$-10477]dd mmmm yyyy;@"
+			"[$-10477]dd\\-mmm\\-yyyy;@",
+			"[$-10477]dddd\\,\\ mmmm\\ d\\,\\ yyyy;@",
+			"[$-10477]mmmm\\ d\\,\\ yyyy;@"
 		],
 		"1144": [
 			"[$-10478]yyyy/m/d;@",
-			"[$-10478]yyyy-m-d;@",
-			"[$-10478]yyyy.m.d;@",
-			"[$-10478]yyyy.mm.dd;@",
-			"[$-10478]yyyy-mm-dd;@",
+			"[$-10478]yyyy\\-m\\-d;@",
+			"[$-10478]yyyy\\.m\\.d;@",
+			"[$-10478]yyyy\\.mm\\.dd;@",
+			"[$-10478]yyyy\\-mm\\-dd;@",
 			"[$-10478]yyyy/mm/dd;@",
-			"[$-10478]yyyy\"ꈎ\" m\"ꆪ\" d\"ꑍ\";@",
-			"[$-10478]dddd, yyyy\"ꈎ\" m\"ꆪ\" d\"ꑍ\";@",
-			"[$-10478]yyyy\"ꈎ\" m\"ꆪ\" d\"ꑍ\", dddd;@",
-			"[$-10478]yyyyꈎ mmm dꑍ;@",
-			"[$-10478]dddd, yyyyꈎ mmm dꑍ;@"
+			"[$-10478]yyyy\"ꈎ\"\\ m\"ꆪ\"\\ d\"ꑍ\";@",
+			"[$-10478]dddd\\,\\ yyyy\"ꈎ\"\\ m\"ꆪ\"\\ d\"ꑍ\";@",
+			"[$-10478]yyyy\"ꈎ\"\\ m\"ꆪ\"\\ d\"ꑍ\"\\,\\ dddd;@",
+			"[$-10478]yyyy\\ꈎ\\ mmm\\ d\\ꑍ;@",
+			"[$-10478]dddd\\,\\ yyyy\\ꈎ\\ mmm\\ d\\ꑍ;@"
 		],
 		"1145": [
-			"yyyy-mm-dd;@",
-			"[$-10479]d-m-yyyy;@",
-			"[$-10479]d mmm yyyy;@",
-			"[$-10479]d mmm yy;@",
-			"[$-10479]dddd d mmmm yyyy;@",
-			"[$-10479]d mmmm yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-10479]d\\-m\\-yyyy;@",
+			"[$-10479]d\\ mmm\\ yyyy;@",
+			"[$-10479]d\\ mmm\\ yy;@",
+			"[$-10479]dddd\\ d\\ mmmm\\ yyyy;@",
+			"[$-10479]d\\ mmmm\\ yyyy;@"
 		],
 		"1146": [
-			"[$-1047A]dd-mm-yyyy;@",
-			"[$-1047A]dd-mm-yy;@",
+			"[$-1047A]dd\\-mm\\-yyyy;@",
+			"[$-1047A]dd\\-mm\\-yy;@",
 			"[$-1047A]dd/mm/yy;@",
 			"[$-1047A]d/m/yy;@",
-			"[$-1047A]yyyy-mm-dd;@",
-			"[$-1047A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
-			"[$-1047A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-1047A]yyyy\\-mm\\-dd;@",
+			"[$-1047A]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-1047A]dddd\\ d\" de \"mmmm\" de \"yyyy;@",
 			"[$-1047A]d\" de \"mmmm\" de \"yyyy;@"
 		],
 		"1148": [
@@ -7275,122 +7463,112 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 			"[$-1047C]mm/dd/yy;@",
 			"[$-1047C]mm/dd/yyyy;@",
 			"[$-1047C]yy/mm/dd;@",
-			"[$-1047C]yyyy-mm-dd;@",
-			"[$-1047C]dd-mmm-yy;@",
-			"[$-1047C]dddd, mmmm dd, yyyy;@",
-			"[$-1047C]mmmm dd, yyyy;@",
-			"[$-1047C]dddd, dd mmmm, yyyy;@",
-			"[$-1047C]dd mmmm, yyyy;@"
+			"[$-1047C]yyyy\\-mm\\-dd;@",
+			"[$-1047C]dd\\-mmm\\-yy;@",
+			"[$-1047C]dddd\\,\\ mmmm\\ dd\\,\\ yyyy;@",
+			"[$-1047C]mmmm\\ dd\\,\\ yyyy;@",
+			"[$-1047C]dddd\\,\\ dd\\ mmmm\\,\\ yyyy;@",
+			"[$-1047C]dd\\ mmmm\\,\\ yyyy;@"
 		],
 		"1150": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1047E]dd/mm/yyyy;@",
-			"[$-1047E]d mmm yyyy;@",
-			"[$-1047E]dddd d mmmm yyyy;@",
-			"[$-1047E]d mmmm yyyy;@"
+			"[$-1047E]d\\ mmm\\ yyyy;@",
+			"[$-1047E]dddd\\ d\\ mmmm\\ yyyy;@",
+			"[$-1047E]d\\ mmmm\\ yyyy;@"
 		],
 		"1152": [
-			"[$-10480]yyyy-m-d;@",
-			"[$-10480]yyyy.m.d;@",
-			"[$-10480]yyyy-mm-dd;@",
-			"[$-10480]yyyy.mm.dd;@",
-			"[$-10480]yyyy-\"يىل\" d-mmmm;@",
-			"[$-10480]yyyy-\"يىل\" d-mmmm dddd;@",
-			"[$-10480]yyyy-\"يىلى\" mmm\"نىڭ\" d\"-كۈنى\";@",
-			"[$-10480]yyyy-\"يىلى\" mmm\"نىڭ\" d\"-كۈنى\" dddd;@",
-			"[$-10480]yyyy-m-d dddd;@"
+			"[$-10480]yyyy\\-m\\-d;@",
+			"[$-10480]yyyy\\.m\\.d;@",
+			"[$-10480]yyyy\\-mm\\-dd;@",
+			"[$-10480]yyyy\\.mm\\.dd;@",
+			"[$-10480]yyyy\\-\"يىل\"\\ d\\-mmmm;@",
+			"[$-10480]yyyy\\-\"يىل\"\\ d\\-mmmm\\ dddd;@",
+			"[$-10480]yyyy\\-\"يىلى\"\\ mmm\"نىڭ\"\\ d\"-كۈنى\";@",
+			"[$-10480]yyyy\\-\"يىلى\"\\ mmm\"نىڭ\"\\ d\"-كۈنى\"\\ dddd;@",
+			"[$-10480]yyyy\\-m\\-d\\ dddd;@"
 		],
 		"1153": [
-			"yyyy-mm-dd;@",
-			"[$-10481]dd-mm-yyyy;@",
-			"[$-10481]d mmm yyyy;@",
-			"[$-10481]dddd, d mmmm yyyy;@",
-			"[$-10481]d mmmm yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-10481]dd\\-mm\\-yyyy;@",
+			"[$-10481]d\\ mmm\\ yyyy;@",
+			"[$-10481]dddd\\,\\ d\\ mmmm\\ yyyy;@",
+			"[$-10481]d\\ mmmm\\ yyyy;@"
 		],
 		"1154": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10482]d/mm/yyyy;@",
 			"[$-10482]d/mm/yy;@",
-			"[$-10482]d mmm yyyy;@",
-			"[$-10482]dddd d mmmm\" de \"yyyy;@",
-			"[$-10482]dddd d mmmm \"de\" yyyy;@",
-			"[$-10482]d mmmm \"de\" yyyy;@"
+			"[$-10482]d\\ mmm\\ yyyy;@",
+			"[$-10482]dddd\\ d\\ mmmm\" de \"yyyy;@",
+			"[$-10482]dddd\\ d\\ mmmm\\ \"de\"\\ yyyy;@",
+			"[$-10482]d\\ mmmm\\ \"de\"\\ yyyy;@"
 		],
 		"1155": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10483]dd/mm/yyyy;@",
 			"[$-10483]dd/mm/yy;@",
-			"[$-10483]dddd d mmmm yyyy;@",
-			"[$-10483]d mmm yy;@",
-			"[$-10483]d mmmm yyyy;@"
+			"[$-10483]dddd\\ d\\ mmmm\\ yyyy;@",
+			"[$-10483]d\\ mmm\\ yy;@",
+			"[$-10483]d\\ mmmm\\ yyyy;@"
 		],
 		"1156": [
 			"[$-10484]dd/mm/yyyy;@",
 			"[$-10484]dd/mm/yy;@",
-			"[$-10484]dd.mm.yy;@",
-			"[$-10484]dd-mm-yy;@",
-			"[$-10484]yyyy-mm-dd;@",
-			"[$-10484]dddd d mmmm yyyy;@",
-			"[$-10484]d mmm yy;@",
-			"[$-10484]d mmmm yyyy;@"
+			"[$-10484]dd\\.mm\\.yy;@",
+			"[$-10484]dd\\-mm\\-yy;@",
+			"[$-10484]yyyy\\-mm\\-dd;@",
+			"[$-10484]dddd\\ d\\ mmmm\\ yyyy;@",
+			"[$-10484]d\\ mmm\\ yy;@",
+			"[$-10484]d\\ mmmm\\ yyyy;@"
 		],
 		"1157": [
-			"[$-10485]dd.mm.yyyy;@",
-			"[$-10485]d.m.yyyy;@",
-			"[$-10485]yyyy-mm-dd;@",
-			"[$-10485]yyyy mm d;@",
-			"[$-10485]dd yyyy mm d;@",
-			"[$-10485]dddd, yyyy \"с.\" mmmm d \"күнэ\";@",
-			"[$-10485]yyyy \"с.\" mmmm d \"күнэ\";@",
-			"[$-10485]dddd, mmmm d \"күнэ\" yyyy \"с.\";@"
+			"[$-10485]dd\\.mm\\.yyyy;@",
+			"[$-10485]d\\.m\\.yyyy;@",
+			"[$-10485]yyyy\\-mm\\-dd;@",
+			"[$-10485]yyyy\\ mm\\ d;@",
+			"[$-10485]dd\\ yyyy\\ mm\\ d;@",
+			"[$-10485]dddd\\,\\ yyyy\\ \"с.\"\\ mmmm\\ d\\ \"күнэ\";@",
+			"[$-10485]yyyy\\ \"с.\"\\ mmmm\\ d\\ \"күнэ\";@",
+			"[$-10485]dddd\\,\\ mmmm\\ d\\ \"күнэ\"\\ yyyy\\ \"с.\";@"
 		],
 		"1158": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10486]dd/mm/yyyy;@",
 			"[$-10486]d/mm/yyyy;@",
-			"[$-10486]dddd, dd\" rech \"mmmm\" rech \"yyyy;@",
-			"[$-10486]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-10486]dddd\\,\\ dd\" rech \"mmmm\" rech \"yyyy;@",
+			"[$-10486]dddd\\ d\" de \"mmmm\" de \"yyyy;@",
 			"[$-10486]d\" de \"mmmm\" de \"yyyy;@"
 		],
 		"1159": [
-			"[$-10487]yyyy-mm-dd;@",
-			"[$-10487]yyyy mmm d;@",
-			"[$-10487]yyyy mmmm d, dddd;@",
-			"[$-10487]yyyy mmmm d;@"
+			"[$-10487]yyyy\\-mm\\-dd;@",
+			"[$-10487]yyyy\\ mmm\\ d;@",
+			"[$-10487]yyyy\\ mmmm\\ d\\,\\ dddd;@",
+			"[$-10487]yyyy\\ mmmm\\ d;@"
 		],
 		"1160": [
-			"yyyy-mm-dd;@",
-			"[$-10488]dd-mm-yyyy;@",
-			"[$-10488]d mmm, yyyy;@",
-			"[$-10488]dddd, d mmm, yyyy;@",
-			"[$-10488]d mmmm, yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-10488]dd\\-mm\\-yyyy;@",
+			"[$-10488]d\\ mmm\\,\\ yyyy;@",
+			"[$-10488]dddd\\,\\ d\\ mmm\\,\\ yyyy;@",
+			"[$-10488]d\\ mmmm\\,\\ yyyy;@"
 		],
 		"1164": [
 			"[$-16048C]yyyy/m/d;@",
-			"[$-16048C]yyyy-mm-dd;@",
-			"[$-16048C]dddd, d mmmm yyyy;@",
-			"[$-16048C]d mmmm yyyy;@"
+			"[$-16048C]yyyy\\-mm\\-dd;@",
+			"[$-16048C]dddd\\,\\ d\\ mmmm\\ yyyy;@",
+			"[$-16048C]d\\ mmmm\\ yyyy;@"
 		],
 		"1169": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10491]dd/mm/yyyy;@",
-			"[$-10491]d mmm yyyy;@",
-			"[$-10491]dd mmmm yyyy;@",
-			"[$-10491]dddd, d\"mh\" mmmm yyyy;@",
-			"[$-10491]d\"mh\" mmmm yyyy;@"
-		],
-		"2049": [
-			"yyyy-mm-dd;@",
-			"[$-1010000]d/m/yyyy;@",
-			"[$-1010000]yyyy/mm/dd;@",
-			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
-			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
-			"[$-2010000]d/mm/yyyy;@",
-			"[$-2010000]yyyy/mm/dd;@",
-			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+			"[$-10491]d\\ mmm\\ yyyy;@",
+			"[$-10491]dd\\ mmmm\\ yyyy;@",
+			"[$-10491]dddd\\,\\ d\"mh\"\\ mmmm\\ yyyy;@",
+			"[$-10491]d\"mh\"\\ mmmm\\ yyyy;@"
 		],
 		"2052": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[DBNum1][$-804]yyyy\"年\"m\"月\"d\"日\";@",
 			"[DBNum1][$-804]yyyy\"年\"m\"月\";@",
 			"[DBNum1][$-804]m\"月\"d\"日\";@",
@@ -7400,321 +7578,321 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 			"[$-804]aaaa;@",
 			"[$-804]aaa;@",
 			"yyyy/m/d;@",
-			"[$-409]yyyy/m/d h:mm AM/PM;@",
-			"yyyy/m/d h:mm;@",
+			"[$-409]yyyy/m/d\\ h:mm\\ AM/PM;@",
+			"yyyy/m/d\\ h:mm;@",
 			"yy/m/d;@",
 			"m/d;@",
 			"m/d/yy;@",
 			"mm/dd/yy;@",
-			"[$-409]d-mmm;@",
-			"[$-409]d-mmm-yy;@",
-			"[$-409]dd-mmm-yy;@",
-			"[$-409]mmm-yy;@",
-			"[$-409]mmmm-yy;@",
+			"[$-409]d\\-mmm;@",
+			"[$-409]d\\-mmm\\-yy;@",
+			"[$-409]dd\\-mmm\\-yy;@",
+			"[$-409]mmm\\-yy;@",
+			"[$-409]mmmm\\-yy;@",
 			"[$-409]mmmmm;@",
-			"[$-409]mmmmm-yy;@"
+			"[$-409]mmmmm\\-yy;@"
 		],
 		"2055": [
-			"dd.mm.yyyy;@",
-			"dd.mm.yy;@",
-			"d.mm.yy;@",
-			"dd. m. yy;@",
-			"d.m.yy;@",
-			"dd.mm.yyyy;@",
-			"yyyy-mm-dd;@",
-			"[$-807]dddd, d. mmmm yyyy;@",
-			"[$-807]d. mmmm yyyy;@",
-			"[$-807]d. mmm yy;@"
+			"dd\\.mm\\.yyyy;@",
+			"dd\\.mm\\.yy;@",
+			"d\\.mm\\.yy;@",
+			"dd\\.\\ m\\.\\ yy;@",
+			"d\\.m\\.yy;@",
+			"dd\\.mm\\.yyyy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-807]dddd\\,\\ d\\.\\ mmmm\\ yyyy;@",
+			"[$-807]d\\.\\ mmmm\\ yyyy;@",
+			"[$-807]d\\.\\ mmm\\ yy;@"
 		],
 		"2057": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
 			"d/m/yy;@",
-			"d.m.yy;@",
-			"yyyy-mm-dd;@",
-			"[$-809]dd mmmm yyyy;@",
-			"[$-809]d mmmm yyyy;@"
+			"d\\.m\\.yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-809]dd\\ mmmm\\ yyyy;@",
+			"[$-809]d\\ mmmm\\ yyyy;@"
 		],
 		"2058": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
 			"d/mm/yy;@",
 			"d/m/yy;@",
-			"dd-mm-yy;@",
-			"yyyy-mm-dd;@",
-			"[$-80A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
-			"[$-80A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"dd\\-mm\\-yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-80A]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-80A]dddd\\ d\" de \"mmmm\" de \"yyyy;@",
 			"[$-80A]d\" de \"mmmm\" de \"yyyy;@"
 		],
 		"2060": [
 			"d/mm/yyyy;@",
 			"d/mm/yy;@",
-			"dd.mm.yy;@",
+			"dd\\.mm\\.yy;@",
 			"yy/mm/dd;@",
-			"dd-mm-yy;@",
+			"dd\\-mm\\-yy;@",
 			"dd/mm/yyyy;@",
-			"yyyy-mm-dd;@",
-			"[$-80C]dddd d mmmm yyyy;@",
-			"[$-80C]d mmmm yyyy;@",
-			"[$-80C]dd-mmm-yy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-80C]dddd\\ d\\ mmmm\\ yyyy;@",
+			"[$-80C]d\\ mmmm\\ yyyy;@",
+			"[$-80C]dd\\-mmm\\-yy;@"
 		],
 		"2064": [
-			"dd.mm.yyyy;@",
-			"dd.mm.yy;@",
-			"dd. mm. yy;@",
+			"dd\\.mm\\.yyyy;@",
+			"dd\\.mm\\.yy;@",
+			"dd\\.\\ mm\\.\\ yy;@",
 			"d/m/yy;@",
-			"dd.m.yy;@",
-			"yyyy-mm-dd;@",
-			"[$-810]dddd, d. mmmm yyyy;@",
-			"[$-810]d-mmm-yy;@",
-			"[$-810]d mmmm yyyy;@"
+			"dd\\.m\\.yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-810]dddd\\,\\ d\\.\\ mmmm\\ yyyy;@",
+			"[$-810]d\\-mmm\\-yy;@",
+			"[$-810]d\\ mmmm\\ yyyy;@"
 		],
 		"2067": [
 			"d/mm/yyyy;@",
 			"d/mm/yy;@",
-			"dd-mm-yy;@",
-			"dd.mm.yy;@",
-			"yyyy-mm-dd;@",
-			"[$-813]dddd d mmmm yyyy;@",
-			"[$-813]dd-mmm-yy;@",
-			"[$-813]d mmmm yyyy;@",
-			"[$-813]dd mmm yy;@"
+			"dd\\-mm\\-yy;@",
+			"dd\\.mm\\.yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-813]dddd\\ d\\ mmmm\\ yyyy;@",
+			"[$-813]dd\\-mmm\\-yy;@",
+			"[$-813]d\\ mmmm\\ yyyy;@",
+			"[$-813]dd\\ mmm\\ yy;@"
 		],
 		"2068": [
-			"dd.mm.yyyy;@",
-			"dd.mm.yy;@",
-			"d.m.yy;@",
-			"yyyy-mm-dd;@",
-			"[$-814]d. mmmm yyyy;@",
-			"[$-814]dd. mmmm yyyy;@"
+			"dd\\.mm\\.yyyy;@",
+			"dd\\.mm\\.yy;@",
+			"d\\.m\\.yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-814]d\\.\\ mmmm\\ yyyy;@",
+			"[$-814]dd\\.\\ mmmm\\ yyyy;@"
 		],
 		"2070": [
-			"yyyy-mm-dd;@",
-			"dd-mm-yyyy;@",
+			"yyyy\\-mm\\-dd;@",
+			"dd\\-mm\\-yyyy;@",
 			"d/m/yy;@",
 			"dd/mm/yy;@",
 			"[$-816]d/mmm;@",
-			"[$-816]d-mmm-yy;@",
-			"[$-816]dd-mmm-yy;@",
+			"[$-816]d\\-mmm\\-yy;@",
+			"[$-816]dd\\-mmm\\-yy;@",
 			"[$-816]mmm/yy;@",
-			"[$-816]mmmm yy;@",
-			"[$-816]d \"de\" mmmm \"de\" yyyy;@",
-			"[$-409]d/m/yy h:mm AM/PM;@",
-			"d/m/yy h:mm;@",
+			"[$-816]mmmm\\ yy;@",
+			"[$-816]d\\ \"de\"\\ mmmm\\ \"de\"\\ yyyy;@",
+			"[$-409]d/m/yy\\ h:mm\\ AM/PM;@",
+			"d/m/yy\\ h:mm;@",
 			"[$-816]mmmmm;@",
-			"[$-816]mmmmm-yy;@",
+			"[$-816]mmmmm\\-yy;@",
 			"d/m/yyyy;@",
-			"[$-816]d-mmm-yyyy;@"
+			"[$-816]d\\-mmm\\-yyyy;@"
 		],
 		"2072": [
-			"yyyy-mm-dd;@",
-			"[$-10818]dd.mm.yyyy;@",
-			"[$-10818]d mmm yyyy;@",
-			"[$-10818]dddd, d mmmm yyyy;@",
-			"[$-10818]d mmmm yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-10818]dd\\.mm\\.yyyy;@",
+			"[$-10818]d\\ mmm\\ yyyy;@",
+			"[$-10818]dddd\\,\\ d\\ mmmm\\ yyyy;@",
+			"[$-10818]d\\ mmmm\\ yyyy;@"
 		],
 		"2073": [
-			"yyyy-mm-dd;@",
-			"[$-10819]dd.mm.yyyy;@",
-			"[$-10819]d mmm yyyy \"г\".;@",
-			"[$]dddd, d mmmm yyyy \"г\".;@",
-			"[$]d mmmm yyyy \"г\".;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-10819]dd\\.mm\\.yyyy;@",
+			"[$-10819]d\\ mmm\\ yyyy\\ \"г\"\\.;@",
+			"[$]dddd\\,\\ d\\ mmmm\\ yyyy\\ \"г\"\\.;@",
+			"[$]d\\ mmmm\\ yyyy\\ \"г\"\\.;@"
 		],
 		"2074": [
-			"d.m.yyyy;@",
-			"d.m.yy;@",
-			"d. m. yyyy;@",
-			"dd.mm.yyyy;@",
-			"d. m. yy;@",
-			"dd.mm.yy;@",
-			"dd. mm. yy;@",
-			"yyyy-mm-dd;@",
-			"[$-81A]d. mmmm yyyy;@",
-			"[$-81A]dd. mmmm yyyy;@",
-			"[$-81A]dddd, d. mmmm yyyy;@"
+			"d\\.m\\.yyyy;@",
+			"d\\.m\\.yy;@",
+			"d\\.\\ m\\.\\ yyyy;@",
+			"dd\\.mm\\.yyyy;@",
+			"d\\.\\ m\\.\\ yy;@",
+			"dd\\.mm\\.yy;@",
+			"dd\\.\\ mm\\.\\ yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-81A]d\\.\\ mmmm\\ yyyy;@",
+			"[$-81A]dd\\.\\ mmmm\\ yyyy;@",
+			"[$-81A]dddd\\,\\ d\\.\\ mmmm\\ yyyy;@"
 		],
 		"2077": [
-			"d.m.yyyy;@",
-			"dd.mm.yyyy;@",
-			"d.m.yy;@",
-			"yyyy-mm-dd;@",
-			"[$-81D]\"den \"d mmmm yyyy;@"
+			"d\\.m\\.yyyy;@",
+			"dd\\.mm\\.yyyy;@",
+			"d\\.m\\.yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-81D]\"den \"d\\ mmmm\\ yyyy;@"
 		],
 		"2092": [
-			"dd.mm.yyyy;@",
-			"dd.mm.yy;@",
-			"d.m.yy;@",
+			"dd\\.mm\\.yyyy;@",
+			"dd\\.mm\\.yy;@",
+			"d\\.m\\.yy;@",
 			"dd/mm/yy;@",
-			"yyyy-mm-dd;@",
-			"[$-82C]d mmmm yyyy;@",
-			"[$-82C]dd mmmm yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-82C]d\\ mmmm\\ yyyy;@",
+			"[$-82C]dd\\ mmmm\\ yyyy;@"
 		],
 		"2094": [
-			"[$-1082E]d. m. yyyy;@",
-			"[$-1082E]d. m. yy;@",
-			"[$-1082E]dd.mm.yyyy;@",
-			"[$-1082E]dd.mm.yy;@",
-			"[$-1082E]yyyy-mm-dd;@",
-			"[$-1082E]dddd, d. mmmm yyyy;@",
-			"[$-1082E]d. mmmm yyyy;@"
+			"[$-1082E]d\\.\\ m\\.\\ yyyy;@",
+			"[$-1082E]d\\.\\ m\\.\\ yy;@",
+			"[$-1082E]dd\\.mm\\.yyyy;@",
+			"[$-1082E]dd\\.mm\\.yy;@",
+			"[$-1082E]yyyy\\-mm\\-dd;@",
+			"[$-1082E]dddd\\,\\ d\\.\\ mmmm\\ yyyy;@",
+			"[$-1082E]d\\.\\ mmmm\\ yyyy;@"
 		],
 		"2098": [
-			"[$-10832]yyyy-mm-dd;@",
-			"[$-10832]yyyy mmm d;@",
-			"[$-10832]yyyy mmmm d, dddd;@",
-			"[$-10832]yyyy mmmm d;@"
+			"[$-10832]yyyy\\-mm\\-dd;@",
+			"[$-10832]yyyy\\ mmm\\ d;@",
+			"[$-10832]yyyy\\ mmmm\\ d\\,\\ dddd;@",
+			"[$-10832]yyyy\\ mmmm\\ d;@"
 		],
 		"2107": [
-			"[$-1083B]yyyy-mm-dd;@",
-			"[$-1083B]yy-mm-dd;@",
-			"[$-1083B]dddd, mmmm d\". b. \"yyyy;@",
-			"[$-1083B]mmmm d\". b. \"yyyy;@"
+			"[$-1083B]yyyy\\-mm\\-dd;@",
+			"[$-1083B]yy\\-mm\\-dd;@",
+			"[$-1083B]dddd\\,\\ mmmm\\ d\". b. \"yyyy;@",
+			"[$-1083B]mmmm\\ d\". b. \"yyyy;@"
 		],
 		"2108": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1083C]dd/mm/yyyy;@",
-			"[$-1083C]d mmm yyyy;@",
-			"[$-1083C]dddd d mmmm yyyy;@",
-			"[$-1083C]d mmmm yyyy;@"
+			"[$-1083C]d\\ mmm\\ yyyy;@",
+			"[$-1083C]dddd\\ d\\ mmmm\\ yyyy;@",
+			"[$-1083C]d\\ mmmm\\ yyyy;@"
 		],
 		"2110": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
-			"yyyy-mm-dd;@",
-			"[$-83E]dd mmmm yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-83E]dd\\ mmmm\\ yyyy;@"
 		],
 		"2115": [
-			"dd.mm.yyyy;@",
-			"dd.mm.yy;@",
-			"dd/mm yyyy;@",
-			"d.m.yy;@",
+			"dd\\.mm\\.yyyy;@",
+			"dd\\.mm\\.yy;@",
+			"dd/mm\\ yyyy;@",
+			"d\\.m\\.yy;@",
 			"dd/mm/yy;@",
-			"yyyy-mm-dd;@",
-			"[$-843]yyyy \"йил\" d-mmmm;@",
-			"[$-843]d mmmm yyyy;@",
-			"[$-843]dd mmmm yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-843]yyyy\\ \"йил\"\\ d\\-mmmm;@",
+			"[$-843]d\\ mmmm\\ yyyy;@",
+			"[$-843]dd\\ mmmm\\ yyyy;@"
 		],
 		"2117": [
-			"dd-mm-yyyy;@",
-			"dd-mm-yy;@",
-			"d-m-yy;@",
-			"d.m.yy;@",
-			"yyyy-mm-dd;@",
-			"[$-845]dd mmmm yyyy;@",
-			"[$-845]d mmmm yyyy;@",
-			"[$-5000845]dd-mm-yyyy;@",
-			"[$-5000845]dd-mm-yy;@",
-			"[$-5000845]d-m-yy;@",
-			"[$-5000845]d.m.yy;@",
-			"[$-5000845]yyyy-mm-dd;@",
+			"dd\\-mm\\-yyyy;@",
+			"dd\\-mm\\-yy;@",
+			"d\\-m\\-yy;@",
+			"d\\.m\\.yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-845]dd\\ mmmm\\ yyyy;@",
+			"[$-845]d\\ mmmm\\ yyyy;@",
+			"[$-5000845]dd\\-mm\\-yyyy;@",
+			"[$-5000845]dd\\-mm\\-yy;@",
+			"[$-5000845]d\\-m\\-yy;@",
+			"[$-5000845]d\\.m\\.yy;@",
+			"[$-5000845]yyyy\\-mm\\-dd;@",
 			"[$-5000845]d/m/yyyy;@",
-			"[$-5000845]dd mmmm yyyy;@",
-			"[$-5000845]d mmmm yyyy;@",
-			"[$-5000845]d mmmm, yyyy;@",
-			"[$-5000845]dddd, d mmmm, yyyy;@"
+			"[$-5000845]dd\\ mmmm\\ yyyy;@",
+			"[$-5000845]d\\ mmmm\\ yyyy;@",
+			"[$-5000845]d\\ mmmm\\,\\ yyyy;@",
+			"[$-5000845]dddd\\,\\ d\\ mmmm\\,\\ yyyy;@"
 		],
 		"2118": [
-			"[$-10846]dd-mm-yy;@",
-			"[$-10846]d-m-yy;@",
-			"[$-10846]d.m.yy;@",
-			"[$-10846]dd-mm-yyyy;@",
-			"[$-10846]yyyy-mm-dd;@",
-			"[$-10846]dd mmmm yyyy dddd;@",
-			"[$-10846]d mmmm yyyy;@"
+			"[$-10846]dd\\-mm\\-yy;@",
+			"[$-10846]d\\-m\\-yy;@",
+			"[$-10846]d\\.m\\.yy;@",
+			"[$-10846]dd\\-mm\\-yyyy;@",
+			"[$-10846]yyyy\\-mm\\-dd;@",
+			"[$-10846]dd\\ mmmm\\ yyyy\\ dddd;@",
+			"[$-10846]d\\ mmmm\\ yyyy;@"
 		],
 		"2128": [
 			"[$-10850]yyyy/m/d;@",
-			"[$-10850]yyyy-m-d;@",
-			"[$-10850]yyyy.m.d;@",
-			"[$-10850]yyyy.mm.dd;@",
-			"[$-10850]yyyy-mm-dd;@",
+			"[$-10850]yyyy\\-m\\-d;@",
+			"[$-10850]yyyy\\.m\\.d;@",
+			"[$-10850]yyyy\\.mm\\.dd;@",
+			"[$-10850]yyyy\\-mm\\-dd;@",
 			"[$-10850]yyyy/mm/dd;@",
-			"[$-10850]yy-m-d;@",
+			"[$-10850]yy\\-m\\-d;@",
 			"[$-10850]yy/m/d;@",
-			"[$-10850]yy.m.d;@",
+			"[$-10850]yy\\.m\\.d;@",
 			"[$-10850]yy/mm/dd;@",
-			"[$-10850]yyyyᠣᠨ mmmm dᠡᠳᠦᠷ᠂ dddd;@",
-			"[$-10850]yyyyᠣᠨ mmmm dᠡᠳᠦᠷ;@"
+			"[$-10850]yyyy\\ᠣ\\ᠨ\\ mmmm\\ d\\ᠡ\\ᠳ\\ᠦ\\ᠷ\\᠂\\ dddd;@",
+			"[$-10850]yyyy\\ᠣ\\ᠨ\\ mmmm\\ d\\ᠡ\\ᠳ\\ᠦ\\ᠷ;@"
 		],
 		"2137": [
 			"[$-10859]dd/mm/yyyy;@",
 			"[$-10859]dd/mm/yy;@",
-			"[$-10859]yyyy-mm-dd;@",
-			"[$-10859]dddd, dd mmmm, yyyy;@",
-			"[$-10859]dd mmmm yyyy;@"
+			"[$-10859]yyyy\\-mm\\-dd;@",
+			"[$-10859]dddd\\,\\ dd\\ mmmm\\,\\ yyyy;@",
+			"[$-10859]dd\\ mmmm\\ yyyy;@"
 		],
 		"2141": [
 			"[$-1085D]d/mm/yyyy;@",
 			"[$-1085D]d/m/yy;@",
 			"[$-1085D]dd/mm/yyyy;@",
-			"[$-1085D]yy-mm-dd;@",
-			"[$-1085D]yyyy-mm-dd;@",
-			"[$-1085D]dd-mmm-yy;@",
-			"[$-1085D]dddd, dd mmmm, yyyy;@",
-			"[$-1085D]ddd, mmmm dd,yyyy;@",
-			"[$-1085D]mmmm dd,yyyy;@",
-			"[$-1085D]dd mmmm, yyyy;@"
+			"[$-1085D]yy\\-mm\\-dd;@",
+			"[$-1085D]yyyy\\-mm\\-dd;@",
+			"[$-1085D]dd\\-mmm\\-yy;@",
+			"[$-1085D]dddd\\,\\ dd\\ mmmm\\,\\ yyyy;@",
+			"[$-1085D]ddd\\,\\ mmmm\\ dd\\,yyyy;@",
+			"[$-1085D]mmmm\\ dd\\,yyyy;@",
+			"[$-1085D]dd\\ mmmm\\,\\ yyyy;@"
 		],
 		"2143": [
-			"[$-1085F]dd-mm-yyyy;@",
-			"[$-1085F]dd-mm-yy;@",
-			"[$-1085F]yyyy-mm-dd;@",
-			"[$-1085F]dd mmmm, yyyy;@",
-			"[$-1085F]dddd, dd mmmm, yyyy;@"
+			"[$-1085F]dd\\-mm\\-yyyy;@",
+			"[$-1085F]dd\\-mm\\-yy;@",
+			"[$-1085F]yyyy\\-mm\\-dd;@",
+			"[$-1085F]dd\\ mmmm\\,\\ yyyy;@",
+			"[$-1085F]dddd\\,\\ dd\\ mmmm\\,\\ yyyy;@"
 		],
 		"2144": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10860]d/m/yyyy;@",
 			"[$-10860]d/m/yy;@",
-			"[$-10860]d mmm yyyy;@",
-			"[$-10860]dddd, d mmmm yyyy;@",
-			"[$-10860]d mmmm yyyy;@"
+			"[$-10860]d\\ mmm\\ yyyy;@",
+			"[$-10860]dddd\\,\\ d\\ mmmm\\ yyyy;@",
+			"[$-10860]d\\ mmmm\\ yyyy;@"
 		],
 		"2145": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10861]yyyy/m/d;@",
 			"[$-10861]yy/m/d;@",
-			"[$-10861]yyyy mmm d;@",
-			"[$-10861]yyyy mmmm d, dddd;@",
-			"[$-10861]yyyy mmmm d;@"
+			"[$-10861]yyyy\\ mmm\\ d;@",
+			"[$-10861]yyyy\\ mmmm\\ d\\,\\ dddd;@",
+			"[$-10861]yyyy\\ mmmm\\ d;@"
 		],
 		"2151": [
 			"[$-10867]dd/mm/yyyy;@",
 			"[$-10867]dd/mm/yy;@",
-			"[$-10867]dd.mm.yy;@",
-			"[$-10867]dd-mm-yy;@",
-			"[$-10867]yyyy-mm-dd;@",
-			"[$-10867]dddd d mmmm yyyy;@",
-			"[$-10867]d mmm yy;@",
-			"[$-10867]d mmmm yyyy;@"
+			"[$-10867]dd\\.mm\\.yy;@",
+			"[$-10867]dd\\-mm\\-yy;@",
+			"[$-10867]yyyy\\-mm\\-dd;@",
+			"[$-10867]dddd\\ d\\ mmmm\\ yyyy;@",
+			"[$-10867]d\\ mmm\\ yy;@",
+			"[$-10867]d\\ mmmm\\ yyyy;@"
 		],
 		"2155": [
 			"[$-1086B]dd/mm/yyyy;@",
 			"[$-1086B]dd/mm/yy;@",
 			"[$-1086B]d/m/yy;@",
-			"[$-1086B]dd-mm-yy;@",
-			"[$-1086B]yyyy-mm-dd;@",
-			"[$-1086B]dddd, dd\" de \"mmmm\" de \"yyyy;@",
-			"[$-1086B]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"[$-1086B]dd\\-mm\\-yy;@",
+			"[$-1086B]yyyy\\-mm\\-dd;@",
+			"[$-1086B]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-1086B]dddd\\ d\" de \"mmmm\" de \"yyyy;@",
 			"[$-1086B]d\" de \"mmmm\" de \"yyyy;@"
 		],
 		"2163": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-10873]dd/mm/yyyy;@",
 			"[$-10873]dd/mm/yy;@",
-			"[$-10873]dd-mmm-yyyy;@",
-			"[$-10873]dddd\\፣ dd mmmm መዓልቲ yyyy gg;@",
-			"[$-10873]dd mmmm yyyy;@"
+			"[$-10873]d\\ mmm\\ yyyy;@",
+			"[$-10873]dddd\\፣\\ d\\ mmmm\\ yyyy;@",
+			"[$-10873]d\\ mmmm\\ yyyy;@"
 		],
 		"3073": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1010000]d/m/yyyy;@",
 			"[$-1010000]yyyy/mm/dd;@",
-			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
-			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010401]d/m/yyyy\\ h:mm\\ AM/PM;@",
+			"[$-1010409]d/m/yyyy\\ h:mm\\ AM/PM;@",
 			"[$-2010000]d/mm/yyyy;@",
 			"[$-2010000]yyyy/mm/dd;@",
-			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+			"[$-2010401]d/mm/yyyy\\ h:mm\\ AM/PM;@"
 		],
 		"3076": [
 			"d/m/yyyy;@",
@@ -7724,21 +7902,21 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 			"yy/mm/dd;@",
 			"yyyy/m/d;@",
 			"yyyy/mm/dd;@",
-			"yyyy-mm-dd;@",
-			"[$-C04]dddd, d mmmm, yyyy;@",
-			"[$-C04]d mmmm, yyyy;@",
-			"[$-C04]dddd yyyy mm dd;@",
-			"yyyy mm dd;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-C04]dddd\\,\\ d\\ mmmm\\,\\ yyyy;@",
+			"[$-C04]d\\ mmmm\\,\\ yyyy;@",
+			"[$-C04]dddd\\ yyyy\\ mm\\ dd;@",
+			"yyyy\\ mm\\ dd;@"
 		],
 		"3079": [
-			"dd.mm.yyyy;@",
-			"dd.mm.yy;@",
-			"dd.m.yyyy;@",
-			"yyyy-mm-dd;@",
-			"[$-C07]dddd, dd. mmmm yyyy;@",
-			"[$-C07]d.mmmm yyyy;@",
-			"[$-C07]d.mmmyyyy;@",
-			"[$-C07]d mmm yyyy;@"
+			"dd\\.mm\\.yyyy;@",
+			"dd\\.mm\\.yy;@",
+			"dd\\.m\\.yyyy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-C07]dddd\\,\\ dd\\.\\ mmmm\\ yyyy;@",
+			"[$-C07]d\\.mmmm\\ yyyy;@",
+			"[$-C07]d\\.mmmyyyy;@",
+			"[$-C07]d\\ mmm\\ yyyy;@"
 		],
 		"3081": [
 			"d/mm/yyyy;@",
@@ -7747,93 +7925,93 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 			"d/m/yyyy;@",
 			"dd/mm/yy;@",
 			"dd/mm/yyyy;@",
-			"[$-C09]dd-mmm-yy;@",
-			"[$-C09]dd-mmmm-yyyy;@",
-			"yyyy-mm-dd;@",
+			"[$-C09]dd\\-mmm\\-yy;@",
+			"[$-C09]dd\\-mmmm\\-yyyy;@",
+			"yyyy\\-mm\\-dd;@",
 			"yy/mm/dd;@",
 			"yyyy/mm/dd;@",
-			"[$-C09]dddd, d mmmm yyyy;@",
-			"[$-C09]d mmmm yyyy;@"
+			"[$-C09]dddd\\,\\ d\\ mmmm\\ yyyy;@",
+			"[$-C09]d\\ mmmm\\ yyyy;@"
 		],
 		"3082": [
-			"yyyy-mm-dd;@",
-			"d-m;@",
-			"d-m-yy;@",
-			"dd-mm-yy;@",
-			"[$-C0A]d-mmm;@",
-			"[$-C0A]d-mmm-yy;@",
-			"[$-C0A]dd-mmm-yy;@",
-			"[$-C0A]mmm-yy;@",
-			"[$-C0A]mmmm-yy;@",
-			"[$-C0A]d \"de\" mmmm \"de\" yyyy;@",
-			"[$-409]d-m-yy h:mm AM/PM;@",
-			"d-m-yy h:mm;@",
+			"yyyy\\-mm\\-dd;@",
+			"d\\-m;@",
+			"d\\-m\\-yy;@",
+			"dd\\-mm\\-yy;@",
+			"[$-C0A]d\\-mmm;@",
+			"[$-C0A]d\\-mmm\\-yy;@",
+			"[$-C0A]dd\\-mmm\\-yy;@",
+			"[$-C0A]mmm\\-yy;@",
+			"[$-C0A]mmmm\\-yy;@",
+			"[$-C0A]d\\ \"de\"\\ mmmm\\ \"de\"\\ yyyy;@",
+			"[$-409]d\\-m\\-yy\\ h:mm\\ AM/PM;@",
+			"d\\-m\\-yy\\ h:mm;@",
 			"[$-C0A]mmmmm;@",
-			"[$-C0A]mmmmm-yy;@",
-			"d-m-yyyy;@",
-			"[$-C0A]d-mmm-yyyy;@"
+			"[$-C0A]mmmmm\\-yy;@",
+			"d\\-m\\-yyyy;@",
+			"[$-C0A]d\\-mmm\\-yyyy;@"
 		],
 		"3084": [
-			"yyyy-mm-dd;@",
-			"yy-mm-dd;@",
-			"dd-mm-yy;@",
-			"yy mm dd;@",
+			"yyyy\\-mm\\-dd;@",
+			"yy\\-mm\\-dd;@",
+			"dd\\-mm\\-yy;@",
+			"yy\\ mm\\ dd;@",
 			"dd/mm/yy;@",
-			"[$-C0C]d mmmm, yyyy;@",
-			"[$-C0C]d mmm yyyy;@"
+			"[$-C0C]d\\ mmmm\\,\\ yyyy;@",
+			"[$-C0C]d\\ mmm\\ yyyy;@"
 		],
 		"3098": [
-			"d.m.yyyy;@",
-			"d.m.yy;@",
-			"d. m. yyyy;@",
-			"dd.mm.yyyy;@",
-			"d. m. yy;@",
-			"dd.mm.yy;@",
-			"dd. mm. yy;@",
-			"yyyy-mm-dd;@",
-			"[$-C1A]d. mmmm yyyy;@",
-			"[$-C1A]dd. mmmm yyyy;@",
-			"[$-C1A]dddd, d. mmmm yyyy;@"
+			"d\\.m\\.yyyy\\.;@",
+			"d\\.m\\.yy\\.;@",
+			"d\\.\\ m\\.\\ yyyy\\.;@",
+			"dd\\.mm\\.yyyy\\.;@",
+			"d\\.\\ m\\.\\ yy\\.;@",
+			"dd\\.mm\\.yy\\.;@",
+			"dd\\.\\ mm\\.\\ yy\\.;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-C1A]d\\.\\ mmmm\\ yyyy\\.;@",
+			"[$-C1A]dd\\.\\ mmmm\\ yyyy\\.;@",
+			"[$-C1A]dddd\\,\\ d\\.\\ mmmm\\ yyyy\\.;@"
 		],
 		"3131": [
-			"[$-10C3B]d.m.yyyy;@",
-			"[$-10C3B]dd.mm.yyyy;@",
-			"[$-10C3B]d.m.yy;@",
-			"[$-10C3B]yyyy-mm-dd;@",
-			"[$-10C3B]dddd\", \"mmmm d\". b. \"yyyy;@",
-			"[$-10C3B]mmmm d\". b. \"yyyy;@"
+			"[$-10C3B]d\\.m\\.yyyy;@",
+			"[$-10C3B]dd\\.mm\\.yyyy;@",
+			"[$-10C3B]d\\.m\\.yy;@",
+			"[$-10C3B]yyyy\\-mm\\-dd;@",
+			"[$-10C3B]dddd\", \"mmmm\\ d\". b. \"yyyy;@",
+			"[$-10C3B]mmmm\\ d\". b. \"yyyy;@"
 		],
 		"3152": [
 			"[$-10C50]yyyy/m/d;@",
-			"[$-10C50]yyyy-m-d;@",
-			"[$-10C50]yyyy.m.d;@",
-			"[$-10C50]yyyy.mm.dd;@",
-			"[$-10C50]yyyy-mm-dd;@",
+			"[$-10C50]yyyy\\-m\\-d;@",
+			"[$-10C50]yyyy\\.m\\.d;@",
+			"[$-10C50]yyyy\\.mm\\.dd;@",
+			"[$-10C50]yyyy\\-mm\\-dd;@",
 			"[$-10C50]yyyy/mm/dd;@",
-			"[$-10C50]yy-m-d;@",
+			"[$-10C50]yy\\-m\\-d;@",
 			"[$-10C50]yy/m/d;@",
-			"[$-10C50]yy.m.d;@",
+			"[$-10C50]yy\\.m\\.d;@",
 			"[$-10C50]yy/mm/dd;@",
-			"[$-10C50]yyyyᠣᠨ mmmm dᠡᠳᠦᠷ᠂ dddd;@",
-			"[$-10C50]yyyyᠣᠨ mmmm dᠡᠳᠦᠷ;@"
+			"[$-10C50]yyyy\\ᠣ\\ᠨ\\ mmmm\\ d\\ᠡ\\ᠳ\\ᠦ\\ᠷ\\᠂\\ dddd;@",
+			"[$-10C50]yyyy\\ᠣ\\ᠨ\\ mmmm\\ d\\ᠡ\\ᠳ\\ᠦ\\ᠷ;@"
 		],
 		"3179": [
 			"[$-10C6B]dd/mm/yyyy;@",
 			"[$-10C6B]dd/mm/yy;@",
 			"[$-10C6B]d/m/yy;@",
-			"[$-10C6B]dd-mm-yy;@",
-			"[$-10C6B]yyyy-mm-dd;@",
-			"[$-10C6B]dddd, d mmmm, yyyy;@"
+			"[$-10C6B]dd\\-mm\\-yy;@",
+			"[$-10C6B]yyyy\\-mm\\-dd;@",
+			"[$-10C6B]dddd\\,\\ d\\ mmmm\\,\\ yyyy;@"
 		],
 		"4097": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1010000]d/m/yyyy;@",
 			"[$-1010000]yyyy/mm/dd;@",
-			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
-			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010401]d/m/yyyy\\ h:mm\\ AM/PM;@",
+			"[$-1010409]d/m/yyyy\\ h:mm\\ AM/PM;@",
 			"[$-2010000]d/mm/yyyy;@",
 			"[$-2010000]yyyy/mm/dd;@",
-			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+			"[$-2010401]d/mm/yyyy\\ h:mm\\ AM/PM;@"
 		],
 		"4100": [
 			"d/m/yyyy;@",
@@ -7843,97 +8021,97 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 			"yy/mm/dd;@",
 			"yyyy/m/d;@",
 			"yyyy/mm/dd;@",
-			"yyyy-mm-dd;@",
-			"[$-1004]dddd, d mmmm, yyyy;@",
-			"[$-1004]d mmmm, yyyy;@",
-			"[$-1004]dddd yyyy mm dd;@",
-			"yyyy mm dd;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-1004]dddd\\,\\ d\\ mmmm\\,\\ yyyy;@",
+			"[$-1004]d\\ mmmm\\,\\ yyyy;@",
+			"[$-1004]dddd\\ yyyy\\ mm\\ dd;@",
+			"yyyy\\ mm\\ dd;@"
 		],
 		"4103": [
-			"dd.mm.yyyy;@",
-			"dd.mm.yy;@",
-			"d.mm.yy;@",
-			"d.m.yy;@",
-			"d.m.yyyy;@",
-			"yyyy-mm-dd;@",
-			"[$-1007]dddd, d. mmmm yyyy;@",
-			"[$-1007]d. mmmm yyyy;@",
-			"[$-1007]d. mmm yyyy;@"
+			"dd\\.mm\\.yyyy;@",
+			"dd\\.mm\\.yy;@",
+			"d\\.mm\\.yy;@",
+			"d\\.m\\.yy;@",
+			"d\\.m\\.yyyy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-1007]dddd\\,\\ d\\.\\ mmmm\\ yyyy;@",
+			"[$-1007]d\\.\\ mmmm\\ yyyy;@",
+			"[$-1007]d\\.\\ mmm\\ yyyy;@"
 		],
 		"4105": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
 			"d/m/yy;@",
-			"yyyy-mm-dd;@",
-			"yy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
+			"yy\\-mm\\-dd;@",
 			"m/dd/yy;@",
-			"[$-1009]mmmm d, yyyy;@",
-			"[$-1009]d-mmm-yy;@"
+			"[$-1009]mmmm\\ d\\,\\ yyyy;@",
+			"[$-1009]d\\-mmm\\-yy;@"
 		],
 		"4106": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
 			"d/mm/yyyy;@",
 			"d/m/yy;@",
-			"dd-mm-yy;@",
-			"yyyy-mm-dd;@",
-			"[$-100A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
-			"[$-100A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"dd\\-mm\\-yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-100A]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-100A]dddd\\ d\" de \"mmmm\" de \"yyyy;@",
 			"[$-100A]d\" de \"mmmm\" de \"yyyy;@"
 		],
 		"4108": [
-			"dd.mm.yyyy;@",
-			"dd.mm.yy;@",
-			"dd. m. yy;@",
-			"d.m.yy;@",
-			"yyyy-mm-dd;@",
-			"[$-100C]dddd, d. mmmm yyyy;@",
-			"[$-100C]d. mmmm yyyy;@",
-			"[$-100C]d mmm yy;@"
+			"dd\\.mm\\.yyyy;@",
+			"dd\\.mm\\.yy;@",
+			"dd\\.\\ m\\.\\ yy;@",
+			"d\\.m\\.yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-100C]dddd\\,\\ d\\.\\ mmmm\\ yyyy;@",
+			"[$-100C]d\\.\\ mmmm\\ yyyy;@",
+			"[$-100C]d\\ mmm\\ yy;@"
 		],
 		"4122": [
-			"yyyy-mm-dd;@",
-			"[$-1101A]d. m. yyyy.;@",
-			"[$-1101A]d. m. yy.;@",
-			"[$-1101A]d. mmm yyyy.;@",
-			"[$-1101A]dddd, d. mmmm yyyy.;@",
-			"[$-1101A]d. mmmm yyyy.;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-1101A]d\\.\\ m\\.\\ yyyy\\.;@",
+			"[$-1101A]d\\.\\ m\\.\\ yy\\.;@",
+			"[$-1101A]d\\.\\ mmm\\ yyyy\\.;@",
+			"[$-1101A]dddd\\,\\ d\\.\\ mmmm\\ yyyy\\.;@",
+			"[$-1101A]d\\.\\ mmmm\\ yyyy\\.;@"
 		],
 		"4155": [
-			"[$-1103B]dd.mm.yyyy;@",
-			"[$-1103B]dd.mm.yy;@",
-			"[$-1103B]d.m.yy;@",
-			"[$-1103B]yyyy-mm-dd;@",
-			"[$-1103B]dddd, mmmm d\". b. \"yyyy;@",
-			"[$-1103B]mmmm d\". b. \"yyyy;@"
+			"[$-1103B]dd\\.mm\\.yyyy;@",
+			"[$-1103B]dd\\.mm\\.yy;@",
+			"[$-1103B]d\\.m\\.yy;@",
+			"[$-1103B]yyyy\\-mm\\-dd;@",
+			"[$-1103B]dddd\\,\\ mmmm\\ d\". b. \"yyyy;@",
+			"[$-1103B]mmmm\\ d\". b. \"yyyy;@"
 		],
 		"4191": [
-			"yyyy-mm-dd;@",
-			"dd-mm;@",
-			"dd-mm-yyyy;@",
-			"dd.mmm.yyyy;@",
-			"[$-105F]d-mmm;@",
-			"[$-105F]d-mmm-yy;@",
-			"[$-105F]dd-mmm-yy;@",
-			"[$-105F]mmm-yy;@",
-			"[$-105F]mmmm-yy;@",
-			"[$-105F]dd mmmm, yyyy;@",
-			"[$-105F]dd-mm-yy h:mm;@",
-			"dd-mm-yy h:mm;@",
+			"yyyy\\-mm\\-dd;@",
+			"dd\\-mm;@",
+			"dd\\-mm\\-yyyy;@",
+			"dd\\.mmm\\.yyyy;@",
+			"[$-105F]d\\-mmm;@",
+			"[$-105F]d\\-mmm\\-yy;@",
+			"[$-105F]dd\\-mmm\\-yy;@",
+			"[$-105F]mmm\\-yy;@",
+			"[$-105F]mmmm\\-yy;@",
+			"[$-105F]dd\\ mmmm\\,\\ yyyy;@",
+			"[$-105F]dd\\-mm\\-yy\\ h:mm;@",
+			"dd\\-mm\\-yy\\ h:mm;@",
 			"[$-105F]mmmmm;@",
-			"[$-105F]mmmmm, yyyy;@",
-			"yyyy-mm-dd;@",
-			"[$-105F]dd.mmm.yyyy;@"
+			"[$-105F]mmmmm\\,\\ yyyy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-105F]dd\\.mmm\\.yyyy;@"
 		],
 		"5121": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1010000]d/m/yyyy;@",
 			"[$-1010000]yyyy/mm/dd;@",
-			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
-			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010401]d/m/yyyy\\ h:mm\\ AM/PM;@",
+			"[$-1010409]d/m/yyyy\\ h:mm\\ AM/PM;@",
 			"[$-2010000]d/mm/yyyy;@",
 			"[$-2010000]yyyy/mm/dd;@",
-			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+			"[$-2010401]d/mm/yyyy\\ h:mm\\ AM/PM;@"
 		],
 		"5124": [
 			"d/m/yyyy;@",
@@ -7943,544 +8121,533 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 			"yy/mm/dd;@",
 			"yyyy/m/d;@",
 			"yyyy/mm/dd;@",
-			"yyyy-mm-dd;@",
-			"[$-1404]dddd, d mmmm, yyyy;@",
-			"[$-1404]d mmmm, yyyy;@",
-			"[$-1404]dddd yyyy mm dd;@",
-			"yyyy mm dd;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-1404]dddd\\,\\ d\\ mmmm\\,\\ yyyy;@",
+			"[$-1404]d\\ mmmm\\,\\ yyyy;@",
+			"[$-1404]dddd\\ yyyy\\ mm\\ dd;@",
+			"yyyy\\ mm\\ dd;@"
 		],
 		"5127": [
-			"dd.mm.yyyy;@",
-			"dd.mm.yy;@",
-			"d.mm.yy;@",
-			"dd. m. yy;@",
-			"d.m.yy;@",
-			"dd.mm.yyyy;@",
-			"yyyy-mm-dd;@",
-			"[$-1407]dddd, d. mmmm yyyy;@",
-			"[$-1407]d. mmmm yyyy;@",
-			"[$-1407]d. mmm yy;@"
+			"dd\\.mm\\.yyyy;@",
+			"dd\\.mm\\.yy;@",
+			"d\\.mm\\.yy;@",
+			"dd\\.\\ m\\.\\ yy;@",
+			"d\\.m\\.yy;@",
+			"dd\\.mm\\.yyyy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-1407]dddd\\,\\ d\\.\\ mmmm\\ yyyy;@",
+			"[$-1407]d\\.\\ mmmm\\ yyyy;@",
+			"[$-1407]d\\.\\ mmm\\ yy;@"
 		],
 		"5129": [
 			"d/mm/yyyy;@",
 			"d/mm/yy;@",
 			"dd/mm/yy;@",
-			"d.mm.yy;@",
-			"yyyy-mm-dd;@",
-			"[$-1409]dddd, d mmmm yyyy;@",
-			"[$-1409]d mmmm yyyy;@"
+			"d\\.mm\\.yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-1409]dddd\\,\\ d\\ mmmm\\ yyyy;@",
+			"[$-1409]d\\ mmmm\\ yyyy;@"
 		],
 		"5130": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
 			"d/m/yy;@",
-			"dd-mm-yy;@",
-			"yyyy-mm-dd;@",
-			"[$-140A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
-			"[$-140A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"dd\\-mm\\-yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-140A]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-140A]dddd\\ d\" de \"mmmm\" de \"yyyy;@",
 			"[$-140A]d\" de \"mmmm\" de \"yyyy;@"
 		],
 		"5132": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
-			"dd.mm.yy;@",
-			"dd-mm-yy;@",
-			"yyyy-mm-dd;@",
-			"[$-140C]dddd d mmmm yyyy;@",
-			"[$-140C]d mmm yy;@",
-			"[$-140C]d mmmm yyyy;@"
+			"dd\\.mm\\.yy;@",
+			"dd\\-mm\\-yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-140C]dddd\\ d\\ mmmm\\ yyyy;@",
+			"[$-140C]d\\ mmm\\ yy;@",
+			"[$-140C]d\\ mmmm\\ yyyy;@"
 		],
 		"5146": [
-			"yyyy-mm-dd;@",
-			"[$-1141A]d. m. yyyy.;@",
-			"[$-1141A]d. mmm yyyy.;@",
-			"[$-1141A]dddd, d. mmmm yyyy.;@",
-			"[$-1141A]d. mmmm yyyy.;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-1141A]d\\.\\ m\\.\\ yyyy\\.;@",
+			"[$-1141A]d\\.\\ mmm\\ yyyy\\.;@",
+			"[$-1141A]dddd\\,\\ d\\.\\ mmmm\\ yyyy\\.;@",
+			"[$-1141A]d\\.\\ mmmm\\ yyyy\\.;@"
 		],
 		"5179": [
-			"[$-1143B]yyyy-mm-dd;@",
-			"[$-1143B]yy-mm-dd;@",
-			"[$-1143B]dddd, mmmm d\". b. \"yyyy;@",
-			"[$-1143B]mmmm d\". b. \"yyyy;@"
-		],
-		"6145": [
-			"yyyy-mm-dd;@",
-			"[$-1010000]d/m/yyyy;@",
-			"[$-1010000]yyyy/mm/dd;@",
-			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
-			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
-			"[$-2010000]d/mm/yyyy;@",
-			"[$-2010000]yyyy/mm/dd;@",
-			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+			"[$-1143B]yyyy\\-mm\\-dd;@",
+			"[$-1143B]yy\\-mm\\-dd;@",
+			"[$-1143B]dddd\\,\\ mmmm\\ d\". b. \"yyyy;@",
+			"[$-1143B]mmmm\\ d\". b. \"yyyy;@"
 		],
 		"6153": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
 			"d/m/yy;@",
-			"d.m.yy;@",
-			"yyyy-mm-dd;@",
-			"[$-1809]dd mmmm yyyy;@",
-			"[$-1809]d mmmm yyyy;@"
+			"d\\.m\\.yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-1809]dd\\ mmmm\\ yyyy;@",
+			"[$-1809]d\\ mmmm\\ yyyy;@"
 		],
 		"6154": [
 			"mm/dd/yyyy;@",
 			"mm/dd/yy;@",
 			"d/m/yy;@",
 			"dd/mm/yy;@",
-			"dd-mm-yy;@",
-			"yyyy-mm-dd;@",
-			"[$-180A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
-			"[$-180A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"dd\\-mm\\-yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-180A]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-180A]dddd\\ d\" de \"mmmm\" de \"yyyy;@",
 			"[$-180A]d\" de \"mmmm\" de \"yyyy;@"
 		],
 		"6156": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
-			"dd.mm.yy;@",
-			"dd-mm-yy;@",
-			"yyyy-mm-dd;@",
-			"[$-180C]dddd d mmmm yyyy;@",
-			"[$-180C]d mmm yy;@",
-			"[$-180C]d mmmm yyyy;@"
+			"dd\\.mm\\.yy;@",
+			"dd\\-mm\\-yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-180C]dddd\\ d\\ mmmm\\ yyyy;@",
+			"[$-180C]d\\ mmm\\ yy;@",
+			"[$-180C]d\\ mmmm\\ yyyy;@"
 		],
 		"6170": [
-			"yyyy-mm-dd;@",
-			"[$-1181A]d.m.yyyy.;@",
-			"[$-1181A]d.m.yy.;@",
-			"[$-1181A]dd.mm.yyyy.;@",
-			"[$-1181A]d. mmmm yyyy.;@",
-			"[$-1181A]dddd, dd. mmmm yyyy.;@",
-			"[$-1181A]dd. mmmm yyyy.;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-1181A]d\\.m\\.yyyy\\.;@",
+			"[$-1181A]d\\.m\\.yy\\.;@",
+			"[$-1181A]d\\.\\ m\\.\\ yyyy\\.;@",
+			"[$-1181A]d\\.\\ mmmm\\ yyyy\\.;@",
+			"[$-1181A]dddd\\,\\ d\\.\\ mmmm\\ yyyy\\.;@"
 		],
 		"6203": [
-			"[$-1183B]dd.mm.yyyy;@",
-			"[$-1183B]dd.mm.yy;@",
-			"[$-1183B]d.m.yy;@",
-			"[$-1183B]yyyy-mm-dd;@",
-			"[$-1183B]dddd, mmmm d\". b. \"yyyy;@",
-			"[$-1183B]mmmm d\". b. \"yyyy;@"
+			"[$-1183B]dd\\.mm\\.yyyy;@",
+			"[$-1183B]dd\\.mm\\.yy;@",
+			"[$-1183B]d\\.m\\.yy;@",
+			"[$-1183B]yyyy\\-mm\\-dd;@",
+			"[$-1183B]dddd\\,\\ mmmm\\ d\". b. \"yyyy;@",
+			"[$-1183B]mmmm\\ d\". b. \"yyyy;@"
 		],
 		"7169": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1010000]d/m/yyyy;@",
 			"[$-1010000]yyyy/mm/dd;@",
-			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
-			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010401]d/m/yyyy\\ h:mm\\ AM/PM;@",
+			"[$-1010409]d/m/yyyy\\ h:mm\\ AM/PM;@",
 			"[$-2010000]d/mm/yyyy;@",
 			"[$-2010000]yyyy/mm/dd;@",
-			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+			"[$-2010401]d/mm/yyyy\\ h:mm\\ AM/PM;@"
 		],
 		"7177": [
 			"yyyy/mm/dd;@",
 			"yy/mm/dd;@",
-			"yyyy-mm-dd;@",
-			"[$-1C09]dd mmmm yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-1C09]dd\\ mmmm\\ yyyy;@"
 		],
 		"7178": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
 			"mm/dd/yyyy;@",
 			"d/m/yy;@",
-			"dd-mm-yy;@",
-			"yyyy-mm-dd;@",
-			"[$-1C0A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
-			"[$-1C0A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"dd\\-mm\\-yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-1C0A]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-1C0A]dddd\\ d\" de \"mmmm\" de \"yyyy;@",
 			"[$-1C0A]d\" de \"mmmm\" de \"yyyy;@"
 		],
 		"7180": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-11C0C]dd/mm/yyyy;@",
-			"[$-11C0C]d mmm yyyy;@",
-			"[$-11C0C]dddd d mmmm yyyy;@",
-			"[$-11C0C]d mmmm yyyy;@"
+			"[$-11C0C]d\\ mmm\\ yyyy;@",
+			"[$-11C0C]dddd\\ d\\ mmmm\\ yyyy;@",
+			"[$-11C0C]d\\ mmmm\\ yyyy;@"
 		],
 		"7194": [
-			"d.m.yyyy;@",
-			"d.m.yy;@",
-			"d. m. yyyy;@",
-			"dd.mm.yyyy;@",
-			"d. m. yy;@",
-			"dd.mm.yy;@",
-			"dd. mm. yy;@",
-			"yyyy-mm-dd;@",
-			"[$-1C1A]d. mmmm yyyy;@",
-			"[$-1C1A]dd. mmmm yyyy;@",
-			"[$-1C1A]dddd, d. mmmm yyyy;@"
+			"d\\.m\\.yyyy;@",
+			"d\\.m\\.yy;@",
+			"d\\.\\ m\\.\\ yyyy;@",
+			"dd\\.mm\\.yyyy;@",
+			"d\\.\\ m\\.\\ yy;@",
+			"dd\\.mm\\.yy;@",
+			"dd\\.\\ mm\\.\\ yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-1C1A]d\\.\\ mmmm\\ yyyy;@",
+			"[$-1C1A]dd\\.\\ mmmm\\ yyyy;@",
+			"[$-1C1A]dddd\\,\\ d\\.\\ mmmm\\ yyyy;@"
 		],
 		"7227": [
-			"[$-11C3B]yyyy-mm-dd;@",
-			"[$-11C3B]yy-mm-dd;@",
-			"[$-11C3B]dddd, mmmm d\". b. \"yyyy;@",
-			"[$-11C3B]mmmm d\". b. \"yyyy;@"
+			"[$-11C3B]yyyy\\-mm\\-dd;@",
+			"[$-11C3B]yy\\-mm\\-dd;@",
+			"[$-11C3B]dddd\\,\\ mmmm\\ d\". b. \"yyyy;@",
+			"[$-11C3B]mmmm\\ d\". b. \"yyyy;@"
 		],
 		"8193": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1010000]d/m/yyyy;@",
 			"[$-1010000]yyyy/mm/dd;@",
-			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
-			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010401]d/m/yyyy\\ h:mm\\ AM/PM;@",
+			"[$-1010409]d/m/yyyy\\ h:mm\\ AM/PM;@",
 			"[$-2010000]d/mm/yyyy;@",
 			"[$-2010000]yyyy/mm/dd;@",
-			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+			"[$-2010401]d/mm/yyyy\\ h:mm\\ AM/PM;@"
 		],
 		"8201": [
 			"dd/mm/yyyy;@",
-			"yyyy-mm-dd;@",
-			"[$-2009]dddd, mmmm dd, yyyy;@",
-			"[$-2009]mmmm dd, yyyy;@",
-			"[$-2009]dddd, dd mmmm, yyyy;@",
-			"[$-2009]dd mmmm, yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-2009]dddd\\,\\ mmmm\\ dd\\,\\ yyyy;@",
+			"[$-2009]mmmm\\ dd\\,\\ yyyy;@",
+			"[$-2009]dddd\\,\\ dd\\ mmmm\\,\\ yyyy;@",
+			"[$-2009]dd\\ mmmm\\,\\ yyyy;@"
 		],
 		"8202": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
 			"d/m/yy;@",
-			"dd-mm-yy;@",
-			"yyyy-mm-dd;@",
-			"[$-200A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
-			"[$-200A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"dd\\-mm\\-yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-200A]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-200A]dddd\\ d\" de \"mmmm\" de \"yyyy;@",
 			"[$-200A]d\" de \"mmmm\" de \"yyyy;@"
 		],
 		"8204": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1200C]dd/mm/yyyy;@",
-			"[$-1200C]d mmm yyyy;@",
-			"[$-1200C]dddd d mmmm yyyy;@",
-			"[$-1200C]d mmmm yyyy;@"
+			"[$-1200C]d\\ mmm\\ yyyy;@",
+			"[$-1200C]dddd\\ d\\ mmmm\\ yyyy;@",
+			"[$-1200C]d\\ mmmm\\ yyyy;@"
 		],
 		"8218": [
-			"[$-1201A]d.m.yyyy;@",
-			"[$-1201A]d.m.yy;@",
-			"[$-1201A]d. m. yyyy;@",
-			"[$-1201A]dd.mm.yyyy;@",
-			"[$-1201A]d. m. yy;@",
-			"[$-1201A]dd.mm.yy;@",
-			"[$-1201A]dd. mm. yy;@",
-			"[$-1201A]yyyy-mm-dd;@",
-			"[$-1201A]d. mmmm yyyy;@",
-			"[$-1201A]dd. mmmm yyyy;@",
-			"[$-1201A]dddd, d. mmmm yyyy;@"
+			"[$-1201A]d\\.m\\.yyyy;@",
+			"[$-1201A]d\\.m\\.yy;@",
+			"[$-1201A]d\\.\\ m\\.\\ yyyy;@",
+			"[$-1201A]dd\\.mm\\.yyyy;@",
+			"[$-1201A]d\\.\\ m\\.\\ yy;@",
+			"[$-1201A]dd\\.mm\\.yy;@",
+			"[$-1201A]dd\\.\\ mm\\.\\ yy;@",
+			"[$-1201A]yyyy\\-mm\\-dd;@",
+			"[$-1201A]d\\.\\ mmmm\\ yyyy;@",
+			"[$-1201A]dd\\.\\ mmmm\\ yyyy;@",
+			"[$-1201A]dddd\\,\\ d\\.\\ mmmm\\ yyyy;@"
 		],
 		"8251": [
-			"[$-1203B]d.m.yyyy;@",
-			"[$-1203B]dd.mm.yyyy;@",
-			"[$-1203B]d.m.yy;@",
-			"[$-1203B]yyyy-mm-dd;@",
-			"[$-1203B]mmmm d\". p. \"yyyy;@",
-			"[$-1203B]dddd, mmmm d\". p. \"yyyy;@"
+			"[$-1203B]d\\.m\\.yyyy;@",
+			"[$-1203B]dd\\.mm\\.yyyy;@",
+			"[$-1203B]d\\.m\\.yy;@",
+			"[$-1203B]yyyy\\-mm\\-dd;@",
+			"[$-1203B]mmmm\\ d\". p. \"yyyy;@",
+			"[$-1203B]dddd\\,\\ mmmm\\ d\". p. \"yyyy;@"
 		],
 		"9217": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1010000]d/m/yyyy;@",
 			"[$-1010000]yyyy/mm/dd;@",
-			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
-			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010401]d/m/yyyy\\ h:mm\\ AM/PM;@",
+			"[$-1010409]d/m/yyyy\\ h:mm\\ AM/PM;@",
 			"[$-2010000]d/mm/yyyy;@",
 			"[$-2010000]yyyy/mm/dd;@",
-			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+			"[$-2010401]d/mm/yyyy\\ h:mm\\ AM/PM;@"
 		],
 		"9225": [
 			"mm/dd/yyyy;@",
 			"mm/dd/yy;@",
-			"yyyy-mm-dd;@",
-			"[$-2409]dddd, mmmm dd, yyyy;@",
-			"[$-2409]mmmm dd, yyyy;@",
-			"[$-2409]dddd, dd mmmm, yyyy;@",
-			"[$-2409]dd mmmm, yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-2409]dddd\\,\\ mmmm\\ dd\\,\\ yyyy;@",
+			"[$-2409]mmmm\\ dd\\,\\ yyyy;@",
+			"[$-2409]dddd\\,\\ dd\\ mmmm\\,\\ yyyy;@",
+			"[$-2409]dd\\ mmmm\\,\\ yyyy;@"
 		],
 		"9226": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
 			"d/mm/yyyy;@",
 			"d/m/yy;@",
-			"dd-mm-yy;@",
-			"yyyy-mm-dd;@",
-			"[$-240A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
-			"[$-240A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"dd\\-mm\\-yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-240A]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-240A]dddd\\ d\" de \"mmmm\" de \"yyyy;@",
 			"[$-240A]d\" de \"mmmm\" de \"yyyy;@"
 		],
 		"9228": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1240C]dd/mm/yyyy;@",
-			"[$-1240C]d mmm yyyy;@",
-			"[$-1240C]dddd d mmmm yyyy;@",
-			"[$-1240C]d mmmm yyyy;@"
+			"[$-1240C]d\\ mmm\\ yyyy;@",
+			"[$-1240C]dddd\\ d\\ mmmm\\ yyyy;@",
+			"[$-1240C]d\\ mmmm\\ yyyy;@"
 		],
 		"9242": [
-			"d.m.yyyy;@",
-			"d.m.yy;@",
-			"d. m. yyyy;@",
-			"dd.mm.yyyy;@",
-			"d. m. yy;@",
-			"dd.mm.yy;@",
-			"dd. mm. yy;@",
-			"yyyy-mm-dd;@",
-			"[$-241A]d. mmmm yyyy;@",
-			"[$-241A]dd. mmmm yyyy;@",
-			"[$-241A]dddd, d. mmmm yyyy;@"
+			"d\\.m\\.yyyy;@",
+			"d\\.m\\.yy;@",
+			"d\\.\\ m\\.\\ yyyy;@",
+			"dd\\.mm\\.yyyy;@",
+			"d\\.\\ m\\.\\ yy;@",
+			"dd\\.mm\\.yy;@",
+			"dd\\.\\ mm\\.\\ yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-241A]d\\.\\ mmmm\\ yyyy;@",
+			"[$-241A]dd\\.\\ mmmm\\ yyyy;@",
+			"[$-241A]dddd\\,\\ d\\.\\ mmmm\\ yyyy;@"
 		],
 		"9275": [
-			"[$-1243B]d.m.yyyy;@",
-			"[$-1243B]dd.mm.yyyy;@",
-			"[$-1243B]d.m.yy;@",
-			"[$-1243B]yyyy-mm-dd;@",
-			"[$-1243B]mmmm d\". p. \"yyyy;@",
-			"[$-1243B]dddd, mmmm d. yyyy;@"
+			"[$-1243B]d\\.m\\.yyyy;@",
+			"[$-1243B]dd\\.mm\\.yyyy;@",
+			"[$-1243B]d\\.m\\.yy;@",
+			"[$-1243B]yyyy\\-mm\\-dd;@",
+			"[$-1243B]mmmm\\ d\". p. \"yyyy;@",
+			"[$-1243B]dddd\\,\\ mmmm\\ d\\.\\ yyyy;@"
 		],
 		"10241": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1010000]d/m/yyyy;@",
 			"[$-1010000]yyyy/mm/dd;@",
-			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
-			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010401]d/m/yyyy\\ h:mm\\ AM/PM;@",
+			"[$-1010409]d/m/yyyy\\ h:mm\\ AM/PM;@",
 			"[$-2010000]d/mm/yyyy;@",
 			"[$-2010000]yyyy/mm/dd;@",
-			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+			"[$-2010401]d/mm/yyyy\\ h:mm\\ AM/PM;@"
 		],
 		"10249": [
 			"dd/mm/yyyy;@",
-			"yyyy-mm-dd;@",
-			"[$-2809]dddd, dd mmmm yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-2809]dddd\\,\\ dd\\ mmmm\\ yyyy;@"
 		],
 		"10250": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
 			"d/m/yy;@",
-			"dd-mm-yy;@",
-			"yyyy-mm-dd;@",
-			"[$-280A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
-			"[$-280A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"dd\\-mm\\-yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-280A]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-280A]dddd\\ d\" de \"mmmm\" de \"yyyy;@",
 			"[$-280A]d\" de \"mmmm\" de \"yyyy;@"
 		],
 		"10252": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1280C]dd/mm/yyyy;@",
-			"[$-1280C]d mmm yyyy;@",
-			"[$-1280C]dddd d mmmm yyyy;@",
-			"[$-1280C]d mmmm yyyy;@"
+			"[$-1280C]d\\ mmm\\ yyyy;@",
+			"[$-1280C]dddd\\ d\\ mmmm\\ yyyy;@",
+			"[$-1280C]d\\ mmmm\\ yyyy;@"
 		],
 		"10266": [
-			"d.m.yyyy.;@",
-			"d.m.yy.;@",
-			"d. m. yyyy.;@",
-			"dd.mm.yyyy.;@",
-			"d. m. yy.;@",
-			"dd.mm.yy.;@",
-			"dd. mm. yy.;@",
-			"yyyy-mm-dd;@",
-			"[$-281A]d. mmmm yyyy.;@",
-			"[$-281A]dd. mmmm yyyy.;@",
-			"[$-281A]dddd, d. mmmm yyyy.;@"
+			"d\\.m\\.yyyy\\.;@",
+			"d\\.m\\.yy\\.;@",
+			"d\\.\\ m\\.\\ yyyy\\.;@",
+			"dd\\.mm\\.yyyy\\.;@",
+			"d\\.\\ m\\.\\ yy\\.;@",
+			"dd\\.mm\\.yy\\.;@",
+			"dd\\.\\ mm\\.\\ yy\\.;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-281A]d\\.\\ mmmm\\ yyyy\\.;@",
+			"[$-281A]dd\\.\\ mmmm\\ yyyy\\.;@",
+			"[$-281A]dddd\\,\\ d\\.\\ mmmm\\ yyyy\\.;@"
 		],
 		"11265": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1010000]d/m/yyyy;@",
 			"[$-1010000]yyyy/mm/dd;@",
-			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
-			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010401]d/m/yyyy\\ h:mm\\ AM/PM;@",
+			"[$-1010409]d/m/yyyy\\ h:mm\\ AM/PM;@",
 			"[$-2010000]d/mm/yyyy;@",
 			"[$-2010000]yyyy/mm/dd;@",
-			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+			"[$-2010401]d/mm/yyyy\\ h:mm\\ AM/PM;@"
 		],
 		"11273": [
 			"dd/mm/yyyy;@",
-			"yyyy-mm-dd;@",
-			"[$-2C09]dddd, dd mmmm yyyy;@"
+			"yyyy\\-mm\\-dd;@",
+			"[$-2C09]dddd\\,\\ dd\\ mmmm\\ yyyy;@"
 		],
 		"11274": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
 			"d/m/yy;@",
-			"dd-mm-yy;@",
-			"yyyy-mm-dd;@",
-			"[$-2C0A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
-			"[$-2C0A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"dd\\-mm\\-yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-2C0A]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-2C0A]dddd\\ d\" de \"mmmm\" de \"yyyy;@",
 			"[$-2C0A]d\" de \"mmmm\" de \"yyyy;@"
 		],
 		"11276": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-12C0C]dd/mm/yyyy;@",
-			"[$-12C0C]d mmm yyyy;@",
-			"[$-12C0C]dddd d mmmm yyyy;@",
-			"[$-12C0C]d mmmm yyyy;@"
+			"[$-12C0C]d\\ mmm\\ yyyy;@",
+			"[$-12C0C]dddd\\ d\\ mmmm\\ yyyy;@",
+			"[$-12C0C]d\\ mmmm\\ yyyy;@"
 		],
 		"12289": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1010000]d/m/yyyy;@",
 			"[$-1010000]yyyy/mm/dd;@",
-			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
-			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010401]d/m/yyyy\\ h:mm\\ AM/PM;@",
+			"[$-1010409]d/m/yyyy\\ h:mm\\ AM/PM;@",
 			"[$-2010000]d/mm/yyyy;@",
 			"[$-2010000]yyyy/mm/dd;@",
-			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+			"[$-2010401]d/mm/yyyy\\ h:mm\\ AM/PM;@"
 		],
 		"12297": [
 			"m/d/yyyy;@",
 			"m/d/yy;@",
 			"mm/dd/yy;@",
 			"mm/dd/yyyy;@",
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"yy/mm/dd;@",
-			"[$-3009]dd-mmm-yy;@",
-			"[$-3009]dddd, mmmm dd, yyyy;@",
-			"[$-3009]mmmm dd, yyyy;@",
-			"[$-3009]dddd, dd mmmm, yyyy;@",
-			"[$-3009]dd mmmm, yyyy;@"
+			"[$-3009]dd\\-mmm\\-yy;@",
+			"[$-3009]dddd\\,\\ mmmm\\ dd\\,\\ yyyy;@",
+			"[$-3009]mmmm\\ dd\\,\\ yyyy;@",
+			"[$-3009]dddd\\,\\ dd\\ mmmm\\,\\ yyyy;@",
+			"[$-3009]dd\\ mmmm\\,\\ yyyy;@"
 		],
 		"12298": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
 			"d/m/yy;@",
-			"dd-mm-yy;@",
-			"yyyy-mm-dd;@",
-			"[$-300A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
-			"[$-300A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"dd\\-mm\\-yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-300A]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-300A]dddd\\ d\" de \"mmmm\" de \"yyyy;@",
 			"[$-300A]d\" de \"mmmm\" de \"yyyy;@"
 		],
 		"12300": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1300C]dd/mm/yyyy;@",
-			"[$-1300C]d mmm yyyy;@",
-			"[$-1300C]dddd d mmmm yyyy;@",
-			"[$-1300C]d mmmm yyyy;@"
+			"[$-1300C]d\\ mmm\\ yyyy;@",
+			"[$-1300C]dddd\\ d\\ mmmm\\ yyyy;@",
+			"[$-1300C]d\\ mmmm\\ yyyy;@"
 		],
 		"13313": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1010000]d/m/yyyy;@",
 			"[$-1010000]yyyy/mm/dd;@",
-			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
-			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010401]d/m/yyyy\\ h:mm\\ AM/PM;@",
+			"[$-1010409]d/m/yyyy\\ h:mm\\ AM/PM;@",
 			"[$-2010000]d/mm/yyyy;@",
 			"[$-2010000]yyyy/mm/dd;@",
-			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+			"[$-2010401]d/mm/yyyy\\ h:mm\\ AM/PM;@"
 		],
 		"13321": [
 			"m/d/yyyy;@",
 			"m/d/yy;@",
 			"mm/dd/yy;@",
 			"mm/dd/yyyy;@",
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"yy/mm/dd;@",
-			"[$-3409]dd-mmm-yy;@",
-			"[$-3409]dddd, mmmm dd, yyyy;@",
-			"[$-3409]mmmm dd, yyyy;@",
-			"[$-3409]dddd, dd mmmm, yyyy;@",
-			"[$-3409]dd mmmm, yyyy;@"
+			"[$-3409]dd\\-mmm\\-yy;@",
+			"[$-3409]dddd\\,\\ mmmm\\ dd\\,\\ yyyy;@",
+			"[$-3409]mmmm\\ dd\\,\\ yyyy;@",
+			"[$-3409]dddd\\,\\ dd\\ mmmm\\,\\ yyyy;@",
+			"[$-3409]dd\\ mmmm\\,\\ yyyy;@"
 		],
 		"13322": [
-			"dd-mm-yyyy;@",
-			"dd-mm-yy;@",
+			"dd\\-mm\\-yyyy;@",
+			"dd\\-mm\\-yy;@",
 			"dd/mm/yy;@",
 			"d/m/yy;@",
-			"yyyy-mm-dd;@",
-			"[$-340A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
-			"[$-340A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-340A]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-340A]dddd\\ d\" de \"mmmm\" de \"yyyy;@",
 			"[$-340A]d\" de \"mmmm\" de \"yyyy;@"
 		],
 		"13324": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1340C]dd/mm/yyyy;@",
-			"[$-1340C]d mmm yyyy;@",
-			"[$-1340C]dddd d mmmm yyyy;@",
-			"[$-1340C]d mmmm yyyy;@"
+			"[$-1340C]d\\ mmm\\ yyyy;@",
+			"[$-1340C]dddd\\ d\\ mmmm\\ yyyy;@",
+			"[$-1340C]d\\ mmmm\\ yyyy;@"
 		],
 		"14337": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1010000]d/m/yyyy;@",
 			"[$-1010000]yyyy/mm/dd;@",
-			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
-			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010401]d/m/yyyy\\ h:mm\\ AM/PM;@",
+			"[$-1010409]d/m/yyyy\\ h:mm\\ AM/PM;@",
 			"[$-2010000]d/mm/yyyy;@",
 			"[$-2010000]yyyy/mm/dd;@",
-			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+			"[$-2010401]d/mm/yyyy\\ h:mm\\ AM/PM;@"
 		],
 		"14345": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-13809]dd/mm/yyyy;@",
 			"[$-13809]dd/mm/yy;@",
-			"[$-13809]d mmm yyyy;@",
-			"[$-13809]dddd, dd mmmm yyyy;@",
-			"[$-13809]dd mmmm yyyy;@"
+			"[$-13809]d\\ mmm\\ yyyy;@",
+			"[$-13809]dddd\\,\\ dd\\ mmmm\\ yyyy;@",
+			"[$-13809]dd\\ mmmm\\ yyyy;@"
 		],
 		"14346": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
 			"d/m/yy;@",
-			"dd-mm-yy;@",
-			"yyyy-mm-dd;@",
-			"[$-380A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
-			"[$-380A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"dd\\-mm\\-yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-380A]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-380A]dddd\\ d\" de \"mmmm\" de \"yyyy;@",
 			"[$-380A]d\" de \"mmmm\" de \"yyyy;@"
 		],
 		"14348": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1380C]dd/mm/yyyy;@",
-			"[$-1380C]d mmm yyyy;@",
-			"[$-1380C]dddd d mmmm yyyy;@",
-			"[$-1380C]d mmmm yyyy;@"
+			"[$-1380C]d\\ mmm\\ yyyy;@",
+			"[$-1380C]dddd\\ d\\ mmmm\\ yyyy;@",
+			"[$-1380C]d\\ mmmm\\ yyyy;@"
 		],
 		"15361": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1010000]d/m/yyyy;@",
 			"[$-1010000]yyyy/mm/dd;@",
-			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
-			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010401]d/m/yyyy\\ h:mm\\ AM/PM;@",
+			"[$-1010409]d/m/yyyy\\ h:mm\\ AM/PM;@",
 			"[$-2010000]d/mm/yyyy;@",
 			"[$-2010000]yyyy/mm/dd;@",
-			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+			"[$-2010401]d/mm/yyyy\\ h:mm\\ AM/PM;@"
 		],
 		"15369": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-13C09]d/m/yyyy;@",
-			"[$-13C09]d mmm yyyy;@",
-			"[$-13C09]dddd, d mmmm yyyy;@",
-			"[$-13C09]d mmmm yyyy;@"
+			"[$-13C09]d\\ mmm\\ yyyy;@",
+			"[$-13C09]dddd\\,\\ d\\ mmmm\\ yyyy;@",
+			"[$-13C09]d\\ mmmm\\ yyyy;@"
 		],
 		"15370": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
 			"d/m/yy;@",
-			"dd-mm-yy;@",
-			"yyyy-mm-dd;@",
-			"[$-3C0A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
-			"[$-3C0A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"dd\\-mm\\-yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-3C0A]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-3C0A]dddd\\ d\" de \"mmmm\" de \"yyyy;@",
 			"[$-3C0A]d\" de \"mmmm\" de \"yyyy;@"
 		],
 		"15372": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-13C0C]dd/mm/yyyy;@",
-			"[$-13C0C]d mmm yyyy;@",
-			"[$-13C0C]dddd d mmmm yyyy;@",
-			"[$-13C0C]d mmmm yyyy;@"
+			"[$-13C0C]d\\ mmm\\ yyyy;@",
+			"[$-13C0C]dddd\\ d\\ mmmm\\ yyyy;@",
+			"[$-13C0C]d\\ mmmm\\ yyyy;@"
 		],
 		"16385": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-1010000]d/m/yyyy;@",
 			"[$-1010000]yyyy/mm/dd;@",
-			"[$-1010401]d/m/yyyy h:mm AM/PM;@",
-			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
+			"[$-1010401]d/m/yyyy\\ h:mm\\ AM/PM;@",
+			"[$-1010409]d/m/yyyy\\ h:mm\\ AM/PM;@",
 			"[$-2010000]d/mm/yyyy;@",
 			"[$-2010000]yyyy/mm/dd;@",
-			"[$-2010401]d/mm/yyyy h:mm AM/PM;@"
+			"[$-2010401]d/mm/yyyy\\ h:mm\\ AM/PM;@"
 		],
 		"16393": [
-			"[$-14009]dd-mm-yyyy;@",
-			"[$-14009]dd-mm-yy;@",
-			"[$-14009]d-m-yy;@",
-			"[$-14009]d.m.yy;@",
-			"[$-14009]yyyy-mm-dd;@",
-			"[$-14009]dd mmmm yyyy;@",
-			"[$-14009]d mmmm yyyy;@",
-			"[$-14009]dddd, d mmmm, yyyy;@"
+			"[$-14009]dd\\-mm\\-yyyy;@",
+			"[$-14009]dd\\-mm\\-yy;@",
+			"[$-14009]d\\-m\\-yy;@",
+			"[$-14009]d\\.m\\.yy;@",
+			"[$-14009]yyyy\\-mm\\-dd;@",
+			"[$-14009]dd\\ mmmm\\ yyyy;@",
+			"[$-14009]d\\ mmmm\\ yyyy;@",
+			"[$-14009]dddd\\,\\ d\\ mmmm\\,\\ yyyy;@"
 		],
 		"16394": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
 			"d/m/yy;@",
-			"dd-mm-yy;@",
-			"yyyy-mm-dd;@",
-			"[$-400A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
-			"[$-400A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"dd\\-mm\\-yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-400A]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-400A]dddd\\ d\" de \"mmmm\" de \"yyyy;@",
 			"[$-400A]d\" de \"mmmm\" de \"yyyy;@"
 		],
 		"17417": [
@@ -8488,87 +8655,105 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 			"[$-14409]d/m/yy;@",
 			"[$-14409]dd/mm/yyyy;@",
 			"[$-14409]dd/mm/yy;@",
-			"[$-14409]yyyy-mm-dd;@",
-			"[$-14409]dddd, d mmmm, yyyy;@",
-			"[$-14409]d mmmm, yyyy;@"
+			"[$-14409]yyyy\\-mm\\-dd;@",
+			"[$-14409]dddd\\,\\ d\\ mmmm\\,\\ yyyy;@",
+			"[$-14409]d\\ mmmm\\,\\ yyyy;@"
 		],
 		"17418": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
-			"mm-dd-yyyy;@",
-			"yyyy-mm-dd;@",
-			"[$-440A]dddd, dd\" de \"mmmm\" de \"yyyy;@"
+			"mm\\-dd\\-yyyy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-440A]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@"
 		],
 		"18441": [
-			"yyyy-mm-dd;@",
+			"yyyy\\-mm\\-dd;@",
 			"[$-14809]d/m/yyyy;@",
 			"[$-14809]d/m/yy;@",
-			"[$-14809]d mmm yyyy;@",
-			"[$-14809]dddd, d mmmm yyyy;@",
-			"[$-14809]d mmmm yyyy;@"
+			"[$-14809]d\\ mmm\\ yyyy;@",
+			"[$-14809]dddd\\,\\ d\\ mmmm\\ yyyy;@",
+			"[$-14809]d\\ mmmm\\ yyyy;@"
 		],
 		"18442": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
-			"mm-dd-yyyy;@",
-			"yyyy-mm-dd;@",
-			"[$-480A]dddd, dd\" de \"mmmm\" de \"yyyy;@"
+			"mm\\-dd\\-yyyy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-480A]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@"
 		],
 		"19466": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
-			"mm-dd-yyyy;@",
-			"yyyy-mm-dd;@",
-			"[$-4C0A]dddd, dd\" de \"mmmm\" de \"yyyy;@"
+			"mm\\-dd\\-yyyy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-4C0A]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@"
 		],
 		"20490": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
-			"mm-dd-yyyy;@",
-			"yyyy-mm-dd;@",
-			"[$-500A]dddd, dd\" de \"mmmm\" de \"yyyy;@"
+			"mm\\-dd\\-yyyy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-500A]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@"
 		],
 		"21514": [
 			"[$-1540A]m/d/yyyy;@",
 			"[$-1540A]m/d/yy;@",
 			"[$-1540A]mm/dd/yy;@",
-			"[$-1540A]mm/dd/yyyy;@",
 			"[$-1540A]yy/mm/dd;@",
-			"[$-1540A]yyyy-mm-dd;@",
-			"[$-1540A]dd-mmm-yy;@",
-			"[$-1540A]dddd, mmmm dd, yyyy;@",
-			"[$-1540A]mmmm dd, yyyy;@",
-			"[$-1540A]dddd, dd mmmm, yyyy;@",
-			"[$-1540A]dd mmmm, yyyy;@"
+			"[$-1540A]yyyy\\-mm\\-dd;@",
+			"[$-1540A]dd\\-mmm\\-yy;@",
+			"[$-1540A]dddd\\,\\ mmmm\\ dd\\,\\ yyyy;@",
+			"[$-1540A]mmmm\\ dd\\,\\ yyyy;@",
+			"[$-1540A]dddd\\,\\ dd\\ mmmm\\,\\ yyyy;@",
+			"[$-1540A]dd\\ mmmm\\,\\ yyyy;@"
 		],
 		"22538": [
 			"dd/mm/yyyy;@",
 			"dd/mm/yy;@",
 			"d/mm/yy;@",
 			"d/m/yy;@",
-			"dd-mm-yy;@",
-			"yyyy-mm-dd;@",
-			"[$-580A]dddd, dd\" de \"mmmm\" de \"yyyy;@",
-			"[$-580A]dddd d\" de \"mmmm\" de \"yyyy;@",
+			"dd\\-mm\\-yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-580A]dddd\\,\\ dd\" de \"mmmm\" de \"yyyy;@",
+			"[$-580A]dddd\\ d\" de \"mmmm\" de \"yyyy;@",
 			"[$-580A]d\" de \"mmmm\" de \"yyyy;@"
 		],
+		"63488": [
+			"mm-dd-yy",
+			"[$-F800]dddd\\,\\ mmmm\\ dd\\,\\ yyyy",
+			"d\\.m\\.;@",
+			"d\\.m\\.yy;@",
+			"d\\.m\\.yyyy;@",
+			"[$-40B]d\\.\\ mmmm\\t\\a;@",
+			"[$-40B]d\\.\\ mmmm\\t\\a\\ yy;@",
+			"[$-40B]d\\.\\ mmmm\\t\\a\\ yyyy;@",
+			"[$-40B]mmmm\\ yy;@",
+			"[$-40B]mmmm\\ yyyy;@",
+			"[$-40B]d\\.\\ mmmm\\t\\a\\ yyyy\\ h:mm;@",
+			"d\\.m\\.yyyy\\ h:mm;@",
+			"d\\.m\\.yy\\ h:mm;@",
+			"[$-40B]mmmmm;@",
+			"[$-40B]mmmmm\\ yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"yyyy\\-mm\\-dd\\ hh:mm;@"
+		],
 		"64546": [
-			"dd.mm.yyyy;@",
-			"dd.mm.yy;@",
-			"yyyy-mm-dd;@",
-			"[$-FC22]d mmmm yyyy\" р.\";@"
+			"dd\\.mm\\.yyyy;@",
+			"dd\\.mm\\.yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-FC22]d\\ mmmm\\ yyyy\" р.\";@"
 		],
 		"64547": [
-			"dd.mm.yyyy;@",
-			"dd.mm.yy;@",
-			"yyyy-mm-dd;@",
-			"[$-FC23]d mmmm yyyy;@"
+			"dd\\.mm\\.yyyy;@",
+			"dd\\.mm\\.yy;@",
+			"yyyy\\-mm\\-dd;@",
+			"[$-FC23]d\\ mmmm\\ yyyy;@"
 		],
 		"64551": [
-			"yyyy-mm-dd;@",
-			"yyyy.mm.dd;@",
-			"[$-FC27]yyyy \"m.\" mmmm d \"d.\";@",
-			"[$-427]yyyy \"m.\" mmmm d \"d.\";@"
+			"yyyy\\-mm\\-dd;@",
+			"yyyy\\.mm\\.dd;@",
+			"[$-FC27]yyyy\\ \"m.\"\\ mmmm\\ d\\ \"d.\";@",
+			"[$-427]yyyy\\ \"m.\"\\ mmmm\\ d\\ \"d.\";@"
 		]
 	};
 
@@ -8658,6 +8843,7 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 			"hh\"H\"mm\"'\";@"
 		],
 		"1035": [
+			"[$-409]h\\.mm\\.ss AM/PM",
 			"h:mm;@",
 			"[$-409]h:mm AM/PM;@",
 			"h:mm:ss;@",
@@ -8676,14 +8862,6 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 			"[h]:mm:ss;@",
 			"[$-409]d/m/yy h:mm AM/PM;@",
 			"d/m/yy h:mm;@"
-		],
-		"1037": [
-			"[$-1000000]h:mm;@",
-			"[$-1000409]h:mm AM/PM;@",
-			"[$-1000000]h:mm:ss;@",
-			"[$-1000409]h:mm:ss AM/PM;@",
-			"[$-1010409]d/m/yyyy h:mm AM/PM;@",
-			"[$-1010409]d/m/yyyy h:mm;@"
 		],
 		"1038": [
 			"h:mm;@",
@@ -8812,10 +8990,6 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 			"[$-409]d/m/yy h:mm AM/PM;@",
 			"d/m/yy h:mm;@"
 		],
-		"1052": [
-			"[$-41C]hh:mm:ss.Pd/md;@",
-			"hh:mm:ss;@"
-		],
 		"1053": [
 			"hh:mm;@",
 			"hh:mm:ss;@",
@@ -8825,16 +8999,6 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 			"[h]:mm:ss;@",
 			"yyyy-mm-dd hh:mm;@",
 			"[$-409]yyyy-mm-dd h:mm AM/PM;@"
-		],
-		"1054": [
-			"[$-D000000]h:mm:ss AM/PM;@",
-			"[$-D000000]h:mm:ss;@",
-			"[$-D000000]h:mm \"น.\";@",
-			"[$-D000409]h:mm AM/PM;@",
-			"[$-1000000]h:mm:ss AM/PM;@",
-			"[$-1000000]h:mm:ss;@",
-			"[$-1000000]h:mm \"น.\";@",
-			"[$-1000409]h:mm AM/PM;@"
 		],
 		"1055": [
 			"hh:mm;@",
@@ -9408,14 +9572,6 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 			"[$-10491]hh:mm:ss;@",
 			"[$-10491]hh:mm;@"
 		],
-		"2049": [
-			"[$-1000000]h:mm:ss;@",
-			"[$-1000401]h:mm AM/PM;@",
-			"[$-1000409]h:mm AM/PM;@",
-			"[$-2000000]h:mm:ss;@",
-			"[$-2000401]h:mm AM/PM;@",
-			"[$-2000409]h:mm AM/PM;@"
-		],
 		"2052": [
 			"h:mm;@",
 			"[$-409]h:mm AM/PM;@",
@@ -9775,14 +9931,6 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 			"[$-1143B]h:mm:ss;@",
 			"[$-1143B]hh:mm;@",
 			"[$-1143B]h:mm;@"
-		],
-		"6145": [
-			"[$-1000000]h:mm:ss;@",
-			"[$-1000401]h:mm AM/PM;@",
-			"[$-1000409]h:mm AM/PM;@",
-			"[$-2000000]h:mm:ss;@",
-			"[$-2000401]h:mm AM/PM;@",
-			"[$-2000409]h:mm AM/PM;@"
 		],
 		"6153": [
 			"hh:mm:ss;@",

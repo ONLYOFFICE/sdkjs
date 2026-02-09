@@ -3704,14 +3704,20 @@
 				return null;
 			}
 			var _ret = new CBlipFill();
-			if (this.RasterImageId == fill.RasterImageId) {
-				_ret.RasterImageId = this.RasterImageId;
+
+			_ret.RasterImageId = this.RasterImageId == fill.RasterImageId
+				? this.RasterImageId
+				: null;
+
+			if (isRealObject(this.stretch) && isRealObject(fill.stretch)) {
+				_ret.stretch = this.stretch.isIdentical(fill.stretch)
+					? this.stretch.createDuplicate()
+					: new CBlipFillStretch();
 			}
-			if (isRealObject(fill.stretch)) {
-				_ret.stretch = this.stretch.isIdentical(fill.stretch) ? this.stretch.createDuplicate() : new CBlipFillStretch();
-			}
-			if (isRealObject(fill.tile)) {
-				_ret.tile = fill.tile.IsIdentical(this.tile) ? this.tile.createDuplicate() : new CBlipFillTile();
+			if (isRealObject(this.tile) && isRealObject(fill.tile)) {
+				_ret.tile = this.tile.IsIdentical(fill.tile)
+					? this.tile.createDuplicate()
+					: new CBlipFillTile();
 			}
 			if (fill.rotWithShape === this.rotWithShape) {
 				_ret.rotWithShape = this.rotWithShape;
@@ -4029,12 +4035,14 @@
 			return copy;
 		};
 		CBlipFillStretch.prototype.isIdentical = function (other) {
-			return other && (
-				this.fillRect == null && other.fillRect == null ||
-				other.fillRect.l == this.fillRect.l &&
-				other.fillRect.t == this.fillRect.t &&
-				other.fillRect.r == this.fillRect.r &&
-				other.fillRect.b == this.fillRect.b);
+			if (!other)
+				return false;
+			if (!this.fillRect) {
+				return !other.fillRect;
+			}
+			let f = this.fillRect;
+			let o = other.fillRect;
+			return o && f.l === o.l && f.t === o.t && f.r === o.r && f.b === o.b;
 		};
 
 
@@ -7306,8 +7314,8 @@
 		EndArrow.prototype.IsIdentical = function (arrow) {
 			return arrow && arrow.type === this.type && arrow.len === this.len && arrow.w === this.w;
 		};
-		EndArrow.prototype.GetWidth = function (_size, _max) {
-			var size = Math.min(_size, _max ? _max : 2);
+		EndArrow.prototype.GetWidth = function (_size, _minSize) {
+			const size = Math.max(_size, _minSize ? _minSize : 2);
 			var _ret = 3 * size;
 			let startSizeInch;
 			let inchSize;
@@ -7362,8 +7370,8 @@
 			}
 			return _ret;
 		};
-		EndArrow.prototype.GetLen = function (_size, _max) {
-			var size = Math.min(_size, _max ? _max : 2);
+		EndArrow.prototype.GetLen = function (_size, _minSize) {
+			const size = Math.max(_size, _minSize ? _minSize : 2);
 			var _ret = 3 * size;
 			let startSizeInch;
 			let inchSize;
@@ -7746,7 +7754,7 @@
 			this.cmpd = cmpd;
 		};
 		CLn.prototype.setW = function (w) {
-			this.w = w;
+			this.w = (w !== null && w !== undefined) ? (w + 0.5 >> 0) : w;
 		};
 		CLn.prototype.isVisible = function () {
 			return this.Fill && this.Fill.isVisible();
@@ -16849,7 +16857,7 @@
 			var _w = asc_stroke.width;
 
 			if (_w !== null && _w !== undefined)
-				ret.w = _w * 36000.0;
+				ret.setW(_w * 36000);
 
 			var _color = asc_stroke.color;
 			if (_type === c_oAscStrokeType.STROKE_NONE) {
@@ -17515,13 +17523,14 @@
 			return oUniFill;
 		}
 
-		function builder_CreateLine(nWidth, oFill) {
+		function builder_CreateLine(nWidth, oFill, prstDash) {
 			if (nWidth === 0) {
 				return new AscFormat.CreateNoFillLine();
 			}
 			var oLn = new AscFormat.CLn();
-			oLn.w = nWidth;
+			oLn.setW(nWidth);
 			oLn.Fill = oFill.UniFill;
+			oLn.prstDash = (prstDash === undefined) ? null : prstDash;
 			return oLn;
 		}
 

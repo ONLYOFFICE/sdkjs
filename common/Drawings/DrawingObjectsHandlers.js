@@ -351,6 +351,12 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
                 ret = handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord);
                 break;
             }
+			case AscDFH.historyitem_type_Pdf_Text_Field:
+			case AscDFH.historyitem_type_Pdf_Combobox_Field:
+			{
+				ret = handlePdfTextField(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord);
+                break;
+			}
             case AscDFH.historyitem_type_ChartSpace:
             {
                 ret = handleChart(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord);
@@ -636,6 +642,13 @@ function handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pag
         }
     }
     return false;
+}
+
+function handlePdfTextField(field, drawingObjectsController, e, x, y, group, pageIndex, bWord)
+{
+	if (drawingObjectsController.document.GetActiveObject() == field) {
+		return drawingObjectsController.handleTextHit(field, e, x, y, null, pageIndex, false);
+	}
 }
 
 

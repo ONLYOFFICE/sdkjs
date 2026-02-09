@@ -1308,6 +1308,9 @@
     CROUNDFunctionNode.prototype._calculate = function (aArgs) {
         this.result = fRoundNumber(aArgs[1].result, (aArgs[0].result >> 0));
     };
+    CROUNDFunctionNode.prototype.checkRoundNumber = function(number){
+        return number;
+    };
 
     function CSIGNFunctionNode(parseQueue){
         CFunctionNode.call(this, parseQueue);
@@ -2233,6 +2236,11 @@
             return new CRightParenOperatorNode(this.parseQueue);
         }
         if(this.formula[this.pos] === '\n' || this.formula[this.pos] === '\t' || this.formula[this.pos] === '\r'){
+            ++this.pos;
+            this.setFlag(PARSER_MASK_CLEAN, false);
+            return new CLineSeparatorOperatorNode(this.parseQueue);
+        }
+        if(this.formula[this.pos] === this.listSeparator){
             ++this.pos;
             this.setFlag(PARSER_MASK_CLEAN, false);
             return new CLineSeparatorOperatorNode(this.parseQueue);

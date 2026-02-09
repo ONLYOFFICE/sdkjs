@@ -316,7 +316,7 @@
 
 	/**
      * Any valid drawing element.
-     * @typedef {(ApiShape | ApiImage | ApiOleObject | ApiChart )} Drawing
+     * @typedef {(ApiShape | ApiImage | ApiOleObject | ApiChart | ApiGroup | ApiSmartArt)} Drawing
 	 * @see office-js-api/Examples/Enumerations/Drawing.js
 	 */
 
@@ -8230,7 +8230,7 @@
 				const selectedOne = selectedDrawings[0];
 
 				if (selectedOne.graphicObject && selectedOne.isChart()) {
-					return Asc.editor.private_CreateApiChart(selectedOne.graphicObject);
+					return new ApiChart(selectedOne.graphicObject);
 				}
 			}
 		}
@@ -9070,7 +9070,7 @@
 				oChart.setStyle(nStyleIndex);
 			}
 			oChart.recalculateReferences();
-			return Asc.editor.private_CreateApiChart(oChart);
+			return new ApiChart(oChart);
 		};
 
 
@@ -9261,6 +9261,45 @@
 	};
 
 	/**
+	 * Returns selected shapes from the current sheet.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiShape[]}.
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetSelectedShapes.js
+	 */
+	ApiWorksheet.prototype.GetSelectedShapes = function () {
+		var allDrawings = this.worksheet.Drawings;
+		var allApiDrawings = [];
+
+		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++) {
+			if (allDrawings[nDrawing].graphicObject && allDrawings[nDrawing].graphicObject.selected && allDrawings[nDrawing].isShape()) {
+				allApiDrawings.push(new ApiShape(allDrawings[nDrawing].graphicObject));
+			}
+		}
+		return allApiDrawings;
+	};
+
+	/**
+	 * Returns selected drawings from the current sheet.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @returns {Drawing[]}.
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetAllDrawings.js
+	 */
+	ApiWorksheet.prototype.GetSelectedDrawings = function () {
+		var allDrawings = this.worksheet.Drawings;
+		var allApiDrawings = [];
+
+		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++) {
+			if (allDrawings[nDrawing].graphicObject && allDrawings[nDrawing].graphicObject.selected) {
+				allApiDrawings.push(GetApiDrawing(allDrawings[nDrawing].graphicObject));
+			}
+		}
+
+		return allApiDrawings
+	};
+
+	/**
 	 * Returns all charts from the current sheet.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
@@ -9273,7 +9312,7 @@
 
 		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++) {
 			if (allDrawings[nDrawing].graphicObject && allDrawings[nDrawing].isChart()) {
-				allApiDrawings.push(Asc.editor.private_CreateApiChart(allDrawings[nDrawing].graphicObject));
+				allApiDrawings.push(new ApiChart(allDrawings[nDrawing].graphicObject));
 			}
 		}
 		return allApiDrawings;
@@ -11100,18 +11139,18 @@
 		
 		sortSettings.levels = [];
 		key1 = filterRange(key1);
-		const rangeKey1 = apiWorksheet.GetRange(key1);
-		if (key1 && false === getSortLevel(rangeKey1, sSortOrder1)) {
+		const rangeKey1 = key1 && apiWorksheet.GetRange(key1);
+		if (rangeKey1 && false === getSortLevel(rangeKey1, sSortOrder1)) {
 			return;
 		}
 		key2 = filterRange(key2);
-		const rangeKey2 = apiWorksheet.GetRange(key2);
-		if (key2 && false === getSortLevel(rangeKey2, sSortOrder2)) {
+		const rangeKey2 = key2 && apiWorksheet.GetRange(key2);
+		if (rangeKey2 && false === getSortLevel(rangeKey2, sSortOrder2)) {
 			return;
 		}
 		key3 = filterRange(key3);
-		const rangeKey3 = apiWorksheet.GetRange(key3);
-		if (key3 && false === getSortLevel(rangeKey3, sSortOrder3)) {
+		const rangeKey3 = key3 && apiWorksheet.GetRange(key3);
+		if (rangeKey3 && false === getSortLevel(rangeKey3, sSortOrder3)) {
 			return;
 		}
 
@@ -12115,7 +12154,7 @@
 	 * Adds an AutoFilter to the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {number} [Field] - The integer offset of the field on which you want to base the filter (from the left of the list; the leftmost field is field one).
+	 * @param {number|null} [Field] - The integer offset of the field on which you want to base the filter (from the left of the list; the leftmost field is field one). If {null} provided, clears the AutoFilter for the range.
 	 * @param {string | string[] | ApiColor | XlDynamicFilterCriteria} [Criteria1] - The criteria (a string; for example, "101"). Use "=" to find blank fields, "<>" to find non-blank fields, and "><" to select (No Data) fields in data types.
 	 * If this argument is omitted, the criteria is All. If Operator is xlTop10Items, Criteria1 specifies the number of items (for example, "10").
 	 * @param {XlAutoFilterOperator} [Operator] - An XlAutoFilterOperator constant specifying the type of filter.
@@ -12960,6 +12999,42 @@
 		oController.updateOverlay();
 	};
 
+	/**
+	 * Sets the fill formatting properties to the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiFill} oFill - The fill type used to fill the graphic object.
+	 * @returns {boolean} - returns false if param is invalid.
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Fill.js
+	 */
+	ApiDrawing.prototype.Fill = function(oFill)
+	{
+		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
+			return false;
+
+		this.Drawing.spPr.setFill(oFill.UniFill);
+		return true;
+	};
+
+	/**
+	 * Sets the outline properties to the specified graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiStroke} oStroke - The stroke used to create the graphic object outline.
+	 * @returns {boolean} - returns false if param is invalid.
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetOutLine.js
+	 */
+	ApiDrawing.prototype.SetOutLine = function(oStroke)
+	{
+		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
+			return false;
+
+		this.Drawing.spPr.setLn(oStroke.Ln);
+		return true;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiImage
@@ -12975,6 +13050,60 @@
 	 */
 	ApiImage.prototype.GetClassType = function () {
 		return "image";
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiGroup
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a group of drawings.
+	 * @constructor
+	 */
+	function ApiGroup(oGroup) {
+		ApiDrawing.call(this, oGroup);
+	}
+	ApiGroup.prototype = Object.create(ApiDrawing.prototype);
+	ApiGroup.prototype.constructor = ApiGroup;
+
+	/**
+	 * Returns a type of the ApiGroup class.
+	 * @memberof ApiGroup
+	 * @typeofeditors ["CSE"]
+	 * @returns {"group"}
+	 * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/GetClassType.js
+	 */
+	ApiGroup.prototype.GetClassType = function() {
+		return "group";
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiSmartArt
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a smart art.
+	 * @constructor
+	 */
+	function ApiSmartArt(oGroup){
+		ApiDrawing.call(this, oGroup);
+	}
+	ApiSmartArt.prototype = Object.create(ApiDrawing.prototype);
+	ApiSmartArt.prototype.constructor = ApiSmartArt;
+
+	/**
+	 * Returns a type of the ApiSmartArt class.
+	 * @memberof ApiSmartArt
+	 * @typeofeditors ["CSE"]
+	 * @returns {"smartArt"}
+	 * @see office-js-api/Examples/{Editor}/ApiSmartArt/Methods/GetClassType.js
+	 */
+	ApiSmartArt.prototype.GetClassType = function() {
+		return "smartArt";
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -13098,26 +13227,114 @@
 		return false;
 	};
 
+	/**
+	 * Sets the fill properties to the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiFill} oFill - The fill type used to fill the shape.
+	 * @returns {boolean} - returns false if param is invalid.
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetFill.js
+	 */
+	ApiShape.prototype.SetFill = function(oFill)
+	{
+		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
+			return false;
+
+		if (this.Shape && this.Shape.spPr)
+		{
+			this.Shape.spPr.setFill(oFill.UniFill);
+			return true;
+		}
+
+		return false;
+	};
+
+	/**
+	 * Gets the fill properties from the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiFill | null}
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetFill.js
+	 */
+	ApiShape.prototype.GetFill = function()
+	{
+		if (this.Shape)
+		{
+			if (this.Shape.recalcInfo && this.Shape.recalcInfo.recalculateBrush)
+			{
+				this.Shape.recalculateBrush();
+			}
+			if (this.Shape.brush)
+			{
+				return new AscBuilder.ApiFill(this.Shape.brush);
+			}
+		}
+
+		return null;
+	};
+
+	/**
+	 * Sets the outline properties to the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiStroke} oStroke - The stroke used to create the shape outline.
+	 * @returns {boolean} - returns false if param is invalid.
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetLine.js
+	 */
+	ApiShape.prototype.SetLine = function(oStroke)
+	{
+		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
+			return false;
+
+		if (this.Shape && this.Shape.spPr)
+		{
+			this.Shape.spPr.setLn(oStroke.Ln);
+			return true;
+		}
+
+		return false;
+	};
+
+	/**
+	 * Gets the outline properties from the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiStroke | null}
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetLine.js
+	 */
+	ApiShape.prototype.GetLine = function()
+	{
+		if (this.Shape)
+		{
+			if (this.Shape.recalcInfo && this.Shape.recalcInfo.recalculatePen)
+			{
+				this.Shape.recalculatePen();
+			}
+			if (this.Shape.pen)
+			{
+				return new AscBuilder.ApiStroke(this.Shape.pen);
+			}
+		}
+
+		return null;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiChart
 	//
 	//------------------------------------------------------------------------------------------------------------------
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-	let ApiChart = AscBuilder.ApiChart;
+	/**
+	 * Class representing a chart.
+	 * @constructor
+	 */
+	function ApiChart(Chart) {
+		ApiDrawing.call(this, Chart);
+		this.Chart = Chart;
+	}
+	ApiChart.prototype = Object.create(ApiDrawing.prototype);
+	ApiChart.prototype.constructor = ApiChart;
 
 	/**
 	 * Sets values from the specified range to the specified series.
@@ -13202,11 +13419,6 @@
 		} else
 			this.Chart.addSeries(sNameRange, sValuesRange);
 	};
-
-
-
-
-
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -19461,8 +19673,15 @@
 				return new window['Asc'].CDataFormula(formula);
 			} else if (typeof formula === "number") {
 				return new window['Asc'].CDataFormula(formula.toString());
-			} else if (formula && formula.constructor === ApiRange) {
-				return new window['Asc'].CDataFormula(formula.GetAddress());
+			} else if (Array.isArray(formula)) {
+                const sep = ",";
+                return new window['Asc'].CDataFormula(formula.join(sep));
+            } else if (formula && formula.constructor === ApiRange) {
+                let text = formula.GetAddress();
+                if (text && typeof text === "string") {
+                    text = "=" + text;
+                }
+				return new window['Asc'].CDataFormula(text);
 			}
 
 			return null;
@@ -19501,8 +19720,8 @@
 			worksheet.dataValidations = new window['AscCommonExcel'].CDataValidations();
 		}
 
+        dataValidation.correctFromInterface(worksheet);
 		dataValidation._init(worksheet);
-		dataValidation.correctFromInterface(worksheet);
 
 		worksheet.dataValidations.add(worksheet, dataValidation, true);
 
@@ -19863,6 +20082,11 @@
 			return;
 		}
 		let formula1 = validation.getFormula1();
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
+		if (formula1 && worksheet) {
+			formula1 = formula1.clone();
+			formula1.correctToInterface(worksheet, validation);
+		}
 		return formula1 ? formula1.asc_getValue() : "";
 	};
 
@@ -19879,6 +20103,11 @@
 			return;
 		}
 		let formula2 = validation.getFormula2();
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
+		if (formula2 && worksheet) {
+			formula2 = formula2.clone();
+			formula2.correctToInterface(worksheet, validation);
+		}
 		return formula2 ? formula2.asc_getValue() : "";
 	};
 
@@ -26853,11 +27082,6 @@
      */
     function ApiAutoFilter(ws) {
         this.ws = ws;
-        this.filters = ws && ws.worksheet &&
-        ws.worksheet.AutoFilter &&
-        ws.worksheet.AutoFilter.FilterColumns
-            ? createAutoFilterArray(this, ws.worksheet.AutoFilter.FilterColumns)
-            : [];
     }
 
     /**
@@ -26916,7 +27140,15 @@
      * @see office-js-api/Examples/{Editor}/ApiAutoFilter/Methods/GetFilters.js
      */
     ApiAutoFilter.prototype.GetFilters = function () {
-        return this.filters;
+        const cols =
+            this.ws &&
+            this.ws.worksheet &&
+            this.ws.worksheet.AutoFilter &&
+            this.ws.worksheet.AutoFilter.FilterColumns
+                ? this.ws.worksheet.AutoFilter.FilterColumns
+                : [];
+
+        return createAutoFilterArray(this, cols);
     };
 
     Object.defineProperty(ApiAutoFilter.prototype, "Filters", {
@@ -27449,18 +27681,57 @@
 	ApiShape.prototype["SetVerticalTextAlign"]         =  ApiShape.prototype.SetVerticalTextAlign;
 	ApiShape.prototype["GetGeometry"]                  =  ApiShape.prototype.GetGeometry;
 	ApiShape.prototype["SetGeometry"]                  =  ApiShape.prototype.SetGeometry;
+	ApiShape.prototype["SetFill"]                      =  ApiShape.prototype.SetFill;
+	ApiShape.prototype["GetFill"]                      =  ApiShape.prototype.GetFill;
+	ApiShape.prototype["SetLine"]                      =  ApiShape.prototype.SetLine;
+	ApiShape.prototype["GetLine"]                      =  ApiShape.prototype.GetLine;
+
+	ApiChart.prototype["GetClassType"] = ApiChart.prototype.GetClassType = AscBuilder.ApiChart.prototype.GetClassType;
+	ApiChart.prototype["GetChartType"] = ApiChart.prototype.GetChartType = AscBuilder.ApiChart.prototype.GetChartType;
+	ApiChart.prototype["SetTitle"] = ApiChart.prototype.SetTitle = AscBuilder.ApiChart.prototype.SetTitle;
+	ApiChart.prototype["SetHorAxisTitle"] = ApiChart.prototype.SetHorAxisTitle = AscBuilder.ApiChart.prototype.SetHorAxisTitle;
+	ApiChart.prototype["SetVerAxisTitle"] = ApiChart.prototype.SetVerAxisTitle = AscBuilder.ApiChart.prototype.SetVerAxisTitle;
+	ApiChart.prototype["SetVerAxisOrientation"] = ApiChart.prototype.SetVerAxisOrientation = AscBuilder.ApiChart.prototype.SetVerAxisOrientation;
+	ApiChart.prototype["SetHorAxisOrientation"] = ApiChart.prototype.SetHorAxisOrientation = AscBuilder.ApiChart.prototype.SetHorAxisOrientation;
+	ApiChart.prototype["SetLegendPos"] = ApiChart.prototype.SetLegendPos = AscBuilder.ApiChart.prototype.SetLegendPos;
+	ApiChart.prototype["SetLegendFontSize"] = ApiChart.prototype.SetLegendFontSize = AscBuilder.ApiChart.prototype.SetLegendFontSize;
+	ApiChart.prototype["SetShowDataLabels"] = ApiChart.prototype.SetShowDataLabels = AscBuilder.ApiChart.prototype.SetShowDataLabels;
+	ApiChart.prototype["SetShowPointDataLabel"] = ApiChart.prototype.SetShowPointDataLabel = AscBuilder.ApiChart.prototype.SetShowPointDataLabel;
+	ApiChart.prototype["SetVertAxisTickLabelPosition"] = ApiChart.prototype.SetVertAxisTickLabelPosition = AscBuilder.ApiChart.prototype.SetVertAxisTickLabelPosition;
+	ApiChart.prototype["SetHorAxisTickLabelPosition"] = ApiChart.prototype.SetHorAxisTickLabelPosition = AscBuilder.ApiChart.prototype.SetHorAxisTickLabelPosition;
+	ApiChart.prototype["SetHorAxisMajorTickMark"] = ApiChart.prototype.SetHorAxisMajorTickMark = AscBuilder.ApiChart.prototype.SetHorAxisMajorTickMark;
+	ApiChart.prototype["SetHorAxisMinorTickMark"] = ApiChart.prototype.SetHorAxisMinorTickMark = AscBuilder.ApiChart.prototype.SetHorAxisMinorTickMark;
+	ApiChart.prototype["SetVertAxisMajorTickMark"] = ApiChart.prototype.SetVertAxisMajorTickMark = AscBuilder.ApiChart.prototype.SetVertAxisMajorTickMark;
+	ApiChart.prototype["SetVertAxisMinorTickMark"] = ApiChart.prototype.SetVertAxisMinorTickMark = AscBuilder.ApiChart.prototype.SetVertAxisMinorTickMark;
+	ApiChart.prototype["SetMajorVerticalGridlines"] = ApiChart.prototype.SetMajorVerticalGridlines = AscBuilder.ApiChart.prototype.SetMajorVerticalGridlines;
+	ApiChart.prototype["SetMinorVerticalGridlines"] = ApiChart.prototype.SetMinorVerticalGridlines = AscBuilder.ApiChart.prototype.SetMinorVerticalGridlines;
+	ApiChart.prototype["SetMajorHorizontalGridlines"] = ApiChart.prototype.SetMajorHorizontalGridlines = AscBuilder.ApiChart.prototype.SetMajorHorizontalGridlines;
+	ApiChart.prototype["SetMinorHorizontalGridlines"] = ApiChart.prototype.SetMinorHorizontalGridlines = AscBuilder.ApiChart.prototype.SetMinorHorizontalGridlines;
+	ApiChart.prototype["SetHorAxisLabelsFontSize"] = ApiChart.prototype.SetHorAxisLabelsFontSize = AscBuilder.ApiChart.prototype.SetHorAxisLabelsFontSize;
+	ApiChart.prototype["SetVertAxisLabelsFontSize"] = ApiChart.prototype.SetVertAxisLabelsFontSize = AscBuilder.ApiChart.prototype.SetVertAxisLabelsFontSize;
+	ApiChart.prototype["RemoveSeria"] = ApiChart.prototype.RemoveSeria = AscBuilder.ApiChart.prototype.RemoveSeria;
+	ApiChart.prototype["ApplyChartStyle"] = ApiChart.prototype.ApplyChartStyle = AscBuilder.ApiChart.prototype.ApplyChartStyle;
+	ApiChart.prototype["SetPlotAreaFill"] = ApiChart.prototype.SetPlotAreaFill = AscBuilder.ApiChart.prototype.SetPlotAreaFill;
+	ApiChart.prototype["SetPlotAreaOutLine"] = ApiChart.prototype.SetPlotAreaOutLine = AscBuilder.ApiChart.prototype.SetPlotAreaOutLine;
+	ApiChart.prototype["SetSeriesFill"] = ApiChart.prototype.SetSeriesFill = AscBuilder.ApiChart.prototype.SetSeriesFill;
+	ApiChart.prototype["SetSeriesOutLine"] = ApiChart.prototype.SetSeriesOutLine = AscBuilder.ApiChart.prototype.SetSeriesOutLine;
+	ApiChart.prototype["SetDataPointFill"] = ApiChart.prototype.SetDataPointFill = AscBuilder.ApiChart.prototype.SetDataPointFill;
+	ApiChart.prototype["SetDataPointOutLine"] = ApiChart.prototype.SetDataPointOutLine = AscBuilder.ApiChart.prototype.SetDataPointOutLine;
+	ApiChart.prototype["SetMarkerFill"] = ApiChart.prototype.SetMarkerFill = AscBuilder.ApiChart.prototype.SetMarkerFill;
+	ApiChart.prototype["SetMarkerOutLine"] = ApiChart.prototype.SetMarkerOutLine = AscBuilder.ApiChart.prototype.SetMarkerOutLine;
+	ApiChart.prototype["SetTitleFill"] = ApiChart.prototype.SetTitleFill = AscBuilder.ApiChart.prototype.SetTitleFill;
+	ApiChart.prototype["SetTitleOutLine"] = ApiChart.prototype.SetTitleOutLine = AscBuilder.ApiChart.prototype.SetTitleOutLine;
+	ApiChart.prototype["SetLegendFill"] = ApiChart.prototype.SetLegendFill = AscBuilder.ApiChart.prototype.SetLegendFill;
+	ApiChart.prototype["SetLegendOutLine"] = ApiChart.prototype.SetLegendOutLine = AscBuilder.ApiChart.prototype.SetLegendOutLine;
+	ApiChart.prototype["SetAxieNumFormat"] = ApiChart.prototype.SetAxieNumFormat = AscBuilder.ApiChart.prototype.SetAxieNumFormat;
+	ApiChart.prototype["GetAllSeries"] = ApiChart.prototype.GetAllSeries = AscBuilder.ApiChart.prototype.GetAllSeries;
+	ApiChart.prototype["GetSeries"] = ApiChart.prototype.GetSeries = AscBuilder.ApiChart.prototype.GetSeries;
 
 	ApiChart.prototype["SetSeriaValues"]              =  ApiChart.prototype.SetSeriaValues;
 	ApiChart.prototype["SetSeriaXValues"]             =  ApiChart.prototype.SetSeriaXValues;
 	ApiChart.prototype["SetSeriaName"]                =  ApiChart.prototype.SetSeriaName;
 	ApiChart.prototype["SetCatFormula"]               =  ApiChart.prototype.SetCatFormula;
 	ApiChart.prototype["AddSeria"]                    =  ApiChart.prototype.AddSeria;
-	ApiChart.prototype["SetSize"]                     =  ApiChart.prototype.SetSize      = ApiDrawing.prototype.SetSize;
-	ApiChart.prototype["SetPosition"]                 =  ApiChart.prototype.SetPosition  = ApiDrawing.prototype.SetPosition;
-	ApiChart.prototype["GetWidth"]                    =  ApiChart.prototype.GetWidth     = ApiDrawing.prototype.GetWidth;
-	ApiChart.prototype["GetHeight"]                   =  ApiChart.prototype.GetHeight    = ApiDrawing.prototype.GetHeight;
-	ApiChart.prototype["GetLockValue"]                =  ApiChart.prototype.GetLockValue = ApiDrawing.prototype.GetLockValue;
-	ApiChart.prototype["SetLockValue"]                =  ApiChart.prototype.SetLockValue = ApiDrawing.prototype.SetLockValue;
 
 	ApiOleObject.prototype["GetClassType"]            = ApiOleObject.prototype.GetClassType;
 	ApiOleObject.prototype["SetData"]                 = ApiOleObject.prototype.SetData;
@@ -28397,14 +28668,15 @@
 
 
     function createAutoFilterArray(parent, filters) {
-        let result = [];
-        if (!Array.isArray(filters)) {
-            return result;
+        if (!Array.isArray(filters)) return [];
+
+        const res = [];
+        for (let i = 0; i < filters.length; i++) {
+            const col = filters[i];
+            let wrapper = new ApiFilter(parent, col);
+            res.push(wrapper);
         }
-        for (let i = 0; i< filters.length; i++) {
-            result.push(new ApiFilter(parent, filters[i]));
-        }
-        return result;
+        return res;
     }
 
 	function private_SetCoords(oDrawing, oWorksheet, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset, pos) {
@@ -28643,7 +28915,9 @@
             case AscDFH.historyitem_type_OleObject:
                 return new AscBuilder.ApiOleObject(drawing);
 			case AscDFH.historyitem_type_GroupShape:
-                return new ApiDrawing(drawing);
+                return new AscBuilder.ApiGroup(drawing);
+			case AscDFH.historyitem_type_SmartArt:
+                return new AscBuilder.ApiSmartArt(drawing);
 			case AscDFH.historyitem_type_ChartSpace:
 				return new AscBuilder.ApiChart(drawing);
         }
@@ -28656,6 +28930,9 @@
 	window['AscBuilder'] = window['AscBuilder'] || {};
 	window['AscBuilder'].ApiShape           = ApiShape;
 	window['AscBuilder'].ApiImage           = ApiImage;
+	window['AscBuilder'].ApiGroup           = ApiGroup;
+	window['AscBuilder'].ApiSmartArt        = ApiSmartArt;
 	window['AscBuilder'].ApiOleObject       = ApiOleObject;
+	window['AscBuilder'].ApiChart			= ApiChart;
 
 }(window, null));

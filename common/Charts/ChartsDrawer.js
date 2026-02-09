@@ -8642,7 +8642,7 @@ drawTreemapChart.prototype = {
 
 	_getDefaultTreemapPen: function() {
 		const pen = new AscFormat.CLn();
-		pen.setW(AscFormat.g_dKoef_pt_to_emu * 0.75);
+		pen.setW(12700 * 0.75);
 		
 		const penFill = new AscFormat.CUniFill();
 		const solidFill = new AscFormat.CSolidFill();

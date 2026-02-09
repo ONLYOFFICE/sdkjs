@@ -149,6 +149,7 @@
 			"cell/view/DrawingObjectsController.js",
 
 			"word/Math/mathTypes.js",
+			"word/Editor/Styles/para-spacing.js",
 			"word/Editor/Styles.js",
 			"word/Math/math-settings.js",
 			"word/Editor/StructuredDocumentTags/sdt-settings.js",

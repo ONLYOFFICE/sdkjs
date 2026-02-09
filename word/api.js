@@ -2196,11 +2196,15 @@ background-repeat: no-repeat;\
 
 		if (true === ParaPr.Spacing.AfterAutoSpacing)
 			ParaPr.Spacing.After = AscCommonWord.spacing_Auto;
+		else if (undefined !== ParaPr.Spacing.AfterLines)
+			ParaPr.Spacing.After = ParaPr.Spacing.CalculateAfter();
 		else if (undefined === ParaPr.Spacing.AfterAutoSpacing)
 			ParaPr.Spacing.After = AscCommonWord.UnknownValue;
 
 		if (true === ParaPr.Spacing.BeforeAutoSpacing)
 			ParaPr.Spacing.Before = AscCommonWord.spacing_Auto;
+		else if (undefined !== ParaPr.Spacing.BeforeLines)
+			ParaPr.Spacing.Before = ParaPr.Spacing.CalculateBefore();
 		else if (undefined === ParaPr.Spacing.BeforeAutoSpacing)
 			ParaPr.Spacing.Before = AscCommonWord.UnknownValue;
 
@@ -3860,7 +3864,8 @@ background-repeat: no-repeat;\
 					else
 						this.WordControl.m_oLogicDocument.SetParagraphSpacing({
 							Before            : value,
-							BeforeAutoSpacing : false
+							BeforeAutoSpacing : false,
+							BeforeLines       : null
 						});
 
 					break;
@@ -3872,7 +3877,8 @@ background-repeat: no-repeat;\
 					else
 						this.WordControl.m_oLogicDocument.SetParagraphSpacing({
 							After            : value,
-							AfterAutoSpacing : false
+							AfterAutoSpacing : false,
+							AfterLines       : null
 						});
 
 					break;
@@ -4106,7 +4112,14 @@ background-repeat: no-repeat;\
 				this.WordControl.m_oLogicDocument.SetParagraphPageBreakBefore(Props.PageBreakBefore);
 
 			if ("undefined" != typeof(Props.Spacing) && null != Props.Spacing)
+			{
+				if (undefined !== Props.Spacing.Before)
+					Props.Spacing.BeforeLines = null;
+				if (undefined !== Props.Spacing.After)
+					Props.Spacing.AfterLines = null;
+				
 				this.WordControl.m_oLogicDocument.SetParagraphSpacing(Props.Spacing);
+			}
 
 			if (undefined !== Props.OutlineLvl)
 				this.WordControl.m_oLogicDocument.SetParagraphOutlineLvl(Props.OutlineLvl);
@@ -7049,8 +7062,6 @@ background-repeat: no-repeat;\
 		return this.WordControl.m_oLogicDocument.GetHyperlinkAnchors();
 	};
 
-
-
 	asc_docs_api.prototype.sync_HyperlinkPropCallback = function(hyperProp)
 	{
 		this.SelectedObjectsStack[this.SelectedObjectsStack.length] = new asc_CSelectedObject(c_oAscTypeSelectElement.Hyperlink, new Asc.CHyperlinkProperty(hyperProp));
@@ -8630,7 +8641,7 @@ background-repeat: no-repeat;\
 			end = this.WordControl.m_oDrawingDocument.m_lDrawingEnd;
 		}
 
-		if (start == -1 || end == -1) {
+		if (start === -1 || end === -1) {
 			return [];
 		}
 
@@ -8640,6 +8651,21 @@ background-repeat: no-repeat;\
 		}
 
 		return pages;
+	};
+	asc_docs_api.prototype.GetMultipageViewMode = function() {
+		return this.WordControl && this.WordControl.pageViewMode === AscCommonWord.EditorPageViewMode.MultiPage;
+	};
+	asc_docs_api.prototype.SetMultipageViewMode = function(isMultiPage) {
+		if (!this.WordControl)
+			return;
+		let oldValue = this.WordControl.pageViewMode;
+		this.WordControl.pageViewMode = isMultiPage ? AscCommonWord.EditorPageViewMode.MultiPage : AscCommonWord.EditorPageViewMode.OnePage;
+		if (oldValue !== this.WordControl.pageViewMode)
+		{
+			if (this.WordControl.m_oEditor && this.WordControl.m_oEditor.HtmlElement)
+				this.WordControl.m_oEditor.HtmlElement.fullRepaint = true;
+			this.WordControl.zoom_Fire(0, this.WordControl.m_nZoomValue);
+		}
 	};
 
 	asc_docs_api.prototype.asc_SetDocumentPlaceChangedEnabled = function(bEnabled)
@@ -15281,6 +15307,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['ClearSearch']                               = asc_docs_api.prototype.ClearSearch;
 	asc_docs_api.prototype['GetCurrentVisiblePage']                     = asc_docs_api.prototype.GetCurrentVisiblePage;
 	asc_docs_api.prototype['GetCurrentVisiblePages']                    = asc_docs_api.prototype.GetCurrentVisiblePages;
+	asc_docs_api.prototype['SetMultipageViewMode']                      = asc_docs_api.prototype.SetMultipageViewMode;
+	asc_docs_api.prototype['GetMultipageViewMode']                      = asc_docs_api.prototype.GetMultipageViewMode;
 	asc_docs_api.prototype['asc_setAutoSaveGap']                        = asc_docs_api.prototype.asc_setAutoSaveGap;
 	asc_docs_api.prototype['asc_SetDocumentPlaceChangedEnabled']        = asc_docs_api.prototype.asc_SetDocumentPlaceChangedEnabled;
 	asc_docs_api.prototype['asc_SetViewRulers']                         = asc_docs_api.prototype.asc_SetViewRulers;

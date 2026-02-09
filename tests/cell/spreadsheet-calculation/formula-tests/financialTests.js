@@ -8764,10 +8764,15 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: FV(Sheet2!A6:A7,Sheet2!A8,Sheet2!A9,Sheet2!A10,Sheet2!A1) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Negative case: Area3D. Multi-cell 3D range for rate returns num array.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 0, 'Test: Negative case: Area3D. Multi-cell 3D range for rate returns num array.');
+
 		// Case #15: Name3D. 3D named range with multi-cell area for rate returns num array.
+		//correct test for dynamic arrays
+		let res = AscCommonExcel.bIsSupportDynamicArrays ? -2.3609390290986965 : 0;
 		oParser = new parserFormula('FV(TestNameArea3D2,TestNameArea3D2,TestNameArea3D2,TestNameArea3D2,TestNameArea3D2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(TestNameArea3D2,TestNameArea3D2,TestNameArea3D2,TestNameArea3D2,TestNameArea3D2) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Negative case: Name3D. 3D named range with multi-cell area for rate returns num array.');
+		assert.strictEqual(oParser.calculate(null, null, null, null, null, null, true).getElementRowCol(0,0).getValue(), res, 'Test: Negative case: Name3D. 3D named range with multi-cell area for rate returns num array.');
+
+
 		// Case #16: Date. Large date serial number as rate returns num.
 		oParser = new parserFormula('FV(DATE(2025,1,1),12,-100,0,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(DATE(2025,1,1),12,-100,0,0) is parsed.');
@@ -14986,10 +14991,19 @@ $(function () {
 		oParser = new parserFormula('RRI(TestNameArea,TestName1,TestName2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: RRI(TestNameArea,TestName1,TestName2) is parsed.');
 		//? assert.strictEqual(oParser.calculate().getValue(), 20, 'Test: Negative case: Name(3). nper as named range with area, returns #NUM!. 3 of 3 arguments used.');
+
 		// Case #18: Name3D(3). nper as 3D named range with area, returns #NUM!. 3 of 3 arguments used.
+		//correct test for dynamic arrays
+		oParser = new parserFormula('RRI(SINGLE(TestNameArea3D),TestName3D1,TestName3D2)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: RRI(TestNameArea3D,TestName3D1,TestName3D2) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: SINGLE Name3D(3). nper as 3D named range with area, returns #NUM!. 3 of 3 arguments used.');
+
+		let res = AscCommonExcel.bIsSupportDynamicArrays ? '#NUM!' : '#VALUE!';
 		oParser = new parserFormula('RRI(TestNameArea3D,TestName3D1,TestName3D2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: RRI(TestNameArea3D,TestName3D1,TestName3D2) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Name3D(3). nper as 3D named range with area, returns #NUM!. 3 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate(null, null, null, null, null, null, true).getValue(), res, 'Test: Negative case: Name3D(3). nper as 3D named range with area, returns #NUM!. 3 of 3 arguments used.');
+
+
 		// Case #19: Area3D(3). 3D multi-cell range for nper, returns #NUM!. 3 of 3 arguments used.
 		oParser = new parserFormula('RRI(Sheet2!A4:A5,Sheet2!A2:A2,Sheet2!A3:A3)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: RRI(Sheet2!A4:A5,Sheet2!A2:A2,Sheet2!A3:A3) is parsed.');
@@ -16935,10 +16949,16 @@ $(function () {
 		ws.getRange2("F14").setValue("TRUE");
 		ws.getRange2("F15").setValue("#N/A");
 
-	
+		//correct test for dynamic arrays
+		oParser = new parserFormula("VDB(SINGLE(F2:F4),11000,8,0,1)", "A2", ws);
+		assert.ok(oParser.parse(), "VDB(F2:F4,11000,8,0,1)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result SINGLE of VDB(F2:F4,11000,8,0,1)");
+
+		let res = AscCommonExcel.bIsSupportDynamicArrays ? 25000 : '#VALUE!';
 		oParser = new parserFormula("VDB(F2:F4,11000,8,0,1)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(F2:F4,11000,8,0,1)");
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of VDB(F2:F4,11000,8,0,1)");
+		assert.strictEqual(oParser.calculate(null, null, null, null, null, null, true).getValue(), res, "Result of VDB(F2:F4,11000,8,0,1)");
+
 
 		// cellsRange (arg0)
 		oParser = new parserFormula("VDB(F2:F4,11000,8,0,1)", "A2", ws);

@@ -188,7 +188,7 @@ var section_footnote_RestartEachPage   = 0x02;
 		if (Other.HaveLineNumbers())
 			this.SetLineNumbers(Other.GetLineNumbersCountBy(), Other.GetLineNumbersDistance(), Other.GetLineNumbersStart(), Other.GetLineNumbersRestart());
 	};
-	SectPr.prototype.Clear_AllHdrFtr = function()
+	SectPr.prototype.RemoveAllHdrFtr = function()
 	{
 		this.Set_Header_First(null);
 		this.Set_Header_Even(null);

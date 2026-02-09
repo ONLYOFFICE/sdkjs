@@ -459,6 +459,16 @@
 	CGraphicsBase.prototype.drawPermissionMark = function(x, y, h, isStart, isActive)
 	{
 	};
+	
+	CGraphicsBase.prototype.drawCommentMark = function(x, y, h, isStart)
+	{
+	};
+	
+	CGraphicsBase.prototype.drawCommentArea = function(x, y, w, h)
+	{
+		this.rect(x, y, w, h);
+		this.df();
+	};
 
 	CGraphicsBase.prototype.DrawFootnoteRect = function(x, y, w, h)
 	{

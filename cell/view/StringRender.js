@@ -226,14 +226,18 @@
 			}
 			else
 			{
+				let graphemeW = w + (r ? 1 : 0);
+				if (r)
+					--r;
+
 				if (this.IsRtlDirection())
 				{
 					this.private_HandleItem(this.Buffer[charIndex], AscFonts.NO_GRAPHEME, w);
-					this.private_HandleItem(this.Buffer[charIndex + codePointCount - 1], grapheme, w);
+					this.private_HandleItem(this.Buffer[charIndex + codePointCount - 1], grapheme, graphemeW);
 				}
 				else
 				{
-					this.private_HandleItem(this.Buffer[charIndex], grapheme, w);
+					this.private_HandleItem(this.Buffer[charIndex], grapheme, graphemeW);
 					this.private_HandleItem(this.Buffer[charIndex + codePointCount - 1], AscFonts.NO_GRAPHEME, w);
 				}
 
@@ -1182,10 +1186,13 @@
 			let drawState = this.drawState;
 			let align = this.getEffectiveAlign();
 			let i, j, p, p_, strBeg;
-			let n = 0, l = this.lines[0], x1 = l ? this.initStartX(0, l, x, maxWidth) : 0, y1 = y, dx = l ? computeWordDeltaX() : 0;
+			let n = 0, l = this.lines[0];
+			let lastLineAlign = this._getJustifyLastLineAlign(align, !this.lines || this.lines.length <= 1);
+			let x1 = l ? this.initStartX(0, l, x, maxWidth, false, lastLineAlign) : 0, y1 = y, dx = l ? computeWordDeltaX() : 0;
 
 			ctx.setTextRotated(!!this.angle);
 			self.textColor = textColor;
+			drawState.justifyDx = dx;
 
 
 			function computeWordDeltaX() {
@@ -1193,117 +1200,45 @@
 					return 0;
 				}
 
-				if (align === AscCommon.align_Justify) {
-					let wordCount = 0;
-					let isLastWordSpace = false;
-					let lastSpacesWidth = 0;
-					let lastSymbolWidth = 0;
-
-					for (let i = l.beg; i <= l.end; ++i) {
-						let p = self.charProps[i];
-						let isSpace = self.codesHypSp[self.chars[i]];
-
-						if (p && p.wrd && isLastWordSpace) {
-							++wordCount;
-							if (i !== l.end) {
-								lastSpacesWidth = 0;
-							} else if (!isSpace) {
-								lastSymbolWidth = self.charWidths[i];
-							}
-						} else if (i === l.end) {
-							++wordCount;
-						}
-
-						if (isSpace) {
-							lastSpacesWidth += self.charWidths[i];
-						}
-
-						isLastWordSpace = isSpace;
-					}
-
-					if (wordCount <= 1) {
-						return 0;
-					}
-
-					let rightDiff = 1;
-					let availableWidth = maxWidth - rightDiff - (l.tw - lastSymbolWidth - lastSpacesWidth);
-					return (availableWidth) / (wordCount - 1);
-				} else {
-					for (var i = l.beg, c = 0; i <= l.end; ++i) {
-						var p = self.charProps[i];
-						if (p && p.wrd) {
-							++c;
-						}
-					}
-					return c > 1 ? (maxWidth - l.tw) / (c - 1) : 0;
+				let effectiveEnd = l.end;
+				let endProp = self.charProps[effectiveEnd];
+				if (endProp && (endProp.hp || endProp.nl)) {
+					effectiveEnd--;
 				}
+				while (effectiveEnd >= l.beg && self.codesHypSp[self.chars[effectiveEnd]]) {
+					effectiveEnd--;
+				}
+				if (effectiveEnd < l.beg) return 0;
+
+				let renderedWidth = 0;
+				for (let i = l.beg; i <= effectiveEnd; ++i) {
+					renderedWidth += self.charWidths[i];
+				}
+
+				let gaps = 0, prevSpace = false, seenNonSpace = false;
+				for (let i = l.beg; i <= effectiveEnd; ++i) {
+					let isSpace = !!self.codesHypSp[self.chars[i]];
+					if (!isSpace && prevSpace && seenNonSpace) ++gaps;
+					if (!isSpace) seenNonSpace = true;
+					prevSpace = isSpace;
+				}
+
+				if (gaps === 0) return 0;
+				return (maxWidth - 1 - renderedWidth) / gaps;
 			}
 
 			function renderFragment(begin, end, prop, angle) {
 				var dh = prop && prop.lm && prop.lm.bl2 > 0 ? prop.lm.bl2 - prop.lm.bl : 0;
-				var dw = self._calcCharsWidth(strBeg, end - 1);
-				var so = prop.font.getStrikeout();
-				var ul = Asc.EUnderline.underlineNone !== prop.font.getUnderline();
-				var isSO = so === true;
-				var fsz, x2, y, lw, dy, i, b, cp;
 				var bl = asc_round(l.bl * zoom);
 
 				if (begin > end)
-					return 0;
+					return;
 
 				let fontSize = prop.font.getSize();
-				y = y1 + bl + dh;
+				let y = y1 + bl + dh;
 
-				let startX = drawState.x;
-				x1 = startX;
-				if (align !== AscCommon.align_Justify || dx < 0.000001) {
-					renderGraphemes(begin, end, drawState.x, y, fontSize);
-				} else {
-					for (i = b = begin; i < end; ++i) {
-						cp = self.charProps[i];
-						if (cp && cp.wrd && i > b) {
-							x1 = drawState.x;
-							renderGraphemes(b, i, drawState.x, y, fontSize);
-							x1 += self._calcCharsWidth(b, i - 1) + dx;
-							drawState.x = x1;
-							dw += dx;
-							b = i;
-						}
-					}
-					if (i > b) {
-						renderGraphemes(b, i, drawState.x, y, fontSize);
-					}
-				}
-
-
-				if (isSO || ul) {
-					if (angle && window["IS_NATIVE_EDITOR"])
-						ctx.nativeTextDecorationTransform(true);
-
-					x2 = startX + dw;
-					fsz = prop.font.getSize();
-					lw = asc_round(fsz * ppiy / 72 / 18) || 1;
-					ctx.setStrokeStyle(prop.c || textColor)
-						.setLineWidth(lw)
-						.beginPath();
-					dy = (lw / 2);
-					dy = dy >> 0;
-					if (ul) {
-						y = asc_round(y1 + bl + prop.lm.d * 0.4 * zoom);
-						ctx.lineHor(startX, y + dy, x2 + 1);
-					}
-					if (isSO) {
-						dy += 1;
-						y = asc_round(y1 + bl - prop.lm.a * 0.275 * zoom);
-						ctx.lineHor(startX, y - dy, x2 + 1);
-					}
-					ctx.stroke();
-
-					if (angle && window["IS_NATIVE_EDITOR"])
-						ctx.nativeTextDecorationTransform(false);
-				}
-
-				return dw;
+				drawState.baselineY = y1 + bl;
+				renderGraphemes(begin, end, drawState.x, y, fontSize);
 			}
 
 			function renderGraphemes(begin, end, x, y) {
@@ -1339,8 +1274,10 @@
 						drawState.endLine();
 						y1 += asc_round(l.th * zoom);
 						l = self.lines[++n];
-						drawState.x = self.initStartX(i, l, x, maxWidth);
+						let la = self._getJustifyLastLineAlign(align, n === self.lines.length - 1);
+						drawState.x = self.initStartX(i, l, x, maxWidth, false, la);
 						dx = computeWordDeltaX();
+						drawState.justifyDx = dx;
 						drawState.beginLine(l, drawState.x, y);
 					}
 				}
@@ -1351,19 +1288,27 @@
 
 			drawState.endLine();
 		};
-		StringRender.prototype.initStartX = function (startPos, l, x, maxWidth, initAllLines) {
-			let align = this.getEffectiveAlign();
+		StringRender.prototype.initStartX = function (startPos, l, x, maxWidth, initAllLines, lineAlign) {
+			let align = lineAlign != null ? lineAlign : this.getEffectiveAlign();
 
 			if (initAllLines) {
 				if (this.lines) {
 					for (let i = 0; i < this.lines.length; ++i) {
+						let la = this._getJustifyLastLineAlign(align, i === this.lines.length - 1);
 						let lineWidth = this._calcLineWidth(this.lines[i].beg);
-						this.lines[i].initStartX(lineWidth, x, maxWidth, align);
+						this.lines[i].initStartX(lineWidth, x, maxWidth, la);
 					}
 				}
 			} else {
 				return l.initStartX(this._calcLineWidth(startPos), x, maxWidth, align);
 			}
+		};
+		StringRender.prototype._getJustifyLastLineAlign = function (align, isLastLine) {
+			if (align === AscCommon.align_Justify && isLastLine) {
+				let isRtl = this.drawState.getMainDirection() === AscBidi.DIRECTION_FLAG.RTL;
+				return isRtl ? AscCommon.align_Right : AscCommon.align_Left;
+			}
+			return align;
 		};
 		StringRender.prototype.getInternalState = function () {
 			return {
@@ -1435,11 +1380,60 @@
 			this.angle = 0;
 			this.currentLine = null;
 			this.startIdx = 0;
+			this.lastHandledFont = null;
+			this.baselineY = 0;
+			this.pendingDecorations = [];
+			this.justifyDx = 0;
+			this.afterSpaceInLine = false;
+			this.seenNonSpaceInLine = false;
+			this.trailingSpaceStart = Infinity;
 		}
 
 
 		TableCellDrawState.prototype.endLine = function() {
 			this.bidiFlow.end();
+			this.drawDecorations();
+		};
+		TableCellDrawState.prototype.drawDecorations = function() {
+			let ctx = this.drawingCtx;
+			let ppiy = this.ppiy;
+			let zoom = this.zoom;
+			let angle = this.angle;
+			let textColor = this.stringRender.textColor;
+			for (let i = 0; i < this.pendingDecorations.length; ++i) {
+				let dec = this.pendingDecorations[i];
+				let prop = dec.prop;
+				let baselineY = dec.baselineY;
+				let startX = dec.startX;
+				let endX = dec.endX;
+				let isSO = prop.font.getStrikeout() === true;
+				let ul = Asc.EUnderline.underlineNone !== prop.font.getUnderline();
+
+				if (angle && window["IS_NATIVE_EDITOR"])
+					ctx.nativeTextDecorationTransform(true);
+
+				let fsz = prop.font.getSize();
+				let lw = asc_round(fsz * ppiy / 72 / 18) || 1;
+				ctx.setStrokeStyle(prop.c || textColor)
+					.setLineWidth(lw)
+					.beginPath();
+				let dy = (lw / 2);
+				dy = dy >> 0;
+				if (ul) {
+					let y = asc_round(baselineY + prop.lm.d * 0.4 * zoom);
+					ctx.lineHor(startX, y + dy, endX + 1);
+				}
+				if (isSO) {
+					dy += 1;
+					let y = asc_round(baselineY - prop.lm.a * 0.275 * zoom);
+					ctx.lineHor(startX, y - dy, endX + 1);
+				}
+				ctx.stroke();
+
+				if (angle && window["IS_NATIVE_EDITOR"])
+					ctx.nativeTextDecorationTransform(false);
+			}
+			this.pendingDecorations.length = 0;
 		};
 		TableCellDrawState.prototype.getBidiType = function(char, charProp) {
 			if (charProp && charProp.nl) {
@@ -1479,7 +1473,9 @@
 				this.bidiFlow.add({
 					charIndex: i,
 					charProp: charProp,
-					fragmentProp: prop
+					fragmentProp: prop,
+					y: this.y,
+					baselineY: this.baselineY
 				}, bidiType);
 				i++;
 			}
@@ -1487,16 +1483,29 @@
 
 		TableCellDrawState.prototype.handleBidiFlow = function(data, direction) {
 			let charIndex = data.charIndex;
+
+			if (charIndex >= this.trailingSpaceStart) {
+				return;
+			}
+
 			let width = this.stringRender.charWidths[charIndex];
+			let char = this.stringRender.chars[charIndex];
+			let isSpace = !!this.stringRender.codesHypSp[char];
+
+			if (!isSpace && this.afterSpaceInLine && this.seenNonSpaceInLine && this.justifyDx) {
+				this.x += this.justifyDx;
+			}
+
 			let cr = this.stringRender.clipRect;
 			if (cr.use) {
 				if (cr.x > this.x + width || cr.x + cr.w < this.x) {
 					this.x += width;
+					if (!isSpace) this.seenNonSpaceInLine = true;
+					this.afterSpaceInLine = isSpace;
 					return;
 				}
 			}
 			let charProp = data.charProp;
-			let char = this.stringRender.chars[charIndex];
 			let grapheme = charProp ? charProp.grapheme : AscFonts.NO_GRAPHEME;
 
 			if (direction === AscBidi.DIRECTION.R && AscBidi.isPairedBracket(char)) {
@@ -1505,14 +1514,52 @@
 				}
 			}
 
-			let fontSize = data.fragmentProp && data.fragmentProp.font ? data.fragmentProp.font.getSize() : 10;
-			let y = this.y;
+			let prop = data.fragmentProp;
+			if (prop && prop.font) {
+				if (!this.lastHandledFont || !prop.font.isEqual2(this.lastHandledFont)) {
+					this.lastHandledFont = prop.font;
+					this.stringRender._setFont(this.drawingCtx, prop.font);
+				}
+				let textColor = prop.c || this.stringRender.textColor;
+				let _r = textColor.getR();
+				let _g = textColor.getG();
+				let _b = textColor.getB();
+				let _a = textColor.getA();
+				let setColor = true;
+				if (this.drawingCtx.fillColor && this.drawingCtx.fillColor.isEqual(_r, _g, _b, _a)) {
+					setColor = false;
+				}
+				if (setColor || window["IS_NATIVE_EDITOR"]) {
+					this.drawingCtx.setFillStyle(textColor);
+				}
+			}
+
+			let fontSize = prop && prop.font ? prop.font.getSize() : 10;
+			let y = data.y;
 
 			if (grapheme !== AscFonts.NO_GRAPHEME) {
 				AscFonts.DrawGrapheme(grapheme, this.drawingCtx, this.x, y, fontSize, this.ppiy / 25.4);
 			}
 
+			if (prop && prop.font) {
+				let isSO = prop.font.getStrikeout() === true;
+				let ul = Asc.EUnderline.underlineNone !== prop.font.getUnderline();
+				if (isSO || ul) {
+					let startX = this.x;
+					let endX = this.x + width;
+					let last = this.pendingDecorations.length > 0 ? this.pendingDecorations[this.pendingDecorations.length - 1] : null;
+					if (last && last.prop === prop) {
+						last.startX = Math.min(last.startX, startX);
+						last.endX = Math.max(last.endX, endX);
+					} else {
+						this.pendingDecorations.push({startX: startX, endX: endX, prop: prop, baselineY: data.baselineY});
+					}
+				}
+			}
+
 			this.x += width;
+			if (!isSpace) this.seenNonSpaceInLine = true;
+			this.afterSpaceInLine = isSpace;
 		};
 
 		TableCellDrawState.prototype.beginLine = function(line, x, y) {
@@ -1520,6 +1567,24 @@
 			this.x = x;
 			this.y = y;
 			this.baseY = y;
+			this.afterSpaceInLine = false;
+			this.seenNonSpaceInLine = false;
+
+			this.trailingSpaceStart = line ? line.end + 1 : Infinity;
+			if (line && line.beg >= 0) {
+				let endPos = line.end;
+				let endProp = this.stringRender.charProps[endPos];
+				if (endProp && (endProp.hp || endProp.nl)) {
+					endPos--;
+				}
+				for (let j = endPos; j >= line.beg; --j) {
+					if (this.stringRender.codesHypSp[this.stringRender.chars[j]]) {
+						this.trailingSpaceStart = j;
+					} else {
+						break;
+					}
+				}
+			}
 
 			this.bidiFlow.begin(this.getMainDirection() === AscBidi.DIRECTION_FLAG.RTL);
 		};
@@ -1535,6 +1600,13 @@
 			this.currentColor = null;
 			this.currentLine = null;
 			this.startIdx = 0;
+			this.lastHandledFont = null;
+			this.baselineY = 0;
+			this.pendingDecorations.length = 0;
+			this.justifyDx = 0;
+			this.afterSpaceInLine = false;
+			this.seenNonSpaceInLine = false;
+			this.trailingSpaceStart = Infinity;
 			this.textColor = textColor || null;
 			this.angle = angle || 0;
 			this.zoom = this.drawingCtx.getZoom();

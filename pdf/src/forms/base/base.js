@@ -396,7 +396,7 @@
         
         if (oNewPage) {
             let sId = this.GetId();
-            oCurPage.RemoveField(sId, true);
+            oCurPage.RemoveField(sId);
             oNewPage.AddField(this);
 
             let oEditShape = this.GetEditShape();
@@ -493,6 +493,7 @@
     CBaseField.prototype.GetDocContent = function(bFormatContent) {
         return bFormatContent ? this.contentFormat : this.content;
     };
+	CBaseField.prototype.getDocContent = CBaseField.prototype.GetDocContent;
 
     CBaseField.prototype.getFormRelRect = function() {
         return this.contentClipRect;
@@ -2671,7 +2672,7 @@
         return this._textSize;
     };
     CBaseField.prototype.SetRect = function(aOrigRect) {
-        if (this._rect == aOrigRect) {
+        if (this._rect != null && aOrigRect != null && AscCommon.isEqualSortedArrays(this._rect, aOrigRect)) {
             return;
         }
 
@@ -3525,6 +3526,47 @@
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
     
+	CBaseField.prototype.updateSelectionState = function() {
+		let oDoc = this.GetDocument();
+		let oDrDoc = oDoc.GetDrawingDocument();
+
+        if (oDrDoc) {
+            var content = this.getDocContent();
+            if (content) {
+                oDrDoc.UpdateTargetTransform(null);
+                if (true === content.IsSelectionUse()) {
+                    if (false === content.IsSelectionEmpty()) {
+						oDrDoc.Overlay && content.DrawSelectionOnPage(0);
+						oDrDoc.TargetEnd();
+					} else {
+						if (true !== content.Selection.Start) {
+							content.RemoveSelection();
+						}
+						content.RecalculateCurPos();
+
+						oDrDoc.TargetStart(true);
+					}
+                } else {
+                    content.RecalculateCurPos();
+
+                    oDrDoc.TargetStart(true);
+                }
+            } else {
+                oDrDoc.UpdateTargetTransform(new AscCommon.CMatrix());
+                oDrDoc.TargetEnd();
+            }
+        }
+	};
+	CBaseField.prototype.select = AscFormat.CGraphicObjectBase.prototype.select;
+	CBaseField.prototype.deselect = AscFormat.CGraphicObjectBase.prototype.deselect;
+	CBaseField.prototype.getNoChangeAspect = function() {};
+	CBaseField.prototype.getMainGroup = function() {};
+	CBaseField.prototype.getObjectName = function() {};
+	CBaseField.prototype.canChangeAdjustments = function() {};
+	CBaseField.prototype.hitToHandles = function() {};
+	CBaseField.prototype.hitInBoundingRect = function() {};
+	CBaseField.prototype.IsEditFieldShape = function() {};
+
 	window["AscPDF"].ALIGN_TYPE         = ALIGN_TYPE;
 	window["AscPDF"].VALID_ROTATIONS    = VALID_ROTATIONS;
     window["AscPDF"].MAX_TEXT_SIZE      = MAX_TEXT_SIZE;

@@ -766,8 +766,8 @@
                     continue;
 
                 AscFonts.g_font_files.push(new CFontFileLoaderEmbed(name));
+                AscFonts.g_map_font_index_embed[name] = AscFonts.g_font_infos_embed.length;
                 AscFonts.g_font_infos_embed.push(new CFontInfoEmbed(name, currentIndex++));
-                AscFonts.g_map_font_index_embed[name] = i;
             }
         }
     };

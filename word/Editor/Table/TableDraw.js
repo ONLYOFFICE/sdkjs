@@ -85,15 +85,30 @@ CTable.prototype.Draw = function(CurPage, pGraphics, isDrawContent)
     // 2. Рисуем заливку всех ячеек таблицы
     //-------------------------------------------------------------------------------------
     this.private_DrawCellsBackground(pGraphics, CurPage, Row_start, Row_last);
-    //-------------------------------------------------------------------------------------
-    // 3. Рисуем содержимое ячеек
-    //-------------------------------------------------------------------------------------
-    if (false !== isDrawContent)
-        this.private_DrawCellsContent(pGraphics, CurPage, Row_start, Row_last);
-    //-------------------------------------------------------------------------------------
-    // 4. Рисуем границы всех ячеек таблицы
-    //-------------------------------------------------------------------------------------
-    this.private_DrawCellsBorders(pGraphics, CurPage, Row_start, Row_last);
+		if (this.bPresentation)
+		{
+			//-------------------------------------------------------------------------------------
+			// 3. Рисуем границы всех ячеек таблицы
+			//-------------------------------------------------------------------------------------
+			this.private_DrawCellsBorders(pGraphics, CurPage, Row_start, Row_last);
+			//-------------------------------------------------------------------------------------
+			// 4. Рисуем содержимое ячеек
+			//-------------------------------------------------------------------------------------
+			if (false !== isDrawContent)
+				this.private_DrawCellsContent(pGraphics, CurPage, Row_start, Row_last);
+		}
+		else
+		{
+			//-------------------------------------------------------------------------------------
+			// 3. Рисуем содержимое ячеек
+			//-------------------------------------------------------------------------------------
+			if (false !== isDrawContent)
+				this.private_DrawCellsContent(pGraphics, CurPage, Row_start, Row_last);
+			//-------------------------------------------------------------------------------------
+			// 4. Рисуем границы всех ячеек таблицы
+			//-------------------------------------------------------------------------------------
+			this.private_DrawCellsBorders(pGraphics, CurPage, Row_start, Row_last);
+		}
 
     if (pGraphics.EndCheckTableDraw)
         pGraphics.EndCheckTableDraw(bIsSmartGrForcing);
@@ -1409,7 +1424,7 @@ CTable.prototype.private_DrawCellsBorders = function(pGraphics, PNum, Row_start,
                             pGraphics.SetBorder(CurBorderInfo);
                         }
 
-                        pGraphics.drawHorLineExt( c_oAscLineDrawingRule.Top, Y, X0, X1, CurBorderInfo.Size, LeftMW, RightMW );
+                        pGraphics.drawHorLineExt( this.bPresentation ? c_oAscLineDrawingRule.Center : c_oAscLineDrawingRule.Top, Y, X0, X1, CurBorderInfo.Size, LeftMW, RightMW );
                         //pGraphics._m( X0 * 100, ( Y + CurBorderInfo.Size / 2 ) * 100 );
                         //pGraphics._l( X1 * 100, ( Y + CurBorderInfo.Size / 2 ) * 100 );
 
@@ -1510,7 +1525,7 @@ CTable.prototype.private_DrawCellsBorders = function(pGraphics, PNum, Row_start,
                                 if ( BorderInfo_Right.length > 0 && border_Single === BorderInfo_Right[BorderInfo_Right.length - 1].Value )
                                     RightMW = +BorderInfo_Right[BorderInfo_Right.length - 1].Size / 2;
 
-                                pGraphics.drawHorLineExt( c_oAscLineDrawingRule.Top, Y + RealHeight, X0, X1, BottomBorder.Size, LeftMW, RightMW );
+                                pGraphics.drawHorLineExt( this.bPresentation ? c_oAscLineDrawingRule.Center : c_oAscLineDrawingRule.Top, Y + RealHeight, X0, X1, BottomBorder.Size, LeftMW, RightMW );
 
                                 //var X0 = X_cell_start;
                                 //var X1 = X_cell_end;

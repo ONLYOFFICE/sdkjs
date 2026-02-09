@@ -217,7 +217,7 @@ StartAddNewShape.prototype =
 						? undefined
 						: {
 							type: shape.getPresetGeom(),
-							pos: {x: drawing.X, t: drawing.Y},
+							pos: {x: drawing.X, y: drawing.Y},
 							extX: shape.spPr.xfrm.extX,
 							extY: shape.spPr.xfrm.extY,
 							fill: shape.brush,
@@ -563,6 +563,9 @@ NullState.prototype =
                     aDrawings.push(field.GetEditShape());
                 });
             }
+			else {
+				aDrawings = aDrawings.concat(oDoc.GetPageInfo(pageIndex).fields);
+			}
 
             ret = AscFormat.handleFloatObjects(this.drawingObjects, aDrawings, e, x, y, null, pageIndex, true);
 
@@ -2740,7 +2743,7 @@ TextAddState.prototype =
                 return {cursorType: "default", objectId: oCheckObject.Get_Id(), content: this.majorObject.getDocContent && this.majorObject.getDocContent()};
             }
             else if (Asc.editor.isPdfEditor()) {
-                if (oCheckObject.IsShape()) {
+                if (oCheckObject.IsShape && oCheckObject.IsShape()) {
                     return {cursorType: "text", objectId: oCheckObject.Get_Id(), content: this.majorObject.getDocContent && this.majorObject.getDocContent()};
                 }   
             }

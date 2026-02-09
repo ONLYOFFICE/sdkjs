@@ -345,6 +345,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
 
 
         this.isLine = originalObject.spPr && originalObject.spPr.geometry && originalObject.spPr.geometry.preset === "line";
+		this.isLine = this.isLine || this.bConnector;
         this.bChangeCoef = this.translatetNumberHandle % 2 === 0 && this.originalFlipH !== this.originalFlipV;
 
         if(this.originalObject.cropObject)
@@ -1427,6 +1428,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                         xfrm.setOffY(this.resizedPosY/scale_coefficients.cy + ch_off_y);
                         xfrm.setExtX(this.resizedExtX/scale_coefficients.cx);
                         xfrm.setExtY(this.resizedExtY/scale_coefficients.cy);
+						Asc.editor.addMacroStepData("SetShapeSize", {width: this.resizedExtX, height: this.resizedExtY});
                     }
                     else
                     {

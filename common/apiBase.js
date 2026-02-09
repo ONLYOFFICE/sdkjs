@@ -2569,17 +2569,23 @@
 			this.watermarkDraw && this.watermarkDraw.inputContentSrc) {
 			jsonparams["watermark"] = JSON.parse(this.watermarkDraw.getCorrectedInputContentSrc());
 		}
-		const nativeOptions = options.advancedOptions && options.advancedOptions.asc_getNativeOptions();
-		if (nativeOptions) {
-			jsonparams["printPages"] = nativeOptions["pages"];
-		}
-
-		if (Asc.editor.isPdfEditor() && options.advancedOptions) {
-			jsonparams["pdfLayout"] = {
-				"content": options.advancedOptions.asc_getPdfContent()
+		
+		if (options.advancedOptions instanceof Asc.asc_CAdjustPrint)
+		{
+			const nativeOptions = options.advancedOptions.asc_getNativeOptions();
+			if (nativeOptions)
+			{
+				jsonparams["printPages"] = nativeOptions["pages"];
+			}
+			
+			if (Asc.editor.isPdfEditor() && options.advancedOptions)
+			{
+				jsonparams["pdfLayout"] = {
+					"content" : options.advancedOptions.asc_getPdfContent()
+				}
 			}
 		}
-
+		
 		if (Object.keys(jsonparams).length > 0) {
 			oAdditionalData["jsonparams"] = jsonparams;
 		}
@@ -4577,7 +4583,7 @@
 		{
 			case AscCommon.c_oEditorId.Word:
 			{
-				if (this.WordControl && this.WordControl.m_oLogicDocument)
+				if (!this.isPdfEditor() && this.WordControl && this.WordControl.m_oLogicDocument)
 					this.WordControl.m_oLogicDocument.LockPanelStyles();
 				break;
 			}
@@ -6145,6 +6151,10 @@
 	{
 		return this.macroRecorder;
 	};
+	baseEditorsApi.prototype.addMacroStepData = function(type, additional)
+	{
+		return this.macroRecorder.addStepData(type, additional);
+	};
 
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
@@ -6281,5 +6291,6 @@
 	prot['asc_markAsFinal'] = prot.asc_markAsFinal = prot.markAsFinal;
 	prot['asc_isFinal'] = prot.asc_isFinal = prot.isFinal;
 	prot["getMacroRecorder"] = prot.getMacroRecorder;
+	prot["addMacroStepData"] = prot.addMacroStepData;
 
 })(window);

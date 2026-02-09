@@ -58,6 +58,11 @@ var Y_Bottom_Field = Page_Height - Y_Bottom_Margin;
 
 var tableSpacingMinValue = 0.02;//0.02мм
 
+var EditorPageViewMode = {
+	OnePage   : 0,
+	MultiPage : 1
+};
+
 function CEditorPage(api)
 {
 	this.Name = "";
@@ -141,6 +146,11 @@ function CEditorPage(api)
 	this.zoom_values = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 320, 340, 360, 380, 400, 425, 450, 475, 500];
 	this.m_nZoomType = 0; // 0 - custom, 1 - fitToWidth, 2 - fitToPage
 	this.m_nZoomValue = 100;
+
+	this.pageViewMode = EditorPageViewMode.OnePage;
+
+	this.viewBetweenPagesHor = 20;
+	this.viewBetweenPagesVer = 20;
 
 	// текущий зум после резайза. чтобы например после zoomToWidth и zoomIn/Out можно было вернуться на значение меньше меньшего/больше большего
 	this.m_nZoomValueMin = -1;
@@ -1664,6 +1674,15 @@ function CEditorPage(api)
 		return this.m_dDocumentHeight - size;
 	};
 
+	this.isUseMultiPageView = function()
+	{
+		if (this.pageViewMode !== EditorPageViewMode.MultiPage)
+			return false;
+		if (this.m_nZoomType !== 0)
+			return false;
+		return true;
+	};
+
 	this.GetVerticalScrollTo = function(y, page)
 	{
 		var dKoef = g_dKoef_mm_to_pix * this.m_nZoomValue / 100;
@@ -3072,28 +3091,88 @@ function CEditorPage(api)
 		this.m_dDocumentPageHeight = 0;
 
 		var dKoef = (this.m_nZoomValue * g_dKoef_mm_to_pix / 100);
+		let isMultiPageView = this.isUseMultiPageView();
 
-		for (var i = 0; i < this.m_oDrawingDocument.m_lPagesCount; i++)
+		if (!isMultiPageView)
 		{
-			var mm_w = this.m_oDrawingDocument.m_arrPages[i].width_mm;
-			var mm_h = this.m_oDrawingDocument.m_arrPages[i].height_mm;
+			for (let i = 0; i < this.m_oDrawingDocument.m_lPagesCount; i++)
+			{
+				let mm_w = this.m_oDrawingDocument.m_arrPages[i].width_mm;
+				let mm_h = this.m_oDrawingDocument.m_arrPages[i].height_mm;
 
-			if (mm_w > this.m_dDocumentPageWidth)
-				this.m_dDocumentPageWidth = mm_w;
-			if (mm_h > this.m_dDocumentPageHeight)
-				this.m_dDocumentPageHeight = mm_h;
+				if (mm_w > this.m_dDocumentPageWidth)
+					this.m_dDocumentPageWidth = mm_w;
+				if (mm_h > this.m_dDocumentPageHeight)
+					this.m_dDocumentPageHeight = mm_h;
 
-			var _pageWidth  = (mm_w * dKoef) >> 0;
-			var _pageHeight = (mm_h * dKoef + 0.5) >> 0;
+				let _pageWidth = (mm_w * dKoef) >> 0;
+				let _pageHeight = (mm_h * dKoef + 0.5) >> 0;
 
-			if (_pageWidth > this.m_dDocumentWidth)
-				this.m_dDocumentWidth = _pageWidth;
+				if (_pageWidth > this.m_dDocumentWidth)
+					this.m_dDocumentWidth = _pageWidth;
 
-			this.m_dDocumentHeight += 20;
-			this.m_dDocumentHeight += _pageHeight;
+				this.m_dDocumentHeight += this.viewBetweenPagesVer;
+				this.m_dDocumentHeight += _pageHeight;
+			}
+		}
+		else
+		{
+			let editorWidth = this.m_oEditor.HtmlElement.width;
+			editorWidth /= AscCommon.AscBrowser.retinaPixelRatio;
+
+			let currentBlockW = 0;
+			let currentBlockH = 0;
+
+			let _checkBlock = function(_this) {
+				if (currentBlockW > _this.m_dDocumentWidth)
+					_this.m_dDocumentWidth = currentBlockW;
+
+				_this.m_dDocumentHeight += _this.viewBetweenPagesVer;
+				_this.m_dDocumentHeight += currentBlockH;
+			};
+
+			for (let i = 0; i < this.m_oDrawingDocument.m_lPagesCount; i++)
+			{
+				let mm_w = this.m_oDrawingDocument.m_arrPages[i].width_mm;
+				let mm_h = this.m_oDrawingDocument.m_arrPages[i].height_mm;
+
+				if (mm_w > this.m_dDocumentPageWidth)
+					this.m_dDocumentPageWidth = mm_w;
+				if (mm_h > this.m_dDocumentPageHeight)
+					this.m_dDocumentPageHeight = mm_h;
+
+				let _pageWidth = (mm_w * dKoef) >> 0;
+				let _pageHeight = (mm_h * dKoef + 0.5) >> 0;
+
+				if (0 === currentBlockW)
+				{
+					currentBlockW = _pageWidth;
+					currentBlockH = _pageHeight;
+					continue;
+				}
+
+				let testW = currentBlockW + this.viewBetweenPagesHor + _pageWidth;
+				if (testW > editorWidth)
+				{
+					_checkBlock(this);
+					// new block
+					currentBlockW = _pageWidth;
+					currentBlockH = _pageHeight;
+				}
+				else
+				{
+					currentBlockW += _pageWidth;
+
+					if (_pageHeight > currentBlockH)
+						currentBlockH = _pageHeight;
+				}
+			}
+
+			if (0 !== this.m_oDrawingDocument.m_lPagesCount)
+				_checkBlock(this);
 		}
 
-		this.m_dDocumentHeight += 20;
+		this.m_dDocumentHeight += this.viewBetweenPagesVer;
 
 		// теперь увеличим ширину документа, чтобы он не был плотно к краям
 		if (!this.m_oApi.isMobileVersion)
@@ -3164,43 +3243,119 @@ function CEditorPage(api)
 
 		var dKoef  = (this.m_nZoomValue * g_dKoef_mm_to_pix / 100);
 		var lStart = offsetTop;
-		for (var i = 0; i < this.m_oDrawingDocument.m_lPagesCount; i++)
-		{
-			var _pageWidth  = (this.m_oDrawingDocument.m_arrPages[i].width_mm * dKoef + 0.5) >> 0;
-			var _pageHeight = (this.m_oDrawingDocument.m_arrPages[i].height_mm * dKoef + 0.5) >> 0;
 
-			if (false === bIsFoundFirst)
+		let isMultiPageView = this.isUseMultiPageView();
+
+		if (!isMultiPageView)
+		{
+			for (let i = 0; i < this.m_oDrawingDocument.m_lPagesCount; i++)
 			{
-				if (lStart + 20 + _pageHeight > lCurrentTopInDoc)
+				let pageWidth  = (this.m_oDrawingDocument.m_arrPages[i].width_mm * dKoef + 0.5) >> 0;
+				let pageHeight = (this.m_oDrawingDocument.m_arrPages[i].height_mm * dKoef + 0.5) >> 0;
+
+				let drawRect = this.m_oDrawingDocument.m_arrPages[i].drawingPage;
+
+				drawRect.left = hor_pos_median - (pageWidth >> 1);
+				drawRect.top = lStart + this.viewBetweenPagesVer - lCurrentTopInDoc;
+				drawRect.right = drawRect.left + pageWidth;
+				drawRect.bottom = drawRect.top + pageHeight;
+				drawRect.pageIndex = i;
+
+				lStart += (this.viewBetweenPagesVer + pageHeight);
+
+				if (false === bIsFoundFirst && drawRect.bottom > 0)
 				{
 					this.m_oDrawingDocument.m_lDrawingFirst = i;
-					bIsFoundFirst                           = true;
+					bIsFoundFirst = true;
 				}
-			}
 
-			var xDst = hor_pos_median - parseInt(_pageWidth / 2);
-			var wDst = _pageWidth;
-			var yDst = lStart + 20 - lCurrentTopInDoc;
-			var hDst = _pageHeight;
-
-			if (false === bIsFoundEnd)
-			{
-				if (yDst > _height)
+				if (false === bIsFoundEnd && drawRect.top > _height)
 				{
 					this.m_oDrawingDocument.m_lDrawingEnd = i - 1;
-					bIsFoundEnd                           = true;
+					bIsFoundEnd = true;
 				}
 			}
+		}
+		else
+		{
+			let editorWidth = this.m_oEditor.HtmlElement.width;
+			editorWidth /= AscCommon.AscBrowser.retinaPixelRatio;
 
-			var drawRect = this.m_oDrawingDocument.m_arrPages[i].drawingPage;
+			let currentBlockW = 0;
+			let currentBlockH = 0;
+			let currentBlockPages = [];
 
-			drawRect.left      = xDst;
-			drawRect.top       = yDst;
-			drawRect.right     = xDst + wDst;
-			drawRect.bottom    = yDst + hDst;
-			drawRect.pageIndex = i;
+			let _checkBlock = function(_this) {
 
-			lStart += (20 + _pageHeight);
+				let left = hor_pos_median - (currentBlockW >> 1);
+				let top = lStart + _this.viewBetweenPagesVer - lCurrentTopInDoc;
+
+				for (let i = 0, len = currentBlockPages.length; i < len; i++)
+				{
+					let ind = currentBlockPages[i];
+					let page = _this.m_oDrawingDocument.m_arrPages[ind];
+					let pageWidth  = (page.width_mm * dKoef + 0.5) >> 0;
+					let pageHeight = (page.height_mm * dKoef + 0.5) >> 0;
+
+					let drawRect = page.drawingPage;
+
+					drawRect.left = left;
+					drawRect.top = top + ((currentBlockH - pageHeight) >> 1);
+					drawRect.right = drawRect.left + pageWidth;
+					drawRect.bottom = drawRect.top + pageHeight;
+					drawRect.pageIndex = ind;
+
+					left = drawRect.right + _this.viewBetweenPagesHor;
+
+					if (false === bIsFoundFirst && drawRect.bottom > 0)
+					{
+						_this.m_oDrawingDocument.m_lDrawingFirst = ind;
+						bIsFoundFirst = true;
+					}
+
+					if (false === bIsFoundEnd && drawRect.top > _height)
+					{
+						_this.m_oDrawingDocument.m_lDrawingEnd = ind - 1;
+						bIsFoundEnd = true;
+					}
+				}
+
+				lStart += (_this.viewBetweenPagesVer + currentBlockH);
+				currentBlockPages = [];
+			};
+
+			for (let i = 0; i < this.m_oDrawingDocument.m_lPagesCount; i++)
+			{
+				let _pageWidth  = (this.m_oDrawingDocument.m_arrPages[i].width_mm * dKoef + 0.5) >> 0;
+				let _pageHeight = (this.m_oDrawingDocument.m_arrPages[i].height_mm * dKoef + 0.5) >> 0;
+
+				if (0 === currentBlockW)
+				{
+					currentBlockW = _pageWidth;
+					currentBlockH = _pageHeight;
+					currentBlockPages.push(i);
+					continue;
+				}
+
+				let testW = currentBlockW + this.viewBetweenPagesHor + _pageWidth;
+				if (testW > editorWidth)
+				{
+					_checkBlock(this);
+
+					currentBlockW = _pageWidth;
+					currentBlockH = _pageHeight;
+				}
+				else
+				{
+					currentBlockW = testW;
+
+					if (_pageHeight > currentBlockH)
+						currentBlockH = _pageHeight;
+				}
+
+				currentBlockPages.push(i);
+			}
+			_checkBlock(this);
 		}
 
 		if (false === bIsFoundEnd)
@@ -3208,7 +3363,7 @@ function CEditorPage(api)
 			this.m_oDrawingDocument.m_lDrawingEnd = this.m_oDrawingDocument.m_lPagesCount - 1;
 		}
 
-		if ((-1 == this.m_oDrawingDocument.m_lPagesCount) && (0 != this.m_oDrawingDocument.m_lPagesCount))
+		if ((-1 === this.m_oDrawingDocument.m_lPagesCount) && (0 !== this.m_oDrawingDocument.m_lPagesCount))
 		{
 			this.m_oDrawingDocument.m_lCurrentPage = 0;
 			this.SetCurrentPage();
@@ -3890,3 +4045,5 @@ window['AscCommon'].X_Left_Margin   = X_Left_Margin;
 window['AscCommon'].X_Right_Margin  = X_Right_Margin;
 window['AscCommon'].Y_Bottom_Margin = Y_Bottom_Margin;
 window['AscCommon'].Y_Top_Margin    = Y_Top_Margin;
+
+window['AscCommonWord'].EditorPageViewMode = EditorPageViewMode;

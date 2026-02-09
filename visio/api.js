@@ -1080,7 +1080,7 @@
 		//this.WordControl.onMouseUpExternal(x, y);
 	};
 	//temp stubs
-	
+
 	VisioEditorApi.prototype.EndDemonstration = function()
 	{
 	};
@@ -1120,6 +1120,20 @@
 	};
 	VisioEditorApi.prototype.onChangeRTLInterface = function () {
 		this.onUpdateThumbnailsPosition();
+	};
+	VisioEditorApi.prototype.asc_enableKeyEvents = function(value, isFromInput) {
+		if (!this.isLoadFullApi) {
+			this.tmpFocus = value;
+			return;
+		}
+
+		if (this.WordControl && this.WordControl.IsFocus != value) {
+			this.WordControl.IsFocus = value;
+			this.sendEvent("asc_onEnableKeyEventsChanged", value);
+		}
+
+		if (isFromInput !== true && AscCommon.g_inputContext)
+			AscCommon.g_inputContext.setInterfaceEnableKeyEvents(value);
 	};
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};

@@ -2087,6 +2087,16 @@
         }
     };
 
+	CGraphicObjects.prototype.removeInGroup = function(oGroup, arrShapes, arrSlicerNames) {
+		if (oGroup.getObjectType() === AscDFH.historyitem_type_GroupShape) {
+			return AscFormat.DrawingObjectsController.prototype.removeInGroup.call(this, oGroup, arrShapes, arrSlicerNames);
+		}
+		else if (oGroup.getObjectType() === AscDFH.historyitem_type_Pdf_Annot_FreeText) {
+			oGroup.deleteDrawingBase();
+			return true;
+		}
+	};
+
     // import
     CGraphicObjects.prototype.setEquationTrack          = AscFormat.DrawingObjectsController.prototype.setEquationTrack;
     CGraphicObjects.prototype.alignLeft                 = AscFormat.DrawingObjectsController.prototype.alignLeft;

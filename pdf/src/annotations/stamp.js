@@ -172,18 +172,10 @@
         }
 
         function getRectRotation(pts) {
-            let dx1 = pts[2] - pts[0];
-            let dy1 = pts[3] - pts[1];
-            let dx2 = pts[4] - pts[2];
-            let dy2 = pts[5] - pts[3];
-
-            let len1 = dx1 * dx1 + dy1 * dy1;
-            let len2 = dx2 * dx2 + dy2 * dy2;
-            let dx   = len1 >= len2 ? dx1 : dx2;
-            let dy   = len1 >= len2 ? dy1 : dy2;
-
-            let deg = Math.atan2(dy, dx) * 180 / Math.PI; // ±180°
-            return deg < 0 ? deg + 360 : deg;             // 0‑360°
+            const dx = pts[4] - pts[2];
+            const dy = pts[5] - pts[3];
+            let deg = Math.atan2(dy, dx) * 180 / Math.PI;
+            return (deg + 360) % 360;
         }
 
         // If this annotation is from a file, then the rotation is not taken into account.

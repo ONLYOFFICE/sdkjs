@@ -8807,6 +8807,10 @@
         if (this.selected) {
             oCopy.selected = true;
         }
+        // Copy _apiId for tracking effect across tree rebuilds
+        if (this._apiId !== undefined) {
+            oCopy._apiId = this._apiId;
+        }
     };
     CTimeNodeContainer.prototype.privateWriteAttributes = function (pWriter) {
     };
@@ -11824,7 +11828,7 @@
     function CTexturesCache() {
         this.map = {};
     }
-		CTexturesCache.prototype.clearImageCache = function(sImageSrc) {
+	CTexturesCache.prototype.clearImageCache = function(sImageSrc) {
 			for (let sId in this.map) {
 				const oDrawing = AscCommon.g_oTableId.Get_ById(sId);
 				if (oDrawing && oDrawing.getAllRasterImages) {
@@ -11958,7 +11962,7 @@
 			this.generateParagraphCaches()
         this.collectHiddenObjects();
     }
-		CAnimationDrawer.prototype.clearImageCache = function(sImageSrc) {
+	CAnimationDrawer.prototype.clearImageCache = function(sImageSrc) {
 			this.texturesCache.clearImageCache(sImageSrc);
 		};
     CAnimationDrawer.prototype.clearSandwiches = function () {
@@ -12204,7 +12208,7 @@
         }
         return oSandwich.getDrawingParams(sId, bMorph);
     };
-		CAnimationDrawer.prototype.generateParagraphCaches = function() {
+	CAnimationDrawer.prototype.generateParagraphCaches = function() {
 			const oStructuresByDrawing = {};
 			const oThis = this;
 			this.traverseTimeNodes((function(oTimeNode) {
@@ -12306,7 +12310,7 @@
         this.timer = new CAnimationTimer(this);
         this.drawer = drawer;
     }
-		CAnimationPlayer.prototype.clearImageCache = function(sImageSrc) {
+	CAnimationPlayer.prototype.clearImageCache = function(sImageSrc) {
 			this.animationDrawer.clearImageCache(sImageSrc);
 		};
     CAnimationPlayer.prototype.createGraphics = function (oCanvas, oRect) {
@@ -13849,8 +13853,9 @@
     };
     //--------------------------------------------------------------------------
 
-	
-    window['AscFormat'] = window['AscFormat'] || {};
+
+
+	window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].CTiming = CTiming;
     window['AscFormat'].CEmptyObject = CEmptyObject;
     window['AscFormat'].CCommonTimingList = CCommonTimingList;

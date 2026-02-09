@@ -1026,12 +1026,19 @@ ParaDrawing.prototype.Set_Props = function(Props)
 					break;
 			}
 
+			if (this.IsShape() || this.IsPicture())
+				Asc.editor.addMacroStepData("SetDrawingWrapping", {type: this.wrappingType, style: Props.WrappingStyle, behind: this.behindDoc});
+
 			this.Set_BehindDoc(false);
 		}
 	}
 
 	if (undefined != Props.Paddings)
+	{
 		this.Set_Distance(Props.Paddings.Left, Props.Paddings.Top, Props.Paddings.Right, Props.Paddings.Bottom);
+		if (this.IsShape() || this.IsPicture())
+			Asc.editor.addMacroStepData("SetDrawingDistances", {Left: Props.Paddings.Left, Top: Props.Paddings.Top, Right: Props.Paddings.Right, Bottom: Props.Paddings.Bottom});
+	}
 
 	if (undefined != Props.AllowOverlap)
 		this.Set_AllowOverlap(Props.AllowOverlap);
@@ -1039,10 +1046,14 @@ ParaDrawing.prototype.Set_Props = function(Props)
 	if (undefined != Props.PositionH)
 	{
 		this.Set_PositionH(Props.PositionH.RelativeFrom, Props.PositionH.UseAlign, ( true === Props.PositionH.UseAlign ? Props.PositionH.Align : Props.PositionH.Value ), Props.PositionH.Percent);
+		if (this.IsShape() || this.IsPicture())
+			Asc.editor.addMacroStepData("SetPositionH", {relativeFrom: Props.PositionH.RelativeFrom, useAlign: Props.PositionH.UseAlign, value: ( true === Props.PositionH.UseAlign ? Props.PositionH.Align : Props.PositionH.Value ), percent: Props.PositionH.Percent});
 	}
 	if (undefined != Props.PositionV)
 	{
 		this.Set_PositionV(Props.PositionV.RelativeFrom, Props.PositionV.UseAlign, ( true === Props.PositionV.UseAlign ? Props.PositionV.Align : Props.PositionV.Value ), Props.PositionV.Percent);
+		if (this.IsShape() || this.IsPicture())
+			Asc.editor.addMacroStepData("SetPositionV", {relativeFrom: Props.PositionV.RelativeFrom, useAlign: Props.PositionV.UseAlign, value: ( true === Props.PositionV.UseAlign ? Props.PositionV.Align : Props.PositionV.Value ), percent: Props.PositionV.Percent});
 	}
 	if (undefined != Props.SizeRelH)
 	{
@@ -1050,6 +1061,10 @@ ParaDrawing.prototype.Set_Props = function(Props)
 			RelativeFrom : AscFormat.ConvertRelPositionHToRelSize(Props.SizeRelH.RelativeFrom),
 			Percent      : Props.SizeRelH.Value / 100.0
 		});
+
+		if (this.IsShape())
+			Asc.editor.addMacroStepData("SetRelSizeH", Props.SizeRelH);
+
 	}
 
 	if (undefined != Props.SizeRelV)
@@ -1058,6 +1073,10 @@ ParaDrawing.prototype.Set_Props = function(Props)
 			RelativeFrom : AscFormat.ConvertRelPositionVToRelSize(Props.SizeRelV.RelativeFrom),
 			Percent      : Props.SizeRelV.Value / 100.0
 		});
+
+		if (this.IsShape())
+			Asc.editor.addMacroStepData("SetRelSizeV", Props.SizeRelH);
+
 	}
 
 	if (this.SizeRelH && !this.SizeRelV)
@@ -1784,6 +1803,9 @@ ParaDrawing.prototype.Set_XY = function(X, Y, Paragraph, PageNum, bResetAlign)
 			Layout = Paragraph.Get_Layout(ContentPos, this);
 
 		this.private_SetXYByLayout(X, Y, PageNum, Layout, (bResetAlign || true !== this.PositionH.Align ? true : false), (bResetAlign || true !== this.PositionV.Align ? true : false));
+
+		if (this.IsShape() || this.IsPicture())
+			Asc.editor.addMacroStepData("SetDrawingPos", {x: this.X, y: this.Y});
 	}
 };
 ParaDrawing.prototype.private_SetXYByLayout = function(X, Y, PageNum, Layout, bChangeX, bChangeY)

@@ -911,6 +911,20 @@
 					this.handlers.trigger("setFontAttributes", "u");
 					break;
 				}
+				case Asc.c_oAscSpreadsheetShortcutType.Subscript: {
+					if (!bCanEdit || bSelectionDialogMode || this.getCellEditMode()) {
+						break;
+					}
+					this.handlers.trigger("setFontAttributes", "fa", AscCommon.vertalign_SubScript);
+					break;
+				}
+				case Asc.c_oAscSpreadsheetShortcutType.Superscript: {
+					if (!bCanEdit || bSelectionDialogMode || this.getCellEditMode()) {
+						break;
+					}
+					this.handlers.trigger("setFontAttributes", "fa", AscCommon.vertalign_SuperScript);
+					break;
+				}
 				case Asc.c_oAscSpreadsheetShortcutType.EditRedo: {
 					if (!(bCanEdit || this.handlers.trigger('isRestrictionComments')) || bSelectionDialogMode || this.getCellEditMode()) {
 						break;

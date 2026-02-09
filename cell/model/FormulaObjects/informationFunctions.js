@@ -164,12 +164,20 @@ function (window, undefined) {
 	cCell.prototype = Object.create(cBaseFunction.prototype);
 	cCell.prototype.constructor = cCell;
 	cCell.prototype.name = 'CELL';
-	cCell.prototype.argumentsMin = 2;
+	cCell.prototype.argumentsMin = 1;
 	cCell.prototype.argumentsMax = 2;
 	cCell.prototype.ca = true;
 	cCell.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.area_to_ref;
+	cCell.prototype.exactTypes = {1: 1};
 	cCell.prototype.argumentsType = [argType.text, argType.reference];
 	cCell.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	/**
+	 * The CELL function returns information about the formatting, location, or contents of a cell.
+	 * 
+	 * @param {text} info_type - A text value that specifies what type of cell information you want to return.
+	 * @param {reference}[reference] - (optional) The cell that you want information about.
+	 * @return {text} Returns information about the formatting, location, or contents of a cell.
+	 */
 	cCell.prototype.Calculate = function (arg, opt_bbox, opt_defName, ws) {
 		//специально ввожу ограничения - минимум 2 аргумента
 		//в случае одного аргумента необходимо следить всегда за последней измененной ячейкой
@@ -183,17 +191,9 @@ function (window, undefined) {
 			return arg0;
 		} else {
 			let str = arg0.toString().toLowerCase();
-
-			//если первый аргумент из набора тех, которые не требуют значения второго аргумента, то обрабатываем его частично
-			let needCheckVal2Arg = {"contents": 1, "type": 1};
-
 			let cell, bbox;
+
 			if (arg1) {
-				//TODO добавил заглушку, на случай если приходит массив.
-				// необходимо пересмотреть - сейчас мы рассматриваем как функции массива все дочерние элементы аргумента с типом .reference
-				if (cElementType.array === arg1.type) {
-					arg1 = arg1.getElementRowCol(0, 0);
-				}
 				if (str === "contents") {
 					// Save ref for recursion check
 					AscCommonExcel.g_cCalcRecursion.saveFunctionResult(this.name, arg1);
@@ -201,17 +201,14 @@ function (window, undefined) {
 
 				let isRangeArg1 = cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type;
 				if (isRangeArg1 || cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
-					if (needCheckVal2Arg[str]) {
-						let _tempValue = isRangeArg1 ? arg1.getValueByRowCol(0, 0) : arg1.getValue();
-						if (_tempValue instanceof cError) {
-							return _tempValue;
-						}
-					}
 					bbox = arg1.getRange();
 					bbox = bbox && bbox.bbox;
 				} else {
+					// in case an argument other than reference is received, but this should not happen when checking arguments type before calc
 					return new cError(cErrorType.wrong_name);
 				}
+			} else {
+				bbox = opt_bbox;
 			}
 
 			let api = window["Asc"]["editor"];
@@ -245,8 +242,18 @@ function (window, undefined) {
 				}
 				case "address":
 				case _cCellFunctionLocal["address"]: {
+					// return last user selection if we don't get arg1
+					if (!arg1) {
+						res = ws.getSelection();
+						if (res.ranges && res.ranges[0] && res.ranges[0].getAbsName) {
+							res = new cString(res.ranges[0].getAbsName());
+							break;
+						} 
+					}
+
 					res = new Asc.Range(bbox.c1, bbox.r1, bbox.c1, bbox.r1);
 					res = new cString(res.getAbsName());
+
 					break;
 				}
 				case "filename":
@@ -260,7 +267,7 @@ function (window, undefined) {
 						fileName = docInfo ? docInfo.get_Title() : "";
 					}
 
-					let _ws = arg1.getWS();
+					let _ws = arg1 ? arg1.getWS() : ws;
 					let sheetName = _ws ? _ws.getName() : null;
 					if (sheetName) {
 						res = new cString("[" + fileName + "]" + sheetName);
@@ -271,32 +278,42 @@ function (window, undefined) {
 				}
 				case "coord":
 				case _cCellFunctionLocal["coord"]: {
-					//нет в офф. документации
+					// no info in the official documentation
 					break;
 				}
 				case "contents":
 				case _cCellFunctionLocal["contents"]: {
-					if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
-						res = arg1.getValue();
+					if (!arg1) {
+						res = new cNumber(0);
 					} else {
-						res = arg1.getValue()[0];
-						if (!res) {
-							res = new cNumber(0);
+						if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
+							res = arg1.getValue();
+						} else {
+							res = arg1.getValue()[0];
+							if (!res) {
+								res = new cNumber(0);
+							}
 						}
 					}
+
 					break;
 				}
 				case "type":
 				case _cCellFunctionLocal["type"]: {
 					// b = blank; l = string (label); v = otherwise (value)
-					res = arg1.getValue();
-					if (res.type === cElementType.empty) {
+					if (!arg1) {
 						res = new cString("b");
-					} else if (res.type === cElementType.string) {
-						res = new cString("l");
 					} else {
-						res = new cString("v");
+						res = arg1.getValue();
+						if (res.type === cElementType.empty) {
+							res = new cString("b");
+						} else if (res.type === cElementType.string) {
+							res = new cString("l");
+						} else {
+							res = new cString("v");
+						}
 					}
+
 					break;
 				}
 				case "width":

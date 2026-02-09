@@ -297,12 +297,11 @@
 	{
 		let codePoint = this.MaskSymbol ? this.MaskSymbol : item.GetCodePoint();
 		
-		let fontInfo   = this.TextPr.GetFontInfo(AscWord.fontslot_ASCII);
-		let grapheme   = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(codePoint, fontInfo.Name, fontInfo.Style);
-		let enGrapheme = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(0x2002, fontInfo.Name, fontInfo.Style);
+		let fontInfo = this.TextPr.GetFontInfo(AscWord.fontslot_ASCII);
+		let grapheme = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(codePoint, fontInfo.Name, fontInfo.Style);
 		
 		let width   = AscFonts.GetGraphemeWidth(grapheme);
-		let enWidth = (AscFonts.NO_GRAPHEME === enGrapheme ? 25.4 / 72 / 2 : AscFonts.GetGraphemeWidth(enGrapheme));
+		let enWidth = getEastAsiaEnWidth(fontInfo.Name, fontInfo.Style);
 		
 		item.SetGrapheme(this.MaskSymbol ? grapheme : AscFonts.NO_GRAPHEME);
 		item.SetMetrics(fontInfo.Size, AscWord.fontslot_ASCII, this.TextPr);
@@ -400,6 +399,47 @@
 		else
 			this.MaskSymbol = null;
 	};
+	
+	let enWidth = {};
+	function getEastAsiaEnWidth(fontName, fontStyle)
+	{
+		if (!enWidth[fontName])
+			enWidth[fontName] = {};
+		
+		if (undefined !== enWidth[fontName][fontStyle])
+			return enWidth[fontName][fontStyle];
+		
+		function getWidth(codePoint, flags)
+		{
+			let grapheme = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(codePoint, fontName, fontStyle);
+			if (AscFonts.NO_GRAPHEME === grapheme)
+				return 0;
+			
+			let fontId = AscFonts.GetGraphemeFontId(grapheme);
+			let fName  = AscFonts.GetFontNameByFontId(fontId);
+			let fStyle = AscFonts.GetFontStyleByFontId(fontId);
+			
+			let info = AscCommon.g_oTextMeasurer.GetFontBySymbol(codePoint, null, false);
+			let fontFace = info.Font && info.Font && info.Font.m_pFaceInfo ? info.Font.m_pFaceInfo : null;
+			if (info.CodePoint !== codePoint
+				|| !fontFace
+				|| fName !== fontFace.family_name
+				|| fStyle !== fontStyle
+				|| 0 === (fontFace.os2_ulCodePageRange1 & flags))
+				return 0;
+			
+			return AscFonts.GetGraphemeWidth(grapheme) / 2;
+		}
+		
+		let w = getWidth(0xE400, 0x160000); // (1 << 17) | (1 << 18) | (1 << 20);
+		if (0 !== w)
+			return w;
+		
+		w = getWidth(0xAC00, 0x280000); // (1 << 19) | (1 << 21);
+		w = 0 !== w ? w : 25.4 / 72 / 2;
+		enWidth[fontName][fontStyle] = w;
+		return w;
+	}
 	
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};

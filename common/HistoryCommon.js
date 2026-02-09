@@ -1984,6 +1984,8 @@
 	window['AscDFH'].historyitem_Paragraph_Bidi                      = window['AscDFH'].historyitem_type_Paragraph | 42;
 	window['AscDFH'].historyitem_Paragraph_ParaId                    = window['AscDFH'].historyitem_type_Paragraph | 43;
 	window['AscDFH'].historyitem_Paragraph_TextId                    = window['AscDFH'].historyitem_type_Paragraph | 44;
+	window['AscDFH'].historyitem_Paragraph_Spacing_BeforeLines      = window['AscDFH'].historyitem_type_Paragraph | 45;
+	window['AscDFH'].historyitem_Paragraph_Spacing_AfterLines       = window['AscDFH'].historyitem_type_Paragraph | 46;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе ParaTextPr
 	//------------------------------------------------------------------------------------------------------------------

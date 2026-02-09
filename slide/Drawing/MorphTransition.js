@@ -368,7 +368,8 @@
         }, this, []);
         oPath.fill = oPath1.fill;
         oPath.stroke = oPath1.stroke;
-        let aPathCommands = oPath.ArrPathCommand;
+
+		const aMorphData = [];
         for(let nContour = 0; nContour < this.contours1.length; ++nContour) {
             let aContour1 = this.contours1[nContour];
             let aContour2 = this.contours2[nContour];
@@ -382,38 +383,30 @@
                     return;
                 }
                 if(aCmd1.length === 2) {
-                    aPathCommands.push({
-                        id: AscFormat.moveTo,
-                        X: aCmd1[0],
-                        Y: aCmd1[1],
-
-                        cmd1: aCmd1,
-                        cmd2: aCmd2
-                    });
+					oPath.moveTo(aCmd1[0], aCmd1[1]);
+					aMorphData.push({ cmd1: aCmd1, cmd2: aCmd2 });
                 }
                 else if (aCmd1.length === 6) {
-                    aPathCommands.push({
-                        id: AscFormat.bezier4,
-                        X0: aCmd1[0],
-                        Y0: aCmd1[1],
-                        X1: aCmd1[2],
-                        Y1: aCmd1[3],
-                        X2: aCmd1[4],
-                        Y2: aCmd1[5],
-
-                        cmd1: aCmd1,
-                        cmd2: aCmd2
-                    });
+					oPath.cubicBezTo(aCmd1[0], aCmd1[1], aCmd1[2], aCmd1[3], aCmd1[4], aCmd1[5]);
+					aMorphData.push({ cmd1: aCmd1, cmd2: aCmd2 });
                 }
                 else if (aCmd1.length === 0) {
-                    aPathCommands.push({
-                        id: AscFormat.close,
-                        cmd1: aCmd1,
-                        cmd2: aCmd2
-                    });
+					oPath.close();
+					aMorphData.push({
+						cmd1: aCmd1,
+						cmd2: aCmd2
+					});
                 }
             }
         }
+
+		oPath.recalculate({}, false);
+		const aPathCommands = oPath.ArrPathCommand;
+		for (let nCmd = 0; nCmd < aPathCommands.length; ++nCmd) {
+			aPathCommands[nCmd].cmd1 = aMorphData[nCmd].cmd1;
+			aPathCommands[nCmd].cmd2 = aMorphData[nCmd].cmd2;
+		}
+
         this.path = oPath;
         this.morph(1);
     }
@@ -824,13 +817,24 @@
         const oT = this.drawObject.transform;
         const oT1 = this.transform1;
         const oT2 = this.transform2;
-        oT.tx = this.getValBetween(oT1.tx, oT2.tx);
-        oT.ty = this.getValBetween(oT1.ty, oT2.ty);
-        oT.sx = this.getValBetween(oT1.sx, oT2.sx);
-        oT.sy = this.getValBetween(oT1.sy, oT2.sy);
-        oT.shx = this.getValBetween(oT1.shx, oT2.shx);
-        oT.shy = this.getValBetween(oT1.shy, oT2.shy);
-        const oInvT = AscCommon.global_MatrixTransformer.Invert(oT);
+
+		const oParent1 = this.geometry1.parent && this.geometry1.parent.parent;
+		const isConnector = oParent1 && oParent1.getObjectType() === AscDFH.historyitem_type_Cnx;
+
+		let oInvT;
+		if (isConnector) {
+			oT.Reset();
+			oInvT = null;
+		} else {
+			oT.tx = this.getValBetween(oT1.tx, oT2.tx);
+			oT.ty = this.getValBetween(oT1.ty, oT2.ty);
+			oT.sx = this.getValBetween(oT1.sx, oT2.sx);
+			oT.sy = this.getValBetween(oT1.sy, oT2.sy);
+			oT.shx = this.getValBetween(oT1.shx, oT2.shx);
+			oT.shy = this.getValBetween(oT1.shy, oT2.shy);
+			oInvT = AscCommon.global_MatrixTransformer.Invert(oT);
+		}
+
         const nPathsCount = this.morphedPaths.length;
         for(let nIdx = 0; nIdx < nPathsCount; ++nIdx) {
             this.morphedPaths[nIdx].morph(dRelTime, oInvT);

@@ -283,7 +283,9 @@ var c_oSerProp_pPrType = {
 	SuppressLineNumbers: 44,
 	CnfStyle: 45,
 	SnapToGrid: 46,
-	Bidi: 47
+	Bidi: 47,
+	Spacing_AfterLines: 48,
+	Spacing_BeforeLines: 49
 };
 var c_oSerProp_rPrType = {
     Bold:0,
@@ -2619,6 +2621,20 @@ function Binary_pPrWriter(memory, oNumIdMap, oBinaryHeaderFooterTableWriter, sav
             this.memory.WriteByte(c_oSerPropLenType.Long);
             this.bs.writeMmToTwips(Spacing.After);
         }
+		
+		if (null !== Spacing.AfterLines && undefined !== Spacing.AfterLines)
+		{
+			this.memory.WriteByte(c_oSerProp_pPrType.Spacing_AfterLines);
+			this.memory.WriteByte(c_oSerPropLenType.Long);
+			this.memory.WriteLong(Spacing.AfterLines);
+		}
+		
+		if (null !== Spacing.BeforeLines && undefined !== Spacing.BeforeLines)
+		{
+			this.memory.WriteByte(c_oSerProp_pPrType.Spacing_BeforeLines);
+			this.memory.WriteByte(c_oSerPropLenType.Long);
+			this.memory.WriteLong(Spacing.BeforeLines);
+		}
     };
     this.WriteTabs = function(Tab)
     {
@@ -9532,6 +9548,8 @@ function Binary_pPrReader(doc, oReadResult, stream)
 			case c_oSerProp_pPrType.Spacing_AfterTwips: Spacing.After = g_dKoef_twips_to_mm * this.stream.GetULongLE();break;
             case c_oSerProp_pPrType.Spacing_BeforeAuto: Spacing.BeforeAutoSpacing = (this.stream.GetUChar() != 0);break;
             case c_oSerProp_pPrType.Spacing_AfterAuto: Spacing.AfterAutoSpacing = (this.stream.GetUChar() != 0);break;
+			case c_oSerProp_pPrType.Spacing_BeforeLines: Spacing.BeforeLines = this.stream.GetULongLE();break;
+			case c_oSerProp_pPrType.Spacing_AfterLines: Spacing.AfterLines = this.stream.GetULongLE();break;
             default:
                 res = c_oSerConstants.ReadUnknown;
                 break;

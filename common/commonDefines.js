@@ -585,7 +585,8 @@ window.AscCommon.g_cIsBeta = "false";
 		Submit : 19,
 		Disconnect :20,
 		RefreshFile: 21,
-		SolverLookingSolution: 22
+		SolverLookingSolution: 22,
+		BackgroundOpen: 23
 	};
 
 	var c_oAscAdvancedOptionsID = {
@@ -1764,6 +1765,14 @@ window.AscCommon.g_cIsBeta = "false";
 		stackedPer : "stackedPer"
 	};
 
+	const c_oAscPathFillMode = {
+		DARKEN: 0,
+		DARKEN_LESS: 1,
+		LIGHTEN: 2,
+		LIGHTEN_LESS: 3,
+		NONE: 4,
+		NORM: 5
+	};
 	var c_oAscFillGradType = {
 		GRAD_LINEAR : 1,
 		GRAD_PATH   : 2
@@ -5008,6 +5017,8 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['Submit']                           = prot.Submit;
 	prot['Disconnect']                       = prot.Disconnect;
 	prot['RefreshFile']                      = prot.RefreshFile;
+	prot['SolverLookingSolution']            = prot.SolverLookingSolution;
+	prot['BackgroundOpen']                   = prot.BackgroundOpen;
 	window['Asc']['c_oAscAdvancedOptionsID'] = window['Asc'].c_oAscAdvancedOptionsID = c_oAscAdvancedOptionsID;
 	prot                                         = c_oAscAdvancedOptionsID;
 	prot['CSV']                                  = prot.CSV;
@@ -5341,6 +5352,16 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['FILL_TYPE_GRAD']              = prot.FILL_TYPE_GRAD;
 	prot['FILL_TYPE_PATT']              = prot.FILL_TYPE_PATT;
 	prot['FILL_TYPE_GRP']               = prot.FILL_TYPE_GRP;
+
+	window['Asc']['c_oAscPathFillMode'] = window['Asc'].c_oAscPathFillMode = c_oAscPathFillMode;
+	prot = c_oAscPathFillMode;
+	prot['DARKEN']       = prot.DARKEN;
+	prot['DARKEN_LESS']  = prot.DARKEN_LESS;
+	prot['LIGHTEN']      = prot.LIGHTEN;
+	prot['LIGHTEN_LESS'] = prot.LIGHTEN_LESS;
+	prot['NONE']         = prot.NONE;
+	prot['NORM']         = prot.NORM;
+
 	window['Asc']['c_oAscFillGradType'] = window['Asc'].c_oAscFillGradType = c_oAscFillGradType;
 	prot                                = c_oAscFillGradType;
 	prot['GRAD_LINEAR']                 = prot.GRAD_LINEAR;

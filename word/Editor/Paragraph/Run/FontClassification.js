@@ -217,6 +217,10 @@ const fontslot_Unknown  = 0x10;
 
 	function GetFontSlot(nUnicode, nHint, nLangId, isCS, isRTL)
 	{
+		// treat private area as ASCII font slot
+		if (nUnicode >= 0xE000 && nUnicode <= 0xF8FF)
+			return fonthint_EastAsia !== nHint ? fontslot_ASCII : fonthint_EastAsia;
+		
 		let nSlot;
 		if (nUnicode > 0xFFFF)
 		{

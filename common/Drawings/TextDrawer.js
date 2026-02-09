@@ -1733,21 +1733,10 @@
 
 	CTextDrawer.prototype.SetShd = function (oShd) {
 		if (oShd) {
-			if (oShd.Value !== Asc.c_oAscShdNil) {
-				if (oShd.Unifill) {
-					this.m_oFill = oShd.Unifill;
-				}
-				else {
-					if (oShd.Color) {
-						this.m_oFill = this.CreateUnfilFromRGB(oShd.Color.r, oShd.Color.g, oShd.Color.b);
-					}
-					else {
-						this.m_oFill = null;
-					}
-				}
-			}
-			else {
-				this.m_oFill = null;
+			this.m_oFill = null;
+			let shdColor = !oShd.IsNil() ? oShd.GetSimpleColor(this.m_oTheme, AscFormat.GetDefaultColorMap()) : null;
+			if (shdColor) {
+				this.m_oFill = this.CreateUnfilFromRGB(shdColor.r, shdColor.g, shdColor.b);
 			}
 		}
 		else {

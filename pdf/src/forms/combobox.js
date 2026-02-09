@@ -74,7 +74,7 @@
             this.CheckFormViewWindow();
 
         oGraphicsWord.AddClipRect(this.contentClipRect.X, this.contentClipRect.Y, this.contentClipRect.W, this.contentClipRect.H);
-        oContentToDraw.Draw(0, oGraphicsWord);
+        oContentToDraw.Draw(oContentToDraw.GetAbsolutePage(), oGraphicsWord);
         // redraw target cursor if field is selected
         if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && this.IsCanEditText())
             oContentToDraw.RecalculateCurPos();
@@ -189,6 +189,7 @@
     CComboBoxField.prototype.onMouseDown = function(x, y, e) {
         let oViewer         = editor.getDocumentRenderer();
         let oDoc            = this.GetDocument();
+        let oController     = oDoc.GetController();
         let oActionsQueue   = oDoc.GetActionsQueue();
 
         let bHighlight  = this.IsNeedDrawHighlight();
@@ -202,14 +203,13 @@
         }
 
         function callbackAfterFocus(x, y, e) {
+            let pageObjectMM = oDoc.Viewer.getPageByCoords2(x, y);
+			if (!pageObjectMM)
+				return false;
+
+            this.SetInForm(true);
             oDoc.SetLocalHistory();
-            if (false == e.ShiftKey) {
-                oDoc.SelectionSetStart(x, y, e);
-            }
-            else {
-                this.content.StartSelectionFromCurPos();
-                oDoc.SelectionSetEnd(x, y, e);
-            }
+            oController.OnMouseDown(e, pageObjectMM.x, pageObjectMM.y, pageObjectMM.index);
             
             this.SetInForm(true);
 
@@ -814,8 +814,8 @@
 	CComboBoxField.prototype.Remove                 = AscPDF.CTextField.prototype.Remove;
 	CComboBoxField.prototype.MoveCursorLeft         = AscPDF.CTextField.prototype.MoveCursorLeft;
 	CComboBoxField.prototype.MoveCursorRight        = AscPDF.CTextField.prototype.MoveCursorRight;
-	CComboBoxField.prototype.SelectionSetStart      = AscPDF.CTextField.prototype.SelectionSetStart;
-	CComboBoxField.prototype.SelectionSetEnd        = AscPDF.CTextField.prototype.SelectionSetEnd;
+	CComboBoxField.prototype.selectionSetStart      = AscPDF.CTextField.prototype.selectionSetStart;
+	CComboBoxField.prototype.selectionSetEnd        = AscPDF.CTextField.prototype.selectionSetEnd;
 	CComboBoxField.prototype.CheckFormViewWindow    = AscPDF.CTextField.prototype.CheckFormViewWindow;
 	CComboBoxField.prototype.CheckAlignInternal     = AscPDF.CTextField.prototype.CheckAlignInternal;
 	CComboBoxField.prototype.IsTextOutOfForm        = AscPDF.CTextField.prototype.IsTextOutOfForm;
