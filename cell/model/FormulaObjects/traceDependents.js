@@ -355,6 +355,44 @@ function (window, undefined) {
 		const setDefNameIndexes = function (defName, isTable, defNameRange) {
 			let tableHeader = isTable ? getTableHeader(ws.getTableByName(defName)) : false;
 			let isCurrentCellHeader = isTable ? checkIfHeader(tableHeader) : false;
+
+			// TODO: разделить функционал на табличный и defName?
+			// Или 
+			// Создать аналог здесь и убрать его ниже для таблиц
+
+			if (Object.keys(allDefNamesListeners) <= 0 && isTable && dependencyFormulas.tableListeners[defName]) {
+				// check areaMap
+				console.log(dependencyFormulas.tableListeners);
+				
+				for (let i in dependencyFormulas.tableListeners[defName]) {
+					let listenerInfo = dependencyFormulas.tableListeners[defName][i];
+					let formula = listenerInfo.formula;
+					let is3D = listenerInfo.sheetId !== defNameRange.worksheet.Id;
+					
+
+					if (is3D) {
+						// set external ref with cell info
+						let parentIndex = getParentIndex(formula.parent);
+						if (parentIndex) {
+							t.setDependentsExternal(cellIndex, parentIndex, listenerInfo.range, formula.getWs()/*elemWS */);
+							t._setDependents(cellIndex, parentIndex);
+							t._setPrecedents(parentIndex, cellIndex, true);
+						}
+						continue;
+					} else {
+						let areaIndexes = getAllAreaIndexes(formula);
+						if (areaIndexes) {
+							for (let index in areaIndexes) {
+								if (areaIndexes.hasOwnProperty(index)) {
+									t._setDependents(cellIndex, areaIndexes[index]);
+									t._setPrecedents(areaIndexes[index], cellIndex);
+								}
+							}
+						}
+					}
+				}
+			}
+
 			for (let i in allDefNamesListeners) {
 				if (allDefNamesListeners.hasOwnProperty(i) && i.toLowerCase() === defName.toLowerCase()) {
 					for (let listener in allDefNamesListeners[i].listeners) {
@@ -585,7 +623,7 @@ function (window, undefined) {
 						let isTable = parent.parsedRef ? parent.parsedRef.isTable : false;
 						let isDefName = !!parent.name;
 						let formula = cellListeners[i].Formula;
-						let is3D = false;
+						let is3D = cellListeners[i].is3D ? true : false;
 
 						//todo slow operation. parent not have type
 						if (parent instanceof Asc.CT_WorksheetSource) {
@@ -599,11 +637,9 @@ function (window, undefined) {
 							if (parentInnerElementType === cElementType.cellsRange || parentInnerElementType === cElementType.cellsRange3D || parentInnerElementType === cElementType.cell3D) {
 								defNameRange = parent.parsedRef.outStack[0].getRange();
 							}
-							// TODO check external table ref
+							
 							setDefNameIndexes(parent.name, isTable, defNameRange);
 							continue;
-						} else if (cellListeners[i].is3D) {
-							is3D = true;
 						}
 
 						if (cellListeners[i].shared !== null && !is3D) {
@@ -631,13 +667,12 @@ function (window, undefined) {
 
 						parentCellIndex = getParentIndex(parent);
 						if (parentCellIndex === null) {
-							//if (parentCellIndex === null || (typeof(parentCellIndex) === "number" && isNaN(parentCellIndex))) {
 							continue;
 						}
 
 						if (is3D && typeof parentCellIndex === "string") {
 							// the object dependentsExternal is only needed to handle a double click on an arrow, and is not used in drawing
-							let elemRange = cellListeners[i].ref ? cellListeners[i].ref : new Asc.Range(parent.col, parent.row, parent.col, parent.row);
+							let elemRange = cellListeners[i].ref ? cellListeners[i].ref : new Asc.Range(parent.nCol, parent.nRow, parent.nCol, parent.nRow);
 							let elemWs = parent.ws;
 							this.setDependentsExternal(cellIndex, parentCellIndex, elemRange, elemWs);
 						}
@@ -1153,15 +1188,21 @@ function (window, undefined) {
 						}
 
 						if (is3D) {
-							// external dependencies are stored in a separate object and rendered in a separate loop 
-							let elemIndex = elem.wsTo ? elem.wsTo.index : elem.ws.index;
-							let elemWs = elem.wsFrom ? elem.wsTo : elem.ws;			
-							if (currentWsIndex !== elemIndex) {
+							// external dependencies are stored in a separate object and rendered in a separate loop
+							let elemWsIndex = elem.wsTo ? elem.wsTo.index : elem.ws.index;
+							let elemWs = elem.wsFrom ? elem.wsTo : elem.ws;
+							if (isTable) {
+								let tableOriginalArea = elem.area;
+								elemWs = tableOriginalArea ? tableOriginalArea.getWS() : elemWs; // wsTo
+								elemWsIndex = (elemWs && elemWs.index !== undefined) ? elemWs.index : elemWsIndex;
+							}
+
+							if (currentWsIndex !== elemWsIndex) {
 								if (elem.externalLink != null) {
-									elemIndex = "[" + elem.externalLink + "]";
+									elemWsIndex = "[" + elem.externalLink + "]";
 								}
 
-								elemCellIndex += ";" + elemIndex;
+								elemCellIndex += ";" + elemWsIndex;
 								this.setPrecedentExternal(currentCellIndex, elemCellIndex, elemRange, elemWs, elem.externalLink);
 								continue
 							}
@@ -1419,7 +1460,6 @@ function (window, undefined) {
 							if (!hasExternalPrecedent || (hasExternalPrecedent && !this.precedentsExternal[cellIndex][elemCellIndex])) {
 								isHaveUnrecorded = true;
 							}
-							// this.setPrecedentExternal(currentCellIndex, elemCellIndex, elemRange, elemWs);
 							continue
 						}
 					}
