@@ -356,30 +356,69 @@ function (window, undefined) {
 			let tableHeader = isTable ? getTableHeader(ws.getTableByName(defName)) : false;
 			let isCurrentCellHeader = isTable ? checkIfHeader(tableHeader) : false;
 
-			// TODO: разделить функционал на табличный и defName?
-			// Или 
-			// Создать аналог здесь и убрать его ниже для таблиц
-
+			// TODO: divide the functionality into table and defName? or unite at one?
 			if (Object.keys(allDefNamesListeners) <= 0 && isTable && dependencyFormulas.tableListeners[defName]) {
-				// check areaMap
-				console.log(dependencyFormulas.tableListeners);
-				
 				for (let i in dependencyFormulas.tableListeners[defName]) {
 					let listenerInfo = dependencyFormulas.tableListeners[defName][i];
 					let formula = listenerInfo.formula;
 					let is3D = listenerInfo.sheetId !== defNameRange.worksheet.Id;
+					let dynamicRange = formula.getDynamicRef();
 					
+					// check Headers
+					// if current header and listener is header, make trace only with header
+					// check if current cell header or not
+					// Skip if header status doesn't match formula type
+					// (header cell should only match with Headers formula, and vice versa)
+					let hasHeadersInFormula = formula.Formula.includes("Headers");
+					if (isCurrentCellHeader !== hasHeadersInFormula) {
+						continue;
+					}
 
+					// additional check if the listener is in the same table, need to check if it is a listener of the main cell
+					if (formula.outStack) {
+						let arr = [];
+						// check each element of the stack for an occurrence in the original cell
+						for (let table in formula.outStack) {
+							if (formula.outStack[table].type !== cElementType.table) {
+								continue;
+							}
+
+							let bbox = formula.outStack[table].area.bbox 
+								? formula.outStack[table].area.bbox 
+								: (formula.outStack[table].area.range.bbox ? formula.outStack[table].area.range.bbox : null);
+								
+							if (bbox) {
+								arr.push(bbox.contains2(cellAddress));
+							}
+						}
+						if (!arr.includes(true)) {
+							continue;
+						}
+					}
+					// shared checks
+					if (formula.shared !== null && !is3D) {
+						let currentCellRange = ws.getCell3(cellAddress.row, cellAddress.col);
+						setSharedTableIntersection(ws.getTableByName(defName).getRangeWithoutHeaderFooter(), currentCellRange, formula.shared);
+						continue;
+					}
+
+					let parentIndex = getParentIndex(formula.parent);
 					if (is3D) {
 						// set external ref with cell info
-						let parentIndex = getParentIndex(formula.parent);
-						if (parentIndex) {
+						if (parentIndex !== null) {
 							t.setDependentsExternal(cellIndex, parentIndex, listenerInfo.range, formula.getWs()/*elemWS */);
 							t._setDependents(cellIndex, parentIndex);
 							t._setPrecedents(parentIndex, cellIndex, true);
 						}
-						continue;
 					} else {
+						// if the formula is a dynamic array, then we refer to the first cell of this array. Otherwise for the entire range
+						if (dynamicRange && parentIndex !== null) {
+							// set dependents only to first cell
+							t._setDependents(cellIndex, parentIndex);
+							t._setPrecedents(parentIndex, cellIndex, true);
+							continue;
+						}
+
 						let areaIndexes = getAllAreaIndexes(formula);
 						if (areaIndexes) {
 							for (let index in areaIndexes) {
@@ -434,47 +473,6 @@ function (window, undefined) {
 							continue;
 						}
 
-						if (isTable) {
-							// check Headers
-							// if current header and listener is header, make trace only with header
-							// check if current cell header or not
-							if (elem.Formula.includes("Headers")) {
-								if (isCurrentCellHeader) {
-									t._setDependents(cellIndex, parentCellIndex);
-									t._setPrecedents(parentCellIndex, cellIndex);
-								} else {
-									continue;
-								}
-							} else if (!elem.Formula.includes("Headers") && isCurrentCellHeader) {
-								continue;
-							}
-							// ?additional check if the listener is in the same table, need to check if it is a listener of the main cell
-							if (elem.outStack) {
-								let arr = [];
-								// check each element of the stack for an occurrence in the original cell
-								for (let table in elem.outStack) {
-									if (elem.outStack[table].type !== cElementType.table) {
-										continue;
-									}
-
-									let bbox = elem.outStack[table].area.bbox ? elem.outStack[table].area.bbox : (elem.outStack[table].area.range.bbox ? elem.outStack[table].area.range.bbox : null);
-
-									if (bbox) {
-										arr.push(bbox.contains2(cellAddress));
-									}
-								}
-								if (!arr.includes(true)) {
-									continue;
-								}
-							}
-
-							// shared checks
-							if (elem.shared !== null && !is3D) {
-								let currentCellRange = ws.getCell3(cellAddress.row, cellAddress.col);
-								setSharedTableIntersection(ws.getTableByName(defName).getRangeWithoutHeaderFooter(), currentCellRange, elem.shared);
-								continue;
-							}
-						}
 						t._setDependents(cellIndex, parentCellIndex);
 						t._setPrecedents(parentCellIndex, cellIndex);
 					}
