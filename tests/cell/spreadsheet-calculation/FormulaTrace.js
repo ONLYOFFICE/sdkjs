@@ -1185,502 +1185,360 @@ $(function() {
 		QUnit.test("Test: \"Tables tests\"", function (assert) {
 			let bbox;
 			// -------------- dependents --------------
-			ws.getRange2("A1:Z100").cleanAll();
-			ws.selectionRange.ranges = [ws.getRange2("A2:A4").getBBox0()];
-			ws.selectionRange.setActiveCell(ws.getRange2("A2").getBBox0().r1, ws.getRange2("A2").getBBox0().c1);
+			ws.getRange2("A1:Z200").cleanAll();
+			ws.selectionRange.ranges = [ws.getRange2("A102:A104").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("A102").getBBox0().r1, ws.getRange2("A102").getBBox0().c1);
 
 			let tableProp = AscCommonExcel.AddFormatTableOptions();
-			tableProp.asc_setRange("$A$2:$A$4");
+			tableProp.asc_setRange("$A$102:$A$104");
 			tableProp.asc_setIsTitle(false);
 			
 			ws.autoFilters.addAutoFilter("TableStyleLight1", ws.selectionRange.getLast().clone(), tableProp);
 
-			let A2Index = AscCommonExcel.getCellIndex(ws.getRange2("A2").bbox.r1, ws.getRange2("A2").bbox.c1),
-				A3Index = AscCommonExcel.getCellIndex(ws.getRange2("A3").bbox.r1, ws.getRange2("A3").bbox.c1),
-				A4Index = AscCommonExcel.getCellIndex(ws.getRange2("A4").bbox.r1, ws.getRange2("A4").bbox.c1),
-				A5Index = AscCommonExcel.getCellIndex(ws.getRange2("A5").bbox.r1, ws.getRange2("A5").bbox.c1),
-				A8Index = AscCommonExcel.getCellIndex(ws.getRange2("A8").bbox.r1, ws.getRange2("A8").bbox.c1),
-				B2Index = AscCommonExcel.getCellIndex(ws.getRange2("B2").bbox.r1, ws.getRange2("B2").bbox.c1),
-				B3Index = AscCommonExcel.getCellIndex(ws.getRange2("B3").bbox.r1, ws.getRange2("B3").bbox.c1),
-				B4Index = AscCommonExcel.getCellIndex(ws.getRange2("B4").bbox.r1, ws.getRange2("B4").bbox.c1),
-				B5Index = AscCommonExcel.getCellIndex(ws.getRange2("B5").bbox.r1, ws.getRange2("B5").bbox.c1),
-				C1Index = AscCommonExcel.getCellIndex(ws.getRange2("C1").bbox.r1, ws.getRange2("C1").bbox.c1),
-				D2Index = AscCommonExcel.getCellIndex(ws.getRange2("D2").bbox.r1, ws.getRange2("D2").bbox.c1),
-				D3Index = AscCommonExcel.getCellIndex(ws.getRange2("D3").bbox.r1, ws.getRange2("D3").bbox.c1),
-				D4Index = AscCommonExcel.getCellIndex(ws.getRange2("D4").bbox.r1, ws.getRange2("D4").bbox.c1),
-				D5Index = AscCommonExcel.getCellIndex(ws.getRange2("D5").bbox.r1, ws.getRange2("D5").bbox.c1),
-				E2Index = AscCommonExcel.getCellIndex(ws.getRange2("E2").bbox.r1, ws.getRange2("E2").bbox.c1),
-				E3Index = AscCommonExcel.getCellIndex(ws.getRange2("E3").bbox.r1, ws.getRange2("E3").bbox.c1),
-				E4Index = AscCommonExcel.getCellIndex(ws.getRange2("E4").bbox.r1, ws.getRange2("E4").bbox.c1),
-				E5Index = AscCommonExcel.getCellIndex(ws.getRange2("E5").bbox.r1, ws.getRange2("E5").bbox.c1),
-				E7Index = AscCommonExcel.getCellIndex(ws.getRange2("E7").bbox.r1, ws.getRange2("E7").bbox.c1),
-				E8Index = AscCommonExcel.getCellIndex(ws.getRange2("E8").bbox.r1, ws.getRange2("E8").bbox.c1);
+			let A102Index = AscCommonExcel.getCellIndex(ws.getRange2("A102").bbox.r1, ws.getRange2("A102").bbox.c1),
+				A103Index = AscCommonExcel.getCellIndex(ws.getRange2("A103").bbox.r1, ws.getRange2("A103").bbox.c1),
+				A104Index = AscCommonExcel.getCellIndex(ws.getRange2("A104").bbox.r1, ws.getRange2("A104").bbox.c1),
+				A105Index = AscCommonExcel.getCellIndex(ws.getRange2("A105").bbox.r1, ws.getRange2("A105").bbox.c1),
+				A108Index = AscCommonExcel.getCellIndex(ws.getRange2("A108").bbox.r1, ws.getRange2("A108").bbox.c1),
+				B102Index = AscCommonExcel.getCellIndex(ws.getRange2("B102").bbox.r1, ws.getRange2("B102").bbox.c1),
+				B103Index = AscCommonExcel.getCellIndex(ws.getRange2("B103").bbox.r1, ws.getRange2("B103").bbox.c1),
+				B104Index = AscCommonExcel.getCellIndex(ws.getRange2("B104").bbox.r1, ws.getRange2("B104").bbox.c1),
+				B105Index = AscCommonExcel.getCellIndex(ws.getRange2("B105").bbox.r1, ws.getRange2("B105").bbox.c1),
+				C101Index = AscCommonExcel.getCellIndex(ws.getRange2("C101").bbox.r1, ws.getRange2("C101").bbox.c1),
+				D102Index = AscCommonExcel.getCellIndex(ws.getRange2("D102").bbox.r1, ws.getRange2("D102").bbox.c1),
+				D103Index = AscCommonExcel.getCellIndex(ws.getRange2("D103").bbox.r1, ws.getRange2("D103").bbox.c1),
+				D104Index = AscCommonExcel.getCellIndex(ws.getRange2("D104").bbox.r1, ws.getRange2("D104").bbox.c1),
+				D105Index = AscCommonExcel.getCellIndex(ws.getRange2("D105").bbox.r1, ws.getRange2("D105").bbox.c1),
+				E102Index = AscCommonExcel.getCellIndex(ws.getRange2("E102").bbox.r1, ws.getRange2("E102").bbox.c1),
+				E103Index = AscCommonExcel.getCellIndex(ws.getRange2("E103").bbox.r1, ws.getRange2("E103").bbox.c1),
+				E104Index = AscCommonExcel.getCellIndex(ws.getRange2("E104").bbox.r1, ws.getRange2("E104").bbox.c1),
+				E105Index = AscCommonExcel.getCellIndex(ws.getRange2("E105").bbox.r1, ws.getRange2("E105").bbox.c1),
+				E107Index = AscCommonExcel.getCellIndex(ws.getRange2("E107").bbox.r1, ws.getRange2("E107").bbox.c1),
+				E108Index = AscCommonExcel.getCellIndex(ws.getRange2("E108").bbox.r1, ws.getRange2("E108").bbox.c1);
 
-			ws.getRange2("A3").setValue("1");
-			ws.getRange2("A4").setValue("=C1");
-			ws.getRange2("A5").setValue("3");
-			ws.getRange2("A8").setValue("=A2");
-			ws.getRange2("B3").setValue("a");
-			ws.getRange2("B4").setValue("b");
-			ws.getRange2("B5").setValue("c");
-			ws.getRange2("D2").setValue("=A2");
+			ws.getRange2("A103").setValue("1");
+			ws.getRange2("A104").setValue("=C101");
+			ws.getRange2("A105").setValue("3");
+			ws.getRange2("A108").setValue("=A102");
+			ws.getRange2("B103").setValue("a");
+			ws.getRange2("B104").setValue("b");
+			ws.getRange2("B105").setValue("c");
+			ws.getRange2("D102").setValue("=A102");
 
-			bbox = ws.getRange2("D3:D5").bbox;
-			ws.getRange2("D3:D5").setValue("=Table1", undefined, undefined, bbox);
+			bbox = ws.getRange2("D103:D105").bbox;
+			ws.getRange2("D103:D105").setValue("=Table1", undefined, undefined, bbox);
 
-			ws.getRange2("E2").setValue("=Table1");
-			ws.getRange2("E3").setValue("=Table1");
-			ws.getRange2("E4").setValue("=Table1");
-			ws.getRange2("E5").setValue("=Table1");
-			ws.getRange2("E7").setValue("=Table1");
+			ws.getRange2("E102").setValue("=Table1");
+			ws.getRange2("E103").setValue("=Table1");
+			ws.getRange2("E104").setValue("=Table1");
+			ws.getRange2("E105").setValue("=Table1");
+			ws.getRange2("E107").setValue("=Table1");
 
-			bbox = ws.getRange2("E8").bbox;
-			ws.getRange2("E8").setValue("=Table1", undefined, undefined, bbox);
+			bbox = ws.getRange2("E108").bbox;
+			ws.getRange2("E108").setValue("=Table1", undefined, undefined, bbox);
 
-			ws.selectionRange.ranges = [ws.getRange2("A3").getBBox0()];
-			ws.selectionRange.setActiveCell(ws.getRange2("A3").getBBox0().r1, ws.getRange2("A3").getBBox0().c1);
+			ws.selectionRange.ranges = [ws.getRange2("A103").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("A103").getBBox0().r1, ws.getRange2("A103").getBBox0().c1);
 
-			assert.ok(1, "Trace dependents from A3");
+			assert.ok(1, "Trace dependents from A103");
 			api.asc_TraceDependents();
-			assert.strictEqual(traceManager._getDependents(A3Index, D2Index), undefined, "A3->D2 === undefined");
-			assert.strictEqual(traceManager._getDependents(A3Index, D3Index), 1, "A3->D3");
-			assert.strictEqual(traceManager._getDependents(A3Index, D4Index), 1, "A3->D4");
-			assert.strictEqual(traceManager._getDependents(A3Index, D5Index), 1, "A3->D5");
-			assert.strictEqual(traceManager._getDependents(A3Index, A8Index), undefined, "A3->A8 === undefined");
+			assert.strictEqual(traceManager._getDependents(A103Index, D102Index), undefined, "A103->D102 === undefined");
+			assert.strictEqual(traceManager._getDependents(A103Index, D103Index), 1, "A103->D103");
+			assert.strictEqual(traceManager._getDependents(A103Index, D104Index), 1, "A103->D104");
+			assert.strictEqual(traceManager._getDependents(A103Index, D105Index), 1, "A103->D105");
+			assert.strictEqual(traceManager._getDependents(A103Index, A108Index), undefined, "A103->A108 === undefined");
 
-			assert.ok(1, "Remove last dependents from A3");
+			assert.ok(1, "Remove last dependents from A103");
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.dependent);
-			assert.strictEqual(traceManager._getDependents(A3Index, D2Index), undefined, "A3->D2 === undefined");
-			assert.strictEqual(traceManager._getDependents(A3Index, D3Index), undefined, "A3->D3 === undefined");
-			assert.strictEqual(traceManager._getDependents(A3Index, D4Index), undefined, "A3->D4 === undefined");
-			assert.strictEqual(traceManager._getDependents(A3Index, D5Index), undefined, "A3->D5 === undefined");
-			assert.strictEqual(traceManager._getDependents(A3Index, A8Index), undefined, "A3->A8 === undefined");
+			assert.strictEqual(traceManager._getDependents(A103Index, D102Index), undefined, "A103->D102 === undefined");
+			assert.strictEqual(traceManager._getDependents(A103Index, D103Index), undefined, "A103->D103 === undefined");
+			assert.strictEqual(traceManager._getDependents(A103Index, D104Index), undefined, "A103->D104 === undefined");
+			assert.strictEqual(traceManager._getDependents(A103Index, D105Index), undefined, "A103->D105 === undefined");
+			assert.strictEqual(traceManager._getDependents(A103Index, A108Index), undefined, "A103->A108 === undefined");
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 
-			ws.selectionRange.ranges = [ws.getRange2("A2").getBBox0()];
-			ws.selectionRange.setActiveCell(ws.getRange2("A2").getBBox0().r1, ws.getRange2("A2").getBBox0().c1);
+			ws.selectionRange.ranges = [ws.getRange2("A102").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("A102").getBBox0().r1, ws.getRange2("A102").getBBox0().c1);
 
-			assert.ok(1, "Trace dependents from A2. Column header dependent check.");
+			assert.ok(1, "Trace dependents from A102. Column header dependent check.");
 			api.asc_TraceDependents();
-			assert.strictEqual(traceManager._getDependents(A2Index, D2Index), 1, "A2->D2");
-			assert.strictEqual(traceManager._getDependents(A2Index, D3Index), undefined, "A2->D3 === undefined");
-			assert.strictEqual(traceManager._getDependents(A2Index, D4Index), undefined, "A2->D4 === undefined");
-			assert.strictEqual(traceManager._getDependents(A2Index, D5Index), undefined, "A3->D5 === undefined");
-			assert.strictEqual(traceManager._getDependents(A2Index, A8Index), 1, "A2->A8");
+			assert.strictEqual(traceManager._getDependents(A102Index, D102Index), 1, "A102->D102");
+			assert.strictEqual(traceManager._getDependents(A102Index, D103Index), undefined, "A102->D103 === undefined");
+			assert.strictEqual(traceManager._getDependents(A102Index, D104Index), undefined, "A102->D104 === undefined");
+			assert.strictEqual(traceManager._getDependents(A102Index, D105Index), undefined, "A102->D105 === undefined");
+			assert.strictEqual(traceManager._getDependents(A102Index, A108Index), 1, "A102->A108");
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 
 			// -------------- precedents --------------
-			ws.selectionRange.ranges = [ws.getRange2("D2").getBBox0()];
-			ws.selectionRange.setActiveCell(ws.getRange2("D2").getBBox0().r1, ws.getRange2("D2").getBBox0().c1);
+			ws.selectionRange.ranges = [ws.getRange2("D102").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("D102").getBBox0().r1, ws.getRange2("D102").getBBox0().c1);
 
-			assert.ok(1, "Trace precedents from D2");
+			assert.ok(1, "Trace precedents from D102");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(D2Index, A2Index), 1, "D2<-A2");
-			assert.ok(1, "Remove last precedents from D2");
+			assert.strictEqual(traceManager._getPrecedents(D102Index, A102Index), 1, "D102<-A102");
+			assert.ok(1, "Remove last precedents from D102");
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.precedent);
-			assert.strictEqual(traceManager._getPrecedents(D2Index, A2Index), undefined, "D2<-A2 === undefined");
+			assert.strictEqual(traceManager._getPrecedents(D102Index, A102Index), undefined, "D102<-A102 === undefined");
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 
-			ws.selectionRange.ranges = [ws.getRange2("D3").getBBox0()];
-			ws.selectionRange.setActiveCell(ws.getRange2("D3").getBBox0().r1, ws.getRange2("D3").getBBox0().c1);
+			ws.selectionRange.ranges = [ws.getRange2("D103").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("D103").getBBox0().r1, ws.getRange2("D103").getBBox0().c1);
 
-			assert.ok(1, "Trace precedents from D3");
+			assert.ok(1, "Trace precedents from D103");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(D3Index, A3Index), "$A$3:$A$5", "D3<-A3");
-			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), undefined, "A4<-C1");
-			assert.strictEqual(typeof(traceManager.precedentsAreas["$A$3:$A$5"]), "object", "Area A3:A5 exist");
+			assert.strictEqual(traceManager._getPrecedents(D103Index, A103Index), "$A$103:$A$105", "D103<-A103");
+			assert.strictEqual(traceManager._getPrecedents(A104Index, C101Index), undefined, "A104<-C101");
+			assert.strictEqual(typeof(traceManager.precedentsAreas["$A$103:$A$105"]), "object", "Area A103:A105 exist");
 
-			assert.ok(1, "Trace precedents from D3");
+			assert.ok(1, "Trace precedents from D103");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(D3Index, A3Index), "$A$3:$A$5", "D3<-A3");
-			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), 1, "A4<-C1");
-			assert.strictEqual(typeof(traceManager.precedentsAreas["$A$3:$A$5"]), "object", "Area A3:A5 exist");
+			assert.strictEqual(traceManager._getPrecedents(D103Index, A103Index), "$A$103:$A$105", "D103<-A103");
+			assert.strictEqual(traceManager._getPrecedents(A104Index, C101Index), 1, "A104<-C101");
+			assert.strictEqual(typeof(traceManager.precedentsAreas["$A$103:$A$105"]), "object", "Area A103:A105 exist");
 
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.precedent);
-			assert.strictEqual(traceManager._getPrecedents(D3Index, A3Index), "$A$3:$A$5", "D3<-A3");
-			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), undefined, "A4<-C1 === undefined");
-			assert.strictEqual(typeof(traceManager.precedentsAreas["$A$3:$A$5"]), "object", "Area A3:A5 exist");
+			assert.strictEqual(traceManager._getPrecedents(D103Index, A103Index), "$A$103:$A$105", "D103<-A103");
+			assert.strictEqual(traceManager._getPrecedents(A104Index, C101Index), undefined, "A104<-C101 === undefined");
+			assert.strictEqual(typeof(traceManager.precedentsAreas["$A$103:$A$105"]), "object", "Area A103:A105 exist");
 
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.precedent);
-			assert.strictEqual(traceManager._getPrecedents(D3Index, A3Index), undefined, "D3<-A3 === undefined");
-			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), undefined, "A4<-C1 === undefined");
-			assert.strictEqual(typeof(traceManager.precedentsAreas["$A$3:$A$5"]), "undefined", "Area A3:A5 doesn't exist");
+			assert.strictEqual(traceManager._getPrecedents(D103Index, A103Index), undefined, "D103<-A103 === undefined");
+			assert.strictEqual(traceManager._getPrecedents(A104Index, C101Index), undefined, "A104<-C101 === undefined");
+			assert.strictEqual(typeof(traceManager.precedentsAreas["$A$103:$A$105"]), "undefined", "Area A103:A105 doesn't exist");
 
-			ws.selectionRange.ranges = [ws.getRange2("E2").getBBox0()];
-			ws.selectionRange.setActiveCell(ws.getRange2("E2").getBBox0().r1, ws.getRange2("E2").getBBox0().c1);
+			ws.selectionRange.ranges = [ws.getRange2("E102").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("E102").getBBox0().r1, ws.getRange2("E102").getBBox0().c1);
 
-			assert.ok(1, "Trace precedents from E2");
+			assert.ok(1, "Trace precedents from E102");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(E2Index, A3Index), "$A$3:$A$5", "E2<-A3");
-			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), undefined, "A4<-C1 === undefined");
-			assert.strictEqual(typeof(traceManager.precedentsAreas["$A$3:$A$5"]), "object", "Area A3:A5 exist");
+			assert.strictEqual(traceManager._getPrecedents(E102Index, A103Index), "$A$103:$A$105", "E102<-A103");
+			assert.strictEqual(traceManager._getPrecedents(A104Index, C101Index), undefined, "A104<-C101 === undefined");
+			assert.strictEqual(typeof(traceManager.precedentsAreas["$A$103:$A$105"]), "object", "Area A103:A105 exist");
 
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 
-			ws.selectionRange.ranges = [ws.getRange2("E3").getBBox0()];
-			ws.selectionRange.setActiveCell(ws.getRange2("E3").getBBox0().r1, ws.getRange2("E3").getBBox0().c1);
+			ws.selectionRange.ranges = [ws.getRange2("E103").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("E103").getBBox0().r1, ws.getRange2("E103").getBBox0().c1);
 
-			assert.ok(1, "Trace precedents from E3");
+			assert.ok(1, "Trace precedents from E103");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(E2Index, A3Index), undefined, "E2<-A3 === undefined");
-			assert.strictEqual(traceManager._getPrecedents(E3Index, A3Index), 1, "E3<-A3");
-			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), undefined, "A4<-C1 === undefined");
+			assert.strictEqual(traceManager._getPrecedents(E102Index, A103Index), undefined, "E102<-A103 === undefined");
+			assert.strictEqual(traceManager._getPrecedents(E103Index, A103Index), 1, "E103<-A103");
+			assert.strictEqual(traceManager._getPrecedents(A104Index, C101Index), undefined, "A104<-C101 === undefined");
 			assert.strictEqual(traceManager.precedentsAreas, null);
 
-			ws.selectionRange.ranges = [ws.getRange2("E8").getBBox0()];
-			ws.selectionRange.setActiveCell(ws.getRange2("E8").getBBox0().r1, ws.getRange2("E8").getBBox0().c1);
+			ws.selectionRange.ranges = [ws.getRange2("E108").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("E108").getBBox0().r1, ws.getRange2("E108").getBBox0().c1);
 
-			assert.ok(1, "Trace precedents from E8");
+			assert.ok(1, "Trace precedents from E108");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(E8Index, A3Index), "$A$3:$A$5", "E8<-A3");
-			assert.strictEqual(traceManager._getPrecedents(A4Index, C1Index), undefined, "A4<-C1 === undefined");
-			assert.strictEqual(typeof(traceManager.precedentsAreas["$A$3:$A$5"]), "object", "Area A3:A5 exist");
+			assert.strictEqual(traceManager._getPrecedents(E108Index, A103Index), "$A$103:$A$105", "E108<-A103");
+			assert.strictEqual(traceManager._getPrecedents(A104Index, C101Index), undefined, "A104<-C101 === undefined");
+			assert.strictEqual(typeof(traceManager.precedentsAreas["$A$103:$A$105"]), "object", "Area A103:A105 exist");
 
 			// clear traces
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
-
-			// ws.TableParts = [];
-			// ws.TableParts.length = 0;
 		});
 
-		QUnit.test("Test: \"Tables - Column references and structured references\"", function (assert) {
+
+		QUnit.test("Test: \"Tables - Advanced scenarios\"", function (assert) {
 			ws.getRange2("A1:Z100").cleanAll();
 			
-			// Create a table with headers
-			ws.selectionRange.ranges = [ws.getRange2("A2:C5").getBBox0()];
-			ws.selectionRange.setActiveCell(ws.getRange2("A2").getBBox0().r1, ws.getRange2("A2").getBBox0().c1);
-			
-			ws.getRange2("A2").setValue("Name");
-			ws.getRange2("B2").setValue("Value");
-			ws.getRange2("C2").setValue("Total");
-			ws.getRange2("A3").setValue("Item1");
-			ws.getRange2("A4").setValue("Item2");
-			ws.getRange2("A5").setValue("Item3");
-			ws.getRange2("B3").setValue("10");
-			ws.getRange2("B4").setValue("20");
-			ws.getRange2("B5").setValue("30");
-
-			let tableProp = AscCommonExcel.AddFormatTableOptions();
-			tableProp.asc_setRange("$A$2:$C$5");
-			tableProp.asc_setIsTitle(true);
-			
-			ws.autoFilters.addAutoFilter("TableStyleLight1", ws.selectionRange.getLast().clone(), tableProp);
-
-			let A2Index = AscCommonExcel.getCellIndex(ws.getRange2("A2").bbox.r1, ws.getRange2("A2").bbox.c1),
-				A3Index = AscCommonExcel.getCellIndex(ws.getRange2("A3").bbox.r1, ws.getRange2("A3").bbox.c1),
-				A4Index = AscCommonExcel.getCellIndex(ws.getRange2("A4").bbox.r1, ws.getRange2("A4").bbox.c1),
-				A5Index = AscCommonExcel.getCellIndex(ws.getRange2("A5").bbox.r1, ws.getRange2("A5").bbox.c1),
-				B2Index = AscCommonExcel.getCellIndex(ws.getRange2("B2").bbox.r1, ws.getRange2("B2").bbox.c1),
-				B3Index = AscCommonExcel.getCellIndex(ws.getRange2("B3").bbox.r1, ws.getRange2("B3").bbox.c1),
-				B4Index = AscCommonExcel.getCellIndex(ws.getRange2("B4").bbox.r1, ws.getRange2("B4").bbox.c1),
-				B5Index = AscCommonExcel.getCellIndex(ws.getRange2("B5").bbox.r1, ws.getRange2("B5").bbox.c1),
-				E3Index = AscCommonExcel.getCellIndex(ws.getRange2("E3").bbox.r1, ws.getRange2("E3").bbox.c1),
-				E4Index = AscCommonExcel.getCellIndex(ws.getRange2("E4").bbox.r1, ws.getRange2("E4").bbox.c1),
-				E5Index = AscCommonExcel.getCellIndex(ws.getRange2("E5").bbox.r1, ws.getRange2("E5").bbox.c1),
-				F2Index = AscCommonExcel.getCellIndex(ws.getRange2("F2").bbox.r1, ws.getRange2("F2").bbox.c1),
-				G3Index = AscCommonExcel.getCellIndex(ws.getRange2("G3").bbox.r1, ws.getRange2("G3").bbox.c1);
-
-			// Test 1: Table column reference - precedents
-			ws.getRange2("E3").setValue("=Table1[Value]");
-			ws.selectionRange.ranges = [ws.getRange2("E3").getBBox0()];
-			ws.selectionRange.setActiveCell(ws.getRange2("E3").getBBox0().r1, ws.getRange2("E3").getBBox0().c1);
-
-			assert.ok(1, "Trace precedents from E3 with table column reference");
-			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(E3Index, B3Index), 1, "E3<-B3 (table column)");
-
-			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
-
-			// Test 2: Table Headers reference - precedents
-			ws.getRange2("F2").setValue("=Table1[#Headers]");
-			ws.selectionRange.ranges = [ws.getRange2("F2").getBBox0()];
-			ws.selectionRange.setActiveCell(ws.getRange2("F2").getBBox0().r1, ws.getRange2("F2").getBBox0().c1);
-
-			assert.ok(1, "Trace precedents from F2 with table headers reference");
-			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(F2Index, A2Index), "$A$2:$C$2", "F2<-A2 (table headers)");
-			
-			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
-
-			// Test 3: Table Data reference - dependents
-			ws.selectionRange.ranges = [ws.getRange2("B3").getBBox0()];
-			ws.selectionRange.setActiveCell(ws.getRange2("B3").getBBox0().r1, ws.getRange2("B3").getBBox0().c1);
-
-			ws.getRange2("G3").setValue("=Table1[[#Data],[Value]]");
-
-			assert.ok(1, "Trace dependents from B3 (table data cell)");
-			api.asc_TraceDependents();
-			assert.strictEqual(traceManager._getDependents(B3Index, E3Index), 1, "B3->E3");
-			assert.strictEqual(traceManager._getDependents(B3Index, G3Index), 1, "B3->G3");
-
-			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
-
-			// Test 4: Table header cell - dependents
-			ws.selectionRange.ranges = [ws.getRange2("B2").getBBox0()];
-			ws.selectionRange.setActiveCell(ws.getRange2("B2").getBBox0().r1, ws.getRange2("B2").getBBox0().c1);
-
-			assert.ok(1, "Trace dependents from B2 (table header cell)");
-			api.asc_TraceDependents();
-			assert.strictEqual(traceManager._getDependents(B2Index, F2Index), 1, "B2->F2 (header reference)");
-			assert.strictEqual(traceManager._getDependents(B2Index, B3Index), undefined, "B2->B3 should not exist (header to data)");
-
-			// clear traces
-			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
-
-			// ws.TableParts = [];
-			// ws.TableParts.length = 0;
-		});
-
-		QUnit.test("Test: \"Tables - Multiple tables with cross-references\"", function (assert) {
-			ws.getRange2("A1:Z100").cleanAll();
-			
-			// Create first table
-			ws.selectionRange.ranges = [ws.getRange2("A2:B5").getBBox0()];
-			ws.selectionRange.setActiveCell(ws.getRange2("A2").getBBox0().r1, ws.getRange2("A2").getBBox0().c1);
-			
-			ws.getRange2("A2").setValue("Product");
-			ws.getRange2("B2").setValue("Price");
-			ws.getRange2("A3").setValue("A");
-			ws.getRange2("A4").setValue("B");
-			ws.getRange2("A5").setValue("C");
-			ws.getRange2("B3").setValue("100");
-			ws.getRange2("B4").setValue("200");
-			ws.getRange2("B5").setValue("300");
-
-			let tableProp1 = AscCommonExcel.AddFormatTableOptions();
-			tableProp1.asc_setRange("$A$2:$B$5");
-			tableProp1.asc_setIsTitle(true);
-			
-			ws.autoFilters.addAutoFilter("TableStyleLight1", ws.selectionRange.getLast().clone(), tableProp1);
-			
-			// Create second table
-			ws.selectionRange.ranges = [ws.getRange2("D2:E5").getBBox0()];
-			ws.selectionRange.setActiveCell(ws.getRange2("D2").getBBox0().r1, ws.getRange2("D2").getBBox0().c1);
-			
-			ws.getRange2("D2").setValue("Item");
-			ws.getRange2("E2").setValue("Quantity");
-			ws.getRange2("D3").setValue("X");
-			ws.getRange2("D4").setValue("Y");
-			ws.getRange2("D5").setValue("Z");
-			ws.getRange2("E3").setValue("10");
-			ws.getRange2("E4").setValue("20");
-			ws.getRange2("E5").setValue("30");
-
-			let tableProp2 = AscCommonExcel.AddFormatTableOptions();
-			tableProp2.asc_setRange("$D$2:$E$5");
-			tableProp2.asc_setIsTitle(true);
-			
-			ws.autoFilters.addAutoFilter("TableStyleLight2", ws.selectionRange.getLast().clone(), tableProp2);
-
-			let B3Index = AscCommonExcel.getCellIndex(ws.getRange2("B3").bbox.r1, ws.getRange2("B3").bbox.c1),
-				E3Index = AscCommonExcel.getCellIndex(ws.getRange2("E3").bbox.r1, ws.getRange2("E3").bbox.c1),
-				G3Index = AscCommonExcel.getCellIndex(ws.getRange2("G3").bbox.r1, ws.getRange2("G3").bbox.c1),
-				H3Index = AscCommonExcel.getCellIndex(ws.getRange2("H3").bbox.r1, ws.getRange2("H3").bbox.c1);
-
-			// TODO Get Table by cell and set it to the formula directly?
-
-			// Test 1: Reference both tables
-			ws.getRange2("G3").setValue("=Table1[Price]+Table2[Quantity]");
-			ws.selectionRange.ranges = [ws.getRange2("G3").getBBox0()];
-			ws.selectionRange.setActiveCell(ws.getRange2("G3").getBBox0().r1, ws.getRange2("G3").getBBox0().c1);
-
-			assert.ok(1, "Trace precedents from G3 with multiple table references");
-			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(G3Index, B3Index), 1, "G3<-B3 (Table1)");
-			assert.strictEqual(traceManager._getPrecedents(G3Index, E3Index), 1, "G3<-E3 (Table2)");
-
-			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
-
-			// Test 2: Nested table reference
-			ws.getRange2("H3").setValue("=SUM(Table1[Price])*SUM(Table2[Quantity])");
-			ws.selectionRange.ranges = [ws.getRange2("H3").getBBox0()];
-			ws.selectionRange.setActiveCell(ws.getRange2("H3").getBBox0().r1, ws.getRange2("H3").getBBox0().c1);
-
-			assert.ok(1, "Trace precedents from H3 with nested table references");
-			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(H3Index, B3Index), 1, "H3<-B3 (Table1 range)");
-			assert.strictEqual(traceManager._getPrecedents(H3Index, E3Index), 1, "H3<-E3 (Table2 range)");
-
-			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
-
-			// ws.TableParts = [];
-			// ws.TableParts.length = 0;
-			// clearData(0, 0, 200, 200);
-
-		});
-
-		QUnit.test("Test: \"Tables - Table with totals row\"", function (assert) {
-			ws.getRange2("A1:Z100").cleanAll();
-			
-			// Create table with totals
-			ws.selectionRange.ranges = [ws.getRange2("A2:B6").getBBox0()];
+			// Create two comprehensive tables
+			// Table 1: Main table with headers and data (will add totals later)
+			ws.selectionRange.ranges = [ws.getRange2("A2:C6").getBBox0()];
 			ws.selectionRange.setActiveCell(ws.getRange2("A2").getBBox0().r1, ws.getRange2("A2").getBBox0().c1);
 			
 			ws.getRange2("A2").setValue("Category");
-			ws.getRange2("A3").setValue("Cat1");
-			ws.getRange2("A4").setValue("Cat2");
-			ws.getRange2("A5").setValue("Cat3");
-			// ws.getRange2("A6").setValue("=SUBTOTAL(103,[Category])");
-			ws.getRange2("B2").setValue("Amount");
-			ws.getRange2("B3").setValue("100");
-			ws.getRange2("B4").setValue("200");
-			ws.getRange2("B5").setValue("300");
-			// ws.getRange2("B6").setValue("=SUBTOTAL(109,[Amount])");
+			ws.getRange2("B2").setValue("Value");
+			ws.getRange2("C2").setValue("Calculated");
+			ws.getRange2("A3").setValue("Item1");
+			ws.getRange2("A4").setValue("Item2");
+			ws.getRange2("A5").setValue("Item3");
+			ws.getRange2("A6").setValue("Item4");
+			ws.getRange2("B3").setValue("10");
+			ws.getRange2("B4").setValue("20");
+			ws.getRange2("B5").setValue("30");
+			ws.getRange2("B6").setValue("40");
 
-			let tableProp = AscCommonExcel.AddFormatTableOptions();
-			tableProp.asc_setRange("$A$2:$B$5");
-			tableProp.asc_setIsTitle(true);
+			let tableProp1 = AscCommonExcel.AddFormatTableOptions();
+			tableProp1.asc_setRange("$A$2:$C$6");
+			tableProp1.asc_setIsTitle(true);
 			
-			ws.autoFilters.addAutoFilter("TableStyleLight1", ws.selectionRange.getLast().clone(), tableProp);
+			ws.autoFilters.addAutoFilter("TableStyleLight1", ws.selectionRange.getLast().clone(), tableProp1);
+
+			let firstTableName = ws.TableParts[ws.TableParts.length - 1].DisplayName;
+			
+			// Table 2: Secondary table for cross-references
+			ws.selectionRange.ranges = [ws.getRange2("E2:F5").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("E2").getBBox0().r1, ws.getRange2("E2").getBBox0().c1);
+			
+			ws.getRange2("E2").setValue("Product");
+			ws.getRange2("F2").setValue("Quantity");
+			ws.getRange2("E3").setValue("A");
+			ws.getRange2("E4").setValue("B");
+			ws.getRange2("E5").setValue("C");
+			ws.getRange2("F3").setValue("100");
+			ws.getRange2("F4").setValue("200");
+			ws.getRange2("F5").setValue("300");
+
+			let tableProp2 = AscCommonExcel.AddFormatTableOptions();
+			tableProp2.asc_setRange("$E$2:$F$5");
+			tableProp2.asc_setIsTitle(true);
+			
+			ws.autoFilters.addAutoFilter("TableStyleLight2", ws.selectionRange.getLast().clone(), tableProp2);
+			let secondTableName = ws.TableParts[ws.TableParts.length - 1].DisplayName;
+
 			// add subtotal row
-			ws.autoFilters.changeFormatTableInfo("Table1", 5, true);
-
-			let A6Index = AscCommonExcel.getCellIndex(ws.getRange2("A6").bbox.r1, ws.getRange2("A6").bbox.c1),
+			// ws.autoFilters.changeFormatTableInfo(firstTableName, 5, true);
+			console.log(ws);
+			// Define cell indexes for Table1
+			let A2Index = AscCommonExcel.getCellIndex(ws.getRange2("A2").bbox.r1, ws.getRange2("A2").bbox.c1),
+				A3Index = AscCommonExcel.getCellIndex(ws.getRange2("A3").bbox.r1, ws.getRange2("A3").bbox.c1),
+				A6Index = AscCommonExcel.getCellIndex(ws.getRange2("A6").bbox.r1, ws.getRange2("A6").bbox.c1),
+				A7Index = AscCommonExcel.getCellIndex(ws.getRange2("A7").bbox.r1, ws.getRange2("A7").bbox.c1),
+				B2Index = AscCommonExcel.getCellIndex(ws.getRange2("B2").bbox.r1, ws.getRange2("B2").bbox.c1),
 				B3Index = AscCommonExcel.getCellIndex(ws.getRange2("B3").bbox.r1, ws.getRange2("B3").bbox.c1),
+				B4Index = AscCommonExcel.getCellIndex(ws.getRange2("B4").bbox.r1, ws.getRange2("B4").bbox.c1),
 				B6Index = AscCommonExcel.getCellIndex(ws.getRange2("B6").bbox.r1, ws.getRange2("B6").bbox.c1),
-				D3Index = AscCommonExcel.getCellIndex(ws.getRange2("D3").bbox.r1, ws.getRange2("D3").bbox.c1),
-				D6Index = AscCommonExcel.getCellIndex(ws.getRange2("D6").bbox.r1, ws.getRange2("D6").bbox.c1);
+				B7Index = AscCommonExcel.getCellIndex(ws.getRange2("B7").bbox.r1, ws.getRange2("B7").bbox.c1),
+				C3Index = AscCommonExcel.getCellIndex(ws.getRange2("C3").bbox.r1, ws.getRange2("C3").bbox.c1),
+				C7Index = AscCommonExcel.getCellIndex(ws.getRange2("C7").bbox.r1, ws.getRange2("C7").bbox.c1);
 
-			// Reference to totals row
-			ws.getRange2("D6").setValue("=Table1[#Totals]");
-			ws.selectionRange.ranges = [ws.getRange2("D6").getBBox0()];
-			ws.selectionRange.setActiveCell(ws.getRange2("D6").getBBox0().r1, ws.getRange2("D6").getBBox0().c1);
+			// Define cell indexes for Table2
+			let E2Index = AscCommonExcel.getCellIndex(ws.getRange2("E2").bbox.r1, ws.getRange2("E2").bbox.c1),
+				F2Index = AscCommonExcel.getCellIndex(ws.getRange2("F2").bbox.r1, ws.getRange2("F2").bbox.c1),
+				F3Index = AscCommonExcel.getCellIndex(ws.getRange2("F3").bbox.r1, ws.getRange2("F3").bbox.c1),
+				F4Index = AscCommonExcel.getCellIndex(ws.getRange2("F4").bbox.r1, ws.getRange2("F4").bbox.c1);
 
-			assert.ok(1, "Trace precedents from D6 with totals row reference");
+			// Define cell indexes for test formulas
+			let H2Index = AscCommonExcel.getCellIndex(ws.getRange2("H2").bbox.r1, ws.getRange2("H2").bbox.c1),
+				H3Index = AscCommonExcel.getCellIndex(ws.getRange2("H3").bbox.r1, ws.getRange2("H3").bbox.c1),
+				H4Index = AscCommonExcel.getCellIndex(ws.getRange2("H4").bbox.r1, ws.getRange2("H4").bbox.c1),
+				J3Index = AscCommonExcel.getCellIndex(ws.getRange2("J3").bbox.r1, ws.getRange2("J3").bbox.c1),
+				J4Index = AscCommonExcel.getCellIndex(ws.getRange2("J4").bbox.r1, ws.getRange2("J4").bbox.c1);
+
+			// Test 1: Column references and structured references
+			
+			// Test column reference - precedents
+			ws.getRange2("H3").setValue(`=${firstTableName}[Value]`);
+			ws.selectionRange.ranges = [ws.getRange2("H3").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("H3").getBBox0().r1, ws.getRange2("H3").getBBox0().c1);
+
+			assert.ok(1, "Test 1a: Trace precedents from H3 with table column reference");
 			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(D6Index, A6Index), "$A$6:$B$6", "D6<-A6 (totals row f.cell)");
-			assert.strictEqual(traceManager._getPrecedents(D6Index, B6Index), undefined, "D6<-B6 (totals row s.cell)");
+			assert.strictEqual(traceManager._getPrecedents(H3Index, B3Index), 1, "H3<-B3 (table column)");
 
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 
-			// Dependents from data cell (should not include totals)
-			ws.getRange2("D3").setValue("=Table1[[#Data],[Amount]]");
+			// Test headers reference - precedents
+			ws.getRange2("H2").setValue(`=${firstTableName}[#Headers]`);
+			ws.selectionRange.ranges = [ws.getRange2("H2").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("H2").getBBox0().r1, ws.getRange2("H2").getBBox0().c1);
+
+			assert.ok(1, "Test 1b: Trace precedents from H2 with table headers reference");
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(H2Index, A2Index), "$A$2:$C$2", "H2<-A2 (table headers)");
+			
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+
+			// Test data reference - dependents
+			ws.getRange2("J3").setValue(`=${firstTableName}[[#Data],[Value]]`);
 			ws.selectionRange.ranges = [ws.getRange2("B3").getBBox0()];
 			ws.selectionRange.setActiveCell(ws.getRange2("B3").getBBox0().r1, ws.getRange2("B3").getBBox0().c1);
 
-			assert.ok(1, "Trace dependents from B3 (data cell, should not link to totals)");
+			assert.ok(1, "Test 1c: Trace dependents from B3 (table data cell)");
 			api.asc_TraceDependents();
-			assert.strictEqual(traceManager._getDependents(B3Index, D3Index), 1, "B3->D3");
-			assert.strictEqual(traceManager._getDependents(B3Index, B6Index), 1, "B3->B6 should exist (data to subtotal)");
+			assert.strictEqual(traceManager._getDependents(B3Index, H3Index), 1, "B3->H3");
+			assert.strictEqual(traceManager._getDependents(B3Index, J3Index), 1, "B3->J3");
 
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 
-			// ws.TableParts = [];
-			// ws.TableParts.length = 0;
-			// clearData(0, 0, 200, 200);
-		});
+			// Test header cell - dependents
+			ws.selectionRange.ranges = [ws.getRange2("B2").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("B2").getBBox0().r1, ws.getRange2("B2").getBBox0().c1);
 
-		QUnit.test("Test: \"Tables - Table column formulas with shared references\"", function (assert) {
-			ws.getRange2("A1:Z100").cleanAll();
+			assert.ok(1, "Test 1d: Trace dependents from B2 (table header cell)");
+			api.asc_TraceDependents();
+			assert.strictEqual(traceManager._getDependents(B2Index, H2Index), 1, "B2->H2 (header reference)");
+			assert.strictEqual(traceManager._getDependents(B2Index, B3Index), undefined, "B2->B3 should not exist (header to data)");
+
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+
+			// Test 2: Cross-table references
 			
-			// Create table
-			ws.selectionRange.ranges = [ws.getRange2("A2:C5").getBBox0()];
-			ws.selectionRange.setActiveCell(ws.getRange2("A2").getBBox0().r1, ws.getRange2("A2").getBBox0().c1);
+			ws.getRange2("H4").setValue(`=${firstTableName}[Value]+${secondTableName}[Quantity]`);
+			ws.selectionRange.ranges = [ws.getRange2("H4").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("H4").getBBox0().r1, ws.getRange2("H4").getBBox0().c1);
+
+			assert.ok(1, "Test 2a: Trace precedents from H4 with multiple table references");
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(H4Index, B4Index), 1, `H4<-B3 (${firstTableName})`);
+			assert.strictEqual(traceManager._getPrecedents(H4Index, F4Index), 1, `H4<-F3 (${secondTableName})`);
+
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+
+			// Nested table reference
+			ws.getRange2("J4").setValue(`=SUM(${firstTableName}[Value])*SUM(${secondTableName}[Quantity])`);
+			ws.selectionRange.ranges = [ws.getRange2("J4").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("J4").getBBox0().r1, ws.getRange2("J4").getBBox0().c1);
+
+			assert.ok(1, "Test 2b: Trace precedents from J4 with nested table references");
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(J4Index, B4Index), 1, `J4<-B4 (${firstTableName} range)`);
+			assert.strictEqual(traceManager._getPrecedents(J4Index, F4Index), 1, `J4<-F4 (${secondTableName} range)`);
+
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+
+			// Test 3: Table with totals row 
 			
-			ws.getRange2("A2").setValue("Value1");
-			ws.getRange2("B2").setValue("Value2");
-			ws.getRange2("C2").setValue("Sum");
-			ws.getRange2("A3").setValue("10");
-			ws.getRange2("A4").setValue("20");
-			ws.getRange2("A5").setValue("30");
-			ws.getRange2("B3").setValue("5");
-			ws.getRange2("B4").setValue("10");
-			ws.getRange2("B5").setValue("15");
+			// Add totals row to Table1
+			ws.autoFilters.changeFormatTableInfo(firstTableName, 5, true);
 
-			let tableProp = AscCommonExcel.AddFormatTableOptions();
-			tableProp.asc_setRange("$A$2:$C$5");
-			tableProp.asc_setIsTitle(true);
-			
-			ws.autoFilters.addAutoFilter("TableStyleLight1", ws.selectionRange.getLast().clone(), tableProp);
+			ws.getRange2("H2").setValue(`=${firstTableName}[#Totals]`);
+			ws.selectionRange.ranges = [ws.getRange2("H2").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("H2").getBBox0().r1, ws.getRange2("H2").getBBox0().c1);
 
-			let A3Index = AscCommonExcel.getCellIndex(ws.getRange2("A3").bbox.r1, ws.getRange2("A3").bbox.c1),
-				A4Index = AscCommonExcel.getCellIndex(ws.getRange2("A4").bbox.r1, ws.getRange2("A4").bbox.c1),
-				B3Index = AscCommonExcel.getCellIndex(ws.getRange2("B3").bbox.r1, ws.getRange2("B3").bbox.c1),
-				B4Index = AscCommonExcel.getCellIndex(ws.getRange2("B4").bbox.r1, ws.getRange2("B4").bbox.c1),
-				C3Index = AscCommonExcel.getCellIndex(ws.getRange2("C3").bbox.r1, ws.getRange2("C3").bbox.c1),
-				C4Index = AscCommonExcel.getCellIndex(ws.getRange2("C4").bbox.r1, ws.getRange2("C4").bbox.c1);
+			assert.ok(1, "Test 3a: Trace precedents from H2 with totals row reference");
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(H2Index, A7Index), "$A$7:$C$7", "H2<-A7 (totals row)");
+			assert.strictEqual(traceManager._getPrecedents(H2Index, B7Index), undefined, "H2<-B7 (totals row s.cell)");
 
-			// Add formula to table column (should create shared formula)
-			ws.getRange2("C3").setValue("=Table1[@Value1]+Table1[@Value2]");
-			let bbox = ws.getRange2("C3").bbox;
-			let cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
-			let oParser = new parserFormula("Table1[@Value1]+Table1[@Value2]", cellWithFormula, ws);
-			let sharedRef = ws.getRange2("C3:C5").bbox.clone();
-			oParser.setShared(sharedRef, cellWithFormula);
-			oParser.parse();
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 
-			ws.getRange2("C3:C5")._foreachNoEmpty(function (cell) {
-				cell.formulaParsed = oParser;
-			});
-
-			// Test: Trace precedents from shared formula in table
+			// Dependents from data cell should include totals
 			ws.selectionRange.ranges = [ws.getRange2("C3").getBBox0()];
 			ws.selectionRange.setActiveCell(ws.getRange2("C3").getBBox0().r1, ws.getRange2("C3").getBBox0().c1);
 
-			assert.ok(1, "Trace precedents from C3 (shared formula in table)");
-			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(C3Index, A3Index), 1, "C3<-A3");
-			assert.strictEqual(traceManager._getPrecedents(C3Index, B3Index), 1, "C3<-B3");
+			assert.ok(1, "Test 3b: Trace dependents from C3 (data cell to totals)");
+			api.asc_TraceDependents();
+			assert.strictEqual(traceManager._getDependents(C3Index, C7Index), 1, "C3->C7 (data to subtotal)");
 
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 
-			// ws.TableParts = [];
-			// ws.TableParts.length = 0;
-			// clearData(0, 0, 200, 200);
-			
+			// Test 4: Shared formulas in table columns
+			ws.getRange2("C3").setValue(`=${firstTableName}[@Category]&${firstTableName}[@Value]`);
+			let bbox = ws.getRange2("C3").bbox;
+			let cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+			let oParser = new parserFormula(`${firstTableName}[@Category]&${firstTableName}[@Value]`, cellWithFormula, ws);
+			let sharedRef = ws.getRange2("C3:C6").bbox.clone();
+			oParser.setShared(sharedRef, cellWithFormula);
+			oParser.parse();
+
+			ws.getRange2("C3:C6")._foreachNoEmpty(function (cell) {
+				cell.formulaParsed = oParser;
+			});
+
+			ws.selectionRange.ranges = [ws.getRange2("C3").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("C3").getBBox0().r1, ws.getRange2("C3").getBBox0().c1);
+
+			assert.ok(1, "Test 4: Trace precedents from C3 (shared formula in table)");
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(C3Index, A3Index), 1, "C3<-A3 (shared formula)");
+			assert.strictEqual(traceManager._getPrecedents(C3Index, B3Index), 1, "C3<-B3 (shared formula)");
+
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 		});
-
-		QUnit.test("Test: \"Tables - Table resize impact on dependencies\"", function (assert) {
-			ws.getRange2("A1:Z100").cleanAll();
-			
-			// Create table
-			ws.selectionRange.ranges = [ws.getRange2("A2:B4").getBBox0()];
-			ws.selectionRange.setActiveCell(ws.getRange2("A2").getBBox0().r1, ws.getRange2("A2").getBBox0().c1);
-			
-			ws.getRange2("A2").setValue("Name");
-			ws.getRange2("B2").setValue("Value");
-			ws.getRange2("A3").setValue("Item1");
-			ws.getRange2("A4").setValue("Item2");
-			ws.getRange2("B3").setValue("10");
-			ws.getRange2("B4").setValue("20");
-
-			let tableProp = AscCommonExcel.AddFormatTableOptions();
-			tableProp.asc_setRange("$A$2:$B$4");
-			tableProp.asc_setIsTitle(true);
-			
-			ws.autoFilters.addAutoFilter("TableStyleLight1", ws.selectionRange.getLast().clone(), tableProp);
-
-			let B3Index = AscCommonExcel.getCellIndex(ws.getRange2("B3").bbox.r1, ws.getRange2("B3").bbox.c1),
-				B4Index = AscCommonExcel.getCellIndex(ws.getRange2("B4").bbox.r1, ws.getRange2("B4").bbox.c1),
-				B5Index = AscCommonExcel.getCellIndex(ws.getRange2("B5").bbox.r1, ws.getRange2("B5").bbox.c1),
-				D3Index = AscCommonExcel.getCellIndex(ws.getRange2("D3").bbox.r1, ws.getRange2("D3").bbox.c1);
-
-			// Add reference to table
-			ws.getRange2("D3").setValue("=SUM(Table1[Value])");
-			ws.selectionRange.ranges = [ws.getRange2("D3").getBBox0()];
-			ws.selectionRange.setActiveCell(ws.getRange2("D3").getBBox0().r1, ws.getRange2("D3").getBBox0().c1);
-
-			assert.ok(1, "Trace precedents before table resize");
-			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(D3Index, B3Index), "$B$3:$B$4", "D3<-B3 (initial table range)");
-
-			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
-
-			// Expand table by adding a row
-			ws.getRange2("A5").setValue("Item3");
-			ws.getRange2("B5").setValue("30");
-
-			assert.ok(1, "Trace precedents after table resize (expanded)");
-			api.asc_TracePrecedents();
-			assert.strictEqual(traceManager._getPrecedents(D3Index, B3Index), "$B$3:$B$5", "D3<-B3 (expanded table range)");
-
-			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
-
-			// ws.TableParts = [];
-			// ws.TableParts.length = 0;
-			// clearData(0, 0, 200, 200);
-		});
-
 
 		QUnit.test("Test: \"Deletes tests\"", function (assert) {
 			let bbox;
