@@ -6656,6 +6656,11 @@ function(window, undefined) {
 			let oLabelsBox = null, fPos;
 			let fPosStart = oCurAxis.grid.fStart;
 			let fPosEnd = oCurAxis.grid.fStart + oCurAxis.grid.nCount * oCurAxis.grid.fStride;
+			if (oCurAxis.isReversed()) {
+				const fTemp = fPosStart;
+				fPosStart = fPosEnd;
+				fPosEnd = fTemp;
+			}
 
 			let bForceVertical = false;
 			let bNumbers = false;//TODO
