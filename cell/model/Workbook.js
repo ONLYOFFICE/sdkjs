@@ -706,28 +706,6 @@
 				}
 			}
 		},
-		addTableListener: function(sheetId, tableName, listenerRange, listener) {
-			const listenerId = listener.getListenerId();
-			if (!this.tableListeners[tableName]) {
-				this.tableListeners[tableName] = {};
-			}
-
-			let vertexIndex = getVertexIndex(listenerRange);
-			let tableListenersContainer = {formula: listener, sheetId: sheetId, range: listenerRange};
-
-			this.tableListeners[tableName][listenerId] = tableListenersContainer;
-		},
-		removeTableListener: function(tableName, listener) {
-			const listenerId = listener.getListenerId();
-			if (!this.tableListeners[tableName]) {
-				return;
-			}
-
-			if (this.tableListeners[tableName][listenerId]) {
-				delete this.tableListeners[tableName][listenerId];
-			}
-
-		},
 		startListeningVolatile: function(listener) {
 			var listenerId = listener.getListenerId();
 			this.volatileListeners[listenerId] = listener;

@@ -353,84 +353,9 @@ function (window, undefined) {
 			return {col: table.Ref.c1, row: table.Ref.r1};
 		};
 		const setDefNameIndexes = function (defName, isTable, defNameRange) {
-			let tableHeader = isTable ? getTableHeader(ws.getTableByName(defName)) : false;
+			let tableInfo = isTable ? ws.getTableByName(defName) : null; 
+			let tableHeader = tableInfo ? getTableHeader(tableInfo) : false;
 			let isCurrentCellHeader = isTable ? checkIfHeader(tableHeader) : false;
-
-			// TODO: divide the functionality into table and defName? or unite at one?
-			if (Object.keys(allDefNamesListeners) <= 0 && isTable && dependencyFormulas.tableListeners[defName]) {
-				for (let i in dependencyFormulas.tableListeners[defName]) {
-					let listenerInfo = dependencyFormulas.tableListeners[defName][i];
-					let formula = listenerInfo.formula;
-					let is3D = listenerInfo.sheetId !== defNameRange.worksheet.Id;
-					let dynamicRange = formula.getDynamicRef();
-					
-					// check Headers
-					// if current header and listener is header, make trace only with header
-					// check if current cell header or not
-					// Skip if header status doesn't match formula type
-					// (header cell should only match with Headers formula, and vice versa)
-					let hasHeadersInFormula = formula.Formula.includes("Headers");
-					if (isCurrentCellHeader !== hasHeadersInFormula) {
-						continue;
-					}
-
-					// additional check if the listener is in the same table, need to check if it is a listener of the main cell
-					if (formula.outStack) {
-						let arr = [];
-						// check each element of the stack for an occurrence in the original cell
-						for (let table in formula.outStack) {
-							if (formula.outStack[table].type !== cElementType.table) {
-								continue;
-							}
-
-							let bbox = formula.outStack[table].area.bbox 
-								? formula.outStack[table].area.bbox 
-								: (formula.outStack[table].area.range.bbox ? formula.outStack[table].area.range.bbox : null);
-								
-							if (bbox) {
-								arr.push(bbox.contains2(cellAddress));
-							}
-						}
-						if (!arr.includes(true)) {
-							continue;
-						}
-					}
-					// shared checks
-					if (formula.shared !== null && !is3D) {
-						let currentCellRange = ws.getCell3(cellAddress.row, cellAddress.col);
-						setSharedTableIntersection(ws.getTableByName(defName).getRangeWithoutHeaderFooter(), currentCellRange, formula.shared);
-						continue;
-					}
-
-					let parentIndex = getParentIndex(formula.parent);
-					if (is3D) {
-						// set external ref with cell info
-						if (parentIndex !== null) {
-							t.setDependentsExternal(cellIndex, parentIndex, listenerInfo.range, formula.getWs()/*elemWS */);
-							t._setDependents(cellIndex, parentIndex);
-							t._setPrecedents(parentIndex, cellIndex, true);
-						}
-					} else {
-						// if the formula is a dynamic array, then we refer to the first cell of this array. Otherwise for the entire range
-						if (dynamicRange && parentIndex !== null) {
-							// set dependents only to first cell
-							t._setDependents(cellIndex, parentIndex);
-							t._setPrecedents(parentIndex, cellIndex, true);
-							continue;
-						}
-
-						let areaIndexes = getAllAreaIndexes(formula);
-						if (areaIndexes) {
-							for (let index in areaIndexes) {
-								if (areaIndexes.hasOwnProperty(index)) {
-									t._setDependents(cellIndex, areaIndexes[index]);
-									t._setPrecedents(areaIndexes[index], cellIndex);
-								}
-							}
-						}
-					}
-				}
-			}
 
 			for (let i in allDefNamesListeners) {
 				if (allDefNamesListeners.hasOwnProperty(i) && i.toLowerCase() === defName.toLowerCase()) {
@@ -616,12 +541,14 @@ function (window, undefined) {
 				let parentCellIndex = null;
 				for (let i in cellListeners) {
 					if (cellListeners.hasOwnProperty(i)) {
-						let parent = cellListeners[i].parent;
-						let parentWsId = parent.ws ? parent.ws.Id : null;
-						let isTable = parent.parsedRef ? parent.parsedRef.isTable : false;
-						let isDefName = !!parent.name;
-						let formula = cellListeners[i].Formula;
-						let is3D = cellListeners[i].is3D ? true : false;
+						let parent = cellListeners[i].parent,
+							parentWsId = parent.ws ? parent.ws.Id : null,
+							isTable = parent.parsedRef ? parent.parsedRef.isTable : false,
+							isDefName = !!parent.name,
+							formula = cellListeners[i].Formula,
+							is3D = cellListeners[i].is3D ? true : false,
+							isArea = cellListeners[i].getArrayFormulaRef(),
+							isDynamic = isArea ? cellListeners[i].getDynamicRef() : false;
 
 						//todo slow operation. parent not have type
 						if (parent instanceof Asc.CT_WorksheetSource) {
@@ -648,7 +575,7 @@ function (window, undefined) {
 							continue;
 						}
 
-						if (formula.includes(":") && !is3D) {
+						if (/*formula.includes(":") || */isArea && !isDynamic && !is3D) {
 							// call splitAreaListeners which return cellIndexes of each element(this will be parentCellIndex)
 							// go through the values and set dependents for each
 							let areaIndexes = getAllAreaIndexes(cellListeners[i]);

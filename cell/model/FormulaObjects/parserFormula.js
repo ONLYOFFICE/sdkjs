@@ -11284,9 +11284,7 @@ function parserFormula( formula, parent, _ws ) {
 				// analyze table structure - if its full link, write defnamelistener
 				const isFullTableLink = ref.reservedColumnIndex === AscCommon.FormulaTablePartInfo.all;
 				const refAreaRange = ref.area && ref.area.getRange && ref.area.getRange();
-				
-				// set table listener by ref
-				this.buildTableListener(ref, /*isStart*/true);
+				// const tableWS = refAreaRange.worksheet && refAreaRange.worksheet.getId && refAreaRange.worksheet.getId(); // buildRef?
 
 				if (isFullTableLink || !refAreaRange) {
 					this.wb.dependencyFormulas.startListeningDefName(ref.tableName, this, null, ref);
@@ -11370,9 +11368,7 @@ function parserFormula( formula, parent, _ws ) {
 			if (ref.type === cElementType.table) {
 				const isFullTableLink = ref.reservedColumnIndex === AscCommon.FormulaTablePartInfo.all;
 				const refAreaRange = ref.area && ref.area.getRange && ref.area.getRange();
-				
-				// remove listener by area
-				this.buildTableListener(ref, /*isStart*/false);
+				// const tableWS = refAreaRange.worksheet && refAreaRange.worksheet.getId() && refAreaRange.worksheet.getId(); //? build ref
 
 				if (isFullTableLink || !refAreaRange) {
 					this.wb.dependencyFormulas.endListeningDefName(ref.tableName, this);
@@ -11459,25 +11455,6 @@ function parserFormula( formula, parent, _ws ) {
 				this.wb.dependencyFormulas.startListeningRange(wsId, bbox, this);
 			} else {
 				this.wb.dependencyFormulas.endListeningRange(wsId, bbox, this);
-			}
-		}
-	};
-	parserFormula.prototype.buildTableListener = function(structTableElem, isStart) {
-		// Записываем слушатели для таблиц
-		// У каждой таблицы будет объект со слушателями в формате pF, area
-
-		let parent = this.parent;
-		// let formulaIndex = this.getIndexNumber();
-
-		if (parent && structTableElem) {
-			let area = this.ref ? this.ref : new Asc.Range(parent.nCol, parent.nRow, parent.nCol, parent.nRow);
-			let wsId = this.ws.Get_Id();
-			let tableName = structTableElem.tableName;
-
-			if (isStart) {
-				this.wb.dependencyFormulas.addTableListener(wsId, tableName, area, this);
-			} else {
-				this.wb.dependencyFormulas.removeTableListener(tableName, this);
 			}
 		}
 	};
