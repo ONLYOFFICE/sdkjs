@@ -25786,7 +25786,7 @@
 
 				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoArrayFormula, AscCH.historyitem_ArrayFromula_AddFormula,
 					this.ws.getId(),
-					new Asc.Range(oldRef.c1, oldRef.r1, oldRef.oldRef, oldRef.r1),
+					new Asc.Range(oldRef.c1, oldRef.r1, oldRef.c1, oldRef.r1),
 					new AscCommonExcel.UndoRedoData_ArrayFormula(
 						new Asc.Range(oldRef.c1, oldRef.r1, oldRef.c1, oldRef.r1),
 						null,
