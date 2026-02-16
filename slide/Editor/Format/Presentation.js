@@ -11750,6 +11750,21 @@ CPresentation.prototype.getCustomXmlManager = function()
 {
 	return this.customXmlManager;
 };
+CPresentation.prototype.IsNeedNotesSize = function () {
+	return Asc.editor.IsHandoutMasterMode();
+}
+CPresentation.prototype.GetSizesMM = function (pageIndex) {
+	const result = {width: 0, height: 0};
+	const presentation = this;
+	if (this.IsNeedNotesSize()) {
+		result.width = presentation.GetNotesWidthMM();
+		result.height = presentation.GetNotesHeightMM();
+	} else {
+		result.width = presentation.GetWidthMM();
+		result.height = presentation.GetHeightMM();
+	}
+	return result;
+};
 
 function collectSelectedObjects(aSpTree, aCollectArray, bRecursive, oIdMap, bSourceFormatting) {
 	var oSp;

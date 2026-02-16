@@ -1119,6 +1119,12 @@ AscDFH.historyitem_type_VisioWindow = 328;
 	};
 	CVisioDocument.prototype.Viewer_OnChangePosition = function () {
 	};
+	CVisioDocument.prototype.GetSizesMM = function (pageIndex) {
+		const result = {width: 0, height: 0};
+		result.width = this.GetWidthMM(pageIndex);
+		result.height = this.GetHeightMM(pageIndex);
+		return result;
+	};
 	// CVisioDocument.prototype.getMasterByID = function(ID) {
 	// 	// join Master_Type and MasterContents_Type
 	// 	let masterFromMastersArray = this.masters.master;

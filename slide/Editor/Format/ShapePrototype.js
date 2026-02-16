@@ -428,6 +428,15 @@ CShape.prototype.getParentObjects = function ()
                 }
                 break;
             }
+	        case AscDFH.historyitem_type_HandoutMaster: {
+		        return {
+			        presentation: editor.WordControl.m_oLogicDocument,
+			        slide: null,
+			        layout: null,
+			        master: oParent,
+			        theme: this.themeOverride ? this.themeOverride : oParent.Theme
+		        };
+	        }
         }
     }
     return { slide: null, layout: null, master: null, theme: null};

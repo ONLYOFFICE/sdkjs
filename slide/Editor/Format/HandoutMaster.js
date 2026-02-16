@@ -86,9 +86,12 @@
 		this.cSld = new AscFormat.CSld(this);
 		this.hf = null;
 
+		this.slideCounts = 6;
+
 		this.Theme = null;
 		this.kind = AscFormat.TYPE_KIND.HANDOUT_MASTER;
 		this.m_oContentChanges = new AscCommon.CContentChanges();
+		this.setSlideSize(this.presentation.GetNotesWidthMM(), this.presentation.GetNotesHeightMM());
 	}
 
 	AscFormat.InitClass(CHandoutMaster, AscCommonSlide.SlideBase, AscDFH.historyitem_type_HandoutMaster);
@@ -226,14 +229,130 @@
 				oSp.draw(graphics);
 			}
 		});
+		this.drawPlaceholders(graphics);
+	};
+	const gap = 10;
+	const maxGap = 30;
+	const fieldSize = 20;
+	CHandoutMaster.prototype.getGap = function(paperSize, slideSize, scale, repeatCount) {
+		return repeatCount === 1 ? 0: (paperSize - slideSize * repeatCount * scale) / (repeatCount - 1);
+	}
+	CHandoutMaster.prototype.getHandouts = function () {
+		const handouts = [];
+		const slidesCount = this.slideCounts;
+		//todo align
+		const align = 1;
 
-		if (!slide) {
-			this.drawViewPrMarks(graphics);
+		const scaledFieldSize = fieldSize;
+		let countSlidesOnRow = this.getSlidesCountOnRow(slidesCount);
+		let rowsCount = Math.floor(slidesCount / countSlidesOnRow);
+		if (this.presentation.GetNotesWidthMM() < this.presentation.GetNotesHeightMM()) {
+			const temp = countSlidesOnRow;
+			countSlidesOnRow = rowsCount;
+			rowsCount = temp;
+		}
+		const w_mm = this.presentation.GetWidthMM();
+		const h_mm = this.presentation.GetHeightMM();
+		const paperWidth = this.presentation.GetNotesWidthMM() - scaledFieldSize * 2;
+		const paperHeight = this.presentation.GetNotesHeightMM() - scaledFieldSize * 2;
+		const slidesWidth = w_mm * countSlidesOnRow;
+		const slidesHeight = h_mm * rowsCount;
+		const resultWidthWithMaxGap = slidesWidth + (countSlidesOnRow - 1) * maxGap;
+		const resultHeightWithMaxGap = slidesHeight + (rowsCount - 1) * maxGap;
+		let slideScale = Math.min(paperWidth / resultWidthWithMaxGap, paperHeight / resultHeightWithMaxGap);
+		let horizontalGap = this.getGap(paperWidth, w_mm, slideScale, countSlidesOnRow);
+		let verticalGap = this.getGap(paperHeight, h_mm, slideScale, rowsCount);
+		if (horizontalGap < gap || verticalGap < gap) {
+			const paperWidthWithoutMinGap = paperWidth - gap * (countSlidesOnRow - 1);
+			const paperHeightWithoutMinGap = paperHeight - gap * (rowsCount - 1);
+			slideScale = Math.min(paperWidthWithoutMinGap / slidesWidth, paperHeightWithoutMinGap / slidesHeight);
+			horizontalGap = this.getGap(paperWidth, w_mm, slideScale, countSlidesOnRow);
+			verticalGap = this.getGap(paperHeight, h_mm, slideScale, rowsCount);
+		}
+
+		const scaledPresentationWidth = w_mm * slideScale;
+		const scaledPresentationHeight = h_mm * slideScale;
+
+		const resultWidth = countSlidesOnRow * w_mm * slideScale + (countSlidesOnRow - 1) * horizontalGap;
+		const resultHeight = rowsCount * h_mm * slideScale + (rowsCount - 1) * verticalGap;
+		const startX = scaledFieldSize + (paperWidth - resultWidth) / 2;
+		const startY = scaledFieldSize + (paperHeight - resultHeight) / 2;
+
+		if (align === 0) {
+			for (let i = 0; i < rowsCount; i += 1) {
+				const slideY = startY + i * verticalGap + h_mm * i * slideScale;
+				for (let j = 0; j < countSlidesOnRow; j += 1) {
+					const slideX = startX + j * w_mm * slideScale + j * horizontalGap;
+					handouts.push(new Placeholder(slideX, slideY, scaledPresentationWidth, scaledPresentationHeight));
+				}
+			}
+		} else {
+			for (let i = 0; i < countSlidesOnRow; i += 1) {
+				const slideX = startX + i * horizontalGap + w_mm * i * slideScale;
+				for (let j = 0; j < rowsCount; j += 1) {
+					const slideY = startY + j * h_mm * slideScale + j * verticalGap;
+					handouts.push(new Placeholder(slideX, slideY, scaledPresentationWidth, scaledPresentationHeight));
+				}
+			}
+		}
+		return handouts;
+	};
+	CHandoutMaster.prototype.drawPlaceholders = function (g) {
+		const handouts = this.getHandouts();
+		for (let i = 0; i < handouts.length; i += 1) {
+			const handout = handouts[i];
+			handout.draw(g);
 		}
 	};
-
+	CHandoutMaster.prototype.getSlidesCountOnRow = function(slidesCount) {
+		if (slidesCount % 3 === 0) {
+			return 3;
+		} else if (slidesCount % 2) {
+			return 2;
+		}
+		return 1;
+	}
+	CHandoutMaster.prototype.getDrawingsForController = function () {
+		return this.cSld.spTree;
+	};
+	CHandoutMaster.prototype.setSlideSize = function (nW, nH) {
+		this.Width = nW;
+		this.Height = nH;
+	};
 	CHandoutMaster.prototype.getParentObjects = function() {
 		return {}
+	};
+
+	function PlaceholderBase(x, y, width, height) {
+		this.x = x;
+		this.y = y;
+		this.width = width;
+		this.height = height;
+	}
+	PlaceholderBase.prototype.draw = function (g) {
+
+	};
+	function Placeholder(x, y, width, height) {
+		PlaceholderBase.call(this, x, y, width, height);
+	};
+	AscFormat.InitClassWithoutType(Placeholder, PlaceholderBase);
+	Placeholder.prototype.draw = function (graphics) {
+		graphics.SaveGrState();
+		const transform = new AscCommon.CMatrix();
+		transform.tx = this.x;
+		transform.ty = this.y;
+		graphics.transform3(transform);
+		const color = parseInt(AscCommon.GlobalSkin.PageOutline.slice(1), 16);
+		graphics.p_color((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, 0xFF);
+		graphics.p_width(0);
+		graphics._s();
+		graphics._m(0, 0);
+		graphics._l(this.width, 0);
+		graphics._l(this.width, this.height);
+		graphics._l(0, this.height);
+		graphics._z();
+		graphics.ds();
+		graphics.RestoreGrState();
 	};
 
 	function CreateHandoutMaster() {
