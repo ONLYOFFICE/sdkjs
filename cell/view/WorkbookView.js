@@ -6966,7 +6966,7 @@
 		if (elem) {
 			let ws = this.wb.getWorksheet();
 			if (elem.index !== ws.model.index) {
-				this.wb.model.handlers.trigger('undoRedoHideSheet', elem.index);
+				//this.wb.model.handlers.trigger('undoRedoHideSheet', elem.index);
 				ws = this.wb.getWorksheet(elem.index);
 			}
 
@@ -6976,12 +6976,12 @@
 				let selection = ws.model.getSelection();
 				let ar = selection.getLast();
 				//options.findInSelection ? ws.setActiveCell(result) : ws.setSelection(range);
-				if (ar.contains(elem.col, elem.row)) {
-					let activeCell =  new AscCommon.CellBase(elem.row, elem.col);
-					ws.setActiveCell(activeCell);
-				} else {
-					ws.setSelection(range);
-				}
+				// if (ar.contains(elem.col, elem.row)) {
+				// 	let activeCell =  new AscCommon.CellBase(elem.row, elem.col);
+				// 	ws.setActiveCell(activeCell);
+				// } else {
+				// 	ws.setSelection(range);
+				// }
 				this.changingSelection = false;
 
 				this.SetCurrent(nId);
