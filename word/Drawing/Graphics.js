@@ -2200,7 +2200,7 @@
 
 		switch (align)
 		{
-			case 0:
+			case AscCommon.c_oAscLineDrawingRule.Top:
 			{
 				// top
 				var _top = (this.m_oFullTransform.TransformPointY(x,y) >> 0) + 0.5;
@@ -2212,7 +2212,7 @@
 
 				break;
 			}
-			case 1:
+			case AscCommon.c_oAscLineDrawingRule.Center:
 			{
 				// center
 				var _center = (this.m_oFullTransform.TransformPointY(x,y) >> 0) + 0.5;
@@ -2232,7 +2232,7 @@
 
 				break;
 			}
-			case 2:
+			case AscCommon.c_oAscLineDrawingRule.Bottom:
 			{
 				// bottom
 				var _bottom = (this.m_oFullTransform.TransformPointY(x,y) >> 0) + 0.5;
@@ -2290,7 +2290,7 @@
 
 		switch (align)
 		{
-			case 0:
+			case AscCommon.c_oAscLineDrawingRule.Top:
 			{
 				// top
 				var _top = (this.m_oFullTransform.TransformPointY(x,y) >> 0) + 0.5;
@@ -2310,14 +2310,14 @@
 
 				break;
 			}
-			case 1:
+			case AscCommon.c_oAscLineDrawingRule.Center:
 			{
 				// center
 				// TODO:
 
 				break;
 			}
-			case 2:
+			case AscCommon.c_oAscLineDrawingRule.Bottom:
 			{
 				// bottom
 				// TODO:
@@ -2362,7 +2362,7 @@
 
 		switch (align)
 		{
-			case 0:
+			case AscCommon.c_oAscLineDrawingRule.Left:
 			{
 				// left
 				var _left = (this.m_oFullTransform.TransformPointX(x,y) >> 0) + 0.5;
@@ -2374,7 +2374,7 @@
 
 				break;
 			}
-			case 1:
+			case AscCommon.c_oAscLineDrawingRule.Center:
 			{
 				// center
 				var _center = (this.m_oFullTransform.TransformPointX(x,y) >> 0) + 0.5;
@@ -2394,7 +2394,7 @@
 
 				break;
 			}
-			case 2:
+			case AscCommon.c_oAscLineDrawingRule.Right:
 			{
 				// right
 				var _right = (this.m_oFullTransform.TransformPointX(x,y) >> 0) + 0.5;
@@ -2502,7 +2502,7 @@
 
 		switch (align)
 		{
-			case 0:
+			case AscCommon.c_oAscLineDrawingRule.Top:
 			{
 				// top
 				var _top = (this.m_oFullTransform.TransformPointY(x,y) >> 0) + 0.5;
@@ -2514,7 +2514,7 @@
 
 				break;
 			}
-			case 1:
+			case AscCommon.c_oAscLineDrawingRule.Center:
 			{
 				// center
 				var _center = (this.m_oFullTransform.TransformPointY(x,y) >> 0) + 0.5;
@@ -2534,7 +2534,7 @@
 
 				break;
 			}
-			case 2:
+			case AscCommon.c_oAscLineDrawingRule.Bottom:
 			{
 				// bottom
 				var _bottom = (this.m_oFullTransform.TransformPointY(x,y) >> 0) + 0.5;

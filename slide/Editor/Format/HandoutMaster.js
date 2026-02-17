@@ -231,25 +231,30 @@
 		});
 		this.drawPlaceholders(graphics);
 	};
-	const gap = 10;
-	const maxGap = 30;
-	const fieldSize = 20;
+	const CHANDOUTMASTER_GAP = 10;
+	const CHANDOUTMASTER_FIELDSIZE = 20;
 	CHandoutMaster.prototype.getGap = function(paperSize, slideSize, scale, repeatCount) {
 		return repeatCount === 1 ? 0: (paperSize - slideSize * repeatCount * scale) / (repeatCount - 1);
 	}
 	CHandoutMaster.prototype.getHandouts = function () {
-		const handouts = [];
-		const slidesCount = this.slideCounts;
 		//todo align
-		const align = 1;
+		let align = 1;
 
-		const scaledFieldSize = fieldSize;
+		const handouts = [];
+		let slidesCount = this.slideCounts;
+		let isDrawWithSlideTextPlaceholder = false;
+		if (slidesCount === 3) {
+			isDrawWithSlideTextPlaceholder = true;
+			slidesCount = 6;
+		}
+		const scaledFieldSize = CHANDOUTMASTER_FIELDSIZE;
 		let countSlidesOnRow = this.getSlidesCountOnRow(slidesCount);
 		let rowsCount = Math.floor(slidesCount / countSlidesOnRow);
 		if (this.presentation.GetNotesWidthMM() < this.presentation.GetNotesHeightMM()) {
 			const temp = countSlidesOnRow;
 			countSlidesOnRow = rowsCount;
 			rowsCount = temp;
+			align = 0;
 		}
 		const w_mm = this.presentation.GetWidthMM();
 		const h_mm = this.presentation.GetHeightMM();
@@ -257,18 +262,14 @@
 		const paperHeight = this.presentation.GetNotesHeightMM() - scaledFieldSize * 2;
 		const slidesWidth = w_mm * countSlidesOnRow;
 		const slidesHeight = h_mm * rowsCount;
-		const resultWidthWithMaxGap = slidesWidth + (countSlidesOnRow - 1) * maxGap;
-		const resultHeightWithMaxGap = slidesHeight + (rowsCount - 1) * maxGap;
-		let slideScale = Math.min(paperWidth / resultWidthWithMaxGap, paperHeight / resultHeightWithMaxGap);
+		const resultWidthWithMaxGap = (countSlidesOnRow - 1) * CHANDOUTMASTER_GAP;
+		const resultHeightWithMaxGap = (rowsCount - 1) * CHANDOUTMASTER_GAP;
+		const adaptSlideWidthScale = (paperWidth - resultWidthWithMaxGap) / slidesWidth;
+		const adaptSlideHeightScale = (paperHeight - resultHeightWithMaxGap) / slidesHeight;
+
+		let slideScale = Math.min(adaptSlideWidthScale, adaptSlideHeightScale);
 		let horizontalGap = this.getGap(paperWidth, w_mm, slideScale, countSlidesOnRow);
 		let verticalGap = this.getGap(paperHeight, h_mm, slideScale, rowsCount);
-		if (horizontalGap < gap || verticalGap < gap) {
-			const paperWidthWithoutMinGap = paperWidth - gap * (countSlidesOnRow - 1);
-			const paperHeightWithoutMinGap = paperHeight - gap * (rowsCount - 1);
-			slideScale = Math.min(paperWidthWithoutMinGap / slidesWidth, paperHeightWithoutMinGap / slidesHeight);
-			horizontalGap = this.getGap(paperWidth, w_mm, slideScale, countSlidesOnRow);
-			verticalGap = this.getGap(paperHeight, h_mm, slideScale, rowsCount);
-		}
 
 		const scaledPresentationWidth = w_mm * slideScale;
 		const scaledPresentationHeight = h_mm * slideScale;
@@ -283,7 +284,11 @@
 				const slideY = startY + i * verticalGap + h_mm * i * slideScale;
 				for (let j = 0; j < countSlidesOnRow; j += 1) {
 					const slideX = startX + j * w_mm * slideScale + j * horizontalGap;
-					handouts.push(new Placeholder(slideX, slideY, scaledPresentationWidth, scaledPresentationHeight));
+					if (isDrawWithSlideTextPlaceholder && handouts.length % 2 === 1) {
+						handouts.push(new TextPlaceholder(slideX, slideY, scaledPresentationWidth, scaledPresentationHeight));
+					} else {
+						handouts.push(new SlidePlaceholder(slideX, slideY, scaledPresentationWidth, scaledPresentationHeight));
+					}
 				}
 			}
 		} else {
@@ -291,7 +296,11 @@
 				const slideX = startX + i * horizontalGap + w_mm * i * slideScale;
 				for (let j = 0; j < rowsCount; j += 1) {
 					const slideY = startY + j * h_mm * slideScale + j * verticalGap;
-					handouts.push(new Placeholder(slideX, slideY, scaledPresentationWidth, scaledPresentationHeight));
+					if (isDrawWithSlideTextPlaceholder && handouts.length % 2 === 1) {
+						handouts.push(new TextPlaceholder(slideX, slideY, scaledPresentationWidth, scaledPresentationHeight));
+					} else {
+						handouts.push(new SlidePlaceholder(slideX, slideY, scaledPresentationWidth, scaledPresentationHeight));
+					}
 				}
 			}
 		}
@@ -332,26 +341,45 @@
 	PlaceholderBase.prototype.draw = function (g) {
 
 	};
-	function Placeholder(x, y, width, height) {
+	function SlidePlaceholder(x, y, width, height) {
 		PlaceholderBase.call(this, x, y, width, height);
 	};
-	AscFormat.InitClassWithoutType(Placeholder, PlaceholderBase);
-	Placeholder.prototype.draw = function (graphics) {
+	AscFormat.InitClassWithoutType(SlidePlaceholder, PlaceholderBase);
+	SlidePlaceholder.prototype.draw = function (graphics) {
+		if (graphics.isBoundsChecker()) {
+			return;
+		}
 		graphics.SaveGrState();
 		const transform = new AscCommon.CMatrix();
 		transform.tx = this.x;
 		transform.ty = this.y;
 		graphics.transform3(transform);
-		const color = parseInt(AscCommon.GlobalSkin.PageOutline.slice(1), 16);
-		graphics.p_color((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, 0xFF);
-		graphics.p_width(0);
-		graphics._s();
-		graphics._m(0, 0);
-		graphics._l(this.width, 0);
-		graphics._l(this.width, this.height);
-		graphics._l(0, this.height);
-		graphics._z();
-		graphics.ds();
+		graphics.p_color(127, 127, 127, 255);
+		graphics.p_dash(AscCommon.DashPatternPresets[10].slice());
+		graphics.AddSmartRect(0, 0, this.width, this.height, 0);
+		graphics.p_dash(null);
+		graphics.RestoreGrState();
+	};
+
+	const TEXTPLACEHOLDER_STEP_COUNT = 7;
+	function TextPlaceholder(x, y, width, height) {
+		PlaceholderBase.call(this, x, y, width, height);
+	};
+	AscFormat.InitClassWithoutType(TextPlaceholder, PlaceholderBase);
+	TextPlaceholder.prototype.draw = function (graphics) {
+		if (graphics.isBoundsChecker()) {
+			return;
+		}
+		const step = this.height / TEXTPLACEHOLDER_STEP_COUNT;
+		graphics.SaveGrState();
+		const transform = new AscCommon.CMatrix();
+		transform.tx = this.x;
+		transform.ty = this.y;
+		graphics.transform3(transform);
+		graphics.p_color(0, 0, 0, 255);
+		for (let i = 0; i < TEXTPLACEHOLDER_STEP_COUNT; i++) {
+			graphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, step * (i + 1), 0, this.width, 0);
+		}
 		graphics.RestoreGrState();
 	};
 
