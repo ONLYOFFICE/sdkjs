@@ -402,7 +402,8 @@ module.exports = function(grunt) {
 		});
 		grunt.task.run('copy', 'clean');
 	});
-	grunt.registerTask('compile-sdk', ['compile-word', 'compile-cell', 'compile-slide', 'compile-visio']);
+	// grunt.registerTask('compile-sdk', ['compile-word', 'compile-cell', 'compile-slide', 'compile-visio']);
+	grunt.registerTask('compile-sdk', ['compile-word']);
 	grunt.registerTask('clean-deploy', 'Clean deploy folder before deploying', function () {
 		grunt.initConfig({
 			clean: {

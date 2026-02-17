@@ -156,6 +156,10 @@
       if(this.onLicense && !this._standaloneApp){
         this.onLicense(null);
       }
+      const s = this
+      this._CoAuthoringApi.onDocumentOpenStandalone = function(data) {
+        s.callback_OnDocumentOpen(data);
+      };
     }
   };
 
@@ -222,6 +226,26 @@
   CDocsCoApi.prototype.openDocument = function(data) {
     if (this._CoAuthoringApi && this._onlineWork) {
       this._CoAuthoringApi.openDocument(data);
+    }
+
+    if (data.c === "imgurls" && this._standaloneApp) {
+      const imagePayload = {
+        type: "documentOpen",
+        data: {
+          type: "imgurls",
+          status: "ok",
+          data: {
+            error: 0,
+            urls: (data?.data ?? [])?.map((t) => ({
+              url: t,
+              path: `media/${Date.now()}`,
+            })),
+          },
+        },
+      };
+      if (this._CoAuthoringApi) {
+        this._CoAuthoringApi.openForStandalone(imagePayload);
+      }
     }
   };
 
@@ -313,6 +337,13 @@
   };
 
   CDocsCoApi.prototype.saveChanges = function(arrayChanges, deleteIndex, excelAdditionalInfo, canUnlockDocument, canReleaseLocks) {
+    const frameId = "iframe_asc.{57096ca0-51df-438e-90d6-2cfe9d2fa7d4}";
+    let frame = document.getElementById(frameId);
+    if (frame)
+      frame.contentWindow.postMessage(
+        JSON.stringify({ type: "FILE_DELTA_CHANGES", payload: arrayChanges }),
+        "*"
+      );
     if (this._CoAuthoringApi && this._onlineWork) {
       this._CoAuthoringApi.canUnlockDocument = canUnlockDocument;
       this._CoAuthoringApi.canReleaseLocks = canReleaseLocks;
@@ -1206,6 +1237,10 @@
   DocsCoApi.prototype._documentOpen = function(data) {
     this.onDocumentOpen(data);
   };
+
+    DocsCoApi.prototype.openForStandalone = function (data) {
+      this.onDocumentOpenStandalone(data);
+    };
 
   DocsCoApi.prototype._onSaveChanges = function(data, useEncryption) {
     if (!this.check_state()) {
