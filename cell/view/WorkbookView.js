@@ -1298,11 +1298,15 @@
         this.input.value = '';
       } else {
         this.input.disabled = false;
+        // Changing input.value can cause blur event and keyboard hiding
+        // This is triggered during search (CDocumentSearchExcel.Select -> setSelection -> _updateSelectionNameAndInfo)
         this.input.value = this.oSelectionInfo.text;
       }
+	  //applyElementDirection changes input.dir which may affect focus
 	  AscCommon.applyElementDirection(this.input);
     }
     this.handlers.trigger("asc_onSelectionChanged", this.oSelectionInfo);
+    //asc_onSelectionEnd event may trigger handlers that call _setEditorFocus() -> element.focus()
     this.handlers.trigger("asc_onSelectionEnd");
     //если меняется выделенный диапазон
     this.SearchEngine && this.SearchEngine.ResetCurrent(true);
@@ -2269,6 +2273,8 @@
   };
 
   WorkbookView.prototype._setEditorFocus = function () {
+	 // This is called from cellEditor._blur() -> handlers.trigger("doEditorFocus")
+	 // During search: Select -> setSelection -> _updateSelectionNameAndInfo -> asc_onSelectionEnd -> doEditorFocus
 	 this.element && this.element.focus();
   };
 
@@ -6972,17 +6978,27 @@
 
 			if (ws) {
 				this.changingSelection = true;
+
+				let bInputWasFocused = this.wb.input && this.wb.input.isFocused;
+
 				let range = new Asc.Range(elem.col, elem.row, elem.col, elem.row);
 				let selection = ws.model.getSelection();
 				let ar = selection.getLast();
 				//options.findInSelection ? ws.setActiveCell(result) : ws.setSelection(range);
-				// if (ar.contains(elem.col, elem.row)) {
-				// 	let activeCell =  new AscCommon.CellBase(elem.row, elem.col);
-				// 	ws.setActiveCell(activeCell);
-				// } else {
-				// 	ws.setSelection(range);
-				// }
+				if (ar.contains(elem.col, elem.row)) {
+					let activeCell =  new AscCommon.CellBase(elem.row, elem.col);
+					ws.setActiveCell(activeCell);
+				} else {
+					//setSelection -> _updateSelectionNameAndInfo -> _onWSSelectionChanged
+					//_onWSSelectionChanged changes input.value and triggers asc_onSelectionEnd
+					// asc_onSelectionEnd may call _setEditorFocus() which calls element.focus() (canvas)
+					ws.setSelection(range);
+				}
 				this.changingSelection = false;
+
+				if (bInputWasFocused && this.wb.input && !this.wb.input.isFocused) {
+					this.wb.input.focus();
+				}
 
 				this.SetCurrent(nId);
 			}
