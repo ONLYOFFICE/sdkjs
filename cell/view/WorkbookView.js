@@ -1313,14 +1313,14 @@
     this.handlers.trigger("asc_onSelectionEnd");
 
     //если меняется выделенный диапазон
-    //this.SearchEngine && this.SearchEngine.ResetCurrent(true);
+    this.SearchEngine && this.SearchEngine.ResetCurrent(true);
 
-    this._onInputMessage();
-
-    if (!isSaving) {
-      this.Api.cleanSpelling();
-
-    }
+    // this._onInputMessage();
+	//
+    // if (!isSaving) {
+    //   this.Api.cleanSpelling();
+	//
+    // }
   };
 
   WorkbookView.prototype._onInputMessage = function () {
@@ -7032,7 +7032,7 @@
 	};
 	CDocumentSearchExcel.prototype.ResetCurrent = function (changeSelection) {
 		if (changeSelection) {
-			//this.changedSelection = true;
+			this.changedSelection = true;
 		}
 		this.SetCurrent(-1);
 	};
