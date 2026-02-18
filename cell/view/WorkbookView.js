@@ -6979,8 +6979,6 @@
 			if (ws) {
 				this.changingSelection = true;
 
-				let bInputWasFocused = this.wb.input && this.wb.input.isFocused;
-
 				let range = new Asc.Range(elem.col, elem.row, elem.col, elem.row);
 				let selection = ws.model.getSelection();
 				let ar = selection.getLast();
@@ -6995,10 +6993,6 @@
 					ws.setSelection(range);
 				}
 				this.changingSelection = false;
-
-				if (bInputWasFocused && this.wb.input && !this.wb.input.isFocused) {
-					this.wb.input.focus();
-				}
 
 				this.SetCurrent(nId);
 			}
