@@ -1291,7 +1291,7 @@
     }
 
     // При редактировании ячейки не нужно пересылать изменения
-    if (this.input && !this.getCellEditMode()) {
+    if (this.input && !this.getCellEditMode() && !window['IS_NATIVE_EDITOR']) {
       // Сами запретим заходить в строку формул, когда выделен shape
       if (this.lastSendInfoRangeIsSelectOnShape) {
         this.input.disabled = true;
