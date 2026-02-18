@@ -5614,6 +5614,7 @@ var editor;
           var cellsChange = this.spellcheckState.cellsChange;
           var lastFindOptions = this.spellcheckState.lastFindOptions;
           if (cellsChange.length !== 0 && lastFindOptions && !isCellEditing) {
+			  console.log("cleanSpelling")
             this.asc_replaceMisspelledWords(lastFindOptions);
           }
 
