@@ -1289,7 +1289,7 @@
     if (!this._updateSelectionInfo()) {
       return;
     }
-	console.log("focus1:" + document.hasFocus())
+
     // При редактировании ячейки не нужно пересылать изменения
     if (this.input && !this.getCellEditMode()) {
 		console.log("_onWSSelectionChanged -> change input")
@@ -1303,24 +1303,23 @@
         // This is triggered during search (CDocumentSearchExcel.Select -> setSelection -> _updateSelectionNameAndInfo)
         this.input.value = this.oSelectionInfo.text;
       }
-		console.log("focus2:" + document.hasFocus())
+
 	  //applyElementDirection changes input.dir which may affect focus
 	  AscCommon.applyElementDirection(this.input);
-		console.log("focus3:" + document.hasFocus())
     }
     this.handlers.trigger("asc_onSelectionChanged", this.oSelectionInfo);
-	  console.log("focus4:" + document.hasFocus())
+
     //asc_onSelectionEnd event may trigger handlers that call _setEditorFocus() -> element.focus()
     this.handlers.trigger("asc_onSelectionEnd");
-	  console.log("focus5:" + document.hasFocus())
+
     //если меняется выделенный диапазон
-    this.SearchEngine && this.SearchEngine.ResetCurrent(true);
-	  console.log("focus6:" + document.hasFocus())
+    //this.SearchEngine && this.SearchEngine.ResetCurrent(true);
+
     this._onInputMessage();
-	  console.log("focus7:" + document.hasFocus())
+
     if (!isSaving) {
       this.Api.cleanSpelling();
-		console.log("focus8:" + document.hasFocus())
+
     }
   };
 
