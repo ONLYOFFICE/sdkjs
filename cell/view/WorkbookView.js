@@ -1286,9 +1286,9 @@
     return true;
   };
   WorkbookView.prototype._onWSSelectionChanged = function(isSaving) {
-    if (!this._updateSelectionInfo()) {
-      return;
-    }
+    // if (!this._updateSelectionInfo()) {
+    //   return;
+    // }
 
     // При редактировании ячейки не нужно пересылать изменения
     if (this.input && !this.getCellEditMode()) {
@@ -1307,10 +1307,10 @@
 	  //applyElementDirection changes input.dir which may affect focus
 	  AscCommon.applyElementDirection(this.input);
     }
-    this.handlers.trigger("asc_onSelectionChanged", this.oSelectionInfo);
+    //this.handlers.trigger("asc_onSelectionChanged", this.oSelectionInfo);
 
     //asc_onSelectionEnd event may trigger handlers that call _setEditorFocus() -> element.focus()
-    this.handlers.trigger("asc_onSelectionEnd");
+    //this.handlers.trigger("asc_onSelectionEnd");
 
     //если меняется выделенный диапазон
     this.SearchEngine && this.SearchEngine.ResetCurrent(true);
