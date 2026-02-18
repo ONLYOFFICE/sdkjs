@@ -331,8 +331,7 @@
 		this.mouseMode = "select";
 
 
-		this.presentationViewMode = Asc.c_oAscPresentationViewMode.normal;
-
+		this.presentationViewManager = AscCommon.getViewModeByType(Asc.c_oAscPresentationViewMode.handoutMaster, this);
 		this.frameLoader = null;
 
 		if (window.editor == undefined)
@@ -754,63 +753,40 @@
 	};
 
 	asc_docs_api.prototype.IsMasterSlideMode = function() {
-		return false;
+		return this.presentationViewManager.isMasterSlideMode();
 	};
 	asc_docs_api.prototype.IsSlidePageMode = function() {
-		return false;
+		return this.presentationViewManager.isSlideMode();
 	};
 	asc_docs_api.prototype.IsNotesPageMode = function() {
-		return false;
+		return this.presentationViewManager.isNoteMode();
 	};
 	asc_docs_api.prototype.IsNotesMasterMode = function() {
-		return false;
+		return this.presentationViewManager.isMasterNoteMode();
 	};
 	asc_docs_api.prototype.IsHandoutMasterMode = function() {
-		return true;
+		return this.presentationViewManager.isMasterHandoutMode();
 	};
 	asc_docs_api.prototype.asc_IsMasterSlideMode = function() {
 		return this.IsMasterSlideMode();
 	};
 	asc_docs_api.prototype.asc_AddMasterSlide = function() {
-		if(!this.IsMasterSlideMode()) return;
-
-
-		let oLogicDocument = this.private_GetLogicDocument();
-		if(!oLogicDocument) return;
-		oLogicDocument.AddNewMasterSlide();
+		return this.presentationViewManager.addMasterSlide();
 	};
 	asc_docs_api.prototype.asc_AddSlideLayout = function() {
-		if(!this.IsMasterSlideMode()) return;
-		let oLogicDocument = this.private_GetLogicDocument();
-		if(!oLogicDocument) return;
-		oLogicDocument.AddNewLayout();
+		return this.presentationViewManager.addLayoutSlide();
 	};
 	asc_docs_api.prototype.asc_StartAddPlaceholder = function(nType, bVertical, bStart) {
-		if(!this.IsMasterSlideMode()) return;
-
-		let oLogicDocument = this.private_GetLogicDocument();
-		if(!oLogicDocument) return;
-		let oCurSlide = oLogicDocument.GetCurrentSlide();
-		if(oCurSlide.getObjectType() !== AscDFH.historyitem_type_SlideLayout) return;
-		oLogicDocument.StartAddShape("textRect", bStart, nType, bVertical);
+		return this.presentationViewManager.startAddPlaceholder(nType, bVertical, bStart);
 	};
 	asc_docs_api.prototype.asc_setLayoutTitle = function(bVal) {
-		if(!this.IsMasterSlideMode()) return;
-
-		let oLogicDocument = this.private_GetLogicDocument();
-		if(!oLogicDocument) return;
-		let oCurSlide = oLogicDocument.GetCurrentSlide();
-		if(oCurSlide.getObjectType() !== AscDFH.historyitem_type_SlideLayout) return;
-		oLogicDocument.SetLayoutTitle(bVal);
+		return this.presentationViewManager.setLayoutTitle(bVal);
 	};
 	asc_docs_api.prototype.asc_setLayoutFooter = function(bVal) {
-		if(!this.IsMasterSlideMode()) return;
-
-		let oLogicDocument = this.private_GetLogicDocument();
-		if(!oLogicDocument) return;
-		let oCurSlide = oLogicDocument.GetCurrentSlide();
-		if(oCurSlide.getObjectType() !== AscDFH.historyitem_type_SlideLayout) return;
-		oLogicDocument.SetLayoutFooter(bVal);
+		return this.presentationViewManager.setLayoutFooter(bVal);
+	};
+	asc_docs_api.prototype.IsNotesSupported = function() {
+		return this.presentationViewManager.isNotesSupported();
 	};
 
     //----------------------------------------------------------------------------------------------------------------------
@@ -7978,74 +7954,11 @@ background-repeat: no-repeat;\
 	{
 		if(!oTransition)
 			return;
-		if(this.IsMasterSlideMode()) return;
-
-		const oPresentation = this.private_GetLogicDocument();
-		if(!oPresentation)
-			return;
-		if(oPresentation.IsEmpty())
-			return;
-
-		if (!oPresentation.IsSelectionLocked(AscCommon.changestype_SlideTransition))
-		{
-			oPresentation.StartAction(AscDFH.historydescription_Presentation_ApplyTransition);
-            const aSelectedSlides = oPresentation.GetSelectedSlides();
-            for(let nSld = 0; nSld < aSelectedSlides.length; ++nSld)
-            {
-                let oSlide = oPresentation.GetSlide(aSelectedSlides[nSld]);
-				if(oSlide)
-				{
-					oSlide.applyTransition(oTransition);
-				}
-			}
-			const bNewIsShowLoop = oTransition.get_ShowLoop();
-			if(AscFormat.isRealBool(bNewIsShowLoop) && bNewIsShowLoop !== oPresentation.isLoopShowMode())
-			{
-				oPresentation.setShowLoop(bNewIsShowLoop);
-			}
-			oPresentation.UpdateInterface();
-			oPresentation.FinalizeAction();
-		}
+		this.presentationViewManager.applySlideTransition(oTransition);
 	};
 	asc_docs_api.prototype.SlideTransitionApplyToAll = function()
 	{
-		const oPresentation = this.private_GetLogicDocument();
-
-		if(!oPresentation)
-			return;
-		if(oPresentation.IsEmpty())
-			return;
-
-		if(this.IsMasterSlideMode())
-			return;
-		const oCurSlide = oPresentation.GetCurrentSlide();
-		if(!oCurSlide)
-			return;
-
-		let oTrToApply = null;
-		if(oCurSlide.transition)
-		{
-			oTrToApply = oCurSlide.transition.createDuplicate();
-		}
-		if(!oTrToApply)
-			return;
-
-
-		if (!oPresentation.IsSelectionLocked(AscCommon.changestype_SlideTransition, {All : true}))
-		{
-			oPresentation.StartAction(AscDFH.historydescription_Presentation_ApplyTransitionToAll);
-			let aSlides = oPresentation.Slides;
-			for(let nSld = 0; nSld < aSlides.length; ++nSld)
-			{
-				let oSlide = aSlides[nSld];
-				if(oSlide !== oCurSlide)
-				{
-					oSlide.applyTransition(oTrToApply);
-				}
-			}
-			oPresentation.UpdateInterface();
-			oPresentation.FinalizeAction();
-		}
+		this.presentationViewManager.applySlideTransitionToAll();
 	};
 	asc_docs_api.prototype.SlideTransitionPlay   = function(endCallback)
 	{
@@ -9302,8 +9215,8 @@ background-repeat: no-repeat;\
 
 
 	asc_docs_api.prototype.asc_changePresentationViewMode = function(mode) {
-		if(this.presentationViewMode === mode) return;
-		this.presentationViewMode = mode;
+		if(this.presentationViewManager.type === mode) return;
+		this.presentationViewManager = AscCommon.getViewModeByType(mode, this);
 		this.updateViewMode();
 		this.sendEvent("asc_onChangeViewMode", mode);
 	};

@@ -2052,25 +2052,8 @@ CPresentation.prototype.GetSlides = function () {
 	return this.Slides;
 };
 CPresentation.prototype.GetAllSlides = function () {
-	if(this.IsMasterSlideMode()) {
-		let aSlides = [];
-		for(let nMaster = 0; nMaster < this.slideMasters.length; ++nMaster) {
-			let oMaster = this.slideMasters[nMaster];
-			aSlides.push(oMaster);
-			let aLayouts = oMaster.sldLayoutLst;
-			for(let nLt = 0; nLt < aLayouts.length; ++nLt) {
-				aSlides.push(aLayouts[nLt]);
-			}
-		}
-		return aSlides;
-	} else if (this.IsNotesPageMode()) {
-		return this.notes;
-	} else if (this.IsNotesMasterMode()) {
-		return this.notesMasters;
-	} else if (this.IsHandoutMasterMode()) {
-		return this.handoutMasters;
-	}
-	return this.GetSlides();
+	const viewManager = this.getViewManager();
+	return viewManager.getAllSlides();
 };
 CPresentation.prototype.GetSlide = function (nIndex) {
 	let aSlides = this.GetAllSlides();
@@ -2107,13 +2090,7 @@ CPresentation.prototype.GetSlidesCount = function () {
 	return this.GetAllSlides().length;
 };
 CPresentation.prototype.GetSlideIndex = function (oSlide) {
-	let aSlides = this.GetAllSlides();
-	for(let nIdx = 0; nIdx < aSlides.length; ++nIdx) {
-		if(aSlides[nIdx] === oSlide) {
-			return nIdx;
-		}
-	}
-	return -1;
+	return this.getViewManager().getSlideIndex(oSlide);
 };
 CPresentation.prototype.GetThumbnailsCount = function() {
 
@@ -2123,19 +2100,8 @@ CPresentation.prototype.GetThumbnailsCount = function() {
 	return this.GetSlidesCount();
 };
 CPresentation.prototype.GetSlideNumber = function (nIdx) {
-	if (this.IsMasterSlideMode()) {
-		let oSlide = this.GetSlide(nIdx);
-		if(oSlide.getObjectType() === AscDFH.historyitem_type_SlideMaster) {
-			for(let nMaster = 0; nMaster < this.slideMasters.length; ++nMaster) {
-				if(this.slideMasters[nMaster] === oSlide) {
-					return nMaster + 1;
-				}
-			}
-		}
-	} else {
-		return nIdx + this.getFirstSlideNumber();
-	}
-	return null;
+	const view = this.getViewManager();
+	return view.getSlideNumber(nIdx);
 };
 CPresentation.prototype.CorrectCurSlideIdx = function () {
 	let aAllSlides = this.GetAllSlides();
@@ -7445,7 +7411,7 @@ CPresentation.prototype.Set_FastCollaborativeEditing = function (isOn) {
 
 CPresentation.prototype.GetSelectionState = function () {
 	const oSelectionState = {};
-	oSelectionState.mode = Asc.editor.presentationViewMode;
+	oSelectionState.mode = Asc.editor.presentationViewManager.type;
 	oSelectionState.CurPage = this.CurPage;
 	oSelectionState.FocusOnNotes = this.FocusOnNotes;
 	oSelectionState.SelectedSlides = this.GetSelectedSlides();
@@ -7460,7 +7426,7 @@ CPresentation.prototype.GetSelectionState = function () {
 
 CPresentation.prototype.SetSelectionState = function (State) {
 	if (State.CurPage > -1) {
-		if(State.mode !== null && State.mode !== undefined && State.mode !== Asc.editor.presentationViewMode) {
+		if(State.mode !== null && State.mode !== undefined && State.mode !== Asc.editor.presentationViewManager.type) {
 			Asc.editor.asc_changePresentationViewMode(State.mode);
 		}
 		var oSlide = this.GetSlide(State.CurPage);
@@ -9865,62 +9831,8 @@ CPresentation.prototype.insertSlide = function (pos, slide) {
 	slide.setSlideSize(this.GetWidthMM(), this.GetHeightMM());
 };
 CPresentation.prototype.insertSlideObjectToPos = function (pos, slide) {
-	if(this.IsMasterSlideMode()) {
-		if(slide.isMaster()) {
-			let oCurSlide = this.GetSlide(pos - 1);
-			let oPrevMaster = null;
-			if(oCurSlide) {
-				if(oCurSlide.isMaster()) {
-					oPrevMaster = oCurSlide;
-				}
-				else {
-					oPrevMaster = oCurSlide.Master;
-				}
-			}
-			let nPos = 0;
-			if(oPrevMaster) {
-				for(let nIdx = 0; nIdx < this.slideMasters.length; ++nIdx) {
-					if(this.slideMasters[nIdx] === oPrevMaster) {
-						nPos = nIdx + 1;
-						break;
-					}
-				}
-			}
-			this.addSlideMaster(nPos, slide);
-		}
-		else {
-			let oCurSlide = this.GetSlide(pos - 1);
-			let oPrevMaster = null;
-			let oPrevLayout = null;
-			if(oCurSlide) {
-				if(oCurSlide.isMaster()) {
-					oPrevMaster = oCurSlide;
-				}
-				else {
-					oPrevLayout = oCurSlide;
-					oPrevMaster = oCurSlide.Master;
-				}
-			}
-			if(!oPrevMaster) {
-				oPrevMaster = this.slideMasters[0];
-			}
-			if(oPrevMaster) {
-				let nPos = 0;
-				if(oPrevLayout) {
-					for(let nIdx = 0; nIdx < oPrevMaster.sldLayoutLst.length; ++nIdx) {
-						if(oPrevMaster.sldLayoutLst[nIdx] === oPrevLayout) {
-							nPos = nIdx + 1;
-							break;
-						}
-					}
-				}
-				oPrevMaster.addToSldLayoutLstToPos(nPos, slide);
-			}
-		}
-	}
-	else if (this.IsSlidePageMode()) {
-		this.insertSlide(pos, slide)
-	}
+	const view = this.getViewManager();
+	view.insertSlideObjectToPos(pos, slide);
 };
 
 CPresentation.prototype.moveSlides = function (slidesIndexes, pos) {
@@ -11765,6 +11677,13 @@ CPresentation.prototype.GetSizesMM = function (pageIndex) {
 	}
 	return result;
 };
+CPresentation.prototype.getViewManager = function () {
+	return Asc.editor.presentationViewManager;
+};
+CPresentation.prototype.getCumulativeThumbnailsLength = function (isHorizontalOrientation, thumbnailWidth, thumbnailHeight) {
+	const viewManager = this.getViewManager();
+	return viewManager.getCumulativeThumbnailsLength(isHorizontalOrientation, thumbnailWidth, thumbnailHeight);
+}
 
 function collectSelectedObjects(aSpTree, aCollectArray, bRecursive, oIdMap, bSourceFormatting) {
 	var oSp;

@@ -1125,6 +1125,20 @@ AscDFH.historyitem_type_VisioWindow = 328;
 		result.height = this.GetHeightMM(pageIndex);
 		return result;
 	};
+	CVisioDocument.prototype.getCumulativeThumbnailsLength = function (isHorizontalOrientation, thumbnailWidth, thumbnailHeight) {
+		let cumulativeThumbnailLength = 0;
+		const slidesCount = this.GetSlidesCount();
+		for (let nIdx = 0; nIdx < slidesCount; ++nIdx) {
+			const sizes = this.GetSizesMM(nIdx);
+			const originalSlideWidth = sizes.width;
+			const originalSlideHeight = sizes.height;
+			const additionalLength = isHorizontalOrientation
+				? thumbnailHeight * originalSlideWidth / originalSlideHeight >> 0
+				: thumbnailWidth * originalSlideHeight / originalSlideWidth >> 0;
+			cumulativeThumbnailLength += additionalLength;
+		}
+		return cumulativeThumbnailLength;
+	};
 	// CVisioDocument.prototype.getMasterByID = function(ID) {
 	// 	// join Master_Type and MasterContents_Type
 	// 	let masterFromMastersArray = this.masters.master;

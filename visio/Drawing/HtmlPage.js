@@ -4745,9 +4745,6 @@
 	CEditorPage.prototype.ChangeTimelineScale = function (bZoomOut) {
 		this.m_oAnimPaneApi.timeline.Control.timeline.changeTimelineScale(bZoomOut);
 	};
-	CEditorPage.prototype.IsAnimPaneSupported = function () {
-		return this.IsSupportAnimPane && !this.m_oApi.IsMasterSlideMode();
-	};
 
 	// Notes
 	CEditorPage.prototype.GetNotesHeight = function () {
@@ -4780,7 +4777,7 @@
 	CEditorPage.prototype.setAnimPaneEnable = function (bEnabled) {
 	};
 	CEditorPage.prototype.IsNotesSupported = function () {
-		return this.IsSupportNotes && !this.m_oApi.IsMasterSlideMode();
+		return this.IsSupportNotes;
 	};
 
 	// Media player
@@ -4956,45 +4953,7 @@
 		let oPlayerData = this.GetMediaPlayerData();
 		console.log(JSON.stringify(oPlayerData))
 	};
-	CEditorPage.prototype.UpdateViewMode = function () {
-		let nMode = Asc.editor.presentationViewMode;
-		switch (nMode) {
-			case Asc.c_oAscPresentationViewMode.normal:
-				{
-					this.GoToPage(0);
-					this.setNotesEnable(true);
-					this.setAnimPaneEnable(true);
-					this.m_oApi.hideMediaControl();
-					this.m_oApi.asc_hideComments();
-					this.m_oLogicDocument.Recalculate({ Drawings: { All: true, Map: {} } });
-					this.m_oLogicDocument.Document_UpdateInterfaceState();
-					break;
-				}
-			case Asc.c_oAscPresentationViewMode.masterSlide:
-				{
-					let oSlide = this.m_oLogicDocument.GetCurrentSlide();
-					let nIdx = 0;
-					if (oSlide) {
-						let nCurIdx = this.m_oLogicDocument.GetSlideIndex(oSlide.Layout);
-						if (nCurIdx !== -1) {
-							nIdx = nCurIdx;
-						}
-					}
-					this.GoToPage(nIdx);
-					this.m_oLogicDocument.Recalculate({ Drawings: { All: true, Map: {} } });
-					this.setNotesEnable(false);
-					this.setAnimPaneEnable(false);
-					this.m_oApi.hideMediaControl();
-					this.m_oApi.asc_hideComments();
-					this.m_oLogicDocument.Document_UpdateInterfaceState();
-					break;
-				}
-			case Asc.c_oAscPresentationViewMode.sorter:
-				{
-					break;
-				}
-		}
-	};
+	CEditorPage.prototype.UpdateViewMode = function () {};
 
 	// EXPORTS
 

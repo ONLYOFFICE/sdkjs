@@ -142,7 +142,7 @@ function SlideLayout()
     this.showLock = new PropLocker(this.Id);
 }
 AscFormat.InitClass(SlideLayout, AscCommonSlide.SlideBase, AscDFH.historyitem_type_SlideLayout);
-
+SlideLayout.LAYOUT_THUMBNAIL_SCALE = 0.87;
 
 SlideLayout.prototype.getDrawingsForController = function(){
     return this.cSld.spTree;

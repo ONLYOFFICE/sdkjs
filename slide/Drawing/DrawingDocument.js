@@ -60,7 +60,6 @@ AscCommon.FOCUS_OBJECT_ANIM_PANE  = FOCUS_OBJECT_ANIM_PANE;
 var COMMENT_WIDTH  = 18;
 var COMMENT_HEIGHT = 16;
 
-const LAYOUT_SCALE = 0.87;
 
 // text measurer wrapper
 AscCommon.CTextMeasurer.prototype.GetAscender  = function()
@@ -2971,7 +2970,9 @@ function CDrawingDocument()
 		renderer.Memory.Seek(0);
 		renderer.VectorMemoryForPrint.ClearNoAttack();
 		renderer.DocInfo(this.m_oWordControl.m_oApi.asc_getCoreProps());
+
 		const sizes = this.m_oLogicDocument.GetSizesMM();
+		//todo change for advanced print options
 		for (var i = start; i <= end; i++)
 		{
 			if ((true === printerOptions && !this.m_oLogicDocument.IsMasterSlideMode()) && !this.m_oWordControl.Thumbnails.isSelectedPage(i))
@@ -4216,9 +4217,6 @@ function CThumbnailsManager(editorPage)
 	this.m_oWordControl = editorPage;
 	var oThis = this;
 
-	this.IsMasterSlideMode = function() {
-		return Asc.editor.IsMasterSlideMode();
-	};
 	// init
 	this.Init = function()
 	{
@@ -6095,8 +6093,8 @@ function CThumbnailsManager(editorPage)
 			}
 
 			if (slideData.getObjectType() === AscDFH.historyitem_type_SlideLayout) {
-				const scaledWidth = (slideRect.right - slideRect.left) * LAYOUT_SCALE;
-				const scaledHeight = (slideRect.bottom - slideRect.top) * LAYOUT_SCALE;
+				const scaledWidth = (slideRect.right - slideRect.left) * AscCommonSlide.SlideLayout.LAYOUT_THUMBNAIL_SCALE;
+				const scaledHeight = (slideRect.bottom - slideRect.top) * AscCommonSlide.SlideLayout.LAYOUT_THUMBNAIL_SCALE;
 
 				if (isVerticalThumbnails) {
 					slideRect.bottom = (slideRect.top + scaledHeight) + 0.5 >> 0;
@@ -6373,34 +6371,7 @@ function CThumbnailsManager(editorPage)
 			thumbnailHeight = thumbnailWidth * this.SlideHeight / this.SlideWidth >> 0;
 		}
 
-		let cumulativeThumbnailLength = 0;
-
-		if (oPresentation.IsVisioEditor()) {
-			for (let nIdx = 0; nIdx < slidesCount; ++nIdx) {
-				const sizes = oPresentation.GetSizesMM(nIdx);
-				const originalSlideWidth = sizes.width;
-				const originalSlideHeight = sizes.height;
-				const additionalLength = isHorizontalOrientation
-					? thumbnailHeight * originalSlideWidth / originalSlideHeight >> 0
-					: thumbnailWidth * originalSlideHeight / originalSlideWidth >> 0;;
-				cumulativeThumbnailLength += additionalLength;
-			}
-
-		} else if (this.IsMasterSlideMode()) {
-			for (let nIdx = 0; nIdx < oPresentation.slideMasters.length; ++nIdx) {
-				const oMaster = oPresentation.slideMasters[nIdx];
-				const additionalLength = isHorizontalOrientation
-					? thumbnailWidth + oMaster.sldLayoutLst.length * thumbnailWidth * LAYOUT_SCALE
-					: thumbnailHeight + oMaster.sldLayoutLst.length * thumbnailHeight * LAYOUT_SCALE;
-				cumulativeThumbnailLength += additionalLength;
-			}
-			cumulativeThumbnailLength = Math.round(cumulativeThumbnailLength);
-
-		} else {
-			cumulativeThumbnailLength = isHorizontalOrientation
-				? thumbnailWidth * slidesCount
-				: thumbnailHeight * slidesCount;
-		}
+		const cumulativeThumbnailLength = oPresentation.getCumulativeThumbnailsLength(isHorizontalOrientation, thumbnailWidth, thumbnailHeight);
 
 		const totalThumbnailsLength = isHorizontalOrientation
 			? 2 * this.const_offset_x + cumulativeThumbnailLength + (slidesCount > 0 ? (slidesCount - 1) * 3 * this.const_border_w : 0)

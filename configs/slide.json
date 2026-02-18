@@ -221,6 +221,7 @@
 			"word/Drawing/cachemanager.js",
 			"slide/Drawing/DrawingDocument.js",
 			"slide/Drawing/HtmlPage.js",
+		  	"slide/Editor/ModeManager.js",
 			"slide/Editor/Format/Presentation.js",
 			"slide/Editor/Format/ViewPr.js",
 			"slide/Editor/DrawingObjectsController.js",

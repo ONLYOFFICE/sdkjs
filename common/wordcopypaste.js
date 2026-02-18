@@ -3894,55 +3894,8 @@ PasteProcessor.prototype =
 	},
 
 	_setSpecialPasteShowOptionsPresentation: function(props){
-		let presentation = editor.WordControl.m_oLogicDocument;
-		if(presentation.IsMasterSlideMode()) return;
-		let stateSelection = presentation.GetSelectionState();
-		let curPage = stateSelection.CurPage;
-		let pos = presentation.GetTargetPosition();
-		props = !props ? [Asc.c_oSpecialPasteProps.sourceformatting, Asc.c_oSpecialPasteProps.keepTextOnly] : props;
-		let x, y, w, h;
-		if (null === pos) {
-			pos = presentation.GetSelectedBounds();
-			w = pos.w;
-			h = pos.h;
-			x = pos.x + w;
-			y = pos.y + h;
-		} else {
-			x = pos.X;
-			y = pos.Y;
-		}
-		let screenPos;
-		let bThumbnals = presentation.IsFocusOnThumbnails();
-		let sSlideId = null;
-
-		let aSelectedSlides = presentation.GetSelectedSlides();
-		if(bThumbnals && aSelectedSlides.length > 0) {
-			let nSlideIndex = aSelectedSlides[aSelectedSlides.length - 1];
-			let oSlide = presentation.GetSlide(nSlideIndex);
-			sSlideId = oSlide.Get_Id();
-		}
-		if(sSlideId) {
-			screenPos = editor.WordControl.Thumbnails.getSpecialPasteButtonCoords(sSlideId);
-			w = 1;
-			h = 1;
-		}
-		else {
-			screenPos = presentation.DrawingDocument.ConvertCoordsToCursorWR(x, y, curPage);
-		}
-
-		let specialPasteShowOptions = window['AscCommon'].g_specialPasteHelper.buttonInfo;
-		specialPasteShowOptions.asc_setOptions(props);
-
-		let targetDocContent = presentation.Get_TargetDocContent();
-		if(targetDocContent && targetDocContent.Id) {
-			specialPasteShowOptions.setShapeId(targetDocContent.Id);
-		} else {
-			specialPasteShowOptions.setShapeId(null);
-		}
-
-		let curCoord = new AscCommon.asc_CRect( screenPos.X, screenPos.Y, 0, 0 );
-		specialPasteShowOptions.asc_setCellCoord(curCoord);
-		specialPasteShowOptions.setFixPosition({x: x, y: y, pageNum: curPage, w: w, h: h, slideId: sSlideId});
+		const presentationViewManager = editor.presentationViewManager;
+		presentationViewManager.setSpecialPasteShowOptions(props);
 	},
 
     insertInPlace2: function(oDoc, aNewContent)

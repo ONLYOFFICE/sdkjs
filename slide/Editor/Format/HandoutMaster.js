@@ -332,6 +332,86 @@
 		return {}
 	};
 
+	CHandoutMaster.prototype.getTheme = function() {
+		return this.Theme;
+	};
+	CHandoutMaster.prototype.getColorMap = function() {
+	};
+	CHandoutMaster.prototype.recalculateBackground = function() {
+	};
+	CHandoutMaster.prototype.checkSlideColorScheme = function() {
+	};
+	CHandoutMaster.prototype.getAllFonts = function(fonts) {
+	};
+	CHandoutMaster.prototype.createFontMap = function(oFontsMap, oCheckedMap) {
+	};
+	CHandoutMaster.prototype.recalculate = function() {
+	};
+	CHandoutMaster.prototype.isAnimated = function() {
+		return false;
+	};
+	CHandoutMaster.prototype.isLockedObject = function() {
+		return false;
+	};
+	CHandoutMaster.prototype.needRecalc = function() {
+		return false;
+	};
+	CHandoutMaster.prototype.Clear_ContentChanges = function() {
+	};
+	CHandoutMaster.prototype.Add_ContentChanges = function(Changes) {
+	};
+	CHandoutMaster.prototype.Refresh_ContentChanges = function() {
+	};
+	CHandoutMaster.prototype.checkSlideColorScheme = function() {
+	};
+	CHandoutMaster.prototype.isSlide = function() {
+		return false;
+	};
+	CHandoutMaster.prototype.isLayout = function() {
+		return false;
+	};
+	CHandoutMaster.prototype.isMaster = function() {
+		return false;
+	};
+	CHandoutMaster.prototype.getParentObjects = function() {
+	};
+	CHandoutMaster.prototype.recalculateNotesShape = function() {
+	};
+	CHandoutMaster.prototype.getNotesHeight = function() {
+		return 0;
+	};
+	CHandoutMaster.prototype.isVisible = function() {
+		return true;
+	};
+	CHandoutMaster.prototype.getWorksheet = function() {
+		return null;
+	};
+	CHandoutMaster.prototype.Get_ColorMap = function() {
+		return AscFormat.GetDefaultColorMap();
+	};
+	CHandoutMaster.prototype.IsUseInDocument = function() {
+		return false;
+	};
+	CHandoutMaster.prototype.IsUseInSlides = function() {
+		return false
+	};
+	CHandoutMaster.prototype.isPreserve = function() {
+		return false
+	};
+	CHandoutMaster.prototype.draw = function(graphics, slide) {
+	};
+	CHandoutMaster.prototype.shapeRemove = function(pos, count) {
+	};
+	SlideBase.prototype.shapeAdd = function(pos, item) {
+	};
+	SlideBase.prototype.addToSpTreeToPos = function(pos, item) {
+		this.shapeAdd(pos, item);
+	};
+	SlideBase.prototype.setSlideSize = function(w, h) {
+	};
+	SlideBase.prototype.changeBackground = function(bg) {
+	};
+
 	function PlaceholderBase(x, y, width, height) {
 		this.x = x;
 		this.y = y;

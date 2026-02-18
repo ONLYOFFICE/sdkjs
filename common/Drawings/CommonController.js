@@ -3437,7 +3437,7 @@
 						if (this.document && content.Parent && content.Parent instanceof AscFormat.CTextBody)
 							return false;
 
-						if(Asc.editor.IsMasterSlideMode()) {
+						if(!Asc.editor.presentationViewManager.isCanAddHyperlinkInContent()) {
 							return false;
 						}
 						return content.CanAddHyperlink(bCheckInHyperlink);
