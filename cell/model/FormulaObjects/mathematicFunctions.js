@@ -3568,45 +3568,74 @@ function (window, undefined) {
 	cPRODUCT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cPRODUCT.prototype.argumentsType = [[argType.number]];
 	cPRODUCT.prototype.Calculate = function (arg) {
-		var element, arg0 = new cNumber(1);
-		for (var i = 0; i < arg.length; i++) {
+
+		let element, arg0 = new cNumber(1), isFoundValue;
+		for (let i = 0; i < arg.length; i++) {
 			element = arg[i];
-			if (cElementType.cellsRange === element.type || cElementType.cellsRange3D === element.type) {
-				var _arrVal = element.getValue(this.checkExclude, this.excludeHiddenRows, this.excludeErrorsVal,
-					this.excludeNestedStAg);
-				for (var j = 0; j < _arrVal.length; j++) {
-					if (_arrVal[j].type !== cElementType.string) {
-						arg0 = _func[arg0.type][_arrVal[j].type](arg0, _arrVal[j], "*");
-						if (cElementType.error === arg0.type) {
-							return arg0;
+
+			let is3DArea = cElementType.cellsRange3D === element.type;
+
+			if (cElementType.cellsRange === element.type || is3DArea || cElementType.array === element.type) {
+				let dimensions = element.getDimensions();
+				for (let row = 0; row < dimensions.row; row++) {
+					for (let col = 0; col < dimensions.col; col++) {
+						let elem = is3DArea ? element.getValueByRowCol(row, col) : element.getValue2(row, col);
+						if(!elem || elem.type === cElementType.empty || elem.type === cElementType.bool) {
+							continue;
 						}
+
+						if (elem.type === cElementType.error) {
+							return elem;
+						}
+
+						elem = elem.tocNumber();
+						if (elem.type === cElementType.number) {
+							isFoundValue = true;
+							arg0 = _func[arg0.type][elem.type](arg0, elem, "*");
+						}
+						
 					}
 				}
 			} else if (cElementType.cell === element.type || cElementType.cell3D === element.type) {
 				if (!this.checkExclude || !element.isHidden(this.excludeHiddenRows)) {
-					var _arg = element.getValue();
-					if (_arg.type !== cElementType.string) {
+					let _arg = element.getValue();
+					if (_arg.type === cElementType.empty || _arg.type === cElementType.bool) {
+						continue;
+					}
+
+					if (_arg.type === cElementType.error) {
+						return _arg;
+					}
+
+					_arg = _arg.tocNumber();
+					if (_arg.type === cElementType.number) {
+						isFoundValue = true;
 						arg0 = _func[arg0.type][_arg.type](arg0, _arg, "*");
 					}
 				}
-			} else if (cElementType.array === element.type) {
-				element.foreach(function (elem) {
-					if (cElementType.string === elem.type || cElementType.bool === elem.type ||
-						cElementType.empty === elem.type) {
-						return;
-					}
-
-					arg0 = _func[arg0.type][elem.type](arg0, elem, "*");
-				})
 			} else {
-				arg0 = _func[arg0.type][element.type](arg0, element, "*");
+				if (element.type === cElementType.empty) {
+					continue;
+				}
+
+				if (element.type === cElementType.error) {
+					return element;
+				}
+
+				element = element.tocNumber();
+				if (element.type === cElementType.number) {
+					isFoundValue = true;
+					arg0 = _func[arg0.type][element.type](arg0, element, "*");
+				} else if (element.type === cElementType.error) {
+					return element;
+				}
 			}
 			if (cElementType.error === arg0.type) {
 				return arg0;
 			}
 
 		}
-		return arg0;
+		return isFoundValue ? arg0 : new cNumber(0);
 	};
 
 	/**

@@ -857,7 +857,7 @@
 				this.m_oPen.Color.B + "," + (this.m_oPen.Color.A / 255) + ")";
 		}
 	};
-	CGraphics.prototype.drawBlipFillTile = function (transform, imageUrl, alpha, scaleX, scaleY, offsetX, offsetY, flipH, flipV) {
+	CGraphics.prototype.drawBlipFillTile = function (transform, imageUrl, alpha, scaleX, scaleY, offsetX, offsetY, flipH, flipV, nativeCanvas) {
 		const ctx = this.m_oContext;
 		if (!ctx) return;
 
@@ -874,11 +874,16 @@
 			);
 		}
 
-		const imageData = Asc.editor.ImageLoader.map_image_index[imageUrl];
-		if (!imageData || this.checkLoadingImage(imageData)) return;
+		let image;
+		if (nativeCanvas) {
+			image = nativeCanvas;
+		} else {
+			const imageData = Asc.editor.ImageLoader.map_image_index[imageUrl];
+			if (!imageData || this.checkLoadingImage(imageData)) return;
 
-		const image = imageData.Image;
-		if (!image) return;
+			image = imageData.Image;
+			if (!image) return;
+		}
 
 		// Translation (offsets)
 		ctx.translate(offsetX, offsetY);

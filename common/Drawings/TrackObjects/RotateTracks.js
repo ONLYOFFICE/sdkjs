@@ -560,6 +560,7 @@
 			}
 
 		}
+		const scaleCoefficient = this.originalObject.getScaleCoefficient();
 		this.draw(boundsChecker, tr ? tr : null);
 		tr = this.transform;
 		var arr_p_x = [];
@@ -583,10 +584,10 @@
 		boundsChecker.Bounds.min_y = Math.min.apply(Math, arr_p_y);
 		boundsChecker.Bounds.max_y = Math.max.apply(Math, arr_p_y);
 
-		boundsChecker.Bounds.posX = this.originalObject.x;
-		boundsChecker.Bounds.posY = this.originalObject.y;
-		boundsChecker.Bounds.extX = this.originalObject.extX;
-		boundsChecker.Bounds.extY = this.originalObject.extY;
+		boundsChecker.Bounds.posX = this.originalObject.x / scaleCoefficient;
+		boundsChecker.Bounds.posY = this.originalObject.y / scaleCoefficient;
+		boundsChecker.Bounds.extX = this.originalObject.extX / scaleCoefficient;
+		boundsChecker.Bounds.extY = this.originalObject.extY / scaleCoefficient;
 		return boundsChecker.Bounds;
 	}
 	RotateTrackShapeImage.prototype.checkDrawingPartWithHistory = function () {
@@ -645,6 +646,7 @@
 	{
 		var boundsChecker = new  AscFormat.CSlideBoundsChecker();
 		this.draw(boundsChecker);
+		const scaleCoefficient = this.originalObject.getScaleCoefficient();
 		var tr = this.transform;
 		var arr_p_x = [];
 		var arr_p_y = [];
@@ -666,10 +668,10 @@
 		boundsChecker.Bounds.max_x = Math.max.apply(Math, arr_p_x);
 		boundsChecker.Bounds.min_y = Math.min.apply(Math, arr_p_y);
 		boundsChecker.Bounds.max_y = Math.max.apply(Math, arr_p_y);
-		boundsChecker.Bounds.posX = this.originalObject.x;
-		boundsChecker.Bounds.posY = this.originalObject.y;
-		boundsChecker.Bounds.extX = this.originalObject.extX;
-		boundsChecker.Bounds.extY = this.originalObject.extY;
+		boundsChecker.Bounds.posX = this.originalObject.x / scaleCoefficient;
+		boundsChecker.Bounds.posY = this.originalObject.y / scaleCoefficient;
+		boundsChecker.Bounds.extX = this.originalObject.extX / scaleCoefficient;
+		boundsChecker.Bounds.extY = this.originalObject.extY / scaleCoefficient;
 		return boundsChecker.Bounds;
 	};
 
@@ -911,6 +913,7 @@
 
 		this.getBounds = function()
 		{
+			const scaleCoefficient = this.originalObject.getScaleCoefficient();
 			var boundsChecker = new  AscFormat.CSlideBoundsChecker();
 			//this.draw(boundsChecker);
 			var tr = this.transform;
@@ -934,10 +937,10 @@
 			boundsChecker.Bounds.max_x = Math.max.apply(Math, arr_p_x);
 			boundsChecker.Bounds.min_y = Math.min.apply(Math, arr_p_y);
 			boundsChecker.Bounds.max_y = Math.max.apply(Math, arr_p_y);
-			boundsChecker.Bounds.posX = this.originalObject.x;
-			boundsChecker.Bounds.posY = this.originalObject.y;
-			boundsChecker.Bounds.extX = this.originalObject.extX;
-			boundsChecker.Bounds.extY = this.originalObject.extY;
+			boundsChecker.Bounds.posX = this.originalObject.x / scaleCoefficient;
+			boundsChecker.Bounds.posY = this.originalObject.y / scaleCoefficient;
+			boundsChecker.Bounds.extX = this.originalObject.extX / scaleCoefficient;
+			boundsChecker.Bounds.extY = this.originalObject.extY / scaleCoefficient;
 			return boundsChecker.Bounds;
 		};
 

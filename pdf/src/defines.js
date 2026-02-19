@@ -65,10 +65,13 @@
         Redact:         25
     };
 
-    let BORDER_EFFECT_STYLES = {
-        None:   0,
-        Cloud:  1
+    const BORDER_EFFECT_STYLES = {
+        none:   0,
+        cloud:  1
     }
+
+    BORDER_EFFECT_STYLES["none"]    = BORDER_EFFECT_STYLES.none;
+    BORDER_EFFECT_STYLES["cloud"]   = BORDER_EFFECT_STYLES.cloud;
 
     let REF_TO_REASON = {
         Reply: 0,
@@ -293,6 +296,18 @@
         outline:    3
     }
 
+    const BORDER_WIDTH = {
+        none:   0,
+        thin:   1,
+        medium: 2,
+        thick:  3
+    }
+
+    BORDER_WIDTH["none"]    = BORDER_WIDTH.none;
+    BORDER_WIDTH["thin"]    = BORDER_WIDTH.thin;
+    BORDER_WIDTH["medium"]  = BORDER_WIDTH.medium;
+    BORDER_WIDTH["thick"]   = BORDER_WIDTH.thick;
+
     BUTTON_HIGHLIGHT_TYPES["none"]      = BUTTON_HIGHLIGHT_TYPES.none;
     BUTTON_HIGHLIGHT_TYPES["invert"]    = BUTTON_HIGHLIGHT_TYPES.invert;
     BUTTON_HIGHLIGHT_TYPES["push"]      = BUTTON_HIGHLIGHT_TYPES.push;
@@ -355,25 +370,90 @@
     PRINT_CONTENT_TYPES["docAndStamps"]  = PRINT_CONTENT_TYPES.docAndStamps;
     PRINT_CONTENT_TYPES["formsOnly"]     = PRINT_CONTENT_TYPES.formsOnly;
 
-    asc["FIELD_TYPES"]                  = asc.FIELD_TYPES               = FIELD_TYPES;
-    asc["BORDER_EFFECT_STYLES"]         = asc.BORDER_EFFECT_STYLES      = BORDER_EFFECT_STYLES;
-    asc["REF_TO_REASON"]                = asc.REF_TO_REASON             = REF_TO_REASON;
-    asc["FormatType"]                   = asc.FormatType                = FormatType;
-    asc["SpecialFormatType"]            = asc.SpecialFormatType         = SpecialFormatType;
-    asc["SeparatorStyle"]               = asc.SeparatorStyle            = SeparatorStyle;
-    asc["TimeFormatType"]               = asc.TimeFormatType            = TimeFormatType;
-    asc["NegativeStyle"]                = asc.NegativeStyle             = NegativeStyle;
-    asc["CalculateType"]                = asc.CalculateType             = CalculateType;
-    asc["ValidateType"]                 = asc.ValidateType              = ValidateType;
-    asc["CHECKBOX_STYLES"]              = asc.CHECKBOX_STYLES           = CHECKBOX_STYLES;
-    asc["BORDER_TYPES"]                 = asc.BORDER_TYPES              = BORDER_TYPES;
-    asc["ANNOT_COMPLEX_BORDER_TYPES"]   = asc.ANNOT_COMPLEX_BORDER_TYPES= ANNOT_COMPLEX_BORDER_TYPES;
-    asc["ANNOT_BORDER_DASHED_VALUES"]   = asc.ANNOT_BORDER_DASHED_VALUES= ANNOT_BORDER_DASHED_VALUES;
-    asc["BUTTON_HIGHLIGHT_TYPES"]       = asc.BUTTON_HIGHLIGHT_TYPES    = BUTTON_HIGHLIGHT_TYPES;
-    asc["APPEARANCE_TYPES"]            = asc.APPEARANCE_TYPES           = APPEARANCE_TYPES;
-    asc["DIGITS_TYPES"]                = asc.DIGITS_TYPES               = DIGITS_TYPES;
-    asc["USER_PERMISSIONS"]            = asc.USER_PERMISSIONS           = USER_PERMISSIONS;
-    asc["GOTO_TYPES"]                  = asc.GOTO_TYPES                 = GOTO_TYPES;
+    const TEXT_ICONS_TYPES = {
+        check1:         0,
+        check2:         1,
+        circle:         2,
+        comment:        3,
+        cross:          4,
+        crossH:         5,
+        help:           6,
+        insert:         7,
+        key:            8,
+        newParagraph:   9,
+        note:           10,
+        paragraph:      11,
+        rightArrow:     12,
+        rightPointer:   13,
+        star:           14,
+        upArrow:        15,
+        upLeftArrow:    16
+    }
+
+    TEXT_ICONS_TYPES["check"]           = TEXT_ICONS_TYPES.check1;
+    TEXT_ICONS_TYPES["check1"]          = TEXT_ICONS_TYPES.check1;
+    TEXT_ICONS_TYPES["check2"]          = TEXT_ICONS_TYPES.check2;
+    TEXT_ICONS_TYPES["circle"]          = TEXT_ICONS_TYPES.circle;
+    TEXT_ICONS_TYPES["comment"]         = TEXT_ICONS_TYPES.comment;
+    TEXT_ICONS_TYPES["cross"]           = TEXT_ICONS_TYPES.cross;
+    TEXT_ICONS_TYPES["crossH"]          = TEXT_ICONS_TYPES.crossH;
+    TEXT_ICONS_TYPES["help"]            = TEXT_ICONS_TYPES.help;
+    TEXT_ICONS_TYPES["insert"]          = TEXT_ICONS_TYPES.insert;
+    TEXT_ICONS_TYPES["key"]             = TEXT_ICONS_TYPES.key;
+    TEXT_ICONS_TYPES["newParagraph"]    = TEXT_ICONS_TYPES.newParagraph;
+    TEXT_ICONS_TYPES["note"]            = TEXT_ICONS_TYPES.note;
+    TEXT_ICONS_TYPES["paragraph"]       = TEXT_ICONS_TYPES.paragraph;
+    TEXT_ICONS_TYPES["rightArrow"]      = TEXT_ICONS_TYPES.rightArrow;
+    TEXT_ICONS_TYPES["rightPointer"]    = TEXT_ICONS_TYPES.rightPointer;
+    TEXT_ICONS_TYPES["star"]            = TEXT_ICONS_TYPES.star;
+    TEXT_ICONS_TYPES["upArrow"]         = TEXT_ICONS_TYPES.upArrow;
+    TEXT_ICONS_TYPES["upLeftArrow"]     = TEXT_ICONS_TYPES.upLeftArrow;
+
+    const LINE_END_TYPE = {
+        square:         0,
+        circle:         1,
+        diamond:        2,
+        openArrow:      3,
+        closedArrow:    4,
+        none:           5,
+        butt:           6,
+        rOpenArrow:     7,
+        rClosedArrow:   8,
+        slash:          9
+    }
+
+    LINE_END_TYPE["square"]         = LINE_END_TYPE.square;
+    LINE_END_TYPE["circle"]         = LINE_END_TYPE.circle;
+    LINE_END_TYPE["diamond"]        = LINE_END_TYPE.diamond;
+    LINE_END_TYPE["openArrow"]      = LINE_END_TYPE.openArrow;
+    LINE_END_TYPE["closedArrow"]    = LINE_END_TYPE.closedArrow;
+    LINE_END_TYPE["none"]           = LINE_END_TYPE.none;
+    LINE_END_TYPE["butt"]           = LINE_END_TYPE.butt;
+    LINE_END_TYPE["rOpenArrow"]     = LINE_END_TYPE.rOpenArrow;
+    LINE_END_TYPE["rClosedArrow"]   = LINE_END_TYPE.rClosedArrow;
+    LINE_END_TYPE["slash"]          = LINE_END_TYPE.slash;
+
+    asc["FIELD_TYPES"]                  = asc.FIELD_TYPES                = FIELD_TYPES;
+    asc["BORDER_EFFECT_STYLES"]         = asc.BORDER_EFFECT_STYLES       = BORDER_EFFECT_STYLES;
+    asc["REF_TO_REASON"]                = asc.REF_TO_REASON              = REF_TO_REASON;
+    asc["FormatType"]                   = asc.FormatType                 = FormatType;
+    asc["SpecialFormatType"]            = asc.SpecialFormatType          = SpecialFormatType;
+    asc["SeparatorStyle"]               = asc.SeparatorStyle             = SeparatorStyle;
+    asc["TimeFormatType"]               = asc.TimeFormatType             = TimeFormatType;
+    asc["NegativeStyle"]                = asc.NegativeStyle              = NegativeStyle;
+    asc["CalculateType"]                = asc.CalculateType              = CalculateType;
+    asc["ValidateType"]                 = asc.ValidateType               = ValidateType;
+    asc["CHECKBOX_STYLES"]              = asc.CHECKBOX_STYLES            = CHECKBOX_STYLES;
+    asc["BORDER_TYPES"]                 = asc.BORDER_TYPES               = BORDER_TYPES;
+    asc["ANNOT_COMPLEX_BORDER_TYPES"]   = asc.ANNOT_COMPLEX_BORDER_TYPES = ANNOT_COMPLEX_BORDER_TYPES;
+    asc["ANNOT_BORDER_DASHED_VALUES"]   = asc.ANNOT_BORDER_DASHED_VALUES = ANNOT_BORDER_DASHED_VALUES;
+    asc["BUTTON_HIGHLIGHT_TYPES"]       = asc.BUTTON_HIGHLIGHT_TYPES     = BUTTON_HIGHLIGHT_TYPES;
+    asc["APPEARANCE_TYPES"]             = asc.APPEARANCE_TYPES           = APPEARANCE_TYPES;
+    asc["DIGITS_TYPES"]                 = asc.DIGITS_TYPES               = DIGITS_TYPES;
+    asc["USER_PERMISSIONS"]             = asc.USER_PERMISSIONS           = USER_PERMISSIONS;
+    asc["GOTO_TYPES"]                   = asc.GOTO_TYPES                 = GOTO_TYPES;
     asc["PRINT_CONTENT_TYPES"]         = asc.PRINT_CONTENT_TYPES        = PRINT_CONTENT_TYPES;
-    asc.CommandType                    = CommandType;
+    asc["TEXT_ICONS_TYPES"]             = asc.TEXT_ICONS_TYPES           = TEXT_ICONS_TYPES;
+    asc["LINE_END_TYPE"]                = asc.LINE_END_TYPE              = LINE_END_TYPE;
+    asc.CommandType                     = CommandType;
 })();

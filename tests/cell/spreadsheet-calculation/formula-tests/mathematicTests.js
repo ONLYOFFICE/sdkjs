@@ -14382,6 +14382,9 @@ $(function () {
 		ws.getRange2("A102").setValue("0.5");
 		ws.getRange2("A103").setValue("");
 		ws.getRange2("A105").setValue("1");
+		ws.getRange2("A106").setValue("");
+		ws.getRange2("A107").setValue("");
+		ws.getRange2("A108").setValue("");
 		ws.getRange2("A110").setValue("TRUE");
 		ws.getRange2("A111").setValue("FALSE");
 
@@ -14393,6 +14396,8 @@ $(function () {
 		ws2.getRange2("A1").setValue("0.5");
 		ws2.getRange2("A2").setValue("1.5");
 		ws2.getRange2("A3").setValue("Text");
+		ws2.getRange2("A4").setValue("FALSE");
+		ws2.getRange2("A5").setValue("123");
 		ws2.getRange2("B1").setValue("-1");
 		ws2.getRange2("C1").setValue("1");
 		// DefNames.
@@ -14422,11 +14427,11 @@ $(function () {
 		// Case #4: String. String convertible to number. 1 of 3 arguments used.
 		oParser = new parserFormula('PRODUCT("4")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PRODUCT("4") is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 4, 'Test: Positive case: String. String convertible to number. 1 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 4, 'Test: Positive case: String. String convertible to number. 1 of 3 arguments used.');
 		// Case #5: String,Number. String and number inputs. 2 of 3 arguments used.
 		oParser = new parserFormula('PRODUCT("2",3)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PRODUCT("2",3) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 6, 'Test: Positive case: String,Number. String and number inputs. 2 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 6, 'Test: Positive case: String,Number. String and number inputs. 2 of 3 arguments used.');
 		// Case #6: Formula. Nested formula returning number. 1 of 3 arguments used.
 		oParser = new parserFormula('PRODUCT(SQRT(16))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PRODUCT(SQRT(16)) is parsed.');
@@ -14450,7 +14455,7 @@ $(function () {
 		// Case #11: Area,Number. Two-cell range and number. 2 of 3 arguments used.
 		oParser = new parserFormula('PRODUCT(A103:A104,2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PRODUCT(A103:A104,2) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), -2, 'Test: Positive case: Area,Number. Two-cell range and number. 2 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), -2, 'Test: Positive case: Area,Number. Two-cell range and number. 2 of 3 arguments used.');
 		// Case #12: Array. Array with multiple elements. 1 of 3 arguments used.
 		oParser = new parserFormula('PRODUCT({2,3})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PRODUCT({2,3}) is parsed.');
@@ -14470,11 +14475,11 @@ $(function () {
 		// Case #16: Ref3D. 3D reference to cell. 1 of 3 arguments used.
 		oParser = new parserFormula('PRODUCT(Sheet2!A1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PRODUCT(Sheet2!A1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: Ref3D. 3D reference to cell. 1 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 0.5, 'Test: Positive case: Ref3D. 3D reference to cell. 1 of 3 arguments used.');
 		// Case #17: Area3D. 3D single-cell range. 1 of 3 arguments used.
 		oParser = new parserFormula('PRODUCT(Sheet2!A2:A2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PRODUCT(Sheet2!A2:A2) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 2, 'Test: Positive case: Area3D. 3D single-cell range. 1 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 1.5, 'Test: Positive case: Area3D. 3D single-cell range. 1 of 3 arguments used.');
 		// Case #18: Table. Table structured reference. 1 of 3 arguments used.
 		oParser = new parserFormula('PRODUCT(Table1[Column1])', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PRODUCT(Table1[Column1]) is parsed.');
@@ -14491,6 +14496,19 @@ $(function () {
 		oParser = new parserFormula('PRODUCT(IF(TRUE,2,1))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PRODUCT(IF(TRUE,2,1)) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 2, 'Test: Positive case: Formula. Nested IF formula returning number. 1 of 3 arguments used.');
+		// Case #22: Area, Number, String, Empty, Boolean. 5 arguments used.
+		oParser = new parserFormula('PRODUCT(A201:A202,0.1,"abc",,TRUE)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: PRODUCT(A201:A202,0.1,"abc",,TRUE) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Test: Positive case: Area, Number, String, Empty, Boolean. 5 arguments used.');
+		// Case #23: Area, Number, String(as num), Empty, Boolean. 5 arguments used.
+		oParser = new parserFormula('PRODUCT(A201:A202,0.1,"123",,TRUE)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: PRODUCT(A201:A202,0.1,"123",,TRUE) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), -3.075, 'Test: Positive case: Area, Number, String, Empty, Boolean. 5 arguments used.');
+		// Case #24: Area(empty), Number, String(as num), Empty, Boolean. 5 arguments used.
+		oParser = new parserFormula('PRODUCT(A106:A107,0.1,"123",,TRUE)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: PRODUCT(A106:A107,0.1,"123",,TRUE) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 12.3, 'Test: Positive case: Area(empty), Number, String(as num), Empty, Boolean. 5 arguments used.');
+
 
 		// Negative cases:
 		// Case #1: String. Non-numeric string returns #VALUE!. 1 of 3 arguments used.
@@ -14520,11 +14538,11 @@ $(function () {
 		// Case #7: Area. Multi-cell range with text returns #VALUE!. 1 of 3 arguments used.
 		oParser = new parserFormula('PRODUCT(A107:A108)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PRODUCT(A107:A108) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: Area. Multi-cell range with text returns #VALUE!. 1 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: Area. Multi-cell range with text returns #VALUE!. 1 of 3 arguments used.');
 		// Case #8: Array. Array with boolean treated as 0. 1 of 3 arguments used.
 		oParser = new parserFormula('PRODUCT({FALSE})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PRODUCT({FALSE}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: Array. Array with boolean treated as 0. 1 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: Array. Array with boolean treated as 0. 1 of 3 arguments used.');
 		// Case #9: Name. Named range with text returns #VALUE!. 1 of 3 arguments used.
 		oParser = new parserFormula('PRODUCT(TestName3)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PRODUCT(TestName3) is parsed.');
@@ -14536,11 +14554,11 @@ $(function () {
 		// Case #11: Ref3D. 3D reference to text cell returns #VALUE!. 1 of 3 arguments used.
 		oParser = new parserFormula('PRODUCT(Sheet2!A3)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PRODUCT(Sheet2!A3) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: Ref3D. 3D reference to text cell returns #VALUE!. 1 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: Ref3D. 3D reference to text cell returns #VALUE!. 1 of 3 arguments used.');
 		// Case #12: Area3D. 3D multi-cell range with text returns #VALUE!. 1 of 3 arguments used.
 		oParser = new parserFormula('PRODUCT(Sheet2!A4:A5)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PRODUCT(Sheet2!A4:A5) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Negative case: Area3D. 3D multi-cell range with text returns #VALUE!. 1 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 123, 'Test: Negative case: Area3D. 3D multi-cell range with text returns #VALUE!. 1 of 3 arguments used.');
 		// Case #14: Formula. Formula resulting in #NUM! propagates error. 1 of 3 arguments used.
 		oParser = new parserFormula('PRODUCT(SQRT(-1))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: PRODUCT(SQRT(-1)) is parsed.');

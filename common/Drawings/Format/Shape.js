@@ -4992,11 +4992,12 @@
 				this.recalcInfo.recalcTitle = oOldRecalcTitle;
 				this.recalcInfo.bRecalculatedTitle = bOldRecalcTitle;
 				AscFormat.CheckSpPrXfrm(this, true);
-				this.spPr.xfrm.setExtX(this.extX + TEXT_RECT_ERROR);
-				this.spPr.xfrm.setExtY(this.extY + TEXT_RECT_ERROR);
+				const scaleCoefficient = this.getScaleCoefficient();
+				this.spPr.xfrm.setExtX(this.extX / scaleCoefficient + TEXT_RECT_ERROR);
+				this.spPr.xfrm.setExtY(this.extY / scaleCoefficient + TEXT_RECT_ERROR);
 				if (!this.bWordShape || this.group) {
-					this.spPr.xfrm.setOffX(this.x);
-					this.spPr.xfrm.setOffY(this.y);
+					this.spPr.xfrm.setOffX(this.x / scaleCoefficient);
+					this.spPr.xfrm.setOffY(this.y / scaleCoefficient);
 					if (this.drawingBase) {
 						CheckExcelDrawingXfrm(this.spPr.xfrm);
 					}
@@ -6014,9 +6015,14 @@
 		}
 
 		CShape.prototype.getAllRasterImages = function (images) {
-			if (this.spPr && this.spPr.Fill && this.spPr.Fill.fill && typeof (this.spPr.Fill.fill.RasterImageId) === "string" && this.spPr.Fill.fill.RasterImageId.length > 0)
-				images.push(this.spPr.Fill.fill.RasterImageId);
-
+			if (this.spPr) {
+				let sId = this.spPr.Fill && this.spPr.Fill.checkRasterImageId();
+				if (sId)
+					images.push(sId);
+				sId = this.spPr.ln && this.spPr.ln.checkRasterImageId();
+				if (sId)
+					images.push(sId);
+			}
 
 			var compiled_style = this.getCompiledStyle();
 			var parents = this.getParentObjects();
@@ -6075,6 +6081,7 @@
 						var defaultExtX;
 						var defaultExtY;
 						var isNormalRotate = AscFormat.checkNormalRotate(this.getDefaultRotSA());
+						const scaleCoefficient = this.getScaleCoefficient();
 						if (isNormalRotate) {
 							originalPosX = this.x;
 							originalPosY = this.y;
@@ -6086,6 +6093,10 @@
 							defaultExtX = this.extY;
 							defaultExtY = this.extX;
 						}
+						originalPosX /= scaleCoefficient;
+						originalPosY /= scaleCoefficient;
+						defaultExtX /= scaleCoefficient;
+						defaultExtY /= scaleCoefficient;
 
 
 						if (prSet) {

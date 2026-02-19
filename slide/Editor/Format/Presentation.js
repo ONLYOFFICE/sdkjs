@@ -11214,7 +11214,7 @@ CPresentation.prototype.StartAction = function (nDescription, additional) {
 	this.Create_NewHistoryPoint(nDescription);
 	this.StopAnimationPreview();
 	this.Api.sendEvent("asc_onUserActionStart");
-	this.Api.getMacroRecorder().onAction(nDescription, additional, true);
+	this.Api.getMacroRecorder().addStepData(nDescription, additional, true);
 };
 CPresentation.prototype.FinalizeAction = function (isCheckEmptyAction, isCheckLockedAction, additional) {
 	this.Recalculate();
@@ -11226,7 +11226,7 @@ CPresentation.prototype.FinalizeAction = function (isCheckEmptyAction, isCheckLo
 		this.Recalculate(this.History.Get_RecalcData(null, arrChanges));
 	}
 	this.Api.sendEvent("asc_onUserActionEnd");
-	this.Api.getMacroRecorder().onAction(null, additional, false);
+	this.Api.getMacroRecorder().addStepData(null, additional, false);
 };
 CPresentation.prototype.AddMacroData = function(nDescription, additional)
 {

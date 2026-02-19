@@ -211,7 +211,10 @@
 		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 		{
 			let oForm = arrForms[nIndex];
-			if (oForm.IsRadioButton() && sGroupKey === oForm.GetCheckBoxPr().GetGroupKey())
+			if (oForm.IsLabeledCheckBox())
+				oForm = oForm.GetInnerCheckBox();
+			
+			if (oForm && oForm.IsRadioButton() && sGroupKey === oForm.GetCheckBoxPr().GetGroupKey())
 				arrResult.push(oForm);
 		}
 
@@ -378,6 +381,12 @@
 		for (let index = 0, count = allForms.length; index < count; ++index)
 		{
 			let form = allForms[index];
+			if (form.IsLabeledCheckBox())
+				form = form.GetInnerCheckBox();
+			
+			if (!form)
+				continue;
+			
 			let key  = form.GetFormKey();
 			let type = form.GetSpecificType();
 			
@@ -397,19 +406,74 @@
 				stringType = "radio";
 			
 			let roleColor = form.GetRoleColor();
-			
-			data.push({
+			let formData = {
 				"key"       : key,
 				"tag"       : form.GetTag(),
 				"value"     : this.GetFormValue(form),
 				"type"      : stringType,
 				"role"      : form.GetFormRole(),
 				"roleColor" : roleColor ? roleColor.ToHexColor() : undefined
-			});
+			};
+			
+			let formOptions = this.GetFormOptions(form);
+			if (formOptions)
+				formData["options"] = formOptions;
+			
+			
+			if (form.IsCheckBox() && !form.IsRadioButton())
+				formData["label"] = form.GetCheckBoxLabel();
+			
+			if (form.IsDatePicker())
+			{
+				formData["format"] = form.GetDatePickerPr().GetDateFormat();
+				let lcid = form.GetDatePickerPr().GetLangId();
+				if (lcid)
+					formData["lang"] = Asc.g_oLcidIdToNameMap[lcid];
+			}
+			
+			data.push(formData);
 		}
 		
 		return data;
 	};
+	CFormsManager.prototype.GetFormOptions = function(form)
+	{
+		if (form.IsRadioButton())
+		{
+			let groupKey = form.GetCheckBoxPr().GetGroupKey();
+			let group   = this.GetRadioButtons(groupKey);
+			let options = [];
+			for (let i = 0, count = group.length; i < count; ++i)
+			{
+				let rb = group[i];
+				options.push({
+					"value" : rb.GetFormKey(),
+					"label" : rb.GetCheckBoxLabel()
+				});
+			}
+			return options;
+		}
+		else if (form.IsCheckBox())
+		{
+			return [true, false];
+		}
+		else if (form.IsDropDownList() || form.IsComboBox())
+		{
+			let pr      = form.IsComboBox() ? form.GetComboBoxPr() : form.GetDropDownListPr();
+			let options = [];
+			for (let i = 0, count = pr.GetItemsCount(); i < count; ++i)
+			{
+				options.push({
+					"value" : pr.GetItemValue(i),
+					"label" : pr.GetItemDisplayText(i)
+				});
+			}
+			return options;
+		}
+
+		return undefined;
+	};
+
 	CFormsManager.prototype.SetAllFormsData = function(data)
 	{
 		if (!data || !Array.isArray(data))

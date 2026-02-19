@@ -328,12 +328,12 @@ CPDFCollaborativeEditing.prototype.Apply_Changes = function(fEndCallBack) {
 		return fEndCallBack ? fEndCallBack() : null;
 
 	let docHistory = this.GetDocument().History;
-	docHistory.TurnOff();
+	docHistory.StartNoHistoryMode();
 	
 	this.GetDocument().currInkInDrawingProcess = null; // останавливаем ink рисование
 	AscCommon.CCollaborativeEditingBase.prototype.Apply_Changes.call(this, fEndCallBack);
 	
-	docHistory.TurnOn();
+	docHistory.EndNoHistoryMode();
 };
 CPDFCollaborativeEditing.prototype.OnEnd_ReadForeignChanges = function() {
 	AscCommon.CCollaborativeEditingBase.prototype.OnEnd_ReadForeignChanges.apply(this, arguments);

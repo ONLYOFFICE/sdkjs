@@ -471,13 +471,24 @@ var editor;
     return false;
   };
 
-  spreadsheet_api.prototype.asc_SpecialPaste = function(props) {
-    return AscCommon.g_specialPasteHelper.Special_Paste(props);
+  spreadsheet_api.prototype.asc_SpecialPaste = function(props, isPasteOptions) {
+    return AscCommon.g_specialPasteHelper.Special_Paste(props, isPasteOptions);
   };
 
-  spreadsheet_api.prototype.asc_SpecialPasteData = function(props) {
+  spreadsheet_api.prototype.asc_SpecialPasteData = function(props, isPasteOptions) {
 	if (this.canEdit()) {
-      this.wb.specialPasteData(props);
+		if (isPasteOptions) {
+			let t = this;
+			AscCommon.g_clipboardBase.initSpecialPasteData(function () {
+				let ws = t.wb.getWorksheet();
+				//AscCommon.g_specialPasteHelper.specialPasteData.activeRange = ws.model.selectionRange.clone(ws.model);
+				AscCommon.g_specialPasteHelper.specialPasteData.pasteFromWord = false;
+
+				t.wb.specialPasteData(props, isPasteOptions);
+			});
+		} else {
+			this.wb.specialPasteData(props);
+		}
     }
   };
 
@@ -7334,6 +7345,7 @@ var editor;
         {
             this.openFileCryptCallback(this.openFileCryptBinary);
         }
+		AscBuilder.Cell.init();
 	};
 
 	spreadsheet_api.prototype.asc_OnShowContextMenu = function() {
@@ -9037,9 +9049,11 @@ var editor;
 
 	spreadsheet_api.prototype.onWorksheetChange = function(props) {
 		let ws = this.wbModel.getActiveWs();
-		if (!ws) {
+		let jsApi = this.getJsApi();
+		if (!ws || !jsApi) {
 			return;
 		}
+		
 		let range = null;
 		let result = null;
 		if (Array.isArray(props)) {
@@ -9048,11 +9062,11 @@ var editor;
 			let arr = props.length <= 1 ? null : props.map(function(r){
 				return ws.getRange3(r.r1, r.c1, r.r2, r.c2);
 			})
-			result = this.private_GetRange(range, arr);
+			result = jsApi.private_GetRange(range, arr);
 		} else {
 			// todo сделать получение листа ещё
 			range = ws.getRange3(props.r1, props.c1, props.r2, props.c2);
-			result = this.private_GetRange(range);
+			result = jsApi.private_GetRange(range);
 		}
 		this.sendEvent('onWorksheetChange', result);
 	};
@@ -9864,6 +9878,87 @@ var editor;
 	spreadsheet_api.prototype.asc_SetIsSupportDynamicArrays = function(val) {
 		AscCommonExcel.bIsSupportDynamicArrays = val;
 	};
+	spreadsheet_api.prototype.getJsApi = function() {
+		return AscBuilder.Cell.Api;
+	};
+
+	spreadsheet_api.prototype.asc_getPasteOptions = function(callback) {
+		AscCommon.g_clipboardBase.Get_Clipboard_Data(function (data) {
+			if (!data) {
+				callback(null);
+				return;
+			}
+			//onpaste
+			if (data.clipboardData) {
+				callback(null);
+			} else {
+				//data -> navigator.clipboard -> [AscCommon.c_oAscClipboardDataFormat.Internal, AscCommon.c_oAscClipboardDataFormat.Html, AscCommon.c_oAscClipboardDataFormat.Text]
+				let _internal = data[AscCommon.c_oAscClipboardDataFormat.Internal];
+				let _specialPasteShowOptions = new Asc.SpecialPasteShowOptions();
+				let allowedSpecialPasteProps = null;
+				let sProps = Asc.c_oSpecialPasteProps;
+
+				let checkInternal = function (str) {
+					if (str && str.indexOf("xslData;XLSY") > -1) {
+						allowedSpecialPasteProps =
+							[sProps.paste, sProps.pasteOnlyFormula, sProps.formulaNumberFormat, sProps.formulaAllFormatting,
+								sProps.formulaWithoutBorders, sProps.formulaColumnWidth, sProps.pasteOnlyValues,
+								sProps.valueNumberFormat, sProps.valueAllFormating, sProps.pasteOnlyFormating, sProps.comments,
+								sProps.columnWidth];
+
+						//if (!isTablePasted) {
+							//add transpose property
+							allowedSpecialPasteProps.push(sProps.transpose);
+							allowedSpecialPasteProps.push(sProps.link);
+						//}
+
+						_specialPasteShowOptions.asc_setShowPasteSpecial(true);
+					} else {
+						allowedSpecialPasteProps = [sProps.sourceformatting, sProps.destinationFormatting];
+					}
+				};
+
+				if (_internal && _internal !== "" && _internal.indexOf("asc_internalData2;") === 0) {
+					// var isTablePasted = checkTablesPaste();
+					checkInternal(_internal);
+
+					if (data[AscCommon.c_oAscClipboardDataFormat.Image]) {
+						allowedSpecialPasteProps.push(sProps.picture);
+					}
+
+					_specialPasteShowOptions.options = allowedSpecialPasteProps;
+					callback(_specialPasteShowOptions);
+					return;
+					// 	if (isAllowPasteLink(pasteInfo.wb)) {
+					// 		allowedSpecialPasteProps.push(sProps.link);
+					// 	}
+				}
+				let _html = data[AscCommon.c_oAscClipboardDataFormat.Html];
+				if (_html) {
+					checkInternal(_html);
+
+					if (data[AscCommon.c_oAscClipboardDataFormat.Image]) {
+						allowedSpecialPasteProps.push(sProps.picture);
+					}
+
+					_specialPasteShowOptions.options = allowedSpecialPasteProps;
+					callback(_specialPasteShowOptions);
+					return;
+				}
+
+				let _text = data[AscCommon.c_oAscClipboardDataFormat.Text];
+				if (_text) {
+					allowedSpecialPasteProps = [sProps.keepTextOnly, sProps.useTextImport];
+					_specialPasteShowOptions.options = allowedSpecialPasteProps;
+					callback(_specialPasteShowOptions);
+
+					return;
+				}
+
+				callback(null);
+			}
+		});
+	};
 
   /*
    * Export
@@ -10485,8 +10580,10 @@ var editor;
   prot["sync_currentSheetCallback"]= prot.sync_currentSheetCallback;
 
   prot["asc_SetIsSupportDynamicArrays"]= prot.asc_SetIsSupportDynamicArrays;
-
-
+  prot["asc_getPasteOptions"]= prot.asc_getPasteOptions;
+  prot["getJsApi"]= prot.getJsApi;
+  
+  AscCommon['SpreadsheetEditorApi'] = AscCommon.SpreadsheetEditorApi = spreadsheet_api;
 
 
 })(window);

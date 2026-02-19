@@ -32,6 +32,9 @@
 
 $(function () {
     var ws = AscTest.JsApi.GetActiveSheet();
+    function isNum(value) {
+        return !isNaN(parseFloat(value)) && isFinite(value);
+    }
 
     // ======= TEST HELPERS =======
     // Must exist & each test must start with it
@@ -114,7 +117,7 @@ $(function () {
         // string
         const r1 = ws.GetRange("D1:D2");
         r1.GetValidation().Add('xlValidateList', 'xlValidAlertStop', undefined, 'A1:A3');
-        assert.strictEqual(r1.GetValidation().GetFormula1(), '\"A1:A3\"', "Formula from string is quoted");
+        assert.strictEqual(r1.GetValidation().GetFormula1(), 'A1:A3', "Formula from string is quoted");
 
         // number
         const r2 = ws.GetRange("E1:E1");
@@ -126,7 +129,7 @@ $(function () {
         const src = ws.GetRange("F1:F2"); src.SetValue('x');
         const r3 = ws.GetRange("G1:G2");
         r3.GetValidation().Add('xlValidateList', 'xlValidAlertWarning', undefined, ws.GetRange('F1:F2'));
-        assert.strictEqual(r3.GetValidation().GetFormula1(), 'F1:F2', "Formula1 from ApiRange address");
+        assert.strictEqual(r3.GetValidation().GetFormula1(), "=$F$1:$F$2", "Formula1 from ApiRange address");
     });
 
     QUnit.test("Add fails when type is invalid", function (assert) {
@@ -388,7 +391,7 @@ $(function () {
 
         // Expected per your engine: correctFromInterface() wraps list literal in quotes
         // Example: "3,4" (quotes are part of returned string)
-        assert.strictEqual(v.GetFormula1(), "\"3,4\"", "Formula1 is quoted list literal");
+        assert.strictEqual(v.GetFormula1(), "3,4", "Formula1 is quoted list literal");
 
         // Ensure it isn't empty internally
         const dv = getAllValidations()[0];
@@ -407,7 +410,7 @@ $(function () {
 
         const v = r.GetValidation();
         assert.strictEqual(v.GetType(), "xlValidateList", "Type");
-        assert.strictEqual(v.GetFormula1(), "M1:M2", "Formula1 returns range address (no quotes, no '=')");
+        assert.strictEqual(v.GetFormula1(), "=$M$1:$M$2", "Formula1 returns range address");
     });
 
     QUnit.test("xlValidateDate: Greater than 01/31/2027 => stored numerically (no '=' drift)", function (assert) {

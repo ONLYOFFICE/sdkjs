@@ -388,6 +388,7 @@
     EditShapeGeometryTrack.prototype.getBounds = function() {
         var bounds_checker = new  AscFormat.CSlideBoundsChecker();
         bounds_checker.init(Page_Width, Page_Height, Page_Width, Page_Height);
+				const scaleCoefficient = this.originalObject.getScaleCoefficient();
         this.overlayObject.TransformMatrix = this.originalShape.transform;
         this.overlayObject.draw(bounds_checker);
         var tr = this.originalShape.transform;
@@ -416,14 +417,18 @@
         bounds_checker.Bounds.max_y = Math.max.apply(Math, arr_p_y);
 
         var oOffset = this.getXfrmOffset();
+				const oSizes = this.getXfrmExt();
         bounds_checker.Bounds.posX = oOffset.OffX;
         bounds_checker.Bounds.posY = oOffset.OffY;
-        bounds_checker.Bounds.extX = this.xMax - this.xMin;
-        bounds_checker.Bounds.extY = this.yMax - this.yMin;
+        bounds_checker.Bounds.extX = oSizes.ExtX;
+        bounds_checker.Bounds.extY = oSizes.ExtY;
 
         return bounds_checker.Bounds;
     };
-
+	EditShapeGeometryTrack.prototype.getXfrmExt = function() {
+		const scaleCoefficient = this.originalObject.getScaleCoefficient();
+		return {ExtX: (this.xMax - this.xMin) / scaleCoefficient, ExtY: (this.yMax - this.yMin) / scaleCoefficient};
+	};
     EditShapeGeometryTrack.prototype.addPathCommandInfo = function (command, arrPathElem, x1, y1, x2, y2, x3, y3) {
         AscFormat.ExecuteNoHistory(function () {
             switch (command) {
@@ -485,6 +490,7 @@
     };
 
 	EditShapeGeometryTrack.prototype.getXfrmOffset = function () {
+		const scaleCoefficient = this.originalObject.getScaleCoefficient();
 		const oRectBounds = this.getRectBounds();
 		const dXLT = oRectBounds.XLT;
 		const dXRB = oRectBounds.XRB;
@@ -505,7 +511,7 @@
 			dOffY -= oGroup.transform.ty;
 		}
 
-		return { OffX: dOffX, OffY: dOffY };
+		return { OffX: dOffX / scaleCoefficient, OffY: dOffY / scaleCoefficient };
 	};
 	EditShapeGeometryTrack.prototype.checkDrawingPartWithHistory = function () {
 		if (this.originalObject.checkDrawingPartWithHistory) {
@@ -522,8 +528,9 @@
 		const oSpPr = this.originalObject.spPr;
 		const oXfrm = oSpPr.xfrm;
 
-		const dExtX = this.xMax - this.xMin;
-		const dExtY = this.yMax - this.yMin;
+		const oExt = this.getXfrmExt();
+		const dExtX = oExt.ExtX;
+		const dExtY = oExt.ExtY;
 
 		if (this.originalObject.animMotionTrack) {
 			const oOffset = this.getXfrmOffset();

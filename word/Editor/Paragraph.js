@@ -4366,6 +4366,10 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 			}
 			else if(this.bFromDocument)
 			{
+				if (Asc.editor.isPdfEditor()) {
+					return Result;
+				}
+				
              	if (align_Right === Pr.Jc)
                 {
                     this.Set_Align(align_Center);

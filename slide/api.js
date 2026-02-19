@@ -2047,12 +2047,12 @@ background-repeat: no-repeat;\
 		}
 	};
 
-	asc_docs_api.prototype.asc_SpecialPaste = function(props)
+	asc_docs_api.prototype.asc_SpecialPaste = function(props, isPasteOptions)
 	{
-		return AscCommon.g_specialPasteHelper.Special_Paste(props);
+		return AscCommon.g_specialPasteHelper.Special_Paste(props, isPasteOptions);
 	};
 
-	asc_docs_api.prototype.asc_SpecialPasteData = function(props)
+	asc_docs_api.prototype.asc_SpecialPasteData = function(props, isPasteOptions)
 	{
 		if (AscCommon.CollaborativeEditing.Get_GlobalLock())
 			return;
@@ -2064,20 +2064,96 @@ background-repeat: no-repeat;\
 		//TODO пересмотреть проверку лока и добавление новой точки(AscDFH.historydescription_Document_PasteHotKey)
 		if (false === _logicDoc.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, false))
 		{
-			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
-			window['AscCommon'].g_specialPasteHelper.Special_Paste_Start();
+			if (isPasteOptions) {
+				AscCommon.g_clipboardBase.initSpecialPasteData(function () {
+					_logicDoc.Create_NewHistoryPoint(AscDFH.historydescription_Document_PasteHotKey);
+					AscCommon.Editor_Paste_Exec(this, null, null, null, null, props);
+				});
+			} else {
+				window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
+				window['AscCommon'].g_specialPasteHelper.Special_Paste_Start();
 
-			//undo previous action
+				//undo previous action
 
-            this.WordControl.m_oLogicDocument.TurnOffInterfaceEvents = true;
-			this.WordControl.m_oLogicDocument.Document_Undo();
-            this.WordControl.m_oLogicDocument.TurnOffInterfaceEvents = false;
-			//if (!useCurrentPoint) {
-			_logicDoc.Create_NewHistoryPoint(AscDFH.historydescription_Document_PasteHotKey);
-			//}
+				this.WordControl.m_oLogicDocument.TurnOffInterfaceEvents = true;
+				this.WordControl.m_oLogicDocument.Document_Undo();
+				this.WordControl.m_oLogicDocument.TurnOffInterfaceEvents = false;
+				//if (!useCurrentPoint) {
+				_logicDoc.Create_NewHistoryPoint(AscDFH.historydescription_Document_PasteHotKey);
+				//}
 
-			AscCommon.Editor_Paste_Exec(this, null, null, null, null, props);
+				AscCommon.Editor_Paste_Exec(this, null, null, null, null, props);
+			}
 		}
+	};
+
+	asc_docs_api.prototype.asc_getPasteOptions = function(callback) {
+		var t = this;
+		AscCommon.g_clipboardBase.Get_Clipboard_Data(function (data) {
+			if (!data) {
+				callback(null);
+				return;
+			}
+			
+			// Check presentation state (similar to _setSpecialPasteShowOptionsPresentation)
+			var presentation = t.WordControl.m_oLogicDocument;
+			if (!presentation || presentation.IsMasterMode()) {
+				callback(null);
+				return;
+			}
+			
+			// onpaste - real paste event
+			if (data.clipboardData) {
+				callback(null);
+				return;
+			}
+			
+			// data from navigator.clipboard
+			var _internal = data[AscCommon.c_oAscClipboardDataFormat.Internal];
+			var _html = data[AscCommon.c_oAscClipboardDataFormat.Html];
+			var _text = data[AscCommon.c_oAscClipboardDataFormat.Text];
+			var _image = data[AscCommon.c_oAscClipboardDataFormat.Image];
+			
+			var _specialPasteShowOptions = new Asc.SpecialPasteShowOptions();
+			var allowedSpecialPasteProps = null;
+			var sProps = Asc.c_oSpecialPasteProps;
+
+			let checkInternal = function (str) {
+				if (str && str.indexOf("xslData;XLSY") > -1) {
+					allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.keepTextOnly]
+				} else if (str && str.indexOf("xslData;DOCY") > -1) {
+					allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.keepTextOnly];
+				} else if (str && str.indexOf("xslData;PPTY") > -1) {
+					allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.sourceformatting, sProps.picture, sProps.keepTextOnly];
+				} else {
+					allowedSpecialPasteProps = [sProps.sourceformatting, sProps.keepTextOnly];
+				}
+			};
+
+			//TODO now don't analyze inner pasted content + place of paste. it can be slow. only simple options
+			if (_internal && _internal !== "" && _internal.indexOf("asc_internalData2;") === 0) {
+				checkInternal(_internal);
+				
+				_specialPasteShowOptions.options = allowedSpecialPasteProps;
+				callback(_specialPasteShowOptions);
+				return;
+			}
+			
+			// HTML format (external source - from Excel, Word, browsers)
+			if (_html) {
+				checkInternal(_html);
+				
+				_specialPasteShowOptions.options = allowedSpecialPasteProps;
+				callback(_specialPasteShowOptions);
+				return;
+			}
+			
+			// Text only - no special paste options
+			if (_text) {
+			}
+			
+			callback(null);
+		});
 	};
 
 	asc_docs_api.prototype.asc_IsFocus = function(bIsNaturalFocus)
@@ -6643,11 +6719,6 @@ background-repeat: no-repeat;\
 		this.SelectedObjectsStack[this.SelectedObjectsStack.length] = new asc_CSelectedObject(c_oAscTypeSelectElement.Hyperlink, new Asc.CHyperlinkProperty(hyperProp));
 	};
 
-	asc_docs_api.prototype.sync_HyperlinkClickCallback = function(Url)
-	{
-		this.sendEvent("asc_onHyperlinkClick", Url);
-	};
-
 	asc_docs_api.prototype.sync_CanAddHyperlinkCallback = function(bCanAdd)
 	{
 		//if ( true === CollaborativeEditing.Get_GlobalLock() )
@@ -7473,9 +7544,12 @@ background-repeat: no-repeat;\
 		}
 
 		let presentation = this.private_GetLogicDocument();
-		let allGIFs = presentation.GetAllGIFImageUrls();
-		for (let i = 0; i < allGIFs.length; i++) {
-			this.WordControl.DemonstrationManager.loadGIF(allGIFs[i]);
+		if (presentation) {
+			let allGIFs = presentation.GetAllGIFImageUrls();
+			this.WordControl.DemonstrationManager.cleanGifCache(allGIFs);
+			for (let i = 0; i < allGIFs.length; i++) {
+				this.WordControl.DemonstrationManager.loadGIF(allGIFs[i]);
+			}
 		}
 
 
@@ -8383,6 +8457,7 @@ background-repeat: no-repeat;\
         {
             this.openFileCryptCallback(this.openFileCryptBinary);
         }
+		AscBuilder.Slide.init();
 	};
 	asc_docs_api.prototype.initCollaborativeEditing = function()
 	{
@@ -9439,6 +9514,11 @@ background-repeat: no-repeat;\
 			}
 		}
 	};
+	
+	asc_docs_api.prototype.getJsApi = function()
+	{
+		return AscBuilder.Slide.Api;
+	};
 
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                 = window['Asc'] || {};
@@ -9968,6 +10048,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["preloadReporter"]						= asc_docs_api.prototype.preloadReporter;
 
 	asc_docs_api.prototype["asc_SpecialPaste"]						= asc_docs_api.prototype.asc_SpecialPaste;
+	asc_docs_api.prototype["asc_getPasteOptions"]					= asc_docs_api.prototype.asc_getPasteOptions;
 
 	// signatures
 	asc_docs_api.prototype["asc_addSignatureLine"] 					= asc_docs_api.prototype.asc_addSignatureLine;
@@ -10026,6 +10107,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_setPreserveSlideMaster"] = asc_docs_api.prototype.asc_setPreserveSlideMaster;
 
 	asc_docs_api.prototype["asc_SetThumbnailsPosition"] = asc_docs_api.prototype.asc_SetThumbnailsPosition;
+	asc_docs_api.prototype["getJsApi"] = asc_docs_api.prototype.getJsApi;
 
 
 	window['Asc']['asc_CCommentDataSlide'] = window['Asc'].asc_CCommentDataSlide = asc_CCommentDataSlide;

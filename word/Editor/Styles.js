@@ -17805,6 +17805,7 @@ window["AscWord"].NumPr   = CNumPr;
 window["AscWord"].CBorder = CDocumentBorder;
 window["AscWord"].CShd    = CDocumentShd;
 window["AscWord"].CStyles = CStyles;
+window["AscWord"].CParaInd = CParaInd;
 
 
 // Создаем глобальные дефолтовые стили, чтобы быстро можно было отдать дефолтовые настройки

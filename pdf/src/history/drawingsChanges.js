@@ -34,6 +34,7 @@
 
 AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Drawing_Page]		= CChangesPDFDrawingPage;
 AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Drawing_Redacts]	= CChangesPDFDrawingRedacts;
+AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Drawing_From_Scan]= CChangesPDFDrawingFromScan;
 
 /**
  * @constructor
@@ -197,4 +198,18 @@ CChangesPDFDrawingRedacts.prototype.Copy = function() {
 };
 CChangesPDFDrawingRedacts.prototype.CreateReverseChange = function(){
     return this.private_CreateReverseChange(this.constructor);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesPDFDrawingFromScan(Class, Old, New, Color) {
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFDrawingFromScan.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesPDFDrawingFromScan.prototype.constructor = CChangesPDFDrawingFromScan;
+CChangesPDFDrawingFromScan.prototype.Type = AscDFH.historyitem_type_Pdf_Drawing_From_Scan;
+CChangesPDFDrawingFromScan.prototype.private_SetValue = function(Value) {
+	this.Class._isFromScan = Value;
 };

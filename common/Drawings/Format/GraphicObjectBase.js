@@ -629,7 +629,7 @@
 			new_ext_x = xfrm.extX;
 			new_ext_y = xfrm.extY;
 		} else {
-			var scale_scale_coefficients = this.group.getResultScaleCoefficients();
+			var scale_scale_coefficients = this.group.getResultScaleCoefficients(true);
 			new_off_x = scale_scale_coefficients.cx * (xfrm.offX - this.group.spPr.xfrm.chOffX);
 			new_off_y = scale_scale_coefficients.cy * (xfrm.offY - this.group.spPr.xfrm.chOffY);
 			new_ext_x = scale_scale_coefficients.cx * xfrm.extX;
@@ -1046,27 +1046,25 @@
 		return !this.isObjectInSmartArt() && this.getNoAdjustHandles() === false;
 	};
 	CGraphicObjectBase.prototype.Reassign_ImageUrls = function (mapUrl) {
-		var blip_fill;
 		if (this.blipFill) {
 			if (mapUrl[this.blipFill.RasterImageId]) {
 				if (this.setBlipFill) {
-					blip_fill = this.blipFill.createDuplicate();
+					const blip_fill = this.blipFill.createDuplicate();
 					blip_fill.setRasterImageId(mapUrl[this.blipFill.RasterImageId]);
 					this.setBlipFill(blip_fill);
 				}
 			}
 		}
-		if (this.spPr && this.spPr.Fill && this.spPr.Fill.fill && this.spPr.Fill.fill.RasterImageId) {
-			if (mapUrl[this.spPr.Fill.fill.RasterImageId] && mapUrl[this.spPr.Fill.fill.RasterImageId] !== this.spPr.Fill.fill.RasterImageId) {
-				blip_fill = this.spPr.Fill.fill.createDuplicate();
-				blip_fill.setRasterImageId(mapUrl[this.spPr.Fill.fill.RasterImageId]);
-				var oUniFill = this.spPr.Fill.createDuplicate();
-				oUniFill.setFill(blip_fill);
-				this.spPr.setFill(oUniFill);
-			}
+		if (this.spPr) {
+			const oNewFill = this.spPr.Fill && this.spPr.Fill.reassignImageUrl(mapUrl);
+			if (oNewFill)
+				this.spPr.setFill(oNewFill);
+			const oNewLn = this.spPr.ln && this.spPr.ln.reassignImageUrl(mapUrl);
+			if (oNewLn)
+				this.spPr.setLn(oNewLn);
 		}
 		if (Array.isArray(this.spTree)) {
-			for (var i = 0; i < this.spTree.length; ++i) {
+			for (let i = 0; i < this.spTree.length; ++i) {
 				if (this.spTree[i].Reassign_ImageUrls) {
 					this.spTree[i].Reassign_ImageUrls(mapUrl);
 				}
@@ -1481,6 +1479,7 @@
 	CGraphicObjectBase.prototype.checkTypeCorrect = function () {
 		return true;
 	};
+	CGraphicObjectBase.prototype.updateDrawingTextCache = function () {};
 	CGraphicObjectBase.prototype.isSupported = function () {
 		return true;
 	};
@@ -3568,13 +3567,15 @@
 				if (oBounds.t < topEdgeOfSmartArt) {
 					diffY = topEdgeOfSmartArt - oBounds.t;
 				}
-
+				const scaleCoefficient = this.getScaleCoefficient();
 				if (diffX !== null) {
+					diffX /= scaleCoefficient;
 					var newOffX = this.spPr.xfrm.offX + diffX;
 					this.spPr.xfrm.setOffX(newOffX);
 					this.txXfrm && this.txXfrm.setOffX(this.txXfrm.offX + diffX);
 				}
 				if (diffY !== null) {
+					diffY /=  scaleCoefficient;
 					var newOffY = this.spPr.xfrm.offY + diffY;
 					this.spPr.xfrm.setOffY(newOffY);
 					this.txXfrm && this.txXfrm.setOffY(this.txXfrm.offY + diffY);

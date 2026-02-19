@@ -464,6 +464,7 @@
 			
 			"word/apiBuilder.js",
 			"word/fromToJSON.js",
+			"pdf/apiBuilder.js",
 
 			"vendor/easysax.js",
 			"common/openxml.js"

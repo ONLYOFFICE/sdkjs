@@ -10500,6 +10500,14 @@ function BinaryPPTYLoader()
                                 }
 
                                 if (oPdfFontInfo && _run) {
+									if (!Asc.editor.embeddedFontsMap) {
+										Asc.editor.embeddedFontsMap = {};
+									}
+
+									if (!oPdfFontInfo.isActual) {
+										Asc.editor.embeddedFontsMap[AscFonts.getEmbeddedFontPrefix() + oPdfFontInfo.name] = _run.GetFontFamily();
+									}
+
                                     _run.RFonts.SetAll((!oPdfFontInfo.isActual ? AscFonts.getEmbeddedFontPrefix() : "") + oPdfFontInfo.name, -1);
                                 }
 

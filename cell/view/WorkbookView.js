@@ -1630,7 +1630,10 @@
 		const nPage = this.model.nActive;
 		const oContext = this.trackOverlay.m_oContext;
 		const oRect = {};
-		const nLeft = 2 * oWS.cellsLeft - oWS._getColLeft(oWS.visibleRange.c1);
+		let nLeft = 2 * oWS.cellsLeft - oWS._getColLeft(oWS.visibleRange.c1);
+		if (oWS.getRightToLeft()) {
+			nLeft = -nLeft;
+		}
 		const nTop = 2 * oWS.cellsTop - oWS._getRowTop(oWS.visibleRange.r1);
 		oRect.left   = nLeft;
 		oRect.right  = nLeft + AscCommon.AscBrowser.convertToRetinaValue(oContext.canvas.width);
@@ -3395,9 +3398,9 @@
     g_clipboardExcel.pasteData(ws, _format, data1, data2, text_data, null, doNotShowButton, null, callback);
   };
 
-  WorkbookView.prototype.specialPasteData = function(props) {
+  WorkbookView.prototype.specialPasteData = function(props, isPasteOptions) {
     if (!this.getCellEditMode()) {
-		this.getWorksheet().specialPaste(props);
+		this.getWorksheet().specialPaste(props, isPasteOptions);
 	}
   };
 
@@ -4212,43 +4215,7 @@
       }
   };
     WorkbookView.prototype.handleDrawingsOnWorkbookChange = function (aRanges) {
-        if(!Array.isArray(aRanges) || aRanges.length === 0) {
-            return;
-        }
-        var aChartRefsToChange = [];
-        var aCharts = [];
-				let bHandled = false;
-				const fDrawingCallback = function(oDrawing) {
-					switch (oDrawing.getObjectType()) {
-						case AscDFH.historyitem_type_ChartSpace: {
-							const nPrevLength = aChartRefsToChange.length;
-							oDrawing.collectIntersectionRefs(aRanges, aChartRefsToChange);
-							if(aChartRefsToChange.length > nPrevLength) {
-								aCharts.push(oDrawing);
-								bHandled = true;
-							}
-							break;
-						}
-						case AscDFH.historyitem_type_Control: {
-							bHandled |= oDrawing.handleChangeRanges(aRanges);
-							break;
-						}
-						default: {
-							break;
-						}
-					}
-				};
-			this.model.handleDrawings(fDrawingCallback);
-			this.Api.frameManager.handleMainDiagram(fDrawingCallback);
-        if(aChartRefsToChange.length > 0) {
-            for(var nRef = 0; nRef < aChartRefsToChange.length; ++nRef) {
-                aChartRefsToChange[nRef].updateCacheAndCat();
-            }
-            for(var nChart = 0; nChart < aCharts.length; ++nChart) {
-                aCharts[nChart].recalculate();
-            }
-            this.onShowDrawingObjects();
-        }
+				const bHandled = this.model.handleDrawingsOnWorkbookChange(aRanges);
 				if (bHandled) {
 					this.onShowDrawingObjects();
 				}
@@ -5768,6 +5735,14 @@
 			return this.EnterText(newValue);
 		}
 
+		let oWSView = this.getWorksheet();
+		if (oWSView && oWSView.isSelectOnShape) {
+			if (oWSView.objectRender) {
+				return oWSView.objectRender.CorrectEnterText(oldValue, newValue);
+			}
+			return;
+		}
+
 		if (!this.isCellEditMode || !this.cellEditor) {
 			return;
 		}
@@ -6851,7 +6826,7 @@
 	WorkbookView.prototype.StartAction = function(nDescription, additional)
 	{
 		this.Api.sendEvent("asc_onUserActionStart");
-		this.Api.getMacroRecorder().onAction(nDescription, additional);
+		this.Api.getMacroRecorder().addStepData(nDescription, additional);
 	};
 	WorkbookView.prototype.MacrosAddData = function(nDescription, additional)
 	{
@@ -6860,7 +6835,7 @@
 	WorkbookView.prototype.FinalizeAction = function(nDescription, additional)
 	{
 		this.Api.sendEvent("asc_onUserActionEnd");
-		this.Api.getMacroRecorder().onAction(nDescription, additional);
+		this.Api.getMacroRecorder().addStepData(nDescription, additional);
 	};
 	WorkbookView.prototype.setIsPartialReading = function(val)
 	{

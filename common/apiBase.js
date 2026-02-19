@@ -3782,6 +3782,9 @@
 	{
 		return false;
 	};
+	baseEditorsApi.prototype.asc_getPasteOptions          = function()
+	{
+	};
 	baseEditorsApi.prototype.asc_Recalculate       = function()
 	{
 	};
@@ -6155,6 +6158,11 @@
 	{
 		return this.macroRecorder.addStepData(type, additional);
 	};
+	
+	baseEditorsApi.prototype.getJsApi = function()
+	{
+		return this;
+	};
 
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
@@ -6292,5 +6300,7 @@
 	prot['asc_isFinal'] = prot.asc_isFinal = prot.isFinal;
 	prot["getMacroRecorder"] = prot.getMacroRecorder;
 	prot["addMacroStepData"] = prot.addMacroStepData;
+	
+	prot['getJsApi'] = prot.getJsApi;
 
 })(window);

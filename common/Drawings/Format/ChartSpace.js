@@ -5898,16 +5898,35 @@ function(window, undefined) {
 		const seria = this.chart.plotArea.plotAreaRegion.series[size - 1];
 		const cachedData = this.chart.plotArea.plotAreaRegion.getCachedData();
 
+		// helper to get label for treemap from catPts by idx of valPt
+		function searchLabel(sPts, idx) {
+			for (let i = 0; i < sPts.length; i++) {
+				if (sPts[i].idx === idx && sPts[i].val) {
+					return sPts[i].val;
+				}
+			}
+			return String(idx + 1);
+		}
+
 		//seria.dataLabels.visibility optional
 		if (cachedData && seria && seria.dataLabels) {
+			const chartType = cachedData.type;
 			const default_lbl = new AscFormat.CDLbl();
 			const nDefaultPosition = seria.dataLabels.pos ? seria.dataLabels.pos : AscFormat.DATA_LABEL_POS_OUT_END;
 			default_lbl.initDefault(nDefaultPosition);
 			cachedData.compiledDlbs = [];
 			let aPts = seria.getValPts();
+			let sPts = seria.getCatPts();
+			let sPtsIndex = 0;
 
 			for(let nPt = 0; nPt < aPts.length; ++nPt) {
-				let pt = aPts[nPt];
+				let pt = null;
+				// if (chartType === AscFormat.SERIES_LAYOUT_TREEMAP) {
+				// 	pt = sPts[nPt];
+				// } else {
+				// 	pt = aPts[nPt];
+				// }
+				pt = aPts[nPt];
 				const compiled_dlb = new AscFormat.CDLbl();
 				compiled_dlb.merge(default_lbl);
 				pt.compiledDlb = compiled_dlb;
@@ -5917,6 +5936,13 @@ function(window, undefined) {
 				pt.compiledDlb.idx = pt.idx;
 				pt.compiledDlb.setShowChartExVal(true);
 				pt.compiledDlb.recalculate();
+
+				// treemap show labels rather than numbers
+				if (chartType === AscFormat.SERIES_LAYOUT_TREEMAP) {
+					const label = searchLabel(sPts, pt.idx);
+					pt.compiledDlb.replaceTextContentNoHistory(label);
+					pt.compiledDlb.recalculateInternal();
+				}
 				if (cachedData.funnel && pt.compiledDlb.pt <= 0) {
 					pt.compiledDlb = default_lbl;
 				}
@@ -6922,8 +6948,15 @@ function(window, undefined) {
 		}
 		return null;
 	};
+	CChartSpace.prototype.removeCachedCanvas = function () {
+		if (this.cachedCanvas) {
+			this.cachedCanvas.width = 0;
+			this.cachedCanvas.height = 0;
+			this.cachedCanvas = null;
+		}
+	};
 	CChartSpace.prototype.recalculateAxes = function () {
-		this.cachedCanvas = null;
+		this.removeCachedCanvas();
 		this.plotAreaRect = null;
 		this.bEmptySeries = this.checkEmptySeries();
 		const isChartEx = this.isChartEx();
@@ -9266,6 +9299,10 @@ function(window, undefined) {
 	};
 	CChartSpace.prototype.recalculateDLbls = function () {
 		if (this.chart && this.chart.plotArea) {
+			if (this.cachedCanvas) {
+				this.cachedCanvas.width = 0;
+				this.cachedCanvas.height = 0;
+			}
 			this.cachedCanvas = null;
 			var aCharts = this.chart.plotArea.charts;
 			for (var t = 0; t < aCharts.length; ++t) {
@@ -9382,7 +9419,7 @@ function(window, undefined) {
 		}
 	};
 	CChartSpace.prototype.recalculateSeriesColors = function () {
-		this.cachedCanvas = null;
+		this.removeCachedCanvas();
 		this.ptsCount = 0;
 		if (this.chart && this.chart.plotArea) {
 			let style = CHART_STYLE_MANAGER.getStyleByIndex(this.style);
@@ -9958,7 +9995,7 @@ function(window, undefined) {
 		old_pos_y = this.recalcInfo.recalcTitle.y;
 		old_pos_cx = this.recalcInfo.recalcTitle.x + this.recalcInfo.recalcTitle.extX / 2;
 		old_pos_cy = this.recalcInfo.recalcTitle.y + this.recalcInfo.recalcTitle.extY / 2;
-		this.cachedCanvas = null;
+		this.removeCachedCanvas();
 		this.recalculateAxisLabels();
 		this.recalculateDLbls();
 		this.recalculateTrendlines();
@@ -10344,7 +10381,7 @@ function(window, undefined) {
 		}
 		if (this.cachedCanvas) {
 			if (this.cachedCanvas.width !== nWidth || this.cachedCanvas.height !== nHeight) {
-				this.cachedCanvas = null;
+				this.removeCachedCanvas();
 			}
 		}
 		var ctx;

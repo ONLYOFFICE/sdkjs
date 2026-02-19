@@ -5958,7 +5958,6 @@ function (window, undefined) {
 	}
 
 	//***array-formula***
-	//todo формула массива имеет различия в резальтатах в случае с range - аргументами
 	cXNPV.prototype = Object.create(cBaseFunction.prototype);
 	cXNPV.prototype.constructor = cXNPV;
 	cXNPV.prototype.name = 'XNPV';
@@ -5968,113 +5967,166 @@ function (window, undefined) {
 	cXNPV.prototype.arrayIndexes = {1: 1, 2: 1};
 	cXNPV.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cXNPV.prototype.argumentsType = [argType.any, argType.any, argType.any];
+	/**
+	 * XNPV - Returns the net present value for a schedule of cash flows that is not necessarily periodic. 
+	 * @param {number} rate - Discount rate
+	 * @param {number[]} values - A series of cash flows that corresponds to a schedule of payments in dates.
+	 * @param {number[]} dates - A schedule of payment dates that corresponds to the cash flow payments.
+	 * @returns {number} NPV value
+	 */
 	cXNPV.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
+		const MAX_NUM_USED = 1E+308;
+		const MIN_NUM_USED = 1E-308;
+		const MAX_DATE = AscCommonExcel.getMaxDate();
+
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
 
 		function xnpv(rate, valueArray, dateArray) {
-			var res = 0, vaTmp, daTmp, r = 1 + rate.getValue();
+			let res = 0, valTmp, dateTmp, r = 1 + rate.getValue();
 
-			if (dateArray.length != valueArray.length) {
+			if (dateArray.length !== valueArray.length) {
 				return new cError(cErrorType.not_numeric);
 			}
 
-			if (!(dateArray[0] instanceof cNumber) || !(valueArray[0] instanceof cNumber)) {
+			if (!(dateArray[0].type === cElementType.number) || !(valueArray[0].type === cElementType.number)) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 
-			var d1 = Math.floor(dateArray[0].getValue()), wasNeg = false, wasPos = false;
+			let d1 = Math.floor(dateArray[0].getValue()), wasNeg = false, wasPos = false;
+			let prevDate = null;
 
-			for (var i = 0; i < dateArray.length; i++) {
-				vaTmp = valueArray[i].tocNumber();
-				daTmp = dateArray[i].tocNumber();
-				if (vaTmp instanceof cError || daTmp instanceof cError) {
+			for (let i = 0; i < dateArray.length; i++) {
+				valTmp = valueArray[i].tocNumber();
+				dateTmp = dateArray[i].tocNumber();
+
+				if (valTmp.type === cElementType.error || dateTmp.type === cElementType.error) {
 					return new cError(cErrorType.not_numeric);
 				}
 
-				res += vaTmp.getValue() / (Math.pow(r, (Math.floor(daTmp.getValue()) - d1) / 365));
+				valTmp = valTmp.getValue();
+				dateTmp = dateTmp.getValue();
+
+				// Check for negative dates or non-increasing sequence
+				if (dateTmp < 0 || dateTmp > MAX_DATE || (prevDate !== null && dateTmp < prevDate)) {
+					return new cError(cErrorType.not_numeric);
+				}
+
+				// Update previous date for next iteration
+				prevDate = dateTmp;
+
+				res += valTmp / (Math.pow(r, (Math.floor(dateTmp) - d1) / 365));
+			}
+
+			// Normalize num(MS res)
+			if (res > 0 && res < MIN_NUM_USED) {
+				res = 0;
 			}
 
 			return new cNumber(res);
 		}
 
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
 		}
-		if (arg0 instanceof cArray) {
+		if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElement(0);
 		}
 
-		arg0 = arg0.tocNumber();
-
-		if (arg0 instanceof cError) {
-			return arg0;
+		if (arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
+			arg0 = arg0.getValue();
+		}
+		
+		if (arg0.type === cElementType.string) {
+			arg0 = arg0.tocNumber();
 		}
 
-		var dateArray = [], valueArray = [];
+		if (arg0.type === cElementType.error) {
+			return arg0;
+		} else if (arg0.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
+		} else if (arg0.type !== cElementType.number) {
+			return new cError(cErrorType.wrong_value_type);
+		}
 
-		if (arg1 instanceof cArea) {
+		if (arg0.getValue() <= 0) {
+			return new cError(cErrorType.not_numeric);
+		}
+
+
+		let dateArray = [], valueArray = [];
+
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
 			arg1.foreach2(function (c) {
-				if (c instanceof cNumber) {
+				if (c && c.type === cElementType.number) {
 					valueArray.push(c);
 				} else {
 					valueArray.push(new cError(cErrorType.not_numeric));
 				}
 			});
-//        valueArray = arg1.getMatrix();
-		} else if (arg1 instanceof cArray) {
+		} else if (arg1.type === cElementType.array) {
 			arg1.foreach(function (c) {
-				if (c instanceof cNumber) {
+				if (c && c.type === cElementType.number) {
 					valueArray.push(c);
 				} else {
 					valueArray.push(new cError(cErrorType.not_numeric));
 				}
 			})
-		} else if (arg1 instanceof cArea3D) {
-			if (arg1.isSingleSheet()) {
-				valueArray = arg1.getMatrix()[0];
-			} else {
+		} else {
+			if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+				arg1 = arg1.getValue();
+			}
+			
+			if (arg1.type === cElementType.string) {
+				arg1 = arg1.tocNumber();
+			}
+
+			if (arg1.type === cElementType.error) {
+				return arg1;
+			} else if (arg1.type === cElementType.empty) {
+				return new cError(cErrorType.not_available);
+			} else if (arg1.type !== cElementType.number) {
 				return new cError(cErrorType.wrong_value_type);
 			}
-		} else {
-			arg1 = arg1.tocNumber();
-			if (arg1 instanceof cError) {
-				return new cError(cErrorType.not_numeric)
-			} else {
-				valueArray[0] = arg1;
-			}
+
+			valueArray[0] = arg1;
+
 		}
 
-		if (arg2 instanceof cArea) {
+		if (arg2.type === cElementType.cellsRange || arg2.type === cElementType.cellsRange3D) {
 			arg2.foreach2(function (c) {
-				if (c instanceof cNumber) {
+				if (c && c.type === cElementType.number) {
 					dateArray.push(c);
 				} else {
 					dateArray.push(new cError(cErrorType.not_numeric));
 				}
 			});
-//        dateArray = arg2.getMatrix();
-		} else if (arg2 instanceof cArray) {
+		} else if (arg2.type === cElementType.array) {
 			arg2.foreach(function (c) {
-				if (c instanceof cNumber) {
+				if (c && c.type === cElementType.number) {
 					dateArray.push(c);
 				} else {
 					dateArray.push(new cError(cErrorType.not_numeric));
 				}
-			});
-//        dateArray = arg2.getMatrix();
-		} else if (arg2 instanceof cArea3D) {
-			if (arg2.isSingleSheet()) {
-				dateArray = arg2.getMatrix()[0];
-			} else {
+			})
+		} else {
+			if (arg2.type === cElementType.cell || arg2.type === cElementType.cell3D) {
+				arg2 = arg2.getValue();
+			}
+			
+			if (arg2.type === cElementType.string) {
+				arg2 = arg2.tocNumber();
+			}
+
+			if (arg2.type === cElementType.error) {
+				return arg2;
+			} else if (arg2.type === cElementType.empty) {
+				return new cError(cErrorType.not_available);
+			} else if (arg2.type !== cElementType.number) {
 				return new cError(cErrorType.wrong_value_type);
 			}
-		} else {
-			arg2 = arg2.tocNumber();
-			if (arg2 instanceof cError) {
-				return new cError(cErrorType.not_numeric)
-			} else {
-				dateArray[0] = arg2;
-			}
+
+			dateArray[0] = arg2;
+
 		}
 
 		return xnpv(arg0, valueArray, dateArray);

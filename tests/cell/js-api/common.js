@@ -136,26 +136,26 @@ $(function()
 	wsView.objectRender.drawingDocument = drawingDocument;
 	wsView.objectRender.controller = new AscFormat.DrawingObjectsController(wsView.objectRender);
 	
-	var ws = api.GetActiveSheet();
-
 	AscTest.JsApi = {};
 	
-	AscTest.JsApi.GetActiveSheet = Asc.spreadsheet_api.prototype.GetActiveSheet.bind(AscTest.Editor);
-	AscTest.JsApi.GetRange = Asc.spreadsheet_api.prototype.GetRange.bind(AscTest.Editor);
-	AscTest.JsApi.CreateRGBColor = Asc.spreadsheet_api.prototype.CreateRGBColor.bind(AscTest.Editor);
-	AscTest.JsApi.CreateSolidFill = Asc.spreadsheet_api.prototype.CreateSolidFill.bind(AscTest.Editor);
-	AscTest.JsApi.CreateStroke = Asc.spreadsheet_api.prototype.CreateStroke.bind(AscTest.Editor);
-	AscTest.JsApi.CreateNoFill = Asc.spreadsheet_api.prototype.CreateNoFill.bind(AscTest.Editor);
-	AscTest.JsApi.CreateColorFromRGB = Asc.spreadsheet_api.prototype.CreateColorFromRGB.bind(AscTest.Editor);
-	AscTest.JsApi.CreateGradientStop = Asc.spreadsheet_api.prototype.CreateGradientStop.bind(AscTest.Editor);
-	AscTest.JsApi.CreateRadialGradientFill = Asc.spreadsheet_api.prototype.CreateRadialGradientFill.bind(AscTest.Editor);
-	AscTest.JsApi.AddDefName = Asc.spreadsheet_api.prototype.AddDefName.bind(AscTest.Editor);
+	AscTest.JsApi.GetActiveSheet = AscBuilder.Cell.Api.GetActiveSheet.bind(AscTest.JsApi);
+	AscTest.JsApi.GetActiveWorkbook = AscBuilder.Cell.Api.GetActiveWorkbook.bind(AscTest.JsApi);
+	AscTest.JsApi.GetRange = AscBuilder.Cell.Api.GetRange.bind(AscTest.JsApi);
 	
-	AscTest.JsApi.wbModel = AscTest.Editor.wbModel;
+	AscTest.JsApi.CreateRGBColor = AscBuilder.Word.Api.CreateRGBColor.bind(AscTest.JsApi);
+	AscTest.JsApi.CreateSolidFill = AscBuilder.Word.Api.CreateSolidFill.bind(AscTest.JsApi);
+	AscTest.JsApi.CreateStroke = AscBuilder.Word.Api.CreateStroke.bind(AscTest.JsApi);
+	AscTest.JsApi.CreateNoFill = AscBuilder.Word.Api.CreateNoFill.bind(AscTest.JsApi);
+	AscTest.JsApi.CreateGradientStop = AscBuilder.Word.Api.CreateGradientStop.bind(AscTest.JsApi);
+	AscTest.JsApi.CreateRadialGradientFill = AscBuilder.Word.Api.CreateRadialGradientFill.bind(AscTest.JsApi);
+	
+	AscTest.JsApi.CreateColorFromRGB = AscBuilder.Cell.Api.CreateColorFromRGB.bind(AscTest.JsApi);
+	AscTest.JsApi.AddDefName = AscBuilder.Cell.Api.AddDefName.bind(AscTest.JsApi);
 	
 	AscTest.Workbook = AscTest.Editor.wbModel;
 	AscTest.WorkbookView = AscTest.Editor.wb;
 	
+	var ws = AscTest.JsApi.GetActiveSheet();
 	QUnit.testStart(function()
 	{
 		let range = AscTest.JsApi.GetRange('A1:Z100');

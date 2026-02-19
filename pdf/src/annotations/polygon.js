@@ -56,7 +56,6 @@
         this._rotate        = undefined;
         this._state         = undefined;
         this._stateModel    = undefined;
-        this._width         = undefined;
         this._vertices      = undefined;
         this._intent        = undefined;
     }
@@ -74,10 +73,12 @@
         return oCopy;
     };
     CAnnotationPolygon.prototype.SetVertices = function(aVertices) {
-        this.recalcGeometry();
         AscCommon.History.Add(new CChangesPDFAnnotVertices(this, this.GetVertices(), aVertices));
 
         this._vertices = aVertices;
+		this.recalcGeometry();
+		this.SetWasChanged(true);
+		this.SetNeedRecalc(true);
     };
     CAnnotationPolygon.prototype.GetVertices = function() {
         return this._vertices;
@@ -101,7 +102,7 @@
         AscCommon.History.StartNoHistoryMode();
 
         let geometry;
-        if (this.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.Cloud) {
+        if (this.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.cloud) {
             geometry = AscPDF.generateCloudyGeometry(aPolygonPoints, aShapeRectInMM, this.spPr.geometry, this.GetBorderEffectIntensity());
         }
         else {
@@ -130,7 +131,7 @@
         oDrawingObjects.startEditGeometry();
     };
     CAnnotationPolygon.prototype.GetGeometryEdit = function() {
-        if (this.GetBorderEffectStyle() !== AscPDF.BORDER_EFFECT_STYLES.Cloud)
+        if (this.GetBorderEffectStyle() !== AscPDF.BORDER_EFFECT_STYLES.cloud)
             return this.spPr.geometry;
         
         let aPoints = this.GetVertices();

@@ -941,7 +941,10 @@
 				{
 					code = 0x10000 + (((code & 0x3FF) << 10) | (0x03FF & val.charCodeAt(pCur++)));
 				}
-				this.WriteXmlCharCode(code);
+				if (code === 0x5F && this._isOoxmlEscapePattern(val, pCur, pEnd))
+					this.WriteXmlEscapeOoxmlChar(0x5F);
+				else
+					this.WriteXmlCharCode(code);
 			}
 		};
 		this.WriteXmlCharCode = function(code)
@@ -1004,7 +1007,10 @@
 				{
 					code = 0x10000 + (((code & 0x3FF) << 10) | (0x03FF & val.charCodeAt(pCur++)));
 				}
-				this.WriteXmlCharCodeInSingleQuote(code);
+				if (code === 0x5F && this._isOoxmlEscapePattern(val, pCur, pEnd))
+					this.WriteXmlEscapeOoxmlChar(0x5F);
+				else
+					this.WriteXmlCharCodeInSingleQuote(code);
 			}
 		};
 		this.WriteXmlCharCodeInSingleQuote = function(code)
@@ -1043,7 +1049,10 @@
 					this.WriteUtf8Char(0x3b);
 					break;
 				default:
-					this.WriteUtf8Char(code);
+					if (code < 0x20 || code >= 0xFFFE)
+						this.WriteXmlEscapeOoxmlChar(code);
+					else
+						this.WriteUtf8Char(code);
 					break;
 			}
 		};
@@ -1058,7 +1067,10 @@
 				{
 					code = 0x10000 + (((code & 0x3FF) << 10) | (0x03FF & val.charCodeAt(pCur++)));
 				}
-				this.WriteXmlCharCodeInDoubleQuote(code);
+				if (code === 0x5F && this._isOoxmlEscapePattern(val, pCur, pEnd))
+					this.WriteXmlEscapeOoxmlChar(0x5F);
+				else
+					this.WriteXmlCharCodeInDoubleQuote(code);
 			}
 		};
 		this.WriteXmlCharCodeInDoubleQuote = function(code)
@@ -1097,9 +1109,37 @@
 					this.WriteUtf8Char(0x3b);
 					break;
 				default:
-					this.WriteUtf8Char(code);
+					if (code < 0x20 || code >= 0xFFFE)
+						this.WriteXmlEscapeOoxmlChar(code);
+					else
+						this.WriteUtf8Char(code);
 					break;
 			}
+		};
+		this.WriteXmlEscapeOoxmlChar = function(code)
+		{
+			// _xHHHH_
+			var n;
+			this.WriteUtf8Char(0x5F); // _
+			this.WriteUtf8Char(0x78); // x
+			n = (code >> 12) & 0x0F; this.WriteUtf8Char(n + (n > 9 ? 0x37 : 0x30));
+			n = (code >> 8) & 0x0F; this.WriteUtf8Char(n + (n > 9 ? 0x37 : 0x30));
+			n = (code >> 4) & 0x0F; this.WriteUtf8Char(n + (n > 9 ? 0x37 : 0x30));
+			n = code & 0x0F; this.WriteUtf8Char(n + (n > 9 ? 0x37 : 0x30));
+			this.WriteUtf8Char(0x5F); // _
+		};
+		this._isOoxmlEscapePattern = function(val, pos, end)
+		{
+			// check if characters at pos form xHHHH_ pattern (after an underscore)
+			if (pos + 6 > end) return false;
+			if (val.charCodeAt(pos) !== 0x78) return false; // 'x'
+			for (var i = 1; i <= 4; i++)
+			{
+				var c = val.charCodeAt(pos + i);
+				if (!((c >= 0x30 && c <= 0x39) || (c >= 0x41 && c <= 0x46) || (c >= 0x61 && c <= 0x66)))
+					return false;
+			}
+			return val.charCodeAt(pos + 5) === 0x5F; // '_'
 		};
 		this.WriteXmlBool = function(val)
 		{

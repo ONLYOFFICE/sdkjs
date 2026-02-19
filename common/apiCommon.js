@@ -7853,6 +7853,9 @@ function (window, undefined) {
 	CButtonData.prototype.get_Properties = function() {
 		return this["pr"];
 	};
+	CButtonData.prototype.asc_getSignatureProps = function(api) {
+		return new Asc.CSignatureFormProps(api, this);
+	};
 
 	function CAscChartProp(obj)
 	{
@@ -9527,6 +9530,7 @@ function (window, undefined) {
 	prot["get_Button"] = prot.get_Button;
 	prot["get_IsForm"] = prot.get_IsForm;
 	prot["get_Properties"] = prot.get_Properties;
+	prot["asc_getSignatureProps"] = prot.asc_getSignatureProps;
 
 	window["AscCommon"]["pix2mm"] = window["AscCommon"].pix2mm = function(pix)
 	{

@@ -74,6 +74,17 @@
 	CTextBoxContent.prototype = Object.create(AscWord.CDocumentContent.prototype);
 	CTextBoxContent.prototype.constructor = CTextBoxContent;
 	
+	Object.defineProperties(CTextBoxContent.prototype, {
+		StartPage: {
+			get: function () {
+				return this.GetAbsolutePage();
+			},
+			set: function() {
+				return;
+			}
+		}
+	});
+
 	CTextBoxContent.prototype.GetLogicDocument = function() {
 		return this.ParentPDF && this.ParentPDF.GetDocument();
 	};
@@ -250,7 +261,7 @@
 		}
 
 		return AscWord.CDocumentContent.prototype.GetCalculatedTextPr.call(this, skipFontCalculator);
-	}
+	};
 	
 	function getInternalAlignByPdfType(nPdfType) {
 		let nInternalType = AscCommon.align_Left;

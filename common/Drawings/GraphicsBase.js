@@ -267,6 +267,16 @@
 	CGraphicsBase.prototype.b_color2 = function(r, g, b, a)
 	{
 	};
+	
+	CGraphicsBase.prototype.put_PathOffset = function(tx, ty)
+	{
+	};
+	CGraphicsBase.prototype.put_PathScale = function(sx, sy)
+	{
+	};
+	CGraphicsBase.prototype.ResetRotation = function()
+	{
+	};
 
 	// TRANSFORM
 	CGraphicsBase.prototype.grStateIsUseBaseTransform = function()

@@ -13428,7 +13428,8 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			this.oReadResult.sdtPrWithFieldPath.push({sdt: oSdt, target: sTarget});
 		} else if (c_oSerSdt.FormPrRoleName === type && this.oReadResult.bCopyPaste) {
 			val.RoleName = this.stream.GetString2LE(length);
-			let oform = this.Document && this.Document.GetOFormDocument();
+			let logicDocument = this.Document && this.Document.GetLogicDocument();
+			let oform = logicDocument && logicDocument.GetOFormDocument();
 			if (oform) {
 				if (val && !val.Field && val.RoleName) {
 					if (!oform.haveRole(val.RoleName)) {

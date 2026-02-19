@@ -1647,6 +1647,61 @@ $(function () {
                 assert.strictEqual(sCellVal, oExpectedChangingCells[sCellName], _desc + `Cell: ${sCellName}. Value: ${sCellVal}`);
             }
         },`Check API. CloseSolver API with final result. isSave - true. Check fill of cells from "By Changing Variable Cells".`);
+
+		// Case #4: Check defNames for cells with SheetNames in quotes 'sheet name' for Constraint. Bug-80174
+		ws.getRange2('A1').setValue('=1+1');
+		solverParams = api.asc_GetSolverParams();
+		assert.ok(solverParams, 'Check API. Case#4: asc_GetSolverParams is created. Reopen Solver params dialogue window after closing');
+		solverParams.asc_resetAll(); // Reset all previous field data
+		solverParams.asc_setObjectiveFunction('$A$1');
+		assert.strictEqual(solverParams.asc_getObjectiveFunction(), '$A$1', 'Check API. Case #4: asc_GetSolverParams. objectiveFunction is $A$1');
+		solverParams.asc_setOptimizeResultTo(c_oAscOptimizeTo.max);
+		assert.strictEqual(solverParams.asc_getOptimizeResultTo(), c_oAscOptimizeTo.max, 'Check API. Case #4: asc_GetSolverParams. optimizeResultTo is max');
+		solverParams.asc_setChangingCells('$A$1');
+		assert.strictEqual(solverParams.asc_getChangingCells(), '$A$1', 'Check API. Case #4: asc_GetSolverParams. changingCells is $A$1');
+		solverParams.asc_addConstraint(1, {cellRef: "'Sheet1'!$A$1", operator: c_oAscOperator['<='], constraint: '1'});
+		assert.strictEqual(solverParams.asc_getConstraints().size, 1, 'Check API. Case #4: asc_GetSolverParams. constraints has 1 element');
+		assert.strictEqual(solverParams.asc_getConstraints().get(1).cellRef, '\'Sheet1\'!$A$1', 'Check API. Case #4: asc_GetSolverParams. constraints has cellRef \'Sheet1\'!$A$1');
+		assert.strictEqual(solverParams.asc_getConstraints().get(1).operator, c_oAscOperator['<='], 'Check API. Case #4: asc_GetSolverParams. constraints has operator <=');
+		assert.strictEqual(solverParams.asc_getConstraints().get(1).constraint, '1', 'Check API. Case #4: asc_GetSolverParams. constraints has constraint 1');
+		// Closing Solver params dialogue window for save fields in define names
+		api.asc_CloseSolver(false);
+		solverParams = api.asc_GetSolverParams();
+		assert.ok(solverParams, 'Check API. Case#4: asc_GetSolverParams is created with saved data. Reopen Solver params dialogue window after closing');
+		assert.strictEqual(solverParams.asc_getObjectiveFunction(), 'Sheet1!$A$1', 'Check API. Case #4: asc_GetSolverParams. objectiveFunction is Sheet1!$A$1');
+		assert.strictEqual(solverParams.asc_getChangingCells(), 'Sheet1!$A$1', 'Check API. Case #4: asc_GetSolverParams. changingCells is Sheet1!$A$1');
+		assert.strictEqual(solverParams.asc_getConstraints().size, 1, 'Check API. Case #4: asc_GetSolverParams. constraints has 1 element');
+		assert.strictEqual(solverParams.asc_getConstraints().get(1).cellRef, 'Sheet1!$A$1', 'Check API. Case #4: asc_GetSolverParams. constraints has cellRef Sheet1!$A$1');
+		assert.strictEqual(solverParams.asc_getConstraints().get(1).operator, c_oAscOperator['<='], 'Check API. Case #4: asc_GetSolverParams. constraints has operator <=');
+		assert.strictEqual(solverParams.asc_getConstraints().get(1).constraint, '1', 'Check API. Case #4: asc_GetSolverParams. constraints has constraint 1');
+
+		// Case #5: Check defNames for cells with sheet names with spaces or special symbols.
+		// Change ws name to name with spaces.
+		ws.setName('Sheet with spaces');
+		// Fill solver params
+		solverParams = api.asc_GetSolverParams();
+		assert.ok(solverParams, 'Check API. Case#5: asc_GetSolverParams is created. Reopen Solver params dialogue window after closing');
+		solverParams.asc_setObjectiveFunction('$A$10')
+		assert.strictEqual(solverParams.asc_getObjectiveFunction(), '$A$10', 'Check API. Case #5: asc_GetSolverParams. objectiveFunction is $A$10');
+		// Closing Solver params dialogue window for save fields in define names
+		api.asc_CloseSolver(false);
+		solverParams = api.asc_GetSolverParams();
+		assert.ok(solverParams, 'Check API. Case#5: asc_GetSolverParams is created with saved data. Reopen Solver params dialogue window after closing');
+		assert.strictEqual(solverParams.asc_getObjectiveFunction(), '\'Sheet with spaces\'!$A$10', 'Check API. Case #5: asc_GetSolverParams. objectiveFunction is \'Sheet with spaces\'!$A$10');
+		// Change ws name to name with special symbols.
+		ws.setName('Case#5');
+		// Open solver params for filling fields.
+		solverParams = api.asc_GetSolverParams();
+		assert.ok(solverParams, 'Check API. Case#5: asc_GetSolverParams is created. Reopen Solver params dialogue window after closing');
+		solverParams.asc_setObjectiveFunction('\'Case#5\'!$A$1');
+		assert.strictEqual(solverParams.asc_getObjectiveFunction(), '\'Case#5\'!$A$1', 'Check API. Case #5: asc_GetSolverParams. objectiveFunction is \'Case#5\'!$A$1');
+		// Closing Solver params dialogue window for save fields in define names
+		api.asc_CloseSolver(false);
+		solverParams = api.asc_GetSolverParams();
+		assert.ok(solverParams, 'Check API. Case#5: asc_GetSolverParams is created with saved data. Reopen Solver params dialogue window after closing');
+		assert.strictEqual(solverParams.asc_getObjectiveFunction(), '\'Case#5\'!$A$1', 'Check API. Case #5: asc_GetSolverParams. objectiveFunction is \'Case#5\'!$A$1');
+
+		ws.setName('Sheet1');
 		clearData(0, 0, 100, 100);
 	});
 	QUnit.test('Test: Check calculate by Simplex method. Value of type.', function (assert) {
@@ -1870,12 +1925,12 @@ $(function () {
 		let oSimplexTableau = wb.getSolver().getSimplexTableau();
 		let oVarIndexByCellName = oSimplexTableau.getVarIndexByCellName();
 		api.asc_CloseSolver(true);
-		const undoExpectedVariableCells = {
+		let undoExpectedVariableCells = {
 			'A1': '55',
 			'A2': '40',
 			'A3': '45'
 		};
-		const expectedVariableCells = {
+		let expectedVariableCells = {
 			'A1': '0',
 			'A2': '1',
 			'A3': '0'
@@ -1897,6 +1952,48 @@ $(function () {
 			assert.strictEqual(nResult.toFixed(2), '0.12', _desc + 'Objective cell: ' + nResult.toFixed(2));
 
 		}, 'Case #1: Checking result after found solution. Result: ');
+		// Case #2: Objective cell and Variable cell have the same reference link
+		ws.getRange2('A1').setValue('=1+1');
+		// Filling solver parameters
+		oSolverParams = api.asc_GetSolverParams();
+		assert.ok(oSolverParams, 'Case #2: solverParams is created. Open Solver params dialogue window');
+		oSolverParams.asc_resetAll();
+		oSolverParams.asc_setObjectiveFunction('Sheet1!$A$1');
+		assert.strictEqual(oSolverParams.asc_getObjectiveFunction(), 'Sheet1!$A$1', 'Case #2: Checking fill "Set Objective" field. Result: ' + oSolverParams.asc_getObjectiveFunction());
+		oSolverParams.asc_setOptimizeResultTo(c_oAscOptimizeTo.max);
+		assert.strictEqual(oSolverParams.asc_getOptimizeResultTo(), c_oAscOptimizeTo.max, 'Case #2: Checking fill "Optimize to" field. Result: Max(' + oSolverParams.asc_getOptimizeResultTo() + ')');
+		oSolverParams.asc_setChangingCells('Sheet1!$A$1');
+		assert.strictEqual(oSolverParams.asc_getChangingCells(), 'Sheet1!$A$1', 'Case #2: Checking fill "By changing Variable" cells field. Result: ' + oSolverParams.asc_getChangingCells());
+		oSolverParams.asc_addConstraint(1, {cellRef: 'Sheet1!$A$1', operator: c_oAscOperator['<='], constraint: '1'});
+		assert.strictEqual(oSolverParams.asc_getConstraints().size, 1, 'Case #2: Checking count elements of "Constraints" field. Result: ' + oSolverParams.asc_getConstraints().size);
+		assert.strictEqual(oSolverParams.asc_getVariablesNonNegative(), true, 'Case #2: Checking fill "Variables Non-Negative" field. Result: ' + oSolverParams.asc_getVariablesNonNegative());
+		assert.strictEqual(oSolverParams.asc_getSolvingMethod(), c_oAscSolvingMethod.simplexLP, 'Case #2: Checking fill "Select a solving method" field. Result: Simplex LP(' + oSolverParams.asc_getSolvingMethod() + ')');
+		// Finding solution
+		api.asc_StartSolver(oSolverParams);
+		oSimplexTableau = wb.getSolver().getSimplexTableau();
+		oVarIndexByCellName = oSimplexTableau.getVarIndexByCellName();
+		api.asc_CloseSolver(true);
+		undoExpectedVariableCells = {
+			'A1': '55',
+		};
+		expectedVariableCells = {
+			'A1': '1',
+		};
+		checkUndoRedo(function (_desc) {
+			for (let sCellName in oVarIndexByCellName) {
+				let sVarCellVal = ws.getCell2(sCellName).getValue();
+				assert.strictEqual(sVarCellVal, undoExpectedVariableCells[sCellName], _desc + 'Variable cell: ' + sVarCellVal);
+			}
+			let nResult = +ws.getCell2('A1').getValue();
+			assert.strictEqual(nResult, 55, _desc + 'Result cell: ' + nResult);
+		}, function (_desc) {
+			for (let sCellName in oVarIndexByCellName) {
+				let sVarCellVal = ws.getCell2(sCellName).getValue();
+				assert.strictEqual(sVarCellVal, expectedVariableCells[sCellName], _desc + 'Variable cell: ' + sVarCellVal);
+			}
+			let nResult = +ws.getCell2('A1').getValue();
+			assert.strictEqual(nResult, 1, _desc + 'Result cell: ' + nResult.toFixed());
+		}, 'Case #2: Checking result after found solution.');
 	});
 	QUnit.test('Test: Check calculate by Simplex method. Minimize.', function (assert) {
 		// Case #1: Finding the total spending for advertising.
@@ -1933,13 +2030,13 @@ $(function () {
 		let oSimplexTableau = wb.getSolver().getSimplexTableau();
 		let oVarIndexByCellName = oSimplexTableau.getVarIndexByCellName();
 		api.asc_CloseSolver(true);
-		const undoExpectedVariableCells = {
+		let undoExpectedVariableCells = {
 			'A4': '',
 			'B4': '',
 			'C4': '',
 			'D4': '',
 		};
-		const expectedVariableCells = {
+		let expectedVariableCells = {
 			'A4': '60000',
 			'B4': '15000',
 			'C4': '15000',
@@ -1949,9 +2046,9 @@ $(function () {
 			for (let sCellName in oVarIndexByCellName) {
 				let sVarCellVal = ws.getCell2(sCellName).getValue();
 				assert.strictEqual(sVarCellVal, undoExpectedVariableCells[sCellName], _desc + 'Variable cell: ' + sVarCellVal);
-				let nResult = +ws.getCell2('E4').getValue();
-				assert.strictEqual(nResult, 0, _desc + 'Result cell: ' + nResult);
 			}
+			let nResult = +ws.getCell2('E4').getValue();
+			assert.strictEqual(nResult, 0, _desc + 'Result cell: ' + nResult);
 		}, function (_desc) {
 			for (let sCellName in oVarIndexByCellName) {
 				let nVarCellVal = +ws.getCell2(sCellName).getValue();

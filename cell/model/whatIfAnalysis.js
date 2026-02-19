@@ -949,11 +949,14 @@ function (window, undefined) {
 		if (oDefName) {
 			sValue = oDefName.ref;
 		}
+		let sCellName = sValue;
 		if (!!~sValue.indexOf('!')) {
-			const sWsName = sValue.split('!')[0];
+			const aSplittedValue = sValue.split('!');
+			const sWsName = aSplittedValue[0].replaceAll("'", "");
+			sCellName = aSplittedValue[1];
 			oWs = oWb.getWorksheetByName(sWsName);
 		}
-		const oRange = oWs.getRange2(sValue);
+		const oRange = oWs.getRange2(sCellName);
 		if (!oRange) {
 			return sValue;
 		}
@@ -1624,6 +1627,9 @@ function (window, undefined) {
 	 */
 	function findCell (oCell, oFindingCell) {
 		const aArgsFormula = getArgsFormula(oCell.getFormulaParsed().outStack, true);
+		if (!aArgsFormula.length && oFindingCell.bbox.contains(oCell.nCol, oCell.nRow)) {
+			return oCell;
+		}
 		for (let i = 0, length = aArgsFormula.length; i < length; i++) {
 			if (oFindingCell.bbox.contains(aArgsFormula[i].nCol, aArgsFormula[i].nRow)) {
 				return aArgsFormula[i];
@@ -2420,10 +2426,22 @@ function (window, undefined) {
 				let nVarIndex = aVariablesIndexes[nIndex];
 				fillObjectiveFuncRow(nValue, nIndex, nVarIndex);
 			}, oObjectiveFunc)
-		} else { // For one variable - calculates the objective function with a constant variable.
+		} else { // For one variable - calculates the objective function with a constant variable
 			const DEFAULT_VALUE = 1;
-			nObjectiveResult = oModel.calculateFormula(DEFAULT_VALUE, oVariables);
-			oVariables.setValue("0");
+			const aFormulaArgs = getArgsFormula(oObjectiveFunc.outStack, true);
+			// Checks whether the variable cell is the same as the objective function cell
+			if (!aFormulaArgs.length && oVariables.isOneCell()) {
+				oVariables.worksheet._getCell(oVariables.bbox.r1, oVariables.bbox.c1, function (oVariableCell) {
+					if (oVariableCell.compareCellIndex(oObjectiveFunc.getParent())) {
+						// Set the default coefficient in that case - equation is 1*x
+						nObjectiveResult = DEFAULT_VALUE;
+					}
+				});
+			}
+			if (!nObjectiveResult) {
+				nObjectiveResult = oModel.calculateFormula(DEFAULT_VALUE, oVariables);
+				oVariables.setValue("0");
+			}
 			let nVarIndex = aVariablesIndexes[FIRST_COLUMN_INDEX];
 			fillObjectiveFuncRow(nObjectiveResult, FIRST_COLUMN_INDEX, nVarIndex);
 		}
@@ -2450,8 +2468,13 @@ function (window, undefined) {
 			let coefficient = 1;
 			// Work with terms
 			if (oRefCell.compareCellIndex(oObjectiveParentCell) && nTotalCountVariables === 1) {
+				let oVariableCell = null;
 				coefficient = nObjectiveResult;
-				const oVariableCell = findCell(oRefCell, oVariables);
+				if (oRefCell.isFormula()) {
+					oVariableCell = findCell(oRefCell, oVariables);
+				} else if (oVariables.isOneCell() && oVariables.bbox.contains(oRefCell.nCol, oRefCell.nRow)) {
+					oVariableCell = oRefCell;
+				}
 				if (oVariableCell) {
 					fillRow(oVariableCell);
 				}
@@ -3141,8 +3164,17 @@ function (window, undefined) {
 		let bVariablesIsCorrect = true;
 
 		if (!aObjectiveVars.length) {
-			this.setResultStatus(c_oAscResultStatus.errorValInObjectiveOrConstraintCell);
-			return false;
+			// Checks whether the variable cell it's objective cell
+			if (oVariablesCells.isOneCell()) {
+				const ws = oVariablesCells.worksheet;
+				ws._getCell(oVariablesCells.bbox.r1, oVariablesCells.bbox.c1, function (oVariableCell) {
+					bIsConnected = oVariableCell.compareCellIndex(oObjectiveCell.getParent());
+				});
+			}
+			if (!bIsConnected) {
+				this.setResultStatus(c_oAscResultStatus.errorValInObjectiveOrConstraintCell);
+				return false;
+			}
 		}
 		// Checks whether the objective cell is connected with variable cells
 		checkObjectiveVars(oVariablesCells);

@@ -782,24 +782,7 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 			this.workbook.handlers.trigger("changeWorksheetUpdate",
 				oRedoObjectParam.oChangeWorksheetUpdate[i],{lockDraw: true, reinitRanges: true});
 
-		for (i in Point.UpdateRigions) {
-			//последним параметром передаю resetCache, при добавлении/удаление строк/столбцов в случая прямого действия
-			//всегда делается cache -> reset, здесь аналогично делаю
-			this.workbook.handlers.trigger("cleanCellCache", i, [Point.UpdateRigions[i]], null, oRedoObjectParam.bAddRemoveRowCol);
-			var curSheet = this.workbook.getWorksheetById(i);
-			if (curSheet)
-				this.workbook.getWorksheetById(i).updateSlicersByRange(Point.UpdateRigions[i]);
-
-			//this.workbook.oApi.onWorksheetChange(Point.UpdateRigions[i]);
-		}
-
-		// So far, the event call has been removed when undo/redo, since UpdateRigions does not always have the right range and you need to pick it up from another place
-		// if (Point.SelectRange) {
-		// 	this.workbook.oApi.onWorksheetChange(Point.SelectRange);
-		// }
-		// if (Point.SelectRangeRedo && (!Point.SelectRange || (Point.SelectRange && !Point.SelectRange.isEqual(Point.SelectRangeRedo)))) {
-		// 	this.workbook.oApi.onWorksheetChange(Point.SelectRangeRedo);
-		// }
+		this.updateDrawingsByRegions(Point.UpdateRigions, oRedoObjectParam);
 
 		if (oRedoObjectParam.bOnSheetsChanged)
 			this.workbook.handlers.trigger("asc_onSheetsChanged");
@@ -813,14 +796,7 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 			Asc["editor"].wb.recalculateDrawingObjects(Point, false);
         }
 
-		for (i in oRedoObjectParam.UpdateRigions) {
-			this.workbook.handlers.trigger("cleanCellCache", i, [oRedoObjectParam.UpdateRigions[i]], null, oRedoObjectParam.bAddRemoveRowCol);
-			var curSheet = this.workbook.getWorksheetById(i);
-			if (curSheet)
-				this.workbook.getWorksheetById(i).updateSlicersByRange(oRedoObjectParam.UpdateRigions[i]);
-
-			//this.workbook.oApi.onWorksheetChange(Point.UpdateRigions[i]);
-		}
+		this.updateDrawingsByRegions(oRedoObjectParam.UpdateRigions, oRedoObjectParam);
 
 		if (oRedoObjectParam.oOnUpdateSheetViewSettings[this.workbook.getWorksheet(this.workbook.getActive()).getId()])
 			this.workbook.handlers.trigger("asc_onUpdateSheetViewSettings");
@@ -1039,19 +1015,6 @@ CHistory.prototype.Reset_RecalcIndex = function()
 
 CHistory.prototype.Add_RecalcNumPr = function()
 {};
-
-	CHistory.prototype.Add_UpdateRegion = function(sheetid, range)
-	{
-		if(this.oRedoObjectParam) {
-
-			var updateRange = this.oRedoObjectParam.UpdateRigions[sheetid];
-			if(null != updateRange)
-				updateRange.union2(range);
-			else
-				updateRange = range.clone();
-			this.oRedoObjectParam.UpdateRigions[sheetid] = updateRange;
-		}
-	};
 
 
 CHistory.prototype.Set_Additional_ExtendDocumentToPos = function()
@@ -1275,7 +1238,8 @@ CHistory.prototype.Add = function(Class, Type, sheetid, range, Data, LocalChange
 			var bAdd = Class.IsAdd();
 			var Count = Class.GetItemsCount();
 
-			var ContentChanges = new AscCommon.CContentChangesElement(bAdd == true ? AscCommon.contentchanges_Add : AscCommon.contentchanges_Remove, Class.Pos, Count, Class);
+			var oContentChangeData = {Class: Class.GetClass(), Data: Class, Binary: Item.Binary, Item: Item};
+			var ContentChanges = new AscCommon.CContentChangesElement(bAdd == true ? AscCommon.contentchanges_Add : AscCommon.contentchanges_Remove, Class.Pos, Count, oContentChangeData);
 			Class.Class.Add_ContentChanges(ContentChanges);
 			AscCommon.CollaborativeEditing.Add_NewDC(Class.Class);
 			if (true === bAdd)
@@ -1744,6 +1708,19 @@ CHistory.prototype.GetSerializeArray = function()
 
 		this.Points.length = startIndex + 1;
 		this.Index = startIndex;
+	};
+	CHistory.prototype.updateDrawingsByRegions = function(oUpdateRegions, oRedoObjectParam) {
+		const aRanges = [];
+		for (let i in oUpdateRegions) {
+			this.workbook.handlers.trigger("cleanCellCache", i, [oUpdateRegions[i]], null, oRedoObjectParam.bAddRemoveRowCol);
+			var curSheet = this.workbook.getWorksheetById(i);
+			if (curSheet) {
+				const oAscRange = oUpdateRegions[i];
+				aRanges.push(new AscCommonExcel.Range(curSheet, oAscRange.r1, oAscRange.c1, oAscRange.r2, oAscRange.c2));
+				curSheet.updateSlicersByRange(oAscRange);
+			}
+		}
+		this.workbook.handleDrawingsOnWorkbookChange(aRanges);
 	};
 	//------------------------------------------------------------export--------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};

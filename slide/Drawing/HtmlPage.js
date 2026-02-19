@@ -3856,6 +3856,15 @@
 		oWordControl.m_oLogicDocument.Document_UpdateRulersState();
 
 		oWordControl.EndUpdateOverlay();
+
+		if (AscCommon.check_MouseClickOnUp())
+		{
+			if (window.g_asc_plugins)
+			{
+				let oController = oWordControl.m_oApi.getGraphicController();
+				window.g_asc_plugins.onPluginEvent("onClick", oController ? oController.IsSelectionUse() : false);
+			}
+		}
 	};
 	CEditorPage.prototype.onMouseUpMainSimple = function () {
 		if (false === oThis.m_oApi.bInit_word_control)

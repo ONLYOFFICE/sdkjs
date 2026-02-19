@@ -9290,9 +9290,27 @@ PasteProcessor.prototype =
 					//Часть кода скопирована из Document.Set_ParagraphNumbering
 
 					//Смотрим передыдущий параграф, если тип списка совпадает, то берем тип списка из предыдущего параграфа
+					let curLvl = pNoHtmlPr.nLvl != null ? pNoHtmlPr.nLvl : 0;
 					if (this.aContent.length > 1) {
-						var prevElem = this.aContent[this.aContent.length - 2];
-						if (null != prevElem && type_Paragraph === prevElem.GetType()) {
+						let prevElem = null;
+						let bCanContinue = true;
+						for (let iPrev = this.aContent.length - 2; iPrev >= 0; iPrev--) {
+							var tempElem = this.aContent[iPrev];
+							if (null != tempElem && type_Paragraph === tempElem.GetType()) {
+								var TempNumPr = tempElem.GetNumPr();
+								if (null != TempNumPr) {
+									if (curLvl > 0 && TempNumPr.Lvl < curLvl) {
+										bCanContinue = false;
+										break;
+									}
+									if (TempNumPr.Lvl === curLvl) {
+										prevElem = tempElem;
+										break;
+									}
+								}
+							}
+						}
+						if (bCanContinue && null != prevElem) {
 							var PrevNumPr = prevElem.GetNumPr();
 							if (null != PrevNumPr && true === this.oLogicDocument.Numbering.CheckFormat(PrevNumPr.NumId, PrevNumPr.Lvl, num)) {
 								NumId = PrevNumPr.NumId;
@@ -9364,8 +9382,7 @@ PasteProcessor.prototype =
 							}
 						}
 					};
-
-					let curLvl = pNoHtmlPr.nLvl != null ? pNoHtmlPr.nLvl : 0;
+					
 					if (null == NumId && this.pasteInPresentationShape !== true) {
 						// Создаем нумерацию
 						let oNum = this.oLogicDocument.GetNumbering().CreateNum();
@@ -13286,6 +13303,11 @@ PasteProcessor.prototype =
 
 
 		//рекурсивно вызываем для childNodes
+		var savedNLvl = null;
+		if (("ul" === sNodeName || "ol" === sNodeName) && pPr.nLvl != null) {
+			savedNLvl = pPr.nLvl;
+		}
+		
 		for (var i = 0, length = node.childNodes.length; i < length; i++) {
 			var child = node.childNodes[i];
 			var nodeType = child.nodeType;
@@ -13361,6 +13383,11 @@ PasteProcessor.prototype =
 			node.nodeName.toLowerCase() === "a" && (-1 !== node.name.indexOf("ftn") || -1 !== node.name.indexOf("edn"))) {
 				oThis.bIsForFootEndnote = false;
 			}
+		
+		if (savedNLvl !== null) {
+			pPr.nLvl = savedNLvl;
+		}
+		
 		return bAddParagraph;
 	},
 
@@ -13907,6 +13934,8 @@ function SpecialPasteShowOptions()
 	//показывать или нет дополнительный пункт специальной вставки
 	this.showPasteSpecial = null;
 	this.containTables = null;
+
+	this.lastSelectedPasteProperty = null;
 }
 
 SpecialPasteShowOptions.prototype = {
@@ -13973,6 +14002,12 @@ SpecialPasteShowOptions.prototype = {
 	},
 	asc_setContainTables: function (val) {
 		this.containTables = val;
+	},
+	asc_setLastSelectedPasteProperty: function (val) {
+		this.lastSelectedPasteProperty = val;
+	},
+	asc_getLastSelectedPasteProperty: function () {
+		return this.lastSelectedPasteProperty;
 	}
 };
 
@@ -14504,6 +14539,7 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
   prot["asc_getOptions"]					= prot.asc_getOptions;
   prot["asc_getShowPasteSpecial"]			= prot.asc_getShowPasteSpecial;
   prot["asc_getContainTables"]			    = prot.asc_getContainTables;
+  prot["asc_getLastSelectedPasteProperty"]	= prot.asc_getLastSelectedPasteProperty;
 
   window["AscCommon"].checkOnlyOneImage = checkOnlyOneImage;
 

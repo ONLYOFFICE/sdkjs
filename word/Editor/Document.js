@@ -2046,7 +2046,7 @@ CDocument.prototype.StartAction = function(nDescription, oSelectionState, flags,
 		}
 	}
 	
-	this.Api.getMacroRecorder().onAction(nDescription, additional);
+	this.Api.getMacroRecorder().addStepData(nDescription, additional);
 };
 /**
  * В процессе ли какое-либо действие
@@ -2320,7 +2320,7 @@ CDocument.prototype.FinalizeAction = function(checkEmptyAction, additional)
 	this.Action.UpdateStates = false;
 	
 	this.sendEvent("asc_onUserActionEnd");
-	this.Api.getMacroRecorder().onAction(this.Action.Description, additional);
+	this.Api.getMacroRecorder().addStepData(this.Action.Description, additional);
 	return actionCompleted;
 };
 CDocument.prototype.AddMacroData = function(type, additional)
@@ -4231,7 +4231,8 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
                 this.CurPage = PageIndex; // TODO: переделать
         }
 
-		if (docpostype_Content === this.GetDocPosType() && ((true !== this.Selection.Use && Index === this.CurPos.ContentPos + 1) || (true === this.Selection.Use && Index === (Math.max(this.Selection.EndPos, this.Selection.StartPos) + 1))))
+		let cursorPos = true !== this.Selection.Use ? this.CurPos.ContentPos : Math.max(this.Selection.EndPos, this.Selection.StartPos);
+		if (docpostype_Content === this.GetDocPosType() && (Index === cursorPos + 1 || (cursorPos === Index && cursorPos === Count - 1)))
 			this.UpdateCursorOnRecalculate();
     }
 
@@ -18624,6 +18625,13 @@ CDocument.prototype.getCompositeInput = function()
 	
 	return this.compositeInput;
 };
+CDocument.prototype.UpdateDrawingTextCache = function()
+{
+	if (docpostype_DrawingObjects === this.CurPos.Type)
+	{
+		this.DrawingObjects.updateDrawingTextCache();
+	}
+};
 CDocument.prototype.CheckCurrentTextObjectExtends = function()
 {
 	var oController = this.DrawingObjects;
@@ -19416,13 +19424,6 @@ CDocument.prototype.controller_AddInlineImage = function(W, H, Img, GraphicObjec
 			var Image = this.DrawingObjects.createImage(Img, 0, 0, W, H);
 			Image.setParent(Drawing);
 			Drawing.Set_GraphicObject(Image);
-		}
-		else if (GraphicObject.isSmartArtObject && GraphicObject.isSmartArtObject())
-		{
-			Drawing   = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
-			GraphicObject.setParent(Drawing);
-			Drawing.Set_GraphicObject(GraphicObject);
-			Drawing.setExtent(GraphicObject.spPr.xfrm.extX, GraphicObject.spPr.xfrm.extY);
 		}
 		else
 		{
@@ -26723,6 +26724,44 @@ CDocument.prototype.ConvertFormFixedType = function(sId, isToFixed)
 	}
 
 	return false;
+};
+/**
+ * Конвертируем
+ * @param formId
+ * @returns {boolean}
+ */
+CDocument.prototype.StretchFormToCell = function(formId)
+{
+	let form = this.GetContentControl(formId);
+	if (!form || !form.IsForm())
+		return false;
+	
+	form = form.GetMainForm();
+	if (!form)
+		return false;
+	
+	let paragraph = form.GetParagraph();
+	if (!paragraph)
+		return false;
+	
+	if (this.IsSelectionLocked(AscCommon.changestype_None, {
+		Type      : AscCommon.changestype_2_ElementsArray_and_Type,
+		Elements  : [paragraph],
+		CheckType : AscCommon.changestype_Paragraph_Properties
+	}, false, false))
+		return false;
+	
+	this.StartAction(AscDFH.historydescription_Document_StretchFormToCell);
+	
+	form.StretchFormToCell();
+	
+	this.Recalculate();
+	this.UpdateInterface();
+	this.UpdateSelection();
+	this.UpdateTracks();
+	this.FinalizeAction();
+	
+	return true;
 };
 /**
  * Подсвечиваем ли обязательные поля

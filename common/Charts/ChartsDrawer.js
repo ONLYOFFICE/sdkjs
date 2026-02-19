@@ -8538,10 +8538,12 @@ drawTreemapChart.prototype = {
 				// predefinedSize tells about the height of the whole array, however if array contains multiple elements, then to find the width of one element, we can divide totalArea by height
 				const weekSide = rect.totalSum/ rect.predefinedSize;
 				for( let j = 0; j < rect.array.length; j++) {
+					const item = rect.array[j];
+					const area = item.area;
 					// vertical arrays weekSide is width and horizontal arrays weekSide is height;
-					const w = direction? weekSide : rect.array[j] / weekSide;
-					const h = direction ? rect.array[j] / weekSide : weekSide;
-					this.paths[pos] = this.cChartDrawer._calculateRect(startX, startY + h, w, h , true);
+					const w = direction? weekSide : area / weekSide;
+					const h = direction ? area / weekSide : weekSide;
+					this.paths[item.idx] = this.cChartDrawer._calculateRect(startX, startY + h, w, h , true);
 					if (direction) {
 						startY += h;
 					} else {
@@ -8601,7 +8603,82 @@ drawTreemapChart.prototype = {
 	},
 
 	_calculateDLbl: function (compiledDlb) {
-		return {x: null, y: null}
+		if (!compiledDlb || !this.paths || !this.chartProp || !this.cChartSpace) {
+			return;
+		}
+
+		const path = this.paths[compiledDlb.idx];
+		if (!AscFormat.isRealNumber(path)) {
+			return;
+		}
+
+		const oPath = this.cChartSpace.GetPath(path);
+		if (!oPath) {
+			return;
+		}
+
+		const oCommand0 = oPath.getCommandByIndex(0);
+		const oCommand1 = oPath.getCommandByIndex(1);
+		const oCommand2 = oPath.getCommandByIndex(2);
+
+		if (!oCommand0 || !oCommand1 || !oCommand2) {
+			return;
+		}
+
+		const x = oCommand0.X;
+		const y = oCommand0.Y;
+
+		const h = oCommand0.Y - oCommand1.Y;
+		const w = oCommand2.X - oCommand1.X;
+
+		const pxToMm = this.chartProp.pxToMM;
+
+		const labelW = compiledDlb.extX;
+		const labelH = compiledDlb.extY;
+
+		if (!AscFormat.isRealNumber(x) || !AscFormat.isRealNumber(y) ||
+			!AscFormat.isRealNumber(w) || !AscFormat.isRealNumber(h) ||
+			!AscFormat.isRealNumber(labelW) || !AscFormat.isRealNumber(labelH)) {
+			return;
+		}
+
+		const paddingX = 2 / pxToMm; // 2px
+		const paddingY = 2 / pxToMm; // 2px
+
+		let centerX = x + paddingX;
+		let centerY = y - labelH - paddingY;
+
+		const rectLeft = x;
+		const rectRight = x + w;
+		const rectTop = y - h;
+		const rectBottom = y;
+
+		if (centerX + labelW > rectRight) {
+			centerX = rectRight - labelW;
+		}
+		if (centerX < rectLeft) {
+			centerX = rectLeft;
+		}
+
+		if (centerY < rectTop) {
+			centerY = rectTop;
+		}
+		if (centerY + labelH > rectBottom) {
+			centerY = rectBottom - labelH;
+		}
+
+		const chartLeft = this.chartProp.chartGutter._left / pxToMm;
+		const chartTop = this.chartProp.chartGutter._top / pxToMm;
+		const chartRight = (this.chartProp.trueWidth + this.chartProp.chartGutter._left) / pxToMm - labelW;
+		const chartBottom = (this.chartProp.trueHeight + this.chartProp.chartGutter._top) / pxToMm - labelH;
+
+		if (centerX < chartLeft) centerX = chartLeft;
+		if (centerX > chartRight) centerX = chartRight;
+
+		if (centerY < chartTop) centerY = chartTop;
+		if (centerY > chartBottom) centerY = chartBottom;
+
+		return { x: centerX, y: centerY };
 	},
 
 	_getDefaultTreemapBrush: function(index) {
@@ -19997,14 +20074,18 @@ CErrBarsDraw.prototype = {
 			const squarify = function(areas, newWidth, newHeight){
 				const resArr = [];
 				let oldHeight, oldWidth;
+
 				for (let i = 0; i < areas.length; i++){
-					const area = areas[i].val;
+					const item = areas[i];
+					const area = item.val;
 					const lastElem = resArr.length !== 0 ? resArr[resArr.length - 1] : null;
+
 					const oldAspectRatio = lastElem && getAspectRatio(lastElem.totalSum, area, lastElem.predefinedSize, lastElem.position);
 					const newVerticalAspectRatio = getAspectRatio(0, area, newHeight, true);
 					const newHorizontalAspectRatio = getAspectRatio(0, area, newWidth, false);
+
 					if (oldAspectRatio && oldAspectRatio < newHorizontalAspectRatio && oldAspectRatio < newVerticalAspectRatio){
-						lastElem.array.push(area);
+						lastElem.array.push({ idx: item.idx, area: item.val});
 						lastElem.totalSum += area;
 						if (lastElem.position) {
 							newWidth = newWidth - (area / oldHeight);
@@ -20014,11 +20095,12 @@ CErrBarsDraw.prototype = {
 					}else {
 						oldHeight = newHeight;
 						oldWidth = newWidth;
+
 						if (newVerticalAspectRatio < newHorizontalAspectRatio){
-							resArr.push({position: true, array: [area], totalSum: area, predefinedSize: oldHeight});
+							resArr.push({position: true, array: [{ idx: item.idx, area: area }], totalSum: area, predefinedSize: oldHeight});
 							newWidth = oldWidth - (area / oldHeight);
 						} else {
-							resArr.push({position: false, array: [area], totalSum: area, predefinedSize: oldWidth});
+							resArr.push({position: false, array: [{ idx: item.idx, area: area }], totalSum: area, predefinedSize: oldWidth});
 							newHeight = oldHeight - (area / oldWidth);
 						}
 					}
