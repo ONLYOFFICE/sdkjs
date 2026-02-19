@@ -8445,7 +8445,7 @@ background-repeat: no-repeat;\
 
 		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
 		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_SetTextFontNameLong);
+			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_SetTextFontNameLong,  null, null, fontinfo.Name);
 			this.WordControl.m_oLogicDocument.AddToParagraph(new AscCommonWord.ParaTextPr({
 				FontFamily : {
 					Name  : fontinfo.Name,
@@ -10271,6 +10271,8 @@ background-repeat: no-repeat;\
         {
             this.openFileCryptCallback(this.openFileCryptBinary);
         }
+		
+		AscBuilder.Word.init();
 	};
 	asc_docs_api.prototype.initCollaborativeEditing = function()
 	{
@@ -14879,6 +14881,11 @@ background-repeat: no-repeat;\
 			logicDocument.GetSpellCheckManager().TurnOn();
 		}
 	};
+	
+	asc_docs_api.prototype.getJsApi = function()
+	{
+		return AscBuilder.Word.Api;
+	};
 
 	asc_docs_api.prototype.asc_getPasteOptions = function(callback) {
 		AscCommon.g_clipboardBase.Get_Clipboard_Data(function (data) {
@@ -15786,6 +15793,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_getRestrictionSettings'] = asc_docs_api.prototype.asc_getRestrictionSettings = asc_docs_api.prototype.getRestrictionSettings;
 	asc_docs_api.prototype['asc_markAsFinal'] = asc_docs_api.prototype.asc_markAsFinal = asc_docs_api.prototype.markAsFinal;
 	asc_docs_api.prototype['asc_isFinal'] = asc_docs_api.prototype.asc_isFinal = asc_docs_api.prototype.isFinal;
+	
+	asc_docs_api.prototype['getJsApi'] = asc_docs_api.prototype.getJsApi;
 	
 	
 	CDocInfoProp.prototype['get_PageCount']             = CDocInfoProp.prototype.get_PageCount;

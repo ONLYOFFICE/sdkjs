@@ -7346,6 +7346,7 @@ var editor;
         {
             this.openFileCryptCallback(this.openFileCryptBinary);
         }
+		AscBuilder.Cell.init();
 	};
 
 	spreadsheet_api.prototype.asc_OnShowContextMenu = function() {
@@ -9049,9 +9050,11 @@ var editor;
 
 	spreadsheet_api.prototype.onWorksheetChange = function(props) {
 		let ws = this.wbModel.getActiveWs();
-		if (!ws) {
+		let jsApi = this.getJsApi();
+		if (!ws || !jsApi) {
 			return;
 		}
+		
 		let range = null;
 		let result = null;
 		if (Array.isArray(props)) {
@@ -9060,11 +9063,11 @@ var editor;
 			let arr = props.length <= 1 ? null : props.map(function(r){
 				return ws.getRange3(r.r1, r.c1, r.r2, r.c2);
 			})
-			result = this.private_GetRange(range, arr);
+			result = jsApi.private_GetRange(range, arr);
 		} else {
 			// todo сделать получение листа ещё
 			range = ws.getRange3(props.r1, props.c1, props.r2, props.c2);
-			result = this.private_GetRange(range);
+			result = jsApi.private_GetRange(range);
 		}
 		this.sendEvent('onWorksheetChange', result);
 	};
@@ -9876,6 +9879,9 @@ var editor;
 	spreadsheet_api.prototype.asc_SetIsSupportDynamicArrays = function(val) {
 		AscCommonExcel.bIsSupportDynamicArrays = val;
 	};
+	spreadsheet_api.prototype.getJsApi = function() {
+		return AscBuilder.Cell.Api;
+	};
 
 	spreadsheet_api.prototype.asc_getPasteOptions = function(callback) {
 		AscCommon.g_clipboardBase.Get_Clipboard_Data(function (data) {
@@ -10576,8 +10582,9 @@ var editor;
 
   prot["asc_SetIsSupportDynamicArrays"]= prot.asc_SetIsSupportDynamicArrays;
   prot["asc_getPasteOptions"]= prot.asc_getPasteOptions;
-
-
+  prot["getJsApi"]= prot.getJsApi;
+  
+  AscCommon['SpreadsheetEditorApi'] = AscCommon.SpreadsheetEditorApi = spreadsheet_api;
 
 
 })(window);

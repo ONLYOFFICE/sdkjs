@@ -653,9 +653,6 @@ var g_oFontProperties = {
 		if (!this.fs) {
 			this.fs = 11;
 		}
-		if (!this.c) {
-			this.c = AscCommonExcel.g_oColorManager.getThemeColor(AscCommonExcel.g_nColorTextDefault);
-		}
 	};
 	Font.prototype.assign = function(font) {
 		this.fn = font.fn;
@@ -775,7 +772,7 @@ var g_oFontProperties = {
 		return font && this.getName() === font.getName() && this.getSize() === font.getSize() && this.getBold() === font.getBold() && this.getItalic() === font.getItalic();
 	};
 	Font.prototype.isNormalXfColor = function () {
-		return this.c && this.c.isEqual(g_StyleCache.normalXf.font.c);
+		return g_oColorManager.isEqual(this.c, g_StyleCache.normalXf.font.c);
 	};
 	Font.prototype.clone = function () {
 		var font = new Font();

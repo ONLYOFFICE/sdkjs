@@ -1659,6 +1659,8 @@
 			g_cCalcRecursion.clearDiffBetweenIter();
 			g_cCalcRecursion.clearCycleCells();
 			g_cCalcRecursion.clearCheckedCells();
+			g_cCalcRecursion.clearRecheckingFormulaData();
+			g_cCalcRecursion.clearCalculatedArguments();
 			this.changedCell = null;
 			this.changedRange = null;
 			this.updateSharedFormulas();
@@ -7916,7 +7918,7 @@
 		if (bOldHidden != hidden) {
 			if (true == this.bHidden && this.getIndex() == wsActive.getIndex()) {
 				oVisibleWs = wb.findSheetNoHidden(this.getIndex());
-			} else if (false == this.bHidden && this.getIndex() !== wsActive.getIndex()) {
+			} else if (false == this.bHidden && this.getIndex() !== wsActive.getIndex() && !wb.bCollaborativeChanges) {
 				oVisibleWs = this;
 			}
 			if (null != oVisibleWs) {
@@ -16414,6 +16416,7 @@
 	}
 	/**
 	 * Method returns listeners of cell
+	 * @memberOf Cell
 	 * @returns {object}
 	 */
 	Cell.prototype.getListeners = function () {
@@ -16437,13 +16440,19 @@
 			return oSheetListeners.cellMap[nCellIndex];
 		} else if (aOutStack && aOutStack.length && sFunctionName) {
 			for (let nIndex in oSheetListeners.areaMap) {
-				if (oSheetListeners.areaMap[nIndex].bbox.contains(this.nCol, this.nRow)) {
-					return _areaMapIsExcludeFormula(aOutStack, oSheetListeners.areaMap[nIndex]) ? null : oSheetListeners.areaMap[nIndex];
+				const oAreaMap = oSheetListeners.areaMap[nIndex];
+				let bInvalidListener = false;
+				if (oAreaMap.count === 1) {
+					const sListenerId = Object.getOwnPropertyNames(oAreaMap.listeners)[0];
+					const oListener = oAreaMap.listeners[sListenerId];
+					bInvalidListener = oListener.isTable === 1;
+				}
+				if (oAreaMap.bbox.contains(this.nCol, this.nRow) && !bInvalidListener) {
+					return _areaMapIsExcludeFormula(aOutStack, oAreaMap) ? null : oAreaMap;
 				}
 			}
 		}
 	};
-
 	/**
 	 * Iterative extract listeners of a cell
 	 * @param fAction {Function} Action on the listener.
@@ -16559,7 +16568,8 @@
 		}
 		let bContainsInFormula = false;
 		foreachRefElements(function (oRange) {
-			if (oRange.containCell2(oThis)) {
+			const sWsId = oRange.worksheet.getId();
+			if (oRange.containCell2(oThis) && sWsId === oThis.ws.getId()) {
 				bContainsInFormula = true;
 				return true;
 			}
@@ -16568,7 +16578,7 @@
 		return bContainsInFormula;
 	};
 	/**
-	 * Method finds a start cell index of recursion formula.
+	 * Method finds a start cell index of a recursion formula.
 	 * Uses for iterative calculations feature.
 	 * @param {Cell} [oPrevCell] - Previous cell in recursion.
 	 * @param {Cell} [oFirstCell] - First cell in recursion.
@@ -16628,7 +16638,7 @@
 				if (oCellFromListener.compareCellIndex(oThis)) {
 					g_cCalcRecursion.resetRecursionCounter();
 					bBreakFunction = true;
-					return;
+					return true;
 				}
 				let bPassedCell = aPassedCells.some(function (oPassedCell) {
 					let nPassedCellIndex = getCellIndex(oPassedCell.nRow, oPassedCell.nCol);
@@ -16666,30 +16676,6 @@
 	};
 
 	/**
-	 * Function returns an array of reference cells from outStack attribute of parserFormula class.
-	 * @param {parserFormula} oFormulaParsed
-	 * @returns {[]}
-	 * @private
-	 */
-	function _getRefElements(oFormulaParsed) {
-		const aRefElements = [];
-		for (let i = 0, length = oFormulaParsed.getOutStackSize(); i < length; i++) {
-			const oOutStackElem = oFormulaParsed.getOutStackElem(i);
-			const nElemType = oOutStackElem.type;
-			const b3D = nElemType === cElementType.cell3D || nElemType === cElementType.cellsRange3D || nElemType === cElementType.name3D;
-			const bArea = nElemType === cElementType.cellsRange || nElemType === cElementType.name;
-			const bDefName = nElemType === cElementType.name || nElemType === cElementType.name3D;
-			const bTable = nElemType === cElementType.table;
-
-			if (nElemType === cElementType.cell || b3D || bArea || bDefName || bTable) {
-				aRefElements.push(oOutStackElem);
-			}
-		}
-
-		return aRefElements;
-	}
-
-	/**
 	 * Iterative extract reference elements from outStack attribute of parserFormula class.
 	 * @param {Function} fAction - Action with reference element
 	 * @param {[]} aRefElements
@@ -16699,7 +16685,7 @@
 			return;
 		}
 		let nLastIndex = aRefElements.length - 1;
-		for (let i = 0; i < aRefElements.length; i++) {
+		for (let i = 0, length = aRefElements.length; i < length; i++) {
 			const oRefElement = aRefElements[i];
 			const nRefType = oRefElement.type;
 			const b3D = nRefType === cElementType.cell3D || nRefType === cElementType.cellsRange3D;
@@ -16718,12 +16704,12 @@
 				if (!aRef.includes(oElemType)) {
 					return;
 				}
-				oRange = oElemValue.getRange();
+				oRange = oElemValue.getRange && oElemValue.getRange();
 			} else if (nRefType === cElementType.table) {
 				let oRefElem = oRefElement.toRef();
-				oRange = oRefElem.getRange();
+				oRange = oRefElem.getRange && oRefElem.getRange();
 			} else {
-				oRange = oRefElement.getRange();
+				oRange = oRefElement.getRange && oRefElement.getRange();
 			}
 			if (!oRange) {
 				continue;
@@ -16737,16 +16723,18 @@
 
 	/**
 	 * Changes ca flag of cell from listener.
-	 * Function is recursive.
-	 * @param {Cell} oSourceCell
+	 * Method is recursive.
+	 * @param {boolean} bRecursiveCell
 	 * @private
+	 * @memberof Cell
 	 */
-	function _changeCellsFromListener (oSourceCell) {
+	Cell.prototype._changeCaFlagFromListener = function (bRecursiveCell) {
 		if (g_cCalcRecursion.checkRecursionCounter()) {
 			g_cCalcRecursion.resetRecursionCounter();
 			return;
 		}
-		const oCellListeners = oSourceCell.getListeners();
+		const caFlag = !bRecursiveCell ? null : bRecursiveCell;
+		const oCellListeners = this.getListeners();
 		if (!oCellListeners) {
 			g_cCalcRecursion.resetRecursionCounter();
 			return;
@@ -16761,26 +16749,26 @@
 				return;
 			}
 			const oFormulaParsed = oListenerCell.getFormulaParsed();
-			if (oFormulaParsed.ca) {
+			if (oFormulaParsed.ca === caFlag) {
 				return;
 			}
-			oFormulaParsed.ca = true;
+			oFormulaParsed.ca = bRecursiveCell;
 			if (oListenerCell.getListeners()) {
-			g_cCalcRecursion.incRecursionCounter();
-			_changeCellsFromListener(oListenerCell);
+				g_cCalcRecursion.incRecursionCounter();
+				oListenerCell._changeCaFlagFromListener(bRecursiveCell);
 			}
-		}, oSourceCell, oCellListeners);
+		}, this, oCellListeners);
 		g_cCalcRecursion.resetRecursionCounter();
-	}
-
+	};
 	/**
-	 * Method checks is cell has recursive formula.
+	 * Method checks is cell has a recursive formula.
 	 * Recursion method
 	 * @param {CCellWithFormula} oCellWithFormula
 	 * @param {Cell[]} [aPassedCell]
+	 * @param {boolean} [bRecheckFormula] - uses when changing a cell in an already checked chain of cells.
 	 * @returns {boolean}
 	 */
-	Cell.prototype.checkRecursiveFormula = function (oCellWithFormula, aPassedCell) {
+	Cell.prototype.checkRecursiveFormula = function (oCellWithFormula, aPassedCell, bRecheckFormula) {
 		if (g_cCalcRecursion.checkRecursionCounter() || oCellWithFormula == null) {
 			g_cCalcRecursion.resetRecursionCounter();
 			return false;
@@ -16801,7 +16789,7 @@
 			return false;
 		}
 		const oFormulaParsed = this.getFormulaParsed();
-		const aRefElements = _getRefElements(oFormulaParsed);
+		const aRefElements = oFormulaParsed.getRefElements();
 		const oThis = this;
 		let bRecursiveFormula = false;
 		aPassedCell = aPassedCell || [];
@@ -16822,7 +16810,7 @@
 				} else if (!bRecursiveFormula && oCell.isFormula() && !bCellIsPassed) {
 					g_cCalcRecursion.incRecursionCounter();
 					aPassedCell.push(oCell);
-					bRecursiveFormula = oCell.checkRecursiveFormula(oCellWithFormula, aPassedCell);
+					bRecursiveFormula = oCell.checkRecursiveFormula(oCellWithFormula, aPassedCell, bRecheckFormula);
 				}
 				if (bRecursiveFormula) {
 					return true; // break loop
@@ -16837,12 +16825,15 @@
 							oSourceCell = oCell;
 						});
 						if (oSourceCell) {
-							_changeCellsFromListener(oSourceCell);
+							oSourceCell._changeCaFlagFromListener(bRecursiveFormula);
 						}
 					}
 				}
 				oFormulaParsed.ca = true;
 				return true;
+			}
+			if (oFormulaParsed.ca !== bRecursiveFormula && bRecheckFormula) {
+				oFormulaParsed.ca = bRecursiveFormula;
 			}
 		}, aRefElements);
 
@@ -16869,7 +16860,7 @@
 			return;
 		}
 
-		const aRefElements = _getRefElements(oFormulaParsed);
+		const aRefElements = oFormulaParsed.getRefElements();
 		foreachRefElements(function (oRange, nIndex, nLastRefElemIndex) {
 			oRange._foreachNoEmpty(function(oCell) {
 				let nCellIndex = getCellIndex(oCell.nRow, oCell.nCol);
@@ -16951,6 +16942,80 @@
 		g_cCalcRecursion.addRecursiveCells(this, aRecursiveCells);
 	};
 	/**
+	 * Rechecks the cell for the cycle after being calculated.
+	 * @memberof Cell
+	 * @param {[]} calcedElements - calculated elements from outStack
+	 * @param {AscCommonExcel.parserFormula} parsedFormula
+	 */
+	Cell.prototype.recheckCellForCycle = function (calcedElements, parsedFormula) {
+		const t = this;
+		const isEnabledRecursion = g_cCalcRecursion.getIsEnabledRecursion();
+		let isCycleCell = false;
+
+		foreachRefElements(function (range) {
+			if (range.bbox.contains(t.nCol, t.nRow) && range.worksheet.getName() === t.ws.getName()) {
+				if (!parsedFormula.ca) {
+					parsedFormula.ca = true;
+				}
+				isCycleCell = true;
+				!isEnabledRecursion && g_cCalcRecursion.addCycleCell(t);
+			} else {
+				range._foreachNoEmpty(function (cell) {
+					if (cell.isFormula()) {
+						cell.initStartCellForIterCalc();
+						if (g_cCalcRecursion.getStartCellIndex() != null) {
+							if (!cell.getFormulaParsed().ca) {
+								cell.getFormulaParsed().ca = true;
+							}
+							isCycleCell = true;
+							!isEnabledRecursion && g_cCalcRecursion.addCycleCell(cell);
+							g_cCalcRecursion.getStartCellIndex() && g_cCalcRecursion.setStartCellIndex(null);
+							return true;
+						}
+						if (!parsedFormula.ca && g_cCalcRecursion.needRecheckFormulaAfterCalc()) {
+							const bRecheckFormula = g_cCalcRecursion.needRecheckFormulaAfterCalc();
+							const bRecursionFormula = cell.checkRecursiveFormula(parsedFormula.getParent(), [], bRecheckFormula);
+							if (bRecursionFormula) {
+								parsedFormula.ca = true;
+								if (cell.getFormulaParsed().ca !== bRecursionFormula) {
+									cell.getFormulaParsed().ca = bRecursionFormula;
+								}
+								isCycleCell = true;
+								!isEnabledRecursion && g_cCalcRecursion.addCycleCell(cell);
+								return true;
+							}
+
+						}
+					}
+				});
+			}
+			if (isCycleCell) {
+				return true;
+			}
+		}, calcedElements);
+		if (isCycleCell) {
+			if (isEnabledRecursion) {
+				const recursiveCells = g_cCalcRecursion.getRecursiveCells(t);
+				if (!recursiveCells.length) {
+					const cellIndex = {
+						cellId: getCellIndex(t.nRow, t.nCol),
+						wsName: t.ws.getName().toLowerCase()
+					};
+					t.fillRecursiveCells(recursiveCells, cellIndex);
+				}
+
+			} else {
+				parsedFormula.value = null;
+				t.setIsDirty(false);
+				if (t.getType() !== CellValueType.Number) {
+					t.setTypeInternal(CellValueType.Number);
+				}
+				t.setValueNumberInternal(0);
+				g_cCalcRecursion.addCycleCell(t);
+			}
+		}
+	};
+	/**
 	 * Method calculates cells with formula aren't calculated yet.
 	 * @memberof Cell
 	 * @private
@@ -16989,59 +17054,16 @@
 						}
 						if (g_cCalcRecursion.getFunctionsResult().length && g_cCalcRecursion.getIterStep() === 1 && g_cCalcRecursion.getLevel() === 1) {
 							const functionsResult = g_cCalcRecursion.getFunctionsResult();
-							const isEnabledRecursion = g_cCalcRecursion.getIsEnabledRecursion();
-							let isCycleCell = false;
-
-							foreachRefElements(function (range) {
-								if (range.bbox.contains(t.nCol, t.nRow) && range.worksheet.getName() === t.ws.getName()) {
-									if (!parsed.ca) {
-										parsed.ca = true;
-									}
-									isCycleCell = true;
-									!isEnabledRecursion && g_cCalcRecursion.addCycleCell(t);
-								} else {
-									range._foreachNoEmpty(function (cell) {
-										if (cell.isFormula()) {
-											cell.initStartCellForIterCalc();
-											if (g_cCalcRecursion.getStartCellIndex() != null) {
-												if (!cell.getFormulaParsed().ca) {
-													cell.getFormulaParsed().ca = true;
-												}
-												isCycleCell = true;
-												!isEnabledRecursion && g_cCalcRecursion.addCycleCell(cell);
-												g_cCalcRecursion.getStartCellIndex() && g_cCalcRecursion.setStartCellIndex(null);
-												return true;
-											}
-										}
-									});
-								}
-								if (isCycleCell) {
-									return true;
-								}
-							}, functionsResult);
-							if (isCycleCell) {
-								if (isEnabledRecursion) {
-									const recursiveCells = g_cCalcRecursion.getRecursiveCells(t);
-									if (!recursiveCells.length) {
-										const cellIndex = {
-											cellId: getCellIndex(t.nRow, t.nCol),
-											wsName: t.ws.getName().toLowerCase()
-										};
-										t.fillRecursiveCells(recursiveCells, cellIndex);
-									}
-
-								} else {
-									parsed.value = null;
-									t.setIsDirty(false);
-									if (t.getType() !== CellValueType.Number) {
-										t.setTypeInternal(CellValueType.Number);
-									}
-									t.setValueNumberInternal(0);
-								}
-							}
+							t.recheckCellForCycle(functionsResult, parsed);
 						}
 						if (g_cCalcRecursion.getFunctionsResult().length) {
 							g_cCalcRecursion.clearFunctionsResult();
+						}
+						if (g_cCalcRecursion.needRecheckFormulaAfterCalc() && g_cCalcRecursion.hasCalculatedArguments() &&
+							g_cCalcRecursion.getRecheckingFormulaData('parserFormula') && parsed.compare(g_cCalcRecursion.getRecheckingFormulaData('parserFormula'))) {
+							const refElements = parsed.getRefElements();
+							t.recheckCellForCycle(refElements, parsed);
+							g_cCalcRecursion.resetRecheckFormula();
 						}
 					}
 				});

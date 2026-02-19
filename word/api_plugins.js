@@ -1564,6 +1564,59 @@
 			pasteTail();
 	};
 
+	/**
+	 * Checks if the document is in the filling form mode.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @alias IsFillingFormMode
+	 * @returns {boolean} - Returns **true** if the document is in the filling form mode.
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/IsFillingFormMode.js
+	 */
+	Api.prototype["pluginMethod_IsFillingFormMode"] = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return false;
+
+		return logicDocument.IsFillingFormMode();
+	};
+	/**
+	 * Checks if the document is in the filling OForm mode.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @alias IsFillingOFormMode
+	 * @returns {boolean} - Returns **true** if the document is in the filling OForm mode.
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/IsFillingOFormMode.js
+	 */
+	Api.prototype["pluginMethod_IsFillingOFormMode"] = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return false;
+
+		return logicDocument.IsFillingOFormMode();
+	};
+
+	/**
+	 * Checks if the document is in the editing OForm mode.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @alias IsEditingOFormMode
+	 * @returns {boolean} - Returns **true** if the document is in the editing OForm mode.
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/IsEditingOFormMode.js
+	 */
+	Api.prototype["pluginMethod_IsEditingOFormMode"] = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return false;
+
+		return logicDocument.IsEditingOFormMode();
+	};
+
 	window["AscCommon"] = window["AscCommon"] || {};
 	window["AscCommon"].readContentControlCommonPr = readContentControlCommonPr;
 	

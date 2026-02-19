@@ -70,7 +70,7 @@
         }
 
         aFullQuads.forEach(function(aQuads) {
-            oThis.AddQuads(aQuads);
+            oThis.AddQuad(aQuads);
         });
 
         if (aFullQuads.length == 1) {
@@ -85,7 +85,7 @@
             return;
         }
 
-        let nLineW = this.GetWidth();
+        let nLineW = this.GetBorderWidth();
         let aQuads = this.GetQuads();
         
         AscCommon.History.StartNoHistoryMode();
@@ -133,7 +133,7 @@
         AscCommon.History.EndNoHistoryMode();
         this.SetNeedRecalcSizes(false);
     };
-    CAnnotationLink.prototype.AddQuads = function(aQuads) {
+    CAnnotationLink.prototype.AddQuad = function(aQuads) {
         AscCommon.History.Add(new CChangesPDFAnnotQuads(this, this._quads.length, aQuads, true));
         this._quads.push(aQuads);
     };
@@ -176,7 +176,7 @@
         let nWidth  = originView.width;
         let nHeight = originView.height;
 
-        let nLineWidth = this.GetWidth() + 1;
+        let nLineWidth = this.GetBorderWidth() + 1;
 
         // Create a new canvas element for the cropped area
         var croppedCanvas       = document.createElement('canvas');
@@ -266,7 +266,7 @@
 
     CAnnotationLink.prototype.RefillGeometry = function() {
         let aQuads = this.GetQuads();
-        if (aQuads.length > 1 || this.GetBorder() !== AscPDF.BORDER_TYPES.underline) {
+        if (aQuads.length == 0 || aQuads.length > 1 || this.GetBorderStyle() !== AscPDF.BORDER_TYPES.underline) {
             return;
         }
 

@@ -321,7 +321,8 @@
 		if (mathComments)
 		{
 			let bounds = math.Root.Get_LineBound(this.Line, this.Range);
-			comm.Add(bounds.Y, bounds.Y + bounds.H, bounds.X, bounds.X + bounds.W, 0, 0, 0, 0, mathComments.Additional);
+			let commentColor = this.getCommentColor(mathComments.Additional.CommentId[0], mathComments.Additional.Active);
+			comm.Add(bounds.Y, bounds.Y + bounds.H, bounds.X, bounds.X + bounds.W, 0, commentColor.r, commentColor.g, commentColor.b, mathComments.Additional);
 		}
 		
 		let mathColl = this.Coll.getNext();

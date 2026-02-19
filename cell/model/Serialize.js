@@ -11041,8 +11041,10 @@
 						var ref = curFormula.ref;
 						if(ref) {
 							var rangeFormulaArray = tmp.ws.getRange3(ref.r1, ref.c1, ref.r2, ref.c2);
-							rangeFormulaArray._foreach(function(cell){
-								cell.setFormulaInternal(curFormula);
+							rangeFormulaArray._foreach(function(cell, row, col){
+								if (!(row === ref.r1 && col === ref.c1 && cell.formulaParsed)) {
+									cell.setFormulaInternal(curFormula);
+								}
 								if (curFormula.ca || cell.isNullTextString()) {
 									tmp.ws.workbook.dependencyFormulas.addToChangedCell(cell);
 								}

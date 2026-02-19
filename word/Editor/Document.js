@@ -2046,7 +2046,7 @@ CDocument.prototype.StartAction = function(nDescription, oSelectionState, flags,
 		}
 	}
 	
-	this.Api.getMacroRecorder().onAction(nDescription, additional);
+	this.Api.getMacroRecorder().addStepData(nDescription, additional);
 };
 /**
  * В процессе ли какое-либо действие
@@ -2320,7 +2320,7 @@ CDocument.prototype.FinalizeAction = function(checkEmptyAction, additional)
 	this.Action.UpdateStates = false;
 	
 	this.sendEvent("asc_onUserActionEnd");
-	this.Api.getMacroRecorder().onAction(this.Action.Description, additional);
+	this.Api.getMacroRecorder().addStepData(this.Action.Description, additional);
 	return actionCompleted;
 };
 CDocument.prototype.AddMacroData = function(type, additional)

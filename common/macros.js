@@ -465,7 +465,7 @@ function (window, undefined)
 				cb.apply({}, args);
 			}, delay);
 		};
-		const Api = window.g_asc_plugins.api;
+		const Api = window.g_asc_plugins.api.getJsApi();
 		// clear this field on each run
 		delete Api.parsedJSDoc;
 		// check if we add a custom function into this macros we will parse a jsdoc

@@ -114,6 +114,8 @@
 		this.clearBufferTimerId = -1;
 
 		this.needClearBuffer = false;
+
+		this.canUseNewCopy = null;
 	}
 
 	CClipboardBase.prototype =
@@ -468,6 +470,7 @@
 
 		Init : function(_api)
 		{
+			let t = this;
 			this.Api = _api;
 
 			window['AscCommon'].g_specialPasteHelper.Init(_api);
@@ -654,6 +657,10 @@
 					}
 				};
 			}
+
+			this.Check_Copy_New(function (success) {
+				t.canUseNewCopy = success;
+			});
 
 			if (AscBrowser.isSafari && false)
 			{
@@ -1003,7 +1010,7 @@
 
 		isUseNewCopy : function()
 		{
-			if (navigator.clipboard) {
+			if (navigator.clipboard && this.canUseNewCopy) {
 
 				if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["getEngineVersion"])
 				{
@@ -1133,6 +1140,37 @@
 					return true;
 				}
 			}
+			return false;
+		},
+
+		Check_Copy_New : function(callback)
+		{
+			if (navigator.clipboard)
+			{
+				if (navigator.permissions && navigator.permissions.query)
+				{
+					navigator.permissions.query({ name: 'clipboard-write' })
+						.then(function(result) {
+							if (result.state === 'denied')
+							{
+								callback && callback(false);
+								return false;
+							}
+							callback && callback(true);
+						})
+						.catch(function() {
+							callback && callback(false);
+						});
+
+					return true;
+				}
+				else
+				{
+					callback && callback(true);
+					return true;
+				}
+			}
+			callback && callback(false);
 			return false;
 		},
 

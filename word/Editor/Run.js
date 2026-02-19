@@ -3415,7 +3415,10 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 	{
 		isKeepWidth = true;
 		nMaxComb = oTextFormPDF.GetCharLimit();
-		nCombWidth = oTextFormPDF.getFormRelRect().W / nMaxComb;
+		let formRelRect = oTextFormPDF.getFormRelRect();
+		if (formRelRect) {
+			nCombWidth = formRelRect.W / nMaxComb;
+		}
 	}
 
 	if (nCombWidth && nMaxComb > 1)
@@ -8028,7 +8031,7 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 
 		if (undefined === IncFontSize)
 		{
-			if (Asc.editor.isPdfEditor())
+			if (Asc.editor.isPdfEditor() && !AscCommon.g_oIdCounter.IsLoad())
 				checkRunPdf(this, TextPr);
 
 			this.Apply_Pr(TextPr);
@@ -8136,7 +8139,7 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 
 				if (undefined === IncFontSize)
 				{
-					if (Asc.editor.isPdfEditor())
+					if (Asc.editor.isPdfEditor() && !AscCommon.g_oIdCounter.IsLoad())
 						checkRunPdf(CRun, TextPr);
 
 					CRun.Apply_Pr(TextPr);
@@ -8227,7 +8230,7 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 
 			if (undefined === IncFontSize)
 			{
-				if (Asc.editor.isPdfEditor())
+				if (Asc.editor.isPdfEditor() && !AscCommon.g_oIdCounter.IsLoad())
 					checkRunPdf(CRun, TextPr);
 
 				CRun.Apply_Pr(TextPr);
@@ -8248,8 +8251,14 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
         return Result;
     }
 
-	function checkRunPdf(run, textPr) {
-		if (!!run.Pr.Bold !== !!textPr.Bold || !!run.Pr.Italic !== !!textPr.Italic || (textPr.GetFontFamily() && run.Pr.GetFontFamily() != textPr.GetFontFamily()))
+	function checkRunPdf(run, newTextPr)
+	{
+		let fontName = run.Pr.GetFontFamily();
+		let prefix = AscFonts.getEmbeddedFontPrefix();
+		if (!fontName || !fontName.startsWith(prefix))
+			return;
+
+		if (!!run.Pr.Bold !== !!newTextPr.Bold || !!run.Pr.Italic !== !!newTextPr.Italic || (newTextPr.GetFontFamily() && fontName != newTextPr.GetFontFamily()))
 		{
 			for (let i = 0; i < run.Content.length; i++)
 			{
@@ -8261,13 +8270,8 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 				}
 			}
 
-			let fontName = run.Pr.GetFontFamily();
-			let prefix = AscFonts.getEmbeddedFontPrefix();
-
-			if (fontName && fontName.startsWith(prefix)) {
-				let fontInfo = AscFonts.g_fontApplication.GetFontInfo(fontName.substr(prefix.length));
-				textPr.RFonts.SetAll(fontInfo.Name, -1);
-			}
+			newTextPr.RFonts.SetAll(Asc.editor.embeddedFontsMap[fontName]);
+			newTextPr.SetSpacing(0);
 		}
 	}
 };

@@ -246,6 +246,9 @@
 
         AscCommon.History.Add(new CChangesPDFDocumentAnnotsContent(this, nPos, [oAnnot], true));
 		this.RedrawAnnots();
+
+		let oDoc = Asc.editor.getPDFDoc();
+		oDoc.CheckComment(oAnnot);
 	};
 	CPageInfo.prototype.RemoveAnnot = function(sId) {
 		let oAnnot = this.annots.find(function(annot) {
@@ -260,6 +263,9 @@
         
         AscCommon.History.Add(new CChangesPDFDocumentAnnotsContent(this, nPos, [oAnnot], false));
 		this.RedrawAnnots(oAnnot.IsTextMarkup());
+	};
+	CPageInfo.prototype.GetAnnots = function() {
+		return this.annots;
 	};
 	CPageInfo.prototype.AddField = function(oField, nPos) {
 		if (nPos == undefined) {
@@ -375,7 +381,27 @@
 		return oFile.pages[nIndex].isRecognized;
 	};
 	CPageInfo.prototype.Is_Inline = function(){};
+	CPageInfo.prototype.GetSelectedText = function(bClearText, oPr) {
+		let oDoc		= this.GetDocument();
+		let oController = oDoc.GetController();
+		let oViewer     = oDoc.Viewer;
+		let oFile       = oViewer.file;
+		let nPageIndex	= this.GetIndex();
+		let oAcitveObj	= oDoc.GetActiveObject();
 
+		let sText = "";
+
+		if (oAcitveObj && oAcitveObj.GetPage() == nPageIndex) {
+			sText = oController.GetSelectedText(bClearText, oPr)
+		}
+		else {
+			let oTextObj = {Text: ""};
+			oFile.copySelection(nPageIndex, oTextObj);
+			sText = oTextObj.Text;
+		}
+
+		return sText;
+	}
 	function PropLocker(objectId) {
 		this.objectId = null;
 		this.Lock = new AscCommon.CLock();
@@ -1147,7 +1173,6 @@
 				if (this.file && this.file.isNeedPassword())
 				{
 					window["AscViewer"].setFilePassword(this.file, password);
-					this.Api.asc_setCurrentPassword(password, true);
 				}
 			}
 			else
@@ -1179,6 +1204,9 @@
 				}, 100);
 				return;
 			}
+
+			if (undefined !== password)
+				this.Api.asc_setCurrentPassword(password, true);
 
 			if (window["AscDesktopEditor"])
 			{
@@ -4622,7 +4650,7 @@
 						continue;
 					}
 
-					!oPageInfo.annots[nAnnot].IsNeedDrawFromStream() && oPageInfo.annots[nAnnot].WriteToBinary(oMemory);
+					oPageInfo.annots[nAnnot].IsNeedWriteOnSave() && oPageInfo.annots[nAnnot].WriteToBinary(oMemory);
 					oPageInfo.annots[nAnnot].GetReplies().forEach(function(reply) {
 						(reply.IsChanged() || !oMemory.docRenderer) && reply.WriteToBinary(oMemory);
 					});
@@ -4640,7 +4668,7 @@
 			// forms
 			if (oPageInfo.fields) {
 				for (let nForm = 0; nForm < oPageInfo.fields.length; nForm++) {
-					if (oPageInfo.fields[nForm].IsChanged())
+					if (oPageInfo.fields[nForm].IsNeedWriteOnSave())
 						oPageInfo.fields[nForm].WriteToBinary(oMemory);
 				}
 			}
@@ -4857,12 +4885,12 @@
 			if (aDrawings.length != 0) bNeedEdit = true;
 			if (aAnnots.find(function(annot) {
 				let aReplies = annot.GetReplies();
-				return !annot.IsNeedDrawFromStream() || aReplies.find(function(reply) {
+				return annot.IsNeedWriteOnSave() || aReplies.find(function(reply) {
 					return reply.IsChanged();
 				});
 			})) bNeedEdit = true;
 			if (aForms.find(function(form) {
-				return form.IsChanged();
+				return form.IsNeedWriteOnSave();
 			})) bNeedEdit = true;
 			if (aDeletedObj.length != 0) bNeedEdit = true;
 
@@ -5174,7 +5202,7 @@
 				for (let nAnnot = 0; nAnnot < oPageInfo.annots.length; nAnnot++) {
 					let oAnnot = oPageInfo.annots[nAnnot];
 
-					!oAnnot.IsNeedDrawFromStream() && oAnnot.WriteToBinary(oMemory);
+					oAnnot.IsChanged() && oAnnot.WriteToBinary(oMemory);
 					oAnnot.GetReplies().forEach(function(reply) {
 						(reply.IsChanged() || !oMemory.docRenderer) && reply.WriteToBinary(oMemory);
 					});
@@ -5281,7 +5309,7 @@
 			if (aDrawings.length != 0) bNeedEdit = true;
 			if (aAnnots.some(function(annot) {
 				let aReplies = annot.GetReplies();
-				return !annot.IsNeedDrawFromStream() || aReplies.some(function(reply) {
+				return annot.IsChanged() || aReplies.some(function(reply) {
 					return reply.IsChanged();
 				});
 			})) bNeedEdit = true;

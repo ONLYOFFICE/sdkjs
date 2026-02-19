@@ -491,6 +491,7 @@ window.AscCommon.g_cIsBeta = "false";
 		DOCX_PACKAGE  : 0x0054,
 		OFORM  : 0x0055,
 		DOCXF  : 0x0056,
+		MD   : 0x005c,
 		DOCY : 0x1001,
 		CANVAS_WORD : 0x2001,
 		JSON : 0x0808,	// Для mail-merge

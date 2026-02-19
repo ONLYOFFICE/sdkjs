@@ -10122,5 +10122,118 @@ $(function () {
 		clearData(0, 0, 100, 200);
 	});
 
+	QUnit.test("Test: \"Array formula display with undo/redo\"", function (assert) {
+		clearData(0, 0, 100, 200);
+
+		let fillRange, fragment;
+		let flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = true;
+		flags.shiftKey = true;
+
+		let formula = "=1";
+		fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		let displayedFormula = ws.getRange2("A1").getValueForEdit(true);
+		assert.strictEqual(displayedFormula, "{=1}", "Array formula should display with braces");
+
+		let checkFormulaPresent = function(desc) {
+			let formulaText = ws.getRange2("A1").getValueForEdit(true);
+			assert.strictEqual(formulaText, "{=1}", desc + " - Formula should be present with braces");
+		};
+
+		let checkFormulaAbsent = function(desc) {
+			let formulaText = ws.getRange2("A1").getValueForEdit(true);
+			assert.ok(formulaText === "" || formulaText === null || formulaText === undefined, desc + " - Formula should be absent");
+		};
+
+		checkUndoRedo(checkFormulaAbsent, checkFormulaPresent, "Array formula add/remove");
+
+		clearData(0, 0, 100, 200);
+	});
+
+	QUnit.test("Test: \"Ctrl+Enter with range formula - offset behavior\"", function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+
+		clearData(0, 0, 100, 200);
+
+		let flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = true;
+		flags.shiftKey = false;
+
+		var getCellMetadata = function (r, c) {
+			var _cell;
+			ws.getRange3(r, c, r, c)._foreachNoEmpty(function(cell) {
+				_cell = cell;
+			});
+			return _cell && _cell.formulaParsed && _cell.formulaParsed.getCm();
+		};
+
+		var getCellRichValueIndex = function (r, c) {
+			var _cell;
+			ws.getRange3(r, c, r, c)._foreachNoEmpty(function(cell) {
+				_cell = cell;
+			});
+			return _cell && _cell.formulaParsed && _cell.formulaParsed.getVm();
+		};
+
+		// Setup test data
+		ws.getRange2("A2").setValue("1");
+		ws.getRange2("B2").setValue("2");
+		ws.getRange2("C2").setValue("3");
+
+		// Select range A1:B1 and enter formula =A2:B2 with Ctrl+Enter
+		let fillRange = ws.getRange2("A1:B1");
+		wsView.setSelection(fillRange.bbox);
+		let fragment = ws.getRange2("A1").getValueForEdit2();
+		fragment[0].setFragmentText("=A2:B2");
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+
+		// Verify formulas are correct with offset
+		let cellA1 = getCell(ws.getRange2("A1"));
+		let cellB1 = getCell(ws.getRange2("B1"));
+		
+		assert.strictEqual(cellA1.getFormulaParsed().getFormula(), "A2:B2", "A1 formula should be A2:B2");
+		assert.strictEqual(cellB1.getFormulaParsed().getFormula(), "B2:C2", "B1 formula should be B2:C2 (offset)");
+
+		// Both formulas return 1x2 arrays, so they ARE dynamic arrays
+		let dynRefA1 = cellA1.getFormulaParsed().getDynamicRef();
+		let dynRefB1 = cellB1.getFormulaParsed().getDynamicRef();
+		assert.ok(dynRefA1, "A1 SHOULD be a dynamic array");
+		assert.ok(dynRefB1, "B1 SHOULD be a dynamic array");
+
+		// Verify A1 cannot expand (blocked by B1 array) - should have #SPILL! error
+		let valueA1 = ws.getRange2("A1").getValue();
+		assert.strictEqual(valueA1, "#SPILL!", "A1 should show #SPILL! error (blocked by B1)");
+
+		// Verify B1 can expand successfully
+		let valueB1 = ws.getRange2("B1").getValue();
+		let valueC1 = ws.getRange2("C1").getValue();
+		assert.strictEqual(valueB1, "2", "B1 should show value 2 (expanded successfully)");
+		assert.strictEqual(valueC1, "3", "C1 should show value 3 (B1 array spilled here)");
+
+		// Verify dynamic array metadata exists for both head cells
+		let cmA1 = getCellMetadata(0, 0);
+		let cmB1 = getCellMetadata(0, 1);
+		assert.ok(cmA1 > 0, "A1 should have dynamic array metadata");
+		assert.ok(cmB1 > 0, "B1 should have dynamic array metadata");
+
+		// Verify richdata (vmIndex):
+		// - A1 is blocked (#SPILL!) so it SHOULD have vmIndex (richdata stores error info)
+		// - B1 expanded successfully so it should NOT have vmIndex (data is in cells)
+		let vmA1 = getCellRichValueIndex(0, 0);
+		let vmB1 = getCellRichValueIndex(0, 1);
+		assert.ok(vmA1 > 0, "A1 should have richdata vmIndex (blocked array)");
+		assert.ok(!vmB1 || vmB1 === 0, "B1 should NOT have richdata vmIndex (expanded successfully)");
+
+		clearData(0, 0, 100, 200);
+	});
+
 	QUnit.module("Dynamic Arrays Tests");
 });

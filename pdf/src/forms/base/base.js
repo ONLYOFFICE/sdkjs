@@ -1003,12 +1003,12 @@
         let oParent = this.GetParent(true);
         if (oParent == null && this._value == null)
             return undefined;
-        else if (bInherit === false || (this._value != null && this.GetPartialName() != null)) {
+		else if (oParent && bInherit !== false) {
+			return oParent.GetParentValue();
+		}
+        else {
             return this._value;
         }
-        
-        if (oParent)
-            return oParent.GetParentValue();
     };
     /**
 	 * Sets api value of form.
@@ -1759,9 +1759,6 @@
 
         if (!isChanged)
             this.SetWasChanged(false);
-        
-        if (this.IsChanged() == false)
-            this.SetDrawFromStream(true);
     };
 
     CBaseField.prototype.ClearCache = function() {
@@ -1780,7 +1777,7 @@
         return this._hasOriginView;
     };
     CBaseField.prototype.IsNeedDrawFromStream = function() {
-        return this._bDrawFromStream;
+		return this._bDrawFromStream && (this.GetType() === AscPDF.FIELD_TYPES.button || !this.IsInForm());
     };
     CBaseField.prototype.SetDrawFromStream = function(bFromStream) {
         let valueToSet;
@@ -1803,7 +1800,7 @@
         this._needDrawHighlight = bDraw;
     };
     CBaseField.prototype.IsNeedDrawHighlight = function() {
-        return false == this.IsReadOnly() && this._needDrawHighlight;
+        return false == this.IsReadOnly() && this._needDrawHighlight && (this.GetType() === AscPDF.FIELD_TYPES.button || !this.IsInForm());
     };
 
     CBaseField.prototype.DrawEdit = function(oGraphicsWord) {
@@ -1998,6 +1995,8 @@
         this._strokeColor = this._borderColor = aColor;
         this.SetWasChanged(true);
         this.AddToRedraw();
+
+        return true;
     };
     CBaseField.prototype.GetBorderColor = function() {
         return this._strokeColor;
@@ -2679,6 +2678,8 @@
 
         this.SetWasChanged(true);
         this.SetNeedRecalc(true);
+
+        return true;
     };
     CBaseField.prototype.GetTextSize = function() {
         return this._textSize;
@@ -2812,6 +2813,9 @@
             "h" : (aOrigRect[3] - aOrigRect[1])
         };
     };
+	CBaseField.prototype.IsNeedWriteOnSave = function() {
+		return !this.IsNeedDrawFromStream() || this.IsChanged();
+	};
     CBaseField.prototype.WriteToBinaryBase = function(memory) {
         // type
         memory.WriteByte(this.GetType());
@@ -3543,8 +3547,8 @@
 		let oDrDoc = oDoc.GetDrawingDocument();
 
         if (oDrDoc) {
-            var content = this.getDocContent();
-            if (content) {
+            let content = this.getDocContent();
+            if (content && this.IsInForm()) {
                 oDrDoc.UpdateTargetTransform(null);
                 if (true === content.IsSelectionUse()) {
                     if (false === content.IsSelectionEmpty()) {

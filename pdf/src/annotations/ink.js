@@ -49,7 +49,6 @@
         this._stateModel    = undefined;
         this._gestures      = [];
         this._relativePaths = [];
-        this._width         = 1;
     }
     
 	CAnnotationInk.prototype.constructor = CAnnotationInk;
@@ -75,51 +74,41 @@
         return this.content.GetAllDrawingObjects()[0];
     };
 
-    CAnnotationInk.prototype.SetInkPoints = function(aSourcePaths, isOnResize) {
+    CAnnotationInk.prototype.SetInkPoints = function(aSourcePaths) {
         let oThis = this;
 
         for (let i = 0, nCount = this._gestures.length; i < nCount; i++) {
-            this.RemoveInkPath(0, isOnResize);
+            this.RemoveInkPath(0);
         }
 
         aSourcePaths.forEach(function(aPath) {
-            oThis.AddInkPath(aPath, isOnResize);
+            oThis.AddInkPath(aPath);
         });
 
         this.recalcGeometry();
     };
-    CAnnotationInk.prototype.AddInkPath = function(aInkPath, isOnResize) {
+    CAnnotationInk.prototype.AddInkPath = function(aInkPath) {
         AscCommon.History.Add(new CChangesPDFInkPoints(this, this._gestures.length, aInkPath, true));
         this._gestures.push(aInkPath);
 
-        if (isOnResize !== true) {
-            let oViewer = Asc.editor.getDocumentRenderer();
-            if (false == oViewer.IsOpenAnnotsInProgress) {
-                this.SetRect(this.private_CalculateBoundingBox());
-            }
-            
-            this.SetWasChanged(true);
-            this.recalcGeometry();
-            this.SetNeedRecalc(true);
-        }
+        this.SetWasChanged(true);
+		this.recalcGeometry();
+		this.SetNeedRecalc(true);
     };
-    CAnnotationInk.prototype.RemoveInkPath = function(nIdx, isOnResize) {
+    CAnnotationInk.prototype.RemoveInkPath = function(nIdx) {
         AscCommon.History.Add(new CChangesPDFInkPoints(this, nIdx, this._gestures[nIdx], false));
         this._gestures.splice(nIdx, 1);
 
-        if (isOnResize !== true) {
-            this.SetRect(this.private_CalculateBoundingBox());
-            this.SetWasChanged(true);
-            this.recalcGeometry();
-            this.SetNeedRecalc(true);
-        }
+		this.SetWasChanged(true);
+		this.recalcGeometry();
+		this.SetNeedRecalc(true);
     };
     CAnnotationInk.prototype.private_CalculateBoundingBox = function() {
         if (this._gestures.length === 0) {
             return null;
         }
     
-        let nLineW = this.GetWidth();
+        let nLineW = this.GetBorderWidth();
 
         let minX = Infinity;
         let minY = Infinity;
@@ -231,7 +220,7 @@
         let aRelPointsPos   = this._relativePaths;
         let aShapePaths     = [];
         
-        let nLineW = this.GetWidth() * g_dKoef_pt_to_mm;
+        let nLineW = this.GetBorderWidth() * g_dKoef_pt_to_mm;
 
         let xMin = aBounds[0] + nLineW;
         let yMin = aBounds[1] + nLineW;
@@ -255,11 +244,13 @@
             aShapePaths.push(aShapePath);
         }
         
+		AscCommon.History.StartNoHistoryMode();
         let geometry = generateGeometry(aShapePaths, aBounds, this.spPr.geometry);
         this.recalcTransform()
         var transform = this.getTransform();
         
         geometry.Recalculate(transform.extX, transform.extY);
+		AscCommon.History.EndNoHistoryMode();
 
         return geometry;
     };
@@ -271,7 +262,7 @@
         let aRelPointsPos   = this._relativePaths;
         let aGestures       = [];
         
-        let nLineW = this.GetWidth();
+        let nLineW = this.GetBorderWidth();
 
         let xMin = aBounds[0] + nLineW;
         let yMin = aBounds[1] + nLineW;
@@ -295,7 +286,7 @@
             aGestures.push(aInkPath);
         }
         
-        this.SetInkPoints(aGestures, true);
+        this.SetInkPoints(aGestures);
     };
     CAnnotationInk.prototype.GetRelativePaths = function() {
         return this._relativePaths;

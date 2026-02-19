@@ -32,26 +32,25 @@
 
 $(function()
 {
-	AscTest.Editor.GetDocument = AscCommon.DocumentEditorApi.prototype.GetDocument.bind(AscTest.Editor);
-
+	AscTest.Editor.GetDocument = AscBuilder.Word.Api.GetDocument.bind(AscTest.Editor);
 	AscTest.JsApi = {};
 	
-	AscTest.JsApi.GetDocument = AscCommon.DocumentEditorApi.prototype.GetDocument.bind(AscTest.Editor);
-	AscTest.JsApi.ReplaceTextSmart = AscCommon.DocumentEditorApi.prototype.ReplaceTextSmart.bind(AscTest.Editor);
-	AscTest.JsApi.CreateRun = AscCommon.DocumentEditorApi.prototype.CreateRun.bind(AscTest.Editor);
-	AscTest.JsApi.CreateParagraph = AscCommon.DocumentEditorApi.prototype.CreateParagraph.bind(AscTest.Editor);
-	AscTest.JsApi.CreateInlineLvlSdt = AscCommon.DocumentEditorApi.prototype.CreateInlineLvlSdt.bind(AscTest.Editor);
-	AscTest.JsApi.CreateTable = AscCommon.DocumentEditorApi.prototype.CreateTable.bind(AscTest.Editor);
-	AscTest.JsApi.CreateShape = AscCommon.DocumentEditorApi.prototype.CreateShape.bind(AscTest.Editor);
-	AscTest.JsApi.CreateSolidFill = AscCommon.DocumentEditorApi.prototype.CreateSolidFill.bind(AscTest.Editor);
-	AscTest.JsApi.CreateStroke = AscCommon.DocumentEditorApi.prototype.CreateStroke.bind(AscTest.Editor);
-	AscTest.JsApi.CreateNoFill = AscCommon.DocumentEditorApi.prototype.CreateNoFill.bind(AscTest.Editor);
-	AscTest.JsApi.HexColor = AscCommon.DocumentEditorApi.prototype.HexColor.bind(AscTest.Editor);
-	AscTest.JsApi.ThemeColor = AscCommon.DocumentEditorApi.prototype.ThemeColor.bind(AscTest.Editor);
-	AscTest.JsApi.AutoColor = AscCommon.DocumentEditorApi.prototype.AutoColor.bind(AscTest.Editor);
-	AscTest.JsApi.RGBA = AscCommon.DocumentEditorApi.prototype.RGBA.bind(AscTest.Editor);
-	AscTest.JsApi.RGB = AscCommon.DocumentEditorApi.prototype.RGB.bind(AscTest.Editor);
-	AscTest.JsApi.FromJSON = AscCommon.DocumentEditorApi.prototype.FromJSON.bind(AscTest.Editor);
+	AscTest.JsApi.GetDocument = AscBuilder.Word.Api.GetDocument.bind(AscTest.Editor);
+	AscTest.JsApi.ReplaceTextSmart = AscBuilder.Word.Api.ReplaceTextSmart.bind(AscTest.Editor);
+	AscTest.JsApi.CreateRun = AscBuilder.Word.Api.CreateRun.bind(AscTest.Editor);
+	AscTest.JsApi.CreateParagraph = AscBuilder.Word.Api.CreateParagraph.bind(AscTest.Editor);
+	AscTest.JsApi.CreateInlineLvlSdt = AscBuilder.Word.Api.CreateInlineLvlSdt.bind(AscTest.Editor);
+	AscTest.JsApi.CreateTable = AscBuilder.Word.Api.CreateTable.bind(AscTest.Editor);
+	AscTest.JsApi.CreateShape = AscBuilder.Word.Api.CreateShape.bind(AscTest.Editor);
+	AscTest.JsApi.CreateSolidFill = AscBuilder.Word.Api.CreateSolidFill.bind(AscTest.Editor);
+	AscTest.JsApi.CreateStroke = AscBuilder.Word.Api.CreateStroke.bind(AscTest.Editor);
+	AscTest.JsApi.CreateNoFill = AscBuilder.Word.Api.CreateNoFill.bind(AscTest.Editor);
+	AscTest.JsApi.HexColor = AscBuilder.Word.Api.HexColor.bind(AscTest.Editor);
+	AscTest.JsApi.ThemeColor = AscBuilder.Word.Api.ThemeColor.bind(AscTest.Editor);
+	AscTest.JsApi.AutoColor = AscBuilder.Word.Api.AutoColor.bind(AscTest.Editor);
+	AscTest.JsApi.RGBA = AscBuilder.Word.Api.RGBA.bind(AscTest.Editor);
+	AscTest.JsApi.RGB = AscBuilder.Word.Api.RGB.bind(AscTest.Editor);
+	AscTest.JsApi.FromJSON = AscBuilder.Word.Api.FromJSON.bind(AscTest.Editor);
 	
 	AscTest.JsApi.CreateDocContent = function()
 	{

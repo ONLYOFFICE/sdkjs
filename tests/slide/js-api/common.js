@@ -35,8 +35,8 @@ $(function()
     AscTest.Editor.GetPresentation = AscCommon.SlideEditorApi.prototype.GetPresentation.bind(AscTest.Editor);
 
     AscTest.Editor.private_checkPlaceholders = function(){};
-    AscTest.Editor.private_CreateApiDocContent = AscCommon.SlideEditorApi.prototype.private_CreateApiDocContent.bind(AscTest.Editor);;
-    AscTest.Editor.private_CreateApiParagraph = AscCommon.SlideEditorApi.prototype.private_CreateApiParagraph.bind(AscTest.Editor);;
+    AscTest.Editor.private_CreateApiDocContent = AscCommon.SlideEditorApi.prototype.private_CreateApiDocContent.bind(AscTest.Editor);
+    AscTest.Editor.private_CreateApiParagraph = AscCommon.SlideEditorApi.prototype.private_CreateApiParagraph.bind(AscTest.Editor);
 
 	AscTest.JsApi = {};
 
@@ -68,6 +68,7 @@ $(function()
 	AscTest.JsApi.CreateSchemeColor = AscCommon.SlideEditorApi.prototype.CreateSchemeColor.bind(AscTest.Editor);
 	AscTest.JsApi.CreatePresetColor = AscCommon.SlideEditorApi.prototype.CreatePresetColor.bind(AscTest.Editor);
 
+	Asc.editor.getLogicDocument = function(){return Asc.editor.WordControl.m_oLogicDocument}
 	// QUnit.testStart(function()
 	// {
 	// 	AscTest.CreateLogicDocument();

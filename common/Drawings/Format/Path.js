@@ -2280,7 +2280,7 @@ function (window, undefined) {
 					prevPoint,
 					{ x: command.X0, y: command.Y0 },
 					{ x: command.X1, y: command.Y1 },
-					{ x: command.X2, y: command.Y2 },
+					{ x: command.X2, y: command.Y2 }
 				);
 				prevPoint = { x: command.X2, y: command.Y2 };
 			}

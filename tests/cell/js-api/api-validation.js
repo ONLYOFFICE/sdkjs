@@ -129,7 +129,7 @@ $(function () {
         const src = ws.GetRange("F1:F2"); src.SetValue('x');
         const r3 = ws.GetRange("G1:G2");
         r3.GetValidation().Add('xlValidateList', 'xlValidAlertWarning', undefined, ws.GetRange('F1:F2'));
-        assert.strictEqual(r3.GetValidation().GetFormula1(), '=F1:F2', "Formula1 from ApiRange address");
+        assert.strictEqual(r3.GetValidation().GetFormula1(), "=$F$1:$F$2", "Formula1 from ApiRange address");
     });
 
     QUnit.test("Add fails when type is invalid", function (assert) {
@@ -410,7 +410,7 @@ $(function () {
 
         const v = r.GetValidation();
         assert.strictEqual(v.GetType(), "xlValidateList", "Type");
-        assert.strictEqual(v.GetFormula1(), "=M1:M2", "Formula1 returns range address (no quotes, no '=')");
+        assert.strictEqual(v.GetFormula1(), "=$M$1:$M$2", "Formula1 returns range address");
     });
 
     QUnit.test("xlValidateDate: Greater than 01/31/2027 => stored numerically (no '=' drift)", function (assert) {

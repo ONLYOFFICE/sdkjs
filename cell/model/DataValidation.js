@@ -1456,7 +1456,6 @@
 							}
 
 							val._init(ws);
-							val.correctToInterface(ws);
 							ws.dataValidations.change(ws, originalValidation, val, addToHistory);
 							// adjust j to skip over newly added ranges
 							j += newRanges.length - 1;
@@ -1505,7 +1504,6 @@
 							}
 
 							val._init(ws);
-							val.correctToInterface(ws);
 
 							ws.dataValidations.change(ws, originalValidation, val, addToHistory);
 							// adjust j to skip over newly added ranges

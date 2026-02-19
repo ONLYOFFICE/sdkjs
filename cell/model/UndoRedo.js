@@ -5200,7 +5200,7 @@ function (window, undefined) {
 				if (!bUndo) {
 					AscCommonExcel.executeInR1C1Mode(false, function () {
 						if (formula) {
-							range.setValue(formula, null, null, bbox, null, {cmIndex: cmIndex, vmIndex: vmIndex, range: bbox});
+							range.setValue(formula, null, null, bbox, null, (cmIndex != null || vmIndex != null) ? {cmIndex: cmIndex, vmIndex: vmIndex, range: bbox} : null);
 						}
 						if (cmIndex != null) {
 							ws.getRange3(bbox.r1, bbox.c1, bbox.r1, bbox.c1)._foreach(function(cell) {
@@ -5215,9 +5215,10 @@ function (window, undefined) {
 					ws.getRange3(bbox.r1, bbox.c1, bbox.r1, bbox.c1)._foreach(function(cell) {
 						if (cell && cell.formulaParsed) {
 							//cell.formulaParsed.setCm(null);
-							//cell.formulaParsed.setVm(null);
+							cell.formulaParsed.setVm(null);
 						}
 					});
+					ws && ws.dynamicArrayManager.recalculateVolatileArrays();
 				}
 				break;
 			case AscCH.historyitem_ArrayFromula_DeleteFormula:

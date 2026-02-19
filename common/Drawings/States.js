@@ -399,7 +399,8 @@ StartAddNewShape.prototype =
                             extY: track.extY,
                             fill: track.overlayObject.brush,
                             border: track.overlayObject.pen,
-                            base: shape.drawingBase ? shape.drawingBase : null
+                            base: shape.drawingBase ? shape.drawingBase : null,
+							id: shape.getObjectName()
                         };
 
                     if (oAPI.editorId === AscCommon.c_oEditorId.Presentation)

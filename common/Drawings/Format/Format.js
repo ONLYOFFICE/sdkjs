@@ -17598,6 +17598,17 @@
 			}
 		}
 
+		function builder_GetChartTitle(chartSpace) {
+			const title = chartSpace && chartSpace.chart && chartSpace.chart.title;
+			if (title) {
+				const content = title.getDocContent();
+				if (content) {
+					return content.GetText();
+				}
+			}
+			return null;
+		}
+
 		function builder_SetChartHorAxisTitle(oChartSpace, sTitle, nFontSize, bIsBold) {
 			if (oChartSpace) {
 				var horAxis = oChartSpace.chart.plotArea.getHorizontalAxis();
@@ -20595,6 +20606,7 @@
 		window['AscFormat'].builder_CreateBlipFill = builder_CreateBlipFill;
 		window['AscFormat'].builder_CreateLine = builder_CreateLine;
 		window['AscFormat'].builder_SetChartTitle = builder_SetChartTitle;
+		window['AscFormat'].builder_GetChartTitle = builder_GetChartTitle;
 		window['AscFormat'].builder_SetChartHorAxisTitle = builder_SetChartHorAxisTitle;
 		window['AscFormat'].builder_SetChartVertAxisTitle = builder_SetChartVertAxisTitle;
 		window['AscFormat'].builder_SetChartLegendPos = builder_SetChartLegendPos;

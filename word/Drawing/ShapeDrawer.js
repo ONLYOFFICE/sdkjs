@@ -1249,10 +1249,10 @@ CShapeDrawer.prototype =
     {
         if (Asc.editor.isPdfEditor()) {
             let aDash;
-            if (this.Shape.GetDash)
-                aDash = this.Shape.GetDash();
-            else if (this.Shape.group && this.Shape.group.GetDash)
-                aDash = this.Shape.group.GetDash();
+            if (this.Shape.GetDashPattern)
+                aDash = this.Shape.GetDashPattern();
+            else if (this.Shape.group && this.Shape.group.GetDashPattern)
+                aDash = this.Shape.group.GetDashPattern();
             else if (this.Shape.IsDrawing && this.Shape.IsDrawing()) {
                 if (AscCommon.DashPatternPresets[this.Ln.prstDash]) {
                     aDash = AscCommon.DashPatternPresets[this.Ln.prstDash].slice();

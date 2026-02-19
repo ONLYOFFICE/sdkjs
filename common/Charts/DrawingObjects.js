@@ -3569,13 +3569,17 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                 var oDrawingBase = aObjects[i];
                 var oGraphicObject = oDrawingBase.graphicObject;
                 if(oDrawingBase.checkTarget(target, false)) {
+                    const oldX = oGraphicObject.x;
+                    const oldY = oGraphicObject.y;
                     const oldExtX = oGraphicObject.extX;
                     const oldExtY = oGraphicObject.extY;
                     oGraphicObject.recalcBounds();
                     oGraphicObject.recalcTransform();
                     oGraphicObject.addToRecalculate();
                     oGraphicObject.recalculate();
-                    if (!AscFormat.fApproxEqual(oldExtX, oGraphicObject.extX, 0.01) ||
+                    if (!AscFormat.fApproxEqual(oldX, oGraphicObject.x, 0.01) ||
+                        !AscFormat.fApproxEqual(oldY, oGraphicObject.y, 0.01) ||
+                        !AscFormat.fApproxEqual(oldExtX, oGraphicObject.extX, 0.01) ||
                         !AscFormat.fApproxEqual(oldExtY, oGraphicObject.extY, 0.01)) {
                         oGraphicObject.handleUpdateExtents();
                         oGraphicObject.recalculate();

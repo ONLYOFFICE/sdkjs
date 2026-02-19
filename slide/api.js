@@ -8457,6 +8457,7 @@ background-repeat: no-repeat;\
         {
             this.openFileCryptCallback(this.openFileCryptBinary);
         }
+		AscBuilder.Slide.init();
 	};
 	asc_docs_api.prototype.initCollaborativeEditing = function()
 	{
@@ -9513,6 +9514,11 @@ background-repeat: no-repeat;\
 			}
 		}
 	};
+	
+	asc_docs_api.prototype.getJsApi = function()
+	{
+		return AscBuilder.Slide.Api;
+	};
 
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                 = window['Asc'] || {};
@@ -10101,6 +10107,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_setPreserveSlideMaster"] = asc_docs_api.prototype.asc_setPreserveSlideMaster;
 
 	asc_docs_api.prototype["asc_SetThumbnailsPosition"] = asc_docs_api.prototype.asc_SetThumbnailsPosition;
+	asc_docs_api.prototype["getJsApi"] = asc_docs_api.prototype.getJsApi;
 
 
 	window['Asc']['asc_CCommentDataSlide'] = window['Asc'].asc_CCommentDataSlide = asc_CCommentDataSlide;

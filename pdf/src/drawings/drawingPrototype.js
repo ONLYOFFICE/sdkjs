@@ -75,9 +75,6 @@
 	CPdfDrawingPrototype.prototype.GetEditField = function() {
 		return null;
 	};
-    CPdfDrawingPrototype.prototype.OnContentChange = function() {
-        return this.SetNeedRecalc(true);
-    };
     CPdfDrawingPrototype.prototype.IsPdfDrawing = function() {
         return true;
     };
@@ -313,6 +310,7 @@
     CPdfDrawingPrototype.prototype.OnContentChange = function() {
         let oGroup = this.getMainGroup();
         if (oGroup) {
+			oGroup.SetWasChanged && oGroup.SetWasChanged(true);
             oGroup.SetNeedRecalc && oGroup.SetNeedRecalc(true);
         }
         else {
@@ -590,9 +588,7 @@
 		
         let oPara = content.GetCurrentParagraph();
         let oRun = oPara.IsSelectionUse() ? oPara.GetElement(oPara.Selection.StartPos) : oPara.GetElement(oPara.CurPos.ContentPos);
-        let oParaContentPos = new AscWord.CParagraphContentPos();
-        oRun.Get_ParaContentPos(undefined, undefined, oParaContentPos);
-        let oTextPr = oRun.GetTextPr(oParaContentPos, oParaContentPos.Depth);
+        let oTextPr = oRun.GetDirectTextPr();
         let sFontName = oTextPr.GetFontFamily();
 
         let oFontFile;
@@ -685,8 +681,34 @@
         return Asc.editor.getPDFDoc().GetDrawingDocument();
     };
     CPdfDrawingPrototype.prototype.handleUpdateRot = function() {
+        this.recalcTransform();
         this.recalcTransformText && this.recalcTransformText();
         this.SetNeedRecalc(true);
+    };
+	CPdfDrawingPrototype.prototype.Set_CurrentElement = function(bUpdate, pageIndex, bNoTextSelection) {
+        let oDoc = this.GetDocument();
+		if (!oDoc) {
+			return;
+		}
+
+        let oController = oDoc.GetController();
+
+		pageIndex = pageIndex !== undefined ? pageIndex : this.GetAbsolutePage();
+		if (bNoTextSelection !== true) {
+			this.SetControllerTextSelection(oController, pageIndex, bNoTextSelection);
+		}
+
+		if(bNoTextSelection !== true) {
+            this.SetControllerTextSelection(oController, pageIndex);
+        }
+        else {
+            oController.resetSelection();
+            oController.selectObject(this, pageIndex);
+        }
+
+        let oGroup = this.getMainGroup && this.getMainGroup();
+        if (!oGroup)
+            oDoc.SetMouseDownObject(this);
     };
 
     /////////////////////////////

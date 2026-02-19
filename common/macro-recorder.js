@@ -35,6 +35,8 @@
 (function (window)
 {
 	let oMacroRecorderContext = {};
+	let shapesMacro = {};
+	let nShape = 0;
 
 	/**
 	 * @param editor
@@ -67,6 +69,8 @@
 		this.paused = false;
 		this.inProgress = true;
 		this.isFirstAction = true;
+		shapesMacro = {};
+		nShape = 0;
 
 		this.initEvents();
 		this.editor.asc_registerCallback('asc_onKeyDown', this.onKeyDown);
@@ -307,50 +311,34 @@
 		this.prevChangeType	= null;
 		this.prevData		= undefined;
 	};
-	MacroRecorder.prototype.onAction = function(type, additional, isStart)
+	MacroRecorder.prototype.addStepData = function(type, additional, isStart)
 	{
 		if (isStart === true)
 			this.currentDescription = type;
 
-		if (!this.isInProgress() || this.isPaused() || undefined === additional)
-			return;
-
 		if (isStart === false)
 			type = this.currentDescription;
 
-		//additional = this.proceedDataBefoeApply(additional);
-
-		if (this.prevChangeType === type)
-		{
-			this.prevData = this.joinDataForMacros(this.prevData, additional);
-		}
-		else if (type !== AscDFH.historydescription_Document_AutoCorrectMath)
-		{
-			this.getResultByType(this.prevChangeType, this.prevData);
-			this.prevChangeType = type;
-			this.prevData = additional;
-		}
-
-		if (this.isFirstAction)
-		{
-			this.addDefualtVaribalesForEditor();
-			this.isFirstAction = false;
-		}
-	};
-	// for now duplicate, leter we delete onAction
-	MacroRecorder.prototype.addStepData = function(type, additional)
-	{
 		if (!this.isInProgress()
 			|| this.isPaused()
 			|| undefined === additional
 			|| (Array.isArray(additional) && additional.length === 0))
 			return;
 
-		// for meta action
-		if (type === 'remove')
-		{
+	    this.filterAction(type, additional);
+	};
+	MacroRecorder.prototype.filterAction = function(type, additional){
+		if (type === "remove") {
 			this.getResultByType(type, additional);
 			return;
+		}
+		else if (this.prevChangeType === "DeselectDrawing" && type === AscDFH.historydescription_Document_AddNewShape)
+		{
+			if (this.prevData === additional.id || this.prevData.includes(additional.id)) // unselect by create shape - skip
+			{
+				this.prevData = undefined;
+				this.prevChangeType = undefined;
+			}
 		}
 
 		if (this.prevChangeType === type)
@@ -383,7 +371,7 @@
 				&& type !== 'moveCursorRight'
 				&& type !== 'moveCursorUp'
 				&& type !== 'moveCursorDown'
-				&& type !== 'SelectShape'
+				&& type !== 'SelectDrawing'
 			)
 			{
 				for (let i = 0; i < additional.length; i++)
@@ -473,7 +461,7 @@
 	MacroRecorder.prototype.proceedDefualtVariablesForSpreadsheet = function()
 	{
 		this.result += "\tlet worksheet = Api.GetActiveSheet();\n"
-			+ "";
+			+ "\tlet workbook = Api.GetActiveWorkbook();\n";
 	};
 	MacroRecorder.prototype.proceedDefualtVariablesForPresentation = function()
 	{
@@ -727,6 +715,11 @@
 		}
 	}
 
+	function getShapeCount()
+	{
+		return nShape++;
+	}
+
 	const wordActions = {
 		setTextBold				: function(bold){return "\tdoc.GetRangeBySelect().SetBold(" + bold + ");\n"},
 		setTextItalic			: function(italic){return "\tdoc.GetRangeBySelect().SetItalic(" + italic + ");\n"},
@@ -927,20 +920,20 @@
 			return "\tdoc.GetRangeBySelect().AddHyperlink(\"" + (hl.Value ? hl.Value : hl.Text) + "\", \"" + hl.ToolTip + "\");\n"
 		},
 		addShape				: function(shapeProps){
-			// for now we don't have api for move shape in exact position
 			let fill = shapeProps.fill.getRGBAColor();
 			let border = shapeProps.border;
 			let borderwidth = border.w / 36000;
 			let borderColor = border.Fill.getRGBAColor();
+			shapesMacro[shapeProps.id] = getShapeCount();
+
 			return "\t(function () {\n" +
 					"\t\tlet fill = Api.CreateSolidFill(Api.CreateRGBColor("+ fill.R +", " + fill.G + ", " + fill.B + "));\n" +
 					"\t\tlet stroke = Api.CreateStroke(" + borderwidth +" * 36000, Api.CreateSolidFill(Api.CreateRGBColor("+ borderColor.R +", " + borderColor.G + ", " + borderColor.B + ")));\n" +
 					"\t\tlet shape = Api.CreateShape(\"" + shapeProps.type + "\", " + shapeProps.extX + " * 36000, " + shapeProps.extY + " * 36000, fill, stroke);\n" +
 					"\t\tshape.SetWrappingStyle(\"inFront\");\n" +
-					"\t\tshape.SetVerPosition(\"page\", " + shapeProps.pos.y + " * 36000.0);\n" +
-					"\t\tshape.SetHorPosition(\"page\", " + shapeProps.pos.x + " * 36000.0);\n" +
-					"\t\tdoc.GetCurrentParagraph().AddDrawing(shape);\n" +
-					"\t\tshape.Select();\n" +
+					"\t\tdoc.AddDrawingToPage(shape, doc.GetCurrentPage(), " + shapeProps.pos.x + " * 36000.0, " + shapeProps.pos.y + " * 36000.0 )\n" +
+					"\t\tshape.Select(true);\n" +
+					"\t\tshape.SetName(\"macroShape" + shapesMacro[shapeProps.id] + "\");\n" +
 				"\t}());\n";
 		},
 		removeHdr				: function(hdr){
@@ -1072,9 +1065,37 @@
 				oMacroRecorderContext.prevData.pop();
 			return "";
 		},
-		selectShape				: function(shapes)
+		selectDrawing			: function(shapes)
 		{
-			return "";
+			let str = "";
+			let shapesSort = [];
+			shapes.forEach(function(element) {
+				if (!shapesSort.includes(element)) 
+					shapesSort.push(element);
+			});
+
+			shapesSort = shapesSort.filter(function(element) {
+				return shapesMacro[element.getObjectName()] !== undefined;
+			});
+
+			if (shapesSort.length === 0)
+				return "";
+
+			let ids = ""
+			for(let i = 0; i < shapesSort.length; i++)
+			{
+				if (shapesMacro[shapesSort[i].getObjectName()] !== undefined)
+					ids +=  "\"" + "macroShape" + shapesMacro[shapesSort[i].getObjectName()] + "\"" + (i != shapesSort.length - 1 ? ", " : "")
+			}
+
+			return str + "\tdoc.GetDrawingsByName([" + ids + "])\n\t\t.forEach(function(drawing, index){drawing.Select(index === 0)});\n"
+		},
+		deselectDrawing			: function(name)
+		{
+			if (shapesMacro[name] === undefined) {
+				return "\tdoc.GetSelectedDrawings().forEach(function(drawing){drawing.Unselect()});\n";
+			}
+			return "\tdoc.GetDrawingsByName([\"" + ("macroShape" + shapesMacro[name]) + "\"])\n\t\t.forEach(function(drawing){drawing.Unselect()});\n"
 		},
 		setDrawingFill			: function(unifill)
 		{
@@ -1176,7 +1197,7 @@
 		},
 		setDrawingPos			: function(pos)
 		{
-			return "\tdoc.GetSelectedDrawings().forEach(function(draw) {\n" +
+			return "\tdoc.GetDrawingsByName([\"" + pos.name + "\"]).forEach(function(draw) {\n" +
 				"\t\tdraw.SetVerPosition(\"page\", " + pos.y + " * 36000.0);\n" +
 				"\t\tdraw.SetHorPosition(\"page\", " + pos.x + " * 36000.0);\n" +
 				"\t});\n"
@@ -1348,6 +1369,7 @@
 	WordActionsMacroList[AscDFH.historydescription_Document_SetTextStrikeout]			= wordActions.setTextStrikeout;
 	WordActionsMacroList[AscDFH.historydescription_Document_SetTextStrikeoutHotKey]		= wordActions.setTextStrikeout;
 	WordActionsMacroList[AscDFH.historydescription_Document_SetTextFontName]			= wordActions.setTextFontName;
+	WordActionsMacroList[AscDFH.historydescription_Document_SetTextFontNameLong]		= wordActions.setTextFontName;
 	WordActionsMacroList[AscDFH.historydescription_Document_SetTextFontSize]			= wordActions.setTextFontSize;
 	WordActionsMacroList[AscDFH.historydescription_Document_SetTextHighlightColor]		= wordActions.setTextHighlightNone;
 	WordActionsMacroList[AscDFH.historydescription_Document_SetTextHighlightNone]		= wordActions.setTextHighlightColor;
@@ -1397,7 +1419,8 @@
 	WordActionsMacroList[AscDFH.historydescription_Document_AddImages]					= wordActions.addImage;
 	WordActionsMacroList[AscDFH.historydescription_Document_AddHyperlink]				= wordActions.addHyperlink;
 	WordActionsMacroList[AscDFH.historydescription_Document_AddNewShape]				= wordActions.addShape;
-	WordActionsMacroList['SelectShape']													= wordActions.selectShape;
+	WordActionsMacroList['SelectDrawing']												= wordActions.selectDrawing;
+	WordActionsMacroList['DeselectDrawing']												= wordActions.deselectDrawing;
 	WordActionsMacroList['SetDrawingFill']												= wordActions.setDrawingFill;
 	WordActionsMacroList['SetDrawingLine']												= wordActions.setDrawingLine;
 	WordActionsMacroList['SetDrawingRotation']											= wordActions.setDrawingRotation;
@@ -1678,17 +1701,49 @@
 			let border = shapeProps.border;
 			let borderwidth = border.w / 36000;
 			let borderColor = border.Fill.getRGBAColor();
+			shapesMacro[shapeProps.id] = getShapeCount();
 			let from = shapeProps.base.from;
 			return "\t(function () {\n" +
 					"\t\tlet fill = Api.CreateSolidFill(Api.CreateRGBColor("+ fill.R +", " + fill.G + ", " + fill.B + "));\n" +
 					"\t\tlet stroke = Api.CreateStroke(" + borderwidth +" * 36000, Api.CreateSolidFill(Api.CreateRGBColor("+ borderColor.R +", " + borderColor.G + ", " + borderColor.B + ")));\n" +
 					"\t\tlet shape = worksheet.AddShape(\"" + shapeProps.type + "\", " + shapeProps.extX + " * 36000, " + shapeProps.extY + " * 36000, fill, stroke, " + from.col + ", " + from.colOff * 36000 + ", " + from.row + ", " + from.rowOff * 36000 + ");\n" +
 					"\t\tshape.Select();\n" +
+					"\t\tshape.SetName(\"macroShape" + shapesMacro[shapeProps.id] + "\");\n" +
 				"\t}());\n";
 		},
-		selectShape				: function(shapes)
+		deselectDrawing				: function(name)
 		{
-			return "";
+			if (shapesMacro[name] === undefined) {
+				return "\tworksheet.GetSelectedDrawings().forEach(function(drawing){drawing.Unselect()});\n";
+			}
+			return "\tworkbook.GetDrawingsByName([\"" + ("macroShape" + shapesMacro[name])  + "\"])\n\t\t.forEach(function(drawing){drawing.Unselect()});\n"
+		},
+		selectDrawing				: function(shapes)
+		{
+			let str = "";
+			let shapesSort = [];
+			
+			shapes.forEach(function(element) {
+				if (!shapesSort.includes(element)) 
+					shapesSort.push(element);
+			});
+
+			// Remove elements where shapesMacro[element.getObjectName()] === undefined
+			shapesSort = shapesSort.filter(function(element) {
+				return shapesMacro[element.getObjectName()] !== undefined;
+			});
+
+			if (shapesSort.length === 0)
+				return "";
+
+			let ids = ""
+			for(let i = 0; i < shapesSort.length; i++)
+			{
+				if (shapesMacro[shapesSort[i].getObjectName()] !== undefined)
+					ids +=  "\"" + "macroShape" + shapesMacro[shapesSort[i].getObjectName()] + "\"" + (i != shapesSort.length - 1 ? ", " : "")
+			}
+
+			return str + "\tworkbook.GetDrawingsByName([" + ids + "])\n\t\t.forEach(function(drawing, index){drawing.Select(index === 0)});\n"
 		},
 		setDrawingFill			: function(unifill)
 		{
@@ -1876,7 +1931,8 @@
 	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SelectRange]					= cellActions.selectRange;
 	CellActionsMacroList[AscDFH.historydescription_Spreadsheet_SetCellFormula]				= cellActions.setCellFormula;
 
-	CellActionsMacroList['SelectShape']														= cellActions.selectShape;
+	CellActionsMacroList['DeselectDrawing']													= cellActions.deselectDrawing;
+	CellActionsMacroList['SelectDrawing']													= cellActions.selectDrawing;
 	CellActionsMacroList['SetDrawingFill']													= cellActions.setDrawingFill;
 	CellActionsMacroList['SetDrawingLine']													= cellActions.setDrawingLine;
 	CellActionsMacroList['SetDrawingRotation']												= cellActions.setDrawingRotation;
@@ -2185,18 +2241,67 @@
 			let border = shapeProps.border;
 			let borderwidth = border.w / 36000;
 			let borderColor = border.Fill.getRGBAColor();
+			shapesMacro[shapeProps.id] = getShapeCount();
+
 			return "\t(function () {\n" +
 					"\t\tlet fill = Api.CreateSolidFill(Api.CreateRGBColor(" + fill.R +", " + fill.G + ", " + fill.B + "));\n" +
 					"\t\tlet stroke = Api.CreateStroke(" + borderwidth +" * 36000, Api.CreateSolidFill(Api.CreateRGBColor(" + borderColor.R +", " + borderColor.G + ", " + borderColor.B + ")));\n" +
 					"\t\tlet shape = Api.CreateShape(\"" + shapeProps.type + "\", " + shapeProps.extX + " * 36000, " + shapeProps.extY + " * 36000, fill, stroke);\n" +
 					"\t\tshape.SetPosition(" + shapeProps.pos.x + " * 36000 , " + shapeProps.pos.y + " * 36000 );\n" +
 					"\t\tpresentation.GetCurrentSlide().AddObject(shape);\n" +
-					"\t\tshape.Select();\n" +
+					"\t\tshape.Select(true);\n" +
+					"\t\tshape.SetName(\"macroShape" + shapesMacro[shapeProps.id] + "\");\n" +
 				"\t}());\n";
 		},
-		selectShape				: function(shapes)
+		selectDrawing				: function(shapes)
 		{
-			return "";
+			let str = "";
+			let shapesSort = [];
+			function isDrawingOnSlide(oDrawing) {
+				if(!oDrawing) return false;
+				let oSlide = oDrawing.parent;
+				if(!oSlide) return false;
+				let aSpTree = oSlide instanceof window['AscCommonSlide'].Slide && oSlide.cSld && oSlide.cSld.spTree;
+				if(!Array.isArray(aSpTree)) return false;
+				for(let nSp = 0; nSp < aSpTree.length; ++nSp) {
+					if(aSpTree[nSp] === oDrawing) {
+						return true;
+					}
+				}
+				return false;
+			}
+
+			shapes.forEach(function(element) {
+				if (!shapesSort.includes(element) && isDrawingOnSlide(element))
+					shapesSort.push(element);
+			});
+
+			if (shapesSort.length === 0)
+				return "";
+
+			shapesSort = shapesSort.filter(function(element) {
+				return shapesMacro[element.getObjectName()] !== undefined;
+			});
+
+			if (shapesSort.length === 0)
+				return "";
+
+			let ids = "";
+			for(let i = 0; i < shapesSort.length; i++)
+			{
+				if (shapesMacro[shapesSort[i].getObjectName()] !== undefined)
+					ids +=  "\"" + "macroShape" + shapesMacro[shapesSort[i].getObjectName()] + "\"" + (i != shapesSort.length - 1 ? ", " : "")
+			}
+
+			return str + "\tpresentation.GetDrawingsByName([" + ids + "])\n\t\t.forEach(function(drawing, index){drawing.Select(index === 0)});\n"
+
+		},
+		deselectDrawing			: function(name)
+		{
+			if (shapesMacro[name] === undefined) {
+				return "\tpresentation.GetSelectedDrawings().forEach(function(drawing){drawing.Unselect()});\n";
+			}
+			return "\tpresentation.GetDrawingsByName([\"" + ("macroShape" + shapesMacro[name]) + "\"])\n\t\t.forEach(function(drawing){drawing.Unselect()});\n"
 		},
 		setDrawingFill			: function(unifill)
 		{
@@ -2286,35 +2391,23 @@
 				"\t\tdraw.SetRotation(" + nRot * 180 / Math.PI + ");\n" +
 				"\t});\n"
 		},
-		setShapeFlipHInvert		: function()
+		setDrawingFlipH			: function(isFlip)
 		{
-			return "\tdoc.GetSelectedDrawings()\n"
-				+ "\t\t.filter(item => item.GetClassType() === \"shape\")\n"
-				+ "\t\t.forEach(shape => {shape.SetHorFlip(!shape.GetFlipH())});\n";
-		},
-		setShapeFlipVInvert		: function()
-		{
-			return "\tdoc.GetSelectedDrawings()\n"
-				+ "\t\t.filter(item => item.GetClassType() === \"shape\")\n"
-				+ "\t\t.forEach(shape => {shape.SetVertFlip(!shape.GetFlipV())});\n";
-		},
-		setShapeFlipH			: function(isFlip)
-		{
-			return "\tdoc.GetSelectedDrawings()\n"
+			return "\tApi.GetSelection().GetShapes()\n"
 				+ "\t\t.filter(item => item.GetClassType() === \"shape\")\n"
 				+ "\t\t.forEach(shape => {shape.SetHorFlip(" + isFlip +")});\n";
 
 		},
-		setShapeFlipV			: function(isFlip)
+		setDrawingFlipV			: function(isFlip)
 		{
-			return "\tdoc.GetSelectedDrawings()\n"
+			return "\tApi.GetSelection().GetShapes()\n"
 				+ "\t\t.filter(item => item.GetClassType() === \"shape\")\n"
 				+ "\t\t.forEach(shape => {shape.SetVertFlip(" + isFlip + ")});\n";
 
 		},
 		setDrawingWrapping		: function(props)
 		{
-			return "\tdoc.GetSelectedDrawings().forEach(draw => draw.SetWrappingStyle(\"" + getWrappingStyleName(props) + "\"))\n"
+			return "\tApi.GetSelection().GetShapes().forEach(draw => draw.SetWrappingStyle(\"" + getWrappingStyleName(props) + "\"))\n"
 		},
 		setDrawingPos			: function(pos)
 		{
@@ -2522,6 +2615,10 @@
 	PresentationActionMacroList["SetShapeX"]														= presActions.setShapeX;
 	PresentationActionMacroList["SetShapeY"]														= presActions.setShapeY;
 	PresentationActionMacroList['SetShapeInnerPadding']												= presActions.setShapeInnerPadding;
+	PresentationActionMacroList['SetDrawingFlipH']													= presActions.setDrawingFlipH;
+	PresentationActionMacroList['SetDrawingFlipV']													= presActions.setDrawingFlipV;
+	PresentationActionMacroList["SelectDrawing"]													= presActions.selectDrawing;
+	PresentationActionMacroList["DeselectDrawing"]													= presActions.deselectDrawing;
 
 	//--------------------------------------------------------export----------------------------------------------------
 	AscCommon.MacroRecorder = MacroRecorder;

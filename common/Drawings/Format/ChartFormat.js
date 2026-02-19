@@ -5307,6 +5307,7 @@
             }
             case AscDFH.historyitem_PlotArea_SetLayout:
             {
+				this.Refresh_RecalcData2(data);
                 break;
             }
             case AscDFH.historyitem_PlotArea_SetSerAx:
@@ -5765,7 +5766,7 @@
                             }
                         }
                     }
-                    else if(oFirstChart.getChartType() === Asc.c_oAscChartTypeSettings.areaNormal
+                    else if(oFirstChart.getChartType() === Asc.c_oAscChartTypeSettings.areaStacked
                         && oSecondChart.getChartType() === Asc.c_oAscChartTypeSettings.barNormal) {
                         if(!oFirstChart.isSecondaryAxis()) {
                             if(!oSecondChart.isSecondaryAxis()) {
@@ -6370,7 +6371,7 @@
 			this.switchToRadar(nType);
         }
 		this.getAllSeries().forEach(function(s) {
-			s.checkSeriesAfterChangeType();
+			s.checkSeriesAfterChangeType(nType);
 		});
     };
     CPlotArea.prototype.getAllSeries = function() {

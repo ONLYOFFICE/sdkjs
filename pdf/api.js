@@ -768,6 +768,12 @@
 		let oViewer	= this.getDocumentRenderer();
 		let oDoc	= this.getPDFDoc();
 		
+		oDoc.StartAction(AscDFH.historydescription_Pdf_EditPage);
+		if (oDoc.IsSelectionLocked(AscDFH.historydescription_Pdf_EditPage, [oViewer.currentPage])) {
+			oDoc.FinalizeAction(true);
+			return false;
+		}
+
 		oDoc.EditPage(oViewer.currentPage);
 	};
 	PDFEditorApi.prototype.asc_AddPage = function(nPos) {
@@ -1448,7 +1454,10 @@
 	};
 	PDFEditorApi.prototype.ApplyRedact = function() {
 		let oDoc = this.getPDFDoc();
-		return oDoc.ApplyRedact();
+		
+		return oDoc.DoAction(function() {
+			oDoc.ApplyRedact()
+		}, AscDFH.historydescription_Pdf_Apply_Redact);
 	};
 
 	PDFEditorApi.prototype.HasRedact = function() {
@@ -2854,7 +2863,7 @@
 			oController.selectedObjects.forEach(function(shape) {
 				let field = shape.GetEditField();
 				if (AscPDF.FIELD_TYPES.button == field.GetType()) {
-					field.SetButtonFitBounds(bValue);
+					field.SetFitBounds(bValue);
 				}
 			});
 
@@ -3241,7 +3250,7 @@
 						annot.SetFillColor(aColor);
 					}
 					else {
-						annot.SetStrokeColor(aColor);
+						annot.SetBorderColor(aColor);
 					}
 				}
 			});
@@ -3258,7 +3267,7 @@
 			return null;
 		}
 
-		let aInnerColor = oMouseDownAnnot.IsRedact() ? oMouseDownAnnot.GetFillColor() : oMouseDownAnnot.GetStrokeColor();
+		let aInnerColor = oMouseDownAnnot.IsRedact() ? oMouseDownAnnot.GetFillColor() : oMouseDownAnnot.GetBorderColor();
 		let oColor = oMouseDownAnnot.GetRGBColor(aInnerColor);
 		
 		oColor["r"] = oColor.r;
@@ -3311,7 +3320,7 @@
 		return oDoc.DoAction(function() {
 			oController.selectedObjects.forEach(function(annot) {
 				if (annot.IsAnnot()) {
-					annot.SetWidth(nValue);
+					annot.SetBorderWidth(nValue);
 				}
 			});
 
@@ -3332,65 +3341,65 @@
 				if (annot.IsAnnot()) {
 					switch (nComplexType) {
 						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.solid: {
-							annot.SetBorder(AscPDF.BORDER_TYPES.solid);
-							annot.SetDash([]);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
+							annot.SetDashPattern([]);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
 							annot.SetBorderEffectIntensity(0);
 							break;
 						}
 						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash1: {
-							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
-							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash1);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
+							annot.SetDashPattern(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash1);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
 							annot.SetBorderEffectIntensity(0);
 							break;
 						}
 						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash2: {
-							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
-							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash2);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
+							annot.SetDashPattern(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash2);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
 							annot.SetBorderEffectIntensity(0);
 							break;
 						}
 						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash3: {
-							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
-							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash3);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
+							annot.SetDashPattern(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash3);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
 							annot.SetBorderEffectIntensity(0);
 							break;
 						}
 						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash4: {
-							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
-							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash4);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
+							annot.SetDashPattern(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash4);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
 							annot.SetBorderEffectIntensity(0);
 							break;
 						}
 						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash5: {
-							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
-							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash5);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
+							annot.SetDashPattern(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash5);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
 							annot.SetBorderEffectIntensity(0);
 							break;
 						}
 						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.dash6: {
-							annot.SetBorder(AscPDF.BORDER_TYPES.dashed);
-							annot.SetDash(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash6);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.None);
+							annot.SetBorderStyle(AscPDF.BORDER_TYPES.dashed);
+							annot.SetDashPattern(AscPDF.ANNOT_BORDER_DASHED_VALUES.dash6);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.none);
 							annot.SetBorderEffectIntensity(0);
 							break;
 						}
 						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.cloud1: {
-							annot.SetBorder(AscPDF.BORDER_TYPES.solid);
-							annot.SetDash([]);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.Cloud);
+							annot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
+							annot.SetDashPattern([]);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.cloud);
 							annot.SetBorderEffectIntensity(1);
 							break;
 						}
 						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.cloud2: {
-							annot.SetBorder(AscPDF.BORDER_TYPES.solid);
-							annot.SetDash([]);
-							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.Cloud);
+							annot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
+							annot.SetDashPattern([]);
+							annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES.cloud);
 							annot.SetBorderEffectIntensity(2);
 							break;
 						}
@@ -4076,6 +4085,11 @@
 		AscCommon.DocumentEditorApi.prototype._onEndLoadSdk.call(this);
 
 		this.stampAnnotPreviewManager = new AscPDF.StampAnnotPreviewManager();
+		AscBuilder.Pdf.init();
+	};
+	PDFEditorApi.prototype.getJsApi = function()
+	{
+		return AscBuilder.Pdf.Api;
 	};
 	PDFEditorApi.prototype.asc_getPropertyEditorStamps = function() {
 		if (this.loadStampsJSON()) {
@@ -5512,6 +5526,9 @@
 	PDFEditorApi.prototype['asc_CheckEditPassword']			= PDFEditorApi.prototype.asc_CheckEditPassword;
 	PDFEditorApi.prototype['asc_CheckPrintPassword']		= PDFEditorApi.prototype.asc_CheckPrintPassword;
 	
+	PDFEditorApi.prototype['getJsApi'] = PDFEditorApi.prototype.getJsApi;
+	
 	window["PDFEditorApi"] = PDFEditorApi;
+	AscCommon['PDFEditorApi'] = AscCommon.PDFEditorApi = PDFEditorApi;
 
 })(window, window.document);
