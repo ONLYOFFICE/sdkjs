@@ -2621,13 +2621,30 @@ function ShapeToImageConverter(shape, pageIndex, sImageFormat)
 }
 
 function getArrowDrawingParameters(drawer, bIsSaveToPdfMode) {
-	const graphicsCtx = (drawer.Graphics.isTrack() && !bIsSaveToPdfMode)
-		? drawer.Graphics.Graphics
-		: drawer.Graphics;
+	let graphics;
+	let fullTransform;
+	let lineSize;
+	let arrCoef;
 
-	const fullTransform = bIsSaveToPdfMode
-		? (drawer.isPdf() ? drawer.Graphics.GetTransform() : drawer.Graphics.m_oFullTransform)
-		: graphicsCtx.m_oFullTransform;
+	if (bIsSaveToPdfMode) {
+		graphics = drawer.Graphics;
+		fullTransform = drawer.isPdf()
+			? graphics.GetTransform()
+			: graphics.m_oFullTransform;
+		lineSize = drawer.isPdf()
+			? graphics.GetLineWidth()
+			: graphics.m_oContext.lineWidth;
+		arrCoef = 1;
+	} else {
+		graphics = drawer.Graphics.isTrack()
+			? drawer.Graphics.Graphics
+			: drawer.Graphics;
+		fullTransform = graphics.m_oFullTransform;
+		lineSize = graphics.m_oContext.lineWidth;
+		arrCoef = drawer.isArrPix
+			? 1 * AscCommon.g_dKoef_pix_to_mm
+			: 1;
+	}
 
 	const inverseTransform = AscCommon.global_MatrixTransformer.Invert(fullTransform);
 
@@ -2635,18 +2652,8 @@ function getArrowDrawingParameters(drawer, bIsSaveToPdfMode) {
 	const dy = fullTransform.TransformPointY(1, 1) - fullTransform.TransformPointY(0, 0);
 	const transformScaleFactor = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2)) / Math.sqrt(2);
 
-	const lineSize = bIsSaveToPdfMode
-		? (drawer.isPdf() ? drawer.Graphics.GetLineWidth() : graphicsCtx.m_oContext.lineWidth)
-		: graphicsCtx.m_oContext.lineWidth;
-
 	const penWidth = lineSize * transformScaleFactor;
-	const minArrowSize = bIsSaveToPdfMode
-		? 2.5 / AscCommon.g_dKoef_mm_to_pix
-		: null;
-
-	const arrCoef = bIsSaveToPdfMode
-		? 1
-		: drawer.isArrPix ? (1 / AscCommon.g_dKoef_mm_to_pix) : 1;
+	const minArrowSize = 2.5 * AscCommon.g_dKoef_pix_to_mm * transformScaleFactor; // Value chosen empirically (2.5 pix)
 
 	return {
 		fullTransform: fullTransform,
