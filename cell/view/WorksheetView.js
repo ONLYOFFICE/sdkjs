@@ -14036,10 +14036,7 @@ function isAllowPasteLink(pastedWb) {
 
     WorksheetView.prototype._updateSelectionNameAndInfo = function () {
         this.handlers.trigger("selectionNameChanged", this.getSelectionName(/*bRangeText*/false));
-      	//TODO change focus ?
-
-		this.handlers.trigger("selectionChanged");
-
+        this.handlers.trigger("selectionChanged");
         let t = this;
         this.getSelectionMathInfo(function (info) {
             t.handlers.trigger("selectionMathInfoChanged", info);
