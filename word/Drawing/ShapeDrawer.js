@@ -1631,31 +1631,13 @@ CShapeDrawer.prototype =
 		this.IsArrowsDrawing = true;
 		this.Graphics.p_dash(null);
 
-		const graphicsCtx = this.Graphics.isTrack() && !bIsSaveToPdfMode
-			? this.Graphics.Graphics
-			: this.Graphics;
-
-		const fullTransform = bIsSaveToPdfMode
-			? (this.isPdf() ? this.Graphics.GetTransform() : this.Graphics.m_oFullTransform)
-			: graphicsCtx.m_oFullTransform;
-		const inverseTransform = AscCommon.global_MatrixTransformer.Invert(fullTransform);
-
-		const point1 = { x: fullTransform.TransformPointX(0, 0), y: fullTransform.TransformPointY(0, 0) };
-		const point2 = { x: fullTransform.TransformPointX(1, 1), y: fullTransform.TransformPointY(1, 1) };
-		const transformScaleFactor = Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2)) / Math.sqrt(2);
-
-		const lineSize = bIsSaveToPdfMode
-			? (this.isPdf() ? this.Graphics.GetLineWidth() : graphicsCtx.m_oContext.lineWidth)
-			: graphicsCtx.m_oContext.lineWidth;
-
-		const penWidth = lineSize * transformScaleFactor;
-		const minArrowSize = bIsSaveToPdfMode
-			? 2.5 / AscCommon.g_dKoef_mm_to_pix
-			: null;
-
-		const arrCoef = bIsSaveToPdfMode
-			? 1
-			: this.isArrPix ? (1 / AscCommon.g_dKoef_mm_to_pix) : 1;
+		const params = getArrowDrawingParameters(this, bIsSaveToPdfMode);
+		const fullTransform = params.fullTransform;
+		const inverseTransform = params.inverseTransform;
+		const transformScaleFactor = params.transformScaleFactor;
+		const penWidth = params.penWidth;
+		const minArrowSize = params.minArrowSize;
+		const arrCoef = params.arrCoef;
 
 		const geometry = this.Shape.getGeometry();
 		const unclosedPaths = geometry.pathLst.filter(function (path) {
@@ -1667,26 +1649,25 @@ CShapeDrawer.prototype =
 			const arrowWidth = this.Ln.headEnd.GetWidth(penWidth, minArrowSize);
 
 			const firstUnclosedPath = unclosedPaths[0];
-			const subPaths = firstUnclosedPath && firstUnclosedPath.stroke ? firstUnclosedPath.getContinuousSubpaths() : [];
-			const unclosedSubPaths = subPaths.filter(function (path) {
-				return !path.isClosed(0);
-			});
+			const unclosedSubPaths = getUnclosedSubPaths(firstUnclosedPath);
 
 			for (let i = 0; i < unclosedSubPaths.length; i++) {
 				const path = unclosedSubPaths[i];
 				const headAngle = path.getHeadArrowAngle(arrowLength / transformScaleFactor);
 
 				if (AscFormat.isRealNumber(headAngle)) {
-					// Each continuous subpath starts with a moveTo command
-					// so we can use the first point of the path as the arrow tip point
+					const pathStartPoint = path.getStartPoint();
+					if (!pathStartPoint) {
+						continue;
+					}
 
 					const arrowEndPoint = {
-						x: fullTransform.TransformPointX(path.ArrPathCommand[0].X, path.ArrPathCommand[0].Y),
-						y: fullTransform.TransformPointY(path.ArrPathCommand[0].X, path.ArrPathCommand[0].Y)
+						x: fullTransform.TransformPointX(pathStartPoint.x, pathStartPoint.y),
+						y: fullTransform.TransformPointY(pathStartPoint.x, pathStartPoint.y)
 					};
 					const arrowStartPoint = {
-						x: fullTransform.TransformPointX(path.ArrPathCommand[0].X - Math.cos(headAngle * Math.PI / 180), path.ArrPathCommand[0].Y - Math.sin(headAngle * Math.PI / 180)),
-						y: fullTransform.TransformPointY(path.ArrPathCommand[0].X - Math.cos(headAngle * Math.PI / 180), path.ArrPathCommand[0].Y - Math.sin(headAngle * Math.PI / 180))
+						x: fullTransform.TransformPointX(pathStartPoint.x - Math.cos(headAngle * Math.PI / 180), pathStartPoint.y - Math.sin(headAngle * Math.PI / 180)),
+						y: fullTransform.TransformPointY(pathStartPoint.x - Math.cos(headAngle * Math.PI / 180), pathStartPoint.y - Math.sin(headAngle * Math.PI / 180))
 					};
 
 					DrawLineEnd(
@@ -1706,31 +1687,14 @@ CShapeDrawer.prototype =
 			const arrowWidth = this.Ln.tailEnd.GetWidth(penWidth, minArrowSize);
 
 			const lastUnclosedPath = unclosedPaths[unclosedPaths.length - 1];
-			const subPaths = lastUnclosedPath && lastUnclosedPath.stroke ? lastUnclosedPath.getContinuousSubpaths() : [];
-			const unclosedSubPaths = subPaths.filter(function (path) {
-				return !path.isClosed(0);
-			});
+			const unclosedSubPaths = getUnclosedSubPaths(lastUnclosedPath);
 
 			for (let i = 0; i < unclosedSubPaths.length; i++) {
 				const path = unclosedSubPaths[i];
 				const tailAngle = path.getTailArrowAngle(arrowLength / transformScaleFactor);
 
 				if (AscFormat.isRealNumber(tailAngle)) {
-
-					function getPathEndPoint(commands) {
-						for (let i = commands.length - 1; i >= 0; i--) {
-							const command = commands[i];
-							if (command.id === AscFormat.lineTo) {
-								return { x: command.X, y: command.Y };
-							}
-							if (command.id === AscFormat.bezier4) {
-								return { x: command.X2, y: command.Y2 };
-							}
-						}
-						return null;
-					}
-
-					const pathEndPoint = getPathEndPoint(path.ArrPathCommand);
+					const pathEndPoint = path.getEndPoint();
 					if (!pathEndPoint) {
 						continue;
 					}
@@ -2726,6 +2690,54 @@ function ShapeToImageConverter(shape, pageIndex, sImageFormat)
     if (_canvas.isNativeGraphics === true)
         _canvas.Destroy();
     return _ret;
+}
+
+function getArrowDrawingParameters(drawer, bIsSaveToPdfMode) {
+	const graphicsCtx = (drawer.Graphics.isTrack() && !bIsSaveToPdfMode)
+		? drawer.Graphics.Graphics
+		: drawer.Graphics;
+
+	const fullTransform = bIsSaveToPdfMode
+		? (drawer.isPdf() ? drawer.Graphics.GetTransform() : drawer.Graphics.m_oFullTransform)
+		: graphicsCtx.m_oFullTransform;
+
+	const inverseTransform = AscCommon.global_MatrixTransformer.Invert(fullTransform);
+
+	const point1 = { x: fullTransform.TransformPointX(0, 0), y: fullTransform.TransformPointY(0, 0) };
+	const point2 = { x: fullTransform.TransformPointX(1, 1), y: fullTransform.TransformPointY(1, 1) };
+	const transformScaleFactor = Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2)) / Math.sqrt(2);
+
+	const lineSize = bIsSaveToPdfMode
+		? (drawer.isPdf() ? drawer.Graphics.GetLineWidth() : graphicsCtx.m_oContext.lineWidth)
+		: graphicsCtx.m_oContext.lineWidth;
+
+	const penWidth = lineSize * transformScaleFactor;
+	const minArrowSize = bIsSaveToPdfMode
+		? 2.5 / AscCommon.g_dKoef_mm_to_pix
+		: null;
+
+	const arrCoef = bIsSaveToPdfMode
+		? 1
+		: drawer.isArrPix ? (1 / AscCommon.g_dKoef_mm_to_pix) : 1;
+
+	return {
+		fullTransform: fullTransform,
+		inverseTransform: inverseTransform,
+		transformScaleFactor: transformScaleFactor,
+		penWidth: penWidth,
+		minArrowSize: minArrowSize,
+		arrCoef: arrCoef
+	};
+}
+
+function getUnclosedSubPaths(geometryPath) {
+	if (!geometryPath || !geometryPath.stroke) {
+		return [];
+	}
+	const subPaths = geometryPath.getContinuousSubpaths();
+	return subPaths.filter(function (path) {
+		return !path.isClosed(0);
+	});
 }
 
 //------------------------------------------------------------export----------------------------------------------------
