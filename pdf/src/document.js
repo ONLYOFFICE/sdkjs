@@ -5870,6 +5870,8 @@ var CPresentation = CPresentation || function(){};
                     oAnnot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
                 }
 
+				// these values we can get via resize annot with default border settings.
+				oAnnot.SetRectangleDiff([2.834, 2.834, 2.834, 2.834]);
                 aAnnots.push(oAnnot);
             });
         }

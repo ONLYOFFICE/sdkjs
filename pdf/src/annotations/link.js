@@ -85,13 +85,12 @@
             return;
         }
 
-        let nLineW = this.GetBorderWidth();
         let aQuads = this.GetQuads();
         
         AscCommon.History.StartNoHistoryMode();
         if (aQuads.length == 0 || aQuads.length > 1) {
             let aRect = this.GetRect();
-            let aRD = [nLineW / 2, nLineW / 2, nLineW / 2, nLineW / 2];
+            let aRD = this.GetRectangleDiff();
 
             let extX = ((aRect[2] - aRect[0]) - aRD[0] - aRD[2]) * g_dKoef_pt_to_mm;
             let extY = ((aRect[3] - aRect[1]) - aRD[1] - aRD[3]) * g_dKoef_pt_to_mm;
@@ -665,6 +664,15 @@
                 for (let j = 0; j < aQuads[i].length; j++) {
                     memory.WriteDouble(aQuads[i][j]);
                 }
+            }
+        }
+
+		// rectangle diff
+        let aRD = this.GetRectangleDiff();
+        if (aRD) {
+            memory.annotFlags |= (1 << 15);
+            for (let i = 0; i < 4; i++) {
+                memory.WriteDouble(aRD[i]);
             }
         }
 
