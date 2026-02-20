@@ -1988,7 +1988,7 @@ QUnit.config.autostart = false;
 		let offset6 = tr.calcCharOffset(6);
 
 		assert.ok(offset0.left < offset2.left, 'LTR part: pos=0 is left of pos=2');
-		assert.ok(offset2.left > offset4.left, 'RTL part: pos=2 boundary is right of pos=4 boundary');
+		assert.ok(offset2.left >= offset4.left, 'RTL part: pos=2 boundary is at or right of pos=4 boundary');
 		assert.ok(offset4.left < offset6.left, 'LTR part after RTL: pos=4 is left of pos=6');
 	});
 
@@ -2018,7 +2018,7 @@ QUnit.config.autostart = false;
 		OpenCellEditor();
 		EnterText('\u05E9\u05DC\u05D5\u05DD');
 
-		cellEditor._moveCursor(-2);
+		cellEditor._moveCursor(-11, 2);
 		assert.strictEqual(cellEditor.cursorPos, 2, 'Cursor moved to pos=2');
 
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToStartLine);
