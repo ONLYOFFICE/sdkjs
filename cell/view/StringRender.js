@@ -1660,6 +1660,7 @@
 			this.afterSpaceInLine = false;
 			this.seenNonSpaceInLine = false;
 			this.trailingSpaceStart = Infinity;
+			this.positionCallback = null;
 			this.textColor = textColor || null;
 			this.angle = angle || 0;
 			this.zoom = this.drawingCtx.getZoom();
