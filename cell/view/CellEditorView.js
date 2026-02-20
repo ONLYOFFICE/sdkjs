@@ -1793,8 +1793,10 @@ function (window, undefined) {
 		this.textRender.cursorAtTrailingEdge = undefined;
 		let charsCount = this.textRender.getCharsCount();
 		let textAlign = this.textFlags && this.textFlags.textAlign;
+		let isRtl = this.textRender.isRtlLine();
+		let useContentPos = AscCommon.align_Right === textAlign && this.cursorPos === charsCount && !isRtl;
 		let curLeft = asc_round(
-			((AscCommon.align_Right !== textAlign || this.cursorPos !== charsCount) && cur !== null &&
+			(!useContentPos && cur !== null &&
 			cur.left !== null ? cur.left : this._getContentPosition()) * this.kx);
 		let curTop = asc_round(((cur !== null ? cur.top : 0) + y) * this.ky);
 		let curHeight = asc_round((cur !== null ? cur.height : this._getContentHeight()) * this.ky);
