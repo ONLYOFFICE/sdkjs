@@ -1244,10 +1244,13 @@
 			if (!this.content)
 				return;
 			
-			let oPara       = oCaptionRun.Paragraph;
-			let oApiPara    = editor.private_CreateApiParagraph(oPara);
-			
-			oApiPara.SetColor(oRGB.r, oRGB.g, oRGB.b, false);
+			let oPara = oCaptionRun.Paragraph;
+			oPara.SetApplyToAll(true);
+			oPara.Add(new AscCommonWord.ParaTextPr({
+				Color: { Auto: false, r: oRGB.r, g: oRGB.g, b: oRGB.b },
+				Unifill: undefined
+			}));
+			oPara.SetApplyToAll(false);
 			oPara.RecalcCompiledPr(true);
 		}, undefined, this);
 	};

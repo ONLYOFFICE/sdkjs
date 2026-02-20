@@ -6342,7 +6342,16 @@
 							}
 						} else {
 							const bIsWord = bIsMacOs ? oEvent.AltKey : bIsCtrl;
-							this.cursorMoveLeft(oEvent.ShiftKey, bIsWord);
+							const oContentL = this.getTargetDocContent();
+							let isRtlL = false;
+							if (oContentL) {
+								let curParaL = oContentL.GetCurrentParagraph();
+								isRtlL = !!(curParaL && curParaL.isRtlDirection());
+							}
+							if (isRtlL)
+								this.cursorMoveRight(oEvent.ShiftKey, bIsWord);
+							else
+								this.cursorMoveLeft(oEvent.ShiftKey, bIsWord);
 						}
 
 						this.updateSelectionState();
@@ -6369,7 +6378,16 @@
 							}
 						} else {
 							const bIsWord = bIsMacOs ? oEvent.AltKey : bIsCtrl;
-							this.cursorMoveRight(oEvent.ShiftKey, bIsWord);
+							const oContentR = this.getTargetDocContent();
+							let isRtlR = false;
+							if (oContentR) {
+								let curParaR = oContentR.GetCurrentParagraph();
+								isRtlR = !!(curParaR && curParaR.isRtlDirection());
+							}
+							if (isRtlR)
+								this.cursorMoveLeft(oEvent.ShiftKey, bIsWord);
+							else
+								this.cursorMoveRight(oEvent.ShiftKey, bIsWord);
 						}
 
 						this.updateSelectionState();

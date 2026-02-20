@@ -4225,7 +4225,7 @@ function (window, undefined) {
 		this.format				= null;
 		this.validate			= null;
 
-		this.options			= null;
+		this.options			= [];
 		this.commitOnSelChange	= undefined;
 		this.editable			= undefined;
 		this.placeholder		= undefined;
@@ -4280,12 +4280,12 @@ function (window, undefined) {
 
 			if (Array.isArray(a)) {
 				if (!Array.isArray(b) || a[0] !== b[0] || a[1] !== b[1]) {
-					this.options = null;
+					this.options = [];
 					break;
 				}
 			}
 			else if (a !== b) {
-				this.options = null;
+				this.options = [];
 				break;
 			}
 		}
@@ -4308,7 +4308,7 @@ function (window, undefined) {
 	///// Listbox field
 	//////////////////////////////////////////////////////////////////
 	function asc_CListboxFieldProperty() {
-		this.options		 	= null;
+		this.options		 	= [];
 		this.commitOnSelChange	= undefined;
 		this.multipleSelection	= undefined;
 	}
@@ -4337,12 +4337,12 @@ function (window, undefined) {
 
 			if (Array.isArray(a)) {
 				if (!Array.isArray(b) || a[0] !== b[0] || a[1] !== b[1]) {
-					this.options = null;
+					this.options = [];
 					break;
 				}
 			}
 			else if (a !== b) {
-				this.options = null;
+				this.options = [];
 				break;
 			}
 		}

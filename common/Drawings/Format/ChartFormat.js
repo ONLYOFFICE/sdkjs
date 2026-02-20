@@ -2385,6 +2385,9 @@
         }
         return 0;
     };
+    CBaseChartObject.prototype.getScaleCoefficient = function() {
+        return 1;
+    };
 
     function getMinMaxFromArrPoints(aPoints) {
         if(Array.isArray(aPoints) && aPoints.length > 0) {
@@ -16897,6 +16900,9 @@
         }
         return false;
     };
+    CalcLegendEntry.prototype.getScaleCoefficient = function() {
+        return 1;
+    };
 
     function CompiledMarker() {
         this.spPr = new AscFormat.CSpPr();
@@ -16931,6 +16937,9 @@
     };
 	CompiledMarker.prototype.drawTxBody = function() {};
 
+    CompiledMarker.prototype.getScaleCoefficient = function() {
+        return 1;
+    };
     function CUnionMarker() {
         this.lineMarker = null;
         this.marker = null;
@@ -16940,7 +16949,9 @@
         this.lineMarker && this.lineMarker.draw(g);
         this.marker && this.marker.draw(g);
     };
-
+    CUnionMarker.prototype.getScaleCoefficient = function() {
+        return 1;
+    };
     function CreateMarkerGeometryByType(type) {
         var ret = new AscFormat.Geometry();
         var w = 43200, h = 43200;

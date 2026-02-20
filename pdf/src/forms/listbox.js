@@ -310,25 +310,21 @@
             return;
             
         let oPara = this.content.GetElement(nIdx);
-        let oApiPara;
-        
         AscCommon.History.StartNoHistoryMode();
 
         this.content.Set_CurrentElement(nIdx);
         if (isSingleSelect) {
+			let oShd = private_GetShd('nil');
             this.content.Content.forEach(function(para) {
-                oApiPara = editor.private_CreateApiParagraph(para);
-                if (para.Pr.Shd && para.Pr.Shd.IsNil() == false) {
-                    oApiPara.SetShd('nil');
-                    para.RecalcCompiledPr(true);
-                }
+				para.Pr.Shd = oShd;
+				para.RecalcCompiledPr(true);
             });
         }
 
         if (oPara) {
-            oApiPara = editor.private_CreateApiParagraph(oPara);
-            oApiPara.SetShd('clear', LISTBOX_SELECTED_COLOR.r, LISTBOX_SELECTED_COLOR.g, LISTBOX_SELECTED_COLOR.b);
-            oApiPara.Paragraph.RecalcCompiledPr(true);
+			let oShd = private_GetShd('clear', LISTBOX_SELECTED_COLOR.r, LISTBOX_SELECTED_COLOR.g, LISTBOX_SELECTED_COLOR.b);
+			oPara.Pr.Shd = oShd;
+            oPara.RecalcCompiledPr(true);
         }
 
         AscCommon.History.EndNoHistoryMode();
@@ -337,12 +333,14 @@
         this.SetNeedCommit(true);
         this.AddToRedraw();
     };
-    CListBoxField.prototype.UnselectOption = function(nIdx) {
-        let oApiPara = editor.private_CreateApiParagraph(this.content.GetElement(nIdx));
-        oApiPara.SetShd('nil');
-        oApiPara.Paragraph.RecalcCompiledPr(true);
-        this.SetNeedRecalc(true);
-    };
+	CListBoxField.prototype.UnselectOption = function(nIdx) {
+		let oShd = private_GetShd('nil');
+		let oPara = this.content.GetElement(nIdx);
+
+		oPara.Pr.Shd = oShd;
+		oPara.RecalcCompiledPr(true);
+		this.SetNeedRecalc(true);
+	};
     CListBoxField.prototype.AddOption = function(option, nPos) {
         let _t = this;
 
@@ -590,12 +588,10 @@
                 }
             }
 
+			let oShd = private_GetShd('nil');
             this.content.Content.forEach(function(para) {
-                let oApiPara = editor.private_CreateApiParagraph(para);
-                if (para.Pr.Shd && para.Pr.Shd.IsNil() == false) {
-                    oApiPara.SetShd('nil');
-                    para.RecalcCompiledPr(true);
-                }
+				para.Pr.Shd = oShd;
+				para.RecalcCompiledPr(true);
             });
 
             for (let i = 0; i < aIndexes.length; i++) {
@@ -751,6 +747,14 @@
             return;
         }
         
+		let oScrollInfo = this.GetScrollInfo();
+		if (bShow == false) {
+			if (oScrollInfo) {
+				oScrollInfo.docElem.style.display = "none";
+			}
+			return;
+		}
+
         let oContentBounds  = this.content.GetContentBounds(0);
         let oContentRect    = this.getFormRelRect();
         let aOrigRect       = this.GetRect();
@@ -764,15 +768,13 @@
             dFrmH = tmp;
         }
 
-        let nContentH   = oContentBounds.Bottom - oContentBounds.Top;
-        let oScrollInfo = this.GetScrollInfo();
-        if (bShow == false || nContentH < dFrmH) {
-            if (oScrollInfo) {
-                oScrollInfo.docElem.style.display = "none";
-            }
-            
-            return;
-        }
+		let nContentH = oContentBounds.Bottom - oContentBounds.Top;
+		if (nContentH < dFrmH) {
+			if (oScrollInfo) {
+				oScrollInfo.docElem.style.display = "none";
+			}
+			return;
+		}
 
         let oDoc        = this.GetDocument();
         let nPage       = this.GetPage();
@@ -1283,6 +1285,19 @@
 
         this.CheckWidgetFlags(memory);
     };
+
+	function private_GetShd(sType, r, g, b, isAuto) {
+		var oShd = new CDocumentShd();
+
+		if ("nil" === sType)
+			oShd.Value = Asc.c_oAscShdNil;
+		else if ("clear" === sType)
+			oShd.Value = Asc.c_oAscShdClear;
+
+		oShd.Color.Set(r, g, b, isAuto);
+		oShd.Fill = new CDocumentColor(r, g, b, isAuto);
+		return oShd;
+	}
 
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};

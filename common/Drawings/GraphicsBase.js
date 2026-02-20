@@ -274,6 +274,9 @@
 	CGraphicsBase.prototype.put_PathScale = function(sx, sy)
 	{
 	};
+	CGraphicsBase.prototype.ResetRotation = function()
+	{
+	};
 
 	// TRANSFORM
 	CGraphicsBase.prototype.grStateIsUseBaseTransform = function()

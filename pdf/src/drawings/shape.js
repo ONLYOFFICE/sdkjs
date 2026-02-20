@@ -347,7 +347,11 @@
         let aFillColor = oRGBAFill ? [oRGBAFill.R / 255, oRGBAFill.G / 255, oRGBAFill.B / 255] : null;
 
         function rotateRect(rect, rad) {
-            const [x1, y1, x2, y2] = rect;
+			const x1 = rect[0];
+			const y1 = rect[1];
+			const x2 = rect[2];
+			const y2 = rect[3];
+
             const cx = (x1 + x2) * 0.5, cy = (y1 + y2) * 0.5;
             const hw = (x2 - x1) * 0.5, hh = (y2 - y1) * 0.5;
 

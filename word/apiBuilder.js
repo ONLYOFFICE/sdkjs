@@ -3231,7 +3231,7 @@
 	/**
 	 * Returns a type of the ApiHyperlink class.
 	 * @memberof ApiHyperlink
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {"hyperlink"}
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetClassType.js
 	 */
@@ -3342,7 +3342,7 @@
 
 	/**
 	 * Sets the hyperlink address.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string} sLink - The hyperlink address.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/SetLink.js
@@ -3411,7 +3411,7 @@
 	};
 	/**
 	 * Sets the screen tip text of the hyperlink.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string} sScreenTipText - The screen tip text of the hyperlink.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/SetScreenTipText.js
@@ -3427,7 +3427,7 @@
 	};
 	/**
 	 * Returns the hyperlink address.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {string} 
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetLinkedText.js
 	 */
@@ -3454,7 +3454,7 @@
 	};
 	/**
 	 * Returns the screen tip text of the hyperlink.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {string} 
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetScreenTipText.js
 	 */
@@ -3464,7 +3464,7 @@
 	};
 	/**
 	 * Returns the hyperlink element using the position specified.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} nPos - The position where the element which content we want to get must be located.
 	 * @returns {?ParagraphContent}
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetElement.js
@@ -3481,7 +3481,7 @@
 	};
 	/**
 	 * Returns a number of elements in the current hyperlink.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiHyperlink/Methods/GetElementsCount.js
 	 */
@@ -4638,7 +4638,7 @@
 	/**
 	 * Creates a new smaller text block to be inserted to the current paragraph or table.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {ApiRun}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateRun.js
 	 */
@@ -4824,7 +4824,7 @@
 	/**
 	 * Creates a new custom geometry.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {ApiGeometry}
 	 * @since 9.1.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateCustomGeometry.js
@@ -4837,7 +4837,7 @@
 	/**
 	 * Creates a geometry using one of the available preset shapes.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {ShapeType} sPreset - The preset name.
 	 * @returns {ApiGeometry | null}
 	 * @since 9.1.0
@@ -4856,7 +4856,7 @@
 	/**
 	 * Creates an RGB color setting the appropriate values for the red, green and blue color components.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
@@ -4871,7 +4871,7 @@
 	/**
 	 * Creates a complex color scheme selecting from one of the available schemes.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {SchemeColorId} schemeColorId - The color scheme identifier.
 	 * @returns {ApiSchemeColor}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateSchemeColor.js
@@ -4884,7 +4884,7 @@
 	/**
 	 * Creates a color selecting it from one of the available color presets.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {PresetColor} presetColor - A preset selected from the list of the available color preset names.
 	 * @returns {ApiPresetColor};
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreatePresetColor.js
@@ -4910,7 +4910,7 @@
 	 * Creates an RGB color from red, green and blue components.
 	 *
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "PDFE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {byte} r - Red component (0-255).
 	 * @param {byte} g - Green component (0-255).
 	 * @param {byte} b - Blue component (0-255).
@@ -4976,7 +4976,7 @@
 	 * Creates a solid fill to apply to the object using a selected solid color as the object background.
 	 *
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
 	 * @deprecated since 9.1.0 version.
 	 * @param {ApiUniColor} color - The color used for the element fill.
@@ -4988,7 +4988,7 @@
 	 * Creates a solid fill to apply to the object using a selected solid color as the object background.
 	 *
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
 	 * @since 9.1.0
 	 * @param {ApiColor} color - The color used for the element fill.
@@ -5008,7 +5008,7 @@
 	/**
 	 * Creates a linear gradient fill to apply to the object using the selected linear gradient as the object background.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number[]} gradientStops - The array of gradient color stops measured in 1000th of percent.
 	 * @param {PositiveFixedAngle} angle - The angle measured in 60000th of a degree that will define the gradient direction.
 	 * @returns {ApiFill}
@@ -5023,7 +5023,7 @@
 	/**
 	 * Creates a radial gradient fill to apply to the object using the selected radial gradient as the object background.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number[]} gradientStops - The array of gradient color stops measured in 1000th of percent.
 	 * @returns {ApiFill}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateRadialGradientFill.js
@@ -5037,7 +5037,7 @@
 	 * Creates a pattern fill to apply to the object using the selected pattern as the object background.
 	 *
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
 	 * @deprecated since 9.1.0 version.
 	 * @param {PatternType} patternType - The pattern type used for the fill selected from one of the available pattern types.
@@ -5051,7 +5051,7 @@
 	 * Creates a pattern fill to apply to the object using the selected pattern as the object background.
 	 *
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
 	 * @since 9.1.0
 	 * @param {PatternType} patternType - The pattern type used for the fill selected from one of the available pattern types.
@@ -5076,7 +5076,7 @@
 	/**
 	 * Creates a blip fill to apply to the object using the selected image as the object background.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string} imageUrl - The path to the image used for the blip fill (currently only internet URL or Base64 encoded images are supported).
 	 * @param {BlipFillType} blipFillType - The type of the fill used for the blip fill (tile or stretch).
 	 * @returns {ApiFill}
@@ -5090,7 +5090,7 @@
 	/**
 	 * Creates no fill and removes the fill from the element.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {ApiFill}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateNoFill.js
 	 */
@@ -5103,7 +5103,7 @@
 	 * Creates a stroke adding shadows to the element.
 	 *
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
 	 * @deprecated since 9.3.0 version.
 	 * @param {EMU} width - The width of the shadow measured in English measure units.
@@ -5116,7 +5116,7 @@
 	 * Creates a stroke adding shadows to the element.
 	 *
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
 	 * @since 9.3.0
 	 * @param {EMU} width - The width of the shadow measured in English measure units.
@@ -5136,7 +5136,7 @@
 	 * Creates a gradient stop used for different types of gradients.
 	 *
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
 	 * @deprecated since 9.1.0 version.
 	 * @param {ApiUniColor} color - The color used for the gradient stop.
@@ -5149,7 +5149,7 @@
 	 * Creates a gradient stop used for different types of gradients.
 	 *
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *
 	 * @since 9.1.0
 	 * @param {ApiColor} color - The color used for the gradient stop.
@@ -5167,7 +5167,7 @@
 	/**
 	 * Creates a bullet for a paragraph with the character or symbol specified with the sSymbol parameter.
 	 * @memberof Api
-	 * @typeofeditors ["CSE", "CPE"]
+	 * @typeofeditors ["CSE", "CPE", "PDFE"]
 	 * @param {string} sSymbol - The character or symbol which will be used to create the bullet for the paragraph.
 	 * @returns {ApiBullet}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateBullet.js
@@ -5188,7 +5188,7 @@
 	/**
 	 * Creates a bullet for a paragraph with the numbering character or symbol specified with the numType parameter.
 	 * @memberof Api
-	 * @typeofeditors ["CPE", "CSE"]
+	 * @typeofeditors ["CPE", "PDFE", "CSE"]
 	 * @param {BulletType} numType - The numbering type the paragraphs will be numbered with.
 	 * @param {number} startAt - The number the first numbered paragraph will start with.
 	 * @returns {ApiBullet}
@@ -5838,7 +5838,7 @@
 
 	/**
 	 * Returns a type of the ApiUnsupported class.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {"unsupported"}
 	 * @see office-js-api/Examples/{Editor}/ApiUnsupported/Methods/GetClassType.js
 	 */
@@ -5955,7 +5955,7 @@
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/attachEvent.js
 	 */
-	Api["attachEvent"] = function(eventName, callback)
+	Api.attachEvent = function(eventName, callback)
 	{
 		Asc.editor.attachEvent(eventName, callback);
 	};
@@ -5969,7 +5969,7 @@
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/detachEvent.js
 	 */
-	Api["detachEvent"] = function(eventName)
+	Api.detachEvent = function(eventName)
 	{
 		Asc.editor.detachEvent(eventName);
 	};
@@ -5983,7 +5983,7 @@
 	/**
 	 * Returns a type of the ApiDocumentContent class. 
 	 * @memberof ApiDocumentContent
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {"documentContent"}
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetClassType.js
 	 */
@@ -5994,7 +5994,7 @@
 	/**
 	 * Returns an internal ID of the current document content.
 	 * @memberof ApiDocumentContent
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {string}
 	 * @since 9.0.4
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetInternalId.js
@@ -6006,7 +6006,7 @@
 	/**
 	 * Returns a number of elements in the current document.
 	 * @memberof ApiDocumentContent
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetElementsCount.js
 	 */
@@ -6018,7 +6018,7 @@
 	 * Returns an element by its position in the document.
 	 * @memberof ApiDocumentContent
 	 * @param {number} nPos - The element position that will be taken from the document.
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {?DocumentElement}
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetElement.js
 	 */
@@ -6040,7 +6040,7 @@
 	/**
 	 * Adds a paragraph or a table or a blockLvl content control using its position in the document content.
 	 * @memberof ApiDocumentContent
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} nPos - The position where the current element will be added.
 	 * @param {DocumentElement} oElement - The document element which will be added at the current position.
 	 * @returns {boolean}
@@ -6063,7 +6063,7 @@
 	/**
 	 * Pushes a paragraph or a table to actually add it to the document.
 	 * @memberof ApiDocumentContent
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {DocumentElement} oElement - The element type which will be pushed to the document.
 	 * @returns {boolean} - returns false if oElement is unsupported.
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/Push.js
@@ -6087,7 +6087,7 @@
 	 * <note>When all elements are removed, a new empty paragraph is automatically created. If you want to add
 	 * content to this paragraph, use the {@link ApiDocumentContent#GetElement} method.</note>
 	 * @memberof ApiDocumentContent
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/RemoveAllElements.js
 	 */
@@ -6099,7 +6099,7 @@
 	/**
 	 * Removes an element using the position specified.
 	 * @memberof ApiDocumentContent
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} nPos - The element number (position) in the document or inside other element.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/RemoveElement.js
@@ -6249,7 +6249,7 @@
 	/**
 	 * Returns an array of all paragraphs from the current document content.
 	 * @memberof ApiDocumentContent
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @return {ApiParagraph[]}
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetAllParagraphs.js
 	 */
@@ -6281,7 +6281,7 @@
 	/**
 	 * Returns the inner text of the current document content object.
 	 * @memberof ApiDocumentContent
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {object} [options] - Options for formatting the returned text.
 	 * @param {boolean} [options.Numbering=true] - Defines if the resulting string will include numbering or not.
 	 * @param {boolean} [options.Math=true] - Defines if the resulting string will include mathematical expressions or not.
@@ -6312,7 +6312,7 @@
 	/**
 	 * Returns the current paragraph where the cursor is located.
 	 * @memberof ApiDocumentContent
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @return {?ApiParagraph}
 	 * @since 9.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetCurrentParagraph.js
@@ -6330,7 +6330,7 @@
 	/**
 	 * Returns the current run where the cursor is located.
 	 * @memberof ApiDocumentContent
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @return {?ApiRun}
 	 * @since 9.0.0
 	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetCurrentRun.js
@@ -10079,7 +10079,7 @@
 	/**
 	 * Returns a type of the ApiParagraph class.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {"paragraph"}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetClassType.js
 	 */
@@ -10123,7 +10123,7 @@
 	/**
 	 * Returns an internal ID of the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {string}
 	 * @since 9.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetInternalId.js
@@ -10135,7 +10135,7 @@
 	/**
 	 * Adds some text to the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string} text - The text that we want to insert into the current document element.
 	 * @returns {ApiRun}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/AddText.js
@@ -10174,7 +10174,7 @@
 	/**
 	 * Adds a line break to the current position and starts the next element from a new line.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {ApiRun}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/AddLineBreak.js
 	 */
@@ -10243,7 +10243,7 @@
 	/**
 	 * Returns the paragraph properties.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {ApiParaPr}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetParaPr.js
 	 */
@@ -10292,7 +10292,7 @@
 	/**
 	 * Returns a number of elements in the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetElementsCount.js
 	 */
@@ -10304,7 +10304,7 @@
 	/**
 	 * Returns a paragraph element using the position specified.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} nPos - The position where the element which content we want to get must be located.
 	 * @returns {?ParagraphContent}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetElement.js
@@ -10323,7 +10323,7 @@
      * a new empty run is automatically created. If you want to add
 	 * content to this run, use the {@link ApiParagraph#GetElement} method.</note>
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} nPos - The element position which we want to remove from the paragraph.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/RemoveElement.js
@@ -10342,7 +10342,7 @@
 	 * <note>When all the elements are removed from the paragraph, a new empty run is automatically created. If you want to add
 	 * content to this run, use the {@link ApiParagraph#GetElement} method.</note>
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/RemoveAllElements.js
 	 */
@@ -10359,7 +10359,7 @@
 	/**
 	 * Deletes the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {boolean} - returns false if paragraph haven't parent.
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/Delete.js
 	 */
@@ -10381,7 +10381,7 @@
 	/**
 	 * Returns the next paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {ApiParagraph | null} - returns null if paragraph is last.
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetNext.js
 	 */
@@ -10396,7 +10396,7 @@
 	/**
 	 * Returns the previous paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {ApiParagraph} - returns null if paragraph is first.
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetPrevious.js
 	 */
@@ -10411,7 +10411,7 @@
 	/**
 	 * Creates a paragraph copy. Ingnore comments, footnote references, complex fields.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {ApiParagraph}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/Copy.js
 	 */
@@ -10428,7 +10428,7 @@
 	/**
 	 * Adds an element to the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {ParagraphContent} oElement - The document element which will be added at the current position. Returns false if the
 	 * oElement type is not supported by a paragraph.
 	 * @param {number} [nPos] - The position where the current element will be added. If this value is not
@@ -10461,7 +10461,7 @@
 	/**
 	 * Adds a tab stop to the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {ApiRun}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/AddTabStop.js
 	 */
@@ -10624,7 +10624,7 @@
 	/**
 	 * Adds an element to the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {ParagraphContent} oElement - The document element which will be added at the current position. Returns false if the
 	 * oElement type is not supported by a paragraph.
 	 * @returns {boolean} Returns <code>false</code> if the type of <code>oElement</code> is not supported by paragraph
@@ -10665,7 +10665,7 @@
 	/**
 	 * Returns the last Run with text in the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {ApiRun}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetLastRunWithText.js
 	 */
@@ -10696,7 +10696,7 @@
 	/**
 	 * Sets the bold property to the text character.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} isBold - Specifies that the contents of this paragraph are displayed bold.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetBold.js
@@ -10712,7 +10712,7 @@
 	/**
 	 * Specifies that any lowercase characters in this paragraph are formatted for display only as their capital letter character equivalents.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} isCaps - Specifies that the contents of the current paragraph are displayed capitalized.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetCaps.js
@@ -10730,7 +10730,7 @@
 	 * Sets the text color to the current paragraph.
 	 *
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 *
 	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
@@ -10796,7 +10796,7 @@
 	/**
 	 * Specifies that the contents of this paragraph are displayed with two horizontal lines through each character displayed on the line.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} isDoubleStrikeout - Specifies that the contents of the current paragraph are displayed double struck through.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetDoubleStrikeout.js
@@ -10812,7 +10812,7 @@
 	/**
 	 * Sets all 4 font slots with the specified font family.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string} sFontFamily - The font family or families used for the current paragraph.
 	 * @returns {?ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetFontFamily.js
@@ -10836,7 +10836,7 @@
 	/**
 	 * Returns all font names from all elements inside the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {string[]} - The font names used for the current paragraph.
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetFontNames.js
 	 */
@@ -10860,7 +10860,7 @@
 	/**
 	 * Sets the font size to the characters of the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {hps} nSize - The text size value measured in half-points (1/144 of an inch).
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetFontSize.js
@@ -10876,7 +10876,7 @@
 	/**
 	 * Specifies a highlighting color which is applied as a background to the contents of the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE"]
 	 * @param {highlightColor} sColor - Available highlight color.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetHighlight.js
@@ -10915,7 +10915,7 @@
 	/**
 	 * Sets the italic property to the text character.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} isItalic - Specifies that the contents of the current paragraph are displayed italicized.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetItalic.js
@@ -10950,7 +10950,7 @@
 	 * Specifies that all the small letter characters in this paragraph are formatted for display only as their capital
 	 * letter character equivalents which are two points smaller than the actual font size specified for this text.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} isSmallCaps - Specifies if the contents of the current paragraph are displayed capitalized two points smaller or not.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetSmallCaps.js
@@ -10969,7 +10969,7 @@
 	/**
 	 * Sets the text spacing measured in twentieths of a point.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {twips} nSpacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch).
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetSpacing.js
@@ -10985,7 +10985,7 @@
 	/**
 	 * Specifies that the contents of this paragraph are displayed with a single horizontal line through the center of the line.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} isStrikeout - Specifies that the contents of the current paragraph are displayed struck through.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetStrikeout.js
@@ -11005,7 +11005,7 @@
 	 * Specifies that the contents of this paragraph are displayed along with a line appearing directly below the character
 	 * (less than all the spacing above and below the characters on the line).
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} isUnderline - Specifies that the contents of the current paragraph are displayed underlined.
 	 * @returns {ApiParagraph} this
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetUnderline.js
@@ -11071,7 +11071,7 @@
 	/**
 	 * Returns the last element of the paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {?ParagraphContent}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/Last.js
 	 */
@@ -11278,7 +11278,7 @@
 	/**
 	 * Sets the paragraph text properties.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {ApiTextPr} oTextPr - The paragraph text properties.
 	 * @return {boolean} - returns false if param is invalid.
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetTextPr.js
@@ -11331,7 +11331,7 @@
 	/**
 	 * Inserts a paragraph at the specified position.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string | ApiParagraph} paragraph - Text or paragraph.
 	 * @param {string} sPosition - The position where the text or paragraph will be inserted ("before" or "after" the paragraph specified).
 	 * @param {boolean} beRNewPara - Defines if this method returns a new paragraph (true) or the current paragraph (false).
@@ -11377,7 +11377,7 @@
 	/**
 	 * Selects the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE"]
 	 * @return {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/Select.js
 	 */
@@ -11827,7 +11827,7 @@
 	/**
 	 * Converts the ApiParagraph object into the JSON object.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} bWriteNumberings - Specifies if the used numberings will be written to the JSON object or not.
 	 * @param {boolean} bWriteStyles - Specifies if the used styles will be written to the JSON object or not.
 	 * @returns {JSON}
@@ -12032,7 +12032,7 @@
 	/**
 	 * Returns an internal ID of the current content paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetInternalId.js
 	 */
@@ -12049,7 +12049,7 @@
 	/**
 	 * Returns a type of the ApiRun class.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {"run"}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/GetClassType.js
 	 */
@@ -12060,7 +12060,7 @@
 	/**
 	 * Returns the text properties of the current run.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {ApiTextPr}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/GetTextPr.js
 	 */
@@ -12071,7 +12071,7 @@
 	/**
 	 * Clears the content from the current run.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/ClearContent.js
 	 */
@@ -12083,7 +12083,7 @@
 	/**
 	 * Removes all the elements from the current run.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/RemoveAllElements.js
 	 */
@@ -12095,7 +12095,7 @@
 	/**
 	 * Deletes the current run.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/Delete.js
 	 */
@@ -12117,7 +12117,7 @@
 	/**
 	 * Adds some text to the current run.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string} text - The text which will be added to the current run.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/AddText.js
@@ -12143,7 +12143,7 @@
 	/**
 	 * Adds a line break to the current run position and starts the next element from a new line.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/AddLineBreak.js
 	 */
@@ -12167,7 +12167,7 @@
 	/**
 	 * Adds a tab stop to the current run.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/AddTabStop.js
 	 */
@@ -12310,7 +12310,7 @@
 	/**
 	 * Creates a copy of the current run.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {ApiRun}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/Copy.js
 	 */
@@ -12426,7 +12426,7 @@
 	/**
 	 * Sets the text properties to the current run.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {ApiTextPr} oTextPr - The text properties that will be set to the current run.
 	 * @return {ApiTextPr}  
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetTextPr.js
@@ -12442,7 +12442,7 @@
 	/**
 	 * Sets the bold property to the text character.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} isBold - Specifies that the contents of the current run are displayed bold.
 	 * @returns {ApiTextPr}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetBold.js
@@ -12457,7 +12457,7 @@
 	/**
 	 * Specifies that any lowercase characters in the current text run are formatted for display only as their capital letter character equivalents.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} isCaps - Specifies that the contents of the current run are displayed capitalized.
 	 * @returns {ApiTextPr}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetCaps.js
@@ -12474,7 +12474,7 @@
 	 * Sets the text color for the current text run.
 	 *
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 *
 	 * @deprecated since 9.1.0 version.
 	 * @param {byte} r - Red color component value.
@@ -12489,7 +12489,7 @@
 	 * Sets the text color for the current text run.
 	 *
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 *
 	 * @since 9.1.0
 	 * @param {ApiColor} color
@@ -12505,7 +12505,7 @@
 	/**
 	 * Specifies that the contents of the current run are displayed with two horizontal lines through each character displayed on the line.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} isDoubleStrikeout - Specifies that the contents of the current run are displayed double struck through.
 	 * @returns {ApiTextPr}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetDoubleStrikeout.js
@@ -12520,7 +12520,7 @@
 	/**
 	 * Sets the text color to the current text run.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CSE", "CPE"]
+	 * @typeofeditors ["CSE", "CPE", "PDFE"]
 	 * @param {ApiFill} oApiFill - The color or pattern used to fill the text color.
 	 * @returns {ApiTextPr}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetFill.js
@@ -12535,7 +12535,7 @@
 	/**
 	 * Sets all 4 font slots with the specified font family.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string} sFontFamily - The font family or families used for the current text run.
 	 * @returns {ApiTextPr}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetFontFamily.js
@@ -12550,7 +12550,7 @@
 	/**
 	 * Returns all font names from all elements inside the current run.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {string[]} - The font names used for the current run.
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/GetFontNames.js
 	 */
@@ -12569,7 +12569,7 @@
 	/**
 	 * Sets the font size to the characters of the current text run.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {hps} nSize - The text size value measured in half-points (1/144 of an inch).
 	 * @returns {ApiTextPr}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetFontSize.js
@@ -12584,7 +12584,7 @@
 	/**
 	 * Specifies a highlighting color which is applied as a background to the contents of the current run.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {highlightColor} sColor - Available highlight color.
 	 * @returns {ApiTextPr}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetHighlight.js
@@ -12599,7 +12599,7 @@
 	/**
 	 * Sets the italic property to the text character.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} isItalic - Specifies that the contents of the current run are displayed italicized.
 	 * @returns {ApiTextPr}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetItalic.js
@@ -12615,7 +12615,7 @@
 	 * Specifies the languages which will be used to check spelling and grammar (if requested) when processing
 	 * the contents of this text run.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string} sLangId - The possible value for this parameter is a language identifier as defined by
 	 * RFC 4646/BCP 47. Example: "en-CA".
 	 * @returns {ApiTextPr}
@@ -12632,7 +12632,7 @@
 	 * Specifies an amount by which text is raised or lowered for this run in relation to the default
 	 * baseline of the surrounding non-positioned text.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {hps} nPosition - Specifies a positive (raised text) or negative (lowered text)
 	 * measurement in half-points (1/144 of an inch).
 	 * @returns {ApiTextPr}
@@ -12650,7 +12650,7 @@
 	 * Specifies the shading applied to the contents of the current text run.
 	 *
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 *
 	 * @deprecated since 9.1.0 version.
 	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
@@ -12684,7 +12684,7 @@
 	 * Specifies that all the small letter characters in this text run are formatted for display only as their capital
 	 * letter character equivalents which are two points smaller than the actual font size specified for this text.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} isSmallCaps - Specifies if the contents of the current run are displayed capitalized two points smaller or not.
 	 * @returns {ApiTextPr}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetSmallCaps.js
@@ -12699,7 +12699,7 @@
 	/**
 	 * Sets the text spacing measured in twentieths of a point.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {twips} nSpacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch).
 	 * @returns {ApiTextPr}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetSpacing.js
@@ -12714,7 +12714,7 @@
 	/**
 	 * Specifies that the contents of the current run are displayed with a single horizontal line through the center of the line.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} isStrikeout - Specifies that the contents of the current run are displayed struck through.
 	 * @returns {ApiTextPr}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetStrikeout.js
@@ -12745,7 +12745,7 @@
 	 * Specifies that the contents of the current run are displayed along with a line appearing directly below the character
 	 * (less than all the spacing above and below the characters on the line).
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} isUnderline - Specifies that the contents of the current run are displayed underlined.
 	 * @returns {ApiTextPr}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetUnderline.js
@@ -12763,7 +12763,7 @@
 	 * <b>"subscript"</b> - the characters in the current text run will be aligned below the default text baseline.
 	 * <b>"superscript"</b> - the characters in the current text run will be aligned above the default text baseline.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {("baseline" | "subscript" | "superscript")} sType - The vertical alignment type applied to the text contents.
 	 * @returns {ApiTextPr}
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetVertAlign.js
@@ -13535,7 +13535,7 @@
 	/**
 	 * Returns an internal ID of the current table.
 	 * @memberof ApiTable
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @returns {string}
 	 * @since 9.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetInternalId.js
@@ -13847,7 +13847,7 @@
 	/**
 	 * Adds a paragraph or a table or a blockLvl content control using its position in the cell.
 	 * @memberof ApiTable
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {ApiTableCell} oCell - The cell where the specified element will be added.
 	 * @param {number} nPos - The position in the cell where the specified element will be added.
 	 * @param {DocumentElement} oElement - The document element which will be added at the current position.
@@ -13922,7 +13922,7 @@
 	/**
 	 * Creates a copy of the current table.
 	 * @memberof ApiTable
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @returns {ApiTable}
 	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/Copy.js
 	 */
@@ -15637,7 +15637,7 @@
 	/**
 	 * Returns a type of the ApiTextPr class.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {"textPr"}
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/GetClassType.js
 	 */
@@ -15689,7 +15689,7 @@
 	/**
 	 * Sets the bold property to the text character.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} isBold - Specifies that the contents of the run are displayed bold.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetBold.js
@@ -15704,7 +15704,7 @@
 	/**
 	 * Gets the bold property from the current text properties.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @return {?boolean}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/GetBold.js
@@ -15717,7 +15717,7 @@
 	/**
 	 * Sets the italic property to the text character.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} isItalic - Specifies that the contents of the current run are displayed italicized.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetItalic.js
@@ -15732,7 +15732,7 @@
 	/**
 	 * Gets the italic property from the current text properties.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @return {?boolean}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/GetItalic.js
@@ -15745,7 +15745,7 @@
 	/**
 	 * Specifies that the contents of the run are displayed with a single horizontal line through the center of the line.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} isStrikeout - Specifies that the contents of the current run are displayed struck through.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetStrikeout.js
@@ -15760,7 +15760,7 @@
 	/**
 	 * Gets the strikeout property from the current text properties.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @return {?boolean}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/GetStrikeout.js
@@ -15774,7 +15774,7 @@
 	 * Specifies that the contents of the run are displayed along with a line appearing directly below the character
 	 * (less than all the spacing above and below the characters on the line).
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} isUnderline - Specifies that the contents of the current run are displayed underlined.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetUnderline.js
@@ -15789,7 +15789,7 @@
 	/**
 	 * Gets the underline property from the current text properties.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @return {?boolean}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/GetUnderline.js
@@ -15802,7 +15802,7 @@
 	/**
 	 * Sets all 4 font slots with the specified font family.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string} sFontFamily - The font family or families used for the current text run.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetFontFamily.js
@@ -15819,7 +15819,7 @@
 	 * Returns the font family from the current text properties.
 	 * The method automatically calculates the font from the theme if the font was set via the theme.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * param {undefined | "ascii" | "eastAsia" | "hAnsi" | "cs"} [fontSlot="ascii"] - The font slot.
 	 * If this parameter is not specified, the "ascii" value is used.
 	 * @return {?string}
@@ -15852,7 +15852,7 @@
 	/**
 	 * Sets the font size to the characters of the current text run.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {hps} nSize - The text size value measured in half-points (1/144 of an inch).
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetFontSize.js
@@ -15867,7 +15867,7 @@
 	/**
 	 * Gets the font size from the current text properties.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @return {?hps}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/GetFontSize.js
@@ -15976,7 +15976,7 @@
 	 * <b>"subscript"</b> - the characters in the current text run will be aligned below the default text baseline.
 	 * <b>"superscript"</b> - the characters in the current text run will be aligned above the default text baseline.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {("baseline" | "subscript" | "superscript")} sType - The vertical alignment type applied to the text contents.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetVertAlign.js
@@ -16020,7 +16020,7 @@
 	/**
 	 * Specifies a highlighting color which is added to the text properties and applied as a background to the contents of the current run/range/paragraph.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE"]
 	 * @param {highlightColor} sColor - Available highlight color.
 	 * @returns {ApiTextPr}
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetHighlight.js
@@ -16053,7 +16053,7 @@
 	/**
 	 * Gets the highlight property from the current text properties.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE"]
 	 * @return {?string}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/GetHighlight.js
@@ -16072,7 +16072,7 @@
 	/**
 	 * Sets the text spacing measured in twentieths of a point.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {twips} nSpacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch).
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetSpacing.js
@@ -16087,7 +16087,7 @@
 	/**
 	 * Gets the text spacing from the current text properties measured in twentieths of a point.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @return {?twips}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/GetSpacing.js
@@ -16105,7 +16105,7 @@
 	/**
 	 * Specifies that the contents of the run are displayed with two horizontal lines through each character displayed on the line.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} isDoubleStrikeout - Specifies that the contents of the current run are displayed double struck through.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetDoubleStrikeout.js
@@ -16120,7 +16120,7 @@
 	/**
 	 * Gets the double strikeout property from the current text properties.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @return {?boolean}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/GetDoubleStrikeout.js
@@ -16133,7 +16133,7 @@
 	/**
 	 * Specifies that any lowercase characters in the text run are formatted for display only as their capital letter character equivalents.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} isCaps - Specifies that the contents of the current run are displayed capitalized.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetCaps.js
@@ -16148,7 +16148,7 @@
 	/**
 	 * Specifies whether the text with the current text properties are capitalized.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @return {?boolean}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/GetCaps.js
@@ -16162,7 +16162,7 @@
 	 * Specifies that all the small letter characters in the text run are formatted for display only as their capital
 	 * letter character equivalents which are two points smaller than the actual font size specified for this text.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} isSmallCaps - Specifies if the contents of the current run are displayed capitalized two points smaller or not.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetSmallCaps.js
@@ -16177,7 +16177,7 @@
 	/**
 	 * Specifies whether the text with the current text properties are displayed capitalized two points smaller than the actual font size.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @return {?boolean}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/GetSmallCaps.js
@@ -16362,7 +16362,7 @@
 	/**
 	 * Sets the text color to the current text run.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CSE", "CPE"]
+	 * @typeofeditors ["CSE", "CPE", "PDFE"]
 	 * @param {ApiFill} oApiFill - The color or pattern used to fill the text color.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetFill.js
@@ -16377,7 +16377,7 @@
 	/**
 	 * Gets the text color from the current text properties.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CSE", "CPE"]
+	 * @typeofeditors ["CSE", "CPE", "PDFE"]
 	 * @return {ApiFill}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/GetFill.js
@@ -16395,7 +16395,7 @@
 	/**
 	 * Sets the text fill to the current text run.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {ApiFill} oApiFill - The color or pattern used to fill the text color.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetTextFill.js
@@ -16410,7 +16410,7 @@
 	/**
 	 * Gets the text fill from the current text properties.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @return {ApiFill}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/GetTextFill.js
@@ -16428,7 +16428,7 @@
 	/**
 	 * Sets the text outline to the current text run.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the text outline.
 	 * @return {ApiTextPr} - this text properties.
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetOutLine.js
@@ -16443,7 +16443,7 @@
 	/**
 	 * Gets the text outline from the current text properties.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @return {ApiStroke}
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/GetOutLine.js
@@ -16492,7 +16492,7 @@
 	/**
 	 * Returns a type of the ApiParaPr class.
 	 * @memberof ApiParaPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {"paraPr"}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/GetClassType.js
 	 */
@@ -16565,7 +16565,7 @@
 	/**
 	 * Sets the paragraph left side indentation.
 	 * @memberof ApiParaPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {twips} nValue - The paragraph left side indentation value measured in twentieths of a point (1/1440 of an inch).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetIndLeft.js
@@ -16579,7 +16579,7 @@
 	/**
 	 * Returns the paragraph left side indentation.
 	 * @memberof ApiParaPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {twips | undefined} - The paragraph left side indentation value measured in twentieths of a point (1/1440 of an inch).
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/GetIndLeft.js
 	 */
@@ -16596,7 +16596,7 @@
 	/**
 	 * Sets the paragraph right side indentation.
 	 * @memberof ApiParaPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {twips} nValue - The paragraph right side indentation value measured in twentieths of a point (1/1440 of an inch).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetIndRight.js
@@ -16610,7 +16610,7 @@
 	/**
 	 * Returns the paragraph right side indentation.
 	 * @memberof ApiParaPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {twips | undefined} - The paragraph right side indentation value measured in twentieths of a point (1/1440 of an inch).
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/GetIndRight.js
 	 */
@@ -16628,7 +16628,7 @@
 	/**
 	 * Sets the paragraph first line indentation.
 	 * @memberof ApiParaPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {twips} nValue - The paragraph first line indentation value measured in twentieths of a point (1/1440 of an inch).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetIndFirstLine.js
@@ -16642,7 +16642,7 @@
 	/**
 	 * Returns the paragraph first line indentation.
 	 * @memberof ApiParaPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {twips | undefined} - The paragraph first line indentation value measured in twentieths of a point (1/1440 of an inch).
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/GetIndFirstLine.js
 	 */
@@ -16661,7 +16661,7 @@
 	/**
 	 * Sets the paragraph contents justification.
 	 * @memberof ApiParaPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {("left" | "right" | "both" | "center")} sJc - The justification type that
 	 * will be applied to the paragraph contents.
 	 * @returns {boolean}
@@ -16676,7 +16676,7 @@
 	/**
 	 * Returns the paragraph contents justification.
 	 * @memberof ApiParaPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {("left" | "right" | "both" | "center" | undefined)} 
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/GetJc.js
 	 */
@@ -16743,7 +16743,7 @@
 	 * the value of the sLineRule parameter is "auto", then the value of the 
 	 * nLine parameter will be interpreted as 240ths of a line.
 	 * @memberof ApiParaPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {(twips | line240)} nLine - The line spacing value measured either in twentieths of a point (1/1440 of an inch) or in 240ths of a line.
 	 * @param {("auto" | "atLeast" | "exact")} sLineRule - The rule that determines the measuring units of the line spacing.
 	 * @returns {boolean}
@@ -16777,7 +16777,7 @@
 	/**
 	 * Returns the paragraph line spacing value.
 	 * @memberof ApiParaPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {twips | line240 | undefined} - to know is twips or line240 use ApiParaPr.prototype.GetSpacingLineRule().
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/GetSpacingLineValue.js
 	 */
@@ -16810,7 +16810,7 @@
 	/**
 	 * Returns the paragraph line spacing rule.
 	 * @memberof ApiParaPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {"auto" | "atLeast" | "exact" | undefined} 
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/GetSpacingLineRule.js
 	 */
@@ -16847,7 +16847,7 @@
 	 * any value of the nBefore is ignored. If isBeforeAuto parameter is not specified, then 
 	 * it will be interpreted as false.
 	 * @memberof ApiParaPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {twips} nBefore - The value of the spacing before the current paragraph measured in twentieths of a point (1/1440 of an inch).
 	 * @param {boolean} [isBeforeAuto=false] - The true value disables the spacing before the current paragraph.
 	 * @returns {boolean}
@@ -16867,7 +16867,7 @@
 	/**
 	 * Returns the spacing before value of the current paragraph.
 	 * @memberof ApiParaPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {twips} - The value of the spacing before the current paragraph measured in twentieths of a point (1/1440 of an inch).
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/GetSpacingBefore.js
 	 */
@@ -16888,7 +16888,7 @@
 	 * any value of the nAfter is ignored. If isAfterAuto parameter is not specified, then it 
 	 * will be interpreted as false.
 	 * @memberof ApiParaPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {twips} nAfter - The value of the spacing after the current paragraph measured in twentieths of a point (1/1440 of an inch).
 	 * @param {boolean} [isAfterAuto=false] - The true value disables the spacing after the current paragraph.
 	 * @returns {boolean}
@@ -16908,7 +16908,7 @@
 	/**
 	 * Returns the spacing after value of the current paragraph. 
 	 * @memberof ApiParaPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {twips} - The value of the spacing after the current paragraph measured in twentieths of a point (1/1440 of an inch).
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/GetSpacingAfter.js
 	 */
@@ -17142,7 +17142,7 @@
 	 * Specifies a sequence of custom tab stops which will be used for any tab characters in the current paragraph.
 	 * <b>Warning</b>: The lengths of aPos array and aVal array <b>MUST BE</b> equal to each other.
 	 * @memberof ApiParaPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {twips[]} aPos - An array of the positions of custom tab stops with respect to the current page margins
 	 * measured in twentieths of a point (1/1440 of an inch).
 	 * @param {TabJc[]} aVal - An array of the styles of custom tab stops, which determines the behavior of the tab
@@ -17193,7 +17193,7 @@
 	/**
 	 * Sets the bullet or numbering to the current paragraph.
 	 * @memberof ApiParaPr
-	 * @typeofeditors ["CSE", "CPE"]
+	 * @typeofeditors ["CSE", "CPE", "PDFE"]
 	 * @param {?ApiBullet} oBullet - The bullet object created with the {@link Api#CreateBullet} or {@link Api#CreateNumbering} method.
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/SetBullet.js
 	 */
@@ -17210,7 +17210,7 @@
 	/**
 	 * Sets the outline level for the specified properties.
 	 * @memberof ApiParaPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {Number?} [nLvl=undefined] - The outline level. Possible values: 1-9. The 1The desired functionality is as follows: When inserting document A into document B using the merge document API during editing, the source of document A should be visible within document B. By clicking or hovering over the inserted content of document A in document B, information about the insertion of document A should be displayed in a pop-up/floating window, preserving the boundaries of document A. Document A should be able to be inserted between any two characters in document B.
 	 * To set no outline level, use this method without a parameter.
 	 * @returns {boolean}
@@ -17236,7 +17236,7 @@
 	/**
 	 * Returns the outline level of the specified properties.
 	 * @memberof ApiParaPr
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {Number?}
 	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/ApiParaPr/Methods/GetOutlineLvl.js
@@ -18524,7 +18524,7 @@
 	/**
 	 * Returns a type of the ApiDrawing class.
 	 * @memberof ApiDrawing
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @returns {"drawing"}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetClassType.js
 	 */
@@ -19361,7 +19361,7 @@
 	/**
 	 * Returns the width of the current drawing.
 	 * @memberof ApiDrawing
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE"]
 	 * @returns {EMU}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetWidth.js
 	 */
@@ -19372,7 +19372,7 @@
 	/**
 	 * Returns the height of the current drawing.
 	 * @memberof ApiDrawing
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE"]
 	 * @returns {EMU}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetHeight.js
 	 */
@@ -19383,7 +19383,7 @@
 	/**
 	 * Returns the name of the current drawing.
 	 * @memberof ApiDrawing
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE"]
 	 * @returns {string} - Name of drawing.
 	 * @since 9.3.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetName.js
@@ -19396,7 +19396,7 @@
 	 * Sets the name of the current drawing.
 	 * If another drawing with the same name already exists, that drawing's name will be reset to a default auto-generated name.
 	 * @memberof ApiDrawing
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE"]
 	 * @param {string} name - The name which will be set to the current drawing.
 	 * @returns {boolean} - Returns true if the name was successfully set, otherwise returns false.
 	 * @since 9.3.0
@@ -19989,7 +19989,7 @@
 	/**
 	 * Checks whether the current geometry is custom.
 	 * @memberof ApiGeometry
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/IsCustom.js
 	 * @since 9.1.0
@@ -20002,7 +20002,7 @@
 	/**
 	 * Returns the name of the preset shape if the current geometry is based on a preset.
 	 * @memberof ApiGeometry
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {ShapeType | null}
 	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/GetPreset.js
 	 * @since 9.1.0
@@ -20019,7 +20019,7 @@
 	/**
 	 * Returns the number of paths in the current geometry.
 	 * @memberof ApiGeometry
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/GetPathCount.js
 	 * @since 9.1.0
@@ -20032,7 +20032,7 @@
 	/**
 	 * Returns a geometry path by its index.
 	 * @memberof ApiGeometry
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} nIndex - The path index.
 	 * @returns {ApiPath}
 	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/GetPath.js
@@ -20050,7 +20050,7 @@
 	/**
 	 * Returns all paths of the current geometry.
 	 * @memberof ApiGeometry
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {ApiPath[]}
 	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/GetPaths.js
 	 * @since 9.1.0
@@ -20071,7 +20071,7 @@
 	/**
 	 * Adds a new path to the current geometry.
 	 * @memberof ApiGeometry
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {ApiPath | null}
 	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/AddPath.js
 	 * @since 9.1.0
@@ -20093,7 +20093,7 @@
 	/**
 	 * Returns the adjustment value by its name from the current geometry.
 	 * @memberof ApiGeometry
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string} sName - The adjustment name.
 	 * @returns {number | null}
 	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/GetAdjValue.js
@@ -20111,7 +20111,7 @@
 	/**
 	 * Adds a new adjustment parameter to the current geometry.
 	 * @memberof ApiGeometry
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string} sName - The adjustment name.
 	 * @param {number} nValue - The adjustment value.
 	 * @returns {boolean}
@@ -20128,7 +20128,7 @@
 	/**
 	 * Sets the specified adjustment parameter for the current geometry.
 	 * @memberof ApiGeometry
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string} sName - The adjustment name.
 	 * @param {number} nValue - The adjustment value.
 	 * @see office-js-api/Examples/{Editor}/ApiGeometry/Methods/SetAdjValue.js
@@ -20143,7 +20143,7 @@
 	/**
 	 * Adds a guide (formula) to the current geometry.
 	 * @memberof ApiGeometry
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string} sName - The guide name.
 	 * @param {GeometryFormulaType} sFormula - The formula type.
 	 * @param {string} sX - The X parameter.
@@ -20165,7 +20165,7 @@
 	/**
 	 * Sets the text rectangle for the current geometry.
 	 * @memberof ApiGeometry
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string} sLeft - The left guide name or value.
 	 * @param {string} sTop - The top guide name or value.
 	 * @param {string} sRight - The right guide name or value.
@@ -20184,7 +20184,7 @@
 	/**
 	 * Adds a connection point to the current geometry.
 	 * @memberof ApiGeometry
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string} sAngle - The angle of the connection point.
 	 * @param {string} sX - The X position.
 	 * @param {string} sY - The Y position.
@@ -20234,7 +20234,7 @@
 	/**
 	 * Returns the type of the current path command.
 	 * @memberof ApiPathCommand
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {PathCommandType}
 	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetType.js
 	 * @since 9.1.0
@@ -20256,7 +20256,7 @@
 	/**
 	 * Returns the X coordinate for the "moveTo"/"lineTo" path commands.
 	 * @memberof ApiPathCommand
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {string | null}
 	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetX.js
 	 * @since 9.1.0
@@ -20269,7 +20269,7 @@
 	/**
 	 * Returns the Y coordinate for the "moveTo"/"lineTo" path commands.
 	 * @memberof ApiPathCommand
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {string | null}
 	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetY.js
 	 * @since 9.1.0
@@ -20282,7 +20282,7 @@
 	/**
 	 * Returns the X coordinate of the first control point for the Bezier curves.
 	 * @memberof ApiPathCommand
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {string | null}
 	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetX0.js
 	 * @since 9.1.0
@@ -20295,7 +20295,7 @@
 	/**
 	 * Returns the Y coordinate of the first control point for the Bezier curves.
 	 * @memberof ApiPathCommand
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {string | null}
 	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetY0.js
 	 * @since 9.1.0
@@ -20308,7 +20308,7 @@
 	/**
 	 * Returns the X coordinate of the second control point for the cubic Bezier curves.
 	 * @memberof ApiPathCommand
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {string | null}
 	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetX1.js
 	 * @since 9.1.0
@@ -20321,7 +20321,7 @@
 	/**
 	 * Returns the Y coordinate of the second control point for the cubic Bezier curves.
 	 * @memberof ApiPathCommand
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {string | null}
 	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetY1.js
 	 * @since 9.1.0
@@ -20334,7 +20334,7 @@
 	/**
 	 * Returns the X coordinate of the end point for the cubic Bezier curves.
 	 * @memberof ApiPathCommand
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {string | null}
 	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetX2.js
 	 * @since 9.1.0
@@ -20347,7 +20347,7 @@
 	/**
 	 * Returns the Y coordinate of the end point for the cubic Bezier curves.
 	 * @memberof ApiPathCommand
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {string | null}
 	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetY2.js
 	 * @since 9.1.0
@@ -20360,7 +20360,7 @@
 	/**
 	 * Returns the width radius of the arc.
 	 * @memberof ApiPathCommand
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {string | null}
 	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetWR.js
 	 * @since 9.1.0
@@ -20373,7 +20373,7 @@
 	/**
 	 * Returns the height radius of the arc.
 	 * @memberof ApiPathCommand
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {string | null}
 	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetHR.js
 	 * @since 9.1.0
@@ -20386,7 +20386,7 @@
 	/**
 	 * Returns the start angle of the arc.
 	 * @memberof ApiPathCommand
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {string | null}
 	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetStartAngle.js
 	 * @since 9.1.0
@@ -20399,7 +20399,7 @@
 	/**
 	 * Returns the sweep angle of the arc.
 	 * @memberof ApiPathCommand
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {string | null}
 	 * @see office-js-api/Examples/{Editor}/ApiPathCommand/Methods/GetSweepAngle.js
 	 * @since 9.1.0
@@ -20419,7 +20419,7 @@
 	/**
 	 * Returns true if the current path is stroked, otherwise false.
 	 * @memberof ApiPath
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/GetStroke.js
 	 * @since 9.1.0
@@ -20432,7 +20432,7 @@
 	/**
 	 * Sets whether the current path is stroked.
 	 * @memberof ApiPath
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} bStroke - Specifies if the path is stroked (true) or not (false).
 	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/SetStroke.js
 	 * @since 9.1.0
@@ -20448,7 +20448,7 @@
 	/**
 	 * Returns the fill type of the current path.
 	 * @memberof ApiPath
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {PathFillType}
 	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/GetFill.js
 	 * @since 9.1.0
@@ -20461,7 +20461,7 @@
 	/**
 	 * Sets the fill type to the current path.
 	 * @memberof ApiPath
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {PathFillType} sFill - The path fill type.
 	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/SetFill.js
 	 * @since 9.1.0
@@ -20481,7 +20481,7 @@
 	/**
 	 * Returns the width of the current path.
 	 * @memberof ApiPath
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/GetWidth.js
 	 * @since 9.1.0
@@ -20494,7 +20494,7 @@
 	/**
 	 * Sets the width to the current path.
 	 * @memberof ApiPath
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} nWidth - The path width in EMU.
 	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/SetWidth.js
 	 * @since 9.1.0
@@ -20510,7 +20510,7 @@
 	/**
 	 * Returns the height of the current path.
 	 * @memberof ApiPath
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/GetHeight.js
 	 * @since 9.1.0
@@ -20523,7 +20523,7 @@
 	/**
 	 * Sets the height to the current path.
 	 * @memberof ApiPath
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} nHeight - The path height in EMU.
 	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/SetHeight.js
 	 * @since 9.1.0
@@ -20539,7 +20539,7 @@
 	/**
 	 * Returns all commands of the current path.
 	 * @memberof ApiPath
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {ApiPathCommand[]}
 	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/GetCommands.js
 	 * @since 9.1.0
@@ -20560,7 +20560,7 @@
 	/**
 	 * Returns the number of commands for the current path.
 	 * @memberof ApiPath
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/GetCommandCount.js
 	 * @since 9.1.0
@@ -20573,7 +20573,7 @@
 	/**
 	 * Returns a specific path command by its index.
 	 * @memberof ApiPath
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} nIndex - The path command index.
 	 * @returns {ApiPathCommand | null}
 	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/GetCommand.js
@@ -20591,7 +20591,7 @@
 	/**
 	 * Moves the current path to the specified coordinates.
 	 * @memberof ApiPath
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {GeometryCoordinate} x - The X coordinate.
 	 * @param {GeometryCoordinate} y - The Y coordinate.
 	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/MoveTo.js
@@ -20605,7 +20605,7 @@
 	/**
 	 * Draws a line from the current point to the specified coordinates.
 	 * @memberof ApiPath
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {GeometryCoordinate} x - The X coordinate.
 	 * @param {GeometryCoordinate} y - The Y coordinate.
 	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/LineTo.js
@@ -20619,7 +20619,7 @@
 	/**
 	 * Draws a cubic Bezier curve from the current point to the specified end point using two control points.
 	 * @memberof ApiPath
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {GeometryCoordinate} x1 - The X coordinate of the first control point.
 	 * @param {GeometryCoordinate} y1 - The Y coordinate of the first control point.
 	 * @param {GeometryCoordinate} x2 - The X coordinate of the second control point.
@@ -20641,7 +20641,7 @@
 	/**
 	 * Draws a quadratic Bezier curve from the current point to the specified end point using a control point.
 	 * @memberof ApiPath
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {GeometryCoordinate} x1 - The X coordinate of the control point.
 	 * @param {GeometryCoordinate} y1 - The Y coordinate of the control point.
 	 * @param {GeometryCoordinate} x2 - The X coordinate of the end point.
@@ -20660,7 +20660,7 @@
 	/**
 	 * Draws an arc from the current point using the specified width and height radii, start angle, and sweep angle.
 	 * @memberof ApiPath
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {GeometryCoordinate} wR - The width radius.
 	 * @param {GeometryCoordinate} hR - The height radius.
 	 * @param {GeometryCoordinate} stAng - The start angle.
@@ -20678,7 +20678,7 @@
 	/**
 	 * Closes the current path.
 	 * @memberof ApiPath
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @see office-js-api/Examples/{Editor}/ApiPath/Methods/Close.js
 	 * @since 9.1.0
 	 */
@@ -20695,7 +20695,7 @@
 	/**
 	 * Returns a type of the ApiChart class.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {"chart"}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/GetClassType.js
 	 */
@@ -20707,7 +20707,7 @@
 	/**
 	 * Returns a type of the chart object.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {ChartType}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/GetChartType.js
 	 */
@@ -20724,7 +20724,7 @@
 	/**
 	 *  Specifies the chart title.
 	 *  @memberof ApiChart
-	 *  @typeofeditors ["CDE", "CSE", "CPE"]
+	 *  @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *  @param {string} sTitle - The title which will be displayed for the current chart.
 	 *  @param {pt} nFontSize - The text size value measured in points.
 	 *  @param {boolean} bIsBold - Specifies if the chart title is written in bold font or not.
@@ -20752,7 +20752,7 @@
 	/**
 	 *  Specifies the chart horizontal axis title.
 	 *  @memberof ApiChart
-	 *  @typeofeditors ["CDE", "CSE", "CPE"]
+	 *  @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *  @param {string} sTitle - The title which will be displayed for the horizontal axis of the current chart.
 	 *  @param {pt} nFontSize - The text size value measured in points.
 	 *  @param {boolean} bIsBold - Specifies if the horizontal axis title is written in bold font or not.
@@ -20768,7 +20768,7 @@
 	/**
 	 *  Specifies the chart vertical axis title.
 	 *  @memberof ApiChart
-	 *  @typeofeditors ["CDE", "CSE", "CPE"]
+	 *  @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 *  @param {string} sTitle - The title which will be displayed for the vertical axis of the current chart.
 	 *  @param {pt} nFontSize - The text size value measured in points.
 	 *  @param {boolean} bIsBold - Specifies if the vertical axis title is written in bold font or not.
@@ -20784,7 +20784,7 @@
 	/**
 	 * Specifies the vertical axis orientation.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} bIsMinMax - The <code>true</code> value will set the normal data direction for the vertical axis (from minimum to maximum).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVerAxisOrientation.js
@@ -20797,7 +20797,7 @@
 	/**
 	 * Specifies the horizontal axis orientation.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} bIsMinMax - The <code>true</code> value will set the normal data direction for the horizontal axis (from minimum to maximum).
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisOrientation.js
@@ -20810,7 +20810,7 @@
 	/**
 	 * Specifies the chart legend position.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {"left" | "top" | "right" | "bottom" | "none"} sLegendPos - The position of the chart legend inside the chart window.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetLegendPos.js
@@ -20878,7 +20878,7 @@
 	/**
 	 * Specifies the legend font size.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {pt} nFontSize - The text size value measured in points.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetLegendFontSize.js
@@ -20892,7 +20892,7 @@
 	/**
 	 * Specifies which chart data labels are shown for the chart.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {boolean} bShowSerName - Whether to show or hide the source table column names used for the data which the chart will be build from.
 	 * @param {boolean} bShowCatName - Whether to show or hide the source table row names used for the data which the chart will be build from.
 	 * @param {boolean} bShowVal - Whether to show or hide the chart data values.
@@ -20910,7 +20910,7 @@
 	/**
 	 * Spicifies the show options for data labels.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} nSeriesIndex - The series index from the array of the data used to build the chart from.
 	 * @param {number} nPointIndex - The point index from this series.
 	 * @param {boolean} bShowSerName - Whether to show or hide the source table column names used for the data which the chart will be build from.
@@ -20929,7 +20929,7 @@
 	/**
 	 * Spicifies tick labels position for the vertical axis.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {TickLabelPosition} sTickLabelPosition - The type for the position of chart vertical tick labels.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVertAxisTickLabelPosition.js
@@ -20943,7 +20943,7 @@
 	/**
 	 * Spicifies tick labels position for the horizontal axis.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {TickLabelPosition} sTickLabelPosition - The type for the position of chart horizontal tick labels.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisTickLabelPosition.js
@@ -20957,7 +20957,7 @@
 	/**
 	 * Specifies major tick mark for the horizontal axis.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {TickMark} sTickMark - The type of tick mark appearance.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisMajorTickMark.js
@@ -20970,7 +20970,7 @@
 	/**
 	 * Specifies minor tick mark for the horizontal axis.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {TickMark} sTickMark - The type of tick mark appearance.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisMinorTickMark.js
@@ -20983,7 +20983,7 @@
 	/**
 	 * Specifies major tick mark for the vertical axis.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {TickMark} sTickMark - The type of tick mark appearance.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVertAxisMajorTickMark.js
@@ -20997,7 +20997,7 @@
 	/**
 	 * Specifies minor tick mark for the vertical axis.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {TickMark} sTickMark - The type of tick mark appearance.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVertAxisMinorTickMark.js
@@ -21010,7 +21010,7 @@
 	/**
 	 * Specifies major vertical gridline visual properties.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetMajorVerticalGridlines.js
@@ -21024,7 +21024,7 @@
 	/**
 	 * Specifies minor vertical gridline visual properties.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetMinorVerticalGridlines.js
@@ -21039,7 +21039,7 @@
 	/**
 	 * Specifies major horizontal gridline visual properties.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetMajorHorizontalGridlines.js
@@ -21053,7 +21053,7 @@
 	/**
 	 * Specifies minor horizontal gridline visual properties.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetMinorHorizontalGridlines.js
@@ -21068,7 +21068,7 @@
 	/**
 	 * Specifies font size for labels of the horizontal axis.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {pt} nFontSize - The text size value measured in points.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetHorAxisLabelsFontSize.js
@@ -21081,7 +21081,7 @@
 	/**
 	 * Specifies font size for labels of the vertical axis.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {pt} nFontSize - The text size value measured in points.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetVertAxisLabelsFontSize.js
@@ -21150,7 +21150,7 @@
 	/**
 	 * Removes the specified series from the current chart.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {number} nSeria - The index of the chart series.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/RemoveSeria.js
@@ -21163,7 +21163,7 @@
 	/**
 	 * Sets values to the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE"]
 	 * @param {number[]} aValues - The array of the data which will be set to the specified chart series.
 	 * @param {number} nSeria - The index of the chart series.
 	 * @returns {boolean}
@@ -21177,7 +21177,7 @@
 	/**
 	 * Sets the x-axis values to all chart series. It is used with the scatter charts only.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE"]
 	 * @param {string[]} aValues - The array of the data which will be set to the x-axis data points.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetXValues.js
@@ -21192,7 +21192,7 @@
 	/**
 	 * Sets a name to the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE"]
 	 * @param {string} sName - The name which will be set to the specified chart series.
 	 * @param {number} nSeria - The index of the chart series.
 	 * @returns {boolean}
@@ -21206,7 +21206,7 @@
 	/**
 	 * Sets a name to the specified chart category.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE"]
 	 * @param {string} sName - The name which will be set to the specified chart category.
 	 * @param {number} nCategory - The index of the chart category.
 	 * @returns {boolean}
@@ -21220,7 +21220,7 @@
 	/**
 	 * Sets a style to the current chart by style ID.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param nStyleId - One of the styles available in the editor.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/ApplyChartStyle.js
@@ -21245,7 +21245,7 @@
 	/**
 	 * Sets the fill to the chart plot area.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the plot area.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetPlotAreaFill.js
@@ -21262,7 +21262,7 @@
 	/**
 	 * Sets the outline to the chart plot area.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the plot area outline.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetPlotAreaOutLine.js
@@ -21279,7 +21279,7 @@
 	/**
 	 * Sets the fill to the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the series.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {boolean} [bAll=false] - Specifies if the fill will be applied to all series.
@@ -21297,7 +21297,7 @@
 	/**
 	 * Sets the outline to the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the series outline.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {boolean} [bAll=false] - Specifies if the outline will be applied to all series.
@@ -21315,7 +21315,7 @@
 	/**
 	 * Sets the fill to the data point in the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the data point.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {number} nDataPoint - The index of the data point in the specified chart series.
@@ -21334,7 +21334,7 @@
 	/**
 	 * Sets the outline to the data point in the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the data point outline.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {number} nDataPoint - The index of the data point in the specified chart series.
@@ -21353,7 +21353,7 @@
 	/**
 	 * Sets the fill to the marker in the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the marker.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {number} nMarker - The index of the marker in the specified chart series.
@@ -21372,7 +21372,7 @@
 	/**
 	 * Sets the outline to the marker in the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the marker outline.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {number} nMarker - The index of the marker in the specified chart series.
@@ -21391,7 +21391,7 @@
 	/**
 	 * Sets the fill to the chart title.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the title.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetTitleFill.js
@@ -21407,7 +21407,7 @@
 	/**
 	 * Sets the outline to the chart title.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the title outline.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetTitleOutLine.js
@@ -21423,7 +21423,7 @@
 	/**
 	 * Sets the fill to the chart legend.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the legend.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetLegendFill.js
@@ -21439,7 +21439,7 @@
 	/**
 	 * Sets the outline to the chart legend.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the legend outline.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetLegendOutLine.js
@@ -21455,7 +21455,7 @@
 	/**
 	 * Sets the specified numeric format to the axis values.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {NumFormat | String} sFormat - Numeric format (can be custom format).
 	 * @param {AxisPos} - Axis position in the chart.
 	 * @returns {boolean}
@@ -21488,7 +21488,7 @@
 	/**
 	 * Sets the specified numeric format to the chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE"]
 	 * @param {NumFormat | String} sFormat - Numeric format (can be custom format).
 	 * @param {Number} nSeria - Series index.
 	 * @returns {boolean}
@@ -21502,7 +21502,7 @@
 	/**
 	 * Sets the specified numeric format to the chart data point.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE"]
 	 * @param {NumFormat | String} sFormat - Numeric format (can be custom format).
 	 * @param {Number} nSeria - Series index.
 	 * @param {number} nDataPoint - The index of the data point in the specified chart series.
@@ -21518,7 +21518,7 @@
 	/**
 	 * Returns all series from the chart space.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @returns {ApiChartSeries[]}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/GetAllSeries.js
 	 */
@@ -21539,7 +21539,7 @@
 	/**
 	 * Returns the series with a specific index.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {number} nIdx - Series index.
 	 * @returns {?ApiChartSeries}
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/GetSeries.js
@@ -21567,7 +21567,7 @@
 	/**
 	 * Returns a type of the ApiChartSeries class.
 	 * @memberof ApiChartSeries
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @returns {"chartSeries"}
 	 * @see office-js-api/Examples/{Editor}/ApiChartSeries/Methods/GetClassType.js
 	 */
@@ -21579,7 +21579,7 @@
 	/**
 	 * Tries to change the series type. Returns true if successful.
 	 * @memberof ApiChartSeries
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @param {ChartType} sType - Chart type.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiChartSeries/Methods/ChangeChartType.js
@@ -21599,7 +21599,7 @@
 	/**
 	 * Returns a chart type of the current series.
 	 * @memberof ApiChartSeries
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @returns {ChartType}
 	 * @see office-js-api/Examples/{Editor}/ApiChartSeries/Methods/GetChartType.js
 	 */
@@ -21695,7 +21695,7 @@
 	/**
 	 * Returns a type of the ApiFill class.
 	 * @memberof ApiFill
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {"fill"}
 	 * @see office-js-api/Examples/{Editor}/ApiFill/Methods/GetClassType.js
 	 */
@@ -21719,7 +21719,7 @@
 	/**
 	 * Gets the fill type.
 	 * @memberof ApiFill
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {FillType} - returns "solid", "gradient", "pattern", "blip", "nofill" or null.
 	 * @see office-js-api/Examples/{Editor}/ApiFill/Methods/GetType.js
 	 */
@@ -21755,7 +21755,7 @@
 	/**
 	 * Returns a type of the ApiStroke class.
 	 * @memberof ApiStroke
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {"stroke"}
 	 * @see office-js-api/Examples/{Editor}/ApiStroke/Methods/GetClassType.js
 	 */
@@ -21779,7 +21779,7 @@
 	/**
 	 * Gets the width of the stroke in English Metric Units.
 	 * @memberof ApiStroke
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {EMU | null}
 	 * @see office-js-api/Examples/{Editor}/ApiStroke/Methods/GetWidth.js
 	 */
@@ -21802,7 +21802,7 @@
 	/**
 	 * Gets the fill (color) of the stroke.
 	 * @memberof ApiStroke
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {ApiFill | null}
 	 * @see office-js-api/Examples/{Editor}/ApiStroke/Methods/GetFill.js
 	 */
@@ -21818,7 +21818,7 @@
 	/**
 	 * Gets the dash type of the stroke.
 	 * @memberof ApiStroke
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {LineDashType | null} - returns dash type ("solid", "dash", etc.) or null.
 	 * @see office-js-api/Examples/{Editor}/ApiStroke/Methods/GetDashType.js
 	 */
@@ -21845,7 +21845,7 @@
 	/**
 	 * Returns a type of the ApiGradientStop class.
 	 * @memberof ApiGradientStop
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {"gradientStop"}
 	 * @see office-js-api/Examples/{Editor}/ApiGradientStop/Methods/GetClassType.js
 	 */
@@ -21875,7 +21875,7 @@
 	/**
 	 * Returns a type of the ApiUniColor class.
 	 * @memberof ApiUniColor
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {"uniColor"}
 	 * @see office-js-api/Examples/{Editor}/ApiUniColor/Methods/GetClassType.js
 	 */
@@ -21924,7 +21924,7 @@
 	/**
 	 * Returns a type of the ApiRGBColor class.
 	 * @memberof ApiRGBColor
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {"rgbColor"}
 	 * @see office-js-api/Examples/{Editor}/ApiRGBColor/Methods/GetClassType.js
 	 */
@@ -21954,7 +21954,7 @@
 	/**
 	 * Returns a type of the ApiSchemeColor class.
 	 * @memberof ApiSchemeColor
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {"schemeColor"}
 	 * @see office-js-api/Examples/{Editor}/ApiSchemeColor/Methods/GetClassType.js
 	 */
@@ -21984,7 +21984,7 @@
 	/**
 	 * Returns a type of the ApiPresetColor class.
 	 * @memberof ApiPresetColor
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {"presetColor"}
 	 * @see office-js-api/Examples/{Editor}/ApiPresetColor/Methods/GetClassType.js
 	 */
@@ -22096,7 +22096,7 @@
 	 * Returns a type of the ApiColor class.
 	 *
 	 * @memberof ApiColor
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "PDFE"]
 	 * @since 9.1.0
 	 * @returns {"color"}
 	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetClassType.js
@@ -22135,7 +22135,7 @@
 	 * Gets the RGB components of the color.
 	 *
 	 * @memberof ApiColor
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "PDFE"]
 	 * @since 9.1.0
 	 * @returns {{r: byte, g: byte, b: byte}}
 	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetRGB.js
@@ -22172,7 +22172,7 @@
 	 * Gets the HEX string representation of the color.
 	 *
 	 * @memberof ApiColor
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "PDFE"]
 	 * @since 9.1.0
 	 * @returns {string} A six-digit uppercase hex string, e.g. "FF00AA".
 	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetHex.js
@@ -22238,7 +22238,7 @@
 	 * Converts the ApiColor object into the JSON object.
 	 *
 	 * @memberof ApiColor
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "PDFE"]
 	 * @since 9.3.0
 	 * @returns {string} JSON string representation of the color.
 	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/ToJSON.js
@@ -22285,7 +22285,7 @@
 	 * Converts the JSON object into the ApiColor object.
 	 *
 	 * @memberof ApiColor
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "PDFE"]
 	 * @since 9.3.0
 	 * @param {string} jsonObject - JSON representation of the color.
 	 * @returns {ApiColor|null} - new ApiColor object if the conversion was successful, null otherwise.
@@ -22361,7 +22361,7 @@
 	/**
 	 * Returns a type of the ApiBullet class.
 	 * @memberof ApiBullet
-	 * @typeofeditors ["CSE", "CPE"]
+	 * @typeofeditors ["CSE", "CPE", "PDFE"]
 	 * @returns {"bullet"}
 	 * @see office-js-api/Examples/{Editor}/ApiBullet/Methods/GetClassType.js
 	 */
@@ -27434,7 +27434,7 @@
 	/**
 	 * Creates the empty text properties.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {ApiTextPr}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateTextPr.js
 	 */
@@ -27535,7 +27535,7 @@
 	/**
 	 * Returns the full name of the currently opened file.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CDE", "CPE", "PDFE", "CSE"]
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetFullName.js
 	 */
@@ -27552,7 +27552,7 @@
 	/**
 	 * Converts pixels to EMUs (English Metric Units).
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} px - The number of pixels to convert to EMUs.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/PixelsToEmu.js
@@ -27564,7 +27564,7 @@
 	/**
 	 * Converts millimeters to pixels.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} mm - The number of millimeters to convert to pixels.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/MillimetersToPixels.js
@@ -27576,7 +27576,7 @@
 	/**
 	 * Converts points to centimeters.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} pt - The number of points to convert to centimeters.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/PointsToCentimeters.js
@@ -27589,7 +27589,7 @@
 	/**
 	 * Converts points to EMUs (English Metric Units).
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} pt - The number of points to convert to EMUs.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/PointsToEmus.js
@@ -27602,7 +27602,7 @@
 	/**
 	 * Converts points to inches.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} pt - The number of points to convert to inches.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/PointsToInches.js
@@ -27615,7 +27615,7 @@
 	/**
 	 * Converts points to lines (1 line = 12 points).
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} pt - The number of points to convert to lines.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/PointsToLines.js
@@ -27628,7 +27628,7 @@
 	/**
 	 * Converts points to millimeters.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} pt - The number of points to convert to millimeters.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/PointsToMillimeters.js
@@ -27640,7 +27640,7 @@
 	/**
 	 * Converts points to picas (1 pica = 12 points).
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} pt - The number of points to convert to picas.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/PointsToPicas.js
@@ -27652,7 +27652,7 @@
 	/**
 	 * Converts points to pixels.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} pt - The number of points to convert to pixels.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/PointsToPixels.js
@@ -27665,7 +27665,7 @@
 	/**
 	 * Converts points to twips.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} pt - The number of points to convert to twips.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/PointsToTwips.js
@@ -27677,7 +27677,7 @@
 	/**
 	 * Converts centimeters to points.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} cm - The number of centimeters to convert to points.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CentimetersToPoints.js
@@ -27690,7 +27690,7 @@
 	/**
 	 * Converts EMUs (English Metric Units) to points.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} emu - The number of EMUs to convert to points.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/EmusToPoints.js
@@ -27703,7 +27703,7 @@
 	/**
 	 * Converts inches to points.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} inches - The number of inches to convert to points.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/InchesToPoints.js
@@ -27716,7 +27716,7 @@
 	/**
 	 * Converts lines to points (1 line = 12 points).
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} lines - The number of lines to convert to points.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/LinesToPoints.js
@@ -27730,7 +27730,7 @@
 	/**
 	 * Converts millimeters to points.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} mm - The number of millimeters to convert to points.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/MillimetersToPoints.js
@@ -27742,7 +27742,7 @@
 	/**
 	 * Converts picas to points.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} pc - The number of picas to convert to points.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/PicasToPoints.js
@@ -27754,7 +27754,7 @@
 	/**
 	 * Converts pixels to points.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} px - The number of pixels to convert to points.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/PixelsToPoints.js
@@ -27767,7 +27767,7 @@
 	/**
 	 * Converts twips to points.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {number} twips - The number of twips to convert to points.
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/TwipsToPoints.js
@@ -27781,7 +27781,7 @@
 	 * The result is an integer value.
 	 *
 	 * @memberof Api
-	 * @typeofeditors ["CDE", CSE", "CPE"]
+	 * @typeofeditors ["CDE", CSE", "CPE", "PDFE"]
 	 * @param {mm} mm
 	 * @returns {EMU} - The value in English Metric Units (EMUs), as an integer.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/MillimetersToEmus.js
@@ -27793,7 +27793,7 @@
 	/**
 	 * Converts English measure units (EMU) to millimeters.
 	 * @memberof Api
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {EMU} emu
 	 * @returns {mm}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/EmusToMillimeters.js
@@ -29190,6 +29190,11 @@
 	// ApiDocumentVisitor
 	//
 	//------------------------------------------------------------------------------------------------------------------
+	
+	/**
+	 * Class representing a document visitor.
+	 * @constructor
+	 */
 	function ApiDocumentVisitor(docContent)
 	{
 		AscWord.DocumentVisitor.call(this);
@@ -29404,6 +29409,8 @@
 	Api["CreateParagraph"]                  = Api.CreateParagraph;
 	Api["CreateTable"]                      = Api.CreateTable;
 	Api["AddComment"]                       = Api.AddComment;
+	Api["attachEvent"]                      = Api.attachEvent;
+	Api["detachEvent"]                      = Api.detachEvent;
 	Api["CreateRun"]                        = Api.CreateRun;
 	Api["CreateHyperlink"]                  = Api.CreateHyperlink;
 	Api["CreateImage"]                      = Api.CreateImage;
@@ -30227,7 +30234,9 @@
 	ApiChart.prototype["SetMajorHorizontalGridlines"]  =  ApiChart.prototype.SetMajorHorizontalGridlines;
 	ApiChart.prototype["SetMinorHorizontalGridlines"]  =  ApiChart.prototype.SetMinorHorizontalGridlines;
 	ApiChart.prototype["SetHorAxisLabelsFontSize"]     = ApiChart.prototype.SetHorAxisLabelsFontSize;
+	ApiChart.prototype["SetHorAxisLablesFontSize"]     = ApiChart.prototype.SetHorAxisLabelsFontSize;
 	ApiChart.prototype["SetVertAxisLabelsFontSize"]    = ApiChart.prototype.SetVertAxisLabelsFontSize;
+	ApiChart.prototype["SetVertAxisLablesFontSize"]    = ApiChart.prototype.SetVertAxisLabelsFontSize;
 	ApiChart.prototype["GetNextChart"]                 = ApiChart.prototype.GetNextChart;
 	ApiChart.prototype["GetPrevChart"]                 = ApiChart.prototype.GetPrevChart;
 	ApiChart.prototype["RemoveSeria"]                  = ApiChart.prototype.RemoveSeria;

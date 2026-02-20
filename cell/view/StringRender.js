@@ -1193,6 +1193,7 @@
 			ctx.setTextRotated(!!this.angle);
 			self.textColor = textColor;
 			drawState.justifyDx = dx;
+			if (l) l.justifyDx = dx;
 
 
 			function computeWordDeltaX() {
@@ -1278,6 +1279,7 @@
 						drawState.x = self.initStartX(i, l, x, maxWidth, false, la);
 						dx = computeWordDeltaX();
 						drawState.justifyDx = dx;
+						if (l) l.justifyDx = dx;
 						drawState.beginLine(l, drawState.x, y);
 					}
 				}
@@ -1360,6 +1362,48 @@
 		StringRender.prototype.removeClipRect = function() {
 			this.clipRect.use = false;
 		};
+
+		StringRender.prototype.isRtlLine = function() {
+			return this.drawState.getMainDirection() === AscBidi.DIRECTION_FLAG.RTL;
+		};
+
+		StringRender.prototype._forEachVisualChar = function(lineIndex, callback) {
+			let line = this.lines[lineIndex];
+			if (!line || line.beg < 0) return;
+
+			let drawState = this.drawState;
+			drawState.positionCallback = callback;
+			drawState.justifyDx = line.justifyDx || 0;
+
+			drawState.beginLine(line, line.startX, 0);
+
+			for (let i = line.beg; i <= line.end; ++i) {
+				let charProp = this.charProps[i];
+
+				if (charProp && charProp.skip > 0) {
+					let j = i + charProp.skip - 1;
+					drawState.x += this._calcCharsWidth(i, j);
+					i = j;
+					continue;
+				}
+
+				if (charProp && charProp.skip) {
+					continue;
+				}
+
+				if (charProp && (charProp.nl || charProp.hp)) {
+					break;
+				}
+
+				let char = this.chars[i];
+				let bidiType = drawState.getBidiType(char, charProp);
+				drawState.bidiFlow.add({charIndex: i, charProp: charProp}, bidiType);
+			}
+
+			drawState.bidiFlow.end();
+			drawState.positionCallback = null;
+		};
+
 		//------------------------------------------------------------export---------------------------------------------------
 		window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 		window["AscCommonExcel"].StringRender = StringRender;
@@ -1387,6 +1431,7 @@
 			this.afterSpaceInLine = false;
 			this.seenNonSpaceInLine = false;
 			this.trailingSpaceStart = Infinity;
+			this.positionCallback = null;
 		}
 
 
@@ -1494,6 +1539,14 @@
 
 			if (!isSpace && this.afterSpaceInLine && this.seenNonSpaceInLine && this.justifyDx) {
 				this.x += this.justifyDx;
+			}
+
+			if (this.positionCallback) {
+				this.positionCallback(charIndex, this.x, width, direction);
+				this.x += width;
+				if (!isSpace) this.seenNonSpaceInLine = true;
+				this.afterSpaceInLine = isSpace;
+				return;
 			}
 
 			let cr = this.stringRender.clipRect;
@@ -1607,6 +1660,7 @@
 			this.afterSpaceInLine = false;
 			this.seenNonSpaceInLine = false;
 			this.trailingSpaceStart = Infinity;
+			this.positionCallback = null;
 			this.textColor = textColor || null;
 			this.angle = angle || 0;
 			this.zoom = this.drawingCtx.getZoom();

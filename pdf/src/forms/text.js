@@ -1413,6 +1413,14 @@
             return;
         }
         
+		let oScrollInfo = this.GetScrollInfo();
+		if (bShow == false) {
+			if (oScrollInfo) {
+				oScrollInfo.docElem.style.display = "none";
+			}
+			return;
+		}
+
         let oContentBounds  = this.content.GetContentBounds(0);
         let oContentRect    = this.getFormRelRect();
         let aOrigRect       = this.GetRect();
@@ -1426,16 +1434,13 @@
             dFrmH = tmp;
         }
 
-
-        let nContentH   = oContentBounds.Bottom - oContentBounds.Top;
-        let oScrollInfo = this.GetScrollInfo();
-        if ((bShow == false || nContentH < dFrmH || this.IsDoNotScroll())) {
-            if (oScrollInfo) {
-                oScrollInfo.docElem.style.display = "none";
-            }
-            
-            return;
-        }
+		let nContentH = oContentBounds.Bottom - oContentBounds.Top;
+		if ((nContentH < dFrmH || this.IsDoNotScroll())) {
+			if (oScrollInfo) {
+				oScrollInfo.docElem.style.display = "none";
+			}
+			return;
+		}
 
         let oDoc        = this.GetDocument();
         let nPage       = this.GetPage();

@@ -6533,11 +6533,11 @@ var CPresentation = CPresentation || function(){};
                         }
                     });
 
-                    let aRedactIdsOrder = Array.from(oRedactIdsSet).sort((a, b) => {
-                        const ia = a.indexOf("_redact_") + 8;
-                        const ib = b.indexOf("_redact_") + 8;
-                        return parseInt(a.slice(ia)) - parseInt(b.slice(ib));
-                    });
+					let aRedactIdsOrder = Array.from(oRedactIdsSet).sort(function(a, b) {
+						const ia = a.indexOf("_redact_") + 8;
+						const ib = b.indexOf("_redact_") + 8;
+						return parseInt(a.slice(ia)) - parseInt(b.slice(ib));
+					});
         
                     aRedactIdsOrder.forEach(function(id) {
                         oThis.ApplyRedact(id, nInsertPos);
@@ -10530,7 +10530,11 @@ var CPresentation = CPresentation || function(){};
         let pts;
 
         if (rect.length === 4) {
-            const [x1, y1, x2, y2] = rect;
+			const x1 = rect[0];
+			const y1 = rect[1];
+			const x2 = rect[2];
+			const y2 = rect[3];
+			
             pts = [
                 [x1, y1],
                 [x2, y1],
@@ -10546,17 +10550,6 @@ var CPresentation = CPresentation || function(){};
             ];
         }
 
-        // Центр через bbox углов (универсально)
-        let minX = pts[0][0], maxX = pts[0][0];
-        let minY = pts[0][1], maxY = pts[0][1];
-        for (let i = 1; i < 4; i++) {
-            const [x, y] = pts[i];
-            if (x < minX) minX = x;
-            if (x > maxX) maxX = x;
-            if (y < minY) minY = y;
-            if (y > maxY) maxY = y;
-        }
-
         const cx = (pts[0][0] + pts[1][0] + pts[2][0] + pts[3][0]) / 4;
         const cy = (pts[0][1] + pts[1][1] + pts[2][1] + pts[3][1]) / 4;
 
@@ -10566,7 +10559,9 @@ var CPresentation = CPresentation || function(){};
         const res = [];
 
         for (let i = 0; i < 4; i++) {
-            const [x, y] = pts[i];
+            const x = pts[i][0];
+        	const y = pts[i][1];
+
             const dx = x - cx;
             const dy = y - cy;
 
@@ -10580,7 +10575,10 @@ var CPresentation = CPresentation || function(){};
     }
 
     function getQuadsRot(points) {
-        const [x1, y1, x2, y2] = points;
+		const x1 = points[0];
+		const y1 = points[1];
+		const x2 = points[2];
+		const y2 = points[3];
 
         const dx = x2 - x1;
         const dy = y2 - y1;

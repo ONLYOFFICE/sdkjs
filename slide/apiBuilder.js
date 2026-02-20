@@ -38,7 +38,7 @@
      * @class
      * @name Api
      */
-	var Api = AscBuilder.Word.Api || {};
+	var Api = Object.create(AscBuilder.Word.Api || {});
 
     /**
      * Class representing a presentation.
@@ -1271,7 +1271,7 @@
 	 * @param {function} callback - Function to be called when the event fires.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/attachEvent.js
 	 */
-	Api["attachEvent"] = function(eventName, callback)
+	Api.attachEvent = function(eventName, callback)
 	{
 		Asc.editor.attachEvent(eventName, callback);
 	};
@@ -1284,7 +1284,7 @@
 	 * @param {string} eventName - The event name.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/detachEvent.js
 	 */
-	Api["detachEvent"] = function(eventName)
+	Api.detachEvent = function(eventName)
 	{
 		Asc.editor.detachEvent(eventName);
 	};
@@ -5716,6 +5716,10 @@
 	 */
 	var g_nApiEffectIdCounter = 0;
 
+	/**
+	 * Class representing an animation effect.
+	 * @constructor
+	 */
 	function ApiAnimationEffect(effect, timing) {
 		this.Effect = effect;
 		this.Timing = timing;
@@ -7970,6 +7974,8 @@
     Api["CreateTable"]                          = Api.CreateTable;
     Api["CreateParagraph"]                      = Api.CreateParagraph;
     Api["CreateHyperlink"]                      = Api.CreateHyperlink;
+    Api["attachEvent"]                      	= Api.attachEvent;
+    Api["detachEvent"]                      	= Api.detachEvent;
     Api["Save"]                                 = Api.Save;
     Api["CreateMaster"]                         = Api.CreateMaster;
     Api["CreateDefaultMasterSlide"]             = Api.CreateDefaultMasterSlide;
@@ -8261,7 +8267,9 @@
 	ApiChart.prototype["SetMajorHorizontalGridlines"] = ApiChart.prototype.SetMajorHorizontalGridlines = AscBuilder.ApiChart.prototype.SetMajorHorizontalGridlines;
 	ApiChart.prototype["SetMinorHorizontalGridlines"] = ApiChart.prototype.SetMinorHorizontalGridlines = AscBuilder.ApiChart.prototype.SetMinorHorizontalGridlines;
 	ApiChart.prototype["SetHorAxisLabelsFontSize"] = ApiChart.prototype.SetHorAxisLabelsFontSize = AscBuilder.ApiChart.prototype.SetHorAxisLabelsFontSize;
+	ApiChart.prototype["SetHorAxisLablesFontSize"] = ApiChart.prototype.SetHorAxisLabelsFontSize;
 	ApiChart.prototype["SetVertAxisLabelsFontSize"] = ApiChart.prototype.SetVertAxisLabelsFontSize = AscBuilder.ApiChart.prototype.SetVertAxisLabelsFontSize;
+	ApiChart.prototype["SetVertAxisLablesFontSize"] = ApiChart.prototype.SetVertAxisLabelsFontSize;
 	ApiChart.prototype["RemoveSeria"] = ApiChart.prototype.RemoveSeria = AscBuilder.ApiChart.prototype.RemoveSeria;
 	ApiChart.prototype["SetSeriaValues"] = ApiChart.prototype.SetSeriaValues = AscBuilder.ApiChart.prototype.SetSeriaValues;
 	ApiChart.prototype["SetXValues"] = ApiChart.prototype.SetXValues = AscBuilder.ApiChart.prototype.SetXValues;

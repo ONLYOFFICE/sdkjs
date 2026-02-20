@@ -3593,7 +3593,10 @@
 
 		curves.forEach(function (curve) {
 			const v = curve.getValues();
-			const [o0, o1, o2, o3] = [v[1], v[3], v[5], v[7]];
+			const o0 = v[1];
+			const o1 = v[3];
+			const o2 = v[5];
+			const o3 = v[7];
 
 			if (y >= Math.min(o0, o1, o2, o3) && y <= Math.max(o0, o1, o2, o3)) {
 				const monoCurves = Curve.getMonoCurves(v);

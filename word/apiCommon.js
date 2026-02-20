@@ -2884,24 +2884,38 @@
 		this.ProcessedCanvas.width = nW;
 		this.ProcessedCanvas.height = nH;
 		const ctx = this.ProcessedCanvas.getContext('2d');
-		ctx.drawImage(_img.Image, 0, 0, nW, nH);
+
+		try
+		{
+			ctx.drawImage(_img.Image, 0, 0, nW, nH);
+		}
+		catch (e)
+		{
+			return;
+		}
 
 		if (this.RemoveBackground)
 		{
-			const oData = ctx.getImageData(0, 0, nW, nH);
-			const px = oData.data;
-			const nLow = 50;
-			const nHigh = 230;
-			const nRange = nHigh - nLow;
-			for (let i = 0; i < px.length; i += 4)
+			try
 			{
-				const nLum = (px[i] * 299 + px[i + 1] * 587 + px[i + 2] * 114) / 1000;
-				if (nLum >= nHigh)
-					px[i + 3] = 0;
-				else if (nLum > nLow)
-					px[i + 3] = Math.min(px[i + 3], Math.round(255 * (nHigh - nLum) / nRange));
+				const oData = ctx.getImageData(0, 0, nW, nH);
+				const px = oData.data;
+				const nLow = 50;
+				const nHigh = 230;
+				const nRange = nHigh - nLow;
+				for (let i = 0; i < px.length; i += 4)
+				{
+					const nLum = (px[i] * 299 + px[i + 1] * 587 + px[i + 2] * 114) / 1000;
+					if (nLum >= nHigh)
+						px[i + 3] = 0;
+					else if (nLum > nLow)
+						px[i + 3] = Math.min(px[i + 3], Math.round(255 * (nHigh - nLum) / nRange));
+				}
+				ctx.putImageData(oData, 0, 0);
 			}
-			ctx.putImageData(oData, 0, 0);
+			catch (e)
+			{
+			}
 		}
 	};
 

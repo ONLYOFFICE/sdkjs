@@ -56,7 +56,7 @@
 	 * @property {ApiWorksheetFunction} WorksheetFunction - Returns an object that represents the function list.
 	 * @property {ApiPivotTable[]} PivotTables - Returns all pivot tables.
 	 */
-	var Api = AscBuilder.Slide.Api || {};
+	var Api = Object.create(AscBuilder.Slide.Api || {});
 	
 	/**
 	 * Class representing the currently active workbook
@@ -7803,7 +7803,7 @@
 	 * @fires Api#onWorksheetChange
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/attachEvent.js
 	 */
-	Api["attachEvent"] = function(eventName, callback)
+	Api.attachEvent = function(eventName, callback)
 	{
 		Asc.editor.attachEvent(eventName, callback);
 	};
@@ -7817,7 +7817,7 @@
 	 * @fires Api#onWorksheetChange
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/detachEvent.js
 	 */
-	Api["detachEvent"] = function(eventName)
+	Api.detachEvent = function(eventName)
 	{
 		Asc.editor.detachEvent(eventName);
 	};
@@ -27772,6 +27772,8 @@
 	Api["GetPivotByName"] = Api.GetPivotByName;
 	Api["RefreshAllPivots"] = Api.RefreshAllPivots;
 	Api["GetAllPivotTables"] = Api.GetAllPivotTables;
+	Api["attachEvent"] = Api.attachEvent;
+	Api["detachEvent"] = Api.detachEvent;
 
 	ApiWorkbook.prototype["Save"] = ApiWorkbook.prototype.Save;
 	ApiWorkbook.prototype["GetSheets"] = ApiWorkbook.prototype.GetSheets;
@@ -28007,7 +28009,9 @@
 	ApiChart.prototype["SetMajorHorizontalGridlines"] = ApiChart.prototype.SetMajorHorizontalGridlines = AscBuilder.ApiChart.prototype.SetMajorHorizontalGridlines;
 	ApiChart.prototype["SetMinorHorizontalGridlines"] = ApiChart.prototype.SetMinorHorizontalGridlines = AscBuilder.ApiChart.prototype.SetMinorHorizontalGridlines;
 	ApiChart.prototype["SetHorAxisLabelsFontSize"] = ApiChart.prototype.SetHorAxisLabelsFontSize = AscBuilder.ApiChart.prototype.SetHorAxisLabelsFontSize;
+	ApiChart.prototype["SetHorAxisLablesFontSize"] = ApiChart.prototype.SetHorAxisLabelsFontSize;
 	ApiChart.prototype["SetVertAxisLabelsFontSize"] = ApiChart.prototype.SetVertAxisLabelsFontSize = AscBuilder.ApiChart.prototype.SetVertAxisLabelsFontSize;
+	ApiChart.prototype["SetVertAxisLablesFontSize"] = ApiChart.prototype.SetVertAxisLabelsFontSize;
 	ApiChart.prototype["RemoveSeria"] = ApiChart.prototype.RemoveSeria = AscBuilder.ApiChart.prototype.RemoveSeria;
 	ApiChart.prototype["ApplyChartStyle"] = ApiChart.prototype.ApplyChartStyle = AscBuilder.ApiChart.prototype.ApplyChartStyle;
 	ApiChart.prototype["SetPlotAreaFill"] = ApiChart.prototype.SetPlotAreaFill = AscBuilder.ApiChart.prototype.SetPlotAreaFill;

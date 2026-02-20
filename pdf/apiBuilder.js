@@ -161,7 +161,7 @@
 	 *  - rect[0] < rect[2] (x1 < x2)
 	 *  - rect[1] < rect[3] (y1 < y2)
 	 *
-	 * @typedef {[pt, pt, pt, pt]} Rect
+	 * @typedef {pt[]} Rect
 	 * @property {pt} 0 - x1 (left)
 	 * @property {pt} 1 - y1 (top)
 	 * @property {pt} 2 - x2 (right)
@@ -178,7 +178,7 @@
 	 *  - diff[2] = x2B - x2A
 	 *  - diff[3] = y2B - y2A
 	 *
-	 * @typedef {[pt, pt, pt, pt]} RectDiff
+	 * @typedef {pt[]} RectDiff
 	 * @property {pt} 0 - dx1 (left delta)
 	 * @property {pt} 1 - dy1 (top delta)
 	 * @property {pt} 2 - dx2 (right delta)
@@ -238,7 +238,7 @@
 	 *  · y1 <= y3 (left edge goes top → bottom)
 	 *  · y2 <= y4 (right edge goes top → bottom)
 	 *
-	 * @typedef {[pt, pt, pt, pt, pt, pt, pt, pt]} Quad
+	 * @typedef {pt[]} Quad
 	 * @property {pt} 0 - x1 (left top)
 	 * @property {pt} 1 - y1 (left top)
 	 * @property {pt} 2 - x2 (right top)
@@ -256,9 +256,13 @@
 	 */
 
 	/**
-	 * FreeText callout coordinates.
-	 * @typedef {[Point, Point, Point]} FreeTextCallout
+	 * FreeText callout coordinates (Array of 3 points).
+	 * @typedef {Point[]} FreeTextCallout
+	 * @property {Point} 0 - The starting point of the callout.
+	 * @property {Point} 1 - The knee/bend point of the callout.
+	 * @property {Point} 2 - The end point attached to the textbox.
 	 */
+
 	/**
 	 * Degree defines an angle in degrees.
 	 * Can be any finite number (positive or negative).
@@ -359,12 +363,12 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Base class
-	 * @global
-	 * @class
-	 * @name Api
-	 */
-	let Api = {};
+     * @global
+     * @class
+     * @name Api
+     */
+	let Api = Object.create(AscBuilder.Word.Api || {});
+	
 	
 	/**
 	 * Creates a text field with the specified text field properties.
@@ -383,7 +387,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {Rect} aRect - widget rect
 	 * @returns {ApiTextField}
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddTextField.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateTextField.js
 	 */
 	Api.CreateTextField = function(aRect) {
 		let oDoc = private_GetLogicDocument();
@@ -399,7 +403,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {Rect} aRect - widget rect
 	 * @returns {ApiTextField}
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddDateField.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateDateField.js
 	 */
 	Api.CreateDateField = function(aRect) {
 		let oDoc = private_GetLogicDocument();
@@ -415,7 +419,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {Rect} aRect - widget rect
 	 * @returns {ApiButtonField}
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddImageField.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateImageField.js
 	 */
 	Api.CreateImageField = function(aRect) {
 		let oDoc = private_GetLogicDocument();
@@ -431,7 +435,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {Rect} aRect - widget rect
 	 * @returns {ApiCheckboxField}
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddImageField.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateCheckboxField.js
 	 */
 	Api.CreateCheckboxField = function(aRect) {
 		let oDoc = private_GetLogicDocument();
@@ -447,7 +451,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {Rect} aRect - widget rect
 	 * @returns {ApiRadiobuttonField}
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddRadiobuttonField.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateRadiobuttonField.js
 	 */
 	Api.CreateRadiobuttonField = function(aRect) {
 		let oDoc = private_GetLogicDocument();
@@ -463,7 +467,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {Rect} aRect - widget rect
 	 * @returns {ApiComboboxField}
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddComboboxField.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateComboboxField.js
 	 */
 	Api.CreateComboboxField = function(aRect) {
 		let oDoc = private_GetLogicDocument();
@@ -479,7 +483,7 @@
 	 * @typeofeditors ["PDFE"]
 	 * @param {Rect} aRect - widget rect
 	 * @returns {ApiListboxField}
-	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddListboxField.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateListboxField.js
 	 */
 	Api.CreateListboxField = function(aRect) {
 		let oDoc = private_GetLogicDocument();
@@ -1247,8 +1251,8 @@
 		sType = sType || "rect";
 		nWidth = nWidth || 72;
 		nHeight = nHeight || 72;
-		oFill = oFill || Asc.editor.CreateNoFill();
-		oStroke = oStroke || Asc.editor.CreateStroke(0, Asc.editor.CreateNoFill());
+		oFill = oFill || Api.CreateNoFill();
+		oStroke = oStroke || Api.CreateStroke(0, Api.CreateNoFill());
 
 		return new ApiShape(AscFormat.builder_CreateShape(sType, private_EMU2MM(nWidth), private_EMU2MM(nHeight), oFill.UniFill, oStroke.Ln, null, oDoc.GetTheme(), private_GetDrawingDocument(), false));
 	};
@@ -2088,7 +2092,7 @@
 
 		let oRGB = this.Field.GetRGBColor(aInnerColor);
 
-		return new Asc.editor.RGB(oRGB.r, oRGB.g, oRGB.b);
+		return new Api.RGB(oRGB.r, oRGB.g, oRGB.b);
 	};
 
 	/**
@@ -2173,7 +2177,7 @@
 
 		let oRGB = this.Field.GetRGBColor(aInnerColor);
 
-		return new Asc.editor.RGB(oRGB.r, oRGB.g, oRGB.b);
+		return new Api.RGB(oRGB.r, oRGB.g, oRGB.b);
 	};
 
 	/**
@@ -2206,7 +2210,7 @@
 
 		let oRGB = this.Field.GetRGBColor(aInnerColor);
 
-		return new Asc.editor.RGB(oRGB.r, oRGB.g, oRGB.b);
+		return new Api.RGB(oRGB.r, oRGB.g, oRGB.b);
 	};
 
 	/**
@@ -3892,7 +3896,7 @@
 
 		let oRGB = this.Annot.GetRGBColor(aInnerColor);
 
-		return new Asc.editor.RGB(oRGB.r, oRGB.g, oRGB.b);
+		return new Api.RGB(oRGB.r, oRGB.g, oRGB.b);
 	};
 
 	/**
@@ -3925,7 +3929,7 @@
 
 		let oRGB = this.Annot.GetRGBColor(aInnerColor);
 
-		return new Asc.editor.RGB(oRGB.r, oRGB.g, oRGB.b);
+		return new Api.RGB(oRGB.r, oRGB.g, oRGB.b);
 	};
 
 	/**
@@ -6758,7 +6762,7 @@
 
 		docContent = this.Drawing.getDocContent();
 		if (docContent) {
-			return Asc.editor.private_CreateApiDocContent(docContent);
+			return Api.private_CreateApiDocContent(docContent);
 		}
 
 		return null;
@@ -7336,7 +7340,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetContent.js
 	 */
 	ApiTableCell.prototype.GetContent = function() {
-		return Asc.editor.private_CreateApiDocContent(this.Cell.Content);
+		return Api.private_CreateApiDocContent(this.Cell.Content);
 	};
 
 	/**

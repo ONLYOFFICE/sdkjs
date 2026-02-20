@@ -2299,7 +2299,7 @@
 		deselectDrawing			: function(name)
 		{
 			if (shapesMacro[name] === undefined) {
-				return "\tpresentation.GetSelectedDrawings().forEach(function(drawing){drawing.Unselect()});\n";
+				return "\tApi.GetSelection().GetShapes().forEach(function(drawing){drawing.Unselect()});\n";
 			}
 			return "\tpresentation.GetDrawingsByName([\"" + ("macroShape" + shapesMacro[name]) + "\"])\n\t\t.forEach(function(drawing){drawing.Unselect()});\n"
 		},

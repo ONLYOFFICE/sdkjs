@@ -5629,13 +5629,8 @@ background-repeat: no-repeat;\
 			this.sync_StartAction(undefined === blockType ? c_oAscAsyncActionType.BlockInteraction : blockType, c_oAscAsyncAction.LoadDocumentFonts);
 
 			// заполним прогресс
-			var _progress         = this.OpenDocumentProgress;
-			_progress.Type        = c_oAscAsyncAction.LoadDocumentFonts;
-			_progress.FontsCount  = this.FontLoader.fonts_loading.length;
-			_progress.CurrentFont = 0;
-
+			this.updateOpenDocumentProgress();
 			var _loader_object = this.WordControl.m_oLogicDocument;
-			var _count         = 0;
 			if (_loader_object !== undefined && _loader_object != null)
 			{
 				for (var i in _loader_object.ImageMap)
@@ -5645,12 +5640,8 @@ background-repeat: no-repeat;\
 						var localUrl = _loader_object.ImageMap[i];
 						g_oDocumentUrls.addImageUrl(localUrl, this.documentUrl + 'media/' + localUrl);
 					}
-					++_count;
 				}
 			}
-
-			_progress.ImagesCount  = _count + AscCommon.g_oUserTexturePresets.length;
-			_progress.CurrentImage = 0;
 		}
 	};
 	asc_docs_api.prototype.GenerateStyles                = function()
@@ -5699,7 +5690,7 @@ background-repeat: no-repeat;\
 				this.EndActionLoadImages = 2;
 				this.sync_StartAction(c_oAscAsyncActionType.Information, c_oAscAsyncAction.LoadImage);
 			}
-			const oRequiredSyncImagesMap = this.isSyncLoadFirstSlideImages() && this.isApplyChangesOnOpen ? this.getFirstSlideImagesMap() : null;
+			const oRequiredSyncImagesMap = this.getRequiredSyncImagesOnLoad();
 			this.ImageLoader.LoadDocumentImages(this.saveImageMap, false, oRequiredSyncImagesMap);
 			return;
 		}
@@ -5727,7 +5718,7 @@ background-repeat: no-repeat;\
 			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.LoadDocumentImages);
 		}
 
-		const oRequiredSyncImagesMap = this.isSyncLoadFirstSlideImages() && !AscCommon.CollaborativeEditing.m_aChanges.length ? this.getFirstSlideImagesMap() : null;
+		const oRequiredSyncImagesMap = this.getRequiredSyncImagesOnLoad();
 		this.ImageLoader.bIsLoadDocumentFirst = true;
 		this.ImageLoader.LoadDocumentImages(_loader_object.ImageMap, false, oRequiredSyncImagesMap);
 	};
@@ -9518,6 +9509,36 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.getJsApi = function()
 	{
 		return AscBuilder.Slide.Api;
+	};
+	asc_docs_api.prototype.getRequiredSyncImagesOnLoad = function() {
+		if (this.ImageLoader.bIsAsyncLoadDocumentImages &&
+			!this.isPasteFonts_Images &&
+			this.isSyncLoadFirstSlideImages() &&
+			!this.isDocumentLoadComplete &&
+			(!AscCommon.CollaborativeEditing.m_aChanges.length || this.isApplyChangesOnOpen)) {
+			return this.getFirstSlideImagesMap();
+		}
+		return null;
+	};
+	asc_docs_api.prototype.updateOpenDocumentProgress = function() {
+		const progress         = this.OpenDocumentProgress;
+		progress.Type        = c_oAscAsyncAction.LoadDocumentFonts;
+		progress.FontsCount  = this.FontLoader.fonts_loading.length;
+		progress.CurrentFont = 0;
+
+		if (this.ImageLoader.bIsAsyncLoadDocumentImages) {
+			const requiredImageMap = this.getRequiredSyncImagesOnLoad();
+			if (requiredImageMap) {
+				progress.ImagesCount = Object.keys(requiredImageMap).length;
+				progress.CurrentImage = 0;
+			}
+		} else {
+			const logicDocument = this.WordControl.m_oLogicDocument;
+			if (logicDocument && logicDocument.ImageMap) {
+				progress.ImagesCount = Object.keys(logicDocument.ImageMap).length + AscCommon.g_oUserTexturePresets.length;
+				progress.CurrentImage = 0;
+			}
+		}
 	};
 
 	//-------------------------------------------------------------export---------------------------------------------------
