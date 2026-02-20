@@ -67,6 +67,7 @@
 
 			/** @type RegExp */
 			this.reWordBegining = new XRegExp("[^\\p{L}\\p{N}\\'][\\p{L}\\p{N}]", "i");
+			this.cursorAtTrailingEdge = undefined;
 
 			return this;
 		}
@@ -237,17 +238,27 @@
 			} else if (pos > li.end) {
 				left = isRtl ? li.startX : (li.startX + li.tw);
 			} else {
-				let found = false;
+				let atPos = null;
+				let beforePos = null;
 				let visibleEndX = li.startX;
 				this._forEachVisualChar(lineIndex, function (charIndex, visualX, width, direction) {
 					let right = visualX + width;
 					if (right > visibleEndX) visibleEndX = right;
-					if (charIndex === pos && !found) {
-						left = (direction === AscBidi.DIRECTION.R) ? right : visualX;
-						found = true;
+					if (charIndex === pos && atPos === null) {
+						atPos = (direction === AscBidi.DIRECTION.R) ? right : visualX;
+					}
+					if (charIndex === pos - 1 && beforePos === null) {
+						beforePos = (direction === AscBidi.DIRECTION.R) ? visualX : right;
 					}
 				});
-				if (!found) {
+
+				if (atPos !== null && beforePos !== null && this.cursorAtTrailingEdge !== undefined && atPos !== beforePos) {
+					left = this.cursorAtTrailingEdge ? beforePos : atPos;
+				} else if (atPos !== null) {
+					left = atPos;
+				} else if (beforePos !== null) {
+					left = beforePos;
+				} else {
 					left = isRtl ? li.startX : visibleEndX;
 				}
 			}
@@ -306,6 +317,7 @@
 			let lineInfo = this.getLineInfo(line);
 			let bestPos = lineInfo.beg;
 			let bestDist = Infinity;
+			let isTrailing = false;
 			let self = this;
 
 			this._forEachVisualChar(line, function(charIndex, visualX, width, direction) {
@@ -317,15 +329,17 @@
 				if (direction === AscBidi.DIRECTION.R) {
 					let distRight = Math.abs(x - rightEdge);
 					let distLeft = Math.abs(x - leftEdge);
-					if (distRight < bestDist) { bestDist = distRight; bestPos = charIndex; }
-					if (distLeft < bestDist) { bestDist = distLeft; bestPos = charIndex + 1; }
+					if (distRight < bestDist) { bestDist = distRight; bestPos = charIndex; isTrailing = false; }
+					if (distLeft < bestDist) { bestDist = distLeft; bestPos = charIndex + 1; isTrailing = true; }
 				} else {
 					let distLeft = Math.abs(x - leftEdge);
 					let distRight = Math.abs(x - rightEdge);
-					if (distLeft < bestDist) { bestDist = distLeft; bestPos = charIndex; }
-					if (distRight < bestDist) { bestDist = distRight; bestPos = charIndex + 1; }
+					if (distLeft < bestDist) { bestDist = distLeft; bestPos = charIndex; isTrailing = false; }
+					if (distRight < bestDist) { bestDist = distRight; bestPos = charIndex + 1; isTrailing = true; }
 				}
 			});
+
+			this.cursorAtTrailingEdge = isTrailing;
 
 			let maxPos = line === this.getLinesCount() - 1 ? lineInfo.end + 1 : lineInfo.end;
 			if (bestPos > maxPos) bestPos = maxPos;

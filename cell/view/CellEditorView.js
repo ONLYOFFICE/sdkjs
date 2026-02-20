@@ -1790,6 +1790,7 @@ function (window, undefined) {
 		let h = this.canvas.height;
 		let y = -this.textRender.calcLineOffset(this.topLineIndex);
 		let cur = this.textRender.calcCharOffset(this.cursorPos, lineIndex);
+		this.textRender.cursorAtTrailingEdge = undefined;
 		let charsCount = this.textRender.getCharsCount();
 		let textAlign = this.textFlags && this.textFlags.textAlign;
 		let curLeft = asc_round(
