@@ -7931,9 +7931,10 @@ background-repeat: no-repeat;\
 					++_count;
 				}
 			}
-
-			_progress.ImagesCount  = _count;
-			_progress.CurrentImage = 0;
+			if (!this.ImageLoader.bIsAsyncLoadDocumentImages) {
+				_progress.ImagesCount  = _count;
+				_progress.CurrentImage = 0;
+			}
 		}
 	};
 	asc_docs_api.prototype.GenerateStyles                = function()
