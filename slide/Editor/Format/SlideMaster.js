@@ -385,16 +385,6 @@ MasterSlide.prototype.recalculate = function () {
         this.recalcInfo.recalculateBackground = false;
     }
 };
-MasterSlide.prototype.checkSlideColorScheme = function () {
-    this.recalcInfo.recalculateSpTree = true;
-    this.recalcInfo.recalculateBackground = true;
-    for (var i = 0; i < this.cSld.spTree.length; ++i) {
-        if (!this.cSld.spTree[i].isPlaceholder()) {
-            this.cSld.spTree[i].handleUpdateFill();
-            this.cSld.spTree[i].handleUpdateLn();
-        }
-    }
-};
 MasterSlide.prototype.needRecalc = function(){
     var recalcInfo = this.recalcInfo;
     return recalcInfo.recalculateBackground ||

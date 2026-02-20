@@ -384,16 +384,16 @@
 					prevMaster = curSlide.Master;
 				}
 			}
-			let pos = 0;
+			let masterPos = 0;
 			if(prevMaster) {
 				for(let idx = 0; idx < masters.length; ++idx) {
 					if(masters[idx] === prevMaster) {
-						pos = idx + 1;
+						masterPos = idx + 1;
 						break;
 					}
 				}
 			}
-			presentation.addSlideMaster(pos, slide);
+			presentation.addSlideMaster(masterPos, slide);
 		}
 		else {
 			let curSlide = this.getSlide(pos - 1);
@@ -412,16 +412,16 @@
 				prevMaster = masters[0];
 			}
 			if(prevMaster) {
-				let pos = 0;
+				let layoutPos = 0;
 				if(prevLayout) {
 					for(let idx = 0; idx < prevMaster.sldLayoutLst.length; ++idx) {
 						if(prevMaster.sldLayoutLst[idx] === prevLayout) {
-							pos = idx + 1;
+							layoutPos = idx + 1;
 							break;
 						}
 					}
 				}
-				prevMaster.addToSldLayoutLstToPos(pos, slide);
+				prevMaster.addToSldLayoutLstToPos(layoutPos, slide);
 			}
 		}
 	};
