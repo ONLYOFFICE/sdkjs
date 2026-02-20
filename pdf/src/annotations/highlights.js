@@ -43,7 +43,6 @@
         this._quads         = [];
         this._richContents  = undefined;
         this._rotate        = undefined;
-        this._width         = undefined;
     }
     CAnnotationTextMarkup.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
 	CAnnotationTextMarkup.prototype.constructor = CAnnotationTextMarkup;
@@ -75,16 +74,30 @@
 
     CAnnotationTextMarkup.prototype.SetQuads = function(aFullQuads) {
         let oThis = this;
+
+		for (let i = 0, nCount = this._quads.length; i < nCount; i++) {
+            this.RemoveQuad(0);
+        }
+
         aFullQuads.forEach(function(aQuads) {
-            oThis.AddQuads(aQuads);
+            oThis.AddQuad(aQuads);
         });
     };
     CAnnotationTextMarkup.prototype.GetQuads = function() {
         return this._quads;
     };
-    CAnnotationTextMarkup.prototype.AddQuads = function(aQuads) {
-        AscCommon.History.Add(new CChangesPDFAnnotQuads(this, this._quads.length, aQuads, true));
-        this._quads.push(aQuads);
+	CAnnotationTextMarkup.prototype.RemoveQuad = function(nIdx) {
+        AscCommon.History.Add(new CChangesPDFAnnotQuads(this, nIdx, this._quads[nIdx], false));
+        this._quads.splice(nIdx, 1);
+
+		this.SetWasChanged(true);
+		this.SetNeedRecalc(true);
+    };
+    CAnnotationTextMarkup.prototype.AddQuad = function(aQuad) {
+        AscCommon.History.Add(new CChangesPDFAnnotQuads(this, this._quads.length, aQuad, true));
+        this._quads.push(aQuad);
+
+		this.SetWasChanged(true);
         this.SetNeedRecalc(true);
     };
     
@@ -203,7 +216,7 @@
         if (this.IsHidden() == true)
             return;
 
-        let oRGBFill = this.GetRGBColor(this.GetStrokeColor());
+        let oRGBFill = this.GetRGBColor(this.GetBorderColor());
 
         let aQuads = this.GetQuads();
         for (let i = 0; i < aQuads.length; i++) {
@@ -278,7 +291,7 @@
             return;
 
         let aQuads      = this.GetQuads();
-        let oRGBFill    = this.GetRGBColor(this.GetStrokeColor());
+        let oRGBFill    = this.GetRGBColor(this.GetBorderColor());
         
         for (let i = 0; i < aQuads.length; i++) {
             let aPoints     = aQuads[i];
@@ -364,7 +377,7 @@
             return;
 
         let aQuads      = this.GetQuads();
-        let oRGBFill    = this.GetRGBColor(this.GetStrokeColor());
+        let oRGBFill    = this.GetRGBColor(this.GetBorderColor());
 
         for (let i = 0; i < aQuads.length; i++) {
             let aPoints = aQuads[i];
@@ -443,7 +456,7 @@
             return;
     
         let aQuads   = this.GetQuads();
-        let oRGBFill = this.GetRGBColor(this.GetStrokeColor());
+        let oRGBFill = this.GetRGBColor(this.GetBorderColor());
     
         for (let i = 0; i < aQuads.length; i++) {
             let aPoints = aQuads[i];
@@ -558,7 +571,7 @@
             return;
 
         let aQuads      = this.GetQuads();
-        let oRGBFill    = this.GetRGBColor(this.GetStrokeColor());
+        let oRGBFill    = this.GetRGBColor(this.GetBorderColor());
         
         for (let i = 0; i < aQuads.length; i++) {
             let aPoints     = aQuads[i];
@@ -785,7 +798,7 @@
         }
     };
     CAnnotationRedact.prototype._DrawRect = function(oGraphicsPDF) {
-        let oRGBStroke = this.GetRGBColor(this.GetStrokeColor());
+        let oRGBStroke = this.GetRGBColor(this.GetBorderColor());
 
         oGraphicsPDF.SetLineWidth(1);
         oGraphicsPDF.SetGlobalAlpha(1);

@@ -148,7 +148,12 @@
 		for (let nPos = nStartPos; nPos < nEndPos; ++nPos)
 		{
 			let oItem = oRun.GetElement(nPos);
-			if (!oItem.IsText())
+			if (oItem.IsPdfText())
+			{
+				this.FlushWord();
+				this.private_HandlePdfText(oItem);
+			}
+			else if (!oItem.IsText())
 			{
 				this.FlushWord();
 				if (oItem.IsSpace())
@@ -246,6 +251,26 @@
 		let nSpace    = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(0x0020, oFontInfo.Name, oFontInfo.Style);
 		this.private_HandleItem(oItem, nGrapheme, AscFonts.GetGraphemeWidth(nSpace), oFontInfo.Size, AscWord.fontslot_ASCII, false, false, false);
 	};
+	CParagraphTextShaper.prototype.private_HandlePdfText = function(item)
+	{
+		let fontInfo = this.TextPr.GetFontInfo(AscWord.fontslot_ASCII);
+		let gid = item.GetGid();
+		
+		let grapheme;
+		if (gid)
+			grapheme = AscCommon.g_oTextMeasurer.GetGraphemeByGid(gid, fontInfo.Name, fontInfo.Style, item.GetCodePoint());
+		else
+			grapheme = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(item.GetCodePoint(), fontInfo.Name, fontInfo.Style);
+		
+		let width = AscFonts.GetGraphemeWidth(grapheme);
+		
+		item.SetGrapheme(grapheme);
+		item.SetMetrics(fontInfo.Size, AscWord.fontslot_ASCII, this.TextPr);
+		item.SetWidth(width, this.TextPr, width);
+		
+		if (item.IsText())
+			item.SetCodePointType(AscWord.CODEPOINT_TYPE.BASE);
+	};
 	CParagraphTextShaper.prototype.private_HandleItem = function(oItem, nGrapheme, nWidth, nFontSize, nFontSlot, nCodePointType)
 	{
 		if (this.Temporary)
@@ -272,12 +297,11 @@
 	{
 		let codePoint = this.MaskSymbol ? this.MaskSymbol : item.GetCodePoint();
 		
-		let fontInfo   = this.TextPr.GetFontInfo(AscWord.fontslot_ASCII);
-		let grapheme   = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(codePoint, fontInfo.Name, fontInfo.Style);
-		let enGrapheme = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(0x2002, fontInfo.Name, fontInfo.Style);
+		let fontInfo = this.TextPr.GetFontInfo(AscWord.fontslot_ASCII);
+		let grapheme = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(codePoint, fontInfo.Name, fontInfo.Style);
 		
 		let width   = AscFonts.GetGraphemeWidth(grapheme);
-		let enWidth = (AscFonts.NO_GRAPHEME === enGrapheme ? 25.4 / 72 / 2 : AscFonts.GetGraphemeWidth(enGrapheme));
+		let enWidth = getEastAsiaEnWidth(fontInfo.Name, fontInfo.Style);
 		
 		item.SetGrapheme(this.MaskSymbol ? grapheme : AscFonts.NO_GRAPHEME);
 		item.SetMetrics(fontInfo.Size, AscWord.fontslot_ASCII, this.TextPr);
@@ -375,6 +399,47 @@
 		else
 			this.MaskSymbol = null;
 	};
+	
+	let enWidth = {};
+	function getEastAsiaEnWidth(fontName, fontStyle)
+	{
+		if (!enWidth[fontName])
+			enWidth[fontName] = {};
+		
+		if (undefined !== enWidth[fontName][fontStyle])
+			return enWidth[fontName][fontStyle];
+		
+		function getWidth(codePoint, flags)
+		{
+			let grapheme = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(codePoint, fontName, fontStyle);
+			if (AscFonts.NO_GRAPHEME === grapheme)
+				return 0;
+			
+			let fontId = AscFonts.GetGraphemeFontId(grapheme);
+			let fName  = AscFonts.GetFontNameByFontId(fontId);
+			let fStyle = AscFonts.GetFontStyleByFontId(fontId);
+			
+			let info = AscCommon.g_oTextMeasurer.GetFontBySymbol(codePoint, null, false);
+			let fontFace = info.Font && info.Font && info.Font.m_pFaceInfo ? info.Font.m_pFaceInfo : null;
+			if (info.CodePoint !== codePoint
+				|| !fontFace
+				|| fName !== fontFace.family_name
+				|| fStyle !== fontStyle
+				|| 0 === (fontFace.os2_ulCodePageRange1 & flags))
+				return 0;
+			
+			return AscFonts.GetGraphemeWidth(grapheme) / 2;
+		}
+		
+		let w = getWidth(0xE400, 0x160000); // (1 << 17) | (1 << 18) | (1 << 20);
+		if (0 !== w)
+			return w;
+		
+		w = getWidth(0xAC00, 0x280000); // (1 << 19) | (1 << 21);
+		w = 0 !== w ? w : 25.4 / 72 / 2;
+		enWidth[fontName][fontStyle] = w;
+		return w;
+	}
 	
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};

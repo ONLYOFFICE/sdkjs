@@ -491,6 +491,7 @@ window.AscCommon.g_cIsBeta = "false";
 		DOCX_PACKAGE  : 0x0054,
 		OFORM  : 0x0055,
 		DOCXF  : 0x0056,
+		MD   : 0x005c,
 		DOCY : 0x1001,
 		CANVAS_WORD : 0x2001,
 		JSON : 0x0808,	// Для mail-merge
@@ -584,7 +585,9 @@ window.AscCommon.g_cIsBeta = "false";
 		Waiting	: 18,
 		Submit : 19,
 		Disconnect :20,
-		RefreshFile: 21
+		RefreshFile: 21,
+		SolverLookingSolution: 22,
+		BackgroundOpen: 23
 	};
 
 	var c_oAscAdvancedOptionsID = {
@@ -1763,6 +1766,14 @@ window.AscCommon.g_cIsBeta = "false";
 		stackedPer : "stackedPer"
 	};
 
+	const c_oAscPathFillMode = {
+		DARKEN: 0,
+		DARKEN_LESS: 1,
+		LIGHTEN: 2,
+		LIGHTEN_LESS: 3,
+		NONE: 4,
+		NORM: 5
+	};
 	var c_oAscFillGradType = {
 		GRAD_LINEAR : 1,
 		GRAD_PATH   : 2
@@ -4927,7 +4938,9 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['DOCX_PACKAGE']         = prot.DOCX_PACKAGE;
 	prot['OFORM']                = prot.OFORM;
 	prot['DOCXF']                = prot.DOCXF;
+	prot['MD']                   = prot.MD;
 	prot['DOCY']                 = prot.DOCY;
+	prot['CANVAS_WORD']          = prot.CANVAS_WORD;
 	prot['JSON']                 = prot.JSON;
 	prot['XLSX']                 = prot.XLSX;
 	prot['XLS']                  = prot.XLS;
@@ -4954,14 +4967,20 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['FODP']                 = prot.FODP;
 	prot['OTP']                  = prot.OTP;
 	prot['PPTX_PACKAGE']         = prot.PPTX_PACKAGE;
+	prot['PPTY']                 = prot.PPTY;
 	prot['CANVAS_PRESENTATION']  = prot.CANVAS_PRESENTATION;
 
 	prot['VSDX']        		 = prot.VSDX;
 	prot['VSSX']        		 = prot.VSSX;
 	prot['VSTX']        		 = prot.VSTX;
 	prot['VSDM']        		 = prot.VSDM;
+	prot['VSSM']        		 = prot.VSSM;
 	prot['VSTM']        		 = prot.VSTM;
 
+	prot['VSDY']        		 = prot.VSDY;
+	prot['CANVAS_DIAGRAM']  	 = prot.CANVAS_DIAGRAM;
+
+	prot['IMG']                  = prot.IMG;
 	prot['JPG']                  = prot.JPG;
 	prot['TIFF']                 = prot.TIFF;
 	prot['TGA']                  = prot.TGA;
@@ -5007,6 +5026,8 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['Submit']                           = prot.Submit;
 	prot['Disconnect']                       = prot.Disconnect;
 	prot['RefreshFile']                      = prot.RefreshFile;
+	prot['SolverLookingSolution']            = prot.SolverLookingSolution;
+	prot['BackgroundOpen']                   = prot.BackgroundOpen;
 	window['Asc']['c_oAscAdvancedOptionsID'] = window['Asc'].c_oAscAdvancedOptionsID = c_oAscAdvancedOptionsID;
 	prot                                         = c_oAscAdvancedOptionsID;
 	prot['CSV']                                  = prot.CSV;
@@ -5340,6 +5361,16 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['FILL_TYPE_GRAD']              = prot.FILL_TYPE_GRAD;
 	prot['FILL_TYPE_PATT']              = prot.FILL_TYPE_PATT;
 	prot['FILL_TYPE_GRP']               = prot.FILL_TYPE_GRP;
+
+	window['Asc']['c_oAscPathFillMode'] = window['Asc'].c_oAscPathFillMode = c_oAscPathFillMode;
+	prot = c_oAscPathFillMode;
+	prot['DARKEN']       = prot.DARKEN;
+	prot['DARKEN_LESS']  = prot.DARKEN_LESS;
+	prot['LIGHTEN']      = prot.LIGHTEN;
+	prot['LIGHTEN_LESS'] = prot.LIGHTEN_LESS;
+	prot['NONE']         = prot.NONE;
+	prot['NORM']         = prot.NORM;
+
 	window['Asc']['c_oAscFillGradType'] = window['Asc'].c_oAscFillGradType = c_oAscFillGradType;
 	prot                                = c_oAscFillGradType;
 	prot['GRAD_LINEAR']                 = prot.GRAD_LINEAR;

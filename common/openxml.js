@@ -764,7 +764,10 @@
 		worksheetSortMap: {dir: "", filename: "worksheetSortMap.xml", contentType: "application/vnd.ms-excel.wsSortMap+xml", relationType: "http://schemas.microsoft.com/office/2006/relationships/wsSortMap"},
 		xmlSignature: {dir: "", filename: "xmlSignature.xml", contentType: "application/vnd.openxmlformats-package.digital-signature-xmlsignature+xml", relationType: "http://schemas.openxmlformats.org/package/2006/relationships/digital-signature/signature"},
 		hyperlink: {dir: "", filename: "", contentType: "", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"},
-		metadata: {dir: "xl", filename: "metadata.xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheetMetadata+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sheetMetadata"},
+		metadata: {dir: "", filename: "metadata.xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheetMetadata+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sheetMetadata"},
+		rdRichValue: {dir: "richData", filename: "rdrichvalue.xml", contentType: "application/vnd.ms-excel.rdrichvalue+xml", relationType: "http://schemas.microsoft.com/office/2017/06/relationships/rdRichValue"},
+		rdRichValueStructure: {dir: "richData", filename: "rdrichvaluestructure.xml", contentType: "application/vnd.ms-excel.rdrichvaluestructure+xml", relationType: "http://schemas.microsoft.com/office/2017/06/relationships/rdRichValueStructure"},
+		rdRichValueTypes: {dir: "richData", filename: "rdRichValueTypes.xml", contentType: "application/vnd.ms-excel.rdrichvaluetypes+xml", relationType: "http://schemas.microsoft.com/office/2017/06/relationships/rdRichValueTypes"},
 
 		threadedComment: {dir: "../threadedComments", filename: "threadedComment[N].xml", contentType: "application/vnd.ms-excel.threadedcomments+xml", relationType: "http://schemas.microsoft.com/office/2017/10/relationships/threadedComment"},
 		person: {dir: "../persons", filename: "person.xml", contentType: "application/vnd.ms-excel.person+xml", relationType: "http://schemas.microsoft.com/office/2017/10/relationships/person"},

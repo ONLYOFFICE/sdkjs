@@ -81,6 +81,8 @@ var para_EndnoteReference          = 0x0049; // Ссылка на сноску
 var para_EndnoteRef                = 0x004a; // Номер сноски (должен быть только внутри сноски)
 var para_PermStart                 = 0x004b;
 var para_PermEnd                   = 0x004c;
+var para_PdfText                   = 0x004d;
+var para_PdfSpace                  = 0x004e;
 
 (function(window)
 {
@@ -102,6 +104,8 @@ var para_PermEnd                   = 0x004c;
 			case para_RunBase               : oElement = new AscWord.CRunElementBase(); break;
 			case para_Text                  : oElement = new AscWord.CRunText(); break;
 			case para_Space                 : oElement = new AscWord.CRunSpace(); break;
+			case para_PdfText               : oElement = new AscWord.CPdfRunText(); break;
+			case para_PdfSpace              : oElement = new AscWord.CPdfRunSpace(); break;
 			case para_End                   : oElement = new AscWord.CRunParagraphMark(); break;
 			case para_NewLine               : oElement = new AscWord.CRunBreak(); break;
 			case para_Numbering             : oElement = new ParaNumbering(); break;

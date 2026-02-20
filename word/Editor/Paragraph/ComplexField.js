@@ -1761,7 +1761,7 @@ CComplexField.prototype.GetFieldValueText = function()
 	var oEndPos = oDocument.GetContentPosition(false);
 
 	oDocument.SetSelectionByContentPositions(oStartPos, oEndPos);
-	let result = oDocument.GetSelectedText();
+	let result = logicDocument ? logicDocument.GetSelectedText() : "";
 	
 	if (state)
 		logicDocument.LoadDocumentState(state);

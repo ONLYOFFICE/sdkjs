@@ -8764,10 +8764,15 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: FV(Sheet2!A6:A7,Sheet2!A8,Sheet2!A9,Sheet2!A10,Sheet2!A1) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Negative case: Area3D. Multi-cell 3D range for rate returns num array.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 0, 'Test: Negative case: Area3D. Multi-cell 3D range for rate returns num array.');
+
 		// Case #15: Name3D. 3D named range with multi-cell area for rate returns num array.
+		//correct test for dynamic arrays
+		let res = AscCommonExcel.bIsSupportDynamicArrays ? -2.3609390290986965 : 0;
 		oParser = new parserFormula('FV(TestNameArea3D2,TestNameArea3D2,TestNameArea3D2,TestNameArea3D2,TestNameArea3D2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(TestNameArea3D2,TestNameArea3D2,TestNameArea3D2,TestNameArea3D2,TestNameArea3D2) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Test: Negative case: Name3D. 3D named range with multi-cell area for rate returns num array.');
+		assert.strictEqual(oParser.calculate(null, null, null, null, null, null, true).getElementRowCol(0,0).getValue(), res, 'Test: Negative case: Name3D. 3D named range with multi-cell area for rate returns num array.');
+
+
 		// Case #16: Date. Large date serial number as rate returns num.
 		oParser = new parserFormula('FV(DATE(2025,1,1),12,-100,0,0)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: FV(DATE(2025,1,1),12,-100,0,0) is parsed.');
@@ -14986,10 +14991,19 @@ $(function () {
 		oParser = new parserFormula('RRI(TestNameArea,TestName1,TestName2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: RRI(TestNameArea,TestName1,TestName2) is parsed.');
 		//? assert.strictEqual(oParser.calculate().getValue(), 20, 'Test: Negative case: Name(3). nper as named range with area, returns #NUM!. 3 of 3 arguments used.');
+
 		// Case #18: Name3D(3). nper as 3D named range with area, returns #NUM!. 3 of 3 arguments used.
+		//correct test for dynamic arrays
+		oParser = new parserFormula('RRI(SINGLE(TestNameArea3D),TestName3D1,TestName3D2)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: RRI(TestNameArea3D,TestName3D1,TestName3D2) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: SINGLE Name3D(3). nper as 3D named range with area, returns #NUM!. 3 of 3 arguments used.');
+
+		let res = AscCommonExcel.bIsSupportDynamicArrays ? '#NUM!' : '#VALUE!';
 		oParser = new parserFormula('RRI(TestNameArea3D,TestName3D1,TestName3D2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: RRI(TestNameArea3D,TestName3D1,TestName3D2) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Name3D(3). nper as 3D named range with area, returns #NUM!. 3 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate(null, null, null, null, null, null, true).getValue(), res, 'Test: Negative case: Name3D(3). nper as 3D named range with area, returns #NUM!. 3 of 3 arguments used.');
+
+
 		// Case #19: Area3D(3). 3D multi-cell range for nper, returns #NUM!. 3 of 3 arguments used.
 		oParser = new parserFormula('RRI(Sheet2!A4:A5,Sheet2!A2:A2,Sheet2!A3:A3)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: RRI(Sheet2!A4:A5,Sheet2!A2:A2,Sheet2!A3:A3) is parsed.');
@@ -16935,10 +16949,16 @@ $(function () {
 		ws.getRange2("F14").setValue("TRUE");
 		ws.getRange2("F15").setValue("#N/A");
 
-	
+		//correct test for dynamic arrays
+		oParser = new parserFormula("VDB(SINGLE(F2:F4),11000,8,0,1)", "A2", ws);
+		assert.ok(oParser.parse(), "VDB(F2:F4,11000,8,0,1)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result SINGLE of VDB(F2:F4,11000,8,0,1)");
+
+		let res = AscCommonExcel.bIsSupportDynamicArrays ? 25000 : '#VALUE!';
 		oParser = new parserFormula("VDB(F2:F4,11000,8,0,1)", "A2", ws);
 		assert.ok(oParser.parse(), "VDB(F2:F4,11000,8,0,1)");
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of VDB(F2:F4,11000,8,0,1)");
+		assert.strictEqual(oParser.calculate(null, null, null, null, null, null, true).getValue(), res, "Result of VDB(F2:F4,11000,8,0,1)");
+
 
 		// cellsRange (arg0)
 		oParser = new parserFormula("VDB(F2:F4,11000,8,0,1)", "A2", ws);
@@ -17749,6 +17769,18 @@ $(function () {
 		ws2.getRange2("B1").setValue("3");
 		ws2.getRange2("B2").setValue("4");
 		ws2.getRange2("C1").setValue("1");
+		
+		// data for bug 78421
+		ws.getRange2("B112").setValue("45991");
+		ws.getRange2("C112").setValue("46356");
+		ws.getRange2("D112").setValue("46721");
+		ws.getRange2("E112").setValue("47118");
+
+		ws2.getRange2("B12").setValue("-5000");
+		ws2.getRange2("C12").setValue("2000");
+		ws2.getRange2("D12").setValue("2000");
+		ws2.getRange2("E12").setValue("2000");
+
 		// DefNames.
 		initDefNames();
 		ws.getRange2("A201").setValue("-0.5"); // TestName
@@ -17792,11 +17824,11 @@ $(function () {
 		// Case #8: Name,Array. Rate as named range. 3 of 3 arguments used.
 		oParser = new parserFormula('XNPV(TestName,{100,-200},{38777,38838})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: XNPV(TestName,{100,-200},{38777,38838}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Positive case: Name,Array. Rate as named range. 3 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Positive case: Name,Array. Rate as named range. 3 of 3 arguments used.');
 		// Case #9: Name3D,Array. Rate as 3D named range. 3 of 3 arguments used.
 		oParser = new parserFormula('XNPV(TestName3D,{100,-200},{38777,38838})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: XNPV(TestName3D,{100,-200},{38777,38838}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Positive case: Name3D,Array. Rate as 3D named range. 3 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Positive case: Name3D,Array. Rate as 3D named range. 3 of 3 arguments used.');
 		// Case #10: Ref3D,Array. Rate as 3D reference. 3 of 3 arguments used.
 		oParser = new parserFormula('XNPV(Sheet2!A1,{100,-200},{38777,38838})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: XNPV(Sheet2!A1,{100,-200},{38777,38838}) is parsed.');
@@ -17849,6 +17881,11 @@ $(function () {
 		oParser = new parserFormula('XNPV(ROUND(0.1,2),{100,-200},{38777,38838})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: XNPV(ROUND(0.1,2),{100,-200},{38777,38838}) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), -96.83952757528081, 'Test: Positive case: Formula,Array. Rate rounded by formula. 3 of 3 arguments used.');
+		// Case #23: Number, Area3D, Area. Normal rate and references to 3D area and current sheet area together.
+		oParser = new parserFormula('XNPV(5%,Sheet2!B12:E12,B112:E112)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: XNPV(5%,Sheet2!B12:E12,B112:E112) is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 439.12172180379343, 'Test: Positive case: Number, Area3D, Area. Normal rate and references to 3D area and current sheet area together.');
+
 
 		// Negative cases:
 		// Case #1: Number,Array. Rate = -1 returns #NUM!. 3 of 3 arguments used.
@@ -17866,7 +17903,7 @@ $(function () {
 		// Case #4: Number,Array. Dates not in chronological order (second date before first) returns #NUM!. 3 of 3 arguments used.
 		oParser = new parserFormula('XNPV(0.1,{100,-200},{38838,38777})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: XNPV(0.1,{100,-200},{38838,38777}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Number,Array. Dates not in chronological order (second date before first) returns #NUM!. 3 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Number,Array. Dates not in chronological order (second date before first) returns #NUM!. 3 of 3 arguments used.');
 		// Case #5: Error,Array. Rate as #N/A error propagates #N/A. 3 of 3 arguments used.
 		oParser = new parserFormula('XNPV(NA(),{100,-200},{38777,38838})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: XNPV(NA(),{100,-200},{38777,38838}) is parsed.');
@@ -17886,19 +17923,19 @@ $(function () {
 		// Case #9: Empty,Array. Empty rate returns #VALUE!. 3 of 3 arguments used.
 		oParser = new parserFormula('XNPV(,{100,-200},{38777,38838})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: XNPV(,{100,-200},{38777,38838}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty,Array. Empty rate returns #VALUE!. 3 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Empty,Array. Empty rate returns #VALUE!. 3 of 3 arguments used.');
 		// Case #10: Number,Empty,Array. Empty values argument returns #VALUE!. 3 of 3 arguments used.
 		oParser = new parserFormula('XNPV(0.1,,{38777,38838})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: XNPV(0.1,,{38777,38838}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number,Empty,Array. Empty values argument returns #VALUE!. 3 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number,Empty,Array. Empty values argument returns #VALUE!. 3 of 3 arguments used.');
 		// Case #11: Number,Array,Empty. Empty dates argument returns #VALUE!. 3 of 3 arguments used.
 		oParser = new parserFormula('XNPV(0.1,{100,-200},)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: XNPV(0.1,{100,-200},) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number,Array,Empty. Empty dates argument returns #VALUE!. 3 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: Number,Array,Empty. Empty dates argument returns #VALUE!. 3 of 3 arguments used.');
 		// Case #12: Boolean,Array. Boolean rate (FALSE = 0) may cause unexpected results or #NUM!. 3 of 3 arguments used.
 		oParser = new parserFormula('XNPV(FALSE,{100,-200},{38777,38838})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: XNPV(FALSE,{100,-200},{38777,38838}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean,Array. Boolean rate (FALSE = 0) may cause unexpected results or #NUM!. 3 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Boolean,Array. Boolean rate (FALSE = 0) may cause unexpected results or #NUM!. 3 of 3 arguments used.');
 		// Case #13: Number,Array. Single value with no negative cash flow returns #NUM!. 3 of 3 arguments used.
 		oParser = new parserFormula('XNPV(0.1,{100},{38777})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: XNPV(0.1,{100},{38777}) is parsed.');
@@ -17914,7 +17951,7 @@ $(function () {
 		// Case #16: Number,Name,Array. Values as named range with area returns #VALUE!. 3 of 3 arguments used.
 		oParser = new parserFormula('XNPV(0.1,TestNameArea2,{38777,38838})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: XNPV(0.1,TestNameArea2,{38777,38838}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 2.968395276, 'Test: Negative case: Number,Name,Array. Values as named range with area returns #VALUE!. 3 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 0.012641889698876807, 'Test: Negative case: Number,Name,Array. Values as named range with area returns #VALUE!. 3 of 3 arguments used.');
 		// Case #17: Number,Array,Name3D. Dates as 3D named range with area returns #VALUE!. 3 of 3 arguments used.
 		oParser = new parserFormula('XNPV(0.1,{100,-200},TestNameArea3D2)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: XNPV(0.1,{100,-200},TestNameArea3D2) is parsed.');
@@ -17922,11 +17959,11 @@ $(function () {
 		// Case #18: Number,Table,Array. Table column with text values returns #VALUE!. 3 of 3 arguments used.
 		oParser = new parserFormula('XNPV(0.1,Table1[Column2],{38777,38838})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: XNPV(0.1,Table1[Column2],{38777,38838}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number,Table,Array. Table column with text values returns #VALUE!. 3 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number,Table,Array. Table column with text values returns #VALUE!. 3 of 3 arguments used.');
 		// Case #19: Number,Array,Table. Table column with text dates returns #VALUE!. 3 of 3 arguments used.
 		oParser = new parserFormula('XNPV(0.1,{100,-200},Table1[Column2])', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: XNPV(0.1,{100,-200},Table1[Column2]) is parsed.');
-		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Number,Array,Table. Table column with text dates returns #VALUE!. 3 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Number,Array,Table. Table column with text dates returns #VALUE!. 3 of 3 arguments used.');
 		// Case #20: Formula,Array. Rate as formula returning #NUM! propagates error. 3 of 3 arguments used.
 		oParser = new parserFormula('XNPV(SQRT(-1),{100,-200},{38777,38838})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: XNPV(SQRT(-1),{100,-200},{38777,38838}) is parsed.');
@@ -17944,7 +17981,7 @@ $(function () {
 		// Case #3: Number,Array. Minimum valid cash flow values. 3 of 3 arguments used.
 		oParser = new parserFormula('XNPV(0.1,{1E-307,-1E-307},{38777,38838})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: XNPV(0.1,{1E-307,-1E-307},{38777,38838}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Bounded case: Number,Array. Minimum valid cash flow values. 3 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Bounded case: Number,Array. Minimum valid cash flow values. 3 of 3 arguments used.');
 		// Case #4: Number,Array. Maximum valid cash flow values. 3 of 3 arguments used.
 		oParser = new parserFormula('XNPV(0.1,{9.99999999999999E+307,-9.99999999999999E+307},{38777,38838})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: XNPV(0.1,{9.99999999999999E+307,-9.99999999999999E+307},{38777,38838}) is parsed.');
@@ -17956,20 +17993,8 @@ $(function () {
 		// Case #6: Number,Array. Maximum valid Excel dates (12/31/9999). 3 of 3 arguments used.
 		oParser = new parserFormula('XNPV(0.1,{100,-200},{2958465,2958466})', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: XNPV(0.1,{100,-200},{2958465,2958466}) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number,Array. Maximum valid Excel dates (12/31/9999). 3 of 3 arguments used.');
+		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Bounded case: Number,Array. Maximum valid Excel dates (12/31/9999). 3 of 3 arguments used.');
 
-		// Need to fix: empty handle, diff results from MS
-		// Case #8: Name,Array. Rate as named range. 3 of 3 arguments used.
-		// Case #9: Name3D,Array. Rate as 3D named range. 3 of 3 arguments used.
-		// Case #4: Number,Array. Dates not in chronological order (second date before first) returns #NUM!. 3 of 3 arguments used.
-		// Case #9: Empty,Array. Empty rate returns #VALUE!. 3 of 3 arguments used.
-		// Case #10: Number,Empty,Array. Empty values argument returns #VALUE!. 3 of 3 arguments used.
-		// Case #11: Number,Array,Empty. Empty dates argument returns #VALUE!. 3 of 3 arguments used.
-		// Case #12: Boolean,Array. Boolean rate (FALSE = 0) may cause unexpected results or #NUM!. 3 of 3 arguments used.
-		// Case #16: Number,Name,Array. Values as named range with area returns #VALUE!. 3 of 3 arguments used.
-		// Case #17: Number,Array,Name3D. Dates as 3D named range with area returns #VALUE!. 3 of 3 arguments used.
-		// Case #18: Number,Table,Array. Table column with text values returns #VALUE!. 3 of 3 arguments used.
-		// Case #3: Number,Array. Minimum valid cash flow values. 3 of 3 arguments used.
 
 	});
 

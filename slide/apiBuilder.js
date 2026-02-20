@@ -38,7 +38,7 @@
      * @class
      * @name Api
      */
-    var Api = window["Asc"]["asc_docs_api"] || window["Asc"]["spreadsheet_api"];
+	var Api = Object.create(AscBuilder.Word.Api || {});
 
     /**
      * Class representing a presentation.
@@ -178,6 +178,17 @@
 	ApiOleObject.prototype.constructor = ApiOleObject;
 
 	/**
+	 * Class representing a chart.
+	 * @constructor
+	 */
+	function ApiChart(Chart) {
+		ApiDrawing.call(this, Chart);
+		this.Chart = Chart;
+	}
+	ApiChart.prototype = Object.create(ApiDrawing.prototype);
+	ApiChart.prototype.constructor = ApiChart;
+
+	/**
      * Class representing a table.
      * @param oGraphicFrame
      * @constructor
@@ -213,6 +224,13 @@
         this.Cell = oCell;
     }
 
+	/**
+	 * Class representing a slide show transition.
+	 * @constructor
+	 */
+	function ApiSlideShowTransition(transition) {
+		this.Transition = transition;
+	}
 
     /**
      * Twentieths of a point (equivalent to 1/1440th of an inch).
@@ -292,6 +310,11 @@
      * The available text vertical alignment (used to align text in a shape with a placement for text inside it).
      * @typedef {("top" | "center" | "bottom")} VerticalTextAlign
      * @see office-js-api/Examples/Enumerations/VerticalTextAlign.js
+	 */
+
+	/**
+	 * The available text flow direction inside a drawing content.
+	 * @typedef {("lrtb" | "tbrl" | "btlr")} TextFlowDirection
 	 */
 
     /**
@@ -377,7 +400,7 @@
 
     /**
      * Any valid drawing element.
-     * @typedef {(ApiShape | ApiImage | ApiGroup | ApiOleObject | ApiTable | ApiChart )} Drawing
+     * @typedef {(ApiShape | ApiImage | ApiGroup | ApiOleObject | ApiTable | ApiChart | ApiSmartArt)} Drawing
      * @see office-js-api/Examples/Enumerations/Drawing.js
 	 */
 
@@ -409,9 +432,74 @@
 	 * Represents the type of objects in a selection.
 	 * @typedef {("none" | "shapes" | "slides" | "text")} SelectionType - Available selection types.
      * @see office-js-api/Examples/Enumerations/SelectionType.js
-	 *
 	 */
-	
+
+	/**
+	 * The available slide transition speed values (similar to PowerPoint VBA ppTransitionSpeed).
+	 * @typedef TransitionSpeed
+	 * @type {"slow" | "medium" | "fast"}
+	 */
+
+	/**
+	 * The available slide transition effects (similar to PowerPoint VBA ppEffect).
+	 * @typedef EntryEffect
+	 * @type {(
+	 * "effectAppear" |
+	 * "effectBlindsHorizontal" | "effectBlindsVertical" |
+	 * "effectBoxDown" | "effectBoxIn" | "effectBoxLeft" | "effectBoxOut" | "effectBoxRight" | "effectBoxUp" |
+	 * "effectCheckerboardAcross" | "effectCheckerboardDown" |
+	 * "effectCircleOut" |
+	 * "effectCombHorizontal" | "effectCombVertical" |
+	 * "effectConveyorLeft" | "effectConveyorRight" |
+	 * "effectCoverDown" | "effectCoverLeft" | "effectCoverLeftDown" | "effectCoverLeftUp" | "effectCoverRight" | "effectCoverRightDown" | "effectCoverRightUp" | "effectCoverUp" |
+	 * "effectCubeDown" | "effectCubeLeft" | "effectCubeRight" | "effectCubeUp" |
+	 * "effectCut" | "effectCutThroughBlack" |
+	 * "effectDiamondOut" |
+	 * "effectDissolve" |
+	 * "effectDoorsHorizontal" | "effectDoorsVertical" |
+	 * "effectFade" | "effectFadeSmoothly" |
+	 * "effectFerrisWheelLeft" | "effectFerrisWheelRight" |
+	 * "effectFlashbulb" |
+	 * "effectFlipDown" | "effectFlipLeft" | "effectFlipRight" | "effectFlipUp" |
+	 * "effectFlyThroughIn" | "effectFlyThroughInBounce" | "effectFlyThroughOut" | "effectFlyThroughOutBounce" |
+	 * "effectGalleryLeft" | "effectGalleryRight" |
+	 * "effectGlitterDiamondDown" | "effectGlitterDiamondLeft" | "effectGlitterDiamondRight" | "effectGlitterDiamondUp" |
+	 * "effectGlitterHexagonDown" | "effectGlitterHexagonLeft" | "effectGlitterHexagonRight" | "effectGlitterHexagonUp" |
+	 * "effectHoneycomb" |
+	 * "effectNewsflash" |
+	 * "effectOrbitDown" | "effectOrbitLeft" | "effectOrbitRight" | "effectOrbitUp" |
+	 * "effectPanDown" | "effectPanLeft" | "effectPanRight" | "effectPanUp" |
+	 * "effectPlusOut" |
+	 * "effectPushDown" | "effectPushLeft" | "effectPushRight" | "effectPushUp" |
+	 * "effectRandom" | "effectRandomBarsHorizontal" | "effectRandomBarsVertical" |
+	 * "effectRevealBlackLeft" | "effectRevealBlackRight" | "effectRevealSmoothLeft" | "effectRevealSmoothRight" |
+	 * "effectRippleCenter" | "effectRippleLeftDown" | "effectRippleLeftUp" | "effectRippleRightDown" | "effectRippleRightUp" |
+	 * "effectRotateDown" | "effectRotateLeft" | "effectRotateRight" | "effectRotateUp" |
+	 * "effectShredRectangleIn" | "effectShredRectangleOut" | "effectShredStripsIn" | "effectShredStripsOut" |
+	 * "effectSplitHorizontalIn" | "effectSplitHorizontalOut" | "effectSplitVerticalIn" | "effectSplitVerticalOut" |
+	 * "effectStripsDownLeft" | "effectStripsDownRight" | "effectStripsLeftDown" | "effectStripsLeftUp" | "effectStripsRightDown" | "effectStripsRightUp" | "effectStripsUpLeft" | "effectStripsUpRight" |
+	 * "effectSwitchDown" | "effectSwitchLeft" | "effectSwitchRight" | "effectSwitchUp" |
+	 * "effectUncoverDown" | "effectUncoverLeft" | "effectUncoverLeftDown" | "effectUncoverLeftUp" | "effectUncoverRight" | "effectUncoverRightDown" | "effectUncoverRightUp" | "effectUncoverUp" |
+	 * "effectVortexDown" | "effectVortexLeft" | "effectVortexRight" | "effectVortexUp" |
+	 * "effectWarpIn" | "effectWarpOut" |
+	 * "effectWedge" |
+	 * "effectWheel1Spoke" | "effectWheel2Spokes" | "effectWheel3Spokes" | "effectWheel4Spokes" | "effectWheel8Spokes" | "effectWheelReverse1Spoke" |
+	 * "effectWindowHorizontal" | "effectWindowVertical" |
+	 * "effectWipeDown" | "effectWipeLeft" | "effectWipeRight" | "effectWipeUp" |
+	 *
+	 * "effectNone" |
+	 *
+	 * "effectCrawlFromDown" | "effectCrawlFromLeft" | "effectCrawlFromRight" | "effectCrawlFromUp" |
+	 * "effectFlashOnceFast" | "effectFlashOnceMedium" | "effectFlashOnceSlow" |
+	 * "effectFlyFromBottom" | "effectFlyFromBottomLeft" | "effectFlyFromBottomRight" | "effectFlyFromLeft" | "effectFlyFromRight" | "effectFlyFromTop" | "effectFlyFromTopLeft" | "effectFlyFromTopRight" |
+	 * "effectMixed" |
+	 * "effectPeekFromDown" | "effectPeekFromLeft" | "effectPeekFromRight" | "effectPeekFromUp" |
+	 * "effectSpiral" |
+	 * "effectStretchAcross" | "effectStretchDown" | "effectStretchLeft" | "effectStretchRight" | "effectStretchUp" |
+	 * "effectSwivel" |
+	 * "effectZoomBottom" | "effectZoomCenter" | "effectZoomIn" | "effectZoomInSlightly" | "effectZoomOut" | "effectZoomOutSlightly"
+	 * )}
+	*/
 
     //------------------------------------------------------------------------------------------------------------------
     //
@@ -426,14 +514,14 @@
      * @returns {ApiPresentation}
      * @see office-js-api/Examples/{Editor}/Api/Methods/GetPresentation.js
 	 */
-    Api.prototype.GetPresentation = function(){
-        if(this.WordControl && this.WordControl.m_oLogicDocument){
-            return new ApiPresentation(this.WordControl.m_oLogicDocument);
+    Api.GetPresentation = function(){
+        if(Asc.editor.WordControl && Asc.editor.WordControl.m_oLogicDocument){
+            return new ApiPresentation(Asc.editor.WordControl.m_oLogicDocument);
         }
         return null;
     };
 
-	Api.prototype.GetByInternalId = function(id)
+	Api.GetByInternalId = function(id)
 	{
 		let obj = AscCommon.g_oTableId.Get_ById(id);
 		if (!obj)
@@ -469,14 +557,14 @@
      * @returns {?ApiMaster} - returns null if presentation theme doesn't exist.
      * @see office-js-api/Examples/{Editor}/Api/Methods/CreateMaster.js
 	 */
-    Api.prototype.CreateMaster = function(oTheme)
+    Api.CreateMaster = function(oTheme)
 	{
 		const rawMaster = new AscCommonSlide.MasterSlide();
 
 		const isThemeValid = oTheme && oTheme.GetClassType && oTheme.GetClassType() === "theme";
         if (!isThemeValid) {
 			
-			const zeroMaster = editor.GetPresentation().GetMaster(0);
+			const zeroMaster = Api.GetPresentation().GetMaster(0);
             if (zeroMaster) {
 				oTheme = zeroMaster.GetTheme();
 			} else {
@@ -501,7 +589,7 @@
     };
 
 
-	Api.prototype.CreateDefaultMasterSlide = function () {
+	Api.CreateDefaultMasterSlide = function () {
         let master = AscCommonSlide.CreateDefaultMaster();
         let pres = private_GetPresentation()
         pres.pushSlideMaster(master);
@@ -515,7 +603,7 @@
      * @returns {ApiLayout}
      * @see office-js-api/Examples/{Editor}/Api/Methods/CreateLayout.js
 	 */
-    Api.prototype.CreateLayout = function(oMaster){
+    Api.CreateLayout = function(oMaster){
         var oLayout = new ApiLayout(new AscCommonSlide.SlideLayout());
 
 				oLayout.Layout.setPreserve(true);
@@ -533,7 +621,7 @@
      * @returns {ApiPlaceholder}
      * @see office-js-api/Examples/{Editor}/Api/Methods/CreatePlaceholder.js
 	 */
-    Api.prototype.CreatePlaceholder = function(sType){
+    Api.CreatePlaceholder = function(sType){
         
         if (typeof(sType) !== "string")
             sType = "body";
@@ -556,7 +644,7 @@
      * @returns {ApiTheme | null} 
      * @see office-js-api/Examples/{Editor}/Api/Methods/CreateTheme.js
 	 */
-    Api.prototype.CreateTheme = function(sName, oMaster, oClrScheme, oFormatScheme, oFontScheme){
+    Api.CreateTheme = function(sName, oMaster, oClrScheme, oFormatScheme, oFontScheme){
         if (typeof(sName) !== "string")
             sName = "";
         if (oMaster.GetClassType() !== "master" || oClrScheme.GetClassType() !== "themeColorScheme" ||
@@ -575,7 +663,7 @@
         presentation.ImageMap         = {};
         presentation.Fonts            = [];
         presentation.Masters          = [oMaster.Master];
-        presentation.DrawingDocument  = editor.WordControl.m_oDrawingDocument;
+        presentation.DrawingDocument  = Asc.editor.WordControl.m_oDrawingDocument;
         presentation.pres             = oPresentation;
         presentation.Width            = oPresentation.Width;
         presentation.Height           = oPresentation.Height;
@@ -606,7 +694,7 @@
 	 *
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateThemeColorScheme.js
 	 */
-    Api.prototype.CreateThemeColorScheme = function(arrColors, sName){
+    Api.CreateThemeColorScheme = function(arrColors, sName){
         if (typeof(sName) !== "string")
             sName = "New theme's color scheme";
         if (!Array.isArray(arrColors) || arrColors.length !== 12)
@@ -615,7 +703,7 @@
 		arrColors = arrColors.map(function (color) {
 			if (color instanceof AscBuilder.ApiColor) {
 				const rgb = color.GetRGB();
-				const safeCopy = new AscBuilder.Api.prototype.RGB(rgb['r'], rgb['g'], rgb['b']);
+				const safeCopy = Api.RGB(rgb['r'], rgb['g'], rgb['b']);
 				const unifill = safeCopy.private_createUnifill();
 				return { Unicolor: unifill.fill.color };
 			}
@@ -652,7 +740,7 @@
      * @returns {?ApiThemeFormatScheme} 
      * @see office-js-api/Examples/{Editor}/Api/Methods/CreateThemeFormatScheme.js
 	 */
-    Api.prototype.CreateThemeFormatScheme = function(arrFill, arrBgFill, arrLine, sName){
+    Api.CreateThemeFormatScheme = function(arrFill, arrBgFill, arrLine, sName){
         
         if (typeof(sName) !== "string")
             sName = "New format scheme";
@@ -689,7 +777,7 @@
      * @returns {ApiThemeFontScheme}
      * @see office-js-api/Examples/{Editor}/Api/Methods/CreateThemeFontScheme.js
 	 */
-    Api.prototype.CreateThemeFontScheme = function(mjLatin, mjEa, mjCs, mnLatin, mnEa, mnCs, sName){
+    Api.CreateThemeFontScheme = function(mjLatin, mjEa, mjCs, mnLatin, mnEa, mnCs, sName){
         
         if (typeof(sName) !== "string")
             sName = "New format scheme";
@@ -721,7 +809,7 @@
      * @returns {ApiSlide}
      * @see office-js-api/Examples/{Editor}/Api/Methods/CreateSlide.js
 	 */
-    Api.prototype.CreateSlide = function(){
+    Api.CreateSlide = function(){
         var oPresentation = private_GetPresentation();
         var oSlide = new AscCommonSlide.Slide(oPresentation, oPresentation.slideMasters[0].sldLayoutLst[0], 0);
         oSlide.setNotes(AscCommonSlide.CreateNotes());
@@ -741,7 +829,7 @@
      * @returns {ApiImage}
      * @see office-js-api/Examples/{Editor}/Api/Methods/CreateImage.js
 	 */
-    Api.prototype.CreateImage = function(sImageSrc, nWidth, nHeight){
+    Api.CreateImage = function(sImageSrc, nWidth, nHeight){
         var oImage = AscFormat.DrawingObjectsController.prototype.createImage(sImageSrc, 0, 0, nWidth/36000, nHeight/36000);
         oImage.setParent(private_GetCurrentSlide());
         return new ApiImage(oImage);
@@ -759,7 +847,7 @@
 	 * @returns {ApiOleObject}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateOleObject.js
 	 */
-	Api.prototype.CreateOleObject = function(sImageSrc, nWidth, nHeight, sData, sAppId)
+	Api.CreateOleObject = function(sImageSrc, nWidth, nHeight, sData, sAppId)
 	{
 		if (typeof sImageSrc === "string" && sImageSrc.length > 0 && typeof sData === "string"
 			&& typeof sAppId === "string" && sAppId.length > 0
@@ -786,14 +874,14 @@
      * @returns {ApiShape}
      * @see office-js-api/Examples/{Editor}/Api/Methods/CreateShape.js
 	 */
-	Api.prototype.CreateShape = function(sType, nWidth, nHeight, oFill, oStroke){
+	Api.CreateShape = function(sType, nWidth, nHeight, oFill, oStroke){
         let curSlide = private_GetCurrentSlide();
 		let presentation = private_GetPresentation();
         sType   = sType   || "rect";
         nWidth  = nWidth  || 914400;
 	    nHeight = nHeight || 914400;
-	    oFill   = oFill   || Asc.editor.CreateNoFill();
-	    oStroke = oStroke || Asc.editor.CreateStroke(0, Asc.editor.CreateNoFill());
+	    oFill   = oFill   || Api.CreateNoFill();
+	    oStroke = oStroke || Api.CreateStroke(0, Api.CreateNoFill());
         let theme = presentation.Get_Theme();
         return new ApiShape(AscFormat.builder_CreateShape(sType, nWidth/36000, nHeight/36000, oFill.UniFill, oStroke.Ln, curSlide, theme, private_GetDrawingDocument(), false));
     };
@@ -815,11 +903,11 @@
      * @returns {ApiChart}
      * @see office-js-api/Examples/{Editor}/Api/Methods/CreateChart.js
 	 */
-    Api.prototype.CreateChart = function(sType, aSeries, aSeriesNames, aCatNames, nWidth, nHeight, nStyleIndex, aNumFormats)
+    Api.CreateChart = function(sType, aSeries, aSeriesNames, aCatNames, nWidth, nHeight, nStyleIndex, aNumFormats)
     {
         var oChartSpace = AscFormat.builder_CreateChart(nWidth/36000, nHeight/36000, sType, aCatNames, aSeriesNames, aSeries, nStyleIndex, aNumFormats);
         oChartSpace.setParent(private_GetCurrentSlide());
-        return Asc.editor.private_CreateApiChart(oChartSpace);
+        return new ApiChart(oChartSpace);
     };
 
 
@@ -832,7 +920,7 @@
      * @since 8.3.0
      * @see office-js-api/Examples/{Editor}/Api/Methods/CreateGroup.js
 	 */
-    Api.prototype.CreateGroup = function(drawings) {
+    Api.CreateGroup = function(drawings) {
         drawings = AscBuilder.GetArrayParameter(drawings, []);
 		if (drawings.length == 0)
 			AscBuilder.throwException(new Error("The drawings parameter must be a non empty array"));
@@ -863,7 +951,7 @@
      * @returns {?ApiTable}
      * @see office-js-api/Examples/{Editor}/Api/Methods/CreateTable.js
 	 */
-    Api.prototype.CreateTable = function(nCols, nRows){
+    Api.CreateTable = function(nCols, nRows){
         var oPresentation = private_GetPresentation();
         var oSlide = private_GetCurrentSlide();
         if(oPresentation && oSlide){
@@ -885,7 +973,7 @@
      * @returns {ApiParagraph}
      * @see office-js-api/Examples/{Editor}/Api/Methods/CreateParagraph.js
 	 */
-    Api.prototype.CreateParagraph = function()
+    Api.CreateParagraph = function()
     {
         return this.private_CreateApiParagraph(new AscWord.Paragraph(null, true));
     };
@@ -896,7 +984,7 @@
 	 * @memberof Api
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/Save.js
 	 */
-	Api.prototype.Save = function () {
+	Api.Save = function () {
 		this.SaveAfterMacros = true;
 	};
 
@@ -909,7 +997,7 @@
      * @param {ApiPlaceholder} oPlaceholder - Placeholder to be added.
      * @return {boolean} - return false if object is unsupported or oPlaceholder isn't a placeholder.
 	 */
-    Api.prototype.private_checkPlaceholders = function(object, oPlaceholder)
+    Api.private_checkPlaceholders = function(object, oPlaceholder)
     {
         if (object.GetClassType() !== "slide" && object.GetClassType() !== "layout" && object.GetClassType() !== "master" )
             return false;
@@ -960,7 +1048,7 @@
 	 * @returns {ApiDrawing}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateWordArt.js
 	 */
-    Api.prototype.CreateWordArt = function(oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight, nIndLeft, nIndTop) {
+    Api.CreateWordArt = function(oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight, nIndLeft, nIndTop) {
         var oPres = private_GetPresentation();
 		oTextPr   = oTextPr && oTextPr.TextPr ? oTextPr.TextPr : null;
 		nRotAngle = typeof(nRotAngle) === "number" && nRotAngle > 0 ? nRotAngle : 0;
@@ -981,6 +1069,20 @@
 		return new ApiDrawing(oArt);
 	};
 
+	/**
+	 * Creates a new slide show transition object.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {ApiSlideShowTransition} - Name of the transition effect.
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateSlideShowTransition.js
+	 */
+	Api.CreateSlideShowTransition = function () {
+		return new ApiSlideShowTransition(new Asc.CAscSlideTransition());
+	};
+
     /**
 	 * Converts the specified JSON object into the Document Builder object of the corresponding type.
 	 * @memberof Api
@@ -988,7 +1090,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/FromJSON.js
 	 */
-	Api.prototype.FromJSON = function(sMessage)
+	Api.FromJSON = function(sMessage)
 	{
 		let oReader = new AscJsonConverter.ReaderFromJSON();
         let oApiPresentation = this.GetPresentation();
@@ -1072,7 +1174,7 @@
                 oResult = new ApiShape(oReader.GraphicObjFromJSON(oParsedObj));
                 break;
             case "chartSpace":
-                oResult = this.private_CreateApiChart(oReader.GraphicObjFromJSON(oParsedObj));
+                oResult = new ApiChart(oReader.GraphicObjFromJSON(oParsedObj));
                 break;
 			case "textPr":
 				oResult = this.private_CreateApiTextPr(oReader.TextPrDrawingFromJSON(oParsedObj));
@@ -1133,9 +1235,31 @@
      * @since 8.3.0
      * @see office-js-api/Examples/{Editor}/Api/Methods/GetSelection.js
 	 */
-	Api.prototype.GetSelection = function()
+	Api.GetSelection = function()
 	{
 		return new ApiSelection();
+	};
+
+	/**
+	 * Creates a new hyperlink object to be used for setting hyperlinks on drawing objects (shapes or images).
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 *
+	 * @param {string} link - The hyperlink address.
+	 * @param {string} tooltip - The tooltip text.
+	 *
+	 * @returns {ApiHyperlink}
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateHyperlink.js
+	 */
+	Api.CreateHyperlink = function (link, tooltip) {
+		const paraHyperlink   = new AscCommonWord.ParaHyperlink();
+		const apiHyperlink = new AscBuilder.ApiHyperlink(paraHyperlink);
+
+		apiHyperlink.SetLink(link);
+		apiHyperlink.SetScreenTipText(tooltip);
+
+		return apiHyperlink;
 	};
 
     /**
@@ -1147,7 +1271,10 @@
 	 * @param {function} callback - Function to be called when the event fires.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/attachEvent.js
 	 */
-	Api.prototype["attachEvent"] = Api.prototype.attachEvent;
+	Api.attachEvent = function(eventName, callback)
+	{
+		Asc.editor.attachEvent(eventName, callback);
+	};
 
 	/**
 	 * Unsubscribes from the specified event.
@@ -1157,7 +1284,10 @@
 	 * @param {string} eventName - The event name.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/detachEvent.js
 	 */
-	Api.prototype["detachEvent"] = Api.prototype.detachEvent;
+	Api.detachEvent = function(eventName)
+	{
+		Asc.editor.detachEvent(eventName);
+	};
 
     //------------------------------------------------------------------------------------------------------------------
     //
@@ -1576,7 +1706,7 @@
 		let aCommentsData = this.Presentation.GetAllComments();
 		let aApiComments = [];
 		for(let nComment = 0; nComment < aCommentsData.length; ++nComment) {
-			aApiComments.push(private_GetApi().private_CreateApiComment(aCommentsData[nComment].comment));
+			aApiComments.push(Api.private_CreateApiComment(aCommentsData[nComment].comment));
 		}
 		return aApiComments;
 	};
@@ -1682,6 +1812,27 @@
 	 */
 	ApiPresentation.prototype.GetAllDrawings = function () {
 		return this._collectAllObjects('GetAllDrawings');
+	};
+
+	/**
+	 * Returns a collection of drawing objects from the document content filtered by their names.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 * @param {string[]} ids - An array of drawing names to filter by.
+	 * @return {Drawing[]}
+	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetDrawingsByName.js
+	 */
+	ApiPresentation.prototype.GetDrawingsByName = function(ids)
+	{
+		let drawings = []
+		this.GetAllSlides().forEach(function (oSource) {
+			oSource.GetAllDrawings().forEach(function (oObject) {
+				drawings.push(oObject);
+			});
+		})
+
+		return drawings.filter(function(drawing){return ids.includes(drawing.GetName())})
 	};
 
 	/**
@@ -1809,7 +1960,7 @@
 		}
 
 		Asc.editor.addBuilderFont('Cambria Math');
-		Asc.editor.loadBuilderFonts(insertMathEquation);
+		Asc.editor.addBuilderEndAction(insertMathEquation);
 
 		function insertMathEquation() {
 			const format = AscBuilder.GetStringParameter(sFormat, "unicode");
@@ -1839,7 +1990,13 @@
 
 			logicDocument.AddToParagraph(mathPr);
 
-			const targetDocContent = editor.getGraphicController().getSelectedArray()[0].txBody.content;
+			const graphicController = Asc.editor.getGraphicController();
+			const shape = graphicController.getSelectedArray()[0];
+			if (!shape || !shape.txBody) {
+				return;
+			}
+
+			const targetDocContent = shape.txBody.content;
 			const info = new CSelectedElementsInfo();
 			targetDocContent.GetSelectedElementsInfo(info);
 
@@ -1850,7 +2007,10 @@
 
             paraMath.ConvertView(false, mathformat, text);
 
-			const graphicController = Asc.editor.getGraphicController();
+			if (shape.checkExtentsByDocContent) {
+				shape.checkExtentsByDocContent();
+			}
+
 			graphicController.startRecalculate();
 		}
 
@@ -1869,6 +2029,39 @@
 	ApiPresentation.prototype.GetCustomXmlParts = function()
 	{
 		return new AscBuilder.ApiCustomXmlParts(this.Presentation);
+	};
+
+	/**
+	 * Returns whether the presentation loops continuously until the user stops it.
+	 *
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {boolean} - True if the presentation is set to loop until stopped; otherwise, false.
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetLoopUntilStopped.js
+	 */
+	ApiPresentation.prototype.GetLoopUntilStopped = function () {
+		return this.Presentation.isLoopShowMode();
+	};
+
+	/**
+	 * Sets whether the presentation loops continuously until the user stops it.
+	 *
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @param {boolean} loopUntilStopped - True to set the presentation to loop until stopped; false otherwise.
+	 * @returns {boolean} - True if the new setting was applied successfully; otherwise, false.
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/SetLoopUntilStopped.js
+	 */
+	ApiPresentation.prototype.SetLoopUntilStopped = function (loopUntilStopped) {
+		if (this.Presentation) {
+			this.Presentation.setShowLoop(loopUntilStopped);
+			return true;
+		}
+		return false;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -2013,7 +2206,7 @@
 
             oDrawing.Drawing.setParent(this.Master);
             this.Master.shapeAdd(this.Master.cSld.spTree.length, oDrawing.Drawing);
-            editor.private_checkPlaceholders(this, oDrawing.GetPlaceholder());
+            Api.private_checkPlaceholders(this, oDrawing.GetPlaceholder());
 
             return true;
         }
@@ -2077,7 +2270,7 @@
         if (!this.Master)
             return false;
         
-        var apiNoFill = editor.CreateNoFill();
+        var apiNoFill = Api.CreateNoFill();
         var bg        = new AscFormat.CBg();
         bg.bgPr       = new AscFormat.CBgPr();
         bg.bgPr.Fill  = apiNoFill.UniFill;
@@ -2241,7 +2434,7 @@
     ApiMaster.prototype.GetAllCharts = function() {
 		if(!this.Master) return [];
 		return private_GetAllDrawingsWithType(this.Master.cSld.spTree, AscDFH.historyitem_type_ChartSpace,
-			function (oDrawing) {return private_GetApi().private_CreateApiChart(oDrawing);});
+			function (oDrawing) {return new ApiChart(oDrawing);});
     };
 
     /**
@@ -2426,7 +2619,7 @@
 
             oDrawing.Drawing.setParent(this.Layout);
             this.Layout.shapeAdd(this.Layout.cSld.spTree.length, oDrawing.Drawing);
-            editor.private_checkPlaceholders(this, oDrawing.GetPlaceholder());
+            Api.private_checkPlaceholders(this, oDrawing.GetPlaceholder());
 
             return true;
         }
@@ -2489,7 +2682,7 @@
         if (!this.Layout)
             return false;
 
-        var apiNoFill = editor.CreateNoFill();
+        var apiNoFill = Api.CreateNoFill();
         var bg        = new AscFormat.CBg();
         bg.bgPr       = new AscFormat.CBgPr();
         bg.bgPr.Fill  = apiNoFill.UniFill;
@@ -2654,7 +2847,7 @@
 			return [];
 		}
 		return private_GetAllDrawingsWithType(this.Layout.cSld.spTree, AscDFH.historyitem_type_ChartSpace,
-			function (oDrawing) {return private_GetApi().private_CreateApiChart(oDrawing);});
+			function (oDrawing) {return new ApiChart(oDrawing);});
     };
 
     /**
@@ -3168,7 +3361,7 @@
 				if (arrFill[nFill] && arrFill[nFill].GetClassType() === "fill")
 					formatScheme.addFillToStyleLst(arrFill[nFill].UniFill);
 				else
-					formatScheme.addFillToStyleLst(editor.CreateNoFill().UniFill);
+					formatScheme.addFillToStyleLst(Api.CreateNoFill().UniFill);
 			}
 		});
 		return true;
@@ -3194,7 +3387,7 @@
 				if (arrBgFill[nFill] && arrBgFill[nFill].GetClassType() === "fill")
 					formatScheme.addBgFillToStyleLst(arrBgFill[nFill].UniFill);
 				else
-					formatScheme.addBgFillToStyleLst(editor.CreateNoFill().UniFill);
+					formatScheme.addBgFillToStyleLst(Api.CreateNoFill().UniFill);
 			}
 		});
 		return true;
@@ -3220,7 +3413,7 @@
 				if (arrLine[nLine] && arrLine[nLine].GetClassType() === "stroke")
 					formatScheme.addLnToStyleLst(arrLine[nLine].Ln);
 				else
-					formatScheme.addLnToStyleLst(editor.CreateStroke(0, editor.CreateNoFill()).Ln);
+					formatScheme.addLnToStyleLst(Api.CreateStroke(0, Api.CreateNoFill()).Ln);
 			}
 		});
 		return true;
@@ -3247,7 +3440,7 @@
     //     //     if (arrEffect[nFill] && arrEffect[nFill].GetClassType() === "stroke")
     //     //         this.FormatScheme.addEffectToStyleLst(arrEffect[nFill].UniFill);
     //     //     else 
-    //     //         this.FormatScheme.addEffectToStyleLst(editor.CreateNoFill().UniFill);
+    //     //         this.FormatScheme.addEffectToStyleLst(Api.CreateNoFill().UniFill);
     //     // }
 
     //     // return true;
@@ -3439,7 +3632,7 @@
 
             oDrawing.Drawing.setParent(this.Slide);
             this.Slide.shapeAdd(this.Slide.cSld.spTree.length, oDrawing.Drawing);
-            editor.private_checkPlaceholders(this, oDrawing.GetPlaceholder());
+            Api.private_checkPlaceholders(this, oDrawing.GetPlaceholder());
 
             return true;
         }
@@ -3504,11 +3697,25 @@
                 if (!nCount || nCount <= 0 || nCount > this.Slide.cSld.spTree.length)
                     nCount = 1;
 
+                const spTree = this.Slide.cSld.spTree;
+                const nEnd = Math.min(nPos + nCount, spTree.length);
+                const objectIds = [];
+                for (let i = nPos; i < nEnd; i++)
+                {
+                    objectIds.push(spTree[i].Get_Id());
+                }
                 this.Slide.shapeRemove(nPos, nCount);
+                if (this.Slide.timing)
+                {
+                    for (let i = 0; i < objectIds.length; i++)
+                    {
+                        this.Slide.timing.onRemoveObject(objectIds[i]);
+                    }
+                }
                 return true;
             }
         }
-        
+
         return false;
     };
 
@@ -3615,7 +3822,7 @@
         if (!this.Slide)
             return false;
         
-        let presentation = private_GetApi().GetPresentation();
+        let presentation = Api.GetPresentation();
         let nPosToDelete  = this.GetSlideIndex();
 
         if (nPosToDelete > -1)
@@ -3720,7 +3927,7 @@
         if (!this.Slide)
             return false;
         
-        var apiNoFill = editor.CreateNoFill();
+        var apiNoFill = Api.CreateNoFill();
         var bg        = new AscFormat.CBg();
         bg.bgPr       = new AscFormat.CBgPr();
         bg.bgPr.Fill  = apiNoFill.UniFill;
@@ -3971,7 +4178,7 @@
 			return [];
 		}
 		return private_GetAllDrawingsWithType(this.Slide.cSld.spTree, AscDFH.historyitem_type_ChartSpace,
-			function (oDrawing) {return private_GetApi().private_CreateApiChart(oDrawing);});
+			function (oDrawing) {return new ApiChart(oDrawing);});
     };
 
     /**
@@ -4156,8 +4363,64 @@
 			}
 		}
 		return false;
-	}
-	
+	};
+
+	/**
+	 * Returns the slide show transition of the current slide.
+	 *
+	 * @memberof ApiSlide
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {ApiSlideShowTransition | null} - Returns the slide show transition or null if the slide has no transition.
+	 * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetSlideShowTransition.js
+	 */
+	ApiSlide.prototype.GetSlideShowTransition = function () {
+		if (this.Slide && this.Slide.transition) {
+			return new ApiSlideShowTransition(this.Slide.transition);
+		}
+		return null;
+	};
+
+	/**
+	 * Sets the slide show transition to the current slide.
+	 *
+	 * @memberof ApiSlide
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @param {ApiSlideShowTransition} transition - The slide show transition to be applied.
+	 * @returns {boolean} - Returns true if the transition was applied successfully, otherwise false.
+	 * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/SetSlideShowTransition.js
+	 */
+	ApiSlide.prototype.SetSlideShowTransition = function (transition) {
+		if (this.Slide && transition && transition.Transition) {
+			this.Slide.applyTransition(transition.Transition);
+			return true;
+		}
+		return false;
+	};
+
+	/**
+	 * Returns the animation timeline for the slide.
+	 *
+	 * @memberof ApiSlide
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {ApiTimeLine} - The animation timeline for the slide.
+	 * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetTimeLine.js
+	 */
+	ApiSlide.prototype.GetTimeLine = function () {
+		if (this.Slide) {
+			if (!this.Slide.timing) {
+				this.Slide.setTiming(new AscFormat.CTiming());
+			}
+			return new ApiTimeLine(this.Slide.timing, this.Slide);
+		}
+		return null;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiNotesPage
@@ -4245,20 +4508,1557 @@
 		return '';
 	};
 
-    ApiNotesPage.prototype.GetTheme = function(){
-            if (this.NotesPage && this.NotesPage.Master && this.NotesPage.Master.Theme)
-            {
-                var oThemeLoadInfo     = new AscCommonSlide.CThemeLoadInfo();
-                oThemeLoadInfo.Master  = this.NotesPage.Master;
-                oThemeLoadInfo.Layouts = [];
-                oThemeLoadInfo.Theme   = this.NotesPage.Master.Theme;
+	ApiNotesPage.prototype.GetTheme = function () {
+		if (this.NotesPage && this.NotesPage.Master && this.NotesPage.Master.Theme) {
+			const oThemeLoadInfo = new AscCommonSlide.CThemeLoadInfo();
+			oThemeLoadInfo.Master = this.NotesPage.Master;
+			oThemeLoadInfo.Layouts = [];
+			oThemeLoadInfo.Theme = this.NotesPage.Master.Theme;
+			return new ApiTheme(oThemeLoadInfo);
+		}
+		return null;
+	};
 
-                return new ApiTheme(oThemeLoadInfo);
-            }
-            
-            return null;
-        };
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiSlideShowTransition
+	//
+	//------------------------------------------------------------------------------------------------------------------
 
+	/**
+	 * Returns the type of the ApiSlideShowTransition class.
+	 *
+	 * @memberof ApiSlideShowTransition
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {"slideShowTransition"}
+	 * @see office-js-api/Examples/{Editor}/ApiSlideShowTransition/Methods/GetClassType.js
+	 */
+	ApiSlideShowTransition.prototype.GetClassType = function () {
+		return 'slideShowTransition';
+	};
+
+	ApiSlideShowTransition.ENTRY_EFFECT_MAP = {
+		// Default 'p:cut' effect attribute is: thruBlk='0'
+		'effectAppear':          { tag: 'p:cut', attrNames: ['thruBlk'], attrValues: ['0'] },
+		'effectCut':             { tag: 'p:cut', attrNames: ['thruBlk'], attrValues: ['0'] },
+		'effectCutThroughBlack': { tag: 'p:cut', attrNames: ['thruBlk'], attrValues: ['1'] },
+
+		// Default 'p:fade' effect attribute is: dir='horz'
+		'effectBlindsHorizontal': { tag: 'p:blinds', attrNames: ['dir'], attrValues: ['horz'] },
+		'effectBlindsVertical':   { tag: 'p:blinds', attrNames: ['dir'], attrValues: ['vert'] },
+
+		// Default 'p14:prism' effect attributes are: dir='l', isContent='0', isInverted='0'
+		'effectBoxDown':     { tag: 'p14:prism', attrNames: ['dir', 'isContent', 'isInverted'], attrValues: ['d', '0', '1'] },
+		'effectBoxLeft':     { tag: 'p14:prism', attrNames: ['dir', 'isContent', 'isInverted'], attrValues: ['l', '0', '1'] },
+		'effectBoxRight':    { tag: 'p14:prism', attrNames: ['dir', 'isContent', 'isInverted'], attrValues: ['r', '0', '1'] },
+		'effectBoxUp':       { tag: 'p14:prism', attrNames: ['dir', 'isContent', 'isInverted'], attrValues: ['u', '0', '1'] },
+		'effectCubeDown':    { tag: 'p14:prism', attrNames: ['dir', 'isContent', 'isInverted'], attrValues: ['d', '0', '0'] },
+		'effectCubeLeft':    { tag: 'p14:prism', attrNames: ['dir', 'isContent', 'isInverted'], attrValues: ['l', '0', '0'] },
+		'effectCubeRight':   { tag: 'p14:prism', attrNames: ['dir', 'isContent', 'isInverted'], attrValues: ['r', '0', '0'] },
+		'effectCubeUp':      { tag: 'p14:prism', attrNames: ['dir', 'isContent', 'isInverted'], attrValues: ['u', '0', '0'] },
+		'effectOrbitDown':   { tag: 'p14:prism', attrNames: ['dir', 'isContent', 'isInverted'], attrValues: ['d', '1', '1'] },
+		'effectOrbitLeft':   { tag: 'p14:prism', attrNames: ['dir', 'isContent', 'isInverted'], attrValues: ['l', '1', '1'] },
+		'effectOrbitRight':  { tag: 'p14:prism', attrNames: ['dir', 'isContent', 'isInverted'], attrValues: ['r', '1', '1'] },
+		'effectOrbitUp':     { tag: 'p14:prism', attrNames: ['dir', 'isContent', 'isInverted'], attrValues: ['u', '1', '1'] },
+		'effectRotateDown':  { tag: 'p14:prism', attrNames: ['dir', 'isContent', 'isInverted'], attrValues: ['d', '1', '0'] },
+		'effectRotateLeft':  { tag: 'p14:prism', attrNames: ['dir', 'isContent', 'isInverted'], attrValues: ['l', '1', '0'] },
+		'effectRotateRight': { tag: 'p14:prism', attrNames: ['dir', 'isContent', 'isInverted'], attrValues: ['r', '1', '0'] },
+		'effectRotateUp':    { tag: 'p14:prism', attrNames: ['dir', 'isContent', 'isInverted'], attrValues: ['u', '1', '0'] },
+
+		// Default 'p:zoom' effect attribute is: dir='out'
+		'effectBoxIn':  { tag: 'p:zoom', attrNames: ['dir'], attrValues: ['in'] },
+		'effectBoxOut': { tag: 'p:zoom', attrNames: ['dir'], attrValues: ['out'] },
+
+		// Default 'p:checker' effect attribute is: dir='horz'
+		'effectCheckerboardAcross': { tag: 'p:checker', attrNames: ['dir'], attrValues: ['horz'] },
+		'effectCheckerboardDown':   { tag: 'p:checker', attrNames: ['dir'], attrValues: ['vert'] },
+
+		// Default 'p:comb' effect attribute is: dir='horz'
+		'effectCombHorizontal': { tag: 'p:comb', attrNames: ['dir'], attrValues: ['horz'] },
+		'effectCombVertical':   { tag: 'p:comb', attrNames: ['dir'], attrValues: ['vert'] },
+
+		// Default 'p14:conveyor' effect attribute is: dir='l'
+		// Attribute must be specified explicitly - <p14:conveyor/> without 'dir' attribute is forbidden
+		'effectConveyorLeft':  { tag: 'p14:conveyor', attrNames: ['dir'], attrValues: ['l'] },
+		'effectConveyorRight': { tag: 'p14:conveyor', attrNames: ['dir'], attrValues: ['r'] },
+
+		// Default 'p:cover' effect attribute is: dir='l'
+		'effectCoverDown':      { tag: 'p:cover', attrNames: ['dir'], attrValues: ['d'] },
+		'effectCoverLeft':      { tag: 'p:cover', attrNames: ['dir'], attrValues: ['l']},
+		'effectCoverLeftDown':  { tag: 'p:cover', attrNames: ['dir'], attrValues: ['ld'] },
+		'effectCoverLeftUp':    { tag: 'p:cover', attrNames: ['dir'], attrValues: ['lu'] },
+		'effectCoverRight':     { tag: 'p:cover', attrNames: ['dir'], attrValues: ['r'] },
+		'effectCoverRightDown': { tag: 'p:cover', attrNames: ['dir'], attrValues: ['rd'] },
+		'effectCoverRightUp':   { tag: 'p:cover', attrNames: ['dir'], attrValues: ['ru'] },
+		'effectCoverUp':        { tag: 'p:cover', attrNames: ['dir'], attrValues: ['u'] },
+
+		// Tags have no attributes
+		'effectCircleOut': { tag: 'p:circle' },
+		'effectDiamondOut': { tag: 'p:diamond' },
+		'effectDissolve': { tag: 'p:dissolve' },
+		'effectFlashbulb': { tag: 'p14:flash' },
+		'effectHoneycomb': { tag: 'p14:honeycomb' },
+		'effectNewsflash': { tag: 'p:newsflash' },
+		'effectPlusOut': { tag: 'p:plus' },
+		'effectRandom': { tag: 'p:random' },
+		'effectWedge': { tag: 'p:wedge' },
+
+		// Default 'p14:doors' effect attribute is: dir='horz'
+		'effectDoorsHorizontal': { tag: 'p14:doors', attrNames: ['dir'], attrValues: ['horz'] },
+		'effectDoorsVertical':   { tag: 'p14:doors', attrNames: ['dir'], attrValues: ['vert'] },
+
+		// Default 'p:fade' effect attribute is: thruBlk='0'
+		'effectFade':         { tag: 'p:fade', attrNames: ['thruBlk'], attrValues: ['1'] },
+		'effectFadeSmoothly': { tag: 'p:fade', attrNames: ['thruBlk'], attrValues: ['0'] },
+
+		// Default 'p14:ferris' effect attribute is: dir='l'
+		// Attribute must be specified explicitly - <p14:ferris/> without 'dir' attribute is forbidden
+		'effectFerrisWheelLeft': { tag: 'p14:ferris', attrNames: ['dir'], attrValues: ['l'] },
+		'effectFerrisWheelRight': { tag: 'p14:ferris', attrNames: ['dir'], attrValues: ['r'] },
+
+		// Default 'p14:flip' effect attribute is: dir='l'
+		// Attribute must be specified explicitly - <p14:flip/> without 'dir' attribute is forbidden
+		'effectFlipDown': { tag: 'p14:flip', attrNames: ['dir'], attrValues: ['r'] },
+		'effectFlipLeft': { tag: 'p14:flip', attrNames: ['dir'], attrValues: ['l'] },
+		'effectFlipRight': { tag: 'p14:flip', attrNames: ['dir'], attrValues: ['r'] },
+		'effectFlipUp': { tag: 'p14:flip', attrNames: ['dir'], attrValues: ['r'] },
+
+		// Default 'p14:flythrough' effect attributes are: dir='in', hasBounce='0'
+		'effectFlyThroughIn':        { tag: 'p14:flythrough', attrNames: ['dir', 'hasBounce'], attrValues: ['in', '0'] },
+		'effectFlyThroughInBounce':  { tag: 'p14:flythrough', attrNames: ['dir', 'hasBounce'], attrValues: ['in', '1'] },
+		'effectFlyThroughOut':       { tag: 'p14:flythrough', attrNames: ['dir', 'hasBounce'], attrValues: ['out', '0'] },
+		'effectFlyThroughOutBounce': { tag: 'p14:flythrough', attrNames: ['dir', 'hasBounce'], attrValues: ['out', '1'] },
+
+		// Default 'p14:gallery' effect attribute is: dir='l'
+		// Attribute must be specified explicitly - <p14:gallery/> without 'dir' attribute is forbidden
+		'effectGalleryLeft': { tag: 'p14:gallery', attrNames: ['dir'], attrValues: ['l'] },
+		'effectGalleryRight': { tag: 'p14:gallery', attrNames: ['dir'], attrValues: ['r'] },
+
+		// Default 'p14:glitter' effect attribute is: dir='l', pattern='diamond'
+		'effectGlitterDiamondDown':  { tag: 'p14:glitter', attrNames: ['dir', 'pattern'], attrValues: ['u', 'diamond'] },
+		'effectGlitterDiamondLeft':  { tag: 'p14:glitter', attrNames: ['dir', 'pattern'], attrValues: ['r', 'diamond'] },
+		'effectGlitterDiamondRight': { tag: 'p14:glitter', attrNames: ['dir', 'pattern'], attrValues: ['l', 'diamond'] },
+		'effectGlitterDiamondUp':    { tag: 'p14:glitter', attrNames: ['dir', 'pattern'], attrValues: ['d', 'diamond'] },
+		'effectGlitterHexagonDown':  { tag: 'p14:glitter', attrNames: ['dir', 'pattern'], attrValues: ['u', 'hexagon'] },
+		'effectGlitterHexagonLeft':  { tag: 'p14:glitter', attrNames: ['dir', 'pattern'], attrValues: ['r', 'hexagon'] },
+		'effectGlitterHexagonRight': { tag: 'p14:glitter', attrNames: ['dir', 'pattern'], attrValues: ['l', 'hexagon'] },
+		'effectGlitterHexagonUp':    { tag: 'p14:glitter', attrNames: ['dir', 'pattern'], attrValues: ['d', 'hexagon'] },
+
+		// Default 'p14:pan' effect attribute is: dir='l'
+		'effectPanDown':  { tag: 'p14:pan', attrNames: ['dir'], attrValues: ['d'] },
+		'effectPanLeft':  { tag: 'p14:pan', attrNames: ['dir'], attrValues: ['l'] },
+		'effectPanRight': { tag: 'p14:pan', attrNames: ['dir'], attrValues: ['r'] },
+		'effectPanUp':    { tag: 'p14:pan', attrNames: ['dir'], attrValues: ['u'] },
+
+		// Default 'p:push' effect attribute is: dir='l'
+		'effectPushDown':  { tag: 'p:push', attrNames: ['dir'], attrValues: ['d'] },
+		'effectPushLeft':  { tag: 'p:push', attrNames: ['dir'], attrValues: ['l'] },
+		'effectPushRight': { tag: 'p:push', attrNames: ['dir'], attrValues: ['r'] },
+		'effectPushUp':    { tag: 'p:push', attrNames: ['dir'], attrValues: ['u'] },
+
+		// Default 'p:randomBar' effect attribute is: dir='horz'
+		'effectRandomBarsHorizontal': { tag: 'p:randomBar', attrNames: ['dir'], attrValues: ['horz'] },
+		'effectRandomBarsVertical':   { tag: 'p:randomBar', attrNames: ['dir'], attrValues: ['vert'] },
+
+		// Default 'p14:reveal' effect attribute is: thruBlk='0', dir='l'
+		'effectRevealBlackLeft':   { tag: 'p14:reveal', attrNames: ['thruBlk', 'dir'], attrValues: ['1', 'l'] },
+		'effectRevealBlackRight':  { tag: 'p14:reveal', attrNames: ['thruBlk', 'dir'], attrValues: ['1', 'r'] },
+		'effectRevealSmoothLeft':  { tag: 'p14:reveal', attrNames: ['thruBlk', 'dir'], attrValues: ['0', 'l'] },
+		'effectRevealSmoothRight': { tag: 'p14:reveal', attrNames: ['thruBlk', 'dir'], attrValues: ['0', 'r'] },
+
+		// Default 'p14:ripple' effect attribute is: dir='center'
+		'effectRippleCenter':    { tag: 'p14:ripple', attrNames: ['dir'], attrValues: ['center'] },
+		'effectRippleLeftDown':  { tag: 'p14:ripple', attrNames: ['dir'], attrValues: ['ld'] },
+		'effectRippleLeftUp':    { tag: 'p14:ripple', attrNames: ['dir'], attrValues: ['lu'] },
+		'effectRippleRightDown': { tag: 'p14:ripple', attrNames: ['dir'], attrValues: ['rd'] },
+		'effectRippleRightUp':   { tag: 'p14:ripple', attrNames: ['dir'], attrValues: ['ru'] },
+
+		// Default 'p14:shred' effect attribute is: pattern='strip', dir='in'
+		'effectShredRectangleIn':  { tag: 'p14:shred', attrNames: ['pattern', 'dir'], attrValues: ['rectangle', 'in'] },
+		'effectShredRectangleOut': { tag: 'p14:shred', attrNames: ['pattern', 'dir'], attrValues: ['rectangle', 'out'] },
+		'effectShredStripsIn':     { tag: 'p14:shred', attrNames: ['pattern', 'dir'], attrValues: ['strip', 'in'] },
+		'effectShredStripsOut':    { tag: 'p14:shred', attrNames: ['pattern', 'dir'], attrValues: ['strip', 'out'] },
+
+		// Default 'p:split' effect attribute is: orient='horz', dir='out'
+		'effectSplitHorizontalIn':  { tag: 'p:split', attrNames: ['orient', 'dir'], attrValues: ['horz', 'in'] },
+		'effectSplitHorizontalOut': { tag: 'p:split', attrNames: ['orient', 'dir'], attrValues: ['horz', 'out'] },
+		'effectSplitVerticalIn':    { tag: 'p:split', attrNames: ['orient', 'dir'], attrValues: ['vert', 'in'] },
+		'effectSplitVerticalOut':   { tag: 'p:split', attrNames: ['orient', 'dir'], attrValues: ['vert', 'out'] },
+
+		// Default 'p:strips' effect attribute is: dir='lu'
+		'effectStripsDownLeft':  { tag: 'p:strips', attrNames: ['dir'], attrValues: ['ld'] },
+		'effectStripsDownRight': { tag: 'p:strips', attrNames: ['dir'], attrValues: ['rd'] },
+		'effectStripsLeftDown':  { tag: 'p:strips', attrNames: ['dir'], attrValues: ['ld'] },
+		'effectStripsLeftUp':    { tag: 'p:strips', attrNames: ['dir'], attrValues: ['lu'] },
+		'effectStripsRightDown': { tag: 'p:strips', attrNames: ['dir'], attrValues: ['rd'] },
+		'effectStripsRightUp':   { tag: 'p:strips', attrNames: ['dir'], attrValues: ['ru'] },
+		'effectStripsUpLeft':    { tag: 'p:strips', attrNames: ['dir'], attrValues: ['lu'] },
+		'effectStripsUpRight':   { tag: 'p:strips', attrNames: ['dir'], attrValues: ['ru'] },
+
+		// Default 'p14:switch' effect attribute is: dir='l'
+		// Attribute must be specified explicitly - <p14:switch/> without 'dir' attribute is forbidden
+		'effectSwitchDown':  { tag: 'p14:switch', attrNames: ['dir'], attrValues: ['r'] },
+		'effectSwitchLeft':  { tag: 'p14:switch', attrNames: ['dir'], attrValues: ['l'] },
+		'effectSwitchRight': { tag: 'p14:switch', attrNames: ['dir'], attrValues: ['r'] },
+		'effectSwitchUp':    { tag: 'p14:switch', attrNames: ['dir'], attrValues: ['r'] },
+
+		// Default 'p:pull' effect attribute is: dir='l'
+		'effectUncoverDown':      { tag: 'p:pull', attrNames: ['dir'], attrValues: ['d'] },
+		'effectUncoverLeft':      { tag: 'p:pull', attrNames: ['dir'], attrValues: ['l'] },
+		'effectUncoverLeftDown':  { tag: 'p:pull', attrNames: ['dir'], attrValues: ['ld'] },
+		'effectUncoverLeftUp':    { tag: 'p:pull', attrNames: ['dir'], attrValues: ['lu'] },
+		'effectUncoverRight':     { tag: 'p:pull', attrNames: ['dir'], attrValues: ['r'] },
+		'effectUncoverRightDown': { tag: 'p:pull', attrNames: ['dir'], attrValues: ['rd'] },
+		'effectUncoverRightUp':   { tag: 'p:pull', attrNames: ['dir'], attrValues: ['ru'] },
+		'effectUncoverUp':        { tag: 'p:pull', attrNames: ['dir'], attrValues: ['u'] },
+
+		// Default 'p14:vortex' effect attribute is: dir='l'
+		'effectVortexDown':  { tag: 'p14:vortex', attrNames: ['dir'], attrValues: ['d'] },
+		'effectVortexLeft':  { tag: 'p14:vortex', attrNames: ['dir'], attrValues: ['l'] },
+		'effectVortexRight': { tag: 'p14:vortex', attrNames: ['dir'], attrValues: ['r'] },
+		'effectVortexUp':    { tag: 'p14:vortex', attrNames: ['dir'], attrValues: ['u'] },
+
+		// Default 'p14:warp' effect attribute is: dir='out'
+		'effectWarpIn':  { tag: 'p14:warp', attrNames: ['dir'], attrValues: ['in'] },
+		'effectWarpOut': { tag: 'p14:warp', attrNames: ['dir'], attrValues: ['out'] },
+
+		// Default 'p:wheel' effect attribute is: spokes='4'
+		'effectWheel1Spoke':  { tag: 'p:wheel', attrNames: ['spokes'], attrValues: ['1'] },
+		'effectWheel2Spokes': { tag: 'p:wheel', attrNames: ['spokes'], attrValues: ['2'] },
+		'effectWheel3Spokes': { tag: 'p:wheel', attrNames: ['spokes'], attrValues: ['3'] },
+		'effectWheel4Spokes': { tag: 'p:wheel', attrNames: ['spokes'], attrValues: ['4'] },
+		'effectWheel8Spokes': { tag: 'p:wheel', attrNames: ['spokes'], attrValues: ['8'] },
+
+		// Default 'p14:wheelReverse' effect attribute is: spokes='4'
+		// There is no effect with 4 spokes in reverse wheel effects but we can set it manually
+		'effectWheelReverse1Spoke': { tag: 'p14:wheelReverse', attrNames: ['spokes'], attrValues: ['1'] },
+
+		// Default 'p14:window' effect attribute is: dir='horz'
+		'effectWindowHorizontal': { tag: 'p14:window', attrNames: ['dir'], attrValues: ['horz'] },
+		'effectWindowVertical':   { tag: 'p14:window', attrNames: ['dir'], attrValues: ['vert'] },
+
+		// Default 'p:wipe' effect attribute is: dir='l'
+		'effectWipeDown':  { tag: 'p:wipe', attrNames: ['dir'], attrValues: ['d'] },
+		'effectWipeLeft':  { tag: 'p:wipe', attrNames: ['dir'], attrValues: ['l'] },
+		'effectWipeRight': { tag: 'p:wipe', attrNames: ['dir'], attrValues: ['r'] },
+		'effectWipeUp':    { tag: 'p:wipe', attrNames: ['dir'], attrValues: ['u'] },
+
+		// Default 'p159:morph' effect attribute is: option='byObject'
+		// Attribute must be specified explicitly - <p159:morph/> without 'option' attribute is forbidden
+		'effectMorphByObject': { tag: 'p159:morph', attrNames: ['option'], attrValues: ['byObject'] },
+		'effectMorphByWord':   { tag: 'p159:morph', attrNames: ['option'], attrValues: ['byWord'] },
+		'effectMorphByChar':   { tag: 'p159:morph', attrNames: ['option'], attrValues: ['byChar'] },
+
+		'effectNone': {}
+
+		// effectCrawlFromDown
+		// effectCrawlFromLeft
+		// effectCrawlFromRight
+		// effectCrawlFromUp
+		// effectFlashOnceFast
+		// effectFlashOnceMedium
+		// effectFlashOnceSlow
+		// effectFlyFromBottom
+		// effectFlyFromBottomLeft
+		// effectFlyFromBottomRight
+		// effectFlyFromLeft
+		// effectFlyFromRight
+		// effectFlyFromTop
+		// effectFlyFromTopLeft
+		// effectFlyFromTopRight
+		// effectMixed
+		// effectPeekFromDown
+		// effectPeekFromLeft
+		// effectPeekFromRight
+		// effectPeekFromUp
+		// effectSpiral
+		// effectStretchAcross
+		// effectStretchDown
+		// effectStretchLeft
+		// effectStretchRight
+		// effectStretchUp
+		// effectSwivel
+		// effectZoomBottom
+		// effectZoomCenter
+		// effectZoomIn
+		// effectZoomInSlightly
+		// effectZoomOut
+		// effectZoomOutSlightly
+	};
+
+	/**
+	 * Returns the entry effect for the slide show transition.
+	 *
+	 * @memberof ApiSlideShowTransition
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {EntryEffect} - The name of the entry effect in string format.
+	 * @see office-js-api/Examples/{Editor}/ApiSlideShowTransition/Methods/GetEntryEffect.js
+	 */
+	ApiSlideShowTransition.prototype.GetEntryEffect = function () {
+		if (this.Transition) {
+			const attrNames = [];
+			const attrValues = [];
+			const nodeName = this.Transition.fillXmlParams(attrNames, attrValues);
+
+			const map = ApiSlideShowTransition.ENTRY_EFFECT_MAP;
+			if (nodeName) {
+				for (const effectName in map) {
+					const effectEntry = map[effectName];
+					if (effectEntry === undefined || !effectEntry.tag) {
+						continue;
+					}
+
+					if (effectEntry.tag !== nodeName) {
+						continue;
+					}
+
+					const effectEntryAttrNames = effectEntry.attrNames || [];
+					const effectEntryAttrValues = effectEntry.attrValues || [];
+
+					if (effectEntryAttrNames.length !== attrNames.length) {
+						continue;
+					}
+
+					let matches = true;
+					for (let j = 0; j < attrNames.length; j++) {
+						if (attrNames[j] !== effectEntryAttrNames[j] || attrValues[j] !== effectEntryAttrValues[j]) {
+							matches = false;
+							break;
+						}
+					}
+
+					if (matches) {
+						return effectName;
+					}
+				}
+			}
+		}
+
+		return 'effectNone';
+	};
+
+	/**
+	 * Sets the entry effect for the slide show transition.
+	 *
+	 * @memberof ApiSlideShowTransition
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @param {EntryEffect} entryEffectName - The name of the entry effect in string format.
+	 * @returns {boolean} - True if the entry effect name is supported and was set successfully; otherwise false.
+	 * @see office-js-api/Examples/{Editor}/ApiSlideShowTransition/Methods/SetEntryEffect.js
+	 */
+	ApiSlideShowTransition.prototype.SetEntryEffect = function (entryEffectName) {
+		if (!this.Transition || !entryEffectName) {
+			return false;
+		}
+
+		if (entryEffectName === 'effectNone') {
+			this.Transition.TransitionType = c_oAscSlideTransitionTypes.None;
+			this.TransitionOption = -1;
+			return true;
+		}
+
+		const entryEffect = ApiSlideShowTransition.ENTRY_EFFECT_MAP[entryEffectName];
+		if (entryEffect === undefined) {
+			return false;
+		}
+
+		const attrNames = entryEffect.attrNames || [];
+		const attrValues = entryEffect.attrValues || [];
+		const copy = this.Transition.createDuplicate();
+		const isMatched = copy.parseXmlParameters(entryEffect.tag, attrNames, attrValues);
+
+		if (!isMatched) {
+			return false;
+		}
+
+		copy.fillObject(this.Transition);
+		return true;
+	};
+
+	/**
+	 * Returns the transition duration in milliseconds for the slide show transition.
+	 *
+	 * @memberof ApiSlideShowTransition
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {number} - The transition duration in milliseconds.
+	 * @see office-js-api/Examples/{Editor}/ApiSlideShowTransition/Methods/GetDuration.js
+	 */
+	ApiSlideShowTransition.prototype.GetDuration = function () {
+		return this.Transition.get_TransitionDuration();
+	};
+
+	/**
+	 * Sets the transition duration in milliseconds for the slide show transition.
+	 *
+	 * @memberof ApiSlideShowTransition
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @param {number} duration - The transition duration in milliseconds.
+	 * @returns {boolean} - True if the duration was set successfully; otherwise false.
+	 * @see office-js-api/Examples/{Editor}/ApiSlideShowTransition/Methods/SetDuration.js
+	 */
+	ApiSlideShowTransition.prototype.SetDuration = function (duration) {
+		if (this.Transition && AscFormat.isRealNumber(duration)) {
+			this.Transition.put_TransitionDuration(duration);
+			return true;
+		}
+		return false;
+	};
+
+	ApiSlideShowTransition.SPEED_FAST_DURATION = 500;
+	ApiSlideShowTransition.SPEED_MEDIUM_DURATION = 750;
+	ApiSlideShowTransition.SPEED_SLOW_DURATION = 1000;
+
+	ApiSlideShowTransition._getSpeedName = function (duration) {
+		if (AscFormat.isRealNumber(duration)) {
+			if (duration <= ApiSlideShowTransition.SPEED_FAST_DURATION)
+				return 'fast';
+			if (duration <= ApiSlideShowTransition.SPEED_MEDIUM_DURATION)
+				return 'medium';
+			return 'slow';
+		}
+		return undefined;
+	};
+
+	ApiSlideShowTransition._getSpeedValue = function (speedName) {
+		switch (speedName) {
+			case 'fast': return ApiSlideShowTransition.SPEED_FAST_DURATION;
+			case 'medium': return ApiSlideShowTransition.SPEED_MEDIUM_DURATION;
+			case 'slow': return ApiSlideShowTransition.SPEED_SLOW_DURATION;
+			default: return undefined;
+		}
+	};
+
+	/**
+	 * Returns the transition speed (similar to PowerPoint VBA Speed property).
+	 * Maps duration to speed based on OOXML spd attribute logic:
+	 * - fast: duration <= 500ms
+	 * - medium: 500ms < duration <= 750ms
+	 * - slow: duration > 750ms
+	 *
+	 * @memberof ApiSlideShowTransition
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {TransitionSpeed} - The transition speed in string format.
+	 * @see office-js-api/Examples/{Editor}/ApiSlideShowTransition/Methods/GetSpeed.js
+	 */
+	ApiSlideShowTransition.prototype.GetSpeed = function () {
+		const duration = this.Transition.get_TransitionDuration();
+		return ApiSlideShowTransition._getSpeedName(duration);
+	};
+
+	/**
+	 * Sets the transition speed (similar to PowerPoint VBA Speed property).
+	 * Converts speed to duration based on standard values:
+	 * - fast = 500ms
+	 * - medium = 750ms
+	 * - slow = 1000ms
+	 *
+	 * @memberof ApiSlideShowTransition
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @param {TransitionSpeed} speed - The transition speed in string format.
+	 * @returns {boolean} - True if the given parameter is valid and was set successfully; otherwise false.
+	 * @see office-js-api/Examples/{Editor}/ApiSlideShowTransition/Methods/SetSpeed.js
+	 */
+	ApiSlideShowTransition.prototype.SetSpeed = function (speed) {
+		if (this.Transition) {
+			const duration = ApiSlideShowTransition._getSpeedValue(speed);
+			if (duration !== undefined) {
+				this.Transition.put_TransitionDuration(duration);
+				return true;
+			}
+		}
+		return false;
+	};
+
+	/**
+	 * Returns whether the slide advances on mouse click.
+	 *
+	 * @memberof ApiSlideShowTransition
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {boolean} - True if the slide advances on mouse click; otherwise false.
+	 * @see office-js-api/Examples/{Editor}/ApiSlideShowTransition/Methods/GetAdvanceOnClick.js
+	 */
+	ApiSlideShowTransition.prototype.GetAdvanceOnClick = function () {
+		return this.Transition.get_SlideAdvanceOnMouseClick();
+	};
+
+	/**
+	 * Sets whether the slide advances on mouse click.
+	 *
+	 * @memberof ApiSlideShowTransition
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @param {boolean} advanceOnClick - True to advance the slide on mouse click; otherwise false.
+	 * @returns {boolean} - True if the value was set successfully; otherwise false.
+	 * @see office-js-api/Examples/{Editor}/ApiSlideShowTransition/Methods/SetAdvanceOnClick.js
+	 */
+	ApiSlideShowTransition.prototype.SetAdvanceOnClick = function (advanceOnClick) {
+		if (this.Transition) {
+			this.Transition.put_SlideAdvanceOnMouseClick(advanceOnClick);
+			return true;
+		}
+		return false;
+	};
+
+	/**
+	 * Returns whether the slide advances after a specified time.
+	 *
+	 * @memberof ApiSlideShowTransition
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {boolean} - True if the slide advances after a specified time; otherwise false.
+	 * @see office-js-api/Examples/{Editor}/ApiSlideShowTransition/Methods/GetAdvanceOnTime.js
+	 */
+	ApiSlideShowTransition.prototype.GetAdvanceOnTime = function () {
+		return this.Transition.get_SlideAdvanceAfter();
+	};
+
+	/**
+	 * Sets whether the slide advances after a specified time.
+	 *
+	 * @memberof ApiSlideShowTransition
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @param {boolean} advanceOnTime - True to advance the slide after a specified time; otherwise false.
+	 * @returns {boolean} - True if the setting was set successfully; otherwise false.
+	 * @see office-js-api/Examples/{Editor}/ApiSlideShowTransition/Methods/SetAdvanceOnTime.js
+	 */
+	ApiSlideShowTransition.prototype.SetAdvanceOnTime = function (advanceOnTime) {
+		if (this.Transition) {
+			this.Transition.put_SlideAdvanceAfter(advanceOnTime);
+			return true;
+		}
+		return false;
+	};
+
+	/**
+	 * Returns the slide advance time in milliseconds.
+	 *
+	 * @memberof ApiSlideShowTransition
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {number | undefined} - The slide advance time in milliseconds if set; otherwise undefined.
+	 * @see office-js-api/Examples/{Editor}/ApiSlideShowTransition/Methods/GetAdvanceTime.js
+	 */
+	ApiSlideShowTransition.prototype.GetAdvanceTime = function () {
+		if (this.Transition) {
+			return this.Transition.get_SlideAdvanceDuration();
+		}
+		return undefined;
+	};
+
+	/**
+	 * Sets the slide advance time in milliseconds.
+	 *
+	 * @memberof ApiSlideShowTransition
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @param {number} advanceTime - The slide advance time in milliseconds.
+	 * @returns {boolean} - True if the time was set successfully; otherwise false.
+	 * @see office-js-api/Examples/{Editor}/ApiSlideShowTransition/Methods/SetAdvanceTime.js
+	 */
+	ApiSlideShowTransition.prototype.SetAdvanceTime = function (advanceTime) {
+		if (this.Transition && AscFormat.isRealNumber(advanceTime)) {
+			this.Transition.put_SlideAdvanceDuration(advanceTime);
+			return true;
+		}
+		return false;
+	};
+
+	Object.defineProperties(ApiSlideShowTransition.prototype, {
+		"EntryEffect": {
+			get: function () { return this.GetEntryEffect(); },
+			set: function (value) { this.SetEntryEffect(value); }
+		},
+		"Speed": {
+			get: function () { return this.GetSpeed(); },
+			set: function (value) { this.SetSpeed(value); }
+		},
+		"Duration": {
+			get: function () { return this.GetDuration(); },
+			set: function (value) { this.SetDuration(value); }
+		},
+		"AdvanceOnClick": {
+			get: function () { return this.GetAdvanceOnClick(); },
+			set: function (value) { this.SetAdvanceOnClick(value); }
+		},
+		"AdvanceOnTime": {
+			get: function () { return this.GetAdvanceOnTime(); },
+			set: function (value) { this.SetAdvanceOnTime(value); }
+		},
+		"AdvanceTime": {
+			get: function () { return this.GetAdvanceTime(); },
+			set: function (value) { this.SetAdvanceTime(value); }
+		}
+	});
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiTimeLine
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing animation timeline for a slide.
+	 * @constructor
+	 */
+	function ApiTimeLine(timing, slide) {
+		this.Timing = timing;
+		this.Slide = slide;
+	}
+
+	/**
+	 * Animation trigger type.
+	 * @typedef {"onclick" | "withprevious" | "afterprevious"} AnimationTriggerType
+	 * @see office-js-api/Examples/Enumerations/AnimationTriggerType.js
+	 */
+
+	/**Animation effect type.
+	 * @typedef {"entranceAppear" | "entranceFade" | "entranceFlyIn" | "entranceFloatIn" | "entranceSplit" | "entranceWipe"
+	 * | "entranceCircle" | "entranceBox" | "entranceDiamond" | "entrancePlus" | "entranceWheel" | "entranceRandomBars"
+	 * | "entranceGrowAndTurn" | "entranceZoom" | "entranceSwivel" | "entranceBounce" | "entranceBlinds"
+	 * | "entranceCheckerboard" | "entrancePeekIn" | "entranceStrips" | "entranceExpand" | "entranceRiseUp"
+	 * | "entranceCenterRevolve" | "entranceSpinner" | "entranceFloatUp" | "entranceFloatDown" | "entranceSpiralIn"
+	 * | "entranceWedge" | "entranceDissolveIn" | "entrancePinwheel"
+	 * | "exitDisappear" | "exitFadeOut" | "exitFlyOut" | "exitFloatOut" | "exitSplitOut" | "exitWipeOut"
+	 * | "exitCircleOut" | "exitBoxOut" | "exitDiamondOut" | "exitPlusOut" | "exitWheelOut" | "exitRandomBarsOut"
+	 * | "exitShrinkAndTurn" | "exitZoomOut" | "exitSwivelOut" | "exitBounceOut" | "exitSpiralOut" | "exitCollapse"
+	 * | "emphasisPulse" | "emphasisColorPulse" | "emphasisTeeter" | "emphasisSpin" | "emphasisGrowShrink"
+	 * | "emphasisDesaturate" | "emphasisDarken" | "emphasisLighten" | "emphasisTransparency"
+	 * | "emphasisObjectColor" | "emphasisComplementaryColor" | "emphasisLineColor" | "emphasisFillColor"
+	 * | "emphasisFontColor" | "emphasisBlink" | "emphasisShimmer" | "emphasisWave"
+	 * | "pathCircle" | "pathSquare" | "pathDiamond" | "pathHeart" | "pathStar" | "pathHexagon"
+	 * | "pathOctagon" | "pathRight" | "pathLeft" | "pathUp" | "pathDown"} AnimationEffectType
+	 * @see office-js-api/Examples/Enumerations/AnimationEffectType.js
+	 */
+
+	/**
+	 * Returns the type of the ApiTimeLine class.
+	 *
+	 * @memberof ApiTimeLine
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {"timeLine"}
+	 * @see office-js-api/Examples/{Editor}/ApiTimeLine/Methods/GetClassType.js
+	 */
+	ApiTimeLine.prototype.GetClassType = function () {
+		return "timeLine";
+	};
+
+	/**
+	 * Returns the main animation sequence for the slide.
+	 *
+	 * @memberof ApiTimeLine
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {ApiAnimationSequence} - The main animation sequence.
+	 * @see office-js-api/Examples/{Editor}/ApiTimeLine/Methods/GetMainSequence.js
+	 */
+	ApiTimeLine.prototype.GetMainSequence = function () {
+		const seq = this.Timing.checkMainSequence();
+		return new ApiAnimationSequence(seq, this.Timing, null);
+	};
+
+	/**
+	 * Returns all interactive animation sequences for the slide.
+	 *
+	 * @memberof ApiTimeLine
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {ApiAnimationSequence[]} - Array of interactive animation sequences.
+	 * @see office-js-api/Examples/{Editor}/ApiTimeLine/Methods/GetInteractiveSequences.js
+	 */
+	ApiTimeLine.prototype.GetInteractiveSequences = function () {
+		const seqs = this.Timing.getInteractiveSequences();
+		const result = [];
+		for (let i = 0; i < seqs.length; i++) {
+			const triggerObjectId = seqs[i].getSpClickInteractiveSeq ? seqs[i].getSpClickInteractiveSeq() : null;
+			result.push(new ApiAnimationSequence(seqs[i], this.Timing, triggerObjectId));
+		}
+		return result;
+	};
+
+	/**
+	 * Creates an interactive animation sequence triggered by clicking on a specified object.
+	 *
+	 * @memberof ApiTimeLine
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @param {ApiDrawing} drawing - The drawing object that triggers the sequence when clicked.
+	 * @returns {ApiAnimationSequence | null} - The interactive animation sequence or null if creation failed.
+	 * @see office-js-api/Examples/{Editor}/ApiTimeLine/Methods/AddInteractiveSequence.js
+	 */
+	ApiTimeLine.prototype.AddInteractiveSequence = function (drawing) {
+		if (!drawing || !drawing.Drawing) {
+			return null;
+		}
+		const objectId = drawing.Drawing.GetId();
+		const seq = this.Timing.checkInteractiveSequence(objectId);
+		return new ApiAnimationSequence(seq, this.Timing, objectId);
+	};
+
+	/**
+	 * Returns all animation effects for the slide.
+	 *
+	 * @memberof ApiTimeLine
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {ApiAnimationEffect[]} - Array of all animation effects.
+	 * @see office-js-api/Examples/{Editor}/ApiTimeLine/Methods/GetAllEffects.js
+	 */
+	ApiTimeLine.prototype.GetAllEffects = function () {
+		const effects = this.Timing.getAllAnimEffects();
+		const result = [];
+		for (let i = 0; i < effects.length; i++) {
+			result.push(new ApiAnimationEffect(effects[i], this.Timing));
+		}
+		return result;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiAnimationSequence
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing an animation sequence (main sequence or interactive sequence).
+	 * @constructor
+	 */
+	function ApiAnimationSequence(seq, timing, triggerObjectId) {
+		this.Sequence = seq;
+		this.Timing = timing;
+		this.TriggerObjectId = triggerObjectId;
+	}
+
+	/**
+	 * Effect type mapping to presetClass and presetID.
+	 * @private
+	 */
+	ApiAnimationSequence.EFFECT_TYPE_MAP = {
+		// Entrance effects (PRESET_CLASS_ENTR = 1)
+		"appear": { presetClass: 1, presetID: 1 },
+		"fade": { presetClass: 1, presetID: 10 },
+		"fly-in": { presetClass: 1, presetID: 2 },
+		"float-in": { presetClass: 1, presetID: 42 },
+		"split": { presetClass: 1, presetID: 16 },
+		"wipe": { presetClass: 1, presetID: 22 },
+		"circle": { presetClass: 1, presetID: 6 },
+		"box": { presetClass: 1, presetID: 4 },
+		"diamond": { presetClass: 1, presetID: 8 },
+		"plus": { presetClass: 1, presetID: 13 },
+		"wheel": { presetClass: 1, presetID: 21 },
+		"random-bars": { presetClass: 1, presetID: 14 },
+		"grow-and-turn": { presetClass: 1, presetID: 31 },
+		"zoom": { presetClass: 1, presetID: 53 },
+		"swivel": { presetClass: 1, presetID: 45 },
+		"bounce": { presetClass: 1, presetID: 26 },
+		"blinds": { presetClass: 1, presetID: 3 },
+		"checkerboard": { presetClass: 1, presetID: 5 },
+		"peek-in": { presetClass: 1, presetID: 12 },
+		"strips": { presetClass: 1, presetID: 18 },
+		"expand": { presetClass: 1, presetID: 55 },
+		"rise-up": { presetClass: 1, presetID: 37 },
+		"center-revolve": { presetClass: 1, presetID: 43 },
+		"spinner": { presetClass: 1, presetID: 49 },
+		"float-up": { presetClass: 1, presetID: 42 },
+		"float-down": { presetClass: 1, presetID: 47 },
+		"spiral-in": { presetClass: 1, presetID: 15 },
+		"wedge": { presetClass: 1, presetID: 20 },
+		"dissolve-in": { presetClass: 1, presetID: 9 },
+		"pinwheel": { presetClass: 1, presetID: 35 },
+
+		// Entrance effects — camelCase aliases
+		"entranceAppear": { presetClass: 1, presetID: 1 },
+		"entranceFade": { presetClass: 1, presetID: 10 },
+		"entranceFlyIn": { presetClass: 1, presetID: 2 },
+		"entranceFloatIn": { presetClass: 1, presetID: 42 },
+		"entranceSplit": { presetClass: 1, presetID: 16 },
+		"entranceWipe": { presetClass: 1, presetID: 22 },
+		"entranceCircle": { presetClass: 1, presetID: 6 },
+		"entranceBox": { presetClass: 1, presetID: 4 },
+		"entranceDiamond": { presetClass: 1, presetID: 8 },
+		"entrancePlus": { presetClass: 1, presetID: 13 },
+		"entranceWheel": { presetClass: 1, presetID: 21 },
+		"entranceRandomBars": { presetClass: 1, presetID: 14 },
+		"entranceGrowAndTurn": { presetClass: 1, presetID: 31 },
+		"entranceZoom": { presetClass: 1, presetID: 53 },
+		"entranceSwivel": { presetClass: 1, presetID: 45 },
+		"entranceBounce": { presetClass: 1, presetID: 26 },
+		"entranceBlinds": { presetClass: 1, presetID: 3 },
+		"entranceCheckerboard": { presetClass: 1, presetID: 5 },
+		"entrancePeekIn": { presetClass: 1, presetID: 12 },
+		"entranceStrips": { presetClass: 1, presetID: 18 },
+		"entranceExpand": { presetClass: 1, presetID: 55 },
+		"entranceRiseUp": { presetClass: 1, presetID: 37 },
+		"entranceCenterRevolve": { presetClass: 1, presetID: 43 },
+		"entranceSpinner": { presetClass: 1, presetID: 49 },
+		"entranceFloatUp": { presetClass: 1, presetID: 42 },
+		"entranceFloatDown": { presetClass: 1, presetID: 47 },
+		"entranceSpiralIn": { presetClass: 1, presetID: 15 },
+		"entranceWedge": { presetClass: 1, presetID: 20 },
+		"entranceDissolveIn": { presetClass: 1, presetID: 9 },
+		"entrancePinwheel": { presetClass: 1, presetID: 35 },
+
+		// Exit effects (PRESET_CLASS_EXIT = 2)
+		"disappear": { presetClass: 2, presetID: 1 },
+		"fade-out": { presetClass: 2, presetID: 10 },
+		"fly-out": { presetClass: 2, presetID: 2 },
+		"float-out": { presetClass: 2, presetID: 42 },
+		"split-out": { presetClass: 2, presetID: 16 },
+		"wipe-out": { presetClass: 2, presetID: 22 },
+		"circle-out": { presetClass: 2, presetID: 6 },
+		"box-out": { presetClass: 2, presetID: 4 },
+		"diamond-out": { presetClass: 2, presetID: 8 },
+		"plus-out": { presetClass: 2, presetID: 13 },
+		"wheel-out": { presetClass: 2, presetID: 21 },
+		"random-bars-out": { presetClass: 2, presetID: 14 },
+		"shrink-and-turn": { presetClass: 2, presetID: 31 },
+		"zoom-out": { presetClass: 2, presetID: 53 },
+		"swivel-out": { presetClass: 2, presetID: 45 },
+		"bounce-out": { presetClass: 2, presetID: 26 },
+		"spiral-out": { presetClass: 2, presetID: 15 },
+		"collapse": { presetClass: 2, presetID: 17 },
+
+		// Exit effects — camelCase aliases
+		"exitDisappear": { presetClass: 2, presetID: 1 },
+		"exitFadeOut": { presetClass: 2, presetID: 10 },
+		"exitFlyOut": { presetClass: 2, presetID: 2 },
+		"exitFloatOut": { presetClass: 2, presetID: 42 },
+		"exitSplitOut": { presetClass: 2, presetID: 16 },
+		"exitWipeOut": { presetClass: 2, presetID: 22 },
+		"exitCircleOut": { presetClass: 2, presetID: 6 },
+		"exitBoxOut": { presetClass: 2, presetID: 4 },
+		"exitDiamondOut": { presetClass: 2, presetID: 8 },
+		"exitPlusOut": { presetClass: 2, presetID: 13 },
+		"exitWheelOut": { presetClass: 2, presetID: 21 },
+		"exitRandomBarsOut": { presetClass: 2, presetID: 14 },
+		"exitShrinkAndTurn": { presetClass: 2, presetID: 31 },
+		"exitZoomOut": { presetClass: 2, presetID: 53 },
+		"exitSwivelOut": { presetClass: 2, presetID: 45 },
+		"exitBounceOut": { presetClass: 2, presetID: 26 },
+		"exitSpiralOut": { presetClass: 2, presetID: 15 },
+		"exitCollapse": { presetClass: 2, presetID: 17 },
+
+		// Emphasis effects (PRESET_CLASS_EMPH = 0)
+		"pulse": { presetClass: 0, presetID: 26 },
+		"color-pulse": { presetClass: 0, presetID: 27 },
+		"teeter": { presetClass: 0, presetID: 32 },
+		"spin": { presetClass: 0, presetID: 8 },
+		"grow-shrink": { presetClass: 0, presetID: 6 },
+		"desaturate": { presetClass: 0, presetID: 25 },
+		"darken": { presetClass: 0, presetID: 24 },
+		"lighten": { presetClass: 0, presetID: 30 },
+		"transparency": { presetClass: 0, presetID: 9 },
+		"object-color": { presetClass: 0, presetID: 19 },
+		"complementary-color": { presetClass: 0, presetID: 21 },
+		"line-color": { presetClass: 0, presetID: 7 },
+		"fill-color": { presetClass: 0, presetID: 1 },
+		"font-color": { presetClass: 0, presetID: 3 },
+		"blink": { presetClass: 0, presetID: 35 },
+		"shimmer": { presetClass: 0, presetID: 36 },
+		"wave": { presetClass: 0, presetID: 34 },
+
+		// Emphasis effects — camelCase aliases
+		"emphasisPulse": { presetClass: 0, presetID: 26 },
+		"emphasisColorPulse": { presetClass: 0, presetID: 27 },
+		"emphasisTeeter": { presetClass: 0, presetID: 32 },
+		"emphasisSpin": { presetClass: 0, presetID: 8 },
+		"emphasisGrowShrink": { presetClass: 0, presetID: 6 },
+		"emphasisDesaturate": { presetClass: 0, presetID: 25 },
+		"emphasisDarken": { presetClass: 0, presetID: 24 },
+		"emphasisLighten": { presetClass: 0, presetID: 30 },
+		"emphasisTransparency": { presetClass: 0, presetID: 9 },
+		"emphasisObjectColor": { presetClass: 0, presetID: 19 },
+		"emphasisComplementaryColor": { presetClass: 0, presetID: 21 },
+		"emphasisLineColor": { presetClass: 0, presetID: 7 },
+		"emphasisFillColor": { presetClass: 0, presetID: 1 },
+		"emphasisFontColor": { presetClass: 0, presetID: 3 },
+		"emphasisBlink": { presetClass: 0, presetID: 35 },
+		"emphasisShimmer": { presetClass: 0, presetID: 36 },
+		"emphasisWave": { presetClass: 0, presetID: 34 },
+
+		// Motion path effects (PRESET_CLASS_PATH = 4)
+		"path-circle": { presetClass: 4, presetID: 1 },
+		"path-square": { presetClass: 4, presetID: 7 },
+		"path-diamond": { presetClass: 4, presetID: 3 },
+		"path-heart": { presetClass: 4, presetID: 9 },
+		"path-star": { presetClass: 4, presetID: 5 },
+		"path-hexagon": { presetClass: 4, presetID: 4 },
+		"path-octagon": { presetClass: 4, presetID: 10 },
+		"path-right": { presetClass: 4, presetID: 63 },
+		"path-left": { presetClass: 4, presetID: 35 },
+		"path-up": { presetClass: 4, presetID: 64 },
+		"path-down": { presetClass: 4, presetID: 42 },
+
+		// Motion path effects — camelCase aliases
+		"pathCircle": { presetClass: 4, presetID: 1 },
+		"pathSquare": { presetClass: 4, presetID: 7 },
+		"pathDiamond": { presetClass: 4, presetID: 3 },
+		"pathHeart": { presetClass: 4, presetID: 9 },
+		"pathStar": { presetClass: 4, presetID: 5 },
+		"pathHexagon": { presetClass: 4, presetID: 4 },
+		"pathOctagon": { presetClass: 4, presetID: 10 },
+		"pathRight": { presetClass: 4, presetID: 63 },
+		"pathLeft": { presetClass: 4, presetID: 35 },
+		"pathUp": { presetClass: 4, presetID: 64 },
+		"pathDown": { presetClass: 4, presetID: 42 }
+	};
+
+	/**
+	 * Reverse mapping from "presetClass_presetID" to canonical effect type name.
+	 * @private
+	 */
+	ApiAnimationSequence.REVERSE_EFFECT_MAP = {
+		// Entrance effects
+		"1_1": "entranceAppear",
+		"1_10": "entranceFade",
+		"1_2": "entranceFlyIn",
+		"1_42": "entranceFloatIn",
+		"1_16": "entranceSplit",
+		"1_22": "entranceWipe",
+		"1_6": "entranceCircle",
+		"1_4": "entranceBox",
+		"1_8": "entranceDiamond",
+		"1_13": "entrancePlus",
+		"1_21": "entranceWheel",
+		"1_14": "entranceRandomBars",
+		"1_31": "entranceGrowAndTurn",
+		"1_53": "entranceZoom",
+		"1_45": "entranceSwivel",
+		"1_26": "entranceBounce",
+		"1_3": "entranceBlinds",
+		"1_5": "entranceCheckerboard",
+		"1_12": "entrancePeekIn",
+		"1_18": "entranceStrips",
+		"1_55": "entranceExpand",
+		"1_37": "entranceRiseUp",
+		"1_43": "entranceCenterRevolve",
+		"1_49": "entranceSpinner",
+		"1_47": "entranceFloatDown",
+		"1_15": "entranceSpiralIn",
+		"1_20": "entranceWedge",
+		"1_9": "entranceDissolveIn",
+		"1_35": "entrancePinwheel",
+
+		// Exit effects
+		"2_1": "exitDisappear",
+		"2_10": "exitFadeOut",
+		"2_2": "exitFlyOut",
+		"2_42": "exitFloatOut",
+		"2_16": "exitSplitOut",
+		"2_22": "exitWipeOut",
+		"2_6": "exitCircleOut",
+		"2_4": "exitBoxOut",
+		"2_8": "exitDiamondOut",
+		"2_13": "exitPlusOut",
+		"2_21": "exitWheelOut",
+		"2_14": "exitRandomBarsOut",
+		"2_31": "exitShrinkAndTurn",
+		"2_53": "exitZoomOut",
+		"2_45": "exitSwivelOut",
+		"2_26": "exitBounceOut",
+		"2_15": "exitSpiralOut",
+		"2_17": "exitCollapse",
+
+		// Emphasis effects
+		"0_26": "emphasisPulse",
+		"0_27": "emphasisColorPulse",
+		"0_32": "emphasisTeeter",
+		"0_8": "emphasisSpin",
+		"0_6": "emphasisGrowShrink",
+		"0_25": "emphasisDesaturate",
+		"0_24": "emphasisDarken",
+		"0_30": "emphasisLighten",
+		"0_9": "emphasisTransparency",
+		"0_19": "emphasisObjectColor",
+		"0_21": "emphasisComplementaryColor",
+		"0_7": "emphasisLineColor",
+		"0_1": "emphasisFillColor",
+		"0_3": "emphasisFontColor",
+		"0_35": "emphasisBlink",
+		"0_36": "emphasisShimmer",
+		"0_34": "emphasisWave",
+
+		// Motion path effects
+		"4_1": "pathCircle",
+		"4_7": "pathSquare",
+		"4_3": "pathDiamond",
+		"4_9": "pathHeart",
+		"4_5": "pathStar",
+		"4_4": "pathHexagon",
+		"4_10": "pathOctagon",
+		"4_63": "pathRight",
+		"4_35": "pathLeft",
+		"4_64": "pathUp",
+		"4_42": "pathDown"
+	};
+
+	/**
+	 * @private
+	 */
+	ApiAnimationSequence._getEffectTypeName = function (presetClass, presetID) {
+		return ApiAnimationSequence.REVERSE_EFFECT_MAP[presetClass + "_" + presetID] || null;
+	};
+
+	/**
+	 * Mapping from trigger type names to node types.
+	 * @private
+	 */
+	ApiAnimationSequence.TRIGGER_TYPE_MAP = {
+		"onclick": AscFormat.NODE_TYPE_CLICKEFFECT,
+		"withprevious": AscFormat.NODE_TYPE_WITHEFFECT,
+		"afterprevious": AscFormat.NODE_TYPE_AFTEREFFECT
+	};
+
+	/**
+	 * Reverse mapping from node type to trigger name.
+	 * @private
+	 */
+	ApiAnimationSequence._getTriggerTypeName = function (nodeType) {
+		switch (nodeType) {
+			case AscFormat.NODE_TYPE_CLICKEFFECT:
+				return "onclick";
+			case AscFormat.NODE_TYPE_WITHEFFECT:
+				return "withprevious";
+			case AscFormat.NODE_TYPE_AFTEREFFECT:
+				return "afterprevious";
+			default:
+				return "onclick";
+		}
+	};
+
+	/**
+	 * Returns the type of the ApiAnimationSequence class.
+	 *
+	 * @memberof ApiAnimationSequence
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {"animationSequence"}
+	 * @see office-js-api/Examples/{Editor}/ApiAnimationSequence/Methods/GetClassType.js
+	 */
+	ApiAnimationSequence.prototype.GetClassType = function () {
+		return "animationSequence";
+	};
+
+	/**
+	 * Returns the number of effects in the sequence.
+	 *
+	 * @memberof ApiAnimationSequence
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {number} - The number of effects.
+	 * @see office-js-api/Examples/{Editor}/ApiAnimationSequence/Methods/GetCount.js
+	 */
+	ApiAnimationSequence.prototype.GetCount = function () {
+		if (this.Timing) {
+			const allEffects = this.Timing.getAllAnimEffects();
+			if (this.TriggerObjectId) {
+				// Interactive sequence - filter by trigger object ID
+				return allEffects.filter(function(e) { return e.isPartOfInteractiveSeq() === this.TriggerObjectId; }, this).length;
+			} else {
+				// Main sequence
+				return allEffects.filter(function(e) { return e.isPartOfMainSequence(); }).length;
+			}
+		}
+		return 0;
+	};
+
+	/**
+	 * Returns the effect at the specified index.
+	 *
+	 * @memberof ApiAnimationSequence
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @param {number} index - The zero-based index of the effect.
+	 * @returns {ApiAnimationEffect | null} - The effect at the specified index, or null if not found.
+	 * @see office-js-api/Examples/{Editor}/ApiAnimationSequence/Methods/GetEffect.js
+	 */
+	ApiAnimationSequence.prototype.GetEffect = function (index) {
+		if (this.Timing && AscFormat.isRealNumber(index) && index >= 0) {
+			const allEffects = this.Timing.getAllAnimEffects();
+			let effects;
+			if (this.TriggerObjectId) {
+				// Interactive sequence - filter by trigger object ID
+				effects = allEffects.filter(function(e) { return e.isPartOfInteractiveSeq() === this.TriggerObjectId; }, this);
+			} else {
+				// Main sequence
+				effects = allEffects.filter(function(e) { return e.isPartOfMainSequence(); });
+			}
+			if (index < effects.length) {
+				return new ApiAnimationEffect(effects[index], this.Timing);
+			}
+		}
+		return null;
+	};
+
+	/**
+	 * Adds an animation effect to the sequence.
+	 *
+	 * @memberof ApiAnimationSequence
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @param {ApiDrawing} drawing - The drawing object to animate.
+	 * @param {AnimationEffectType} effectType - The type of animation effect (e.g., "entranceFade", "entranceFlyIn", "emphasisPulse").
+	 * @param {AnimationTriggerType} [trigger="onclick"] - The trigger type: "onclick", "withprevious", or "afterprevious".
+	 * @returns {ApiAnimationEffect | null} - The created animation effect, or null if creation failed.
+	 * @see office-js-api/Examples/{Editor}/ApiAnimationSequence/Methods/AddEffect.js
+	 */
+	ApiAnimationSequence.prototype.AddEffect = function (drawing, effectType, trigger) {
+		if (!drawing || !drawing.Drawing || !effectType) {
+			return null;
+		}
+
+		const mapping = ApiAnimationSequence.EFFECT_TYPE_MAP[effectType];
+		if (!mapping) {
+			return null;
+		}
+
+		const mappedType = ApiAnimationSequence.TRIGGER_TYPE_MAP[trigger];
+		const nodeType = mappedType !== undefined ? mappedType : AscFormat.NODE_TYPE_CLICKEFFECT;
+		const objectId = drawing.Drawing.GetId();
+
+		const effect = this.Timing.createEffect(
+			objectId,
+			mapping.presetClass,
+			mapping.presetID,
+			mapping.presetSubtype || 0,
+			null
+		);
+
+		if (!effect) {
+			return null;
+		}
+
+		if (effect.cTn) {
+			effect.cTn.setNodeType(nodeType);
+		}
+
+		if (this.TriggerObjectId) {
+			// Interactive sequence
+			this.Timing.addToInteractiveSequence(effect, this.TriggerObjectId);
+		} else {
+			// Main sequence
+			this.Timing.addEffectsToMainSequence([effect]);
+		}
+
+		return new ApiAnimationEffect(effect, this.Timing);
+	};
+
+	/**
+	 * Removes all effects from the sequence.
+	 *
+	 * @memberof ApiAnimationSequence
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {boolean} - True if effects were removed successfully.
+	 * @see office-js-api/Examples/{Editor}/ApiAnimationSequence/Methods/RemoveAllEffects.js
+	 */
+	ApiAnimationSequence.prototype.RemoveAllEffects = function () {
+		if (this.Timing) {
+			const seqs = this.Timing.getEffectsSequences();
+			const seqId = this.TriggerObjectId || null;
+
+			// Find and clear the target sequence
+			for (let i = 0; i < seqs.length; i++) {
+				if (seqs[i][0] === seqId) {
+					// Keep only the sequence ID, remove all effects
+					seqs[i].length = 1;
+					break;
+				}
+			}
+
+			this.Timing.buildTree(seqs);
+			return true;
+		}
+		return false;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiAnimationEffect
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing an animation effect.
+	 * @constructor
+	 */
+	var g_nApiEffectIdCounter = 0;
+
+	/**
+	 * Class representing an animation effect.
+	 * @constructor
+	 */
+	function ApiAnimationEffect(effect, timing) {
+		this.Effect = effect;
+		this.Timing = timing;
+		// Assign unique _apiId for tracking effect across tree rebuilds
+		if (effect && effect._apiId === undefined) {
+			effect._apiId = ++g_nApiEffectIdCounter;
+		}
+		this._apiId = effect ? effect._apiId : null;
+	}
+
+	/**
+	 * Returns the actual effect from the timing tree.
+	 * @private
+	 */
+	ApiAnimationEffect.prototype._getActualEffect = function () {
+		if (!this._apiId || !this.Timing) {
+			return this.Effect;
+		}
+		const allEffects = this.Timing.getAllAnimEffects();
+		for (let i = 0; i < allEffects.length; i++) {
+			if (allEffects[i]._apiId === this._apiId) {
+				return allEffects[i];
+			}
+		}
+		return this.Effect;
+	};
+
+	/**
+	 * Returns the type of the ApiAnimationEffect class.
+	 *
+	 * @memberof ApiAnimationEffect
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {"animationEffect"}
+	 * @see office-js-api/Examples/{Editor}/ApiAnimationEffect/Methods/GetClassType.js
+	 */
+	ApiAnimationEffect.prototype.GetClassType = function () {
+		return "animationEffect";
+	};
+
+	/**
+	 * Returns the animation effect type.
+	 *
+	 * @memberof ApiAnimationEffect
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {AnimationEffectType | null} - The effect type name (e.g., "entranceFade", "exitFadeOut", "emphasisPulse"), or null if unknown.
+	 * @see office-js-api/Examples/{Editor}/ApiAnimationEffect/Methods/GetEffectType.js
+	 */
+	ApiAnimationEffect.prototype.GetEffectType = function () {
+		const effect = this._getActualEffect();
+		if (effect && effect.cTn) {
+			const presetClass = effect.cTn.presetClass;
+			const presetID = effect.cTn.presetID;
+			return ApiAnimationSequence._getEffectTypeName(presetClass, presetID);
+		}
+		return null;
+	};
+
+	/**
+	 * Returns the trigger type for the animation effect.
+	 *
+	 * @memberof ApiAnimationEffect
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {AnimationTriggerType} - The trigger type: "onclick", "withprevious", or "afterprevious".
+	 * @see office-js-api/Examples/{Editor}/ApiAnimationEffect/Methods/GetTriggerType.js
+	 */
+	ApiAnimationEffect.prototype.GetTriggerType = function () {
+		const effect = this._getActualEffect();
+		if (effect && effect.cTn) {
+			return ApiAnimationSequence._getTriggerTypeName(effect.cTn.nodeType);
+		}
+		return "onclick";
+	};
+
+	/**
+	 * Sets the trigger type for the animation effect.
+	 *
+	 * @memberof ApiAnimationEffect
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @param {AnimationTriggerType} trigger - The trigger type: "onclick", "withprevious", or "afterprevious".
+	 * @returns {boolean} - True if the trigger type was set successfully.
+	 * @see office-js-api/Examples/{Editor}/ApiAnimationEffect/Methods/SetTriggerType.js
+	 */
+	ApiAnimationEffect.prototype.SetTriggerType = function (trigger) {
+		const effect = this._getActualEffect();
+		if (effect && effect.cTn) {
+			const nodeType = ApiAnimationSequence.TRIGGER_TYPE_MAP[trigger];
+			if (nodeType !== undefined) {
+				effect.cTn.setNodeType(nodeType);
+				if (this.Timing) {
+					const seqs = this.Timing.getEffectsSequences();
+					this.Timing.buildTree(seqs);
+				}
+				return true;
+			}
+		}
+		return false;
+	};
+
+	/**
+	 * Returns the duration of the animation effect in milliseconds.
+	 *
+	 * @memberof ApiAnimationEffect
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {number} - The duration in milliseconds.
+	 * @see office-js-api/Examples/{Editor}/ApiAnimationEffect/Methods/GetDuration.js
+	 */
+	ApiAnimationEffect.prototype.GetDuration = function () {
+		const effect = this._getActualEffect();
+		if (effect && effect.cTn) {
+			return effect.cTn.getEffectDuration();
+		}
+		return 0;
+	};
+
+	/**
+	 * Sets the duration of the animation effect in milliseconds.
+	 *
+	 * @memberof ApiAnimationEffect
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @param {number} duration - The duration in milliseconds.
+	 * @returns {boolean} - True if the duration was set successfully.
+	 * @see office-js-api/Examples/{Editor}/ApiAnimationEffect/Methods/SetDuration.js
+	 */
+	ApiAnimationEffect.prototype.SetDuration = function (duration) {
+		const effect = this._getActualEffect();
+		if (effect && effect.cTn && AscFormat.isRealNumber(duration) && duration >= 0) {
+			effect.cTn.changeEffectDuration(duration);
+			return true;
+		}
+		return false;
+	};
+
+	/**
+	 * Returns the delay before the animation effect starts in milliseconds.
+	 *
+	 * @memberof ApiAnimationEffect
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {number} - The delay in milliseconds.
+	 * @see office-js-api/Examples/{Editor}/ApiAnimationEffect/Methods/GetDelay.js
+	 */
+	ApiAnimationEffect.prototype.GetDelay = function () {
+		const effect = this._getActualEffect();
+		if (effect && effect.cTn) {
+			return effect.cTn.getDelay();
+		}
+		return 0;
+	};
+
+	/**
+	 * Sets the delay before the animation effect starts in milliseconds.
+	 *
+	 * @memberof ApiAnimationEffect
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @param {number} delay - The delay in milliseconds.
+	 * @returns {boolean} - True if the delay was set successfully.
+	 * @see office-js-api/Examples/{Editor}/ApiAnimationEffect/Methods/SetDelay.js
+	 */
+	ApiAnimationEffect.prototype.SetDelay = function (delay) {
+		const effect = this._getActualEffect();
+		if (effect && effect.cTn && AscFormat.isRealNumber(delay) && delay >= 0) {
+			effect.cTn.changeDelay(delay);
+			return true;
+		}
+		return false;
+	};
+
+	/**
+	 * Returns the animated drawing object.
+	 *
+	 * @memberof ApiAnimationEffect
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {ApiDrawing | null} - The animated drawing or null if not found.
+	 * @see office-js-api/Examples/{Editor}/ApiAnimationEffect/Methods/GetShape.js
+	 */
+	ApiAnimationEffect.prototype.GetShape = function () {
+		const effect = this._getActualEffect();
+		if (effect) {
+			const objectId = effect.getObjectId ? effect.getObjectId() : null;
+			if (objectId) {
+				const drawing = AscCommon.g_oTableId.Get_ById(objectId);
+				if (drawing && drawing.getObjectType) {
+					const objectType = drawing.getObjectType();
+					switch (objectType) {
+						case AscDFH.historyitem_type_Shape:
+							return new ApiShape(drawing);
+						case AscDFH.historyitem_type_ImageShape:
+							return new ApiImage(drawing);
+						case AscDFH.historyitem_type_ChartSpace:
+							return new ApiChart(drawing);
+						case AscDFH.historyitem_type_OleObject:
+							return new ApiOleObject(drawing);
+						case AscDFH.historyitem_type_GroupShape:
+							return new ApiGroup(drawing);
+						case AscDFH.historyitem_type_GraphicFrame:
+							return new ApiTable(drawing);
+						case AscDFH.historyitem_type_SmartArt:
+							return new ApiSmartArt(drawing);
+						default:
+							return new ApiDrawing(drawing);
+					}
+				}
+			}
+		}
+		return null;
+	};
+
+	/**
+	 * Deletes the animation effect.
+	 *
+	 * @memberof ApiAnimationEffect
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {boolean} - True if the effect was deleted successfully.
+	 * @see office-js-api/Examples/{Editor}/ApiAnimationEffect/Methods/Delete.js
+	 */
+	ApiAnimationEffect.prototype.Delete = function () {
+		if (this._apiId && this.Timing) {
+			const apiId = this._apiId;
+			const seqs = this.Timing.getEffectsSequences();
+			let found = false;
+			for (let seqIdx = 0; seqIdx < seqs.length; seqIdx++) {
+				const seq = seqs[seqIdx];
+				for (let effectIdx = 1; effectIdx < seq.length; effectIdx++) {
+					if (seq[effectIdx]._apiId === apiId) {
+						seq.splice(effectIdx, 1);
+						found = true;
+						break;
+					}
+				}
+				if (found) break;
+			}
+			if (found) {
+				this.Timing.buildTree(seqs);
+				return true;
+			}
+		}
+		return false;
+	};
+
+	/**
+	 * Moves the animation effect to the specified position in the sequence.
+	 *
+	 * @memberof ApiAnimationEffect
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @param {number} index - The new zero-based position for the effect.
+	 * @returns {boolean} - True if the effect was moved successfully.
+	 * @see office-js-api/Examples/{Editor}/ApiAnimationEffect/Methods/MoveTo.js
+	 */
+	ApiAnimationEffect.prototype.MoveTo = function (index) {
+		if (this._apiId && this.Timing && AscFormat.isRealNumber(index) && index >= 0) {
+			const apiId = this._apiId;
+			const seqs = this.Timing.getEffectsSequences();
+			let foundSeq = null;
+			let effect = null;
+
+			// Find and remove the effect from its current position
+			for (let seqIdx = 0; seqIdx < seqs.length; seqIdx++) {
+				const seq = seqs[seqIdx];
+				for (let effectIdx = 1; effectIdx < seq.length; effectIdx++) {
+					if (seq[effectIdx]._apiId === apiId) {
+						foundSeq = seq;
+						effect = seq[effectIdx];
+						seq.splice(effectIdx, 1);
+						break;
+					}
+				}
+				if (foundSeq) break;
+			}
+
+			if (foundSeq && effect) {
+				// Insert at new position (add 1 because index 0 is the sequence ID)
+				const newPos = Math.min(index + 1, foundSeq.length);
+				foundSeq.splice(newPos, 0, effect);
+				this.Timing.buildTree(seqs);
+				return true;
+			}
+		}
+		return false;
+	};
+
+	/**
+	 * Returns the repeat count for the animation effect.
+	 *
+	 * @memberof ApiAnimationEffect
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @returns {number} - The repeat count (1 = play once, 2 = play twice, etc.). Returns 1 if not set.
+	 * @see office-js-api/Examples/{Editor}/ApiAnimationEffect/Methods/GetRepeatCount.js
+	 */
+	ApiAnimationEffect.prototype.GetRepeatCount = function () {
+		const effect = this._getActualEffect();
+		if (effect && effect.cTn && effect.cTn.repeatCount) {
+			const repeat = parseInt(effect.cTn.repeatCount, 10);
+			return isNaN(repeat) ? 1 : Math.round(repeat / 1000);
+		}
+		return 1;
+	};
+
+	/**
+	 * Sets the repeat count for the animation effect.
+	 *
+	 * @memberof ApiAnimationEffect
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 *
+	 * @param {number} count - The repeat count (1 = play once, 2 = play twice, etc.).
+	 * @returns {boolean} - True if the repeat count was set successfully.
+	 * @see office-js-api/Examples/{Editor}/ApiAnimationEffect/Methods/SetRepeatCount.js
+	 */
+	ApiAnimationEffect.prototype.SetRepeatCount = function (count) {
+		const effect = this._getActualEffect();
+		if (effect && effect.cTn && AscFormat.isRealNumber(count) && count >= 1) {
+			effect.cTn.changeRepeatCount(Math.round(count) * 1000);
+			return true;
+		}
+		return false;
+	};
 
     //------------------------------------------------------------------------------------------------------------------
     //
@@ -4476,7 +6276,7 @@
             {
                 if (allDrawingsInParent[nDrawing].Drawing.Id === this.Drawing.Id)
                 {
-                    editor.private_checkPlaceholders(drawingParent, oPlaceholder);
+                    Api.private_checkPlaceholders(drawingParent, oPlaceholder);
                     break;
                 }
             }
@@ -4546,7 +6346,53 @@
 	{
 		return private_MM2EMU(this.Drawing.GetHeight());
 	};
+	/**
+	 * Returns the name of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @returns {string}
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetName.js
+	 */
+	ApiDrawing.prototype.GetName = function()
+	{
+		return this.Drawing.getObjectName();
+	};
+	/**
+	 * Sets the name of the current drawing.
+	 * If another drawing with the same name already exists, that drawing's name will be reset to a default auto-generated name.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @param {string} name - The name which will be set to the current drawing.
+	 * @returns {boolean} - Returns true if the name was successfully set, otherwise returns false.
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetName.js
+	 */
+	ApiDrawing.prototype.SetName = function(name)
+	{
+		if (name === "" || name === null || name === undefined)
+			return false;
 
+        let drawings = [];
+		let oPresentation = Api.GetPresentation();
+        oPresentation.GetAllSlides().forEach(function (oSource) {
+			oSource.GetAllDrawings().forEach(function (oObject) {
+				drawings.push(oObject);
+			});
+		})
+
+		for (let nCount = 0; nCount < drawings.length; nCount++)
+		{
+			let drawing = drawings[nCount];
+			if (drawing.Drawing.getOwnName() === name)
+			{
+				drawing.Drawing.setName("");
+				break;
+			}
+		}
+		this.Drawing.setName(name);
+		return true;
+	};
     /**
      * Returns the lock value for the specified lock type of the current drawing.
      * @typeofeditors ["CPE"]
@@ -4608,17 +6454,57 @@
 	 * Selects the current graphic object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
-     * @since 8.2.0
+	 * @deprecated since 9.3.0 version.
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
-	 */	
-	ApiDrawing.prototype.Select = function() {
+	 */
+	/**
+	 * Selects the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 * @param {boolean} [isReplace=false] - Specifies whether the selection should replace the current selection (true) or be added to it (false).
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
+	 */
+	ApiDrawing.prototype.Select = function(isReplace) {
+		if (isReplace === undefined)
+			isReplace = false;
+
 		let oDrawing = this.Drawing;
-		if(!oDrawing) return;
-        oDrawing.Set_CurrentElement(true, 0, true);
+		if(!oDrawing) return false;
+
+        oDrawing.Set_CurrentElement(true, 0, true, !!isReplace);
         let oController = oDrawing.getDrawingObjectsController();
+        if (!oController)
+            return false;
         oController.updateSelectionState();
         oController.updateOverlay();
+        return true;
 	};
+
+	/**
+	 * Removes the current graphic object from the selection.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Unselect.js
+	 */
+	ApiDrawing.prototype.Unselect = function()
+	{
+		let oDrawing =  this.Drawing;
+		if (!oDrawing)
+			return false;
+		let oController = oDrawing.getDrawingObjectsController();
+		if (!oController)
+			return false;
+		oController.deselectObject(oDrawing);
+		oController.updateSelectionState();
+		oController.updateOverlay();
+		return true;
+	};
+
 
     /**
      * Sets the rotation angle to the current drawing object.
@@ -4655,38 +6541,141 @@
 		return this.Drawing.rot * 180 / Math.PI
 	};
 
-
-    
-	ApiDrawing.prototype.GetPosX = function()
+	/**
+	 * Get horizontal flip of current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 * @returns {boolean | null} Returns true if the figure is flipped horizontally, false if not, or null if the drawing properties are not available.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetFlipH.js
+	 */
+	ApiDrawing.prototype.GetFlipH = function()
 	{
+		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
+			return this.Drawing.spPr.xfrm.flipH;
+
+		return null;
+	};
+
+	/**
+	 * Get vertical flip of current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 * @returns {boolean | null} Returns true if the figure is flipped vertically, false if not, or null if the drawing properties are not available.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetFlipV.js
+	 */
+	ApiDrawing.prototype.GetFlipV = function()
+	{
+		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
+			return this.Drawing.spPr.xfrm.flipV;
+
+		return null;
+	};
+
+	/**
+	 * Sets the horizontal flip of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 * @param {boolean} bFlip - Specifies if the figure will be flipped horizontally or not.
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetFlipH.js
+	 */
+	ApiDrawing.prototype.SetFlipH = function(bFlip)
+	{
+		if (typeof(bFlip) !== "boolean")
+			return false;
+
+		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
+		{
+			this.Drawing.spPr.xfrm.setFlipH(bFlip);
+			return true;
+		}
+
+		return false;
+	};
+
+	/**
+	 * Sets the vertical flip of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @since 9.3.0
+	 * @param {boolean} bFlip - Specifies if the figure will be flipped vertically or not.
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetFlipV.js
+	 */
+	ApiDrawing.prototype.SetFlipV = function(bFlip)
+	{
+		if (typeof(bFlip) !== "boolean")
+			return false;
+
+		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
+		{
+			this.Drawing.spPr.xfrm.setFlipV(bFlip);
+			return true;
+		}
+
+		return false;
+	};
+
+	/**
+	 * Gets the x position of the drawing on the slide.
+	 * @typeofeditors ["CPE"]
+	 * @returns {EMU}
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetPosX.js
+	 */
+	ApiDrawing.prototype.GetPosX = function() {
 		return private_MM2EMU(this.Drawing.GetPosX());
 	};
 
-    
-	ApiDrawing.prototype.GetPosY = function()
-	{
+    /**
+	 * Gets the y position of the drawing on the slide.
+	 * @typeofeditors ["CPE"]
+	 * @returns {EMU}
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetPosY.js
+	 */
+	ApiDrawing.prototype.GetPosY = function() {
 		return private_MM2EMU(this.Drawing.GetPosY());
 	};
 
-
-    
-    
-	ApiDrawing.prototype.SetPosX = function(posX)
-	{
-        
+	/**
+	 * Sets the x position of the drawing on the slide.
+	 * @typeofeditors ["CPE"]
+	 * @param {EMU} posX - The distance from the left side of the slide to the left side of the drawing measured in English measure units.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetPosX.js
+	 */
+	ApiDrawing.prototype.SetPosX = function(posX) {
         this.Drawing.checkTransformBeforeApply();
 		let oXfrm = this.Drawing.getXfrm();
 		oXfrm.setOffX(private_EMU2MM(posX));
+
+		return true;
 	};
 
-    
-	ApiDrawing.prototype.SetPosY = function(posY)
-	{
+	/**
+	 * Sets the y position of the drawing on the slide.
+	 * @typeofeditors ["CPE"]
+	 * @param {EMU} posY - The distance from the top side of the slide to the upper side of the drawing measured in English measure units.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetPosY.js
+	 */
+	ApiDrawing.prototype.SetPosY = function(posY) {
         this.Drawing.checkTransformBeforeApply();
 		let oXfrm = this.Drawing.getXfrm();
 		oXfrm.setOffY(private_EMU2MM(posY));
+
+		return true;
 	};
 
+	/**
+	 * Replaces the placeholder by a drawing on the slide.
+	 * @typeofeditors ["CPE"]
+	 * @param {Drawing} oDrawing
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/ReplacePlaceholder.js
+	 */
 	ApiDrawing.prototype.ReplacePlaceholder = function(oDrawing)
 	{
 		let ph = this.GetPlaceholder();
@@ -4695,9 +6684,7 @@
 		let slide = this.Drawing.parent;
 		if (!slide || !slide.graphicObjects) return false;
 
-        
 		slide.replaceSp(this.Drawing, oDrawing.Drawing);
-
         
 		oDrawing.Drawing.setSpPr(this.Drawing.spPr.createDuplicate());
         if(oDrawing.GetClassType() === "table")
@@ -4709,17 +6696,158 @@
             pr.FrameHeight = this.GetHeight() / 36000;
             pr.Force = true;
             oDrawing.Drawing.recalculate();
-            
+
             oDrawing.Drawing.setFrameTransform(pr);
+        }
+        else if(oDrawing.GetClassType() === "chart")
+        {
+            AscFormat.CheckSpPrXfrm(oDrawing.Drawing);
+            let xfrm = oDrawing.Drawing.spPr.xfrm;
+            xfrm.setOffX(this.GetPosX() / 36000);
+            xfrm.setOffY(this.GetPosY() / 36000);
+            xfrm.setExtX(this.GetWidth() / 36000);
+            xfrm.setExtY(this.GetHeight() / 36000);
+            oDrawing.Drawing.recalculate();
         }
         return true;
 	};
 
-
-	ApiDrawing.prototype.GetInternalId = function()
-	{
+	/**
+	 * Returns an internal ID of the current drawing object.
+	 * @typeofeditors ["CPE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetInternalId.js
+	 */
+	ApiDrawing.prototype.GetInternalId = function() {
 		return this.Drawing.GetId();
 	};
+
+	/**
+	 * Sets a hyperlink to the current drawing object (shape or image).
+	 * Pass null to remove the hyperlink.
+	 *
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 *
+	 * @param {ApiHyperlink | null} hyperlink - The hyperlink object to be set to the drawing, or null to remove the hyperlink.
+	 *
+	 * @returns {boolean} - Returns true if the hyperlink was set or removed successfully.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetHyperlink.js
+	 */
+	ApiDrawing.prototype.SetHyperlink = function (hyperlink) {
+		const classType = this.GetClassType();
+		if (classType !== 'shape' && classType !== 'image') {
+			return false;
+		}
+
+		if (!this.Drawing) {
+			return false;
+		}
+
+		const controller = this.Drawing.getDrawingObjectsController();
+		const nonVisualProperties = controller.hyperlinkCollectNonVisualProperties(this.Drawing);
+
+		if (hyperlink === null) {
+			nonVisualProperties.forEach(function (oNvPr) {
+				oNvPr.setHlinkClick(null);
+			});
+			return true;
+		}
+
+		let link = null;
+		let tooltip = null;
+		if (hyperlink && hyperlink.ParaHyperlink) {
+			link = hyperlink.ParaHyperlink.GetValue();
+			tooltip = hyperlink.ParaHyperlink.GetToolTip();
+		}
+
+		nonVisualProperties.forEach(function (oNvPr) {
+			const oHyperlink = new AscFormat.CT_Hyperlink();
+			oHyperlink.id = link;
+			oHyperlink.tooltip = tooltip;
+			oNvPr.setHlinkClick(oHyperlink);
+		});
+
+		return true;
+	};
+
+	/**
+	 * Returns the hyperlink from the current drawing object (shape or image).
+	 *
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 *
+	 * @returns {ApiHyperlink | null} - Returns the hyperlink object or null if no hyperlink is set.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetHyperlink.js
+	 */
+	ApiDrawing.prototype.GetHyperlink = function () {
+		const classType = this.GetClassType();
+		if (classType !== 'shape' && classType !== 'image') {
+			return null;
+		}
+
+		if (!this.Drawing) {
+			return null;
+		}
+
+		const controller = this.Drawing.getDrawingObjectsController();
+		const nonVisualProperties = controller.hyperlinkCollectNonVisualProperties(this.Drawing);
+
+		if (nonVisualProperties.length === 0) {
+			return null;
+		}
+
+		const oNvPr = nonVisualProperties[0];
+		if (!oNvPr || !oNvPr.hlinkClick) {
+			return null;
+		}
+
+		const paraHyperlink = new AscCommonWord.ParaHyperlink();
+		const apiHyperlink = new AscBuilder.ApiHyperlink(paraHyperlink);
+
+		apiHyperlink.SetLink(oNvPr.hlinkClick.id);
+		apiHyperlink.SetScreenTipText(oNvPr.hlinkClick.tooltip);
+
+		return apiHyperlink;
+	};
+
+	/**
+	 * Sets the fill formatting properties to the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @param {ApiFill} oFill - The fill type used to fill the graphic object.
+	 * @returns {boolean} - returns false if param is invalid.
+     * @since 9.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Fill.js
+	 */
+	ApiDrawing.prototype.Fill = function(oFill)
+	{
+		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
+			return false;
+
+		this.Drawing.spPr.setFill(oFill.UniFill);
+		return true;
+	};
+
+	/**
+	 * Sets the outline properties to the specified graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @param {ApiStroke} oStroke - The stroke used to create the graphic object outline.
+	 * @returns {boolean} - returns false if param is invalid.
+     * @since 9.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetOutLine.js
+	 */
+	ApiDrawing.prototype.SetOutLine = function(oStroke)
+	{
+		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
+			return false;
+
+		this.Drawing.spPr.setLn(oStroke.Ln);
+		return true;
+	};
+
+
 
     //------------------------------------------------------------------------------------------------------------------
     //
@@ -4770,6 +6898,33 @@
         oGraphicObjects.unGroupCallback();
         return true;
     };
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiSmartArt
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a smart art.
+	 * @constructor
+	 */
+	function ApiSmartArt(oGroup){
+		ApiDrawing.call(this, oGroup);
+	}
+	ApiSmartArt.prototype = Object.create(ApiDrawing.prototype);
+	ApiSmartArt.prototype.constructor = ApiSmartArt;
+
+	/**
+	 * Returns a type of the ApiSmartArt class.
+	 * @memberof ApiSmartArt
+	 * @typeofeditors ["CPE"]
+	 * @returns {"smartArt"}
+	 * @see office-js-api/Examples/{Editor}/ApiSmartArt/Methods/GetClassType.js
+	 */
+	ApiSmartArt.prototype.GetClassType = function() {
+		return "smartArt";
+	};
 
     //------------------------------------------------------------------------------------------------------------------
     //
@@ -4826,9 +6981,6 @@
 	 */
     ApiShape.prototype.GetContent = function()
     {
-		var oApi = Asc["editor"];
-		if (!oApi)
-			return null;
 		let docContent = this.Drawing.getDocContent();
 		if (!docContent)
 		{
@@ -4837,7 +6989,7 @@
 		docContent = this.Drawing.getDocContent();
 		if (docContent)
 		{
-			return oApi.private_CreateApiDocContent(docContent);
+			return Api.private_CreateApiDocContent(docContent);
 		}
 		return null;
     };
@@ -4887,7 +7039,7 @@
 	{
 		if (this.Shape && this.Shape.spPr && this.Shape.spPr.geometry)
 		{
-			return Api.prototype.private_CreateGeometry(this.Shape.spPr.geometry);
+			return Api.private_CreateGeometry(this.Shape.spPr.geometry);
 		}
 		return null;
 	};
@@ -4908,6 +7060,128 @@
 			this.Shape.spPr.setGeometry(oGeometry.geometry);
 			return true;
 		}
+		return false;
+	};
+
+	/**
+	 * Sets the fill properties to the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CPE"]
+	 * @param {ApiFill} oFill - The fill type used to fill the shape.
+	 * @returns {boolean} - returns false if param is invalid.
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetFill.js
+	 */
+	ApiShape.prototype.SetFill = function(oFill)
+	{
+		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
+			return false;
+
+		if (this.Shape && this.Shape.spPr)
+		{
+			this.Shape.spPr.setFill(oFill.UniFill);
+			return true;
+		}
+
+		return false;
+	};
+
+	/**
+	 * Gets the fill properties from the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiFill | null}
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetFill.js
+	 */
+	ApiShape.prototype.GetFill = function()
+	{
+		if (this.Shape)
+		{
+			if (this.Shape.recalcInfo && this.Shape.recalcInfo.recalculateBrush)
+			{
+				this.Shape.recalculateBrush();
+			}
+			if (this.Shape.brush)
+			{
+				return new AscBuilder.ApiFill(this.Shape.brush);
+			}
+		}
+
+		return null;
+	};
+
+	/**
+	 * Sets the outline properties to the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CPE"]
+	 * @param {ApiStroke} oStroke - The stroke used to create the shape outline.
+	 * @returns {boolean} - returns false if param is invalid.
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetLine.js
+	 */
+	ApiShape.prototype.SetLine = function(oStroke)
+	{
+		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
+			return false;
+
+		if (this.Shape && this.Shape.spPr)
+		{
+			this.Shape.spPr.setLn(oStroke.Ln);
+			return true;
+		}
+
+		return false;
+	};
+
+	/**
+	 * Gets the outline properties from the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiStroke | null}
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetLine.js
+	 */
+	ApiShape.prototype.GetLine = function()
+	{
+		if (this.Shape)
+		{
+			if (this.Shape.recalcInfo && this.Shape.recalcInfo.recalculatePen)
+			{
+				this.Shape.recalculatePen();
+			}
+			if (this.Shape.pen)
+			{
+				return new AscBuilder.ApiStroke(this.Shape.pen);
+			}
+		}
+
+		return null;
+	};
+
+
+    /**
+	 * Sets the text paddings to the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CPE"]
+	 * @param {?EMU} nLeft - Left padding.
+	 * @param {?EMU} nTop - Top padding.
+	 * @param {?EMU} nRight - Right padding.
+	 * @param {?EMU} nBottom - Bottom padding.
+	 * @returns {boolean}
+     * @since 9.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetPaddings.js
+	 */
+	ApiShape.prototype.SetPaddings = function(nLeft, nTop, nRight, nBottom)
+	{
+		if(this.Shape)
+		{
+			this.Shape.setPaddings({
+				Left: AscFormat.isRealNumber(nLeft) ? private_EMU2MM(nLeft) : null,
+				Top: AscFormat.isRealNumber(nTop) ? private_EMU2MM(nTop) : null,
+				Right: AscFormat.isRealNumber(nRight) ? private_EMU2MM(nRight) : null,
+				Bottom: AscFormat.isRealNumber(nBottom) ? private_EMU2MM(nBottom) : null
+			});
+
+			return true;
+		}
+
 		return false;
 	};
 
@@ -5275,7 +7549,27 @@
         this.Table.Set_Pr(oPr);
     };
 
-    /**
+	/**
+	 * Sets the table size.
+	 * @memberof ApiTable
+	 * @typeofeditors ["CPE"]
+	 * @param {EMU} width - The table width measured in English measure units.
+	 * @param {EMU} height - The table height measured in English measure units.
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetSize.js
+	 */
+	ApiTable.prototype.SetSize = function (width, height) {
+		if (this.Drawing) {
+			this.Drawing.recalculateTable();
+			this.Drawing.recalculateSizes();
+			this.Drawing.resize(
+				private_EMU2MM(width),
+				private_EMU2MM(height),
+				true
+			);
+		}
+	};
+
+	/**
 	 * Converts the ApiTable object into the JSON object.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
@@ -5389,9 +7683,7 @@
      * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetContent.js
 	 */
     ApiTableCell.prototype.GetContent = function(){
-        var oApi = private_GetApi();
-        return oApi.private_CreateApiDocContent(this.Cell.Content);
-
+        return Api.private_CreateApiDocContent(this.Cell.Content);
     };
 
 
@@ -5637,7 +7929,7 @@
     /**
      * Specifies the vertical alignment for text within the current table cell.
      * @typeofeditors ["CPE"]
-     * @param {("top" | "center" | "bottom")} sType - The type of the vertical alignment.
+     * @param {VerticalTextAlign} sType - The type of the vertical alignment.
      * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetVerticalAlign.js
 	 */
     ApiTableCell.prototype.SetVerticalAlign = function(sType)
@@ -5654,7 +7946,7 @@
     /**
      * Specifies the direction of the text flow for the current table cell.
      * @typeofeditors ["CPE"]
-     * @param {("lrtb" | "tbrl" | "btlr")} sType - The type of the text flow direction. 
+     * @param {TextFlowDirection} sType - The type of the text flow direction. 
      * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetTextDirection.js
 	 */
     ApiTableCell.prototype.SetTextDirection = function(sType)
@@ -5669,33 +7961,35 @@
         this.Cell.Set_Pr(oPr);
     };
 
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Export
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    Api.prototype["GetPresentation"]                      = Api.prototype.GetPresentation;
-    Api.prototype["CreateSlide"]                          = Api.prototype.CreateSlide;
-    Api.prototype["CreateImage"]                          = Api.prototype.CreateImage;
-    Api.prototype["CreateShape"]                          = Api.prototype.CreateShape;
-    Api.prototype["CreateChart"]                          = Api.prototype.CreateChart;
-    Api.prototype["CreateGroup"]                          = Api.prototype.CreateGroup;
-    Api.prototype["CreateOleObject"]                      = Api.prototype.CreateOleObject;
-    Api.prototype["CreateTable"]                          = Api.prototype.CreateTable;
-    Api.prototype["CreateParagraph"]                      = Api.prototype.CreateParagraph;
-    Api.prototype["Save"]                                 = Api.prototype.Save;
-    Api.prototype["CreateMaster"]                         = Api.prototype.CreateMaster;
-    Api.prototype["CreateDefaultMasterSlide"]             = Api.prototype.CreateDefaultMasterSlide;
-    Api.prototype["CreateLayout"]                         = Api.prototype.CreateLayout;
-    Api.prototype["CreatePlaceholder"]                    = Api.prototype.CreatePlaceholder;
-    Api.prototype["CreateTheme"]                          = Api.prototype.CreateTheme;
-    Api.prototype["CreateThemeColorScheme"]               = Api.prototype.CreateThemeColorScheme;
-    Api.prototype["CreateThemeFormatScheme"]              = Api.prototype.CreateThemeFormatScheme;
-    Api.prototype["CreateThemeFontScheme"]                = Api.prototype.CreateThemeFontScheme;
-    Api.prototype["CreateWordArt"]                        = Api.prototype.CreateWordArt;
-	Api.prototype["FromJSON"]                             = Api.prototype.FromJSON;
-	Api.prototype["GetSelection"]                         = Api.prototype.GetSelection;
-	Api.prototype["GetByInternalId"]                      = Api.prototype.GetByInternalId;
+    Api["GetPresentation"]                      = Api.GetPresentation;
+    Api["CreateSlide"]                          = Api.CreateSlide;
+    Api["CreateImage"]                          = Api.CreateImage;
+    Api["CreateShape"]                          = Api.CreateShape;
+    Api["CreateChart"]                          = Api.CreateChart;
+    Api["CreateGroup"]                          = Api.CreateGroup;
+    Api["CreateOleObject"]                      = Api.CreateOleObject;
+    Api["CreateTable"]                          = Api.CreateTable;
+    Api["CreateParagraph"]                      = Api.CreateParagraph;
+    Api["CreateHyperlink"]                      = Api.CreateHyperlink;
+    Api["attachEvent"]                      	= Api.attachEvent;
+    Api["detachEvent"]                      	= Api.detachEvent;
+    Api["Save"]                                 = Api.Save;
+    Api["CreateMaster"]                         = Api.CreateMaster;
+    Api["CreateDefaultMasterSlide"]             = Api.CreateDefaultMasterSlide;
+    Api["CreateLayout"]                         = Api.CreateLayout;
+    Api["CreatePlaceholder"]                    = Api.CreatePlaceholder;
+    Api["CreateTheme"]                          = Api.CreateTheme;
+    Api["CreateThemeColorScheme"]               = Api.CreateThemeColorScheme;
+    Api["CreateThemeFormatScheme"]              = Api.CreateThemeFormatScheme;
+    Api["CreateThemeFontScheme"]                = Api.CreateThemeFontScheme;
+    Api["CreateWordArt"]                        = Api.CreateWordArt;
+	Api["CreateSlideShowTransition"]            = Api.CreateSlideShowTransition;
+	Api["FromJSON"]                             = Api.FromJSON;
+	Api["GetSelection"]                         = Api.GetSelection;
+	Api["GetByInternalId"]                      = Api.GetByInternalId;
 
 
     ApiPresentation.prototype["GetClassType"]             = ApiPresentation.prototype.GetClassType;
@@ -5729,9 +8023,12 @@
     ApiPresentation.prototype["GetAllShapes"]             = ApiPresentation.prototype.GetAllShapes;
     ApiPresentation.prototype["GetAllImages"]             = ApiPresentation.prototype.GetAllImages;
     ApiPresentation.prototype["GetAllDrawings"]           = ApiPresentation.prototype.GetAllDrawings;
+    ApiPresentation.prototype["GetDrawingsByName"]        = ApiPresentation.prototype.GetDrawingsByName;
     ApiPresentation.prototype["GetCore"]                  = ApiPresentation.prototype.GetCore;
     ApiPresentation.prototype["GetCustomProperties"]      = ApiPresentation.prototype.GetCustomProperties;
     ApiPresentation.prototype["GetCustomXmlParts"]        = ApiPresentation.prototype.GetCustomXmlParts;
+    ApiPresentation.prototype["GetLoopUntilStopped"]      = ApiPresentation.prototype.GetLoopUntilStopped;
+    ApiPresentation.prototype["SetLoopUntilStopped"]      = ApiPresentation.prototype.SetLoopUntilStopped;
 
     ApiMaster.prototype["GetClassType"]                   = ApiMaster.prototype.GetClassType;
     ApiMaster.prototype["GetInternalId"]                  = ApiMaster.prototype.GetInternalId;
@@ -5854,13 +8151,56 @@
     ApiSlide.prototype["GroupDrawings"]                   = ApiSlide.prototype.GroupDrawings;
 	ApiSlide.prototype["GetNotesPage"]                    = ApiSlide.prototype.GetNotesPage;
 	ApiSlide.prototype["AddNotesText"]                    = ApiSlide.prototype.AddNotesText;
+	ApiSlide.prototype["GetSlideShowTransition"]          = ApiSlide.prototype.GetSlideShowTransition;
+	ApiSlide.prototype["SetSlideShowTransition"]          = ApiSlide.prototype.SetSlideShowTransition;
+	ApiSlide.prototype["GetTimeLine"]                     = ApiSlide.prototype.GetTimeLine;
 
 	ApiNotesPage.prototype["GetClassType"]                = ApiNotesPage.prototype.GetClassType;
 	ApiNotesPage.prototype["GetBodyShape"]                = ApiNotesPage.prototype.GetBodyShape;
 	ApiNotesPage.prototype["AddBodyShapeText"]            = ApiNotesPage.prototype.AddBodyShapeText;
 	ApiNotesPage.prototype["GetBodyShapeText"]            = ApiNotesPage.prototype.GetBodyShapeText;
 	ApiNotesPage.prototype["GetTheme"]                    = ApiNotesPage.prototype.GetTheme;
-    
+
+	ApiSlideShowTransition.prototype["GetClassType"]      = ApiSlideShowTransition.prototype.GetClassType;
+	ApiSlideShowTransition.prototype["GetEntryEffect"]    = ApiSlideShowTransition.prototype.GetEntryEffect;
+	ApiSlideShowTransition.prototype["SetEntryEffect"]    = ApiSlideShowTransition.prototype.SetEntryEffect;
+	ApiSlideShowTransition.prototype["GetDuration"]       = ApiSlideShowTransition.prototype.GetDuration;
+	ApiSlideShowTransition.prototype["SetDuration"]       = ApiSlideShowTransition.prototype.SetDuration;
+	ApiSlideShowTransition.prototype["GetSpeed"]          = ApiSlideShowTransition.prototype.GetSpeed;
+	ApiSlideShowTransition.prototype["SetSpeed"]          = ApiSlideShowTransition.prototype.SetSpeed;
+	ApiSlideShowTransition.prototype["GetAdvanceOnClick"] = ApiSlideShowTransition.prototype.GetAdvanceOnClick;
+	ApiSlideShowTransition.prototype["SetAdvanceOnClick"] = ApiSlideShowTransition.prototype.SetAdvanceOnClick;
+	ApiSlideShowTransition.prototype["GetAdvanceOnTime"]  = ApiSlideShowTransition.prototype.GetAdvanceOnTime;
+	ApiSlideShowTransition.prototype["SetAdvanceOnTime"]  = ApiSlideShowTransition.prototype.SetAdvanceOnTime;
+	ApiSlideShowTransition.prototype["GetAdvanceTime"]    = ApiSlideShowTransition.prototype.GetAdvanceTime;
+	ApiSlideShowTransition.prototype["SetAdvanceTime"]    = ApiSlideShowTransition.prototype.SetAdvanceTime;
+
+	ApiTimeLine.prototype["GetClassType"]                 = ApiTimeLine.prototype.GetClassType;
+	ApiTimeLine.prototype["GetMainSequence"]              = ApiTimeLine.prototype.GetMainSequence;
+	ApiTimeLine.prototype["GetInteractiveSequences"]      = ApiTimeLine.prototype.GetInteractiveSequences;
+	ApiTimeLine.prototype["AddInteractiveSequence"]       = ApiTimeLine.prototype.AddInteractiveSequence;
+	ApiTimeLine.prototype["GetAllEffects"]                = ApiTimeLine.prototype.GetAllEffects;
+
+	ApiAnimationSequence.prototype["GetClassType"]        = ApiAnimationSequence.prototype.GetClassType;
+	ApiAnimationSequence.prototype["GetCount"]            = ApiAnimationSequence.prototype.GetCount;
+	ApiAnimationSequence.prototype["GetEffect"]           = ApiAnimationSequence.prototype.GetEffect;
+	ApiAnimationSequence.prototype["AddEffect"]           = ApiAnimationSequence.prototype.AddEffect;
+	ApiAnimationSequence.prototype["RemoveAllEffects"]    = ApiAnimationSequence.prototype.RemoveAllEffects;
+
+	ApiAnimationEffect.prototype["GetClassType"]          = ApiAnimationEffect.prototype.GetClassType;
+	ApiAnimationEffect.prototype["GetEffectType"]         = ApiAnimationEffect.prototype.GetEffectType;
+	ApiAnimationEffect.prototype["GetTriggerType"]        = ApiAnimationEffect.prototype.GetTriggerType;
+	ApiAnimationEffect.prototype["SetTriggerType"]        = ApiAnimationEffect.prototype.SetTriggerType;
+	ApiAnimationEffect.prototype["GetDuration"]           = ApiAnimationEffect.prototype.GetDuration;
+	ApiAnimationEffect.prototype["SetDuration"]           = ApiAnimationEffect.prototype.SetDuration;
+	ApiAnimationEffect.prototype["GetDelay"]              = ApiAnimationEffect.prototype.GetDelay;
+	ApiAnimationEffect.prototype["SetDelay"]              = ApiAnimationEffect.prototype.SetDelay;
+	ApiAnimationEffect.prototype["GetShape"]              = ApiAnimationEffect.prototype.GetShape;
+	ApiAnimationEffect.prototype["Delete"]                = ApiAnimationEffect.prototype.Delete;
+	ApiAnimationEffect.prototype["MoveTo"]                = ApiAnimationEffect.prototype.MoveTo;
+	ApiAnimationEffect.prototype["GetRepeatCount"]        = ApiAnimationEffect.prototype.GetRepeatCount;
+	ApiAnimationEffect.prototype["SetRepeatCount"]        = ApiAnimationEffect.prototype.SetRepeatCount;
+
     ApiDrawing.prototype["GetClassType"]                  = ApiDrawing.prototype.GetClassType;
     ApiDrawing.prototype["SetSize"]                       = ApiDrawing.prototype.SetSize;
     ApiDrawing.prototype["SetPosition"]                   = ApiDrawing.prototype.SetPosition;
@@ -5874,15 +8214,24 @@
     ApiDrawing.prototype["GetPlaceholder"]                = ApiDrawing.prototype.GetPlaceholder;
     ApiDrawing.prototype["GetWidth"]                      = ApiDrawing.prototype.GetWidth;
 	ApiDrawing.prototype["GetHeight"]                     = ApiDrawing.prototype.GetHeight;
+	ApiDrawing.prototype["GetName"]                       = ApiDrawing.prototype.GetName;
+	ApiDrawing.prototype["SetName"]                       = ApiDrawing.prototype.SetName;
     ApiDrawing.prototype["GetLockValue"]                  = ApiDrawing.prototype.GetLockValue;
     ApiDrawing.prototype["SetLockValue"]                  = ApiDrawing.prototype.SetLockValue;
     ApiDrawing.prototype["Select"]                        = ApiDrawing.prototype.Select;
+    ApiDrawing.prototype["Unselect"]                      = ApiDrawing.prototype.Unselect;
     ApiDrawing.prototype["SetRotation"]                   = ApiDrawing.prototype.SetRotation;
     ApiDrawing.prototype["GetRotation"]                   = ApiDrawing.prototype.GetRotation;
+    ApiDrawing.prototype["GetFlipH"]                      = ApiDrawing.prototype.GetFlipH;
+    ApiDrawing.prototype["GetFlipV"]                      = ApiDrawing.prototype.GetFlipV;
+    ApiDrawing.prototype["SetFlipH"]                      = ApiDrawing.prototype.SetFlipH;
+    ApiDrawing.prototype["SetFlipV"]                      = ApiDrawing.prototype.SetFlipV;
     ApiDrawing.prototype["GetPosX"]                       = ApiDrawing.prototype.GetPosX;
     ApiDrawing.prototype["GetPosY"]                       = ApiDrawing.prototype.GetPosY;
     ApiDrawing.prototype["SetPosX"]                       = ApiDrawing.prototype.SetPosX;
     ApiDrawing.prototype["SetPosY"]                       = ApiDrawing.prototype.SetPosY;
+    ApiDrawing.prototype["SetHyperlink"]                  = ApiDrawing.prototype.SetHyperlink;
+    ApiDrawing.prototype["GetHyperlink"]                  = ApiDrawing.prototype.GetHyperlink;
   
     ApiDrawing.prototype["ReplacePlaceholder"]            = ApiDrawing.prototype.ReplacePlaceholder;
     ApiDrawing.prototype["GetInternalId"]                 = ApiDrawing.prototype.GetInternalId;
@@ -5891,24 +8240,63 @@
 	ApiGroup.prototype["Ungroup"]		= ApiGroup.prototype.Ungroup;
 
     ApiDrawing.prototype["ToJSON"]                        = ApiDrawing.prototype.ToJSON;
+    ApiDrawing.prototype["Fill"]                          = ApiDrawing.prototype.Fill;
+    ApiDrawing.prototype["SetOutLine"]                    = ApiDrawing.prototype.SetOutLine;
 
 
-	let ApiChart = AscBuilder.ApiChart;
-	ApiChart.prototype["SetSize"]         = ApiChart.prototype.SetSize           = ApiDrawing.prototype.SetSize;
-	ApiChart.prototype["SetPosition"]     = ApiChart.prototype.SetPosition       = ApiDrawing.prototype.SetPosition;
-	ApiChart.prototype["GetParent"]       = ApiChart.prototype.GetParent         = ApiDrawing.prototype.GetParent;
-	ApiChart.prototype["GetParentSlide"]  = ApiChart.prototype.GetParentSlide    = ApiDrawing.prototype.GetParentSlide;
-	ApiChart.prototype["GetParentLayout"] = ApiChart.prototype.GetParentLayout   = ApiDrawing.prototype.GetParentLayout;
-	ApiChart.prototype["GetParentMaster"] = ApiChart.prototype.GetParentMaster   = ApiDrawing.prototype.GetParentMaster;
-	ApiChart.prototype["Delete"]          = ApiChart.prototype.Delete            = ApiDrawing.prototype.Delete;
-	ApiChart.prototype["SetPlaceholder"]  = ApiChart.prototype.SetPlaceholder    = ApiDrawing.prototype.SetPlaceholder;
-	ApiChart.prototype["GetPlaceholder"]  = ApiChart.prototype.GetPlaceholder    = ApiDrawing.prototype.GetPlaceholder;
-	ApiChart.prototype["GetWidth"]        = ApiChart.prototype.GetWidth          = ApiDrawing.prototype.GetWidth;
-	ApiChart.prototype["GetHeight"]       = ApiChart.prototype.GetHeight         = ApiDrawing.prototype.GetHeight;
-	ApiChart.prototype["GetLockValue"]    = ApiChart.prototype.GetLockValue      = ApiDrawing.prototype.GetLockValue;
-	ApiChart.prototype["SetLockValue"]    = ApiChart.prototype.SetLockValue      = ApiDrawing.prototype.SetLockValue;
+	ApiChart.prototype["GetClassType"] = ApiChart.prototype.GetClassType = AscBuilder.ApiChart.prototype.GetClassType;
+	ApiChart.prototype["GetChartType"] = ApiChart.prototype.GetChartType = AscBuilder.ApiChart.prototype.GetChartType;
+	ApiChart.prototype["SetTitle"] = ApiChart.prototype.SetTitle = AscBuilder.ApiChart.prototype.SetTitle;
+	ApiChart.prototype["GetTitle"] = ApiChart.prototype.GetTitle = AscBuilder.ApiChart.prototype.GetTitle;
+	ApiChart.prototype["SetHorAxisTitle"] = ApiChart.prototype.SetHorAxisTitle = AscBuilder.ApiChart.prototype.SetHorAxisTitle;
+	ApiChart.prototype["SetVerAxisTitle"] = ApiChart.prototype.SetVerAxisTitle = AscBuilder.ApiChart.prototype.SetVerAxisTitle;
+	ApiChart.prototype["SetVerAxisOrientation"] = ApiChart.prototype.SetVerAxisOrientation = AscBuilder.ApiChart.prototype.SetVerAxisOrientation;
+	ApiChart.prototype["SetHorAxisOrientation"] = ApiChart.prototype.SetHorAxisOrientation = AscBuilder.ApiChart.prototype.SetHorAxisOrientation;
+	ApiChart.prototype["SetLegendPos"] = ApiChart.prototype.SetLegendPos = AscBuilder.ApiChart.prototype.SetLegendPos;
+	ApiChart.prototype["SetLegendFontSize"] = ApiChart.prototype.SetLegendFontSize = AscBuilder.ApiChart.prototype.SetLegendFontSize;
+	ApiChart.prototype["SetShowDataLabels"] = ApiChart.prototype.SetShowDataLabels = AscBuilder.ApiChart.prototype.SetShowDataLabels;
+	ApiChart.prototype["SetShowPointDataLabel"] = ApiChart.prototype.SetShowPointDataLabel = AscBuilder.ApiChart.prototype.SetShowPointDataLabel;
+	ApiChart.prototype["SetVertAxisTickLabelPosition"] = ApiChart.prototype.SetVertAxisTickLabelPosition = AscBuilder.ApiChart.prototype.SetVertAxisTickLabelPosition;
+	ApiChart.prototype["SetHorAxisTickLabelPosition"] = ApiChart.prototype.SetHorAxisTickLabelPosition = AscBuilder.ApiChart.prototype.SetHorAxisTickLabelPosition;
+	ApiChart.prototype["SetHorAxisMajorTickMark"] = ApiChart.prototype.SetHorAxisMajorTickMark = AscBuilder.ApiChart.prototype.SetHorAxisMajorTickMark;
+	ApiChart.prototype["SetHorAxisMinorTickMark"] = ApiChart.prototype.SetHorAxisMinorTickMark = AscBuilder.ApiChart.prototype.SetHorAxisMinorTickMark;
+	ApiChart.prototype["SetVertAxisMajorTickMark"] = ApiChart.prototype.SetVertAxisMajorTickMark = AscBuilder.ApiChart.prototype.SetVertAxisMajorTickMark;
+	ApiChart.prototype["SetVertAxisMinorTickMark"] = ApiChart.prototype.SetVertAxisMinorTickMark = AscBuilder.ApiChart.prototype.SetVertAxisMinorTickMark;
+	ApiChart.prototype["SetMajorVerticalGridlines"] = ApiChart.prototype.SetMajorVerticalGridlines = AscBuilder.ApiChart.prototype.SetMajorVerticalGridlines;
+	ApiChart.prototype["SetMinorVerticalGridlines"] = ApiChart.prototype.SetMinorVerticalGridlines = AscBuilder.ApiChart.prototype.SetMinorVerticalGridlines;
+	ApiChart.prototype["SetMajorHorizontalGridlines"] = ApiChart.prototype.SetMajorHorizontalGridlines = AscBuilder.ApiChart.prototype.SetMajorHorizontalGridlines;
+	ApiChart.prototype["SetMinorHorizontalGridlines"] = ApiChart.prototype.SetMinorHorizontalGridlines = AscBuilder.ApiChart.prototype.SetMinorHorizontalGridlines;
+	ApiChart.prototype["SetHorAxisLabelsFontSize"] = ApiChart.prototype.SetHorAxisLabelsFontSize = AscBuilder.ApiChart.prototype.SetHorAxisLabelsFontSize;
+	ApiChart.prototype["SetHorAxisLablesFontSize"] = ApiChart.prototype.SetHorAxisLabelsFontSize;
+	ApiChart.prototype["SetVertAxisLabelsFontSize"] = ApiChart.prototype.SetVertAxisLabelsFontSize = AscBuilder.ApiChart.prototype.SetVertAxisLabelsFontSize;
+	ApiChart.prototype["SetVertAxisLablesFontSize"] = ApiChart.prototype.SetVertAxisLabelsFontSize;
+	ApiChart.prototype["RemoveSeria"] = ApiChart.prototype.RemoveSeria = AscBuilder.ApiChart.prototype.RemoveSeria;
+	ApiChart.prototype["SetSeriaValues"] = ApiChart.prototype.SetSeriaValues = AscBuilder.ApiChart.prototype.SetSeriaValues;
+	ApiChart.prototype["SetXValues"] = ApiChart.prototype.SetXValues = AscBuilder.ApiChart.prototype.SetXValues;
+	ApiChart.prototype["SetSeriaName"] = ApiChart.prototype.SetSeriaName = AscBuilder.ApiChart.prototype.SetSeriaName;
+	ApiChart.prototype["SetCategoryName"] = ApiChart.prototype.SetCategoryName = AscBuilder.ApiChart.prototype.SetCategoryName;
+	ApiChart.prototype["ApplyChartStyle"] = ApiChart.prototype.ApplyChartStyle = AscBuilder.ApiChart.prototype.ApplyChartStyle;
+	ApiChart.prototype["SetPlotAreaFill"] = ApiChart.prototype.SetPlotAreaFill = AscBuilder.ApiChart.prototype.SetPlotAreaFill;
+	ApiChart.prototype["SetPlotAreaOutLine"] = ApiChart.prototype.SetPlotAreaOutLine = AscBuilder.ApiChart.prototype.SetPlotAreaOutLine;
+	ApiChart.prototype["SetSeriesFill"] = ApiChart.prototype.SetSeriesFill = AscBuilder.ApiChart.prototype.SetSeriesFill;
+	ApiChart.prototype["SetSeriesOutLine"] = ApiChart.prototype.SetSeriesOutLine = AscBuilder.ApiChart.prototype.SetSeriesOutLine;
+	ApiChart.prototype["SetDataPointFill"] = ApiChart.prototype.SetDataPointFill = AscBuilder.ApiChart.prototype.SetDataPointFill;
+	ApiChart.prototype["SetDataPointOutLine"] = ApiChart.prototype.SetDataPointOutLine = AscBuilder.ApiChart.prototype.SetDataPointOutLine;
+	ApiChart.prototype["SetMarkerFill"] = ApiChart.prototype.SetMarkerFill = AscBuilder.ApiChart.prototype.SetMarkerFill;
+	ApiChart.prototype["SetMarkerOutLine"] = ApiChart.prototype.SetMarkerOutLine = AscBuilder.ApiChart.prototype.SetMarkerOutLine;
+	ApiChart.prototype["SetTitleFill"] = ApiChart.prototype.SetTitleFill = AscBuilder.ApiChart.prototype.SetTitleFill;
+	ApiChart.prototype["SetTitleOutLine"] = ApiChart.prototype.SetTitleOutLine = AscBuilder.ApiChart.prototype.SetTitleOutLine;
+	ApiChart.prototype["SetLegendFill"] = ApiChart.prototype.SetLegendFill = AscBuilder.ApiChart.prototype.SetLegendFill;
+	ApiChart.prototype["SetLegendOutLine"] = ApiChart.prototype.SetLegendOutLine = AscBuilder.ApiChart.prototype.SetLegendOutLine;
+	ApiChart.prototype["SetAxieNumFormat"] = ApiChart.prototype.SetAxieNumFormat = AscBuilder.ApiChart.prototype.SetAxieNumFormat;
+	ApiChart.prototype["SetSeriaNumFormat"] = ApiChart.prototype.SetSeriaNumFormat = AscBuilder.ApiChart.prototype.SetSeriaNumFormat;
+	ApiChart.prototype["SetDataPointNumFormat"] = ApiChart.prototype.SetDataPointNumFormat = AscBuilder.ApiChart.prototype.SetDataPointNumFormat;
+	ApiChart.prototype["GetAllSeries"] = ApiChart.prototype.GetAllSeries = AscBuilder.ApiChart.prototype.GetAllSeries;
+	ApiChart.prototype["GetSeries"] = ApiChart.prototype.GetSeries = AscBuilder.ApiChart.prototype.GetSeries;
 
     ApiImage.prototype["GetClassType"]                    = ApiImage.prototype.GetClassType;
+
+    ApiSmartArt.prototype["GetClassType"]                 = ApiSmartArt.prototype.GetClassType;
 
     ApiShape.prototype["GetClassType"]                    = ApiShape.prototype.GetClassType;
     ApiShape.prototype["GetDocContent"]                   = ApiShape.prototype.GetDocContent;
@@ -5916,6 +8304,11 @@
     ApiShape.prototype["SetVerticalTextAlign"]            = ApiShape.prototype.SetVerticalTextAlign;
 	ApiShape.prototype["GetGeometry"]                     = ApiShape.prototype.GetGeometry;
 	ApiShape.prototype["SetGeometry"]                     = ApiShape.prototype.SetGeometry;
+	ApiShape.prototype["SetFill"]                         = ApiShape.prototype.SetFill;
+	ApiShape.prototype["GetFill"]                         = ApiShape.prototype.GetFill;
+	ApiShape.prototype["SetLine"]                         = ApiShape.prototype.SetLine;
+	ApiShape.prototype["GetLine"]                         = ApiShape.prototype.GetLine;
+	ApiShape.prototype["SetPaddings"]                     = ApiShape.prototype.SetPaddings;
 
     ApiOleObject.prototype["GetClassType"]                = ApiOleObject.prototype.GetClassType;
 	ApiOleObject.prototype["SetData"]                     = ApiOleObject.prototype.SetData;
@@ -5932,6 +8325,7 @@
     ApiTable.prototype["RemoveRow"]                       = ApiTable.prototype.RemoveRow;
     ApiTable.prototype["RemoveColumn"]                    = ApiTable.prototype.RemoveColumn;
     ApiTable.prototype["SetShd"]                          = ApiTable.prototype.SetShd;
+	ApiTable.prototype["SetSize"]                         = ApiTable.prototype.SetSize;
     ApiTable.prototype["ToJSON"]    				      = ApiTable.prototype.ToJSON;
 
     ApiTableRow.prototype["GetClassType"]                 = ApiTableRow.prototype.GetClassType;
@@ -5953,18 +8347,16 @@
     ApiTableCell.prototype["SetVerticalAlign"]            = ApiTableCell.prototype.SetVerticalAlign;
     ApiTableCell.prototype["SetTextDirection"]            = ApiTableCell.prototype.SetTextDirection;
 
-
-
-    Api.prototype.private_CreateApiSlide = function(oSlide){
+    Api.private_CreateApiSlide = function(oSlide){
         return new ApiSlide(oSlide);
     };
-    Api.prototype.private_CreateApiMaster = function(oMaster){
+    Api.private_CreateApiMaster = function(oMaster){
         return new ApiMaster(oMaster);
     };
-    Api.prototype.private_CreateApiLayout = function(oLayout){
+    Api.private_CreateApiLayout = function(oLayout){
         return new ApiLayout(oLayout);
     };
-    Api.prototype.private_CreateApiPresentation = function(oPresentation){
+    Api.private_CreateApiPresentation = function(oPresentation){
         return new ApiPresentation(oPresentation);
     };
 
@@ -6072,7 +8464,7 @@
 	ApiSelection.prototype["IsEmpty"]                     = ApiSelection.prototype.IsEmpty;
 
     function private_GetCurrentSlide(){
-        var oApiPresentation = editor.GetPresentation();
+        var oApiPresentation = Api.GetPresentation();
         if(oApiPresentation){
             var oApiSlide = oApiPresentation.GetCurrentSlide();
             if(oApiSlide){
@@ -6094,12 +8486,7 @@
     {
         return EMU / 36000.0;
     }
-
-    function private_GetApi(){
-        return Asc.editor;
-    }
-
-
+	
     function private_GetBoolean(bValue, bDefValue)
     {
         if (true === bValue)
@@ -6361,11 +8748,32 @@
 
 	
 	window['AscBuilder'] = window['AscBuilder'] || {};
-	window['AscBuilder'].ApiShape = ApiShape;
-	window['AscBuilder'].ApiImage = ApiImage;
-	window['AscBuilder'].ApiGroup = ApiGroup;
-	window['AscBuilder'].ApiOleObject = ApiOleObject;
-	window['AscBuilder'].ApiTable = ApiTable;
+	
+	window['AscBuilder']["Slide"] = window['AscBuilder'].Slide = window['AscBuilder'].Slide || {};
+	AscBuilder.Slide["Api"] = AscBuilder.Slide.Api = Api;
+	
+	AscBuilder.Slide.init = function()
+	{
+		AscBuilder.ApiDrawing   = ApiDrawing;
+		AscBuilder.ApiShape     = ApiShape;
+		AscBuilder.ApiImage     = ApiImage;
+		AscBuilder.ApiGroup     = ApiGroup;
+		AscBuilder.ApiSmartArt  = ApiSmartArt;
+		AscBuilder.ApiOleObject = ApiOleObject;
+		AscBuilder.ApiChart     = ApiChart;
+		
+		// for backward compatibility
+		Api.sendEvent = Api["sendEvent"] = function()
+		{
+			Asc.editor.sendEvent.apply(Asc.editor, arguments);
+		};
+		
+		Api.AI = Api["AI"] = function()
+		{
+			Asc.editor.AI.apply(Asc.editor, arguments);
+		};
+	};
+	
 })(window, null);
 
 

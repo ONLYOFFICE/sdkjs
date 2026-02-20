@@ -7968,7 +7968,7 @@
 			var oTempElm   = null;
 			var arrContent = [];
 
-			if (oMathContent instanceof AscCommonWord.CDenominator || oMathContent instanceof AscCommonWord.CNumerator)
+			if (oMathContent instanceof CDenominator || oMathContent instanceof CNumerator)
 				arrContent.push(SerFracArg.call(this, oMathContent));
 			else 
 			{
@@ -8052,9 +8052,9 @@
 				return oFractionArg;
 
 			var sArgType = "";
-			if (oFractionArg instanceof AscCommonWord.CDenominator)
+			if (oFractionArg instanceof CDenominator)
 				sArgType = "den";
-			else if (oFractionArg instanceof AscCommonWord.CNumerator)
+			else if (oFractionArg instanceof CNumerator)
 				sArgType = "num";
 
 			return {
@@ -10505,7 +10505,7 @@
 	};
 	ReaderFromJSON.prototype.ParaSpacingFromJSON = function(oParsedSpacing)
 	{
-		let oSpacing = new CParaSpacing();
+		let oSpacing = new AscWord.ParaSpacing();
 
 		if (oParsedSpacing["before"] != null)
 			oSpacing.Before = private_Twips2MM(oParsedSpacing["before"]);

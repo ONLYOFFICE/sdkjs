@@ -941,7 +941,10 @@
 				{
 					code = 0x10000 + (((code & 0x3FF) << 10) | (0x03FF & val.charCodeAt(pCur++)));
 				}
-				this.WriteXmlCharCode(code);
+				if (code === 0x5F && this._isOoxmlEscapePattern(val, pCur, pEnd))
+					this.WriteXmlEscapeOoxmlChar(0x5F);
+				else
+					this.WriteXmlCharCode(code);
 			}
 		};
 		this.WriteXmlCharCode = function(code)
@@ -1004,7 +1007,10 @@
 				{
 					code = 0x10000 + (((code & 0x3FF) << 10) | (0x03FF & val.charCodeAt(pCur++)));
 				}
-				this.WriteXmlCharCodeInSingleQuote(code);
+				if (code === 0x5F && this._isOoxmlEscapePattern(val, pCur, pEnd))
+					this.WriteXmlEscapeOoxmlChar(0x5F);
+				else
+					this.WriteXmlCharCodeInSingleQuote(code);
 			}
 		};
 		this.WriteXmlCharCodeInSingleQuote = function(code)
@@ -1043,7 +1049,10 @@
 					this.WriteUtf8Char(0x3b);
 					break;
 				default:
-					this.WriteUtf8Char(code);
+					if (code < 0x20 || code >= 0xFFFE)
+						this.WriteXmlEscapeOoxmlChar(code);
+					else
+						this.WriteUtf8Char(code);
 					break;
 			}
 		};
@@ -1058,7 +1067,10 @@
 				{
 					code = 0x10000 + (((code & 0x3FF) << 10) | (0x03FF & val.charCodeAt(pCur++)));
 				}
-				this.WriteXmlCharCodeInDoubleQuote(code);
+				if (code === 0x5F && this._isOoxmlEscapePattern(val, pCur, pEnd))
+					this.WriteXmlEscapeOoxmlChar(0x5F);
+				else
+					this.WriteXmlCharCodeInDoubleQuote(code);
 			}
 		};
 		this.WriteXmlCharCodeInDoubleQuote = function(code)
@@ -1097,9 +1109,37 @@
 					this.WriteUtf8Char(0x3b);
 					break;
 				default:
-					this.WriteUtf8Char(code);
+					if (code < 0x20 || code >= 0xFFFE)
+						this.WriteXmlEscapeOoxmlChar(code);
+					else
+						this.WriteUtf8Char(code);
 					break;
 			}
+		};
+		this.WriteXmlEscapeOoxmlChar = function(code)
+		{
+			// _xHHHH_
+			var n;
+			this.WriteUtf8Char(0x5F); // _
+			this.WriteUtf8Char(0x78); // x
+			n = (code >> 12) & 0x0F; this.WriteUtf8Char(n + (n > 9 ? 0x37 : 0x30));
+			n = (code >> 8) & 0x0F; this.WriteUtf8Char(n + (n > 9 ? 0x37 : 0x30));
+			n = (code >> 4) & 0x0F; this.WriteUtf8Char(n + (n > 9 ? 0x37 : 0x30));
+			n = code & 0x0F; this.WriteUtf8Char(n + (n > 9 ? 0x37 : 0x30));
+			this.WriteUtf8Char(0x5F); // _
+		};
+		this._isOoxmlEscapePattern = function(val, pos, end)
+		{
+			// check if characters at pos form xHHHH_ pattern (after an underscore)
+			if (pos + 6 > end) return false;
+			if (val.charCodeAt(pos) !== 0x78) return false; // 'x'
+			for (var i = 1; i <= 4; i++)
+			{
+				var c = val.charCodeAt(pos + i);
+				if (!((c >= 0x30 && c <= 0x39) || (c >= 0x41 && c <= 0x46) || (c >= 0x61 && c <= 0x66)))
+					return false;
+			}
+			return val.charCodeAt(pos + 5) === 0x5F; // '_'
 		};
 		this.WriteXmlBool = function(val)
 		{
@@ -3233,73 +3273,6 @@
 			this.m_arrayPages[this.m_lPagesCount - 1].drawpath(type);
 	};
 
-	CDocumentRenderer.prototype.getFillRect = function(x, y, w, h, srcRect)
-	{
-		var __w   = w;
-		var __h   = h;
-		var _delW = Math.max(0, -srcRect.l) + Math.max(0, srcRect.r - 100) + 100;
-		var _delH = Math.max(0, -srcRect.t) + Math.max(0, srcRect.b - 100) + 100;
-
-		if (srcRect.l < 0)
-		{
-			var _off = ((-srcRect.l / _delW) * __w);
-			x += _off;
-			w -= _off;
-		}
-		if (srcRect.t < 0)
-		{
-			var _off = ((-srcRect.t / _delH) * __h);
-			y += _off;
-			h -= _off;
-		}
-		if (srcRect.r > 100)
-		{
-			var _off = ((srcRect.r - 100) / _delW) * __w;
-			w -= _off;
-		}
-		if (srcRect.b > 100)
-		{
-			var _off = ((srcRect.b - 100) / _delH) * __h;
-			h -= _off;
-		}
-
-		var _wk = 100;
-		if (srcRect.l > 0)
-			_wk -= srcRect.l;
-		if (srcRect.r < 100)
-			_wk -= (100 - srcRect.r);
-		_wk = 100 / _wk;
-
-		var _hk = 100;
-		if (srcRect.t > 0)
-			_hk -= srcRect.t;
-		if (srcRect.b < 100)
-			_hk -= (100 - srcRect.b);
-		_hk = 100 / _hk;
-
-		var _r = x + w;
-		var _b = y + h;
-
-		if (srcRect.l > 0)
-		{
-			x -= ((srcRect.l * _wk * w) / 100);
-		}
-		if (srcRect.t > 0)
-		{
-			y -= ((srcRect.t * _hk * h) / 100);
-		}
-		if (srcRect.r < 100)
-		{
-			_r += (((100 - srcRect.r) * _wk * w) / 100);
-		}
-		if (srcRect.b < 100)
-		{
-			_b += (((100 - srcRect.b) * _hk * h) / 100);
-		}
-
-		return {x: x, y: y, w: _r - x, h: _b - y};
-	};
-
 	// images
 	CDocumentRenderer.prototype.drawImage = function(img, x, y, w, h, alpha, srcRect)
 	{
@@ -3352,7 +3325,7 @@
 					this.AddClipRect(x, y, w, h);
 				}
 
-				const fillRect = this.getFillRect(x, y, w, h, srcRect);
+				const fillRect = getFillRect(x, y, w, h, srcRect);
 
 				this.m_arrayPages[this.m_lPagesCount - 1].drawImage(img, fillRect.x, fillRect.y, fillRect.w, fillRect.h);
 
@@ -4413,6 +4386,73 @@
 		this.h = 0;
 	}
 
+	function getFillRect(x, y, w, h, srcRect)
+	{
+		var __w   = w;
+		var __h   = h;
+		var _delW = Math.max(0, -srcRect.l) + Math.max(0, srcRect.r - 100) + 100;
+		var _delH = Math.max(0, -srcRect.t) + Math.max(0, srcRect.b - 100) + 100;
+
+		if (srcRect.l < 0)
+		{
+			var _off = ((-srcRect.l / _delW) * __w);
+			x += _off;
+			w -= _off;
+		}
+		if (srcRect.t < 0)
+		{
+			var _off = ((-srcRect.t / _delH) * __h);
+			y += _off;
+			h -= _off;
+		}
+		if (srcRect.r > 100)
+		{
+			var _off = ((srcRect.r - 100) / _delW) * __w;
+			w -= _off;
+		}
+		if (srcRect.b > 100)
+		{
+			var _off = ((srcRect.b - 100) / _delH) * __h;
+			h -= _off;
+		}
+
+		var _wk = 100;
+		if (srcRect.l > 0)
+			_wk -= srcRect.l;
+		if (srcRect.r < 100)
+			_wk -= (100 - srcRect.r);
+		_wk = 100 / _wk;
+
+		var _hk = 100;
+		if (srcRect.t > 0)
+			_hk -= srcRect.t;
+		if (srcRect.b < 100)
+			_hk -= (100 - srcRect.b);
+		_hk = 100 / _hk;
+
+		var _r = x + w;
+		var _b = y + h;
+
+		if (srcRect.l > 0)
+		{
+			x -= ((srcRect.l * _wk * w) / 100);
+		}
+		if (srcRect.t > 0)
+		{
+			y -= ((srcRect.t * _hk * h) / 100);
+		}
+		if (srcRect.r < 100)
+		{
+			_r += (((100 - srcRect.r) * _wk * w) / 100);
+		}
+		if (srcRect.b < 100)
+		{
+			_b += (((100 - srcRect.b) * _hk * h) / 100);
+		}
+
+		return {x: x, y: y, w: _r - x, h: _b - y};
+	}
+
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                          = window['AscCommon'] || {};
 	window['AscCommon'].CGrRFonts                = CGrRFonts;
@@ -4441,4 +4481,5 @@
 
 	window['AscCommon'].DashPatternPresets 		 = DashPatternPresets;
     window['AscCommon'].CommandType 		 	 = CommandType;
+	window['AscCommon'].getFillRect				 = getFillRect;
 })(window);

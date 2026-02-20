@@ -2095,78 +2095,88 @@ function (window, undefined) {
 	cGCD.prototype.argumentsMin = 1;
 	cGCD.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cGCD.prototype.argumentsType = [[argType.any]];
+	/**
+	 * GCD - Returns the greatest common divisor of two or more integers
+	 * The greatest common divisor is the largest integer that divides all numbers without a remainder
+	 * GCD using Euclidean algorithm
+	 * @param {...number} numbers - 1 to 255 numbers
+	 * @returns {number} Greatest common divisor
+	 */
 	cGCD.prototype.Calculate = function (arg) {
 
-		var _gcd = 0, argArr;
+		const MAX_USED_VALUE = Math.pow(2,53);
+		let _gcd = 0, argArr;
 
 		function gcd(a, b) {
-			var _a = parseInt(a), _b = parseInt(b);
-			while (_b != 0)
+			let _a = Math.floor(a), _b = Math.floor(b);
+			while (_b !== 0)
 				_b = _a % (_a = _b);
 			return _a;
 		}
 
-		for (var i = 0; i < arg.length; i++) {
-			var argI = arg[i];
+		const checkElemType = function (elem) {
+			let res;
+			if (elem.type === cElementType.empty) {
+				return new cError(cErrorType.not_available);
+			} else if (elem.type === cElementType.bool) {
+				return new cError(cErrorType.wrong_value_type);
+			} else {
+				res = elem.tocNumber();
+			}
 
-			if (argI instanceof cArea || argI instanceof cArea3D) {
+			return res;
+		}
+
+
+		for (let i = 0; i < arg.length; i++) {
+			let argI = arg[i];
+
+			if (argI.type === cElementType.cellsRange || argI.type === cElementType.cellsRange3D) {
 				argArr = argI.getValue();
-				for (var j = 0; j < argArr.length; j++) {
 
-					if (argArr[j] instanceof cError) {
-						return argArr[j];
+				for (let j = 0; j < argArr.length; j++) {
+					let elemValue = checkElemType(argArr[j]);
+
+					if (elemValue.type === cElementType.error) {
+						return elemValue;
 					}
 
-					if (argArr[j] instanceof cString) {
-						continue;
-					}
-
-					if (argArr[j] instanceof cBool) {
-						argArr[j] = argArr[j].tocNumber();
-					}
-
-					if (argArr[j].getValue() < 0) {
+					elemValue = elemValue.getValue();
+					if (elemValue < 0 || elemValue > MAX_USED_VALUE) {
 						return new cError(cErrorType.not_numeric);
 					}
 
-					_gcd = gcd(_gcd, argArr[j].getValue());
+					_gcd = gcd(_gcd, elemValue);
 				}
-			} else if (argI instanceof cArray) {
-				argArr = argI.tocNumber();
+			} else if (argI.type === cElementType.array) {
 
-				if (argArr.foreach(function (arrElem) {
+				if (argI.foreach(function (arrElem, row, col) {
+					let arrElemValue = checkElemType(arrElem);
 
-					if (arrElem instanceof cError) {
-						_gcd = arrElem;
+					if (arrElemValue.type === cElementType.error) {
+						_gcd = arrElemValue;
 						return true;
 					}
 
-					if (arrElem instanceof cBool) {
-						arrElem = arrElem.tocNumber();
-					}
-
-					if (arrElem instanceof cString) {
-						return;
-					}
-
-					if (arrElem.getValue() < 0) {
+					arrElemValue = arrElemValue.getValue();
+					if (arrElemValue < 0 || arrElemValue >= MAX_USED_VALUE) {
 						_gcd = new cError(cErrorType.not_numeric);
 						return true;
 					}
-					_gcd = gcd(_gcd, arrElem.getValue());
+					_gcd = gcd(_gcd, arrElemValue);
 
 				})) {
 					return _gcd;
 				}
 			} else {
-				argI = argI.tocNumber();
+				argI = checkElemType(argI);
 
-				if (argI.getValue() < 0) {
-					return new cError(cErrorType.not_numeric);
+				if (argI.type === cElementType.error) {
+					return argI;
 				}
 
-				if (argI instanceof cError) {
-					return argI;
+				if (argI.getValue() < 0 || argI.getValue() >= MAX_USED_VALUE) {
+					return new cError(cErrorType.not_numeric);
 				}
 
 				_gcd = gcd(_gcd, argI.getValue())
@@ -2276,14 +2286,26 @@ function (window, undefined) {
 	cLCM.prototype.argumentsMin = 1;
 	cLCM.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cLCM.prototype.argumentsType = [[argType.any]];
+	/**
+	 * The least common multiple is the smallest positive integer that is a multiple of all integer arguments number1, number2, and so on. 
+	 * Use LCM to add fractions with different denominators.
+	 * @param {number} Number1, Number2, NumberN - Number1 is required. 1 to 255 values for which you want the least common multiple. If value is not an integer, it is truncated.
+	 * @return {number} Returns the least common multiple of integers.
+	 */
 	cLCM.prototype.Calculate = function (arg) {
 
-		var _lcm = 1, argArr;
+		const EMPTY_VAL = 1;
+		const INT_LIMIT = Math.pow(2,53) + 1; // max num used in this function
+		let _lcm = 1, argArr;
 
 		function gcd(a, b) {
-			var _a = parseInt(a), _b = parseInt(b);
-			while (_b != 0)
+			let _a = parseInt(a), _b = parseInt(b);
+			while (_b != 0) {
 				_b = _a % (_a = _b);
+				if(isNaN(b)) {
+					break;
+				}
+			}
 			return _a;
 		}
 
@@ -2291,70 +2313,123 @@ function (window, undefined) {
 			return Math.abs(parseInt(a) * parseInt(b)) / gcd(a, b);
 		}
 
-		for (var i = 0; i < arg.length; i++) {
-			var argI = arg[i];
-
-			if (argI instanceof cArea || argI instanceof cArea3D) {
+		for (let i = 0; i < arg.length; i++) {
+			let argI = arg[i];
+			if (argI.type === cElementType.cellsRange || argI.type === cElementType.cellsRange3D) {
 				argArr = argI.getValue();
-				for (var j = 0; j < argArr.length; j++) {
+				for (let j = 0; j < argArr.length; j++) {
 
-					if (argArr[j] instanceof cError) {
-						return argArr[j];
-					}
-
-					if (argArr[j] instanceof cString) {
-						continue;
-					}
-
-					if (argArr[j] instanceof cBool) {
+					if (argArr[j].type === cElementType.string) {
 						argArr[j] = argArr[j].tocNumber();
 					}
 
-					if (argArr[j].getValue() <= 0) {
+					if (argArr[j].type === cElementType.error) {
+						return argArr[j];
+					}
+
+					let argValue = argArr[j].getValue();
+					if (argArr[j].type === cElementType.bool) {
+						return new cError(cErrorType.wrong_value_type);
+					}
+
+					if (argArr[j].type === cElementType.empty) {
+						argValue = EMPTY_VAL;
+					}
+
+					if (argValue < 0) {
+						return new cError(cErrorType.not_numeric);
+					} else if (argValue < 1) {
+						argValue = 0;
+					} else if (argValue > INT_LIMIT) {
 						return new cError(cErrorType.not_numeric);
 					}
 
-					_lcm = lcm(_lcm, argArr[j].getValue());
+					if (_lcm.type &&_lcm.type === cElementType.error) {
+						return _lcm;
+					} else {
+						_lcm = lcm(_lcm, argValue);
+					}
 				}
-			} else if (argI instanceof cArray) {
-				argArr = argI.tocNumber();
+			} else if (argI.type === cElementType.array) {
+				argArr = argI;
 
-				if (argArr.foreach(function (arrElem) {
+				if (argI.foreach(function (arrElem) {
 
-					if (arrElem instanceof cError) {
+					let argValue = arrElem && arrElem.getValue();
+					if (arrElem.type === cElementType.error) {
 						_lcm = arrElem;
 						return true;
 					}
 
-					if (arrElem instanceof cBool) {
-						arrElem = arrElem.tocNumber();
-					}
-
-					if (arrElem instanceof cString) {
+					if (arrElem.type === cElementType.bool) {
+						_lcm = new cError(cErrorType.wrong_value_type);
 						return;
 					}
 
-					if (arrElem.getValue() <= 0) {
+					if (arrElem.type === cElementType.string) {
+						arrElem = arrElem.tocNumber();
+						if (arrElem.type === cElementType.error) {
+							_lcm = new cError(cErrorType.wrong_value_type);
+							return;
+						}
+						argValue = arrElem.getValue();
+					}
+
+					if (arrElem.type === cElementType.empty) {
+						argValue = EMPTY_VAL;
+					}
+
+					if (argValue < 0) {
+						_lcm = new cError(cErrorType.not_numeric);
+						return true;
+					} else if (argValue < 1) {
+						_lcm = new cNumber(0);
+						return true;
+					} else if (argValue > INT_LIMIT) {
 						_lcm = new cError(cErrorType.not_numeric);
 						return true;
 					}
-					_lcm = lcm(_lcm, arrElem.getValue());
+
+					if (_lcm.type && _lcm.type === cElementType.error) {
+						return _lcm;
+					} else {
+						_lcm = lcm(_lcm, argValue);
+					}
 
 				})) {
 					return _lcm;
 				}
 			} else {
-				argI = argI.tocNumber();
+				let isEmptyArg = (argI.type === cElementType.empty);
 
-				if (argI.getValue() <= 0) {
-					return new cError(cErrorType.not_numeric);
+				if (argI.type === cElementType.bool) {
+					return new cError(cErrorType.wrong_value_type);
 				}
 
-				if (argI instanceof cError) {
+				argI = argI.tocNumber();
+
+				if (argI.type === cElementType.error) {
 					return argI;
 				}
 
-				_lcm = lcm(_lcm, argI.getValue())
+				let argValue = argI.getValue();
+				if (isEmptyArg) {
+					argValue = EMPTY_VAL;
+				}
+
+				if (argValue < 0) {
+					return new cError(cErrorType.not_numeric);
+				} else if (argValue < 1) {
+					return new cNumber(0);
+				} else if (argValue > INT_LIMIT) {
+					return new cError(cErrorType.not_numeric);
+				}
+
+				if (_lcm.type && _lcm.type === cElementType.error) {
+					return _lcm;
+				} else {
+					_lcm = lcm(_lcm, argValue);
+				}
 			}
 		}
 
@@ -3493,45 +3568,74 @@ function (window, undefined) {
 	cPRODUCT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cPRODUCT.prototype.argumentsType = [[argType.number]];
 	cPRODUCT.prototype.Calculate = function (arg) {
-		var element, arg0 = new cNumber(1);
-		for (var i = 0; i < arg.length; i++) {
+
+		let element, arg0 = new cNumber(1), isFoundValue;
+		for (let i = 0; i < arg.length; i++) {
 			element = arg[i];
-			if (cElementType.cellsRange === element.type || cElementType.cellsRange3D === element.type) {
-				var _arrVal = element.getValue(this.checkExclude, this.excludeHiddenRows, this.excludeErrorsVal,
-					this.excludeNestedStAg);
-				for (var j = 0; j < _arrVal.length; j++) {
-					if (_arrVal[j].type !== cElementType.string) {
-						arg0 = _func[arg0.type][_arrVal[j].type](arg0, _arrVal[j], "*");
-						if (cElementType.error === arg0.type) {
-							return arg0;
+
+			let is3DArea = cElementType.cellsRange3D === element.type;
+
+			if (cElementType.cellsRange === element.type || is3DArea || cElementType.array === element.type) {
+				let dimensions = element.getDimensions();
+				for (let row = 0; row < dimensions.row; row++) {
+					for (let col = 0; col < dimensions.col; col++) {
+						let elem = is3DArea ? element.getValueByRowCol(row, col) : element.getValue2(row, col);
+						if(!elem || elem.type === cElementType.empty || elem.type === cElementType.bool) {
+							continue;
 						}
+
+						if (elem.type === cElementType.error) {
+							return elem;
+						}
+
+						elem = elem.tocNumber();
+						if (elem.type === cElementType.number) {
+							isFoundValue = true;
+							arg0 = _func[arg0.type][elem.type](arg0, elem, "*");
+						}
+						
 					}
 				}
 			} else if (cElementType.cell === element.type || cElementType.cell3D === element.type) {
 				if (!this.checkExclude || !element.isHidden(this.excludeHiddenRows)) {
-					var _arg = element.getValue();
-					if (_arg.type !== cElementType.string) {
+					let _arg = element.getValue();
+					if (_arg.type === cElementType.empty || _arg.type === cElementType.bool) {
+						continue;
+					}
+
+					if (_arg.type === cElementType.error) {
+						return _arg;
+					}
+
+					_arg = _arg.tocNumber();
+					if (_arg.type === cElementType.number) {
+						isFoundValue = true;
 						arg0 = _func[arg0.type][_arg.type](arg0, _arg, "*");
 					}
 				}
-			} else if (cElementType.array === element.type) {
-				element.foreach(function (elem) {
-					if (cElementType.string === elem.type || cElementType.bool === elem.type ||
-						cElementType.empty === elem.type) {
-						return;
-					}
-
-					arg0 = _func[arg0.type][elem.type](arg0, elem, "*");
-				})
 			} else {
-				arg0 = _func[arg0.type][element.type](arg0, element, "*");
+				if (element.type === cElementType.empty) {
+					continue;
+				}
+
+				if (element.type === cElementType.error) {
+					return element;
+				}
+
+				element = element.tocNumber();
+				if (element.type === cElementType.number) {
+					isFoundValue = true;
+					arg0 = _func[arg0.type][element.type](arg0, element, "*");
+				} else if (element.type === cElementType.error) {
+					return element;
+				}
 			}
 			if (cElementType.error === arg0.type) {
 				return arg0;
 			}
 
 		}
-		return arg0;
+		return isFoundValue ? arg0 : new cNumber(0);
 	};
 
 	/**

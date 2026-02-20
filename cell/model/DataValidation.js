@@ -75,10 +75,13 @@
 			this._formula.buildDependencies();
 		}
 	};
-	CDataFormula.prototype.clone = function () {
+	CDataFormula.prototype.clone = function (fullClone) {
 		var res = new CDataFormula();
 		res.text = this.text;
 		//this._formula = null;
+		if (fullClone && this._formula) {
+			res._formula = this._formula.clone();
+		}
 		return res;
 	};
 	CDataFormula.prototype.onFormulaEvent = function (type, eventData) {
@@ -117,6 +120,90 @@
 	CDataFormula.prototype.setOffset = function (offset) {
 		if (this._formula) {
 			this.text = this._formula.changeOffset(offset, null, true).assemble(true);
+		}
+	};
+
+	CDataFormula.prototype.correctToInterface = function (ws, oValidation){
+		let data = {
+			val : this.text,
+			isNum: isNum(this.text),
+		}
+
+		const isQuoted = function (data) {
+			return typeof data.val === "string" && data.val.length >=2 && data.val[0] === '"';
+		}
+
+		const normalizeText = function (data, wasQuoted) {
+
+			if (wasQuoted) {
+				let _val = data.val;
+
+				_val = _val.slice(1, -1);
+				let _isNum = isNum(_val);
+
+				// _val is not number, so we need to replace double quotes to single ones
+				if (!_isNum) {
+					_val = _val.replace(/\"\"/g, "\"")
+				}
+
+				data = { val: _val, isNum: _isNum  };
+			}
+
+			return data;
+		}
+
+		const t = this;
+		const fromNumberToString = function (data) {
+			let _format;
+			if (oValidation.type === Asc.EDataValidationType.Date) {
+				_format = AscCommon.oNumFormatCache.get("m/d/yyyy");
+			} else if (oValidation.type === Asc.EDataValidationType.Time) {
+				_format = AscCommon.oNumFormatCache.get("h:mm:ss AM/PM");
+			}
+
+			// convert to corresponding string
+			if (_format) {
+				let formatVal = _format.format(data.val);
+				if (formatVal && formatVal[0] && formatVal[0].text) {
+					t.asc_setValue(formatVal[0].text);
+				}
+			}
+		}
+
+		const toListPreview = function (data) {
+			const parts = data.val
+				.split(/[,]/g)
+				.map(function (s) {
+					return s.trim();
+				})
+				.filter(Boolean);
+
+			if (parts.length > 1) {
+				t.asc_setValue(parts.join(AscCommon.FormulaSeparators.functionArgumentSeparator));
+				return;
+			}
+
+			t.asc_setValue((parts[0] || data.val).trim());
+		}
+
+		// fix the text from quotes
+		const wasQuoted = isQuoted(data);
+		data = normalizeText(data, wasQuoted);
+		if (data.isNum) {
+			fromNumberToString(data);
+		} else {
+			if (wasQuoted && oValidation.type === Asc.EDataValidationType.List) {
+				toListPreview(data);
+			} else if (this && this._formula) {
+				//если формула содержит ссылки на диапазоны, то в зависимости от активной области нужно их сдвинуть
+				var offset = oValidation.calculateOffset(ws);
+				if (offset) {
+					this._formula.changeOffset(offset);
+				}
+
+				const formulaVal = this._formula.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale);
+				this.asc_setValue("=" + formulaVal);
+			}
 		}
 	};
 
@@ -1049,56 +1136,11 @@
 	};
 
 	CDataValidation.prototype.correctToInterface = function (ws) {
-		var t = this;
-		var doCorrect = function (_formula) {
-			var _val = _formula.text;
-
-			//если формула
-			var _isNum = isNum(_val);
-			if (_val[0] === '"' || _isNum) {
-				if (!_isNum) {
-					_val = _formula.text = _val.slice(1, -1);
-					_isNum = isNum(_val);
-					if (!_isNum) {
-						_val = _formula.text = _val.replace(/\"\"/g, "\"");
-					}
-				}
-
-				if (_isNum) {
-					//переводим в дату
-					var _format;
-					if (t.type === Asc.EDataValidationType.Date) {
-						_format = AscCommon.oNumFormatCache.get("m/d/yyyy");
-					} else if (t.type === Asc.EDataValidationType.Time) {
-						_format = AscCommon.oNumFormatCache.get("h:mm:ss AM/PM");
-					}
-					if (_format) {
-						var dateVal = _format.format(_val);
-						if (dateVal && dateVal[0] && dateVal[0].text) {
-							_formula.text = dateVal[0].text;
-						}
-					}
-				}
-
-			} else {
-				if (_formula && _formula._formula) {
-					//если формула содержит ссылки на диапазоны, то в зависимости от активной области нужно их сдвинуть
-					var offset = t.calculateOffset(ws);
-					if (offset) {
-						_formula._formula.changeOffset(offset);
-					}
-					_formula.text = "=" + _formula._formula.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale);
-				} else {
-					_formula.text = "=" + _val;
-				}
-			}
-		};
-
 		if (this.formula1) {
-			doCorrect(this.formula1);
+			this.formula1.correctToInterface(ws, this);
 		}
 		if (this.formula2) {
-			doCorrect(this.formula2);
+			this.formula2.correctToInterface(ws, this);
 		}
 	};
 
@@ -1149,6 +1191,21 @@
 				if (isDate) {
 					_formula.text = isDate.value;
 					return;
+				}
+
+				if (t.type === Asc.EDataValidationType.List && typeof _formula.text === "string" && _formula.text[0] !== "=") {
+					const uiSep = AscCommon.FormulaSeparators.functionArgumentSeparator;
+					const defSep = AscCommon.FormulaSeparators.functionArgumentSeparatorDef;
+
+					if (uiSep && defSep && uiSep !== defSep) {
+						_formula.text = _formula.text
+							.split(uiSep)
+							.map(function(s) {
+								return s.trim();
+							})
+							.filter(Boolean)
+							.join(defSep);
+					}
 				}
 
 				if (!isFormula) {
@@ -1399,7 +1456,6 @@
 							}
 
 							val._init(ws);
-							val.correctToInterface(ws);
 							ws.dataValidations.change(ws, originalValidation, val, addToHistory);
 							// adjust j to skip over newly added ranges
 							j += newRanges.length - 1;
@@ -1448,7 +1504,6 @@
 							}
 
 							val._init(ws);
-							val.correctToInterface(ws);
 
 							ws.dataValidations.change(ws, originalValidation, val, addToHistory);
 							// adjust j to skip over newly added ranges
@@ -1476,7 +1531,6 @@
 
 		for (let i = 0; i < res.length; i++) {
 			res[i]._init(ws);
-			res[i].correctToInterface(ws);
 		}
 		return res;
 	}

@@ -241,6 +241,7 @@ $(function () {
 	});
 
 	QUnit.module("Math");
+	AscCommonWord.b_DoAutoCorrectMathSymbols = true;
 
 	function AddText(m, str)
 	{

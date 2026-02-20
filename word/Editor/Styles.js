@@ -10089,6 +10089,17 @@ CDocumentShd.prototype.GetSimpleColor = function(oTheme, oColorMap)
 
 	return oResultColor;
 };
+CDocumentShd.prototype.GetAlpha = function(theme, colorMap)
+{
+	let unifill = this.ThemeFill;
+	if (unifill)
+	{
+		unifill.check(theme, colorMap);
+		let rgba = unifill.getRGBAColor();
+		return (rgba.A !== undefined && rgba.A !== null) ? rgba.A : 255;
+	}
+	return 255;
+};
 CDocumentShd.prototype.private_GetPctShdColor = function(nPct, strokeColor, fillColor)
 {
 	var _nPct = 1 - nPct;
@@ -15646,241 +15657,6 @@ CParaInd.prototype.IsEqual = function(oInd)
 	return (IsEqualNullableFloatNumbers(this.Left, oInd.Left) && IsEqualNullableFloatNumbers(this.Right, oInd.Right) && IsEqualNullableFloatNumbers(this.FirstLine, oInd.FirstLine));
 };
 
-function CParaSpacing()
-{
-    this.Line              = undefined; // Расстояние между строками внутри абзаца
-    this.LineRule          = undefined; // Тип расстрояния между строками
-    this.Before            = undefined; // Дополнительное расстояние до абзаца
-    this.BeforePct         = undefined; // Расстояние до абзаца в процентах от высоты строки
-    this.BeforeAutoSpacing = undefined; // Использовать ли автоматический расчет расстояния до параграфа
-    this.After             = undefined; // Дополнительное расстояние после абзаца
-    this.AfterPct          = undefined; // Расстояние после абзаца в процентах от высоты строки
-    this.AfterAutoSpacing  = undefined; // Использовать ли автоматический расчет расстояния после параграфа
-}
-
-CParaSpacing.prototype =
-{
-    Copy : function()
-    {
-        var Spacing = new CParaSpacing();
-        Spacing.Line              = this.Line;
-        Spacing.LineRule          = this.LineRule;
-        Spacing.Before            = this.Before;
-        Spacing.BeforeAutoSpacing = this.BeforeAutoSpacing;
-        Spacing.After             = this.After;
-        Spacing.AfterAutoSpacing  = this.AfterAutoSpacing;
-        Spacing.BeforePct         = this.BeforePct;
-        Spacing.AfterPct          = this.AfterPct;
-        return Spacing;
-    },
-
-    Merge : function(Spacing)
-    {
-        if ( undefined != Spacing.Line )
-            this.Line = Spacing.Line;
-
-        if ( undefined != Spacing.LineRule )
-            this.LineRule = Spacing.LineRule;
-
-        if ( undefined != Spacing.Before )
-            this.Before = Spacing.Before;
-
-        if ( undefined != Spacing.BeforeAutoSpacing )
-            this.BeforeAutoSpacing = Spacing.BeforeAutoSpacing;
-
-        if ( undefined != Spacing.After )
-            this.After = Spacing.After;
-
-        if ( undefined != Spacing.AfterAutoSpacing )
-            this.AfterAutoSpacing = Spacing.AfterAutoSpacing;
-
-        if ( undefined != Spacing.BeforePct )
-            this.BeforePct = Spacing.BeforePct;
-
-        if ( undefined != Spacing.AfterPct )
-            this.AfterPct = Spacing.AfterPct;
-    },
-
-	Is_Equal : function(Spacing)
-	{
-		return this.IsEqual(Spacing);
-	},
-
-    Set_FromObject : function(Spacing)
-    {
-        this.Line              = Spacing.Line;
-        this.LineRule          = Spacing.LineRule;
-        this.Before            = Spacing.Before;
-        this.BeforeAutoSpacing = Spacing.BeforeAutoSpacing;
-        this.After             = Spacing.After;
-        this.AfterAutoSpacing  = Spacing.AfterAutoSpacing;
-        this.BeforePct         = Spacing.BeforePct;
-        this.AfterPct          = Spacing.AfterPct;
-    },
-
-    Write_ToBinary : function(Writer)
-    {
-        var StartPos = Writer.GetCurPosition();
-        Writer.Skip(4);
-        var Flags = 0;
-
-        if ( undefined != this.Line )
-        {
-            Writer.WriteDouble( this.Line );
-            Flags |= 1;
-        }
-
-        if ( undefined != this.LineRule )
-        {
-            Writer.WriteByte( this.LineRule );
-            Flags |= 2;
-        }
-
-        if ( undefined != this.Before )
-        {
-            Writer.WriteDouble( this.Before );
-            Flags |= 4;
-        }
-
-        if ( undefined != this.After )
-        {
-            Writer.WriteDouble( this.After );
-            Flags |= 8;
-        }
-
-        if ( undefined != this.AfterAutoSpacing )
-        {
-            Writer.WriteBool( this.AfterAutoSpacing );
-            Flags |= 16;
-        }
-
-        if ( undefined != this.BeforeAutoSpacing )
-        {
-            Writer.WriteBool( this.BeforeAutoSpacing );
-            Flags |= 32;
-        }
-
-        if ( undefined != this.BeforePct )
-        {
-            Writer.WriteLong( this.BeforePct );
-            Flags |= 64;
-        }
-
-        if ( undefined != this.AfterPct )
-        {
-            Writer.WriteLong( this.AfterPct );
-            Flags |= 128;
-        }
-
-        var EndPos = Writer.GetCurPosition();
-        Writer.Seek( StartPos );
-        Writer.WriteLong( Flags );
-        Writer.Seek( EndPos );
-    },
-
-    Read_FromBinary : function(Reader)
-    {
-        var Flags = Reader.GetLong();
-
-        if ( Flags & 1 )
-            this.Line = Reader.GetDouble();
-
-        if ( Flags & 2 )
-            this.LineRule = Reader.GetByte();
-
-        if ( Flags & 4 )
-            this.Before = Reader.GetDouble();
-
-        if ( Flags & 8 )
-            this.After = Reader.GetDouble();
-
-        if ( Flags & 16 )
-            this.AfterAutoSpacing = Reader.GetBool();
-
-        if ( Flags & 32 )
-            this.BeforeAutoSpacing = Reader.GetBool();
-
-        if ( Flags & 64 )
-            this.BeforePct = Reader.GetLong();
-
-        if ( Flags & 128 )
-            this.AfterPct = Reader.GetLong();
-    }
-};
-CParaSpacing.prototype.Get_Diff = function(Spacing)
-{
-    var DiffSpacing = new CParaSpacing();
-
-    if (this.Line !== Spacing.Line)
-        DiffSpacing.Line = this.Line;
-
-    if (this.LineRule !== Spacing.LineRule)
-        DiffSpacing.LineRule = this.LineRule;
-
-    if (this.Before !== Spacing.Before)
-        DiffSpacing.Before = this.Before;
-
-    if (this.BeforeAutoSpacing !== Spacing.BeforeAutoSpacing)
-        DiffSpacing.BeforeAutoSpacing = this.BeforeAutoSpacing;
-
-    if (this.After !== Spacing.After)
-        DiffSpacing.After = this.After;
-
-    if (this.AfterAutoSpacing !== Spacing.AfterAutoSpacing)
-        DiffSpacing.AfterAutoSpacing = this.AfterAutoSpacing;
-
-    if (this.BeforePct !== Spacing.BeforePct)
-        DiffSpacing.BeforePct = this.BeforePct;
-
-    if (this.AfterPct !== Spacing.AfterPct)
-        DiffSpacing.AfterPct = this.AfterPct;
-
-
-    return DiffSpacing;
-};
-CParaSpacing.prototype.Is_Empty = function()
-{
-	if (undefined !== this.Line
-		|| undefined !== this.LineRule
-		|| undefined !== this.Before
-		|| undefined !== this.BeforeAutoSpacing
-		|| undefined !== this.After
-		|| undefined !== this.AfterAutoSpacing
-		|| undefined !== this.BeforePct
-		|| undefined !== this.AfterPct)
-		return false;
-
-	return true;
-};
-CParaSpacing.prototype.IsEmpty = function()
-{
-	return this.Is_Empty();
-};
-CParaSpacing.prototype.IsEqual = function(oSpacing)
-{
-	return (this.Line === oSpacing.Line
-		&& this.LineRule === oSpacing.LineRule
-		&& IsEqualNullableFloatNumbers(this.Before, oSpacing.Before)
-		&& IsEqualNullableFloatNumbers(this.After, oSpacing.After)
-		&& IsEqualNullableFloatNumbers(this.AfterPct, oSpacing.AfterPct)
-		&& IsEqualNullableFloatNumbers(this.BeforePct, oSpacing.BeforePct)
-		&& this.BeforeAutoSpacing === oSpacing.BeforeAutoSpacing
-		&& this.AfterAutoSpacing === oSpacing.AfterAutoSpacing);
-};
-CParaSpacing.prototype.SetLineTwips = function (val) {
-	if (null !== val && undefined !== val) {
-		if (val < 0) {
-			val = Math.abs(val);
-			this.LineRule = Asc.linerule_Exact;
-		}
-		if (Asc.linerule_Auto === this.LineRule) {
-			this.Line = val / 240;
-		} else {
-			this.Line = g_dKoef_twips_to_mm * val;
-		}
-	}
-};
-
 function CNumPr(numId, iLvl)
 {
     this.NumId = numId;
@@ -16393,7 +16169,7 @@ function CParaPr()
 	this.KeepLines         = undefined;          // Неразрывный параграф
 	this.KeepNext          = undefined;          // Не разъединять со следующим параграфом
 	this.PageBreakBefore   = undefined;          // Разрыв страницы перед параграфом
-	this.Spacing           = new CParaSpacing(); // Расстояния между строками внутри параграфа и между параграфами
+	this.Spacing           = new AscWord.ParaSpacing(); // Расстояния между строками внутри параграфа и между параграфами
 	this.Shd               = undefined;          // Заливка параграфа
 	this.Brd               = {
 		First   : undefined,            // Является ли данный параграф первым в группе параграфов с одинаковыми краями и настройками границ
@@ -16714,7 +16490,7 @@ CParaPr.prototype.InitDefault = function(nCompatibilityMode)
 	this.KeepLines                 = false;
 	this.KeepNext                  = false;
 	this.PageBreakBefore           = false;
-	this.Spacing                   = new CParaSpacing();
+	this.Spacing                   = new AscWord.ParaSpacing();
 	this.Spacing.Line              = 1;
 	this.Spacing.LineRule          = linerule_Auto;
 	this.Spacing.Before            = 0;
@@ -16758,7 +16534,7 @@ CParaPr.prototype.Set_FromObject = function(ParaPr)
 	this.KeepNext        = ParaPr.KeepNext;
 	this.PageBreakBefore = ParaPr.PageBreakBefore;
 
-	this.Spacing = new CParaSpacing();
+	this.Spacing = new AscWord.ParaSpacing();
 	if (undefined != ParaPr.Spacing)
 		this.Spacing.Set_FromObject(ParaPr.Spacing);
 
@@ -16911,7 +16687,7 @@ CParaPr.prototype.Compare = function(ParaPr)
 	if (ParaPr.PageBreakBefore === this.PageBreakBefore)
 		Result_ParaPr.PageBreakBefore = ParaPr.PageBreakBefore;
 
-	Result_ParaPr.Spacing = new CParaSpacing();
+	Result_ParaPr.Spacing = new AscWord.ParaSpacing();
 	if (undefined != this.Spacing && undefined != ParaPr.Spacing)
 	{
 		if (undefined != this.Spacing.After && undefined != ParaPr.Spacing.After && Math.abs(this.Spacing.After - ParaPr.Spacing.After) < 0.001)
@@ -17201,7 +16977,7 @@ CParaPr.prototype.Read_FromBinary = function(Reader)
 
 	if (Flags & 64)
 	{
-		this.Spacing = new CParaSpacing();
+		this.Spacing = new AscWord.ParaSpacing();
 		this.Spacing.Read_FromBinary(Reader);
 	}
 
@@ -18029,6 +17805,7 @@ window["AscWord"].NumPr   = CNumPr;
 window["AscWord"].CBorder = CDocumentBorder;
 window["AscWord"].CShd    = CDocumentShd;
 window["AscWord"].CStyles = CStyles;
+window["AscWord"].CParaInd = CParaInd;
 
 
 // Создаем глобальные дефолтовые стили, чтобы быстро можно было отдать дефолтовые настройки

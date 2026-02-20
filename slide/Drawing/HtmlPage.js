@@ -328,6 +328,13 @@
 		this.m_oBottomPanesContainer.Anchor = (g_anchor_left | g_anchor_right | g_anchor_bottom);
 		this.m_oMainParent.AddControl(this.m_oBottomPanesContainer);
 
+		this.m_oBottomPanesContainer.HtmlElement.addEventListener('mouseleave', function () {
+			const data = new AscCommon.CMouseMoveData();
+			Asc.editor.sync_MouseMoveStartCallback();
+			Asc.editor.sync_MouseMoveCallback(data);
+			Asc.editor.sync_MouseMoveEndCallback();
+		});
+
 		this.initNotes();
 		this.initAnimationPane();
 
@@ -3849,6 +3856,15 @@
 		oWordControl.m_oLogicDocument.Document_UpdateRulersState();
 
 		oWordControl.EndUpdateOverlay();
+
+		if (AscCommon.check_MouseClickOnUp())
+		{
+			if (window.g_asc_plugins)
+			{
+				let oController = oWordControl.m_oApi.getGraphicController();
+				window.g_asc_plugins.onPluginEvent("onClick", oController ? oController.IsSelectionUse() : false);
+			}
+		}
 	};
 	CEditorPage.prototype.onMouseUpMainSimple = function () {
 		if (false === oThis.m_oApi.bInit_word_control)

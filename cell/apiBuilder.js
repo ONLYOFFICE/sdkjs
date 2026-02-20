@@ -56,8 +56,8 @@
 	 * @property {ApiWorksheetFunction} WorksheetFunction - Returns an object that represents the function list.
 	 * @property {ApiPivotTable[]} PivotTables - Returns all pivot tables.
 	 */
-	var Api = window["Asc"]["spreadsheet_api"];
-
+	var Api = Object.create(AscBuilder.Slide.Api || {});
+	
 	/**
 	 * Class representing the currently active workbook
 	 *
@@ -83,6 +83,7 @@
 	 * @property {ApiRange} Selection - Returns an object that represents the selected range.
 	 * @property {ApiRange} Cells - Returns ApiRange that represents all the cells on the worksheet (not just the cells that are currently in use).
 	 * @property {ApiRange} Rows - Returns ApiRange that represents all the cells of the rows range.
+     * @property {ApiAutoFilter} AutoFilter - Returns AutoFilter that represents all applied autofilters
 	 * @property {ApiRange} Cols - Returns ApiRange that represents all the cells of the columns range.
 	 * @property {ApiRange} UsedRange - Returns ApiRange that represents the used range on the specified worksheet.
 	 * @property {string} Name - Returns or sets a name of the active sheet.
@@ -315,7 +316,7 @@
 
 	/**
      * Any valid drawing element.
-     * @typedef {(ApiShape | ApiImage | ApiOleObject | ApiChart )} Drawing
+     * @typedef {(ApiShape | ApiImage | ApiOleObject | ApiChart | ApiGroup | ApiSmartArt)} Drawing
 	 * @see office-js-api/Examples/Enumerations/Drawing.js
 	 */
 
@@ -619,7 +620,7 @@
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/Format.js
 	 */
-	Api.prototype.Format = function (expression, format) {
+	Api.Format = function (expression, format) {
 		format = null == format ? '' : format;
 		return AscCommonExcel.cTEXT.prototype.Calculate([checkFormat(expression), new AscCommonExcel.cString(format)])
 			.getValue();
@@ -652,14 +653,14 @@
 	//     }
 	//     return first + second;
 	// })
-	Api.prototype.AddCustomFunction = function (fCustom) {
+	Api.AddCustomFunction = function (fCustom) {
 		// get parsedJSDoc from a macros (we receive it from the Api class)
 		// take the first element and validate it
 		const parsedJSDoc = this.parsedJSDoc && this.parsedJSDoc.shift();
 		const isValidJsDoc = parsedJSDoc ? private_ValidateParamsForCustomFunction(parsedJSDoc) : false;
 		//const isValidOptions = options ? private_ValidateParamsForCustomFunction(options) : false;
 		if (!isValidJsDoc/* && !isValidOptions*/) {
-			logError(new Error('Invalid parameters type in JSDOC or options.'));
+			throwException(new Error('Invalid parameters type in JSDOC or options.'));
 			return null;
 		}
 		// remove it from this class and use it from the variable (only if it was the last)
@@ -731,7 +732,7 @@
 			);
 		})();*/
 
-		this.addCustomFunction(fCustom, parsedJSDoc/*isValidJsDoc ? parsedJSDoc : options*/);
+		Asc.editor.addCustomFunction(fCustom, parsedJSDoc/*isValidJsDoc ? parsedJSDoc : options*/);
 	};
 
 	/**
@@ -746,8 +747,8 @@
 	 * @since 8.2.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddCustomFunctionLibrary.js
 	 */
-	Api.prototype.AddCustomFunctionLibrary = function(sName, Func) {
-		this.addCustomFunctionsLibrary(sName, Func);
+	Api.AddCustomFunctionLibrary = function(sName, Func) {
+		Asc.editor.addCustomFunctionsLibrary(sName, Func);
 	};
 
 	/**
@@ -758,8 +759,8 @@
 	 * @returns {boolean} - returns false if such a function does not exist.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/RemoveCustomFunction.js
 	 */
-	Api.prototype.RemoveCustomFunction = function (sName) {
-		return this.removeCustomFunction(sName);
+	Api.RemoveCustomFunction = function (sName) {
+		return Asc.editor.removeCustomFunction(sName);
 	};
 	/**
 	 * Clears all custom functions.
@@ -768,8 +769,8 @@
 	 * @returns {boolean} - returns false if such functions do not exist.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/ClearCustomFunctions.js
 	 */
-	Api.prototype.ClearCustomFunctions = function () {
-		return this.clearCustomFunctions();
+	Api.ClearCustomFunctions = function () {
+		return Asc.editor.clearCustomFunctions();
 	};
 
 	/**
@@ -779,11 +780,11 @@
 	 * @param {string} sName - The name of a new worksheet.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddSheet.js
 	 */
-	Api.prototype.AddSheet = function (sName) {
+	Api.AddSheet = function (sName) {
 		if (this.GetSheet(sName))
 			throwException(new Error('Worksheet with such a name already exists.'));
 		else
-			this.asc_addWorksheet(sName);
+			Asc.editor.asc_addWorksheet(sName);
 	};
 
 	/**
@@ -793,14 +794,14 @@
 	 * @returns {ApiWorksheet[]}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetSheets.js
 	 */
-	Api.prototype.GetSheets = function () {
+	Api.GetSheets = function () {
 		var result = [];
-		for (var i = 0; i < this.wbModel.getWorksheetCount(); ++i) {
-			result.push(new ApiWorksheet(this.wbModel.getWorksheet(i)));
+		for (var i = 0; i < Asc.editor.wbModel.getWorksheetCount(); ++i) {
+			result.push(new ApiWorksheet(Asc.editor.wbModel.getWorksheet(i)));
 		}
 		return result;
 	};
-	Object.defineProperty(Api.prototype, "Sheets", {
+	Object.defineProperty(Api, "Sheets", {
 		get: function () {
 			return this.GetSheets();
 		}
@@ -813,8 +814,8 @@
 	 * @param {number} LCID - The locale specified.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/SetLocale.js
 	 */
-	Api.prototype.SetLocale = function (LCID) {
-		this.asc_setLocale(LCID, null, null);
+	Api.SetLocale = function (LCID) {
+		Asc.editor.asc_setLocale(LCID, null, null);
 	};
 
 	/**
@@ -824,8 +825,8 @@
 	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetLocale.js
 	 */
-	Api.prototype.GetLocale = function () {
-		return this.asc_getLocale();
+	Api.GetLocale = function () {
+		return Asc.editor.asc_getLocale();
 	};
 
 	/**
@@ -835,11 +836,11 @@
 	 * @returns {ApiWorksheet}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetActiveSheet.js
 	 */
-	Api.prototype.GetActiveSheet = function () {
-		var index = this.wbModel.getActive();
-		return new ApiWorksheet(this.wbModel.getWorksheet(index));
+	Api.GetActiveSheet = function () {
+		var index = Asc.editor.wbModel.getActive();
+		return new ApiWorksheet(Asc.editor.wbModel.getWorksheet(index));
 	};
-	Object.defineProperty(Api.prototype, "ActiveSheet", {
+	Object.defineProperty(Api, "ActiveSheet", {
 		get: function () {
 			return this.GetActiveSheet();
 		}
@@ -852,10 +853,10 @@
 	 * @returns {ApiWorkbook}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetActiveWorkbook.js
 	 */
-	Api.prototype.GetActiveWorkbook = function () {
-		return new ApiWorkbook(this.wbModel);
+	Api.GetActiveWorkbook = function () {
+		return new ApiWorkbook(Asc.editor.wbModel);
 	};
-	Object.defineProperty(Api.prototype, "ActiveWorkbook", {
+	Object.defineProperty(Api, "ActiveWorkbook", {
 		get: function () {
 			return this.GetActiveWorkbook();
 		}
@@ -869,9 +870,9 @@
 	 * @returns {ApiWorksheet | null}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetSheet.js
 	 */
-	Api.prototype.GetSheet = function (nameOrIndex) {
-		var ws = ('string' === typeof nameOrIndex) ? this.wbModel.getWorksheetByName(nameOrIndex) :
-			this.wbModel.getWorksheet(nameOrIndex);
+	Api.GetSheet = function (nameOrIndex) {
+		var ws = ('string' === typeof nameOrIndex) ? Asc.editor.wbModel.getWorksheetByName(nameOrIndex) :
+			Asc.editor.wbModel.getWorksheet(nameOrIndex);
 		return ws ? new ApiWorksheet(ws) : null;
 	};
 
@@ -882,7 +883,7 @@
 	 * @returns {string[]}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetThemesColors.js
 	 */
-	Api.prototype.GetThemesColors = function () {
+	Api.GetThemesColors = function () {
 		var result = [];
 		AscCommon.g_oUserColorScheme.forEach(function (item) {
 			result.push(item.get_name());
@@ -899,9 +900,9 @@
 	 * @returns {boolean} - returns false if sTheme isn't a string.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/SetThemeColors.js
 	 */
-	Api.prototype.SetThemeColors = function (sTheme) {
+	Api.SetThemeColors = function (sTheme) {
 		if ('string' === typeof sTheme) {
-			this.wbModel.changeColorScheme(sTheme);
+			Asc.editor.wbModel.changeColorScheme(sTheme);
 			return true;
 		}
 		return false;
@@ -913,7 +914,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateNewHistoryPoint.js
 	 */
-	Api.prototype.CreateNewHistoryPoint = function () {
+	Api.CreateNewHistoryPoint = function () {
 		History.Create_NewPoint();
 	};
 
@@ -927,7 +928,7 @@
 	 * @returns {ApiColor}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateColorFromRGB.js
 	 */
-	Api.prototype.CreateColorFromRGB = function (r, g, b) {
+	Api.CreateColorFromRGB = function (r, g, b) {
 		return new ApiColor(AscCommonExcel.createRgbColor(r, g, b));
 	};
 
@@ -939,7 +940,7 @@
 	 * @returns {ApiColor}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateColorByName.js
 	 */
-	Api.prototype.CreateColorByName = function (sPresetColor) {
+	Api.CreateColorByName = function (sPresetColor) {
 		var rgb = AscFormat.mapPrstColor[sPresetColor];
 		return new ApiColor(AscCommonExcel.createRgbColor((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF));
 	};
@@ -953,17 +954,17 @@
 	 * @returns {ApiRange | null}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/Intersect.js
 	 */
-	Api.prototype.Intersect = function (Range1, Range2) {
+	Api.Intersect = function (Range1, Range2) {
 		let result = null;
 		if (Range1.GetWorksheet().Id === Range2.GetWorksheet().Id) {
 			var res = Range1.range.bbox.intersection(Range2.range.bbox);
 			if (!res) {
-				logError(new Error('Ranges do not intersect.'));
+				throwException(new Error('Ranges do not intersect.'));
 			} else {
 				result = new ApiRange(this.GetActiveSheet().worksheet.getRange3(res.r1, res.c1, res.r2, res.c2));
 			}
 		} else {
-			logError(new Error('Ranges should be from one worksheet.'));
+			throwException(new Error('Ranges should be from one worksheet.'));
 		}
 		return result;
 	};
@@ -975,10 +976,10 @@
 	 * @returns {ApiRange}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetSelection.js
 	 */
-	Api.prototype.GetSelection = function () {
+	Api.GetSelection = function () {
 		return this.GetActiveSheet().GetSelection();
 	};
-	Object.defineProperty(Api.prototype, "Selection", {
+	Object.defineProperty(Api, "Selection", {
 		get: function () {
 			return this.GetSelection();
 		}
@@ -995,8 +996,8 @@
 	 * @returns {boolean} - returns false if sName or sRef are invalid.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddDefName.js
 	 */
-	Api.prototype.AddDefName = function (sName, sRef, isHidden) {
-		return private_AddDefName(this.wbModel, sName, sRef, null, isHidden);
+	Api.AddDefName = function (sName, sRef, isHidden) {
+		return private_AddDefName(Asc.editor.wbModel, sName, sRef, null, isHidden);
 	};
 
 	/**
@@ -1007,12 +1008,35 @@
 	 * @returns {ApiName}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetDefName.js
 	 */
-	Api.prototype.GetDefName = function (defName) {
-		if (defName && typeof defName === "string") {
-			defName = this.wbModel.getDefinesNames(defName);
-		}
-		return new ApiName(defName);
-	};
+    Api.GetDefName = function (defName) {
+        if (!defName || typeof  defName !== "string") {
+            throwException(new Error('No name provided'));
+        }
+
+        let wbModel = Asc.editor && Asc.editor.wbModel;
+        let defNameFound = null;
+        if (wbModel && wbModel.aWorksheets) {
+            const worksheets = wbModel.aWorksheets;
+
+            // search for all sheets
+            for (let i = 0; i < worksheets.length; i++) {
+                defNameFound = wbModel.getDefinesNames(defName, worksheets[i].Id, true);
+                if (defNameFound) {
+                    break;
+                }
+            }
+
+            // search inside book
+            if (!defNameFound) {
+                defNameFound = wbModel.getDefineNameWb(defName);
+            }
+        }
+
+        if (!defNameFound) {
+            throwException(new Error('Defined name does not exist:' + defName));
+        }
+        return new ApiName(defNameFound);
+    };
 
 	/**
 	 * Saves changes to the specified document.
@@ -1020,7 +1044,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/Save.js
 	 */
-	Api.prototype.Save = function () {
+	Api.Save = function () {
 		this.SaveAfterMacros = true;
 	};
 
@@ -1032,14 +1056,14 @@
 	 * @returns {ApiRange}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetRange.js
 	 */
-	Api.prototype.GetRange = function (sRange) {
+	Api.GetRange = function (sRange) {
 		var ws;
 		var res = AscCommon.parserHelp.parse3DRef(sRange);
 		if (res) {
-			ws = this.wbModel.getWorksheetByName(res.sheet);
+			ws = Asc.editor.wbModel.getWorksheetByName(res.sheet);
 			sRange = res.range;
 		} else {
-			ws = this.wbModel.getActiveWs();
+			ws = Asc.editor.wbModel.getActiveWs();
 		}
 		return new ApiRange(ws ? ws.getRange2(sRange) : null);
 	};
@@ -1051,14 +1075,14 @@
 	 * @returns {ApiWorksheetFunction}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetWorksheetFunction.js
 	 */
-	Api.prototype.GetWorksheetFunction = function () {
+	Api.GetWorksheetFunction = function () {
 		if (!this.oWorksheetFunction) {
 			this.oWorksheetFunction = new ApiWorksheetFunction(this);
 			//this.oWorksheetFunction.init();
 		}
 		return this.oWorksheetFunction;
 	};
-	Object.defineProperty(Api.prototype, "WorksheetFunction", {
+	Object.defineProperty(Api, "WorksheetFunction", {
 		get: function () {
 			return this.GetWorksheetFunction();
 		}
@@ -1680,7 +1704,8 @@
 		}
 
 		//prepare result
-		let ws = this.api && this.api.wb && this.api.wb.getWorksheet();
+		let editor = Asc.editor;
+		let ws = editor && editor.wb && editor.wb.getWorksheet();
 		if (ws) {
 			ws = ws.model;
 		}
@@ -7440,7 +7465,7 @@
 	 * @param {Range[]} areas - A collection of the ranges (not a ApiRange) from the specified range. For more details see any new ApiRange.
 	 * @returns {ApiRange}
 	 */
-	Api.prototype.private_GetRange = function (range, areas) {
+	Api.private_GetRange = function (range, areas) {
 		return new ApiRange(range, areas);
 	};
 
@@ -7451,7 +7476,7 @@
 	 * @param {number} nSheet - The sheet index.
 	 * @returns {string[]}
 	 */
-	Api.prototype.private_GetMailMergeFields = function (nSheet) {
+	Api.private_GetMailMergeFields = function (nSheet) {
 		var oSheet = this.GetSheet(nSheet);
 		var arrFields = [];
 		var colIndex = 0;
@@ -7486,7 +7511,7 @@
 	 * @param {boolean} [bWithFormat=false] - Specifies that the data will be received with the format.
 	 * @returns {string[][]}
 	 */
-	Api.prototype.private_GetMailMergeMap = function (nSheet, bWithFormat) {
+	Api.private_GetMailMergeMap = function (nSheet, bWithFormat) {
 		var oSheet = this.GetSheet(nSheet);
 		var arrMailMergeMap = [];
 		var valuesInRow = null;
@@ -7541,7 +7566,7 @@
 	 * @returns {string[][]}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetMailMergeData.js
 	 */
-	Api.prototype.GetMailMergeData = function (nSheet, bWithFormat) {
+	Api.GetMailMergeData = function (nSheet, bWithFormat) {
 		if (bWithFormat !== true)
 			bWithFormat = false;
 
@@ -7564,8 +7589,8 @@
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/RecalculateAllFormulas.js
 	 */
-	Api.prototype.RecalculateAllFormulas = function (fLogger) {
-		var formulas = this.wbModel.getAllFormulas(true);
+	Api.RecalculateAllFormulas = function (fLogger) {
+		var formulas = Asc.editor.wbModel.getAllFormulas(true);
 		var _compare = function (_val1, _val2) {
 			if (!isNaN(parseFloat(_val1)) && isFinite(_val1) && !isNaN(parseFloat(_val2)) && isFinite(_val2)) {
 				var eps = 1e-12;
@@ -7657,11 +7682,11 @@
 	 * @since 8.2.0
 	 * @see office-js-api/Examples/Cell/Api/Methods/InsertPivotExistingWorksheet.js
 	 */
-	Api.prototype.InsertPivotExistingWorksheet = function (dataRef, pivotRef, confirmation) {
+	Api.InsertPivotExistingWorksheet = function (dataRef, pivotRef, confirmation) {
 		if (dataRef) {
 			dataRef = dataRef.GetWorksheet().GetName() + "!" + dataRef.GetAddress(true, true);
 		} else {
-			var options = this.asc_getAddPivotTableOptions();
+			var options = Asc.editor.asc_getAddPivotTableOptions();
 			dataRef = options.range;
 		}
 		if (pivotRef) {
@@ -7669,9 +7694,9 @@
 		} else {
 			private_MakeError('"pivotRef" is undefined.');
 		}
-		var pivot = this.asc_insertPivotExistingWorksheet(dataRef, pivotRef, confirmation);
+		var pivot = Asc.editor.asc_insertPivotExistingWorksheet(dataRef, pivotRef, confirmation);
 		if (pivot) {
-			return new ApiPivotTable(pivot, this);
+			return new ApiPivotTable(pivot, Asc.editor);
 		}
 		private_MakeError('Error! Bad pivotRef!');
 	};
@@ -7686,17 +7711,18 @@
 	 * @since 8.2.0
 	 * @see office-js-api/Examples/Cell/Api/Methods/InsertPivotNewWorksheet.js
 	 */
-	Api.prototype.InsertPivotNewWorksheet = function (dataRef, newSheetName) {
+	Api.InsertPivotNewWorksheet = function (dataRef, newSheetName) {
+		let editor = Asc.editor;
 		if (dataRef) {
 			dataRef = dataRef.GetWorksheet().GetName() + "!" + dataRef.GetAddress(true, true);
 		} else {
-			var options = this.asc_getAddPivotTableOptions();
+			var options = editor.asc_getAddPivotTableOptions();
 			dataRef = options.range;
 		}
 		if (!newSheetName) {
-			var items = [], wc = this.asc_getWorksheetsCount();
+			var items = [], wc = editor.asc_getWorksheetsCount();
 			while (wc--) {
-				items.push(this.asc_getWorksheetName(wc).toLowerCase());
+				items.push(editor.asc_getWorksheetName(wc).toLowerCase());
 			}
 
 			var index = 0, name;
@@ -7707,9 +7733,9 @@
 
 			newSheetName = name;
 		}
-		var pivot = this.asc_insertPivotNewWorksheet(dataRef, newSheetName);
+		var pivot = editor.asc_insertPivotNewWorksheet(dataRef, newSheetName);
 		if (pivot) {
-			return new ApiPivotTable(pivot, this);
+			return new ApiPivotTable(pivot, Asc.editor);
 		}
 		private_MakeError('An error occurred while creating the pivot table!');
 	};
@@ -7723,12 +7749,12 @@
 	 * @since 8.2.0
 	 * @see office-js-api/Examples/Cell/Api/Methods/GetPivotByName.js
 	 */
-	Api.prototype.GetPivotByName = function (name) {
+	Api.GetPivotByName = function (name) {
 		var res = null;
 		if (typeof name == "string" && name.trim().length) {
-			var pivot = this.wbModel.getPivotTableByName( name.trim() );
+			var pivot = Asc.editor.wbModel.getPivotTableByName( name.trim() );
 			if (pivot)
-				res = new ApiPivotTable(pivot, this);
+				res = new ApiPivotTable(pivot, Asc.editor);
 		}
 		return res;
 	};
@@ -7740,8 +7766,8 @@
 	 * @since 8.2.0
 	 * @see office-js-api/Examples/Cell/Api/Methods/RefreshAllPivots.js
 	 */
-	Api.prototype.RefreshAllPivots = function () {
-		this.asc_refreshAllPivots();
+	Api.RefreshAllPivots = function () {
+		Asc.editor.asc_refreshAllPivots();
 	};
 
 	/**
@@ -7752,7 +7778,7 @@
 	 * @since 8.2.0
 	 * @see office-js-api/Examples/Cell/Api/Methods/GetAllPivotTables.js
 	 */
-	Api.prototype.GetAllPivotTables = function () {
+	Api.GetAllPivotTables = function () {
 		var res = [];
 		var sheets = this.GetSheets();
 		sheets.forEach(function(ws) {
@@ -7761,7 +7787,7 @@
 		return res;
 	};
 
-	Object.defineProperty(Api.prototype, "PivotTables", {
+	Object.defineProperty(Api, "PivotTables", {
 		get: function () {
 			return this.GetAllPivotTables();
 		}
@@ -7777,7 +7803,10 @@
 	 * @fires Api#onWorksheetChange
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/attachEvent.js
 	 */
-	Api.prototype["attachEvent"] = Api.prototype.attachEvent;
+	Api.attachEvent = function(eventName, callback)
+	{
+		Asc.editor.attachEvent(eventName, callback);
+	};
 
 	/**
 	 * Unsubscribes from the specified event.
@@ -7788,7 +7817,10 @@
 	 * @fires Api#onWorksheetChange
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/detachEvent.js
 	 */
-	Api.prototype["detachEvent"] = Api.prototype.detachEvent;
+	Api.detachEvent = function(eventName)
+	{
+		Asc.editor.detachEvent(eventName);
+	};
 
 	/**
 	 * Returns an array of ApiComment objects.
@@ -7800,7 +7832,7 @@
 	 * @since 7.5.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddComment.js
 	 */
-	Api.prototype.AddComment = function (sText, sAuthor) {
+	Api.AddComment = function (sText, sAuthor) {
 		let result = null;
 		let isValidData = typeof (sText) === 'string' && sText.trim() !== '';
 		if (isValidData) {
@@ -7811,7 +7843,7 @@
 			// todo проверить как в документа добавлются (надо ли выставлять этот параметр)
 			// comment.asc_putUserId(Asc['editor'].User.asc_getId());
 			comment.asc_putDocumentFlag(true);
-			this.asc_addComment(comment);
+			Asc.editor.asc_addComment(comment);
 			result = new ApiComment(comment, Asc['editor'].wb);
 		}
 
@@ -7826,12 +7858,12 @@
 	 * @returns {?ApiComment}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetCommentById.js
 	 */
-	Api.prototype.GetCommentById = function (sId) {
-		let comment = this.asc_findComment(sId);
+	Api.GetCommentById = function (sId) {
+		let comment = Asc.editor.asc_findComment(sId);
 		if (!comment)
-			comment = this.wb.cellCommentator.findComment(sId);
+			comment = Asc.editor.wb.cellCommentator.findComment(sId);
 
-		return comment ? new ApiComment(comment, Asc['editor'].wb) : null;
+		return comment ? new ApiComment(comment, Asc.editor.wb) : null;
 	};
 
 	/**
@@ -7841,14 +7873,14 @@
 	 * @returns {ApiComment[]}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetComments.js
 	 */
-	Api.prototype.GetComments = function () {
+	Api.GetComments = function () {
 		var comments = [];
-		for (var i = 0; i < this.wbModel.aComments.length; i++) {
-			comments.push(new ApiComment(this.wbModel.aComments[i], this.wb));
+		for (var i = 0; i < Asc.editor.wbModel.aComments.length; i++) {
+			comments.push(new ApiComment(Asc.editor.wbModel.aComments[i], this.wb));
 		}
 		return comments;
 	};
-	Object.defineProperty(Api.prototype, "Comments", {
+	Object.defineProperty(Api, "Comments", {
 		get: function () {
 			return this.GetComments();
 		}
@@ -7862,7 +7894,7 @@
 	 * @returns {ApiComment[]}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetAllComments.js
 	 */
-	Api.prototype.GetAllComments = function () {
+	Api.GetAllComments = function () {
 		let aApiComments = this.GetComments();
 
 		let aWS = this.GetSheets();
@@ -7871,7 +7903,7 @@
 		}
 		return aApiComments;
 	};
-	Object.defineProperty(Api.prototype, "AllComments", {
+	Object.defineProperty(Api, "AllComments", {
 		get: function () {
 			return this.GetAllComments();
 		}
@@ -7891,7 +7923,7 @@
 	 * @since 8.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/SetFreezePanesType.js
 	 */
-	Api.prototype.SetFreezePanesType = function (FreezePaneType) {
+	Api.SetFreezePanesType = function (FreezePaneType) {
 		if (typeof FreezePaneType === 'string' || FreezePaneType === null) {
 			//detect current freeze type
 			let curType = this.GetFreezePanesType();
@@ -7900,7 +7932,7 @@
 			if (FreezePaneType === 'cell' && ((curType && curType !== 'cell') || (!curType))) {
 				// make unfreeze and freeze then
 				if (curType)
-					this.asc_freezePane(undefined);
+					Asc.editor.asc_freezePane(undefined);
 
 				type = undefined;
 			} else if (FreezePaneType === null && curType) {
@@ -7912,10 +7944,10 @@
 			}
 
 			if (type !== null)
-				this.asc_freezePane(type);
+				Asc.editor.asc_freezePane(type);
 
 		} else {
-			logError(new Error('Invalid parameter "FreezePaneType".'));
+			throwException(new Error('Invalid parameter "FreezePaneType".'));
 		}
 	};
 
@@ -7927,8 +7959,8 @@
 	 * @since 8.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetFreezePanesType.js
 	 */
-	Api.prototype.GetFreezePanesType = function () {
-		let cell = this.wb.getWorksheet().topLeftFrozenCell;
+	Api.GetFreezePanesType = function () {
+		let cell = Asc.editor.wb.getWorksheet().topLeftFrozenCell;
 		//detect current freeze type
 		let curType = null;
 		if (cell) {
@@ -7948,7 +7980,7 @@
 		return curType;
 	};
 
-	Object.defineProperty(Api.prototype, "FreezePanes", {
+	Object.defineProperty(Api, "FreezePanes", {
 		get: function () {
 			return this.GetFreezePanesType();
 		},
@@ -7965,8 +7997,8 @@
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetReferenceStyle.js
 	 */
-	Api.prototype.GetReferenceStyle = function () {
-		let bReferenceStyle = this.asc_getR1C1Mode();
+	Api.GetReferenceStyle = function () {
+		let bReferenceStyle = Asc.editor.asc_getR1C1Mode();
 		return bReferenceStyle ? "xlR1C1" : "xlA1";
 	};
 
@@ -7978,7 +8010,7 @@
 	 * @since 8.1.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/SetReferenceStyle.js
 	 */
-	Api.prototype.SetReferenceStyle = function (sReferenceStyle) {
+	Api.SetReferenceStyle = function (sReferenceStyle) {
 		let bReferenceMode = null;
 		switch (sReferenceStyle) {
 			case "xlA1":
@@ -7990,13 +8022,13 @@
 		}
 
 		if (bReferenceMode !== null) {
-			this.asc_setR1C1Mode(bReferenceMode);
+			Asc.editor.asc_setR1C1Mode(bReferenceMode);
 		} else {
-			logError(new Error('Invalid parameter "ReferenceStyle"'));
+			throwException(new Error('Invalid parameter "ReferenceStyle"'));
 		}
 	};
 
-	Object.defineProperty(Api.prototype, "ReferenceStyle", {
+	Object.defineProperty(Api, "ReferenceStyle", {
 		get: function () {
 			return this.GetReferenceStyle();
 		},
@@ -8024,7 +8056,7 @@
 	 * @returns {object}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetDocumentInfo.js
 	 */
-	Api.prototype.GetDocumentInfo = function()
+	Api.GetDocumentInfo = function()
 	{
 		const oDocInfo = {
 			"Application": '',
@@ -8039,21 +8071,22 @@
 			"Subject": '',
 			"Comment": ''
 		};
-
-		let props = (this) ? this.asc_getAppProps() : null;
+		
+		let editor = Asc.editor;
+		let props = editor.asc_getAppProps();
 		oDocInfo["Application"] = (props.asc_getApplication() || '') + (props.asc_getAppVersion() ? ' ' : '') + (props.asc_getAppVersion() || '');
 
 		let langCode = 1033; // en-US
 		let langName = 'en-us';
 		if (AscCommon.g_oDefaultCultureInfo.Name) {
 			langName = AscCommon.g_oDefaultCultureInfo.Name.replace('_', '-').toLowerCase();
-		} else if (this.defaultLanguage && window['Common']) {
-			langCode = this.defaultLanguage;
+		} else if (editor.defaultLanguage && window['Common']) {
+			langCode = editor.defaultLanguage;
 			langName = window['Common']['util']['LanguageInfo']['getLocalLanguageName'](langCode)[0].toLowerCase();
 
 		}
 
-		props = this.asc_getCoreProps();
+		props = editor.asc_getCoreProps();
 		oDocInfo["CreatedRaw"] = props.asc_getCreated();
 		oDocInfo["LastModifiedRaw"] = props.asc_getModified();
 
@@ -8096,8 +8129,8 @@
 	 * @since 9.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetCore.js
 	 */
-	Api.prototype.GetCore = function () {
-		return new AscBuilder.ApiCore(this.wbModel.Core);
+	Api.GetCore = function () {
+		return new AscBuilder.ApiCore(Asc.editor.wbModel.Core);
 	};
 
 	/**
@@ -8108,8 +8141,8 @@
 	 * @since 9.0.0
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetCustomProperties.js
 	 */
-	Api.prototype.GetCustomProperties = function () {
-		return new AscBuilder.ApiCustomProperties(this.wbModel.CustomProperties);
+	Api.GetCustomProperties = function () {
+		return new AscBuilder.ApiCustomProperties(Asc.editor.wbModel.CustomProperties);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -8127,7 +8160,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/Save.js
 	 */
 	ApiWorkbook.prototype.Save = function () {
-		return Asc.editor.Save();
+		return Api.Save();
 	};
 
 	/**
@@ -8140,7 +8173,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/GetSheets.js
 	 */
 	ApiWorkbook.prototype.GetSheets = function () {
-		return Asc.editor.GetSheets();
+		return Api.GetSheets();
 	};
 
 	/**
@@ -8153,7 +8186,7 @@
 	 * @see office-js-api/Examples/Cell/ApiWorkbook/Methods/GetAllPivotTables.js
 	 */
 	ApiWorkbook.prototype.GetAllPivotTables = function () {
-		return Asc.editor.GetAllPivotTables();
+		return Api.GetAllPivotTables();
 	};
 
 	/**
@@ -8166,7 +8199,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/GetCustomProperties.js
 	 */
 	ApiWorkbook.prototype.GetCustomProperties = function () {
-		return Asc.editor.GetCustomProperties();
+		return Api.GetCustomProperties();
 	};
 
 	/**
@@ -8192,7 +8225,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/GetName.js
 	 */
 	ApiWorkbook.prototype.GetName = function () {
-		return Asc.editor.GetFullName();
+		return Api.GetFullName();
 	};
 
 	/**
@@ -8205,7 +8238,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/GetActiveSheet.js
 	 */
 	ApiWorkbook.prototype.GetActiveSheet = function () {
-		return Asc.editor.GetActiveSheet();
+		return Api.GetActiveSheet();
 	};
 
 	/**
@@ -8229,13 +8262,33 @@
 				const selectedOne = selectedDrawings[0];
 
 				if (selectedOne.graphicObject && selectedOne.isChart()) {
-					return Asc.editor.private_CreateApiChart(selectedOne.graphicObject);
+					return new ApiChart(selectedOne.graphicObject);
 				}
 			}
 		}
 		return null;
 	};
 
+	/**
+	 * Returns drawings with the specified names from the workbook.
+	 * @memberof ApiWorkbook
+	 * @typeofeditors ["CSE"]
+	 * @param {string[]} ids - An array of drawing names.
+	 * @returns {Drawing[]} - Returns an array of drawing obkects filtered by the specified names.
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiWorkbook/Methods/GetDrawingsByName.js
+	 */
+	ApiWorkbook.prototype.GetDrawingsByName = function(ids)
+	{
+		let sheets = this.GetSheets();
+		let allDrawings = [];
+		for (let i = 0; i < sheets.length; i++) {
+			allDrawings = allDrawings.concat(sheets[i].GetAllDrawings());
+		}
+		return allDrawings.filter(function(drawing) {
+			return ids.includes(drawing.GetName());
+		});
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiWorksheet
@@ -8343,7 +8396,7 @@
 		let result;
 		if (typeof col == "number" && typeof row == "number") {
 			if (col < 1 || row < 1 || col > AscCommon.gc_nMaxCol0 || row > AscCommon.gc_nMaxRow0) {
-				logError(new Error('Invalid paremert "row" or "col".'));
+				throwException(new Error('Invalid paremert "row" or "col".'));
 				result = null;
 			} else {
 				row--;
@@ -8352,7 +8405,7 @@
 			}
 		} else if (typeof row == "number") {
 			if (row < 1 || row > AscCommon.gc_nMaxRow0) {
-				logError(new Error('Invalid paremert "row".'));
+				throwException(new Error('Invalid paremert "row".'));
 				result = null;
 			} else {
 				row--;
@@ -8364,7 +8417,7 @@
 
 		} else if (typeof col == "number") {
 			if (col < 1 || col > AscCommon.gc_nMaxCol0) {
-				logError(new Error('Invalid paremert "col".'));
+				throwException(new Error('Invalid paremert "col".'));
 				result = null;
 			} else {
 				col--;
@@ -8403,7 +8456,7 @@
 			if (value > 0 && value <= AscCommon.gc_nMaxRow0 + 1 && value[0] !== NaN) {
 				value--;
 			} else {
-				logError(new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
+				throwException(new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
 				return null;
 			}
 			return new ApiRange(this.worksheet.getRange3(value, 0, value, AscCommon.gc_nMaxCol0));
@@ -8419,13 +8472,29 @@
 				}
 			}
 			if (isError) {
-				logError(new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
+				throwException(new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
 				return null;
 			} else {
 				return new ApiRange(this.worksheet.getRange3(value[0], 0, value[1], AscCommon.gc_nMaxCol0));
 			}
 		}
 	};
+
+    /**
+     * Returns the instante of ApiAutoFilter object that represents the worksheet AutoFilter.
+     * @memberof ApiWorksheet
+     * @typeofeditors ["CSE"]
+     * @returns {ApiAutoFilter}
+     * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetAutoFilter.js
+     */
+    ApiWorksheet.prototype.GetAutoFilter = function () {
+		return new ApiAutoFilter(this);
+	};
+	Object.defineProperty(ApiWorksheet.prototype, "AutoFilter", {
+		get: function () {
+			return this.GetAutoFilter();
+		}
+	});
 
 	/**
 	 * Returns the ApiRange object that represents all the cells on the columns range.
@@ -8537,7 +8606,7 @@
 		Range1 = (Range1 instanceof ApiRange) ? Range1.range : (typeof Range1 == 'string') ? this.worksheet.getRange2(Range1) : null;
 
 		if (!Range1) {
-			logError(new Error('Incorrect "Range1" or it is empty.'));
+			throwException(new Error('Incorrect "Range1" or it is empty.'));
 			return null;
 		}
 
@@ -9031,7 +9100,7 @@
 	ApiWorksheet.prototype.AddChart =
 		function (sDataRange, bInRows, sType, nStyleIndex, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset) {
 			if (this.worksheet && this.worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
-				logError(new Error('Cannot modify protected sheet'));
+				throwException(new Error('Cannot modify protected sheet'));
 				return null;
 			}
 			const settings = new Asc.asc_ChartSettings();
@@ -9053,7 +9122,7 @@
 				oChart.setStyle(nStyleIndex);
 			}
 			oChart.recalculateReferences();
-			return Asc.editor.private_CreateApiChart(oChart);
+			return new ApiChart(oChart);
 		};
 
 
@@ -9135,7 +9204,7 @@
 		nRowOffset = typeof (nRowOffset) === "number" && nRowOffset > 0 ? nRowOffset : 0;
 		sTransform = typeof (sTransform) === "string" && sTransform !== "" ? sTransform : "textNoShape";
 
-		var oArt = Asc.editor.private_createWordArt(oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight);
+		var oArt = Api.private_createWordArt(oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight);
 
 		private_SetCoords(oArt, this.worksheet, nWidth, nHeight, nFromCol, nColOffset, nFromRow, nRowOffset);
 
@@ -9185,7 +9254,7 @@
 		let oWorksheet = Asc['editor'].wb.getWorksheet();
 		if (oWorksheet && oWorksheet.objectRender && oWorksheet.objectRender.controller) {
 			if (oWorksheet.model && oWorksheet.model.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
-				logError(new Error('Cannot modify protected sheet'));
+				throwException(new Error('Cannot modify protected sheet'));
 				return null;
 			}
 			let oController = oWorksheet.objectRender.controller;
@@ -9244,6 +9313,45 @@
 	};
 
 	/**
+	 * Returns selected shapes from the current sheet.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiShape[]}.
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetSelectedShapes.js
+	 */
+	ApiWorksheet.prototype.GetSelectedShapes = function () {
+		var allDrawings = this.worksheet.Drawings;
+		var allApiDrawings = [];
+
+		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++) {
+			if (allDrawings[nDrawing].graphicObject && allDrawings[nDrawing].graphicObject.selected && allDrawings[nDrawing].isShape()) {
+				allApiDrawings.push(new ApiShape(allDrawings[nDrawing].graphicObject));
+			}
+		}
+		return allApiDrawings;
+	};
+
+	/**
+	 * Returns selected drawings from the current sheet.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @returns {Drawing[]}.
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetAllDrawings.js
+	 */
+	ApiWorksheet.prototype.GetSelectedDrawings = function () {
+		var allDrawings = this.worksheet.Drawings;
+		var allApiDrawings = [];
+
+		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++) {
+			if (allDrawings[nDrawing].graphicObject && allDrawings[nDrawing].graphicObject.selected) {
+				allApiDrawings.push(GetApiDrawing(allDrawings[nDrawing].graphicObject));
+			}
+		}
+
+		return allApiDrawings
+	};
+
+	/**
 	 * Returns all charts from the current sheet.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
@@ -9256,7 +9364,7 @@
 
 		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++) {
 			if (allDrawings[nDrawing].graphicObject && allDrawings[nDrawing].isChart()) {
-				allApiDrawings.push(Asc.editor.private_CreateApiChart(allDrawings[nDrawing].graphicObject));
+				allApiDrawings.push(new ApiChart(allDrawings[nDrawing].graphicObject));
 			}
 		}
 		return allApiDrawings;
@@ -9412,10 +9520,10 @@
 			if (typeof editRes === "object") {
 				result = new ApiProtectedRange(editRes);
 			} else {
-				logError(new Error('Protected range cannot be added.'));
+				throwException(new Error('Protected range cannot be added.'));
 			}
 		} else {
-			logError(new Error('The title or dataRange is invalid'));
+			throwException(new Error('The title or dataRange is invalid'));
 		}
 
 		return result;
@@ -9438,10 +9546,10 @@
 			let protectedRange = this.worksheet.getUserProtectedRangeByName(sTitle);
 			result = protectedRange && protectedRange.obj ? new ApiProtectedRange(protectedRange.obj.clone(protectedRange.obj._ws, true)) : null;
 			if (result === null) {
-				logError(new Error('The range not found'));
+				throwException(new Error('The range not found'));
 			}
 		} else {
-			logError(new Error('The title is invalid'));
+			throwException(new Error('The title is invalid'));
 		}
 
 		return result;
@@ -9464,7 +9572,7 @@
 				result.push(new ApiProtectedRange(protectedRanges[i].clone(protectedRanges[i]._ws, true)));
 			}
 		} else {
-			logError(new Error('Ranges not found'));
+			throwException(new Error('Ranges not found'));
 		}
 
 		return result;
@@ -9484,7 +9592,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/Paste.js
 	 */
 	ApiWorksheet.prototype.Paste = function (destination) {
-		var oApi = Asc["editor"];
+		var oApi = Asc.editor;
 		if (destination) {
 			if (destination instanceof ApiRange) {
 				AscCommon.g_specialPasteHelper && AscCommon.g_specialPasteHelper.Special_Paste_Hide_Button();
@@ -9493,7 +9601,7 @@
 					oApi && oApi.asc_Paste();
 				});
 			} else {
-				logError(new Error('Invalid destination'));
+				throwException(new Error('Invalid destination'));
 			}
 		} else {
 			AscCommon.g_specialPasteHelper && AscCommon.g_specialPasteHelper.Special_Paste_Hide_Button();
@@ -9689,7 +9797,7 @@
 			if (r < 0) r = 0;
 			result = new ApiRange(this.range.worksheet.getRange3(r, this.range.bbox.c1, r, this.range.bbox.c2));
 		} else {
-			logError(new Error('The nRow must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
+			throwException(new Error('The nRow must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
 		}
 		return result;
 	};
@@ -9782,7 +9890,7 @@
 			if (c < 0) c = 0;
 			result = new ApiRange(this.range.worksheet.getRange3(this.range.bbox.r1, c, this.range.bbox.r2, c));
 		} else {
-			logError(new Error('The nCol must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxCol0 + 1)));
+			throwException(new Error('The nCol must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxCol0 + 1)));
 		}
 		return result;
 	};
@@ -10059,7 +10167,7 @@
 		let worksheet = this.range.worksheet;
 
 		if (worksheet.getSheetProtection() && worksheet.isIntersectLockedRanges([this.range.bbox])) {
-			//logError(new Error('Cannot modify protected sheet'));
+			//throwException(new Error('Cannot modify protected sheet'));
 			return false;
 		}
 
@@ -10829,7 +10937,7 @@
 				var bb = this.range.hasMerged();
 				result = new ApiRange((bb) ? AscCommonExcel.Range.prototype.createFromBBox(this.range.worksheet, bb) : this.range);
 			} else {
-				logError(new Error('Range must be is one cell.'));
+				throwException(new Error('Range must be is one cell.'));
 			}
 			return result;
 		}
@@ -11031,7 +11139,7 @@
 		var range = this.range.bbox;
 
 		if (!this._checkProtection()) {
-			logError(new Error('Cannot modify protected sheet'));
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 
@@ -11083,18 +11191,18 @@
 		
 		sortSettings.levels = [];
 		key1 = filterRange(key1);
-		const rangeKey1 = apiWorksheet.GetRange(key1);
-		if (key1 && false === getSortLevel(rangeKey1, sSortOrder1)) {
+		const rangeKey1 = key1 && apiWorksheet.GetRange(key1);
+		if (rangeKey1 && false === getSortLevel(rangeKey1, sSortOrder1)) {
 			return;
 		}
 		key2 = filterRange(key2);
-		const rangeKey2 = apiWorksheet.GetRange(key2);
-		if (key2 && false === getSortLevel(rangeKey2, sSortOrder2)) {
+		const rangeKey2 = key2 && apiWorksheet.GetRange(key2);
+		if (rangeKey2 && false === getSortLevel(rangeKey2, sSortOrder2)) {
 			return;
 		}
 		key3 = filterRange(key3);
-		const rangeKey3 = apiWorksheet.GetRange(key3);
-		if (key3 && false === getSortLevel(rangeKey3, sSortOrder3)) {
+		const rangeKey3 = key3 && apiWorksheet.GetRange(key3);
+		if (rangeKey3 && false === getSortLevel(rangeKey3, sSortOrder3)) {
 			return;
 		}
 
@@ -11230,7 +11338,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Copy.js
 	 */
 	ApiRange.prototype.Copy = function (destination) {
-		var oApi = Asc["editor"];
+		var oApi = Asc.editor;
 		if (destination) {
 			if (destination instanceof ApiRange) {
 				let bboxFrom = this.range.bbox;
@@ -11241,7 +11349,7 @@
 				this.range.move(range.bbox, true, destination.range.worksheet);
 				//AscCommon.g_clipboardBase && AscCommon.g_clipboardBase.ClearBuffer();
 			} else {
-				logError(new Error('Invalid destination'));
+				throwException(new Error('Invalid destination'));
 			}
 		} else {
 			let ws =  this.range.worksheet;
@@ -11261,7 +11369,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Cut.js
 	 */
 	ApiRange.prototype.Cut = function (destination) {
-		var oApi = Asc["editor"];
+		var oApi = Asc.editor;
 		if (destination) {
 			if (destination instanceof ApiRange) {
 				let bboxFrom = this.range.bbox;
@@ -11272,7 +11380,7 @@
 				this.range.move(range.bbox, false, destination.range.worksheet);
 				//AscCommon.g_clipboardBase && AscCommon.g_clipboardBase.ClearBuffer();
 			} else {
-				logError(new Error('Invalid destination'));
+				throwException(new Error('Invalid destination'));
 			}
 		} else {
 			let ws =  this.range.worksheet;
@@ -11301,7 +11409,7 @@
 			let range = this.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
 			rangeFrom.range.move(range.bbox, true, range.worksheet);
 		} else {
-			logError(new Error('Invalid range'));
+			throwException(new Error('Invalid range'));
 		}
 	};
 
@@ -11318,11 +11426,11 @@
 	 */
 	ApiRange.prototype.PasteSpecial = function (sPasteType, sPasteSpecialOperation, bSkipBlanks, bTranspose) {
 		if (sPasteType && typeof sPasteType !== 'string') {
-			logError(new Error('Invalid type of parameter "sPasteType".'));
+			throwException(new Error('Invalid type of parameter "sPasteType".'));
 			return;
 		}
 		if (sPasteSpecialOperation && typeof sPasteSpecialOperation !== 'string') {
-			logError(new Error('Invalid type of parameter "sPasteSpecialOperation".'));
+			throwException(new Error('Invalid type of parameter "sPasteSpecialOperation".'));
 			return;
 		}
 
@@ -11401,7 +11509,7 @@
 		specialPasteProps.asc_setSkipBlanks(!!bSkipBlanks);
 		specialPasteProps.asc_setTranspose(!!bTranspose);
 
-		let oApi = Asc["editor"];
+		let oApi = Asc.editor;
 		AscCommon.g_specialPasteHelper && AscCommon.g_specialPasteHelper.Special_Paste_Hide_Button();
 		let ws =  this.range.worksheet;
 		private_executeOtherActiveSheet(ws, this.areas || [this.range], function () {
@@ -11560,7 +11668,7 @@
 			this._searchOptions = options;
 			return res;
 		} else {
-			logError(new Error('Invalid parametr "What".'));
+			throwException(new Error('Invalid parametr "What".'));
 			return null;
 		}
 	};
@@ -11601,7 +11709,7 @@
 			}
 			return res;
 		} else {
-			logError(new Error('You should use "Find" method before this.'));
+			throwException(new Error('You should use "Find" method before this.'));
 			return null;
 		}
 	};
@@ -11642,7 +11750,7 @@
 			}
 			return res;
 		} else {
-			logError(new Error('You should use "Find" method before this.'));
+			throwException(new Error('You should use "Find" method before this.'));
 			return null;
 		}
 	};
@@ -11710,7 +11818,7 @@
 				this.range.worksheet.workbook.oApi.wb.replaceCellText(options);
 			}
 		} else {
-			logError(new Error('Invalid type of parametr "What" or "Replacement".'));
+			throwException(new Error('Invalid type of parametr "What" or "Replacement".'));
 		}
 	};
 
@@ -11783,6 +11891,68 @@
 		}
 		return res;
 	};
+
+    function _ascCustomOpToSign(op) {
+        var c = Asc.c_oAscCustomAutoFilter;
+        switch (op) {
+            case c.equals:                 return "=";
+            case c.doesNotEqual:           return "<>";
+            case c.isGreaterThan:          return ">";
+            case c.isGreaterThanOrEqualTo: return ">=";
+            case c.isLessThan:             return "<";
+            case c.isLessThanOrEqualTo:    return "<=";
+            default:                       return "";
+        }
+    }
+
+    function _dynamicTypeToCriteria(type) {
+        var d = Asc.c_oAscDynamicAutoFilter;
+        switch (type) {
+            case d.aboveAverage:  return "xlFilterAboveAverage";
+            case d.belowAverage:  return "xlFilterBelowAverage";
+
+            case d.lastMonth:     return "xlFilterLastMonth";
+            case d.lastQuarter:   return "xlFilterLastQuarter";
+            case d.lastWeek:      return "xlFilterLastWeek";
+            case d.lastYear:      return "xlFilterLastYear";
+
+            case d.nextMonth:     return "xlFilterNextMonth";
+            case d.nextQuarter:   return "xlFilterNextQuarter";
+            case d.nextWeek:      return "xlFilterNextWeek";
+            case d.nextYear:      return "xlFilterNextYear";
+
+            case d.thisMonth:     return "xlFilterThisMonth";
+            case d.thisQuarter:   return "xlFilterThisQuarter";
+            case d.thisWeek:      return "xlFilterThisWeek";
+            case d.thisYear:      return "xlFilterThisYear";
+
+            case d.today:         return "xlFilterToday";
+            case d.tomorrow:      return "xlFilterTomorrow";
+            case d.yearToDate:    return "xlFilterYearToDate";
+            case d.yesterday:     return "xlFilterYesterday";
+
+            case d.m1:  return "xlFilterAllDatesInPeriodJanuary";
+            case d.m2:  return "xlFilterAllDatesInPeriodFebruary";
+            case d.m3:  return "xlFilterAllDatesInPeriodMarch";
+            case d.m4:  return "xlFilterAllDatesInPeriodApril";
+            case d.m5:  return "xlFilterAllDatesInPeriodMay";
+            case d.m6:  return "xlFilterAllDatesInPeriodJune";
+            case d.m7:  return "xlFilterAllDatesInPeriodJuly";
+            case d.m8:  return "xlFilterAllDatesInPeriodAugust";
+            case d.m9:  return "xlFilterAllDatesInPeriodSeptember";
+            case d.m10: return "xlFilterAllDatesInPeriodOctober";
+            case d.m11: return "xlFilterAllDatesInPeriodNovember";
+            case d.m12: return "xlFilterAllDatesInPeriodDecember";
+
+            case d.q1:  return "xlFilterAllDatesInPeriodQuarter1";
+            case d.q2:  return "xlFilterAllDatesInPeriodQuarter2";
+            case d.q3:  return "xlFilterAllDatesInPeriodQuarter3";
+            case d.q4:  return "xlFilterAllDatesInPeriodQuarter4";
+
+            default:    return null;
+        }
+    }
+
 	let createCustomFilter = function (autoFilterOptions, Criteria1, Criteria2, Operator, cellId, opt_operator1, opt_operator2) {
 		if (Criteria1 || Criteria1) {
 			let filterObj = new Asc.AutoFilterObj();
@@ -12036,7 +12206,7 @@
 	 * Adds an AutoFilter to the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {number} [Field] - The integer offset of the field on which you want to base the filter (from the left of the list; the leftmost field is field one).
+	 * @param {number|null} [Field] - The integer offset of the field on which you want to base the filter (from the left of the list; the leftmost field is field one). If {null} provided, clears the AutoFilter for the range.
 	 * @param {string | string[] | ApiColor | XlDynamicFilterCriteria} [Criteria1] - The criteria (a string; for example, "101"). Use "=" to find blank fields, "<>" to find non-blank fields, and "><" to select (No Data) fields in data types.
 	 * If this argument is omitted, the criteria is All. If Operator is xlTop10Items, Criteria1 specifies the number of items (for example, "10").
 	 * @param {XlAutoFilterOperator} [Operator] - An XlAutoFilterOperator constant specifying the type of filter.
@@ -12093,9 +12263,21 @@
 		// 	test.SetAutoFilter(1, "xlFilterAboveAverage", "xlFilterDynamic");
 		// })();
 
-
 		if (!this._checkProtection()) {
 			return null;
+		}
+
+        // case when filter values array lenght 2 or less
+		if (Operator === "xlFilterValues" &&  Array.isArray(Criteria1) && Criteria1.length && Criteria1.length <= 2 && Criteria1[0] !== null && Criteria1[0] !== undefined) {
+            if (Criteria1.length === 2 && Criteria1[1] !== null && Criteria1[1] !== undefined) {
+                Criteria2 = Criteria1[1].toString();
+            }
+            Criteria1 = Criteria1[0].toString();
+            Operator = "xlOr"
+        }
+
+		if (Field != null && (Criteria1 === undefined || Criteria1 === null)) {
+			return;
 		}
 
 		if (Criteria2 && Array.isArray(Criteria2)) {
@@ -12181,12 +12363,33 @@
 
 				let criteriaMap = {};
 				for (let i in Criteria1) {
-					criteriaMap[Criteria1[i]] = 1;
+					criteriaMap[Criteria1[i]] = {
+                        visible: true,
+                        used: false
+                    };
 				}
 
 				for (let i = 0; i < autoFiltersOptionsElements.values.length; i++) {
-					autoFiltersOptionsElements.values[i].asc_setVisible(!!criteriaMap[autoFiltersOptionsElements.values[i].text]);
+					const target = criteriaMap[autoFiltersOptionsElements.values[i].text];
+                    if (target !== undefined) {
+                        autoFiltersOptionsElements.values[i].asc_setVisible(target.visible);
+                        target.used = true;
+                    } else {
+                        autoFiltersOptionsElements.values[i].asc_setVisible(false);
+                    }
 				}
+
+                for (let key in criteriaMap) {
+                    if (criteriaMap.hasOwnProperty(key) && !criteriaMap[key].used) {
+                        let elem = AscCommonExcel.AutoFiltersOptionsElements();
+                        elem.asc_setVisible(true);
+                        elem.asc_setVal(key);
+                        elem.asc_setText(key);
+                        elem.asc_setIsDateFormat(false);
+                        elem.asc_setRepeats(undefined);
+                        autoFiltersOptionsElements.values.push(elem);
+                    }
+                }
 				// for (let i in Criteria1) {
 				// 	let elem = new AscCommonExcel.AutoFiltersOptionsElements();
 				// 	elem.asc_setVisible(true);
@@ -12259,6 +12462,7 @@
 					let _type = toDynamicConst(Criteria1);
 					autoFilterOptions = new Asc.AutoFiltersOptions();
 					createDynamicFilter(autoFilterOptions, _type, null);
+					autoFilterOptions.asc_setCellId(cellId);
 					break;
 				}
 				/*case "xlFilterIcon": {
@@ -12278,6 +12482,7 @@
 						private_MakeError('Error! Criteria1 must be between 1 and 500!');
 						return false;
 					}
+					autoFilterOptions.asc_setCellId(cellId);
 					break;
 				}
 				case "xlFilterValues":
@@ -12725,6 +12930,47 @@
 		return private_MM2EMU(this.Drawing.GetHeight());
 	};
 	/**
+	 * Returns the name of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetName.js
+	 */
+	ApiDrawing.prototype.GetName = function () {
+		return this.Drawing.getObjectName();
+	};
+	/**
+	 * Sets the name of the current drawing.
+	 * If another drawing with the same name already exists, that drawing's name will be reset to a default auto-generated name.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - The name which will be set to the current drawing.
+	 * @returns {boolean} - Returns true if the name was successfully set, otherwise returns false.
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetName.js
+	 */
+	ApiDrawing.prototype.SetName = function(name)
+	{
+		if (name === "" || name === null || name === undefined)
+			return false
+
+		let worksheet = this.Drawing.getWorksheet();
+		let drawings = GetApiDrawings(worksheet.Drawings.map(function(drawingBase) { return drawingBase.graphicObject }));
+
+		for (let nCount = 0; nCount < drawings.length; nCount++)
+		{
+			let drawing = drawings[nCount];
+			if (drawing.Drawing.getOwnName() === name)
+			{
+				drawing.Drawing.setName("");
+				break;
+			}
+		}
+		this.Drawing.setName(name);
+		return true;
+	}
+	/**
 	 * Returns the lock value for the specified lock type of the current drawing.
 	 * @typeofeditors ["CSE"]
 	 * @param {DrawingLockType} sType - Lock type in the string format.
@@ -12830,20 +13076,167 @@
 	};
 
 	/**
+	 * Get horizontal flip of current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @since 9.3.0
+	 * @returns {boolean | null} Returns true if the figure is flipped horizontally, false if not, or null if the drawing properties are not available.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetFlipH.js
+	 */
+	ApiDrawing.prototype.GetFlipH = function()
+	{
+		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
+			return this.Drawing.spPr.xfrm.flipH;
+
+		return null;
+	};
+
+	/**
+	 * Get vertical flip of current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @since 9.3.0
+	 * @returns {boolean | null} Returns true if the figure is flipped vertically, false if not, or null if the drawing properties are not available.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetFlipV.js
+	 */
+	ApiDrawing.prototype.GetFlipV = function()
+	{
+		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
+			return this.Drawing.spPr.xfrm.flipV;
+
+		return null;
+	};
+
+	/**
+	 * Sets the horizontal flip of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @since 9.3.0
+	 * @param {boolean} bFlip - Specifies if the figure will be flipped horizontally or not.
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetFlipH.js
+	 */
+	ApiDrawing.prototype.SetFlipH = function(bFlip)
+	{
+		if (typeof(bFlip) !== "boolean")
+			return false;
+
+		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
+		{
+			this.Drawing.spPr.xfrm.setFlipH(bFlip);
+			return true;
+		}
+
+		return false;
+	};
+
+	/**
+	 * Sets the vertical flip of the current drawing.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @since 9.3.0
+	 * @param {boolean} bFlip - Specifies if the figure will be flipped vertically or not.
+	 * @returns {boolean} Returns true if the operation is successful, false otherwise.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetFlipV.js
+	 */
+	ApiDrawing.prototype.SetFlipV = function(bFlip)
+	{
+		if (typeof(bFlip) !== "boolean")
+			return false;
+
+		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
+		{
+			this.Drawing.spPr.xfrm.setFlipV(bFlip);
+			return true;
+		}
+
+		return false;
+	};
+
+	/**
 	 * Selects the current graphic object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
-	 * @since 9.1.0
+	 * @deprecated since 9.3.0 version.
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
 	 */
-	ApiDrawing.prototype.Select = function() {
+	/**
+	 * Selects the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @since 9.3.0
+	 * @param {boolean} [isReplace=false] - Specifies whether the selection should replace the current selection (true) or be added to it (false).
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
+	 */
+	ApiDrawing.prototype.Select = function(isReplace) {
 		let oDrawing = this.Drawing;
 		if(!oDrawing) return;
 		let oController = oDrawing.getDrawingObjectsController();
 		if (!oController) return;
+
+		if (!!isReplace)
+			oController.resetSelection();
+
 		oController.selectObject(oDrawing, 0);
 		oController.updateSelectionState();
 		oController.updateOverlay();
+	};
+
+	/**
+	 * Removes the current drawing from the selection.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @since 9.3.0
+	 * @returns {boolean} - Returns false if the drawing or controller is not available, otherwise returns true.
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Unselect.js
+	 */
+	ApiDrawing.prototype.Unselect = function() {
+		let oDrawing = this.Drawing;
+		if(!oDrawing)
+			return false
+		let oController = oDrawing.getDrawingObjectsController();
+		if (!oController)
+			return false
+		oController.deselectObject(oDrawing);
+		oController.updateSelectionState();
+		oController.updateOverlay();
+		return true
+	};
+
+	/**
+	 * Sets the fill formatting properties to the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiFill} oFill - The fill type used to fill the graphic object.
+	 * @returns {boolean} - returns false if param is invalid.
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Fill.js
+	 */
+	ApiDrawing.prototype.Fill = function(oFill)
+	{
+		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
+			return false;
+
+		this.Drawing.spPr.setFill(oFill.UniFill);
+		return true;
+	};
+
+	/**
+	 * Sets the outline properties to the specified graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiStroke} oStroke - The stroke used to create the graphic object outline.
+	 * @returns {boolean} - returns false if param is invalid.
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetOutLine.js
+	 */
+	ApiDrawing.prototype.SetOutLine = function(oStroke)
+	{
+		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
+			return false;
+
+		this.Drawing.spPr.setLn(oStroke.Ln);
+		return true;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -12861,6 +13254,60 @@
 	 */
 	ApiImage.prototype.GetClassType = function () {
 		return "image";
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiGroup
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a group of drawings.
+	 * @constructor
+	 */
+	function ApiGroup(oGroup) {
+		ApiDrawing.call(this, oGroup);
+	}
+	ApiGroup.prototype = Object.create(ApiDrawing.prototype);
+	ApiGroup.prototype.constructor = ApiGroup;
+
+	/**
+	 * Returns a type of the ApiGroup class.
+	 * @memberof ApiGroup
+	 * @typeofeditors ["CSE"]
+	 * @returns {"group"}
+	 * @see office-js-api/Examples/{Editor}/ApiGroup/Methods/GetClassType.js
+	 */
+	ApiGroup.prototype.GetClassType = function() {
+		return "group";
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiSmartArt
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Class representing a smart art.
+	 * @constructor
+	 */
+	function ApiSmartArt(oGroup){
+		ApiDrawing.call(this, oGroup);
+	}
+	ApiSmartArt.prototype = Object.create(ApiDrawing.prototype);
+	ApiSmartArt.prototype.constructor = ApiSmartArt;
+
+	/**
+	 * Returns a type of the ApiSmartArt class.
+	 * @memberof ApiSmartArt
+	 * @typeofeditors ["CSE"]
+	 * @returns {"smartArt"}
+	 * @see office-js-api/Examples/{Editor}/ApiSmartArt/Methods/GetClassType.js
+	 */
+	ApiSmartArt.prototype.GetClassType = function() {
+		return "smartArt";
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -12888,16 +13335,13 @@
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetContent.js
 	 */
 	ApiShape.prototype.GetContent = function () {
-		var oApi = Asc["editor"];
-		if (!oApi)
-			return null;
 		let docContent = this.Drawing.getDocContent();
 		if (!docContent) {
 			this.Drawing.createTextBody();
 		}
 		docContent = this.Drawing.getDocContent();
 		if (docContent) {
-			return oApi.private_CreateApiDocContent(docContent);
+			return Api.private_CreateApiDocContent(docContent);
 		}
 		return null;
 	};
@@ -12945,7 +13389,33 @@
 		return false;
 	};
 
+	/**
+	 * Sets the text paddings to the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CSE"]
+	 * @param {?EMU} nLeft - Left padding.
+	 * @param {?EMU} nTop - Top padding.
+	 * @param {?EMU} nRight - Right padding.
+	 * @param {?EMU} nBottom - Bottom padding.
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetPaddings.js
+	 */
+	ApiShape.prototype.SetPaddings = function(nLeft, nTop, nRight, nBottom)
+	{
+		if(this.Shape)
+		{
+			this.Shape.setPaddings({
+				Left: AscFormat.isRealNumber(nLeft) ? private_EMU2MM(nLeft) : null,
+				Top: AscFormat.isRealNumber(nTop) ? private_EMU2MM(nTop) : null,
+				Right: AscFormat.isRealNumber(nRight) ? private_EMU2MM(nRight) : null,
+				Bottom: AscFormat.isRealNumber(nBottom) ? private_EMU2MM(nBottom) : null
+			});
 
+			return true;
+		}
+
+		return false;
+	};
 
 	/**
 	 * Returns the geometry object from the current shape.
@@ -12960,7 +13430,7 @@
 	{
 		if (this.Shape && this.Shape.spPr && this.Shape.spPr.geometry)
 		{
-			return Api.prototype.private_CreateGeometry(this.Shape.spPr.geometry);
+			return Api.private_CreateGeometry(this.Shape.spPr.geometry);
 		}
 		return null;
 	};
@@ -12984,26 +13454,114 @@
 		return false;
 	};
 
+	/**
+	 * Sets the fill properties to the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiFill} oFill - The fill type used to fill the shape.
+	 * @returns {boolean} - returns false if param is invalid.
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetFill.js
+	 */
+	ApiShape.prototype.SetFill = function(oFill)
+	{
+		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
+			return false;
+
+		if (this.Shape && this.Shape.spPr)
+		{
+			this.Shape.spPr.setFill(oFill.UniFill);
+			return true;
+		}
+
+		return false;
+	};
+
+	/**
+	 * Gets the fill properties from the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiFill | null}
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetFill.js
+	 */
+	ApiShape.prototype.GetFill = function()
+	{
+		if (this.Shape)
+		{
+			if (this.Shape.recalcInfo && this.Shape.recalcInfo.recalculateBrush)
+			{
+				this.Shape.recalculateBrush();
+			}
+			if (this.Shape.brush)
+			{
+				return new AscBuilder.ApiFill(this.Shape.brush);
+			}
+		}
+
+		return null;
+	};
+
+	/**
+	 * Sets the outline properties to the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiStroke} oStroke - The stroke used to create the shape outline.
+	 * @returns {boolean} - returns false if param is invalid.
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetLine.js
+	 */
+	ApiShape.prototype.SetLine = function(oStroke)
+	{
+		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
+			return false;
+
+		if (this.Shape && this.Shape.spPr)
+		{
+			this.Shape.spPr.setLn(oStroke.Ln);
+			return true;
+		}
+
+		return false;
+	};
+
+	/**
+	 * Gets the outline properties from the current shape.
+	 * @memberof ApiShape
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiStroke | null}
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetLine.js
+	 */
+	ApiShape.prototype.GetLine = function()
+	{
+		if (this.Shape)
+		{
+			if (this.Shape.recalcInfo && this.Shape.recalcInfo.recalculatePen)
+			{
+				this.Shape.recalculatePen();
+			}
+			if (this.Shape.pen)
+			{
+				return new AscBuilder.ApiStroke(this.Shape.pen);
+			}
+		}
+
+		return null;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiChart
 	//
 	//------------------------------------------------------------------------------------------------------------------
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-	let ApiChart = AscBuilder.ApiChart;
+	/**
+	 * Class representing a chart.
+	 * @constructor
+	 */
+	function ApiChart(Chart) {
+		ApiDrawing.call(this, Chart);
+		this.Chart = Chart;
+	}
+	ApiChart.prototype = Object.create(ApiDrawing.prototype);
+	ApiChart.prototype.constructor = ApiChart;
 
 	/**
 	 * Sets values from the specified range to the specified series.
@@ -13088,11 +13646,6 @@
 		} else
 			this.Chart.addSeries(sNameRange, sValuesRange);
 	};
-
-
-
-
-
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -13219,12 +13772,12 @@
 	 */
 	ApiName.prototype.SetName = function (sName) {
 		if (!sName || typeof sName !== 'string' || !this.DefName) {
-			logError(new Error('Invalid name or Defname is undefined.'));
+			throwException(new Error('Invalid name or Defname is undefined.'));
 			return false;
 		}
 		var res = this.DefName.wb.checkDefName(sName);
 		if (!res.status) {
-			logError(new Error('Invalid name.')); // invalid name
+			throwException(new Error('Invalid name.')); // invalid name
 			return false;
 		}
 		var oldName = this.DefName.getAscCDefName(false);
@@ -14067,7 +14620,7 @@
 			if (excess) {
 				length -= excess;
 				if (!length) {
-					logError(new Error('Max symbols in one cell.'));
+					throwException(new Error('Max symbols in one cell.'));
 					return;
 				}
 				String = String.slice(0, length);
@@ -14296,7 +14849,7 @@
 	 */
 	ApiFont.prototype.SetBold = function (isBold) {
 		if (typeof isBold !== 'boolean') {
-			logError(new Error('Invalid type of parametr "isBold".'));
+			throwException(new Error('Invalid type of parametr "isBold".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -14395,7 +14948,7 @@
 	 */
 	ApiFont.prototype.SetItalic = function (isItalic) {
 		if (typeof isItalic !== 'boolean') {
-			logError(new Error('Invalid type of parametr "isItalic".'));
+			throwException(new Error('Invalid type of parametr "isItalic".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -14495,7 +15048,7 @@
 	 */
 	ApiFont.prototype.SetSize = function (Size) {
 		if (typeof Size !== 'number' || Size < 0 || Size > 409) {
-			logError(new Error('Invalid type of parametr "Size".'));
+			throwException(new Error('Invalid type of parametr "Size".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -14594,7 +15147,7 @@
 	 */
 	ApiFont.prototype.SetStrikethrough = function (isStrikethrough) {
 		if (typeof isStrikethrough !== 'boolean') {
-			logError(new Error('Invalid type of parametr "isStrikethrough".'));
+			throwException(new Error('Invalid type of parametr "isStrikethrough".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -14738,7 +15291,7 @@
 	 */
 	ApiFont.prototype.SetUnderline = function (Underline) {
 		if (typeof Underline !== 'string') {
-			logError(new Error('Invalid type of parametr "isUnderline".'));
+			throwException(new Error('Invalid type of parametr "isUnderline".'));
 			return;
 		}
 		switch (Underline) {
@@ -14860,7 +15413,7 @@
 	 */
 	ApiFont.prototype.SetSubscript = function (isSubscript) {
 		if (typeof isSubscript !== 'boolean') {
-			logError(new Error('Invalid type of parametr "isSubscript".'));
+			throwException(new Error('Invalid type of parametr "isSubscript".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -14960,7 +15513,7 @@
 	 */
 	ApiFont.prototype.SetSuperscript = function (isSuperscript) {
 		if (typeof isSuperscript !== 'boolean') {
-			logError(new Error('Invalid type of parametr "isSuperscript".'));
+			throwException(new Error('Invalid type of parametr "isSuperscript".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -15060,7 +15613,7 @@
 	 */
 	ApiFont.prototype.SetName = function (FontName) {
 		if (typeof FontName !== 'string') {
-			logError(new Error('Invalid type of parametr "FontName".'));
+			throwException(new Error('Invalid type of parametr "FontName".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -15160,7 +15713,7 @@
 	 */
 	ApiFont.prototype.SetColor = function (Color) {
 		if (!Color instanceof ApiColor) {
-			logError(new Error('Invalid type of parametr "Color".'));
+			throwException(new Error('Invalid type of parametr "Color".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -15236,7 +15789,7 @@
 			let c = bbox.c2 < AscCommon.gc_nMaxCol0 ? bbox.c2 + 1 : bbox.c2;
 			api.asc_freezePane(null, c, r);
 		} else {
-			logError(new Error('Invalid parametr "frozenRange".'));
+			throwException(new Error('Invalid parametr "frozenRange".'));
 		}
 	};
 
@@ -15256,7 +15809,7 @@
 		} else if (!!api.wb.getWorksheet().topLeftFrozenCell && count === 0) {
 			api.asc_freezePane(undefined);
 		} else {
-			logError(new Error('Invalid parametr "count".'));
+			throwException(new Error('Invalid parametr "count".'));
 		}
 	};
 
@@ -15276,7 +15829,7 @@
 		} else if (!!api.wb.getWorksheet().topLeftFrozenCell && count === 0) {
 			api.asc_freezePane(undefined);
 		} else {
-			logError(new Error('Invalid parametr "count".'));
+			throwException(new Error('Invalid parametr "count".'));
 		}
 	};
 
@@ -19255,7 +19808,7 @@
 		return sOperator;
 	}
 
-	// Helper to get single instance of validation
+	// Helpers to get single instance of validation
 	function getSingleValidation(apiValidation) {
 		if (!apiValidation) {
 			return;
@@ -19266,11 +19819,44 @@
 			return apiValidation.validations[0];
 		}
 		if (apiValidation.validations.length > 1) {
-			logError(new Error('Multiple validations exist'));
+			throwException(new Error('Multiple validations exist'));
 			return null;
 		}
 		return apiValidation.validations[0];
 	}
+
+    function setSingleValidation(apiValidation) {
+        if (!apiValidation) {
+            return;
+        }
+        if (!apiValidation.validations || !Array.isArray(apiValidation.validations) || !apiValidation.validations.length) {
+            const validation = new window['AscCommonExcel'].CDataValidations().getNewValidation();
+            apiValidation.validations = [validation];
+            return apiValidation.validations[0];
+        }
+        if (apiValidation.validations.length > 1) {
+            throwException(new Error('Multiple validations exist'));
+            return null;
+        }
+        if (!apiValidation.range || !apiValidation.range.range) {
+            throwException(new Error('Range is not provided'));
+            return
+        }
+        const targetRange = apiValidation.range.range;
+        const thisValidation = apiValidation.validations[0];
+        // if validation contains multiple ranges or if validations range is not the same as target range, create newValidation
+        if (thisValidation.ranges.length > 1 || (thisValidation.ranges.length > 0 && !targetRange.bbox.isEqual(thisValidation.ranges[0]))) {
+            const type = apiValidation.GetType();
+            const alert = apiValidation.GetAlertStyle();
+            const operator = apiValidation.GetOperator();
+            const formula1 = apiValidation.GetFormula1();
+            const formula2 = apiValidation.GetFormula2();
+            const newValidation = apiValidation.Modify(type, alert, operator, formula1, formula2);
+            return newValidation ? newValidation.validations[0] : null;
+        } else {
+            return apiValidation.validations[0];
+        }
+    }
 
 	/**
 	 * Class representing data validation.
@@ -19317,7 +19903,7 @@
 		}
 
 		if (this.validations && Array.isArray(this.validations) && this.validations.length > 0 && this.validations[0].ranges) {
-			logError(new Error('Validation already exists.'));
+			throwException(new Error('Validation already exists.'));
 			return null;
 		}
 
@@ -19338,28 +19924,56 @@
 		dataValidation.showInputMessage = true;
 		dataValidation.allowBlank = true;
 
-		let processFormula = function(formula) {
+        const getFormulaString = function (formula) {
+            if (formula === undefined || formula === null) {
+                return null;
+            }
+
+            if (typeof formula === "string") {
+                return formula
+            } else if (typeof formula === "number") {
+                return formula.toString()
+            } else if (Array.isArray(formula)) {
+                const sep = ",";
+                return formula.join(sep)
+            } else if (formula && formula.constructor === ApiRange) {
+                let text = formula.GetAddress(true, true);
+                if (text && typeof text === "string") {
+                    text = "=" + text;
+                }
+                return text
+            }
+
+            return null;
+        }
+
+		let processFormula = function(formula, t) {
 			if (formula === undefined || formula === null) {
 				return null;
 			}
 
-			if (typeof formula === "string") {
-				return new window['Asc'].CDataFormula(formula);
-			} else if (typeof formula === "number") {
-				return new window['Asc'].CDataFormula(formula.toString());
-			} else if (formula && formula.constructor === ApiRange) {
-				return new window['Asc'].CDataFormula(formula.GetAddress());
-			}
+            const formulaText = getFormulaString(formula);
+            if (formulaText !== null) {
+                // check for validation if validation provided else simply pass
+                const res = t.range && t.range.range && t.range.range.worksheet && t.range.range.worksheet.workbook && t.range.range.worksheet.workbook.oApi && t.range.range.worksheet.workbook.oApi.asc_checkDataRange ?
+                    t.range.range.worksheet.workbook.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.DataValidation, formulaText, true, undefined, internalType) : Asc.c_oAscError.ID.No;
+                if (res !== Asc.c_oAscError.ID.No) {
+                    throwException(new Error('Provide correct formula!'));
+                    return null;
+                }
+                return new window['Asc'].CDataFormula(formulaText);
+            }
 
 			return null;
 		};
 
+        const t = this;
 		if (Formula1 !== undefined) {
-			dataValidation.formula1 = processFormula(Formula1);
+			dataValidation.formula1 = processFormula(Formula1, t);
 		}
 
 		if (Formula2 !== undefined) {
-			dataValidation.formula2 = processFormula(Formula2);
+			dataValidation.formula2 = processFormula(Formula2, t);
 		}
 
 		let ranges = [];
@@ -19372,13 +19986,14 @@
 		}
 		dataValidation.ranges = ranges;
 
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let apiWorksheet = this.range && this.range.GetWorksheet();
+		let worksheet = apiWorksheet && apiWorksheet.worksheet;
 		if (!worksheet) {
 			return null;
 		}
 
 		if (Asc.c_oAscError.ID.No !== dataValidation.asc_checkValid()) {
-			logError(new Error('Check params error.'));
+			throwException(new Error('Check params error.'));
 			return null;
 		}
 
@@ -19386,8 +20001,8 @@
 			worksheet.dataValidations = new window['AscCommonExcel'].CDataValidations();
 		}
 
+        dataValidation.correctFromInterface(worksheet);
 		dataValidation._init(worksheet);
-		dataValidation.correctFromInterface(worksheet);
 
 		worksheet.dataValidations.add(worksheet, dataValidation, true);
 
@@ -19407,7 +20022,8 @@
 			return;
 		}
 
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let apiWorksheet = this.range && this.range.GetWorksheet();
+		let worksheet = apiWorksheet && apiWorksheet.worksheet;
 		if (!worksheet || !worksheet.dataValidations) {
 			return;
 		}
@@ -19436,16 +20052,17 @@
 	 */
 	ApiValidation.prototype.Modify = function(Type, AlertStyle, Operator, Formula1, Formula2) {
 		if (!this.validations || !Array.isArray(this.validations) || !this.validations.length) {
-			logError(new Error('No validation to modify.'));
+			throwException(new Error('No validation to modify.'));
 			return null;
 		}
 
 		if (this.validations.length > 0 && !this.validations[0].ranges) {
-			logError(new Error('No ranges to modify.'));
+			throwException(new Error('No ranges to modify.'));
 			return null;
 		}
 
-		let worksheet = this.range && this.range.Worksheet && this.range.Worksheet.worksheet;
+		let apiWorksheet = this.range && this.range.GetWorksheet();
+		let worksheet = apiWorksheet && apiWorksheet.worksheet;
 		if (!worksheet || !worksheet.dataValidations) {
 			return null;
 		}
@@ -19473,25 +20090,6 @@
 	};
 
 	/**
-	 * Sets the validation type.
-	 * @memberof ApiValidation
-	 * @typeofeditors ["CSE"]
-	 * @param {ValidationType} Type - The validation type.
-	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetType.js
-	 */
-	ApiValidation.prototype.SetType = function(Type) {
-		const validation = getSingleValidation(this);
-		if (!validation) {
-			return;
-		}
-		// If there are multiple validations, we cannot set type
-		let internalType = FromXlValidationTypeTo(Type);
-		if (internalType !== -1) {
-			validation.asc_setType(internalType);
-		}
-	};
-
-	/**
 	 * Returns the validation alert style.
 	 * @memberof ApiValidation
 	 * @typeofeditors ["CSE"]
@@ -19504,24 +20102,6 @@
 			return;
 		}
 		return ToXlValidationAlertStyleFrom(validation.getErrorStyle());
-	};
-
-	/**
-	 * Sets the validation alert style.
-	 * @memberof ApiValidation
-	 * @typeofeditors ["CSE"]
-	 * @param {ValidationAlertStyle} AlertStyle - The validation alert style.
-	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetAlertStyle.js
-	 */
-	ApiValidation.prototype.SetAlertStyle = function(AlertStyle) {
-		const validation = getSingleValidation(this);
-		if (!validation) {
-			return;
-		}
-		let internalAlertStyle = FromXlValidationAlertStyleTo(AlertStyle);
-		if (internalAlertStyle !== -1) {
-			validation.asc_setErrorStyle(internalAlertStyle);
-		}
 	};
 
 	/**
@@ -19547,11 +20127,11 @@
 	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetIgnoreBlank.js
 	 */
 	ApiValidation.prototype.SetIgnoreBlank = function(IgnoreBlank) {
-		const validation = getSingleValidation(this);
+		const validation = setSingleValidation(this);
 		if (!validation) {
 			return;
 		}
-		validation.asc_setAllowBlank(IgnoreBlank);
+		validation.setAllowBlank(IgnoreBlank);
 	};
 
 	/**
@@ -19577,11 +20157,11 @@
 	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetInCellDropdown.js
 	 */
 	ApiValidation.prototype.SetInCellDropdown = function(InCellDropdown) {
-		const validation = getSingleValidation(this);
+		const validation = setSingleValidation(this);
 		if (!validation) {
 			return;
 		}
-		validation.asc_setShowDropDown(!InCellDropdown);
+		validation.setShowDropDown(!InCellDropdown);
 	};
 
 	/**
@@ -19607,11 +20187,11 @@
 	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetShowInput.js
 	 */
 	ApiValidation.prototype.SetShowInput = function(ShowInput) {
-		const validation = getSingleValidation(this);
+		const validation = setSingleValidation(this);
 		if (!validation) {
 			return;
 		}
-		validation.asc_setShowInputMessage(ShowInput);
+		validation.setShowInputMessage(ShowInput);
 	};
 
 	/**
@@ -19637,11 +20217,11 @@
 	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetShowError.js
 	 */
 	ApiValidation.prototype.SetShowError = function(ShowError) {
-		const validation = getSingleValidation(this);
+		const validation = setSingleValidation(this);
 		if (!validation) {
 			return;
 		}
-		validation.asc_setShowErrorMessage(ShowError);
+		validation.setShowErrorMessage(ShowError);
 	};
 
 	/**
@@ -19656,7 +20236,8 @@
 		if (!validation) {
 			return;
 		}
-		return validation.getPromptTitle();
+        const promptTitle = validation.getPromptTitle();
+        return promptTitle === null ? "" : promptTitle;
 	};
 
 	/**
@@ -19667,11 +20248,11 @@
 	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetInputTitle.js
 	 */
 	ApiValidation.prototype.SetInputTitle = function(InputTitle) {
-		const validation = getSingleValidation(this);
+		const validation = setSingleValidation(this);
 		if (!validation) {
 			return;
 		}
-		validation.asc_setPromptTitle(InputTitle);
+		validation.setPromptTitle(InputTitle);
 	};
 
 	/**
@@ -19686,7 +20267,8 @@
 		if (!validation) {
 			return;
 		}
-		return validation.getPrompt();
+        const promptMessage = validation.getPrompt();
+        return promptMessage === null ? "" : promptMessage;
 	};
 
 	/**
@@ -19697,11 +20279,11 @@
 	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetInputMessage.js
 	 */
 	ApiValidation.prototype.SetInputMessage = function(InputMessage) {
-		const validation = getSingleValidation(this);
+		const validation = setSingleValidation(this);
 		if (!validation) {
 			return;
 		}
-		validation.asc_setPrompt(InputMessage);
+		validation.setPrompt(InputMessage);
 	};
 
 	/**
@@ -19716,7 +20298,9 @@
 		if (!validation) {
 			return;
 		}
-		return validation.getErrorTitle();
+
+        const errorTitle = validation.getErrorTitle();
+        return errorTitle === null ? "" : errorTitle;
 	};
 
 	/**
@@ -19727,11 +20311,11 @@
 	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetErrorTitle.js
 	 */
 	ApiValidation.prototype.SetErrorTitle = function(ErrorTitle) {
-		const validation = getSingleValidation(this);
+		const validation = setSingleValidation(this);
 		if (!validation) {
 			return;
 		}
-		validation.asc_setErrorTitle(ErrorTitle);
+		validation.setErrorTitle(ErrorTitle);
 	};
 
 	/**
@@ -19746,7 +20330,9 @@
 		if (!validation) {
 			return;
 		}
-		return validation.getError();
+
+        const errorMessage= validation.getError();
+        return errorMessage === null ? "" : errorMessage;
 	};
 
 	/**
@@ -19757,11 +20343,11 @@
 	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetErrorMessage.js
 	 */
 	ApiValidation.prototype.SetErrorMessage = function(ErrorMessage) {
-		const validation = getSingleValidation(this);
+		const validation = setSingleValidation(this);
 		if (!validation) {
 			return;
 		}
-		validation.asc_setError(ErrorMessage);
+		validation.setError(ErrorMessage);
 	};
 
 	/**
@@ -19777,23 +20363,12 @@
 			return;
 		}
 		let formula1 = validation.getFormula1();
-		return formula1 ? formula1.asc_getValue() : "";
-	};
-
-	/**
-	 * Sets the first formula in the data validation.
-	 * @memberof ApiValidation
-	 * @typeofeditors ["CSE"]
-	 * @param {string} Formula1 - The first formula.
-	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetFormula1.js
-	 */
-	ApiValidation.prototype.SetFormula1 = function(Formula1) {
-		const validation = getSingleValidation(this);
-		if (!validation) {
-			return;
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
+		if (formula1 && worksheet) {
+			formula1 = formula1.clone(true);
+			formula1.correctToInterface(worksheet, validation);
 		}
-		let formula = new window['Asc'].CDataFormula(Formula1);
-		validation.asc_setFormula1(formula);
+		return formula1 ? formula1.asc_getValue() : "";
 	};
 
 	/**
@@ -19809,23 +20384,12 @@
 			return;
 		}
 		let formula2 = validation.getFormula2();
-		return formula2 ? formula2.asc_getValue() : "";
-	};
-
-	/**
-	 * Sets the second formula in the data validation.
-	 * @memberof ApiValidation
-	 * @typeofeditors ["CSE"]
-	 * @param {string} Formula2 - The second formula.
-	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetFormula2.js
-	 */
-	ApiValidation.prototype.SetFormula2 = function(Formula2) {
-		const validation = getSingleValidation(this);
-		if (!validation) {
-			return;
+		let worksheet = this.range && this.range.range && this.range.range.worksheet;
+		if (formula2 && worksheet) {
+			formula2 = formula2.clone(true);
+			formula2.correctToInterface(worksheet, validation);
 		}
-		let formula = new window['Asc'].CDataFormula(Formula2);
-		validation.asc_setFormula2(formula);
+		return formula2 ? formula2.asc_getValue() : "";
 	};
 
 	/**
@@ -19844,24 +20408,6 @@
 	};
 
 	/**
-	 * Sets the data validation operator.
-	 * @memberof ApiValidation
-	 * @typeofeditors ["CSE"]
-	 * @param {ValidationOperator} Operator - The validation operator.
-	 * @see office-js-api/Examples/{Editor}/ApiValidation/Methods/SetOperator.js
-	 */
-	ApiValidation.prototype.SetOperator = function(Operator) {
-		const validation = getSingleValidation(this);
-		if (!validation) {
-			return;
-		}
-		let internalOperator = FromXlValidationOperatorTo(Operator);
-		if (internalOperator !== -1) {
-			validation.asc_setOperator(internalOperator);
-		}
-	};
-
-	/**
 	 * Returns the parent range object.
 	 * @memberof ApiValidation
 	 * @typeofeditors ["CSE"]
@@ -19876,18 +20422,12 @@
 	Object.defineProperty(ApiValidation.prototype, "Type", {
 		get: function() {
 			return this.GetType();
-		},
-		set: function(value) {
-			this.SetType(value);
 		}
 	});
 
 	Object.defineProperty(ApiValidation.prototype, "AlertStyle", {
 		get: function() {
 			return this.GetAlertStyle();
-		},
-		set: function(value) {
-			this.SetAlertStyle(value);
 		}
 	});
 
@@ -19967,27 +20507,18 @@
 		get: function() {
 			return this.GetFormula1();
 		},
-		set: function(value) {
-			this.SetFormula1(value);
-		}
 	});
 
 	Object.defineProperty(ApiValidation.prototype, "Formula2", {
 		get: function() {
 			return this.GetFormula2();
 		},
-		set: function(value) {
-			this.SetFormula2(value);
-		}
 	});
 
 	Object.defineProperty(ApiValidation.prototype, "Operator", {
 		get: function() {
 			return this.GetOperator();
 		},
-		set: function(value) {
-			this.SetOperator(value);
-		}
 	});
 
 	Object.defineProperty(ApiValidation.prototype, "Parent", {
@@ -19999,9 +20530,6 @@
 	Object.defineProperty(ApiValidation.prototype, "Value", {
 		get: function() {
 			return this.GetFormula1();
-		},
-		set: function(value) {
-			this.SetFormula1(value);
 		}
 	});
 
@@ -20345,7 +20873,7 @@
 		}
 
 		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			logError(new Error('Cannot modify protected sheet'));
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 
@@ -20547,7 +21075,7 @@
 		}
 
 		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			logError(new Error('Cannot modify protected sheet'));
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 
@@ -20597,7 +21125,7 @@
 		}
 
 		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			logError(new Error('Cannot modify protected sheet'));
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 
@@ -20608,7 +21136,7 @@
 
 		// Validate ColorScaleType parameter
 		if (ColorScaleType !== 2 && ColorScaleType !== 3) {
-			logError(new Error("Invalid ColorScaleType. Must be 2 (two-color scale) or 3 (three-color scale)."));
+			throwException(new Error("Invalid ColorScaleType. Must be 2 (two-color scale) or 3 (three-color scale)."));
 			return null;
 		}
 
@@ -20707,7 +21235,7 @@
 		}
 
 		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			logError(new Error('Cannot modify protected sheet'));
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 
@@ -20777,7 +21305,7 @@
 		}
 
 		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			logError(new Error('Cannot modify protected sheet'));
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 
@@ -20857,7 +21385,7 @@
 		}
 
 		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			logError(new Error('Cannot modify protected sheet'));
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 
@@ -20909,7 +21437,7 @@
 		}
 
 		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			logError(new Error('Cannot modify protected sheet'));
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 
@@ -20955,7 +21483,7 @@
 		}
 
 		if (worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			logError(new Error('Cannot modify protected sheet'));
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 
@@ -21844,7 +22372,7 @@
 		});
 
 		if (isContains) {
-			logError(new Error("Priority already exists in the worksheet."));
+			throwException(new Error("Priority already exists in the worksheet."));
 			return;
 		}
 
@@ -22086,7 +22614,7 @@
 			this.rule.type === Asc.ECfType.notContainsText ||
 			this.rule.type === Asc.ECfType.beginsWith ||
 			this.rule.type === Asc.ECfType.endsWith)) {
-			logError(new Error('Type must be one of the text-based types: containsText, notContainsText, beginsWith, endsWith'));
+			throwException(new Error('Type must be one of the text-based types: containsText, notContainsText, beginsWith, endsWith'));
 			return;
 		}
 
@@ -22122,7 +22650,7 @@
 			this.rule.type === Asc.ECfType.notContainsText ||
 			this.rule.type === Asc.ECfType.beginsWith ||
 			this.rule.type === Asc.ECfType.endsWith)) {
-			logError(new Error('Type must be one of the text-based types: containsText, notContainsText, beginsWith, endsWith'));
+			throwException(new Error('Type must be one of the text-based types: containsText, notContainsText, beginsWith, endsWith'));
 			return;
 		}
 
@@ -26825,54 +27353,427 @@
 	//ApiUniqueValues.prototype.GetCalcFor = null;
 	//ApiUniqueValues.prototype.SetCalcFor = null;
 
+    /**
+     * Class representing worksheet autofilters.
+     * @constructor
+     * @property {ApiFilter[]} Filters - Returns the array of ApiFilter objects that represents the filters applied to the range.
+     * @property {boolean} FilterMode - Returns a value that indicates whether the worksheet has an AutoFilter applied.
+     * @property {ApiWorksheet} Parent - Returns the ApiWorksheet object that contains the AutoFilter.
+     * @property {ApiRange | null} Range - Returns the ApiRange object that represents the AutoFilter range; null if no AutoFilter is defined.
+     */
+    function ApiAutoFilter(ws) {
+        this.ws = ws;
+    }
 
-	Api.prototype["Format"]                = Api.prototype.Format;
-	Api.prototype["AddSheet"]              = Api.prototype.AddSheet;
-	Api.prototype["GetSheets"]             = Api.prototype.GetSheets;
-	Api.prototype["GetActiveSheet"]        = Api.prototype.GetActiveSheet;
-	Api.prototype["GetActiveWorkbook"]     = Api.prototype.GetActiveWorkbook;
-	Api.prototype["GetLocale"]             = Api.prototype.GetLocale;
-	Api.prototype["SetLocale"]             = Api.prototype.SetLocale;
-	Api.prototype["GetSheet"]              = Api.prototype.GetSheet;
-	Api.prototype["GetThemesColors"]       = Api.prototype.GetThemesColors;
-	Api.prototype["SetThemeColors"]        = Api.prototype.SetThemeColors;
-	Api.prototype["CreateNewHistoryPoint"] = Api.prototype.CreateNewHistoryPoint;
-	Api.prototype["CreateColorFromRGB"]    = Api.prototype.CreateColorFromRGB;
-	Api.prototype["CreateColorByName"]     = Api.prototype.CreateColorByName;
-	Api.prototype["Intersect"]             = Api.prototype.Intersect;
-	Api.prototype["GetSelection"]          = Api.prototype.GetSelection;
-	Api.prototype["AddDefName"]            = Api.prototype.AddDefName;
-	Api.prototype["GetDefName"]            = Api.prototype.GetDefName;
-	Api.prototype["Save"]                  = Api.prototype.Save;
-	Api.prototype["GetMailMergeData"]      = Api.prototype.GetMailMergeData;
+    /**
+     * Reapplies the AutoFilter to the worksheet using the existing filter criteria.
+     *
+     * This method corresponds to the Excel AutoFilter.ApplyFilter behavior:
+     * it does not change the currently defined filter conditions; it only
+     * reevaluates which rows should be visible based on the active filters.
+     * If no AutoFilter is defined for the worksheet, the method does nothing.
+     *
+     * @memberof ApiAutoFilter
+     * @typeofeditors ["CSE"]
+     * @returns {void}
+     * @see office-js-api/Examples/{Editor}/ApiAutoFilter/Methods/ApplyFilter.js
+     */
+    ApiAutoFilter.prototype.ApplyFilter = function () {
+        if (this.GetFilterMode()) {
+            const Id = this.ws.worksheet.Id;
+            if (Id) {
+                this.ws.worksheet.workbook.oApi.asc_reapplyAutoFilter(null, Id);
+            }
+        }
+    };
+
+    /**
+     * Clears all filters and displays all rows in the AutoFilter range.
+     *
+     * This method corresponds to the Excel AutoFilter.ShowAllData behavior:
+     * it removes any active filtering from the worksheet while preserving the
+     * AutoFilter drop-downs on the header row. If no AutoFilter is defined
+     * for the worksheet, the method does nothing.
+     *
+     * @memberof ApiAutoFilter
+     * @typeofeditors ["CSE"]
+     * @returns {void}
+     * @see office-js-api/Examples/{Editor}/ApiAutoFilter/Methods/ShowAllData.js
+     */
+    ApiAutoFilter.prototype.ShowAllData = function () {
+        if (this.GetFilterMode()) {
+            // const localWs = this.ws.worksheet;
+            // var bbox = localWs.AutoFilter.Ref;
+            // localWs.autoFilters.deleteAutoFilter(bbox);
+            // localWs.autoFilters.addAutoFilter(null, bbox);
+            const Id = this.ws.worksheet.Id;
+            if (Id) {
+                this.ws.worksheet.workbook.oApi.asc_clearFilter(Id);
+            }
+        }
+    };
+
+    /**
+     * Returns the array of ApiFilter objects that represents the filters applied to the AutoFilter range.
+     * @memberof ApiAutoFilter
+     * @typeofeditors ["CSE"]
+     * @returns {ApiFilter[]}
+     * @see office-js-api/Examples/{Editor}/ApiAutoFilter/Methods/GetFilters.js
+     */
+    ApiAutoFilter.prototype.GetFilters = function () {
+        const cols =
+            this.ws &&
+            this.ws.worksheet &&
+            this.ws.worksheet.AutoFilter &&
+            this.ws.worksheet.AutoFilter.FilterColumns
+                ? this.ws.worksheet.AutoFilter.FilterColumns
+                : [];
+
+        return createAutoFilterArray(this, cols);
+    };
+
+    Object.defineProperty(ApiAutoFilter.prototype, "Filters", {
+        get: function () {
+            return this.GetFilters();
+        }
+    });
+
+    /**
+     * Returns a value that indicates whether the worksheet has an AutoFilter applied.
+     * @memberof ApiAutoFilter
+     * @typeofeditors ["CSE"]
+     * @returns {boolean} true if the worksheet has an AutoFilter; otherwise, false.
+     * @see office-js-api/Examples/{Editor}/ApiAutoFilter/Methods/GetFilterMode.js
+     */
+    ApiAutoFilter.prototype.GetFilterMode = function () {
+        return !!(this.ws && this.ws.worksheet && this.ws.worksheet.AutoFilter);
+    };
+
+    Object.defineProperty(ApiAutoFilter.prototype, "FilterMode", {
+        get: function () {
+            return this.GetFilterMode();
+        }
+    });
+
+    /**
+     * Returns the parent ApiWorksheet object for the AutoFilter.
+     * @memberof ApiAutoFilter
+     * @typeofeditors ["CSE"]
+     * @returns {ApiWorksheet}
+     * @see office-js-api/Examples/{Editor}/ApiAutoFilter/Methods/GetParent.js
+     */
+    ApiAutoFilter.prototype.GetParent = function () {
+        return this.ws;
+    };
+
+    Object.defineProperty(ApiAutoFilter.prototype, "Parent", {
+        get: function () {
+            return this.GetParent();
+        }
+    });
+
+    /**
+     * Returns the ApiRange object that represents the AutoFilter range.
+     * @memberof ApiAutoFilter
+     * @typeofeditors ["CSE"]
+     * @returns {ApiRange | null} The range to which the AutoFilter is applied; null if no AutoFilter is defined.
+     * @see office-js-api/Examples/{Editor}/ApiAutoFilter/Methods/GetRange.js
+     */
+    ApiAutoFilter.prototype.GetRange = function () {
+        if (
+            !this.ws ||
+            !this.ws.worksheet ||
+            !this.ws.worksheet.AutoFilter ||
+            !this.ws.worksheet.AutoFilter.Ref
+        ) {
+            return null;
+        }
+
+        var bbox = this.ws.worksheet.AutoFilter.Ref;
+        return new ApiRange(AscCommonExcel.Range.prototype.createFromBBox(this.ws.worksheet, bbox));
+    };
+
+    Object.defineProperty(ApiAutoFilter.prototype, "Range", {
+        get: function () {
+            return this.GetRange();
+        }
+    });
+
+    /**
+     * Class representing a single AutoFilter column.
+     * @constructor
+     * @property {ApiAutoFilter} Parent - Returns the parent filters collection for this filter column.
+     * @property {string|string[]|number|XlDynamicFilterCriteria|null} Criteria1 - Returns the first criteria associated with the filter.
+     * @property {string|null} Criteria2 - Returns the second criteria associated with the filter (used with xlAnd/xlOr).
+     * @property {boolean} On - Indicates whether any filter is applied to this column.
+     * @property {XlAutoFilterOperator|null} Operator - Returns the operator used for the filter on this column.
+     */
+    function ApiFilter(parent, filter){
+        this.parent = parent;
+        this.filter = filter;
+    }
+
+    /**
+     * Returns the first criteria associated with the filter for this column.
+     *
+     *
+     * @memberof ApiFilter
+     * @typeofeditors ["CSE"]
+     * @returns {string|string[]|number|XlDynamicFilterCriteria|null} The first criteria for the filter.
+     * @see office-js-api/Examples/{Editor}/ApiFilter/Methods/GetCriteria1.js
+     */
+    ApiFilter.prototype.GetCriteria1 = function () {
+        var f = this.filter;
+        if (!f) {
+            return null;
+        }
+
+        var op = this.GetOperator();
+
+        // 1) Values filter
+        if (op === "xlFilterValues" && f.Filters && f.Filters.Values) {
+            // Values: { "3":1,"5":1,... } -> ["3","5",...]
+            return Object.keys(f.Filters.Values);
+        }
+
+        // 2) Custom filters (numeric / text with AND / OR)
+        if ((op === "xlAnd" || op === "xlOr") &&
+            f.CustomFiltersObj &&
+            Array.isArray(f.CustomFiltersObj.CustomFilters) &&
+            f.CustomFiltersObj.CustomFilters.length
+        ) {
+            var cf1 = f.CustomFiltersObj.CustomFilters[0];
+            if (!cf1) {
+                return null;
+            }
+            var sign1 = _ascCustomOpToSign(cf1.Operator);
+            var val1  = cf1.Val != null ? (cf1.Val + "") : "";
+            return sign1 + val1; // e.g. ">0"
+        }
+
+        // 3) Dynamic filter
+        if (op === "xlFilterDynamic" && f.DynamicFilter) {
+            return _dynamicTypeToCriteria(f.DynamicFilter.Type);
+        }
+
+        // 4) Top10 filter
+        if (
+            (op === "xlTop10Items" ||
+                op === "xlTop10Percent" ||
+                op === "xlBottom10Items" ||
+                op === "xlBottom10Percent") &&
+            f.Top10
+        ) {
+            // In SetAutoFilter Criteria1 was the "Val" (items count or percentage)
+            return f.Top10.Val;
+        }
+
+        // 5) Color filters – Criteria1 in SetAutoFilter was ApiColor.
+        // We could reconstruct it via asc_getCColor, but API type is different.
+        // For now return null; extend later if needed.
+        return null;
+    };
+
+    Object.defineProperty(ApiFilter.prototype, "Criteria1", {
+        get: function () {
+            return this.GetCriteria1();
+        }
+    });
+
+    /**
+     * Returns the second criteria associated with the filter for this column.
+     *
+     * @memberof ApiFilter
+     * @typeofeditors ["CSE"]
+     * @returns {string|null} The second criteria for the filter, or null if not applicable.
+     * @see office-js-api/Examples/{Editor}/ApiFilter/Methods/GetCriteria2.js
+     */
+    ApiFilter.prototype.GetCriteria2 = function () {
+        var f = this.filter;
+        if (!f) {
+            return null;
+        }
+
+        var op = this.GetOperator();
+        if ((op !== "xlAnd" && op !== "xlOr") ||
+            !f.CustomFiltersObj ||
+            !Array.isArray(f.CustomFiltersObj.CustomFilters)
+        ) {
+            return null;
+        }
+
+        var cfArr = f.CustomFiltersObj.CustomFilters;
+        if (cfArr.length < 2) {
+            return null;
+        }
+
+        var cf2 = cfArr[1];
+        if (!cf2) {
+            return null;
+        }
+
+        var sign2 = _ascCustomOpToSign(cf2.Operator);
+        var val2  = cf2.Val != null ? (cf2.Val + "") : "";
+        return sign2 + val2; // e.g. "<=8"
+    };
+
+    Object.defineProperty(ApiFilter.prototype, "Criteria2", {
+        get: function () {
+            return this.GetCriteria2();
+        }
+    });
+
+    /**
+     * Indicates whether any filter is applied on this column.
+     *
+     * The property is true when at least one of the following underlying
+     * structures is present for the column:
+     * - Filters
+     * - CustomFiltersObj
+     * - DynamicFilter
+     * - ColorFilter
+     * - Top10
+     *
+     * @memberof ApiFilter
+     * @typeofeditors ["CSE"]
+     * @returns {boolean} True if a filter is applied; otherwise, false.
+     * @see office-js-api/Examples/{Editor}/ApiFilter/Methods/GetOn.js
+     */
+    ApiFilter.prototype.GetOn = function () {
+        var f = this.filter;
+        if (!f) {
+            return false;
+        }
+        return !!(f.Filters || f.CustomFiltersObj || f.DynamicFilter || f.ColorFilter || f.Top10);
+    };
+
+    Object.defineProperty(ApiFilter.prototype, "On", {
+        get: function () {
+            return this.GetOn();
+        }
+    });
+
+    /**
+     * Returns the operator used for the filter on this column.
+     *
+     * @memberof ApiFilter
+     * @typeofeditors ["CSE"]
+     * @returns {XlAutoFilterOperator|null} The operator for the current filter.
+     * @see office-js-api/Examples/{Editor}/ApiFilter/Methods/GetOperator.js
+     */
+    ApiFilter.prototype.GetOperator = function () {
+        var f = this.filter;
+        if (!f) {
+            return null;
+        }
+
+        // 1) Color filters
+        if (f.ColorFilter) {
+            // CellColor === false -> font color; otherwise cell color
+            return (f.ColorFilter.CellColor === false)
+                ? "xlFilterFontColor"
+                : "xlFilterCellColor";
+        }
+
+        // 2) Dynamic filter
+        if (f.DynamicFilter) {
+            return "xlFilterDynamic";
+        }
+
+        // 3) Top10 filter
+        if (f.Top10) {
+            var t = f.Top10;
+            if (t.Percent) {
+                return t.Top ? "xlTop10Percent" : "xlBottom10Percent";
+            }
+            return t.Top ? "xlTop10Items" : "xlBottom10Items";
+        }
+
+        // 4) Custom filters (numeric/text) – AND / OR
+        if (f.CustomFiltersObj) {
+            return f.CustomFiltersObj.And ? "xlAnd" : "xlOr";
+        }
+
+        // 5) Simple values filter
+        if (f.Filters) {
+            return "xlFilterValues";
+        }
+
+        return null;
+    };
+
+    Object.defineProperty(ApiFilter.prototype, "Operator", {
+        get: function () {
+            return this.GetOperator();
+        }
+    });
+
+    /**
+     * Returns the parent filters collection for this filter column.
+     * @memberof ApiFilter
+     * @typeofeditors ["CSE"]
+     * @returns {ApiAutoFilter} The parent filters collection.
+     * @see office-js-api/Examples/{Editor}/ApiFilter/Methods/Parent.js
+     */
+    ApiFilter.prototype.GetParent = function () {
+        return this.parent;
+    };
+
+    Object.defineProperty(ApiFilter.prototype, "Parent", {
+        get: function () {
+            return this.GetParent();
+        }
+    });
+
+	Api["Format"]                = Api.Format;
+	Api["AddSheet"]              = Api.AddSheet;
+	Api["GetSheets"]             = Api.GetSheets;
+	Api["GetActiveSheet"]        = Api.GetActiveSheet;
+	Api["GetActiveWorkbook"]     = Api.GetActiveWorkbook;
+	Api["GetLocale"]             = Api.GetLocale;
+	Api["SetLocale"]             = Api.SetLocale;
+	Api["GetSheet"]              = Api.GetSheet;
+	Api["GetThemesColors"]       = Api.GetThemesColors;
+	Api["SetThemeColors"]        = Api.SetThemeColors;
+	Api["CreateNewHistoryPoint"] = Api.CreateNewHistoryPoint;
+	Api["CreateColorFromRGB"]    = Api.CreateColorFromRGB;
+	Api["CreateColorByName"]     = Api.CreateColorByName;
+	Api["Intersect"]             = Api.Intersect;
+	Api["GetSelection"]          = Api.GetSelection;
+	Api["AddDefName"]            = Api.AddDefName;
+	Api["GetDefName"]            = Api.GetDefName;
+	Api["Save"]                  = Api.Save;
+	Api["GetMailMergeData"]      = Api.GetMailMergeData;
 	
-	Api.prototype["GetRange"] = Api.prototype.GetRange;
+	Api["GetRange"] = Api.GetRange;
 
-	Api.prototype["RecalculateAllFormulas"] = Api.prototype.RecalculateAllFormulas;
-	Api.prototype["AddComment"]  = Api.prototype.AddComment;
-	Api.prototype["GetComments"] = Api.prototype.GetComments;
-	Api.prototype["GetAllComments"] = Api.prototype.GetAllComments;
-	Api.prototype["GetCommentById"] = Api.prototype.GetCommentById;
-	Api.prototype["SetFreezePanesType"] = Api.prototype.SetFreezePanesType;
-	Api.prototype["GetFreezePanesType"] = Api.prototype.GetFreezePanesType;
-	Api.prototype["GetDocumentInfo"] = Api.prototype.GetDocumentInfo;
-	Api.prototype["GetCore"] = Api.prototype.GetCore;
-	Api.prototype["GetCustomProperties"] = Api.prototype.GetCustomProperties;
+	Api["RecalculateAllFormulas"] = Api.RecalculateAllFormulas;
+	Api["AddComment"]  = Api.AddComment;
+	Api["GetComments"] = Api.GetComments;
+	Api["GetAllComments"] = Api.GetAllComments;
+	Api["GetCommentById"] = Api.GetCommentById;
+	Api["SetFreezePanesType"] = Api.SetFreezePanesType;
+	Api["GetFreezePanesType"] = Api.GetFreezePanesType;
+	Api["GetDocumentInfo"] = Api.GetDocumentInfo;
+	Api["GetCore"] = Api.GetCore;
+	Api["GetCustomProperties"] = Api.GetCustomProperties;
 
-	Api.prototype["AddCustomFunction"] = Api.prototype.AddCustomFunction;
-	Api.prototype["RemoveCustomFunction"] = Api.prototype.RemoveCustomFunction;
-	Api.prototype["ClearCustomFunctions"] = Api.prototype.ClearCustomFunctions;
-	Api.prototype["AddCustomFunctionLibrary"] = Api.prototype.AddCustomFunctionLibrary;
+	Api["AddCustomFunction"] = Api.AddCustomFunction;
+	Api["RemoveCustomFunction"] = Api.RemoveCustomFunction;
+	Api["ClearCustomFunctions"] = Api.ClearCustomFunctions;
+	Api["AddCustomFunctionLibrary"] = Api.AddCustomFunctionLibrary;
 
-	Api.prototype["GetReferenceStyle"] = Api.prototype.GetReferenceStyle;
-	Api.prototype["SetReferenceStyle"] = Api.prototype.SetReferenceStyle;
+	Api["GetReferenceStyle"] = Api.GetReferenceStyle;
+	Api["SetReferenceStyle"] = Api.SetReferenceStyle;
 
-	Api.prototype["GetWorksheetFunction"] = Api.prototype.GetWorksheetFunction;
-	Api.prototype["InsertPivotExistingWorksheet"] = Api.prototype.InsertPivotExistingWorksheet;
-	Api.prototype["InsertPivotNewWorksheet"] = Api.prototype.InsertPivotNewWorksheet;
-	Api.prototype["GetPivotByName"] = Api.prototype.GetPivotByName;
-	Api.prototype["RefreshAllPivots"] = Api.prototype.RefreshAllPivots;
-	Api.prototype["GetAllPivotTables"] = Api.prototype.GetAllPivotTables;
+	Api["GetWorksheetFunction"] = Api.GetWorksheetFunction;
+	Api["InsertPivotExistingWorksheet"] = Api.InsertPivotExistingWorksheet;
+	Api["InsertPivotNewWorksheet"] = Api.InsertPivotNewWorksheet;
+	Api["GetPivotByName"] = Api.GetPivotByName;
+	Api["RefreshAllPivots"] = Api.RefreshAllPivots;
+	Api["GetAllPivotTables"] = Api.GetAllPivotTables;
+	Api["attachEvent"] = Api.attachEvent;
+	Api["detachEvent"] = Api.detachEvent;
 
 	ApiWorkbook.prototype["Save"] = ApiWorkbook.prototype.Save;
 	ApiWorkbook.prototype["GetSheets"] = ApiWorkbook.prototype.GetSheets;
@@ -26882,6 +27783,7 @@
 	ApiWorkbook.prototype["GetName"] = ApiWorkbook.prototype.GetName;
 	ApiWorkbook.prototype["GetActiveSheet"] = ApiWorkbook.prototype.GetActiveSheet;
 	ApiWorkbook.prototype["GetActiveChart"] = ApiWorkbook.prototype.GetActiveChart;
+	ApiWorkbook.prototype["GetDrawingsByName"] = ApiWorkbook.prototype.GetDrawingsByName;
 
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
@@ -26889,6 +27791,7 @@
 	ApiWorksheet.prototype["GetActiveCell"] = ApiWorksheet.prototype.GetActiveCell;
 	ApiWorksheet.prototype["GetSelection"] = ApiWorksheet.prototype.GetSelection;
 	ApiWorksheet.prototype["GetCells"] = ApiWorksheet.prototype.GetCells;
+    ApiWorksheet.prototype["GetAutoFilter"] = ApiWorksheet.prototype.GetAutoFilter;
 	ApiWorksheet.prototype["GetCols"] = ApiWorksheet.prototype.GetCols;
 	ApiWorksheet.prototype["GetRows"] = ApiWorksheet.prototype.GetRows;
 	ApiWorksheet.prototype["GetUsedRange"] = ApiWorksheet.prototype.GetUsedRange;
@@ -26933,6 +27836,8 @@
 	ApiWorksheet.prototype["GetAllShapes"] = ApiWorksheet.prototype.GetAllShapes;
 	ApiWorksheet.prototype["GetAllCharts"] = ApiWorksheet.prototype.GetAllCharts;
 	ApiWorksheet.prototype["GetAllOleObjects"] = ApiWorksheet.prototype.GetAllOleObjects;
+	ApiWorksheet.prototype["GetSelectedShapes"] = ApiWorksheet.prototype.GetSelectedShapes;
+	ApiWorksheet.prototype["GetSelectedDrawings"] = ApiWorksheet.prototype.GetSelectedDrawings;
 	ApiWorksheet.prototype["Move"] = ApiWorksheet.prototype.Move;
 	ApiWorksheet.prototype["GetFreezePanes"] = ApiWorksheet.prototype.GetFreezePanes;
 	ApiWorksheet.prototype["AddProtectedRange"] = ApiWorksheet.prototype.AddProtectedRange;
@@ -26943,6 +27848,19 @@
 	ApiWorksheet.prototype["GetAllPivotTables"] = ApiWorksheet.prototype.GetAllPivotTables;
 	ApiWorksheet.prototype["RefreshAllPivots"] = ApiWorksheet.prototype.RefreshAllPivots;
 	ApiWorksheet.prototype["GetCustomXmlParts"] = ApiWorksheet.prototype.GetCustomXmlParts;
+
+    ApiAutoFilter.prototype["ShowAllData"] = ApiAutoFilter.prototype.ShowAllData;
+    ApiAutoFilter.prototype["ApplyFilter"] = ApiAutoFilter.prototype.ApplyFilter;
+    ApiAutoFilter.prototype["GetFilters"] = ApiAutoFilter.prototype.GetFilters;
+    ApiAutoFilter.prototype["GetFilterMode"] = ApiAutoFilter.prototype.GetFilterMode;
+    ApiAutoFilter.prototype["GetParent"] = ApiAutoFilter.prototype.GetParent;
+    ApiAutoFilter.prototype["GetRange"] = ApiAutoFilter.prototype.GetRange;
+
+    ApiFilter.prototype["GetCriteria1"] = ApiFilter.prototype.GetCriteria1;
+    ApiFilter.prototype["GetCriteria2"] = ApiFilter.prototype.GetCriteria2;
+    ApiFilter.prototype["GetOperator"] = ApiFilter.prototype.GetOperator;
+    ApiFilter.prototype["GetOn"] = ApiFilter.prototype.GetOn;
+    ApiFilter.prototype["GetParent"] = ApiFilter.prototype.GetParent;
 
 	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType;
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
@@ -27034,33 +27952,89 @@
 	ApiDrawing.prototype["SetPosition"]                =  ApiDrawing.prototype.SetPosition;
 	ApiDrawing.prototype["GetWidth"]                   =  ApiDrawing.prototype.GetWidth;
 	ApiDrawing.prototype["GetHeight"]                  =  ApiDrawing.prototype.GetHeight;
+	ApiDrawing.prototype["GetName"]                    =  ApiDrawing.prototype.GetName;
+	ApiDrawing.prototype["SetName"]                    =  ApiDrawing.prototype.SetName;
 	ApiDrawing.prototype["GetLockValue"]               =  ApiDrawing.prototype.GetLockValue;
 	ApiDrawing.prototype["SetLockValue"]               =  ApiDrawing.prototype.SetLockValue;
 	ApiDrawing.prototype["GetParentSheet"]             =  ApiDrawing.prototype.GetParentSheet;
 	ApiDrawing.prototype["SetRotation"]                =  ApiDrawing.prototype.SetRotation;
 	ApiDrawing.prototype["GetRotation"]                =  ApiDrawing.prototype.GetRotation;
+	ApiDrawing.prototype["GetFlipH"]                   =  ApiDrawing.prototype.GetFlipH;
+	ApiDrawing.prototype["GetFlipV"]                   =  ApiDrawing.prototype.GetFlipV;
+	ApiDrawing.prototype["SetFlipH"]                   =  ApiDrawing.prototype.SetFlipH;
+	ApiDrawing.prototype["SetFlipV"]                   =  ApiDrawing.prototype.SetFlipV;
 	ApiDrawing.prototype["Select"]                     =  ApiDrawing.prototype.Select;
+	ApiDrawing.prototype["Fill"]                       =  ApiDrawing.prototype.Fill;
+	ApiDrawing.prototype["SetOutLine"]                 =  ApiDrawing.prototype.SetOutLine;
+	ApiDrawing.prototype["Unselect"]                   =  ApiDrawing.prototype.Unselect;
 
 	ApiImage.prototype["GetClassType"]                 =  ApiImage.prototype.GetClassType;
+
+	ApiSmartArt.prototype["GetClassType"]              =  ApiSmartArt.prototype.GetClassType;
+
+	ApiGroup.prototype["GetClassType"]                =  ApiGroup.prototype.GetClassType;
 
 	ApiShape.prototype["GetClassType"]                 =  ApiShape.prototype.GetClassType;
 	ApiShape.prototype["GetDocContent"]                =  ApiShape.prototype.GetDocContent;
 	ApiShape.prototype["GetContent"]                   =  ApiShape.prototype.GetContent;
 	ApiShape.prototype["SetVerticalTextAlign"]         =  ApiShape.prototype.SetVerticalTextAlign;
+	ApiShape.prototype["SetPaddings"]                  =  ApiShape.prototype.SetPaddings;
 	ApiShape.prototype["GetGeometry"]                  =  ApiShape.prototype.GetGeometry;
 	ApiShape.prototype["SetGeometry"]                  =  ApiShape.prototype.SetGeometry;
+	ApiShape.prototype["SetFill"]                      =  ApiShape.prototype.SetFill;
+	ApiShape.prototype["GetFill"]                      =  ApiShape.prototype.GetFill;
+	ApiShape.prototype["SetLine"]                      =  ApiShape.prototype.SetLine;
+	ApiShape.prototype["GetLine"]                      =  ApiShape.prototype.GetLine;
+
+	ApiChart.prototype["GetClassType"] = ApiChart.prototype.GetClassType = AscBuilder.ApiChart.prototype.GetClassType;
+	ApiChart.prototype["GetChartType"] = ApiChart.prototype.GetChartType = AscBuilder.ApiChart.prototype.GetChartType;
+	ApiChart.prototype["SetTitle"] = ApiChart.prototype.SetTitle = AscBuilder.ApiChart.prototype.SetTitle;
+	ApiChart.prototype["GetTitle"] = ApiChart.prototype.GetTitle = AscBuilder.ApiChart.prototype.GetTitle;
+	ApiChart.prototype["SetHorAxisTitle"] = ApiChart.prototype.SetHorAxisTitle = AscBuilder.ApiChart.prototype.SetHorAxisTitle;
+	ApiChart.prototype["SetVerAxisTitle"] = ApiChart.prototype.SetVerAxisTitle = AscBuilder.ApiChart.prototype.SetVerAxisTitle;
+	ApiChart.prototype["SetVerAxisOrientation"] = ApiChart.prototype.SetVerAxisOrientation = AscBuilder.ApiChart.prototype.SetVerAxisOrientation;
+	ApiChart.prototype["SetHorAxisOrientation"] = ApiChart.prototype.SetHorAxisOrientation = AscBuilder.ApiChart.prototype.SetHorAxisOrientation;
+	ApiChart.prototype["SetLegendPos"] = ApiChart.prototype.SetLegendPos = AscBuilder.ApiChart.prototype.SetLegendPos;
+	ApiChart.prototype["SetLegendFontSize"] = ApiChart.prototype.SetLegendFontSize = AscBuilder.ApiChart.prototype.SetLegendFontSize;
+	ApiChart.prototype["SetShowDataLabels"] = ApiChart.prototype.SetShowDataLabels = AscBuilder.ApiChart.prototype.SetShowDataLabels;
+	ApiChart.prototype["SetShowPointDataLabel"] = ApiChart.prototype.SetShowPointDataLabel = AscBuilder.ApiChart.prototype.SetShowPointDataLabel;
+	ApiChart.prototype["SetVertAxisTickLabelPosition"] = ApiChart.prototype.SetVertAxisTickLabelPosition = AscBuilder.ApiChart.prototype.SetVertAxisTickLabelPosition;
+	ApiChart.prototype["SetHorAxisTickLabelPosition"] = ApiChart.prototype.SetHorAxisTickLabelPosition = AscBuilder.ApiChart.prototype.SetHorAxisTickLabelPosition;
+	ApiChart.prototype["SetHorAxisMajorTickMark"] = ApiChart.prototype.SetHorAxisMajorTickMark = AscBuilder.ApiChart.prototype.SetHorAxisMajorTickMark;
+	ApiChart.prototype["SetHorAxisMinorTickMark"] = ApiChart.prototype.SetHorAxisMinorTickMark = AscBuilder.ApiChart.prototype.SetHorAxisMinorTickMark;
+	ApiChart.prototype["SetVertAxisMajorTickMark"] = ApiChart.prototype.SetVertAxisMajorTickMark = AscBuilder.ApiChart.prototype.SetVertAxisMajorTickMark;
+	ApiChart.prototype["SetVertAxisMinorTickMark"] = ApiChart.prototype.SetVertAxisMinorTickMark = AscBuilder.ApiChart.prototype.SetVertAxisMinorTickMark;
+	ApiChart.prototype["SetMajorVerticalGridlines"] = ApiChart.prototype.SetMajorVerticalGridlines = AscBuilder.ApiChart.prototype.SetMajorVerticalGridlines;
+	ApiChart.prototype["SetMinorVerticalGridlines"] = ApiChart.prototype.SetMinorVerticalGridlines = AscBuilder.ApiChart.prototype.SetMinorVerticalGridlines;
+	ApiChart.prototype["SetMajorHorizontalGridlines"] = ApiChart.prototype.SetMajorHorizontalGridlines = AscBuilder.ApiChart.prototype.SetMajorHorizontalGridlines;
+	ApiChart.prototype["SetMinorHorizontalGridlines"] = ApiChart.prototype.SetMinorHorizontalGridlines = AscBuilder.ApiChart.prototype.SetMinorHorizontalGridlines;
+	ApiChart.prototype["SetHorAxisLabelsFontSize"] = ApiChart.prototype.SetHorAxisLabelsFontSize = AscBuilder.ApiChart.prototype.SetHorAxisLabelsFontSize;
+	ApiChart.prototype["SetHorAxisLablesFontSize"] = ApiChart.prototype.SetHorAxisLabelsFontSize;
+	ApiChart.prototype["SetVertAxisLabelsFontSize"] = ApiChart.prototype.SetVertAxisLabelsFontSize = AscBuilder.ApiChart.prototype.SetVertAxisLabelsFontSize;
+	ApiChart.prototype["SetVertAxisLablesFontSize"] = ApiChart.prototype.SetVertAxisLabelsFontSize;
+	ApiChart.prototype["RemoveSeria"] = ApiChart.prototype.RemoveSeria = AscBuilder.ApiChart.prototype.RemoveSeria;
+	ApiChart.prototype["ApplyChartStyle"] = ApiChart.prototype.ApplyChartStyle = AscBuilder.ApiChart.prototype.ApplyChartStyle;
+	ApiChart.prototype["SetPlotAreaFill"] = ApiChart.prototype.SetPlotAreaFill = AscBuilder.ApiChart.prototype.SetPlotAreaFill;
+	ApiChart.prototype["SetPlotAreaOutLine"] = ApiChart.prototype.SetPlotAreaOutLine = AscBuilder.ApiChart.prototype.SetPlotAreaOutLine;
+	ApiChart.prototype["SetSeriesFill"] = ApiChart.prototype.SetSeriesFill = AscBuilder.ApiChart.prototype.SetSeriesFill;
+	ApiChart.prototype["SetSeriesOutLine"] = ApiChart.prototype.SetSeriesOutLine = AscBuilder.ApiChart.prototype.SetSeriesOutLine;
+	ApiChart.prototype["SetDataPointFill"] = ApiChart.prototype.SetDataPointFill = AscBuilder.ApiChart.prototype.SetDataPointFill;
+	ApiChart.prototype["SetDataPointOutLine"] = ApiChart.prototype.SetDataPointOutLine = AscBuilder.ApiChart.prototype.SetDataPointOutLine;
+	ApiChart.prototype["SetMarkerFill"] = ApiChart.prototype.SetMarkerFill = AscBuilder.ApiChart.prototype.SetMarkerFill;
+	ApiChart.prototype["SetMarkerOutLine"] = ApiChart.prototype.SetMarkerOutLine = AscBuilder.ApiChart.prototype.SetMarkerOutLine;
+	ApiChart.prototype["SetTitleFill"] = ApiChart.prototype.SetTitleFill = AscBuilder.ApiChart.prototype.SetTitleFill;
+	ApiChart.prototype["SetTitleOutLine"] = ApiChart.prototype.SetTitleOutLine = AscBuilder.ApiChart.prototype.SetTitleOutLine;
+	ApiChart.prototype["SetLegendFill"] = ApiChart.prototype.SetLegendFill = AscBuilder.ApiChart.prototype.SetLegendFill;
+	ApiChart.prototype["SetLegendOutLine"] = ApiChart.prototype.SetLegendOutLine = AscBuilder.ApiChart.prototype.SetLegendOutLine;
+	ApiChart.prototype["SetAxieNumFormat"] = ApiChart.prototype.SetAxieNumFormat = AscBuilder.ApiChart.prototype.SetAxieNumFormat;
+	ApiChart.prototype["GetAllSeries"] = ApiChart.prototype.GetAllSeries = AscBuilder.ApiChart.prototype.GetAllSeries;
+	ApiChart.prototype["GetSeries"] = ApiChart.prototype.GetSeries = AscBuilder.ApiChart.prototype.GetSeries;
 
 	ApiChart.prototype["SetSeriaValues"]              =  ApiChart.prototype.SetSeriaValues;
 	ApiChart.prototype["SetSeriaXValues"]             =  ApiChart.prototype.SetSeriaXValues;
 	ApiChart.prototype["SetSeriaName"]                =  ApiChart.prototype.SetSeriaName;
 	ApiChart.prototype["SetCatFormula"]               =  ApiChart.prototype.SetCatFormula;
 	ApiChart.prototype["AddSeria"]                    =  ApiChart.prototype.AddSeria;
-	ApiChart.prototype["SetSize"]                     =  ApiChart.prototype.SetSize      = ApiDrawing.prototype.SetSize;
-	ApiChart.prototype["SetPosition"]                 =  ApiChart.prototype.SetPosition  = ApiDrawing.prototype.SetPosition;
-	ApiChart.prototype["GetWidth"]                    =  ApiChart.prototype.GetWidth     = ApiDrawing.prototype.GetWidth;
-	ApiChart.prototype["GetHeight"]                   =  ApiChart.prototype.GetHeight    = ApiDrawing.prototype.GetHeight;
-	ApiChart.prototype["GetLockValue"]                =  ApiChart.prototype.GetLockValue = ApiDrawing.prototype.GetLockValue;
-	ApiChart.prototype["SetLockValue"]                =  ApiChart.prototype.SetLockValue = ApiDrawing.prototype.SetLockValue;
 
 	ApiOleObject.prototype["GetClassType"]            = ApiOleObject.prototype.GetClassType;
 	ApiOleObject.prototype["SetData"]                 = ApiOleObject.prototype.SetData;
@@ -27739,9 +28713,7 @@
 	ApiValidation.prototype["Delete"]               = ApiValidation.prototype.Delete;
 	ApiValidation.prototype["Modify"]               = ApiValidation.prototype.Modify;
 	ApiValidation.prototype["GetType"]              = ApiValidation.prototype.GetType;
-	ApiValidation.prototype["SetType"]              = ApiValidation.prototype.SetType;
 	ApiValidation.prototype["GetAlertStyle"]        = ApiValidation.prototype.GetAlertStyle;
-	ApiValidation.prototype["SetAlertStyle"]        = ApiValidation.prototype.SetAlertStyle;
 	ApiValidation.prototype["GetIgnoreBlank"]       = ApiValidation.prototype.GetIgnoreBlank;
 	ApiValidation.prototype["SetIgnoreBlank"]       = ApiValidation.prototype.SetIgnoreBlank;
 	ApiValidation.prototype["GetInCellDropdown"]    = ApiValidation.prototype.GetInCellDropdown;
@@ -27759,11 +28731,8 @@
 	ApiValidation.prototype["GetErrorMessage"]      = ApiValidation.prototype.GetErrorMessage;
 	ApiValidation.prototype["SetErrorMessage"]      = ApiValidation.prototype.SetErrorMessage;
 	ApiValidation.prototype["GetFormula1"]          = ApiValidation.prototype.GetFormula1;
-	ApiValidation.prototype["SetFormula1"]          = ApiValidation.prototype.SetFormula1;
 	ApiValidation.prototype["GetFormula2"]          = ApiValidation.prototype.GetFormula2;
-	ApiValidation.prototype["SetFormula2"]          = ApiValidation.prototype.SetFormula2;
 	ApiValidation.prototype["GetOperator"]          = ApiValidation.prototype.GetOperator;
-	ApiValidation.prototype["SetOperator"]          = ApiValidation.prototype.SetOperator;
 	ApiValidation.prototype["GetParent"]            = ApiValidation.prototype.GetParent;
 
 	ApiFormatConditions.prototype["Add"] = ApiFormatConditions.prototype.Add;
@@ -28001,6 +28970,18 @@
 	ApiIconCriterion.prototype["SetIcon"] = ApiIconCriterion.prototype.SetIcon;
 
 
+    function createAutoFilterArray(parent, filters) {
+        if (!Array.isArray(filters)) return [];
+
+        const res = [];
+        for (let i = 0; i < filters.length; i++) {
+            const col = filters[i];
+            let wrapper = new ApiFilter(parent, col);
+            res.push(wrapper);
+        }
+        return res;
+    }
+
 	function private_SetCoords(oDrawing, oWorksheet, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset, pos) {
 		oDrawing.x = 0;
 		oDrawing.y = 0;
@@ -28074,12 +29055,12 @@
 	function private_AddDefName(wb, name, ref, sheetInd, hidden) {
 		let res = wb.checkDefName(name);
 		if (!res.status) {
-			logError(new Error('Invalid name.'));
+			throwException(new Error('Invalid name.'));
 			return false;
 		}
 		res = wb.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.Chart, ref, false);
 		if (res === Asc.c_oAscError.ID.DataRangeError) {
-			logError(new Error('Invalid range.'));
+			throwException(new Error('Invalid range.'));
 			return false;
 		}
 		if (sheetInd) {
@@ -28237,7 +29218,9 @@
             case AscDFH.historyitem_type_OleObject:
                 return new AscBuilder.ApiOleObject(drawing);
 			case AscDFH.historyitem_type_GroupShape:
-                return new ApiDrawing(drawing);
+                return new AscBuilder.ApiGroup(drawing);
+			case AscDFH.historyitem_type_SmartArt:
+                return new AscBuilder.ApiSmartArt(drawing);
 			case AscDFH.historyitem_type_ChartSpace:
 				return new AscBuilder.ApiChart(drawing);
         }
@@ -28245,11 +29228,37 @@
     }
 
 	function private_MakeError(message) {
-		console.error(new Error(message) );
+		throwException(new Error(message));
+	}
+	function private_EMU2MM(EMU) {
+		return EMU / 36000.0;
 	}
 	window['AscBuilder'] = window['AscBuilder'] || {};
-	window['AscBuilder'].ApiShape           = ApiShape;
-	window['AscBuilder'].ApiImage           = ApiImage;
-	window['AscBuilder'].ApiOleObject       = ApiOleObject;
-
+	
+	window['AscBuilder']["Cell"] = window['AscBuilder'].Cell = window['AscBuilder'].Cell || {};
+	AscBuilder.Cell["Api"] = AscBuilder.Cell.Api = Api;
+	
+	AscBuilder.Cell.init = function()
+	{
+		AscBuilder.ApiDrawing   = ApiDrawing;
+		AscBuilder.ApiShape     = ApiShape;
+		AscBuilder.ApiImage     = ApiImage;
+		AscBuilder.ApiGroup     = ApiGroup;
+		AscBuilder.ApiSmartArt  = ApiSmartArt;
+		AscBuilder.ApiOleObject = ApiOleObject;
+		AscBuilder.ApiChart     = ApiChart;
+		
+		// for backward compatibility
+		Api.sendEvent = Api["sendEvent"] = function()
+		{
+			Asc.editor.sendEvent.apply(Asc.editor, arguments);
+		};
+		
+		Api.AI = Api["AI"] = function()
+		{
+			Asc.editor.AI.apply(Asc.editor, arguments);
+		};
+	};
+	
+	
 }(window, null));

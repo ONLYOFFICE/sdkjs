@@ -6867,6 +6867,17 @@ CPresentation.prototype.Reassign_ImageUrls = function (images_rename) {
 	}
 };
 
+CPresentation.prototype.GetAllGIFImageUrls = function() {
+	let allURLs = this.Get_AllImageUrls();
+	let gifURLs = [];
+	for (let imageIndex = 0; imageIndex < allURLs.length; ++imageIndex) {
+		let imageUrl = allURLs[imageIndex];
+		if (imageUrl.toLowerCase().endsWith(".gif")) {
+			gifURLs.push(imageUrl);
+		}
+	}
+	return gifURLs;
+};
 
 CPresentation.prototype.Get_GraphicObjectsProps = function () {
 	let oController = this.GetCurrentController();
@@ -8067,6 +8078,11 @@ CPresentation.prototype.GetSelectedContent2 = function () {
 										oMaster = oSld;
 										fAddMaster();
 									}
+									if (nIdx === 0) {
+										let sRasterImageId = oSld.getBase64Img();
+										oImage = AscFormat.DrawingObjectsController.prototype.createImage(sRasterImageId, 0, 0, this.GetWidthMM() / 2.0, this.GetHeightMM() / 2.0);
+										oImagesSelectedContent.Drawings.push(new DrawingCopyObject(oImage, 0, 0, this.GetWidthMM() / 2.0, this.GetHeightMM() / 2.0, sRasterImageId));
+									}
 								}
 							}
 							else {
@@ -8074,6 +8090,11 @@ CPresentation.prototype.GetSelectedContent2 = function () {
 									let oSld = aSelectedSlides[nIdx];
 									if(oSld.isLayout()) {
 										oSourceFormattingContent.Layouts.push(oSld);
+									}
+									if (nIdx === 0) {
+										let sRasterImageId = oSld.getBase64Img();
+										oImage = AscFormat.DrawingObjectsController.prototype.createImage(sRasterImageId, 0, 0, this.GetWidthMM() / 2.0, this.GetHeightMM() / 2.0);
+										oImagesSelectedContent.Drawings.push(new DrawingCopyObject(oImage, 0, 0, this.GetWidthMM() / 2.0, this.GetHeightMM() / 2.0, sRasterImageId));
 									}
 								}
 							}
@@ -11193,7 +11214,7 @@ CPresentation.prototype.StartAction = function (nDescription, additional) {
 	this.Create_NewHistoryPoint(nDescription);
 	this.StopAnimationPreview();
 	this.Api.sendEvent("asc_onUserActionStart");
-	this.Api.getMacroRecorder().onAction(nDescription, additional, true);
+	this.Api.getMacroRecorder().addStepData(nDescription, additional, true);
 };
 CPresentation.prototype.FinalizeAction = function (isCheckEmptyAction, isCheckLockedAction, additional) {
 	this.Recalculate();
@@ -11205,9 +11226,12 @@ CPresentation.prototype.FinalizeAction = function (isCheckEmptyAction, isCheckLo
 		this.Recalculate(this.History.Get_RecalcData(null, arrChanges));
 	}
 	this.Api.sendEvent("asc_onUserActionEnd");
-	this.Api.getMacroRecorder().onAction(null, additional, false);
+	this.Api.getMacroRecorder().addStepData(null, additional, false);
 };
-
+CPresentation.prototype.AddMacroData = function(nDescription, additional)
+{
+	this.Api.getMacroRecorder().addStepData(nDescription, additional);
+};
 CPresentation.prototype.IsSplitPageBreakAndParaMark = function () {
 	return false;
 };

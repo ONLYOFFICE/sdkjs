@@ -31,68 +31,15 @@
  */
 
 $(function () {
-    Asc.spreadsheet_api.prototype._init = function () {};
-    Asc.spreadsheet_api.prototype._loadFonts = function (fonts, callback) {
-        callback();
-    };
-    AscCommonExcel.WorkbookView.prototype._calcMaxDigitWidth = function () {};
-    AscCommonExcel.WorkbookView.prototype._init = function () {};
-    AscCommonExcel.WorkbookView.prototype._onWSSelectionChanged =
-        function () {};
-    AscCommonExcel.WorkbookView.prototype.showWorksheet = function () {};
-    AscCommonExcel.WorksheetView.prototype._init = function () {};
-    AscCommonExcel.WorksheetView.prototype._onUpdateFormatTable =
-        function () {};
-    AscCommonExcel.WorksheetView.prototype.setSelection = function () {};
-    AscCommonExcel.WorksheetView.prototype.draw = function () {};
-    AscCommonExcel.WorksheetView.prototype._prepareDrawingObjects =
-        function () {};
-    AscCommonExcel.WorksheetView.prototype._reinitializeScroll = function () {};
-    AscCommonExcel.WorksheetView.prototype.getZoom = function () {};
-    AscCommonExcel.WorksheetView.prototype._getPPIY = function () {};
-    AscCommonExcel.WorksheetView.prototype._getPPIX = function () {};
-    AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function () {};
-    Asc.ReadDefTableStyles = function () {};
+	let ws = AscTest.JsApi.GetActiveSheet();
 
-    var api = new Asc.spreadsheet_api({
-        "id-view": "editor_sdk",
-    });
+	AscTest.JsApi.AddDefName('super', 'Sheet1!$A$1:$F$4');
+	AscTest.JsApi.AddDefName('negativeIndexColumn', 'Sheet1!$F$5:$I$14');
+	AscTest.JsApi.AddDefName('negativeIndexRow', 'Sheet1!$F$8:$H$13');
+	AscTest.JsApi.AddDefName('outOfRangeColumn', 'Sheet1!$H$5:$I$14');
+	AscTest.JsApi.AddDefName('outOfRangeRow', 'Sheet1!$F$11:$H$13');
 
-    api.FontLoader = {
-        LoadDocumentFonts: function () {},
-    };
-    window["Asc"]["editor"] = api;
-    AscCommon.g_oTableId.init();
-    api._onEndLoadSdk();
-    api.isOpenOOXInBrowser = false;
-    api.OpenDocumentFromBin(null, AscCommon.getEmpty());
-    api.initCollaborativeEditing({});
-    api.wb = new AscCommonExcel.WorkbookView(
-        api.wbModel,
-        api.controller,
-        api.handlers,
-        api.HtmlElement,
-        api.topLineEditorElement,
-        api,
-        api.collaborativeEditing,
-        api.fontRenderingMode
-    );
-
-    var wsView = api.wb.getWorksheet(0);
-    wsView.handlers = api.handlers;
-    wsView.objectRender = new AscFormat.DrawingObjects();
-    wsView.objectRender.controller = new AscFormat.DrawingObjectsController(
-        wsView.objectRender
-    );
-    var ws = api.GetActiveSheet();
-
-    api.AddDefName('super', 'Sheet1!$A$1:$F$4');
-    api.AddDefName('negativeIndexColumn', 'Sheet1!$F$5:$I$14');
-    api.AddDefName('negativeIndexRow', 'Sheet1!$F$8:$H$13');
-    api.AddDefName('outOfRangeColumn', 'Sheet1!$H$5:$I$14');
-    api.AddDefName('outOfRangeRow', 'Sheet1!$F$11:$H$13');
-
-    // QUnit.module("Test api range sort for all editors");
+    QUnit.module("Test api range sort for all editors");
 
     QUnit.test("SetSort: single cell, header yes, orientation column, ascending order", function(assert) {
         ws.GetRange("A1").SetValue("Header");
@@ -310,7 +257,6 @@ $(function () {
     });
 
     QUnit.test("Test asc_sortRanges", function (assert) {
-        console.log("here");
         ws.GetRange("A1").SetValue("1");
         ws.GetRange("A2").SetValue("2");
         ws.GetRange("A3").SetValue("3");

@@ -324,7 +324,8 @@ function MoveShapeImageTrack(originalObject)
                     return;
                 }
             }
-            scale_coefficients = {cx: 1, cy: 1};
+						const scaleCoefficient = this.originalObject.getScaleCoefficient();
+            scale_coefficients = {cx: scaleCoefficient, cy: scaleCoefficient};
             ch_off_x = 0;
             ch_off_y = 0;
             if(bWord && !this.originalObject.isCrop)
@@ -364,7 +365,7 @@ function MoveShapeImageTrack(originalObject)
             if (oSmartArt.extY < b) {
                 this.y = this.y - (b - oSmartArt.extY);
             }
-            this.originalObject.changePositionInSmartArt(this.x, this.y);
+            this.originalObject.changePositionInSmartArt(this.x/scale_coefficients.cx, this.y/scale_coefficients.cy);
         }
         var _xfrm = this.originalObject.spPr.xfrm;
         var _x = _xfrm.offX;
@@ -383,6 +384,18 @@ function MoveShapeImageTrack(originalObject)
         {
             _xfrm.setOffX(this.x/scale_coefficients.cx + ch_off_x);
             _xfrm.setOffY(this.y/scale_coefficients.cy + ch_off_y);
+
+            if (!this.originalObject.group) {
+                if (Asc.editor.getEditorId() === AscCommon.c_oEditorId.Spreadsheet) {
+                    let drawingBase = this.originalObject.drawingBase;
+                    if (drawingBase) {
+                        Asc.editor.addMacroStepData("SetDrawingPos", {from: drawingBase.from, to: drawingBase.to});
+                    }
+                }
+                if (Asc.editor.getEditorId() === AscCommon.c_oEditorId.Presentation)
+                    Asc.editor.addMacroStepData("SetDrawingPos", {x: this.x, y: this.y});
+            }
+
             if (this.originalObject.txXfrm) {
                 var previousTxXfrmX = this.originalObject.txXfrm.offX;
                 var previousTxXfrmY = this.originalObject.txXfrm.offY;
@@ -476,6 +489,7 @@ MoveShapeImageTrack.prototype.getBounds = function()
 {
     var boundsChecker = new  AscFormat.CSlideBoundsChecker();
     this.draw(boundsChecker);
+		const scaleCoefficient = this.originalObject.getScaleCoefficient();
     var tr = this.transform;
     var arr_p_x = [];
     var arr_p_y = [];
@@ -497,10 +511,10 @@ MoveShapeImageTrack.prototype.getBounds = function()
     boundsChecker.Bounds.max_x = Math.max.apply(Math, arr_p_x);
     boundsChecker.Bounds.min_y = Math.min.apply(Math, arr_p_y);
     boundsChecker.Bounds.max_y = Math.max.apply(Math, arr_p_y);
-    boundsChecker.Bounds.posX = this.x;
-    boundsChecker.Bounds.posY = this.y;
-    boundsChecker.Bounds.extX =  this.originalObject.extX;
-    boundsChecker.Bounds.extY =  this.originalObject.extY;
+    boundsChecker.Bounds.posX = this.x / scaleCoefficient;
+    boundsChecker.Bounds.posY = this.y / scaleCoefficient;
+    boundsChecker.Bounds.extX =  this.originalObject.extX / scaleCoefficient;
+    boundsChecker.Bounds.extY =  this.originalObject.extY / scaleCoefficient;
     return boundsChecker.Bounds;
 };
 
@@ -570,15 +584,17 @@ function MoveGroupTrack(originalObject)
 
     this.getBounds = function()
     {
+			const scaleCoefficient = this.originalObject.getScaleCoefficient();
         var bounds_checker = new AscFormat.CSlideBoundsChecker();
         for(var i = 0; i < this.overlayObjects.length; ++i)
         {
             this.overlayObjects[i].draw(bounds_checker);
         }
-        bounds_checker.Bounds.posX = this.x;
-        bounds_checker.Bounds.posY = this.y;
-        bounds_checker.Bounds.extX = this.originalObject.extX;
-        bounds_checker.Bounds.extY = this.originalObject.extY;
+
+        bounds_checker.Bounds.posX = this.x / scaleCoefficient;
+        bounds_checker.Bounds.posY = this.y / scaleCoefficient;
+        bounds_checker.Bounds.extX = this.originalObject.extX / scaleCoefficient;
+        bounds_checker.Bounds.extY = this.originalObject.extY / scaleCoefficient;
         return bounds_checker.Bounds;
     };
 	this.checkDrawingPartWithHistory = function () {
@@ -599,9 +615,9 @@ function MoveGroupTrack(originalObject)
         AscFormat.CheckSpPrXfrm3(this.originalObject);
         var xfrm = this.originalObject.spPr.xfrm;
 
-
-        xfrm.setOffX(this.x);
-        xfrm.setOffY(this.y);
+			const scaleCoefficient = this.originalObject.getScaleCoefficient();
+        xfrm.setOffX(this.x / scaleCoefficient);
+        xfrm.setOffY(this.y / scaleCoefficient);
 
         if(bWord)
         {
@@ -781,7 +797,10 @@ function MoveAnnotationTrack(originalObject)
 
         oDrawer.m_oContext.globalAlpha = 0.5;
 
-        this.objectToDraw.SetPosition(this.x, this.y, true);
+		AscFormat.ExecuteNoHistory(function() {
+			this.objectToDraw.SetPosition(this.x, this.y, true);
+		}, this);
+        
         if (this.originalObject.IsNeedDrawFromStream())
             this.objectToDraw.DrawFromStream(oGraphicsPDF, oGraphicsWord);
         else
@@ -913,15 +932,16 @@ function MoveChartObjectTrack(oObject, oChartSpace)
 
     this.getBounds = function ()
     {
+			const scaleCoefficient = this.chartSpace.getScaleCoefficient();
         var boundsChecker = new  AscFormat.CSlideBoundsChecker();
         boundsChecker.Bounds.min_x = this.x;
         boundsChecker.Bounds.max_x = this.x + oObject.extX;
         boundsChecker.Bounds.min_y = this.y;
         boundsChecker.Bounds.max_y = this.y + oObject.extY;
-        boundsChecker.Bounds.posX = this.x;
-        boundsChecker.Bounds.posY = this.y;
-        boundsChecker.Bounds.extX = oObject.extX;
-        boundsChecker.Bounds.extY = oObject.extY;
+        boundsChecker.Bounds.posX = this.x / scaleCoefficient;
+        boundsChecker.Bounds.posY = this.y / scaleCoefficient;
+        boundsChecker.Bounds.extX = oObject.extX / scaleCoefficient;
+        boundsChecker.Bounds.extY = oObject.extY / scaleCoefficient;
         return boundsChecker.Bounds;
     };
 	this.checkDrawingPartWithHistory = function () {};

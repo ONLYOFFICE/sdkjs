@@ -386,6 +386,7 @@
 	 * @property {string} QuoteText - The quote comment text.
 	 * @property {string} Text - The comment text.
 	 * @property {string} Time - The time when the comment was posted (in milliseconds).
+	 * @property {string} UserId - The user ID of the comment author.
 	 * @property {boolean} Solved - Specifies if the comment is resolved (**true**) or not (**false**).
 	 * @property {CommentData[]} Replies - An array containing the comment replies represented as the *CommentData* object.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/CommentData.js
@@ -1085,6 +1086,35 @@
 		return result;
 	};
 	/**
+	 * Returns the current addin field from the document.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias GetCurrentAddinField
+	 * @returns {?AddinFieldData} - An AddinFieldData object containing the data about the current addin field, or null if no addin field is found.
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetCurrentAddinField.js
+	 */
+	Api.prototype["pluginMethod_GetCurrentAddinField"] = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return null;
+		
+		let fields = logicDocument.GetCurrentComplexFields();
+		let data = null;
+		for (let i = 0; i < fields.length; ++i)
+		{
+			let field = fields[i];
+			if ((field instanceof AscWord.CComplexField) && field.IsAddin())
+			{
+				data = AscWord.CAddinFieldData.FromField(field).ToJson();
+				break;
+			}
+		}
+		
+		return data;
+	};
+	/**
 	 * Updates the addin fields with the specified data.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
@@ -1532,6 +1562,59 @@
 			this._pluginMethod_PasteHtml(streamObj["stable"], pasteTail);
 		else
 			pasteTail();
+	};
+
+	/**
+	 * Checks if the document is in the filling form mode.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @alias IsFillingFormMode
+	 * @returns {boolean} - Returns **true** if the document is in the filling form mode.
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/IsFillingFormMode.js
+	 */
+	Api.prototype["pluginMethod_IsFillingFormMode"] = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return false;
+
+		return logicDocument.IsFillingFormMode();
+	};
+	/**
+	 * Checks if the document is in the filling OForm mode.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @alias IsFillingOFormMode
+	 * @returns {boolean} - Returns **true** if the document is in the filling OForm mode.
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/IsFillingOFormMode.js
+	 */
+	Api.prototype["pluginMethod_IsFillingOFormMode"] = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return false;
+
+		return logicDocument.IsFillingOFormMode();
+	};
+
+	/**
+	 * Checks if the document is in the editing OForm mode.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @alias IsEditingOFormMode
+	 * @returns {boolean} - Returns **true** if the document is in the editing OForm mode.
+	 * @since 9.3.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/IsEditingOFormMode.js
+	 */
+	Api.prototype["pluginMethod_IsEditingOFormMode"] = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return false;
+
+		return logicDocument.IsEditingOFormMode();
 	};
 
 	window["AscCommon"] = window["AscCommon"] || {};

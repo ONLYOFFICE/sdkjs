@@ -523,6 +523,17 @@ QUnit.config.autostart = false;
 		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Italic);
 		assert.false(cellEditor._getFragments(0, 11).every((e) => e.format.getItalic()), 'Check cell editor italic format');
 
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Superscript);
+		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getVerticalAlign() === AscCommon.vertalign_SuperScript), 'Check cell editor superscript format');
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Superscript);
+		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getVerticalAlign() === AscCommon.vertalign_Baseline), 'Check cell editor baseline format');
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Superscript);
+		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getVerticalAlign() === AscCommon.vertalign_SuperScript), 'Check cell editor superscript format');
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Subscript);
+		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getVerticalAlign() === AscCommon.vertalign_SubScript), 'Check cell editor subscript format');
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Subscript);
+		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getVerticalAlign() === AscCommon.vertalign_Baseline), 'Check cell editor baseline format');
+
 		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Underline);
 		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getUnderline() === Asc.EUnderline.underlineSingle), 'Check cell editor underline format');
 		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Underline);
@@ -1624,6 +1635,17 @@ QUnit.config.autostart = false;
 		assert.true(GetCellFormatting(0, 0).asc_getFontUnderline(), 'Check turn on underline format');
 		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Underline);
 		assert.false(GetCellFormatting(0, 0).asc_getFontUnderline(), 'Check turn off underline format');
+
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Superscript);
+		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontVerticalAlign(), AscCommon.vertalign_SuperScript, 'Check cell editor superscript format');
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Superscript);
+		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontVerticalAlign(), AscCommon.vertalign_Baseline, 'Check cell editor baseline format');
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Superscript);
+		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontVerticalAlign(), AscCommon.vertalign_SuperScript, 'Check cell editor superscript format');
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Subscript);
+		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontVerticalAlign(), AscCommon.vertalign_SubScript, 'Check cell editor subscript format');
+		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.Subscript);
+		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontVerticalAlign(), AscCommon.vertalign_Baseline, 'Check cell editor baseline format');
 
 		assert.strictEqual(GetCellFormatting(0, 0).asc_getFontSize(), 11, "Check init font size");
 		ExecuteShortcut(Asc.c_oAscSpreadsheetShortcutType.IncreaseFontSize);

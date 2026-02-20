@@ -399,7 +399,8 @@ StartAddNewShape.prototype =
                             extY: track.extY,
                             fill: track.overlayObject.brush,
                             border: track.overlayObject.pen,
-                            base: shape.drawingBase ? shape.drawingBase : null
+                            base: shape.drawingBase ? shape.drawingBase : null,
+							id: shape.getObjectName()
                         };
 
                     if (oAPI.editorId === AscCommon.c_oEditorId.Presentation)
@@ -1471,7 +1472,7 @@ ResizeState.prototype =
             dX = oNearestPos.x;
             dY = oNearestPos.y;
         }
-        var resize_coef = this.majorObject.getResizeCoefficients(this.handleNum, dX, dY, start_arr, this.drawingObjects);
+        var resize_coef = this.majorObject.getResizeCoefficients(this.handleNum, dX, dY, start_arr, this.drawingObjects, e.ShiftKey);
         this.drawingObjects.trackResizeObjects(resize_coef.kd1, resize_coef.kd2, e, dX, dY);
         if(this.drawingObjects.drawingObjects.cSld)
         {
@@ -1878,8 +1879,8 @@ function MoveInGroupState(drawingObjects, majorObject, group, startX, startY)
     }
     this.rectX = Math.min.apply(Math, arr_x);
     this.rectY = Math.min.apply(Math, arr_y);
-    this.rectW = Math.max.apply(Math, arr_x);
-    this.rectH = Math.max.apply(Math, arr_y);
+    this.rectW = Math.max.apply(Math, arr_x) - this.rectX;
+    this.rectH = Math.max.apply(Math, arr_y) - this.rectY;
 }
 
 MoveInGroupState.prototype =

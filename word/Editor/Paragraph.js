@@ -2772,7 +2772,7 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 			var Element = aShd.Get_Next();
 			while (null != Element)
 			{
-				pGraphics.b_color1(Element.r, Element.g, Element.b, 255);
+				pGraphics.b_color1(Element.r, Element.g, Element.b, Element.a);
 				if (pGraphics.SetShd)
 				{
 					pGraphics.SetShd(Element.Additional2);
@@ -2845,6 +2845,7 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 					else
 						pGraphics.set_fillColor(Element.r, Element.g, Element.b);
 					
+					
 					pGraphics.rect(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0);
 					pGraphics.df();
 					Element = aPerm.Get_Next();
@@ -2860,14 +2861,12 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 			{
 				if (!pGraphics.DrawTextArtComment)
 				{
-					if (Element.Additional.Active === true)
-						pGraphics.b_color1(240, 200, 120, 255);
+					if (!pGraphics.set_fillColor)
+						pGraphics.b_color1(Element.r, Element.g, Element.b, 255);
 					else
-						pGraphics.b_color1(248, 231, 195, 255);
-
-					pGraphics.rect(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0);
-					pGraphics.df();
-
+						pGraphics.set_fillColor(Element.r, Element.g, Element.b);
+					
+					pGraphics.drawCommentArea(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0);
 					DocumentComments.Add_DrawingRect(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0, Page_abs, Element.Additional.CommentId, ParentInvertTransform);
 				}
 				else
@@ -3972,39 +3971,48 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 			}
 			else
 			{
+				let oldElement = this.Content[StartPos];
 				this.Content[StartPos].Remove(nCount, bOnAddText);
-
+				
 				var isRemoveOnDrag = this.LogicDocument ? this.LogicDocument.DragAndDropAction : false;
-
-				// TODO: Как только избавимся от para_End переделать здесь
-				// Последние 2 элемента не удаляем (один для para_End, второй для всего остального)
-				// Пустой контент контрол сам себя удаляет внутри функции Remove
-				if (StartPos < this.Content.length - 2
-					&& true === this.Content[StartPos].Is_Empty()
-					&& true !== this.Content[StartPos].Is_CheckingNearestPos()
-					&& !(this.Content[StartPos] instanceof AscWord.CInlineLevelSdt)
-					&& (!bOnAddText || isRemoveOnDrag))
+				
+				if (StartPos < this.Content.length && oldElement === this.Content[StartPos])
 				{
-					if (this.Selection.StartPos === this.Selection.EndPos)
-						this.Selection.Use = false;
-
-					this.Internal_Content_Remove(StartPos);
-					
-					// Fix the content after deletion
-					if (!bOnAddText
-						&& !this.Content[StartPos].IsCursorPlaceable()
-						&& (0 === StartPos || !this.Content[StartPos - 1].IsCursorPlaceable()))
+					// TODO: Как только избавимся от para_End переделать здесь
+					// Последние 2 элемента не удаляем (один для para_End, второй для всего остального)
+					// Пустой контент контрол сам себя удаляет внутри функции Remove
+					if (StartPos < this.Content.length - 2
+						&& true === this.Content[StartPos].Is_Empty()
+						&& true !== this.Content[StartPos].Is_CheckingNearestPos()
+						&& !(this.Content[StartPos] instanceof AscWord.CInlineLevelSdt)
+						&& (!bOnAddText || isRemoveOnDrag))
 					{
-						this.AddToContent(StartPos, new AscWord.Run());
+						if (this.Selection.StartPos === this.Selection.EndPos)
+							this.Selection.Use = false;
+						
+						this.Internal_Content_Remove(StartPos);
+						
+						// Fix the content after deletion
+						if (!bOnAddText
+							&& !this.Content[StartPos].IsCursorPlaceable()
+							&& (0 === StartPos || !this.Content[StartPos - 1].IsCursorPlaceable()))
+						{
+							this.AddToContent(StartPos, new AscWord.Run());
+						}
+						
+						this.CurPos.ContentPos = StartPos;
+						this.Content[StartPos].MoveCursorToStartPos();
+						this.Correct_ContentPos2();
 					}
-
-					this.CurPos.ContentPos = StartPos;
-					this.Content[StartPos].MoveCursorToStartPos();
-					this.Correct_ContentPos2();
+					else
+					{
+						this.CurPos.ContentPos = StartPos;
+					}
 				}
 				else
 				{
-					this.CurPos.ContentPos = StartPos;
+					// Если элемент был удален или перемещен, то основываемся на перемещении позиции селекта
+					this.CurPos.ContentPos = this.Selection.StartPos;
 				}
 				
 				if (this.LogicDocument
@@ -4358,6 +4366,10 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 			}
 			else if(this.bFromDocument)
 			{
+				if (Asc.editor.isPdfEditor()) {
+					return Result;
+				}
+				
              	if (align_Right === Pr.Jc)
                 {
                     this.Set_Align(align_Center);
@@ -4639,6 +4651,9 @@ Paragraph.prototype.Add = function(Item)
 				TextPr.RFonts.HAnsi    = {Name : FName, Index : FIndex};
 				TextPr.RFonts.CS       = {Name : FName, Index : FIndex};
 			}
+			
+			if (TextPr.Lang && !TextPr.Lang.IsEmpty())
+				this.RecalcInfo.NeedSpellCheck();
 
 			if (true === this.ApplyToAll)
 			{
@@ -8404,11 +8419,11 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 	
 	let startPos = this.Get_ParaContentPos(true, true);
 	
-	if (logicDocument.IsWordSelection())
+	if (logicDocument && logicDocument.IsWordSelection())
 		pos = this.getClosestWordPos(pos, SearchPosXY2.getLine(), SearchPosXY2.getRange());
 	
 	// Выставим в полученном месте текущую позицию курсора
-	if (!logicDocument.IsWordSelection())
+	if (!logicDocument || !logicDocument.IsWordSelection())
 		this.Set_ParaContentPos(pos2, true, SearchPosXY2.getLine(), SearchPosXY2.getRange());
 
 	if (!isFixedForm
@@ -8419,10 +8434,10 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 	// Выставляем селект
 	this.Set_SelectionContentPos(startPos, pos, true, this.Selection.StartLine, this.Selection.StartRange, SearchPosXY2.getLine(), SearchPosXY2.getRange());
 	
-	if (logicDocument.IsWordSelection())
+	if (logicDocument && logicDocument.IsWordSelection())
 		this.checkWordSelection();
 	
-	if (logicDocument.IsParagraphSelection())
+	if (logicDocument && logicDocument.IsParagraphSelection())
 		this.SelectAll(logicDocument.GetSelectDirection());
 	
 	if (!this.GetPlaceHolderObject())
@@ -10820,8 +10835,8 @@ Paragraph.prototype.Get_CompiledPr = function()
 			Pr.ParaPr.Spacing.Before = 0;
 		else
 		{
-			Cur_Before = this.Internal_CalculateAutoSpacing(Cur_Before, Cur_BeforeAuto, this);
-			Prev_After = this.Internal_CalculateAutoSpacing(Prev_After, Prev_AfterAuto, this);
+			Cur_Before = Pr.ParaPr.Spacing.CalculateBefore();
+			Prev_After = Prev_Pr.Spacing.CalculateAfter();
 
 			if ((true === Prev_Pr.ContextualSpacing
 				&& PrevStyle === StyleId)
@@ -10875,13 +10890,14 @@ Paragraph.prototype.Get_CompiledPr = function()
 		{
 			Pr.ParaPr.Spacing.Before = 0;
 		}
+		else
+		{
+			Pr.ParaPr.Spacing.Before = Pr.ParaPr.Spacing.CalculateBefore()
+		}
 	}
 	else if (type_Table === PrevEl.GetType())
 	{
-		if (true === Pr.ParaPr.Spacing.BeforeAutoSpacing)
-		{
-			Pr.ParaPr.Spacing.Before = 14 * g_dKoef_pt_to_mm;
-		}
+		Pr.ParaPr.Spacing.Before = Pr.ParaPr.Spacing.CalculateBefore()
 	}
 
 	var oTempNextEl = NextEl;
@@ -10915,7 +10931,7 @@ Paragraph.prototype.Get_CompiledPr = function()
 			if (true === Cur_AfterAuto && NextStyle === StyleId && undefined != Next_NumPr && undefined != NumPr && Next_NumPr.NumId === NumPr.NumId)
 				Pr.ParaPr.Spacing.After = 0;
 			else
-				Pr.ParaPr.Spacing.After = this.Internal_CalculateAutoSpacing(Cur_After, Cur_AfterAuto, this);
+				Pr.ParaPr.Spacing.After = Pr.ParaPr.Spacing.CalculateAfter();
 		}
 		else if (NextEl.IsTable() || NextEl.IsBlockLevelSdt())
 		{
@@ -10923,20 +10939,20 @@ Paragraph.prototype.Get_CompiledPr = function()
 			if (oNextElFirstParagraph)
 			{
 				var NextStyle       = oNextElFirstParagraph.Style_Get();
+				let Next_Pr         = oNextElFirstParagraph.Get_CompiledPr2(false).ParaPr;
 				var Next_Before     = oNextElFirstParagraph.Get_CompiledPr2(false).ParaPr.Spacing.Before;
-				var Next_BeforeAuto = oNextElFirstParagraph.Get_CompiledPr2(false).ParaPr.Spacing.BeforeAutoSpacing;
 				var Cur_After       = Pr.ParaPr.Spacing.After;
 				var Cur_AfterAuto   = Pr.ParaPr.Spacing.AfterAutoSpacing;
 				if (NextStyle === StyleId && true === Pr.ParaPr.ContextualSpacing)
 				{
-					Cur_After   = this.Internal_CalculateAutoSpacing(Cur_After, Cur_AfterAuto, this);
-					Next_Before = this.Internal_CalculateAutoSpacing(Next_Before, Next_BeforeAuto, this);
+					Cur_After   = Pr.ParaPr.Spacing.CalculateAfter();
+					Next_Before = Next_Pr.Spacing.CalculateBefore();
 
 					Pr.ParaPr.Spacing.After = Math.max(Next_Before, Cur_After) - Cur_After;
 				}
 				else
 				{
-					Pr.ParaPr.Spacing.After = this.Internal_CalculateAutoSpacing(Pr.ParaPr.Spacing.After, Cur_AfterAuto, this);
+					Pr.ParaPr.Spacing.After = Pr.ParaPr.Spacing.CalculateAfter();
 				}
 			}
 		}
@@ -10987,7 +11003,7 @@ Paragraph.prototype.Get_CompiledPr = function()
 		}
 		else
 		{
-			Pr.ParaPr.Spacing.After = this.Internal_CalculateAutoSpacing(Pr.ParaPr.Spacing.After, Pr.ParaPr.Spacing.AfterAutoSpacing, this);
+			Pr.ParaPr.Spacing.After = Pr.ParaPr.Spacing.CalculateAfter();
 		}
 	}
 
@@ -11280,14 +11296,6 @@ Paragraph.prototype.IsParaPrCompiled = function()
 {
 	return !this.CompiledPr.NeedRecalc;
 };
-Paragraph.prototype.Internal_CalculateAutoSpacing = function(Value, UseAuto, Para)
-{
-	var Result = Value;
-	if (true === UseAuto)
-		Result = 14 * g_dKoef_pt_to_mm;
-
-	return Result;
-};
 Paragraph.prototype.GetDirectTextPr = function()
 {
 	var TextPr;
@@ -11384,7 +11392,7 @@ Paragraph.prototype.PasteFormatting = function(oData)
 		if (oParaPr.Spacing)
 			this.Set_Spacing(oParaPr.Spacing, true);
 		else
-			this.Set_Spacing(new CParaSpacing(), true);
+			this.Set_Spacing(new AscWord.ParaSpacing(), true);
 
 		if (oParaPr.Shd)
 			this.Set_Shd(oParaPr.Shd, true);
@@ -11470,7 +11478,7 @@ Paragraph.prototype.Style_Add = function(Id, bDoNotDeleteProps)
 		this.Set_KeepLines(undefined);
 		this.Set_KeepNext(undefined);
 		this.Set_PageBreakBefore(undefined);
-		this.Set_Spacing(new CParaSpacing(), true);
+		this.Set_Spacing(new AscWord.ParaSpacing(), true);
 		this.Set_Shd(undefined, true);
 		this.Set_WidowControl(undefined);
 		this.Set_Tabs(undefined);
@@ -11619,7 +11627,7 @@ Paragraph.prototype.Clear_Formatting = function()
 	this.Set_KeepLines(undefined);
 	this.Set_KeepNext(undefined);
 	this.Set_PageBreakBefore(undefined);
-	this.Set_Spacing(new CParaSpacing(), true);
+	this.Set_Spacing(new AscWord.ParaSpacing(), true);
 	this.Set_Shd(new CDocumentShd(), true);
 	this.Set_WidowControl(undefined);
 	this.Set_Tabs(new CParaTabs());
@@ -11684,7 +11692,7 @@ Paragraph.prototype.Set_Ind = function(Ind, bDeleteUndefined)
 Paragraph.prototype.Set_Spacing = function(Spacing, bDeleteUndefined)
 {
 	if (undefined === this.Pr.Spacing)
-		this.Pr.Spacing = new CParaSpacing();
+		this.Pr.Spacing = new AscWord.ParaSpacing();
 
 	if (( undefined != Spacing.Line || true === bDeleteUndefined ) && this.Pr.Spacing.Line !== Spacing.Line)
 	{
@@ -11738,6 +11746,32 @@ Paragraph.prototype.Set_Spacing = function(Spacing, bDeleteUndefined)
 		this.private_AddPrChange();
 		AscCommon.History.Add(new CChangesParagraphSpacingBeforeAutoSpacing(this, this.Pr.Spacing.BeforeAutoSpacing, Spacing.BeforeAutoSpacing));
 		this.Pr.Spacing.BeforeAutoSpacing = Spacing.BeforeAutoSpacing;
+	}
+	
+	if (null === Spacing.BeforeLines || (bDeleteUndefined && undefined === Spacing.BeforeLines))
+	{
+		this.private_AddPrChange();
+		AscCommon.History.Add(new CChangesParagraphSpacingBeforeLines(this, this.Pr.Spacing.BeforeLines, undefined));
+		this.Pr.Spacing.BeforeLines = Spacing.BeforeLines;
+	}
+	else if (undefined !== Spacing.BeforeLines && Spacing.BeforeLines !== this.Pr.Spacing.BeforeLines)
+	{
+		this.private_AddPrChange();
+		AscCommon.History.Add(new CChangesParagraphSpacingBeforeLines(this, this.Pr.Spacing.BeforeLines, Spacing.BeforeLines));
+		this.Pr.Spacing.BeforeLines = Spacing.BeforeLines;
+	}
+
+	if (null === Spacing.AfterLines || (bDeleteUndefined && undefined === Spacing.AfterLines))
+	{
+		this.private_AddPrChange();
+		AscCommon.History.Add(new CChangesParagraphSpacingAfterLines(this, this.Pr.Spacing.AfterLines, undefined));
+		this.Pr.Spacing.AfterLines = Spacing.AfterLines;
+	}
+	else if (undefined !== Spacing.AfterLines && Spacing.AfterLines !== this.Pr.Spacing.AfterLines)
+	{
+		this.private_AddPrChange();
+		AscCommon.History.Add(new CChangesParagraphSpacingAfterLines(this, this.Pr.Spacing.AfterLines, Spacing.AfterLines));
+		this.Pr.Spacing.AfterLines = Spacing.AfterLines;
 	}
 
 	// Надо пересчитать конечный стиль

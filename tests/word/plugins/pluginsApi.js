@@ -113,7 +113,30 @@ $(function () {
 			"Remove the first add-in field");
 		
 	});
-	
+
+	QUnit.test("Test addin fields in header/footer", function (assert)
+	{
+		AscTest.ClearDocument();
+		MoveToNewParagraph();
+
+		let sectPr = logicDocument.GetFinalSectPr();
+		let header = AscTest.CreateDefaultHeader(sectPr);
+		header.Set_CurrentElement(false, 0);
+		
+		logicDocument.Set_DocumentDefaultTab(35.45);
+
+		let addinFieldData = {"FieldId": "1", "Value": "Addin №1", "Content": "This is the first addin field"};
+		PluginsApi.pluginMethod_AddAddinField(addinFieldData);
+
+		logicDocument.RemoveSelection();
+		logicDocument.Document_UpdateInterfaceState();
+
+		let fields = PluginsApi.pluginMethod_GetAllAddinFields();
+		assert.strictEqual(fields.length, 1, "Check one addin field in header");
+		assert.strictEqual(fields[0].Value, "Addin №1", "Check Value");
+		assert.strictEqual(fields[0].Content, "This is the first addin field", "Check Content from header field");
+	});
+
 	QUnit.test("Test RemoveFieldWrapper", function(assert)
 	{
 		AscTest.ClearDocument();

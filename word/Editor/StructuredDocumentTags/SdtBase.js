@@ -421,6 +421,10 @@ CSdtBase.prototype.GetInnerCheckBox = function()
 };
 CSdtBase.prototype.GetCheckBoxLabel = function()
 {
+	let mainForm = this.GetMainForm();
+	if (mainForm !== this)
+		return mainForm.GetCheckBoxLabel();
+	
 	if (!this.IsLabeledCheckBox())
 		return "";
 	

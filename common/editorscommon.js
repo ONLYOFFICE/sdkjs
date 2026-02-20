@@ -4135,7 +4135,8 @@
 		}
 
 		if (!range && cDialogType.DataValidation !== dialogType && cDialogType.ConditionalFormattingRule !== dialogType && cDialogType.GoalSeek_Cell !== dialogType &&
-			cDialogType.GoalSeek_ChangingCell !== dialogType)
+			cDialogType.GoalSeek_ChangingCell !== dialogType && cDialogType.Solver_ObjectiveCell !== dialogType && cDialogType.Solver_VariableCell !== dialogType &&
+			cDialogType.Solver_Constraint !== dialogType && cDialogType.Solver_CellReference !== dialogType)
 		{
 			return Asc.c_oAscError.ID.DataRangeError;
 		}
@@ -4246,7 +4247,8 @@
 					sheetModel = model.getActiveWs();
 				}
 				return AscCommonExcel.CGoalSeek.prototype.isValidDataRef(sheetModel, range, dialogType);
-			} else if (cDialogType.Solver_ObjectiveCell) {
+			} else if (cDialogType.Solver_ObjectiveCell === dialogType || cDialogType.Solver_VariableCell === dialogType || cDialogType.Solver_Constraint === dialogType ||
+					cDialogType.Solver_CellReference === dialogType) {
 				result = parserHelp.parse3DRef(dataRange);
 				if (result) {
 					sheetModel = model.getWorksheetByName(result.sheet);
@@ -4257,7 +4259,7 @@
 				if (!sheetModel) {
 					sheetModel = model.getActiveWs();
 				}
-				return AscCommonExcel.CSolver.prototype.isValidDataRef(sheetModel, range, dialogType);
+				return AscCommonExcel.CSolver.prototype.isValidDataRef(sheetModel, range, dialogType, dataRange);
 			}
 		}
 
@@ -11126,7 +11128,7 @@
 		if (!res)
 			return new CColor(0, 0, 0, 255);
 
-		return true === isDark ? res.Dark : res.Light;
+		return -1 === isDark ? res.Light : true === isDark || 1 === isDark ? res.Dark : res.Normal;
 	}
 	function setUserColorById(userId, light, dark)
 	{
@@ -11507,8 +11509,9 @@
 
 	function CUserCacheColor(nColor)
 	{
-		this.Light = null;
-		this.Dark = null;
+		this.Light  = null;
+		this.Dark   = null;
+		this.Normal = null;
 		this.init(nColor);
 	}
 
@@ -11521,16 +11524,23 @@
 		var Y = Math.max(0, Math.min(255, 0.299 * r + 0.587 * g + 0.114 * b));
 		var Cb = Math.max(0, Math.min(255, 128 - 0.168736 * r - 0.331264 * g + 0.5 * b));
 		var Cr = Math.max(0, Math.min(255, 128 + 0.5 * r - 0.418688 * g - 0.081312 * b));
-
+		
+		var Y_light = Math.min(255, Y + (255 - Y) * 0.6);
+		
 		if (Y > 63)
 			Y = 63;
+		
+		var R_dark = Math.max(0, Math.min(255, Y + 1.402 * (Cr - 128))) | 0;
+		var G_dark = Math.max(0, Math.min(255, Y - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128))) | 0;
+		var B_dark = Math.max(0, Math.min(255, Y + 1.772 * (Cb - 128))) | 0;
+		
+		var R_light = Math.max(0, Math.min(255, Y_light + 1.402 * (Cr - 128))) | 0;
+		var G_light = Math.max(0, Math.min(255, Y_light - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128))) | 0;
+		var B_light = Math.max(0, Math.min(255, Y_light + 1.772 * (Cb - 128))) | 0;
 
-		var R = Math.max(0, Math.min(255, Y + 1.402 * (Cr - 128))) | 0;
-		var G = Math.max(0, Math.min(255, Y - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128))) | 0;
-		var B = Math.max(0, Math.min(255, Y + 1.772 * (Cb - 128))) | 0;
-
-		this.Light = new CColor(r, g, b, 255);
-		this.Dark = new CColor(R, G, B, 255);
+		this.Light  = new CColor(R_light, G_light, B_light, 255);
+		this.Normal = new CColor(r, g, b, 255);
+		this.Dark   = new CColor(R_dark, G_dark, B_dark, 255);
 	};
 
 	function loadScript(url, onSuccess, onError)
@@ -14116,19 +14126,54 @@
 		delimiterMap[AscCommon.c_oAscCsvDelimiter.Colon] = ":";
 		delimiterMap[AscCommon.c_oAscCsvDelimiter.Comma] = ",";
 		delimiterMap[AscCommon.c_oAscCsvDelimiter.Space] = " ";
-		const delimiterChar = options.asc_getDelimiterChar() || delimiterMap[options.asc_getDelimiter()];
+
+		const delimiterChar = options.asc_getDelimiterChar();
+		const delimiter = options.asc_getDelimiter();
+		const delimiterArray = [];
+
+		if (delimiterChar) {
+			if (Array.isArray(delimiterChar)) {
+				for (let i = 0; i < delimiterChar.length; i++) {
+					delimiterArray.push(delimiterChar[i]);
+				}
+			} else {
+				delimiterArray.push(delimiterChar);
+			}
+		}
+
+		if (delimiter !== undefined && delimiter !== null) {
+			if (delimiter) {
+				if (Array.isArray(delimiter)) {
+					for (let i = 0; i < delimiter.length; i++) {
+						let delimeterValue = delimiterMap[delimiter[i]];
+						if (delimiterArray.indexOf(delimeterValue) === -1) {
+							delimiterArray.push(delimeterValue);
+						}
+					}
+				} else {
+					let delimeterValue = delimiterMap[delimiter];
+					if (delimiterArray.indexOf(delimeterValue) === -1) {
+						delimiterArray.push(delimeterValue);
+					}
+				}
+			}
+		}
+
 		const textQualifier = options.asc_getTextQualifier();
 		const hasQualifier = !!textQualifier;
 		
 		if (!text.length) return [[]];
 		
-		let rows = delimiterChar === '\n' ? [text] : text.split(/\r\n|\r|\n/);
+		let rows = (delimiterArray.length === 1 && delimiterArray[0] === '\n') ? [text] : text.split(/\r\n|\r|\n/);
 		if (rows.length > 1 && rows[rows.length - 1] === '') rows.pop();
-		
-		const isSpace = delimiterChar === " ";
+
+		const isSpace = delimiterArray.length > 0 && delimiterArray.indexOf(" ") !== -1;
 		// Note: Using charCodeAt instead of codePointAt for performance.
 		// CSV delimiters are always basic ASCII chars (comma=44, semicolon=59, tab=9, etc.)
-		const delimiterCode = delimiterChar ? delimiterChar.charCodeAt(0) : 0;
+		const delimiterCodes = [];
+		for (let i = 0; i < delimiterArray.length; i++) {
+			delimiterCodes.push(delimiterArray[i].charCodeAt(0));
+		}
 		const qualifierCode = hasQualifier ? textQualifier.charCodeAt(0) : 0;
 		
 		/**
@@ -14139,9 +14184,9 @@
 		 */
 		const processSpaceRow = function(row) {
 			if (!isSpace || !bTrimSpaces) return row;
-			const hasLeadingSpace = row.length > 0 && row.charCodeAt(0) === delimiterCode;
+			const hasLeadingSpace = row.length > 0 && delimiterCodes.indexOf(row.charCodeAt(0)) !== -1;
 			row = row.trim();
-			return hasLeadingSpace ? delimiterChar + row : row;
+			return hasLeadingSpace ? delimiterArray[0] + row : row;
 		};
 		
 		/**
@@ -14177,7 +14222,7 @@
 
 				const charCode = row.charCodeAt(j);
 				if (charCode === qualifierCode) {
-					if (!insideQualifier && (j === 0 || row.charCodeAt(j - 1) === delimiterCode)) {
+					if (!insideQualifier && (j === 0 || delimiterCodes.indexOf(row.charCodeAt(j - 1)) !== -1)) {
 						insideQualifier = true;
 						j++;
 						continue;
@@ -14194,7 +14239,7 @@
 					}
 				}
 				
-				if (!insideQualifier && charCode === delimiterCode) {
+				if (!insideQualifier && delimiterCodes.indexOf(charCode) !== -1) {
 					fields.push(textParts.join(''));
 					textParts = [];
 				} else {
@@ -14218,7 +14263,22 @@
 				matrix.push(res.fields);
 				i = res.curIndex;
 			} else {
-				matrix.push(delimiterChar === undefined ? [row] : row.split(delimiterChar));
+				if (delimiterArray.length === 0) {
+					matrix.push([row]);
+				} else {
+					const parts = [];
+					let currentPart = "";
+					for (let j = 0; j < row.length; j++) {
+						if (delimiterCodes.indexOf(row.charCodeAt(j)) !== -1) {
+							parts.push(currentPart);
+							currentPart = "";
+						} else {
+							currentPart += row[j];
+						}
+					}
+					parts.push(currentPart);
+					matrix.push(parts);
+				}
 			}
 		}
 		return matrix;
@@ -14926,6 +14986,9 @@
 	function sendClientLog(level, msg, api) {
 		if (!api) {
 			return;
+		}
+		if (level === "error") {
+			console.error(msg);
 		}
 		if (api.documentOpenOptions && api.documentOpenOptions["debug"]) {
 			console.log("[speed]: "+ msg);

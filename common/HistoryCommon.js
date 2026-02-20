@@ -1984,6 +1984,8 @@
 	window['AscDFH'].historyitem_Paragraph_Bidi                      = window['AscDFH'].historyitem_type_Paragraph | 42;
 	window['AscDFH'].historyitem_Paragraph_ParaId                    = window['AscDFH'].historyitem_type_Paragraph | 43;
 	window['AscDFH'].historyitem_Paragraph_TextId                    = window['AscDFH'].historyitem_type_Paragraph | 44;
+	window['AscDFH'].historyitem_Paragraph_Spacing_BeforeLines      = window['AscDFH'].historyitem_type_Paragraph | 45;
+	window['AscDFH'].historyitem_Paragraph_Spacing_AfterLines       = window['AscDFH'].historyitem_type_Paragraph | 46;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе ParaTextPr
 	//------------------------------------------------------------------------------------------------------------------
@@ -3116,6 +3118,7 @@
 	window['AscDFH'].historyitem_PathSetPathH       = window['AscDFH'].historyitem_type_Path | 4;
 	window['AscDFH'].historyitem_PathSetPathW       = window['AscDFH'].historyitem_type_Path | 5;
 	window['AscDFH'].historyitem_PathAddPathCommand = window['AscDFH'].historyitem_type_Path | 6;
+	window['AscDFH'].historyitem_PathSetParent      = window['AscDFH'].historyitem_type_Path | 7;
 
 	window['AscDFH'].historyitem_TextBodySetBodyPr   = window['AscDFH'].historyitem_type_TextBody | 1;
 	window['AscDFH'].historyitem_TextBodySetLstStyle = window['AscDFH'].historyitem_type_TextBody | 2;
@@ -4266,6 +4269,7 @@
 
 	AscDFH.historyitem_type_Pdf_Drawing_Page		= AscDFH.historyitem_type_Pdf_Drawing | 1;
 	AscDFH.historyitem_type_Pdf_Drawing_Redacts		= AscDFH.historyitem_type_Pdf_Drawing | 2;
+	AscDFH.historyitem_type_Pdf_Drawing_From_Scan	= AscDFH.historyitem_type_Pdf_Drawing | 3;
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CPDFDoc
@@ -4287,6 +4291,7 @@
 	window['AscDFH'].historyitem_Pdf_Document_Start_Redact		= window['AscDFH'].historyitem_type_PDF_Document | 15;
 	window['AscDFH'].historyitem_Pdf_Document_Part_Redact		= window['AscDFH'].historyitem_type_PDF_Document | 16;
 	window['AscDFH'].historyitem_Pdf_Document_End_Redact		= window['AscDFH'].historyitem_type_PDF_Document | 17;
+	window['AscDFH'].historyitem_Pdf_Embed_Fonts_Map			= window['AscDFH'].historyitem_type_PDF_Document | 18;
 
 
 	AscDFH.historyitem_CustomPropertiesAddProperty = AscDFH.historyitem_type_CustomProperties | 0;
@@ -4807,6 +4812,7 @@
 	window['AscDFH'].historydescription_Spreadsheet_SelectRange						= 0x01fa;
 	window['AscDFH'].historydescription_Spreadsheet_SetCellFormula					= 0x01fb;
 	window['AscDFH'].historydescription_Document_AddCheckBoxLabel                   = 0x01fc;
+	window['AscDFH'].historydescription_Document_StretchFormToCell                  = 0x01fd;
 
 	// pdf
 	window['AscDFH'].historydescription_Pdf_AddAnnot			= 0x29a;

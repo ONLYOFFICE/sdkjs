@@ -349,7 +349,11 @@ function (window, undefined) {
 			}
 		}
 
+		// if we have 1x1 byArr, then we just return the main array
 		let tempArrIndicies = sortByArray(colsRowArr, sortOrderArr, isByCol);
+		if (tempArrIndicies.length === 1) {
+			return array;
+		}
 
 		let resultArr = new cArray();
 		for (let i = 0; i < tempArrIndicies.length; i++) {
@@ -1224,13 +1228,14 @@ function (window, undefined) {
 	cFORMULATEXT.prototype.isXLFN = true;
 	cFORMULATEXT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.area_to_ref;
 	cFORMULATEXT.prototype.argumentsType = [argType.reference];
+	cFORMULATEXT.prototype.arrayIndexes = {0: 1};
 	cFORMULATEXT.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0];
 		if (cElementType.error === arg0.type) {
 			return arg0;
 		}
-
+		//TODO !!!
 		var res = null;
 		if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type ||
 			cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
@@ -1785,7 +1790,7 @@ function (window, undefined) {
 	cLOOKUP.prototype.name = 'LOOKUP';
 	cLOOKUP.prototype.argumentsMin = 2;
 	cLOOKUP.prototype.argumentsMax = 3;
-	cLOOKUP.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
+	cLOOKUP.prototype.arrayIndexes = {1: 1, 2: 1};
 	cLOOKUP.prototype.argumentsType = [argType.any, argType.reference, argType.reference];
 	cLOOKUP.prototype.Calculate = function (arg) {
 
@@ -2263,12 +2268,22 @@ function (window, undefined) {
 	cSORTBY.prototype.name = 'SORTBY';
 	cSORTBY.prototype.argumentsMin = 2;
 	cSORTBY.prototype.isXLFN = true;
-	// TODO infinite arrayIndexes for even/odd arguments
 	cSORTBY.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 8: 1, 9: 1, 10: 1, 11: 1};
-	cSORTBY.prototype.getArrayIndex = function (index) {
+	/**
+	 * Sorts the contents of a range or array based on the values in a corresponding range or array
+	 * 
+	 * @param {array} array - The array or range to sort.
+	 * @param {array} by_array1 - The array or range to sort on.
+	 * @param {number} [sort_order1] optional - The order to use for sorting. 1 for ascending, -1 for descending. Default is ascending.
+	 * @param {array} [by_array2] optional - The array or range to sort on.
+	 * @param {number} [sort_order2] optional - The order to use for sorting. 1 for ascending, -1 for descending. Default is ascending.
+	 * @return {array} Returns the sorted array or an error.
+	 */
+	cSORTBY.prototype.getArrayIndex = function () {
 		return 1;
 	};
 	cSORTBY.prototype.argumentsType = [argType.array, argType.array, argType.number, [argType.array, argType.number]];
+
 	cSORTBY.prototype.Calculate = function (arg) {
 		function arrayHelper (arr, args) {
 			// Helper logic:
@@ -2285,7 +2300,6 @@ function (window, undefined) {
 					sortOrder = args[i+1];
 
 				by_array1 = i === 1 ? by_array : by_array1;
-				// TODO can be array with single item and can be just single item
 				if (sortOrder.type === cElementType.array || sortOrder.type === cElementType.cellsRange || sortOrder.type === cElementType.cellsRange3D) {
 					// if single element in array, fill array with it element
 					let resDimensoins = sortOrder.getDimensions();
@@ -2483,38 +2497,37 @@ function (window, undefined) {
 		if (isSortOrderArray) {
 			return arrayHelper(array, args);
 		} else {
-			// dimensions check: 
-			// check on errors first, then check on truthy dimensions and do things with it
+			/*
+				created a new argument to check the sizes of the byArray arguments - they should always be the same when compared with each other
+				But they may differ from the original array
+			*/
+			const firstByArrayDimensions = args[1].getDimensions();
+
+			// byArray sizes check: 
 			for (let i = 1; i < args.length; i += 2) {
-				let byArrDimensions = args[i].getDimensions();
 
-				// TODO if there is a match on the single row, but not on the col - return the original array
-				if (maxRows === 1) {
-					// single row with elements
-					if (maxRows === 1 && byArrDimensions.row === 1) {
-						if (maxCols !== byArrDimensions.col) {
-							// area to array
-							if (cElementType.cellsRange === array.type || cElementType.cellsRange3D === array.type) {
-								return array.getFullArray();
-							}
-							return array;
-						} 
-						// else {
-						// 	// return sorted array
-						// }
-					}
-				}
+				let byArrayI = args[i];
+				let byArrIDimensions = byArrayI.getDimensions();
 
-				// isByCol or not determined by the first byarray arg
-				if ((byArrDimensions.row === 1 && byArrDimensions.col !== maxCols) || 
-					(byArrDimensions.col === 1 && byArrDimensions.row !== maxRows) || 
-					(byArrDimensions.col > 1 && byArrDimensions.row > 1)) {
+				if (byArrIDimensions.row !== firstByArrayDimensions.row || byArrIDimensions.col !== firstByArrayDimensions.col) {
 					return new cError(cErrorType.wrong_value_type);
-				} else if (byArrDimensions.row === 1 && byArrDimensions.col === maxCols) {
-					isByCol = i === 1 ? true : isByCol;
-				} else if (byArrDimensions.col === 1 && byArrDimensions.row === maxRows) {
-					isByCol = i === 1 ? false : isByCol;
 				}
+
+				if (byArrayI.isOneElement()) {
+					continue;
+				}
+
+				if (byArrIDimensions.row === 1 && byArrIDimensions.col === maxCols) {
+					isByCol = i === 1 ? true : isByCol;
+				} else if (byArrIDimensions.col === 1 && byArrIDimensions.row === maxRows) {
+					isByCol = i === 1 ? false : isByCol;
+				} else {
+					return new cError(cErrorType.wrong_value_type);
+				}
+			}
+
+			if (firstByArrayDimensions.row === 1 && firstByArrayDimensions.col === 1) {
+				return array;
 			}
 		}
 
@@ -2934,7 +2947,6 @@ function (window, undefined) {
 
 	TypedCache.prototype.getData = function (ws, rowCol, type, startIndex, endIndex, bHor) {
 		const wsId = ws.getId();
-		const t = this;
 		if (!this.data[wsId]) {
 			this.data[wsId] = {vertical: {}, horizontal: {}};
 		}
@@ -2948,7 +2960,7 @@ function (window, undefined) {
 			const c2 = bHor ? axisData[rowCol].start - 1: rowCol;
 			const r2 = bHor ? rowCol : axisData[rowCol].start - 1;
 			const fullRange = ws.getRange3(r1, c1, r2, c2);
-			t.updateDataBerofe(fullRange, axisData[rowCol], bHor, startIndex);
+			this.updateDataBerofe(fullRange, axisData[rowCol], bHor, startIndex);
 		}
 		if (endIndex > axisData[rowCol].end) {
 			const c1 = bHor ? axisData[rowCol].end + 1: rowCol;
@@ -2956,7 +2968,7 @@ function (window, undefined) {
 			const c2 = bHor ? endIndex : rowCol;
 			const r2 = bHor ? rowCol : endIndex;
 			const fullRange = ws.getRange3(r1, c1, r2, c2);
-			t.updateDataAfter(fullRange, axisData[rowCol], bHor, endIndex);
+			this.updateDataAfter(fullRange, axisData[rowCol], bHor, endIndex);
 		}
 		return axisData[rowCol].data[type];
 	};
@@ -3076,7 +3088,7 @@ function (window, undefined) {
 			}
 		});
 		rowColAxisData.end = endIndex;
-	}
+	};
 
 	function TypedMapCache() {
 		TypedCache.call(this);
@@ -3213,7 +3225,6 @@ function (window, undefined) {
 		this.bHor = bHor;
 		this.typedCache = new TypedCache();
 		this.sortedCache = new TypedMapCache();
-		// this.typedCacheValuesMap = new TypedValuesCache();
 	}
 
 	VHLOOKUPCache.prototype.calculate = function (arg, argument1) {
@@ -3872,7 +3883,6 @@ function (window, undefined) {
 			}
 		} else if (lookup) {
 			const typedCache = this.typedCache.getData(ws, rowCol, valueForSearching.type, startIndex, endIndex, this.bHor);
-			// const typedCacheValuesMap = this._getTypedCacheValuesMap(ws, rowCol, valueForSearching.type, startIndex, endIndex, this.bHor);
 			if (typedCache) {
 				res = this._defaultBinarySearch(valueForSearching, startIndex, endIndex, ws, rowCol, typedCache);
 			}
@@ -3906,7 +3916,6 @@ function (window, undefined) {
 		this.cacheRanges = {};
 		this.sortedCache.clean();
 		this.typedCache.clean();
-		// this.typedCacheValuesMap.clean();
 	};
 	function MatchCache() {
 		VHLOOKUPCache.call(this);

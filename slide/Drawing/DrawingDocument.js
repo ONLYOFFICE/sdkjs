@@ -821,15 +821,21 @@ function CDrawingDocument()
 	this.SetCursorType     = function(sType, Data)
 	{
 		let elem = this.m_oWordControl.m_oMainContent.HtmlElement;
-		if (this.m_oWordControl.DemonstrationManager.Mode)
-			elem = this.m_oWordControl.DemonstrationManager.Canvas;
+		let oDemManager = this.m_oWordControl.DemonstrationManager;
+		if (oDemManager.Mode)
+			elem = oDemManager.Canvas;
 
+		let sCursorValue;
 		if ("" === this.m_sLockedCursorType)
 		{
-			elem.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
+			sCursorValue = AscCommon.g_oHtmlCursor.value(sType);
 		}
 		else
-			elem.style.cursor = AscCommon.g_oHtmlCursor.value(this.m_sLockedCursorType);
+			sCursorValue = AscCommon.g_oHtmlCursor.value(this.m_sLockedCursorType);
+
+		elem.style.cursor = sCursorValue;
+		if (oDemManager.Mode && oDemManager.Overlay)
+			oDemManager.Overlay.style.cursor = sCursorValue;
 
 		if ("undefined" === typeof(Data) || null === Data)
 			Data = new AscCommon.CMouseMoveData();
@@ -838,8 +844,19 @@ function CDrawingDocument()
 	};
 	this.LockCursorType    = function(sType)
 	{
-		this.m_sLockedCursorType                                    = sType;
-		this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value(this.m_sLockedCursorType);
+		this.m_sLockedCursorType = sType;
+		let sCursorValue = AscCommon.g_oHtmlCursor.value(this.m_sLockedCursorType);
+		let oDemManager = this.m_oWordControl.DemonstrationManager;
+		if (oDemManager.Mode)
+		{
+			oDemManager.Canvas.style.cursor = sCursorValue;
+			if (oDemManager.Overlay)
+				oDemManager.Overlay.style.cursor = sCursorValue;
+		}
+		else
+		{
+			this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = sCursorValue;
+		}
 	};
 	this.LockCursorTypeCur = function()
 	{

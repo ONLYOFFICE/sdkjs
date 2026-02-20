@@ -7504,18 +7504,36 @@ $(function () {
 		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value in C3 after +A1 calculate");
 		assert.strictEqual(resCell.getValueForEdit(), "=+A1", "Formula in C3 after +A1 calculate");
 
+		if (AscCommonExcel.bIsSupportDynamicArrays) {
+			fragment[0].setFragmentText("-@A1:A2");
+			fillRange = ws.getRange2("C3");
+			resCell = ws.getRange2("C3");
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+			assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Single Value in C3 after -A1:A2 calculate");
+			assert.strictEqual(resCell.getValueForEdit(), "=-@A1:A2", "Formula in C3 after -A1:A2 calculate");
+		}
+
 		fragment[0].setFragmentText("-A1:A2");
 		fillRange = ws.getRange2("C3");
 		resCell = ws.getRange2("C3");
 		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
-		assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in C3 after -A1:A2 calculate");
+		assert.strictEqual(resCell.getValueWithFormat(), AscCommonExcel.bIsSupportDynamicArrays ? "-1" : "#VALUE!", "Value in C3 after -A1:A2 calculate");
 		assert.strictEqual(resCell.getValueForEdit(), "=-A1:A2", "Formula in C3 after -A1:A2 calculate");
+
+		if (AscCommonExcel.bIsSupportDynamicArrays) {
+			fragment[0].setFragmentText("+@A1:A2");
+			fillRange = ws.getRange2("C3");
+			resCell = ws.getRange2("C3");
+			wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+			assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "SIngle Value in C3 after +A1:A2 calculate");
+			assert.strictEqual(resCell.getValueForEdit(), "=+@A1:A2", "Formula in C3 after +A1:A2 calculate");
+		}
 
 		fragment[0].setFragmentText("+A1:A2");
 		fillRange = ws.getRange2("C3");
 		resCell = ws.getRange2("C3");
 		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
-		assert.strictEqual(resCell.getValueWithFormat(), "#VALUE!", "Value in C3 after +A1:A2 calculate");
+		assert.strictEqual(resCell.getValueWithFormat(), AscCommonExcel.bIsSupportDynamicArrays ? "1" : "#VALUE!", "Value in C3 after +A1:A2 calculate");
 		assert.strictEqual(resCell.getValueForEdit(), "=+A1:A2", "Formula in C3 after +A1:A2 calculate");
 
 		fragment[0].setFragmentText("-{1,2,3}");

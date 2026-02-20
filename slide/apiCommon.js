@@ -299,11 +299,13 @@ CAscSlideTransition.prototype.ToArray = function()
 };
 
 CAscSlideTransition.prototype.parseXmlParameters = function (_type, _paramNames, _paramValues) {
+	let typeMatched = false;
     if (_paramNames.length === _paramValues.length && typeof _type === "string" && _type.length > 0)
     {
         var _len = _paramNames.length;
         if ("p:fade" === _type)
         {
+			typeMatched = true;
             this.TransitionType = c_oAscSlideTransitionTypes.Fade;
             this.TransitionOption = c_oAscSlideTransitionParams.Fade_Smoothly;
 
@@ -314,6 +316,7 @@ CAscSlideTransition.prototype.parseXmlParameters = function (_type, _paramNames,
         }
         else if ("p:push" === _type)
         {
+			typeMatched = true;
             this.TransitionType = c_oAscSlideTransitionTypes.Push;
             this.TransitionOption = c_oAscSlideTransitionParams.Param_Bottom;
 
@@ -329,6 +332,7 @@ CAscSlideTransition.prototype.parseXmlParameters = function (_type, _paramNames,
         }
         else if ("p:wipe" === _type)
         {
+			typeMatched = true;
             this.TransitionType = c_oAscSlideTransitionTypes.Wipe;
             this.TransitionOption = c_oAscSlideTransitionParams.Param_Right;
 
@@ -344,6 +348,7 @@ CAscSlideTransition.prototype.parseXmlParameters = function (_type, _paramNames,
         }
         else if ("p:strips" === _type)
         {
+			typeMatched = true;
             this.TransitionType = c_oAscSlideTransitionTypes.Wipe;
             this.TransitionOption = c_oAscSlideTransitionParams.Param_TopRight;
 
@@ -359,6 +364,7 @@ CAscSlideTransition.prototype.parseXmlParameters = function (_type, _paramNames,
         }
         else if ("p:cover" === _type)
         {
+			typeMatched = true;
             this.TransitionType = c_oAscSlideTransitionTypes.Cover;
             this.TransitionOption = c_oAscSlideTransitionParams.Param_Right;
 
@@ -382,6 +388,7 @@ CAscSlideTransition.prototype.parseXmlParameters = function (_type, _paramNames,
         }
         else if ("p:pull" === _type)
         {
+			typeMatched = true;
             this.TransitionType = c_oAscSlideTransitionTypes.UnCover;
             this.TransitionOption = c_oAscSlideTransitionParams.Param_Right;
 
@@ -405,6 +412,7 @@ CAscSlideTransition.prototype.parseXmlParameters = function (_type, _paramNames,
         }
         else if ("p:split" === _type)
         {
+			typeMatched = true;
             this.TransitionType = c_oAscSlideTransitionTypes.Split;
 
             var _is_vert = true;
@@ -439,21 +447,25 @@ CAscSlideTransition.prototype.parseXmlParameters = function (_type, _paramNames,
         }
         else if ("p:wheel" === _type)
         {
+			typeMatched = true;
             this.TransitionType = c_oAscSlideTransitionTypes.Clock;
             this.TransitionOption = c_oAscSlideTransitionParams.Clock_Clockwise;
         }
         else if ("p14:wheelReverse" === _type)
         {
+			typeMatched = true;
             this.TransitionType = c_oAscSlideTransitionTypes.Clock;
             this.TransitionOption = c_oAscSlideTransitionParams.Clock_Counterclockwise;
         }
         else if ("p:wedge" === _type)
         {
+			typeMatched = true;
             this.TransitionType = c_oAscSlideTransitionTypes.Clock;
             this.TransitionOption = c_oAscSlideTransitionParams.Clock_Wedge;
         }
         else if ("p14:warp" === _type)
         {
+			typeMatched = true;
             this.TransitionType = c_oAscSlideTransitionTypes.Zoom;
             this.TransitionOption = c_oAscSlideTransitionParams.Zoom_Out;
 
@@ -465,12 +477,13 @@ CAscSlideTransition.prototype.parseXmlParameters = function (_type, _paramNames,
         }
         else if ("p:newsflash" === _type)
         {
+			typeMatched = true;
             this.TransitionType = c_oAscSlideTransitionTypes.Zoom;
             this.TransitionOption = c_oAscSlideTransitionParams.Zoom_AndRotate;
         }
         else if ("p159:morph" === _type)
         {
-
+			typeMatched = true;
             this.TransitionType = c_oAscSlideTransitionTypes.Morph;
             this.TransitionOption = c_oAscSlideTransitionParams.Morph_Objects;
             if(_paramNames[0] === "option")
@@ -491,6 +504,7 @@ CAscSlideTransition.prototype.parseXmlParameters = function (_type, _paramNames,
         }
         else if("p:random" === _type)
         {
+			typeMatched = true;
             this.TransitionType = c_oAscSlideTransitionTypes.Random;
         }
         else if ("p:none" !== _type)
@@ -498,7 +512,11 @@ CAscSlideTransition.prototype.parseXmlParameters = function (_type, _paramNames,
             this.TransitionType = c_oAscSlideTransitionTypes.Fade;
             this.TransitionOption = c_oAscSlideTransitionParams.Fade_Smoothly;
         }
+		else if ("p:none" === _type) {
+			typeMatched = true;
+		}
     }
+	return typeMatched;
 };
 CAscSlideTransition.prototype.fillXmlParams = function (aAttrNames, aAttrValues) {
     let sNodeName = null;

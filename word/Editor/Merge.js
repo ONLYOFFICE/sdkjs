@@ -728,6 +728,7 @@
         if (!oOriginalDocument || !oRevisedDocument) {
             return;
         }
+			this.originalComparison = this;
 	    this.oBookmarkManager.init(oOriginalDocument, oRevisedDocument);
         const oThis = this;
         const aImages = AscCommon.pptx_content_loader.End_UseFullUrl();

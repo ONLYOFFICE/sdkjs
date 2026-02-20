@@ -310,8 +310,8 @@
                 break;
             }
             case AscPDF.GOTO_TYPES.fitR: { // fit to rect
-                let nRectW = (this.rect.right - this.rect.left) * nScaleX * AscCommon.AscBrowser.retinaPixelRatio;
-                let nRectH = (this.rect.bottom - this.rect.top) * nScaleY * AscCommon.AscBrowser.retinaPixelRatio;
+                let nRectW = Math.abs((this.rect.right - this.rect.left) * nScaleX * AscCommon.AscBrowser.retinaPixelRatio);
+                let nRectH = Math.abs((this.rect.bottom - this.rect.top) * nScaleY * AscCommon.AscBrowser.retinaPixelRatio);
 
                 let nVerZoom = ((oViewer.canvas.height / (nRectH)) * 100 >> 0) / 100;
                 let nHorZoom = ((oViewer.canvas.width / (nRectW)) * 100 >> 0) / 100;
@@ -320,7 +320,7 @@
                 
                 // далее вычисляем ширину с новым потенциальным зумом,
                 // если при данных размерах будет добавлен скролл, то вычитаем его ширину и пересчитываем zoom
-                let nNewPageW = oViewer.drawingPages[nPageIdx].W = (oViewer.file.pages[nPageIdx].W * 96 * nMinZoom / oViewer.file.pages[nPageIdx].Dpi) >> 0;
+                let nNewPageW = (oViewer.file.pages[nPageIdx].W * 96 * nMinZoom / oViewer.file.pages[nPageIdx].Dpi) >> 0;
                 if (nNewPageW > oViewer.width) {
                     nVerZoom = (((oViewer.canvas.height - oViewer.scrollWidth) / (nRectH)) * 100 >> 0) / 100;
                 }
@@ -408,15 +408,15 @@
                 memory.Skip(4);
 
                 if (this.rect.left != null) {
-                    nFlag |= (1 << 4);
+                    nFlag |= (1 << 0);
                     memory.WriteDouble(this.rect.left);
                 }
                 if (this.rect.top != null) {
-                    nFlag |= (1 << 4);
+                    nFlag |= (1 << 1);
                     memory.WriteDouble(this.rect.top);
                 }
                 if (this.zoom != null) {
-                    nFlag |= (1 << 4);
+                    nFlag |= (1 << 2);
                     memory.WriteDouble(this.zoom);
                 }
 
@@ -430,9 +430,9 @@
             case 4:
             {
                 memory.WriteDouble(this.rect.left);
-                memory.WriteDouble(this.rect.bottom);
-                memory.WriteDouble(this.rect.right);
                 memory.WriteDouble(this.rect.top);
+                memory.WriteDouble(this.rect.right);
+                memory.WriteDouble(this.rect.bottom);
                 break;
             }
         }
@@ -487,6 +487,7 @@
         let oField          = this.GetCallerFiled();
         let oDoc            = oField.GetDocument();
         let oActionsQueue   = oDoc.GetActionsQueue();
+		let nPagesCount		= oDoc.GetPagesCount();
 
         oActionsQueue.SetCurAction(this);
 
@@ -501,7 +502,7 @@
                 Api.goToPage(0);
                 break;
             case ACTION_NAMED_TYPES.NextPage:
-                if (oViewer.currentPage + 1 <= oViewer.pagesInfo.countTextPages)
+                if (oViewer.currentPage + 1 <= nPagesCount)
                     Api.goToPage(oViewer.currentPage + 1);
                 break;
             case ACTION_NAMED_TYPES.PrevPage:
@@ -509,8 +510,8 @@
                     Api.goToPage(oViewer.currentPage - 1);
                 break;
             case ACTION_NAMED_TYPES.LastPage:
-                if (oViewer.currentPage != oViewer.pagesInfo.countTextPages)
-                    Api.goToPage(oViewer.pagesInfo.countTextPages - 1);
+                if (oViewer.currentPage != nPagesCount)
+                    Api.goToPage(nPagesCount - 1);
                 break;
         }
 

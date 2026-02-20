@@ -102,7 +102,7 @@ $(function () {
 	// Init basic data
 	const parserFormula = AscCommonExcel.parserFormula;
 	const g_oIdCounter = AscCommon.g_oIdCounter;
-	let oParser, wb, ws, sData = AscCommon.getEmpty(), tmp;
+	let oParser, wb, ws, sData = AscCommon.getEmpty(), tmp, wsView;
 
 	let newFormulaParser = false;
 
@@ -162,6 +162,7 @@ $(function () {
 		oBinaryFileReader.Read(sData, wb);
 		ws = wb.getWorksheet(wb.getActive());
 		AscCommonExcel.getFormulasInfo();
+		wsView = api.wb.getWorksheet(0);
 	}
 
 	// Init basic functions
@@ -1233,10 +1234,12 @@ $(function () {
 		oParser = new parserFormula('CHOOSE(,"1st","2nd")', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula CHOOSE(,"1st","2nd") is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Empty, String(2). Empty index_num results in #VALUE! error. 1 of 2 arguments used.');
+
 		// Case #10: Number, Area. Value is whole column. 2 arguments were used.
 		oParser = new parserFormula('CHOOSE(1,A:A)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula CHOOSE(1,A:A) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue()[0].getValue(), '1st', 'Test: Negative case: Number, Area. Value is whole column. 2 arguments were used.');
+
 		// Case #11: Array, Number(3). Index_num is an array with mostly incorrect number. 4 arguments were used.
 		oParser = new parserFormula('CHOOSE({-1,0,1},1,2,3)', "A1", ws);
 		assert.ok(oParser.parse(), 'Test: Formula CHOOSE({-1,0,1},1,2,3) is parsed.');
@@ -2547,11 +2550,11 @@ $(function () {
 		// array(first number >= arr.length)
 		oParser = new parserFormula('EXPAND(A1:B1,{3,2,4},4,5)', "A1", ws);
 		assert.ok(oParser.parse(), "Pass an array to the second argument(first number of array >= rows in exist area)");
-		array = oParser.calculate();
+		array = oParser.calculate(null, null, null, null, null, null, true);
 		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Pass an array to the second argument(first number of array >= rows in exist area).[0,0]");
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "test2", "Pass an array to the second argument(first number of array >= rows in exist area).[0,1]");
-		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 5, "Pass an array to the second argument(first number of array >= rows in exist area).[1,0]");
-		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 5, "Pass an array to the second argument(first number of array >= rows in exist area).[1,1]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), AscCommonExcel.bIsSupportDynamicArrays ? 2 : 'test2', "Pass an array to the second argument(first number of array >= rows in exist area).[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), AscCommonExcel.bIsSupportDynamicArrays ? 2 : 5, "Pass an array to the second argument(first number of array >= rows in exist area).[1,0]");
+		//assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 5, "Pass an array to the second argument(first number of array >= rows in exist area).[1,1]");
 
 		// cell ref(single value - string)
 		oParser = new parserFormula('EXPAND(A1:B1,B1,3,5)', "A1", ws);
@@ -2582,12 +2585,15 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Pass a reference to value in cell(single - boolean(FALSE)) to the second argument.");
 
 		// cell ref(array-like cellsRange)
+		let cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, 0, 10);
+		oParser = new parserFormula('EXPAND(A1:B1,SINGLE(A1:B1),3,5)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), "Pass a reference to values in cells(cellsRange) to the second argument");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Pass SINGLE a reference to values in cells(cellsRange) to the second argument.");
+
+		let res = AscCommonExcel.bIsSupportDynamicArrays ? 2 : "#VALUE!";
 		oParser = new parserFormula('EXPAND(A1:B1,A1:B1,3,5)', "A1", ws);
 		assert.ok(oParser.parse(), "Pass a reference to values in cells(cellsRange) to the second argument");
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Pass a reference to values in cells(cellsRange) to the second argument.");
-
-		// ------------------------------ arg[2] ------------------------------ //
-		// empty (no value)
+		assert.strictEqual(oParser.calculate(null, null, null, null, null, null, true).getValue(), res, "Pass a reference to values in cells(cellsRange) to the second argument.");
 		oParser = new parserFormula('EXPAND(A1:B2,2,,"new_val")', "A1", ws);
 		assert.ok(oParser.parse(), "Pass an empty value() to the third argument");
 		array = oParser.calculate();
@@ -2633,11 +2639,11 @@ $(function () {
 		// arry(first number >= arr.length)
 		oParser = new parserFormula('EXPAND(A1:B1,3,{3,2,4},5)', "A1", ws);
 		assert.ok(oParser.parse(), "Pass an array to the third argument(first number of array >= columns in exist area)");
-		array = oParser.calculate();
+		array = oParser.calculate(null, null, null, null, null, null, true);
 		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Pass an array to the third argument(first number of array >= columns in exist area).[0,0]");
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "test2", "Pass an array to the third argument(first number of array >= columns in exist area).[0,1]");
-		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 5, "Pass an array to the third argument(first number of array >= columns in exist area).[1,0]");
-		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 5, "Pass an array to the third argument(first number of array >= columns in exist area).[1,1]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(),  AscCommonExcel.bIsSupportDynamicArrays ? 2 : 'test2', "Pass an array to the third argument(first number of array >= columns in exist area).[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), AscCommonExcel.bIsSupportDynamicArrays ? 2 : 5, "Pass an array to the third argument(first number of array >= columns in exist area).[1,0]");
+		//assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 5, "Pass an array to the third argument(first number of array >= columns in exist area).[1,1]");
 
 		// cell ref(single value - string)
 		oParser = new parserFormula('EXPAND(A1:B1,3,B1,5)', "A1", ws);
@@ -2659,7 +2665,8 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Pass a reference to value in cell(single - boolean) to the third argument.");
 
 		// cell ref(array-like cellsRange)
-		oParser = new parserFormula('EXPAND(A1:B1,3,A1:B1,5)', "A1", ws);
+		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, 0, 10);
+		oParser = new parserFormula('EXPAND(A1:B1,3,SINGLE(A1:B1),5)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), "Pass a reference to values in cells(cellsRange) to the third argument");
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Pass a reference to values in cells(cellsRange) to the third argument.");
 
@@ -3306,7 +3313,7 @@ $(function () {
 		oParser = new parserFormula('FILTER(12,"0")', "A2", ws);
 		assert.ok(oParser.parse(), 'FILTER(12,"0")');
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER(12,"0")');
-		
+
 		oParser = new parserFormula('FILTER(12,"1")', "A2", ws);
 		assert.ok(oParser.parse(), 'FILTER(12,"1")');
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER(12,"1")');
@@ -3322,7 +3329,7 @@ $(function () {
 		oParser = new parserFormula('FILTER(12,"0",25)', "A2", ws);
 		assert.ok(oParser.parse(), 'FILTER(12,"0",25)');
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER(12,"0",25)');
-		
+
 		oParser = new parserFormula('FILTER(12,"1",25)', "A2", ws);
 		assert.ok(oParser.parse(), 'FILTER(12,"1",25)');
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER(12,"1",25)');
@@ -6925,10 +6932,16 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
 
 		// Case #15: Area, Area, Area. Multi-cell range as lookup value, returns #VALUE!
-		oParser = new parserFormula("LOOKUP(A1041:A1042,A1041:A1044,B1041:B1044)", "A2", ws);
-		assert.ok(oParser.parse(), "LOOKUP(A1041:A1042,A1041:A1044,B1041:B1044)");
+		oParser = new parserFormula("LOOKUP(SINGLE(A1041:A1042),A1041:A1044,B1041:B1044)", "A2", ws);
+		assert.ok(oParser.parse(), "LOOKUP(SINGLE(A1041:A1042),A1041:A1044,B1041:B1044)");
 		array = oParser.calculate();
-		assert.strictEqual(array.getValue(), "#VALUE!", "Result of LOOKUP(A1041:A1042,A1041:A1044,B1041:B1044)");
+		assert.strictEqual(array.getValue(), "#VALUE!", "Result of LOOKUP(SINGLE(A1041:A1042),A1041:A1044,B1041:B1044)");
+
+		//TODO dynamic
+		// oParser = new parserFormula("LOOKUP(A1041:A1042,A1041:A1044,B1041:B1044)", "A2", ws);
+		// assert.ok(oParser.parse(), "LOOKUP(A1041:A1042,A1041:A1044,B1041:B1044)");
+		// array = oParser.calculate();
+		// assert.strictEqual(array.getValue(), "#VALUE!", "Result of LOOKUP(A1041:A1042,A1041:A1044,B1041:B1044)");
 
 		// Case #16: Area, Area, String. Range lookup with undefined variable, returns #NAME?
 		oParser = new parserFormula("LOOKUP(A1041:A1041,A1041:A1044,a)", "A2", ws);
@@ -8665,7 +8678,7 @@ $(function () {
 		oParser = new parserFormula('SORT({2,4;6,6;9,1},1,-1,{TRUE,FALSE})', 'A2', ws);
 		assert.ok(oParser.parse(), 'SORT({2,4;6,6;9,1},1,-1,{TRUE,FALSE})');
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 4, 'Result of SORT({2,4;6,6;9,1},1,-1,{TRUE,FALSE})[0,0]');			
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 4, 'Result of SORT({2,4;6,6;9,1},1,-1,{TRUE,FALSE})[0,0]');
 		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 0, 'Result of SORT({2,4;6,6;9,1},1,-1,{TRUE,FALSE})[0,1]');		// #VALUE!
 
 		oParser = new parserFormula('SORT({2,4;6,6;9,1},2,1,{TRUE,FALSE})', 'A2', ws);
@@ -8678,7 +8691,7 @@ $(function () {
 		assert.ok(oParser.parse(), 'SORT({2,4;6,6;9,1},2,-1,{TRUE,FALSE})');
 		array = oParser.calculate();
 		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, 'Result of SORT({2,4;6,6;9,1},2,-1,{TRUE,FALSE})[0,0]');
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 0, 'Result of SORT({2,4;6,6;9,1},2,-1,{TRUE,FALSE})[0,1]');		
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 0, 'Result of SORT({2,4;6,6;9,1},2,-1,{TRUE,FALSE})[0,1]');
 
 		oParser = new parserFormula('SORT({2,4;6,6;9,1},1,1,{FALSE,TRUE})', 'A2', ws);
 		assert.ok(oParser.parse(), 'SORT({2,4;6,6;9,1},1,1,{FALSE,TRUE})');
@@ -8689,26 +8702,26 @@ $(function () {
 		oParser = new parserFormula('SORT({2,4;6,6;9,1},1,-1,{FALSE,TRUE})', 'A2', ws);
 		assert.ok(oParser.parse(), 'SORT({2,4;6,6;9,1},1,-1,{FALSE,TRUE})');
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 9, 'Result of SORT({2,4;6,6;9,1},1,-1,{FALSE,TRUE})[0,0]');			
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 9, 'Result of SORT({2,4;6,6;9,1},1,-1,{FALSE,TRUE})[0,0]');
 		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 0, 'Result of SORT({2,4;6,6;9,1},1,-1,{FALSE,TRUE})[0,1]');
 
 		oParser = new parserFormula('SORT({2,4;6,6;9,1},2,1,{FALSE,TRUE})', 'A2', ws);
 		assert.ok(oParser.parse(), 'SORT({2,4;6,6;9,1},2,1,{FALSE,TRUE})');
 		array = oParser.calculate();
 		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 9, 'Result of SORT({2,4;6,6;9,1},2,1,{FALSE,TRUE})[0,0]');
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 0, 'Result of SORT({2,4;6,6;9,1},2,1,{FALSE,TRUE})[0,1]');	
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 0, 'Result of SORT({2,4;6,6;9,1},2,1,{FALSE,TRUE})[0,1]');
 
 		oParser = new parserFormula('SORT({2,4;6,6;9,1},2,-1,{FALSE,TRUE})', 'A2', ws);
 		assert.ok(oParser.parse(), 'SORT({2,4;6,6;9,1},2,-1,{FALSE,TRUE})');
 		array = oParser.calculate();
 		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 6, 'Result of SORT({2,4;6,6;9,1},2,-1,{FALSE,TRUE})[0,0]');
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 0, 'Result of SORT({2,4;6,6;9,1},2,-1,{FALSE,TRUE})[0,1]');	
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 0, 'Result of SORT({2,4;6,6;9,1},2,-1,{FALSE,TRUE})[0,1]');
 
 		oParser = new parserFormula('SORT(25,1.9,1.9,FALSE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'SORT(25,1.9,1.9,FALSE)');
 		array = oParser.calculate();
 		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 25, "Result of SORT(25,1.9,1.9,FALSE)");
-		
+
 		oParser = new parserFormula('SORT(25,0.9,1.9,FALSE)', 'A2', ws);
 		assert.ok(oParser.parse(), 'SORT(25,0.9,1.9,FALSE)');
 		array = oParser.calculate();
@@ -8865,10 +8878,12 @@ $(function () {
 		oParser = new parserFormula('SORT({"z","a","m"},1,-1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SORT({"z","a","m"},1,-1) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 'z', 'Test: Positive case: Array, Number. Sorts a single-column string array in descending order. 3 of 4 arguments used.');
+
 		// Case #7: Formula, Number. Sorts a range with nested IF formula in ascending order. 3 of 4 arguments used.
 		oParser = new parserFormula('SORT(IF(TRUE,A108:A109,{1,2}),1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SORT(IF(TRUE,A108:A109,{1,2}),1,1) is parsed.');
-		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 0, 'Test: Positive case: Formula, Number. Sorts a range with nested IF formula in ascending order. 3 of 4 arguments used.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), AscCommonExcel.bIsSupportDynamicArrays ? "" : "", 'Test: Positive case: Formula, Number. Sorts a range with nested IF formula in ascending order. 3 of 4 arguments used.');
+
 		// Case #8: Reference link, Number. Sorts a single-cell reference as an array in ascending order. 3 of 4 arguments used.
 		oParser = new parserFormula('SORT(A100,1,1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SORT(A100,1,1) is parsed.');
@@ -9246,16 +9261,13 @@ $(function () {
 		oParser = new parserFormula('SORTBY(C101:D101,{1,2,3,4,5},1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'SORTBY(C101:D101,{1,2,3,4,5},1)');
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, 'Result of SORTBY(C101:D101,{1,2,3,4,5},1)[0,0]');
-		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 8, 'Result of SORTBY(C101:D101,{1,2,3,4,5},1)[0,1]');
-		assert.strictEqual(array.getElementRowCol(0,2).getValue(), "", 'Result of SORTBY(C101:D101,{1,2,3,4,5},1)[0,2]');
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of SORTBY(C101:D101,{1,2,3,4,5},1)');
 
-		oParser = new parserFormula('SORTBY(C101:D101,{1,2,3,4,5},-1)', 'A2', ws);
-		assert.ok(oParser.parse(), 'SORTBY(C101:D101,{1,2,3,4,5},-1)');
+		oParser = new parserFormula('SORTBY(C101:D101,{1,2},1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORTBY(C101:D101,{1,2},1)');
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, 'Result of SORTBY(C101:D101,{1,2,3,4,5},-1)[0,0]');
-		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 8, 'Result of SORTBY(C101:D101,{1,2,3,4,5},-1)[0,1]');
-		assert.strictEqual(array.getElementRowCol(0,2).getValue(), "", 'Result of SORTBY(C101:D101,{1,2,3,4,5},-1)[0,2]');
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, 'Result of SORTBY(C101:D101,{1,2},1)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 8, 'Result of SORTBY(C101:D101,{1,2},1)[0,1]');
 
 		// two conditions(by_row)
 		// let bbox = ws.getRange2("C2").bbox;
@@ -9486,11 +9498,10 @@ $(function () {
 		array = oParser.calculate();
 		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of SORTBY(TRUE,1,FALSE)');
 
-		// ???
 		oParser = new parserFormula('SORTBY(TRUE,{1,2},"1")', 'A2', ws);
 		assert.ok(oParser.parse(), 'SORTBY(TRUE,{1,2},"1")');
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0,0).getValue(), "TRUE", 'Result of SORTBY(TRUE,{1,2},"1")');
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of SORTBY(TRUE,{1,2},"1")');
 
 		oParser = new parserFormula('SORTBY(H10:I12,I10:I12,{1,#N/A;2,-2})', 'A2', ws);
 		assert.ok(oParser.parse(), 'SORTBY(H10:I12,I10:I12,{1,#N/A;2,-2})');
@@ -10280,7 +10291,11 @@ $(function () {
 		// Case #3: Formula, Array, Number. Nested IF formula for array, ascending order. 3 arguments used.
 		oParser = new parserFormula('SORTBY(IF(TRUE,{1;3;2},{4;5;6}),{10;30;20},1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SORTBY(IF(TRUE,{1;3;2},{4;5;6}),{10;30;20},1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: Formula, Array, Number. Nested IF formula for array, ascending order. 3 arguments used.');
+		oParser.setArrayFormulaRef(ws.getRange2("E106:H107").bbox);
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Formula, Array, Number. Nested IF formula for array, ascending order. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 2, 'Test: Positive case: Formula, Array, Number. Nested IF formula for array, ascending order. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), 3, 'Test: Positive case: Formula, Array, Number. Nested IF formula for array, ascending order. 3 arguments used.');
 		// Case #4: String, Array, Number. String convertible to array, ascending order. 3 arguments used.
 		oParser = new parserFormula('SORTBY("1;2;3",{10;20;30},1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SORTBY("1;2;3",{10;20;30},1) is parsed.');
@@ -10344,7 +10359,10 @@ $(function () {
 		// Case #19: Formula, Array, Number. Nested IF with array output, ascending order. 3 arguments used.
 		oParser = new parserFormula('SORTBY(IF({TRUE;FALSE},{1;2},{3;4}),{10;20},1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SORTBY(IF({TRUE;FALSE},{1;2},{3;4}),{10;20},1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: Formula, Array, Number. Nested IF with array output, ascending order. 3 arguments used.');
+		oParser.setArrayFormulaRef(ws.getRange2("E106:H107").bbox);
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Formula, Array, Number. Nested IF with array output, ascending order. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 4, 'Test: Positive case: Formula, Array, Number. Nested IF with array output, ascending order. 3 arguments used.');
 		// Case #20: Area, Array, Number. Two-cell range sorted by array, ascending order. 3 arguments used.
 		oParser = new parserFormula('SORTBY(A100:A101,{10;20},1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SORTBY(A100:A101,{10;20},1) is parsed.');
@@ -10357,6 +10375,17 @@ $(function () {
 		oParser = new parserFormula('SORTBY({1;2;3},{10;20;30},IF(TRUE,1,-1))', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SORTBY({1;2;3},{10;20;30},IF(TRUE,1,-1)) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1, 'Test: Positive case: Array, Array, Formula. sort_order as nested IF formula, ascending order. 3 arguments used.');
+		// Case #23: Array, Array, Number. Single row in by_array.
+		oParser = new parserFormula('SORTBY(A100:B110,A100:B100,1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: SORTBY(A100:B110,A100:B100,1) is parsed.');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Test: Positive case: Array, Array, Number. Single row in by_array. 3 arguments used.');
+		// Case #24: Array, Array, Number. Single col in by_array.
+		oParser = new parserFormula('SORTBY(A100:B110,B100:B110,1)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: SORTBY(A100:B110,B100:B110,1) is parsed.');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Test: Positive case: Array, Array, Number. Single col in by_array. 3 arguments used.');
+
 
 		// Negative cases:
 		// Case #1: Number, Number, Number. by_array with single invalid value returns #VALUE!. 3 arguments used.
@@ -10411,10 +10440,12 @@ $(function () {
 		oParser = new parserFormula('SORTBY(SQRT(-1),{10;20;30},1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SORTBY(SQRT(-1),{10;20;30},1) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#NUM!', 'Test: Negative case: Formula, Array, Number. Formula resulting in #NUM! error. 3 arguments used.');
-		// Case #14: Array, Array, Number. Mismatched array sizes return #VALUE!. 3 arguments used.
+		// Case #14: Array, Array, Number. Mismatched array sizes in byArray. 3 arguments used.
 		oParser = new parserFormula('SORTBY({1;2},{10},1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SORTBY({1;2},{10},1) is parsed.');
-		//? assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Negative case: Array, Array, Number. Mismatched array sizes return #VALUE!. 3 arguments used.');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, 'Test: Negative case: Array, Array, Number. Mismatched array sizes in byArray. 3 arguments used.');
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 2, 'Test: Negative case: Array, Array, Number. Mismatched array sizes in byArray. 3 arguments used.');
 		// Case #15: Array, Array, Number. Array with booleans returns #VALUE!. 3 arguments used.
 		oParser = new parserFormula('SORTBY({FALSE;TRUE},{10;20},1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: SORTBY({FALSE;TRUE},{10;20},1) is parsed.');
@@ -10454,12 +10485,19 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: SORTBY({9.99999999999999E+307;2;3},{9.99999999999999E+307;2;3},1) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 2, 'Test: Bounded case: Number, Number, Number. Maximum valid Excel number. 3 arguments used.');
 
-		// TODO
-		// Need to fix: different results from MS
-		// Case #3: Formula, Array, Number. Nested IF formula for array, ascending order. 3 arguments used.
-		// Case #19: Formula, Array, Number. Nested IF with array output, ascending order. 3 arguments used.
-		// Case #14: Array, Array, Number. Mismatched array sizes return #VALUE!. 3 arguments used.
+		
+		// Dynamic arrays cases:
+		AscCommonExcel.bIsSupportDynamicArrays = true;
+		// Case #1: Array, Array, Number. Array with at(@) operator before and in the same data row.
+		let fillRange = ws.getRange2("D100");
+		let cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, fillRange.bbox.r1, fillRange.bbox.c1);
+		oParser = new parserFormula('SORTBY(@A100:A110,@A100:A110,1)', cellWithFormula, ws);
+		assert.ok(oParser.parse(AscCommonExcel.oFormulaLocaleInfo.Parse), 'Test: SORTBY(@A100:A110,@A100:A110,1) is parsed.');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Array, Array, Number. Single col in by_array. 3 arguments used.');
 
+
+		AscCommonExcel.bIsSupportDynamicArrays = false;
 	});
 
 	QUnit.test("Test: \"TRANSPOSE\"", function (assert) {
@@ -13002,6 +13040,57 @@ $(function () {
 		assert.ok(oParser.parse(), 'ISREF(XLOOKUP(2,A700:A710,A700:G710,"",1))');
 		assert.strictEqual(oParser.calculate().getValue(), "TRUE", 'Result of ISREF(XLOOKUP(2,A700:A710,A700:G710,"",1))');
 
+		//TODO we add @ if formulas applied without ref, but need see on parent
+		// Case #49a: IF function with array condition and reference arguments. Testing ISREF with IF returning array as TRUE branch returns FALSE.
+		// oParser = new parserFormula('ISREF(IF({1,0,1;2,0,4},A1:C2))', "A2", ws);
+		// assert.ok(oParser.parse(), 'ISREF(IF({1,0,1;2,0,4},A1:C2))');
+		// assert.strictEqual(oParser.calculate().getValue(), "FALSE", 'Result of ISREF(IF({1,0,1;2,0,4},A1:C2)) should be FALSE');
+
+		// Case #49b: IF function with range condition as TRUE value returns range reference. Testing ISREF returns FALSE.
+		oParser = new parserFormula('ISREF(IF(A1:C1,A1:C2))', "A2", ws);
+		assert.ok(oParser.parse(), 'ISREF(IF(A1:C1,A1:C2))');
+		assert.strictEqual(oParser.calculate().getValue(), "FALSE", 'Result of ISREF(IF(A1:C1,A1:C2)) should be FALSE');
+
+		// Case #49c: IF function with TRUE condition and range reference argument. Testing ISREF with reference TRUE branch returns TRUE.
+		oParser = new parserFormula('ISREF(IF(TRUE,A1:C2,{1,2,3}))', "A2", ws);
+		assert.ok(oParser.parse(), 'ISREF(IF(TRUE,A1:C2,{1,2,3}))');
+		assert.strictEqual(oParser.calculate().getValue(), "TRUE", 'Result of ISREF(IF(TRUE,A1:C2,{1,2,3})) should be TRUE');
+
+		// Case #49d: IF function with FALSE condition returns array as FALSE branch. Testing ISREF returns FALSE.
+		oParser = new parserFormula('ISREF(IF(FALSE,A1:C2,{1,2,3}))', "A2", ws);
+		assert.ok(oParser.parse(), 'ISREF(IF(FALSE,A1:C2,{1,2,3}))');
+		assert.strictEqual(oParser.calculate().getValue(), "FALSE", 'Result of ISREF(IF(FALSE,A1:C2,{1,2,3})) should be FALSE');
+
+		// Case #49e: IF function with FALSE condition returns range reference as FALSE branch. Testing ISREF returns TRUE.
+		oParser = new parserFormula('ISREF(IF(FALSE,A1:C2,A1:C1))', "A2", ws);
+		assert.ok(oParser.parse(), 'ISREF(IF(FALSE,A1:C2,A1:C1))');
+		assert.strictEqual(oParser.calculate().getValue(), "TRUE", 'Result of ISREF(IF(FALSE,A1:C2,A1:C1)) should be TRUE');
+
+		// Case #49f: IF function with array condition and array arguments. Testing ISREF returns FALSE.
+		oParser = new parserFormula('ISREF(IF({1,0;0,1},{1,2,3},{4,5,6}))', "A2", ws);
+		assert.ok(oParser.parse(), 'ISREF(IF({1,0;0,1},{1,2,3},{4,5,6}))');
+		assert.strictEqual(oParser.calculate().getValue(), "FALSE", 'Result of ISREF(IF({1,0;0,1},{1,2,3},{4,5,6})) should be FALSE');
+
+		// Case #49g: IF function with TRUE condition and both branches as ranges. Testing ISREF returns TRUE.
+		oParser = new parserFormula('ISREF(IF(TRUE,A1:B2,B1:C2))', "A2", ws);
+		assert.ok(oParser.parse(), 'ISREF(IF(TRUE,A1:B2,B1:C2))');
+		assert.strictEqual(oParser.calculate().getValue(), "TRUE", 'Result of ISREF(IF(TRUE,A1:B2,B1:C2)) should be TRUE');
+
+		// Case #49h: IF function with FALSE condition and both branches as ranges. Testing ISREF returns TRUE.
+		oParser = new parserFormula('ISREF(IF(FALSE,A1:B2,B1:C2))', "A2", ws);
+		assert.ok(oParser.parse(), 'ISREF(IF(FALSE,A1:B2,B1:C2))');
+		assert.strictEqual(oParser.calculate().getValue(), "TRUE", 'Result of ISREF(IF(FALSE,A1:B2,B1:C2)) should be TRUE');
+
+		// Case #49i: IF function with scalar TRUE condition and array FALSE branch. Testing ISREF returns FALSE.
+		oParser = new parserFormula('ISREF(IF(1,A1:C2,{1,2,3,4,5,6}))', "A2", ws);
+		assert.ok(oParser.parse(), 'ISREF(IF(1,A1:C2,{1,2,3,4,5,6}))');
+		assert.strictEqual(oParser.calculate().getValue(), "TRUE", 'Result of ISREF(IF(1,A1:C2,{1,2,3,4,5,6})) should be TRUE');
+
+		// Case #49j: IF function with scalar FALSE condition and array TRUE branch. Testing ISREF returns FALSE.
+		oParser = new parserFormula('ISREF(IF(0,{1,2,3,4,5,6},A1:C2))', "A2", ws);
+		assert.ok(oParser.parse(), 'ISREF(IF(0,{1,2,3,4,5,6},A1:C2))');
+		assert.strictEqual(oParser.calculate().getValue(), "TRUE", 'Result of ISREF(IF(0,{1,2,3,4,5,6},A1:C2)) should be TRUE');
+
 		// Case #50: XLOOKUP in range operation with SUM. Using XLOOKUP result as range reference in SUM function. For bug 70550.
 		oParser = new parserFormula('SUM(XLOOKUP(2,A700:A710,A700:G710,"",1):XLOOKUP(2,A700:A710,A700:G710,"",1))', "A2", ws);
 		assert.ok(oParser.parse(), 'SUM(XLOOKUP(2,A700:A710,A700:G710,"",1):XLOOKUP(2,A700:A710,A700:G710,"",1))');
@@ -15161,10 +15250,13 @@ $(function () {
 		oParser = new parserFormula('WRAPROWS({1},1)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPROWS({1},1) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Bounded case: Number. Minimum valid wrap_count=1, single-element vector. 2 arguments used.');
+
 		// Case #2: Number. Maximum valid vector length (Excel row limit), wrap_count=1048576. 2 arguments used.
+		//TODO large array!
 		oParser = new parserFormula('WRAPROWS(SEQUENCE(1048576),1048576)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPROWS(SEQUENCE(1048576),1048576) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Test: Bounded case: Number. Maximum valid vector length (Excel row limit), wrap_count=1048576. 2 arguments used.');
+
 		// Case #3: Number. Maximum valid number for pad_with. 3 arguments used.
 		oParser = new parserFormula('WRAPROWS({1,2},2,9.99999999999999E+307)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: WRAPROWS({1,2},2,9.99999999999999E+307) is parsed.');

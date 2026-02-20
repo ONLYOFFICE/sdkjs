@@ -2837,7 +2837,7 @@
 
 		this.LoadFontWithEmbed = function(name, font_loader, fontManager, fEmSize, lStyle, dHorDpi, dVerDpi, transform, objDst)
 		{
-			if (name.startsWith(AscFonts.getEmbeddedFontPrefix()))
+			if (name.startsWith(AscFonts.getEmbeddedFontPrefix()) && AscFonts.g_font_infos_embed[AscFonts.g_map_font_index_embed[name]])
 				return AscFonts.g_font_infos_embed[AscFonts.g_map_font_index_embed[name]].LoadFont(AscCommon.g_font_loader, fontManager, fEmSize, /*_font.GetStyle()*/lStyle, dHorDpi, dVerDpi, transform);
 
 			return this.LoadFontWithoutEmbed(name, font_loader, fontManager, fEmSize, lStyle, dHorDpi, dVerDpi, transform, objDst)
@@ -2946,7 +2946,7 @@
 
 		this.GetFontInfoWithEmbed = function(name, lStyle, objDst)
 		{
-			if (name.startsWith(AscFonts.getEmbeddedFontPrefix()))
+			if (name.startsWith(AscFonts.getEmbeddedFontPrefix()) && AscFonts.g_font_infos_embed[AscFonts.g_map_font_index_embed[name]])
 				return AscFonts.g_font_infos_embed[AscFonts.g_map_font_index_embed[name]];
 
 			return this.GetFontInfoWithoutEmbed(name, lStyle, objDst);

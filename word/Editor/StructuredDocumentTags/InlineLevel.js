@@ -3715,6 +3715,65 @@ CInlineLevelSdt.prototype.ConvertFormToInline = function()
 
 	return this;
 };
+CInlineLevelSdt.prototype.StretchFormToCell = function()
+{
+	if (!this.IsForm())
+		return false;
+	
+	if (!this.IsFixedForm())
+	{
+		let parentParagraph = this.GetParagraph();
+		if (!parentParagraph)
+			return false;
+		
+		let docContent = parentParagraph.GetParent();
+		if (!docContent || !docContent.IsTableCellContent())
+			return null;
+		
+		this.ConvertFormToFixed();
+	}
+	
+	let drawing;
+	let parentShape = this.GetParagraph().GetParentShape();
+	if (parentShape)
+		drawing = parentShape.GetParaDrawing();
+	
+	if (!drawing)
+		return false;
+	
+	let drawingParagraph = drawing.GetParagraph();
+	if (!drawingParagraph)
+		return false;
+
+	let docContent = drawingParagraph.GetParent();
+	if (!docContent || !docContent.IsTableCellContent())
+		return null;
+
+	if (!docContent.Pages || !docContent.Pages.length)
+		return null;
+
+	let cellBounds = docContent.GetParent().GetPageBounds(0);
+	let h = cellBounds.Bottom - cellBounds.Top;
+	let w = cellBounds.Right - cellBounds.Left;
+	
+	drawing.Set_PositionH(Asc.c_oAscRelativeFromH.Page, false, 0, false);
+	drawing.Set_PositionV(Asc.c_oAscRelativeFromV.Page, false, 0, false);
+	drawing.Set_Distance(0, 0, 0, 0);
+	drawing.Set_DrawingType(drawing_Anchor);
+	drawing.Set_WrappingType(WRAPPING_TYPE_NONE);
+	drawing.Set_BehindDoc(false);
+	drawing.Set_LayoutInCell(true);
+	
+	let xfrm = drawing.GraphicObj.getXfrm();
+	xfrm.setOffX(0);
+	xfrm.setOffY(0);
+	xfrm.setExtX(w);
+	xfrm.setExtY(h);
+	
+	drawing.CheckWH();
+
+	return true;
+};
 CInlineLevelSdt.prototype.IsMultiLineForm = function()
 {
 	var oTextFormPr = this.GetTextFormPr();

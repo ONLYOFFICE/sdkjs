@@ -6344,19 +6344,6 @@ CDocumentContent.prototype.GetDirectParaPr = function()
 //-----------------------------------------------------------------------------------
 // Функции для работы с интерфейсом
 //-----------------------------------------------------------------------------------
-CDocumentContent.prototype.Interface_Update_DrawingPr = function(Flag)
-{
-    var ImagePr = {};
-
-    if (docpostype_DrawingObjects === this.CurPos.Type)
-        ImagePr = this.LogicDocument.DrawingObjects.getProps();
-
-    if (true === Flag)
-        return ImagePr;
-    else
-        editor.sync_ImgPropCallback(ImagePr);
-
-};
 CDocumentContent.prototype.Interface_Update_TablePr   = function(Flag)
 {
     var TablePr = null;

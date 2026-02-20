@@ -209,7 +209,7 @@
 
     CDrawingDocContent.prototype.GetColumnCount = function(){
         var nColumnCount = 1;
-        if(this.Parent.getBodyPr){
+        if(this.Parent && this.Parent.getBodyPr){
             var oBodyPr = this.Parent.getBodyPr();
             nColumnCount = AscFormat.isRealNumber(oBodyPr.numCol) ? oBodyPr.numCol : 1;
         }
@@ -233,7 +233,7 @@
         var ColumnSpaceBefore = 0;
         var ColumnSpaceAfter = 0;
         var nNumCol = this.GetColumnCount();
-        var oBodyPr = this.Parent.getBodyPr && this.Parent.getBodyPr();
+        var oBodyPr = this.Parent && this.Parent.getBodyPr && this.Parent.getBodyPr();
         if(nNumCol > 1 && oBodyPr)
         {
             var fSpace = AscFormat.isRealNumber(oBodyPr.spcCol) ? oBodyPr.spcCol : 0;

@@ -179,6 +179,7 @@ function (window, undefined) {
 	AscDFH.changesFactory[AscDFH.historyitem_PathSetFill] = AscDFH.CChangesDrawingsString;
 	AscDFH.changesFactory[AscDFH.historyitem_PathSetPathH] = AscDFH.CChangesDrawingsLong;
 	AscDFH.changesFactory[AscDFH.historyitem_PathSetPathW] = AscDFH.CChangesDrawingsLong;
+	AscDFH.changesFactory[AscDFH.historyitem_PathSetParent] = AscDFH.CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_PathAddPathCommand] = CChangesDrawingsAddPathCommand;
 
 	AscDFH.drawingsChangesMap[AscDFH.historyitem_PathSetStroke] = function (oClass, value) {
@@ -196,6 +197,9 @@ function (window, undefined) {
 	AscDFH.drawingsChangesMap[AscDFH.historyitem_PathSetPathW] = function (oClass, value) {
 		oClass.pathW = value;
 	};
+	AscDFH.drawingsChangesMap[AscDFH.historyitem_PathSetParent] = function (oClass, value) {
+		oClass.parent = value;
+	};
 
 
 	function Path() {
@@ -205,6 +209,7 @@ function (window, undefined) {
 		this.fill = null;
 		this.pathH = null;
 		this.pathW = null;
+		this.parent = null;
 
 		this.ArrPathCommandInfo = [];
 		this.ArrPathCommand = [];
@@ -362,6 +367,13 @@ function (window, undefined) {
 	Path.prototype.setPathW = function (pr) {
 		AscCommon.History.CanAddChanges() && AscCommon.History.Add(new AscDFH.CChangesDrawingsLong(this, AscDFH.historyitem_PathSetPathW, this.pathW, pr));
 		this.pathW = pr;
+	};
+	Path.prototype.setParent = function (parent) {
+		if (AscCommon.History.CanAddChanges()) {
+			const changes = new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_PathSetParent, this.parent, parent);
+			AscCommon.History.Add(changes);
+		}
+		this.parent = parent;
 	};
 	Path.prototype.addPathCommand = function (cmd) {
 		AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsAddPathCommand(this, cmd, this.ArrPathCommandInfo.length));
@@ -2134,8 +2146,35 @@ function (window, undefined) {
 		}
 		return true;
 	};
+	Path.prototype.isClosed = function (epsilon) {
+		const hasCloseCommand = this.ArrPathCommand.some(function (command) {
+			return command.id === AscFormat.close;
+		});
 
+		if (hasCloseCommand) {
+			return true;
+		}
 
+		if (AscFormat.isRealNumber(epsilon)) {
+			let firstPointCommand = null;
+			for (let i = 0; i < this.ArrPathCommand.length; i++) {
+				const command = this.ArrPathCommand[i];
+				if (command.id === AscFormat.moveTo || command.id === AscFormat.lineTo) {
+					firstPointCommand = command;
+					break;
+				}
+			}
+
+			const firstPoint = firstPointCommand ? { x: firstPointCommand.X, y: firstPointCommand.Y } : null;
+			const lastPoint = getPathEndPoint(this.ArrPathCommand);
+
+			if (firstPoint && lastPoint && Math.abs(firstPoint.x - lastPoint.x) <= epsilon && Math.abs(firstPoint.y - lastPoint.y) <= epsilon) {
+				return true;
+			}
+		}
+
+		return false;
+	};
 
 	function getNonDuplicateCommands(path) {
 		const commands = [];
@@ -2184,32 +2223,37 @@ function (window, undefined) {
 	}
 
 	Path.prototype.getContinuousSubpaths = function () {
-		const convertedPath = new AscFormat.Path();
-		const transform = new AscCommon.CMatrix();
-		AscFormat.ExecuteNoHistory(this.convertToBezierCurves, this, [convertedPath, transform, true]);
-		// convertedPath contains cubicBezierTo, lineTo, and moveTo commands only
+		return AscFormat.ExecuteNoHistory(
+			function () {
 
-		const subpaths = [];
-		let currentSubpath;
+				const convertedPath = new AscFormat.Path();
+				const transform = new AscCommon.CMatrix();
+				this.convertToBezierCurves(convertedPath, transform, true);
+				// convertedPath contains cubicBezierTo, lineTo, and moveTo commands only
 
-		// Since we only draw geometries that start with a "moveTo" command,
-		// the first command in the 'commands' array is guaranteed to be "moveTo"
-		const commands = getNonDuplicateCommands(convertedPath);
-		commands.forEach(function (command, index) {
-			if (command.id === AscFormat.moveTo) {
+				const subpaths = [];
+				let currentSubpath;
+
+				// Since we only draw geometries that start with a "moveTo" command,
+				// the first command in the 'commands' array is guaranteed to be "moveTo"
+				const commands = getNonDuplicateCommands(convertedPath);
+				commands.forEach(function (command, index) {
+					if (command.id === AscFormat.moveTo) {
+						if (currentSubpath) {
+							subpaths.push(currentSubpath);
+						}
+						currentSubpath = new Path();
+					}
+					currentSubpath.ArrPathCommand.push(command);
+				});
+
 				if (currentSubpath) {
 					subpaths.push(currentSubpath);
 				}
-				currentSubpath = new Path();
-			}
-			currentSubpath.ArrPathCommand.push(command);
-		});
 
-		if (currentSubpath) {
-			subpaths.push(currentSubpath);
-		}
-
-		return subpaths;
+				return subpaths;
+			}, this, []
+		);
 	};
 
 	function getClosestIntersectionWithPath(circleCenter, circleRadius, pathCommands, searchFromEnd) {
@@ -2236,7 +2280,7 @@ function (window, undefined) {
 					prevPoint,
 					{ x: command.X0, y: command.Y0 },
 					{ x: command.X1, y: command.Y1 },
-					{ x: command.X2, y: command.Y2 },
+					{ x: command.X2, y: command.Y2 }
 				);
 				prevPoint = { x: command.X2, y: command.Y2 };
 			}
@@ -2374,6 +2418,19 @@ function (window, undefined) {
 		return { x: x, y: y, t: t };
 	}
 
+	function getPathEndPoint(commands) {
+		for (let i = commands.length - 1; i >= 0; i--) {
+			const command = commands[i];
+			if (command.id === AscFormat.lineTo) {
+				return { x: command.X, y: command.Y };
+			}
+			if (command.id === AscFormat.bezier4) {
+				return { x: command.X2, y: command.Y2 };
+			}
+		}
+		return null;
+	}
+
 	Path.prototype.getHeadArrowAngle = function (arrowLength) {
 		// This path should contain cubicBezierTo, lineTo, and moveTo commands only,
 		// describe a continuous curve and start with the "moveTo" command
@@ -2411,19 +2468,6 @@ function (window, undefined) {
 
 		const commands = this.ArrPathCommand;
 		if (commands.length <= 1) {
-			return null;
-		}
-
-		function getPathEndPoint(commands) {
-			for (let i = commands.length - 1; i >= 0; i--) {
-				const command = commands[i];
-				if (command.id === AscFormat.lineTo) {
-					return { x: command.X, y: command.Y };
-				}
-				if (command.id === AscFormat.bezier4) {
-					return { x: command.X2, y: command.Y2 };
-				}
-			}
 			return null;
 		}
 
@@ -2483,7 +2527,7 @@ function (window, undefined) {
 		this.fill = null;
 		this.pathH = null;
 		this.pathW = null;
-
+		this.parent = null;
 
 		this.startPos = 0;
 
@@ -3642,15 +3686,16 @@ function (window, undefined) {
 					break;
 				}
 				case close: {
+					arrPathCommand.push({id: close});
 					i += 1;
 					break;
 				}
 			}
 		}
-
+		return arrPathCommand;
 	};
 	Path2.prototype.executeWithPathCommands = function(fMethod, params) {
-		this.ArrPathCommand = this.getArrPathCommand();
+		this.ArrPathCommand = this.getArrPathCommandObjects();
 		let result = fMethod.apply(this, params);
 		this.ArrPathCommand = undefined;
 		return result;
@@ -3663,6 +3708,9 @@ function (window, undefined) {
 	};
 	Path2.prototype.getTailArrowAngle = function (arrowLength) {
 		return this.executeWithPathCommands(Path.prototype.getTailArrowAngle, [arrowLength]);
+	};
+	Path2.prototype.isClosed = function (epsilon) {
+		return this.executeWithPathCommands(Path.prototype.isClosed, [epsilon]);
 	};
 	Path2.prototype.Write_ToBinary = function(writer) {
 		AscFormat.writeBool(writer, this.extrusionOk);

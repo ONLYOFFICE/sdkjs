@@ -75,6 +75,7 @@
     	this.cacheManager = null;
     	this.logging = true;
         this.type = -1;
+        this.fontsGidsMaps = {};
 
     	this.Selection = {
             Page1 : 0,
@@ -140,6 +141,14 @@
     {
         if (this.nativeFile)
             this.nativeFile["setCMap"](data);
+    };
+    CFile.prototype.getGIDByUnicode = function(fontName) {
+        if (this.fontsGidsMaps[fontName]) {
+            return this.fontsGidsMaps[fontName];
+        }
+
+        this.fontsGidsMaps[fontName] = this.nativeFile["getGIDByUnicode"](fontName);
+        return this.fontsGidsMaps[fontName];
     };
 
     CFile.prototype.getPage = function(pageIndex, width, height, isNoUseCacheManager, backgroundColor)
@@ -659,7 +668,7 @@ void main() {\n\
                     let isTextSelection = !(_t.Selection.startPoint && _t.Selection.endPoint);
                     let aAnnots = oDoc.AddLinkAnnotByQuads(aSelQuads, isTextSelection);
                     if (aAnnots.length > 0) {
-                        Asc.editor.OnAfterAddLinkAnnot(aAnnots.map(function(annot) {
+                        Asc.editor.StartLinkAnnotCreation(aAnnots.map(function(annot) {
                             return annot.GetId();
                         }));
                     }

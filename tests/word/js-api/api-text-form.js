@@ -121,4 +121,17 @@ $(function ()
 		textForm.SetBackgroundColor(0, 0, 0, true);
 		assert.strictEqual(textForm.GetBackgroundColor(), null, 'Check background color after resetting it');
 	});
+	
+	QUnit.test('SetLock/GetLock', function (assert)
+	{
+		const textForm = AscTest.JsApi.CreateTextForm();
+		
+		assert.strictEqual(textForm.GetLock(), false, 'Check that a newly created text form is unlocked');
+		
+		textForm.SetLock(true);
+		assert.strictEqual(textForm.GetLock(), true, 'Check that the text form is locked after SetLock(true)');
+		
+		let sdt = textForm.private_GetImpl();
+		assert.strictEqual(sdt.GetContentControlLock(), c_oAscSdtLockType.SdtLocked, 'Check that the internal lock type is SdtLocked');
+	});
 });

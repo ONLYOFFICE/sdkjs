@@ -103,7 +103,10 @@ var c_oAscSelectionDialogType = {
   ImportXml: 12,
   GoalSeek_Cell: 13,
   GoalSeek_ChangingCell: 14,
-  Solver_ObjectiveCell: 15
+  Solver_ObjectiveCell: 15,
+  Solver_VariableCell: 16,
+  Solver_Constraint: 17,
+  Solver_CellReference: 18
 };
 
 var c_oAscScrollType = {
@@ -288,7 +291,8 @@ var c_oAscVisibleAreaOleEditorBorderColor = new CColor(32, 139, 255);
     Dash        : 16,
     DashThick   : 32,
     ResizeRange : 64,
-    NotStroke   : 128
+    NotStroke   : 128,
+    ThinSolid   : 256
   };
 
   var docChangedType = {
@@ -780,6 +784,10 @@ var c_oAscPopUpSelectorType = {
   prot['ConditionalFormattingRule'] = prot.ConditionalFormattingRule;
   prot['GoalSeek_Cell'] = prot.GoalSeek_Cell;
   prot['GoalSeek_ChangingCell'] = prot.GoalSeek_ChangingCell;
+  prot['Solver_ObjectiveCell'] = prot.Solver_ObjectiveCell;
+  prot['Solver_VariableCell'] = prot.Solver_VariableCell;
+  prot['Solver_Constraint'] = prot.Solver_Constraint;
+  prot['Solver_CellReference'] = prot.Solver_CellReference;
 
 
   window['Asc']['c_oAscHyperlinkType'] = window['Asc'].c_oAscHyperlinkType = c_oAscHyperlinkType;

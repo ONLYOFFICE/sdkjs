@@ -545,16 +545,17 @@
 				_x = 0.0;
 				_y = 0.0;
 			}
-			if (oXfrm.offX === null || !AscFormat.fApproxEqual(_x, oXfrm.offX, 0.01)) {
+			const scaleCoefficient = object.getScaleCoefficient();
+			if (oXfrm.offX === null || !AscFormat.fApproxEqual(_x, oXfrm.offX * scaleCoefficient, 0.01)) {
 				object.spPr.xfrm.setOffX(_x);
 			}
-			if (oXfrm.offY === null || !AscFormat.fApproxEqual(_y, oXfrm.offY, 0.01)) {
+			if (oXfrm.offY === null || !AscFormat.fApproxEqual(_y, oXfrm.offY * scaleCoefficient, 0.01)) {
 				object.spPr.xfrm.setOffY(_y);
 			}
-			if (oXfrm.extX === null || !AscFormat.fApproxEqual(object.extX, oXfrm.extX, 0.01)) {
+			if (oXfrm.extX === null || !AscFormat.fApproxEqual(object.extX, oXfrm.extX * scaleCoefficient, 0.01)) {
 				object.spPr.xfrm.setExtX(object.extX);
 			}
-			if (oXfrm.extY === null || !AscFormat.fApproxEqual(object.extY, oXfrm.extY, 0.01)) {
+			if (oXfrm.extY === null || !AscFormat.fApproxEqual(object.extY, oXfrm.extY * scaleCoefficient, 0.01)) {
 				object.spPr.xfrm.setExtY(object.extY);
 			}
 		}
@@ -731,6 +732,15 @@
 						return;
 					}
 
+					const docContent = drawing.getDocContent && drawing.getDocContent();
+					if (docContent) {
+						const selectedObjects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects;
+						for (let i = 0; i < selectedObjects.length; i++) {
+							if (selectedObjects[i] === drawing) {
+								return;
+							}
+						}
+					}
 
 					//
 					// if( this.document || (this.drawingObjects.cSld && !(this.noNeedUpdateCursorType === true)) )
@@ -757,6 +767,7 @@
 					//     }
 					// }
 
+					const editorId = Asc.editor.getEditorId();
 
 					var oNvPr;
 					if (this.document || this.drawingObjects && this.drawingObjects.cSld) {
@@ -771,6 +782,7 @@
 						var sTooltip = "";
 						var oTextHyperlink;
 						var bRedrawFrame = false;
+						let isNoCtrl = false;
 						if (bCheckTextHyperlink) {
 							if (hit_in_text_rect) {
 								oTextHyperlink = fCheckObjectHyperlink(drawing, x, y);
@@ -788,9 +800,21 @@
 									}
 								}
 							}
+							else if (drawing.IsAnnot && drawing.IsAnnot() && drawing.IsLink()) {
+								let aActions = drawing.GetActions(AscPDF.PDF_TRIGGERS_TYPES.MouseUp);
+								
+								for (let i = 0; i < aActions.length; i++) {
+									if (aActions[i]["S"] == AscPDF.ACTIONS_TYPES.URI) {
+										sHyperlink = sHyperlink ? sHyperlink + "\r" + aActions[i]["URI"] : aActions[i]["URI"];
+										sTooltip = sTooltip ? sTooltip + "\r" + aActions[i]["URI"] : aActions[i]["URI"];
+										isNoCtrl = true;
+									}
+								}
+							}
 						}
 						if (sHyperlink === null) {
-							oNvPr = drawing.getCNvProps();
+							const nvProps = this.hyperlinkCollectNonVisualProperties(drawing);
+							oNvPr = nvProps[0];
 							if (oNvPr
 								&& oNvPr.hlinkClick
 								&& typeof oNvPr.hlinkClick.id === "string"
@@ -824,7 +848,11 @@
 											}
 										}
 									}
-									editor.sync_HyperlinkClickCallback(sHyperlink);
+									if (Asc.editor.isPdfEditor() && Asc.editor.canEdit() && drawing.IsAnnot() && drawing.IsLink()) {
+										return false;
+									}
+
+									Asc.editor.sync_HyperlinkClickCallback(sHyperlink);
 									return true;
 								}
 							} else {
@@ -848,7 +876,8 @@
 											Text: null,
 											Value: sHyperlink,
 											ToolTip: sTooltip,
-											Class: null
+											Class: null,
+											NoCtrl: isNoCtrl
 										});
 										if (this.isSlideShow()) {
 											ret.cursorType = "pointer";
@@ -887,63 +916,80 @@
 							}
 						}
 					} else if (this.drawingObjects && this.drawingObjects.getWorksheetModel) {
+						const bCheckTextHyperlink = true;
+
+						let textHyperlinkId = null;
+						let textHyperlinkTooltip = "";
+						if (bCheckTextHyperlink) {
+							const oTextHyperlink = fCheckObjectHyperlink(drawing, x, y);
+							if (oTextHyperlink && typeof oTextHyperlink.Value === "string" && oTextHyperlink.Value.length > 0) {
+								textHyperlinkId = oTextHyperlink.GetValue();
+								textHyperlinkTooltip = oTextHyperlink.GetToolTip() || "";
+							}
+						}
+
 						oNvPr = drawing.getCNvProps();
-						var bHasLink = oNvPr && oNvPr.hlinkClick && oNvPr.hlinkClick.id !== null;
-						if (!drawing.selected && !e.CtrlKey && (bHasLink || drawing.hasJSAMacro())) {
+						let shapeHyperlinkId = null;
+						let shapeHyperlinkTooltip = "";
+						if (oNvPr && oNvPr.hlinkClick) {
+							shapeHyperlinkId = oNvPr.hlinkClick.id;
+							shapeHyperlinkTooltip = oNvPr.hlinkClick.tooltip;
+						}
+
+						if (!drawing.selected && !e.CtrlKey && (textHyperlinkId || shapeHyperlinkId || drawing.hasJSAMacro())) {
 							if (this.handleEventMode === HANDLE_EVENT_MODE_HANDLE) {
-								if (e.Button === AscCommon.g_mouse_button_right) {
-									return false;
-								}
-								return true;
-							} else {
-								if (bHasLink) {
-									var _link = oNvPr.hlinkClick.id;
-									var sLink2;
-									if (_link.search('#') === 0) {
-										sLink2 = _link.replace('#', '');
-									} else {
-										sLink2 = _link;
-									}
-									var oHyperlink = AscFormat.ExecuteNoHistory(function () {
-										return new ParaHyperlink();
-									}, this, []);
-									oHyperlink.Value = sLink2;
-									oHyperlink.ToolTip = oNvPr.hlinkClick.tooltip;
-									if (hit_in_text_rect) {
-										return {
-											objectId: drawing.Get_Id(),
-											cursorType: "text",
-											content: drawing.getDocContent ? drawing.getDocContent() : null,
-											bMarker: false,
-											hyperlink: oHyperlink,
-											macro: null
-										};
-									} else {
-										return {
-											objectId: drawing.Get_Id(),
-											cursorType: "move",
-											bMarker: false,
-											hyperlink: oHyperlink,
-											macro: null
-										};
-									}
-								} else if (drawing.hasJSAMacro()) {
-									return {
-										objectId: drawing.Get_Id(),
-										cursorType: "pointer",
-										bMarker: false,
-										hyperlink: null,
-										macro: drawing.getJSAMacroId()
-									};
-								}
+								return e.Button !== AscCommon.g_mouse_button_right;
+							}
+
+							if (textHyperlinkId) {
+								const hyperlink = AscFormat.ExecuteNoHistory(function () {
+									return new ParaHyperlink();
+								}, this, []);
+								hyperlink.Value = textHyperlinkId;
+								hyperlink.ToolTip = textHyperlinkTooltip;
+
+								return {
+									objectId: drawing.Get_Id(),
+									cursorType: hit_in_text_rect ? "text" : "move",
+									content: drawing.getDocContent ? drawing.getDocContent() : null,
+									bMarker: false,
+									hyperlink: hyperlink,
+									macro: null
+								};
+							}
+
+							if (shapeHyperlinkId) {
+								const hyperlink = AscFormat.ExecuteNoHistory(function () {
+									return new ParaHyperlink();
+								}, this, []);
+								hyperlink.Value = shapeHyperlinkId.search('#') === 0
+									? shapeHyperlinkId.replace('#', '')
+									: shapeHyperlinkId;
+								hyperlink.ToolTip = shapeHyperlinkTooltip;
+
+								return {
+									objectId: drawing.Get_Id(),
+									cursorType: hit_in_text_rect ? "text" : "move",
+									content: hit_in_text_rect && drawing.getDocContent ? drawing.getDocContent() : null,
+									bMarker: false,
+									hyperlink: hyperlink,
+									macro: null
+								};
+							}
+
+							if (drawing.hasJSAMacro()) {
+								return {
+									objectId: drawing.Get_Id(),
+									cursorType: "pointer",
+									bMarker: false,
+									hyperlink: null,
+									macro: drawing.getJSAMacroId()
+								};
 							}
 						}
 					}
-					if (this.handleEventMode === HANDLE_EVENT_MODE_HANDLE) {
-						return false;
-					} else {
-						return null;
-					}
+
+					return this.handleEventMode === HANDLE_EVENT_MODE_HANDLE ? false : null;
 				},
 
 				getAllSignatures: function () {
@@ -2402,9 +2448,10 @@
 					}
 					this.lastSelectedObject = null;
 					this.checkShowMediaControlOnSelect();
+					Asc.editor.addMacroStepData("SelectDrawing", this.selectedObjects.slice());
 				},
 
-				deselectObject: function (object) {
+				deselectObject: function (object) {	
 					for (let i = 0; i < this.selectedObjects.length; ++i) {
 						if (this.selectedObjects[i] === object) {
 							object.selected = false;
@@ -2413,6 +2460,7 @@
 								this.lastSelectedObject = object;
 							}
 							this.checkShowMediaControlOnSelect();
+							Asc.editor.addMacroStepData("DeselectDrawing", object.getObjectName());
 							return;
 						}
 					}
@@ -3401,13 +3449,21 @@
 						return content.CanAddHyperlink(bCheckInHyperlink);
 					}
 					else {
-						if(Asc.editor.getEditorId() === AscCommon.c_oEditorId.Presentation) {
+						const editorId = Asc.editor.getEditorId();
+						const isSupportedEditor = editorId === AscCommon.c_oEditorId.Presentation ||
+							editorId === AscCommon.c_oEditorId.Word ||
+							editorId === AscCommon.c_oEditorId.Spreadsheet;
+						if (isSupportedEditor) {
 							let aSelectedObjects = this.getSelectedArray();
 							if(aSelectedObjects.length === 1) {
 								let oDrawing = aSelectedObjects[0];
-								if(oDrawing.isShape() || oDrawing.isImage()) {
-									if(bCheckInHyperlink) {
-										let oNvPr = oDrawing.getCNvProps();
+								const isGroup = oDrawing.isGroup && oDrawing.isGroup();
+								const isShapeDrawing = oDrawing.isShape && oDrawing.isShape();
+								const isImageDrawing = oDrawing.isImage && oDrawing.isImage();
+								if (isGroup || isShapeDrawing || isImageDrawing) {
+									if (bCheckInHyperlink) {
+										let nvProps = this.hyperlinkCollectNonVisualProperties(oDrawing);
+										const oNvPr = nvProps[0];
 										if (oNvPr
 											&& oNvPr.hlinkClick
 											&& typeof oNvPr.hlinkClick.id === "string"
@@ -3434,18 +3490,25 @@
 						return Ret;
 					}
 					else {
-						if(Asc.editor.getEditorId() === AscCommon.c_oEditorId.Presentation) {
+						const editorId = Asc.editor.getEditorId();
+						const isSupportedEditor = editorId === AscCommon.c_oEditorId.Presentation ||
+							editorId === AscCommon.c_oEditorId.Word ||
+							editorId === AscCommon.c_oEditorId.Spreadsheet;
+						if (isSupportedEditor) {
 							let aSelectedObjects = this.getSelectedArray();
 							if(aSelectedObjects.length === 1) {
 								let oDrawing = aSelectedObjects[0];
-								if(oDrawing.isShape() || oDrawing.isImage()) {
-									let oNvPr = oDrawing.getCNvProps();
-									if (oNvPr) {
-										if(oNvPr.hlinkClick)
+								const isGroup = oDrawing.isGroup && oDrawing.isGroup();
+								const isImageDrawing = oDrawing.isImage && oDrawing.isImage();
+								const isShapeDrawing = oDrawing.isShape && oDrawing.isShape();
+								if (isGroup || isShapeDrawing || isImageDrawing) {
+									let nvProps = this.hyperlinkCollectNonVisualProperties(oDrawing);
+									nvProps.forEach(function (oNvPr) {
+										if (oNvPr.hlinkClick)
 											oNvPr.setHlinkClick(null);
-										if(oNvPr.hlinkHover)
+										if (oNvPr.hlinkHover)
 											oNvPr.setHlinkHover(null);
-									}
+									});
 								}
 							}
 						}
@@ -3463,30 +3526,49 @@
 						}
 						return Ret;
 					}
-					else {
-						if(Asc.editor.getEditorId() === AscCommon.c_oEditorId.Presentation) {
-							if(HyperProps.Value) {
-								let aSelectedObjects = this.getSelectedArray();
-								if(aSelectedObjects.length === 1) {
-									let oDrawing = aSelectedObjects[0];
-									if(oDrawing.isShape() || oDrawing.isImage()) {
 
-										let oNvPr = oDrawing.getCNvProps();
-										if (oNvPr) {
-											let oHyper = new AscFormat.CT_Hyperlink();
-											if(HyperProps.Value.startsWith("ppaction")) {
-												oHyper.action = HyperProps.Value;
-											}
-											oHyper.id = HyperProps.Value;
-											oHyper.tooltip = HyperProps.ToolTip;
-											oNvPr.setHlinkClick(oHyper);
-										}
-									}
-								}
-							}
-						}
+					const editorId = Asc.editor.getEditorId();
+					const isSupportedEditor = (
+						editorId === AscCommon.c_oEditorId.Word ||
+						editorId === AscCommon.c_oEditorId.Spreadsheet ||
+						editorId === AscCommon.c_oEditorId.Presentation
+					);
+					if (!isSupportedEditor) {
+						return;
 					}
-					return undefined;
+
+					const hyperlinkAnchor = typeof HyperProps.Anchor === 'string' && HyperProps.Anchor;
+
+					let hyperlinkId = HyperProps.Value;
+					if (!hyperlinkId && hyperlinkAnchor) {
+						hyperlinkId = '#' + hyperlinkAnchor;
+					}
+					if (!hyperlinkId) {
+						return;
+					}
+
+					const selectedObjects = this.getSelectedArray();
+					if (selectedObjects.length !== 1) {
+						return;
+					}
+
+					const selectedObject = selectedObjects[0];
+					const isGroup = selectedObject.isGroup && selectedObject.isGroup();
+					const isShape = selectedObject.isShape && selectedObject.isShape();
+					const isImage = selectedObject.isImage && selectedObject.isImage();
+
+					if (isGroup || isShape || isImage) {
+						const nvProps = this.hyperlinkCollectNonVisualProperties(selectedObject);
+						nvProps.forEach(function (oNvPr) {
+							const hyperlink = new AscFormat.CT_Hyperlink();
+							hyperlink.id = hyperlinkId;
+							hyperlink.tooltip = HyperProps.ToolTip;
+							if (hyperlinkId.startsWith('ppaction')) {
+								hyperlink.action = hyperlinkId;
+							}
+							oNvPr.setHlinkClick(hyperlink);
+						});
+					}
 				},
 
 				hyperlinkAdd: function (HyperProps) {
@@ -3509,51 +3591,104 @@
 						}
 						return Ret;
 					}
-					else {
-						if(Asc.editor.getEditorId() === AscCommon.c_oEditorId.Presentation) {
-							if(HyperProps.Value) {
-								let aSelectedObjects = this.getSelectedArray();
-								if(aSelectedObjects.length === 1) {
-									let oDrawing = aSelectedObjects[0];
-									if(oDrawing.isShape() || oDrawing.isImage()) {
 
-										let oNvPr = oDrawing.getCNvProps();
-										if (oNvPr) {
-											let oHyper = new AscFormat.CT_Hyperlink();
-											if(HyperProps.Value.startsWith("ppaction")) {
-												oHyper.action = HyperProps.Value;
-											}
-											oHyper.id = HyperProps.Value;
-											oHyper.tooltip = HyperProps.ToolTip;
-											oNvPr.setHlinkClick(oHyper);
-										}
-									}
-								}
-							}
-						}
+					const editorId = Asc.editor.getEditorId();
+					const isSupportedEditor = (
+						editorId === AscCommon.c_oEditorId.Word ||
+						editorId === AscCommon.c_oEditorId.Spreadsheet ||
+						editorId === AscCommon.c_oEditorId.Presentation
+					);
+					if (!isSupportedEditor) {
+						return null;
 					}
-					return null;
+
+					const hyperlinkAnchor = typeof HyperProps.Anchor === 'string' && HyperProps.Anchor;
+
+					let hyperlinkId = HyperProps.Value;
+					if (!hyperlinkId && hyperlinkAnchor) {
+						hyperlinkId = '#' + hyperlinkAnchor;
+					}
+					if (!hyperlinkId) {
+						return null;
+					}
+
+					const selectedObjects = this.getSelectedArray();
+					if (selectedObjects.length !== 1) {
+						return null;
+					}
+
+					const selectedObject = selectedObjects[0];
+					const isGroup = selectedObject.isGroup && selectedObject.isGroup();
+					const isShape = selectedObject.isShape && selectedObject.isShape();
+					const isImage = selectedObject.isImage && selectedObject.isImage();
+
+					if (isGroup || isShape || isImage) {
+						const nvProps = this.hyperlinkCollectNonVisualProperties(selectedObject);
+						nvProps.forEach(function (oNvPr) {
+							const hyperlink = new AscFormat.CT_Hyperlink();
+							hyperlink.id = hyperlinkId;
+							hyperlink.tooltip = HyperProps.ToolTip;
+							if (hyperlinkId.startsWith('ppaction')) {
+								hyperlink.action = hyperlinkId;
+							}
+							oNvPr.setHlinkClick(hyperlink);
+						});
+					}
 				},
 
+				hyperlinkCollectNonVisualProperties: function (drawing) {
+					let props = [];
+
+					const editorId = Asc.editor.getEditorId();
+					const isWordEditor = editorId === AscCommon.c_oEditorId.Word;
+					const isShapeDrawing = drawing.isShape();
+					const isImageDrawing = drawing.isImage();
+
+					if (!isWordEditor || (isWordEditor && drawing.group)) {
+						const cNvPr = drawing.getCNvProps();
+						if (cNvPr) props.push(cNvPr);
+					} else {
+						if (isImageDrawing) {
+							const nvPicPr = drawing.getCNvProps();
+							if (nvPicPr) props.push(nvPicPr);
+						}
+
+						const docPr = drawing.parent && drawing.parent.docPr;
+						if (docPr) props.push(docPr);
+					}
+
+					return props;
+				},
 
 				insertHyperlink: function (options) {
-
 					if (this.checkSelectedObjectsProtectionText()) {
 						return;
 					}
-					if (!this.getHyperlinkInfo()) {
-						this.checkSelectedObjectsAndCallback(this.hyperlinkAdd, [{
-							Text: options.text,
-							Value: options.hyperlinkModel.Hyperlink,
-							ToolTip: options.hyperlinkModel.Tooltip
-						}], false, AscDFH.historydescription_Spreadsheet_SetCellHyperlinkAdd);
-					} else {
-						this.checkSelectedObjectsAndCallback(this.hyperlinkModify, [{
-							Text: options.text,
-							Value: options.hyperlinkModel.Hyperlink,
-							ToolTip: options.hyperlinkModel.Tooltip
-						}], false, AscDFH.historydescription_Spreadsheet_SetCellHyperlinkModify);
+
+					let hyperlinkValue = options.hyperlinkModel.Hyperlink;
+					let hyperlinkTooltip = options.hyperlinkModel.Tooltip;
+
+					if (!hyperlinkValue) {
+						const location = options.hyperlinkModel.getLocation && options.hyperlinkModel.getLocation();
+						if (location) {
+							hyperlinkValue = '#' + location;
+						}
 					}
+
+					if (!hyperlinkValue) {
+						return;
+					}
+
+					const hyperProps = {
+						Text: options.text,
+						Value: hyperlinkValue,
+						ToolTip: hyperlinkTooltip
+					};
+
+					const hyperlinkInfo = this.getHyperlinkInfo();
+					hyperlinkInfo
+						? this.checkSelectedObjectsAndCallback(this.hyperlinkModify, [hyperProps], false, AscDFH.historydescription_Spreadsheet_SetCellHyperlinkModify)
+						: this.checkSelectedObjectsAndCallback(this.hyperlinkAdd, [hyperProps], false, AscDFH.historydescription_Spreadsheet_SetCellHyperlinkAdd);
 				},
 
 				removeHyperlink: function () {
@@ -3835,6 +3970,9 @@
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {
 							objects_by_type.shapes[i].setPaddings(props.paddings);
 						}
+						if (objects_by_type.shapes.length)
+							Asc.editor.addMacroStepData('SetShapeInnerPadding', {set: props.paddings, original: objects_by_type.shapes[0].getPaddings()});
+
 						for (i = 0; i < objects_by_type.groups.length; ++i) {
 							objects_by_type.groups[i].setPaddings(props.paddings);
 						}
@@ -3866,6 +4004,9 @@
 								aShapes.push(objects_by_type.shapes[i]);
 							}
 						}
+						if (objects_by_type.shapes.length)
+							Asc.editor.addMacroStepData('SetGeometry', props.type);
+
 						for (i = 0; i < objects_by_type.groups.length; ++i) {
 							objects_by_type.groups[i].changePresetGeom(props.type);
 							objects_by_type.groups[i].getAllShapes(objects_by_type.groups[i].spTree, aShapes);
@@ -3880,6 +4021,7 @@
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {
 							objects_by_type.shapes[i].changeLine(props.stroke);
 						}
+
 						for (i = 0; i < objects_by_type.groups.length; ++i) {
 							objects_by_type.groups[i].changeLine(props.stroke);
 						}
@@ -3889,6 +4031,11 @@
 						for (i = 0; i < objects_by_type.images.length; ++i) {
 							objects_by_type.images[i].changeLine(props.stroke);
 						}
+						if (objects_by_type.images.length)
+							Asc.editor.addMacroStepData('SetDrawingLine', objects_by_type.images[0].getCompiledLine().createDuplicate());
+						else if (objects_by_type.shapes.length)
+							Asc.editor.addMacroStepData('SetDrawingLine', objects_by_type.shapes[0].getCompiledLine().createDuplicate());
+
 						for (i = 0; i < objects_by_type.smartArts.length; ++i) {
 							objects_by_type.smartArts[i].changeLine(props.stroke);
 						}
@@ -3897,6 +4044,7 @@
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {
 							objects_by_type.shapes[i].changeFill(props.fill);
 						}
+
 						for (i = 0; i < objects_by_type.groups.length; ++i) {
 							objects_by_type.groups[i].changeFill(props.fill);
 						}
@@ -3909,6 +4057,11 @@
 						for (i = 0; i < objects_by_type.images.length; ++i) {
 							objects_by_type.images[i].changeFill(props.fill);
 						}
+
+						if (objects_by_type.shapes.length)
+							Asc.editor.addMacroStepData('SetDrawingFill', objects_by_type.shapes[0].getFill().createDuplicate());
+						if (objects_by_type.images.length)
+							Asc.editor.addMacroStepData('SetDrawingFill', objects_by_type.images[0].getFill().createDuplicate());
 					}
 					if (isRealObject(props.shadow) || props.shadow === null) {
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {
@@ -4165,6 +4318,7 @@
 								oDrawing.callPluginOnResize();
 							}
 						}
+						Asc.editor.addMacroStepData('SetShapeSize', {width: props.Width, height: props.Height});
 						if (editorId === AscCommon.c_oEditorId.Presentation || editorId === AscCommon.c_oEditorId.Spreadsheet) {
 							bCheckConnectors = true;
 							bMoveFlag = false;
@@ -4239,6 +4393,14 @@
 							oDrawing.checkDrawingBaseCoords();
 							oDrawing.recalculate();
 						}
+						if (bPosition && editorId === AscCommon.c_oEditorId.Presentation)
+						{
+							if (AscFormat.isRealNumber(props.Position.X))
+								Asc.editor.addMacroStepData('SetShapeX', props.Position.X);
+							if (AscFormat.isRealNumber(props.Position.Y))
+								Asc.editor.addMacroStepData('SetShapeY', props.Position.Y);
+
+						}
 						if (editorId === AscCommon.c_oEditorId.Presentation || editorId === AscCommon.c_oEditorId.Spreadsheet) {
 							bCheckConnectors = true;
 						}
@@ -4253,8 +4415,9 @@
 						const oPos = oGroup.updateCoordinatesAfterInternalResize();
 						const oParent = oGroup.parent;
 						if (oParent instanceof AscCommonWord.ParaDrawing) {
-							const nNewX = oPos.posX + oGroup.x;
-							const nNewY = oPos.posY + oGroup.y;
+							const scaleCoefficient = oParent.GetScaleCoefficient();
+							const nNewX = oPos.posX + oGroup.x / scaleCoefficient;
+							const nNewY = oPos.posY + oGroup.y / scaleCoefficient;
 							oGroup.spPr.xfrm.setOffX(0);
 							oGroup.spPr.xfrm.setOffY(0);
 							if (!oParent.IsInline()) {
@@ -6771,11 +6934,12 @@
 						arrDrawings = this.getArrayForGrouping();
 					if (arrDrawings.length < 2)
 						return null;
+					const scaleCoefficient = arrDrawings[0].getScaleCoefficient();
 					var bounds = this.getBoundsForGroup(arrDrawings);
-					var max_x = bounds.r;
-					var max_y = bounds.b;
-					var min_x = bounds.l;
-					var min_y = bounds.t;
+					var max_x = bounds.r / scaleCoefficient;
+					var max_y = bounds.b / scaleCoefficient;
+					var min_x = bounds.l / scaleCoefficient;
+					var min_y = bounds.t / scaleCoefficient;
 					var group = new AscFormat.CGroupShape();
 					group.setSpPr(new AscFormat.CSpPr());
 					group.spPr.setParent(group);
@@ -6792,8 +6956,8 @@
 					xfrm.setChOffY(0);
 					for (var i = 0; i < arrDrawings.length; ++i) {
 						CheckSpPrXfrm(arrDrawings[i]);
-						arrDrawings[i].spPr.xfrm.setOffX(arrDrawings[i].x - min_x);
-						arrDrawings[i].spPr.xfrm.setOffY(arrDrawings[i].y - min_y);
+						arrDrawings[i].spPr.xfrm.setOffX(arrDrawings[i].x / scaleCoefficient - min_x);
+						arrDrawings[i].spPr.xfrm.setOffY(arrDrawings[i].y / scaleCoefficient - min_y);
 						arrDrawings[i].setGroup(group);
 						group.addToSpTree(group.spTree.length, arrDrawings[i]);
 					}
@@ -7418,6 +7582,8 @@
 				},
 
 				getDrawingPropsFromArray: function (drawings) {
+					const editorId = Asc.editor.getEditorId();
+
 					var image_props, shape_props, chart_props, table_props = undefined, new_image_props,
 						new_shape_props, new_chart_props, new_table_props, shape_chart_props, locked;
 					var anim_props = null;
@@ -8106,17 +8272,29 @@
 						const oDrawingObjectsController = oDrawing.getDrawingObjectsController && oDrawing.getDrawingObjectsController();
 						const oTargetDocContent = oDrawingObjectsController && oDrawingObjectsController.getTargetDocContent();
 
-						const isValidType = oDrawing.isShape() || oDrawing.isImage();
-						const isStickyNote = oDrawing.IsAnnot && oDrawing.IsAnnot() && oDrawing.IsComment() ||
-							drawing.IsEditFieldShape && oDrawing.IsEditFieldShape(); // skip pdf text annot and form
+						const isGroup = oDrawing.isGroup && oDrawing.isGroup();
+						const isShape = oDrawing.isShape && oDrawing.isShape();
+						const isImage = oDrawing.isImage && oDrawing.isImage();
 
-						if (!isStickyNote && isValidType && !oTargetDocContent) {
-							const oNvPr = oDrawing.getCNvProps();
+						if (isGroup || isShape || isImage) {
+							const nvProps = this.hyperlinkCollectNonVisualProperties(oDrawing);
+							const oNvPr = nvProps[0];
+
 							if (oNvPr && oNvPr.hlinkClick && oNvPr.hlinkClick.id) {
 								hyperlink_properties = new Asc.CHyperlinkProperty();
-								hyperlink_properties.Text = null;
-								hyperlink_properties.Value = oNvPr.hlinkClick.id;
-								hyperlink_properties.ToolTip = oNvPr.hlinkClick.tooltip;
+
+								const hyperlinkId = oNvPr.hlinkClick.id;
+								if (typeof hyperlinkId === 'string') {
+
+									if (hyperlinkId[0] === '#') {
+										hyperlink_properties.Value = "";
+										hyperlink_properties.Anchor = hyperlinkId.slice(1);
+									} else {
+										hyperlink_properties.Value = hyperlinkId;
+									}
+
+									hyperlink_properties.ToolTip = oNvPr.hlinkClick.tooltip;
+								}
 							}
 						}
 					}
@@ -9817,6 +9995,13 @@
 						this.loadDocumentStateAfterLoadChanges(oStateBeforeLoadChanges);
 						this.startRecalculate();
 					}, [], false, 0);
+				},
+
+				updateDrawingTextCache: function () {
+					for (let i = 0; i < this.selectedObjects.length; i += 1) {
+						const oGraphicObject = this.selectedObjects[i];
+						oGraphicObject.updateDrawingTextCache();
+					}
 				},
 
 				getInputLanguage: function () {

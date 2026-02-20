@@ -890,7 +890,11 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 						}
 						else if (this.Content.length === 1 && true === this.Content[0].IsEmpty())
 						{
-							if (Count > 0)
+							if (this.ParentPDF)
+							{
+								bRetValue = false;
+							}
+							else if (Count > 0)
 							{
 								this.Internal_Content_Add(0, this.private_CreateNewParagraph());
 								this.Internal_Content_Remove(1, this.Content.length - 1);

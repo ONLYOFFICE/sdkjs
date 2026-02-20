@@ -74,7 +74,7 @@
             this.CheckFormViewWindow();
 
         oGraphicsWord.AddClipRect(this.contentClipRect.X, this.contentClipRect.Y, this.contentClipRect.W, this.contentClipRect.H);
-        oContentToDraw.Draw(0, oGraphicsWord);
+        oContentToDraw.Draw(oContentToDraw.GetAbsolutePage(), oGraphicsWord);
         // redraw target cursor if field is selected
         if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && this.IsCanEditText())
             oContentToDraw.RecalculateCurPos();
@@ -89,7 +89,7 @@
         if (this.IsNeedRecalc() == false)
             return;
 
-        if (!this.contentClipRect) {
+        if (!this.contentClipRect || !this.content.Recalculated) {
             this.RecalculateContentRect();
         }
         
@@ -97,6 +97,7 @@
             this.CheckAlignInternal();
         }
         
+        let isChangedRect = false == this.RecalculateContentRect();
         if (this.GetTextSize() == 0) {
             if (null == this.getFormRelRect()) {
                 this.CalculateContentClipRect();
@@ -105,13 +106,15 @@
             this.ProcessAutoFitContent(this.contentFormat);
         }
 
-        if (false == this.RecalculateContentRect()) {
-            this.contentFormat.Content.forEach(function(element) {
-                element.Recalculate_Page(0);
-            });
-            this.content.Content.forEach(function(element) {
-                element.Recalculate_Page(0);
-            });
+        if (isChangedRect) {
+            if (false == this.RecalculateContentRect()) {
+                this.contentFormat.Content.forEach(function(element) {
+                    element.Recalculate_Page(0);
+                });
+                this.content.Content.forEach(function(element) {
+                    element.Recalculate_Page(0);
+                });
+            }
         }
         
         if (this.IsNeedRecalcTextTransform()) {
@@ -142,7 +145,7 @@
         let contentYFormat  = Y * g_dKoef_pt_to_mm + (nHeight * g_dKoef_pt_to_mm - nContentHFormat) / 2;
 
         if (contentX != this.content.X || contentY != this.content.Y ||
-        contentXLimit != this.content.XLimit || contentYFormat != this.contentFormat.Y) {
+        contentXLimit != this.content.XLimit || contentYFormat != this.contentFormat.Y || !this.content.Recalculated || !this.contentFormat.Recalculated) {
             this.content.X      = this.contentFormat.X = contentX;
             this.content.Y      = contentY;
             this.contentFormat.Y= contentYFormat;
@@ -189,10 +192,11 @@
     CComboBoxField.prototype.onMouseDown = function(x, y, e) {
         let oViewer         = editor.getDocumentRenderer();
         let oDoc            = this.GetDocument();
+        let oController     = oDoc.GetController();
         let oActionsQueue   = oDoc.GetActionsQueue();
 
-        let bHighlight  = this.IsNeedDrawHighlight();
         let isInFocus   = oDoc.activeForm === this;
+		let isInForm    = this.IsInForm();
 
         oDoc.activeForm = this;
 
@@ -202,14 +206,13 @@
         }
 
         function callbackAfterFocus(x, y, e) {
+            let pageObjectMM = oDoc.Viewer.getPageByCoords2(x, y);
+			if (!pageObjectMM)
+				return false;
+
+            this.SetInForm(true);
             oDoc.SetLocalHistory();
-            if (false == e.ShiftKey) {
-                oDoc.SelectionSetStart(x, y, e);
-            }
-            else {
-                this.content.StartSelectionFromCurPos();
-                oDoc.SelectionSetEnd(x, y, e);
-            }
+            oController.OnMouseDown(e, pageObjectMM.x, pageObjectMM.y, pageObjectMM.index);
             
             this.SetInForm(true);
 
@@ -227,12 +230,7 @@
                 this.content.MoveCursorToStartPos();
             }
             
-            this.SetDrawHighlight(false);
-            if (this.IsNeedDrawFromStream() == true) {
-                this.SetDrawFromStream(false);
-                this.AddToRedraw();
-            }
-            else if (this.curContent === this.contentFormat || bHighlight) {
+            if (this.curContent === this.contentFormat || !isInForm) {
                 this.AddToRedraw();
             }
         }
@@ -300,7 +298,7 @@
     };
     CComboBoxField.prototype.SetCurIdxs = function(aIdxs) {
         if (this.IsWidget()) {
-            AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetCurIdxs(), aIdxs));
+            AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetParentCurIdxs(), aIdxs));
 
             let aOptions = this.GetOptions();
             if (undefined !== aIdxs[0]) {
@@ -542,7 +540,7 @@
     CComboBoxField.prototype.SetEditable = function(bValue) {
         let oParent = this.GetParent(true);
         if (oParent) {
-            oParent.SetEditable(bValue);
+            return oParent.SetEditable(bValue);
         }
         else {
             AscCommon.History.Add(new CChangesPDFComboboxFieldEditable(this, this._editable, bValue));
@@ -550,6 +548,7 @@
         }
 
         this.SetWasChanged(true);
+        return true;
     };
     CComboBoxField.prototype.IsEditable = function(bInherit) {
         let oParent = this.GetParent(true);
@@ -570,7 +569,7 @@
         if (oParent)
             return oParent.AddOption(option, nPos);
 
-        if (option == null) return;
+        if (option == null) return false;
         
         let formattedOption;
         
@@ -594,6 +593,8 @@
 
         this.SetWasChanged(true);
         this.SetNeedRecalc(true);
+
+        return true;
     };
     CComboBoxField.prototype.RemoveOption = function(nPos) {
         let oParent = this.GetParent(true);
@@ -620,6 +621,8 @@
 
             return option;
         }
+
+        return false;
     };
     CComboBoxField.prototype.SetOptions = function(aOpt) {
         while (this.GetOptions().length > 0) {
@@ -654,7 +657,7 @@
 	 */
     CComboBoxField.prototype.GetCurIdxs = function(bApiValue) {
         if (bApiValue)
-            return this._currentValueIndices;
+            return this._currentValueIndexes;
 
         let aOptions = this.GetOptions();
         let sValue = this.content.getAllText();
@@ -814,8 +817,8 @@
 	CComboBoxField.prototype.Remove                 = AscPDF.CTextField.prototype.Remove;
 	CComboBoxField.prototype.MoveCursorLeft         = AscPDF.CTextField.prototype.MoveCursorLeft;
 	CComboBoxField.prototype.MoveCursorRight        = AscPDF.CTextField.prototype.MoveCursorRight;
-	CComboBoxField.prototype.SelectionSetStart      = AscPDF.CTextField.prototype.SelectionSetStart;
-	CComboBoxField.prototype.SelectionSetEnd        = AscPDF.CTextField.prototype.SelectionSetEnd;
+	CComboBoxField.prototype.selectionSetStart      = AscPDF.CTextField.prototype.selectionSetStart;
+	CComboBoxField.prototype.selectionSetEnd        = AscPDF.CTextField.prototype.selectionSetEnd;
 	CComboBoxField.prototype.CheckFormViewWindow    = AscPDF.CTextField.prototype.CheckFormViewWindow;
 	CComboBoxField.prototype.CheckAlignInternal     = AscPDF.CTextField.prototype.CheckAlignInternal;
 	CComboBoxField.prototype.IsTextOutOfForm        = AscPDF.CTextField.prototype.IsTextOutOfForm;
@@ -846,7 +849,9 @@
     CComboBoxField.prototype.GetValidateType        = AscPDF.CTextField.prototype.GetValidateType;
     CComboBoxField.prototype.GetValidateArgs        = AscPDF.CTextField.prototype.GetValidateArgs;
     CComboBoxField.prototype.SetPlaceholder         = AscPDF.CTextField.prototype.SetPlaceholder;
+    CComboBoxField.prototype.GetPlaceholder         = AscPDF.CTextField.prototype.GetPlaceholder;
     CComboBoxField.prototype.SetRegularExp          = AscPDF.CTextField.prototype.SetRegularExp;
+    CComboBoxField.prototype.GetRegularExp          = AscPDF.CTextField.prototype.GetRegularExp;
     CComboBoxField.prototype.SetArbitaryMask        = AscPDF.CTextField.prototype.SetArbitaryMask;
     CComboBoxField.prototype.ClearFormat            = AscPDF.CTextField.prototype.ClearFormat;
     CComboBoxField.prototype.DrawMarker             = AscPDF.CTextField.prototype.DrawMarker;

@@ -86,6 +86,7 @@ var editor;
     this.tmpDecimalSeparator = null;
     this.tmpGroupSeparator = null;
     this.tmpLocalization = null;
+	this.backgroundOpenFileSize = 3 * 1024 * 1024;//3mb
 
 	this.activeLocalization = null;
 
@@ -470,13 +471,24 @@ var editor;
     return false;
   };
 
-  spreadsheet_api.prototype.asc_SpecialPaste = function(props) {
-    return AscCommon.g_specialPasteHelper.Special_Paste(props);
+  spreadsheet_api.prototype.asc_SpecialPaste = function(props, isPasteOptions) {
+    return AscCommon.g_specialPasteHelper.Special_Paste(props, isPasteOptions);
   };
 
-  spreadsheet_api.prototype.asc_SpecialPasteData = function(props) {
+  spreadsheet_api.prototype.asc_SpecialPasteData = function(props, isPasteOptions) {
 	if (this.canEdit()) {
-      this.wb.specialPasteData(props);
+		if (isPasteOptions) {
+			let t = this;
+			AscCommon.g_clipboardBase.initSpecialPasteData(function () {
+				let ws = t.wb.getWorksheet();
+				//AscCommon.g_specialPasteHelper.specialPasteData.activeRange = ws.model.selectionRange.clone(ws.model);
+				AscCommon.g_specialPasteHelper.specialPasteData.pasteFromWord = false;
+
+				t.wb.specialPasteData(props, isPasteOptions);
+			});
+		} else {
+			this.wb.specialPasteData(props);
+		}
     }
   };
 
@@ -1100,12 +1112,21 @@ var editor;
     ws.applyAutoFilterByType(autoFilterObject);
   };
 
-  spreadsheet_api.prototype.asc_reapplyAutoFilter = function(displayName) {
+  spreadsheet_api.prototype.asc_reapplyAutoFilter = function(displayName, sheetId) {
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return false;
     }
-    var ws = this.wb.getWorksheet();
-    ws.reapplyAutoFilter(displayName);
+
+    let ws;
+    if (sheetId) {
+        ws = this.wb.getWorksheetById(sheetId)
+    } else {
+        ws = this.wb.getWorksheet();
+    }
+
+    if (ws) {
+        ws.reapplyAutoFilter(displayName);
+    }
   };
 
   spreadsheet_api.prototype.asc_sortColFilter = function(type, cellId, displayName, color, bIsExpandRange) {
@@ -1121,12 +1142,21 @@ var editor;
     return ws.getAddFormatTableOptions(range);
   };
 
-  spreadsheet_api.prototype.asc_clearFilter = function() {
+  spreadsheet_api.prototype.asc_clearFilter = function(sheetId) {
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return false;
     }
-  	var ws = this.wb.getWorksheet();
-    return ws.clearFilter();
+  	// var ws = this.wb.getWorksheet();
+    let ws;
+    if (sheetId) {
+        ws = this.wb.getWorksheetById(sheetId)
+    } else {
+        ws = this.wb.getWorksheet();
+    }
+
+    if (ws) {
+        return ws.clearFilter();
+    }
   };
 
   spreadsheet_api.prototype.asc_clearFilterColumn = function(cellId, displayName) {
@@ -1798,7 +1828,8 @@ var editor;
 	this.isOpenOOXInBrowser = this["asc_isSupportFeature"]("ooxml") && AscCommon.checkOOXMLSignature(file.data);
 	if (this.isOpenOOXInBrowser) {
 		this.openOOXInBrowserZip = file.data;
-		this.OpenDocumentFromZip(file.data);
+		const backgroundOpen = file.data.length > this.backgroundOpenFileSize;
+		this.OpenDocumentFromZip(file.data, backgroundOpen);
 	} else {
 		this.OpenDocumentFromBin(file.url, file.data);
 	}
@@ -1857,14 +1888,120 @@ var editor;
 		this.OpenDocumentFromBinNoInit(gObject);
 		this._onEndOpen();
 	};
-	spreadsheet_api.prototype.OpenDocumentFromZip = function (data) {
+
+	/**
+	 * Reads remaining sheet data in background
+	 * @param {Object} api - spreadsheet_api instance
+	 * @param {Object} reader - BackgroundOpenReader object
+	 * @param {Object} ws - worksheet
+	 * @param {boolean} bNoBuildDep - whether to skip dependency building
+	 * @param {Array} curSheetData - current sheet data array
+	 * @param {Array} delayedSheetData - all sheet data array
+	 * @param {Object} selectionState - saved selection state
+	 * @param {boolean} startAction - whether to start action indicator
+	 */
+	function readRemainings(api, reader, ws, bNoBuildDep, curSheetData, delayedSheetData, selectionState, startAction) {
+		if (startAction && api.asc_checkNeedCallback("asc_onStartAction")) {
+			api.wb.setIsPartialReading(true);
+			startAction = false;
+			api.sync_StartAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.BackgroundOpen, Asc.c_oAscRestrictionType.View);
+		}
+		
+		// Read remainings
+		if (curSheetData[0].state) {
+			reader.setSheetData(curSheetData);
+			reader.readSheetData(bNoBuildDep);
+			const sheetDataElem = curSheetData[0];
+			updateDrawingsBySheetDataElem(api, sheetDataElem);
+			api.wb._onScrollReinitialize(AscCommonExcel.c_oAscScrollType.ScrollVertical | AscCommonExcel.c_oAscScrollType.ScrollHorizontal);
+		} else {
+			let sheetDataElem = delayedSheetData.find(function (item) {
+				return !!item.state;
+			});
+			
+			if (!sheetDataElem) {
+				// All reading complete - restore state
+				api.wb.setIsPartialReading(false);
+				api.wbModel.dependencyFormulas.unlockRecal();
+				
+				sheetDataElem = curSheetData[0];
+				//scroll if selection not changed
+				if (sheetDataElem.ws.selectionRange.isEqual(new AscCommonExcel.SelectionRange(sheetDataElem.ws))) {
+					sheetDataElem.ws.selectionRange = selectionState.selectionRange;
+					sheetDataElem.ws.setTopLeftCell(selectionState.topLeftCell, false);
+					let wsView = api.wb.getWorksheet()
+					wsView._initTopLeftCell();
+					wsView._calcHeightRows(AscCommonExcel.recalcType.full);
+					api.handlers.trigger("drawWS");
+				}
+				api.sync_EndAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.BackgroundOpen, Asc.c_oAscRestrictionType.View);
+				AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onDocumentContentReadyBackground", performance.now(), AscCommon.getMemoryInfo()), api);
+				return;
+			}
+			
+			reader.setSheetData([sheetDataElem]);
+			reader.readSheetData(bNoBuildDep);
+			updateDrawingsBySheetDataElem(api, sheetDataElem);
+		}
+		
+		// Schedule next iteration
+		setTimeout(function() {
+			readRemainings(api, reader, ws, bNoBuildDep, curSheetData, delayedSheetData, selectionState, startAction);
+		}, 30);
+	}
+	/**
+	 * Update drawings on reading sheet data
+	 */
+	function updateDrawingsBySheetDataElem(api, sheetDataElem) {
+		const intersectionRange = new AscCommonExcel.Range(sheetDataElem.ws, sheetDataElem.r1, 0, sheetDataElem.r2, AscCommon.gc_nMaxCol0);
+		const insideRange = new AscCommonExcel.Range(sheetDataElem.ws, 0, 0, sheetDataElem.r2, AscCommon.gc_nMaxCol0);
+		sheetDataElem.ws.onUpdateRanges([intersectionRange.bbox]);//"cleanCellCache" works only for visible sheets
+		api.wb.handleDrawingsOnWorkbookOpening([{intersectionRange: intersectionRange, insideRange: insideRange}]);
+	}
+
+	/**
+	 * Initializes background open reading process for large documents
+	 * @param {Object} api - spreadsheet_api instance
+	 * @param {Object} reader - BackgroundOpenReader object from OpenDocumentFromZipNoInit
+	 */
+	function initBackgroundOpenReading(api, reader) {
+		const backgroundOpenContext = reader.backgroundOpenContext;
+		
+		if (!backgroundOpenContext) {
+			return;
+		}
+		
+		const ws = backgroundOpenContext.ws;
+		const curSheetData = backgroundOpenContext.curSheetData;
+		const delayedSheetData = backgroundOpenContext.delayedSheetData;
+		const selectionState = backgroundOpenContext.selectionState;
+		
+		api.wbModel.dependencyFormulas.lockRecal();
+		
+		// Start background reading after selection is ready
+		api.asc_registerCallback('asc_onSelectionEnd', function() {
+			api.asc_unregisterCallback('asc_onSelectionEnd');
+			setTimeout(function() {
+				reader.updateBackgroundOpenParams(false, 10000);
+				readRemainings(api, reader, ws, false, curSheetData, delayedSheetData, selectionState, true);
+			}, 100);
+		});
+	}
+
+	spreadsheet_api.prototype.OpenDocumentFromZip = function (data, backgroundOpen) {
 		this.wbModel = new AscCommonExcel.Workbook(this.handlers, this, true);
 		this.initGlobalObjects(this.wbModel, data.length);
-		let res =  this.OpenDocumentFromZipNoInit(data);
+		let reader = this.OpenDocumentFromZipNoInit(data, backgroundOpen);
 		this._onEndOpen();
-		return res;
+		
+		// Handle background open reading if enabled and context was prepared
+		if (reader && reader.backgroundOpenContext) {
+			initBackgroundOpenReading(this, reader);
+		}
+		
+		return !!reader;
 	};
-	spreadsheet_api.prototype.OpenDocumentFromZipNoInit = function (data) {
+	spreadsheet_api.prototype.OpenDocumentFromZipNoInit = function (data, backgroundOpen) {
 		var t = this;
 		let wb = this.wbModel;
 		var openXml = AscCommon.openXml;
@@ -1879,6 +2016,11 @@ var editor;
 			return false;
 		}
 		xmlParserContext.zip = jsZlib;
+		if (backgroundOpen) {
+			xmlParserContext.backgroundOpen.readOnlyActive = true;
+			xmlParserContext.backgroundOpen.readNextRows = 100;
+		}
+		var backgroundOpenReader = true;
 
 		//check fonts inside
 		AscFonts.IsCheckSymbols = true;
@@ -1925,6 +2067,30 @@ var editor;
 					wb.metadata = new AscCommonExcel.CMetadata();
 					reader = new StaxParser(contentMetaData, metaData, xmlParserContext);
 					wb.metadata.fromXml(reader);
+				}
+
+				let rdRichValue = wbPart.getPartByRelationshipType(openXml.Types.rdRichValue.relationType);
+				if (rdRichValue) {
+					let content = rdRichValue.getDocumentContent();
+					wb.richValueData = new AscCommonExcel.CRichValueData();
+					reader = new StaxParser(content, rdRichValue, xmlParserContext);
+					wb.richValueData.fromXml(reader);
+				}
+
+				let rdRichValueStructure = wbPart.getPartByRelationshipType(openXml.Types.rdRichValueStructure.relationType);
+				if (rdRichValueStructure) {
+					let content = rdRichValueStructure.getDocumentContent();
+					wb.richValueStructures = new AscCommonExcel.CRichValueStructures();
+					reader = new StaxParser(content, rdRichValueStructure, xmlParserContext);
+					wb.richValueStructures.fromXml(reader);
+				}
+
+				let rdRichValueTypes = wbPart.getPartByRelationshipType(openXml.Types.rdRichValueTypes.relationType);
+				if (rdRichValueTypes) {
+					let content = rdRichValueTypes.getDocumentContent();
+					wb.richValueTypesInfo = new AscCommonExcel.CRichValueTypesInfo();
+					reader = new StaxParser(content, rdRichValueTypes, xmlParserContext);
+					wb.richValueTypesInfo.fromXml(reader);
 				}
 			}
 
@@ -2119,17 +2285,6 @@ var editor;
 				});
 			}
 
-			//sharedString
-			var sharedStringPart = wbPart.getPartByRelationshipType(openXml.Types.sharedStringTable.relationType);
-			if (sharedStringPart) {
-				var contentSharedStrings = sharedStringPart.getDocumentContent();
-				if (contentSharedStrings) {
-					var sharedStrings = new AscCommonExcel.CT_SharedStrings();
-					reader = new StaxParser(contentSharedStrings, sharedStringPart, xmlParserContext);
-					sharedStrings.fromXml(reader);
-				}
-			}
-
 			//TODO CalcChain - из бинарника не читается, и не пишется в бинарник. реализовать позже
 
 			//Custom xml
@@ -2309,78 +2464,181 @@ var editor;
 				xmlParserContext.InitOpenManager.PostLoadPrepareDefNames(wb);
 			}
 
-			var readSheetDataExternal = function (bNoBuildDep) {
-				for (var i = 0; i < xmlParserContext.InitOpenManager.oReadResult.sheetData.length; ++i) {
-					var sheetDataElem = xmlParserContext.InitOpenManager.oReadResult.sheetData[i];
-					var ws = sheetDataElem.ws;
+			/**
+			 * Reads single sheet data from XML
+			 * @param {Object} sheetDataElem - sheet data element with ws and reader
+			 * @param {boolean} bNoBuildDep - whether to skip dependency building
+			 * @returns {Object} processing context with parsed data
+			 */
+			function readSingleSheetData(sheetDataElem, bNoBuildDep) {
+				var ws = sheetDataElem.ws;
+				var tmp = {
+					pos: null,
+					len: null,
+					bNoBuildDep: bNoBuildDep,
+					ws: ws,
+					row: new AscCommonExcel.Row(ws),
+					cell: new AscCommonExcel.Cell(ws),
+					formula: new AscCommonExcel.OpenFormula(),
+					sharedFormulas: {},
+					prevFormulas: {},
+					siFormulas: {},
+					prevRow: -1,
+					prevCol: -1,
+					formulaArray: []
+				};
+				var sheetData = new AscCommonExcel.CT_SheetData();
+				
+				xmlParserContext.InitOpenManager.tmp = tmp;
+				//TODO пересмотреть фунцию fromXml
+				sheetData.fromXmlPart(sheetDataElem);
+				
+				return tmp;
+			}
 
-					var tmp = {
-						pos: null,
-						len: null,
-						bNoBuildDep: bNoBuildDep,
-						ws: ws,
-						row: new AscCommonExcel.Row(ws),
-						cell: new AscCommonExcel.Cell(ws),
-						formula: new AscCommonExcel.OpenFormula(),
-						sharedFormulas: {},
-						prevFormulas: {},
-						siFormulas: {},
-						prevRow: -1,
-						prevCol: -1,
-						formulaArray: []
-					};
-
-
-					var sheetData = new AscCommonExcel.CT_SheetData();
-					xmlParserContext.InitOpenManager.tmp = tmp;
-
-					sheetDataElem.reader.setState(sheetDataElem.state);
-					//TODO пересмотреть фунцию fromXml
-					sheetData.fromXml2(sheetDataElem.reader);
-
-					if (!bNoBuildDep) {
-						//TODO возможно стоит делать это в worksheet после полного чтения
-						//***array-formula***
-						//добавление ко всем ячейкам массива головной формулы
-						for (var j = 0; j < tmp.formulaArray.length; j++) {
-							var curFormula = tmp.formulaArray[j];
-							var ref = curFormula.ref;
-							if (ref) {
-								var rangeFormulaArray = tmp.ws.getRange3(ref.r1, ref.c1, ref.r2, ref.c2);
-								rangeFormulaArray._foreach(function (cell) {
-									cell.setFormulaInternal(curFormula);
-									if (curFormula.ca || cell.isNullTextString()) {
-										tmp.ws.workbook.dependencyFormulas.addToChangedCell(cell);
-									}
-								});
+			/**
+			 * Builds all formula dependencies for processed sheet data
+			 * @param {Object} tmp - processing context
+			 */
+			function buildSheetDependencies(tmp) {
+				if (tmp.bNoBuildDep) {
+					return;
+				}
+				
+				//TODO возможно стоит делать это в worksheet после полного чтения
+				//***array-formula***
+				//добавление ко всем ячейкам массива головной формулы
+				for (var j = 0; j < tmp.formulaArray.length; j++) {
+					var curFormula = tmp.formulaArray[j];
+					var ref = curFormula.ref;
+					if (ref) {
+						var rangeFormulaArray = tmp.ws.getRange3(ref.r1, ref.c1, ref.r2, ref.c2);
+						rangeFormulaArray._foreach(function (cell) {
+							cell.setFormulaInternal(curFormula);
+							if (curFormula.ca || cell.isNullTextString()) {
+								tmp.ws.workbook.dependencyFormulas.addToChangedCell(cell);
 							}
-						}
-						for (var nCol in tmp.prevFormulas) {
-							if (tmp.prevFormulas.hasOwnProperty(nCol)) {
-								var prevFormula = tmp.prevFormulas[nCol];
-								if (!tmp.siFormulas[prevFormula.parsed.getListenerId()]) {
-									prevFormula.parsed.buildDependencies();
-								}
-							}
-						}
-						for (var listenerId in tmp.siFormulas) {
-							if (tmp.siFormulas.hasOwnProperty(listenerId)) {
-								tmp.siFormulas[listenerId].buildDependencies();
-							}
+						});
+					}
+				}
+				
+				// Previous formulas dependencies
+				for (var nCol in tmp.prevFormulas) {
+					if (tmp.prevFormulas.hasOwnProperty(nCol)) {
+						var prevFormula = tmp.prevFormulas[nCol];
+						if (!tmp.siFormulas[prevFormula.parsed.getListenerId()]) {
+							prevFormula.parsed.buildDependencies();
 						}
 					}
 				}
+				
+				// SI formulas dependencies
+				for (var listenerId in tmp.siFormulas) {
+					if (tmp.siFormulas.hasOwnProperty(listenerId)) {
+						tmp.siFormulas[listenerId].buildDependencies();
+					}
+				}
+			}
+
+			/**
+			 * Processes shared strings from workbook part
+			 */
+			function processSharedStrings() {
+				if (!xmlParserContext.backgroundOpen.sharedStringsState.sharedStrings) {
+					//sharedString
+					var sharedStringPart = wbPart.getPartByRelationshipType(openXml.Types.sharedStringTable.relationType);
+					if (sharedStringPart) {
+						var contentSharedStrings = sharedStringPart.getDocumentContent();
+						if (contentSharedStrings) {
+							var sharedStrings = new AscCommonExcel.CT_SharedStrings();
+							xmlParserContext.backgroundOpen.sharedStringsState.sharedStrings = sharedStrings;
+							reader = new StaxParser(contentSharedStrings, sharedStringPart, xmlParserContext);
+							sharedStrings.fromXml(reader);
+						}
+					}
+				}
+			}
+
+			/**
+			 * Reads all sheets data with dependencies
+			 * @param {boolean} bNoBuildDep - whether to skip dependency building
+			 */
+			function readAllSheetsData(bNoBuildDep) {
+				var sheetDataArray = xmlParserContext.InitOpenManager.oReadResult.sheetData;
+				
+				for (var i = 0; i < sheetDataArray.length; i++) {
+					var tmp = readSingleSheetData(sheetDataArray[i], bNoBuildDep);
+					buildSheetDependencies(tmp);
+				}
+			}
+			/**
+			 * Checks and prepares background open reading if enabled
+			 * @returns {Object|null} background open context if enabled, null otherwise
+			 */
+			var prepareBackgroundOpenReading = function() {
+				if (backgroundOpen) {
+					backgroundOpen = false;
+					const activeIndex = wb.nActive;
+					const ws = wb.aWorksheets[activeIndex];
+					if (!ws) {
+						return null;
+					}
+					const sheetDatas = xmlParserContext.InitOpenManager.oReadResult.sheetData;
+					if (!sheetDatas || activeIndex >= sheetDatas.length) {
+						return null;
+					}
+					const curSheetData = [sheetDatas[activeIndex]];
+					const delayedSheetData = sheetDatas;
+					const selectionState = {
+						selectionRange: ws.selectionRange,
+						topLeftCell: ws.getTopLeftCell()
+					};
+					ws.selectionRange = new AscCommonExcel.SelectionRange(ws);
+					ws.sheetViews = [];
+					xmlParserContext.InitOpenManager.oReadResult.sheetData = curSheetData;
+					return {
+						ws: ws,
+						curSheetData: curSheetData,
+						delayedSheetData: delayedSheetData,
+						selectionState: selectionState
+					};
+				}
+				return null;
 			};
 
-			//TODO общий код с serialize
+			/**
+			 * Reads sheet data - pure data reading function
+			 * @param {boolean} bNoBuildDep - whether to skip dependency building
+			 */
+			var readSheetDataExternal = function (bNoBuildDep) {
+				processSharedStrings();
+				readAllSheetsData(bNoBuildDep);
+			};
+
+			// Build BackgroundOpenReader object to expose reading callback and context
+			backgroundOpenReader = {
+				readSheetData: readSheetDataExternal,
+				backgroundOpenContext: null,
+				setSheetData: function(sheetData) {
+					xmlParserContext.InitOpenManager.oReadResult.sheetData = sheetData;
+				},
+				updateBackgroundOpenParams: function(readOnlyActive, readNextRows) {
+					xmlParserContext.backgroundOpen.readOnlyActive = readOnlyActive;
+					xmlParserContext.backgroundOpen.readNextRows = readNextRows;
+				}
+			};
+
+			//TODO shared code with serialize
 			//ReadSheetDataExternal
 			if (!initOpenManager.copyPasteObj.isCopyPaste || initOpenManager.copyPasteObj.selectAllSheet) {
+				backgroundOpenReader.backgroundOpenContext = prepareBackgroundOpenReading();
 				readSheetDataExternal(false);
 				if (!initOpenManager.copyPasteObj.isCopyPaste) {
 					initOpenManager.PostLoadPrepare(wb);
 				}
 				wb.init(initOpenManager.oReadResult, false, true);
 			} else {
+				backgroundOpenReader.backgroundOpenContext = prepareBackgroundOpenReading();
 				readSheetDataExternal(true);
 				if (Asc["editor"] && Asc["editor"].wb) {
 					wb.init(initOpenManager.oReadResult, true);
@@ -2400,7 +2658,7 @@ var editor;
 		jsZlib.close();
 		//clean up
 		openXml.SaxParserDataTransfer = {};
-		return true;
+		return backgroundOpenReader;
 	};
 
   // Эвент о пришедщих изменениях
@@ -5093,11 +5351,6 @@ var editor;
 		oController.onInkDrawerChangeState();
 	};
 
-  spreadsheet_api.prototype.asc_canAddShapeHyperlink = function() {
-    var ws = this.wb.getWorksheet();
-    return ws.objectRender.controller.canAddHyperlink();
-  };
-
   spreadsheet_api.prototype.asc_canGroupGraphicsObjects = function() {
     var ws = this.wb.getWorksheet();
     return ws.objectRender.controller.canGroup();
@@ -5952,10 +6205,10 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
-	if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
-      return;
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+		return;
     }
-  	let ws = this.wb.getWorksheet();
+    let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
     } else {
@@ -5963,8 +6216,6 @@ var editor;
       this.wb.restoreFocus();
     }
   };
-
-
 
   spreadsheet_api.prototype.asc_setCellItalic = function(isItalic) {
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
@@ -6333,15 +6584,20 @@ var editor;
 
   };
 
+	spreadsheet_api.prototype.asc_canAddShapeHyperlink = function () {
+		const ws = this.wb.getWorksheet();
+		return ws.objectRender.controller.canAddHyperlink();
+	};
+
 	spreadsheet_api.prototype.asc_insertHyperlink = function (options) {
 		AscFonts.FontPickerByCharacter.checkText(options.text, this, function () {
 			this.wb.insertHyperlink(options);
 		});
 	};
 
-  spreadsheet_api.prototype.asc_removeHyperlink = function() {
-    this.wb.removeHyperlink();
-  };
+	spreadsheet_api.prototype.asc_removeHyperlink = function () {
+		this.wb.removeHyperlink();
+	};
 
   spreadsheet_api.prototype.asc_getFullHyperlinkLength = function(str) {
     return window["AscCommonExcel"].getFullHyperlinkLength(str);
@@ -7089,6 +7345,7 @@ var editor;
         {
             this.openFileCryptCallback(this.openFileCryptBinary);
         }
+		AscBuilder.Cell.init();
 	};
 
 	spreadsheet_api.prototype.asc_OnShowContextMenu = function() {
@@ -8792,9 +9049,11 @@ var editor;
 
 	spreadsheet_api.prototype.onWorksheetChange = function(props) {
 		let ws = this.wbModel.getActiveWs();
-		if (!ws) {
+		let jsApi = this.getJsApi();
+		if (!ws || !jsApi) {
 			return;
 		}
+		
 		let range = null;
 		let result = null;
 		if (Array.isArray(props)) {
@@ -8803,11 +9062,11 @@ var editor;
 			let arr = props.length <= 1 ? null : props.map(function(r){
 				return ws.getRange3(r.r1, r.c1, r.r2, r.c2);
 			})
-			result = this.private_GetRange(range, arr);
+			result = jsApi.private_GetRange(range, arr);
 		} else {
 			// todo сделать получение листа ещё
 			range = ws.getRange3(props.r1, props.c1, props.r2, props.c2);
-			result = this.private_GetRange(range);
+			result = jsApi.private_GetRange(range);
 		}
 		this.sendEvent('onWorksheetChange', result);
 	};
@@ -9161,34 +9420,49 @@ var editor;
 	};
 
 	/**
+	 * Calls logic for closing "Solver Params" and "Solver Results" dialogue windows.
 	 * @memberof spreadsheet_api
 	 * @param {boolean} isSave - true - save result of calculation, false - discard changes.
-	 * @param {asc_CSolverParams} solverParams
 	 */
-	spreadsheet_api.prototype.asc_CloseSolver = function (isSave, solverParams) {
+	spreadsheet_api.prototype.asc_CloseSolver = function (isSave) {
 		if (!this.wb) {
 			return;
 		}
 
-		this.wb.closeSolver(isSave, solverParams);
+		this.wb.closeSolver(isSave);
 	};
 
 	/**
-	 * Start solver logic in "Show iteration results" mode.
+	 * Continues Solver's calculation.
+	 * Uses for "Continue" button of "Show trial Solution" window.
 	 * @memberof spreadsheet_api
 	 */
-	spreadsheet_api.prototype.asc_StepSolver = function () {
+	spreadsheet_api.prototype.asc_ContinueSolver = function () {
 		if (!this.wb) {
 			return;
 		}
 
-		this.wb.stepSolver();
+		this.wb.continueSolver();
 	};
+
+	/**
+	 * Stops solver calculation by user's request.
+	 * Uses for "Stop" button or closing window of "Show Trial Solution" dialogue window.
+	 * @memberof spreadsheet_api
+	 */
+	spreadsheet_api.prototype.asc_StopSolver = function () {
+		if (!this.wb) {
+			return;
+		}
+
+		this.wb.stopSolver();
+	}
 
 	/**
 	 * Returns solver parameters object.
+	 * Uses for open "Solver" dialogue window.
 	 * @memberof spreadsheet_api
-	 * @returns {asc_CSolverParams|null}
+	 * @returns {asc_CSolverParams}
 	 */
 	spreadsheet_api.prototype.asc_GetSolverParams = function () {
 		if (!this.wb) {
@@ -9196,15 +9470,6 @@ var editor;
 		}
 
 		return this.wb.getSolverParams();
-	};
-
-	/**
-	 * Returns solver results object.
-	 * @memberof spreadsheet_api
-	 * @returns {asc_CSolverResults}
-	 */
-	spreadsheet_api.prototype.asc_GetSolverResults = function () {
-		return new AscCommonExcel.asc_CSolverResults();
 	};
 
 	spreadsheet_api.prototype.asc_TracePrecedents = function() {
@@ -9608,6 +9873,91 @@ var editor;
 		}
 
 		this.wb.removeAllInks();
+	};
+
+	spreadsheet_api.prototype.asc_SetIsSupportDynamicArrays = function(val) {
+		AscCommonExcel.bIsSupportDynamicArrays = val;
+	};
+	spreadsheet_api.prototype.getJsApi = function() {
+		return AscBuilder.Cell.Api;
+	};
+
+	spreadsheet_api.prototype.asc_getPasteOptions = function(callback) {
+		AscCommon.g_clipboardBase.Get_Clipboard_Data(function (data) {
+			if (!data) {
+				callback(null);
+				return;
+			}
+			//onpaste
+			if (data.clipboardData) {
+				callback(null);
+			} else {
+				//data -> navigator.clipboard -> [AscCommon.c_oAscClipboardDataFormat.Internal, AscCommon.c_oAscClipboardDataFormat.Html, AscCommon.c_oAscClipboardDataFormat.Text]
+				let _internal = data[AscCommon.c_oAscClipboardDataFormat.Internal];
+				let _specialPasteShowOptions = new Asc.SpecialPasteShowOptions();
+				let allowedSpecialPasteProps = null;
+				let sProps = Asc.c_oSpecialPasteProps;
+
+				let checkInternal = function (str) {
+					if (str && str.indexOf("xslData;XLSY") > -1) {
+						allowedSpecialPasteProps =
+							[sProps.paste, sProps.pasteOnlyFormula, sProps.formulaNumberFormat, sProps.formulaAllFormatting,
+								sProps.formulaWithoutBorders, sProps.formulaColumnWidth, sProps.pasteOnlyValues,
+								sProps.valueNumberFormat, sProps.valueAllFormating, sProps.pasteOnlyFormating, sProps.comments,
+								sProps.columnWidth];
+
+						//if (!isTablePasted) {
+							//add transpose property
+							allowedSpecialPasteProps.push(sProps.transpose);
+							allowedSpecialPasteProps.push(sProps.link);
+						//}
+
+						_specialPasteShowOptions.asc_setShowPasteSpecial(true);
+					} else {
+						allowedSpecialPasteProps = [sProps.sourceformatting, sProps.destinationFormatting];
+					}
+				};
+
+				if (_internal && _internal !== "" && _internal.indexOf("asc_internalData2;") === 0) {
+					// var isTablePasted = checkTablesPaste();
+					checkInternal(_internal);
+
+					if (data[AscCommon.c_oAscClipboardDataFormat.Image]) {
+						allowedSpecialPasteProps.push(sProps.picture);
+					}
+
+					_specialPasteShowOptions.options = allowedSpecialPasteProps;
+					callback(_specialPasteShowOptions);
+					return;
+					// 	if (isAllowPasteLink(pasteInfo.wb)) {
+					// 		allowedSpecialPasteProps.push(sProps.link);
+					// 	}
+				}
+				let _html = data[AscCommon.c_oAscClipboardDataFormat.Html];
+				if (_html) {
+					checkInternal(_html);
+
+					if (data[AscCommon.c_oAscClipboardDataFormat.Image]) {
+						allowedSpecialPasteProps.push(sProps.picture);
+					}
+
+					_specialPasteShowOptions.options = allowedSpecialPasteProps;
+					callback(_specialPasteShowOptions);
+					return;
+				}
+
+				let _text = data[AscCommon.c_oAscClipboardDataFormat.Text];
+				if (_text) {
+					allowedSpecialPasteProps = [sProps.keepTextOnly, sProps.useTextImport];
+					_specialPasteShowOptions.options = allowedSpecialPasteProps;
+					callback(_specialPasteShowOptions);
+
+					return;
+				}
+
+				callback(null);
+			}
+		});
 	};
 
   /*
@@ -10201,6 +10551,12 @@ var editor;
   prot["asc_ContinueGoalSeek"] = prot.asc_ContinueGoalSeek;
   prot["asc_StepGoalSeek"] = prot.asc_StepGoalSeek;
 
+  prot["asc_StartSolver"] = prot.asc_StartSolver;
+  prot["asc_CloseSolver"] = prot.asc_CloseSolver;
+  prot["asc_ContinueSolver"] = prot.asc_ContinueSolver;
+  prot["asc_StopSolver"] = prot.asc_StopSolver;
+  prot["asc_GetSolverParams"] = prot.asc_GetSolverParams;
+
   prot["asc_GetSeriesSettings"] = prot.asc_GetSeriesSettings;
   prot["asc_FillCells"] = prot.asc_FillCells;
   prot["asc_CancelFillCells"] = prot.asc_CancelFillCells;
@@ -10223,6 +10579,11 @@ var editor;
   prot["asc_GetShowHorizontalScroll"]= prot.asc_GetShowHorizontalScroll;
   prot["sync_currentSheetCallback"]= prot.sync_currentSheetCallback;
 
+  prot["asc_SetIsSupportDynamicArrays"]= prot.asc_SetIsSupportDynamicArrays;
+  prot["asc_getPasteOptions"]= prot.asc_getPasteOptions;
+  prot["getJsApi"]= prot.getJsApi;
+  
+  AscCommon['SpreadsheetEditorApi'] = AscCommon.SpreadsheetEditorApi = spreadsheet_api;
 
 
 })(window);

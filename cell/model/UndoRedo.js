@@ -677,6 +677,11 @@ function (window, undefined) {
 		this.CacheFieldElem = 184;
 		this.CalculatedItems = 185;
 
+		this.Metadata = 195;
+		this.RichValueStructures = 196;
+		this.RichValueTypesInfo = 197;
+		this.RichValueData = 198;
+
 		this.Create = function (nType) {
 			switch (nType) {
 				case this.ValueMultiTextElem:
@@ -854,6 +859,14 @@ function (window, undefined) {
 					return new AscCommonExcel.UndoRedoData_LegacyDrawingHFDrawing();
 				case this.PivotFieldItem:
 					return new AscCommonExcel.UndoRedoData_PivotFieldItem();
+				case this.Metadata:
+					return new AscCommonExcel.CMetadata();
+				case this.RichValueStructures:
+					return new AscCommonExcel.CRichValueStructures();
+				case this.RichValueTypesInfo:
+					return new AscCommonExcel.CRichValueTypesInfo();
+				case this.RichValueData:
+					return new AscCommonExcel.CRichValueData();
 			}
 			return null;
 		};
@@ -949,15 +962,18 @@ function (window, undefined) {
 		}
 	};
 
-	function UndoRedoData_CellValueData(sFormula, oValue, formulaRef, bCa) {
+	function UndoRedoData_CellValueData(sFormula, oValue, formulaRef, bCa, nCm, nVm, bAca) {
 		this.formula = sFormula;
 		this.formulaRef = formulaRef;
 		this.value = oValue;
 		this.ca = bCa;
+		this.cm = nCm;
+		this.vm = nVm;
+		this.aca = bAca;
 	}
 
 	UndoRedoData_CellValueData.prototype.Properties = {
-		formula: 0, value: 1, formulaRef: 2, ca: 3
+		formula: 0, value: 1, formulaRef: 2, ca: 3, cm: 4, vm: 5, aca: 6
 	};
 	UndoRedoData_CellValueData.prototype.isEqual = function (val) {
 		if (null == val) {
@@ -969,6 +985,15 @@ function (window, undefined) {
 		if ((this.formulaRef && val.formulaRef &&
 			!(this.formulaRef.r1 === val.formulaRef.r1 && this.formulaRef.c1 === val.formulaRef.c1 && this.formulaRef.r2 === val.formulaRef.r2 &&
 				this.formulaRef.c2 === val.formulaRef.c2)) || (this.formulaRef !== val.formulaRef)) {
+			return false;
+		}
+		if (this.cm != val.cm) {
+			return false;
+		}
+		if (this.vm != val.vm) {
+			return false;
+		}
+		if (this.aca != val.aca) {
 			return false;
 		}
 		if (this.value.isEqual(val.value)) {
@@ -992,6 +1017,12 @@ function (window, undefined) {
 				return this.formulaRef ? new UndoRedoData_BBox(this.formulaRef) : null;
 			case this.Properties.ca:
 				return this.ca;
+			case this.Properties.cm:
+				return this.cm;
+			case this.Properties.vm:
+				return this.vm;
+			case this.Properties.aca:
+				return this.aca;
 		}
 		return null;
 	};
@@ -1008,6 +1039,15 @@ function (window, undefined) {
 				break;
 			case this.Properties.ca:
 				this.ca = value;
+				break;
+			case this.Properties.cm:
+				this.cm = value;
+				break;
+			case this.Properties.vm:
+				this.vm = value;
+				break;
+			case this.Properties.aca:
+				this.aca = value;
 				break;
 		}
 	};
@@ -2370,14 +2410,20 @@ function (window, undefined) {
 	};
 
 	//***array-formula***
-	function UndoRedoData_ArrayFormula(range, formula) {
+	function UndoRedoData_ArrayFormula(range, formula, cmIndex, vmIndex, undoVmIndex) {
 		this.range = range;
 		this.formula = formula;
+		this.cmIndex = cmIndex;
+		this.vmIndex = vmIndex;
+		this.undoVmIndex = undoVmIndex;
 	}
 
 	UndoRedoData_ArrayFormula.prototype.Properties = {
 		range: 0,
-		formula: 1
+		formula: 1,
+		cmIndex: 2,
+		vmIndex: 3,
+		undoVmIndex: 4
 	};
 	UndoRedoData_ArrayFormula.prototype.getType = function () {
 		return UndoRedoDataTypes.ArrayFormula;
@@ -2391,6 +2437,12 @@ function (window, undefined) {
 				return new UndoRedoData_BBox(this.range);
 			case this.Properties.formula:
 				return this.formula;
+			case this.Properties.cmIndex:
+				return this.cmIndex;
+			case this.Properties.vmIndex:
+				return this.vmIndex;
+			case this.Properties.undoVmIndex:
+				return this.undoVmIndex;
 		}
 
 		return null;
@@ -2402,6 +2454,15 @@ function (window, undefined) {
 				break;
 			case this.Properties.formula:
 				this.formula = value;
+				break;
+			case this.Properties.cmIndex:
+				this.cmIndex = value;
+				break;
+			case this.Properties.vmIndex:
+				this.vmIndex = value;
+				break;
+			case this.Properties.undoVmIndex:
+				this.undoVmIndex = value;
 				break;
 		}
 		return null;
@@ -3156,6 +3217,14 @@ function (window, undefined) {
 			wb.setShowHorizontalScroll(bUndo ? Data.from : Data.to);
 		} else if (AscCH.historyitem_Workbook_SetCustomFunctions === Type) {
 			wb.oApi["pluginMethod_SetCustomFunctions"] && wb.oApi["pluginMethod_SetCustomFunctions"](bUndo ? Data.from : Data.to);
+		} else if (AscCH.historyitem_Workbook_Metadata === Type) {
+			wb.metadata = bUndo ? (Data.from ? Data.from.clone(): null) : (Data.to ? Data.to.clone(): null);
+		} else if (AscCH.historyitem_Workbook_RichValueStructures === Type) {
+			wb.richValueStructures = bUndo ? (Data.from ? Data.from.clone(): null) : (Data.to ? Data.to.clone(): null);
+		} else if (AscCH.historyitem_Workbook_RichValueTypesInfo === Type) {
+			wb.richValueTypesInfo = bUndo ? (Data.from ? Data.from.clone(): null) : (Data.to ? Data.to.clone(): null);
+		} else if (AscCH.historyitem_Workbook_RichValueData === Type) {
+			wb.richValueData = bUndo ? (Data.from ? Data.from.clone(): null) : (Data.to ? Data.to.clone(): null);
 		}
 	};
 	UndoRedoWorkbook.prototype.forwardTransformationIsAffect = function (Type) {
@@ -3286,7 +3355,12 @@ function (window, undefined) {
 				cell.setValueMultiTextInternal(multiText);
 			} else if (AscCH.historyitem_Cell_ChangeValue === Type || AscCH.historyitem_Cell_ChangeValueUndo === Type) {
 				if (bUndo || AscCH.historyitem_Cell_ChangeValueUndo !== Type) {
+					var oldFormula = cell.formulaParsed;
 					cell.setValueData(Val);
+					var newFormula = cell.formulaParsed;
+					if (ws && ws.dynamicArrayManager && (oldFormula || newFormula)) {
+						ws.dynamicArrayManager.changeFormula(newFormula, oldFormula, cell);
+					}
 				}
 			} else if (AscCH.historyitem_Cell_SetStyle == Type) {
 				if (null != Val) {
@@ -5112,26 +5186,59 @@ function (window, undefined) {
 		this.UndoRedo(Type, Data, nSheetId, false, opt_wb);
 	};
 	UndoRedoArrayFormula.prototype.UndoRedo = function (Type, Data, nSheetId, bUndo, opt_wb) {
-		var ws = this.wb.getWorksheetById(nSheetId);
+		var bbox = Data.range;
+		var formula = Data.formula;
+		let cmIndex = Data.cmIndex;
+		let vmIndex = Data.vmIndex;
+		let ws = this.wb.getWorksheetById(nSheetId);
 		if (null == ws) {
 			return;
 		}
-
-		var bbox = Data.range;
-		var formula = Data.formula;
 		var range = ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2);
 		switch (Type) {
 			case AscCH.historyitem_ArrayFromula_AddFormula:
 				if (!bUndo) {
 					AscCommonExcel.executeInR1C1Mode(false, function () {
-						range.setValue(formula, null, null, bbox);
+						if (formula) {
+							range.setValue(formula, null, null, bbox, null, (cmIndex != null || vmIndex != null) ? {cmIndex: cmIndex, vmIndex: vmIndex, range: bbox} : null);
+						}
+						if (cmIndex != null) {
+							ws.getRange3(bbox.r1, bbox.c1, bbox.r1, bbox.c1)._foreach(function(cell) {
+								if (cell && cell.formulaParsed) {
+									cell.formulaParsed.setCm(cmIndex);
+									cell.formulaParsed.setVm(vmIndex);
+								}
+							});
+						}
 					});
+				} else {
+					ws.getRange3(bbox.r1, bbox.c1, bbox.r1, bbox.c1)._foreach(function(cell) {
+						if (cell && cell.formulaParsed) {
+							//cell.formulaParsed.setCm(null);
+							cell.formulaParsed.setVm(null);
+						}
+					});
+					ws && ws.dynamicArrayManager.recalculateVolatileArrays();
 				}
 				break;
 			case AscCH.historyitem_ArrayFromula_DeleteFormula:
 				if (bUndo) {
-					range.setValue(formula, null, null, bbox);
+					if (vmIndex != null) {
+						range = ws.getRange3(bbox.r1, bbox.c1, bbox.r1, bbox.c1);
+						bbox = new Asc.Range(bbox.c1, bbox.r1, bbox.c1, bbox.r1);
+					}
+					range.setValue(formula, null, null, bbox, null, {cmIndex: cmIndex, vmIndex: vmIndex, range: bbox});
 				}
+				break;
+			case AscCH.historyitem_ArrayFromula_ChangeValueMetaDataIndex:
+
+				let val = bUndo ? Data.undoVmIndex : Data.vmIndex;
+				range._foreach(function(cell) {
+					if (cell && cell.formulaParsed) {
+						cell.formulaParsed.setVm(val);
+					}
+				});
+
 				break;
 		}
 	};

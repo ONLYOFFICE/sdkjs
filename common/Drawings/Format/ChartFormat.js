@@ -2385,6 +2385,9 @@
         }
         return 0;
     };
+    CBaseChartObject.prototype.getScaleCoefficient = function() {
+        return 1;
+    };
 
     function getMinMaxFromArrPoints(aPoints) {
         if(Array.isArray(aPoints) && aPoints.length > 0) {
@@ -2545,6 +2548,15 @@
         if(this.bDelete) {
             return;
         }
+        this.recalculateInternal();
+        if(this.chart) {
+            this.chart.addToSetPosition(this);
+        }
+    };
+    CDLbl.prototype.recalculateInternal = function() {
+        if(this.bDelete) {
+            return;
+        }
         AscFormat.ExecuteNoHistory(function() {
             if(this.recalcInfo.recalculateBrush) {
                 this.recalculateBrush();
@@ -2566,16 +2578,13 @@
                 this.recalculateContent();
                 //this.recalcInfo.recalculateContent = false;
             }
-            if(this.recalcInfo.recalcTransform) {
+            if(this.recalcInfo.recalculateTransform) {
                 this.recalculateTransform();
-                //this.recalcInfo.recalcTransform = false;
+                //this.recalcInfo.recalculateTransform = false;
             }
             if(this.recalcInfo.recalculateTransformText) {
                 this.recalculateTransformText();
                 //this.recalcInfo.recalcTransformText = false;
-            }
-            if(this.chart) {
-                this.chart.addToSetPosition(this);
             }
         }, this, []);
     };
@@ -3810,6 +3819,29 @@
         this.txPr = pr;
         this.setParentToChild(pr);
     };
+    CDLbl.prototype.replaceTextContent = function(sText) {
+        let sVal = typeof sText === "string" ? sText : "";
+        if(this.tx && this.tx.rich && this.tx.rich.content) {
+            this.tx.rich.content.ClearContent(true);
+            AddToContentFromString(this.tx.rich.content, sVal);
+        } else {
+            let oTx = this.tx || new CChartText();
+            let oBody = AscFormat.CreateTextBodyFromString(sVal, this.getDrawingDocument(), this);
+            oTx.setRich(oBody);
+            if(!this.tx) {
+                this.setTx(oTx);
+            }
+        }
+        this.recalcInfo.recalculateTxBody = true;
+        this.recalcInfo.recalculateContent = true;
+        this.recalcInfo.recalcTransform = true;
+        this.recalcInfo.recalculateTransformText = true;
+    };
+    CDLbl.prototype.replaceTextContentNoHistory = function(sText) {
+        AscFormat.ExecuteNoHistory(function() {
+            this.replaceTextContent(sText);
+        }, this, []);
+    };
     CDLbl.prototype.handleUpdateFill = function() {
         this.Refresh_RecalcData2();
     };
@@ -4784,24 +4816,32 @@
 		}
 	};
 	CSeriesBase.prototype.supportsErrorBars = function () {
-		if (this instanceof AscFormat.CAreaSeries ||
-			this instanceof AscFormat.CBarSeries ||
-			this instanceof AscFormat.CBubbleSeries ||
-			this instanceof AscFormat.CScatterSeries ||
-			this instanceof AscFormat.CLineSeries) {
+		const objectType = this.getObjectType();
+		const supportedTypes = [
+			AscDFH.historyitem_type_AreaSeries,
+			AscDFH.historyitem_type_BarSeries,
+			AscDFH.historyitem_type_BubbleSeries,
+			AscDFH.historyitem_type_ScatterSer,
+			AscDFH.historyitem_type_LineSeries
+		];
 
+		if (supportedTypes.indexOf(objectType) >= 0) {
 			const chart = this.parent;
 			return !(chart && chart.b3D);
 		}
 		return false;
 	};
 	CSeriesBase.prototype.supportsTrendlines = function () {
-		if (this instanceof AscFormat.CAreaSeries ||
-			this instanceof AscFormat.CBarSeries ||
-			this instanceof AscFormat.CBubbleSeries ||
-			this instanceof AscFormat.CScatterSeries ||
-			this instanceof AscFormat.CLineSeries) {
+		const objectType = this.getObjectType();
+		const supportedTypes = [
+			AscDFH.historyitem_type_AreaSeries,
+			AscDFH.historyitem_type_BarSeries,
+			AscDFH.historyitem_type_BubbleSeries,
+			AscDFH.historyitem_type_ScatterSer,
+			AscDFH.historyitem_type_LineSeries
+		];
 
+		if (supportedTypes.indexOf(objectType) >= 0) {
 			const chart = this.parent;
 			return !(chart && chart.b3D);
 		}
@@ -4824,8 +4864,7 @@
 		if (!Array.isArray(trendlines) || trendlines.length === 0)
 			return;
 
-		const allowedTypes = [AscFormat.CAreaSeries, AscFormat.CBarSeries, AscFormat.CBubbleSeries, AscFormat.CLineSeries, AscFormat.CScatterSeries];
-		const canAddTrendlines = allowedTypes.some(function (seriesType) { return this instanceof seriesType; }, this);
+		const canAddTrendlines = this.supportsTrendlines();
 		if (!canAddTrendlines)
 			return;
 
@@ -5271,6 +5310,7 @@
             }
             case AscDFH.historyitem_PlotArea_SetLayout:
             {
+				this.Refresh_RecalcData2(data);
                 break;
             }
             case AscDFH.historyitem_PlotArea_SetSerAx:
@@ -5729,7 +5769,7 @@
                             }
                         }
                     }
-                    else if(oFirstChart.getChartType() === Asc.c_oAscChartTypeSettings.areaNormal
+                    else if(oFirstChart.getChartType() === Asc.c_oAscChartTypeSettings.areaStacked
                         && oSecondChart.getChartType() === Asc.c_oAscChartTypeSettings.barNormal) {
                         if(!oFirstChart.isSecondaryAxis()) {
                             if(!oSecondChart.isSecondaryAxis()) {
@@ -6334,7 +6374,7 @@
 			this.switchToRadar(nType);
         }
 		this.getAllSeries().forEach(function(s) {
-			s.checkSeriesAfterChangeType();
+			s.checkSeriesAfterChangeType(nType);
 		});
     };
     CPlotArea.prototype.getAllSeries = function() {
@@ -14470,7 +14510,7 @@
     };
     CTitle.prototype.Refresh_RecalcData2 = function(pageIndex) {
         this.recalcInfo.recalculateTxBody = true;
-        this.recalcInfo.recalcTransform = true;
+        this.recalcInfo.recalculateTransform = true;
         this.recalcInfo.recalculateTransformText = true;
         this.recalcInfo.recalculateContent = true;
         this.recalcInfo.recalculateGeometry = true;
@@ -14725,7 +14765,7 @@
     };
     CTitle.prototype.resetRecalcFlags = function() {
         this.recalcInfo.recalculateTxBody = true;
-        this.recalcInfo.recalcTransform = true;
+        this.recalcInfo.recalculateTransform = true;
         this.recalcInfo.recalculateTransformText = true;
         this.recalcInfo.recalculateContent = true;
         this.recalcInfo.recalculateGeometry = true;
@@ -14802,9 +14842,9 @@
                 this.recalculateContent();
                 this.recalcInfo.recalculateContent = false;
             }
-            if(this.recalcInfo.recalcTransform) {
+            if(this.recalcInfo.recalculateTransform) {
                 this.recalculateTransform();
-                this.recalcInfo.recalcTransform = false;
+                this.recalcInfo.recalculateTransform = false;
             }
             if(this.recalcInfo.recalculateGeometry) {
                 this.recalculateGeometry && this.recalculateGeometry();
@@ -16860,6 +16900,9 @@
         }
         return false;
     };
+    CalcLegendEntry.prototype.getScaleCoefficient = function() {
+        return 1;
+    };
 
     function CompiledMarker() {
         this.spPr = new AscFormat.CSpPr();
@@ -16894,6 +16937,9 @@
     };
 	CompiledMarker.prototype.drawTxBody = function() {};
 
+    CompiledMarker.prototype.getScaleCoefficient = function() {
+        return 1;
+    };
     function CUnionMarker() {
         this.lineMarker = null;
         this.marker = null;
@@ -16903,7 +16949,9 @@
         this.lineMarker && this.lineMarker.draw(g);
         this.marker && this.marker.draw(g);
     };
-
+    CUnionMarker.prototype.getScaleCoefficient = function() {
+        return 1;
+    };
     function CreateMarkerGeometryByType(type) {
         var ret = new AscFormat.Geometry();
         var w = 43200, h = 43200;
@@ -18088,6 +18136,18 @@
             }
         }
     };
+	CDataRefs.prototype.collectInsideAndIntersectionRefs = function(aRanges, aCollectedRefs) {
+		if(this.ref) {
+			for(var nRange = 0; nRange < aRanges.length; ++nRange) {
+				const oInsideRange = aRanges[nRange].insideRange;
+				const oIntersectionRange = aRanges[nRange].intersectionRange;
+				if(this.isInside(oInsideRange) && this.hasIntersection(oIntersectionRange)) {
+					aCollectedRefs.push(this.ref);
+					break;
+				}
+			}
+		}
+	};
 
     var SERIES_COMPARE_RESULT_NONE = 0;
     var SERIES_COMPARE_RESULT_RIGHT = 1;
@@ -18299,6 +18359,17 @@
             this.errBarsPlus[nIdx].collectIntersectionRefs(aRanges, aCollectedRefs);
         }
     };
+	CSeriesDataRefs.prototype.collectInsideAndIntersectionRefs = function(aRanges, aCollectedRefs) {
+		this.val.collectInsideAndIntersectionRefs(aRanges, aCollectedRefs);
+		this.cat.collectInsideAndIntersectionRefs(aRanges, aCollectedRefs);
+		this.tx.collectInsideAndIntersectionRefs(aRanges, aCollectedRefs);
+		for(let nIdx = 0; nIdx < this.errBarsMinus.length; ++nIdx) {
+			this.errBarsMinus[nIdx].collectInsideAndIntersectionRefs(aRanges, aCollectedRefs);
+		}
+		for(let nIdx = 0; nIdx < this.errBarsPlus.length; ++nIdx) {
+			this.errBarsPlus[nIdx].collectInsideAndIntersectionRefs(aRanges, aCollectedRefs);
+		}
+	};
     CSeriesDataRefs.prototype.collectIntersectionRefsForInsertColRow = function(oRange, aCollectedRefs, isInsertCol) {
         this.val.collectRefsIntersectsForInsertColRow(oRange, aCollectedRefs, isInsertCol);
     };
@@ -19194,6 +19265,28 @@
             }
         }
     };
+	CChartDataRefs.prototype.collectInsideAndIntersectionRefs = function(aRanges, aCollectedRefs) {
+		if(!Array.isArray(aRanges) || aRanges.length === 0) {
+			return;
+		}
+		var aIntersectionRanges = [];
+		var oRange;
+		for(var nRange = 0; nRange < aRanges.length; ++nRange) {
+			oRange = aRanges[nRange];
+			const oIntersectionRange = oRange.intersectionRange;
+			if(this.hasIntersection(oIntersectionRange)) {
+				aIntersectionRanges.push(oRange);
+			}
+		}
+		if(aIntersectionRanges.length > 0) {
+			for(var nSeries = 0; nSeries < this.seriesRefs.length; ++nSeries) {
+				this.seriesRefs[nSeries].collectInsideAndIntersectionRefs(aIntersectionRanges, aCollectedRefs);
+			}
+			for(var nLblRef = 0; nLblRef < this.labelsRefs.length; ++nLblRef) {
+				this.labelsRefs[nLblRef].collectInsideAndIntersectionRefs(aIntersectionRanges, aCollectedRefs);
+			}
+		}
+	};
 
     function isValidChartRange(sRange) {
         if(sRange === "") {

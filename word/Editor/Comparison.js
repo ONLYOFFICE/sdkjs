@@ -561,7 +561,7 @@
 					nMainElementsCount -= nInnerElementIndex + 1;
 					nElementIndex -= 1;
 					if (this.revisedElements[nElementIndex] && this.mainElements[nElementIndex]) {
-						nInnerElementIndex = this.revisedElements[nElementIndex].revisedElements.length - 1;
+						nInnerElementIndex = this.revisedElements[nElementIndex].elements.length - 1;
 					}
 				}
 				if (nElementIndex < 0) {
@@ -580,13 +580,13 @@
 				do {
 					nRevisedRunIndex -= 1;
 					bSaveOldRevisedCount = false;
-				} while (this.isSkippedElement(oRevisedContent[nRevisedRunIndex]) && nRevisedRunIndex >= 0)
+				} while (nRevisedRunIndex >= 0 && this.isSkippedElement(oRevisedContent[nRevisedRunIndex]))
 			}
 			if (nMainElementsCount === 0) {
 				do {
 					nMainRunIndex -= 1;
 					bSaveOldMainCount = false;
-				} while (this.isSkippedElement(oMainContent[nMainRunIndex]) && nMainRunIndex >= 0)
+				} while (nMainRunIndex >= 0 && this.isSkippedElement(oMainContent[nMainRunIndex]))
 			}
 		}
 		return arrResult;
@@ -785,13 +785,13 @@
 				do {
 					nRevisedRunIndex -= 1;
 					bSaveOldRevisedCount = false;
-				} while (this.isSkippedElement(oRevisedContent[nRevisedRunIndex]) && nRevisedRunIndex >= 0)
+				} while (nRevisedRunIndex >= 0 && this.isSkippedElement(oRevisedContent[nRevisedRunIndex]))
 			}
 			if (nMainElementsCount === 0) {
 				do {
 					nMainRunIndex -= 1;
 					bSaveOldMainCount = false;
-				} while (this.isSkippedElement(oMainContent[nMainRunIndex]) && nMainRunIndex >= 0)
+				} while (nMainRunIndex >= 0 && this.isSkippedElement(oMainContent[nMainRunIndex]))
 			}
 		}
 		return arrResult;
@@ -2172,6 +2172,7 @@
 
 	    this.nInsertChangesType = reviewtype_Add;
 	    this.nRemoveChangesType = reviewtype_Remove;
+			this.originalComparison = null;
     }
 		CDocumentComparison.prototype.skipCommentElementOnCopyParagraph = function (oParaComment) {
 			if (this.options.comments) {
@@ -2190,6 +2191,7 @@
 		oResolveConflictComparison.oComparisonMoveMarkManager = this.oComparisonMoveMarkManager;
 		oResolveConflictComparison.CommentsMap = this.CommentsMap;
 		oResolveConflictComparison.StylesMap = this.StylesMap;
+		oResolveConflictComparison.originalComparison = this.originalComparison;
 		fCallback();
 		this.oBookmarkManager.mapBookmarkMeeting = oOldBookmarkMeeting;
 		this.oCommentManager.mapCommentMeeting = oOldCommentsMeeting;
@@ -2291,9 +2293,11 @@
             oDiff.matchTrees(oMatching);
             const oDeltaCollector = new AscCommon.DeltaCollector(oMatching, oOrigNode, oReviseNode);
             oDeltaCollector.forEachChange(oThis.forEachChangeCallback);
-            oThis.compareDrawingObjectsFromMatching(oMatching, bOrig);
+						if (oThis.originalComparison) {
+							oThis.originalComparison.compareDrawingObjectsFromMatching(oMatching, bOrig);
+							oThis.originalComparison.compareNotes(oMatching);
+						}
             oThis.applyChangesToChildNode(oOrigNode);
-            oThis.compareNotes(oMatching);
         };
     };
 
@@ -2640,6 +2644,7 @@
         {
             return;
         }
+			this.originalComparison = this;
 				this.oBookmarkManager.init(oOriginalDocument, oRevisedDocument);
         const oThis = this;
         const aImages = AscCommon.pptx_content_loader.End_UseFullUrl();
@@ -3031,7 +3036,7 @@
 			const sRevisedStyleId  = this.copyStyleById(oRevisedTable.TableStyle);
 
 			const oMainTableLook = oMainTable.Get_TableLook();
-			const oRevisedTableLook = oMainTable.Get_TableLook();
+			const oRevisedTableLook = oRevisedTable.Get_TableLook();
 			if (oMainPr.Is_Equal(oRevisedPr) && sMainStyleId === sRevisedStyleId && (oMainTableLook && oMainTableLook.IsEqual(oRevisedTableLook) || oMainTableLook === oRevisedTableLook)) {
 				return;
 			}
@@ -4494,7 +4499,7 @@
 	CRunCollector.prototype.nextRun = function () {
 		do {
 			this.runIndex -= 1;
-		} while (!(this.getRun() instanceof AscCommonWord.ParaRun) && this.runIndex >= 0 || this.getRun().Content.length === 0)
+		} while (this.runIndex >= 0 && (!(this.getRun() instanceof AscCommonWord.ParaRun) || this.getRun().Content.length === 0))
 		const oCurRun = this.getRun();
 		if (oCurRun) {
 			this.addToCollectCurrentRun();

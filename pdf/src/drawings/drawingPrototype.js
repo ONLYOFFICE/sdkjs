@@ -72,9 +72,9 @@
     CPdfDrawingPrototype.prototype.IsEditFieldShape = function() {
         return false;
     };
-    CPdfDrawingPrototype.prototype.OnContentChange = function() {
-        return this.SetNeedRecalc(true);
-    };
+	CPdfDrawingPrototype.prototype.GetEditField = function() {
+		return null;
+	};
     CPdfDrawingPrototype.prototype.IsPdfDrawing = function() {
         return true;
     };
@@ -292,6 +292,8 @@
     };
     
     CPdfDrawingPrototype.prototype.SetFromScan = function(bFromScan) {
+		AscCommon.History.Add(new CChangesPDFDrawingFromScan(this, this._isFromScan, bFromScan));
+
         this._isFromScan = bFromScan;
     };
     CPdfDrawingPrototype.prototype.IsFromScan = function() {
@@ -308,6 +310,7 @@
     CPdfDrawingPrototype.prototype.OnContentChange = function() {
         let oGroup = this.getMainGroup();
         if (oGroup) {
+			oGroup.SetWasChanged && oGroup.SetWasChanged(true);
             oGroup.SetNeedRecalc && oGroup.SetNeedRecalc(true);
         }
         else {
@@ -339,7 +342,7 @@
         let oNewPage    = oDoc.GetPageInfo(nPage);
 
         if (oNewPage) {
-            oDoc.RemoveDrawing(this.GetId(), true);
+            oDoc.RemoveDrawing(this.GetId());
             oDoc.AddDrawing(this, nPage);
             this.selectStartPage = nPage;
         }
@@ -563,19 +566,15 @@
 
         return false;
     };
-	CPdfDrawingPrototype.prototype.Remove = function(direction, isWord) {
-		let oDoc = this.GetDocument();
-		if (!oDoc)
-			return;
-		
-		let oController = oDoc.GetController();
-		oController.remove(direction, true, false, false, isWord)
-		this.SetNeedRecalc(true);
-	};
 	CPdfDrawingPrototype.prototype.deleteDrawingBase = function() {
 		let oDoc = this.GetDocument();
 		if (!oDoc) {
 			return;
+		}
+
+		let oEditField = this.GetEditField();
+		if (oEditField && !oEditField.IsLocked()) {
+			oDoc.RemoveField(oEditField.GetId());
 		}
 
 		oDoc.RemoveDrawing(this.GetId());
@@ -587,10 +586,69 @@
 		if (!doc || !content)
 			return false;
 		
+        let oPara = content.GetCurrentParagraph();
+        let oRun = oPara.IsSelectionUse() ? oPara.GetElement(oPara.Selection.StartPos) : oPara.GetElement(oPara.CurPos.ContentPos);
+        let oTextPr = oRun.GetDirectTextPr();
+        let sFontName = oTextPr.GetFontFamily();
+
+        let oFontFile;
+        let prefix = AscFonts.getEmbeddedFontPrefix();
+
+        if (sFontName && sFontName.startsWith(prefix)) {
+            let oFontInfo = AscFonts.g_font_infos_embed[AscFonts.g_map_font_index_embed[sFontName]];
+            oFontFile = AscCommon.g_fontManager.LoadFont(AscCommon.g_font_loader.fontFiles[oFontInfo.indexR], oFontInfo.faceIndexR, oTextPr.GetFontSize() || AscFonts.MEASURE_FONTSIZE,
+                false,
+                false,
+                false, false);
+        }
+
         for (let nIdx = 0; nIdx < codePoints.length; ++nIdx) {
             let nCode = codePoints[nIdx];
-            let oItem = AscCommon.IsSpace(nCode) ? new AscWord.CRunSpace(nCode) : new AscWord.CRunText(nCode);
+
+            let oItem;
+            if (oFontFile) {
+                let nGid = oFontFile.GetGIDByUnicode(nCode);
+                if (nGid !== 0) {
+                    oItem = AscCommon.IsSpace(nCode) ? new AscWord.CPdfRunSpace(nGid, nCode, 0, 0) : new AscWord.CPdfRunText(nGid, nCode, 0, 0);
+                }
+                else {
+                    let oGidsMaps = doc.Viewer.file.getGIDByUnicode(sFontName.substr(prefix.length));
+                    nGid = oGidsMaps[nCode];
+                    if (nGid !== undefined) {
+                        oItem = AscCommon.IsSpace(nCode) ? new AscWord.CPdfRunSpace(nGid, nCode, 0, 0) : new AscWord.CPdfRunText(nGid, nCode, 0, 0);
+                    }
+                }
+            }
+
+            let sNewFont;
+            if (!oItem) {
+                if (oFontFile) {
+                    let oFont = AscFonts.g_fontApplication.GetFontInfo(sFontName.substr(prefix.length));
+                    sNewFont = oFont.Name;
+                }
+
+                oItem = AscCommon.IsSpace(nCode) ? new AscWord.CRunSpace(nCode) : new AscWord.CRunText(nCode);
+            }
+            
             controller.paragraphAdd(oItem, false);
+
+            // split run with new text pr
+            if (sNewFont) {
+                oRun = oRun.Paragraph.GetElement(oRun.Paragraph.CurPos.ContentPos);
+
+                let oNewTextPr = oTextPr.Copy();
+                oNewTextPr.RFonts.SetAll(sNewFont, -1);
+
+                oRun.State.Selection.Use = true;
+                oRun.State.Selection.StartPos = oRun.State.ContentPos - 1;
+                oRun.State.Selection.EndPos = oRun.State.ContentPos;
+                
+                oRun.Paragraph.Selection.Use = true;
+                oRun.Paragraph.Selection.StartPos = oRun.Paragraph.CurPos.ContentPos;
+                oRun.Paragraph.Selection.EndPos = oRun.Paragraph.CurPos.ContentPos;
+                
+                oRun.Paragraph.Apply_TextPr(oNewTextPr);
+            }
         }
 
 		return true;
@@ -623,8 +681,34 @@
         return Asc.editor.getPDFDoc().GetDrawingDocument();
     };
     CPdfDrawingPrototype.prototype.handleUpdateRot = function() {
+        this.recalcTransform();
         this.recalcTransformText && this.recalcTransformText();
         this.SetNeedRecalc(true);
+    };
+	CPdfDrawingPrototype.prototype.Set_CurrentElement = function(bUpdate, pageIndex, bNoTextSelection) {
+        let oDoc = this.GetDocument();
+		if (!oDoc) {
+			return;
+		}
+
+        let oController = oDoc.GetController();
+
+		pageIndex = pageIndex !== undefined ? pageIndex : this.GetAbsolutePage();
+		if (bNoTextSelection !== true) {
+			this.SetControllerTextSelection(oController, pageIndex, bNoTextSelection);
+		}
+
+		if(bNoTextSelection !== true) {
+            this.SetControllerTextSelection(oController, pageIndex);
+        }
+        else {
+            oController.resetSelection();
+            oController.selectObject(this, pageIndex);
+        }
+
+        let oGroup = this.getMainGroup && this.getMainGroup();
+        if (!oGroup)
+            oDoc.SetMouseDownObject(this);
     };
 
     /////////////////////////////
