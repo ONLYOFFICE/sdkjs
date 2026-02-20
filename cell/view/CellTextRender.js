@@ -227,10 +227,32 @@
 		};
 
 		CellTextRender.prototype.charOffset = function (pos, lineIndex, h) {
-			var zoom = this.drawingCtx.getZoom();
-			var li = this.lines[lineIndex];
-			return new CharOffset(li.startX + (pos > 0 ? this._calcCharsWidth(li.beg, pos - 1) : 0), Asc.round(
-				h * zoom), Asc.round(li.th * zoom), lineIndex);
+			let zoom = this.drawingCtx.getZoom();
+			let li = this.lines[lineIndex];
+			let left;
+			let isRtl = this.isRtlLine();
+
+			if (pos <= li.beg) {
+				left = isRtl ? (li.startX + li.tw) : li.startX;
+			} else if (pos > li.end) {
+				left = isRtl ? li.startX : (li.startX + li.tw);
+			} else {
+				let found = false;
+				let visibleEndX = li.startX;
+				this._forEachVisualChar(lineIndex, function (charIndex, visualX, width, direction) {
+					let right = visualX + width;
+					if (right > visibleEndX) visibleEndX = right;
+					if (charIndex === pos && !found) {
+						left = (direction === AscBidi.DIRECTION.R) ? right : visualX;
+						found = true;
+					}
+				});
+				if (!found) {
+					left = isRtl ? li.startX : visibleEndX;
+				}
+			}
+
+			return new CharOffset(left, Asc.round(h * zoom), Asc.round(li.th * zoom), lineIndex);
 		};
 
 		CellTextRender.prototype.calcCharOffset = function (pos, lineIndex) {
@@ -276,68 +298,40 @@
 		};
 		
 		CellTextRender.prototype.getCharPosByXY = function(x, y, topLine, zoom) {
-			
-			let line = this.getLineByY(y, topLine, zoom);
-			if (line < 0) {
-				return -1;
-			}
-			
-			let lineInfo = this.getLineInfo(line);
-			let _x = lineInfo.startX;
-			let dist = Math.abs(x - _x);
-			let resultPos = lineInfo.beg;
-			
-			for (let charPos = lineInfo.beg; charPos <= lineInfo.end; ++charPos) {
-				
-				if (!this._isCombinedChar(charPos) && dist > Math.abs(x - _x)) {
-					dist = Math.abs(x - _x);
-					resultPos = charPos;
-				}
-				
-				_x += this.getCharWidth(charPos);
-			}
-			
-			if (Math.abs(x - _x) < dist)
-				resultPos = line === this.getLinesCount() - 1 ?  lineInfo.end + 1 : lineInfo.end;
-			
-			return resultPos;
-		};
-
-		CellTextRender.prototype.getCharPosByXY = function(x, y, topLine, zoom) {
 			let line = this.getLineByY(y, topLine, zoom);
 			if (line < 0) {
 				return -1;
 			}
 
 			let lineInfo = this.getLineInfo(line);
-			let _x = lineInfo.startX;
-			let dist = Math.abs(x - _x);
-			let resultPos = lineInfo.beg;
+			let bestPos = lineInfo.beg;
+			let bestDist = Infinity;
+			let self = this;
 
-			for (let charPos = lineInfo.beg; charPos <= lineInfo.end; ++charPos) {
+			this._forEachVisualChar(line, function(charIndex, visualX, width, direction) {
+				if (self._isCombinedChar(charIndex)) return;
 
-				if (!this._isCombinedChar(charPos) && dist > Math.abs(x - _x)) {
-					dist = Math.abs(x - _x);
-					resultPos = charPos;
+				let leftEdge = visualX;
+				let rightEdge = visualX + width;
+
+				if (direction === AscBidi.DIRECTION.R) {
+					let distRight = Math.abs(x - rightEdge);
+					let distLeft = Math.abs(x - leftEdge);
+					if (distRight < bestDist) { bestDist = distRight; bestPos = charIndex; }
+					if (distLeft < bestDist) { bestDist = distLeft; bestPos = charIndex + 1; }
+				} else {
+					let distLeft = Math.abs(x - leftEdge);
+					let distRight = Math.abs(x - rightEdge);
+					if (distLeft < bestDist) { bestDist = distLeft; bestPos = charIndex; }
+					if (distRight < bestDist) { bestDist = distRight; bestPos = charIndex + 1; }
 				}
+			});
 
-				_x += this.getCharWidth(charPos);
-			}
+			let maxPos = line === this.getLinesCount() - 1 ? lineInfo.end + 1 : lineInfo.end;
+			if (bestPos > maxPos) bestPos = maxPos;
+			if (bestPos < lineInfo.beg) bestPos = lineInfo.beg;
 
-			if (Math.abs(x - _x) < dist)
-				resultPos = line === this.getLinesCount() - 1 ?  lineInfo.end + 1 : lineInfo.end;
-
-			// Если текст обрабатывался как bidi, корректируем позицию
-			if (this.bidiProcessed && this.baseDirection === AscFonts.HB_DIRECTION.HB_DIRECTION_RTL) {
-				let line = this.getLineByY(y, topLine, zoom);
-				if (line >= 0) {
-					let lineInfo = this.getLineInfo(line);
-					// Для RTL строк логика поиска позиции может быть скорректирована
-					// Пока оставляем базовую логику, но это место для дальнейших улучшений
-				}
-			}
-
-			return resultPos;
+			return bestPos;
 		};
 		
 		CellTextRender.prototype.getLineByY = function(y, topLine, zoom) {

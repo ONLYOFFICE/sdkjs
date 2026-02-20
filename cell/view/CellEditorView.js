@@ -1671,21 +1671,18 @@ function (window, undefined) {
 			line = this.textRender.getLineInfo(begInfo.lineIndex);
 			topLine = this.textRender.calcLineOffset(begInfo.lineIndex);
 			endInfo = this.textRender.calcCharOffset(Math.max(begPos, endPos));
-			h = asc_round(line.th * zoom);
-			y = topLine - top;
-			if (begInfo.lineIndex === endInfo.lineIndex) {
-				drawRect(begInfo.left, y, endInfo.left - begInfo.left, h);
-			} else {
-				drawRect(begInfo.left, y, line.tw - begInfo.left + line.startX, h);
-				for (i = begInfo.lineIndex + 1, y += h; i < endInfo.lineIndex; ++i, y += h) {
-					line = this.textRender.getLineInfo(i);
-					h = asc_round(line.th * zoom);
-					drawRect(line.startX, y, line.tw, h);
-				}
-				line = this.textRender.getLineInfo(endInfo.lineIndex);
-				topLine = this.textRender.calcLineOffset(endInfo.lineIndex);
-				if (line) {
-					drawRect(line.startX, topLine - top, endInfo.left - line.startX, asc_round(line.th * zoom));
+
+			let selBeg = Math.min(begPos, endPos);
+			let selEnd = Math.max(begPos, endPos);
+			for (i = begInfo.lineIndex; i <= endInfo.lineIndex; ++i) {
+				line = this.textRender.getLineInfo(i);
+				if (!line) continue;
+				topLine = this.textRender.calcLineOffset(i);
+				h = asc_round(line.th * zoom);
+				y = topLine - top;
+				let rects = this._collectSelectionRects(i, selBeg, selEnd);
+				for (let r = 0; r < rects.length; ++r) {
+					drawRect(rects[r].x, y, rects[r].w, h);
 				}
 			}
 		}
@@ -1697,6 +1694,39 @@ function (window, undefined) {
 		externalSelectionController && externalSelectionController.sendExternalChangeSelection();
 
 		return selection;
+	};
+
+	CellEditor.prototype._collectSelectionRects = function (lineIndex, selBeg, selEnd) {
+		let rects = [];
+		let currentX = null;
+		let currentW = 0;
+
+		this.textRender._forEachVisualChar(lineIndex, function (charIndex, visualX, width, direction) {
+			if (charIndex >= selBeg && charIndex < selEnd) {
+				if (currentX === null) {
+					currentX = visualX;
+					currentW = width;
+				} else if (Math.abs(visualX - (currentX + currentW)) < 0.5) {
+					currentW += width;
+				} else {
+					rects.push({x: currentX, w: currentW});
+					currentX = visualX;
+					currentW = width;
+				}
+			} else {
+				if (currentX !== null) {
+					rects.push({x: currentX, w: currentW});
+					currentX = null;
+					currentW = 0;
+				}
+			}
+		});
+
+		if (currentX !== null) {
+			rects.push({x: currentX, w: currentW});
+		}
+
+		return rects;
 	};
 
 	CellEditor.prototype.calculateOffset = function (pos) {
@@ -2880,7 +2910,10 @@ function (window, undefined) {
 						oEvent.IsShift() ? oThis._selectChars(kBeginOfLine) : oThis._moveCursor(kBeginOfLine);
 					} else {
 						const bWord = bIsMacOs ? oEvent.IsAlt() : oEvent.CtrlKey;
-						const nKind = bWord ? kPrevWord : kPrevChar;
+						const isRtl = oThis.textRender.isRtlLine();
+						const nKind = isRtl
+							? (bWord ? kNextWord : kNextChar)
+							: (bWord ? kPrevWord : kPrevChar);
 						oEvent.IsShift() ? oThis._selectChars(nKind) : oThis._moveCursor(nKind);
 					}
 
@@ -2920,7 +2953,10 @@ function (window, undefined) {
 						oEvent.IsShift() ? oThis._selectChars(kEndOfLine) : oThis._moveCursor(kEndOfLine);
 					} else {
 						const bWord = bIsMacOs ? oEvent.IsAlt() : oEvent.CtrlKey;
-						const nKind = bWord ? kNextWord : kNextChar;
+						const isRtl = oThis.textRender.isRtlLine();
+						const nKind = isRtl
+							? (bWord ? kPrevWord : kPrevChar)
+							: (bWord ? kNextWord : kNextChar);
 						oEvent.IsShift() ? oThis._selectChars(nKind) : oThis._moveCursor(nKind);
 					}
 					break;
