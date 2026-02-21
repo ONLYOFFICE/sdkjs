@@ -300,6 +300,11 @@
 		this.nat_scale = 0;
 		this.nat_y1 = 0;
 		this.nat_y2 = 0;
+
+		// hhea table metrics (scaled by r2 = ppiX/72)
+		this.hhea_asc = 0;
+		this.hhea_desc = 0;
+		this.hhea_gap = 0;
 	}
 
 	FontMetrics.prototype.clone = function () {
@@ -311,6 +316,10 @@
 		res.nat_scale = this.nat_scale;
 		res.nat_y1 = this.nat_y1;
 		res.nat_y2 = this.nat_y2;
+
+		res.hhea_asc = this.hhea_asc;
+		res.hhea_desc = this.hhea_desc;
+		res.hhea_gap = this.hhea_gap;
 		return res;
 	};
 
@@ -872,6 +881,12 @@
 
 		res.nat_y1 *= r2;
 		res.nat_y2 *= r2;
+
+		// hhea metrics for external leading and adaptive padding
+		res.hhea_asc = faceMetrics[3] * r2;
+		res.hhea_desc = faceMetrics[4] * r2;
+		res.hhea_gap = faceMetrics[5] * r2;
+
 		return res;
 	};
 

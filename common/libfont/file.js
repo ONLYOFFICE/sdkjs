@@ -1714,6 +1714,10 @@
 				ret.push(face.header_yMax);
 				ret.push(face.header_yMin);
 			}
+			// hhea table metrics for external leading and adaptive padding
+			ret.push(face.ascender);   // hhea ascender (positive)
+			ret.push(face.descender);  // hhea descender (negative)
+			ret.push(face.height - face.ascender + face.descender); // hhea lineGap
 			return ret;
 		};
 

@@ -724,13 +724,27 @@
 			var l = new lineMetrics();
 
 			if (!va) {
-				var _a = Math.max(0, asc.ceil(fm.nat_y1 * f / fm.nat_scale));
-				var _d = Math.max(0, asc.ceil(-fm.nat_y2 * f / fm.nat_scale)) + 1; // 1 px for border
+				let _a = Math.max(0, asc.ceil(fm.nat_y1 * f / fm.nat_scale));
+				let _d = Math.max(0, asc.ceil(-fm.nat_y2 * f / fm.nat_scale));
+				let base = _a + _d;
 
-				l.th = _a + _d;
+				// External leading: GDI tmExternalLeading equivalent
+				// EL = max(0, ceil((hheaGap - (winH - hheaH)) * ppem / UPM))
+				let winH_s = fm.nat_y1 - fm.nat_y2;
+				let hheaH_s = fm.hhea_asc - fm.hhea_desc;
+				let el_arg = fm.hhea_gap - (winH_s - hheaH_s);
+				let el = (el_arg > 0) ? Math.max(0, asc.ceil(el_arg * f / fm.nat_scale)) : 0;
+
+				// Adaptive padding: ceil(0.1 * ppem * UPM / winH)
+				let ppiX = AscCommon.AscBrowser.convertToRetinaValue(96, true);
+				let ppem = f * ppiX / 72;
+				let winH_du = winH_s * 72 / ppiX;
+				let adaptive = asc.ceil(0.1 * ppem * fm.nat_scale / winH_du);
+
+				l.th = base + Math.max(el, adaptive);
 				l.bl = _a;
 				l.a = _a;
-				l.d = _d;
+				l.d = l.th - _a;
 			} else {
 				var ppi = 96;
 				var hpt = f * 1.275;
@@ -774,23 +788,36 @@
 		StringRender.prototype._calcLineMetrics2 = function (f, va, fm) {
 			var l = new lineMetrics();
 
-			var a = Math.max(0, asc.ceil(fm.nat_y1 * f / fm.nat_scale));
-			var d = Math.max(0, asc.ceil(-fm.nat_y2 * f / fm.nat_scale)) + 1; // 1 px for border
+			let _a = Math.max(0, asc.ceil(fm.nat_y1 * f / fm.nat_scale));
+			let _d = Math.max(0, asc.ceil(-fm.nat_y2 * f / fm.nat_scale));
+			let base = _a + _d;
+
+			// External leading: GDI tmExternalLeading equivalent
+			let winH_s = fm.nat_y1 - fm.nat_y2;
+			let hheaH_s = fm.hhea_asc - fm.hhea_desc;
+			let el_arg = fm.hhea_gap - (winH_s - hheaH_s);
+			let el = (el_arg > 0) ? Math.max(0, asc.ceil(el_arg * f / fm.nat_scale)) : 0;
+
+			// Adaptive padding: ceil(0.1 * ppem * UPM / winH)
+			let ppiX = AscCommon.AscBrowser.convertToRetinaValue(96, true);
+			let ppem = f * ppiX / 72;
+			let winH_du = winH_s * 72 / ppiX;
+			let adaptive = asc.ceil(0.1 * ppem * fm.nat_scale / winH_du);
 
 			/*
 			// ToDo
 			if (va) {
 				var k = (AscCommon.vertalign_SuperScript === va) ? AscCommon.vaKSuper : AscCommon.vaKSub;
-				d += asc.ceil((a + d) * k);
+				_d += asc.ceil((_a + _d) * k);
 				f = asc.ceil(f * 2 / 3 / 0.5) * 0.5; // Round 0.5
-				a = Math.max(0, asc.ceil(fm.nat_y1 * f / fm.nat_scale));
+				_a = Math.max(0, asc.ceil(fm.nat_y1 * f / fm.nat_scale));
 			}
 			*/
 
-			l.th = a + d;
-			l.bl = a;
-			l.a = a;
-			l.d = d;
+			l.th = base + Math.max(el, adaptive);
+			l.bl = _a;
+			l.a = _a;
+			l.d = l.th - _a;
 
 			return l;
 		};
