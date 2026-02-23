@@ -11270,6 +11270,40 @@ Paragraph.prototype.Internal_CompiledParaPrPresentation = function(Lvl, bNoMerge
 			Pr.ParaPr.Jc = AscCommon.align_Left;
 	}
 
+	if (Pr.ParaPr.Bidi && !(logicDocument && logicDocument.IsDocumentEditor()))
+	{
+		let jcExplicit = false;
+
+		if (!(bNoMergeDefault === true) && this.Pr.Jc !== undefined)
+		{
+			jcExplicit = true;
+		}
+
+		if (!jcExplicit)
+		{
+			let sid = styleObject.lastId;
+			let visited = {};
+			while (sid && !visited[sid])
+			{
+				visited[sid] = true;
+				let style = Styles.Style[sid];
+				if (!style)
+					break;
+				if (style.ParaPr && style.ParaPr.Jc !== undefined)
+				{
+					jcExplicit = true;
+					break;
+				}
+				sid = style.BasedOn;
+			}
+		}
+
+		if (!jcExplicit)
+		{
+			Pr.ParaPr.Jc = AscCommon.align_Right;
+		}
+	}
+
 	return Pr;
 };
 Paragraph.prototype.getCompiledPrFromStyle = function()
