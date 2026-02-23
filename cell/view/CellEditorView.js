@@ -1450,6 +1450,9 @@ function (window, undefined) {
 
 			this._updateTextAlign();
 			tm = this.textRender.measureString(fragments, this.textFlags, this._getContentWidth());
+			if (this.textFlags.textAlign === null) {
+				this.textFlags.textAlign = this.textRender.getEffectiveAlign();
+			}
 
 			if (!this.textFlags.wrapText && !this.textFlags.wrapOnlyCE) {
 				while (tm.width > this._getContentWidth()) {

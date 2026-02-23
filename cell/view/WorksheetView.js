@@ -19504,6 +19504,9 @@ function isAllowPasteLink(pastedWb) {
 		if (AscCommon.align_Distributed === fl.textAlign) {
 			fl.textAlign = AscCommon.align_Center;
 		}
+		if (align && align.getAlignHorizontal() === null) {
+			fl.textAlign = null;
+		}
 
 		let offset = this._calcActiveCellOffset();
 		if (this.topLeftFrozenCell) {
