@@ -79,6 +79,29 @@ $(function ()
 		assert.strictEqual(apiParagraph.GetShd().IsAutoColor(), true, 'Check shd color set with ApiColor (auto)');
 	});
 	
+	QUnit.test('GetRange', function (assert)
+	{
+		const detachedParagraph = AscTest.JsApi.CreateParagraph();
+		assert.throws(
+			function() { detachedParagraph.GetRange(); },
+			/Paragraph must be attached to document before getting its range/,
+			"GetRange throws when paragraph is not attached to document"
+		);
+		
+		const doc = AscTest.JsApi.GetDocument();
+		const apiParagraph = AscTest.JsApi.CreateParagraph();
+		apiParagraph.AddText("Hello World");
+		doc.Push(apiParagraph);
+		
+		const fullRange = apiParagraph.GetRange();
+		assert.ok(fullRange !== null, "GetRange returns non-null range for attached paragraph");
+		assert.strictEqual(fullRange.GetText(), "Hello World\r\n", "Full range text matches paragraph text");
+		
+		const partialRange = apiParagraph.GetRange(0, 5);
+		assert.ok(partialRange !== null, "GetRange with bounds returns non-null range");
+		assert.strictEqual(partialRange.GetText(), "Hello", "Partial range text matches expected substring");
+	});
+	
 	QUnit.test('SetColor, GetColor', function (assert) {
 		const hexColor = AscTest.JsApi.HexColor('#bada55');
 		const themeColor = AscTest.JsApi.ThemeColor('accent2');

@@ -51,6 +51,7 @@ AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_Locks]            = CChang
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Start_Redact]     = CChangesPDFDocumentStartRedact;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_Part_Redact]      = CChangesPDFDocumentPartRedact;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Document_End_Redact]       = CChangesPDFDocumentEndRedact;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Embed_Fonts_Map]       	= CChangesEmbedFontsMap;
 
 function CChangesPDFArrayOfDoubleProperty(Class, Old, New) {
 	AscDFH.CChangesBaseProperty.call(this, Class, Old, New);
@@ -1578,4 +1579,52 @@ CChangesPDFDocumentEndRedact.prototype.ReadFromBinary = function(Reader)
 };
 CChangesPDFDocumentEndRedact.prototype.CreateReverseChange = function() {
     return new this.constructor(this.Class, this.RedactId, this.PageId, this.QuadsFlat);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesEmbedFontsMap(Class, oOldFontMap, oNewFontsMap) {
+	AscDFH.CChangesBaseStringProperty.call(this, Class, oOldFontMap, oNewFontsMap);
+}
+CChangesEmbedFontsMap.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesEmbedFontsMap.prototype.constructor = CChangesEmbedFontsMap;
+CChangesEmbedFontsMap.prototype.Type = AscDFH.historyitem_Pdf_Embed_Fonts_Map;
+CChangesEmbedFontsMap.prototype.CreateReverseChange = function() {
+	return new this.constructor(this.Class, this.New, this.Old);
+};
+CChangesEmbedFontsMap.prototype.private_SetValue = function(Value) {
+	Asc.editor.embeddedFontsMap = Value ? JSON.parse(Value) : Value;
+};
+
+CChangesEmbedFontsMap.prototype.WriteToBinary = function(Writer) {
+	let nFlags = 0;
+
+	if (undefined === this.New)
+		nFlags |= 1;
+
+	if (undefined === this.Old)
+		nFlags |= 2;
+
+	Writer.WriteLong(nFlags);
+
+	if (undefined !== this.New)
+		Writer.WriteString2(this.New);
+
+	if (undefined !== this.Old)
+		Writer.WriteString2(this.Old);
+};
+CChangesEmbedFontsMap.prototype.ReadFromBinary = function(Reader) {
+	let nFlags = Reader.GetLong();
+
+	if (nFlags & 1)
+		this.New = undefined;
+	else
+		this.New = Reader.GetString2();
+
+	if (nFlags & 2)
+		this.Old = undefined;
+	else
+		this.Old = Reader.GetString2();
 };

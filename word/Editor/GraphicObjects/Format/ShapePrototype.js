@@ -490,6 +490,15 @@ CShape.prototype.recalculate = function ()
 
 };
 
+CShape.prototype.updateDrawingTextCache = function()
+{
+	if (this.txWarpStructNoTransform)
+	{
+		this.recalcInfo.recalculateTxBoxContent = true;
+		this.recalculateText();
+	}
+};
+
 CShape.prototype.recalculateText = function()
 {
     if(!this.bWordShape)

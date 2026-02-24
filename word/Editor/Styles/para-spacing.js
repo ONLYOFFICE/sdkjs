@@ -76,22 +76,34 @@
 			this.LineRule = Spacing.LineRule;
 
 		if ( undefined != Spacing.Before )
+		{
 			this.Before = Spacing.Before;
+			this.BeforePct = undefined;
+		}
 
 		if ( undefined != Spacing.BeforeAutoSpacing )
 			this.BeforeAutoSpacing = Spacing.BeforeAutoSpacing;
 
 		if ( undefined != Spacing.After )
+		{
 			this.After = Spacing.After;
+			this.AfterPct = undefined;
+		}
 
 		if ( undefined != Spacing.AfterAutoSpacing )
 			this.AfterAutoSpacing = Spacing.AfterAutoSpacing;
 
 		if ( undefined != Spacing.BeforePct )
+		{
 			this.BeforePct = Spacing.BeforePct;
+			this.Before = 0;
+		}
 
 		if ( undefined != Spacing.AfterPct )
+		{
 			this.AfterPct = Spacing.AfterPct;
+			this.After = 0;
+		}
 
 		if (undefined !== Spacing.BeforeLines)
 			this.BeforeLines = Spacing.BeforeLines;
@@ -307,7 +319,7 @@
 	{
 		if (true === this.BeforeAutoSpacing)
 			return 14 * g_dKoef_pt_to_mm;
-		else if (undefined !== this.BeforeLines && null !== this.BeforeLines)
+		else if (undefined !== this.BeforeLines && null !== this.BeforeLines && 0 !== this.BeforeLines)
 			return this.BeforeLines * 240 / 100 * g_dKoef_twips_to_mm;
 		
 		return this.Before;
@@ -316,7 +328,7 @@
 	{
 		if (true === this.AfterAutoSpacing)
 			return 14 * g_dKoef_pt_to_mm;
-		else if (undefined !== this.AfterLines && null !== this.AfterLines)
+		else if (undefined !== this.AfterLines && null !== this.AfterLines && 0 !== this.AfterLines)
 			return this.AfterLines * 240 / 100 * g_dKoef_twips_to_mm;
 		
 		return this.After;

@@ -81,6 +81,13 @@ AscCommon.CContentChangesElement.prototype.Refresh_BinaryData = function()
 		this.m_pData.Binary.Pos = Binary_Pos;
 		this.m_pData.Binary.Len = Binary_Len;
 	}
+	else if(this.m_pData.Data && this.m_pData.Item)
+	{
+		this.m_pData.Data.UseArray = true;
+		this.m_pData.Data.PosArray = this.m_aPositions;
+
+		History.Refresh_SpreadsheetChanges(this.m_pData.Item);
+	}
 };
 
 function CheckIdSatetShapeAdd(state)

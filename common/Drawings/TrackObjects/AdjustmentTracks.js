@@ -150,6 +150,7 @@ function XYAdjustmentTrack(originalShape, adjIndex, bTextWarp)
 
 XYAdjustmentTrack.prototype.getBounds = function()
 {
+	const scaleCoefficient = this.originalShape.getScaleCoefficient();
     var bounds_checker = new  AscFormat.CSlideBoundsChecker();
     bounds_checker.init(Page_Width, Page_Height, Page_Width, Page_Height);
     this.draw(bounds_checker);
@@ -175,10 +176,10 @@ XYAdjustmentTrack.prototype.getBounds = function()
     bounds_checker.Bounds.min_y = Math.min.apply(Math, arr_p_y);
     bounds_checker.Bounds.max_y = Math.max.apply(Math, arr_p_y);
 
-    bounds_checker.Bounds.posX = this.originalShape.x;
-    bounds_checker.Bounds.posY = this.originalShape.y;
-    bounds_checker.Bounds.extX = this.originalShape.extX;
-    bounds_checker.Bounds.extY = this.originalShape.extY;
+    bounds_checker.Bounds.posX = this.originalShape.x / scaleCoefficient;
+    bounds_checker.Bounds.posY = this.originalShape.y / scaleCoefficient;
+    bounds_checker.Bounds.extX = this.originalShape.extX / scaleCoefficient;
+    bounds_checker.Bounds.extY = this.originalShape.extY / scaleCoefficient;
 
     return bounds_checker.Bounds;
 };

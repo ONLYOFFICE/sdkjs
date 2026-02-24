@@ -11044,7 +11044,7 @@ CPresentation.prototype.CallSignatureDblClickEvent = function (sGuid) {
 		allSpr = allSpr.concat(oController.getAllSignatures2(ret, oController.getDrawingArray()));
 	}
 	for (i = 0; i < allSpr.length; ++i) {
-		if (allSpr[i].signatureLine && allSpr[i].signatureLine.id === sGuid) {
+		if (allSpr[i].signatureLine && allSpr[i].signatureLine.isEqualId(sGuid)) {
 			this.Api.sendEvent("asc_onSignatureDblClick", sGuid, allSpr[i].extX, allSpr[i].extY);
 		}
 	}
@@ -11151,7 +11151,7 @@ CPresentation.prototype.StartAction = function (nDescription, additional) {
 	this.Create_NewHistoryPoint(nDescription);
 	this.StopAnimationPreview();
 	this.Api.sendEvent("asc_onUserActionStart");
-	this.Api.getMacroRecorder().onAction(nDescription, additional, true);
+	this.Api.getMacroRecorder().addStepData(nDescription, additional, true);
 };
 CPresentation.prototype.FinalizeAction = function (isCheckEmptyAction, isCheckLockedAction, additional) {
 	this.Recalculate();
@@ -11163,9 +11163,12 @@ CPresentation.prototype.FinalizeAction = function (isCheckEmptyAction, isCheckLo
 		this.Recalculate(this.History.Get_RecalcData(null, arrChanges));
 	}
 	this.Api.sendEvent("asc_onUserActionEnd");
-	this.Api.getMacroRecorder().onAction(null, additional, false);
+	this.Api.getMacroRecorder().addStepData(null, additional, false);
 };
-
+CPresentation.prototype.AddMacroData = function(nDescription, additional)
+{
+	this.Api.getMacroRecorder().addStepData(nDescription, additional);
+};
 CPresentation.prototype.IsSplitPageBreakAndParaMark = function () {
 	return false;
 };

@@ -120,4 +120,88 @@ $(function ()
         assert.equal(oPositionV.percent, true, 'Check drawing vertical position percent === true');
     });
 
+    QUnit.test("GetName", function (assert) {
+        let doc = AscTest.JsApi.GetDocument();
+        let p = AscTest.JsApi.CreateParagraph();
+        doc.Push(p);
+        let fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.RGB(255, 111, 61));
+        let stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+        let drawing = AscTest.JsApi.CreateShape("cube", 3212465, 963295, fill, stroke);
+        p.AddDrawing(drawing);
+        let name = drawing.GetName();
+        assert.strictEqual(typeof name, 'string', 'Check GetName returns a string');
+        assert.ok(name.length > 0, 'Check drawing name is not empty');
+    });
+
+    QUnit.test("SetName", function (assert) {
+        let doc = AscTest.JsApi.GetDocument();
+        let p = AscTest.JsApi.CreateParagraph();
+        doc.Push(p);
+
+        let fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.RGB(255, 111, 61));
+        let stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+        let drawing = AscTest.JsApi.CreateShape("cube", 3212465, 963295, fill, stroke);
+        p.AddDrawing(drawing);
+
+        let result = drawing.SetName("TestShape");
+        assert.strictEqual(result, true, 'Check SetName returns true');
+        assert.strictEqual(drawing.GetName(), "TestShape", 'Check drawing name is set correctly');
+
+        let result2 = drawing.SetName("");
+        assert.strictEqual(result2, false, 'Check SetName returns false for empty string');
+
+        let result3 = drawing.SetName(null);
+        assert.strictEqual(result3, false, 'Check SetName returns false for null');
+
+        let result4 = drawing.SetName(undefined);
+        assert.strictEqual(result4, false, 'Check SetName returns false for undefined');
+
+        // Test that setting duplicate name causes previous drawing to get default name
+        let drawing2 = AscTest.JsApi.CreateShape("rect", 3212465, 963295, fill, stroke);
+        p.AddDrawing(drawing2);
+
+        drawing.SetName("DuplicateName");
+        const firstDrawingName = drawing.GetName();
+        assert.strictEqual(firstDrawingName, "DuplicateName", 'Check first drawing has duplicate name');
+
+        drawing2.SetName("DuplicateName");
+
+        assert.strictEqual(drawing2.GetName(), "DuplicateName", 'Check second drawing has the duplicate name');
+        assert.notStrictEqual(drawing.GetName(), "DuplicateName", 'Check first drawing name changed from duplicate');
+        assert.notStrictEqual(drawing.GetName(), firstDrawingName, 'Check first drawing has a new default name');
+    });
+
+    QUnit.test("Unselect", function (assert) {
+        let doc = AscTest.JsApi.GetDocument();
+        let p = AscTest.JsApi.CreateParagraph();
+        doc.Push(p);
+
+        let fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.RGB(255, 111, 61));
+        let stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+        let drawing = AscTest.JsApi.CreateShape("cube", 3212465, 963295, fill, stroke);
+        p.AddDrawing(drawing);
+
+        drawing.Select();
+        assert.ok(drawing.Drawing.getDrawingObjectsController().selectedObjects.includes(drawing.Drawing), 'Check drawing is selected before unselect');
+
+        let result = drawing.Unselect();
+        assert.strictEqual(result, true, 'Check Unselect returns true');
+        assert.ok(!drawing.Drawing.getDrawingObjectsController().selectedObjects.includes(drawing.Drawing), 'Check drawing is not selected after unselect');
+    });
+
+    QUnit.test("Select", function (assert) {
+        let doc = AscTest.JsApi.GetDocument();
+        let p = AscTest.JsApi.CreateParagraph();
+        doc.Push(p);
+
+        let fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.RGB(255, 111, 61));
+        let stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+        let drawing = AscTest.JsApi.CreateShape("cube", 3212465, 963295, fill, stroke);
+        p.AddDrawing(drawing);
+
+        let result = drawing.Select();
+        assert.strictEqual(result, true, 'Check Select returns true');
+        assert.ok(drawing.Drawing.getDrawingObjectsController().selectedObjects.includes(drawing.Drawing), 'Check drawing is selected in document');
+    });
 });
+

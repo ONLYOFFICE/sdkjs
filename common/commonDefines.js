@@ -491,6 +491,7 @@ window.AscCommon.g_cIsBeta = "false";
 		DOCX_PACKAGE  : 0x0054,
 		OFORM  : 0x0055,
 		DOCXF  : 0x0056,
+		MD   : 0x005c,
 		DOCY : 0x1001,
 		CANVAS_WORD : 0x2001,
 		JSON : 0x0808,	// Для mail-merge
@@ -4889,6 +4890,11 @@ window.AscCommon.g_cIsBeta = "false";
 		ByValue: 6
 	};
 
+	var c_oAscHyperlinkType = {
+		WebLink: 1,
+		RangeLink: 2,
+		FileLink: 3
+	};
 
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
@@ -4937,7 +4943,9 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['DOCX_PACKAGE']         = prot.DOCX_PACKAGE;
 	prot['OFORM']                = prot.OFORM;
 	prot['DOCXF']                = prot.DOCXF;
+	prot['MD']                   = prot.MD;
 	prot['DOCY']                 = prot.DOCY;
+	prot['CANVAS_WORD']          = prot.CANVAS_WORD;
 	prot['JSON']                 = prot.JSON;
 	prot['XLSX']                 = prot.XLSX;
 	prot['XLS']                  = prot.XLS;
@@ -4964,14 +4972,20 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['FODP']                 = prot.FODP;
 	prot['OTP']                  = prot.OTP;
 	prot['PPTX_PACKAGE']         = prot.PPTX_PACKAGE;
+	prot['PPTY']                 = prot.PPTY;
 	prot['CANVAS_PRESENTATION']  = prot.CANVAS_PRESENTATION;
 
 	prot['VSDX']        		 = prot.VSDX;
 	prot['VSSX']        		 = prot.VSSX;
 	prot['VSTX']        		 = prot.VSTX;
 	prot['VSDM']        		 = prot.VSDM;
+	prot['VSSM']        		 = prot.VSSM;
 	prot['VSTM']        		 = prot.VSTM;
 
+	prot['VSDY']        		 = prot.VSDY;
+	prot['CANVAS_DIAGRAM']  	 = prot.CANVAS_DIAGRAM;
+
+	prot['IMG']                  = prot.IMG;
 	prot['JPG']                  = prot.JPG;
 	prot['TIFF']                 = prot.TIFF;
 	prot['TGA']                  = prot.TGA;
@@ -6601,6 +6615,12 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['ByColorFont'] = prot.ByColorFont;
 	prot['ByIcon'] = prot.ByIcon;
 	prot['ByValue'] = prot.ByValue;
+
+	window['Asc']['c_oAscHyperlinkType'] = window['Asc'].c_oAscHyperlinkType = c_oAscHyperlinkType;
+	prot = c_oAscHyperlinkType;
+	prot['WebLink'] = prot.WebLink;
+	prot['RangeLink'] = prot.RangeLink;
+	prot['FileLink'] = prot.FileLink;
 
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window['AscCommonExcel'].c_oAscPaneState = c_oAscPaneState;

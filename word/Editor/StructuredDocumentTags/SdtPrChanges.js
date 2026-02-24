@@ -158,7 +158,7 @@ AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_BorderColor] = [
 function private_SdtPrChangesCheckLock(lockData)
 {
 	if (lockData && lockData.isFillingForm())
-		lockData.setLock(true);
+		lockData.lock(true);
 
 	if (this instanceof AscWord.CInlineLevelSdt)
 		private_ParagraphContentChangesCheckLock.apply(this, arguments);
@@ -604,7 +604,19 @@ CChangesSdtPrDatePicker.prototype.private_CreateObject = function()
 {
 	return new AscWord.CSdtDatePickerPr();
 };
-CChangesSdtPrDatePicker.prototype.CheckLock = private_SdtPrChangesCheckLock;
+CChangesSdtPrDatePicker.prototype.CheckLock = function(lockData)
+{
+	if (this.New
+		&& this.Old
+		&& this.New.LangId === this.Old.LangId
+		&& this.New.DateFormat === this.Old.DateFormat
+		&& this.New.Calendar === this.Old.Calendar)
+	{
+		return;
+	}
+	
+	return private_SdtPrChangesCheckLock.apply(this, lockData);
+};
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectProperty}
@@ -660,7 +672,13 @@ CChangesSdtPrShowingPlcHdr.prototype.private_SetValue = function(Value)
 {
 	this.Class.Pr.ShowingPlcHdr = Value;
 };
-CChangesSdtPrShowingPlcHdr.prototype.CheckLock = private_SdtPrChangesCheckLock;
+CChangesSdtPrShowingPlcHdr.prototype.CheckLock = function(lockData)
+{
+	if (lockData && lockData.isFillingForm())
+		return;
+	
+	return private_SdtPrChangesCheckLock.apply(this, arguments);
+};
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseBoolProperty}

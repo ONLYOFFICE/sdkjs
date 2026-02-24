@@ -551,6 +551,13 @@
 		this.m_oLastFont2   = null;
 	};
 
+	CGraphics.prototype.ClearCacheProps = function()
+	{
+		this.ClearLastFont();
+		this.m_bPenColorInit = false;
+		this.m_bBrushColorInit = false;
+	};
+
 	// images
 	CGraphics.prototype.checkLoadingImage = function(img)
 	{
@@ -857,7 +864,7 @@
 				this.m_oPen.Color.B + "," + (this.m_oPen.Color.A / 255) + ")";
 		}
 	};
-	CGraphics.prototype.drawBlipFillTile = function (transform, imageUrl, alpha, scaleX, scaleY, offsetX, offsetY, flipH, flipV) {
+	CGraphics.prototype.drawBlipFillTile = function (transform, imageUrl, alpha, scaleX, scaleY, offsetX, offsetY, flipH, flipV, nativeCanvas) {
 		const ctx = this.m_oContext;
 		if (!ctx) return;
 
@@ -874,11 +881,16 @@
 			);
 		}
 
-		const imageData = Asc.editor.ImageLoader.map_image_index[imageUrl];
-		if (!imageData || this.checkLoadingImage(imageData)) return;
+		let image;
+		if (nativeCanvas) {
+			image = nativeCanvas;
+		} else {
+			const imageData = Asc.editor.ImageLoader.map_image_index[imageUrl];
+			if (!imageData || this.checkLoadingImage(imageData)) return;
 
-		const image = imageData.Image;
-		if (!image) return;
+			image = imageData.Image;
+			if (!image) return;
+		}
 
 		// Translation (offsets)
 		ctx.translate(offsetX, offsetY);
@@ -2734,6 +2746,68 @@
 			ctx.lineTo(_x0, _b);
 			ctx.lineTo(_x1, _b);
 			ctx.stroke();
+			ctx.beginPath();
+		}
+	};
+	
+	CGraphics.prototype.drawCommentMark = function(x, y, h, isStart)
+	{
+		if (!global_MatrixTransformer.IsIdentity2(this.m_oTransform))
+		{
+			let coeff = this.m_oCoordTransform.sx;
+			
+			this.p_width(2 / coeff * 1000);
+			this._s();
+			this._m(x, y);
+			this._l(x, y + h);
+			this.ds();
+			this._s();
+		}
+		else
+		{
+			let pen_w = 2;
+			
+			let ctx = this.m_oContext;
+			ctx.setTransform(1, 0, 0, 1, 0, 0);
+			ctx.lineWidth = 2;
+			
+			let _y = (this.m_oFullTransform.TransformPointY(x, y) >> 0) + 0.5 - 0.5;
+			let _b = (this.m_oFullTransform.TransformPointY(x, y + h) >> 0) + 0.5 - 0.5;
+			
+			let _x0 = (this.m_oFullTransform.TransformPointX(x, y) >> 0) + 0.5 - 0.5 - pen_w / 2;
+			
+			ctx.beginPath();
+			ctx.moveTo(_x0, _y);
+			ctx.lineTo(_x0, _b);
+			ctx.stroke();
+			ctx.beginPath();
+		}
+	};
+	
+	CGraphics.prototype.drawCommentArea = function(x, y, w, h)
+	{
+		if (!global_MatrixTransformer.IsIdentity2(this.m_oTransform))
+		{
+			this.rect(x, y, w, h);
+			this.df();
+		}
+		else
+		{
+			let t = (this.m_oFullTransform.TransformPointY(x, y) >> 0);
+			let b = (this.m_oFullTransform.TransformPointY(x, y + h) >> 0);
+			let l = (this.m_oFullTransform.TransformPointX(x, y) >> 0);
+			let r = (this.m_oFullTransform.TransformPointX(x + w, y) >> 0);
+			
+			let ctx = this.m_oContext;
+			ctx.setTransform(1, 0, 0, 1, 0, 0);
+			
+			ctx.beginPath();
+			ctx.moveTo(l, t);
+			ctx.lineTo(r, t);
+			ctx.lineTo(r, b);
+			ctx.lineTo(l, b);
+			ctx.closePath();
+			ctx.fill();
 			ctx.beginPath();
 		}
 	};

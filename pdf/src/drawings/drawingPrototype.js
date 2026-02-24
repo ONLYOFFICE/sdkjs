@@ -75,9 +75,6 @@
 	CPdfDrawingPrototype.prototype.GetEditField = function() {
 		return null;
 	};
-    CPdfDrawingPrototype.prototype.OnContentChange = function() {
-        return this.SetNeedRecalc(true);
-    };
     CPdfDrawingPrototype.prototype.IsPdfDrawing = function() {
         return true;
     };
@@ -295,6 +292,8 @@
     };
     
     CPdfDrawingPrototype.prototype.SetFromScan = function(bFromScan) {
+		AscCommon.History.Add(new CChangesPDFDrawingFromScan(this, this._isFromScan, bFromScan));
+
         this._isFromScan = bFromScan;
     };
     CPdfDrawingPrototype.prototype.IsFromScan = function() {
@@ -311,6 +310,7 @@
     CPdfDrawingPrototype.prototype.OnContentChange = function() {
         let oGroup = this.getMainGroup();
         if (oGroup) {
+			oGroup.SetWasChanged && oGroup.SetWasChanged(true);
             oGroup.SetNeedRecalc && oGroup.SetNeedRecalc(true);
         }
         else {
@@ -566,15 +566,6 @@
 
         return false;
     };
-	CPdfDrawingPrototype.prototype.Remove = function(direction, isWord) {
-		let oDoc = this.GetDocument();
-		if (!oDoc)
-			return;
-		
-		let oController = oDoc.GetController();
-		oController.remove(direction, true, false, false, isWord)
-		this.SetNeedRecalc(true);
-	};
 	CPdfDrawingPrototype.prototype.deleteDrawingBase = function() {
 		let oDoc = this.GetDocument();
 		if (!oDoc) {
@@ -597,7 +588,7 @@
 		
         let oPara = content.GetCurrentParagraph();
         let oRun = oPara.IsSelectionUse() ? oPara.GetElement(oPara.Selection.StartPos) : oPara.GetElement(oPara.CurPos.ContentPos);
-        let oTextPr = oRun.GetTextPr();
+        let oTextPr = oRun.GetDirectTextPr();
         let sFontName = oTextPr.GetFontFamily();
 
         let oFontFile;
@@ -616,17 +607,11 @@
 
             let oItem;
             if (oFontFile) {
-                let nGid = oFontFile.GetGIDByUnicode(nCode);
-                if (nGid !== 0) {
-                    oItem = AscCommon.IsSpace(nCode) ? new AscWord.CPdfRunSpace(nGid, nCode, 0, 0) : new AscWord.CPdfRunText(nGid, nCode, 0, 0);
-                }
-                else {
-                    let oGidsMaps = doc.Viewer.file.getGIDByUnicode(sFontName.substr(prefix.length));
-                    nGid = oGidsMaps[nCode];
-                    if (nGid !== undefined) {
-                        oItem = AscCommon.IsSpace(nCode) ? new AscWord.CPdfRunSpace(nGid, nCode, 0, 0) : new AscWord.CPdfRunText(nGid, nCode, 0, 0);
-                    }
-                }
+				let oGidsMaps = doc.Viewer.file.getGIDByUnicode(sFontName.substr(prefix.length));
+				let nGid = oGidsMaps[nCode];
+				if (nGid !== undefined) {
+					oItem = AscCommon.IsSpace(nCode) ? new AscWord.CPdfRunSpace(nGid, nCode, 0, 0) : new AscWord.CPdfRunText(nGid, nCode, 0, 0);
+				}
             }
 
             let sNewFont;
@@ -690,8 +675,34 @@
         return Asc.editor.getPDFDoc().GetDrawingDocument();
     };
     CPdfDrawingPrototype.prototype.handleUpdateRot = function() {
+        this.recalcTransform();
         this.recalcTransformText && this.recalcTransformText();
         this.SetNeedRecalc(true);
+    };
+	CPdfDrawingPrototype.prototype.Set_CurrentElement = function(bUpdate, pageIndex, bNoTextSelection) {
+        let oDoc = this.GetDocument();
+		if (!oDoc) {
+			return;
+		}
+
+        let oController = oDoc.GetController();
+
+		pageIndex = pageIndex !== undefined ? pageIndex : this.GetAbsolutePage();
+		if (bNoTextSelection !== true) {
+			this.SetControllerTextSelection(oController, pageIndex, bNoTextSelection);
+		}
+
+		if(bNoTextSelection !== true) {
+            this.SetControllerTextSelection(oController, pageIndex);
+        }
+        else {
+            oController.resetSelection();
+            oController.selectObject(this, pageIndex);
+        }
+
+        let oGroup = this.getMainGroup && this.getMainGroup();
+        if (!oGroup)
+            oDoc.SetMouseDownObject(this);
     };
 
     /////////////////////////////

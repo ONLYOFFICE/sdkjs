@@ -2046,7 +2046,7 @@ CDocument.prototype.StartAction = function(nDescription, oSelectionState, flags,
 		}
 	}
 	
-	this.Api.getMacroRecorder().onAction(nDescription, additional);
+	this.Api.getMacroRecorder().addStepData(nDescription, additional);
 };
 /**
  * В процессе ли какое-либо действие
@@ -2320,7 +2320,7 @@ CDocument.prototype.FinalizeAction = function(checkEmptyAction, additional)
 	this.Action.UpdateStates = false;
 	
 	this.sendEvent("asc_onUserActionEnd");
-	this.Api.getMacroRecorder().onAction(this.Action.Description, additional);
+	this.Api.getMacroRecorder().addStepData(this.Action.Description, additional);
 	return actionCompleted;
 };
 CDocument.prototype.AddMacroData = function(type, additional)
@@ -2469,7 +2469,7 @@ CDocument.prototype.private_CheckActionLock = function()
 	if (!this.Action.CheckLock || !this.Action.PointsCount || this.Action.CancelAction)
 		return;
 
-	if (!this.StartSelectionLockCheck())
+	if (!this.StartSelectionLockCheck(this.IsFillingFormMode()))
 	{
 		this.Action.CancelAction = true;
 		return;
@@ -4231,7 +4231,8 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
                 this.CurPage = PageIndex; // TODO: переделать
         }
 
-		if (docpostype_Content === this.GetDocPosType() && ((true !== this.Selection.Use && Index === this.CurPos.ContentPos + 1) || (true === this.Selection.Use && Index === (Math.max(this.Selection.EndPos, this.Selection.StartPos) + 1))))
+		let cursorPos = true !== this.Selection.Use ? this.CurPos.ContentPos : Math.max(this.Selection.EndPos, this.Selection.StartPos);
+		if (docpostype_Content === this.GetDocPosType() && (Index === cursorPos + 1 || (cursorPos === Index && cursorPos === Count - 1)))
 			this.UpdateCursorOnRecalculate();
     }
 
@@ -7233,29 +7234,24 @@ CDocument.prototype.CanAddDropCap = function()
 };
 /**
  * Обновляем данные в интерфейсе о свойствах графики (картинки, автофигуры).
- * @param Flag
  * @returns {*}
  */
-CDocument.prototype.Interface_Update_DrawingPr = function(Flag)
+CDocument.prototype.Interface_Update_DrawingPr = function()
 {
-	var DrawingPr = this.DrawingObjects.Get_Props();
-
-	if (true === Flag)
-		return DrawingPr;
-	else
+	if (!this.Api)
+		return;
+	
+	let showHyperlinks = docpostype_DrawingObjects === this.GetDocPosType() && !this.DrawingObjects.getTargetDocContent();
+	let drawingProps = this.DrawingObjects.Get_Props();
+	for (let i = 0; i < drawingProps.length; ++i)
 	{
-		if (this.Api)
-		{
-			for (var i = 0; i < DrawingPr.length; ++i)
-			{
-				DrawingPr[i] instanceof Asc.CHyperlinkProperty
-					? this.Api.sync_HyperlinkPropCallback(DrawingPr[i])
-					: this.Api.sync_ImgPropCallback(DrawingPr[i]);
-			}
-		}
+		let pr = drawingProps[i];
+		
+		if (!(pr instanceof Asc.CHyperlinkProperty))
+			this.Api.sync_ImgPropCallback(pr);
+		else if (showHyperlinks)
+			this.Api.sync_HyperlinkPropCallback(pr);
 	}
-	if (Flag)
-		return null;
 };
 /**
  * Обновляем данные в интерфейсе о свойствах таблицы.
@@ -13202,19 +13198,17 @@ CDocument.prototype.ModifyHyperlink = function(oHyperProps)
 	}
 	else if (!oClass)
 	{
-		// shape/image hyperlink
 		if (docpostype_DrawingObjects === this.GetDocPosType())
-			return this.DrawingObjects.hyperlinkModify(oHyperProps);
-		return;
+			this.DrawingObjects.hyperlinkModify(oHyperProps);
 	}
 	else
 	{
 		return;
 	}
-
+	
 	this.Recalculate();
-    this.Document_UpdateSelectionState();
-    this.Document_UpdateInterfaceState();
+	this.UpdateSelection();
+	this.UpdateInterface();
 };
 CDocument.prototype.RemoveHyperlink = function(oHyperProps)
 {
@@ -13272,17 +13266,14 @@ CDocument.prototype.RemoveHyperlink = function(oHyperProps)
 	}
 	else if (!oClass)
 	{
-		// shape/image hyperlink
 		if (docpostype_DrawingObjects === this.GetDocPosType())
-			return this.DrawingObjects.hyperlinkModify(oHyperProps);
-		return;
+			this.DrawingObjects.hyperlinkRemove();
 	}
 	else
 	{
 		return;
 	}
-
-	//this.Controller.RemoveHyperlink();
+	
 	this.Recalculate();
 	this.Document_UpdateSelectionState();
 	this.Document_UpdateInterfaceState();
@@ -14464,7 +14455,7 @@ CDocument.prototype.AddSectionBreak = function(sectionBreakType)
 	sectPr.Copy(curSectPr);
 	curSectPr.Set_Type(sectionBreakType);
 	curSectPr.SetPageNumStart(-1);
-	curSectPr.Clear_AllHdrFtr();
+	curSectPr.RemoveAllHdrFtr();
 
 	this.History.MinorChanges = false;
 	
@@ -18634,6 +18625,13 @@ CDocument.prototype.getCompositeInput = function()
 	
 	return this.compositeInput;
 };
+CDocument.prototype.UpdateDrawingTextCache = function()
+{
+	if (docpostype_DrawingObjects === this.CurPos.Type)
+	{
+		this.DrawingObjects.updateDrawingTextCache();
+	}
+};
 CDocument.prototype.CheckCurrentTextObjectExtends = function()
 {
 	var oController = this.DrawingObjects;
@@ -19426,13 +19424,6 @@ CDocument.prototype.controller_AddInlineImage = function(W, H, Img, GraphicObjec
 			var Image = this.DrawingObjects.createImage(Img, 0, 0, W, H);
 			Image.setParent(Drawing);
 			Drawing.Set_GraphicObject(Image);
-		}
-		else if (GraphicObject.isSmartArtObject && GraphicObject.isSmartArtObject())
-		{
-			Drawing   = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
-			GraphicObject.setParent(Drawing);
-			Drawing.Set_GraphicObject(GraphicObject);
-			Drawing.setExtent(GraphicObject.spPr.xfrm.extX, GraphicObject.spPr.xfrm.extY);
 		}
 		else
 		{
@@ -22632,6 +22623,11 @@ CDocument.prototype.IsFillingOFormMode = function()
 	let api = this.GetApi();
 	return !!(api.DocInfo && api.DocInfo.isFormatWithForms());
 };
+CDocument.prototype.IsEditingOFormMode = function()
+{
+	let api = this.GetApi();
+	return (api.DocInfo && api.DocInfo.isFormatWithForms() && !this.IsFillingOFormMode());
+};
 CDocument.prototype.CheckOFormUserMaster = function(form)
 {
 	let currentUserMaster = this.GetCurrentOFormUserMaster();
@@ -23152,7 +23148,7 @@ CDocument.prototype.CallSignatureDblClickEvent = function(sGuid)
     allSpr = allSpr.concat(allSpr.concat(this.DrawingObjects.getAllSignatures2(ret, this.DrawingObjects.getDrawingArray())));
     for(var i = 0; i < allSpr.length; ++i)
     {
-        if(allSpr[i].getSignatureLineGuid() === sGuid)
+        if(allSpr[i].isEqualSignatureLineGuid(sGuid))
         {
             this.sendEvent("asc_onSignatureDblClick", sGuid, allSpr[i].extX, allSpr[i].extY);
         }
@@ -26725,6 +26721,44 @@ CDocument.prototype.ConvertFormFixedType = function(sId, isToFixed)
 	}
 
 	return false;
+};
+/**
+ * Конвертируем
+ * @param formId
+ * @returns {boolean}
+ */
+CDocument.prototype.StretchFormToCell = function(formId)
+{
+	let form = this.GetContentControl(formId);
+	if (!form || !form.IsForm())
+		return false;
+	
+	form = form.GetMainForm();
+	if (!form || form.IsFormLocked())
+		return false;
+	
+	let paragraph = form.GetParagraph();
+	if (!paragraph)
+		return false;
+	
+	if (this.IsSelectionLocked(AscCommon.changestype_None, {
+		Type      : AscCommon.changestype_2_ElementsArray_and_Type,
+		Elements  : [paragraph],
+		CheckType : AscCommon.changestype_Paragraph_Properties
+	}, false, false))
+		return false;
+	
+	this.StartAction(AscDFH.historydescription_Document_StretchFormToCell);
+	
+	form.StretchFormToCell();
+	
+	this.Recalculate();
+	this.UpdateInterface();
+	this.UpdateSelection();
+	this.UpdateTracks();
+	this.FinalizeAction();
+	
+	return true;
 };
 /**
  * Подсвечиваем ли обязательные поля

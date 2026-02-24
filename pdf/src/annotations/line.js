@@ -43,19 +43,6 @@
         Arrow:      1
     }
 
-    let LINE_END_TYPE = {
-        Square:         0,
-        Circle:         1,
-        Diamond:        2,
-        OpenArrow:      3,
-        ClosedArrow:    4,
-        None:           5,
-        Butt:           6,
-        ROpenArrow:     7,
-        RClosedArrow:   8,
-        Slash:          9
-    }
-
     let CAPTION_POSITIONING = {
         Inline: 0,
         Top:    1
@@ -77,12 +64,11 @@
         this._rotate        = undefined;
         this._state         = undefined;
         this._stateModel    = undefined;
-        this._width         = undefined;
         this._points        = undefined;
         this._doCaption     = undefined;
         this._intent        = undefined;
-        this._lineStart     = AscPDF.LINE_END_TYPE.None;
-        this._lineEnd       = AscPDF.LINE_END_TYPE.None;
+        this._lineStart     = AscPDF.LINE_END_TYPE.none;
+        this._lineEnd       = AscPDF.LINE_END_TYPE.none;
         this._leaderLength  = undefined; // LL
         this._leaderExtend  = undefined; // LLE
         this._leaderLineOffset  = undefined; // LLO
@@ -451,7 +437,7 @@
         return true;
     };
     CAnnotationLine.prototype.private_CalcBoundingRect = function() {
-        let nLineWidth  = this.GetWidth();
+        let nLineWidth  = this.GetBorderWidth();
         let aPoints     = this.GetLinePoints();
 
         let shapeSizeAtStart    = getFigureSize(this.GetLineStart(), nLineWidth);
@@ -512,17 +498,6 @@
 
         return calculateBoundingRectangle({x1: aPoints[0], y1: aPoints[1], x2: aPoints[2], y2: aPoints[3]}, shapeSizeAtStart, shapeSizeAtEnd);
     };
-    CAnnotationLine.prototype.SetStrokeColor = function(aColor) {
-        AscCommon.History.Add(new CChangesPDFAnnotStroke(this, this.GetStrokeColor(), aColor));
-
-        this._strokeColor = aColor;
-
-        let oRGB    = this.GetRGBColor(aColor);
-        let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-        let oLine   = this.spPr.ln;
-        oLine.setFill(oFill);
-        this.handleUpdateLn();
-    };
     CAnnotationLine.prototype.GetDrawing = function() {
         return this.content.GetAllDrawingObjects()[0];
     };
@@ -539,7 +514,7 @@
         this._doCaption = bCaption;
         
         this.SetWasChanged(true);
-        this.private_UpdateCaption();
+        this.private_UpdateRichContent();
         this.SetNeedRecalc(true);
     };
     CAnnotationLine.prototype.private_UpdateRect = function() {
@@ -548,7 +523,7 @@
         this.SetNeedRecalcSizes(true);
         this.Recalculate(true);
 
-        let nLineW = this.GetWidth() * g_dKoef_pt_to_mm;
+        let nLineW = this.GetBorderWidth() * g_dKoef_pt_to_mm;
 
         let oGrBounds = this.bounds;
 
@@ -564,7 +539,7 @@
     CAnnotationLine.prototype.IsDoCaption = function() {
         return this._doCaption;
     };
-    CAnnotationLine.prototype.private_UpdateCaption = function() {
+    CAnnotationLine.prototype.private_UpdateRichContent = function() {
         if (this.IsDoCaption()) {
             if (!this.txBody) {
                 this.createTextBody();
@@ -682,82 +657,6 @@
             this.setTxBody(null);
             this.setTxBox(true);
         }
-    };
-    CAnnotationLine.prototype.SetRichContents = function(aRCInfo) {
-        AscCommon.History.Add(new CChangesPDFAnnotRC(this, this.GetRichContents(), aRCInfo));
-        this._richContents = aRCInfo;
-
-        this.SetWasChanged(true);
-        this.private_UpdateCaption();
-        this.SetNeedRecalc(true);
-    };
-    CAnnotationLine.prototype.GetRichContents = function(bCalced) {
-        if (!bCalced)
-            return this._richContents;
-
-        let oContent = this.GetDocContent();
-        if (!oContent) {
-            return null;
-        }
-        
-        let aRCInfo = [];
-
-        for (let i = 0, nCount = oContent.GetElementsCount(); i < nCount; i++) {
-            let oPara = oContent.GetElement(i);
-
-            for (let j = 0, nRunsCount = oPara.GetElementsCount(); j < nRunsCount; j++) {
-                let oRun = oPara.GetElement(j);
-                let sText = oRun.GetText();
-                let oUniColor   = oRun.Pr.Unifill;
-                let oRGBA       = oUniColor ? oUniColor.fill.color.color.RGBA : null;
-                let aPdfColor   = oRGBA ? [oRGBA.R / 255, oRGBA.G / 255, oRGBA.B / 255] : [0, 0, 0];
-
-                let sFont   = oRun.Get_RFonts().Ascii.Name;
-                let isEmbed = false;
-                let prefix  = AscFonts.getEmbeddedFontPrefix();
-
-                let nVertAlign;
-                switch (oRun.GetVertAlign()) {
-                    case AscCommon.vertalign_SuperScript:
-                        nVertAlign = 0;
-                        break;
-                    case AscCommon.vertalign_SubScript:
-                        nVertAlign = -0.01;
-                        break;
-                }
-
-                if (sFont.startsWith(prefix)) {
-                    sFont = sFont.substr(prefix.length);
-                    isEmbed = true;
-                }
-                    
-                let oRCInfo = {
-                    "alignment":        AscPDF.getPdfTypeAlignByInternal(oRun.Paragraph.GetParagraphAlign()),
-                    "bold":             oRun.Get_Bold(),
-                    "italic":           oRun.Get_Italic(),
-                    "strikethrough":    oRun.Get_Strikeout(),
-                    "underlined":       oRun.Get_Underline(),
-                    "size":             oRun.Get_FontSize(),
-                    "color":            aPdfColor,
-                    "text":             sText,
-                    "vertical":         nVertAlign
-                };
-
-                if (isEmbed) {
-                    oRCInfo["name"] = sFont;
-                }
-                else {
-                    oRCInfo["actual"] = sFont;
-                }
-
-                aRCInfo.push(oRCInfo);
-            }
-
-            if (aRCInfo[aRCInfo.length - 1])
-                aRCInfo[aRCInfo.length - 1]["text"] += '\r';
-        }
-
-        return aRCInfo;
     };
     CAnnotationLine.prototype.GetContents = function() {
         if (!this.IsDoCaption()) {
@@ -970,36 +869,36 @@
         let oSize = {width: 0, height: 0};
 
         switch (nType) {
-            case AscPDF.LINE_END_TYPE.None:
+            case AscPDF.LINE_END_TYPE.none:
                 oSize.width = nLineW;
                 oSize.height = nLineW;
-            case AscPDF.LINE_END_TYPE.OpenArrow:
-            case AscPDF.LINE_END_TYPE.ClosedArrow:
+            case AscPDF.LINE_END_TYPE.openArrow:
+            case AscPDF.LINE_END_TYPE.closedArrow:
                 oSize.width = 6 * nLineW;
                 oSize.height = 6 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.Diamond:
-            case AscPDF.LINE_END_TYPE.Square:
+            case AscPDF.LINE_END_TYPE.diamond:
+            case AscPDF.LINE_END_TYPE.square:
                 oSize.width = 6 * nLineW;
                 oSize.height = 6 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.Circle:
+            case AscPDF.LINE_END_TYPE.circle:
                 oSize.width = 6 * nLineW;
                 oSize.height = 6 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.RClosedArrow:
+            case AscPDF.LINE_END_TYPE.rClosedArrow:
                 oSize.width = 8 * nLineW;
                 oSize.height = 8 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.ROpenArrow:
+            case AscPDF.LINE_END_TYPE.rOpenArrow:
                 oSize.width = 8 * nLineW;
                 oSize.height = 8 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.Butt:
+            case AscPDF.LINE_END_TYPE.butt:
                 oSize.width = 6 * nLineW;
                 oSize.height = 6 * nLineW;
                 break;
-            case AscPDF.LINE_END_TYPE.Slash:
+            case AscPDF.LINE_END_TYPE.slash:
                 oSize.width = 6 * nLineW;
                 oSize.height = 6 * nLineW;
                 break;
@@ -1011,34 +910,34 @@
     function getInnerLineEndType(nPdfType) {
         let nInnerType;
         switch (nPdfType) {
-            case AscPDF.LINE_END_TYPE.None:
+            case AscPDF.LINE_END_TYPE.none:
                 nInnerType = AscFormat.LineEndType.None;
                 break;
-            case AscPDF.LINE_END_TYPE.OpenArrow:
+            case AscPDF.LINE_END_TYPE.openArrow:
                 nInnerType = AscFormat.LineEndType.Arrow;
                 break;
-            case AscPDF.LINE_END_TYPE.Diamond:
+            case AscPDF.LINE_END_TYPE.diamond:
                 nInnerType = AscFormat.LineEndType.Diamond;
                 break;
-            case AscPDF.LINE_END_TYPE.Circle:
+            case AscPDF.LINE_END_TYPE.circle:
                 nInnerType = AscFormat.LineEndType.Oval;
                 break;
-            case AscPDF.LINE_END_TYPE.ClosedArrow:
+            case AscPDF.LINE_END_TYPE.closedArrow:
                 nInnerType = AscFormat.LineEndType.Triangle;
                 break;
-            case AscPDF.LINE_END_TYPE.ROpenArrow:
+            case AscPDF.LINE_END_TYPE.rOpenArrow:
                 nInnerType = AscFormat.LineEndType.ReverseArrow;
                 break;
-            case AscPDF.LINE_END_TYPE.RClosedArrow:
+            case AscPDF.LINE_END_TYPE.rClosedArrow:
                 nInnerType = AscFormat.LineEndType.ReverseTriangle;
                 break;
-            case AscPDF.LINE_END_TYPE.Butt:
+            case AscPDF.LINE_END_TYPE.butt:
                 nInnerType = AscFormat.LineEndType.Butt;
                 break;
-            case AscPDF.LINE_END_TYPE.Square:
+            case AscPDF.LINE_END_TYPE.square:
                 nInnerType = AscFormat.LineEndType.Square;
                 break;
-            case AscPDF.LINE_END_TYPE.Slash:
+            case AscPDF.LINE_END_TYPE.slash:
                 nInnerType = AscFormat.LineEndType.Slash;
                 break;
             default:
@@ -1050,7 +949,6 @@
     }
 
     window["AscPDF"].CAnnotationLine    = CAnnotationLine;
-    window["AscPDF"].LINE_END_TYPE      = LINE_END_TYPE;
     window["AscPDF"].getInnerLineEndType= getInnerLineEndType;
 })();
 

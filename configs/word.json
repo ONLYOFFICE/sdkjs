@@ -424,11 +424,11 @@
 			"pdf/src/apiPDF.js",
 			"pdf/src/document.js",
 			"word/document/empty.js",
+			"word/Math/mathText.js",
+			"word/Math/mathContent.js",
 			"word/Math/NamesOfLiterals.js",
 			"word/Math/LaTeXParser.js",
 			"word/Math/UnicodeParser.js",
-			"word/Math/mathText.js",
-			"word/Math/mathContent.js",
 			"word/Math/base.js",
 			"word/Math/fraction.js",
 			"word/Math/degree.js",
@@ -464,6 +464,7 @@
 			
 			"word/apiBuilder.js",
 			"word/fromToJSON.js",
+			"pdf/apiBuilder.js",
 
 			"vendor/easysax.js",
 			"common/openxml.js"

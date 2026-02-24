@@ -274,6 +274,10 @@ CCommentData.prototype.SetUserName = function(sUserName)
 {
 	this.m_sUserName = sUserName;
 };
+CCommentData.prototype.GetUserId = function()
+{
+	return this.m_sUserId;
+};
 CCommentData.prototype.GetDateTime = function()
 {
 	var nTime = parseInt(this.m_sTime);
@@ -643,6 +647,10 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 
 		return "";
 	};
+	CComment.prototype.GetUserId = function()
+	{
+		return this.Data ? this.Data.GetUserId() : "";
+	};
 	CComment.prototype.IsQuoted = function()
 	{
 		return (this.Data && null !== this.Data.GetQuoteText());
@@ -821,6 +829,9 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 
     this.Add_DrawingRect = function(X, Y, W, H, PageNum, arrCommentId, InvertTransform)
     {
+		if (this.Pages.length <= PageNum)
+			return;
+		
         this.Pages[PageNum].push( new CCommentDrawingRect(X, Y, W, H, arrCommentId, InvertTransform) );
     };
 
@@ -872,13 +883,6 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	CComments.prototype.isUse = function()
 	{
 		return this.Is_Use();
-	};
-	CComments.prototype.GetById = function(sId)
-	{
-		if (this.m_arrCommentsById[sId])
-			return this.m_arrCommentsById[sId];
-
-		return null;
 	};
 	CComments.prototype.getCurrentCommentId = function()
 	{
@@ -1372,6 +1376,38 @@ ParaComment.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPa
 		Comment.m_oStartInfo.X += Dx;
 		Comment.m_oStartInfo.Y += Dy;
 	}
+};
+ParaComment.prototype.Draw_Lines = function(lineDrawState)
+{
+	lineDrawState.handleAnnotationMark(this);
+};
+ParaComment.prototype.drawMark = function(x, y, h, graphics, isRTL, lineDrawState)
+{
+	if (!graphics || !graphics.drawCommentMark)
+		return;
+	
+	let markColor = this.getMarkColor();
+	graphics.p_color(markColor.r, markColor.g, markColor.b, 255);
+	graphics.drawCommentMark(x, y, h, isRTL ? !this.Start : this.Start);
+};
+ParaComment.prototype.getMarkColor = function()
+{
+	let defaultColor = new AscCommon.CColor(164, 160, 0, 255);
+	if (!this.Paragraph)
+		return defaultColor;
+	
+	let logicDocument  = this.Paragraph.GetLogicDocument();
+	let commentManager = logicDocument && logicDocument.IsDocumentEditor() ? logicDocument.GetCommentsManager() : null;
+	if (!commentManager)
+		return defaultColor;
+	
+	let comment = commentManager.GetById(this.CommentId);
+	if (!comment)
+		return defaultColor;
+	
+	let userId   = comment.GetUserId();
+	let userName = comment.GetUserName();
+	return AscCommon.getUserColorById(userId, userName, 1, false);
 };
 ParaComment.prototype.Draw_HighLights = function(PDSH)
 {

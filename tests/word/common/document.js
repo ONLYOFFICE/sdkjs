@@ -368,6 +368,7 @@
 			return;
 
 		logicDocument.RemoveFromContent(0, logicDocument.GetElementsCount(), false);
+		logicDocument.GetFinalSectPr().RemoveAllHdrFtr();
 	}
 	function ClearParagraph(p)
 	{

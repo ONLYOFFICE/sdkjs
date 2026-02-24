@@ -1186,6 +1186,56 @@ $(function () {
 		oParser = new parserFormula('CELL(A106:A107,A100)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula CELL(A106:A107,A100) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: Area, Reference link. Area as info_type');
+		// Case #24: Area, Reference link. Area as info_type
+		oParser = new parserFormula('CELL("address")', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: Formula CELL("address") is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), "$A$1", 'Test: Positive case: Area, Reference link. Area as info_type');
+		// Case #25: Area, Reference link. Area as info_type
+		oParser = new parserFormula('CELL("col")', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: Formula CELL("col") is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: Area, Reference link. Area as info_type');
+		// Case #26: Area, Reference link. Area as info_type
+		oParser = new parserFormula('CELL("color")', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: Formula CELL("color") is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Positive case: Area, Reference link. Area as info_type');
+		// Case #27: Area, Reference link. Area as info_type
+		oParser = new parserFormula('CELL("contents")', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: Formula CELL("contents") is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Positive case: Area, Reference link. Area as info_type');
+		// Case #28: Area, Reference link. Area as info_type
+		oParser = new parserFormula('CELL("filename")', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: Formula CELL("filename") is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), "[TeSt.xlsx]Sheet1", 'Test: Positive case: Area, Reference link. Area as info_type');
+		// Case #29: Area, Reference link. Area as info_type
+		oParser = new parserFormula('CELL("format")', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: Formula CELL("format") is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), "G", 'Test: Positive case: Area, Reference link. Area as info_type');
+		// Case #30: Area, Reference link. Area as info_type
+		oParser = new parserFormula('CELL("parentheses")', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: Formula CELL("parentheses") is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Test: Positive case: Area, Reference link. Area as info_type');
+		// Case #31: Area, Reference link. Area as info_type
+		oParser = new parserFormula('CELL("prefix")', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: Formula CELL("prefix") is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), "", 'Test: Positive case: Area, Reference link. Area as info_type');
+		// Case #32: Area, Reference link. Area as info_type
+		oParser = new parserFormula('CELL("protect")', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: Formula CELL("protect") is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: Area, Reference link. Area as info_type');
+		// Case #33: Area, Reference link. Area as info_type
+		oParser = new parserFormula('CELL("row")', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: Formula CELL("row") is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Test: Positive case: Area, Reference link. Area as info_type');
+		// Case #34: Area, Reference link. Area as info_type
+		oParser = new parserFormula('CELL("type")', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: Formula CELL("type") is parsed.');
+		assert.strictEqual(oParser.calculate().getValue(), "b", 'Test: Positive case: Area, Reference link. Area as info_type');
+		// Case #35: Area, Reference link. Area as info_type
+		oParser = new parserFormula('CELL("width")', 'A2', ws);
+		assert.ok(oParser.parse(), 'Test: Formula CELL("width") is parsed.');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 8, 'Test: Positive case: Area, Reference link. Area as info_type');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,1).getValue(), "TRUE", 'Test: Positive case: Area, Reference link. Area as info_type');
+
 
 		// Negative cases:
 		// Case #1: Number, Reference link. info_type parameter as number instead of string - should return #VALUE!
@@ -1224,39 +1274,29 @@ $(function () {
 		oParser = new parserFormula('CELL("address",NonExistentName)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula CELL("address",NonExistentName) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#NAME?', 'Test: Negative case: String, Name. Non-existent named range - should return #NAME? error.');
-		// Case #23: String, Ref3D. Reference to non-existent sheet - should return #N/A error.
-		oParser = new parserFormula('CELL("address",\'NonExistentSheet\'!A1)', 'A2', ws);
-		assert.ok(oParser.parse() === false, 'Test: Formula CELL("address",\'NonExistentSheet\'!A1) is not parsed.');
-		// assert.strictEqual(oParser.calculate().getValue(), '#N/A', 'Test: Negative case: String, Ref3D. Reference to non-existent sheet - should return #N/A error.');
-		// Case #24: String, Ref3D. 3D reference with cell error - tests error propagation across sheets.
+		// Case #20: String, Ref3D. 3D reference with cell error - tests error propagation across sheets.
 		oParser = new parserFormula('CELL("contents",Sheet2!#REF!)', 'A2', ws);
 		assert.ok(oParser.parse() === false, 'Test: Formula CELL("contents",Sheet2!#REF!) is not parsed.');
-		// assert.strictEqual(oParser.calculate().getValue(), '#REF!', 'Test: Negative case: String, Ref3D. 3D reference with cell error - tests error propagation across sheets.');
-		// Case #25: String, Area3D. 3D range with non-existent sheet - should return #REF! error.
-		oParser = new parserFormula('CELL("address",Sheet2!A1:\'NonExistentSheet\'!A1)', 'A2', ws);
-		assert.ok(oParser.parse() === false, 'Test: Formula CELL("address",Sheet2!A1:NonExistentSheet!A1) is not parsed.');
-		// assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: String, Area3D. 3D range with non-existent sheet - should return #REF! error.');
-		// Case #26: String, Area3D. 3D range with cell errors - tests error propagation in 3D ranges.
-		oParser = new parserFormula('CELL("contents",Sheet2!#REF!:#REF!)', 'A2', ws);
-		assert.ok(oParser.parse() === false, 'Test: Formula CELL("contents",Sheet2!#REF!:#REF!) is not parsed.');
-		// assert.strictEqual(oParser.calculate().getValue(), '#REF!', 'Test: Negative case: String, Area3D. 3D range with cell errors - tests error propagation in 3D ranges.');
-		// Case #29: String, Reference link. Reference to cell outside worksheet bounds - tests boundary handling.
+		// Case #21: String, Area3D. 3D range with cell errors - tests error propagation in 3D ranges.
+		oParser = new parserFormula('CELL("contents",Sheet22!A1:A2)', 'A2', ws);
+		assert.ok(oParser.parse() === false, 'Test: Formula CELL("contents",Sheet22!A1:A2) is not parsed.');
+		// Case #22: String, Reference link. Reference to cell outside worksheet bounds - tests boundary handling.
 		oParser = new parserFormula('CELL("address",A2000000)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula CELL("address",A2000000) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#NAME?', 'Test: Negative case: String, Reference link. Reference to cell outside worksheet bounds - tests boundary handling.');
-		// Case #32: Name, Reference link. Named range as info_type - should return #VALUE! if name contains non-text.
+		// Case #23: Name, Reference link. Named range as info_type - should return #VALUE! if name contains non-text.
 		oParser = new parserFormula('CELL(TestName,A100)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula CELL(TestName,A100) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Name, Reference link. Named range as info_type - should return #VALUE! if name contains non-text.');
-		// Case #33: Ref3D, Reference link. 3D reference as info_type - should return #VALUE! if cell contains non-text.
+		// Case #24: Ref3D, Reference link. 3D reference as info_type - should return #VALUE! if cell contains non-text.
 		oParser = new parserFormula('CELL(Sheet2!A1,A100)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula CELL(Sheet2!A1,A100) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Ref3D, Reference link. 3D reference as info_type - should return #VALUE! if cell contains non-text.');
-		// Case #34: Area3D, Reference link. 3D range as info_type - should return #VALUE! if range contains non-text.
+		// Case #25: Area3D, Reference link. 3D range as info_type - should return #VALUE! if range contains non-text.
 		oParser = new parserFormula('CELL(Sheet2!A1:A1,A100)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula CELL(Sheet2!A1:A1,A100) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Area3D, Reference link. 3D range as info_type - should return #VALUE! if range contains non-text.');
-		// Case #35: Table, Reference link. Table reference as info_type - should return #VALUE! if column contains non-text.
+		// Case #26: Table, Reference link. Table reference as info_type - should return #VALUE! if column contains non-text.
 		oParser = new parserFormula('CELL(Table1[Column1],A100)', 'A2', ws);
 		assert.ok(oParser.parse(), 'Test: Formula CELL(Table1[Column1],A100) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Test: Negative case: Table, Reference link. Table reference as info_type - should return #VALUE! if column contains non-text.');
@@ -1271,8 +1311,6 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: Formula CELL("col",INDIRECT(ADDRESS(1,16384))) is parsed.');
 		assert.strictEqual(oParser.calculate().getValue(), 16384, 'Test: Bounded case: String, Formula. Using INDIRECT and ADDRESS to create reference to maximum column - tests boundary values.');
 
-        // Need to fix:
-        // Case #8: String, Error. Error value in cell - how CELL handles error values.
 
 	});
 

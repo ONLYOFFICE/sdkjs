@@ -173,6 +173,7 @@
 	};
 
 	const customFunctionsStorageId = "cell-custom-functions-library";
+	AscCommon.customFunctionsStorageId = customFunctionsStorageId;
 
 	Api.prototype.registerCustomFunctionsLibrary = function(obj, isNotUpdate)
 	{
@@ -296,25 +297,12 @@
 	 */
 	Api.prototype["pluginMethod_SetCustomFunctions"] = function(jsonString)
 	{
-		try
-		{
-			if (AscCommon.History.Is_On()) {
-				AscCommon.History.Create_NewPoint();
-				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_SetCustomFunctions,
-					null, null, new AscCommonExcel.UndoRedoData_FromTo(this["pluginMethod_GetCustomFunctions"](), jsonString));
-			}
-
-			let obj = JSON.parse(jsonString);
-			AscCommon.setLocalStorageItem(customFunctionsStorageId, obj);
-
-			this.wb && this.wb.model && this.wb.model.clearFileCustomFunctions();
-			this.registerCustomFunctionsLibrary(obj);
-		}
-		catch (err)
-		{
-			console.log("SetCustomFunctions method error! Please check your code...");
-		}
+		this.SetCustomFunctions(jsonString, true);
 	};
+
+	//------------------------------------------------------------export--------------------------------------------------
+	window['AscCommon']                             = window['AscCommon'] || {};
+	window["AscCommon"].customFunctionsStorageId    = customFunctionsStorageId;
 
 })(window);
 

@@ -349,7 +349,11 @@ function (window, undefined) {
 			}
 		}
 
+		// if we have 1x1 byArr, then we just return the main array
 		let tempArrIndicies = sortByArray(colsRowArr, sortOrderArr, isByCol);
+		if (tempArrIndicies.length === 1) {
+			return array;
+		}
 
 		let resultArr = new cArray();
 		for (let i = 0; i < tempArrIndicies.length; i++) {
@@ -2264,12 +2268,22 @@ function (window, undefined) {
 	cSORTBY.prototype.name = 'SORTBY';
 	cSORTBY.prototype.argumentsMin = 2;
 	cSORTBY.prototype.isXLFN = true;
-	// TODO infinite arrayIndexes for even/odd arguments
 	cSORTBY.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 8: 1, 9: 1, 10: 1, 11: 1};
-	cSORTBY.prototype.getArrayIndex = function (index) {
+	/**
+	 * Sorts the contents of a range or array based on the values in a corresponding range or array
+	 * 
+	 * @param {array} array - The array or range to sort.
+	 * @param {array} by_array1 - The array or range to sort on.
+	 * @param {number} [sort_order1] optional - The order to use for sorting. 1 for ascending, -1 for descending. Default is ascending.
+	 * @param {array} [by_array2] optional - The array or range to sort on.
+	 * @param {number} [sort_order2] optional - The order to use for sorting. 1 for ascending, -1 for descending. Default is ascending.
+	 * @return {array} Returns the sorted array or an error.
+	 */
+	cSORTBY.prototype.getArrayIndex = function () {
 		return 1;
 	};
 	cSORTBY.prototype.argumentsType = [argType.array, argType.array, argType.number, [argType.array, argType.number]];
+
 	cSORTBY.prototype.Calculate = function (arg) {
 		function arrayHelper (arr, args) {
 			// Helper logic:
@@ -2286,7 +2300,6 @@ function (window, undefined) {
 					sortOrder = args[i+1];
 
 				by_array1 = i === 1 ? by_array : by_array1;
-				// TODO can be array with single item and can be just single item
 				if (sortOrder.type === cElementType.array || sortOrder.type === cElementType.cellsRange || sortOrder.type === cElementType.cellsRange3D) {
 					// if single element in array, fill array with it element
 					let resDimensoins = sortOrder.getDimensions();
@@ -2484,38 +2497,37 @@ function (window, undefined) {
 		if (isSortOrderArray) {
 			return arrayHelper(array, args);
 		} else {
-			// dimensions check: 
-			// check on errors first, then check on truthy dimensions and do things with it
+			/*
+				created a new argument to check the sizes of the byArray arguments - they should always be the same when compared with each other
+				But they may differ from the original array
+			*/
+			const firstByArrayDimensions = args[1].getDimensions();
+
+			// byArray sizes check: 
 			for (let i = 1; i < args.length; i += 2) {
-				let byArrDimensions = args[i].getDimensions();
 
-				// TODO if there is a match on the single row, but not on the col - return the original array
-				if (maxRows === 1) {
-					// single row with elements
-					if (maxRows === 1 && byArrDimensions.row === 1) {
-						if (maxCols !== byArrDimensions.col) {
-							// area to array
-							if (cElementType.cellsRange === array.type || cElementType.cellsRange3D === array.type) {
-								return array.getFullArray();
-							}
-							return array;
-						} 
-						// else {
-						// 	// return sorted array
-						// }
-					}
-				}
+				let byArrayI = args[i];
+				let byArrIDimensions = byArrayI.getDimensions();
 
-				// isByCol or not determined by the first byarray arg
-				if ((byArrDimensions.row === 1 && byArrDimensions.col !== maxCols) || 
-					(byArrDimensions.col === 1 && byArrDimensions.row !== maxRows) || 
-					(byArrDimensions.col > 1 && byArrDimensions.row > 1)) {
+				if (byArrIDimensions.row !== firstByArrayDimensions.row || byArrIDimensions.col !== firstByArrayDimensions.col) {
 					return new cError(cErrorType.wrong_value_type);
-				} else if (byArrDimensions.row === 1 && byArrDimensions.col === maxCols) {
-					isByCol = i === 1 ? true : isByCol;
-				} else if (byArrDimensions.col === 1 && byArrDimensions.row === maxRows) {
-					isByCol = i === 1 ? false : isByCol;
 				}
+
+				if (byArrayI.isOneElement()) {
+					continue;
+				}
+
+				if (byArrIDimensions.row === 1 && byArrIDimensions.col === maxCols) {
+					isByCol = i === 1 ? true : isByCol;
+				} else if (byArrIDimensions.col === 1 && byArrIDimensions.row === maxRows) {
+					isByCol = i === 1 ? false : isByCol;
+				} else {
+					return new cError(cErrorType.wrong_value_type);
+				}
+			}
+
+			if (firstByArrayDimensions.row === 1 && firstByArrayDimensions.col === 1) {
+				return array;
 			}
 		}
 

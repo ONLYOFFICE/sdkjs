@@ -2772,7 +2772,7 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 			var Element = aShd.Get_Next();
 			while (null != Element)
 			{
-				pGraphics.b_color1(Element.r, Element.g, Element.b, 255);
+				pGraphics.b_color1(Element.r, Element.g, Element.b, Element.a);
 				if (pGraphics.SetShd)
 				{
 					pGraphics.SetShd(Element.Additional2);
@@ -2845,6 +2845,7 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 					else
 						pGraphics.set_fillColor(Element.r, Element.g, Element.b);
 					
+					
 					pGraphics.rect(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0);
 					pGraphics.df();
 					Element = aPerm.Get_Next();
@@ -2858,22 +2859,13 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 			var ParentInvertTransform = Element && this.Get_ParentTextInvertTransform();
 			while (null != Element)
 			{
-				if (!pGraphics.DrawTextArtComment)
-				{
-					if (Element.Additional.Active === true)
-						pGraphics.b_color1(240, 200, 120, 255);
-					else
-						pGraphics.b_color1(248, 231, 195, 255);
-
-					pGraphics.rect(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0);
-					pGraphics.df();
-
-					DocumentComments.Add_DrawingRect(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0, Page_abs, Element.Additional.CommentId, ParentInvertTransform);
-				}
+				if (!pGraphics.set_fillColor)
+					pGraphics.b_color1(Element.r, Element.g, Element.b, 255);
 				else
-				{
-					pGraphics.DrawTextArtComment(Element);
-				}
+					pGraphics.set_fillColor(Element.r, Element.g, Element.b);
+				
+				pGraphics.drawCommentArea(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0);
+				DocumentComments.Add_DrawingRect(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0, Page_abs, Element.Additional.CommentId, ParentInvertTransform);
 				Element = aComm.Get_Next();
 			}
 
@@ -4367,6 +4359,10 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 			}
 			else if(this.bFromDocument)
 			{
+				if (Asc.editor.isPdfEditor()) {
+					return Result;
+				}
+				
              	if (align_Right === Pr.Jc)
                 {
                     this.Set_Align(align_Center);
@@ -4648,6 +4644,9 @@ Paragraph.prototype.Add = function(Item)
 				TextPr.RFonts.HAnsi    = {Name : FName, Index : FIndex};
 				TextPr.RFonts.CS       = {Name : FName, Index : FIndex};
 			}
+			
+			if (TextPr.Lang && !TextPr.Lang.IsEmpty())
+				this.RecalcInfo.NeedSpellCheck();
 
 			if (true === this.ApplyToAll)
 			{
@@ -19853,6 +19852,10 @@ CParaDrawingRangeLines.prototype =
 				}
 
 				return true;
+			}
+			else if ((PrevEl.Additional instanceof AscWord.Shd) && (Element.Additional instanceof AscWord.Shd))
+			{
+				return Element.Additional.IsEqual(PrevEl.Additional);
 			}
 			else if (undefined !== PrevEl.Additional.RunPr && true === Element.Additional.RunPr.Is_Equal(PrevEl.Additional.RunPr))
 			{

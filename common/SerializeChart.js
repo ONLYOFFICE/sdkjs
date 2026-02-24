@@ -3621,6 +3621,12 @@ BinaryChartWriter.prototype.WriteCT_Trendline = function (oVal) {
             oThis.WriteCT_Order(oVal.order);
         });
     }
+
+	const isMovingAverage = oVal.trendlineType === TRENDLINE_TYPE_MOVING_AVG;
+	if (isMovingAverage && null == oVal.period) {
+		oVal.period = 2;
+	}
+
     if (null != oVal.period) {
         this.bs.WriteItem(c_oserct_trendlinePERIOD, function () {
             oThis.WriteCT_Period(oVal.period);

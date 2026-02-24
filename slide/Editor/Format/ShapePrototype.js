@@ -633,8 +633,10 @@ CShape.prototype.getIsSingleBody = function(x, y)
     return true;
 };
 
-CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex, bNoTextSelection){
+CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex, bNoTextSelection, isReplace){
     if(this.parent && this.parent.graphicObjects){
+		if (isReplace === undefined)
+			isReplace = false;
         var drawing_objects = this.parent.graphicObjects;
         
         if(bNoTextSelection !== true) 
@@ -653,7 +655,9 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex, bNoTextSelect
             {
                 oSelector = drawing_objects;
             }
-            oSelector.resetSelection();
+
+			if (isReplace === true)
+            	oSelector.resetSelection();
             oSelector.selectObject(this, 0);
         }
         var nSlideNum;

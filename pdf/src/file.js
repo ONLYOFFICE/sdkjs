@@ -668,7 +668,7 @@ void main() {\n\
                     let isTextSelection = !(_t.Selection.startPoint && _t.Selection.endPoint);
                     let aAnnots = oDoc.AddLinkAnnotByQuads(aSelQuads, isTextSelection);
                     if (aAnnots.length > 0) {
-                        Asc.editor.OnAfterAddLinkAnnot(aAnnots.map(function(annot) {
+                        Asc.editor.StartLinkAnnotCreation(aAnnots.map(function(annot) {
                             return annot.GetId();
                         }));
                     }

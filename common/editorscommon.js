@@ -1105,6 +1105,9 @@
 			case c_oAscServerError.ForcedViewMode :
 				nRes = Asc.c_oAscError.ID.ForcedViewMode;
 				break;
+			case c_oAscServerError.FileNotAssembled :
+				nRes = Asc.c_oAscError.ID.FileNotAssembled;
+				break;
 			case c_oAscServerError.Storage :
 			case c_oAscServerError.StorageFileNoFound :
 			case c_oAscServerError.StorageRead :
@@ -1704,7 +1707,8 @@
 
 		Password: -180,
 
-		ForcedViewMode: -200
+		ForcedViewMode: -200,
+		FileNotAssembled: -201
 	};
 
 	//todo get from server config
@@ -1779,6 +1783,12 @@
 			case c_oAscFileType.PDFA:
 				return 'pdf';
 				break;
+			case c_oAscFileType.DJVU:
+				return 'djvu';
+				break;
+			case c_oAscFileType.XPS:
+				return 'xps';
+				break;
 			case c_oAscFileType.HTML:
 				return 'html';
 				break;
@@ -1842,6 +1852,9 @@
 				break;
 			case c_oAscFileType.DOCXF:
 				return 'docxf';
+				break;
+			case c_oAscFileType.MD:
+				return 'md';
 				break;
 			case c_oAscFileType.DOCY:
 				return 'doct';
@@ -1917,6 +1930,9 @@
 			case c_oAscFileType.OTP:
 				return 'otp';
 				break;
+			case c_oAscFileType.PPTY:
+				return 'pptt';
+				break;
 			case c_oAscFileType.VSDX:
 				return 'vsdx';
 				break;
@@ -1934,6 +1950,9 @@
 				break;
 			case c_oAscFileType.VSTM:
 				return 'vstm';
+				break;
+			case c_oAscFileType.VSDY:
+				return 'vsdt';
 				break;
 			case c_oAscFileType.IMG:
 				return 'zip';
@@ -4136,7 +4155,7 @@
 
 		if (!range && cDialogType.DataValidation !== dialogType && cDialogType.ConditionalFormattingRule !== dialogType && cDialogType.GoalSeek_Cell !== dialogType &&
 			cDialogType.GoalSeek_ChangingCell !== dialogType && cDialogType.Solver_ObjectiveCell !== dialogType && cDialogType.Solver_VariableCell !== dialogType &&
-			cDialogType.Solver_Constraint !== dialogType)
+			cDialogType.Solver_Constraint !== dialogType && cDialogType.Solver_CellReference !== dialogType)
 		{
 			return Asc.c_oAscError.ID.DataRangeError;
 		}
@@ -4153,7 +4172,7 @@
 				// ToDo убрать эту проверку, заменить на более грамотную после правки функции _searchFilters
 				if (true === wb.getWorksheet().model.autoFilters.isRangeIntersectionTableOrFilter(range)) {
 					return Asc.c_oAscError.ID.AutoFilterDataRangeError;
-				} else if (wb.getWorksheet().intersectionFormulaArray(range, true, true)) {
+				} else if (wb.getWorksheet().intersectionFormulaArray(range, true, true, true)) {
 					return Asc.c_oAscError.ID.MultiCellsInTablesFormulaArray;
 				} else if (range && Asc.c_oAscSelectionType.RangeCells !== range.getType()) {
 					return Asc.c_oAscError.ID.LargeRangeWarning;
@@ -4247,7 +4266,8 @@
 					sheetModel = model.getActiveWs();
 				}
 				return AscCommonExcel.CGoalSeek.prototype.isValidDataRef(sheetModel, range, dialogType);
-			} else if (cDialogType.Solver_ObjectiveCell === dialogType || cDialogType.Solver_VariableCell === dialogType || cDialogType.Solver_Constraint === dialogType) {
+			} else if (cDialogType.Solver_ObjectiveCell === dialogType || cDialogType.Solver_VariableCell === dialogType || cDialogType.Solver_Constraint === dialogType ||
+					cDialogType.Solver_CellReference === dialogType) {
 				result = parserHelp.parse3DRef(dataRange);
 				if (result) {
 					sheetModel = model.getWorksheetByName(result.sheet);
@@ -11127,7 +11147,7 @@
 		if (!res)
 			return new CColor(0, 0, 0, 255);
 
-		return true === isDark ? res.Dark : res.Light;
+		return -1 === isDark ? res.Light : true === isDark || 1 === isDark ? res.Dark : res.Normal;
 	}
 	function setUserColorById(userId, light, dark)
 	{
@@ -11508,8 +11528,9 @@
 
 	function CUserCacheColor(nColor)
 	{
-		this.Light = null;
-		this.Dark = null;
+		this.Light  = null;
+		this.Dark   = null;
+		this.Normal = null;
 		this.init(nColor);
 	}
 
@@ -11522,16 +11543,23 @@
 		var Y = Math.max(0, Math.min(255, 0.299 * r + 0.587 * g + 0.114 * b));
 		var Cb = Math.max(0, Math.min(255, 128 - 0.168736 * r - 0.331264 * g + 0.5 * b));
 		var Cr = Math.max(0, Math.min(255, 128 + 0.5 * r - 0.418688 * g - 0.081312 * b));
-
+		
+		var Y_light = Math.min(255, Y + (255 - Y) * 0.6);
+		
 		if (Y > 63)
 			Y = 63;
+		
+		var R_dark = Math.max(0, Math.min(255, Y + 1.402 * (Cr - 128))) | 0;
+		var G_dark = Math.max(0, Math.min(255, Y - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128))) | 0;
+		var B_dark = Math.max(0, Math.min(255, Y + 1.772 * (Cb - 128))) | 0;
+		
+		var R_light = Math.max(0, Math.min(255, Y_light + 1.402 * (Cr - 128))) | 0;
+		var G_light = Math.max(0, Math.min(255, Y_light - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128))) | 0;
+		var B_light = Math.max(0, Math.min(255, Y_light + 1.772 * (Cb - 128))) | 0;
 
-		var R = Math.max(0, Math.min(255, Y + 1.402 * (Cr - 128))) | 0;
-		var G = Math.max(0, Math.min(255, Y - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128))) | 0;
-		var B = Math.max(0, Math.min(255, Y + 1.772 * (Cb - 128))) | 0;
-
-		this.Light = new CColor(r, g, b, 255);
-		this.Dark = new CColor(R, G, B, 255);
+		this.Light  = new CColor(R_light, G_light, B_light, 255);
+		this.Normal = new CColor(r, g, b, 255);
+		this.Dark   = new CColor(R_dark, G_dark, B_dark, 255);
 	};
 
 	function loadScript(url, onSuccess, onError)

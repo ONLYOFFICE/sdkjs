@@ -1407,6 +1407,37 @@ $(function () {
 			let run = cont.Content[0];
 			assert.strictEqual(run instanceof ParaRun, true, 'check run');
 		})
+
+		QUnit.test('Check create custom function with auto-correction', function (assert)
+		{
+			Clear();
+
+			const list = window['AscCommonWord'].g_AutoCorrectMathsList.AutoCorrectMathFuncs;
+			assert.ok(true, "Add new function in AutoCorrectMathFuncs - 'custom'");
+
+			logicDocument.SetMathInputType(0);
+			list.push("custom");
+			AddText('custom ');
+
+			let cont = MathContent.Root
+			assert.strictEqual(cont.Content.length, 3, 'Check length of content');
+			let mathFunc = cont.Content[1];
+			assert.strictEqual(mathFunc instanceof CMathFunc, true, 'Check is created CMathFunc');
+
+			let contentName = mathFunc.getFName();
+			assert.strictEqual(contentName.GetTextOfElement().GetText(), "custom", 'Check name of created CMathFunc is "custom"');
+
+			let argument = mathFunc.getArgument()
+			assert.strictEqual(argument.GetTextOfElement().GetText(), "", 'Check argument of created CMathFunc is empty');
+
+			const idx = list.indexOf("custom");
+			if (idx !== -1) {
+				list.splice(idx, 1);
+			}
+
+			assert.ok(true, "Delete custom function from AutoCorrectMathFuncs");
+		})
+
 		QUnit.test('Check cursor position after convert math func with content (cos, sin..)', function (assert)
 		{
 			Clear();
@@ -1416,6 +1447,19 @@ $(function () {
 			let cont = MathContent.Root;
 
 			assert.strictEqual(cont.CurPos, 2, 'Cursor after function');
+		})
+
+		QUnit.test('Create function after degree (bug 79822)', function (assert)
+		{
+			Clear();
+			logicDocument.SetMathInputType(0);
+			AddText('x^2 log ');
+
+			let cont = MathContent.Root;
+
+			assert.strictEqual(cont.Content.length, 5, 'Check length of content');
+			let func = cont.Content[3];
+			assert.ok(func instanceof CMathFunc, 'Check is math func created');
 		})
 
 		QUnit.test('Add nary from menu', function (assert)

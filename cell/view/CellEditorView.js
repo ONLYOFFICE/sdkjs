@@ -426,7 +426,7 @@ function (window, undefined) {
 
 			// Reset editor state
 			t._setEditorState(c_oAscCellEditorState.editEnd);
-			t.handlers.trigger("closed");
+			t.handlers.trigger("closed", saveValue);
 			t.closeAction();
 
 			if (callback) {
@@ -483,7 +483,7 @@ function (window, undefined) {
 
 		// Reset editor state
 		this._setEditorState(c_oAscCellEditorState.editEnd);
-		this.handlers.trigger("closed");
+		this.handlers.trigger("closed", saveValue);
 		t.closeAction();
 
 		if (callback) {

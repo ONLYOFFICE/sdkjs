@@ -1747,6 +1747,9 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 			
 			lock : function()
 			{
+				if (this.isFillingForm() && this.isSkipFormCheck())
+					return;
+				
 				AscCommon.CollaborativeEditing.Add_CheckLock(true);
 				this.locked = true;
 			},

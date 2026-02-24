@@ -37,6 +37,8 @@
 // Import
 var getFullImageSrc2 = AscCommon.getFullImageSrc2;
 
+var getSourceImageSize = AscCommon.getSourceImageSize;
+
 var getFillRect = AscCommon.getFillRect;
 
 var CShapeColor = AscFormat.CShapeColor;
@@ -1247,10 +1249,10 @@ CShapeDrawer.prototype =
     {
         if (Asc.editor.isPdfEditor()) {
             let aDash;
-            if (this.Shape.GetDash)
-                aDash = this.Shape.GetDash();
-            else if (this.Shape.group && this.Shape.group.GetDash)
-                aDash = this.Shape.group.GetDash();
+            if (this.Shape.GetDashPattern)
+                aDash = this.Shape.GetDashPattern();
+            else if (this.Shape.group && this.Shape.group.GetDashPattern)
+                aDash = this.Shape.group.GetDashPattern();
             else if (this.Shape.IsDrawing && this.Shape.IsDrawing()) {
                 if (AscCommon.DashPatternPresets[this.Ln.prstDash]) {
                     aDash = AscCommon.DashPatternPresets[this.Ln.prstDash].slice();
@@ -1868,7 +1870,8 @@ CShapeDrawer.prototype =
 			scaleY * scaleCoefY,
 			offsetX + alignOffsetX,
 			offsetY + alignOffsetY,
-			flipH, flipV
+			flipH, flipV,
+			this.UniFill.fill.canvas
 		);
 
 		graphics.m_bPenColorInit = false;
@@ -2383,7 +2386,7 @@ CShapeDrawer.prototype =
                         }
 
                         this.Graphics.put_brushTexture(imageUrl, type);
-                        const imageData = Asc.editor.ImageLoader.map_image_index[imageUrl];
+                        const imageSize = getSourceImageSize(imageUrl);
 
                         const sx = this.UniFill.fill.tile.sx ? (this.UniFill.fill.tile.sx / 1000) / 100 : 1;
                         const sy = this.UniFill.fill.tile.sy ? (this.UniFill.fill.tile.sy / 1000) / 100 : 1;
@@ -2410,15 +2413,15 @@ CShapeDrawer.prototype =
                         let alignOffsetX, alignOffsetY;
                         if (rotWithShape)
                         {
-                            alignOffsetX = getAlignment(align)[0] * (this.max_x - this.min_x - imageData.Image.width * sx * AscCommon.g_dKoef_pix_to_mm)
-                            alignOffsetY = getAlignment(align)[1] * (this.max_y - this.min_y - imageData.Image.height * sy * AscCommon.g_dKoef_pix_to_mm)
+                            alignOffsetX = getAlignment(align)[0] * (this.max_x - this.min_x - imageSize.width * sx * AscCommon.g_dKoef_pix_to_mm)
+                            alignOffsetY = getAlignment(align)[1] * (this.max_y - this.min_y - imageSize.height * sy * AscCommon.g_dKoef_pix_to_mm)
                         }
                         else
                         {
                             const shapeBounds = this.Shape.getBounds();
 
-                            alignOffsetX = shapeBounds.x + getAlignment(align)[0] * (shapeBounds.w - imageData.Image.width * sx * AscCommon.g_dKoef_pix_to_mm);
-                            alignOffsetY = shapeBounds.y + getAlignment(align)[1] * (shapeBounds.h - imageData.Image.height * sy * AscCommon.g_dKoef_pix_to_mm);
+                            alignOffsetX = shapeBounds.x + getAlignment(align)[0] * (shapeBounds.w - imageSize.width * sx * AscCommon.g_dKoef_pix_to_mm);
+                            alignOffsetY = shapeBounds.y + getAlignment(align)[1] * (shapeBounds.h - imageSize.height * sy * AscCommon.g_dKoef_pix_to_mm);
                         }
 
                         const tx = this.UniFill.fill.tile.tx ? this.UniFill.fill.tile.tx * AscCommonWord.g_dKoef_emu_to_mm : 0;

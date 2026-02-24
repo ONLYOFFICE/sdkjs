@@ -75,10 +75,13 @@
 			this._formula.buildDependencies();
 		}
 	};
-	CDataFormula.prototype.clone = function () {
+	CDataFormula.prototype.clone = function (fullClone) {
 		var res = new CDataFormula();
 		res.text = this.text;
 		//this._formula = null;
+		if (fullClone && this._formula) {
+			res._formula = this._formula.clone();
+		}
 		return res;
 	};
 	CDataFormula.prototype.onFormulaEvent = function (type, eventData) {
@@ -126,10 +129,13 @@
 			isNum: isNum(this.text),
 		}
 
-		const normalizeText = function (data) {
-			const isQuote = typeof data.val === "string" && data.val.length >=2 && data.val[0] === '"';
+		const isQuoted = function (data) {
+			return typeof data.val === "string" && data.val.length >=2 && data.val[0] === '"';
+		}
 
-			if (isQuote) {
+		const normalizeText = function (data, wasQuoted) {
+
+			if (wasQuoted) {
 				let _val = data.val;
 
 				_val = _val.slice(1, -1);
@@ -164,12 +170,31 @@
 			}
 		}
 
+		const toListPreview = function (data) {
+			const parts = data.val
+				.split(/[,]/g)
+				.map(function (s) {
+					return s.trim();
+				})
+				.filter(Boolean);
+
+			if (parts.length > 1) {
+				t.asc_setValue(parts.join(AscCommon.FormulaSeparators.functionArgumentSeparator));
+				return;
+			}
+
+			t.asc_setValue((parts[0] || data.val).trim());
+		}
+
 		// fix the text from quotes
-		data = normalizeText(data)
+		const wasQuoted = isQuoted(data);
+		data = normalizeText(data, wasQuoted);
 		if (data.isNum) {
 			fromNumberToString(data);
 		} else {
-			if (this && this._formula) {
+			if (wasQuoted && oValidation.type === Asc.EDataValidationType.List) {
+				toListPreview(data);
+			} else if (this && this._formula) {
 				//если формула содержит ссылки на диапазоны, то в зависимости от активной области нужно их сдвинуть
 				var offset = oValidation.calculateOffset(ws);
 				if (offset) {
@@ -1168,6 +1193,21 @@
 					return;
 				}
 
+				if (t.type === Asc.EDataValidationType.List && typeof _formula.text === "string" && _formula.text[0] !== "=") {
+					const uiSep = AscCommon.FormulaSeparators.functionArgumentSeparator;
+					const defSep = AscCommon.FormulaSeparators.functionArgumentSeparatorDef;
+
+					if (uiSep && defSep && uiSep !== defSep) {
+						_formula.text = _formula.text
+							.split(uiSep)
+							.map(function(s) {
+								return s.trim();
+							})
+							.filter(Boolean)
+							.join(defSep);
+					}
+				}
+
 				if (!isFormula) {
 					_formula.text = addQuotes(_formula.text);
 				} else if (_tempFormula && _tempFormula._formula) {
@@ -1416,7 +1456,6 @@
 							}
 
 							val._init(ws);
-							val.correctToInterface(ws);
 							ws.dataValidations.change(ws, originalValidation, val, addToHistory);
 							// adjust j to skip over newly added ranges
 							j += newRanges.length - 1;
@@ -1465,7 +1504,6 @@
 							}
 
 							val._init(ws);
-							val.correctToInterface(ws);
 
 							ws.dataValidations.change(ws, originalValidation, val, addToHistory);
 							// adjust j to skip over newly added ranges

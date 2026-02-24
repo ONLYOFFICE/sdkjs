@@ -64,6 +64,45 @@ $(function () {
 		logicDocument.MoveCursorToEndPos();
 		return form;
 	}
+	function addCheckBox(key)
+	{
+		let form = logicDocument.AddContentControlCheckBox();
+		form.SetFormPr(new AscWord.CSdtFormPr(key));
+		logicDocument.MoveCursorToEndPos();
+		return form;
+	}
+	function addDropDown(key, items)
+	{
+		let pr = new AscWord.CSdtComboBoxPr();
+		for (let i = 0; i < items.length; ++i)
+			pr.AddItem(items[i]["label"], items[i]["value"]);
+		let form = logicDocument.AddContentControlDropDownList(pr);
+		form.SetFormPr(new AscWord.CSdtFormPr(key));
+		logicDocument.MoveCursorToEndPos();
+		return form;
+	}
+	function addComboBox(key, items)
+	{
+		let pr = new AscWord.CSdtComboBoxPr();
+		for (let i = 0; i < items.length; ++i)
+			pr.AddItem(items[i]["label"], items[i]["value"]);
+		let form = logicDocument.AddContentControlComboBox(pr);
+		form.SetFormPr(new AscWord.CSdtFormPr(key));
+		logicDocument.MoveCursorToEndPos();
+		return form;
+	}
+	function addDatePicker(key, format, date)
+	{
+		let pr = new AscWord.CSdtDatePickerPr();
+		pr.SetDateFormat(format);
+		if (date)
+			pr.SetFullDate(date);
+		let form = logicDocument.AddContentControlDatePicker();
+		form.SetFormPr(new AscWord.CSdtFormPr(key));
+		form.ApplyDatePickerPr(pr, !!date);
+		logicDocument.MoveCursorToEndPos();
+		return form;
+	}
 
 	QUnit.module("Check forms");
 
@@ -599,12 +638,27 @@ $(function () {
 		let radio2_1 = addRadioButton("Group2", "Choice1");
 		let radio2_2 = addRadioButton("Group2", "Choice2");
 		
+		let checkBox1 = addCheckBox("CheckBox1");
+		
+		const dropDownItems = [{"value" : "v1", "label" : "Item1"}, {"value" : "v2", "label" : "Item2"}];
+		let dropDown1 = addDropDown("DropDown1", dropDownItems);
+		
+		const comboBoxItems = [{"value" : "opt1", "label" : "Option1"}, {"value" : "opt2", "label" : "Option2"}];
+		let comboBox1 = addComboBox("ComboBox1", comboBoxItems);
+		
+		const datePickerDate = new Date(2024, 6, 24);
+		let datePicker1 = addDatePicker("DatePicker1", "mm/dd/yyyy", datePickerDate);
+		
 		assert.deepEqual(formsManager.GetAllFormsData(), [
-			{"key" : "TextForm1", "value" : "123", "tag" : "", "type" : "text", "role" : "", "roleColor" : undefined},
-			{"key" : "TextForm2", "value" : "222", "tag" : "", "type" : "text", "role" : "", "roleColor" : undefined},
-			{"key" : "TextForm3", "value" : "333", "tag" : "", "type" : "text", "role" : "", "roleColor" : undefined},
-			{"key" : "Group1", "value" : "", "tag" : "", "type" : "radio", "role" : "", "roleColor" : undefined},
-			{"key" : "Group2", "value" : "", "tag" : "", "type" : "radio", "role" : "", "roleColor" : undefined}
+			{"key" : "TextForm1",  "value" : "123",   "tag" : "", "type" : "text",         "role" : "", "roleColor" : undefined},
+			{"key" : "TextForm2",  "value" : "222",   "tag" : "", "type" : "text",         "role" : "", "roleColor" : undefined},
+			{"key" : "TextForm3",  "value" : "333",   "tag" : "", "type" : "text",         "role" : "", "roleColor" : undefined},
+			{"key" : "Group1",     "value" : "",      "tag" : "", "type" : "radio",        "role" : "", "roleColor" : undefined, "options" : [{"value" : "Choice1", "label" : ""}, {"value" : "123", "label" : ""}, {"value" : "Last", "label" : ""}]},
+			{"key" : "Group2",     "value" : "",      "tag" : "", "type" : "radio",        "role" : "", "roleColor" : undefined, "options" : [{"value" : "Choice1", "label" : ""}, {"value" : "Choice2", "label" : ""}]},
+			{"key" : "CheckBox1",  "value" : false,   "tag" : "", "type" : "checkBox",     "role" : "", "roleColor" : undefined, "options" : [true, false], "label" : ""},
+			{"key" : "DropDown1",  "value" : "",      "tag" : "", "type" : "dropDownList", "role" : "", "roleColor" : undefined, "options" : [{"value" : "v1", "label" : "Item1"}, {"value" : "v2", "label" : "Item2"}]},
+			{"key" : "ComboBox1",  "value" : "",      "tag" : "", "type" : "comboBox",     "role" : "", "roleColor" : undefined, "options" : [{"value" : "opt1", "label" : "Option1"}, {"value" : "opt2", "label" : "Option2"}]},
+			{"key" : "DatePicker1", "value" : "07/24/2024", "tag" : "", "type" : "dateTime", "role" : "", "roleColor" : undefined, "format" : "mm/dd/yyyy", "lang" : "en-US"}
 		], "Add text forms and check GetAllFormsData");
 		
 		AscTest.SetFillingFormMode();
@@ -612,26 +666,30 @@ $(function () {
 		formsManager.SetAllFormsData([
 			{"key" : "TextForm1", "value" : "text1"},
 			{"key" : "TextForm2", "value" : "another text", "type" : "text"},
-			{"key" : "Group1", "value" : "Last"},
-			{"key" : "Group2", "value" : "Choice2"}
+			{"key" : "Group1",    "value" : "Last"},
+			{"key" : "Group2",    "value" : "Choice2"}
 		]);
 		
-		assert.strictEqual(textForm1.GetInnerText(), "text1", "Check form1");
-		assert.strictEqual(textForm1_1.GetInnerText(), "text1", "Check form1_1");
+		assert.strictEqual(textForm1.GetInnerText(), "text1",        "Check form1");
+		assert.strictEqual(textForm1_1.GetInnerText(), "text1",      "Check form1_1");
 		assert.strictEqual(textForm2.GetInnerText(), "another text", "Check form2");
-		assert.strictEqual(textForm3.GetInnerText(), "333", "Check form2");
+		assert.strictEqual(textForm3.GetInnerText(), "333",          "Check form3");
 		assert.strictEqual(radio1_1.IsCheckBoxChecked(), false, "Check radio button 1. Group1");
 		assert.strictEqual(radio1_2.IsCheckBoxChecked(), false, "Check radio button 2. Group1");
-		assert.strictEqual(radio1_3.IsCheckBoxChecked(), true, "Check radio button 3. Group1");
+		assert.strictEqual(radio1_3.IsCheckBoxChecked(), true,  "Check radio button 3. Group1");
 		assert.strictEqual(radio2_1.IsCheckBoxChecked(), false, "Check radio button 1. Group2");
-		assert.strictEqual(radio2_2.IsCheckBoxChecked(), true, "Check radio button 2. Group2");
+		assert.strictEqual(radio2_2.IsCheckBoxChecked(), true,  "Check radio button 2. Group2");
 		
 		assert.deepEqual(formsManager.GetAllFormsData(), [
-			{"key" : "TextForm1", "value" : "text1", "tag" : "", "type" : "text", "role" : "", "roleColor" : undefined},
-			{"key" : "TextForm2", "value" : "another text", "tag" : "", "type" : "text", "role" : "", "roleColor" : undefined},
-			{"key" : "TextForm3", "value" : "333", "tag" : "", "type" : "text", "role" : "", "roleColor" : undefined},
-			{"key" : "Group1", "value" : "Last", "tag" : "", "type" : "radio", "role" : "", "roleColor" : undefined},
-			{"key" : "Group2", "value" : "Choice2", "tag" : "", "type" : "radio", "role" : "", "roleColor" : undefined}
+			{"key" : "TextForm1",  "value" : "text1",        "tag" : "", "type" : "text",         "role" : "", "roleColor" : undefined},
+			{"key" : "TextForm2",  "value" : "another text", "tag" : "", "type" : "text",         "role" : "", "roleColor" : undefined},
+			{"key" : "TextForm3",  "value" : "333",          "tag" : "", "type" : "text",         "role" : "", "roleColor" : undefined},
+			{"key" : "Group1",     "value" : "Last",         "tag" : "", "type" : "radio",        "role" : "", "roleColor" : undefined, "options" : [{"value" : "Choice1", "label" : ""}, {"value" : "123", "label" : ""}, {"value" : "Last", "label" : ""}]},
+			{"key" : "Group2",     "value" : "Choice2",      "tag" : "", "type" : "radio",        "role" : "", "roleColor" : undefined, "options" : [{"value" : "Choice1", "label" : ""}, {"value" : "Choice2", "label" : ""}]},
+			{"key" : "CheckBox1",  "value" : false,          "tag" : "", "type" : "checkBox",     "role" : "", "roleColor" : undefined, "options" : [true, false], "label" : ""},
+			{"key" : "DropDown1",  "value" : "",             "tag" : "", "type" : "dropDownList", "role" : "", "roleColor" : undefined, "options" : [{"value" : "v1", "label" : "Item1"}, {"value" : "v2", "label" : "Item2"}]},
+			{"key" : "ComboBox1",  "value" : "",             "tag" : "", "type" : "comboBox",     "role" : "", "roleColor" : undefined, "options" : [{"value" : "opt1", "label" : "Option1"}, {"value" : "opt2", "label" : "Option2"}]},
+			{"key" : "DatePicker1", "value" : "07/24/2024", "tag" : "", "type" : "dateTime", "role" : "", "roleColor" : undefined, "format" : "mm/dd/yyyy", "lang" : "en-US"}
 		], "Add text forms and check GetAllFormsData");
 	});
 

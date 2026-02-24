@@ -3782,6 +3782,9 @@
 	{
 		return false;
 	};
+	baseEditorsApi.prototype.asc_getPasteOptions          = function()
+	{
+	};
 	baseEditorsApi.prototype.asc_Recalculate       = function()
 	{
 	};
@@ -3991,7 +3994,7 @@
 
 			for (var j = this.signatures.length - 1; j >= 0; j--)
 			{
-				if (this.signatures[j].guid == _sig.id)
+				if (this.signatures[j].isEqualGuid(_sig.id))
 				{
 					_found = true;
 					break;
@@ -4103,7 +4106,7 @@
 		for (var i = _sigs.length - 1; i >= 0; i--)
 		{
 			var _sig = _sigs[i];
-			if (_sig.id == guid)
+			if (_sig.isEqualId(guid))
 			{
 				var _add_sig = new AscCommon.asc_CSignatureLine();
 				_add_sig.guid = _sig.id;
@@ -4117,7 +4120,7 @@
 				for (var j = 0; j < this.signatures.length; j++)
 				{
 					var signDoc = this.signatures[j];
-					if (signDoc.guid == _add_sig.guid)
+					if (signDoc.isEqualGuid(_add_sig.guid))
 					{
 						_add_sig.valid = signDoc.valid;
 						_add_sig.isrequested = false;
@@ -4137,7 +4140,7 @@
 		var count = this.signatures.length;
 		for (var i = 0; i < count; i++)
 		{
-			if (this.signatures[i].guid == sGuid)
+			if (this.signatures[i].isEqualGuid(sGuid))
 				return this.signatures[i].image;
 		}
 		return "";
@@ -4583,7 +4586,7 @@
 		{
 			case AscCommon.c_oEditorId.Word:
 			{
-				if (this.WordControl && this.WordControl.m_oLogicDocument)
+				if (!this.isPdfEditor() && this.WordControl && this.WordControl.m_oLogicDocument)
 					this.WordControl.m_oLogicDocument.LockPanelStyles();
 				break;
 			}
@@ -6164,6 +6167,11 @@
 	{
 		return this.macroRecorder.addStepData(type, additional);
 	};
+	
+	baseEditorsApi.prototype.getJsApi = function()
+	{
+		return this;
+	};
 
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
@@ -6301,5 +6309,7 @@
 	prot['asc_isFinal'] = prot.asc_isFinal = prot.isFinal;
 	prot["getMacroRecorder"] = prot.getMacroRecorder;
 	prot["addMacroStepData"] = prot.addMacroStepData;
+	
+	prot['getJsApi'] = prot.getJsApi;
 
 })(window);

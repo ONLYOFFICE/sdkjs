@@ -47,7 +47,7 @@
         AscPDF.CBaseField.call(this, sName, sType, nPage, aRect, oDoc);
 
         this._commitOnSelChange     = false;
-        this._currentValueIndices   = [];
+        this._currentValueIndexes   = [];
         this._textFont              = AscPDF.DEFAULT_FIELD_FONT;
         this._options               = [];
     }
@@ -64,15 +64,15 @@
             oParent.SetParentCurIdxs(aIdxs);
         else {
             AscCommon.History.Add(new CChangesPDFListFormParentCurIdxs(this, this.GetParentCurIdxs(), aIdxs));
-            this._currentValueIndices = aIdxs;
+            this._currentValueIndexes = aIdxs;
         }
     };
     CBaseListField.prototype.GetParentCurIdxs = function(bInherit) {
         let oParent = this.GetParent(true);
         if (oParent == null)
-            return this._currentValueIndices;
+            return this._currentValueIndexes;
         else if (bInherit === false || (this.GetPartialName() != null)) {
-            return this._currentValueIndices;
+            return this._currentValueIndexes;
         }
         
         if (oParent)
@@ -82,14 +82,15 @@
     CBaseListField.prototype.SetCommitOnSelChange = function(bValue) {
         let oParent = this.GetParent(true);
         if (oParent) {
-            oParent.SetCommitOnSelChange(bValue);
-            return;
+            return oParent.SetCommitOnSelChange(bValue);
         }
 
         AscCommon.History.Add(new CChangesPDFListCommitOnSelChange(this, this._commitOnSelChange, bValue));
 
         this._commitOnSelChange = bValue;
         this.SetWasChanged(true);
+
+        return true;
     };
     CBaseListField.prototype.IsCommitOnSelChange = function(bInherit) {
         let oParent = this.GetParent(true);

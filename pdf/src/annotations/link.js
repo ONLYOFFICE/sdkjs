@@ -70,7 +70,7 @@
         }
 
         aFullQuads.forEach(function(aQuads) {
-            oThis.AddQuads(aQuads);
+            oThis.AddQuad(aQuads);
         });
 
         if (aFullQuads.length == 1) {
@@ -85,7 +85,7 @@
             return;
         }
 
-        let nLineW = this.GetWidth();
+        let nLineW = this.GetBorderWidth();
         let aQuads = this.GetQuads();
         
         AscCommon.History.StartNoHistoryMode();
@@ -133,7 +133,7 @@
         AscCommon.History.EndNoHistoryMode();
         this.SetNeedRecalcSizes(false);
     };
-    CAnnotationLink.prototype.AddQuads = function(aQuads) {
+    CAnnotationLink.prototype.AddQuad = function(aQuads) {
         AscCommon.History.Add(new CChangesPDFAnnotQuads(this, this._quads.length, aQuads, true));
         this._quads.push(aQuads);
     };
@@ -176,7 +176,7 @@
         let nWidth  = originView.width;
         let nHeight = originView.height;
 
-        let nLineWidth = this.GetWidth() + 1;
+        let nLineWidth = this.GetBorderWidth() + 1;
 
         // Create a new canvas element for the cropped area
         var croppedCanvas       = document.createElement('canvas');
@@ -266,7 +266,7 @@
 
     CAnnotationLink.prototype.RefillGeometry = function() {
         let aQuads = this.GetQuads();
-        if (aQuads.length == 0 || aQuads.length > 1 || this.GetBorder() !== AscPDF.BORDER_TYPES.underline) {
+        if (aQuads.length == 0 || aQuads.length > 1 || this.GetBorderStyle() !== AscPDF.BORDER_TYPES.underline) {
             return;
         }
 
@@ -558,6 +558,8 @@
         let oCopy = AscPDF.CAnnotationBase.prototype.Copy.call(this, isForMove);
 
         oCopy.SetActions(AscPDF.PDF_TRIGGERS_TYPES.MouseUp, this.GetActions(AscPDF.PDF_TRIGGERS_TYPES.MouseUp));
+        oCopy.SetHighlight(this.GetHighlight());
+
         return oCopy;
     };
 
@@ -645,15 +647,14 @@
         // highlight
         let nHighlightType = this.GetHighlight();
         if (nHighlightType != null) {
-            memory.fieldDataFlags |= (1 << 2);
+            nFlags |= (1 << 2);
             memory.WriteByte(nHighlightType);
         }
 
         // quads
         let aQuads = this.GetQuads();
         if (aQuads != null) {
-            memory.fieldDataFlags |= (1 << 3);
-            memory.WriteByte(nHighlightType);
+            nFlags |= (1 << 3);
             
             let nLen = 0;
             for (let i = 0; i < aQuads.length; i++) {

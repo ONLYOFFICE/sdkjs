@@ -955,6 +955,10 @@
 			oCopy.id = sId;
 			return oCopy;
 		};
+		CSignatureLine.prototype.isEqualId = function (sId) {
+			return typeof sId === "string" && this.id !== null
+				&& this.id.toUpperCase() === sId.toUpperCase();
+		};
 		CSignatureLine.prototype.setProperties = function (oPr) {
 			this.signer = oPr.asc_getSigner1();
 			this.signer2 = oPr.asc_getSigner2();
@@ -1607,6 +1611,17 @@
 			t = oRect.t + t_ins;
 			r = oRect.r - r_ins;
 			b = oRect.b - b_ins;
+
+			if (l >= r) {
+				var _c = (l + r) * 0.5;
+				l = _c - 0.01;
+				r = _c + 0.01;
+			}
+			if (t >= b) {
+				var _c = (t + b) * 0.5;
+				t = _c - 0.01;
+				b = _c + 0.01;
+			}
 
 			var x_lt, y_lt, x_rt, y_rt, x_rb, y_rb, x_lb, y_lb;
 			var tr = this.transform;
@@ -3915,7 +3930,7 @@
 			
 			return isRotated;
 		};
-		CShape.prototype.recalculateDocContent = function (oDocContent, oBodyPr) {
+		CShape.prototype.recalculateDocContent = function (oDocContent, oBodyPr, bSkipPctSpacing) {
 			let nStartPage = this.GetAbsolutePage ? this.GetAbsolutePage() : 0;
 			let oRet = {w: 0, h: 0, contentH: 0};
 			let oInsets = this.getInsets({bIgnoreInsets: false, bodyPr: oBodyPr});
@@ -3929,6 +3944,12 @@
 			w = oRect.r - oRect.l - (l_ins + r_ins);
 			h = oRect.b - oRect.t - (t_ins + b_ins);
 
+			if (w <= 0) {
+				w = 0.02;
+			}
+			if (h <= 0) {
+				h = 0.02;
+			}
 
 			if (this.checkAutofit && this.checkAutofit() &&
 				this.bCheckAutoFitFlag &&
@@ -4042,13 +4063,56 @@
 		RecalcResult = oDocContent.Recalculate_Page( CurPage++, true );*/
 
 			var oContentW = oRet.w;
-
-			if (oForm && !oForm.IsMultiLineForm() || oBodyPr.wrap === AscFormat.nTWTNone)
-				oDocContent.SetUseXLimit(false);
-			else
-				oDocContent.SetUseXLimit(true);
+			let bUseXLimit = true;
+			if (oForm && !oForm.IsMultiLineForm()) {
+				bUseXLimit = false;
+			}
+			else {
+				if (oBodyPr.wrap === AscFormat.nTWTNone) {
+					if (oBodyPr.textFit && oBodyPr.textFit.type === AscFormat.text_fit_Auto) {
+						bUseXLimit = !!this.bCheckAutoFitFlag;
+					}
+					else {
+						bUseXLimit = false;
+					}
+				}
+				else {
+					bUseXLimit = true;
+				}
+			}
+			oDocContent.SetUseXLimit(bUseXLimit);
 
 			oDocContent.RecalculateContent(oContentW, oRet.h, nStartPage);
+
+			if (!bSkipPctSpacing) {
+				let bNeedSecondPass = false;
+				for (let i = 0; i < oDocContent.Content.length; i++) {
+					const para = oDocContent.Content[i];
+					if (!para.CompiledPr || !para.CompiledPr.Pr || !para.Lines || !para.Lines.length)
+						continue;
+
+					const spacing = para.CompiledPr.Pr.ParaPr.Spacing;
+					const firstLine = para.Lines[0];
+
+					if (spacing.BeforePct && (!spacing.Before || spacing.Before === 0)) {
+						const lineH = firstLine.Metrics.TextAscent + firstLine.Metrics.TextDescent;
+						spacing.Before = lineH * spacing.BeforePct / 100000;
+						bNeedSecondPass = true;
+					}
+
+					if (spacing.AfterPct && (!spacing.After || spacing.After === 0)) {
+						const lastLine = para.Lines[para.Lines.length - 1];
+						const lastLineH = lastLine.Metrics.TextAscent + lastLine.Metrics.TextDescent;
+						spacing.After = lastLineH * spacing.AfterPct / 100000;
+						bNeedSecondPass = true;
+					}
+				}
+
+				if (bNeedSecondPass) {
+					return this.recalculateDocContent(oDocContent, oBodyPr, true);
+				}
+			}
+
 			oRet.contentH = oDocContent.GetSummaryHeight();
 
 			if (this.bWordShape) {
@@ -4169,6 +4233,13 @@
 						} else {
 							w = this.extX - (l_ins + r_ins);
 							h = this.extY - (t_ins + b_ins);
+						}
+
+						if (w <= 0) {
+							w = 0.02;
+						}
+						if (h <= 0) {
+							h = 0.02;
 						}
 
 						if (!body_pr.upright) {
@@ -4925,11 +4996,12 @@
 				this.recalcInfo.recalcTitle = oOldRecalcTitle;
 				this.recalcInfo.bRecalculatedTitle = bOldRecalcTitle;
 				AscFormat.CheckSpPrXfrm(this, true);
-				this.spPr.xfrm.setExtX(this.extX + TEXT_RECT_ERROR);
-				this.spPr.xfrm.setExtY(this.extY + TEXT_RECT_ERROR);
+				const scaleCoefficient = this.getScaleCoefficient();
+				this.spPr.xfrm.setExtX(this.extX / scaleCoefficient + TEXT_RECT_ERROR);
+				this.spPr.xfrm.setExtY(this.extY / scaleCoefficient + TEXT_RECT_ERROR);
 				if (!this.bWordShape || this.group) {
-					this.spPr.xfrm.setOffX(this.x);
-					this.spPr.xfrm.setOffY(this.y);
+					this.spPr.xfrm.setOffX(this.x / scaleCoefficient);
+					this.spPr.xfrm.setOffY(this.y / scaleCoefficient);
 					if (this.drawingBase) {
 						CheckExcelDrawingXfrm(this.spPr.xfrm);
 					}
@@ -5945,9 +6017,14 @@
 		}
 
 		CShape.prototype.getAllRasterImages = function (images) {
-			if (this.spPr && this.spPr.Fill && this.spPr.Fill.fill && typeof (this.spPr.Fill.fill.RasterImageId) === "string" && this.spPr.Fill.fill.RasterImageId.length > 0)
-				images.push(this.spPr.Fill.fill.RasterImageId);
-
+			if (this.spPr) {
+				let sId = this.spPr.Fill && this.spPr.Fill.checkRasterImageId();
+				if (sId)
+					images.push(sId);
+				sId = this.spPr.ln && this.spPr.ln.checkRasterImageId();
+				if (sId)
+					images.push(sId);
+			}
 
 			var compiled_style = this.getCompiledStyle();
 			var parents = this.getParentObjects();
@@ -6006,6 +6083,7 @@
 						var defaultExtX;
 						var defaultExtY;
 						var isNormalRotate = AscFormat.checkNormalRotate(this.getDefaultRotSA());
+						const scaleCoefficient = this.getScaleCoefficient();
 						if (isNormalRotate) {
 							originalPosX = this.x;
 							originalPosY = this.y;
@@ -6017,6 +6095,10 @@
 							defaultExtX = this.extY;
 							defaultExtY = this.extX;
 						}
+						originalPosX /= scaleCoefficient;
+						originalPosY /= scaleCoefficient;
+						defaultExtX /= scaleCoefficient;
+						defaultExtY /= scaleCoefficient;
 
 
 						if (prSet) {
@@ -6964,6 +7046,9 @@
 				return this.signatureLine.id;
 			}
 			return null;
+		};
+		CShape.prototype.isEqualSignatureLineGuid = function (sGuid) {
+			return this.signatureLine !== null && this.signatureLine.isEqualId(sGuid);
 		};
 
 		CShape.prototype.GetAllFields = function (isUseSelection, arrFields) {

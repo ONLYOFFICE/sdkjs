@@ -179,6 +179,7 @@ function (window, undefined) {
 	AscDFH.changesFactory[AscDFH.historyitem_PathSetFill] = AscDFH.CChangesDrawingsString;
 	AscDFH.changesFactory[AscDFH.historyitem_PathSetPathH] = AscDFH.CChangesDrawingsLong;
 	AscDFH.changesFactory[AscDFH.historyitem_PathSetPathW] = AscDFH.CChangesDrawingsLong;
+	AscDFH.changesFactory[AscDFH.historyitem_PathSetParent] = AscDFH.CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_PathAddPathCommand] = CChangesDrawingsAddPathCommand;
 
 	AscDFH.drawingsChangesMap[AscDFH.historyitem_PathSetStroke] = function (oClass, value) {
@@ -196,6 +197,9 @@ function (window, undefined) {
 	AscDFH.drawingsChangesMap[AscDFH.historyitem_PathSetPathW] = function (oClass, value) {
 		oClass.pathW = value;
 	};
+	AscDFH.drawingsChangesMap[AscDFH.historyitem_PathSetParent] = function (oClass, value) {
+		oClass.parent = value;
+	};
 
 
 	function Path() {
@@ -205,6 +209,7 @@ function (window, undefined) {
 		this.fill = null;
 		this.pathH = null;
 		this.pathW = null;
+		this.parent = null;
 
 		this.ArrPathCommandInfo = [];
 		this.ArrPathCommand = [];
@@ -362,6 +367,13 @@ function (window, undefined) {
 	Path.prototype.setPathW = function (pr) {
 		AscCommon.History.CanAddChanges() && AscCommon.History.Add(new AscDFH.CChangesDrawingsLong(this, AscDFH.historyitem_PathSetPathW, this.pathW, pr));
 		this.pathW = pr;
+	};
+	Path.prototype.setParent = function (parent) {
+		if (AscCommon.History.CanAddChanges()) {
+			const changes = new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_PathSetParent, this.parent, parent);
+			AscCommon.History.Add(changes);
+		}
+		this.parent = parent;
 	};
 	Path.prototype.addPathCommand = function (cmd) {
 		AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsAddPathCommand(this, cmd, this.ArrPathCommandInfo.length));
@@ -2268,7 +2280,7 @@ function (window, undefined) {
 					prevPoint,
 					{ x: command.X0, y: command.Y0 },
 					{ x: command.X1, y: command.Y1 },
-					{ x: command.X2, y: command.Y2 },
+					{ x: command.X2, y: command.Y2 }
 				);
 				prevPoint = { x: command.X2, y: command.Y2 };
 			}
@@ -2515,7 +2527,7 @@ function (window, undefined) {
 		this.fill = null;
 		this.pathH = null;
 		this.pathW = null;
-
+		this.parent = null;
 
 		this.startPos = 0;
 

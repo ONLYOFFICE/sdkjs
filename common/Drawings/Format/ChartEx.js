@@ -3410,6 +3410,10 @@ function (window, undefined) {
 		const numLit = this.getValLit();
 		return numLit ? numLit.pts : [];
 	};
+	CSeries.prototype.getCatPts = function () {
+		const strLit = this.getCatLit()
+		return strLit ? strLit.pts : [];
+	}
 	CSeries.prototype.getNumPts = function() {
 		return this.getValPts();
 	};

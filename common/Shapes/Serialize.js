@@ -10253,6 +10253,7 @@ function BinaryPPTYLoader()
                         txbody.content.Internal_Content_Add(txbody.content.Content.length, _paragraph);
 
                     }
+                    this.fixEmptyParagraphsTextPr(txbody.content);
                     break;
                 }
                 default:
@@ -10321,7 +10322,7 @@ function BinaryPPTYLoader()
                         txbody.content.Internal_Content_Add(txbody.content.Content.length, _paragraph);
 
                     }
-
+                    this.fixEmptyParagraphsTextPr(txbody.content);
 
                     break;
                 }
@@ -10373,6 +10374,7 @@ function BinaryPPTYLoader()
                         var _paragraph = this.ReadParagraph(content);
                         content.Internal_Content_Add(content.Content.length, _paragraph);
                     }
+                    this.fixEmptyParagraphsTextPr(content);
                     break;
                 }
                 default:
@@ -10391,6 +10393,8 @@ function BinaryPPTYLoader()
         var par = new AscWord.Paragraph(DocumentContent, true);
 
         var EndPos = 0;
+        var bHasEndParaRPr = false;
+        var bHasRuns = false;
 
         var s = this.stream;
 
@@ -10409,6 +10413,7 @@ function BinaryPPTYLoader()
                 }
                 case 1:
                 {
+                    bHasEndParaRPr = true;
                     var OldImgCount = 0;
                     if(this.IsUseFullUrl)
                     {
@@ -10495,6 +10500,14 @@ function BinaryPPTYLoader()
                                 }
 
                                 if (oPdfFontInfo && _run) {
+									if (!Asc.editor.embeddedFontsMap) {
+										Asc.editor.embeddedFontsMap = {};
+									}
+
+									if (!oPdfFontInfo.isActual) {
+										Asc.editor.embeddedFontsMap[AscFonts.getEmbeddedFontPrefix() + oPdfFontInfo.name] = _run.GetFontFamily();
+									}
+
                                     _run.RFonts.SetAll((!oPdfFontInfo.isActual ? AscFonts.getEmbeddedFontPrefix() : "") + oPdfFontInfo.name, -1);
                                 }
 
@@ -10733,6 +10746,9 @@ function BinaryPPTYLoader()
                             }
                         }
                     }
+                    if (_c > 0) {
+                        bHasRuns = true;
+                    }
                     break;
                 }
                 default:
@@ -10742,9 +10758,51 @@ function BinaryPPTYLoader()
                 }
             }
         }
+
+        if (!bHasEndParaRPr && !bHasRuns) {
+            par.bNeedCopyTextPrFromPrev = true;
+        }
+
         s.Seek2(_end_rec);
         par.Correct_Content();
         return par;
+    };
+
+    this.fixEmptyParagraphsTextPr = function(content) {
+        if (!content || !content.Content || content.Content.length < 2)
+            return;
+
+        for (let i = 1; i < content.Content.length; i++) {
+            const para = content.Content[i];
+            const prevPara = content.Content[i - 1];
+
+            if (!para || !prevPara)
+                continue;
+
+            if (!para.bNeedCopyTextPrFromPrev)
+                continue;
+
+            let prevLastRun = null;
+            for (let j = prevPara.Content.length - 1; j >= 0; j--) {
+                const item = prevPara.Content[j];
+                if (item && item.Type === para_Run && !item.IsParaEndRun() && item.Pr) {
+                    prevLastRun = item;
+                    break;
+                }
+            }
+
+            if (prevLastRun && prevLastRun.Pr) {
+                const textPr = prevLastRun.Pr.Copy();
+                para.TextPr.Apply_TextPr(textPr);
+                if (para.Content[0] && para.Content[0].Set_Pr) {
+                    para.Content[0].Set_Pr(textPr.Copy());
+                }
+            }
+        }
+
+        for (let i = 0; i < content.Content.length; i++) {
+            delete content.Content[i].bNeedCopyTextPrFromPrev;
+        }
     };
 
     // ------------------------------------------

@@ -1479,6 +1479,15 @@
 				this.isResizeModeMove = true;
 				this._resizeElement(event);
 			}
+			if (this.isFillHandleMode && !this.hasCursor) {
+				this._changeFillHandle2(event);
+			}
+			if (this.isMoveRangeMode && !this.hasCursor) {
+				this._moveRangeHandle2(event);
+			}
+			if (this.isMoveResizeRange && !this.hasCursor) {
+				this._moveResizeRangeHandle2(event);
+			}
 			if (this.hsbApiLockMouse)
 				this.hsbApi.mouseDown ? this.hsbApi.evt_mousemove.call(this.hsbApi, event) : false;
 			else if (this.vsbApiLockMouse)
@@ -1979,7 +1988,11 @@
 			var ctrlKey = !AscCommon.getAltGr(event) && (event.metaKey || event.ctrlKey);
 			var coord = t._getCoordinates(event);
 
-			t.hasCursor = true;
+			var canvasWidth = this.element.width / AscCommon.AscBrowser.retinaPixelRatio;
+			var canvasHeight = this.element.height / AscCommon.AscBrowser.retinaPixelRatio;
+			var coordX = coord.x / AscCommon.AscBrowser.retinaPixelRatio;
+			var coordY = coord.y / AscCommon.AscBrowser.retinaPixelRatio;
+			t.hasCursor = (coordX >= 0 && coordX <= canvasWidth && coordY >= 0 && coordY <= canvasHeight);
 
 			if (t.view.Api.isEyedropperStarted()) {
 				t.view.Api.checkEyedropperColor(coord.x, coord.y);

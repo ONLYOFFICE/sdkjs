@@ -138,6 +138,7 @@
 			Warning  : -101,
 			UpdateVersion : -102,
 			ForcedViewMode : -103,
+			FileNotAssembled : -104,
 
 			PrintMaxPagesCount : -110,
 
@@ -149,6 +150,8 @@
 			LockedCellSolver			: -201,
 			TooManyVarCellsSolver		: -202,
 			DataConstraintError			: -203,
+			TooManyCells		        : -204,
+			UnequalCellsNumber			: -205,
 
 			/* для формул */
 			FrmlMaxReference            : -297,
@@ -347,6 +350,11 @@
 	prot['MustFormulaResultNumber']          = prot.MustFormulaResultNumber;
 	prot['MustContainValue']                 = prot.MustContainValue;
 	prot['LockedCellGoalSeek']               = prot.LockedCellGoalSeek;
+	prot['LockedCellSolver']				 = prot.LockedCellSolver;
+	prot['TooManyVarCellsSolver'] 			 = prot.TooManyVarCellsSolver;
+	prot['DataConstraintError'] 			 = prot.DataConstraintError;
+	prot['TooManyCells'] 					 = prot.TooManyCells;
+	prot['UnequalCellsNumber'] 				 = prot.UnequalCellsNumber;
 	prot['NoValues']                         = prot.NoValues;
 	prot['NoSingleRowCol']                   = prot.NoSingleRowCol;
 	prot['InvalidReference']                 = prot.InvalidReference;
@@ -362,6 +370,8 @@
 	prot['UserDrop']                         = prot.UserDrop;
 	prot['Warning']                          = prot.Warning;
 	prot['UpdateVersion']                    = prot.UpdateVersion;
+	prot['ForcedViewMode']                   = prot.ForcedViewMode;
+	prot['FileNotAssembled']                 = prot.FileNotAssembled;
 	prot['PrintMaxPagesCount']               = prot.PrintMaxPagesCount;
 	prot['SessionAbsolute']                  = prot.SessionAbsolute;
 	prot['SessionIdle']                      = prot.SessionIdle;

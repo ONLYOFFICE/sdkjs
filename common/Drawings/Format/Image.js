@@ -901,8 +901,9 @@
 				if (oMainGroup) {
 					oMainGroup.normalize();
 				}
-				let dExtX = this.extX;
-				let dExtY = this.extY;
+				const dScaleCoefficient = this.getScaleCoefficient();
+				let dExtX = this.extX / dScaleCoefficient;
+				let dExtY = this.extY / dScaleCoefficient;
 				let dX = oXfrm.offX;
 				let dY = oXfrm.offY;
 				let bFlipH = oXfrm.flipH;

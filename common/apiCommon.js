@@ -371,6 +371,14 @@ function (window, undefined) {
 		if (this.isvisible == null) this.isvisible = false;
 		if (this.isForm === null) this.isForm = false;
 	};
+	asc_CSignatureLine.prototype.isEqualId = function (sId) {
+		return typeof sId === "string" && typeof this.id === "string"
+			&& this.id.toUpperCase() === sId.toUpperCase();
+	};
+	asc_CSignatureLine.prototype.isEqualGuid = function (sGuid) {
+		return typeof sGuid === "string" && typeof this.guid === "string"
+			&& this.guid.toUpperCase() === sGuid.toUpperCase();
+	};
 	asc_CSignatureLine.prototype.asc_getId = function () {
 		return this.id;
 	};
@@ -2032,6 +2040,10 @@ function (window, undefined) {
 	STANDART_COLORS_MAP[0xE0E0E0] = "Light Gray";
 	STANDART_COLORS_MAP[0xE6F5E6] = "Light Green";
 	STANDART_COLORS_MAP[0xDCF0DC] = "Light Green";
+	STANDART_COLORS_MAP[0xDCE6F5] = "Light Blue";
+	STANDART_COLORS_MAP[0xD7E1F0] = "Light Blue";
+	STANDART_COLORS_MAP[0xFAE6D7] = "Light Orange";
+	STANDART_COLORS_MAP[0xF5E1D2] = "Light Orange";
 
 
 	/**
@@ -3763,7 +3775,7 @@ function (window, undefined) {
 	function asc_CFreeTextAnnotProperty() {
 		this.borderWidth		= undefined;
 		this.borderStyle		= undefined;
-		this.lineEnd			= undefined;
+		this.lineEnd			= null;
 		this.canEditText		= undefined;
 	}
 
@@ -4221,7 +4233,7 @@ function (window, undefined) {
 		this.format				= null;
 		this.validate			= null;
 
-		this.options			= null;
+		this.options			= [];
 		this.commitOnSelChange	= undefined;
 		this.editable			= undefined;
 		this.placeholder		= undefined;
@@ -4276,12 +4288,12 @@ function (window, undefined) {
 
 			if (Array.isArray(a)) {
 				if (!Array.isArray(b) || a[0] !== b[0] || a[1] !== b[1]) {
-					this.options = null;
+					this.options = [];
 					break;
 				}
 			}
 			else if (a !== b) {
-				this.options = null;
+				this.options = [];
 				break;
 			}
 		}
@@ -4304,7 +4316,7 @@ function (window, undefined) {
 	///// Listbox field
 	//////////////////////////////////////////////////////////////////
 	function asc_CListboxFieldProperty() {
-		this.options		 	= null;
+		this.options		 	= [];
 		this.commitOnSelChange	= undefined;
 		this.multipleSelection	= undefined;
 	}
@@ -4333,12 +4345,12 @@ function (window, undefined) {
 
 			if (Array.isArray(a)) {
 				if (!Array.isArray(b) || a[0] !== b[0] || a[1] !== b[1]) {
-					this.options = null;
+					this.options = [];
 					break;
 				}
 			}
 			else if (a !== b) {
-				this.options = null;
+				this.options = [];
 				break;
 			}
 		}
@@ -6873,6 +6885,7 @@ function (window, undefined) {
 			let y = (h - hMM) / 2;
 
 			if (window["NATIVE_EDITOR_ENJINE"]) {
+				renderer.ResetRotation();
 				renderer.put_brushTexture(this.imageBase64, 0);
 				renderer.put_BrushTextureAlpha((255 * this.transparent) >> 0);
 				renderer._e();
@@ -7848,6 +7861,9 @@ function (window, undefined) {
 	};
 	CButtonData.prototype.get_Properties = function() {
 		return this["pr"];
+	};
+	CButtonData.prototype.asc_getSignatureProps = function(api) {
+		return new Asc.CSignatureFormProps(api, this);
 	};
 
 	function CAscChartProp(obj)
@@ -9523,6 +9539,7 @@ function (window, undefined) {
 	prot["get_Button"] = prot.get_Button;
 	prot["get_IsForm"] = prot.get_IsForm;
 	prot["get_Properties"] = prot.get_Properties;
+	prot["asc_getSignatureProps"] = prot.asc_getSignatureProps;
 
 	window["AscCommon"]["pix2mm"] = window["AscCommon"].pix2mm = function(pix)
 	{

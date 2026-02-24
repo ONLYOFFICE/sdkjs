@@ -70,6 +70,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Comment_Data]	= CChangesPDFAn
 AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_Reply]		= CChangesPDFAnnotReply;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Ap_Idx]			= CChangesPDFAnnotApIdx;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Actions]			= CChangesPDFAnnotActions;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_In_Reply_To]		= CChangesPDFAnnotInReplyTo;
 
 // text annot
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Text_Annot_Icon]		= CChangesPDFTextAnnotIcon;
@@ -432,7 +433,7 @@ CChangesPDFAnnotStroke.prototype.Type = AscDFH.historyitem_Pdf_Annot_Stroke;
 CChangesPDFAnnotStroke.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
-	oAnnot.SetStrokeColor(Value);
+	oAnnot.SetBorderColor(Value);
 };
 
 /**
@@ -466,7 +467,7 @@ CChangesPDFAnnotStrokeWidth.prototype.Type = AscDFH.historyitem_Pdf_Annot_Stroke
 CChangesPDFAnnotStrokeWidth.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
-	oAnnot._width = Value;
+	oAnnot._borderWidth = Value;
 	oAnnot.private_UpdateLn();
 };
 
@@ -539,7 +540,10 @@ CChangesPDFAnnotRC.prototype.Type = AscDFH.historyitem_Pdf_Annot_RC;
 CChangesPDFAnnotRC.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
-	oAnnot.SetRichContents(Value);
+
+	oAnnot._richContents = Value;
+	oAnnot.SetNeedRecalc(true);
+	oAnnot.private_UpdateRichContent && oAnnot.private_UpdateRichContent();
 };
 
 CChangesPDFAnnotRC.prototype.WriteToBinary = function(Writer)
@@ -950,7 +954,30 @@ CChangesPDFAnnotActions.prototype.ReadFromBinary = function(Reader)
 		this.Old = undefined;
 	else
 		this.Old = Reader.GetString2();
-};// text annot
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseObjectProperty}
+ */
+function CChangesPDFAnnotInReplyTo(Class, oOldPage, oNewPage)
+{
+	AscDFH.CChangesBaseObjectProperty.call(this, Class, oOldPage, oNewPage);
+}
+CChangesPDFAnnotInReplyTo.prototype = Object.create(AscDFH.CChangesBaseObjectProperty.prototype);
+CChangesPDFAnnotInReplyTo.prototype.constructor = CChangesPDFAnnotInReplyTo;
+CChangesPDFAnnotInReplyTo.prototype.Type = AscDFH.historyitem_Pdf_Annot_In_Reply_To;
+CChangesPDFAnnotInReplyTo.prototype.CreateReverseChange = function() {
+	return new this.constructor(this.Class, this.New, this.Old);
+};
+
+CChangesPDFAnnotInReplyTo.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot._inReplyTo = Value;
+};
+
+// text annot
 
 /**
  * @constructor
@@ -1090,36 +1117,37 @@ CChangesPDFAnnotContents.prototype.private_SetValue = function(Value)
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesBaseStringProperty}
+ * @extends {AscDFH.CChangesBaseLongProperty}
  */
 function CChangesPDFAnnotCreationDate(Class, Old, New, Color)
 {
-	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New, Color);
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
 }
-CChangesPDFAnnotCreationDate.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesPDFAnnotCreationDate.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
 CChangesPDFAnnotCreationDate.prototype.constructor = CChangesPDFAnnotCreationDate;
 CChangesPDFAnnotCreationDate.prototype.Type = AscDFH.historyitem_Pdf_Annot_Creation_Date;
 CChangesPDFAnnotCreationDate.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
-	oAnnot.SetCreationDate(Value);
+	oAnnot._creationDate = Value;
 };
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesBaseStringProperty}
+ * @extends {AscDFH.CChangesBaseLongProperty}
  */
 function CChangesPDFAnnotModDate(Class, Old, New, Color)
 {
-	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New, Color);
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
 }
-CChangesPDFAnnotModDate.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesPDFAnnotModDate.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
 CChangesPDFAnnotModDate.prototype.constructor = CChangesPDFAnnotModDate;
 CChangesPDFAnnotModDate.prototype.Type = AscDFH.historyitem_Pdf_Annot_Mod_Date;
 CChangesPDFAnnotModDate.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
-	oAnnot.SetModDate(Value);
+	oAnnot._modDate = Value;
+	
 	let oAscCommData = oAnnot.GetAscCommentData();
 	if (oAscCommData) {
 		let oCommData = new AscCommon.CCommentData();
@@ -1363,7 +1391,7 @@ CChangesPDFAnnotBorderEffect.prototype.private_SetValue = function(Value)
 	let oAnnot = this.Class;
 	oAnnot._borderEffectStyle = Value;
 	oAnnot.AddToRedraw();
-	if (Value == AscPDF.BORDER_EFFECT_STYLES.None) {
+	if (Value == AscPDF.BORDER_EFFECT_STYLES.none) {
 		oAnnot.SetDefaultGeometry();
 	}
 };
@@ -1418,7 +1446,7 @@ CChangesPDFAnnotBorderType.prototype.Type = AscDFH.historyitem_Pdf_Annot_Border_
 CChangesPDFAnnotBorderType.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
-	oAnnot._border = Value;
+	oAnnot._borderStyle = Value;
 	oAnnot.AddToRedraw();
 };
 
@@ -1606,7 +1634,7 @@ CChangesPDFLineAnnotDoCaption.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
 	oAnnot._doCaption = Value;
-	oAnnot.private_UpdateCaption();
+	oAnnot.private_UpdateRichContent();
 	oAnnot.SetNeedRecalc(true);
 };
 
@@ -1624,7 +1652,8 @@ CChangesPDFLineAnnotRC.prototype.Type = AscDFH.historyitem_type_Pdf_Annot_Line_R
 CChangesPDFLineAnnotRC.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
-	oAnnot.SetRichContents(Value);
+	oAnnot._richContents = Value;
+	oAnnot.private_UpdateRichContent();
 };
 
 CChangesPDFLineAnnotRC.prototype.WriteToBinary = function(Writer)

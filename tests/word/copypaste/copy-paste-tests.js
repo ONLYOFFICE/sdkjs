@@ -1200,6 +1200,96 @@ $(function () {
 		done();
 	});
 
+	QUnit.test("Paste nested list with paragraphs HTML", function (assert) {
+		initDocument();
+
+		let done = assert.async();
+		let htmlElement = document.createElement("div");
+		htmlElement.innerHTML = `<ol>
+			<li>
+				<p>test1</p>
+				<ul>
+					<li>elem1</li>
+				</ul>
+			</li>
+			<li>
+				<p>test2</p>
+				<ul>
+					<li>elem2</li>
+				</ul>
+			</li>
+		</ol>`;
+
+		AscTest.Editor.asc_PasteData(
+			AscCommon.c_oAscClipboardDataFormat.HtmlElement,
+			htmlElement,
+		);
+
+		const result = ToJsonString(logicDocument);
+		
+		// Verify that we have 5 paragraphs: test1, elem1, test2, elem2, and empty final paragraph
+		const paragraphMatches = result.match(/"type":"paragraph"/g);
+		assert.ok(paragraphMatches && paragraphMatches.length >= 4, "Should have at least 4 paragraphs");
+		
+		// Verify text content
+		assert.ok(result.includes('"content":["test1"]'), "Should contain 'test1' text");
+		assert.ok(result.includes('"content":["test2"]'), "Should contain 'test2' text");
+		assert.ok(result.includes('"content":["elem1"]'), "Should contain 'elem1' text");
+		assert.ok(result.includes('"content":["elem2"]'), "Should contain 'elem2' text");
+		
+		// Extract all numId and ilvl values
+		const numIdMatches = result.match(/"numId":"(\d+)"/g);
+		const ilvlMatches = result.match(/"ilvl":(\d+)/g);
+		
+		assert.ok(numIdMatches && numIdMatches.length >= 4, "Should have numbering for list items");
+		assert.ok(ilvlMatches && ilvlMatches.length >= 4, "Should have level information");
+		
+		// Parse the result to check specific structure
+		const resultObj = JSON.parse(result);
+		
+		// Find paragraphs with "test1", "elem1", "test2", "elem2"
+		let test1Para = null, elem1Para = null, test2Para = null, elem2Para = null;
+		
+		for (let para of resultObj.content) {
+			if (para.type === "paragraph" && para.content) {
+				for (let run of para.content) {
+					if (run.content && run.content.includes("test1")) {
+						test1Para = para;
+					} else if (run.content && run.content.includes("elem1")) {
+						elem1Para = para;
+					} else if (run.content && run.content.includes("test2")) {
+						test2Para = para;
+					} else if (run.content && run.content.includes("elem2")) {
+						elem2Para = para;
+					}
+				}
+			}
+		}
+		
+		// Verify numbering structure
+		assert.ok(test1Para && test1Para.pPr && test1Para.pPr.numPr, "test1 should have numbering");
+		assert.ok(elem1Para && elem1Para.pPr && elem1Para.pPr.numPr, "elem1 should have numbering");
+		assert.ok(test2Para && test2Para.pPr && test2Para.pPr.numPr, "test2 should have numbering");
+		assert.ok(elem2Para && elem2Para.pPr && elem2Para.pPr.numPr, "elem2 should have numbering");
+		
+		// Check that test1 and test2 are on level 0 (ordered list)
+		assert.strictEqual(test1Para.pPr.numPr.ilvl, 0, "test1 should be on level 0");
+		assert.strictEqual(test2Para.pPr.numPr.ilvl, 0, "test2 should be on level 0");
+		
+		// Check that elem1 and elem2 are on level 1 (nested unordered list)
+		assert.strictEqual(elem1Para.pPr.numPr.ilvl, 1, "elem1 should be on level 1");
+		assert.strictEqual(elem2Para.pPr.numPr.ilvl, 1, "elem2 should be on level 1");
+		
+		// Check that test1 and test2 share the same numId (continue same numbered list)
+		assert.strictEqual(
+			test1Para.pPr.numPr.numId,
+			test2Para.pPr.numPr.numId,
+			"test1 and test2 should share the same numId to continue numbering"
+		);
+		
+		done();
+	});
+
 	QUnit.test("Paste image HTML", function (assert) {
 		// add prepare recursive to tests
 		AscCommon.PasteProcessor.prototype._Prepeare_recursive = oldPrepeare_recursive;
