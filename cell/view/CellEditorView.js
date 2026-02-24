@@ -368,6 +368,9 @@ function (window, undefined) {
 
 		AscCommon.StartIntervalDrawText(true);
 		this.openAction();
+
+		let externalSelectionController = this.handlers.trigger("getExternalSelectionController");
+		externalSelectionController && externalSelectionController.sendExternalChangeSelection();
 	};
 
 	CellEditor.prototype.close = function (saveValue, callback) {
