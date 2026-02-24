@@ -513,12 +513,7 @@ function (window, undefined) {
 			begin = Math.min(t.selectionBegin, t.selectionEnd);
 			end = Math.max(t.selectionBegin, t.selectionEnd);
 
-			// save info to undo/redo
-			if (end - begin < 2) {
-				t.undoList.push({fn: t._addChars, args: [t.textRender.getChars(begin, 1), begin]});
-			} else {
-				t.undoList.push({fn: t._addFragments, args: [t._getFragments(begin, end - begin), begin]});
-			}
+			let savedFragments = t._getFragments(begin, end - begin);
 
 			t._extractFragments(begin, end - begin);
 
@@ -542,7 +537,7 @@ function (window, undefined) {
 				t._drawSelection();
 
 				// save info to undo/redo
-				t.undoList.push({fn: t._removeChars, args: [begin, end - begin]});
+				t.undoList.push({fn: t._replaceFragments, args: [savedFragments, begin, end - begin]});
 				t.redoList = [];
 			}
 
@@ -605,6 +600,13 @@ function (window, undefined) {
 			this._drawSelection();
 		}
 		this.endAction();
+	};
+
+	CellEditor.prototype._replaceFragments = function (fragments, pos, length) {
+		this.noUpdateMode = true;
+		this._removeChars(pos, length);
+		this.noUpdateMode = false;
+		this._addFragments(fragments, pos);
 	};
 
 	CellEditor.prototype.empty = function (options) {
@@ -2591,6 +2593,10 @@ function (window, undefined) {
 				}
 			}
 			list2.push({fn: t._changeFragments, args: [_redoFragments]});
+		} else if (action.fn === t._replaceFragments) {
+			pos = action.args[1];
+			len = action.args[2];
+			list2.push({fn: t._replaceFragments, args: [t._getFragments(pos, len), pos, len]});
 		} else {
 			return;
 		}
