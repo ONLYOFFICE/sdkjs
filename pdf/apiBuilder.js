@@ -74,11 +74,6 @@
 	 */
 
 	/**
-	 * The available widget border styles.
-	 * @typedef {("solid" | "beveled" | "dashed" | "inset" | "underline")} WidgetBorderStyle
-	 */
-
-	/**
 	 * The available button widget border appearances types.
 	 * @typedef {("normal" | "down" | "hover")} ButtonAppearance
 	 */
@@ -846,7 +841,7 @@
 
 		if (creationDate != null) {
 			creationDate = AscBuilder.GetNumberParameter(creationDate, null);
-			if (!creationDate) {
+			if (creationDate === null) {
 				AscBuilder.throwException("The creationDate parameter must be a number");
 			}
 		}
@@ -865,8 +860,8 @@
 			rect:			[X1, Y1, X2, Y2],
 			name:           AscCommon.CreateGUID(),
 			type:           AscPDF.ANNOTATIONS_TYPES.Stamp,
-			creationDate:   creationDate ? new Date().getTime() : creationDate,
-			modDate:        creationDate ? new Date().getTime() : creationDate,
+			creationDate:   creationDate ? creationDate : new Date().getTime(),
+			modDate:        creationDate ? creationDate : new Date().getTime(),
 			hidden:         false
 		}
 
@@ -2873,8 +2868,8 @@
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiComboboxField/Methods/SetEditable.js
 	 */
-	ApiComboboxField.prototype.SetEditable = function(bCommit) {
-		return this.Field.SetEditable(bCommit)
+	ApiComboboxField.prototype.SetEditable = function(bEditable) {
+		return this.Field.SetEditable(bEditable)
 	};
 
 	/**
@@ -2884,8 +2879,8 @@
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiComboboxField/Methods/IsEditable.js
 	 */
-	ApiComboboxField.prototype.IsEditable = function(bCommit) {
-		return this.Field.IsEditable(bCommit)
+	ApiComboboxField.prototype.IsEditable = function() {
+		return this.Field.IsEditable()
 	};
 
 	/**
@@ -3301,7 +3296,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRadiobuttonField/Methods/IsCheckInUnison.js
 	 */
 	ApiRadiobuttonField.prototype.IsCheckInUnison = function() {
-		return this.Field.SetRadiosInUnison();
+		return this.Field.IsRadiosInUnison();
 	};
 
 	/**
@@ -4220,7 +4215,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetDashPattern.js
 	 */
 	ApiBaseAnnotation.prototype.SetDashPattern = function(pattern) {
-		if (pattern.find(function(value) { value = AscBuilder.GetNumberParameter(value, null); if (!value) return true})) {
+		if (pattern.find(function(value) { let num = AscBuilder.GetNumberParameter(value, null); if (num === null) return true})) {
 			AscBuilder.throwException("The pattern parameter must be an array with numbers");
 		}
 
@@ -4710,10 +4705,10 @@
 
 		switch (nIntentType) {
 			case AscPDF.FREE_TEXT_INTENT_TYPE.freeText: {
-				return "check";
+				return "freeText";
 			}
 			case AscPDF.FREE_TEXT_INTENT_TYPE.freeTextCallout: {
-				return "circle";
+				return "freeTextCallout";
 			}
 		}
 	};
@@ -4756,7 +4751,7 @@
 		let aCallout = this.Annot.GetCallout();
 
 		let aResult = [];
-		for (let i = 0; i < aCallout.length - 1; i++) {
+		for (let i = 0; i < aCallout.length - 1; i += 2) {
 			aResult.push({
 				"x": aCallout[i],
 				"y": aCallout[i + 1],
@@ -8157,12 +8152,12 @@
 		}
 
 		let x = AscBuilder.GetNumberParameter(point['x'], null);
-		if (!x) {
+		if (x === null) {
 			AscBuilder.throwException("The x coordinate of a point must be a number");
 		}
 
 		let y = AscBuilder.GetNumberParameter(point['y'], null);
-		if (!y) {
+		if (y === null) {
 			AscBuilder.throwException("The y coordinate of a point must be a number");
 		}
 	}
