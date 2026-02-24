@@ -15232,8 +15232,10 @@
 		let dir = 'ltr';
 		for (let iter = text.getUnicodeIterator(); iter.check(); iter.next()) {
 			let charDir = AscCommon.getCharStrongDir(iter.value());
-			if (charDir === AscBidi.DIRECTION_FLAG.RTL) {
-				dir = 'rtl';
+			if (charDir !== null) {
+				if (charDir === AscBidi.DIRECTION_FLAG.RTL) {
+					dir = 'rtl';
+				}
 				break;
 			}
 		}
