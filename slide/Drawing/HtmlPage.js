@@ -306,7 +306,7 @@
 			if (element) element.style.overflow = "hidden";
 		}
 
-		const thumbnailsSplitter = new Splitter(67.5, 20, 80);
+		const thumbnailsSplitter = this.IsThumbnailsSupported() ? new Splitter(67.5, 20, 80) : new Splitter(0, 0, 0);
 		const notesSplitter = this.m_oApi.isReporterMode
 			? new Splitter(Math.min(Math.max(window.innerHeight * 0.5 * AscCommon.g_dKoef_pix_to_mm, 10), 200), 10, 200)
 			: new Splitter(this.IsNotesSupported() && !this.m_oApi.isEmbedVersion ? 10 : 0, 10, 100);
@@ -1779,7 +1779,7 @@
 		}
 	};
 	CEditorPage.prototype.onSplitterResize = function (isNoNeedResize) {
-		if (Asc.editor.IsHandoutMasterMode()) {
+		if (!this.IsThumbnailsSupported()) {
 			this.splitters[0].setPosition(0);
 		}
 		if (Asc.editor.getThumbnailsPosition() === thumbnailsPositionMap.left) {
@@ -4714,6 +4714,7 @@
 	CEditorPage.prototype.GetSlidesCount = function () {
 		return this.m_oDrawingDocument.GetSlidesCount();
 	};
+	//todo
 	CEditorPage.prototype.GoToPage = function (lPageNum, isFromZoom, isScroll, bIsAttack, isReporterUpdateSlide) {
 		if (this.m_oApi.isReporterMode) {
 			if (!this.DemonstrationManager.Mode) {
@@ -4997,6 +4998,9 @@
 	};
 	CEditorPage.prototype.IsNotesSupported = function () {
 		return this.IsSupportNotes && this.m_oApi.IsNotesSupported();
+	};
+	CEditorPage.prototype.IsThumbnailsSupported = function () {
+		return this.m_oApi.IsThumbnailsSupported();
 	};
 
 	// Media player

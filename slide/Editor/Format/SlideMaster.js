@@ -385,13 +385,6 @@ MasterSlide.prototype.recalculate = function () {
         this.recalcInfo.recalculateBackground = false;
     }
 };
-MasterSlide.prototype.needRecalc = function(){
-    var recalcInfo = this.recalcInfo;
-    return recalcInfo.recalculateBackground ||
-        recalcInfo.recalculateSpTree ||
-        recalcInfo.recalculateBounds ||
-        recalcInfo.recalculateSlideLayouts;
-};
 MasterSlide.prototype.setSlideSize = function (w, h) {
     History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SlideMasterSetSize, new AscFormat.CDrawingBaseCoordsWritable(this.Width, this.Height), new AscFormat.CDrawingBaseCoordsWritable(w, h)));
     this.Width = w;

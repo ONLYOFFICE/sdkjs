@@ -648,6 +648,13 @@
 		return false;
 	};
 	SlideBase.prototype.needRecalc = function() {
+		if (this.recalcInfo) {
+			for (let flag in this.recalcInfo) {
+				if (flag) {
+					return true;
+				}
+			}
+		}
 		return false;
 	};
 	SlideBase.prototype.Clear_ContentChanges = function() {
@@ -706,7 +713,79 @@
 	SlideBase.prototype.changeBackground = function(bg) {
 	};
 
+	function fAddTextToPhInSlideLikeObject(oSlideLikeObject, nPhType, sText) {
+		if(typeof sText === "string") {
+			let oSp = oSlideLikeObject.getMatchingShape(nPhType, null, false, {});
+			let oContent = oSp && oSp.getDocContent && oSp.getDocContent();
+			if (oContent) {
+				let oParaPr = null;
+				let oFirstParaOld = oContent.GetFirstParagraph();
+				if (oFirstParaOld) {
+					oParaPr = oFirstParaOld.GetDirectParaPr();
+				}
+				AscFormat.CheckContentTextAndAdd(oContent, sText);
+				if(oParaPr) {
+					let oFirstParaNew = oContent.GetFirstParagraph();
+					if (oFirstParaNew) {
+						oFirstParaNew.SetPr(oParaPr);
+					}
+				}
+			}
+		}
+	}
+	function addFooterToSlideLikeObject(oSlideLikeObject, sFooterText) {
+		fAddTextToPhInSlideLikeObject(oSlideLikeObject, AscFormat.phType_ftr, sFooterText);
+	}
+	function addHeaderToSlideLikeObject(oSlideLikeObject, sHeaderText) {
+		fAddTextToPhInSlideLikeObject(oSlideLikeObject, AscFormat.phType_hdr, sHeaderText);
+	}
+	function addDateTimeToSlideLikeObject(oSlideLikeObject, sDateTimeFieldType, sCustomDateTime, nLang) {
+
+		let oSp = oSlideLikeObject.getMatchingShape(AscFormat.phType_dt, null, false, {});
+		if (oSp) {
+			let oContent = oSp.getDocContent && oSp.getDocContent();
+			if (oContent) {
+				if (sDateTimeFieldType) {
+					oContent.ClearContent(true);
+					let oParagraph = oContent.Content[0];
+					let oFld = new AscCommonWord.CPresentationField(oParagraph);
+					oFld.SetGuid(AscCommon.CreateGUID());
+					oFld.SetFieldType(sDateTimeFieldType);
+					if(AscFormat.isRealNumber(nLang)) {
+						oFld.Set_Lang_Val(nLang);
+					}
+					else {
+					const presentation = oSlideLikeObject.presentation;
+					const nDefaultLang = presentation && presentation.GetDefaultLanguage() || null;
+						oFld.Set_Lang_Val(nDefaultLang);
+					}
+					if (typeof sCustomDateTime === "string") {
+						oFld.CanAddToContent = true;
+						oFld.AddText(sCustomDateTime);
+						oFld.CanAddToContent = false;
+					}
+					oParagraph.Internal_Content_Add(0, oFld);
+				} else {
+					AscFormat.CheckContentTextAndAdd(oContent, sCustomDateTime);
+				}
+			}
+		}
+	}
+	function copyPlaceholderToLikeObject(oSlide, oTemplate, nPhType) {
+		let oSp = oTemplate.getMatchingShape(nPhType, null, false, {});
+		if (oSp) {
+			oSp = oSp.copy(undefined);
+			oSp.clearLang();
+			oSlide.addToSpTreeToPos(undefined, oSp);
+			oSp.setParent(oSlide);
+		}
+	}
+
 //--------------------------------------------------------export----------------------------------------------------
 	window['AscCommonSlide'] = window['AscCommonSlide'] || {};
 	window['AscCommonSlide'].SlideBase = SlideBase;
+	window['AscCommonSlide'].addFooterToSlideLikeObject = addFooterToSlideLikeObject;
+	window['AscCommonSlide'].addHeaderToSlideLikeObject = addHeaderToSlideLikeObject;
+	window['AscCommonSlide'].addDateTimeToSlideLikeObject = addDateTimeToSlideLikeObject;
+	window['AscCommonSlide'].copyPlaceholderToLikeObject = copyPlaceholderToLikeObject;
 })();

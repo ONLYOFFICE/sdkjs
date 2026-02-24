@@ -294,12 +294,6 @@ SlideLayout.prototype.getColorMap = function() {
         this.cSld.Bg = bg;
         this.recalcInfo.recalculateBackground = true;
     };
-    SlideLayout.prototype.needRecalc = function()
-    {
-        return  this.recalcInfo.recalculateBackground ||
-                this.recalcInfo.recalculateSpTree ||
-                this.recalcInfo.recalculateBounds;
-    };
     SlideLayout.prototype.setCSldName = function(name)
     {
         History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_SlideLayoutSetCSldName, this.cSld.name, name));

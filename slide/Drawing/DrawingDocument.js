@@ -6502,6 +6502,9 @@ function CThumbnailsManager(editorPage)
 CThumbnailsManager.prototype.isThumbnailsShown = function () {
 	const thumbnailsContainer = this.m_oWordControl.m_oThumbnailsContainer;
 	if (!thumbnailsContainer) return false;
+	if (!this.m_oWordControl.IsThumbnailsSupported()) {
+		return false;
+	}
 
 	const absolutePosition = thumbnailsContainer.AbsolutePosition;
 	const width = absolutePosition.R - absolutePosition.L;

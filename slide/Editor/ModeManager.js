@@ -100,6 +100,7 @@
 	SlideModeManagerBase.prototype.applySlideTransitionToAll = function () {};
 	SlideModeManagerBase.prototype.getCumulativeThumbnailsLength = function (isHorizontalOrientation, thumbnailWidth, thumbnailHeight) {return 0;};
 	SlideModeManagerBase.prototype.isNotesSupported = function () {return false;};
+	SlideModeManagerBase.prototype.isThumbnailsSupported = function () {return false;};
 	SlideModeManagerBase.prototype.getAnimationStartSlideNum = function (startSlideNum) {return 0;};
 	SlideModeManagerBase.prototype.getSavedAnimationStartObject = function () {return null;};
 	SlideModeManagerBase.prototype.goToSavedAnimationStartObject = function (object) {};
@@ -254,6 +255,9 @@
 	};
 	SlideModeManager.prototype.insertSlideObjectToPos = function (pos, slide) {
 		this.getPresentation().insertSlide(pos, slide);
+	};
+	SlideModeManager.prototype.isThumbnailsSupported = function () {
+		return true;
 	};
 
 
@@ -424,6 +428,9 @@
 				prevMaster.addToSldLayoutLstToPos(layoutPos, slide);
 			}
 		}
+	};
+	MasterSlideModeManager.prototype.isThumbnailsSupported = function () {
+		return true;
 	};
 
 

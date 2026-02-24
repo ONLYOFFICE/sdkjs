@@ -788,6 +788,9 @@
 	asc_docs_api.prototype.IsNotesSupported = function() {
 		return this.presentationViewManager.isNotesSupported();
 	};
+	asc_docs_api.prototype.IsThumbnailsSupported = function() {
+		return this.presentationViewManager.isThumbnailsSupported();
+	};
 
     //----------------------------------------------------------------------------------------------------------------------
     // SpellCheck_CallBack
