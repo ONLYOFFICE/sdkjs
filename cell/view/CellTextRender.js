@@ -67,6 +67,7 @@
 
 			/** @type RegExp */
 			this.reWordBegining = new XRegExp("[^\\p{L}\\p{N}\\'][\\p{L}\\p{N}]", "i");
+			this.reWordEnding = new XRegExp("[\\p{L}\\p{N}][^\\p{L}\\p{N}\\']", "i");
 			this.cursorAtTrailingEdge = undefined;
 
 			return this;
@@ -143,6 +144,12 @@
 			let s = AscCommonExcel.convertUnicodeToSimpleString(this.chars);
 			let i = s.slice(pos).search(this.reWordBegining);
 			return i >= 0 ? pos + (i + 1) : this.getEndOfLine(pos);
+		};
+
+		CellTextRender.prototype.getEndOfWord = function (pos) {
+			let s = AscCommonExcel.convertUnicodeToSimpleString(this.chars);
+			let i = s.slice(pos).search(this.reWordEnding);
+			return i >= 0 ? pos + i + 1 : this.chars.length;
 		};
 
 		CellTextRender.prototype.getBeginOfLine = function (pos) {

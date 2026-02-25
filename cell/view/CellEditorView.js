@@ -1795,7 +1795,6 @@ function (window, undefined) {
 		let h = this.canvas.height;
 		let y = -this.textRender.calcLineOffset(this.topLineIndex);
 		let cur = this.textRender.calcCharOffset(this.cursorPos, lineIndex);
-		this.textRender.cursorAtTrailingEdge = undefined;
 		let charsCount = this.textRender.getCharsCount();
 		let textAlign = this.textFlags && this.textFlags.textAlign;
 		let isRtl = this.textRender.isRtlLine();
@@ -1902,6 +1901,10 @@ function (window, undefined) {
 		this.newTextFormat = null;
 		var t = this;
 		this.sAutoComplete = null;
+
+		if (kind !== kPosition) {
+			this.textRender.cursorAtTrailingEdge = undefined;
+		}
 
 		let getLineIndex = function (_curPos) {
 			if (!t.textRender || !t.textRender.lines) {
@@ -3182,12 +3185,15 @@ function (window, undefined) {
 					}
 				}
 
-				// End of the word
-				endWord = endWord === undefined ? this.textRender.getNextWord(this.cursorPos) : endWord;
-				// The beginning of the word (we look for the end, because we could get into a space)
-				startWord = startWord === undefined ? this.textRender.getPrevWord(endWord) : startWord;
+				if (endWord === undefined) {
+					let nextWordStart = this.textRender.getNextWord(this.cursorPos);
+					startWord = this.textRender.getPrevWord(nextWordStart);
+					endWord = this.textRender.getEndOfWord(startWord);
+				}
 
+				this.textRender.cursorAtTrailingEdge = false;
 				this._moveCursor(kPosition, startWord);
+				this.textRender.cursorAtTrailingEdge = true;
 				this._selectChars(kPosition, endWord);
 			}
 		} else if (2 === button) {
