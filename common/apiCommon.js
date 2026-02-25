@@ -1533,6 +1533,9 @@ function (window, undefined) {
 	asc_ChartSettings.prototype.getErrorBarsValueType = function () {
 		return this.errorBarsValueType;
 	};
+	asc_ChartSettings.prototype.getTrendlineType = function () {
+		return this.trendlineType;
+	};
 	asc_ChartSettings.prototype.getType = function () {
 		if (this.chartSpace) {
 			return this.chartSpace.getChartType();
@@ -8431,6 +8434,7 @@ function (window, undefined) {
 	prot["getLegendPos"] = prot.getLegendPos;
 	prot["getDataLabelsPos"] = prot.getDataLabelsPos;
 	prot["getErrorBarsValueType"] = prot.getErrorBarsValueType;
+	prot["getTrendlineType"] = prot.getTrendlineType;
 	prot["getHorGridLines"] = prot.getHorGridLines;
 	prot["putHorGridLines"] = prot.putHorGridLines;
 	prot["getVertGridLines"] = prot.getVertGridLines;

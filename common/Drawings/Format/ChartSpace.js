@@ -2584,6 +2584,20 @@ function(window, undefined) {
 	{
 		return !!this.externalReference;
 	}
+	CChartSpace.prototype._getCommonSeriesValue = function (seriesArray, getValueCallback) {
+		if (!seriesArray || seriesArray.length === 0) {
+			return null;
+		}
+
+		const firstValue = getValueCallback(seriesArray[0]);
+		for (let i = 1; i < seriesArray.length; ++i) {
+			if (getValueCallback(seriesArray[i]) !== firstValue) {
+				return undefined;
+			}
+		}
+
+		return AscFormat.isRealNumber(firstValue) ? firstValue : null;
+	};
 	CChartSpace.prototype.getAscSettings = function ()
 	{
 		const chart = this.chart;
@@ -2662,12 +2676,24 @@ function(window, undefined) {
 			ret.showMarker = oFirstChart.isMarkerChart();
 		}
 
-		if (targetSeries && targetSeries.errBars && targetSeries.errBars.length > 0) {
-			const firstErrBar = targetSeries.errBars[0];
-			if (firstErrBar && AscFormat.isRealNumber(firstErrBar.errValType)) {
-				ret.errorBarsValueType = firstErrBar.errValType;
+		const getErrBarType = function (series) {
+			if (series.errBars && series.errBars.length > 0) {
+				const firstErrBar = series.errBars[0];
+				if (firstErrBar && AscFormat.isRealNumber(firstErrBar.errValType)) {
+					return firstErrBar.errValType;
+				}
 			}
-		}
+		};
+		const getTrendlineType = function (series) {
+			const lastTrendline = series.getLastTrendline && series.getLastTrendline();
+			if (lastTrendline && AscFormat.isRealNumber(lastTrendline.trendlineType)) {
+				return lastTrendline.trendlineType;
+			}
+		};
+
+		const seriesToCheck = selectedSeries ? [selectedSeries] : aSeries;
+		ret.errorBarsValueType = this._getCommonSeriesValue(seriesToCheck, getErrBarType);
+		ret.trendlineType = this._getCommonSeriesValue(seriesToCheck, getTrendlineType);
 
 		ret.putView3d(this.getView3d());
 		return ret;
