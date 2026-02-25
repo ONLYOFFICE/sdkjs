@@ -3098,6 +3098,14 @@
 
 			this.m_oFontSlotFont    = new CFontSetup();
 			this.LastFontOriginInfo = {Name : "", Replace : null};
+		},
+
+		ClearCacheProps : function()
+		{
+			this.ClearLastFont();
+			this.m_oPen.Color.R    = -1;
+			this.m_oBrush.Color1.R = -1;
+			this.m_oBrush.Color2.R = -1;
 		}
 	};
 
@@ -3608,6 +3616,12 @@
 	{
 		if (0 !== this.m_lPagesCount)
 			this.m_arrayPages[this.m_lPagesCount - 1].ClearLastFont();
+	};
+
+	CDocumentRenderer.prototype.ClearCacheProps = function()
+	{
+		if (0 !== this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].ClearCacheProps();
 	};
 
 	function WriteHeadings(memory, headings)

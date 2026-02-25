@@ -8760,6 +8760,7 @@
 		AscBuilder.ApiGroup     = ApiGroup;
 		AscBuilder.ApiSmartArt  = ApiSmartArt;
 		AscBuilder.ApiOleObject = ApiOleObject;
+		AscBuilder.ApiTable     = ApiTable;
 		AscBuilder.ApiChart     = ApiChart;
 		
 		// for backward compatibility

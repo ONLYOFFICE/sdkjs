@@ -818,6 +818,9 @@
 	CGraphicsBase.prototype.ClearLastFont = function()
 	{
 	};
+	CGraphicsBase.prototype.ClearCacheProps = function()
+	{
+	};
 
 	CGraphicsBase.prototype.GetFont = function()
 	{

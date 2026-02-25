@@ -8145,6 +8145,10 @@
 		return new AscBuilder.ApiCustomProperties(Asc.editor.wbModel.CustomProperties);
 	};
 
+	Api.SetDynamicArraysSupport = function (val, addToLS) {
+		return Asc.editor.asc_SetIsSupportDynamicArrays(val, addToLS);
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiWorkbook
@@ -27765,6 +27769,7 @@
 
 	Api["GetReferenceStyle"] = Api.GetReferenceStyle;
 	Api["SetReferenceStyle"] = Api.SetReferenceStyle;
+	Api["SetDynamicArraysSupport"] = Api.SetDynamicArraysSupport;
 
 	Api["GetWorksheetFunction"] = Api.GetWorksheetFunction;
 	Api["InsertPivotExistingWorksheet"] = Api.InsertPivotExistingWorksheet;

@@ -593,7 +593,7 @@ CopyProcessor.prototype =
     CopyRunContent: function (Container, oTarget, bOmitHyperlink) {
 		var bookmarksStartMap = {};
 		var bookmarkPrviousTargetMap = {};
-		var bookmarkLevel = 0;
+		var bookmarkStack = [];
 
 		var closeBookmarks = function (_level) {
 			var tempTarget = bookmarkPrviousTargetMap[_level];
@@ -627,10 +627,10 @@ CopyProcessor.prototype =
 						bOmitHyperlink = true;
 					} else if (realTarget && !this.instructionHyperlinkStart) {
 						//TODO close all bookmarks before change content. need to reconsider
-						if (bookmarkLevel > 0) {
-							while(bookmarkLevel > 0) {
-								closeBookmarks(bookmarkLevel);
-								bookmarkLevel--;
+						if (bookmarkStack.length > 0) {
+							while(bookmarkStack.length > 0) {
+								var levelToClose = bookmarkStack.pop();
+								closeBookmarks(levelToClose);
 							}
 						}
 						oTarget = realTarget;
@@ -683,26 +683,29 @@ CopyProcessor.prototype =
 				//чтобы заранее не проходиться по всему контенту параграфа в поисках закрытия bookmark - закрываю его после всего цикла
 				//на следующий параграф не переносим
 				if (item.Start) {
-					bookmarkLevel++;
-					bookmarksStartMap[item.BookmarkId] = 1;
+					var bookmarkLevel = bookmarkStack.length + 1;
+					bookmarksStartMap[item.BookmarkId] = bookmarkLevel;
+					bookmarkStack.push(bookmarkLevel);
 					var oBookmark = new CopyElement("a");
 					var name = item.GetBookmarkName();
 					oBookmark.oAttributes["name"] = CopyPasteCorrectString(name);
 					bookmarkPrviousTargetMap[bookmarkLevel] = oTarget;
 					oTarget = oBookmark;
 				} else if (bookmarksStartMap[item.BookmarkId]) {
+					var bookmarkLevel = bookmarksStartMap[item.BookmarkId];
 					bookmarksStartMap[item.BookmarkId] = 0;
-					closeBookmarks(bookmarkLevel);
-					bookmarkLevel--;
+					
+					if (bookmarkStack.length > 0 && bookmarkStack[bookmarkStack.length - 1] === bookmarkLevel) {
+						bookmarkStack.pop();
+						closeBookmarks(bookmarkLevel);
+					}
 				}
 			}
 		}
 
-		if (bookmarkLevel > 0) {
-    		while(bookmarkLevel > 0) {
-				closeBookmarks(bookmarkLevel);
-				bookmarkLevel--;
-			}
+		while(bookmarkStack.length > 0) {
+			var levelToClose = bookmarkStack.pop();
+			closeBookmarks(levelToClose);
 		}
 		if (this.instructionHyperlinkStart) {
 			this.instructionHyperlinkStart = null;

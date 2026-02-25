@@ -3450,7 +3450,7 @@ CGraphicObjects.prototype =
         for(var i = 0; i < aSignatureShapes.length; ++i)
         {
             oShape = aSignatureShapes[i];
-            if(oShape && !oShape.group && oShape.signatureLine && oShape.signatureLine.id === sGuid && oShape.parent)
+            if(oShape && !oShape.group && oShape.signatureLine && oShape.signatureLine.isEqualId(sGuid) && oShape.parent)
             {
                 oWordControl.ScrollToPosition(oShape.x, oShape.y, oShape.parent.PageNum, oShape.extY);
                 oShape.Set_CurrentElement(false, oShape.parent.PageNum);

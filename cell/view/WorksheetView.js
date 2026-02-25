@@ -11414,8 +11414,9 @@ function isAllowPasteLink(pastedWb) {
 			reinitScrollX = oldEnd !== vr.c2;
 		}
 		
+		let _maxCol = this.model.isDefaultWidthHidden() ? this.nColsCount : gc_nMaxCol;
 		if ((reinitScrollX && !this.workbook.getSmoothScrolling()) || (reinitScrollX && this.workbook.getSmoothScrolling() && deltaCorrect !== currentScrollCorrect) ||
-			(0 > delta && initColsCount && this._initColsCount()) || (this.workbook.getSmoothScrolling() && initColsCount && this.nColsCount !== gc_nMaxCol)) {
+			(0 > delta && initColsCount && this._initColsCount()) || (this.workbook.getSmoothScrolling() && initColsCount && this.nColsCount !== _maxCol)) {
 			if (reinitScrollX && (start - cFrozen) === 0 && 0 > delta && initColsCount) {
 				this._initColsCount();
 			}
@@ -14283,8 +14284,7 @@ function isAllowPasteLink(pastedWb) {
 				return;
 			}
 			if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.selectLockedCells)) {
-				var lockedCell = this.model.getLockedCell(newRange.c2, newRange.r2);
-				if (lockedCell || lockedCell === null) {
+				if (this.model.isLockedRange(newRange)) {
 					return;
 				}
 			}
@@ -14329,6 +14329,15 @@ function isAllowPasteLink(pastedWb) {
         if (0 === dc && 0 === dr) {
             return this._calcActiveCellOffset();
         }
+
+		if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.selectLockedCells)) {
+			var newRange = this._calcSelectionEndPointByOffset(dc, dr);
+			var lockedCell = this.model.getLockedCell(newRange.c2, newRange.r2);
+			if (lockedCell || lockedCell === null) {
+				return;
+			}
+		}
+
 		res = this._moveActivePointInSelection(dc, dr);
         if (0 === res) {
             return this.changeSelectionStartPoint(dc, dr, /*isCoord*/false, false);
@@ -21587,7 +21596,7 @@ function isAllowPasteLink(pastedWb) {
 			worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot,
 				c_oAscError.Level.NoCritical);
 			result = false;
-		} else if(styleName && this.intersectionFormulaArray(activeRange, true, true)) {
+		} else if(styleName && this.intersectionFormulaArray(activeRange, true, true, true)) {
 			worksheet.workbook.handlers.trigger("asc_onError", c_oAscError.ID.MultiCellsInTablesFormulaArray, c_oAscError.Level.NoCritical);
 			result = false;
 		}

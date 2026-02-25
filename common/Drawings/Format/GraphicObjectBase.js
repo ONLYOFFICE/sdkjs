@@ -2502,6 +2502,9 @@
 	CGraphicObjectBase.prototype.getSignatureLineGuid = function () {
 		return null;
 	};
+	CGraphicObjectBase.prototype.isEqualSignatureLineGuid = function (sGuid) {
+		return false;
+	};
 	CGraphicObjectBase.prototype.getMacrosName = function () {
 		var sGuid = this.getJSAMacroId();
 		if (sGuid) {

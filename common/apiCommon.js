@@ -371,6 +371,14 @@ function (window, undefined) {
 		if (this.isvisible == null) this.isvisible = false;
 		if (this.isForm === null) this.isForm = false;
 	};
+	asc_CSignatureLine.prototype.isEqualId = function (sId) {
+		return typeof sId === "string" && typeof this.id === "string"
+			&& this.id.toUpperCase() === sId.toUpperCase();
+	};
+	asc_CSignatureLine.prototype.isEqualGuid = function (sGuid) {
+		return typeof sGuid === "string" && typeof this.guid === "string"
+			&& this.guid.toUpperCase() === sGuid.toUpperCase();
+	};
 	asc_CSignatureLine.prototype.asc_getId = function () {
 		return this.id;
 	};
@@ -6877,6 +6885,7 @@ function (window, undefined) {
 			let y = (h - hMM) / 2;
 
 			if (window["NATIVE_EDITOR_ENJINE"]) {
+				renderer.ResetRotation();
 				renderer.put_brushTexture(this.imageBase64, 0);
 				renderer.put_BrushTextureAlpha((255 * this.transparent) >> 0);
 				renderer._e();

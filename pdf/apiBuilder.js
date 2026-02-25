@@ -2739,9 +2739,9 @@
 	 * @param {number} nCurPos - index of moved option
 	 * @param {number} nNewPos - new positon for option
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/{Editor}/ApiBaseListField/Methods/MoveOptionTo.js
+	 * @see office-js-api/Examples/{Editor}/ApiBaseListField/Methods/MoveOption.js
 	 */
-	ApiBaseListField.prototype.MoveOptionTo = function(nCurPos, nNewPos) {
+	ApiBaseListField.prototype.MoveOption = function(nCurPos, nNewPos) {
 		let aOptions = this.GetOptions();
 		if (nCurPos < 0 || nCurPos >= aOptions.length || nNewPos < 0) return false;
 	
@@ -6089,15 +6089,6 @@
 	};
 
 	/**
-	 * Returns the last Run with text in the current paragraph.
-	 * @memberof ApiRichParagraph
-	 * @typeofeditors ["PDFE"]
-	 * @returns {ApiRichRun}
-	 * @see office-js-api/Examples/{Editor}/ApiRichParagraph/Methods/GetLastRunWithText.js
-	 */
-	ApiRichParagraph.prototype.GetLastRunWithText = AscBuilder.ApiParagraph.prototype.GetLastRunWithText;
-
-	/**
 	 * Creates a paragraph copy.
 	 * @memberof ApiRichParagraph
 	 * @typeofeditors ["PDFE"]
@@ -8336,33 +8327,37 @@
 
 
 	// Api
-	Api["GetDocument"]            = Api.GetDocument;
-	Api["CreateTextField"]        = Api.CreateTextField;
-	Api["CreateDateField"]        = Api.CreateDateField;
-	Api["CreateImageField"]       = Api.CreateImageField;
-	Api["CreateCheckboxField"]    = Api.CreateCheckboxField;
-	Api["CreateRadiobuttonField"] = Api.CreateRadiobuttonField;
-	Api["CreateComboboxField"]    = Api.CreateComboboxField;
-	Api["CreateListboxField"]     = Api.CreateListboxField;
-	Api["CreateTextAnnot"]        = Api.CreateTextAnnot;
-	Api["CreateCircleAnnot"]      = Api.CreateCircleAnnot;
-	Api["CreateSquareAnnot"]      = Api.CreateSquareAnnot;
-	Api["CreateFreeTextAnnot"]    = Api.CreateFreeTextAnnot;
-	Api["CreateLineAnnot"]        = Api.CreateLineAnnot;
-	Api["CreateInkAnnot"]         = Api.CreateInkAnnot;
-	Api["CreatePolygonAnnot"]     = Api.CreatePolygonAnnot;
-	Api["CreatePolyLineAnnot"]    = Api.CreatePolyLineAnnot;
-	Api["CreateStampAnnot"]       = Api.CreateStampAnnot;
-	Api["CreateHighlightAnnot"]   = Api.CreateHighlightAnnot;
-	Api["CreateStrikeoutAnnot"]   = Api.CreateStrikeoutAnnot;
-	Api["CreateUnderlineAnnot"]   = Api.CreateUnderlineAnnot;
-	Api["CreateCaretAnnot"]       = Api.CreateCaretAnnot;
-	Api["CreateRedactAnnot"]      = Api.CreateRedactAnnot;
-	Api["CreateParagraph"]        = Api.CreateParagraph;
-	Api["CreateRichParagraph"]    = Api.CreateRichParagraph;
-	Api["CreateRichRun"]          = Api.CreateRichRun;
-	Api["CreateRichTextPr"]       = Api.CreateRichTextPr;
-	Api["CreateRichParaPr"]       = Api.CreateRichParaPr;
+	Api["GetDocument"]				= Api.GetDocument;
+	Api["CreateTextField"]			= Api.CreateTextField;
+	Api["CreateDateField"]			= Api.CreateDateField;
+	Api["CreateImageField"]			= Api.CreateImageField;
+	Api["CreateCheckboxField"]		= Api.CreateCheckboxField;
+	Api["CreateRadiobuttonField"]	= Api.CreateRadiobuttonField;
+	Api["CreateComboboxField"]		= Api.CreateComboboxField;
+	Api["CreateListboxField"]		= Api.CreateListboxField;
+	Api["CreateTextAnnot"]			= Api.CreateTextAnnot;
+	Api["CreateCircleAnnot"]		= Api.CreateCircleAnnot;
+	Api["CreateSquareAnnot"]		= Api.CreateSquareAnnot;
+	Api["CreateFreeTextAnnot"]		= Api.CreateFreeTextAnnot;
+	Api["CreateLineAnnot"]			= Api.CreateLineAnnot;
+	Api["CreateInkAnnot"]			= Api.CreateInkAnnot;
+	Api["CreatePolygonAnnot"]		= Api.CreatePolygonAnnot;
+	Api["CreatePolyLineAnnot"]		= Api.CreatePolyLineAnnot;
+	Api["CreateStampAnnot"]			= Api.CreateStampAnnot;
+	Api["CreateHighlightAnnot"]		= Api.CreateHighlightAnnot;
+	Api["CreateStrikeoutAnnot"]		= Api.CreateStrikeoutAnnot;
+	Api["CreateUnderlineAnnot"]		= Api.CreateUnderlineAnnot;
+	Api["CreateCaretAnnot"]			= Api.CreateCaretAnnot;
+	Api["CreateRedactAnnot"]		= Api.CreateRedactAnnot;
+	Api["CreateParagraph"]			= Api.CreateParagraph;
+	Api["CreateRichParagraph"]		= Api.CreateRichParagraph;
+	Api["CreateRichRun"]			= Api.CreateRichRun;
+	Api["CreateRichTextPr"]			= Api.CreateRichTextPr;
+	Api["CreateRichParaPr"]			= Api.CreateRichParaPr;
+	Api["CreateShape"]				= Api.CreateShape;
+	Api["CreateImage"]				= Api.CreateImage;
+	Api["CreateTable"]				= Api.CreateTable;
+	Api["CreateChart"]				= Api.CreateChart;
 
 	// ApiDocument
 	ApiDocument.prototype["GetClassType"]					= ApiDocument.prototype.GetClassType;
@@ -8381,6 +8376,7 @@
 	ApiPage.prototype["GetRotation"]						= ApiPage.prototype.GetRotation;
 	ApiPage.prototype["GetIndex"]							= ApiPage.prototype.GetIndex;
 	ApiPage.prototype["GetAllWidgets"]						= ApiPage.prototype.GetAllWidgets;
+	ApiPage.prototype["AddObject"]							= ApiPage.prototype.AddObject;
 	ApiPage.prototype["GetAllAnnots"]						= ApiPage.prototype.GetAllAnnots;
 	ApiPage.prototype["Search"]								= ApiPage.prototype.Search;
 	ApiPage.prototype["SetSelection"]						= ApiPage.prototype.SetSelection;
@@ -8390,8 +8386,6 @@
 	ApiPage.prototype["GetAllDrawings"]						= ApiPage.prototype.GetAllDrawings;
 
 	// ApiBaseField
-	ApiBaseField.prototype["SetRect"]						= ApiBaseField.prototype.SetRect;
-	ApiBaseField.prototype["GetRect"]						= ApiBaseField.prototype.GetRect;
 	ApiBaseField.prototype["SetFullName"]					= ApiBaseField.prototype.SetFullName;
 	ApiBaseField.prototype["GetFullName"]					= ApiBaseField.prototype.GetFullName;
 	ApiBaseField.prototype["SetPartialName"]				= ApiBaseField.prototype.SetPartialName;
@@ -8408,6 +8402,8 @@
 
 	// ApiBaseWidget
 	ApiBaseWidget.prototype["GetClassType"]					= ApiBaseWidget.prototype.GetClassType;
+	ApiBaseWidget.prototype["SetRect"]						= ApiBaseWidget.prototype.SetRect;
+	ApiBaseWidget.prototype["GetRect"]						= ApiBaseWidget.prototype.GetRect;
 	ApiBaseWidget.prototype["SetPosition"]					= ApiBaseWidget.prototype.SetPosition;
 	ApiBaseWidget.prototype["GetPosition"]					= ApiBaseWidget.prototype.GetPosition;
 	ApiBaseWidget.prototype["SetBorderColor"]				= ApiBaseWidget.prototype.SetBorderColor;
@@ -8631,7 +8627,6 @@
 	ApiStampAnnotation.prototype["GetRotation"]				= ApiStampAnnotation.prototype.GetRotation;
 
 	// ApiBaseMarkupAnnotation
-	ApiBaseMarkupAnnotation.prototype["GetClassType"]		= ApiBaseMarkupAnnotation.prototype.GetClassType;
 	ApiBaseMarkupAnnotation.prototype["SetQuads"]			= ApiBaseMarkupAnnotation.prototype.SetQuads;
 	ApiBaseMarkupAnnotation.prototype["GetQuads"]			= ApiBaseMarkupAnnotation.prototype.GetQuads;
 
@@ -8656,6 +8651,7 @@
 	ApiRichContent.prototype["GetElement"]					= ApiRichContent.prototype.GetElement;
 	ApiRichContent.prototype["AddElement"]					= ApiRichContent.prototype.AddElement;
 	ApiRichContent.prototype["Push"]						= ApiRichContent.prototype.Push;
+	ApiRichContent.prototype["RemoveAllElements"]			= ApiRichContent.prototype.RemoveAllElements;
 	ApiRichContent.prototype["RemoveElement"]				= ApiRichContent.prototype.RemoveElement;
 	ApiRichContent.prototype["GetContent"]					= ApiRichContent.prototype.GetContent;
 	ApiRichContent.prototype["GetText"]						= ApiRichContent.prototype.GetText;
@@ -8785,6 +8781,7 @@
 	ApiChart.prototype["GetClassType"]						= ApiChart.prototype.GetClassType = AscBuilder.ApiChart.prototype.GetClassType;
 	ApiChart.prototype["GetChartType"]						= ApiChart.prototype.GetChartType = AscBuilder.ApiChart.prototype.GetChartType;
 	ApiChart.prototype["SetTitle"]							= ApiChart.prototype.SetTitle = AscBuilder.ApiChart.prototype.SetTitle;
+	ApiChart.prototype["GetTitle"]							= ApiChart.prototype.GetTitle = AscBuilder.ApiChart.prototype.GetTitle;
 	ApiChart.prototype["SetHorAxisTitle"]					= ApiChart.prototype.SetHorAxisTitle = AscBuilder.ApiChart.prototype.SetHorAxisTitle;
 	ApiChart.prototype["SetVerAxisTitle"]					= ApiChart.prototype.SetVerAxisTitle = AscBuilder.ApiChart.prototype.SetVerAxisTitle;
 	ApiChart.prototype["SetVerAxisOrientation"]				= ApiChart.prototype.SetVerAxisOrientation = AscBuilder.ApiChart.prototype.SetVerAxisOrientation;

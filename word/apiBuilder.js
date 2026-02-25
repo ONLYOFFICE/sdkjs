@@ -10605,15 +10605,19 @@
 	};
 	/**
 	 * Returns a Range object that represents the part of the document contained in the specified paragraph.
+	 * The paragraph must be attached to the document before calling this method.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {Number} Start - Start position index in the current element.
 	 * @param {Number} End - End position index in the current element.
-	 * @returns {ApiRange} 
+	 * @returns {ApiRange | null}
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/GetRange.js
 	 */
 	ApiParagraph.prototype.GetRange = function(Start, End)
 	{
+		if (!this.Paragraph.IsUseInDocument())
+			throwException("Paragraph must be attached to document before getting its range");
+		
 		let oRange = new ApiRange(this.Paragraph, Start, End);
 		if (oRange.isEmpty) {
 			return null;
@@ -20740,7 +20744,7 @@
 	/**
 	 * Returns the chart title text.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @returns {string | null} - The chart title text or null if the chart has no title.
 	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/GetTitle.js
 	 */

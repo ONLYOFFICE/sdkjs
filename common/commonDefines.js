@@ -4890,6 +4890,11 @@ window.AscCommon.g_cIsBeta = "false";
 		ByValue: 6
 	};
 
+	var c_oAscHyperlinkType = {
+		WebLink: 1,
+		RangeLink: 2,
+		FileLink: 3
+	};
 
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
@@ -6610,6 +6615,12 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['ByColorFont'] = prot.ByColorFont;
 	prot['ByIcon'] = prot.ByIcon;
 	prot['ByValue'] = prot.ByValue;
+
+	window['Asc']['c_oAscHyperlinkType'] = window['Asc'].c_oAscHyperlinkType = c_oAscHyperlinkType;
+	prot = c_oAscHyperlinkType;
+	prot['WebLink'] = prot.WebLink;
+	prot['RangeLink'] = prot.RangeLink;
+	prot['FileLink'] = prot.FileLink;
 
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window['AscCommonExcel'].c_oAscPaneState = c_oAscPaneState;

@@ -4486,7 +4486,7 @@
 				let prefix = AscFonts.getEmbeddedFontPrefix();
 
 				if (TextPr.FontFamily.Name && TextPr.FontFamily.Name.startsWith(prefix)) {
-					let match = TextPr.FontFamily.Name.match(/ (\d+)$/);
+					let match = TextPr.FontFamily.Name.match(/ [0-9a-fA-F]+$/);
 					let lastSpaceIdx = match ? match.index : -1;
 
 					if (lastSpaceIdx !== -1) {
@@ -4947,7 +4947,12 @@
 		
 		let desktopOptions = {};
 		if (options && options.advancedOptions)
+		{
 			desktopOptions["nativeOptions"] = options.advancedOptions.asc_getNativeOptions();
+			desktopOptions["pdfLayout"] = {
+				"content" : options.advancedOptions.asc_getPdfContent()
+			};
+		}
 		
 		let viewer = this.DocumentRenderer;
 		if (window["AscDesktopEditor"] && !window["AscDesktopEditor"]["IsLocalFile"]() && window["AscDesktopEditor"]["SetPdfCloudPrintFileInfo"])

@@ -2199,6 +2199,9 @@
                     let oImageElm = mapItem.Image;
                     sPathToImg = getBase64FromImage(oImageElm);
                 }
+				else {
+					sPathToImg = "";
+				}
             }
             
             if (nExistIdx === -1) {

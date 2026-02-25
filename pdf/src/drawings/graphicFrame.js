@@ -400,6 +400,26 @@
     CPdfGraphicFrame.prototype.Get_PageFields = function (nPage) {
         return this.Get_PageLimits(nPage);
     };
+	CPdfGraphicFrame.prototype.Set_CurrentElement = function () {
+		let oDoc = this.GetDocument();
+		let nPage = this.GetPage();
+
+		if (this.parent && this.parent.graphicObjects) {
+			this.parent.graphicObjects.resetSelection(true);
+			if (this.group) {
+				var main_group = this.group.getMainGroup();
+				this.parent.graphicObjects.selectObject(main_group, 0);
+				main_group.selectObject(this, 0);
+				main_group.selection.textSelection = this;
+			} else {
+				this.parent.graphicObjects.selectObject(this, 0);
+				this.parent.graphicObjects.selection.textSelection = this;
+			}
+			if (oDoc && oDoc.GetCurPage() !== nPage) {
+				Asc.editor.WordControl.GoToPage(nPage);
+			}
+		}
+	};
 
     window["AscPDF"].CPdfGraphicFrame = CPdfGraphicFrame;
 })();

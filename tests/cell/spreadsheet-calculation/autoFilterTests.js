@@ -1759,6 +1759,77 @@ $(function () {
 		clearData(0, 0, 0, 9)
 	});
 
+	QUnit.test('Test: "Date filter apply - hour/minute :00 edge case"', function (assert) {
+		// Regression test for bug: filtering by hour=10 (datetimegroupHour) or minute=0
+		// (datetimegroupMinute) was broken — cells at exactly HH:00 were excluded because
+		// convertDateGroupItemToRange built the start range at HH:01 instead of HH:00.
+		//
+		// Data (row index in comments):
+		//   row 1: 10/22/2020 10:00  — hour=10, minute=0  (should match hour=10 AND minute=0 filter)
+		//   row 2: 10/22/2020 10:30  — hour=10, minute=30 (should match hour=10 filter but NOT minute=0)
+		//   row 3: 10/22/2020 11:00  — hour=11, minute=0  (should NOT match hour=10, but matches minute=0)
+		//   row 4: 10/22/2020 09:59  — hour=9,  minute=59 (should NOT match hour=10 or minute=0)
+		//
+		// month field below is 0-indexed (as returned by parseDate / getUTCMonth):
+		//   October = 9
+
+		const testData = [
+			['Dates'],
+			['10/22/2020 10:00'],
+			['10/22/2020 10:30'],
+			['10/22/2020 11:00'],
+			['10/22/2020 9:59']
+		];
+
+		ws = getRangeWithData(ws, testData);
+		let range = getRange(0, 0, 0, 0);
+		ws.autoFilters.addAutoFilter(null, range);
+		checkFilterRef(assert, 0, 0, 4, 0);
+
+		// --- Test 1: filter by hour=10 (datetimegroupHour=2) ---
+		// Mark rows 3 (11:00) and 4 (9:59) as NOT visible; rows 1 and 2 stay visible with grouping=Hour.
+		// setFilterOptionsVisible matches by year/month(0-based)/day/hour/minute.
+		let autoFiltersOptions = ws.autoFilters.getAutoFiltersOptions(ws, {colId: 0, id: null});
+		autoFiltersOptions.filter.asc_setType(c_oAscAutoFilterTypes.Filters);
+		let aChangedVal = [
+			// row 1: 10:00 — visible, grouped by hour
+			{ year: 2020, month: 9, day: 22, hour: 10, minute: 0,  visible: true,  dateTimeGrouping: Asc.EDateTimeGroup.datetimegroupHour },
+			// row 2: 10:30 — visible, grouped by hour (same hour=10 bucket)
+			{ year: 2020, month: 9, day: 22, hour: 10, minute: 30, visible: true,  dateTimeGrouping: Asc.EDateTimeGroup.datetimegroupHour },
+			// row 3: 11:00 — hidden
+			{ year: 2020, month: 9, day: 22, hour: 11, minute: 0,  visible: false, dateTimeGrouping: Asc.EDateTimeGroup.datetimegroupHour },
+			// row 4:  9:59 — hidden
+			{ year: 2020, month: 9, day: 22, hour: 9,  minute: 59, visible: false, dateTimeGrouping: Asc.EDateTimeGroup.datetimegroupHour }
+		];
+		setFilterOptionsVisible(autoFiltersOptions, aChangedVal, true);
+		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
+		// rows 3 (11:00) and 4 (9:59) must be hidden; header row 0 and rows 1,2 visible
+		checkHiddenRows(assert, testData, {"3": 1, "4": 1}, " hour=10 filter: rows with 11:00 and 9:59 hidden");
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		// --- Test 2: filter by minute=0 (datetimegroupMinute=3) ---
+		// Rows 1 (10:00) and 3 (11:00) visible (minute=0); rows 2 (10:30) and 4 (9:59) hidden.
+		autoFiltersOptions = ws.autoFilters.getAutoFiltersOptions(ws, {colId: 0, id: null});
+		autoFiltersOptions.filter.asc_setType(c_oAscAutoFilterTypes.Filters);
+		aChangedVal = [
+			// row 1: 10:00 — visible, minute=0
+			{ year: 2020, month: 9, day: 22, hour: 10, minute: 0,  visible: true,  dateTimeGrouping: Asc.EDateTimeGroup.datetimegroupMinute },
+			// row 2: 10:30 — hidden
+			{ year: 2020, month: 9, day: 22, hour: 10, minute: 30, visible: false, dateTimeGrouping: Asc.EDateTimeGroup.datetimegroupMinute },
+			// row 3: 11:00 — visible, minute=0
+			{ year: 2020, month: 9, day: 22, hour: 11, minute: 0,  visible: true,  dateTimeGrouping: Asc.EDateTimeGroup.datetimegroupMinute },
+			// row 4:  9:59 — hidden
+			{ year: 2020, month: 9, day: 22, hour: 9,  minute: 59, visible: false, dateTimeGrouping: Asc.EDateTimeGroup.datetimegroupMinute }
+		];
+		setFilterOptionsVisible(autoFiltersOptions, aChangedVal, true);
+		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
+		// rows 2 (10:30) and 4 (9:59) must be hidden
+		checkHiddenRows(assert, testData, {"2": 1, "4": 1}, " minute=0 filter: rows with 10:30 and 9:59 hidden");
+		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		clearData(0, 0, 0, 4);
+	});
+
 	QUnit.test('Test: "Custom date filter apply"', function (assert) {
 		const testData = [
 			['Dates'],

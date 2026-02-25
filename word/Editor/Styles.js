@@ -17797,15 +17797,17 @@ window["AscCommonWord"].wrap_NotBeside = wrap_NotBeside;
 window["AscCommonWord"].wrap_Through = wrap_Through;
 window["AscCommonWord"].wrap_Tight = wrap_Tight;
 
-window["AscWord"].CTextPr = CTextPr;
-window["AscWord"].CParaPr = CParaPr;
-window["AscWord"].CStyle  = CStyle;
-window["AscWord"].CNumPr  = CNumPr;
-window["AscWord"].NumPr   = CNumPr;
-window["AscWord"].CBorder = CDocumentBorder;
-window["AscWord"].CShd    = CDocumentShd;
-window["AscWord"].CStyles = CStyles;
+window["AscWord"].CTextPr  = CTextPr;
+window["AscWord"].CParaPr  = CParaPr;
+window["AscWord"].CStyle   = CStyle;
+window["AscWord"].CNumPr   = CNumPr;
+window["AscWord"].NumPr    = CNumPr;
+window["AscWord"].CBorder  = CDocumentBorder;
+window["AscWord"].CShd     = CDocumentShd;
+window["AscWord"].Shd      = CDocumentShd;
+window["AscWord"].CStyles  = CStyles;
 window["AscWord"].CParaInd = CParaInd;
+
 
 
 // Создаем глобальные дефолтовые стили, чтобы быстро можно было отдать дефолтовые настройки

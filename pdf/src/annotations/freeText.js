@@ -1004,10 +1004,16 @@
             oDoc.DoAction(function() {
                 this.GetContents() != sText && this.SetContents(sText);
             
+				let aCurRc = this.GetRichContents();
+				let aNewRc = this.GetRichContents(true);
+                    
+				this._richContents = aNewRc;
+
                 if (isNeedUpdateRC) {
                     oDoc.History.Add(new CChangesFreeTextCallout(this, this._prevCallout, this.GetCallout()));
                     oDoc.History.Add(new CChangesPDFAnnotRD(this, this._prevRectDiff, this.GetRectangleDiff()));
                     oDoc.History.Add(new CChangesPDFAnnotRect(this, this._prevRect, this.GetRect()));
+					oDoc.History.Add(new CChangesPDFAnnotRC(this, aCurRc, aNewRc));
                     oDoc.private_UpdateTargetForCollaboration(true);
                 }
             }, AscDFH.historydescription_Pdf_UpdateAnnotRC, this);

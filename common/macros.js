@@ -478,6 +478,17 @@ function (window, undefined)
 			if (Api.parsedJSDoc.length > countOfAdding)
 				Api.parsedJSDoc.length = countOfAdding;
 		}
+
+		function _sanitizeCode(value) {
+			if (/\bimport\s*\(/.test(value)) {
+				throw new Error("Security: dynamic import() is not allowed in macros");
+			}
+			if (/\bimport\s+/.test(value)) {
+				throw new Error("Security: static import is not allowed in macros");
+			}
+			return value;
+		}
+		value = _sanitizeCode(value);
 		const result = _safe_eval_closure.call(null, {}, Api, {}, {}, function(){}, {}, customXMLHttpRequest, {}, {}, timeout, interval, value);
 		protoFunc.constructor = normalConstructor;
 		if (protoFuncGen)

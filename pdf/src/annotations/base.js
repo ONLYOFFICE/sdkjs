@@ -952,14 +952,18 @@
         AscCommon.History.Add(new CChangesPDFAnnotChangedView(this, this._bDrawFromStream, bFromStream));
         this._bDrawFromStream = bFromStream;
     };
-    CAnnotationBase.prototype.SetRect = function(aOrigRect) {
-        if (this._rect != null && aOrigRect != null && AscCommon.isEqualSortedArrays(this._rect, aOrigRect)) {
+    CAnnotationBase.prototype.SetRect = function(aRect) {
+		if (aRect) {
+			aRect = aRect.slice();
+		}
+
+        if (this._rect != null && aRect != null && AscCommon.isEqualSortedArrays(this._rect, aRect)) {
             return;
         }
 
-        AscCommon.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aOrigRect));
+        AscCommon.History.Add(new CChangesPDFAnnotRect(this, this._rect, aRect));
 
-        this._rect = aOrigRect;
+        this._rect = aRect;
         this.SetWasChanged(true);
 
         if (this.IsShapeBased()) {
@@ -1981,7 +1985,9 @@
         let nStartPos = memory.GetCurPosition();
         memory.Skip(4);
 
+        memory.docRenderer.ClearCacheProps();
         this.draw(memory.docRenderer); // для каждой страницы инициализируется свой renderer
+        memory.docRenderer.ClearCacheProps();
 
         // запись длины комманд
         let nEndPos = memory.GetCurPosition();

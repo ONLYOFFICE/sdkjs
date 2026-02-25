@@ -3216,7 +3216,7 @@ function (window, undefined) {
 		} else if (AscCH.historyitem_Workbook_ShowHorizontalScroll === Type) {
 			wb.setShowHorizontalScroll(bUndo ? Data.from : Data.to);
 		} else if (AscCH.historyitem_Workbook_SetCustomFunctions === Type) {
-			wb.oApi["pluginMethod_SetCustomFunctions"] && wb.oApi["pluginMethod_SetCustomFunctions"](bUndo ? Data.from : Data.to);
+			wb.oApi.SetCustomFunctions(bUndo ? Data.from : Data.to);
 		} else if (AscCH.historyitem_Workbook_Metadata === Type) {
 			wb.metadata = bUndo ? (Data.from ? Data.from.clone(): null) : (Data.to ? Data.to.clone(): null);
 		} else if (AscCH.historyitem_Workbook_RichValueStructures === Type) {

@@ -551,6 +551,13 @@
 		this.m_oLastFont2   = null;
 	};
 
+	CGraphics.prototype.ClearCacheProps = function()
+	{
+		this.ClearLastFont();
+		this.m_bPenColorInit = false;
+		this.m_bBrushColorInit = false;
+	};
+
 	// images
 	CGraphics.prototype.checkLoadingImage = function(img)
 	{

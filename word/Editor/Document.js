@@ -2469,7 +2469,7 @@ CDocument.prototype.private_CheckActionLock = function()
 	if (!this.Action.CheckLock || !this.Action.PointsCount || this.Action.CancelAction)
 		return;
 
-	if (!this.StartSelectionLockCheck())
+	if (!this.StartSelectionLockCheck(this.IsFillingFormMode()))
 	{
 		this.Action.CancelAction = true;
 		return;
@@ -23148,7 +23148,7 @@ CDocument.prototype.CallSignatureDblClickEvent = function(sGuid)
     allSpr = allSpr.concat(allSpr.concat(this.DrawingObjects.getAllSignatures2(ret, this.DrawingObjects.getDrawingArray())));
     for(var i = 0; i < allSpr.length; ++i)
     {
-        if(allSpr[i].getSignatureLineGuid() === sGuid)
+        if(allSpr[i].isEqualSignatureLineGuid(sGuid))
         {
             this.sendEvent("asc_onSignatureDblClick", sGuid, allSpr[i].extX, allSpr[i].extY);
         }
@@ -26734,7 +26734,7 @@ CDocument.prototype.StretchFormToCell = function(formId)
 		return false;
 	
 	form = form.GetMainForm();
-	if (!form)
+	if (!form || form.IsFormLocked())
 		return false;
 	
 	let paragraph = form.GetParagraph();

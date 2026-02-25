@@ -829,6 +829,9 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 
     this.Add_DrawingRect = function(X, Y, W, H, PageNum, arrCommentId, InvertTransform)
     {
+		if (this.Pages.length <= PageNum)
+			return;
+		
         this.Pages[PageNum].push( new CCommentDrawingRect(X, Y, W, H, arrCommentId, InvertTransform) );
     };
 

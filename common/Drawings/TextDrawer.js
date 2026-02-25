@@ -2509,11 +2509,15 @@
 		}
 	};
 
-	CTextDrawer.prototype.DrawTextArtComment = function (Element) {
-		this.m_oCurComment = Element;
-		this.rect(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0);
+	CTextDrawer.prototype.drawCommentArea = function (x, y, w, h) {
+		this.m_oCurComment = null;
+		this.rect(x, y, w, h);
 		this.df();
 		this.m_oCurComment = null;
+	};
+	CTextDrawer.prototype.drawCommentMark = function(x, y, h, isStart)
+	{
+		this.drawVerLine(0, x, y, y + h, 2, false);
 	};
 
 	CTextDrawer.prototype.rect = function (x, y, w, h) {
