@@ -7642,6 +7642,26 @@
 						if (!oRule.dxf) {
 							continue;
 						}
+						let doExpression = function () {
+							bboxCf = oRule.getBBox();
+							compareFunction = getCacheFunction(oRule, (function(rule, formulaCF, formulaParent, rowLT, colLT) {
+								return function(row, col) {
+									var offset = new AscCommon.CellBase(row - rowLT, col - colLT);
+									var bboxCell = new Asc.Range(col, row, col, row);
+									var res = formulaCF && formulaCF.getValue(t, formulaParent, bboxCell, offset, true);
+									if (res && res.tocBool) {
+										res = res.tocBool();
+										if (res && res.toBool) {
+											return res.toBool();
+										}
+									}
+									return false;
+								};
+							})(oRule, oRule.aRuleElements[0],
+								new AscCommonExcel.CConditionalFormattingFormulaParent(this, oRule, true),
+								bboxCf ? bboxCf.r1 : 0, bboxCf ? bboxCf.c1 : 0));
+						};
+
 						switch (oRule.type) {
 							case Asc.ECfType.duplicateValues:
 							case Asc.ECfType.uniqueValues:
@@ -7694,6 +7714,9 @@
 									})(oRule, operator,
 										new AscCommonExcel.CConditionalFormattingFormulaParent(this, oRule, true),
 										bboxCf ? bboxCf.r1 : 0, bboxCf ? bboxCf.c1 : 0));
+								} else if (oRule.aRuleElements && oRule.aRuleElements[0] && oRule.aRuleElements[0]._f && !oRule.aRuleElements[1]) {
+									doExpression();
+									break;
 								} else {
 									compareFunction = (function(rule, operator, v1) {
 										return function(row, col) {
@@ -7813,23 +7836,7 @@
 								}
 								break;
 							case Asc.ECfType.expression:
-								bboxCf = oRule.getBBox();
-								compareFunction = getCacheFunction(oRule, (function(rule, formulaCF, formulaParent, rowLT, colLT) {
-									return function(row, col) {
-										var offset = new AscCommon.CellBase(row - rowLT, col - colLT);
-										var bboxCell = new Asc.Range(col, row, col, row);
-										var res = formulaCF && formulaCF.getValue(t, formulaParent, bboxCell, offset, true);
-										if (res && res.tocBool) {
-											res = res.tocBool();
-											if (res && res.toBool) {
-												return res.toBool();
-											}
-										}
-										return false;
-									};
-								})(oRule, oRule.aRuleElements[0],
-									new AscCommonExcel.CConditionalFormattingFormulaParent(this, oRule, true),
-									bboxCf ? bboxCf.r1 : 0, bboxCf ? bboxCf.c1 : 0));
+								doExpression();
 								break;
 							default:
 								break;
