@@ -2739,7 +2739,7 @@
 		if (!t)
 			return;
 
-		if (window["AscDesktopEditor"])
+		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]())
 		{
 			window["AscDesktopEditor"]["OpenFilenameDialog"]("images", false, function(_file)
 			{

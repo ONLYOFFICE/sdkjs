@@ -607,17 +607,11 @@
 
             let oItem;
             if (oFontFile) {
-                let nGid = oFontFile.GetGIDByUnicode(nCode);
-                if (nGid !== 0) {
-                    oItem = AscCommon.IsSpace(nCode) ? new AscWord.CPdfRunSpace(nGid, nCode, 0, 0) : new AscWord.CPdfRunText(nGid, nCode, 0, 0);
-                }
-                else {
-                    let oGidsMaps = doc.Viewer.file.getGIDByUnicode(sFontName.substr(prefix.length));
-                    nGid = oGidsMaps[nCode];
-                    if (nGid !== undefined) {
-                        oItem = AscCommon.IsSpace(nCode) ? new AscWord.CPdfRunSpace(nGid, nCode, 0, 0) : new AscWord.CPdfRunText(nGid, nCode, 0, 0);
-                    }
-                }
+				let oGidsMaps = doc.Viewer.file.getGIDByUnicode(sFontName.substr(prefix.length));
+				let nGid = oGidsMaps[nCode];
+				if (nGid !== undefined) {
+					oItem = AscCommon.IsSpace(nCode) ? new AscWord.CPdfRunSpace(nGid, nCode, 0, 0) : new AscWord.CPdfRunText(nGid, nCode, 0, 0);
+				}
             }
 
             let sNewFont;

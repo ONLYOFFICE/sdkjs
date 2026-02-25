@@ -3161,7 +3161,7 @@ function CEditorPage(api)
 				}
 				else
 				{
-					currentBlockW += _pageWidth;
+					currentBlockW = testW;
 
 					if (_pageHeight > currentBlockH)
 						currentBlockH = _pageHeight;
@@ -3448,6 +3448,17 @@ function CEditorPage(api)
 				this.onTimerScroll_sync();
 				return;
 			}
+		}
+
+		if (this.isUseMultiPageView())
+		{
+			if (this.m_oEditor && this.m_oEditor.HtmlElement)
+				this.m_oEditor.HtmlElement.fullRepaint = true;
+			this.zoom_Fire(0, this.m_nZoomValue);
+
+			this.m_oBoundsController.ClearNoAttack();
+			this.onTimerScroll_sync();
+			return;
 		}
 
 		this.m_bIsUpdateHorRuler = true;

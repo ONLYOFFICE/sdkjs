@@ -2172,6 +2172,7 @@
 
 	    this.nInsertChangesType = reviewtype_Add;
 	    this.nRemoveChangesType = reviewtype_Remove;
+			this.originalComparison = null;
     }
 		CDocumentComparison.prototype.skipCommentElementOnCopyParagraph = function (oParaComment) {
 			if (this.options.comments) {
@@ -2190,6 +2191,7 @@
 		oResolveConflictComparison.oComparisonMoveMarkManager = this.oComparisonMoveMarkManager;
 		oResolveConflictComparison.CommentsMap = this.CommentsMap;
 		oResolveConflictComparison.StylesMap = this.StylesMap;
+		oResolveConflictComparison.originalComparison = this.originalComparison;
 		fCallback();
 		this.oBookmarkManager.mapBookmarkMeeting = oOldBookmarkMeeting;
 		this.oCommentManager.mapCommentMeeting = oOldCommentsMeeting;
@@ -2291,9 +2293,11 @@
             oDiff.matchTrees(oMatching);
             const oDeltaCollector = new AscCommon.DeltaCollector(oMatching, oOrigNode, oReviseNode);
             oDeltaCollector.forEachChange(oThis.forEachChangeCallback);
-            oThis.compareDrawingObjectsFromMatching(oMatching, bOrig);
+						if (oThis.originalComparison) {
+							oThis.originalComparison.compareDrawingObjectsFromMatching(oMatching, bOrig);
+							oThis.originalComparison.compareNotes(oMatching);
+						}
             oThis.applyChangesToChildNode(oOrigNode);
-            oThis.compareNotes(oMatching);
         };
     };
 
@@ -2640,6 +2644,7 @@
         {
             return;
         }
+			this.originalComparison = this;
 				this.oBookmarkManager.init(oOriginalDocument, oRevisedDocument);
         const oThis = this;
         const aImages = AscCommon.pptx_content_loader.End_UseFullUrl();

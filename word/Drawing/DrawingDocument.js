@@ -7141,8 +7141,9 @@ function CDrawingDocument()
                 },
                 ConvetToPageCoords : function() { return { Page : -1, X : 0, Y : 0 } },
                 GetDotsPerMM : function(v) { return v * g_dKoef_mm_to_pix },
-                GetMMPerDot : function(v) { return v / this.GetDotsPerMM(1) }
-            };
+                GetMMPerDot : function(v) { return v / this.GetDotsPerMM(1) },
+				scrollToTarget : function() {}
+			};
 
             var _srcDoc = this.m_oLogicDocument;
             _srcDoc.PrintSelection = true;
@@ -7199,7 +7200,15 @@ function CDrawingDocument()
 
             var old = window["NATIVE_EDITOR_ENJINE_SYNC_RECALC"];
             window["NATIVE_EDITOR_ENJINE_SYNC_RECALC"] = true;
-            _document.RecalculateFromStart(false); // sync
+
+			try
+			{
+				_document.RecalculateFromStart(false); // sync
+			}
+			catch (errRec)
+			{
+			}
+
             window["NATIVE_EDITOR_ENJINE_SYNC_RECALC"] = old;
 
             editor.WordControl.m_oLogicDocument = _srcDoc;

@@ -1856,13 +1856,50 @@
 			}
 		},
 		_broadcastDefName: function(name, notifyData) {
-			var nameIndex = getDefNameIndex(name);
-			var container = this.defNameListeners[nameIndex];
+			const wb = this.wb;
+			let nameIndex = getDefNameIndex(name);
+			let container = this.defNameListeners[nameIndex];
+			let defNameObj = this.getDefNameByName(nameIndex);
 			if (container) {
-				for (var listenerId in container.listeners) {
+				for (let listenerId in container.listeners) {
 					container.listeners[listenerId].notify(notifyData);
 				}
 			}
+
+			let isDefnameTable = defNameObj && defNameObj.type === Asc.c_oAscDefNameType.table;
+			// TODO do notify below only when we rename the table?
+			if (isDefnameTable /*&& notifyData.type === c_oNotifyType.RenameTableColumn*/) {
+				// we are getting table info and notify all range listeners that intersects with the table ref
+				let table = wb.getTableByName(nameIndex);
+				if (table) {
+					let tableRef = table.Ref;
+					let sheetId = defNameObj.parsedRef && defNameObj.parsedRef.outStack && 
+						defNameObj.parsedRef.outStack[0] && defNameObj.parsedRef.outStack[0].getWsId && defNameObj.parsedRef.outStack[0].getWsId();
+					let areaMap = sheetId !== undefined && this.sheetListeners[sheetId] && this.sheetListeners[sheetId].areaMap;
+					let cellMap = sheetId !== undefined && this.sheetListeners[sheetId] && this.sheetListeners[sheetId].cellMap;
+
+					for (let cell in cellMap) {
+						let cellIndex = cellMap[cell].cellIndex;
+						let rowCol = AscCommonExcel.getFromCellIndex(cellIndex, true);
+						//  the index is in the table, check the listeners
+						if (tableRef.contains2(rowCol)) {
+							for (let listenerId in cellMap[cell].listeners) {
+								cellMap[cell].listeners[listenerId].notify(notifyData);
+							}
+						}
+					}
+
+					for (let area in areaMap) {
+						let areabbox = areaMap[area].bbox;
+						if (tableRef.isIntersect(areabbox)) {
+							for (let listenerId in areaMap[area].listeners) {
+								areaMap[area].listeners[listenerId].notify(notifyData);
+							}
+						}
+					}
+				}
+			}
+
 		},
 		_broadcastDefNames: function(notifyData) {
 			if (this.changedDefNameRepeated) {
@@ -2175,7 +2212,7 @@
 		_foreachChanged: function(callback) {
 			var sheetId, changedSheet, ws, bbox;
 			for (sheetId in this.changedCell) {
-				if (this.changedCell.hasOwnProperty(sheetId)) {
+				if (this.changedCell && this.changedCell.hasOwnProperty(sheetId)) {
 					changedSheet = this.changedCell[sheetId];
 					ws = this.wb.getWorksheetById(sheetId);
 					if (changedSheet && ws) {
@@ -2189,7 +2226,7 @@
 				}
 			}
 			for (sheetId in this.changedRange) {
-				if (this.changedRange.hasOwnProperty(sheetId)) {
+				if (this.changedRange && this.changedRange.hasOwnProperty(sheetId)) {
 					changedSheet = this.changedRange[sheetId];
 					ws = this.wb.getWorksheetById(sheetId);
 					if (changedSheet && ws) {

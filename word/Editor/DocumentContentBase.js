@@ -2592,6 +2592,10 @@ CDocumentContentBase.prototype.CountElementsInFrame = function(nStartIndex)
 		let oElement = this.Content[nIndex];
 
 		let oTempFramePr = oElement.GetFramePr();
+		
+		if (oElement.IsParagraph() && oElement.Get_CompiledPr2().ParaPr.PageBreakBefore)
+			break;
+		
 		if (oTempFramePr && oFramePr.IsEqual(oTempFramePr) && (!oElement.IsParagraph() || !oElement.IsInline()))
 			nFlowsCount++;
 		else

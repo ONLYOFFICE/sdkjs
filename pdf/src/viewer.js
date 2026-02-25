@@ -136,6 +136,12 @@
 			get: function () {
 				return this.GetIndex();
 			}
+		},
+		graphicObjects: {
+			get: function() {
+				let oDoc = this.GetDocument();
+				return oDoc ? oDoc.GetController() : null;
+			}
 		}
 	});
 

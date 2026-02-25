@@ -1105,6 +1105,9 @@
 			case c_oAscServerError.ForcedViewMode :
 				nRes = Asc.c_oAscError.ID.ForcedViewMode;
 				break;
+			case c_oAscServerError.FileNotAssembled :
+				nRes = Asc.c_oAscError.ID.FileNotAssembled;
+				break;
 			case c_oAscServerError.Storage :
 			case c_oAscServerError.StorageFileNoFound :
 			case c_oAscServerError.StorageRead :
@@ -1704,7 +1707,8 @@
 
 		Password: -180,
 
-		ForcedViewMode: -200
+		ForcedViewMode: -200,
+		FileNotAssembled: -201
 	};
 
 	//todo get from server config
@@ -1779,6 +1783,12 @@
 			case c_oAscFileType.PDFA:
 				return 'pdf';
 				break;
+			case c_oAscFileType.DJVU:
+				return 'djvu';
+				break;
+			case c_oAscFileType.XPS:
+				return 'xps';
+				break;
 			case c_oAscFileType.HTML:
 				return 'html';
 				break;
@@ -1842,6 +1852,9 @@
 				break;
 			case c_oAscFileType.DOCXF:
 				return 'docxf';
+				break;
+			case c_oAscFileType.MD:
+				return 'md';
 				break;
 			case c_oAscFileType.DOCY:
 				return 'doct';
@@ -1917,6 +1930,9 @@
 			case c_oAscFileType.OTP:
 				return 'otp';
 				break;
+			case c_oAscFileType.PPTY:
+				return 'pptt';
+				break;
 			case c_oAscFileType.VSDX:
 				return 'vsdx';
 				break;
@@ -1934,6 +1950,9 @@
 				break;
 			case c_oAscFileType.VSTM:
 				return 'vstm';
+				break;
+			case c_oAscFileType.VSDY:
+				return 'vsdt';
 				break;
 			case c_oAscFileType.IMG:
 				return 'zip';
@@ -4153,7 +4172,7 @@
 				// ToDo убрать эту проверку, заменить на более грамотную после правки функции _searchFilters
 				if (true === wb.getWorksheet().model.autoFilters.isRangeIntersectionTableOrFilter(range)) {
 					return Asc.c_oAscError.ID.AutoFilterDataRangeError;
-				} else if (wb.getWorksheet().intersectionFormulaArray(range, true, true)) {
+				} else if (wb.getWorksheet().intersectionFormulaArray(range, true, true, true)) {
 					return Asc.c_oAscError.ID.MultiCellsInTablesFormulaArray;
 				} else if (range && Asc.c_oAscSelectionType.RangeCells !== range.getType()) {
 					return Asc.c_oAscError.ID.LargeRangeWarning;

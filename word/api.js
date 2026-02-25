@@ -4961,7 +4961,7 @@ background-repeat: no-repeat;\
 				allSpr = allSpr.concat(allSpr.concat(oDrawingObjects.getAllSignatures2(ret, oDrawingObjects.getDrawingArray())));
 				for(var i = 0; i < allSpr.length; ++i)
 				{
-					if(allSpr[i].getSignatureLineGuid() === sGuid)
+					if(allSpr[i].isEqualSignatureLineGuid(sGuid))
 					{
 						oSpToEdit = allSpr[i];
 						break;
@@ -5002,7 +5002,7 @@ background-repeat: no-repeat;\
 			for (let i = 0; i < this.signatures.length; ++i)
 			{
 				let sign = this.signatures[i];
-				if (sign.guid === guid && sign.isForm)
+				if (sign.isEqualGuid(guid) && sign.isForm)
 				{
 					if (!logicDocument.IsSelectionLocked(AscCommon.changestype_Document_Settings))
 					{

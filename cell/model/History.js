@@ -475,6 +475,9 @@ function CHistory(Document)
 	this.PosInCurPoint = null; // position to roll back changes within the current point
 
 	this.oRedoObjectParam = null;
+
+	this.waitingList = null;
+	this.isExecutingWaitingList = false;
 }
 	CHistory.prototype = Object.create(CHistoryWord.prototype);
 CHistory.prototype.init = function(workbook) {
@@ -508,6 +511,9 @@ CHistory.prototype.Clear = function()
 	this.SavedIndex = null;
 	this.ForceSave= false;
   	this.UserSavedIndex = null;
+
+	this.waitingList = null;
+	this.isExecutingWaitingList = false;
 
 	window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
 	this.workbook.handlers.trigger("toggleAutoCorrectOptions", null, true);
@@ -1170,6 +1176,8 @@ CHistory.prototype.Add = function(Class, Type, sheetid, range, Data, LocalChange
 	if (!this.CanAddChanges())
 		return;
 
+	this.executeWaitingList();
+
 	if (Class instanceof AscCommonExcel.UndoRedoItemSerializable) {
 		let serializable = Class;
 		Class = serializable.oClass;
@@ -1252,10 +1260,45 @@ CHistory.prototype.Add = function(Class, Type, sheetid, range, Data, LocalChange
 		}
 	}
 };
+
+	CHistory.prototype.AddToWaitingList = function(Class, Type, sheetid, range, Data, LocalChange, isRedoAdd)
+	{
+		if (!this.waitingList) {
+			this.waitingList = [];
+		}
+		this.waitingList.push({
+			Class: Class,
+			Type: Type,
+			sheetid: sheetid,
+			range: range,
+			Data: Data,
+			LocalChange: LocalChange,
+			isRedoAdd: isRedoAdd
+		});
+	};
+
+	CHistory.prototype.executeWaitingList = function()
+	{
+		if (this.isExecutingWaitingList) {
+			return;
+		}
+		
+		if (this.waitingList && this.waitingList.length > 0) {
+			let _curPoint = this.Points && this.Points[this.Index];
+			if (this.Index === 0 && (_curPoint && _curPoint.Items && _curPoint.Items.length === 0) && (this.SavedIndex === -1 || this.SavedIndex === null)) {
+				this.isExecutingWaitingList = true;
+				for (let i = 0; i < this.waitingList.length; i++) {
+					this.Add(this.waitingList[i].Class, this.waitingList[i].Type, this.waitingList[i].sheetid, this.waitingList[i].range, this.waitingList[i].Data, this.waitingList[i].LocalChange, this.waitingList[i].isRedoAdd);
+				}
+				this.isExecutingWaitingList = false;
+			}
+		}
+	};
+
 	CHistory.prototype.Item_ToSerializable = function(item)
 	{
 		return new AscCommonExcel.UndoRedoItemSerializable(item.Class, item.Type, item.SheetId, item.Range, item.Data, item.LocalChange);
-	}
+	};
 	CHistory.prototype.Refresh_SpreadsheetChanges = function(item)
 	{
 		if (!this.workbook) {
@@ -1265,9 +1308,9 @@ CHistory.prototype.Add = function(Class, Type, sheetid, range, Data, LocalChange
 		let Binary_Pos = this.BinaryWriter.GetCurPosition();
 		this.workbook._SerializeHistoryItem2(this.BinaryWriter, serializable);
 		let Binary_Len = this.BinaryWriter.GetCurPosition() - Binary_Pos;
-		item.Binary.Pos = Binary_Pos
-		item.Binary.Len = Binary_Len
-	}
+		item.Binary.Pos = Binary_Pos;
+		item.Binary.Len = Binary_Len;
+	};
 CHistory.prototype.CanAddChanges = function()
 {
 	return (0 === this.TurnOffHistory && this.Index >= 0);

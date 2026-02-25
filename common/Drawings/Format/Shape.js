@@ -955,6 +955,10 @@
 			oCopy.id = sId;
 			return oCopy;
 		};
+		CSignatureLine.prototype.isEqualId = function (sId) {
+			return typeof sId === "string" && this.id !== null
+				&& this.id.toUpperCase() === sId.toUpperCase();
+		};
 		CSignatureLine.prototype.setProperties = function (oPr) {
 			this.signer = oPr.asc_getSigner1();
 			this.signer2 = oPr.asc_getSigner2();
@@ -7044,6 +7048,9 @@
 				return this.signatureLine.id;
 			}
 			return null;
+		};
+		CShape.prototype.isEqualSignatureLineGuid = function (sGuid) {
+			return this.signatureLine !== null && this.signatureLine.isEqualId(sGuid);
 		};
 
 		CShape.prototype.GetAllFields = function (isUseSelection, arrFields) {

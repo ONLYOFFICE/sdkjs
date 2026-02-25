@@ -852,6 +852,11 @@ function (window, undefined) {
 		let realZoom = ws.stringRender.drawingCtx.getZoom();
 		ws.stringRender.drawingCtx.changeZoom(1);
 
+		let clipRectUse = ws.stringRender.clipRect && ws.stringRender.clipRect.use;
+		if (clipRectUse != null) {
+			ws.stringRender.clipRect.use = false;
+		}
+
 		let cellEditorWidth = width - 2 * wb.defaults.worksheetView.cells.padding + 1 + 2 * correctCanvasDiff;
 		ws.stringRender.setString(this.fragments, cellFlags);
 		let textMetrics = ws.stringRender._measureChars(cellEditorWidth);
@@ -861,6 +866,9 @@ function (window, undefined) {
 		drawBackground();
 		ws.stringRender.render(drawingCtx, wb.defaults.worksheetView.cells.padding, 0, cellEditorWidth, ws.settings.activeCellBorderColor);
 
+		if (clipRectUse != null) {
+			ws.stringRender.clipRect.use = clipRectUse;
+		}
 		ws.stringRender.drawingCtx.changeZoom(realZoom)
 	};
 	CHeaderFooterEditorSection.prototype.getElem = function () {

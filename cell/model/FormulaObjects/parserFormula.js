@@ -50,6 +50,7 @@ function (window, undefined) {
   var CellAddress = AscCommon.CellAddress;
   var cDate = Asc.cDate;
   var bIsSupportArrayFormula = true;
+  var dynamicArraysStorageId = "dynamic-arrays-info";
   var bIsSupportDynamicArrays = true;
 
   var c_oAscError = Asc.c_oAscError;
@@ -81,6 +82,13 @@ function (window, undefined) {
 		val: 1,
 		formula: 2
 	};
+
+	function checkSupportDynamicArrays() {
+		let oDynamicArraysStorage = AscCommon.getLocalStorageItem && AscCommon.getLocalStorageItem(dynamicArraysStorageId);
+		if (oDynamicArraysStorage && oDynamicArraysStorage["support"]) {
+			AscCommonExcel.bIsSupportDynamicArrays = oDynamicArraysStorage["support"] === "false" ? false : true;
+		}
+	}
 
 	function getArrayCopy(arr) {
 		var newArray = [];
@@ -13718,6 +13726,8 @@ function parserFormula( formula, parent, _ws ) {
 
 	window['AscCommonExcel'].bIsSupportArrayFormula = bIsSupportArrayFormula;
 	window['AscCommonExcel'].bIsSupportDynamicArrays = bIsSupportDynamicArrays;
+	window['AscCommonExcel'].dynamicArraysStorageId = dynamicArraysStorageId;
+	window['AscCommonExcel'].checkSupportDynamicArrays = checkSupportDynamicArrays;
 
 	window['AscCommonExcel'].aExcludeRecursiveFormulas = aExcludeRecursiveFormulas;
 

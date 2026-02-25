@@ -492,13 +492,30 @@ var editor;
     }
   };
 
-  spreadsheet_api.prototype.asc_TextImport = function(options, callback, bPaste) {
+  spreadsheet_api.prototype.asc_TextImport = function(options, callback, bPaste, isPasteOptions) {
     //return this.asc_TextFromUrl(null, options, callback);
     //return this.asc_TextFromFile(options, callback);
     if (this.canEdit()) {
       var text;
       if(bPaste) {
-        text = AscCommon.g_specialPasteHelper.GetPastedData(true);
+        if (isPasteOptions) {
+          AscCommon.g_clipboardBase.Get_Clipboard_Data(function (data) {
+            if (!data) {
+              callback("");
+              return;
+            }
+            //onpaste
+            if (data.clipboardData) {
+              callback("");
+            } else {
+              let _text = data[AscCommon.c_oAscClipboardDataFormat.Text];
+              callback(_text ? _text : "");
+            }
+          });
+          return;
+        } else {
+          text = AscCommon.g_specialPasteHelper.GetPastedData(true);
+        }
       } else {
         var ws = this.wb.getWorksheet();
         text = ws.getRangeText();
@@ -507,7 +524,7 @@ var editor;
         //error
         //no data was selected to parse
         this.sendEvent('asc_onError', c_oAscError.ID.NoDataToParse, c_oAscError.Level.NoCritical);
-        callback(false);
+        callback("");
         return;
       }
       callback(text);
@@ -1825,6 +1842,7 @@ var editor;
 		//this.VersionHistory.applyChanges(this);
 	}
 
+	AscCommonExcel.checkSupportDynamicArrays && AscCommonExcel.checkSupportDynamicArrays();
 	this.isOpenOOXInBrowser = this["asc_isSupportFeature"]("ooxml") && AscCommon.checkOOXMLSignature(file.data);
 	if (this.isOpenOOXInBrowser) {
 		this.openOOXInBrowserZip = file.data;
@@ -4963,7 +4981,7 @@ var editor;
 		}
         AscFormat.DrawingObjectsController.prototype.getAllSignatures2(ret, aSpTree);
         for(var i = 0; i < aSpTree.length; ++i){
-            if(aSpTree[i].signatureLine && aSpTree[i].signatureLine.id === sGuid){
+            if(aSpTree[i].signatureLine && aSpTree[i].signatureLine.isEqualId(sGuid)){
                 return aSpTree[i];
             }
         }
@@ -9875,8 +9893,12 @@ var editor;
 		this.wb.removeAllInks();
 	};
 
-	spreadsheet_api.prototype.asc_SetIsSupportDynamicArrays = function(val) {
+	spreadsheet_api.prototype.asc_SetIsSupportDynamicArrays = function(val, addToLS) {
 		AscCommonExcel.bIsSupportDynamicArrays = val;
+		if (addToLS) {
+			AscCommon.setLocalStorageItem(AscCommonExcel.dynamicArraysStorageId, {"support": val === false ? "false" : "true"});
+		}
+
 	};
 	spreadsheet_api.prototype.getJsApi = function() {
 		return AscBuilder.Cell.Api;
@@ -9958,6 +9980,31 @@ var editor;
 				callback(null);
 			}
 		});
+	};
+
+	spreadsheet_api.prototype.SetCustomFunctions = function(jsonString, disableSave) {
+		try {
+			if (AscCommon.History.Is_On()) {
+				if (disableSave) {
+					AscCommon.History.AddToWaitingList(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_SetCustomFunctions,
+						null, null, new AscCommonExcel.UndoRedoData_FromTo(this["pluginMethod_GetCustomFunctions"](), jsonString));
+				} else {
+					AscCommon.History.Create_NewPoint();
+					AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_SetCustomFunctions,
+						null, null, new AscCommonExcel.UndoRedoData_FromTo(this["pluginMethod_GetCustomFunctions"](), jsonString));
+				}
+			}
+
+			let customFunctionsStorageId = AscCommon.customFunctionsStorageId;
+			let obj = JSON.parse(jsonString);
+			AscCommon.setLocalStorageItem(AscCommon.customFunctionsStorageId, obj);
+
+			this.wb && this.wb.model && this.wb.model.clearFileCustomFunctions();
+			this.registerCustomFunctionsLibrary(obj);
+		}
+		catch (err) {
+			console.log("SetCustomFunctions method error! Please check your code...");
+		}
 	};
 
   /*
@@ -10582,6 +10629,8 @@ var editor;
   prot["asc_SetIsSupportDynamicArrays"]= prot.asc_SetIsSupportDynamicArrays;
   prot["asc_getPasteOptions"]= prot.asc_getPasteOptions;
   prot["getJsApi"]= prot.getJsApi;
+
+  prot["SetCustomFunctions"] = prot.SetCustomFunctions;
   
   AscCommon['SpreadsheetEditorApi'] = AscCommon.SpreadsheetEditorApi = spreadsheet_api;
 

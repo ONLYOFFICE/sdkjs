@@ -652,7 +652,7 @@ window["asc_IsVisibleSign"] = function(guid)
 	var _req = _editor.asc_getAllSignatures();
 	for (var i = 0; i < _req.length; i++)
 	{
-		if (_req[i].id == guid)
+		if (_req[i].isEqualId(guid))
 		{
 			isVisible = true;
 			break;
@@ -677,7 +677,7 @@ window["asc_LocalRequestSign"] = function(guid, width, height, isView)
 	var _length = _editor.signatures.length;
 	for (var i = 0; i < _length; i++)
 	{
-		if (_editor.signatures[i].guid == guid)
+		if (_editor.signatures[i].isEqualGuid(guid))
 		{
 			if (isView === true)
 			{

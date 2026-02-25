@@ -2684,17 +2684,21 @@
     CBaseField.prototype.GetTextSize = function() {
         return this._textSize;
     };
-    CBaseField.prototype.SetRect = function(aOrigRect) {
-        if (this._rect != null && aOrigRect != null && AscCommon.isEqualSortedArrays(this._rect, aOrigRect)) {
+    CBaseField.prototype.SetRect = function(aRect) {
+		if (aRect) {
+			aRect = aRect.slice();
+		}
+		
+        if (this._rect != null && aRect != null && AscCommon.isEqualSortedArrays(this._rect, aRect)) {
             return;
         }
 
         let nOldExtX = this.GetWidth();
         let nOldExtY = this.GetHeight();
 
-        AscCommon.History.Add(new CChangesPDFFormRect(this, this.GetRect(), aOrigRect));
+        AscCommon.History.Add(new CChangesPDFFormRect(this, this._rect, aRect));
 
-        this._rect = aOrigRect;
+        this._rect = aRect;
 
         let nNewExtX = this.GetWidth();
         let nNewExtY = this.GetHeight();
@@ -3512,8 +3516,9 @@
         let oContentToDraw = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.Format) ? this.contentFormat : this.content;
         let oldTrMatrix = oContentToDraw.transform;
         oContentToDraw.transform = new AscCommon.CMatrix();
-        memory.docRenderer.ClearLastFont();
-        oContentToDraw.Draw(0, memory.docRenderer);
+        memory.docRenderer.ClearCacheProps();
+        oContentToDraw.Draw(oContentToDraw.GetAbsolutePage(), memory.docRenderer);
+        memory.docRenderer.ClearCacheProps();
         oContentToDraw.transform = oldTrMatrix;
 
         // запись длины комманд

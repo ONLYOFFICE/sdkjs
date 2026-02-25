@@ -8145,6 +8145,10 @@
 		return new AscBuilder.ApiCustomProperties(Asc.editor.wbModel.CustomProperties);
 	};
 
+	Api.SetDynamicArraysSupport = function (val, addToLS) {
+		return Asc.editor.asc_SetIsSupportDynamicArrays(val, addToLS);
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiWorkbook
@@ -27765,6 +27769,7 @@
 
 	Api["GetReferenceStyle"] = Api.GetReferenceStyle;
 	Api["SetReferenceStyle"] = Api.SetReferenceStyle;
+	Api["SetDynamicArraysSupport"] = Api.SetDynamicArraysSupport;
 
 	Api["GetWorksheetFunction"] = Api.GetWorksheetFunction;
 	Api["InsertPivotExistingWorksheet"] = Api.InsertPivotExistingWorksheet;
@@ -28009,7 +28014,9 @@
 	ApiChart.prototype["SetMajorHorizontalGridlines"] = ApiChart.prototype.SetMajorHorizontalGridlines = AscBuilder.ApiChart.prototype.SetMajorHorizontalGridlines;
 	ApiChart.prototype["SetMinorHorizontalGridlines"] = ApiChart.prototype.SetMinorHorizontalGridlines = AscBuilder.ApiChart.prototype.SetMinorHorizontalGridlines;
 	ApiChart.prototype["SetHorAxisLabelsFontSize"] = ApiChart.prototype.SetHorAxisLabelsFontSize = AscBuilder.ApiChart.prototype.SetHorAxisLabelsFontSize;
+	ApiChart.prototype["SetHorAxisLablesFontSize"] = ApiChart.prototype.SetHorAxisLabelsFontSize;
 	ApiChart.prototype["SetVertAxisLabelsFontSize"] = ApiChart.prototype.SetVertAxisLabelsFontSize = AscBuilder.ApiChart.prototype.SetVertAxisLabelsFontSize;
+	ApiChart.prototype["SetVertAxisLablesFontSize"] = ApiChart.prototype.SetVertAxisLabelsFontSize;
 	ApiChart.prototype["RemoveSeria"] = ApiChart.prototype.RemoveSeria = AscBuilder.ApiChart.prototype.RemoveSeria;
 	ApiChart.prototype["ApplyChartStyle"] = ApiChart.prototype.ApplyChartStyle = AscBuilder.ApiChart.prototype.ApplyChartStyle;
 	ApiChart.prototype["SetPlotAreaFill"] = ApiChart.prototype.SetPlotAreaFill = AscBuilder.ApiChart.prototype.SetPlotAreaFill;

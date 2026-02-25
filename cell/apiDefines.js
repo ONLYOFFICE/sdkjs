@@ -115,12 +115,6 @@ var c_oAscScrollType = {
   ScrollInitRowsColsCount: 4
 };
 
-var c_oAscHyperlinkType = {
-  WebLink: 1,
-  RangeLink: 2,
-  FileLink: 3
-};
-
 var c_oAscMouseMoveType = {
   None: 0,
   Hyperlink: 1,
@@ -790,11 +784,6 @@ var c_oAscPopUpSelectorType = {
   prot['Solver_CellReference'] = prot.Solver_CellReference;
 
 
-  window['Asc']['c_oAscHyperlinkType'] = window['Asc'].c_oAscHyperlinkType = c_oAscHyperlinkType;
-  prot = c_oAscHyperlinkType;
-  prot['WebLink'] = prot.WebLink;
-  prot['RangeLink'] = prot.RangeLink;
-  prot['FileLink'] = prot.FileLink;
   window['Asc']['c_oAscMouseMoveType'] = window['Asc'].c_oAscMouseMoveType = c_oAscMouseMoveType;
   prot = c_oAscMouseMoveType;
   prot['None'] = prot.None;

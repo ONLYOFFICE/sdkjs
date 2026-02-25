@@ -1234,7 +1234,7 @@
 		AscDFH.changesFactory[AscDFH.historyitem_Xfrm_SetChExtY] = CChangesDrawingsDouble;
 		AscDFH.changesFactory[AscDFH.historyitem_Xfrm_SetFlipH] = CChangesDrawingsBool;
 		AscDFH.changesFactory[AscDFH.historyitem_Xfrm_SetFlipV] = CChangesDrawingsBool;
-		AscDFH.changesFactory[AscDFH.historyitem_Xfrm_SetRot] = CChangesDrawingsDouble;
+		AscDFH.changesFactory[AscDFH.historyitem_Xfrm_SetRot] = AscDFH.CChangesDrawingsDouble2;
 		AscDFH.changesFactory[AscDFH.historyitem_SpPr_SetParent] = CChangesDrawingsObject;
 		AscDFH.changesFactory[AscDFH.historyitem_SpPr_SetBwMode] = CChangesDrawingsLong;
 		AscDFH.changesFactory[AscDFH.historyitem_SpPr_SetXfrm] = CChangesDrawingsObject;
@@ -8959,7 +8959,7 @@
 			this.handleUpdateFlip();
 		};
 		CXfrm.prototype.setRot = function (pr) {
-			AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_Xfrm_SetRot, this.rot, pr));
+			AscCommon.History.CanAddChanges() && AscCommon.History.Add(new AscDFH.CChangesDrawingsDouble2(this, AscDFH.historyitem_Xfrm_SetRot, this.rot, pr));
 			this.rot = pr;
 			this.handleUpdateRot();
 		};

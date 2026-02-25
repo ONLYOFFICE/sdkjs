@@ -192,6 +192,8 @@ var CPresentation = CPresentation || function(){};
 		this.defaultFontsLoaded     = -1; // -1 не загружены и не грузим, 0 - грузим, 1 - загружены
         this.loadedFonts            = [];
         this.Action                 = {};
+		
+		this.needRecalcShape = {}; // шейпы, которые нужно пересчитать из-за конвертации PdfText->RunText
         
         this.checkDefaultFonts();
     }
@@ -2371,7 +2373,7 @@ var CPresentation = CPresentation || function(){};
 
                                         bOldShowParaMarks = this.Api.ShowParaMarks;
                                         this.Api.ShowParaMarks = false;
-                                        oDocContentForDraw.Draw(0, oGraphics);
+                                        oDocContentForDraw.Draw(oDocContentForDraw.GetAbsolutePage(), oGraphics);
                                         this.Api.ShowParaMarks = bOldShowParaMarks;
                                     }
                                     sImageUrl = oCanvas.toDataURL("image/png");

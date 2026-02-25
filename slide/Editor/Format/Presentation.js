@@ -11107,7 +11107,7 @@ CPresentation.prototype.CallSignatureDblClickEvent = function (sGuid) {
 		allSpr = allSpr.concat(oController.getAllSignatures2(ret, oController.getDrawingArray()));
 	}
 	for (i = 0; i < allSpr.length; ++i) {
-		if (allSpr[i].signatureLine && allSpr[i].signatureLine.id === sGuid) {
+		if (allSpr[i].signatureLine && allSpr[i].signatureLine.isEqualId(sGuid)) {
 			this.Api.sendEvent("asc_onSignatureDblClick", sGuid, allSpr[i].extX, allSpr[i].extY);
 		}
 	}

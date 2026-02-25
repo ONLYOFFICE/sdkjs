@@ -540,7 +540,10 @@ CChangesPDFAnnotRC.prototype.Type = AscDFH.historyitem_Pdf_Annot_RC;
 CChangesPDFAnnotRC.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
-	oAnnot.SetRichContents(Value);
+
+	oAnnot._richContents = Value;
+	oAnnot.SetNeedRecalc(true);
+	oAnnot.private_UpdateRichContent && oAnnot.private_UpdateRichContent();
 };
 
 CChangesPDFAnnotRC.prototype.WriteToBinary = function(Writer)

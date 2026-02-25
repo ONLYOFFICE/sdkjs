@@ -558,6 +558,10 @@
         if (!this.isEnabled)
             return isNeedTasks;
 
+		if (this.isNeedResize()) {
+			this.resize();
+		}
+		
         if (!isViewerTask && -1 != this.startBlock)
         {
             // смотрим, какие страницы нужно перерисовать. 

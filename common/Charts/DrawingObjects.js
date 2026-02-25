@@ -2772,7 +2772,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             allSpr = allSpr.concat(allSpr.concat(oDrawingObjects.getAllSignatures2(ret, oDrawingObjects.getDrawingArray())));
             for(var i = 0; i < allSpr.length; ++i)
             {
-                if(allSpr[i].getSignatureLineGuid() === sGuid)
+                if(allSpr[i].isEqualSignatureLineGuid(sGuid))
                 {
                     oSpToEdit = allSpr[i];
                     break;
