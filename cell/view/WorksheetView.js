@@ -14982,7 +14982,16 @@ function isAllowPasteLink(pastedWb) {
         return ret;
     };
 
-	/* Функция для применения автозаполнения */
+	/**
+	 * Method applies autofill.
+	 * Initializes data and runs autofill logic.
+	 * @memberof WorksheetView
+	 * @param {number|null} [x]
+	 * @param {number|null} [y]
+	 * @param {boolean|null} [ctrlPress]
+	 * @param {boolean|null} [opt_doNotDraw]
+	 * @param {Function} [callback]
+	 */
 	WorksheetView.prototype.applyFillHandle = function (x, y, ctrlPress, opt_doNotDraw, callback) {
 		let t = this;
 
@@ -15008,6 +15017,24 @@ function isAllowPasteLink(pastedWb) {
 		// Текущее выделение (к нему применится автозаполнение)
 		let arn = t.model.selectionRange.getLast();
 		let range = t.model.getRange3(arn.r1, arn.c1, arn.r2, arn.c2);
+
+		// Check whether the filter is applied to the sheet
+		if (t.model && t.model.isApplyFilterBySheet() && this.fillHandleArea !== 2 && this.fillHandleDirection === 1) {
+			// Change selection to first cell
+			arn = arn.clone();
+			if (this.fillHandleArea === 3) { // From top to bottom
+				arn.r2 = arn.r1;
+				arn.c2 = arn.c1;
+			} else { // From bottom to top
+				arn.r1 = arn.r2;
+				arn.c1 = arn.c2;
+			}
+			range = t.model.getRange3(arn.r1, arn.c1, arn.r2, arn.c2);
+			// Change ctrlPress flag to copy pattern
+			const numFormat = range.getXfs() && range.getXfs().num && range.getXfs().num.getFormat();
+			const dateType = !!(numFormat && AscCommon.oNumFormatCache.get(numFormat).isDateTimeFormat());
+			ctrlPress = !(range.getType() === AscCommon.CellValueType.Number && !dateType);
+		}
 
 		// Были ли изменения
 		let bIsHaveChanges = false;
