@@ -3250,7 +3250,7 @@
             if (null != gradientStop.position) {
                 this.bs.WriteItem(c_oSerFillTypes.GradientStopPosition, function(){oThis.memory.WriteDouble2(gradientStop.position);});
             }
-            if (null != gradientStop.color) {
+            if (null != gradientStop.color || null != gradientStop.position) {
                 this.bs.WriteItem(c_oSerFillTypes.GradientStopColor, function(){oThis.bs.WriteColorSpreadsheet(gradientStop.color);});
             }
         };
