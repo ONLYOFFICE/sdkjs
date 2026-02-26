@@ -5201,6 +5201,15 @@
 
 		return oDoc.Viewer.file.nativeFile['CheckOwnerPassword'](password);
 	};
+
+	PDFEditorApi.prototype.asc_onSelectionEnd = function(page, x, y) {
+		if (window.g_asc_plugins)
+			window.g_asc_plugins.onPluginEvent("onSelectionEnd", page, x, y);
+	};
+	PDFEditorApi.prototype.asc_onSelectionCancel = function() {
+		if (window.g_asc_plugins)
+			window.g_asc_plugins.onPluginEvent("onSelectionCancel");
+	};
 	
 	function CPdfContextMenuData(obj) {
 		if (obj) {

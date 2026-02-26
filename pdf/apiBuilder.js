@@ -356,6 +356,11 @@
 	 * "#,##0.00_\);\(#,##0.00\)" | "#,##0.00_\);\[Red\]\(#,##0.00\)" | "mm:ss" | "[h]:mm:ss" | "mm:ss.0" | "##0.0E+0" | "@")} NumFormat
 	 */
 
+	/**
+	 * @typedef {Object} DocQuads
+	 * @property {Quad[]} [pageIndex] - the key is the index of a page
+	 */
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// Api
@@ -1522,6 +1527,66 @@
 
 		this.Document.ApplyRedact();
 		return true;
+	};
+
+	/**
+	 * Sets document selection
+	 * @typeofeditors ["PDFE"]
+	 * @param {number} startPage
+	 * @param {Point} startPoint
+	 * @param {number} endPage
+	 * @param {Point} endPoint
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetSelection.js
+	 */
+	ApiDocument.prototype.SetSelection = function(startPage, startPoint, endPage, endPoint) {
+		private_CheckPoint(startPoint);
+		private_CheckPoint(endPoint);
+
+		if (!this.GetPage(startPage)) {
+			AscBuilder.throwException("Invalid start page index");
+		}
+		if (!this.GetPage(endPage)) {
+			AscBuilder.throwException("Invalid end page index");
+		}
+
+		let oFile = this.Document.GetFile();
+		this.Document.BlurActiveObject();
+
+		let startNearestPos = oFile.getNearestPos(startPage, startPoint['x'], startPoint['y']);
+		let endNearestPos = oFile.getNearestPos(endPage, endPoint['x'], endPoint['y']);
+
+		oFile.Selection.IsSelection = true;
+
+		oFile.Selection.Page1  = startPage;
+		oFile.Selection.Line1  = startNearestPos.Line;
+		oFile.Selection.Glyph1 = startNearestPos.Glyph;
+
+		oFile.Selection.Page2  = endPage;
+		oFile.Selection.Line2  = endNearestPos.Line;
+		oFile.Selection.Glyph2 = endNearestPos.Glyph;
+
+		this.Document.Action.UpdateSelection = true;
+
+		return true;
+	};
+	
+	/**
+	 * Gets document selection quads by page
+	 * @typeofeditors ["PDFE"]
+	 * @returns {DocQuads}
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetSelectionQuads.js
+	 */
+	ApiDocument.prototype.GetSelectionQuads = function() {
+		let oDoc = private_GetLogicDocument();
+		let aDocQuads = oDoc.GetFile().getSelectionQuads();
+
+		let aResult = {};
+		aDocQuads.forEach(function(pageQuads) {
+			aResult[pageQuads["page"]] = pageQuads["quads"];
+		});
+
+		return aResult;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -8369,6 +8434,8 @@
 	ApiDocument.prototype["GetFieldByName"]					= ApiDocument.prototype.GetFieldByName;
 	ApiDocument.prototype["SearchAndRedact"]				= ApiDocument.prototype.SearchAndRedact;
 	ApiDocument.prototype["ApplyRedact"]					= ApiDocument.prototype.ApplyRedact;
+	ApiDocument.prototype["SetSelection"]					= ApiDocument.prototype.SetSelection;
+	ApiDocument.prototype["GetSelectionQuads"]				= ApiDocument.prototype.GetSelectionQuads;
 
 	// ApiPage
 	ApiPage.prototype["GetClassType"]						= ApiPage.prototype.GetClassType;

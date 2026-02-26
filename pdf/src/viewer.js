@@ -2048,7 +2048,7 @@
 			//if (e && e.preventDefault)
 			//	e.preventDefault();
 
-			let wasMouseDown = oThis.isMouseDown;
+			oThis.wasMouseDown = oThis.isMouseDown;
 			oThis.isMouseDown = false;
 
 			if (!oThis.file || !oThis.file.isValid())
@@ -2092,33 +2092,6 @@
 
 			oDoc.OnMouseUp(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, AscCommon.global_mouseEvent);
 
-			if (oThis.canSelectPageText() && !oThis.MouseHandObject && !oDoc.mouseDownAnnot && !oDoc.mouseDownField)
-			{
-				let pageObjectLogic = oThis.getPageByCoords2(oThis.mouseDownCoords.X, oThis.mouseDownCoords.Y);
-				if (!pageObjectLogic) {
-					return false;
-				}
-				
-				if (global_mouseEvent.ClickCount == 2) {
-					oThis.file.selectWholeWord(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
-					return;
-				}
-				else if (global_mouseEvent.ClickCount == 3) {
-					oThis.file.selectWholeRow(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
-					return;
-				}
-				else if (global_mouseEvent.ClickCount == 4) {
-					oThis.file.selectWholePage(pageObjectLogic.index);
-					return;
-				}
-			}
-
-			// если было нажатие - то отжимаем
-			if (wasMouseDown && (!oDoc.GetActiveObject() || Asc.editor.IsLinkTool() || Asc.editor.IsRedactTool())) {
-				let pageObjectLogic = oThis.getPageByCoords2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
-				oThis.file.onMouseUp(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
-			}
-				
 			if (oThis.MouseHandObject) {
 				oThis.MouseHandObject.Active = false;
 
@@ -2134,6 +2107,8 @@
 				clearInterval(oThis.timerScrollSelect);
 				oThis.timerScrollSelect = -1;
 			}
+
+			delete oThis.wasMouseDown;
 		};
 
 		this.onMouseMove = function(e)
