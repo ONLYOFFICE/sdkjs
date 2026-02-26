@@ -10445,7 +10445,7 @@
 			var sum = 0;
 			var width;
 			for (var i = 0; i <= max; i++) {
-				width = ws.getColWidth(i);
+				width = ws.getColWidth(this.range.bbox.c1 + i);
 				width = (width < 0) ? AscCommonExcel.oDefaultMetrics.ColWidthChars : width;
 				sum += ws.modelColWidthToColWidth(width);
 			}
@@ -10487,7 +10487,7 @@
 			var max = this.range.bbox.r2 - this.range.bbox.r1;
 			var sum = 0;
 			for (var i = 0; i <= max; i++) {
-				sum += this.range.worksheet.getRowHeight(i);
+				sum += this.range.worksheet.getRowHeight(this.range.bbox.r1 + i);
 			}
 			return sum;
 		}
@@ -11118,8 +11118,8 @@
 		get: function () {
 			return this.GetOrientation();
 		},
-		set: function () {
-			return this.SetOrientation();
+		set: function (angle) {
+			this.SetOrientation(angle);
 		}
 	});
 
@@ -14223,7 +14223,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/RemoveReplies.js
 	 */
 	ApiComment.prototype.RemoveReplies = function (nPos, nCount, bRemoveAll) {
-		if (typeof (nPos) !== "number" || nPos < 0 || nPos > this.GetRepliesCount())
+		if (typeof (nPos) !== "number" || nPos < 0 || nPos >= this.GetRepliesCount())
 			nPos = 0;
 
 		if (typeof (nCount) !== "number" || nCount < 0)

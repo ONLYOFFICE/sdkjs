@@ -12074,12 +12074,15 @@ function isAllowPasteLink(pastedWb) {
 						oHyperlink.Hyperlink = hyperlinkValue;
 					}
 
+					const hyperlinkResult = new asc_CHyperlink(oHyperlink);
+					hyperlinkResult.asc_setIsFromShape(true);
+
 					cellCursor =
 						{cursor: drawingInfo.cursor, target: c_oTargetType.Cells, col: -1, row: -1, userId: userId};
 					return {
 						cursor: kCurHyperlink,
 						target: c_oTargetType.Hyperlink,
-						hyperlink: new asc_CHyperlink(oHyperlink),
+						hyperlink: hyperlinkResult,
 						cellCursor: cellCursor,
 						userId: userId
 					};
@@ -13912,6 +13915,7 @@ function isAllowPasteLink(pastedWb) {
 				}
 
                 objectInfo.hyperlink = new asc_CHyperlink(hyperlink);
+                objectInfo.hyperlink.asc_setIsFromShape(true);
                 objectInfo.hyperlink.asc_setText(shapeHyperlink.GetSelectedText(true, true));
             }
         }
@@ -13929,6 +13933,7 @@ function isAllowPasteLink(pastedWb) {
 						hyperlink.Tooltip = cNvProps.hlinkClick.tooltip;
 					}
 					objectInfo.hyperlink = new asc_CHyperlink(hyperlink);
+					objectInfo.hyperlink.asc_setIsFromShape(true);
 				}
 			}
 		}

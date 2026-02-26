@@ -281,12 +281,12 @@
 			case 'open':
 				// пробелов нет в начале
 				if (nFirstNonSpaceChar === 0)
-					return sSyblols + sText
+					return sSyblols + sText;
 				// строка из пробелов
 				else if (nFirstNonSpaceChar === -1)
-					return sText + sSyblols
+					return sText + sSyblols;
 				// в начале строки есть пробелы
-				else if (nFirstNonSpaceChar !== -1)
+				else
 					return sText.slice(0, nFirstNonSpaceChar) + sSyblols + sText.slice(nFirstNonSpaceChar);
 			case 'close':
 				// пробелов нет в конце
@@ -296,7 +296,7 @@
 				else if (nFirstNonSpaceChar === -1)
 					return sSyblols + sText;
 				// в конце строки есть пробелы
-				else if (nSpaceCharsCountOnEnd !== 0)
+				else
 					return sText.slice(0, sText.length - nSpaceCharsCountOnEnd) + sSyblols + sText.slice(sText.length - nSpaceCharsCountOnEnd);
 			case 'wholly':
 			default:
@@ -310,7 +310,7 @@
 				else if (nFirstNonSpaceChar !== 0 && nSpaceCharsCountOnEnd === 0)
 					return sText.slice(0, nFirstNonSpaceChar) + sSyblols + sText.slice(nFirstNonSpaceChar) + sSyblols;
 				// пробелы есть в начале и есть в конце
-				else if (nFirstNonSpaceChar !== 0 && nSpaceCharsCountOnEnd !== 0)
+				else
 					return sText.slice(0, nFirstNonSpaceChar) + sSyblols + sText.slice(nFirstNonSpaceChar, sText.length - nSpaceCharsCountOnEnd) + sSyblols + sText.slice(sText.length - nSpaceCharsCountOnEnd);
 		}
 	};
@@ -6426,8 +6426,6 @@
 			? doc.getCustomXmlManager()
 			: new AscWord.CustomXmlManager(null);
 	}
-	ApiCustomXmlParts.prototype = Object.create(ApiCustomXmlParts.prototype);
-	ApiCustomXmlParts.prototype.constructor = ApiCustomXmlParts;
 
 	/**
 	 * Adds a new custom XML part to the XML manager.
@@ -6545,8 +6543,6 @@
 		this.customXml        = customXMl;
 		this.customXmlManager = customXmlManager;
 	}
-	ApiCustomXmlPart.prototype = Object.create(ApiCustomXmlPart.prototype);
-	ApiCustomXmlPart.prototype.constructor = ApiCustomXmlPart;
 
 	/**
 	 * Returns a type of the ApiCustomXmlPart class.
@@ -6741,8 +6737,6 @@
 		this.CustomXmlPart    = xmlPart;
 		this.CustomXmlContent = xmlNode;
 	}
-	ApiCustomXmlNode.prototype = Object.create(ApiCustomXmlNode.prototype);
-	ApiCustomXmlNode.prototype.constructor = ApiCustomXmlNode;
 
 	/**
 	 * Returns a type of the ApiCustomXmlNode class.
@@ -23628,8 +23622,7 @@
 	ApiInlineLvlSdt.prototype.SetAppearance = function(type)
 	{
 		type = GetStringParameter(type, "boundingBox");
-		this.Sdt.SetAppearance();
-		
+
 		if (type === "hidden")
 			this.Sdt.SetAppearance(Asc.c_oAscSdtAppearance.Hidden);
 		else
