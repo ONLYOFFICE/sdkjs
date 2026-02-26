@@ -11677,7 +11677,9 @@ function isAllowPasteLink(pastedWb) {
         return Math.abs(x2 - x1) <= wEps + 2 && Math.abs(y2 - y1) <= hEps + 2;
     };
     WorksheetView.prototype._hitInRange = function (range, rangeType, vr, x, y, offsetX, offsetY, opt_pageBreakPreviewRange) {
-        var wEps = 2 * AscCommon.global_mouseEvent.KoefPixToMM, hEps = 2 * AscCommon.global_mouseEvent.KoefPixToMM;
+        var wEps = AscCommon.AscBrowser.convertToRetinaValue(2 * AscCommon.global_mouseEvent.KoefPixToMM, true);
+        var hEps = AscCommon.AscBrowser.convertToRetinaValue(2 * AscCommon.global_mouseEvent.KoefPixToMM, true);
+
         var cursor, x1, x2, y1, y2, isResize;
         var col = -1, row = -1;
 
