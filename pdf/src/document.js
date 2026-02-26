@@ -10617,6 +10617,11 @@ var CPresentation = CPresentation || function(){};
             }
         };
 
+        let oAcitveObj = controller.document.GetActiveObject();
+        if (oAcitveObj && oAcitveObj.IsAnnot() && oAcitveObj.IsFreeText() && oAcitveObj.IsInTextBox()) {
+            nAngle -= oAcitveObj.GetRotate();
+        }
+
         const normalized = ((nAngle % 360) + 360) % 360;
         const finalDir = rotateMap[normalized][direction];
 
