@@ -559,10 +559,10 @@ function handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pag
         }
 
 		if (group) {
+			const isSpreadsheet = Asc.editor.getEditorId() === AscCommon.c_oEditorId.Spreadsheet;
 			const groupObjectType = group.getObjectType && group.getObjectType();
 			const isGroupOrSmartArt = groupObjectType === AscDFH.historyitem_type_GroupShape || groupObjectType === AscDFH.historyitem_type_SmartArt;
-			const editorId = Asc.editor.getEditorId();
-			if (isGroupOrSmartArt && editorId === AscCommon.c_oEditorId.Spreadsheet) {
+			if (isSpreadsheet && isGroupOrSmartArt && !drawing.selected) {
 				oCheckResult = drawingObjectsController.checkDrawingHyperlinkAndMacro(group, e, false, x, y, pageIndex);
 				if (oCheckResult) {
 					return oCheckResult;

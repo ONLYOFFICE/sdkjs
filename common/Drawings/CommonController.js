@@ -779,21 +779,22 @@
 						}
 
 						const isWord = editorId === AscCommon.c_oEditorId.Word;
-						if (isWord && !this.selection.groupSelection && drawing.group) {
-							let isGroupSelected = false;
-							for (let i = 0; i < this.selectedObjects.length; i++) {
-								if (this.selectedObjects[i] === drawing.group) {
-									isGroupSelected = true;
-									break;
+						let isInSelectedGroup = false;
+						if (isWord && drawing.group) {
+							if (this.selection.groupSelection === drawing.group) {
+								isInSelectedGroup = true;
+							} else {
+								for (let i = 0; i < this.selectedObjects.length; i++) {
+									if (this.selectedObjects[i] === drawing.group) {
+										isInSelectedGroup = true;
+										break;
+									}
 								}
-							}
-							if (isGroupSelected) {
-								return;
 							}
 						}
 
-						const bCheckTextHyperlink = isWord ? isSelected : true;
-						const bCheckShapeHyperlink = !isSelected;
+						const bCheckTextHyperlink = isWord ? (isSelected || isInSelectedGroup) : true;
+						const bCheckShapeHyperlink = isWord ? (!isSelected && !isInSelectedGroup) : !isSelected;
 
 						var sHyperlink = null;
 						var sTooltip = "";
@@ -933,16 +934,24 @@
 							}
 						}
 					} else if (this.drawingObjects && this.drawingObjects.getWorksheetModel) {
-						const bCheckTextHyperlink = true;
+						const groupObjectType = drawing.getObjectType && drawing.getObjectType();
+						const isGroupOrSmartArt = (
+							groupObjectType === AscDFH.historyitem_type_GroupShape ||
+							groupObjectType === AscDFH.historyitem_type_SmartArt
+						);
+						const ignoreHyperlinkAndMacro = drawing.selected && !isGroupOrSmartArt;
+
+						if (ignoreHyperlinkAndMacro) {
+							return this.handleEventMode === HANDLE_EVENT_MODE_HANDLE ? false : null;
+						}
 
 						let textHyperlinkId = null;
 						let textHyperlinkTooltip = "";
-						if (bCheckTextHyperlink) {
-							const oTextHyperlink = fCheckObjectHyperlink(drawing, x, y);
-							if (oTextHyperlink && typeof oTextHyperlink.Value === "string" && oTextHyperlink.Value.length > 0) {
-								textHyperlinkId = oTextHyperlink.GetValue();
-								textHyperlinkTooltip = oTextHyperlink.GetToolTip() || "";
-							}
+
+						const oTextHyperlink = fCheckObjectHyperlink(drawing, x, y);
+						if (oTextHyperlink && typeof oTextHyperlink.Value === "string" && oTextHyperlink.Value.length > 0) {
+							textHyperlinkId = oTextHyperlink.GetValue();
+							textHyperlinkTooltip = oTextHyperlink.GetToolTip() || "";
 						}
 
 						oNvPr = drawing.getCNvProps();
@@ -953,7 +962,7 @@
 							shapeHyperlinkTooltip = oNvPr.hlinkClick.tooltip;
 						}
 
-						if (!drawing.selected && !e.CtrlKey && (textHyperlinkId || shapeHyperlinkId || drawing.hasJSAMacro())) {
+						if (!e.CtrlKey && (textHyperlinkId || shapeHyperlinkId || drawing.hasJSAMacro())) {
 							if (this.handleEventMode === HANDLE_EVENT_MODE_HANDLE) {
 								return e.Button !== AscCommon.g_mouse_button_right;
 							}
