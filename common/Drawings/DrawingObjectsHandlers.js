@@ -557,6 +557,18 @@ function handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pag
         {
             return oCheckResult;
         }
+
+		if (group) {
+			const groupObjectType = group.getObjectType && group.getObjectType();
+			const isGroupOrSmartArt = groupObjectType === AscDFH.historyitem_type_GroupShape || groupObjectType === AscDFH.historyitem_type_SmartArt;
+			const editorId = Asc.editor.getEditorId();
+			if (isGroupOrSmartArt && editorId === AscCommon.c_oEditorId.Spreadsheet) {
+				oCheckResult = drawingObjectsController.checkDrawingHyperlinkAndMacro(group, e, false, x, y, pageIndex);
+				if (oCheckResult) {
+					return oCheckResult;
+				}
+			}
+		}
     }
 
 
@@ -670,6 +682,29 @@ function handleShapeImageInGroup(drawingObjectsController, drawing, shape, e, x,
         {
             return oCheckResult;
         }
+
+		const editorId = Asc.editor.getEditorId();
+		let bCheckGroupFallback;
+		switch (editorId) {
+			case AscCommon.c_oEditorId.Word:
+				bCheckGroupFallback = !drawing.selected && drawingObjectsController.selection.groupSelection !== drawing;
+				break;
+			case AscCommon.c_oEditorId.Presentation:
+				bCheckGroupFallback = !drawing.selected;
+				break;
+			case AscCommon.c_oEditorId.Spreadsheet:
+				bCheckGroupFallback = true;
+				break;
+			default:
+				bCheckGroupFallback = false;
+		}
+
+		if (bCheckGroupFallback) {
+			oCheckResult = drawingObjectsController.checkDrawingHyperlinkAndMacro(drawing, e, false, x, y, pageIndex);
+			if (oCheckResult) {
+				return oCheckResult;
+			}
+		}
     }
     if(!hit_in_text_rect && (hit_in_inner_area || hit_in_path))
     {
@@ -717,14 +752,6 @@ function handleShapeImageInGroup(drawingObjectsController, drawing, shape, e, x,
 
 function handleGroup(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord)
 {
-	let bHit = drawing.hit && drawing.hit(x, y);
-	if (bHit) {
-		const oCheckResult = drawingObjectsController.checkDrawingHyperlinkAndMacro(drawing, e, false, x, y, pageIndex);
-		if (oCheckResult) {
-			return oCheckResult;
-		}
-	}
-
     var grouped_objects = drawing.getArrGraphicObjects();
     var ret;
     for(var j = grouped_objects.length - 1; j > -1; --j)

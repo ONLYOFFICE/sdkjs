@@ -732,16 +732,6 @@
 						return;
 					}
 
-					const docContent = drawing.getDocContent && drawing.getDocContent();
-					if (docContent) {
-						const selectedObjects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects;
-						for (let i = 0; i < selectedObjects.length; i++) {
-							if (selectedObjects[i] === drawing) {
-								return;
-							}
-						}
-					}
-
 					//
 					// if( this.document || (this.drawingObjects.cSld && !(this.noNeedUpdateCursorType === true)) )
 					// {
@@ -776,7 +766,34 @@
 						// 	bCheckTextHyperlink = true;
 						// }
 
-						const bCheckTextHyperlink = true;
+						let isSelected = false;
+						const docContent = drawing.getDocContent && drawing.getDocContent();
+						if (docContent) {
+							const selectedObjects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects;
+							for (let i = 0; i < selectedObjects.length; i++) {
+								if (selectedObjects[i] === drawing) {
+									isSelected = true;
+									break;
+								}
+							}
+						}
+
+						const isWord = editorId === AscCommon.c_oEditorId.Word;
+						if (isWord && !this.selection.groupSelection && drawing.group) {
+							let isGroupSelected = false;
+							for (let i = 0; i < this.selectedObjects.length; i++) {
+								if (this.selectedObjects[i] === drawing.group) {
+									isGroupSelected = true;
+									break;
+								}
+							}
+							if (isGroupSelected) {
+								return;
+							}
+						}
+
+						const bCheckTextHyperlink = isWord ? isSelected : true;
+						const bCheckShapeHyperlink = !isSelected;
 
 						var sHyperlink = null;
 						var sTooltip = "";
@@ -812,7 +829,7 @@
 								}
 							}
 						}
-						if (sHyperlink === null) {
+						if (sHyperlink === null && bCheckShapeHyperlink) {
 							const nvProps = this.hyperlinkCollectNonVisualProperties(drawing);
 							oNvPr = nvProps[0];
 							if (oNvPr
