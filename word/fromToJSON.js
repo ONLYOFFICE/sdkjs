@@ -5420,9 +5420,9 @@
 	 */
 	WriterToJSON.prototype.GetComplexFieldsToSave = function(arrContent, minStartDocPos, maxStartDocPos, bAll)
 	{
-		var oMinStartPos          = minStartDocPos ? minStartDocPos : (arrContent.length !== 0 ? arrContent[0].GetDocumentPositionFromObject() : null);
-		var oMaxStartPos          = maxStartDocPos ? maxStartDocPos : (arrContent.length !== 0 ? arrContent[arrContent.length - 1].GetDocumentPositionFromObject() : null);
-		if (oMinStartPos[0].Position === -1 || oMaxStartPos[0].Position === -1)
+		let aMinStartPos          = minStartDocPos ? minStartDocPos : (arrContent.length !== 0 ? arrContent[0].GetDocumentPositionFromObject() : null);
+		let aMaxStartPos          = maxStartDocPos ? maxStartDocPos : (arrContent.length !== 0 ? arrContent[arrContent.length - 1].GetDocumentPositionFromObject() : null);
+		if (aMaxStartPos.length == 0 || aMinStartPos[0].Position === -1 || aMaxStartPos.length == 0 || aMaxStartPos[0].Position === -1)
 			bAll = true;
 
 		var arrCompexFieldsToSave = [];
@@ -5445,7 +5445,7 @@
 						oFieldStartPos = arrTemp[nField].GetStartDocumentPosition();
 						oFieldEndPos   = arrTemp[nField].GetEndDocumentPosition();
 
-						if (private_checkRelativePos(oFieldStartPos, oMinStartPos) === 1 || private_checkRelativePos(oFieldEndPos, oMaxStartPos) === -1)
+						if (private_checkRelativePos(oFieldStartPos, aMinStartPos) === 1 || private_checkRelativePos(oFieldEndPos, aMaxStartPos) === -1)
 						{
 							arrTemp.splice(nField, 1);
 							nField--;
