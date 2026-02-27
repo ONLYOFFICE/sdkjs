@@ -6223,7 +6223,8 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
-    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+    this.updateDarkMode(isBold)
+	  if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
 		return;
     }
     let ws = this.wb.getWorksheet();
@@ -8587,6 +8588,13 @@ var editor;
 		  ws.draw();
       }
     }
+  };
+
+  spreadsheet_api.prototype.updateDarkMode = function (val) {
+    if (!this.wb) {
+        return;
+    }
+    this.wb.updateDarkMode(val);
   };
 
   spreadsheet_api.prototype.turnOffSpecialModes = function() {
