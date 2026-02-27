@@ -4074,7 +4074,11 @@
 		this.WritePivotCache = function(id, pivotCache) {
 			var oThis = this;
 			var oldId = pivotCache.id;
-			pivotCache.id = "rId1";
+			if (pivotCache.cacheRecords) {
+				pivotCache.id = "rId1";
+			} else {
+				pivotCache.id = null;
+			}
 			this.bs.WriteItem(c_oSer_PivotTypes.id, function() {
 				oThis.memory.WriteLong(id - 0);
 			});
