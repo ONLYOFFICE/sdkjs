@@ -8582,6 +8582,9 @@ var editor;
 
     if (this.wb) {
       this.wb.updateSkin();
+      if (this.isDarkMode) {
+          this.wb.updateDarkMode(true);
+      }
       var ws = this.wb.getWorksheet();
       if (ws) {
           this.controller.updateScrollSettings();
