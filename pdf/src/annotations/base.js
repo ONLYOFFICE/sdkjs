@@ -323,8 +323,8 @@
         this._fillColor = aColor;
 
         if (this.IsShapeBased()) {
-            let oRGB    = this.GetRGBColor(aColor);
-            let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+            let oRGB    = aColor ? this.GetRGBColor(aColor) : null;
+            let oFill   = oRGB ? AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255) : AscFormat.CreateNoFillUniFill();
             this.setFill(oFill);
             this.SetNeedRecalc(true);
             this.SetNeedUpdateOpacity(true);
