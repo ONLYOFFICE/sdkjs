@@ -5505,7 +5505,7 @@ function (window, undefined) {
 		const searchRangeWs = searchRange.getWS();
 		const searchRangeWsId = searchRangeWs.getId();
 		const searchRangeBbox = searchRange.getBBox0();
-		const sumRangeWs = sumRange.getWS();
+		const sumRangeWs = sumRange.getWorksheet();
 		const sumRangeWsId = sumRangeWs.getId();
 		const sumRangeBbox = sumRange.getBBox0();
 
@@ -5544,8 +5544,8 @@ function (window, undefined) {
 			const minFirstDataOriginalIndex = originalIndexesArray.length > 0 ? Math.min.apply(Math, originalIndexesArray) : searchRangeBbox.r2 + 1;
 			const minFirstDataIndex = indexesArray.length > 0 ? Math.min.apply(Math, indexesArray) : -1;
 
-			let currentSumIndex = sumColumnIndexes && sumCache.findLowerIndexInTyped(searchRangeBbox.r1, sumColumnIndexes);
-			let currentErrorIndex = errorIndexes && sumCache.findLowerIndexInTyped(searchRangeBbox.r1, errorIndexes);
+			let currentSumIndex = sumColumnIndexes && sumCache.findLowerIndexInTyped(sumRangeBbox.r1, sumColumnIndexes);
+			let currentErrorIndex = errorIndexes && sumCache.findLowerIndexInTyped(sumRangeBbox.r1, errorIndexes);
 
 			for (let j = searchRangeBbox.r1; j < minFirstDataOriginalIndex; j += 1) {
 				if (errorIndexes && currentErrorIndex !== errorIndexes.length && errorIndexes[currentErrorIndex] === (j + rowSumOffset)) {
@@ -5647,7 +5647,7 @@ function (window, undefined) {
 		const searchRangeWs = searchRange.getWS();
 		const searchRangeWsId = searchRangeWs.getId();
 		const searchRangeBbox = searchRange.getBBox0();
-		const sumRangeWs = sumRange.getWS();
+		const sumRangeWs = sumRange.getWorksheet();
 		const sumRangeWsId = sumRangeWs.getId();
 		const sumRangeBbox = sumRange.getBBox0();
 
@@ -5685,8 +5685,8 @@ function (window, undefined) {
 			const minFirstDataOriginalIndex = originalIndexesArray.length > 0 ? Math.min.apply(Math, originalIndexesArray) : searchRangeBbox.r2 + 1;
 			const minFirstDataIndex = indexesArray.length > 0 ? Math.min.apply(Math, indexesArray) : -1;
 
-			let currentSumIndex = sumColumnIndexes && sumCache.findLowerIndexInTyped(searchRangeBbox.r1, sumColumnIndexes);
-			let currentErrorIndex = errorIndexes && sumCache.findLowerIndexInTyped(searchRangeBbox.r1, errorIndexes);
+			let currentSumIndex = sumColumnIndexes && sumCache.findLowerIndexInTyped(sumRangeBbox.r1, sumColumnIndexes);
+			let currentErrorIndex = errorIndexes && sumCache.findLowerIndexInTyped(sumRangeBbox.r1, errorIndexes);
 
 			if (minFirstDataIndex !== -1) {
 
@@ -5754,7 +5754,7 @@ function (window, undefined) {
 		const searchRangeWs = searchRange.getWS();
 		const searchRangeWsId = searchRangeWs.getId();
 		const searchRangeBbox = searchRange.getBBox0();
-		const sumRangeWs = sumRange.getWS();
+		const sumRangeWs = sumRange.getWorksheet();
 		const sumRangeWsId = sumRangeWs.getId();
 		const sumRangeBbox = sumRange.getBBox0();
 
@@ -5792,8 +5792,8 @@ function (window, undefined) {
 			const minFirstDataOriginalIndex = originalIndexesArray.length > 0 ? Math.min.apply(Math, originalIndexesArray) : searchRangeBbox.r2 + 1;
 			const minFirstDataIndex = indexesArray.length > 0 ? Math.min.apply(Math, indexesArray) : -1;
 
-			let currentSumIndex = sumColumnIndexes && sumCache.findLowerIndexInTyped(searchRangeBbox.r1, sumColumnIndexes);
-			let currentErrorIndex = errorIndexes && sumCache.findLowerIndexInTyped(searchRangeBbox.r1, errorIndexes);
+			let currentSumIndex = sumColumnIndexes && sumCache.findLowerIndexInTyped(sumRangeBbox.r1, sumColumnIndexes);
+			let currentErrorIndex = errorIndexes && sumCache.findLowerIndexInTyped(sumRangeBbox.r1, errorIndexes);
 
 			for (let j = searchRangeBbox.r1; j < minFirstDataOriginalIndex; j += 1) {
 				if (errorIndexes && currentErrorIndex !== errorIndexes.length && errorIndexes[currentErrorIndex] === (j + rowSumOffset)) {
@@ -5891,7 +5891,7 @@ function (window, undefined) {
 		const searchRangeWs = searchRange.getWS();
 		const searchRangeWsId = searchRangeWs.getId();
 		const searchRangeBbox = searchRange.getBBox0();
-		const sumRangeWs = sumRange.getWS();
+		const sumRangeWs = sumRange.getWorksheet();
 		const sumRangeWsId = sumRangeWs.getId();
 		const sumRangeBbox = sumRange.getBBox0();
 
@@ -5921,8 +5921,8 @@ function (window, undefined) {
 				const firstIndex = this.findLowerIndexInTyped(searchRangeBbox.r1, searchTypedIndexes);
 				const lastIndex = this.findHigherIndexInTyped(searchRangeBbox.r2, searchTypedIndexes);
 
-				let currentSumIndex = sumIndexes && sumCache.findLowerIndexInTyped(searchTypedIndexes[firstIndex], sumIndexes);
-				let currentErrorIndex = errorIndexes && sumCache.findLowerIndexInTyped(searchTypedIndexes[firstIndex], errorIndexes);
+				let currentSumIndex = sumIndexes && sumCache.findLowerIndexInTyped(searchTypedIndexes[firstIndex] + rowSumOffset, sumIndexes);
+				let currentErrorIndex = errorIndexes && sumCache.findLowerIndexInTyped(searchTypedIndexes[firstIndex] + rowSumOffset, errorIndexes);
 
 				if (convertToNumber) {
 					for (let j = firstIndex; j < lastIndex; j += 1) {
@@ -6006,21 +6006,10 @@ function (window, undefined) {
 
 		const t = this;
 		function calculateOne(rangeOrCell, condition, sumRangeOrCell) {
-
 			const bbox = rangeOrCell.getBBox0();
 			const sumBbox = sumRangeOrCell.getBBox0();
-			// todo fix sumrange
-			if ((bbox.c2 - bbox.c1) !== (sumBbox.c2 - sumBbox.c1) ||
-				(bbox.r2 - bbox.r1) !== (sumBbox.r2 - sumBbox.r1)) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-
-			if (cElementType.cell === rangeOrCell.type || cElementType.cell3D === rangeOrCell.type ||
-				cElementType.cellsRange === rangeOrCell.type || cElementType.cellsRange3D === rangeOrCell.type) {
-				return t._get(rangeOrCell, condition, sumRangeOrCell);
-			} else {
-				return new cError(cErrorType.wrong_value_type);
-			}
+			const realSumBbox = new AscCommonExcel.Range(sumRangeOrCell.getWS(), sumBbox.r1, sumBbox.c1, sumBbox.r1 + (bbox.r2 - bbox.r1), sumBbox.c1 + (bbox.c2 - bbox.c1));
+			return t._get(rangeOrCell, condition, realSumBbox);
 		}
 
 		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
@@ -6062,7 +6051,7 @@ function (window, undefined) {
 		const ws = range.getWS();
 		let res, wsId = ws.getId(),
 			sRangeName = wsId + AscCommon.g_cCharDelimiter + range.getBBox0().getName(),
-			sSumRangeName = wsId + AscCommon.g_cCharDelimiter + sumRange.getBBox0().getName(),
+			sSumRangeName = wsId + AscCommon.g_cCharDelimiter + sumRange.bbox.getName(),
 			cacheElem = this.cacheId[sRangeName],
 			valueForSearching = arg1.getValue();
 
