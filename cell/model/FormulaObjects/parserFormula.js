@@ -486,6 +486,11 @@ function (window, undefined) {
 		return typedArr;
 	}
 
+	function getCustomFunctionCacheKey(sheetId, row, col) {
+		// sheetId:row:col
+		return sheetId + ':' + row + ':' + col;
+	}
+
 
 /** @enum */
 var cElementType = {
@@ -10082,6 +10087,16 @@ function parserFormula( formula, parent, _ws ) {
 	};
 	parserFormula.prototype.calculate = function (opt_defName, opt_bbox, opt_offset, checkMultiSelect, opt_oCalculateResult, opt_pivotCallback, opt_check_dynamic) {
 		if (AscCommonExcel.g_LockCustomFunctionRecalculate && this.unknownOrCustomFunction) {
+			if ((this.wb.bUndoChanges || this.wb.bRedoChanges)) {
+				let cachedResult = this.getCachedCustomFunctionResult();
+				if (cachedResult) {
+					// todo нужно ли записывать promiseResult?
+					this.value = cachedResult;
+					this._endCalculate();
+					// return this.value;
+					return cachedResult;
+				}
+			}
 			return;
 		}
 		if (this.outStack.length < 1) {
@@ -10401,8 +10416,113 @@ function parserFormula( formula, parent, _ws ) {
 			//***array-formula***
 		}
 
+		// After calculation, if it's a custom function, save the result
+		if (this.unknownOrCustomFunction && this.value /*&& this.value.type !== cElementType.error*/) {
+			this.saveCustomFunctionResult(this.value);
+		}
+
 		return this.value;
 	};
+	parserFormula.prototype.saveCustomFunctionResult = function(result) {
+		if (!result) {
+			return;
+		}
+
+		let history = this.wb && this.wb.History;
+		if (!history || history.Index < 0) {
+			return;
+		}
+		
+		let currentPoint = history.Points[history.Index];
+		if (!currentPoint) {
+			return;
+		}
+		
+		// Get cell location from formula
+		let cell = this.getFormulaCell();
+		if (!cell) {
+			return;
+		}
+		
+		// Create cache key
+		let cacheKey = getCustomFunctionCacheKey(
+			cell.ws.getId(), 
+			cell.nRow, 
+			cell.nCol
+		);
+		
+		// Save to global cache inside History Point
+		if (!currentPoint.customFunctionCache) {
+			currentPoint.customFunctionCache = {};
+		}
+		currentPoint.customFunctionCache[cacheKey] = {
+			result: result,
+			formula: this.Formula,
+			timestamp: Date.now()
+		};
+
+	};
+	parserFormula.prototype.getCachedCustomFunctionResult = function() {
+		if (!this.unknownOrCustomFunction) {
+			return null;
+		}
+		
+		let history = this.wb && this.wb.History;
+		if (!history || history.Index < 0) {
+			return null;
+		}
+		
+		let currentPoint = history.Points[history.Index];
+		if (currentPoint === null || currentPoint === undefined) {
+			return null;
+		}
+		
+		let cell = this.getFormulaCell();
+		if (!cell) {
+			return null;
+		}
+		
+		// Get from cache operation
+		let cacheKey = getCustomFunctionCacheKey(
+			cell.ws.getId(), 
+			cell.nRow, 
+			cell.nCol
+		);
+		
+		let cached = currentPoint.customFunctionCache && currentPoint.customFunctionCache[cacheKey];
+		if (!cached) {
+			return null;
+		}
+		
+		// Verify the formula hasn't changed
+		if (cached.formula !== this.Formula) {
+			return null;
+		}
+		
+		return cached.result;
+
+	};
+	// Helper to get the cell this formula belongs to
+	parserFormula.prototype.getFormulaCell = function() {
+		if (this.parent && this.parent.nRow !== undefined && this.parent.nCol !== undefined) {
+			return this.parent; // parent is the cell
+		}
+		
+		// If parent is a DefName or other object, try to get cell differently
+		if (this.parent && this.parent.ws) {
+			// For array formulas or shared formulas
+			if (this.ref) {
+				return {
+					ws: this.parent.ws,
+					nRow: this.ref.r1,
+					nCol: this.ref.c1
+				};
+			}
+		}
+		
+		return null;
+	};
+
 	parserFormula.prototype._checkAndHandleDynamicArraySizeChange = function(oldDynamicRef, opt_bbox) {
 		if (!this.value || !this.parent || !this.ws) {
 			return;

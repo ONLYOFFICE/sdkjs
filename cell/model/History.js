@@ -515,6 +515,13 @@ CHistory.prototype.Clear = function()
 	this.waitingList = null;
 	this.isExecutingWaitingList = false;
 
+	// Clear all caches
+	for (let i = 0; i < this.Points.length; i++) {
+		if (this.Points[i] && this.Points[i].customFunctionCache) {
+			this.Points[i].customFunctionCache = null;
+		}
+	}
+
 	window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
 	this.workbook.handlers.trigger("toggleAutoCorrectOptions", null, true);
 	//this.workbook.handlers.trigger("cleanCutData");
@@ -681,8 +688,15 @@ CHistory.prototype.Remove_LastPoint = function()
 {
 	if (this.Index > -1)
 	{
+		let point = this.Points[this.Index];
+		// Clear cache - single operation
+		if (point && point.customFunctionCache) {
+			point.customFunctionCache = null;
+		}
+		
 		this.Index--;
 		this.Points.length = this.Index + 1;
+
 	}
 };
 CHistory.prototype.RemoveLastPoint = function()
@@ -722,7 +736,7 @@ CHistory.prototype.RedoExecute = function(Point, oRedoObjectParam)
 CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 	var wsViews, i, oState = null, bCoaut = false, t = this;
 	AscCommonExcel.executeInR1C1Mode(false, function () {
-		AscCommonExcel.lockCustomFunctionRecalculate(false, function () {
+		AscCommonExcel.lockCustomFunctionRecalculate(true, function () {
 			t.workbook.dependencyFormulas.unlockRecal();
 		});
 	});
@@ -1208,7 +1222,8 @@ CHistory.prototype.Add = function(Class, Type, sheetid, range, Data, LocalChange
 				Pos : 0,
 				Len : 0
 			},
-			NeedRecalc : !this.MinorChanges && (!Class || Class.IsNeedRecalculate() || Class.IsNeedRecalculateLineNumbers())
+			NeedRecalc : !this.MinorChanges && (!Class || Class.IsNeedRecalculate() || Class.IsNeedRecalculateLineNumbers()),
+			customFunctionCache: null
 		};
 
 	if(null != range)
