@@ -3203,7 +3203,7 @@
 			return false;
 		}
 
-		let aColor = [r / 255, g / 255, b / 255];
+		let aColor = ![r, g, b].includes(undefined) ? [r / 255, g / 255, b / 255] : undefined;
 		
 		return oDoc.DoAction(function() {
 			oController.selectedObjects.forEach(function(annot) {
