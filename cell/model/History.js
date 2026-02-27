@@ -722,7 +722,7 @@ CHistory.prototype.RedoExecute = function(Point, oRedoObjectParam)
 CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 	var wsViews, i, oState = null, bCoaut = false, t = this;
 	AscCommonExcel.executeInR1C1Mode(false, function () {
-		AscCommonExcel.lockCustomFunctionRecalculate(true, function () {
+		AscCommonExcel.lockCustomFunctionRecalculate(false, function () {
 			t.workbook.dependencyFormulas.unlockRecal();
 		});
 	});
