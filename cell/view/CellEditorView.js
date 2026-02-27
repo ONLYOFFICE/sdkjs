@@ -1670,7 +1670,10 @@ function (window, undefined) {
 		endPos = this.selectionEnd;
 
 		if (!window['IS_NATIVE_EDITOR']) {
-			ctx.setFillStyle(this.defaults.selectColor).clear();
+			var selOldDarkMode = ctx.isDarkMode; ctx.isDarkMode = false;
+			ctx.setFillStyle(this.defaults.selectColor);
+			ctx.isDarkMode = selOldDarkMode;
+			ctx.clear();
 		}
 
 		if (begPos !== endPos && !this.isTopLineActive) {
@@ -1771,6 +1774,23 @@ function (window, undefined) {
 			this._hideCursor();
 		} else {
 			this._showCursor();
+		}
+	};
+
+	CellEditor.prototype.updateDarkMode = function (isDarkMode) {
+		if (isDarkMode) {
+			this.drawingCtx.setDarkMode();
+			this.overlayCtx.setDarkMode();
+		} else {
+			this.drawingCtx.isDarkMode = false;
+			this.overlayCtx.isDarkMode = false;
+		}
+		if (this.cursorStyle) {
+			this.cursorStyle.backgroundColor = isDarkMode ? "#FFFFFF" : "";
+		}
+		if (this.isOpened) {
+			this._renderText();
+			this._drawSelection();
 		}
 	};
 

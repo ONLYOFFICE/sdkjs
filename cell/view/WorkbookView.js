@@ -5308,6 +5308,9 @@
 			if (!this.shapeCtx.p_color_old)        this.shapeCtx.setDarkMode();
 			if (!this.shapeOverlayCtx.p_color_old) this.shapeOverlayCtx.setDarkMode();
 			if (!this.mainGraphics.p_color_old)    this.mainGraphics.setDarkMode();
+			if (this.cellEditor) {
+				this.cellEditor.updateDarkMode(isDarkMode);
+			}
 		} else {
 			this.buffers.main.isDarkMode         = false;
 			this.buffers.overlay.isDarkMode      = false;
@@ -5316,6 +5319,13 @@
 			this.shapeCtx.isDarkMode        = false;
 			this.shapeOverlayCtx.isDarkMode = false;
 			this.mainGraphics.isDarkMode    = false;
+			if (this.cellEditor) {
+				this.cellEditor.updateDarkMode(isDarkMode);
+			}
+		}
+		var hfEditor = window["Asc"] && window["Asc"]["g_header_footer_editor"];
+		if (hfEditor) {
+			hfEditor.updateDarkMode(isDarkMode);
 		}
 		var ws = this.getWorksheet();
 		if (ws) {
