@@ -31,3 +31,30 @@
  */
 
 "use strict";
+
+/**
+ * A point.
+ * @typedef {number} pt
+ */
+
+/**
+ * Event: onSelectionEnd
+ * @event Plugin#onSelectionEnd
+ * @memberof Plugin
+ * @typeofeditors ["PDFE"]
+ * @alias onSelectionEnd
+ * @description The function called to when selection was ended.
+ * @param {number} page - the page on which the selection ended
+ * @param {pt} x - the x coordinate
+ * @param {pt} y - the y coordinate
+ */
+
+/**
+ * Event: onSelectionCancel
+ * @event Plugin#onSelectionCancel
+ * @memberof Plugin
+ * @typeofeditors ["PDFE"]
+ * @alias onSelectionCancel
+ * @description The function called was when selection was canceled.
+ */
+
