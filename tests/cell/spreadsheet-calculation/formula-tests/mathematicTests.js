@@ -20734,6 +20734,8 @@ $(function () {
 		ws.getRange2("C16").setValue("4200");
 		ws.getRange2("C17").setValue("1200");
 
+		AscCommonExcel.g_oSumIfCache.clean();
+
 		oParser = new parserFormula("SUMIF(A12:A17,\"Fruits\",C12:C17)", "A19", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 2000);
@@ -20749,6 +20751,615 @@ $(function () {
 		oParser = new parserFormula("SUMIF(A12:A17,\"\",C12:C17)", "A22", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 400);
+
+	});
+
+	QUnit.test("Test: \"SUMIF\" (comprehensive)", function (assert) {
+
+		ws.getRange2("A1:BK200").cleanAll();
+
+		// === Group 1: Numeric Comparisons (criteria A2:A11, sum B2:B11) ===
+		ws.getRange2("A2").setValue("10");
+		ws.getRange2("A3").setValue("20");
+		ws.getRange2("A4").setValue("30");
+		ws.getRange2("A5").setValue("40");
+		ws.getRange2("A6").setValue("50");
+		ws.getRange2("A7").setValue("10");
+		ws.getRange2("A8").setValue("20");
+		ws.getRange2("A9").setValue("30");
+		ws.getRange2("A10").setValue("15");
+		ws.getRange2("A11").setValue("25");
+
+		ws.getRange2("B2").setValue("100");
+		ws.getRange2("B3").setValue("200");
+		ws.getRange2("B4").setValue("300");
+		ws.getRange2("B5").setValue("400");
+		ws.getRange2("B6").setValue("500");
+		ws.getRange2("B7").setValue("150");
+		ws.getRange2("B8").setValue("250");
+		ws.getRange2("B9").setValue("350");
+		ws.getRange2("B10").setValue("175");
+		ws.getRange2("B11").setValue("275");
+
+		// === Group 2: Strings & Wildcards (criteria F2:F9, sum G2:G9) ===
+		ws.getRange2("F2").setValue("Apple");
+		ws.getRange2("F3").setValue("Banana");
+		ws.getRange2("F4").setValue("Apple");
+		ws.getRange2("F5").setValue("Cherry");
+		ws.getRange2("F6").setValue("Banana");
+		ws.getRange2("F7").setValue("Apricot");
+		ws.getRange2("F8").setValue("Avocado");
+		ws.getRange2("F9").setValue("Blueberry");
+
+		ws.getRange2("G2").setValue("10");
+		ws.getRange2("G3").setValue("20");
+		ws.getRange2("G4").setValue("30");
+		ws.getRange2("G5").setValue("40");
+		ws.getRange2("G6").setValue("50");
+		ws.getRange2("G7").setValue("60");
+		ws.getRange2("G8").setValue("70");
+		ws.getRange2("G9").setValue("80");
+
+		// === Group 3: Boolean criteria (criteria K2:K9, sum L2:L9) ===
+		ws.getRange2("K2").setValue("=TRUE()");
+		ws.getRange2("K3").setValue("=FALSE()");
+		ws.getRange2("K4").setValue("=TRUE()");
+		ws.getRange2("K5").setValue("1");
+		ws.getRange2("K6").setValue("0");
+		ws.getRange2("K7").setValue("=TRUE()");
+		ws.getRange2("K8").setValue("TRUE");  // text "TRUE", not boolean
+		ws.getRange2("K9").setValue("=FALSE()");
+
+		ws.getRange2("L2").setValue("100");
+		ws.getRange2("L3").setValue("200");
+		ws.getRange2("L4").setValue("300");
+		ws.getRange2("L5").setValue("400");
+		ws.getRange2("L6").setValue("500");
+		ws.getRange2("L7").setValue("600");
+		ws.getRange2("L8").setValue("700");
+		ws.getRange2("L9").setValue("800");
+
+		// === Group 4: Error cells in criteria range (criteria P2:P9, sum Q2:Q9) ===
+		ws.getRange2("P2").setValue("10");
+		ws.getRange2("P3").setValue("=1/0");    // #DIV/0!
+		ws.getRange2("P4").setValue("20");
+		ws.getRange2("P5").setValue("=1/0");    // #DIV/0!
+		ws.getRange2("P6").setValue("30");
+		ws.getRange2("P7").setValue("=SQRT(-1)"); // #NUM!
+		ws.getRange2("P8").setValue("40");
+		ws.getRange2("P9").setValue("50");
+
+		ws.getRange2("Q2").setValue("100");
+		ws.getRange2("Q3").setValue("200");
+		ws.getRange2("Q4").setValue("300");
+		ws.getRange2("Q5").setValue("400");
+		ws.getRange2("Q6").setValue("500");
+		ws.getRange2("Q7").setValue("600");
+		ws.getRange2("Q8").setValue("700");
+		ws.getRange2("Q9").setValue("800");
+
+		// === Group 5: Mixed types in criteria range (criteria U2:U11, sum V2:V11) ===
+		ws.getRange2("U2").setValue("10");
+		ws.getRange2("U3").setValue("hello");
+		ws.getRange2("U4").setValue("=TRUE()");
+		ws.getRange2("U5").setValue("20");
+		ws.getRange2("U6").setValue("");        // empty string
+		ws.getRange2("U7").setValue("world");
+		ws.getRange2("U8").setValue("30");
+		ws.getRange2("U9").setValue("=FALSE()");
+		ws.getRange2("U10").setValue("=1/0");   // #DIV/0!
+		ws.getRange2("U11").setValue("10");
+
+		ws.getRange2("V2").setValue("1");
+		ws.getRange2("V3").setValue("2");
+		ws.getRange2("V4").setValue("3");
+		ws.getRange2("V5").setValue("4");
+		ws.getRange2("V6").setValue("5");
+		ws.getRange2("V7").setValue("6");
+		ws.getRange2("V8").setValue("7");
+		ws.getRange2("V9").setValue("8");
+		ws.getRange2("V10").setValue("9");
+		ws.getRange2("V11").setValue("10");
+
+		// === Group 6: Empty cells in criteria range (criteria Z2:Z11, sum AA2:AA11) ===
+		ws.getRange2("Z2").setValue("1");
+		// Z3 empty
+		ws.getRange2("Z4").setValue("2");
+		// Z5 empty
+		ws.getRange2("Z6").setValue("3");
+		// Z7 empty
+		ws.getRange2("Z8").setValue("1");
+		// Z9 empty
+		ws.getRange2("Z10").setValue("2");
+		// Z11 empty
+
+		ws.getRange2("AA2").setValue("10");
+		ws.getRange2("AA3").setValue("20");
+		ws.getRange2("AA4").setValue("30");
+		// AA5 empty
+		ws.getRange2("AA6").setValue("50");
+		ws.getRange2("AA7").setValue("60");
+		ws.getRange2("AA8").setValue("70");
+		ws.getRange2("AA9").setValue("80");
+		ws.getRange2("AA10").setValue("90");
+		ws.getRange2("AA11").setValue("100");
+
+		// === Group 7: Error cells in sum range (criteria AE2:AE7, sum AF2:AF7) ===
+		ws.getRange2("AE2").setValue("A");
+		ws.getRange2("AE3").setValue("B");
+		ws.getRange2("AE4").setValue("A");
+		ws.getRange2("AE5").setValue("C");
+		ws.getRange2("AE6").setValue("A");
+		ws.getRange2("AE7").setValue("B");
+
+		ws.getRange2("AF2").setValue("10");
+		ws.getRange2("AF3").setValue("=1/0");   // #DIV/0!
+		ws.getRange2("AF4").setValue("30");
+		ws.getRange2("AF5").setValue("40");
+		ws.getRange2("AF6").setValue("=1/0");   // #DIV/0!
+		ws.getRange2("AF7").setValue("60");
+
+		// === Group 8: Sum range offset (criteria AJ2:AJ6, sum AK5:AK9) ===
+		ws.getRange2("AJ2").setValue("10");
+		ws.getRange2("AJ3").setValue("20");
+		ws.getRange2("AJ4").setValue("30");
+		ws.getRange2("AJ5").setValue("40");
+		ws.getRange2("AJ6").setValue("50");
+
+		ws.getRange2("AK5").setValue("100");
+		ws.getRange2("AK6").setValue("200");
+		ws.getRange2("AK7").setValue("300");
+		ws.getRange2("AK8").setValue("400");
+		ws.getRange2("AK9").setValue("500");
+
+		// === Group 9: Sum range smaller than criteria range (criteria AO2:AO8, sum AP2:AP8) ===
+		ws.getRange2("AO2").setValue("1");
+		ws.getRange2("AO3").setValue("2");
+		ws.getRange2("AO4").setValue("3");
+		ws.getRange2("AO5").setValue("1");
+		ws.getRange2("AO6").setValue("2");
+		ws.getRange2("AO7").setValue("3");
+		ws.getRange2("AO8").setValue("1");
+
+		ws.getRange2("AP2").setValue("10");
+		ws.getRange2("AP3").setValue("20");
+		ws.getRange2("AP4").setValue("30");
+		ws.getRange2("AP5").setValue("40");
+		ws.getRange2("AP6").setValue("50");
+		ws.getRange2("AP7").setValue("60");
+		ws.getRange2("AP8").setValue("70");
+
+		// === Group 10: Sparse range with mixed text/number (criteria AT2:AT10, sum AU2:AU10) ===
+		ws.getRange2("AT2").setValue("12");
+		ws.getRange2("AT3").setValue("2");
+		ws.getRange2("AT4").setValue("3");
+		ws.getRange2("AT5").setValue("4");
+		ws.getRange2("AT6").setValue("text");
+		// AT7, AT8, AT9 empty
+		ws.getRange2("AT10").setValue("12");
+
+		ws.getRange2("AU2").setValue("100");
+		ws.getRange2("AU3").setValue("200");
+		ws.getRange2("AU4").setValue("300");
+		ws.getRange2("AU5").setValue("400");
+		ws.getRange2("AU6").setValue("500");
+		// AU7, AU8 empty
+		ws.getRange2("AU9").setValue("800");
+		ws.getRange2("AU10").setValue("900");
+
+		// === Group 11: Sparse data with large gaps (criteria AY2:AY200, sum AZ2:AZ200) ===
+		ws.getRange2("AY2").setValue("1");
+		ws.getRange2("AY50").setValue("2");
+		ws.getRange2("AY100").setValue("1");
+		ws.getRange2("AY150").setValue("3");
+		ws.getRange2("AY200").setValue("2");
+
+		ws.getRange2("AZ2").setValue("10");
+		ws.getRange2("AZ50").setValue("20");
+		ws.getRange2("AZ100").setValue("30");
+		ws.getRange2("AZ150").setValue("40");
+		ws.getRange2("AZ200").setValue("50");
+
+		// === Group 13: Extended <> tests (criteria BI2:BI7, sum BJ2:BJ7) ===
+		ws.getRange2("BI2").setValue("5");
+		ws.getRange2("BI3").setValue("5");
+		ws.getRange2("BI4").setValue("5");
+		ws.getRange2("BI5").setValue("99");
+		ws.getRange2("BI6").setValue("5");
+		ws.getRange2("BI7").setValue("5");
+
+		ws.getRange2("BJ2").setValue("10");
+		ws.getRange2("BJ3").setValue("20");
+		ws.getRange2("BJ4").setValue("30");
+		ws.getRange2("BJ5").setValue("40");
+		ws.getRange2("BJ6").setValue("50");
+		ws.getRange2("BJ7").setValue("60");
+
+		// Mixed types with <> (criteria BI10:BI16, sum BJ10:BJ16)
+		ws.getRange2("BI10").setValue("cat");
+		ws.getRange2("BI11").setValue("dog");
+		ws.getRange2("BI12").setValue("cat");
+		ws.getRange2("BI13").setValue("42");
+		ws.getRange2("BI14").setValue("=TRUE()");
+		// BI15 empty
+		ws.getRange2("BI16").setValue("cat");
+
+		ws.getRange2("BJ10").setValue("1");
+		ws.getRange2("BJ11").setValue("2");
+		ws.getRange2("BJ12").setValue("3");
+		ws.getRange2("BJ13").setValue("4");
+		ws.getRange2("BJ14").setValue("5");
+		ws.getRange2("BJ15").setValue("6");
+		ws.getRange2("BJ16").setValue("7");
+
+		AscCommonExcel.g_oSumIfCache.clean();
+
+		// --- Group 1: Numeric comparison assertions ---
+		oParser = new parserFormula("SUMIF(A2:A11,\">20\",B2:B11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1825);
+
+		oParser = new parserFormula("SUMIF(A2:A11,\"<20\",B2:B11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 425);
+
+		oParser = new parserFormula("SUMIF(A2:A11,\">=20\",B2:B11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2275);
+
+		oParser = new parserFormula("SUMIF(A2:A11,\"<=20\",B2:B11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 875);
+
+		oParser = new parserFormula("SUMIF(A2:A11,20,B2:B11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 450);
+
+		oParser = new parserFormula("SUMIF(A2:A11,\"<>20\",B2:B11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2250);
+
+		oParser = new parserFormula("SUMIF(A2:A11,\"<>30\",B2:B11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2050);
+
+		oParser = new parserFormula("SUMIF(A2:A11,10,B2:B11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 250);
+
+		oParser = new parserFormula("SUMIF(A2:A11,\">=\" & A6,B2:B11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 500);
+
+		oParser = new parserFormula("SUMIF(A2:A11,\">\" & A4,B2:B11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 900);
+
+		// Two-argument form: no sum_range (sums criteria range itself)
+		oParser = new parserFormula("SUMIF(A2:A11,\">20\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 175);
+
+		oParser = new parserFormula("SUMIF(A2:A11,\"<>10\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 230);
+
+		// --- Group 2: String and wildcard assertions ---
+		oParser = new parserFormula("SUMIF(F2:F9,\"Apple\",G2:G9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 40);
+
+		oParser = new parserFormula("SUMIF(F2:F9,\"Banana\",G2:G9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 70);
+
+		oParser = new parserFormula("SUMIF(F2:F9,\"<>Apple\",G2:G9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 320);
+
+		oParser = new parserFormula("SUMIF(F2:F9,\"A*\",G2:G9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 170);
+
+		oParser = new parserFormula("SUMIF(F2:F9,\"*berry\",G2:G9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 80);
+
+		oParser = new parserFormula("SUMIF(F2:F9,\"??????\",G2:G9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 110);
+
+		oParser = new parserFormula("SUMIF(F2:F9,\"<>Banana\",G2:G9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 290);
+
+		oParser = new parserFormula("SUMIF(F2:F9,\"ap*\",G2:G9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 100);
+
+		// --- Group 3: Boolean criteria assertions ---
+		oParser = new parserFormula("SUMIF(K2:K9,TRUE,L2:L9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1700);
+
+		oParser = new parserFormula("SUMIF(K2:K9,FALSE,L2:L9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1000);
+
+		oParser = new parserFormula("SUMIF(K2:K9,1,L2:L9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 400);
+
+		oParser = new parserFormula("SUMIF(K2:K9,0,L2:L9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 500);
+
+		oParser = new parserFormula("SUMIF(K2:K9,\"TRUE\",L2:L9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1700);
+
+		oParser = new parserFormula("SUMIF(K2:K9,\"<>TRUE\",L2:L9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1900);
+
+		oParser = new parserFormula("SUMIF(K2:K9,\"<>FALSE\",L2:L9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2600);
+
+		// --- Group 4: Error cells in criteria range assertions ---
+		oParser = new parserFormula("SUMIF(P2:P9,\">15\",Q2:Q9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2300);
+
+		oParser = new parserFormula("SUMIF(P2:P9,\"<>10\",Q2:Q9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 3500);
+
+		oParser = new parserFormula("SUMIF(P2:P9,10,Q2:Q9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 100);
+
+		oParser = new parserFormula("SUMIF(P2:P9,\"<30\",Q2:Q9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 400);
+
+		// --- Group 5: Mixed types in criteria range assertions ---
+		oParser = new parserFormula("SUMIF(U2:U11,10,V2:V11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 11);
+
+		oParser = new parserFormula("SUMIF(U2:U11,\"hello\",V2:V11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2);
+
+		oParser = new parserFormula("SUMIF(U2:U11,TRUE,V2:V11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 3);
+
+		oParser = new parserFormula("SUMIF(U2:U11,FALSE,V2:V11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 8);
+
+		oParser = new parserFormula("SUMIF(U2:U11,\"\",V2:V11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 5);
+
+		oParser = new parserFormula("SUMIF(U2:U11,\">0\",V2:V11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 22);
+
+		oParser = new parserFormula("SUMIF(U2:U11,\"<>10\",V2:V11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 44);
+
+		oParser = new parserFormula("SUMIF(U2:U11,\"*\",V2:V11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 8);
+
+		oParser = new parserFormula("SUMIF(U2:U11,\"<>\",V2:V11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 50);
+
+		// --- Group 6: Empty cells in criteria range assertions ---
+		oParser = new parserFormula("SUMIF(Z2:Z11,1,AA2:AA11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 80);
+
+		oParser = new parserFormula("SUMIF(Z2:Z11,2,AA2:AA11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 120);
+
+		oParser = new parserFormula("SUMIF(Z2:Z11,\"\",AA2:AA11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 260);
+
+		oParser = new parserFormula("SUMIF(Z2:Z11,\"<>\",AA2:AA11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 250);
+
+		oParser = new parserFormula("SUMIF(Z2:Z11,\">0\",AA2:AA11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 250);
+
+		oParser = new parserFormula("SUMIF(Z2:Z11,\"<>1\",AA2:AA11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 430);
+
+		oParser = new parserFormula("SUMIF(Z2:Z11,\"<>2\",AA2:AA11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 390);
+
+		oParser = new parserFormula("SUMIF(Z2:Z11,3,AA2:AA11)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 50);
+
+		// --- Group 7: Error cells in sum range assertions ---
+		// AF3 and AF6 are #DIV/0!, so SUMIF propagates error when those cells are summed
+		oParser = new parserFormula("SUMIF(AE2:AE7,\"A\",AF2:AF7)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		oParser = new parserFormula("SUMIF(AE2:AE7,\"B\",AF2:AF7)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		oParser = new parserFormula("SUMIF(AE2:AE7,\"C\",AF2:AF7)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 40);
+
+		oParser = new parserFormula("SUMIF(AE2:AE7,\"<>A\",AF2:AF7)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		oParser = new parserFormula("SUMIF(AE2:AE7,\"<>B\",AF2:AF7)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		oParser = new parserFormula("SUMIF(AE2:AE7,\"<>C\",AF2:AF7)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
+
+		// --- Group 8: Offset sum range assertions ---
+		oParser = new parserFormula("SUMIF(AJ2:AJ6,\">20\",AK5:AK9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1200);
+
+		oParser = new parserFormula("SUMIF(AJ2:AJ6,\"<30\",AK5:AK9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 300);
+
+		oParser = new parserFormula("SUMIF(AJ2:AJ6,10,AK5:AK9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 100);
+
+		oParser = new parserFormula("SUMIF(AJ2:AJ6,\"<>30\",AK5:AK9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1200);
+
+		oParser = new parserFormula("SUMIF(AJ2:AJ6,\">=\" & AJ4,AK5:AK9)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1200);
+
+		// --- Group 9: Sum range smaller than criteria range (Excel extends it) ---
+		oParser = new parserFormula("SUMIF(AO2:AO8,1,AP2:AP4)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 120);
+
+		oParser = new parserFormula("SUMIF(AO2:AO8,2,AP2:AP4)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 70);
+
+		oParser = new parserFormula("SUMIF(AO2:AO8,3,AP2:AP4)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 90);
+
+		oParser = new parserFormula("SUMIF(AO2:AO8,\">1\",AP2:AP4)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 160);
+
+		oParser = new parserFormula("SUMIF(AO2:AO8,\"<>1\",AP2:AP4)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 160);
+
+		// --- Group 10: Sparse range with text/empty cells assertions ---
+		oParser = new parserFormula("SUMIF(AT2:AT10,\">3\",AU2:AU10)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1400);
+
+		oParser = new parserFormula("SUMIF(AT2:AT10,\"<5\",AU2:AU10)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 900);
+
+		oParser = new parserFormula("SUMIF(AT2:AT10,12,AU2:AU10)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1000);
+
+		oParser = new parserFormula("SUMIF(AT2:AT10,\"<>12\",AU2:AU10)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2200);
+
+		oParser = new parserFormula("SUMIF(AT2:AT10,\"text\",AU2:AU10)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 500);
+
+		oParser = new parserFormula("SUMIF(AT2:AT10,\"\",AU2:AU10)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 800);
+
+		oParser = new parserFormula("SUMIF(AT2:AT10,\"<>\",AU2:AU10)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2400);
+
+		// --- Group 11: Sparse data with large gaps assertions ---
+		oParser = new parserFormula("SUMIF(AY2:AY200,1,AZ2:AZ200)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 40);
+
+		oParser = new parserFormula("SUMIF(AY2:AY200,2,AZ2:AZ200)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 70);
+
+		oParser = new parserFormula("SUMIF(AY2:AY200,\"<>1\",AZ2:AZ200)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 110);
+
+		oParser = new parserFormula("SUMIF(AY2:AY200,\">0\",AZ2:AZ200)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 150);
+
+		oParser = new parserFormula("SUMIF(AY2:AY200,\"\",AZ2:AZ200)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
+		oParser = new parserFormula("SUMIF(AY2:AY200,\"<>\",AZ2:AZ200)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 150);
+
+		// --- Group 13: Extended <> assertions ---
+		oParser = new parserFormula("SUMIF(BI2:BI7,\"<>5\",BJ2:BJ7)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 40);
+
+		oParser = new parserFormula("SUMIF(BI2:BI7,\"<>99\",BJ2:BJ7)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 170);
+
+		oParser = new parserFormula("SUMIF(BI2:BI7,\"<>0\",BJ2:BJ7)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 210);
+
+		oParser = new parserFormula("SUMIF(BI2:BI7,5,BJ2:BJ7)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 170);
+
+		oParser = new parserFormula("SUMIF(BI10:BI16,\"<>cat\",BJ10:BJ16)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 17);
+
+		oParser = new parserFormula("SUMIF(BI10:BI16,\"<>dog\",BJ10:BJ16)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 26);
+
+		oParser = new parserFormula("SUMIF(BI10:BI16,\"<>42\",BJ10:BJ16)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 24);
+
+		oParser = new parserFormula("SUMIF(BI10:BI16,\"<>\",BJ10:BJ16)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 22);
+
+		oParser = new parserFormula("SUMIF(BI10:BI16,\"cat\",BJ10:BJ16)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 11);
+
+		// Single-cell range with <>
+		oParser = new parserFormula("SUMIF(BI2,\"<>5\",BJ2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
+		oParser = new parserFormula("SUMIF(BI5,\"<>5\",BJ5)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 40);
 
 	});
 

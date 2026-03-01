@@ -5408,7 +5408,7 @@ function (window, undefined) {
 			let oldValue = null;
 			let oldType = null;
 			if (dataOld) {
-				const oldCellValue = dataOld && dataOld.value;
+				const oldCellValue = dataOld.value;
 				oldType = oldCellValue && oldCellValue.type;
 				oldValue = oldType === cElementType.number ? oldCellValue.number : oldCellValue.text;
 				if (oldValue && oldType === cElementType.error) {
@@ -5454,16 +5454,16 @@ function (window, undefined) {
 		let highestBooleanIndex = booleanIndexes && this.findHigherIndexInTyped(index, booleanIndexes);
 		let highestErrorIndex = errorIndexes && this.findHigherIndexInTyped(index, errorIndexes);
 
-		if (highestNumberIndex !== undefined) {
+		if (highestNumberIndex > 0) {
 			result[cElementType.number] = highestNumberIndex - 1;
 		}
-		if (highestStringIndex !== undefined) {
+		if (highestStringIndex > 0) {
 			result[cElementType.string] = highestStringIndex - 1;
 		}
-		if (highestBooleanIndex !== undefined) {
+		if (highestBooleanIndex > 0) {
 			result[cElementType.bool] = highestBooleanIndex - 1;
 		}
-		if (highestErrorIndex !== undefined) {
+		if (highestErrorIndex > 0) {
 			result[cElementType.error] = highestErrorIndex - 1;
 		}
 
@@ -5483,16 +5483,16 @@ function (window, undefined) {
 		let lowestBooleanIndex = booleanIndexes && this.findLowerIndexInTyped(index, booleanIndexes);
 		let lowestErrorIndex = errorIndexes && this.findLowerIndexInTyped(index, errorIndexes);
 
-		if (lowestNumberIndex !== undefined) {
+		if (numberIndexes && lowestNumberIndex < numberIndexes.length) {
 			result[cElementType.number] = lowestNumberIndex;
 		}
-		if (lowestStringIndex !== undefined) {
+		if (stringIndexes && lowestStringIndex < stringIndexes.length) {
 			result[cElementType.string] = lowestStringIndex;
 		}
-		if (lowestBooleanIndex !== undefined) {
+		if (booleanIndexes && lowestBooleanIndex < booleanIndexes.length) {
 			result[cElementType.bool] = lowestBooleanIndex;
 		}
-		if (lowestErrorIndex !== undefined) {
+		if (errorIndexes && lowestErrorIndex < errorIndexes.length) {
 			result[cElementType.error] = lowestErrorIndex;
 		}
 
@@ -5527,9 +5527,9 @@ function (window, undefined) {
 			const sumColumnData = sumColumn.data[cElementType.number];
 
 			const errorIndexes = sumColumn.indexes[cElementType.error];
-			const errorData = sumColumn.data[cElementType.error]
+			const errorData = sumColumn.data[cElementType.error];
 
-			const rowSumOffset = searchRangeBbox.r1 - sumRangeBbox.r1;
+			const rowSumOffset = sumRangeBbox.r1 - searchRangeBbox.r1;
 
 			let currentDataIndexes = this.findLowestDataIndexes(searchColumn, searchRangeBbox.r1);
 			const originalIndexesArray = [];
@@ -5552,9 +5552,9 @@ function (window, undefined) {
 					return {
 						result: null,
 						error: new cError(errorData[currentErrorIndex])
-					}
+					};
 				} else {
-					if (sumColumnIndexes && currentSumIndex !== sumColumnIndexes.length && (sumColumnIndexes[currentSumIndex] + rowSumOffset === j)) {
+					if (sumColumnIndexes && currentSumIndex !== sumColumnIndexes.length && (sumColumnIndexes[currentSumIndex] === (j + rowSumOffset))) {
 						sum += sumColumnData[currentSumIndex];
 						currentSumIndex += 1;
 					}
@@ -5563,7 +5563,7 @@ function (window, undefined) {
 
 			if (minFirstDataIndex !== -1) {
 
-				const highestDataIndexes = this.findHighestDataIndexes(searchColumn, searchRangeBbox.r2)
+				const highestDataIndexes = this.findHighestDataIndexes(searchColumn, searchRangeBbox.r2);
 				const maxIndexesArray = [];
 				const maxOriginalIndexesArray = [];
 
@@ -5598,21 +5598,21 @@ function (window, undefined) {
 					}
 					if (isNotEqual) {
 						if (errorIndexes) {
-							if ((currentCellIndex + rowSumOffset) > (errorIndexes[currentErrorIndex])) {
+							if (currentErrorIndex !== errorIndexes.length && ((currentCellIndex + rowSumOffset) > errorIndexes[currentErrorIndex])) {
 								currentErrorIndex = sumCache.findLowerIndexInTyped(currentCellIndex + rowSumOffset, errorIndexes);
 							}
-							if (currentErrorIndex !== errorIndexes.length && (errorIndexes[currentErrorIndex] + rowSumOffset === currentCellIndex)) {
+							if (currentErrorIndex !== errorIndexes.length && (errorIndexes[currentErrorIndex] === (currentCellIndex + rowSumOffset))) {
 								return {
 									result: null,
 									error: new cError(errorData[currentErrorIndex])
-								}
+								};
 							}
 						}
 						if (sumColumnIndexes) {
-							if ((currentCellIndex + rowSumOffset) > (sumColumnIndexes[currentSumIndex])) {
+							if (currentSumIndex !== sumColumnIndexes.length && ((currentCellIndex + rowSumOffset) > sumColumnIndexes[currentSumIndex])) {
 								currentSumIndex = sumCache.findLowerIndexInTyped(currentCellIndex + rowSumOffset, sumColumnIndexes);
 							}
-							if (currentSumIndex !== sumColumnIndexes.length && (sumColumnIndexes[currentSumIndex] + rowSumOffset === currentCellIndex)) {
+							if (currentSumIndex !== sumColumnIndexes.length && (sumColumnIndexes[currentSumIndex] === (currentCellIndex + rowSumOffset))) {
 								sum += sumColumnData[currentSumIndex];
 							}
 						}
@@ -5626,14 +5626,12 @@ function (window, undefined) {
 					return {
 						result: null,
 						error: new cError(errorData[currentErrorIndex])
-					}
+					};
 				}
 				if (sumColumnIndexes && currentSumIndex !== sumColumnIndexes.length) {
-					for (let j = currentCellIndex + 1; j <= searchRangeBbox.r2 && currentSumIndex < sumColumnIndexes.length; j += 1) {
-						if (sumColumnIndexes && (sumColumnIndexes[currentSumIndex] + rowSumOffset === j)) {
-							sum += sumColumnData[currentSumIndex];
-							currentSumIndex += 1;
-						}
+					while (currentSumIndex < sumColumnIndexes.length && sumColumnIndexes[currentSumIndex] <= sumRangeBbox.r2) {
+						sum += sumColumnData[currentSumIndex];
+						currentSumIndex += 1;
 					}
 				}
 			}
@@ -5668,9 +5666,9 @@ function (window, undefined) {
 			const sumColumnData = sumColumn.data[cElementType.number];
 
 			const errorIndexes = sumColumn.indexes[cElementType.error];
-			const errorData = sumColumn.data[cElementType.error]
+			const errorData = sumColumn.data[cElementType.error];
 
-			const rowSumOffset = searchRangeBbox.r1 - sumRangeBbox.r1;
+			const rowSumOffset = sumRangeBbox.r1 - searchRangeBbox.r1;
 
 			let currentDataIndexes = this.findLowestDataIndexes(searchColumn, searchRangeBbox.r1);
 			const originalIndexesArray = [];
@@ -5690,7 +5688,7 @@ function (window, undefined) {
 
 			if (minFirstDataIndex !== -1) {
 
-				const highestDataIndexes = this.findHighestDataIndexes(searchColumn, searchRangeBbox.r2)
+				const highestDataIndexes = this.findHighestDataIndexes(searchColumn, searchRangeBbox.r2);
 				const maxIndexesArray = [];
 				const maxOriginalIndexesArray = [];
 
@@ -5721,21 +5719,21 @@ function (window, undefined) {
 					}
 					if (!isEmpty) {
 						if (errorIndexes) {
-							if ((currentCellIndex + rowSumOffset) > (errorIndexes[currentErrorIndex])) {
+							if (currentErrorIndex !== errorIndexes.length && ((currentCellIndex + rowSumOffset) > errorIndexes[currentErrorIndex])) {
 								currentErrorIndex = sumCache.findLowerIndexInTyped(currentCellIndex + rowSumOffset, errorIndexes);
 							}
-							if (currentErrorIndex !== errorIndexes.length && (errorIndexes[currentErrorIndex] + rowSumOffset === currentCellIndex)) {
+							if (currentErrorIndex !== errorIndexes.length && (errorIndexes[currentErrorIndex] === (currentCellIndex + rowSumOffset))) {
 								return {
 									result: null,
 									error: new cError(errorData[currentErrorIndex])
-								}
+								};
 							}
 						}
 						if (sumColumnIndexes) {
-							if ((currentCellIndex + rowSumOffset) > (sumColumnIndexes[currentSumIndex])) {
+							if (currentSumIndex !== sumColumnIndexes.length && ((currentCellIndex + rowSumOffset) > sumColumnIndexes[currentSumIndex])) {
 								currentSumIndex = sumCache.findLowerIndexInTyped(currentCellIndex + rowSumOffset, sumColumnIndexes);
 							}
-							if (currentSumIndex !== sumColumnIndexes.length && (sumColumnIndexes[currentSumIndex] + rowSumOffset === currentCellIndex)) {
+							if (currentSumIndex !== sumColumnIndexes.length && (sumColumnIndexes[currentSumIndex] === (currentCellIndex + rowSumOffset))) {
 								sum += sumColumnData[currentSumIndex];
 							}
 						}
@@ -5775,9 +5773,9 @@ function (window, undefined) {
 			const sumColumnData = sumColumn.data[cElementType.number];
 
 			const errorIndexes = sumColumn.indexes[cElementType.error];
-			const errorData = sumColumn.data[cElementType.error]
+			const errorData = sumColumn.data[cElementType.error];
 
-			const rowSumOffset = searchRangeBbox.r1 - sumRangeBbox.r1;
+			const rowSumOffset = sumRangeBbox.r1 - searchRangeBbox.r1;
 
 			let currentDataIndexes = this.findLowestDataIndexes(searchColumn, searchRangeBbox.r1);
 			const originalIndexesArray = [];
@@ -5800,9 +5798,9 @@ function (window, undefined) {
 					return {
 						result: null,
 						error: new cError(errorData[currentErrorIndex])
-					}
+					};
 				} else {
-					if (sumColumnIndexes && currentSumIndex !== sumColumnIndexes.length && (sumColumnIndexes[currentSumIndex] + rowSumOffset === j)) {
+					if (sumColumnIndexes && currentSumIndex !== sumColumnIndexes.length && (sumColumnIndexes[currentSumIndex] === (j + rowSumOffset))) {
 						sum += sumColumnData[currentSumIndex];
 						currentSumIndex += 1;
 					}
@@ -5811,7 +5809,7 @@ function (window, undefined) {
 
 			if (minFirstDataIndex !== -1) {
 
-				const highestDataIndexes = this.findHighestDataIndexes(searchColumn, searchRangeBbox.r2)
+				const highestDataIndexes = this.findHighestDataIndexes(searchColumn, searchRangeBbox.r2);
 				const maxIndexesArray = [];
 				const maxOriginalIndexesArray = [];
 
@@ -5842,21 +5840,21 @@ function (window, undefined) {
 					}
 					if (isEmpty) {
 						if (errorIndexes) {
-							if ((currentCellIndex + rowSumOffset) > (errorIndexes[currentErrorIndex])) {
+							if (currentErrorIndex !== errorIndexes.length && ((currentCellIndex + rowSumOffset) > errorIndexes[currentErrorIndex])) {
 								currentErrorIndex = sumCache.findLowerIndexInTyped(currentCellIndex + rowSumOffset, errorIndexes);
 							}
-							if (currentErrorIndex !== errorIndexes.length && (errorIndexes[currentErrorIndex] + rowSumOffset === currentCellIndex)) {
+							if (currentErrorIndex !== errorIndexes.length && (errorIndexes[currentErrorIndex] === (currentCellIndex + rowSumOffset))) {
 								return {
 									result: null,
 									error: new cError(errorData[currentErrorIndex])
-								}
+								};
 							}
 						}
 						if (sumColumnIndexes) {
-							if ((currentCellIndex + rowSumOffset) > (sumColumnIndexes[currentSumIndex])) {
+							if (currentSumIndex !== sumColumnIndexes.length && ((currentCellIndex + rowSumOffset) > sumColumnIndexes[currentSumIndex])) {
 								currentSumIndex = sumCache.findLowerIndexInTyped(currentCellIndex + rowSumOffset, sumColumnIndexes);
 							}
-							if (currentSumIndex !== sumColumnIndexes.length && (sumColumnIndexes[currentSumIndex] + rowSumOffset === currentCellIndex)) {
+							if (currentSumIndex !== sumColumnIndexes.length && (sumColumnIndexes[currentSumIndex] === (currentCellIndex + rowSumOffset))) {
 								sum += sumColumnData[currentSumIndex];
 							}
 						}
@@ -5870,14 +5868,12 @@ function (window, undefined) {
 					return {
 						result: null,
 						error: new cError(errorData[currentErrorIndex])
-					}
+					};
 				}
 				if (sumColumnIndexes && currentSumIndex !== sumColumnIndexes.length) {
-					for (let j = currentCellIndex + 1; j <= searchRangeBbox.r2 && currentSumIndex < sumColumnIndexes.length; j += 1) {
-						if (sumColumnIndexes && (sumColumnIndexes[currentSumIndex] + rowSumOffset === j)) {
-							sum += sumColumnData[currentSumIndex];
-							currentSumIndex += 1;
-						}
+					while (currentSumIndex < sumColumnIndexes.length && sumColumnIndexes[currentSumIndex] <= sumRangeBbox.r2) {
+						sum += sumColumnData[currentSumIndex];
+						currentSumIndex += 1;
 					}
 				}
 			}
@@ -5913,7 +5909,7 @@ function (window, undefined) {
 			const sumIndexes = sumColumn.indexes[cElementType.number];
 
 			const errorIndexes = sumColumn.indexes[cElementType.error];
-			const errorData = sumColumn.data[cElementType.error]
+			const errorData = sumColumn.data[cElementType.error];
 
 			if (searchTypedData) {
 				const rowSumOffset = sumRangeBbox.r1 - searchRangeBbox.r1;
@@ -5926,11 +5922,10 @@ function (window, undefined) {
 
 				if (convertToNumber) {
 					for (let j = firstIndex; j < lastIndex; j += 1) {
-						// bottleneck with error pointer
-						if (errorIndexes && ((searchTypedIndexes[j] + rowSumOffset) > errorIndexes[currentErrorIndex])) {
+						if (errorIndexes && currentErrorIndex !== errorIndexes.length && ((searchTypedIndexes[j] + rowSumOffset) > errorIndexes[currentErrorIndex])) {
 							currentErrorIndex = sumCache.findLowerIndexInTyped(searchTypedIndexes[j] + rowSumOffset, errorIndexes);
 						}
-						if (sumIndexes && ((searchTypedIndexes[j] + rowSumOffset) > sumIndexes[currentSumIndex])) {
+						if (sumIndexes && currentSumIndex !== sumIndexes.length && ((searchTypedIndexes[j] + rowSumOffset) > sumIndexes[currentSumIndex])) {
 							currentSumIndex = sumCache.findLowerIndexInTyped(searchTypedIndexes[j] + rowSumOffset, sumIndexes);
 						}
 						if ((!errorIndexes || currentErrorIndex === errorIndexes.length) && (!sumIndexes || currentSumIndex === sumIndexes.length)) {
@@ -5939,7 +5934,7 @@ function (window, undefined) {
 						let value = AscCommon.g_oFormatParser.parseLocaleNumber(searchTypedData[j]);
 						if (!isNaN(value) && matchingFunction(value, searchValue)) {
 							if (errorIndexes && currentErrorIndex !== errorIndexes.length && (errorIndexes[currentErrorIndex] === (searchTypedIndexes[j] + rowSumOffset))) {
-								return {result: null, error: new cError(errorData[currentErrorIndex])}
+								return {result: null, error: new cError(errorData[currentErrorIndex])};
 							}
 							if (sumIndexes && currentSumIndex !== sumIndexes.length && (sumIndexes[currentSumIndex] === (searchTypedIndexes[j] + rowSumOffset))) {
 								sum += sumData[currentSumIndex];
@@ -5949,19 +5944,18 @@ function (window, undefined) {
 					}
 				} else {
 					for (let j = firstIndex; j < lastIndex; j += 1) {
-						// bottleneck with error pointer
 						if (errorIndexes && currentErrorIndex !== errorIndexes.length && ((searchTypedIndexes[j] + rowSumOffset) > errorIndexes[currentErrorIndex])) {
 							currentErrorIndex = sumCache.findLowerIndexInTyped(searchTypedIndexes[j] + rowSumOffset, errorIndexes);
 						}
-						if (sumIndexes && ((searchTypedIndexes[j] + rowSumOffset) > sumIndexes[currentSumIndex])) {
+						if (sumIndexes && currentSumIndex !== sumIndexes.length && ((searchTypedIndexes[j] + rowSumOffset) > sumIndexes[currentSumIndex])) {
 							currentSumIndex = sumCache.findLowerIndexInTyped(searchTypedIndexes[j] + rowSumOffset, sumIndexes);
 						}
 						if ((!errorIndexes || currentErrorIndex === errorIndexes.length) && (!sumIndexes || currentSumIndex === sumIndexes.length)) {
 							break;
 						}
 						if (matchingFunction(searchTypedData[j], searchValue)) {
-							if (errorIndexes && (errorIndexes[currentErrorIndex] === (searchTypedIndexes[j] + rowSumOffset))) {
-								return {result: null, error: new cError(errorData[currentErrorIndex])}
+							if (errorIndexes && currentErrorIndex !== errorIndexes.length && (errorIndexes[currentErrorIndex] === (searchTypedIndexes[j] + rowSumOffset))) {
+								return {result: null, error: new cError(errorData[currentErrorIndex])};
 							}
 							if (sumIndexes && currentSumIndex !== sumIndexes.length && (sumIndexes[currentSumIndex] === (searchTypedIndexes[j] + rowSumOffset))) {
 								sum += sumData[currentSumIndex];
@@ -6131,11 +6125,6 @@ function (window, undefined) {
 					return calculatingResult.error;
 				}
 				_sum = calculatingResult.result;
-				calculatingResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, type, matchingFunction, searchValue);
-				if (calculatingResult.error !== null) {
-					return calculatingResult.error;
-				}
-				_sum += calculatingResult.result;
 			} else {
 				const matchingFunction = AscCommonExcel.getMatchingFunction(type, matchingInfo.op, isWildcard);
 				let calculatingResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, type, matchingFunction, searchValue);

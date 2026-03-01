@@ -12435,10 +12435,9 @@ function parseStringToCElement (val, cultureInfo) {
 			convertedToNumber = AscCommon.g_oFormatParser.parseLocaleNumber(value);
 		}
 		if (isNaN(convertedToNumber) || convertedToNumber === null) {
-			let convertedToNumber = AscCommon.g_oFormatParser.parse(value);
-			if (convertedToNumber) {
-				convertedToNumber = convertedToNumber.value;
-				return convertedToNumber;
+			const parseResult = AscCommon.g_oFormatParser.parse(value);
+			if (parseResult) {
+				return parseResult.value;
 			}
 			return null;
 		}
@@ -12528,7 +12527,7 @@ function parseStringToCElement (val, cultureInfo) {
 			let oldValue = null;
 			let oldType = null;
 			if (dataOld) {
-				const oldCellValue = dataOld && dataOld.value;
+				const oldCellValue = dataOld.value;
 				oldType = oldCellValue && oldCellValue.type;
 				oldValue = oldType === cElementType.number ? oldCellValue.number : oldCellValue.text;
 				if (oldValue && oldType === cElementType.string) {
