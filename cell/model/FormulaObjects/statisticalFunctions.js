@@ -12489,6 +12489,37 @@ function parseStringToCElement (val, cultureInfo) {
 		}
 		return result;
 	};
+	/**
+	 * Checks whether a column has any non-empty data at a specific row.
+	 * Uses binary search per type — O(T × log K) where T ≤ 4.
+	 * @param {Object} column - column cache object with .indexes
+	 * @param {number} row - row index to check
+	 * @returns {boolean}
+	 */
+	CountIfTypedCache.prototype.hasDataAtRow = function(column, row) {
+		const indexes = column.indexes;
+		const numIdx = indexes[cElementType.number];
+		if (numIdx) {
+			const i = this.findLowerIndexInTyped(row, numIdx);
+			if (i < numIdx.length && numIdx[i] === row) return true;
+		}
+		const strIdx = indexes[cElementType.string];
+		if (strIdx) {
+			const i = this.findLowerIndexInTyped(row, strIdx);
+			if (i < strIdx.length && strIdx[i] === row) return true;
+		}
+		const boolIdx = indexes[cElementType.bool];
+		if (boolIdx) {
+			const i = this.findLowerIndexInTyped(row, boolIdx);
+			if (i < boolIdx.length && boolIdx[i] === row) return true;
+		}
+		const errIdx = indexes[cElementType.error];
+		if (errIdx) {
+			const i = this.findLowerIndexInTyped(row, errIdx);
+			if (i < errIdx.length && errIdx[i] === row) return true;
+		}
+		return false;
+	};
 	CountIfTypedCache.prototype.changeColumnsData = function(wsId, cell, oldValue, oldType, newValue, newType) {
 		const columnIndex = cell.nCol;
 		const changedIndex = cell.nRow;
