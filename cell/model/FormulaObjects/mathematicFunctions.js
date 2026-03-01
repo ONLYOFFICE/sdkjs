@@ -5455,7 +5455,7 @@ function (window, undefined) {
 		const sumRangeWs = sumRange.getWorksheet();
 		const sumRangeWsId = sumRangeWs.getId();
 		const sumRangeBbox = sumRange.getBBox0();
-		const columnsOffset = searchRangeBbox.c1 - sumRangeBbox.c1;
+		const columnsOffset = searchRangeBbox.c1 - sumRangeBbox.c1; // searchCol = i + columnsOffset (i iterates sum cols here)
 
 		for (let i = sumRangeBbox.c1; i <= sumRangeBbox.c2; i += 1) {
 			const searchColumnIndex = columnsOffset + i;
@@ -5501,8 +5501,9 @@ function (window, undefined) {
 
 			const searchColumn = this.data[searchRangeWsId][searchColumnIndex];
 			const sumColumn = sumCache.data[sumRangeWsId][i];
-			const rowSumOffset = sumRangeBbox.r1 - searchRangeBbox.r1;
+			const rowSumOffset = sumRangeBbox.r1 - searchRangeBbox.r1; // sumRow = searchRow + rowSumOffset
 
+			// 4 advancing pointers, one per type — amortized O(1) per sum entry to check if search row has ANY data
 			const sNumIdx = searchColumn.indexes[cElementType.number];
 			const sStrIdx = searchColumn.indexes[cElementType.string];
 			const sBoolIdx = searchColumn.indexes[cElementType.bool];
@@ -5523,7 +5524,7 @@ function (window, undefined) {
 				const firstErr = sumCache.findLowerIndexInTyped(sumRangeBbox.r1, sumErrorIndexes);
 				const lastErr = sumCache.findHigherIndexInTyped(sumRangeBbox.r2, sumErrorIndexes);
 				for (let j = firstErr; j < lastErr; j += 1) {
-					const searchRow = sumErrorIndexes[j] - rowSumOffset;
+					const searchRow = sumErrorIndexes[j] - rowSumOffset; // map sum-column row to corresponding search-column row
 					if (this.hasDataAtRow(searchColumn, searchRow)) {
 						return {result: null, error: new cError(sumErrorData[j])};
 					}
@@ -5536,8 +5537,9 @@ function (window, undefined) {
 				const first = sumCache.findLowerIndexInTyped(sumRangeBbox.r1, sumIndexes);
 				const last = sumCache.findHigherIndexInTyped(sumRangeBbox.r2, sumIndexes);
 				for (let j = first; j < last; j += 1) {
-					const searchRow = sumIndexes[j] - rowSumOffset;
+					const searchRow = sumIndexes[j] - rowSumOffset; // map sum-column row to corresponding search-column row
 					let found = false;
+					// advance each type pointer forward to searchRow; exact match means the search cell has a value of that type
 					if (sNumIdx) {
 						while (sNumPtr < sNumEnd && sNumIdx[sNumPtr] < searchRow) sNumPtr += 1;
 						if (sNumPtr < sNumEnd && sNumIdx[sNumPtr] === searchRow) found = true;
@@ -5703,53 +5705,70 @@ function (window, undefined) {
 				let currentSumIndex = sumIndexes && sumCache.findLowerIndexInTyped(searchTypedIndexes[firstIndex] + rowSumOffset, sumIndexes);
 				let currentErrorIndex = errorIndexes && sumCache.findLowerIndexInTyped(searchTypedIndexes[firstIndex] + rowSumOffset, errorIndexes);
 
+				const sumLen = sumIndexes ? sumIndexes.length : 0;
+				const errLen = errorIndexes ? errorIndexes.length : 0;
+
 				if (convertToNumber) {
-					const errLen = errorIndexes ? errorIndexes.length : 0;
-					const sumLen = sumIndexes ? sumIndexes.length : 0;
 					for (let j = firstIndex; j < lastIndex; j += 1) {
+						const value = AscCommon.g_oFormatParser.parseLocaleNumber(searchTypedData[j]);
+						if (isNaN(value) || !matchingFunction(value, searchValue)) continue;
+						// Early exit only on matches (runs K_match times, not K_search times)
+						if ((!sumIndexes || currentSumIndex >= sumLen) && (!errorIndexes || currentErrorIndex >= errLen)) break;
 						const targetRow = searchTypedIndexes[j] + rowSumOffset;
-						if (errorIndexes) {
-							while (currentErrorIndex < errLen && errorIndexes[currentErrorIndex] < targetRow) currentErrorIndex += 1;
+						// Galloping advance: exponential probe then binary refinement — O(log gap) per match
+						if (sumIndexes && currentSumIndex < sumLen && sumIndexes[currentSumIndex] < targetRow) {
+							let lo = currentSumIndex, step = 1, hi = lo + step;
+							while (hi < sumLen && sumIndexes[hi] < targetRow) { lo = hi; step <<= 1; hi = lo + step; }
+							if (hi > sumLen) hi = sumLen;
+							while (lo < hi) { const m = (lo + hi) >>> 1; if (sumIndexes[m] < targetRow) lo = m + 1; else hi = m; }
+							currentSumIndex = lo;
 						}
-						if (sumIndexes) {
-							while (currentSumIndex < sumLen && sumIndexes[currentSumIndex] < targetRow) currentSumIndex += 1;
+						if (errorIndexes && currentErrorIndex < errLen && errorIndexes[currentErrorIndex] < targetRow) {
+							// Galloping advance for error pointer
+							let lo = currentErrorIndex, step = 1, hi = lo + step;
+							while (hi < errLen && errorIndexes[hi] < targetRow) { lo = hi; step <<= 1; hi = lo + step; }
+							if (hi > errLen) hi = errLen;
+							while (lo < hi) { const m = (lo + hi) >>> 1; if (errorIndexes[m] < targetRow) lo = m + 1; else hi = m; }
+							currentErrorIndex = lo;
 						}
-						if ((!errorIndexes || currentErrorIndex === errLen) && (!sumIndexes || currentSumIndex === sumLen)) {
-							break;
+						// Check after gallop: pointer may land on targetRow whether or not it needed to advance
+						if (errorIndexes && currentErrorIndex < errLen && errorIndexes[currentErrorIndex] === targetRow) {
+							return {result: null, error: new cError(errorData[currentErrorIndex])};
 						}
-						let value = AscCommon.g_oFormatParser.parseLocaleNumber(searchTypedData[j]);
-						if (!isNaN(value) && matchingFunction(value, searchValue)) {
-							if (errorIndexes && currentErrorIndex < errLen && errorIndexes[currentErrorIndex] === targetRow) {
-								return {result: null, error: new cError(errorData[currentErrorIndex])};
-							}
-							if (sumIndexes && currentSumIndex < sumLen && sumIndexes[currentSumIndex] === targetRow) {
-								sum += sumData[currentSumIndex];
-								currentSumIndex += 1;
-							}
+						if (sumIndexes && currentSumIndex < sumLen && sumIndexes[currentSumIndex] === targetRow) {
+							sum += sumData[currentSumIndex];
+							currentSumIndex += 1;
 						}
 					}
 				} else {
-					const errLen = errorIndexes ? errorIndexes.length : 0;
-					const sumLen = sumIndexes ? sumIndexes.length : 0;
 					for (let j = firstIndex; j < lastIndex; j += 1) {
+						if (!matchingFunction(searchTypedData[j], searchValue)) continue;
+						// Early exit only on matches (runs K_match times, not K_search times)
+						if ((!sumIndexes || currentSumIndex >= sumLen) && (!errorIndexes || currentErrorIndex >= errLen)) break;
 						const targetRow = searchTypedIndexes[j] + rowSumOffset;
-						if (errorIndexes) {
-							while (currentErrorIndex < errLen && errorIndexes[currentErrorIndex] < targetRow) currentErrorIndex += 1;
+						// Galloping advance: exponential probe then binary refinement — O(log gap) per match
+						if (sumIndexes && currentSumIndex < sumLen && sumIndexes[currentSumIndex] < targetRow) {
+							let lo = currentSumIndex, step = 1, hi = lo + step;
+							while (hi < sumLen && sumIndexes[hi] < targetRow) { lo = hi; step <<= 1; hi = lo + step; }
+							if (hi > sumLen) hi = sumLen;
+							while (lo < hi) { const m = (lo + hi) >>> 1; if (sumIndexes[m] < targetRow) lo = m + 1; else hi = m; }
+							currentSumIndex = lo;
 						}
-						if (sumIndexes) {
-							while (currentSumIndex < sumLen && sumIndexes[currentSumIndex] < targetRow) currentSumIndex += 1;
+						if (errorIndexes && currentErrorIndex < errLen && errorIndexes[currentErrorIndex] < targetRow) {
+							// Galloping advance for error pointer
+							let lo = currentErrorIndex, step = 1, hi = lo + step;
+							while (hi < errLen && errorIndexes[hi] < targetRow) { lo = hi; step <<= 1; hi = lo + step; }
+							if (hi > errLen) hi = errLen;
+							while (lo < hi) { const m = (lo + hi) >>> 1; if (errorIndexes[m] < targetRow) lo = m + 1; else hi = m; }
+							currentErrorIndex = lo;
 						}
-						if ((!errorIndexes || currentErrorIndex === errLen) && (!sumIndexes || currentSumIndex === sumLen)) {
-							break;
+						// Check after gallop: pointer may land on targetRow whether or not it needed to advance
+						if (errorIndexes && currentErrorIndex < errLen && errorIndexes[currentErrorIndex] === targetRow) {
+							return {result: null, error: new cError(errorData[currentErrorIndex])};
 						}
-						if (matchingFunction(searchTypedData[j], searchValue)) {
-							if (errorIndexes && currentErrorIndex < errLen && errorIndexes[currentErrorIndex] === targetRow) {
-								return {result: null, error: new cError(errorData[currentErrorIndex])};
-							}
-							if (sumIndexes && currentSumIndex < sumLen && sumIndexes[currentSumIndex] === targetRow) {
-								sum += sumData[currentSumIndex];
-								currentSumIndex += 1;
-							}
+						if (sumIndexes && currentSumIndex < sumLen && sumIndexes[currentSumIndex] === targetRow) {
+							sum += sumData[currentSumIndex];
+							currentSumIndex += 1;
 						}
 					}
 				}
@@ -5833,8 +5852,8 @@ function (window, undefined) {
 	SumIfCache.prototype._get = function (range, arg1, sumRange) {
 		const ws = range.getWS();
 		let res, wsId = ws.getId(),
-			sRangeName = wsId + AscCommon.g_cCharDelimiter + range.getBBox0().getName(),
-			sSumRangeName = wsId + AscCommon.g_cCharDelimiter + sumRange.bbox.getName(),
+			sRangeName = wsId + AscCommon.g_cCharDelimiter + range.getBBox0().getName(), // L1 key: one cacheElem per unique search range
+			sSumRangeName = wsId + AscCommon.g_cCharDelimiter + sumRange.bbox.getName(), // .bbox is the already-clipped sum range stored on Range
 			cacheElem = this.cacheId[sRangeName],
 			valueForSearching = arg1.getValue();
 
@@ -5848,7 +5867,7 @@ function (window, undefined) {
 			}
 			cacheRange.add(range.getBBox0(), cacheElem);
 		}
-		let sInputKey = valueForSearching + AscCommon.g_cCharDelimiter + sSumRangeName;
+		let sInputKey = valueForSearching + AscCommon.g_cCharDelimiter + sSumRangeName; // L2 key: criteria + sum range inside the search-range entry
 		res = cacheElem.results[sInputKey];
 
 		if (!res) {
@@ -5887,6 +5906,7 @@ function (window, undefined) {
 				_sum = totalSum - nonEmptyResult.result + emptyStringResult.result;
 			}
 			if (matchingInfo.op === "<>") {
+				// complement: sum(<>"") = rows with any value; sumForNonEmpty is exactly that
 				const calculatingResult = this.typedCache.sumForNonEmpty(range, sumRange, this.sumRangeCache);
 				if (calculatingResult.error !== null) return calculatingResult.error;
 				_sum = calculatingResult.result;
@@ -5899,6 +5919,7 @@ function (window, undefined) {
 				if (calculatingResult.error !== null) return calculatingResult.error;
 				_sum = calculatingResult.result;
 				if (type === cElementType.number) {
+					// also sum string cells that parse to the same number (e.g. cell "5" with criteria 5)
 					calculatingResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, cElementType.string, matchingFunction, searchValue, true);
 					if (calculatingResult.error !== null) return calculatingResult.error;
 					_sum += calculatingResult.result;
@@ -5910,10 +5931,10 @@ function (window, undefined) {
 				if (errorResult) return errorResult;
 
 				const totalSum = this.typedCache.sumColumnTotalInRange(range, sumRange, this.sumRangeCache);
-				const matchResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, type, equalFn, searchValue, false, true);
+				const matchResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, type, equalFn, searchValue, false, true); // skipErrors=true: errors at matching rows are excluded from the complement sum
 				_sum = totalSum - matchResult.result;
 				if (type === cElementType.number) {
-					const strMatchResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, cElementType.string, equalFn, searchValue, true, true);
+					const strMatchResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, cElementType.string, equalFn, searchValue, true, true); // also subtract string cells that parse to searchValue
 					_sum -= strMatchResult.result;
 				}
 			} else {
