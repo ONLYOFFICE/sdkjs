@@ -3084,15 +3084,38 @@ function CTransitionAnimation(htmlpage)
         let cX = _xDst + _wDst / 2;
         let cY = _yDst + _hDst / 2;
         let maxR = Math.sqrt((_wDst / 2) * (_wDst / 2) + (_hDst / 2) * (_hDst / 2));
-        let r = _part * maxR;
+        let edgeW = maxR * 0.08;
+        let r = _part * (maxR + edgeW);
 
-        _ctx2.save();
-        _ctx2.beginPath();
-        _ctx2.arc(cX, cY, r, 0, 2 * Math.PI);
-        _ctx2.clip();
         if (null != oThis.CacheImage2.Image)
-            _ctx2.drawImage(oThis.CacheImage2.Image, _xDst, _yDst, _wDst, _hDst);
-        _ctx2.restore();
+        {
+            let _tmpCanvas = oThis._circleTmpCanvas;
+            if (!_tmpCanvas || _tmpCanvas.width !== _wDst || _tmpCanvas.height !== _hDst)
+            {
+                _tmpCanvas = document.createElement('canvas');
+                _tmpCanvas.width = _wDst;
+                _tmpCanvas.height = _hDst;
+                oThis._circleTmpCanvas = _tmpCanvas;
+            }
+            let _tmpCtx = _tmpCanvas.getContext('2d');
+            _tmpCtx.clearRect(0, 0, _wDst, _hDst);
+
+            _tmpCtx.drawImage(oThis.CacheImage2.Image, 0, 0, _wDst, _hDst);
+
+            _tmpCtx.globalCompositeOperation = 'destination-in';
+            let innerR = Math.max(0, r - edgeW);
+            let outerR = r;
+            let lcX = _wDst / 2;
+            let lcY = _hDst / 2;
+            let grad = _tmpCtx.createRadialGradient(lcX, lcY, innerR, lcX, lcY, outerR);
+            grad.addColorStop(0, 'rgba(0,0,0,1)');
+            grad.addColorStop(1, 'rgba(0,0,0,0)');
+            _tmpCtx.fillStyle = grad;
+            _tmpCtx.fillRect(0, 0, _wDst, _hDst);
+            _tmpCtx.globalCompositeOperation = 'source-over';
+
+            _ctx2.drawImage(_tmpCanvas, _xDst, _yDst);
+        }
 
         oThis.TimerId = __nextFrame(oThis._startCircle);
         oThis.OnAfterAnimationDraw();
@@ -3114,22 +3137,50 @@ function CTransitionAnimation(htmlpage)
         let _xDst = oThis.Rect.x, _yDst = oThis.Rect.y, _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
         let _part = oThis._getPart();
 
-        let cX = _xDst + _wDst / 2;
-        let cY = _yDst + _hDst / 2;
-        let maxR = Math.sqrt((_wDst / 2) * (_wDst / 2) + (_hDst / 2) * (_hDst / 2));
-        let r = _part * maxR;
+        let maxR = _wDst / 2 + _hDst / 2;
+        let edgeW = maxR * 0.08;
+        let r = _part * (maxR + edgeW);
 
-        _ctx2.save();
-        _ctx2.beginPath();
-        _ctx2.moveTo(cX, cY - r);
-        _ctx2.lineTo(cX + r, cY);
-        _ctx2.lineTo(cX, cY + r);
-        _ctx2.lineTo(cX - r, cY);
-        _ctx2.closePath();
-        _ctx2.clip();
         if (null != oThis.CacheImage2.Image)
-            _ctx2.drawImage(oThis.CacheImage2.Image, _xDst, _yDst, _wDst, _hDst);
-        _ctx2.restore();
+        {
+            let _tmpCanvas = oThis._diamondTmpCanvas;
+            if (!_tmpCanvas || _tmpCanvas.width !== _wDst || _tmpCanvas.height !== _hDst)
+            {
+                _tmpCanvas = document.createElement('canvas');
+                _tmpCanvas.width = _wDst;
+                _tmpCanvas.height = _hDst;
+                oThis._diamondTmpCanvas = _tmpCanvas;
+            }
+            let _tmpCtx = _tmpCanvas.getContext('2d');
+            _tmpCtx.clearRect(0, 0, _wDst, _hDst);
+            _tmpCtx.drawImage(oThis.CacheImage2.Image, 0, 0, _wDst, _hDst);
+
+            let imgData = _tmpCtx.getImageData(0, 0, _wDst, _hDst);
+            let data = imgData.data;
+            let hcx = _wDst / 2, hcy = _hDst / 2;
+            let innerR = Math.max(0, r - edgeW);
+            let invEdge = edgeW > 0 ? 1.0 / edgeW : 0;
+
+            for (let y = 0; y < _hDst; y++)
+            {
+                let dy = Math.abs(y - hcy);
+                let rowOff = y * _wDst;
+                for (let x = 0; x < _wDst; x++)
+                {
+                    let d = Math.abs(x - hcx) + dy;
+                    if (d >= r)
+                    {
+                        data[(rowOff + x) * 4 + 3] = 0;
+                    }
+                    else if (d > innerR)
+                    {
+                        data[(rowOff + x) * 4 + 3] = ((1.0 - (d - innerR) * invEdge) * 255 + 0.5) | 0;
+                    }
+                }
+            }
+            _tmpCtx.putImageData(imgData, 0, 0);
+            _ctx2.drawImage(_tmpCanvas, _xDst, _yDst);
+        }
 
         oThis.TimerId = __nextFrame(oThis._startDiamond);
         oThis.OnAfterAnimationDraw();
@@ -3151,24 +3202,52 @@ function CTransitionAnimation(htmlpage)
         let _xDst = oThis.Rect.x, _yDst = oThis.Rect.y, _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
         let _part = oThis._getPart();
 
-        let cX = _xDst + _wDst / 2;
-        let cY = _yDst + _hDst / 2;
-        let hw = _part * _wDst / 2;
-        let hh = _part * _hDst / 2;
-        // Plus-shaped clip: intersection of horizontal and vertical bars
-        let armW = _wDst * _part * 0.4;
-        let armH = _hDst * _part * 0.4;
-
-        _ctx2.save();
-        _ctx2.beginPath();
-        // Horizontal bar
-        _ctx2.rect(cX - hw, cY - armH, hw * 2, armH * 2);
-        // Vertical bar
-        _ctx2.rect(cX - armW, cY - hh, armW * 2, hh * 2);
-        _ctx2.clip();
         if (null != oThis.CacheImage2.Image)
-            _ctx2.drawImage(oThis.CacheImage2.Image, _xDst, _yDst, _wDst, _hDst);
-        _ctx2.restore();
+        {
+            let _tmpCanvas = oThis._plusTmpCanvas;
+            if (!_tmpCanvas || _tmpCanvas.width !== _wDst || _tmpCanvas.height !== _hDst)
+            {
+                _tmpCanvas = document.createElement('canvas');
+                _tmpCanvas.width = _wDst;
+                _tmpCanvas.height = _hDst;
+                oThis._plusTmpCanvas = _tmpCanvas;
+            }
+            let _tmpCtx = _tmpCanvas.getContext('2d');
+            _tmpCtx.clearRect(0, 0, _wDst, _hDst);
+            _tmpCtx.drawImage(oThis.CacheImage2.Image, 0, 0, _wDst, _hDst);
+
+            let imgData = _tmpCtx.getImageData(0, 0, _wDst, _hDst);
+            let data = imgData.data;
+            let hcx = _wDst / 2, hcy = _hDst / 2;
+            let halfW = _wDst / 2, halfH = _hDst / 2;
+            let edgeFrac = 0.06;
+            let part = _part * (1.0 + edgeFrac);
+
+            for (let y = 0; y < _hDst; y++)
+            {
+                let ny = Math.abs(y - hcy) / halfH;
+                let rowOff = y * _wDst;
+                for (let x = 0; x < _wDst; x++)
+                {
+                    let nx = Math.abs(x - hcx) / halfW;
+                    let tp = nx < ny ? nx : ny;
+
+                    let idx = (rowOff + x) * 4 + 3;
+                    if (part >= tp + edgeFrac)
+                        continue;
+                    if (part <= tp)
+                    {
+                        data[idx] = 0;
+                    }
+                    else
+                    {
+                        data[idx] = ((part - tp) / edgeFrac * 255 + 0.5) | 0;
+                    }
+                }
+            }
+            _tmpCtx.putImageData(imgData, 0, 0);
+            _ctx2.drawImage(_tmpCanvas, _xDst, _yDst);
+        }
 
         oThis.TimerId = __nextFrame(oThis._startPlus);
         oThis.OnAfterAnimationDraw();
@@ -3236,52 +3315,113 @@ function CTransitionAnimation(htmlpage)
 
         if (oThis.TimerId === null)
         {
-            let n = 24;
+            let isVert = (oThis.Param === c_oAscSlideTransitionParams.RandomBar_Vertical);
+            let n = isVert ? 195 : 150;
             let order = [];
             for (let i = 0; i < n; i++) order.push(i);
-            // Fisher-Yates shuffle
             for (let i = n - 1; i > 0; i--)
             {
                 let j = (Math.random() * (i + 1)) >> 0;
                 let tmp = order[i]; order[i] = order[j]; order[j] = tmp;
             }
-            oThis.Params = { count: n, order: order, lastCount: 0 };
+            oThis.Params = { count: n, order: order };
             oThis._initFirstFrame2D();
         }
 
+        let _ctx2 = oThis._getOverlayCtx();
         let _xDst = oThis.Rect.x, _yDst = oThis.Rect.y, _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
         let _part = oThis._getPart();
-        let n = oThis.Params.count;
-        let revealCount = Math.min(n, Math.ceil(_part * n));
 
-        // Draw only newly revealed bars (incremental)
-        let _ctx2 = oThis._getOverlayCtx();
-        _ctx2.save();
-        _ctx2.beginPath();
-
-        if (oThis.Param === c_oAscSlideTransitionParams.RandomBar_Vertical)
-        {
-            let stripW = _wDst / n;
-            for (let k = 0; k < revealCount; k++)
-            {
-                let i = oThis.Params.order[k];
-                _ctx2.rect(_xDst + i * stripW, _yDst, stripW + 1, _hDst);
-            }
-        }
-        else
-        {
-            let stripH = _hDst / n;
-            for (let k = 0; k < revealCount; k++)
-            {
-                let i = oThis.Params.order[k];
-                _ctx2.rect(_xDst, _yDst + i * stripH, _wDst, stripH + 1);
-            }
-        }
-
-        _ctx2.clip();
         if (null != oThis.CacheImage2.Image)
-            _ctx2.drawImage(oThis.CacheImage2.Image, _xDst, _yDst, _wDst, _hDst);
-        _ctx2.restore();
+        {
+            let _tmpCanvas = oThis._rbarTmpCanvas;
+            if (!_tmpCanvas || _tmpCanvas.width !== _wDst || _tmpCanvas.height !== _hDst)
+            {
+                _tmpCanvas = document.createElement('canvas');
+                _tmpCanvas.width = _wDst;
+                _tmpCanvas.height = _hDst;
+                oThis._rbarTmpCanvas = _tmpCanvas;
+            }
+            let _tmpCtx = _tmpCanvas.getContext('2d');
+            _tmpCtx.clearRect(0, 0, _wDst, _hDst);
+            _tmpCtx.drawImage(oThis.CacheImage2.Image, 0, 0, _wDst, _hDst);
+
+            let n = oThis.Params.count;
+            let revealCount = Math.min(n, Math.ceil(_part * n));
+            let revealed = new Uint8Array(n);
+            for (let k = 0; k < revealCount; k++)
+                revealed[oThis.Params.order[k]] = 1;
+
+            let imgData = _tmpCtx.getImageData(0, 0, _wDst, _hDst);
+            let data = imgData.data;
+            let isVert = (oThis.Param === c_oAscSlideTransitionParams.RandomBar_Vertical);
+
+            if (isVert)
+            {
+                let stripW = _wDst / n;
+                let edgeW = stripW * 0.2;
+                let invEdge = edgeW > 0 ? 1.0 / edgeW : 0;
+                for (let y = 0; y < _hDst; y++)
+                {
+                    let rowOff = y * _wDst;
+                    for (let x = 0; x < _wDst; x++)
+                    {
+                        let si = (x / stripW) | 0;
+                        if (si >= n) si = n - 1;
+                        let idx = (rowOff + x) * 4 + 3;
+                        if (!revealed[si])
+                        {
+                            data[idx] = 0;
+                            continue;
+                        }
+                        let left = si * stripW;
+                        let dLeft = x - left;
+                        let dRight = left + stripW - x;
+                        let needLeft = (si === 0) || !revealed[si - 1];
+                        let needRight = (si === n - 1) || !revealed[si + 1];
+                        let dist = 999;
+                        if (needLeft && dLeft < edgeW) dist = dLeft;
+                        if (needRight && dRight < edgeW && dRight < dist) dist = dRight;
+                        if (dist < edgeW)
+                            data[idx] = ((dist * invEdge) * 255 + 0.5) | 0;
+                    }
+                }
+            }
+            else
+            {
+                let stripH = _hDst / n;
+                let edgeW = stripH * 0.2;
+                let invEdge = edgeW > 0 ? 1.0 / edgeW : 0;
+                for (let y = 0; y < _hDst; y++)
+                {
+                    let si = (y / stripH) | 0;
+                    if (si >= n) si = n - 1;
+                    let rowOff = y * _wDst;
+                    if (!revealed[si])
+                    {
+                        for (let x = 0; x < _wDst; x++)
+                            data[(rowOff + x) * 4 + 3] = 0;
+                        continue;
+                    }
+                    let top = si * stripH;
+                    let dTop = y - top;
+                    let dBot = top + stripH - y;
+                    let needTop = (si === 0) || !revealed[si - 1];
+                    let needBot = (si === n - 1) || !revealed[si + 1];
+                    let dist = 999;
+                    if (needTop && dTop < edgeW) dist = dTop;
+                    if (needBot && dBot < edgeW && dBot < dist) dist = dBot;
+                    if (dist < edgeW)
+                    {
+                        let a = ((dist * invEdge) * 255 + 0.5) | 0;
+                        for (let x = 0; x < _wDst; x++)
+                            data[(rowOff + x) * 4 + 3] = a;
+                    }
+                }
+            }
+            _tmpCtx.putImageData(imgData, 0, 0);
+            _ctx2.drawImage(_tmpCanvas, _xDst, _yDst);
+        }
 
         oThis.TimerId = __nextFrame(oThis._startRandomBar);
         oThis.OnAfterAnimationDraw();
@@ -3637,7 +3777,7 @@ function CTransitionAnimation(htmlpage)
 
         if (oThis.TimerId === null)
         {
-            let cols = 30, rows = 20;
+            let cols = 70, rows = 55;
             let total = cols * rows;
             let order = [];
             for (let i = 0; i < total; i++) order.push(i);
