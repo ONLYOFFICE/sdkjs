@@ -3426,7 +3426,7 @@ PasteProcessor.prototype =
 
 
 		var specialPasteShowOptions = !specialPasteHelper.buttonInfo.isClean() ? specialPasteHelper.buttonInfo : null;
-		if(!specialPasteHelper.specialPasteStart)
+		if(!specialPasteHelper.specialPasteStart || window['AscCommon'].g_specialPasteHelper.isPasteOptions)
 		{
 			specialPasteShowOptions = specialPasteHelper.buttonInfo;
 
@@ -3471,6 +3471,7 @@ PasteProcessor.prototype =
 			if(null !== props)
 			{
 				specialPasteShowOptions.asc_setOptions(props);
+				specialPasteShowOptions.asc_setLastSelectedPasteProperty(specialPasteHelper.isPasteOptions ? AscCommon.g_specialPasteHelper.specialPasteProps : null);
 			}
 			else
 			{

@@ -2481,10 +2481,9 @@ background-repeat: no-repeat;\
 						let html = "<img src=\"" + e.target.result + "\"/>";
 						AscCommon.g_clipboardBase.CommonIframe_PasteStart(html, null, function (oHtmlElem) {
 							if (oHtmlElem) {
+								window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
+								window['AscCommon'].g_specialPasteHelper.Special_Paste_Start();
 								if (!isPasteOptions) {
-									window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
-									window['AscCommon'].g_specialPasteHelper.Special_Paste_Start();
-
 									//undo previous action
 									t.WordControl.m_oLogicDocument.Document_Undo();
 								}
@@ -2508,10 +2507,9 @@ background-repeat: no-repeat;\
 					} catch (err) {
 					}
 				} else {
+					window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
+					window['AscCommon'].g_specialPasteHelper.Special_Paste_Start();
 					if (!isPasteOptions) {
-						window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
-						window['AscCommon'].g_specialPasteHelper.Special_Paste_Start();
-
 						//undo previous action
 						t.WordControl.m_oLogicDocument.Document_Undo();
 					}
@@ -2525,6 +2523,7 @@ background-repeat: no-repeat;\
 
 			if (isPasteOptions) {
 				AscCommon.g_clipboardBase.initSpecialPasteData(function () {
+					window['AscCommon'].g_specialPasteHelper.isPasteOptions = isPasteOptions;
 					doPaste();
 				});
 			} else {
