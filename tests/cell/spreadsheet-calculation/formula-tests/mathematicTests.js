@@ -20960,6 +20960,22 @@ $(function () {
 		ws.getRange2("AZ150").setValue("40");
 		ws.getRange2("AZ200").setValue("50");
 
+		// === Group 12: All-text criteria range (BD2:BD7 via formula ="N", sum BE2:BE7) ===
+		// Formulas ="10" etc. evaluate to text strings, not numbers
+		ws.getRange2("BD2").setValue('="10"');
+		ws.getRange2("BD3").setValue('="20"');
+		ws.getRange2("BD4").setValue('="10"');
+		ws.getRange2("BD5").setValue('="30"');
+		ws.getRange2("BD6").setValue('="20"');
+		ws.getRange2("BD7").setValue('="10"');
+
+		ws.getRange2("BE2").setValue("1");
+		ws.getRange2("BE3").setValue("2");
+		ws.getRange2("BE4").setValue("3");
+		ws.getRange2("BE5").setValue("4");
+		ws.getRange2("BE6").setValue("5");
+		ws.getRange2("BE7").setValue("6");
+
 		// === Group 13: Extended <> tests (criteria BI2:BI7, sum BJ2:BJ7) ===
 		ws.getRange2("BI2").setValue("5");
 		ws.getRange2("BI3").setValue("5");
@@ -20991,6 +21007,17 @@ $(function () {
 		ws.getRange2("BJ14").setValue("5");
 		ws.getRange2("BJ15").setValue("6");
 		ws.getRange2("BJ16").setValue("7");
+
+		// === Group 17: Mixed real and text-stored numbers (CC12:CC15, sum CD12:CD15) ===
+		ws.getRange2("CC12").setValue("10");        // real numeric 10
+		ws.getRange2("CC13").setValue('="10"');     // formula → text "10"
+		ws.getRange2("CC14").setValue("20");        // real numeric 20
+		ws.getRange2("CC15").setValue('="20"');     // formula → text "20"
+
+		ws.getRange2("CD12").setValue("100");
+		ws.getRange2("CD13").setValue("200");
+		ws.getRange2("CD14").setValue("300");
+		ws.getRange2("CD15").setValue("400");
 
 		AscCommonExcel.g_oSumIfCache.clean();
 
@@ -21360,6 +21387,58 @@ $(function () {
 		oParser = new parserFormula("SUMIF(BI5,\"<>5\",BJ5)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 40);
+
+		// --- Group 14: All-text criteria range assertions ---
+		// text "30" parses to 30, so it is excluded by "<>30" (same as = which includes it)
+		oParser = new parserFormula("SUMIF(BD2:BD7,\"<>30\",BE2:BE7)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 17);  // totalSum=21, minus BE5=4 (BD5=text"30")
+
+		// numeric comparison ops (>=, <=, >, <) skip text cells entirely
+		oParser = new parserFormula("SUMIF(BD2:BD7,\">=10\",BE2:BE7)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);   // no numeric cells in BD range
+
+		// --- Group 17: Mixed real and text-stored numbers (CC12:CC15) ---
+		// "<>20": real 20 (CC14) AND text "20" (CC15) are excluded — symmetric with numeric =20
+		oParser = new parserFormula("SUMIF(CC12:CC15,\"<>20\",CD12:CD15)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 300); // 1000 - CD14(300) - CD15(400)
+
+		// numeric 20: matches real 20 (CC14) and text "20" (CC15)
+		oParser = new parserFormula("SUMIF(CC12:CC15,20,CD12:CD15)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 700); // CD14+CD15
+
+		// "<>0": no zeros; all 4 cells included
+		oParser = new parserFormula("SUMIF(CC12:CC15,\"<>0\",CD12:CD15)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1000);
+
+		// sum(=10) + sum(<>10) = SUM() = 1000 (text "10" counted once by each, symmetric)
+		oParser = new parserFormula("SUMIF(CC12:CC15,10,CD12:CD15)+SUMIF(CC12:CC15,\"<>10\",CD12:CD15)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1000);
+
+		// real 10 at CC12: excluded by "<>10"
+		oParser = new parserFormula("SUMIF(CC12,\"<>10\",CD12)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
+		// text "10" at CC13: also excluded by "<>10" (string "10" parses to 10)
+		oParser = new parserFormula("SUMIF(CC13,\"<>10\",CD13)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
+		// real 10 at CC12: matched by numeric =10
+		oParser = new parserFormula("SUMIF(CC12,10,CD12)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 100);
+
+		// text "10" at CC13: also matched by =10 (string path converts to number)
+		oParser = new parserFormula("SUMIF(CC13,10,CD13)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 200);
 
 	});
 
