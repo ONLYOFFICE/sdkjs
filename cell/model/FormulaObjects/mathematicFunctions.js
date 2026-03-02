@@ -5482,9 +5482,10 @@ function (window, undefined) {
 	 * @param {Object} searchRange - criteria range (cArea)
 	 * @param {Object} sumRange - sum range (AscCommonExcel.Range)
 	 * @param {SumIfSumRangeCache} sumCache
+	 * @param {boolean} ignoreErrors
 	 * @returns {{result: number|null, error: cError|null}}
 	 */
-	SumIfTypedCache.prototype.sumForNonEmpty = function(searchRange, sumRange, sumCache) {
+	SumIfTypedCache.prototype.sumForNonEmpty = function(searchRange, sumRange, sumCache, ignoreErrors) {
 		let sum = 0;
 		const searchRangeWs = searchRange.getWS();
 		const searchRangeWsId = searchRangeWs.getId();
@@ -5520,7 +5521,7 @@ function (window, undefined) {
 
 			const sumErrorIndexes = sumColumn.indexes[cElementType.error];
 			const sumErrorData = sumColumn.data[cElementType.error];
-			if (sumErrorIndexes) {
+			if (sumErrorIndexes && !ignoreErrors) {
 				const firstErr = sumCache.findLowerIndexInTyped(sumRangeBbox.r1, sumErrorIndexes);
 				const lastErr = sumCache.findHigherIndexInTyped(sumRangeBbox.r2, sumErrorIndexes);
 				for (let j = firstErr; j < lastErr; j += 1) {
@@ -5658,7 +5659,7 @@ function (window, undefined) {
 			for (let j = firstError; j < lastError; j += 1) {
 				const searchRow = errorIndexes[j] - rowSumOffset;
 				if (searchRow < searchRangeBbox.r1 || searchRow > searchRangeBbox.r2) continue;
-				if (!this.hasDataAtRow(searchColumn, searchRow)) {
+				if (!this.hasDataAtRow(searchColumn, searchRow, true)) {
 					return new cError(errorData[j]);
 				}
 			}
@@ -5896,7 +5897,7 @@ function (window, undefined) {
 				if (errorResult) return errorResult;
 
 				const totalSum = this.typedCache.sumColumnTotalInRange(range, sumRange, this.sumRangeCache);
-				const nonEmptyResult = this.typedCache.sumForNonEmpty(range, sumRange, this.sumRangeCache);
+				const nonEmptyResult = this.typedCache.sumForNonEmpty(range, sumRange, this.sumRangeCache, true);
 				if (nonEmptyResult.error !== null) return nonEmptyResult.error;
 
 				const matchingFunction = AscCommonExcel.getMatchingFunction(type, matchingInfo.op, false);

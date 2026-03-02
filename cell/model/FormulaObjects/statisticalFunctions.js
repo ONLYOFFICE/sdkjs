@@ -12494,9 +12494,10 @@ function parseStringToCElement (val, cultureInfo) {
 	 * Uses binary search per type — O(T × log K) where T ≤ 4.
 	 * @param {Object} column - column cache object with .indexes
 	 * @param {number} row - row index to check
+	 * @param {boolean} checkEmptyString - consider an empty string as a data
 	 * @returns {boolean}
 	 */
-	CountIfTypedCache.prototype.hasDataAtRow = function(column, row) {
+	CountIfTypedCache.prototype.hasDataAtRow = function(column, row, checkEmptyString) {
 		const indexes = column.indexes;
 		const numIdx = indexes[cElementType.number];
 		if (numIdx) {
@@ -12505,8 +12506,13 @@ function parseStringToCElement (val, cultureInfo) {
 		}
 		const strIdx = indexes[cElementType.string];
 		if (strIdx) {
+			const data = column.data[cElementType.string];
 			const i = this.findLowerIndexInTyped(row, strIdx);
-			if (i < strIdx.length && strIdx[i] === row) return true;
+			if (i < strIdx.length && strIdx[i] === row) {
+				if (!(checkEmptyString && data[i] === "")) {
+					return true;
+				}
+			}
 		}
 		const boolIdx = indexes[cElementType.bool];
 		if (boolIdx) {
