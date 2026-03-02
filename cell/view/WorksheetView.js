@@ -19391,7 +19391,12 @@ function isAllowPasteLink(pastedWb) {
 			}
 		}
 
-		endTransaction();
+		if (!t.model.workbook.asyncFormulasManager.isRecalculating() && t.model.workbook.asyncFormulasManager.getPromises() && !AscCommonExcel.g_LockCustomFunctionRecalculate) {
+			// Transaction will end in callback
+			t.model.workbook.asyncFormulasManager.calculatePromises();
+		} else {
+			endTransaction();
+		}
 
 		if(isFormula && !applyByArray) {
 			c._foreach(function(cell){

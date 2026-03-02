@@ -3071,14 +3071,15 @@
 							const newR2 = (currentRow + arraySize.row) > AscCommon.gc_nMaxRow ? AscCommon.gc_nMaxRow - 1 : (currentRow + arraySize.row - 1);
 							const newC2 = (currentCol + arraySize.col) > AscCommon.gc_nMaxCol ? AscCommon.gc_nMaxCol - 1 : (currentCol + arraySize.col - 1);
 
-							let refRange = new Asc.Range(currentCol, currentRow, newC2, newR2);
 							let refRangeWS = new Range(parsed.ws, currentRow, currentCol, newR2, newC2);
+							let refRange = refRangeWS.bbox;
+							// let dynamicProps = AscCommonExcel.bIsSupportDynamicArrays ? {range: refRange, beforeSpillRange: null} : null;
 
 							parsed.setArrayFormulaRef(refRange);
 
 							t.wb.dependencyFormulas.lockRecal();
-
-							refRangeWS.setValue("=" + parsed.getFormula(), null, null, refRange, null, null);
+							
+							refRangeWS.setValue("=" + parsed.getFormula(), null, null, refRange, null, /*dynamicProps*/null, parsed);
 
 							t.wb.dependencyFormulas.unlockRecal(true);
 						}
@@ -15376,7 +15377,8 @@
 		}
 
 		var isFirstArrayFormulaCell = byRef && this.nCol === byRef.c1 && this.nRow === byRef.r1;
-		var newFP = this.setValueGetParsed(val, callback, isCopyPaste, byRef, dynamicRangeProps);
+		let newFP = this.setValueGetParsed(val, callback, isCopyPaste, byRef, dynamicRangeProps);
+
 		if (undefined === newFP) {
 			return;
 		}
@@ -18990,7 +18992,7 @@
 				_val = "=" + _formula.changeOffset(offset, null, true).assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true, true);
 			}
 			// when creating new array formulas, it is necessary to transfer information about the dynamic array because regular ref is used
-			cell.setValue(_val, callback, isCopyPaste, byRef, ignoreHyperlink, dynamicRangeProps);
+			cell.setValue(_val, callback, isCopyPaste, byRef, ignoreHyperlink, dynamicRangeProps, null);
 			if (dynamicRangeProps && cmIndex == null) {
 				cmIndex = cell.formulaParsed && cell.formulaParsed.getCm();
 				vmIndex = cell.formulaParsed && cell.formulaParsed.getVm();
