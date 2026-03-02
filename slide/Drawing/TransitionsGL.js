@@ -503,6 +503,21 @@ CTransitionGL.prototype.PrepareTransition = function(type, param)
         case c_oAscSlideTransitionTypes.Checker:
             this._prepareChecker();
             break;
+        case c_oAscSlideTransitionTypes.Circle:
+            this._prepareCircle();
+            break;
+        case c_oAscSlideTransitionTypes.Diamond:
+            this._prepareDiamond();
+            break;
+        case c_oAscSlideTransitionTypes.Plus:
+            this._preparePlus();
+            break;
+        case c_oAscSlideTransitionTypes.RandomBar:
+            this._prepareRandomBar();
+            break;
+        case c_oAscSlideTransitionTypes.Dissolve:
+            this._prepareDissolve();
+            break;
         default:
             this._prepareCrossfade();
             break;
@@ -615,6 +630,21 @@ CTransitionGL.prototype.Render = function(type, param, progress)
             break;
         case c_oAscSlideTransitionTypes.Checker:
             this._renderChecker(progress, param);
+            break;
+        case c_oAscSlideTransitionTypes.Circle:
+            this._renderCircle(progress);
+            break;
+        case c_oAscSlideTransitionTypes.Diamond:
+            this._renderDiamond(progress);
+            break;
+        case c_oAscSlideTransitionTypes.Plus:
+            this._renderPlus(progress);
+            break;
+        case c_oAscSlideTransitionTypes.RandomBar:
+            this._renderRandomBar(progress, param);
+            break;
+        case c_oAscSlideTransitionTypes.Dissolve:
+            this._renderDissolve(progress);
             break;
         default:
             this._renderCrossfade(progress);
@@ -2780,6 +2810,277 @@ let _FRAG_FLASH = [
 CTransitionGL.prototype._prepareFlash = function()
 {
     this.GetProgram('flash', _VERT_QUAD, _FRAG_FLASH);
+};
+
+// ============================================================
+// Transition: Circle — expanding circle with gradient edge
+// ============================================================
+
+let _FRAG_CIRCLE = [
+    'precision mediump float;',
+    'uniform sampler2D uTexture1;',
+    'uniform sampler2D uTexture2;',
+    'uniform float uProgress;',
+    'uniform float uAspect;',
+    'varying vec2 vTexCoord;',
+    'void main() {',
+    '    vec4 c1 = texture2D(uTexture1, vTexCoord);',
+    '    vec4 c2 = texture2D(uTexture2, vTexCoord);',
+    '    vec2 uv = vTexCoord - 0.5;',
+    '    uv.x *= uAspect;',
+    '    float maxR = length(vec2(0.5 * uAspect, 0.5));',
+    '    float edgeW = maxR * 0.08;',
+    '    float r = uProgress * (maxR + edgeW);',
+    '    float d = length(uv);',
+    '    float alpha = smoothstep(r, r - edgeW, d);',
+    '    gl_FragColor = mix(c1, c2, alpha);',
+    '}'
+].join('\n');
+
+CTransitionGL.prototype._prepareCircle = function()
+{
+    this.GetProgram('circle', _VERT_QUAD, _FRAG_CIRCLE);
+};
+
+CTransitionGL.prototype._renderCircle = function(progress)
+{
+    let gl = this.gl;
+    let prog = this.programs['circle'];
+    if (!prog) return;
+
+    gl.useProgram(prog.program);
+    gl.disable(gl.DEPTH_TEST);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.textures.slide1);
+    gl.uniform1i(prog.uniforms['uTexture1'], 0);
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.textures.slide2);
+    gl.uniform1i(prog.uniforms['uTexture2'], 1);
+
+    gl.uniform1f(prog.uniforms['uProgress'], progress);
+    gl.uniform1f(prog.uniforms['uAspect'], this.glCanvas.width / this.glCanvas.height);
+
+    this._bindQuad(prog);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+};
+
+// ============================================================
+// Transition: Diamond — expanding diamond with gradient edge
+// ============================================================
+
+let _FRAG_DIAMOND = [
+    'precision mediump float;',
+    'uniform sampler2D uTexture1;',
+    'uniform sampler2D uTexture2;',
+    'uniform float uProgress;',
+    'varying vec2 vTexCoord;',
+    'void main() {',
+    '    vec4 c1 = texture2D(uTexture1, vTexCoord);',
+    '    vec4 c2 = texture2D(uTexture2, vTexCoord);',
+    '    float maxR = 1.0;',
+    '    float edgeW = maxR * 0.08;',
+    '    float r = uProgress * (maxR + edgeW);',
+    '    float d = abs(vTexCoord.x - 0.5) + abs(vTexCoord.y - 0.5);',
+    '    float alpha = smoothstep(r, r - edgeW, d);',
+    '    gl_FragColor = mix(c1, c2, alpha);',
+    '}'
+].join('\n');
+
+CTransitionGL.prototype._prepareDiamond = function()
+{
+    this.GetProgram('diamond', _VERT_QUAD, _FRAG_DIAMOND);
+};
+
+CTransitionGL.prototype._renderDiamond = function(progress)
+{
+    let gl = this.gl;
+    let prog = this.programs['diamond'];
+    if (!prog) return;
+
+    gl.useProgram(prog.program);
+    gl.disable(gl.DEPTH_TEST);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.textures.slide1);
+    gl.uniform1i(prog.uniforms['uTexture1'], 0);
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.textures.slide2);
+    gl.uniform1i(prog.uniforms['uTexture2'], 1);
+
+    gl.uniform1f(prog.uniforms['uProgress'], progress);
+
+    this._bindQuad(prog);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+};
+
+// ============================================================
+// Transition: Plus — cross shape expanding from center
+// ============================================================
+
+let _FRAG_PLUS = [
+    'precision mediump float;',
+    'uniform sampler2D uTexture1;',
+    'uniform sampler2D uTexture2;',
+    'uniform float uProgress;',
+    'varying vec2 vTexCoord;',
+    'void main() {',
+    '    vec4 c1 = texture2D(uTexture1, vTexCoord);',
+    '    vec4 c2 = texture2D(uTexture2, vTexCoord);',
+    '    float nx = abs(vTexCoord.x - 0.5) * 2.0;',
+    '    float ny = abs(vTexCoord.y - 0.5) * 2.0;',
+    '    float d = min(nx, ny);',
+    '    float edgeFrac = 0.06;',
+    '    float part = uProgress * (1.0 + edgeFrac);',
+    '    float alpha = smoothstep(part - edgeFrac, part, d);',
+    '    gl_FragColor = mix(c2, c1, alpha);',
+    '}'
+].join('\n');
+
+CTransitionGL.prototype._preparePlus = function()
+{
+    this.GetProgram('plus', _VERT_QUAD, _FRAG_PLUS);
+};
+
+CTransitionGL.prototype._renderPlus = function(progress)
+{
+    let gl = this.gl;
+    let prog = this.programs['plus'];
+    if (!prog) return;
+
+    gl.useProgram(prog.program);
+    gl.disable(gl.DEPTH_TEST);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.textures.slide1);
+    gl.uniform1i(prog.uniforms['uTexture1'], 0);
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.textures.slide2);
+    gl.uniform1i(prog.uniforms['uTexture2'], 1);
+
+    gl.uniform1f(prog.uniforms['uProgress'], progress);
+
+    this._bindQuad(prog);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+};
+
+// ============================================================
+// Transition: RandomBar — random strips with gradient edges
+// ============================================================
+
+let _FRAG_RANDOMBAR = [
+    'precision mediump float;',
+    'uniform sampler2D uTexture1;',
+    'uniform sampler2D uTexture2;',
+    'uniform float uProgress;',
+    'uniform float uStripCount;',
+    'uniform float uIsVertical;',
+    'varying vec2 vTexCoord;',
+    'float hash(float n) { return fract(sin(n * 127.1) * 43758.5453); }',
+    'void main() {',
+    '    vec4 c1 = texture2D(uTexture1, vTexCoord);',
+    '    vec4 c2 = texture2D(uTexture2, vTexCoord);',
+    '    float coord = uIsVertical > 0.5 ? vTexCoord.x : vTexCoord.y;',
+    '    float si = floor(coord * uStripCount);',
+    '    if (si >= uStripCount) si = uStripCount - 1.0;',
+    '    if (si < 0.0) si = 0.0;',
+    '    float threshold = hash(si);',
+    '    if (uProgress < threshold) { gl_FragColor = c1; return; }',
+    '    float localPos = fract(coord * uStripCount);',
+    '    float edgeW = 0.2;',
+    '    float alpha = 1.0;',
+    '    if (si > 0.0 && uProgress < hash(si - 1.0))',
+    '        alpha = min(alpha, smoothstep(0.0, edgeW, localPos));',
+    '    if (si < uStripCount - 1.0 && uProgress < hash(si + 1.0))',
+    '        alpha = min(alpha, smoothstep(0.0, edgeW, 1.0 - localPos));',
+    '    gl_FragColor = mix(c1, c2, alpha);',
+    '}'
+].join('\n');
+
+CTransitionGL.prototype._prepareRandomBar = function()
+{
+    this.GetProgram('randombar', _VERT_QUAD, _FRAG_RANDOMBAR);
+};
+
+CTransitionGL.prototype._renderRandomBar = function(progress, param)
+{
+    let gl = this.gl;
+    let prog = this.programs['randombar'];
+    if (!prog) return;
+
+    gl.useProgram(prog.program);
+    gl.disable(gl.DEPTH_TEST);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.textures.slide1);
+    gl.uniform1i(prog.uniforms['uTexture1'], 0);
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.textures.slide2);
+    gl.uniform1i(prog.uniforms['uTexture2'], 1);
+
+    gl.uniform1f(prog.uniforms['uProgress'], progress);
+    let isVert = (param === c_oAscSlideTransitionParams.RandomBar_Vertical);
+    gl.uniform1f(prog.uniforms['uStripCount'], isVert ? 195.0 : 150.0);
+    gl.uniform1f(prog.uniforms['uIsVertical'], isVert ? 1.0 : 0.0);
+
+    this._bindQuad(prog);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+};
+
+// ============================================================
+// Transition: Dissolve — random cell grid reveal
+// ============================================================
+
+let _FRAG_DISSOLVE = [
+    'precision mediump float;',
+    'uniform sampler2D uTexture1;',
+    'uniform sampler2D uTexture2;',
+    'uniform float uProgress;',
+    'uniform float uCols;',
+    'uniform float uRows;',
+    'varying vec2 vTexCoord;',
+    'float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }',
+    'void main() {',
+    '    vec4 c1 = texture2D(uTexture1, vTexCoord);',
+    '    vec4 c2 = texture2D(uTexture2, vTexCoord);',
+    '    vec2 cell = floor(vTexCoord * vec2(uCols, uRows));',
+    '    float threshold = hash(cell);',
+    '    gl_FragColor = uProgress >= threshold ? c2 : c1;',
+    '}'
+].join('\n');
+
+CTransitionGL.prototype._prepareDissolve = function()
+{
+    this.GetProgram('dissolve', _VERT_QUAD, _FRAG_DISSOLVE);
+};
+
+CTransitionGL.prototype._renderDissolve = function(progress)
+{
+    let gl = this.gl;
+    let prog = this.programs['dissolve'];
+    if (!prog) return;
+
+    gl.useProgram(prog.program);
+    gl.disable(gl.DEPTH_TEST);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.textures.slide1);
+    gl.uniform1i(prog.uniforms['uTexture1'], 0);
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.textures.slide2);
+    gl.uniform1i(prog.uniforms['uTexture2'], 1);
+
+    gl.uniform1f(prog.uniforms['uProgress'], progress);
+    gl.uniform1f(prog.uniforms['uCols'], 70.0);
+    gl.uniform1f(prog.uniforms['uRows'], 55.0);
+
+    this._bindQuad(prog);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 };
 
 CTransitionGL.prototype._renderFlash = function(progress)
