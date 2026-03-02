@@ -698,6 +698,129 @@
 			case c_oAscSlideTransitionTypes.Zoom:
 				sTransType = "zoom";
 				break;
+			case c_oAscSlideTransitionTypes.Morph:
+				sTransType = "morph";
+				break;
+			case c_oAscSlideTransitionTypes.Random:
+				sTransType = "random";
+				break;
+			case c_oAscSlideTransitionTypes.Cut:
+				sTransType = "cut";
+				break;
+			case c_oAscSlideTransitionTypes.Blinds:
+				sTransType = "blinds";
+				break;
+			case c_oAscSlideTransitionTypes.Checker:
+				sTransType = "checker";
+				break;
+			case c_oAscSlideTransitionTypes.Comb:
+				sTransType = "comb";
+				break;
+			case c_oAscSlideTransitionTypes.Circle:
+				sTransType = "circle";
+				break;
+			case c_oAscSlideTransitionTypes.Diamond:
+				sTransType = "diamond";
+				break;
+			case c_oAscSlideTransitionTypes.Dissolve:
+				sTransType = "dissolve";
+				break;
+			case c_oAscSlideTransitionTypes.Plus:
+				sTransType = "plus";
+				break;
+			case c_oAscSlideTransitionTypes.RandomBar:
+				sTransType = "randomBar";
+				break;
+			case c_oAscSlideTransitionTypes.BoxZoom:
+				sTransType = "boxZoom";
+				break;
+			case c_oAscSlideTransitionTypes.Vortex:
+				sTransType = "vortex";
+				break;
+			case c_oAscSlideTransitionTypes.Switch:
+				sTransType = "switch";
+				break;
+			case c_oAscSlideTransitionTypes.Flip:
+				sTransType = "flip";
+				break;
+			case c_oAscSlideTransitionTypes.Ripple:
+				sTransType = "ripple";
+				break;
+			case c_oAscSlideTransitionTypes.Honeycomb:
+				sTransType = "honeycomb";
+				break;
+			case c_oAscSlideTransitionTypes.Prism:
+				sTransType = "prism";
+				break;
+			case c_oAscSlideTransitionTypes.Doors:
+				sTransType = "doors";
+				break;
+			case c_oAscSlideTransitionTypes.Window:
+				sTransType = "window";
+				break;
+			case c_oAscSlideTransitionTypes.Ferris:
+				sTransType = "ferris";
+				break;
+			case c_oAscSlideTransitionTypes.Gallery:
+				sTransType = "gallery";
+				break;
+			case c_oAscSlideTransitionTypes.Conveyor:
+				sTransType = "conveyor";
+				break;
+			case c_oAscSlideTransitionTypes.Pan:
+				sTransType = "pan";
+				break;
+			case c_oAscSlideTransitionTypes.Glitter:
+				sTransType = "glitter";
+				break;
+			case c_oAscSlideTransitionTypes.Flythrough:
+				sTransType = "flythrough";
+				break;
+			case c_oAscSlideTransitionTypes.Flash:
+				sTransType = "flash";
+				break;
+			case c_oAscSlideTransitionTypes.Shred:
+				sTransType = "shred";
+				break;
+			case c_oAscSlideTransitionTypes.Reveal:
+				sTransType = "reveal";
+				break;
+			case c_oAscSlideTransitionTypes.FallOver:
+				sTransType = "fallOver";
+				break;
+			case c_oAscSlideTransitionTypes.Drape:
+				sTransType = "drape";
+				break;
+			case c_oAscSlideTransitionTypes.Curtains:
+				sTransType = "curtains";
+				break;
+			case c_oAscSlideTransitionTypes.Wind:
+				sTransType = "wind";
+				break;
+			case c_oAscSlideTransitionTypes.Prestige:
+				sTransType = "prestige";
+				break;
+			case c_oAscSlideTransitionTypes.Fracture:
+				sTransType = "fracture";
+				break;
+			case c_oAscSlideTransitionTypes.Crush:
+				sTransType = "crush";
+				break;
+			case c_oAscSlideTransitionTypes.PeelOff:
+				sTransType = "peelOff";
+				break;
+			case c_oAscSlideTransitionTypes.PageCurlDouble:
+				sTransType = "pageCurlDouble";
+				break;
+			case c_oAscSlideTransitionTypes.PageCurlSingle:
+				sTransType = "pageCurlSingle";
+				break;
+			case c_oAscSlideTransitionTypes.Airplane:
+				sTransType = "airplane";
+				break;
+			case c_oAscSlideTransitionTypes.Origami:
+				sTransType = "origami";
+				break;
 		}
 
 		var transOption = "none";
@@ -782,6 +905,25 @@
 						transOption = "andRotate";
 						break;
 				}
+				break;
+			case "morph":
+				switch (oTransition.TransitionOption)
+				{
+					case c_oAscSlideTransitionParams.Morph_Objects:
+						transOption = "byObject";
+						break;
+					case c_oAscSlideTransitionParams.Morph_Words:
+						transOption = "byWord";
+						break;
+					case c_oAscSlideTransitionParams.Morph_Letters:
+						transOption = "byChar";
+						break;
+				}
+				break;
+			default:
+				// All new transition types store TransitionOption as a number
+				if (AscFormat.isRealNumber(oTransition.TransitionOption))
+					transOption = oTransition.TransitionOption;
 				break;
 		}
 
@@ -3264,6 +3406,129 @@
 			case "zoom":
 				nTransType = c_oAscSlideTransitionTypes.Zoom;
 				break;
+			case "morph":
+				nTransType = c_oAscSlideTransitionTypes.Morph;
+				break;
+			case "random":
+				nTransType = c_oAscSlideTransitionTypes.Random;
+				break;
+			case "cut":
+				nTransType = c_oAscSlideTransitionTypes.Cut;
+				break;
+			case "blinds":
+				nTransType = c_oAscSlideTransitionTypes.Blinds;
+				break;
+			case "checker":
+				nTransType = c_oAscSlideTransitionTypes.Checker;
+				break;
+			case "comb":
+				nTransType = c_oAscSlideTransitionTypes.Comb;
+				break;
+			case "circle":
+				nTransType = c_oAscSlideTransitionTypes.Circle;
+				break;
+			case "diamond":
+				nTransType = c_oAscSlideTransitionTypes.Diamond;
+				break;
+			case "dissolve":
+				nTransType = c_oAscSlideTransitionTypes.Dissolve;
+				break;
+			case "plus":
+				nTransType = c_oAscSlideTransitionTypes.Plus;
+				break;
+			case "randomBar":
+				nTransType = c_oAscSlideTransitionTypes.RandomBar;
+				break;
+			case "boxZoom":
+				nTransType = c_oAscSlideTransitionTypes.BoxZoom;
+				break;
+			case "vortex":
+				nTransType = c_oAscSlideTransitionTypes.Vortex;
+				break;
+			case "switch":
+				nTransType = c_oAscSlideTransitionTypes.Switch;
+				break;
+			case "flip":
+				nTransType = c_oAscSlideTransitionTypes.Flip;
+				break;
+			case "ripple":
+				nTransType = c_oAscSlideTransitionTypes.Ripple;
+				break;
+			case "honeycomb":
+				nTransType = c_oAscSlideTransitionTypes.Honeycomb;
+				break;
+			case "prism":
+				nTransType = c_oAscSlideTransitionTypes.Prism;
+				break;
+			case "doors":
+				nTransType = c_oAscSlideTransitionTypes.Doors;
+				break;
+			case "window":
+				nTransType = c_oAscSlideTransitionTypes.Window;
+				break;
+			case "ferris":
+				nTransType = c_oAscSlideTransitionTypes.Ferris;
+				break;
+			case "gallery":
+				nTransType = c_oAscSlideTransitionTypes.Gallery;
+				break;
+			case "conveyor":
+				nTransType = c_oAscSlideTransitionTypes.Conveyor;
+				break;
+			case "pan":
+				nTransType = c_oAscSlideTransitionTypes.Pan;
+				break;
+			case "glitter":
+				nTransType = c_oAscSlideTransitionTypes.Glitter;
+				break;
+			case "flythrough":
+				nTransType = c_oAscSlideTransitionTypes.Flythrough;
+				break;
+			case "flash":
+				nTransType = c_oAscSlideTransitionTypes.Flash;
+				break;
+			case "shred":
+				nTransType = c_oAscSlideTransitionTypes.Shred;
+				break;
+			case "reveal":
+				nTransType = c_oAscSlideTransitionTypes.Reveal;
+				break;
+			case "fallOver":
+				nTransType = c_oAscSlideTransitionTypes.FallOver;
+				break;
+			case "drape":
+				nTransType = c_oAscSlideTransitionTypes.Drape;
+				break;
+			case "curtains":
+				nTransType = c_oAscSlideTransitionTypes.Curtains;
+				break;
+			case "wind":
+				nTransType = c_oAscSlideTransitionTypes.Wind;
+				break;
+			case "prestige":
+				nTransType = c_oAscSlideTransitionTypes.Prestige;
+				break;
+			case "fracture":
+				nTransType = c_oAscSlideTransitionTypes.Fracture;
+				break;
+			case "crush":
+				nTransType = c_oAscSlideTransitionTypes.Crush;
+				break;
+			case "peelOff":
+				nTransType = c_oAscSlideTransitionTypes.PeelOff;
+				break;
+			case "pageCurlDouble":
+				nTransType = c_oAscSlideTransitionTypes.PageCurlDouble;
+				break;
+			case "pageCurlSingle":
+				nTransType = c_oAscSlideTransitionTypes.PageCurlSingle;
+				break;
+			case "airplane":
+				nTransType = c_oAscSlideTransitionTypes.Airplane;
+				break;
+			case "origami":
+				nTransType = c_oAscSlideTransitionTypes.Origami;
+				break;
 		}
 
 		var transOption = undefined;
@@ -3348,6 +3613,25 @@
 						transOption = c_oAscSlideTransitionParams.Zoom_AndRotate;
 						break;
 				}
+				break;
+			case c_oAscSlideTransitionTypes.Morph:
+				switch (oParsedTransition["option"])
+				{
+					case "byObject":
+						transOption = c_oAscSlideTransitionParams.Morph_Objects;
+						break;
+					case "byWord":
+						transOption = c_oAscSlideTransitionParams.Morph_Words;
+						break;
+					case "byChar":
+						transOption = c_oAscSlideTransitionParams.Morph_Letters;
+						break;
+				}
+				break;
+			default:
+				// All new transition types store TransitionOption as a number
+				if (typeof oParsedTransition["option"] === "number")
+					transOption = oParsedTransition["option"];
 				break;
 		}
 

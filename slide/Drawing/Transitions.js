@@ -91,6 +91,10 @@ function CTransitionAnimation(htmlpage)
     this.DemonstrationObject = null;
 
     this.TimerId = null;
+
+    this.GLTransition = null;
+    this.IsWebGLAvailable = null;
+
     var oThis = this;
 
     this.CalculateRect = function()
@@ -259,6 +263,58 @@ function CTransitionAnimation(htmlpage)
         }
     };
 
+    // ---- WebGL transition type lookup ----
+    let _WebGLTransitionTypes = {};
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Vortex]         = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Switch]         = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Flip]           = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Ripple]         = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Prism]          = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Doors]          = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Window]         = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Ferris]         = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Gallery]        = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Conveyor]       = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.FallOver]       = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Drape]          = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Curtains]       = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Wind]           = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Prestige]       = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Fracture]       = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Crush]          = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.PeelOff]        = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.PageCurlDouble] = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.PageCurlSingle] = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Airplane]       = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Origami]        = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Pan]            = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Flythrough]     = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Honeycomb]      = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Glitter]        = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Shred]          = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Flash]          = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Reveal]         = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Blinds]         = true;
+    _WebGLTransitionTypes[c_oAscSlideTransitionTypes.Checker]        = true;
+
+    this.CheckWebGLSupport = function()
+    {
+        if (oThis.IsWebGLAvailable !== null)
+            return oThis.IsWebGLAvailable;
+        try
+        {
+            let testCanvas = document.createElement('canvas');
+            let gl = testCanvas.getContext('webgl') || testCanvas.getContext('experimental-webgl');
+            oThis.IsWebGLAvailable = (gl !== null);
+            testCanvas = null;
+        }
+        catch (e)
+        {
+            oThis.IsWebGLAvailable = false;
+        }
+        return oThis.IsWebGLAvailable;
+    };
+
     this.Start = function(isButtonPreview, endCallback)
     {
         this.endCallback = endCallback
@@ -287,59 +343,87 @@ function CTransitionAnimation(htmlpage)
         this.StartTime = new Date().getTime();
         this.EndTime = this.StartTime + this.Duration;
 
-		const nType = this.Type;
+		let nType = this.Type;
+
+        // WebGL transitions: route to GL or fallback to Fade
+        if (_WebGLTransitionTypes[nType])
+        {
+            if (this.CheckWebGLSupport() && typeof CTransitionGL !== "undefined")
+            {
+                console.log('[Transition] WebGL path for type=' + nType);
+                this._startGL(nType);
+                return;
+            }
+            else
+            {
+                console.warn('[Transition] WebGL fallback to Fade: support=' + this.CheckWebGLSupport() + ' CTransitionGL=' + (typeof CTransitionGL !== "undefined"));
+                nType = c_oAscSlideTransitionTypes.Fade;
+                this.Param = c_oAscSlideTransitionParams.Fade_Smoothly;
+            }
+        }
+
         switch (nType)
         {
             case c_oAscSlideTransitionTypes.Fade:
-            {
                 this._startFade();
                 break;
-            }
             case c_oAscSlideTransitionTypes.Push:
-            {
                 this._startPush();
                 break;
-            }
             case c_oAscSlideTransitionTypes.Wipe:
-            {
                 this._startWipe();
                 break;
-            }
             case c_oAscSlideTransitionTypes.Split:
-            {
                 this._startSplit();
                 break;
-            }
             case c_oAscSlideTransitionTypes.UnCover:
-            {
                 this._startUnCover();
                 break;
-            }
             case c_oAscSlideTransitionTypes.Cover:
-            {
                 this._startCover();
                 break;
-            }
             case c_oAscSlideTransitionTypes.Clock:
-            {
                 this._startClock();
                 break;
-            }
             case c_oAscSlideTransitionTypes.Zoom:
-            {
+            case c_oAscSlideTransitionTypes.BoxZoom:
                 this._startZoom();
                 break;
-            }
             case c_oAscSlideTransitionTypes.Morph:
-            {
                 this._startMorph();
                 break;
-            }
+            case c_oAscSlideTransitionTypes.Cut:
+                this._startCut();
+                break;
+            case c_oAscSlideTransitionTypes.Blinds:
+                this._startBlinds();
+                break;
+            case c_oAscSlideTransitionTypes.Checker:
+                this._startChecker();
+                break;
+            case c_oAscSlideTransitionTypes.Comb:
+                this._startComb();
+                break;
+            case c_oAscSlideTransitionTypes.Circle:
+                this._startCircle();
+                break;
+            case c_oAscSlideTransitionTypes.Diamond:
+                this._startDiamond();
+                break;
+            case c_oAscSlideTransitionTypes.Dissolve:
+                this._startDissolve();
+                break;
+            case c_oAscSlideTransitionTypes.Plus:
+                this._startPlus();
+                break;
+            case c_oAscSlideTransitionTypes.RandomBar:
+                this._startRandomBar();
+                break;
+            // Pan, Glitter, Flythrough, Flash, Shred, Reveal, Honeycomb
+            // are now handled by WebGL (routed before this switch)
             default:
-            {
                 this.End(true);
                 break;
-            }
         }
     };
 
@@ -354,6 +438,10 @@ function CTransitionAnimation(htmlpage)
         {
             this.Morph.end();
             this.Morph = null;
+        }
+        if (this.GLTransition)
+        {
+            this.GLTransition.Cleanup();
         }
 
         if (this.endCallback)
@@ -2696,6 +2784,1140 @@ function CTransitionAnimation(htmlpage)
 	    oThis.Morph.draw(oCanvas, oThis.Rect, _part)
 
         oThis.TimerId = __nextFrame(oThis._startMorph);
+    };
+
+    // ============================================================
+    // WebGL bridge
+    // ============================================================
+    this._startGL = function(nType)
+    {
+        if (!oThis.GLTransition)
+            oThis.GLTransition = new CTransitionGL(oThis);
+
+        let _w = oThis.Rect.w;
+        let _h = oThis.Rect.h;
+
+        if (!oThis.GLTransition.isInitialized ||
+            oThis.GLTransition.glCanvas.width !== _w ||
+            oThis.GLTransition.glCanvas.height !== _h)
+        {
+            if (!oThis.GLTransition.Init(_w, _h))
+            {
+                oThis.IsWebGLAvailable = false;
+                oThis.Type = c_oAscSlideTransitionTypes.Fade;
+                oThis.Param = c_oAscSlideTransitionParams.Fade_Smoothly;
+                oThis._startFade();
+                return;
+            }
+        }
+
+        // Fallback: if slide image is null, create a solid-color canvas from CacheImage.Color
+        let _img1 = oThis.CacheImage1.Image;
+        let _img2 = oThis.CacheImage2.Image;
+        if (!_img1)
+        {
+            let _c = oThis.CacheImage1.Color;
+            let _tmpCanvas = document.createElement('canvas');
+            _tmpCanvas.width = _w;
+            _tmpCanvas.height = _h;
+            let _tmpCtx = _tmpCanvas.getContext('2d');
+            _tmpCtx.fillStyle = "rgb(" + _c.r + "," + _c.g + "," + _c.b + ")";
+            _tmpCtx.fillRect(0, 0, _w, _h);
+            _img1 = _tmpCanvas;
+        }
+        if (!_img2)
+        {
+            let _c = oThis.CacheImage2.Color;
+            let _tmpCanvas = document.createElement('canvas');
+            _tmpCanvas.width = _w;
+            _tmpCanvas.height = _h;
+            let _tmpCtx = _tmpCanvas.getContext('2d');
+            _tmpCtx.fillStyle = "rgb(" + _c.r + "," + _c.g + "," + _c.b + ")";
+            _tmpCtx.fillRect(0, 0, _w, _h);
+            _img2 = _tmpCanvas;
+        }
+
+        oThis.GLTransition.UploadSlideTextures(_img1, _img2);
+        oThis.GLTransition.PrepareTransition(nType, oThis.Param);
+
+        // First-frame: draw CacheImage1 on base canvas
+        if (oThis.TimerId === null)
+        {
+            let _ctx1 = null;
+            if (null == oThis.DemonstrationObject)
+            {
+                _ctx1 = oThis.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
+                _ctx1.fillStyle = GlobalSkin.BackgroundColor;
+                _ctx1.fillRect(0, 0, oThis.HtmlPage.m_oEditor.HtmlElement.width, oThis.HtmlPage.m_oEditor.HtmlElement.height);
+            }
+            else
+            {
+                _ctx1 = oThis.DemonstrationObject.Canvas.getContext('2d');
+                _ctx1.fillStyle = oThis.DemonstrationObject.Canvas.style.backgroundColor;
+                _ctx1.fillRect(0, 0, oThis.DemonstrationObject.Canvas.width, oThis.DemonstrationObject.Canvas.height);
+            }
+            if (null != oThis.CacheImage1.Image)
+                _ctx1.drawImage(oThis.CacheImage1.Image, oThis.Rect.x, oThis.Rect.y, _w, _h);
+            else
+            {
+                let _c = oThis.CacheImage1.Color;
+                _ctx1.fillStyle = "rgb(" + _c.r + "," + _c.g + "," + _c.b + ")";
+                _ctx1.fillRect(oThis.Rect.x, oThis.Rect.y, _w, _h);
+            }
+        }
+
+        let _savedType = nType;
+        let _savedParam = oThis.Param;
+
+        oThis._glFrame = function()
+        {
+            oThis.CurrentTime = new Date().getTime();
+            if (oThis.CurrentTime >= oThis.EndTime)
+            {
+                oThis.End(false);
+                return;
+            }
+
+            oThis.SetBaseTransform();
+            let _part = oThis._getPart();
+
+            oThis.GLTransition.Render(_savedType, _savedParam, _part);
+
+            let _ctx2 = null;
+            if (oThis.DemonstrationObject == null)
+            {
+                oThis.HtmlPage.m_oOverlayApi.Clear();
+                oThis.HtmlPage.m_oOverlayApi.CheckRect(oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
+                _ctx2 = oThis.HtmlPage.m_oOverlayApi.m_oContext;
+            }
+            else
+            {
+                _ctx2 = oThis.DemonstrationObject.Overlay.getContext('2d');
+                _ctx2.clearRect(oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
+            }
+            _ctx2.drawImage(oThis.GLTransition.glCanvas, 0, 0, oThis.Rect.w, oThis.Rect.h,
+                oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
+
+            oThis.TimerId = __nextFrame(oThis._glFrame);
+            oThis.OnAfterAnimationDraw();
+        };
+        oThis._glFrame();
+    };
+
+    // ============================================================
+    // Helper: standard first-frame boilerplate for 2D transitions
+    // ============================================================
+    this._initFirstFrame2D = function()
+    {
+        let _ctx1 = null;
+        if (null == oThis.DemonstrationObject)
+        {
+            _ctx1 = oThis.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
+            _ctx1.fillStyle = GlobalSkin.BackgroundColor;
+            _ctx1.fillRect(0, 0, oThis.HtmlPage.m_oEditor.HtmlElement.width, oThis.HtmlPage.m_oEditor.HtmlElement.height);
+        }
+        else
+        {
+            _ctx1 = oThis.DemonstrationObject.Canvas.getContext('2d');
+            _ctx1.fillStyle = oThis.DemonstrationObject.Canvas.style.backgroundColor;
+            _ctx1.fillRect(0, 0, oThis.DemonstrationObject.Canvas.width, oThis.DemonstrationObject.Canvas.height);
+        }
+        if (null != oThis.CacheImage1.Image)
+            _ctx1.drawImage(oThis.CacheImage1.Image, oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
+        else
+        {
+            let _c = oThis.CacheImage1.Color;
+            _ctx1.fillStyle = "rgb(" + _c.r + "," + _c.g + "," + _c.b + ")";
+            _ctx1.fillRect(oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
+            _ctx1.beginPath();
+        }
+    };
+
+    this._getOverlayCtx = function()
+    {
+        let _ctx2 = null;
+        if (oThis.DemonstrationObject == null)
+        {
+            oThis.HtmlPage.m_oOverlayApi.Clear();
+            oThis.HtmlPage.m_oOverlayApi.CheckRect(oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
+            _ctx2 = oThis.HtmlPage.m_oOverlayApi.m_oContext;
+        }
+        else
+        {
+            _ctx2 = oThis.DemonstrationObject.Overlay.getContext('2d');
+            _ctx2.clearRect(oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
+        }
+        return _ctx2;
+    };
+
+    // ============================================================
+    // 2D transitions: Cut
+    // ============================================================
+    this._startCut = function()
+    {
+        oThis.CurrentTime = new Date().getTime();
+        if (oThis.CurrentTime >= oThis.EndTime) { oThis.End(false); return; }
+        oThis.SetBaseTransform();
+
+        if (oThis.TimerId === null)
+        {
+            oThis.Params = { IsFirstAfterHalf: true };
+            oThis._initFirstFrame2D();
+        }
+
+        let _ctx2 = oThis._getOverlayCtx();
+        let _xDst = oThis.Rect.x, _yDst = oThis.Rect.y, _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
+        let _part = oThis._getPart();
+
+        if (oThis.Param === c_oAscSlideTransitionParams.Cut_ThroughBlack)
+        {
+            // Two-phase: old→black→new
+            if (_part < 0.5)
+            {
+                _ctx2.globalAlpha = _part * 2;
+                _ctx2.fillStyle = "#000000";
+                _ctx2.fillRect(_xDst, _yDst, _wDst, _hDst);
+                _ctx2.globalAlpha = 1;
+            }
+            else
+            {
+                if (oThis.Params.IsFirstAfterHalf)
+                {
+                    oThis.Params.IsFirstAfterHalf = false;
+                    let _ctx1 = (oThis.DemonstrationObject == null)
+                        ? oThis.HtmlPage.m_oEditor.HtmlElement.getContext('2d')
+                        : oThis.DemonstrationObject.Canvas.getContext('2d');
+                    _ctx1.fillStyle = "#000000";
+                    _ctx1.fillRect(_xDst, _yDst, _wDst, _hDst);
+                }
+                _ctx2.globalAlpha = (_part - 0.5) * 2;
+                if (null != oThis.CacheImage2.Image)
+                    _ctx2.drawImage(oThis.CacheImage2.Image, _xDst, _yDst, _wDst, _hDst);
+                _ctx2.globalAlpha = 1;
+            }
+        }
+        else
+        {
+            // Instant cut — draw new slide immediately
+            if (null != oThis.CacheImage2.Image)
+                _ctx2.drawImage(oThis.CacheImage2.Image, _xDst, _yDst, _wDst, _hDst);
+            oThis.End(false);
+            return;
+        }
+
+        oThis.TimerId = __nextFrame(oThis._startCut);
+        oThis.OnAfterAnimationDraw();
+    };
+
+    // ============================================================
+    // 2D transitions: Flash
+    // ============================================================
+    this._startFlash = function()
+    {
+        oThis.CurrentTime = new Date().getTime();
+        if (oThis.CurrentTime >= oThis.EndTime) { oThis.End(false); return; }
+        oThis.SetBaseTransform();
+
+        if (oThis.TimerId === null)
+        {
+            oThis.Params = { IsFirstAfterHalf: true };
+            oThis._initFirstFrame2D();
+        }
+
+        let _ctx2 = oThis._getOverlayCtx();
+        let _xDst = oThis.Rect.x, _yDst = oThis.Rect.y, _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
+        let _part = oThis._getPart();
+
+        if (_part < 0.4)
+        {
+            // Phase 1: fade old slide to white
+            _ctx2.globalAlpha = _part / 0.4;
+            _ctx2.fillStyle = "#FFFFFF";
+            _ctx2.fillRect(_xDst, _yDst, _wDst, _hDst);
+            _ctx2.globalAlpha = 1;
+        }
+        else if (_part < 0.5)
+        {
+            // Phase 2: pure white
+            _ctx2.fillStyle = "#FFFFFF";
+            _ctx2.fillRect(_xDst, _yDst, _wDst, _hDst);
+        }
+        else
+        {
+            if (oThis.Params.IsFirstAfterHalf)
+            {
+                oThis.Params.IsFirstAfterHalf = false;
+                let _ctx1 = (oThis.DemonstrationObject == null)
+                    ? oThis.HtmlPage.m_oEditor.HtmlElement.getContext('2d')
+                    : oThis.DemonstrationObject.Canvas.getContext('2d');
+                if (null != oThis.CacheImage2.Image)
+                    _ctx1.drawImage(oThis.CacheImage2.Image, _xDst, _yDst, _wDst, _hDst);
+            }
+            // Phase 3: white fades out revealing new slide
+            let alpha = 1.0 - (_part - 0.5) / 0.5;
+            _ctx2.globalAlpha = alpha;
+            _ctx2.fillStyle = "#FFFFFF";
+            _ctx2.fillRect(_xDst, _yDst, _wDst, _hDst);
+            _ctx2.globalAlpha = 1;
+        }
+
+        oThis.TimerId = __nextFrame(oThis._startFlash);
+        oThis.OnAfterAnimationDraw();
+    };
+
+    // ============================================================
+    // 2D transitions: Circle
+    // ============================================================
+    this._startCircle = function()
+    {
+        oThis.CurrentTime = new Date().getTime();
+        if (oThis.CurrentTime >= oThis.EndTime) { oThis.End(false); return; }
+        oThis.SetBaseTransform();
+
+        if (oThis.TimerId === null)
+            oThis._initFirstFrame2D();
+
+        let _ctx2 = oThis._getOverlayCtx();
+        let _xDst = oThis.Rect.x, _yDst = oThis.Rect.y, _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
+        let _part = oThis._getPart();
+
+        let cX = _xDst + _wDst / 2;
+        let cY = _yDst + _hDst / 2;
+        let maxR = Math.sqrt((_wDst / 2) * (_wDst / 2) + (_hDst / 2) * (_hDst / 2));
+        let r = _part * maxR;
+
+        _ctx2.save();
+        _ctx2.beginPath();
+        _ctx2.arc(cX, cY, r, 0, 2 * Math.PI);
+        _ctx2.clip();
+        if (null != oThis.CacheImage2.Image)
+            _ctx2.drawImage(oThis.CacheImage2.Image, _xDst, _yDst, _wDst, _hDst);
+        _ctx2.restore();
+
+        oThis.TimerId = __nextFrame(oThis._startCircle);
+        oThis.OnAfterAnimationDraw();
+    };
+
+    // ============================================================
+    // 2D transitions: Diamond
+    // ============================================================
+    this._startDiamond = function()
+    {
+        oThis.CurrentTime = new Date().getTime();
+        if (oThis.CurrentTime >= oThis.EndTime) { oThis.End(false); return; }
+        oThis.SetBaseTransform();
+
+        if (oThis.TimerId === null)
+            oThis._initFirstFrame2D();
+
+        let _ctx2 = oThis._getOverlayCtx();
+        let _xDst = oThis.Rect.x, _yDst = oThis.Rect.y, _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
+        let _part = oThis._getPart();
+
+        let cX = _xDst + _wDst / 2;
+        let cY = _yDst + _hDst / 2;
+        let maxR = Math.sqrt((_wDst / 2) * (_wDst / 2) + (_hDst / 2) * (_hDst / 2));
+        let r = _part * maxR;
+
+        _ctx2.save();
+        _ctx2.beginPath();
+        _ctx2.moveTo(cX, cY - r);
+        _ctx2.lineTo(cX + r, cY);
+        _ctx2.lineTo(cX, cY + r);
+        _ctx2.lineTo(cX - r, cY);
+        _ctx2.closePath();
+        _ctx2.clip();
+        if (null != oThis.CacheImage2.Image)
+            _ctx2.drawImage(oThis.CacheImage2.Image, _xDst, _yDst, _wDst, _hDst);
+        _ctx2.restore();
+
+        oThis.TimerId = __nextFrame(oThis._startDiamond);
+        oThis.OnAfterAnimationDraw();
+    };
+
+    // ============================================================
+    // 2D transitions: Plus
+    // ============================================================
+    this._startPlus = function()
+    {
+        oThis.CurrentTime = new Date().getTime();
+        if (oThis.CurrentTime >= oThis.EndTime) { oThis.End(false); return; }
+        oThis.SetBaseTransform();
+
+        if (oThis.TimerId === null)
+            oThis._initFirstFrame2D();
+
+        let _ctx2 = oThis._getOverlayCtx();
+        let _xDst = oThis.Rect.x, _yDst = oThis.Rect.y, _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
+        let _part = oThis._getPart();
+
+        let cX = _xDst + _wDst / 2;
+        let cY = _yDst + _hDst / 2;
+        let hw = _part * _wDst / 2;
+        let hh = _part * _hDst / 2;
+        // Plus-shaped clip: intersection of horizontal and vertical bars
+        let armW = _wDst * _part * 0.4;
+        let armH = _hDst * _part * 0.4;
+
+        _ctx2.save();
+        _ctx2.beginPath();
+        // Horizontal bar
+        _ctx2.rect(cX - hw, cY - armH, hw * 2, armH * 2);
+        // Vertical bar
+        _ctx2.rect(cX - armW, cY - hh, armW * 2, hh * 2);
+        _ctx2.clip();
+        if (null != oThis.CacheImage2.Image)
+            _ctx2.drawImage(oThis.CacheImage2.Image, _xDst, _yDst, _wDst, _hDst);
+        _ctx2.restore();
+
+        oThis.TimerId = __nextFrame(oThis._startPlus);
+        oThis.OnAfterAnimationDraw();
+    };
+
+    // ============================================================
+    // 2D transitions: Blinds
+    // ============================================================
+    this._startBlinds = function()
+    {
+        oThis.CurrentTime = new Date().getTime();
+        if (oThis.CurrentTime >= oThis.EndTime) { oThis.End(false); return; }
+        oThis.SetBaseTransform();
+
+        if (oThis.TimerId === null)
+        {
+            oThis.Params = { count: 12 };
+            oThis._initFirstFrame2D();
+        }
+
+        let _ctx2 = oThis._getOverlayCtx();
+        let _xDst = oThis.Rect.x, _yDst = oThis.Rect.y, _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
+        let _part = oThis._getPart();
+        let n = oThis.Params.count;
+
+        _ctx2.save();
+        _ctx2.beginPath();
+
+        if (oThis.Param === c_oAscSlideTransitionParams.Blinds_Vertical)
+        {
+            let stripW = _wDst / n;
+            for (let i = 0; i < n; i++)
+            {
+                let openW = stripW * _part;
+                _ctx2.rect(_xDst + i * stripW, _yDst, openW, _hDst);
+            }
+        }
+        else
+        {
+            let stripH = _hDst / n;
+            for (let i = 0; i < n; i++)
+            {
+                let openH = stripH * _part;
+                _ctx2.rect(_xDst, _yDst + i * stripH, _wDst, openH);
+            }
+        }
+
+        _ctx2.clip();
+        if (null != oThis.CacheImage2.Image)
+            _ctx2.drawImage(oThis.CacheImage2.Image, _xDst, _yDst, _wDst, _hDst);
+        _ctx2.restore();
+
+        oThis.TimerId = __nextFrame(oThis._startBlinds);
+        oThis.OnAfterAnimationDraw();
+    };
+
+    // ============================================================
+    // 2D transitions: RandomBar
+    // ============================================================
+    this._startRandomBar = function()
+    {
+        oThis.CurrentTime = new Date().getTime();
+        if (oThis.CurrentTime >= oThis.EndTime) { oThis.End(false); return; }
+        oThis.SetBaseTransform();
+
+        if (oThis.TimerId === null)
+        {
+            let n = 24;
+            let order = [];
+            for (let i = 0; i < n; i++) order.push(i);
+            // Fisher-Yates shuffle
+            for (let i = n - 1; i > 0; i--)
+            {
+                let j = (Math.random() * (i + 1)) >> 0;
+                let tmp = order[i]; order[i] = order[j]; order[j] = tmp;
+            }
+            oThis.Params = { count: n, order: order, lastCount: 0 };
+            oThis._initFirstFrame2D();
+        }
+
+        let _xDst = oThis.Rect.x, _yDst = oThis.Rect.y, _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
+        let _part = oThis._getPart();
+        let n = oThis.Params.count;
+        let revealCount = Math.min(n, Math.ceil(_part * n));
+
+        // Draw only newly revealed bars (incremental)
+        let _ctx2 = oThis._getOverlayCtx();
+        _ctx2.save();
+        _ctx2.beginPath();
+
+        if (oThis.Param === c_oAscSlideTransitionParams.RandomBar_Vertical)
+        {
+            let stripW = _wDst / n;
+            for (let k = 0; k < revealCount; k++)
+            {
+                let i = oThis.Params.order[k];
+                _ctx2.rect(_xDst + i * stripW, _yDst, stripW + 1, _hDst);
+            }
+        }
+        else
+        {
+            let stripH = _hDst / n;
+            for (let k = 0; k < revealCount; k++)
+            {
+                let i = oThis.Params.order[k];
+                _ctx2.rect(_xDst, _yDst + i * stripH, _wDst, stripH + 1);
+            }
+        }
+
+        _ctx2.clip();
+        if (null != oThis.CacheImage2.Image)
+            _ctx2.drawImage(oThis.CacheImage2.Image, _xDst, _yDst, _wDst, _hDst);
+        _ctx2.restore();
+
+        oThis.TimerId = __nextFrame(oThis._startRandomBar);
+        oThis.OnAfterAnimationDraw();
+    };
+
+    // ============================================================
+    // 2D transitions: Reveal
+    // ============================================================
+    this._startReveal = function()
+    {
+        oThis.CurrentTime = new Date().getTime();
+        if (oThis.CurrentTime >= oThis.EndTime) { oThis.End(false); return; }
+        oThis.SetBaseTransform();
+
+        if (oThis.TimerId === null)
+        {
+            // Draw CacheImage2 on base canvas (it's revealed underneath)
+            let _ctx1 = null;
+            if (null == oThis.DemonstrationObject)
+            {
+                _ctx1 = oThis.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
+                _ctx1.fillStyle = GlobalSkin.BackgroundColor;
+                _ctx1.fillRect(0, 0, oThis.HtmlPage.m_oEditor.HtmlElement.width, oThis.HtmlPage.m_oEditor.HtmlElement.height);
+            }
+            else
+            {
+                _ctx1 = oThis.DemonstrationObject.Canvas.getContext('2d');
+                _ctx1.fillStyle = oThis.DemonstrationObject.Canvas.style.backgroundColor;
+                _ctx1.fillRect(0, 0, oThis.DemonstrationObject.Canvas.width, oThis.DemonstrationObject.Canvas.height);
+            }
+            if (null != oThis.CacheImage2.Image)
+                _ctx1.drawImage(oThis.CacheImage2.Image, oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
+            oThis.Params = {};
+        }
+
+        let _ctx2 = oThis._getOverlayCtx();
+        let _xDst = oThis.Rect.x, _yDst = oThis.Rect.y, _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
+        let _part = oThis._getPart();
+
+        let isLeft = (oThis.Param === c_oAscSlideTransitionParams.Reveal_SmoothLeft ||
+                      oThis.Param === c_oAscSlideTransitionParams.Reveal_BlackLeft);
+        let isBlack = (oThis.Param === c_oAscSlideTransitionParams.Reveal_BlackLeft ||
+                       oThis.Param === c_oAscSlideTransitionParams.Reveal_BlackRight);
+
+        let offset = (_wDst * _part) >> 0;
+
+        _ctx2.save();
+        _ctx2.beginPath();
+        _ctx2.rect(_xDst, _yDst, _wDst, _hDst);
+        _ctx2.clip();
+
+        // Draw the old slide sliding away
+        let slideX = isLeft ? _xDst - offset : _xDst + offset;
+        if (null != oThis.CacheImage1.Image)
+            _ctx2.drawImage(oThis.CacheImage1.Image, slideX, _yDst, _wDst, _hDst);
+
+        // Black band at leading edge
+        if (isBlack)
+        {
+            let bandW = Math.min(40, _wDst * 0.05);
+            _ctx2.fillStyle = "#000000";
+            if (isLeft)
+                _ctx2.fillRect(slideX + _wDst, _yDst, bandW, _hDst);
+            else
+                _ctx2.fillRect(slideX - bandW, _yDst, bandW, _hDst);
+        }
+
+        _ctx2.restore();
+
+        oThis.TimerId = __nextFrame(oThis._startReveal);
+        oThis.OnAfterAnimationDraw();
+    };
+
+    // ============================================================
+    // 2D transitions: Comb
+    // ============================================================
+    this._startComb = function()
+    {
+        oThis.CurrentTime = new Date().getTime();
+        if (oThis.CurrentTime >= oThis.EndTime) { oThis.End(false); return; }
+        oThis.SetBaseTransform();
+
+        if (oThis.TimerId === null)
+        {
+            let count = (oThis.Param === c_oAscSlideTransitionParams.Comb_Vertical) ? 10 : 7;
+            oThis.Params = { count: count };
+            oThis._initFirstFrame2D();
+        }
+
+        let _ctx2 = oThis._getOverlayCtx();
+        let _xDst = oThis.Rect.x, _yDst = oThis.Rect.y, _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
+        let _part = oThis._getPart();
+        let n = oThis.Params.count;
+
+        if (oThis.Param === c_oAscSlideTransitionParams.Comb_Vertical)
+        {
+            let stripW = _wDst / n;
+            for (let i = 0; i < n; i++)
+            {
+                let shift = (_hDst * _part) >> 0;
+                let fromTop = (i % 2 === 0);
+                _ctx2.save();
+                _ctx2.beginPath();
+                _ctx2.rect(_xDst + i * stripW, _yDst, stripW + 1, _hDst);
+                _ctx2.clip();
+                let oldY = fromTop ? _yDst + shift : _yDst - shift;
+                let newY = fromTop ? _yDst + shift - _hDst : _yDst - shift + _hDst;
+                if (null != oThis.CacheImage1.Image)
+                    _ctx2.drawImage(oThis.CacheImage1.Image, _xDst, oldY, _wDst, _hDst);
+                if (null != oThis.CacheImage2.Image)
+                    _ctx2.drawImage(oThis.CacheImage2.Image, _xDst, newY, _wDst, _hDst);
+                _ctx2.restore();
+            }
+        }
+        else
+        {
+            let stripH = _hDst / n;
+            for (let i = 0; i < n; i++)
+            {
+                let shift = (_wDst * _part) >> 0;
+                let fromLeft = (i % 2 === 0);
+                _ctx2.save();
+                _ctx2.beginPath();
+                _ctx2.rect(_xDst, _yDst + i * stripH, _wDst, stripH + 1);
+                _ctx2.clip();
+                let oldX = fromLeft ? _xDst + shift : _xDst - shift;
+                let newX = fromLeft ? _xDst + shift - _wDst : _xDst - shift + _wDst;
+                if (null != oThis.CacheImage1.Image)
+                    _ctx2.drawImage(oThis.CacheImage1.Image, oldX, _yDst, _wDst, _hDst);
+                if (null != oThis.CacheImage2.Image)
+                    _ctx2.drawImage(oThis.CacheImage2.Image, newX, _yDst, _wDst, _hDst);
+                _ctx2.restore();
+            }
+        }
+
+        oThis.TimerId = __nextFrame(oThis._startComb);
+        oThis.OnAfterAnimationDraw();
+    };
+
+    // ============================================================
+    // 2D transitions: Checker
+    // ============================================================
+    this._startChecker = function()
+    {
+        oThis.CurrentTime = new Date().getTime();
+        if (oThis.CurrentTime >= oThis.EndTime) { oThis.End(false); return; }
+        oThis.SetBaseTransform();
+
+        if (oThis.TimerId === null)
+        {
+            oThis.Params = { cols: 10, rows: 8 };
+            oThis._initFirstFrame2D();
+        }
+
+        let _ctx2 = oThis._getOverlayCtx();
+        let _xDst = oThis.Rect.x, _yDst = oThis.Rect.y, _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
+        let _part = oThis._getPart();
+        let cols = oThis.Params.cols, rows = oThis.Params.rows;
+        let cellW = _wDst / cols, cellH = _hDst / rows;
+        let isVert = (oThis.Param === c_oAscSlideTransitionParams.Checker_Vertical);
+
+        _ctx2.save();
+        _ctx2.beginPath();
+
+        for (let r = 0; r < rows; r++)
+        {
+            for (let c = 0; c < cols; c++)
+            {
+                let even = ((r + c) % 2 === 0);
+                let cx = _xDst + c * cellW;
+                let cy = _yDst + r * cellH;
+                if (isVert)
+                {
+                    let openH = cellH * _part;
+                    let startY = even ? cy : cy + cellH - openH;
+                    _ctx2.rect(cx, startY, cellW + 1, openH + 1);
+                }
+                else
+                {
+                    let openW = cellW * _part;
+                    let startX = even ? cx : cx + cellW - openW;
+                    _ctx2.rect(startX, cy, openW + 1, cellH + 1);
+                }
+            }
+        }
+
+        _ctx2.clip();
+        if (null != oThis.CacheImage2.Image)
+            _ctx2.drawImage(oThis.CacheImage2.Image, _xDst, _yDst, _wDst, _hDst);
+        _ctx2.restore();
+
+        oThis.TimerId = __nextFrame(oThis._startChecker);
+        oThis.OnAfterAnimationDraw();
+    };
+
+    // ============================================================
+    // 2D transitions: Pan
+    // ============================================================
+    this._startPan = function()
+    {
+        oThis.CurrentTime = new Date().getTime();
+        if (oThis.CurrentTime >= oThis.EndTime) { oThis.End(false); return; }
+        oThis.SetBaseTransform();
+
+        if (oThis.TimerId === null)
+            oThis._initFirstFrame2D();
+
+        let _ctx2 = oThis._getOverlayCtx();
+        let _xDst = oThis.Rect.x, _yDst = oThis.Rect.y, _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
+        let _part = oThis._getPart();
+
+        // Similar to Push but with slight scaling
+        let scale = 0.9 + 0.1 * _part;
+        let dx = 0, dy = 0;
+
+        switch (oThis.Param)
+        {
+            case c_oAscSlideTransitionParams.Pan_Left:   dx = -_wDst * _part; break;
+            case c_oAscSlideTransitionParams.Pan_Right:  dx =  _wDst * _part; break;
+            case c_oAscSlideTransitionParams.Pan_Up:     dy = -_hDst * _part; break;
+            case c_oAscSlideTransitionParams.Pan_Down:   dy =  _hDst * _part; break;
+            default: dx = -_wDst * _part; break;
+        }
+
+        let cX = _xDst + _wDst / 2;
+        let cY = _yDst + _hDst / 2;
+
+        _ctx2.save();
+        _ctx2.beginPath();
+        _ctx2.rect(_xDst, _yDst, _wDst, _hDst);
+        _ctx2.clip();
+
+        // Old slide moving out with scale
+        let s1 = 1.0 - 0.1 * _part;
+        _ctx2.save();
+        _ctx2.translate(cX + dx, cY);
+        _ctx2.scale(s1, s1);
+        if (null != oThis.CacheImage1.Image)
+            _ctx2.drawImage(oThis.CacheImage1.Image, -_wDst / 2, -_hDst / 2, _wDst, _hDst);
+        _ctx2.restore();
+
+        // New slide coming in with scale
+        let oppDx = dx > 0 ? dx - _wDst : dx + _wDst;
+        let oppDy = dy !== 0 ? (dy > 0 ? dy - _hDst : dy + _hDst) : 0;
+        if (dx !== 0) oppDy = 0;
+        if (dy !== 0) oppDx = 0;
+        _ctx2.save();
+        _ctx2.translate(cX + oppDx, cY + oppDy);
+        _ctx2.scale(scale, scale);
+        if (null != oThis.CacheImage2.Image)
+            _ctx2.drawImage(oThis.CacheImage2.Image, -_wDst / 2, -_hDst / 2, _wDst, _hDst);
+        _ctx2.restore();
+
+        _ctx2.restore();
+
+        oThis.TimerId = __nextFrame(oThis._startPan);
+        oThis.OnAfterAnimationDraw();
+    };
+
+    // ============================================================
+    // 2D transitions: Flythrough
+    // ============================================================
+    this._startFlythrough = function()
+    {
+        oThis.CurrentTime = new Date().getTime();
+        if (oThis.CurrentTime >= oThis.EndTime) { oThis.End(false); return; }
+        oThis.SetBaseTransform();
+
+        if (oThis.TimerId === null)
+        {
+            oThis.Params = { IsFirstAfterHalf: true };
+            oThis._initFirstFrame2D();
+        }
+
+        let _ctx2 = oThis._getOverlayCtx();
+        let _xDst = oThis.Rect.x, _yDst = oThis.Rect.y, _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
+        let _part = oThis._getPart();
+
+        let isOut = (oThis.Param === c_oAscSlideTransitionParams.Flythrough_Out ||
+                     oThis.Param === c_oAscSlideTransitionParams.Flythrough_Out_Bounce);
+        let hasBounce = (oThis.Param === c_oAscSlideTransitionParams.Flythrough_In_Bounce ||
+                         oThis.Param === c_oAscSlideTransitionParams.Flythrough_Out_Bounce);
+
+        let cX = _xDst + _wDst / 2;
+        let cY = _yDst + _hDst / 2;
+
+        if (_part < 0.5)
+        {
+            // Phase 1: old slide zooms away
+            let p = _part / 0.5;
+            let scale = isOut ? 1.0 + p * 2.0 : 1.0 - p * 0.8;
+            let alpha = 1.0 - p;
+
+            _ctx2.globalAlpha = alpha;
+            _ctx2.save();
+            _ctx2.translate(cX, cY);
+            _ctx2.scale(scale, scale);
+            if (null != oThis.CacheImage1.Image)
+                _ctx2.drawImage(oThis.CacheImage1.Image, -_wDst / 2, -_hDst / 2, _wDst, _hDst);
+            _ctx2.restore();
+            _ctx2.globalAlpha = 1;
+        }
+        else
+        {
+            if (oThis.Params.IsFirstAfterHalf)
+            {
+                oThis.Params.IsFirstAfterHalf = false;
+                let _ctx1 = (oThis.DemonstrationObject == null)
+                    ? oThis.HtmlPage.m_oEditor.HtmlElement.getContext('2d')
+                    : oThis.DemonstrationObject.Canvas.getContext('2d');
+                _ctx1.fillStyle = "#000000";
+                _ctx1.fillRect(_xDst, _yDst, _wDst, _hDst);
+            }
+            // Phase 2: new slide zooms in
+            let p = (_part - 0.5) / 0.5;
+            let scale, alpha;
+            if (hasBounce)
+            {
+                // Bounce: overshoot to 1.1 then settle
+                let t = p;
+                scale = isOut ? 0.2 + 0.8 * (1 + 0.2 * Math.sin(t * Math.PI) * (1 - t)) * t
+                              : 3.0 - 2.0 * (1 + 0.2 * Math.sin(t * Math.PI) * (1 - t)) * t;
+                alpha = p;
+            }
+            else
+            {
+                scale = isOut ? 0.2 + 0.8 * p : 3.0 - 2.0 * p;
+                alpha = p;
+            }
+
+            _ctx2.globalAlpha = alpha;
+            _ctx2.save();
+            _ctx2.translate(cX, cY);
+            _ctx2.scale(scale, scale);
+            if (null != oThis.CacheImage2.Image)
+                _ctx2.drawImage(oThis.CacheImage2.Image, -_wDst / 2, -_hDst / 2, _wDst, _hDst);
+            _ctx2.restore();
+            _ctx2.globalAlpha = 1;
+        }
+
+        oThis.TimerId = __nextFrame(oThis._startFlythrough);
+        oThis.OnAfterAnimationDraw();
+    };
+
+    // ============================================================
+    // 2D transitions: Dissolve
+    // ============================================================
+    this._startDissolve = function()
+    {
+        oThis.CurrentTime = new Date().getTime();
+        if (oThis.CurrentTime >= oThis.EndTime) { oThis.End(false); return; }
+        oThis.SetBaseTransform();
+
+        if (oThis.TimerId === null)
+        {
+            let cols = 30, rows = 20;
+            let total = cols * rows;
+            let order = [];
+            for (let i = 0; i < total; i++) order.push(i);
+            for (let i = total - 1; i > 0; i--)
+            {
+                let j = (Math.random() * (i + 1)) >> 0;
+                let tmp = order[i]; order[i] = order[j]; order[j] = tmp;
+            }
+            oThis.Params = { cols: cols, rows: rows, order: order };
+            oThis._initFirstFrame2D();
+        }
+
+        let _ctx2 = oThis._getOverlayCtx();
+        let _xDst = oThis.Rect.x, _yDst = oThis.Rect.y, _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
+        let _part = oThis._getPart();
+
+        let cols = oThis.Params.cols, rows = oThis.Params.rows;
+        let total = cols * rows;
+        let cellW = _wDst / cols, cellH = _hDst / rows;
+        let revealCount = Math.min(total, Math.ceil(_part * total));
+
+        _ctx2.save();
+        _ctx2.beginPath();
+        for (let k = 0; k < revealCount; k++)
+        {
+            let idx = oThis.Params.order[k];
+            let c = idx % cols, r = (idx / cols) >> 0;
+            _ctx2.rect(_xDst + c * cellW, _yDst + r * cellH, cellW + 1, cellH + 1);
+        }
+        _ctx2.clip();
+        if (null != oThis.CacheImage2.Image)
+            _ctx2.drawImage(oThis.CacheImage2.Image, _xDst, _yDst, _wDst, _hDst);
+        _ctx2.restore();
+
+        oThis.TimerId = __nextFrame(oThis._startDissolve);
+        oThis.OnAfterAnimationDraw();
+    };
+
+    // ============================================================
+    // 2D transitions: Honeycomb
+    // ============================================================
+    this._startHoneycomb = function()
+    {
+        oThis.CurrentTime = new Date().getTime();
+        if (oThis.CurrentTime >= oThis.EndTime) { oThis.End(false); return; }
+        oThis.SetBaseTransform();
+
+        if (oThis.TimerId === null)
+        {
+            // Generate hexagonal grid
+            let hexR = 40; // hex radius in pixels
+            let hexW = hexR * Math.sqrt(3);
+            let hexH = hexR * 2;
+            let _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
+            let cols = Math.ceil(_wDst / hexW) + 2;
+            let rows = Math.ceil(_hDst / (hexH * 0.75)) + 2;
+            let hexes = [];
+            for (let r = 0; r < rows; r++)
+            {
+                for (let c = 0; c < cols; c++)
+                {
+                    let cx = c * hexW + (r % 2) * hexW / 2;
+                    let cy = r * hexH * 0.75;
+                    hexes.push({ cx: cx, cy: cy });
+                }
+            }
+            // Random order
+            for (let i = hexes.length - 1; i > 0; i--)
+            {
+                let j = (Math.random() * (i + 1)) >> 0;
+                let tmp = hexes[i]; hexes[i] = hexes[j]; hexes[j] = tmp;
+            }
+            oThis.Params = { hexes: hexes, hexR: hexR };
+            oThis._initFirstFrame2D();
+        }
+
+        let _ctx2 = oThis._getOverlayCtx();
+        let _xDst = oThis.Rect.x, _yDst = oThis.Rect.y, _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
+        let _part = oThis._getPart();
+
+        let hexes = oThis.Params.hexes;
+        let hexR = oThis.Params.hexR;
+        let revealCount = Math.min(hexes.length, Math.ceil(_part * hexes.length));
+
+        _ctx2.save();
+        _ctx2.beginPath();
+        for (let k = 0; k < revealCount; k++)
+        {
+            let h = hexes[k];
+            let cx = _xDst + h.cx, cy = _yDst + h.cy;
+            // Draw hexagon path
+            for (let a = 0; a < 6; a++)
+            {
+                let angle = Math.PI / 3 * a - Math.PI / 6;
+                let px = cx + hexR * Math.cos(angle);
+                let py = cy + hexR * Math.sin(angle);
+                if (a === 0) _ctx2.moveTo(px, py);
+                else _ctx2.lineTo(px, py);
+            }
+            _ctx2.closePath();
+        }
+        _ctx2.clip();
+        if (null != oThis.CacheImage2.Image)
+            _ctx2.drawImage(oThis.CacheImage2.Image, _xDst, _yDst, _wDst, _hDst);
+        _ctx2.restore();
+
+        oThis.TimerId = __nextFrame(oThis._startHoneycomb);
+        oThis.OnAfterAnimationDraw();
+    };
+
+    // ============================================================
+    // 2D transitions: Glitter
+    // ============================================================
+    this._startGlitter = function()
+    {
+        oThis.CurrentTime = new Date().getTime();
+        if (oThis.CurrentTime >= oThis.EndTime) { oThis.End(false); return; }
+        oThis.SetBaseTransform();
+
+        if (oThis.TimerId === null)
+        {
+            let tileSize = 10;
+            let _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
+            let cols = Math.ceil(_wDst / tileSize);
+            let rows = Math.ceil(_hDst / tileSize);
+            let tiles = [];
+
+            // Determine direction
+            let dirParam = oThis.Param;
+            let isHex = (dirParam >= c_oAscSlideTransitionParams.Glitter_Left_Hexagon);
+
+            for (let r = 0; r < rows; r++)
+            {
+                for (let c = 0; c < cols; c++)
+                {
+                    // Directional threshold based on param
+                    let dirThreshold;
+                    switch (dirParam)
+                    {
+                        case c_oAscSlideTransitionParams.Glitter_Left_Diamond:
+                        case c_oAscSlideTransitionParams.Glitter_Left_Hexagon:
+                            dirThreshold = c / cols;
+                            break;
+                        case c_oAscSlideTransitionParams.Glitter_Right_Diamond:
+                        case c_oAscSlideTransitionParams.Glitter_Right_Hexagon:
+                            dirThreshold = 1 - c / cols;
+                            break;
+                        case c_oAscSlideTransitionParams.Glitter_Up_Diamond:
+                        case c_oAscSlideTransitionParams.Glitter_Up_Hexagon:
+                            dirThreshold = r / rows;
+                            break;
+                        case c_oAscSlideTransitionParams.Glitter_Down_Diamond:
+                        case c_oAscSlideTransitionParams.Glitter_Down_Hexagon:
+                            dirThreshold = 1 - r / rows;
+                            break;
+                        default:
+                            dirThreshold = c / cols;
+                            break;
+                    }
+                    let threshold = dirThreshold * 0.7 + Math.random() * 0.3;
+                    tiles.push({ c: c, r: r, threshold: threshold });
+                }
+            }
+            oThis.Params = { tiles: tiles, tileSize: tileSize, cols: cols, rows: rows, isHex: isHex };
+            oThis._initFirstFrame2D();
+        }
+
+        let _ctx2 = oThis._getOverlayCtx();
+        let _xDst = oThis.Rect.x, _yDst = oThis.Rect.y, _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
+        let _part = oThis._getPart();
+
+        let tiles = oThis.Params.tiles;
+        let ts = oThis.Params.tileSize;
+
+        _ctx2.save();
+        _ctx2.beginPath();
+        for (let k = 0; k < tiles.length; k++)
+        {
+            let t = tiles[k];
+            if (t.threshold <= _part)
+            {
+                let x = _xDst + t.c * ts;
+                let y = _yDst + t.r * ts;
+                _ctx2.rect(x, y, ts + 1, ts + 1);
+            }
+        }
+        _ctx2.clip();
+        if (null != oThis.CacheImage2.Image)
+            _ctx2.drawImage(oThis.CacheImage2.Image, _xDst, _yDst, _wDst, _hDst);
+        _ctx2.restore();
+
+        oThis.TimerId = __nextFrame(oThis._startGlitter);
+        oThis.OnAfterAnimationDraw();
+    };
+
+    // ============================================================
+    // 2D transitions: Shred
+    // ============================================================
+    this._startShred = function()
+    {
+        oThis.CurrentTime = new Date().getTime();
+        if (oThis.CurrentTime >= oThis.EndTime) { oThis.End(false); return; }
+        oThis.SetBaseTransform();
+
+        if (oThis.TimerId === null)
+        {
+            let _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
+            let isStrip = (oThis.Param === c_oAscSlideTransitionParams.Shred_StripIn ||
+                           oThis.Param === c_oAscSlideTransitionParams.Shred_StripOut);
+            let cols = isStrip ? 8 : 6;
+            let rows = isStrip ? 1 : 4;
+            let pieces = [];
+            for (let r = 0; r < rows; r++)
+            {
+                for (let c = 0; c < cols; c++)
+                {
+                    pieces.push({
+                        c: c, r: r,
+                        angle: (Math.random() - 0.5) * Math.PI * 0.5,
+                        dx: (Math.random() - 0.5) * _wDst * 0.3,
+                        dy: (Math.random() - 0.5) * _hDst * 0.3
+                    });
+                }
+            }
+            oThis.Params = { pieces: pieces, cols: cols, rows: rows, isStrip: isStrip };
+
+            // CacheImage2 on base (revealed underneath)
+            let _ctx1 = null;
+            if (null == oThis.DemonstrationObject)
+            {
+                _ctx1 = oThis.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
+                _ctx1.fillStyle = GlobalSkin.BackgroundColor;
+                _ctx1.fillRect(0, 0, oThis.HtmlPage.m_oEditor.HtmlElement.width, oThis.HtmlPage.m_oEditor.HtmlElement.height);
+            }
+            else
+            {
+                _ctx1 = oThis.DemonstrationObject.Canvas.getContext('2d');
+                _ctx1.fillStyle = oThis.DemonstrationObject.Canvas.style.backgroundColor;
+                _ctx1.fillRect(0, 0, oThis.DemonstrationObject.Canvas.width, oThis.DemonstrationObject.Canvas.height);
+            }
+            if (null != oThis.CacheImage2.Image)
+                _ctx1.drawImage(oThis.CacheImage2.Image, oThis.Rect.x, oThis.Rect.y, _wDst, _hDst);
+        }
+
+        let _ctx2 = oThis._getOverlayCtx();
+        let _xDst = oThis.Rect.x, _yDst = oThis.Rect.y, _wDst = oThis.Rect.w, _hDst = oThis.Rect.h;
+        let _part = oThis._getPart();
+
+        let pieces = oThis.Params.pieces;
+        let cols = oThis.Params.cols, rows = oThis.Params.rows;
+        let cellW = _wDst / cols, cellH = _hDst / rows;
+        let isIn = (oThis.Param === c_oAscSlideTransitionParams.Shred_StripIn ||
+                    oThis.Param === c_oAscSlideTransitionParams.Shred_RectangleIn);
+
+        for (let k = 0; k < pieces.length; k++)
+        {
+            let p = pieces[k];
+            let srcX = p.c * cellW;
+            let srcY = p.r * cellH;
+            let dstX = _xDst + srcX;
+            let dstY = _yDst + srcY;
+
+            let t = isIn ? (1 - _part) : _part;
+            let offX = p.dx * t;
+            let offY = p.dy * t;
+            let angle = p.angle * t;
+            let alpha = 1.0 - t;
+
+            _ctx2.save();
+            _ctx2.globalAlpha = alpha;
+            _ctx2.translate(dstX + cellW / 2 + offX, dstY + cellH / 2 + offY);
+            _ctx2.rotate(angle);
+            if (null != oThis.CacheImage1.Image)
+                _ctx2.drawImage(oThis.CacheImage1.Image, srcX, srcY, cellW, cellH, -cellW / 2, -cellH / 2, cellW, cellH);
+            _ctx2.globalAlpha = 1;
+            _ctx2.restore();
+        }
+
+        oThis.TimerId = __nextFrame(oThis._startShred);
+        oThis.OnAfterAnimationDraw();
     };
 
     this._easeFunction = function(t)

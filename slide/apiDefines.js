@@ -114,7 +114,52 @@ var c_oAscSlideTransitionTypes = {
 	Clock   : 7,
 	Zoom    : 8,
 	Morph   : 9,
-	Random  : 10
+	Random  : 10,
+
+	// Base p: transitions (ISO 29500, not previously mapped)
+	Cut            : 11,
+	Blinds         : 12,
+	Checker        : 13,
+	Comb           : 14,
+	Circle         : 15,
+	Diamond        : 16,
+	Dissolve       : 17,
+	Plus           : 18,
+	RandomBar      : 19,
+	BoxZoom        : 20,
+
+	// p14 transitions (PowerPoint 2010)
+	Vortex         : 21,
+	Switch         : 22,
+	Flip           : 23,
+	Ripple         : 24,
+	Honeycomb      : 25,
+	Prism          : 26,
+	Doors          : 27,
+	Window         : 28,
+	Ferris         : 29,
+	Gallery        : 30,
+	Conveyor       : 31,
+	Pan            : 32,
+	Glitter        : 33,
+	Flythrough     : 34,
+	Flash          : 35,
+	Shred          : 36,
+	Reveal         : 37,
+
+	// p15 preset transitions (PowerPoint 2013)
+	FallOver       : 38,
+	Drape          : 39,
+	Curtains       : 40,
+	Wind           : 41,
+	Prestige       : 42,
+	Fracture       : 43,
+	Crush          : 44,
+	PeelOff        : 45,
+	PageCurlDouble : 46,
+	PageCurlSingle : 47,
+	Airplane       : 48,
+	Origami        : 49
 };
 
 /** @enum {number} */
@@ -146,7 +191,192 @@ var c_oAscSlideTransitionParams = {
 
 	Morph_Objects          : 20,
 	Morph_Words            : 21,
-	Morph_Letters          : 22
+	Morph_Letters          : 22,
+
+	// Base p: Cut: thruBlk (0/1)
+	Cut_Default            : 23,
+	Cut_ThroughBlack       : 24,
+
+	// Base p: Blinds: dir (horz/vert)
+	Blinds_Horizontal      : 25,
+	Blinds_Vertical        : 26,
+
+	// Base p: Checker: dir (horz/vert)
+	Checker_Horizontal     : 27,
+	Checker_Vertical       : 28,
+
+	// Base p: Comb: dir (horz/vert)
+	Comb_Horizontal        : 29,
+	Comb_Vertical          : 30,
+
+	// Base p: Circle: (no attrs)
+	Circle_Default         : 31,
+
+	// Base p: Diamond: (no attrs)
+	Diamond_Default        : 32,
+
+	// Base p: Dissolve: (no attrs)
+	Dissolve_Default       : 33,
+
+	// Base p: Plus: (no attrs)
+	Plus_Default           : 34,
+
+	// Base p: RandomBar: dir (horz/vert)
+	RandomBar_Horizontal   : 35,
+	RandomBar_Vertical     : 36,
+
+	// Base p: BoxZoom: dir (in/out)
+	BoxZoom_In             : 37,
+	BoxZoom_Out            : 38,
+
+	// p14 Vortex: dir (l/r/u/d)
+	Vortex_Left            : 39,
+	Vortex_Right           : 40,
+	Vortex_Up              : 41,
+	Vortex_Down            : 42,
+
+	// p14 Switch: dir (l/r)
+	Switch_Left            : 43,
+	Switch_Right           : 44,
+
+	// p14 Flip: dir (l/r)
+	Flip_Left              : 45,
+	Flip_Right             : 46,
+
+	// p14 Ripple: dir (lu/ru/ld/rd/center)
+	Ripple_LeftUp          : 47,
+	Ripple_RightUp         : 48,
+	Ripple_LeftDown        : 49,
+	Ripple_RightDown       : 50,
+	Ripple_Center          : 51,
+
+	// p14 Honeycomb: (no attrs)
+	Honeycomb_Default      : 52,
+
+	// p14 Prism: dir(l/r/u/d) x isContent(0/1) x isInverted(0/1) = 16 combos
+	Prism_Left             : 53,
+	Prism_Right            : 54,
+	Prism_Up               : 55,
+	Prism_Down             : 56,
+	Prism_Left_Inverted    : 57,
+	Prism_Right_Inverted   : 58,
+	Prism_Up_Inverted      : 59,
+	Prism_Down_Inverted    : 60,
+	Prism_Left_Content     : 61,
+	Prism_Right_Content    : 62,
+	Prism_Up_Content       : 63,
+	Prism_Down_Content     : 64,
+	Prism_Left_ContentInv  : 65,
+	Prism_Right_ContentInv : 66,
+	Prism_Up_ContentInv    : 67,
+	Prism_Down_ContentInv  : 68,
+
+	// p14 Doors: dir (horz/vert)
+	Doors_Horizontal       : 69,
+	Doors_Vertical         : 70,
+
+	// p14 Window: dir (horz/vert)
+	Window_Horizontal      : 71,
+	Window_Vertical        : 72,
+
+	// p14 Ferris: dir (l/r)
+	Ferris_Left            : 73,
+	Ferris_Right           : 74,
+
+	// p14 Gallery: dir (l/r)
+	Gallery_Left           : 75,
+	Gallery_Right          : 76,
+
+	// p14 Conveyor: dir (l/r)
+	Conveyor_Left          : 77,
+	Conveyor_Right         : 78,
+
+	// p14 Pan: dir (l/r/u/d)
+	Pan_Left               : 79,
+	Pan_Right              : 80,
+	Pan_Up                 : 81,
+	Pan_Down               : 82,
+
+	// p14 Glitter: dir(l/r/u/d) x pattern(diamond/hexagon) = 8 combos
+	Glitter_Left_Diamond   : 83,
+	Glitter_Right_Diamond  : 84,
+	Glitter_Up_Diamond     : 85,
+	Glitter_Down_Diamond   : 86,
+	Glitter_Left_Hexagon   : 87,
+	Glitter_Right_Hexagon  : 88,
+	Glitter_Up_Hexagon     : 89,
+	Glitter_Down_Hexagon   : 90,
+
+	// p14 Flythrough: dir(in/out) x hasBounce(0/1) = 4 combos
+	Flythrough_In          : 91,
+	Flythrough_In_Bounce   : 92,
+	Flythrough_Out         : 93,
+	Flythrough_Out_Bounce  : 94,
+
+	// p14 Flash: (no attrs)
+	Flash_Default          : 95,
+
+	// p14 Shred: pattern(strip/rectangle) x dir(in/out) = 4 combos
+	Shred_StripIn          : 96,
+	Shred_StripOut         : 97,
+	Shred_RectangleIn      : 98,
+	Shred_RectangleOut     : 99,
+
+	// p14 Reveal: thruBlk(0/1) x dir(l/r) = 4 combos
+	Reveal_SmoothLeft      : 100,
+	Reveal_SmoothRight     : 101,
+	Reveal_BlackLeft       : 102,
+	Reveal_BlackRight      : 103,
+
+	// p15 presets: invX(0/1) x invY(0/1) = 4 combos each
+	FallOver_Default       : 104,
+	FallOver_InvX          : 105,
+	FallOver_InvY          : 106,
+	FallOver_InvXY         : 107,
+	Drape_Default          : 108,
+	Drape_InvX             : 109,
+	Drape_InvY             : 110,
+	Drape_InvXY            : 111,
+	Curtains_Default       : 112,
+	Curtains_InvX          : 113,
+	Curtains_InvY          : 114,
+	Curtains_InvXY         : 115,
+	Wind_Default           : 116,
+	Wind_InvX              : 117,
+	Wind_InvY              : 118,
+	Wind_InvXY             : 119,
+	Prestige_Default       : 120,
+	Prestige_InvX          : 121,
+	Prestige_InvY          : 122,
+	Prestige_InvXY         : 123,
+	Fracture_Default       : 124,
+	Fracture_InvX          : 125,
+	Fracture_InvY          : 126,
+	Fracture_InvXY         : 127,
+	Crush_Default          : 128,
+	Crush_InvX             : 129,
+	Crush_InvY             : 130,
+	Crush_InvXY            : 131,
+	PeelOff_Default        : 132,
+	PeelOff_InvX           : 133,
+	PeelOff_InvY           : 134,
+	PeelOff_InvXY          : 135,
+	PageCurlDouble_Default : 136,
+	PageCurlDouble_InvX    : 137,
+	PageCurlDouble_InvY    : 138,
+	PageCurlDouble_InvXY   : 139,
+	PageCurlSingle_Default : 140,
+	PageCurlSingle_InvX    : 141,
+	PageCurlSingle_InvY    : 142,
+	PageCurlSingle_InvXY   : 143,
+	Airplane_Default       : 144,
+	Airplane_InvX          : 145,
+	Airplane_InvY          : 146,
+	Airplane_InvXY         : 147,
+	Origami_Default        : 148,
+	Origami_InvX           : 149,
+	Origami_InvY           : 150,
+	Origami_InvXY          : 151
 };
 
 /** @enum {number} */
@@ -658,6 +888,45 @@ prot['Clock']   = c_oAscSlideTransitionTypes.Clock;
 prot['Zoom']    = c_oAscSlideTransitionTypes.Zoom;
 prot['Morph']   = c_oAscSlideTransitionTypes.Morph;
 prot['Random']   = c_oAscSlideTransitionTypes.Random;
+prot['Cut']            = c_oAscSlideTransitionTypes.Cut;
+prot['Blinds']         = c_oAscSlideTransitionTypes.Blinds;
+prot['Checker']        = c_oAscSlideTransitionTypes.Checker;
+prot['Comb']           = c_oAscSlideTransitionTypes.Comb;
+prot['Circle']         = c_oAscSlideTransitionTypes.Circle;
+prot['Diamond']        = c_oAscSlideTransitionTypes.Diamond;
+prot['Dissolve']       = c_oAscSlideTransitionTypes.Dissolve;
+prot['Plus']           = c_oAscSlideTransitionTypes.Plus;
+prot['RandomBar']      = c_oAscSlideTransitionTypes.RandomBar;
+prot['BoxZoom']        = c_oAscSlideTransitionTypes.BoxZoom;
+prot['Vortex']         = c_oAscSlideTransitionTypes.Vortex;
+prot['Switch']         = c_oAscSlideTransitionTypes.Switch;
+prot['Flip']           = c_oAscSlideTransitionTypes.Flip;
+prot['Ripple']         = c_oAscSlideTransitionTypes.Ripple;
+prot['Honeycomb']      = c_oAscSlideTransitionTypes.Honeycomb;
+prot['Prism']          = c_oAscSlideTransitionTypes.Prism;
+prot['Doors']          = c_oAscSlideTransitionTypes.Doors;
+prot['Window']         = c_oAscSlideTransitionTypes.Window;
+prot['Ferris']         = c_oAscSlideTransitionTypes.Ferris;
+prot['Gallery']        = c_oAscSlideTransitionTypes.Gallery;
+prot['Conveyor']       = c_oAscSlideTransitionTypes.Conveyor;
+prot['Pan']            = c_oAscSlideTransitionTypes.Pan;
+prot['Glitter']        = c_oAscSlideTransitionTypes.Glitter;
+prot['Flythrough']     = c_oAscSlideTransitionTypes.Flythrough;
+prot['Flash']          = c_oAscSlideTransitionTypes.Flash;
+prot['Shred']          = c_oAscSlideTransitionTypes.Shred;
+prot['Reveal']         = c_oAscSlideTransitionTypes.Reveal;
+prot['FallOver']       = c_oAscSlideTransitionTypes.FallOver;
+prot['Drape']          = c_oAscSlideTransitionTypes.Drape;
+prot['Curtains']       = c_oAscSlideTransitionTypes.Curtains;
+prot['Wind']           = c_oAscSlideTransitionTypes.Wind;
+prot['Prestige']       = c_oAscSlideTransitionTypes.Prestige;
+prot['Fracture']       = c_oAscSlideTransitionTypes.Fracture;
+prot['Crush']          = c_oAscSlideTransitionTypes.Crush;
+prot['PeelOff']        = c_oAscSlideTransitionTypes.PeelOff;
+prot['PageCurlDouble'] = c_oAscSlideTransitionTypes.PageCurlDouble;
+prot['PageCurlSingle'] = c_oAscSlideTransitionTypes.PageCurlSingle;
+prot['Airplane']       = c_oAscSlideTransitionTypes.Airplane;
+prot['Origami']        = c_oAscSlideTransitionTypes.Origami;
 
 prot = window['Asc']['c_oAscSlideTransitionParams'] = c_oAscSlideTransitionParams;
 prot['Fade_Smoothly']          = c_oAscSlideTransitionParams.Fade_Smoothly;
@@ -683,6 +952,135 @@ prot['Zoom_AndRotate']         = c_oAscSlideTransitionParams.Zoom_AndRotate;
 prot['Morph_Objects']          = c_oAscSlideTransitionParams.Morph_Objects;
 prot['Morph_Words']            = c_oAscSlideTransitionParams.Morph_Words;
 prot['Morph_Letters']          = c_oAscSlideTransitionParams.Morph_Letters;
+prot['Cut_Default']            = c_oAscSlideTransitionParams.Cut_Default;
+prot['Cut_ThroughBlack']       = c_oAscSlideTransitionParams.Cut_ThroughBlack;
+prot['Blinds_Horizontal']      = c_oAscSlideTransitionParams.Blinds_Horizontal;
+prot['Blinds_Vertical']        = c_oAscSlideTransitionParams.Blinds_Vertical;
+prot['Checker_Horizontal']     = c_oAscSlideTransitionParams.Checker_Horizontal;
+prot['Checker_Vertical']       = c_oAscSlideTransitionParams.Checker_Vertical;
+prot['Comb_Horizontal']        = c_oAscSlideTransitionParams.Comb_Horizontal;
+prot['Comb_Vertical']          = c_oAscSlideTransitionParams.Comb_Vertical;
+prot['Circle_Default']         = c_oAscSlideTransitionParams.Circle_Default;
+prot['Diamond_Default']        = c_oAscSlideTransitionParams.Diamond_Default;
+prot['Dissolve_Default']       = c_oAscSlideTransitionParams.Dissolve_Default;
+prot['Plus_Default']           = c_oAscSlideTransitionParams.Plus_Default;
+prot['RandomBar_Horizontal']   = c_oAscSlideTransitionParams.RandomBar_Horizontal;
+prot['RandomBar_Vertical']     = c_oAscSlideTransitionParams.RandomBar_Vertical;
+prot['BoxZoom_In']             = c_oAscSlideTransitionParams.BoxZoom_In;
+prot['BoxZoom_Out']            = c_oAscSlideTransitionParams.BoxZoom_Out;
+prot['Vortex_Left']            = c_oAscSlideTransitionParams.Vortex_Left;
+prot['Vortex_Right']           = c_oAscSlideTransitionParams.Vortex_Right;
+prot['Vortex_Up']              = c_oAscSlideTransitionParams.Vortex_Up;
+prot['Vortex_Down']            = c_oAscSlideTransitionParams.Vortex_Down;
+prot['Switch_Left']            = c_oAscSlideTransitionParams.Switch_Left;
+prot['Switch_Right']           = c_oAscSlideTransitionParams.Switch_Right;
+prot['Flip_Left']              = c_oAscSlideTransitionParams.Flip_Left;
+prot['Flip_Right']             = c_oAscSlideTransitionParams.Flip_Right;
+prot['Ripple_LeftUp']          = c_oAscSlideTransitionParams.Ripple_LeftUp;
+prot['Ripple_RightUp']         = c_oAscSlideTransitionParams.Ripple_RightUp;
+prot['Ripple_LeftDown']        = c_oAscSlideTransitionParams.Ripple_LeftDown;
+prot['Ripple_RightDown']       = c_oAscSlideTransitionParams.Ripple_RightDown;
+prot['Ripple_Center']          = c_oAscSlideTransitionParams.Ripple_Center;
+prot['Honeycomb_Default']      = c_oAscSlideTransitionParams.Honeycomb_Default;
+prot['Prism_Left']             = c_oAscSlideTransitionParams.Prism_Left;
+prot['Prism_Right']            = c_oAscSlideTransitionParams.Prism_Right;
+prot['Prism_Up']               = c_oAscSlideTransitionParams.Prism_Up;
+prot['Prism_Down']             = c_oAscSlideTransitionParams.Prism_Down;
+prot['Prism_Left_Inverted']    = c_oAscSlideTransitionParams.Prism_Left_Inverted;
+prot['Prism_Right_Inverted']   = c_oAscSlideTransitionParams.Prism_Right_Inverted;
+prot['Prism_Up_Inverted']      = c_oAscSlideTransitionParams.Prism_Up_Inverted;
+prot['Prism_Down_Inverted']    = c_oAscSlideTransitionParams.Prism_Down_Inverted;
+prot['Prism_Left_Content']     = c_oAscSlideTransitionParams.Prism_Left_Content;
+prot['Prism_Right_Content']    = c_oAscSlideTransitionParams.Prism_Right_Content;
+prot['Prism_Up_Content']       = c_oAscSlideTransitionParams.Prism_Up_Content;
+prot['Prism_Down_Content']     = c_oAscSlideTransitionParams.Prism_Down_Content;
+prot['Prism_Left_ContentInv']  = c_oAscSlideTransitionParams.Prism_Left_ContentInv;
+prot['Prism_Right_ContentInv'] = c_oAscSlideTransitionParams.Prism_Right_ContentInv;
+prot['Prism_Up_ContentInv']    = c_oAscSlideTransitionParams.Prism_Up_ContentInv;
+prot['Prism_Down_ContentInv']  = c_oAscSlideTransitionParams.Prism_Down_ContentInv;
+prot['Doors_Horizontal']       = c_oAscSlideTransitionParams.Doors_Horizontal;
+prot['Doors_Vertical']         = c_oAscSlideTransitionParams.Doors_Vertical;
+prot['Window_Horizontal']      = c_oAscSlideTransitionParams.Window_Horizontal;
+prot['Window_Vertical']        = c_oAscSlideTransitionParams.Window_Vertical;
+prot['Ferris_Left']            = c_oAscSlideTransitionParams.Ferris_Left;
+prot['Ferris_Right']           = c_oAscSlideTransitionParams.Ferris_Right;
+prot['Gallery_Left']           = c_oAscSlideTransitionParams.Gallery_Left;
+prot['Gallery_Right']          = c_oAscSlideTransitionParams.Gallery_Right;
+prot['Conveyor_Left']          = c_oAscSlideTransitionParams.Conveyor_Left;
+prot['Conveyor_Right']         = c_oAscSlideTransitionParams.Conveyor_Right;
+prot['Pan_Left']               = c_oAscSlideTransitionParams.Pan_Left;
+prot['Pan_Right']              = c_oAscSlideTransitionParams.Pan_Right;
+prot['Pan_Up']                 = c_oAscSlideTransitionParams.Pan_Up;
+prot['Pan_Down']               = c_oAscSlideTransitionParams.Pan_Down;
+prot['Glitter_Left_Diamond']   = c_oAscSlideTransitionParams.Glitter_Left_Diamond;
+prot['Glitter_Right_Diamond']  = c_oAscSlideTransitionParams.Glitter_Right_Diamond;
+prot['Glitter_Up_Diamond']     = c_oAscSlideTransitionParams.Glitter_Up_Diamond;
+prot['Glitter_Down_Diamond']   = c_oAscSlideTransitionParams.Glitter_Down_Diamond;
+prot['Glitter_Left_Hexagon']   = c_oAscSlideTransitionParams.Glitter_Left_Hexagon;
+prot['Glitter_Right_Hexagon']  = c_oAscSlideTransitionParams.Glitter_Right_Hexagon;
+prot['Glitter_Up_Hexagon']     = c_oAscSlideTransitionParams.Glitter_Up_Hexagon;
+prot['Glitter_Down_Hexagon']   = c_oAscSlideTransitionParams.Glitter_Down_Hexagon;
+prot['Flythrough_In']          = c_oAscSlideTransitionParams.Flythrough_In;
+prot['Flythrough_In_Bounce']   = c_oAscSlideTransitionParams.Flythrough_In_Bounce;
+prot['Flythrough_Out']         = c_oAscSlideTransitionParams.Flythrough_Out;
+prot['Flythrough_Out_Bounce']  = c_oAscSlideTransitionParams.Flythrough_Out_Bounce;
+prot['Flash_Default']          = c_oAscSlideTransitionParams.Flash_Default;
+prot['Shred_StripIn']          = c_oAscSlideTransitionParams.Shred_StripIn;
+prot['Shred_StripOut']         = c_oAscSlideTransitionParams.Shred_StripOut;
+prot['Shred_RectangleIn']      = c_oAscSlideTransitionParams.Shred_RectangleIn;
+prot['Shred_RectangleOut']     = c_oAscSlideTransitionParams.Shred_RectangleOut;
+prot['Reveal_SmoothLeft']      = c_oAscSlideTransitionParams.Reveal_SmoothLeft;
+prot['Reveal_SmoothRight']     = c_oAscSlideTransitionParams.Reveal_SmoothRight;
+prot['Reveal_BlackLeft']       = c_oAscSlideTransitionParams.Reveal_BlackLeft;
+prot['Reveal_BlackRight']      = c_oAscSlideTransitionParams.Reveal_BlackRight;
+prot['FallOver_Default']       = c_oAscSlideTransitionParams.FallOver_Default;
+prot['FallOver_InvX']          = c_oAscSlideTransitionParams.FallOver_InvX;
+prot['FallOver_InvY']          = c_oAscSlideTransitionParams.FallOver_InvY;
+prot['FallOver_InvXY']         = c_oAscSlideTransitionParams.FallOver_InvXY;
+prot['Drape_Default']          = c_oAscSlideTransitionParams.Drape_Default;
+prot['Drape_InvX']             = c_oAscSlideTransitionParams.Drape_InvX;
+prot['Drape_InvY']             = c_oAscSlideTransitionParams.Drape_InvY;
+prot['Drape_InvXY']            = c_oAscSlideTransitionParams.Drape_InvXY;
+prot['Curtains_Default']       = c_oAscSlideTransitionParams.Curtains_Default;
+prot['Curtains_InvX']          = c_oAscSlideTransitionParams.Curtains_InvX;
+prot['Curtains_InvY']          = c_oAscSlideTransitionParams.Curtains_InvY;
+prot['Curtains_InvXY']         = c_oAscSlideTransitionParams.Curtains_InvXY;
+prot['Wind_Default']           = c_oAscSlideTransitionParams.Wind_Default;
+prot['Wind_InvX']              = c_oAscSlideTransitionParams.Wind_InvX;
+prot['Wind_InvY']              = c_oAscSlideTransitionParams.Wind_InvY;
+prot['Wind_InvXY']             = c_oAscSlideTransitionParams.Wind_InvXY;
+prot['Prestige_Default']       = c_oAscSlideTransitionParams.Prestige_Default;
+prot['Prestige_InvX']          = c_oAscSlideTransitionParams.Prestige_InvX;
+prot['Prestige_InvY']          = c_oAscSlideTransitionParams.Prestige_InvY;
+prot['Prestige_InvXY']         = c_oAscSlideTransitionParams.Prestige_InvXY;
+prot['Fracture_Default']       = c_oAscSlideTransitionParams.Fracture_Default;
+prot['Fracture_InvX']          = c_oAscSlideTransitionParams.Fracture_InvX;
+prot['Fracture_InvY']          = c_oAscSlideTransitionParams.Fracture_InvY;
+prot['Fracture_InvXY']         = c_oAscSlideTransitionParams.Fracture_InvXY;
+prot['Crush_Default']          = c_oAscSlideTransitionParams.Crush_Default;
+prot['Crush_InvX']             = c_oAscSlideTransitionParams.Crush_InvX;
+prot['Crush_InvY']             = c_oAscSlideTransitionParams.Crush_InvY;
+prot['Crush_InvXY']            = c_oAscSlideTransitionParams.Crush_InvXY;
+prot['PeelOff_Default']        = c_oAscSlideTransitionParams.PeelOff_Default;
+prot['PeelOff_InvX']           = c_oAscSlideTransitionParams.PeelOff_InvX;
+prot['PeelOff_InvY']           = c_oAscSlideTransitionParams.PeelOff_InvY;
+prot['PeelOff_InvXY']          = c_oAscSlideTransitionParams.PeelOff_InvXY;
+prot['PageCurlDouble_Default'] = c_oAscSlideTransitionParams.PageCurlDouble_Default;
+prot['PageCurlDouble_InvX']    = c_oAscSlideTransitionParams.PageCurlDouble_InvX;
+prot['PageCurlDouble_InvY']    = c_oAscSlideTransitionParams.PageCurlDouble_InvY;
+prot['PageCurlDouble_InvXY']   = c_oAscSlideTransitionParams.PageCurlDouble_InvXY;
+prot['PageCurlSingle_Default'] = c_oAscSlideTransitionParams.PageCurlSingle_Default;
+prot['PageCurlSingle_InvX']    = c_oAscSlideTransitionParams.PageCurlSingle_InvX;
+prot['PageCurlSingle_InvY']    = c_oAscSlideTransitionParams.PageCurlSingle_InvY;
+prot['PageCurlSingle_InvXY']   = c_oAscSlideTransitionParams.PageCurlSingle_InvXY;
+prot['Airplane_Default']       = c_oAscSlideTransitionParams.Airplane_Default;
+prot['Airplane_InvX']          = c_oAscSlideTransitionParams.Airplane_InvX;
+prot['Airplane_InvY']          = c_oAscSlideTransitionParams.Airplane_InvY;
+prot['Airplane_InvXY']         = c_oAscSlideTransitionParams.Airplane_InvXY;
+prot['Origami_Default']        = c_oAscSlideTransitionParams.Origami_Default;
+prot['Origami_InvX']           = c_oAscSlideTransitionParams.Origami_InvX;
+prot['Origami_InvY']           = c_oAscSlideTransitionParams.Origami_InvY;
+prot['Origami_InvXY']          = c_oAscSlideTransitionParams.Origami_InvXY;
 
 prot = window['Asc']['c_oAscPresentationShortcutType'] = window['Asc'].c_oAscPresentationShortcutType = c_oAscPresentationShortcutType;
 prot["OpenFilePanel"] = prot.OpenFilePanel;

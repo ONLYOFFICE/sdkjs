@@ -4754,6 +4754,29 @@
 		'effectMorphByWord':   { tag: 'p159:morph', attrNames: ['option'], attrValues: ['byWord'] },
 		'effectMorphByChar':   { tag: 'p159:morph', attrNames: ['option'], attrValues: ['byChar'] },
 
+		// p15:prstTrans (PowerPoint 2013 preset transitions)
+		// Default variants (no invX/invY)
+		'effectFallOver':        { tag: 'p15:prstTrans', attrNames: ['prst'], attrValues: ['fallOver'] },
+		'effectDrape':           { tag: 'p15:prstTrans', attrNames: ['prst'], attrValues: ['drape'] },
+		'effectCurtains':        { tag: 'p15:prstTrans', attrNames: ['prst'], attrValues: ['curtains'] },
+		'effectWind':            { tag: 'p15:prstTrans', attrNames: ['prst'], attrValues: ['wind'] },
+		'effectPrestige':        { tag: 'p15:prstTrans', attrNames: ['prst'], attrValues: ['prestige'] },
+		'effectFracture':        { tag: 'p15:prstTrans', attrNames: ['prst'], attrValues: ['fracture'] },
+		'effectCrush':           { tag: 'p15:prstTrans', attrNames: ['prst'], attrValues: ['crush'] },
+		'effectPeelOff':         { tag: 'p15:prstTrans', attrNames: ['prst'], attrValues: ['peelOff'] },
+		'effectPageCurlDouble':  { tag: 'p15:prstTrans', attrNames: ['prst'], attrValues: ['pageCurlDouble'] },
+		'effectPageCurlSingle':  { tag: 'p15:prstTrans', attrNames: ['prst'], attrValues: ['pageCurlSingle'] },
+		'effectAirplane':        { tag: 'p15:prstTrans', attrNames: ['prst'], attrValues: ['airplane'] },
+		'effectOrigami':         { tag: 'p15:prstTrans', attrNames: ['prst'], attrValues: ['origami'] },
+
+		// Inverted X variants (invX='1') — directional left/right
+		'effectFallOverRight':       { tag: 'p15:prstTrans', attrNames: ['prst', 'invX'], attrValues: ['fallOver', '1'] },
+		'effectWindRight':           { tag: 'p15:prstTrans', attrNames: ['prst', 'invX'], attrValues: ['wind', '1'] },
+		'effectPeelOffRight':        { tag: 'p15:prstTrans', attrNames: ['prst', 'invX'], attrValues: ['peelOff', '1'] },
+		'effectPageCurlSingleRight': { tag: 'p15:prstTrans', attrNames: ['prst', 'invX'], attrValues: ['pageCurlSingle', '1'] },
+		'effectAirplaneRight':       { tag: 'p15:prstTrans', attrNames: ['prst', 'invX'], attrValues: ['airplane', '1'] },
+		'effectOrigamiRight':        { tag: 'p15:prstTrans', attrNames: ['prst', 'invX'], attrValues: ['origami', '1'] },
+
 		'effectNone': {}
 
 		// effectCrawlFromDown

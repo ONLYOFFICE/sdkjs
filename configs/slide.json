@@ -217,6 +217,7 @@
 
 			"slide/Editor/SlideShowAnnotations.js",
 			"slide/Drawing/Transitions.js",
+			"slide/Drawing/TransitionsGL.js",
 			"slide/Drawing/MorphTransition.js",
 			"word/Drawing/cachemanager.js",
 			"slide/Drawing/DrawingDocument.js",
