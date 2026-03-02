@@ -24494,6 +24494,9 @@ CDocument.prototype.AddTableOfFigures = function(oPr)
         {
             if (oPr)
             {
+				if (undefined !== oPr.TabLeader && oComplexField.GetInstruction())
+					oComplexField.GetInstruction().ForceTabLeader = oPr.TabLeader;
+				
                 if (isNeedChangeStyles)
                     oStyles.SetTOFStyleType(nStylesType);
                 oComplexField.Update();
