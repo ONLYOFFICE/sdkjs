@@ -4145,7 +4145,7 @@ function CDemonstrationManager(htmlpage)
         this.Transition.IsBackward = false;
         if (is_first)
         {
-            _slide1 = -1;
+            _slide1 = this.GetPrevVisibleSlide();
             _slide2 = this.SlideNum;
         }
         else if (!is_backward)
