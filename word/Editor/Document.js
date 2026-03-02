@@ -9973,7 +9973,10 @@ CDocument.prototype.OnKeyPress = function(e)
 CDocument.prototype.CheckEnterSpaceAction = function()
 {
 	let checkBox = this.GetSelectedElementsInfo().GetCheckBox();
-	if (!checkBox || !this.IsFormFieldEditing())
+	if (!checkBox)
+		return false;
+	
+	if (checkBox.IsForm() && !this.IsFormFieldEditing())
 		return false;
 	
 	let result = false;
@@ -10821,6 +10824,9 @@ CDocument.prototype.private_CheckForbiddenPlaceOnTextAdd = function(codePoints)
 		}
 		else
 		{
+			if (!oCheckBox.IsForm() && ((Array.isArray(codePoints) && 1 === codePoints.length && AscCommon.IsSpace(codePoints[0])) || AscCommon.IsSpace(codePoints)))
+				return true;
+			
 			this.RemoveSelection();
 			oCheckBox.MoveCursorOutsideForm(!oCheckBox.IsForm() && oCheckBox.IsCursorAtBegin());
 		}
