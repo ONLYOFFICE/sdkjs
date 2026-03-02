@@ -5202,58 +5202,6 @@
 		return oDoc.Viewer.file.nativeFile['CheckOwnerPassword'](password);
 	};
 
-	PDFEditorApi.prototype.asc_getPasteOptions = function(callback) {
-		AscCommon.g_clipboardBase.Get_Clipboard_Data(function (data) {
-			if (!data) {
-				callback(null);
-				return;
-			}
-
-			// onpaste - real paste event
-			if (data.clipboardData) {
-				callback(null);
-				return;
-			}
-
-			// data from navigator.clipboard
-			var _internal = data[AscCommon.c_oAscClipboardDataFormat.Internal];
-			var _text     = data[AscCommon.c_oAscClipboardDataFormat.Text];
-
-			var _specialPasteShowOptions = new Asc.SpecialPasteShowOptions();
-			var allowedSpecialPasteProps = null;
-			var sProps = Asc.c_oSpecialPasteProps;
-
-			if (_internal && _internal !== "" && _internal.indexOf("asc_internalData2;") === 0) {
-				if (_internal.indexOf("pdfData;") > -1 || _internal.indexOf("pptData;") > -1) {
-					// PDF or Presentation binary
-					allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.sourceformatting, sProps.picture, sProps.keepTextOnly];
-				} else if (_internal.indexOf("docData;") > -1) {
-					// Word binary
-					allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.keepTextOnly];
-				} else if (_internal.indexOf("xslData;") > -1) {
-					// Excel binary - no paste options
-					callback(null);
-					return;
-				}
-
-				if (allowedSpecialPasteProps) {
-					_specialPasteShowOptions.options = allowedSpecialPasteProps;
-					callback(_specialPasteShowOptions);
-					return;
-				}
-			}
-
-			// Text only
-			if (_text) {
-				_specialPasteShowOptions.options = [sProps.keepTextOnly];
-				callback(_specialPasteShowOptions);
-				return;
-			}
-
-			callback(null);
-		});
-	};
-
 	function CPdfContextMenuData(obj) {
 		if (obj) {
 			this.Type  		= ( undefined != obj.Type ) ? obj.Type : Asc.c_oAscPdfContextMenuTypes.Common;
