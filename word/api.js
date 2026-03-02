@@ -14943,7 +14943,7 @@ background-repeat: no-repeat;\
 			
 			// HTML format (external source)
 			if (_html) {
-				allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.keepTextOnly];
+				allowedSpecialPasteProps = [sProps.sourceformatting, sProps.keepTextOnly];
 				if (_image) {
 					allowedSpecialPasteProps.push(sProps.picture);
 				}
@@ -14955,6 +14955,13 @@ background-repeat: no-repeat;\
 			
 			// Text only
 			if (_text) {
+				allowedSpecialPasteProps = [sProps.keepTextOnly];
+				if (_image) {
+					allowedSpecialPasteProps.push(sProps.picture);
+				}
+				_specialPasteShowOptions.options = allowedSpecialPasteProps;
+				callback(_specialPasteShowOptions);
+				return;
 			}
 			
 			callback(null);
