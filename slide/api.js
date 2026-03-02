@@ -2065,9 +2065,13 @@ background-repeat: no-repeat;\
 		if (false === _logicDoc.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, false))
 		{
 			if (isPasteOptions) {
+				let oThis = this;
 				AscCommon.g_clipboardBase.initSpecialPasteData(function () {
+					window['AscCommon'].g_specialPasteHelper.isPasteOptions = isPasteOptions;
+					window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
+					window['AscCommon'].g_specialPasteHelper.Special_Paste_Start();
 					_logicDoc.Create_NewHistoryPoint(AscDFH.historydescription_Document_PasteHotKey);
-					AscCommon.Editor_Paste_Exec(this, null, null, null, null, props);
+					AscCommon.Editor_Paste_Exec(oThis, null, null, null, null, props);
 				});
 			} else {
 				window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
@@ -2121,9 +2125,9 @@ background-repeat: no-repeat;\
 			let checkInternal = function (str) {
 				if (str && str.indexOf("xslData;XLSY") > -1) {
 					allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.keepTextOnly]
-				} else if (str && str.indexOf("xslData;DOCY") > -1) {
+				} else if (str && str.indexOf("docData;DOCY") > -1) {
 					allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.keepTextOnly];
-				} else if (str && str.indexOf("xslData;PPTY") > -1) {
+				} else if (str && str.indexOf("pptData;") > -1) {
 					allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.sourceformatting, sProps.picture, sProps.keepTextOnly];
 				} else {
 					allowedSpecialPasteProps = [sProps.sourceformatting, sProps.keepTextOnly];
@@ -2148,8 +2152,15 @@ background-repeat: no-repeat;\
 				return;
 			}
 			
-			// Text only - no special paste options
+			// Text only
 			if (_text) {
+				allowedSpecialPasteProps = [sProps.keepTextOnly];
+				if (_image) {
+					allowedSpecialPasteProps.push(sProps.picture);
+				}
+				_specialPasteShowOptions.options = allowedSpecialPasteProps;
+				callback(_specialPasteShowOptions);
+				return;
 			}
 			
 			callback(null);
