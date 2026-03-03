@@ -3094,7 +3094,7 @@
 
 								t.wb.dependencyFormulas.lockRecal();
 								
-								refRangeWS.setValue("=" + parsed.getFormula(), null, null, refRange, null, /*dynamicProps*/null, parsed);
+								refRangeWS.setValue("=" + parsed.getFormula(), null, null, refRange, null, /*dynamicProps*/null);
 
 								t.wb.dependencyFormulas.unlockRecal(true);
 							}
@@ -3113,9 +3113,9 @@
 						oCell.setIsDirty(true);
 						oCell && oCell._checkDirty();
 					});*/
-
 					t.clearPromises();
 					t.setRecalculating(true);
+					History.EndTransaction();
 					t.wb.dependencyFormulas.calcTree();
 					t.wb.handlers && t.wb.handlers.trigger("drawWS");
 					/*for (let i = 0; i < streamInfos.length; i++) {
@@ -16387,6 +16387,10 @@
 				oldValueText: Val.value.text
 			};
 			this.setFormula(Val.formula, null, Val.formulaRef, caProps);
+			if (null !== Val.value && this.ws.workbook.bRedoChanges) {
+				// Set value in Redo when we have a formula
+				this._setValueData(Val.value);
+			}
 		} else if (null != Val.value) {
 			var DataOld = null;
 			var DataNew = null;

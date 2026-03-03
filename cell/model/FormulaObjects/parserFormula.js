@@ -10087,7 +10087,7 @@ function parserFormula( formula, parent, _ws ) {
 	};
 	parserFormula.prototype.calculate = function (opt_defName, opt_bbox, opt_offset, checkMultiSelect, opt_oCalculateResult, opt_pivotCallback, opt_check_dynamic) {
 		if (AscCommonExcel.g_LockCustomFunctionRecalculate && this.unknownOrCustomFunction) {
-			if ((this.wb.bUndoChanges || this.wb.bRedoChanges)) {
+			if (false && (this.wb.bUndoChanges || this.wb.bRedoChanges)) {
 				let cachedResult = this.getCachedCustomFunctionResult();
 				if (cachedResult) {
 					// todo нужно ли записывать promiseResult?
