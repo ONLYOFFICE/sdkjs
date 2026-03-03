@@ -7674,6 +7674,7 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.ApplyRedact = function(sRedactId, nPage) {
         let oFile = this.Viewer.file;
 		let oNativeFile = oFile.nativeFile;
+        let _t = this;
 
        	this.BlurActiveObject();
 
@@ -7684,6 +7685,33 @@ var CPresentation = CPresentation || function(){};
 		if (sRedactId && undefined !== nPage) {
 			isOnMerge = true;
 		}
+
+        function isIntersectingRects(quads, rect) {
+            let xCoords = [quads[0], quads[2], quads[4], quads[6]];
+            let yCoords = [quads[1], quads[3], quads[5], quads[7]];
+            
+            let r1 = {
+                left:   Math.min.apply(null, xCoords),
+                right:  Math.max.apply(null, xCoords),
+                top:    Math.min.apply(null, yCoords),
+                bottom: Math.max.apply(null, yCoords)
+            };
+
+            let r2 = {
+                left:   rect[0],
+                top:    rect[1],
+                right:  rect[2],
+                bottom: rect[3]
+            };
+
+            let isOutside = 
+                r1.left   > r2.right  ||
+                r1.right  < r2.left   ||
+                r1.top    > r2.bottom ||
+                r1.bottom < r2.top;
+
+            return !isOutside;
+        }
 
 		function applyForPage(pageIdx) {
 			if (!isOnMerge) {
@@ -7756,6 +7784,34 @@ var CPresentation = CPresentation || function(){};
 
 				this.SetRedactData(sRedactId, oPageInfo.GetId(), aQuadsFlat, oRender);
 			}
+
+            if (Asc.editor.IsRedactDelForms()) {
+                oPageInfo.fields.slice().forEach(function(field) {
+                    let aRect = field.GetRect();
+
+                    for (let i = 0, count = aQuadsFlat.length / 8; i < count; i++) {
+                        if (isIntersectingRects(aQuadsFlat.slice(i, i + 8), aRect)) {
+                            _t.RemoveField(field.GetId());
+                            return;
+                        }
+                    } 
+                });
+            }
+            if (Asc.editor.IsRedactDelAnnots()) {
+                oPageInfo.annots.slice().forEach(function(annot) {
+                    if (annot.IsRedact()) {
+                        return;
+                    }
+
+                    let aRect = annot.GetRect();
+                    for (let i = 0, count = aQuadsFlat.length / 8; i < count; i++) {
+                        if (isIntersectingRects(aQuadsFlat.slice(i, i + 8), aRect)) {
+                            _t.RemoveAnnot(annot.GetId());
+                            return;
+                        }
+                    } 
+                });
+            }
 		}
 
 		if (nPage != undefined) {
