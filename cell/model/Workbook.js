@@ -3072,16 +3072,32 @@
 							const newC2 = (currentCol + arraySize.col) > AscCommon.gc_nMaxCol ? AscCommon.gc_nMaxCol - 1 : (currentCol + arraySize.col - 1);
 
 							let refRangeWS = new Range(parsed.ws, currentRow, currentCol, newR2, newC2);
-							let refRange = refRangeWS.bbox;
-							// let dynamicProps = AscCommonExcel.bIsSupportDynamicArrays ? {range: refRange, beforeSpillRange: null} : null;
+							let refRange = refRangeWS.bbox.clone && refRangeWS.bbox.clone();
 
-							parsed.setArrayFormulaRef(refRange);
+							/* dynamic array formula */
+							// let dynamicProps, beforeSpillRange;
+							// if (!parsed.ws.dynamicArrayManager.isAutoExpandBBox(refRange)) {
+							// 	beforeSpillRange = refRange;
+							// 	refRange = new Asc.Range(refRange.c1, refRange.r1, refRange.c1, refRange.r1);
+							// }
 
-							t.wb.dependencyFormulas.lockRecal();
-							
-							refRangeWS.setValue("=" + parsed.getFormula(), null, null, refRange, null, /*dynamicProps*/null, parsed);
+							// dynamicProps = AscCommonExcel.bIsSupportDynamicArrays ? {range: refRange, beforeSpillRange: beforeSpillRange} : null;
+							// parsed.setDynamicRef(refRange);
+							/* dynamic array formula */
 
-							t.wb.dependencyFormulas.unlockRecal(true);
+							if (!parsed.ws.dynamicArrayManager.isAutoExpandBBox(refRange)) {
+								// todo clear promises after all?
+								t.wb.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
+								break;
+							} else {
+								parsed.setArrayFormulaRef(refRange);
+
+								t.wb.dependencyFormulas.lockRecal();
+								
+								refRangeWS.setValue("=" + parsed.getFormula(), null, null, refRange, null, /*dynamicProps*/null, parsed);
+
+								t.wb.dependencyFormulas.unlockRecal(true);
+							}
 						}
 
 						if (parsed.ref) {
