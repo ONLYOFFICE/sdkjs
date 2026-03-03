@@ -3923,6 +3923,25 @@ window.AscCommon.g_cIsBeta = "false";
 		"HH:mm",
 		"HH:mm:ss"
 	];
+	c_oAscDateTimeFormat[lcid_arEG] = [
+		"dd/MM/yyyy",
+		"dddd, dd MMMM, yyyy",
+		"dd MMMM, yyyy",
+		"dd/MM/yy",
+		"yyyy-MM-dd",
+		"d-MMM-yy",
+		"dd.MM.yyyy",
+		"dd MMM, yy",
+		"d MMMM yyyy",
+		"MMMM yy",
+		"MMM-yy",
+		"dd/MM/yyyy hh:mm am/pm",
+		"dd/MM/yyyy hh:mm:ss am/pm",
+		"h:mm am/pm",
+		"h:mm:ss am/pm",
+		"HH:mm",
+		"HH:mm:ss"
+	];
 	c_oAscDateTimeFormat[lcid_azLatnAZ] = [
 		"dd.MM.yyyy",
 		"d MMMM yyyy, dddd",
