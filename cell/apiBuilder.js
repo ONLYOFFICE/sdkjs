@@ -9340,7 +9340,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {Drawing[]}.
-	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetAllDrawings.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetSelectedDrawings.js
 	 */
 	ApiWorksheet.prototype.GetSelectedDrawings = function () {
 		var allDrawings = this.worksheet.Drawings;
@@ -16950,7 +16950,7 @@
 	};
 
 	/**
-	 * Returns the setting which specifies whether to display field headers for rows and columns.
+	 * Sets whether to display field headers for rows and columns.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} show - Specifies whether to display field headers for rows and columns.
@@ -27717,7 +27717,7 @@
      * @memberof ApiFilter
      * @typeofeditors ["CSE"]
      * @returns {ApiAutoFilter} The parent filters collection.
-     * @see office-js-api/Examples/{Editor}/ApiFilter/Methods/Parent.js
+     * @see office-js-api/Examples/{Editor}/ApiFilter/Methods/GetParent.js
      */
     ApiFilter.prototype.GetParent = function () {
         return this.parent;
@@ -27906,7 +27906,7 @@
 	ApiRange.prototype["SetUnderline"] = ApiRange.prototype.SetUnderline;
 	ApiRange.prototype["SetStrikeout"] = ApiRange.prototype.SetStrikeout;
 	ApiRange.prototype["SetWrap"] = ApiRange.prototype.SetWrap;
-	ApiRange.prototype["SetWrapText"] = ApiRange.prototype.SetWrap;	
+	ApiRange.prototype["SetWrapText"] = ApiRange.prototype.SetWrap;
 	ApiRange.prototype["GetWrapText"] = ApiRange.prototype.GetWrapText;
 	ApiRange.prototype["SetFillColor"] = ApiRange.prototype.SetFillColor;
 	ApiRange.prototype["GetFillColor"] = ApiRange.prototype.GetFillColor;

@@ -1391,7 +1391,7 @@
 						"variations" : [
 							{
 								"isViewer"            : true,
-								"EditorsSupport"      : ["word", "cell", "slide"],
+								"EditorsSupport"      : ["word", "cell", "slide", "pdf"],
 								"type"                : "system",
 								"buttons"             : []
 							}
