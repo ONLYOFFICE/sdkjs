@@ -8004,7 +8004,7 @@
 			userInfo.put_Id(userId);
 			userInfo.put_FullName(assistantName);
 			
-			AscCommon.setUserColorById(userId, {r : 8, g: 145, b: 178}, {r : 8, g: 145, b: 178});
+			AscCommon.setUserColorById(userId, {r : 8, g: 145, b: 178});
 		}
 		else
 		{
