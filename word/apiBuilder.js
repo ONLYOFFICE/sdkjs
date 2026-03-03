@@ -2900,8 +2900,9 @@
 	 */
 	ApiRange.prototype.GetStartPage = function()
 	{
-		let oDoc = private_GetLogicDocument();
-		let oPosXY = oDoc.private_GetXYByDocumentPosition(this.StartPos);
+		let oApiDoc = Api.GetDocument();
+		oApiDoc.ForceRecalculate();
+		let oPosXY = oApiDoc.Document.private_GetXYByDocumentPosition(this.StartPos);
 		
 		return oPosXY.Page;
 	};
@@ -2916,8 +2917,9 @@
 	 */
 	ApiRange.prototype.GetEndPage = function()
 	{
-		let oDoc = private_GetLogicDocument();
-		let oPosXY = oDoc.private_GetXYByDocumentPosition(this.EndPos);
+		let oApiDoc = Api.GetDocument();
+		oApiDoc.ForceRecalculate();
+		let oPosXY = oApiDoc.Document.private_GetXYByDocumentPosition(this.EndPos);
 		
 		return oPosXY.Page;
 	};
