@@ -528,6 +528,10 @@ CTransitionGL.prototype.Render = function(type, param, progress)
 {
     if (!this.gl || !this.isInitialized) return;
 
+    window['_dbgGL'] = this;
+    window['_dbgType'] = type;
+    window['_dbgParam'] = param;
+
     let gl = this.gl;
 
     this._resetGLState();
@@ -590,7 +594,7 @@ CTransitionGL.prototype.Render = function(type, param, progress)
             this._renderPageCurlDouble(progress, param);
             break;
         case c_oAscSlideTransitionTypes.Vortex:
-            this._renderScatter(progress, param, 0, c_oAscSlideTransitionParams.Vortex_Left);
+            this._renderVortex(progress, param);
             break;
         case c_oAscSlideTransitionTypes.Prestige:
             this._renderScatter(progress, param, 1, c_oAscSlideTransitionParams.Prestige_Default);
@@ -2321,15 +2325,160 @@ CTransitionGL.prototype._bindTileMesh = function(name, progInfo)
 };
 
 // ============================================================
-// Transition: Vortex — tiles spiral outward
+// Transition: Vortex — fragment shader vortex effect
 // ============================================================
+
+let _VERT_VORTEX_SCATTER = [
+    'attribute vec3 aPosition;',
+    'attribute vec2 aTexCoord;',
+    'attribute vec3 aTileOffset;',
+    'attribute float aTilePhase;',
+    'attribute vec2 aTileCenter;',
+    'uniform mat4 uProjection;',
+    'uniform mat4 uModelView;',
+    'uniform float uProgress;',
+    'uniform float uDirection;',
+    'uniform float uAspect;',
+    'uniform float uReverse;',
+    'varying vec2 vTexCoord;',
+    'varying float vAlpha;',
+    '',
+    'vec3 rotAx(vec3 v, vec3 ax, float a) {',
+    '    float c = cos(a); float s = sin(a);',
+    '    vec3 n = normalize(ax);',
+    '    return v * c + cross(n, v) * s + n * dot(n, v) * (1.0 - c);',
+    '}',
+    '',
+    'void main() {',
+    '    vec3 pos = aPosition;',
+    '    vec3 local = pos - vec3(aTileCenter, 0.0);',
+    '',
+    '    // Direction-based wave coordinate',
+    '    float coord;',
+    '    float maxR;',
+    '    if (uDirection < 0.5) {',
+    '        coord = aTileCenter.x; maxR = uAspect;',
+    '    } else if (uDirection < 1.5) {',
+    '        coord = -aTileCenter.x; maxR = uAspect;',
+    '    } else if (uDirection < 2.5) {',
+    '        coord = -aTileCenter.y; maxR = 1.0;',
+    '    } else {',
+    '        coord = aTileCenter.y; maxR = 1.0;',
+    '    }',
+    '',
+    '    float normalized = (coord + maxR) / (2.0 * maxR);',
+    '    if (uReverse > 0.5) normalized = 1.0 - normalized;',
+    '',
+    '    float delay = (1.0 - normalized) * 0.5 + aTilePhase * 0.08;',
+    '    float t = smoothstep(delay, delay + 0.4, uProgress);',
+    '    float tAnim = (uReverse > 0.5) ? 1.0 - t : t;',
+    '',
+    '    vAlpha = 1.0 - smoothstep(0.85, 1.0, tAnim);',
+    '',
+    '    // Y-axis rotation: slide turns like a page',
+    '    float rotAngle = tAnim * 1.5708;',
+    '    float rSign;',
+    '    if (uDirection < 0.5) rSign = 1.0;',
+    '    else if (uDirection < 1.5) rSign = -1.0;',
+    '    else if (uDirection < 2.5) rSign = 1.0;',
+    '    else rSign = -1.0;',
+    '',
+    '    float cr = cos(rotAngle * rSign);',
+    '    float sr = sin(rotAngle * rSign);',
+    '',
+    '    // Pivot at center of half-slide: scatter→dir side, assemble→opposite',
+    '    float pivotSign = rSign;',
+    '    if (uReverse > 0.5) pivotSign = -pivotSign;',
+    '',
+    '    // Rotate tile center and local geometry around Y (or X) at pivot',
+    '    vec3 rotPos;',
+    '    if (uDirection < 1.5) {',
+    '        float pivotX = pivotSign * uAspect * 0.5;',
+    '        float dx = aTileCenter.x - pivotX;',
+    '        local = vec3(local.x * cr, local.y, -local.x * sr);',
+    '        rotPos = vec3(pivotX + dx * cr, aTileCenter.y, -dx * sr);',
+    '    } else {',
+    '        float pivotY = pivotSign * 0.5;',
+    '        float dy = aTileCenter.y - pivotY;',
+    '        local = vec3(local.x, local.y * cr, -local.y * sr);',
+    '        rotPos = vec3(aTileCenter.x, pivotY + dy * cr, -dy * sr);',
+    '    }',
+    '',
+    '    pos = rotPos + local;',
+    '',
+    '    // Cloud scatter',
+    '    pos.x += aTileOffset.x * tAnim * 1.2;',
+    '    pos.y += aTileOffset.y * tAnim * 1.0;',
+    '    pos.z += (aTileOffset.z - 0.75) * tAnim * 5.0;',
+    '',
+    '    vTexCoord = aTexCoord;',
+    '    gl_Position = uProjection * uModelView * vec4(pos, 1.0);',
+    '}'
+].join('\n');
 
 CTransitionGL.prototype._prepareVortex = function()
 {
-    this.GetProgram('tileScatter', _VERT_TILE_SCATTER, _FRAG_TILE_SCATTER);
-    this.GetProgram('flip3d', _VERT_3D, _FRAG_TEXTURED);
-    this._initTileMeshBuffer(25, 18, 'tilesVortex');
-    this._initQuadBuffer3D();
+    this.GetProgram('vortexScatter', _VERT_VORTEX_SCATTER, _FRAG_TILE_SCATTER);
+    this._initTileMeshBuffer(200, 112, 'tilesVortex');
+};
+
+CTransitionGL.prototype._renderVortex = function(progress, param)
+{
+    let gl = this.gl;
+    let prog = this.programs['vortexScatter'];
+    if (!prog) return;
+
+    let tileBuf = this.buffers['tilesVortex'];
+    if (!tileBuf) return;
+
+    let aspect = this.glCanvas.width / this.glCanvas.height;
+    let fov = Math.PI / 4;
+    let dist = 1.0 / Math.tan(fov / 2);
+    let projection = _Mat4.perspective(fov, aspect, 0.1, 100.0);
+    let mv = _Mat4.translate(_Mat4.identity(), 0, 0, -dist);
+
+    let dir = 0;
+    if (param === c_oAscSlideTransitionParams.Vortex_Right) dir = 1;
+    else if (param === c_oAscSlideTransitionParams.Vortex_Up) dir = 2;
+    else if (param === c_oAscSlideTransitionParams.Vortex_Down) dir = 3;
+
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    gl.useProgram(prog.program);
+    gl.uniformMatrix4fv(prog.uniforms['uProjection'], false, projection);
+    gl.uniformMatrix4fv(prog.uniforms['uModelView'], false, mv);
+    gl.uniform1f(prog.uniforms['uDirection'], dir);
+    gl.uniform1f(prog.uniforms['uAspect'], aspect);
+
+    // Split timeline: old scatters 0→0.5, new assembles 0.5→1.0
+    let oldProgress = Math.min(1.0, progress * 2.0);
+    let newProgress = Math.max(0.0, (progress - 0.5) * 2.0);
+
+    // Pass 1: new slide tiles assembling (draw first = behind)
+    gl.depthMask(false);
+    gl.uniform1f(prog.uniforms['uProgress'], newProgress);
+    gl.uniform1f(prog.uniforms['uReverse'], 1.0);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.textures.slide2);
+    gl.uniform1i(prog.uniforms['uTexture'], 0);
+    this._bindTileMesh('tilesVortex', prog);
+    gl.drawArrays(gl.TRIANGLES, 0, tileBuf.vertCount);
+
+    // Pass 2: old slide tiles scattering (draw second = in front)
+    gl.depthMask(true);
+    gl.uniform1f(prog.uniforms['uProgress'], oldProgress);
+    gl.uniform1f(prog.uniforms['uReverse'], 0.0);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.textures.slide1);
+    gl.uniform1i(prog.uniforms['uTexture'], 0);
+    gl.drawArrays(gl.TRIANGLES, 0, tileBuf.vertCount);
+
+    gl.disable(gl.BLEND);
+    gl.disable(gl.DEPTH_TEST);
 };
 
 CTransitionGL.prototype._renderScatter = function(progress, param, scatterType, baseParam)
@@ -4222,6 +4371,71 @@ CTransitionGL.prototype._renderChecker = function(progress, param)
 
     gl.enable(gl.BLEND);
     gl.activeTexture(gl.TEXTURE0);
+};
+
+// ============ Debug: frame capture ============
+
+CTransitionGL.prototype.captureFrames = function(type, param, frameCount)
+{
+    if (!this.gl || !this.isInitialized) return;
+
+    frameCount = frameCount || 20;
+
+    let w = this.glCanvas.width;
+    let h = this.glCanvas.height;
+    let thumbW = 400;
+    let thumbH = Math.round(thumbW * h / w);
+    let labelH = 22;
+    let cols = 5;
+    let totalFrames = frameCount + 1;
+    let rows = Math.ceil(totalFrames / cols);
+
+    let grid = document.createElement('canvas');
+    grid.width = cols * thumbW;
+    grid.height = rows * (thumbH + labelH);
+    let ctx = grid.getContext('2d');
+    ctx.fillStyle = '#111';
+    ctx.fillRect(0, 0, grid.width, grid.height);
+
+    for (let i = 0; i < totalFrames; i++)
+    {
+        let progress = i / frameCount;
+        this.Render(type, param, progress);
+
+        let col = i % cols;
+        let row = Math.floor(i / cols);
+        let x = col * thumbW;
+        let y = row * (thumbH + labelH);
+
+        ctx.drawImage(this.glCanvas, 0, 0, w, h, x, y + labelH, thumbW, thumbH);
+        ctx.fillStyle = '#fff';
+        ctx.font = '14px monospace';
+        ctx.fillText(Math.round(progress * 100) + '%', x + 4, y + 15);
+    }
+
+    grid.toBlob(function(blob)
+    {
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = 'transition_' + type + '_' + param + '_frames.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+    }, 'image/png');
+};
+
+window['captureTransition'] = function(count)
+{
+    if (window['_dbgGL'])
+    {
+        window['_dbgGL'].captureFrames(window['_dbgType'], window['_dbgParam'], count || 20);
+    }
+    else
+    {
+        console.log('No active GL transition. Start a transition first.');
+    }
 };
 
 // Export
