@@ -282,29 +282,22 @@
         let nOpacity = this.GetOpacity();
 
 		AscCommon.ExecuteNoHistory(function() {
-			let aStrokeColor = this.GetBorderColor();
-			if (!aStrokeColor || aStrokeColor.length == 0) {
-				aStrokeColor = [0, 0, 0];
-			}
+			let oRGB    = this.GetRGBColor(this.GetBorderColor(), true);
+			let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+			oFill.transparent = nOpacity * 100 * 2.55;
 			
-			if (aStrokeColor) {
-				let oRGB    = this.GetRGBColor(aStrokeColor);
-				let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-				oFill.transparent = nOpacity * 100 * 2.55;
-				
-				let oTxBoxShape = this.GetTextBoxShape();
-				let oLine = oTxBoxShape.spPr.ln;
-				if (this.GetBorderWidth() == 0) {
-					oLine.setFill(AscFormat.CreateNoFillUniFill());
-				}
-				else {
-					oLine.setFill(oFill);
-				}
-	
-				for (let i = 0; i < this.spTree.length; i++) {
-					let oLine = this.spTree[i].spPr.ln;
-					oLine.setFill(oFill);
-				}
+			let oTxBoxShape = this.GetTextBoxShape();
+			let oLine = oTxBoxShape.spPr.ln;
+			if (this.GetBorderWidth() == 0) {
+				oLine.setFill(AscFormat.CreateNoFillUniFill());
+			}
+			else {
+				oLine.setFill(oFill);
+			}
+
+			for (let i = 0; i < this.spTree.length; i++) {
+				let oLine = this.spTree[i].spPr.ln;
+				oLine.setFill(oFill);
 			}
 			
 			let aFillColor = this.GetFillColor();
@@ -365,49 +358,47 @@
         let nWidthPt = this.GetBorderWidth();
         
         AscCommon.ExecuteNoHistory(function() {
-			for (let i = 1; i < this.spTree.length; i++) {
+			let oTextBoxShape = this.GetTextBoxShape();
+			let oRGB  = this.GetRGBColor(this.GetBorderColor(), true);
+			let oFill = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+
+			for (let i = 0; i < this.spTree.length; i++) {
 				let oLine = this.spTree[i].spPr.ln;
-				if (nWidthPt == 0 && this.spTree[i] != this.GetTextBoxShape()) {
-					oLine.setW(0.5 * g_dKoef_pt_to_mm * 36000.0);
-				}
-				else {
-					if (nWidthPt == 0) {
-						oLine.setFill(AscFormat.CreateNoFillUniFill());
+
+				if (nWidthPt == 0) {
+					if (this.spTree[i] != oTextBoxShape) {
+						oLine.setW(0.5 * g_dKoef_pt_to_mm * 36000.0);
 					}
 					else {
-						this.SetBorderColor(this.GetBorderColor());
+						oLine.setFill(AscFormat.CreateNoFillUniFill());
 					}
-					
+				}
+				else {
+					oLine.setFill(oFill);
 					oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
 				}
 			}
+
+			this.handleUpdateLn();
 		}, undefined, this);
     };
-	CAnnotationFreeText.prototype.SetBorderColor = function(aColor) {
-		AscCommon.History.Add(new CChangesPDFAnnotStroke(this, this.GetBorderColor(), aColor));
-		
-		this._strokeColor = aColor;
-		
-		AscCommon.ExecuteNoHistory(function() {
-			let oRGB  = this.GetRGBColor(aColor);
-			let oFill = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-			
-			let oTxBoxShape = this.GetTextBoxShape();
-			let oLine       = oTxBoxShape.spPr.ln;
-			if (this.GetBorderWidth() == 0) {
-				oLine.setFill(AscFormat.CreateNoFillUniFill());
-			}
-			else {
-				oLine.setFill(oFill);
-			}
-			for (let i = 1; i < this.spTree.length; i++) {
-				let oLine = this.spTree[i].spPr.ln;
-				oLine.setFill(oFill);
-			}
-		}, undefined, this);
+	CAnnotationFreeText.prototype.private_UpdateOpacity = function() {
+		const t = this.GetOpacity() * 100 * 2.55;
 
-		this.SetWasChanged(true);
-		this.SetNeedRecalc(true);
+		for (let i = 0; i < this.spTree.length; i++) {
+			const oLine = this.spTree[i].spPr.ln;
+			oLine.Fill.transparent = t;
+
+			const oFill = this.spTree[i].spPr.Fill;
+			if (oFill) {
+				oFill.transparent = t;
+
+				this.spTree[i].handleUpdateLn();
+				this.spTree[i].handleUpdateFill();
+			}
+		}
+
+		this.SetNeedUpdateOpacity(false);
 	};
 	CAnnotationFreeText.prototype.SetFillColor = function(aColor) {
 		AscCommon.History.Add(new CChangesPDFAnnotFill(this, this.GetFillColor(), aColor));
@@ -457,7 +448,7 @@
             return;
 
         if (this.IsNeedUpdateOpacity()) {
-            this.UpdateOpacity();
+            this.private_UpdateOpacity();
         }
         
         if (this.IsNeedRecalcSizes()) {
