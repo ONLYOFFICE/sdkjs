@@ -9864,12 +9864,14 @@ var CPresentation = CPresentation || function(){};
 		}
 
         // stroke
-        let oStrokeColor    = annot.GetBorderColor();
-        let oStrokeRGB      = annot.GetRGBColor(oStrokeColor);
-		oStrokeRGB["r"] = oStrokeRGB.r;
-        oStrokeRGB["g"] = oStrokeRGB.g;
-        oStrokeRGB["b"] = oStrokeRGB.b;
-        oProps.asc_putStroke(oStrokeRGB);
+        if (nType !== AscPDF.ANNOTATIONS_TYPES.Stamp) {
+            let oStrokeColor    = annot.GetBorderColor();
+            let oStrokeRGB      = annot.GetRGBColor(oStrokeColor);
+            oStrokeRGB["r"] = oStrokeRGB.r;
+            oStrokeRGB["g"] = oStrokeRGB.g;
+            oStrokeRGB["b"] = oStrokeRGB.b;
+            oProps.asc_putStroke(oStrokeRGB);
+        }
 
         // opacity
         oProps.asc_putOpacity(annot.GetOpacity());
