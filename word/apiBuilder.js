@@ -7639,12 +7639,12 @@
 	};
 	/**
 	 * Returns a collection of drawing objects from the document filtered by their names.
-	 * @memberof ApiDocumentContent
+	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @since 9.3.0
 	 * @param {string[]} ids - An array of drawing names to filter by.
 	 * @return {ApiDrawing[]}
-	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetDrawingsByName.js
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetDrawingsByName.js
 	 */
 	ApiDocument.prototype.GetDrawingsByName = function(ids)
 	{
@@ -10749,7 +10749,7 @@
 	 * Sets the text color to the current paragraph.
 	 *
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 *
 	 * @since 9.1.0
 	 * @param {ApiColor} color
@@ -12493,7 +12493,7 @@
 	 * Sets the text color for the current text run.
 	 *
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 *
 	 * @since 9.1.0
 	 * @param {ApiColor} color

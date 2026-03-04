@@ -1816,12 +1816,12 @@
 
 	/**
 	 * Returns a collection of drawing objects from the document content filtered by their names.
-	 * @memberof ApiDocumentContent
+	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
 	 * @param {string[]} ids - An array of drawing names to filter by.
 	 * @return {Drawing[]}
-	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetDrawingsByName.js
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetDrawingsByName.js
 	 */
 	ApiPresentation.prototype.GetDrawingsByName = function(ids)
 	{

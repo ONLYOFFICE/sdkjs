@@ -1763,7 +1763,7 @@
 	};
 
 	/**
-	 * Gets page selection quads
+	 * Sets page selection.
 	 * @typeofeditors ["PDFE"]
 	 * @param {Point} startPoint
 	 * @param {Point} endPoint
