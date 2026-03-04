@@ -544,11 +544,9 @@
 		oAnnot.SetBorderWidth(1);
 		oAnnot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
 		oAnnot.SetBorderColor([0, 0, 0]);
+		oAnnot.private_UpdateRect(rect);
 
-		let oApiAnnot = new ApiCircleAnnotation(oAnnot);
-		oApiAnnot.private_UpdateRect(rect);
-
-		return oApiAnnot;
+		return new ApiCircleAnnotation(oAnnot);
 	};
 	
 	/**
@@ -578,11 +576,9 @@
 		oAnnot.SetBorderWidth(1);
 		oAnnot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
 		oAnnot.SetBorderColor([0, 0, 0]);
+		oAnnot.private_UpdateRect(rect);
 
-		let oApiAnnot = new ApiSquareAnnotation(oAnnot);
-		oApiAnnot.private_UpdateRect(rect);
-
-		return oApiAnnot;
+		return new ApiSquareAnnotation(oAnnot);
 	};
 
 	/**
@@ -3798,12 +3794,6 @@
 		return this.Annot;
 	};
 
-	ApiBaseAnnotation.prototype.private_UpdateRect = function(rect) {
-		if (rect) {
-			this.Annot.SetRect(rect);
-		}
-	};
-
 	/**
 	 * Sets annotation rect.
 	 * @typeofeditors ["PDFE"]
@@ -3816,7 +3806,7 @@
 			AscBuilder.throwException("The rect parameter must be a valid rect");
 		}
 
-		this.private_UpdateRect(rect);
+		this.Annot.private_UpdateRect(rect);
 		return true;
 	};
 
@@ -3937,6 +3927,7 @@
 	ApiBaseAnnotation.prototype.SetBorderWidth = function(width) {
 		width = AscBuilder.GetNumberParameter(width, 0);
 		this.Annot.SetBorderWidth(width);
+		this.Annot.private_UpdateRect();
 		return true;
 	};
 
@@ -4247,7 +4238,7 @@
 		}
 
 		this.Annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES[style]);
-		this.private_UpdateRect();
+		this.Annot.private_UpdateRect();
 
 		return true;
 	};
@@ -4287,7 +4278,7 @@
 		}
 
 		this.Annot.SetBorderEffectIntensity(value);
-		this.private_UpdateRect();
+		this.Annot.private_UpdateRect();
 
 		return true;
 	};
@@ -4475,43 +4466,6 @@
 	ApiCircleAnnotation.prototype = Object.create(ApiBaseAnnotation.prototype);
 	ApiCircleAnnotation.prototype.constructor = ApiCircleAnnotation;
 
-	ApiCircleAnnotation.prototype.private_UpdateRect = function(rect) {
-		if (!rect) {
-			rect = this.Annot.GetRect();
-		}
-
-		AscCommon.History.StartNoHistoryMode();
-		let aCurRect = this.Annot.GetRect();
-		let aCurRD = this.Annot.GetRectangleDiff().slice();
-		let nLineW = this.Annot.GetBorderWidth() * g_dKoef_pt_to_mm;
-		this.Annot.SetRect(rect);
-		this.Annot.SetRectangleDiff([0, 0, 0, 0]);
-		this.Annot.recalcBounds();
-		this.Annot.recalcGeometry();
-		this.Annot.Recalculate(true);
-		
-		AscCommon.History.EndNoHistoryMode();
-		
-		let oGrBounds = this.Annot.bounds;
-		let oShapeBounds = this.Annot.getRectBounds();
-
-		rect[0] = (oGrBounds.l - nLineW) * g_dKoef_mm_to_pt;
-		rect[1] = (oGrBounds.t - nLineW) * g_dKoef_mm_to_pt;
-		rect[2] = (oGrBounds.r + nLineW) * g_dKoef_mm_to_pt;
-		rect[3] = (oGrBounds.b + nLineW) * g_dKoef_mm_to_pt;
-
-		this.Annot._rect = aCurRect;
-		this.Annot._rectDiff = aCurRD;
-
-		this.Annot.SetRect(rect);
-		this.Annot.SetRectangleDiff([
-			(oShapeBounds.l - oGrBounds.l + nLineW) * g_dKoef_mm_to_pt,
-			(oShapeBounds.t - oGrBounds.t + nLineW) * g_dKoef_mm_to_pt,
-			(oGrBounds.r - oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt,
-			(oGrBounds.b - oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt
-		]);
-	};
-
 	/**
 	 * Returns a type of the ApiCircleAnnotation class.
 	 * @memberof ApiCircleAnnotation
@@ -4569,43 +4523,6 @@
 
 	ApiSquareAnnotation.prototype = Object.create(ApiBaseAnnotation.prototype);
 	ApiSquareAnnotation.prototype.constructor = ApiSquareAnnotation;
-
-	ApiSquareAnnotation.prototype.private_UpdateRect = function(rect) {
-		if (!rect) {
-			rect = this.Annot.GetRect();
-		}
-
-		AscCommon.History.StartNoHistoryMode();
-		let aCurRect = this.Annot.GetRect();
-		let aCurRD = this.Annot.GetRectangleDiff().slice();
-		let nLineW = this.Annot.GetBorderWidth() * g_dKoef_pt_to_mm;
-		this.Annot.SetRect(rect);
-		this.Annot.SetRectangleDiff([0, 0, 0, 0]);
-		this.Annot.recalcBounds();
-		this.Annot.recalcGeometry();
-		this.Annot.Recalculate(true);
-		
-		AscCommon.History.EndNoHistoryMode();
-		
-		let oGrBounds = this.Annot.bounds;
-		let oShapeBounds = this.Annot.getRectBounds();
-
-		rect[0] = (oGrBounds.l - nLineW) * g_dKoef_mm_to_pt;
-		rect[1] = (oGrBounds.t - nLineW) * g_dKoef_mm_to_pt;
-		rect[2] = (oGrBounds.r + nLineW) * g_dKoef_mm_to_pt;
-		rect[3] = (oGrBounds.b + nLineW) * g_dKoef_mm_to_pt;
-
-		this.Annot._rect = aCurRect;
-		this.Annot._rectDiff = aCurRD;
-
-		this.Annot.SetRect(rect);
-		this.Annot.SetRectangleDiff([
-			(oShapeBounds.l - oGrBounds.l + nLineW) * g_dKoef_mm_to_pt,
-			(oShapeBounds.t - oGrBounds.t + nLineW) * g_dKoef_mm_to_pt,
-			(oGrBounds.r - oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt,
-			(oGrBounds.b - oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt
-		]);
-	};
 
 	/**
 	 * Returns a type of the ApiSquareAnnotation class.

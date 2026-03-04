@@ -79,6 +79,55 @@
     AscFormat.InitClass(CAnnotationFreeText, AscFormat.CGroupShape, AscDFH.historyitem_type_Pdf_Annot_FreeText);
     Object.assign(CAnnotationFreeText.prototype, AscPDF.CAnnotationBase.prototype);
 
+	CAnnotationFreeText.prototype.private_UpdateRect = function(rect) {
+		AscCommon.History.StartNoHistoryMode();
+		let aCurRect = this.GetRect();
+		let aCurRD = this.GetRectangleDiff().slice();
+		let nLineW = this.GetBorderWidth() * g_dKoef_pt_to_mm;
+		rect && this.SetRect(rect);
+		this.recalcBounds();
+		this.recalcGeometry();
+		this.Recalculate(true);
+		
+		AscCommon.History.EndNoHistoryMode();
+		
+		let oGrBounds = this.bounds;
+		let oShapeBounds = this.getRectBounds();
+
+		if (!rect) {
+			rect = [];
+		}
+
+		rect[0] = (oGrBounds.l) * g_dKoef_mm_to_pt;
+		rect[1] = (oGrBounds.t) * g_dKoef_mm_to_pt;
+		rect[2] = (oGrBounds.r) * g_dKoef_mm_to_pt;
+		rect[3] = (oGrBounds.b) * g_dKoef_mm_to_pt;
+
+		this._rect = aCurRect;
+		this._rectDiff = aCurRD;
+
+		this.SetRect(rect);
+
+		let aNewRD;
+		if (AscPDF.FREE_TEXT_INTENT_TYPE.freeTextCallout == this.GetIntent()) {
+			aNewRD = aCurRD.slice();
+			aNewRD[0] += Math.abs(rect[0] - aCurRect[0]);
+			aNewRD[1] += Math.abs(rect[1] - aCurRect[1]);
+			aNewRD[2] += Math.abs(rect[2] - aCurRect[2]);
+			aNewRD[3] += Math.abs(rect[3] - aCurRect[3]);
+		}
+		else {
+			aNewRD = [
+				(oShapeBounds.l - oGrBounds.l + nLineW) * g_dKoef_mm_to_pt,
+				(oShapeBounds.t - oGrBounds.t + nLineW) * g_dKoef_mm_to_pt,
+				(oGrBounds.r - oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt,
+				(oGrBounds.b - oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt
+			];
+		}
+
+		this.SetRectangleDiff(aNewRD);
+	};
+
     CAnnotationFreeText.prototype.GetCalloutExitPos = function(aTxBoxRect) {
         let aCallout = this.GetCallout();
         if (aCallout.length == 0)

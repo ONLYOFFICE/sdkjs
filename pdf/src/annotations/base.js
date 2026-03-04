@@ -947,6 +947,11 @@
         AscCommon.History.Add(new CChangesPDFAnnotChangedView(this, this._bDrawFromStream, bFromStream));
         this._bDrawFromStream = bFromStream;
     };
+	CAnnotationBase.prototype.private_UpdateRect = function(rect) {
+		if (rect) {
+			this.SetRect(rect);
+		}
+	};
     CAnnotationBase.prototype.SetRect = function(aRect) {
 		if (aRect) {
 			aRect = aRect.slice();
