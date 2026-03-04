@@ -294,5 +294,93 @@ $(function () {
 		result = drawing.SetFlipV("invalid");
 		assert.strictEqual(result, false, 'Check SetFlipV returns false for invalid parameter');
 	});
+
+	QUnit.test("Test: SetTitle", function (assert) {
+		CreateSlide();
+
+		const presentation = AscTest.JsApi.GetPresentation();
+		const slide = presentation.GetSlideByIndex(0);
+		const fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.CreateRGBColor(255, 111, 61));
+		const stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+		const drawing = AscTest.JsApi.CreateShape("cube", 150 * 36000, 80 * 36000, fill, stroke);
+
+		drawing.SetPosition(608400, 1267200);
+		slide.AddObject(drawing);
+
+		let result = drawing.SetTitle("Test Title");
+		assert.strictEqual(result, true, 'Check SetTitle returns true');
+		assert.strictEqual(drawing.GetTitle(), "Test Title", 'Check title is set correctly');
+
+		result = drawing.SetTitle("");
+		assert.strictEqual(result, false, 'Check SetTitle returns false for empty string');
+
+		result = drawing.SetTitle(null);
+		assert.strictEqual(result, false, 'Check SetTitle returns false for null');
+
+		result = drawing.SetTitle(undefined);
+		assert.strictEqual(result, false, 'Check SetTitle returns false for undefined');
+	});
+
+	QUnit.test("Test: GetTitle", function (assert) {
+		CreateSlide();
+
+		const presentation = AscTest.JsApi.GetPresentation();
+		const slide = presentation.GetSlideByIndex(0);
+		const fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.CreateRGBColor(255, 111, 61));
+		const stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+		const drawing = AscTest.JsApi.CreateShape("cube", 150 * 36000, 80 * 36000, fill, stroke);
+
+		drawing.SetPosition(608400, 1267200);
+		slide.AddObject(drawing);
+
+		assert.strictEqual(drawing.GetTitle(), null, 'Check GetTitle returns null when no title is set');
+
+		drawing.SetTitle("My Title");
+		assert.strictEqual(drawing.GetTitle(), "My Title", 'Check GetTitle returns the set title');
+	});
+
+	QUnit.test("Test: SetDescription", function (assert) {
+		CreateSlide();
+
+		const presentation = AscTest.JsApi.GetPresentation();
+		const slide = presentation.GetSlideByIndex(0);
+		const fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.CreateRGBColor(255, 111, 61));
+		const stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+		const drawing = AscTest.JsApi.CreateShape("cube", 150 * 36000, 80 * 36000, fill, stroke);
+
+		drawing.SetPosition(608400, 1267200);
+		slide.AddObject(drawing);
+
+		let result = drawing.SetDescription("Test Description");
+		assert.strictEqual(result, true, 'Check SetDescription returns true');
+		assert.strictEqual(drawing.GetDescription(), "Test Description", 'Check description is set correctly');
+
+		result = drawing.SetDescription("");
+		assert.strictEqual(result, false, 'Check SetDescription returns false for empty string');
+
+		result = drawing.SetDescription(null);
+		assert.strictEqual(result, false, 'Check SetDescription returns false for null');
+
+		result = drawing.SetDescription(undefined);
+		assert.strictEqual(result, false, 'Check SetDescription returns false for undefined');
+	});
+
+	QUnit.test("Test: GetDescription", function (assert) {
+		CreateSlide();
+
+		const presentation = AscTest.JsApi.GetPresentation();
+		const slide = presentation.GetSlideByIndex(0);
+		const fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.CreateRGBColor(255, 111, 61));
+		const stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+		const drawing = AscTest.JsApi.CreateShape("cube", 150 * 36000, 80 * 36000, fill, stroke);
+
+		drawing.SetPosition(608400, 1267200);
+		slide.AddObject(drawing);
+
+		assert.strictEqual(drawing.GetDescription(), null, 'Check GetDescription returns null when no description is set');
+
+		drawing.SetDescription("My Description");
+		assert.strictEqual(drawing.GetDescription(), "My Description", 'Check GetDescription returns the set description');
+	});
 });
 

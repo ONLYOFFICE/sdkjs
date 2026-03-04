@@ -4096,6 +4096,16 @@
 						for (i = 0; i < objects_by_type.oleObjects.length; ++i) {
 							objects_by_type.oleObjects[i].setTitle(props.title);
 						}
+
+						if (objects_by_type.shapes.length
+							|| objects_by_type.groups.length
+							|| objects_by_type.charts.length
+							|| objects_by_type.images.length
+							|| objects_by_type.smartArts.length
+							|| objects_by_type.oleObjects.length)
+							{
+								Asc.editor.addMacroStepData('SetDrawingTitle', props.title);
+							}
 					}
 					if (props.description !== null && props.description !== undefined) {
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {
@@ -4115,6 +4125,16 @@
 						}
 						for (i = 0; i < objects_by_type.oleObjects.length; ++i) {
 							objects_by_type.oleObjects[i].setDescription(props.description);
+						}
+
+						if (objects_by_type.shapes.length
+						|| objects_by_type.groups.length
+						|| objects_by_type.charts.length
+						|| objects_by_type.images.length
+						|| objects_by_type.smartArts.length
+						|| objects_by_type.oleObjects.length)
+						{
+							Asc.editor.addMacroStepData('SetDrawingDescription', props.description);
 						}
 					}
 					if (props.name !== null && props.name !== undefined && props.name !== "") {

@@ -219,5 +219,69 @@
 		assert.strictEqual(result, false, 'Check SetFlipV returns false for invalid parameter');
 	});
 
+	QUnit.test("SetTitle", function (assert) {
+		let worksheet = AscTest.JsApi.GetActiveSheet();
+		let fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.CreateRGBColor(51, 51, 51));
+		let stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+		let shape = worksheet.AddShape("ellipse", 50 * 36000, 50 * 36000, fill, stroke, 0, 0, 0, 0);
+
+		let result = shape.SetTitle("Test Title");
+		assert.strictEqual(result, true, 'Check SetTitle returns true');
+		assert.strictEqual(shape.GetTitle(), "Test Title", 'Check title is set correctly');
+
+		result = shape.SetTitle("");
+		assert.strictEqual(result, false, 'Check SetTitle returns false for empty string');
+
+		result = shape.SetTitle(null);
+		assert.strictEqual(result, false, 'Check SetTitle returns false for null');
+
+		result = shape.SetTitle(undefined);
+		assert.strictEqual(result, false, 'Check SetTitle returns false for undefined');
+	});
+
+	QUnit.test("GetTitle", function (assert) {
+		let worksheet = AscTest.JsApi.GetActiveSheet();
+		let fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.CreateRGBColor(51, 51, 51));
+		let stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+		let shape = worksheet.AddShape("ellipse", 50 * 36000, 50 * 36000, fill, stroke, 0, 0, 0, 0);
+
+		assert.strictEqual(shape.GetTitle(), null, 'Check GetTitle returns null when no title is set');
+
+		shape.SetTitle("My Title");
+		assert.strictEqual(shape.GetTitle(), "My Title", 'Check GetTitle returns the set title');
+	});
+
+	QUnit.test("SetDescription", function (assert) {
+		let worksheet = AscTest.JsApi.GetActiveSheet();
+		let fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.CreateRGBColor(51, 51, 51));
+		let stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+		let shape = worksheet.AddShape("ellipse", 50 * 36000, 50 * 36000, fill, stroke, 0, 0, 0, 0);
+
+		let result = shape.SetDescription("Test Description");
+		assert.strictEqual(result, true, 'Check SetDescription returns true');
+		assert.strictEqual(shape.GetDescription(), "Test Description", 'Check description is set correctly');
+
+		result = shape.SetDescription("");
+		assert.strictEqual(result, false, 'Check SetDescription returns false for empty string');
+
+		result = shape.SetDescription(null);
+		assert.strictEqual(result, false, 'Check SetDescription returns false for null');
+
+		result = shape.SetDescription(undefined);
+		assert.strictEqual(result, false, 'Check SetDescription returns false for undefined');
+	});
+
+	QUnit.test("GetDescription", function (assert) {
+		let worksheet = AscTest.JsApi.GetActiveSheet();
+		let fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.CreateRGBColor(51, 51, 51));
+		let stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+		let shape = worksheet.AddShape("ellipse", 50 * 36000, 50 * 36000, fill, stroke, 0, 0, 0, 0);
+
+		assert.strictEqual(shape.GetDescription(), null, 'Check GetDescription returns null when no description is set');
+
+		shape.SetDescription("My Description");
+		assert.strictEqual(shape.GetDescription(), "My Description", 'Check GetDescription returns the set description');
+	});
+
 })(window);
 

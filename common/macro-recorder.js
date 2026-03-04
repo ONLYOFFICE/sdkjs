@@ -1355,6 +1355,20 @@
 				+ "\t\t.forEach(function(draw) {\n"
 				+ "\t\t\tdraw.SetGeometry(Api.CreatePresetGeometry(\""+ type +"\"));\n"
 				+ "\t\t});\n";
+		},
+		setDrawingTitle		: function(title)
+		{
+			return "\tdoc.GetSelectedDrawings()\n"
+				+ "\t\t.forEach(function(draw) {\n"
+				+ "\t\t\tdraw.SetTitle(\"" + title + "\");\n"
+				+ "\t\t});\n";
+		},
+		setDrawingDescription: function(description)
+		{
+			return "\tdoc.GetSelectedDrawings()\n"
+				+ "\t\t.forEach(function(draw) {\n"
+				+ "\t\t\tdraw.SetDescription(\"" + description + "\");\n"
+				+ "\t\t});\n";
 		}
 	};
 
@@ -1436,6 +1450,9 @@
 	WordActionsMacroList['SetRelSizeH']													= wordActions.setShapeRelSizeH;
 	WordActionsMacroList['SetRelSizeV']													= wordActions.setShapeRelSizeV;
 	WordActionsMacroList['SetGeometry']													= wordActions.setGeometry;
+	WordActionsMacroList['SetDrawingTitle']												= wordActions.setDrawingTitle;
+	WordActionsMacroList['SetDrawingDescription']										= wordActions.setDrawingDescription;
+
 	WordActionsMacroList[AscDFH.historydescription_Document_RemoveHdrFtr]				= wordActions.removeHdr;
 	WordActionsMacroList[AscDFH.historydescription_Document_AddComment]					= wordActions.addComment;
 	//WordActionsMacroList[AscDFH.AscDFH.historydescription_Document_AddTextArt]		= wordActions.addTextArt;
@@ -1885,6 +1902,20 @@
 				+ "\t\t.forEach(draw => {\n"
 					+ "\t\t\tdraw.SetGeometry(Api.CreatePresetGeometry(\""+ type +"\"))\n"
 				+ "\t\t});\n"
+		},
+    setDrawingTitle		: function(title)
+		{
+			return "\tworksheet.GetSelectedDrawings()\n"
+				+ "\t\t.forEach(function(draw) {\n"
+				+ "\t\t\tdraw.SetTitle(\"" + title + "\");\n"
+				+ "\t\t});\n";
+		},
+		setDrawingDescription: function(description)
+		{
+			return "\tworksheet.GetSelectedDrawings()\n"
+				+ "\t\t.forEach(function(draw) {\n"
+				+ "\t\t\tdraw.SetDescription(\"" + description + "\");\n"
+				+ "\t\t});\n";
 		}
 	};
 	const CellActionsMacroList = {};
@@ -1942,6 +1973,8 @@
 	CellActionsMacroList['SetShapeSize']													= cellActions.setShapeSize;
 	CellActionsMacroList['SetShapeInnerPadding']											= cellActions.setShapeInnerPadding;
 	CellActionsMacroList['SetGeometry']														= cellActions.setGeometry;
+  CellActionsMacroList['SetDrawingTitle']												= cellActions.setDrawingTitle;
+	CellActionsMacroList['SetDrawingDescription']										= cellActions.setDrawingDescription;
 
 	const presActions = {
 		setParagraphAlign		: function(align){
@@ -2557,6 +2590,20 @@
 			return "\tApi.GetSelection().GetShapes().forEach(draw => {\n" +
 				"\t\tdraw.SetGeometry(Api.CreatePresetGeometry(\""+ type +"\"));\n" +
 				"\t});\n"
+		},
+    setDrawingTitle		: function(title)
+		{
+			return "\tApi.GetSelection().GetShapes()\n"
+				+ "\t\t.forEach(function(shape) {\n"
+				+ "\t\t\tshape.SetTitle(\"" + title + "\");\n"
+				+ "\t\t});\n";
+		},
+		setDrawingDescription: function(description)
+		{
+			return "\tApi.GetSelection().GetShapes()\n"
+				+ "\t\t.forEach(function(shape) {\n"
+				+ "\t\t\tshape.SetDescription(\"" + description + "\");\n"
+				+ "\t\t});\n";
 		}
 	};
 
@@ -2619,6 +2666,8 @@
 	PresentationActionMacroList['SetDrawingFlipV']													= presActions.setDrawingFlipV;
 	PresentationActionMacroList["SelectDrawing"]													= presActions.selectDrawing;
 	PresentationActionMacroList["DeselectDrawing"]													= presActions.deselectDrawing;
+  PresentationActionMacroList['SetDrawingTitle']												= presActions.setDrawingTitle;
+	PresentationActionMacroList['SetDrawingDescription']										= presActions.setDrawingDescription;
 
 	//--------------------------------------------------------export----------------------------------------------------
 	AscCommon.MacroRecorder = MacroRecorder;
