@@ -9910,6 +9910,11 @@ var CPresentation = CPresentation || function(){};
                 oAnnotProps.asc_putBorderWidth(annot.GetBorderWidth());
                 break;
             }
+            case AscPDF.ANNOTATIONS_TYPES.Ink: {
+                oAnnotProps = new Asc.asc_CInkAnnotProperty();
+                oAnnotProps.asc_putBorderWidth(annot.GetBorderWidth());
+                break;
+            }
         }
         
         oProps.asc_putAnnotProps(oAnnotProps);

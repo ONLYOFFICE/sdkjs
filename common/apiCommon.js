@@ -3952,6 +3952,23 @@ function (window, undefined) {
 		}
 	};
 
+	// ink
+	function asc_CInkAnnotProperty() {
+		this.borderWidth= undefined;
+	}
+
+	asc_CInkAnnotProperty.prototype.asc_getBorderWidth = function () {
+		return this.borderWidth;
+	};
+	asc_CInkAnnotProperty.prototype.asc_putBorderWidth = function (v) {
+		this.borderWidth = v;
+	};
+	asc_CInkAnnotProperty.prototype.compare = function(pr) {
+		if (this.borderWidth !== pr.borderWidth) {
+			this.borderWidth = null;
+		}
+	};
+
 	//////////////////////////////////////////////////////////////////
 	///// Common field
 	/////////////////////////////////////////////////////////////////
@@ -8924,6 +8941,11 @@ function (window, undefined) {
 	prot = asc_CClosedAnnotProperty.prototype;
 	prot["asc_getBorderStyle"]	= prot.asc_getBorderStyle;
 	prot["asc_putBorderStyle"]	= prot.asc_putBorderStyle;
+	prot["asc_getBorderWidth"]	= prot.asc_getBorderWidth;
+	prot["asc_putBorderWidth"]	= prot.asc_putBorderWidth;
+
+	window["Asc"]["asc_CInkAnnotProperty"] = window["Asc"].asc_CInkAnnotProperty = asc_CInkAnnotProperty;
+	prot = asc_CInkAnnotProperty.prototype;
 	prot["asc_getBorderWidth"]	= prot.asc_getBorderWidth;
 	prot["asc_putBorderWidth"]	= prot.asc_putBorderWidth;
 
