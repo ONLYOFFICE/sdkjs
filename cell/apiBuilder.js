@@ -8658,6 +8658,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/FormatAsTable.js
 	 */
 	ApiWorksheet.prototype.FormatAsTable = function (sRange) {
+		if (this.worksheet && this.worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.autoFilter)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		this.worksheet.autoFilters.addAutoFilter('TableStyleLight9', AscCommonExcel.g_oRangeCache.getAscRange(sRange));
 	};
 
@@ -8673,6 +8677,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetColumnWidth.js
 	 */
 	ApiWorksheet.prototype.SetColumnWidth = function (nColumn, nWidth, bWithotPaddings) {
+		if (this.worksheet && this.worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatColumns)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		if (bWithotPaddings) {
 			let wb = this.worksheet.workbook;
 			nWidth = (nWidth * wb.maxDigitWidth - wb.paddingPlusBorder) / wb.maxDigitWidth;
@@ -10428,6 +10436,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetColumnWidth.js
 	 */
 	ApiRange.prototype.SetColumnWidth = function (nWidth) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatColumns)) {
+			return null;
+		}
 		this.range.worksheet.setColWidth(nWidth, this.range.bbox.c1, this.range.bbox.c2);
 	};
 	Object.defineProperty(ApiRange.prototype, "ColumnWidth", {
