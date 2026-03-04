@@ -12325,8 +12325,7 @@
 		// 	test.SetAutoFilter(1, "xlFilterAboveAverage", "xlFilterDynamic");
 		// })();
 
-		if (!this._checkProtection(Asc.c_oAscSheetProtectType.autoFilter)) {
-			throwException(new Error('Cannot modify protected sheet'));
+		if (!this._checkProtection()) {
 			return null;
 		}
 
