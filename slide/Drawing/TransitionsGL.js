@@ -57,11 +57,17 @@ function CTransitionGL(transitionAnimation)
 
 CTransitionGL.prototype.Init = function(w, h)
 {
-    if (this.glCanvas && this.gl && this.glCanvas.width === w && this.glCanvas.height === h)
+    if (this.glCanvas && this.gl && !this.gl.isContextLost() &&
+        this.glCanvas.width === w && this.glCanvas.height === h)
     {
         this.isInitialized = true;
         return true;
     }
+
+    // New context — old GL objects become invalid
+    this.programs = {};
+    this.buffers = {};
+    this.textures = { slide1: null, slide2: null };
 
     this.glCanvas = document.createElement('canvas');
     this.glCanvas.width = w;
@@ -801,50 +807,43 @@ CTransitionGL.prototype._renderFlip = function(progress, param)
     gl.enable(gl.DEPTH_TEST);
 
     let aspect = this.glCanvas.width / this.glCanvas.height;
-    let fov = Math.PI / 4; // 45 degrees
-    let dist = 1.0 / Math.tan(fov / 2); // camera distance so unit quad fills view
-
+    let fov = Math.PI / 4;
+    let dist = 1.0 / Math.tan(fov / 2);
     let projection = _Mat4.perspective(fov, aspect, 0.1, 100.0);
 
     let isLeft = (param === c_oAscSlideTransitionParams.Flip_Left);
-    let angle = progress * Math.PI; // 0 to 180 degrees
-    if (!isLeft) angle = -angle;
+    let dir = isLeft ? -1 : 1;
+    let angle = dir * progress * Math.PI; // 0 to ±180°
 
-    // Draw old slide (front face)
-    if (progress < 0.5)
+    gl.uniformMatrix4fv(prog.uniforms['uProjection'], false, projection);
+    gl.uniform1f(prog.uniforms['uAlpha'], 1.0);
+
+    if (progress <= 0.5)
     {
+        // Old slide: front face rotating away (0 → ±90°)
         let mv = _Mat4.identity();
         mv = _Mat4.translate(mv, 0, 0, -dist);
         mv = _Mat4.rotateY(mv, angle);
 
-        gl.uniformMatrix4fv(prog.uniforms['uProjection'], false, projection);
         gl.uniformMatrix4fv(prog.uniforms['uModelView'], false, mv);
-        gl.uniform1f(prog.uniforms['uAlpha'], 1.0);
-
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.textures.slide1);
         gl.uniform1i(prog.uniforms['uTexture'], 0);
-
         this._bindQuad3D(prog);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
-
-    // Draw new slide (back face — rotated an extra 180 degrees)
-    if (progress >= 0.5 || true) // draw both for smooth transition
+    else
     {
-        let backAngle = angle + (isLeft ? -Math.PI : Math.PI);
+        // New slide: back face rotating into view (∓90° → 0)
+        let backAngle = angle - dir * Math.PI;
         let mv = _Mat4.identity();
         mv = _Mat4.translate(mv, 0, 0, -dist);
         mv = _Mat4.rotateY(mv, backAngle);
 
-        gl.uniformMatrix4fv(prog.uniforms['uProjection'], false, projection);
         gl.uniformMatrix4fv(prog.uniforms['uModelView'], false, mv);
-        gl.uniform1f(prog.uniforms['uAlpha'], 1.0);
-
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.textures.slide2);
         gl.uniform1i(prog.uniforms['uTexture'], 0);
-
         this._bindQuad3D(prog);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
@@ -1130,24 +1129,22 @@ CTransitionGL.prototype._renderSwitch = function(progress, param)
     let isLeft = (param === c_oAscSlideTransitionParams.Switch_Left);
     let dir = isLeft ? -1 : 1;
 
-    // Both slides rotate on a shared axis like a carousel
-    let angle = progress * Math.PI; // 0 to 180 degrees
-    let hw = aspect;
-    let carouselR = hw * 0.7;
+    // 90-degree carousel: slides form an L-shape, rotating together
+    let angle = progress * Math.PI / 2; // 0 to 90 degrees
+    let R = aspect; // carousel radius = slide half-width
 
     // Old slide rotating away
     {
         let a = dir * angle;
-        let x = Math.sin(a) * carouselR;
-        let z = -dist + (Math.cos(a) - 1) * carouselR * 0.5;
+        let x = Math.sin(a) * R;
+        let z = -dist + (Math.cos(a) - 1) * R;
         let mv = _Mat4.identity();
         mv = _Mat4.translate(mv, x, 0, z);
         mv = _Mat4.rotateY(mv, a);
 
-        let alpha = 1.0 - progress * 0.5;
         gl.uniformMatrix4fv(prog.uniforms['uProjection'], false, projection);
         gl.uniformMatrix4fv(prog.uniforms['uModelView'], false, mv);
-        gl.uniform1f(prog.uniforms['uAlpha'], alpha);
+        gl.uniform1f(prog.uniforms['uAlpha'], 1.0);
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.textures.slide1);
         gl.uniform1i(prog.uniforms['uTexture'], 0);
@@ -1155,19 +1152,18 @@ CTransitionGL.prototype._renderSwitch = function(progress, param)
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
 
-    // New slide rotating in
+    // New slide rotating in (starts at -90°, ends at 0°)
     {
-        let a = dir * (angle - Math.PI);
-        let x = Math.sin(a) * carouselR;
-        let z = -dist + (Math.cos(a) - 1) * carouselR * 0.5;
+        let a = dir * (angle - Math.PI / 2);
+        let x = Math.sin(a) * R;
+        let z = -dist + (Math.cos(a) - 1) * R;
         let mv = _Mat4.identity();
         mv = _Mat4.translate(mv, x, 0, z);
         mv = _Mat4.rotateY(mv, a);
 
-        let alpha = 0.5 + progress * 0.5;
         gl.uniformMatrix4fv(prog.uniforms['uProjection'], false, projection);
         gl.uniformMatrix4fv(prog.uniforms['uModelView'], false, mv);
-        gl.uniform1f(prog.uniforms['uAlpha'], alpha);
+        gl.uniform1f(prog.uniforms['uAlpha'], 1.0);
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.textures.slide2);
         gl.uniform1i(prog.uniforms['uTexture'], 0);
@@ -1425,18 +1421,21 @@ let _VERT_MESH_DEFORM = [
     '    vShade = 1.0;',
     '',
     '    if (uDeformType < 0.5) {',  // Ripple (type 0) — expanding circle with wave distortion
-    '        float dist = length(pos.xy - vec2(uParam1, uParam2));',
+    '        vec2 diff = pos.xy - vec2(uParam1, uParam2);',
+    '        float dist = length(diff);',
     '        float maxR = 4.5;',
     '        float wavefrontR = p * maxR;',
     '        float d = dist - wavefrontR;',
     '',
-    '        float waveAmp = 0.18 * exp(-d * d * 3.0);',
-    '        pos.z += sin(d * 12.0) * waveAmp;',
+    '        float envelope = exp(-d * d * 0.8);',
+    '        float wave = sin(d * 5.0);',
+    '        float waveAmp = 0.30 * envelope;',
+    '        pos.z += wave * waveAmp;',
     '',
-    '        float behindWave = smoothstep(0.2, -0.2, d);',
-    '        pos.z -= behindWave * 0.1;',  // push behind background slide
+    '        float behindWave = smoothstep(0.05, -0.3, d);',
+    '        pos.z -= behindWave * 0.15;',
     '',
-    '        vShade = mix(1.0, 0.85 + 0.15 * cos(d * 12.0) * exp(-d * d * 3.0), 1.0 - behindWave);',
+    '        vShade = 1.0 - 0.15 * envelope * (1.0 - wave) * 0.5 * (1.0 - behindWave);',
     '',
     '    } else if (uDeformType < 1.5) {',  // Wind (type 1) — page peeling from edge
     '        float edgeDist = (pos.x * uParam1 + 1.0) * 0.5;',
@@ -1532,10 +1531,7 @@ let _FRAG_MESH_DEFORM = [
 
 CTransitionGL.prototype._prepareRipple = function()
 {
-    this.GetProgram('meshDeform', _VERT_MESH_DEFORM, _FRAG_MESH_DEFORM);
-    this.GetProgram('flip3d', _VERT_3D, _FRAG_TEXTURED);
-    this._initMeshBuffer(80, 80, 'mesh80');
-    this._initQuadBuffer3D();
+    this.GetProgram('ripple', _VERT_QUAD, _FRAG_RIPPLE);
 };
 
 CTransitionGL.prototype._renderMeshDeform = function(progress, param, deformType, baseParam)
@@ -1599,58 +1595,37 @@ CTransitionGL.prototype._renderMeshDeform = function(progress, param, deformType
 CTransitionGL.prototype._renderRipple = function(progress, param)
 {
     let gl = this.gl;
-    let meshProg = this.programs['meshDeform'];
-    let flatProg = this.programs['flip3d'];
-    if (!meshProg || !flatProg) return;
+    let prog = this.programs['ripple'];
+    if (!prog) return;
 
-    let aspect = this.glCanvas.width / this.glCanvas.height;
-    let fov = Math.PI / 4;
-    let dist = 1.0 / Math.tan(fov / 2);
-    let projection = _Mat4.perspective(fov, aspect, 0.1, 100.0);
+    gl.useProgram(prog.program);
+    gl.disable(gl.DEPTH_TEST);
 
-    // Origin position for ripple (in mesh coordinate space)
-    let hw = aspect;
-    let originX = 0.0, originY = 0.0;
+    // Origin in UV space (0,0)=bottom-left, (1,1)=top-right
+    let originX = 0.5, originY = 0.5;
     switch (param)
     {
-        case c_oAscSlideTransitionParams.Ripple_LeftUp:    originX = -hw; originY = 1.0;  break;
-        case c_oAscSlideTransitionParams.Ripple_RightUp:   originX = hw;  originY = 1.0;  break;
-        case c_oAscSlideTransitionParams.Ripple_LeftDown:  originX = -hw; originY = -1.0; break;
-        case c_oAscSlideTransitionParams.Ripple_RightDown: originX = hw;  originY = -1.0; break;
-        case c_oAscSlideTransitionParams.Ripple_Center:    originX = 0.0; originY = 0.0;  break;
+        case c_oAscSlideTransitionParams.Ripple_LeftUp:    originX = 1.0; originY = 0.0; break;
+        case c_oAscSlideTransitionParams.Ripple_RightUp:   originX = 0.0; originY = 0.0; break;
+        case c_oAscSlideTransitionParams.Ripple_LeftDown:  originX = 1.0; originY = 1.0; break;
+        case c_oAscSlideTransitionParams.Ripple_RightDown: originX = 0.0; originY = 1.0; break;
+        case c_oAscSlideTransitionParams.Ripple_Center:    originX = 0.5; originY = 0.5; break;
     }
-
-    // 1) Draw new slide behind
-    gl.useProgram(flatProg.program);
-    gl.enable(gl.DEPTH_TEST);
-    let mvBack = _Mat4.translate(_Mat4.identity(), 0, 0, -dist - 0.02);
-    gl.uniformMatrix4fv(flatProg.uniforms['uProjection'], false, projection);
-    gl.uniformMatrix4fv(flatProg.uniforms['uModelView'], false, mvBack);
-    gl.uniform1f(flatProg.uniforms['uAlpha'], 1.0);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.textures.slide2);
-    gl.uniform1i(flatProg.uniforms['uTexture'], 0);
-    this._bindQuad3D(flatProg);
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-
-    // 2) Draw old slide with ripple deformation
-    let mv = _Mat4.translate(_Mat4.identity(), 0, 0, -dist);
-    gl.useProgram(meshProg.program);
-    gl.uniformMatrix4fv(meshProg.uniforms['uProjection'], false, projection);
-    gl.uniformMatrix4fv(meshProg.uniforms['uModelView'], false, mv);
-    gl.uniform1f(meshProg.uniforms['uProgress'], progress);
-    gl.uniform1f(meshProg.uniforms['uTime'], progress * 6.28);
-    gl.uniform1f(meshProg.uniforms['uDeformType'], 0);
-    gl.uniform1f(meshProg.uniforms['uParam1'], originX);
-    gl.uniform1f(meshProg.uniforms['uParam2'], originY);
-    gl.uniform1f(meshProg.uniforms['uAlpha'], 1.0);
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.textures.slide1);
-    gl.uniform1i(meshProg.uniforms['uTexture'], 0);
+    gl.uniform1i(prog.uniforms['uTexture1'], 0);
 
-    this._bindMesh('mesh80', meshProg);
-    gl.drawElements(gl.TRIANGLES, this.buffers['mesh80'].idxCount, gl.UNSIGNED_SHORT, 0);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.textures.slide2);
+    gl.uniform1i(prog.uniforms['uTexture2'], 1);
+
+    gl.uniform1f(prog.uniforms['uProgress'], progress);
+    gl.uniform1f(prog.uniforms['uAspect'], this.glCanvas.width / this.glCanvas.height);
+    gl.uniform2f(prog.uniforms['uOrigin'], originX, originY);
+
+    this._bindQuad(prog);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 };
 
 // ============================================================
@@ -2375,7 +2350,7 @@ let _VERT_VORTEX_SCATTER = [
     '',
     '    vAlpha = 1.0 - smoothstep(0.85, 1.0, tAnim);',
     '',
-    '    // Y-axis rotation: slide turns like a page',
+    '    // Y-axis rotation: tile centers orbit into depth',
     '    float rotAngle = tAnim * 1.5708;',
     '    float rSign;',
     '    if (uDirection < 0.5) rSign = 1.0;',
@@ -2386,30 +2361,28 @@ let _VERT_VORTEX_SCATTER = [
     '    float cr = cos(rotAngle * rSign);',
     '    float sr = sin(rotAngle * rSign);',
     '',
-    '    // Pivot at center of half-slide: scatter→dir side, assemble→opposite',
-    '    float pivotSign = rSign;',
-    '    if (uReverse > 0.5) pivotSign = -pivotSign;',
-    '',
-    '    // Rotate tile center and local geometry around Y (or X) at pivot',
+    '    // Rotate both tile center and local geometry around same axis',
     '    vec3 rotPos;',
     '    if (uDirection < 1.5) {',
-    '        float pivotX = pivotSign * uAspect * 0.5;',
-    '        float dx = aTileCenter.x - pivotX;',
     '        local = vec3(local.x * cr, local.y, -local.x * sr);',
-    '        rotPos = vec3(pivotX + dx * cr, aTileCenter.y, -dx * sr);',
+    '        rotPos = vec3(aTileCenter.x * cr, aTileCenter.y, -aTileCenter.x * sr);',
     '    } else {',
-    '        float pivotY = pivotSign * 0.5;',
-    '        float dy = aTileCenter.y - pivotY;',
     '        local = vec3(local.x, local.y * cr, -local.y * sr);',
-    '        rotPos = vec3(aTileCenter.x, pivotY + dy * cr, -dy * sr);',
+    '        rotPos = vec3(aTileCenter.x, aTileCenter.y * cr, -aTileCenter.y * sr);',
     '    }',
     '',
     '    pos = rotPos + local;',
     '',
-    '    // Cloud scatter',
+    '    // Cloud scatter + directional drift',
     '    pos.x += aTileOffset.x * tAnim * 1.2;',
     '    pos.y += aTileOffset.y * tAnim * 1.0;',
     '    pos.z += (aTileOffset.z - 0.75) * tAnim * 5.0;',
+    '',
+    '    // Drift: "Left" = particles move right (away from wave), etc.',
+    '    if (uDirection < 0.5) pos.x += tAnim * 0.6;',
+    '    else if (uDirection < 1.5) pos.x -= tAnim * 0.6;',
+    '    else if (uDirection < 2.5) pos.y -= tAnim * 0.6;',
+    '    else pos.y += tAnim * 0.6;',
     '',
     '    vTexCoord = aTexCoord;',
     '    gl_Position = uProjection * uModelView * vec4(pos, 1.0);',
@@ -2960,6 +2933,40 @@ CTransitionGL.prototype._prepareFlash = function()
 {
     this.GetProgram('flash', _VERT_QUAD, _FRAG_FLASH);
 };
+
+// ============================================================
+// Transition: Ripple — fullscreen 2D UV-distortion ripple
+// ============================================================
+
+let _FRAG_RIPPLE = [
+    'precision mediump float;',
+    'uniform sampler2D uTexture1;',
+    'uniform sampler2D uTexture2;',
+    'uniform float uProgress;',
+    'uniform float uAspect;',
+    'uniform vec2 uOrigin;',
+    'varying vec2 vTexCoord;',
+    'void main() {',
+    '    vec2 uv = vTexCoord;',
+    '    vec2 diff = uv - uOrigin;',
+    '    diff.x *= uAspect;',
+    '    float dist = length(diff);',
+    '    float maxR = length(vec2(uAspect, 1.0));',
+    '    float wavefrontR = uProgress * (maxR + 0.15);',
+    '    float d = dist - wavefrontR;',
+    '    float envelope = exp(-d * d * 6.0);',
+    '    float wave = sin(d * 25.0);',
+    '    vec2 dir = dist > 0.001 ? normalize(diff) : vec2(1.0, 0.0);',
+    '    dir.x /= uAspect;',
+    '    vec2 rippleUV = uv + dir * wave * envelope * 0.008;',
+    '    vec4 c1 = texture2D(uTexture1, rippleUV);',
+    '    vec4 c2 = texture2D(uTexture2, rippleUV);',
+    '    float behind = smoothstep(0.03, -0.03, d);',
+    '    float shade = 1.0 - 0.08 * (1.0 - wave) * 0.5 * envelope;',
+    '    vec4 result = mix(c1, c2, behind);',
+    '    gl_FragColor = vec4(result.rgb * shade, result.a);',
+    '}'
+].join('\n');
 
 // ============================================================
 // Transition: Circle — expanding circle with gradient edge
