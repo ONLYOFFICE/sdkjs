@@ -8698,6 +8698,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetRowHeight.js
 	 */
 	ApiWorksheet.prototype.SetRowHeight = function (nRow, nHeight) {
+		if (this.worksheet && this.worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatRows)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		this.worksheet.setRowHeight(nHeight, nRow, nRow, true);
 	};
 
@@ -9740,6 +9744,10 @@
 			bbox = range.bbox,
 			ws = range.worksheet,
 			wsView = Asc['editor'].wb.getWorksheet(ws.getIndex());
+		if (ws.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells) || (ws.getSheetProtection() && ws.isIntersectLockedRanges([bbox]))) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		range.cleanAll();
 		ws.deletePivotTables(bbox);
 		ws.removeSparklines(bbox);
@@ -9759,6 +9767,9 @@
         const range = this.range;
         const bbox = range.bbox;
         const ws = range.worksheet;
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			return null;
+		}
 		range.cleanFormat();
         ws.clearConditionalFormattingRulesByRanges([bbox]);
     };
@@ -9774,6 +9785,10 @@
 		const range = this.range;
 		const bbox = range.bbox;
 		const ws = range.worksheet;
+		if (ws.getSheetProtection() && ws.isIntersectLockedRanges([bbox])) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
         this.range.cleanAll();
 		ws.deletePivotTables(bbox);
     };
@@ -9786,6 +9801,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/ClearHyperlinks.js
      */
     ApiRange.prototype.ClearHyperlinks = function () {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.insertHyperlinks)) {
+			return null;
+		}
         this.range.cleanHyperlinks();
     };
 
@@ -10483,6 +10501,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetRowHeight.js
 	 */
 	ApiRange.prototype.SetRowHeight = function (nHeight) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatRows)) {
+			return null;
+		}
 		this.range.worksheet.setRowHeight(nHeight, this.range.bbox.r1, this.range.bbox.r2, true);
 	};
 	Object.defineProperty(ApiRange.prototype, "RowHeight", {
@@ -10512,6 +10533,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFontSize.js
 	 */
 	ApiRange.prototype.SetFontSize = function (nSize) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			return null;
+		}
 		this.range.setFontsize(nSize);
 	};
 	Object.defineProperty(ApiRange.prototype, "FontSize", {
@@ -10528,6 +10552,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFontName.js
 	 */
 	ApiRange.prototype.SetFontName = function (sName) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			return null;
+		}
 		this.range.setFontname(sName);
 	};
 	Object.defineProperty(ApiRange.prototype, "FontName", {
@@ -10631,6 +10658,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetReadingOrder.js
 	 */
 	ApiRange.prototype.SetReadingOrder = function (direction) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			return null;
+		}
 		const map = {
 			"context": Asc.c_oReadingOrderTypes.Context, // 0
 			"ltr": Asc.c_oReadingOrderTypes.LTR, // 1
@@ -11276,6 +11306,11 @@
 			let cols = bbox.c2 - bbox.c1 + 1;
 			shift = (rows <= cols) ? "up" : "left";
 		}
+		const deleteProtectType = shift === "up" ? Asc.c_oAscSheetProtectType.deleteRows : Asc.c_oAscSheetProtectType.deleteColumns;
+		if (!this._checkProtection(deleteProtectType)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		if (shift === "up") {
 			val = Asc.c_oAscDeleteOptions.DeleteCellsAndShiftTop;
 			lockRange = ws.getRange3(bbox.r1, bbox.c1, bbox.r2, AscCommon.gc_nMaxCol0);
@@ -11302,6 +11337,11 @@
 			var rows = bbox.r2 - bbox.r1 + 1;
 			var cols = bbox.c2 - bbox.c1 + 1;
 			shift = (rows <= cols) ? "down" : "right";
+		}
+		const insertProtectType = shift === "down" ? Asc.c_oAscSheetProtectType.insertRows : Asc.c_oAscSheetProtectType.insertColumns;
+		if (!this._checkProtection(insertProtectType)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
 		}
 		if (shift == "down")
 			this.range.addCellsShiftBottom();
@@ -12278,7 +12318,7 @@
 		// 	test.SetAutoFilter(1, "xlFilterAboveAverage", "xlFilterDynamic");
 		// })();
 
-		if (!this._checkProtection()) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.autoFilter)) {
 			return null;
 		}
 
