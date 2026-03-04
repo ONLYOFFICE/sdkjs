@@ -3083,8 +3083,15 @@
 
 							// dynamicProps = AscCommonExcel.bIsSupportDynamicArrays ? {range: refRange, beforeSpillRange: beforeSpillRange} : null;
 							// parsed.setDynamicRef(refRange);
-							/* dynamic array formula */
 
+							// t.wb.dependencyFormulas.lockRecal();
+							
+							// refRangeWS.setValue("=" + parsed.getFormula(), null, null, refRange, null, dynamicProps);
+
+							// t.wb.dependencyFormulas.unlockRecal(true);
+							/* dynamic array formula end */
+
+							/* array formula */
 							if (!parsed.ws.dynamicArrayManager.isAutoExpandBBox(refRange)) {
 								// todo clear promises after all?
 								t.wb.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
@@ -3098,6 +3105,7 @@
 
 								t.wb.dependencyFormulas.unlockRecal(true);
 							}
+							/* array formula end*/
 						}
 
 						if (parsed.ref) {
@@ -16387,7 +16395,7 @@
 				oldValueText: Val.value.text
 			};
 			this.setFormula(Val.formula, null, Val.formulaRef, caProps);
-			if (null !== Val.value && this.ws.workbook.bRedoChanges) {
+			if (null !== Val.value && (this.ws.workbook.bRedoChanges /*|| this.ws.workbook.bUndoChanges*/)) {
 				// Set value in Redo when we have a formula
 				this._setValueData(Val.value);
 			}

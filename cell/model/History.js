@@ -515,13 +515,6 @@ CHistory.prototype.Clear = function()
 	this.waitingList = null;
 	this.isExecutingWaitingList = false;
 
-	// Clear all caches
-	for (let i = 0; i < this.Points.length; i++) {
-		if (this.Points[i] && this.Points[i].customFunctionCache) {
-			this.Points[i].customFunctionCache = null;
-		}
-	}
-
 	window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
 	this.workbook.handlers.trigger("toggleAutoCorrectOptions", null, true);
 	//this.workbook.handlers.trigger("cleanCutData");
@@ -688,12 +681,7 @@ CHistory.prototype.Remove_LastPoint = function()
 {
 	if (this.Index > -1)
 	{
-		let point = this.Points[this.Index];
-		// Clear cache - single operation
-		if (point && point.customFunctionCache) {
-			point.customFunctionCache = null;
-		}
-		
+
 		this.Index--;
 		this.Points.length = this.Index + 1;
 
@@ -1222,8 +1210,7 @@ CHistory.prototype.Add = function(Class, Type, sheetid, range, Data, LocalChange
 				Pos : 0,
 				Len : 0
 			},
-			NeedRecalc : !this.MinorChanges && (!Class || Class.IsNeedRecalculate() || Class.IsNeedRecalculateLineNumbers()),
-			customFunctionCache: null
+			NeedRecalc : !this.MinorChanges && (!Class || Class.IsNeedRecalculate() || Class.IsNeedRecalculateLineNumbers())
 		};
 
 	if(null != range)
