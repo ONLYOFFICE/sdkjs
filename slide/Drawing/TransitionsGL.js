@@ -392,6 +392,23 @@ let _Mat4 = {
         return out;
     },
 
+    rotateZ: function(m, rad)
+    {
+        let s = Math.sin(rad), c = Math.cos(rad);
+        let out = new Float32Array(m);
+        let a00 = m[0], a01 = m[1], a02 = m[2], a03 = m[3];
+        let a10 = m[4], a11 = m[5], a12 = m[6], a13 = m[7];
+        out[0]  = a00 * c + a10 * s;
+        out[1]  = a01 * c + a11 * s;
+        out[2]  = a02 * c + a12 * s;
+        out[3]  = a03 * c + a13 * s;
+        out[4]  = a10 * c - a00 * s;
+        out[5]  = a11 * c - a01 * s;
+        out[6]  = a12 * c - a02 * s;
+        out[7]  = a13 * c - a03 * s;
+        return out;
+    },
+
     multiply: function(a, b)
     {
         let out = new Float32Array(16);
@@ -3367,24 +3384,29 @@ let _VERT_HONEYCOMB = [
     'varying vec2 vTexCoord;',
     'varying float vFlipProgress;',
     'varying float vShade;',
+    'varying float vAlpha;',
     'void main() {',
     '    vec3 pos = aPosition;',
-    '    float flipDuration = 0.25;',
+    '    float flipDuration = 0.45;',
     '    float flipStart = aTilePhase * (1.0 - flipDuration);',
     '    float fp = clamp((uProgress - flipStart) / flipDuration, 0.0, 1.0);',
+    '    fp = fp * fp * (3.0 - 2.0 * fp);',
     '    vFlipProgress = fp;',
     '',
     '    vec3 local = pos - vec3(aTileCenter, 0.0);',
-    '    float angle = fp * 3.14159;',
-    '    float c = cos(angle);',
-    '    float s = sin(angle);',
-    '    float newX = local.x * c;',
-    '    float newZ = local.x * s;',
-    '    local.x = newX;',
-    '    local.z = newZ;',
-    '    pos = vec3(aTileCenter, 0.0) + local;',
     '',
-    '    vShade = 1.0 - sin(fp * 3.14159) * 0.3;',
+    '    float scale;',
+    '    if (fp <= 0.5) {',
+    '        scale = 1.0 - fp * 2.0;',
+    '    } else {',
+    '        scale = (fp - 0.5) * 2.0;',
+    '    }',
+    '    local.x *= scale;',
+    '    local.y *= scale;',
+    '    vShade = 1.0;',
+    '    vAlpha = 1.0;',
+    '',
+    '    pos = vec3(aTileCenter, 0.0) + local;',
     '    vTexCoord = aTexCoord;',
     '    gl_Position = uProjection * uModelView * vec4(pos, 1.0);',
     '}'
@@ -3397,6 +3419,7 @@ let _FRAG_HONEYCOMB = [
     'varying vec2 vTexCoord;',
     'varying float vFlipProgress;',
     'varying float vShade;',
+    'varying float vAlpha;',
     'void main() {',
     '    vec4 color;',
     '    if (vFlipProgress < 0.5) {',
@@ -3404,7 +3427,7 @@ let _FRAG_HONEYCOMB = [
     '    } else {',
     '        color = texture2D(uTexture2, vTexCoord);',
     '    }',
-    '    gl_FragColor = vec4(color.rgb * vShade, color.a);',
+    '    gl_FragColor = vec4(color.rgb * vShade, color.a * vAlpha);',
     '}'
 ].join('\n');
 
@@ -3435,7 +3458,14 @@ CTransitionGL.prototype._initHexMeshBuffer = function(name, hexRadius)
             let cx = -hw - r + col * colSpacing + (row % 2) * colSpacing * 0.5;
             if (cx + r < -hw - 0.2 || cx - r > hw + 0.2) continue;
             if (cy + r < -hh - 0.2 || cy - r > hh + 0.2) continue;
-            hexes.push({ cx: cx, cy: cy, phase: rand() });
+
+            // Phase: diagonal wave from bottom-left to top-right
+            let nx = (cx + hw) / (2 * hw);
+            let ny = (cy + hh) / (2 * hh);
+            let diag = (nx + ny) / 2;
+            let phase = diag * 0.85 + rand() * 0.15;
+            if (phase > 1.0) phase = 1.0;
+            hexes.push({ cx: cx, cy: cy, phase: phase });
         }
     }
 
@@ -3445,7 +3475,7 @@ CTransitionGL.prototype._initHexMeshBuffer = function(name, hexRadius)
     let data = new Float32Array(vertCount * 8);
     let vi = 0;
 
-    let hexScale = 0.92; // gap between hexes
+    let hexScale = 0.88; // visible gap between hexes
 
     for (let h = 0; h < hexes.length; h++)
     {
@@ -3544,22 +3574,16 @@ CTransitionGL.prototype._renderHoneycomb = function(progress)
     let dist = 1.0 / Math.tan(fov / 2);
     let projection = _Mat4.perspective(fov, aspect, 0.1, 100.0);
 
-    gl.enable(gl.DEPTH_TEST);
+    gl.disable(gl.DEPTH_TEST);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-    // New slide behind (visible through gaps between hexes)
-    gl.useProgram(flatProg.program);
-    let mvBack = _Mat4.translate(_Mat4.identity(), 0, 0, -dist - 0.02);
-    gl.uniformMatrix4fv(flatProg.uniforms['uProjection'], false, projection);
-    gl.uniformMatrix4fv(flatProg.uniforms['uModelView'], false, mvBack);
-    gl.uniform1f(flatProg.uniforms['uAlpha'], 1.0);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.textures.slide2);
-    gl.uniform1i(flatProg.uniforms['uTexture'], 0);
-    this._bindQuad3D(flatProg);
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-
-    // Hex tiles on top
-    let mv = _Mat4.translate(_Mat4.identity(), 0, 0, -dist);
+    // Hex tiles with zoom + Z rotation (background is black via clearColor)
+    let zoomAmount = Math.sin(progress * Math.PI) * 1.5;
+    let mv = _Mat4.identity();
+    mv = _Mat4.translate(mv, 0, 0, -dist + zoomAmount);
+    let rotAngle = Math.sin(progress * Math.PI) * 0.15;
+    mv = _Mat4.rotateZ(mv, rotAngle);
     gl.useProgram(prog.program);
     gl.uniformMatrix4fv(prog.uniforms['uProjection'], false, projection);
     gl.uniformMatrix4fv(prog.uniforms['uModelView'], false, mv);
@@ -3575,6 +3599,36 @@ CTransitionGL.prototype._renderHoneycomb = function(progress)
 
     this._bindHexMesh('hexTiles', prog);
     gl.drawArrays(gl.TRIANGLES, 0, this.buffers['hexTiles'].vertCount);
+
+    // Directional wipe: slide2 sweeps from right to left at the end
+    let wipeStart = 0.78;
+    if (progress > wipeStart)
+    {
+        let wipeProgress = (progress - wipeStart) / (1.0 - wipeStart);
+        wipeProgress = wipeProgress * wipeProgress * (3.0 - 2.0 * wipeProgress);
+        let canvasWidth = this.glCanvas.width;
+        let canvasHeight = this.glCanvas.height;
+        let cleanWidth = Math.ceil(canvasWidth * wipeProgress);
+        let cleanX = canvasWidth - cleanWidth;
+
+        gl.enable(gl.SCISSOR_TEST);
+        gl.scissor(cleanX, 0, cleanWidth, canvasHeight);
+
+        gl.useProgram(flatProg.program);
+        let mvWipe = _Mat4.translate(_Mat4.identity(), 0, 0, -dist + 0.01);
+        gl.uniformMatrix4fv(flatProg.uniforms['uProjection'], false, projection);
+        gl.uniformMatrix4fv(flatProg.uniforms['uModelView'], false, mvWipe);
+        gl.uniform1f(flatProg.uniforms['uAlpha'], 1.0);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.textures.slide2);
+        gl.uniform1i(flatProg.uniforms['uTexture'], 0);
+        this._bindQuad3D(flatProg);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+        gl.disable(gl.SCISSOR_TEST);
+    }
+
+    gl.disable(gl.BLEND);
 };
 
 // ============================================================
