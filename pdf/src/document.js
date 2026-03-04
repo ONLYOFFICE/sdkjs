@@ -1750,10 +1750,6 @@ var CPresentation = CPresentation || function(){};
                     return;
 				}
             }
-            
-            if ((oMouseDownObject.IsDrawing() || (oMouseDownObject.IsAnnot() && oMouseDownObject.IsFreeText())) && false == oMouseDownObject.IsInTextBox()) {
-                oDrDoc.TargetEnd();
-            }
         }
 
         // check redraw if focus is lost
@@ -2817,7 +2813,7 @@ var CPresentation = CPresentation || function(){};
         
         this.UpdateInterface();
         this.UpdateSelectionTrackPos();
-        this.AnnotSelectTrackHandler.Update(true);
+        this.UpdateAnnotTrackPos(true);
         oViewer.onUpdateOverlay();
         oViewer.file.onUpdateSelection();
     };
@@ -4004,9 +4000,9 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.UpdateMathTrackPos = function() {
         this.MathTrackHandler.OnChangePosition();
     };
-    CPDFDoc.prototype.UpdateAnnotTrackPos = function() {
-        this.AnnotTextPrTrackHandler.OnChangePosition();
-        this.AnnotSelectTrackHandler.OnChangePosition();
+    CPDFDoc.prototype.UpdateAnnotTrackPos = function(bCheckMouseUpPos) {
+        this.AnnotTextPrTrackHandler.OnChangePosition(bCheckMouseUpPos);
+        this.AnnotSelectTrackHandler.OnChangePosition(bCheckMouseUpPos);
     };
     CPDFDoc.prototype.UpdateSelectionTrackPos = function() {
         this.TextSelectTrackHandler.OnChangePosition();
