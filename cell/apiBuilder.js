@@ -12326,6 +12326,7 @@
 		// })();
 
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.autoFilter)) {
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 
