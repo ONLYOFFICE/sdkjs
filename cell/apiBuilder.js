@@ -9768,6 +9768,7 @@
         const bbox = range.bbox;
         const ws = range.worksheet;
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 		range.cleanFormat();
@@ -9802,6 +9803,7 @@
      */
     ApiRange.prototype.ClearHyperlinks = function () {
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.insertHyperlinks)) {
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
         this.range.cleanHyperlinks();
@@ -10455,6 +10457,7 @@
 	 */
 	ApiRange.prototype.SetColumnWidth = function (nWidth) {
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatColumns)) {
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 		this.range.worksheet.setColWidth(nWidth, this.range.bbox.c1, this.range.bbox.c2);
@@ -10502,6 +10505,7 @@
 	 */
 	ApiRange.prototype.SetRowHeight = function (nHeight) {
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatRows)) {
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 		this.range.worksheet.setRowHeight(nHeight, this.range.bbox.r1, this.range.bbox.r2, true);
@@ -10534,6 +10538,7 @@
 	 */
 	ApiRange.prototype.SetFontSize = function (nSize) {
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 		this.range.setFontsize(nSize);
@@ -10553,6 +10558,7 @@
 	 */
 	ApiRange.prototype.SetFontName = function (sName) {
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 		this.range.setFontname(sName);
@@ -10659,6 +10665,7 @@
 	 */
 	ApiRange.prototype.SetReadingOrder = function (direction) {
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
 		const map = {
