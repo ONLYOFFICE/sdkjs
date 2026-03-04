@@ -448,6 +448,7 @@
         oCopy.SetRotate(this.GetRotate());
         aCallout && oCopy.SetCallout(aCallout.slice());
         aRC && oCopy.SetRichContents(aRC.slice());
+        oCopy.SetIntent(this.GetIntent());
 
         return oCopy;
     };
