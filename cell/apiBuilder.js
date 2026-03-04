@@ -8658,7 +8658,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/FormatAsTable.js
 	 */
 	ApiWorksheet.prototype.FormatAsTable = function (sRange) {
-		if (this.worksheet && this.worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.autoFilter)) {
+		if (this.worksheet && this.worksheet.getSheetProtection()) {
 			throwException(new Error('Cannot modify protected sheet'));
 			return null;
 		}
