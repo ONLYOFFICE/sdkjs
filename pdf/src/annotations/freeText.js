@@ -625,6 +625,8 @@
 	CAnnotationFreeText.prototype.private_UpdateRichContent = function() {
 		let aRCInfo = this.GetRichContents();
 
+		AscCommon.History.StartNoHistoryMode();
+
         let oContent = this.GetDocContent();
         oContent.ClearContent();
         
@@ -718,6 +720,8 @@
         else {
             _t.SetNeedRecalc(true);
         }
+
+		AscCommon.History.EndNoHistoryMode();
     };
     CAnnotationFreeText.prototype.GetAllFonts = function(fontMap) {
         let aRCInfo = this.GetRichContents(true);
