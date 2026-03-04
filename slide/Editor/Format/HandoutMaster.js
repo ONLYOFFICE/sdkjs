@@ -488,7 +488,7 @@
 	const TEXTPLACEHOLDER_STEP_COUNT = 7;
 	function TextPlaceholder(x, y, width, height) {
 		PlaceholderBase.call(this, x, y, width, height);
-	};
+	}
 	AscFormat.InitClassWithoutType(TextPlaceholder, PlaceholderBase);
 	TextPlaceholder.prototype.draw = function (graphics) {
 		if (graphics.isBoundsChecker()) {
@@ -507,7 +507,7 @@
 		graphics.RestoreGrState();
 	};
 
-	function CreateHandoutMaster() {
+	function createHandoutMaster() {
 		var oHandoutMaster = new CHandoutMaster();
 		var oBG = new AscFormat.CBg();
 		var oBgRef = new AscFormat.StyleRef();
@@ -519,183 +519,10 @@
 		oBG.bgRef = oBgRef;
 		oHandoutMaster.changeBackground(oBG);
 
-		var oSp = new AscFormat.CShape();
-		oSp.setBDeleted(false);
-		var oNvSpPr = new AscFormat.UniNvPr();
-		var oCNvPr = oNvSpPr.cNvPr;
-		oCNvPr.setId(2);
-		oCNvPr.setName("Header Placeholder 1");
-		var oPh = new AscFormat.Ph();
-		oPh.setType(AscFormat.phType_hdr);
-		oPh.setSz(2);
-		oNvSpPr.nvPr.setPh(oPh);
-		oSp.setNvSpPr(oNvSpPr);
-		oSp.setLockValue(AscFormat.LOCKS_MASKS.noGrp, true);
-		oSp.setSpPr(new AscFormat.CSpPr());
-		oSp.spPr.setParent(oSp);
-		oSp.spPr.setXfrm(new AscFormat.CXfrm());
-		oSp.spPr.xfrm.setParent(oSp.spPr);
-		oSp.spPr.xfrm.setOffX(0);
-		oSp.spPr.xfrm.setOffY(0);
-		oSp.spPr.xfrm.setExtX(2971800 / 36000);
-		oSp.spPr.xfrm.setExtY(458788 / 36000);
-		oSp.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
-		oSp.spPr.geometry.setParent(oSp.spPr);
-		oSp.createTextBody();
-		var oBodyPr = oSp.txBody.bodyPr.createDuplicate();
-		oBodyPr.vert = AscFormat.nVertTThorz;
-		oBodyPr.lIns = 91440 / 36000;
-		oBodyPr.tIns = 45720 / 36000;
-		oBodyPr.rIns = 91440 / 36000;
-		oBodyPr.bIns = 45720 / 36000;
-		oBodyPr.rtlCol = false;
-		oBodyPr.anchor = 1;
-		oSp.txBody.setBodyPr(oBodyPr);
-		var oTxLstStyle = new AscFormat.TextListStyle();
-		oTxLstStyle.levels[0] = new CParaPr();
-		oTxLstStyle.levels[0].Jc = AscCommon.align_Left;
-		oTxLstStyle.levels[0].DefaultRunPr = new AscCommonWord.CTextPr();
-		oTxLstStyle.levels[0].DefaultRunPr.FontSize = 12;
-		oSp.txBody.setLstStyle(oTxLstStyle);
-		oSp.setParent(oHandoutMaster);
-		oHandoutMaster.addToSpTreeToPos(0, oSp);
-
-		oSp = new AscFormat.CShape();
-		oSp.setBDeleted(false);
-		oNvSpPr = new AscFormat.UniNvPr();
-		oCNvPr = oNvSpPr.cNvPr;
-		oCNvPr.setId(3);
-		oCNvPr.setName("Date Placeholder 2");
-		oPh = new AscFormat.Ph();
-		oPh.setType(AscFormat.phType_dt);
-		oPh.setIdx(3 + "");
-		oNvSpPr.nvPr.setPh(oPh);
-		oSp.setNvSpPr(oNvSpPr);
-		oSp.setLockValue(AscFormat.LOCKS_MASKS.noGrp, true);
-		oSp.setSpPr(new AscFormat.CSpPr());
-		oSp.spPr.setParent(oSp);
-		oSp.spPr.setXfrm(new AscFormat.CXfrm());
-		oSp.spPr.xfrm.setParent(oSp.spPr);
-		oSp.spPr.xfrm.setOffX(3884613 / 36000);
-		oSp.spPr.xfrm.setOffY(0);
-		oSp.spPr.xfrm.setExtX(2971800 / 36000);
-		oSp.spPr.xfrm.setExtY(458788 / 36000);
-		oSp.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
-		oSp.spPr.geometry.setParent(oSp.spPr);
-		oSp.createTextBody();
-		oBodyPr = oSp.txBody.bodyPr.createDuplicate();
-		oBodyPr.vert = AscFormat.nVertTThorz;
-		oBodyPr.lIns = 91440 / 36000;
-		oBodyPr.tIns = 45720 / 36000;
-		oBodyPr.rIns = 91440 / 36000;
-		oBodyPr.bIns = 45720 / 36000;
-		oSp.txBody.setBodyPr(oBodyPr);
-		oTxLstStyle = new AscFormat.TextListStyle();
-		oTxLstStyle.levels[0] = new CParaPr();
-		oTxLstStyle.levels[0].Jc = AscCommon.align_Right;
-		oTxLstStyle.levels[0].DefaultRunPr = new AscCommonWord.CTextPr();
-		oTxLstStyle.levels[0].DefaultRunPr.FontSize = 12;
-		//endParaPr
-		oSp.txBody.setLstStyle(oTxLstStyle);
-		oSp.setParent(oHandoutMaster);
-		oHandoutMaster.addToSpTreeToPos(1, oSp);
-		AscCommonSlide.addDateTimeToSlideLikeObject(oHandoutMaster, "datetimeFigureOut");
-
-		oSp = new AscFormat.CShape();
-		oSp.setBDeleted(false);
-		oNvSpPr = new AscFormat.UniNvPr();
-		oCNvPr = oNvSpPr.cNvPr;
-		oCNvPr.setId(4);
-		oCNvPr.setName("Footer Placeholder 3");
-		oPh = new AscFormat.Ph();
-		oPh.setType(AscFormat.phType_ftr);
-		oPh.setIdx(2 + "");
-		oPh.setSz(2);
-		oNvSpPr.nvPr.setPh(oPh);
-		oSp.setNvSpPr(oNvSpPr);
-		oSp.setLockValue(AscFormat.LOCKS_MASKS.noGrp, true);
-		oSp.setSpPr(new AscFormat.CSpPr());
-		oSp.spPr.setParent(oSp);
-		oSp.spPr.setXfrm(new AscFormat.CXfrm());
-		oSp.spPr.xfrm.setParent(oSp.spPr);
-		oSp.spPr.xfrm.setOffX(0);
-		oSp.spPr.xfrm.setOffY(8685213 / 36000);
-		oSp.spPr.xfrm.setExtX(2971800 / 36000);
-		oSp.spPr.xfrm.setExtY(458787 / 36000);
-		oSp.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
-		oSp.spPr.geometry.setParent(oSp.spPr);
-		oSp.createTextBody();
-		oBodyPr = oSp.txBody.bodyPr.createDuplicate();
-		oBodyPr.vert = AscFormat.nVertTThorz;
-		oBodyPr.lIns = 91440 / 36000;
-		oBodyPr.tIns = 45720 / 36000;
-		oBodyPr.rIns = 91440 / 36000;
-		oBodyPr.bIns = 45720 / 36000;
-		oBodyPr.rtlCol = false;
-		oBodyPr.anchor = 0;
-		oSp.txBody.setBodyPr(oBodyPr);
-		oTxLstStyle = new AscFormat.TextListStyle();
-		oTxLstStyle.levels[0] = new CParaPr();
-		oTxLstStyle.levels[0].Jc = AscCommon.align_Left;
-		oTxLstStyle.levels[0].DefaultRunPr = new AscCommonWord.CTextPr();
-		oTxLstStyle.levels[0].DefaultRunPr.FontSize = 12;
-		//endParaPr
-		oSp.txBody.setLstStyle(oTxLstStyle);
-		oSp.setParent(oHandoutMaster);
-		oHandoutMaster.addToSpTreeToPos(2, oSp);
-
-		oSp = new AscFormat.CShape();
-		oSp.setBDeleted(false);
-		oNvSpPr = new AscFormat.UniNvPr();
-		oCNvPr = oNvSpPr.cNvPr;
-		oCNvPr.setId(5);
-		oCNvPr.setName("Slide Number Placeholder 4");
-		oPh = new AscFormat.Ph();
-		oPh.setType(AscFormat.phType_sldNum);
-		oPh.setIdx(3 + "");
-		oPh.setSz(2);
-		oNvSpPr.nvPr.setPh(oPh);
-		oSp.setNvSpPr(oNvSpPr);
-		oSp.setLockValue(AscFormat.LOCKS_MASKS.noGrp, true);
-		oSp.setSpPr(new AscFormat.CSpPr());
-		oSp.spPr.setParent(oSp);
-		oSp.spPr.setXfrm(new AscFormat.CXfrm());
-		oSp.spPr.xfrm.setParent(oSp.spPr);
-		oSp.spPr.xfrm.setOffX(3884613 / 36000);
-		oSp.spPr.xfrm.setOffY(8685213 / 36000);
-		oSp.spPr.xfrm.setExtX(2971800 / 36000);
-		oSp.spPr.xfrm.setExtY(458787 / 36000);
-		oSp.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
-		oSp.spPr.geometry.setParent(oSp.spPr);
-		oSp.createTextBody();
-		oBodyPr = oSp.txBody.bodyPr.createDuplicate();
-		oBodyPr.vert = AscFormat.nVertTThorz;
-		oBodyPr.lIns = 91440 / 36000;
-		oBodyPr.tIns = 45720 / 36000;
-		oBodyPr.rIns = 91440 / 36000;
-		oBodyPr.bIns = 45720 / 36000;
-		oBodyPr.rtlCol = false;
-		oBodyPr.anchor = 0;
-		oSp.txBody.setBodyPr(oBodyPr);
-		oTxLstStyle = new AscFormat.TextListStyle();
-		oTxLstStyle.levels[0] = new CParaPr();
-		oTxLstStyle.levels[0].Jc = AscCommon.align_Right;
-		oTxLstStyle.levels[0].DefaultRunPr = new AscCommonWord.CTextPr();
-		oTxLstStyle.levels[0].DefaultRunPr.FontSize = 12;
-		//endParaPr
-		oSp.txBody.setLstStyle(oTxLstStyle);
-		const oContent = oSp.getDocContent();
-		if(oContent) {
-			oContent.ClearContent(true);
-			const oParagraph = oContent.Content[0];
-			const oFld = new AscCommonWord.CPresentationField(oParagraph);
-			oFld.SetGuid(AscCommon.CreateGUID());
-			oFld.SetFieldType("slidenum");
-			oParagraph.Internal_Content_Add(0, oFld);
-		}
-		oSp.setParent(oHandoutMaster);
-		oHandoutMaster.addToSpTreeToPos(3, oSp);
-
+		AscCommonSlide.addHeaderShape(oHandoutMaster);
+		AscCommonSlide.addDateShape(oHandoutMaster);
+		AscCommonSlide.addFooterShape(oHandoutMaster);
+		AscCommonSlide.addNumberShape(oHandoutMaster);
 		//clrMap
 		oHandoutMaster.clrMap.setClr(0, 0);
 		oHandoutMaster.clrMap.setClr(1, 1);
@@ -714,5 +541,5 @@
 
 	window['AscCommonSlide'] = window['AscCommonSlide'] || {};
 	window['AscCommonSlide'].CHandoutMaster = CHandoutMaster;
-	window['AscCommonSlide'].CreateHandoutMaster = CreateHandoutMaster;
+	window['AscCommonSlide'].createHandoutMaster = createHandoutMaster;
 })();

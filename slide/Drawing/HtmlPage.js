@@ -4401,6 +4401,7 @@
 
 		if (drDoc.placeholders.objects.length > 0 && drDoc.SlideCurrent >= 0)
 		{
+			const sizes = this.m_oLogicDocument.GetSizesMM();
 			var rectSlide = {};
 			rectSlide.left = AscCommon.AscBrowser.convertToRetinaValue(drDoc.SlideCurrectRect.left, true);
 			rectSlide.top = AscCommon.AscBrowser.convertToRetinaValue(drDoc.SlideCurrectRect.top, true);

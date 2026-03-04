@@ -35,7 +35,14 @@
 		this.api = api;
 		this.type = null;
 	}
-
+	SlideModeManagerBase.prototype.startAction = function(description) {
+		const presentation = this.getPresentation();
+		presentation.StartAction(description);
+	};
+	SlideModeManagerBase.prototype.finalizeAction = function(checkEmptyAction) {
+		const presentation = this.getPresentation();
+		presentation.FinalizeAction(checkEmptyAction);
+	};
 	SlideModeManagerBase.prototype.getPresentation = function () {
 		return this.api.WordControl.m_oLogicDocument;
 	};
@@ -51,13 +58,16 @@
 	};
 	SlideModeManagerBase.prototype.getSlideIndex = function (object) {
 		const allSlides = this.getAllSlides();
-		const presentation = this.getPresentation();
 		for (let i = 0; i < allSlides.length; i += 1) {
 			if (allSlides[i] === object) {
 				return i;
 			}
 		}
 		return -1;
+	};
+	SlideModeManagerBase.prototype.getSlide = function(idx) {
+		const allSlides = this.getAllSlides();
+		return allSlides[idx] || null;
 	};
 	SlideModeManagerBase.prototype.isMasterSlideMode = function () {
 		return false;
@@ -106,7 +116,13 @@
 	SlideModeManagerBase.prototype.goToSavedAnimationStartObject = function (object) {};
 	SlideModeManagerBase.prototype.getSlideNumber = function (object) {return null;};
 	SlideModeManagerBase.prototype.insertSlideObjectToPos = function (pos, slide) {};
-
+	SlideModeManagerBase.prototype.setHandoutFooter = function(val) {};
+	SlideModeManagerBase.prototype.setHandoutHeader = function(val) {};
+	SlideModeManagerBase.prototype.setHandoutDate = function(val) {};
+	SlideModeManagerBase.prototype.setHandoutNumber = function(val) {};
+	SlideModeManagerBase.prototype.setHandoutPageCount = function(val) {};
+	SlideModeManagerBase.prototype.setPageOrientation = function(val) {};
+	SlideModeManagerBase.prototype.getCurrentTheme = function() {return null;};
 
 	function SlideModeManager(api) {
 		SlideModeManagerBase.call(this, api);
@@ -258,6 +274,10 @@
 	};
 	SlideModeManager.prototype.isThumbnailsSupported = function () {
 		return true;
+	};
+	SlideModeManager.prototype.getCurrentTheme = function() {
+		const slide = this.getCurrentSlide();
+		return slide && slide.Layout.Master.Theme || null;
 	};
 
 
@@ -432,6 +452,17 @@
 	MasterSlideModeManager.prototype.isThumbnailsSupported = function () {
 		return true;
 	};
+	MasterSlideModeManager.prototype.getCurrentTheme = function() {
+		const slide = this.getCurrentSlide();
+		if (slide) {
+			if (slide.getObjectType() === AscDFH.historyitem_type_SlideLayout) {
+				return slide.Master.Theme;
+			} else {
+				return slide.Theme;
+			}
+		}
+		return null;
+	};
 
 
 	function NoteModeManager(api) {
@@ -474,6 +505,44 @@
 	MasterHandoutModeManager.prototype.getAllSlides = function () {
 		const presentation = this.getPresentation();
 		return presentation.handoutMasters;
+	};
+	MasterHandoutModeManager.prototype.isMasterPlaceholderShape = function (shape) {
+		return shape.isPlaceholder && shape.isPlaceholder();
+	};
+	MasterHandoutModeManager.prototype.setPlaceholder = function(val, type, addCallback) {
+		const slide = this.getCurrentSlide();
+		if (!slide) {
+			return;
+		}
+		this.startAction(0);
+		let shape = slide.getMatchingShape(type, null, false, {});
+		if (!val) {
+			if (shape) {
+				slide.graphicObjects.deselectObject(shape);
+				slide.removeFromSpTreeById(shape.Get_Id());
+			}
+		} else if (!shape) {
+			addCallback(slide);
+		}
+		this.finalizeAction(true);
+	};
+	MasterHandoutModeManager.prototype.setHandoutFooter = function(val) {
+		this.setPlaceholder(val, AscFormat.phType_ftr, AscCommonSlide.addFooterShape);
+	};
+	MasterHandoutModeManager.prototype.setHandoutHeader = function(val) {
+		this.setPlaceholder(val, AscFormat.phType_hdr, AscCommonSlide.addHeaderShape);
+	};
+	MasterHandoutModeManager.prototype.setHandoutDate = function(val) {
+		this.setPlaceholder(val, AscFormat.phType_dt, AscCommonSlide.addDateShape);
+	};
+	MasterHandoutModeManager.prototype.setHandoutNumber = function(val) {
+		this.setPlaceholder(val, AscFormat.phType_sldNum, AscCommonSlide.addNumberShape);
+	};
+	MasterHandoutModeManager.prototype.setHandoutPageCount = function(val) {
+
+	};
+	MasterHandoutModeManager.prototype.setPageOrientation = function(val) {
+
 	};
 
 	function SorterModeManager(api) {

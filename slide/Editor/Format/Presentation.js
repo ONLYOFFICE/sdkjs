@@ -9394,27 +9394,6 @@ CPresentation.prototype.GetAllLayouts = function() {
 	}
 	return aLayouts;
 };
-CPresentation.prototype.GetCurrentTheme = function() {
-	let oCurSlide = this.GetCurrentSlide();
-	if(oCurSlide) {
-		let nType = oCurSlide.getObjectType();
-		switch (nType) {
-			case AscDFH.historyitem_type_Slide: {
-				return oCurSlide.Layout.Master.Theme;
-			}
-			case AscDFH.historyitem_type_SlideLayout: {
-				return oCurSlide.Master.Theme;
-			}
-			case AscDFH.historyitem_type_SlideMaster: {
-				return oCurSlide.Theme;
-			}
-		}
-	}
-	if(this.lastMaster) {
-		return this.lastMaster;
-	}
-	return this.slideMasters[0] || null;
-};
 CPresentation.prototype.changeLayout = function (_array, layout_index) {
 	if(!this.IsSlidePageMode()) return;
 	let aLayouts = this.GetAllLayouts();
@@ -11312,7 +11291,7 @@ CPresentation.prototype.createNecessaryObjectsIfNoPresent = function () {
 	}
 
 	if (this.handoutMasters.length === 0) {
-		let oHandoutMaster = AscCommonSlide.CreateHandoutMaster();
+		let oHandoutMaster = AscCommonSlide.createHandoutMaster();
 		this.addHandoutMaster(0, oHandoutMaster);
 		let oHandoutTheme = this.slideMasters[0].Theme.createDuplicate();
 		oHandoutTheme.presentation = this;

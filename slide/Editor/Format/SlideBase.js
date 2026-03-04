@@ -781,6 +781,127 @@
 		}
 	}
 
+	const PLACEHOLDERSHAPE_WIDTH_COEFFICIENT = 2971800 / 6858000;
+	const PLACEHOLDERSHAPE_HEIGHT_COEFFICIENT = 458787 / 9144000;
+
+	function addHeaderShape(slideObject, x, y, width, height) {
+		var oNvSpPr = new AscFormat.UniNvPr();
+		var oCNvPr = oNvSpPr.cNvPr;
+		oCNvPr.setId(2);
+		oCNvPr.setName("Header Placeholder 1");
+		var oPh = new AscFormat.Ph();
+		oPh.setType(AscFormat.phType_hdr);
+		oPh.setSz(2);
+		oNvSpPr.nvPr.setPh(oPh);
+		const notesHeight = slideObject.Height;
+		const notesWidth = slideObject.Width;
+		const placeholderWidth = notesWidth * PLACEHOLDERSHAPE_WIDTH_COEFFICIENT;
+		const placeholderHeight = notesHeight * PLACEHOLDERSHAPE_HEIGHT_COEFFICIENT;
+		var oSp = createPlaceholderShape(oNvSpPr, 0, 0, placeholderWidth, placeholderHeight, AscCommon.align_Left, AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
+		oSp.setParent(slideObject);
+		slideObject.addToSpTreeToPos(0, oSp);
+	}
+
+	function addDateShape(slideObject) {
+		const oNvSpPr = new AscFormat.UniNvPr();
+		const oCNvPr = oNvSpPr.cNvPr;
+		oCNvPr.setId(3);
+		oCNvPr.setName("Date Placeholder 2");
+		const oPh = new AscFormat.Ph();
+		oPh.setType(AscFormat.phType_dt);
+		oPh.setIdx(3 + "");
+		oNvSpPr.nvPr.setPh(oPh);
+		const notesHeight = slideObject.Height;
+		const notesWidth = slideObject.Width;
+		const placeholderWidth = notesWidth * PLACEHOLDERSHAPE_WIDTH_COEFFICIENT;
+		const placeholderHeight = notesHeight * PLACEHOLDERSHAPE_HEIGHT_COEFFICIENT;
+		const oSp = createPlaceholderShape(oNvSpPr, notesWidth - placeholderWidth, 0, placeholderWidth, placeholderHeight, AscCommon.align_Right, AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
+		oSp.setParent(slideObject);
+		slideObject.addToSpTreeToPos(1, oSp);
+		AscCommonSlide.addDateTimeToSlideLikeObject(slideObject, "datetimeFigureOut");
+	}
+
+	function addFooterShape(slideObject) {
+		const oNvSpPr = new AscFormat.UniNvPr();
+		const oCNvPr = oNvSpPr.cNvPr;
+		oCNvPr.setId(4);
+		oCNvPr.setName("Footer Placeholder 3");
+		const oPh = new AscFormat.Ph();
+		oPh.setType(AscFormat.phType_ftr);
+		oPh.setIdx(2 + "");
+		oPh.setSz(2);
+		oNvSpPr.nvPr.setPh(oPh);
+		const notesHeight = slideObject.Height;
+		const notesWidth = slideObject.Width;
+		const placeholderWidth = notesWidth * PLACEHOLDERSHAPE_WIDTH_COEFFICIENT;
+		const placeholderHeight = notesHeight * PLACEHOLDERSHAPE_HEIGHT_COEFFICIENT;
+		const oSp = createPlaceholderShape(oNvSpPr, 0, notesHeight - placeholderHeight, placeholderWidth, placeholderHeight, AscCommon.align_Left, AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
+		oSp.setParent(slideObject);
+		slideObject.addToSpTreeToPos(2, oSp);
+	}
+
+	function addNumberShape(slideObject) {
+		const oNvSpPr = new AscFormat.UniNvPr();
+		const oCNvPr = oNvSpPr.cNvPr;
+		oCNvPr.setId(5);
+		oCNvPr.setName("Slide Number Placeholder 4");
+		const oPh = new AscFormat.Ph();
+		oPh.setType(AscFormat.phType_sldNum);
+		oPh.setIdx(3 + "");
+		oPh.setSz(2);
+		oNvSpPr.nvPr.setPh(oPh);
+		const notesHeight = slideObject.Height;
+		const notesWidth = slideObject.Width;
+		const placeholderWidth = notesWidth * PLACEHOLDERSHAPE_WIDTH_COEFFICIENT;
+		const placeholderHeight = notesHeight * PLACEHOLDERSHAPE_HEIGHT_COEFFICIENT;
+		const oSp = createPlaceholderShape(oNvSpPr, notesWidth - placeholderWidth, notesHeight - placeholderHeight, placeholderWidth, placeholderHeight, AscCommon.align_Right, AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
+		const oContent = oSp.getDocContent();
+		if(oContent) {
+			oContent.ClearContent(true);
+			const oParagraph = oContent.Content[0];
+			const oFld = new AscCommonWord.CPresentationField(oParagraph);
+			oFld.SetGuid(AscCommon.CreateGUID());
+			oFld.SetFieldType("slidenum");
+			oParagraph.Internal_Content_Add(0, oFld);
+		}
+		oSp.setParent(slideObject);
+		slideObject.addToSpTreeToPos(3, oSp);
+	}
+
+	function createPlaceholderShape(oNvSpPr, x, y, width, height, textAlign, bodyPrAlign) {
+		const oSp = new AscFormat.CShape();
+		oSp.setBDeleted(false);
+		oSp.setNvSpPr(oNvSpPr);
+		oSp.setLockValue(AscFormat.LOCKS_MASKS.noGrp, true);
+		oSp.setSpPr(new AscFormat.CSpPr());
+		oSp.spPr.setParent(oSp);
+		oSp.spPr.setXfrm(new AscFormat.CXfrm());
+		oSp.spPr.xfrm.setParent(oSp.spPr);
+		oSp.spPr.xfrm.setOffX(x);
+		oSp.spPr.xfrm.setOffY(y);
+		oSp.spPr.xfrm.setExtX(width);
+		oSp.spPr.xfrm.setExtY(height);
+		oSp.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
+		oSp.spPr.geometry.setParent(oSp.spPr);
+		oSp.createTextBody();
+		const oBodyPr = oSp.txBody.bodyPr.createDuplicate();
+		oBodyPr.vert = AscFormat.nVertTThorz;
+		oBodyPr.lIns = 91440 / 36000;
+		oBodyPr.tIns = 45720 / 36000;
+		oBodyPr.rIns = 91440 / 36000;
+		oBodyPr.bIns = 45720 / 36000;
+		oBodyPr.anchor = bodyPrAlign;
+		oSp.txBody.setBodyPr(oBodyPr);
+		const oTxLstStyle = new AscFormat.TextListStyle();
+		oTxLstStyle.levels[0] = new CParaPr();
+		oTxLstStyle.levels[0].Jc = textAlign;
+		oTxLstStyle.levels[0].DefaultRunPr = new AscCommonWord.CTextPr();
+		oTxLstStyle.levels[0].DefaultRunPr.FontSize = 12;
+		//endParaPr
+		oSp.txBody.setLstStyle(oTxLstStyle);
+		return oSp;
+	}
+
 //--------------------------------------------------------export----------------------------------------------------
 	window['AscCommonSlide'] = window['AscCommonSlide'] || {};
 	window['AscCommonSlide'].SlideBase = SlideBase;
@@ -788,4 +909,8 @@
 	window['AscCommonSlide'].addHeaderToSlideLikeObject = addHeaderToSlideLikeObject;
 	window['AscCommonSlide'].addDateTimeToSlideLikeObject = addDateTimeToSlideLikeObject;
 	window['AscCommonSlide'].copyPlaceholderToLikeObject = copyPlaceholderToLikeObject;
+	window['AscCommonSlide'].addHeaderShape = addHeaderShape;
+	window['AscCommonSlide'].addDateShape = addDateShape;
+	window['AscCommonSlide'].addFooterShape = addFooterShape;
+	window['AscCommonSlide'].addNumberShape = addNumberShape;
 })();

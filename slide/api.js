@@ -791,6 +791,25 @@
 	asc_docs_api.prototype.IsThumbnailsSupported = function() {
 		return this.presentationViewManager.isThumbnailsSupported();
 	};
+	asc_docs_api.prototype.asc_setHandoutFooter = function(val) {
+		return this.presentationViewManager.setHandoutFooter(val);
+	};
+	asc_docs_api.prototype.asc_setHandoutHeader = function(val) {
+		return this.presentationViewManager.setHandoutHeader(val);
+	};
+	asc_docs_api.prototype.asc_setHandoutDate = function(val) {
+		return this.presentationViewManager.setHandoutDate(val);
+	};
+	asc_docs_api.prototype.asc_setHandoutNumber = function(val) {
+		return this.presentationViewManager.setHandoutNumber(val);
+	};
+	asc_docs_api.prototype.asc_setHandoutPageCount = function(val) {
+		return this.presentationViewManager.setHandoutPageCount(val);
+	};
+	asc_docs_api.prototype.asc_setPageOrientation = function(val) {
+		return this.presentationViewManager.setPageOrientation(val);
+	};
+
 
     //----------------------------------------------------------------------------------------------------------------------
     // SpellCheck_CallBack
@@ -5173,9 +5192,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.getCurrentTheme = function()
 	{
-		if (null == this.WordControl.m_oLogicDocument)
-			return null;
-		return this.WordControl.m_oLogicDocument.GetCurrentTheme();
+		return this.presentationViewManager.getCurrentTheme();
 	};
 
 	asc_docs_api.prototype.getGraphicController = function() {
@@ -10034,6 +10051,12 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_SetThumbnailsPosition"] = asc_docs_api.prototype.asc_SetThumbnailsPosition;
 	asc_docs_api.prototype["getJsApi"] = asc_docs_api.prototype.getJsApi;
 
+	asc_docs_api.prototype["asc_setHandoutFooter"] = asc_docs_api.prototype.asc_setHandoutFooter;
+	asc_docs_api.prototype["asc_setHandoutHeader"] = asc_docs_api.prototype.asc_setHandoutHeader;
+	asc_docs_api.prototype["asc_setHandoutDate"] = asc_docs_api.prototype.asc_setHandoutDate;
+	asc_docs_api.prototype["asc_setHandoutNumber"] = asc_docs_api.prototype.asc_setHandoutNumber;
+	asc_docs_api.prototype["asc_setHandoutPageCount"] = asc_docs_api.prototype.asc_setHandoutPageCount;
+	asc_docs_api.prototype["asc_setPageOrientation"] = asc_docs_api.prototype.asc_setPageOrientation;
 
 	window['Asc']['asc_CCommentDataSlide'] = window['Asc'].asc_CCommentDataSlide = asc_CCommentDataSlide;
 	window['Asc']['asc_CCommentData'] = window['Asc'].asc_CCommentData = asc_CCommentDataSlide;
