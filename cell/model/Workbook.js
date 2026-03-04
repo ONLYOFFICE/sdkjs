@@ -22965,6 +22965,7 @@
 		this.nPrevIntDateValue = null;
 		this.bDiffDirectionDateTime = null;
 		this.nCurrentDayValue = null; // Using for Date & Time format for month step mode when day changed.
+		this.bLastDaysInMonth = false;
 
 		this.bOneSelectedCell = false;
 	}
@@ -23234,8 +23235,7 @@
 						//для дат и чисел с префиксом автозаполняются только целочисленные последовательности
 						let nFirstVal = oFirstData.getVal();
 						let bIsNotIntegerSequence = oSequence.a1 !== parseInt(oSequence.a1);
-						let bDateCalcModeHasDiffDay = aDigits.length > 1 && bIsCalcDateMode && this.isDiffDaysForCalcMode(aDigits, nFirstVal);
-						let bDateCalcModeCorrectSeq = bIsCalcDateMode && !bDateCalcModeHasDiffDay && parseInt(nFirstVal) === Math.round(oSequence.a0);
+						let bDateCalcModeCorrectSeq = bIsCalcDateMode && this.hasDateModeCorrectSequence(aDigits, nFirstVal);
 						let sPrefix = oFirstData.getPrefix();
 						let bDelimiter = oFirstData.getDelimiter();
 						// For Date format
@@ -23413,6 +23413,7 @@
 		},
 		/**
 		 * Returns chosen property from context menu.
+		 * @memberof PromoteHelper
 		 * @returns {Asc.c_oAscFillType}
 		 */
 		getFillMenuChosenProp: function () {
@@ -23420,6 +23421,7 @@
 		},
 		/**
 		 * Sets chosen property from context menu.
+		 * @memberof PromoteHelper
 		 * @param {Asc.c_oAscFillType} nFillMenuChosenProp
 		 */
 		setFillMenuChosenProp: function (nFillMenuChosenProp) {
@@ -23427,6 +23429,7 @@
 		},
 		/**
 		 * Returns the last day of a month.
+		 * @memberof PromoteHelper
 		 * @returns {number}
 		 */
 		getLastDayOfMonth: function () {
@@ -23434,6 +23437,7 @@
 		},
 		/**
 		 * Sets the last day of a month taken from ExcelDateValue.
+		 * @memberof PromoteHelper
 		 * @param {number} nExcelDateValue
 		 */
 		setLastDayOfMonth: function (nExcelDateValue) {
@@ -23444,6 +23448,7 @@
 		},
 		/**
 		 * Returns days in year.
+		 * @memberof PromoteHelper
 		 * @returns {number}
 		 */
 		getDaysInYear: function () {
@@ -23451,6 +23456,7 @@
 		},
 		/**
 		 * Sets days in year taken from ExcelDateValue.
+		 * @memberof PromoteHelper
 		 * @param {number} nExcelDateValue
 		 */
 		setDaysInYear: function (nExcelDateValue) {
@@ -23460,6 +23466,7 @@
 		},
 		/**
 		 * Returns previous date value while calculating for modes: "Fill months", "Fill years" and "Fill weekdays".
+		 * @memberof PromoteHelper
 		 * @returns {number}
 		 */
 		getPrevDateValue: function () {
@@ -23467,6 +23474,7 @@
 		},
 		/**
 		 * Sets previous date value while calculating for modes: "Fill months", "Fill years" and "Fill weekdays".
+		 * @memberof PromoteHelper
 		 * @param {number} nPrevDateValue
 		 */
 		setPrevDateValue: function (nPrevDateValue) {
@@ -23475,6 +23483,7 @@
 		/**
 		 * Returns previous integer date value while calculating for modes: "Fill months", "Fill years".
 		 * Using when step is fractional number.
+		 * @memberof PromoteHelper
 		 * @returns {number}
 		 */
 		getPrevIntDateValue: function () {
@@ -23482,7 +23491,8 @@
 		},
 		/**
 		 * Sets previous integer date value while calculating for modes: "Fill months", "Fill years".
-		 * Using when step is fractional number.
+		 * Using when a step is fractional number.
+		 * @memberof PromoteHelper
 		 * @param {number} nPrevIntDateValue
 		 */
 		setPrevIntDateValue: function (nPrevIntDateValue) {
@@ -23490,13 +23500,15 @@
 		},
 		/**
 		 * Returns the current state of the flag recognizing different direction at date and time.
+		 * @memberof PromoteHelper
 		 * @returns {boolean}
 		 */
 		getIsDiffDirectionDateTime: function () {
 			return this.bDiffDirectionDateTime;
 		},
 		/**
-		 * Sets the current state of the flag recognizing different direction at date and time.
+		 * Sets the current state of the flag recognizing a different direction at date and time.
+		 * @memberof PromoteHelper
 		 * @param {boolean} bDiffDirectionDateTime
 		 */
 		setIsDiffDirectionDateTime: function (bDiffDirectionDateTime) {
@@ -23505,6 +23517,7 @@
 		/**
 		 * Returns current day value for Date & Time format.
 		 * Using for month step mode when day changed.
+		 * @memberof PromoteHelper
 		 * @returns {number}
 		 */
 		getCurrentDayValue: function () {
@@ -23513,6 +23526,7 @@
 		/**
 		 * Sets current day value for Date & Time format.
 		 * Using for month step mode when day changed.
+		 * @memberof PromoteHelper
 		 * @param {number} nCurrentDayValue
 		 */
 		setCurrentDayValue: function (nCurrentDayValue) {
@@ -23522,6 +23536,7 @@
 		 * Initializes flag recognizing that date and time have different direction between each other.
 		 * true - date and time have different direction.
 		 * false - date and time have same direction
+		 * @memberof PromoteHelper
 		 * @param {{x:number, y:number}[]} aDigits
 		 */
 		initDiffDirectionDateTime: function (aDigits) {
@@ -23535,49 +23550,98 @@
 			this.setIsDiffDirectionDateTime(bAscTimePart !== bAscDatePart);
 		},
 		/**
-		 * Initializes property of autofill context menu if in default autofill, has the required step to needed mode.
+		 * Initializes property of an autofill context menu if in default autofill has the required step to needed mode.
 		 * Modes: "Fill months", "Fill years".
+		 * @memberof PromoteHelper
 		 * @param {{x:number, y:number}[]} aDigits
 		 * @param {number} nFirstValue
 		 */
 		initFillMenuChosenProp: function (aDigits, nFirstValue) {
-			const SECOND_VALUE_INDEX = 1;
 			const oFillType = Asc.c_oAscFillType;
-			const nSecondValue = aDigits[SECOND_VALUE_INDEX].y;
 			const dtFirstValue = new Asc.cDate().getDateFromExcel(nFirstValue < 60 ? nFirstValue + 1 : nFirstValue);
-			const dtSecondValue = new Asc.cDate().getDateFromExcel(nSecondValue < 60 ? nSecondValue + 1 : nSecondValue);
+			const aDates = aDigits.map(function (oDigit) {
+				return new Asc.cDate().getDateFromExcel(oDigit.y < 60 ? oDigit.y + 1 : oDigit.y);
+			});
+			const bSameDay = aDates.every(function (dtValue) {
+				return (dtValue.getDate() === dtFirstValue.getDate()) || (dtValue.lastDayOfMonth());
+			});
+			const bSameMonth = aDates.every(function (dtValue) {
+				return dtValue.getMonth() === dtFirstValue.getMonth();
+			});
+			const bSameYear = aDates.every(function (dtValue) {
+				return dtValue.getFullYear() === dtFirstValue.getFullYear();
+			});
+			this.setIsLastDayOfMonth(aDates.every(function (dtValue) {
+				return dtValue.lastDayOfMonth();
+			}));
 
-			let nDayFirstValue = dtFirstValue.getDate();
-			let nMonthFirstValue = dtFirstValue.getMonth();
-			let nYearFirstValue = dtFirstValue.getFullYear();
-
-			let nDaySecondValue = dtSecondValue.getDate();
-			let nMonthSecondValue = dtSecondValue.getMonth();
-			let nYearSecondValue = dtSecondValue.getFullYear();
-
-			if (nDayFirstValue === nDaySecondValue && nMonthFirstValue !== nMonthSecondValue) {
+			if (bSameDay && !bSameMonth) {
 				this.setFillMenuChosenProp(oFillType.fillMonths);
-			} else if (nDayFirstValue === nDaySecondValue && nMonthFirstValue === nMonthSecondValue && nYearFirstValue !== nYearSecondValue) {
+			} else if (bSameDay && bSameMonth && !bSameYear) {
 				this.setFillMenuChosenProp(oFillType.fillYears);
 			}
 		},
 		/**
-		 * Checks has different days in the date of the selected range for date calculate modes from the context menu.
-		 * Applies for modes : "Fill months", "Fill years".
+		 * Checks whether the correct sequence for the date calculation mode.
+		 * Applies for modes: "Fill months", "Fill years".
+		 * @memberof PromoteHelper
 		 * @param {{x:number, y:number}[]} aDigits
 		 * @param {number} nFirstValue
 		 * @returns {boolean}
 		 */
-		isDiffDaysForCalcMode: function (aDigits, nFirstValue) {
-			const SECOND_VALUE_INDEX = 1;
-			const nSecondValue = aDigits[SECOND_VALUE_INDEX].y;
-			const dtFirstValue = new Asc.cDate().getDateFromExcel(nFirstValue < 60 ? nFirstValue + 1 : nFirstValue);
-			const dtSecondValue = new Asc.cDate().getDateFromExcel(nSecondValue < 60 ? nSecondValue + 1 : nSecondValue);
+		hasDateModeCorrectSequence: function (aDigits, nFirstValue) {
+			function checkSequence (nCurrentValue, nExpectedStep) {
+				if (nPreviousValue) {
+					const nStep =  nCurrentValue - nPreviousValue;
+					if (nStep !== nExpectedStep) {
+						bSequenceCorrect = false;
+					}
+				}
+				nPreviousValue = nCurrentValue;
+			}
+			if (aDigits.length === 1) {
+				return true;
+			}
 
-			return dtFirstValue.getDate() !== dtSecondValue.getDate();
+			const oFillType = Asc.c_oAscFillType;
+			const oSecondValue = aDigits[1];
+			const dtFirstValue = new Asc.cDate().getDateFromExcel(nFirstValue < 60 ? nFirstValue + 1 : nFirstValue);
+			const dtSecondValue = new Asc.cDate().getDateFromExcel(oSecondValue.y < 60 ? oSecondValue.y + 1 : oSecondValue.y);
+			const aDates = aDigits.map(function (oDigit) {
+				return new Asc.cDate().getDateFromExcel(oDigit.y < 60 ? oDigit.y + 1 : oDigit.y);
+			});
+
+			let bSequenceCorrect = true;
+			let nPreviousValue = null;
+
+			if (this.getFillMenuChosenProp() === oFillType.fillMonths) {
+				const nExpectedStep = dtSecondValue.getMonth() - dtFirstValue.getMonth();
+				if (nExpectedStep === 0) {
+					return false;
+				}
+				for (let i = 1, length = aDates.length; i < length; i++) {
+					const nCurrentValue = aDates[i].getMonth();
+					checkSequence(nCurrentValue, nExpectedStep);
+				}
+				return bSequenceCorrect;
+			}
+			if (this.getFillMenuChosenProp() === oFillType.fillYears) {
+				const nExpectedStep = dtSecondValue.getYear() - dtFirstValue.getYear();
+				if (nExpectedStep === 0) {
+					return false;
+				}
+				for (let i = 1, length = aDates.length; i < length; i++) {
+					const nCurrentValue = aDates[i].getYear();
+					checkSequence(nCurrentValue, nExpectedStep);
+				}
+				return bSequenceCorrect;
+			}
+
+			return false;
 		},
 		/**
 		 * Calculates date based on step and modes: "Fill months", "Fill years" or "Fill weekdays".
+		 * @memberof PromoteHelper
 		 * @param {cDataRow} oDataRow
 		 * @returns {number}
 		 */
@@ -23585,6 +23649,7 @@
 			const DEFAULT_STEP = this.bReverse ? -1 : 1;
 			const oSequence = oDataRow.getSequence();
 			const nChosenMenuItem = this.getFillMenuChosenProp();
+			const bRightClickAutoFill = this.getFillHandleRightClick();
 			let nStep =  null;
 			let nStepDivider = null;
 			let nUnitDate = null;
@@ -23612,7 +23677,7 @@
 					nStepDivider = this.getDaysInYear();
 					break;
 			}
-			if (!this.getIsOneSelectedCell() && nChosenMenuItem !== Asc.c_oAscFillType.fillWeekdays) {
+			if (!this.getIsOneSelectedCell() && nChosenMenuItem !== Asc.c_oAscFillType.fillWeekdays && bRightClickAutoFill) {
 				bUseValFromDataRow =  Math.abs(oSequence.a1) < nStepDivider;
 			}
 			if (bUseValFromDataRow) {
@@ -23622,7 +23687,8 @@
 					dateUnit: nUnitDate,
 					previousValue: oDataRow.getVal(),
 					previousIntValue: oDataRow.getVal(),
-					expectedDayValue: oDataRow.getStartValue()
+					expectedDayValue: oDataRow.getStartValue(),
+					isLastDayOfMonth: this.getIsLastDayOfMonth()
 				};
 				const oResult = _calculateDate(oCellInfo, true);
 				oDataRow.setVal(oResult.previousValue);
@@ -23635,7 +23701,8 @@
 				dateUnit: nUnitDate,
 				previousValue: this.getPrevDateValue(),
 				previousIntValue: this.getPrevIntDateValue(),
-				expectedDayValue: oDataRow.getVal()
+				expectedDayValue: oDataRow.getVal(),
+				isLastDayOfMonth: this.getIsLastDayOfMonth()
 			};
 			if (oDataRow.getIsDateTime() && this.nColLength === 2) {
 				if (oSequence.nX === this.nColLength) { // For first iteration using element from selected range.
@@ -23685,6 +23752,7 @@
 		},
 		/**
 		 * Returns flag that recognizes it as one selected cell.
+		 * @memberof PromoteHelper
 		 * @returns {boolean}
 		 */
 		getIsOneSelectedCell: function () {
@@ -23692,10 +23760,27 @@
 		},
 		/**
 		 * Sets flag that recognizes it as one selected cell.
+		 * @memberof PromoteHelper
 		 * @param {boolean} bOneSelectedCell
 		 */
 		setIsOneSelectedCell: function (bOneSelectedCell) {
 			this.bOneSelectedCell = bOneSelectedCell;
+		},
+		/**
+		 * Sets a flag that recognizes all dates in selected range have last day of month.
+		 * @memberof PromoteHelper
+		 * @param {boolean} bLastDayOfMonth
+		 */
+		setIsLastDayOfMonth: function (bLastDayOfMonth) {
+			this.bLastDaysInMonth = bLastDayOfMonth;
+		},
+		/**
+		 * Returns a flag that recognizes all dates in selected range have last day of month.
+		 * @memberof PromoteHelper
+		 * @returns {boolean}
+		 */
+		getIsLastDayOfMonth: function () {
+			return this.bLastDaysInMonth;
 		}
 	};
 
@@ -24579,7 +24664,7 @@
 
 	/**
 	 * Calculates date for autofill and Series.
-	 * @param {{step:number, dateUnit:c_oAscDateUnitType, previousValue:number, previousIntValue:number, expectedDayValue:number}} oCellInfo
+	 * @param {{step:number, dateUnit:c_oAscDateUnitType, previousValue:number, previousIntValue:number, expectedDayValue:number, isLastDayOfMonth:boolean}} oCellInfo
 	 * @param {boolean} bAutofill
 	 * @returns {{previousValue:number, currentValue:number, previousIntValue:number}}
 	 * @private
@@ -24591,6 +24676,7 @@
 		let nPrevValue = oCellInfo.previousValue;
 		let nPrevIntValue = oCellInfo.previousIntValue;
 		let dtExpectedDayValue = new Asc.cDate().getDateFromExcel(oCellInfo.expectedDayValue < 59 && !bDate1904 ? oCellInfo.expectedDayValue + 1 : oCellInfo.expectedDayValue);
+		let bLastDayInMonth = !!(oCellInfo.isLastDayOfMonth);
 		let oReturn = {};
 
 		// Condition: nPrevVal < 60 is temporary solution for "01/01/1900 - 01/03/1900" dates
@@ -24663,7 +24749,8 @@
 			if (Number.isInteger(nFinalStep)) {
 				oCurrentValDate.addMonths(nFinalStep);
 				let nLastDayOfCurrentMonth = AscCommonExcel.getLastDayInMonth(oCurrentValDate.getExcelDate(), 0).getDate();
-				if (!bNextMonthIsFeb &&  nLastDayOfCurrentMonth >= dtExpectedDayValue.getDate() && dtExpectedDayValue.getDate() !== oCurrentValDate.getDate()) {
+				if (!bNextMonthIsFeb && !bLastDayInMonth && nLastDayOfCurrentMonth >= dtExpectedDayValue.getDate() &&
+					dtExpectedDayValue.getDate() !== oCurrentValDate.getDate()) {
 					oCurrentValDate.setUTCDate(dtExpectedDayValue.getDate());
 				}
 				oReturn.currentValue = oCurrentValDate.getExcelDate();

@@ -168,7 +168,6 @@ $(function () {
 	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function () {
 	};
 	Asc.ReadDefTableStyles = function(){};
-
 	function openDocument(){
 		AscCommon.g_oTableId.init();
 		api._onEndLoadSdk();
@@ -224,6 +223,19 @@ $(function () {
 	wsView.handlers = api.handlers;
 	wsView.objectRender = new AscFormat.DrawingObjects();
 	var ws = api.wbModel.aWorksheets[0];
+	// Mock Date to static data
+	const RealDate = window.Date;
+	const mockNow = new RealDate(2026, 2, 4, 0, 0, 0, 0);
+	function MockDate () {
+		if (arguments.length > 0) {
+			return new (Function.prototype.bind.apply(RealDate, [null].concat(Array.prototype.slice.call(arguments))))();
+		}
+		return new RealDate(mockNow.getTime());
+	}
+	MockDate.prototype = RealDate.prototype;
+	MockDate.now = function() { return mockNow.getTime(); };
+	MockDate.parse = RealDate.parse;
+	MockDate.UTC = RealDate.UTC;
 
 	var getRange = function (c1, r1, c2, r2) {
 		return new window["Asc"].Range(c1, r1, c2, r2);
@@ -7078,12 +7090,73 @@ $(function () {
 		testData = [
 			['03/30/2003'],
 			['04/30/2003']
-		]
+		];
 		range = ws.getRange4(6, 0);
 		range.fillData(testData);
 		undoData = [[''], [''], [''], [''], ['37651'], ['37620']];
 		expectedData = [['37680'], ['37651'], ['37620'], ['37590'], ['37559'], ['37529']];
 		getAutofillCase([0, 0, 6, 7], [0, 0, 5, 0], 1, 'Date format. Reverse sequence. Vertical. Two selected cells. Step - month. Next month is February, and the day is more than the last day of the month.', expectedData);
+		// Case #105: Date format. Asc sequence. Vertical. Three selected cells. Step - month. Bug-79127
+		// Mock Date object to prevent dynamic change of date. Those cases have dynamic year
+		window.Date = MockDate;
+		testData = [
+			['01/20'],
+			['02/20'],
+			['03/20']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], ['']];
+		expectedData = [['46132'], ['46162'], ['46193']];
+		getAutofillCase([0, 0, 0, 2], [0, 0, 3, 5], 3, 'Short date format - 01/20, 02/20, 03/20. Asc sequence. Vertical. Three selected cells. Step - month. Bug-79127', expectedData);
+		// Case #106: Date format. Reverse sequence. Vertical. Three selected cells. Step - month. Bug-79127
+		range = ws.getRange4(3, 0);
+		range.fillData(testData);
+		undoData = [['46101'], ['46073'], ['46042']];
+		expectedData = [['46011'], ['45981'], ['45950']];
+		getAutofillCase([0, 0, 3, 5], [0, 0, 2, 0], 1, 'Short date format - 01/20, 02/20, 03/20. Reverse sequence. Vertical. Three selected cells. Step - month. Bug-79127', expectedData);
+		// Case #107: Date format. Asc sequence. Horizontal. Five selected cells. Step - month. Bug-79127
+		testData = [
+			['01/20', '02/20', '03/20', '04/20', '05/20']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = ['', '', '', '', ''];
+		expectedData = ['46193', '46223', '46254', '46285', '46315'];
+		getAutofillCase([0, 4, 0, 0], [5, 9, 0, 0], 3, 'Short date format - 01/20, 02/20, 03/20, 04/20, 05/20. Asc sequence. Horizontal. Five selected cells. Step - month. Bug-79127', expectedData);
+		// Case #108: Date format. Reverse sequence. Horizontal. Five selected cells. Step - month. Bug-79127
+		range = ws.getRange4(0, 5);
+		range.fillData(testData);
+		undoData = ['46162', '46132', '46101', '46073', '46042'];
+		expectedData = ['46011', '45981', '45950', '45920', '45889'];
+		getAutofillCase([5, 9, 0, 0], [4, 0, 0, 0], 1, 'Short date format - 01/20, 02/20, 03/20, 04/20, 05/20. Reverse sequence. Horizontal. Five selected cells. Step - month. Bug-79127', expectedData);
+		// Restore Date object
+		window.Date = RealDate;
+		// Case #109: Date format. Asc sequence. Vertical. Five selected cells. Sequence with the last day of the month. Step - month. Bug-79127
+		testData = [
+			['01/31/2026'],
+			['02/28/2026'],
+			['03/31/2026'],
+			['04/30/2026'],
+			['05/31/2026']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = [['46101'], ['37710'], ['37741'], [''], ['']];
+		expectedData = [['46203'], ['46234'], ['46265'], ['46295'], ['46326']];
+		getAutofillCase([0, 0, 0, 4], [0, 0, 5, 9], 3, 'Date format. Asc sequence. Vertical. Five selected cells. Sequence with the last day of month. Step - month. Bug-79127', expectedData);
+		// Case #110: Date format. Asc sequence. Vertical. Three selected cells. Change to default mode coz sequence for month step isn't correct, but it's int sequence. Bug-79127
+		testData = [
+			['01/01/2026'],
+			['02/01/2026'],
+			['03/04/2026']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = [['46142'], ['46173'], ['46101']];
+		expectedData = [['46116'], ['46147'], ['46178']];
+		getAutofillCase([0, 0, 0, 2], [0, 0, 3, 5], 3, 'Date format. Asc sequence. Vertical. Three selected cells. Change to default mode coz sequence for month step isn\'t correct, but it\'s int sequence. Bug-79127', expectedData);
+
 		ws.getRange2('A1:A20').cleanAll();
 	});
 
