@@ -2822,8 +2822,8 @@ CChartsDrawer.prototype =
             val : {max: null, min:null, scale : []},
         }
 
-		for (let i = 0; i < plotArea.plotAreaRegion.series.length; i++) {
-            const seria = plotArea.plotAreaRegion.series[i];
+		// for (let i = 0; i < plotArea.plotAreaRegion.series.length; i++) {
+            const seria = plotArea.plotAreaRegion.series[0];
             const type = seria.layoutId;
             const secondType = 1 < plotArea.plotAreaRegion.series.length ? plotArea.plotAreaRegion.series[1].layoutId : null;
             const strLit = seria.getCatLit(type);
@@ -2854,7 +2854,7 @@ CChartsDrawer.prototype =
                 plotArea.plotAreaRegion.setCachedData(this._createCachedData(type, seria, numLit, strLit, axisProperties, secondType, width, height));
 				axisProperties.isValid = true;
             }
-        }
+        // }
 
 		if (axisProperties.isValid) {
 			this._chartExHandleAxesConfigurations(plotArea.axId, axisProperties);

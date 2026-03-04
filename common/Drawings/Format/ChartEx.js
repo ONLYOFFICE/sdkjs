@@ -266,13 +266,13 @@ function (window, undefined) {
 		let sFormatCode = null;
 
 		if (oNumFmt) {
-		if (oNumFmt.sourceLinked) {
+			if (oNumFmt.sourceLinked) {
 				return this.getSourceFormatCode();
-		}
+			}
 			sFormatCode = oNumFmt.formatCode;
-		if (typeof sFormatCode === "string" && sFormatCode.length > 0) {
+			if (typeof sFormatCode === "string" && sFormatCode.length > 0) {
 				return sFormatCode;
-		}
+			}
 		}
 		return "General";
 	};

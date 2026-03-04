@@ -6168,10 +6168,13 @@ function(window, undefined) {
 		return oAxis.dispUnits.getMultiplier();
 	}
 
-	CChartSpace.prototype.getNumFmt = function (oAxis) {
+	CChartSpace.prototype.getNumFmt = function (oAxis, fallbackFormat) {
 		const sFormatCode = oAxis ? oAxis.getFormatCode() : null;
-		if (typeof sFormatCode === "string") {
+		if (typeof sFormatCode === "string" && sFormatCode !== "General") {
 			return oNumFormatCache.get(sFormatCode);
+		}
+		if (typeof fallbackFormat === "string") {
+			return oNumFormatCache.get(fallbackFormat);
 		}
 		return oNumFormatCache.get("General");
 	}
@@ -6184,11 +6187,11 @@ function(window, undefined) {
 		return fCalcValue + "";
 	}
 
-	CChartSpace.prototype.getValLabels = function(oAxis) {
+	CChartSpace.prototype.getValLabels = function(oAxis, fallbackFormat) {
 		let aStrings = [];
 		let aVal = [].concat(oAxis.scale);
 		const fMultiplier = this.getMultiplier(oAxis);
-		const oNumFormat = this.getNumFmt(oAxis);
+		const oNumFormat = this.getNumFmt(oAxis, fallbackFormat);
 		for (let t = 0; t < aVal.length; ++t) {
 			aStrings.push(this.getFormattedString(aVal[t], oNumFormat, fMultiplier));
 		}
@@ -6343,11 +6346,13 @@ function(window, undefined) {
 				if (!this.chart || !this.chart.plotArea) {
 					return [];
 				}
+				const strSeria = this.chart.plotArea.plotAreaRegion && this.chart.plotArea.plotAreaRegion.series ? this.chart.plotArea.plotAreaRegion.series[0] : null;
+				const numCache = strSeria ? strSeria.getValLit() : null;
+				const firstPointFormat = numCache && Array.isArray(numCache.pts) && numCache.pts.length > 0 ? numCache.pts[0].formatCode : null;
 				if (oAxis.isValuesAxis()) {
-					aStrings = this.getValLabels(oAxis);
+					aStrings = this.getValLabels(oAxis, firstPointFormat);
 					break;
 				}
-				const strSeria = this.chart.plotArea.plotAreaRegion && this.chart.plotArea.plotAreaRegion.series ? this.chart.plotArea.plotAreaRegion.series[0] : null;
 				if (strSeria) {
 					const type = this.chart.plotArea.plotAreaRegion.series[0].layoutId;
 					const cachedDatas = this.chart.plotArea.plotAreaRegion.getCachedData(true);
