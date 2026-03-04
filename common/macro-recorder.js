@@ -1992,21 +1992,32 @@
 				"\t});\n";
 		},
 		paragraphAdd			: function(additional){
-			if (!additional.length)
-				return "";
+			if (additional.type === "font")
+			{
+				return "\tApi.GetSelection().GetShapes().forEach(function(shape) {\n" +
+					"\t\tshape.GetDocContent().GetContent().forEach(function(para) {\n" +
+					"\t\t\tpara.SetFontName(\"" + additional.value + "\");\n" +
+					"\t\t});\n" +
+				"\t});\n"
+			}
+			else
+			{
+				if (!additional.length)
+					return "";
 
-			let text = "";
-			for (let nChar = 0; nChar < additional.length; nChar++)
-				text += String.fromCodePoint(additional[nChar]);
+				let text = "";
+				for (let nChar = 0; nChar < additional.length; nChar++)
+					text += String.fromCodePoint(additional[nChar]);
 
-			return "\t(function () {\n"
-				+ "\t\tlet shapes = Api.GetSelection().GetShapes();\n"
-				+ "\t\tif (shapes.length) {\n"
-				+	"\t\t\tlet content = shapes[0].GetDocContent();\n"
-				+	"\t\t\tlet len = content.GetElementsCount();\n"
-				+	"\t\t\tcontent.GetElement(len - 1).AddText(\"" + text + "\")\n"
-				+ "\t\t}\n"
-				+ "\t}());\n";
+				return "\t(function () {\n"
+					+ "\t\tlet shapes = Api.GetSelection().GetShapes();\n"
+					+ "\t\tif (shapes.length) {\n"
+					+	"\t\t\tlet content = shapes[0].GetDocContent();\n"
+					+	"\t\t\tlet len = content.GetElementsCount();\n"
+					+	"\t\t\tcontent.GetElement(len - 1).AddText(\"" + text + "\")\n"
+					+ "\t\t}\n"
+					+ "\t}());\n";
+			}
 		},
 		putTextPrBold			: function(bold){return "\tApi.GetSelection().GetShapes().forEach(function(shape) {\n" +
 			"\t\tshape.GetDocContent().GetContent().forEach(function(para) {\n" +
@@ -2032,8 +2043,10 @@
 			"\t});\n"
 			},
 		putTextPrFontName		: function(fontName){return "\tApi.GetSelection().GetShapes().forEach(function(shape) {\n" +
-			"\t\tshape.GetDocContent().GetContent().forEach(function(para) {\n" +
-			"\t\t\tpara.SetFontName(" + fontName + ");\n" +
+			"\t\tlet shapeContent = shape.GetContent();\n" +
+			"\t\tlet arrContent = shapeContent.GetContent().filter(function(item){return item.GetClassType() === 'paragraph'});\n" +
+			"\t\tarrContent.forEach(function(paragraph){\n" +
+			"\t\t\tparagraph.SetFontFamily('" + fontName + "');\n" +
 			"\t\t});\n" +
 			"\t});\n"
 			},
