@@ -2128,7 +2128,28 @@ background-repeat: no-repeat;\
 				} else if (str && str.indexOf("docData;DOCY") > -1) {
 					allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.keepTextOnly];
 				} else if (str && str.indexOf("pptData;") > -1) {
-					allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.sourceformatting, sProps.picture, sProps.keepTextOnly];
+					var pptDataStart = str.indexOf("pptData;") + "pptData;".length;
+					var pptDataEnd = str.indexOf("\"", pptDataStart);
+					var pptStr = pptDataEnd > -1 ? str.substring(pptDataStart, pptDataEnd) : str.substring(pptDataStart);
+					var _stream = AscFormat.CreateBinaryReader(pptStr, 0, pptStr.length);
+					var stream = new AscCommon.FileStream(_stream.data, _stream.size);
+					var p_url = stream.GetString2();
+					var p_theme = stream.GetString2();
+					var p_width = stream.GetULong();
+					var p_height = stream.GetULong();
+					var bIsMultipleContent = stream.GetBool();
+					let multipleParamsCount;
+					if (true === bIsMultipleContent) {
+						multipleParamsCount = stream.GetULong();
+					}
+
+					if (1 === multipleParamsCount || !multipleParamsCount) {
+						allowedSpecialPasteProps = [sProps.destinationFormatting];
+					} else if (2 === multipleParamsCount) {
+						allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.sourceformatting];
+					} else if (3 === multipleParamsCount) {
+						allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.sourceformatting, sProps.picture];
+					}
 				} else {
 					allowedSpecialPasteProps = [sProps.sourceformatting, sProps.keepTextOnly];
 				}
