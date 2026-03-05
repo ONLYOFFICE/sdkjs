@@ -5334,7 +5334,6 @@
 	PDFEditorApi.prototype['asc_CheckCopy']                = PDFEditorApi.prototype.asc_CheckCopy;
 	PDFEditorApi.prototype['Paste']                        = PDFEditorApi.prototype.Paste;
 	PDFEditorApi.prototype['asc_PasteData']                = PDFEditorApi.prototype.asc_PasteData;
-	PDFEditorApi.prototype['asc_getPasteOptions']          = PDFEditorApi.prototype.asc_getPasteOptions;
 	PDFEditorApi.prototype['asc_CloseFile']                = PDFEditorApi.prototype.asc_CloseFile;
 	PDFEditorApi.prototype['get_TextProps']                = PDFEditorApi.prototype.get_TextProps;
 
