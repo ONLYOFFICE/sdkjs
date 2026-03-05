@@ -1769,7 +1769,7 @@ CTransitionGL.prototype._renderFerris = function(progress, param)
 };
 
 // ============================================================
-// Transition: Prism — triangular prism rotation
+// Transition: Prism — rectangular prism (cube) rotation, 90°
 // ============================================================
 
 CTransitionGL.prototype._preparePrism = function()
@@ -1798,14 +1798,17 @@ CTransitionGL.prototype._renderPrism = function(progress, param)
     let dirIdx = offset % 4;  // 0=left, 1=right, 2=up, 3=down
     let isInverted = (offset >= 4 && offset < 8) || (offset >= 12);
 
-    // Prism rotates 120 degrees (triangular prism face-to-face)
-    let angle = progress * (2 * Math.PI / 3);
-    // Distance from prism center to face (for equilateral triangle with half-width = aspect)
-    let prismR = (dirIdx <= 1) ? 1.0 / Math.sqrt(3) : aspect / Math.sqrt(3);
-    if (isInverted) angle = -angle;
+    // Prism rotates 90 degrees (rectangular prism / cube face-to-face)
+    let angle = progress * (Math.PI / 2);
+    // Distance from prism center to face = half-width of the face
+    let prismR = (dirIdx <= 1) ? aspect : 1.0;
 
     let isVertical = (dirIdx <= 1); // left/right rotate around Y
     let dirSign = (dirIdx === 0 || dirIdx === 2) ? 1 : -1;
+
+    // isInverted=0 (default): faces on OUTSIDE (convex cube, axis behind faces)
+    // isInverted=1: faces on INSIDE (concave, axis in front of faces)
+    let pivotZ = isInverted ? prismR : -prismR;
 
     // Old slide face
     {
@@ -1813,15 +1816,15 @@ CTransitionGL.prototype._renderPrism = function(progress, param)
         mv = _Mat4.translate(mv, 0, 0, -dist);
         if (isVertical)
         {
-            mv = _Mat4.translate(mv, 0, 0, prismR);
+            mv = _Mat4.translate(mv, 0, 0, pivotZ);
             mv = _Mat4.rotateY(mv, dirSign * angle);
-            mv = _Mat4.translate(mv, 0, 0, -prismR);
+            mv = _Mat4.translate(mv, 0, 0, -pivotZ);
         }
         else
         {
-            mv = _Mat4.translate(mv, 0, 0, prismR);
+            mv = _Mat4.translate(mv, 0, 0, pivotZ);
             mv = _Mat4.rotateX(mv, -dirSign * angle);
-            mv = _Mat4.translate(mv, 0, 0, -prismR);
+            mv = _Mat4.translate(mv, 0, 0, -pivotZ);
         }
 
         gl.uniformMatrix4fv(prog.uniforms['uProjection'], false, projection);
@@ -1834,22 +1837,22 @@ CTransitionGL.prototype._renderPrism = function(progress, param)
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
 
-    // New slide face (offset by 120 degrees on the prism)
+    // New slide face (offset by 90 degrees on the prism)
     {
-        let faceAngle = 2 * Math.PI / 3; // 120 degrees between faces
+        let faceAngle = Math.PI / 2; // 90 degrees between adjacent cube faces
         let mv = _Mat4.identity();
         mv = _Mat4.translate(mv, 0, 0, -dist);
         if (isVertical)
         {
-            mv = _Mat4.translate(mv, 0, 0, prismR);
+            mv = _Mat4.translate(mv, 0, 0, pivotZ);
             mv = _Mat4.rotateY(mv, dirSign * (angle - faceAngle));
-            mv = _Mat4.translate(mv, 0, 0, -prismR);
+            mv = _Mat4.translate(mv, 0, 0, -pivotZ);
         }
         else
         {
-            mv = _Mat4.translate(mv, 0, 0, prismR);
+            mv = _Mat4.translate(mv, 0, 0, pivotZ);
             mv = _Mat4.rotateX(mv, -dirSign * (angle - faceAngle));
-            mv = _Mat4.translate(mv, 0, 0, -prismR);
+            mv = _Mat4.translate(mv, 0, 0, -pivotZ);
         }
 
         gl.uniformMatrix4fv(prog.uniforms['uProjection'], false, projection);
