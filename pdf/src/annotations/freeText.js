@@ -450,15 +450,14 @@
 		this.SetNeedUpdateOpacity(false);
 	};
 	CAnnotationFreeText.prototype.SetFillColor = function(aColor) {
-		AscCommon.History.Add(new CChangesPDFAnnotFill(this, this.GetFillColor(), aColor));
+		AscCommon.History.Add(new CChangesPDFAnnotFill(this, this._fillColor, aColor));
 		
 		this._fillColor = aColor;
 		
 		AscCommon.ExecuteNoHistory(function() {
-			let oRGB  = this.GetRGBColor(aColor);
-			let oFill = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-			for (let i = 0; i < this.spTree.length; i++)
-			{
+			let oRGB    = aColor ? this.GetRGBColor(aColor) : null;
+            let oFill   = oRGB ? AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255) : AscFormat.CreateNoFillUniFill();
+			for (let i = 0; i < this.spTree.length; i++) {
 				this.spTree[i].setFill(oFill);
 			}
 		}, undefined, this);

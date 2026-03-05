@@ -318,7 +318,7 @@
         return this._dash;
     };
     CAnnotationBase.prototype.SetFillColor = function(aColor) {
-        AscCommon.History.Add(new CChangesPDFAnnotFill(this, this.GetFillColor(), aColor));
+        AscCommon.History.Add(new CChangesPDFAnnotFill(this, this._fillColor, aColor));
 
         this._fillColor = aColor;
 
@@ -332,6 +332,8 @@
         else {
             this.AddToRedraw();
         }
+
+		this.SetWasChanged(true);
     };
     CAnnotationBase.prototype.GetFillColor = function() {
         return this._fillColor;
