@@ -8397,22 +8397,27 @@
 	 * @returns {?ApiDrawing} - The object which represents the watermark drawing if the watermark type in Settings is not "none".
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetWatermarkSettings.js
 	 */
-	ApiDocument.prototype.SetWatermarkSettings = function(Settings)
-	{
-		let oDrawing = this.Document.SetWatermarkPropsAction(Settings.Settings);
-		if(oDrawing && oDrawing.GraphicObj)
-		{
-			const oGraphic = oDrawing.GraphicObj;
-			if(oGraphic.isImage())
-			{
-				return new ApiImage(oGraphic);
-			}
-			else if(oGraphic.isShape())
-			{
-				return new ApiShape(oGraphic);
-			}
+	ApiDocument.prototype.SetWatermarkSettings = function (Settings) {
+		const doc = this.Document;
+		const settings = Settings.Settings;
+		const drawing = doc.SetWatermarkPropsAction(settings);
 
+		const isShape = drawing && drawing.GraphicObj && drawing.GraphicObj.isShape();
+		if (isShape) {
+			AddEndScriptAction(function () {
+				const shape = drawing.GraphicObj;
+				shape.checkExtentsByDocContent(true);
+				drawing.setExtent(shape.spPr.xfrm.extX, shape.spPr.xfrm.extY);
+			});
+
+			return new ApiShape(drawing.GraphicObj);
 		}
+
+		const isImage = drawing && drawing.GraphicObj && drawing.GraphicObj.isImage();
+		if (isImage) {
+			return new ApiImage(drawing.GraphicObj);
+		}
+
 		return null;
 	};
 
