@@ -483,9 +483,19 @@ CDrawingsController.prototype.GetCurrentParagraph = function(bIgnoreSelection, a
 {
 	return this.DrawingObjects.getCurrentParagraph(bIgnoreSelection, arrSelectedParagraphs, oPr);
 };
-CDrawingsController.prototype.GetCurrentTablesStack = function(arrTables)
+CDrawingsController.prototype.GetCurrentTablesStack = function(tables)
 {
-	return this.DrawingObjects.getCurrentTablesStack(arrTables);
+	if (!tables)
+		tables = [];
+	
+	let paraDrawing = this.DrawingObjects.getMajorParaDrawing();
+	let run = paraDrawing ? paraDrawing.GetRun() : null;
+	if (run)
+		tables = run.GetParentTables(tables);
+	
+	this.DrawingObjects.getCurrentTablesStack(tables);
+	
+	return tables;
 };
 CDrawingsController.prototype.GetSelectedElementsInfo = function(oInfo)
 {

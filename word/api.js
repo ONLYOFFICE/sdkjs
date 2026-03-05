@@ -5726,6 +5726,14 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oLogicDocument.FinalizeAction(undefined, {col: col, row: row, style: tableStyleName, tableGrid: tableGrid});
 		}
 	};
+	asc_docs_api.prototype.asc_IsTable = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || !logicDocument.IsDocumentEditor())
+			return false;
+		
+		return !!logicDocument.GetCurrentTable();
+	};
 	asc_docs_api.prototype.addRowAbove             = function(nCount)
 	{
 		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Table_Properties))
@@ -15266,6 +15274,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['sync_PageOrientCallback']                   = asc_docs_api.prototype.sync_PageOrientCallback;
 	asc_docs_api.prototype['sync_HeadersAndFootersPropCallback']        = asc_docs_api.prototype.sync_HeadersAndFootersPropCallback;
 	asc_docs_api.prototype['put_Table']                                 = asc_docs_api.prototype.put_Table;
+	asc_docs_api.prototype['asc_IsTable']                               = asc_docs_api.prototype.asc_IsTable;
 	asc_docs_api.prototype['addRowAbove']                               = asc_docs_api.prototype.addRowAbove;
 	asc_docs_api.prototype['addRowBelow']                               = asc_docs_api.prototype.addRowBelow;
 	asc_docs_api.prototype['addColumnLeft']                             = asc_docs_api.prototype.addColumnLeft;
