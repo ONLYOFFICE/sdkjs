@@ -5304,10 +5304,6 @@
 			this.buffers.overlay.setDarkMode();
 			this.buffers.mainGraphic.setDarkMode();
 			this.buffers.overlayGraphic.setDarkMode();
-			// CGraphics objects for shapes (inherit CGraphicsBase.setDarkMode)
-			if (!this.shapeCtx.p_color_old)        this.shapeCtx.setDarkMode();
-			if (!this.shapeOverlayCtx.p_color_old) this.shapeOverlayCtx.setDarkMode();
-			if (!this.mainGraphics.p_color_old)    this.mainGraphics.setDarkMode();
 			if (this.cellEditor) {
 				this.cellEditor.updateDarkMode(isDarkMode);
 			}
