@@ -123,6 +123,7 @@
 	SlideModeManagerBase.prototype.setHandoutPageCount = function(val) {};
 	SlideModeManagerBase.prototype.setPageOrientation = function(val) {};
 	SlideModeManagerBase.prototype.getCurrentTheme = function() {return null;};
+	SlideModeManagerBase.prototype.getSizesMM = function() {return {width: 0, height: 0};};
 
 	function SlideModeManager(api) {
 		SlideModeManagerBase.call(this, api);
@@ -278,6 +279,17 @@
 	SlideModeManager.prototype.getCurrentTheme = function() {
 		const slide = this.getCurrentSlide();
 		return slide && slide.Layout.Master.Theme || null;
+	};
+	SlideModeManager.prototype.getSizesMM = function() {
+		const presentation = this.getPresentation();
+		return presentation.GetSlideSizesMM();
+	};
+	SlideModeManager.prototype.setPageOrientation = function(val) {
+		const sizes = this.getSizesMM();
+		const presentation = this.getPresentation();
+		if (sizes.width > sizes.height && val === Asc.c_oAscPageOrientation.PagePortrait || sizes.width < sizes.height && val === Asc.c_oAscPageOrientation.PageLandscape) {
+			presentation.changeSlideSize(sizes.height * AscCommonWord.g_dKoef_mm_to_emu, sizes.width * AscCommonWord.g_dKoef_mm_to_emu, sizes.type);
+		}
 	};
 
 
@@ -463,7 +475,8 @@
 		}
 		return null;
 	};
-
+	MasterSlideModeManager.prototype.getSizesMM = SlideModeManager.prototype.getSizesMM;
+	MasterSlideModeManager.prototype.setPageOrientation = SlideModeManager.prototype.setPageOrientation;
 
 	function NoteModeManager(api) {
 		SlideModeManagerBase.call(this, api);
@@ -477,6 +490,17 @@
 	NoteModeManager.prototype.getAllSlides = function () {
 		const presentation = this.getPresentation();
 		return presentation.notes;
+	};
+	NoteModeManager.prototype.getSizesMM = function() {
+		const presentation = this.getPresentation();
+		return presentation.GetNotesSizesMM();
+	};
+	NoteModeManager.prototype.setPageOrientation = function(val) {
+		const sizes = this.getSizesMM();
+		const presentation = this.getPresentation();
+		if (sizes.width > sizes.height && val === Asc.c_oAscPageOrientation.PagePortrait || sizes.width < sizes.height && val === Asc.c_oAscPageOrientation.PageLandscape) {
+			presentation.changeNoteSize(sizes.height * AscCommonWord.g_dKoef_mm_to_emu, sizes.width * AscCommonWord.g_dKoef_mm_to_emu, sizes.type);
+		}
 	};
 
 	function MasterNoteModeManager(api) {
@@ -492,6 +516,8 @@
 		const presentation = this.getPresentation();
 		return presentation.notesMasters;
 	};
+	MasterNoteModeManager.prototype.getSizesMM = NoteModeManager.prototype.getSizesMM;
+	MasterNoteModeManager.prototype.setPageOrientation = NoteModeManager.prototype.setPageOrientation;
 
 	function MasterHandoutModeManager(api) {
 		SlideModeManagerBase.call(this, api);
@@ -539,11 +565,11 @@
 		this.setPlaceholder(val, AscFormat.phType_sldNum, AscCommonSlide.addNumberShape);
 	};
 	MasterHandoutModeManager.prototype.setHandoutPageCount = function(val) {
-
+		const slide = this.getCurrentSlide();
+		slide && slide.setSlideCount(val);
 	};
-	MasterHandoutModeManager.prototype.setPageOrientation = function(val) {
-
-	};
+	MasterHandoutModeManager.prototype.getSizesMM = NoteModeManager.prototype.getSizesMM;
+	MasterHandoutModeManager.prototype.setPageOrientation = NoteModeManager.prototype.setPageOrientation;
 
 	function SorterModeManager(api) {
 		SlideModeManagerBase.call(this, api);

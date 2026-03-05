@@ -86,7 +86,7 @@
 		this.cSld = new AscFormat.CSld(this);
 		this.hf = null;
 
-		this.slideCounts = 6;
+		this.slideCount = 6;
 
 		this.Theme = null;
 		this.kind = AscFormat.TYPE_KIND.HANDOUT_MASTER;
@@ -220,7 +220,7 @@
 		let align = 1;
 
 		const handouts = [];
-		let slidesCount = this.slideCounts;
+		let slidesCount = this.slideCount;
 		let isDrawWithSlideTextPlaceholder = false;
 		if (slidesCount === 3) {
 			isDrawWithSlideTextPlaceholder = true;
@@ -455,6 +455,9 @@
 			this.addToRecalculate();
 		}
 	};
+	CHandoutMaster.prototype.setSlideCount = function(count) {
+		this.slideCount = count;
+	}
 
 	function PlaceholderBase(x, y, width, height) {
 		this.x = x;

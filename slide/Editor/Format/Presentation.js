@@ -776,9 +776,15 @@ CPresentation.prototype.GetNotesHeightEMU = function () {
 	}
 	return CSlideSize.prototype.DEFAULT_CY;
 };
-CPresentation.prototype.GetSizeType = function () {
+CPresentation.prototype.GetSlideSizeType = function () {
 	if (this.sldSz) {
 		return this.sldSz.GetSizeType();
+	}
+	return Asc.c_oAscSlideSZType.SzCustom;
+};
+CPresentation.prototype.GetNotesSizeType = function () {
+	if (this.notesSz) {
+		return this.notesSz.GetSizeType();
 	}
 	return Asc.c_oAscSlideSZType.SzCustom;
 };
@@ -6943,7 +6949,7 @@ CPresentation.prototype.Document_UpdateInterfaceState = function () {
 	this.Document_UpdateRulersState();
 	this.Document_UpdateCanAddHyperlinkState();
 
-	this.Api.sendEvent("asc_onPresentationSize", this.GetWidthEMU(), this.GetHeightEMU(), this.GetSizeType(), this.getFirstSlideNumber());
+	this.Api.sendEvent("asc_onPresentationSize", this.GetWidthEMU(), this.GetHeightEMU(), this.GetSlideSizeType(), this.getFirstSlideNumber());
 	this.Api.sendEvent("asc_canIncreaseIndent", this.Can_IncreaseParagraphLevel(true));
 	this.Api.sendEvent("asc_canDecreaseIndent", this.Can_IncreaseParagraphLevel(false));
 	this.Api.sendEvent("asc_onCanGroup", this.canGroup());
@@ -11585,16 +11591,13 @@ CPresentation.prototype.IsNeedNotesSize = function () {
 	return Asc.editor.IsHandoutMasterMode();
 }
 CPresentation.prototype.GetSizesMM = function (pageIndex) {
-	const result = {width: 0, height: 0};
-	const presentation = this;
-	if (this.IsNeedNotesSize()) {
-		result.width = presentation.GetNotesWidthMM();
-		result.height = presentation.GetNotesHeightMM();
-	} else {
-		result.width = presentation.GetWidthMM();
-		result.height = presentation.GetHeightMM();
-	}
-	return result;
+	return this.getViewManager().getSizesMM();
+};
+CPresentation.prototype.GetNotesSizesMM = function (pageIndex) {
+	return {width: this.GetNotesWidthMM(), height: this.GetNotesHeightMM(), type: this.GetNotesSizeType()};
+};
+CPresentation.prototype.GetSlideSizesMM = function (pageIndex) {
+	return {width: this.GetWidthMM(), height: this.GetHeightMM(), type: this.GetSlideSizeType()};
 };
 CPresentation.prototype.getViewManager = function () {
 	return Asc.editor.presentationViewManager;
@@ -11603,7 +11606,25 @@ CPresentation.prototype.getCumulativeThumbnailsLength = function (isHorizontalOr
 	const viewManager = this.getViewManager();
 	return viewManager.getCumulativeThumbnailsLength(isHorizontalOrientation, thumbnailWidth, thumbnailHeight);
 }
+CPresentation.prototype.changeNoteSize = function (width, height, type) {
+	//todo think about change note size
+	if (this.Document_Is_SelectionLocked(AscCommon.changestype_SlideSize) === false) {
+		History.Create_NewPoint(AscDFH.historydescription_Presentation_ChangeSlideSize);
+		this.internalChangeSizes(width, height, type);
+		this.Recalculate();
+		this.Document_UpdateInterfaceState();
+	}
+};
 
+CPresentation.prototype.internalChangeNoteSizes = function (width, height, type) {
+	const sldSize = new CSlideSize();
+	sldSize.setCX(width);
+	sldSize.setCY(height);
+	if (AscFormat.isRealNumber(type) && type !== Asc.c_oAscSlideSZType.SzWidescreen && type !== Asc.c_oAscSlideSZType.SzCustom) {
+		sldSize.setType(type);
+	}
+	this.setNotesSz(sldSize);
+};
 function collectSelectedObjects(aSpTree, aCollectArray, bRecursive, oIdMap, bSourceFormatting) {
 	var oSp;
 	var oPr = new AscFormat.CCopyObjectProperties();

@@ -622,6 +622,7 @@
 		this.cSld.getAllInks(arrInks);
 		return arrInks;
 	};
+	SlideBase.prototype.setSlideCount = function() {};
 
 	// todo end check slides methods
 
