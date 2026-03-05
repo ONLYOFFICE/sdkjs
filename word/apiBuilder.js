@@ -11350,24 +11350,23 @@
 		if (paragraph instanceof ApiParagraph)
 		{
 			oNewPara = paragraph;
-
-			if (sPosition === "before")
-				paraParent.Internal_Content_Add(paraIndex, oNewPara.private_GetImpl());
-			else if (sPosition === "after")
-				paraParent.Internal_Content_Add(paraIndex + 1, oNewPara.private_GetImpl());
 		}
 		else if (typeof paragraph === "string")
 		{
 			oNewPara = Api.CreateParagraph();
 			oNewPara.AddText(paragraph);
-
-			if (sPosition === "before")
-				paraParent.Internal_Content_Add(paraIndex, oNewPara.private_GetImpl());
-			else if (sPosition === "after")
-				paraParent.Internal_Content_Add(paraIndex + 1, oNewPara.private_GetImpl());
 		}
-		else 
+
+		if (oNewPara === null) {
 			return null;
+		}
+
+		oNewPara.private_GetImpl().bFromDocument = this.Paragraph.bFromDocument;
+
+		if (sPosition === 'before')
+			paraParent.Internal_Content_Add(paraIndex, oNewPara.private_GetImpl());
+		else if (sPosition === 'after')
+			paraParent.Internal_Content_Add(paraIndex + 1, oNewPara.private_GetImpl());
 
 		if (beRNewPara === true)
 			return oNewPara;
