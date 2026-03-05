@@ -560,9 +560,6 @@ void main() {\n\
         
         this.cacheSelectionQuads([]);
 
-        this.updateCursorType(pageIndex, x, y);
-        this.viewer.drawingDocument.LockCursorType(this.viewer.id_main.style.cursor);
-
         this.onUpdateSelection();
         this.onUpdateOverlay();
     };
@@ -587,6 +584,7 @@ void main() {\n\
             sel.Glyph2 = ret.Glyph;
         }
         
+		this.updateCursorType(pageIndex, x, y);
         this.onUpdateOverlay();
     };
     CFile.prototype.updateCursorType = function(pageIndex, x, y) {
@@ -633,8 +631,6 @@ void main() {\n\
             sel.Line2  = ret.Line;
             sel.Glyph2 = ret.Glyph;
         }
-
-        this.viewer.drawingDocument.UnlockCursorType();
 
         oDoc.TextSelectTrackHandler.Update(true);
         this.onUpdateSelection();
