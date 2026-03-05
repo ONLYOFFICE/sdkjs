@@ -281,12 +281,12 @@
 			case 'open':
 				// пробелов нет в начале
 				if (nFirstNonSpaceChar === 0)
-					return sSyblols + sText
+					return sSyblols + sText;
 				// строка из пробелов
 				else if (nFirstNonSpaceChar === -1)
-					return sText + sSyblols
+					return sText + sSyblols;
 				// в начале строки есть пробелы
-				else if (nFirstNonSpaceChar !== -1)
+				else
 					return sText.slice(0, nFirstNonSpaceChar) + sSyblols + sText.slice(nFirstNonSpaceChar);
 			case 'close':
 				// пробелов нет в конце
@@ -296,7 +296,7 @@
 				else if (nFirstNonSpaceChar === -1)
 					return sSyblols + sText;
 				// в конце строки есть пробелы
-				else if (nSpaceCharsCountOnEnd !== 0)
+				else
 					return sText.slice(0, sText.length - nSpaceCharsCountOnEnd) + sSyblols + sText.slice(sText.length - nSpaceCharsCountOnEnd);
 			case 'wholly':
 			default:
@@ -310,7 +310,7 @@
 				else if (nFirstNonSpaceChar !== 0 && nSpaceCharsCountOnEnd === 0)
 					return sText.slice(0, nFirstNonSpaceChar) + sSyblols + sText.slice(nFirstNonSpaceChar) + sSyblols;
 				// пробелы есть в начале и есть в конце
-				else if (nFirstNonSpaceChar !== 0 && nSpaceCharsCountOnEnd !== 0)
+				else
 					return sText.slice(0, nFirstNonSpaceChar) + sSyblols + sText.slice(nFirstNonSpaceChar, sText.length - nSpaceCharsCountOnEnd) + sSyblols + sText.slice(sText.length - nSpaceCharsCountOnEnd);
 		}
 	};
@@ -2900,8 +2900,9 @@
 	 */
 	ApiRange.prototype.GetStartPage = function()
 	{
-		let oDoc = private_GetLogicDocument();
-		let oPosXY = oDoc.private_GetXYByDocumentPosition(this.StartPos);
+		let oApiDoc = Api.GetDocument();
+		oApiDoc.ForceRecalculate();
+		let oPosXY = oApiDoc.Document.private_GetXYByDocumentPosition(this.StartPos);
 		
 		return oPosXY.Page;
 	};
@@ -2916,8 +2917,9 @@
 	 */
 	ApiRange.prototype.GetEndPage = function()
 	{
-		let oDoc = private_GetLogicDocument();
-		let oPosXY = oDoc.private_GetXYByDocumentPosition(this.EndPos);
+		let oApiDoc = Api.GetDocument();
+		oApiDoc.ForceRecalculate();
+		let oPosXY = oApiDoc.Document.private_GetXYByDocumentPosition(this.EndPos);
 		
 		return oPosXY.Page;
 	};
@@ -6426,8 +6428,6 @@
 			? doc.getCustomXmlManager()
 			: new AscWord.CustomXmlManager(null);
 	}
-	ApiCustomXmlParts.prototype = Object.create(ApiCustomXmlParts.prototype);
-	ApiCustomXmlParts.prototype.constructor = ApiCustomXmlParts;
 
 	/**
 	 * Adds a new custom XML part to the XML manager.
@@ -6545,8 +6545,6 @@
 		this.customXml        = customXMl;
 		this.customXmlManager = customXmlManager;
 	}
-	ApiCustomXmlPart.prototype = Object.create(ApiCustomXmlPart.prototype);
-	ApiCustomXmlPart.prototype.constructor = ApiCustomXmlPart;
 
 	/**
 	 * Returns a type of the ApiCustomXmlPart class.
@@ -6741,8 +6739,6 @@
 		this.CustomXmlPart    = xmlPart;
 		this.CustomXmlContent = xmlNode;
 	}
-	ApiCustomXmlNode.prototype = Object.create(ApiCustomXmlNode.prototype);
-	ApiCustomXmlNode.prototype.constructor = ApiCustomXmlNode;
 
 	/**
 	 * Returns a type of the ApiCustomXmlNode class.
@@ -8010,7 +8006,7 @@
 			userInfo.put_Id(userId);
 			userInfo.put_FullName(assistantName);
 			
-			AscCommon.setUserColorById(userId, {r : 8, g: 145, b: 178}, {r : 8, g: 145, b: 178});
+			AscCommon.setUserColorById(userId, {r : 8, g: 145, b: 178});
 		}
 		else
 		{
@@ -10054,7 +10050,7 @@
 	};
 	
 	/**
-	 * Moves a cursor to the start of the specified page in the document.
+	 * Returns the footnote or endnote content if the cursor is currently inside one, otherwise returns null.
 	 * @memberof ApiDocument
 	 * @returns {?ApiDocumentContent}
 	 * @typeofeditors ["CDE"]
@@ -15259,7 +15255,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @return {?ApiColor}
 	 * @since 9.1.0
-	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetBackgroundColor.js
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetBackgroundColor.js
 	 */
 	ApiTableCell.prototype.GetBackgroundColor = function () {
 		const shd = this.Cell.Get_Shd();
@@ -16150,7 +16146,7 @@
 	};
 
 	/**
-	 * Specifies whether the text with the current text properties are capitalized.
+	 * Returns whether the text with the current text properties are capitalized.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @return {?boolean}
@@ -16179,7 +16175,7 @@
 	};
 
 	/**
-	 * Specifies whether the text with the current text properties are displayed capitalized two points smaller than the actual font size.
+	 * Returns whether the text with the current text properties are displayed capitalized two points smaller than the actual font size.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @return {?boolean}
@@ -17352,7 +17348,7 @@
 		return this.Lvl;
 	};
 	/**
-	 * Specifies the text properties which will be applied to the text in the current numbering level itself, not to the text in the subsequent paragraph.
+	 * Returns the text properties which will be applied to the text in the current numbering level itself, not to the text in the subsequent paragraph.
 	 * <note>To change the text style of the paragraph, a style must be applied to it using the {@link ApiRun#SetStyle} method.</note>
 	 * @memberof ApiNumberingLevel
 	 * @typeofeditors ["CDE"]
@@ -19098,7 +19094,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @since 9.3.0
 	 * @returns {boolean | null} Returns true if the figure is flipped horizontally, false if not, or null if the drawing properties are not available.
-	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/AddBreak.js
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetFlipH.js
 	 */
 	ApiDrawing.prototype.GetFlipH = function()
 	{
@@ -19113,7 +19109,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @since 9.3.0
 	 * @returns {boolean | null} Returns true if the figure is flipped vertically, false if not, or null if the drawing properties are not available.
-	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/AddBreak.js
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetFlipV.js
 	 */
 	ApiDrawing.prototype.GetFlipV = function()
 	{
@@ -23628,8 +23624,7 @@
 	ApiInlineLvlSdt.prototype.SetAppearance = function(type)
 	{
 		type = GetStringParameter(type, "boundingBox");
-		this.Sdt.SetAppearance();
-		
+
 		if (type === "hidden")
 			this.Sdt.SetAppearance(Asc.c_oAscSdtAppearance.Hidden);
 		else
@@ -25453,7 +25448,7 @@
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @return {?ApiColor}
 	 * @since 9.1.0
-	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBorderColor.js
+	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/GetBackgroundColor.js
 	 */
 	ApiFormBase.prototype.GetBackgroundColor = function () {
 		const formPr = this.Sdt.GetFormPr();
@@ -30443,6 +30438,8 @@
 	ApiBlockLvlSdt.prototype["GetBackgroundColor"]      = ApiBlockLvlSdt.prototype.GetBackgroundColor;
 	ApiBlockLvlSdt.prototype["GetDataBinding"]          = ApiBlockLvlSdt.prototype.GetDataBinding;
 	ApiBlockLvlSdt.prototype["SetDataBinding"]          = ApiBlockLvlSdt.prototype.SetDataBinding;
+	ApiBlockLvlSdt.prototype["SetPicture"]              = ApiBlockLvlSdt.prototype.SetPicture;
+	ApiBlockLvlSdt.prototype["IsPicture"]               = ApiBlockLvlSdt.prototype.IsPicture;
 	ApiBlockLvlSdt.prototype["UpdateFromXmlMapping"]    = ApiBlockLvlSdt.prototype.UpdateFromXmlMapping;
 	ApiBlockLvlSdt.prototype["GetDataForXmlMapping"]    = ApiBlockLvlSdt.prototype.GetDataForXmlMapping;
 	ApiBlockLvlSdt.prototype["SetAppearance"]           = ApiBlockLvlSdt.prototype.SetAppearance;

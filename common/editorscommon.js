@@ -11121,11 +11121,23 @@
 	}
 
 	var g_oUserColorById = {}, g_oUserNextColorIndex = 0;
-	
+	let g_oDefaultUserColor = null; // steel blue for anonymous/unknown user
 	function _getUserColorById(userId, userName, isDark, isNumericValue)
 	{
+		function defaultColor()
+		{
+			if (g_oDefaultUserColor)
+				return g_oDefaultUserColor;
+			
+			g_oDefaultUserColor = new CUserCacheColor(0x4A90D9);
+			return g_oDefaultUserColor;
+		}
+		
 		if ((!userId || "" === userId) && (!userName || "" === userName))
-			return new CColor(0, 0, 0, 255);
+		{
+			let res = defaultColor();
+			return -1 === isDark ? res.Light : true === isDark || 1 === isDark ? res.Dark : res.Normal;
+		}
 
 		var res;
 		if (g_oUserColorById.hasOwnProperty(userId))
@@ -11145,16 +11157,14 @@
 		}
 
 		if (!res)
-			return new CColor(0, 0, 0, 255);
+			res = defaultColor();
 
 		return -1 === isDark ? res.Light : true === isDark || 1 === isDark ? res.Dark : res.Normal;
 	}
-	function setUserColorById(userId, light, dark)
+	function setUserColorById(userId, color)
 	{
-		g_oUserColorById[userId] = {
-			Light : new CColor(light.r, light.g, light.b, 255),
-			Dark : new CColor(dark.r, dark.g, dark.b, 255),
-		};
+		let nColor = typeof color === "number" ? color : ((color.r & 0xFF) << 16) | ((color.g & 0xFF) << 8) | (color.b & 0xFF);
+		g_oUserColorById[userId] = new CUserCacheColor(nColor);
 	}
 	function getUserColorById(userId, userName, isDark, isNumericValue)
 	{

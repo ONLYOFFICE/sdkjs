@@ -1390,7 +1390,8 @@ CChangesPDFAnnotBorderEffect.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
 	oAnnot._borderEffectStyle = Value;
-	oAnnot.AddToRedraw();
+	oAnnot.SetNeedRecalc(true);
+	oAnnot.recalcGeometry();
 	if (Value == AscPDF.BORDER_EFFECT_STYLES.none) {
 		oAnnot.SetDefaultGeometry();
 	}
@@ -1411,7 +1412,8 @@ CChangesPDFAnnotBorderIntensity.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
 	oAnnot._borderEffectIntensity = Value;
-	oAnnot.AddToRedraw();
+	oAnnot.SetNeedRecalc(true);
+	oAnnot.recalcGeometry();
 };
 
 /**

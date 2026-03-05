@@ -3250,7 +3250,7 @@
             if (null != gradientStop.position) {
                 this.bs.WriteItem(c_oSerFillTypes.GradientStopPosition, function(){oThis.memory.WriteDouble2(gradientStop.position);});
             }
-            if (null != gradientStop.color) {
+            if (null != gradientStop.color || null != gradientStop.position) {
                 this.bs.WriteItem(c_oSerFillTypes.GradientStopColor, function(){oThis.bs.WriteColorSpreadsheet(gradientStop.color);});
             }
         };
@@ -13502,7 +13502,8 @@
                 if(!isNaN(dateMs))
                     oCommentData.asc_putOnlyOfficeTime(dateMs + "");
             } else if ( c_oSer_ThreadedComment.personId === type ) {
-                var person = this.personList[this.stream.GetString2LE(length)];
+                let personGuid = this.stream.GetString2LE(length);
+                var person = this.personList[personGuid.toUpperCase()];
                 if (person) {
                     oCommentData.asc_putUserName(person.displayName);
                     oCommentData.asc_putUserId(person.userId);
@@ -13727,7 +13728,8 @@
             var res = c_oSerConstants.ReadOk;
             var oThis = this;
             if ( c_oSer_Person.id === type ) {
-                this.personList[this.stream.GetString2LE(length)] = person;
+                let personGuid = this.stream.GetString2LE(length);
+                this.personList[personGuid.toUpperCase()] = person;
             } else if (c_oSer_Person.providerId === type) {
                 person.providerId = this.stream.GetString2LE(length);
             } else if (c_oSer_Person.userId === type) {

@@ -71,10 +71,7 @@
         }
         else if (bNoCheck !== true) {
             drawingDocument.UpdateTargetTransform(null);
-            let oActiveObj  = this.document.GetActiveObject();
-            let oDocContent = oActiveObj ? oActiveObj.GetDocContent() : null;
-            if (oDocContent == null)
-                drawingDocument.TargetEnd();
+			drawingDocument.TargetEnd();
         }
 
         let oMathTrackHandler   = this.document.MathTrackHandler;

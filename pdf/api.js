@@ -3280,7 +3280,7 @@
 		}
 
 		let aInnerColor = oMouseDownAnnot.IsRedact() ? oMouseDownAnnot.GetFillColor() : oMouseDownAnnot.GetBorderColor();
-		let oColor = oMouseDownAnnot.GetRGBColor(aInnerColor);
+		let oColor = oMouseDownAnnot.GetRGBColor(aInnerColor, true);
 		
 		oColor["r"] = oColor.r;
         oColor["g"] = oColor.g;

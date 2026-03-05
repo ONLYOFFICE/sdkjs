@@ -360,6 +360,23 @@ function editorDeleteDrawingBase(oGraphicObject, bCheckPlaceholder) {
         History.Add(new CChangeContentDrawingWorksheetRemove(oGraphicObject, position));
         //oGraphicObject.worksheet.addContentChanges(new AscCommon.CContentChangesElement(AscCommon.contentchanges_Remove, data.Pos, 1, data));
     }
+    if(oDrawingBase && oDrawingBase.worksheet)
+    {
+        let ws = oDrawingBase.worksheet;
+        if(ws._cleanPagesModeData)
+        {
+            ws._cleanPagesModeData();
+        }
+        if(ws.isPageBreakPreview && ws.isPageBreakPreview())
+        {
+            let drawingObjects = oDrawingBase.getDrawingObjects();
+            if(drawingObjects)
+            {
+                drawingObjects.pageBreakPreviewNeedRedraw = true;
+                drawingObjects.showDrawingObjects();
+            }
+        }
+    }
     if(oGraphicObject.signatureLine && oGraphicObject.setSignature)
     {
         let oApi = Asc.editor;
