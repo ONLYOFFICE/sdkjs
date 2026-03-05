@@ -10009,6 +10009,11 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
 
+		// Case #8: Area3D, Number.
+		oParser = new parserFormula('COUNTIF(Sheet1:Sheet2!A1:B1, ">0")', "C2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!")
+
 		// Bounded Cases:
 		// Case #1: Area, String. Count errors greater than #N/A
 		AscCommonExcel.g_oCountIfCache.clean();
