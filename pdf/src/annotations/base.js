@@ -318,13 +318,13 @@
         return this._dash;
     };
     CAnnotationBase.prototype.SetFillColor = function(aColor) {
-        AscCommon.History.Add(new CChangesPDFAnnotFill(this, this.GetFillColor(), aColor));
+        AscCommon.History.Add(new CChangesPDFAnnotFill(this, this._fillColor, aColor));
 
         this._fillColor = aColor;
 
         if (this.IsShapeBased()) {
-            let oRGB    = this.GetRGBColor(aColor);
-            let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+            let oRGB    = aColor ? this.GetRGBColor(aColor) : null;
+            let oFill   = oRGB ? AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255) : AscFormat.CreateNoFillUniFill();
             this.setFill(oFill);
             this.SetNeedRecalc(true);
             this.SetNeedUpdateOpacity(true);
@@ -332,6 +332,8 @@
         else {
             this.AddToRedraw();
         }
+
+		this.SetWasChanged(true);
     };
     CAnnotationBase.prototype.GetFillColor = function() {
         return this._fillColor;
