@@ -14060,11 +14060,13 @@ Paragraph.prototype.Concat = function(Para, isUseConcatedStyle)
 {
 	this.DeleteCommentOnRemove = false;
 	Para.DeleteCommentOnRemove = false;
-	
+
 	let complexFields = this.GetComplexFieldsByPos(this.GetEndPos());
+	Para.GetAllComplexFields(complexFields);
+	
 	for (let iField = 0, nFields = complexFields.length; iField < nFields; ++iField)
 		complexFields[iField].StartCharsUpdate();
-
+	
 	// Если в параграфе Para были точки NearPos, за которыми нужно следить перенесем их в этот параграф
 	var NearPosCount = Para.NearPosArray.length;
 	for (var Pos = 0; Pos < NearPosCount; Pos++)
@@ -14116,11 +14118,12 @@ Paragraph.prototype.ConcatBefore = function(oPara, nSelection)
 {
 	this.DeleteCommentOnRemove = false;
 	oPara.DeleteCommentOnRemove = false;
-	
+
 	let complexFields = this.GetComplexFieldsByPos(this.GetStartPos());
+	oPara.GetAllComplexFields(complexFields);
 	for (let iField = 0, nFields = complexFields.length; iField < nFields; ++iField)
 		complexFields[iField].StartCharsUpdate();
-
+	
 	// Убираем метку конца параграфа у добавляемого параграфа
 	oPara.RemoveParaEnd();
 
@@ -18220,6 +18223,18 @@ Paragraph.prototype.GetAllFields = function(isUseSelection, arrFields)
 	}
 
 	return arrFields;
+};
+Paragraph.prototype.GetAllComplexFields = function(fields)
+{
+	let allFields = this.GetAllFields();
+	fields = fields ? fields : [];
+	for (let i = 0; i < allFields.length; ++i)
+	{
+		let f = allFields[i];
+		if ((f instanceof AscWord.ComplexField) && -1 === fields.indexOf(f))
+			fields.push(f);
+	}
+	return fields;
 };
 /**
  * Используются ли уменьшенные по ширине пробелы между словами?
