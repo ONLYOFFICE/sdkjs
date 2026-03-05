@@ -1763,11 +1763,6 @@ var CPresentation = CPresentation || function(){};
             oViewer.onMouseDownEpsilon(e);
         }
         
-        // если в селекте нет drawing по которой кликнули, то сбрасываем селект
-        if (oMouseDownObject == null || (this.IsEditFieldsMode() == false && (false == oController.selectedObjects.includes(oMouseDownObject)) && oController.selection.groupSelection != oMouseDownObject)) {
-            this.RemoveSelection();
-        }
-
         oViewer.onUpdateOverlay();
         this.UpdateInterface();
         this.private_UpdateTargetForCollaboration();
