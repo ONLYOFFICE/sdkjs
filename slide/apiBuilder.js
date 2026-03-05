@@ -647,8 +647,9 @@
     Api.CreateTheme = function(sName, oMaster, oClrScheme, oFormatScheme, oFontScheme){
         if (typeof(sName) !== "string")
             sName = "";
-        if (oMaster.GetClassType() !== "master" || oClrScheme.GetClassType() !== "themeColorScheme" ||
-        oFormatScheme.GetClassType() !== "themeFormatScheme" || oFontScheme.GetClassType() !== "themeFontScheme")
+        if (!oMaster || !oClrScheme || !oFormatScheme || !oFontScheme
+        || oMaster.GetClassType() !== "master" || oClrScheme.GetClassType() !== "themeColorScheme"
+        || oFormatScheme.GetClassType() !== "themeFormatScheme" || oFontScheme.GetClassType() !== "themeFontScheme")
             return null;
 
         var oPresentation      = private_GetPresentation();
@@ -849,10 +850,10 @@
 	 */
 	Api.CreateOleObject = function(sImageSrc, nWidth, nHeight, sData, sAppId)
 	{
-		if (typeof sImageSrc === "string" && sImageSrc.length > 0 && typeof sData === "string"
+		if (!(typeof sImageSrc === "string" && sImageSrc.length > 0 && typeof sData === "string"
 			&& typeof sAppId === "string" && sAppId.length > 0
-			&& AscFormat.isRealNumber(nWidth) && AscFormat.isRealNumber(nHeight)
-		)
+			&& AscFormat.isRealNumber(nWidth) && AscFormat.isRealNumber(nHeight)))
+			return null;
 
 		var nW = private_EMU2MM(nWidth);
 		var nH = private_EMU2MM(nHeight);
@@ -1684,9 +1685,9 @@
         nEnd = nEnd == undefined ? this.Presentation.Slides.length - 1 : nEnd;
 
         if (nStart < 0 || nStart >= this.Presentation.Slides.length)
-            return;
+            return null;
         if (nEnd < 0 || nEnd >= this.Presentation.Slides.length)
-            return;
+            return null;
 
         let oResult = oWriter.SerSlides(nStart, nEnd, bWriteLayout, bWriteMaster, bWriteAllMasLayouts);
         if (bWriteTableStyles)
@@ -1816,12 +1817,12 @@
 
 	/**
 	 * Returns a collection of drawing objects from the document content filtered by their names.
-	 * @memberof ApiDocumentContent
+	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
 	 * @param {string[]} ids - An array of drawing names to filter by.
 	 * @return {Drawing[]}
-	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetDrawingsByName.js
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetDrawingsByName.js
 	 */
 	ApiPresentation.prototype.GetDrawingsByName = function(ids)
 	{
@@ -1871,7 +1872,7 @@
 		const api = this.Presentation.Api;
 		
 		let props = (api) ? api.asc_getAppProps() : null;
-		oDocInfo["Application"] = (props.asc_getApplication() || '') + (props.asc_getAppVersion() ? ' ' : '') + (props.asc_getAppVersion() || '');
+		oDocInfo["Application"] = props ? (props.asc_getApplication() || '') + (props.asc_getAppVersion() ? ' ' : '') + (props.asc_getAppVersion() || '') : '';
 		
 		let langCode = 1033; // en-US
 		let langName = 'en-us';
@@ -2111,7 +2112,7 @@
 	 */
     ApiMaster.prototype.GetLayout = function(nPos)
     {
-        if (nPos < 0 || nPos > this.Master.sldLayoutLst.length || typeof (nPos) !== 'number')
+        if (nPos < 0 || nPos >= this.Master.sldLayoutLst.length || typeof (nPos) !== 'number')
             return null;
         
         return new ApiLayout(this.Master.sldLayoutLst[nPos])
@@ -2571,9 +2572,9 @@
 	 */
     ApiLayout.prototype.SetName = function(sName)
     {
-        if (typeof(sName) !== "string")
+        if (typeof(sName) === "string")
             this.Layout.setCSldName(sName);
-        else 
+        else
             return false;
         
         return true;
@@ -2587,7 +2588,7 @@
 	 */
     ApiLayout.prototype.GetLayoutType = function()
     {
-		this.Layout.getType();
+		return AscCommonSlide.LAYOUT_TYPE_TO_STRING[this.Layout.getType()];
     };
 
     /**
@@ -2791,6 +2792,7 @@
                 return true;
             }
         }
+        return false;
     };
 
     /**
@@ -3037,6 +3039,7 @@
 
         nIdx >>= 0;
         this.Placeholder.setIdx(nIdx);
+        return true;
     };
 
     /**
@@ -4342,8 +4345,8 @@
 			const notes = AscCommonSlide.CreateNotes();
 			notes.setNotesMaster(presentation.notesMasters[0]);
 
-			notes.setSlide(this);
-			this.setNotes(notes);
+			notes.setSlide(this.Slide);
+			this.Slide.setNotes(notes);
 
 			oNotesPage = new ApiNotesPage(notes);
 		}
@@ -4859,7 +4862,7 @@
 
 		if (entryEffectName === 'effectNone') {
 			this.Transition.TransitionType = c_oAscSlideTransitionTypes.None;
-			this.TransitionOption = -1;
+			this.Transition.TransitionOption = -1;
 			return true;
 		}
 

@@ -540,6 +540,8 @@
         return this._doCaption;
     };
     CAnnotationLine.prototype.private_UpdateRichContent = function() {
+		AscCommon.History.StartNoHistoryMode();
+
         if (this.IsDoCaption()) {
             if (!this.txBody) {
                 this.createTextBody();
@@ -657,6 +659,8 @@
             this.setTxBody(null);
             this.setTxBox(true);
         }
+
+		AscCommon.History.EndNoHistoryMode();
     };
     CAnnotationLine.prototype.GetContents = function() {
         if (!this.IsDoCaption()) {

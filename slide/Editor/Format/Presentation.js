@@ -4442,16 +4442,38 @@ CPresentation.prototype.MoveCursorToEndPos = function (AddToSelect) {
 };
 
 CPresentation.prototype.MoveCursorLeft = function (AddToSelect, Word) {
-	var oController = this.GetCurrentController();
-	oController && oController.cursorMoveLeft(AddToSelect, Word);
+	let oController = this.GetCurrentController();
+	if (oController) {
+		let isRtl = false;
+		let oContent = oController.getTargetDocContent();
+		if (oContent) {
+			let curPara = oContent.GetCurrentParagraph();
+			isRtl = !!(curPara && curPara.isRtlDirection());
+		}
+		if (isRtl)
+			oController.cursorMoveRight(AddToSelect, Word);
+		else
+			oController.cursorMoveLeft(AddToSelect, Word);
+	}
 	this.private_UpdateCursorXY(true, true);
 	this.Document_UpdateInterfaceState();
 	return true;
 };
 
 CPresentation.prototype.MoveCursorRight = function (AddToSelect, Word) {
-	var oController = this.GetCurrentController();
-	oController && oController.cursorMoveRight(AddToSelect, Word);
+	let oController = this.GetCurrentController();
+	if (oController) {
+		let isRtl = false;
+		let oContent = oController.getTargetDocContent();
+		if (oContent) {
+			let curPara = oContent.GetCurrentParagraph();
+			isRtl = !!(curPara && curPara.isRtlDirection());
+		}
+		if (isRtl)
+			oController.cursorMoveLeft(AddToSelect, Word);
+		else
+			oController.cursorMoveRight(AddToSelect, Word);
+	}
 	this.private_UpdateCursorXY(true, true);
 	this.Document_UpdateInterfaceState();
 	return true;

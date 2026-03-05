@@ -1898,4 +1898,133 @@ QUnit.config.autostart = false;
 		assert.strictEqual(wsName.getRange4(0, 2).getValueWithFormat(), '2', 'Check calculating value');
 		RemoveWorksheets([0]);
 	});
+
+	QUnit.module('Test BiDi cell editor', {
+		afterEach: function ()
+		{
+			CloseCellEditor();
+		}
+	});
+
+	QUnit.test('Arrow keys swap in RTL text', (assert) =>
+	{
+		Select(0, 0, 0, 0, 0, 0);
+		OpenCellEditor();
+		EnterText('\u05E9\u05DC\u05D5\u05DD');
+
+		assert.strictEqual(cellEditor.cursorPos, 4, 'Cursor at end after entering Hebrew text');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToRightChar);
+		assert.strictEqual(cellEditor.cursorPos, 3, 'Right arrow in RTL moves to prev char');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToRightChar);
+		assert.strictEqual(cellEditor.cursorPos, 2, 'Right arrow in RTL moves to prev char again');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveCursorLeftChar);
+		assert.strictEqual(cellEditor.cursorPos, 3, 'Left arrow in RTL moves to next char');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveCursorLeftChar);
+		assert.strictEqual(cellEditor.cursorPos, 4, 'Left arrow in RTL moves to next char again');
+	});
+
+	QUnit.test('Cursor visual position in RTL text', (assert) =>
+	{
+		Select(0, 0, 0, 0, 0, 0);
+		OpenCellEditor();
+		EnterText('\u05E9\u05DC\u05D5\u05DD');
+
+		let tr = cellEditor.textRender;
+		let offsetBegin = tr.calcCharOffset(0);
+		let offsetEnd = tr.calcCharOffset(4);
+
+		assert.ok(offsetBegin !== null, 'Offset at pos=0 is not null');
+		assert.ok(offsetEnd !== null, 'Offset at pos=4 is not null');
+		assert.ok(offsetBegin.left > offsetEnd.left, 'In RTL: cursor at pos=0 is visually to the right of cursor at pos=4');
+
+		let offsetMid = tr.calcCharOffset(2);
+		assert.ok(offsetMid.left > offsetEnd.left && offsetMid.left < offsetBegin.left,
+			'Cursor at pos=2 is between pos=0 and pos=4');
+	});
+
+	QUnit.test('Hit-testing in RTL text', (assert) =>
+	{
+		Select(0, 0, 0, 0, 0, 0);
+		OpenCellEditor();
+		EnterText('\u05E9\u05DC\u05D5\u05DD');
+
+		let tr = cellEditor.textRender;
+		let zoom = cellEditor.getZoom();
+		let offsetBegin = tr.calcCharOffset(0);
+		let offsetEnd = tr.calcCharOffset(4);
+
+		let posAtRight = tr.getCharPosByXY(offsetBegin.left, 1, 0, zoom);
+		assert.strictEqual(posAtRight, 0, 'Click at right edge of RTL text gives pos=0');
+
+		let posAtLeft = tr.getCharPosByXY(offsetEnd.left, 1, 0, zoom);
+		assert.strictEqual(posAtLeft, 4, 'Click at left edge of RTL text gives pos=4');
+	});
+
+	QUnit.test('Selection rects in RTL text', (assert) =>
+	{
+		Select(0, 0, 0, 0, 0, 0);
+		OpenCellEditor();
+		EnterText('\u05E9\u05DC\u05D5\u05DD');
+
+		let rects = cellEditor._collectSelectionRects(0, 1, 3);
+		assert.strictEqual(rects.length, 1, 'Pure RTL selection produces one contiguous rect');
+		assert.ok(rects[0].w > 0, 'Selection rect has positive width');
+	});
+
+	QUnit.test('Mixed LTR/RTL cursor positions', (assert) =>
+	{
+		Select(0, 0, 0, 0, 0, 0);
+		OpenCellEditor();
+		EnterText('AB\u05E9\u05DCCD');
+
+		let tr = cellEditor.textRender;
+		let offset0 = tr.calcCharOffset(0);
+		let offset2 = tr.calcCharOffset(2);
+		let offset4 = tr.calcCharOffset(4);
+		let offset6 = tr.calcCharOffset(6);
+
+		assert.ok(offset0.left < offset2.left, 'LTR part: pos=0 is left of pos=2');
+		assert.ok(offset2.left >= offset4.left, 'RTL part: pos=2 boundary is at or right of pos=4 boundary');
+		assert.ok(offset4.left < offset6.left, 'LTR part after RTL: pos=4 is left of pos=6');
+	});
+
+	QUnit.test('Cursor at BiDi boundary with trailing edge hint', (assert) =>
+	{
+		Select(0, 0, 0, 0, 0, 0);
+		OpenCellEditor();
+		EnterText('AB\u05E9\u05DCCD');
+
+		let tr = cellEditor.textRender;
+
+		tr.cursorAtTrailingEdge = true;
+		let offsetTrailing = tr.calcCharOffset(2);
+
+		tr.cursorAtTrailingEdge = false;
+		let offsetLeading = tr.calcCharOffset(2);
+
+		tr.cursorAtTrailingEdge = undefined;
+
+		assert.ok(offsetTrailing !== null && offsetLeading !== null,
+			'Both cursor positions at BiDi boundary are valid');
+	});
+
+	QUnit.test('Home/End keys work in RTL text', (assert) =>
+	{
+		Select(0, 0, 0, 0, 0, 0);
+		OpenCellEditor();
+		EnterText('\u05E9\u05DC\u05D5\u05DD');
+
+		cellEditor._moveCursor(-11, 2);
+		assert.strictEqual(cellEditor.cursorPos, 2, 'Cursor moved to pos=2');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToStartLine);
+		assert.strictEqual(cellEditor.cursorPos, 0, 'Home moves to logical start (pos=0)');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToEndLine);
+		assert.strictEqual(cellEditor.cursorPos, 4, 'End moves to logical end (pos=4)');
+	});
 })(window);

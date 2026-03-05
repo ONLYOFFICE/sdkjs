@@ -1430,6 +1430,18 @@
 	PDFEditorApi.prototype.IsRedactTool = function() {
 		return !!this.isRedactTool;
 	};
+	PDFEditorApi.prototype.SetRedactDelForm = function(bDel) {
+		this.bRedactDelForms = bDel;
+	};
+	PDFEditorApi.prototype.IsRedactDelForms = function() {
+		return !!this.bRedactDelForms;
+	};
+	PDFEditorApi.prototype.SetRedactDelAnnots = function(bDel) {
+		this.bRedactDelAnnots = bDel;
+	};
+	PDFEditorApi.prototype.IsRedactDelAnnots = function() {
+		return !!this.bRedactDelAnnots;
+	};
 	PDFEditorApi.prototype.RedactPages = function(aIdxs) {
 		let oDoc = this.getPDFDoc();
 		let oFile = oDoc.Viewer.file;
@@ -3203,7 +3215,7 @@
 			return false;
 		}
 
-		let aColor = [r / 255, g / 255, b / 255];
+		let aColor = ![r, g, b].includes(undefined) ? [r / 255, g / 255, b / 255] : undefined;
 		
 		return oDoc.DoAction(function() {
 			oController.selectedObjects.forEach(function(annot) {
@@ -3268,7 +3280,7 @@
 		}
 
 		let aInnerColor = oMouseDownAnnot.IsRedact() ? oMouseDownAnnot.GetFillColor() : oMouseDownAnnot.GetBorderColor();
-		let oColor = oMouseDownAnnot.GetRGBColor(aInnerColor);
+		let oColor = oMouseDownAnnot.GetRGBColor(aInnerColor, true);
 		
 		oColor["r"] = oColor.r;
         oColor["g"] = oColor.g;
@@ -5201,6 +5213,15 @@
 
 		return oDoc.Viewer.file.nativeFile['CheckOwnerPassword'](password);
 	};
+
+	PDFEditorApi.prototype.asc_onSelectionEnd = function(page, x, y) {
+		if (window.g_asc_plugins)
+			window.g_asc_plugins.onPluginEvent("onSelectionEnd", page, x, y);
+	};
+	PDFEditorApi.prototype.asc_onSelectionCancel = function() {
+		if (window.g_asc_plugins)
+			window.g_asc_plugins.onPluginEvent("onSelectionCancel");
+	};
 	
 	function CPdfContextMenuData(obj) {
 		if (obj) {
@@ -5397,6 +5418,8 @@
 	// redact
 	PDFEditorApi.prototype['SetRedactTool']		= PDFEditorApi.prototype.SetRedactTool;
 	PDFEditorApi.prototype['IsRedactTool']		= PDFEditorApi.prototype.IsRedactTool;
+	PDFEditorApi.prototype['SetRedactDelForm']	= PDFEditorApi.prototype.SetRedactDelForm;
+	PDFEditorApi.prototype['SetRedactDelAnnots']= PDFEditorApi.prototype.SetRedactDelAnnots;
 	PDFEditorApi.prototype['RedactPages']		= PDFEditorApi.prototype.RedactPages;
 	PDFEditorApi.prototype['ApplyRedact']		= PDFEditorApi.prototype.ApplyRedact;
 	PDFEditorApi.prototype['HasRedact']			= PDFEditorApi.prototype.HasRedact;

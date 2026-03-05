@@ -86,7 +86,7 @@ var gc_nMaxDigCountView = 11;//Максимальное число знаков 
 var gc_nMaxMantissa = Math.pow(10, gc_nMaxDigCount);
 var gc_aTimeFormats = ['[$-F400]h:mm:ss AM/PM', 'h:mm;@', 'h:mm AM/PM;@', 'h:mm:ss;@', 'h:mm:ss AM/PM;@', 'mm:ss.0;@',
 	'[h]:mm:ss;@'];
-var gc_aFractionFormats = ['# ?/?', '# ??/??', '# ???/???', '# ?/2', '# ?/4', '# ?/8', '# ??/16', '# ?/10', '# ??/100'];
+var gc_aFractionFormats = ['#\\ ?/?', '#\\ ??/??', '#\\ ???/???', '#\\ ?/2', '#\\ ?/4', '#\\ ?/8', '#\\ ??/16', '#\\ ?/10', '#\\ ??/100'];
 //important for shortcuts
 var gc_oParseDateOverrideFormats = {
     "d-mmm": 1,
@@ -2824,6 +2824,19 @@ NumFormatCache.prototype =
 //кеш структур по строке формата
 var oNumFormatCache = new NumFormatCache();
 
+// Strip \x escaping and "text" quoting from a format string.
+// '#\ ?/?' and '#" "?/?' and '# ?/?' all normalize to '# ?/?'.
+function stripFormatEscaping(s) {
+	var r = '';
+	for (var i = 0; i < s.length; i++) {
+		var c = s[i];
+		if (c === '\\' && i + 1 < s.length) { r += s[++i]; }
+		else if (c === '"') { for (++i; i < s.length && s[i] !== '"'; i++) { r += s[i]; } }
+		else { r += c; }
+	}
+	return r;
+}
+
 function CellFormat(format, formatType, useLocaleFormat)
 {
     this.sFormat = format;
@@ -3283,12 +3296,18 @@ CellFormat.prototype =
 				c_oAscNumFormatType.Number, c_oAscNumFormatType.Fraction, c_oAscNumFormatType.Currency,
 				c_oAscNumFormatType.Accounting
 			];
+			var normalized = stripFormatEscaping(this.sFormat);
 			for (var i = 0; i < types.length; ++i) {
 				var type = types[i];
 				info.asc_setType(type);
 				var formats = getFormatCells(info);
-				if (-1 != formats.indexOf(this.sFormat)) {
-					nType = type;
+				for (var j = 0; j < formats.length; j++) {
+					if (stripFormatEscaping(formats[j]) === normalized) {
+						nType = type;
+						break;
+					}
+				}
+				if (nType !== c_oAscNumFormatType.Custom) {
 					break;
 				}
 			}

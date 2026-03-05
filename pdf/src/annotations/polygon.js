@@ -63,6 +63,43 @@
     AscFormat.InitClass(CAnnotationPolygon, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Polygon);
     Object.assign(CAnnotationPolygon.prototype, AscPDF.CAnnotationBase.prototype);
     
+	CAnnotationPolygon.prototype.private_UpdateRect = function(rect) {
+		AscCommon.History.StartNoHistoryMode();
+		let aCurRect = this.GetRect();
+		let aCurRD = this.GetRectangleDiff().slice();
+		let nLineW = this.GetBorderWidth() * g_dKoef_pt_to_mm;
+		rect && this.SetRect(rect);
+		this.SetRectangleDiff([0, 0, 0, 0]);
+		this.recalcBounds();
+		this.recalcGeometry();
+		this.Recalculate(true);
+		
+		AscCommon.History.EndNoHistoryMode();
+		
+		let oGrBounds = this.bounds;
+		let oShapeBounds = this.getRectBounds();
+
+		if (!rect) {
+			rect = [];
+		}
+
+		rect[0] = (oGrBounds.l - nLineW) * g_dKoef_mm_to_pt;
+		rect[1] = (oGrBounds.t - nLineW) * g_dKoef_mm_to_pt;
+		rect[2] = (oGrBounds.r + nLineW) * g_dKoef_mm_to_pt;
+		rect[3] = (oGrBounds.b + nLineW) * g_dKoef_mm_to_pt;
+
+		this._rect = aCurRect;
+		this._rectDiff = aCurRD;
+
+		this.SetRect(rect);
+		this.SetRectangleDiff([
+			(oShapeBounds.l - oGrBounds.l + nLineW) * g_dKoef_mm_to_pt,
+			(oShapeBounds.t - oGrBounds.t + nLineW) * g_dKoef_mm_to_pt,
+			(oGrBounds.r - oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt,
+			(oGrBounds.b - oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt
+		]);
+	};
+
     CAnnotationPolygon.prototype.Copy = function(isForMove) {
         let oCopy = AscPDF.CAnnotationBase.prototype.Copy.call(this, isForMove);
 

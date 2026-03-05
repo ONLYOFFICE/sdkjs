@@ -74,11 +74,6 @@
 	 */
 
 	/**
-	 * The available widget border styles.
-	 * @typedef {("solid" | "beveled" | "dashed" | "inset" | "underline")} WidgetBorderStyle
-	 */
-
-	/**
 	 * The available button widget border appearances types.
 	 * @typedef {("normal" | "down" | "hover")} ButtonAppearance
 	 */
@@ -356,6 +351,11 @@
 	 * "#,##0.00_\);\(#,##0.00\)" | "#,##0.00_\);\[Red\]\(#,##0.00\)" | "mm:ss" | "[h]:mm:ss" | "mm:ss.0" | "##0.0E+0" | "@")} NumFormat
 	 */
 
+	/**
+	 * @typedef {Object} DocQuads
+	 * @property {Quad[]} [pageIndex] - the key is the index of a page
+	 */
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// Api
@@ -549,11 +549,9 @@
 		oAnnot.SetBorderWidth(1);
 		oAnnot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
 		oAnnot.SetBorderColor([0, 0, 0]);
+		oAnnot.private_UpdateRect(rect);
 
-		let oApiAnnot = new ApiCircleAnnotation(oAnnot);
-		oApiAnnot.private_UpdateRect(rect);
-
-		return oApiAnnot;
+		return new ApiCircleAnnotation(oAnnot);
 	};
 	
 	/**
@@ -583,11 +581,9 @@
 		oAnnot.SetBorderWidth(1);
 		oAnnot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);
 		oAnnot.SetBorderColor([0, 0, 0]);
+		oAnnot.private_UpdateRect(rect);
 
-		let oApiAnnot = new ApiSquareAnnotation(oAnnot);
-		oApiAnnot.private_UpdateRect(rect);
-
-		return oApiAnnot;
+		return new ApiSquareAnnotation(oAnnot);
 	};
 
 	/**
@@ -846,7 +842,7 @@
 
 		if (creationDate != null) {
 			creationDate = AscBuilder.GetNumberParameter(creationDate, null);
-			if (!creationDate) {
+			if (creationDate === null) {
 				AscBuilder.throwException("The creationDate parameter must be a number");
 			}
 		}
@@ -865,8 +861,8 @@
 			rect:			[X1, Y1, X2, Y2],
 			name:           AscCommon.CreateGUID(),
 			type:           AscPDF.ANNOTATIONS_TYPES.Stamp,
-			creationDate:   creationDate ? new Date().getTime() : creationDate,
-			modDate:        creationDate ? new Date().getTime() : creationDate,
+			creationDate:   creationDate ? creationDate : new Date().getTime(),
+			modDate:        creationDate ? creationDate : new Date().getTime(),
 			hidden:         false
 		}
 
@@ -1524,6 +1520,66 @@
 		return true;
 	};
 
+	/**
+	 * Sets document selection
+	 * @typeofeditors ["PDFE"]
+	 * @param {number} startPage
+	 * @param {Point} startPoint
+	 * @param {number} endPage
+	 * @param {Point} endPoint
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetSelection.js
+	 */
+	ApiDocument.prototype.SetSelection = function(startPage, startPoint, endPage, endPoint) {
+		private_CheckPoint(startPoint);
+		private_CheckPoint(endPoint);
+
+		if (!this.GetPage(startPage)) {
+			AscBuilder.throwException("Invalid start page index");
+		}
+		if (!this.GetPage(endPage)) {
+			AscBuilder.throwException("Invalid end page index");
+		}
+
+		let oFile = this.Document.GetFile();
+		this.Document.BlurActiveObject();
+
+		let startNearestPos = oFile.getNearestPos(startPage, startPoint['x'], startPoint['y']);
+		let endNearestPos = oFile.getNearestPos(endPage, endPoint['x'], endPoint['y']);
+
+		oFile.Selection.IsSelection = true;
+
+		oFile.Selection.Page1  = startPage;
+		oFile.Selection.Line1  = startNearestPos.Line;
+		oFile.Selection.Glyph1 = startNearestPos.Glyph;
+
+		oFile.Selection.Page2  = endPage;
+		oFile.Selection.Line2  = endNearestPos.Line;
+		oFile.Selection.Glyph2 = endNearestPos.Glyph;
+
+		this.Document.Action.UpdateSelection = true;
+
+		return true;
+	};
+	
+	/**
+	 * Gets document selection quads by page
+	 * @typeofeditors ["PDFE"]
+	 * @returns {DocQuads}
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetSelectionQuads.js
+	 */
+	ApiDocument.prototype.GetSelectionQuads = function() {
+		let oDoc = private_GetLogicDocument();
+		let aDocQuads = oDoc.GetFile().getSelectionQuads();
+
+		let aResult = {};
+		aDocQuads.forEach(function(pageQuads) {
+			aResult[pageQuads["page"]] = pageQuads["quads"];
+		});
+
+		return aResult;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiPage
@@ -1698,7 +1754,7 @@
 	};
 
 	/**
-	 * Gets page selection quads
+	 * Sets page selection.
 	 * @typeofeditors ["PDFE"]
 	 * @param {Point} startPoint
 	 * @param {Point} endPoint
@@ -2873,8 +2929,8 @@
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiComboboxField/Methods/SetEditable.js
 	 */
-	ApiComboboxField.prototype.SetEditable = function(bCommit) {
-		return this.Field.SetEditable(bCommit)
+	ApiComboboxField.prototype.SetEditable = function(bEditable) {
+		return this.Field.SetEditable(bEditable)
 	};
 
 	/**
@@ -2884,8 +2940,8 @@
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiComboboxField/Methods/IsEditable.js
 	 */
-	ApiComboboxField.prototype.IsEditable = function(bCommit) {
-		return this.Field.IsEditable(bCommit)
+	ApiComboboxField.prototype.IsEditable = function() {
+		return this.Field.IsEditable()
 	};
 
 	/**
@@ -3301,7 +3357,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRadiobuttonField/Methods/IsCheckInUnison.js
 	 */
 	ApiRadiobuttonField.prototype.IsCheckInUnison = function() {
-		return this.Field.SetRadiosInUnison();
+		return this.Field.IsRadiosInUnison();
 	};
 
 	/**
@@ -3803,12 +3859,6 @@
 		return this.Annot;
 	};
 
-	ApiBaseAnnotation.prototype.private_UpdateRect = function(rect) {
-		if (rect) {
-			this.Annot.SetRect(rect);
-		}
-	};
-
 	/**
 	 * Sets annotation rect.
 	 * @typeofeditors ["PDFE"]
@@ -3821,7 +3871,7 @@
 			AscBuilder.throwException("The rect parameter must be a valid rect");
 		}
 
-		this.private_UpdateRect(rect);
+		this.Annot.private_UpdateRect(rect);
 		return true;
 	};
 
@@ -3942,6 +3992,7 @@
 	ApiBaseAnnotation.prototype.SetBorderWidth = function(width) {
 		width = AscBuilder.GetNumberParameter(width, 0);
 		this.Annot.SetBorderWidth(width);
+		this.Annot.private_UpdateRect();
 		return true;
 	};
 
@@ -4220,7 +4271,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetDashPattern.js
 	 */
 	ApiBaseAnnotation.prototype.SetDashPattern = function(pattern) {
-		if (pattern.find(function(value) { value = AscBuilder.GetNumberParameter(value, null); if (!value) return true})) {
+		if (pattern.find(function(value) { let num = AscBuilder.GetNumberParameter(value, null); if (num === null) return true})) {
 			AscBuilder.throwException("The pattern parameter must be an array with numbers");
 		}
 
@@ -4252,7 +4303,7 @@
 		}
 
 		this.Annot.SetBorderEffectStyle(AscPDF.BORDER_EFFECT_STYLES[style]);
-		this.private_UpdateRect();
+		this.Annot.private_UpdateRect();
 
 		return true;
 	};
@@ -4292,7 +4343,7 @@
 		}
 
 		this.Annot.SetBorderEffectIntensity(value);
-		this.private_UpdateRect();
+		this.Annot.private_UpdateRect();
 
 		return true;
 	};
@@ -4480,43 +4531,6 @@
 	ApiCircleAnnotation.prototype = Object.create(ApiBaseAnnotation.prototype);
 	ApiCircleAnnotation.prototype.constructor = ApiCircleAnnotation;
 
-	ApiCircleAnnotation.prototype.private_UpdateRect = function(rect) {
-		if (!rect) {
-			rect = this.Annot.GetRect();
-		}
-
-		AscCommon.History.StartNoHistoryMode();
-		let aCurRect = this.Annot.GetRect();
-		let aCurRD = this.Annot.GetRectangleDiff().slice();
-		let nLineW = this.Annot.GetBorderWidth() * g_dKoef_pt_to_mm;
-		this.Annot.SetRect(rect);
-		this.Annot.SetRectangleDiff([0, 0, 0, 0]);
-		this.Annot.recalcBounds();
-		this.Annot.recalcGeometry();
-		this.Annot.Recalculate(true);
-		
-		AscCommon.History.EndNoHistoryMode();
-		
-		let oGrBounds = this.Annot.bounds;
-		let oShapeBounds = this.Annot.getRectBounds();
-
-		rect[0] = (oGrBounds.l - nLineW) * g_dKoef_mm_to_pt;
-		rect[1] = (oGrBounds.t - nLineW) * g_dKoef_mm_to_pt;
-		rect[2] = (oGrBounds.r + nLineW) * g_dKoef_mm_to_pt;
-		rect[3] = (oGrBounds.b + nLineW) * g_dKoef_mm_to_pt;
-
-		this.Annot._rect = aCurRect;
-		this.Annot._rectDiff = aCurRD;
-
-		this.Annot.SetRect(rect);
-		this.Annot.SetRectangleDiff([
-			(oShapeBounds.l - oGrBounds.l + nLineW) * g_dKoef_mm_to_pt,
-			(oShapeBounds.t - oGrBounds.t + nLineW) * g_dKoef_mm_to_pt,
-			(oGrBounds.r - oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt,
-			(oGrBounds.b - oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt
-		]);
-	};
-
 	/**
 	 * Returns a type of the ApiCircleAnnotation class.
 	 * @memberof ApiCircleAnnotation
@@ -4574,43 +4588,6 @@
 
 	ApiSquareAnnotation.prototype = Object.create(ApiBaseAnnotation.prototype);
 	ApiSquareAnnotation.prototype.constructor = ApiSquareAnnotation;
-
-	ApiSquareAnnotation.prototype.private_UpdateRect = function(rect) {
-		if (!rect) {
-			rect = this.Annot.GetRect();
-		}
-
-		AscCommon.History.StartNoHistoryMode();
-		let aCurRect = this.Annot.GetRect();
-		let aCurRD = this.Annot.GetRectangleDiff().slice();
-		let nLineW = this.Annot.GetBorderWidth() * g_dKoef_pt_to_mm;
-		this.Annot.SetRect(rect);
-		this.Annot.SetRectangleDiff([0, 0, 0, 0]);
-		this.Annot.recalcBounds();
-		this.Annot.recalcGeometry();
-		this.Annot.Recalculate(true);
-		
-		AscCommon.History.EndNoHistoryMode();
-		
-		let oGrBounds = this.Annot.bounds;
-		let oShapeBounds = this.Annot.getRectBounds();
-
-		rect[0] = (oGrBounds.l - nLineW) * g_dKoef_mm_to_pt;
-		rect[1] = (oGrBounds.t - nLineW) * g_dKoef_mm_to_pt;
-		rect[2] = (oGrBounds.r + nLineW) * g_dKoef_mm_to_pt;
-		rect[3] = (oGrBounds.b + nLineW) * g_dKoef_mm_to_pt;
-
-		this.Annot._rect = aCurRect;
-		this.Annot._rectDiff = aCurRD;
-
-		this.Annot.SetRect(rect);
-		this.Annot.SetRectangleDiff([
-			(oShapeBounds.l - oGrBounds.l + nLineW) * g_dKoef_mm_to_pt,
-			(oShapeBounds.t - oGrBounds.t + nLineW) * g_dKoef_mm_to_pt,
-			(oGrBounds.r - oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt,
-			(oGrBounds.b - oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt
-		]);
-	};
 
 	/**
 	 * Returns a type of the ApiSquareAnnotation class.
@@ -4710,10 +4687,10 @@
 
 		switch (nIntentType) {
 			case AscPDF.FREE_TEXT_INTENT_TYPE.freeText: {
-				return "check";
+				return "freeText";
 			}
 			case AscPDF.FREE_TEXT_INTENT_TYPE.freeTextCallout: {
-				return "circle";
+				return "freeTextCallout";
 			}
 		}
 	};
@@ -4756,7 +4733,7 @@
 		let aCallout = this.Annot.GetCallout();
 
 		let aResult = [];
-		for (let i = 0; i < aCallout.length - 1; i++) {
+		for (let i = 0; i < aCallout.length - 1; i += 2) {
 			aResult.push({
 				"x": aCallout[i],
 				"y": aCallout[i + 1],
@@ -8157,12 +8134,12 @@
 		}
 
 		let x = AscBuilder.GetNumberParameter(point['x'], null);
-		if (!x) {
+		if (x === null) {
 			AscBuilder.throwException("The x coordinate of a point must be a number");
 		}
 
 		let y = AscBuilder.GetNumberParameter(point['y'], null);
-		if (!y) {
+		if (y === null) {
 			AscBuilder.throwException("The y coordinate of a point must be a number");
 		}
 	}
@@ -8369,6 +8346,8 @@
 	ApiDocument.prototype["GetFieldByName"]					= ApiDocument.prototype.GetFieldByName;
 	ApiDocument.prototype["SearchAndRedact"]				= ApiDocument.prototype.SearchAndRedact;
 	ApiDocument.prototype["ApplyRedact"]					= ApiDocument.prototype.ApplyRedact;
+	ApiDocument.prototype["SetSelection"]					= ApiDocument.prototype.SetSelection;
+	ApiDocument.prototype["GetSelectionQuads"]				= ApiDocument.prototype.GetSelectionQuads;
 
 	// ApiPage
 	ApiPage.prototype["GetClassType"]						= ApiPage.prototype.GetClassType;

@@ -7931,9 +7931,10 @@ background-repeat: no-repeat;\
 					++_count;
 				}
 			}
-
-			_progress.ImagesCount  = _count;
-			_progress.CurrentImage = 0;
+			if (!this.ImageLoader.bIsAsyncLoadDocumentImages) {
+				_progress.ImagesCount  = _count;
+				_progress.CurrentImage = 0;
+			}
 		}
 	};
 	asc_docs_api.prototype.GenerateStyles                = function()
@@ -15546,6 +15547,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_addOleObjectAction"]                    = asc_docs_api.prototype.asc_addOleObjectAction;
 	asc_docs_api.prototype["asc_InputClearKeyboardElement"]             = asc_docs_api.prototype.asc_InputClearKeyboardElement;
 	asc_docs_api.prototype["asc_SpecialPaste"]                          = asc_docs_api.prototype.asc_SpecialPaste;
+	asc_docs_api.prototype["asc_getPasteOptions"]			     		= asc_docs_api.prototype.asc_getPasteOptions;
 
 	asc_docs_api.prototype["SetDrawImagePlaceContents"]					= asc_docs_api.prototype.SetDrawImagePlaceContents;
 	asc_docs_api.prototype["SetDrawImagePlaceTableOfFigures"]			= asc_docs_api.prototype.SetDrawImagePlaceTableOfFigures;

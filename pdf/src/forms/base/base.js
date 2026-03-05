@@ -3517,7 +3517,7 @@
         let oldTrMatrix = oContentToDraw.transform;
         oContentToDraw.transform = new AscCommon.CMatrix();
         memory.docRenderer.ClearCacheProps();
-        oContentToDraw.Draw(0, memory.docRenderer);
+        oContentToDraw.Draw(oContentToDraw.GetAbsolutePage(), memory.docRenderer);
         memory.docRenderer.ClearCacheProps();
         oContentToDraw.transform = oldTrMatrix;
 

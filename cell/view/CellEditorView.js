@@ -368,6 +368,9 @@ function (window, undefined) {
 
 		AscCommon.StartIntervalDrawText(true);
 		this.openAction();
+
+		let externalSelectionController = this.handlers.trigger("getExternalSelectionController");
+		externalSelectionController && externalSelectionController.sendExternalChangeSelection();
 	};
 
 	CellEditor.prototype.close = function (saveValue, callback) {
@@ -513,12 +516,7 @@ function (window, undefined) {
 			begin = Math.min(t.selectionBegin, t.selectionEnd);
 			end = Math.max(t.selectionBegin, t.selectionEnd);
 
-			// save info to undo/redo
-			if (end - begin < 2) {
-				t.undoList.push({fn: t._addChars, args: [t.textRender.getChars(begin, 1), begin]});
-			} else {
-				t.undoList.push({fn: t._addFragments, args: [t._getFragments(begin, end - begin), begin]});
-			}
+			let savedFragments = t._getFragments(begin, end - begin);
 
 			t._extractFragments(begin, end - begin);
 
@@ -542,7 +540,7 @@ function (window, undefined) {
 				t._drawSelection();
 
 				// save info to undo/redo
-				t.undoList.push({fn: t._removeChars, args: [begin, end - begin]});
+				t.undoList.push({fn: t._replaceFragments, args: [savedFragments, begin, end - begin]});
 				t.redoList = [];
 			}
 
@@ -605,6 +603,13 @@ function (window, undefined) {
 			this._drawSelection();
 		}
 		this.endAction();
+	};
+
+	CellEditor.prototype._replaceFragments = function (fragments, pos, length) {
+		this.noUpdateMode = true;
+		this._removeChars(pos, length);
+		this.noUpdateMode = false;
+		this._addFragments(fragments, pos);
 	};
 
 	CellEditor.prototype.empty = function (options) {
@@ -1450,6 +1455,9 @@ function (window, undefined) {
 
 			this._updateTextAlign();
 			tm = this.textRender.measureString(fragments, this.textFlags, this._getContentWidth());
+			if (this.textFlags.textAlign === null) {
+				this.textFlags.textAlign = this.textRender.getEffectiveAlign();
+			}
 
 			if (!this.textFlags.wrapText && !this.textFlags.wrapOnlyCE) {
 				while (tm.width > this._getContentWidth()) {
@@ -1671,21 +1679,18 @@ function (window, undefined) {
 			line = this.textRender.getLineInfo(begInfo.lineIndex);
 			topLine = this.textRender.calcLineOffset(begInfo.lineIndex);
 			endInfo = this.textRender.calcCharOffset(Math.max(begPos, endPos));
-			h = asc_round(line.th * zoom);
-			y = topLine - top;
-			if (begInfo.lineIndex === endInfo.lineIndex) {
-				drawRect(begInfo.left, y, endInfo.left - begInfo.left, h);
-			} else {
-				drawRect(begInfo.left, y, line.tw - begInfo.left + line.startX, h);
-				for (i = begInfo.lineIndex + 1, y += h; i < endInfo.lineIndex; ++i, y += h) {
-					line = this.textRender.getLineInfo(i);
-					h = asc_round(line.th * zoom);
-					drawRect(line.startX, y, line.tw, h);
-				}
-				line = this.textRender.getLineInfo(endInfo.lineIndex);
-				topLine = this.textRender.calcLineOffset(endInfo.lineIndex);
-				if (line) {
-					drawRect(line.startX, topLine - top, endInfo.left - line.startX, asc_round(line.th * zoom));
+
+			let selBeg = Math.min(begPos, endPos);
+			let selEnd = Math.max(begPos, endPos);
+			for (i = begInfo.lineIndex; i <= endInfo.lineIndex; ++i) {
+				line = this.textRender.getLineInfo(i);
+				if (!line) continue;
+				topLine = this.textRender.calcLineOffset(i);
+				h = asc_round(line.th * zoom);
+				y = topLine - top;
+				let rects = this._collectSelectionRects(i, selBeg, selEnd);
+				for (let r = 0; r < rects.length; ++r) {
+					drawRect(rects[r].x, y, rects[r].w, h);
 				}
 			}
 		}
@@ -1697,6 +1702,39 @@ function (window, undefined) {
 		externalSelectionController && externalSelectionController.sendExternalChangeSelection();
 
 		return selection;
+	};
+
+	CellEditor.prototype._collectSelectionRects = function (lineIndex, selBeg, selEnd) {
+		let rects = [];
+		let currentX = null;
+		let currentW = 0;
+
+		this.textRender._forEachVisualChar(lineIndex, function (charIndex, visualX, width, direction) {
+			if (charIndex >= selBeg && charIndex < selEnd) {
+				if (currentX === null) {
+					currentX = visualX;
+					currentW = width;
+				} else if (Math.abs(visualX - (currentX + currentW)) < 0.5) {
+					currentW += width;
+				} else {
+					rects.push({x: currentX, w: currentW});
+					currentX = visualX;
+					currentW = width;
+				}
+			} else {
+				if (currentX !== null) {
+					rects.push({x: currentX, w: currentW});
+					currentX = null;
+					currentW = 0;
+				}
+			}
+		});
+
+		if (currentX !== null) {
+			rects.push({x: currentX, w: currentW});
+		}
+
+		return rects;
 	};
 
 	CellEditor.prototype.calculateOffset = function (pos) {
@@ -1762,8 +1800,10 @@ function (window, undefined) {
 		let cur = this.textRender.calcCharOffset(this.cursorPos, lineIndex);
 		let charsCount = this.textRender.getCharsCount();
 		let textAlign = this.textFlags && this.textFlags.textAlign;
+		let isRtl = this.textRender.isRtlLine();
+		let useContentPos = AscCommon.align_Right === textAlign && this.cursorPos === charsCount && !isRtl;
 		let curLeft = asc_round(
-			((AscCommon.align_Right !== textAlign || this.cursorPos !== charsCount) && cur !== null &&
+			(!useContentPos && cur !== null &&
 			cur.left !== null ? cur.left : this._getContentPosition()) * this.kx);
 		let curTop = asc_round(((cur !== null ? cur.top : 0) + y) * this.ky);
 		let curHeight = asc_round((cur !== null ? cur.height : this._getContentHeight()) * this.ky);
@@ -1864,6 +1904,10 @@ function (window, undefined) {
 		this.newTextFormat = null;
 		var t = this;
 		this.sAutoComplete = null;
+
+		if (kind !== kPosition) {
+			this.textRender.cursorAtTrailingEdge = undefined;
+		}
 
 		let getLineIndex = function (_curPos) {
 			if (!t.textRender || !t.textRender.lines) {
@@ -2555,6 +2599,10 @@ function (window, undefined) {
 				}
 			}
 			list2.push({fn: t._changeFragments, args: [_redoFragments]});
+		} else if (action.fn === t._replaceFragments) {
+			pos = action.args[1];
+			len = action.args[2];
+			list2.push({fn: t._replaceFragments, args: [t._getFragments(pos, len), pos, len]});
 		} else {
 			return;
 		}
@@ -2880,7 +2928,10 @@ function (window, undefined) {
 						oEvent.IsShift() ? oThis._selectChars(kBeginOfLine) : oThis._moveCursor(kBeginOfLine);
 					} else {
 						const bWord = bIsMacOs ? oEvent.IsAlt() : oEvent.CtrlKey;
-						const nKind = bWord ? kPrevWord : kPrevChar;
+						const isRtl = oThis.textRender.isRtlLine();
+						const nKind = isRtl
+							? (bWord ? kNextWord : kNextChar)
+							: (bWord ? kPrevWord : kPrevChar);
 						oEvent.IsShift() ? oThis._selectChars(nKind) : oThis._moveCursor(nKind);
 					}
 
@@ -2920,7 +2971,10 @@ function (window, undefined) {
 						oEvent.IsShift() ? oThis._selectChars(kEndOfLine) : oThis._moveCursor(kEndOfLine);
 					} else {
 						const bWord = bIsMacOs ? oEvent.IsAlt() : oEvent.CtrlKey;
-						const nKind = bWord ? kNextWord : kNextChar;
+						const isRtl = oThis.textRender.isRtlLine();
+						const nKind = isRtl
+							? (bWord ? kPrevWord : kPrevChar)
+							: (bWord ? kNextWord : kNextChar);
 						oEvent.IsShift() ? oThis._selectChars(nKind) : oThis._moveCursor(nKind);
 					}
 					break;
@@ -3134,12 +3188,15 @@ function (window, undefined) {
 					}
 				}
 
-				// End of the word
-				endWord = endWord === undefined ? this.textRender.getNextWord(this.cursorPos) : endWord;
-				// The beginning of the word (we look for the end, because we could get into a space)
-				startWord = startWord === undefined ? this.textRender.getPrevWord(endWord) : startWord;
+				if (endWord === undefined) {
+					let nextWordStart = this.textRender.getNextWord(this.cursorPos);
+					startWord = this.textRender.getPrevWord(nextWordStart);
+					endWord = this.textRender.getEndOfWord(startWord);
+				}
 
+				this.textRender.cursorAtTrailingEdge = false;
 				this._moveCursor(kPosition, startWord);
+				this.textRender.cursorAtTrailingEdge = true;
 				this._selectChars(kPosition, endWord);
 			}
 		} else if (2 === button) {

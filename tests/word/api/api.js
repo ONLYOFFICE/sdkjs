@@ -334,6 +334,31 @@ $(function () {
 		
 	});
 	
+	QUnit.test("Backspace after apply bold to selection (bug 66602)", function(assert)
+	{
+		AscTest.ClearDocument();
+
+		let p = AscTest.CreateParagraph();
+		logicDocument.AddToContent(0, p);
+
+		let run = AscTest.CreateRun();
+		p.AddToContentToEnd(run);
+		run.AddText("Bold test");
+
+		AscTest.MoveCursorToParagraph(p, true);
+		AscTest.MoveCursorRight(true, false, 4);
+		logicDocument.AddToParagraph(new AscCommonWord.ParaTextPr({Bold: true}));
+		AscTest.MoveCursorRight(false, false, 6);
+
+		AscTest.PressKey(AscTest.Key.backspace);
+
+		logicDocument.SelectAll();
+		let text = logicDocument.GetSelectedText(false, {ParaSeparator : ""});
+		logicDocument.RemoveSelection();
+
+		assert.strictEqual(text, "Bold tes", "Backspace should delete the last 't' in 'test'");
+	});
+
 	QUnit.test("Get text/selected text", function(assert)
 	{
 		AscTest.ClearDocument();
