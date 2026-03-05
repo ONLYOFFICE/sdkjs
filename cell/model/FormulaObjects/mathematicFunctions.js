@@ -5806,6 +5806,15 @@ function (window, undefined) {
 			cElementType.cellsRange !== arg2.type && cElementType.cellsRange3D !== arg2.type) {
 			return new cError(cErrorType.wrong_value_type);
 		}
+		if (arg0.type === cElementType.cellsRange3D && !arg0.isSingleSheet()) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+		if (arg2.type === cElementType.cellsRange3D && !arg2.isSingleSheet()) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+		if (arg1.type === cElementType.cellsRange3D && !arg1.isSingleSheet()) {
+			return new cNumber(0);
+		}
 
 		const t = this;
 		function calculateOne(rangeOrCell, condition, sumRangeOrCell) {

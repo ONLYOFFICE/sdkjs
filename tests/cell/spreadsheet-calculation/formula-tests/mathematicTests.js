@@ -21566,12 +21566,21 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 100);
 
-		// Case #99: Area, Formula, Area. Sum using formula as criteria (arithmetic expression)
+		// Case #99: Area3D, Area3D, Area3D. Multi-cell 3D area as criteria - returns array of results per criteria element
+		// Sheet2!A4:A6=[15,10,5]; for 15→C4=40, for 10→C2+C5=70, for 5→C1+C3+C6=100
+		oParser = new parserFormula('SUMIF(Sheet2!A1:A6, Sheet2!A4:A6, Sheet2!C1:C6)', "A1", ws);
+		assert.ok(oParser.parse());
+		let result3d = oParser.calculate();
+		assert.strictEqual(result3d.getElementRowCol(0, 0).getValue(), 40);
+		assert.strictEqual(result3d.getElementRowCol(1, 0).getValue(), 70);
+		assert.strictEqual(result3d.getElementRowCol(2, 0).getValue(), 100);
+
+		// Case #100: Area, Formula, Area. Sum using formula as criteria (arithmetic expression)
 		oParser = new parserFormula('SUMIF(A301:A310, 2+8, B301:B310)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 250);
 
-		// Case #100: Area, Array, Ref. Sum using array as criteria - returns array of results
+		// Case #101: Area, Array, Ref. Sum using array as criteria - returns array of results
 		oParser = new parserFormula('SUMIF(A301:A310, {10,20,30}, B301:B310)', "A1", ws);
 		assert.ok(oParser.parse());
 		let result = oParser.calculate();
@@ -21579,7 +21588,7 @@ $(function () {
 		assert.strictEqual(result.getElementRowCol(0, 1).getValue(), 450, 'SUMIF with array criteria [20]');
 		assert.strictEqual(result.getElementRowCol(0, 2).getValue(), 650, 'SUMIF with array criteria [30]');
 
-		// Case #101: Area, Area, Area. Sum using area as criteria array
+		// Case #102: Area, Area, Area. Sum using area as criteria array
 		oParser = new parserFormula('SUMIF(A301:A310, A301:A303, B301:B310)', "A1", ws);
 		assert.ok(oParser.parse());
 		result = oParser.calculate();
@@ -21587,132 +21596,132 @@ $(function () {
 		assert.strictEqual(result.getElementRowCol(1, 0).getValue(), 450, 'SUMIF with area criteria [A302=20]');
 		assert.strictEqual(result.getElementRowCol(2, 0).getValue(), 650, 'SUMIF with area criteria [A303=30]');
 
-		// Case #102: Formula, String, Formula. Sum values in XLOOKUP result
+		// Case #103: Formula, String, Formula. Sum values in XLOOKUP result
 		oParser = new parserFormula('SUMIF(XLOOKUP(A900,A900:B900,A901:B904),">80",XLOOKUP(A900,A900:B900,A901:B904))', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 186);
 
-		// Case #103: Formula, String, Formula. Sum values in XLOOKUP result (Physics)
+		// Case #104: Formula, String, Formula. Sum values in XLOOKUP result (Physics)
 		oParser = new parserFormula('SUMIF(XLOOKUP(B900,A900:B900,A901:B904),">80",XLOOKUP(B900,A900:B900,A901:B904))', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 173);
 
-		// Case #104: Area, String, Area. Both formula =NA() and text "#N/A" in range match criteria "#N/A"
+		// Case #105: Area, String, Area. Both formula =NA() and text "#N/A" in range match criteria "#N/A"
 		oParser = new parserFormula('SUMIF(R1:R4, "#N/A", S1:S4)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 30);
 
-		// Case #105: Area, Formula, Area. Both formula =NA() and text "#N/A" in range match criteria NA()
+		// Case #106: Area, Formula, Area. Both formula =NA() and text "#N/A" in range match criteria NA()
 		oParser = new parserFormula('SUMIF(R1:R4, NA(), S1:S4)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 30);
 
-		// Case #106: Area, String, Area. Criteria "=NA()" (literal formula text) matches neither error nor text
+		// Case #107: Area, String, Area. Criteria "=NA()" (literal formula text) matches neither error nor text
 		oParser = new parserFormula('SUMIF(R1:R4, "=NA()", S1:S4)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 0);
 
-		// Case #107: Area, String, Area. Criteria ">3" treats text ">3" in range as non-numeric, only matches numeric > 3
+		// Case #108: Area, String, Area. Criteria ">3" treats text ">3" in range as non-numeric, only matches numeric > 3
 		oParser = new parserFormula('SUMIF(W1:W4, ">3", X1:X4)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 300);
 
-		// Case #108: Area, String, Area. Criteria "=>3" is an exact-match for the text string ">3"
+		// Case #109: Area, String, Area. Criteria "=>3" is an exact-match for the text string ">3"
 		oParser = new parserFormula('SUMIF(W1:W4, "=>3", X1:X4)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 100);
 
-		// Case #109: Area, String, Area. Criteria "a~*c" uses tilde to match literal asterisk - only "a*c" matches
+		// Case #110: Area, String, Area. Criteria "a~*c" uses tilde to match literal asterisk - only "a*c" matches
 		oParser = new parserFormula('SUMIF(H1:H4, "a~*c", I1:I4)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 10);
 
-		// Case #110: Area, String, Area. Criteria "a*c" treats * as wildcard - all 4 values match (all start with a and end with c)
+		// Case #111: Area, String, Area. Criteria "a*c" treats * as wildcard - all 4 values match (all start with a and end with c)
 		oParser = new parserFormula('SUMIF(H1:H4, "a*c", I1:I4)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 100);
 
-		// Case #111: DefName, Number, DefName. Range and sum range as named ranges
+		// Case #112: DefName, Number, DefName. Range and sum range as named ranges
 		oParser = new parserFormula('SUMIF(SumIfTestNameRange, 10, SumIfTestNameSum)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 250);
 
-		// Case #112: DefName, DefName, DefName. Criteria cell as named range
+		// Case #113: DefName, DefName, DefName. Criteria cell as named range
 		oParser = new parserFormula('SUMIF(SumIfTestNameRange, SumIfTestNameCriteria, SumIfTestNameSum)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 500);
 
-		// Case #113: Area, String, Area. Criteria "<>*" matches non-text cells (numbers, booleans, errors, empty)
+		// Case #114: Area, String, Area. Criteria "<>*" matches non-text cells (numbers, booleans, errors, empty)
 		oParser = new parserFormula('SUMIF(U2:U11, "<>*", V2:V11)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 47);
 
-		// Case #114: Area, String, Area. Lowercase criteria "#n/a" matches both formula =NA() and text "#N/A" (case-insensitive)
+		// Case #115: Area, String, Area. Lowercase criteria "#n/a" matches both formula =NA() and text "#N/A" (case-insensitive)
 		oParser = new parserFormula('SUMIF(R1:R4, "#n/a", S1:S4)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 30);
 
-		// Case #115: Area, Formula, Area. FALSE() function criteria matches same cells as FALSE literal (Case #22)
+		// Case #116: Area, Formula, Area. FALSE() function criteria matches same cells as FALSE literal (Case #22)
 		oParser = new parserFormula('SUMIF(K2:K9, FALSE(), L2:L9)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 1000);
 
-		// Case #116: Area, String, Area. Date string criteria "12/1/2024" matches cells stored as date "12/1/2024"
+		// Case #117: Area, String, Area. Date string criteria "12/1/2024" matches cells stored as date "12/1/2024"
 		oParser = new parserFormula('SUMIF(J1:J2, "12/1/2024", J3:J4)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 30);
 
-		// Case #117: Area, String, Area. Date string "12/1/2023" does not match "12/1/2024"
+		// Case #118: Area, String, Area. Date string "12/1/2023" does not match "12/1/2024"
 		oParser = new parserFormula('SUMIF(J1:J2, "12/1/2023", J3:J4)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 0);
 
-		// Case #118: Area, String, Area. "<>"&"*" concatenation is equivalent to "<>*" - matches non-text cells
+		// Case #119: Area, String, Area. "<>"&"*" concatenation is equivalent to "<>*" - matches non-text cells
 		oParser = new parserFormula('SUMIF(U2:U11, "<>"&"*", V2:V11)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 47);
 
-		// Case #119: Area, String, Area. "<>"&"?" concatenation equals "<>?" - matches cells that are not exactly 1 character
+		// Case #120: Area, String, Area. "<>"&"?" concatenation equals "<>?" - matches cells that are not exactly 1 character
 		oParser = new parserFormula('SUMIF(U2:U11, "<>"&"?", V2:V11)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 55);
 
-		// Case #120: Area, String, Area. Sum range with text → treated as 0 (not counted, not error)
+		// Case #121: Area, String, Area. Sum range with text → treated as 0 (not counted, not error)
 		oParser = new parserFormula('SUMIF(AQ1:AQ2, "A", AR1:AR2)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 10);
 
-		// Case #121: Area, String, Area. Sum range with boolean
+		// Case #122: Area, String, Area. Sum range with boolean
 		oParser = new parserFormula('SUMIF(AQ4:AQ5, "A", AR4:AR5)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 0);
 
-		// Case #122: Area, String, Area. Mixed sum range (number + text + empty + TRUE + FALSE) → numeric contributions only
+		// Case #123: Area, String, Area. Mixed sum range (number + text + empty + TRUE + FALSE) → numeric contributions only
 		oParser = new parserFormula('SUMIF(AQ1:AQ5, "A", AR1:AR5)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 10);
 
-		// Case #123: Area, String, Area. Error in sum range propagates to result
+		// Case #124: Area, String, Area. Error in sum range propagates to result
 		oParser = new parserFormula('SUMIF(AQ1:AQ6, "A", AR1:AR6)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!");
 
-		// Case #124: Area, String, Area. Lowercase "true" matches boolean TRUE cells (case-insensitive)
+		// Case #125: Area, String, Area. Lowercase "true" matches boolean TRUE cells (case-insensitive)
 		oParser = new parserFormula('SUMIF(K2:K9, "true", L2:L9)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 1700);
 
-		// Case #125: Area, String, Area. Mixed-case "TrUe" matches boolean TRUE cells (case-insensitive)
+		// Case #126: Area, String, Area. Mixed-case "TrUe" matches boolean TRUE cells (case-insensitive)
 		oParser = new parserFormula('SUMIF(K2:K9, "TrUe", L2:L9)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 1700);
 
-		// Case #126: Area, String, Area. Lowercase "false" matches boolean FALSE cells (case-insensitive)
+		// Case #127: Area, String, Area. Lowercase "false" matches boolean FALSE cells (case-insensitive)
 		oParser = new parserFormula('SUMIF(K2:K9, "false", L2:L9)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 1000);
 
-		// Case #127: Area, String, Area. "="&cell dynamic exact match - "="&W1 yields "=">3"", matching only cells equal to the text ">3"
+		// Case #128: Area, String, Area. "="&cell dynamic exact match - "="&W1 yields "=">3"", matching only cells equal to the text ">3"
 		oParser = new parserFormula('SUMIF(W1:W4, "="&W1, X1:X4)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 100);
@@ -21750,6 +21759,16 @@ $(function () {
 
 		// Case #7: Number, Number. Number literal not allowed as range
 		oParser = new parserFormula('SUMIF(1, 1)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		// Case #8: Area3D, String. Area3D with different sheets not allowed
+		oParser = new parserFormula('SUMIF(Sheet1:Sheet2!A1:B1, "0")', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		// Case #9: Area, String. Area3D with different sheets not allowed
+		oParser = new parserFormula('SUMIF(A1:B1, "0", Sheet1:Sheet2!A1:B1)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
 
@@ -21843,6 +21862,11 @@ $(function () {
 		oParser = new parserFormula('SUMIF(BA1:BA8, "123.0", BB1)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 360);
+
+		// Case #19: Area, Area3D, Area. Multi-sheet 3D range as criteria always returns 0
+		oParser = new parserFormula('SUMIF(A301:A310, Sheet1:Sheet2!A1:B1, B301:B310)', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
 
 		// Cleanup: remove named ranges
 		wb.delDefinesNames(defNameSumIfRange);
