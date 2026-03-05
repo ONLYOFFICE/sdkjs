@@ -8401,21 +8401,66 @@
 		const doc = this.Document;
 		const settings = Settings.Settings;
 		const drawing = doc.SetWatermarkPropsAction(settings);
+		const graphicObject = drawing && drawing.GraphicObj;
 
-		const isShape = drawing && drawing.GraphicObj && drawing.GraphicObj.isShape();
+		const isShape = graphicObject && graphicObject.isShape();
 		if (isShape) {
+			const shape = graphicObject;
+			const docContent = shape.getDocContent();
+			if (!docContent) {
+				return;
+			}
+
+			const settingsTextPr = settings.get_TextPr();
+			const settingsFontSize = settingsTextPr ? settingsTextPr.get_FontSize() : null;
+			const needResize = !(settingsFontSize > 0);
+
 			AddEndScriptAction(function () {
-				const shape = drawing.GraphicObj;
-				shape.checkExtentsByDocContent(true);
+				let docContentSize = AscFormat.GetContentOneStringSizes(docContent);
+
+				if (needResize) {
+					const sectionProps = doc.Get_SectionProps();
+					const maxWidth = sectionProps.get_W() - sectionProps.get_LeftMargin() - sectionProps.get_RightMargin();
+					const maxHeight = sectionProps.get_H() - sectionProps.get_TopMargin() - sectionProps.get_BottomMargin();
+
+					let scale;
+
+					const rot = shape.spPr.xfrm.rot || 0;
+					const isZeroAngle = AscFormat.fApproxEqual(0.0, rot);
+					if (isZeroAngle) {
+						scale = Math.min(maxWidth / docContentSize.w, maxHeight / docContentSize.h);
+					} else {
+						const cos = Math.abs(Math.cos(rot));
+						const sin = Math.abs(Math.sin(rot));
+
+						const scaleX = maxWidth / (docContentSize.w * cos + docContentSize.h * sin);
+						const scaleY = maxHeight / (docContentSize.w * sin + docContentSize.h * cos);
+
+						scale = Math.min(scaleX, scaleY);
+					}
+
+					let textPr = docContent.GetCalculatedTextPr();
+					textPr.SetFontSize(textPr.GetFontSize() * scale);
+
+					docContent.SetApplyToAll(true);
+					docContent.AddToParagraph(new ParaTextPr(textPr));
+					docContent.SetApplyToAll(false);
+
+					docContentSize = AscFormat.GetContentOneStringSizes(docContent);
+				}
+
+				shape.spPr.xfrm.setExtX(docContentSize.w + 1);
+				shape.spPr.xfrm.setExtY(docContentSize.h);
 				drawing.setExtent(shape.spPr.xfrm.extX, shape.spPr.xfrm.extY);
 			});
 
-			return new ApiShape(drawing.GraphicObj);
+			return new ApiShape(shape);
 		}
 
-		const isImage = drawing && drawing.GraphicObj && drawing.GraphicObj.isImage();
+		const isImage = graphicObject && graphicObject.isImage();
 		if (isImage) {
-			return new ApiImage(drawing.GraphicObj);
+			const image = graphicObject;
+			return new ApiImage(image);
 		}
 
 		return null;
