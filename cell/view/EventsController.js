@@ -1137,7 +1137,9 @@
 						break;
 
 					case 9: // tab
+						console.log('[EventsController Tab] getCellEditMode:', oThis.getCellEditMode(), 'bSelectionDialogMode:', bSelectionDialogMode);
 						if (oThis.getCellEditMode() || bSelectionDialogMode) {
+							console.log('[EventsController Tab] in edit mode — delegated to CellEditor, breaking');
 							break;
 						}
 						// Disable the browser's standard handling of tab pressing

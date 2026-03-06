@@ -1641,6 +1641,7 @@
   WorkbookView.prototype._onSelectionActivePointChanged = function(dc, dr, callback) {
     var ws = this.getWorksheet();
     var d = ws.changeSelectionActivePoint(dc, dr);
+    console.log('[WorkbookView._onSelectionActivePointChanged] dc:', dc, 'dr:', dr, 'result:', d);
     asc_applyFunction(callback, d);
   };
 
@@ -2208,7 +2209,11 @@
     var t = this;
 
     // Проверка глобального лока
-    if (this.collaborativeEditing.getGlobalLock() || this.controller.isResizeMode || !this.canEdit()) {
+    const _globalLock = this.collaborativeEditing.getGlobalLock();
+    const _canEdit = this.canEdit();
+    console.log('[WorkbookView._onEditCell] globalLock:', _globalLock, 'isResizeMode:', this.controller.isResizeMode, 'canEdit:', _canEdit);
+    if (_globalLock || this.controller.isResizeMode || !_canEdit) {
+      console.log('[WorkbookView._onEditCell] BLOCKED by lock/resize/canEdit');
       return;
     }
 
@@ -2229,6 +2234,7 @@
 	}
 
     var editFunction = function() {
+      console.log('[WorkbookView._onEditCell] editFunction called — entering cell edit mode');
       if (needBlur) {
 		  t.input && t.input.focus();
 	  }
@@ -2248,6 +2254,7 @@
     };
 
     var editLockCallback = function(res) {
+      console.log('[WorkbookView._onEditCell] editLockCallback called, res:', res);
       if (!res) {
         t.setCellEditMode(false);
         t.input.disabled = true;
@@ -2260,12 +2267,15 @@
     };
 
     var doEdit = function (success) {
+		console.log('[WorkbookView._onEditCell] doEdit called, success:', success);
 		if (!success) {
 			return;
 		}
     	// Стартуем редактировать ячейку
 		activeCellRange = ws.expandActiveCellByFormulaArray(activeCellRange);
-		if (ws._isLockedCells(activeCellRange, /*subType*/null, editLockCallback)) {
+		const _lockedResult = ws._isLockedCells(activeCellRange, /*subType*/null, editLockCallback);
+		console.log('[WorkbookView._onEditCell] _isLockedCells result (sync):', _lockedResult, '— editFunction will be called:', !!_lockedResult);
+		if (_lockedResult) {
 			editFunction();
 		}
 	};
@@ -5754,10 +5764,13 @@
 	};
 
 	WorkbookView.prototype.EnterText = function (codePoints, skipCellEditor) {
+		var cpText = Array.isArray(codePoints) ? codePoints.map(function(cp) { return String.fromCodePoint(cp); }).join('') : codePoints;
+		console.log('[WorkbookView.EnterText] text:', JSON.stringify(cpText), 'isCellEditMode:', this.isCellEditMode, 'skipCellEditor:', skipCellEditor);
 		this.controller.EnterText(codePoints);
 		if (this.isCellEditMode && !skipCellEditor) {
 			return this.cellEditor.EnterText(codePoints);
 		}
+		console.log('[WorkbookView.EnterText] SKIPPED cellEditor.EnterText — isCellEditMode is false or skipCellEditor is true');
 	};
 
 	WorkbookView.prototype.CorrectEnterText = function (oldValue, newValue) {

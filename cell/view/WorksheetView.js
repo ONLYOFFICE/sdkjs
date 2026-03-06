@@ -16320,7 +16320,15 @@ function isAllowPasteLink(pastedWb) {
 
     WorksheetView.prototype.setSelectionInfo = function (prop, val, onlyActive, isMineComments) {
         // Проверка глобального лока
-        if (this.collaborativeEditing.getGlobalLock() || !window["Asc"]["editor"].canEdit()) {
+        const _ssGlobalLock = this.collaborativeEditing.getGlobalLock();
+        const _ssCanEdit = window["Asc"]["editor"].canEdit();
+        if (prop === 'b' || prop === 'i' || prop === 'u' || prop === 's') {
+            console.log('[WorksheetView.setSelectionInfo] prop:', prop, 'val:', val, 'globalLock:', _ssGlobalLock, 'canEdit:', _ssCanEdit);
+        }
+        if (_ssGlobalLock || !_ssCanEdit) {
+            if (prop === 'b' || prop === 'i' || prop === 'u' || prop === 's') {
+                console.log('[WorksheetView.setSelectionInfo] BLOCKED — prop:', prop);
+            }
             if (prop === "paste" && AscCommonExcel.g_clipboardExcel.pasteProcessor.pasteCallBack) {
                 AscCommonExcel.g_clipboardExcel.pasteProcessor.pasteCallBack(false);
                 AscCommonExcel.g_clipboardExcel.pasteProcessor.pasteCallBack = null;
@@ -16341,6 +16349,9 @@ function isAllowPasteLink(pastedWb) {
 		};
 
         const onSelectionCallback = function (isSuccess) {
+            if (prop === 'b' || prop === 'i' || prop === 'u' || prop === 's') {
+                console.log('[WorksheetView.setSelectionInfo onSelectionCallback] prop:', prop, 'isSuccess:', isSuccess);
+            }
             if (false === isSuccess) {
 				if (AscCommonExcel.g_clipboardExcel.pasteProcessor.pasteCallBack) {
 					AscCommonExcel.g_clipboardExcel.pasteProcessor.pasteCallBack(false);
@@ -19460,6 +19471,7 @@ function isAllowPasteLink(pastedWb) {
 
 	WorksheetView.prototype.openCellEditor = function (editor, enterOptions, selectionRange) {
 		var t = this, col, row, c, fl, mc, bg, isMerged;
+		console.log('[WorksheetView.openCellEditor] called, enterOptions:', enterOptions);
 
 		let wsModel = this.model;
 		//todo after remove check native

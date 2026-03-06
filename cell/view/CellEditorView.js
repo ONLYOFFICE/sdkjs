@@ -323,6 +323,7 @@ function (window, undefined) {
 	 *   saveValueCallback
 	 */
 	CellEditor.prototype.open = function (options) {
+		console.log('[CellEditor.open] called');
 		this._setEditorState(c_oAscCellEditorState.editStart);
 		
 		var b = this.input.selectionStart;
@@ -374,6 +375,7 @@ function (window, undefined) {
 	};
 
 	CellEditor.prototype.close = function (saveValue, callback) {
+		console.log('[CellEditor.close] called, saveValue:', saveValue);
 		var opt = this.options;
 		var t = this;
 
@@ -2104,6 +2106,7 @@ function (window, undefined) {
 		return this._addChars(arrCharCodes);
 	};
 	CellEditor.prototype._addChars = function (str, pos, isRange) {
+		console.log('[CellEditor._addChars] str:', JSON.stringify(Array.isArray(str) ? str.map(function(cp) { return String.fromCodePoint(cp); }).join('') : str), 'pos:', pos);
 		if (!isRange) {
 			this.cleanSelectRange();
 		}
@@ -2619,9 +2622,11 @@ function (window, undefined) {
 	CellEditor.prototype._tryCloseEditor = function (event) {
 		var t = this;
 		let nRetValue = keydownresult_PreventNothing;
+		console.log('[CellEditor._tryCloseEditor] called, keyCode:', event && event.keyCode);
 		var callback = function (success) {
 			// for the case when the user presses ctrl+shift+enter/crtl+enter the transition to a new line is not performed
 			var applyByArray = t.textFlags && t.textFlags.ctrlKey;
+			console.log('[CellEditor._tryCloseEditor callback] success:', success, 'applyByArray:', applyByArray);
 			if (!applyByArray && success) {
 				nRetValue = t.handlers.trigger("applyCloseEvent", event);
 				AscCommon.StartIntervalDrawText(false);
@@ -2857,7 +2862,9 @@ function (window, undefined) {
 						oThis._syncEditors();
 					}
 
-					if (false === oThis.handlers.trigger("isGlobalLockEditCell")) {
+					var _isGlobalLock = oThis.handlers.trigger("isGlobalLockEditCell");
+					console.log('[CellEditor keydown Tab] isGlobalLockEditCell:', _isGlobalLock);
+					if (false === _isGlobalLock) {
 						nRetValue = oThis._tryCloseEditor(oEvent);
 					}
 					break;
@@ -3053,9 +3060,12 @@ function (window, undefined) {
 
 	CellEditor.prototype.EnterText = function (codePoints) {
 		var t = this;
+		var cpText = Array.isArray(codePoints) ? codePoints.map(function(cp) { return String.fromCharCode(cp); }).join('') : String.fromCharCode(codePoints);
+		console.log('[CellEditor.EnterText] text:', JSON.stringify(cpText), 'isOpened:', t.isOpened, 'enableKeyEvents:', t.enableKeyEvents);
 
 		if (!window['IS_NATIVE_EDITOR']) {
 			if (!t.isOpened || !t.enableKeyEvents || this.handlers.trigger('getWizard')) {
+				console.log('[CellEditor.EnterText] SKIPPED — isOpened:', t.isOpened, 'enableKeyEvents:', t.enableKeyEvents, 'wizard:', !!this.handlers.trigger('getWizard'));
 				return true;
 			}
 			// hieroglyph input definition

@@ -6223,6 +6223,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
+    console.log('[asc_setCellBold] isBold:', isBold, 'globalLock:', this.collaborativeEditing.getGlobalLock(), 'canEdit:', this.canEdit(), 'isCellEditMode:', this.wb && this.wb.isCellEditMode);
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
 		return;
     }
@@ -6236,6 +6237,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellItalic = function(isItalic) {
+    console.log('[asc_setCellItalic] isItalic:', isItalic, 'globalLock:', this.collaborativeEditing.getGlobalLock(), 'canEdit:', this.canEdit(), 'isCellEditMode:', this.wb && this.wb.isCellEditMode);
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return;
     }
@@ -6249,6 +6251,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellUnderline = function(isUnderline) {
+    console.log('[asc_setCellUnderline] isUnderline:', isUnderline, 'globalLock:', this.collaborativeEditing.getGlobalLock(), 'canEdit:', this.canEdit(), 'isCellEditMode:', this.wb && this.wb.isCellEditMode);
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return;
     }
@@ -9095,6 +9098,9 @@ var editor;
 		if (!wb)
 			return false;
 
+		var cpText = Array.isArray(codePoints) ? codePoints.map(function(cp) { return String.fromCodePoint(cp); }).join('') : codePoints;
+		console.log('[asc_enterText] codePoints:', codePoints, '=> text:', JSON.stringify(cpText), 'isCellEditMode:', wb.isCellEditMode);
+
 		return wb.EnterText(codePoints);
 	};
 
@@ -9104,6 +9110,7 @@ var editor;
 		if (!wb)
 			return false;
 
+		console.log('[asc_correctEnterText] oldValue:', JSON.stringify(oldValue), 'newValue:', JSON.stringify(newValue), 'isCellEditMode:', wb.isCellEditMode);
 		return wb.CorrectEnterText(oldValue, newValue);
 	};
 
