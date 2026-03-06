@@ -19392,11 +19392,10 @@ function isAllowPasteLink(pastedWb) {
 		}
 
 		if (!t.model.workbook.asyncFormulasManager.isRecalculating() && t.model.workbook.asyncFormulasManager.getPromises() && !AscCommonExcel.g_LockCustomFunctionRecalculate) {
-			// Transaction will end in callback
+			// the tree will calculated in the callback
 			t.model.workbook.asyncFormulasManager.calculatePromises();
-		} else {
-			endTransaction();
 		}
+		endTransaction();
 
 		if(isFormula && !applyByArray) {
 			c._foreach(function(cell){

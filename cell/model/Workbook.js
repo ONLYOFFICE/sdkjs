@@ -3057,55 +3057,69 @@
 						}
 
 						parsed.promiseResult[_promises[i].index] = resStreamInfo;
+						console.log("Promise after all called");
 
-						if (parsed && !parsed.ref && resStreamInfo.type === cElementType.array) {
+						if (parsed && /*!parsed.ref &&*/ resStreamInfo.type === cElementType.array) {
 							/*
 							 - we are getting formula result and set ref to the formula
 							 - although do .setValue to affected cells(ref)
 							 - the shift comes from the starting cell with the formula
 							*/
-							const arraySize = resStreamInfo.getDimensions();
-							const currentRow = parsed.parent.nRow;
-							const currentCol = parsed.parent.nCol;
+							if (parsed.getDynamicRef() || !parsed.ref) {
+								const arraySize = resStreamInfo.getDimensions();
+								const currentRow = parsed.parent.nRow;
+								const currentCol = parsed.parent.nCol;
 
-							const newR2 = (currentRow + arraySize.row) > AscCommon.gc_nMaxRow ? AscCommon.gc_nMaxRow - 1 : (currentRow + arraySize.row - 1);
-							const newC2 = (currentCol + arraySize.col) > AscCommon.gc_nMaxCol ? AscCommon.gc_nMaxCol - 1 : (currentCol + arraySize.col - 1);
+								const newR2 = (currentRow + arraySize.row) > AscCommon.gc_nMaxRow ? AscCommon.gc_nMaxRow - 1 : (currentRow + arraySize.row - 1);
+								const newC2 = (currentCol + arraySize.col) > AscCommon.gc_nMaxCol ? AscCommon.gc_nMaxCol - 1 : (currentCol + arraySize.col - 1);
 
-							let refRangeWS = new Range(parsed.ws, currentRow, currentCol, newR2, newC2);
-							let refRange = refRangeWS.bbox.clone && refRangeWS.bbox.clone();
+								let refRangeWS = new Range(parsed.ws, currentRow, currentCol, newR2, newC2);
+								let refRange = refRangeWS.bbox.clone && refRangeWS.bbox.clone();
 
-							/* dynamic array formula */
-							// let dynamicProps, beforeSpillRange;
-							// if (!parsed.ws.dynamicArrayManager.isAutoExpandBBox(refRange)) {
-							// 	beforeSpillRange = refRange;
-							// 	refRange = new Asc.Range(refRange.c1, refRange.r1, refRange.c1, refRange.r1);
-							// }
+								/* dynamic array formula */
+								// В случаях когда у нас уже существовал массив и он был "сжат", нужно переопределить его размер по результату
+								let dynamicRangeProps, beforeSpillRange;
+								if (!parsed.ws.dynamicArrayManager.isAutoExpandBBox(refRange)) {
+									beforeSpillRange = refRange;
+									refRange = new Asc.Range(refRange.c1, refRange.r1, refRange.c1, refRange.r1);
+									refRangeWS.bbox = refRange;
+								}
 
-							// dynamicProps = AscCommonExcel.bIsSupportDynamicArrays ? {range: refRange, beforeSpillRange: beforeSpillRange} : null;
-							// parsed.setDynamicRef(refRange);
-
-							// t.wb.dependencyFormulas.lockRecal();
-							
-							// refRangeWS.setValue("=" + parsed.getFormula(), null, null, refRange, null, dynamicProps);
-
-							// t.wb.dependencyFormulas.unlockRecal(true);
-							/* dynamic array formula end */
-
-							/* array formula */
-							if (!parsed.ws.dynamicArrayManager.isAutoExpandBBox(refRange)) {
-								// todo clear promises after all?
-								t.wb.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
-								break;
-							} else {
-								parsed.setArrayFormulaRef(refRange);
+								dynamicRangeProps = AscCommonExcel.bIsSupportDynamicArrays ? {range: refRange, beforeSpillRange: beforeSpillRange} : null;
+								parsed.setDynamicRef(refRange);
 
 								t.wb.dependencyFormulas.lockRecal();
 								
-								refRangeWS.setValue("=" + parsed.getFormula(), null, null, refRange, null, /*dynamicProps*/null);
+								// refRangeWS.setValue("=" + parsed.getFormula(), null, null, refRange, null, dynamicRangeProps);
+								refRangeWS._foreach(function (cell, i, j) {
+									if (cell && !cell.ws.isUserProtectedRangesIntersectionCell(cell)) {
+										// в первую всегда выставляем формулу уже с параметрами
+										// главное отличие от обычной .setValue в том,
+										// что не создается новый объект с формулой для которого повторно придется ждать выполнения промиса
+										cell.setValueAsync(parsed, refRange, dynamicRangeProps);
+									}
+								})
 
 								t.wb.dependencyFormulas.unlockRecal(true);
+								/* dynamic array formula end */
+
+								/* array formula */
+								// if (!parsed.ws.dynamicArrayManager.isAutoExpandBBox(refRange)) {
+								// 	// todo clear promises after all?
+								// 	t.wb.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
+								// 	break;
+								// } else {
+								// 	parsed.setArrayFormulaRef(refRange);
+
+								// 	t.wb.dependencyFormulas.lockRecal();
+									
+								// 	refRangeWS.setValue("=" + parsed.getFormula(), null, null, refRange, null, /*dynamicProps*/null);
+
+								// 	t.wb.dependencyFormulas.unlockRecal(true);
+								// }
+								/* array formula end*/
+
 							}
-							/* array formula end*/
 						}
 
 						if (parsed.ref) {
@@ -3123,7 +3137,7 @@
 					});*/
 					t.clearPromises();
 					t.setRecalculating(true);
-					History.EndTransaction();
+					// History.EndTransaction();
 					t.wb.dependencyFormulas.calcTree();
 					t.wb.handlers && t.wb.handlers.trigger("drawWS");
 					/*for (let i = 0; i < streamInfos.length; i++) {
@@ -15388,7 +15402,7 @@
 		this.textIndex = null;
 		this._hasChanged = true;
 	};
-	Cell.prototype.setValue=function(val,callback, isCopyPaste, byRef, ignoreHyperlink, dynamicRangeProps, skipExternalCheck) {
+	Cell.prototype.setValue=function(val, callback, isCopyPaste, byRef, ignoreHyperlink, dynamicRangeProps, skipExternalCheck) {
 		var ws = this.ws;
 		var wb = ws.workbook;
 		var DataOld = null;
@@ -15512,7 +15526,91 @@
 		
 		this.ws.dynamicArrayManager.changeFormula(newFP, oldFP, this);
 	};
+	Cell.prototype.setValueAsync=function(existedFormula, byRef, dynamicRangeProps) {
+		let ws = this.ws;
+		let wb = ws.workbook;
+		let DataOld = null;
+		if (AscCommon.History.Is_On()) {
+			DataOld = this.getValueData();
+		}
 
+		let isFirstArrayFormulaCell = byRef && this.nCol === byRef.c1 && this.nRow === byRef.r1;
+		let newFP = existedFormula;
+
+		if (undefined === newFP) {
+			return;
+		}
+
+		let oldFP = this.formulaParsed;
+		// this.cleanText();
+		// this.setFormulaInternal(null);
+
+		if (existedFormula) {
+			this.setFormulaInternal(existedFormula);
+			if(byRef) {
+				if(isFirstArrayFormulaCell) {
+					if (dynamicRangeProps) {
+						if (dynamicRangeProps.cmIndex != null) {
+							if (dynamicRangeProps.cmIndex != null) {
+								newFP.setCm(dynamicRangeProps.cmIndex);
+							}
+							if (dynamicRangeProps.vmIndex != null) {
+								newFP.setVm(dynamicRangeProps.vmIndex);
+								newFP.setAca(true);
+								// newFP.setCa(true);
+							}
+						} else {
+							let dynamicProps = this.ws.dynamicArrayManager.generateDynamicProps(oldFP, dynamicRangeProps.beforeSpillRange);
+							if (dynamicProps) {
+								if (dynamicProps.cmIndex != null) {
+									newFP.setCm(dynamicProps.cmIndex);
+									newFP.setVm(dynamicProps.vmIndex);
+								}
+								if (dynamicProps.vmIndex != null) {
+									newFP.setVm(dynamicProps.vmIndex);
+									newFP.setAca(true);
+									// newFP.setCa(true);
+								}
+							}
+						}
+					}
+					wb.dependencyFormulas.addToBuildDependencyArray(newFP);
+				}
+			} else {
+				wb.dependencyFormulas.addToBuildDependencyCell(this);
+			}
+			if (this.ws.workbook.handlers) {
+				this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this, null, this.ws.getId());
+			}
+		} 
+
+		let DataNew = null;
+		if (AscCommon.History.Is_On()) {
+			DataNew = this.getValueData();
+		}
+		if (AscCommon.History.Is_On() && false == DataOld.isEqual(DataNew)) {
+			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_ChangeValue, this.ws.getId(),
+						new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow),
+						new UndoRedoData_CellSimpleData(this.nRow, this.nCol, DataOld, DataNew));
+		}
+		//sortDependency вызывается ниже AscCommon.History.Add(AscCH.historyitem_Cell_ChangeValue, потому что в ней может быть выставлен формат ячейки(если это текстовый, то принимая изменения формула станет текстом)
+		// this.ws.workbook.sortDependency();
+		// if (!this.ws.workbook.dependencyFormulas.isLockRecal()) {
+		// 	this._adjustCellFormat();
+		// }
+
+		// //todo не должны удаляться ссылки, если сделать merge ее части.
+		// if (this.isNullTextString() && !this.isFormula()) {
+		// 	var cell = this.ws.getCell3(this.nRow, this.nCol);
+		// 	cell.removeHyperlink();
+		// }
+
+		// if (!skipExternalCheck) {
+		// 	this.checkRemoveExternalReferences(newFP, oldFP);
+		// }
+		
+		this.ws.dynamicArrayManager.changeFormula(newFP, oldFP, this);
+	};
 	Cell.prototype.checkRemoveExternalReferences=function(fNew, fOld) {
 		//1.проверяем, были ли ссылки на внешние данные
 		let externalLinks;
@@ -16395,8 +16493,8 @@
 				oldValueText: Val.value.text
 			};
 			this.setFormula(Val.formula, null, Val.formulaRef, caProps);
-			if (null !== Val.value && (this.ws.workbook.bRedoChanges /*|| this.ws.workbook.bUndoChanges*/)) {
-				// Set value in Redo when we have a formula
+			if (null !== Val.value && (this.ws.workbook.bRedoChanges || this.ws.workbook.bUndoChanges)) {
+				// Set value in UndoRedo when we have a formula
 				this._setValueData(Val.value);
 			}
 		} else if (null != Val.value) {
@@ -25392,7 +25490,7 @@
 			this.allFormulasCountMap[cmIndex]--;
 		}
 		let isRemovedMetaData;
-		if (this.allFormulasCountMap[cmIndex] < 1) {
+		if (this.allFormulasCountMap && this.allFormulasCountMap[cmIndex] < 1) {
 			isRemovedMetaData = this.ws.workbook.checkRemoveMetadataByCmIndex(cmIndex);
 		}
 		if (!isRemovedMetaData && vmIndex != null) {
@@ -25408,7 +25506,7 @@
 	};
 	
 	CDynamicArrayManager.prototype.recalculateVolatileArrays = function () {
-		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays || this.ws.workbook.bRedoChanges || this.ws.workbook.bUndoChanges) {
 			return;
 		}
 		const ws = this.ws;
@@ -25435,9 +25533,16 @@
 			const formulaResult = formula.calculate();
 			const firstCellRef = formula.parent && new Asc.Range(formula.parent.nCol, formula.parent.nRow, formula.parent.nCol, formula.parent.nRow);
 
+			// formula can be a async with unknown range
 			if (!(formula.aca && formula.ca)) {
 				// array can expand, setValue for each cell except first
-				const dimensions = formulaResult.getDimensions(/*true*/);
+				const dimensions = formulaResult && formulaResult.getDimensions(/*true*/);
+				if (!dimensions) {
+					dimensions = {
+						col: 1,
+						row: 1
+					}
+				}
 				const newRef = new Asc.Range(
 					firstCellRef.c1,
 					firstCellRef.r1,
@@ -25682,6 +25787,11 @@
 		}
 		const formulaRes = oFormula.calculate(null, null, null, null, calculateResult || null, null, true);
 
+		if (formulaRes && formulaRes.type === cElementType.error && formulaRes.errorType === cErrorType.busy) {
+			// clear promises
+			oFormula.wb.asyncFormulasManager.clearPromises && oFormula.wb.asyncFormulasManager.clearPromises();
+		}
+
 		if (!formulaRes || (formulaRes.type !== AscCommonExcel.cElementType.array && formulaRes.type !== AscCommonExcel.cElementType.cellsRange && formulaRes.type !== AscCommonExcel.cElementType.cellsRange3D)) {
 			return null;
 		}
@@ -25735,6 +25845,16 @@
 			} else if (arrayData.doRecalc) {
 				// delete all cells except the first one
 				range.cleanTextExceptFirst();
+
+				// add the first cell value to changed for correct Undo/Redo when we work with custom functions
+				range.getLeftTopCell(function (cell) {
+					if (AscCommon.History.Is_On()) {
+						let data = cell.getValueData();
+						AscCommon.History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_ChangeValue, cell.ws.getId(),
+							new Asc.Range(cell.nCol, cell.nRow, cell.nCol, cell.nRow),
+							new UndoRedoData_CellSimpleData(cell.nRow, cell.nCol, data, data));
+					}
+				});
 
 				var fText = "=" + arrayData.formula.getFormula();
 				let arrayFormula = arrayData.formula.getArrayFormulaRef();
@@ -25843,6 +25963,16 @@
 			} else if (arrayData.doRecalc) {
 				// delete all cells except the first one
 				range.cleanTextExceptFirst();
+
+				// add the first cell value to changed for correct Undo/Redo when we work with custom functions
+				range.getLeftTopCell(function (cell) {
+					if (AscCommon.History.Is_On()) {
+						let data = cell.getValueData();
+						AscCommon.History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_ChangeValue, cell.ws.getId(),
+							new Asc.Range(cell.nCol, cell.nRow, cell.nCol, cell.nRow),
+							new UndoRedoData_CellSimpleData(cell.nRow, cell.nCol, data, data));
+					}
+				});
 
 				var fText = "=" + arrayData.formula.getFormula();
 				let arrayFormula = arrayData.formula.getArrayFormulaRef();

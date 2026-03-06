@@ -10081,7 +10081,7 @@ function parserFormula( formula, parent, _ws ) {
 		}
 	};
 	parserFormula.prototype.calculate = function (opt_defName, opt_bbox, opt_offset, checkMultiSelect, opt_oCalculateResult, opt_pivotCallback, opt_check_dynamic) {
-		if (AscCommonExcel.g_LockCustomFunctionRecalculate && this.unknownOrCustomFunction && !this.wb.bUndoChanges) {
+		if (AscCommonExcel.g_LockCustomFunctionRecalculate && this.unknownOrCustomFunction) {
 			return;
 		}
 		if (this.outStack.length < 1) {
@@ -10284,8 +10284,29 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		}
 
+		let isRangeCanFitIntoCells;
+		let oldDynamicRef = null;
 		if (promiseCounter && /*!this.promiseResult*/ this.wb.asyncFormulasManager.isPromises()) {
-			this.value = new cError(cErrorType.busy);
+			if (AscCommonExcel.bIsSupportDynamicArrays && this.getDynamicRef()) {
+				isRangeCanFitIntoCells =  this.ws.dynamicArrayManager.checkDynamicRangeByElement(this.value, this.parent);
+				if (!isRangeCanFitIntoCells) {
+					this.setAca(true);
+					this.setCa(true);
+
+					let realRef = this.ws.dynamicArrayManager.getArrayByElement(this.value, this.parent);
+					this.ws.dynamicArrayManager.checkVm(this, realRef);
+
+					this.value = new cError(cErrorType.cannot_be_spilled);
+				} else {
+					this.setAca(false);
+					this.setCa(false);
+				}
+			}
+
+			if (!this.value) {
+				this.value = new cError(cErrorType.busy);
+			}
+
 			this._endCalculate();
 			return this.value;
 		}
@@ -10301,8 +10322,6 @@ function parserFormula( formula, parent, _ws ) {
 		// CSE can expand to all cells except the same CSE arrays, tables, pivot tables
 		// DAF can only expand to completely empty cells(empty values)
 
-		let isRangeCanFitIntoCells;
-		let oldDynamicRef = null;
 		if (AscCommonExcel.bIsSupportDynamicArrays && this.getDynamicRef() && this.ref) {
 			oldDynamicRef = this.ref.clone();
 		}
@@ -10346,10 +10365,12 @@ function parserFormula( formula, parent, _ws ) {
 				}
 			}
 
-			if (cElementType.error === res.type && res.errorType === cErrorType.busy) {
-				this._endCalculate();
-				return;
-			}
+			// TODO проблема тут
+			// Разобраться с этим и возможно именно для кастомных сделать флаг чтобы далее вернуть корректное значение
+			// if (cElementType.error === res.type && res.errorType === cErrorType.busy) {
+			// 	this._endCalculate();
+			// 	return;
+			// }
 			this.value = res;
 
 			if (AscCommonExcel.bIsSupportDynamicArrays && this.getDynamicRef()) {
@@ -10377,6 +10398,11 @@ function parserFormula( formula, parent, _ws ) {
 			if (AscCommonExcel.bIsSupportDynamicArrays && this.getDynamicRef() && null == this.getVm()) {
 				this._checkAndHandleDynamicArraySizeChange(oldDynamicRef, opt_bbox);
 			}
+
+			// if (cElementType.error === res.type && res.errorType === cErrorType.busy) {
+			// 	this._endCalculate();
+			// 	return;
+			// }
 			
 			//***array-formula***
 			//для обработки формулы массива

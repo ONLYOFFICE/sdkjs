@@ -5227,7 +5227,13 @@ function (window, undefined) {
 						range = ws.getRange3(bbox.r1, bbox.c1, bbox.r1, bbox.c1);
 						bbox = new Asc.Range(bbox.c1, bbox.r1, bbox.c1, bbox.r1);
 					}
-					range.setValue(formula, null, null, bbox, null, {cmIndex: cmIndex, vmIndex: vmIndex, range: bbox});
+					// TODO данный .setValue удаляет все данные из ячеек и отправляет их на пересчет.
+					// В случае с кастомными функциями пересчета не будет
+					// Поэтому либо в истории смещать этот delete ДО ячеек(в случае Undo после)
+					// Или же ставить здесь флаг на кастомные функции в формуле
+					// ws.workbook.lockCellValueClear = true;
+					range.setValue(formula, null, null, bbox, null, {cmIndex: cmIndex, vmIndex: vmIndex, range: bbox}, null);
+					// ws.workbook.lockCellValueClear = null;
 				}
 				break;
 			case AscCH.historyitem_ArrayFromula_ChangeValueMetaDataIndex:
