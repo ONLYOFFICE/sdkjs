@@ -1530,6 +1530,12 @@
 			let charIndex = data.charIndex;
 
 			if (charIndex >= this.trailingSpaceStart) {
+				if (this.positionCallback) {
+					let width = this.stringRender.charWidths[charIndex];
+					this.positionCallback(charIndex, this.x, width, direction);
+					this.x += width;
+					this.afterSpaceInLine = true;
+				}
 				return;
 			}
 
