@@ -706,6 +706,18 @@ let _FRAG_TEXTURED = [
     '}'
 ].join('\n');
 
+let _FRAG_GALLERY_REFL = [
+    'precision mediump float;',
+    'uniform sampler2D uTexture;',
+    'uniform float uAlpha;',
+    'varying vec2 vTexCoord;',
+    'void main() {',
+    '    vec4 color = texture2D(uTexture, vTexCoord);',
+    '    float grad = 1.0 - vTexCoord.y;',
+    '    gl_FragColor = vec4(color.rgb, color.a * uAlpha * grad * grad);',
+    '}'
+].join('\n');
+
 let _VERT_QUAD = [
     'attribute vec2 aPosition;',
     'attribute vec2 aTexCoord;',
@@ -971,14 +983,18 @@ CTransitionGL.prototype._renderDoors = function(progress, param, isWindow)
 
     let isHorz = (param === c_oAscSlideTransitionParams.Doors_Horizontal ||
                   param === c_oAscSlideTransitionParams.Window_Horizontal);
-    let angle = progress * Math.PI / 2; // 0 to 90 degrees
-    let sign = isWindow ? -1 : 1;
+    let sign = isWindow ? 1 : -1;
 
-    // Draw new slide behind (full quad)
+    // Doors take ~85% of the time; new slide zooms for the full duration
+    let doorEnd = 0.9;
+    let doorProgress = Math.min(progress / doorEnd, 1.0);
+    let angle = doorProgress * Math.PI / 2;
+
+    // Draw new slide behind (full quad) — starts at ~half size and zooms in
     this._initQuadBuffer3D();
     {
         let mv = _Mat4.identity();
-        mv = _Mat4.translate(mv, 0, 0, -dist - 0.01);
+        mv = _Mat4.translate(mv, 0, 0, -dist * (2 - progress));
 
         gl.uniformMatrix4fv(prog.uniforms['uProjection'], false, projection);
         gl.uniformMatrix4fv(prog.uniforms['uModelView'], false, mv);
@@ -992,66 +1008,76 @@ CTransitionGL.prototype._renderDoors = function(progress, param, isWindow)
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
 
-    // Draw old slide left/top half
+    // Draw old slide halves (only while doors are still open)
+    if (doorProgress < 1.0)
     {
-        let hw = aspect;
-        let mv = _Mat4.identity();
-        mv = _Mat4.translate(mv, 0, 0, -dist);
-        if (isHorz)
-        {
-            // Hinge at top edge, rotate around X
-            mv = _Mat4.translate(mv, 0, 1.0, 0);
-            mv = _Mat4.rotateX(mv, sign * angle);
-            mv = _Mat4.translate(mv, 0, -1.0, 0);
-        }
-        else
-        {
-            // Hinge at left edge, rotate around Y
-            mv = _Mat4.translate(mv, -hw, 0, 0);
-            mv = _Mat4.rotateY(mv, -sign * angle);
-            mv = _Mat4.translate(mv, hw, 0, 0);
-        }
+        let halfAlpha = 1.0 - doorProgress;
 
-        gl.uniformMatrix4fv(prog.uniforms['uProjection'], false, projection);
-        gl.uniformMatrix4fv(prog.uniforms['uModelView'], false, mv);
-        gl.uniform1f(prog.uniforms['uAlpha'], 1.0);
+        // Keep framebuffer alpha at 1.0 so the 2D layer below doesn't show through
+        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this.textures.slide1);
-        gl.uniform1i(prog.uniforms['uTexture'], 0);
-
-        this._bindBuffer3D(isHorz ? 'halfTop' : 'halfLeft', prog);
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    }
-
-    // Draw old slide right/bottom half
-    {
-        let hw = aspect;
-        let mv = _Mat4.identity();
-        mv = _Mat4.translate(mv, 0, 0, -dist);
-        if (isHorz)
+        // Left/top half
         {
-            mv = _Mat4.translate(mv, 0, -1.0, 0);
-            mv = _Mat4.rotateX(mv, -sign * angle);
-            mv = _Mat4.translate(mv, 0, 1.0, 0);
-        }
-        else
-        {
-            mv = _Mat4.translate(mv, hw, 0, 0);
-            mv = _Mat4.rotateY(mv, sign * angle);
-            mv = _Mat4.translate(mv, -hw, 0, 0);
+            let hw = aspect;
+            let mv = _Mat4.identity();
+            mv = _Mat4.translate(mv, 0, 0, -dist);
+            if (isHorz)
+            {
+                mv = _Mat4.translate(mv, 0, 1.0, 0);
+                mv = _Mat4.rotateX(mv, sign * angle);
+                mv = _Mat4.translate(mv, 0, -1.0, 0);
+            }
+            else
+            {
+                mv = _Mat4.translate(mv, -hw, 0, 0);
+                mv = _Mat4.rotateY(mv, -sign * angle);
+                mv = _Mat4.translate(mv, hw, 0, 0);
+            }
+
+            gl.uniformMatrix4fv(prog.uniforms['uProjection'], false, projection);
+            gl.uniformMatrix4fv(prog.uniforms['uModelView'], false, mv);
+            gl.uniform1f(prog.uniforms['uAlpha'], halfAlpha);
+
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, this.textures.slide1);
+            gl.uniform1i(prog.uniforms['uTexture'], 0);
+
+            this._bindBuffer3D(isHorz ? 'halfTop' : 'halfLeft', prog);
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
         }
 
-        gl.uniformMatrix4fv(prog.uniforms['uProjection'], false, projection);
-        gl.uniformMatrix4fv(prog.uniforms['uModelView'], false, mv);
-        gl.uniform1f(prog.uniforms['uAlpha'], 1.0);
+        // Right/bottom half
+        {
+            let hw = aspect;
+            let mv = _Mat4.identity();
+            mv = _Mat4.translate(mv, 0, 0, -dist);
+            if (isHorz)
+            {
+                mv = _Mat4.translate(mv, 0, -1.0, 0);
+                mv = _Mat4.rotateX(mv, -sign * angle);
+                mv = _Mat4.translate(mv, 0, 1.0, 0);
+            }
+            else
+            {
+                mv = _Mat4.translate(mv, hw, 0, 0);
+                mv = _Mat4.rotateY(mv, sign * angle);
+                mv = _Mat4.translate(mv, -hw, 0, 0);
+            }
 
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this.textures.slide1);
-        gl.uniform1i(prog.uniforms['uTexture'], 0);
+            gl.uniformMatrix4fv(prog.uniforms['uProjection'], false, projection);
+            gl.uniformMatrix4fv(prog.uniforms['uModelView'], false, mv);
+            gl.uniform1f(prog.uniforms['uAlpha'], halfAlpha);
 
-        this._bindBuffer3D(isHorz ? 'halfBottom' : 'halfRight', prog);
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, this.textures.slide1);
+            gl.uniform1i(prog.uniforms['uTexture'], 0);
+
+            this._bindBuffer3D(isHorz ? 'halfBottom' : 'halfRight', prog);
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        }
+
+        // Restore standard blend func
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     }
 };
 
@@ -1196,66 +1222,95 @@ CTransitionGL.prototype._renderSwitch = function(progress, param)
 CTransitionGL.prototype._prepareGallery = function()
 {
     this.GetProgram('flip3d', _VERT_3D, _FRAG_TEXTURED);
+    this.GetProgram('galleryRefl', _VERT_3D, _FRAG_GALLERY_REFL);
     this._initQuadBuffer3D();
+};
+
+CTransitionGL.prototype._renderGallerySlide = function(prog, reflProg, projection, texture, t, dir, targetBottom)
+{
+    let gl = this.gl;
+    let aspect = this.glCanvas.width / this.glCanvas.height;
+    let dist = 1.0 / Math.tan(Math.PI / 8);
+    let hh = 1.0;
+
+    let maxZ = 3.0;
+    let tiltMax = Math.PI / 6;
+    let xFactor = 2.2;
+
+    let extraZ = t * maxZ;
+    let scale = dist / (dist + extraZ);
+    // Anchor bottom edge at targetBottom NDC line
+    let yShift = targetBottom / scale + 1.0;
+    let slideX = dir * t * aspect * xFactor;
+    let tiltAngle = dir * t * tiltMax;
+    let slideZ = -dist - extraZ;
+
+    let mv = _Mat4.identity();
+    mv = _Mat4.translate(mv, slideX, yShift, slideZ);
+    mv = _Mat4.rotateY(mv, tiltAngle);
+
+    // Main slide
+    gl.useProgram(prog.program);
+    gl.uniformMatrix4fv(prog.uniforms['uProjection'], false, projection);
+    gl.uniformMatrix4fv(prog.uniforms['uModelView'], false, mv);
+    gl.uniform1f(prog.uniforms['uAlpha'], 1.0);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.uniform1i(prog.uniforms['uTexture'], 0);
+    this._bindQuad3D(prog);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+    // Reflection below
+    if (reflProg && t > 0.01)
+    {
+        gl.useProgram(reflProg.program);
+        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+        let mvRefl = _Mat4.translate(mv, 0, -2.0 * hh, 0);
+        mvRefl[4] = -mvRefl[4];
+        mvRefl[5] = -mvRefl[5];
+        mvRefl[6] = -mvRefl[6];
+        mvRefl[7] = -mvRefl[7];
+
+        gl.uniformMatrix4fv(reflProg.uniforms['uProjection'], false, projection);
+        gl.uniformMatrix4fv(reflProg.uniforms['uModelView'], false, mvRefl);
+        gl.uniform1f(reflProg.uniforms['uAlpha'], 0.3);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.uniform1i(reflProg.uniforms['uTexture'], 0);
+        this._bindQuad3D(reflProg);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    }
 };
 
 CTransitionGL.prototype._renderGallery = function(progress, param)
 {
     let gl = this.gl;
     let prog = this.programs['flip3d'];
+    let reflProg = this.programs['galleryRefl'];
     if (!prog) return;
 
-    gl.useProgram(prog.program);
     gl.enable(gl.DEPTH_TEST);
 
-    let aspect = this.glCanvas.width / this.glCanvas.height;
     let fov = Math.PI / 4;
-    let dist = 1.0 / Math.tan(fov / 2);
+    let aspect = this.glCanvas.width / this.glCanvas.height;
     let projection = _Mat4.perspective(fov, aspect, 0.1, 100.0);
 
     let isLeft = (param === c_oAscSlideTransitionParams.Gallery_Left);
     let dir = isLeft ? -1 : 1;
-    let hw = aspect;
 
-    // Old slide moves off to the side with perspective tilt
-    {
-        let slideX = dir * progress * hw * 2;
-        let tiltAngle = dir * progress * Math.PI / 6; // up to 30 degrees
-        let slideZ = -dist - progress * 0.5;
+    // Common bottom line: rises quickly from -1.0, stays constant, drops back
+    // Both slides' bottom edges travel along this same line
+    let bottomRise = Math.min(progress * 4, (1 - progress) * 4, 1.0) * 0.35;
+    let targetBottom = -1.0 + bottomRise;
 
-        let mv = _Mat4.identity();
-        mv = _Mat4.translate(mv, slideX, 0, slideZ);
-        mv = _Mat4.rotateY(mv, tiltAngle);
+    // Old slide: t goes 0 → 1 (moves away)
+    this._renderGallerySlide(prog, reflProg, projection, this.textures.slide1, progress, dir, targetBottom);
 
-        gl.uniformMatrix4fv(prog.uniforms['uProjection'], false, projection);
-        gl.uniformMatrix4fv(prog.uniforms['uModelView'], false, mv);
-        gl.uniform1f(prog.uniforms['uAlpha'], 1.0 - progress * 0.3);
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this.textures.slide1);
-        gl.uniform1i(prog.uniforms['uTexture'], 0);
-        this._bindQuad3D(prog);
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    }
-
-    // New slide comes in from the other side
-    {
-        let slideX = -dir * (1.0 - progress) * hw * 2;
-        let tiltAngle = -dir * (1.0 - progress) * Math.PI / 6;
-        let slideZ = -dist - (1.0 - progress) * 0.5;
-
-        let mv = _Mat4.identity();
-        mv = _Mat4.translate(mv, slideX, 0, slideZ);
-        mv = _Mat4.rotateY(mv, tiltAngle);
-
-        gl.uniformMatrix4fv(prog.uniforms['uProjection'], false, projection);
-        gl.uniformMatrix4fv(prog.uniforms['uModelView'], false, mv);
-        gl.uniform1f(prog.uniforms['uAlpha'], 0.7 + progress * 0.3);
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this.textures.slide2);
-        gl.uniform1i(prog.uniforms['uTexture'], 0);
-        this._bindQuad3D(prog);
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    }
+    // New slide: t goes 1 → 0 (arrives), opposite direction
+    this._renderGallerySlide(prog, reflProg, projection, this.textures.slide2, 1.0 - progress, -dir, targetBottom);
 };
 
 // ============================================================
