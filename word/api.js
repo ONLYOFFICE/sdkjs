@@ -13779,6 +13779,8 @@ background-repeat: no-repeat;\
 				continue;
 			this["asc_nativePrint"](_renderer, i, options);
 		}
+		
+		_renderer.AddHeadings(this.WordControl.m_oLogicDocument, true);
 
 		this.ShowParaMarks = _bOldShowMarks;
 
