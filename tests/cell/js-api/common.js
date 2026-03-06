@@ -128,7 +128,28 @@ $(function()
 		api.collaborativeEditing,
 		api.fontRenderingMode
 	);
-	
+
+	AscCommonExcel.CCellCommentator.prototype.drawCommentCells = function() {};
+	api.wb.cellCommentator = new AscCommonExcel.CCellCommentator({
+		model: api.wbModel.aWorksheets[0],
+		collaborativeEditing: api.collaborativeEditing,
+		draw: function() {
+		},
+		handlers: {
+			trigger: function() {
+				return false;
+			}
+		},
+		workbook: {
+			StartAction: function() {
+				return false;
+			},
+			FinalizeAction: function() {
+				return false;
+			}
+		}
+	});
+
 	var wsView = api.wb.getWorksheet(0);
 	wsView.handlers = api.handlers;
 	wsView.objectRender = new AscFormat.DrawingObjects();

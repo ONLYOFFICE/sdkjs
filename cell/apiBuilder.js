@@ -7876,7 +7876,7 @@
 	Api.GetComments = function () {
 		var comments = [];
 		for (var i = 0; i < Asc.editor.wbModel.aComments.length; i++) {
-			comments.push(new ApiComment(Asc.editor.wbModel.aComments[i], this.wb));
+			comments.push(new ApiComment(Asc.editor.wbModel.aComments[i], Asc.editor.wb));
 		}
 		return comments;
 	};
