@@ -8415,7 +8415,7 @@
 			const settingsFontSize = settingsTextPr ? settingsTextPr.get_FontSize() : null;
 			const needResize = !(settingsFontSize > 0);
 
-			AddEndScriptAction(function () {
+			const resizeWatermark = function () {
 				let docContentSize = AscFormat.GetContentOneStringSizes(docContent);
 
 				if (needResize) {
@@ -8452,7 +8452,11 @@
 				shape.spPr.xfrm.setExtX(docContentSize.w + 1);
 				shape.spPr.xfrm.setExtY(docContentSize.h);
 				drawing.setExtent(shape.spPr.xfrm.extX, shape.spPr.xfrm.extY);
-			});
+			};
+
+			AscCommon.isFileBuild()
+				? resizeWatermark()
+				: AddEndScriptAction(resizeWatermark);
 
 			return new ApiShape(shape);
 		}
