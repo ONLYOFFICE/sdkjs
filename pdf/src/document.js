@@ -5859,6 +5859,7 @@ var CPresentation = CPresentation || function(){};
                 oAnnot.SetOpacity(1);
                 oAnnot.SetBorderWidth(1);
                 oAnnot.SetHighlight(AscPDF.BUTTON_HIGHLIGHT_TYPES.none);
+				oAnnot.SetRectangleDiff([2.834, 2.834, 2.834, 2.834]);
 
                 if (isTextSelection) {
                     let dx = quads[2] - quads[0];
