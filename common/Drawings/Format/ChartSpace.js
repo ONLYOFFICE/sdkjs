@@ -1513,7 +1513,7 @@ function(window, undefined) {
 				this.aLabels[i].checkShapeChildTransform(t);
 		}
 	};
-	CLabelsBox.prototype.getLabelsOffset = function() {
+	CLabelsBox.prototype.getLabelsOffset = function(isHoriz) {
 		let dStakeOffset = 1;
 		if(this.axis) {
 			if(AscFormat.isRealNumber(this.axis.lblOffset)) {
@@ -1529,7 +1529,7 @@ function(window, undefined) {
 				AscCommon.g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, 1);
 				let oInfo = AscCommon.g_oTextMeasurer.Measure2Code("A".charCodeAt(0));
 				let dHeight = 0.8*oInfo.Height;
-				return dHeight + (dHeight / 2 ) * dStakeOffset;
+				return isHoriz ? dHeight * dStakeOffset : dHeight + (dHeight / 2 ) * dStakeOffset;
 			}
 		}
 		return dFontSize * (25.4 / 72) * dStakeOffset;
@@ -6761,7 +6761,7 @@ function(window, undefined) {
 					if(bTickSkip && !AscFormat.isRealNumber(fForceContentWidth)) {
 						fForceContentWidth = Math.abs(fHorInterval) + fHorInterval / nTickLblSkip;
 					}
-					fDistance = fDistanceSign * oLabelsBox.getLabelsOffset();
+					fDistance = fDistanceSign * oLabelsBox.getLabelsOffset(true);
 					fLayoutHorLabelsBox(oLabelsBox, fPos, fPosStart, fPosEnd, bOnTickMark, fDistance, bForceVertical, bNumbers, fForceContentWidth, nIndex, oBaseRect.h);
 					if(bLabelsExtremePosition) {
 						if(fDistance > 0) {
