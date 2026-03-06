@@ -25536,7 +25536,7 @@
 			// formula can be a async with unknown range
 			if (!(formula.aca && formula.ca)) {
 				// array can expand, setValue for each cell except first
-				const dimensions = formulaResult && formulaResult.getDimensions(/*true*/);
+				let dimensions = formulaResult && formulaResult.getDimensions(/*true*/);
 				if (!dimensions) {
 					dimensions = {
 						col: 1,
