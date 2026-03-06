@@ -242,8 +242,6 @@
 
 			if (pos <= li.beg) {
 				left = isRtl ? (li.startX + li.tw) : li.startX;
-			} else if (pos > li.end) {
-				left = isRtl ? li.startX : (li.startX + li.tw);
 			} else {
 				let atPos = null;
 				let beforePos = null;
