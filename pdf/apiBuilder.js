@@ -356,6 +356,17 @@
 	 * @property {Quad[]} [pageIndex] - the key is the index of a page
 	 */
 
+	/**
+	 * @typedef {Object} DocSelection
+	 * @property {number} StartPage - index of start page
+	 * @property {number} EndPage - index of end page
+	 * @property {number} StartLine - index of start line
+	 * @property {number} EndLine - index of end line
+	 * @property {number} StartChar - index of start char
+	 * @property {number} EndChar - index of end char
+	 * @property {DocQuads} DocQuads - document selection quads
+	 */
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// Api
@@ -1572,12 +1583,40 @@
 		let oDoc = private_GetLogicDocument();
 		let aDocQuads = oDoc.GetFile().getSelectionQuads();
 
-		let aResult = {};
+		let oResult = {};
 		aDocQuads.forEach(function(pageQuads) {
-			aResult[pageQuads["page"]] = pageQuads["quads"];
+			oResult[pageQuads["page"]] = pageQuads["quads"];
 		});
 
-		return aResult;
+		return oResult;
+	};
+	
+	/**
+	 * Gets document selection info
+	 * @typeofeditors ["PDFE"]
+	 * @returns {DocSelection}
+	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/GetSelection.js
+	 */
+	ApiDocument.prototype.GetSelectionInfo = function() {
+		let oDoc = private_GetLogicDocument();
+		let oSelection = oDoc.GetFile().getSelection();
+
+		let oDocQuads = {};
+		oSelection.quads.forEach(function(pageQuads) {
+			oDocQuads[pageQuads["page"]] = pageQuads["quads"];
+		});
+
+		let oResult = {
+			"StartPage":	oSelection.Page1,
+			"EndPage":		oSelection.Page2,
+			"StartLine":	oSelection.Line1,
+			"EndLine":		oSelection.Line2,
+			"StartChar":	oSelection.Glyph1,
+			"EndChar":		oSelection.Glyph2,
+			"DocQuads":		oDocQuads
+		};
+
+		return oResult;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------

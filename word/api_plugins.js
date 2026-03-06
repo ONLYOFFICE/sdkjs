@@ -499,6 +499,22 @@
 		searchProps.SetText(oProperties["searchString"]);
 		searchProps.SetMatchCase(undefined !== oProperties["matchCase"] ? oProperties["matchCase"] : true);
 		
+		if (this.isPdfEditor())
+		{
+			let oDoc			= logicDocument;
+			let oViewer 		= oDoc.Viewer;
+			let oSearchEngine	= oDoc.SearchEngine;
+
+			oViewer.IsSearch = true;
+			oDoc.RecalculateAll();
+			
+			oViewer.findText(searchProps, isForward)
+			if (0 == oSearchEngine.Count)
+				return false;
+
+			return true;
+		}
+
 		logicDocument.Search(searchProps);
 		let elementId = logicDocument.GetSearchElementId(!(false === isForward || 0 === isForward));
 		if (null === elementId)
