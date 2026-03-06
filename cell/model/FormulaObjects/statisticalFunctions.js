@@ -12613,6 +12613,9 @@ function parseStringToCElement (val, cultureInfo) {
 			cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type) {
 			return new cError(cErrorType.wrong_value_type);
 		}
+		if (arg1.type === cElementType.cellsRange3D && !arg1.isSingleSheet()) {
+			return new cNumber(0);
+		}
 		const t = this;
 		function calculateOne(rangeOrCell, condition) {
 			if (cElementType.cell === rangeOrCell.type || cElementType.cell3D === rangeOrCell.type || cElementType.cellsRange === rangeOrCell.type || cElementType.cellsRange3D === rangeOrCell.type) {
