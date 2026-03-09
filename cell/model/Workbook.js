@@ -3057,7 +3057,6 @@
 						}
 
 						parsed.promiseResult[_promises[i].index] = resStreamInfo;
-						console.log("Promise after all called");
 
 						if (parsed && /*!parsed.ref &&*/ resStreamInfo.type === cElementType.array) {
 							/*
@@ -3098,22 +3097,25 @@
 										// что не создается новый объект с формулой для которого повторно придется ждать выполнения промиса
 										cell.setValueAsync(parsed, refRange, dynamicRangeProps);
 									}
-								})
+								});
 
 								t.wb.dependencyFormulas.unlockRecal(true);
 								/* dynamic array formula end */
 
 								/* array formula */
 								// if (!parsed.ws.dynamicArrayManager.isAutoExpandBBox(refRange)) {
-								// 	// todo clear promises after all?
 								// 	t.wb.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
-								// 	break;
+								// 	continue;
 								// } else {
 								// 	parsed.setArrayFormulaRef(refRange);
 
 								// 	t.wb.dependencyFormulas.lockRecal();
-									
-								// 	refRangeWS.setValue("=" + parsed.getFormula(), null, null, refRange, null, /*dynamicProps*/null);
+
+								// refRangeWS._foreach(function (cell, i, j) {
+								// 	if (cell && !cell.ws.isUserProtectedRangesIntersectionCell(cell)) {
+								// 		cell.setValueAsync(parsed, refRange, /*dynamicRangeProps*/null);
+								// 	}
+								// });
 
 								// 	t.wb.dependencyFormulas.unlockRecal(true);
 								// }

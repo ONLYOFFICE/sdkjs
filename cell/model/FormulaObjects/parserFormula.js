@@ -10365,8 +10365,6 @@ function parserFormula( formula, parent, _ws ) {
 				}
 			}
 
-			// TODO проблема тут
-			// Разобраться с этим и возможно именно для кастомных сделать флаг чтобы далее вернуть корректное значение
 			// if (cElementType.error === res.type && res.errorType === cErrorType.busy) {
 			// 	this._endCalculate();
 			// 	return;

@@ -9798,8 +9798,8 @@ $(function () {
 			assert.ok(parserFruit.parse(), desc + ' - FILTER formula parsed');
 			let infoFruit = ws.dynamicArrayManager.getRefDynamicInfo(parserFruit);
 			assert.ok(infoFruit, desc + " - Dynamic array info exists");
-			assert.strictEqual(infoFruit.dynamicRange.getHeight(), 3, desc + " - Array height = 3 rows");
-			assert.strictEqual(infoFruit.dynamicRange.getWidth(), 2, desc + " - Array width = 2 columns");
+			assert.strictEqual(infoFruit.dynamicRange && infoFruit.dynamicRange.getHeight(), 3, desc + " - Array height = 3 rows");
+			assert.strictEqual(infoFruit.dynamicRange && infoFruit.dynamicRange.getWidth(), 2, desc + " - Array width = 2 columns");
 			
 			// Verify dynamic array shows 3 fruit entries
 			assert.strictEqual(ws.getRange2("C1").getValue(), "fruit", desc + " - C1 = fruit");
