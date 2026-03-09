@@ -1706,8 +1706,8 @@
 
 		oDoc.BlurActiveObject();
 
-		let startNearestPos = oFile.getNearestPos(nPageIdx, startPoint['x'], startPoint['y']);
-		let endNearestPos = oFile.getNearestPos(nPageIdx, endPoint['x'], endPoint['y']);
+		let startNearestPos = oFile.getNearestPos(nPageIdx, startPoint['x'] * g_dKoef_pt_to_mm, startPoint['y'] * g_dKoef_pt_to_mm);
+		let endNearestPos = oFile.getNearestPos(nPageIdx, endPoint['x'] * g_dKoef_pt_to_mm, endPoint['y'] * g_dKoef_pt_to_mm);
 
 		oFile.Selection.IsSelection = true;
 
