@@ -8658,6 +8658,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/FormatAsTable.js
 	 */
 	ApiWorksheet.prototype.FormatAsTable = function (sRange) {
+		if (this.worksheet && this.worksheet.getSheetProtection()) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		this.worksheet.autoFilters.addAutoFilter('TableStyleLight9', AscCommonExcel.g_oRangeCache.getAscRange(sRange));
 	};
 
@@ -8673,6 +8677,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetColumnWidth.js
 	 */
 	ApiWorksheet.prototype.SetColumnWidth = function (nColumn, nWidth, bWithotPaddings) {
+		if (this.worksheet && this.worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatColumns)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		if (bWithotPaddings) {
 			let wb = this.worksheet.workbook;
 			nWidth = (nWidth * wb.maxDigitWidth - wb.paddingPlusBorder) / wb.maxDigitWidth;
@@ -8690,6 +8698,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetRowHeight.js
 	 */
 	ApiWorksheet.prototype.SetRowHeight = function (nRow, nHeight) {
+		if (this.worksheet && this.worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatRows)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		this.worksheet.setRowHeight(nHeight, nRow, nRow, true);
 	};
 
@@ -9340,7 +9352,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {Drawing[]}.
-	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetAllDrawings.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetSelectedDrawings.js
 	 */
 	ApiWorksheet.prototype.GetSelectedDrawings = function () {
 		var allDrawings = this.worksheet.Drawings;
@@ -9732,6 +9744,10 @@
 			bbox = range.bbox,
 			ws = range.worksheet,
 			wsView = Asc['editor'].wb.getWorksheet(ws.getIndex());
+		if (ws.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells) || (ws.getSheetProtection() && ws.isIntersectLockedRanges([bbox]))) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		range.cleanAll();
 		ws.deletePivotTables(bbox);
 		ws.removeSparklines(bbox);
@@ -9751,6 +9767,10 @@
         const range = this.range;
         const bbox = range.bbox;
         const ws = range.worksheet;
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		range.cleanFormat();
         ws.clearConditionalFormattingRulesByRanges([bbox]);
     };
@@ -9766,6 +9786,10 @@
 		const range = this.range;
 		const bbox = range.bbox;
 		const ws = range.worksheet;
+		if (ws.getSheetProtection() && ws.isIntersectLockedRanges([bbox])) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
         this.range.cleanAll();
 		ws.deletePivotTables(bbox);
     };
@@ -9778,6 +9802,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/ClearHyperlinks.js
      */
     ApiRange.prototype.ClearHyperlinks = function () {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.insertHyperlinks)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
         this.range.cleanHyperlinks();
     };
 
@@ -10428,6 +10456,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetColumnWidth.js
 	 */
 	ApiRange.prototype.SetColumnWidth = function (nWidth) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatColumns)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		this.range.worksheet.setColWidth(nWidth, this.range.bbox.c1, this.range.bbox.c2);
 	};
 	Object.defineProperty(ApiRange.prototype, "ColumnWidth", {
@@ -10445,7 +10477,7 @@
 			var sum = 0;
 			var width;
 			for (var i = 0; i <= max; i++) {
-				width = ws.getColWidth(i);
+				width = ws.getColWidth(this.range.bbox.c1 + i);
 				width = (width < 0) ? AscCommonExcel.oDefaultMetrics.ColWidthChars : width;
 				sum += ws.modelColWidthToColWidth(width);
 			}
@@ -10472,6 +10504,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetRowHeight.js
 	 */
 	ApiRange.prototype.SetRowHeight = function (nHeight) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatRows)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		this.range.worksheet.setRowHeight(nHeight, this.range.bbox.r1, this.range.bbox.r2, true);
 	};
 	Object.defineProperty(ApiRange.prototype, "RowHeight", {
@@ -10487,7 +10523,7 @@
 			var max = this.range.bbox.r2 - this.range.bbox.r1;
 			var sum = 0;
 			for (var i = 0; i <= max; i++) {
-				sum += this.range.worksheet.getRowHeight(i);
+				sum += this.range.worksheet.getRowHeight(this.range.bbox.r1 + i);
 			}
 			return sum;
 		}
@@ -10501,6 +10537,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFontSize.js
 	 */
 	ApiRange.prototype.SetFontSize = function (nSize) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		this.range.setFontsize(nSize);
 	};
 	Object.defineProperty(ApiRange.prototype, "FontSize", {
@@ -10517,6 +10557,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFontName.js
 	 */
 	ApiRange.prototype.SetFontName = function (sName) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		this.range.setFontname(sName);
 	};
 	Object.defineProperty(ApiRange.prototype, "FontName", {
@@ -10620,6 +10664,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetReadingOrder.js
 	 */
 	ApiRange.prototype.SetReadingOrder = function (direction) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		const map = {
 			"context": Asc.c_oReadingOrderTypes.Context, // 0
 			"ltr": Asc.c_oReadingOrderTypes.LTR, // 1
@@ -11118,8 +11166,8 @@
 		get: function () {
 			return this.GetOrientation();
 		},
-		set: function () {
-			return this.SetOrientation();
+		set: function (angle) {
+			this.SetOrientation(angle);
 		}
 	});
 
@@ -11265,6 +11313,11 @@
 			let cols = bbox.c2 - bbox.c1 + 1;
 			shift = (rows <= cols) ? "up" : "left";
 		}
+		const deleteProtectType = shift === "up" ? Asc.c_oAscSheetProtectType.deleteRows : Asc.c_oAscSheetProtectType.deleteColumns;
+		if (!this._checkProtection(deleteProtectType)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		if (shift === "up") {
 			val = Asc.c_oAscDeleteOptions.DeleteCellsAndShiftTop;
 			lockRange = ws.getRange3(bbox.r1, bbox.c1, bbox.r2, AscCommon.gc_nMaxCol0);
@@ -11291,6 +11344,11 @@
 			var rows = bbox.r2 - bbox.r1 + 1;
 			var cols = bbox.c2 - bbox.c1 + 1;
 			shift = (rows <= cols) ? "down" : "right";
+		}
+		const insertProtectType = shift === "down" ? Asc.c_oAscSheetProtectType.insertRows : Asc.c_oAscSheetProtectType.insertColumns;
+		if (!this._checkProtection(insertProtectType)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
 		}
 		if (shift == "down")
 			this.range.addCellsShiftBottom();
@@ -13243,6 +13301,34 @@
 		return true;
 	};
 
+	/**
+	 * Deletes the specified drawing object.
+	 *
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} - returns false if the drawing object can not be deleted.
+	 *
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Delete.js
+	 */
+	ApiDrawing.prototype.Delete = function () {
+		if (!this.Drawing) {
+			return false;
+		}
+
+		const controller = this.Drawing.getDrawingObjectsController();
+		if (controller) {
+			if (controller.selection.groupSelection === this.Drawing) {
+				controller.resetInternalSelection();
+			}
+			this.Drawing.deselect(controller);
+		}
+
+		this.Drawing.setBDeleted(true);
+		this.Drawing.deleteDrawingBase();
+		return true;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiImage
@@ -14223,7 +14309,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/RemoveReplies.js
 	 */
 	ApiComment.prototype.RemoveReplies = function (nPos, nCount, bRemoveAll) {
-		if (typeof (nPos) !== "number" || nPos < 0 || nPos > this.GetRepliesCount())
+		if (typeof (nPos) !== "number" || nPos < 0 || nPos >= this.GetRepliesCount())
 			nPos = 0;
 
 		if (typeof (nCount) !== "number" || nCount < 0)
@@ -16950,7 +17036,7 @@
 	};
 
 	/**
-	 * Returns the setting which specifies whether to display field headers for rows and columns.
+	 * Sets whether to display field headers for rows and columns.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} show - Specifies whether to display field headers for rows and columns.
@@ -27717,7 +27803,7 @@
      * @memberof ApiFilter
      * @typeofeditors ["CSE"]
      * @returns {ApiAutoFilter} The parent filters collection.
-     * @see office-js-api/Examples/{Editor}/ApiFilter/Methods/Parent.js
+     * @see office-js-api/Examples/{Editor}/ApiFilter/Methods/GetParent.js
      */
     ApiFilter.prototype.GetParent = function () {
         return this.parent;
@@ -27906,7 +27992,7 @@
 	ApiRange.prototype["SetUnderline"] = ApiRange.prototype.SetUnderline;
 	ApiRange.prototype["SetStrikeout"] = ApiRange.prototype.SetStrikeout;
 	ApiRange.prototype["SetWrap"] = ApiRange.prototype.SetWrap;
-	ApiRange.prototype["SetWrapText"] = ApiRange.prototype.SetWrap;	
+	ApiRange.prototype["SetWrapText"] = ApiRange.prototype.SetWrap;
 	ApiRange.prototype["GetWrapText"] = ApiRange.prototype.GetWrapText;
 	ApiRange.prototype["SetFillColor"] = ApiRange.prototype.SetFillColor;
 	ApiRange.prototype["GetFillColor"] = ApiRange.prototype.GetFillColor;
@@ -27972,6 +28058,7 @@
 	ApiDrawing.prototype["Fill"]                       =  ApiDrawing.prototype.Fill;
 	ApiDrawing.prototype["SetOutLine"]                 =  ApiDrawing.prototype.SetOutLine;
 	ApiDrawing.prototype["Unselect"]                   =  ApiDrawing.prototype.Unselect;
+	ApiDrawing.prototype["Delete"]                     =  ApiDrawing.prototype.Delete;
 
 	ApiImage.prototype["GetClassType"]                 =  ApiImage.prototype.GetClassType;
 

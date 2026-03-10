@@ -294,6 +294,12 @@
 	CPdfRunSpace.prototype.GetWidth        = AscWord.CPdfRunText.prototype.GetWidth;
 	CPdfRunSpace.prototype.GetWidthVisible = AscWord.CPdfRunText.prototype.GetWidthVisible;
 	CPdfRunSpace.prototype.SetMetrics      = AscWord.CPdfRunText.prototype.SetMetrics;
+
+	CPdfRunSpace.prototype.Copy = function()
+	{
+		return new CPdfRunSpace(this.charGid, this.Value, this.originWidth, this.originSize);
+	};
+
 	CPdfRunSpace.prototype.GetWidth = function()
 	{
 		return (this.originSize && this.originWidth ? this.originWidth * this.originCoeff + this.spacing : this.Width / AscWord.TEXTWIDTH_DIVIDER);

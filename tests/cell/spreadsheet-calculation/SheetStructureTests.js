@@ -168,7 +168,6 @@ $(function () {
 	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function () {
 	};
 	Asc.ReadDefTableStyles = function(){};
-
 	function openDocument(){
 		AscCommon.g_oTableId.init();
 		api._onEndLoadSdk();
@@ -224,6 +223,19 @@ $(function () {
 	wsView.handlers = api.handlers;
 	wsView.objectRender = new AscFormat.DrawingObjects();
 	var ws = api.wbModel.aWorksheets[0];
+	// Mock Date to static data
+	const RealDate = window.Date;
+	const mockNow = new RealDate(2026, 2, 4, 0, 0, 0, 0);
+	function MockDate () {
+		if (arguments.length > 0) {
+			return new (Function.prototype.bind.apply(RealDate, [null].concat(Array.prototype.slice.call(arguments))))();
+		}
+		return new RealDate(mockNow.getTime());
+	}
+	MockDate.prototype = RealDate.prototype;
+	MockDate.now = function() { return mockNow.getTime(); };
+	MockDate.parse = RealDate.parse;
+	MockDate.UTC = RealDate.UTC;
 
 	var getRange = function (c1, r1, c2, r2) {
 		return new window["Asc"].Range(c1, r1, c2, r2);
@@ -499,6 +511,52 @@ $(function () {
 		this.width = 0;
 
 		this._widthForPrint = null;
+	}
+
+	function applyFilter (idValue) {
+		ws.selectionRange.ranges = [getRange(0, 0, 0, 0)];
+		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
+
+		let autoFiltersOptions = ws.autoFilters.getAutoFiltersOptions(ws, {colId: 0, id: null});
+		autoFiltersOptions.values[idValue].asc_setVisible(false);
+		autoFiltersOptions.filter.asc_setType(c_oAscAutoFilterTypes.Filters);
+		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
+	}
+
+	function createAutofillAsserts(aFrom, aTo, sDescription, oComparedData) {
+		const [c1From, c2From, r1From, r2From] = aFrom;
+		const [c1To, c2To, r1To, r2To] = aTo;
+		const nHandleDirection = r1To === r2To ? 0 : 1; // 0 - Horizontal, 1 - Vertical
+		const {expectedData, undoData, assert} = oComparedData;
+
+		let nFillHandleArea = c1To < c2To ? 3 : 1; // 3 - Up to bottom or LTR, 1 - Bottom to up or RTL, 2 - inner selection
+		if (nHandleDirection === 1) {
+			nFillHandleArea = r1To < r2To ? 3 : 1;
+		}
+		if (c1To >= c1From && r1To >= r1From && c2To <= c2From && r2To <= r2From) {
+			nFillHandleArea = 2;
+		}
+		const autoFillAssert = nFillHandleArea === 3 ? autofillData : reverseAutofillData;
+		let autoFillRange;
+
+		if (ws.isApplyFilterBySheet()) {
+			autoFillRange = nFillHandleArea === 3 ? getRange(c1From, r1From, c2To, r2To) : getRange(c2From, r2From, c2To, r2To);
+		} else if (nHandleDirection === 0) {
+			let autofillC1 = nFillHandleArea === 3 ? c2From + 1 : c1From - 1;
+			autoFillRange = getRange(autofillC1, r1To, c2To, r2To);
+		} else {
+			let autofillR1 = nFillHandleArea === 3 ? r2From + 1 : r1From - 1;
+			autoFillRange = getRange(c1To, autofillR1, c2To, r2To);
+		}
+		ws.selectionRange.ranges = [getRange(c1From, r1From, c2From, r2From)];
+		wsView = getAutoFillRange(wsView, c1To, r1To, c2To, r2To, nHandleDirection, nFillHandleArea);
+		let undoRes = nHandleDirection === 0 ? [undoData] : undoData;
+		let expectedRes = nHandleDirection === 0 ? [expectedData] : expectedData;
+		checkUndoRedo(function (_desc) {
+			autoFillAssert(assert, autoFillRange, undoRes, _desc);
+		}, function (_desc) {
+			autoFillAssert(assert, autoFillRange, expectedRes, _desc);
+		}, sDescription);
 	}
 
 	QUnit.test("Test: \"Move rows/cols\"", function (assert) {
@@ -7078,13 +7136,286 @@ $(function () {
 		testData = [
 			['03/30/2003'],
 			['04/30/2003']
-		]
+		];
 		range = ws.getRange4(6, 0);
 		range.fillData(testData);
 		undoData = [[''], [''], [''], [''], ['37651'], ['37620']];
 		expectedData = [['37680'], ['37651'], ['37620'], ['37590'], ['37559'], ['37529']];
 		getAutofillCase([0, 0, 6, 7], [0, 0, 5, 0], 1, 'Date format. Reverse sequence. Vertical. Two selected cells. Step - month. Next month is February, and the day is more than the last day of the month.', expectedData);
+		// Case #105: Date format. Asc sequence. Vertical. Three selected cells. Step - month. Bug-79127
+		// Mock Date object to prevent dynamic change of date. Those cases have dynamic year
+		window.Date = MockDate;
+		testData = [
+			['01/20'],
+			['02/20'],
+			['03/20']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], ['']];
+		expectedData = [['46132'], ['46162'], ['46193']];
+		getAutofillCase([0, 0, 0, 2], [0, 0, 3, 5], 3, 'Short date format - 01/20, 02/20, 03/20. Asc sequence. Vertical. Three selected cells. Step - month. Bug-79127', expectedData);
+		// Case #106: Date format. Reverse sequence. Vertical. Three selected cells. Step - month. Bug-79127
+		range = ws.getRange4(3, 0);
+		range.fillData(testData);
+		undoData = [['46101'], ['46073'], ['46042']];
+		expectedData = [['46011'], ['45981'], ['45950']];
+		getAutofillCase([0, 0, 3, 5], [0, 0, 2, 0], 1, 'Short date format - 01/20, 02/20, 03/20. Reverse sequence. Vertical. Three selected cells. Step - month. Bug-79127', expectedData);
+		// Case #107: Date format. Asc sequence. Horizontal. Five selected cells. Step - month. Bug-79127
+		testData = [
+			['01/20', '02/20', '03/20', '04/20', '05/20']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = ['', '', '', '', ''];
+		expectedData = ['46193', '46223', '46254', '46285', '46315'];
+		getAutofillCase([0, 4, 0, 0], [5, 9, 0, 0], 3, 'Short date format - 01/20, 02/20, 03/20, 04/20, 05/20. Asc sequence. Horizontal. Five selected cells. Step - month. Bug-79127', expectedData);
+		// Case #108: Date format. Reverse sequence. Horizontal. Five selected cells. Step - month. Bug-79127
+		range = ws.getRange4(0, 5);
+		range.fillData(testData);
+		undoData = ['46162', '46132', '46101', '46073', '46042'];
+		expectedData = ['46011', '45981', '45950', '45920', '45889'];
+		getAutofillCase([5, 9, 0, 0], [4, 0, 0, 0], 1, 'Short date format - 01/20, 02/20, 03/20, 04/20, 05/20. Reverse sequence. Horizontal. Five selected cells. Step - month. Bug-79127', expectedData);
+		// Restore Date object
+		window.Date = RealDate;
+		// Case #109: Date format. Asc sequence. Vertical. Five selected cells. Sequence with the last day of the month. Step - month. Bug-79127
+		testData = [
+			['01/31/2026'],
+			['02/28/2026'],
+			['03/31/2026'],
+			['04/30/2026'],
+			['05/31/2026']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = [['46101'], ['37710'], ['37741'], [''], ['']];
+		expectedData = [['46203'], ['46234'], ['46265'], ['46295'], ['46326']];
+		getAutofillCase([0, 0, 0, 4], [0, 0, 5, 9], 3, 'Date format. Asc sequence. Vertical. Five selected cells. Sequence with the last day of month. Step - month. Bug-79127', expectedData);
+		// Case #110: Date format. Asc sequence. Vertical. Three selected cells. Change to default mode coz sequence for month step isn't correct, but it's int sequence. Bug-79127
+		testData = [
+			['01/01/2026'],
+			['02/01/2026'],
+			['03/04/2026']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = [['46142'], ['46173'], ['46101']];
+		expectedData = [['46116'], ['46147'], ['46178']];
+		getAutofillCase([0, 0, 0, 2], [0, 0, 3, 5], 3, 'Date format. Asc sequence. Vertical. Three selected cells. Change to default mode coz sequence for month step isn\'t correct, but it\'s int sequence. Bug-79127', expectedData);
+
 		ws.getRange2('A1:A20').cleanAll();
+	});
+	QUnit.test('Autofill - work with applied filter', function (assert) {
+		// Case #1: Data with numbers. Vertical Bug-41742
+		// Filling data
+		let testData = [
+			['Region', 'Jan'],
+			['East', '153817'],
+			['South', '253536'],
+			['North', '124204'],
+			['West', '202334']
+		];
+		let range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		// Applying filter. Hide the "South" row.
+		applyFilter(2);
+
+		let undoData = [['153817'], ['253536'], ['124204'], ['202334'], [''], [''], ['']];
+		let expectedData = [['153817'], ['253536'], ['153817'], ['153817'], ['153817'], ['153817'], ['153817']]; // Hidden row doesn't change.
+		let comparedData = {
+			'undoData': undoData,
+			'expectedData': expectedData,
+			'assert': assert
+		};
+		// aFrom, aTo: [c1,c2,r1,r2]
+		createAutofillAsserts([1, 1, 1, 4], [1, 1, 5, 7], 'Case #1.1: Asc sequence. Vertical. Values are number. "South" row is hidden. Bug-41742', comparedData);
+
+		// For testing a reverse sequence, need to change all data in reverse order.
+		undoData = [['202334'], ['124204'], ['253536'], ['153817']];
+		expectedData = [['202334'],['202334'], ['253536'], ['202334']];
+		comparedData = {
+			'undoData': undoData,
+			'expectedData': expectedData,
+			'assert': assert
+		};
+		createAutofillAsserts([1, 1, 3, 4], [1, 1, 2, 1], 'Case #1.2: Reverse sequence. Vertical. Values are number. "South" row is hidden. Bug-41742', comparedData);
+
+		ws.autoFilters.deleteAutoFilter(range);
+
+		// Case #2: Data with numbers. Horizontal Bug-41742
+		// Filling data
+		testData = [
+			['Region', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
+			['East', '153817', '105633', '106388', '196916', '175668', '177601', '284978', '171973', '193572'],
+			['South', '253536', '286799', '104008', '282149', '149151', '275912', '221377', '156108', '296918'],
+			['North', '124204', '206630', '114726',	'279390', '131361',	'226639', '265283',	'148012', '154301'],
+			['West', '202334', '117631', '284072', '161893', '138454', '170931', '216727', '111816', '223142']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		// Applying filter. Hide the "North" row.
+		applyFilter(1);
+
+		undoData = ['153817', '105633', '106388', '196916', '175668', '177601', '284978', '171973', '193572'];
+		expectedData = ['153817', '105633', '106388', '74517', '50802.5', '27088', '3373.5', '-20341', '-44055.5'];
+		comparedData = {
+			'undoData': undoData,
+			'expectedData': expectedData,
+			'assert': assert
+		}
+		createAutofillAsserts([1, 3, 1, 1], [4, 9, 1, 1], 'Case #2.1: Asc sequence. Horizontal. Values are number. "North" row is hidden. Bug-41742', comparedData);
+
+		// Reverse case
+		undoData = ['193572', '171973', '284978', '177601', '175668', '196916', '106388', '105633', '153817'];
+		expectedData = ['193572', '171973', '284978', '308247', '353950', '399653', '445356', '491059', '536762'];
+		comparedData = {
+			'undoData': undoData,
+			'expectedData': expectedData,
+			'assert': assert
+		};
+		createAutofillAsserts([7, 9, 1, 1], [6, 1, 1, 1], 'Case #2.2: Reverse sequence. Horizontal. Values are number. "North" row is hidden. Bug-41742', comparedData);
+
+		ws.autoFilters.deleteAutoFilter(range);
+
+		// Case #3: Data with date. Vertical. Bug-41742
+		testData = [
+			['Associate', 'Date'],
+			['Jason', '03/01/2011'],
+			['Jason', '03/03/2011'],
+			['Angela', '03/04/2011'],
+			['Angela', '03/04/2011'],
+			['Cahir', '04/02/2011'],
+			['Gomer', '04/27/2011'],
+			['Cahir', '04/29/2011'],
+			['Carl', '04/29/2011']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		// Applying filter. Hide the "Angela" rows.
+		applyFilter(0);
+
+		undoData = [['40603'], ['40605'], ['40606'], ['40606'], ['40635'], ['40660'], ['40662'], ['40662']];
+		expectedData = [['40603'], ['40603'], ['40606'], ['40606'], ['40603'], ['40603'], ['40603'], ['40603']];
+		comparedData = {
+			'undoData': undoData,
+			'expectedData': expectedData,
+			'assert': assert
+		};
+		createAutofillAsserts([1, 1, 1, 5], [1, 1, 6, 8], 'Case #3.1: Asc sequence. Vertical. Values are date. "Angela" rows are hidden. Bug-41742', comparedData);
+
+		// Reverse case
+		undoData = [['40662'], ['40662'], ['40660'], ['40635'], ['40606'], ['40606'], ['40605'], ['40603']];
+		expectedData = [['40662'], ['40662'], ['40662'], ['40662'], ['40606'], ['40606'], ['40662'], ['40662']];
+		comparedData = {
+			'undoData': undoData,
+			'expectedData': expectedData,
+			'assert': assert
+		};
+		createAutofillAsserts([1, 1, 6, 8], [1, 1, 5, 1], 'Case #3.2: Reverse sequence. Vertical. Values are date. "Angela" rows are hidden. Bug-41742', comparedData);
+
+		ws.autoFilters.deleteAutoFilter(range);
+
+		// Case #4: Data with string + number. Vertical. Bug-41742
+		testData = [
+			['Test1'],
+			['help2'],
+			['help'],
+			['help'],
+			['help'],
+			['nohelp'],
+			['nohelp'],
+			['nohelp'],
+			['help'],
+			['help']
+		];
+			range = ws.getRange4(0, 0);
+			range.fillData(testData);
+			// Applying filter. Hide the "nohelp" rows.
+			applyFilter(2);
+
+			undoData = [['help2'], ['help'], ['help'], ['help'], ['nohelp'], ['nohelp'], ['nohelp'], ['help'], ['help']];
+			expectedData = [['help2'], ['help2'], ['help2'], ['help2'], ['nohelp'], ['nohelp'], ['nohelp'], ['help2'], ['help2']];
+			comparedData = {
+				'undoData': undoData,
+				'expectedData': expectedData,
+				'assert': assert
+			};
+			createAutofillAsserts([0, 0, 1, 3], [0, 0, 4, 9], 'Case #4.1: Asc sequence. Vertical. Values are string + number. "nohelp" rows are hidden. Bug-41742', comparedData);
+
+			// Reverse case
+			undoData = [['help'], ['help'], ['nohelp'], ['nohelp'], ['nohelp'], ['help'], ['help'], ['help'], ['help2']];
+			expectedData = [['help'], ['help'], ['nohelp'], ['nohelp'], ['nohelp'], ['help'], ['help'], ['help'], ['help']];
+			comparedData = {
+				'undoData': undoData,
+				'expectedData': expectedData,
+				'assert': assert
+			};
+			createAutofillAsserts([0, 0, 8, 9], [0, 0, 7, 1], 'Case #4.2: Reverse sequence. Vertical. Values are string + number. "nohelp" rows are hidden. Bug-41742', comparedData);
+
+			ws.autoFilters.deleteAutoFilter(range);
+
+			// Case #5: Data with text. Vertical. Bug-41742
+			testData = [
+				['Filter', 'Text'],
+				['Test', 'Test'],
+				['Hello', ''],
+				['Test', 'Test'],
+				['Hello', ''],
+				['2B', 'Test'],
+				['Test', 'Test'],
+				['Hello', ''],
+				['2B', ''],
+				['2B', '']
+			];
+			range = ws.getRange4(0, 0);
+			range.fillData(testData);
+			// Applying filter. Hide the "Hello" rows.
+			applyFilter(1);
+
+			undoData = [['Test'], [''], ['Test'], [''], ['Test'], ['Test'], [''], [''], ['']];
+			expectedData = [['Test'], [''], ['Test'], [''], ['Test'], ['Test'], [''], ['Test'], ['Test']];
+			comparedData = {
+				'undoData': undoData,
+				'expectedData': expectedData,
+				'assert': assert
+			};
+			createAutofillAsserts([1, 1, 1, 5], [1, 1, 6, 9], 'Case #5.1: Asc sequence. Vertical. Values are text. "Hello" rows are hidden. Bug-41742', comparedData);
+
+			// Reverse case
+			undoData = [[''], [''], [''], ['Test'], ['Test'], [''], ['Test'], [''], ['Test']];
+			expectedData = [[''], [''], [''], [''], [''], [''], [''], [''], ['']];
+				comparedData = {
+					'undoData': undoData,
+					'expectedData': expectedData,
+					'assert': assert
+				};
+			createAutofillAsserts([1, 1, 6, 9], [1, 1, 5, 1], 'Case #5.2: Reverse sequence. Vertical. Values are text. "Hello" rows are hidden. Bug-41742', comparedData);
+
+			ws.autoFilters.deleteAutoFilter(range);
+
+			// Case #6: Inner selection. Vertical. Bug-41742
+			testData = [
+				['Test'],
+				['Test1'],
+				['Test2'],
+				['Hidden']
+			];
+			range = ws.getRange4(0, 0);
+			range.fillData(testData);
+			// Applying filter. Hide the "Hidden" row.
+			applyFilter(2);
+
+			undoData = [['Hidden'], ['Test2'], ['Test1']];
+			expectedData = [['Hidden'], [''], ['']];
+			comparedData = {
+				'undoData': undoData,
+				'expectedData': expectedData,
+				'assert': assert
+			};
+			createAutofillAsserts([0, 0, 1, 3], [0, 0, 3, 1], 'Case #6: Reverse sequence. Vertical. Inner selection. "Hidden" row is hidden. Bug-41742', comparedData);
+
+			ws.autoFilters.deleteAutoFilter(range);
+			ws.getRange2('A1:Z100').cleanAll();
 	});
 
 	QUnit.test('Cells merge test', function (assert) {

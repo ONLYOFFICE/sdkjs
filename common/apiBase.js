@@ -534,6 +534,14 @@
 	{
 		return "";
 	};
+	baseEditorsApi.prototype.isLogPluginCommands = function()
+	{
+		return false;
+	};
+	baseEditorsApi.prototype.log = function(msg)
+	{
+		console.log(msg);
+	};
 
 	// modules
 	baseEditorsApi.prototype._loadModules = function()

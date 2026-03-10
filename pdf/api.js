@@ -1430,6 +1430,18 @@
 	PDFEditorApi.prototype.IsRedactTool = function() {
 		return !!this.isRedactTool;
 	};
+	PDFEditorApi.prototype.SetRedactDelForm = function(bDel) {
+		this.bRedactDelForms = bDel;
+	};
+	PDFEditorApi.prototype.IsRedactDelForms = function() {
+		return !!this.bRedactDelForms;
+	};
+	PDFEditorApi.prototype.SetRedactDelAnnots = function(bDel) {
+		this.bRedactDelAnnots = bDel;
+	};
+	PDFEditorApi.prototype.IsRedactDelAnnots = function() {
+		return !!this.bRedactDelAnnots;
+	};
 	PDFEditorApi.prototype.RedactPages = function(aIdxs) {
 		let oDoc = this.getPDFDoc();
 		let oFile = oDoc.Viewer.file;
@@ -3268,7 +3280,7 @@
 		}
 
 		let aInnerColor = oMouseDownAnnot.IsRedact() ? oMouseDownAnnot.GetFillColor() : oMouseDownAnnot.GetBorderColor();
-		let oColor = oMouseDownAnnot.GetRGBColor(aInnerColor);
+		let oColor = oMouseDownAnnot.GetRGBColor(aInnerColor, true);
 		
 		oColor["r"] = oColor.r;
         oColor["g"] = oColor.g;
@@ -5406,6 +5418,8 @@
 	// redact
 	PDFEditorApi.prototype['SetRedactTool']		= PDFEditorApi.prototype.SetRedactTool;
 	PDFEditorApi.prototype['IsRedactTool']		= PDFEditorApi.prototype.IsRedactTool;
+	PDFEditorApi.prototype['SetRedactDelForm']	= PDFEditorApi.prototype.SetRedactDelForm;
+	PDFEditorApi.prototype['SetRedactDelAnnots']= PDFEditorApi.prototype.SetRedactDelAnnots;
 	PDFEditorApi.prototype['RedactPages']		= PDFEditorApi.prototype.RedactPages;
 	PDFEditorApi.prototype['ApplyRedact']		= PDFEditorApi.prototype.ApplyRedact;
 	PDFEditorApi.prototype['HasRedact']			= PDFEditorApi.prototype.HasRedact;

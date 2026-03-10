@@ -4940,6 +4940,10 @@ var editor;
           }
         }
       } else {
+        if (oWS.model.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
+          this.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
+          return;
+        }
         oWS.objectRender.addImageDrawingObject(arrUrls, null);
       }
     }
