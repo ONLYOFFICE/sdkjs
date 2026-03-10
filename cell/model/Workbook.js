@@ -3075,52 +3075,53 @@
 								let refRangeWS = new Range(parsed.ws, currentRow, currentCol, newR2, newC2);
 								let refRange = refRangeWS.bbox.clone && refRangeWS.bbox.clone();
 
-								/* dynamic array formula */
-								// В случаях когда у нас уже существовал массив и он был "сжат", нужно переопределить его размер по результату
-								let dynamicRangeProps, beforeSpillRange;
-								if (!parsed.ws.dynamicArrayManager.isAutoExpandBBox(refRange)) {
-									beforeSpillRange = refRange;
-									refRange = new Asc.Range(refRange.c1, refRange.r1, refRange.c1, refRange.r1);
-									refRangeWS.bbox = refRange;
-								}
-
-								dynamicRangeProps = AscCommonExcel.bIsSupportDynamicArrays ? {range: refRange, beforeSpillRange: beforeSpillRange} : null;
-								parsed.setDynamicRef(refRange);
-
-								t.wb.dependencyFormulas.lockRecal();
-								
-								// refRangeWS.setValue("=" + parsed.getFormula(), null, null, refRange, null, dynamicRangeProps);
-								refRangeWS._foreach(function (cell, i, j) {
-									if (cell && !cell.ws.isUserProtectedRangesIntersectionCell(cell)) {
-										// в первую всегда выставляем формулу уже с параметрами
-										// главное отличие от обычной .setValue в том,
-										// что не создается новый объект с формулой для которого повторно придется ждать выполнения промиса
-										cell.setValueAsync(parsed, refRange, dynamicRangeProps);
+								if (AscCommonExcel.bIsSupportDynamicArrays) {
+									/* dynamic array formula */
+									// В случаях когда у нас уже существовал массив и он был "сжат", нужно переопределить его размер по результату
+									let dynamicRangeProps, beforeSpillRange;
+									if (!parsed.ws.dynamicArrayManager.isAutoExpandBBox(refRange)) {
+										beforeSpillRange = refRange;
+										refRange = new Asc.Range(refRange.c1, refRange.r1, refRange.c1, refRange.r1);
+										refRangeWS.bbox = refRange;
 									}
-								});
 
-								t.wb.dependencyFormulas.unlockRecal(true);
-								/* dynamic array formula end */
+									dynamicRangeProps = AscCommonExcel.bIsSupportDynamicArrays ? {range: refRange, beforeSpillRange: beforeSpillRange} : null;
+									parsed.setDynamicRef(refRange);
 
-								/* array formula */
-								// if (!parsed.ws.dynamicArrayManager.isAutoExpandBBox(refRange)) {
-								// 	t.wb.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
-								// 	continue;
-								// } else {
-								// 	parsed.setArrayFormulaRef(refRange);
+									t.wb.dependencyFormulas.lockRecal();
+									
+									// refRangeWS.setValue("=" + parsed.getFormula(), null, null, refRange, null, dynamicRangeProps);
+									refRangeWS._foreach(function (cell, i, j) {
+										if (cell && !cell.ws.isUserProtectedRangesIntersectionCell(cell)) {
+											// в первую всегда выставляем формулу уже с параметрами
+											// главное отличие от обычной .setValue в том,
+											// что не создается новый объект с формулой для которого повторно придется ждать выполнения промиса
+											cell.setValueAsync(parsed, refRange, dynamicRangeProps);
+										}
+									});
 
-								// 	t.wb.dependencyFormulas.lockRecal();
+									t.wb.dependencyFormulas.unlockRecal(true);
+									/* dynamic array formula end */
+								} else {
+									/* array formula */
+									if (!parsed.ws.dynamicArrayManager.isAutoExpandBBox(refRange)) {
+										t.wb.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
+										continue;
+									} else {
+										parsed.setArrayFormulaRef(refRange);
 
-								// refRangeWS._foreach(function (cell, i, j) {
-								// 	if (cell && !cell.ws.isUserProtectedRangesIntersectionCell(cell)) {
-								// 		cell.setValueAsync(parsed, refRange, /*dynamicRangeProps*/null);
-								// 	}
-								// });
+										t.wb.dependencyFormulas.lockRecal();
 
-								// 	t.wb.dependencyFormulas.unlockRecal(true);
-								// }
-								/* array formula end*/
+										refRangeWS._foreach(function (cell, i, j) {
+											if (cell && !cell.ws.isUserProtectedRangesIntersectionCell(cell)) {
+												cell.setValueAsync(parsed, refRange, /*dynamicRangeProps*/null);
+											}
+										});
 
+										t.wb.dependencyFormulas.unlockRecal(true);
+									}
+									/* array formula end*/
+								}
 							}
 						}
 
@@ -16498,6 +16499,9 @@
 			if (null !== Val.value && (this.ws.workbook.bRedoChanges || this.ws.workbook.bUndoChanges)) {
 				// Set value in UndoRedo when we have a formula
 				this._setValueData(Val.value);
+				// let wb = Asc["editor"] && Asc["editor"].wb;
+				// let currentFunc = wb && wb.customFunctionEngine && wb.customFunctionEngine.getFunc(Val.formula);
+				// TODO: добавить распознавание кастомной(асинхронной) функции в ячейке и только в этом случае выставлять данные из истории
 			}
 		} else if (null != Val.value) {
 			var DataOld = null;
