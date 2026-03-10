@@ -4795,6 +4795,48 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 333);
 
+		// Table type for HLOOKUP. Use A1701:F1704 (horizontal table)
+		getTableType(1699, 0, 1703, 5);
+		ws.getRange2("A1701").setValue("5");
+		ws.getRange2("B1701").setValue("10");
+		ws.getRange2("C1701").setValue("15");
+		ws.getRange2("D1701").setValue("20");
+		ws.getRange2("E1701").setValue("25");
+		ws.getRange2("F1701").setValue("30");
+		ws.getRange2("A1702").setValue("Apple");
+		ws.getRange2("B1702").setValue("Banana");
+		ws.getRange2("C1702").setValue("Orange");
+		ws.getRange2("D1702").setValue("Cherry");
+		ws.getRange2("E1702").setValue("Grape");
+		ws.getRange2("F1702").setValue("Peach");
+		ws.getRange2("A1703").setValue("Red");
+		ws.getRange2("B1703").setValue("Yellow");
+		ws.getRange2("C1703").setValue("Orange");
+		ws.getRange2("D1703").setValue("Red");
+		ws.getRange2("E1703").setValue("Purple");
+		ws.getRange2("F1703").setValue("Pink");
+		ws.getRange2("A1704").setValue("10");
+		ws.getRange2("B1704").setValue("5");
+		ws.getRange2("C1704").setValue("15");
+		ws.getRange2("D1704").setValue("25");
+		ws.getRange2("E1704").setValue("20");
+		ws.getRange2("F1704").setValue("30");
+
+		// Case #64: Table, Number, Number. HLOOKUP with table reference
+		oParser = new parserFormula('HLOOKUP(10, Table1, 2, FALSE)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "Banana");
+
+		// Case #65: Number, Table, Number. HLOOKUP with table reference and row 3
+		oParser = new parserFormula('HLOOKUP(15, Table1, 3, FALSE)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "Orange");
+
+		// Case #66: Number, Table, Number. HLOOKUP with approximate match
+		oParser = new parserFormula('HLOOKUP(12, Table1, 2, TRUE)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "Banana");
+
 		// Negative Cases:
 		// Case #1: Array, Array, Array with wrong data
 		oParser = new parserFormula("HLOOKUP({2,3,4},{1,2;2,3;3,4},{4,5,6})", "A2", ws);
@@ -11562,7 +11604,7 @@ $(function () {
 
 	QUnit.test("Test: \"VLOOKUP\"", function (assert) {
 		let array;
-
+		
 		ws.getRange2("A501").setValue("Density");
 		ws.getRange2("B501").setValue("Bearings");
 		ws.getRange2("C501").setValue("Bolts");
@@ -12325,6 +12367,48 @@ $(function () {
 		oParser = new parserFormula('VLOOKUP(ABS(2),VLOOKUPTestNameArea3D,ABS(2),1=1)', "A2", ws);
 		assert.ok(oParser.parse(), 'VLOOKUP(ABS(2),VLOOKUPTestNameArea3D,ABS(2),1=1)');
 		assert.strictEqual(oParser.calculate().getValue(), 2, 'Result of VLOOKUP(ABS(2),VLOOKUPTestNameArea3D,ABS(2),1=1)');
+
+		// Table type. Use A1601:D1606
+		getTableType(1599, 0, 1605, 3);
+		ws.getRange2("A1601").setValue("5");
+		ws.getRange2("B1601").setValue("Apple");
+		ws.getRange2("C1601").setValue("Red");
+		ws.getRange2("D1601").setValue("10");
+		ws.getRange2("A1602").setValue("10");
+		ws.getRange2("B1602").setValue("Banana");
+		ws.getRange2("C1602").setValue("Yellow");
+		ws.getRange2("D1602").setValue("5");
+		ws.getRange2("A1603").setValue("15");
+		ws.getRange2("B1603").setValue("Orange");
+		ws.getRange2("C1603").setValue("Orange");
+		ws.getRange2("D1603").setValue("15");
+		ws.getRange2("A1604").setValue("20");
+		ws.getRange2("B1604").setValue("Cherry");
+		ws.getRange2("C1604").setValue("Red");
+		ws.getRange2("D1604").setValue("25");
+		ws.getRange2("A1605").setValue("25");
+		ws.getRange2("B1605").setValue("Grape");
+		ws.getRange2("C1605").setValue("Purple");
+		ws.getRange2("D1605").setValue("20");
+		ws.getRange2("A1606").setValue("30");
+		ws.getRange2("B1606").setValue("Peach");
+		ws.getRange2("C1606").setValue("Pink");
+		ws.getRange2("D1606").setValue("30");
+
+		// Case #64: Table, Number, Number. VLOOKUP with table reference as array
+		oParser = new parserFormula('VLOOKUP(10, Table1, 2, FALSE)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "Banana");
+
+		// Case #65: Number, Table, Number. VLOOKUP with table reference and column 3
+		oParser = new parserFormula('VLOOKUP(15, Table1, 3, FALSE)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "Orange");
+
+		// Case #66: Number, Table, Number. VLOOKUP with approximate match
+		oParser = new parserFormula('VLOOKUP(12, Table1, 2, TRUE)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "Banana");
 
 		// Negative Cases:
 		// Case #1: Array, Array, Array with wrong data

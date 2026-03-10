@@ -7593,6 +7593,12 @@ Paragraph.prototype.Apply_TextPr = function(TextPr, IncFontSize)
 			if (this.Content[EndPos].IsRun())
 			{
 				this.RemoveSelection();
+				for (let i = 0; i < NewElements.length; ++i)
+				{
+					if (NewElements[i])
+						NewElements[i].RemoveSelection();
+				}
+				
 				let centerPos = this.Internal_ReplaceRun(EndPos, NewElements);
 
 				this.Selection.Use      = true;

@@ -10219,17 +10219,15 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 1);
 
-		//Different with MS
-		// // Case #34: Area, String. Count number 123 with fraction criteria "122 1/1" (equals 123)
-		// oParser = new parserFormula('COUNTIF(A324:A356,"122 1/1")', "AC7", ws);
-		// assert.ok(oParser.parse());
-		// assert.strictEqual(oParser.calculate().getValue(), 18);
+		// Case #34: Area, String. Count number 123 with fraction criteria "122 1/1" (equals 123)
+		oParser = new parserFormula('COUNTIF(A324:A356,"122 1/1")', "AC7", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 18);
 
-		//Different with MS
-		// // Case #35: Area, String. Count number 123 with fraction criteria "123 0/2" (equals 123)
-		// oParser = new parserFormula('COUNTIF(A324:A356,"123 0/2")', "AC7", ws);
-		// assert.ok(oParser.parse());
-		// assert.strictEqual(oParser.calculate().getValue(), 18);
+		// Case #35: Area, String. Count number 123 with fraction criteria "123 0/2" (equals 123)
+		oParser = new parserFormula('COUNTIF(A324:A356,"123 0/2")', "AC7", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 18);
 
 		// Case #36: Area, String. Count number 123 with trailing space criteria "123 " (equals 123)
 		oParser = new parserFormula('COUNTIF(A324:A356,"123 ")', "AC7", ws);
@@ -10240,6 +10238,11 @@ $(function () {
 		oParser = new parserFormula('COUNTIF(A324:A356," 123")', "AC7", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 18);
+
+		// Case #38: Area, Area3D. Multi-sheet 3D range as criteria always returns 0
+		oParser = new parserFormula('COUNTIF(A324:A356, Sheet1:Sheet2!A1:B1)', "AC7", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
 
 		testArrayFormula2(assert, "COUNTIF", 2, 2);
 	});

@@ -6314,7 +6314,7 @@ ParaRun.prototype.RecalculateMinMaxContentWidth = function(MinMax)
 					nMinWidth = Math.max(nMinWidth, Item.getExtX());
                 }
 
-                if ((true === Item.Is_Inline() || true === this.Paragraph.Parent.Is_DrawingShape()) && Item.getHeight() > nMaxHeight)
+                if ((true === Item.Is_Inline() || true === this.Paragraph.Parent.Is_DrawingShape() || Item.IsForm()) && Item.getHeight() > nMaxHeight)
                 {
                     nMaxHeight = Item.getHeight();
                 }
