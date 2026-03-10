@@ -141,9 +141,10 @@
 	var CTextInputPrototype = CTextInput2.prototype;
 
 	const TEXT_INPUT_DEBUG = false;
+	const TEST_LOG = true;
 	CTextInputPrototype.log = function(value)
 	{
-		if (TEXT_INPUT_DEBUG)
+		if (TEXT_INPUT_DEBUG || TEST_LOG)
 			console.log(value);
 	};
 
@@ -389,6 +390,7 @@
 
 	CTextInputPrototype.onInput = function(e)
 	{
+		console.log('[TextInput.onInput] type:', e && e.type, 'isLongAction:', this.Api.isLongAction(), 'IsComposition:', this.IsComposition, 'Text:', JSON.stringify(this.Text));
 		if (this.Api.isLongAction())
 		{
 			AscCommon.stopEvent(e);
@@ -489,6 +491,9 @@
 			}
 
 			// добавляем новые
+			var _cpNew = codesNew.map(function(cp) { return String.fromCodePoint(cp); }).join('');
+			var _cpRemove = codesRemove ? codesRemove.map(function(cp) { return String.fromCodePoint(cp); }).join('') : '';
+			console.log('[TextInput.onInput] codesNew:', JSON.stringify(_cpNew), 'codesRemove:', JSON.stringify(_cpRemove), 'this.Text:', JSON.stringify(this.Text), 'newValue:', JSON.stringify(newValue));
 			isAsyncInput = this.checkTextInput(codesNew, codesRemove);
 		}
 
@@ -557,6 +562,7 @@
 	};
 	CTextInputPrototype.compositeReplace = function(codes)
 	{
+		console.log("compositeReplace: " + (codes ? codes.map(function(cp) { return String.fromCodePoint(cp); }).join('') : ''));
 		this.Api.Replace_CompositeText(codes);
 	};
 	CTextInputPrototype.compositeEnd = function()
@@ -579,7 +585,10 @@
 	};
 	CTextInputPrototype.checkTextInput = function(codes, codesRemove)
 	{
+		var cpText = codes ? codes.map(function(cp) { return String.fromCodePoint(cp); }).join('') : '';
+		var cpRemove = codesRemove ? codesRemove.map(function(cp) { return String.fromCodePoint(cp); }).join('') : '';
 		var isAsync = AscFonts.FontPickerByCharacter.checkTextLight(codes, true);
+		console.log('[TextInput.checkTextInput] codes:', JSON.stringify(cpText), 'codesRemove:', JSON.stringify(cpRemove), 'IsComposition:', this.IsComposition, 'isAsync:', isAsync);
 
 		if (!isAsync)
 		{
@@ -614,6 +623,9 @@
 
 	CTextInputPrototype.addTextCodes = function(codes, codesRemove)
 	{
+		var cpText = codes ? codes.map(function(cp) { return String.fromCodePoint(cp); }).join('') : '';
+		var cpRemove = codesRemove ? codesRemove.map(function(cp) { return String.fromCodePoint(cp); }).join('') : '';
+		console.log('[TextInput.addTextCodes] codes:', JSON.stringify(cpText), 'codesRemove:', JSON.stringify(cpRemove));
 		if (codesRemove && codesRemove.length !== 0)
 		{
 			// old version (cells??).
@@ -1037,6 +1049,7 @@
 		{
 			this.HtmlArea.addEventListener(inputEvents[i], function(e)
 			{
+				console.log('[TextInput event]', e.type, 'data:', JSON.stringify(e.data), 'inputType:', e.inputType, 'areaValue:', JSON.stringify(oThis.getAreaValue()));
 				return oThis.onInput(e);
 			}, false);
 		}

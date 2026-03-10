@@ -5774,6 +5774,9 @@
 	};
 
 	WorkbookView.prototype.CorrectEnterText = function (oldValue, newValue) {
+		var cpOld = Array.isArray(oldValue) ? oldValue.map(function(cp) { return String.fromCodePoint(cp); }).join('') : oldValue;
+		var cpNew = Array.isArray(newValue) ? newValue.map(function(cp) { return String.fromCodePoint(cp); }).join('') : newValue;
+		console.log('[WorkbookView.CorrectEnterText] oldValue:', JSON.stringify(cpOld), 'newValue:', JSON.stringify(cpNew), 'isCellEditMode:', this.isCellEditMode);
 		if (undefined === oldValue || null === oldValue || (Array.isArray(oldValue) && !oldValue.length)) {
 			return this.EnterText(newValue);
 		}
