@@ -2354,8 +2354,7 @@
 							let oDrawing = this.selectedObjects[i];
 							// if (oDrawing.selectStartPage === pageIndex) {
 							if (oDrawing.selectStartPage === pageIndex && !oDrawing.IsFreeText && !oDrawing.isFrameChart || (oDrawing.IsFreeText && !oDrawing.IsFreeText())) {
-								let oHRGeom = oDrawing.getGeometry && oDrawing.getGeometry();
-								if (oHRGeom && oHRGeom.hr) {
+								if (oDrawing.isHorizontalRule()) {
 									let frameRect = drawingDocument.FrameRect;
 									let savedActive = frameRect.IsActive;
 									let savedRect = frameRect.Rect;
@@ -4385,17 +4384,19 @@
 								nType === AscDFH.historyitem_type_ImageShape ||
 								nType === AscDFH.historyitem_type_GroupShape) {
 
-								if (AscFormat.isRealBool(props.flipH)) {
-									oDrawing.changeFlipH(props.flipH);
-								}
-								if (AscFormat.isRealBool(props.flipV)) {
-									oDrawing.changeFlipV(props.flipV);
-								}
-								if (props.flipHInvert) {
-									oDrawing.changeFlipH(!oDrawing.flipH);
-								}
-								if (props.flipVInvert) {
-									oDrawing.changeFlipV(!oDrawing.flipV);
+								if (!oDrawing.isHorizontalRule()) {
+									if (AscFormat.isRealBool(props.flipH)) {
+										oDrawing.changeFlipH(props.flipH);
+									}
+									if (AscFormat.isRealBool(props.flipV)) {
+										oDrawing.changeFlipV(props.flipV);
+									}
+									if (props.flipHInvert) {
+										oDrawing.changeFlipH(!oDrawing.flipH);
+									}
+									if (props.flipVInvert) {
+										oDrawing.changeFlipV(!oDrawing.flipV);
+									}
 								}
 								if(oDrawing.canRotate()) {
 									if (AscFormat.isRealNumber(props.rotAdd)) {
@@ -7640,8 +7641,10 @@
 					for (var i = 0; i < drawings.length; ++i) {
 						drawing = drawings[i];
 
-						// skip sticky note for pdf editor
 						if (drawing.IsAnnot && drawing.IsAnnot() && drawing.IsComment() || drawing.IsEditFieldShape && drawing.IsEditFieldShape()) {
+							continue;
+						}
+						if (drawing.isHorizontalRule()) {
 							continue;
 						}
 

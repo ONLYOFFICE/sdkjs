@@ -1134,7 +1134,7 @@
 			}
 			if (this.spPr) {
 				c.setSpPr(this.spPr.createDuplicate());
-				if (c.spPr.geometry && c.spPr.geometry.hr) {
+				if (c.isHorizontalRule()) {
 					c.spPr.geometry.setHR(null);
 				}
 				c.spPr.setParent(c);
@@ -2831,10 +2831,13 @@
 		};
 
 		CShape.prototype.canEditText = function () {
+			if (this.isHorizontalRule()) {
+				return false;
+			}
 			let form = this.isForm && this.isForm() ? this.getInnerForm() : null;
 			if (form && !form.CanPlaceCursorInside())
 				return false;
-			
+
 			return this.superclass.prototype.canEditText.call(this);
 		};
 		CShape.prototype.canEditTextInSmartArt = function () {
@@ -3464,15 +3467,15 @@
 									}
 								}
 							}
-							var oHRGeom = this.getGeometry && this.getGeometry();
-							if (oHRGeom && oHRGeom.hr) {
+							var oHR = this.getHorizontalRule();
+							if (oHR) {
 								var oHRParagraph = oParaDrawing.Get_ParentParagraph();
 								if (oHRParagraph) {
 									var oHRSectPr = oHRParagraph.Get_SectPr();
 									if (oHRSectPr) {
 										var hrContentWidth = oHRSectPr.GetContentFrameWidth();
-										if (oHRGeom.hr.pct != null && oHRGeom.hr.pct > 0) {
-											hrContentWidth = hrContentWidth * oHRGeom.hr.pct / 1000;
+										if (oHR.pct != null && oHR.pct > 0) {
+											hrContentWidth = hrContentWidth * oHR.pct / 1000;
 										}
 										this.extX = hrContentWidth;
 									}
@@ -5642,8 +5645,9 @@
 					this.brush = AscFormat.CreateBlipFillUniFillFromUrl(sSignatureUrl);
 				}
 			}
-			if (geometry && geometry.hr) {
-				if (geometry.hr.noshade) {
+			var oHR = this.getHorizontalRule();
+			if (oHR) {
+				if (oHR.noshade) {
 					if (!this.brush || !this.brush.fill) {
 						this.brush = AscFormat.CreateSolidFillRGBA(160, 160, 160, 255);
 					}
@@ -6472,6 +6476,9 @@
 		};
 
 		CShape.prototype.hit = function (x, y) {
+			if (this.isHorizontalRule()) {
+				return this.hitInRect(x, y);
+			}
 			return this.hitInInnerArea(x, y) || this.hitInPath(x, y) || this.hitInTextRect(x, y);
 		};
 
@@ -6601,6 +6608,9 @@
 			if (this.signatureLine) {
 				return false;
 			}
+			if (this.isHorizontalRule()) {
+				return false;
+			}
 			return AscFormat.CGraphicObjectBase.prototype.canRotate.call(this);
 		};
 
@@ -6613,6 +6623,9 @@
 				return false;
 			}
 			if (this.signatureLine) {
+				return false;
+			}
+			if (this.isHorizontalRule()) {
 				return false;
 			}
 			return AscFormat.CGraphicObjectBase.prototype.canGroup.call(this);

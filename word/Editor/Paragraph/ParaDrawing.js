@@ -1278,15 +1278,19 @@ ParaDrawing.prototype.Measure = function()
 			this.Height = this.GraphicObj.extY;
 		}
 	}
-	let oHRGeom = this.GraphicObj.getGeometry && this.GraphicObj.getGeometry();
-	if (oHRGeom && oHRGeom.hr) {
+	let oHR = this.getHorizontalRule();
+	if (oHR)
+	{
 		let oParagraph = this.GetParagraph();
-		if (oParagraph) {
+		if (oParagraph)
+		{
 			let oSectPr = oParagraph.Get_SectPr();
-			if (oSectPr) {
+			if (oSectPr)
+			{
 				let hrContentWidth = oSectPr.GetContentFrameWidth();
-				if (oHRGeom.hr.pct != null && oHRGeom.hr.pct > 0) {
-					hrContentWidth = hrContentWidth * oHRGeom.hr.pct / 1000;
+				if (oHR.pct != null && oHR.pct > 0)
+				{
+					hrContentWidth = hrContentWidth * oHR.pct / 1000;
 				}
 				this.Width = hrContentWidth;
 				this.WidthVisible = hrContentWidth;
@@ -1459,8 +1463,7 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	this.Internal_Position.Calculate_Y(bInline, this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value, this.PositionV.Percent, isInTable);
 
 	if (bInline) {
-		let oHRGeom = this.GraphicObj.getGeometry && this.GraphicObj.getGeometry();
-		if (oHRGeom && oHRGeom.hr) {
+		if (this.isHorizontalRule()) {
 			let oLine = Paragraph.Lines[LineNum];
 			if (oLine) {
 				let metrics = oLine.Metrics;
@@ -1865,6 +1868,14 @@ ParaDrawing.prototype.Is_Inline = function()
 ParaDrawing.prototype.IsInline = function()
 {
 	return this.Is_Inline();
+};
+ParaDrawing.prototype.isHorizontalRule = function()
+{
+	return this.GraphicObj && this.GraphicObj.isHorizontalRule && this.GraphicObj.isHorizontalRule();
+};
+ParaDrawing.prototype.getHorizontalRule = function()
+{
+	return this.GraphicObj && this.GraphicObj.getHorizontalRule && this.GraphicObj.getHorizontalRule();
 };
 ParaDrawing.prototype.MakeInline = function()
 {

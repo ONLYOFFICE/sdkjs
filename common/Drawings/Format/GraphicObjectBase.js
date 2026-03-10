@@ -989,11 +989,20 @@
 	CGraphicObjectBase.prototype.canEditGeometry = function () {
 		return this.getObjectType() === AscDFH.historyitem_type_Shape &&
 			!this.isPlaceholder() &&
+			!this.isHorizontalRule() &&
 			this.getNoEditPoints() !== true &&
 			!!(this.spPr && this.spPr.geometry) && !(this.isObjectInSmartArt()); // todo: functionality not available in microsoft for smartart shapes, but the OOX format supports it, currently blocked due to resizing blocking
 	};
 	CGraphicObjectBase.prototype.canEditTableOleObject = function (bReturnOle) {
 		return bReturnOle ? null : false;
+	};
+	CGraphicObjectBase.prototype.isHorizontalRule = function () {
+		let oGeom = this.getGeometry && this.getGeometry();
+		return !!(oGeom && oGeom.hr);
+	};
+	CGraphicObjectBase.prototype.getHorizontalRule = function () {
+		let oGeom = this.getGeometry && this.getGeometry();
+		return oGeom && oGeom.hr || null;
 	};
 	CGraphicObjectBase.prototype.canRotate = function () {
 		if (!this.canEdit()) {

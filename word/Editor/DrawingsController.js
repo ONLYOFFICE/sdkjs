@@ -271,13 +271,32 @@ CDrawingsController.prototype.MoveCursorToCell = function(bNext)
 };
 CDrawingsController.prototype.SetParagraphAlign = function(Align)
 {
-	if (true != this.DrawingObjects.isSelectedText())
+	if (!this.DrawingObjects.isSelectedText())
 	{
-		var ParaDrawing = this.DrawingObjects.getMajorParaDrawing();
+		let ParaDrawing = this.DrawingObjects.getMajorParaDrawing();
 		if (null != ParaDrawing)
 		{
-			var Paragraph = ParaDrawing.Parent;
-			Paragraph.Set_Align(Align);
+			let oHR = ParaDrawing.getHorizontalRule();
+			if (oHR)
+			{
+				let sHRAlign = "left";
+				if (Align === AscCommon.align_Center)
+					sHRAlign = "center";
+				else if (Align === AscCommon.align_Right)
+					sHRAlign = "right";
+				let oGeom = ParaDrawing.GraphicObj.getGeometry();
+				if (oGeom)
+				{
+					let oNewHR = oHR.createDuplicate();
+					oNewHR.align = sHRAlign;
+					oGeom.setHR(oNewHR);
+				}
+			}
+			else
+			{
+				let Paragraph = ParaDrawing.Parent;
+				Paragraph.Set_Align(Align);
+			}
 		}
 	}
 	else
