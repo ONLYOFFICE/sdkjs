@@ -14968,6 +14968,15 @@ background-repeat: no-repeat;\
 			callback(null);
 		});
 	};
+	
+	asc_docs_api.prototype.scrollToTarget = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || !logicDocument.IsDocumentEditor())
+			return;
+		
+		logicDocument.ScrollToTarget();
+	};
 
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};
@@ -15823,7 +15832,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_isFinal'] = asc_docs_api.prototype.asc_isFinal = asc_docs_api.prototype.isFinal;
 	
 	asc_docs_api.prototype['getJsApi'] = asc_docs_api.prototype.getJsApi;
-	
+	asc_docs_api.prototype['scrollToTarget'] = asc_docs_api.prototype.scrollToTarget;
 	
 	CDocInfoProp.prototype['get_PageCount']             = CDocInfoProp.prototype.get_PageCount;
 	CDocInfoProp.prototype['put_PageCount']             = CDocInfoProp.prototype.put_PageCount;

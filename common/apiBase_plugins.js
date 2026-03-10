@@ -486,9 +486,14 @@
     Api.prototype["pluginMethod_StartAction"] = function(type, description)
     {
 		if ("GroupActions" === type)
-			this.startGroupActions();
+		{
+			let pr = description && (typeof description === "object") ? description : {};
+			this.startGroupActions(pr);
+		}
 		else
+		{
 			this.sync_StartAction((type === "Block") ? Asc.c_oAscAsyncActionType.BlockInteraction : Asc.c_oAscAsyncActionType.Information, description);
+		}
     };
 
     /**
@@ -505,10 +510,11 @@
     {
 		if ("GroupActions" === type)
 		{
+			let pr = description && (typeof description === "object") ? description : {};
 			if (status)
-				this.cancelGroupActions();
+				this.cancelGroupActions(pr);
 			else
-				this.endGroupActions();
+				this.endGroupActions(pr);
 			
 			return;
 		}
