@@ -13301,6 +13301,34 @@
 		return true;
 	};
 
+	/**
+	 * Deletes the specified drawing object.
+	 *
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} - returns false if the drawing object can not be deleted.
+	 *
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Delete.js
+	 */
+	ApiDrawing.prototype.Delete = function () {
+		if (!this.Drawing) {
+			return false;
+		}
+
+		const controller = this.Drawing.getDrawingObjectsController();
+		if (controller) {
+			if (controller.selection.groupSelection === this.Drawing) {
+				controller.resetInternalSelection();
+			}
+			this.Drawing.deselect(controller);
+		}
+
+		this.Drawing.setBDeleted(true);
+		this.Drawing.deleteDrawingBase();
+		return true;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiImage
@@ -28030,6 +28058,7 @@
 	ApiDrawing.prototype["Fill"]                       =  ApiDrawing.prototype.Fill;
 	ApiDrawing.prototype["SetOutLine"]                 =  ApiDrawing.prototype.SetOutLine;
 	ApiDrawing.prototype["Unselect"]                   =  ApiDrawing.prototype.Unselect;
+	ApiDrawing.prototype["Delete"]                     =  ApiDrawing.prototype.Delete;
 
 	ApiImage.prototype["GetClassType"]                 =  ApiImage.prototype.GetClassType;
 
