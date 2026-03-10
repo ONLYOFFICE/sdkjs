@@ -3467,17 +3467,21 @@
 									}
 								}
 							}
-							var oHR = this.getHorizontalRule();
+							let oHR = this.getHorizontalRule();
 							if (oHR) {
-								var oHRParagraph = oParaDrawing.Get_ParentParagraph();
+								this.m_oSectPr = null;
+								let oHRParagraph = oParaDrawing.Get_ParentParagraph();
 								if (oHRParagraph) {
-									var oHRSectPr = oHRParagraph.Get_SectPr();
+									let oHRSectPr = oHRParagraph.Get_SectPr();
 									if (oHRSectPr) {
-										var hrContentWidth = oHRSectPr.GetContentFrameWidth();
+										let nColIdx = oHRParagraph.ColumnNum || 0;
+										let hrContentWidth = oHRSectPr.GetColumnWidth(nColIdx);
 										if (oHR.pct != null && oHR.pct > 0) {
 											hrContentWidth = hrContentWidth * oHR.pct / 1000;
 										}
 										this.extX = hrContentWidth;
+										this.m_oSectPr = new AscWord.SectPr();
+										this.m_oSectPr.Copy(oHRSectPr);
 									}
 								}
 							}
@@ -3891,21 +3895,29 @@
 			var bRet = false;
 			var oParaDrawing = getParaDrawing(this);
 			var bSizRel = (oParaDrawing && (oParaDrawing.SizeRelH || oParaDrawing.SizeRelV));
-			if (this.checkAutofit() || bSizRel) {
+			let bHR = this.isHorizontalRule();
+			if (this.checkAutofit() || bSizRel || bHR) {
 				if (oSectPr) {
 					if (!this.m_oSectPr) {
 						this.recalcBounds();
 						this.recalcText();
 						this.recalcGeometry();
-						if (bSizRel) {
+						if (bSizRel || bHR) {
 							this.recalcTransform();
 						}
 						bRet = true;
 					} else {
-						Width = oSectPr.GetContentFrameWidth();
+						let nHRColIdx = 0;
+						if (bHR && oParaDrawing) {
+							let oHRPara = oParaDrawing.Get_ParentParagraph && oParaDrawing.Get_ParentParagraph();
+							if (oHRPara) {
+								nHRColIdx = oHRPara.ColumnNum || 0;
+							}
+						}
+						Width = bHR ? oSectPr.GetColumnWidth(nHRColIdx) : oSectPr.GetContentFrameWidth();
 						Height = oSectPr.GetContentFrameHeight();
 
-						Width2 = this.m_oSectPr.GetContentFrameWidth();
+						Width2 = bHR ? this.m_oSectPr.GetColumnWidth(nHRColIdx) : this.m_oSectPr.GetContentFrameWidth();
 						Height2 = this.m_oSectPr.GetContentFrameHeight();
 
 						bRet = (Math.abs(Width - Width2) > 0.001 || Math.abs(Height - Height2) > 0.001);
@@ -3913,7 +3925,7 @@
 							this.recalcBounds();
 							this.recalcText();
 							this.recalcGeometry();
-							if (bSizRel) {
+							if (bSizRel || bHR) {
 								this.recalcTransform();
 							}
 						}

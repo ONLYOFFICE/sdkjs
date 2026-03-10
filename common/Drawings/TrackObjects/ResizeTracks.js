@@ -1418,6 +1418,27 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                         xfrm.setExtX(this.resizedExtX/scale_coefficients.cx);
                         xfrm.setExtY(this.resizedExtY/scale_coefficients.cy);
 						Asc.editor.addMacroStepData("SetShapeSize", {width: this.resizedExtX, height: this.resizedExtY});
+                        let oHR = this.originalObject.getHorizontalRule && this.originalObject.getHorizontalRule();
+                        if (oHR) {
+                            let oParaDrawing = this.originalObject.parent;
+                            if (oParaDrawing) {
+                                let oParagraph = oParaDrawing.Get_ParentParagraph && oParaDrawing.Get_ParentParagraph();
+                                if (oParagraph) {
+                                    let oSectPr = oParagraph.Get_SectPr();
+                                    if (oSectPr) {
+                                        let nColIdx = oParagraph.ColumnNum || 0;
+                                        let contentWidth = oSectPr.GetColumnWidth(nColIdx);
+                                        let newPct = (this.resizedExtX / scale_coefficients.cx) / contentWidth * 1000;
+                                        let oGeom = this.originalObject.getGeometry();
+                                        if (oGeom) {
+                                            let oNewHR = oHR.createDuplicate();
+                                            oNewHR.pct = newPct;
+                                            oGeom.setHR(oNewHR);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                     else
                     {

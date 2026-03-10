@@ -4998,7 +4998,7 @@ background-repeat: no-repeat;\
             oLogicDocument.StartAction(AscDFH.historydescription_Document_InsertHorizontalRule);
 
             var oSectPr = oLogicDocument.GetCurrentSectPr();
-            var dWidth = oSectPr.GetContentFrameWidth();
+            var dWidth = oSectPr.GetColumnWidth(0);
             var dHeight = 1.5 * (25.4 / 72); // 1.5pt in mm
 
             var oShape = new AscFormat.CShape();

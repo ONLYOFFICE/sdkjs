@@ -1287,13 +1287,15 @@ ParaDrawing.prototype.Measure = function()
 			let oSectPr = oParagraph.Get_SectPr();
 			if (oSectPr)
 			{
-				let hrContentWidth = oSectPr.GetContentFrameWidth();
+				let nColIdx = oParagraph.ColumnNum || 0;
+				let hrContentWidth = oSectPr.GetColumnWidth(nColIdx);
 				if (oHR.pct != null && oHR.pct > 0)
 				{
 					hrContentWidth = hrContentWidth * oHR.pct / 1000;
 				}
 				this.Width = hrContentWidth;
 				this.WidthVisible = hrContentWidth;
+				this.GraphicObj.recalculate();
 			}
 		}
 	}
