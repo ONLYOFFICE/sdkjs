@@ -12254,6 +12254,22 @@
 					this.RestoredStylesMap[key].Set_Link(null);
 			}
 		}
+
+		let oStyles = private_GetStyles();
+		let aStyles = oStyles.GetAllStyles();
+
+		let _t = this;
+		Object.entries(this.RestoredStylesMap).forEach(function(entry) {
+			let id = entry[0];
+			let style = entry[1];
+			
+			for (let i = 0; i < aStyles.length; i++) {
+				if (style.Is_Similar(aStyles[i])) {
+					_t.RestoredStylesMap[id] = aStyles[i];
+					return;
+				}
+			}
+		});
 	};
 	ReaderFromJSON.prototype.StyleFromJSON = function(oParsedStyle)
 	{
