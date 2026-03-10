@@ -4988,6 +4988,53 @@ background-repeat: no-repeat;\
         }
     };
 
+    asc_docs_api.prototype.asc_addHorizontalRule = function() {
+        var oLogicDocument = this.WordControl.m_oLogicDocument;
+        if (!oLogicDocument)
+            return;
+
+        if (false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Document_Content_Add))
+        {
+            oLogicDocument.StartAction(AscDFH.historydescription_Document_InsertHorizontalRule);
+
+            var oSectPr = oLogicDocument.GetCurrentSectPr();
+            var dWidth = oSectPr.GetContentFrameWidth();
+            var dHeight = 1.5 * (25.4 / 72); // 1.5pt in mm
+
+            var oShape = new AscFormat.CShape();
+            oShape.setWordShape(true);
+            oShape.setBDeleted(false);
+
+            var oSpPr = new AscFormat.CSpPr();
+            var oXfrm = new AscFormat.CXfrm();
+            oXfrm.setOffX(0);
+            oXfrm.setOffY(0);
+            oXfrm.setExtX(dWidth);
+            oXfrm.setExtY(dHeight);
+            oSpPr.setXfrm(oXfrm);
+            oXfrm.setParent(oSpPr);
+
+            var oGeometry = AscFormat.CreateGeometry("rect");
+            oGeometry.setPreset("rect");
+
+            var oHR = new AscFormat.CHorizontalRule();
+            oHR.align = "center";
+            oGeometry.setHR(oHR);
+
+            oSpPr.setGeometry(oGeometry);
+            oSpPr.setLn(AscFormat.CreateNoFillLine());
+
+            oShape.setSpPr(oSpPr);
+            oSpPr.setParent(oShape);
+
+            oLogicDocument.AddInlineImage(dWidth, dHeight, null, oShape);
+
+            oLogicDocument.Recalculate();
+            oLogicDocument.UpdateInterface();
+            oLogicDocument.FinalizeAction();
+        }
+    };
+
     asc_docs_api.prototype.asc_getAllSignatures = function(){
     	if (!this.WordControl.m_oLogicDocument)
     		return [];
@@ -15751,6 +15798,7 @@ background-repeat: no-repeat;\
 
 	// signatures
 	asc_docs_api.prototype["asc_addSignatureLine"] 						= asc_docs_api.prototype.asc_addSignatureLine;
+	asc_docs_api.prototype["asc_addHorizontalRule"] 					= asc_docs_api.prototype.asc_addHorizontalRule;
 	asc_docs_api.prototype["asc_CallSignatureDblClickEvent"]			= asc_docs_api.prototype.asc_CallSignatureDblClickEvent;
 	asc_docs_api.prototype["asc_getRequestSignatures"] 					= asc_docs_api.prototype.asc_getRequestSignatures;
 	asc_docs_api.prototype["asc_AddSignatureLine2"]             		= asc_docs_api.prototype.asc_AddSignatureLine2;

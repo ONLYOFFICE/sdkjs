@@ -1278,6 +1278,21 @@ ParaDrawing.prototype.Measure = function()
 			this.Height = this.GraphicObj.extY;
 		}
 	}
+	let oHRGeom = this.GraphicObj.getGeometry && this.GraphicObj.getGeometry();
+	if (oHRGeom && oHRGeom.hr) {
+		let oParagraph = this.GetParagraph();
+		if (oParagraph) {
+			let oSectPr = oParagraph.Get_SectPr();
+			if (oSectPr) {
+				let hrContentWidth = oSectPr.GetContentFrameWidth();
+				if (oHRGeom.hr.pct != null && oHRGeom.hr.pct > 0) {
+					hrContentWidth = hrContentWidth * oHRGeom.hr.pct / 1000;
+				}
+				this.Width = hrContentWidth;
+				this.WidthVisible = hrContentWidth;
+			}
+		}
+	}
 };
 ParaDrawing.prototype.GetScaleCoefficient = function ()
 {
@@ -1443,6 +1458,18 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	this.Internal_Position.Calculate_X(bInline, this.PositionH.RelativeFrom, this.PositionH.Align, this.PositionH.Value, this.PositionH.Percent);
 	this.Internal_Position.Calculate_Y(bInline, this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value, this.PositionV.Percent, isInTable);
 
+	if (bInline) {
+		let oHRGeom = this.GraphicObj.getGeometry && this.GraphicObj.getGeometry();
+		if (oHRGeom && oHRGeom.hr) {
+			let oLine = Paragraph.Lines[LineNum];
+			if (oLine) {
+				let metrics = oLine.Metrics;
+				let lineH = metrics.Ascent + metrics.Descent + metrics.LineGap;
+				let hrH = this.GraphicObj.extY;
+				this.Internal_Position.CalcY = this.Internal_Position.LineTop + (lineH - hrH) / 2;
+			}
+		}
+	}
 
 	let bCorrect = false;
 	if(oDocumentContent && oDocumentContent.IsTableCellContent && oDocumentContent.IsTableCellContent(false))

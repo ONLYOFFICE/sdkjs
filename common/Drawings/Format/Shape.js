@@ -1134,6 +1134,9 @@
 			}
 			if (this.spPr) {
 				c.setSpPr(this.spPr.createDuplicate());
+				if (c.spPr.geometry && c.spPr.geometry.hr) {
+					c.spPr.geometry.setHR(null);
+				}
 				c.spPr.setParent(c);
 			}
 			if (this.style) {
@@ -3461,6 +3464,20 @@
 									}
 								}
 							}
+							var oHRGeom = this.getGeometry && this.getGeometry();
+							if (oHRGeom && oHRGeom.hr) {
+								var oHRParagraph = oParaDrawing.Get_ParentParagraph();
+								if (oHRParagraph) {
+									var oHRSectPr = oHRParagraph.Get_SectPr();
+									if (oHRSectPr) {
+										var hrContentWidth = oHRSectPr.GetContentFrameWidth();
+										if (oHRGeom.hr.pct != null && oHRGeom.hr.pct > 0) {
+											hrContentWidth = hrContentWidth * oHRGeom.hr.pct / 1000;
+										}
+										this.extX = hrContentWidth;
+									}
+								}
+							}
 						}
 					} else {
 						if (this.isPlaceholder()) {
@@ -5613,6 +5630,7 @@
 			}
 			this.drawShdw && this.drawShdw(graphics);
 			var _oldBrush = this.brush;
+			var _oldPen = this.pen;
 			if (this.signatureLine) {
 				var sSignatureUrl = null;
 
@@ -5622,6 +5640,29 @@
 				}
 				if (typeof sSignatureUrl === "string" && sSignatureUrl.length > 0) {
 					this.brush = AscFormat.CreateBlipFillUniFillFromUrl(sSignatureUrl);
+				}
+			}
+			if (geometry && geometry.hr) {
+				if (geometry.hr.noshade) {
+					if (!this.brush || !this.brush.fill) {
+						this.brush = AscFormat.CreateSolidFillRGBA(160, 160, 160, 255);
+					}
+					if (!this.pen || !this.pen.Fill || !this.pen.Fill.fill) {
+						this.pen = null;
+					}
+				} else {
+					graphics.SetIntegerGrid(true);
+					graphics.transform3(_transform, false);
+					var hrExtX = this.extX;
+					var hrExtY = this.extY;
+					graphics.p_color(128, 128, 128, 255);
+					graphics.drawHorLine(0, 0, 0, hrExtX, 0);
+					graphics.drawVerLine(0, 0, 0, hrExtY, 0);
+					graphics.p_color(212, 208, 200, 255);
+					graphics.drawHorLine(2, hrExtY, 0, hrExtX, 0);
+					graphics.drawVerLine(2, hrExtX, 0, hrExtY, 0);
+					this.brush = null;
+					this.pen = null;
 				}
 			}
 
@@ -5635,6 +5676,7 @@
 			}
 
 			this.brush = _oldBrush;
+			this.pen = _oldPen;
 			var oController = this.getDrawingObjectsController && this.getDrawingObjectsController();
 
 			if (!this.cropObject) {

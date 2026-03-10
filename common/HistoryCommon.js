@@ -3111,6 +3111,7 @@
 	window['AscDFH'].historyitem_GeometryAddPath        = window['AscDFH'].historyitem_type_Geometry | 7;
 	window['AscDFH'].historyitem_GeometryAddRect        = window['AscDFH'].historyitem_type_Geometry | 8;
 	window['AscDFH'].historyitem_GeometrySetPreset      = window['AscDFH'].historyitem_type_Geometry | 9;
+	window['AscDFH'].historyitem_GeometrySetHR          = window['AscDFH'].historyitem_type_Geometry | 10;
 
 	window['AscDFH'].historyitem_PathSetStroke      = window['AscDFH'].historyitem_type_Path | 1;
 	window['AscDFH'].historyitem_PathSetExtrusionOk = window['AscDFH'].historyitem_type_Path | 2;
@@ -4813,6 +4814,7 @@
 	window['AscDFH'].historydescription_Spreadsheet_SetCellFormula					= 0x01fb;
 	window['AscDFH'].historydescription_Document_AddCheckBoxLabel                   = 0x01fc;
 	window['AscDFH'].historydescription_Document_StretchFormToCell                  = 0x01fd;
+	window['AscDFH'].historydescription_Document_InsertHorizontalRule              = 0x01fe;
 
 	// pdf
 	window['AscDFH'].historydescription_Pdf_AddAnnot			= 0x29a;
