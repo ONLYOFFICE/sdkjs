@@ -1676,31 +1676,6 @@
 			this.id_main.style.cursor = cursor;
 		};
 
-		this.getPageLinkByMouse = function()
-		{
-			var pageObject = this.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
-			if (!pageObject)
-				return null;
-
-			// после конвертации не даем кликать линки на странице
-			if (this.file.pages[pageObject.index].isRecognized) {
-				return null;
-			}
-
-			var pageLinks = this.pagesInfo.pages[pageObject.index];
-			if (pageLinks.links)
-			{
-				for (var i = 0, len = pageLinks.links.length; i < len; i++)
-				{
-					if (pageObject.x >= pageLinks.links[i]["x"] && pageObject.x <= (pageLinks.links[i]["x"] + pageLinks.links[i]["w"]) &&
-						pageObject.y >= pageLinks.links[i]["y"] && pageObject.y <= (pageLinks.links[i]["y"] + pageLinks.links[i]["h"]))
-					{
-						return pageLinks.links[i];
-					}
-				}
-			}
-			return null;
-		};
 		this.getPageFieldByCoords = function(x, y, pageIndex, bGetHidden)
 		{
 			var pageFields = this.pagesInfo.pages[pageIndex];
@@ -1997,12 +1972,6 @@
 		{
 			if (oThis.MouseHandObject)
 			{
-				if (oThis.getPDFDoc().mouseDownLinkObject)
-				{
-					// если нажали на ссылке - то не зажимаем лапу
-					oThis.setCursorType("pointer");
-					return;
-				}
 				// режим лапы. просто начинаем режим Active - зажимаем лапу
 				oThis.MouseHandObject.X = oThis.mouseDownCoords.X;
 				oThis.MouseHandObject.Y = oThis.mouseDownCoords.Y;
@@ -2182,21 +2151,6 @@
 			}
 			else
 			{
-				if (oThis.getPDFDoc().mouseDownLinkObject)
-				{
-					// селект начат на ссылке. смотрим, нужно ли начать реально селект
-					if (oThis.isMouseDown)
-					{
-						// вышли за eps
-						oThis.getPDFDoc().mouseDownLinkObject = null;
-						oThis.setCursorType("default");
-					}
-					else
-					{
-						oThis.setCursorType("pointer");
-					}
-				}
-
 				if (oThis.isMouseDown)
 				{
 					if (oThis.canSelectPageText())

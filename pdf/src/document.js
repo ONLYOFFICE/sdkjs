@@ -1631,7 +1631,6 @@ var CPresentation = CPresentation || function(){};
         let IsOnRedact      = this.Api.IsRedactTool();
         let IsOnLink        = this.Api.IsLinkTool();
 
-        let oMouseDownLink      = oViewer.getPageLinkByMouse();
         let oMouseDownField     = oViewer.getPageFieldByMouse();
         let oMouseDownAnnot     = oViewer.getPageAnnotByMouse();
         let oMouseDownDrawing   = oViewer.getPageDrawingByMouse();
@@ -1714,11 +1713,11 @@ var CPresentation = CPresentation || function(){};
         }
 
         // оставляем текущий объет к селекте, если кликнули по нему же
-        let isObjectSelected = (oCurObject && ([oMouseDownField, oMouseDownAnnot, oMouseDownDrawing, oMouseDownLink].includes(oCurObject)) || isFloatSelected);
+        let isObjectSelected = (oCurObject && ([oMouseDownField, oMouseDownAnnot, oMouseDownDrawing].includes(oCurObject)) || isFloatSelected);
         if (null == oCurObject || !isObjectSelected)
-            this.SetMouseDownObject(oMouseDownField || oMouseDownAnnot || oMouseDownDrawing || oMouseDownLink);
+            this.SetMouseDownObject(oMouseDownField || oMouseDownAnnot || oMouseDownDrawing);
         else if (isSameType && oFloatObject != oCurObject) {
-            this.SetMouseDownObject(oMouseDownField || oMouseDownAnnot || oMouseDownDrawing || oMouseDownLink, false);
+            this.SetMouseDownObject(oMouseDownField || oMouseDownAnnot || oMouseDownDrawing, false);
         }
 
         let oMouseDownObject = this.GetMouseDownObject();
@@ -1851,7 +1850,6 @@ var CPresentation = CPresentation || function(){};
             this.mouseDownField         = null;
             this.mouseDownAnnot         = null;
             this.activeDrawing          = null;
-            this.mouseDownLinkObject    = null;
             
             return;
         }
@@ -1876,7 +1874,6 @@ var CPresentation = CPresentation || function(){};
             this.mouseDownField         = oObject;
             this.mouseDownAnnot         = null;
             this.activeDrawing          = null;
-            this.mouseDownLinkObject    = null;
         }
         else if (oObject.IsAnnot && oObject.IsAnnot()) {
             bBlurActive !== false && this.BlurActiveObject();
@@ -1884,7 +1881,6 @@ var CPresentation = CPresentation || function(){};
             this.mouseDownField         = null;
             this.mouseDownAnnot         = oObject;
             this.activeDrawing          = null;
-            this.mouseDownLinkObject    = null;
         }
         else if (oObject.IsDrawing && oObject.IsDrawing()) {
             bBlurActive !== false && this.BlurActiveObject();
@@ -1892,14 +1888,11 @@ var CPresentation = CPresentation || function(){};
             this.mouseDownField         = null;
             this.mouseDownAnnot         = null;
             this.activeDrawing          = oObject;
-            this.mouseDownLinkObject    = null;
         }
-        // значит Link object
         else {
             this.mouseDownField         = null;
             this.mouseDownAnnot         = null;
             this.activeDrawing          = null;
-            this.mouseDownLinkObject    = oObject;
         }
     };
     CPDFDoc.prototype.IsSelectionUse = function() {
@@ -2429,7 +2422,6 @@ var CPresentation = CPresentation || function(){};
         let IsOnAddAddShape = this.Api.isStartAddShape;
         let IsPageHighlight = this.Api.IsCommentMarker();
 
-        let oMouseMoveLink          = oViewer.getPageLinkByMouse();
         let oMouseMoveField         = oViewer.getPageFieldByMouse();
         let oMouseMoveAnnot         = oViewer.getPageAnnotByMouse();
         let oMouseMoveDrawing       = oViewer.getPageDrawingByMouse();
@@ -2581,7 +2573,6 @@ var CPresentation = CPresentation || function(){};
         let IsOnRedact      = this.Api.IsRedactTool();
         let IsOnLink        = this.Api.IsLinkTool();
 
-        let oMouseMoveLink          = oViewer.getPageLinkByMouse();
         let oMouseMoveField         = oViewer.getPageFieldByMouse();
         let oMouseMoveAnnot         = oViewer.getPageAnnotByMouse();
         let oMouseMoveDrawing       = oViewer.getPageDrawingByMouse();
@@ -2592,7 +2583,7 @@ var CPresentation = CPresentation || function(){};
             oMouseMoveDrawing = null;
         }
         
-        let isHitted = oMouseMoveLink || oMouseMoveField || oMouseMoveAnnot || oMouseMoveDrawing;
+        let isHitted = oMouseMoveField || oMouseMoveAnnot || oMouseMoveDrawing;
 
         // координаты клика на странице в MM
         let pageObject = oViewer.getPageByCoords2(x, y);
@@ -2697,9 +2688,6 @@ var CPresentation = CPresentation || function(){};
                 cursorType = "pointer";
             }
         }
-        else if (oMouseMoveLink) {
-            cursorType = "pointer";
-        }
 
         // если не обновлен по drawing объектам и не задан по объектам из pdf то выставляем дефолтный
         if (cursorType == undefined) {
@@ -2736,7 +2724,6 @@ var CPresentation = CPresentation || function(){};
         let IsOnEraser      = this.Api.isEraseInkMode();
         let IsOnAddAddShape = this.Api.isStartAddShape;
 
-        let oMouseUpLink        = oViewer.getPageLinkByMouse();
         let oMouseUpField       = oViewer.getPageFieldByMouse();
         let oMouseUpAnnot       = oViewer.getPageAnnotByMouse();
         let oMouseUpDrawing     = oViewer.getPageDrawingByMouse();
@@ -2788,9 +2775,6 @@ var CPresentation = CPresentation || function(){};
 
             oController.updateCursorType(pageObjectMM.index, X, Y, e, false);
             oDrDoc.UnlockCursorType();
-        }
-        else if (e.Button !== 2 && this.mouseDownLinkObject && this.mouseDownLinkObject == oMouseUpLink) {
-            oViewer.navigateToLink(oMouseUpLink);
         }
         
         let fileMouseUpRes = false;
