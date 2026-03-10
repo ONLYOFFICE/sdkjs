@@ -692,7 +692,9 @@
 		 * @return {Number}
 		 */
 		StringRender.prototype._calcLineWidth = function (startPos, endPos) {
-			var wrap = this.flags && (this.flags.wrapText || this.flags.wrapOnlyNL || this.flags.wrapOnlyCE);
+			if (startPos < 0 || startPos >= this.chars.length) {
+				return 0;
+			}
 			var isAtEnd, j, chProp, tw;
 
 			if (endPos === undefined || endPos < 0) {
@@ -709,7 +711,7 @@
 			for (j = endPos, tw = 0, isAtEnd = true; j >= startPos; --j) {
 				if (isAtEnd) {
 					// skip space char at end of line
-					if ((wrap) && this.codesSpace[this.chars[j]]) {
+					if (this.codesSpace[this.chars[j]]) {
 						continue;
 					}
 					isAtEnd = false;
@@ -1391,7 +1393,7 @@
 					continue;
 				}
 
-				if (charProp && (charProp.nl || charProp.hp)) {
+				if (charProp && (charProp.nl || charProp.hp) && i !== line.beg) {
 					break;
 				}
 
@@ -1431,6 +1433,7 @@
 			this.afterSpaceInLine = false;
 			this.seenNonSpaceInLine = false;
 			this.trailingSpaceStart = Infinity;
+			this.trailingSpaceX = 0;
 			this.positionCallback = null;
 		}
 
@@ -1532,8 +1535,13 @@
 			if (charIndex >= this.trailingSpaceStart) {
 				if (this.positionCallback) {
 					let width = this.stringRender.charWidths[charIndex];
-					this.positionCallback(charIndex, this.x, width, direction);
-					this.x += width;
+					if (this.bidiFlow.direction === AscBidi.DIRECTION.R) {
+						this.trailingSpaceX -= width;
+						this.positionCallback(charIndex, this.trailingSpaceX, width, direction);
+					} else {
+						this.positionCallback(charIndex, this.x, width, direction);
+						this.x += width;
+					}
 					this.afterSpaceInLine = true;
 				}
 				return;
@@ -1630,6 +1638,7 @@
 			this.seenNonSpaceInLine = false;
 
 			this.trailingSpaceStart = line ? line.end + 1 : Infinity;
+			this.trailingSpaceX = x;
 			if (line && line.beg >= 0) {
 				let endPos = line.end;
 				let endProp = this.stringRender.charProps[endPos];
@@ -1666,6 +1675,7 @@
 			this.afterSpaceInLine = false;
 			this.seenNonSpaceInLine = false;
 			this.trailingSpaceStart = Infinity;
+			this.trailingSpaceX = 0;
 			this.positionCallback = null;
 			this.textColor = textColor || null;
 			this.angle = angle || 0;
