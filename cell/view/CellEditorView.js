@@ -3161,7 +3161,8 @@ function (window, undefined) {
 		this.input.isFocused = false;
 
 		if (0 === button) {
-			if (1 === this.clickCounter.getClickCount() % 2) {
+			let clickCount = this.clickCounter.getClickCount() % 3;
+			if (clickCount === 1) {
 				this.isSelectMode = c_oAscCellEditorSelectState.char;
 				if (!event.shiftKey) {
 					this._updateCursor();
@@ -3172,7 +3173,7 @@ function (window, undefined) {
 				} else {
 					this._changeSelection(coord);
 				}
-			} else {
+			} else if (clickCount === 2) {
 				// Dbl click
 				this.isSelectMode = c_oAscCellEditorSelectState.word;
 
@@ -3198,6 +3199,9 @@ function (window, undefined) {
 				this._moveCursor(kPosition, startWord);
 				this.textRender.cursorAtTrailingEdge = true;
 				this._selectChars(kPosition, endWord);
+			} else {
+				this.isSelectMode = c_oAscCellEditorSelectState.char;
+				this.selectAll();
 			}
 		} else if (2 === button) {
 			this.handlers.trigger('onContextMenu', event);
