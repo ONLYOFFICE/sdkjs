@@ -2240,7 +2240,23 @@
         
         return false;
     };
-    
+
+	/**
+	 * Returns the background of the current slide master.
+	 *
+	 * @memberOf ApiMaster
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiFill | null} - returns null if slide master doesn't exist or hasn't background.
+	 *
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/GetBackground.js
+	 */
+	ApiMaster.prototype.GetBackground = function () {
+		if (this.Master && this.Master.cSld.Bg && this.Master.cSld.Bg.bgPr) {
+			return new AscBuilder.ApiFill(this.Master.cSld.Bg.bgPr.Fill);
+		}
+		return null;
+	};
 
     /**
      * Sets the background to the current slide master.
@@ -2653,6 +2669,23 @@
         
         return false;
     };
+
+	/**
+	 * Returns the background of the current slide layout.
+	 *
+	 * @memberOf ApiLayout
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiFill | null} - returns null if slide layout doesn't exist or hasn't background.
+	 *
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/GetBackground.js
+	 */
+	ApiLayout.prototype.GetBackground = function () {
+		if (this.Layout && this.Layout.cSld.Bg && this.Layout.cSld.Bg.bgPr) {
+			return new AscBuilder.ApiFill(this.Layout.cSld.Bg.bgPr.Fill);
+		}
+		return null;
+	};
 
     /**
      * Sets the background to the current slide layout.
@@ -3721,6 +3754,23 @@
 
         return false;
     };
+
+	/**
+	 * Returns the background of the current presentation slide.
+	 *
+	 * @memberOf ApiSlide
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiFill | null} - returns null if slide doesn't exist or hasn't background.
+	 *
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetBackground.js
+	 */
+	ApiSlide.prototype.GetBackground = function () {
+		if (this.Slide && this.Slide.cSld.Bg && this.Slide.cSld.Bg.bgPr) {
+			return new AscBuilder.ApiFill(this.Slide.cSld.Bg.bgPr.Fill);
+		}
+		return null;
+	};
 
     /**
      * Sets the background to the current presentation slide.
@@ -8043,6 +8093,7 @@
     ApiMaster.prototype["GetLayoutsCount"]                = ApiMaster.prototype.GetLayoutsCount;
     ApiMaster.prototype["AddObject"]                      = ApiMaster.prototype.AddObject;
     ApiMaster.prototype["RemoveObject"]                   = ApiMaster.prototype.RemoveObject;
+	ApiMaster.prototype["GetBackground"]                  = ApiMaster.prototype.GetBackground;
     ApiMaster.prototype["SetBackground"]                  = ApiMaster.prototype.SetBackground;
     ApiMaster.prototype["ClearBackground"]                = ApiMaster.prototype.ClearBackground;
     ApiMaster.prototype["Copy"]                           = ApiMaster.prototype.Copy;
@@ -8067,6 +8118,7 @@
     ApiLayout.prototype["GetName"]                        = ApiLayout.prototype.GetName;
     ApiLayout.prototype["AddObject"]                      = ApiLayout.prototype.AddObject;
     ApiLayout.prototype["RemoveObject"]                   = ApiLayout.prototype.RemoveObject;
+	ApiLayout.prototype["GetBackground"]                  = ApiLayout.prototype.GetBackground;
     ApiLayout.prototype["SetBackground"]                  = ApiLayout.prototype.SetBackground;
     ApiLayout.prototype["ClearBackground"]                = ApiLayout.prototype.ClearBackground;
     ApiLayout.prototype["FollowMasterBackground"]         = ApiLayout.prototype.FollowMasterBackground;
@@ -8125,6 +8177,7 @@
     ApiSlide.prototype["AddObject"]                       = ApiSlide.prototype.AddObject;
     ApiSlide.prototype["AddComment"]                      = ApiSlide.prototype.AddComment;
     ApiSlide.prototype["RemoveObject"]                    = ApiSlide.prototype.RemoveObject;
+	ApiSlide.prototype["GetBackground"]                   = ApiSlide.prototype.GetBackground;
     ApiSlide.prototype["SetBackground"]                   = ApiSlide.prototype.SetBackground;
     ApiSlide.prototype["GetVisible"]                      = ApiSlide.prototype.GetVisible;
     ApiSlide.prototype["SetVisible"]                      = ApiSlide.prototype.SetVisible;
