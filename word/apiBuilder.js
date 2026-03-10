@@ -2802,10 +2802,10 @@
 			return "";
 
 		// numbering и styles в конце, потому что сначала нужно обойти все параграфы
-		if (bWriteNumberings)
-			oJSON["numbering"] = oWriter.jsonWordNumberings;
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
 
 		return JSON.stringify(oJSON);
 	};
@@ -8600,8 +8600,8 @@
 			"theme":     bWriteTheme ? oWriter.SerTheme(this.Document.GetTheme()) : undefined,
 			"sectPr":    bWriteSectionPr ? oWriter.SerSectionPr(this.Document.SectPr) : undefined,
 			"content":   oWriter.SerContent(this.Document.Content, undefined, undefined, undefined, true),
-			"numbering": bWriteNumberings ? oWriter.jsonWordNumberings : undefined,
-			"styles":    bWriteStyles ? oWriter.SerWordStylesForWrite() : undefined
+			"styles":    bWriteStyles ? oWriter.SerWordStylesForWrite() : undefined,
+			"numbering": bWriteNumberings ? oWriter.jsonWordNumberings : undefined
 		}
 
 		return JSON.stringify(oResult);
@@ -11846,10 +11846,11 @@
 	{
 		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerParagraph(this.Paragraph);
-		if (bWriteNumberings)
-			oJSON["numbering"] = oWriter.jsonWordNumberings;
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
+		
 		return JSON.stringify(oJSON);
 	};
 
@@ -13485,10 +13486,11 @@
 	{
 		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerSectionPr(this.Section);
-		if (bWriteNumberings)
-			oJSON["numbering"] = oWriter.jsonWordNumberings;
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
+		
 		return JSON.stringify(oJSON);
 	};
 	/**
@@ -14331,10 +14333,11 @@
 	{
 		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerTable(this.Table);
-		if (bWriteNumberings)
-			oJSON["numbering"] = oWriter.jsonWordNumberings;
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
+		
 		return JSON.stringify(oJSON);
 	};
 
@@ -19360,10 +19363,11 @@
 	{
 		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerParaDrawing(this.getParaDrawing());
-		if (bWriteNumberings)
-			oJSON["numbering"] = oWriter.jsonWordNumberings;
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
+		
 		return JSON.stringify(oJSON);
 	};
 
@@ -26907,10 +26911,11 @@
 	{
 		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerBlockLvlSdt(this.Sdt);
-		if (bWriteNumberings)
-			oJSON["numbering"] = oWriter.jsonWordNumberings;
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
+		
 		return JSON.stringify(oJSON);
 	};
 
