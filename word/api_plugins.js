@@ -1210,6 +1210,59 @@
 		logicDocument.RemoveComplexFieldWrapper(fieldId);
 	};
 	/**
+	 * Moves the cursor to the beginning or end of a field.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias MoveCursorToField
+	 * @param {string} [fieldId=undefined] - Field ID. If it is not specified, the current field is used.
+	 * @param {boolean} [isBegin=true] - Defines whether the cursor is moved to the beginning (<b>true</b>) or end (<b>false</b>) of the field.
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/MoveCursorToField.js
+	 */
+	Api.prototype["pluginMethod_MoveCursorToField"] = function(fieldId, isBegin)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		let field = logicDocument.GetComplexFieldById(fieldId);
+		if (!field)
+			return;
+		
+		field.MoveCursorToField(true, !!isBegin);
+		logicDocument.UpdateSelection();
+		logicDocument.UpdateInterface();
+		logicDocument.UpdateRulers();
+		logicDocument.UpdateTracks();
+	};
+	/**
+	 * Moves the cursor outside a field to the position before or after it.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias MoveCursorOutsideField
+	 * @param {string} [fieldId=undefined] - Field ID. If it is not specified, the current field is used.
+	 * @param {boolean} [isBefore=true] - Defines whether the cursor is moved before (<b>true</b>) or after (<b>false</b>) the field.
+	 * @since 9.4.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/MoveCursorOutsideField.js
+	 */
+	Api.prototype["pluginMethod_MoveCursorOutsideField"] = function(fieldId, isBefore)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		let field = logicDocument.GetComplexFieldById(fieldId);
+		if (!field)
+			return;
+		
+		field.MoveCursorOutsideElement(!!isBefore);
+		logicDocument.UpdateSelection();
+		logicDocument.UpdateInterface();
+		logicDocument.UpdateRulers();
+		logicDocument.UpdateTracks();
+
+	};
+	/**
 	 * Sets the document editing restrictions.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]

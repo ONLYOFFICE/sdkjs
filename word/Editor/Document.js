@@ -23695,6 +23695,27 @@ CDocument.prototype.ToggleComplexFieldCodes = function()
 	
 	fields[fields.length - 1].ToggleFieldCodes();
 };
+CDocument.prototype.GetComplexFieldById = function(fieldId)
+{
+	let field = null;
+	let allFields = this.GetAllFields();
+	for (let index = 0, count = allFields.length; index < count; ++index)
+	{
+		if (allFields[index] instanceof AscWord.CComplexField && allFields[index].GetFieldId() === fieldId)
+		{
+			field = allFields[index];
+			break;
+		}
+	}
+	
+	if (!field)
+		field = this.GetCurrentComplexField();
+	
+	if (!field || !(field instanceof AscWord.CComplexField) || !field.IsValid())
+		return null;
+	
+	return field;
+};
 CDocument.prototype.IsFastCollaborationBeforeViewModeInReview = function()
 {
 	return this.ViewModeInReview.isFastCollaboration;
