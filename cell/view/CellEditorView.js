@@ -1559,15 +1559,23 @@ function (window, undefined) {
 		var borderSize = AscBrowser.retinaPixelRatio === 1.5 ? 1 : AscCommon.AscBrowser.convertToRetinaValue(1, true);
 		var left = this.left * this.kx;
 		var top = this.top * this.ky;
-		var width, height, widthStyle, heightStyle;
+		var width, widthStyle, heightStyle;
 
-		width = widthStyle = (this.right - this.left) * this.kx - borderSize;
-		height = heightStyle = (this.bottom - this.top) * this.ky - borderSize;
+		let gridBorderSize = AscBrowser.retinaPixelRatio >= 2 ? 1 : 0;
 
-		left = AscCommon.AscBrowser.convertToRetinaValue(left);
-		top = AscCommon.AscBrowser.convertToRetinaValue(top);
-		widthStyle = AscCommon.AscBrowser.convertToRetinaValue(widthStyle);
-		heightStyle = AscCommon.AscBrowser.convertToRetinaValue(heightStyle);
+		width = widthStyle = (this.right - this.left - borderSize) * this.kx;
+		heightStyle = (this.bottom - this.top - borderSize) * this.ky;
+
+		var leftShiftCSS = (left % 2 === 0 && AscBrowser.retinaPixelRatio >= 2) ? 0.5 : 0;
+		this._leftSubpixelCorrection = leftShiftCSS * AscBrowser.retinaPixelRatio / this.kx;
+		left = AscCommon.AscBrowser.convertToRetinaValue(left) + leftShiftCSS;
+
+		var topShiftCSS = (top % 2 === 0 && AscBrowser.retinaPixelRatio >= 2) ? 0.5 : 0;
+		this._topSubpixelCorrection = topShiftCSS * AscBrowser.retinaPixelRatio / this.ky;
+		top = AscCommon.AscBrowser.convertToRetinaValue(top) + topShiftCSS;
+
+		widthStyle = AscCommon.AscBrowser.convertToRetinaValue(widthStyle) - gridBorderSize;
+		heightStyle = AscCommon.AscBrowser.convertToRetinaValue(heightStyle) - gridBorderSize;
 
 		// in safari with hardware acceleration enabled, there is a bug when entering text.
 		// apparently they cache textures in a special way that are (w*h<5000) in size
@@ -1645,7 +1653,7 @@ function (window, undefined) {
 		}
 
 		if (opt.fragments && opt.fragments.length > 0) {
-			t.textRender.render(undefined, t._getContentLeft(), dy || 0, t._getContentWidth(), opt.font.getColor());
+			t.textRender.render(undefined, t._getContentLeft() - (t._leftSubpixelCorrection || 0), (dy || 0) - (t._leftSubpixelCorrection || 0), t._getContentWidth(), opt.font.getColor());
 		}
 	};
 
