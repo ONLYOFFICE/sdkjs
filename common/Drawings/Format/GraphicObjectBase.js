@@ -2232,8 +2232,9 @@
 			}
 		}
 
+		let bHR = this.isHorizontalRule && this.isHorizontalRule();
 		if (numHandle === 0 || numHandle === 1 || numHandle === 2) {
-			if (Math.abs(t_y) < AscFormat.SNAP_DISTANCE) {
+			if (Math.abs(t_y) < AscFormat.SNAP_DISTANCE && !bHR) {
 				t_y = 0;
 				bSnapV = true;
 				bOwnV = true;
@@ -2241,7 +2242,7 @@
 		}
 
 		if (numHandle === 4 || numHandle === 5 || numHandle === 6) {
-			if (Math.abs(t_y - this.extY) < AscFormat.SNAP_DISTANCE) {
+			if (Math.abs(t_y - this.extY) < AscFormat.SNAP_DISTANCE && !bHR) {
 				t_y = this.extY;
 				bSnapV = true;
 				bOwnV = true;

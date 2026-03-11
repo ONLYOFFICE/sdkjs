@@ -1289,13 +1289,18 @@ ParaDrawing.prototype.Measure = function()
 			{
 				let nColIdx = oParagraph.ColumnNum || 0;
 				let hrColumnWidth = oSectPr.GetColumnWidth(nColIdx);
-				let hrContentWidth = hrColumnWidth;
-				if (oHR.pct != null && oHR.pct > 0)
+				let oInd = oParagraph.Get_CompiledPr2(true).ParaPr.Ind;
+				if (oInd)
 				{
-					hrContentWidth = hrColumnWidth * oHR.pct / 1000;
+					if (oInd.Left != null && oInd.Left > 0)
+						hrColumnWidth -= oInd.Left;
+					if (oInd.Right != null && oInd.Right > 0)
+						hrColumnWidth -= oInd.Right;
 				}
 				this.Width = hrColumnWidth;
 				this.WidthVisible = hrColumnWidth;
+				this.GraphicObj.recalcTransform();
+				this.GraphicObj.recalcBounds();
 				this.GraphicObj.recalculate();
 			}
 		}

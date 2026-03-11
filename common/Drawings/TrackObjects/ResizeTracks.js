@@ -638,6 +638,9 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             var _new_used_half_width;
             var _new_used_half_height;
             var _temp;
+            var _bHR = this.originalObject.isHorizontalRule && this.originalObject.isHorizontalRule();
+            var _minExtY = _bHR ? 0.05 * 25.4 / 72 : MIN_SHAPE_SIZE;
+            var _hrSnapRange = _bHR ? 0.3 : 0;
 
             if (Asc.editor.isPdfEditor()) {
                 let isFreeText = this.originalObject.group && this.originalObject.group.IsAnnot() && this.originalObject.group.IsFreeText();
@@ -708,16 +711,23 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                     _real_height = this.usedExtY*kd2;
                     _abs_height = Math.abs(_real_height);
 
-                    if(!this.isLine)
+                    if(_bHR && _abs_height < _minExtY + _hrSnapRange)
                     {
-                        this.resizedExtY = _abs_height >= MIN_SHAPE_SIZE  ? _abs_height : MIN_SHAPE_SIZE;
+                        this.resizedExtY = _minExtY;
+                    }
+                    else if(!this.isLine)
+                    {
+                        this.resizedExtY = _abs_height >= _minExtY  ? _abs_height : _minExtY;
                     }
                     else
                     {
-                        this.resizedExtY = _abs_height >= MIN_SHAPE_SIZE  ? _abs_height : 0;
+                        this.resizedExtY = _abs_height >= _minExtY  ? _abs_height : 0;
                     }
 
-                    this.resizedExtY = _abs_height >= MIN_SHAPE_SIZE  || this.isLine  ? _abs_height : MIN_SHAPE_SIZE;
+                    if(!_bHR)
+                    {
+                        this.resizedExtY = _abs_height >= _minExtY  || this.isLine  ? _abs_height : _minExtY;
+                    }
                     if(_real_height < 0 )
                     {
                         this.resizedflipV = !this.originalFlipV;
@@ -770,7 +780,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                         kd1 = _temp;
                         _real_height = this.usedExtY*kd2;
                         _abs_height = Math.abs(_real_height);
-                        this.resizedExtY = _abs_height >= MIN_SHAPE_SIZE  ? _abs_height : (this.isLine ? 0 : MIN_SHAPE_SIZE);
+                        this.resizedExtY = (_bHR && _abs_height < _minExtY + _hrSnapRange) ? _minExtY : (_abs_height >= _minExtY ? _abs_height : (this.isLine ? 0 : _minExtY));
                         if(_real_height < 0 )
                             this.resizedflipV = !this.originalFlipV;
                         else
@@ -846,7 +856,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
 
                     _real_height = this.usedExtY*kd2;
                     _abs_height = Math.abs(_real_height);
-                    this.resizedExtY = _abs_height >= MIN_SHAPE_SIZE  ? _abs_height :  (this.isLine ? 0 : MIN_SHAPE_SIZE);
+                    this.resizedExtY = (_bHR && _abs_height < _minExtY + _hrSnapRange) ? _minExtY : (_abs_height >= _minExtY ? _abs_height : (this.isLine ? 0 : _minExtY));
                     if(_real_height < 0 )
                     {
                         this.resizedflipV = !this.originalFlipV;
@@ -897,7 +907,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                     {
                         _real_height = this.usedExtY*kd1;
                         _abs_height = Math.abs(_real_height);
-                        this.resizedExtY = _abs_height >= MIN_SHAPE_SIZE   ? _abs_height : (this.isLine ? 0 : MIN_SHAPE_SIZE);
+                        this.resizedExtY = (_bHR && _abs_height < _minExtY + _hrSnapRange) ? _minExtY : (_abs_height >= _minExtY ? _abs_height : (this.isLine ? 0 : _minExtY));
                         if(_real_height < 0 )
                             this.resizedflipV = !this.originalFlipV;
                         else
@@ -1021,6 +1031,9 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             }
             var _real_height, _real_width;
             var _abs_height, _abs_width;
+            var _bHR = this.originalObject.isHorizontalRule && this.originalObject.isHorizontalRule();
+            var _minExtY = _bHR ? 0.05 * 25.4 / 72 : MIN_SHAPE_SIZE;
+            var _hrSnapRange = _bHR ? 0.3 : 0;
 
             var isCrop = (this.originalObject.isCrop || !!this.originalObject.cropObject);
             if((ShiftKey === true || window.AscAlwaysSaveAspectOnResizeTrack === true || (!isCrop && this.originalObject.getNoChangeAspect())) && this.bAspect === true)
@@ -1059,7 +1072,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
 
                 _real_height = this.usedExtY*kd2;
                 _abs_height = Math.abs(_real_height);
-                this.resizedExtY = _abs_height >= MIN_SHAPE_SIZE  || this.isLine ? _abs_height : MIN_SHAPE_SIZE;
+                this.resizedExtY = (_bHR && _abs_height < _minExtY + _hrSnapRange) ? _minExtY : (_abs_height >= _minExtY || this.isLine ? _abs_height : _minExtY);
                 this.resizedflipV  = _real_height < 0 ? !this.originalFlipV : this.originalFlipV;
 
 
@@ -1074,7 +1087,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
 
                     _real_height = this.usedExtY*kd2;
                     _abs_height = Math.abs(_real_height);
-                    this.resizedExtY = _abs_height >= MIN_SHAPE_SIZE  || this.isLine ? _abs_height : MIN_SHAPE_SIZE;
+                    this.resizedExtY = (_bHR && _abs_height < _minExtY + _hrSnapRange) ? _minExtY : (_abs_height >= _minExtY || this.isLine ? _abs_height : _minExtY);
                     this.resizedflipV  = _real_height < 0 ? !this.originalFlipV : this.originalFlipV;
 
                 }

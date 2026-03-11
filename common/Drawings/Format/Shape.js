@@ -3470,16 +3470,26 @@
 							let oHR = this.getHorizontalRule();
 							if (oHR) {
 								this.m_oSectPr = null;
+								this.m_dHRColumnWidth = 0;
 								let oHRParagraph = oParaDrawing.Get_ParentParagraph();
 								if (oHRParagraph) {
 									let oHRSectPr = oHRParagraph.Get_SectPr();
 									if (oHRSectPr) {
 										let nColIdx = oHRParagraph.ColumnNum || 0;
-										let hrContentWidth = oHRSectPr.GetColumnWidth(nColIdx);
+										let hrColumnWidth = oHRSectPr.GetColumnWidth(nColIdx);
+										let oInd = oHRParagraph.Get_CompiledPr2(true).ParaPr.Ind;
+										if (oInd) {
+											if (oInd.Left != null && oInd.Left > 0)
+												hrColumnWidth -= oInd.Left;
+											if (oInd.Right != null && oInd.Right > 0)
+												hrColumnWidth -= oInd.Right;
+										}
+										let hrContentWidth = hrColumnWidth;
 										if (oHR.pct != null && oHR.pct > 0) {
-											hrContentWidth = hrContentWidth * oHR.pct / 1000;
+											hrContentWidth = hrColumnWidth * oHR.pct / 1000;
 										}
 										this.extX = hrContentWidth;
+										this.m_dHRColumnWidth = hrColumnWidth;
 										this.m_oSectPr = new AscWord.SectPr();
 										this.m_oSectPr.Copy(oHRSectPr);
 									}
@@ -3908,16 +3918,25 @@
 						bRet = true;
 					} else {
 						let nHRColIdx = 0;
+						let dHRColumnWidth = 0;
 						if (bHR && oParaDrawing) {
 							let oHRPara = oParaDrawing.Get_ParentParagraph && oParaDrawing.Get_ParentParagraph();
 							if (oHRPara) {
 								nHRColIdx = oHRPara.ColumnNum || 0;
+								dHRColumnWidth = oSectPr.GetColumnWidth(nHRColIdx);
+								let oInd = oHRPara.Get_CompiledPr2(true).ParaPr.Ind;
+								if (oInd) {
+									if (oInd.Left != null && oInd.Left > 0)
+										dHRColumnWidth -= oInd.Left;
+									if (oInd.Right != null && oInd.Right > 0)
+										dHRColumnWidth -= oInd.Right;
+								}
 							}
 						}
-						Width = bHR ? oSectPr.GetColumnWidth(nHRColIdx) : oSectPr.GetContentFrameWidth();
+						Width = bHR ? dHRColumnWidth : oSectPr.GetContentFrameWidth();
 						Height = oSectPr.GetContentFrameHeight();
 
-						Width2 = bHR ? this.m_oSectPr.GetColumnWidth(nHRColIdx) : this.m_oSectPr.GetContentFrameWidth();
+						Width2 = bHR ? (this.m_dHRColumnWidth || 0) : this.m_oSectPr.GetContentFrameWidth();
 						Height2 = this.m_oSectPr.GetContentFrameHeight();
 
 						bRet = (Math.abs(Width - Width2) > 0.001 || Math.abs(Height - Height2) > 0.001);
