@@ -3865,6 +3865,11 @@
 	 */
 	function ApiGradientStop(color, pos)
 	{
+		const isColorValid = color instanceof ApiColor || color instanceof ApiUniColor;
+		if (!isColorValid) {
+			throwException(new Error('The color parameter must be an instance of ApiColor or ApiUniColor'));
+		}
+
 		this.Gs = new AscFormat.CGs();
 		this.Gs.pos = pos;
 		this.Gs.color = color instanceof ApiColor
