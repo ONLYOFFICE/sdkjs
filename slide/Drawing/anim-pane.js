@@ -1047,63 +1047,115 @@
 		this.moveDownButton.icon.src = AscCommon.GlobalSkin.type == 'light' ? arrowDownIcon_dark : arrowDownIcon_light;
 		this.closeButton.icon.src = AscCommon.GlobalSkin.type == 'light' ? closeIcon_dark : closeIcon_light;
 
-		this.label.setLayout(COMMON_LEFT_MARGIN, 0, Math.min(HEADER_LABEL_WIDTH, this.label.cachedMaxWidth), this.getHeight());
-
-		let sPlayButtonText = this.getPlayButtonText();
-		let sPlayButtonIcon = this.getPlayButtonIcon();
-		this.playButton.icon.src = sPlayButtonIcon;
+		let playButtonText = this.getPlayButtonText();
+		let playButtonIcon = this.getPlayButtonIcon();
+		this.playButton.icon.src = playButtonIcon;
 		gap = (PLAY_BUTTON_HEIGHT - PLAY_BUTTON_ICON_SIZE) / 2;
-		this.playButton.icon.setLayout(PLAY_BUTTON_LEFT_PADDING, gap, PLAY_BUTTON_ICON_SIZE, PLAY_BUTTON_ICON_SIZE);
 
-		let oButtonLabel = this.playButton.label;
-		oButtonLabel.setString(sPlayButtonText);
-		let dLabelWidth = oButtonLabel.cachedMaxWidth;
-		oButtonLabel.setLayout(
-			this.playButton.icon.getRight() + PLAY_BUTTON_LABEL_LEFT_MARGIN,
-			0,
-			dLabelWidth,
-			PLAY_BUTTON_HEIGHT
-		);
-		oButtonLabel.recalculate();
+		let buttonLabel = this.playButton.label;
+		buttonLabel.setString(playButtonText);
+		let labelWidth = buttonLabel.cachedMaxWidth;
 
-		this.playButton.setLayout(
-			this.label.getRight() + PLAY_BUTTON_LEFT_MARGIN,
-			(HEADER_HEIGHT - PLAY_BUTTON_HEIGHT) / 2,
-			this.playButton.icon.getRight() + PLAY_BUTTON_LABEL_LEFT_MARGIN + oButtonLabel.getWidth() + PLAY_BUTTON_RIGHT_PADDING,
-			PLAY_BUTTON_HEIGHT
-		);
+		let isRTL = !!(Asc.editor && Asc.editor.isRtlInterface);
+		let containerWidth = this.getWidth();
 
+		let playButtonWidth = PLAY_BUTTON_LEFT_PADDING + PLAY_BUTTON_ICON_SIZE + PLAY_BUTTON_LABEL_LEFT_MARGIN + labelWidth + PLAY_BUTTON_RIGHT_PADDING;
+
+		if (isRTL) {
+			// RTL: LEFT_PADDING | label | LABEL_MARGIN | icon | RIGHT_PADDING
+
+			buttonLabel.setLayout(PLAY_BUTTON_LEFT_PADDING, 0, labelWidth, PLAY_BUTTON_HEIGHT);
+			buttonLabel.recalculate();
+			this.playButton.icon.setLayout(
+				PLAY_BUTTON_LEFT_PADDING + labelWidth + PLAY_BUTTON_LABEL_LEFT_MARGIN,
+				gap,
+				PLAY_BUTTON_ICON_SIZE,
+				PLAY_BUTTON_ICON_SIZE
+			);
+		} else {
+			// LTR: LEFT_PADDING | icon | LABEL_MARGIN | label | RIGHT_PADDING
+
+			this.playButton.icon.setLayout(PLAY_BUTTON_LEFT_PADDING, gap, PLAY_BUTTON_ICON_SIZE, PLAY_BUTTON_ICON_SIZE);
+			buttonLabel.setLayout(
+				PLAY_BUTTON_LEFT_PADDING + PLAY_BUTTON_ICON_SIZE + PLAY_BUTTON_LABEL_LEFT_MARGIN,
+				0,
+				labelWidth,
+				PLAY_BUTTON_HEIGHT
+			);
+			buttonLabel.recalculate();
+		}
+		let labelHeaderWidth = Math.min(HEADER_LABEL_WIDTH, this.label.cachedMaxWidth);
 
 		this.moveUpButton.icon.setLayout(0, 0, MOVE_BUTTON_SIZE, MOVE_BUTTON_SIZE);
-
-		gap = (HEADER_HEIGHT - MOVE_BUTTON_SIZE) / 2;
-		this.moveUpButton.setLayout(
-			this.playButton.getRight() + MOVE_UP_BUTTON_LEFT_MARGIN,
-			gap,
-			MOVE_BUTTON_SIZE,
-			MOVE_BUTTON_SIZE
-		);
-		this.moveUpButton.recalculate();
-
 		this.moveDownButton.icon.setLayout(0, 0, MOVE_BUTTON_SIZE, MOVE_BUTTON_SIZE);
-
-		this.moveDownButton.setLayout(
-			this.moveUpButton.getRight() + MOVE_DOWN_BUTTON_LEFT_MARGIN,
-			gap,
-			MOVE_BUTTON_SIZE,
-			MOVE_BUTTON_SIZE
-		);
-		this.moveDownButton.recalculate();
-
 		this.closeButton.icon.setLayout(0, 0, CLOSE_BUTTON_SIZE, CLOSE_BUTTON_SIZE);
-		gap = (HEADER_HEIGHT - CLOSE_BUTTON_SIZE) / 2;
-		this.closeButton.setLayout(
-			this.getRight() - COMMON_RIGHT_MARGIN - CLOSE_BUTTON_SIZE,
-			gap,
-			CLOSE_BUTTON_SIZE,
-			CLOSE_BUTTON_SIZE
-		);
-		this.closeButton.recalculate();
+
+		if (isRTL) {
+			// RTL: closeBtn | ... | moveDown | moveUp | playBtn | label
+
+			this.label.paraAlign = AscCommon.align_Right;
+			let labelLeft = containerWidth - COMMON_RIGHT_MARGIN - labelHeaderWidth;
+			this.label.setLayout(labelLeft, 0, labelHeaderWidth, this.getHeight());
+
+			let playLeft = labelLeft - PLAY_BUTTON_LEFT_MARGIN - playButtonWidth;
+			this.playButton.setLayout(
+				playLeft,
+				(HEADER_HEIGHT - PLAY_BUTTON_HEIGHT) / 2,
+				playButtonWidth,
+				PLAY_BUTTON_HEIGHT
+			);
+
+			gap = (HEADER_HEIGHT - MOVE_BUTTON_SIZE) / 2;
+			let moveUpLeft = playLeft - MOVE_UP_BUTTON_LEFT_MARGIN - MOVE_BUTTON_SIZE;
+			this.moveUpButton.setLayout(moveUpLeft, gap, MOVE_BUTTON_SIZE, MOVE_BUTTON_SIZE);
+			this.moveUpButton.recalculate();
+
+			let moveDownLeft = moveUpLeft - MOVE_DOWN_BUTTON_LEFT_MARGIN - MOVE_BUTTON_SIZE;
+			this.moveDownButton.setLayout(moveDownLeft, gap, MOVE_BUTTON_SIZE, MOVE_BUTTON_SIZE);
+			this.moveDownButton.recalculate();
+
+			gap = (HEADER_HEIGHT - CLOSE_BUTTON_SIZE) / 2;
+			this.closeButton.setLayout(COMMON_LEFT_MARGIN, gap, CLOSE_BUTTON_SIZE, CLOSE_BUTTON_SIZE);
+			this.closeButton.recalculate();
+		} else {
+			// LTR: label | playBtn | moveUp | moveDown | ... | closeBtn
+
+			this.label.paraAlign = AscCommon.align_Left;
+			this.label.setLayout(COMMON_LEFT_MARGIN, 0, labelHeaderWidth, this.getHeight());
+
+			this.playButton.setLayout(
+				this.label.getRight() + PLAY_BUTTON_LEFT_MARGIN,
+				(HEADER_HEIGHT - PLAY_BUTTON_HEIGHT) / 2,
+				playButtonWidth,
+				PLAY_BUTTON_HEIGHT
+			);
+
+			gap = (HEADER_HEIGHT - MOVE_BUTTON_SIZE) / 2;
+			this.moveUpButton.setLayout(
+				this.playButton.getRight() + MOVE_UP_BUTTON_LEFT_MARGIN,
+				gap,
+				MOVE_BUTTON_SIZE,
+				MOVE_BUTTON_SIZE
+			);
+			this.moveUpButton.recalculate();
+
+			this.moveDownButton.setLayout(
+				this.moveUpButton.getRight() + MOVE_DOWN_BUTTON_LEFT_MARGIN,
+				gap,
+				MOVE_BUTTON_SIZE,
+				MOVE_BUTTON_SIZE
+			);
+			this.moveDownButton.recalculate();
+
+			gap = (HEADER_HEIGHT - CLOSE_BUTTON_SIZE) / 2;
+			this.closeButton.setLayout(
+				this.getRight() - COMMON_RIGHT_MARGIN - CLOSE_BUTTON_SIZE,
+				gap,
+				CLOSE_BUTTON_SIZE,
+				CLOSE_BUTTON_SIZE
+			);
+			this.closeButton.recalculate();
+		}
 	};
 	CAnimPaneHeader.prototype.onMouseMove = function (e, x, y) {
 		const animPane = Asc.editor.WordControl.m_oAnimPaneApi;
