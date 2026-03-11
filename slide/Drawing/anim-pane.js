@@ -1946,6 +1946,13 @@
 	CSeqListContainer.prototype.onScroll = function () {
 		this.onUpdate();
 	};
+	CSeqListContainer.prototype.hit = function (x, y) {
+		const tx = this.invertTransform.TransformPointX(x, y);
+		const ty = this.invertTransform.TransformPointY(x, y);
+		const scrollOffset = this.drawer.Scroll * AscCommon.g_dKoef_pix_to_mm;
+		const visibleHeight = this.drawer.GetHeight();
+		return tx >= 0 && tx <= this.extX && ty >= scrollOffset && ty <= scrollOffset + visibleHeight;
+	};
 	CSeqListContainer.prototype.onMouseWheel = function (e, deltaY, X, Y) {
 		return false;
 	};
