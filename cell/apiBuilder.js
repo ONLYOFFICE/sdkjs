@@ -13216,6 +13216,37 @@
 	};
 
 	/**
+	 * Sets whether the aspect ratio of the drawing is locked.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} bAspect - Specifies whether the aspect ratio of this drawing is locked.
+	 * @returns {boolean} Returns `true` if the lock aspect was successfully set, otherwise returns `false`.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLockAspect.js
+	 */
+	ApiDrawing.prototype.SetLockAspect = function(bAspect)
+	{
+		if (bAspect !== false && bAspect !== true)
+			return false;
+
+		this.Drawing.setNoChangeAspect(bAspect);
+		return true;
+	};
+
+	/**
+	 * Returns whether the aspect ratio of the drawing is locked.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLockAspect.js
+	 */
+	ApiDrawing.prototype.GetLockAspect = function()
+	{
+		return this.Drawing.getNoChangeAspect();
+	};
+
+	/**
 	 * Selects the current graphic object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
@@ -28132,6 +28163,8 @@
 	ApiDrawing.prototype["GetFlipV"]                   =  ApiDrawing.prototype.GetFlipV;
 	ApiDrawing.prototype["SetFlipH"]                   =  ApiDrawing.prototype.SetFlipH;
 	ApiDrawing.prototype["SetFlipV"]                   =  ApiDrawing.prototype.SetFlipV;
+	ApiDrawing.prototype["SetLockAspect"]              =  ApiDrawing.prototype.SetLockAspect;
+	ApiDrawing.prototype["GetLockAspect"]              =  ApiDrawing.prototype.GetLockAspect;
 	ApiDrawing.prototype["Select"]                     =  ApiDrawing.prototype.Select;
 	ApiDrawing.prototype["Fill"]                       =  ApiDrawing.prototype.Fill;
 	ApiDrawing.prototype["SetOutLine"]                 =  ApiDrawing.prototype.SetOutLine;

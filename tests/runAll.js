@@ -87,6 +87,8 @@ const allTests = [
 	'word/js-api/js-api.html',
 	'word/js-api/js-api-forms.html',
 
+	'slide/js-api/js-api.html',
+
 	'cell/shortcuts/shortcuts.html',
 	'slide/shortcuts/shortcuts.html',
 	'word/shortcuts/shortcuts.html',

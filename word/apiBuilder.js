@@ -19663,7 +19663,60 @@
 
 		return nRad * 180 / Math.PI
 	};
+	/**
+	 * Sets whether the aspect ratio of the drawing is locked.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @param {boolean} bAspect - Specifies whether the aspect ratio of this drawing is locked.
+	 * @returns {boolean} Returns `true` if the lock aspect was successfully set, otherwise returns `false`.
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLockAspect.js
+	 */
+	ApiDrawing.prototype.SetLockAspect = function(bAspect)
+	{
+		if (bAspect !== false && bAspect !== true)
+			return false;
 
+		this.Drawing.setNoChangeAspect(bAspect);
+		return true;
+	};
+	/**
+	 * Returns whether the aspect ratio of the drawing is locked.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLockAspect.js
+	 */
+	ApiDrawing.prototype.GetLockAspect = function()
+	{
+		return this.Drawing.getNoChangeAspect();
+	};
+	/**
+	 * Sets whether the drawing object is allowed to overlap other drawing objects.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @param {boolean} bOverlap - Specifies whether this drawing object can overlap other drawing objects.
+	 * @returns {void}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetAllowOverlap.js
+	 */
+	ApiDrawing.prototype.SetAllowOverlap = function(bOverlap) {
+		let drawing = this.getParaDrawing();
+		drawing.Set_AllowOverlap(bOverlap);
+	};
+	/**
+	 * Returns whether the drawing object is allowed to overlap other drawing objects.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetAllowOverlap.js
+	 */
+	ApiDrawing.prototype.GetAllowOverlap = function() {
+		let drawing = this.getParaDrawing();
+		return drawing.Get_AllowOverlap();
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiImage

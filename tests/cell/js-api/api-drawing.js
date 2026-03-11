@@ -283,5 +283,37 @@
 		assert.strictEqual(shape.GetDescription(), "My Description", 'Check GetDescription returns the set description');
 	});
 
+	QUnit.test("SetLockAspect", function (assert) {
+		let worksheet = AscTest.JsApi.GetActiveSheet();
+		let fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.CreateRGBColor(51, 51, 51));
+		let stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+		let shape = worksheet.AddShape("ellipse", 50 * 36000, 50 * 36000, fill, stroke, 0, 0, 0, 0);
+
+		assert.strictEqual(shape.SetLockAspect(true), true, 'Check SetLockAspect returns true for valid value');
+		assert.strictEqual(shape.GetLockAspect(), true, 'Check lock aspect is set to true');
+
+		assert.strictEqual(shape.SetLockAspect(false), true, 'Check SetLockAspect returns true for false');
+		assert.strictEqual(shape.GetLockAspect(), false, 'Check lock aspect is set to false');
+
+		assert.strictEqual(shape.SetLockAspect(null), false, 'Check SetLockAspect returns false for null');
+		assert.strictEqual(shape.SetLockAspect(undefined), false, 'Check SetLockAspect returns false for undefined');
+		assert.strictEqual(shape.SetLockAspect(1), false, 'Check SetLockAspect returns false for non-boolean');
+	});
+
+	QUnit.test("GetLockAspect", function (assert) {
+		let worksheet = AscTest.JsApi.GetActiveSheet();
+		let fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.CreateRGBColor(51, 51, 51));
+		let stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+		let shape = worksheet.AddShape("ellipse", 50 * 36000, 50 * 36000, fill, stroke, 0, 0, 0, 0);
+
+		assert.strictEqual(typeof shape.GetLockAspect(), 'boolean', 'Check GetLockAspect returns a boolean');
+
+		shape.SetLockAspect(true);
+		assert.strictEqual(shape.GetLockAspect(), true, 'Check GetLockAspect returns true after SetLockAspect(true)');
+
+		shape.SetLockAspect(false);
+		assert.strictEqual(shape.GetLockAspect(), false, 'Check GetLockAspect returns false after SetLockAspect(false)');
+	});
+
 })(window);
 

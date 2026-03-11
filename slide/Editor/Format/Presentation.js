@@ -3773,14 +3773,13 @@ CPresentation.prototype.findText = function (text, scanForward) {
 
 CPresentation.prototype.groupShapes = function () {
 	var oController = this.GetCurrentController();
-	oController && oController.checkSelectedObjectsAndCallback(oController.createGroup, [], false, AscDFH.historydescription_Presentation_CreateGroup);
+	oController && oController.checkSelectedObjectsAndCallback(oController.createGroup, oController.selectedObjects.splice(0), false, AscDFH.historydescription_Presentation_CreateGroup);
 	this.Document_UpdateInterfaceState();
 };
 
 CPresentation.prototype.unGroupShapes = function () {
 	var oController = this.GetCurrentController();
-	oController && oController.checkSelectedObjectsAndCallback(oController.unGroupCallback, [], false, AscDFH.historydescription_Presentation_UnGroup);
-	this.Document_UpdateInterfaceState();
+	oController && oController.checkSelectedObjectsAndCallback(oController.unGroupCallback, oController.selectedObjects.splice(0), false, AscDFH.historydescription_Presentation_UnGroup);
 };
 
 CPresentation.prototype.mergeSelectedShapes = function (operation) {

@@ -4387,6 +4387,9 @@
 						for (i = 0; i < objects_by_type.smartArts.length; ++i) {
 							objects_by_type.smartArts[i].setNoChangeAspect(props.lockAspect ? true : undefined);
 						}
+            
+            if (objects_by_type.shapes.length || objects_by_type.images.lengt || objects_by_type.charts.length)
+              Asc.editor.addMacroStepData('SetDrawingAspectRatio', props.lockAspect);
 					}
 					if (isRealObject(props.Position) && AscFormat.isRealNumber(props.Position.X) && AscFormat.isRealNumber(props.Position.Y)
 						|| AscFormat.isRealBool(props.flipH) || AscFormat.isRealBool(props.flipV) || AscFormat.isRealBool(props.flipHInvert) || AscFormat.isRealBool(props.flipVInvert) || AscFormat.isRealNumber(props.rotAdd) || AscFormat.isRealNumber(props.rot) || AscFormat.isRealNumber(props.anchor)) {

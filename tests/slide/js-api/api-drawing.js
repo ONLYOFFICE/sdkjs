@@ -382,5 +382,49 @@ $(function () {
 		drawing.SetDescription("My Description");
 		assert.strictEqual(drawing.GetDescription(), "My Description", 'Check GetDescription returns the set description');
 	});
+
+	QUnit.test("Test: SetLockAspect", function (assert) {
+		CreateSlide();
+
+		const presentation = AscTest.JsApi.GetPresentation();
+		const slide = presentation.GetSlideByIndex(0);
+		const fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.CreateRGBColor(255, 111, 61));
+		const stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+		const drawing = AscTest.JsApi.CreateShape("cube", 150 * 36000, 80 * 36000, fill, stroke);
+
+		drawing.SetPosition(608400, 1267200);
+		slide.AddObject(drawing);
+
+		assert.strictEqual(drawing.SetLockAspect(true), true, 'Check SetLockAspect returns true for valid value');
+		assert.strictEqual(drawing.GetLockAspect(), true, 'Check lock aspect is set to true');
+
+		assert.strictEqual(drawing.SetLockAspect(false), true, 'Check SetLockAspect returns true for false');
+		assert.strictEqual(drawing.GetLockAspect(), false, 'Check lock aspect is set to false');
+
+		assert.strictEqual(drawing.SetLockAspect(null), false, 'Check SetLockAspect returns false for null');
+		assert.strictEqual(drawing.SetLockAspect(undefined), false, 'Check SetLockAspect returns false for undefined');
+		assert.strictEqual(drawing.SetLockAspect(1), false, 'Check SetLockAspect returns false for non-boolean');
+	});
+
+	QUnit.test("Test: GetLockAspect", function (assert) {
+		CreateSlide();
+
+		const presentation = AscTest.JsApi.GetPresentation();
+		const slide = presentation.GetSlideByIndex(0);
+		const fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.CreateRGBColor(255, 111, 61));
+		const stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+		const drawing = AscTest.JsApi.CreateShape("cube", 150 * 36000, 80 * 36000, fill, stroke);
+
+		drawing.SetPosition(608400, 1267200);
+		slide.AddObject(drawing);
+
+		assert.strictEqual(typeof drawing.GetLockAspect(), 'boolean', 'Check GetLockAspect returns a boolean');
+
+		drawing.SetLockAspect(true);
+		assert.strictEqual(drawing.GetLockAspect(), true, 'Check GetLockAspect returns true after SetLockAspect(true)');
+
+		drawing.SetLockAspect(false);
+		assert.strictEqual(drawing.GetLockAspect(), false, 'Check GetLockAspect returns false after SetLockAspect(false)');
+	});
 });
 

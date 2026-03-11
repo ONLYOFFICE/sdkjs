@@ -283,5 +283,81 @@ $(function ()
         drawing.SetDescription("My Description");
         assert.strictEqual(drawing.GetDescription(), "My Description", 'Check GetDescription returns the set description');
     });
+
+    QUnit.test("SetLockAspect", function (assert) {
+        let doc = AscTest.JsApi.GetDocument();
+        let p = AscTest.JsApi.CreateParagraph();
+        doc.Push(p);
+
+        let fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.RGB(255, 111, 61));
+        let stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+        let drawing = AscTest.JsApi.CreateShape("cube", 3212465, 963295, fill, stroke);
+        p.AddDrawing(drawing);
+
+        assert.strictEqual(drawing.SetLockAspect(true), true, 'Check SetLockAspect returns true for valid value');
+        assert.strictEqual(drawing.GetLockAspect(), true, 'Check lock aspect is set to true');
+
+        assert.strictEqual(drawing.SetLockAspect(false), true, 'Check SetLockAspect returns true for false');
+        assert.strictEqual(drawing.GetLockAspect(), false, 'Check lock aspect is set to false');
+
+        assert.strictEqual(drawing.SetLockAspect(null), false, 'Check SetLockAspect returns false for null');
+        assert.strictEqual(drawing.SetLockAspect(undefined), false, 'Check SetLockAspect returns false for undefined');
+        assert.strictEqual(drawing.SetLockAspect(1), false, 'Check SetLockAspect returns false for non-boolean');
+    });
+
+    QUnit.test("GetLockAspect", function (assert) {
+        let doc = AscTest.JsApi.GetDocument();
+        let p = AscTest.JsApi.CreateParagraph();
+        doc.Push(p);
+
+        let fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.RGB(255, 111, 61));
+        let stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+        let drawing = AscTest.JsApi.CreateShape("cube", 3212465, 963295, fill, stroke);
+        p.AddDrawing(drawing);
+
+        assert.strictEqual(typeof drawing.GetLockAspect(), 'boolean', 'Check GetLockAspect returns a boolean');
+
+        drawing.SetLockAspect(true);
+        assert.strictEqual(drawing.GetLockAspect(), true, 'Check GetLockAspect returns true after SetLockAspect(true)');
+
+        drawing.SetLockAspect(false);
+        assert.strictEqual(drawing.GetLockAspect(), false, 'Check GetLockAspect returns false after SetLockAspect(false)');
+    });
+
+    QUnit.test("SetAllowOverlap", function (assert) {
+        let doc = AscTest.JsApi.GetDocument();
+        let p = AscTest.JsApi.CreateParagraph();
+        doc.Push(p);
+
+        let fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.RGB(255, 111, 61));
+        let stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+        let drawing = AscTest.JsApi.CreateShape("cube", 3212465, 963295, fill, stroke);
+        p.AddDrawing(drawing);
+
+        drawing.SetAllowOverlap(true);
+        assert.strictEqual(drawing.GetAllowOverlap(), true, 'Check allow overlap is set to true');
+
+        drawing.SetAllowOverlap(false);
+        assert.strictEqual(drawing.GetAllowOverlap(), false, 'Check allow overlap is set to false');
+    });
+
+    QUnit.test("GetAllowOverlap", function (assert) {
+        let doc = AscTest.JsApi.GetDocument();
+        let p = AscTest.JsApi.CreateParagraph();
+        doc.Push(p);
+
+        let fill = AscTest.JsApi.CreateSolidFill(AscTest.JsApi.RGB(255, 111, 61));
+        let stroke = AscTest.JsApi.CreateStroke(0, AscTest.JsApi.CreateNoFill());
+        let drawing = AscTest.JsApi.CreateShape("cube", 3212465, 963295, fill, stroke);
+        p.AddDrawing(drawing);
+
+        assert.strictEqual(typeof drawing.GetAllowOverlap(), 'boolean', 'Check GetAllowOverlap returns a boolean');
+
+        drawing.SetAllowOverlap(true);
+        assert.strictEqual(drawing.GetAllowOverlap(), true, 'Check GetAllowOverlap returns true after SetAllowOverlap(true)');
+
+        drawing.SetAllowOverlap(false);
+        assert.strictEqual(drawing.GetAllowOverlap(), false, 'Check GetAllowOverlap returns false after SetAllowOverlap(false)');
+    });
 });
 

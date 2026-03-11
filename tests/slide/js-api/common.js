@@ -32,47 +32,37 @@
 
 $(function()
 {
-    AscTest.Editor.GetPresentation = AscCommon.SlideEditorApi.prototype.GetPresentation.bind(AscTest.Editor);
+	AscBuilder.Slide.init();
 
-    AscTest.Editor.private_checkPlaceholders = function(){};
-    AscTest.Editor.private_CreateApiDocContent = AscCommon.SlideEditorApi.prototype.private_CreateApiDocContent.bind(AscTest.Editor);
-    AscTest.Editor.private_CreateApiParagraph = AscCommon.SlideEditorApi.prototype.private_CreateApiParagraph.bind(AscTest.Editor);
+	Asc.editor.getLogicDocument = function() { return Asc.editor.WordControl.m_oLogicDocument; };
 
 	AscTest.JsApi = {};
 
-	AscTest.JsApi.GetPresentation = AscCommon.SlideEditorApi.prototype.GetPresentation.bind(AscTest.Editor);
-	AscTest.JsApi.CreateSlide = AscCommon.SlideEditorApi.prototype.CreateSlide.bind(AscTest.Editor);
-	AscTest.JsApi.CreateMaster = AscCommon.SlideEditorApi.prototype.CreateMaster.bind(AscTest.Editor);
-	AscTest.JsApi.CreateLayout = AscCommon.SlideEditorApi.prototype.CreateLayout.bind(AscTest.Editor);
-	AscTest.JsApi.CreatePlaceholder = AscCommon.SlideEditorApi.prototype.CreatePlaceholder.bind(AscTest.Editor);
-	AscTest.JsApi.CreateTheme = AscCommon.SlideEditorApi.prototype.CreateTheme.bind(AscTest.Editor);
+	AscTest.JsApi.GetPresentation = AscBuilder.Slide.Api.GetPresentation.bind(AscBuilder.Slide.Api);
+	AscTest.JsApi.CreateSlide = AscBuilder.Slide.Api.CreateSlide.bind(AscBuilder.Slide.Api);
+	AscTest.JsApi.CreateMaster = AscBuilder.Slide.Api.CreateMaster.bind(AscBuilder.Slide.Api);
+	AscTest.JsApi.CreateLayout = AscBuilder.Slide.Api.CreateLayout.bind(AscBuilder.Slide.Api);
+	AscTest.JsApi.CreatePlaceholder = AscBuilder.Slide.Api.CreatePlaceholder.bind(AscBuilder.Slide.Api);
+	AscTest.JsApi.CreateTheme = AscBuilder.Slide.Api.CreateTheme.bind(AscBuilder.Slide.Api);
 
-	AscTest.JsApi.CreateImage = AscCommon.SlideEditorApi.prototype.CreateImage.bind(AscTest.Editor);
-	AscTest.JsApi.CreateShape = AscCommon.SlideEditorApi.prototype.CreateShape.bind(AscTest.Editor);
-	AscTest.JsApi.CreateChart = AscCommon.SlideEditorApi.prototype.CreateChart.bind(AscTest.Editor);
-	AscTest.JsApi.CreateGroup = AscCommon.SlideEditorApi.prototype.CreateGroup.bind(AscTest.Editor);
-	AscTest.JsApi.CreateTable = AscCommon.SlideEditorApi.prototype.CreateTable.bind(AscTest.Editor);
-	AscTest.JsApi.CreateParagraph = AscCommon.SlideEditorApi.prototype.CreateParagraph.bind(AscTest.Editor);
-	AscTest.JsApi.CreateWordArt = AscCommon.SlideEditorApi.prototype.CreateWordArt.bind(AscTest.Editor);
+	AscTest.JsApi.CreateImage = AscBuilder.Slide.Api.CreateImage.bind(AscBuilder.Slide.Api);
+	AscTest.JsApi.CreateShape = AscBuilder.Slide.Api.CreateShape.bind(AscBuilder.Slide.Api);
+	AscTest.JsApi.CreateChart = AscBuilder.Slide.Api.CreateChart.bind(AscBuilder.Slide.Api);
+	AscTest.JsApi.CreateGroup = AscBuilder.Slide.Api.CreateGroup.bind(AscBuilder.Slide.Api);
+	AscTest.JsApi.CreateTable = AscBuilder.Slide.Api.CreateTable.bind(AscBuilder.Slide.Api);
+	AscTest.JsApi.CreateParagraph = AscBuilder.Slide.Api.CreateParagraph.bind(AscBuilder.Slide.Api);
+	AscTest.JsApi.CreateWordArt = AscBuilder.Slide.Api.CreateWordArt.bind(AscBuilder.Slide.Api);
 
-	AscTest.JsApi.CreateSolidFill = AscCommon.SlideEditorApi.prototype.CreateSolidFill.bind(AscTest.Editor);
-	AscTest.JsApi.CreateLinearGradientFill = AscCommon.SlideEditorApi.prototype.CreateLinearGradientFill.bind(AscTest.Editor);
-	AscTest.JsApi.CreateRadialGradientFill = AscCommon.SlideEditorApi.prototype.CreateRadialGradientFill.bind(AscTest.Editor);
-	AscTest.JsApi.CreatePatternFill = AscCommon.SlideEditorApi.prototype.CreatePatternFill.bind(AscTest.Editor);
-	AscTest.JsApi.CreateBlipFill = AscCommon.SlideEditorApi.prototype.CreateBlipFill.bind(AscTest.Editor);
-	AscTest.JsApi.CreateNoFill = AscCommon.SlideEditorApi.prototype.CreateNoFill.bind(AscTest.Editor);
-	AscTest.JsApi.CreateStroke = AscCommon.SlideEditorApi.prototype.CreateStroke.bind(AscTest.Editor);
-	AscTest.JsApi.CreateGradientStop = AscCommon.SlideEditorApi.prototype.CreateGradientStop.bind(AscTest.Editor);
+	AscTest.JsApi.CreateSolidFill = AscBuilder.Slide.Api.CreateSolidFill.bind(AscBuilder.Slide.Api);
+	AscTest.JsApi.CreateLinearGradientFill = AscBuilder.Slide.Api.CreateLinearGradientFill.bind(AscBuilder.Slide.Api);
+	AscTest.JsApi.CreateRadialGradientFill = AscBuilder.Slide.Api.CreateRadialGradientFill.bind(AscBuilder.Slide.Api);
+	AscTest.JsApi.CreatePatternFill = AscBuilder.Slide.Api.CreatePatternFill.bind(AscBuilder.Slide.Api);
+	AscTest.JsApi.CreateBlipFill = AscBuilder.Slide.Api.CreateBlipFill.bind(AscBuilder.Slide.Api);
+	AscTest.JsApi.CreateNoFill = AscBuilder.Slide.Api.CreateNoFill.bind(AscBuilder.Slide.Api);
+	AscTest.JsApi.CreateStroke = AscBuilder.Slide.Api.CreateStroke.bind(AscBuilder.Slide.Api);
+	AscTest.JsApi.CreateGradientStop = AscBuilder.Slide.Api.CreateGradientStop.bind(AscBuilder.Slide.Api);
 
-	AscTest.JsApi.CreateRGBColor = AscCommon.SlideEditorApi.prototype.CreateRGBColor.bind(AscTest.Editor);
-	AscTest.JsApi.CreateSchemeColor = AscCommon.SlideEditorApi.prototype.CreateSchemeColor.bind(AscTest.Editor);
-	AscTest.JsApi.CreatePresetColor = AscCommon.SlideEditorApi.prototype.CreatePresetColor.bind(AscTest.Editor);
-
-	Asc.editor.getLogicDocument = function(){return Asc.editor.WordControl.m_oLogicDocument}
-	// QUnit.testStart(function()
-	// {
-	// 	AscTest.CreateLogicDocument();
-	// 	AscCommon.History.Clear();
-	// 	AscTest.ClearDocument();
-	// });
+	AscTest.JsApi.CreateRGBColor = AscBuilder.Slide.Api.CreateRGBColor.bind(AscBuilder.Slide.Api);
+	AscTest.JsApi.CreateSchemeColor = AscBuilder.Slide.Api.CreateSchemeColor.bind(AscBuilder.Slide.Api);
+	AscTest.JsApi.CreatePresetColor = AscBuilder.Slide.Api.CreatePresetColor.bind(AscBuilder.Slide.Api);
 });
