@@ -19920,6 +19920,35 @@
         }
     }
 
+    // Helpers to work with icon set elements
+    function getCurrentIconSetElement (parent)  {
+        if (!parent || !parent.rule || !Array.isArray(parent.rule.aRuleElements) || parent.rule.aRuleElements.length <= 0) {
+            return null;
+        }
+        let iconSetElement = parent.rule.aRuleElements[0];
+        return iconSetElement;
+    }
+
+    function getCurrentCfvo (iconSetElement, index) {
+        if (!iconSetElement) {
+            return null;
+        }
+
+        const aCFVOs = iconSetElement.aCFVOs || [];
+
+        return index < aCFVOs.length ? aCFVOs[index] : null
+    }
+
+    function getCurrentIconSet (iconSetElement, index) {
+        if (!iconSetElement) {
+            return null;
+        }
+
+        let aIconSets = iconSetElement.aIconSets || [];
+
+        return index < aIconSets.length ? aIconSets[index] : null
+    }
+
 	/**
 	 * Class representing data validation.
 	 * @constructor
@@ -25860,11 +25889,7 @@
 	 * @property {XlIcon} Icon - Returns or sets the icon of the icon criterion.
 	 */
 	function ApiIconCriterion(cfvo, iconSet, iconSetElement, parent, index) {
-		this.cfvo = cfvo;
-		this.iconSet = iconSet;
-		this.iconSetElement = iconSetElement;
 		this.parent = parent;
-
 		this.index = index;
 	}
 
@@ -25877,10 +25902,11 @@
 	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/GetType.js
 	 */
 	ApiIconCriterion.prototype.GetType = function() {
-		if (!this.cfvo) {
+        const cfvo = getCurrentCfvo(getCurrentIconSetElement(this.parent), this.index);
+		if (!cfvo) {
 			return null;
 		}
-		return ToXlConditionValueTypesFrom(this.cfvo.asc_getType());
+		return ToXlConditionValueTypesFrom(cfvo.asc_getType());
 	};
 
 	/**
@@ -25892,7 +25918,8 @@
 	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/SetType.js
 	 */
 	ApiIconCriterion.prototype.SetType = function(type) {
-		if (!this.cfvo || typeof type !== "string") {
+        const cfvo = getCurrentCfvo(getCurrentIconSetElement(this.parent), this.index);
+		if (!cfvo || typeof type !== "string") {
 			return;
 		}
 
@@ -25952,10 +25979,11 @@
 	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/GetValue.js
 	 */
 	ApiIconCriterion.prototype.GetValue = function() {
-		if (!this.cfvo) {
+        const cfvo = getCurrentCfvo(getCurrentIconSetElement(this.parent), this.index);
+		if (!cfvo) {
 			return null;
 		}
-		return this.cfvo.asc_getVal();
+		return cfvo.asc_getVal();
 	};
 
 	/**
@@ -25967,14 +25995,15 @@
 	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/SetValue.js
 	 */
 	ApiIconCriterion.prototype.SetValue = function(value) {
-		if (!this.cfvo) {
+        const cfvo = getCurrentCfvo(getCurrentIconSetElement(this.parent), this.index);
+		if (!cfvo) {
 			return;
 		}
 
 		//ms not allow change value at 1 criterion
 
 		// Check if the type allows setting a value
-		let currentType = this.cfvo.asc_getType();
+		let currentType = cfvo.asc_getType();
 		let allowedTypes = [
 			AscCommonExcel.ECfvoType.Number,        // xlConditionValueNumber
 			AscCommonExcel.ECfvoType.Percent,       // xlConditionValuePercent
@@ -26011,10 +26040,11 @@
 	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/GetOperator.js
 	 */
 	ApiIconCriterion.prototype.GetOperator = function() {
-		if (!this.cfvo) {
+        const cfvo = getCurrentCfvo(getCurrentIconSetElement(this.parent), this.index);
+		if (!cfvo) {
 			return null;
 		}
-		return this.cfvo.asc_getGte() ? "xlGreaterEqual" : "xlGreater";
+		return cfvo.asc_getGte() ? "xlGreaterEqual" : "xlGreater";
 	};
 
 	/**
@@ -26026,7 +26056,8 @@
 	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/SetOperator.js
 	 */
 	ApiIconCriterion.prototype.SetOperator = function(operator) {
-		if (this.cfvo && typeof operator === "string") {
+        const cfvo = getCurrentCfvo(getCurrentIconSetElement(this.parent), this.index)
+		if (cfvo && typeof operator === "string") {
 			let t = this;
 			this.parent.private_changeStyle(function (newRule) {
 				let index = t.GetIndex() - 1;
@@ -26082,19 +26113,21 @@
 	 * @see office-js-api/Examples/{Editor}/ApiIconCriterion/Methods/GetIcon.js
 	 */
 	ApiIconCriterion.prototype.GetIcon = function() {
-		if (!this.iconSetElement) {
+        const iconSetElement = getCurrentIconSetElement(this.parent);
+		if (!iconSetElement) {
 			return null;
 		}
 
 		// Check if there's a custom icon set for this specific criterion
-		if (this.iconSet && this.iconSet.asc_getIconSet && this.iconSet.asc_getIconSet() !== null && this.iconSet.asc_getIconSet() !== undefined) {
-			let customIconSetType = this.iconSet.asc_getIconSet();
-			let customIconIndex = this.iconSet.asc_getIndex();
+        const iconSet = getCurrentIconSet(iconSetElement, this.index);
+		if (iconSet && iconSet.asc_getIconSet && iconSet.asc_getIconSet() !== null && iconSet.asc_getIconSet() !== undefined) {
+			let customIconSetType = iconSet.asc_getIconSet();
+			let customIconIndex = iconSet.asc_getIndex();
 			return ToXlIconFrom(customIconSetType, customIconIndex);
 		}
 
 		// Otherwise return the default icon for this criterion's position in the parent icon set
-		let iconSetType = this.iconSetElement.IconSet || Asc.EIconSetType.Traffic3Lights2;
+		let iconSetType = iconSetElement.IconSet || Asc.EIconSetType.Traffic3Lights2;
 		return ToXlIconFrom(iconSetType, this.index);
 	};
 
@@ -26585,12 +26618,13 @@
 		}
 
 		// Создаем или обновляем iconSet
-		if (!this.iconSet) {
-			this.iconSet = new window['AscCommonExcel'].CConditionalFormatIconSet();
+        let iconSet = getCurrentIconSet(getCurrentIconSetElement(this.parent), this.index);
+		if (!iconSet) {
+			iconSet = new window['AscCommonExcel'].CConditionalFormatIconSet();
 		}
 
-		this.iconSet.asc_setIconSet(iconData.iconSetType);
-		this.iconSet.asc_setIndex(iconData.iconIndex);
+		iconSet.asc_setIconSet(iconData.iconSetType);
+		iconSet.asc_setIndex(iconData.iconIndex);
 
 		// Обновляем правило через parent
 		let t = this;
