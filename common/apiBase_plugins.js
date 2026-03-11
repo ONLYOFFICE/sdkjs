@@ -1059,7 +1059,8 @@
 	 */
     Api.prototype["pluginMethod_CoAuthoringChatSendMessage"] = function(sText)
     {
-        return this.CoAuthoringChatSendMessage(sText);
+		let jsApi = this.getJsApi();
+        return jsApi.CoAuthoringChatSendMessage(sText);
     };
 
 	/**
@@ -1172,7 +1173,8 @@
 	 */
     Api.prototype["pluginMethod_ConvertDocument"] = function(sConvertType, bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags)
     {
-        return this.ConvertDocument(sConvertType, bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags);
+		let jsApi = this.getJsApi();
+        return jsApi.ConvertDocument(sConvertType, bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags);
     };
     /**
      * Returns the selected text from the document.
@@ -1252,11 +1254,11 @@
     {
 		window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
 		this.incrementCounterLongAction();
-
+		let jsApi = this.getJsApi();
 		function ReplaceTextSmart()
 		{
 			this.asc_canPaste();
-			this.ReplaceTextSmart(arrString, sParaTab, sParaNewLine);
+			jsApi.ReplaceTextSmart(arrString, sParaTab, sParaNewLine);
 			this.asc_Recalculate(true);
 			switch (this.editorId)
 			{

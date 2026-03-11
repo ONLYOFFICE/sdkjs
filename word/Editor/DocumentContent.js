@@ -1819,9 +1819,9 @@ CDocumentContent.prototype.Get_PageBounds = function(CurPage, Height, bForceChec
 			if (PageAbs === Obj.GetPageNum())
 			{
 				var ObjBounds = Obj.Get_Bounds();
-				if (true === Obj.Use_TextWrap() || Obj.IsForm())
+				if (true === Obj.Use_TextWrap() || (!Obj.IsInline() && Obj.IsForm()))
 				{
-					if (ObjBounds.Bottom > Bounds.Bottom || Obj.IsForm())
+					if (ObjBounds.Bottom > Bounds.Bottom)
 						Bounds.Bottom = ObjBounds.Bottom;
 				}
 				else if (undefined !== Height && ObjBounds.Top < this.Y + Height)

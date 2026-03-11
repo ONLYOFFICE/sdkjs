@@ -3751,8 +3751,13 @@ CInlineLevelSdt.prototype.StretchFormToCell = function()
 
 	if (!docContent.Pages || !docContent.Pages.length)
 		return null;
-
-	let cellBounds = docContent.GetParent().GetPageBounds(0);
+	
+	let cell = docContent.GetParent();
+	if (!cell || !(cell instanceof AscWord.TableCell))
+		return null;
+	
+	let startPage = docContent.GetRelativePage();
+	let cellBounds = cell.GetPageBounds(startPage);
 	let h = cellBounds.Bottom - cellBounds.Top;
 	let w = cellBounds.Right - cellBounds.Left;
 	

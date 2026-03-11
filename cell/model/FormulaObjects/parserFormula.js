@@ -4003,6 +4003,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		//добавлен специальный тип для функции сT, она использует из области всегда первый аргумент
 		var replaceOnlyArray = cReturnFormulaType.replace_only_array === returnFormulaType;
 
+		const checkRange3d = function (_arg) {
+			if (_arg && _arg.type === cElementType.cellsRange3D && _arg.isSingleSheet && _arg.isSingleSheet()) {
+				return true;
+			}
+			return false;
+		};
+
 		// Проверка должен ли элемент поступать в формулу без изменени?
 		const checkArrayIndex = function(index, _arg_type, args) {
 			let res = false;
@@ -4015,7 +4022,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					//от которого зависит стоит ли вопринимать данный аргумент как массив или нет
 					let tempsArgIndex = arrayIndex[0];
 					if(undefined !== tempsArgIndex && arg[tempsArgIndex]) {
-						if(cElementType.cellsRange === arg[tempsArgIndex].type || cElementType.cellsRange3D === arg[tempsArgIndex].type || cElementType.array === arg[tempsArgIndex].type) {
+						if(cElementType.cellsRange === arg[tempsArgIndex].type || checkRange3d(arg[tempsArgIndex]) || cElementType.array === arg[tempsArgIndex].type) {
 							res = true;
 						}
 					}
@@ -4070,7 +4077,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 				_checkArrayIndex = checkArrayIndex(j, tempArg.type, arg);
 				if (!_checkArrayIndex) {
-					if (cElementType.cellsRange === tempArg.type || cElementType.cellsRange3D === tempArg.type) {
+					if (cElementType.cellsRange === tempArg.type || checkRange3d(tempArg)) {
 						if (checkArayIndexType(j, arrayIndexesType.range)) {
 							// transfer range to argument without changing 
 							tempArg = tempArg;
@@ -4153,7 +4160,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 								//пока делаю так - если не последний аргумент, то пустой элемент, если последний - undefined
 								newArg = /*j === argumentsCount - 1 ? undefined : */new cError(cErrorType.not_available);
 							}
-						} else if ((cElementType.cellsRange === newArg.type || cElementType.cellsRange3D === newArg.type) && !isArrayArg && !checkArrayIndex(j, cElementType.cellsRange)) {
+						} else if ((cElementType.cellsRange === newArg.type || checkRange3d(newArg)) && !isArrayArg && !checkArrayIndex(j, cElementType.cellsRange)) {
 							let dimensions = newArg.getDimensions();
 							if (1 === dimensions.row && 1 === dimensions.col) {
 								newArg = newArg.getValueByRowCol(0, 0);

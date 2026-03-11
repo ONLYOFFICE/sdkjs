@@ -647,8 +647,9 @@
     Api.CreateTheme = function(sName, oMaster, oClrScheme, oFormatScheme, oFontScheme){
         if (typeof(sName) !== "string")
             sName = "";
-        if (oMaster.GetClassType() !== "master" || oClrScheme.GetClassType() !== "themeColorScheme" ||
-        oFormatScheme.GetClassType() !== "themeFormatScheme" || oFontScheme.GetClassType() !== "themeFontScheme")
+        if (!oMaster || !oClrScheme || !oFormatScheme || !oFontScheme
+        || oMaster.GetClassType() !== "master" || oClrScheme.GetClassType() !== "themeColorScheme"
+        || oFormatScheme.GetClassType() !== "themeFormatScheme" || oFontScheme.GetClassType() !== "themeFontScheme")
             return null;
 
         var oPresentation      = private_GetPresentation();
@@ -849,10 +850,10 @@
 	 */
 	Api.CreateOleObject = function(sImageSrc, nWidth, nHeight, sData, sAppId)
 	{
-		if (typeof sImageSrc === "string" && sImageSrc.length > 0 && typeof sData === "string"
+		if (!(typeof sImageSrc === "string" && sImageSrc.length > 0 && typeof sData === "string"
 			&& typeof sAppId === "string" && sAppId.length > 0
-			&& AscFormat.isRealNumber(nWidth) && AscFormat.isRealNumber(nHeight)
-		)
+			&& AscFormat.isRealNumber(nWidth) && AscFormat.isRealNumber(nHeight)))
+			return null;
 
 		var nW = private_EMU2MM(nWidth);
 		var nH = private_EMU2MM(nHeight);
@@ -1684,9 +1685,9 @@
         nEnd = nEnd == undefined ? this.Presentation.Slides.length - 1 : nEnd;
 
         if (nStart < 0 || nStart >= this.Presentation.Slides.length)
-            return;
+            return null;
         if (nEnd < 0 || nEnd >= this.Presentation.Slides.length)
-            return;
+            return null;
 
         let oResult = oWriter.SerSlides(nStart, nEnd, bWriteLayout, bWriteMaster, bWriteAllMasLayouts);
         if (bWriteTableStyles)
@@ -1816,12 +1817,12 @@
 
 	/**
 	 * Returns a collection of drawing objects from the document content filtered by their names.
-	 * @memberof ApiDocumentContent
+	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @since 9.3.0
 	 * @param {string[]} ids - An array of drawing names to filter by.
 	 * @return {Drawing[]}
-	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/GetDrawingsByName.js
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetDrawingsByName.js
 	 */
 	ApiPresentation.prototype.GetDrawingsByName = function(ids)
 	{
@@ -1871,7 +1872,7 @@
 		const api = this.Presentation.Api;
 		
 		let props = (api) ? api.asc_getAppProps() : null;
-		oDocInfo["Application"] = (props.asc_getApplication() || '') + (props.asc_getAppVersion() ? ' ' : '') + (props.asc_getAppVersion() || '');
+		oDocInfo["Application"] = props ? (props.asc_getApplication() || '') + (props.asc_getAppVersion() ? ' ' : '') + (props.asc_getAppVersion() || '') : '';
 		
 		let langCode = 1033; // en-US
 		let langName = 'en-us';
@@ -2111,7 +2112,7 @@
 	 */
     ApiMaster.prototype.GetLayout = function(nPos)
     {
-        if (nPos < 0 || nPos > this.Master.sldLayoutLst.length || typeof (nPos) !== 'number')
+        if (nPos < 0 || nPos >= this.Master.sldLayoutLst.length || typeof (nPos) !== 'number')
             return null;
         
         return new ApiLayout(this.Master.sldLayoutLst[nPos])
@@ -2239,7 +2240,23 @@
         
         return false;
     };
-    
+
+	/**
+	 * Returns the background of the current slide master.
+	 *
+	 * @memberOf ApiMaster
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiFill | null} - returns null if slide master doesn't exist or hasn't background.
+	 *
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/GetBackground.js
+	 */
+	ApiMaster.prototype.GetBackground = function () {
+		if (this.Master && this.Master.cSld.Bg && this.Master.cSld.Bg.bgPr) {
+			return new AscBuilder.ApiFill(this.Master.cSld.Bg.bgPr.Fill);
+		}
+		return null;
+	};
 
     /**
      * Sets the background to the current slide master.
@@ -2571,9 +2588,9 @@
 	 */
     ApiLayout.prototype.SetName = function(sName)
     {
-        if (typeof(sName) !== "string")
+        if (typeof(sName) === "string")
             this.Layout.setCSldName(sName);
-        else 
+        else
             return false;
         
         return true;
@@ -2587,7 +2604,7 @@
 	 */
     ApiLayout.prototype.GetLayoutType = function()
     {
-		this.Layout.getType();
+		return AscCommonSlide.LAYOUT_TYPE_TO_STRING[this.Layout.getType()];
     };
 
     /**
@@ -2652,6 +2669,23 @@
         
         return false;
     };
+
+	/**
+	 * Returns the background of the current slide layout.
+	 *
+	 * @memberOf ApiLayout
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiFill | null} - returns null if slide layout doesn't exist or hasn't background.
+	 *
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/GetBackground.js
+	 */
+	ApiLayout.prototype.GetBackground = function () {
+		if (this.Layout && this.Layout.cSld.Bg && this.Layout.cSld.Bg.bgPr) {
+			return new AscBuilder.ApiFill(this.Layout.cSld.Bg.bgPr.Fill);
+		}
+		return null;
+	};
 
     /**
      * Sets the background to the current slide layout.
@@ -2791,6 +2825,7 @@
                 return true;
             }
         }
+        return false;
     };
 
     /**
@@ -3037,6 +3072,7 @@
 
         nIdx >>= 0;
         this.Placeholder.setIdx(nIdx);
+        return true;
     };
 
     /**
@@ -3719,6 +3755,23 @@
         return false;
     };
 
+	/**
+	 * Returns the background of the current presentation slide.
+	 *
+	 * @memberOf ApiSlide
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiFill | null} - returns null if slide doesn't exist or hasn't background.
+	 *
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetBackground.js
+	 */
+	ApiSlide.prototype.GetBackground = function () {
+		if (this.Slide && this.Slide.cSld.Bg && this.Slide.cSld.Bg.bgPr) {
+			return new AscBuilder.ApiFill(this.Slide.cSld.Bg.bgPr.Fill);
+		}
+		return null;
+	};
+
     /**
      * Sets the background to the current presentation slide.
      * @memberOf ApiSlide
@@ -4342,8 +4395,8 @@
 			const notes = AscCommonSlide.CreateNotes();
 			notes.setNotesMaster(presentation.notesMasters[0]);
 
-			notes.setSlide(this);
-			this.setNotes(notes);
+			notes.setSlide(this.Slide);
+			this.Slide.setNotes(notes);
 
 			oNotesPage = new ApiNotesPage(notes);
 		}
@@ -4859,7 +4912,7 @@
 
 		if (entryEffectName === 'effectNone') {
 			this.Transition.TransitionType = c_oAscSlideTransitionTypes.None;
-			this.TransitionOption = -1;
+			this.Transition.TransitionOption = -1;
 			return true;
 		}
 
@@ -8117,6 +8170,7 @@
     ApiMaster.prototype["GetLayoutsCount"]                = ApiMaster.prototype.GetLayoutsCount;
     ApiMaster.prototype["AddObject"]                      = ApiMaster.prototype.AddObject;
     ApiMaster.prototype["RemoveObject"]                   = ApiMaster.prototype.RemoveObject;
+	ApiMaster.prototype["GetBackground"]                  = ApiMaster.prototype.GetBackground;
     ApiMaster.prototype["SetBackground"]                  = ApiMaster.prototype.SetBackground;
     ApiMaster.prototype["ClearBackground"]                = ApiMaster.prototype.ClearBackground;
     ApiMaster.prototype["Copy"]                           = ApiMaster.prototype.Copy;
@@ -8141,6 +8195,7 @@
     ApiLayout.prototype["GetName"]                        = ApiLayout.prototype.GetName;
     ApiLayout.prototype["AddObject"]                      = ApiLayout.prototype.AddObject;
     ApiLayout.prototype["RemoveObject"]                   = ApiLayout.prototype.RemoveObject;
+	ApiLayout.prototype["GetBackground"]                  = ApiLayout.prototype.GetBackground;
     ApiLayout.prototype["SetBackground"]                  = ApiLayout.prototype.SetBackground;
     ApiLayout.prototype["ClearBackground"]                = ApiLayout.prototype.ClearBackground;
     ApiLayout.prototype["FollowMasterBackground"]         = ApiLayout.prototype.FollowMasterBackground;
@@ -8199,6 +8254,7 @@
     ApiSlide.prototype["AddObject"]                       = ApiSlide.prototype.AddObject;
     ApiSlide.prototype["AddComment"]                      = ApiSlide.prototype.AddComment;
     ApiSlide.prototype["RemoveObject"]                    = ApiSlide.prototype.RemoveObject;
+	ApiSlide.prototype["GetBackground"]                   = ApiSlide.prototype.GetBackground;
     ApiSlide.prototype["SetBackground"]                   = ApiSlide.prototype.SetBackground;
     ApiSlide.prototype["GetVisible"]                      = ApiSlide.prototype.GetVisible;
     ApiSlide.prototype["SetVisible"]                      = ApiSlide.prototype.SetVisible;

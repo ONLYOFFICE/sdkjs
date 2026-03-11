@@ -526,6 +526,7 @@
 			AscCommonExcel.g_oSUMIFSCache.clean();
 			AscCommonExcel.g_oFormulaRangesCache.clean();
 			AscCommonExcel.g_oCountIfCache.clean();
+			AscCommonExcel.g_oSumIfCache.clean();
 		};
 
 		let cellType = cell.getType();

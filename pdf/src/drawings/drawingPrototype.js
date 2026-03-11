@@ -589,7 +589,7 @@
         let oPara = content.GetCurrentParagraph();
         let oRun = oPara.IsSelectionUse() ? oPara.GetElement(oPara.Selection.StartPos) : oPara.GetElement(oPara.CurPos.ContentPos);
         let oTextPr = oRun.GetDirectTextPr();
-        let sFontName = oTextPr.GetFontFamily();
+        let sFontName = oTextPr ? oTextPr.GetFontFamily() : undefined;
 
         let oFontFile;
         let prefix = AscFonts.getEmbeddedFontPrefix();

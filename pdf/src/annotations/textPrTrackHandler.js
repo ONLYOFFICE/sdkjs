@@ -87,7 +87,7 @@
 	CAnnotTextPrTrackHandler.prototype.GetBounds = function() {
 		let oAnnot = this.Annot;
 
-		if (!oAnnot || !oAnnot.IsUseInDocument())
+		if (!oAnnot || !oAnnot.IsUseInDocument() || !oAnnot.IsInTextBox())
 			return null;
 		
 		let oDoc = oAnnot.GetDocument();

@@ -948,11 +948,15 @@
 			// todo add time
 		},
 		addMath					: function(type){
-			let paraMath = new AscCommonWord.ParaMath();
-			paraMath.Root.Load_FromMenu(type);
-			paraMath.Root.Correct_Content(true);
+			let mathText = "";
+			AscFormat.ExecuteNoHistory(function () {
+				let paraMath = new AscCommonWord.ParaMath();
+				paraMath.Root.Load_FromMenu(type);
+				paraMath.Root.Correct_Content(true);
+				mathText = paraMath.GetTextOfElement().GetText();
+			}, this, []);
 
-			return "\tdoc.AddMathEquation(\"" + paraMath.GetTextOfElement().GetText() + "\", \"unicode\");\n"
+			return "\tdoc.AddMathEquation(\"" + mathText + "\", \"unicode\");\n"
 		},
 		addMathHotkey			: function(obj){
 			let type = 'unicode';
