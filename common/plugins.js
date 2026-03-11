@@ -1669,7 +1669,12 @@
 			let methodRetValue = undefined;
 
 			if (this.api[methodName])
-				methodRetValue = this.api[methodName].apply(this.api, value);
+			{
+				let api = this.api;
+				methodRetValue = api.executeGroupActions(function(){
+					return api[methodName].apply(api, value);
+				});
+			}
 
 			if (guid === this.internalGuid)
 			{

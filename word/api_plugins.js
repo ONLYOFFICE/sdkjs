@@ -360,15 +360,12 @@
 		if (!logicDocument || !logicDocument.IsSelectionUse())
 			return;
 		
-		this.executeGroupActions(function()
+		if (!logicDocument.IsSelectionLocked(AscCommon.changestype_Remove, null, true, logicDocument.IsFormFieldEditing()))
 		{
-			if (!logicDocument.IsSelectionLocked(AscCommon.changestype_Remove, null, true, logicDocument.IsFormFieldEditing()))
-			{
-				logicDocument.StartAction(AscDFH.historydescription_Document_BackSpaceButton);
-				logicDocument.Remove(-1, true);
-				logicDocument.FinalizeAction();
-			}
-		});
+			logicDocument.StartAction(AscDFH.historydescription_Document_BackSpaceButton);
+			logicDocument.Remove(-1, true);
+			logicDocument.FinalizeAction();
+		}
     };
 
 	/**

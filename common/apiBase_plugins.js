@@ -284,18 +284,15 @@
 	{
 		if (!this.canEdit() || this.isPdfEditor() || !AscCommon.g_inputContext)
 			return;
-	
-		this.executeGroupActions(function()
-		{
-			if (textReplace)
-			{
-				for (var i = 0; i < textReplace.length; i++)
-					AscCommon.g_inputContext.emulateKeyDownApi(8);
-			}
 		
-			AscCommon.g_inputContext.addText(text);
-			AscCommon.g_inputContext.keyPressInput = "";
-		});
+		if (textReplace)
+		{
+			for (var i = 0; i < textReplace.length; i++)
+				AscCommon.g_inputContext.emulateKeyDownApi(8);
+		}
+	
+		AscCommon.g_inputContext.addText(text);
+		AscCommon.g_inputContext.keyPressInput = "";
 	};
 
 	/**
