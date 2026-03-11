@@ -1469,7 +1469,8 @@ function (window, undefined) {
 					doAdjust = true;
 				}
 			}
-			while (tm.height > this._getContentHeight() && this._expandHeight()) {
+			let tmHeight = asc_round(tm.height * this.getZoom());
+			while (tmHeight > this._getContentHeight() && this._expandHeight()) {
 			}
 			if (bottom !== this.bottom) {
 				if (bottom > this.bottom) {
