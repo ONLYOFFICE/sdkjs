@@ -1288,13 +1288,14 @@ ParaDrawing.prototype.Measure = function()
 			if (oSectPr)
 			{
 				let nColIdx = oParagraph.ColumnNum || 0;
-				let hrContentWidth = oSectPr.GetColumnWidth(nColIdx);
+				let hrColumnWidth = oSectPr.GetColumnWidth(nColIdx);
+				let hrContentWidth = hrColumnWidth;
 				if (oHR.pct != null && oHR.pct > 0)
 				{
-					hrContentWidth = hrContentWidth * oHR.pct / 1000;
+					hrContentWidth = hrColumnWidth * oHR.pct / 1000;
 				}
-				this.Width = hrContentWidth;
-				this.WidthVisible = hrContentWidth;
+				this.Width = hrColumnWidth;
+				this.WidthVisible = hrColumnWidth;
 				this.GraphicObj.recalculate();
 			}
 		}
@@ -1465,13 +1466,22 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	this.Internal_Position.Calculate_Y(bInline, this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value, this.PositionV.Percent, isInTable);
 
 	if (bInline) {
-		if (this.isHorizontalRule()) {
+		let oHR = this.getHorizontalRule();
+		if (oHR) {
 			let oLine = Paragraph.Lines[LineNum];
 			if (oLine) {
 				let metrics = oLine.Metrics;
 				let lineH = metrics.Ascent + metrics.Descent + metrics.LineGap;
 				let hrH = this.GraphicObj.extY;
 				this.Internal_Position.CalcY = this.Internal_Position.LineTop + (lineH - hrH) / 2;
+			}
+			let hrExtX = this.GraphicObj.extX;
+			let hrLineW = this.WidthVisible;
+			if (hrExtX < hrLineW) {
+				if (oHR.align === "center")
+					this.Internal_Position.CalcX += (hrLineW - hrExtX) / 2;
+				else if (oHR.align === "right")
+					this.Internal_Position.CalcX += hrLineW - hrExtX;
 			}
 		}
 	}

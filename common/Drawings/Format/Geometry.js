@@ -1780,6 +1780,13 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
             this.align = r.GetString2();
         }
     };
+    CHorizontalRule.prototype.getJc = function() {
+        if (this.align === "center")
+            return AscCommon.align_Center;
+        if (this.align === "right")
+            return AscCommon.align_Right;
+        return AscCommon.align_Left;
+    };
     CHorizontalRule.prototype.createDuplicate = function() {
         var hr = new CHorizontalRule();
         hr.noshade = this.noshade;

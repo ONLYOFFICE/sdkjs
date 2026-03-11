@@ -395,6 +395,21 @@ CDrawingsController.prototype.SetTableProps = function(Props)
 };
 CDrawingsController.prototype.GetCalculatedParaPr = function()
 {
+	let oParaDrawing = this.DrawingObjects.getMajorParaDrawing();
+	if (oParaDrawing)
+	{
+		let oHR = oParaDrawing.getHorizontalRule();
+		if (oHR)
+		{
+			let oParagraph = oParaDrawing.Get_ParentParagraph();
+			if (oParagraph)
+			{
+				let oParaPr = oParagraph.GetCalculatedParaPr();
+				oParaPr.Jc = oHR.getJc();
+				return oParaPr;
+			}
+		}
+	}
 	return this.DrawingObjects.getParagraphParaPr();
 };
 CDrawingsController.prototype.GetCalculatedTextPr = function()

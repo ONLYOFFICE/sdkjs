@@ -1475,17 +1475,20 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                     this.originalObject.getObjectType() !== AscDFH.historyitem_type_SlicerView)
                 {
 
-                    if(!this.originalObject.isCrop)
+                    if(!(this.originalObject.isHorizontalRule && this.originalObject.isHorizontalRule()))
                     {
-                        xfrm.setFlipH(this.resizedflipH);
-                        xfrm.setFlipV(this.resizedflipV);
-                    }
-                    else
-                    {
-                        AscFormat.ExecuteNoHistory(function () {
+                        if(!this.originalObject.isCrop)
+                        {
                             xfrm.setFlipH(this.resizedflipH);
                             xfrm.setFlipV(this.resizedflipV);
-                        }, this, []);
+                        }
+                        else
+                        {
+                            AscFormat.ExecuteNoHistory(function () {
+                                xfrm.setFlipH(this.resizedflipH);
+                                xfrm.setFlipV(this.resizedflipV);
+                            }, this, []);
+                        }
                     }
                 }
                 if(this.originalObject.getObjectType && this.originalObject.getObjectType() === AscDFH.historyitem_type_OleObject)
