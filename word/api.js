@@ -4989,7 +4989,7 @@ background-repeat: no-repeat;\
     };
 
     asc_docs_api.prototype.asc_addHorizontalRule = function() {
-        var oLogicDocument = this.WordControl.m_oLogicDocument;
+        let oLogicDocument = this.WordControl.m_oLogicDocument;
         if (!oLogicDocument)
             return;
 
@@ -4997,16 +4997,81 @@ background-repeat: no-repeat;\
         {
             oLogicDocument.StartAction(AscDFH.historydescription_Document_InsertHorizontalRule);
 
-            var oSectPr = oLogicDocument.GetCurrentSectPr();
-            var dWidth = oSectPr.GetColumnWidth(0);
-            var dHeight = 1.5 * (25.4 / 72); // 1.5pt in mm
+            let oCurParagraph = oLogicDocument.GetCurrentParagraph();
 
-            var oShape = new AscFormat.CShape();
+            let oExistingHRDrawing = null;
+            if (oCurParagraph)
+            {
+                let arrDrawings = oCurParagraph.GetAllDrawingObjects();
+                for (let i = 0; i < arrDrawings.length; i++)
+                {
+                    if (arrDrawings[i].isHorizontalRule && arrDrawings[i].isHorizontalRule())
+                    {
+                        oExistingHRDrawing = arrDrawings[i];
+                        break;
+                    }
+                }
+            }
+
+            if (oExistingHRDrawing)
+            {
+                oCurParagraph.MoveCursorToEndPos();
+                oLogicDocument.AddNewParagraph(false);
+                oCurParagraph = oLogicDocument.GetCurrentParagraph();
+            }
+
+            let oPrevHRDrawing = oExistingHRDrawing;
+            if (!oPrevHRDrawing && oCurParagraph)
+            {
+                let oPrevParagraph = oCurParagraph.Get_DocumentPrev();
+                if (oPrevParagraph && oPrevParagraph.GetAllDrawingObjects)
+                {
+                    let arrDrawings = oPrevParagraph.GetAllDrawingObjects();
+                    for (let i = 0; i < arrDrawings.length; i++)
+                    {
+                        if (arrDrawings[i].isHorizontalRule && arrDrawings[i].isHorizontalRule())
+                        {
+                            oPrevHRDrawing = arrDrawings[i];
+                            break;
+                        }
+                    }
+                }
+            }
+
+            let oSectPr = oLogicDocument.GetCurrentSectPr();
+            let dWidth = oSectPr.GetColumnWidth(0);
+            let dHeight = 1.5 * (25.4 / 72);
+
+            let oNewHR = new AscFormat.CHorizontalRule();
+            oNewHR.align = "center";
+
+            let oFill = null;
+            let oLn = AscFormat.CreateNoFillLine();
+
+            if (oPrevHRDrawing && oPrevHRDrawing.GraphicObj)
+            {
+                let oSrcShape = oPrevHRDrawing.GraphicObj;
+                let oSrcHR = oSrcShape.getHorizontalRule && oSrcShape.getHorizontalRule();
+                if (oSrcHR)
+                    oNewHR = oSrcHR.createDuplicate();
+
+                if (oSrcShape.spPr)
+                {
+                    if (oSrcShape.spPr.xfrm && AscFormat.isRealNumber(oSrcShape.spPr.xfrm.extY))
+                        dHeight = oSrcShape.spPr.xfrm.extY;
+                    if (oSrcShape.spPr.Fill)
+                        oFill = oSrcShape.spPr.Fill.createDuplicate();
+                    if (oSrcShape.spPr.ln)
+                        oLn = oSrcShape.spPr.ln.createDuplicate();
+                }
+            }
+
+            let oShape = new AscFormat.CShape();
             oShape.setWordShape(true);
             oShape.setBDeleted(false);
 
-            var oSpPr = new AscFormat.CSpPr();
-            var oXfrm = new AscFormat.CXfrm();
+            let oSpPr = new AscFormat.CSpPr();
+            let oXfrm = new AscFormat.CXfrm();
             oXfrm.setOffX(0);
             oXfrm.setOffY(0);
             oXfrm.setExtX(dWidth);
@@ -5014,15 +5079,14 @@ background-repeat: no-repeat;\
             oSpPr.setXfrm(oXfrm);
             oXfrm.setParent(oSpPr);
 
-            var oGeometry = AscFormat.CreateGeometry("rect");
+            let oGeometry = AscFormat.CreateGeometry("rect");
             oGeometry.setPreset("rect");
-
-            var oHR = new AscFormat.CHorizontalRule();
-            oHR.align = "center";
-            oGeometry.setHR(oHR);
+            oGeometry.setHR(oNewHR);
 
             oSpPr.setGeometry(oGeometry);
-            oSpPr.setLn(AscFormat.CreateNoFillLine());
+            oSpPr.setLn(oLn);
+            if (oFill)
+                oSpPr.setFill(oFill);
 
             oShape.setSpPr(oSpPr);
             oSpPr.setParent(oShape);
