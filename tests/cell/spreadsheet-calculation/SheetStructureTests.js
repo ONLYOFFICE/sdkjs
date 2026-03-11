@@ -6173,6 +6173,231 @@ $(function () {
 		range.sort(Asc.c_oAscSortOptions.Descending, 0);
 		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_18");
 
+		// Locale-aware sorting tests (check_sort_19–21)
+		// These tests verify that the sort order changes depending on the locale set in the editor.
+		// Each block: (a) sorts with the target locale, (b) sorts with en-US to show the difference.
+		const defaultLCID = AscCommon.g_oDefaultCultureInfo.LCID;
+
+		// check_sort_19 — Spanish (es-ES, LCID 3082)
+		// In Spanish, ñ is a distinct letter of the alphabet that comes AFTER all n-words and BEFORE o-words.
+		// In English locale, ñ has the primary weight of 'n', so "ñoño" sorts among n-words (before "oca" but also before "nube"/"nota").
+		// Data (unsorted): ["ñoño", "oca", "nota", "nube"]
+		//   es-ES ascending: nota → nube → ñoño → oca   (n-words first, then ñ-words, then o-words)
+		//   en-US ascending: ñoño → nota → nube → oca   (ñ primary=n, so ñoño=n.o.n.o < nota=n.o.t.a at 3rd char)
+		testData = [['ñoño'], ['oca'], ['nota'], ['nube']];
+		range = ws.getRange2("A1:A4");
+
+		AscCommon.setCurrentCultureInfo(3082); // es-ES
+		expectedRes = [['nota'], ['nube'], ['ñoño'], ['oca']];
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_19 es-ES");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_19 es-ES");
+
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+		expectedRes = [['ñoño'], ['nota'], ['nube'], ['oca']];
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_19 en-US");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_19 en-US");
+
+		// check_sort_20 — Chinese Simplified (zh-CN, LCID 2052)
+		// zh-CN sorts Chinese characters by pinyin (romanised pronunciation).
+		// en-US sorts by Unicode code point.
+		// Data (unsorted): ["搭"(dā U+642D), "啊"(ā U+554A), "鹅"(é U+9E45), "芭"(bā U+82AD)]
+		//   zh-CN ascending (pinyin a→ba→da→é): 啊 → 芭 → 搭 → 鹅
+		//   en-US ascending (Unicode order):     啊(554A) → 搭(642D) → 芭(82AD) → 鹅(9E45)
+		testData = [['搭'], ['啊'], ['鹅'], ['芭']];
+		range = ws.getRange2("A1:A4");
+
+		AscCommon.setCurrentCultureInfo(2052); // zh-CN
+		expectedRes = [['啊'], ['芭'], ['搭'], ['鹅']];
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_20 zh-CN");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_20 zh-CN");
+
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+		expectedRes = [['啊'], ['搭'], ['芭'], ['鹅']];
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_20 en-US");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_20 en-US");
+
+		// check_sort_21 — Arabic (ar-SA, LCID 1025)
+		// Each word starts with a variant of alef: آ(U+0622), ا(U+0627), إ(U+0625), أ(U+0623)
+		// Data (unsorted): ["آفاق", "ابن", "إيمان", "أمل"]
+		//
+		// Excel: both ar-SA and en-US produce the same order:
+		//   ascending:  ابن → إيمان → أمل → آفاق
+		//
+		// ICU/localeCompare (also used in LibreOffice and Google Docs):
+		//   en-US ascending (by Unicode code point of 1st char: آ=0622 < أ=0623 < إ=0625 < ا=0627):
+		//     آفاق → أمل → إيمان → ابن
+		//   ar-SA ascending (ICU Arabic collation orders alef variants as آ < ا < أ < إ):
+		//     آفاق → ابن → أمل → إيمان
+		testData = [['آفاق'], ['ابن'], ['إيمان'], ['أمل']];
+		range = ws.getRange2("A1:A4");
+
+		AscCommon.setCurrentCultureInfo(1025); // ar-SA
+		// expectedRes = [['ابن'], ['إيمان'], ['أمل'], ['آفاق']]; // Excel
+		expectedRes = [['آفاق'], ['ابن'], ['أمل'], ['إيمان']];
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_21 ar-SA");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_21 ar-SA");
+
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+		// expectedRes = [['ابن'], ['إيمان'], ['أمل'], ['آفاق']]; // Excel
+		expectedRes = [['آفاق'], ['أمل'], ['إيمان'], ['ابن']];
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_21 en-US");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_21 en-US");
+
+		// check_sort_22 — Spanish (es-ES) with ñ in the middle of a word
+		// Data (unsorted): ["Caña", "Algo", "Cano"]
+		//   es-ES ascending: Algo → Cano → Caña
+		//     (ñ is a distinct letter after n, so "Caña" > "Cano")
+		//   en-US ascending: Algo → Caña → Cano
+		//     (ñ has primary weight 'n'; "Caña" = Ca+n+a vs "Cano" = Ca+n+o — 4th char a < o → Caña < Cano)
+		testData = [['Caña'], ['Algo'], ['Cano']];
+		range = ws.getRange2("A1:A3");
+
+		AscCommon.setCurrentCultureInfo(3082); // es-ES
+		expectedRes = [['Algo'], ['Cano'], ['Caña']];
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_22 es-ES");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_22 es-ES");
+
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+		expectedRes = [['Algo'], ['Caña'], ['Cano']];
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_22 en-US");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_22 en-US");
+
+		// check_sort_23 — Swedish (sv-SE, LCID 1053)
+		// In Swedish, å/ä/ö are independent letters that come AFTER z (and y) at the end of the alphabet
+		// in the order: …y → å → ä → ö.
+		// In en-US they sort near their base letters: å/ä near 'a', ö near 'o'.
+		//
+		// Data (28 values, unsorted): g ä 0 t å r ö d 5 f a ö s 7 å h ö d t ä b g r f d a g y
+		//
+		//   sv-SE ascending:
+		//     0 5 7 a a b d d d f f g g g h r r s t t y å å ä ä ö ö ö
+		//
+		//   en-US ascending (ICU/localeCompare — å before ä; same result in LibreOffice and Google Docs):
+		//     0 5 7 a a å å ä ä b d d d f f g g g h ö ö ö r r s t t y
+		//   en-US ascending (Excel — ä before å):
+		//     0 5 7 a a ä ä å å b d d d f f g g g h ö ö ö r r s t t y
+		testData = [['g'],['ä'],['0'],['t'],['å'],['r'],['ö'],['d'],['5'],['f'],['a'],['ö'],['s'],['7'],['å'],['h'],['ö'],['d'],['t'],['ä'],['b'],['g'],['r'],['f'],['d'],['a'],['g'],['y']];
+		range = ws.getRange2("A1:A28");
+
+		AscCommon.setCurrentCultureInfo(1053); // sv-SE
+		expectedRes = [['0'],['5'],['7'],['a'],['a'],['b'],['d'],['d'],['d'],['f'],['f'],['g'],['g'],['g'],['h'],['r'],['r'],['s'],['t'],['t'],['y'],['å'],['å'],['ä'],['ä'],['ö'],['ö'],['ö']];
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_23 sv-SE");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_23 sv-SE");
+
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+		// expectedRes = [['0'],['5'],['7'],['a'],['a'],['ä'],['ä'],['å'],['å'],['b'],['d'],['d'],['d'],['f'],['f'],['g'],['g'],['g'],['h'],['ö'],['ö'],['ö'],['r'],['r'],['s'],['t'],['t'],['y']]; // Excel
+		expectedRes = [['0'],['5'],['7'],['a'],['a'],['å'],['å'],['ä'],['ä'],['b'],['d'],['d'],['d'],['f'],['f'],['g'],['g'],['g'],['h'],['ö'],['ö'],['ö'],['r'],['r'],['s'],['t'],['t'],['y']];
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_23 en-US");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_23 en-US");
+
+		// check_sort_24 — Apostrophe handling (en-US, LCID 1033)
+		// The apostrophe is a punctuation symbol; its collation weight determines sort order.
+		// Excel:             bills → bill's  (word without apostrophe sorts first)
+		// ICU/localeCompare: bill's → bills  (apostrophe has a very low weight, bill's ≈ "bills"
+		//                                     but the extra character makes it sort after "bill",
+		//                                     yet the ICU collation places it before plain "bills";
+		//                                     same result in LibreOffice and Google Docs)
+		testData = [['bill\'s'], ['bills']];
+		range = ws.getRange2("A1:A2");
+
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+		// expectedRes = [['bills'], ['bill\'s']]; // Excel
+		expectedRes = [['bill\'s'], ['bills']];
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_24 en-US");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_24 en-US");
+
+		// check_sort_25 — Arabic expanded (ar-SA, LCID 1025)
+		// Data mixes alef-variant words with regular Arabic words.
+		// Data (unsorted): ["إجابة", "بيت", "أثر", "آية", "تاج", "اسم"]
+		//
+		// ICU/localeCompare: ar-SA and en-US produce the same order (verified):
+		//   ascending: آية → أثر → إجابة → اسم → بيت → تاج
+		//   (alef variants sorted by Unicode code point: آ=0622 < أ=0623 < إ=0625 < ا=0627)
+		//   Same result is observed in LibreOffice and Google Docs.
+		//
+		// Excel: ar-SA and en-US also produce the same order (but different from ICU/localeCompare):
+		//   ascending: اسم → إجابة → أثر → آية → بيت → تاج
+		testData = [['إجابة'], ['بيت'], ['أثر'], ['آية'], ['تاج'], ['اسم']];
+		range = ws.getRange2("A1:A6");
+		// expectedRes = [['اسم'], ['إجابة'], ['أثر'], ['آية'], ['بيت'], ['تاج']]; // Excel
+		expectedRes = [['آية'], ['أثر'], ['إجابة'], ['اسم'], ['بيت'], ['تاج']]; // ICU/localeCompare
+
+		AscCommon.setCurrentCultureInfo(1025); // ar-SA
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_25 ar-SA");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_25 ar-SA");
+
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_25 en-US");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_25 en-US");
+
+		// Restore original locale
+		AscCommon.setCurrentCultureInfo(defaultLCID);
+
 	});
 	QUnit.test("Autofill - format Date, Date & Time and Time.", function (assert) {
 		function getAutofillCase(aFrom, aTo, nFillHandleArea, sDescription, expectedData) {
