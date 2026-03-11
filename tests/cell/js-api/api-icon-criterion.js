@@ -31,7 +31,7 @@
  */
 
 $(function () {
-    var ws = AscTest.JsApi.GetActiveSheet();
+    let ws = AscTest.JsApi.GetActiveSheet();
 
     // ======= TEST HELPERS =======
     const initializeTest = function () {
@@ -234,7 +234,6 @@ $(function () {
 
     QUnit.test("SetIcon / GetIcon roundtrip on first criterion", function (assert) {
         initializeTest();
-        console.log("here");
         const ctx = getCriteria("M1");
         const firstCriterion = ctx.criteria[0];
 
@@ -319,5 +318,36 @@ $(function () {
 
         firstCriterion.SetIcon("xlIcon__Bogus");
         assert.strictEqual(firstCriterion.GetIcon(), before, "Invalid icon does not change current icon");
+    });
+
+    QUnit.test("Changing one criterion does not affect the other two criteria", function (assert) {
+        initializeTest();
+
+        var ctx = getCriteria("S1");
+        var criteria = ctx.criteria;
+
+        assert.strictEqual(criteria.length, 3, "Icon set has exactly 3 criteria");
+
+        var first = criteria[0];
+        var second = criteria[1];
+        var third = criteria[2];
+
+        var firstTypeBefore = first.GetType();
+        var firstOperatorBefore = first.GetOperator();
+
+        var thirdTypeBefore = third.GetType();
+        var thirdOperatorBefore = third.GetOperator();
+
+        second.SetType("xlConditionValueNumber");
+        second.SetOperator("xlGreater");
+
+        assert.strictEqual(second.GetType(), "xlConditionValueNumber", "Second criterion type changed");
+        assert.strictEqual(second.GetOperator(), "xlGreater", "Second criterion operator changed");
+
+        assert.strictEqual(first.GetType(), firstTypeBefore, "First criterion type did not change");
+        assert.strictEqual(first.GetOperator(), firstOperatorBefore, "First criterion operator did not change");
+
+        assert.strictEqual(third.GetType(), thirdTypeBefore, "Third criterion type did not change");
+        assert.strictEqual(third.GetOperator(), thirdOperatorBefore, "Third criterion operator did not change");
     });
 });
