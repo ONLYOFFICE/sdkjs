@@ -765,18 +765,21 @@ void main() {\n\
                 }
 
                 tmp = Infinity;
-                if (y > _lineY - _lineAscent * 2)
-                {
-                    if (_distX >= 0 && _distX <= _lineWidth)
-                        tmp = y - _lineY;
-                    else if (_distX < 0)
-                        tmp = Math.sqrt((x - _lineX) * (x - _lineX) + (y - _lineY) * (y - _lineY));
-                    else if (_distX > _lineWidth)
-                    {
-                        let _xx1 = _lineX + _lineWidth;
-                        tmp = Math.sqrt((x - _xx1) * (x - _xx1) + (y - _lineY) * (y - _lineY));
-                    }
-                }
+				const dy = y - _lineY;
+				const maxVerticalSnap = _lineAscent + _lineDescent;
+
+				if (dy >= -_lineAscent * 2 && dy <= maxVerticalSnap)
+				{
+					if (_distX >= 0 && _distX <= _lineWidth)
+						tmp = Math.abs(dy);
+					else if (_distX < 0)
+						tmp = Math.sqrt((x - _lineX) * (x - _lineX) + dy * dy);
+					else
+					{
+						const _xx1 = _lineX + _lineWidth;
+						tmp = Math.sqrt((x - _xx1) * (x - _xx1) + dy * dy);
+					}
+				}
 
                 if (_lineY < _predY)
                     _curBlockId++;
