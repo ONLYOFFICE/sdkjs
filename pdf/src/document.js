@@ -9761,6 +9761,12 @@ var CPresentation = CPresentation || function(){};
                 });
             }
         }
+
+		// on copy page with field with format value
+		if (oMeta && oMeta["formatValue"]) {
+			oForm.SetFormatValue(oMeta["formatValue"], true);
+		}
+
         AscPDF.FillActionsFromJSON(oForm, formJson['AA']);
 
         return oForm;
