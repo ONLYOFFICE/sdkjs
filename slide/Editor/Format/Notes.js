@@ -80,8 +80,6 @@
 
     function CNotes() {
         AscCommonSlide.SlideBase.call(this);
-        this.clrMap = null;
-        this.cSld = new AscFormat.CSld(this);
         this.showMasterPhAnim = null;
         this.showMasterSp     = null;
         this.slide            = null;

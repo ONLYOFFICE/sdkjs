@@ -209,6 +209,48 @@
 	SlideBase.prototype.openOleEditor = function() {
 		this.graphicObjects.openOleEditor();
 	};
+	SlideBase.prototype.getNativeImg = function() {
+		if (window["NATIVE_EDITOR_ENJINE"]) {
+			return null;
+		}
+		if (this.nativeImage)
+			return this.nativeImage;
+
+		AscCommon.IsShapeToImageConverter = true;
+
+		var dKoef = AscCommon.g_dKoef_mm_to_pix;
+		var _need_pix_width = ((this.Width * dKoef / 3.0 + 0.5) >> 0);
+		var _need_pix_height = ((this.Height * dKoef / 3.0 + 0.5) >> 0);
+
+		if (_need_pix_width <= 0 || _need_pix_height <= 0)
+			return null;
+
+		var _canvas = document.createElement('canvas');
+		_canvas.width = _need_pix_width;
+		_canvas.height = _need_pix_height;
+
+		var _ctx = _canvas.getContext('2d');
+
+		var g = new AscCommon.CGraphics();
+		g.init(_ctx, _need_pix_width, _need_pix_height, this.Width, this.Height);
+		g.m_oFontManager = AscCommon.g_fontManager;
+
+		g.m_oCoordTransform.tx = 0.0;
+		g.m_oCoordTransform.ty = 0.0;
+		g.transform(1, 0, 0, 1, 0, 0);
+
+		this.draw(g, /*pageIndex*/0);
+
+		if (AscCommon.g_fontManager) {
+			AscCommon.g_fontManager.m_pFont = null;
+		}
+		if (AscCommon.g_fontManager2) {
+			AscCommon.g_fontManager2.m_pFont = null;
+		}
+		AscCommon.IsShapeToImageConverter = false;
+
+		return _canvas;
+	};
 	SlideBase.prototype.getBase64Img = function() {
 		if (window["NATIVE_EDITOR_ENJINE"]) {
 			return "";
@@ -623,6 +665,19 @@
 		return arrInks;
 	};
 	SlideBase.prototype.setSlideCount = function() {};
+	SlideBase.prototype.needRecalc = function() {
+		if (this.recalcInfo) {
+			for (let flag in this.recalcInfo) {
+				if (flag) {
+					return true;
+				}
+			}
+		}
+		return false;
+	};
+	SlideBase.prototype.addToSpTreeToPos = function(pos, item) {
+		this.shapeAdd(pos, item);
+	};
 
 	// todo end check slides methods
 
@@ -634,11 +689,9 @@
 	};
 	SlideBase.prototype.recalculateBackground = function() {
 	};
-	SlideBase.prototype.checkSlideColorScheme = function() {
-	};
 	SlideBase.prototype.getAllFonts = function(fonts) {
 	};
-	SlideBase.prototype.createFontMap = function(oFontsMap, oCheckedMap) {
+	SlideBase.prototype.createFontMap = function(oFontsMap, oCheckedMap, isNoPh) {
 	};
 	SlideBase.prototype.recalculate = function() {
 	};
@@ -648,16 +701,7 @@
 	SlideBase.prototype.isLockedObject = function() {
 		return false;
 	};
-	SlideBase.prototype.needRecalc = function() {
-		if (this.recalcInfo) {
-			for (let flag in this.recalcInfo) {
-				if (flag) {
-					return true;
-				}
-			}
-		}
-		return false;
-	};
+
 	SlideBase.prototype.Clear_ContentChanges = function() {
 	};
 	SlideBase.prototype.Add_ContentChanges = function(Changes) {
@@ -676,6 +720,7 @@
 		return false;
 	};
 	SlideBase.prototype.getParentObjects = function() {
+		return {};
 	};
 	SlideBase.prototype.recalculateNotesShape = function() {
 	};
@@ -705,9 +750,6 @@
 	SlideBase.prototype.shapeRemove = function(pos, count) {
 	};
 	SlideBase.prototype.shapeAdd = function(pos, item) {
-	};
-	SlideBase.prototype.addToSpTreeToPos = function(pos, item) {
-		this.shapeAdd(pos, item);
 	};
 	SlideBase.prototype.setSlideSize = function(w, h) {
 	};

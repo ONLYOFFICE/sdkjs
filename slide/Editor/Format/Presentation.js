@@ -1261,10 +1261,6 @@ CPresentation.prototype.setHFProperties = function (oProps, bAll) {
 
 	this.StartAction(AscDFH.historydescription_Presentation_SetHF);
 	let oSlideProps = oProps.get_Slide();
-	let oNotesProps = oProps.get_Notes();
-	let oSlide, oSp, sText, oContent, oDateTime, sDateTime, sCustomDateTime, nLang, aSelectedSlides, nSlideIndex;
-	let oNotes;
-	let oNotesMaster;
 	let bRecalculate = false;
 	const nDefaultLang = this.GetDefaultLanguage();
 
@@ -7502,10 +7498,8 @@ CPresentation.prototype.CreateAndAddShapeFromSelectedContent = function (oDocCon
  * @param {number} nIndex
  * */
 CPresentation.prototype.InsertContent2 = function (aContents, nIndex) {
-	//nIndex = 1;
-	var oContent, oSlide, i, j, bEndFormatting = (nIndex === 0), oSourceContent, kw = 1.0, kh = 1.0;
-	var nLayoutIndex, nMasterIndex, nNotesMasterIndex;
-	var oLayout, oMaster, oTheme, oNotes, oNotesMaster, oNotesTheme, oCurrentMaster, bChangeSize = false;
+	var oContent, i, bEndFormatting = (nIndex === 0), oSourceContent, kw = 1.0, kh = 1.0;
+	let oCurrentMaster;
 	var bNeedGenerateThumbnails = false;
 	let oRet = {};
 	if (!aContents[nIndex]) {
@@ -7521,12 +7515,11 @@ CPresentation.prototype.InsertContent2 = function (aContents, nIndex) {
 	oContent = aContents[nIndex].copy();
 	if (oContent.PresentationWidth !== null && oContent.PresentationHeight !== null) {
 		if (!AscFormat.fApproxEqual(this.GetWidthMM(), oContent.PresentationWidth) || !AscFormat.fApproxEqual(this.GetHeightMM(), oContent.PresentationHeight)) {
-			bChangeSize = true;
 			kw = this.GetWidthMM() / oContent.PresentationWidth;
 			kh = this.GetHeightMM() / oContent.PresentationHeight;
 		}
 	}
-	bNeedGenerateThumbnails = this.getViewManager().insertContent2(oContent);
+	bNeedGenerateThumbnails = this.getViewManager().insertContent2(oContent,aContents, kw, kh, bEndFormatting);
 	if (oContent.Drawings.length > 0) {
 		if (bEndFormatting) {
 			oSourceContent = aContents[1];

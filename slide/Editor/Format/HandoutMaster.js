@@ -94,7 +94,7 @@
 		this.setSlideSize(this.presentation.GetNotesWidthMM(), this.presentation.GetNotesHeightMM());
 		this.recalcInfo = {
 			recalculateBackground: true,
-			recalculateSpTree: true
+			recalculateSpTree:     true
 		};
 	}
 
@@ -213,9 +213,9 @@
 	const CHANDOUTMASTER_GAP = 10;
 	const CHANDOUTMASTER_FIELDSIZE = 20;
 	CHandoutMaster.prototype.getGap = function(paperSize, slideSize, scale, repeatCount) {
-		return repeatCount === 1 ? 0: (paperSize - slideSize * repeatCount * scale) / (repeatCount - 1);
+		return repeatCount === 1 ? 0 : (paperSize - slideSize * repeatCount * scale) / (repeatCount - 1);
 	}
-	CHandoutMaster.prototype.getHandouts = function () {
+	CHandoutMaster.prototype.getHandouts = function() {
 		//todo align
 		let align = 1;
 
@@ -285,7 +285,7 @@
 		}
 		return handouts;
 	};
-	CHandoutMaster.prototype.drawPlaceholders = function (g) {
+	CHandoutMaster.prototype.drawPlaceholders = function(g) {
 		const handouts = this.getHandouts();
 		for (let i = 0; i < handouts.length; i += 1) {
 			const handout = handouts[i];
@@ -300,10 +300,10 @@
 		}
 		return 1;
 	}
-	CHandoutMaster.prototype.getDrawingsForController = function () {
+	CHandoutMaster.prototype.getDrawingsForController = function() {
 		return this.cSld.spTree;
 	};
-	CHandoutMaster.prototype.setSlideSize = function (nW, nH) {
+	CHandoutMaster.prototype.setSlideSize = function(nW, nH) {
 		this.Width = nW;
 		this.Height = nH;
 	};
@@ -346,16 +346,14 @@
 		}
 	};
 	CHandoutMaster.prototype.createFontMap = function(oFontsMap, oCheckedMap, isNoPh) {
-		if(oCheckedMap[this.Get_Id()]) {
+		if (oCheckedMap[this.Get_Id()]) {
 			return;
 		}
 		const spTree = this.cSld.spTree;
-		for(let idx = 0; idx < spTree.length; ++idx) {
+		for (let idx = 0; idx < spTree.length; ++idx) {
 			const oSp = spTree[idx];
-			if(isNoPh)
-			{
-				if(oSp.isPlaceholder())
-				{
+			if (isNoPh) {
+				if (oSp.isPlaceholder()) {
 					continue;
 				}
 			}
@@ -398,16 +396,16 @@
 		return null;
 	};
 	CHandoutMaster.prototype.Get_ColorMap = function() {
-		if(this.clrMap) {
+		if (this.clrMap) {
 			return this.clrMap;
 		}
 		return AscFormat.GetDefaultColorMap();
 	};
 	CHandoutMaster.prototype.IsUseInDocument = function() {
 		let oPresentation = Asc.editor.private_GetLogicDocument();
-		if(!oPresentation) return false;
-		for(let nIdx = 0; nIdx < oPresentation.handoutMasters.length; ++nIdx) {
-			if(oPresentation.handoutMasters[nIdx] === this) {
+		if (!oPresentation) return false;
+		for (let nIdx = 0; nIdx < oPresentation.handoutMasters.length; ++nIdx) {
+			if (oPresentation.handoutMasters[nIdx] === this) {
 				return true;
 			}
 		}
@@ -420,7 +418,7 @@
 		return false;
 	};
 	CHandoutMaster.prototype.shapeRemove = function(pos, count) {
-		if(pos > -1 && pos < this.cSld.spTree.length){
+		if (pos > -1 && pos < this.cSld.spTree.length) {
 			History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_HandoutMasterRemoveFromTree, pos, this.cSld.spTree.slice(pos, pos + count), false));
 			this.cSld.spTree.splice(pos, count);
 		}
@@ -438,13 +436,10 @@
 	CHandoutMaster.prototype.addToSpTreeToPos = function(pos, item) {
 		this.shapeAdd(pos, item);
 	};
-	CHandoutMaster.prototype.Refresh_RecalcData = function (data) {
-		if(data)
-		{
-			switch(data.Type)
-			{
-				case AscDFH.historyitem_HandoutMasterSetBg:
-				{
+	CHandoutMaster.prototype.Refresh_RecalcData = function(data) {
+		if (data) {
+			switch (data.Type) {
+				case AscDFH.historyitem_HandoutMasterSetBg: {
 					this.recalcInfo.recalculateBackground = true;
 					break;
 				}
@@ -465,14 +460,16 @@
 		this.width = width;
 		this.height = height;
 	}
-	PlaceholderBase.prototype.draw = function (g) {
+
+	PlaceholderBase.prototype.draw = function(g) {
 
 	};
+
 	function SlidePlaceholder(x, y, width, height) {
 		PlaceholderBase.call(this, x, y, width, height);
 	};
 	AscFormat.InitClassWithoutType(SlidePlaceholder, PlaceholderBase);
-	SlidePlaceholder.prototype.draw = function (graphics) {
+	SlidePlaceholder.prototype.draw = function(graphics) {
 		if (graphics.isBoundsChecker()) {
 			return;
 		}
@@ -489,11 +486,13 @@
 	};
 
 	const TEXTPLACEHOLDER_STEP_COUNT = 7;
+
 	function TextPlaceholder(x, y, width, height) {
 		PlaceholderBase.call(this, x, y, width, height);
 	}
+
 	AscFormat.InitClassWithoutType(TextPlaceholder, PlaceholderBase);
-	TextPlaceholder.prototype.draw = function (graphics) {
+	TextPlaceholder.prototype.draw = function(graphics) {
 		if (graphics.isBoundsChecker()) {
 			return;
 		}

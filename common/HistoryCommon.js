@@ -3338,7 +3338,6 @@
     window['AscDFH'].historyitem_NotesMasterAddToSpTree    = window['AscDFH'].historyitem_type_NotesMaster | 4;
     window['AscDFH'].historyitem_NotesMasterRemoveFromTree = window['AscDFH'].historyitem_type_NotesMaster | 5;
     window['AscDFH'].historyitem_NotesMasterSetBg          = window['AscDFH'].historyitem_type_NotesMaster | 6;
-    window['AscDFH'].historyitem_NotesMasterAddToNotesLst  = window['AscDFH'].historyitem_type_NotesMaster | 7;
     window['AscDFH'].historyitem_NotesMasterSetName        = window['AscDFH'].historyitem_type_NotesMaster | 8;
     window['AscDFH'].historyitem_NotesMasterSetClrMap      = window['AscDFH'].historyitem_type_NotesMaster | 9;
 

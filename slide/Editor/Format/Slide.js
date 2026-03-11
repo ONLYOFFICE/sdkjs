@@ -1484,7 +1484,7 @@ AscFormat.InitClass(Slide, AscCommonSlide.SlideBase, AscDFH.historyitem_type_Sli
         return this.cSld.spTree;
     };
     
-    Slide.prototype.createFontMap = function (oFontsMap, oCheckedMap) {
+    Slide.prototype.createFontMap = function (oFontsMap, oCheckedMap, isNoPh) {
         var aSpTree = this.cSld.spTree;
         var nSp, nSpCount = aSpTree.length;
         for(nSp = 0; nSp < nSpCount; ++nSp) {

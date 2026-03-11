@@ -5535,84 +5535,50 @@
 				graphics.RestoreGrState();
 			}
 		};
-		/**
-		 * note: sometimes call to recalculate bounds
-		 * @memberOf CShape
-		 */
-		CShape.prototype.draw = function (graphics, transform, transformText, pageIndex, opt) {
-
-			if (this.checkNeedRecalculate && this.checkNeedRecalculate()) {
-				return;
+		CShape.prototype.specialDraw = function(graphics, transform, transformText, pageIndex) {
+			if (this.isSlideImagePlaceholder()) {
+				this.drawSlideImagePlaceholder(graphics, transform, transformText, pageIndex);
+			} else {
+				this.drawShape(graphics, transform, transformText, pageIndex);
 			}
-
-			var oUR = graphics.updatedRect;
-			if (oUR && this.bounds) {
-				if (!oUR.isIntersectOther(this.bounds)) {
-					return;
-				}
-			}
-			if (graphics.animationDrawer) {
-				graphics.animationDrawer.drawObject(this, graphics);
-				return;
-			}
-			var options = opt || {};
-			var _transform = transform ? transform : this.transform;
-			var _transform_text = transformText ? transformText : this.transformText;
-			var _transform_text2 = options.transformText2 || this.transformText2;
-			var geometry = this.getGeometry();
-
-			if (graphics.isBoundsChecker()) {
-
-				this.drawShdw && this.drawShdw(graphics);
-				graphics.transform3(_transform);
-				if (!this.spPr || null == geometry || geometry.isEmpty() || !graphics.IsShapeNeedBounds(geometry.preset)) {
-					graphics._s();
-					graphics._m(0, 0);
-					graphics._l(this.extX, 0);
-					graphics._l(this.extX, this.extY);
-					graphics._l(0, this.extY);
-					graphics._e();
-				} else {
-					geometry.check_bounds(graphics, this);
+		};
+		CShape.prototype.drawSlideImagePlaceholder = function(graphics, transform, transformText, pageIndex) {
+			//todo think about base transform
+			const _transform  = transform || this.transform;
+			const parent = this.parent;
+			const presentation = Asc.editor.WordControl.m_oLogicDocument;
+			if (parent && presentation) {
+				let slideObject;
+				if (parent instanceof AscCommonSlide.CNotesMaster) {
+					slideObject = presentation.slideMasters[0];
+				} else if (parent instanceof AscCommonSlide.CNotes) {
+					slideObject;
 				}
 
-				if (this.txBody) {
-					graphics.SetIntegerGrid(false);
 
-					var transform_text;
-					if ((!this.txBody.content || this.txBody.content.Is_Empty()) && this.txBody.content2 != null && !this.txBody.checkCurrentPlaceholder() && (this.isEmptyPlaceholder ? this.isEmptyPlaceholder() : false) && this.transformText2) {
-						transform_text = _transform_text2;
-					} else if (this.txBody.content) {
-						transform_text = _transform_text;
-					}
-
-					graphics.transform3(transform_text);
-
-					if (graphics.CheckUseFonts2 !== undefined)
-						graphics.CheckUseFonts2(transform_text);
-					this.txBody.draw(graphics);
-					if (graphics.UncheckUseFonts2 !== undefined)
-						graphics.UncheckUseFonts2(transform_text);
-					graphics.SetIntegerGrid(true);
-				}
-
+				const widthScale = this.extX / presentation.GetWidthMM();
+				const heightScale = this.extY / presentation.GetHeightMM();
+				const m = new AscCommon.CMatrix();
+				m.CopyFrom(_transform);
+				m.Scale(widthScale, heightScale);
+				m.tx /= widthScale;
+				m.ty /= heightScale;
+				graphics.SetBaseTransform(m);
 				graphics.reset();
-				return;
+				// graphics.transform3(_transform);
+				slideObject.draw(graphics, 0);
+				graphics.ResetBaseTransform();
+				graphics.reset();
 			}
-
-			if (graphics.StartDrawShape) {
-				graphics.StartDrawShape(undefined, this.isForm && this.isForm() ? true : false);
-			}
-			var oClipRect;
-			if (!graphics.isBoundsChecker() && this.getClipRect) {
-				oClipRect = this.getClipRect();
-			}
-			if (oClipRect) {
-				graphics.SaveGrState();
-				graphics.AddClipRect(oClipRect.x, oClipRect.y, oClipRect.w, oClipRect.h);
-			}
-			this.drawShdw && this.drawShdw(graphics);
+		};
+		CShape.prototype.isSlideImagePlaceholder = function() {
+			return this.getPlaceholderType() === AscFormat.phType_sldImg;
+		};
+		CShape.prototype.drawShape = function(graphics, transform, transformText, pageIndex) {
+			var _transform_text = transformText ? transformText : this.transformText;
+			var _transform = transform ? transform : this.transform;
 			var _oldBrush = this.brush;
+			var geometry = this.getGeometry();
 			if (this.signatureLine) {
 				var sSignatureUrl = null;
 
@@ -5734,100 +5700,91 @@
 					}
 				}
 			}
+		};
+			/**
+		 * note: sometimes call to recalculate bounds
+		 * @memberOf CShape
+		 */
+		CShape.prototype.draw = function (graphics, transform, transformText, pageIndex, opt) {
+
+			if (this.checkNeedRecalculate && this.checkNeedRecalculate()) {
+				return;
+			}
+
+			var oUR = graphics.updatedRect;
+			if (oUR && this.bounds) {
+				if (!oUR.isIntersectOther(this.bounds)) {
+					return;
+				}
+			}
+			if (graphics.animationDrawer) {
+				graphics.animationDrawer.drawObject(this, graphics);
+				return;
+			}
+			var options = opt || {};
+			var _transform = transform ? transform : this.transform;
+			var _transform_text = transformText ? transformText : this.transformText;
+			var _transform_text2 = options.transformText2 || this.transformText2;
+			var geometry = this.getGeometry();
+
+			if (graphics.isBoundsChecker()) {
+
+				this.drawShdw && this.drawShdw(graphics);
+				graphics.transform3(_transform);
+				if (!this.spPr || null == geometry || geometry.isEmpty() || !graphics.IsShapeNeedBounds(geometry.preset)) {
+					graphics._s();
+					graphics._m(0, 0);
+					graphics._l(this.extX, 0);
+					graphics._l(this.extX, this.extY);
+					graphics._l(0, this.extY);
+					graphics._e();
+				} else {
+					geometry.check_bounds(graphics, this);
+				}
+
+				if (this.txBody) {
+					graphics.SetIntegerGrid(false);
+
+					var transform_text;
+					if ((!this.txBody.content || this.txBody.content.Is_Empty()) && this.txBody.content2 != null && !this.txBody.checkCurrentPlaceholder() && (this.isEmptyPlaceholder ? this.isEmptyPlaceholder() : false) && this.transformText2) {
+						transform_text = _transform_text2;
+					} else if (this.txBody.content) {
+						transform_text = _transform_text;
+					}
+
+					graphics.transform3(transform_text);
+
+					if (graphics.CheckUseFonts2 !== undefined)
+						graphics.CheckUseFonts2(transform_text);
+					this.txBody.draw(graphics);
+					if (graphics.UncheckUseFonts2 !== undefined)
+						graphics.UncheckUseFonts2(transform_text);
+					graphics.SetIntegerGrid(true);
+				}
+
+				graphics.reset();
+				return;
+			}
+
+			if (graphics.StartDrawShape) {
+				graphics.StartDrawShape(undefined, this.isForm && this.isForm() ? true : false);
+			}
+			var oClipRect;
+			if (!graphics.isBoundsChecker() && this.getClipRect) {
+				oClipRect = this.getClipRect();
+			}
+			if (oClipRect) {
+				graphics.SaveGrState();
+				graphics.AddClipRect(oClipRect.x, oClipRect.y, oClipRect.w, oClipRect.h);
+			}
+			this.drawShdw && this.drawShdw(graphics);
+			this.specialDraw(graphics, transform, transformText, pageIndex);
 			this.drawLocks && this.drawLocks(_transform, graphics);
 			if (oClipRect) {
 				graphics.RestoreGrState();
 			}
-			//if(this.txXfrm && this.group) {
-			//    graphics.SetIntegerGrid(false);
-			//    _transform = new AscCommon.CMatrix();
-			//    _transform.tx = this.txXfrm.offX + this.txXfrm.extX / 2 + this.group.transform.tx;
-			//    _transform.ty = this.txXfrm.offY + this.txXfrm.extY / 2 + this.group.transform.ty;
-			//    graphics.transform3(_transform, false);
-			//    graphics.b_color1(255, 0, 0, 255);
-			//    graphics.rect(-2, -2, 4, 4);
-			//    graphics.df();
-			//
-			//    graphics.p_color(255, 0, 0, 255);
-			//    graphics.rect(-this.txXfrm.extX / 2, -this.txXfrm.extY / 2, this.txXfrm.extX, this.txXfrm.extY);
-			//    graphics.ds();
-			//}
 
-			let bMasterPh = false;
-			if(Asc.editor.presentationViewManager.isMasterPlaceholderShape(this)) {
-				bMasterPh = true;
-			}
-			if (/*(!(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN) || */(!graphics.isSmartArtPreviewDrawer && !graphics.isPdf() && !this.bWordShape && (this.isEmptyPlaceholder() && !this.isObjectInSmartArt() || bMasterPh) && !(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && (graphics.IsNoDrawingEmptyPlaceholder !== true || bMasterPh) && !AscCommon.IsShapeToImageConverter)
-				|| (Asc.editor.isPdfEditor() && !graphics.isPdf() && !graphics.isSmartArtPreviewDrawer && this.IsDrawing && this.IsDrawing() && this.ShouldDrawImaginaryBorder(graphics) && (graphics.IsNoDrawingEmptyPlaceholder !== true || bMasterPh) && !AscCommon.IsShapeToImageConverter)) {
-					var drawingObjects = this.getDrawingObjectsController();
-					if (typeof editor !== "undefined" && editor && graphics.m_oContext !== undefined && graphics.m_oContext !== null && !graphics.isTrack() && (Asc.editor.isPdfEditor() || !drawingObjects || AscFormat.getTargetTextObject(drawingObjects) !== this)) {
-						var angle = _transform.GetRotation();
-						if (AscFormat.fApproxEqual(angle, 0.0, 0.0) ||
-							AscFormat.fApproxEqual(angle, 90.0, 0.0) ||
-							AscFormat.fApproxEqual(angle, 180.0, 0.0) ||
-							AscFormat.fApproxEqual(angle, 270.0, 0.0)) {
-							graphics.transform3(_transform, false);
-							var tr = graphics.m_oFullTransform;
-							graphics.SetIntegerGrid(true);
-	
-							var _x = tr.TransformPointX(0, 0);
-							var _y = tr.TransformPointY(0, 0);
-							var _r = tr.TransformPointX(this.extX, this.extY);
-							var _b = tr.TransformPointY(this.extX, this.extY);
-	
-							var __x = Math.min(_x, _r);
-							var __y = Math.min(_y, _b);
-							var __r = Math.max(_x, _r);
-							var __b = Math.max(_y, _b);
-							graphics.m_oContext.lineWidth = 1;
-							graphics.p_color(127, 127, 127, 255);
-	
-							graphics._s();
-							editor.WordControl.m_oDrawingDocument.AutoShapesTrack.AddRectDashClever(graphics.m_oContext, __x >> 0, __y >> 0, __r >> 0, __b >> 0, 2, 2, true);
-							graphics._s();
-						} else {
-							graphics.transform3(_transform, false);
-							var tr = graphics.m_oFullTransform;
-							graphics.SetIntegerGrid(true);
-	
-							var _r = this.extX;
-							var _b = this.extY;
-	
-							var x1 = tr.TransformPointX(0, 0) >> 0;
-							var y1 = tr.TransformPointY(0, 0) >> 0;
-	
-							var x2 = tr.TransformPointX(_r, 0) >> 0;
-							var y2 = tr.TransformPointY(_r, 0) >> 0;
-	
-							var x3 = tr.TransformPointX(0, _b) >> 0;
-							var y3 = tr.TransformPointY(0, _b) >> 0;
-	
-							var x4 = tr.TransformPointX(_r, _b) >> 0;
-							var y4 = tr.TransformPointY(_r, _b) >> 0;
-	
-							graphics.m_oContext.lineWidth = 1;
-							graphics.p_color(127, 127, 127, 255);
-	
-							graphics._s();
-							editor.WordControl.m_oDrawingDocument.AutoShapesTrack.AddRectDash(graphics.m_oContext, x1, y1, x2, y2, x3, y3, x4, y4, 3, 1, true);
-							graphics._s();
-						}
-					} else {
-						graphics.SetIntegerGrid(false);
-						graphics.p_width(70);
-						graphics.transform3(_transform, false);
-						graphics.p_color(0, 0, 0, 255);
-						graphics._s();
-						graphics._m(0, 0);
-						graphics._l(this.extX, 0);
-						graphics._l(this.extX, this.extY);
-						graphics._l(0, this.extY);
-						graphics._z();
-						graphics.ds();
-	
-						graphics.SetIntegerGrid(true);
-					}
-				}
+			this.drawPlaceholderRect(graphics, _transform);
 
 			graphics.SetIntegerGrid(true);
 			graphics.reset();
@@ -5835,7 +5792,83 @@
 				graphics.EndDrawShape();
 			}
 		};
+		CShape.prototype.drawPlaceholderRect = function(graphics, transform) {
+			let bMasterPh = false;
+			if(Asc.editor.presentationViewManager.isMasterPlaceholderShape(this)) {
+				bMasterPh = true;
+			}
+			if (/*(!(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN) || */(!graphics.isSmartArtPreviewDrawer && !graphics.isPdf() && !this.bWordShape && (this.isEmptyPlaceholder() && !this.isObjectInSmartArt() || bMasterPh) && !(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && (graphics.IsNoDrawingEmptyPlaceholder !== true || bMasterPh) && !AscCommon.IsShapeToImageConverter)
+				|| (Asc.editor.isPdfEditor() && !graphics.isPdf() && !graphics.isSmartArtPreviewDrawer && this.IsDrawing && this.IsDrawing() && this.ShouldDrawImaginaryBorder(graphics) && (graphics.IsNoDrawingEmptyPlaceholder !== true || bMasterPh) && !AscCommon.IsShapeToImageConverter)) {
+				var drawingObjects = this.getDrawingObjectsController();
+				if (typeof editor !== "undefined" && editor && graphics.m_oContext !== undefined && graphics.m_oContext !== null && !graphics.isTrack() && (Asc.editor.isPdfEditor() || !drawingObjects || AscFormat.getTargetTextObject(drawingObjects) !== this)) {
+					var angle = transform.GetRotation();
+					if (AscFormat.fApproxEqual(angle, 0.0, 0.0) ||
+						AscFormat.fApproxEqual(angle, 90.0, 0.0) ||
+						AscFormat.fApproxEqual(angle, 180.0, 0.0) ||
+						AscFormat.fApproxEqual(angle, 270.0, 0.0)) {
+						graphics.transform3(transform, false);
+						var tr = graphics.m_oFullTransform;
+						graphics.SetIntegerGrid(true);
 
+						var _x = tr.TransformPointX(0, 0);
+						var _y = tr.TransformPointY(0, 0);
+						var _r = tr.TransformPointX(this.extX, this.extY);
+						var _b = tr.TransformPointY(this.extX, this.extY);
+
+						var __x = Math.min(_x, _r);
+						var __y = Math.min(_y, _b);
+						var __r = Math.max(_x, _r);
+						var __b = Math.max(_y, _b);
+						graphics.m_oContext.lineWidth = 1;
+						graphics.p_color(127, 127, 127, 255);
+
+						graphics._s();
+						editor.WordControl.m_oDrawingDocument.AutoShapesTrack.AddRectDashClever(graphics.m_oContext, __x >> 0, __y >> 0, __r >> 0, __b >> 0, 2, 2, true);
+						graphics._s();
+					} else {
+						graphics.transform3(transform, false);
+						var tr = graphics.m_oFullTransform;
+						graphics.SetIntegerGrid(true);
+
+						var _r = this.extX;
+						var _b = this.extY;
+
+						var x1 = tr.TransformPointX(0, 0) >> 0;
+						var y1 = tr.TransformPointY(0, 0) >> 0;
+
+						var x2 = tr.TransformPointX(_r, 0) >> 0;
+						var y2 = tr.TransformPointY(_r, 0) >> 0;
+
+						var x3 = tr.TransformPointX(0, _b) >> 0;
+						var y3 = tr.TransformPointY(0, _b) >> 0;
+
+						var x4 = tr.TransformPointX(_r, _b) >> 0;
+						var y4 = tr.TransformPointY(_r, _b) >> 0;
+
+						graphics.m_oContext.lineWidth = 1;
+						graphics.p_color(127, 127, 127, 255);
+
+						graphics._s();
+						editor.WordControl.m_oDrawingDocument.AutoShapesTrack.AddRectDash(graphics.m_oContext, x1, y1, x2, y2, x3, y3, x4, y4, 3, 1, true);
+						graphics._s();
+					}
+				} else {
+					graphics.SetIntegerGrid(false);
+					graphics.p_width(70);
+					graphics.transform3(transform, false);
+					graphics.p_color(0, 0, 0, 255);
+					graphics._s();
+					graphics._m(0, 0);
+					graphics._l(this.extX, 0);
+					graphics._l(this.extX, this.extY);
+					graphics._l(0, this.extY);
+					graphics._z();
+					graphics.ds();
+
+					graphics.SetIntegerGrid(true);
+				}
+			}
+		};
 		CShape.prototype.recalculateGeometry = function () {
 			this.calcGeometry = null;
 			if (isRealObject(this.spPr && this.spPr.geometry)) {
