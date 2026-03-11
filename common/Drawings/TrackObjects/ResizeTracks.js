@@ -357,6 +357,9 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             this.pen = AscFormat.CreatePenBrushForChartTrack().pen;
         }
         this.overlayObject = new AscFormat.OverlayObject(this.geometry, this.resizedExtX, this.resizedExtY, this.brush, this.pen, this.transform);
+        if (originalObject.isHorizontalRule && originalObject.isHorizontalRule()) {
+            this.overlayObject.hr = originalObject.getHorizontalRule();
+        }
 
 
         this.resizeConnector = function(kd1, kd2, e, x, y){

@@ -5686,10 +5686,10 @@
 						this.pen = null;
 					}
 				} else {
-					graphics.SetIntegerGrid(true);
 					graphics.transform3(_transform, false);
-					var hrExtX = this.extX;
-					var hrExtY = this.extY;
+					graphics.SetIntegerGrid(true);
+					let hrExtX = this.extX;
+					let hrExtY = this.extY;
 					graphics.p_color(128, 128, 128, 255);
 					graphics.drawHorLine(0, 0, 0, hrExtX, 0);
 					graphics.drawVerLine(0, 0, 0, hrExtY, 0);

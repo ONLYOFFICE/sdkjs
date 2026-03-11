@@ -998,7 +998,12 @@
 	};
 	CGraphicObjectBase.prototype.isHorizontalRule = function () {
 		let oGeom = this.getGeometry && this.getGeometry();
-		return !!(oGeom && oGeom.hr);
+		if (!(oGeom && oGeom.hr))
+			return false;
+		if (this.group)
+			return false;
+		let oParaDrawing = this.parent;
+		return !oParaDrawing || !oParaDrawing.Is_Inline || oParaDrawing.Is_Inline();
 	};
 	CGraphicObjectBase.prototype.getHorizontalRule = function () {
 		let oGeom = this.getGeometry && this.getGeometry();
