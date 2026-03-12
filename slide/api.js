@@ -5309,7 +5309,7 @@ background-repeat: no-repeat;\
 	};
 	asc_CCommentDataSlide.prototype.asc_putTime         = function(v)
 	{
-		this.m_sTime = v;
+		this.m_sTime = undefined !== v && null !== v ? v : "";
 		this.m_nTimeZoneBias = new Date().getTimezoneOffset();
 	};
 	asc_CCommentDataSlide.prototype.asc_getOnlyOfficeTime         = function()
@@ -5318,7 +5318,7 @@ background-repeat: no-repeat;\
 	};
 	asc_CCommentDataSlide.prototype.asc_putOnlyOfficeTime         = function(v)
 	{
-		this.m_sOOTime = v;
+		this.m_sOOTime = undefined !== v && null !== v ? v : "";
 	};
 	asc_CCommentDataSlide.prototype.asc_getUserId       = function()
 	{

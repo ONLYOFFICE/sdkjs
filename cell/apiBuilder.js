@@ -153,6 +153,7 @@
 	 * @property {number} ColumnsCount - Returns a number of columns in the current range.
 	 * @property {number} RowsCount - Returns a number of rows in the current range.
 	 * @property {ApiFormatConditions} FormatConditions - Returns the collection of conditional formatting rules for the current range.
+     * @property {ApiValidation} Validation - Returns the ApiValidation class instance associated with this range. If no validation instance exists yet, it will be created.
 	 */
 	function ApiRange(range, areas) {
 		this.range = range;
@@ -7585,7 +7586,7 @@
 	 * Recalculates all formulas in the active workbook.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @param {Function} fLogger - A function which specifies the logger object for checking recalculation of formulas.
+	 * @param {Function} [fLogger] - A function which specifies the logger object for checking recalculation of formulas.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/RecalculateAllFormulas.js
 	 */
@@ -12866,7 +12867,7 @@
 		}
 	});
 	/**
-	 * Returns a collection of the ranges.
+	 * Returns the data validation object associated with this range. If no validation object exists yet, it will be created.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiValidation}
@@ -19967,8 +19968,8 @@
 	/**
 	 * Class representing data validation.
 	 * @constructor
-	 * @property {ValidationType} Type - Returns or sets the validation type.
-	 * @property {ValidationAlertStyle} AlertStyle - Returns or sets the validation alert style.
+	 * @property {ValidationType} Type - Returns the validation type.
+	 * @property {ValidationAlertStyle} AlertStyle - Returns the validation alert style.
 	 * @property {boolean} IgnoreBlank - Returns or sets a Boolean value that specifies whether blank values are permitted by the range data validation.
 	 * @property {boolean} InCellDropdown - Returns or sets a Boolean value indicating whether data validation displays a drop-down list that contains acceptable values.
 	 * @property {boolean} ShowInput - Returns or sets a Boolean value indicating whether the data validation input message will be displayed whenever the user selects a cell in the data validation range.
@@ -19977,11 +19978,11 @@
 	 * @property {string} InputMessage - Returns or sets the data validation input message.
 	 * @property {string} ErrorTitle - Returns or sets the title of the data-validation error dialog box.
 	 * @property {string} ErrorMessage - Returns or sets the data validation error message.
-	 * @property {string} Formula1 - Returns or sets the value or expression associated with the conditional format or data validation.
-	 * @property {string} Formula2 - Returns or sets the value or expression associated with the second part of a conditional format or data validation.
-	 * @property {ValidationOperator} Operator - Returns or sets the data validation operator.
+	 * @property {string} Formula1 - Returns the value or expression associated with the conditional format or data validation.
+	 * @property {string} Formula2 - Returns the value or expression associated with the second part of a conditional format or data validation.
+	 * @property {ValidationOperator} Operator - Returns the data validation operator.
 	 * @property {ApiRange} Parent - Returns the parent range object.
-	 * @property {string} Value - Returns or sets the validation value.
+	 * @property {string} Value - Returns the validation value.
 	 */
 	function ApiValidation(validations, range) {
         if (!validations || !Array.isArray(validations) || !validations.length ) {

@@ -322,10 +322,10 @@ function (window, undefined) {
 	asc_CCommentData.prototype.asc_putText = function(val) { this.sText = val ? val.slice(0, Asc.c_oAscMaxCellOrCommentLength) : val; };
 	asc_CCommentData.prototype.asc_getText = function() { return this.sText; };
 
-	asc_CCommentData.prototype.asc_putTime = function(val) { this.sTime = val; };
+	asc_CCommentData.prototype.asc_putTime = function(val) { this.sTime = undefined !== val && null !== val ? val : ""; };
 	asc_CCommentData.prototype.asc_getTime = function() { return this.sTime; };
 
-	asc_CCommentData.prototype.asc_putOnlyOfficeTime = function(val) { this.sOOTime = val; };
+	asc_CCommentData.prototype.asc_putOnlyOfficeTime = function(val) { this.sOOTime = undefined !== val && null !== val ? val : ""; };
 	asc_CCommentData.prototype.asc_getOnlyOfficeTime = function() { return this.sOOTime; };
 
 	asc_CCommentData.prototype.asc_putUserId = function(val) { this.sUserId = val; this.sProviderId = "Teamlab"; };

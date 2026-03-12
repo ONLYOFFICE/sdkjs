@@ -7329,7 +7329,7 @@ background-repeat: no-repeat;\
 	};
 	asc_CCommentDataWord.prototype.asc_putTime         = function(v)
 	{
-		this.m_sTime = v;
+		this.m_sTime = undefined !== v && null !== v ? v : "";
 	};
 	asc_CCommentDataWord.prototype.asc_getOnlyOfficeTime         = function()
 	{
@@ -7337,7 +7337,7 @@ background-repeat: no-repeat;\
 	};
 	asc_CCommentDataWord.prototype.asc_putOnlyOfficeTime         = function(v)
 	{
-		this.m_sOOTime = v;
+		this.m_sOOTime = undefined !== v && null !== v ? v : "";
 	};
 	asc_CCommentDataWord.prototype.asc_getUserId       = function()
 	{
