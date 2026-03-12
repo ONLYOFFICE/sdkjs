@@ -2388,6 +2388,9 @@
     CBaseChartObject.prototype.getScaleCoefficient = function() {
         return 1;
     };
+    CBaseChartObject.prototype.getHorizontalRule = function() {
+        return null;
+    };
 
     function getMinMaxFromArrPoints(aPoints) {
         if(Array.isArray(aPoints) && aPoints.length > 0) {
@@ -16903,6 +16906,9 @@
     CalcLegendEntry.prototype.getScaleCoefficient = function() {
         return 1;
     };
+    CalcLegendEntry.prototype.getHorizontalRule = function() {
+        return null;
+    };
 
     function CompiledMarker() {
         this.spPr = new AscFormat.CSpPr();
@@ -16940,6 +16946,10 @@
     CompiledMarker.prototype.getScaleCoefficient = function() {
         return 1;
     };
+    CompiledMarker.prototype.getHorizontalRule = function() {
+        return null;
+    };
+
     function CUnionMarker() {
         this.lineMarker = null;
         this.marker = null;
@@ -16952,6 +16962,10 @@
     CUnionMarker.prototype.getScaleCoefficient = function() {
         return 1;
     };
+    CUnionMarker.prototype.getHorizontalRule = function() {
+        return null;
+    };
+
     function CreateMarkerGeometryByType(type) {
         var ret = new AscFormat.Geometry();
         var w = 43200, h = 43200;
