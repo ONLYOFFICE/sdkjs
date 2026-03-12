@@ -6173,9 +6173,28 @@ $(function () {
 		range.sort(Asc.c_oAscSortOptions.Descending, 0);
 		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_18");
 
-		// Locale-aware sorting tests (check_sort_19–21)
-		// These tests verify that the sort order changes depending on the locale set in the editor.
-		// Each block: (a) sorts with the target locale, (b) sorts with en-US to show the difference.
+		// ─── Locale-aware sorting tests (check_sort_19–27) ───────────────────────────────────────
+		//
+		// Excel on Windows uses the NLS (National Language Support) subsystem — specifically
+		// the Win32 API CompareStringEx() — which applies Microsoft's proprietary collation tables.
+		//
+		// JavaScript's localeCompare() uses ICU (International Components for Unicode), which
+		// implements the Unicode Collation Algorithm (UCA, Unicode TR#10) and derives its
+		// locale-specific rules from CLDR (Common Locale Data Repository).
+		//
+		// NLS and ICU/CLDR are independent systems with different data sources, so they assign
+		// different weights to certain characters. The most common divergences:
+		//   • Accented letters (ñ, å, ä) — secondary weight order differs between the two systems.
+		//   • Arabic alef variants (آ أ إ ا) — NLS groups them differently from ICU/UCA.
+		//   • Punctuation (apostrophe) — NLS gives it a higher weight than ICU does.
+		//   • Multi-character collation elements (e.g. Czech "ch") — ICU follows CLDR tailoring,
+		//     NLS uses its own rules.
+		//
+		// References:
+		//   https://learn.microsoft.com/en-us/windows/win32/intl/national-language-support
+		//   https://icu.unicode.org/userguide/collation
+		//   https://www.unicode.org/reports/tr10/
+		// ─────────────────────────────────────────────────────────────────────────────────────────
 		const defaultLCID = AscCommon.g_oDefaultCultureInfo.LCID;
 
 		// check_sort_19 — Spanish (es-ES, LCID 3082)
