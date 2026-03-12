@@ -2003,7 +2003,7 @@
 						}
 					}
 				}
-				debugger
+				this.recalculate();
 				this.checkExtentsByDocContent(true, true);
 			}
 		};

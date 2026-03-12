@@ -7277,10 +7277,7 @@
 			}
 
 			if (textFitType !== undefined) {
-				let oShape = this.Shape;
-				Asc.editor.addBuilderEndAction(function () {
-					oShape.setTextFitType(textFitType);
-				});
+				this.Shape.setTextFitType(textFitType);
 				return true;
 			}
 		}
