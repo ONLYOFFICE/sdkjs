@@ -2049,7 +2049,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The text color.
 	 * @return {ApiRange | null} - returns null if can't apply color.
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetColor.js
@@ -2220,7 +2220,7 @@
 	 *
 	 * @since 9.1.0
 	 * @param {ShdType} type - The shading type applied to the contents of the current text Range.
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The shading color.
 	 * @returns {ApiRange | null} - returns null if can't apply shadow.
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetShd.js
@@ -8683,7 +8683,7 @@
 	 * @typeofeditors ["CDE", "CFE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The highlight color for the forms.
 	 * @returns {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetFormsHighlight.js
@@ -9097,7 +9097,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The highlight color for the content controls.
 	 * @returns {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetControlsHighlight.js
@@ -10777,7 +10777,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The text color.
 	 * @return {ApiParagraph} this
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetColor.js
@@ -12521,7 +12521,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The text color.
 	 * @return {ApiTextPr}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetColor.js
@@ -12698,7 +12698,7 @@
 	 *
 	 * @since 9.1.0
 	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The shading color.
 	 * @returns {ApiTextPr}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetShd.js
@@ -15934,7 +15934,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The text color.
 	 * @return {ApiTextPr} - this text properties.
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetColor.js
@@ -23108,7 +23108,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} [color]
+	 * @param {ApiColor} [color] - The border color.
 	 * @return {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetBorderColor.js
@@ -23173,7 +23173,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} [color]
+	 * @param {ApiColor} [color] - The background color.
 	 * @return {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetBackgroundColor.js
@@ -25018,7 +25018,7 @@
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 8.3.2
-	 * @param {ApiColor} [color]
+	 * @param {ApiColor} [color] - The border color.
 	 * @return {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/SetBorderColor.js
 	 */
@@ -25037,10 +25037,11 @@
 	
 	/**
 	 * Sets the background color to the current content control.
+	 * @method
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 *
-	 * @param {ApiColor} [color]
+	 * @since 8.3.2
+	 * @param {ApiColor} [color] - The background color.
 	 * @return {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/SetBackgroundColor.js
 	 */
@@ -25331,7 +25332,7 @@
 	 * @typeofeditors ["CDE", "CFE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} [color]
+	 * @param {ApiColor} [color] - The border color.
 	 * @return {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBorderColor.js
@@ -25417,7 +25418,7 @@
 	 * @typeofeditors ["CDE", "CFE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} [color]
+	 * @param {ApiColor} [color] - The background color.
 	 * @return {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBackgroundColor.js
