@@ -2003,6 +2003,7 @@
 						}
 					}
 				}
+				debugger
 				this.checkExtentsByDocContent(true, true);
 			}
 		};

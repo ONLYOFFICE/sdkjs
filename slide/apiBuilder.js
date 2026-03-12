@@ -436,14 +436,13 @@
 
 	/**
 	 * The available slide transition speed values (similar to PowerPoint VBA ppTransitionSpeed).
-	 * @typedef TransitionSpeed
-	 * @type {"slow" | "medium" | "fast"}
+	 * @typedef {"slow" | "medium" | "fast"} TransitionSpeed
+	 * @see office-js-api/Examples/Enumerations/TransitionSpeed.js
 	 */
 
 	/**
 	 * The available slide transition effects (similar to PowerPoint VBA ppEffect).
-	 * @typedef EntryEffect
-	 * @type {(
+	 * @typedef {(
 	 * "effectAppear" |
 	 * "effectBlindsHorizontal" | "effectBlindsVertical" |
 	 * "effectBoxDown" | "effectBoxIn" | "effectBoxLeft" | "effectBoxOut" | "effectBoxRight" | "effectBoxUp" |
@@ -498,8 +497,21 @@
 	 * "effectStretchAcross" | "effectStretchDown" | "effectStretchLeft" | "effectStretchRight" | "effectStretchUp" |
 	 * "effectSwivel" |
 	 * "effectZoomBottom" | "effectZoomCenter" | "effectZoomIn" | "effectZoomInSlightly" | "effectZoomOut" | "effectZoomOutSlightly"
-	 * )}
-	*/
+	 * )} EntryEffect
+	 * @see office-js-api/Examples/Enumerations/EntryEffect.js
+	 */
+
+	/**
+	 * The type specifies how text is automatically fitted inside a shape.
+	 *
+	 * Possible values:
+	 * - noAutoFit — Do not autofit.
+	 * - autoFit — Resize shape to fit text.
+	 * - normAutoFit — Shrink text when it overflows.
+	 *
+	 * @typedef {"noAutoFit" | "autoFit" | "normAutoFit"} TextAutoFit
+	 * @see office-js-api/Examples/Enumerations/TextAutoFit.js
+	 */
 
     //------------------------------------------------------------------------------------------------------------------
     //
@@ -7208,7 +7220,6 @@
 		return null;
 	};
 
-
     /**
 	 * Sets the text paddings to the current shape.
 	 * @memberof ApiShape
@@ -7238,6 +7249,43 @@
 		return false;
 	};
 
+	/**
+	 * Sets the text fit type to the current shape.
+	 *
+	 * @memberof ApiShape
+	 * @typeofeditors ["CPE"]
+	 *
+	 * @param {TextAutoFit} type - The type of the text auto fit.
+	 * @returns {boolean} - returns false if param is invalid or shape has no text box.
+	 *
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetTextFit.js
+	 */
+	ApiShape.prototype.SetTextFit = function (type) {
+		if (this.Shape && this.Shape.txBody) {
+			let textFitType;
+			switch (type) {
+				case 'noAutoFit':
+					textFitType = AscFormat.text_fit_No;
+					break;
+				case 'autoFit':
+					textFitType = AscFormat.text_fit_Auto;
+					break;
+				case 'normAutoFit':
+					textFitType = AscFormat.text_fit_NormAuto;
+					break;
+			}
+
+			if (textFitType !== undefined) {
+				let oShape = this.Shape;
+				Asc.editor.addBuilderEndAction(function () {
+					oShape.setTextFitType(textFitType);
+				});
+				return true;
+			}
+		}
+		return false;
+	};
 
 	//------------------------------------------------------------------------------------------------------------------
     //
@@ -8365,6 +8413,7 @@
 	ApiShape.prototype["SetLine"]                         = ApiShape.prototype.SetLine;
 	ApiShape.prototype["GetLine"]                         = ApiShape.prototype.GetLine;
 	ApiShape.prototype["SetPaddings"]                     = ApiShape.prototype.SetPaddings;
+	ApiShape.prototype["SetTextFit"]                      = ApiShape.prototype.SetTextFit;
 
     ApiOleObject.prototype["GetClassType"]                = ApiOleObject.prototype.GetClassType;
 	ApiOleObject.prototype["SetData"]                     = ApiOleObject.prototype.SetData;
