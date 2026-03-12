@@ -1868,8 +1868,8 @@
 			}
 
 			let isDefnameTable = defNameObj && defNameObj.type === Asc.c_oAscDefNameType.table;
-			// TODO do notify below only when we rename the table?
-			if (isDefnameTable /*&& notifyData.type === c_oNotifyType.RenameTableColumn*/) {
+			// go through  all intersected listeners only if we do not change the cell inside the table
+			if (isDefnameTable && notifyData.type !== c_oNotifyType.Dirty) {
 				// we are getting table info and notify all range listeners that intersects with the table ref
 				let table = wb.getTableByName(nameIndex);
 				if (table) {

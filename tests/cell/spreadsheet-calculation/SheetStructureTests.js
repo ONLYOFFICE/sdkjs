@@ -4257,6 +4257,125 @@ $(function () {
 
 		clearData(0, 99, 0, 105);
 	});
+	/* for bug 73818 */
+	QUnit.test('Broadcast def name speed tests', function (assert) {
+		let array;
+		ws.getRange2("A1:Z10000").cleanAll();
+
+		// ws.getRange2("A1:Z10000").setValue("1");
+
+		let tableOptions = new AscCommonExcel.AddFormatTableOptions();
+		tableOptions.range = "A1:Z10000";
+		api.asc_addAutoFilter("TableStyleMedium2", tableOptions);	// create table in A1:Z10000 range
+
+		let tables = wsView.model.autoFilters.getTablesIntersectionRange(new Asc.Range(0, 1, 0, 1));
+		assert.strictEqual(tables.length, 1, "compare tables length");
+
+		let table = tables[0];
+		let tableName = table.DisplayName;
+		wsView.af_changeFormatTableInfo(tableName, Asc.c_oAscChangeTableStyleInfo.rowTotal, true);
+		for (let i = 1; i < 1000; i += 2) {
+			// areaMap
+			ws.getRange2(`J${i}:L${i}`).setValue(`=A${i}`);
+			// cellMap
+			ws.getRange2(`M${i}`).setValue(`=B${i}`);
+			ws.getRange2(`N${i}`).setValue(`=C${i}`);
+
+			// table refs
+			ws.getRange2(`O${i}`).setValue("=" + tableName + "[Column2]");
+			ws.getRange2(`P${i}`).setValue("=" + tableName + "[Column3]");
+		}
+
+		ws.getRange2("A10:A100").setValue("="+ tableName + "[Column2]");
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(101, 20);
+		resCell.setValue("=" + tableName +"[@Column1]");
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[@Column1]", "Value for edit in cell after Table[@Column1] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[[#This Row],[Column1]]", "Formula in cell after Table[@Column1] is typed");
+
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(101, 25);
+		resCell.setValue("=" + tableName +"[[#This Row],[Column1]]");
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[@Column1]", "Value for edit in cell after Table[[#This Row],[Column1]] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[[#This Row],[Column1]]", "Formula in cell after Table[[#This Row],[Column1]] is typed");
+
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(101, 30);
+		resCell.setValue("=" + tableName +"[[Column1]:[Column2]]");
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[[Column1]:[Column2]]", "Value for edit in cell after Table[[Column1]:[Column2]] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[[Column1]:[Column2]]", "Formula in cell after Table[[Column1]:[Column2]] is typed");
+
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(101, 30);
+		resCell.setValue("=" + tableName +"[[Column1]:[Column3]]");	
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[[Column1]:[Column3]]", "Value for edit in cell after Table[[Column1]:[Column3]] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[[Column1]:[Column3]]", "Formula in cell after Table[[Column1]:[Column3]] is typed");
+
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(101, 30);
+		resCell.setValue("=" + tableName +"[@[Column1]:[Column2]]");
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[@[Column1]:[Column2]]", "Value for edit in cell after Table[@[Column1]:[Column2]] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[[#This Row],[Column1]:[Column2]]", "Formula in cell after Table[@[Column1]:[Column2]] is typed");
+
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(101, 35);
+		resCell.setValue("=" + tableName +"[[#This Row],[Column1]:[Column2]]");
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[@[Column1]:[Column2]]", "Value for edit in cell after Table[[#This Row],[Column1]:[Column2]] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[[#This Row],[Column1]:[Column2]]", "Formula in cell after Table[[#This Row],[Column1]:[Column2]] is typed");
+
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(101, 40);
+		resCell.setValue("=" + tableName +"[[#This Row],[Column1]:[Column2]]");
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[@[Column1]:[Column2]]", "Value for edit in cell after Table[[#This Row],[Column1]:[Column2]] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[[#This Row],[Column1]:[Column2]]", "Formula in cell after Table[[#This Row],[Column1]:[Column2]] is typed");
+
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(101, 45);
+		resCell.setValue("=" + tableName +"[@[Column1]]");
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[@Column1]", "Value for edit in cell after Table[@[Column1]] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[[#This Row],[Column1]]", "Formula in cell after Table[@[Column1]] is typed");
+
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(101, 60);
+		resCell.setValue("=" + tableName +"[[#Headers],[Column1]]");
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[[#Headers],[Column1]]", "Value for edit in cell after Table[[#Headers],[Column1]] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[[#Headers],[Column1]]", "Formula in cell after Table[[#Headers],[Column1]] is typed");
+
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(101, 65);
+		resCell.setValue("=" + tableName +"[[#Headers],[Column1]:[Column2]]");
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[[#Headers],[Column1]:[Column2]]", "Value for edit in cell after Table[[#Headers],[Column1]:[Column3]] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[[#Headers],[Column1]:[Column2]]", "Formula in cell after Table[[#Headers],[Column1]:[Column2]] is typed");
+
+		let textVal = "newVal";
+		// change the value inside the table
+		// we should recalculate only the values ​​that refer to this column
+		ws.getRange2("A100").setValue(textVal);
+		ws.checkChangeTablesContent(ws.getRange2("A100").bbox);
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(101, 20);
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[@Column1]", "Value for edit in cell after textVal inside the table is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[[#This Row],[Column1]]", "Formula in cell after textVal inside the table is typed");
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange2("A100");
+		assert.strictEqual(resCell.getValueForEdit(), textVal, "Value for edit in cell after textVal inside the table is typed");
+		assert.strictEqual(resCell.getFormula(), "", "Formula in cell after textVal inside the table is typed");
+
+		ws.getRange2("A1:Z11000").cleanAll();
+		ws.deleteTablePart(0);
+	});
 
 	/* for bug 77989 */
 	QUnit.test('Table column names changes tests', function (assert) {
@@ -4286,13 +4405,6 @@ $(function () {
 		// value for edit and formula in cell check
 		resCell = ws.getRange4(101, 20);
 		resCell.setValue("=" + tableName +"[@Column1]");
-		
-		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[@Column1]", "Value for edit in cell after Table[@Column1] is typed");
-		assert.strictEqual(resCell.getFormula(), tableName + "[[#This Row],[Column1]]", "Formula in cell after Table[@Column1] is typed");
-
-		// value for edit and formula in cell check
-		resCell = ws.getRange4(101, 20);
-		// resCell.setValue("=" + tableName +"[@Column1]");
 		
 		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[@Column1]", "Value for edit in cell after Table[@Column1] is typed");
 		assert.strictEqual(resCell.getFormula(), tableName + "[[#This Row],[Column1]]", "Formula in cell after Table[@Column1] is typed");

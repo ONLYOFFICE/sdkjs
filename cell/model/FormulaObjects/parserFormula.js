@@ -11426,6 +11426,7 @@ function parserFormula( formula, parent, _ws ) {
 			ref = this.outStack[i];
 
 			if (ref.type === cElementType.table) {
+				// analyze table structure - if its full link, write defnamelistener
 				const isFullTableLink = ref.reservedColumnIndex === AscCommon.FormulaTablePartInfo.all;
 				const refAreaRange = ref.area && ref.area.getRange && ref.area.getRange();
 				
