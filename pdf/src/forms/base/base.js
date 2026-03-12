@@ -3587,6 +3587,9 @@
 	CBaseField.prototype.hitToHandles = function() {};
 	CBaseField.prototype.hitInBoundingRect = function() {};
 	CBaseField.prototype.IsEditFieldShape = function() {};
+	CBaseField.prototype.GetAbsolutePage = function() {
+		return this.GetPage();
+	};
 
 	window["AscPDF"].ALIGN_TYPE         = ALIGN_TYPE;
 	window["AscPDF"].VALID_ROTATIONS    = VALID_ROTATIONS;

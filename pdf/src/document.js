@@ -1645,14 +1645,14 @@ var CPresentation = CPresentation || function(){};
         }
 
         // координаты клика на странице в MM
-        var pageObject = oViewer.getPageByCoords2(x, y);
-        if (!pageObject)
+        let pageObjectMM = oViewer.getPageByCoords2(x, y);
+        if (!pageObjectMM)
             return false;
 
-        let nPage       = pageObject.index;
+        let nPage       = pageObjectMM.index;
         let oPageInfo   = this.GetPageInfo(nPage);
-        let X           = pageObject.x;
-        let Y           = pageObject.y;
+        let X           = pageObjectMM.x;
+        let Y           = pageObjectMM.y;
         
         if (oPageInfo.IsDeleteLock()) {
             if (oCurObject && oCurObject.GetPage() == nPage) {
@@ -1744,8 +1744,11 @@ var CPresentation = CPresentation || function(){};
                 oMouseDownObject.onMouseDown(x, y, e, nPage);
 
                 // if no text select, then do mousedown in file
-                if ((IsOnRedact || IsOnLink) && null == oController.getTargetTextObject()) {
-                    this.BlurActiveObject();
+                if (null == oController.getTargetTextObject()) {
+					if ((IsOnRedact || IsOnLink)) {
+						this.BlurActiveObject();
+					}
+                    
                     oViewer.onMouseDownEpsilon(e);
                     return;
 				}
@@ -2412,12 +2415,25 @@ var CPresentation = CPresentation || function(){};
             return;
         }
 
+        let pageObjectMM = oViewer.getPageByCoords2(x, y);
+        if (!pageObjectMM)
+            return false;
+		
+		let oFile		= this.GetFile();
+        let oController	= this.GetController();
+
+		let isPageTextSelected = false;
+		if (oViewer.isMouseDown && oViewer.canSelectPageText()) {
+			oViewer.setCursorType("default");
+			oFile.onMouseMove(pageObjectMM.index, pageObjectMM.x, pageObjectMM.y);
+			isPageTextSelected = true;
+
+			oController.resetSelection();
+		}
+
         this.Api.sync_MouseMoveStartCallback();
 
-        let oController     = this.GetController();
-        let oDrDoc          = this.GetDrawingDocument();
-        
-        let IsOnDrawer      = this.Api.isDrawInkMode();
+		let IsOnDrawer      = this.Api.isDrawInkMode();
         let IsOnEraser      = this.Api.isEraseInkMode();
         let IsOnAddAddShape = this.Api.isStartAddShape;
         let IsPageHighlight = this.Api.IsCommentMarker();
@@ -2432,19 +2448,16 @@ var CPresentation = CPresentation || function(){};
             oMouseMoveDrawing = null;
         }
 
-        // координаты клика на странице в MM
-        let pageObjectMM = oViewer.getPageByCoords2(x, y);
-        if (!pageObjectMM)
-            return false;
         let pageObjectOrig = oViewer.getPageByCoords(x, y);
         if (!pageObjectOrig)
             return false;
 
         let X = pageObjectMM.x;
         let Y = pageObjectMM.y;
+		let nPage = pageObjectMM.index;
 
-        this.CollaborativeEditing.Check_ForeignCursorsLabels(X, Y, pageObjectMM.index);
-        this.CollaborativeEditing.Check_ForeignSelectedObjectsLabels(pageObjectOrig.x, pageObjectOrig.y, pageObjectMM.index);
+        this.CollaborativeEditing.Check_ForeignCursorsLabels(X, Y, nPage);
+        this.CollaborativeEditing.Check_ForeignSelectedObjectsLabels(pageObjectOrig.x, pageObjectOrig.y, nPage);
 
         // при зажатой мышке
         if (oViewer.isMouseDown)
@@ -2459,18 +2472,18 @@ var CPresentation = CPresentation || function(){};
             }
             // рисуем ink линию или добавляем фигугу
             else if (IsOnDrawer || IsOnAddAddShape) {
-                oController.OnMouseMove(e, X, Y, pageObjectMM.index);
+                oController.OnMouseMove(e, X, Y, nPage);
             }
             // обработка mouseMove в полях
             else if (this.activeForm) {
                 if (this.IsEditFieldsMode()) {
-                    oController.OnMouseMove(e, X, Y, pageObjectMM.index);
+                    oController.OnMouseMove(e, X, Y, nPage);
                     return;
                 }
 
                 // селект текста внутри формы с редаткриуемым текстом
                 if ([AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(this.activeForm.GetType())) {
-                    oController.OnMouseMove(e, X, Y, pageObjectMM.index);
+                    oController.OnMouseMove(e, X, Y, nPage);
                 }
                 // отрисовка нажатого/отжатого состояния кнопок/чекбоксов при входе выходе мыши в форму
                 else if ([AscPDF.FIELD_TYPES.button, AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(this.activeForm.GetType())) {
@@ -2497,22 +2510,188 @@ var CPresentation = CPresentation || function(){};
                     }
                 }
 
-                oController.OnMouseMove(e, X, Y, pageObjectMM.index);
+                oController.OnMouseMove(e, X, Y, nPage);
             }
             else if (this.activeDrawing) {
-                oController.OnMouseMove(e, X, Y, pageObjectMM.index);
-                // если тянем за бордер, то не обновляем оверлей, т.к. рисуется внутри oController.OnMouseMove(e, X, Y, pageObjectMM.index);
-                if (this.activeDrawing.IsGraphicFrame() && this.activeDrawing.graphicObject.Selection.Type2 === table_Selection_Border) {
-                    return;
-                }
+				let nearPos = oFile.getNearestPos(nPage, pageObjectMM.x, pageObjectMM.y);
+
+				// on edit can select text only in current drawings
+				if (Asc.editor.canEdit()) {
+					oController.OnMouseMove(e, X, Y, nPage);
+
+					// если тянем за бордер, то не обновляем оверлей, т.к. рисуется внутри oController.OnMouseMove(e, X, Y, nPage);
+					if (this.activeDrawing.IsGraphicFrame() && this.activeDrawing.graphicObject.Selection.Type2 === table_Selection_Border) {
+						return;
+					}
+				}
+				else {
+					let oPageInfo = this.GetPageInfo(nPage);
+					let aDrawings = oPageInfo.drawings;
+					let nActiveIdx = aDrawings.indexOf(this.activeDrawing);
+
+					// if mouse is far from page text
+					if (nearPos.Line === -1 && nearPos.Glyph === -1) {
+						oFile.removeSelection();
+
+						oController.skipResetSelection = true;
+
+						let lastClickPageMM = oViewer.getPageByCoords2(oViewer.mouseDownCoords.X, oViewer.mouseDownCoords.Y);
+						if (!lastClickPageMM)
+							return false;
+
+						// if drawing under mouse is active drawing then use selection as default
+						if (oMouseMoveDrawing == this.activeDrawing) {
+							oController.curState = oController.nullState;
+
+							oController.selectedObjects.forEach(function(drawing) {
+								drawing.selected = false;
+							});
+							oController.selectedObjects.length = 0;
+
+							oController.selectObject(this.activeDrawing, nPage);
+							oController.OnMouseDown(oViewer.mouseDownCoords.e, lastClickPageMM.x, lastClickPageMM.y, lastClickPageMM.index);
+							oController.OnMouseMove(e, X, Y, nPage);
+						}
+						else if (oMouseMoveDrawing) {
+							// don't select text in drawing until mouse not in text
+							let oCursorInfo = oController.getGraphicInfoUnderCursor(nPage, X, Y);
+							let isTextHit = oCursorInfo.cursorType === "text";
+
+							// select text by drawings order
+							let nMoveIdx = aDrawings.indexOf(oMouseMoveDrawing);
+							let oDocContent = this.activeDrawing.GetDocContent();
+							if (nActiveIdx < nMoveIdx) {
+								oDocContent.MoveCursorToEndPos(true);
+							}
+							else {
+								oDocContent.MoveCursorToStartPos(true);
+							}
+
+							// reset selection
+							oController.curState = oController.nullState;
+							oController.selectedObjects.forEach(function(drawing) {
+								drawing.selected = false;
+							});
+							oController.selectedObjects.length = 0;
+
+							// add to selection again
+							let nStartIdx = Math.min(nActiveIdx, nMoveIdx);
+							let nEndIdx = Math.max(nActiveIdx, nMoveIdx);
+
+							for (let i = nStartIdx; i <= nEndIdx; i++) {
+								if (!aDrawings[i].selected) {
+									// no select drawing under cursor without text selection
+									if (isTextHit || aDrawings[i] !== oMouseMoveDrawing) {
+										oController.selectObject(aDrawings[i], nPage);
+									}
+								}
+
+								// select all text in drawings between active drawing and under mouse
+								if (aDrawings[i] !== this.activeDrawing && (isTextHit || aDrawings[i] !== oMouseMoveDrawing)) {
+									aDrawings[i].SelectAllContent();
+								}
+							}
+
+							if (isTextHit) {
+								oMouseMoveDrawing.onMouseDown(x, y, e);
+
+								// text selection by drawings order
+								let oDocContent = oMouseMoveDrawing.GetDocContent();
+								if (nMoveIdx < nActiveIdx) {
+									oDocContent.MoveCursorToEndPos();
+									oDocContent.StartSelectionFromCurPos();
+								}
+								else {
+									oDocContent.MoveCursorToStartPos();
+									oDocContent.StartSelectionFromCurPos();
+								}
+
+								oController.OnMouseMove(e, X, Y, nPage);
+							}
+						}
+
+						oController.skipResetSelection = false;
+					}
+					// select from shape to file text
+					else if (nearPos.Line !== -1 && nearPos.Glyph !== -1) {
+						oFile.selectAll(nPage, true);
+						oFile.onMouseMove(nPage, X, Y);
+						
+						for (let i = 0; i <= nActiveIdx; i++) {
+							if (!aDrawings[i].selected) {
+								oController.selectObject(aDrawings[i], nPage);
+							}
+
+							if (aDrawings[i] != this.activeDrawing) {
+								aDrawings[i].SelectAllContent();
+							}
+							else {
+								this.activeDrawing.GetDocContent().MoveCursorToStartPos(true);
+							}
+						}
+					}
+				}
             }
+			// select text from file to drawing in view mode
+			else if (isPageTextSelected && !Asc.editor.canEdit() && oMouseMoveDrawing) {
+				// don't select text in drawing until mouse not in text
+				let oCursorInfo = oController.getGraphicInfoUnderCursor(nPage, X, Y);
+				let isTextHit = oCursorInfo.cursorType === "text";
+				if (!isTextHit) {
+					return false;
+				}
+
+				let lastClickPageMM = oViewer.getPageByCoords2(oViewer.mouseDownCoords.X, oViewer.mouseDownCoords.Y);
+				if (!lastClickPageMM)
+					return false;
+
+				oFile.selectAll(nPage);
+				oFile.setSelectionStartPos(nPage, lastClickPageMM.x, lastClickPageMM.y);
+				
+				let oPageInfo = this.GetPageInfo(nPage);
+				let aDrawings = oPageInfo.drawings;
+				let nMoveIdx = aDrawings.indexOf(oMouseMoveDrawing);
+
+				oController.skipResetSelection = true;
+				oController.skipSetActiveObject = true;
+
+				for (let i = 0; i <= nMoveIdx; i++) {
+					if (!aDrawings[i].selected) {
+						aDrawings[i].select(oController, nPage);
+					}
+
+					if (i !== nMoveIdx) {
+						aDrawings[i].SelectAllContent();
+					}
+					else {
+						oMouseMoveDrawing.onMouseDown(x, y, e);
+						// table
+						if (oMouseMoveDrawing.graphicObject) {
+							oMouseMoveDrawing.graphicObject.RemoveSelection();
+							oMouseMoveDrawing.graphicObject.Set_CurCell(oMouseMoveDrawing.graphicObject.GetRow(0).GetCell(0));
+							oMouseMoveDrawing.graphicObject.MoveCursorToStartPos(true);
+							oMouseMoveDrawing.graphicObject.StartSelectionFromCurPos();
+						}
+						else {
+							let oDocContent = aDrawings[i].GetDocContent();
+							oDocContent.MoveCursorToStartPos();
+							oDocContent.StartSelectionFromCurPos();
+						}
+						
+						oController.OnMouseMove(e, X, Y, nPage);
+					}
+				}
+				
+				oController.skipResetSelection = false;
+				oController.skipSetActiveObject = false;
+			}
 
             oViewer.onUpdateOverlay();
         }
         else
         {
             if (IsOnAddAddShape && oController.isPolylineAddition()) {
-                oController.OnMouseMove(e, X, Y, pageObjectMM.index);
+                oController.OnMouseMove(e, X, Y, nPage);
                 return;
             }
 
@@ -8803,6 +8982,10 @@ var CPresentation = CPresentation || function(){};
             oController.resetTrackState();
         }
 
+        let oAcitveDrawing  = this.activeDrawing;
+        let oDocContent     = oAcitveDrawing && oAcitveDrawing.GetDocContent();
+        oDocContent && oDocContent.RemoveSelection();
+		
         this.GetFile().removeSelection();
 
         if (isSelectionUse) {

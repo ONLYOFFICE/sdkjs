@@ -704,6 +704,16 @@
         if (!oGroup)
             oDoc.SetMouseDownObject(this);
     };
+	CPdfDrawingPrototype.prototype.SelectAllContent = function () {
+		if (this.getObjectType() === AscDFH.historyitem_type_GraphicFrame) {
+			this.graphicObject.SelectAll();
+		} else {
+			let content = this.GetDocContent();
+			if (content && !content.IsSelectedAll()) {
+				content.SelectAll();
+			}
+		}
+	};
 
     /////////////////////////////
     /// saving

@@ -67,7 +67,15 @@
         }
 
         if (isRealObject(text_object)) {
-            text_object.updateSelectionState(drawingDocument);
+			if (text_object.IsPdfObject && text_object.IsPdfObject() && this.selectedObjects.length > 0) {
+				this.selectedObjects.forEach(function(text_object) {
+					text_object.updateSelectionState(drawingDocument);
+				});
+			}
+			else {
+            	text_object.updateSelectionState(drawingDocument);
+			}
+
         }
         else if (bNoCheck !== true) {
             drawingDocument.UpdateTargetTransform(null);
@@ -1191,7 +1199,6 @@
             // Обработка выбора объекта (для одиночного объекта или группы)
             if (!group) {
                 if (this.selection.textSelection !== object) {
-                    this.resetSelection(true);
                     this.selectObject(object, pageIndex);
                     this.selection.textSelection = object;
                 } else if (this.checkTargetSelection(object, x, y, object.invertTransformText)) {
@@ -1199,7 +1206,6 @@
                 }
             } else {
                 if (this.selection.groupSelection !== group || group.selection.textSelection !== object) {
-                    this.resetSelection(true);
                     group.selectObject(object, pageIndex);
                     this.selectObject(group, pageIndex);
                     this.selection.groupSelection = group;
@@ -1258,7 +1264,7 @@
     };
     CGraphicObjects.prototype.selectObject = function (object, pageIndex) {
         let oDoc = this.document;
-        if (this.selectedObjects.length == 0 && !oDoc.GetActiveObject()) {
+        if (this.selectedObjects.length == 0 && !oDoc.GetActiveObject() && this.skipSetActiveObject !== true) {
             oDoc.SetMouseDownObject(object);
         }
         object.select(this, pageIndex);
@@ -1301,12 +1307,14 @@
         const oFirstSelected = this.selectedObjects[0];
 
         var i;
+		const isEdit		= Asc.editor.canEdit();
+
         const oTx           = this.selection.textSelection;
-        const oCrop         = this.selection.cropSelection;
+        const oCrop         = isEdit && this.selection.cropSelection;
         const oGm           = this.selection.geometrySelection;
         const oGrp          = this.selection.groupSelection;
-        const oChart        = this.selection.chartSelection;
-        const oWrp          = this.selection.wrapPolygonSelection;
+        const oChart        = isEdit && this.selection.chartSelection;
+        const oWrp          = isEdit && this.selection.wrapPolygonSelection;
 
         if (oCrop) {
             if (this.arrTrackObjects.length === 0) {
@@ -1364,6 +1372,10 @@
                 if (!oTx.isForm()) {
                     let isLineAnnot = oTx.IsAnnot() && oTx.IsLine();
 
+					if (!isEdit && oTx.IsDrawing()) {
+						return;
+					}
+					
                     drawingDocument.DrawTrack(
                         !isLineAnnot ? AscFormat.TYPE_TRACK.TEXT : AscFormat.TYPE_TRACK.SHAPE,
                         oTx.getTransformMatrix(),
@@ -1454,6 +1466,9 @@
                     if (oDrawing.IsForm()) {
                         oDrawing = oDrawing.editShape;
                     }
+					else if (!isEdit && oDrawing.IsDrawing()) {
+						return;
+					}
 
                     let nType = oDrawing.IsAnnot() && oDrawing.IsStamp() ? AscFormat.TYPE_TRACK.ANNOT_STAMP : AscFormat.TYPE_TRACK.SHAPE;
 

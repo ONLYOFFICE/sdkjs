@@ -434,14 +434,6 @@ void main() {\n\
 
 			IsSelection : false
 		}
-
-        let oDoc            = Asc.editor.getPDFDoc();
-        let oAcitveDrawing  = oDoc.activeDrawing;
-        let oDocContent     = oAcitveDrawing && oAcitveDrawing.GetDocContent();
-        oDocContent && oDocContent.RemoveSelection();
-
-        this.cacheSelectionQuads([]);
-        oDoc.TextSelectTrackHandler.Update();
     };
     CFile.prototype.isSelectionUse = function() {
         let oDoc            = Asc.editor.getPDFDoc();
@@ -1039,38 +1031,86 @@ void main() {\n\
         this.onUpdateSelection();
         this.onUpdateOverlay();
     };
-    CFile.prototype.selectAll = function() {
-        this.removeSelection();
+	CFile.prototype.selectAll = function(pageIndex, bRevert) {
+		this.removeSelection();
+
+		const sel = this.Selection;
+		const pagesCount = this.pages.length;
+
+		if (!pagesCount) {
+			this.onUpdateSelection();
+			this.onUpdateOverlay();
+			this.viewer.getPDFDoc().TextSelectTrackHandler.Update();
+			return;
+		}
+
+		const hasPageIndex = Number.isInteger(pageIndex);
+
+		if (hasPageIndex && (pageIndex < 0 || pageIndex >= pagesCount)) {
+			return;
+		}
+
+		const startPage = hasPageIndex ? pageIndex : 0;
+		const endPage = hasPageIndex ? pageIndex : pagesCount - 1;
+
+		const getLastLineIndex = (page) => {
+			let numLine = -1;
+			const stream = this.getPageTextStream(page);
+
+			if (!stream) {
+				return -1;
+			}
+
+			while (stream.pos < stream.size) {
+				numLine++;
+				stream.Skip(8);
+				if (stream.GetChar()) {
+					stream.Skip(8);
+				}
+				stream.Skip(12);
+				stream.Skip(12 * stream.GetLong() - 4);
+			}
+
+			return numLine;
+		};
+
+		const lastLine = getLastLineIndex(endPage);
+		if (lastLine < 0) {
+			return;
+		}
+
+		if (bRevert !== true) {
+			sel.Page1 = startPage;
+			sel.Line1 = 0;
+			sel.Glyph1 = -2;
+
+			sel.Page2 = endPage;
+			sel.Line2 = lastLine;
+			sel.Glyph2 = -1;
+		}
+		else {
+			sel.Page1 = endPage;
+			sel.Line1 = lastLine;
+			sel.Glyph1 = -1;
+
+			sel.Page2 = startPage;
+			sel.Line2 = 0;
+			sel.Glyph2 = -2;
+		}
+
+		sel.IsSelection = true;
+
+		this.onUpdateSelection();
+		this.onUpdateOverlay();
+		this.viewer.getPDFDoc().TextSelectTrackHandler.Update();
+	};
+	CFile.prototype.setSelectionStartPos = function(pageIndex, x, y) {
+        let ret = this.getNearestPos(pageIndex, x, y);
         let sel = this.Selection;
-        
-        let pagesCount = this.pages.length;
-        if (pagesCount)
-        {
-            let _numLine = -1;
-            let stream = this.getPageTextStream(pagesCount - 1);
-            if (!stream) {
-                return;
-            }
-            while (stream.pos < stream.size)
-            {
-                _numLine++;
-                stream.Skip(8);
-                if (stream.GetChar())
-                    stream.Skip(8);
-                stream.Skip(12);
-                // Не объединять - GetLong прочитает нужное только после skip 12
-                stream.Skip(12 * stream.GetLong() - 4);
-            }
 
-            sel.Glyph1 = -2;
-            sel.Page2 = pagesCount - 1;
-            sel.Line2 = _numLine;
-            sel.Glyph2 = -1;
-        }
-
-        this.onUpdateSelection();
-        this.onUpdateOverlay();
-        this.viewer.getPDFDoc().TextSelectTrackHandler.Update();
+        sel.Page1  = pageIndex;
+		sel.Line1  = ret.Line;
+		sel.Glyph1 = ret.Glyph;
     };
     CFile.prototype.cacheSelectionQuads = function(aQuads) {
         this.Selection.quads = aQuads;

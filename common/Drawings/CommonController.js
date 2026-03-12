@@ -6854,6 +6854,10 @@
 				},
 
 				resetSelection: function (noResetContentSelect, bNoCheckChart, bDoNotRedraw, bNoCheckAnim) {
+					if (this.skipResetSelection === true) {
+						return;
+					}
+					
 					if (bNoCheckChart !== true) {
 						this.checkChartTextSelection();
 					}

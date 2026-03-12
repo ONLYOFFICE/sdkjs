@@ -2048,6 +2048,9 @@
 
 		oDoc.RemoveAnnot(this.GetId());
 	};
+	CAnnotationBase.prototype.GetAbsolutePage = function() {
+		return this.GetPage();
+	};
 	
 	CAnnotationBase.prototype.setBDeleted = AscFormat.CGraphicObjectBase.prototype.setBDeleted;
     

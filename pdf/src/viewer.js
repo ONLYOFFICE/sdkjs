@@ -1818,9 +1818,9 @@
 			return this.scheduledRepaintTimer == null && this.isRepaint != true && this.initPaintDone == true && !this.isCMapLoading &&
 				(!Asc.editor.getPDFDoc().CollaborativeEditing.Get_GlobalLock() || Asc.editor.isViewMode);
 		};
-		this.getPageDrawingByMouse = function()
+		this.getPageDrawingByMouse = function(x, y)
 		{
-			var pageObject = this.getPageByCoords2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+			var pageObject = this.getPageByCoords2(x !== undefined ? x : AscCommon.global_mouseEvent.X, y !== undefined ? y : AscCommon.global_mouseEvent.Y);
 			if (!pageObject)
 				return null;
 
@@ -1964,6 +1964,7 @@
 
 			oThis.mouseDownCoords.X = AscCommon.global_mouseEvent.X;
 			oThis.mouseDownCoords.Y = AscCommon.global_mouseEvent.Y;
+			oThis.mouseDownCoords.e = AscCommon.global_mouseEvent;
 
 			oDoc.OnMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, AscCommon.global_mouseEvent);
 		};
@@ -2151,30 +2152,8 @@
 			}
 			else
 			{
-				if (oThis.isMouseDown)
-				{
-					if (oThis.canSelectPageText())
-					{
-						// нажатая мышка - курсор всегда default (так как за eps вышли)
-						oThis.setCursorType("default");
-
-						let pageObjectLogic = oThis.getPageByCoords2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
-						if (!pageObjectLogic) {
-							return false;
-						}
-
-						oThis.file.onMouseMove(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
-					}
-					else
-					{
-						if (false == editor.isEmbedVersion)
-							oDoc.OnMouseMove(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, AscCommon.global_mouseEvent);
-					}
-				}
-				else
-				{
-					oThis.getPDFDoc().OnMouseMove(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, AscCommon.global_mouseEvent);
-				}
+				if (false == editor.isEmbedVersion)
+					oDoc.OnMouseMove(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, AscCommon.global_mouseEvent);
 			}
 			return false;
 		};
@@ -2528,6 +2507,7 @@
 		};
 		
 		this.drawSelection = function(ctx, oDoc, oDrDoc) {
+			let oController = oDoc.GetController();
 			oDrDoc.private_StartDrawSelection(this.overlay);
 
 			ctx.fillStyle = "rgba(51,102,204,255)";
@@ -2539,7 +2519,11 @@
 					oDrDoc.AutoShapesTrack.SetCurrentPage(i, true);
 					ctx.globalAlpha = 0.2;
 					this.file.drawSelection(i, this.overlay, pageCoords.x, pageCoords.y);
-					ctx.fill();
+
+					// means the selection only in file text
+					if (!oController.getTargetTextObject()) {
+						ctx.fill()
+					}
 				}
 			}
 			
@@ -2566,10 +2550,10 @@
 					this.DrawingObjects.drawSelect(nPage);
 				}
 			}
-			else if (oDoc.activeDrawing || (oDoc.activeForm && oDoc.IsEditFieldsMode())) {
-				let oObj = oDoc.activeDrawing || oDoc.activeForm;
-				const nPage = oObj.GetPage();
-				oDrDoc.SetTextSelectionOutline(true);
+			else if (oController.getTargetTextObject() || (oDoc.activeForm && oDoc.IsEditFieldsMode())) {
+				let oObj = oController.getTargetTextObject() || oDoc.activeForm;
+				const nPage = oObj.GetAbsolutePage();
+				oDrDoc.SetTextSelectionOutline(Asc.editor.canEdit());
 				oDrDoc.private_EndDrawSelection();
 				oDrDoc.AutoShapesTrack.PageIndex = nPage;
 				this.DrawingObjects.drawSelect(nPage);
