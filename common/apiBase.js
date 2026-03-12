@@ -6083,12 +6083,15 @@
 		this.groupActionsExecuteCounter = 0;
 		this.groupActionsPr = {};
 		this.groupActionsPr.lockScroll = !!(pr && pr["lockScroll"]);
-		
+
 		if (this.groupActionsPr.lockScroll && !this.isLockScrollToTarget)
 			this.asc_LockScrollToTarget(true);
 		else
 			this.groupActionsPr.lockScroll = false;
-		
+
+		if (!!(pr && pr["keepSelection"]))
+			this._saveGroupActionsState();
+
 		this._onStartGroupActions();
 
 		AscCommon.CollaborativeEditing.Set_GlobalLock(true);
@@ -6145,12 +6148,15 @@
 		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
 		
 		this._onEndGroupActions(false);
-		
+
+		if (this.groupActionsPr.selectionState)
+			this._restoreGroupActionsState();
+
 		if (this.groupActionsPr.lockScroll)
 			this.asc_LockScrollToTarget(false);
-		
+
 		if (!pr || false !== pr["scrollToTarget"])
-			this.scrollToTarget()
+			this.scrollToTarget();
 	};
 	baseEditorsApi.prototype.endGroupActions = function(pr)
 	{
@@ -6162,17 +6168,20 @@
 
 		if (this.groupActionsCounter > 0)
 			return;
-		
+
 		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
 		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
-		
+
 		this._onEndGroupActions(true);
-		
+
+		if (this.groupActionsPr.selectionState)
+			this._restoreGroupActionsState();
+
 		if (this.groupActionsPr.lockScroll)
 			this.asc_LockScrollToTarget(false);
-		
+
 		if (!pr || false !== pr["scrollToTarget"])
-			this.scrollToTarget()
+			this.scrollToTarget();
 	};
 	baseEditorsApi.prototype.isGroupActions = function()
 	{
@@ -6182,6 +6191,12 @@
 	{
 	};
 	baseEditorsApi.prototype._onEndGroupActions = function(isFullEnd)
+	{
+	};
+	baseEditorsApi.prototype._saveGroupActionsState = function()
+	{
+	};
+	baseEditorsApi.prototype._restoreGroupActionsState = function()
 	{
 	};
 	

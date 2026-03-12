@@ -14899,18 +14899,35 @@ background-repeat: no-repeat;\
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument)
 			return;
-		
+
 		let groupChanges = AscCommon.History.getGroupChanges();
 		AscCommon.History.resetGroupChanges();
 		if (groupChanges.length)
 			logicDocument.RecalculateByChanges(groupChanges);
-		
+
 		if (isFullEnd)
 		{
 			logicDocument.UpdateInterface();
 			logicDocument.UpdateSelection();
 			logicDocument.GetSpellCheckManager().TurnOn();
 		}
+	};
+	asc_docs_api.prototype._saveGroupActionsState = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+
+		this.groupActionsPr.selectionState = logicDocument.SaveDocumentState();
+	};
+	asc_docs_api.prototype._restoreGroupActionsState = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || !this.groupActionsPr.selectionState)
+			return;
+
+		logicDocument.LoadDocumentState(this.groupActionsPr.selectionState);
+		this.groupActionsPr.selectionState = null;
 	};
 	
 	asc_docs_api.prototype.getJsApi = function()
