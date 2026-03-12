@@ -9158,10 +9158,14 @@
 	 * @param {EMU} nColOffset - The offset from the nFromCol column to the left part of the shape measured in English measure units.
 	 * @param {number} nFromRow - The number of the row where the beginning of the shape will be placed.
 	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the shape measured in English measure units.
-	 * @returns {ApiShape}
+	 * @returns {ApiShape | null}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/AddShape.js
 	 */
 	ApiWorksheet.prototype.AddShape = function (sType, nWidth, nHeight, oFill, oStroke, nFromCol, nColOffset, nFromRow, nRowOffset) {
+		if (this.worksheet && this.worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		var oShape = AscFormat.builder_CreateShape(sType, nWidth / 36000, nHeight / 36000, oFill.UniFill, oStroke.Ln, null, this.worksheet.workbook.theme, this.worksheet.getDrawingDocument(), false, this.worksheet);
 		private_SetCoords(oShape, this.worksheet, nWidth, nHeight, nFromCol, nColOffset, nFromRow, nRowOffset);
 		return new ApiShape(oShape);
@@ -9179,10 +9183,14 @@
 	 * @param {EMU} nColOffset - The offset from the nFromCol column to the left part of the image measured in English measure units.
 	 * @param {number} nFromRow - The number of the row where the beginning of the image will be placed.
 	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the image measured in English measure units.
-	 * @returns {ApiImage}
+	 * @returns {ApiImage | null}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/AddImage.js
 	 */
 	ApiWorksheet.prototype.AddImage = function (sImageSrc, nWidth, nHeight, nFromCol, nColOffset, nFromRow, nRowOffset) {
+		if (this.worksheet && this.worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		var oImage = AscFormat.DrawingObjectsController.prototype.createImage(sImageSrc, 0, 0, nWidth / 36000, nHeight / 36000);
 		private_SetCoords(oImage, this.worksheet, nWidth, nHeight, nFromCol, nColOffset, nFromRow, nRowOffset);
 		return new ApiImage(oImage);
@@ -9204,10 +9212,14 @@
 	 * @param {number} [nFromRow=0] - The row number where the beginning of the Text Art object will be placed.
 	 * @param {EMU} [nColOffset=0] - The offset from the nFromCol column to the left part of the Text Art object measured in English measure units.
 	 * @param {EMU} [nRowOffset=0] - The offset from the nFromRow row to the upper part of the Text Art object measured in English measure units.
-	 * @returns {ApiDrawing}
+	 * @returns {ApiDrawing | null}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/AddWordArt.js
 	 */
 	ApiWorksheet.prototype.AddWordArt = function (oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight, nFromCol, nFromRow, nColOffset, nRowOffset) {
+		if (this.worksheet && this.worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		oTextPr = oTextPr && oTextPr.TextPr ? oTextPr.TextPr : null;
 		nRotAngle = typeof (nRotAngle) === "number" && nRotAngle > 0 ? nRotAngle : 0;
 		nWidth = typeof (nWidth) === "number" && nWidth > 0 ? nWidth : 1828800;
@@ -9240,10 +9252,14 @@
 	 * @param {EMU} nColOffset - The offset from the nFromCol column to the left part of the OLE object measured in English measure units.
 	 * @param {number} nFromRow - The number of the row where the beginning of the OLE object will be placed.
 	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the OLE object measured in English measure units.
-	 * @returns {ApiOleObject}
+	 * @returns {ApiOleObject | null}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/AddOleObject.js
 	 */
 	ApiWorksheet.prototype.AddOleObject = function (sImageSrc, nWidth, nHeight, sData, sAppId, nFromCol, nColOffset, nFromRow, nRowOffset) {
+		if (this.worksheet && this.worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		if (typeof sImageSrc === "string" && sImageSrc.length > 0 && typeof sData === "string"
 			&& typeof sAppId === "string" && sAppId.length > 0
 			&& AscFormat.isRealNumber(nWidth) && AscFormat.isRealNumber(nHeight)
