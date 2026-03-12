@@ -22472,6 +22472,12 @@
 									} else {
 										var fromFormulaParsed = oFromCell.getFormulaParsed();
 										var formulaArrayRef = fromFormulaParsed.getArrayFormulaRef();
+										
+										let dynamicRef = fromFormulaParsed.getDynamicRef(), isDynamicFirstCellSelected;
+										if (AscCommonExcel.bIsSupportDynamicArrays && dynamicRef && dynamicRef.c1 === oFromCell.nCol && dynamicRef.r1 === oFromCell.nRow) {
+											// only the first cell of dynamic array contain a value, other is "empty" to promote 
+											isDynamicFirstCellSelected = true;
+										}
 
 										var _p_,offset, offsetArray, assemb;
 										if(formulaArrayRef) {
@@ -22490,15 +22496,41 @@
 														_p_ = oFromCell.getFormulaParsed().clone(null, oFromCell, this);
 														_p_.changeOffset(offset);
 
-														var rangeFormulaArray = oCopyCell.ws.getRange3(intersectionTo.r1, intersectionTo.c1, intersectionTo.r2, intersectionTo.c2);
-														rangeFormulaArray.setValue("=" + _p_.assemble(true), function (r) {}, null, intersectionTo);
+														let rangeFormulaArray;
+														// var rangeFormulaArray = oCopyCell.ws.getRange3(intersectionTo.r1, intersectionTo.c1, intersectionTo.r2, intersectionTo.c2);
+														if (!dynamicRef || isDynamicFirstCellSelected) {
+															rangeFormulaArray = oCopyCell.ws.getRange3(intersectionTo.r1, intersectionTo.c1, intersectionTo.r2, intersectionTo.c2);
+															let newRange, cmIndex, beforeSpillRange;
+															if (dynamicRef) {
+																// get new range and set it to the value
+																let dynamicNewR2 = intersectionTo.r2 + (dynamicRef.r2 - dynamicRef.r1),
+																	dynamicNewC2 = intersectionTo.c2 + (dynamicRef.c2 - dynamicRef.c1);
+																newRange = new Asc.Range(intersectionTo.c1, intersectionTo.r1, dynamicNewC2, dynamicNewR2);
+																if (!wsTo.dynamicArrayManager.isAutoExpandBBox(newRange)) {
+																	// cmIndex = fromFormulaParsed.cm;
+																	beforeSpillRange = intersectionTo;
+																	newRange = intersectionTo;
+																} else {
+																	rangeFormulaArray.bbox = newRange;
+																}
 
-														AscCommon.History.Add(AscCommonExcel.g_oUndoRedoArrayFormula,
-															AscCH.historyitem_ArrayFromula_AddFormula, oCopyCell.ws.getId(),
-															new Asc.Range(intersectionTo.c1, intersectionTo.r1, intersectionTo.c2, intersectionTo.r2),
-															new AscCommonExcel.UndoRedoData_ArrayFormula(intersectionTo, "=" + oCopyCell.getFormulaParsed().assemble(true)));
+																rangeFormulaArray.setValue(
+																	"=" + _p_.assemble(true), 
+																	function (r) {}, 
+																	null, 
+																	newRange, 
+																	null, 
+																	{range: newRange, beforeSpillRange: beforeSpillRange});
+															} else {
+																rangeFormulaArray.setValue("=" + _p_.assemble(true), function (r) {}, null, intersectionTo);
+															}
+															
+															AscCommon.History.Add(AscCommonExcel.g_oUndoRedoArrayFormula,
+																AscCH.historyitem_ArrayFromula_AddFormula, oCopyCell.ws.getId(),
+																new Asc.Range(intersectionTo.c1, intersectionTo.r1, intersectionTo.c2, intersectionTo.r2),
+																new AscCommonExcel.UndoRedoData_ArrayFormula(intersectionTo, "=" + oCopyCell.getFormulaParsed().assemble(true)));
+														}
 													}
-
 												}
 											}
 										} else {
