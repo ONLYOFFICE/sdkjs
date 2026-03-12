@@ -106,9 +106,10 @@
 		this.LongActionCallbacksParams = [];
 		this.IsActionRestrictionCurrent  = 0;
 		this.IsActionRestrictionPrev  = null;
-
-		this.groupActionsCounter = 0;
-		this.groupActionsPr      = {};
+		
+		this.groupActionsCounter        = 0;
+		this.groupActionsPr             = {};
+		this.groupActionsExecuteCounter = 0;
 
 		// AutoSave
 		this.autoSaveGap = 0;					// Интервал автосохранения (0 - означает, что автосохранения нет) в милесекундах
@@ -6079,6 +6080,7 @@
 		if (this.groupActionsCounter > 1)
 			return;
 		
+		this.groupActionsExecuteCounter = 0;
 		this.groupActionsPr = {};
 		this.groupActionsPr.lockScroll = !!(pr && pr["lockScroll"]);
 		
@@ -6108,12 +6110,20 @@
 		if (!this.isGroupActions())
 			return;
 		
+		++this.groupActionsExecuteCounter;
+		if (this.groupActionsExecuteCounter > 1)
+			return;
+		
 		AscCommon.CollaborativeEditing.Set_GlobalLock(false);
 		AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
 	};
 	baseEditorsApi.prototype.executeGroupActionsEnd = function()
 	{
 		if (!this.isGroupActions())
+			return;
+		
+		--this.groupActionsExecuteCounter;
+		if (this.groupActionsExecuteCounter > 0)
 			return;
 		
 		AscCommon.CollaborativeEditing.Set_GlobalLock(true);
