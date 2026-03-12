@@ -6425,6 +6425,25 @@
 		let ref = this.Document.GetRef();
 		return ref && ref.SelectThisElement();
 	};
+	/**
+	 * Moves the cursor to the reference of this footnote/endnote in the main document. If this document content is not a footnote/endnote, does nothing.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @since 9.4.0
+	 * @param {boolean} isBefore - Specifies whether to place the cursor before (<em>true</em>) or after (<em>false</em>) the note reference.
+	 * @returns {boolean} Returns <em>true</em> if the cursor was moved to the reference successfully.
+	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/MoveCursorToNoteReference.js
+	 */
+	ApiDocumentContent.prototype.MoveCursorToNoteReference = function(isBefore)
+	{
+		if (!this.IsFootnote() && !this.IsEndnote())
+			return false;
+		
+		isBefore = GetBoolParameter(isBefore, false);
+		
+		let ref = this.Document.GetRef();
+		return ref && ref.MoveCursorToElement(isBefore);
+	};
 
 	/**
 	 * Class representing a custom XML manager, which provides methods to manage custom XML parts in the document.
@@ -29498,32 +29517,33 @@
 
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 	
-	ApiDocumentContent.prototype["GetClassType"]             = ApiDocumentContent.prototype.GetClassType;
-	ApiDocumentContent.prototype["GetInternalId"]            = ApiDocumentContent.prototype.GetInternalId;
-	ApiDocumentContent.prototype["GetElementsCount"]         = ApiDocumentContent.prototype.GetElementsCount;
-	ApiDocumentContent.prototype["GetElement"]               = ApiDocumentContent.prototype.GetElement;
-	ApiDocumentContent.prototype["AddElement"]               = ApiDocumentContent.prototype.AddElement;
-	ApiDocumentContent.prototype["Push"]                     = ApiDocumentContent.prototype.Push;
-	ApiDocumentContent.prototype["RemoveAllElements"]        = ApiDocumentContent.prototype.RemoveAllElements;
-	ApiDocumentContent.prototype["RemoveElement"]            = ApiDocumentContent.prototype.RemoveElement;
-	ApiDocumentContent.prototype["GetRange"]                 = ApiDocumentContent.prototype.GetRange;
-	ApiDocumentContent.prototype["ToJSON"]                   = ApiDocumentContent.prototype.ToJSON;
-	ApiDocumentContent.prototype["GetContent"]               = ApiDocumentContent.prototype.GetContent;
-	ApiDocumentContent.prototype["GetAllDrawingObjects"]     = ApiDocumentContent.prototype.GetAllDrawingObjects;
-	ApiDocumentContent.prototype["GetAllShapes"]             = ApiDocumentContent.prototype.GetAllShapes;
-	ApiDocumentContent.prototype["GetAllImages"]             = ApiDocumentContent.prototype.GetAllImages;
-	ApiDocumentContent.prototype["GetAllCharts"]             = ApiDocumentContent.prototype.GetAllCharts;
-	ApiDocumentContent.prototype["GetAllOleObjects"]         = ApiDocumentContent.prototype.GetAllOleObjects;
-	ApiDocumentContent.prototype["GetAllParagraphs"]         = ApiDocumentContent.prototype.GetAllParagraphs;
-	ApiDocumentContent.prototype["GetAllTables"]             = ApiDocumentContent.prototype.GetAllTables;
-	ApiDocumentContent.prototype["GetText"]                  = ApiDocumentContent.prototype.GetText;
-	ApiDocumentContent.prototype["GetCurrentParagraph"]      = ApiDocumentContent.prototype.GetCurrentParagraph;
-	ApiDocumentContent.prototype["GetCurrentRun"]            = ApiDocumentContent.prototype.GetCurrentRun;
-	ApiDocumentContent.prototype["GetCurrentContentControl"] = ApiDocumentContent.prototype.GetCurrentContentControl;
-	ApiDocumentContent.prototype["GetDocumentVisitor"]       = ApiDocumentContent.prototype.GetDocumentVisitor;
-	ApiDocumentContent.prototype["IsFootnote"]               = ApiDocumentContent.prototype.IsFootnote;
-	ApiDocumentContent.prototype["IsEndnote"]                = ApiDocumentContent.prototype.IsEndnote;
-	ApiDocumentContent.prototype["SelectNoteReference"]      = ApiDocumentContent.prototype.SelectNoteReference;
+	ApiDocumentContent.prototype["GetClassType"]              = ApiDocumentContent.prototype.GetClassType;
+	ApiDocumentContent.prototype["GetInternalId"]             = ApiDocumentContent.prototype.GetInternalId;
+	ApiDocumentContent.prototype["GetElementsCount"]          = ApiDocumentContent.prototype.GetElementsCount;
+	ApiDocumentContent.prototype["GetElement"]                = ApiDocumentContent.prototype.GetElement;
+	ApiDocumentContent.prototype["AddElement"]                = ApiDocumentContent.prototype.AddElement;
+	ApiDocumentContent.prototype["Push"]                      = ApiDocumentContent.prototype.Push;
+	ApiDocumentContent.prototype["RemoveAllElements"]         = ApiDocumentContent.prototype.RemoveAllElements;
+	ApiDocumentContent.prototype["RemoveElement"]             = ApiDocumentContent.prototype.RemoveElement;
+	ApiDocumentContent.prototype["GetRange"]                  = ApiDocumentContent.prototype.GetRange;
+	ApiDocumentContent.prototype["ToJSON"]                    = ApiDocumentContent.prototype.ToJSON;
+	ApiDocumentContent.prototype["GetContent"]                = ApiDocumentContent.prototype.GetContent;
+	ApiDocumentContent.prototype["GetAllDrawingObjects"]      = ApiDocumentContent.prototype.GetAllDrawingObjects;
+	ApiDocumentContent.prototype["GetAllShapes"]              = ApiDocumentContent.prototype.GetAllShapes;
+	ApiDocumentContent.prototype["GetAllImages"]              = ApiDocumentContent.prototype.GetAllImages;
+	ApiDocumentContent.prototype["GetAllCharts"]              = ApiDocumentContent.prototype.GetAllCharts;
+	ApiDocumentContent.prototype["GetAllOleObjects"]          = ApiDocumentContent.prototype.GetAllOleObjects;
+	ApiDocumentContent.prototype["GetAllParagraphs"]          = ApiDocumentContent.prototype.GetAllParagraphs;
+	ApiDocumentContent.prototype["GetAllTables"]              = ApiDocumentContent.prototype.GetAllTables;
+	ApiDocumentContent.prototype["GetText"]                   = ApiDocumentContent.prototype.GetText;
+	ApiDocumentContent.prototype["GetCurrentParagraph"]       = ApiDocumentContent.prototype.GetCurrentParagraph;
+	ApiDocumentContent.prototype["GetCurrentRun"]             = ApiDocumentContent.prototype.GetCurrentRun;
+	ApiDocumentContent.prototype["GetCurrentContentControl"]  = ApiDocumentContent.prototype.GetCurrentContentControl;
+	ApiDocumentContent.prototype["GetDocumentVisitor"]        = ApiDocumentContent.prototype.GetDocumentVisitor;
+	ApiDocumentContent.prototype["IsFootnote"]                = ApiDocumentContent.prototype.IsFootnote;
+	ApiDocumentContent.prototype["IsEndnote"]                 = ApiDocumentContent.prototype.IsEndnote;
+	ApiDocumentContent.prototype["SelectNoteReference"]       = ApiDocumentContent.prototype.SelectNoteReference;
+	ApiDocumentContent.prototype["MoveCursorToNoteReference"] = ApiDocumentContent.prototype.MoveCursorToNoteReference;
 
 	ApiRange.prototype["GetClassType"]               = ApiRange.prototype.GetClassType;
 	ApiRange.prototype["GetParagraph"]               = ApiRange.prototype.GetParagraph;
