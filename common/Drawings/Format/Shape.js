@@ -2831,7 +2831,10 @@
 			let form = this.isForm && this.isForm() ? this.getInnerForm() : null;
 			if (form && !form.CanPlaceCursorInside())
 				return false;
-			
+
+			if (this.isSlideImagePlaceholder()) {
+				return false;
+			}
 			return this.superclass.prototype.canEditText.call(this);
 		};
 		CShape.prototype.canEditTextInSmartArt = function () {
@@ -5288,6 +5291,10 @@
 				return false;
 			}
 
+			if (this.isSlideImagePlaceholder()) {
+				return false;
+			}
+
 			var bForceWord = ((this.isEmptyPlaceholder && this.isEmptyPlaceholder()) || (this.isPlaceholder && this.isPlaceholder() && oController && (AscFormat.getTargetTextObject(oController) === this)));
 			if (bForceWord) {
 				if (this.hitInTextRectWord(x, y)) {
@@ -5552,23 +5559,25 @@
 				if (parent instanceof AscCommonSlide.CNotesMaster) {
 					slideObject = presentation.slideMasters[0];
 				} else if (parent instanceof AscCommonSlide.CNotes) {
-					slideObject;
+					slideObject = parent.slide;
 				}
+				if (slideObject) {
+					const widthScale = this.extX / presentation.GetWidthMM();
+					const heightScale = this.extY / presentation.GetHeightMM();
+					const m = new AscCommon.CMatrix();
+					m.CopyFrom(_transform);
+					m.Scale(widthScale, heightScale);
+					m.tx /= widthScale;
+					m.ty /= heightScale;
+					graphics.SetBaseTransform(m);
+					graphics.reset();
+					graphics.isSlidePaceholder = true;
+					slideObject.draw(graphics, 0);
+					graphics.isSlidePaceholder = false;
 
-
-				const widthScale = this.extX / presentation.GetWidthMM();
-				const heightScale = this.extY / presentation.GetHeightMM();
-				const m = new AscCommon.CMatrix();
-				m.CopyFrom(_transform);
-				m.Scale(widthScale, heightScale);
-				m.tx /= widthScale;
-				m.ty /= heightScale;
-				graphics.SetBaseTransform(m);
-				graphics.reset();
-				// graphics.transform3(_transform);
-				slideObject.draw(graphics, 0);
-				graphics.ResetBaseTransform();
-				graphics.reset();
+					graphics.ResetBaseTransform();
+					graphics.reset();
+				}
 			}
 		};
 		CShape.prototype.isSlideImagePlaceholder = function() {
@@ -5802,10 +5811,11 @@
 				var drawingObjects = this.getDrawingObjectsController();
 				if (typeof editor !== "undefined" && editor && graphics.m_oContext !== undefined && graphics.m_oContext !== null && !graphics.isTrack() && (Asc.editor.isPdfEditor() || !drawingObjects || AscFormat.getTargetTextObject(drawingObjects) !== this)) {
 					var angle = transform.GetRotation();
-					if (AscFormat.fApproxEqual(angle, 0.0, 0.0) ||
+					if (!graphics.isSlidePaceholder &&
+						(AscFormat.fApproxEqual(angle, 0.0, 0.0) ||
 						AscFormat.fApproxEqual(angle, 90.0, 0.0) ||
 						AscFormat.fApproxEqual(angle, 180.0, 0.0) ||
-						AscFormat.fApproxEqual(angle, 270.0, 0.0)) {
+						AscFormat.fApproxEqual(angle, 270.0, 0.0))) {
 						graphics.transform3(transform, false);
 						var tr = graphics.m_oFullTransform;
 						graphics.SetIntegerGrid(true);
