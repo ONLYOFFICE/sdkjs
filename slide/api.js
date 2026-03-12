@@ -4247,7 +4247,12 @@ background-repeat: no-repeat;\
 				{
 					if(!oBorder || !oBorder.Color)
 						return;
-					oBorder.Unifill =  AscFormat.CreateUnifillFromAscColor(oBorder.Color, 0);
+					if(oBorder.Value === AscWord.BorderType.none || oBorder.Value === AscWord.BorderType.nil)
+					{
+						oBorder.Unifill = AscFormat.CreateNoFillUniFill();
+						return;
+					}
+					oBorder.Unifill = AscFormat.CreateUnifillFromAscColor(oBorder.Color, 0);
 				}
 				fCheckBorder(oBorders.Left);
 				fCheckBorder(oBorders.Top);
