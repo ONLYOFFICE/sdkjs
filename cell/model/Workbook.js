@@ -22503,8 +22503,10 @@
 															let newRange, cmIndex, beforeSpillRange;
 															if (dynamicRef) {
 																// get new range and set it to the value
-																let dynamicNewR2 = intersectionTo.r2 + (dynamicRef.r2 - dynamicRef.r1),
-																	dynamicNewC2 = intersectionTo.c2 + (dynamicRef.c2 - dynamicRef.c1);
+																// dynamic ref can change after setValue, through the loop
+																// so we should use ArrayRef instead because it's immutable when we setting value
+																let dynamicNewR2 = intersectionTo.r2 + (formulaArrayRef.r2 - formulaArrayRef.r1),
+																	dynamicNewC2 = intersectionTo.c2 + (formulaArrayRef.c2 - formulaArrayRef.c1);
 																newRange = new Asc.Range(intersectionTo.c1, intersectionTo.r1, dynamicNewC2, dynamicNewR2);
 																if (!wsTo.dynamicArrayManager.isAutoExpandBBox(newRange)) {
 																	// cmIndex = fromFormulaParsed.cm;
