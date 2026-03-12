@@ -184,15 +184,9 @@ MasterSlide.prototype.recalculateBackground = function() {
     var _layout = null;
     var _master = this;
     var _theme = this.Theme;
-    if (this.cSld.Bg != null) {
-        if (null != this.cSld.Bg.bgPr)
-            _back_fill = this.cSld.Bg.bgPr.Fill;
-        else if (this.cSld.Bg.bgRef != null) {
-            this.cSld.Bg.bgRef.Color.Calculate(_theme, this, _layout, _master, RGBA);
-            RGBA = this.cSld.Bg.bgRef.Color.RGBA;
-            _back_fill = _theme.themeElements.fmtScheme.GetFillStyle(this.cSld.Bg.bgRef.idx, this.cSld.Bg.bgRef.Color);
-        }
-    }
+	const ret = this.cSld.recalculateBackground(_theme, this, _layout, _master, RGBA);
+	_back_fill = ret.backFill;
+	RGBA = ret.RGBA || RGBA;
     if (_back_fill != null)
         _back_fill.calculate(_theme, this, _layout, _master, RGBA);
 

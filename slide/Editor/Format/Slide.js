@@ -841,70 +841,29 @@ AscFormat.InitClass(Slide, AscCommonSlide.SlideBase, AscDFH.historyitem_type_Sli
         this.cachedImage = null;
     };
 
-    Slide.prototype.recalculateBackground = function()
-    {
-        var _back_fill = null;
-        var RGBA = {R:0, G:0, B:0, A:255};
+Slide.prototype.recalculateBackground = function() {
+	let RGBA = {R: 0, G: 0, B: 0, A: 255};
 
-        var _layout = this.Layout;
-        var _master = _layout.Master;
-        var _theme = _master.Theme;
-        if (this.cSld.Bg != null)
-        {
-            if (null != this.cSld.Bg.bgPr)
-                _back_fill = this.cSld.Bg.bgPr.Fill;
-            else if(this.cSld.Bg.bgRef != null)
-            {
-                this.cSld.Bg.bgRef.Color.Calculate(_theme, this, _layout, _master, RGBA);
-                RGBA = this.cSld.Bg.bgRef.Color.RGBA;
-                _back_fill = _theme.themeElements.fmtScheme.GetFillStyle(this.cSld.Bg.bgRef.idx, this.cSld.Bg.bgRef.Color);
-            }
-        }
-        else
-        {
-            if (_layout != null)
-            {
-                if (_layout.cSld.Bg != null)
-                {
-                    if (null != _layout.cSld.Bg.bgPr)
-                        _back_fill = _layout.cSld.Bg.bgPr.Fill;
-                    else if(_layout.cSld.Bg.bgRef != null)
-                    {
-                        _layout.cSld.Bg.bgRef.Color.Calculate(_theme, this, _layout, _master, RGBA);
-                        RGBA = _layout.cSld.Bg.bgRef.Color.RGBA;
-                        _back_fill = _theme.themeElements.fmtScheme.GetFillStyle(_layout.cSld.Bg.bgRef.idx, _layout.cSld.Bg.bgRef.Color);
-                    }
-                }
-                else if (_master != null)
-                {
-                    if (_master.cSld.Bg != null)
-                    {
-                        if (null != _master.cSld.Bg.bgPr)
-                            _back_fill = _master.cSld.Bg.bgPr.Fill;
-                        else if(_master.cSld.Bg.bgRef != null)
-                        {
-                            _master.cSld.Bg.bgRef.Color.Calculate(_theme, this, _layout, _master, RGBA);
-                            RGBA = _master.cSld.Bg.bgRef.Color.RGBA;
-                            _back_fill = _theme.themeElements.fmtScheme.GetFillStyle(_master.cSld.Bg.bgRef.idx, _master.cSld.Bg.bgRef.Color);
-                        }
-                    }
-                    else
-                    {
-                        _back_fill = new AscFormat.CUniFill();
-                        _back_fill.fill = new AscFormat.CSolidFill();
-                        _back_fill.fill.color =  new AscFormat.CUniColor();
-                        _back_fill.fill.color.color = new AscFormat.CRGBColor();
-                        _back_fill.fill.color.color.RGBA = {R:255, G:255, B:255, A:255};
-                    }
-                }
-            }
-        }
+	const _layout = this.Layout;
+	const _master = _layout.Master;
+	const _theme = _master.Theme;
+	let ret;
+	if (this.cSld.Bg) {
+		ret = this.cSld.recalculateBackground(_theme, this, _layout, _master, RGBA);
+	} else if (_layout && _layout.cSld.Bg) {
+		ret = _layout.cSld.recalculateBackground(_theme, this, _layout, _master, RGBA);
+	} else if (_master && _master.cSld.Bg) {
+		ret = _master.cSld.recalculateBackground(_theme, this, _layout, _master, RGBA);
+	} else {
+		ret = this.getDefaultBackFill();
+	}
+	RGBA = ret.RGBA || RGBA;
+	const backFill = ret.backFill;
+	if (backFill != null)
+		backFill.calculate(_theme, this, _layout, _master, RGBA);
 
-        if (_back_fill != null)
-            _back_fill.calculate(_theme, this, _layout, _master, RGBA);
-
-        this.backgroundFill = _back_fill;
-    };
+	this.backgroundFill = backFill;
+};
 
     Slide.prototype.recalculateSpTree = function()
     {

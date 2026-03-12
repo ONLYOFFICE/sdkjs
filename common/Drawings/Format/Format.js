@@ -11079,6 +11079,17 @@
 				this.bgRef.Read_FromBinary(r);
 			}
 		};
+		CBg.prototype.recalculate = function(theme, slide, layout, master, RGBA) {
+			const ret = {RGBA: null, backFill: null};
+			if (this.bgPr) {
+				ret.backFill = this.bgPr.Fill;
+			} else if (this.bgRef) {
+				this.bgRef.Color.Calculate(theme, slide, layout, master, RGBA);
+				ret.RGBA = this.bgRef.Color.RGBA;
+				ret.backFill = theme.themeElements.fmtScheme.GetFillStyle(this.bgRef.idx, this.bgRef.Color);
+			}
+			return ret;
+		};
 
 		function CSld(parent) {
 			CBaseNoIdObject.call(this);
@@ -11162,6 +11173,13 @@
 			if(bNoHistory) {
 				AscCommon.History.RecalculateData.Update = bOldUpdate;
 			}
+		};
+		CSld.prototype.recalculateBackground = function(theme, slide, layout, master, RGBA) {
+			if (this.Bg) {
+				return this.Bg.recalculate(theme, slide, layout, master, RGBA);
+
+			}
+			return {backFill: null, RGBA: null};
 		};
 
 		function RefreshContentAllFields(oContent) {

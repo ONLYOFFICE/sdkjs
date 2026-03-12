@@ -675,6 +675,14 @@
 		}
 		return false;
 	};
+	SlideBase.prototype.getDefaultBackFill = function() {
+		const ret = {backFill: new AscFormat.CUniFill()};
+		ret.backFill.fill = new AscFormat.CSolidFill();
+		ret.backFill.fill.color =  new AscFormat.CUniColor();
+		ret.backFill.fill.color.color = new AscFormat.CRGBColor();
+		ret.backFill.fill.color.color.RGBA = {R:255, G:255, B:255, A:255};
+		return ret;
+	};
 	SlideBase.prototype.addToSpTreeToPos = function(pos, item) {
 		this.shapeAdd(pos, item);
 	};

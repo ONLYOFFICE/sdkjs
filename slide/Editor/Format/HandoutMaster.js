@@ -321,13 +321,9 @@
 		const master = this;
 		const theme = this.Theme;
 		if (this.cSld.Bg != null) {
-			if (null != this.cSld.Bg.bgPr)
-				backgroundFill = this.cSld.Bg.bgPr.Fill;
-			else if (this.cSld.Bg.bgRef != null) {
-				this.cSld.Bg.bgRef.Color.Calculate(theme, this, layout, master, rgba);
-				rgba = this.cSld.Bg.bgRef.Color.RGBA;
-				backgroundFill = theme.themeElements.fmtScheme.GetFillStyle(this.cSld.Bg.bgRef.idx, this.cSld.Bg.bgRef.Color);
-			}
+			const ret = this.cSld.recalculateBackground(theme, this, layout, master, rgba);
+			backgroundFill = ret.backFill;
+			rgba = ret.RGBA || rgba;
 		}
 		if (backgroundFill != null)
 			backgroundFill.calculate(theme, this, layout, master, rgba);

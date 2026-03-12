@@ -93,8 +93,9 @@
 					recalculateSlideLayouts: true
 				};
 
-        this.m_oContentChanges = new AscCommon.CContentChanges(); // список изменений(добавление/удаление элементов)
         this.kind = AscFormat.TYPE_KIND.NOTES;
+
+				this.setSlideSize(this.presentation.GetNotesWidthMM(), this.presentation.GetNotesHeightMM());
 
         this.Lock = new AscCommon.CLock();
         this.graphicObjects = new AscFormat.DrawingObjectsController(this);
@@ -106,21 +107,6 @@
 			this.showLock = new PropLocker(this.Id);
     }
     AscFormat.InitClass(CNotes, AscCommonSlide.SlideBase, AscDFH.historyitem_type_Notes);
-
-    CNotes.prototype.Clear_ContentChanges = function()
-    {
-        this.m_oContentChanges.Clear();
-    };
-
-    CNotes.prototype.Add_ContentChanges = function(Changes)
-    {
-        this.m_oContentChanges.Add( Changes );
-    };
-
-    CNotes.prototype.Refresh_ContentChanges = function()
-    {
-        this.m_oContentChanges.Refresh();
-    };
     CNotes.prototype.setClMapOverride = function(pr){
         History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_NotesSetClrMap, this.clrMap, pr));
         this.clrMap = pr;
@@ -136,30 +122,12 @@
         this.showMasterSp = pr;
     };
 
-    CNotes.prototype.addToSpTreeToPos = function(pos, obj){
-        var _pos = Math.max(0, Math.min(pos, this.cSld.spTree.length));
-        History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_NotesAddToSpTree, _pos, [obj], true));
-        this.cSld.spTree.splice(_pos, 0, obj);
-        obj.setParent2(this);
-    };
-
-    CNotes.prototype.removeFromSpTreeByPos = function(pos){
-        if(pos > -1 && pos < this.cSld.spTree.length){
-            History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_NotesRemoveFromTree, pos, this.cSld.spTree.splice(pos, 1), false));
-        }
-    };
-
     CNotes.prototype.removeFromSpTreeById = function(id){
         for(var i = this.cSld.spTree.length - 1; i > -1; --i){
             if(this.cSld.spTree[i].Get_Id() === id){
                 this.removeFromSpTreeByPos(i);
             }
         }
-    };
-
-    CNotes.prototype.changeBackground = function(bg){
-        History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_NotesSetBg, this.cSld.Bg , bg));
-        this.cSld.Bg = bg;
     };
 
 
@@ -229,38 +197,6 @@
         return null;
     };
 
-    CNotes.prototype.recalculate = function(){
-    };
-
-    CNotes.prototype.draw = function(graphics){
-        var aSpTree = this.cSld.spTree;
-        for(var i = 0; i < aSpTree.length; ++i){
-            var sp = aSpTree[i];
-						sp.draw(graphics);
-        }
-    };
-
-
-    CNotes.prototype.getAllFonts = function(fonts)
-    {
-        var i;
-        for(i = 0; i < this.cSld.spTree.length; ++i)
-        {
-            if(typeof  this.cSld.spTree[i].getAllFonts === "function")
-                this.cSld.spTree[i].getAllFonts(fonts);
-        }
-    };
-
-    CNotes.prototype.getTheme = function(){
-        return this.Master && this.Master.getTheme() || null;
-    };
-
-
-    CNotes.prototype.getParentObjects = function()
-    {
-        return {master: this.Master, layout: null, slide: null};
-    };
-
     CNotes.prototype.Refresh_RecalcData = function(){
 
     };
@@ -307,15 +243,6 @@
         return copy;
     };
 
-
-    CNotes.prototype.isEmptyBody = function(){
-        var oBodyShape = this.getBodyShape();
-        if(!oBodyShape){
-            return true;
-        }
-        return oBodyShape.isEmptyPlaceholder();
-    };
-
 		//todo think about it
     CNotes.prototype.showDrawingObjects = function(){
         var oPresentation = editor.WordControl.m_oLogicDocument;
@@ -327,16 +254,6 @@
             }
         }
     };
-
-    CNotes.prototype.getDrawingsForController = function()
-    {
-        var _ret = [];
-        var oBodyShape = this.getBodyShape();
-        if(oBodyShape && oBodyShape.getObjectType() === AscDFH.historyitem_type_Shape){
-            _ret.push(oBodyShape);
-        }
-        return _ret;
-    };
     CNotes.prototype.isViewerMode = function()
     {
         return editor.WordControl.m_oLogicDocument.IsViewMode();
@@ -346,38 +263,154 @@
         return editor.WordControl.m_oDrawingDocument.GetMMPerDot(pix);
     };
 
-
-    CNotes.prototype.Clear_ContentChanges = function()
-    {
-    };
-
-    CNotes.prototype.Add_ContentChanges = function(Changes)
-    {
-    };
-
-    CNotes.prototype.Refresh_ContentChanges = function()
-    {
-    };
-    CNotes.prototype.getColorMap = function()
-    {
-        if(this.Master)
-        {
-            if(this.Master.clrMap)
-            {
-                return this.Master.clrMap;
-            }
-        }
-        return AscFormat.GetDefaultColorMap();
-    };
-    CNotes.prototype.IsUseInDocument = function() {
-        if(this.slide){
-            return this.slide.IsUseInDocument();
-        }
-        return false;
-    };
 	CNotes.prototype.drawViewPrMarks = function(oGraphics) {
 		if(oGraphics.isSupportTextDraw && !oGraphics.isSupportTextDraw()) return;
 		return AscCommonSlide.Slide.prototype.drawViewPrMarks.call(this, oGraphics);
+	};
+	CNotes.prototype.getDrawingsForController = function() {
+		return this.cSld.spTree;
+	};
+	CNotes.prototype.getTheme = function() {
+		return this.Master && this.Master.getTheme() || null;
+	};
+	CNotes.prototype.getColorMap = function() {
+		if(this.Master)
+		{
+			if(this.Master.clrMap)
+			{
+				return this.Master.clrMap;
+			}
+		}
+		return AscFormat.GetDefaultColorMap();
+	};
+	CNotes.prototype.recalculateBackground = function() {
+		let RGBA = {R: 0, G: 0, B: 0, A: 255};
+
+		const _master = this.Master;
+		const _theme = _master.Theme;
+		let ret;
+		if (this && this.cSld.Bg) {
+			ret = this.cSld.recalculateBackground(_theme, this, null, _master, RGBA);
+		} else if (_master && _master.cSld.Bg) {
+			ret = _master.cSld.recalculateBackground(_theme, this, null, _master, RGBA);
+		} else {
+			ret = this.getDefaultBackFill();
+		}
+		RGBA = ret.RGBA || RGBA;
+		const backFill = ret.backFill;
+		if (backFill != null)
+			backFill.calculate(_theme, this, this, _master, RGBA);
+
+		this.backgroundFill = backFill;
+	};
+	CNotes.prototype.getAllFonts = function(fonts) {
+		var i;
+		for(i = 0; i < this.cSld.spTree.length; ++i)
+		{
+			if(typeof  this.cSld.spTree[i].getAllFonts === "function")
+				this.cSld.spTree[i].getAllFonts(fonts);
+		}
+	};
+	CNotes.prototype.needMasterSpDraw = function() {
+		return this.showMasterSp;
+	};
+	CNotes.prototype.createFontMap = function(oFontsMap, oCheckedMap, isNoPh) {
+		if (oCheckedMap[this.Get_Id()]) {
+			return;
+		}
+		var aSpTree = this.cSld.spTree;
+		var nSp, nSpCount = aSpTree.length;
+		for(nSp = 0; nSp < nSpCount; ++nSp) {
+			aSpTree[nSp].createFontMap(oFontsMap);
+		}
+		if(this.needMasterSpDraw()) {
+			this.Master.createFontMap(oFontsMap, oCheckedMap, true);
+		}
+		oCheckedMap[this.Get_Id()] = this;
+	};
+	CNotes.prototype.recalculate = function() {
+		if(!this.Master) {
+			return;
+		}
+		this.Master.recalculate();
+		if(this.recalcInfo.recalculateBackground) {
+			this.recalculateBackground();
+			this.recalcInfo.recalculateBackground = false;
+		}
+		if(this.recalcInfo.recalculateSpTree) {
+			for(let i = 0; i < this.cSld.spTree.length; ++i)
+				this.cSld.spTree[i].recalculate();
+
+			this.recalcInfo.recalculateSpTree = false;
+		}
+		//todo cachedImage
+		this.cachedImage = null;
+	};
+	CNotes.prototype.checkSlideColorScheme = function() {
+		this.recalcInfo.recalculateSpTree = true;
+		this.recalcInfo.recalculateBackground = true;
+		this.cSld.forEachSp(function(oSp) {
+			oSp.handleUpdateFill();
+			oSp.handleUpdateLn();
+		});
+	};
+	//todo
+	CNotes.prototype.getParentObjects = function() {
+		return {};
+	};
+	CNotes.prototype.Get_ColorMap = function() {
+		if (this.clrMap) {
+			return this.clrMap;
+		} else if (this.Master && this.Master.clrMap) {
+			return this.Master.clrMap;
+		}
+		return AscFormat.GetDefaultColorMap();
+	};
+	CNotes.prototype.IsUseInDocument = function() {
+		if(this.slide){
+			return this.slide.IsUseInDocument();
+		}
+		return false;
+	};
+	CNotes.prototype.draw = function(graphics, slide) {
+		let i;
+		this.drawBgMaster(graphics);
+		for(i = 0; i < this.cSld.spTree.length; ++i) {
+			let oSp = this.cSld.spTree[i];
+			if(AscCommon.IsHiddenObj(oSp)) {
+				continue;
+			}
+			oSp.draw(graphics);
+		}
+
+		if(slide) {
+			this.drawViewPrMarks(graphics);
+		}
+	};
+	CNotes.prototype.drawBgMaster = function(graphics) {
+		DrawBackground(graphics, this.backgroundFill, this.Width, this.Height);
+		if(this.needMasterSpDraw()) {
+				this.Master.drawNoPlaceholdersShapesOnly(graphics, this);
+		}
+	};
+	CNotes.prototype.shapeRemove = function(pos, count) {
+		if(pos > -1 && pos < this.cSld.spTree.length){
+			History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_NotesRemoveFromTree, pos, this.cSld.spTree.splice(pos, 1), false));
+		}
+	};
+	CNotes.prototype.shapeAdd = function(pos, obj) {
+		var _pos = Math.max(0, Math.min(pos, this.cSld.spTree.length));
+		History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_NotesAddToSpTree, _pos, [obj], true));
+		this.cSld.spTree.splice(_pos, 0, obj);
+		obj.setParent2(this);
+	};
+	CNotes.prototype.setSlideSize = function(w, h) {
+		this.Width = w;
+		this.Height = h;
+	};
+	CNotes.prototype.changeBackground = function(bg) {
+		History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_NotesSetBg, this.cSld.Bg , bg));
+		this.cSld.Bg = bg;
 	};
 
 

@@ -197,13 +197,9 @@
 		const master = this;
 		const theme = this.Theme;
 		if (this.cSld.Bg != null) {
-			if (null != this.cSld.Bg.bgPr)
-				backgroundFill = this.cSld.Bg.bgPr.Fill;
-			else if (this.cSld.Bg.bgRef != null) {
-				this.cSld.Bg.bgRef.Color.Calculate(theme, this, layout, master, rgba);
-				rgba = this.cSld.Bg.bgRef.Color.RGBA;
-				backgroundFill = theme.themeElements.fmtScheme.GetFillStyle(this.cSld.Bg.bgRef.idx, this.cSld.Bg.bgRef.Color);
-			}
+			const ret = this.cSld.recalculateBackground(theme, this, layout, master, rgba);
+			backgroundFill = ret.backFill;
+			rgba = ret.RGBA || rgba;
 		}
 		if (backgroundFill != null)
 			backgroundFill.calculate(theme, this, layout, master, rgba);
@@ -297,6 +293,27 @@
 		DrawBackground(graphics, this.backgroundFill, this.Width, this.Height);
 		this.cSld.forEachSp(function(oSp) {
 			if (!AscCommon.IsHiddenObj(oSp)) {
+				oSp.draw(graphics);
+			}
+		});
+	};
+	CNotesMaster.prototype.drawNoPlaceholdersShapesOnly = function(graphics, slide) {
+		if(slide) {
+			if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex) {
+				this.lastRecalcSlideIndex = slide.num;
+				this.cSld.refreshAllContentsFields(true);
+			}
+		}
+		else {
+			if(-1 !== this.lastRecalcSlideIndex){
+				this.lastRecalcSlideIndex = -1;
+				this.cSld.refreshAllContentsFields(true);
+
+			}
+		}
+		this.recalculate();
+		this.cSld.forEachSp(function(oSp) {
+			if ( !AscCommon.IsHiddenObj(oSp) && !oSp.isPlaceholder()) {
 				oSp.draw(graphics);
 			}
 		});
