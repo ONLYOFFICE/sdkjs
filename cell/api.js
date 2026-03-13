@@ -3470,6 +3470,8 @@ var editor;
 		// Go to if sent options
 		this.goTo();
 
+		this.updateDarkMode();
+
 		// Меняем тип состояния (на никакое)
 		this.advancedOptionsAction = c_oAscAdvancedOptionsAction.None;
 
