@@ -12356,6 +12356,7 @@
 	};
 	/**
 	 * Returns a Range object that represents the part of the document contained in the specified run.
+	 * The run must be attached to the document before calling this method.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
 	 * @param {Number} Start - Start position index in the current element.
@@ -12365,6 +12366,9 @@
 	 */
 	ApiRun.prototype.GetRange = function(Start, End)
 	{
+		if (!this.Run.IsUseInDocument())
+			throwException("Run must be attached to document before getting its range");
+		
 		let oRange = new ApiRange(this.Run, Start, End);
 		if (oRange.isEmpty) {
 			return null;
