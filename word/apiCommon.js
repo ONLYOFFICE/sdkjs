@@ -3402,6 +3402,170 @@
 		graphics.restore();
 	};
 
+	CSignatureFormProps.prototype.getSignatureImage = function()
+	{
+		switch (this.Mode)
+		{
+			case 0:
+			{
+				if (this.ProcessedCanvas)
+					return this.ProcessedCanvas.toDataURL("image/png");
+
+				if (this.ImageUrl && this.Api)
+				{
+					let _img = this.Api.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(this.ImageUrl)];
+					if (_img && _img.Image)
+					{
+						let nW = _img.Image.naturalWidth || _img.Image.width;
+						let nH = _img.Image.naturalHeight || _img.Image.height;
+						if (nW && nH)
+						{
+							let oCanvas = document.createElement('canvas');
+							oCanvas.width = nW;
+							oCanvas.height = nH;
+							oCanvas.getContext('2d').drawImage(_img.Image, 0, 0);
+							return oCanvas.toDataURL("image/png");
+						}
+					}
+				}
+				return null;
+			}
+			case 1:
+				return this._getDrawImageData();
+			case 2:
+				return this._getTypeImageData();
+		}
+		return null;
+	};
+
+	CSignatureFormProps.prototype.get_Mode = function()
+	{
+		return this.Mode;
+	};
+
+	CSignatureFormProps.prototype.getText = function()
+	{
+		return this.TypeText;
+	};
+
+	CSignatureFormProps.prototype.get_TypeFont = function()
+	{
+		return this.TypeFont;
+	};
+
+	CSignatureFormProps.prototype.get_TypeFontSize = function()
+	{
+		return this.TypeFontSize;
+	};
+
+	CSignatureFormProps.prototype.get_TypeBold = function()
+	{
+		return this.TypeBold;
+	};
+
+	CSignatureFormProps.prototype.get_TypeItalic = function()
+	{
+		return this.TypeItalic;
+	};
+
+	CSignatureFormProps.prototype.serialize = function()
+	{
+		let result = {
+			'mode': this.Mode,
+			'signatureImage': this.getSignatureImage()
+		};
+
+		switch (this.Mode)
+		{
+			case 0:
+			{
+				result['removeBackground'] = this.RemoveBackground;
+				break;
+			}
+			case 1:
+			{
+				result['paths'] = this.DrawPaths;
+				result['lineSize'] = this.LineSize;
+				result['lineColor'] = this.LineColor;
+				break;
+			}
+			case 2:
+			{
+				result['text'] = this.TypeText;
+				result['font'] = this.TypeFont;
+				result['fontSize'] = this.TypeFontSize;
+				result['bold'] = this.TypeBold;
+				result['italic'] = this.TypeItalic;
+				break;
+			}
+		}
+
+		return result;
+	};
+
+	CSignatureFormProps.prototype.deserialize = function(data)
+	{
+		if (!data)
+			return;
+
+		this.Mode = data['mode'] || 0;
+
+		switch (this.Mode)
+		{
+			case 0:
+			{
+				this.RemoveBackground = !!data['removeBackground'];
+				this.ImageUrl = null;
+
+				if (data['signatureImage'] && this.Api)
+				{
+					let _this = this;
+					let t = this.Api;
+					AscCommon.sendImgUrls(t, [data['signatureImage']], function(imgData)
+					{
+						if (imgData && imgData[0] && imgData[0].url !== "error")
+						{
+							let url = AscCommon.g_oDocumentUrls.imagePath2Local(imgData[0].path);
+							t.ImageLoader.LoadImagesWithCallback([AscCommon.getFullImageSrc2(url)], function()
+							{
+								_this.ImageUrl = url;
+								_this.ProcessedCanvas = null;
+								t.sendEvent("asc_onSignatureImageLoaded");
+							});
+						}
+					});
+				}
+				break;
+			}
+			case 1:
+			{
+				if (data['paths'])
+					this.DrawPaths = data['paths'];
+				if (data['lineSize'] !== undefined)
+					this.LineSize = data['lineSize'];
+				if (data['lineColor'] !== undefined)
+					this.LineColor = data['lineColor'];
+				this.UndoStack = [];
+				this.RedoStack = [];
+				break;
+			}
+			case 2:
+			{
+				if (data['text'] !== undefined)
+					this.TypeText = data['text'];
+				if (data['font'] !== undefined)
+					this.TypeFont = data['font'];
+				if (data['fontSize'] !== undefined)
+					this.TypeFontSize = data['fontSize'];
+				if (data['bold'] !== undefined)
+					this.TypeBold = data['bold'];
+				if (data['italic'] !== undefined)
+					this.TypeItalic = data['italic'];
+				break;
+			}
+		}
+	};
+
 	CSignatureFormProps.prototype.getResult = function()
 	{
 		let imageData = null;
@@ -3410,9 +3574,9 @@
 		switch (mode)
 		{
 			case 0:
-				if (this.RemoveBackground && this.ProcessedCanvas)
+				if (this.ProcessedCanvas && (this.RemoveBackground || !this.ImageUrl))
 					imageData = this.ProcessedCanvas.toDataURL("image/png");
-				else
+				else if (this.ImageUrl)
 					imageData = AscCommon.getFullImageSrc2(this.ImageUrl);
 				break;
 			case 1:
@@ -3536,6 +3700,15 @@
 	prot['put_TypeItalic']      = prot.put_TypeItalic;
 	prot['setText']             = prot.setText;
 	prot['clearType']           = prot.clearType;
+	prot['getSignatureImage']   = prot.getSignatureImage;
+	prot['get_Mode']            = prot.get_Mode;
+	prot['getText']             = prot.getText;
+	prot['get_TypeFont']        = prot.get_TypeFont;
+	prot['get_TypeFontSize']    = prot.get_TypeFontSize;
+	prot['get_TypeBold']        = prot.get_TypeBold;
+	prot['get_TypeItalic']      = prot.get_TypeItalic;
+	prot['serialize']           = prot.serialize;
+	prot['deserialize']         = prot.deserialize;
 	prot['getResult']           = prot.getResult;
 
 	window['Asc']['CAscTextToTableProperties']				 = window['Asc'].CAscTextToTableProperties = CAscTextToTableProperties;
