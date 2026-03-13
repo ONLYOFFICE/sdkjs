@@ -2937,7 +2937,7 @@
 				if (isRealObject(parent_objects.master) && isRealObject(parent_objects.master.txStyles)) {
 					var master_ppt_styles;
 					master_style = new CStyle("masterStyle", null, null, null, true);
-					if (parent_objects.master.kind === AscFormat.TYPE_KIND.NOTES_MASTER) {
+					if (parent_objects.master.isNoteMaster()) {
 						master_ppt_styles = parent_objects.master.txStyles;
 					} else {
 						if (this.isPlaceholder() && !(this instanceof AscFormat.CGraphicFrame)) {
@@ -3074,8 +3074,7 @@
 					slide: parent_objects.slide,
 					layout: parent_objects.layout,
 					master: parent_objects.master,
-					presentation: parent_objects.presentation,
-					notes: parent_objects.notes
+					presentation: parent_objects.presentation
 				};
 				return this.compiledStyles[level];
 			}, this, []);
@@ -3361,8 +3360,7 @@
 							this.x = metrics.x + metricExtX / 2 - metricExtY / 2;
 							this.y = metrics.y + metricExtY / 2 - metricExtX / 2;
 						}
-					} else if (typeof AscCommonSlide !== "undefined" && AscCommonSlide
-						&& AscCommonSlide.CNotes && this.parent && this.parent instanceof AscCommonSlide.CNotes) {
+					} else if (this.isSlideNoteShape()) {
 						bNotesShape = true;
 						this.x = 0;
 						this.y = editor.WordControl.m_oLogicDocument.GetHeightMM();
@@ -4184,7 +4182,7 @@
 
 					if (!this.txBody.content2) {
 						var text;
-						if (typeof AscCommonSlide !== "undefined" && AscCommonSlide.CNotes && this.parent instanceof AscCommonSlide.CNotes && this.nvSpPr.nvPr.ph.type === AscFormat.phType_body) {
+						if (this.isSlideNoteShape() && this.nvSpPr.nvPr.ph.type === AscFormat.phType_body) {
 							text = AscCommon.translateManager.getValue("Click to add notes");
 						} else if (this.isObjectInSmartArt()) {
 							const pointContent = this.getSmartArtPointContent();
@@ -5279,7 +5277,7 @@
 
 		CShape.prototype.hitInTextRect = function (x, y) {
 			var oController = this.getDrawingObjectsController && this.getDrawingObjectsController();
-			if (this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) {
+			if (this.isSlideNoteShape()) {
 				return true;
 			}
 
@@ -5806,7 +5804,7 @@
 			if(Asc.editor.presentationViewManager.isMasterPlaceholderShape(this)) {
 				bMasterPh = true;
 			}
-			if (/*(!(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN) || */(!graphics.isSmartArtPreviewDrawer && !graphics.isPdf() && !this.bWordShape && (this.isEmptyPlaceholder() && !this.isObjectInSmartArt() || bMasterPh) && !(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && (graphics.IsNoDrawingEmptyPlaceholder !== true || bMasterPh) && !AscCommon.IsShapeToImageConverter)
+			if (/*(!(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN) || */(!graphics.isSmartArtPreviewDrawer && !graphics.isPdf() && !this.bWordShape && (this.isEmptyPlaceholder() && !this.isObjectInSmartArt() || bMasterPh) && !this.isSlideNoteShape() && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && (graphics.IsNoDrawingEmptyPlaceholder !== true || bMasterPh) && !AscCommon.IsShapeToImageConverter)
 				|| (Asc.editor.isPdfEditor() && !graphics.isPdf() && !graphics.isSmartArtPreviewDrawer && this.IsDrawing && this.IsDrawing() && this.ShouldDrawImaginaryBorder(graphics) && (graphics.IsNoDrawingEmptyPlaceholder !== true || bMasterPh) && !AscCommon.IsShapeToImageConverter)) {
 				var drawingObjects = this.getDrawingObjectsController();
 				if (typeof editor !== "undefined" && editor && graphics.m_oContext !== undefined && graphics.m_oContext !== null && !graphics.isTrack() && (Asc.editor.isPdfEditor() || !drawingObjects || AscFormat.getTargetTextObject(drawingObjects) !== this)) {
@@ -6557,7 +6555,7 @@
 					return false;
 			}
 
-			if (this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) {
+			if (this.isSlideNoteShape()) {
 				return false;
 			}
 			var invert_transform = this.getInvertTransform();
@@ -6762,7 +6760,7 @@
 				this.recalcInfo.recalcTitle = this.getDocContent();
 				this.recalcInfo.bRecalculatedTitle = true;
 			}
-			if (this.parent && this.parent.getObjectType && this.parent.getObjectType() === AscDFH.historyitem_type_Notes) {
+			if (this.isSlideNoteShape()) {
 				if (this.parent.slide && this.parent.slide.addToRecalculate) {
 					this.parent.slide.addToRecalculate();
 				}
@@ -7538,6 +7536,9 @@
 				}
 				return null;
 			}, this, []);
+		};
+		CShape.prototype.isSlideNoteShape = function() {
+			return false;
 		};
 
 		function CreateBinaryReader(szSrc, offset, srcLen) {

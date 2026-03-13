@@ -187,6 +187,9 @@
 	};
 	SlideModeManagerBase.prototype.updateInterfaceState = function() {
 	};
+	SlideModeManagerBase.prototype.isSlideNoteShape = function(shape) {
+		return false;
+	};
 
 	function SlideModeManager(api) {
 		SlideModeManagerBase.call(this, api);
@@ -808,6 +811,9 @@
 			}
 		}
 		return true;
+	};
+	SlideModeManager.prototype.isSlideNoteShape = function(shape) {
+		return shape.parent && shape.parent.isNote();
 	};
 
 	function MasterSlideModeManager(api) {

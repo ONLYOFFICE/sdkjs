@@ -63,6 +63,9 @@
 	}
 
 	AscFormat.InitClass(SlideBase, AscFormat.CBaseFormatObject, 0);
+	SlideBase.prototype.isSlideLikeObject = function() {
+		return true;
+	};
 	SlideBase.prototype.getDrawingDocument = function() {
 		return editor.WordControl.m_oLogicDocument.DrawingDocument;
 	};
@@ -725,6 +728,12 @@
 		return false;
 	};
 	SlideBase.prototype.isMaster = function() {
+		return false;
+	};
+	SlideBase.prototype.isNote = function() {
+		return false;
+	};
+	SlideBase.prototype.isNoteMaster = function() {
 		return false;
 	};
 	SlideBase.prototype.getParentObjects = function() {

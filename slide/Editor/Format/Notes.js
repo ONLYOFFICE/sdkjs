@@ -89,8 +89,7 @@
 				{
 					recalculateBackground: true,
 					recalculateSpTree: true,
-					recalculateBounds: true,
-					recalculateSlideLayouts: true
+					recalculateSlide: true
 				};
 
         this.kind = AscFormat.TYPE_KIND.NOTES;
@@ -332,6 +331,10 @@
 		if(!this.Master) {
 			return;
 		}
+		if(this.recalcInfo.recalculateSlide) {
+			this.recalcInfo.recalculateSlide = false;
+			this.recalculateSlide();
+		}
 		this.Master.recalculate();
 		if(this.recalcInfo.recalculateBackground) {
 			this.recalculateBackground();
@@ -345,6 +348,19 @@
 		}
 		//todo cachedImage
 		this.cachedImage = null;
+	};
+	CNotes.prototype.recalculateSlide = function() {
+		const presentation = this.presentation;
+		if (presentation) {
+			for (let i = 0; i < presentation.Slides.length; i += 1) {
+				const slide = presentation.Slides[i];
+				if (slide.notes === this) {
+					this.slide = slide;
+					slide.recalculate();
+					return;
+				}
+			}
+		}
 	};
 	CNotes.prototype.checkSlideColorScheme = function() {
 		this.recalcInfo.recalculateSpTree = true;
@@ -411,6 +427,9 @@
 	CNotes.prototype.changeBackground = function(bg) {
 		History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_NotesSetBg, this.cSld.Bg , bg));
 		this.cSld.Bg = bg;
+	};
+	CNotes.prototype.isNote = function() {
+		return true;
 	};
 
 

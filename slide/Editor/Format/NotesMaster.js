@@ -337,6 +337,9 @@
 		History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_NotesMasterSetBg, this.cSld.Bg, bg));
 		this.cSld.Bg = bg;
 	};
+	CNotesMaster.prototype.isNoteMaster = function() {
+		return true;
+	}
 
 
 	function CreateNotesMaster() {

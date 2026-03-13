@@ -2418,7 +2418,7 @@
 		return {hit: false};
 	};
 	CGraphicObjectBase.prototype.hitToHandles = function (x, y) {
-		if (this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) {
+		if (this.isSlideNoteShape()) {
 			return -1;
 		}
 		if (!AscFormat.canSelectDrawing(this)) {
@@ -2430,7 +2430,7 @@
 		return AscFormat.hitToHandles(x, y, this);
 	};
 	CGraphicObjectBase.prototype.hitInBoundingRect = function (x, y) {
-		if (this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) {
+		if (this.isSlideNoteShape()) {
 			return false;
 		}
 		if (!AscFormat.canSelectDrawing(this)) {
@@ -2462,7 +2462,7 @@
 		if (AscCommon.IsShapeToImageConverter) {
 			return;
 		}
-		var bNotes = !!(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES);
+		var bNotes = !!(this.isSlideNoteShape());
 		if (!this.group && !bNotes) {
 			var oLock;
 			if (this.parent instanceof AscCommonWord.ParaDrawing) {
@@ -4054,6 +4054,9 @@
 	CGraphicObjectBase.prototype.isControl = function() {
 		return false;
 	}
+	CGraphicObjectBase.prototype.isSlideNoteShape = function() {
+		return false;
+	};
 	var ANIM_LABEL_WIDTH_PIX = 22;
 	var ANIM_LABEL_HEIGHT_PIX = 17;
 

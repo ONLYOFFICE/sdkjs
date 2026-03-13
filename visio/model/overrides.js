@@ -80,10 +80,6 @@ AscFormat.CShape.prototype.recalculate = function ()
 		return;
 	}
 
-	if(this.parent.getObjectType() === AscDFH.historyitem_type_Notes){
-		return;
-	}
-
 	// var check_slide_placeholder = !this.isPlaceholder() || (this.parent && (this.parent.getObjectType() === AscDFH.historyitem_type_Slide));
 	let check_placeholder = !this.isPlaceholder() || (this.parent && this.parent.IsVisioEditor());
 	AscFormat.ExecuteNoHistory(function(){

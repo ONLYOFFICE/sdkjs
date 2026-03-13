@@ -1881,7 +1881,7 @@
 						if (this.isObjectsProtected() && object.getProtectionLockText()) {
 							return this.handleMoveHit(object, e, x, y, group, false, pageIndex, bWord);
 						}
-						var bNotes = (this.drawingObjects && this.drawingObjects.getObjectType && this.drawingObjects.getObjectType() === AscDFH.historyitem_type_Notes);
+						var bNotes = (this.drawingObjects && this.drawingObjects.isNote && this.drawingObjects.isNote());
 						if ((e.CtrlKey || this.isSlideShow()) && !this.document && !bNotes) {
 							check_hyperlink = fCheckObjectHyperlink(object, x, y);
 							var oAnimPlayer = this.getAnimationPlayer();
@@ -9953,11 +9953,7 @@
 					oAPI.stopInkDrawer();
 				},
 				checkInkState: function () {
-					if (typeof AscCommonSlide !== "undefined" &&
-						AscCommonSlide.CNotes &&
-						this.drawingObjects instanceof AscCommonSlide.CNotes) {
-						return;
-					}
+					//todo
 					const oAPI = this.getEditorApi();
 					if(oAPI.isInkDrawerOn()) {
 						if(oAPI.isDrawInkMode()) {
@@ -11791,12 +11787,7 @@
 
 
 		function isSlideLikeObject(oObject) {
-			if(!oObject) return false;
-			if(!oObject.getObjectType) return false;
-			let nType = oObject.getObjectType();
-			return (nType === AscDFH.historyitem_type_Slide
-				|| nType === AscDFH.historyitem_type_SlideLayout
-				|| nType === AscDFH.historyitem_type_SlideMaster );
+			return !!oObject.isSlideLikeObject && oObject.isSlideLikeObject();
 		}
 
 		// Shapes merge

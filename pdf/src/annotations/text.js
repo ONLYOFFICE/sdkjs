@@ -262,7 +262,7 @@
 		if (AscCommon.IsShapeToImageConverter) {
 			return;
 		}
-		var bNotes = !!(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES);
+		var bNotes = !!(this.isSlideNoteShape());
 		if (!this.group && !bNotes) {
 			var oLock;
 			if (this.parent instanceof AscCommonWord.ParaDrawing) {

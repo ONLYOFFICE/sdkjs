@@ -67,7 +67,7 @@ CShape.prototype.IsUseInDocument = function()
 
 CShape.prototype.getDrawingObjectsController = function()
 {
-    if(this.parent && (AscFormat.isSlideLikeObject(this.parent) ||  this.parent.getObjectType() === AscDFH.historyitem_type_Notes))
+    if(this.parent && (AscFormat.isSlideLikeObject(this.parent)))
     {
         return this.parent.graphicObjects;
     }
@@ -399,13 +399,11 @@ CShape.prototype.getParentObjects = function ()
             case AscDFH.historyitem_type_Notes:
             {
                 return {
-
                     presentation: editor.WordControl.m_oLogicDocument,
-                    slide: null,
+                    slide: oParent,
                     layout: null,
                     master: oParent.Master,
-                    theme: this.themeOverride ? this.themeOverride : (oParent.Master ? oParent.Master.Theme : null),
-                    notes: oParent
+                    theme: this.themeOverride ? this.themeOverride : (oParent.Master ? oParent.Master.Theme : null)
                 }
             }
             case AscDFH.historyitem_type_NotesMaster:
@@ -658,7 +656,7 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex, bNoTextSelect
             oSelector.selectObject(this, 0);
         }
         var nSlideNum;
-        if(this.parent instanceof AscCommonSlide.CNotes){
+        if(this.isSlideNoteShape()){
             editor.WordControl.m_oLogicDocument.FocusOnNotes = true;
             if(this.parent.slide){
                 nSlideNum = this.parent.slide.num;
@@ -675,7 +673,7 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex, bNoTextSelect
         if(editor.WordControl.m_oLogicDocument.CurPage !== nSlideNum){
             editor.WordControl.m_oLogicDocument.Set_CurPage(nSlideNum);
             editor.WordControl.GoToPage(nSlideNum);
-            if(this.parent instanceof AscCommonSlide.CNotes){
+            if(this.isSlideNoteShape()){
                 editor.WordControl.m_oLogicDocument.FocusOnNotes = true;
             }
         }
@@ -692,7 +690,7 @@ CShape.prototype.OnContentReDraw = function(){
         if(this.parent instanceof AscCommonSlide.Slide) {
             oPresentation.DrawingDocument.OnRecalculateSlide(this.getParentNum());
         }
-        else if(this.parent instanceof AscCommonSlide.CNotes) {
+        else if(this.isSlideNoteShape()) {
             var oCurSlide = oPresentation.Slides[oPresentation.CurPage];
             if(oCurSlide && oCurSlide.notes === this.parent){
                 oPresentation.DrawingDocument.Notes_OnRecalculate(oPresentation.CurPage, oCurSlide.NotesWidth, oCurSlide.getNotesHeight());
@@ -712,7 +710,7 @@ CShape.prototype.OnContentReDraw = function(){
             }
             else
             {
-                if(this.parent.getObjectType && this.parent.getObjectType() === AscDFH.historyitem_type_Notes)
+                if(this.isSlideNoteShape())
                 {
                     if(editor.WordControl.m_oLogicDocument.FocusOnNotes && this.parent.slide && this.parent.slide.num === editor.WordControl.m_oLogicDocument.CurPage)
                     {
@@ -733,11 +731,12 @@ CShape.prototype.OnContentReDraw = function(){
         if(this.getParentObjects) {
             let oParents = this.getParentObjects();
             if(oParents && oParents.presentation) {
-                if(oParents.slide) {
+							if (oParents.slide && oParents.slide.isNote()) {
+								if (oParents.slide.slide) {
+									return oParents.slide.slide.num;
+								}
+							} else if(oParents.slide) {
                     return oParents.slide.num;
-                }
-                if(oParents.notes && oParents.notes.slide) {
-                    return oParents.notes.slide.num;
                 }
                 if(oParents.layout) {
                     return oParents.presentation.GetSlideIndex(oParents.layout);
@@ -754,6 +753,14 @@ CShape.prototype.OnContentReDraw = function(){
 			if (oPresentation && oPresentation.timing) {
 				oPresentation.timing.onRemoveContent(this.GetId());
 			}
+		};
+		CShape.prototype.isSlideNoteShape = function() {
+			const oPresentation = this.getLogicDocument();
+			const viewManager = oPresentation && oPresentation.getViewManager();
+			if (viewManager) {
+				return viewManager.isSlideNoteShape(this);
+			}
+			return false;
 		};
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
