@@ -5442,6 +5442,54 @@ function (window, undefined) {
 	SumIfTypedCache.prototype.constructor = SumIfTypedCache;
 
 	/**
+	 * Build (once) a sorted-rank index for a column's string data.
+	 * Stores on the column object:
+	 *   _sortedStrings   — unique string values sorted by localeCompare("en")
+	 *   _stringRankArray — Int32Array: rank[i] = sorted position of stringData[i]
+	 *   _rankLen         — stringData.length at build time (used for staleness check)
+	 * Re-builds automatically when stringData grows or shrinks (splice/unshift change length).
+	 */
+	SumIfTypedCache.prototype._ensureStringRank = function(column) {
+		const stringData = column.data[cElementType.string];
+		if (!stringData || !stringData.length) return;
+		if (!column._rankDirty && column._rankLen === stringData.length) return; // already valid
+
+		const seen = Object.create(null);
+		const unique = [];
+		for (let i = 0; i < stringData.length; i++) {
+			const s = stringData[i];
+			if (!seen[s]) { seen[s] = true; unique.push(s); }
+		}
+		unique.sort(function(a, b) { return a.localeCompare(b, "en"); });
+
+		const rankMap = Object.create(null);
+		for (let i = 0; i < unique.length; i++) rankMap[unique[i]] = i;
+
+		const rankArray = new Int32Array(stringData.length);
+		for (let i = 0; i < stringData.length; i++) rankArray[i] = rankMap[stringData[i]];
+
+		column._sortedStrings = unique;
+		column._stringRankArray = rankArray;
+		column._rankLen = stringData.length;
+		column._rankDirty = false;
+	};
+
+	/**
+	 * Override changeColumnsData to invalidate the rank index when string data is modified.
+	 * Without this, a string→string splice (same length) would leave stale ranks.
+	 */
+	SumIfTypedCache.prototype.changeColumnsData = function(wsId, cell, oldValue, oldType, newValue, newType) {
+		AscCommonExcel.CountIfTypedCache.prototype.changeColumnsData.call(this, wsId, cell, oldValue, oldType, newValue, newType);
+		if (oldType === cElementType.string || newType === cElementType.string) {
+			const data = this.data[wsId];
+			const column = data && data[cell.nCol];
+			if (column) {
+				column._rankDirty = true;
+			}
+		}
+	};
+
+	/**
 	 * Sums all number values in the sum range. O(N_sum) per column.
 	 * @param {Object} searchRange - criteria range (cArea)
 	 * @param {Object} sumRange - sum range (AscCommonExcel.Range)
@@ -5667,7 +5715,10 @@ function (window, undefined) {
 		return null;
 	};
 
-	SumIfTypedCache.prototype.calculate = function(searchRange, sumRange, sumCache, type, matchingFunction, searchValue, convertToNumber, skipErrors) {
+	/**
+	 * @param {string} [opt_op] - operator ('<', '>', '<=', '>=') for rank-based string comparison fast path
+	 */
+	SumIfTypedCache.prototype.calculate = function(searchRange, sumRange, sumCache, type, matchingFunction, searchValue, convertToNumber, skipErrors, opt_op) {
 		let sum = 0;
 
 		const searchRangeWs = searchRange.getWS();
@@ -5678,6 +5729,11 @@ function (window, undefined) {
 		const sumRangeBbox = sumRange.getBBox0();
 
 		const columnsOffset = sumRangeBbox.c1 - searchRangeBbox.c1;
+
+		// Rank-based comparison is eligible when searching strings with inequality operators.
+		// The actual rank arrays are built lazily per-column below.
+		const useRankCompare = !convertToNumber && type === cElementType.string && opt_op &&
+			(opt_op === '<' || opt_op === '>' || opt_op === '<=' || opt_op === '>=');
 
 		for (let i = searchRangeBbox.c1; i <= searchRangeBbox.c2; i += 1) {
 			const sumColumnIndex = columnsOffset + i;
@@ -5697,6 +5753,30 @@ function (window, undefined) {
 			const errorIndexes = skipErrors ? null : sumColumn.indexes[cElementType.error];
 			const errorData = skipErrors ? null : sumColumn.data[cElementType.error];
 
+			// Rank setup: sort unique column strings once, binary-search for searchValue's position.
+			// Replaces O(N) localeCompare calls in the hot loop with O(N) integer comparisons.
+			let rankData = null, rankThreshold = 0, rankUseGte = false;
+			if (useRankCompare && searchTypedData && searchTypedData.length) {
+				this._ensureStringRank(searchColumn);
+				if (searchColumn._sortedStrings && searchColumn._sortedStrings.length) {
+					const sorted = searchColumn._sortedStrings;
+					// Binary search: find lower bound of searchValue in sorted array
+					let lo = 0, hi = sorted.length;
+					while (lo < hi) {
+						const mid = (lo + hi) >>> 1;
+						if (sorted[mid].localeCompare(searchValue, "en") < 0) lo = mid + 1;
+						else hi = mid;
+					}
+					// posInclusive = lo + 1 if searchValue is exactly in the array, else lo
+					const posInclusive = lo + (lo < sorted.length && sorted[lo] === searchValue ? 1 : 0);
+					if (opt_op === '<')       { rankThreshold = lo;           rankUseGte = false; }
+					else if (opt_op === '>')  { rankThreshold = posInclusive; rankUseGte = true; }
+					else if (opt_op === '<=') { rankThreshold = posInclusive; rankUseGte = false; }
+					else                      { rankThreshold = lo;           rankUseGte = true; } // '>='
+					rankData = searchColumn._stringRankArray;
+				}
+			}
+
 			if (searchTypedData) {
 				const rowSumOffset = sumRangeBbox.r1 - searchRangeBbox.r1;
 
@@ -5713,6 +5793,38 @@ function (window, undefined) {
 					for (let j = firstIndex; j < lastIndex; j += 1) {
 						const value = AscCommon.g_oFormatParser.parseLocaleNumber(searchTypedData[j]);
 						if (isNaN(value) || !matchingFunction(value, searchValue)) continue;
+						// Early exit only on matches (runs K_match times, not K_search times)
+						if ((!sumIndexes || currentSumIndex >= sumLen) && (!errorIndexes || currentErrorIndex >= errLen)) break;
+						const targetRow = searchTypedIndexes[j] + rowSumOffset;
+						// Galloping advance: exponential probe then binary refinement — O(log gap) per match
+						if (sumIndexes && currentSumIndex < sumLen && sumIndexes[currentSumIndex] < targetRow) {
+							let lo = currentSumIndex, step = 1, hi = lo + step;
+							while (hi < sumLen && sumIndexes[hi] < targetRow) { lo = hi; step <<= 1; hi = lo + step; }
+							if (hi > sumLen) hi = sumLen;
+							while (lo < hi) { const m = (lo + hi) >>> 1; if (sumIndexes[m] < targetRow) lo = m + 1; else hi = m; }
+							currentSumIndex = lo;
+						}
+						if (errorIndexes && currentErrorIndex < errLen && errorIndexes[currentErrorIndex] < targetRow) {
+							// Galloping advance for error pointer
+							let lo = currentErrorIndex, step = 1, hi = lo + step;
+							while (hi < errLen && errorIndexes[hi] < targetRow) { lo = hi; step <<= 1; hi = lo + step; }
+							if (hi > errLen) hi = errLen;
+							while (lo < hi) { const m = (lo + hi) >>> 1; if (errorIndexes[m] < targetRow) lo = m + 1; else hi = m; }
+							currentErrorIndex = lo;
+						}
+						// Check after gallop: pointer may land on targetRow whether or not it needed to advance
+						if (errorIndexes && currentErrorIndex < errLen && errorIndexes[currentErrorIndex] === targetRow) {
+							return {result: null, error: new cError(errorData[currentErrorIndex])};
+						}
+						if (sumIndexes && currentSumIndex < sumLen && sumIndexes[currentSumIndex] === targetRow) {
+							sum += sumData[currentSumIndex];
+							currentSumIndex += 1;
+						}
+					}
+				} else if (rankData) {
+					// Fast path: integer rank comparison instead of string localeCompare
+					for (let j = firstIndex; j < lastIndex; j += 1) {
+						if (rankUseGte ? rankData[j] < rankThreshold : rankData[j] >= rankThreshold) continue;
 						// Early exit only on matches (runs K_match times, not K_search times)
 						if ((!sumIndexes || currentSumIndex >= sumLen) && (!errorIndexes || currentErrorIndex >= errLen)) break;
 						const targetRow = searchTypedIndexes[j] + rowSumOffset;
@@ -5992,7 +6104,8 @@ function (window, undefined) {
 				const matchingFunction = (type === cElementType.string && isWildcard && (matchingInfo.op === '=' || matchingInfo.op === null))
 					? (function() { var re = _buildWildcardRegex(searchValue); return function(a) { return re.test(a); }; }())
 					: AscCommonExcel.getMatchingFunction(type, matchingInfo.op, isWildcard);
-				const calculatingResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, type, matchingFunction, searchValue);
+				// Pass the operator so calculate can use rank-based integer comparison for string inequality
+				const calculatingResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, type, matchingFunction, searchValue, undefined, undefined, matchingInfo.op);
 				if (calculatingResult.error !== null) return calculatingResult.error;
 				_sum = calculatingResult.result;
 			}
