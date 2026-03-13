@@ -4125,7 +4125,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			//значение для каждой ячейки массива, изменяя при этом opt_bbox
 			//TODO добавляю ещё одну проверку. в будущем стоит рассмотреть использование всегда parserFormula.ref
 			//TODO персмотреть проверку isOneCell/checkOneRowCol - возможно стоит смотреть по количеству данных и расширять диапазон в случае, если parserFormula.ref превышает диапазон аргументов
-			if ((replaceAreaByRefs && 0 === argumentsCount && parserFormula.ref) || (/*!bIsSpecialFunction &&*/ firstArray && parserFormula.ref && !parserFormula.ref.isOneCell() && checkOneRowCol())) {
+			let refSize = parserFormula.ref && parserFormula.ref.getSize();
+			if ((replaceAreaByRefs && 0 === argumentsCount && parserFormula.ref) || 
+				(firstArray && parserFormula.ref && !parserFormula.ref.isOneCell() && 
+				(refSize.row > firstArray.rowCount || refSize.col > firstArray.countElementInRow.length) && checkOneRowCol())) {
 				firstArray = new cArray();
 				firstArray.fillEmptyFromRange(parserFormula.ref);
 			}

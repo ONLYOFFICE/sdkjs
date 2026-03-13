@@ -3508,6 +3508,28 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(2,0).getValue(), "FALSE", 'Result of FILTER(A:A<3,B:B="Test")');
 		assert.strictEqual(array.getElementRowCol(3,0).getValue(), "FALSE", 'Result of FILTER(A:A<3,B:B="Test")');
 
+		// for bug 80566
+		ws.getRange2("A1:C6").cleanAll();
+		ws.getRange2("A1").setValue("List:");
+		ws.getRange2("A2").setValue("Apples");
+		ws.getRange2("A3").setValue("Oranges");
+		ws.getRange2("A4").setValue("Potatoes");
+		ws.getRange2("A5").setValue("Tomatoes");
+		ws.getRange2("B1").setValue("Exclude:");
+		ws.getRange2("B2").setValue("Oranges");
+		ws.getRange2("B3").setValue("Potatoes");
+
+		// formulaRef to c2
+		let bbox = ws.getRange2("C2").bbox;
+		let cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+		oParser = new parserFormula("FILTER(A2:A5,ISNA(XMATCH(A2:A5,B2:B5)))", cellWithFormula, ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:C3").bbox);
+		assert.ok(oParser.parse(), 'FILTER(A2:A5,ISNA(XMATCH(A2:A5,B2:B5)))');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol && array.getElementRowCol(0,0).getValue(), "Apples", 'Result of FILTER(A2:A5,ISNA(XMATCH(A2:A5,B2:B5)))[0,0]');
+		assert.strictEqual(array.getElementRowCol && array.getElementRowCol(1,0).getValue(), "Tomatoes", 'Result of FILTER(A2:A5,ISNA(XMATCH(A2:A5,B2:B5)))[1,0]');
+		assert.strictEqual(array.getElementRowCol && array.getElementRowCol(2,0).getValue(), "", 'Result of FILTER(A2:A5,ISNA(XMATCH(A2:A5,B2:B5)))[2,0]');
+
 		ws.getRange2("A100:C214").cleanAll();
 		// Data for reference link. Use A100-A115
 		ws.getRange2("A100").setValue("1");
