@@ -9333,6 +9333,10 @@ function parserFormula( formula, parent, _ws ) {
 		"FORMULATEXT": {
 			"0": true
 		},
+		"GETPIVOTDATA": {
+			"0": true,
+			"1": true
+		},
 		"GCD": {
 			"*": true
 		},
@@ -9718,9 +9722,6 @@ function parserFormula( formula, parent, _ws ) {
 		},
 		"SWITCH": {
 			"*": true
-		},
-		"SEARCH": {
-			"0": true
 		},
 		"T": {
 			"0": true
@@ -12021,7 +12022,11 @@ function parserFormula( formula, parent, _ws ) {
 					continue;
 				}
 				oTableArrayArg = oTableArrayArg.clone();
-				const nIndexNumValue = oIndexNumValue.tocNumber().toNumber() - 1;
+				const oNumber = oIndexNumValue.tocNumber();
+				if (oNumber.type === cElementType.error) {
+					continue;
+				}
+				const nIndexNumValue = oNumber.toNumber() - 1;
 				const nIndexTableArray = aRefElements.findIndex(function (oElem) {
 					return oElem.getRange().getBBox0().isEqualAll(oTableArrayArg.getRange().getBBox0());
 				});
