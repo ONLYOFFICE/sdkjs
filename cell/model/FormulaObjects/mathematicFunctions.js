@@ -5485,7 +5485,7 @@ function (window, undefined) {
 				const first = sumCache.findLowerIndexInTyped(sumRangeBbox.r1, sumIndexes);
 				const last = sumCache.findHigherIndexInTyped(sumRangeBbox.r2, sumIndexes);
 				for (let j = first; j < last; j += 1) {
-					sum += sumData[j];
+					sum += AscCommonExcel.checkTypeCell(sumData[j], true).value;//sumData[j];
 				}
 			}
 		}
@@ -5574,7 +5574,7 @@ function (window, undefined) {
 						if (sErrPtr < sErrEnd && sErrIdx[sErrPtr] === searchRow) found = true;
 					}
 					if (found) {
-						sum += sumData[j];
+						sum += AscCommonExcel.checkTypeCell(sumData[j], true).value;//sumData[j];
 					}
 				}
 			}
