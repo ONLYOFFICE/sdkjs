@@ -8002,7 +8002,7 @@
 	 */
 	ApiDocument.prototype.SetTrackRevisions = function(isTrack)
 	{
-		this.Document.SetGlobalTrackRevisions(isTrack);
+		this.Document.SetGlobalTrackRevisions(isTrack, true);
 		return true;
 	};
 	
