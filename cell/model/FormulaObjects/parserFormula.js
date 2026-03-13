@@ -9129,29 +9129,29 @@ function parserFormula( formula, parent, _ws ) {
 	let enabledToSingle =
 	{
 		"AGGREGATE": {
-			"2": true
+			"allFrom": 2
 		},
 		"AND": {
-			"0": true
+			"*": true
 		},
 		"AREAS": {
 			"0": true
 		},
 		"AVEDEV": {
-			"0": true
+			"*": true
 		},
 		"AVERAGE": {
-			"0": true
+			"*": true
 		},
 		"AVERAGEA": {
-			"0": true
+			"*": true
 		},
 		"AVERAGEIF": {
-			"0": true
+			"0": true,
+			"2": true
 		},
 		"AVERAGEIFS": {
-			"0": true,
-			"1": true
+			"arg0orOdd": true
 		},
 		"BESSELI": {
 			"0": true,
@@ -9187,7 +9187,7 @@ function parserFormula( formula, parent, _ws ) {
 			"1": true
 		},
 		"CHOOSE": {
-			"1": true
+			"allFrom": 1
 		},
 		"COLUMN": {
 			"0": true
@@ -9200,7 +9200,7 @@ function parserFormula( formula, parent, _ws ) {
 			"1": true
 		},
 		"CONCAT": {
-			"0": true
+			"*": true
 		},
 		"CONVERT": {
 			"0": true,
@@ -9212,10 +9212,10 @@ function parserFormula( formula, parent, _ws ) {
 			"1": true
 		},
 		"COUNT": {
-			"0": true
+			"*": true
 		},
 		"COUNTA": {
-			"0": true
+			"*": true
 		},
 		"COUNTBLANK": {
 			"0": true
@@ -9224,7 +9224,7 @@ function parserFormula( formula, parent, _ws ) {
 			"0": true
 		},
 		"COUNTIFS": {
-			"0": true
+			"even": true
 		},
 		"COVAR": {
 			"0": true,
@@ -9244,7 +9244,7 @@ function parserFormula( formula, parent, _ws ) {
 			"1": true
 		},
 		"DEVSQ": {
-			"0": true
+			"*": true
 		},
 		"DOLLARDE": {
 			"0": true,
@@ -9294,17 +9294,17 @@ function parserFormula( formula, parent, _ws ) {
 			"0": true
 		},
 		"GCD": {
-			"0": true
+			"*": true
 		},
 		"GEOMEAN": {
-			"0": true
+			"*": true
 		},
 		"GESTEP": {
 			"0": true,
 			"1": true
 		},
 		"HARMEAN": {
-			"0": true
+			"*": true
 		},
 		"HEX2BIN": {
 			"0": true
@@ -9329,8 +9329,7 @@ function parserFormula( formula, parent, _ws ) {
 			"1": true
 		},
 		"IFS": {
-			"0": true,
-			"1": true
+			"*": true
 		},
 		/*"IF": {
 			"1": true,
@@ -9384,7 +9383,7 @@ function parserFormula( formula, parent, _ws ) {
 			"1": true
 		},
 		"IMPRODUCT": {
-			"0": true
+			"*": true
 		},
 		"IMREAL": {
 			"0": true
@@ -9409,7 +9408,7 @@ function parserFormula( formula, parent, _ws ) {
 			"1": true
 		},
 		"IMSUM": {
-			"0": true
+			"*": true
 		},
 		"IMTAN": {
 			"0": true
@@ -9441,13 +9440,13 @@ function parserFormula( formula, parent, _ws ) {
 			"0": true
 		},
 		"KURT": {
-			"0": true
+			"*": true
 		},
 		"LARGE": {
 			"0": true
 		},
 		"LCM": {
-			"0": true
+			"*": true
 		},
 		"LOOKUP": {
 			"1": true,
@@ -9458,49 +9457,47 @@ function parserFormula( formula, parent, _ws ) {
 			"2": true
 		},
 		"MAX": {
-			"0": true
+			"*": true
 		},
 		"MAXA": {
-			"0": true
+			"*": true
 		},
 		"MAXIFS": {
-			"0": true,
-			"1": true
+			"arg0orOdd": true
 		},
 		"MDETERM": {
 			"0": true
 		},
 		"MEDIAN": {
-			"0": true
+			"*": true
 		},
 		"MIN": {
-			"0": true
+			"*": true
 		},
 		"MINA": {
-			"0": true
+			"*": true
 		},
 		"MINIFS": {
-			"0": true,
-			"1": true
+			"arg0orOdd": true
 		},
 		"MIRR": {
 			"0": true
 		},
 		"MODE": {
-			"0": true
+			"*": true
 		},
 		"MODE.MULT": {
-			"0": true
+			"*": true
 		},
 		"MODE.SNGL": {
-			"0": true
+			"*": true
 		},
 		"MROUND": {
 			"0": true,
 			"1": true
 		},
 		"MULTINOMIAL": {
-			"0": true
+			"*": true
 		},
 		"MUNIT": {
 			"0": true
@@ -9521,7 +9518,7 @@ function parserFormula( formula, parent, _ws ) {
 			"1": true
 		},
 		"NPV": {
-			"1": true
+			"allFrom": 1
 		},
 		"OCT2BIN": {
 			"0": true
@@ -9536,7 +9533,7 @@ function parserFormula( formula, parent, _ws ) {
 			"0": true
 		},
 		"OR": {
-			"0": true
+			"*": true
 		},
 		"PEARSON": {
 			"0": true,
@@ -9549,7 +9546,7 @@ function parserFormula( formula, parent, _ws ) {
 			"0": true
 		},
 		"PRODUCT": {
-			"0": true
+			"*": true
 		},
 		"QUARTILE": {
 			"0": true
@@ -9586,10 +9583,10 @@ function parserFormula( formula, parent, _ws ) {
 			"1": true
 		},
 		"SKEW": {
-			"0": true
+			"*": true
 		},
 		"SKEW.P": {
-			"0": true
+			"*": true
 		},
 		"SLOPE": {
 			"0": true,
@@ -9602,22 +9599,22 @@ function parserFormula( formula, parent, _ws ) {
 			"0": true
 		},
 		"STDEV": {
-			"0": true
+			"*": true
 		},
 		"STDEV.P": {
-			"0": true
+			"*": true
 		},
 		"STDEV.S": {
-			"0": true
+			"*": true
 		},
 		"STDEVA": {
-			"0": true
+			"*": true
 		},
 		"STDEVP": {
-			"0": true
+			"*": true
 		},
 		"STDEVPA": {
-			"0": true
+			"*": true
 		},
 		"STEYX": {
 			"0": true,
@@ -9627,20 +9624,20 @@ function parserFormula( formula, parent, _ws ) {
 			"1": true
 		},
 		"SUM": {
-			"0": true
+			"*": true
 		},
 		"SUMIF": {
-			"0": true
+			"0": true,
+			"2": true
 		},
 		"SUMIFS": {
-			"0": true,
-			"1": true
+			"arg0orOdd": true
 		},
 		"SUMPRODUCT": {
 			"0": true
 		},
 		"SUMSQ": {
-			"0": true
+			"*": true
 		},
 		"SUMX2MY2": {
 			"0": true,
@@ -9655,8 +9652,7 @@ function parserFormula( formula, parent, _ws ) {
 			"1": true
 		},
 		"SWITCH": {
-			"0": true,
-			"1": true
+			"*": true
 		},
 		"SEARCH": {
 			"0": true
@@ -9685,7 +9681,7 @@ function parserFormula( formula, parent, _ws ) {
 		},
 		"TEXTJOIN": {
 			"0": true,
-			"3": true
+			"allFrom": 2
 		},
 		"TRANSPOSE": {
 			"0": true
@@ -9705,22 +9701,22 @@ function parserFormula( formula, parent, _ws ) {
 			"0": true
 		},
 		"VAR": {
-			"0": true
+			"*": true
 		},
 		"VAR.P": {
-			"0": true
+			"*": true
 		},
 		"VAR.S": {
-			"0": true
+			"*": true
 		},
 		"VARA": {
-			"0": true
+			"*": true
 		},
 		"VARP": {
-			"0": true
+			"*": true
 		},
 		"VARPA": {
-			"0": true
+			"*": true
 		},
 		"VLOOKUP": {
 			"1": true
@@ -9755,7 +9751,7 @@ function parserFormula( formula, parent, _ws ) {
 			"2": true
 		},
 		"XOR": {
-			"0": true
+			"*": true
 		},
 		"YEARFRAC": {
 			"0": true,
@@ -9797,6 +9793,51 @@ function parserFormula( formula, parent, _ws ) {
 		}
 	}
 
+	// Supported keys in an enabledToSingle / displayOnlyNativeRange entry:
+	//   "*": true        – all argument positions accept ranges
+	//   "allFrom": N     – positions N and above accept ranges
+	//   "even": true     – even positions (0, 2, 4, ...) accept ranges
+	//   "arg0orOdd": true – position 0 and all odd positions (1, 3, 5, ...) accept ranges (SUMIFS pattern)
+	//   N: true          – specific position N accepts ranges
+
+	// Generic helper: checks a single map entry.
+	function _isArgPosInMap(map, funcName, argPos) {
+		var entry = map[funcName];
+		if (!entry) {
+			return false;
+		}
+		if (entry["*"]) {
+			return true;
+		}
+		if (entry[argPos]) {
+			return true;
+		}
+		var allFrom = entry["allFrom"];
+		if (allFrom !== undefined && argPos >= allFrom) {
+			return true;
+		}
+		if (entry["even"] && argPos % 2 === 0) {
+			return true;
+		}
+		if (entry["arg0orOdd"] && (argPos === 0 || argPos % 2 === 1)) {
+			return true;
+		}
+		return false;
+	}
+
+	// For the INPUT path (checkSkipAtOperator): checks only enabledToSingle.
+	// Returns true if the position is listed → explicit @ is meaningful, keep it (convert to SINGLE).
+	function isArgPosInEnabledToSingle(funcName, argPos) {
+		return _isArgPosInMap(enabledToSingle, funcName, argPos);
+	}
+
+	// For the DISPLAY path (assembly): checks enabledToSingle.
+	// Returns true if ranges are natively accepted here → do NOT auto-add @.
+	// Functions NOT listed here will have @ auto-added when displaying range arguments.
+	function isArgPosEnabledToSingle(funcName, argPos) {
+		return _isArgPosInMap(enabledToSingle, funcName, argPos);
+	}
+
 	parserFormula.prototype.checkSkipAtOperator = function(_curFunc, _curArgPos, found_operand_type) {
 		if (null == found_operand_type) {
 			return false;
@@ -9807,7 +9848,9 @@ function parserFormula( formula, parent, _ws ) {
 		}
 
 		if (found_operand_type === cElementType.cellsRange || found_operand_type === cElementType.cellsRange3D) {
-			return !enabledToSingle[_curFunc] || !enabledToSingle[_curFunc][_curArgPos];
+			// Use INPUT path check only (enabledToSingle, not displayOnlyNativeRange).
+			// skip @ (return true) when the function is NOT listed or position is NOT covered.
+			return !isArgPosInEnabledToSingle(_curFunc, _curArgPos);
 		}
 
 		/*if (_curFunc && _curFunc.func && _curFunc.func.arrayIndexes) {
@@ -11229,7 +11272,7 @@ function parserFormula( formula, parent, _ws ) {
 						if (parentInfo) {
 							if (parentInfo.funcName === "SINGLE") {
 								needAddAt = false;
-							} else if (enabledToSingle[parentInfo.funcName] && enabledToSingle[parentInfo.funcName][parentInfo.argIndex]) {
+							} else if (isArgPosEnabledToSingle(parentInfo.funcName, parentInfo.argIndex)) {
 								needAddAt = false;
 							}
 						}
