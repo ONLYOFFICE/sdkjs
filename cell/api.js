@@ -3460,6 +3460,7 @@ var editor;
 		this.asc_CheckGuiControlColors();
 		this.sendColorThemes(this.wbModel.theme);
 		this.asc_ApplyColorScheme(false);
+		this.updateDarkMode();
 
 		this.sendStandartTextures();
 		this.sendMathToMenu();
@@ -3469,8 +3470,6 @@ var editor;
 		this._applyPreOpenLocks();
 		// Go to if sent options
 		this.goTo();
-
-		this.updateDarkMode();
 
 		// Меняем тип состояния (на никакое)
 		this.advancedOptionsAction = c_oAscAdvancedOptionsAction.None;
