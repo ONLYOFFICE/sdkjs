@@ -7385,6 +7385,7 @@ var CPresentation = CPresentation || function(){};
             result = Function.apply(oTable, args);
             if (oTable.Content.length === 0) {
                 this.RemoveDrawing(oTable.Parent.GetId());
+				oController.resetSelection();
                 return result;
             }
         }
