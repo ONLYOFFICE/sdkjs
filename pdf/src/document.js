@@ -9179,7 +9179,7 @@ var CPresentation = CPresentation || function(){};
 		else if (activeAnnot && ((activeAnnot.IsFreeText() && activeAnnot.IsInTextBox()) || (activeAnnot.IsLine() && activeAnnot.IsDoCaption()))) {
 			return activeAnnot;
 		}
-		else if (activeDrawing && activeDrawing.GetDocContent()) {
+		else if (activeDrawing && (activeDrawing.GetDocContent() || oController.getTargetTextObject())) {
 			return activeDrawing;
 		}
 		

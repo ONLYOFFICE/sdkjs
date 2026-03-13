@@ -616,8 +616,8 @@
 			doc.StartAction(AscDFH.historydescription_Document_AddLetter);
 		}
 
-		let docContent = textController.GetDocContent();
 		let result = textController.EnterText(codePoints);
+		let docContent = textController.GetDocContent();
 		
 		if (null == drController.getTargetTextObject() && false == textController.IsForm()) {
 			if (textController.IsAnnot() && textController.IsFreeText()) {

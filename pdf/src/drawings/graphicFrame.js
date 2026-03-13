@@ -420,6 +420,13 @@
 			}
 		}
 	};
+	CPdfGraphicFrame.prototype.EnterText = function(codePoints) {
+		if (this.graphicObject.Selection.Use) {
+			this.graphicObject.Remove(1, true, undefined, true);
+		}
+
+		return AscPDF.CPdfDrawingPrototype.prototype.EnterText.call(this, codePoints);
+	};
 
     window["AscPDF"].CPdfGraphicFrame = CPdfGraphicFrame;
 })();
