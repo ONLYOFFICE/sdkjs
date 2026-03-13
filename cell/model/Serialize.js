@@ -15442,6 +15442,7 @@
         }
     };
     InitOpenManager.prototype.ParseNum = function(oNum, oNumFmts, _useNumId) {
+        debugger
         var oRes = new AscCommonExcel.Num();
         var useNumId = false;
         if (null != oNum && oNum.f) {//Excel ignors empty format. bug 70667
