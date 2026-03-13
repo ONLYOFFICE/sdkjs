@@ -3515,13 +3515,14 @@
 	};
 	PDFEditorApi.prototype.remTable = function() {
 		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
 		let oObject = oDoc.GetActiveObject();
 		
 		if (oObject && oObject.IsDrawing() && oObject.IsGraphicFrame()) {
-			oDoc.CreateNewHistoryPoint();
-			oDoc.RemoveDrawing(oObject.GetId());
-			oDoc.TurnOffHistory();
-			return true;
+			oDoc.DoAction(function() {
+				oDoc.RemoveDrawing(oObject.GetId());
+				oController.resetSelection();
+			}, AscDFH.historydescription_Pdf_ContextMenuRemove);
 		}
 
 		return false;
