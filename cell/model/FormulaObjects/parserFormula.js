@@ -9182,6 +9182,10 @@ function parserFormula( formula, parent, _ws ) {
 			"0": true,
 			"1": true
 		},
+		"CHITEST": {
+			"0": true,
+			"1": true
+		},
 		"CHISQ.TEST": {
 			"0": true,
 			"1": true
@@ -9227,6 +9231,14 @@ function parserFormula( formula, parent, _ws ) {
 			"even": true
 		},
 		"COVAR": {
+			"0": true,
+			"1": true
+		},
+		"COVARIANCE.P": {
+			"0": true,
+			"1": true
+		},
+		"COVARIANCE.S": {
 			"0": true,
 			"1": true
 		},
@@ -9286,6 +9298,34 @@ function parserFormula( formula, parent, _ws ) {
 		"F.TEST": {
 			"0": true,
 			"1": true
+		},
+		"FTEST": {
+			"0": true,
+			"1": true
+		},
+		"FORECAST": {
+			"1": true,
+			"2": true
+		},
+		"FORECAST.ETS": {
+			"1": true,
+			"2": true
+		},
+		"FORECAST.ETS.CONFINT": {
+			"1": true,
+			"2": true
+		},
+		"FORECAST.ETS.SEASONALITY": {
+			"0": true,
+			"1": true
+		},
+		"FORECAST.ETS.STAT": {
+			"0": true,
+			"1": true
+		},
+		"FORECAST.LINEAR": {
+			"1": true,
+			"2": true
 		},
 		"FACTDOUBLE": {
 			"0": true
@@ -9542,13 +9582,35 @@ function parserFormula( formula, parent, _ws ) {
 		"PERCENTILE": {
 			"0": true
 		},
+		"PERCENTILE.EXC": {
+			"0": true
+		},
+		"PERCENTILE.INC": {
+			"0": true
+		},
 		"PERCENTRANK": {
 			"0": true
+		},
+		"PERCENTRANK.EXC": {
+			"0": true
+		},
+		"PERCENTRANK.INC": {
+			"0": true
+		},
+		"PROB": {
+			"0": true,
+			"1": true
 		},
 		"PRODUCT": {
 			"*": true
 		},
 		"QUARTILE": {
+			"0": true
+		},
+		"QUARTILE.EXC": {
+			"0": true
+		},
+		"QUARTILE.INC": {
 			"0": true
 		},
 		"QUOTIENT": {
@@ -9620,8 +9682,11 @@ function parserFormula( formula, parent, _ws ) {
 			"0": true,
 			"1": true
 		},
+		"SERIESSUM": {
+			"3": true
+		},
 		"SUBTOTAL": {
-			"1": true
+			"allFrom": 1
 		},
 		"SUM": {
 			"*": true
@@ -9634,7 +9699,7 @@ function parserFormula( formula, parent, _ws ) {
 			"arg0orOdd": true
 		},
 		"SUMPRODUCT": {
-			"0": true
+			"*": true
 		},
 		"SUMSQ": {
 			"*": true
