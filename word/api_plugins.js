@@ -1433,8 +1433,23 @@
 		let bookmarks = logicDocument.GetBookmarksManager();
 		let para = logicDocument.GetCurrentParagraph();
 		let topDocument = para ? para.GetTopDocumentContent() : null;
-		let docPos = topDocument && topDocument.GetContentPosition ? topDocument.GetContentPosition(false) : null;
-		return bookmarks.GetBookmarkByDocPos(docPos);
+		if (!topDocument || !topDocument.GetContentPosition)
+			return null;
+		
+		let currentBookmarks;
+		if (topDocument.IsTextSelectionUse())
+		{
+			let startPos = topDocument.GetContentPosition(true, true);
+			let endPos   = topDocument.GetContentPosition(true, false);
+			currentBookmarks = bookmarks.GetBookmarksByRange(startPos, endPos);
+		}
+		else
+		{
+			let curPos = topDocument.GetContentPosition(false);
+			currentBookmarks = bookmarks.GetBookmarksByDocPos(curPos);
+		}
+		
+		return currentBookmarks.length ? currentBookmarks[0] : null;
 	};
 	/**
 	 * Adds annotations to the specified paragraph.

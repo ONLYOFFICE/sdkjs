@@ -362,13 +362,14 @@ CBookmarksManager.prototype.GetBookmarkByName = function(sName)
 
 	return null;
 };
-CBookmarksManager.prototype.GetBookmarkByDocPos = function(docPos)
+CBookmarksManager.prototype.GetBookmarksByDocPos = function(docPos)
 {
 	if (!docPos)
-		return null;
+		return [];
 	
 	this.Update();
 	
+	let result = [];
 	for (let i = 0, count = this.Bookmarks.length; i < count; ++i)
 	{
 		let mark = this.Bookmarks[i][0];
@@ -383,10 +384,42 @@ CBookmarksManager.prototype.GetBookmarkByDocPos = function(docPos)
 		mark = this.Bookmarks[i][1];
 		markPos = mark.GetDocumentPositionFromObject();
 		if (AscWord.isInSameTopDocContent(docPos, markPos) && AscWord.CompareDocumentPositions(markPos, docPos) > 0)
-			return bookmarkName;
+			result.push(bookmarkName);
 	}
 	
-	return null;
+	return result;
+};
+CBookmarksManager.prototype.GetBookmarksByRange = function(startPos, endPos)
+{
+	if (!startPos || !endPos || !AscWord.isInSameTopDocContent(startPos, endPos))
+		return [];
+	
+	if (AscWord.CompareDocumentPositions(startPos, endPos) > 0)
+		return this.GetBookmarksByRange(endPos, startPos);
+	
+	this.Update();
+	
+	let result = [];
+	for (let i = 0, count = this.Bookmarks.length; i < count; ++i)
+	{
+		let startMark = this.Bookmarks[i][0];
+		let endMark   = this.Bookmarks[i][1];
+		
+		let bookmarkName = startMark.GetBookmarkName();
+		if (this.IsHiddenBookmark(bookmarkName))
+			continue;
+		
+		let startMarkPos = startMark.GetDocumentPositionFromObject();
+		let endMarkPos   = endMark.GetDocumentPositionFromObject();
+		
+		if (AscWord.CompareDocumentPositions(startMarkPos, endPos) > 0
+			|| AscWord.CompareDocumentPositions(endMarkPos, startPos) <= 0)
+			continue;
+		
+		result.push(bookmarkName);
+	}
+	
+	return result;
 };
 CBookmarksManager.prototype.HaveBookmark = function(sName)
 {
