@@ -3501,17 +3501,11 @@
 		}
 		oDoc.SetTableProps(oPr);
 	};
-	PDFEditorApi.prototype.asc_DistributeTableCells = function(isHorizontally) {
-		let oDoc	= this.getPDFDoc();
-		let bResult	= false;
-
-		bResult = oDoc.DistributeTableCells(isHorizontally);
-		return bResult;
-	};
 	PDFEditorApi.prototype.remColumn = function() {
 		let oDoc = this.getPDFDoc();
-		oDoc.RemoveTableColumn();
-		return true;
+		return oDoc.DoAction(function() {
+			oDoc.RemoveTableColumn();
+		}, AscDFH.historydescription_Document_TableRemoveColumn);
 	};
 	PDFEditorApi.prototype.remTable = function() {
 		let oDoc = this.getPDFDoc();
@@ -5520,7 +5514,6 @@
 	// table
 	PDFEditorApi.prototype['put_Table']						= PDFEditorApi.prototype.put_Table;
 	PDFEditorApi.prototype['tblApply']						= PDFEditorApi.prototype.tblApply;
-	PDFEditorApi.prototype['asc_DistributeTableCells']		= PDFEditorApi.prototype.asc_DistributeTableCells;
 	PDFEditorApi.prototype['remColumn']						= PDFEditorApi.prototype.remColumn;
 	PDFEditorApi.prototype['remTable']						= PDFEditorApi.prototype.remTable;
 	PDFEditorApi.prototype['asc_getTableStylesPreviews']	= PDFEditorApi.prototype.asc_getTableStylesPreviews;
