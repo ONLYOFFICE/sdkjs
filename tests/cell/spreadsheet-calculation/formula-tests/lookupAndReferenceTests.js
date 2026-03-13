@@ -4361,6 +4361,29 @@ $(function () {
 		ws.getRange2("AI1132").setValue("9");
 		ws.getRange2("AJ1132").setValue("10");
 
+		// Locale-aware tests (Spanish, es-ES): words in es-ES ascending order (nota < nube < ñoño < oca).
+		// In es-ES, ñ is a distinct letter after all n-words; in en-US, ñ has primary weight 'n'.
+		ws.getRange2("A2010").setValue("nota");
+		ws.getRange2("B2010").setValue("nube");
+		ws.getRange2("C2010").setValue("ñoño");
+		ws.getRange2("D2010").setValue("oca");
+		ws.getRange2("A2011").setValue("10");
+		ws.getRange2("B2011").setValue("20");
+		ws.getRange2("C2011").setValue("30");
+		ws.getRange2("D2011").setValue("40");
+
+		// Locale-aware tests (Swedish characters, en-US): words in ICU/localeCompare en-US order.
+		// Key difference from Excel: ICU/localeCompare sorts å before ä in en-US, Excel sorts ä before å.
+		// Data sorted in ICU/localeCompare en-US order: a < å < ä < b.
+		ws.getRange2("A2012").setValue("a");
+		ws.getRange2("B2012").setValue("å");
+		ws.getRange2("C2012").setValue("ä");
+		ws.getRange2("D2012").setValue("b");
+		ws.getRange2("A2013").setValue("10");
+		ws.getRange2("B2013").setValue("20");
+		ws.getRange2("C2013").setValue("30");
+		ws.getRange2("D2013").setValue("40");
+
 		AscCommonExcel.g_oHLOOKUPCache.clean();
 
 		const defName3D = new Asc.asc_CDefName('HLOOKUPTestName3D', ws.getName() + '!$S$1101');
@@ -4993,6 +5016,34 @@ $(function () {
 		oParser = new parserFormula('HLOOKUP("2",A501:J503,2,FALSE)', "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+
+		const defaultLCID_hl = AscCommon.g_oDefaultCultureInfo ? AscCommon.g_oDefaultCultureInfo.LCID : 1033;
+
+		// Case #39: String, Area, Number, Boolean. Locale es-ES. Data sorted in es-ES order, ñoño found at col 3.
+		AscCommon.setCurrentCultureInfo(3082); // es-ES
+		oParser = new parserFormula('HLOOKUP("ñoño",A2010:D2011,2,TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), 'Parse HLOOKUP("ñoño",A2010:D2011,2,TRUE) es-ES');
+		assert.strictEqual(oParser.calculate().getValue(), 30, 'Result of HLOOKUP("ñoño",A2010:D2011,2,TRUE) es-ES');
+
+		// Case #40: String, Area, Number, Boolean. Locale en-US. ñ has primary weight n, "ñoño" < "nota", binary search finds nothing.
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+		oParser = new parserFormula('HLOOKUP("ñoño",A2010:D2011,2,TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), 'Parse HLOOKUP("ñoño",A2010:D2011,2,TRUE) en-US');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of HLOOKUP("ñoño",A2010:D2011,2,TRUE) en-US');
+
+		// Case #41: String, Area, Number, Boolean. Locale en-US (ICU/localeCompare).
+		// Data sorted with å before ä; searching for "ä" finds it at col 3.
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+		oParser = new parserFormula('HLOOKUP("ä",A2012:D2013,2,TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), 'Parse HLOOKUP("ä",A2012:D2013,2,TRUE) en-US');
+		assert.strictEqual(oParser.calculate().getValue(), 30, 'Result of HLOOKUP("ä",A2012:D2013,2,TRUE) en-US');
+
+		// Excel equivalent (ä < å in Excel en-US — binary search goes left past å, finds "a"):
+		// oParser = new parserFormula('HLOOKUP("ä",A2012:D2013,2,TRUE)', "A2", ws);
+		// assert.ok(oParser.parse(), 'Parse HLOOKUP("ä",A2012:D2013,2,TRUE) en-US Excel');
+		// assert.strictEqual(oParser.calculate().getValue(), 10, 'Result of HLOOKUP("ä",A2012:D2013,2,TRUE) en-US Excel');
+
+		AscCommon.setCurrentCultureInfo(defaultLCID_hl);
 
 		wb.delDefinesNames(defName3D);
 		wb.delDefinesNames(defNameArea3D);
@@ -6288,6 +6339,29 @@ $(function () {
 
 		ws.getRange2("A1323").setValue("BLUE");
 
+		// Locale-aware tests (Spanish, es-ES): words in es-ES ascending order (nota < nube < ñoño < oca).
+		// In es-ES, ñ is a distinct letter after all n-words; in en-US, ñ has primary weight 'n'.
+		ws.getRange2("A2020").setValue("nota");
+		ws.getRange2("A2021").setValue("nube");
+		ws.getRange2("A2022").setValue("ñoño");
+		ws.getRange2("A2023").setValue("oca");
+		ws.getRange2("B2020").setValue("10");
+		ws.getRange2("B2021").setValue("20");
+		ws.getRange2("B2022").setValue("30");
+		ws.getRange2("B2023").setValue("40");
+
+		// Locale-aware tests (Swedish characters, en-US): words in ICU/localeCompare en-US order.
+		// Key difference from Excel: ICU/localeCompare sorts å before ä in en-US, Excel sorts ä before å.
+		// Data sorted in ICU/localeCompare en-US order: a < å < ä < b.
+		ws.getRange2("A2024").setValue("a");
+		ws.getRange2("A2025").setValue("å");
+		ws.getRange2("A2026").setValue("ä");
+		ws.getRange2("A2027").setValue("b");
+		ws.getRange2("B2024").setValue("10");
+		ws.getRange2("B2025").setValue("20");
+		ws.getRange2("B2026").setValue("30");
+		ws.getRange2("B2027").setValue("40");
+
 		ws.getRange2("B1300").setValue("1");
 		ws.getRange2("B1301").setValue("2");
 		ws.getRange2("B1302").setValue("3");
@@ -7023,6 +7097,36 @@ $(function () {
 		oParser = new parserFormula('LOOKUP("2.3",A1300:B1322)', "A2", ws);
 		assert.ok(oParser.parse(), 'LOOKUP("2.3",A1300:B1322)');
 		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of LOOKUP(2.3,A1300:B1322)');
+
+		// LOOKUP always uses binary search (approximate match).
+		// The result changes when the locale changes (see data at A2020:B2027 above).
+		const defaultLCID_lk = AscCommon.g_oDefaultCultureInfo ? AscCommon.g_oDefaultCultureInfo.LCID : 1033;
+
+		// Case #32: String, Area, Area, Locale es-ES. Data sorted in es-ES order, ñoño found at row 3.
+		AscCommon.setCurrentCultureInfo(3082); // es-ES
+		oParser = new parserFormula('LOOKUP("ñoño",A2020:A2023,B2020:B2023)', "A2", ws);
+		assert.ok(oParser.parse(), 'Parse LOOKUP("ñoño",A2020:A2023,B2020:B2023) es-ES');
+		assert.strictEqual(oParser.calculate().getValue().getValue(), 30, 'Result of LOOKUP("ñoño",A2020:A2023,B2020:B2023) es-ES');
+
+		// Case #33: String, Area, Area. Locale en-US. ñ has primary weight n, "ñoño" < "nota", binary search finds nothing.
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+		oParser = new parserFormula('LOOKUP("ñoño",A2020:A2023,B2020:B2023)', "A2", ws);
+		assert.ok(oParser.parse(), 'Parse LOOKUP("ñoño",A2020:A2023,B2020:B2023) en-US');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of LOOKUP("ñoño",A2020:A2023,B2020:B2023) en-US');
+
+		// Case #34: String, Area, Area. Locale en-US (ICU/localeCompare).
+		// Data sorted with å before ä; searching for "ä" finds it at row 3.
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+		oParser = new parserFormula('LOOKUP("ä",A2024:A2027,B2024:B2027)', "A2", ws);
+		assert.ok(oParser.parse(), 'Parse LOOKUP("ä",A2024:A2027,B2024:B2027) en-US');
+		assert.strictEqual(oParser.calculate().getValue().getValue(), 30, 'Result of LOOKUP("ä",A2024:A2027,B2024:B2027) en-US');
+
+		// Excel equivalent (ä < å in Excel en-US — binary search goes left past å, finds "a"):
+		// oParser = new parserFormula('LOOKUP("ä",A2024:A2027,B2024:B2027)', "A2", ws);
+		// assert.ok(oParser.parse(), 'Parse LOOKUP("ä",A2024:A2027,B2024:B2027) en-US Excel');
+		// assert.strictEqual(oParser.calculate().getValue().getValue(), 10, 'Result of LOOKUP("ä",A2024:A2027,B2024:B2027) en-US Excel');
+
+		AscCommon.setCurrentCultureInfo(defaultLCID_lk);
 
 		wb.delDefinesNames(defName3D);
 		wb.delDefinesNames(defNameArea3D);
@@ -11890,6 +11994,30 @@ $(function () {
 		ws.getRange2("AB1139").setValue("9");
 		ws.getRange2("AB1140").setValue("10");
 
+		// Locale-aware tests (Spanish, es-ES): words in es-ES ascending order (nota < nube < ñoño < oca).
+		// In es-ES, ñ is a distinct letter after all n-words; in en-US, ñ has primary weight 'n'.
+		ws.getRange2("A2001").setValue("nota");
+		ws.getRange2("A2002").setValue("nube");
+		ws.getRange2("A2003").setValue("ñoño");
+		ws.getRange2("A2004").setValue("oca");
+		ws.getRange2("B2001").setValue("10");
+		ws.getRange2("B2002").setValue("20");
+		ws.getRange2("B2003").setValue("30");
+		ws.getRange2("B2004").setValue("40");
+
+		// Locale-aware tests (Swedish characters, en-US): words in ICU/localeCompare en-US order.
+		// Key difference from Excel: ICU/localeCompare sorts å before ä in en-US, Excel sorts ä before å.
+		// Data sorted in ICU/localeCompare en-US order: a < å < ä < b.
+		// (Same ordering is observed in LibreOffice and Google Docs.)
+		ws.getRange2("A2005").setValue("a");
+		ws.getRange2("A2006").setValue("å");
+		ws.getRange2("A2007").setValue("ä");
+		ws.getRange2("A2008").setValue("b");
+		ws.getRange2("B2005").setValue("10");
+		ws.getRange2("B2006").setValue("20");
+		ws.getRange2("B2007").setValue("30");
+		ws.getRange2("B2008").setValue("40");
+
 		const defName3D = new Asc.asc_CDefName('VLOOKUPTestName3D', ws.getName() + '!$C$1117');
 		const defName3D2 = new Asc.asc_CDefName('VLOOKUPTestName3D2', ws.getName() + '!$B$1102');
 		const defNameArea3D = new Asc.asc_CDefName('VLOOKUPTestNameArea3D', ws.getName() + '!$C$1101:$D$1123');
@@ -12532,6 +12660,43 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
 
+		// VLOOKUP approximate match (TRUE) uses binary search driven by stringCompare,
+		// so the result changes when the locale changes (see data setup at A2001:B2004 above).
+		const defaultLCID = AscCommon.g_oDefaultCultureInfo ? AscCommon.g_oDefaultCultureInfo.LCID : 1033;
+
+		// Case #40: String, Area, Number, Boolean. Locale es-ES. Data sorted in es-ES order, ñoño found at row 3.
+		AscCommon.setCurrentCultureInfo(3082); // es-ES
+		oParser = new parserFormula('VLOOKUP("ñoño",A2001:B2004,2,TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), 'Parse VLOOKUP("ñoño",A2001:B2004,2,TRUE) es-ES');
+		assert.strictEqual(oParser.calculate().getValue(), 30, 'Result of VLOOKUP("ñoño",A2001:B2004,2,TRUE) es-ES');
+
+		// Case #41: String, Area, Number, Boolean. Locale en-US. ñ has primary weight n, "ñoño" < "nota", binary search finds nothing.
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+		oParser = new parserFormula('VLOOKUP("ñoño",A2001:B2004,2,TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), 'Parse VLOOKUP("ñoño",A2001:B2004,2,TRUE) en-US');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of VLOOKUP("ñoño",A2001:B2004,2,TRUE) en-US');
+
+		// Data for case #42: A2005:B2008 sorted in ICU/localeCompare en-US order (a < å < ä < b).
+		// In Excel en-US the order is different: ä < å, so ä sorts before å.
+		// When binary searching for "ä" in ICU-sorted data using ICU comparison (å < ä):
+		//   the search correctly finds "ä" at row 3 → 30.
+		// When binary searching for "ä" in ICU-sorted data using Excel comparison (ä < å):
+		//   at mid=å the search goes left, overshoots, and lands on "a" → 10.
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+
+		// Case #42: String, Area, Number, Boolean. Locale en-US (ICU/localeCompare).
+		// Data sorted with å before ä; searching for "ä" finds it at row 3.
+		oParser = new parserFormula('VLOOKUP("ä",A2005:B2008,2,TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), 'Parse VLOOKUP("ä",A2005:B2008,2,TRUE) en-US');
+		assert.strictEqual(oParser.calculate().getValue(), 30, 'Result of VLOOKUP("ä",A2005:B2008,2,TRUE) en-US');
+
+		// Excel equivalent (ä < å in Excel en-US — binary search goes left past å, finds "a"):
+		// oParser = new parserFormula('VLOOKUP("ä",A2005:B2008,2,TRUE)', "A2", ws);
+		// assert.ok(oParser.parse(), 'Parse VLOOKUP("ä",A2005:B2008,2,TRUE) en-US Excel');
+		// assert.strictEqual(oParser.calculate().getValue(), 10, 'Result of VLOOKUP("ä",A2005:B2008,2,TRUE) en-US Excel');
+
+		AscCommon.setCurrentCultureInfo(defaultLCID);
+
 		wb.delDefinesNames(defName3D);
 		wb.delDefinesNames(defNameArea3D);
 		wb.delDefinesNames(defName3D2);
@@ -12777,6 +12942,29 @@ $(function () {
 		ws.getRange2("B1508").setValue("8");
 		ws.getRange2("B1509").setValue("9");
 		ws.getRange2("B1510").setValue("10");
+
+		// Locale-aware tests (Spanish, es-ES): words in es-ES ascending order (nota < nube < ñoño < oca).
+		// In es-ES, ñ is a distinct letter after all n-words; in en-US, ñ has primary weight 'n'.
+		ws.getRange2("A2030").setValue("nota");
+		ws.getRange2("A2031").setValue("nube");
+		ws.getRange2("A2032").setValue("ñoño");
+		ws.getRange2("A2033").setValue("oca");
+		ws.getRange2("B2030").setValue("10");
+		ws.getRange2("B2031").setValue("20");
+		ws.getRange2("B2032").setValue("30");
+		ws.getRange2("B2033").setValue("40");
+
+		// Locale-aware tests (Swedish characters, en-US): words in ICU/localeCompare en-US order.
+		// Key difference from Excel: ICU/localeCompare sorts å before ä in en-US, Excel sorts ä before å.
+		// Data sorted in ICU/localeCompare en-US order: a < å < ä < b.
+		ws.getRange2("A2034").setValue("a");
+		ws.getRange2("A2035").setValue("å");
+		ws.getRange2("A2036").setValue("ä");
+		ws.getRange2("A2037").setValue("b");
+		ws.getRange2("B2034").setValue("10");
+		ws.getRange2("B2035").setValue("20");
+		ws.getRange2("B2036").setValue("30");
+		ws.getRange2("B2037").setValue("40");
 
 		const defName3D = new Asc.asc_CDefName('XLOOKUPTestName3D', ws.getName() + '!$A$1118');
 		const defNameArea3D = new Asc.asc_CDefName('XLOOKUPTestNameArea3D', ws.getName() + '!$A$1101:$A$1123');
@@ -13502,6 +13690,36 @@ $(function () {
 		oParser = new parserFormula('XLOOKUP("a",A1501:A1510,B1501:B1515,, -1, 1)', "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(_getValue(oParser.calculate()), "#VALUE!");
+
+		// XLOOKUP approximate match with search_mode=2 (binary search, ascending) uses binary search driven by stringCompare,
+		// so the result changes when the locale changes (see data setup at A2030:B2037 above).
+		const defaultLCID_xl = AscCommon.g_oDefaultCultureInfo ? AscCommon.g_oDefaultCultureInfo.LCID : 1033;
+
+		// Case #27: String, Area, Area, String, Number, Number. Locale es-ES. Data sorted in es-ES order, ñoño found at row 3.
+		AscCommon.setCurrentCultureInfo(3082); // es-ES
+		oParser = new parserFormula('XLOOKUP("ñoño",A2030:A2033,B2030:B2033,"#N/A",-1,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'Parse XLOOKUP("ñoño",A2030:A2033,B2030:B2033,"#N/A",-1,2) es-ES');
+		assert.strictEqual(_getValue(oParser.calculate()), 30, 'Result of XLOOKUP("ñoño",A2030:A2033,B2030:B2033,"#N/A",-1,2) es-ES');
+
+		// Case #28: String, Area, Area, String, Number, Number. Locale en-US. ñ has primary weight n, "ñoño" < "nota", binary search finds nothing.
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+		oParser = new parserFormula('XLOOKUP("ñoño",A2030:A2033,B2030:B2033,"#N/A",-1,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'Parse XLOOKUP("ñoño",A2030:A2033,B2030:B2033,"#N/A",-1,2) en-US');
+		assert.strictEqual(_getValue(oParser.calculate()), "#N/A", 'Result of XLOOKUP("ñoño",A2030:A2033,B2030:B2033,"#N/A",-1,2) en-US');
+
+		// Case #29: String, Area, Area, String, Number, Number. Locale en-US (ICU/localeCompare).
+		// Data sorted with å before ä; searching for "ä" finds it at row 3.
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+		oParser = new parserFormula('XLOOKUP("ä",A2034:A2037,B2034:B2037,"#N/A",-1,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'Parse XLOOKUP("ä",A2034:A2037,B2034:B2037,"#N/A",-1,2) en-US');
+		assert.strictEqual(_getValue(oParser.calculate()), 30, 'Result of XLOOKUP("ä",A2034:A2037,B2034:B2037,"#N/A",-1,2) en-US');
+
+		// Excel equivalent (ä < å in Excel en-US — binary search goes left past å, finds "a"):
+		// oParser = new parserFormula('XLOOKUP("ä",A2034:A2037,B2034:B2037,"#N/A",-1,2)', "A2", ws);
+		// assert.ok(oParser.parse(), 'Parse XLOOKUP("ä",A2034:A2037,B2034:B2037,"#N/A",-1,2) en-US Excel');
+		// assert.strictEqual(_getValue(oParser.calculate()), 10, 'Result of XLOOKUP("ä",A2034:A2037,B2034:B2037,"#N/A",-1,2) en-US Excel');
+
+		AscCommon.setCurrentCultureInfo(defaultLCID_xl);
 
 		wb.delDefinesNames(defName3D);
 		wb.delDefinesNames(defNameArea3D);
