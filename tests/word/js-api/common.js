@@ -61,6 +61,7 @@ $(function()
 	QUnit.testStart(function()
 	{
 		AscTest.CreateLogicDocument();
+		AscTest.SetTrackRevisions(false);
 		AscCommon.History.Clear();
 		AscTest.ClearDocument();
 	});
