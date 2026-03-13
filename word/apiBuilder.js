@@ -10390,18 +10390,29 @@
 	 */
 	ApiParagraph.prototype.Delete = function()
 	{
-		var oParent = this.Paragraph.GetParent();
-		var nPosInParent = this.Paragraph.GetIndex();
+		let docContent   = this.Paragraph.GetParent();
+		let posInParent = this.Paragraph.GetIndex();
 
-		if (nPosInParent !== - 1)
+		if (-1 === posInParent)
+			return false;
+
+		let logicDocument = private_GetLogicDocument();
+		let isTrackRevisions = logicDocument.IsTrackRevisions();
+		if (isTrackRevisions)
+		{
+			let state = logicDocument.SaveDocumentState();
+			logicDocument.RemoveSelection();
+			this.Paragraph.SelectThisElement(1, false);
+			docContent.Remove(-1, false, false, false, false);
+			logicDocument.LoadDocumentState(state);
+		}
+		else
 		{
 			this.Paragraph.PreDelete();
-			oParent.Remove_FromContent(nPosInParent, 1, true);
-
-			return true;
+			docContent.Remove_FromContent(posInParent, 1, true);
 		}
-		else 
-			return false;
+		
+		return true;
 	};
 	/**
 	 * Returns the next paragraph.
