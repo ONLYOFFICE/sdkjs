@@ -5337,8 +5337,8 @@ function (window, undefined) {
 		const unshiftDataArrays = {};
 		const unshiftIndexesArrays = {};
 		range._foreachNoEmpty(function (cell, r, c) {
-			const value = AscCommonExcel.checkTypeCell(cell, true);
-			if (value.type === cElementType.number || value.type === cElementType.error) {
+			const value =  cell.clone();//AscCommonExcel.checkTypeCell(cell, true);
+			if (value.number !== null|| value.type === AscCommon.CellValueType.Error) {
 				if (!unshiftDataArrays[value.type]) {
 					unshiftDataArrays[value.type] = [];
 				}
@@ -5358,9 +5358,9 @@ function (window, undefined) {
 	SumIfSumRangeCache.prototype.updateDataAfter = function (range, column, endIndex) {
 		const t = this;
 		range._foreachNoEmpty(function (cell, r, c) {
-			const value = AscCommonExcel.checkTypeCell(cell, true);
+			const value =  cell.clone();//AscCommonExcel.checkTypeCell(cell, true);
 			if (r > column.end) {
-				if (value.type === cElementType.number || value.type === cElementType.error) {
+				if (value.number !== null || value.type === AscCommon.CellValueType.Error) {
 					t.pushValue(column, value, r)
 				}
 				column.end = r;
@@ -5391,10 +5391,10 @@ function (window, undefined) {
 				const dataArray = column.data[newType];
 				if (dataArray && indexesArray) {
 					const insertIndex = this.findHigherIndexInTyped(changedIndex - 1, indexesArray);
-					dataArray.splice(insertIndex, 0, newValue);
+					dataArray.splice(insertIndex, 0, cell.clone()/*newValue*/);
 					indexesArray.splice(insertIndex, 0, changedIndex);
 				} else {
-					column.data[newType] = [newValue];
+					column.data[newType] = [cell.clone()/*newValue*/];
 					column.indexes[newType] = [changedIndex];
 				}
 			}
@@ -5432,6 +5432,22 @@ function (window, undefined) {
 			}
 			this.changeColumnsData(wsId, cell, oldValue, oldType, newValue, newType);
 		}
+	};
+	SumIfSumRangeCache.prototype.pushValue = function (column, value, index) {
+		const data = column.data;
+		const indexes = column.indexes;
+		if (!data[value.type]) {
+			data[value.type] = [];
+		}
+		if (!indexes[value.type]) {
+			indexes[value.type] = [];
+		}
+		let valueToAdd = value;
+		if (value.type === AscCommon.CellValueType.Error) {
+			valueToAdd = value.text;
+		}
+		data[value.type].push(valueToAdd);
+		indexes[value.type].push(index);
 	};
 
 	function SumIfTypedCache() {
@@ -5737,7 +5753,7 @@ function (window, undefined) {
 							return {result: null, error: new cError(errorData[currentErrorIndex])};
 						}
 						if (sumIndexes && currentSumIndex < sumLen && sumIndexes[currentSumIndex] === targetRow) {
-							sum += sumData[currentSumIndex];
+							sum += AscCommonExcel.checkTypeCell(sumData[currentSumIndex], true).value;//sumData[currentSumIndex];
 							currentSumIndex += 1;
 						}
 					}
@@ -5768,7 +5784,7 @@ function (window, undefined) {
 							return {result: null, error: new cError(errorData[currentErrorIndex])};
 						}
 						if (sumIndexes && currentSumIndex < sumLen && sumIndexes[currentSumIndex] === targetRow) {
-							sum += sumData[currentSumIndex];
+							sum +=  AscCommonExcel.checkTypeCell(sumData[currentSumIndex], true).value;//sumData[currentSumIndex];
 							currentSumIndex += 1;
 						}
 					}
