@@ -1059,6 +1059,7 @@ void main() {\n\
             sel.Page2 = pagesCount - 1;
             sel.Line2 = _numLine;
             sel.Glyph2 = -1;
+			sel.IsSelection = true;
         }
 
         this.onUpdateSelection();
