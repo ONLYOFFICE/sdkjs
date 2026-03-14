@@ -84,6 +84,40 @@ var SignType = {Negative: 1, Null:2, Positive: 3};
 var gc_nMaxDigCount = 15;//Максимальное число знаков точности
 var gc_nMaxDigCountView = 11;//Максимальное число знаков в ячейке
 var gc_nMaxMantissa = Math.pow(10, gc_nMaxDigCount);
+
+// Pre-allocated buffers for IEEE 754 bit-level exponent extraction in getNumberParts.
+// Avoids Math.log() floating-point precision issues and is slightly faster.
+const _g_numPartsBuf = new ArrayBuffer(8);
+const _g_numPartsF64 = new Float64Array(_g_numPartsBuf);
+const _g_numPartsI32 = new Int32Array(_g_numPartsBuf);
+
+// Set of Arabic locale LCIDs used for the RLM (right-to-left mark) check in format().
+// Defined at module level so it is created once, not on every format() call.
+const _g_arabicLCIDs = new Set([
+	lcid_ar, lcid_arSY, lcid_arSA, lcid_arAE,
+	lcid_arBH, lcid_arDZ, lcid_arEG, lcid_arIQ,
+	lcid_arJO, lcid_arKW, lcid_arQA
+]);
+
+// Module-level helper used by NumFormat.prototype.toString().
+// Converts an array of digit-type format items back to a format string fragment.
+// Extracted from the inner closure to avoid re-creating it on every toString() call.
+function _formatDigitArrayToString(aFormat) {
+	var res = "";
+	for (var i = 0, length = aFormat.length; i < length; ++i) {
+		var item = aFormat[i];
+		if (numFormat_Digit === item.type) {
+			res += (null != item.val) ? item.val : "0";
+		} else if (numFormat_DigitNoDisp === item.type) {
+			res += "#";
+		} else if (numFormat_DigitSpace === item.type) {
+			res += "?";
+		} else if (numFormat_DigitDrop === item.type) {
+			res += "x";
+		}
+	}
+	return res;
+}
 var gc_aTimeFormats = ['[$-F400]h:mm:ss AM/PM', 'h:mm;@', 'h:mm AM/PM;@', 'h:mm:ss;@', 'h:mm:ss AM/PM;@', 'mm:ss.0;@',
 	'[h]:mm:ss;@'];
 var gc_aFractionFormats = ['#\\ ?/?', '#\\ ??/??', '#\\ ???/???', '#\\ ?/2', '#\\ ?/4', '#\\ ?/8', '#\\ ??/16', '#\\ ?/10', '#\\ ??/100'];
@@ -131,20 +165,26 @@ function getNumberParts(x)
 	else if(x < 0)
 	{
 		sig = SignType.Negative;
-		x = Math.abs(x);
+		x = -x;
 	}
-    var exp = - gc_nMaxDigCount;
+    var exp = -gc_nMaxDigCount;
 	var man = 0;
 	if(SignType.Null != sig)
 	{
-		exp = Math.floor( Math.log(x) * Math.LOG10E ) - gc_nMaxDigCount + 1;
-		//хотелось бы поставить здесь floor, чтобы не округлялось число 0.9999999999999999, но обнаружились проблемы с числом 0.999999999999999
-		//после умножения оно превращается в 999999999999998.9
+		// Extract the base-2 exponent directly from the IEEE 754 representation.
+		// Bits [62:52] of a float64 are the biased exponent; subtract the bias 1023
+		// to get floor(log2(x)).  Multiplying by log10(2) ≈ 0.30103 gives an
+		// approximation of floor(log10(x)) that is always <= the true value.
+		// When it is one too small, man ends up >= gc_nMaxMantissa and the
+		// existing correction below fixes it.
+		_g_numPartsF64[0] = x;
+		const binaryExp = ((_g_numPartsI32[1] >>> 20) & 0x7FF) - 1023;
+		exp = Math.floor(binaryExp * 0.30102999566398120) - gc_nMaxDigCount + 1;
 		man = Math.round(x / Math.pow(10, exp));
 		if(man >= gc_nMaxMantissa)
 		{
 			exp++;
-			man/=10;
+			man /= 10;
 		}
 	}
     return {mantissa: man, exponent: exp, sign: sig};//для 0,123 exponent == - gc_nMaxDigCount
@@ -1434,31 +1474,35 @@ NumFormat.prototype =
 	_prepareFormatDatePDF : function()
     {
 		var nFormatLength = this.aRawFormat.length;
-        //Группируем несколько элемнтов подряд в один спецсимвол
         for(var i = 0; i < nFormatLength; ++i)
         {
             var item = this.aRawFormat[i];
             if(numFormat_Year == item.type || numFormat_Month == item.type || numFormat_Day == item.type)
             {
-                //Удаляем итемы у которых val > 4 (для года удаляем если "yyy")
+                // Remove "yyy" (3 y's) for year type, or any date item with val > 4.
+                // Use else-if because both conditions are mutually exclusive (3 is not > 4),
+                // and after splice the index must be decremented so the next element is not skipped.
 				if(item.val === 3 && numFormat_Year == item.type)
                 {
                     this.aRawFormat.splice(i, 1);
-					nFormatLength -= 1;
+					nFormatLength--;
+					i--;
                 }
-                if(item.val > 4)
+                else if(item.val > 4)
                 {
                     this.aRawFormat.splice(i, 1);
-					nFormatLength -= 1;
+					nFormatLength--;
+					i--;
                 }
             }
 			else if(numFormat_Hour == item.type || numFormat_Minute == item.type || numFormat_Second == item.type)
             {
-				//Удаляем итемы у которых val > 2
+				// Remove time items with val > 2 (only 1 or 2 repetitions are valid).
                 if(item.val > 2)
                 {
                     this.aRawFormat.splice(i, 1);
-					nFormatLength -= 1;
+					nFormatLength--;
+					i--;
                 }
             }
         }
@@ -1716,8 +1760,7 @@ NumFormat.prototype =
             {
 				var sNumber = number + "";
 				var nNumberLen = sNumber.length;
-				//для бага Bug 14325 - В загруженной таблице число с 30 знаками после разделителя отображается неправильно.
-				//например число "1.23456789123456e+23" и формат "0.000000000000000000000000000000"
+				// Bug 14325: number like "1.23456789123456e+23" with format "0.000…" (30 zeros)
 				if(exponent > nNumberLen)
 				{
 					for(var i = 0; i < exponent - nNumberLen; ++i)
@@ -1727,12 +1770,16 @@ NumFormat.prototype =
                 var bIsNUll = false;
                 if("0" == sNumber && !opt_forceNull)
                     bIsNUll = true;
-                //выравниваем длину
+                // Use an index instead of Array.shift() to avoid O(n) per call.
+                // format is always a fresh .concat() copy, so mutation is safe, but
+                // shifting re-indexes the whole array each time (O(n²) overall).
+                var fmtIdx = 0;
+                //align length
                 if(nNumberLen > nFormatLen)
                 {
                     if(false === bIsNUll)
                     {
-						var item = format.shift();
+						var item = format[fmtIdx++];
 						if (numFormat_DigitDrop !== item.type) {
 							var nSplitIndex = nNumberLen - nFormatLen + 1;
 							aRes.push(new FormatObj(numFormat_Text, sNumber.slice(0, nSplitIndex)));
@@ -1744,19 +1791,19 @@ NumFormat.prototype =
                 }
                 else if(nNumberLen < nFormatLen)
                 {
-                    //просто копируем, здесь будут только нули и пропуски
+                    // leading padding — only zeros and spaces here
                     for(var i = 0, length = nFormatLen - nNumberLen; i < length; ++i)
                     {
-                        var item = format.shift();
+                        var item = format[fmtIdx++];
                         aRes.push(new FormatObj(item.type));
                     }
                 }
-                //просто заполняем текстом
+                // fill digit-by-digit
                 for(var i = 0, length = sNumber.length; i < length; ++i)
                 {
                     var sCurNumber = sNumber[i];
 					var numFormat = numFormat_Text;
-                    var item = format.shift();
+                    var item = format[fmtIdx++];
                     if(true == bIsNUll && null != item && FormatStates.Scientific != nReadState)
 					{
 						if(numFormat_DigitNoDisp == item.type)
@@ -1903,7 +1950,7 @@ NumFormat.prototype =
         }
         else if(numFormat_DigitNoDisp == item.type)
         {
-            oCurText.text += "";
+            // No visible placeholder character — only append the value if present.
             if(null != item.val)
                 oCurText.text += item.val;
         }
@@ -1918,21 +1965,40 @@ NumFormat.prototype =
     },
     _ZeroPad: function(n)
     {
-        return (n < 10) ? "0" + n : n;
+        // Always return a string so callers get consistent string concatenation.
+        return n < 10 ? "0" + n : String(n);
     },
     _CommitText: function(res, oCurText, textVal, format)
     {
+        // Flush accumulated text first (always with format=null).
+        // Previously this called _CommitText recursively with (res, null, text, null).
+        // Inlined here to avoid the function call overhead on every format operation.
         if(null != oCurText && oCurText.text.length > 0)
         {
-            this._CommitText(res, null, oCurText.text, null);
+            var sAccum = oCurText.text;
             oCurText.text = "";
+            var accumFmt = null;
+            if(-1 != this.Color)
+            {
+                accumFmt = new AscCommonExcel.Font();
+                accumFmt.c = new AscCommonExcel.RgbColor(this.Color);
+            }
+            var prevLen = res.length;
+            var prevItem = prevLen > 0 ? res[prevLen - 1] : null;
+            if(null != prevItem && ((null == prevItem.format && null == accumFmt) ||
+                (null != prevItem.format && null != accumFmt && accumFmt.isEqual(prevItem.format))))
+            {
+                prevItem.text += sAccum;
+            }
+            else
+            {
+                res.push(null == accumFmt ? {text: sAccum} : {text: sAccum, format: accumFmt});
+            }
         }
         if(null != textVal && textVal.length > 0)
         {
             var length = res.length;
-            var prev = null;
-            if(length > 0)
-                prev = res[length - 1];
+            var prev = length > 0 ? res[length - 1] : null;
             if(-1 != this.Color)
             {
                 if(null == format)
@@ -1945,11 +2011,7 @@ NumFormat.prototype =
             }
             else
             {
-                if(null == format)
-                    prev = {text: textVal};
-                else
-                    prev = {text: textVal, format: format};
-                res.push(prev);
+                res.push(null == format ? {text: textVal} : {text: textVal, format: format});
             }
         }
     },
@@ -2161,18 +2223,8 @@ NumFormat.prototype =
             var hasSign = false;
             var nReadState = FormatStates.Decimal;
             var nFormatLength = this.aRawFormat.length;
-			let isArabic = (lcid_ar === cultureInfoLCID.LCID
-				|| lcid_arSY === cultureInfoLCID.LCID
-				|| lcid_arSA === cultureInfoLCID.LCID
-				|| lcid_arAE === cultureInfoLCID.LCID
-				|| lcid_arBH === cultureInfoLCID.LCID
-				|| lcid_arDZ === cultureInfoLCID.LCID
-				|| lcid_arEG === cultureInfoLCID.LCID
-				|| lcid_arIQ === cultureInfoLCID.LCID
-				|| lcid_arJO === cultureInfoLCID.LCID
-				|| lcid_arKW === cultureInfoLCID.LCID
-				|| lcid_arQA === cultureInfoLCID.LCID
-			);
+			// _g_arabicLCIDs is a module-level Set — O(1) lookup vs O(n) OR-chain.
+			const isArabic = _g_arabicLCIDs.has(cultureInfoLCID.LCID);
 			
 			let _t = this;
 			function checkRLM(prev)
@@ -2480,12 +2532,11 @@ NumFormat.prototype =
 				}
             }
 
+            this._CommitText(res, oCurText, null, null);
 			if (true == this.bAddMinusIfNes && SignType.Negative == oParsedNumber.sign && !hasSign) {
-				//todo разобраться с минусами
-				//Добавляем в самое начало знак минус
+				// No explicit sign placeholder consumed the minus — prepend it now.
 				res.unshift({text: "-"});
 			}
-            this._CommitText(res, oCurText, null, null);
 			if(0 == res.length)
                 res = [{text: ""}];
         }
@@ -2569,28 +2620,8 @@ NumFormat.prototype =
             nNewFracLength = 0;
         var nReadState = FormatStates.Decimal;
         var res = "";
-        var fFormatToString = function(aFormat)
-        {
-            var res = "";
-            for(var i = 0, length = aFormat.length; i < length; ++i)
-            {
-                var item = aFormat[i];
-                if(numFormat_Digit == item.type)
-                {
-                    if(null != item.val)
-                        res += item.val;
-                    else
-                        res += "0";
-                }
-                else if(numFormat_DigitNoDisp == item.type)
-                    res += "#";
-                else if(numFormat_DigitSpace == item.type)
-                    res += "?";
-				else if(numFormat_DigitDrop == item.type)
-					res += "x";
-            }
-            return res;
-        };
+        // Use the module-level helper to avoid re-creating the function on every toString() call.
+        const fFormatToString = _formatDigitArrayToString;
         //Color
         if(null != this.Color)
         {
@@ -3500,7 +3531,6 @@ function DecodeGeneralFormat_Raw(val, nValType, dDigitsCount)
     if(frac_num_digits > 0)
     {
 		var sTempNumber = parts.mantissa.toString();
-		var sTempNumber;
 		if(dec_num_digits > 0)
 			sTempNumber = sTempNumber.substring(dec_num_digits, dec_num_digits + frac_num_digits);
 		else
@@ -4119,10 +4149,8 @@ FormatParser.prototype =
     {
         var oRes = null;
         var bThouthand = false;
-        //reverse
-        var sReverseVal = "";
-        for (var i = val.length - 1; i >= 0; --i)
-            sReverseVal += val[i];
+        // Reverse the string to scan group separators from the least-significant end.
+        const sReverseVal = val.split("").reverse().join("");
         var nGroupSizeIndex = 0;
         var nGroupSize = cultureInfo.NumberGroupSizes[nGroupSizeIndex];
         var nPrevIndex = 0;
