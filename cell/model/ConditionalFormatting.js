@@ -2549,7 +2549,9 @@
 		return this.Type;
 	};
 	CConditionalFormatValueObject.prototype.asc_getVal = function () {
-		return !isNumeric(this.Val) ? "=" + this.Val : this.Val;
+		if (!isNumeric(this.Val))
+			return "=" + this.Val;
+		return AscCommon.g_oFormatParser.toLocaleNumber(this.Val);
 	};
 	CConditionalFormatValueObject.prototype.asc_setGte = function (val) {
 		this.Gte = val;
@@ -2834,8 +2836,8 @@
 
 			if (_prevNum && _isNum) {
 				if (_isNum && _prevNum) {
-					_val = parseFloat(_val);
-					_prevVal = parseFloat(_prevVal);
+					_val = AscCommon.g_oFormatParser.parseLocaleNumber(_val);
+					_prevVal = AscCommon.g_oFormatParser.parseLocaleNumber(_prevVal);
 				}
 				if (type === Asc.ECfType.colorScale) {
 					if (_prevType === _type && type !== AscCommonExcel.ECfvoType.Formula && _prevVal > _val) {
@@ -2858,7 +2860,7 @@
 		var _isNumeric;
 		for (i = 0; i < props.length; i++) {
 			if (undefined !== props[i][1] && type !== Asc.ECfType.top10) {
-				_isNumeric = isNumeric(props[i][0]);
+				_isNumeric = AscCommon.g_oFormatParser.tryParseLocaleNumber(props[i][0]) !== null;
 				nError = _checkValue(props[i][0], props[i][1], _isNumeric);
 				if (nError !== null) {
 					return [nError, i];
@@ -2915,8 +2917,12 @@
 	}
 
 	function correctFromInterface(val) {
-		let _isNumeric = isNumeric(val);
-		if (!_isNumeric) {
+		if (typeof val === "number")
+			return val;
+		let _num = AscCommon.g_oFormatParser.tryParseLocaleNumber(val);
+		if (_num !== null) {
+			val = String(_num);
+		} else {
 			let isDate;
 			let isFormula;
 

@@ -184,7 +184,7 @@ function getNumberParts(x)
 		if(man >= gc_nMaxMantissa)
 		{
 			exp++;
-			man /= 10;
+			man = Math.floor(man / 10);
 		}
 	}
     return {mantissa: man, exponent: exp, sign: sig};//для 0,123 exponent == - gc_nMaxDigCount
@@ -2532,11 +2532,11 @@ NumFormat.prototype =
 				}
             }
 
-            this._CommitText(res, oCurText, null, null);
 			if (true == this.bAddMinusIfNes && SignType.Negative == oParsedNumber.sign && !hasSign) {
 				// No explicit sign placeholder consumed the minus — prepend it now.
 				res.unshift({text: "-"});
 			}
+            this._CommitText(res, oCurText, null, null);
 			if(0 == res.length)
                 res = [{text: ""}];
         }
@@ -3683,25 +3683,46 @@ function FormatParser()
 }
 FormatParser.prototype =
 {
+    // Replaces the locale decimal separator with '.' (JS format).
+    // '.' is first replaced with 'q' so it is not recognized as a decimal separator, matching Excel behavior.
+    _normalizeDecimalSep: function (val, cultureInfo) {
+        if (typeof val !== "string")
+            val = String(val);
+        if ("." != cultureInfo.NumberDecimalSeparator) {
+            val = val.replace(".", "q");
+            val = val.replace(cultureInfo.NumberDecimalSeparator, ".");
+        }
+        return val;
+    },
     isLocaleNumber: function (val, cultureInfo) {
         if (null == cultureInfo)
             cultureInfo = g_oDefaultCultureInfo;
-        //javascript decimal separator is '.'
-        if ("." != cultureInfo.NumberDecimalSeparator) {
-            val = val.replace(".", "q");//заменяем на символ с которым не распознается, как в Excel
-            val = val.replace(cultureInfo.NumberDecimalSeparator, ".");
-        }
-        //parseNum исключаем запись числа в 16-ричной форме из числа.
+        val = this._normalizeDecimalSep(val, cultureInfo);
+        //parseNum excludes hex number notation.
         return AscCommonExcel.parseNum(val) && Asc.isNumberInfinity(val);
     },
     parseLocaleNumber: function (val, cultureInfo) {
         if (null == cultureInfo)
             cultureInfo = g_oDefaultCultureInfo;
-        //javascript decimal separator is '.'
-        if ("." != cultureInfo.NumberDecimalSeparator) {
-            val = val.replace(".", "q");//заменяем на символ с которым не распознается, как в Excel
-            val = val.replace(cultureInfo.NumberDecimalSeparator, ".");
-        }
+        return this._normalizeDecimalSep(val, cultureInfo) - 0;
+    },
+    // Reverse of parseLocaleNumber: converts a JS-format number string ("0.2") to locale display string ("0,2").
+    toLocaleNumber: function (val, cultureInfo) {
+        if (null == cultureInfo)
+            cultureInfo = g_oDefaultCultureInfo;
+        if (typeof val !== "string")
+            val = String(val);
+        var sep = cultureInfo.NumberDecimalSeparator;
+        return sep !== "." ? val.replace(".", sep) : val;
+    },
+    // Combines isLocaleNumber + parseLocaleNumber in a single pass.
+    // Returns the parsed number, or null if val is not a valid locale number.
+    tryParseLocaleNumber: function (val, cultureInfo) {
+        if (null == cultureInfo)
+            cultureInfo = g_oDefaultCultureInfo;
+        val = this._normalizeDecimalSep(val, cultureInfo);
+        if (!AscCommonExcel.parseNum(val) || !Asc.isNumberInfinity(val))
+            return null;
         return val - 0;
     },
     /**
