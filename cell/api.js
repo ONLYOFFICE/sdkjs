@@ -3460,6 +3460,7 @@ var editor;
 		this.asc_CheckGuiControlColors();
 		this.sendColorThemes(this.wbModel.theme);
 		this.asc_ApplyColorScheme(false);
+		this.updateDarkMode();
 
 		this.sendStandartTextures();
 		this.sendMathToMenu();
@@ -6224,7 +6225,7 @@ var editor;
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
-		return;
+      return;
     }
     let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
@@ -8581,12 +8582,22 @@ var editor;
 
     if (this.wb) {
       this.wb.updateSkin();
+      if (this.isDarkMode) {
+          this.wb.updateDarkMode(true);
+      }
       var ws = this.wb.getWorksheet();
       if (ws) {
           this.controller.updateScrollSettings();
 		  ws.draw();
       }
     }
+  };
+
+  spreadsheet_api.prototype.updateDarkMode = function () {
+    if (!this.wb) {
+        return;
+    }
+    this.wb.updateDarkMode(this.isDarkMode);
   };
 
   spreadsheet_api.prototype.turnOffSpecialModes = function() {

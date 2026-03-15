@@ -284,18 +284,15 @@
 	{
 		if (!this.canEdit() || this.isPdfEditor() || !AscCommon.g_inputContext)
 			return;
-	
-		this.executeGroupActions(function()
-		{
-			if (textReplace)
-			{
-				for (var i = 0; i < textReplace.length; i++)
-					AscCommon.g_inputContext.emulateKeyDownApi(8);
-			}
 		
-			AscCommon.g_inputContext.addText(text);
-			AscCommon.g_inputContext.keyPressInput = "";
-		});
+		if (textReplace)
+		{
+			for (var i = 0; i < textReplace.length; i++)
+				AscCommon.g_inputContext.emulateKeyDownApi(8);
+		}
+	
+		AscCommon.g_inputContext.addText(text);
+		AscCommon.g_inputContext.keyPressInput = "";
 	};
 
 	/**
@@ -486,9 +483,14 @@
     Api.prototype["pluginMethod_StartAction"] = function(type, description)
     {
 		if ("GroupActions" === type)
-			this.startGroupActions();
+		{
+			let pr = description && (typeof description === "object") ? description : {};
+			this.startGroupActions(pr);
+		}
 		else
+		{
 			this.sync_StartAction((type === "Block") ? Asc.c_oAscAsyncActionType.BlockInteraction : Asc.c_oAscAsyncActionType.Information, description);
+		}
     };
 
     /**
@@ -505,10 +507,11 @@
     {
 		if ("GroupActions" === type)
 		{
+			let pr = description && (typeof description === "object") ? description : {};
 			if (status)
-				this.cancelGroupActions();
+				this.cancelGroupActions(pr);
 			else
-				this.endGroupActions();
+				this.endGroupActions(pr);
 			
 			return;
 		}
@@ -1014,7 +1017,7 @@
      * @param {string} guid - A string value which specifies a plugin identifier which must be of the *asc.{UUID}* type.
      * @param {string} isclear - Defines if the input context will be cleared (**true**) or not (**false**).
      * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/UnShowInputHelper.js
-	 */
+     */
     Api.prototype["pluginMethod_UnShowInputHelper"] = function(guid, isclear)
     {
         var _frame = document.getElementById("iframe_" + guid);
@@ -1026,6 +1029,9 @@
         _frame.removeAttribute("oo_editor_input");
 
         _frame.style.zIndex = -1000;
+        try {
+            window.focus();
+        } catch (e) {}
 
         if (AscCommon.g_inputContext && AscCommon.g_inputContext.HtmlArea)
         {
@@ -1059,7 +1065,8 @@
 	 */
     Api.prototype["pluginMethod_CoAuthoringChatSendMessage"] = function(sText)
     {
-        return this.CoAuthoringChatSendMessage(sText);
+		let jsApi = this.getJsApi();
+        return jsApi.CoAuthoringChatSendMessage(sText);
     };
 
 	/**
@@ -1172,7 +1179,8 @@
 	 */
     Api.prototype["pluginMethod_ConvertDocument"] = function(sConvertType, bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags)
     {
-        return this.ConvertDocument(sConvertType, bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags);
+		let jsApi = this.getJsApi();
+        return jsApi.ConvertDocument(sConvertType, bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags);
     };
     /**
      * Returns the selected text from the document.
@@ -1252,11 +1260,11 @@
     {
 		window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
 		this.incrementCounterLongAction();
-
+		let jsApi = this.getJsApi();
 		function ReplaceTextSmart()
 		{
 			this.asc_canPaste();
-			this.ReplaceTextSmart(arrString, sParaTab, sParaNewLine);
+			jsApi.ReplaceTextSmart(arrString, sParaTab, sParaNewLine);
 			this.asc_Recalculate(true);
 			switch (this.editorId)
 			{

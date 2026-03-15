@@ -12582,6 +12582,9 @@ function (window, undefined) {
 			cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type) {
 			return new cError(cErrorType.wrong_value_type);
 		}
+		if (arg0.type === cElementType.cellsRange3D && !arg0.isSingleSheet()) {
+			return new cError(cErrorType.wrong_value_type);
+		}
 		const t = this;
 		function calculateOne(rangeOrCell, condition) {
 			if (cElementType.cell === rangeOrCell.type || cElementType.cell3D === rangeOrCell.type || cElementType.cellsRange === rangeOrCell.type || cElementType.cellsRange3D === rangeOrCell.type) {

@@ -9971,7 +9971,59 @@ $(function () {
 		assert.strictEqual(result.getElementRowCol(3, 0).getValue(), 3, 'Row 4: COUNTIF with criteria "5" returns 3');
 		assert.strictEqual(result.getElementRowCol(4, 0).getValue(), 0, 'Row 5: COUNTIF with criteria "Banana" returns 0');
 		assert.strictEqual(result.getElementRowCol(5, 0).getValue(), 0, 'Row 6: COUNTIF with criteria "FALSE" returns 0');
-	
+
+		// Locale-aware tests (Spanish, es-ES): words in es-ES ascending order (nota < nube < ñoño < oca).
+		// In es-ES, ñ is a distinct letter after all n-words; in en-US, ñ has primary weight 'n'.
+		ws.getRange2("A2040").setValue("nota");
+		ws.getRange2("A2041").setValue("nube");
+		ws.getRange2("A2042").setValue("ñoño");
+		ws.getRange2("A2043").setValue("oca");
+
+		// Locale-aware tests (Swedish characters, en-US): words in ICU/localeCompare en-US order.
+		// Key difference from Excel: ICU/localeCompare sorts å before ä in en-US, Excel sorts ä before å.
+		// Data sorted in ICU/localeCompare en-US order: a < å < ä < b.
+		ws.getRange2("A2044").setValue("a");
+		ws.getRange2("A2045").setValue("å");
+		ws.getRange2("A2046").setValue("ä");
+		ws.getRange2("A2047").setValue("b");
+		AscCommonExcel.g_oCountIfCache.clean();
+
+		const defaultLCID_cf = AscCommon.g_oDefaultCultureInfo ? AscCommon.g_oDefaultCultureInfo.LCID : 1033;
+
+		// Case #69: Area, String. Locale es-ES. Criteria ">ñ": in es-ES ñ is a separate letter after n,
+		// so nota and nube are both less than ñ. Only ñoño and oca are greater → 2.
+		AscCommon.setCurrentCultureInfo(3082); // es-ES
+		AscCommonExcel.g_oCountIfCache.clean();
+		oParser = new parserFormula('COUNTIF(A2040:A2043,">ñ")', "C2", ws);
+		assert.ok(oParser.parse(), 'Parse COUNTIF(A2040:A2043,">ñ") es-ES');
+		assert.strictEqual(oParser.calculate().getValue(), 2, 'Result of COUNTIF(A2040:A2043,">ñ") es-ES');
+
+		// Case #70: Area, String. Locale en-US (ICU/localeCompare). Criteria ">ñ": in en-US ñ has primary weight n,
+		// so all four words (nota, nube, ñoño, oca) are greater than "ñ" → 4.
+		// Excel en-US: same result as ICU en-US here → 4.
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+		AscCommonExcel.g_oCountIfCache.clean();
+		oParser = new parserFormula('COUNTIF(A2040:A2043,">ñ")', "C2", ws);
+		assert.ok(oParser.parse(), 'Parse COUNTIF(A2040:A2043,">ñ") en-US');
+		assert.strictEqual(oParser.calculate().getValue(), 4, 'Result of COUNTIF(A2040:A2043,">ñ") en-US');
+
+		// Case #71: Area, String. Locale en-US (ICU/localeCompare). Criteria ">å":
+		// ICU/localeCompare en-US order: a < å < ä < b, so ä and b are greater than å → 2.
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+		AscCommonExcel.g_oCountIfCache.clean();
+		oParser = new parserFormula('COUNTIF(A2044:A2047,">å")', "C2", ws);
+		assert.ok(oParser.parse(), 'Parse COUNTIF(A2044:A2047,">å") en-US');
+		assert.strictEqual(oParser.calculate().getValue(), 2, 'Result of COUNTIF(A2044:A2047,">å") en-US');
+
+		// Excel equivalent (ä < å in Excel en-US — only b is greater than å):
+		// AscCommon.setCurrentCultureInfo(1033); // en-US
+		// AscCommonExcel.g_oCountIfCache.clean();
+		// oParser = new parserFormula('COUNTIF(A2044:A2047,">å")', "C2", ws);
+		// assert.ok(oParser.parse(), 'Parse COUNTIF(A2044:A2047,">å") en-US Excel');
+		// assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of COUNTIF(A2044:A2047,">å") en-US Excel');
+
+		AscCommon.setCurrentCultureInfo(defaultLCID_cf);
+		AscCommonExcel.g_oCountIfCache.clean();
 
 		// Negative Cases:
 		// Case #1: Error, Number. Handle reference error in range
@@ -10008,6 +10060,11 @@ $(function () {
 		oParser = new parserFormula('COUNTIF(1, 1)', "C2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		// Case #8: Area3D, Number.
+		oParser = new parserFormula('COUNTIF(Sheet1:Sheet2!A1:B1, ">0")', "C2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!")
 
 		// Bounded Cases:
 		// Case #1: Area, String. Count errors greater than #N/A

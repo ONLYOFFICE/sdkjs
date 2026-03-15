@@ -5151,6 +5151,7 @@ function isAllowPasteLink(pastedWb) {
 
 		var activeNamedSheetView = !isPrint && this.model.getActiveNamedSheetViewId() !== null;
         var ctx = drawingCtx || this.drawingCtx;
+		var ctxOldDarkMode = ctx.isDarkMode; ctx.isDarkMode = false;
         var st = this.settings.header.style[style];
 		var backgroundColor = isPrint ? this.settings.header.printBackground : (activeNamedSheetView ? st.backgroundDark : st.background);
 		var borderColor = isPrint ? this.settings.header.printBorder : st.border;
@@ -5265,6 +5266,7 @@ function isAllowPasteLink(pastedWb) {
 
         // Для невидимых кроме border-а ничего не рисуем
         if (isZeroHeader || -1 === index) {
+			ctx.isDarkMode = ctxOldDarkMode;
             return;
         }
 
@@ -5290,6 +5292,7 @@ function isAllowPasteLink(pastedWb) {
 		this._fillText(ctx, text, textX, textY + Asc.round(tm.baseline * this.getZoom()), undefined, sr.charWidths);
 
 		this._RemoveClipRect(ctx);
+		ctx.isDarkMode = ctxOldDarkMode;
     };
 
 	WorksheetView.prototype.drawHeaderFooter = function (drawingCtx, printPagesData, indexPrintPage, countPrintPages) {
@@ -11677,7 +11680,9 @@ function isAllowPasteLink(pastedWb) {
         return Math.abs(x2 - x1) <= wEps + 2 && Math.abs(y2 - y1) <= hEps + 2;
     };
     WorksheetView.prototype._hitInRange = function (range, rangeType, vr, x, y, offsetX, offsetY, opt_pageBreakPreviewRange) {
-        var wEps = 2 * AscCommon.global_mouseEvent.KoefPixToMM, hEps = 2 * AscCommon.global_mouseEvent.KoefPixToMM;
+        var wEps = AscCommon.AscBrowser.convertToRetinaValue(2 * AscCommon.global_mouseEvent.KoefPixToMM, true);
+        var hEps = AscCommon.AscBrowser.convertToRetinaValue(2 * AscCommon.global_mouseEvent.KoefPixToMM, true);
+
         var cursor, x1, x2, y1, y2, isResize;
         var col = -1, row = -1;
 
@@ -12074,12 +12079,15 @@ function isAllowPasteLink(pastedWb) {
 						oHyperlink.Hyperlink = hyperlinkValue;
 					}
 
+					const hyperlinkResult = new asc_CHyperlink(oHyperlink);
+					hyperlinkResult.asc_setIsFromShape(true);
+
 					cellCursor =
 						{cursor: drawingInfo.cursor, target: c_oTargetType.Cells, col: -1, row: -1, userId: userId};
 					return {
 						cursor: kCurHyperlink,
 						target: c_oTargetType.Hyperlink,
-						hyperlink: new asc_CHyperlink(oHyperlink),
+						hyperlink: hyperlinkResult,
 						cellCursor: cellCursor,
 						userId: userId
 					};
@@ -13912,6 +13920,7 @@ function isAllowPasteLink(pastedWb) {
 				}
 
                 objectInfo.hyperlink = new asc_CHyperlink(hyperlink);
+                objectInfo.hyperlink.asc_setIsFromShape(true);
                 objectInfo.hyperlink.asc_setText(shapeHyperlink.GetSelectedText(true, true));
             }
         }
@@ -13929,6 +13938,7 @@ function isAllowPasteLink(pastedWb) {
 						hyperlink.Tooltip = cNvProps.hlinkClick.tooltip;
 					}
 					objectInfo.hyperlink = new asc_CHyperlink(hyperlink);
+					objectInfo.hyperlink.asc_setIsFromShape(true);
 				}
 			}
 		}
@@ -14977,7 +14987,16 @@ function isAllowPasteLink(pastedWb) {
         return ret;
     };
 
-	/* Функция для применения автозаполнения */
+	/**
+	 * Method applies autofill.
+	 * Initializes data and runs autofill logic.
+	 * @memberof WorksheetView
+	 * @param {number|null} [x]
+	 * @param {number|null} [y]
+	 * @param {boolean|null} [ctrlPress]
+	 * @param {boolean|null} [opt_doNotDraw]
+	 * @param {Function} [callback]
+	 */
 	WorksheetView.prototype.applyFillHandle = function (x, y, ctrlPress, opt_doNotDraw, callback) {
 		let t = this;
 
@@ -15003,6 +15022,24 @@ function isAllowPasteLink(pastedWb) {
 		// Текущее выделение (к нему применится автозаполнение)
 		let arn = t.model.selectionRange.getLast();
 		let range = t.model.getRange3(arn.r1, arn.c1, arn.r2, arn.c2);
+
+		// Check whether the filter is applied to the sheet
+		if (t.model && t.model.isApplyFilterBySheet() && this.fillHandleArea !== 2 && this.fillHandleDirection === 1) {
+			// Change selection to first cell
+			arn = arn.clone();
+			if (this.fillHandleArea === 3) { // From top to bottom
+				arn.r2 = arn.r1;
+				arn.c2 = arn.c1;
+			} else { // From bottom to top
+				arn.r1 = arn.r2;
+				arn.c1 = arn.c2;
+			}
+			range = t.model.getRange3(arn.r1, arn.c1, arn.r2, arn.c2);
+			// Change ctrlPress flag to copy pattern
+			const numFormat = range.getXfs() && range.getXfs().num && range.getXfs().num.getFormat();
+			const dateType = !!(numFormat && AscCommon.oNumFormatCache.get(numFormat).isDateTimeFormat());
+			ctrlPress = !(range.getType() === AscCommon.CellValueType.Number && !dateType);
+		}
 
 		// Были ли изменения
 		let bIsHaveChanges = false;
@@ -19513,6 +19550,9 @@ function isAllowPasteLink(pastedWb) {
 		if (AscCommon.align_Distributed === fl.textAlign) {
 			fl.textAlign = AscCommon.align_Center;
 		}
+		if (align && align.getAlignHorizontal() === null) {
+			fl.textAlign = null;
+		}
 
 		let offset = this._calcActiveCellOffset();
 		if (this.topLeftFrozenCell) {
@@ -21047,6 +21087,7 @@ function isAllowPasteLink(pastedWb) {
 		var t = this;
 		var ctx = props.isOverlay ? this.overlayCtx : this.drawingCtx;
 		var isDataValidation = props.isOverlay;
+		var ctxOldDarkMode = ctx.isDarkMode; ctx.isDarkMode = false;
 
 		let isClip = null;
 		if (!isDataValidation && this._clipDrawingRect(ctx, new Asc.Range(props.col, props.row, props.col, props.row), clipType.range)) {
@@ -21058,6 +21099,7 @@ function isAllowPasteLink(pastedWb) {
 			if (isClip) {
 				this._RemoveClipRect(ctx);
 			}
+			ctx.isDarkMode = ctxOldDarkMode;
 			return;
 		}
 
@@ -21282,6 +21324,7 @@ function isAllowPasteLink(pastedWb) {
 		if (isClip) {
 			this._RemoveClipRect(ctx);
 		}
+		ctx.isDarkMode = ctxOldDarkMode;
 	};
 
 

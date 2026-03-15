@@ -1750,10 +1750,6 @@ var CPresentation = CPresentation || function(){};
                     return;
 				}
             }
-            
-            if ((oMouseDownObject.IsDrawing() || (oMouseDownObject.IsAnnot() && oMouseDownObject.IsFreeText())) && false == oMouseDownObject.IsInTextBox()) {
-                oDrDoc.TargetEnd();
-            }
         }
 
         // check redraw if focus is lost
@@ -2373,7 +2369,7 @@ var CPresentation = CPresentation || function(){};
 
                                         bOldShowParaMarks = this.Api.ShowParaMarks;
                                         this.Api.ShowParaMarks = false;
-                                        oDocContentForDraw.Draw(oDocContentForDraw.GetAbsolutePage(), oGraphics);
+                                        oDocContentForDraw.Draw(0, oGraphics);
                                         this.Api.ShowParaMarks = bOldShowParaMarks;
                                     }
                                     sImageUrl = oCanvas.toDataURL("image/png");
@@ -2817,7 +2813,7 @@ var CPresentation = CPresentation || function(){};
         
         this.UpdateInterface();
         this.UpdateSelectionTrackPos();
-        this.AnnotSelectTrackHandler.Update(true);
+        this.UpdateAnnotTrackPos(true);
         oViewer.onUpdateOverlay();
         oViewer.file.onUpdateSelection();
     };
@@ -4004,9 +4000,9 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.UpdateMathTrackPos = function() {
         this.MathTrackHandler.OnChangePosition();
     };
-    CPDFDoc.prototype.UpdateAnnotTrackPos = function() {
-        this.AnnotTextPrTrackHandler.OnChangePosition();
-        this.AnnotSelectTrackHandler.OnChangePosition();
+    CPDFDoc.prototype.UpdateAnnotTrackPos = function(bCheckMouseUpPos) {
+        this.AnnotTextPrTrackHandler.OnChangePosition(bCheckMouseUpPos);
+        this.AnnotSelectTrackHandler.OnChangePosition(bCheckMouseUpPos);
     };
     CPDFDoc.prototype.UpdateSelectionTrackPos = function() {
         this.TextSelectTrackHandler.OnChangePosition();
@@ -7389,6 +7385,7 @@ var CPresentation = CPresentation || function(){};
             result = Function.apply(oTable, args);
             if (oTable.Content.length === 0) {
                 this.RemoveDrawing(oTable.Parent.GetId());
+				oController.resetSelection();
                 return result;
             }
         }
@@ -9182,7 +9179,7 @@ var CPresentation = CPresentation || function(){};
 		else if (activeAnnot && ((activeAnnot.IsFreeText() && activeAnnot.IsInTextBox()) || (activeAnnot.IsLine() && activeAnnot.IsDoCaption()))) {
 			return activeAnnot;
 		}
-		else if (activeDrawing && activeDrawing.GetDocContent()) {
+		else if (activeDrawing && (activeDrawing.GetDocContent() || oController.getTargetTextObject())) {
 			return activeDrawing;
 		}
 		
@@ -9765,6 +9762,12 @@ var CPresentation = CPresentation || function(){};
                 });
             }
         }
+
+		// on copy page with field with format value
+		if (oMeta && oMeta["formatValue"]) {
+			oForm.SetFormatValue(oMeta["formatValue"], true);
+		}
+
         AscPDF.FillActionsFromJSON(oForm, formJson['AA']);
 
         return oForm;

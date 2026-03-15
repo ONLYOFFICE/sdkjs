@@ -156,6 +156,7 @@
                 this.AddLoadFonts("Times New Roman", 0x0F);
             }
 
+			this.BlockOperationType = undefined;
             this.Api.asyncFontsDocumentStartLoaded();
 
             this.bIsLoadDocumentFirst = true;
@@ -204,6 +205,7 @@
 
                 if (null != this.endLoadingCallback)
                 {
+                    this.Api.sync_EndAction(undefined === this.BlockOperationType ? Asc.c_oAscAsyncActionType.BlockInteraction : this.BlockOperationType, Asc.c_oAscAsyncAction.LoadDocumentFonts);
                     this.endLoadingCallback.call(this.Api);
                     this.endLoadingCallback = null;
                 }

@@ -60,6 +60,7 @@ $(function()
 
 	QUnit.testStart(function()
 	{
+		AscTest.SetTrackRevisions(false);
 		AscCommon.History.Clear();
 		AscCommon.History.Create_NewPoint(AscDFH.historydescription_BuilderScript);
 		AscTest.ClearDocument();

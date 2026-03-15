@@ -616,8 +616,8 @@
 			doc.StartAction(AscDFH.historydescription_Document_AddLetter);
 		}
 
-		let docContent = textController.GetDocContent();
 		let result = textController.EnterText(codePoints);
+		let docContent = textController.GetDocContent();
 		
 		if (null == drController.getTargetTextObject() && false == textController.IsForm()) {
 			if (textController.IsAnnot() && textController.IsFreeText()) {
@@ -3268,7 +3268,7 @@
 		}
 
 		let aInnerColor = oMouseDownAnnot.IsRedact() ? oMouseDownAnnot.GetFillColor() : oMouseDownAnnot.GetBorderColor();
-		let oColor = oMouseDownAnnot.GetRGBColor(aInnerColor);
+		let oColor = oMouseDownAnnot.GetRGBColor(aInnerColor, true);
 		
 		oColor["r"] = oColor.r;
         oColor["g"] = oColor.g;
@@ -3501,27 +3501,22 @@
 		}
 		oDoc.SetTableProps(oPr);
 	};
-	PDFEditorApi.prototype.asc_DistributeTableCells = function(isHorizontally) {
-		let oDoc	= this.getPDFDoc();
-		let bResult	= false;
-
-		bResult = oDoc.DistributeTableCells(isHorizontally);
-		return bResult;
-	};
 	PDFEditorApi.prototype.remColumn = function() {
 		let oDoc = this.getPDFDoc();
-		oDoc.RemoveTableColumn();
-		return true;
+		return oDoc.DoAction(function() {
+			oDoc.RemoveTableColumn();
+		}, AscDFH.historydescription_Document_TableRemoveColumn);
 	};
 	PDFEditorApi.prototype.remTable = function() {
 		let oDoc = this.getPDFDoc();
+		let oController = oDoc.GetController();
 		let oObject = oDoc.GetActiveObject();
 		
 		if (oObject && oObject.IsDrawing() && oObject.IsGraphicFrame()) {
-			oDoc.CreateNewHistoryPoint();
-			oDoc.RemoveDrawing(oObject.GetId());
-			oDoc.TurnOffHistory();
-			return true;
+			oDoc.DoAction(function() {
+				oDoc.RemoveDrawing(oObject.GetId());
+				oController.resetSelection();
+			}, AscDFH.historydescription_Pdf_ContextMenuRemove);
 		}
 
 		return false;
@@ -5201,7 +5196,7 @@
 
 		return oDoc.Viewer.file.nativeFile['CheckOwnerPassword'](password);
 	};
-	
+
 	function CPdfContextMenuData(obj) {
 		if (obj) {
 			this.Type  		= ( undefined != obj.Type ) ? obj.Type : Asc.c_oAscPdfContextMenuTypes.Common;
@@ -5519,7 +5514,6 @@
 	// table
 	PDFEditorApi.prototype['put_Table']						= PDFEditorApi.prototype.put_Table;
 	PDFEditorApi.prototype['tblApply']						= PDFEditorApi.prototype.tblApply;
-	PDFEditorApi.prototype['asc_DistributeTableCells']		= PDFEditorApi.prototype.asc_DistributeTableCells;
 	PDFEditorApi.prototype['remColumn']						= PDFEditorApi.prototype.remColumn;
 	PDFEditorApi.prototype['remTable']						= PDFEditorApi.prototype.remTable;
 	PDFEditorApi.prototype['asc_getTableStylesPreviews']	= PDFEditorApi.prototype.asc_getTableStylesPreviews;

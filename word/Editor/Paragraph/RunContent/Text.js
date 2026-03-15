@@ -792,6 +792,25 @@
 	CPdfRunText.prototype = Object.create(CRunText.prototype);
 	CPdfRunText.prototype.constructor = CPdfRunText;
 
+	CPdfRunText.prototype.Copy = function()
+	{
+		let t = new CPdfRunText(this.charGid, this.Value, this.originWidth, this.originSize);
+
+		t.Width    = this.Width;
+		t.Flags    = this.Flags;
+		t.Grapheme = this.Grapheme;
+
+		if (this.Flags & FLAGS_TEMPORARY)
+		{
+			t.TempWidth    = this.TempWidth;
+			t.TempGrapheme = this.TempGrapheme;
+		}
+
+		if (this.Flags & FLAGS_VISIBLE_WIDTH)
+			t.WidthVisible = this.WidthVisible;
+
+		return t;
+	};
 	CPdfRunText.prototype.IsPdfText = function()
 	{
 		return true;

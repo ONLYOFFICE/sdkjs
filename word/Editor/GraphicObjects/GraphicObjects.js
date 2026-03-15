@@ -2418,10 +2418,14 @@ CGraphicObjects.prototype =
                 let oParaPr = oParagraph.Get_CompiledPr2(true).ParaPr;
                 if (oParaPr)
                 {
+                    let oHR = oDrawing.getHorizontalRule();
+                    let nJc = oHR ? oHR.getJc() : oParaPr.Jc;
+                    oParaPr.Jc = nJc;
                     editor.sync_ParaSpacingLine( oParaPr.Spacing );
                     editor.Update_ParaInd(oParaPr.Ind, oParaPr.Bidi);
-                    editor.sync_PrAlignCallBack(oParaPr.Jc);
+                    editor.sync_PrAlignCallBack(nJc);
                     editor.sync_ParaStyleName(oParaPr.StyleName);
+                    editor.sync_PrPropCallback(oParaPr);
                 }
             }
         }

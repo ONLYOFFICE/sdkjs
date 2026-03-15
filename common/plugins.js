@@ -1391,7 +1391,7 @@
 						"variations" : [
 							{
 								"isViewer"            : true,
-								"EditorsSupport"      : ["word", "cell", "slide"],
+								"EditorsSupport"      : ["word", "cell", "slide", "pdf"],
 								"type"                : "system",
 								"buttons"             : []
 							}
@@ -1578,6 +1578,12 @@
 
 		callCommandInternal : function(value, task)
 		{
+			if (this.api && this.api.isLogPluginCommands())
+			{
+				this.api.log("Plugin.CallCommand");
+				this.api.log(value);
+			}
+			
 			let commandReturnValue = undefined;
 			try
 			{
@@ -1651,11 +1657,24 @@
 
 		callMethodInternal : function(guid, name, value)
 		{
+			if (this.api && this.api.isLogPluginCommands())
+			{
+				this.api.log("Plugin.CallMethod");
+				this.api.log(guid);
+				this.api.log(name);
+				this.api.log(value);
+			}
+			
 			let methodName = "pluginMethod_" + name;
 			let methodRetValue = undefined;
 
 			if (this.api[methodName])
-				methodRetValue = this.api[methodName].apply(this.api, value);
+			{
+				let api = this.api;
+				methodRetValue = api.executeGroupActions(function(){
+					return api[methodName].apply(api, value);
+				});
+			}
 
 			if (guid === this.internalGuid)
 			{

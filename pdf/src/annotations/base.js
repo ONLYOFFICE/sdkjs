@@ -286,7 +286,7 @@
         return this._refType;
     };
     CAnnotationBase.prototype.SetRectangleDiff = function(aDiff) {
-        AscCommon.History.Add(new CChangesPDFAnnotRD(this, this.GetRectangleDiff(), aDiff));
+        AscCommon.History.Add(new CChangesPDFAnnotRD(this, this._rectDiff, aDiff));
 
         this._rectDiff = aDiff;
         if (this.IsShapeBased()) {
@@ -318,13 +318,13 @@
         return this._dash;
     };
     CAnnotationBase.prototype.SetFillColor = function(aColor) {
-        AscCommon.History.Add(new CChangesPDFAnnotFill(this, this.GetFillColor(), aColor));
+        AscCommon.History.Add(new CChangesPDFAnnotFill(this, this._fillColor, aColor));
 
         this._fillColor = aColor;
 
         if (this.IsShapeBased()) {
-            let oRGB    = this.GetRGBColor(aColor);
-            let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+            let oRGB    = aColor ? this.GetRGBColor(aColor) : null;
+            let oFill   = oRGB ? AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255) : AscFormat.CreateNoFillUniFill();
             this.setFill(oFill);
             this.SetNeedRecalc(true);
             this.SetNeedUpdateOpacity(true);
@@ -332,6 +332,8 @@
         else {
             this.AddToRedraw();
         }
+
+		this.SetWasChanged(true);
     };
     CAnnotationBase.prototype.GetFillColor = function() {
         return this._fillColor;
@@ -347,6 +349,8 @@
     CAnnotationBase.prototype.private_UpdateLn = function() {
         let nWidthPt = this.GetBorderWidth();
         
+		AscCommon.History.StartNoHistoryMode();
+
         if (this.IsShapeBased()) {
             let oLine = this.spPr.ln;
             oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
@@ -355,13 +359,16 @@
                 oLine.setFill(AscFormat.CreateNoFillUniFill());
             }
             else {
-                AscCommon.History.StartNoHistoryMode();
-                this.SetBorderColor(this.GetBorderColor());
-                AscCommon.History.EndNoHistoryMode();
+                let oRGB    = this.GetRGBColor(this.GetBorderColor(), true);
+				let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+				let oLine   = this.spPr.ln;
+				oLine.setFill(oFill);
             }
 
             this.handleUpdateLn();
         }
+
+		AscCommon.History.EndNoHistoryMode();
     };
     CAnnotationBase.prototype.GetBorderWidth = function() {
         return this._borderWidth;
@@ -591,7 +598,7 @@
         return this._needUpdateOpacity;
     };
 
-    CAnnotationBase.prototype.UpdateOpacity = function() {
+    CAnnotationBase.prototype.private_UpdateOpacity = function() {
         const t = this.GetOpacity() * 100 * 2.55;
 
         if (!this.IsShapeBased()) {
@@ -600,31 +607,21 @@
             return;
         }
 
-        if (this.IsFreeText()) {
-            for (let i = 0; i < this.spTree.length; i++) {
-                const oLine = this.spTree[i].spPr.ln;
-                oLine.Fill.transparent = t;
+        const oLine = this.spPr.ln;
+		if (oLine) {
+			oLine.Fill.transparent = t;
+		}
 
-                const oFill = this.spTree[i].spPr.Fill;
-                oFill.transparent = t;
+		const oFill = this.spPr.Fill;
+		if (oFill) {
+			oFill.transparent = t;
+		}
 
-                this.spTree[i].handleUpdateLn();
-                this.spTree[i].handleUpdateFill();
-            }
-        }
-        else {
-            const oLine = this.spPr.ln;
-            oLine.Fill.transparent = t;
-
-            const oFill = this.spPr.Fill;
-            oFill.transparent = t;
-
-            this.handleUpdateLn();
-            this.handleUpdateFill();
-        }
+		this.handleUpdateLn();
+		this.handleUpdateFill();
 
         this.SetNeedUpdateOpacity(false);
-    }
+    };
     CAnnotationBase.prototype.GetOpacity = function() {
         return this._opacity;
     };
@@ -952,6 +949,11 @@
         AscCommon.History.Add(new CChangesPDFAnnotChangedView(this, this._bDrawFromStream, bFromStream));
         this._bDrawFromStream = bFromStream;
     };
+	CAnnotationBase.prototype.private_UpdateRect = function(rect) {
+		if (rect) {
+			this.SetRect(rect);
+		}
+	};
     CAnnotationBase.prototype.SetRect = function(aRect) {
 		if (aRect) {
 			aRect = aRect.slice();
@@ -1109,7 +1111,7 @@
         }
 
         if (this.IsNeedUpdateOpacity()) {
-            this.UpdateOpacity();
+            this.private_UpdateOpacity();
         }
         
         if (this.IsNeedRecalcSizes()) {
@@ -1438,12 +1440,8 @@
 	 * @typeofeditors ["PDF"]
      * @returns {object}
 	 */
-    CAnnotationBase.prototype.GetRGBColor = function(aInternalColor) {
-        let oColor = {
-            r: 255,
-            g: 255,
-            b: 255
-        };
+    CAnnotationBase.prototype.GetRGBColor = function(aInternalColor, isForStroke) {
+        let oColor = isForStroke !== true ? {r: 255, g: 255, b: 255} : {r: 0, g: 0, b: 0};
 
         if (!aInternalColor || aInternalColor.length == 0) {
             return oColor;
@@ -1500,21 +1498,13 @@
     };
 
     CAnnotationBase.prototype.SetBorderColor = function(aColor) {
-        AscCommon.History.Add(new CChangesPDFAnnotStroke(this, this.GetBorderColor(), aColor));
+        AscCommon.History.Add(new CChangesPDFAnnotStroke(this, this._strokeColor, aColor));
 
         this._strokeColor = aColor;
         this.SetWasChanged(true);
 
-        if (!aColor) {
-            aColor = [0, 0, 0];
-        }
-        
         if (this.IsShapeBased()) {
-            let oRGB    = this.GetRGBColor(aColor);
-            let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-            let oLine   = this.spPr.ln;
-            oLine.setFill(oFill);
-            this.handleUpdateLn();
+            this.private_UpdateLn();
             this.SetNeedUpdateOpacity(true);
         }
         else {

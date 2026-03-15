@@ -235,7 +235,8 @@ function CopyProcessor(api, onlyBinaryCopy)
 
     this.aFootnoteReference = [];
 	this.oRoot = new CopyElement("root");
-    this.listNextNumMap = [];
+    this.listNextNumMap = {};
+    this.oListContext = null;
     this.instructionHyperlinkStart = null;
 }
 CopyProcessor.prototype =
@@ -267,7 +268,7 @@ CopyProcessor.prototype =
             sB = "0" + sB;
         return "#" + sR + sG + sB;
     },
-    Commit_pPr : function(Item, Para, nextElem)
+    Commit_pPr : function(Item, Para, nextElem, oListNumLvl)
     {
         //pPr
         var apPr = [];
@@ -276,12 +277,20 @@ CopyProcessor.prototype =
         if(Item_pPr && Def_pPr)
         {
             //Ind
-            if(Def_pPr.Ind.Left !== Item_pPr.Ind.Left)
-                apPr.push("margin-left:" + (Item_pPr.Ind.Left * g_dKoef_mm_to_pt) + "pt");
+            if (oListNumLvl) {
+                if (oListNumLvl !== true && oListNumLvl.ParaPr) {
+                    var nExtraLeft = Item_pPr.Ind.Left - oListNumLvl.ParaPr.Ind.Left;
+                    if (Math.abs(nExtraLeft) > 0.001)
+                        apPr.push("margin-left:" + (nExtraLeft * g_dKoef_mm_to_pt) + "pt");
+                }
+            } else {
+                if(Def_pPr.Ind.Left !== Item_pPr.Ind.Left)
+                    apPr.push("margin-left:" + (Item_pPr.Ind.Left * g_dKoef_mm_to_pt) + "pt");
+                if(Def_pPr.Ind.FirstLine !== Item_pPr.Ind.FirstLine)
+                    apPr.push("text-indent:" + (Item_pPr.Ind.FirstLine * g_dKoef_mm_to_pt) + "pt");
+            }
             if(Def_pPr.Ind.Right !== Item_pPr.Ind.Right)
                 apPr.push("margin-right:" + ( Item_pPr.Ind.Right * g_dKoef_mm_to_pt) + "pt");
-            if(Def_pPr.Ind.FirstLine !== Item_pPr.Ind.FirstLine)
-                apPr.push("text-indent:" + (Item_pPr.Ind.FirstLine * g_dKoef_mm_to_pt) + "pt");
             //Jc
             if(Def_pPr.Jc !== Item_pPr.Jc){
                 switch(Item_pPr.Jc)
@@ -449,6 +458,8 @@ CopyProcessor.prototype =
             else if(AscCommon.vertalign_SubScript === Value.VertAlign)
                 aProp.push("vertical-align:sub");
         }
+        if (true === Value.SmallCaps)
+            aProp.push("font-variant:small-caps");
 		if(aProp.length > 0)
 			oTarget.oAttributes["style"] = aProp.join(';');
     },
@@ -830,7 +841,10 @@ CopyProcessor.prototype =
             }
         }
         //pPr
-        this.Commit_pPr(Item, Para, nextElem);
+        var oListNumLvl = null;
+        if (!bIsNullNumPr)
+            oListNumLvl = (PasteElementsId.g_bIsDocumentCopyPaste && oNumberingLvl) ? oNumberingLvl : true;
+        this.Commit_pPr(Item, Para, nextElem, oListNumLvl);
 
         if(false === selectedAll)
         {
@@ -843,43 +857,93 @@ CopyProcessor.prototype =
 			//добавляем &nbsp; потому что параграфы без содержимого не копируются
             if(Para.isEmptyChild())
                 Para.addChild(new CopyElement("&nbsp;", true));
-            if(bIsNullNumPr)
-                oDomTarget.addChild( Para );
-			else{
-				var Li = new CopyElement( "li" );
-				Li.oAttributes["style"] = "list-style-type: " + sListStyle;
-				Li.addChild( Para );
-				//пробуем добавить в предыдущий список
-				var oTargetList = null;
-				if(oDomTarget.aChildren.length > 0){
-					var oPrevElem = oDomTarget.aChildren[oDomTarget.aChildren.length - 1];
-					if((bBullet && "ul" === oPrevElem.sName) || (!bBullet && "ol" === oPrevElem.sName))
-						oTargetList = oPrevElem;
-				}
+            if(bIsNullNumPr) {
+                oDomTarget.addChild(Para);
+                this.oListContext = null;
+            } else {
+                var nLvl   = PasteElementsId.g_bIsDocumentCopyPaste ? oNumPr.Lvl   : 0;
+                var nNumId = PasteElementsId.g_bIsDocumentCopyPaste ? oNumPr.NumId : oNumPr.NumId;
 
-				if (!bBullet) {
-					if (!this.listNextNumMap[oNumPr.NumId]) {
-						this.listNextNumMap[oNumPr.NumId] = 1;
-					} else {
-						this.listNextNumMap[oNumPr.NumId]++;
-					}
-				}
-				if (null == oTargetList) {
-					if (bBullet) {
-						oTargetList = new CopyElement("ul");
-					} else {
-						oTargetList = new CopyElement("ol");
-					}
-					oTargetList.oAttributes["style"] = "padding-left:40px";
-					//если список идёт с промежуточными элементами, добавляем аттрибут start
-					if (!bBullet && this.listNextNumMap[oNumPr.NumId] > 1) {
-						oTargetList.oAttributes["start"] = this.listNextNumMap[oNumPr.NumId];
-					}
-					oDomTarget.addChild(oTargetList);
-				}
-				oTargetList.addChild(Li);
-			}
+                var nIndentPt = 30;
+                if (PasteElementsId.g_bIsDocumentCopyPaste && oNum && oNumberingLvl && oNumberingLvl.ParaPr) {
+                    var nAbsPt = oNumberingLvl.ParaPr.Ind.Left * g_dKoef_mm_to_pt;
+                    if (nLvl > 0) {
+                        var oParentLvl = oNum.GetLvl(nLvl - 1);
+                        var nParentPt  = oParentLvl && oParentLvl.ParaPr ? oParentLvl.ParaPr.Ind.Left * g_dKoef_mm_to_pt : 0;
+                        nIndentPt = nAbsPt - nParentPt;
+                    } else {
+                        nIndentPt = nAbsPt;
+                    }
+                    if (nIndentPt <= 0) {
+                        nIndentPt = 30;
+                    }
+                }
+
+                if (!bBullet) {
+                    if (!this.listNextNumMap[nNumId])
+                        this.listNextNumMap[nNumId] = {};
+                    if (!this.listNextNumMap[nNumId][nLvl])
+                        this.listNextNumMap[nNumId][nLvl] = 1;
+                    else
+                        this.listNextNumMap[nNumId][nLvl]++;
+                }
+
+                var Li = new CopyElement("li");
+                Li.oAttributes["style"] = "list-style-type: " + sListStyle;
+                Li.addChild(Para);
+
+                var oTargetList = this._findOrCreateList(oDomTarget, nNumId, nLvl, bBullet, nIndentPt);
+                oTargetList.addChild(Li);
+
+                var oCtxEntry = this.oListContext && this.oListContext.stack[this.oListContext.stack.length - 1];
+                if (oCtxEntry)
+                    oCtxEntry.lastLi = Li;
+            }
         }
+    },
+    _findOrCreateList : function(oDomTarget, numId, lvl, bBullet, nIndentPt)
+    {
+        var ctx = this.oListContext;
+
+        if (ctx && ctx.oDomTarget === oDomTarget) {
+            var stack = ctx.stack;
+            var topEntry = stack[stack.length - 1];
+
+            if (topEntry.lvl === lvl && topEntry.numId === numId) {
+                return topEntry.listElem;
+            } else if (lvl > topEntry.lvl) {
+                var nestedList = this._createListElem(bBullet, numId, lvl, nIndentPt);
+                var parentLi = topEntry.lastLi;
+                if (parentLi)
+                    parentLi.addChild(nestedList);
+                else
+                    oDomTarget.addChild(nestedList);
+                stack.push({lvl: lvl, numId: numId, listElem: nestedList, lastLi: null});
+                return nestedList;
+            } else if (lvl < topEntry.lvl) {
+                while (stack.length > 1 && stack[stack.length - 1].lvl > lvl)
+                    stack.pop();
+                var curEntry = stack[stack.length - 1];
+                if (curEntry.lvl === lvl && curEntry.numId === numId)
+                    return curEntry.listElem;
+            }
+        }
+
+        var newList = this._createListElem(bBullet, numId, lvl, nIndentPt);
+        oDomTarget.addChild(newList);
+        this.oListContext = {
+            oDomTarget: oDomTarget,
+            stack:      [{lvl: lvl, numId: numId, listElem: newList, lastLi: null}]
+        };
+        return newList;
+    },
+    _createListElem : function(bBullet, numId, lvl, nIndentPt)
+    {
+        var elem = new CopyElement(bBullet ? "ul" : "ol");
+        elem.oAttributes["style"] = "padding-left:" + Math.round(nIndentPt || 30) + "pt";
+        if (!bBullet && this.listNextNumMap[numId] && this.listNextNumMap[numId][lvl] > 1)
+            elem.oAttributes["start"] = this.listNextNumMap[numId][lvl];
+        return elem;
     },
     _BorderToStyle : function(border, name)
     {
@@ -3426,7 +3490,7 @@ PasteProcessor.prototype =
 
 
 		var specialPasteShowOptions = !specialPasteHelper.buttonInfo.isClean() ? specialPasteHelper.buttonInfo : null;
-		if(!specialPasteHelper.specialPasteStart)
+		if(!specialPasteHelper.specialPasteStart || window['AscCommon'].g_specialPasteHelper.isPasteOptions)
 		{
 			specialPasteShowOptions = specialPasteHelper.buttonInfo;
 
@@ -3471,6 +3535,7 @@ PasteProcessor.prototype =
 			if(null !== props)
 			{
 				specialPasteShowOptions.asc_setOptions(props);
+				specialPasteShowOptions.asc_setLastSelectedPasteProperty(specialPasteHelper.isPasteOptions ? AscCommon.g_specialPasteHelper.specialPasteProps : null);
 			}
 			else
 			{
@@ -3935,6 +4000,7 @@ PasteProcessor.prototype =
 
 		let specialPasteShowOptions = window['AscCommon'].g_specialPasteHelper.buttonInfo;
 		specialPasteShowOptions.asc_setOptions(props);
+		specialPasteShowOptions.asc_setLastSelectedPasteProperty(window['AscCommon'].g_specialPasteHelper.isPasteOptions ? window['AscCommon'].g_specialPasteHelper.specialPasteProps : null);
 
 		let targetDocContent = presentation.Get_TargetDocContent();
 		if(targetDocContent && targetDocContent.Id) {
@@ -9568,6 +9634,9 @@ PasteProcessor.prototype =
 			var font_style = this._getStyle(node, computedStyle, "font-style");
 			if ("italic" === font_style)
 				rPr.Italic = true;
+			var font_variant = this._getStyle(node, computedStyle, "font-variant");
+			if ("small-caps" === font_variant)
+				rPr.SmallCaps = true;
 			var color = this._getStyle(node, computedStyle, "color");
 			if (color && (color = this._ParseColor(color))) {
 				if (PasteElementsId.g_bIsDocumentCopyPaste) {
@@ -12042,6 +12111,19 @@ PasteProcessor.prototype =
 				return true;
 			}
 
+			if ("sup" === _nodeName || "sub" === _nodeName ||
+				"b" === _nodeName || "strong" === _nodeName ||
+				"i" === _nodeName || "em" === _nodeName ||
+				"u" === _nodeName ||
+				"s" === _nodeName || "strike" === _nodeName || "del" === _nodeName ||
+				"img" === _nodeName) {
+				return true;
+			}
+
+			if ("font" === _nodeName && elem.hasAttributes()) {
+				return true;
+			}
+
 			var sClass = elem.getAttribute("class");
 			var sStyle = elem.getAttribute("style");
 			var sHref = elem.getAttribute("href");
@@ -14408,6 +14490,11 @@ ParseHtmlStyle.prototype.applyStyles = function (textPr) {
 	var font_style = map.get("font-style");
 	if ("italic" === font_style) {
 		textPr.Italic = true;
+	}
+
+	var font_variant = map.get("font-variant");
+	if ("small-caps" === font_variant) {
+		textPr.SmallCaps = true;
 	}
 
 	var spacing = map.get("letter-spacing");

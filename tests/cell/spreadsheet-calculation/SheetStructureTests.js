@@ -501,6 +501,52 @@ $(function () {
 		this._widthForPrint = null;
 	}
 
+	function applyFilter (idValue) {
+		ws.selectionRange.ranges = [getRange(0, 0, 0, 0)];
+		ws.autoFilters.addAutoFilter(null, getRange(0, 0, 0, 0));
+
+		let autoFiltersOptions = ws.autoFilters.getAutoFiltersOptions(ws, {colId: 0, id: null});
+		autoFiltersOptions.values[idValue].asc_setVisible(false);
+		autoFiltersOptions.filter.asc_setType(c_oAscAutoFilterTypes.Filters);
+		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
+	}
+
+	function createAutofillAsserts(aFrom, aTo, sDescription, oComparedData) {
+		const [c1From, c2From, r1From, r2From] = aFrom;
+		const [c1To, c2To, r1To, r2To] = aTo;
+		const nHandleDirection = r1To === r2To ? 0 : 1; // 0 - Horizontal, 1 - Vertical
+		const {expectedData, undoData, assert} = oComparedData;
+
+		let nFillHandleArea = c1To < c2To ? 3 : 1; // 3 - Up to bottom or LTR, 1 - Bottom to up or RTL, 2 - inner selection
+		if (nHandleDirection === 1) {
+			nFillHandleArea = r1To < r2To ? 3 : 1;
+		}
+		if (c1To >= c1From && r1To >= r1From && c2To <= c2From && r2To <= r2From) {
+			nFillHandleArea = 2;
+		}
+		const autoFillAssert = nFillHandleArea === 3 ? autofillData : reverseAutofillData;
+		let autoFillRange;
+
+		if (ws.isApplyFilterBySheet()) {
+			autoFillRange = nFillHandleArea === 3 ? getRange(c1From, r1From, c2To, r2To) : getRange(c2From, r2From, c2To, r2To);
+		} else if (nHandleDirection === 0) {
+			let autofillC1 = nFillHandleArea === 3 ? c2From + 1 : c1From - 1;
+			autoFillRange = getRange(autofillC1, r1To, c2To, r2To);
+		} else {
+			let autofillR1 = nFillHandleArea === 3 ? r2From + 1 : r1From - 1;
+			autoFillRange = getRange(c1To, autofillR1, c2To, r2To);
+		}
+		ws.selectionRange.ranges = [getRange(c1From, r1From, c2From, r2From)];
+		wsView = getAutoFillRange(wsView, c1To, r1To, c2To, r2To, nHandleDirection, nFillHandleArea);
+		let undoRes = nHandleDirection === 0 ? [undoData] : undoData;
+		let expectedRes = nHandleDirection === 0 ? [expectedData] : expectedData;
+		checkUndoRedo(function (_desc) {
+			autoFillAssert(assert, autoFillRange, undoRes, _desc);
+		}, function (_desc) {
+			autoFillAssert(assert, autoFillRange, expectedRes, _desc);
+		}, sDescription);
+	}
+
 	QUnit.test("Test: \"Move rows/cols\"", function (assert) {
 		let testData = [
 			["row1col1", "row1col2", "row1col3", "row1col4", "row1col5", "row1col6"],
@@ -6127,6 +6173,250 @@ $(function () {
 		range.sort(Asc.c_oAscSortOptions.Descending, 0);
 		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_18");
 
+		// ─── Locale-aware sorting tests (check_sort_19–27) ───────────────────────────────────────
+		//
+		// Excel on Windows uses the NLS (National Language Support) subsystem — specifically
+		// the Win32 API CompareStringEx() — which applies Microsoft's proprietary collation tables.
+		//
+		// JavaScript's localeCompare() uses ICU (International Components for Unicode), which
+		// implements the Unicode Collation Algorithm (UCA, Unicode TR#10) and derives its
+		// locale-specific rules from CLDR (Common Locale Data Repository).
+		//
+		// NLS and ICU/CLDR are independent systems with different data sources, so they assign
+		// different weights to certain characters. The most common divergences:
+		//   • Accented letters (ñ, å, ä) — secondary weight order differs between the two systems.
+		//   • Arabic alef variants (آ أ إ ا) — NLS groups them differently from ICU/UCA.
+		//   • Punctuation (apostrophe) — NLS gives it a higher weight than ICU does.
+		//   • Multi-character collation elements (e.g. Czech "ch") — ICU follows CLDR tailoring,
+		//     NLS uses its own rules.
+		//
+		// References:
+		//   https://learn.microsoft.com/en-us/windows/win32/intl/national-language-support
+		//   https://icu.unicode.org/userguide/collation
+		//   https://www.unicode.org/reports/tr10/
+		// ─────────────────────────────────────────────────────────────────────────────────────────
+		const defaultLCID = AscCommon.g_oDefaultCultureInfo.LCID;
+
+		// check_sort_19 — Spanish (es-ES, LCID 3082)
+		// In Spanish, ñ is a distinct letter of the alphabet that comes AFTER all n-words and BEFORE o-words.
+		// In English locale, ñ has the primary weight of 'n', so "ñoño" sorts among n-words (before "oca" but also before "nube"/"nota").
+		// Data (unsorted): ["ñoño", "oca", "nota", "nube"]
+		//   es-ES ascending: nota → nube → ñoño → oca   (n-words first, then ñ-words, then o-words)
+		//   en-US ascending: ñoño → nota → nube → oca   (ñ primary=n, so ñoño=n.o.n.o < nota=n.o.t.a at 3rd char)
+		testData = [['ñoño'], ['oca'], ['nota'], ['nube']];
+		range = ws.getRange2("A1:A4");
+
+		AscCommon.setCurrentCultureInfo(3082); // es-ES
+		expectedRes = [['nota'], ['nube'], ['ñoño'], ['oca']];
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_19 es-ES");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_19 es-ES");
+
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+		expectedRes = [['ñoño'], ['nota'], ['nube'], ['oca']];
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_19 en-US");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_19 en-US");
+
+		// check_sort_20 — Chinese Simplified (zh-CN, LCID 2052)
+		// zh-CN sorts Chinese characters by pinyin (romanised pronunciation).
+		// en-US sorts by Unicode code point.
+		// Data (unsorted): ["搭"(dā U+642D), "啊"(ā U+554A), "鹅"(é U+9E45), "芭"(bā U+82AD)]
+		//   zh-CN ascending (pinyin a→ba→da→é): 啊 → 芭 → 搭 → 鹅
+		//   en-US ascending (Unicode order):     啊(554A) → 搭(642D) → 芭(82AD) → 鹅(9E45)
+		testData = [['搭'], ['啊'], ['鹅'], ['芭']];
+		range = ws.getRange2("A1:A4");
+
+		AscCommon.setCurrentCultureInfo(2052); // zh-CN
+		expectedRes = [['啊'], ['芭'], ['搭'], ['鹅']];
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_20 zh-CN");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_20 zh-CN");
+
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+		expectedRes = [['啊'], ['搭'], ['芭'], ['鹅']];
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_20 en-US");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_20 en-US");
+
+		// check_sort_21 — Arabic (ar-SA, LCID 1025)
+		// Each word starts with a variant of alef: آ(U+0622), ا(U+0627), إ(U+0625), أ(U+0623)
+		// Data (unsorted): ["آفاق", "ابن", "إيمان", "أمل"]
+		//
+		// Excel: both ar-SA and en-US produce the same order:
+		//   ascending:  ابن → إيمان → أمل → آفاق
+		//
+		// ICU/localeCompare (also used in LibreOffice and Google Docs):
+		//   en-US ascending (by Unicode code point of 1st char: آ=0622 < أ=0623 < إ=0625 < ا=0627):
+		//     آفاق → أمل → إيمان → ابن
+		//   ar-SA ascending (ICU Arabic collation orders alef variants as آ < ا < أ < إ):
+		//     آفاق → ابن → أمل → إيمان
+		testData = [['آفاق'], ['ابن'], ['إيمان'], ['أمل']];
+		range = ws.getRange2("A1:A4");
+
+		AscCommon.setCurrentCultureInfo(1025); // ar-SA
+		// expectedRes = [['ابن'], ['إيمان'], ['أمل'], ['آفاق']]; // Excel
+		expectedRes = [['آفاق'], ['ابن'], ['أمل'], ['إيمان']];
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_21 ar-SA");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_21 ar-SA");
+
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+		// expectedRes = [['ابن'], ['إيمان'], ['أمل'], ['آفاق']]; // Excel
+		expectedRes = [['آفاق'], ['أمل'], ['إيمان'], ['ابن']];
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_21 en-US");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_21 en-US");
+
+		// check_sort_22 — Spanish (es-ES) with ñ in the middle of a word
+		// Data (unsorted): ["Caña", "Algo", "Cano"]
+		//   es-ES ascending: Algo → Cano → Caña
+		//     (ñ is a distinct letter after n, so "Caña" > "Cano")
+		//   en-US ascending: Algo → Caña → Cano
+		//     (ñ has primary weight 'n'; "Caña" = Ca+n+a vs "Cano" = Ca+n+o — 4th char a < o → Caña < Cano)
+		testData = [['Caña'], ['Algo'], ['Cano']];
+		range = ws.getRange2("A1:A3");
+
+		AscCommon.setCurrentCultureInfo(3082); // es-ES
+		expectedRes = [['Algo'], ['Cano'], ['Caña']];
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_22 es-ES");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_22 es-ES");
+
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+		expectedRes = [['Algo'], ['Caña'], ['Cano']];
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_22 en-US");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_22 en-US");
+
+		// check_sort_23 — Swedish (sv-SE, LCID 1053)
+		// In Swedish, å/ä/ö are independent letters that come AFTER z (and y) at the end of the alphabet
+		// in the order: …y → å → ä → ö.
+		// In en-US they sort near their base letters: å/ä near 'a', ö near 'o'.
+		//
+		// Data (28 values, unsorted): g ä 0 t å r ö d 5 f a ö s 7 å h ö d t ä b g r f d a g y
+		//
+		//   sv-SE ascending:
+		//     0 5 7 a a b d d d f f g g g h r r s t t y å å ä ä ö ö ö
+		//
+		//   en-US ascending (ICU/localeCompare — å before ä; same result in LibreOffice and Google Docs):
+		//     0 5 7 a a å å ä ä b d d d f f g g g h ö ö ö r r s t t y
+		//   en-US ascending (Excel — ä before å):
+		//     0 5 7 a a ä ä å å b d d d f f g g g h ö ö ö r r s t t y
+		testData = [['g'],['ä'],['0'],['t'],['å'],['r'],['ö'],['d'],['5'],['f'],['a'],['ö'],['s'],['7'],['å'],['h'],['ö'],['d'],['t'],['ä'],['b'],['g'],['r'],['f'],['d'],['a'],['g'],['y']];
+		range = ws.getRange2("A1:A28");
+
+		AscCommon.setCurrentCultureInfo(1053); // sv-SE
+		expectedRes = [['0'],['5'],['7'],['a'],['a'],['b'],['d'],['d'],['d'],['f'],['f'],['g'],['g'],['g'],['h'],['r'],['r'],['s'],['t'],['t'],['y'],['å'],['å'],['ä'],['ä'],['ö'],['ö'],['ö']];
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_23 sv-SE");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_23 sv-SE");
+
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+		// expectedRes = [['0'],['5'],['7'],['a'],['a'],['ä'],['ä'],['å'],['å'],['b'],['d'],['d'],['d'],['f'],['f'],['g'],['g'],['g'],['h'],['ö'],['ö'],['ö'],['r'],['r'],['s'],['t'],['t'],['y']]; // Excel
+		expectedRes = [['0'],['5'],['7'],['a'],['a'],['å'],['å'],['ä'],['ä'],['b'],['d'],['d'],['d'],['f'],['f'],['g'],['g'],['g'],['h'],['ö'],['ö'],['ö'],['r'],['r'],['s'],['t'],['t'],['y']];
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_23 en-US");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_23 en-US");
+
+		// check_sort_24 — Apostrophe handling (en-US, LCID 1033)
+		// The apostrophe is a punctuation symbol; its collation weight determines sort order.
+		// Excel:             bills → bill's  (word without apostrophe sorts first)
+		// ICU/localeCompare: bill's → bills  (apostrophe has a very low weight, bill's ≈ "bills"
+		//                                     but the extra character makes it sort after "bill",
+		//                                     yet the ICU collation places it before plain "bills";
+		//                                     same result in LibreOffice and Google Docs)
+		testData = [['bill\'s'], ['bills']];
+		range = ws.getRange2("A1:A2");
+
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+		// expectedRes = [['bills'], ['bill\'s']]; // Excel
+		expectedRes = [['bill\'s'], ['bills']];
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_24 en-US");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_24 en-US");
+
+		// check_sort_25 — Arabic expanded (ar-SA, LCID 1025)
+		// Data mixes alef-variant words with regular Arabic words.
+		// Data (unsorted): ["إجابة", "بيت", "أثر", "آية", "تاج", "اسم"]
+		//
+		// ICU/localeCompare: ar-SA and en-US produce the same order (verified):
+		//   ascending: آية → أثر → إجابة → اسم → بيت → تاج
+		//   (alef variants sorted by Unicode code point: آ=0622 < أ=0623 < إ=0625 < ا=0627)
+		//   Same result is observed in LibreOffice and Google Docs.
+		//
+		// Excel: ar-SA and en-US also produce the same order (but different from ICU/localeCompare):
+		//   ascending: اسم → إجابة → أثر → آية → بيت → تاج
+		testData = [['إجابة'], ['بيت'], ['أثر'], ['آية'], ['تاج'], ['اسم']];
+		range = ws.getRange2("A1:A6");
+		// expectedRes = [['اسم'], ['إجابة'], ['أثر'], ['آية'], ['بيت'], ['تاج']]; // Excel
+		expectedRes = [['آية'], ['أثر'], ['إجابة'], ['اسم'], ['بيت'], ['تاج']]; // ICU/localeCompare
+
+		AscCommon.setCurrentCultureInfo(1025); // ar-SA
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_25 ar-SA");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_25 ar-SA");
+
+		AscCommon.setCurrentCultureInfo(1033); // en-US
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_25 en-US");
+
+		range.fillData(testData);
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.slice().reverse(), "Desc check_sort_25 en-US");
+
+		// Restore original locale
+		AscCommon.setCurrentCultureInfo(defaultLCID);
+
 	});
 	QUnit.test("Autofill - format Date, Date & Time and Time.", function (assert) {
 		function getAutofillCase(aFrom, aTo, nFillHandleArea, sDescription, expectedData) {
@@ -7085,6 +7375,218 @@ $(function () {
 		expectedData = [['37680'], ['37651'], ['37620'], ['37590'], ['37559'], ['37529']];
 		getAutofillCase([0, 0, 6, 7], [0, 0, 5, 0], 1, 'Date format. Reverse sequence. Vertical. Two selected cells. Step - month. Next month is February, and the day is more than the last day of the month.', expectedData);
 		ws.getRange2('A1:A20').cleanAll();
+	});
+	QUnit.test('Autofill - work with applied filter', function (assert) {
+		// Case #1: Data with numbers. Vertical Bug-41742
+		// Filling data
+		let testData = [
+			['Region', 'Jan'],
+			['East', '153817'],
+			['South', '253536'],
+			['North', '124204'],
+			['West', '202334']
+		];
+		let range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		// Applying filter. Hide the "South" row.
+		applyFilter(2);
+
+		let undoData = [['153817'], ['253536'], ['124204'], ['202334'], [''], [''], ['']];
+		let expectedData = [['153817'], ['253536'], ['153817'], ['153817'], ['153817'], ['153817'], ['153817']]; // Hidden row doesn't change.
+		let comparedData = {
+			'undoData': undoData,
+			'expectedData': expectedData,
+			'assert': assert
+		};
+		// aFrom, aTo: [c1,c2,r1,r2]
+		createAutofillAsserts([1, 1, 1, 4], [1, 1, 5, 7], 'Case #1.1: Asc sequence. Vertical. Values are number. "South" row is hidden. Bug-41742', comparedData);
+
+		// For testing a reverse sequence, need to change all data in reverse order.
+		undoData = [['202334'], ['124204'], ['253536'], ['153817']];
+		expectedData = [['202334'],['202334'], ['253536'], ['202334']];
+		comparedData = {
+			'undoData': undoData,
+			'expectedData': expectedData,
+			'assert': assert
+		};
+		createAutofillAsserts([1, 1, 3, 4], [1, 1, 2, 1], 'Case #1.2: Reverse sequence. Vertical. Values are number. "South" row is hidden. Bug-41742', comparedData);
+
+		ws.autoFilters.deleteAutoFilter(range);
+
+		// Case #2: Data with numbers. Horizontal Bug-41742
+		// Filling data
+		testData = [
+			['Region', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
+			['East', '153817', '105633', '106388', '196916', '175668', '177601', '284978', '171973', '193572'],
+			['South', '253536', '286799', '104008', '282149', '149151', '275912', '221377', '156108', '296918'],
+			['North', '124204', '206630', '114726',	'279390', '131361',	'226639', '265283',	'148012', '154301'],
+			['West', '202334', '117631', '284072', '161893', '138454', '170931', '216727', '111816', '223142']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		// Applying filter. Hide the "North" row.
+		applyFilter(1);
+
+		undoData = ['153817', '105633', '106388', '196916', '175668', '177601', '284978', '171973', '193572'];
+		expectedData = ['153817', '105633', '106388', '74517', '50802.5', '27088', '3373.5', '-20341', '-44055.5'];
+		comparedData = {
+			'undoData': undoData,
+			'expectedData': expectedData,
+			'assert': assert
+		}
+		createAutofillAsserts([1, 3, 1, 1], [4, 9, 1, 1], 'Case #2.1: Asc sequence. Horizontal. Values are number. "North" row is hidden. Bug-41742', comparedData);
+
+		// Reverse case
+		undoData = ['193572', '171973', '284978', '177601', '175668', '196916', '106388', '105633', '153817'];
+		expectedData = ['193572', '171973', '284978', '308247', '353950', '399653', '445356', '491059', '536762'];
+		comparedData = {
+			'undoData': undoData,
+			'expectedData': expectedData,
+			'assert': assert
+		};
+		createAutofillAsserts([7, 9, 1, 1], [6, 1, 1, 1], 'Case #2.2: Reverse sequence. Horizontal. Values are number. "North" row is hidden. Bug-41742', comparedData);
+
+		ws.autoFilters.deleteAutoFilter(range);
+
+		// Case #3: Data with date. Vertical. Bug-41742
+		testData = [
+			['Associate', 'Date'],
+			['Jason', '03/01/2011'],
+			['Jason', '03/03/2011'],
+			['Angela', '03/04/2011'],
+			['Angela', '03/04/2011'],
+			['Cahir', '04/02/2011'],
+			['Gomer', '04/27/2011'],
+			['Cahir', '04/29/2011'],
+			['Carl', '04/29/2011']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		// Applying filter. Hide the "Angela" rows.
+		applyFilter(0);
+
+		undoData = [['40603'], ['40605'], ['40606'], ['40606'], ['40635'], ['40660'], ['40662'], ['40662']];
+		expectedData = [['40603'], ['40603'], ['40606'], ['40606'], ['40603'], ['40603'], ['40603'], ['40603']];
+		comparedData = {
+			'undoData': undoData,
+			'expectedData': expectedData,
+			'assert': assert
+		};
+		createAutofillAsserts([1, 1, 1, 5], [1, 1, 6, 8], 'Case #3.1: Asc sequence. Vertical. Values are date. "Angela" rows are hidden. Bug-41742', comparedData);
+
+		// Reverse case
+		undoData = [['40662'], ['40662'], ['40660'], ['40635'], ['40606'], ['40606'], ['40605'], ['40603']];
+		expectedData = [['40662'], ['40662'], ['40662'], ['40662'], ['40606'], ['40606'], ['40662'], ['40662']];
+		comparedData = {
+			'undoData': undoData,
+			'expectedData': expectedData,
+			'assert': assert
+		};
+		createAutofillAsserts([1, 1, 6, 8], [1, 1, 5, 1], 'Case #3.2: Reverse sequence. Vertical. Values are date. "Angela" rows are hidden. Bug-41742', comparedData);
+
+		ws.autoFilters.deleteAutoFilter(range);
+
+		// Case #4: Data with string + number. Vertical. Bug-41742
+		testData = [
+			['Test1'],
+			['help2'],
+			['help'],
+			['help'],
+			['help'],
+			['nohelp'],
+			['nohelp'],
+			['nohelp'],
+			['help'],
+			['help']
+		];
+			range = ws.getRange4(0, 0);
+			range.fillData(testData);
+			// Applying filter. Hide the "nohelp" rows.
+			applyFilter(2);
+
+			undoData = [['help2'], ['help'], ['help'], ['help'], ['nohelp'], ['nohelp'], ['nohelp'], ['help'], ['help']];
+			expectedData = [['help2'], ['help2'], ['help2'], ['help2'], ['nohelp'], ['nohelp'], ['nohelp'], ['help2'], ['help2']];
+			comparedData = {
+				'undoData': undoData,
+				'expectedData': expectedData,
+				'assert': assert
+			};
+			createAutofillAsserts([0, 0, 1, 3], [0, 0, 4, 9], 'Case #4.1: Asc sequence. Vertical. Values are string + number. "nohelp" rows are hidden. Bug-41742', comparedData);
+
+			// Reverse case
+			undoData = [['help'], ['help'], ['nohelp'], ['nohelp'], ['nohelp'], ['help'], ['help'], ['help'], ['help2']];
+			expectedData = [['help'], ['help'], ['nohelp'], ['nohelp'], ['nohelp'], ['help'], ['help'], ['help'], ['help']];
+			comparedData = {
+				'undoData': undoData,
+				'expectedData': expectedData,
+				'assert': assert
+			};
+			createAutofillAsserts([0, 0, 8, 9], [0, 0, 7, 1], 'Case #4.2: Reverse sequence. Vertical. Values are string + number. "nohelp" rows are hidden. Bug-41742', comparedData);
+
+			ws.autoFilters.deleteAutoFilter(range);
+
+			// Case #5: Data with text. Vertical. Bug-41742
+			testData = [
+				['Filter', 'Text'],
+				['Test', 'Test'],
+				['Hello', ''],
+				['Test', 'Test'],
+				['Hello', ''],
+				['2B', 'Test'],
+				['Test', 'Test'],
+				['Hello', ''],
+				['2B', ''],
+				['2B', '']
+			];
+			range = ws.getRange4(0, 0);
+			range.fillData(testData);
+			// Applying filter. Hide the "Hello" rows.
+			applyFilter(1);
+
+			undoData = [['Test'], [''], ['Test'], [''], ['Test'], ['Test'], [''], [''], ['']];
+			expectedData = [['Test'], [''], ['Test'], [''], ['Test'], ['Test'], [''], ['Test'], ['Test']];
+			comparedData = {
+				'undoData': undoData,
+				'expectedData': expectedData,
+				'assert': assert
+			};
+			createAutofillAsserts([1, 1, 1, 5], [1, 1, 6, 9], 'Case #5.1: Asc sequence. Vertical. Values are text. "Hello" rows are hidden. Bug-41742', comparedData);
+
+			// Reverse case
+			undoData = [[''], [''], [''], ['Test'], ['Test'], [''], ['Test'], [''], ['Test']];
+			expectedData = [[''], [''], [''], [''], [''], [''], [''], [''], ['']];
+				comparedData = {
+					'undoData': undoData,
+					'expectedData': expectedData,
+					'assert': assert
+				};
+			createAutofillAsserts([1, 1, 6, 9], [1, 1, 5, 1], 'Case #5.2: Reverse sequence. Vertical. Values are text. "Hello" rows are hidden. Bug-41742', comparedData);
+
+			ws.autoFilters.deleteAutoFilter(range);
+
+			// Case #6: Inner selection. Vertical. Bug-41742
+			testData = [
+				['Test'],
+				['Test1'],
+				['Test2'],
+				['Hidden']
+			];
+			range = ws.getRange4(0, 0);
+			range.fillData(testData);
+			// Applying filter. Hide the "Hidden" row.
+			applyFilter(2);
+
+			undoData = [['Hidden'], ['Test2'], ['Test1']];
+			expectedData = [['Hidden'], [''], ['']];
+			comparedData = {
+				'undoData': undoData,
+				'expectedData': expectedData,
+				'assert': assert
+			};
+			createAutofillAsserts([0, 0, 1, 3], [0, 0, 3, 1], 'Case #6: Reverse sequence. Vertical. Inner selection. "Hidden" row is hidden. Bug-41742', comparedData);
+
+			ws.autoFilters.deleteAutoFilter(range);
+			ws.getRange2('A1:Z100').cleanAll();
 	});
 
 	QUnit.test('Cells merge test', function (assert) {
