@@ -4186,6 +4186,16 @@
 	 */
 
 	/**
+	 * The line end type.
+	 * @typedef {"none" | "arrow" | "diamond" | "oval" | "stealth" | "triangle"} LineEndType
+	 */
+
+	/**
+	 * The line end size.
+	 * @typedef {"large" | "medium" | "small"} LineEndSize
+	 */
+
+	/**
 	* The available color scheme identifiers.
 	 * @typedef {("accent1" | "accent2" | "accent3" | "accent4" | "accent5" | "accent6" | "bg1" | "bg2" | "dk1" | "dk2"
 	 *     | "lt1" | "lt2" | "tx1" | "tx2")} SchemeColorId
@@ -21905,6 +21915,126 @@
 		return null;
 	};
 
+	/**
+	 * Sets the beginning arrow of the stroke.
+	 *
+	 * @memberof ApiStroke
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @param {LineEndType} type - The type of the beginning arrow.
+	 * @param {LineEndSize} [width="medium"] - The width of the beginning arrow.
+	 * @param {LineEndSize} [length="medium"] - The length of the beginning arrow.
+	 * @returns {boolean}
+	 *
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiStroke/Methods/SetBeginArrow.js
+	 */
+	ApiStroke.prototype.SetBeginArrow = function (type, width, length) {
+		const typeCode = private_GetLineEndTypeCode(type);
+		if (typeCode === undefined) {
+			return false;
+		}
+
+		const widthCode = private_GetLineEndSizeCode(width);
+		const lengthCode = private_GetLineEndSizeCode(length);
+		if (widthCode === undefined || lengthCode === undefined) {
+			return false;
+		}
+
+		if (this.Ln) {
+			const endArrow = new AscFormat.EndArrow();
+			endArrow.setType(typeCode);
+			endArrow.setW(widthCode);
+			endArrow.setLen(lengthCode);
+			this.Ln.setHeadEnd(endArrow);
+			return true;
+		}
+
+		return false;
+	};
+
+	/**
+	 * Returns the beginning arrow properties of the stroke.
+	 *
+	 * @memberof ApiStroke
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @returns {{Type: LineEndType, Width: LineEndSize, Length: LineEndSize} | null}
+	 *
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiStroke/Methods/GetBeginArrow.js
+	 */
+	ApiStroke.prototype.GetBeginArrow = function () {
+		if (this.Ln && this.Ln.headEnd) {
+			return {
+				'Type': private_GetLineEndTypeString(this.Ln.headEnd.type),
+				'Width': private_GetLineEndSizeString(this.Ln.headEnd.w),
+				'Length': private_GetLineEndSizeString(this.Ln.headEnd.len)
+			};
+		}
+		return null;
+	};
+
+	/**
+	 * Sets the ending arrow of the stroke.
+	 *
+	 * @memberof ApiStroke
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @param {LineEndType} type - The type of the ending arrow.
+	 * @param {LineEndSize} [width="medium"] - The width of the ending arrow.
+	 * @param {LineEndSize} [length="medium"] - The length of the ending arrow.
+	 * @returns {boolean}
+	 *
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiStroke/Methods/SetEndArrow.js
+	 */
+	ApiStroke.prototype.SetEndArrow = function (type, width, length) {
+		const typeCode = private_GetLineEndTypeCode(type);
+		if (typeCode === undefined) {
+			return false;
+		}
+
+		const widthCode = private_GetLineEndSizeCode(width);
+		const lengthCode = private_GetLineEndSizeCode(length);
+		if (widthCode === undefined || lengthCode === undefined) {
+			return false;
+		}
+
+		if (this.Ln) {
+			const endArrow = new AscFormat.EndArrow();
+			endArrow.setType(typeCode);
+			endArrow.setW(widthCode);
+			endArrow.setLen(lengthCode);
+			this.Ln.setTailEnd(endArrow);
+			return true;
+		}
+
+		return false;
+	};
+
+	/**
+	 * Returns the ending arrow properties of the stroke.
+	 *
+	 * @memberof ApiStroke
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @returns {{Type: LineEndType, Width: LineEndSize, Length: LineEndSize} | null}
+	 *
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiStroke/Methods/GetEndArrow.js
+	 */
+	ApiStroke.prototype.GetEndArrow = function () {
+		if (this.Ln && this.Ln.tailEnd) {
+			return {
+				'Type': private_GetLineEndTypeString(this.Ln.tailEnd.type),
+				'Width': private_GetLineEndSizeString(this.Ln.tailEnd.w),
+				'Length': private_GetLineEndSizeString(this.Ln.tailEnd.len)
+			};
+		}
+		return null;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiGradientStop
@@ -30348,6 +30478,10 @@
 	ApiStroke.prototype["GetWidth"]                  = ApiStroke.prototype.GetWidth;
 	ApiStroke.prototype["GetFill"]                   = ApiStroke.prototype.GetFill;
 	ApiStroke.prototype["GetDashType"]               = ApiStroke.prototype.GetDashType;
+	ApiStroke.prototype["SetBeginArrow"]             = ApiStroke.prototype.SetBeginArrow;
+	ApiStroke.prototype["GetBeginArrow"]             = ApiStroke.prototype.GetBeginArrow;
+	ApiStroke.prototype["SetEndArrow"]               = ApiStroke.prototype.SetEndArrow;
+	ApiStroke.prototype["GetEndArrow"]               = ApiStroke.prototype.GetEndArrow;
 
 	ApiGradientStop.prototype["GetClassType"]        = ApiGradientStop.prototype.GetClassType;
 	ApiGradientStop.prototype["ToJSON"]              = ApiGradientStop.prototype.ToJSON;
@@ -31355,6 +31489,51 @@
 			return Asc.c_oAscRelativeFromV.Paragraph;
 
 		return Asc.c_oAscRelativeFromV.Page;
+	}
+
+	function private_GetLineEndTypeCode(typeName) {
+		switch (typeName) {
+			case 'none': return AscFormat.LineEndType.None;
+			case 'arrow': return AscFormat.LineEndType.Arrow;
+			case 'diamond': return AscFormat.LineEndType.Diamond;
+			case 'oval': return AscFormat.LineEndType.Oval;
+			case 'stealth': return AscFormat.LineEndType.Stealth;
+			case 'triangle': return AscFormat.LineEndType.Triangle;
+		}
+		return undefined;
+	}
+
+	function private_GetLineEndTypeString(typeCode) {
+		switch (typeCode) {
+			case AscFormat.LineEndType.None: return 'none';
+			case AscFormat.LineEndType.Arrow: return 'arrow';
+			case AscFormat.LineEndType.Diamond: return 'diamond';
+			case AscFormat.LineEndType.Oval: return 'oval';
+			case AscFormat.LineEndType.Stealth: return 'stealth';
+			case AscFormat.LineEndType.Triangle: return 'triangle';
+		}
+		return 'none';
+	}
+
+	function private_GetLineEndSizeCode(sizeName) {
+		switch (sizeName) {
+			case 'large': return AscFormat.LineEndSize.Large;
+			case 'small': return AscFormat.LineEndSize.Small;
+			case 'medium': return AscFormat.LineEndSize.Mid;
+		}
+		if (sizeName === undefined) {
+			return AscFormat.LineEndSize.Mid;
+		}
+		return undefined;
+	}
+
+	function private_GetLineEndSizeString(sizeCode) {
+		switch (sizeCode) {
+			case AscFormat.LineEndSize.Large: return 'large';
+			case AscFormat.LineEndSize.Small: return 'small';
+			case AscFormat.LineEndSize.Mid: return 'medium';
+		}
+		return 'medium';
 	}
 
 	function private_GetDrawingLockType(sType)
