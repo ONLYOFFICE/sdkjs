@@ -5442,54 +5442,6 @@ function (window, undefined) {
 	SumIfTypedCache.prototype.constructor = SumIfTypedCache;
 
 	/**
-	 * Build (once) a sorted-rank index for a column's string data.
-	 * Stores on the column object:
-	 *   _sortedStrings   — unique string values sorted by localeCompare("en")
-	 *   _stringRankArray — Int32Array: rank[i] = sorted position of stringData[i]
-	 *   _rankLen         — stringData.length at build time (used for staleness check)
-	 * Re-builds automatically when stringData grows or shrinks (splice/unshift change length).
-	 */
-	SumIfTypedCache.prototype._ensureStringRank = function(column) {
-		const stringData = column.data[cElementType.string];
-		if (!stringData || !stringData.length) return;
-		if (!column._rankDirty && column._rankLen === stringData.length) return; // already valid
-
-		const seen = Object.create(null);
-		const unique = [];
-		for (let i = 0; i < stringData.length; i++) {
-			const s = stringData[i];
-			if (!seen[s]) { seen[s] = true; unique.push(s); }
-		}
-		unique.sort(function(a, b) { return a.localeCompare(b, "en"); });
-
-		const rankMap = Object.create(null);
-		for (let i = 0; i < unique.length; i++) rankMap[unique[i]] = i;
-
-		const rankArray = new Int32Array(stringData.length);
-		for (let i = 0; i < stringData.length; i++) rankArray[i] = rankMap[stringData[i]];
-
-		column._sortedStrings = unique;
-		column._stringRankArray = rankArray;
-		column._rankLen = stringData.length;
-		column._rankDirty = false;
-	};
-
-	/**
-	 * Override changeColumnsData to invalidate the rank index when string data is modified.
-	 * Without this, a string→string splice (same length) would leave stale ranks.
-	 */
-	SumIfTypedCache.prototype.changeColumnsData = function(wsId, cell, oldValue, oldType, newValue, newType) {
-		AscCommonExcel.CountIfTypedCache.prototype.changeColumnsData.call(this, wsId, cell, oldValue, oldType, newValue, newType);
-		if (oldType === cElementType.string || newType === cElementType.string) {
-			const data = this.data[wsId];
-			const column = data && data[cell.nCol];
-			if (column) {
-				column._rankDirty = true;
-			}
-		}
-	};
-
-	/**
 	 * Sums all number values in the sum range. O(N_sum) per column.
 	 * @param {Object} searchRange - criteria range (cArea)
 	 * @param {Object} sumRange - sum range (AscCommonExcel.Range)
@@ -5716,6 +5668,71 @@ function (window, undefined) {
 	};
 
 	/**
+	 * Galloping (exponential + binary) advance of a sorted-index pointer to the first
+	 * position >= targetRow. O(log gap) amortized — fast when matches are clustered.
+	 * @param {number[]} indexes   — sorted row-index array
+	 * @param {number}   ptr       — current pointer (must be < len)
+	 * @param {number}   len       — indexes.length
+	 * @param {number}   targetRow
+	 * @returns {number} new pointer position
+	 */
+	function _gallopTo(indexes, ptr, len, targetRow) {
+		if (indexes[ptr] >= targetRow) {
+			return ptr;
+		}
+		let lo = ptr;
+		let step = 1;
+		let hi = lo + step;
+		while (hi < len && indexes[hi] < targetRow) {
+			lo = hi;
+			step <<= 1;
+			hi = lo + step;
+		}
+		if (hi > len) {
+			hi = len;
+		}
+		while (lo < hi) {
+			const m = (lo + hi) >>> 1;
+			if (indexes[m] < targetRow) {
+				lo = m + 1;
+			} else {
+				hi = m;
+			}
+		}
+		return lo;
+	}
+
+	/**
+	 * Advance galloping pointers to targetRow and accumulate the matching sum value.
+	 * Mutates ptr.sum, ptr.err and ptr.total in place.
+	 * @param {{sum: number, err: number, total: number}} ptr — mutable pointer state for this column
+	 * @param {number}  targetRow
+	 * @param {?Array}  sumIndexes
+	 * @param {?Array}  sumData
+	 * @param {number}  sumLen
+	 * @param {?Array}  errorIndexes
+	 * @param {?Array}  errorData
+	 * @param {number}  errLen
+	 * @returns {cError|null}  error if sum range has an error at targetRow, null otherwise
+	 */
+	SumIfTypedCache.prototype._addMatchingRow = function(ptr, targetRow, sumIndexes, sumData, sumLen, errorIndexes, errorData, errLen) {
+		if (sumIndexes && ptr.sum < sumLen) {
+			ptr.sum = _gallopTo(sumIndexes, ptr.sum, sumLen, targetRow);
+		}
+		if (errorIndexes && ptr.err < errLen) {
+			ptr.err = _gallopTo(errorIndexes, ptr.err, errLen, targetRow);
+		}
+		if (errorIndexes && ptr.err < errLen && errorIndexes[ptr.err] === targetRow) {
+			return new cError(errorData[ptr.err]);
+		}
+		if (sumIndexes && ptr.sum < sumLen && sumIndexes[ptr.sum] === targetRow) {
+			ptr.total += sumData[ptr.sum];
+			ptr.sum += 1;
+		}
+		return null;
+	};
+
+	/**
 	 * @param {string} [opt_op] - operator ('<', '>', '<=', '>=') for rank-based string comparison fast path
 	 */
 	SumIfTypedCache.prototype.calculate = function(searchRange, sumRange, sumCache, type, matchingFunction, searchValue, convertToNumber, skipErrors, opt_op) {
@@ -5731,7 +5748,6 @@ function (window, undefined) {
 		const columnsOffset = sumRangeBbox.c1 - searchRangeBbox.c1;
 
 		// Rank-based comparison is eligible when searching strings with inequality operators.
-		// The actual rank arrays are built lazily per-column below.
 		const useRankCompare = !convertToNumber && type === cElementType.string && opt_op &&
 			(opt_op === '<' || opt_op === '>' || opt_op === '<=' || opt_op === '>=');
 
@@ -5746,183 +5762,91 @@ function (window, undefined) {
 
 			const searchTypedData = searchColumn.data[type];
 			const searchTypedIndexes = searchColumn.indexes[type];
+			if (!searchTypedData) {
+				continue;
+			}
 
 			const sumData = sumColumn.data[cElementType.number];
 			const sumIndexes = sumColumn.indexes[cElementType.number];
-
 			const errorIndexes = skipErrors ? null : sumColumn.indexes[cElementType.error];
 			const errorData = skipErrors ? null : sumColumn.data[cElementType.error];
 
-			// Rank setup: sort unique column strings once, binary-search for searchValue's position.
-			// Replaces O(N) localeCompare calls in the hot loop with O(N) integer comparisons.
-			let rankData = null, rankThreshold = 0, rankUseGte = false;
-			if (useRankCompare && searchTypedData && searchTypedData.length) {
+			// Build rank threshold once per column — replaces O(N) string comparisons with O(N) integer ops.
+			let rankData = null;
+			let rankThreshold = 0;
+			let rankUseGte = false;
+			if (useRankCompare && searchTypedData.length) {
 				this._ensureStringRank(searchColumn);
 				if (searchColumn._sortedStrings && searchColumn._sortedStrings.length) {
-					const sorted = searchColumn._sortedStrings;
-					// Binary search: find lower bound of searchValue in sorted array
-					let lo = 0, hi = sorted.length;
-					while (lo < hi) {
-						const mid = (lo + hi) >>> 1;
-						if (sorted[mid].localeCompare(searchValue, "en") < 0) lo = mid + 1;
-						else hi = mid;
-					}
-					// posInclusive = lo + 1 if searchValue is exactly in the array, else lo
-					const posInclusive = lo + (lo < sorted.length && sorted[lo] === searchValue ? 1 : 0);
-					if (opt_op === '<')       { rankThreshold = lo;           rankUseGte = false; }
-					else if (opt_op === '>')  { rankThreshold = posInclusive; rankUseGte = true; }
-					else if (opt_op === '<=') { rankThreshold = posInclusive; rankUseGte = false; }
-					else                      { rankThreshold = lo;           rankUseGte = true; } // '>='
+					const rt = this._buildRankThreshold(searchColumn._sortedStrings, searchValue, opt_op);
+					rankThreshold = rt.threshold;
+					rankUseGte = rt.useGte;
 					rankData = searchColumn._stringRankArray;
 				}
 			}
 
-			if (searchTypedData) {
-				const rowSumOffset = sumRangeBbox.r1 - searchRangeBbox.r1;
+			const rowSumOffset = sumRangeBbox.r1 - searchRangeBbox.r1;
+			const firstIndex = this.findLowerIndexInTyped(searchRangeBbox.r1, searchTypedIndexes);
+			const lastIndex = this.findHigherIndexInTyped(searchRangeBbox.r2, searchTypedIndexes);
 
-				const firstIndex = this.findLowerIndexInTyped(searchRangeBbox.r1, searchTypedIndexes);
-				const lastIndex = this.findHigherIndexInTyped(searchRangeBbox.r2, searchTypedIndexes);
+			const sumLen = sumIndexes ? sumIndexes.length : 0;
+			const errLen = errorIndexes ? errorIndexes.length : 0;
 
-				let currentSumIndex = sumIndexes && sumCache.findLowerIndexInTyped(searchTypedIndexes[firstIndex] + rowSumOffset, sumIndexes);
-				let currentErrorIndex = errorIndexes && sumCache.findLowerIndexInTyped(searchTypedIndexes[firstIndex] + rowSumOffset, errorIndexes);
+			// Mutable pointer state — created once per column, updated by _addMatchingRow on each match.
+			const ptr = {
+				sum:   sumIndexes   ? sumCache.findLowerIndexInTyped(searchTypedIndexes[firstIndex] + rowSumOffset, sumIndexes)   : 0,
+				err:   errorIndexes ? sumCache.findLowerIndexInTyped(searchTypedIndexes[firstIndex] + rowSumOffset, errorIndexes) : 0,
+				total: 0
+			};
 
-				const sumLen = sumIndexes ? sumIndexes.length : 0;
-				const errLen = errorIndexes ? errorIndexes.length : 0;
-
-				if (convertToNumber) {
-					for (let j = firstIndex; j < lastIndex; j += 1) {
-						const value = AscCommon.g_oFormatParser.parseLocaleNumber(searchTypedData[j]);
-						if (isNaN(value) || !matchingFunction(value, searchValue)) continue;
-						// Early exit only on matches (runs K_match times, not K_search times)
-						if ((!sumIndexes || currentSumIndex >= sumLen) && (!errorIndexes || currentErrorIndex >= errLen)) break;
-						const targetRow = searchTypedIndexes[j] + rowSumOffset;
-						// Galloping advance: exponential probe then binary refinement — O(log gap) per match
-						if (sumIndexes && currentSumIndex < sumLen && sumIndexes[currentSumIndex] < targetRow) {
-							let lo = currentSumIndex, step = 1, hi = lo + step;
-							while (hi < sumLen && sumIndexes[hi] < targetRow) { lo = hi; step <<= 1; hi = lo + step; }
-							if (hi > sumLen) hi = sumLen;
-							while (lo < hi) { const m = (lo + hi) >>> 1; if (sumIndexes[m] < targetRow) lo = m + 1; else hi = m; }
-							currentSumIndex = lo;
-						}
-						if (errorIndexes && currentErrorIndex < errLen && errorIndexes[currentErrorIndex] < targetRow) {
-							// Galloping advance for error pointer
-							let lo = currentErrorIndex, step = 1, hi = lo + step;
-							while (hi < errLen && errorIndexes[hi] < targetRow) { lo = hi; step <<= 1; hi = lo + step; }
-							if (hi > errLen) hi = errLen;
-							while (lo < hi) { const m = (lo + hi) >>> 1; if (errorIndexes[m] < targetRow) lo = m + 1; else hi = m; }
-							currentErrorIndex = lo;
-						}
-						// Check after gallop: pointer may land on targetRow whether or not it needed to advance
-						if (errorIndexes && currentErrorIndex < errLen && errorIndexes[currentErrorIndex] === targetRow) {
-							return {result: null, error: new cError(errorData[currentErrorIndex])};
-						}
-						if (sumIndexes && currentSumIndex < sumLen && sumIndexes[currentSumIndex] === targetRow) {
-							sum += sumData[currentSumIndex];
-							currentSumIndex += 1;
-						}
+			// Three separate loops keep each hot path monomorphic for JIT optimisation.
+			let err;
+			if (convertToNumber) {
+				for (let j = firstIndex; j < lastIndex; j += 1) {
+					const value = AscCommon.g_oFormatParser.parseLocaleNumber(searchTypedData[j]);
+					if (isNaN(value) || !matchingFunction(value, searchValue)) {
+						continue;
 					}
-				} else if (rankData) {
-					// Fast path: integer rank comparison instead of string localeCompare
-					for (let j = firstIndex; j < lastIndex; j += 1) {
-						if (rankUseGte ? rankData[j] < rankThreshold : rankData[j] >= rankThreshold) continue;
-						// Early exit only on matches (runs K_match times, not K_search times)
-						if ((!sumIndexes || currentSumIndex >= sumLen) && (!errorIndexes || currentErrorIndex >= errLen)) break;
-						const targetRow = searchTypedIndexes[j] + rowSumOffset;
-						// Galloping advance: exponential probe then binary refinement — O(log gap) per match
-						if (sumIndexes && currentSumIndex < sumLen && sumIndexes[currentSumIndex] < targetRow) {
-							let lo = currentSumIndex, step = 1, hi = lo + step;
-							while (hi < sumLen && sumIndexes[hi] < targetRow) { lo = hi; step <<= 1; hi = lo + step; }
-							if (hi > sumLen) hi = sumLen;
-							while (lo < hi) { const m = (lo + hi) >>> 1; if (sumIndexes[m] < targetRow) lo = m + 1; else hi = m; }
-							currentSumIndex = lo;
-						}
-						if (errorIndexes && currentErrorIndex < errLen && errorIndexes[currentErrorIndex] < targetRow) {
-							// Galloping advance for error pointer
-							let lo = currentErrorIndex, step = 1, hi = lo + step;
-							while (hi < errLen && errorIndexes[hi] < targetRow) { lo = hi; step <<= 1; hi = lo + step; }
-							if (hi > errLen) hi = errLen;
-							while (lo < hi) { const m = (lo + hi) >>> 1; if (errorIndexes[m] < targetRow) lo = m + 1; else hi = m; }
-							currentErrorIndex = lo;
-						}
-						// Check after gallop: pointer may land on targetRow whether or not it needed to advance
-						if (errorIndexes && currentErrorIndex < errLen && errorIndexes[currentErrorIndex] === targetRow) {
-							return {result: null, error: new cError(errorData[currentErrorIndex])};
-						}
-						if (sumIndexes && currentSumIndex < sumLen && sumIndexes[currentSumIndex] === targetRow) {
-							sum += sumData[currentSumIndex];
-							currentSumIndex += 1;
-						}
+					if ((!sumIndexes || ptr.sum >= sumLen) && (!errorIndexes || ptr.err >= errLen)) {
+						break;
 					}
-				} else {
-					for (let j = firstIndex; j < lastIndex; j += 1) {
-						if (!matchingFunction(searchTypedData[j], searchValue)) continue;
-						// Early exit only on matches (runs K_match times, not K_search times)
-						if ((!sumIndexes || currentSumIndex >= sumLen) && (!errorIndexes || currentErrorIndex >= errLen)) break;
-						const targetRow = searchTypedIndexes[j] + rowSumOffset;
-						// Galloping advance: exponential probe then binary refinement — O(log gap) per match
-						if (sumIndexes && currentSumIndex < sumLen && sumIndexes[currentSumIndex] < targetRow) {
-							let lo = currentSumIndex, step = 1, hi = lo + step;
-							while (hi < sumLen && sumIndexes[hi] < targetRow) { lo = hi; step <<= 1; hi = lo + step; }
-							if (hi > sumLen) hi = sumLen;
-							while (lo < hi) { const m = (lo + hi) >>> 1; if (sumIndexes[m] < targetRow) lo = m + 1; else hi = m; }
-							currentSumIndex = lo;
-						}
-						if (errorIndexes && currentErrorIndex < errLen && errorIndexes[currentErrorIndex] < targetRow) {
-							// Galloping advance for error pointer
-							let lo = currentErrorIndex, step = 1, hi = lo + step;
-							while (hi < errLen && errorIndexes[hi] < targetRow) { lo = hi; step <<= 1; hi = lo + step; }
-							if (hi > errLen) hi = errLen;
-							while (lo < hi) { const m = (lo + hi) >>> 1; if (errorIndexes[m] < targetRow) lo = m + 1; else hi = m; }
-							currentErrorIndex = lo;
-						}
-						// Check after gallop: pointer may land on targetRow whether or not it needed to advance
-						if (errorIndexes && currentErrorIndex < errLen && errorIndexes[currentErrorIndex] === targetRow) {
-							return {result: null, error: new cError(errorData[currentErrorIndex])};
-						}
-						if (sumIndexes && currentSumIndex < sumLen && sumIndexes[currentSumIndex] === targetRow) {
-							sum += sumData[currentSumIndex];
-							currentSumIndex += 1;
-						}
+					err = this._addMatchingRow(ptr, searchTypedIndexes[j] + rowSumOffset, sumIndexes, sumData, sumLen, errorIndexes, errorData, errLen);
+					if (err) {
+						return {result: null, error: err};
+					}
+				}
+			} else if (rankData) {
+				// Fast path: integer rank comparison instead of string comparison
+				for (let j = firstIndex; j < lastIndex; j += 1) {
+					if (rankUseGte ? rankData[j] < rankThreshold : rankData[j] >= rankThreshold) {
+						continue;
+					}
+					if ((!sumIndexes || ptr.sum >= sumLen) && (!errorIndexes || ptr.err >= errLen)) {
+						break;
+					}
+					err = this._addMatchingRow(ptr, searchTypedIndexes[j] + rowSumOffset, sumIndexes, sumData, sumLen, errorIndexes, errorData, errLen);
+					if (err) {
+						return {result: null, error: err};
+					}
+				}
+			} else {
+				for (let j = firstIndex; j < lastIndex; j += 1) {
+					if (!matchingFunction(searchTypedData[j], searchValue)) {
+						continue;
+					}
+					if ((!sumIndexes || ptr.sum >= sumLen) && (!errorIndexes || ptr.err >= errLen)) {
+						break;
+					}
+					err = this._addMatchingRow(ptr, searchTypedIndexes[j] + rowSumOffset, sumIndexes, sumData, sumLen, errorIndexes, errorData, errLen);
+					if (err) {
+						return {result: null, error: err};
 					}
 				}
 			}
+			sum += ptr.total;
 		}
 		return {result: sum, error: null};
 	};
-
-	/**
-	 * Compile a wildcard mask (already lowercased) into a RegExp, matching
-	 * searchRegExp2 semantics: * = any sequence, ? = any one char, ~ = literal escape.
-	 * Compiled once per SUMIF formula call instead of re-parsing on every cell.
-	 * @param {string} mask - already lowercased wildcard pattern
-	 * @returns {RegExp}
-	 */
-	function _buildWildcardRegex(mask) {
-		var s = '^';
-		var endsWithWildstar = false;
-		for (var i = 0; i < mask.length; i++) {
-			var c = mask[i];
-			if (c === '~' && i + 1 < mask.length) {
-				// ~ escapes the next character literally
-				s += mask[++i].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-				endsWithWildstar = false;
-			} else if (c === '*') {
-				s += '.*';
-				endsWithWildstar = true;
-			} else if (c === '?') {
-				s += '.';
-				endsWithWildstar = false;
-			} else {
-				s += c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-				endsWithWildstar = false;
-			}
-		}
-		// 'i' flag: SUMIF string comparison is case-insensitive (searchValue is already lowercased,
-		// but cell values in the column retain their original case).
-		// If mask ends with an unescaped '*', omit '$': "^prefix.*" already matches the full string
-		// from the anchor — dropping the end-anchor lets V8 use a faster prefix-check path.
-		return new RegExp(endsWithWildstar ? s : s + '$', 'i');
-	}
 
 	/**
 	 * @constructor
@@ -6084,7 +6008,7 @@ function (window, undefined) {
 				// Complement: sum(<>) = totalSum - sum(=)
 				// For wildcards, pre-compile the pattern once instead of re-parsing on every cell
 				const equalFn = (type === cElementType.string && isWildcard)
-					? (function() { var re = _buildWildcardRegex(searchValue); return function(a) { return re.test(a); }; }())
+					? (function() { var re = AscCommonExcel.buildWildcardRegex(searchValue); return function(a) { return re.test(a); }; }())
 					: AscCommonExcel.getMatchingFunction(type, '=', isWildcard);
 				const errorResult = this.typedCache.checkErrorsForNotEqual(range, sumRange, this.sumRangeCache, type, equalFn, searchValue);
 				if (errorResult) return errorResult;
@@ -6102,7 +6026,7 @@ function (window, undefined) {
 				// IMPORTANT: only pre-compile for '=' / null — inequality operators (<,>,<=,>=) treat
 				// * and ? as literal characters (Excel behavior), so they must use stringCompare, not regex.
 				const matchingFunction = (type === cElementType.string && isWildcard && (matchingInfo.op === '=' || matchingInfo.op === null))
-					? (function() { var re = _buildWildcardRegex(searchValue); return function(a) { return re.test(a); }; }())
+					? (function() { var re = AscCommonExcel.buildWildcardRegex(searchValue); return function(a) { return re.test(a); }; }())
 					: AscCommonExcel.getMatchingFunction(type, matchingInfo.op, isWildcard);
 				// Pass the operator so calculate can use rank-based integer comparison for string inequality
 				const calculatingResult = this.typedCache.calculate(range, sumRange, this.sumRangeCache, type, matchingFunction, searchValue, undefined, undefined, matchingInfo.op);

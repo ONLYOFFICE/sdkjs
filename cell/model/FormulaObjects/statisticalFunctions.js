@@ -12443,30 +12443,125 @@ function parseStringToCElement (val, cultureInfo) {
 		}
 		return convertedToNumber;
 	};
-	CountIfTypedCache.prototype.calculate = function(range, type, matchingFunction, searchValue, convertToNumber) {
+	/**
+	 * Build (once) a sorted-rank index for a column's string data.
+	 * Stores on the column object:
+	 *   _sortedStrings   — unique string values sorted by stringCompare
+	 *   _stringRankArray — Int32Array: rank[i] = sorted position of stringData[i]
+	 *   _rankLen         — stringData.length at build time (used for staleness check)
+	 * Re-builds automatically when stringData grows or shrinks or _rankDirty is set.
+	 */
+	CountIfTypedCache.prototype._ensureStringRank = function(column) {
+		const stringData = column.data[cElementType.string];
+		if (!stringData || !stringData.length) {
+			return;
+		}
+		if (!column._rankDirty && column._rankLen === stringData.length) {
+			return; // already valid
+		}
+
+		const seen = Object.create(null);
+		const unique = [];
+		for (let i = 0; i < stringData.length; i++) {
+			const s = stringData[i];
+			if (!seen[s]) {
+				seen[s] = true;
+				unique.push(s);
+			}
+		}
+		unique.sort(function(a, b) { return AscCommonExcel.stringCompare(a, b); });
+
+		const rankMap = Object.create(null);
+		for (let i = 0; i < unique.length; i++) {
+			rankMap[unique[i]] = i;
+		}
+
+		const rankArray = new Int32Array(stringData.length);
+		for (let i = 0; i < stringData.length; i++) {
+			rankArray[i] = rankMap[stringData[i]];
+		}
+
+		column._sortedStrings = unique;
+		column._stringRankArray = rankArray;
+		column._rankLen = stringData.length;
+		column._rankDirty = false;
+	};
+	/**
+	 * Binary-search `searchValue` in a pre-sorted unique-strings array and compute the
+	 * rank threshold and direction needed for inequality-operator matching.
+	 * @param {string[]} sorted     — unique column strings sorted by stringCompare
+	 * @param {string}   searchValue
+	 * @param {string}   opt_op     — one of '<', '>', '<=', '>='
+	 * @returns {{threshold: number, useGte: boolean}}
+	 *   Rows match when: useGte ? rank >= threshold : rank < threshold
+	 */
+	CountIfTypedCache.prototype._buildRankThreshold = function(sorted, searchValue, opt_op) {
+		let lo = 0;
+		let hi = sorted.length;
+		while (lo < hi) {
+			const mid = (lo + hi) >>> 1;
+			if (AscCommonExcel.stringCompare(sorted[mid], searchValue) < 0) {
+				lo = mid + 1;
+			} else {
+				hi = mid;
+			}
+		}
+		const posInclusive = lo + (lo < sorted.length && sorted[lo] === searchValue ? 1 : 0);
+		if (opt_op === '<') {
+			return {threshold: lo, useGte: false};
+		}
+		if (opt_op === '>') {
+			return {threshold: posInclusive, useGte: true};
+		}
+		if (opt_op === '<=') {
+			return {threshold: posInclusive, useGte: false};
+		}
+		/* '>=' */
+		return {threshold: lo, useGte: true};
+	};
+	CountIfTypedCache.prototype.calculate = function(range, type, matchingFunction, searchValue, convertToNumber, opt_op) {
 		let count = 0;
 		const ws = range.getWS();
 		const bbox = range.getBBox0();
 		const wsId = ws.getId();
+		// Rank-based comparison is eligible when searching strings with inequality operators.
+		const useRankCompare = !convertToNumber && type === cElementType.string && opt_op &&
+			(opt_op === '<' || opt_op === '>' || opt_op === '<=' || opt_op === '>=');
 		for (let i = bbox.c1; i <= bbox.c2; i += 1) {
 			this.updateColumnData(ws, i, bbox.r1, bbox.r2);
 			const column = this.data[wsId][i];
 			const typedData = column.data[type];
-			if (typedData) {
-				const typedIndexes = column.indexes[type];
-				const firstIndex = this.findLowerIndexInTyped(bbox.r1, typedIndexes);
-				const lastIndex = this.findHigherIndexInTyped(bbox.r2, typedIndexes);
-				if (convertToNumber) {
+			if (!typedData) {
+				continue;
+			}
+			const typedIndexes = column.indexes[type];
+			const firstIndex = this.findLowerIndexInTyped(bbox.r1, typedIndexes);
+			const lastIndex = this.findHigherIndexInTyped(bbox.r2, typedIndexes);
+			if (useRankCompare && typedData.length) {
+				this._ensureStringRank(column);
+				if (column._sortedStrings && column._sortedStrings.length) {
+					const rt = this._buildRankThreshold(column._sortedStrings, searchValue, opt_op);
+					const rankData = column._stringRankArray;
 					for (let j = firstIndex; j < lastIndex; j += 1) {
-						let value = this.parseAnyNumber(typedData[j]);
-						if (value !== null) {
-							count += matchingFunction(value, searchValue);
+						if (rt.useGte ? rankData[j] >= rt.threshold : rankData[j] < rt.threshold) {
+							count += 1;
 						}
 					}
 				} else {
 					for (let j = firstIndex; j < lastIndex; j += 1) {
-						count += matchingFunction( typedData[j], searchValue);
+						count += matchingFunction(typedData[j], searchValue);
 					}
+				}
+			} else if (convertToNumber) {
+				for (let j = firstIndex; j < lastIndex; j += 1) {
+					const value = this.parseAnyNumber(typedData[j]);
+					if (value !== null) {
+						count += matchingFunction(value, searchValue);
+					}
+				}
+			} else {
+				for (let j = firstIndex; j < lastIndex; j += 1) {
+					count += matchingFunction(typedData[j], searchValue);
 				}
 			}
 		}
@@ -12555,6 +12650,9 @@ function parseStringToCElement (val, cultureInfo) {
 					column.indexes[newType] = [changedIndex];
 				}
 			}
+			if (oldType === cElementType.string || newType === cElementType.string) {
+				column._rankDirty = true;
+			}
 		}
 	};
 	CountIfTypedCache.prototype.changeData = function (cell, dataOld, dataNew) {
@@ -12592,6 +12690,40 @@ function parseStringToCElement (val, cultureInfo) {
 			this.changeColumnsData(wsId, cell, oldValue, oldType, newValue, newType);
 		}
 	};
+
+	/**
+	 * Compile a wildcard mask (already lowercased) into a RegExp.
+	 * Semantics: * = any sequence, ? = any one char, ~ = literal escape.
+	 * Compiled once per formula call — avoids re-parsing the mask on every cell comparison.
+	 * @param {string} mask - already lowercased wildcard pattern
+	 * @returns {RegExp}
+	 */
+	function _buildWildcardRegex(mask) {
+		let s = '^';
+		let endsWithWildstar = false;
+		for (let i = 0; i < mask.length; i++) {
+			const c = mask[i];
+			if (c === '~' && i + 1 < mask.length) {
+				i += 1;
+				s += mask[i].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+				endsWithWildstar = false;
+			} else if (c === '*') {
+				s += '.*';
+				endsWithWildstar = true;
+			} else if (c === '?') {
+				s += '.';
+				endsWithWildstar = false;
+			} else {
+				s += c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+				endsWithWildstar = false;
+			}
+		}
+		// 'i' flag: comparison is case-insensitive (searchValue is already lowercased,
+		// but cell values in the column retain their original case).
+		// If mask ends with an unescaped '*', omit '$': "^prefix.*" already matches the full
+		// string from the anchor — dropping the end-anchor lets V8 use a faster prefix-check path.
+		return new RegExp(endsWithWildstar ? s : s + '$', 'i');
+	}
 
 	/**
 	 * @constructor
@@ -12720,12 +12852,24 @@ function parseStringToCElement (val, cultureInfo) {
 		} else if (matchingInfo.op === '<>') {
 			const bbox = range.getBBox0();
 			const cellsCount = (bbox.c2 - bbox.c1 + 1) * (bbox.r2 - bbox.r1 + 1);
-			const matchingFunction = getMatchingFunction(type, '=', isWildcard);
+			let matchingFunction;
+			if (type === cElementType.string && isWildcard) {
+				const re = _buildWildcardRegex(searchValue);
+				matchingFunction = function (a) { return re.test(a); };
+			} else {
+				matchingFunction = getMatchingFunction(type, '=', isWildcard);
+			}
 			_count = this.typedCache.calculate(range, type, matchingFunction, searchValue);
 			_count = cellsCount - _count;
 		} else {
-			const matchingFunction = getMatchingFunction(type, matchingInfo.op, isWildcard);
-			_count = this.typedCache.calculate(range, type, matchingFunction, searchValue);
+			let matchingFunction;
+			if (type === cElementType.string && isWildcard && (matchingInfo.op === '=' || matchingInfo.op === null)) {
+				const re = _buildWildcardRegex(searchValue);
+				matchingFunction = function (a) { return re.test(a); };
+			} else {
+				matchingFunction = getMatchingFunction(type, matchingInfo.op, isWildcard);
+			}
+			_count = this.typedCache.calculate(range, type, matchingFunction, searchValue, false, matchingInfo.op);
 		}
 		return new cNumber(_count);
 	};
@@ -12758,6 +12902,7 @@ function parseStringToCElement (val, cultureInfo) {
 	window['AscCommonExcel'].gauss = gauss;
 	window['AscCommonExcel'].gaussinv = gaussinv;
 	window['AscCommonExcel'].getPercentile = getPercentile;
+	window['AscCommonExcel'].buildWildcardRegex = _buildWildcardRegex;
 	window['AscCommonExcel'].getMedian = getMedian;
 	window['AscCommonExcel'].getPercentileExclusive = getPercentileExclusive;
 
