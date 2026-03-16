@@ -246,7 +246,7 @@
     CNotes.prototype.showDrawingObjects = function(){
         var oPresentation = editor.WordControl.m_oLogicDocument;
 				if (oPresentation.IsNotesPageMode()) {
-					AscFormat.SlideBase.prototype.showDrawingObjects.call(this);
+					AscCommonSlide.SlideBase.prototype.showDrawingObjects.call(this);
 				}else if(this.slide){
             if(oPresentation.CurPage === this.slide.num){
                 editor.WordControl.m_oDrawingDocument.Notes_OnRecalculate(this.slide.num, this.slide.NotesWidth, this.slide.getNotesHeight());

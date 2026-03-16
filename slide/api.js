@@ -779,11 +779,26 @@
 	asc_docs_api.prototype.asc_StartAddPlaceholder = function(nType, bVertical, bStart) {
 		return this.presentationViewManager.startAddPlaceholder(nType, bVertical, bStart);
 	};
-	asc_docs_api.prototype.asc_setLayoutTitle = function(bVal) {
-		return this.presentationViewManager.setLayoutTitle(bVal);
+	asc_docs_api.prototype.asc_setTitle = function(bVal) {
+		return this.presentationViewManager.setTitle(bVal);
 	};
-	asc_docs_api.prototype.asc_setLayoutFooter = function(bVal) {
-		return this.presentationViewManager.setLayoutFooter(bVal);
+	asc_docs_api.prototype.asc_setFooter = function(bVal) {
+		return this.presentationViewManager.setFooter(bVal);
+	};
+	asc_docs_api.prototype.asc_setHeader = function(bVal) {
+		return this.presentationViewManager.setHeader(bVal);
+	};
+	asc_docs_api.prototype.asc_setDate = function(bVal) {
+		return this.presentationViewManager.setDate(bVal);
+	};
+	asc_docs_api.prototype.asc_setPageNumber = function(bVal) {
+		return this.presentationViewManager.setPageNumber(bVal);
+	};
+	asc_docs_api.prototype.asc_setSlideImage = function(bVal) {
+		return this.presentationViewManager.setSlideImage(bVal);
+	};
+	asc_docs_api.prototype.asc_setBody = function(bVal) {
+		return this.presentationViewManager.setSlideImage(bVal);
 	};
 	asc_docs_api.prototype.IsNotesSupported = function() {
 		return this.presentationViewManager.isNotesSupported();
@@ -10052,8 +10067,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_AddMasterSlide"] = asc_docs_api.prototype.asc_AddMasterSlide;
 	asc_docs_api.prototype["asc_AddSlideLayout"] = asc_docs_api.prototype.asc_AddSlideLayout;
 	asc_docs_api.prototype["asc_StartAddPlaceholder"] = asc_docs_api.prototype.asc_StartAddPlaceholder;
-	asc_docs_api.prototype["asc_setLayoutTitle"] = asc_docs_api.prototype.asc_setLayoutTitle;
-	asc_docs_api.prototype["asc_setLayoutFooter"] = asc_docs_api.prototype.asc_setLayoutFooter;
 	asc_docs_api.prototype["asc_DeleteMaster"] = asc_docs_api.prototype.asc_DeleteMaster;
 	asc_docs_api.prototype["asc_DeleteLayout"] = asc_docs_api.prototype.asc_DeleteLayout;
 	asc_docs_api.prototype["asc_DuplicateMaster"] = asc_docs_api.prototype.asc_DuplicateMaster;
@@ -10072,12 +10085,15 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_SetThumbnailsPosition"] = asc_docs_api.prototype.asc_SetThumbnailsPosition;
 	asc_docs_api.prototype["getJsApi"] = asc_docs_api.prototype.getJsApi;
 
-	asc_docs_api.prototype["asc_setHandoutFooter"] = asc_docs_api.prototype.asc_setHandoutFooter;
-	asc_docs_api.prototype["asc_setHandoutHeader"] = asc_docs_api.prototype.asc_setHandoutHeader;
-	asc_docs_api.prototype["asc_setHandoutDate"] = asc_docs_api.prototype.asc_setHandoutDate;
-	asc_docs_api.prototype["asc_setHandoutNumber"] = asc_docs_api.prototype.asc_setHandoutNumber;
 	asc_docs_api.prototype["asc_setHandoutPageCount"] = asc_docs_api.prototype.asc_setHandoutPageCount;
 	asc_docs_api.prototype["asc_setPageOrientation"] = asc_docs_api.prototype.asc_setPageOrientation;
+	asc_docs_api.prototype["asc_setTitle"] = asc_docs_api.prototype.asc_setTitle;
+	asc_docs_api.prototype["asc_setFooter"] = asc_docs_api.prototype.asc_setFooter;
+	asc_docs_api.prototype["asc_setHeader"] = asc_docs_api.prototype.asc_setHeader;
+	asc_docs_api.prototype["asc_setDate"] = asc_docs_api.prototype.asc_setDate;
+	asc_docs_api.prototype["asc_setPageNumber"] = asc_docs_api.prototype.asc_setPageNumber;
+	asc_docs_api.prototype["asc_setSlideImage"] = asc_docs_api.prototype.asc_setSlideImage;
+	asc_docs_api.prototype["asc_setBody"] = asc_docs_api.prototype.asc_setBody;
 
 	window['Asc']['asc_CCommentDataSlide'] = window['Asc'].asc_CCommentDataSlide = asc_CCommentDataSlide;
 	window['Asc']['asc_CCommentData'] = window['Asc'].asc_CCommentData = asc_CCommentDataSlide;

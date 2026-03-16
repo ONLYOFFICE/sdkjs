@@ -169,7 +169,11 @@
 		this.m_oContentChanges.Refresh();
 	};
 
-	CNotesMaster.prototype.Refresh_RecalcData = function() {
+	CNotesMaster.prototype.Refresh_RecalcData = function(data) {
+			if(data)
+			{
+				this.addToRecalculate();
+			}
 	};
 	CNotesMaster.prototype.getThemeIndex = function() {
 		let aMasters = Asc.editor.WordControl.m_oLogicDocument.notesMasters;
@@ -261,7 +265,12 @@
 	};
 	//todo
 	CNotesMaster.prototype.getParentObjects = function() {
-		return {};
+		return {
+			presentation: Asc.editor.private_GetLogicDocument(),
+			master: this,
+			layout: null,
+			slide: null
+		};
 	};
 	CNotesMaster.prototype.Get_ColorMap = function() {
 		return this.getColorMap();
@@ -353,257 +362,12 @@
 		oBgRef.Color = oUniColor;
 		oBG.bgRef = oBgRef;
 		oNM.changeBackground(oBG);
-
-		var oSp = new AscFormat.CShape();
-		oSp.setBDeleted(false);
-		var oNvSpPr = new AscFormat.UniNvPr();
-		var oCNvPr = oNvSpPr.cNvPr;
-		oCNvPr.setId(2);
-		oCNvPr.setName("Header Placeholder 1");
-		var oPh = new AscFormat.Ph();
-		oPh.setType(AscFormat.phType_hdr);
-		oPh.setSz(2);
-		oNvSpPr.nvPr.setPh(oPh);
-		oSp.setNvSpPr(oNvSpPr);
-		oSp.setLockValue(AscFormat.LOCKS_MASKS.noGrp, true);
-		oSp.setSpPr(new AscFormat.CSpPr());
-		oSp.spPr.setParent(oSp);
-		oSp.spPr.setXfrm(new AscFormat.CXfrm());
-		oSp.spPr.xfrm.setParent(oSp.spPr);
-		oSp.spPr.xfrm.setOffX(0);
-		oSp.spPr.xfrm.setOffY(0);
-		oSp.spPr.xfrm.setExtX(2971800 / 36000);
-		oSp.spPr.xfrm.setExtY(458788 / 36000);
-		oSp.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
-		oSp.spPr.geometry.setParent(oSp.spPr);
-		oSp.createTextBody();
-		var oBodyPr = oSp.txBody.bodyPr.createDuplicate();
-		oBodyPr.vert = AscFormat.nVertTThorz;
-		oBodyPr.lIns = 91440 / 36000;
-		oBodyPr.tIns = 45720 / 36000;
-		oBodyPr.rIns = 91440 / 36000;
-		oBodyPr.bIns = 45720 / 36000;
-		oBodyPr.rtlCol = false;
-		oBodyPr.anchor = 1;
-		oSp.txBody.setBodyPr(oBodyPr);
-		var oTxLstStyle = new AscFormat.TextListStyle();
-		oTxLstStyle.levels[0] = new CParaPr();
-		oTxLstStyle.levels[0].Jc = AscCommon.align_Left;
-		oTxLstStyle.levels[0].DefaultRunPr = new AscCommonWord.CTextPr();
-		oTxLstStyle.levels[0].DefaultRunPr.FontSize = 12;
-		oSp.txBody.setLstStyle(oTxLstStyle);
-		oSp.setParent(oNM);
-		oNM.addToSpTreeToPos(0, oSp);
-		//endParaPr
-
-		oSp = new AscFormat.CShape();
-		oSp.setBDeleted(false);
-		oNvSpPr = new AscFormat.UniNvPr();
-		oCNvPr = oNvSpPr.cNvPr;
-		oCNvPr.setId(3);
-		oCNvPr.setName("Date Placeholder 2");
-		oPh = new AscFormat.Ph();
-		oPh.setType(AscFormat.phType_dt);
-		oPh.setIdx(2 + "");
-		oNvSpPr.nvPr.setPh(oPh);
-		oSp.setNvSpPr(oNvSpPr);
-		oSp.setLockValue(AscFormat.LOCKS_MASKS.noGrp, true);
-		oSp.setSpPr(new AscFormat.CSpPr());
-		oSp.spPr.setParent(oSp);
-		oSp.spPr.setXfrm(new AscFormat.CXfrm());
-		oSp.spPr.xfrm.setParent(oSp.spPr);
-		oSp.spPr.xfrm.setOffX(3884613 / 36000);
-		oSp.spPr.xfrm.setOffY(0);
-		oSp.spPr.xfrm.setExtX(2971800 / 36000);
-		oSp.spPr.xfrm.setExtY(458788 / 36000);
-		oSp.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
-		oSp.spPr.geometry.setParent(oSp.spPr);
-		oSp.createTextBody();
-		oBodyPr = oSp.txBody.bodyPr.createDuplicate();
-		oBodyPr.vert = AscFormat.nVertTThorz;
-		oBodyPr.lIns = 91440 / 36000;
-		oBodyPr.tIns = 45720 / 36000;
-		oBodyPr.rIns = 91440 / 36000;
-		oBodyPr.bIns = 45720 / 36000;
-		oBodyPr.rtlCol = false;
-		oBodyPr.anchor = 1;
-		oSp.txBody.setBodyPr(oBodyPr);
-		oTxLstStyle = new AscFormat.TextListStyle();
-		oTxLstStyle.levels[0] = new CParaPr();
-		oTxLstStyle.levels[0].Jc = AscCommon.align_Right;
-		oTxLstStyle.levels[0].DefaultRunPr = new AscCommonWord.CTextPr();
-		oTxLstStyle.levels[0].DefaultRunPr.FontSize = 12;
-		//endParaPr
-		oSp.txBody.setLstStyle(oTxLstStyle);
-		oSp.setParent(oNM);
-		oNM.addToSpTreeToPos(1, oSp);
-
-		oSp = new AscFormat.CShape();
-		oSp.setBDeleted(false);
-		oNvSpPr = new AscFormat.UniNvPr();
-		oCNvPr = oNvSpPr.cNvPr;
-		oCNvPr.setId(3);
-		oCNvPr.setName("Date Placeholder 2");
-		oPh = new AscFormat.Ph();
-		oPh.setType(AscFormat.phType_dt);
-		oPh.setIdx(3 + "");
-		oNvSpPr.nvPr.setPh(oPh);
-		oSp.setNvSpPr(oNvSpPr);
-		oSp.setLockValue(AscFormat.LOCKS_MASKS.noGrp, true);
-		oSp.setSpPr(new AscFormat.CSpPr());
-		oSp.spPr.setParent(oSp);
-		oSp.spPr.setXfrm(new AscFormat.CXfrm());
-		oSp.spPr.xfrm.setParent(oSp.spPr);
-		oSp.spPr.xfrm.setOffX(3884613 / 36000);
-		oSp.spPr.xfrm.setOffY(0);
-		oSp.spPr.xfrm.setExtX(2971800 / 36000);
-		oSp.spPr.xfrm.setExtY(458788 / 36000);
-		oSp.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
-		oSp.spPr.geometry.setParent(oSp.spPr);
-		oSp.createTextBody();
-		oBodyPr = oSp.txBody.bodyPr.createDuplicate();
-		oBodyPr.vert = AscFormat.nVertTThorz;
-		oBodyPr.lIns = 91440 / 36000;
-		oBodyPr.tIns = 45720 / 36000;
-		oBodyPr.rIns = 91440 / 36000;
-		oBodyPr.bIns = 45720 / 36000;
-		oBodyPr.rtlCol = false;
-		oBodyPr.anchor = 1;
-		oSp.txBody.setBodyPr(oBodyPr);
-		oTxLstStyle = new AscFormat.TextListStyle();
-		oTxLstStyle.levels[0] = new CParaPr();
-		oTxLstStyle.levels[0].Jc = AscCommon.align_Right;
-		oTxLstStyle.levels[0].DefaultRunPr = new AscCommonWord.CTextPr();
-		oTxLstStyle.levels[0].DefaultRunPr.FontSize = 12;
-		//endParaPr
-		oSp.txBody.setLstStyle(oTxLstStyle);
-		oSp.setParent(oNM);
-		oNM.addToSpTreeToPos(2, oSp);
-
-		oSp = new AscFormat.CShape();
-		oSp.setBDeleted(false);
-		oNvSpPr = new AscFormat.UniNvPr();
-		oCNvPr = oNvSpPr.cNvPr;
-		oCNvPr.setId(5);
-		oCNvPr.setName("Notes Placeholder 4");
-		oPh = new AscFormat.Ph();
-		oPh.setType(AscFormat.phType_body);
-		oPh.setIdx(1 + "");
-		oPh.setSz(2);
-		oNvSpPr.nvPr.setPh(oPh);
-		oSp.setNvSpPr(oNvSpPr);
-		oSp.setLockValue(AscFormat.LOCKS_MASKS.noGrp, true);
-		oSp.setSpPr(new AscFormat.CSpPr());
-		oSp.spPr.setParent(oSp);
-		oSp.spPr.setXfrm(new AscFormat.CXfrm());
-		oSp.spPr.xfrm.setParent(oSp.spPr);
-		oSp.spPr.xfrm.setOffX(685800 / 36000);
-		oSp.spPr.xfrm.setOffY(4400550 / 36000);
-		oSp.spPr.xfrm.setExtX(5486400 / 36000);
-		oSp.spPr.xfrm.setExtY(3600450 / 36000);
-		oSp.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
-		oSp.spPr.geometry.setParent(oSp.spPr);
-		oSp.createTextBody();
-		oBodyPr = oSp.txBody.bodyPr.createDuplicate();
-		oBodyPr.vert = AscFormat.nVertTThorz;
-		oBodyPr.lIns = 91440 / 36000;
-		oBodyPr.tIns = 45720 / 36000;
-		oBodyPr.rIns = 91440 / 36000;
-		oBodyPr.bIns = 45720 / 36000;
-		oBodyPr.rtlCol = false;
-		oBodyPr.anchor = 1;
-		oSp.txBody.setBodyPr(oBodyPr);
-		oTxLstStyle = new AscFormat.TextListStyle();
-		//endParaPr
-		oSp.txBody.setLstStyle(oTxLstStyle);
-		oSp.setParent(oNM);
-		oNM.addToSpTreeToPos(3, oSp);
-
-		oSp = new AscFormat.CShape();
-		oSp.setBDeleted(false);
-		oNvSpPr = new AscFormat.UniNvPr();
-		oCNvPr = oNvSpPr.cNvPr;
-		oCNvPr.setId(6);
-		oCNvPr.setName("Footer Placeholder 5");
-		oPh = new AscFormat.Ph();
-		oPh.setType(AscFormat.phType_ftr);
-		oPh.setIdx(4 + "");
-		oPh.setSz(2);
-		oNvSpPr.nvPr.setPh(oPh);
-		oSp.setNvSpPr(oNvSpPr);
-		oSp.setLockValue(AscFormat.LOCKS_MASKS.noGrp, true);
-		oSp.setSpPr(new AscFormat.CSpPr());
-		oSp.spPr.setParent(oSp);
-		oSp.spPr.setXfrm(new AscFormat.CXfrm());
-		oSp.spPr.xfrm.setParent(oSp.spPr);
-		oSp.spPr.xfrm.setOffX(0);
-		oSp.spPr.xfrm.setOffY(8685213 / 36000);
-		oSp.spPr.xfrm.setExtX(2971800 / 36000);
-		oSp.spPr.xfrm.setExtY(458787 / 36000);
-		oSp.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
-		oSp.spPr.geometry.setParent(oSp.spPr);
-		oSp.createTextBody();
-		oBodyPr = oSp.txBody.bodyPr.createDuplicate();
-		oBodyPr.vert = AscFormat.nVertTThorz;
-		oBodyPr.lIns = 91440 / 36000;
-		oBodyPr.tIns = 45720 / 36000;
-		oBodyPr.rIns = 91440 / 36000;
-		oBodyPr.bIns = 45720 / 36000;
-		oBodyPr.rtlCol = false;
-		oBodyPr.anchor = 0;
-		oSp.txBody.setBodyPr(oBodyPr);
-		oTxLstStyle = new AscFormat.TextListStyle();
-		oTxLstStyle.levels[0] = new CParaPr();
-		oTxLstStyle.levels[0].Jc = AscCommon.align_Left;
-		oTxLstStyle.levels[0].DefaultRunPr = new AscCommonWord.CTextPr();
-		oTxLstStyle.levels[0].DefaultRunPr.FontSize = 12;
-		//endParaPr
-		oSp.txBody.setLstStyle(oTxLstStyle);
-		oSp.setParent(oNM);
-		oNM.addToSpTreeToPos(4, oSp);
-
-		oSp = new AscFormat.CShape();
-		oSp.setBDeleted(false);
-		oNvSpPr = new AscFormat.UniNvPr();
-		oCNvPr = oNvSpPr.cNvPr;
-		oCNvPr.setId(7);
-		oCNvPr.setName("Slide Number Placeholder 6");
-		oPh = new AscFormat.Ph();
-		oPh.setType(AscFormat.phType_sldNum);
-		oPh.setIdx(10 + "");
-		oPh.setSz(2);
-		oNvSpPr.nvPr.setPh(oPh);
-		oSp.setNvSpPr(oNvSpPr);
-		oSp.setLockValue(AscFormat.LOCKS_MASKS.noGrp, true);
-		oSp.setSpPr(new AscFormat.CSpPr());
-		oSp.spPr.setParent(oSp);
-		oSp.spPr.setXfrm(new AscFormat.CXfrm());
-		oSp.spPr.xfrm.setParent(oSp.spPr);
-		oSp.spPr.xfrm.setOffX(3884613 / 36000);
-		oSp.spPr.xfrm.setOffY(8685213 / 36000);
-		oSp.spPr.xfrm.setExtX(2971800 / 36000);
-		oSp.spPr.xfrm.setExtY(458787 / 36000);
-		oSp.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
-		oSp.spPr.geometry.setParent(oSp.spPr);
-		oSp.createTextBody();
-		oBodyPr = oSp.txBody.bodyPr.createDuplicate();
-		oBodyPr.vert = AscFormat.nVertTThorz;
-		oBodyPr.lIns = 91440 / 36000;
-		oBodyPr.tIns = 45720 / 36000;
-		oBodyPr.rIns = 91440 / 36000;
-		oBodyPr.bIns = 45720 / 36000;
-		oBodyPr.rtlCol = false;
-		oBodyPr.anchor = 0;
-		oSp.txBody.setBodyPr(oBodyPr);
-		oTxLstStyle = new AscFormat.TextListStyle();
-		oTxLstStyle.levels[0] = new CParaPr();
-		oTxLstStyle.levels[0].Jc = AscCommon.align_Right;
-		oTxLstStyle.levels[0].DefaultRunPr = new AscCommonWord.CTextPr();
-		oTxLstStyle.levels[0].DefaultRunPr.FontSize = 12;
-		//endParaPr
-		oSp.txBody.setLstStyle(oTxLstStyle);
-		oSp.setParent(oNM);
-		oNM.addToSpTreeToPos(5, oSp);
+		AscCommonSlide.addHeaderShape(oNM);
+		AscCommonSlide.addDateShape(oNM);
+		AscCommonSlide.addBodyShape(oNM);
+		AscCommonSlide.addFooterShape(oNM);
+		AscCommonSlide.addSlideImage(oNM);
+		AscCommonSlide.addNumberShape(oNM);
 
 		//clrMap
 		oNM.clrMap.setClr(0, 0);
@@ -619,7 +383,7 @@
 		oNM.clrMap.setClr(15, 8);
 		oNM.clrMap.setClr(16, 9);
 
-		oTxLstStyle = new AscFormat.TextListStyle();
+		const oTxLstStyle = new AscFormat.TextListStyle();
 
 		oTxLstStyle.levels[0] = new CParaPr();
 		oTxLstStyle.levels[0].Ind.Left = 0;

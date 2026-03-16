@@ -123,10 +123,6 @@
 	};
 	SlideModeManagerBase.prototype.startAddPlaceholder = function(nType, bVertical, bStart) {
 	};
-	SlideModeManagerBase.prototype.setLayoutTitle = function(bVal) {
-	};
-	SlideModeManagerBase.prototype.setLayoutFooter = function(bVal) {
-	};
 	SlideModeManagerBase.prototype.applySlideTransition = function(oTransition) {
 	};
 	SlideModeManagerBase.prototype.applySlideTransitionToAll = function() {
@@ -153,14 +149,14 @@
 	};
 	SlideModeManagerBase.prototype.insertSlideObjectToPos = function(pos, slide) {
 	};
-	SlideModeManagerBase.prototype.setHandoutFooter = function(val) {
-	};
-	SlideModeManagerBase.prototype.setHandoutHeader = function(val) {
-	};
-	SlideModeManagerBase.prototype.setHandoutDate = function(val) {
-	};
-	SlideModeManagerBase.prototype.setHandoutNumber = function(val) {
-	};
+	SlideModeManagerBase.prototype.setTitle = function() {};
+	SlideModeManagerBase.prototype.setFooter = function() {};
+	SlideModeManagerBase.prototype.setHeader = function() {};
+	SlideModeManagerBase.prototype.setDate = function() {};
+	SlideModeManagerBase.prototype.setPageNumber = function() {};
+	SlideModeManagerBase.prototype.setSlideImage = function() {};
+	SlideModeManagerBase.prototype.setBody = function() {};
+
 	SlideModeManagerBase.prototype.setHandoutPageCount = function(val) {
 	};
 	SlideModeManagerBase.prototype.setPageOrientation = function(val) {
@@ -190,6 +186,7 @@
 	SlideModeManagerBase.prototype.isSlideNoteShape = function(shape) {
 		return false;
 	};
+	SlideModeManagerBase.prototype.recalculateThemeObjects = function() {};
 
 	function SlideModeManager(api) {
 		SlideModeManagerBase.call(this, api);
@@ -394,7 +391,7 @@
 		presentation.Document_UpdateInterfaceState();
 	}
 	SlideModeManager.prototype.replaceTheme = function(themeInfo, arr_ind) {
-		const presentation = this.getPresentaton();
+		const presentation = this.getPresentation();
 		presentation.clearThemeTimeouts();
 
 		let oCurSlide = this.getCurrentSlide();
@@ -862,13 +859,13 @@
 		if (oCurSlide.getObjectType() !== AscDFH.historyitem_type_SlideLayout) return;
 		presentation.StartAddShape("textRect", bStart, nType, bVertical);
 	};
-	MasterSlideModeManager.prototype.setLayoutTitle = function(bVal) {
+	MasterSlideModeManager.prototype.setTitle = function(bVal) {
 		const presentation = this.getPresentation();
 		const oCurSlide = presentation.GetCurrentSlide();
 		if (oCurSlide.getObjectType() !== AscDFH.historyitem_type_SlideLayout) return;
 		presentation.SetLayoutTitle(bVal);
 	};
-	MasterSlideModeManager.prototype.setLayoutFooter = function(bVal) {
+	MasterSlideModeManager.prototype.setFooter = function(bVal) {
 		const presentation = this.getPresentation();
 		const oCurSlide = presentation.GetCurrentSlide();
 		if (oCurSlide.getObjectType() !== AscDFH.historyitem_type_SlideLayout) return;
@@ -1644,6 +1641,22 @@
 			oNotesMastersMap[oNotesMaster.Get_Id()] = oNotesMaster;
 		}
 	};
+	NoteModeManager.prototype.changeTheme = function(themeInfo, arrInd) {
+		const presentation = this.getPresentation();
+		if (!Array.isArray(arrInd)) {
+			arrInd = [presentation.CurPage];
+		}
+		const masterMap = {};
+		for (let i = 0; i < arrInd.length; i += 1) {
+			const slide = this.getSlide(arrInd[i]);
+			if (slide.Master && !masterMap[slide.Master.Get_Id()]) {
+				masterMap[slide.Master.Get_Id()] = true;
+				slide.Master.setTheme(themeInfo.Theme);
+			}
+		}
+		presentation.Document_UpdateInterfaceState();
+		presentation.Recalculate();
+	}
 
 	function MasterNoteModeManager(api) {
 		SlideModeManagerBase.call(this, api);
@@ -1662,6 +1675,48 @@
 	MasterNoteModeManager.prototype.setPageOrientation = NoteModeManager.prototype.setPageOrientation;
 	MasterNoteModeManager.prototype.isMasterPlaceholderShape = function(shape) {
 		return shape.isPlaceholder && shape.isPlaceholder();
+	};
+	MasterNoteModeManager.prototype.setFooter = MasterHandoutModeManager.prototype.setFooter;
+	MasterNoteModeManager.prototype.setHeader = MasterHandoutModeManager.prototype.setHeader;
+	MasterNoteModeManager.prototype.setDate = MasterHandoutModeManager.prototype.setDate;
+	MasterNoteModeManager.prototype.setNumber = MasterHandoutModeManager.prototype.setNumber;
+	MasterNoteModeManager.prototype.setBody = function(val) {
+		this.setPlaceholder(val, AscFormat.phType_body, AscCommonSlide.addBodyShape);
+	};
+	MasterNoteModeManager.prototype.setSlideImage = function(val) {
+		this.setPlaceholder(val, AscFormat.phType_body, AscCommonSlide.addSlideImage);
+	};
+	MasterNoteModeManager.prototype.setPlaceholder = MasterHandoutModeManager.prototype.setPlaceholder;
+	MasterNoteModeManager.prototype.changeTheme = function(themeInfo, arrInd) {
+		const presentation = this.getPresentation();
+		if (!Array.isArray(arrInd)) {
+			arrInd = [presentation.CurPage];
+		}
+		for (let i = 0; i < arrInd.length; i += 1) {
+			const slide = this.getSlide(arrInd[i]);
+			slide.setTheme(themeInfo.Theme);
+			slide.checkSlideTheme();
+		}
+		presentation.Document_UpdateInterfaceState();
+		presentation.Recalculate();
+	};
+	MasterNoteModeManager.prototype.recalculateThemeObjects = function(oThemeObjects) {
+		const presentation = this.getPresentation();
+		for (let nIdx = 0; nIdx < oThemeObjects.masters.length; ++nIdx) {
+			oThemeObjects.masters[nIdx].recalculate();
+		}
+		for (let nIdx = 0; nIdx < oThemeObjects.layouts.length; ++nIdx) {
+			oThemeObjects.layouts[nIdx].recalculate();
+		}
+		let aIdx = [];
+		let nStartIdx = 0;
+		for (let nIdx = 0; nIdx < oThemeObjects.slides.length; ++nIdx) {
+			if (oThemeObjects.slides[nIdx].num === presentation.CurPage) {
+				nStartIdx = aIdx.length;
+			}
+			aIdx.push(oThemeObjects.slides[nIdx].num);
+		}
+		AscFormat.redrawSlide(presentation.Slides[aIdx[nStartIdx]], presentation, aIdx, nStartIdx, 0, this.getAllSlides());
 	};
 
 	function MasterHandoutModeManager(api) {
@@ -1697,16 +1752,16 @@
 		}
 		this.finalizeAction(true);
 	};
-	MasterHandoutModeManager.prototype.setHandoutFooter = function(val) {
+	MasterHandoutModeManager.prototype.setFooter = function(val) {
 		this.setPlaceholder(val, AscFormat.phType_ftr, AscCommonSlide.addFooterShape);
 	};
-	MasterHandoutModeManager.prototype.setHandoutHeader = function(val) {
+	MasterHandoutModeManager.prototype.setHeader = function(val) {
 		this.setPlaceholder(val, AscFormat.phType_hdr, AscCommonSlide.addHeaderShape);
 	};
-	MasterHandoutModeManager.prototype.setHandoutDate = function(val) {
+	MasterHandoutModeManager.prototype.setDate = function(val) {
 		this.setPlaceholder(val, AscFormat.phType_dt, AscCommonSlide.addDateShape);
 	};
-	MasterHandoutModeManager.prototype.setHandoutNumber = function(val) {
+	MasterHandoutModeManager.prototype.setNumber = function(val) {
 		this.setPlaceholder(val, AscFormat.phType_sldNum, AscCommonSlide.addNumberShape);
 	};
 	MasterHandoutModeManager.prototype.setHandoutPageCount = function(val) {
@@ -1716,7 +1771,7 @@
 	MasterHandoutModeManager.prototype.getSizesMM = NoteModeManager.prototype.getSizesMM;
 	MasterHandoutModeManager.prototype.setPageOrientation = NoteModeManager.prototype.setPageOrientation;
 	MasterHandoutModeManager.prototype.applySlideProps = function() {
-
+		//todo
 	};
 
 	function SorterModeManager(api) {
