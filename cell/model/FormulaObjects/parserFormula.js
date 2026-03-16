@@ -9196,7 +9196,6 @@ function parserFormula( formula, parent, _ws ) {
 			"1": true
 		},
 		"CELL": {
-			"0": true,
 			"1": true
 		},
 		"CHITEST": {
@@ -9209,6 +9208,12 @@ function parserFormula( formula, parent, _ws ) {
 		},
 		"CHOOSE": {
 			"allFrom": 1
+		},
+		"CHOOSECOLS": {
+			"0": true
+		},
+		"CHOOSEROWS": {
+			"0": true
 		},
 		"COLUMN": {
 			"0": true
@@ -9349,6 +9354,9 @@ function parserFormula( formula, parent, _ws ) {
 			"1": true,
 			"2": true
 		},
+		"DROP": {
+			"0": true
+		},
 		"DSTDEV": {
 			"0": true,
 			"1": true,
@@ -9402,6 +9410,9 @@ function parserFormula( formula, parent, _ws ) {
 		"ERFC.PRECISE": {
 			"0": true
 		},
+		"EXPAND": {
+			"0": true
+		},
 		"F.TEST": {
 			"0": true,
 			"1": true
@@ -9437,8 +9448,16 @@ function parserFormula( formula, parent, _ws ) {
 		"FACTDOUBLE": {
 			"0": true
 		},
+		"FILTER": {
+			"0": true,
+			"1": true
+		},
 		"FORMULATEXT": {
 			"0": true
+		},
+		"FREQUENCY": {
+			"0": true,
+			"1": true
 		},
 		"FVSCHEDULE": {
 			"0": true,
@@ -9458,6 +9477,9 @@ function parserFormula( formula, parent, _ws ) {
 			"0": true,
 			"1": true
 		},
+		"GROWTH": {
+			"*": true
+		},
 		"HARMEAN": {
 			"*": true
 		},
@@ -9475,6 +9497,9 @@ function parserFormula( formula, parent, _ws ) {
 		"HLOOKUP": {
 			"1": true
 		},
+		"HSTACK": {
+			"*": true
+		},
 		"IF": {
 			"1": true,
 			"2": true
@@ -9486,7 +9511,7 @@ function parserFormula( formula, parent, _ws ) {
 			"1": true
 		},
 		"IFS": {
-			"*": true
+			"odd": true
 		},
 		/*"IF": {
 			"1": true,
@@ -9539,6 +9564,10 @@ function parserFormula( formula, parent, _ws ) {
 			"0": true,
 			"1": true
 		},
+		"IMPORTRANGE": {
+			"0": true,
+			"1": true
+		},
 		"IMPRODUCT": {
 			"*": true
 		},
@@ -9571,10 +9600,6 @@ function parserFormula( formula, parent, _ws ) {
 			"0": true
 		},
 		"INDEX": {
-			"0": true,
-			"1": true
-		},
-		"INDIRECT": {
 			"0": true
 		},
 		"INTERCEPT": {
@@ -9599,6 +9624,9 @@ function parserFormula( formula, parent, _ws ) {
 		"ISREF": {
 			"0": true
 		},
+		"JIS": {
+			"0": true
+		},
 		"KURT": {
 			"*": true
 		},
@@ -9606,6 +9634,12 @@ function parserFormula( formula, parent, _ws ) {
 			"0": true
 		},
 		"LCM": {
+			"*": true
+		},
+		"LINEST": {
+			"*": true
+		},
+		"LOGEST": {
 			"*": true
 		},
 		"LOOKUP": {
@@ -9643,6 +9677,9 @@ function parserFormula( formula, parent, _ws ) {
 		"MINIFS": {
 			"arg0orOdd": true
 		},
+		"MINVERSE": {
+			"0": true
+		},
 		"MIRR": {
 			"0": true
 		},
@@ -9662,8 +9699,9 @@ function parserFormula( formula, parent, _ws ) {
 		"MULTINOMIAL": {
 			"*": true
 		},
-		"MUNIT": {
-			"0": true
+		"MMULT": {
+			"0": true,
+			"1": true
 		},
 		"N": {
 			"0": true
@@ -9770,10 +9808,6 @@ function parserFormula( formula, parent, _ws ) {
 			"0": true,
 			"1": true
 		},
-		"SEQUENCE": {
-			"0": true,
-			"1": true
-		},
 		"SKEW": {
 			"*": true
 		},
@@ -9786,6 +9820,14 @@ function parserFormula( formula, parent, _ws ) {
 		},
 		"SMALL": {
 			"0": true
+		},
+		"SORT": {
+			"0": true,
+			"1": true,
+			"2": true
+		},
+		"SORTBY": {
+			"arg0orOdd": true
 		},
 		"SQRTPI": {
 			"0": true
@@ -9813,7 +9855,7 @@ function parserFormula( formula, parent, _ws ) {
 			"1": true
 		},
 		"SERIESSUM": {
-			"3": true
+			"*": true
 		},
 		"SUBTOTAL": {
 			"allFrom": 1
@@ -9847,7 +9889,7 @@ function parserFormula( formula, parent, _ws ) {
 			"1": true
 		},
 		"SWITCH": {
-			"*": true
+			"evenFrom2": true
 		},
 		"T": {
 			"0": true
@@ -9875,12 +9917,14 @@ function parserFormula( formula, parent, _ws ) {
 			"0": true,
 			"allFrom": 2
 		},
-		"TRANSPOSE": {
+		"TOCOL": {
+			"0": true
+		},
+		"TOROW": {
 			"0": true
 		},
 		"TREND": {
-			"0": true,
-			"1": true
+			"*": true
 		},
 		"TRIMMEAN": {
 			"0": true
@@ -9913,6 +9957,9 @@ function parserFormula( formula, parent, _ws ) {
 		"VLOOKUP": {
 			"1": true
 		},
+		"VSTACK": {
+			"*": true
+		},
 		"WEEKNUM": {
 			"0": true,
 			"1": true
@@ -9927,6 +9974,12 @@ function parserFormula( formula, parent, _ws ) {
 			"1": true,
 			"3": true
 		},
+		"WRAPCOLS": {
+			"0": true
+		},
+		"WRAPROWS": {
+			"0": true
+		},
 		"XIRR": {
 			"0": true,
 			"1": true,
@@ -9934,7 +9987,8 @@ function parserFormula( formula, parent, _ws ) {
 		},
 		"XLOOKUP": {
 			"1": true,
-			"2": true
+			"2": true,
+			"3": true
 		},
 		"XMATCH": {
 			"1": true
@@ -9985,6 +10039,9 @@ function parserFormula( formula, parent, _ws ) {
 		"SHEET": {
 			"0": true
 		},
+		"SHEETS": {
+			"0": true
+		},
 		"TAKE": {
 			"0": true
 		},
@@ -10018,6 +10075,8 @@ function parserFormula( formula, parent, _ws ) {
 	//   "*": true        – all argument positions accept ranges
 	//   "allFrom": N     – positions N and above accept ranges
 	//   "even": true     – even positions (0, 2, 4, ...) accept ranges
+	//   "odd": true      – odd positions (1, 3, 5, ...) accept ranges (IFS pattern)
+	//   "evenFrom2": true – even positions starting at 2 (2, 4, 6, ...) accept ranges (SWITCH pattern)
 	//   "arg0orOdd": true – position 0 and all odd positions (1, 3, 5, ...) accept ranges (SUMIFS pattern)
 	//   N: true          – specific position N accepts ranges
 
@@ -10038,6 +10097,12 @@ function parserFormula( formula, parent, _ws ) {
 			return true;
 		}
 		if (entry["even"] && argPos % 2 === 0) {
+			return true;
+		}
+		if (entry["odd"] && argPos % 2 === 1) {
+			return true;
+		}
+		if (entry["evenFrom2"] && argPos >= 2 && argPos % 2 === 0) {
 			return true;
 		}
 		if (entry["arg0orOdd"] && (argPos === 0 || argPos % 2 === 1)) {

@@ -2775,6 +2775,3693 @@ $(function () {
 		ws.getRange2("A1:Z150").cleanAll();
 	});
 
+	QUnit.test('Test @ operator: BIN2OCT (arg positions 0 and 1)', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		let fillRange, resCell, fragment, assembledVal;
+		let flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// Case 1: BIN2OCT(area, area) — both args natively accept ranges, no @ expected
+		let formula = "=BIN2OCT(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C1"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "BIN2OCT(A1:B1,A2:B2)", "BIN2OCT(area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C1").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "BIN2OCT(area,area): display without @");
+
+		// Case 2: BIN2OCT(@area, area) — explicit @ on arg 0 only
+		formula = "=BIN2OCT(@A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C2");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C2").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C2"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "BIN2OCT(_xlfn.SINGLE(A1:B1),A2:B2)", "BIN2OCT(@area,area): SINGLE on arg 0 only");
+		assembledVal = ws.getRange2("C2").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "BIN2OCT(@area,area): display with @ on arg 0 only");
+
+		// Case 3: BIN2OCT(@area, @area) — explicit @ on both args
+		formula = "=BIN2OCT(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C3");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C3").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C3"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "BIN2OCT(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "BIN2OCT(@area,@area): SINGLE on both args");
+		assembledVal = ws.getRange2("C3").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "BIN2OCT(@area,@area): display with @ on both args");
+
+		ws.getRange2("A1:Z10").cleanAll();
+	});
+
+	QUnit.test('Test @ operator: conversion functions (BIN2HEX, DEC2BIN, DEC2HEX, DEC2OCT, HEX2BIN, HEX2OCT, OCT2BIN, OCT2HEX)', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		let fillRange, resCell, fragment, assembledVal;
+		let flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// BIN2HEX
+		let formula = "=BIN2HEX(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C1"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "BIN2HEX(A1:B1,A2:B2)", "BIN2HEX(area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C1").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "BIN2HEX(area,area): display without @");
+
+		formula = "=BIN2HEX(@A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C2");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C2").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C2"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "BIN2HEX(_xlfn.SINGLE(A1:B1),A2:B2)", "BIN2HEX(@area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C2").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "BIN2HEX(@area,area): display with @ on arg 0");
+
+		formula = "=BIN2HEX(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C3");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C3").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C3"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "BIN2HEX(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "BIN2HEX(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C3").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "BIN2HEX(@area,@area): display with @ on both");
+
+		// DEC2BIN
+		formula = "=DEC2BIN(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C4");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C4").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C4"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DEC2BIN(A1:B1,A2:B2)", "DEC2BIN(area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C4").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DEC2BIN(area,area): display without @");
+
+		formula = "=DEC2BIN(@A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C5");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C5").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C5"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DEC2BIN(_xlfn.SINGLE(A1:B1),A2:B2)", "DEC2BIN(@area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C5").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DEC2BIN(@area,area): display with @ on arg 0");
+
+		formula = "=DEC2BIN(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C6");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C6").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C6"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DEC2BIN(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "DEC2BIN(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C6").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DEC2BIN(@area,@area): display with @ on both");
+
+		// DEC2HEX
+		formula = "=DEC2HEX(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C7");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C7").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C7"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DEC2HEX(A1:B1,A2:B2)", "DEC2HEX(area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C7").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DEC2HEX(area,area): display without @");
+
+		formula = "=DEC2HEX(@A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C8");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C8").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C8"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DEC2HEX(_xlfn.SINGLE(A1:B1),A2:B2)", "DEC2HEX(@area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C8").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DEC2HEX(@area,area): display with @ on arg 0");
+
+		formula = "=DEC2HEX(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C9");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C9").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C9"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DEC2HEX(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "DEC2HEX(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C9").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DEC2HEX(@area,@area): display with @ on both");
+
+		// DEC2OCT
+		formula = "=DEC2OCT(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C10");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C10").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C10"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DEC2OCT(A1:B1,A2:B2)", "DEC2OCT(area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C10").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DEC2OCT(area,area): display without @");
+
+		formula = "=DEC2OCT(@A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C11");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C11").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C11"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DEC2OCT(_xlfn.SINGLE(A1:B1),A2:B2)", "DEC2OCT(@area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C11").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DEC2OCT(@area,area): display with @ on arg 0");
+
+		formula = "=DEC2OCT(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C12");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C12").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C12"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DEC2OCT(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "DEC2OCT(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C12").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DEC2OCT(@area,@area): display with @ on both");
+
+		// HEX2BIN
+		formula = "=HEX2BIN(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C13");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C13").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C13"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "HEX2BIN(A1:B1,A2:B2)", "HEX2BIN(area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C13").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "HEX2BIN(area,area): display without @");
+
+		formula = "=HEX2BIN(@A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C14");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C14").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C14"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "HEX2BIN(_xlfn.SINGLE(A1:B1),A2:B2)", "HEX2BIN(@area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C14").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "HEX2BIN(@area,area): display with @ on arg 0");
+
+		formula = "=HEX2BIN(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C15");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C15").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C15"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "HEX2BIN(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "HEX2BIN(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C15").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "HEX2BIN(@area,@area): display with @ on both");
+
+		// HEX2OCT
+		formula = "=HEX2OCT(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C16");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C16").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C16"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "HEX2OCT(A1:B1,A2:B2)", "HEX2OCT(area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C16").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "HEX2OCT(area,area): display without @");
+
+		formula = "=HEX2OCT(@A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C17");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C17").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C17"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "HEX2OCT(_xlfn.SINGLE(A1:B1),A2:B2)", "HEX2OCT(@area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C17").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "HEX2OCT(@area,area): display with @ on arg 0");
+
+		formula = "=HEX2OCT(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C18");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C18").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C18"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "HEX2OCT(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "HEX2OCT(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C18").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "HEX2OCT(@area,@area): display with @ on both");
+
+		// OCT2BIN
+		formula = "=OCT2BIN(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C19");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C19").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C19"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "OCT2BIN(A1:B1,A2:B2)", "OCT2BIN(area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C19").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "OCT2BIN(area,area): display without @");
+
+		formula = "=OCT2BIN(@A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C20");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C20").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C20"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "OCT2BIN(_xlfn.SINGLE(A1:B1),A2:B2)", "OCT2BIN(@area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C20").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "OCT2BIN(@area,area): display with @ on arg 0");
+
+		formula = "=OCT2BIN(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C21");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C21").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C21"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "OCT2BIN(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "OCT2BIN(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C21").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "OCT2BIN(@area,@area): display with @ on both");
+
+		// OCT2HEX
+		formula = "=OCT2HEX(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C22");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C22").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C22"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "OCT2HEX(A1:B1,A2:B2)", "OCT2HEX(area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C22").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "OCT2HEX(area,area): display without @");
+
+		formula = "=OCT2HEX(@A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C23");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C23").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C23"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "OCT2HEX(_xlfn.SINGLE(A1:B1),A2:B2)", "OCT2HEX(@area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C23").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "OCT2HEX(@area,area): display with @ on arg 0");
+
+		formula = "=OCT2HEX(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C24");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C24").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C24"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "OCT2HEX(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "OCT2HEX(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C24").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "OCT2HEX(@area,@area): display with @ on both");
+
+		ws.getRange2("A1:Z10").cleanAll();
+	});
+
+	QUnit.test('Test @ operator: database functions (DAVERAGE, DCOUNT, DCOUNTA, DGET, DMAX, DMIN, DPRODUCT, DSTDEV, DSTDEVP, DSUM, DVAR, DVARP)', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		let fillRange, resCell, fragment, assembledVal;
+		let flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// DAVERAGE
+		let formula = "=DAVERAGE(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C1"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DAVERAGE(A1:B1,A2:B2,A3:B3)", "DAVERAGE(area,area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C1").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DAVERAGE(area,area,area): display without @");
+
+		formula = "=DAVERAGE(@A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C2");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C2").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C2"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DAVERAGE(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "DAVERAGE(@area,area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C2").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DAVERAGE(@area,area,area): display with @ on arg 0");
+
+		formula = "=DAVERAGE(@A1:B1,@A2:B2,@A3:B3)";
+		fillRange = ws.getRange2("C3");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C3").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C3"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DAVERAGE(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "DAVERAGE(@area,@area,@area): SINGLE on all");
+		assembledVal = ws.getRange2("C3").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DAVERAGE(@area,@area,@area): display with @ on all");
+
+		// DCOUNT
+		formula = "=DCOUNT(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C4");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C4").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C4"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DCOUNT(A1:B1,A2:B2,A3:B3)", "DCOUNT(area,area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C4").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DCOUNT(area,area,area): display without @");
+
+		formula = "=DCOUNT(@A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C5");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C5").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C5"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DCOUNT(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "DCOUNT(@area,area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C5").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DCOUNT(@area,area,area): display with @ on arg 0");
+
+		formula = "=DCOUNT(@A1:B1,@A2:B2,@A3:B3)";
+		fillRange = ws.getRange2("C6");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C6").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C6"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DCOUNT(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "DCOUNT(@area,@area,@area): SINGLE on all");
+		assembledVal = ws.getRange2("C6").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DCOUNT(@area,@area,@area): display with @ on all");
+
+		// DCOUNTA
+		formula = "=DCOUNTA(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C7");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C7").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C7"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DCOUNTA(A1:B1,A2:B2,A3:B3)", "DCOUNTA(area,area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C7").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DCOUNTA(area,area,area): display without @");
+
+		formula = "=DCOUNTA(@A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C8");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C8").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C8"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DCOUNTA(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "DCOUNTA(@area,area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C8").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DCOUNTA(@area,area,area): display with @ on arg 0");
+
+		formula = "=DCOUNTA(@A1:B1,@A2:B2,@A3:B3)";
+		fillRange = ws.getRange2("C9");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C9").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C9"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DCOUNTA(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "DCOUNTA(@area,@area,@area): SINGLE on all");
+		assembledVal = ws.getRange2("C9").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DCOUNTA(@area,@area,@area): display with @ on all");
+
+		// DGET
+		formula = "=DGET(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C10");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C10").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C10"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DGET(A1:B1,A2:B2,A3:B3)", "DGET(area,area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C10").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DGET(area,area,area): display without @");
+
+		formula = "=DGET(@A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C11");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C11").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C11"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DGET(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "DGET(@area,area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C11").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DGET(@area,area,area): display with @ on arg 0");
+
+		formula = "=DGET(@A1:B1,@A2:B2,@A3:B3)";
+		fillRange = ws.getRange2("C12");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C12").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C12"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DGET(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "DGET(@area,@area,@area): SINGLE on all");
+		assembledVal = ws.getRange2("C12").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DGET(@area,@area,@area): display with @ on all");
+
+		// DMAX
+		formula = "=DMAX(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C13");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C13").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C13"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DMAX(A1:B1,A2:B2,A3:B3)", "DMAX(area,area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C13").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DMAX(area,area,area): display without @");
+
+		formula = "=DMAX(@A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C14");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C14").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C14"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DMAX(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "DMAX(@area,area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C14").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DMAX(@area,area,area): display with @ on arg 0");
+
+		formula = "=DMAX(@A1:B1,@A2:B2,@A3:B3)";
+		fillRange = ws.getRange2("C15");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C15").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C15"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DMAX(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "DMAX(@area,@area,@area): SINGLE on all");
+		assembledVal = ws.getRange2("C15").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DMAX(@area,@area,@area): display with @ on all");
+
+		// DMIN
+		formula = "=DMIN(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C16");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C16").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C16"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DMIN(A1:B1,A2:B2,A3:B3)", "DMIN(area,area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C16").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DMIN(area,area,area): display without @");
+
+		formula = "=DMIN(@A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C17");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C17").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C17"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DMIN(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "DMIN(@area,area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C17").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DMIN(@area,area,area): display with @ on arg 0");
+
+		formula = "=DMIN(@A1:B1,@A2:B2,@A3:B3)";
+		fillRange = ws.getRange2("C18");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C18").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C18"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DMIN(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "DMIN(@area,@area,@area): SINGLE on all");
+		assembledVal = ws.getRange2("C18").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DMIN(@area,@area,@area): display with @ on all");
+
+		// DPRODUCT
+		formula = "=DPRODUCT(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C19");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C19").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C19"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DPRODUCT(A1:B1,A2:B2,A3:B3)", "DPRODUCT(area,area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C19").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DPRODUCT(area,area,area): display without @");
+
+		formula = "=DPRODUCT(@A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C20");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C20").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C20"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DPRODUCT(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "DPRODUCT(@area,area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C20").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DPRODUCT(@area,area,area): display with @ on arg 0");
+
+		formula = "=DPRODUCT(@A1:B1,@A2:B2,@A3:B3)";
+		fillRange = ws.getRange2("C21");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C21").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C21"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DPRODUCT(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "DPRODUCT(@area,@area,@area): SINGLE on all");
+		assembledVal = ws.getRange2("C21").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DPRODUCT(@area,@area,@area): display with @ on all");
+
+		// DSTDEV
+		formula = "=DSTDEV(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C22");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C22").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C22"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DSTDEV(A1:B1,A2:B2,A3:B3)", "DSTDEV(area,area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C22").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DSTDEV(area,area,area): display without @");
+
+		formula = "=DSTDEV(@A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C23");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C23").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C23"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DSTDEV(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "DSTDEV(@area,area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C23").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DSTDEV(@area,area,area): display with @ on arg 0");
+
+		formula = "=DSTDEV(@A1:B1,@A2:B2,@A3:B3)";
+		fillRange = ws.getRange2("C24");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C24").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C24"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DSTDEV(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "DSTDEV(@area,@area,@area): SINGLE on all");
+		assembledVal = ws.getRange2("C24").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DSTDEV(@area,@area,@area): display with @ on all");
+
+		// DSTDEVP
+		formula = "=DSTDEVP(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C25");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C25").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C25"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DSTDEVP(A1:B1,A2:B2,A3:B3)", "DSTDEVP(area,area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C25").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DSTDEVP(area,area,area): display without @");
+
+		formula = "=DSTDEVP(@A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C26");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C26").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C26"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DSTDEVP(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "DSTDEVP(@area,area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C26").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DSTDEVP(@area,area,area): display with @ on arg 0");
+
+		formula = "=DSTDEVP(@A1:B1,@A2:B2,@A3:B3)";
+		fillRange = ws.getRange2("C27");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C27").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C27"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DSTDEVP(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "DSTDEVP(@area,@area,@area): SINGLE on all");
+		assembledVal = ws.getRange2("C27").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DSTDEVP(@area,@area,@area): display with @ on all");
+
+		// DSUM
+		formula = "=DSUM(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C28");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C28").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C28"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DSUM(A1:B1,A2:B2,A3:B3)", "DSUM(area,area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C28").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DSUM(area,area,area): display without @");
+
+		formula = "=DSUM(@A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C29");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C29").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C29"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DSUM(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "DSUM(@area,area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C29").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DSUM(@area,area,area): display with @ on arg 0");
+
+		formula = "=DSUM(@A1:B1,@A2:B2,@A3:B3)";
+		fillRange = ws.getRange2("C30");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C30").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C30"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DSUM(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "DSUM(@area,@area,@area): SINGLE on all");
+		assembledVal = ws.getRange2("C30").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DSUM(@area,@area,@area): display with @ on all");
+
+		// DVAR
+		formula = "=DVAR(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C31");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C31").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C31"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DVAR(A1:B1,A2:B2,A3:B3)", "DVAR(area,area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C31").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DVAR(area,area,area): display without @");
+
+		formula = "=DVAR(@A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C32");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C32").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C32"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DVAR(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "DVAR(@area,area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C32").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DVAR(@area,area,area): display with @ on arg 0");
+
+		formula = "=DVAR(@A1:B1,@A2:B2,@A3:B3)";
+		fillRange = ws.getRange2("C33");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C33").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C33"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DVAR(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "DVAR(@area,@area,@area): SINGLE on all");
+		assembledVal = ws.getRange2("C33").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DVAR(@area,@area,@area): display with @ on all");
+
+		// DVARP
+		formula = "=DVARP(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C34");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C34").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C34"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DVARP(A1:B1,A2:B2,A3:B3)", "DVARP(area,area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C34").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DVARP(area,area,area): display without @");
+
+		formula = "=DVARP(@A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C35");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C35").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C35"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DVARP(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "DVARP(@area,area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C35").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DVARP(@area,area,area): display with @ on arg 0");
+
+		formula = "=DVARP(@A1:B1,@A2:B2,@A3:B3)";
+		fillRange = ws.getRange2("C36");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C36").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C36"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DVARP(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "DVARP(@area,@area,@area): SINGLE on all");
+		assembledVal = ws.getRange2("C36").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DVARP(@area,@area,@area): display with @ on all");
+
+		ws.getRange2("A1:Z10").cleanAll();
+	});
+
+	QUnit.test('Test @ operator: coupon functions (COUPDAYBS, COUPDAYS, COUPDAYSNC, COUPNCD, COUPNUM, COUPPCD)', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		let fillRange, resCell, fragment, assembledVal;
+		let flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// COUPDAYBS
+		let formula = "=COUPDAYBS(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C1"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUPDAYBS(A1:B1,A2:B2,A3:B3)", "COUPDAYBS(area,area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C1").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COUPDAYBS(area,area,area): display without @");
+
+		formula = "=COUPDAYBS(@A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C2");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C2").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C2"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUPDAYBS(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "COUPDAYBS(@area,area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C2").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COUPDAYBS(@area,area,area): display with @ on arg 0");
+
+		formula = "=COUPDAYBS(@A1:B1,@A2:B2,@A3:B3)";
+		fillRange = ws.getRange2("C3");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C3").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C3"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUPDAYBS(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "COUPDAYBS(@area,@area,@area): SINGLE on all");
+		assembledVal = ws.getRange2("C3").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COUPDAYBS(@area,@area,@area): display with @ on all");
+
+		// COUPDAYS
+		formula = "=COUPDAYS(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C4");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C4").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C4"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUPDAYS(A1:B1,A2:B2,A3:B3)", "COUPDAYS(area,area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C4").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COUPDAYS(area,area,area): display without @");
+
+		formula = "=COUPDAYS(@A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C5");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C5").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C5"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUPDAYS(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "COUPDAYS(@area,area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C5").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COUPDAYS(@area,area,area): display with @ on arg 0");
+
+		formula = "=COUPDAYS(@A1:B1,@A2:B2,@A3:B3)";
+		fillRange = ws.getRange2("C6");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C6").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C6"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUPDAYS(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "COUPDAYS(@area,@area,@area): SINGLE on all");
+		assembledVal = ws.getRange2("C6").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COUPDAYS(@area,@area,@area): display with @ on all");
+
+		// COUPDAYSNC
+		formula = "=COUPDAYSNC(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C7");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C7").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C7"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUPDAYSNC(A1:B1,A2:B2,A3:B3)", "COUPDAYSNC(area,area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C7").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COUPDAYSNC(area,area,area): display without @");
+
+		formula = "=COUPDAYSNC(@A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C8");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C8").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C8"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUPDAYSNC(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "COUPDAYSNC(@area,area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C8").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COUPDAYSNC(@area,area,area): display with @ on arg 0");
+
+		formula = "=COUPDAYSNC(@A1:B1,@A2:B2,@A3:B3)";
+		fillRange = ws.getRange2("C9");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C9").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C9"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUPDAYSNC(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "COUPDAYSNC(@area,@area,@area): SINGLE on all");
+		assembledVal = ws.getRange2("C9").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COUPDAYSNC(@area,@area,@area): display with @ on all");
+
+		// COUPNCD
+		formula = "=COUPNCD(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C10");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C10").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C10"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUPNCD(A1:B1,A2:B2,A3:B3)", "COUPNCD(area,area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C10").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COUPNCD(area,area,area): display without @");
+
+		formula = "=COUPNCD(@A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C11");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C11").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C11"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUPNCD(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "COUPNCD(@area,area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C11").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COUPNCD(@area,area,area): display with @ on arg 0");
+
+		formula = "=COUPNCD(@A1:B1,@A2:B2,@A3:B3)";
+		fillRange = ws.getRange2("C12");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C12").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C12"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUPNCD(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "COUPNCD(@area,@area,@area): SINGLE on all");
+		assembledVal = ws.getRange2("C12").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COUPNCD(@area,@area,@area): display with @ on all");
+
+		// COUPNUM
+		formula = "=COUPNUM(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C13");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C13").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C13"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUPNUM(A1:B1,A2:B2,A3:B3)", "COUPNUM(area,area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C13").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COUPNUM(area,area,area): display without @");
+
+		formula = "=COUPNUM(@A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C14");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C14").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C14"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUPNUM(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "COUPNUM(@area,area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C14").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COUPNUM(@area,area,area): display with @ on arg 0");
+
+		formula = "=COUPNUM(@A1:B1,@A2:B2,@A3:B3)";
+		fillRange = ws.getRange2("C15");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C15").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C15"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUPNUM(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "COUPNUM(@area,@area,@area): SINGLE on all");
+		assembledVal = ws.getRange2("C15").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COUPNUM(@area,@area,@area): display with @ on all");
+
+		// COUPPCD
+		formula = "=COUPPCD(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C16");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C16").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C16"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUPPCD(A1:B1,A2:B2,A3:B3)", "COUPPCD(area,area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C16").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COUPPCD(area,area,area): display without @");
+
+		formula = "=COUPPCD(@A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C17");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C17").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C17"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUPPCD(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "COUPPCD(@area,area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C17").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COUPPCD(@area,area,area): display with @ on arg 0");
+
+		formula = "=COUPPCD(@A1:B1,@A2:B2,@A3:B3)";
+		fillRange = ws.getRange2("C18");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C18").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C18"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUPPCD(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "COUPPCD(@area,@area,@area): SINGLE on all");
+		assembledVal = ws.getRange2("C18").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COUPPCD(@area,@area,@area): display with @ on all");
+
+		ws.getRange2("A1:Z10").cleanAll();
+	});
+
+	QUnit.test('Test @ operator: financial functions (CUMIPMT, CUMPRINC, DISC, DURATION, FVSCHEDULE, INTRATE, MDURATION)', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		let fillRange, resCell, fragment, assembledVal;
+		let flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// CUMIPMT
+		let formula = "=CUMIPMT(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6)";
+		fillRange = ws.getRange2("C1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C1"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "CUMIPMT(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6)", "CUMIPMT(areas): no SINGLE added");
+		assembledVal = ws.getRange2("C1").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "CUMIPMT(areas): display without @");
+
+		formula = "=CUMIPMT(@A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6)";
+		fillRange = ws.getRange2("C2");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C2").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C2"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "CUMIPMT(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3,A4:B4,A5:B5,A6:B6)", "CUMIPMT(@area,...): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C2").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "CUMIPMT(@area,...): display with @ on arg 0");
+
+		formula = "=CUMIPMT(@A1:B1,@A2:B2,@A3:B3,@A4:B4,@A5:B5,@A6:B6)";
+		fillRange = ws.getRange2("C3");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C3").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C3"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "CUMIPMT(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3),_xlfn.SINGLE(A4:B4),_xlfn.SINGLE(A5:B5),_xlfn.SINGLE(A6:B6))", "CUMIPMT(@all): SINGLE on all");
+		assembledVal = ws.getRange2("C3").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "CUMIPMT(@all): display with @ on all");
+
+		// CUMPRINC
+		formula = "=CUMPRINC(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6)";
+		fillRange = ws.getRange2("C4");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C4").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C4"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "CUMPRINC(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6)", "CUMPRINC(areas): no SINGLE added");
+		assembledVal = ws.getRange2("C4").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "CUMPRINC(areas): display without @");
+
+		formula = "=CUMPRINC(@A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6)";
+		fillRange = ws.getRange2("C5");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C5").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C5"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "CUMPRINC(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3,A4:B4,A5:B5,A6:B6)", "CUMPRINC(@area,...): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C5").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "CUMPRINC(@area,...): display with @ on arg 0");
+
+		formula = "=CUMPRINC(@A1:B1,@A2:B2,@A3:B3,@A4:B4,@A5:B5,@A6:B6)";
+		fillRange = ws.getRange2("C6");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C6").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C6"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "CUMPRINC(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3),_xlfn.SINGLE(A4:B4),_xlfn.SINGLE(A5:B5),_xlfn.SINGLE(A6:B6))", "CUMPRINC(@all): SINGLE on all");
+		assembledVal = ws.getRange2("C6").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "CUMPRINC(@all): display with @ on all");
+
+		// DISC
+		formula = "=DISC(A1:B1,A2:B2,A3:B3,A4:B4)";
+		fillRange = ws.getRange2("C7");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C7").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C7"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DISC(A1:B1,A2:B2,A3:B3,A4:B4)", "DISC(areas): no SINGLE added");
+		assembledVal = ws.getRange2("C7").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DISC(areas): display without @");
+
+		formula = "=DISC(@A1:B1,A2:B2,A3:B3,A4:B4)";
+		fillRange = ws.getRange2("C8");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C8").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C8"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DISC(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3,A4:B4)", "DISC(@area,...): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C8").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DISC(@area,...): display with @ on arg 0");
+
+		formula = "=DISC(@A1:B1,@A2:B2,@A3:B3,@A4:B4)";
+		fillRange = ws.getRange2("C9");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C9").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C9"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DISC(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3),_xlfn.SINGLE(A4:B4))", "DISC(@all): SINGLE on all");
+		assembledVal = ws.getRange2("C9").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DISC(@all): display with @ on all");
+
+		// DURATION
+		formula = "=DURATION(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5)";
+		fillRange = ws.getRange2("C10");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C10").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C10"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DURATION(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5)", "DURATION(areas): no SINGLE added");
+		assembledVal = ws.getRange2("C10").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DURATION(areas): display without @");
+
+		formula = "=DURATION(@A1:B1,A2:B2,A3:B3,A4:B4,A5:B5)";
+		fillRange = ws.getRange2("C11");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C11").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C11"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DURATION(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3,A4:B4,A5:B5)", "DURATION(@area,...): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C11").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DURATION(@area,...): display with @ on arg 0");
+
+		formula = "=DURATION(@A1:B1,@A2:B2,@A3:B3,@A4:B4,@A5:B5)";
+		fillRange = ws.getRange2("C12");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C12").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C12"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DURATION(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3),_xlfn.SINGLE(A4:B4),_xlfn.SINGLE(A5:B5))", "DURATION(@all): SINGLE on all");
+		assembledVal = ws.getRange2("C12").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DURATION(@all): display with @ on all");
+
+		// FVSCHEDULE
+		formula = "=FVSCHEDULE(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C13");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C13").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C13"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "FVSCHEDULE(A1:B1,A2:B2)", "FVSCHEDULE(area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C13").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "FVSCHEDULE(area,area): display without @");
+
+		formula = "=FVSCHEDULE(@A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C14");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C14").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C14"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "FVSCHEDULE(_xlfn.SINGLE(A1:B1),A2:B2)", "FVSCHEDULE(@area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C14").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "FVSCHEDULE(@area,area): display with @ on arg 0");
+
+		formula = "=FVSCHEDULE(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C15");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C15").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C15"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "FVSCHEDULE(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "FVSCHEDULE(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C15").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "FVSCHEDULE(@area,@area): display with @ on both");
+
+		// INTRATE
+		formula = "=INTRATE(A1:B1,A2:B2,A3:B3,A4:B4)";
+		fillRange = ws.getRange2("C16");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C16").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C16"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "INTRATE(A1:B1,A2:B2,A3:B3,A4:B4)", "INTRATE(areas): no SINGLE added");
+		assembledVal = ws.getRange2("C16").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "INTRATE(areas): display without @");
+
+		formula = "=INTRATE(@A1:B1,A2:B2,A3:B3,A4:B4)";
+		fillRange = ws.getRange2("C17");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C17").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C17"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "INTRATE(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3,A4:B4)", "INTRATE(@area,...): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C17").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "INTRATE(@area,...): display with @ on arg 0");
+
+		formula = "=INTRATE(@A1:B1,@A2:B2,@A3:B3,@A4:B4)";
+		fillRange = ws.getRange2("C18");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C18").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C18"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "INTRATE(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3),_xlfn.SINGLE(A4:B4))", "INTRATE(@all): SINGLE on all");
+		assembledVal = ws.getRange2("C18").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "INTRATE(@all): display with @ on all");
+
+		// MDURATION
+		formula = "=MDURATION(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5)";
+		fillRange = ws.getRange2("C19");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C19").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C19"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "MDURATION(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5)", "MDURATION(areas): no SINGLE added");
+		assembledVal = ws.getRange2("C19").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "MDURATION(areas): display without @");
+
+		formula = "=MDURATION(@A1:B1,A2:B2,A3:B3,A4:B4,A5:B5)";
+		fillRange = ws.getRange2("C20");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C20").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C20"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "MDURATION(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3,A4:B4,A5:B5)", "MDURATION(@area,...): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C20").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "MDURATION(@area,...): display with @ on arg 0");
+
+		formula = "=MDURATION(@A1:B1,@A2:B2,@A3:B3,@A4:B4,@A5:B5)";
+		fillRange = ws.getRange2("C21");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C21").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C21"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "MDURATION(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3),_xlfn.SINGLE(A4:B4),_xlfn.SINGLE(A5:B5))", "MDURATION(@all): SINGLE on all");
+		assembledVal = ws.getRange2("C21").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "MDURATION(@all): display with @ on all");
+
+		ws.getRange2("A1:Z10").cleanAll();
+	});
+
+	QUnit.test('Test @ operator: variadic "*" functions (AND, AVEDEV, AVERAGE, AVERAGEA, COUNT, COUNTA, DEVSQ, GCD, GEOMEAN, HARMEAN)', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		let fillRange, resCell, fragment, assembledVal;
+		let flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// AND
+		let formula = "=AND(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C1"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "AND(A1:B1,A2:B2)", "AND(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C1").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "AND(area,area): display without @");
+
+		formula = "=AND(@A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C2");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C2").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C2"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "AND(_xlfn.SINGLE(A1:B1),A2:B2)", "AND(@area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C2").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "AND(@area,area): display with @ on arg 0");
+
+		// AVEDEV
+		formula = "=AVEDEV(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C3");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C3").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C3"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "AVEDEV(A1:B1,A2:B2)", "AVEDEV(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C3").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "AVEDEV(area,area): display without @");
+
+		formula = "=AVEDEV(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C4");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C4").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C4"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "AVEDEV(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "AVEDEV(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C4").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "AVEDEV(@area,@area): display with @ on both");
+
+		// AVERAGE
+		formula = "=AVERAGE(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C5");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C5").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C5"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "AVERAGE(A1:B1,A2:B2)", "AVERAGE(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C5").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "AVERAGE(area,area): display without @");
+
+		formula = "=AVERAGE(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C6");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C6").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C6"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "AVERAGE(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "AVERAGE(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C6").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "AVERAGE(@area,@area): display with @ on both");
+
+		// AVERAGEA
+		formula = "=AVERAGEA(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C7");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C7").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C7"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "AVERAGEA(A1:B1,A2:B2)", "AVERAGEA(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C7").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "AVERAGEA(area,area): display without @");
+
+		formula = "=AVERAGEA(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C8");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C8").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C8"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "AVERAGEA(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "AVERAGEA(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C8").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "AVERAGEA(@area,@area): display with @ on both");
+
+		// COUNT
+		formula = "=COUNT(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C9");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C9").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C9"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUNT(A1:B1,A2:B2)", "COUNT(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C9").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COUNT(area,area): display without @");
+
+		formula = "=COUNT(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C10");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C10").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C10"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUNT(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "COUNT(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C10").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COUNT(@area,@area): display with @ on both");
+
+		// COUNTA
+		formula = "=COUNTA(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C11");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C11").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C11"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUNTA(A1:B1,A2:B2)", "COUNTA(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C11").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COUNTA(area,area): display without @");
+
+		formula = "=COUNTA(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C12");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C12").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C12"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUNTA(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "COUNTA(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C12").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COUNTA(@area,@area): display with @ on both");
+
+		// DEVSQ
+		formula = "=DEVSQ(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C13");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C13").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C13"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DEVSQ(A1:B1,A2:B2)", "DEVSQ(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C13").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DEVSQ(area,area): display without @");
+
+		formula = "=DEVSQ(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C14");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C14").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C14"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "DEVSQ(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "DEVSQ(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C14").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "DEVSQ(@area,@area): display with @ on both");
+
+		// GCD
+		formula = "=GCD(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C15");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C15").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C15"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "GCD(A1:B1,A2:B2)", "GCD(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C15").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "GCD(area,area): display without @");
+
+		formula = "=GCD(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C16");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C16").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C16"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "GCD(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "GCD(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C16").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "GCD(@area,@area): display with @ on both");
+
+		// GEOMEAN
+		formula = "=GEOMEAN(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C17");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C17").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C17"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "GEOMEAN(A1:B1,A2:B2)", "GEOMEAN(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C17").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "GEOMEAN(area,area): display without @");
+
+		formula = "=GEOMEAN(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C18");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C18").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C18"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "GEOMEAN(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "GEOMEAN(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C18").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "GEOMEAN(@area,@area): display with @ on both");
+
+		// HARMEAN
+		formula = "=HARMEAN(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C19");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C19").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C19"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "HARMEAN(A1:B1,A2:B2)", "HARMEAN(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C19").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "HARMEAN(area,area): display without @");
+
+		formula = "=HARMEAN(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C20");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C20").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C20"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "HARMEAN(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "HARMEAN(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C20").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "HARMEAN(@area,@area): display with @ on both");
+
+		ws.getRange2("A1:Z30").cleanAll();
+	});
+
+	QUnit.test('Test @ operator: variadic "*" functions (IMPRODUCT, IMSUM, KURT, LCM, MAX, MAXA, MEDIAN, MIN, MINA, MODE, MULTINOMIAL, OR, PRODUCT)', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		let fillRange, resCell, fragment, assembledVal;
+		let flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// IMPRODUCT
+		let formula = "=IMPRODUCT(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C1"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "IMPRODUCT(A1:B1,A2:B2)", "IMPRODUCT(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C1").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "IMPRODUCT(area,area): display without @");
+
+		formula = "=IMPRODUCT(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C2");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C2").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C2"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "IMPRODUCT(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "IMPRODUCT(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C2").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "IMPRODUCT(@area,@area): display with @ on both");
+
+		// IMSUM
+		formula = "=IMSUM(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C3");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C3").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C3"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "IMSUM(A1:B1,A2:B2)", "IMSUM(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C3").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "IMSUM(area,area): display without @");
+
+		formula = "=IMSUM(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C4");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C4").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C4"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "IMSUM(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "IMSUM(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C4").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "IMSUM(@area,@area): display with @ on both");
+
+		// KURT
+		formula = "=KURT(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C5");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C5").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C5"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "KURT(A1:B1,A2:B2)", "KURT(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C5").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "KURT(area,area): display without @");
+
+		formula = "=KURT(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C6");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C6").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C6"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "KURT(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "KURT(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C6").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "KURT(@area,@area): display with @ on both");
+
+		// LCM
+		formula = "=LCM(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C7");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C7").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C7"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "LCM(A1:B1,A2:B2)", "LCM(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C7").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "LCM(area,area): display without @");
+
+		formula = "=LCM(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C8");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C8").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C8"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "LCM(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "LCM(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C8").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "LCM(@area,@area): display with @ on both");
+
+		// MAX
+		formula = "=MAX(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C9");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C9").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C9"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "MAX(A1:B1,A2:B2)", "MAX(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C9").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "MAX(area,area): display without @");
+
+		formula = "=MAX(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C10");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C10").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C10"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "MAX(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "MAX(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C10").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "MAX(@area,@area): display with @ on both");
+
+		// MAXA
+		formula = "=MAXA(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C11");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C11").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C11"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "MAXA(A1:B1,A2:B2)", "MAXA(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C11").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "MAXA(area,area): display without @");
+
+		formula = "=MAXA(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C12");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C12").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C12"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "MAXA(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "MAXA(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C12").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "MAXA(@area,@area): display with @ on both");
+
+		// MEDIAN
+		formula = "=MEDIAN(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C13");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C13").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C13"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "MEDIAN(A1:B1,A2:B2)", "MEDIAN(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C13").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "MEDIAN(area,area): display without @");
+
+		formula = "=MEDIAN(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C14");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C14").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C14"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "MEDIAN(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "MEDIAN(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C14").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "MEDIAN(@area,@area): display with @ on both");
+
+		// MIN
+		formula = "=MIN(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C15");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C15").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C15"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "MIN(A1:B1,A2:B2)", "MIN(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C15").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "MIN(area,area): display without @");
+
+		formula = "=MIN(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C16");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C16").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C16"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "MIN(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "MIN(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C16").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "MIN(@area,@area): display with @ on both");
+
+		// MINA
+		formula = "=MINA(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C17");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C17").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C17"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "MINA(A1:B1,A2:B2)", "MINA(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C17").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "MINA(area,area): display without @");
+
+		formula = "=MINA(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C18");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C18").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C18"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "MINA(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "MINA(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C18").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "MINA(@area,@area): display with @ on both");
+
+		// MODE
+		formula = "=MODE(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C19");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C19").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C19"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "MODE(A1:B1,A2:B2)", "MODE(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C19").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "MODE(area,area): display without @");
+
+		formula = "=MODE(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C20");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C20").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C20"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "MODE(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "MODE(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C20").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "MODE(@area,@area): display with @ on both");
+
+		// MULTINOMIAL
+		formula = "=MULTINOMIAL(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C21");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C21").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C21"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "MULTINOMIAL(A1:B1,A2:B2)", "MULTINOMIAL(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C21").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "MULTINOMIAL(area,area): display without @");
+
+		formula = "=MULTINOMIAL(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C22");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C22").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C22"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "MULTINOMIAL(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "MULTINOMIAL(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C22").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "MULTINOMIAL(@area,@area): display with @ on both");
+
+		// OR
+		formula = "=OR(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C23");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C23").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C23"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "OR(A1:B1,A2:B2)", "OR(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C23").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "OR(area,area): display without @");
+
+		formula = "=OR(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C24");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C24").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C24"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "OR(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "OR(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C24").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "OR(@area,@area): display with @ on both");
+
+		// PRODUCT
+		formula = "=PRODUCT(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C25");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C25").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C25"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "PRODUCT(A1:B1,A2:B2)", "PRODUCT(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C25").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "PRODUCT(area,area): display without @");
+
+		formula = "=PRODUCT(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C26");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C26").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C26"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "PRODUCT(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "PRODUCT(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C26").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "PRODUCT(@area,@area): display with @ on both");
+
+		ws.getRange2("A1:Z30").cleanAll();
+	});
+
+	QUnit.test('Test @ operator: variadic "*" functions (SUM, SUMPRODUCT, SUMSQ, CONCAT, XOR, SKEW, SKEW.P)', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		let fillRange, resCell, fragment, assembledVal;
+		let flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// SUM
+		let formula = "=SUM(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C1"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SUM(A1:B1,A2:B2)", "SUM(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C1").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "SUM(area,area): display without @");
+
+		formula = "=SUM(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C2");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C2").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C2"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SUM(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "SUM(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C2").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "SUM(@area,@area): display with @ on both");
+
+		// SUMPRODUCT
+		formula = "=SUMPRODUCT(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C3");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C3").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C3"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SUMPRODUCT(A1:B1,A2:B2)", "SUMPRODUCT(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C3").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "SUMPRODUCT(area,area): display without @");
+
+		formula = "=SUMPRODUCT(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C4");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C4").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C4"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SUMPRODUCT(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "SUMPRODUCT(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C4").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "SUMPRODUCT(@area,@area): display with @ on both");
+
+		// SUMSQ
+		formula = "=SUMSQ(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C5");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C5").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C5"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SUMSQ(A1:B1,A2:B2)", "SUMSQ(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C5").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "SUMSQ(area,area): display without @");
+
+		formula = "=SUMSQ(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C6");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C6").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C6"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SUMSQ(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "SUMSQ(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C6").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "SUMSQ(@area,@area): display with @ on both");
+
+		// CONCAT (_xlfn prefix)
+		formula = "=CONCAT(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C7");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C7").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C7"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.CONCAT(A1:B1,A2:B2)", "CONCAT(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C7").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "CONCAT(area,area): display without @");
+
+		formula = "=CONCAT(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C8");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C8").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C8"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.CONCAT(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "CONCAT(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C8").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "CONCAT(@area,@area): display with @ on both");
+
+		// XOR (_xlfn prefix)
+		formula = "=XOR(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C9");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C9").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C9"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.XOR(A1:B1,A2:B2)", "XOR(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C9").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "XOR(area,area): display without @");
+
+		formula = "=XOR(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C10");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C10").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C10"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.XOR(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "XOR(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C10").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "XOR(@area,@area): display with @ on both");
+
+		// SKEW (_xlfn prefix)
+		formula = "=SKEW(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C11");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C11").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C11"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SKEW(A1:B1,A2:B2)", "SKEW(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C11").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "SKEW(area,area): display without @");
+
+		formula = "=SKEW(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C12");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C12").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C12"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SKEW(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "SKEW(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C12").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "SKEW(@area,@area): display with @ on both");
+
+		// SKEW.P (_xlfn prefix)
+		formula = "=SKEW.P(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C13");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C13").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C13"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SKEW.P(A1:B1,A2:B2)", "SKEW.P(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C13").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "SKEW.P(area,area): display without @");
+
+		formula = "=SKEW.P(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C14");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C14").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C14"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SKEW.P(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "SKEW.P(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C14").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "SKEW.P(@area,@area): display with @ on both");
+
+		ws.getRange2("A1:Z20").cleanAll();
+	});
+
+	QUnit.test('Test @ operator: SERIESSUM, GROWTH, TREND (all args accept ranges)', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		let fillRange, resCell, fragment, assembledVal;
+		let flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// SERIESSUM: all args accept ranges
+		let formula = "=SERIESSUM(A1:B1,A2:B2,A3:B3,A4:B4)";
+		fillRange = ws.getRange2("C1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C1"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SERIESSUM(A1:B1,A2:B2,A3:B3,A4:B4)", "SERIESSUM(area,area,area,area): no SINGLE");
+		assembledVal = ws.getRange2("C1").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "SERIESSUM(area,area,area,area): display without @");
+
+		formula = "=SERIESSUM(@A1:B1,A2:B2,A3:B3,A4:B4)";
+		fillRange = ws.getRange2("C2");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C2").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C2"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SERIESSUM(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3,A4:B4)", "SERIESSUM(@area,...): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C2").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "SERIESSUM(@area,...): display with @ on arg 0");
+
+		formula = "=SERIESSUM(@A1:B1,@A2:B2,@A3:B3,@A4:B4)";
+		fillRange = ws.getRange2("C3");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C3").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C3"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SERIESSUM(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3),_xlfn.SINGLE(A4:B4))", "SERIESSUM(@area,@area,@area,@area): SINGLE on all");
+		assembledVal = ws.getRange2("C3").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "SERIESSUM(@area,@area,@area,@area): display with @ on all");
+
+		// GROWTH: all args accept ranges
+		formula = "=GROWTH(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C4");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C4").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C4"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "GROWTH(A1:B1,A2:B2,A3:B3)", "GROWTH(area,area,area): no SINGLE");
+		assembledVal = ws.getRange2("C4").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "GROWTH(area,area,area): display without @");
+
+		formula = "=GROWTH(@A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C5");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C5").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C5"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "GROWTH(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "GROWTH(@area,area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C5").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "GROWTH(@area,...): display with @ on arg 0");
+
+		formula = "=GROWTH(@A1:B1,@A2:B2,@A3:B3)";
+		fillRange = ws.getRange2("C6");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C6").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C6"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "GROWTH(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "GROWTH(@area,@area,@area): SINGLE on all");
+		assembledVal = ws.getRange2("C6").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "GROWTH(@area,@area,@area): display with @ on all");
+
+		// TREND: all args accept ranges
+		formula = "=TREND(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C7");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C7").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C7"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "TREND(A1:B1,A2:B2,A3:B3)", "TREND(area,area,area): no SINGLE");
+		assembledVal = ws.getRange2("C7").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "TREND(area,area,area): display without @");
+
+		formula = "=TREND(@A1:B1,@A2:B2,@A3:B3)";
+		fillRange = ws.getRange2("C8");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C8").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C8"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "TREND(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "TREND(@area,@area,@area): SINGLE on all");
+		assembledVal = ws.getRange2("C8").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "TREND(@area,@area,@area): display with @ on all");
+
+		ws.getRange2("A1:Z10").cleanAll();
+	});
+
+	QUnit.test('Test @ operator: price functions (ODDFPRICE, ODDFYIELD, ODDLPRICE, ODDLYIELD, PRICE, PRICEDISC, PRICEMAT, RECEIVED)', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		let fillRange, resCell, fragment, assembledVal;
+		let flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// ODDFPRICE: all args accept ranges (8 required args)
+		let formula = "=ODDFPRICE(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6,A7:B7,A8:B8)";
+		fillRange = ws.getRange2("C1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C1"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ODDFPRICE(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6,A7:B7,A8:B8)", "ODDFPRICE(8 areas): no SINGLE");
+		assembledVal = ws.getRange2("C1").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "ODDFPRICE(8 areas): display without @");
+
+		formula = "=ODDFPRICE(@A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6,A7:B7,A8:B8)";
+		fillRange = ws.getRange2("C2");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C2").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C2"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ODDFPRICE(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3,A4:B4,A5:B5,A6:B6,A7:B7,A8:B8)", "ODDFPRICE(@area,...): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C2").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "ODDFPRICE(@area,...): display with @ on arg 0");
+
+		// ODDFYIELD: all args accept ranges
+		formula = "=ODDFYIELD(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6,A7:B7,A8:B8)";
+		fillRange = ws.getRange2("C3");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C3").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C3"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ODDFYIELD(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6,A7:B7,A8:B8)", "ODDFYIELD(8 areas): no SINGLE");
+		assembledVal = ws.getRange2("C3").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "ODDFYIELD(8 areas): display without @");
+
+		formula = "=ODDFYIELD(@A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6,A7:B7,A8:B8)";
+		fillRange = ws.getRange2("C4");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C4").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C4"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ODDFYIELD(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3,A4:B4,A5:B5,A6:B6,A7:B7,A8:B8)", "ODDFYIELD(@area,...): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C4").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "ODDFYIELD(@area,...): display with @ on arg 0");
+
+		// ODDLPRICE: all args accept ranges (7 required args)
+		formula = "=ODDLPRICE(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6,A7:B7)";
+		fillRange = ws.getRange2("C5");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C5").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C5"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ODDLPRICE(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6,A7:B7)", "ODDLPRICE(7 areas): no SINGLE");
+		assembledVal = ws.getRange2("C5").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "ODDLPRICE(7 areas): display without @");
+
+		formula = "=ODDLPRICE(@A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6,A7:B7)";
+		fillRange = ws.getRange2("C6");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C6").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C6"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ODDLPRICE(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3,A4:B4,A5:B5,A6:B6,A7:B7)", "ODDLPRICE(@area,...): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C6").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "ODDLPRICE(@area,...): display with @ on arg 0");
+
+		// ODDLYIELD: all args accept ranges
+		formula = "=ODDLYIELD(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6,A7:B7)";
+		fillRange = ws.getRange2("C7");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C7").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C7"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ODDLYIELD(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6,A7:B7)", "ODDLYIELD(7 areas): no SINGLE");
+		assembledVal = ws.getRange2("C7").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "ODDLYIELD(7 areas): display without @");
+
+		formula = "=ODDLYIELD(@A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6,A7:B7)";
+		fillRange = ws.getRange2("C8");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C8").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C8"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "ODDLYIELD(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3,A4:B4,A5:B5,A6:B6,A7:B7)", "ODDLYIELD(@area,...): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C8").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "ODDLYIELD(@area,...): display with @ on arg 0");
+
+		// PRICE: all args accept ranges (6 required args)
+		formula = "=PRICE(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6)";
+		fillRange = ws.getRange2("C9");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C9").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C9"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "PRICE(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6)", "PRICE(6 areas): no SINGLE");
+		assembledVal = ws.getRange2("C9").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "PRICE(6 areas): display without @");
+
+		formula = "=PRICE(@A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6)";
+		fillRange = ws.getRange2("C10");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C10").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C10"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "PRICE(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3,A4:B4,A5:B5,A6:B6)", "PRICE(@area,...): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C10").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "PRICE(@area,...): display with @ on arg 0");
+
+		// PRICEDISC: all args accept ranges (4 required args)
+		formula = "=PRICEDISC(A1:B1,A2:B2,A3:B3,A4:B4)";
+		fillRange = ws.getRange2("C11");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C11").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C11"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "PRICEDISC(A1:B1,A2:B2,A3:B3,A4:B4)", "PRICEDISC(4 areas): no SINGLE");
+		assembledVal = ws.getRange2("C11").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "PRICEDISC(4 areas): display without @");
+
+		formula = "=PRICEDISC(@A1:B1,A2:B2,A3:B3,A4:B4)";
+		fillRange = ws.getRange2("C12");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C12").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C12"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "PRICEDISC(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3,A4:B4)", "PRICEDISC(@area,...): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C12").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "PRICEDISC(@area,...): display with @ on arg 0");
+
+		// PRICEMAT: all args accept ranges (5 required args)
+		formula = "=PRICEMAT(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5)";
+		fillRange = ws.getRange2("C13");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C13").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C13"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "PRICEMAT(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5)", "PRICEMAT(5 areas): no SINGLE");
+		assembledVal = ws.getRange2("C13").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "PRICEMAT(5 areas): display without @");
+
+		formula = "=PRICEMAT(@A1:B1,A2:B2,A3:B3,A4:B4,A5:B5)";
+		fillRange = ws.getRange2("C14");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C14").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C14"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "PRICEMAT(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3,A4:B4,A5:B5)", "PRICEMAT(@area,...): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C14").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "PRICEMAT(@area,...): display with @ on arg 0");
+
+		// RECEIVED: all args accept ranges (4 required args)
+		formula = "=RECEIVED(A1:B1,A2:B2,A3:B3,A4:B4)";
+		fillRange = ws.getRange2("C15");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C15").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C15"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "RECEIVED(A1:B1,A2:B2,A3:B3,A4:B4)", "RECEIVED(4 areas): no SINGLE");
+		assembledVal = ws.getRange2("C15").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "RECEIVED(4 areas): display without @");
+
+		formula = "=RECEIVED(@A1:B1,@A2:B2,@A3:B3,@A4:B4)";
+		fillRange = ws.getRange2("C16");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C16").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C16"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "RECEIVED(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3),_xlfn.SINGLE(A4:B4))", "RECEIVED(@area,@area,@area,@area): SINGLE on all");
+		assembledVal = ws.getRange2("C16").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "RECEIVED(@area,@area,@area,@area): display with @ on all");
+
+		ws.getRange2("A1:Z20").cleanAll();
+	});
+
+	QUnit.test('Test @ operator: YIELD (args 0-6), YIELDDISC (args 0-4), YIELDMAT (args 0-5)', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		let fillRange, resCell, fragment, assembledVal;
+		let flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// YIELD: all 7 args (0-6) accept ranges
+		let formula = "=YIELD(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6,A7:B7)";
+		fillRange = ws.getRange2("C1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C1"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "YIELD(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6,A7:B7)", "YIELD(7 areas): no SINGLE");
+		assembledVal = ws.getRange2("C1").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "YIELD(7 areas): display without @");
+
+		formula = "=YIELD(@A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6,A7:B7)";
+		fillRange = ws.getRange2("C2");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C2").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C2"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "YIELD(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3,A4:B4,A5:B5,A6:B6,A7:B7)", "YIELD(@area,...): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C2").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "YIELD(@area,...): display with @ on arg 0");
+
+		formula = "=YIELD(@A1:B1,@A2:B2,@A3:B3,@A4:B4,@A5:B5,@A6:B6,@A7:B7)";
+		fillRange = ws.getRange2("C3");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C3").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C3"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "YIELD(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3),_xlfn.SINGLE(A4:B4),_xlfn.SINGLE(A5:B5),_xlfn.SINGLE(A6:B6),_xlfn.SINGLE(A7:B7))", "YIELD(@all): SINGLE on all args");
+		assembledVal = ws.getRange2("C3").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "YIELD(@all): display with @ on all");
+
+		// YIELDDISC: all 5 args (0-4) accept ranges
+		formula = "=YIELDDISC(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5)";
+		fillRange = ws.getRange2("C4");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C4").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C4"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "YIELDDISC(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5)", "YIELDDISC(5 areas): no SINGLE");
+		assembledVal = ws.getRange2("C4").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "YIELDDISC(5 areas): display without @");
+
+		formula = "=YIELDDISC(@A1:B1,@A2:B2,@A3:B3,@A4:B4,@A5:B5)";
+		fillRange = ws.getRange2("C5");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C5").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C5"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "YIELDDISC(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3),_xlfn.SINGLE(A4:B4),_xlfn.SINGLE(A5:B5))", "YIELDDISC(@all): SINGLE on all args");
+		assembledVal = ws.getRange2("C5").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "YIELDDISC(@all): display with @ on all");
+
+		// YIELDMAT: all 6 args (0-5) accept ranges
+		formula = "=YIELDMAT(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6)";
+		fillRange = ws.getRange2("C6");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C6").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C6"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "YIELDMAT(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5,A6:B6)", "YIELDMAT(6 areas): no SINGLE");
+		assembledVal = ws.getRange2("C6").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "YIELDMAT(6 areas): display without @");
+
+		formula = "=YIELDMAT(@A1:B1,@A2:B2,@A3:B3,@A4:B4,@A5:B5,@A6:B6)";
+		fillRange = ws.getRange2("C7");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C7").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C7"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "YIELDMAT(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3),_xlfn.SINGLE(A4:B4),_xlfn.SINGLE(A5:B5),_xlfn.SINGLE(A6:B6))", "YIELDMAT(@all): SINGLE on all args");
+		assembledVal = ws.getRange2("C7").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "YIELDMAT(@all): display with @ on all");
+
+		ws.getRange2("A1:Z10").cleanAll();
+	});
+
+	QUnit.test('Test @ operator: variadic "*" functions (STDEV, STDEV.P, STDEV.S, STDEVA, STDEVP, STDEVPA, VAR, VAR.P, VAR.S, VARA, VARP, VARPA, MODE.MULT, MODE.SNGL)', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		let fillRange, resCell, fragment, assembledVal;
+		let flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// STDEV
+		let formula = "=STDEV(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C1"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "STDEV(A1:B1,A2:B2)", "STDEV(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C1").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "STDEV(area,area): display without @");
+
+		formula = "=STDEV(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C2");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C2").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C2"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "STDEV(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "STDEV(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C2").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "STDEV(@area,@area): display with @ on both");
+
+		// STDEV.P (_xlfn prefix)
+		formula = "=STDEV.P(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C3");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C3").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C3"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.STDEV.P(A1:B1,A2:B2)", "STDEV.P(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C3").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "STDEV.P(area,area): display without @");
+
+		formula = "=STDEV.P(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C4");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C4").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C4"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.STDEV.P(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "STDEV.P(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C4").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "STDEV.P(@area,@area): display with @ on both");
+
+		// STDEV.S (_xlfn prefix)
+		formula = "=STDEV.S(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C5");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C5").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C5"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.STDEV.S(A1:B1,A2:B2)", "STDEV.S(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C5").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "STDEV.S(area,area): display without @");
+
+		formula = "=STDEV.S(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C6");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C6").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C6"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.STDEV.S(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "STDEV.S(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C6").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "STDEV.S(@area,@area): display with @ on both");
+
+		// STDEVA
+		formula = "=STDEVA(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C7");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C7").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C7"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "STDEVA(A1:B1,A2:B2)", "STDEVA(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C7").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "STDEVA(area,area): display without @");
+
+		formula = "=STDEVA(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C8");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C8").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C8"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "STDEVA(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "STDEVA(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C8").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "STDEVA(@area,@area): display with @ on both");
+
+		// STDEVP
+		formula = "=STDEVP(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C9");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C9").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C9"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "STDEVP(A1:B1,A2:B2)", "STDEVP(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C9").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "STDEVP(area,area): display without @");
+
+		formula = "=STDEVP(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C10");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C10").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C10"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "STDEVP(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "STDEVP(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C10").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "STDEVP(@area,@area): display with @ on both");
+
+		// STDEVPA
+		formula = "=STDEVPA(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C11");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C11").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C11"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "STDEVPA(A1:B1,A2:B2)", "STDEVPA(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C11").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "STDEVPA(area,area): display without @");
+
+		formula = "=STDEVPA(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C12");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C12").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C12"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "STDEVPA(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "STDEVPA(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C12").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "STDEVPA(@area,@area): display with @ on both");
+
+		// VAR
+		formula = "=VAR(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C13");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C13").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C13"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "VAR(A1:B1,A2:B2)", "VAR(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C13").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "VAR(area,area): display without @");
+
+		formula = "=VAR(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C14");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C14").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C14"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "VAR(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "VAR(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C14").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "VAR(@area,@area): display with @ on both");
+
+		// VAR.P (_xlfn prefix)
+		formula = "=VAR.P(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C15");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C15").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C15"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.VAR.P(A1:B1,A2:B2)", "VAR.P(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C15").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "VAR.P(area,area): display without @");
+
+		formula = "=VAR.P(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C16");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C16").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C16"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.VAR.P(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "VAR.P(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C16").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "VAR.P(@area,@area): display with @ on both");
+
+		// VAR.S (_xlfn prefix)
+		formula = "=VAR.S(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C17");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C17").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C17"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.VAR.S(A1:B1,A2:B2)", "VAR.S(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C17").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "VAR.S(area,area): display without @");
+
+		formula = "=VAR.S(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C18");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C18").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C18"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.VAR.S(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "VAR.S(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C18").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "VAR.S(@area,@area): display with @ on both");
+
+		// VARA
+		formula = "=VARA(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C19");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C19").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C19"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "VARA(A1:B1,A2:B2)", "VARA(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C19").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "VARA(area,area): display without @");
+
+		formula = "=VARA(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C20");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C20").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C20"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "VARA(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "VARA(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C20").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "VARA(@area,@area): display with @ on both");
+
+		// VARP
+		formula = "=VARP(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C21");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C21").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C21"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "VARP(A1:B1,A2:B2)", "VARP(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C21").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "VARP(area,area): display without @");
+
+		formula = "=VARP(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C22");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C22").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C22"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "VARP(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "VARP(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C22").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "VARP(@area,@area): display with @ on both");
+
+		// VARPA
+		formula = "=VARPA(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C23");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C23").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C23"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "VARPA(A1:B1,A2:B2)", "VARPA(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C23").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "VARPA(area,area): display without @");
+
+		formula = "=VARPA(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C24");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C24").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C24"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "VARPA(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "VARPA(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C24").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "VARPA(@area,@area): display with @ on both");
+
+		// MODE.MULT (_xlfn prefix)
+		formula = "=MODE.MULT(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C25");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C25").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C25"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.MODE.MULT(A1:B1,A2:B2)", "MODE.MULT(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C25").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "MODE.MULT(area,area): display without @");
+
+		formula = "=MODE.MULT(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C26");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C26").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C26"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.MODE.MULT(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "MODE.MULT(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C26").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "MODE.MULT(@area,@area): display with @ on both");
+
+		// MODE.SNGL (_xlfn prefix)
+		formula = "=MODE.SNGL(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C27");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C27").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C27"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.MODE.SNGL(A1:B1,A2:B2)", "MODE.SNGL(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C27").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "MODE.SNGL(area,area): display without @");
+
+		formula = "=MODE.SNGL(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C28");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C28").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C28"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.MODE.SNGL(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "MODE.SNGL(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C28").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "MODE.SNGL(@area,@area): display with @ on both");
+
+		ws.getRange2("A1:Z30").cleanAll();
+	});
+
+	QUnit.test('Test @ operator: FORECAST functions (FORECAST, FORECAST.ETS, FORECAST.ETS.CONFINT, FORECAST.ETS.SEASONALITY, FORECAST.ETS.STAT, FORECAST.LINEAR)', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		let fillRange, resCell, fragment, assembledVal;
+		let flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// FORECAST: args 1,2 accept ranges; arg 0 does NOT (auto-@ added on display)
+		// Case 1: no explicit @, arg 0 not in enabledToSingle so display adds @ on arg 0
+		let formula = "=FORECAST(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C1"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "FORECAST(A1:B1,A2:B2,A3:B3)", "FORECAST(area,area,area): no SINGLE added");
+		assembledVal = ws.getRange2("C1").getValueForEdit();
+		assert.strictEqual(assembledVal, "=FORECAST(A1:B1,A2:B2,A3:B3)", "FORECAST: display auto-adds @ on arg 0");
+
+		// Case 2: @ on arg 1 (in enabledToSingle) → SINGLE stored
+		formula = "=FORECAST(A1:B1,@A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C2");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C2").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C2"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "FORECAST(A1:B1,_xlfn.SINGLE(A2:B2),A3:B3)", "FORECAST(area,@area,area): SINGLE on arg 1");
+		assembledVal = ws.getRange2("C2").getValueForEdit();
+		assert.strictEqual(assembledVal, "=FORECAST(A1:B1,@A2:B2,A3:B3)", "FORECAST(@area,@area,area): display with @ on arg 0 (auto) and arg 1");
+
+		// Case 3: @ on both args 1 and 2
+		formula = "=FORECAST(A1:B1,@A2:B2,@A3:B3)";
+		fillRange = ws.getRange2("C3");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C3").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C3"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "FORECAST(A1:B1,_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "FORECAST(area,@area,@area): SINGLE on args 1 and 2");
+		assembledVal = ws.getRange2("C3").getValueForEdit();
+		assert.strictEqual(assembledVal, "=FORECAST(A1:B1,@A2:B2,@A3:B3)", "FORECAST: display with @ on all args");
+
+		ws.getRange2("A1:Z10").cleanAll();
+	});
+
+	QUnit.test('Test @ operator: two-arg statistical functions (CHITEST, FTEST, COVARIANCE.P, COVARIANCE.S, PROB, GETPIVOTDATA)', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		let fillRange, resCell, fragment, assembledVal;
+		let flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// CHITEST: args 0,1 accept ranges
+		let formula = "=CHITEST(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C1"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "CHITEST(A1:B1,A2:B2)", "CHITEST(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C1").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "CHITEST(area,area): display without @");
+
+		formula = "=CHITEST(@A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C2");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C2").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C2"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "CHITEST(_xlfn.SINGLE(A1:B1),A2:B2)", "CHITEST(@area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C2").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "CHITEST(@area,area): display with @ on arg 0");
+
+		formula = "=CHITEST(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C3");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C3").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C3"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "CHITEST(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "CHITEST(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C3").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "CHITEST(@area,@area): display with @ on both");
+
+		// FTEST: args 0,1 accept ranges
+		formula = "=FTEST(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C4");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C4").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C4"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "FTEST(A1:B1,A2:B2)", "FTEST(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C4").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "FTEST(area,area): display without @");
+
+		formula = "=FTEST(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C5");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C5").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C5"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "FTEST(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "FTEST(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C5").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "FTEST(@area,@area): display with @ on both");
+
+		// COVARIANCE.P (_xlfn): args 0,1 accept ranges
+		formula = "=COVARIANCE.P(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C6");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C6").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C6"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.COVARIANCE.P(A1:B1,A2:B2)", "COVARIANCE.P(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C6").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COVARIANCE.P(area,area): display without @");
+
+		formula = "=COVARIANCE.P(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C7");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C7").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C7"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.COVARIANCE.P(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "COVARIANCE.P(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C7").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COVARIANCE.P(@area,@area): display with @ on both");
+
+		// COVARIANCE.S (_xlfn): args 0,1 accept ranges
+		formula = "=COVARIANCE.S(A1:B1,A2:B2)";
+		fillRange = ws.getRange2("C8");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C8").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C8"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.COVARIANCE.S(A1:B1,A2:B2)", "COVARIANCE.S(area,area): no SINGLE");
+		assembledVal = ws.getRange2("C8").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COVARIANCE.S(area,area): display without @");
+
+		formula = "=COVARIANCE.S(@A1:B1,@A2:B2)";
+		fillRange = ws.getRange2("C9");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C9").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C9"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.COVARIANCE.S(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2))", "COVARIANCE.S(@area,@area): SINGLE on both");
+		assembledVal = ws.getRange2("C9").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COVARIANCE.S(@area,@area): display with @ on both");
+
+		ws.getRange2("A1:Z20").cleanAll();
+	});
+
+	// QUnit.test('Test @ operator: AGGREGATE (allFrom 2), CHOOSE (allFrom 1), NPV (allFrom 1), SUBTOTAL (allFrom 1)', function (assert) {
+	// 	if (!AscCommonExcel.bIsSupportDynamicArrays) {
+	// 		assert.ok(true, "Dynamic arrays support is disabled");
+	// 		return;
+	// 	}
+	// 	let fillRange, resCell, fragment, assembledVal;
+	// 	let flags = wsView._getCellFlags(0, 0);
+	// 	flags.ctrlKey = false;
+	// 	flags.shiftKey = false;
+	//
+	// 	let formula = "=AGGREGATE(A1:B1,A2:B2,A3:B3)";
+	// 	fillRange = ws.getRange2("C1");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C1").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C1"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.AGGREGATE(A1:B1,A2:B2,A3:B3)", "AGGREGATE(area,area,area): no SINGLE");
+	// 	assembledVal = ws.getRange2("C1").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=AGGREGATE(A1:B1,A2:B2,A3:B3)", "AGGREGATE: display auto-adds @ on args 0,1");
+	//
+	// 	// Case 2: @ on arg 2 (in table) → SINGLE stored
+	// 	formula = "=AGGREGATE(A1:B1,A2:B2,@A3:B3)";
+	// 	fillRange = ws.getRange2("C2");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C2").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C2"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.AGGREGATE(A1:B1,A2:B2,_xlfn.SINGLE(A3:B3))", "AGGREGATE(area,area,@area): SINGLE on arg 2");
+	// 	assembledVal = ws.getRange2("C2").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=AGGREGATE(A1:B1,A2:B2,@A3:B3)", "AGGREGATE(area,area,@area): display with auto-@ on 0,1 and @ on 2");
+	//
+	// 	// Case 3: @ on arg 0 (NOT in table) → @ is dropped
+	// 	formula = "=AGGREGATE(@A1:B1,A2:B2,A3:B3)";
+	// 	fillRange = ws.getRange2("C3");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C3").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C3"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.AGGREGATE(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "AGGREGATE(@area,area,area): @ on arg 0 dropped");
+	// 	assembledVal = ws.getRange2("C3").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=AGGREGATE(@A1:B1,A2:B2,A3:B3)", "AGGREGATE(@area,area,area): display same as no-@ case");
+	//
+	// 	// CHOOSE: arg 0 is NOT in table; args 1+ are in table
+	// 	// Case 1: no @, arg 0 gets auto-@; args 1,2 do not
+	// 	formula = "=CHOOSE(A1:B1,A2:B2,A3:B3)";
+	// 	fillRange = ws.getRange2("C4");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C4").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C4"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "CHOOSE(A1:B1,A2:B2,A3:B3)", "CHOOSE(area,area,area): no SINGLE");
+	// 	assembledVal = ws.getRange2("C4").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=CHOOSE(@A1:B1,A2:B2,A3:B3)", "CHOOSE: display auto-adds @ on arg 0");
+	//
+	// 	// Case 2: @ on arg 1 (in table) → SINGLE stored
+	// 	formula = "=CHOOSE(A1:B1,@A2:B2,A3:B3)";
+	// 	fillRange = ws.getRange2("C5");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C5").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C5"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "CHOOSE(A1:B1,_xlfn.SINGLE(A2:B2),A3:B3)", "CHOOSE(area,@area,area): SINGLE on arg 1");
+	// 	assembledVal = ws.getRange2("C5").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=CHOOSE(@A1:B1,@A2:B2,A3:B3)", "CHOOSE(area,@area,area): display with @ on args 0,1");
+	//
+	// 	// Case 3: @ on args 1 and 2
+	// 	formula = "=CHOOSE(A1:B1,@A2:B2,@A3:B3)";
+	// 	fillRange = ws.getRange2("C6");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C6").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C6"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "CHOOSE(A1:B1,_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "CHOOSE(area,@area,@area): SINGLE on args 1 and 2");
+	// 	assembledVal = ws.getRange2("C6").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=CHOOSE(@A1:B1,@A2:B2,@A3:B3)", "CHOOSE(area,@area,@area): display with @ on all");
+	//
+	// 	// NPV: arg 0 is NOT in table; args 1+ are in table
+	// 	formula = "=NPV(A1:B1,A2:B2,A3:B3)";
+	// 	fillRange = ws.getRange2("C7");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C7").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C7"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "NPV(A1:B1,A2:B2,A3:B3)", "NPV(area,area,area): no SINGLE");
+	// 	assembledVal = ws.getRange2("C7").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=NPV(@A1:B1,A2:B2,A3:B3)", "NPV: display auto-adds @ on arg 0");
+	//
+	// 	formula = "=NPV(A1:B1,@A2:B2,A3:B3)";
+	// 	fillRange = ws.getRange2("C8");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C8").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C8"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "NPV(A1:B1,_xlfn.SINGLE(A2:B2),A3:B3)", "NPV(area,@area,area): SINGLE on arg 1");
+	// 	assembledVal = ws.getRange2("C8").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=NPV(@A1:B1,@A2:B2,A3:B3)", "NPV: display with auto-@ on 0 and @ on 1");
+	//
+	// 	formula = "=NPV(A1:B1,@A2:B2,@A3:B3)";
+	// 	fillRange = ws.getRange2("C9");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C9").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C9"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "NPV(A1:B1,_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "NPV(area,@area,@area): SINGLE on args 1 and 2");
+	// 	assembledVal = ws.getRange2("C9").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=NPV(@A1:B1,@A2:B2,@A3:B3)", "NPV: display with @ on all");
+	//
+	// 	// SUBTOTAL: arg 0 is NOT in table; args 1+ are in table
+	// 	formula = "=SUBTOTAL(A1:B1,A2:B2,A3:B3)";
+	// 	fillRange = ws.getRange2("C10");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C10").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C10"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SUBTOTAL(A1:B1,A2:B2,A3:B3)", "SUBTOTAL(area,area,area): no SINGLE");
+	// 	assembledVal = ws.getRange2("C10").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=SUBTOTAL(@A1:B1,A2:B2,A3:B3)", "SUBTOTAL: display auto-adds @ on arg 0");
+	//
+	// 	formula = "=SUBTOTAL(A1:B1,@A2:B2,@A3:B3)";
+	// 	fillRange = ws.getRange2("C11");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C11").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C11"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SUBTOTAL(A1:B1,_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "SUBTOTAL(area,@area,@area): SINGLE on args 1 and 2");
+	// 	assembledVal = ws.getRange2("C11").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=SUBTOTAL(@A1:B1,@A2:B2,@A3:B3)", "SUBTOTAL: display with @ on all");
+	//
+	// 	ws.getRange2("A1:Z20").cleanAll();
+	// });
+
+	QUnit.test('Test @ operator: AVERAGEIF (args 0,2), SUMIF (args 0,2), COMPLEX (args 0,1,2)', function (assert) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays) {
+			assert.ok(true, "Dynamic arrays support is disabled");
+			return;
+		}
+		let fillRange, resCell, fragment, assembledVal;
+		let flags = wsView._getCellFlags(0, 0);
+		flags.ctrlKey = false;
+		flags.shiftKey = false;
+
+		// AVERAGEIF: args 0 and 2 in table; arg 1 NOT in table (auto-@)
+		let formula = "=AVERAGEIF(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C1");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C1").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C1"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "AVERAGEIF(A1:B1,A2:B2,A3:B3)", "AVERAGEIF(area,area,area): no SINGLE");
+		assembledVal = ws.getRange2("C1").getValueForEdit();
+		assert.strictEqual(assembledVal, "=AVERAGEIF(A1:B1,A2:B2,A3:B3)", "AVERAGEIF: display auto-adds @ on arg 1");
+
+
+		// SUMIF: args 0 and 2 in table; arg 1 NOT in table (auto-@)
+		formula = "=SUMIF(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C4");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C4").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C4"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SUMIF(A1:B1,A2:B2,A3:B3)", "SUMIF(area,area,area): no SINGLE");
+		assembledVal = ws.getRange2("C4").getValueForEdit();
+		assert.strictEqual(assembledVal, "=SUMIF(A1:B1,A2:B2,A3:B3)", "SUMIF: display auto-adds @ on arg 1");
+
+
+		formula = "=SUMIF(A1:B1,A2:B2,@A3:B3)";
+		fillRange = ws.getRange2("C6");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C6").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C6"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SUMIF(A1:B1,A2:B2,_xlfn.SINGLE(A3:B3))", "SUMIF(area,area,@area): SINGLE on arg 2");
+		assembledVal = ws.getRange2("C6").getValueForEdit();
+		assert.strictEqual(assembledVal, "=SUMIF(A1:B1,A2:B2,@A3:B3)", "SUMIF(area,area,@area): display with auto-@ on 1 and @ on 2");
+
+		// COMPLEX: all 3 args in table
+		formula = "=COMPLEX(A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C7");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C7").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C7"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COMPLEX(A1:B1,A2:B2,A3:B3)", "COMPLEX(area,area,area): no SINGLE");
+		assembledVal = ws.getRange2("C7").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COMPLEX(area,area,area): display without @");
+
+		formula = "=COMPLEX(@A1:B1,A2:B2,A3:B3)";
+		fillRange = ws.getRange2("C8");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C8").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C8"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COMPLEX(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "COMPLEX(@area,area,area): SINGLE on arg 0");
+		assembledVal = ws.getRange2("C8").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COMPLEX(@area,area,area): display with @ on arg 0");
+
+		formula = "=COMPLEX(@A1:B1,@A2:B2,@A3:B3)";
+		fillRange = ws.getRange2("C9");
+		wsView.setSelection(fillRange.bbox);
+		fragment = ws.getRange2("C9").getValueForEdit2();
+		fragment[0].setFragmentText(formula);
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+		resCell = getCell(ws.getRange2("C9"));
+		assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COMPLEX(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "COMPLEX(@area,@area,@area): SINGLE on all");
+		assembledVal = ws.getRange2("C9").getValueForEdit();
+		assert.strictEqual(assembledVal, formula, "COMPLEX(@area,@area,@area): display with @ on all");
+
+		ws.getRange2("A1:Z10").cleanAll();
+	});
+
+	// QUnit.test('Test @ operator: AVERAGEIFS (arg0orOdd), SUMIFS (arg0orOdd), MAXIFS (arg0orOdd), MINIFS (arg0orOdd)', function (assert) {
+	// 	if (!AscCommonExcel.bIsSupportDynamicArrays) {
+	// 		assert.ok(true, "Dynamic arrays support is disabled");
+	// 		return;
+	// 	}
+	// 	let fillRange, resCell, fragment, assembledVal;
+	// 	let flags = wsView._getCellFlags(0, 0);
+	// 	flags.ctrlKey = false;
+	// 	flags.shiftKey = false;
+	//
+	// 	// AVERAGEIFS: args 0,1,3 in table (arg0orOdd); args 2,4 NOT in table (auto-@)
+	// 	// Case 1: no @, args 2 gets auto-@; args 0,1 do not
+	// 	let formula = "=AVERAGEIFS(A1:B1,A2:B2,A3:B3)";
+	// 	fillRange = ws.getRange2("C1");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C1").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C1"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "AVERAGEIFS(A1:B1,A2:B2,A3:B3)", "AVERAGEIFS(area,area,area): no SINGLE");
+	// 	assembledVal = ws.getRange2("C1").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=AVERAGEIFS(A1:B1,A2:B2,@A3:B3)", "AVERAGEIFS: display auto-adds @ on arg 2 (criteria)");
+	//
+	// 	// Case 2: @ on arg 0 (in table) → SINGLE stored
+	// 	formula = "=AVERAGEIFS(@A1:B1,A2:B2,A3:B3)";
+	// 	fillRange = ws.getRange2("C2");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C2").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C2"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "AVERAGEIFS(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "AVERAGEIFS(@area,area,area): SINGLE on arg 0");
+	// 	assembledVal = ws.getRange2("C2").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=AVERAGEIFS(@A1:B1,A2:B2,@A3:B3)", "AVERAGEIFS(@area,...): display with @ on arg 0 and auto-@ on arg 2");
+	//
+	// 	// Case 3: @ on arg 1 (in table) → SINGLE stored
+	// 	formula = "=AVERAGEIFS(A1:B1,@A2:B2,A3:B3)";
+	// 	fillRange = ws.getRange2("C3");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C3").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C3"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "AVERAGEIFS(A1:B1,_xlfn.SINGLE(A2:B2),A3:B3)", "AVERAGEIFS(area,@area,area): SINGLE on arg 1");
+	// 	assembledVal = ws.getRange2("C3").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=AVERAGEIFS(A1:B1,@A2:B2,@A3:B3)", "AVERAGEIFS(area,@area,...): display with @ on arg 1 and auto-@ on arg 2");
+	//
+	// 	// SUMIFS: same arg0orOdd pattern
+	// 	formula = "=SUMIFS(A1:B1,A2:B2,A3:B3)";
+	// 	fillRange = ws.getRange2("C4");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C4").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C4"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SUMIFS(A1:B1,A2:B2,A3:B3)", "SUMIFS(area,area,area): no SINGLE");
+	// 	assembledVal = ws.getRange2("C4").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=SUMIFS(A1:B1,A2:B2,@A3:B3)", "SUMIFS: display auto-adds @ on arg 2");
+	//
+	// 	formula = "=SUMIFS(@A1:B1,@A2:B2,A3:B3)";
+	// 	fillRange = ws.getRange2("C5");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C5").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C5"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "SUMIFS(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),A3:B3)", "SUMIFS(@area,@area,area): SINGLE on args 0 and 1");
+	// 	assembledVal = ws.getRange2("C5").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=SUMIFS(@A1:B1,@A2:B2,@A3:B3)", "SUMIFS(@area,@area,...): display with @ on all");
+	//
+	// 	// MAXIFS (_xlfn): arg0orOdd pattern
+	// 	formula = "=MAXIFS(A1:B1,A2:B2,A3:B3)";
+	// 	fillRange = ws.getRange2("C6");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C6").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C6"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.MAXIFS(A1:B1,A2:B2,A3:B3)", "MAXIFS(area,area,area): no SINGLE");
+	// 	assembledVal = ws.getRange2("C6").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=MAXIFS(A1:B1,A2:B2,@A3:B3)", "MAXIFS: display auto-adds @ on arg 2");
+	//
+	// 	formula = "=MAXIFS(@A1:B1,@A2:B2,A3:B3)";
+	// 	fillRange = ws.getRange2("C7");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C7").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C7"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.MAXIFS(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),A3:B3)", "MAXIFS(@area,@area,area): SINGLE on args 0 and 1");
+	// 	assembledVal = ws.getRange2("C7").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=MAXIFS(@A1:B1,@A2:B2,@A3:B3)", "MAXIFS(@area,@area,...): display with @ on all");
+	//
+	// 	// MINIFS (_xlfn): arg0orOdd pattern
+	// 	formula = "=MINIFS(A1:B1,A2:B2,A3:B3)";
+	// 	fillRange = ws.getRange2("C8");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C8").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C8"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.MINIFS(A1:B1,A2:B2,A3:B3)", "MINIFS(area,area,area): no SINGLE");
+	// 	assembledVal = ws.getRange2("C8").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=MINIFS(A1:B1,A2:B2,@A3:B3)", "MINIFS: display auto-adds @ on arg 2");
+	//
+	// 	formula = "=MINIFS(@A1:B1,@A2:B2,A3:B3)";
+	// 	fillRange = ws.getRange2("C9");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C9").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C9"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.MINIFS(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),A3:B3)", "MINIFS(@area,@area,area): SINGLE on args 0 and 1");
+	// 	assembledVal = ws.getRange2("C9").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=MINIFS(@A1:B1,@A2:B2,@A3:B3)", "MINIFS(@area,@area,...): display with @ on all");
+	//
+	// 	ws.getRange2("A1:Z10").cleanAll();
+	// });
+	//
+	// QUnit.test('Test @ operator: COUNTIFS (even args), IFS (odd args), SWITCH (evenFrom2)', function (assert) {
+	// 	if (!AscCommonExcel.bIsSupportDynamicArrays) {
+	// 		assert.ok(true, "Dynamic arrays support is disabled");
+	// 		return;
+	// 	}
+	// 	let fillRange, resCell, fragment, assembledVal;
+	// 	let flags = wsView._getCellFlags(0, 0);
+	// 	flags.ctrlKey = false;
+	// 	flags.shiftKey = false;
+	//
+	// 	// COUNTIFS: even args (0,2,4,...) in table; odd args (1,3,...) NOT in table
+	// 	// Case 1: no @, args 0,2 no auto-@; args 1,3 get auto-@
+	// 	let formula = "=COUNTIFS(A1:B1,A2:B2,A3:B3,A4:B4)";
+	// 	fillRange = ws.getRange2("C1");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C1").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C1"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUNTIFS(A1:B1,A2:B2,A3:B3,A4:B4)", "COUNTIFS(area,area,area,area): no SINGLE");
+	// 	assembledVal = ws.getRange2("C1").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=COUNTIFS(A1:B1,@A2:B2,A3:B3,@A4:B4)", "COUNTIFS: display auto-adds @ on odd args 1,3");
+	//
+	// 	// Case 2: @ on arg 0 (in table) → SINGLE stored
+	// 	formula = "=COUNTIFS(@A1:B1,A2:B2,A3:B3,A4:B4)";
+	// 	fillRange = ws.getRange2("C2");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C2").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C2"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUNTIFS(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3,A4:B4)", "COUNTIFS(@area,...): SINGLE on arg 0");
+	// 	assembledVal = ws.getRange2("C2").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=COUNTIFS(@A1:B1,@A2:B2,A3:B3,@A4:B4)", "COUNTIFS(@area,...): display with @ on arg 0 and auto-@ on odd args");
+	//
+	// 	// Case 3: @ on args 0 and 2 (both in table) → SINGLE on both
+	// 	formula = "=COUNTIFS(@A1:B1,A2:B2,@A3:B3,A4:B4)";
+	// 	fillRange = ws.getRange2("C3");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C3").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C3"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "COUNTIFS(_xlfn.SINGLE(A1:B1),A2:B2,_xlfn.SINGLE(A3:B3),A4:B4)", "COUNTIFS(@area,area,@area,area): SINGLE on args 0 and 2");
+	// 	assembledVal = ws.getRange2("C3").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=COUNTIFS(@A1:B1,@A2:B2,@A3:B3,@A4:B4)", "COUNTIFS(@area,area,@area,area): display with @ on all");
+	//
+	// 	// IFS (_xlfn): odd args (1,3,...) in table; even args (0,2,...) NOT in table
+	// 	// Case 1: no @, args 0,2 get auto-@; args 1,3 do not
+	// 	formula = "=IFS(A1:B1,A2:B2,A3:B3,A4:B4)";
+	// 	fillRange = ws.getRange2("C4");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C4").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C4"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.IFS(A1:B1,A2:B2,A3:B3,A4:B4)", "IFS(area,area,area,area): no SINGLE");
+	// 	assembledVal = ws.getRange2("C4").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=IFS(@A1:B1,A2:B2,@A3:B3,A4:B4)", "IFS: display auto-adds @ on even args 0,2");
+	//
+	// 	// Case 2: @ on arg 1 (in table) → SINGLE stored
+	// 	formula = "=IFS(A1:B1,@A2:B2,A3:B3,A4:B4)";
+	// 	fillRange = ws.getRange2("C5");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C5").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C5"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.IFS(A1:B1,_xlfn.SINGLE(A2:B2),A3:B3,A4:B4)", "IFS(area,@area,...): SINGLE on arg 1");
+	// 	assembledVal = ws.getRange2("C5").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=IFS(@A1:B1,@A2:B2,@A3:B3,A4:B4)", "IFS(area,@area,...): display with auto-@ on 0,2 and @ on 1");
+	//
+	// 	// Case 3: @ on args 1 and 3 (both in table) → SINGLE on both
+	// 	formula = "=IFS(A1:B1,@A2:B2,A3:B3,@A4:B4)";
+	// 	fillRange = ws.getRange2("C6");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C6").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C6"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.IFS(A1:B1,_xlfn.SINGLE(A2:B2),A3:B3,_xlfn.SINGLE(A4:B4))", "IFS(area,@area,area,@area): SINGLE on args 1 and 3");
+	// 	assembledVal = ws.getRange2("C6").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=IFS(@A1:B1,@A2:B2,@A3:B3,@A4:B4)", "IFS(area,@area,area,@area): display with @ on all");
+	//
+	// 	// SWITCH (_xlfn): args 2,4,... in table (evenFrom2); args 0,1,3,... NOT in table
+	// 	// Case 1: no @, args 0,1,3 get auto-@; arg 2 does not
+	// 	formula = "=SWITCH(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5)";
+	// 	fillRange = ws.getRange2("C7");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C7").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C7"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SWITCH(A1:B1,A2:B2,A3:B3,A4:B4,A5:B5)", "SWITCH(5 areas): no SINGLE");
+	// 	assembledVal = ws.getRange2("C7").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=SWITCH(@A1:B1,@A2:B2,A3:B3,@A4:B4,A5:B5)", "SWITCH: display auto-adds @ on args 0,1,3");
+	//
+	// 	// Case 2: @ on arg 2 (in table) → SINGLE stored
+	// 	formula = "=SWITCH(A1:B1,A2:B2,@A3:B3,A4:B4,A5:B5)";
+	// 	fillRange = ws.getRange2("C8");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C8").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C8"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SWITCH(A1:B1,A2:B2,_xlfn.SINGLE(A3:B3),A4:B4,A5:B5)", "SWITCH(area,area,@area,...): SINGLE on arg 2");
+	// 	assembledVal = ws.getRange2("C8").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=SWITCH(@A1:B1,@A2:B2,@A3:B3,@A4:B4,A5:B5)", "SWITCH(area,area,@area,...): display with auto-@ on 0,1,3 and @ on 2");
+	//
+	// 	// Case 3: @ on args 2 and 4 (both in table) → SINGLE on both
+	// 	formula = "=SWITCH(A1:B1,A2:B2,@A3:B3,A4:B4,@A5:B5)";
+	// 	fillRange = ws.getRange2("C9");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C9").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C9"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.SWITCH(A1:B1,A2:B2,_xlfn.SINGLE(A3:B3),A4:B4,_xlfn.SINGLE(A5:B5))", "SWITCH(area,area,@area,area,@area): SINGLE on args 2 and 4");
+	// 	assembledVal = ws.getRange2("C9").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=SWITCH(@A1:B1,@A2:B2,@A3:B3,@A4:B4,@A5:B5)", "SWITCH(area,area,@area,area,@area): display with @ on all");
+	//
+	// 	ws.getRange2("A1:Z10").cleanAll();
+	// });
+	//
+	// QUnit.test('Test @ operator: NETWORKDAYS (args 0,1,2), NETWORKDAYS.INTL (args 0,1,3), WORKDAY (args 0,1,2), WORKDAY.INTL (args 0,1,3)', function (assert) {
+	// 	if (!AscCommonExcel.bIsSupportDynamicArrays) {
+	// 		assert.ok(true, "Dynamic arrays support is disabled");
+	// 		return;
+	// 	}
+	// 	let fillRange, resCell, fragment, assembledVal;
+	// 	let flags = wsView._getCellFlags(0, 0);
+	// 	flags.ctrlKey = false;
+	// 	flags.shiftKey = false;
+	//
+	// 	// NETWORKDAYS: args 0,1,2 all in table
+	// 	let formula = "=NETWORKDAYS(A1:B1,A2:B2,A3:B3)";
+	// 	fillRange = ws.getRange2("C1");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C1").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C1"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "NETWORKDAYS(A1:B1,A2:B2,A3:B3)", "NETWORKDAYS(area,area,area): no SINGLE");
+	// 	assembledVal = ws.getRange2("C1").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, formula, "NETWORKDAYS(area,area,area): display without @");
+	//
+	// 	formula = "=NETWORKDAYS(@A1:B1,A2:B2,A3:B3)";
+	// 	fillRange = ws.getRange2("C2");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C2").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C2"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "NETWORKDAYS(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "NETWORKDAYS(@area,...): SINGLE on arg 0");
+	// 	assembledVal = ws.getRange2("C2").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, formula, "NETWORKDAYS(@area,...): display with @ on arg 0");
+	//
+	// 	formula = "=NETWORKDAYS(@A1:B1,@A2:B2,@A3:B3)";
+	// 	fillRange = ws.getRange2("C3");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C3").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C3"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "NETWORKDAYS(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "NETWORKDAYS(@area,@area,@area): SINGLE on all");
+	// 	assembledVal = ws.getRange2("C3").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, formula, "NETWORKDAYS(@area,@area,@area): display with @ on all");
+	//
+	// 	// NETWORKDAYS.INTL: args 0,1,3 in table; arg 2 NOT in table (auto-@)
+	// 	formula = "=NETWORKDAYS.INTL(A1:B1,A2:B2,A3:B3,A4:B4)";
+	// 	fillRange = ws.getRange2("C4");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C4").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C4"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "NETWORKDAYS.INTL(A1:B1,A2:B2,A3:B3,A4:B4)", "NETWORKDAYS.INTL(4 areas): no SINGLE");
+	// 	assembledVal = ws.getRange2("C4").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=NETWORKDAYS.INTL(A1:B1,A2:B2,@A3:B3,A4:B4)", "NETWORKDAYS.INTL: display auto-adds @ on arg 2");
+	//
+	// 	formula = "=NETWORKDAYS.INTL(@A1:B1,A2:B2,A3:B3,A4:B4)";
+	// 	fillRange = ws.getRange2("C5");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C5").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C5"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "NETWORKDAYS.INTL(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3,A4:B4)", "NETWORKDAYS.INTL(@area,...): SINGLE on arg 0");
+	// 	assembledVal = ws.getRange2("C5").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=NETWORKDAYS.INTL(@A1:B1,A2:B2,@A3:B3,A4:B4)", "NETWORKDAYS.INTL(@area,...): display with @ on arg 0 and auto-@ on arg 2");
+	//
+	// 	formula = "=NETWORKDAYS.INTL(A1:B1,A2:B2,A3:B3,@A4:B4)";
+	// 	fillRange = ws.getRange2("C6");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C6").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C6"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "NETWORKDAYS.INTL(A1:B1,A2:B2,A3:B3,_xlfn.SINGLE(A4:B4))", "NETWORKDAYS.INTL(area,area,area,@area): SINGLE on arg 3");
+	// 	assembledVal = ws.getRange2("C6").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=NETWORKDAYS.INTL(A1:B1,A2:B2,@A3:B3,@A4:B4)", "NETWORKDAYS.INTL: display with auto-@ on 2 and @ on 3");
+	//
+	// 	// WORKDAY: args 0,1,2 all in table
+	// 	formula = "=WORKDAY(A1:B1,A2:B2,A3:B3)";
+	// 	fillRange = ws.getRange2("C7");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C7").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C7"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "WORKDAY(A1:B1,A2:B2,A3:B3)", "WORKDAY(area,area,area): no SINGLE");
+	// 	assembledVal = ws.getRange2("C7").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, formula, "WORKDAY(area,area,area): display without @");
+	//
+	// 	formula = "=WORKDAY(@A1:B1,@A2:B2,@A3:B3)";
+	// 	fillRange = ws.getRange2("C8");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C8").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C8"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "WORKDAY(_xlfn.SINGLE(A1:B1),_xlfn.SINGLE(A2:B2),_xlfn.SINGLE(A3:B3))", "WORKDAY(@area,@area,@area): SINGLE on all");
+	// 	assembledVal = ws.getRange2("C8").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, formula, "WORKDAY(@area,@area,@area): display with @ on all");
+	//
+	// 	// WORKDAY.INTL: args 0,1,3 in table; arg 2 NOT in table
+	// 	formula = "=WORKDAY.INTL(A1:B1,A2:B2,A3:B3,A4:B4)";
+	// 	fillRange = ws.getRange2("C9");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C9").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C9"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "WORKDAY.INTL(A1:B1,A2:B2,A3:B3,A4:B4)", "WORKDAY.INTL(4 areas): no SINGLE");
+	// 	assembledVal = ws.getRange2("C9").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=WORKDAY.INTL(A1:B1,A2:B2,@A3:B3,A4:B4)", "WORKDAY.INTL: display auto-adds @ on arg 2");
+	//
+	// 	formula = "=WORKDAY.INTL(A1:B1,A2:B2,A3:B3,@A4:B4)";
+	// 	fillRange = ws.getRange2("C10");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C10").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C10"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "WORKDAY.INTL(A1:B1,A2:B2,A3:B3,_xlfn.SINGLE(A4:B4))", "WORKDAY.INTL(area,area,area,@area): SINGLE on arg 3");
+	// 	assembledVal = ws.getRange2("C10").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=WORKDAY.INTL(A1:B1,A2:B2,@A3:B3,@A4:B4)", "WORKDAY.INTL: display with auto-@ on 2 and @ on 3");
+	//
+	// 	ws.getRange2("A1:Z10").cleanAll();
+	// });
+	//
+	// QUnit.test('Test @ operator: TEXTJOIN (arg 0 + allFrom 2), ARRAYTOTEXT (arg 0), PHONETIC (arg 0)', function (assert) {
+	// 	if (!AscCommonExcel.bIsSupportDynamicArrays) {
+	// 		assert.ok(true, "Dynamic arrays support is disabled");
+	// 		return;
+	// 	}
+	// 	let fillRange, resCell, fragment, assembledVal;
+	// 	let flags = wsView._getCellFlags(0, 0);
+	// 	flags.ctrlKey = false;
+	// 	flags.shiftKey = false;
+	//
+	// 	// TEXTJOIN (_xlfn): arg 0 in table, arg 1 NOT in table (auto-@), args 2+ in table
+	// 	let formula = "=TEXTJOIN(A1:B1,A2:B2,A3:B3)";
+	// 	fillRange = ws.getRange2("C1");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C1").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C1"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.TEXTJOIN(A1:B1,A2:B2,A3:B3)", "TEXTJOIN(area,area,area): no SINGLE");
+	// 	assembledVal = ws.getRange2("C1").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=TEXTJOIN(A1:B1,@A2:B2,A3:B3)", "TEXTJOIN: display auto-adds @ on arg 1");
+	//
+	// 	formula = "=TEXTJOIN(@A1:B1,A2:B2,A3:B3)";
+	// 	fillRange = ws.getRange2("C2");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C2").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C2"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.TEXTJOIN(_xlfn.SINGLE(A1:B1),A2:B2,A3:B3)", "TEXTJOIN(@area,area,area): SINGLE on arg 0");
+	// 	assembledVal = ws.getRange2("C2").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=TEXTJOIN(@A1:B1,@A2:B2,A3:B3)", "TEXTJOIN(@area,...): display with @ on arg 0 and auto-@ on arg 1");
+	//
+	// 	formula = "=TEXTJOIN(A1:B1,A2:B2,@A3:B3)";
+	// 	fillRange = ws.getRange2("C3");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C3").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C3"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.TEXTJOIN(A1:B1,A2:B2,_xlfn.SINGLE(A3:B3))", "TEXTJOIN(area,area,@area): SINGLE on arg 2");
+	// 	assembledVal = ws.getRange2("C3").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=TEXTJOIN(A1:B1,@A2:B2,@A3:B3)", "TEXTJOIN(area,area,@area): display with auto-@ on 1 and @ on 2");
+	//
+	// 	// ARRAYTOTEXT (_xlfn): arg 0 in table; arg 1 NOT in table (auto-@)
+	// 	formula = "=ARRAYTOTEXT(A1:B1,A2:B2)";
+	// 	fillRange = ws.getRange2("C4");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C4").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C4"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.ARRAYTOTEXT(A1:B1,A2:B2)", "ARRAYTOTEXT(area,area): no SINGLE");
+	// 	assembledVal = ws.getRange2("C4").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=ARRAYTOTEXT(A1:B1,@A2:B2)", "ARRAYTOTEXT: display auto-adds @ on arg 1");
+	//
+	// 	formula = "=ARRAYTOTEXT(@A1:B1,A2:B2)";
+	// 	fillRange = ws.getRange2("C5");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C5").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C5"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.ARRAYTOTEXT(_xlfn.SINGLE(A1:B1),A2:B2)", "ARRAYTOTEXT(@area,area): SINGLE on arg 0");
+	// 	assembledVal = ws.getRange2("C5").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=ARRAYTOTEXT(@A1:B1,@A2:B2)", "ARRAYTOTEXT(@area,...): display with @ on arg 0 and auto-@ on arg 1");
+	//
+	// 	// PHONETIC: only arg 0 in table
+	// 	formula = "=PHONETIC(A1:B1)";
+	// 	fillRange = ws.getRange2("C6");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C6").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C6"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "PHONETIC(A1:B1)", "PHONETIC(area): no SINGLE");
+	// 	assembledVal = ws.getRange2("C6").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, formula, "PHONETIC(area): display without @");
+	//
+	// 	formula = "=PHONETIC(@A1:B1)";
+	// 	fillRange = ws.getRange2("C7");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C7").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C7"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "PHONETIC(_xlfn.SINGLE(A1:B1))", "PHONETIC(@area): SINGLE on arg 0");
+	// 	assembledVal = ws.getRange2("C7").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, formula, "PHONETIC(@area): display with @ on arg 0");
+	//
+	// 	ws.getRange2("A1:Z10").cleanAll();
+	// });
+	//
+	// QUnit.test('Test @ operator: PERCENTILE.EXC, PERCENTILE.INC, PERCENTRANK.EXC, PERCENTRANK.INC, QUARTILE.EXC, QUARTILE.INC (arg 0)', function (assert) {
+	// 	if (!AscCommonExcel.bIsSupportDynamicArrays) {
+	// 		assert.ok(true, "Dynamic arrays support is disabled");
+	// 		return;
+	// 	}
+	// 	let fillRange, resCell, fragment, assembledVal;
+	// 	let flags = wsView._getCellFlags(0, 0);
+	// 	flags.ctrlKey = false;
+	// 	flags.shiftKey = false;
+	//
+	// 	// PERCENTILE.EXC (_xlfn): arg 0 in table; arg 1 NOT in table
+	// 	let formula = "=PERCENTILE.EXC(A1:B1,A2:B2)";
+	// 	fillRange = ws.getRange2("C1");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C1").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C1"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.PERCENTILE.EXC(A1:B1,A2:B2)", "PERCENTILE.EXC(area,area): no SINGLE");
+	// 	assembledVal = ws.getRange2("C1").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=PERCENTILE.EXC(A1:B1,@A2:B2)", "PERCENTILE.EXC: display auto-adds @ on arg 1");
+	//
+	// 	formula = "=PERCENTILE.EXC(@A1:B1,A2:B2)";
+	// 	fillRange = ws.getRange2("C2");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C2").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C2"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.PERCENTILE.EXC(_xlfn.SINGLE(A1:B1),A2:B2)", "PERCENTILE.EXC(@area,area): SINGLE on arg 0");
+	// 	assembledVal = ws.getRange2("C2").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=PERCENTILE.EXC(@A1:B1,@A2:B2)", "PERCENTILE.EXC(@area,...): display with @ on arg 0 and auto-@ on arg 1");
+	//
+	// 	// PERCENTILE.INC (_xlfn): arg 0 in table; arg 1 NOT in table
+	// 	formula = "=PERCENTILE.INC(A1:B1,A2:B2)";
+	// 	fillRange = ws.getRange2("C3");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C3").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C3"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.PERCENTILE.INC(A1:B1,A2:B2)", "PERCENTILE.INC(area,area): no SINGLE");
+	// 	assembledVal = ws.getRange2("C3").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=PERCENTILE.INC(A1:B1,@A2:B2)", "PERCENTILE.INC: display auto-adds @ on arg 1");
+	//
+	// 	formula = "=PERCENTILE.INC(@A1:B1,A2:B2)";
+	// 	fillRange = ws.getRange2("C4");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C4").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C4"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.PERCENTILE.INC(_xlfn.SINGLE(A1:B1),A2:B2)", "PERCENTILE.INC(@area,area): SINGLE on arg 0");
+	// 	assembledVal = ws.getRange2("C4").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=PERCENTILE.INC(@A1:B1,@A2:B2)", "PERCENTILE.INC(@area,...): display with @ on arg 0 and auto-@ on arg 1");
+	//
+	// 	// PERCENTRANK.EXC (_xlfn): arg 0 in table; args 1,2 NOT in table
+	// 	formula = "=PERCENTRANK.EXC(A1:B1,A2:B2)";
+	// 	fillRange = ws.getRange2("C5");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C5").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C5"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.PERCENTRANK.EXC(A1:B1,A2:B2)", "PERCENTRANK.EXC(area,area): no SINGLE");
+	// 	assembledVal = ws.getRange2("C5").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=PERCENTRANK.EXC(A1:B1,@A2:B2)", "PERCENTRANK.EXC: display auto-adds @ on arg 1");
+	//
+	// 	formula = "=PERCENTRANK.EXC(@A1:B1,A2:B2)";
+	// 	fillRange = ws.getRange2("C6");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C6").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C6"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.PERCENTRANK.EXC(_xlfn.SINGLE(A1:B1),A2:B2)", "PERCENTRANK.EXC(@area,area): SINGLE on arg 0");
+	// 	assembledVal = ws.getRange2("C6").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=PERCENTRANK.EXC(@A1:B1,@A2:B2)", "PERCENTRANK.EXC(@area,...): display with @ on 0 and auto-@ on 1");
+	//
+	// 	// PERCENTRANK.INC (_xlfn): arg 0 in table
+	// 	formula = "=PERCENTRANK.INC(A1:B1,A2:B2)";
+	// 	fillRange = ws.getRange2("C7");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C7").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C7"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.PERCENTRANK.INC(A1:B1,A2:B2)", "PERCENTRANK.INC(area,area): no SINGLE");
+	// 	assembledVal = ws.getRange2("C7").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=PERCENTRANK.INC(A1:B1,@A2:B2)", "PERCENTRANK.INC: display auto-adds @ on arg 1");
+	//
+	// 	formula = "=PERCENTRANK.INC(@A1:B1,A2:B2)";
+	// 	fillRange = ws.getRange2("C8");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C8").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C8"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.PERCENTRANK.INC(_xlfn.SINGLE(A1:B1),A2:B2)", "PERCENTRANK.INC(@area,area): SINGLE on arg 0");
+	// 	assembledVal = ws.getRange2("C8").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=PERCENTRANK.INC(@A1:B1,@A2:B2)", "PERCENTRANK.INC(@area,...): display with @ on 0 and auto-@ on 1");
+	//
+	// 	// QUARTILE.EXC (_xlfn): arg 0 in table; arg 1 NOT in table
+	// 	formula = "=QUARTILE.EXC(A1:B1,A2:B2)";
+	// 	fillRange = ws.getRange2("C9");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C9").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C9"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.QUARTILE.EXC(A1:B1,A2:B2)", "QUARTILE.EXC(area,area): no SINGLE");
+	// 	assembledVal = ws.getRange2("C9").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=QUARTILE.EXC(A1:B1,@A2:B2)", "QUARTILE.EXC: display auto-adds @ on arg 1");
+	//
+	// 	formula = "=QUARTILE.EXC(@A1:B1,A2:B2)";
+	// 	fillRange = ws.getRange2("C10");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C10").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C10"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.QUARTILE.EXC(_xlfn.SINGLE(A1:B1),A2:B2)", "QUARTILE.EXC(@area,area): SINGLE on arg 0");
+	// 	assembledVal = ws.getRange2("C10").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=QUARTILE.EXC(@A1:B1,@A2:B2)", "QUARTILE.EXC(@area,...): display with @ on 0 and auto-@ on 1");
+	//
+	// 	// QUARTILE.INC (_xlfn): arg 0 in table; arg 1 NOT in table
+	// 	formula = "=QUARTILE.INC(A1:B1,A2:B2)";
+	// 	fillRange = ws.getRange2("C11");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C11").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C11"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.QUARTILE.INC(A1:B1,A2:B2)", "QUARTILE.INC(area,area): no SINGLE");
+	// 	assembledVal = ws.getRange2("C11").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=QUARTILE.INC(A1:B1,@A2:B2)", "QUARTILE.INC: display auto-adds @ on arg 1");
+	//
+	// 	formula = "=QUARTILE.INC(@A1:B1,A2:B2)";
+	// 	fillRange = ws.getRange2("C12");
+	// 	wsView.setSelection(fillRange.bbox);
+	// 	fragment = ws.getRange2("C12").getValueForEdit2();
+	// 	fragment[0].setFragmentText(formula);
+	// 	wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);
+	// 	resCell = getCell(ws.getRange2("C12"));
+	// 	assert.strictEqual(resCell.getFormulaParsed().getFormula(), "_xlfn.QUARTILE.INC(_xlfn.SINGLE(A1:B1),A2:B2)", "QUARTILE.INC(@area,area): SINGLE on arg 0");
+	// 	assembledVal = ws.getRange2("C12").getValueForEdit();
+	// 	assert.strictEqual(assembledVal, "=QUARTILE.INC(@A1:B1,@A2:B2)", "QUARTILE.INC(@area,...): display with @ on 0 and auto-@ on 1");
+	//
+	// 	ws.getRange2("A1:Z20").cleanAll();
+	// });
+
 	QUnit.test("Test: \"Dynamic array test\"", function (assert) {
 		if (!AscCommonExcel.bIsSupportDynamicArrays) {
 			assert.ok(true, "Dynamic arrays support is disabled");
