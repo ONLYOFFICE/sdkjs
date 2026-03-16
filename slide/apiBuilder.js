@@ -7668,6 +7668,55 @@
 	};
 
 	/**
+	 * Sets the width of the specified column in the current table.
+	 *
+	 * @memberof ApiTable
+	 * @typeofeditors ["CPE"]
+	 *
+	 * @param {number} columnIndex - The zero-based column index.
+	 * @param {EMU} width - The column width measured in English measure units.
+	 * @returns {boolean}
+	 *
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetColumnWidth.js
+	 */
+	ApiTable.prototype.SetColumnWidth = function (columnIndex, width) {
+		const table = this.Table;
+		if (!table || columnIndex < 0 || columnIndex >= table.TableGrid.length) {
+			return false;
+		}
+
+		const colsMinWidth = table.GetMinWidth(true);
+		const minWidth = colsMinWidth[columnIndex] || 1;
+		const widthMM = Math.max(private_EMU2MM(width), minWidth);
+
+		const newGrid = table.TableGrid.slice();
+		newGrid[columnIndex] = widthMM;
+		table.SetTableGrid(newGrid);
+
+		const rowsCount = table.GetRowsCount();
+		for (let rowIndex = 0; rowIndex < rowsCount; rowIndex++) {
+			const row = table.GetRow(rowIndex);
+			let gridColumnIndex = row.GetBefore().Grid;
+
+			const cellsCount = row.GetCellsCount();
+			for (let cellIndex = 0; cellIndex < cellsCount; cellIndex++) {
+				const cell = row.GetCell(cellIndex);
+				const gridSpan = cell.GetGridSpan();
+
+				if (gridColumnIndex <= columnIndex && columnIndex < gridColumnIndex + gridSpan) {
+					const spanWidth = table.GetSpanWidth(gridColumnIndex, gridSpan);
+					cell.SetW(new CTableMeasurement(tblwidth_Mm, spanWidth));
+				}
+
+				gridColumnIndex += gridSpan;
+			}
+		}
+
+		return true;
+	};
+
+	/**
 	 * Converts the ApiTable object into the JSON object.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CPE"]
@@ -8428,7 +8477,8 @@
     ApiTable.prototype["RemoveColumn"]                    = ApiTable.prototype.RemoveColumn;
     ApiTable.prototype["SetShd"]                          = ApiTable.prototype.SetShd;
 	ApiTable.prototype["SetSize"]                         = ApiTable.prototype.SetSize;
-    ApiTable.prototype["ToJSON"]    				      = ApiTable.prototype.ToJSON;
+	ApiTable.prototype["SetColumnWidth"]                  = ApiTable.prototype.SetColumnWidth;
+	ApiTable.prototype["ToJSON"]                          = ApiTable.prototype.ToJSON;
 
     ApiTableRow.prototype["GetClassType"]                 = ApiTableRow.prototype.GetClassType;
     ApiTableRow.prototype["GetCellsCount"]                = ApiTableRow.prototype.GetCellsCount;
