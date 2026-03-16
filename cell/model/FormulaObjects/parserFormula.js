@@ -9128,6 +9128,21 @@ function parserFormula( formula, parent, _ws ) {
 
 	let enabledToSingle =
 	{
+		"ACCRINT": {
+			"*": true
+		},
+		"ACCRINTM": {
+			"*": true
+		},
+		"AMORDEGRC": {
+			"*": true
+		},
+		"AMORLINC": {
+			"*": true
+		},
+		"ARRAYTOTEXT": {
+			"0": true
+		},
 		"AGGREGATE": {
 			"allFrom": 2
 		},
@@ -9173,10 +9188,12 @@ function parserFormula( formula, parent, _ws ) {
 			"0": true
 		},
 		"BIN2HEX": {
-			"0": true
+			"0": true,
+			"1": true
 		},
 		"BIN2OCT": {
-			"0": true
+			"0": true,
+			"1": true
 		},
 		"CELL": {
 			"0": true,
@@ -9201,7 +9218,8 @@ function parserFormula( formula, parent, _ws ) {
 		},
 		"COMPLEX": {
 			"0": true,
-			"1": true
+			"1": true,
+			"2": true
 		},
 		"CONCAT": {
 			"*": true
@@ -9230,6 +9248,24 @@ function parserFormula( formula, parent, _ws ) {
 		"COUNTIFS": {
 			"even": true
 		},
+		"COUPDAYBS": {
+			"*": true
+		},
+		"COUPDAYS": {
+			"*": true
+		},
+		"COUPDAYSNC": {
+			"*": true
+		},
+		"COUPNCD": {
+			"*": true
+		},
+		"COUPNUM": {
+			"*": true
+		},
+		"COUPPCD": {
+			"*": true
+		},
 		"COVAR": {
 			"0": true,
 			"1": true
@@ -9242,14 +9278,38 @@ function parserFormula( formula, parent, _ws ) {
 			"0": true,
 			"1": true
 		},
+		"CUMIPMT": {
+			"*": true
+		},
+		"CUMPRINC": {
+			"*": true
+		},
+		"DAVERAGE": {
+			"0": true,
+			"1": true,
+			"2": true
+		},
+		"DCOUNT": {
+			"0": true,
+			"1": true,
+			"2": true
+		},
+		"DCOUNTA": {
+			"0": true,
+			"1": true,
+			"2": true
+		},
 		"DEC2BIN": {
-			"0": true
+			"0": true,
+			"1": true
 		},
 		"DEC2HEX": {
-			"0": true
+			"0": true,
+			"1": true
 		},
 		"DEC2OCT": {
-			"0": true
+			"0": true,
+			"1": true
 		},
 		"DELTA": {
 			"0": true,
@@ -9257,6 +9317,24 @@ function parserFormula( formula, parent, _ws ) {
 		},
 		"DEVSQ": {
 			"*": true
+		},
+		"DGET": {
+			"0": true,
+			"1": true,
+			"2": true
+		},
+		"DISC": {
+			"*": true
+		},
+		"DMAX": {
+			"0": true,
+			"1": true,
+			"2": true
+		},
+		"DMIN": {
+			"0": true,
+			"1": true,
+			"2": true
 		},
 		"DOLLARDE": {
 			"0": true,
@@ -9266,10 +9344,39 @@ function parserFormula( formula, parent, _ws ) {
 			"0": true,
 			"1": true
 		},
-		/*"DGET": {
+		"DPRODUCT": {
 			"0": true,
+			"1": true,
 			"2": true
-		},*/
+		},
+		"DSTDEV": {
+			"0": true,
+			"1": true,
+			"2": true
+		},
+		"DSTDEVP": {
+			"0": true,
+			"1": true,
+			"2": true
+		},
+		"DSUM": {
+			"0": true,
+			"1": true,
+			"2": true
+		},
+		"DURATION": {
+			"*": true
+		},
+		"DVAR": {
+			"0": true,
+			"1": true,
+			"2": true
+		},
+		"DVARP": {
+			"0": true,
+			"1": true,
+			"2": true
+		},
 		"EDATE": {
 			"0": true,
 			"1": true
@@ -9333,6 +9440,10 @@ function parserFormula( formula, parent, _ws ) {
 		"FORMULATEXT": {
 			"0": true
 		},
+		"FVSCHEDULE": {
+			"0": true,
+			"1": true
+		},
 		"GETPIVOTDATA": {
 			"0": true,
 			"1": true
@@ -9351,13 +9462,15 @@ function parserFormula( formula, parent, _ws ) {
 			"*": true
 		},
 		"HEX2BIN": {
-			"0": true
+			"0": true,
+			"1": true
 		},
 		"HEX2DEC": {
 			"0": true
 		},
 		"HEX2OCT": {
-			"0": true
+			"0": true,
+			"1": true
 		},
 		"HLOOKUP": {
 			"1": true
@@ -9468,6 +9581,9 @@ function parserFormula( formula, parent, _ws ) {
 			"0": true,
 			"1": true
 		},
+		"INTRATE": {
+			"*": true
+		},
 		"IRR": {
 			"0": true
 		},
@@ -9512,6 +9628,9 @@ function parserFormula( formula, parent, _ws ) {
 		"MDETERM": {
 			"0": true
 		},
+		"MDURATION": {
+			"*": true
+		},
 		"MEDIAN": {
 			"*": true
 		},
@@ -9551,11 +9670,13 @@ function parserFormula( formula, parent, _ws ) {
 		},
 		"NETWORKDAYS": {
 			"0": true,
-			"1": true
+			"1": true,
+			"2": true
 		},
 		"NETWORKDAYS.INTL": {
 			"0": true,
-			"1": true
+			"1": true,
+			"3": true
 		},
 		"NOMINAL": {
 			"0": true,
@@ -9565,13 +9686,15 @@ function parserFormula( formula, parent, _ws ) {
 			"allFrom": 1
 		},
 		"OCT2BIN": {
-			"0": true
+			"0": true,
+			"1": true
 		},
 		"OCT2DEC": {
 			"0": true
 		},
 		"OCT2HEX": {
-			"0": true
+			"0": true,
+			"1": true
 		},
 		"OFFSET": {
 			"0": true
@@ -9599,6 +9722,9 @@ function parserFormula( formula, parent, _ws ) {
 			"0": true
 		},
 		"PERCENTRANK.INC": {
+			"0": true
+		},
+		"PHONETIC": {
 			"0": true
 		},
 		"PROB": {
@@ -9793,11 +9919,13 @@ function parserFormula( formula, parent, _ws ) {
 		},
 		"WORKDAY": {
 			"0": true,
-			"1": true
+			"1": true,
+			"2": true
 		},
 		"WORKDAY.INTL": {
 			"0": true,
-			"1": true
+			"1": true,
+			"3": true
 		},
 		"XIRR": {
 			"0": true,
@@ -9830,20 +9958,23 @@ function parserFormula( formula, parent, _ws ) {
 			"2": true,
 			"3": true,
 			"4": true,
-			"5": true
+			"5": true,
+			"6": true
 		},
 		"YIELDDISC": {
 			"0": true,
 			"1": true,
 			"2": true,
-			"3": true
+			"3": true,
+			"4": true
 		},
 		"YIELDMAT": {
 			"0": true,
 			"1": true,
 			"2": true,
 			"3": true,
-			"4": true
+			"4": true,
+			"5": true
 		},
 		"Z.TEST": {
 			"0": true
@@ -9856,7 +9987,31 @@ function parserFormula( formula, parent, _ws ) {
 		},
 		"TAKE": {
 			"0": true
-		}
+		},
+		"ODDFPRICE": {
+			"*": true
+		},
+		"ODDFYIELD": {
+			"*": true
+		},
+		"ODDLPRICE": {
+			"*": true
+		},
+		"ODDLYIELD": {
+			"*": true
+		},
+		"PRICE": {
+			"*": true
+		},
+		"PRICEDISC": {
+			"*": true
+		},
+		"PRICEMAT": {
+			"*": true
+		},
+		"RECEIVED": {
+			"*": true
+		},
 	}
 
 	// Supported keys in an enabledToSingle / displayOnlyNativeRange entry:
