@@ -1493,7 +1493,16 @@
 	PDFEditorApi.prototype.AddRedactBySelect = function() {
 		let oDoc = this.getPDFDoc();
 		oDoc.AddRedactAnnotBySelect();
-	}
+	};
+
+	// redact meta
+	PDFEditorApi.prototype.RemoveMeta = function(props) {
+		let oDoc = this.getPDFDoc();
+		
+		return oDoc.DoAction(function() {
+			oDoc.RemoveMeta(props)
+		}, AscDFH.historydescription_Pdf_Apply_Redact);
+	};
 
 	PDFEditorApi.prototype.SetCanInteract = function(bCan) {
 		this.canInteract = bCan;

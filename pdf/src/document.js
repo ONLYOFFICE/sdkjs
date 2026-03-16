@@ -7875,6 +7875,50 @@ var CPresentation = CPresentation || function(){};
         });
     };
 
+	// redact meta
+	CPDFDoc.prototype.RemoveMeta = function(props) {
+		let nFlags = 0;
+
+		if (props["metadata"]) {
+			nFlags |= (1 << 0);
+		}
+		if (props["fileAttachments"]) {
+			nFlags |= (1 << 1);
+		}
+		if (props["bookmarks"]) {
+			nFlags |= (1 << 2);
+
+			this.Viewer.structure = [];
+			this.Viewer.sendEvent("onStructure", []);
+		}
+		if (props["embedSearchIdx"]) {
+			nFlags |= (1 << 3);
+		}
+		if (props["comments"]) {
+			nFlags |= (1 << 4);
+		}
+		if (props["fields"]) {
+			nFlags |= (1 << 5);
+		}
+		if (props["hiddenText"]) {
+			nFlags |= (1 << 6);
+		}
+		if (props["hiddenLayers"]) {
+			nFlags |= (1 << 7);
+		}
+		if (props["delCropContent"]) {
+			nFlags |= (1 << 8);
+		}
+		if (props["actions"]) {
+			nFlags |= (1 << 9);
+		}
+		if (props["overlapping"]) {
+			nFlags |= (1 << 10);
+		}
+
+		AscCommon.History.Add(new CChangesPDFCalcOrder(this, nFlags, this.redactMetaFlags));
+	};
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Collaborative editing
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

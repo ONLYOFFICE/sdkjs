@@ -1628,3 +1628,18 @@ CChangesEmbedFontsMap.prototype.ReadFromBinary = function(Reader) {
 	else
 		this.Old = Reader.GetString2();
 };
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFDocumentRedactMeta(Class, Old, New, Color) {
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFDocumentRedactMeta.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFDocumentRedactMeta.prototype.constructor = CChangesPDFDocumentRedactMeta;
+CChangesPDFDocumentRedactMeta.prototype.Type = AscDFH.historyitem_Pdf_Document_Redact_Meta;
+CChangesPDFDocumentRedactMeta.prototype.private_SetValue = function(Value) {
+	let oAnnot = this.Class;
+	oAnnot.SetDisplay(Value);
+};
