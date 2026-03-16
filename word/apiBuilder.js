@@ -8610,6 +8610,8 @@
 	 */
 	ApiDocument.prototype.ToJSON = function(bWriteDefaultTextPr, bWriteDefaultParaPr, bWriteTheme, bWriteSectionPr, bWriteNumberings, bWriteStyles)
 	{
+		this.Document.ProcessComplexFields();
+		
 		var oWriter = new AscJsonConverter.WriterToJSON();
 
 		var oResult = {
