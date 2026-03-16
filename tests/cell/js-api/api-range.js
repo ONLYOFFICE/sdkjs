@@ -33,6 +33,11 @@
 $(function () {
 	let ws = AscTest.JsApi.GetActiveSheet();
 
+    const initializeTest = function (/*rangeAddress optional*/) {
+        var r = ws.GetRange("A1:Z100");
+        r.Clear();
+    };
+
 	AscTest.JsApi.AddDefName('super', 'Sheet1!$A$1:$F$4');
 	AscTest.JsApi.AddDefName('negativeIndexColumn', 'Sheet1!$F$5:$I$14');
 	AscTest.JsApi.AddDefName('negativeIndexRow', 'Sheet1!$F$8:$H$13');
@@ -679,5 +684,351 @@ $(function () {
         assert.strictEqual(ws.GetRange("F9").GetValue(), "2"); assert.strictEqual(ws.GetRange('G9').GetValue(), "3"); assert.strictEqual(ws.GetRange("H9").GetValue(), "4");
         assert.strictEqual(ws.GetRange("F10").GetValue(), "3"); assert.strictEqual(ws.GetRange('G10').GetValue(), "2"); assert.strictEqual(ws.GetRange("H10").GetValue(), "1");
         assert.strictEqual(ws.GetRange("F11").GetValue(), "4"); assert.strictEqual(ws.GetRange('G11').GetValue(), "1"); assert.strictEqual(ws.GetRange("H11").GetValue(), "2");
+    });
+
+    QUnit.module("Test api range find for all editors");
+
+    QUnit.test("Find: finds first exact match by rows", function (assert) {
+        initializeTest();
+        ws.GetRange("A1").SetValue("100");
+        ws.GetRange("B1").SetValue("200");
+        ws.GetRange("C1").SetValue("300");
+        ws.GetRange("A2").SetValue("200");
+        ws.GetRange("B2").SetValue("400");
+        ws.GetRange("C2").SetValue("200");
+
+        const range = ws.GetRange("A1:C2");
+        const found = range.Find("200", "A1", "xlValues", "xlWhole", "xlByRows", "xlNext", false);
+
+        assert.ok(found, "Find returned a range");
+        assert.strictEqual(found.GetAddress(true, true, "xlA1", false), "$B$1", "First match by rows is B1");
+    });
+
+    QUnit.test("Find: finds first exact match by columns", function (assert) {
+        initializeTest();
+        ws.GetRange("A1").SetValue("100");
+        ws.GetRange("B1").SetValue("200");
+        ws.GetRange("C1").SetValue("300");
+        ws.GetRange("A2").SetValue("200");
+        ws.GetRange("B2").SetValue("400");
+        ws.GetRange("C2").SetValue("200");
+
+        const range = ws.GetRange("A1:C2");
+        const found = range.Find("200", "A1", "xlValues", "xlWhole", "xlByColumns", "xlNext", false);
+
+        assert.ok(found, "Find returned a range");
+        assert.strictEqual(found.GetAddress(true, true, "xlA1", false), "$A$2", "First match by columns is A2");
+    });
+
+    QUnit.test("Find: returns null when value does not exist", function (assert) {
+        initializeTest();
+        ws.GetRange("A1").SetValue("100");
+        ws.GetRange("A2").SetValue("200");
+        ws.GetRange("A3").SetValue("300");
+
+        const range = ws.GetRange("A1:A3");
+        const found = range.Find("999", "A1", "xlValues", "xlWhole", "xlByRows", "xlNext", false);
+
+        assert.strictEqual(found, null, "Find returns null when nothing found");
+    });
+
+    QUnit.test("FindNext: iterates all matches by rows", function (assert) {
+        initializeTest();
+        ws.GetRange("A1").SetValue("200");
+        ws.GetRange("B1").SetValue("x");
+        ws.GetRange("C1").SetValue("200");
+        ws.GetRange("A2").SetValue("y");
+        ws.GetRange("B2").SetValue("200");
+        ws.GetRange("C2").SetValue("z");
+
+        const range = ws.GetRange("A1:C2");
+        const first = range.Find("200", "A1", "xlValues", "xlWhole", "xlByRows", "xlNext", false);
+        const second = range.FindNext(first);
+        const third = range.FindNext(second);
+
+        assert.ok(first, "First result exists");
+        assert.ok(second, "Second result exists");
+        assert.ok(third, "Third result exists");
+
+        assert.strictEqual(first.GetAddress(true, true, "xlA1", false), "$C$1", "First match is C1");
+        assert.strictEqual(second.GetAddress(true, true, "xlA1", false), "$B$2", "Second match is B2");
+        assert.strictEqual(third.GetAddress(true, true, "xlA1", false), "$A$1", "Third match wrapped to A1");
+    });
+
+    QUnit.test("FindNext: iterates all matches by columns", function (assert) {
+        initializeTest();
+        ws.GetRange("A1").SetValue("200");
+        ws.GetRange("B1").SetValue("x");
+        ws.GetRange("C1").SetValue("200");
+        ws.GetRange("A2").SetValue("y");
+        ws.GetRange("B2").SetValue("200");
+        ws.GetRange("C2").SetValue("z");
+
+        const range = ws.GetRange("A1:C2");
+        const first = range.Find("200", "A1", "xlValues", "xlWhole", "xlByColumns", "xlNext", false);
+        const second = range.FindNext(first);
+        const third = range.FindNext(second);
+
+        assert.ok(first, "First result exists");
+        assert.ok(second, "Second result exists");
+        assert.ok(third, "Third result exists");
+
+        assert.strictEqual(first.GetAddress(true, true, "xlA1", false), "$B$2", "First match is B2");
+        assert.strictEqual(second.GetAddress(true, true, "xlA1", false), "$C$1", "Second match is C1");
+        assert.strictEqual(third.GetAddress(true, true, "xlA1", false), "$A$1", "Third match wrapped to A1");
+    });
+
+    QUnit.test("FindPrevious: iterates backwards by rows", function (assert) {
+        initializeTest();
+        ws.GetRange("A1").SetValue("200");
+        ws.GetRange("B1").SetValue("x");
+        ws.GetRange("C1").SetValue("200");
+        ws.GetRange("A2").SetValue("y");
+        ws.GetRange("B2").SetValue("200");
+        ws.GetRange("C2").SetValue("z");
+
+        const range = ws.GetRange("A1:C2");
+        const first = range.Find("200", "C2", "xlValues", "xlWhole", "xlByRows", "xlPrevious", false);
+        const second = range.FindPrevious(first);
+        const third = range.FindPrevious(second);
+
+        assert.ok(first, "First result exists");
+        assert.ok(second, "Second result exists");
+        assert.ok(third, "Third result exists");
+
+        assert.strictEqual(first.GetAddress(true, true, "xlA1", false), "$B$2", "First previous match is B2");
+        assert.strictEqual(second.GetAddress(true, true, "xlA1", false), "$C$1", "Second previous match is C1");
+        assert.strictEqual(third.GetAddress(true, true, "xlA1", false), "$A$1", "Third previous match is A1");
+    });
+
+    QUnit.test("FindPrevious: iterates backwards by columns", function (assert) {
+        initializeTest();
+        ws.GetRange("A1").SetValue("200");
+        ws.GetRange("B1").SetValue("x");
+        ws.GetRange("C1").SetValue("200");
+        ws.GetRange("A2").SetValue("y");
+        ws.GetRange("B2").SetValue("200");
+        ws.GetRange("C2").SetValue("z");
+
+        const range = ws.GetRange("A1:C2");
+        const first = range.Find("200", "C2", "xlValues", "xlWhole", "xlByColumns", "xlPrevious", false);
+        const second = range.FindPrevious(first);
+        const third = range.FindPrevious(second);
+
+        assert.ok(first, "First result exists");
+        assert.ok(second, "Second result exists");
+        assert.ok(third, "Third result exists");
+
+        assert.strictEqual(first.GetAddress(true, true, "xlA1", false), "$C$1", "First previous match is C1");
+        assert.strictEqual(second.GetAddress(true, true, "xlA1", false), "$B$2", "Second previous match is B2");
+        assert.strictEqual(third.GetAddress(true, true, "xlA1", false), "$A$1", "Third previous match is A1");
+    });
+
+    QUnit.test("Find: match case works correctly", function (assert) {
+        initializeTest();
+        ws.GetRange("A1").SetValue("Test");
+        ws.GetRange("A2").SetValue("TEST");
+        ws.GetRange("A3").SetValue("test");
+
+        const range = ws.GetRange("A1:A3");
+
+        const caseInsensitive = range.Find("test", "A1", "xlValues", "xlWhole", "xlByRows", "xlNext", false);
+        const caseSensitive = range.Find("test", "A1", "xlValues", "xlWhole", "xlByRows", "xlNext", true);
+
+        assert.ok(caseInsensitive, "Case-insensitive find returned a result");
+        assert.ok(caseSensitive, "Case-sensitive find returned a result");
+
+        assert.strictEqual(caseInsensitive.GetAddress(true, true, "xlA1", false), "$A$2", "Case-insensitive matched A2");
+        assert.strictEqual(caseSensitive.GetAddress(true, true, "xlA1", false), "$A$3", "Case-sensitive matched exact case A3");
+    });
+
+    QUnit.test("Find: LookAt xlPart works correctly", function (assert) {
+        initializeTest();
+        ws.GetRange("A1").SetValue("abc");
+        ws.GetRange("A2").SetValue("abc200xyz");
+        ws.GetRange("A3").SetValue("200");
+
+        const range = ws.GetRange("A1:A3");
+
+        const whole = range.Find("200", "A1", "xlValues", "xlWhole", "xlByRows", "xlNext", false);
+        const part = range.Find("200", "A1", "xlValues", "xlPart", "xlByRows", "xlNext", false);
+
+        assert.ok(whole, "Whole search returned a result");
+        assert.ok(part, "Part search returned a result");
+
+        assert.strictEqual(whole.GetAddress(true, true, "xlA1", false), "$A$3", "Whole match found A3");
+        assert.strictEqual(part.GetAddress(true, true, "xlA1", false), "$A$2", "Part match found A2");
+    });
+
+    QUnit.test("Find: starts after middle cell with xlByRows + xlNext", function (assert) {
+        initializeTest();
+        ws.GetRange("A1").SetValue("200");
+        ws.GetRange("B1").SetValue("x");
+        ws.GetRange("C1").SetValue("200");
+        ws.GetRange("A2").SetValue("200");
+        ws.GetRange("B2").SetValue("y");
+        ws.GetRange("C2").SetValue("z");
+
+        const range = ws.GetRange("A1:C2");
+        const found = range.Find("200", "B1", "xlValues", "xlWhole", "xlByRows", "xlNext", false);
+
+        assert.ok(found, "Find returned a range");
+        assert.strictEqual(found.GetAddress(true, true, "xlA1", false), "$C$1", "Search starts after B1 and finds C1");
+    });
+
+    QUnit.test("Find: starts after middle cell with xlByColumns + xlNext", function (assert) {
+        initializeTest();
+        ws.GetRange("A1").SetValue("200");
+        ws.GetRange("B1").SetValue("x");
+        ws.GetRange("C1").SetValue("200");
+        ws.GetRange("A2").SetValue("200");
+        ws.GetRange("B2").SetValue("y");
+        ws.GetRange("C2").SetValue("z");
+
+        const range = ws.GetRange("A1:C2");
+        const found = range.Find("200", "A1", "xlValues", "xlWhole", "xlByColumns", "xlNext", false);
+
+        assert.ok(found, "Find returned a range");
+        assert.strictEqual(found.GetAddress(true, true, "xlA1", false), "$A$2", "Search by columns starts after A1 and finds A2");
+    });
+
+    QUnit.test("Find: xlPrevious + xlByRows", function (assert) {
+        initializeTest();
+        ws.GetRange("A1").SetValue("200");
+        ws.GetRange("B1").SetValue("x");
+        ws.GetRange("C1").SetValue("200");
+        ws.GetRange("A2").SetValue("200");
+        ws.GetRange("B2").SetValue("y");
+        ws.GetRange("C2").SetValue("z");
+
+        const range = ws.GetRange("A1:C2");
+        const found = range.Find("200", "B2", "xlValues", "xlWhole", "xlByRows", "xlPrevious", false);
+
+        assert.ok(found, "Find returned a range");
+        assert.strictEqual(found.GetAddress(true, true, "xlA1", false), "$A$2", "Previous by rows from B2 finds A2");
+    });
+
+    QUnit.test("Find: xlPrevious + xlByColumns", function (assert) {
+        initializeTest();
+        ws.GetRange("A1").SetValue("200");
+        ws.GetRange("B1").SetValue("x");
+        ws.GetRange("C1").SetValue("200");
+        ws.GetRange("A2").SetValue("200");
+        ws.GetRange("B2").SetValue("y");
+        ws.GetRange("C2").SetValue("z");
+
+        const range = ws.GetRange("A1:C2");
+        const found = range.Find("200", "C2", "xlValues", "xlWhole", "xlByColumns", "xlPrevious", false);
+
+        assert.ok(found, "Find returned a range");
+        assert.strictEqual(found.GetAddress(true, true, "xlA1", false), "$C$1", "Previous by columns from C2 finds C1");
+    });
+
+    QUnit.test("Find: xlWhole vs xlPart", function (assert) {
+        initializeTest();
+        ws.GetRange("A1").SetValue("1200");
+        ws.GetRange("A2").SetValue("200");
+        ws.GetRange("A3").SetValue("abc200def");
+
+        const range = ws.GetRange("A1:A3");
+
+        const whole = range.Find("200", "A1", "xlValues", "xlWhole", "xlByRows", "xlNext", false);
+        const part = range.Find("200", "A1", "xlValues", "xlPart", "xlByRows", "xlNext", false);
+
+        assert.ok(whole, "Whole search found a result");
+        assert.ok(part, "Part search found a result");
+
+        assert.strictEqual(whole.GetAddress(true, true, "xlA1", false), "$A$2", "xlWhole finds exact 200");
+        assert.strictEqual(part.GetAddress(true, true, "xlA1", false), "$A$2", "First xlPart result after A1 is A2");
+    });
+
+    QUnit.test("Find: xlPart wraps around correctly", function (assert) {
+        initializeTest();
+        ws.GetRange("A1").SetValue("asdf");
+        ws.GetRange("A2").SetValue("abc200");
+        ws.GetRange("A3").SetValue("x");
+        ws.GetRange("A4").SetValue("200");
+
+        const range = ws.GetRange("A1:A4");
+        const found = range.Find("200", "A4", "xlValues", "xlPart", "xlByRows", "xlNext", false);
+
+        assert.ok(found, "Find returned a range");
+        assert.strictEqual(found.GetAddress(true, true, "xlA1", false), "$A$2", "Wrapped and found A2");
+    });
+
+    QUnit.test("FindNext: numeric duplicates by rows", function (assert) {
+        initializeTest();
+        ws.GetRange("A1").SetValue("200");
+        ws.GetRange("A2").SetValue("200");
+        ws.GetRange("B1").SetValue("200");
+        ws.GetRange("C1").SetValue("200");
+        console.log("here");
+        const range = ws.GetRange("A1:C2");
+        const first = range.Find("200", "A1", "xlValues", "xlWhole", "xlByRows", "xlNext", false);
+        const second = range.FindNext(first);
+        const third = range.FindNext(second);
+        const fourth = range.FindNext(third);
+
+        assert.strictEqual(first.GetAddress(true, true, "xlA1", false), "$B$1", "First is B1");
+        assert.strictEqual(second.GetAddress(true, true, "xlA1", false), "$C$1", "Second is C1");
+        assert.strictEqual(third.GetAddress(true, true, "xlA1", false), "$A$2", "Third is A2");
+        assert.strictEqual(fourth.GetAddress(true, true, "xlA1", false), "$A$1", "Fourth wraps to A1");
+    });
+
+    QUnit.test("FindNext: numeric duplicates by columns", function (assert) {
+        initializeTest();
+        ws.GetRange("A1").SetValue("200");
+        ws.GetRange("A2").SetValue("200");
+        ws.GetRange("B1").SetValue("200");
+        ws.GetRange("C1").SetValue("200");
+
+        const range = ws.GetRange("A1:C2");
+        const first = range.Find("200", "A1", "xlValues", "xlWhole", "xlByColumns", "xlNext", false);
+        const second = range.FindNext(first);
+        const third = range.FindNext(second);
+        const fourth = range.FindNext(third);
+
+        assert.strictEqual(first.GetAddress(true, true, "xlA1", false), "$A$2", "First is A2");
+        assert.strictEqual(second.GetAddress(true, true, "xlA1", false), "$B$1", "Second is B1");
+        assert.strictEqual(third.GetAddress(true, true, "xlA1", false), "$C$1", "Third is C1");
+        assert.strictEqual(fourth.GetAddress(true, true, "xlA1", false), "$A$1", "Fourth wraps to A1");
+    });
+
+    QUnit.test("FindPrevious: numeric duplicates by rows", function (assert) {
+        initializeTest();
+        ws.GetRange("A1").SetValue("200");
+        ws.GetRange("A2").SetValue("200");
+        ws.GetRange("B1").SetValue("200");
+        ws.GetRange("C1").SetValue("200");
+
+        const range = ws.GetRange("A1:C2");
+        const first = range.Find("200", "A1", "xlValues", "xlWhole", "xlByRows", "xlPrevious", false);
+        const second = range.FindPrevious(first);
+        const third = range.FindPrevious(second);
+        const fourth = range.FindPrevious(third);
+
+        assert.strictEqual(first.GetAddress(true, true, "xlA1", false), "$A$2", "First is A2");
+        assert.strictEqual(second.GetAddress(true, true, "xlA1", false), "$C$1", "Second is C1");
+        assert.strictEqual(third.GetAddress(true, true, "xlA1", false), "$B$1", "Third is B1");
+        assert.strictEqual(fourth.GetAddress(true, true, "xlA1", false), "$A$1", "Fourth wraps to A1");
+    });
+
+    QUnit.test("FindPrevious: numeric duplicates by columns", function (assert) {
+        initializeTest();
+        ws.GetRange("A1").SetValue("200");
+        ws.GetRange("A2").SetValue("200");
+        ws.GetRange("B1").SetValue("200");
+        ws.GetRange("C1").SetValue("200");
+
+        const range = ws.GetRange("A1:C2");
+        const first = range.Find("200", "A1", "xlValues", "xlWhole", "xlByColumns", "xlPrevious", false);
+        const second = range.FindPrevious(first);
+        const third = range.FindPrevious(second);
+        const fourth = range.FindPrevious(third);
+
+        assert.strictEqual(first.GetAddress(true, true, "xlA1", false), "$C$1", "First is C1");
+        assert.strictEqual(second.GetAddress(true, true, "xlA1", false), "$B$1", "Second is B1");
+        assert.strictEqual(third.GetAddress(true, true, "xlA1", false), "$A$2", "Third is A2");
+        assert.strictEqual(fourth.GetAddress(true, true, "xlA1", false), "$A$1", "Fourth wraps to A1");
     });
 });

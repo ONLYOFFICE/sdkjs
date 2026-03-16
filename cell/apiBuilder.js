@@ -11712,19 +11712,27 @@
 			options.asc_setIsWholeCell(LookAt === 'xlWhole');
 			options.asc_setScanOnOnlySheet(Asc.c_oAscSearchBy.Range);
 			options.asc_setSpecificRange(this["Address"]);
-			options.asc_setScanByRows(SearchOrder === 'xlByRows');
+
+            // by default excel uses rows search
+            if (SearchOrder == null) {
+                options.asc_setScanByRows(true);
+            } else {
+                options.asc_setScanByRows(SearchOrder === 'xlByRows');
+            }
+
 			options.asc_setLookIn((LookIn === 'xlValues' ? 2 : 1));
 			options.asc_setNotSearchEmptyCells(!(What === "" && !options.isWholeCell));
 			let start = (After instanceof ApiRange && After.range.isOneCell() && this.range.containsRange(After.range))
 				? {row: After.range.bbox.r1, col: After.range.bbox.c1}
 				: {row: this.range.bbox.r1, col: this.range.bbox.c1};
 
-			start.row += (options.scanByRows ? (options.scanForward ? 1 : -1) : 0);
-			start.col += (!options.scanByRows ? (options.scanForward ? 1 : -1) : 0);
+			start.row += (!options.scanByRows ? (options.scanForward ? 1 : -1) : 0);
+			start.col += (options.scanByRows ? (options.scanForward ? 1 : -1) : 0);
 			options.asc_setActiveCell(start);
 			let engine = this.range.worksheet.workbook.oApi.wb.Search(options);
 			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(options.scanForward);
 			if (id != null) {
+                engine.SetCurrent(id);
 				let elem = engine.Elements[id];
 				res = new ApiRange(this.range.worksheet.getRange3(elem.row, elem.col, elem.row, elem.col));
 			}
@@ -11753,8 +11761,8 @@
 			this._searchOptions.asc_setScanForward(true);
 			if (After instanceof ApiRange && After.range.isOneCell() && this.range.containsRange(After.range)) {
 				activeCell = {row: After.range.bbox.r1, col: After.range.bbox.c1};
-				activeCell.row += (this._searchOptions.scanByRows ? 1 : 0);
-				activeCell.col += (!this._searchOptions.scanByRows ? 1 : 0);
+				activeCell.row += (!this._searchOptions.scanByRows ? 1 : 0);
+				activeCell.col += (this._searchOptions.scanByRows ? 1 : 0);
 			} else {
 				activeCell = {row: this.range.bbox.r1, col: this.range.bbox.c1};
 			}
@@ -11767,6 +11775,7 @@
 			engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
 			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(true);
 			if (id != null) {
+                engine.SetCurrent(id);
 				let elem = engine.Elements[id];
 				res = new ApiRange(this.range.worksheet.getRange3(elem.row, elem.col, elem.row, elem.col));
 			}
@@ -11794,8 +11803,8 @@
 			this._searchOptions.asc_setScanForward(false);
 			if (Before instanceof ApiRange && Before.range.isOneCell() && this.range.containsRange(Before.range)) {
 				activeCell = {row: Before.range.bbox.r1, col: Before.range.bbox.c1};
-				activeCell.row += (this._searchOptions.scanByRows ? -1 : 0);
-				activeCell.col += (!this._searchOptions.scanByRows ? -1 : 0);
+				activeCell.row += (!this._searchOptions.scanByRows ? -1 : 0);
+				activeCell.col += (this._searchOptions.scanByRows ? -1 : 0);
 			} else {
 				activeCell = {row: this.range.bbox.r1, col: this.range.bbox.c1};
 			}
