@@ -604,6 +604,7 @@ function (window, undefined) {
 	cAREAS.prototype.argumentsMax = 1;
 	cAREAS.prototype.argumentsType = [argType.reference];
 	cAREAS.prototype.arrayIndexes = {0: 1};
+	cAREAS.prototype.enabledToSingle = {"0": true};
 	cAREAS.prototype.Calculate = function (arg) {
 		let arg0 = arg[0];
 		if (arg0.type !== AscCommonExcel.cElementType.cell && arg0.type !== AscCommonExcel.cElementType.cell3D && 
@@ -632,6 +633,7 @@ function (window, undefined) {
 	// todo add arrayIndex to all n-arguments (in array)
 	cCHOOSE.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1, 3: 1, 4: 1};
 	cCHOOSE.prototype.argumentsType = [argType.number, [argType.any]];
+	cCHOOSE.prototype.enabledToSingle = {"allFrom": 1};
 	cCHOOSE.prototype.Calculate = function (arg) {
 		const args = arguments;
 		let arg0 = arg[0];
@@ -868,6 +870,7 @@ function (window, undefined) {
 	cCHOOSECOLS.prototype.argumentsType = [argType.reference, [argType.number]];
 	cCHOOSECOLS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cCHOOSECOLS.prototype.isXLFN = true;
+	cCHOOSECOLS.prototype.enabledToSingle = {"0": true};
 	cCHOOSECOLS.prototype.Calculate = function (arg) {
 		return chooseRowsCols(arg, arguments[1], true);
 	};
@@ -888,6 +891,7 @@ function (window, undefined) {
 	cCHOOSEROWS.prototype.argumentsType = [argType.reference, [argType.number]];
 	cCHOOSEROWS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cCHOOSEROWS.prototype.isXLFN = true;
+	cCHOOSEROWS.prototype.enabledToSingle = {"0": true};
 	cCHOOSEROWS.prototype.Calculate = function (arg) {
 		return chooseRowsCols(arg, arguments[1]);
 	};
@@ -906,6 +910,7 @@ function (window, undefined) {
 	cCOLUMN.prototype.argumentsMax = 1;
 	cCOLUMN.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.setArrayRefAsArg;
 	cCOLUMN.prototype.argumentsType = [argType.reference];
+	cCOLUMN.prototype.enabledToSingle = {"0": true};
 	cCOLUMN.prototype.Calculate = function (arg) {
 		var bbox;
 		var res;
@@ -953,6 +958,7 @@ function (window, undefined) {
 	cCOLUMNS.prototype.argumentsMax = 1;
 	cCOLUMNS.prototype.arrayIndexes = {0: 1};
 	cCOLUMNS.prototype.argumentsType = [argType.reference];
+	cCOLUMNS.prototype.enabledToSingle = {"0": true};
 	cCOLUMNS.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		var range;
@@ -982,6 +988,7 @@ function (window, undefined) {
 	cEXPAND.prototype.argumentsMax = 4;
 	cEXPAND.prototype.arrayIndexes = {0: 1, 3: 1};
 	cEXPAND.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.any];
+	cEXPAND.prototype.enabledToSingle = {"0": true};
 	cEXPAND.prototype.Calculate = function (arg) {
 		const MAX_ARRAY_SIZE = 1048576;
 		let array,
@@ -1097,6 +1104,7 @@ function (window, undefined) {
 	cFILTER.prototype.isXLWS = true;
 	cFILTER.prototype.arrayIndexes = {0: 1, 1: 1};
 	cFILTER.prototype.argumentsType = [argType.reference, argType.reference, argType.any];
+	cFILTER.prototype.enabledToSingle = {"0": true, "1": true};
 	cFILTER.prototype.Calculate = function (arg) {
 		function rangeModeLoop (rows, columns, isColumnMode) {
 			let resArr = new cArray();
@@ -1229,6 +1237,7 @@ function (window, undefined) {
 	cFORMULATEXT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.area_to_ref;
 	cFORMULATEXT.prototype.argumentsType = [argType.reference];
 	cFORMULATEXT.prototype.arrayIndexes = {0: 1};
+	cFORMULATEXT.prototype.enabledToSingle = {"0": true};
 	cFORMULATEXT.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0];
@@ -1266,6 +1275,7 @@ function (window, undefined) {
 	cGETPIVOTDATA.prototype.arrayIndexes = {0: 1, 1: 1};
 	cGETPIVOTDATA.prototype.argumentsType = [argType.text, argType.text, [argType.text, argType.any]];
 	cGETPIVOTDATA.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cGETPIVOTDATA.prototype.enabledToSingle = {"0": true, "1": true};
 	cGETPIVOTDATA.prototype.Calculate = function (arg) {
 		// arg0 - data_field - pivot table name
 		//The name can be entered exactly like the existing field name or only the root of the name, for example, if you enter "second" in the argument, a field named "Sum of second", "Count of second", etc. will be returned.
@@ -1382,6 +1392,7 @@ function (window, undefined) {
 	cHLOOKUP.prototype.argumentsMax = 4;
 	cHLOOKUP.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
 	cHLOOKUP.prototype.argumentsType = [argType.any, argType.number, argType.number, argType.logical];
+	cHLOOKUP.prototype.enabledToSingle = {"1": true};
 	cHLOOKUP.prototype.Calculate = function (arg) {
 		let retArr = new cArray();
 		let error = false;
@@ -1495,6 +1506,7 @@ function (window, undefined) {
 	cINDEX.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cINDEX.prototype.arrayIndexes = {0: 1};
 	cINDEX.prototype.argumentsType = [argType.reference, argType.number, argType.number];
+	cINDEX.prototype.enabledToSingle = {"0": true};
 	cINDEX.prototype.Calculate = function (arg) {
 		let arg0 = arg[0], arg1 = arg[1] && (cElementType.empty !== arg[1].type) ? arg[1] : new cNumber(0),
 			arg2 = arg[2] && (cElementType.empty !== arg[2].type) ? arg[2] : new cNumber(0),
@@ -1792,6 +1804,7 @@ function (window, undefined) {
 	cLOOKUP.prototype.argumentsMax = 3;
 	cLOOKUP.prototype.arrayIndexes = {1: 1, 2: 1};
 	cLOOKUP.prototype.argumentsType = [argType.any, argType.reference, argType.reference];
+	cLOOKUP.prototype.enabledToSingle = {"1": true, "2": true};
 	cLOOKUP.prototype.Calculate = function (arg) {
 
 		if (!AscCommonExcel.bIsSupportDynamicArrays && arg[0].type === cElementType.cellsRange || arg[0].type === cElementType.cellsRange3D) {
@@ -1828,6 +1841,7 @@ function (window, undefined) {
 	cMATCH.prototype.argumentsMax = 3;
 	cMATCH.prototype.arrayIndexes = {1: 1};
 	cMATCH.prototype.argumentsType = [argType.any, argType.number, argType.number];
+	cMATCH.prototype.enabledToSingle = {"1": true, "2": true};
 	cMATCH.prototype.Calculate = function (arg) {
 		return g_oMatchCache.calculate(arg, arguments[1]);
 	};
@@ -1848,6 +1862,7 @@ function (window, undefined) {
 	cOFFSET.prototype.ca = true;
 	cOFFSET.prototype.arrayIndexes = {0: 1};
 	cOFFSET.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.number, argType.number];
+	cOFFSET.prototype.enabledToSingle = {"0": true};
 	cOFFSET.prototype.Calculate = function (arg) {
 
 		function validBBOX(bbox) {
@@ -1962,6 +1977,7 @@ function (window, undefined) {
 	cROW.prototype.argumentsMax = 1;
 	cROW.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.setArrayRefAsArg;
 	cROW.prototype.argumentsType = [argType.reference];
+	cROW.prototype.enabledToSingle = {"0": true};
 	cROW.prototype.Calculate = function (arg) {
 		var bbox;
 		var res;
@@ -2011,6 +2027,7 @@ function (window, undefined) {
 	cROWS.prototype.argumentsMax = 1;
 	cROWS.prototype.arrayIndexes = {0: 1};
 	cROWS.prototype.argumentsType = [argType.reference];
+	cROWS.prototype.enabledToSingle = {"0": true};
 	cROWS.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		var range;
@@ -2052,6 +2069,7 @@ function (window, undefined) {
 	cSORT.prototype.isXLWS = true;
 	cSORT.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1, 3: 1};
 	cSORT.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.logical];
+	cSORT.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cSORT.prototype.Calculate = function (arg) {
 
 		function arrayHelper (byColArray) {
@@ -2283,6 +2301,7 @@ function (window, undefined) {
 		return 1;
 	};
 	cSORTBY.prototype.argumentsType = [argType.array, argType.array, argType.number, [argType.array, argType.number]];
+	cSORTBY.prototype.enabledToSingle = {"arg0orOdd": true};
 
 	cSORTBY.prototype.Calculate = function (arg) {
 		function arrayHelper (arr, args) {
@@ -2738,6 +2757,7 @@ function (window, undefined) {
 	cTAKE.prototype.isXLFN = true;
 	cTAKE.prototype.argumentsType = [argType.reference, argType.number, argType.number];
 	cTAKE.prototype.arrayIndexes = {0: 1};
+	cTAKE.prototype.enabledToSingle = {"0": true};
 	cTAKE.prototype.Calculate = function (arg) {
 		return takeDrop(arg, arguments[1]);
 	};
@@ -2760,6 +2780,7 @@ function (window, undefined) {
 	cDROP.prototype.isXLFN = true;
 	cDROP.prototype.argumentsType = [argType.reference, argType.number, argType.number];
 	cDROP.prototype.arrayIndexes = {0: 1};
+	cDROP.prototype.enabledToSingle = {"0": true};
 	cDROP.prototype.Calculate = function (arg) {
 		return takeDrop(arg, arguments[1], true);
 	};
@@ -2781,6 +2802,7 @@ function (window, undefined) {
 	cUNIQUE.prototype.arrayIndexes = {0: 1};
 	cUNIQUE.prototype.argumentsType = [argType.reference, argType.logical, argType.logical];
 	cUNIQUE.prototype.isXLFN = true;
+	cUNIQUE.prototype.enabledToSingle = {"0": true};
 	cUNIQUE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cUNIQUE.prototype.Calculate = function (arg) {
 
@@ -4701,6 +4723,7 @@ function (window, undefined) {
 	cVLOOKUP.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	// cVLOOKUP.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cVLOOKUP.prototype.argumentsType = [argType.any, argType.number, argType.number, argType.logical];
+	cVLOOKUP.prototype.enabledToSingle = {"1": true};
 	cVLOOKUP.prototype.Calculate = function (arg) {
 		let retArr = new cArray();
 		let error = false;
@@ -4759,6 +4782,7 @@ function (window, undefined) {
 	cXLOOKUP.prototype.argumentsType = [argType.any, argType.reference, argType.reference, argType.any, argType.number, argType.number];
 	cXLOOKUP.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cXLOOKUP.prototype.isXLFN = true;
+	cXLOOKUP.prototype.enabledToSingle = {"1": true, "2": true, "3": true};
 	cXLOOKUP.prototype.Calculate = function (arg) {
 
 		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
@@ -4931,6 +4955,7 @@ function (window, undefined) {
 	cVSTACK.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cVSTACK.prototype.argumentsType = [[argType.reference]];
 	cVSTACK.prototype.isXLFN = true;
+	cVSTACK.prototype.enabledToSingle = {"*": true};
 	cVSTACK.prototype.Calculate = function (arg) {
 		let unionArray;
 		for (let i = 0; i < arg.length; i++) {
@@ -4988,6 +5013,7 @@ function (window, undefined) {
 	cHSTACK.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cHSTACK.prototype.argumentsType = [[argType.reference]];
 	cHSTACK.prototype.isXLFN = true;
+	cHSTACK.prototype.enabledToSingle = {"*": true};
 	cHSTACK.prototype.Calculate = function (arg) {
 		let unionArray;
 		let startCol = 0;
@@ -5151,6 +5177,7 @@ function (window, undefined) {
 	cTOROW.prototype.arrayIndexes = {0: 1};
 	cTOROW.prototype.argumentsType = [argType.reference, argType.number, argType.bool];
 	cTOROW.prototype.isXLFN = true;
+	cTOROW.prototype.enabledToSingle = {"0": true};
 	cTOROW.prototype.Calculate = function (arg) {
 		return toRowCol(arg, arguments[1]);
 	};
@@ -5172,6 +5199,7 @@ function (window, undefined) {
 	cTOCOL.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cTOCOL.prototype.argumentsType = [argType.reference, argType.number, argType.bool];
 	cTOCOL.prototype.isXLFN = true;
+	cTOCOL.prototype.enabledToSingle = {"0": true};
 	cTOCOL.prototype.Calculate = function (arg) {
 		return toRowCol(arg, arguments[1], true);
 	};
@@ -5274,6 +5302,7 @@ function (window, undefined) {
 	cWRAPROWS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cWRAPROWS.prototype.argumentsType = [argType.any/*vector*/, argType.number, argType.any];
 	cWRAPROWS.prototype.isXLFN = true;
+	cWRAPROWS.prototype.enabledToSingle = {"0": true};
 	cWRAPROWS.prototype.Calculate = function (arg) {
 		return wrapRowsCols(arg, arguments[1]);
 	};
@@ -5295,6 +5324,7 @@ function (window, undefined) {
 	cWRAPCOLS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cWRAPCOLS.prototype.argumentsType = [argType.any/*vector*/, argType.number, argType.any];
 	cWRAPCOLS.prototype.isXLFN = true;
+	cWRAPCOLS.prototype.enabledToSingle = {"0": true};
 	cWRAPCOLS.prototype.Calculate = function (arg) {
 		return wrapRowsCols(arg, arguments[1], true);
 	};
@@ -5315,6 +5345,7 @@ function (window, undefined) {
 	cXMATCH.prototype.arrayIndexes = {1: 1};
 	cXMATCH.prototype.argumentsType = [argType.any, argType.reference, argType.number, argType.number];
 	cXMATCH.prototype.isXLFN = true;
+	cXMATCH.prototype.enabledToSingle = {"1": true};
 	cXMATCH.prototype.Calculate = function (arg) {
 		arg[4] = true;
 		return g_oMatchCache.calculate(arg, arguments[1]);

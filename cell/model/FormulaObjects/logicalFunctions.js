@@ -68,6 +68,7 @@ function (window, undefined) {
 	cAND.prototype.argumentsMin = 1;
 	cAND.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cAND.prototype.argumentsType = [[argType.logical]];
+	cAND.prototype.enabledToSingle = {"*": true};
 	cAND.prototype.Calculate = function (arg) {
 		var argResult = null;
 		for (var i = 0; i < arg.length; i++) {
@@ -180,6 +181,7 @@ function (window, undefined) {
 		}
 		return res;
 	};
+	cIF.prototype.enabledToSingle = {"1": true, "2": true};
 	cIF.prototype.Calculate = function (arg) {
 		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
 
@@ -219,6 +221,7 @@ function (window, undefined) {
 	cIFERROR.prototype.argumentsMin = 2;
 	cIFERROR.prototype.argumentsMax = 2;
 	cIFERROR.prototype.argumentsType = [argType.any, argType.any];
+	cIFERROR.prototype.enabledToSingle = {"1": true};
 	cIFERROR.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (arg0 instanceof cArray) {
@@ -253,6 +256,7 @@ function (window, undefined) {
 	cIFNA.prototype.argumentsMax = 2;
 	cIFNA.prototype.isXLFN = true;
 	cIFNA.prototype.argumentsType = [argType.any, argType.any];
+	cIFNA.prototype.enabledToSingle = {"1": true};
 	cIFNA.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (arg0 instanceof cArray) {
@@ -286,6 +290,7 @@ function (window, undefined) {
 	cIFS.prototype.argumentsMin = 2;
 	cIFS.prototype.isXLFN = true;
 	cIFS.prototype.argumentsType = [[argType.logical, argType.any]];
+	cIFS.prototype.enabledToSingle = {"odd": true};
 	cIFS.prototype.Calculate = function (arg) {
 		var oArguments = this._prepareArguments(arg, arguments[1], true);
 		var argClone = oArguments.args;
@@ -377,6 +382,7 @@ function (window, undefined) {
 	cOR.prototype.argumentsMin = 1;
 	cOR.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cOR.prototype.argumentsType = [[argType.logical]];
+	cOR.prototype.enabledToSingle = {"*": true};
 	cOR.prototype.Calculate = function (arg) {
 		var argResult = null;
 		for (var i = 0; i < arg.length; i++) {
@@ -449,6 +455,7 @@ function (window, undefined) {
 	cSWITCH.prototype.argumentsMax = 126;
 	cSWITCH.prototype.isXLFN = true;
 	cSWITCH.prototype.argumentsType = [argType.any, argType.any, argType.any, [argType.any, argType.any]];
+	cSWITCH.prototype.enabledToSingle = {"evenFrom2": true};
 	cSWITCH.prototype.Calculate = function (arg) {
 		var oArguments = this._prepareArguments(arg, arguments[1], true);
 		var argClone = oArguments.args;
@@ -524,6 +531,7 @@ function (window, undefined) {
 	cXOR.prototype.isXLFN = true;
 	cXOR.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cXOR.prototype.argumentsType = [[argType.logical]];
+	cXOR.prototype.enabledToSingle = {"*": true};
 	cXOR.prototype.Calculate = function (arg) {
 		var argResult = null;
 		var nTrueValues = 0;

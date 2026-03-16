@@ -243,6 +243,7 @@ function (window, undefined) {
 	cARRAYTOTEXT.prototype.argumentsMax = 2;
 	cARRAYTOTEXT.prototype.arrayIndexes = {0: 1};
 	cARRAYTOTEXT.prototype.argumentsType = [argType.reference, argType.number];
+	cARRAYTOTEXT.prototype.enabledToSingle = {"0": true};
 	cARRAYTOTEXT.prototype.Calculate = function (arg) {
 		function arrayToTextGeneral(args, isRange) {
 			let array = args[0],
@@ -599,6 +600,7 @@ function (window, undefined) {
 	cCONCAT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cCONCAT.prototype.argumentsType = [[argType.text]];
 	cCONCAT.prototype.isXLFN = true;
+	cCONCAT.prototype.enabledToSingle = {"*": true};
 	cCONCAT.prototype.Calculate = function (arg) {
 		let arg0 = new cString(""), argI;
 
@@ -1248,6 +1250,7 @@ function (window, undefined) {
 	cIMPORTRANGE.prototype.argumentsMax = 2;
 	cIMPORTRANGE.prototype.isXLUDF = true;
 	cIMPORTRANGE.prototype.argumentsType = [argType.text, argType.text];
+	cIMPORTRANGE.prototype.enabledToSingle = {"0": true, "1": true};
 	cIMPORTRANGE.prototype.Calculate = function (arg) {
 		//gs -> allow array(get first element), cRef, cRef3D, cName, cName3d
 		//not allow area/area3d
@@ -1382,6 +1385,7 @@ function (window, undefined) {
 	cJIS.prototype.name = 'JIS';
 	cJIS.prototype.argumentsMin = 1;
 	cJIS.prototype.argumentsMax = 1;
+	cJIS.prototype.enabledToSingle = {"0": true};
 	cJIS.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 
@@ -1792,6 +1796,7 @@ function (window, undefined) {
 	cPHONETIC.prototype = Object.create(cBaseFunction.prototype);
 	cPHONETIC.prototype.constructor = cPHONETIC;
 	cPHONETIC.prototype.name = 'PHONETIC';
+	cPHONETIC.prototype.enabledToSingle = {"0": true};
 
 	//
 
@@ -3148,6 +3153,7 @@ function (window, undefined) {
 	cT.prototype.argumentsMax = 1;
 	cT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.replace_only_array;
 	cT.prototype.argumentsType = [argType.any];
+	cT.prototype.enabledToSingle = {"0": true};
 	cT.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (arg0 instanceof cRef || arg0 instanceof cRef3D) {
@@ -3264,6 +3270,7 @@ function (window, undefined) {
 		}
 		return 1;
 	};
+	cTEXTJOIN.prototype.enabledToSingle = {"0": true, "allFrom": 2};
 	cTEXTJOIN.prototype.Calculate = function (arg) {
 
 		let argClone = [arg[0], arg[1]];

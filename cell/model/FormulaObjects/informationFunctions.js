@@ -171,6 +171,7 @@ function (window, undefined) {
 	//cCell.prototype.exactTypes = {1: 1};
 	cCell.prototype.argumentsType = [argType.text, argType.reference];
 	cCell.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cCell.prototype.enabledToSingle = {"1": true};
 	/**
 	 * The CELL function returns information about the formatting, location, or contents of a cell.
 	 * 
@@ -587,6 +588,7 @@ function (window, undefined) {
 	cISEVEN.prototype.argumentsMax = 1;
 	cISEVEN.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cISEVEN.prototype.argumentsType = [argType.any];
+	cISEVEN.prototype.enabledToSingle = {"0": true};
 	cISEVEN.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (arg0 instanceof cArray) {
@@ -625,6 +627,7 @@ function (window, undefined) {
 	cISFORMULA.prototype.isXLFN = true;
 	cISFORMULA.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.area_to_ref;
 	cISFORMULA.prototype.argumentsType = [argType.reference];
+	cISFORMULA.prototype.enabledToSingle = {"0": true};
 	cISFORMULA.prototype.Calculate = function (arg) {
 		//есть различия в поведении этой формулы для ms и lo(для нескольких ячеек с данными)
 		var arg0 = arg[0];
@@ -783,6 +786,7 @@ function (window, undefined) {
 	cISODD.prototype.argumentsMax = 1;
 	cISODD.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cISODD.prototype.argumentsType = [argType.any];
+	cISODD.prototype.enabledToSingle = {"0": true};
 	cISODD.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (arg0 instanceof cArray) {
@@ -820,6 +824,7 @@ function (window, undefined) {
 	cISREF.prototype.argumentsMax = 1;
 	cISREF.prototype.arrayIndexes = {0: 1};
 	cISREF.prototype.argumentsType = [argType.any];
+	cISREF.prototype.enabledToSingle = {"0": true};
 	cISREF.prototype.Calculate = function (arg) {
 		if ((arg[0] instanceof cRef || arg[0] instanceof cArea || arg[0] instanceof cArea3D ||
 			arg[0] instanceof cRef3D) && arg[0].isValid && arg[0].isValid()) {
@@ -876,6 +881,7 @@ function (window, undefined) {
 	cN.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cN.prototype.arrayIndexes = {0: 1};
 	cN.prototype.argumentsType = [argType.any];
+	cN.prototype.enabledToSingle = {"0": true};
 	cN.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (arg0 instanceof cArray) {
@@ -939,6 +945,7 @@ function (window, undefined) {
 	cSHEET.prototype.isXLFN = true;
 	cSHEET.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cSHEET.prototype.argumentsType = [argType.text];
+	cSHEET.prototype.enabledToSingle = {"0": true};
 	cSHEET.prototype.Calculate = function (arg, opt_bbox, opt_defName, ws) {
 
 		var res = null;
@@ -988,6 +995,7 @@ function (window, undefined) {
 	cSHEETS.prototype.isXLFN = true;
 	cSHEETS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cSHEETS.prototype.argumentsType = [argType.reference];
+	cSHEETS.prototype.enabledToSingle = {"0": true};
 	cSHEETS.prototype.Calculate = function (arg, opt_bbox, opt_defName, ws) {
 
 		var res;

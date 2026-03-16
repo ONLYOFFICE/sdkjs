@@ -1068,6 +1068,7 @@ function (window, undefined) {
 	cEDATE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cEDATE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cEDATE.prototype.argumentsType = [argType.any, argType.any];
+	cEDATE.prototype.enabledToSingle = {"0": true, "1": true};
 	cEDATE.prototype.Calculate = function (arg) {
 		let arg0 = arg[0], arg1 = arg[1];
 
@@ -1191,6 +1192,7 @@ function (window, undefined) {
 	cEOMONTH.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cEOMONTH.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cEOMONTH.prototype.argumentsType = [argType.any, argType.any];
+	cEOMONTH.prototype.enabledToSingle = {"0": true, "1": true};
 	cEOMONTH.prototype.Calculate = function (arg) {
 		let arg0 = arg[0], arg1 = arg[1];
 		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
@@ -1528,6 +1530,7 @@ function (window, undefined) {
 	cNETWORKDAYS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cNETWORKDAYS.prototype.arrayIndexes = {2: 1};
 	cNETWORKDAYS.prototype.argumentsType = [argType.any, argType.any, argType.any];
+	cNETWORKDAYS.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cNETWORKDAYS.prototype.Calculate = function (arg) {
 		let oArguments = this._prepareArguments([arg[0], arg[1]], arguments[1]);
 		let argClone = oArguments.args;
@@ -1653,6 +1656,7 @@ function (window, undefined) {
 	cNETWORKDAYS_INTL.prototype.argumentsType = [argType.any, argType.any, argType.number, argType.any];
 	//TODO в данном случае есть различия с ms. при 3 и 4 аргументах - замена результата на ошибку не происходит.
 	cNETWORKDAYS_INTL.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
+	cNETWORKDAYS_INTL.prototype.enabledToSingle = {"0": true, "1": true, "3": true};
 	cNETWORKDAYS_INTL.prototype.Calculate = function (arg) {
 		var tempArgs = arg[2] ? [arg[0], arg[1], arg[2]] : [arg[0], arg[1]];
 		var oArguments = this._prepareArguments(tempArgs, arguments[1]);
@@ -2050,6 +2054,7 @@ function (window, undefined) {
 	cWEEKNUM.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cWEEKNUM.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cWEEKNUM.prototype.argumentsType = [argType.any, argType.any];
+	cWEEKNUM.prototype.enabledToSingle = {"0": true, "1": true};
 	cWEEKNUM.prototype.Calculate = function (arg) {
 		var arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cNumber(1), type = 0;
 
@@ -2136,6 +2141,7 @@ function (window, undefined) {
 	cWORKDAY.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cWORKDAY.prototype.arrayIndexes = {2: 1};
 	cWORKDAY.prototype.argumentsType = [argType.any, argType.any, argType.any];
+	cWORKDAY.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cWORKDAY.prototype.Calculate = function (arg) {
 		var t = this;
 		var oArguments = this._prepareArguments([arg[0], arg[1]], arguments[1], true);
@@ -2221,6 +2227,7 @@ function (window, undefined) {
 	cWORKDAY_INTL.prototype.argumentsType = [argType.any, argType.any, argType.number, argType.any];
 	//TODO в данном случае есть различия с ms. при 3 и 4 аргументах - замена результата на ошибку не происходит.
 	// cWORKDAY_INTL.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
+	cWORKDAY_INTL.prototype.enabledToSingle = {"0": true, "1": true, "3": true};
 	cWORKDAY_INTL.prototype.Calculate = function (arg) {
 		//TODO проблема с формулами следующего типа - WORKDAY.INTL(8,60,"0000000")
 		let t = this;
@@ -2391,6 +2398,7 @@ function (window, undefined) {
 	cYEARFRAC.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cYEARFRAC.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cYEARFRAC.prototype.argumentsType = [argType.any, argType.any, argType.any];
+	cYEARFRAC.prototype.enabledToSingle = {"0": true, "1": true, "2": true};
 	cYEARFRAC.prototype.Calculate = function (arg) {
 		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : new cNumber(0);
 		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
