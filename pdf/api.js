@@ -1482,7 +1482,16 @@
 	PDFEditorApi.prototype.AddRedactBySelect = function() {
 		let oDoc = this.getPDFDoc();
 		oDoc.AddRedactAnnotBySelect();
-	}
+	};
+
+	// redact meta
+	PDFEditorApi.prototype.RedactMeta = function(props) {
+		let oDoc = this.getPDFDoc();
+		
+		return oDoc.DoAction(function() {
+			oDoc.RedactMeta(props)
+		}, AscDFH.historydescription_Pdf_Apply_Redact);
+	};
 
 	PDFEditorApi.prototype.SetCanInteract = function(bCan) {
 		this.canInteract = bCan;
@@ -4717,45 +4726,9 @@
 		if (!oDoc)
 			return;
 
-		let arrCommentsId = arrIds;
-		if (arrCommentsId == undefined) {
-			let oController = oDoc.GetController();
-
-			if (isCurrent) {
-				let oActiveObj = oDoc.GetActiveObject();
-				if (oActiveObj && oActiveObj.IsAnnot()) {
-					arrCommentsId = oController.selectedObjects.map(function(annot) {
-						return annot.GetId();
-					});
-				}
-			}
-			else if (isMine) {
-				let sUserId = Asc.editor.DocInfo.get_UserId();
-				let annots = oDoc.annots;
-
-				arrCommentsId = [];
-				for (let i = 0, count = annots.length; i < count; i++) {
-					let annot = annots[i];
-
-					if (annot.GetUserId() === sUserId) {
-						arrCommentsId.push(annot.GetId());
-					}
-				}
-			}
-			else {
-				arrCommentsId = oDoc.annots.map(function(annot) {
-					return annot.GetId();
-				});
-			}
-		}
-
-		if (arrCommentsId != undefined && arrCommentsId.length !== 0) {
-			oDoc.DoAction(function() {
-				arrCommentsId.forEach(function(id) {
-					oDoc.RemoveAnnot(id);
-				});
-			}, AscDFH.historydescription_Pdf_RemoveComment, null, arrCommentsId);
-		}
+		oDoc.DoAction(function() {
+			oDoc.RemoveAllComments(isMine, isCurrent, arrIds)
+		}, AscDFH.historydescription_Pdf_RemoveComment, null, arrIds);
 	};
 	PDFEditorApi.prototype.asc_remove = function() {
 		let oDoc = this.getPDFDoc();
@@ -5432,6 +5405,7 @@
 	PDFEditorApi.prototype['HasRedact']			= PDFEditorApi.prototype.HasRedact;
 	PDFEditorApi.prototype['RemoveAllRedact']	= PDFEditorApi.prototype.RemoveAllRedact;
 	PDFEditorApi.prototype['AddRedactBySelect']	= PDFEditorApi.prototype.AddRedactBySelect;
+	PDFEditorApi.prototype['RedactMeta']		= PDFEditorApi.prototype.RedactMeta;
 
 	PDFEditorApi.prototype['SetCanInteract']				= PDFEditorApi.prototype.SetCanInteract;
 

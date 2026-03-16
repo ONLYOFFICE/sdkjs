@@ -1800,12 +1800,16 @@
         this._needDrawHighlight = bDraw;
     };
     CBaseField.prototype.IsNeedDrawHighlight = function() {
-        return false == this.IsReadOnly() && this._needDrawHighlight && (this.GetType() === AscPDF.FIELD_TYPES.button || !this.IsInForm());
+        return false == this.IsReadOnly() && this._needDrawHighlight && (this.GetType() === AscPDF.FIELD_TYPES.button || !this.IsInForm()) && !this.IsRedacted();
     };
 
     CBaseField.prototype.DrawEdit = function(oGraphicsWord) {
         let oDoc = this.GetDocument();
 
+		if (this.IsRedacted()) {
+			return;
+		}
+		
         if (this.IsNeedUpdateEditShape()) {
             this.UpdateEditShape();
         }
@@ -1883,6 +1887,30 @@
             return oParent.IsReadOnly();
 
         return this._readOnly;
+    };
+
+	CBaseField.prototype.SetRedacted = function(isRedacted) {
+        if (this._isRedacted === isRedacted) {
+            return true;
+        }
+
+        AscCommon.History.Add(new CChangesPDFFormRedacted(this, this._isRedacted, isRedacted));
+
+        this._isRedacted = isRedacted;
+
+        let oCurPage = this.GetParentPage();
+
+		let sId = this.GetId();
+		oCurPage.RemoveField(sId);
+		oCurPage.AddRedactedField(this);
+		
+		this.SetWasChanged(true, false);
+        this.AddToRedraw();
+
+        return true;
+    };
+    CBaseField.prototype.IsRedacted = function() {
+        return this._isRedacted;
     };
 
     CBaseField.prototype.SetNoExport = function(bNoExport) {
@@ -2906,8 +2934,14 @@
                     "color": this.GetTextColor()
                 }
 
-				if (memory.isForSplit && this.contentFormat) {
-					oMeta["formatValue"] = this.GetFormatValue();
+				if (memory.isForSplit) {
+					if (this.contentFormat) {
+						oMeta["formatValue"] = this.GetFormatValue();
+					}
+					if (this.IsRedacted()) {
+						oMeta["isRedacted"] = true;
+						oMeta["isChanged"] = !this.IsNeedDrawFromStream();
+					}
 				}
             }
             memory.WriteString(JSON.stringify(oMeta));
