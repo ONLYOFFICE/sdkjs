@@ -1536,8 +1536,8 @@
 				if (this.positionCallback) {
 					let width = this.stringRender.charWidths[charIndex];
 					if (this.bidiFlow.direction === AscBidi.DIRECTION.R) {
-						this.trailingSpaceX -= width;
 						this.positionCallback(charIndex, this.trailingSpaceX, width, direction);
+						this.trailingSpaceX += width;
 					} else {
 						this.positionCallback(charIndex, this.x, width, direction);
 						this.x += width;
@@ -1651,6 +1651,13 @@
 					} else {
 						break;
 					}
+				}
+				if (this.trailingSpaceStart <= endPos) {
+					let totalTrailingWidth = 0;
+					for (let j = this.trailingSpaceStart; j <= endPos; ++j) {
+						totalTrailingWidth += this.stringRender.charWidths[j];
+					}
+					this.trailingSpaceX = x - totalTrailingWidth;
 				}
 			}
 
