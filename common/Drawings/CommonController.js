@@ -7641,9 +7641,10 @@
 					for (var i = 0; i < drawings.length; ++i) {
 						drawing = drawings[i];
 
-						if (drawing.IsAnnot && drawing.IsAnnot() && drawing.IsComment() || drawing.IsEditFieldShape && drawing.IsEditFieldShape()) {
+						if (drawing.IsDrawing && !drawing.IsDrawing()) {
 							continue;
 						}
+
 						if (drawing.isHorizontalRule()) {
 							continue;
 						}
