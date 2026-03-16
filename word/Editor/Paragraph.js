@@ -11114,9 +11114,6 @@ Paragraph.prototype.Internal_CompileParaPr2 = function()
 
 		// Считываем свойства для текущего стиля
 		var Pr = Styles.Get_Pr(StyleId, styletype_Paragraph, TableStyle, ShapeStyle);
-
-		Pr.ParaPr.CheckBorderSpaces();
-
 		// Если в стиле была задана нумерация сохраним это в специальном поле
 		if (undefined != Pr.ParaPr.NumPr)
 			Pr.ParaPr.StyleNumPr = Pr.ParaPr.NumPr.Copy();
@@ -11198,7 +11195,8 @@ Paragraph.prototype.Internal_CompileParaPr2 = function()
 
 		// Копируем прямые настройки параграфа.
 		Pr.ParaPr.Merge(this.Pr);
-
+		Pr.ParaPr.CheckBorderSpaces();
+		
 		if (this.IsInFixedForm())
 		{
 			let oForm = this.GetInnerForm();
