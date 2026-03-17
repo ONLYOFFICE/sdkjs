@@ -13309,7 +13309,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean} - returns false if the drawing object can not be deleted.
 	 *
-	 * @since 9.5.0
+	 * @since 9.4.0
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Delete.js
 	 */
 	ApiDrawing.prototype.Delete = function () {
