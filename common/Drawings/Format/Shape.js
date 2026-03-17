@@ -1134,6 +1134,9 @@
 			}
 			if (this.spPr) {
 				c.setSpPr(this.spPr.createDuplicate());
+				if (c.isHorizontalRule()) {
+					c.spPr.geometry.setHR(null);
+				}
 				c.spPr.setParent(c);
 			}
 			if (this.style) {
@@ -2003,6 +2006,7 @@
 						}
 					}
 				}
+				this.recalculate();
 				this.checkExtentsByDocContent(true, true);
 			}
 		};
@@ -2828,10 +2832,13 @@
 		};
 
 		CShape.prototype.canEditText = function () {
+			if (this.isHorizontalRule()) {
+				return false;
+			}
 			let form = this.isForm && this.isForm() ? this.getInnerForm() : null;
 			if (form && !form.CanPlaceCursorInside())
 				return false;
-			
+
 			return this.superclass.prototype.canEditText.call(this);
 		};
 		CShape.prototype.canEditTextInSmartArt = function () {
@@ -3461,6 +3468,34 @@
 									}
 								}
 							}
+							let oHR = this.getHorizontalRule();
+							if (oHR) {
+								this.m_oSectPr = null;
+								this.m_dHRColumnWidth = 0;
+								let oHRParagraph = oParaDrawing.Get_ParentParagraph();
+								if (oHRParagraph) {
+									let oHRSectPr = oHRParagraph.Get_SectPr();
+									if (oHRSectPr) {
+										let nColIdx = oHRParagraph.ColumnNum || 0;
+										let hrColumnWidth = oHRSectPr.GetColumnWidth(nColIdx);
+										let oInd = oHRParagraph.Get_CompiledPr2(true).ParaPr.Ind;
+										if (oInd) {
+											if (oInd.Left != null && oInd.Left > 0)
+												hrColumnWidth -= oInd.Left;
+											if (oInd.Right != null && oInd.Right > 0)
+												hrColumnWidth -= oInd.Right;
+										}
+										let hrContentWidth = hrColumnWidth;
+										if (oHR.pct != null && oHR.pct > 0) {
+											hrContentWidth = hrColumnWidth * oHR.pct / 1000;
+										}
+										this.extX = hrContentWidth;
+										this.m_dHRColumnWidth = hrColumnWidth;
+										this.m_oSectPr = new AscWord.SectPr();
+										this.m_oSectPr.Copy(oHRSectPr);
+									}
+								}
+							}
 						}
 					} else {
 						if (this.isPlaceholder()) {
@@ -3871,21 +3906,38 @@
 			var bRet = false;
 			var oParaDrawing = getParaDrawing(this);
 			var bSizRel = (oParaDrawing && (oParaDrawing.SizeRelH || oParaDrawing.SizeRelV));
-			if (this.checkAutofit() || bSizRel) {
+			let bHR = this.isHorizontalRule();
+			if (this.checkAutofit() || bSizRel || bHR) {
 				if (oSectPr) {
 					if (!this.m_oSectPr) {
 						this.recalcBounds();
 						this.recalcText();
 						this.recalcGeometry();
-						if (bSizRel) {
+						if (bSizRel || bHR) {
 							this.recalcTransform();
 						}
 						bRet = true;
 					} else {
-						Width = oSectPr.GetContentFrameWidth();
+						let nHRColIdx = 0;
+						let dHRColumnWidth = 0;
+						if (bHR && oParaDrawing) {
+							let oHRPara = oParaDrawing.Get_ParentParagraph && oParaDrawing.Get_ParentParagraph();
+							if (oHRPara) {
+								nHRColIdx = oHRPara.ColumnNum || 0;
+								dHRColumnWidth = oSectPr.GetColumnWidth(nHRColIdx);
+								let oInd = oHRPara.Get_CompiledPr2(true).ParaPr.Ind;
+								if (oInd) {
+									if (oInd.Left != null && oInd.Left > 0)
+										dHRColumnWidth -= oInd.Left;
+									if (oInd.Right != null && oInd.Right > 0)
+										dHRColumnWidth -= oInd.Right;
+								}
+							}
+						}
+						Width = bHR ? dHRColumnWidth : oSectPr.GetContentFrameWidth();
 						Height = oSectPr.GetContentFrameHeight();
 
-						Width2 = this.m_oSectPr.GetContentFrameWidth();
+						Width2 = bHR ? (this.m_dHRColumnWidth || 0) : this.m_oSectPr.GetContentFrameWidth();
 						Height2 = this.m_oSectPr.GetContentFrameHeight();
 
 						bRet = (Math.abs(Width - Width2) > 0.001 || Math.abs(Height - Height2) > 0.001);
@@ -3893,7 +3945,7 @@
 							this.recalcBounds();
 							this.recalcText();
 							this.recalcGeometry();
-							if (bSizRel) {
+							if (bSizRel || bHR) {
 								this.recalcTransform();
 							}
 						}
@@ -5613,6 +5665,7 @@
 			}
 			this.drawShdw && this.drawShdw(graphics);
 			var _oldBrush = this.brush;
+			var _oldPen = this.pen;
 			if (this.signatureLine) {
 				var sSignatureUrl = null;
 
@@ -5622,6 +5675,30 @@
 				}
 				if (typeof sSignatureUrl === "string" && sSignatureUrl.length > 0) {
 					this.brush = AscFormat.CreateBlipFillUniFillFromUrl(sSignatureUrl);
+				}
+			}
+			var oHR = this.getHorizontalRule();
+			if (oHR) {
+				if (oHR.noshade) {
+					if (!this.brush || !this.brush.fill) {
+						this.brush = AscFormat.CreateSolidFillRGBA(160, 160, 160, 255);
+					}
+					if (!this.pen || !this.pen.Fill || !this.pen.Fill.fill) {
+						this.pen = null;
+					}
+				} else {
+					graphics.transform3(_transform, false);
+					graphics.SetIntegerGrid(true);
+					let hrExtX = this.extX;
+					let hrExtY = this.extY;
+					graphics.p_color(128, 128, 128, 255);
+					graphics.drawHorLine(0, 0, 0, hrExtX, 0);
+					graphics.drawVerLine(0, 0, 0, hrExtY, 0);
+					graphics.p_color(212, 208, 200, 255);
+					graphics.drawHorLine(2, hrExtY, 0, hrExtX, 0);
+					graphics.drawVerLine(2, hrExtX, 0, hrExtY, 0);
+					this.brush = null;
+					this.pen = null;
 				}
 			}
 
@@ -5635,6 +5712,7 @@
 			}
 
 			this.brush = _oldBrush;
+			this.pen = _oldPen;
 			var oController = this.getDrawingObjectsController && this.getDrawingObjectsController();
 
 			if (!this.cropObject) {
@@ -6430,6 +6508,9 @@
 		};
 
 		CShape.prototype.hit = function (x, y) {
+			if (this.isHorizontalRule()) {
+				return this.hitInRect(x, y);
+			}
 			return this.hitInInnerArea(x, y) || this.hitInPath(x, y) || this.hitInTextRect(x, y);
 		};
 
@@ -6559,6 +6640,9 @@
 			if (this.signatureLine) {
 				return false;
 			}
+			if (this.isHorizontalRule()) {
+				return false;
+			}
 			return AscFormat.CGraphicObjectBase.prototype.canRotate.call(this);
 		};
 
@@ -6571,6 +6655,9 @@
 				return false;
 			}
 			if (this.signatureLine) {
+				return false;
+			}
+			if (this.isHorizontalRule()) {
 				return false;
 			}
 			return AscFormat.CGraphicObjectBase.prototype.canGroup.call(this);

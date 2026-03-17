@@ -4285,6 +4285,7 @@ function (window, undefined) {
 	cPMT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cPMT.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.number, argType.number];
 	cPMT.prototype.Calculate = function (arg) {
+		const PMT_CURRENCY_FORMAT = "[$$-409]#,##0.00_);[Red]\([$$-409]#,##0.00\)";
 		var rate = arg[0], nper = arg[1], pv = arg[2], fv = arg[3] ? arg[3] : new cNumber(0),
 			type = arg[4] ? arg[4] : new cNumber(0);
 
@@ -4359,7 +4360,7 @@ function (window, undefined) {
 		}
 
 		res = new cNumber(res);
-		res.numFormat = "#,##0.00\\ \"₽\";[Red]\\-#,##0.00\\ \"₽\"";
+		res.numFormat = PMT_CURRENCY_FORMAT;
 		return res;
 	};
 

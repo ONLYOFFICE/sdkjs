@@ -458,6 +458,8 @@ CopyProcessor.prototype =
             else if(AscCommon.vertalign_SubScript === Value.VertAlign)
                 aProp.push("vertical-align:sub");
         }
+        if (true === Value.SmallCaps)
+            aProp.push("font-variant:small-caps");
 		if(aProp.length > 0)
 			oTarget.oAttributes["style"] = aProp.join(';');
     },
@@ -3488,7 +3490,7 @@ PasteProcessor.prototype =
 
 
 		var specialPasteShowOptions = !specialPasteHelper.buttonInfo.isClean() ? specialPasteHelper.buttonInfo : null;
-		if(!specialPasteHelper.specialPasteStart)
+		if(!specialPasteHelper.specialPasteStart || window['AscCommon'].g_specialPasteHelper.isPasteOptions)
 		{
 			specialPasteShowOptions = specialPasteHelper.buttonInfo;
 
@@ -3533,6 +3535,7 @@ PasteProcessor.prototype =
 			if(null !== props)
 			{
 				specialPasteShowOptions.asc_setOptions(props);
+				specialPasteShowOptions.asc_setLastSelectedPasteProperty(specialPasteHelper.isPasteOptions ? AscCommon.g_specialPasteHelper.specialPasteProps : null);
 			}
 			else
 			{
@@ -3997,6 +4000,7 @@ PasteProcessor.prototype =
 
 		let specialPasteShowOptions = window['AscCommon'].g_specialPasteHelper.buttonInfo;
 		specialPasteShowOptions.asc_setOptions(props);
+		specialPasteShowOptions.asc_setLastSelectedPasteProperty(window['AscCommon'].g_specialPasteHelper.isPasteOptions ? window['AscCommon'].g_specialPasteHelper.specialPasteProps : null);
 
 		let targetDocContent = presentation.Get_TargetDocContent();
 		if(targetDocContent && targetDocContent.Id) {
@@ -9630,6 +9634,9 @@ PasteProcessor.prototype =
 			var font_style = this._getStyle(node, computedStyle, "font-style");
 			if ("italic" === font_style)
 				rPr.Italic = true;
+			var font_variant = this._getStyle(node, computedStyle, "font-variant");
+			if ("small-caps" === font_variant)
+				rPr.SmallCaps = true;
 			var color = this._getStyle(node, computedStyle, "color");
 			if (color && (color = this._ParseColor(color))) {
 				if (PasteElementsId.g_bIsDocumentCopyPaste) {
@@ -12104,6 +12111,19 @@ PasteProcessor.prototype =
 				return true;
 			}
 
+			if ("sup" === _nodeName || "sub" === _nodeName ||
+				"b" === _nodeName || "strong" === _nodeName ||
+				"i" === _nodeName || "em" === _nodeName ||
+				"u" === _nodeName ||
+				"s" === _nodeName || "strike" === _nodeName || "del" === _nodeName ||
+				"img" === _nodeName) {
+				return true;
+			}
+
+			if ("font" === _nodeName && elem.hasAttributes()) {
+				return true;
+			}
+
 			var sClass = elem.getAttribute("class");
 			var sStyle = elem.getAttribute("style");
 			var sHref = elem.getAttribute("href");
@@ -14470,6 +14490,11 @@ ParseHtmlStyle.prototype.applyStyles = function (textPr) {
 	var font_style = map.get("font-style");
 	if ("italic" === font_style) {
 		textPr.Italic = true;
+	}
+
+	var font_variant = map.get("font-variant");
+	if ("small-caps" === font_variant) {
+		textPr.SmallCaps = true;
 	}
 
 	var spacing = map.get("letter-spacing");

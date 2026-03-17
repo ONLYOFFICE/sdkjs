@@ -4729,6 +4729,19 @@ function CBinaryFileWriter()
 
             oThis.EndRecord();
         }
+
+        if (geom.hr)
+        {
+            oThis.StartRecord(3);
+
+            oThis.WriteUChar(g_nodeAttributeStart);
+            oThis._WriteBool2(0, geom.hr.noshade);
+            oThis._WriteString2(1, geom.hr.align);
+            oThis._WriteDoubleReal2(2, geom.hr.pct);
+            oThis.WriteUChar(g_nodeAttributeEnd);
+
+            oThis.EndRecord();
+        }
     };
 
     this.WritePrstTxWarp = function(prstTxWarp)

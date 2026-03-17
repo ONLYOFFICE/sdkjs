@@ -1108,6 +1108,12 @@
 		Range.prototype.getHeight = function () {
 			return this.r2 - this.r1 + 1;
 		};
+		Range.prototype.getSize = function () {
+			return {
+				row: this.getHeight(),
+				col: this.getWidth()
+			}
+		};
 		Range.prototype.transpose = function (startCol, startRow) {
 			if (startCol === undefined) {
 				startCol = this.c1;

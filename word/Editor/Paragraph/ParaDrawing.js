@@ -1284,6 +1284,33 @@ ParaDrawing.prototype.Measure = function()
 			this.Height = this.GraphicObj.extY;
 		}
 	}
+	let oHR = this.getHorizontalRule();
+	if (oHR)
+	{
+		let oParagraph = this.GetParagraph();
+		if (oParagraph)
+		{
+			let oSectPr = oParagraph.Get_SectPr();
+			if (oSectPr)
+			{
+				let nColIdx = oParagraph.ColumnNum || 0;
+				let hrColumnWidth = oSectPr.GetColumnWidth(nColIdx);
+				let oInd = oParagraph.Get_CompiledPr2(true).ParaPr.Ind;
+				if (oInd)
+				{
+					if (oInd.Left != null && oInd.Left > 0)
+						hrColumnWidth -= oInd.Left;
+					if (oInd.Right != null && oInd.Right > 0)
+						hrColumnWidth -= oInd.Right;
+				}
+				this.Width = hrColumnWidth;
+				this.WidthVisible = hrColumnWidth;
+				this.GraphicObj.recalcTransform();
+				this.GraphicObj.recalcBounds();
+				this.GraphicObj.recalculate();
+			}
+		}
+	}
 };
 ParaDrawing.prototype.GetScaleCoefficient = function ()
 {
@@ -1449,6 +1476,26 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	this.Internal_Position.Calculate_X(bInline, this.PositionH.RelativeFrom, this.PositionH.Align, this.PositionH.Value, this.PositionH.Percent);
 	this.Internal_Position.Calculate_Y(bInline, this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value, this.PositionV.Percent, isInTable);
 
+	if (bInline) {
+		let oHR = this.getHorizontalRule();
+		if (oHR) {
+			let oLine = Paragraph.Lines[LineNum];
+			if (oLine) {
+				let metrics = oLine.Metrics;
+				let lineH = metrics.Ascent + metrics.Descent + metrics.LineGap;
+				let hrH = this.GraphicObj.extY;
+				this.Internal_Position.CalcY = this.Internal_Position.LineTop + (lineH - hrH) / 2;
+			}
+			let hrExtX = this.GraphicObj.extX;
+			let hrLineW = this.WidthVisible;
+			if (hrExtX < hrLineW) {
+				if (oHR.align === "center")
+					this.Internal_Position.CalcX += (hrLineW - hrExtX) / 2;
+				else if (oHR.align === "right")
+					this.Internal_Position.CalcX += hrLineW - hrExtX;
+			}
+		}
+	}
 
 	let bCorrect = false;
 	if(oDocumentContent && oDocumentContent.IsTableCellContent && oDocumentContent.IsTableCellContent(false))
@@ -1843,6 +1890,14 @@ ParaDrawing.prototype.Is_Inline = function()
 ParaDrawing.prototype.IsInline = function()
 {
 	return this.Is_Inline();
+};
+ParaDrawing.prototype.isHorizontalRule = function()
+{
+	return this.GraphicObj && this.GraphicObj.isHorizontalRule && this.GraphicObj.isHorizontalRule();
+};
+ParaDrawing.prototype.getHorizontalRule = function()
+{
+	return this.GraphicObj && this.GraphicObj.getHorizontalRule && this.GraphicObj.getHorizontalRule();
 };
 ParaDrawing.prototype.MakeInline = function()
 {

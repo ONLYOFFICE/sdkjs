@@ -1469,7 +1469,8 @@ function (window, undefined) {
 					doAdjust = true;
 				}
 			}
-			while (tm.height > this._getContentHeight() && this._expandHeight()) {
+			let tmHeight = asc_round(tm.height * this.getZoom());
+			while (tmHeight > this._getContentHeight() && this._expandHeight()) {
 			}
 			if (bottom !== this.bottom) {
 				if (bottom > this.bottom) {
@@ -1670,7 +1671,10 @@ function (window, undefined) {
 		endPos = this.selectionEnd;
 
 		if (!window['IS_NATIVE_EDITOR']) {
-			ctx.setFillStyle(this.defaults.selectColor).clear();
+			var selOldDarkMode = ctx.isDarkMode; ctx.isDarkMode = false;
+			ctx.setFillStyle(this.defaults.selectColor);
+			ctx.isDarkMode = selOldDarkMode;
+			ctx.clear();
 		}
 
 		if (begPos !== endPos && !this.isTopLineActive) {
@@ -1771,6 +1775,23 @@ function (window, undefined) {
 			this._hideCursor();
 		} else {
 			this._showCursor();
+		}
+	};
+
+	CellEditor.prototype.updateDarkMode = function (isDarkMode) {
+		if (isDarkMode) {
+			this.drawingCtx.setDarkMode();
+			this.overlayCtx.setDarkMode();
+		} else {
+			this.drawingCtx.isDarkMode = false;
+			this.overlayCtx.isDarkMode = false;
+		}
+		if (this.cursorStyle) {
+			this.cursorStyle.backgroundColor = isDarkMode ? "#FFFFFF" : "";
+		}
+		if (this.isOpened) {
+			this._renderText();
+			this._drawSelection();
 		}
 	};
 
@@ -3161,7 +3182,8 @@ function (window, undefined) {
 		this.input.isFocused = false;
 
 		if (0 === button) {
-			if (1 === this.clickCounter.getClickCount() % 2) {
+			let clickCount = this.clickCounter.getClickCount() % 3;
+			if (clickCount === 1) {
 				this.isSelectMode = c_oAscCellEditorSelectState.char;
 				if (!event.shiftKey) {
 					this._updateCursor();
@@ -3172,7 +3194,7 @@ function (window, undefined) {
 				} else {
 					this._changeSelection(coord);
 				}
-			} else {
+			} else if (clickCount === 2) {
 				// Dbl click
 				this.isSelectMode = c_oAscCellEditorSelectState.word;
 
@@ -3198,6 +3220,9 @@ function (window, undefined) {
 				this._moveCursor(kPosition, startWord);
 				this.textRender.cursorAtTrailingEdge = true;
 				this._selectChars(kPosition, endWord);
+			} else {
+				this.isSelectMode = c_oAscCellEditorSelectState.char;
+				this.selectAll();
 			}
 		} else if (2 === button) {
 			this.handlers.trigger('onContextMenu', event);

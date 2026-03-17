@@ -1771,8 +1771,8 @@
 
 		oDoc.BlurActiveObject();
 
-		let startNearestPos = oFile.getNearestPos(nPageIdx, startPoint['x'], startPoint['y']);
-		let endNearestPos = oFile.getNearestPos(nPageIdx, endPoint['x'], endPoint['y']);
+		let startNearestPos = oFile.getNearestPos(nPageIdx, startPoint['x'] * g_dKoef_pt_to_mm, startPoint['y'] * g_dKoef_pt_to_mm);
+		let endNearestPos = oFile.getNearestPos(nPageIdx, endPoint['x'] * g_dKoef_pt_to_mm, endPoint['y'] * g_dKoef_pt_to_mm);
 
 		oFile.Selection.IsSelection = true;
 
@@ -3925,7 +3925,7 @@
 	 */
 	ApiBaseAnnotation.prototype.SetBorderColor = function(color) {
 		if (!(color instanceof AscBuilder.ApiColor)) {
-			return false;
+			AscBuilder.throwException("The name parameter must be an ApiColor object");
 		}
 
 		this.Annot.SetBorderColor(private_GetInnerColorByRGB(color["r"], color["g"], color["b"]));
@@ -3952,16 +3952,16 @@
 	/**
 	 * Sets annotation fill color.
 	 * @typeofeditors ["PDFE"]
-	 * @param {ApiColor} color
+	 * @param {?ApiColor} color - color to set fill (omit the argument to set no fill)
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBaseAnnotation/Methods/SetFillColor.js
 	 */
 	ApiBaseAnnotation.prototype.SetFillColor = function(color) {
-		if (!(color instanceof AscBuilder.ApiColor)) {
-			return false;
+		if (!(color instanceof AscBuilder.ApiColor) && color != undefined) {
+			AscBuilder.throwException("The name parameter must be an ApiColor object or undefined");
 		}
 
-		this.Annot.SetFillColor(private_GetInnerColorByRGB(color["r"], color["g"], color["b"]));
+		this.Annot.SetFillColor(color ? private_GetInnerColorByRGB(color["r"], color["g"], color["b"]) : undefined);
 		return true;
 	};
 
@@ -6867,7 +6867,7 @@
 				this.Shape.recalculatePen();
 			}
 			if (this.Shape.pen) {
-				return new AscBuilder.ApiStroke(this.Shape.pen);
+				return new AscBuilder.ApiStroke(this.Shape.pen, this.Shape.spPr);
 			}
 		}
 

@@ -153,6 +153,7 @@
 	 * @property {number} ColumnsCount - Returns a number of columns in the current range.
 	 * @property {number} RowsCount - Returns a number of rows in the current range.
 	 * @property {ApiFormatConditions} FormatConditions - Returns the collection of conditional formatting rules for the current range.
+     * @property {ApiValidation} Validation - Returns the ApiValidation class instance associated with this range. If no validation instance exists yet, it will be created.
 	 */
 	function ApiRange(range, areas) {
 		this.range = range;
@@ -7585,7 +7586,7 @@
 	 * Recalculates all formulas in the active workbook.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @param {Function} fLogger - A function which specifies the logger object for checking recalculation of formulas.
+	 * @param {Function} [fLogger] - A function which specifies the logger object for checking recalculation of formulas.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/RecalculateAllFormulas.js
 	 */
@@ -9158,10 +9159,14 @@
 	 * @param {EMU} nColOffset - The offset from the nFromCol column to the left part of the shape measured in English measure units.
 	 * @param {number} nFromRow - The number of the row where the beginning of the shape will be placed.
 	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the shape measured in English measure units.
-	 * @returns {ApiShape}
+	 * @returns {ApiShape | null}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/AddShape.js
 	 */
 	ApiWorksheet.prototype.AddShape = function (sType, nWidth, nHeight, oFill, oStroke, nFromCol, nColOffset, nFromRow, nRowOffset) {
+		if (this.worksheet && this.worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		var oShape = AscFormat.builder_CreateShape(sType, nWidth / 36000, nHeight / 36000, oFill.UniFill, oStroke.Ln, null, this.worksheet.workbook.theme, this.worksheet.getDrawingDocument(), false, this.worksheet);
 		private_SetCoords(oShape, this.worksheet, nWidth, nHeight, nFromCol, nColOffset, nFromRow, nRowOffset);
 		return new ApiShape(oShape);
@@ -9179,10 +9184,14 @@
 	 * @param {EMU} nColOffset - The offset from the nFromCol column to the left part of the image measured in English measure units.
 	 * @param {number} nFromRow - The number of the row where the beginning of the image will be placed.
 	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the image measured in English measure units.
-	 * @returns {ApiImage}
+	 * @returns {ApiImage | null}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/AddImage.js
 	 */
 	ApiWorksheet.prototype.AddImage = function (sImageSrc, nWidth, nHeight, nFromCol, nColOffset, nFromRow, nRowOffset) {
+		if (this.worksheet && this.worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		var oImage = AscFormat.DrawingObjectsController.prototype.createImage(sImageSrc, 0, 0, nWidth / 36000, nHeight / 36000);
 		private_SetCoords(oImage, this.worksheet, nWidth, nHeight, nFromCol, nColOffset, nFromRow, nRowOffset);
 		return new ApiImage(oImage);
@@ -9204,10 +9213,14 @@
 	 * @param {number} [nFromRow=0] - The row number where the beginning of the Text Art object will be placed.
 	 * @param {EMU} [nColOffset=0] - The offset from the nFromCol column to the left part of the Text Art object measured in English measure units.
 	 * @param {EMU} [nRowOffset=0] - The offset from the nFromRow row to the upper part of the Text Art object measured in English measure units.
-	 * @returns {ApiDrawing}
+	 * @returns {ApiDrawing | null}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/AddWordArt.js
 	 */
 	ApiWorksheet.prototype.AddWordArt = function (oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight, nFromCol, nFromRow, nColOffset, nRowOffset) {
+		if (this.worksheet && this.worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		oTextPr = oTextPr && oTextPr.TextPr ? oTextPr.TextPr : null;
 		nRotAngle = typeof (nRotAngle) === "number" && nRotAngle > 0 ? nRotAngle : 0;
 		nWidth = typeof (nWidth) === "number" && nWidth > 0 ? nWidth : 1828800;
@@ -9240,10 +9253,14 @@
 	 * @param {EMU} nColOffset - The offset from the nFromCol column to the left part of the OLE object measured in English measure units.
 	 * @param {number} nFromRow - The number of the row where the beginning of the OLE object will be placed.
 	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the OLE object measured in English measure units.
-	 * @returns {ApiOleObject}
+	 * @returns {ApiOleObject | null}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/AddOleObject.js
 	 */
 	ApiWorksheet.prototype.AddOleObject = function (sImageSrc, nWidth, nHeight, sData, sAppId, nFromCol, nColOffset, nFromRow, nRowOffset) {
+		if (this.worksheet && this.worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		if (typeof sImageSrc === "string" && sImageSrc.length > 0 && typeof sData === "string"
 			&& typeof sAppId === "string" && sAppId.length > 0
 			&& AscFormat.isRealNumber(nWidth) && AscFormat.isRealNumber(nHeight)
@@ -12850,7 +12867,7 @@
 		}
 	});
 	/**
-	 * Returns a collection of the ranges.
+	 * Returns the data validation object associated with this range. If no validation object exists yet, it will be created.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiValidation}
@@ -13738,7 +13755,7 @@
 			}
 			if (this.Shape.pen)
 			{
-				return new AscBuilder.ApiStroke(this.Shape.pen);
+				return new AscBuilder.ApiStroke(this.Shape.pen, this.Shape.spPr);
 			}
 		}
 
@@ -20060,8 +20077,8 @@
 	/**
 	 * Class representing data validation.
 	 * @constructor
-	 * @property {ValidationType} Type - Returns or sets the validation type.
-	 * @property {ValidationAlertStyle} AlertStyle - Returns or sets the validation alert style.
+	 * @property {ValidationType} Type - Returns the validation type.
+	 * @property {ValidationAlertStyle} AlertStyle - Returns the validation alert style.
 	 * @property {boolean} IgnoreBlank - Returns or sets a Boolean value that specifies whether blank values are permitted by the range data validation.
 	 * @property {boolean} InCellDropdown - Returns or sets a Boolean value indicating whether data validation displays a drop-down list that contains acceptable values.
 	 * @property {boolean} ShowInput - Returns or sets a Boolean value indicating whether the data validation input message will be displayed whenever the user selects a cell in the data validation range.
@@ -20070,11 +20087,11 @@
 	 * @property {string} InputMessage - Returns or sets the data validation input message.
 	 * @property {string} ErrorTitle - Returns or sets the title of the data-validation error dialog box.
 	 * @property {string} ErrorMessage - Returns or sets the data validation error message.
-	 * @property {string} Formula1 - Returns or sets the value or expression associated with the conditional format or data validation.
-	 * @property {string} Formula2 - Returns or sets the value or expression associated with the second part of a conditional format or data validation.
-	 * @property {ValidationOperator} Operator - Returns or sets the data validation operator.
+	 * @property {string} Formula1 - Returns the value or expression associated with the conditional format or data validation.
+	 * @property {string} Formula2 - Returns the value or expression associated with the second part of a conditional format or data validation.
+	 * @property {ValidationOperator} Operator - Returns the data validation operator.
 	 * @property {ApiRange} Parent - Returns the parent range object.
-	 * @property {string} Value - Returns or sets the validation value.
+	 * @property {string} Value - Returns the validation value.
 	 */
 	function ApiValidation(validations, range) {
         if (!validations || !Array.isArray(validations) || !validations.length ) {
@@ -20147,7 +20164,7 @@
         }
 
 		let processFormula = function(formula, t) {
-			if (formula === undefined || formula === null) {
+			if (formula === undefined || formula === null || formula === "") {
 				return null;
 			}
 
@@ -20167,13 +20184,8 @@
 		};
 
         const t = this;
-		if (Formula1 !== undefined) {
-			dataValidation.formula1 = processFormula(Formula1, t);
-		}
-
-		if (Formula2 !== undefined) {
-			dataValidation.formula2 = processFormula(Formula2, t);
-		}
+        dataValidation.formula1 = processFormula(Formula1, t);
+        dataValidation.formula2 = processFormula(Formula2, t);
 
 		let ranges = [];
 		if (this.range.areas) {

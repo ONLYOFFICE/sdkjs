@@ -2049,7 +2049,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The text color.
 	 * @return {ApiRange | null} - returns null if can't apply color.
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetColor.js
@@ -2220,7 +2220,7 @@
 	 *
 	 * @since 9.1.0
 	 * @param {ShdType} type - The shading type applied to the contents of the current text Range.
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The shading color.
 	 * @returns {ApiRange | null} - returns null if can't apply shadow.
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetShd.js
@@ -2802,10 +2802,10 @@
 			return "";
 
 		// numbering и styles в конце, потому что сначала нужно обойти все параграфы
-		if (bWriteNumberings)
-			oJSON["numbering"] = oWriter.jsonWordNumberings;
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
 
 		return JSON.stringify(oJSON);
 	};
@@ -3848,16 +3848,14 @@
 		this.UniFill = UniFill;
 	}
 
-
 	/**
 	 * Class representing a stroke.
 	 * @constructor
 	 */
-	function ApiStroke(oLn)
-	{
+	function ApiStroke(oLn, parentSpPr) {
 		this.Ln = oLn;
+		this.parent = parentSpPr || null;
 	}
-
 
 	/**
 	 * Class representing gradient stop.
@@ -3865,6 +3863,11 @@
 	 */
 	function ApiGradientStop(color, pos)
 	{
+		const isColorValid = color instanceof ApiColor || color instanceof ApiUniColor;
+		if (!isColorValid) {
+			throwException(new Error('The color parameter must be an instance of ApiColor or ApiUniColor'));
+		}
+
 		this.Gs = new AscFormat.CGs();
 		this.Gs.pos = pos;
 		this.Gs.color = color instanceof ApiColor
@@ -4178,6 +4181,16 @@
 	 * <b>"sysDashDotDot"</b> - 9: System dash-dot-dot style.
 	 * <b>"sysDot"</b> - 10: System dot style.
 	 * @typedef {("dash" | "dashDot" | "dot" | "lgDash" | "lgDashDot" | "lgDashDotDot" | "solid" | "sysDash" | "sysDashDot" | "sysDashDotDot" | "sysDot")} LineDashType
+	 */
+
+	/**
+	 * The line end type.
+	 * @typedef {"none" | "arrow" | "diamond" | "oval" | "stealth" | "triangle"} LineEndType
+	 */
+
+	/**
+	 * The line end size.
+	 * @typedef {"large" | "medium" | "small"} LineEndSize
 	 */
 
 	/**
@@ -4912,7 +4925,7 @@
 	 * Creates an RGB color from red, green and blue components.
 	 *
 	 * @memberof Api
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {byte} r - Red component (0-255).
 	 * @param {byte} g - Green component (0-255).
 	 * @param {byte} b - Blue component (0-255).
@@ -4928,7 +4941,7 @@
 	 * Creates an RGBA color from red, green, blue and alpha components.
 	 *
 	 * @memberof Api
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {byte} r - Red component (0-255).
 	 * @param {byte} g - Green component (0-255).
 	 * @param {byte} b - Blue component (0-255).
@@ -4945,7 +4958,7 @@
 	 * Creates a color from a HEX string.
 	 *
 	 * @memberof Api
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {string} hexString
 	 * @returns {ApiColor}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/HexColor.js
@@ -4962,7 +4975,7 @@
 	 * Creates a theme color.
 	 *
 	 * @memberof Api
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @param {SchemeColorId} [name="tx1"] The theme color name. If the provided name is not supported, the 'tx1' color will be used.
 	 * @returns {ApiColor} Instance of ApiColor with 'theme' type.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/ThemeColor.js
@@ -5831,6 +5844,16 @@
 		oReader.AssignConnectedObjects();
 		return oResult;
 	};
+	
+	/**
+	 * @undocumented
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
+	 */
+	Api.installDeveloperPlugin = Api["installDeveloperPlugin"] = function()
+	{
+		return Asc.editor.installDeveloperPlugin.apply(Asc.editor, arguments);
+	};
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -6414,6 +6437,25 @@
 		
 		let ref = this.Document.GetRef();
 		return ref && ref.SelectThisElement();
+	};
+	/**
+	 * Moves the cursor to the reference of this footnote/endnote in the main document. If this document content is not a footnote/endnote, does nothing.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @since 9.4.0
+	 * @param {boolean} isBefore - Specifies whether to place the cursor before (<em>true</em>) or after (<em>false</em>) the note reference.
+	 * @returns {boolean} Returns <em>true</em> if the cursor was moved to the reference successfully.
+	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/MoveCursorToNoteReference.js
+	 */
+	ApiDocumentContent.prototype.MoveCursorToNoteReference = function(isBefore)
+	{
+		if (!this.IsFootnote() && !this.IsEndnote())
+			return false;
+		
+		isBefore = GetBoolParameter(isBefore, false);
+		
+		let ref = this.Document.GetRef();
+		return ref && ref.MoveCursorToElement(isBefore);
 	};
 
 	/**
@@ -7973,7 +8015,7 @@
 	 */
 	ApiDocument.prototype.SetTrackRevisions = function(isTrack)
 	{
-		this.Document.SetGlobalTrackRevisions(isTrack);
+		this.Document.SetGlobalTrackRevisions(isTrack, true);
 		return true;
 	};
 	
@@ -8635,6 +8677,8 @@
 	 */
 	ApiDocument.prototype.ToJSON = function(bWriteDefaultTextPr, bWriteDefaultParaPr, bWriteTheme, bWriteSectionPr, bWriteNumberings, bWriteStyles)
 	{
+		this.Document.ProcessComplexFields();
+		
 		var oWriter = new AscJsonConverter.WriterToJSON();
 
 		var oResult = {
@@ -8644,8 +8688,8 @@
 			"theme":     bWriteTheme ? oWriter.SerTheme(this.Document.GetTheme()) : undefined,
 			"sectPr":    bWriteSectionPr ? oWriter.SerSectionPr(this.Document.SectPr) : undefined,
 			"content":   oWriter.SerContent(this.Document.Content, undefined, undefined, undefined, true),
-			"numbering": bWriteNumberings ? oWriter.jsonWordNumberings : undefined,
-			"styles":    bWriteStyles ? oWriter.SerWordStylesForWrite() : undefined
+			"styles":    bWriteStyles ? oWriter.SerWordStylesForWrite() : undefined,
+			"numbering": bWriteNumberings ? oWriter.jsonWordNumberings : undefined
 		}
 
 		return JSON.stringify(oResult);
@@ -8708,7 +8752,7 @@
 	 * @typeofeditors ["CDE", "CFE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The highlight color for the forms.
 	 * @returns {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetFormsHighlight.js
@@ -9122,7 +9166,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The highlight color for the content controls.
 	 * @returns {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiDocument/Methods/SetControlsHighlight.js
@@ -10415,18 +10459,29 @@
 	 */
 	ApiParagraph.prototype.Delete = function()
 	{
-		var oParent = this.Paragraph.GetParent();
-		var nPosInParent = this.Paragraph.GetIndex();
+		let docContent   = this.Paragraph.GetParent();
+		let posInParent = this.Paragraph.GetIndex();
 
-		if (nPosInParent !== - 1)
+		if (-1 === posInParent)
+			return false;
+
+		let logicDocument = private_GetLogicDocument();
+		let isTrackRevisions = logicDocument.IsTrackRevisions();
+		if (isTrackRevisions)
+		{
+			let state = logicDocument.SaveDocumentState();
+			logicDocument.RemoveSelection();
+			this.Paragraph.SelectThisElement(1, false);
+			docContent.Remove(-1, false, false, false, false);
+			logicDocument.LoadDocumentState(state);
+		}
+		else
 		{
 			this.Paragraph.PreDelete();
-			oParent.Remove_FromContent(nPosInParent, 1, true);
-
-			return true;
+			docContent.Remove_FromContent(posInParent, 1, true);
 		}
-		else 
-			return false;
+		
+		return true;
 	};
 	/**
 	 * Returns the next paragraph.
@@ -10802,7 +10857,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The text color.
 	 * @return {ApiParagraph} this
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiParagraph/Methods/SetColor.js
@@ -11404,24 +11459,23 @@
 		if (paragraph instanceof ApiParagraph)
 		{
 			oNewPara = paragraph;
-
-			if (sPosition === "before")
-				paraParent.Internal_Content_Add(paraIndex, oNewPara.private_GetImpl());
-			else if (sPosition === "after")
-				paraParent.Internal_Content_Add(paraIndex + 1, oNewPara.private_GetImpl());
 		}
 		else if (typeof paragraph === "string")
 		{
 			oNewPara = Api.CreateParagraph();
 			oNewPara.AddText(paragraph);
-
-			if (sPosition === "before")
-				paraParent.Internal_Content_Add(paraIndex, oNewPara.private_GetImpl());
-			else if (sPosition === "after")
-				paraParent.Internal_Content_Add(paraIndex + 1, oNewPara.private_GetImpl());
 		}
-		else 
+
+		if (oNewPara === null) {
 			return null;
+		}
+
+		oNewPara.private_GetImpl().bFromDocument = this.Paragraph.bFromDocument;
+
+		if (sPosition === 'before')
+			paraParent.Internal_Content_Add(paraIndex, oNewPara.private_GetImpl());
+		else if (sPosition === 'after')
+			paraParent.Internal_Content_Add(paraIndex + 1, oNewPara.private_GetImpl());
 
 		if (beRNewPara === true)
 			return oNewPara;
@@ -11891,10 +11945,11 @@
 	{
 		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerParagraph(this.Paragraph);
-		if (bWriteNumberings)
-			oJSON["numbering"] = oWriter.jsonWordNumberings;
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
+		
 		return JSON.stringify(oJSON);
 	};
 
@@ -12381,6 +12436,7 @@
 	};
 	/**
 	 * Returns a Range object that represents the part of the document contained in the specified run.
+	 * The run must be attached to the document before calling this method.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
 	 * @param {Number} Start - Start position index in the current element.
@@ -12390,6 +12446,9 @@
 	 */
 	ApiRun.prototype.GetRange = function(Start, End)
 	{
+		if (!this.Run.IsUseInDocument())
+			throwException("Run must be attached to document before getting its range");
+		
 		let oRange = new ApiRange(this.Run, Start, End);
 		if (oRange.isEmpty) {
 			return null;
@@ -12546,7 +12605,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The text color.
 	 * @return {ApiTextPr}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetColor.js
@@ -12723,7 +12782,7 @@
 	 *
 	 * @since 9.1.0
 	 * @param {ShdType} type - The shading type applied to the contents of the current text run.
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The shading color.
 	 * @returns {ApiTextPr}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiRun/Methods/SetShd.js
@@ -13530,10 +13589,11 @@
 	{
 		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerSectionPr(this.Section);
-		if (bWriteNumberings)
-			oJSON["numbering"] = oWriter.jsonWordNumberings;
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
+		
 		return JSON.stringify(oJSON);
 	};
 	/**
@@ -14376,10 +14436,11 @@
 	{
 		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerTable(this.Table);
-		if (bWriteNumberings)
-			oJSON["numbering"] = oWriter.jsonWordNumberings;
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
+		
 		return JSON.stringify(oJSON);
 	};
 
@@ -15957,7 +16018,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} color
+	 * @param {ApiColor} color - The text color.
 	 * @return {ApiTextPr} - this text properties.
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiTextPr/Methods/SetColor.js
@@ -19485,10 +19546,11 @@
 	{
 		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerParaDrawing(this.getParaDrawing());
-		if (bWriteNumberings)
-			oJSON["numbering"] = oWriter.jsonWordNumberings;
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
+		
 		return JSON.stringify(oJSON);
 	};
 
@@ -20143,7 +20205,7 @@
 			}
 			if (this.Shape.pen)
 			{
-				return new ApiStroke(this.Shape.pen);
+				return new ApiStroke(this.Shape.pen, this.Shape.spPr);
 			}
 		}
 
@@ -22023,6 +22085,144 @@
 		return null;
 	};
 
+	/**
+	 * Sets the beginning arrow of the stroke.
+	 *
+	 * @memberof ApiStroke
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @param {LineEndType} type - The type of the beginning arrow.
+	 * @param {LineEndSize} [width="medium"] - The width of the beginning arrow.
+	 * @param {LineEndSize} [length="medium"] - The length of the beginning arrow.
+	 * @returns {boolean}
+	 *
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiStroke/Methods/SetBeginArrow.js
+	 */
+	ApiStroke.prototype.SetBeginArrow = function (type, width, length) {
+		const typeCode = private_GetLineEndTypeCode(type);
+		if (typeCode === undefined) {
+			return false;
+		}
+
+		const widthCode = private_GetLineEndSizeCode(width);
+		const lengthCode = private_GetLineEndSizeCode(length);
+		if (widthCode === undefined || lengthCode === undefined) {
+			return false;
+		}
+
+		if (this.Ln) {
+			if (this.parent) {
+				this.Ln = this.Ln.createDuplicate();
+			}
+
+			const endArrow = new AscFormat.EndArrow();
+			endArrow.setType(typeCode);
+			endArrow.setW(widthCode);
+			endArrow.setLen(lengthCode);
+			this.Ln.setHeadEnd(endArrow);
+
+			if (this.parent) {
+				this.parent.setLn(this.Ln);
+			}
+
+			return true;
+		}
+
+		return false;
+	};
+
+	/**
+	 * Returns the beginning arrow properties of the stroke.
+	 *
+	 * @memberof ApiStroke
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @returns {{Type: LineEndType, Width: LineEndSize, Length: LineEndSize} | null}
+	 *
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiStroke/Methods/GetBeginArrow.js
+	 */
+	ApiStroke.prototype.GetBeginArrow = function () {
+		if (this.Ln && this.Ln.headEnd) {
+			return {
+				'Type': private_GetLineEndTypeString(this.Ln.headEnd.type),
+				'Width': private_GetLineEndSizeString(this.Ln.headEnd.w),
+				'Length': private_GetLineEndSizeString(this.Ln.headEnd.len)
+			};
+		}
+		return null;
+	};
+
+	/**
+	 * Sets the ending arrow of the stroke.
+	 *
+	 * @memberof ApiStroke
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @param {LineEndType} type - The type of the ending arrow.
+	 * @param {LineEndSize} [width="medium"] - The width of the ending arrow.
+	 * @param {LineEndSize} [length="medium"] - The length of the ending arrow.
+	 * @returns {boolean}
+	 *
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiStroke/Methods/SetEndArrow.js
+	 */
+	ApiStroke.prototype.SetEndArrow = function (type, width, length) {
+		const typeCode = private_GetLineEndTypeCode(type);
+		if (typeCode === undefined) {
+			return false;
+		}
+
+		const widthCode = private_GetLineEndSizeCode(width);
+		const lengthCode = private_GetLineEndSizeCode(length);
+		if (widthCode === undefined || lengthCode === undefined) {
+			return false;
+		}
+
+		if (this.Ln) {
+			if (this.parent) {
+				this.Ln = this.Ln.createDuplicate();
+			}
+
+			const endArrow = new AscFormat.EndArrow();
+			endArrow.setType(typeCode);
+			endArrow.setW(widthCode);
+			endArrow.setLen(lengthCode);
+			this.Ln.setTailEnd(endArrow);
+
+			if (this.parent) {
+				this.parent.setLn(this.Ln);
+			}
+
+			return true;
+		}
+
+		return false;
+	};
+
+	/**
+	 * Returns the ending arrow properties of the stroke.
+	 *
+	 * @memberof ApiStroke
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 *
+	 * @returns {{Type: LineEndType, Width: LineEndSize, Length: LineEndSize} | null}
+	 *
+	 * @since 9.5.0
+	 * @see office-js-api/Examples/{Editor}/ApiStroke/Methods/GetEndArrow.js
+	 */
+	ApiStroke.prototype.GetEndArrow = function () {
+		if (this.Ln && this.Ln.tailEnd) {
+			return {
+				'Type': private_GetLineEndTypeString(this.Ln.tailEnd.type),
+				'Width': private_GetLineEndSizeString(this.Ln.tailEnd.w),
+				'Length': private_GetLineEndSizeString(this.Ln.tailEnd.len)
+			};
+		}
+		return null;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiGradientStop
@@ -22283,7 +22483,7 @@
 	 * Returns a type of the ApiColor class.
 	 *
 	 * @memberof ApiColor
-	 * @typeofeditors ["CDE", "PDFE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.1.0
 	 * @returns {"color"}
 	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetClassType.js
@@ -22309,7 +22509,7 @@
 	 * Returns true if the color is a theme color.
 	 *
 	 * @memberof ApiColor
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.1.0
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/IsThemeColor.js
@@ -22322,7 +22522,7 @@
 	 * Gets the RGB components of the color.
 	 *
 	 * @memberof ApiColor
-	 * @typeofeditors ["CDE", "PDFE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.1.0
 	 * @returns {{r: byte, g: byte, b: byte}}
 	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetRGB.js
@@ -22340,7 +22540,7 @@
 	 * Gets the RGBA components of the color.
 	 *
 	 * @memberof ApiColor
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.1.0
 	 * @returns {{r: byte, g: byte, b: byte, a: byte}}
 	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetRGBA.js
@@ -22359,7 +22559,7 @@
 	 * Gets the HEX string representation of the color.
 	 *
 	 * @memberof ApiColor
-	 * @typeofeditors ["CDE", "PDFE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.1.0
 	 * @returns {string} A six-digit uppercase hex string, e.g. "FF00AA".
 	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetHex.js
@@ -22402,7 +22602,7 @@
 	 * Gets the theme color name if the color is a theme color.
 	 *
 	 * @memberof ApiColor
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.3.0
 	 * @returns {SchemeColorId | null} The theme color name or null if not a theme color.
 	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetThemeName.js
@@ -22425,7 +22625,7 @@
 	 * Converts the ApiColor object into the JSON object.
 	 *
 	 * @memberof ApiColor
-	 * @typeofeditors ["CDE", "PDFE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.3.0
 	 * @returns {string} JSON string representation of the color.
 	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/ToJSON.js
@@ -22472,7 +22672,7 @@
 	 * Converts the JSON object into the ApiColor object.
 	 *
 	 * @memberof ApiColor
-	 * @typeofeditors ["CDE", "PDFE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE", "PDFE"]
 	 * @since 9.3.0
 	 * @param {string} jsonObject - JSON representation of the color.
 	 * @returns {ApiColor|null} - new ApiColor object if the conversion was successful, null otherwise.
@@ -23263,7 +23463,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} [color]
+	 * @param {ApiColor} [color] - The border color.
 	 * @return {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetBorderColor.js
@@ -23328,7 +23528,7 @@
 	 * @typeofeditors ["CDE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} [color]
+	 * @param {ApiColor} [color] - The background color.
 	 * @return {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiInlineLvlSdt/Methods/SetBackgroundColor.js
@@ -25171,13 +25371,10 @@
 	 * Sets the border color to the current content control.
 	 * @method
 	 * @memberof ApiBlockLvlSdt
-	 * @param {byte} r - Red color component value.
-	 * @param {byte} g - Green color component value.
-	 * @param {byte} b - Blue color component value.
-	 * @param {byte} a - Alpha color component value.
 	 * @typeofeditors ["CDE"]
 	 * @since 8.3.2
-	 * @returns {boolean}
+	 * @param {ApiColor} [color] - The border color.
+	 * @return {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/SetBorderColor.js
 	 */
 	ApiBlockLvlSdt.prototype.SetBorderColor = ApiInlineLvlSdt.prototype.SetBorderColor;
@@ -25188,21 +25385,19 @@
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @since 8.3.2
-	 * @returns {null | {r:byte, g:byte, b:byte, a:byte}}
+	 * @returns {?ApiColor}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/GetBorderColor.js
 	 */
 	ApiBlockLvlSdt.prototype.GetBorderColor = ApiInlineLvlSdt.prototype.GetBorderColor;
 	
 	/**
 	 * Sets the background color to the current content control.
-	 * @memberof ApiBlockLvlSdt
 	 * @method
-	 * @param {byte} r - Red color component value.
-	 * @param {byte} g - Green color component value.
-	 * @param {byte} b - Blue color component value.
-	 * @param {byte} a - Alpha color component value.
+	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @returns {boolean}
+	 * @since 8.3.2
+	 * @param {ApiColor} [color] - The background color.
+	 * @return {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/SetBackgroundColor.js
 	 */
 	ApiBlockLvlSdt.prototype.SetBackgroundColor = ApiInlineLvlSdt.prototype.SetBackgroundColor;
@@ -25213,7 +25408,7 @@
 	 * @method
 	 * @typeofeditors ["CDE"]
 	 * @since 8.3.2
-	 * @returns {null | {r:byte, g:byte, b:byte, a:byte}}
+	 * @returns {?ApiColor}
 	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/GetBackgroundColor.js
 	 */
 	ApiBlockLvlSdt.prototype.GetBackgroundColor = ApiInlineLvlSdt.prototype.GetBackgroundColor;
@@ -25492,7 +25687,7 @@
 	 * @typeofeditors ["CDE", "CFE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} [color]
+	 * @param {ApiColor} [color] - The border color.
 	 * @return {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBorderColor.js
@@ -25578,7 +25773,7 @@
 	 * @typeofeditors ["CDE", "CFE"]
 	 *
 	 * @since 9.1.0
-	 * @param {ApiColor} [color]
+	 * @param {ApiColor} [color] - The background color.
 	 * @return {boolean}
 	 *
 	 * @see office-js-api/Examples/{Editor}/ApiFormBase/Methods/SetBackgroundColor.js
@@ -27091,10 +27286,11 @@
 	{
 		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerBlockLvlSdt(this.Sdt);
-		if (bWriteNumberings)
-			oJSON["numbering"] = oWriter.jsonWordNumberings;
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
+		
 		return JSON.stringify(oJSON);
 	};
 
@@ -29681,32 +29877,33 @@
 
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 	
-	ApiDocumentContent.prototype["GetClassType"]             = ApiDocumentContent.prototype.GetClassType;
-	ApiDocumentContent.prototype["GetInternalId"]            = ApiDocumentContent.prototype.GetInternalId;
-	ApiDocumentContent.prototype["GetElementsCount"]         = ApiDocumentContent.prototype.GetElementsCount;
-	ApiDocumentContent.prototype["GetElement"]               = ApiDocumentContent.prototype.GetElement;
-	ApiDocumentContent.prototype["AddElement"]               = ApiDocumentContent.prototype.AddElement;
-	ApiDocumentContent.prototype["Push"]                     = ApiDocumentContent.prototype.Push;
-	ApiDocumentContent.prototype["RemoveAllElements"]        = ApiDocumentContent.prototype.RemoveAllElements;
-	ApiDocumentContent.prototype["RemoveElement"]            = ApiDocumentContent.prototype.RemoveElement;
-	ApiDocumentContent.prototype["GetRange"]                 = ApiDocumentContent.prototype.GetRange;
-	ApiDocumentContent.prototype["ToJSON"]                   = ApiDocumentContent.prototype.ToJSON;
-	ApiDocumentContent.prototype["GetContent"]               = ApiDocumentContent.prototype.GetContent;
-	ApiDocumentContent.prototype["GetAllDrawingObjects"]     = ApiDocumentContent.prototype.GetAllDrawingObjects;
-	ApiDocumentContent.prototype["GetAllShapes"]             = ApiDocumentContent.prototype.GetAllShapes;
-	ApiDocumentContent.prototype["GetAllImages"]             = ApiDocumentContent.prototype.GetAllImages;
-	ApiDocumentContent.prototype["GetAllCharts"]             = ApiDocumentContent.prototype.GetAllCharts;
-	ApiDocumentContent.prototype["GetAllOleObjects"]         = ApiDocumentContent.prototype.GetAllOleObjects;
-	ApiDocumentContent.prototype["GetAllParagraphs"]         = ApiDocumentContent.prototype.GetAllParagraphs;
-	ApiDocumentContent.prototype["GetAllTables"]             = ApiDocumentContent.prototype.GetAllTables;
-	ApiDocumentContent.prototype["GetText"]                  = ApiDocumentContent.prototype.GetText;
-	ApiDocumentContent.prototype["GetCurrentParagraph"]      = ApiDocumentContent.prototype.GetCurrentParagraph;
-	ApiDocumentContent.prototype["GetCurrentRun"]            = ApiDocumentContent.prototype.GetCurrentRun;
-	ApiDocumentContent.prototype["GetCurrentContentControl"] = ApiDocumentContent.prototype.GetCurrentContentControl;
-	ApiDocumentContent.prototype["GetDocumentVisitor"]       = ApiDocumentContent.prototype.GetDocumentVisitor;
-	ApiDocumentContent.prototype["IsFootnote"]               = ApiDocumentContent.prototype.IsFootnote;
-	ApiDocumentContent.prototype["IsEndnote"]                = ApiDocumentContent.prototype.IsEndnote;
-	ApiDocumentContent.prototype["SelectNoteReference"]      = ApiDocumentContent.prototype.SelectNoteReference;
+	ApiDocumentContent.prototype["GetClassType"]              = ApiDocumentContent.prototype.GetClassType;
+	ApiDocumentContent.prototype["GetInternalId"]             = ApiDocumentContent.prototype.GetInternalId;
+	ApiDocumentContent.prototype["GetElementsCount"]          = ApiDocumentContent.prototype.GetElementsCount;
+	ApiDocumentContent.prototype["GetElement"]                = ApiDocumentContent.prototype.GetElement;
+	ApiDocumentContent.prototype["AddElement"]                = ApiDocumentContent.prototype.AddElement;
+	ApiDocumentContent.prototype["Push"]                      = ApiDocumentContent.prototype.Push;
+	ApiDocumentContent.prototype["RemoveAllElements"]         = ApiDocumentContent.prototype.RemoveAllElements;
+	ApiDocumentContent.prototype["RemoveElement"]             = ApiDocumentContent.prototype.RemoveElement;
+	ApiDocumentContent.prototype["GetRange"]                  = ApiDocumentContent.prototype.GetRange;
+	ApiDocumentContent.prototype["ToJSON"]                    = ApiDocumentContent.prototype.ToJSON;
+	ApiDocumentContent.prototype["GetContent"]                = ApiDocumentContent.prototype.GetContent;
+	ApiDocumentContent.prototype["GetAllDrawingObjects"]      = ApiDocumentContent.prototype.GetAllDrawingObjects;
+	ApiDocumentContent.prototype["GetAllShapes"]              = ApiDocumentContent.prototype.GetAllShapes;
+	ApiDocumentContent.prototype["GetAllImages"]              = ApiDocumentContent.prototype.GetAllImages;
+	ApiDocumentContent.prototype["GetAllCharts"]              = ApiDocumentContent.prototype.GetAllCharts;
+	ApiDocumentContent.prototype["GetAllOleObjects"]          = ApiDocumentContent.prototype.GetAllOleObjects;
+	ApiDocumentContent.prototype["GetAllParagraphs"]          = ApiDocumentContent.prototype.GetAllParagraphs;
+	ApiDocumentContent.prototype["GetAllTables"]              = ApiDocumentContent.prototype.GetAllTables;
+	ApiDocumentContent.prototype["GetText"]                   = ApiDocumentContent.prototype.GetText;
+	ApiDocumentContent.prototype["GetCurrentParagraph"]       = ApiDocumentContent.prototype.GetCurrentParagraph;
+	ApiDocumentContent.prototype["GetCurrentRun"]             = ApiDocumentContent.prototype.GetCurrentRun;
+	ApiDocumentContent.prototype["GetCurrentContentControl"]  = ApiDocumentContent.prototype.GetCurrentContentControl;
+	ApiDocumentContent.prototype["GetDocumentVisitor"]        = ApiDocumentContent.prototype.GetDocumentVisitor;
+	ApiDocumentContent.prototype["IsFootnote"]                = ApiDocumentContent.prototype.IsFootnote;
+	ApiDocumentContent.prototype["IsEndnote"]                 = ApiDocumentContent.prototype.IsEndnote;
+	ApiDocumentContent.prototype["SelectNoteReference"]       = ApiDocumentContent.prototype.SelectNoteReference;
+	ApiDocumentContent.prototype["MoveCursorToNoteReference"] = ApiDocumentContent.prototype.MoveCursorToNoteReference;
 
 	ApiRange.prototype["GetClassType"]               = ApiRange.prototype.GetClassType;
 	ApiRange.prototype["GetParagraph"]               = ApiRange.prototype.GetParagraph;
@@ -30471,6 +30668,10 @@
 	ApiStroke.prototype["GetWidth"]                  = ApiStroke.prototype.GetWidth;
 	ApiStroke.prototype["GetFill"]                   = ApiStroke.prototype.GetFill;
 	ApiStroke.prototype["GetDashType"]               = ApiStroke.prototype.GetDashType;
+	ApiStroke.prototype["SetBeginArrow"]             = ApiStroke.prototype.SetBeginArrow;
+	ApiStroke.prototype["GetBeginArrow"]             = ApiStroke.prototype.GetBeginArrow;
+	ApiStroke.prototype["SetEndArrow"]               = ApiStroke.prototype.SetEndArrow;
+	ApiStroke.prototype["GetEndArrow"]               = ApiStroke.prototype.GetEndArrow;
 
 	ApiGradientStop.prototype["GetClassType"]        = ApiGradientStop.prototype.GetClassType;
 	ApiGradientStop.prototype["ToJSON"]              = ApiGradientStop.prototype.ToJSON;
@@ -31478,6 +31679,51 @@
 			return Asc.c_oAscRelativeFromV.Paragraph;
 
 		return Asc.c_oAscRelativeFromV.Page;
+	}
+
+	function private_GetLineEndTypeCode(typeName) {
+		switch (typeName) {
+			case 'none': return AscFormat.LineEndType.None;
+			case 'arrow': return AscFormat.LineEndType.Arrow;
+			case 'diamond': return AscFormat.LineEndType.Diamond;
+			case 'oval': return AscFormat.LineEndType.Oval;
+			case 'stealth': return AscFormat.LineEndType.Stealth;
+			case 'triangle': return AscFormat.LineEndType.Triangle;
+		}
+		return undefined;
+	}
+
+	function private_GetLineEndTypeString(typeCode) {
+		switch (typeCode) {
+			case AscFormat.LineEndType.None: return 'none';
+			case AscFormat.LineEndType.Arrow: return 'arrow';
+			case AscFormat.LineEndType.Diamond: return 'diamond';
+			case AscFormat.LineEndType.Oval: return 'oval';
+			case AscFormat.LineEndType.Stealth: return 'stealth';
+			case AscFormat.LineEndType.Triangle: return 'triangle';
+		}
+		return 'none';
+	}
+
+	function private_GetLineEndSizeCode(sizeName) {
+		switch (sizeName) {
+			case 'large': return AscFormat.LineEndSize.Large;
+			case 'small': return AscFormat.LineEndSize.Small;
+			case 'medium': return AscFormat.LineEndSize.Mid;
+		}
+		if (sizeName === undefined) {
+			return AscFormat.LineEndSize.Mid;
+		}
+		return undefined;
+	}
+
+	function private_GetLineEndSizeString(sizeCode) {
+		switch (sizeCode) {
+			case AscFormat.LineEndSize.Large: return 'large';
+			case AscFormat.LineEndSize.Small: return 'small';
+			case AscFormat.LineEndSize.Mid: return 'medium';
+		}
+		return 'medium';
 	}
 
 	function private_GetDrawingLockType(sType)

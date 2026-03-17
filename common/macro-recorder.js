@@ -246,6 +246,7 @@
 			"value" : value
 		});
 		
+		macroData["current"] = macroData["macrosArray"].length - 1;
 		this.editor.asc_setMacros(JSON.stringify(macroData));
 		this.editor.sendEvent("asc_onMacroRecordingStop");
 	};

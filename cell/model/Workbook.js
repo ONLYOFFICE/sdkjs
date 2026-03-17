@@ -1868,8 +1868,8 @@
 			}
 
 			let isDefnameTable = defNameObj && defNameObj.type === Asc.c_oAscDefNameType.table;
-			// TODO do notify below only when we rename the table?
-			if (isDefnameTable /*&& notifyData.type === c_oNotifyType.RenameTableColumn*/) {
+			// go through  all intersected listeners only if we do not change the cell inside the table
+			if (isDefnameTable && notifyData.type !== c_oNotifyType.Dirty) {
 				// we are getting table info and notify all range listeners that intersects with the table ref
 				let table = wb.getTableByName(nameIndex);
 				if (table) {
@@ -3119,7 +3119,7 @@
 		if (s1 === s2) {
 			return 0;
 		}
-		return s1.localeCompare(s2, "en");
+		return s1.localeCompare(s2, AscCommon.g_oDefaultCultureInfo ? AscCommon.g_oDefaultCultureInfo.Name : "en");
 	}
 	function ForwardTransformationFormula(elem, formula, parsed) {
 		this.elem = elem;

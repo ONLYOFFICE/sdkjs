@@ -2065,9 +2065,13 @@ background-repeat: no-repeat;\
 		if (false === _logicDoc.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, false))
 		{
 			if (isPasteOptions) {
+				let oThis = this;
 				AscCommon.g_clipboardBase.initSpecialPasteData(function () {
+					window['AscCommon'].g_specialPasteHelper.isPasteOptions = isPasteOptions;
+					window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
+					window['AscCommon'].g_specialPasteHelper.Special_Paste_Start();
 					_logicDoc.Create_NewHistoryPoint(AscDFH.historydescription_Document_PasteHotKey);
-					AscCommon.Editor_Paste_Exec(this, null, null, null, null, props);
+					AscCommon.Editor_Paste_Exec(oThis, null, null, null, null, props);
 				});
 			} else {
 				window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
@@ -2121,10 +2125,31 @@ background-repeat: no-repeat;\
 			let checkInternal = function (str) {
 				if (str && str.indexOf("xslData;XLSY") > -1) {
 					allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.keepTextOnly]
-				} else if (str && str.indexOf("xslData;DOCY") > -1) {
+				} else if (str && str.indexOf("docData;DOCY") > -1) {
 					allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.keepTextOnly];
-				} else if (str && str.indexOf("xslData;PPTY") > -1) {
-					allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.sourceformatting, sProps.picture, sProps.keepTextOnly];
+				} else if (str && str.indexOf("pptData;") > -1) {
+					var pptDataStart = str.indexOf("pptData;") + "pptData;".length;
+					var pptDataEnd = str.indexOf("\"", pptDataStart);
+					var pptStr = pptDataEnd > -1 ? str.substring(pptDataStart, pptDataEnd) : str.substring(pptDataStart);
+					var _stream = AscFormat.CreateBinaryReader(pptStr, 0, pptStr.length);
+					var stream = new AscCommon.FileStream(_stream.data, _stream.size);
+					var p_url = stream.GetString2();
+					var p_theme = stream.GetString2();
+					var p_width = stream.GetULong();
+					var p_height = stream.GetULong();
+					var bIsMultipleContent = stream.GetBool();
+					let multipleParamsCount;
+					if (true === bIsMultipleContent) {
+						multipleParamsCount = stream.GetULong();
+					}
+
+					if (1 === multipleParamsCount || !multipleParamsCount) {
+						allowedSpecialPasteProps = [sProps.destinationFormatting];
+					} else if (2 === multipleParamsCount) {
+						allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.sourceformatting];
+					} else if (3 === multipleParamsCount) {
+						allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.sourceformatting, sProps.picture];
+					}
 				} else {
 					allowedSpecialPasteProps = [sProps.sourceformatting, sProps.keepTextOnly];
 				}
@@ -2148,8 +2173,15 @@ background-repeat: no-repeat;\
 				return;
 			}
 			
-			// Text only - no special paste options
+			// Text only
 			if (_text) {
+				allowedSpecialPasteProps = [sProps.keepTextOnly];
+				if (_image) {
+					allowedSpecialPasteProps.push(sProps.picture);
+				}
+				_specialPasteShowOptions.options = allowedSpecialPasteProps;
+				callback(_specialPasteShowOptions);
+				return;
 			}
 			
 			callback(null);
@@ -4215,7 +4247,12 @@ background-repeat: no-repeat;\
 				{
 					if(!oBorder || !oBorder.Color)
 						return;
-					oBorder.Unifill =  AscFormat.CreateUnifillFromAscColor(oBorder.Color, 0);
+					if(oBorder.Value === AscWord.BorderType.none || oBorder.Value === AscWord.BorderType.nil)
+					{
+						oBorder.Unifill = AscFormat.CreateNoFillUniFill();
+						return;
+					}
+					oBorder.Unifill = AscFormat.CreateUnifillFromAscColor(oBorder.Color, 0);
 				}
 				fCheckBorder(oBorders.Left);
 				fCheckBorder(oBorders.Top);
@@ -5309,7 +5346,7 @@ background-repeat: no-repeat;\
 	};
 	asc_CCommentDataSlide.prototype.asc_putTime         = function(v)
 	{
-		this.m_sTime = v;
+		this.m_sTime = undefined !== v && null !== v ? v : "";
 		this.m_nTimeZoneBias = new Date().getTimezoneOffset();
 	};
 	asc_CCommentDataSlide.prototype.asc_getOnlyOfficeTime         = function()
@@ -5318,7 +5355,7 @@ background-repeat: no-repeat;\
 	};
 	asc_CCommentDataSlide.prototype.asc_putOnlyOfficeTime         = function(v)
 	{
-		this.m_sOOTime = v;
+		this.m_sOOTime = undefined !== v && null !== v ? v : "";
 	};
 	asc_CCommentDataSlide.prototype.asc_getUserId       = function()
 	{
