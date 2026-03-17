@@ -849,6 +849,25 @@ CParagraphContentBase.prototype.GetParentContentControls = function()
 	return arrContentControls;
 };
 /**
+ * Получаем массив всех таблиц, внутри которых лежит данный класс
+ * @returns {Array}
+ */
+CParagraphContentBase.prototype.GetParentTables = function(tables)
+{
+	let docPos = this.GetDocumentPositionFromObject();
+	docPos.push({Class : this, Pos : 0});
+	
+	tables = tables ? tables : [];
+	for (let i = 0, count = docPos.length; i < count; ++i)
+	{
+		let obj = docPos[i].Class;
+		if (obj instanceof AscWord.Table)
+			tables.push(obj);
+	}
+	
+	return tables;
+};
+/**
  * Проверяем есть ли выделение внутри объекта
  * @returns {boolean}
  */

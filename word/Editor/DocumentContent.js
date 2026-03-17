@@ -8152,7 +8152,8 @@ CDocumentContent.prototype.Set_SelectionState2 = function(State)
     if (true !== bFlag)
     {
         var TempElement = g_oTableId.Get_ById(CurId);
-        Pos             = ( null != TempElement ? Math.min(this.Content.length - 1, TempElement.Index) : 0 );
+        Pos             = ( null != TempElement ? TempElement.Index : 0 );
+        Pos             = Math.max(0, Math.min(Pos, this.Content.length - 1));
     }
 
     this.Selection.Start    = false;

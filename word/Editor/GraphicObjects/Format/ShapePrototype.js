@@ -267,6 +267,12 @@ CShape.prototype.handleUpdateGeometry = function()
     this.recalcContent();
     this.recalcTransformText();
     this.addToRecalculate();
+    if (this.isHorizontalRule()) {
+        this.recalcTransform();
+        if (this.parent && this.parent.Refresh_RecalcData) {
+            this.parent.Refresh_RecalcData({Type: AscDFH.historyitem_Drawing_SetExtent});
+        }
+    }
 };
 CShape.prototype.convertPixToMM = function(pix)
 {

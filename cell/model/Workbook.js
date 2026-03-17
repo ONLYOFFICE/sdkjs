@@ -3119,7 +3119,7 @@
 		if (s1 === s2) {
 			return 0;
 		}
-		return s1.localeCompare(s2, "en");
+		return s1.localeCompare(s2, AscCommon.g_oDefaultCultureInfo ? AscCommon.g_oDefaultCultureInfo.Name : "en");
 	}
 	function ForwardTransformationFormula(elem, formula, parsed) {
 		this.elem = elem;

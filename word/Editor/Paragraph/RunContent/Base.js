@@ -208,6 +208,28 @@
 		docContent.SetSelectionByContentPositions(startPos, endPos);
 		return true;
 	};
+	CRunElementBase.prototype.MoveCursorToElement = function(isBefore)
+	{
+		let run = this.GetRun();
+		if (!run || !run.IsUseInDocument())
+			return false;
+		
+		let paragraph = run.GetParagraph();
+		if (!paragraph)
+			return false;
+		
+		let docContent = paragraph.GetTopDocumentContent();
+		if (!docContent)
+			return false;
+		
+		docContent.RemoveSelection();
+		
+		let inRunPos = this.GetInRunPos();
+		
+		run.Make_ThisElementCurrent(false);
+		run.SetCursorPosition(isBefore ? inRunPos : inRunPos + 1);
+		return true;
+	};
 	/**
 	 * Может ли строка начинаться с данного элемента
 	 * @returns {boolean}

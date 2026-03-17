@@ -271,13 +271,32 @@ CDrawingsController.prototype.MoveCursorToCell = function(bNext)
 };
 CDrawingsController.prototype.SetParagraphAlign = function(Align)
 {
-	if (true != this.DrawingObjects.isSelectedText())
+	if (!this.DrawingObjects.isSelectedText())
 	{
-		var ParaDrawing = this.DrawingObjects.getMajorParaDrawing();
+		let ParaDrawing = this.DrawingObjects.getMajorParaDrawing();
 		if (null != ParaDrawing)
 		{
-			var Paragraph = ParaDrawing.Parent;
-			Paragraph.Set_Align(Align);
+			let oHR = ParaDrawing.getHorizontalRule();
+			if (oHR)
+			{
+				let sHRAlign = "left";
+				if (Align === AscCommon.align_Center)
+					sHRAlign = "center";
+				else if (Align === AscCommon.align_Right)
+					sHRAlign = "right";
+				let oGeom = ParaDrawing.GraphicObj.getGeometry();
+				if (oGeom)
+				{
+					let oNewHR = oHR.createDuplicate();
+					oNewHR.align = sHRAlign;
+					oGeom.setHR(oNewHR);
+				}
+			}
+			else
+			{
+				let Paragraph = ParaDrawing.Parent;
+				Paragraph.Set_Align(Align);
+			}
 		}
 	}
 	else
@@ -376,6 +395,21 @@ CDrawingsController.prototype.SetTableProps = function(Props)
 };
 CDrawingsController.prototype.GetCalculatedParaPr = function()
 {
+	let oParaDrawing = this.DrawingObjects.getMajorParaDrawing();
+	if (oParaDrawing)
+	{
+		let oHR = oParaDrawing.getHorizontalRule();
+		if (oHR)
+		{
+			let oParagraph = oParaDrawing.Get_ParentParagraph();
+			if (oParagraph)
+			{
+				let oParaPr = oParagraph.GetCalculatedParaPr();
+				oParaPr.Jc = oHR.getJc();
+				return oParaPr;
+			}
+		}
+	}
 	return this.DrawingObjects.getParagraphParaPr();
 };
 CDrawingsController.prototype.GetCalculatedTextPr = function()
@@ -483,9 +517,19 @@ CDrawingsController.prototype.GetCurrentParagraph = function(bIgnoreSelection, a
 {
 	return this.DrawingObjects.getCurrentParagraph(bIgnoreSelection, arrSelectedParagraphs, oPr);
 };
-CDrawingsController.prototype.GetCurrentTablesStack = function(arrTables)
+CDrawingsController.prototype.GetCurrentTablesStack = function(tables)
 {
-	return this.DrawingObjects.getCurrentTablesStack(arrTables);
+	if (!tables)
+		tables = [];
+	
+	let paraDrawing = this.DrawingObjects.getMajorParaDrawing();
+	let run = paraDrawing ? paraDrawing.GetRun() : null;
+	if (run)
+		tables = run.GetParentTables(tables);
+	
+	this.DrawingObjects.getCurrentTablesStack(tables);
+	
+	return tables;
 };
 CDrawingsController.prototype.GetSelectedElementsInfo = function(oInfo)
 {

@@ -541,8 +541,8 @@
 				_y = y - penW / 2;
 			}
 		}
-		this._m(x, y);
-		this._l(r, y);
+		this._m(x, _y);
+		this._l(r, _y);
 
 		this.ds();
 

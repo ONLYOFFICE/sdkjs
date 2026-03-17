@@ -2483,7 +2483,9 @@ function (window, undefined) {
 		return this.Space;
 	};
 	asc_CTextBorder.prototype.asc_putSpace = function (v) {
-		this.Space = v;
+		// v in range 0..31 pt
+		const maxVal = 639 / 20 / 72 * 25.4 - 0.001;
+		this.Space = Math.min(maxVal, Math.max(0, v));
 	};
 	asc_CTextBorder.prototype.asc_getForSelectedCells = function () {
 		return this.ForSelectedCells;

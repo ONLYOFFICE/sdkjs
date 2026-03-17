@@ -989,11 +989,25 @@
 	CGraphicObjectBase.prototype.canEditGeometry = function () {
 		return this.getObjectType() === AscDFH.historyitem_type_Shape &&
 			!this.isPlaceholder() &&
+			!this.isHorizontalRule() &&
 			this.getNoEditPoints() !== true &&
 			!!(this.spPr && this.spPr.geometry) && !(this.isObjectInSmartArt()); // todo: functionality not available in microsoft for smartart shapes, but the OOX format supports it, currently blocked due to resizing blocking
 	};
 	CGraphicObjectBase.prototype.canEditTableOleObject = function (bReturnOle) {
 		return bReturnOle ? null : false;
+	};
+	CGraphicObjectBase.prototype.isHorizontalRule = function () {
+		let oGeom = this.getGeometry && this.getGeometry();
+		if (!(oGeom && oGeom.hr))
+			return false;
+		if (this.group)
+			return false;
+		let oParaDrawing = this.parent;
+		return !oParaDrawing || !oParaDrawing.Is_Inline || oParaDrawing.Is_Inline();
+	};
+	CGraphicObjectBase.prototype.getHorizontalRule = function () {
+		let oGeom = this.getGeometry && this.getGeometry();
+		return oGeom && oGeom.hr || null;
 	};
 	CGraphicObjectBase.prototype.canRotate = function () {
 		if (!this.canEdit()) {
@@ -2223,8 +2237,9 @@
 			}
 		}
 
+		let bHR = this.isHorizontalRule && this.isHorizontalRule();
 		if (numHandle === 0 || numHandle === 1 || numHandle === 2) {
-			if (Math.abs(t_y) < AscFormat.SNAP_DISTANCE) {
+			if (Math.abs(t_y) < AscFormat.SNAP_DISTANCE && !bHR) {
 				t_y = 0;
 				bSnapV = true;
 				bOwnV = true;
@@ -2232,7 +2247,7 @@
 		}
 
 		if (numHandle === 4 || numHandle === 5 || numHandle === 6) {
-			if (Math.abs(t_y - this.extY) < AscFormat.SNAP_DISTANCE) {
+			if (Math.abs(t_y - this.extY) < AscFormat.SNAP_DISTANCE && !bHR) {
 				t_y = this.extY;
 				bSnapV = true;
 				bOwnV = true;

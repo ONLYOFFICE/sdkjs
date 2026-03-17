@@ -6125,7 +6125,7 @@ function BinaryPPTYLoader()
         var _rec_start = s.cur;
         var _end_rec = _rec_start + s.GetULong() + 4;
 
-        if (s.cur < _end_rec)
+        while (s.cur < _end_rec)
         {
             var _t = s.GetUChar();
 
@@ -6225,6 +6225,46 @@ function BinaryPPTYLoader()
                         }
                     }
                 }
+            }
+            else if (3 == _t)
+            {
+                var _hr_end = s.cur + s.GetULong() + 4;
+                var hr = new AscFormat.CHorizontalRule();
+
+                s.Skip2(1); // start attributes
+                while (true)
+                {
+                    var _at = s.GetUChar();
+                    if (_at == g_nodeAttributeEnd)
+                        break;
+
+                    switch (_at)
+                    {
+                        case 0:
+                            hr.noshade = s.GetBool();
+                            break;
+                        case 1:
+                            hr.align = s.GetString2();
+                            break;
+                        case 2:
+                            hr.pct = s.GetDouble();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                s.Seek2(_hr_end);
+
+                if (!geom)
+                {
+                    geom = AscFormat.CreateGeometry("rect");
+                    geom.setPreset("rect");
+                }
+                geom.setHR(hr);
+            }
+            else
+            {
+                break;
             }
         }
 

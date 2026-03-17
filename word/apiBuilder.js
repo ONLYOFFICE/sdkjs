@@ -2802,10 +2802,10 @@
 			return "";
 
 		// numbering и styles в конце, потому что сначала нужно обойти все параграфы
-		if (bWriteNumberings)
-			oJSON["numbering"] = oWriter.jsonWordNumberings;
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
 
 		return JSON.stringify(oJSON);
 	};
@@ -6438,6 +6438,25 @@
 		let ref = this.Document.GetRef();
 		return ref && ref.SelectThisElement();
 	};
+	/**
+	 * Moves the cursor to the reference of this footnote/endnote in the main document. If this document content is not a footnote/endnote, does nothing.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @since 9.4.0
+	 * @param {boolean} isBefore - Specifies whether to place the cursor before (<em>true</em>) or after (<em>false</em>) the note reference.
+	 * @returns {boolean} Returns <em>true</em> if the cursor was moved to the reference successfully.
+	 * @see office-js-api/Examples/{Editor}/ApiDocumentContent/Methods/MoveCursorToNoteReference.js
+	 */
+	ApiDocumentContent.prototype.MoveCursorToNoteReference = function(isBefore)
+	{
+		if (!this.IsFootnote() && !this.IsEndnote())
+			return false;
+		
+		isBefore = GetBoolParameter(isBefore, false);
+		
+		let ref = this.Document.GetRef();
+		return ref && ref.MoveCursorToElement(isBefore);
+	};
 
 	/**
 	 * Class representing a custom XML manager, which provides methods to manage custom XML parts in the document.
@@ -7996,7 +8015,7 @@
 	 */
 	ApiDocument.prototype.SetTrackRevisions = function(isTrack)
 	{
-		this.Document.SetGlobalTrackRevisions(isTrack);
+		this.Document.SetGlobalTrackRevisions(isTrack, true);
 		return true;
 	};
 	
@@ -8658,6 +8677,8 @@
 	 */
 	ApiDocument.prototype.ToJSON = function(bWriteDefaultTextPr, bWriteDefaultParaPr, bWriteTheme, bWriteSectionPr, bWriteNumberings, bWriteStyles)
 	{
+		this.Document.ProcessComplexFields();
+		
 		var oWriter = new AscJsonConverter.WriterToJSON();
 
 		var oResult = {
@@ -8667,8 +8688,8 @@
 			"theme":     bWriteTheme ? oWriter.SerTheme(this.Document.GetTheme()) : undefined,
 			"sectPr":    bWriteSectionPr ? oWriter.SerSectionPr(this.Document.SectPr) : undefined,
 			"content":   oWriter.SerContent(this.Document.Content, undefined, undefined, undefined, true),
-			"numbering": bWriteNumberings ? oWriter.jsonWordNumberings : undefined,
-			"styles":    bWriteStyles ? oWriter.SerWordStylesForWrite() : undefined
+			"styles":    bWriteStyles ? oWriter.SerWordStylesForWrite() : undefined,
+			"numbering": bWriteNumberings ? oWriter.jsonWordNumberings : undefined
 		}
 
 		return JSON.stringify(oResult);
@@ -10438,18 +10459,29 @@
 	 */
 	ApiParagraph.prototype.Delete = function()
 	{
-		var oParent = this.Paragraph.GetParent();
-		var nPosInParent = this.Paragraph.GetIndex();
+		let docContent   = this.Paragraph.GetParent();
+		let posInParent = this.Paragraph.GetIndex();
 
-		if (nPosInParent !== - 1)
+		if (-1 === posInParent)
+			return false;
+
+		let logicDocument = private_GetLogicDocument();
+		let isTrackRevisions = logicDocument.IsTrackRevisions();
+		if (isTrackRevisions)
+		{
+			let state = logicDocument.SaveDocumentState();
+			logicDocument.RemoveSelection();
+			this.Paragraph.SelectThisElement(1, false);
+			docContent.Remove(-1, false, false, false, false);
+			logicDocument.LoadDocumentState(state);
+		}
+		else
 		{
 			this.Paragraph.PreDelete();
-			oParent.Remove_FromContent(nPosInParent, 1, true);
-
-			return true;
+			docContent.Remove_FromContent(posInParent, 1, true);
 		}
-		else 
-			return false;
+		
+		return true;
 	};
 	/**
 	 * Returns the next paragraph.
@@ -11427,24 +11459,23 @@
 		if (paragraph instanceof ApiParagraph)
 		{
 			oNewPara = paragraph;
-
-			if (sPosition === "before")
-				paraParent.Internal_Content_Add(paraIndex, oNewPara.private_GetImpl());
-			else if (sPosition === "after")
-				paraParent.Internal_Content_Add(paraIndex + 1, oNewPara.private_GetImpl());
 		}
 		else if (typeof paragraph === "string")
 		{
 			oNewPara = Api.CreateParagraph();
 			oNewPara.AddText(paragraph);
-
-			if (sPosition === "before")
-				paraParent.Internal_Content_Add(paraIndex, oNewPara.private_GetImpl());
-			else if (sPosition === "after")
-				paraParent.Internal_Content_Add(paraIndex + 1, oNewPara.private_GetImpl());
 		}
-		else 
+
+		if (oNewPara === null) {
 			return null;
+		}
+
+		oNewPara.private_GetImpl().bFromDocument = this.Paragraph.bFromDocument;
+
+		if (sPosition === 'before')
+			paraParent.Internal_Content_Add(paraIndex, oNewPara.private_GetImpl());
+		else if (sPosition === 'after')
+			paraParent.Internal_Content_Add(paraIndex + 1, oNewPara.private_GetImpl());
 
 		if (beRNewPara === true)
 			return oNewPara;
@@ -11914,10 +11945,11 @@
 	{
 		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerParagraph(this.Paragraph);
-		if (bWriteNumberings)
-			oJSON["numbering"] = oWriter.jsonWordNumberings;
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
+		
 		return JSON.stringify(oJSON);
 	};
 
@@ -12404,6 +12436,7 @@
 	};
 	/**
 	 * Returns a Range object that represents the part of the document contained in the specified run.
+	 * The run must be attached to the document before calling this method.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
 	 * @param {Number} Start - Start position index in the current element.
@@ -12413,6 +12446,9 @@
 	 */
 	ApiRun.prototype.GetRange = function(Start, End)
 	{
+		if (!this.Run.IsUseInDocument())
+			throwException("Run must be attached to document before getting its range");
+		
 		let oRange = new ApiRange(this.Run, Start, End);
 		if (oRange.isEmpty) {
 			return null;
@@ -13553,10 +13589,11 @@
 	{
 		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerSectionPr(this.Section);
-		if (bWriteNumberings)
-			oJSON["numbering"] = oWriter.jsonWordNumberings;
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
+		
 		return JSON.stringify(oJSON);
 	};
 	/**
@@ -14399,10 +14436,11 @@
 	{
 		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerTable(this.Table);
-		if (bWriteNumberings)
-			oJSON["numbering"] = oWriter.jsonWordNumberings;
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
+		
 		return JSON.stringify(oJSON);
 	};
 
@@ -19428,10 +19466,11 @@
 	{
 		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerParaDrawing(this.getParaDrawing());
-		if (bWriteNumberings)
-			oJSON["numbering"] = oWriter.jsonWordNumberings;
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
+		
 		return JSON.stringify(oJSON);
 	};
 
@@ -27114,10 +27153,11 @@
 	{
 		var oWriter = new AscJsonConverter.WriterToJSON();
 		var oJSON = oWriter.SerBlockLvlSdt(this.Sdt);
-		if (bWriteNumberings)
-			oJSON["numbering"] = oWriter.jsonWordNumberings;
 		if (bWriteStyles)
 			oJSON["styles"] = oWriter.SerWordStylesForWrite();
+		if (bWriteNumberings)
+			oJSON["numbering"] = oWriter.jsonWordNumberings;
+		
 		return JSON.stringify(oJSON);
 	};
 
@@ -29704,32 +29744,33 @@
 
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 	
-	ApiDocumentContent.prototype["GetClassType"]             = ApiDocumentContent.prototype.GetClassType;
-	ApiDocumentContent.prototype["GetInternalId"]            = ApiDocumentContent.prototype.GetInternalId;
-	ApiDocumentContent.prototype["GetElementsCount"]         = ApiDocumentContent.prototype.GetElementsCount;
-	ApiDocumentContent.prototype["GetElement"]               = ApiDocumentContent.prototype.GetElement;
-	ApiDocumentContent.prototype["AddElement"]               = ApiDocumentContent.prototype.AddElement;
-	ApiDocumentContent.prototype["Push"]                     = ApiDocumentContent.prototype.Push;
-	ApiDocumentContent.prototype["RemoveAllElements"]        = ApiDocumentContent.prototype.RemoveAllElements;
-	ApiDocumentContent.prototype["RemoveElement"]            = ApiDocumentContent.prototype.RemoveElement;
-	ApiDocumentContent.prototype["GetRange"]                 = ApiDocumentContent.prototype.GetRange;
-	ApiDocumentContent.prototype["ToJSON"]                   = ApiDocumentContent.prototype.ToJSON;
-	ApiDocumentContent.prototype["GetContent"]               = ApiDocumentContent.prototype.GetContent;
-	ApiDocumentContent.prototype["GetAllDrawingObjects"]     = ApiDocumentContent.prototype.GetAllDrawingObjects;
-	ApiDocumentContent.prototype["GetAllShapes"]             = ApiDocumentContent.prototype.GetAllShapes;
-	ApiDocumentContent.prototype["GetAllImages"]             = ApiDocumentContent.prototype.GetAllImages;
-	ApiDocumentContent.prototype["GetAllCharts"]             = ApiDocumentContent.prototype.GetAllCharts;
-	ApiDocumentContent.prototype["GetAllOleObjects"]         = ApiDocumentContent.prototype.GetAllOleObjects;
-	ApiDocumentContent.prototype["GetAllParagraphs"]         = ApiDocumentContent.prototype.GetAllParagraphs;
-	ApiDocumentContent.prototype["GetAllTables"]             = ApiDocumentContent.prototype.GetAllTables;
-	ApiDocumentContent.prototype["GetText"]                  = ApiDocumentContent.prototype.GetText;
-	ApiDocumentContent.prototype["GetCurrentParagraph"]      = ApiDocumentContent.prototype.GetCurrentParagraph;
-	ApiDocumentContent.prototype["GetCurrentRun"]            = ApiDocumentContent.prototype.GetCurrentRun;
-	ApiDocumentContent.prototype["GetCurrentContentControl"] = ApiDocumentContent.prototype.GetCurrentContentControl;
-	ApiDocumentContent.prototype["GetDocumentVisitor"]       = ApiDocumentContent.prototype.GetDocumentVisitor;
-	ApiDocumentContent.prototype["IsFootnote"]               = ApiDocumentContent.prototype.IsFootnote;
-	ApiDocumentContent.prototype["IsEndnote"]                = ApiDocumentContent.prototype.IsEndnote;
-	ApiDocumentContent.prototype["SelectNoteReference"]      = ApiDocumentContent.prototype.SelectNoteReference;
+	ApiDocumentContent.prototype["GetClassType"]              = ApiDocumentContent.prototype.GetClassType;
+	ApiDocumentContent.prototype["GetInternalId"]             = ApiDocumentContent.prototype.GetInternalId;
+	ApiDocumentContent.prototype["GetElementsCount"]          = ApiDocumentContent.prototype.GetElementsCount;
+	ApiDocumentContent.prototype["GetElement"]                = ApiDocumentContent.prototype.GetElement;
+	ApiDocumentContent.prototype["AddElement"]                = ApiDocumentContent.prototype.AddElement;
+	ApiDocumentContent.prototype["Push"]                      = ApiDocumentContent.prototype.Push;
+	ApiDocumentContent.prototype["RemoveAllElements"]         = ApiDocumentContent.prototype.RemoveAllElements;
+	ApiDocumentContent.prototype["RemoveElement"]             = ApiDocumentContent.prototype.RemoveElement;
+	ApiDocumentContent.prototype["GetRange"]                  = ApiDocumentContent.prototype.GetRange;
+	ApiDocumentContent.prototype["ToJSON"]                    = ApiDocumentContent.prototype.ToJSON;
+	ApiDocumentContent.prototype["GetContent"]                = ApiDocumentContent.prototype.GetContent;
+	ApiDocumentContent.prototype["GetAllDrawingObjects"]      = ApiDocumentContent.prototype.GetAllDrawingObjects;
+	ApiDocumentContent.prototype["GetAllShapes"]              = ApiDocumentContent.prototype.GetAllShapes;
+	ApiDocumentContent.prototype["GetAllImages"]              = ApiDocumentContent.prototype.GetAllImages;
+	ApiDocumentContent.prototype["GetAllCharts"]              = ApiDocumentContent.prototype.GetAllCharts;
+	ApiDocumentContent.prototype["GetAllOleObjects"]          = ApiDocumentContent.prototype.GetAllOleObjects;
+	ApiDocumentContent.prototype["GetAllParagraphs"]          = ApiDocumentContent.prototype.GetAllParagraphs;
+	ApiDocumentContent.prototype["GetAllTables"]              = ApiDocumentContent.prototype.GetAllTables;
+	ApiDocumentContent.prototype["GetText"]                   = ApiDocumentContent.prototype.GetText;
+	ApiDocumentContent.prototype["GetCurrentParagraph"]       = ApiDocumentContent.prototype.GetCurrentParagraph;
+	ApiDocumentContent.prototype["GetCurrentRun"]             = ApiDocumentContent.prototype.GetCurrentRun;
+	ApiDocumentContent.prototype["GetCurrentContentControl"]  = ApiDocumentContent.prototype.GetCurrentContentControl;
+	ApiDocumentContent.prototype["GetDocumentVisitor"]        = ApiDocumentContent.prototype.GetDocumentVisitor;
+	ApiDocumentContent.prototype["IsFootnote"]                = ApiDocumentContent.prototype.IsFootnote;
+	ApiDocumentContent.prototype["IsEndnote"]                 = ApiDocumentContent.prototype.IsEndnote;
+	ApiDocumentContent.prototype["SelectNoteReference"]       = ApiDocumentContent.prototype.SelectNoteReference;
+	ApiDocumentContent.prototype["MoveCursorToNoteReference"] = ApiDocumentContent.prototype.MoveCursorToNoteReference;
 
 	ApiRange.prototype["GetClassType"]               = ApiRange.prototype.GetClassType;
 	ApiRange.prototype["GetParagraph"]               = ApiRange.prototype.GetParagraph;

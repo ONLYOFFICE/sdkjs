@@ -5151,6 +5151,7 @@ function isAllowPasteLink(pastedWb) {
 
 		var activeNamedSheetView = !isPrint && this.model.getActiveNamedSheetViewId() !== null;
         var ctx = drawingCtx || this.drawingCtx;
+		var ctxOldDarkMode = ctx.isDarkMode; ctx.isDarkMode = false;
         var st = this.settings.header.style[style];
 		var backgroundColor = isPrint ? this.settings.header.printBackground : (activeNamedSheetView ? st.backgroundDark : st.background);
 		var borderColor = isPrint ? this.settings.header.printBorder : st.border;
@@ -5265,6 +5266,7 @@ function isAllowPasteLink(pastedWb) {
 
         // Для невидимых кроме border-а ничего не рисуем
         if (isZeroHeader || -1 === index) {
+			ctx.isDarkMode = ctxOldDarkMode;
             return;
         }
 
@@ -5290,6 +5292,7 @@ function isAllowPasteLink(pastedWb) {
 		this._fillText(ctx, text, textX, textY + Asc.round(tm.baseline * this.getZoom()), undefined, sr.charWidths);
 
 		this._RemoveClipRect(ctx);
+		ctx.isDarkMode = ctxOldDarkMode;
     };
 
 	WorksheetView.prototype.drawHeaderFooter = function (drawingCtx, printPagesData, indexPrintPage, countPrintPages) {
@@ -21084,6 +21087,7 @@ function isAllowPasteLink(pastedWb) {
 		var t = this;
 		var ctx = props.isOverlay ? this.overlayCtx : this.drawingCtx;
 		var isDataValidation = props.isOverlay;
+		var ctxOldDarkMode = ctx.isDarkMode; ctx.isDarkMode = false;
 
 		let isClip = null;
 		if (!isDataValidation && this._clipDrawingRect(ctx, new Asc.Range(props.col, props.row, props.col, props.row), clipType.range)) {
@@ -21095,6 +21099,7 @@ function isAllowPasteLink(pastedWb) {
 			if (isClip) {
 				this._RemoveClipRect(ctx);
 			}
+			ctx.isDarkMode = ctxOldDarkMode;
 			return;
 		}
 
@@ -21319,6 +21324,7 @@ function isAllowPasteLink(pastedWb) {
 		if (isClip) {
 			this._RemoveClipRect(ctx);
 		}
+		ctx.isDarkMode = ctxOldDarkMode;
 	};
 
 

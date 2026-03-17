@@ -2380,19 +2380,37 @@
 							let oDrawing = this.selectedObjects[i];
 							// if (oDrawing.selectStartPage === pageIndex) {
 							if (oDrawing.selectStartPage === pageIndex && !oDrawing.IsFreeText && !oDrawing.isFrameChart || (oDrawing.IsFreeText && !oDrawing.IsFreeText())) {
-								let nType = oDrawing.isForm && oDrawing.isForm() ? AscFormat.TYPE_TRACK.FORM : AscFormat.TYPE_TRACK.SHAPE
-								drawingDocument.DrawTrack(
-									nType,
-									oDrawing.getTransformMatrix(),
-									0,
-									0,
-									oDrawing.extX,
-									oDrawing.extY,
-									AscFormat.CheckObjectLine(oDrawing),
-									oDrawing.canRotate(),
-									undefined,
-									isDrawHandles && oDrawing.canEdit() && oDrawing.canResize()
-								);
+								if (oDrawing.isHorizontalRule()) {
+									let frameRect = drawingDocument.FrameRect;
+									let savedActive = frameRect.IsActive;
+									let savedRect = frameRect.Rect;
+									let savedPage = frameRect.PageIndex;
+
+									let _hrTransform = oDrawing.getTransformMatrix();
+									frameRect.IsActive = true;
+									frameRect.PageIndex = pageIndex;
+									let hrPadY = 1;
+									frameRect.Rect = {X: _hrTransform.tx, Y: _hrTransform.ty - hrPadY, R: _hrTransform.tx + oDrawing.extX, B: _hrTransform.ty + oDrawing.extY + hrPadY};
+									drawingDocument.DrawFrameTrack(drawingDocument.AutoShapesTrack.m_oOverlay);
+
+									frameRect.IsActive = savedActive;
+									frameRect.Rect = savedRect;
+									frameRect.PageIndex = savedPage;
+								} else {
+									let nType = oDrawing.isForm && oDrawing.isForm() ? AscFormat.TYPE_TRACK.FORM : AscFormat.TYPE_TRACK.SHAPE
+									drawingDocument.DrawTrack(
+										nType,
+										oDrawing.getTransformMatrix(),
+										0,
+										0,
+										oDrawing.extX,
+										oDrawing.extY,
+										AscFormat.CheckObjectLine(oDrawing),
+										oDrawing.canRotate(),
+										undefined,
+										isDrawHandles && oDrawing.canEdit() && oDrawing.canResize()
+									);
+								}
 							}
 						}
 						if (this.selectedObjects.length === 1 && this.selectedObjects[0].drawAdjustments && this.selectedObjects[0].selectStartPage === pageIndex) {
@@ -4392,17 +4410,19 @@
 								nType === AscDFH.historyitem_type_ImageShape ||
 								nType === AscDFH.historyitem_type_GroupShape) {
 
-								if (AscFormat.isRealBool(props.flipH)) {
-									oDrawing.changeFlipH(props.flipH);
-								}
-								if (AscFormat.isRealBool(props.flipV)) {
-									oDrawing.changeFlipV(props.flipV);
-								}
-								if (props.flipHInvert) {
-									oDrawing.changeFlipH(!oDrawing.flipH);
-								}
-								if (props.flipVInvert) {
-									oDrawing.changeFlipV(!oDrawing.flipV);
+								if (!oDrawing.isHorizontalRule()) {
+									if (AscFormat.isRealBool(props.flipH)) {
+										oDrawing.changeFlipH(props.flipH);
+									}
+									if (AscFormat.isRealBool(props.flipV)) {
+										oDrawing.changeFlipV(props.flipV);
+									}
+									if (props.flipHInvert) {
+										oDrawing.changeFlipH(!oDrawing.flipH);
+									}
+									if (props.flipVInvert) {
+										oDrawing.changeFlipV(!oDrawing.flipV);
+									}
 								}
 								if(oDrawing.canRotate()) {
 									if (AscFormat.isRealNumber(props.rotAdd)) {
@@ -7647,8 +7667,11 @@
 					for (var i = 0; i < drawings.length; ++i) {
 						drawing = drawings[i];
 
-						// skip sticky note for pdf editor
-						if (drawing.IsAnnot && drawing.IsAnnot() && drawing.IsComment() || drawing.IsEditFieldShape && drawing.IsEditFieldShape()) {
+						if (drawing.IsDrawing && !drawing.IsDrawing()) {
+							continue;
+						}
+
+						if (drawing.isHorizontalRule()) {
 							continue;
 						}
 

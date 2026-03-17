@@ -5791,6 +5791,107 @@ CDocument.prototype.AddInlineImage = function(W, H, Img, GraphicObject, bFlow)
     this.TurnOn_InterfaceEvents(true);
 };
 
+CDocument.prototype.AddHorizontalRule = function()
+{
+	let curParagraph = this.GetCurrentParagraph();
+
+	let existingHRDrawing = null;
+	if (curParagraph)
+	{
+		let drawings = curParagraph.GetAllDrawingObjects();
+		for (let i = 0; i < drawings.length; i++)
+		{
+			if (drawings[i].isHorizontalRule && drawings[i].isHorizontalRule())
+			{
+				existingHRDrawing = drawings[i];
+				break;
+			}
+		}
+	}
+
+	if (existingHRDrawing)
+	{
+		curParagraph.MoveCursorToEndPos();
+		this.AddNewParagraph(false);
+		curParagraph = this.GetCurrentParagraph();
+	}
+
+	let prevHRDrawing = existingHRDrawing;
+	if (!prevHRDrawing && curParagraph)
+	{
+		let prevParagraph = curParagraph.Get_DocumentPrev();
+		if (prevParagraph && prevParagraph.GetAllDrawingObjects)
+		{
+			let drawings = prevParagraph.GetAllDrawingObjects();
+			for (let i = 0; i < drawings.length; i++)
+			{
+				if (drawings[i].isHorizontalRule && drawings[i].isHorizontalRule())
+				{
+					prevHRDrawing = drawings[i];
+					break;
+				}
+			}
+		}
+	}
+
+	let sectPr = this.GetCurrentSectPr();
+	let width = sectPr.GetColumnWidth(0);
+	let height = 1.5 * (25.4 / 72);
+
+	let hr = new AscFormat.CHorizontalRule();
+	hr.align = "center";
+
+	let fill = null;
+	let ln = AscFormat.CreateNoFillLine();
+
+	if (prevHRDrawing && prevHRDrawing.GraphicObj)
+	{
+		let srcShape = prevHRDrawing.GraphicObj;
+		let srcHR = srcShape.getHorizontalRule && srcShape.getHorizontalRule();
+		if (srcHR)
+			hr = srcHR.createDuplicate();
+
+		if (srcShape.spPr)
+		{
+			if (srcShape.spPr.xfrm && AscFormat.isRealNumber(srcShape.spPr.xfrm.extY))
+				height = srcShape.spPr.xfrm.extY;
+			if (srcShape.spPr.Fill)
+				fill = srcShape.spPr.Fill.createDuplicate();
+			if (srcShape.spPr.ln)
+				ln = srcShape.spPr.ln.createDuplicate();
+		}
+	}
+
+	let shape = new AscFormat.CShape();
+	shape.setWordShape(true);
+	shape.setBDeleted(false);
+
+	let spPr = new AscFormat.CSpPr();
+	let xfrm = new AscFormat.CXfrm();
+	xfrm.setOffX(0);
+	xfrm.setOffY(0);
+	xfrm.setExtX(width);
+	xfrm.setExtY(height);
+	spPr.setXfrm(xfrm);
+	xfrm.setParent(spPr);
+
+	let geometry = AscFormat.CreateGeometry("rect");
+	geometry.setPreset("rect");
+	geometry.setHR(hr);
+
+	spPr.setGeometry(geometry);
+	spPr.setLn(ln);
+	if (fill)
+		spPr.setFill(fill);
+
+	shape.setSpPr(spPr);
+	spPr.setParent(shape);
+
+	this.AddInlineImage(width, height, null, shape);
+
+	this.Recalculate();
+	this.UpdateInterface();
+};
 CDocument.prototype.AddImages = function(aImages){
     this.Controller.AddImages(aImages);
 };
@@ -23694,6 +23795,27 @@ CDocument.prototype.ToggleComplexFieldCodes = function()
 	}
 	
 	fields[fields.length - 1].ToggleFieldCodes();
+};
+CDocument.prototype.GetComplexFieldById = function(fieldId)
+{
+	let field = null;
+	let allFields = this.GetAllFields();
+	for (let index = 0, count = allFields.length; index < count; ++index)
+	{
+		if (allFields[index] instanceof AscWord.CComplexField && allFields[index].GetFieldId() === fieldId)
+		{
+			field = allFields[index];
+			break;
+		}
+	}
+	
+	if (!field)
+		field = this.GetCurrentComplexField();
+	
+	if (!field || !(field instanceof AscWord.CComplexField) || !field.IsValid())
+		return null;
+	
+	return field;
 };
 CDocument.prototype.IsFastCollaborationBeforeViewModeInReview = function()
 {

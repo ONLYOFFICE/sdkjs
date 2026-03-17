@@ -2885,7 +2885,7 @@
         }
 
         // meta data
-        let oMeta = this.GetMeta();
+        let oMeta = Object.assign({}, this.GetMeta());
         if (oMeta != null) {
             annotFlags |= (1 << 9);
             if (memory.isForSplit || memory.isCopyPaste) {
@@ -2905,6 +2905,10 @@
                     "style": nStyle,
                     "color": this.GetTextColor()
                 }
+
+				if (memory.isForSplit && this.contentFormat) {
+					oMeta["formatValue"] = this.GetFormatValue();
+				}
             }
             memory.WriteString(JSON.stringify(oMeta));
         }

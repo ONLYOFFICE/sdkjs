@@ -7405,6 +7405,7 @@ var CPresentation = CPresentation || function(){};
             result = Function.apply(oTable, args);
             if (oTable.Content.length === 0) {
                 this.RemoveDrawing(oTable.Parent.GetId());
+				oController.resetSelection();
                 return result;
             }
         }
@@ -9263,7 +9264,7 @@ var CPresentation = CPresentation || function(){};
 		else if (activeAnnot && ((activeAnnot.IsFreeText() && activeAnnot.IsInTextBox()) || (activeAnnot.IsLine() && activeAnnot.IsDoCaption()))) {
 			return activeAnnot;
 		}
-		else if (activeDrawing && activeDrawing.GetDocContent()) {
+		else if (activeDrawing && (activeDrawing.GetDocContent() || oController.getTargetTextObject())) {
 			return activeDrawing;
 		}
 		
@@ -9846,6 +9847,12 @@ var CPresentation = CPresentation || function(){};
                 });
             }
         }
+
+		// on copy page with field with format value
+		if (oMeta && oMeta["formatValue"]) {
+			oForm.SetFormatValue(oMeta["formatValue"], true);
+		}
+
         AscPDF.FillActionsFromJSON(oForm, formJson['AA']);
 
         return oForm;
