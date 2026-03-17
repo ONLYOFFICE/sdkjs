@@ -12332,7 +12332,7 @@ function parseStringToCElement (val, cultureInfo) {
 		const unshiftDataArrays = {};
 		const unshiftIndexesArrays = {};
 		range._foreachNoEmpty(function (cell, r, c) {
-			const value = checkTypeCell(cell, true);
+			const value = AscCommonExcel.checkTypeCell(cell, true, true);
 			if (value.type !== cElementType.empty) {
 				if (!unshiftDataArrays[value.type]) {
 					unshiftDataArrays[value.type] = [];
@@ -12371,7 +12371,7 @@ function parseStringToCElement (val, cultureInfo) {
 	CountIfTypedCache.prototype.updateDataAfter = function (range, column, endIndex) {
 		const t = this;
 		range._foreachNoEmpty(function (cell, r, c) {
-			const value = checkTypeCell(cell, true);
+			const value = AscCommonExcel.checkTypeCell(cell, true, true);
 			if (r > column.end) {
 				if (value.type !== cElementType.empty) {
 					t.pushValue(column, value, r)

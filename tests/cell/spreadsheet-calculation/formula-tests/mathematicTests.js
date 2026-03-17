@@ -21868,6 +21868,29 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 0);
 
+		// Case #20: Recalculation with cross-referencing formulas (BG/BH cleaned by H1:BK200) Bug 74509
+		ws.getRange2("BG2").setValue("IN");
+		ws.getRange2("BG3").setValue("OUT");
+		ws.getRange2("BG4").setValue("OUT");
+		ws.getRange2("BH2").setValue("1");
+		ws.getRange2("BH5").setValue('=SUMIF(BG2:BG4,"IN",BH2:BH4)');
+		ws.getRange2("BH6").setValue('=SUMIF(BG2:BG4,"OUT",BH2:BH4)');
+		ws.getRange2("BH7").setValue("=BH5-BH6");
+		ws.getRange2("BH3").setValue("=BH5*1");
+		ws.getRange2("BH4").setValue("=BH5*1");
+
+		assert.strictEqual(ws.getRange2("BH5").getValue(), "1", "Recalc initial: SUMIF IN = 1");
+		assert.strictEqual(ws.getRange2("BH6").getValue(), "2", "Recalc initial: SUMIF OUT = 2");
+		assert.strictEqual(ws.getRange2("BH7").getValue(), "-1", "Recalc initial: Balance = -1");
+
+		ws.getRange2("BH2").setValue("2");
+
+		assert.strictEqual(ws.getRange2("BH3").getValue(), "2", "Recalc after: BH3 = 2");
+		assert.strictEqual(ws.getRange2("BH4").getValue(), "2", "Recalc after: BH4 = 2");
+		assert.strictEqual(ws.getRange2("BH5").getValue(), "2", "Recalc after: SUMIF IN = 2");
+		assert.strictEqual(ws.getRange2("BH6").getValue(), "4", "Recalc after: SUMIF OUT = 4");
+		assert.strictEqual(ws.getRange2("BH7").getValue(), "-2", "Recalc after: Balance = -2");
+
 		// Cleanup: remove named ranges
 		wb.delDefinesNames(defNameSumIfRange);
 		wb.delDefinesNames(defNameSumIfSum);

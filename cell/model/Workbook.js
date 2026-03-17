@@ -15254,7 +15254,11 @@
 		(true !== options.isWholeCell || options.findWhat.length === cellText.length);
 
 	};
-	Cell.prototype.isNullText=function(){
+	Cell.prototype.isNullText=function(opt_noCalc){
+		if (opt_noCalc) {
+			// Without _checkDirty: only check raw data, ignore formulaParsed
+			return null === this.number && null === this.text && null === this.multiText;
+		}
 		return this.isNullTextString() && !this.formulaParsed;
 	};
 	Cell.prototype.isEmptyTextString = function() {
@@ -15855,8 +15859,8 @@
 			}
 		}
 	};
-	Cell.prototype.getType=function(){
-		this._checkDirty();
+	Cell.prototype.getType=function(opt_noCalc){
+		if (!opt_noCalc) { this._checkDirty(); }
 		return this.type;
 	};
 	Cell.prototype.setCellStyle=function(val){
@@ -16220,8 +16224,8 @@
 		var aText = this._getValue2(AscCommon.gc_nMaxDigCountView, function(){return true;}, numFormat, cultureInfo, true);
 		return AscCommonExcel.getStringFromMultiText(aText);
 	};
-	Cell.prototype.getValueWithoutFormat = function() {
-		this._checkDirty();
+	Cell.prototype.getValueWithoutFormat = function(opt_noCalc) {
+		if (!opt_noCalc) { this._checkDirty(); }
 		var sResult = "";
 		if(null != this.number)
 		{
@@ -16256,8 +16260,8 @@
 			dDigitsCount = AscCommon.gc_nMaxDigCountView;
 		return this._getValue2(dDigitsCount, fIsFitMeasurer);
 	};
-	Cell.prototype.getNumberValue = function() {
-		this._checkDirty();
+	Cell.prototype.getNumberValue = function(opt_noCalc) {
+		if (!opt_noCalc) { this._checkDirty(); }
 		return this.number;
 	};
 	Cell.prototype.getBoolValue = function() {
@@ -17069,6 +17073,13 @@
 		const t = this;
 		// Checks cell contains formula or formula is not calculated yet
 		if (this.getIsDirty()) {
+			// Reentrant call: cell is already being calculated higher in the stack.
+			// Safe to return early — processFormula below skips calculate() via if(!isCalc),
+			// so no computation would happen anyway. Early exit avoids corrupting flags
+			// (isDirty/isCalc) that the outer frame still owns.
+			if (this.getIsCalc()) {
+				return;
+			}
 			if (g_cCalcRecursion.checkLevel()) {
 				g_cCalcRecursion.incLevel();
 				const isCalc = this.getIsCalc();

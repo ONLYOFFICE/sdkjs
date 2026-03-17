@@ -3415,13 +3415,22 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cUndefined.prototype = Object.create(cBaseType.prototype);
 	cUndefined.prototype.constructor = cUndefined;
 
-	function checkTypeCell(cell, opt_toLowerCase) {
-		if (cell && !cell.isNullText()) {
-			var type = cell.getType();
+	/**
+	 * Returns typed cElement for a cell value.
+	 * When opt_noCalc is true, uses NoCalc getters to avoid triggering _checkDirty —
+	 * used by cache builders to read raw cell state without premature formula recalculation.
+	 * @param {Cell} cell
+	 * @param {boolean} [opt_toLowerCase]
+	 * @param {boolean} [opt_noCalc]
+	 * @returns {cNumber|cString|cBool|cError|cEmpty}
+	 */
+	function checkTypeCell(cell, opt_toLowerCase, opt_noCalc) {
+		if (cell && !cell.isNullText(opt_noCalc)) {
+			var type = cell.getType(opt_noCalc);
 			if (CellValueType.Number === type) {
-				return new cNumber(cell.getNumberValue());
+				return new cNumber(cell.getNumberValue(opt_noCalc));
 			} else {
-				var val = cell.getValueWithoutFormat();
+				var val = cell.getValueWithoutFormat(opt_noCalc);
 				if (CellValueType.Bool === type) {
 					return new cBool(val);
 				} else if (CellValueType.Error === type) {
