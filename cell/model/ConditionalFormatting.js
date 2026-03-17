@@ -2185,7 +2185,9 @@
 	};
 	CFormulaCF.prototype.recalcFormula = function (ws, toInterface) {
 		var f = new AscCommonExcel.parserFormula(this.Text, null, ws);
-		if (f.parse(!toInterface)) {
+		//to interface we parse model formula without localization, from interface - with localization
+		let isParsed = toInterface ? f.parse() : f.parse(true, true);
+		if (isParsed) {
 			this.Text = toInterface ? f.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true) : f.assemble();
 		}
 	};
@@ -2223,7 +2225,7 @@
 				var ws = oWB.getActiveWs();
 				if (ws) {
 					var _f = new AscCommonExcel.parserFormula(this.Text, null, ws);
-					_f.parse(true, true);
+					_f.parse();
 					res = _f.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
 				}
 			}

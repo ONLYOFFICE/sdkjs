@@ -34,6 +34,7 @@ $(function () {
 
 	Asc.spreadsheet_api.prototype._init = function () {
 		this._loadModules();
+		this.isLoadFullApi = true;
 	};
 	Asc.spreadsheet_api.prototype._loadFonts = function (fonts, callback) {
 		callback();
@@ -697,6 +698,141 @@ $(function () {
 
 		// Clean up data after tests
 		clearData(0, 0, 5, 5);
+	});
+
+	QUnit.test('Conditional formatting: French locale decimal separator in cellIs rules', function (assert) {
+		const originalLocale = api.asc_getLocale();
+		api.asc_setLocale(1036); // French locale: decimal separator is ','
+
+		ws.getRange4(0, 0).fillData([[2]]); // A1 = 2, satisfies both rules (> 1.2 and < 3.2)
+
+		let rule1 = new AscCommonExcel.CConditionalFormattingRule();
+		rule1.asc_setType(Asc.c_oAscCFType.cellIs);
+		rule1.asc_setOperator(AscCommonExcel.ECfOperator.Operator_greaterThan);
+		let xfs1 = new Asc.asc_CellXfs();
+		let fillColor1 = getRgbColor("FFC7CE");
+		xfs1.asc_setFillColor(fillColor1);
+		rule1.asc_setDxf(xfs1);
+		rule1.asc_setValue1("1,2");
+		rule1.asc_setLocation("$A$1");
+
+		api.asc_setCF([rule1]);
+
+		wsView.setSelection(new Asc.Range(0, 0, 0, 0));
+		let cfResult = api.asc_getCF(Asc.c_oAscSelectionForCFType.selection, 0);
+		let rules = cfResult[0];
+
+		let rule2 = new AscCommonExcel.CConditionalFormattingRule();
+		rule2.asc_setType(Asc.c_oAscCFType.cellIs);
+		rule2.asc_setOperator(AscCommonExcel.ECfOperator.Operator_lessThan);
+		let xfs2 = new Asc.asc_CellXfs();
+		let fillColor2 = getRgbColor("C6EFCE");
+		xfs2.asc_setFillColor(fillColor2);
+		rule2.asc_setDxf(xfs2);
+		rule2.asc_setValue1("3,2");
+		rule2.asc_setLocation("$A$1");
+
+		rules.push(rule2);
+		api.asc_setCF([rules]);
+
+		// Check model: values must be stored with dot separator
+		let modelRules = [];
+		ws.forEachConditionalFormattingRules(function (r) { modelRules.push(r); });
+		modelRules.sort(function (a, b) { return a.priority - b.priority; });
+
+		// last added rule (rule2) gets priority=1, rule1 gets priority=2
+		assert.strictEqual(modelRules.length, 2, "two rules in model after second setCF");
+		assert.strictEqual(modelRules[0].asc_getType(), Asc.c_oAscCFType.cellIs, "rule2 model: type");
+		assert.strictEqual(modelRules[0].asc_getOperator(), AscCommonExcel.ECfOperator.Operator_lessThan, "rule2 model: operator");
+		assert.strictEqual(modelRules[0].aRuleElements[0].Text, "3.2", "rule2 model: value stored with dot separator");
+		assert.strictEqual(modelRules[1].asc_getType(), Asc.c_oAscCFType.cellIs, "rule1 model: type");
+		assert.strictEqual(modelRules[1].asc_getOperator(), AscCommonExcel.ECfOperator.Operator_greaterThan, "rule1 model: operator");
+		assert.strictEqual(modelRules[1].aRuleElements[0].Text, "1.2", "rule1 model: value stored with dot separator");
+
+		// Check interface: values must be returned with locale separator
+		cfResult = api.asc_getCF(Asc.c_oAscSelectionForCFType.selection, 0);
+		let ifaceRules = cfResult[0];
+		ifaceRules.sort(function (a, b) { return a.asc_getPriority() - b.asc_getPriority(); });
+
+		assert.strictEqual(ifaceRules[0].asc_getValue1(), "=3,2", "rule2 interface: value with locale separator");
+		assert.strictEqual(ifaceRules[1].asc_getValue1(), "=1,2", "rule1 interface: value with locale separator");
+
+		// Add a formula-type rule using a French function name and French decimal
+		api.asc_setLocalization({"SUM": "SOMME"}, "fr");
+
+		let formulaRule = new AscCommonExcel.CConditionalFormattingRule();
+		formulaRule.asc_setType(Asc.c_oAscCFType.expression);
+		formulaRule.asc_setValue1("=SOMME(A1:A1)>1,5");
+		formulaRule.asc_setLocation("$A$1");
+
+		api.asc_setCF([formulaRule]);
+
+		// Get the formula rule from the interface to obtain its ID
+		cfResult = api.asc_getCF(Asc.c_oAscSelectionForCFType.selection, 0);
+		let ifaceFormulaRule = null;
+		for (let i = 0; i < cfResult[0].length; i++) {
+			if (cfResult[0][i].asc_getType() === Asc.c_oAscCFType.expression) {
+				ifaceFormulaRule = cfResult[0][i];
+				break;
+			}
+		}
+		
+		let modelFormulaRule = ws.getCFRuleById(ifaceFormulaRule.asc_getId());
+
+		// In model: formula stored in English (English function name, dot decimal, no '=')
+		assert.strictEqual(modelFormulaRule.aRuleElements[0].Text, "SUM(A1:A1)>1.5", "formula rule model: stored in English");
+		// Via interface: formula returned with French function name, locale separator and '='
+		assert.strictEqual(ifaceFormulaRule.asc_getValue1(), "=SOMME(A1:A1)>1,5", "formula rule interface: displayed in French locale");
+
+		api.asc_setLocalization(null, null);
+		api.asc_setLocale(originalLocale);
+		clearData(0, 0, 0, 0);
+	});
+
+	QUnit.test('Conditional formatting: Russian locale with localized TRUE constant in formula', function (assert) {
+		const originalLocale = api.asc_getLocale();
+		api.asc_setLocale(1049); // Russian locale
+		api.asc_setLocalization({
+			"LocalFormulaOperands": {
+				"CONST_TRUE_FALSE": {"t": "ИСТИНА", "f": "ЛОЖЬ"}
+			}
+		}, "ru");
+
+		ws.getRange4(0, 0).fillData([[2]]);
+
+		let rule = new AscCommonExcel.CConditionalFormattingRule();
+		rule.asc_setType(Asc.c_oAscCFType.expression);
+		let xfs = new Asc.asc_CellXfs();
+		let fillColor = getRgbColor("FFC7CE");
+		xfs.asc_setFillColor(fillColor);
+		rule.asc_setDxf(xfs);
+		rule.asc_setValue1("=ИСТИНА");
+		rule.asc_setLocation("$A$1");
+
+		api.asc_setCF([rule]);
+
+		// Get rule from interface to obtain its ID
+		wsView.setSelection(new Asc.Range(0, 0, 0, 0));
+		let cfResult = api.asc_getCF(Asc.c_oAscSelectionForCFType.selection, 0);
+		let ifaceRule = cfResult[0][0];
+
+		// Get model rule directly by ID
+		let modelRule = ws.getCFRuleById(ifaceRule.asc_getId());
+
+		// In model: formula stored in English
+		assert.strictEqual(modelRule.aRuleElements[0].Text, "TRUE", "model: formula stored in English");
+		// Via interface: formula returned in Russian
+		assert.strictEqual(ifaceRule.asc_getValue1(), "=ИСТИНА", "interface: formula displayed in Russian");
+
+		// =ИСТИНА always evaluates to TRUE — fill must be applied to A1
+		ws.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange([new Asc.Range(0, 0, 0, 0)]));
+		let compiledStyle = ws.getCompiledStyle(0, 0);
+		let rgbColor = compiledStyle && compiledStyle.fill.bg();
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor), true, "fill applied — =ИСТИНА always evaluates to TRUE");
+
+		api.asc_setLocalization(null, null);
+		api.asc_setLocale(originalLocale);
+		clearData(0, 0, 0, 0);
 	});
 
 	QUnit.module("Conditional formatting");
