@@ -17196,7 +17196,8 @@
         if(!oWS) {
             return [];
         }
-        var aParsed = AscCommonExcel.getRangeByRef(_sFormula, oWS, undefined, true);
+        let checkFormula = true;
+        var aParsed = AscCommonExcel.getRangeByRef(_sFormula, oWS, undefined, true, checkFormula);
         for(var nParsed = aParsed.length - 1; nParsed > -1; nParsed--) {
             if(!aParsed[nParsed].bbox || !aParsed[nParsed].worksheet) {
                 aParsed.splice(nParsed, 1);

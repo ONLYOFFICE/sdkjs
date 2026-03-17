@@ -491,15 +491,15 @@
 			if (opt_forceBuild) {
 				if(opt_open) {
 					AscCommonExcel.executeInR1C1Mode(false, function () {
-						t.parsedRef.parse();
+						t.parsedRef.parse(true);
 					});
 				} else {
-					this.parsedRef.parse();
+					this.parsedRef.parse(true);
 				}
 				this.parsedRef.buildDependencies();
 			} else {
 				if(!opt_open) {
-					this.parsedRef.parse();
+					this.parsedRef.parse(true);
 					this.ref = this.parsedRef.assemble();
 				}
 				this.wb.dependencyFormulas.addToBuildDependencyDefName(this);
@@ -510,7 +510,7 @@
 			var res, t = this;
 			if(!this.parsedRef.isParsed) {
 				AscCommonExcel.executeInR1C1Mode(false, function () {
-					t.parsedRef.parse();
+					t.parsedRef.parse(true);
 				});
 			}
 			if(bLocale) {
@@ -1568,7 +1568,7 @@
 			for (var defNameId in this.buildDefName) {
 				var defName = this.getDefNameByNodeId(defNameId);
 				if (defName && defName.parsedRef) {
-					defName.parsedRef.parse();
+					defName.parsedRef.parse(true);
 					defName.parsedRef.buildDependencies();
 					this.addToChangedDefName(defName);
 				}
