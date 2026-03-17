@@ -873,7 +873,7 @@
 	{
 	};
 
-	CGraphicsBase.prototype.tg = function(text,x,y,codepoints)
+	CGraphicsBase.prototype.tg = function(text,x,y,codepoints, advX, advY)
 	{
 	};
 
@@ -906,6 +906,16 @@
 	};
 	
 	CGraphicsBase.prototype.SetBorder = function(border)
+	{
+	};
+	
+	CGraphicsBase.prototype.drawpath = function(type)
+	{
+	};
+	CGraphicsBase.prototype.beginCommand = function()
+	{
+	};
+	CGraphicsBase.prototype.endCommand = function()
 	{
 	};
 

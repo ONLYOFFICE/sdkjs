@@ -2257,7 +2257,7 @@ Paragraph.prototype.Draw = function(CurPage, pGraphics)
 	//    Рисуем верхнюю, нижнюю и промежуточную границы
 	this.Internal_Draw_6(CurPage, pGraphics, Pr);
 	
-	pGraphics.End_Command();
+	pGraphics.End_Command(AscFormat.DRAW_COMMAND_PARAGRAPH);
 	
 	AscWord.ParagraphStatePool.release(drawState);
 };
@@ -3117,6 +3117,8 @@ Paragraph.prototype.drawRunContentElements = function(CurPage, pGraphics, drawSt
 		PDSE.resetLine(CurLine, Y, Y - Line.Metrics.Ascent, Y + Line.Metrics.Descent);
 		for (var CurRange = 0; CurRange < RangesCount; CurRange++)
 		{
+			pGraphics.Start_Command(AscFormat.DRAW_COMMAND_LINE_RANGE, Line, CurLine, CurRange);
+			
 			X = this.Lines[CurLine].Ranges[CurRange].XVisible;
 
 			var Range = Line.Ranges[CurRange];
@@ -3134,9 +3136,11 @@ Paragraph.prototype.drawRunContentElements = function(CurPage, pGraphics, drawSt
 			}
 			
 			PDSE.endRange();
+			
+			pGraphics.End_Command(AscFormat.DRAW_COMMAND_LINE_RANGE);
 		}
 
-		pGraphics.End_Command();
+		pGraphics.End_Command(AscFormat.DRAW_COMMAND_LINE);
 	}
 };
 Paragraph.prototype.drawRunContentLines = function(CurPage, pGraphics, drawState)

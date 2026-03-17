@@ -1377,7 +1377,7 @@
 		}
 	};
 
-	CGraphics.prototype.tg = function(text,x,y,codepoints)
+	CGraphics.prototype.tg = function(text, x, y, codepoints, advX, advY)
 	{
 		if (this.m_bIsBreak)
 			return;

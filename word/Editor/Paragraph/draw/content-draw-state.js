@@ -309,18 +309,12 @@
 	 */
 	ParagraphContentDrawState.prototype.handleText = function(text, direction)
 	{
-		let width = text.GetWidthVisible();
-
-		if (Asc.editor.isPdfEditor() && this.Graphics.isPdfPageTextGen) {
-			this.Graphics.m_arrayPages[0].m_curCharWidth = width;
-		}
-
 		if (AscBidi.DIRECTION.R === direction && AscBidi.isPairedBracket(text.GetCodePoint()))
 			text.Draw(this.X, this.calcY - this.yOffset, this.Graphics, this, this.textPr, AscBidi.getPairedBracketGrapheme(text.Grapheme));
 		else
 			text.Draw(this.X, this.calcY - this.yOffset, this.Graphics, this, this.textPr);
 		
-		this.X += width;
+		this.X += text.GetWidthVisible();
 	};
 	/**
 	 * @param drawing {ParaDrawing}
@@ -392,15 +386,9 @@
 		if (para_Math_Placeholder === element.Type && this.Graphics.isPdf())
 			return;
 		
-		let width = element.GetWidthVisible();
-
-		if (Asc.editor.isPdfEditor() && this.Graphics.isPdfPageTextGen) {
-			this.Graphics.m_arrayPages[0].m_curCharWidth = width;
-		}
-
 		let linePos = this.paraMath.GetLinePosition(this.Line, this.Range);
 		element.Draw(linePos.x, linePos.y, this.Graphics, this.mathTextInfo);
-		this.X += width;
+		this.X += element.GetWidthVisible();
 	};
 	/**
 	 * @param fieldChar {ParaFieldChar}

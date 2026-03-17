@@ -10420,7 +10420,7 @@
 		CSlideBoundsChecker.prototype.FillText     = function(x, y, text) { this._checkText(x, y); };
 		CSlideBoundsChecker.prototype.FillTextCode = function(x, y, lUnicode) { this._checkText(x, y); };
 		CSlideBoundsChecker.prototype.t            = function (text, x, y) { this._checkText(x, y); };
-		CSlideBoundsChecker.prototype.tg           = function (gid, x, y) { this._checkText(x, y); };
+		CSlideBoundsChecker.prototype.tg           = function (gid, x, y, advX, advY) { this._checkText(x, y); };
 		CSlideBoundsChecker.prototype.FillText2    = function (x, y, text, cropX, cropW)  { this._checkText(x, y); };
 		CSlideBoundsChecker.prototype.t2           = function(text, x, y, cropX, cropW)  { this._checkText(x, y); };
 

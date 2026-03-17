@@ -1099,7 +1099,7 @@
 		return this.fillText(text, x, y, maxWidth, charWidths, angle);
 	};
 	
-	DrawingContext.prototype.tg = function(gid, x, y, codePoints) {
+	DrawingContext.prototype.tg = function(gid, x, y, codePoints, advX, advY) {
 		
 		var _x = this._mift.transformPointX(x, y);
 		var _y = this._mift.transformPointY(x, y);

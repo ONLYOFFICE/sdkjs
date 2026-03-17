@@ -468,8 +468,6 @@ void main() {\n\
 			drawing.draw(oRenderer);
 		});
 
-		oRenderer.m_arrayPages[0].finishCurrentLine();
-
 		return oRenderer.Memory.data.subarray(0, oRenderer.Memory.pos);
 	};
     CFile.prototype.removeSelection = function() {

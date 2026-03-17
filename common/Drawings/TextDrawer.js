@@ -1480,6 +1480,7 @@
 	var DRAW_COMMAND_NO_CREATE_GEOM = 0x07;
 	var DRAW_COMMAND_TABLE_ROW = 0x08;
 	var DRAW_COMMAND_SHAPE = 0x09;
+	var DRAW_COMMAND_LINE_RANGE = 0x0A;
 
 	function GetConstDescription(nConst) {
 		switch (nConst) {
@@ -2222,7 +2223,7 @@
 
 		if (AscCommon.g_oTextMeasurer.m_oManager) AscCommon.g_oTextMeasurer.m_oManager.LoadStringPathCode(code, false, x, y, this);
 	};
-	CTextDrawer.prototype.tg = function (gid, x, y) {
+	CTextDrawer.prototype.tg = function (gid, x, y, advX, advY) {
 		g_oTextMeasurer.SetFontInternal(this.m_oFont.Name, this.m_oFont.FontSize, Math.max(this.m_oFont.Style, 0));
 		g_oTextMeasurer.m_oManager.LoadStringPathCode(gid, true, x, y, this);
 	};
@@ -2793,6 +2794,7 @@
 	window['AscFormat'].DRAW_COMMAND_NO_CREATE_GEOM = DRAW_COMMAND_NO_CREATE_GEOM;
 	window['AscFormat'].DRAW_COMMAND_TABLE_ROW = DRAW_COMMAND_TABLE_ROW;
 	window['AscFormat'].DRAW_COMMAND_SHAPE = DRAW_COMMAND_SHAPE;
+	window['AscFormat'].DRAW_COMMAND_LINE_RANGE = DRAW_COMMAND_LINE_RANGE;
 	window['AscFormat'].CreatePenFromParams = CreatePenFromParams;
 	window['AscFormat'].CTextDrawer = CTextDrawer;
 	window['AscFormat'].PolygonWrapper = PolygonWrapper;

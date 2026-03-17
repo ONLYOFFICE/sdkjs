@@ -81,7 +81,7 @@
 		let nKoef = COEF * nFontSize * coeff;
 		if (1 === oGrapheme[2])
 		{
-			oContext.tg(oGrapheme[3], nX + oGrapheme[6] * nKoef, nY - oGrapheme[7] * nKoef, oGrapheme[8]);
+			oContext.tg(oGrapheme[3], nX + oGrapheme[6] * nKoef, nY - oGrapheme[7] * nKoef, oGrapheme[8], oGrapheme[4] * nKoef, oGrapheme[5] * nKoef);
 		}
 		else
 		{
@@ -90,15 +90,15 @@
 			for (let nIndex = 0, nCount = oGrapheme[2]; nIndex < nCount; ++nIndex)
 			{
 				let nGID          = oGrapheme[nPos++];
-				let nAdvanceX     = oGrapheme[nPos++];
-				let nAdvanceY     = oGrapheme[nPos++];
+				let nAdvanceX     = oGrapheme[nPos++] * nKoef;
+				let nAdvanceY     = oGrapheme[nPos++] * nKoef;
 				let nOffsetX      = oGrapheme[nPos++];
 				let nOffsetY      = oGrapheme[nPos++];
 				let arrCodePoints = oGrapheme[nPos++];
 				
-				oContext.tg(nGID, nX + nOffsetX * nKoef, nY - nOffsetY * nKoef, arrCodePoints);
-				nX += nAdvanceX * nKoef;
-				nY += nAdvanceY * nKoef;
+				oContext.tg(nGID, nX + nOffsetX * nKoef, nY - nOffsetY * nKoef, arrCodePoints, nAdvanceX, nAdvanceY);
+				nX += nAdvanceX;
+				nY += nAdvanceY;
 			}
 		}
 	}

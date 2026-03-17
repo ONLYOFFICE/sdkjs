@@ -335,9 +335,9 @@ CNativeGraphics.prototype.FillTextCode = function(x, y, lUnicode)
 {
     this.Native["FillTextCode"](x, y, lUnicode);
 };
-CNativeGraphics.prototype.tg = function(code, x, y)
+CNativeGraphics.prototype.tg = function(code, x, y, advX, advY)
 {
-    this.Native["tg"](code, x, y);
+    this.Native["tg"](code, x, y, advX, advY);
 };
 
 CNativeGraphics.prototype.SetIntegerGrid = function(param)

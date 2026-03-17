@@ -35,24 +35,35 @@
 (function(window, undefined)
 {
 	function CPdfTextMetafile() {
-		AscCommon.CMetafile.apply(this, arguments);
+		AscCommon.CGraphicsBase.apply(this, arguments);
 		
-		// Internal state for line tracking
-		this.m_currentLineStartPos = -1; 
-		this.m_currentLineWidth = 0;
-		this.m_charCountInLine = 0;
-		this.m_curCharWidth = 0;
+		this.m_oTransform = new AscCommon.CMatrix();
+		this.Memory       = null;
+		this.m_oGrFonts   = new AscCommon.CGrRFonts();
+		
+		this.fontFile = null;
+		this.fontInfo = {
+			FontFamily : {Name : "", Index : -1},
+			FontSize : 0,
+			Italic : false,
+			Bold : false
+		};
+		
+		this._lineStartPos = 0;
+		this._newLine = true;
+		this._charCountInLine = 0;
+		this._startX = 0;
+		this._endX   = 0;
+		this._prevX  = 0;
+		
+		this._ascent = 0;
+		this._descent = 0;
+		this._curAscent = 0;
+		this._curDescent = 0;
 	}
 
-	CPdfTextMetafile.prototype = Object.create(AscCommon.CMetafile.prototype);
+	CPdfTextMetafile.prototype = Object.create(AscCommon.CGraphicsBase.prototype);
 	CPdfTextMetafile.prototype.constructor = CPdfTextMetafile;
-
-	// Override all methods of the parent class
-	for (let prop in AscCommon.CMetafile.prototype) {
-		if (typeof AscCommon.CMetafile.prototype[prop] === 'function') {
-			CPdfTextMetafile.prototype[prop] = function() { return; };
-		}
-	}
 
 	CPdfTextMetafile.prototype.transform = function(sx, shy, shx, sy, tx, ty) {
 		if (this.m_oTransform.sx != sx || this.m_oTransform.shx != shx || this.m_oTransform.shy != shy ||
@@ -68,151 +79,137 @@
 	};
 
 	CPdfTextMetafile.prototype.SetFontInternal = function(name, size, style) {
-		let _lastFont = this.m_oFontSlotFont;
-		_lastFont.Name = name;
-		_lastFont.Size = size;
-		_lastFont.Bold = (style & AscFonts.FontStyle.FontStyleBold) ? true : false;
-		_lastFont.Italic = (style & AscFonts.FontStyle.FontStyleItalic) ? true : false;
-
-		this.m_oFontTmp.FontFamily.Name = _lastFont.Name;
-		this.m_oFontTmp.Bold = _lastFont.Bold;
-		this.m_oFontTmp.Italic = _lastFont.Italic;
-		this.m_oFontTmp.FontSize = _lastFont.Size;
-		this.SetFont(this.m_oFontTmp);
+		this.SetFont({
+			FontFamily : {Name : name, Index : -1},
+			FontSize : size,
+			Italic : !!(style & AscFonts.FontStyle.FontStyleItalic),
+			Bold : !!(style & AscFonts.FontStyle.FontStyleBold)
+		});
 	};
 
-	CPdfTextMetafile.prototype.SetFont = function(font, isFromPicker) {
+	CPdfTextMetafile.prototype.SetFont = function(font) {
 		if (!font) return;
-
-		// Calculate the style for the metric
+		
+		if (this.fontInfo.FontFamily.Name === font.FontFamily.Name
+			&& this.fontInfo.FontSize === font.FontSize
+			&& this.fontInfo.Bold === font.Bold
+			&& this.fontInfo.Italic === font.Italic) {
+			return;
+		}
+		
+		this.fontInfo.FontFamily.Name = font.FontFamily.Name;
+		this.fontInfo.FontSize = font.FontSize;
+		this.fontInfo.Bold = font.Bold;
+		this.fontInfo.Italic = font.Italic;
+		
 		let style = 0;
-		if (font.Italic) style += 2;
-		if (font.Bold) style += 1;
-
-		// Check whether the font has changed relative to the current state of m_oFont
-        // CMetafile usually already contains m_oFont; we use it for comparison
-		if (this.m_oFont.FontSize !== font.FontSize) {
-			this.m_oFont.Name = font.FontFamily.Name;
-			this.m_oFont.FontSize = font.FontSize;
-			this.m_oFont.Style = style;
-			
-			// 1. If there was an active line, we close it (and record the final width)
-			this.finishCurrentLine();
-
-			// 2. Update font metrics using the global meter
-			g_oTextMeasurer.SetFontInternal(font.FontFamily.Name, font.FontSize, style);
-			this.m_currentAscent = g_oTextMeasurer.GetAscender();
-			this.m_currentDescent = Math.abs(g_oTextMeasurer.GetDescender());
-			
-			// 3. Reset the line start flag so that tg starts a new entry
-			this.m_currentLineStartPos = -1;
-		}
+		if (font.Italic)
+			style |= AscFonts.FontStyle.FontStyleItalic;
+		
+		if (font.Bold)
+			style |= AscFonts.FontStyle.FontStyleBold;
+		
+		this.fontFile = g_oTextMeasurer.SetFontInternal(this.fontInfo.FontFamily.Name, this.fontInfo.FontSize, style);
+		
+		this._curAscent  = g_oTextMeasurer.GetAscender();
+		this._curDescent = Math.abs(g_oTextMeasurer.GetDescender());
 	};
 
-	CPdfTextMetafile.prototype.FillTextCode = function(x, y, code) {
-		let _code = code;
-		if (null != this.LastFontOriginInfo.Replace)
-			_code = g_fontApplication.GetReplaceGlyph(_code, this.LastFontOriginInfo.Replace);
-
-		if (this.FontPicker)
-			this.FontPicker.FillTextCode(_code);
-
-		this.tg(undefined, x, y, [code]);
+	CPdfTextMetafile.prototype.FillTextCode = function(x, y, codePoint) {
+		let advance = g_oTextMeasurer.MeasureCode(codePoint);
+		this.tg(0, x, y, [codePoint], advance.Width, advance.Height);
 	};
-	CPdfTextMetafile.prototype.tg = function(gid, x, y, codepoints) {
+	CPdfTextMetafile.prototype.tg = function(gid, x, y, codepoints, advX, advY) {
 		let unicode = (Array.isArray(codepoints)) ? codepoints[0] : codepoints;
-		let glyphWidth = this.m_curCharWidth;
-
-		let _x = this.m_oTransform.TransformPointX(x,y);
-		let _y = this.m_oTransform.TransformPointY(x,y);
-
-		if (x <= this.m_LastX || y !== this.m_LastY) {
-			this.finishCurrentLine();
-		}
-
-		// If the line hasn't started yet, write the line header
-		if (this.m_currentLineStartPos === -1) {
-			this.Memory.WriteLong(_x * 10000);
-			this.Memory.WriteLong(_y * 10000);
-			
-			let isComplex = !this.m_oTransform.IsIdentity2();
-			if (!isComplex) {
-				this.Memory.WriteByte(0);
-			}
-			else {
-				this.Memory.WriteByte(1);
-				
-				let angle = this.m_oTransform.GetRotation();
-				let rad = (angle * Math.PI) / 180;
-				
-				let ex = Math.cos(rad);
-				let ey = Math.sin(rad);
-
-				this.Memory.WriteLong(ex * 10000);
-				this.Memory.WriteLong(ey * 10000);
-			}
-
-			this.Memory.WriteLong(this.m_currentAscent * 10000);
-			this.Memory.WriteLong(this.m_currentDescent * 10000);
-
-			// 1. Save the position for the final width (dWidthLine)
-			this.m_currentLineStartPos = this.Memory.GetCurPosition();
-			this.Memory.Skip(4);
-
-			// 2. Save the position for nCount (number of characters)
-			this.m_countPosition = this.Memory.GetCurPosition();
-			this.Memory.Skip(4);
-
-			this.m_currentLineWidth = 0;
-			this.m_charCountInLine = 0;
-		}
-		else if (this.m_charCountInLine > 0) {
-			if (this.m_LastX !== undefined) {
-				let spaceW = x - this.m_LastX - this.m_LastCharW;
-
-				// If the jump is longer than the width of the previous character, we account for the width of that jump
-				if (this.m_LastX + this.m_LastCharW !== x) {
-					let curCharWidth = this.m_curCharWidth;
-					this.m_curCharWidth = spaceW;
-
-					this.tg(undefined, this.m_LastX + this.m_LastCharW, y, [65535]);
-					this.m_curCharWidth = curCharWidth;
-				}
-			}
-			
-			this.Memory.WriteLong((x - this.m_LastX) * 10000);
-		}
+		
+		if (this._newLine || (this._x - x) > 0.001)
+			this.startLine(x, y);
+		
+		this.updateFontMetrics();
+		
+		if (this._charCountInLine)
+			this.Memory.WriteLong((x - this._prevX) * 10000);
 
 		this.Memory.WriteLong(unicode);
-		this.Memory.WriteLong(glyphWidth * 10000);
+		this.Memory.WriteLong(advX * 10000);
 		
-		this.m_currentLineWidth += glyphWidth;
-		this.m_charCountInLine++;
-
-		this.m_LastCharW = glyphWidth;
-		this.m_LastX = x;
-		this.m_LastY = y;
+		this._curX  = x;
+		this._prevX = x;
+		this._endX  = x + advX;
+		
+		this._charCountInLine++;
 	};
 
-	// Method for finalizing a line
-	CPdfTextMetafile.prototype.finishCurrentLine = function() {
-		if (this.m_currentLineStartPos !== -1) {
-			let totalWidth = this.m_currentLineWidth;
-			let endPosition = this.Memory.GetCurPosition();
-
-			// Record the width
-			this.Memory.Seek(this.m_currentLineStartPos);
-			this.Memory.WriteLong(totalWidth * 10000);
-
-			// Record the number of characters
-			this.Memory.Seek(this.m_countPosition);
-			this.Memory.WriteLong(this.m_charCountInLine);
-
-			this.Memory.Seek(endPosition);
-			
-			// Reset the flag so that the next iteration of tg starts a new structure
-			this.m_currentLineStartPos = -1;
+	CPdfTextMetafile.prototype.endLine = function() {
+		if (0 === this._charCountInLine)
+			return;
+		
+		let curPos = this.Memory.GetCurPosition();
+		this.Memory.Seek(this._lineStartPos);
+		this.Memory.WriteLong(this._ascent * 10000);
+		this.Memory.WriteLong(this._descent * 10000);
+		this.Memory.WriteLong((this._endX - this._startX) * 10000);
+		this.Memory.WriteLong(this._charCountInLine);
+		this.Memory.Seek(curPos);
+		
+		this._newLine = true;
+		this._charCountInLine = 0;
+	};
+	
+	CPdfTextMetafile.prototype.startLine = function(x, y) {
+		
+		this.endLine();
+		
+		this._startX = x;
+		
+		let _x = this.m_oTransform.TransformPointX(x, y);
+		let _y = this.m_oTransform.TransformPointY(x, y);
+		
+		this.Memory.WriteLong(_x * 10000);
+		this.Memory.WriteLong(_y * 10000);
+		
+		if (this.m_oTransform.IsIdentity2()) {
+			this.Memory.WriteByte(0);
 		}
+		else {
+			this.Memory.WriteByte(1);
+			
+			let angle = this.m_oTransform.GetRotation();
+			let rad = (angle * Math.PI) / 180;
+			
+			let ex = Math.cos(rad);
+			let ey = Math.sin(rad);
+			
+			this.Memory.WriteLong(ex * 10000);
+			this.Memory.WriteLong(ey * 10000);
+		}
+		
+		this._lineStartPos = this.Memory.GetCurPosition();
+		this.Memory.Skip(4); // ascent
+		this.Memory.Skip(4); // descent
+		this.Memory.Skip(4); // total width
+		this.Memory.Skip(4); // char count
+		
+		this._ascent = 0;
+		this._descent = 0;
+		
+		this._charCountInLine = 0;
+		this._newLine = false;
+	};
+	CPdfTextMetafile.prototype.Start_Command = function(commandId) {
+		if (AscFormat.DRAW_COMMAND_LINE_RANGE === commandId) {
+			this._newLine = true;
+			this._charCountInLine = 0;
+		}
+	};
+	CPdfTextMetafile.prototype.End_Command = function(commandId) {
+		if (AscFormat.DRAW_COMMAND_LINE_RANGE === commandId) {
+			this.endLine();
+		}
+	};
+	CPdfTextMetafile.prototype.updateFontMetrics = function(commandId) {
+		this._ascent = Math.max(this._ascent, this._curAscent);
+		this._descent = Math.max(this._descent, this._curDescent);
 	};
 
 	window['AscPDF'].CPdfTextMetafile = CPdfTextMetafile;
