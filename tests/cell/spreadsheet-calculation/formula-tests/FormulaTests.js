@@ -901,7 +901,7 @@ $(function () {
 		assert.strictEqual(ws.getRange2("B1030").getValue(), "", "Test: Recrusive cell with IF formula, with empty cell (\"\"). B1030 - \"\"");
 		ws.getRange2("A1030").setValue("Test");
 		let date = new cDate();
-		let excelDate = date.getExcelDate();
+		let excelDate = date.getExcelDate(true);
 		assert.strictEqual(Math.floor(ws.getRange2("B1030").getValue()), excelDate, "Test: Recrusive cell with IF formula, with empty cell (\"\"). B1030 - " + excelDate);
 		// Check work isFormulaRecursive function
 		bCaFromSelectedCell = getCaFromSelectedCell("B1030");

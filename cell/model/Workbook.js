@@ -1625,7 +1625,12 @@
 			let repeatCount = 0;
 			while (this.changedCellRepeated || this.changedRangeRepeated || this.changedDefNameRepeated) {
 				if (++repeatCount > this.maxBroadcastRecursion) {
+					// Safety: notify remaining formulas and exit to prevent infinite loop
 					this.notifyAllFormulasInChangedWs();
+					this.changedCellRepeated = null;
+					this.changedRangeRepeated = null;
+					this.changedDefNameRepeated = null;
+					break;
 				}
 
 				this._broadcastDefNames(notifyData);
@@ -2150,6 +2155,22 @@
 					}
 				}
 			});
+
+			// Detect circular references that were missed by the normal addCycleCell path.
+			// This happens when a cycle goes through area references (e.g. SUMIF(range))
+			// where ca=true gets set via checkRecursiveFormula but addCycleCell is never called
+			// because recheckCellForCycle only runs at level===1 and foreachRefElements
+			// doesn't see the indirect dependency through the aggregation function.
+			if (!g_cCalcRecursion.getCycleCells().length && !g_cCalcRecursion.getIsEnabledRecursion()) {
+				this._foreachChanged(function (oCell) {
+					if (oCell && oCell.isFormula()) {
+						const fp = oCell.getFormulaParsed();
+						if (fp && fp.ca === true) {
+							g_cCalcRecursion.addCycleCell(oCell);
+						}
+					}
+				});
+			}
 
 			if (g_cCalcRecursion.getCycleCells().length && g_cCalcRecursion.getShowCycleWarn()) {
 				const oApi = Asc.editor;
@@ -17120,6 +17141,30 @@
 							const refElements = parsed.getRefElements();
 							t.recheckCellForCycle(refElements, parsed);
 							g_cCalcRecursion.resetRecheckFormula();
+						}
+						// POST-calculate area-cycle detection for formulas loaded from file (ca===null).
+						// SUMIF reads cells via TypedCache bypassing _checkDirty, so the standard
+						// recheckCellForCycle never fires. After calculate we check: if any ref-element
+						// cell has isCalc===true, this formula is part of a cycle. We only mark ca=true
+						// (don't abort) so the "Detect missed" block in _calculateDirty picks it up.
+						if (parsed.ca === null &&
+							g_cCalcRecursion.getLevel() > 1 &&
+							g_cCalcRecursion.getIterStep() === 1 &&
+							!g_cCalcRecursion.getIsEnabledRecursion()) {
+							const aRefElemsPost = parsed.getRefElements();
+							let bFoundCalcRef = false;
+							foreachRefElements(function (_range) {
+								if (_range && !bFoundCalcRef) {
+									_range._foreachNoEmpty(function (_cell) {
+										if (_cell && _cell.getIsCalc && _cell.getIsCalc()) {
+											bFoundCalcRef = true;
+										}
+									});
+								}
+							}, aRefElemsPost);
+							if (bFoundCalcRef) {
+								parsed.ca = true;
+							}
 						}
 					}
 				});

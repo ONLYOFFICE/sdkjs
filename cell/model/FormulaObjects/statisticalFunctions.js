@@ -12613,6 +12613,9 @@ function parseStringToCElement (val, cultureInfo) {
 			cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type) {
 			return new cError(cErrorType.wrong_value_type);
 		}
+		if (arg0.type === cElementType.cellsRange3D && !arg0.isSingleSheet()) {
+			return new cError(cErrorType.wrong_value_type);
+		}
 		if (arg1.type === cElementType.cellsRange3D && !arg1.isSingleSheet()) {
 			return new cNumber(0);
 		}

@@ -21891,6 +21891,38 @@ $(function () {
 		assert.strictEqual(ws.getRange2("BH6").getValue(), "4", "Recalc after: SUMIF OUT = 4");
 		assert.strictEqual(ws.getRange2("BH7").getValue(), "-2", "Recalc after: Balance = -2");
 
+		// Case #21: circular reference detection when ca=null (file-loaded state, Bug 74509).
+		// Simulate binary deserialization where isRecursiveFormula was not called.
+		// PRE-calculate area-cycle check must detect the cycle on next data-cell change.
+		// BH column = 59 (0-indexed). Rows 0-indexed: BH3=2, BH4=3, BH5=4.
+		[2, 3, 4].forEach(function (nRow) {
+			ws._getCell(nRow, 59, function (oCell) {
+				if (oCell && oCell.getFormulaParsed()) {
+					oCell.getFormulaParsed().ca = null;
+				}
+			});
+		});
+
+		const g_cCalcRecursion = AscCommonExcel.g_cCalcRecursion;
+		g_cCalcRecursion.setIsEnabledRecursion(false);
+		// Reset after formula-setup initial calc which may have fired its own cycle detection.
+		g_cCalcRecursion.setShowCycleWarn(true);
+
+		let circularRefDetected = false;
+		const originalSendEvent = Asc.editor.sendEvent;
+		Asc.editor.sendEvent = function (eventName, errorId) {
+			if (eventName === "asc_onError" && errorId === Asc.c_oAscError.ID.CircularReference) {
+				circularRefDetected = true;
+			}
+			return originalSendEvent.apply(this, arguments);
+		};
+
+		ws.getRange2("BH2").setValue("3");
+
+		assert.ok(circularRefDetected, "CircularReference event fires via PRE-calculate check when ca=null (Bug 74509)");
+
+		Asc.editor.sendEvent = originalSendEvent;
+
 		// Cleanup: remove named ranges
 		wb.delDefinesNames(defNameSumIfRange);
 		wb.delDefinesNames(defNameSumIfSum);
