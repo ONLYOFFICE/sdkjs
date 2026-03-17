@@ -20055,7 +20055,7 @@
         }
 
 		let processFormula = function(formula, t) {
-			if (formula === undefined || formula === null) {
+			if (formula === undefined || formula === null || formula === "") {
 				return null;
 			}
 
@@ -20075,13 +20075,8 @@
 		};
 
         const t = this;
-		if (Formula1 !== undefined) {
-			dataValidation.formula1 = processFormula(Formula1, t);
-		}
-
-		if (Formula2 !== undefined) {
-			dataValidation.formula2 = processFormula(Formula2, t);
-		}
+        dataValidation.formula1 = processFormula(Formula1, t);
+        dataValidation.formula2 = processFormula(Formula2, t);
 
 		let ranges = [];
 		if (this.range.areas) {
