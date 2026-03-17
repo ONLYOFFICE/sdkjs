@@ -412,13 +412,66 @@ void main() {\n\
     };
 
     // TEXT
-    CFile.prototype.getPageTextStream = function(pageIndex) {
-        let textCommands = this.pages[pageIndex].text;
-        if (!textCommands || 0 === textCommands.length)
-            return null;
+	CFile.prototype.getPageTextStream = function(pageIndex) {
+		let page = this.pages[pageIndex];
+		let textLen = page.text ? page.text.length : 0;
+		let drawingsLen = page.drawingsText ? page.drawingsText.length : 0;
 
-        return new TextStreamReader(textCommands, textCommands.length);
-    };
+		if (Asc.editor.canEdit()) {
+			if (this.pages[pageIndex].isRecognized) {
+				return null;
+			}
+			else {
+				return new TextStreamReader(page.text, textLen);
+			}
+		}
+
+		let oDoc = this.viewer.getPDFDoc();
+		let oPageInfo = oDoc.GetPageInfo(pageIndex);
+		let aDrawings = oPageInfo.drawings;
+		if (aDrawings.length == 0) {
+			if (this.pages[pageIndex].isRecognized) {
+				return null;
+			}
+			else {
+				return new TextStreamReader(page.text, textLen);
+			}
+		}
+
+		this.pages[pageIndex].drawingsText = this.getDrawingsGlyphs(pageIndex);
+		drawingsLen = page.drawingsText.length;
+		if (this.pages[pageIndex].isRecognized) {
+			return new TextStreamReader(page.drawingsText, drawingsLen);
+		}
+
+		let totalLen = textLen + drawingsLen;
+		let merged = new Uint8Array(totalLen);
+		merged.set(page.text, 0);
+		merged.set(page.drawingsText, textLen);
+
+		return new TextStreamReader(merged, merged.length);
+	};
+	CFile.prototype.getDrawingsGlyphs = function(pageIndex) {
+		let oDoc = this.viewer.getPDFDoc();
+		let oPageInfo = oDoc.GetPageInfo(pageIndex);
+		let aDrawings = oPageInfo.drawings;
+		if (aDrawings.length == 0) {
+			return [];
+		}
+
+		let memoryInitSize	= 1024 * 10; // 10Kb
+		let oMemory			= new AscCommon.CMemory(true);
+		oMemory.Init(memoryInitSize);
+		let oRenderer		= this.viewer.InitDocRenderer(oMemory, pageIndex, true);
+
+		aDrawings.forEach(function(drawing) {
+			drawing.draw(oRenderer);
+		});
+
+		oRenderer.m_arrayPages[0].finishCurrentLine();
+
+		return oRenderer.Memory.data.subarray(0, oRenderer.Memory.pos);
+	};
     CFile.prototype.removeSelection = function() {
         this.Selection = {
 			Page1 : 0,
@@ -533,11 +586,8 @@ void main() {\n\
         let isRedactTool = Asc.editor.IsRedactTool();
         let isLinkTool   = Asc.editor.IsLinkTool();
 
-        if (this.pages[pageIndex].isRecognized && !isRedactTool && !isLinkTool)
-            return;
-        
         let ret = this.getNearestPos(pageIndex, x, y);
-        let sel = this.Selection;
+		let sel = this.Selection;
 
         let isTextSel = ret.Glyph >= 0 && ret.Line >= 0;
 
@@ -1113,7 +1163,7 @@ void main() {\n\
         for (let iPage = Page1; iPage <= Page2; ++iPage)
         {
             let stream = this.getPageTextStream(iPage);
-            if (!stream || this.pages[iPage].isRecognized)
+            if (!stream)
                 continue;
 
             let oInfo = { page: iPage, quads: [] };
@@ -1288,9 +1338,6 @@ void main() {\n\
             return;
         }
 
-        if (this.pages[pageIndex].isRecognized)
-            return;
-        
         let stream = this.getPageTextStream(pageIndex);
         if (!stream)
             return;
@@ -1553,8 +1600,6 @@ void main() {\n\
         let ret = "<div>";
         for (let i = page1; i <= page2; ++i)
         {
-            if (this.pages[i].isRecognized)
-                continue;
             ret += this.copySelection(i, _text_format);
         }
         ret += "</div>";

@@ -100,10 +100,12 @@
                 }
             }
             
-            // затем ищем в drawings
-            for (let j = 0; j < oPageInfo.drawings.length; ++j) {
-                oPageInfo.drawings[j].Search && oPageInfo.drawings[j].Search(this, search_Common);
-            }
+            // search in drawings in edit mode
+			if (Asc.editor.canEdit()) {
+				for (let j = 0; j < oPageInfo.drawings.length; ++j) {
+					oPageInfo.drawings[j].Search && oPageInfo.drawings[j].Search(this, search_Common);
+				}
+			}
 
 			// to do (нужен поиск в формах, аннотациях?)
 

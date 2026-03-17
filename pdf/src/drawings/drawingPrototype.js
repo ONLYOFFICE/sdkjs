@@ -421,6 +421,12 @@
             if (oGroup && oGroup != this) {
                 oGroup.SetNeedRecalc(true);
             }
+
+			let oFile = oDoc.GetFile();
+			let nPage = this.GetPage();
+			if (oFile.pages[nPage]) {
+				oFile.pages[nPage].drawingsText = null;
+			}
         }
     };
     CPdfDrawingPrototype.prototype.addToRecalculate = function() {
