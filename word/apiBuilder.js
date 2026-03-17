@@ -3848,16 +3848,14 @@
 		this.UniFill = UniFill;
 	}
 
-
 	/**
 	 * Class representing a stroke.
 	 * @constructor
 	 */
-	function ApiStroke(oLn)
-	{
+	function ApiStroke(oLn, parentSpPr) {
 		this.Ln = oLn;
+		this.parent = parentSpPr || null;
 	}
-
 
 	/**
 	 * Class representing gradient stop.
@@ -20035,7 +20033,7 @@
 			}
 			if (this.Shape.pen)
 			{
-				return new ApiStroke(this.Shape.pen);
+				return new ApiStroke(this.Shape.pen, this.Shape.spPr);
 			}
 		}
 
@@ -21942,11 +21940,20 @@
 		}
 
 		if (this.Ln) {
+			if (this.parent) {
+				this.Ln = this.Ln.createDuplicate();
+			}
+
 			const endArrow = new AscFormat.EndArrow();
 			endArrow.setType(typeCode);
 			endArrow.setW(widthCode);
 			endArrow.setLen(lengthCode);
 			this.Ln.setHeadEnd(endArrow);
+
+			if (this.parent) {
+				this.parent.setLn(this.Ln);
+			}
+
 			return true;
 		}
 
@@ -22002,11 +22009,20 @@
 		}
 
 		if (this.Ln) {
+			if (this.parent) {
+				this.Ln = this.Ln.createDuplicate();
+			}
+
 			const endArrow = new AscFormat.EndArrow();
 			endArrow.setType(typeCode);
 			endArrow.setW(widthCode);
 			endArrow.setLen(lengthCode);
 			this.Ln.setTailEnd(endArrow);
+
+			if (this.parent) {
+				this.parent.setLn(this.Ln);
+			}
+
 			return true;
 		}
 
