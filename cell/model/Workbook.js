@@ -7733,6 +7733,9 @@
 										operator = AscCommonExcel.ECfOperator.Operator_endsWith;
 										break;
 								}
+								if (operator) {
+									oRule.asc_setOperator(operator);
+								}
 								formulaParent = new AscCommonExcel.CConditionalFormattingFormulaParent(this, oRule, true);
 								oRuleElement =  oRule.getFormulaCellIs(Asc.ECfType.notContainsText === oRule.type || Asc.ECfType.containsText === oRule.type);
 								parsed1 = oRuleElement && oRuleElement.getFormula && oRuleElement.getFormula(this, formulaParent);
