@@ -8791,7 +8791,11 @@ var CPresentation = CPresentation || function(){};
 		if (textController.IsNeedRecalc())
 			return;
 		
-		textController.GetDocContent().RecalculateCurPos();
+		let docContent = textController.GetDocContent();
+		if (!docContent)
+			return;
+
+		docContent.RecalculateCurPos();
 		this.NeedUpdateTarget = false;
 	};
 	CPDFDoc.prototype.SetTextSelectionType = function(type){};
@@ -10178,6 +10182,11 @@ var CPresentation = CPresentation || function(){};
 	function CPDFCompositeInput(textController, pdfDocument) {
 		this.textController = textController;
 		this.runInput       = new AscWord.RunCompositeInput(false);
+		
+		if (textController.IsDrawing() && textController.IsGraphicFrame() && textController.graphicObject.Selection.Use) {
+			textController.graphicObject.Remove(1, true, undefined, true);
+		}
+
 		this.contentState   = textController.GetDocContent().GetSelectionState();
 		this.pdfDocument    = pdfDocument;
 		this.startPoint     = -1;

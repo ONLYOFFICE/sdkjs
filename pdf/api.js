@@ -720,7 +720,10 @@
 			}
 
 			let oContent = textController.GetDocContent();
-
+			if (!oContent) {
+				return false;
+			}
+			
 			let oldText = "";
 			for (let index = 0, count = oldCodePoints.length; index < count; ++index) {
 				oldText += String.fromCodePoint(oldCodePoints[index]);
