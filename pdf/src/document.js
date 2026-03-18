@@ -9928,13 +9928,19 @@ var CPresentation = CPresentation || function(){};
             }
             case AscPDF.ANNOTATIONS_TYPES.Polygon:
             case AscPDF.ANNOTATIONS_TYPES.Square:
-            case AscPDF.ANNOTATIONS_TYPES.Link:
             case AscPDF.ANNOTATIONS_TYPES.Circle: {
                 oAnnotProps = new Asc.asc_CClosedAnnotProperty();
                 oAnnotProps.asc_putBorderStyle(annot.GetComplexBorderType());
                 oAnnotProps.asc_putBorderWidth(annot.GetBorderWidth());
                 break;
             }
+			case AscPDF.ANNOTATIONS_TYPES.Link: {
+				oAnnotProps = new Asc.asc_CClosedAnnotProperty();
+				let nLineW = annot.GetBorderWidth();
+				oAnnotProps.asc_putBorderStyle(nLineW == 0 ? undefined : annot.GetBorderStyle());
+				oAnnotProps.asc_putBorderWidth(nLineW);
+				break;
+			}
         }
         
         oProps.asc_putAnnotProps(oAnnotProps);

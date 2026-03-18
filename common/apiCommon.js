@@ -3774,6 +3774,9 @@ function (window, undefined) {
 		if (this.type && this.annotProps) {
 			this.annotProps.compare(pr.annotProps);
 		}
+		else {
+			this.annotProps = null;
+		}
 	};
 
 	// free text
