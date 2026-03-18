@@ -495,6 +495,7 @@
         if (this.IsNeedRecalc() == false)
             return;
 
+		this.bSkipAddToRedraw = true;
         if (this.IsNeedUpdateOpacity()) {
             this.private_UpdateOpacity();
         }
@@ -503,8 +504,10 @@
             this.RecalcSizes();
         }
 
-        if (this.recalcInfo.recalculateGeometry)
+        if (this.recalcInfo.recalculateGeometry) {
             this.RefillGeometry();
+		}
+		this.bSkipAddToRedraw = false;
 
         this.recalculateTransform();
         this.updateTransformMatrix();

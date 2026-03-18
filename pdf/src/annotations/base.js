@@ -602,7 +602,6 @@
         const t = this.GetOpacity() * 100 * 2.55;
 
         if (!this.IsShapeBased()) {
-            this.AddToRedraw();
             this.SetNeedUpdateOpacity(false);
             return;
         }
@@ -1110,6 +1109,7 @@
             return;
         }
 
+		this.bSkipAddToRedraw = true;
         if (this.IsNeedUpdateOpacity()) {
             this.private_UpdateOpacity();
         }
@@ -1120,6 +1120,7 @@
         if (this.recalcInfo.recalculateGeometry) {
             this.RefillGeometry();
         }
+		this.bSkipAddToRedraw = false;
 
         this.recalculateTransform();
         this.updateTransformMatrix();
@@ -1418,6 +1419,10 @@
         return this._apIdx == undefined;
     };
     CAnnotationBase.prototype.AddToRedraw = function() {
+		if (this.bSkipAddToRedraw) {
+			return;
+		}
+
         let oViewer = editor.getDocumentRenderer();
         let nPage   = this.GetPage();
 
