@@ -7685,13 +7685,13 @@
 	 */
 	Api.InsertPivotExistingWorksheet = function (dataRef, pivotRef, confirmation) {
 		if (dataRef) {
-			dataRef = dataRef.GetWorksheet().GetName() + "!" + dataRef.GetAddress(true, true);
+			dataRef = AscCommon.parserHelp.get3DRef(dataRef.GetWorksheet().GetName(), dataRef.GetAddress(true, true));
 		} else {
 			var options = Asc.editor.asc_getAddPivotTableOptions();
 			dataRef = options.range;
 		}
 		if (pivotRef) {
-			pivotRef = pivotRef.GetWorksheet().GetName() + "!" + pivotRef.GetAddress(true, true);
+			pivotRef = AscCommon.parserHelp.get3DRef(pivotRef.GetWorksheet().GetName(), pivotRef.GetAddress(true, true));
 		} else {
 			private_MakeError('"pivotRef" is undefined.');
 		}
@@ -7715,7 +7715,7 @@
 	Api.InsertPivotNewWorksheet = function (dataRef, newSheetName) {
 		let editor = Asc.editor;
 		if (dataRef) {
-			dataRef = dataRef.GetWorksheet().GetName() + "!" + dataRef.GetAddress(true, true);
+			dataRef = AscCommon.parserHelp.get3DRef(dataRef.GetWorksheet().GetName(), dataRef.GetAddress(true, true));
 		} else {
 			var options = editor.asc_getAddPivotTableOptions();
 			dataRef = options.range;
@@ -17365,7 +17365,7 @@
 	 */
 	ApiPivotTable.prototype.SetSource = function (source) {
 		if (source instanceof ApiRange) {
-			var ref = source.GetWorksheet().GetName() + "!" + source.GetAddress(true, true);
+			var ref = AscCommon.parserHelp.get3DRef(source.GetWorksheet().GetName(), source.GetAddress(true, true));
 			var props = new Asc.CT_pivotTableDefinition();
 			props.asc_setDataRef(ref);
 			this.pivot.asc_set(this.api, props);
