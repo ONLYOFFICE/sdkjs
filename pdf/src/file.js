@@ -440,7 +440,7 @@ void main() {\n\
 
 		this.pages[pageIndex].drawingsText = this.getDrawingsGlyphs(pageIndex);
 		drawingsLen = page.drawingsText.length;
-		if (this.pages[pageIndex].isRecognized) {
+		if (this.pages[pageIndex].isRecognized || textLen == 0) {
 			return new TextStreamReader(page.drawingsText, drawingsLen);
 		}
 
