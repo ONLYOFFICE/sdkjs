@@ -2391,6 +2391,9 @@
     CBaseChartObject.prototype.getHorizontalRule = function() {
         return null;
     };
+    CBaseChartObject.prototype.isControl = function() {
+        return false;
+    };
 
     function getMinMaxFromArrPoints(aPoints) {
         if(Array.isArray(aPoints) && aPoints.length > 0) {
@@ -16909,6 +16912,9 @@
     CalcLegendEntry.prototype.getHorizontalRule = function() {
         return null;
     };
+    CalcLegendEntry.prototype.isControl = function() {
+        return false;
+    };
 
     function CompiledMarker() {
         this.spPr = new AscFormat.CSpPr();
@@ -16949,6 +16955,9 @@
     CompiledMarker.prototype.getHorizontalRule = function() {
         return null;
     };
+    CompiledMarker.prototype.isControl = function() {
+        return false;
+    };
 
     function CUnionMarker() {
         this.lineMarker = null;
@@ -16964,6 +16973,9 @@
     };
     CUnionMarker.prototype.getHorizontalRule = function() {
         return null;
+    };
+    CUnionMarker.prototype.isControl = function() {
+        return false;
     };
 
     function CreateMarkerGeometryByType(type) {
