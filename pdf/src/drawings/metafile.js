@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * (c) Copyright Ascensio System SIA 2010-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -34,18 +34,27 @@
 
 (function(window, undefined)
 {
+	let memory = null;
+	function getMemory()
+	{
+		if (!memory) {
+			let memoryInitSize = 1024 * 10; // 10Kb
+			memory = new AscCommon.CMemory(true);
+			memory.Init(memoryInitSize);
+		}
+		memory.Seek(0);
+		return memory;
+	}
+	
 	/**
 	 * @constructor
 	 */
 	function CPdfTextMetafile() {
 		AscCommon.CGraphicsBase.apply(this, arguments);
 		
-		this.m_oTransform = new AscCommon.CMatrix();
-		this.Memory       = null;
-		this.m_oGrFonts   = new AscCommon.CGrRFonts();
+		this._memory = getMemory();
 		
-		this.fontFile = null;
-		this.fontInfo = {
+		this._fontInfo = {
 			FontFamily : {Name : "", Index : -1},
 			FontSize : 0,
 			Italic : false,
@@ -64,24 +73,45 @@
 		this._descent = 0;
 		this._curAscent = 0;
 		this._curDescent = 0;
+		
+		this._transform = new AscCommon.CMatrix();
+		this._states = []; // we need only transform here
 	}
 
 	CPdfTextMetafile.prototype = Object.create(AscCommon.CGraphicsBase.prototype);
 	CPdfTextMetafile.prototype.constructor = CPdfTextMetafile;
-
+	
 	CPdfTextMetafile.prototype.transform = function(sx, shy, shx, sy, tx, ty) {
-		if (this.m_oTransform.sx != sx || this.m_oTransform.shx != shx || this.m_oTransform.shy != shy ||
-			this.m_oTransform.sy != sy || this.m_oTransform.tx != tx || this.m_oTransform.ty != ty) {
+		if (this._transform.sx != sx || this._transform.shx != shx || this._transform.shy != shy ||
+			this._transform.sy != sy || this._transform.tx != tx || this._transform.ty != ty) {
 
-			this.m_oTransform.sx  = sx;
-			this.m_oTransform.shx = shx;
-			this.m_oTransform.shy = shy;
-			this.m_oTransform.sy  = sy;
-			this.m_oTransform.tx  = tx;
-			this.m_oTransform.ty  = ty;
+			this._transform.sx  = sx;
+			this._transform.shx = shx;
+			this._transform.shy = shy;
+			this._transform.sy  = sy;
+			this._transform.tx  = tx;
+			this._transform.ty  = ty;
 		}
 	};
-
+	CPdfTextMetafile.prototype.transform3 = function(m) {
+		this.transform(m.sx, m.shy, m.shx, m.sy, m.tx, m.ty);
+	};
+	CPdfTextMetafile.prototype.reset = function() {
+		this.transform(1, 0, 0, 1, 0, 0);
+	};
+	CPdfTextMetafile.prototype.GetTransform = function() {
+		return this._transform;
+	};
+	CPdfTextMetafile.prototype.SaveGrState = function() {
+		this._states.push(this._transform.CreateDublicate());
+		
+	};
+	CPdfTextMetafile.prototype.RestoreGrState = function() {
+		if (this._states.length) {
+			this._transform = this._states[this._states.length - 1];
+			this._states.length--;
+		}
+	};
 	CPdfTextMetafile.prototype.SetFontInternal = function(name, size, style) {
 		this.SetFont({
 			FontFamily : {Name : name, Index : -1},
@@ -94,17 +124,17 @@
 	CPdfTextMetafile.prototype.SetFont = function(font) {
 		if (!font) return;
 		
-		if (this.fontInfo.FontFamily.Name === font.FontFamily.Name
-			&& this.fontInfo.FontSize === font.FontSize
-			&& this.fontInfo.Bold === font.Bold
-			&& this.fontInfo.Italic === font.Italic) {
+		if (this._fontInfo.FontFamily.Name === font.FontFamily.Name
+			&& this._fontInfo.FontSize === font.FontSize
+			&& this._fontInfo.Bold === font.Bold
+			&& this._fontInfo.Italic === font.Italic) {
 			return;
 		}
 		
-		this.fontInfo.FontFamily.Name = font.FontFamily.Name;
-		this.fontInfo.FontSize = font.FontSize;
-		this.fontInfo.Bold = font.Bold;
-		this.fontInfo.Italic = font.Italic;
+		this._fontInfo.FontFamily.Name = font.FontFamily.Name;
+		this._fontInfo.FontSize = font.FontSize;
+		this._fontInfo.Bold = font.Bold;
+		this._fontInfo.Italic = font.Italic;
 		
 		let style = 0;
 		if (font.Italic)
@@ -113,8 +143,7 @@
 		if (font.Bold)
 			style |= AscFonts.FontStyle.FontStyleBold;
 		
-		this.fontFile = g_oTextMeasurer.SetFontInternal(this.fontInfo.FontFamily.Name, this.fontInfo.FontSize, style);
-		
+		g_oTextMeasurer.SetFontInternal(this._fontInfo.FontFamily.Name, this._fontInfo.FontSize, style);
 		this._curAscent  = g_oTextMeasurer.GetAscender();
 		this._curDescent = Math.abs(g_oTextMeasurer.GetDescender());
 	};
@@ -135,19 +164,19 @@
 		{
 			if ((x - this._x) > 0.1)
 			{
-				this.Memory.WriteLong((this._x - this._prevX) * 10000);
-				this.Memory.WriteLong(0xFFFF);
-				this.Memory.WriteLong((x - this._x) * 10000);
+				this._memory.WriteLong((this._x - this._prevX) * 10000);
+				this._memory.WriteLong(0xFFFF);
+				this._memory.WriteLong((x - this._x) * 10000);
 				this._charCountInLine++;
 				this._prevX = this._x;
 				this._x = x;
 			}
 			
-			this.Memory.WriteLong((x - this._prevX) * 10000);
+			this._memory.WriteLong((x - this._prevX) * 10000);
 		}
 		
-		this.Memory.WriteLong(unicode);
-		this.Memory.WriteLong(advX * 10000);
+		this._memory.WriteLong(unicode);
+		this._memory.WriteLong(advX * 10000);
 		
 		this._prevX = x;
 		this._x     = x + advX;
@@ -160,13 +189,13 @@
 		if (0 === this._charCountInLine)
 			return;
 		
-		let curPos = this.Memory.GetCurPosition();
-		this.Memory.Seek(this._lineStartPos);
-		this.Memory.WriteLong(this._ascent * 10000);
-		this.Memory.WriteLong(this._descent * 10000);
-		this.Memory.WriteLong((this._x - this._startX) * 10000);
-		this.Memory.WriteLong(this._charCountInLine);
-		this.Memory.Seek(curPos);
+		let curPos = this._memory.GetCurPosition();
+		this._memory.Seek(this._lineStartPos);
+		this._memory.WriteLong(this._ascent * 10000);
+		this._memory.WriteLong(this._descent * 10000);
+		this._memory.WriteLong((this._x - this._startX) * 10000);
+		this._memory.WriteLong(this._charCountInLine);
+		this._memory.Seek(curPos);
 		
 		this._newLine = true;
 		this._charCountInLine = 0;
@@ -178,33 +207,33 @@
 		
 		this._startX = x;
 		
-		let _x = this.m_oTransform.TransformPointX(x, y);
-		let _y = this.m_oTransform.TransformPointY(x, y);
+		let _x = this._transform.TransformPointX(x, y);
+		let _y = this._transform.TransformPointY(x, y);
 		
-		this.Memory.WriteLong(_x * 10000);
-		this.Memory.WriteLong(_y * 10000);
+		this._memory.WriteLong(_x * 10000);
+		this._memory.WriteLong(_y * 10000);
 		
-		if (this.m_oTransform.IsIdentity2()) {
-			this.Memory.WriteByte(0);
+		if (this._transform.IsIdentity2()) {
+			this._memory.WriteByte(0);
 		}
 		else {
-			this.Memory.WriteByte(1);
+			this._memory.WriteByte(1);
 			
-			let angle = this.m_oTransform.GetRotation();
+			let angle = this._transform.GetRotation();
 			let rad = (angle * Math.PI) / 180;
 			
 			let ex = Math.cos(rad);
 			let ey = Math.sin(rad);
 			
-			this.Memory.WriteLong(ex * 10000);
-			this.Memory.WriteLong(ey * 10000);
+			this._memory.WriteLong(ex * 10000);
+			this._memory.WriteLong(ey * 10000);
 		}
 		
-		this._lineStartPos = this.Memory.GetCurPosition();
-		this.Memory.Skip(4); // ascent
-		this.Memory.Skip(4); // descent
-		this.Memory.Skip(4); // total width
-		this.Memory.Skip(4); // char count
+		this._lineStartPos = this._memory.GetCurPosition();
+		this._memory.Skip(4); // ascent
+		this._memory.Skip(4); // descent
+		this._memory.Skip(4); // total width
+		this._memory.Skip(4); // char count
 		
 		this._ascent = 0;
 		this._descent = 0;
@@ -215,6 +244,9 @@
 	CPdfTextMetafile.prototype.updateFontMetrics = function() {
 		this._ascent = Math.max(this._ascent, this._curAscent);
 		this._descent = Math.max(this._descent, this._curDescent);
+	};
+	CPdfTextMetafile.prototype.getData = function() {
+		return this._memory.data.subarray(0, this._memory.pos);
 	};
 
 	window['AscPDF'].CPdfTextMetafile = CPdfTextMetafile;

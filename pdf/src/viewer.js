@@ -4411,10 +4411,9 @@
 			this.isRepaint = true;
 		}
 	};
-	CHtmlPage.prototype.InitDocRenderer = function(oMemory, nPage, isPdfPageTextGen) {
+	CHtmlPage.prototype.InitDocRenderer = function(oMemory, nPage) {
 		let oDoc        			= this.getPDFDoc();
         let oRenderer   			= new AscCommon.CDocumentRenderer();
-		oRenderer.isPdfPageTextGen	= isPdfPageTextGen;
 		oRenderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
 
 		oRenderer.Memory		= oMemory;
@@ -4423,7 +4422,7 @@
         oMemory.context = new AscCommon.XmlWriterContext(AscCommon.c_oEditorId.Presentation);
         oMemory.context.docType	= AscFormat.XMLWRITER_DOC_TYPE_PPTX;
 
-		let CMetafile = isPdfPageTextGen !== true ? AscCommon.CMetafile : AscPDF.CPdfTextMetafile;
+		let CMetafile = AscCommon.CMetafile;
 
         oRenderer.m_arrayPages[oRenderer.m_arrayPages.length]						= new CMetafile(oDoc.GetPageWidthMM(nPage), oDoc.GetPageHeightMM(nPage));
         oRenderer.m_lPagesCount														= oRenderer.m_arrayPages.length;

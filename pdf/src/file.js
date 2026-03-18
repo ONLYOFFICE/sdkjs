@@ -459,18 +459,13 @@ void main() {\n\
 			return [];
 		}
 
-		let memoryInitSize	= 1024 * 10; // 10Kb
-		let oMemory			= new AscCommon.CMemory(true);
-		oMemory.Init(memoryInitSize);
-		let oRenderer		= this.viewer.InitDocRenderer(oMemory, pageIndex, true);
-
+		let metafile = new AscPDF.CPdfTextMetafile();
 		aDrawings.forEach(function(drawing) {
-			drawing.draw(oRenderer);
+			drawing.draw(metafile);
 		});
 		
-		oRenderer.m_arrayPages[oRenderer.m_arrayPages.length - 1].endLine();
-
-		return oMemory.data.subarray(0, oMemory.pos);
+		metafile.endLine();
+		return metafile.getData();
 	};
     CFile.prototype.removeSelection = function() {
         this.Selection = {
