@@ -62,6 +62,9 @@
     CAnnotationLink.prototype.IsLink = function() {
         return true;
     };
+	CAnnotationLink.prototype.IsNeedDrawFromStream = function() {
+		return this._bDrawFromStream && this.GetBorderWidth() !== 0;
+	};
     CAnnotationLink.prototype.SetQuads = function(aFullQuads) {
         let oThis = this;
 
