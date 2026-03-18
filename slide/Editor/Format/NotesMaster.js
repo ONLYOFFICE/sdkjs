@@ -172,6 +172,27 @@
 	CNotesMaster.prototype.Refresh_RecalcData = function(data) {
 			if(data)
 			{
+				switch(data.Type)
+				{
+					case AscDFH.historyitem_NotesMasterSetNotesTheme:
+					{
+						this.presentation.bNeedUpdateThemes = true;
+						this.checkSlideTheme();
+						for (let i = 0; i < this.presentation.notes.length; i += 1) {
+							if (this.presentation.notes[i].Master === this) {
+								this.presentation.notes[i].checkSlideTheme();
+								this.presentation.notes[i].addToRecalculate();
+							}
+						}
+						break;
+					}
+					case AscDFH.historyitem_SlideMasterAddToSpTree:
+						this.recalcInfo.recalculateSpTree = true;
+						for (var _slideLayout_index = 0; _slideLayout_index < this.sldLayoutLst.length; _slideLayout_index++) {
+							this.sldLayoutLst[_slideLayout_index].addToRecalculate();
+						}
+						break;
+				}
 				this.addToRecalculate();
 			}
 	};
@@ -348,7 +369,13 @@
 	};
 	CNotesMaster.prototype.isNoteMaster = function() {
 		return true;
-	}
+	};
+	CNotesMaster.prototype.collectRedrawSlides = function (redrawSlides, force) {
+		if (!force && !this.needRecalc()) {
+			return;
+		}
+		redrawSlides.addRedrawSlide(this);
+	};
 
 
 	function CreateNotesMaster() {

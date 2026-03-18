@@ -233,6 +233,11 @@ CShape.prototype.getSlideIndex = function()
 {
     return this.GetAbsoluteStartPage();
 };
+CShape.prototype.collectRedrawSlides = function (redrawSlides, force) {
+    if (this.parent) {
+        redrawSlides.collectRedrawSlides(this.parent, true);
+    }
+};
 CShape.prototype.handleUpdatePosition = function()
 {
     this.recalcTransform();

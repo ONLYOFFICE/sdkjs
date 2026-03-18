@@ -736,6 +736,9 @@
 	SlideBase.prototype.isNoteMaster = function() {
 		return false;
 	};
+	SlideBase.prototype.isHandoutMaster = function() {
+		return false;
+	};
 	SlideBase.prototype.getParentObjects = function() {
 		return {};
 	};
@@ -772,6 +775,7 @@
 	};
 	SlideBase.prototype.changeBackground = function(bg) {
 	};
+	SlideBase.prototype.collectRedrawSlides = function (redrawSlides, force) {};
 
 	function fAddTextToPhInSlideLikeObject(oSlideLikeObject, nPhType, sText) {
 		if(typeof sText === "string") {

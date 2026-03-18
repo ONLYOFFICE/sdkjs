@@ -10769,14 +10769,11 @@
 						if(oPresentation) {
 							oPresentation.bNeedUpdateThemes = true;
 							let oThemedObjects = oPresentation.GetSlideObjectsWithTheme(this);
-							for(let nIdx = 0; nIdx < oThemedObjects.masters.length; ++nIdx) {
-								oThemedObjects.masters[nIdx].checkSlideTheme();
-							}
-							for(let nIdx = 0; nIdx < oThemedObjects.layouts.length; ++nIdx) {
-								oThemedObjects.layouts[nIdx].checkSlideTheme();
-							}
-							for(let nIdx = 0; nIdx < oThemedObjects.slides.length; ++nIdx) {
-								oThemedObjects.slides[nIdx].checkSlideTheme();
+							for (let sKey in oThemedObjects) {
+								const arrSlides = oThemedObjects[sKey];
+								for(let nIdx = 0; nIdx < arrSlides.length; ++nIdx) {
+									arrSlides[nIdx].checkSlideTheme();
+								}
 							}
 							AscCommon.History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, Object: this});
 						}

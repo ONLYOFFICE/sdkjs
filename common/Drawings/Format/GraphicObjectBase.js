@@ -4057,6 +4057,8 @@
 	CGraphicObjectBase.prototype.isSlideNoteShape = function() {
 		return false;
 	};
+	CGraphicObjectBase.prototype.collectRedrawSlides = function (redrawSlides, force) {};
+
 	var ANIM_LABEL_WIDTH_PIX = 22;
 	var ANIM_LABEL_HEIGHT_PIX = 17;
 

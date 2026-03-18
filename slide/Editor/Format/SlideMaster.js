@@ -732,6 +732,24 @@ MasterSlide.prototype.setPreserve = function (bPr) {
 MasterSlide.prototype.isPreserve = function() {
 	return this.preserve;
 };
+MasterSlide.prototype.collectRedrawSlides = function (redrawSlides, force) {
+    if (!force && !this.needRecalc()) {
+        return;
+    }
+    redrawSlides.addRedrawSlide(this);
+    for (let i = 0; i < this.sldLayoutLst.length; i += 1) {
+        redrawSlides.addRedrawSlide(this.sldLayoutLst[i]);
+    }
+    const presentation = redrawSlides.presentation;
+    for (let i = 0; i < presentation.Slides.length; i += 1) {
+        const slide = presentation.Slides[i];
+        if (slide.Layout.Master === this) {
+            redrawSlides.addRedrawSlide(slide);
+        }
+    }
+};
+
+
 function CMasterThumbnailDrawer()
 {
     this.CanvasImage    = null;

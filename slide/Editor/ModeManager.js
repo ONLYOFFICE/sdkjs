@@ -79,10 +79,6 @@
 		const allSlides = this.getAllSlides();
 		return allSlides[idx] || null;
 	};
-	SlideModeManagerBase.prototype.checkRedrawSlide = function(slide, redrawSlides, redrawSlideMap) {
-		const presentation = this.getPresentation();
-		presentation.CheckRedrawSlide(slide, redrawSlides, redrawSlideMap);
-	};
 	SlideModeManagerBase.prototype.isMasterSlideMode = function() {
 		return false;
 	};
@@ -170,8 +166,6 @@
 	SlideModeManagerBase.prototype.getSlidesForChangeColorScheme = function() {
 		return this.getAllSlides();
 	};
-	SlideModeManagerBase.prototype.checkRedrawLayout = function(layout, redrawSlides, redrawSlideMaps) {
-	};
 	SlideModeManagerBase.prototype.isCanShiftSlides = function() {
 		return this.isThumbnailsSupported()
 	};
@@ -187,6 +181,9 @@
 		return false;
 	};
 	SlideModeManagerBase.prototype.recalculateThemeObjects = function() {};
+	SlideModeManagerBase.prototype.isDrawingSlide = function () {
+		return false;
+	};
 
 	function SlideModeManager(api) {
 		SlideModeManagerBase.call(this, api);
@@ -812,6 +809,9 @@
 	SlideModeManager.prototype.isSlideNoteShape = function(shape) {
 		return shape.parent && shape.parent.isNote();
 	};
+	SlideModeManager.prototype.isDrawingSlide = function (slideObject) {
+		return slideObject.isSlide();
+	};
 
 	function MasterSlideModeManager(api) {
 		SlideModeManagerBase.call(this, api);
@@ -1279,9 +1279,6 @@
 		}
 		AscFormat.redrawSlide(this.getSlide(aIdx[nStartIdx]), presentation, aIdx, nStartIdx, 0, this.getAllSlides());
 	};
-	MasterSlideModeManager.prototype.checkRedrawLayout = function(layout, redrawSlides, redrawSlideMaps) {
-		this.checkRedrawSlide(layout, redrawSlides, redrawSlideMaps);
-	};
 	MasterSlideModeManager.prototype.shiftSlides = function(pos, array, bCopyOnMove) {
 		const presentation = this.getPresentation();
 		const aNewSelected = [];
@@ -1478,6 +1475,9 @@
 		}
 		return true;
 	};
+	MasterSlideModeManager.prototype.isDrawingSlide = function (slideObject) {
+		return slideObject.isMaster() || slideObject.isLayout();
+	};
 
 
 	function NoteModeManager(api) {
@@ -1656,7 +1656,27 @@
 		}
 		presentation.Document_UpdateInterfaceState();
 		presentation.Recalculate();
-	}
+	};
+	NoteModeManager.prototype.isDrawingSlide = function (slideObject) {
+		return slideObject.isNote();
+	};
+	NoteModeManager.prototype.recalculateThemeObjects = function(oThemeObjects) {
+		const presentation = this.getPresentation();
+		for (let nIdx = 0; nIdx < oThemeObjects.notesMasters.length; ++nIdx) {
+			oThemeObjects.notesMasters[nIdx].recalculate();
+		}
+		let aIdx = [];
+		let nStartIdx = 0;
+		for (let nIdx = 0; nIdx < oThemeObjects.notes.length; ++nIdx) {
+			const note = oThemeObjects.notes[nIdx];
+			const slideIndex = presentation.GetSlideIndex(note);
+			if (slideIndex === presentation.CurPage) {
+				nStartIdx = aIdx.length;
+			}
+			aIdx.push(slideIndex);
+		}
+		AscFormat.redrawSlide(presentation.notes[aIdx[nStartIdx]], presentation, aIdx, nStartIdx, 0, this.getAllSlides());
+	};
 
 	function MasterNoteModeManager(api) {
 		SlideModeManagerBase.call(this, api);
@@ -1702,21 +1722,22 @@
 	};
 	MasterNoteModeManager.prototype.recalculateThemeObjects = function(oThemeObjects) {
 		const presentation = this.getPresentation();
-		for (let nIdx = 0; nIdx < oThemeObjects.masters.length; ++nIdx) {
-			oThemeObjects.masters[nIdx].recalculate();
-		}
-		for (let nIdx = 0; nIdx < oThemeObjects.layouts.length; ++nIdx) {
-			oThemeObjects.layouts[nIdx].recalculate();
+		for (let nIdx = 0; nIdx < oThemeObjects.notes.length; ++nIdx) {
+			oThemeObjects.notes[nIdx].recalculate();
 		}
 		let aIdx = [];
 		let nStartIdx = 0;
-		for (let nIdx = 0; nIdx < oThemeObjects.slides.length; ++nIdx) {
-			if (oThemeObjects.slides[nIdx].num === presentation.CurPage) {
+		for (let nIdx = 0; nIdx < oThemeObjects.notesMasters.length; ++nIdx) {
+			const masterIndex = presentation.GetSlideIndex(oThemeObjects.notesMasters[nIdx]);
+			if (masterIndex === presentation.CurPage) {
 				nStartIdx = aIdx.length;
 			}
-			aIdx.push(oThemeObjects.slides[nIdx].num);
+			aIdx.push(masterIndex);
 		}
-		AscFormat.redrawSlide(presentation.Slides[aIdx[nStartIdx]], presentation, aIdx, nStartIdx, 0, this.getAllSlides());
+		AscFormat.redrawSlide(presentation.notesMasters[aIdx[nStartIdx]], presentation, aIdx, nStartIdx, 0, this.getAllSlides());
+	};
+	MasterNoteModeManager.prototype.isDrawingSlide = function (slideObject) {
+		return slideObject.isNoteMaster();
 	};
 
 	function MasterHandoutModeManager(api) {
@@ -1772,6 +1793,22 @@
 	MasterHandoutModeManager.prototype.setPageOrientation = NoteModeManager.prototype.setPageOrientation;
 	MasterHandoutModeManager.prototype.applySlideProps = function() {
 		//todo
+	};
+	MasterHandoutModeManager.prototype.isDrawingSlide = function (slideObject) {
+		return slideObject.isHandoutMaster();
+	};
+	MasterHandoutModeManager.prototype.recalculateThemeObjects = function(oThemeObjects) {
+		const presentation = this.getPresentation();
+		let nStartIdx = 0;
+		const aIdx = [];
+		for (let nIdx = 0; nIdx < oThemeObjects.handoutMasters.length; ++nIdx) {
+			const masterIndex = presentation.GetSlideIndex(oThemeObjects.handoutMasters[nIdx]);
+			if (masterIndex === presentation.CurPage) {
+				nStartIdx = aIdx.length;
+			}
+			aIdx.push(masterIndex);
+		}
+		AscFormat.redrawSlide(presentation.handoutMaster[aIdx[nStartIdx]], presentation, aIdx, nStartIdx, 0, this.getAllSlides());
 	};
 
 	function SorterModeManager(api) {

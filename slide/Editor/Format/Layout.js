@@ -746,6 +746,19 @@ SlideLayout.prototype.setPreserve = function(bPr) {
 	History.Add(new AscDFH.CChangesDrawingsBool(this, AscDFH.historyitem_SlideLayoutSetPreserve, this.preserve, bPr));
 	this.preserve = bPr;
 };
+SlideLayout.prototype.collectRedrawSlides = function (redrawSlides, force) {
+    if (!force && !this.needRecalc()) {
+        return;
+    }
+    redrawSlides.addRedrawSlide(this);
+    const presentation = redrawSlides.presentation;
+    for (let i = 0; i < presentation.Slides.length; i += 1) {
+        const slide = presentation.Slides[i];
+        if (slide.Layout === this) {
+            redrawSlides.addRedrawSlide(slide);
+        }
+    }
+};
 
     let LAYOUT_TYPE_MAP = {};
     LAYOUT_TYPE_MAP["blank"] = AscFormat.nSldLtTBlank;

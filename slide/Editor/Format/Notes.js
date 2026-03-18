@@ -196,8 +196,11 @@
         return null;
     };
 
-    CNotes.prototype.Refresh_RecalcData = function(){
-
+    CNotes.prototype.Refresh_RecalcData = function(data){
+        if(data)
+        {
+            this.addToRecalculate();
+        }
     };
 
     CNotes.prototype.Refresh_RecalcData2 = function(){
@@ -370,9 +373,14 @@
 			oSp.handleUpdateLn();
 		});
 	};
-	//todo
+
 	CNotes.prototype.getParentObjects = function() {
-		return {};
+		return {
+			presentation: this.presentation,
+			master: this.Master,
+			layout: null,
+			slide: this
+		};
 	};
 	CNotes.prototype.Get_ColorMap = function() {
 		if (this.clrMap) {
@@ -430,6 +438,12 @@
 	};
 	CNotes.prototype.isNote = function() {
 		return true;
+	};
+	CNotes.prototype.collectRedrawSlides = function (redrawSlides, force) {
+		if (!force && !this.needRecalc()) {
+			return;
+		}
+		redrawSlides.addRedrawSlide(this);
 	};
 
 

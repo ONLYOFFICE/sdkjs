@@ -448,7 +448,17 @@
 	};
 	CHandoutMaster.prototype.setSlideCount = function(count) {
 		this.slideCount = count;
-	}
+	};
+
+	CHandoutMaster.prototype.collectRedrawSlides = function (redrawSlides, force) {
+		if (!force && !this.needRecalc()) {
+			return;
+		}
+		redrawSlides.addRedrawSlide(this);
+	};
+	CHandoutMaster.prototype.isHandoutMaster = function() {
+		return true;
+	};
 
 	function PlaceholderBase(x, y, width, height) {
 		this.x = x;
@@ -463,7 +473,7 @@
 
 	function SlidePlaceholder(x, y, width, height) {
 		PlaceholderBase.call(this, x, y, width, height);
-	};
+	}
 	AscFormat.InitClassWithoutType(SlidePlaceholder, PlaceholderBase);
 	SlidePlaceholder.prototype.draw = function(graphics) {
 		if (graphics.isBoundsChecker()) {
