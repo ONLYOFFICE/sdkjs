@@ -346,6 +346,28 @@
 	return this;
   }
 
+  WorkbookView.prototype._isInputContentEditable = function () {
+    return !!(this.input && this.input.getAttribute && this.input.getAttribute('contenteditable') === 'true');
+  };
+
+  WorkbookView.prototype._setInputDisabled = function (disabled) {
+    if (!this.input) return;
+    if (this._isInputContentEditable()) {
+      this.input.contentEditable = disabled ? 'false' : 'true';
+    } else {
+      this.input.disabled = disabled;
+    }
+  };
+
+  WorkbookView.prototype._setInputValue = function (text) {
+    if (!this.input) return;
+    if (this._isInputContentEditable()) {
+      this.input.textContent = text;
+    } else {
+      this.input.value = text;
+    }
+  };
+
   WorkbookView.prototype._init = function(fontRenderingMode) {
     var self = this;
 
@@ -1294,11 +1316,11 @@
     if (this.input && !this.getCellEditMode()) {
       // Сами запретим заходить в строку формул, когда выделен shape
       if (this.lastSendInfoRangeIsSelectOnShape) {
-        this.input.disabled = true;
-        this.input.value = '';
+        this._setInputDisabled(true);
+        this._setInputValue('');
       } else {
-        this.input.disabled = false;
-        this.input.value = this.oSelectionInfo.text;
+        this._setInputDisabled(false);
+        this._setInputValue(this.oSelectionInfo.text);
       }
 	  AscCommon.applyElementDirection(this.input);
     }
@@ -2237,7 +2259,7 @@
       t.handlers.trigger("asc_onToggleAutoCorrectOptions");
 
       ws.openCellEditor(t.cellEditor, enterOptions, selectionRange);
-      t.input.disabled = false;
+      t._setInputDisabled(false);
 
       t.Api.cleanSpelling(true);
 
@@ -2250,7 +2272,7 @@
     var editLockCallback = function(res) {
       if (!res) {
         t.setCellEditMode(false);
-        t.input.disabled = true;
+        t._setInputDisabled(true);
 
         // Выключаем lock для редактирования ячейки
         t.collaborativeEditing.onStopEditCell();
@@ -2821,7 +2843,7 @@
 				this.cellEditor.updateWizardMode(this.isWizardMode);
 				this._onCleanSelectRange(true);
 			}
-			this.input.disabled = this.isWizardMode;
+			this._setInputDisabled(this.isWizardMode);
 		}
 	};
 
@@ -3686,7 +3708,7 @@
               this.getWorksheet().cloneSelection(true, tmpSelectRange && AscCommonExcel.g_oRangeCache.getAscRange(tmpSelectRange));
           }
           this.selectionDialogMode = newSelectionDialogMode;
-          this.input.disabled = !this.isFormulaEditMode || this.isWizardMode;
+          this._setInputDisabled(!this.isFormulaEditMode || this.isWizardMode);
           drawSelection = true;
       } else {
           this.selectionDialogMode = newSelectionDialogMode;
@@ -3698,7 +3720,7 @@
           }
 
           this.copyActiveSheet = -1;
-          this.input.disabled = false;
+          this._setInputDisabled(false);
       }
 
       if (drawSelection) {
@@ -7676,7 +7698,7 @@
 		oThis.wb.cellEditor.setSelectionState(oThis.activeTabFormula);
 		oThis.lockSendChangeSelection = false;
 
-		oThis.wb.input.disabled = false;
+		oThis.wb._setInputDisabled(false);
 		oThis.lockApplyChangeSelection = false;
 	};
 

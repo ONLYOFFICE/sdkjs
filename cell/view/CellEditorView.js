@@ -314,6 +314,144 @@ function (window, undefined) {
 		});
 	};
 
+	CellEditor.prototype._isContentEditable = function () {
+		return !!(this.input && this.input.getAttribute && this.input.getAttribute('contenteditable') === 'true');
+	};
+
+	CellEditor.prototype._getInputValue = function () {
+		if (!this.input) return '';
+		return this._isContentEditable() ? (this.input.textContent || '') : (this.input.value || '');
+	};
+
+	CellEditor.prototype._setInputValue = function (text) {
+		if (!this.input) return;
+		if (this._isContentEditable()) {
+			this.input.textContent = text;
+		} else {
+			this.input.value = text;
+		}
+	};
+
+	CellEditor.prototype._getInputSelectionStart = function () {
+		if (!this.input) return undefined;
+		if (this._isContentEditable()) {
+			var sel = window.getSelection();
+			if (!sel || !sel.rangeCount) return 0;
+			var range = sel.getRangeAt(0);
+			if (!this.input.contains(range.startContainer)) return 0;
+			var preRange = document.createRange();
+			preRange.selectNodeContents(this.input);
+			preRange.setEnd(range.startContainer, range.startOffset);
+			return preRange.toString().length;
+		}
+		return this.input.selectionStart;
+	};
+
+	CellEditor.prototype._getInputSelectionEnd = function () {
+		if (!this.input) return undefined;
+		if (this._isContentEditable()) {
+			var sel = window.getSelection();
+			if (!sel || !sel.rangeCount) return 0;
+			var range = sel.getRangeAt(0);
+			if (!this.input.contains(range.endContainer)) return 0;
+			var preRange = document.createRange();
+			preRange.selectNodeContents(this.input);
+			preRange.setEnd(range.endContainer, range.endOffset);
+			return preRange.toString().length;
+		}
+		return this.input.selectionEnd;
+	};
+
+	CellEditor.prototype._getInputSelectionDirection = function () {
+		if (!this.input) return 'none';
+		if (this._isContentEditable()) {
+			var sel = window.getSelection();
+			if (!sel || !sel.rangeCount || sel.isCollapsed) return 'none';
+			if (sel.anchorNode === sel.focusNode) {
+				return sel.anchorOffset > sel.focusOffset ? 'backward' : 'forward';
+			}
+			var pos = sel.anchorNode.compareDocumentPosition(sel.focusNode);
+			return (pos & Node.DOCUMENT_POSITION_FOLLOWING) ? 'forward' : 'backward';
+		}
+		return this.input['selectionDirection'] || 'none';
+	};
+
+	CellEditor.prototype._setInputSelectionRange = function (start, end) {
+		if (!this.input) return;
+		if (this._isContentEditable()) {
+			try {
+				var startPos = this._getNodeAtOffset(this.input, start);
+				var endPos = this._getNodeAtOffset(this.input, end);
+				if (!startPos || !endPos) return;
+				var range = document.createRange();
+				var sel = window.getSelection();
+				range.setStart(startPos.node, startPos.offset);
+				range.setEnd(endPos.node, endPos.offset);
+				sel.removeAllRanges();
+				sel.addRange(range);
+			} catch (e) {}
+		} else if (this.input.setSelectionRange) {
+			this.input.setSelectionRange(start, end);
+		}
+	};
+
+	CellEditor.prototype._getNodeAtOffset = function (container, charOffset) {
+		var walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+		var node, cumulative = 0, lastNode = null;
+		while ((node = walker.nextNode()) !== null) {
+			lastNode = node;
+			var len = node.length;
+			if (cumulative + len >= charOffset) {
+				return { node: node, offset: charOffset - cumulative };
+			}
+			cumulative += len;
+		}
+		if (lastNode) {
+			return { node: lastNode, offset: lastNode.length };
+		}
+		return null;
+	};
+
+	CellEditor.prototype._colorToCSS = function (color) {
+		if (color && typeof color.getR === 'function') {
+			return 'rgb(' + color.getR() + ',' + color.getG() + ',' + color.getB() + ')';
+		}
+		return '';
+	};
+
+	CellEditor.prototype._buildInputHTML = function (fragments) {
+		if (!fragments || !fragments.length) return '';
+		var result = '';
+		for (var i = 0; i < fragments.length; i++) {
+			var fr = fragments[i];
+			var text = fr.getFragmentText ? fr.getFragmentText() : (fr.text || '');
+			if (!text) continue;
+			var explicitColor = fr.format && fr.format.c;
+			var cssColor = explicitColor ? this._colorToCSS(explicitColor) : '';
+			var escaped = text
+				.replace(/&/g, '&amp;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;');
+			result += cssColor
+				? '<span style="color:' + cssColor + '">' + escaped + '</span>'
+				: '<span>' + escaped + '</span>';
+		}
+		return result;
+	};
+
+	CellEditor.prototype._setInputFragments = function (fragments) {
+		if (!this.input) return;
+		if (this._isContentEditable()) {
+			if (this.isTopLineActive) {
+				this.input.innerHTML = this._buildInputHTML(fragments);
+			} else {
+				this.input.textContent = AscCommonExcel.getFragmentsText(fragments);
+			}
+		} else {
+			this.input.value = AscCommonExcel.getFragmentsText(fragments);
+		}
+	};
+
 	/**
 	 * @param {Object} options
 	 *   fragments  - text fragments
@@ -325,7 +463,7 @@ function (window, undefined) {
 	CellEditor.prototype.open = function (options) {
 		this._setEditorState(c_oAscCellEditorState.editStart);
 		
-		var b = this.input.selectionStart;
+		var b = this._getInputSelectionStart();
 
 		this.isOpened = true;
 		if (window.addEventListener) {
@@ -1275,7 +1413,7 @@ function (window, undefined) {
 			for (var i = 0; i < this.options.fragments.length; i++) {
 				this.options.fragments[i].initText();
 			}
-			this.input.value = AscCommonExcel.getFragmentsText((this.options.fragments));
+			this._setInputFragments(this._getRenderFragments());
 		}
 		this._updateCursorPosition();
 		this._updateCursor();
@@ -1313,7 +1451,7 @@ function (window, undefined) {
 		var fPos, fName, match, fCurrent;
 
 		if (!this.isTopLineActive || !this.skipTLUpdate || this.undoMode) {
-			this.input.value = s;
+			this._setInputFragments(this._getRenderFragments());
 		}
 
 		//get a string without double-byte characters and pass it to the regular expression
@@ -1992,9 +2130,7 @@ function (window, undefined) {
 		var isSelected = this.selectionBegin !== this.selectionEnd;
 		var b = isSelected ? this.selectionBegin : this.cursorPos;
 		var e = isSelected ? this.selectionEnd : this.cursorPos;
-		if (this.input.setSelectionRange) {
-			this.input.setSelectionRange(Math.min(b, e), Math.max(b, e));
-		}
+		this._setInputSelectionRange(Math.min(b, e), Math.max(b, e));
 	};
 
 	CellEditor.prototype._topLineGotFocus = function () {
@@ -2003,6 +2139,9 @@ function (window, undefined) {
 		this.setFocus(true);
 		this._updateCursor();
 		this._cleanSelection();
+		if (this.isOpened && !this.getMenuEditorMode()) {
+			this._setInputFragments(this._getRenderFragments());
+		}
 	};
 
 	CellEditor.prototype._topLineMouseUp = function () {
@@ -2018,10 +2157,10 @@ function (window, undefined) {
 		});
 	};
 	CellEditor.prototype._updateCursorByTopLine = function () {
-		var b = this.input.selectionStart;
-		var e = this.input.selectionEnd;
+		var b = this._getInputSelectionStart();
+		var e = this._getInputSelectionEnd();
 		// ToDo replace code to input.selectionDirection after updating closure-compiler to version 20200719
-		if ('backward' === this.input["selectionDirection"]) {
+		if ('backward' === this._getInputSelectionDirection()) {
 			var tmp = b;
 			b = e;
 			e = tmp;
@@ -2044,7 +2183,7 @@ function (window, undefined) {
 	CellEditor.prototype._syncEditors = function () {
 		var t = this;
 		var s1 = AscCommonExcel.getFragmentsCharCodes(t.options.fragments);
-		var s2 = AscCommon.convertUTF16toUnicode(t.input.value);
+		var s2 = AscCommon.convertUTF16toUnicode(t._getInputValue());
 		var l = Math.min(s1.length, s2.length);
 		var i1 = 0, i2;
 
@@ -2672,7 +2811,7 @@ function (window, undefined) {
 	CellEditor.prototype.executeShortcut = function(nShortcutAction) {
 		let oResult = {keyResult: keydownresult_PreventAll};
 		const oApi = window["Asc"]["editor"];
-		const bHieroglyph = this.isTopLineActive && AscCommonExcel.getFragmentsLength(this.options.fragments) !== this.input.value.length;
+		const bHieroglyph = this.isTopLineActive && AscCommonExcel.getFragmentsLength(this.options.fragments) !== this._getInputValue().length;
 		switch (nShortcutAction) {
 			case Asc.c_oAscSpreadsheetShortcutType.Strikeout: {
 				if (bHieroglyph) {
@@ -2808,7 +2947,7 @@ function (window, undefined) {
 		oThis.skipTLUpdate = false;
 
 		// hieroglyph input definition
-		const bHieroglyph = oThis.isTopLineActive && AscCommonExcel.getFragmentsLength(oThis.options.fragments) !== oThis.input.value.length;
+		const bHieroglyph = oThis.isTopLineActive && AscCommonExcel.getFragmentsLength(oThis.options.fragments) !== oThis._getInputValue().length;
 
 		nRetValue = keydownresult_PreventKeyPress;
 		const nShortcutAction = oApi.getShortcut(oEvent);
@@ -3059,7 +3198,7 @@ function (window, undefined) {
 				return true;
 			}
 			// hieroglyph input definition
-			if (t.isTopLineActive && AscCommonExcel.getFragmentsLength(t.options.fragments) !== t.input.value.length) {
+			if (t.isTopLineActive && AscCommonExcel.getFragmentsLength(t.options.fragments) !== t._getInputValue().length) {
 				t._syncEditors();
 			}
 		}
@@ -3252,15 +3391,15 @@ function (window, undefined) {
 		}
 		this.loadFonts = true;
 
-		let checkedText = this.input.value.replace(/[\r\n]+/g, '');
+		let checkedText = t._getInputValue().replace(/[\r\n]+/g, '');
 		AscFonts.FontPickerByCharacter.checkText(checkedText, this, function () {
 			t.loadFonts = false;
 			t.skipTLUpdate = true;
-			var length = t.replaceText(0, t.textRender.getEndOfText(), t.input.value);
+			var length = t.replaceText(0, t.textRender.getEndOfText(), t._getInputValue());
 			t._updateCursorByTopLine();
 
-			if (length !== t.input.value.length) {
-				t.input.value = AscCommonExcel.getFragmentsText((t.options.fragments));
+			if (length !== t._getInputValue().length) {
+				t._setInputFragments(t._getRenderFragments());
 				t._updateTopLineCurPos();
 			}
 		});

@@ -1311,7 +1311,7 @@ function (window, undefined) {
 
 		wb.setCellEditMode(true);
 		editor.open(options);
-		wb.input.disabled = false;
+		wb._setInputDisabled(false);
 
 		return true;
 	};
