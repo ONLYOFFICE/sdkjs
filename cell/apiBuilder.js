@@ -24434,7 +24434,7 @@
 		this.private_changeStyle(function(newRule) {
 			if (newRule.aRuleElements && newRule.aRuleElements[0] &&
 				newRule.aRuleElements[0].aCFVOs && newRule.aRuleElements[0].aCFVOs[0]) {
-				newRule.aRuleElements[0].aCFVOs[0].asc_setVal(value);
+				newRule.aRuleElements[0].aCFVOs[0].asc_setVal(value != null ? value + "" : value);
 			}
 		}, true);
 	};
@@ -24522,7 +24522,7 @@
 		this.private_changeStyle(function(newRule) {
 			if (newRule.aRuleElements && newRule.aRuleElements[0] &&
 				newRule.aRuleElements[0].aCFVOs && newRule.aRuleElements[0].aCFVOs[1]) {
-				newRule.aRuleElements[0].aCFVOs[1].asc_setVal(value);
+				newRule.aRuleElements[0].aCFVOs[1].asc_setVal(value != null ? value + "" : value);
 			}
 		}, true);
 	};
@@ -26034,7 +26034,7 @@
 		let t = this;
 		this.parent.private_changeStyle(function (newRule) {
 			let index = t.GetIndex() - 1;
-			newRule.aRuleElements[0].aCFVOs[index].asc_setVal(value);
+			newRule.aRuleElements[0].aCFVOs[index].asc_setVal(value != null ? value + "" : value);
 		}, true);
 	};
 

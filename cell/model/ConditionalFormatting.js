@@ -2562,8 +2562,7 @@
 		this.Type = val;
 	};
 	CConditionalFormatValueObject.prototype.asc_setVal = function (val) {
-		val = correctFromInterface(val);
-		this.Val = (val !== undefined && val !== null) ? val + "" : val;
+		this.Val = correctFromInterface(val);
 	};
 	CConditionalFormatValueObject.prototype.isEqual = function (elem) {
 		if (this.Gte === elem.Gte && this.Type === elem.Type && this.Val === elem.Val && this.Type === elem.Type) {
@@ -2920,7 +2919,7 @@
 
 	function correctFromInterface(val) {
 		if (typeof val === "number")
-			return val;
+			return val + "";
 		let _num = AscCommon.g_oFormatParser.tryParseLocaleNumber(val);
 		if (_num !== null) {
 			val = String(_num);
@@ -2938,7 +2937,7 @@
 			//храним число
 			if (isDate) {
 				val = isDate.value;
-				return val;
+				return typeof val === "number" ? val + "" : val;
 			}
 
 			if (!isFormula) {
