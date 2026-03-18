@@ -2669,10 +2669,25 @@ function getUnclosedSubPaths(geometryPath) {
 	if (!geometryPath || !geometryPath.stroke) {
 		return [];
 	}
+
+	const isPresentation = Asc.editor.editorId === AscCommon.c_oEditorId.Presentation;
+	const isSpreadsheet = Asc.editor.editorId === AscCommon.c_oEditorId.Spreadsheet;
+
 	const subPaths = geometryPath.getContinuousSubpaths();
-	return subPaths.filter(function (path) {
-		return !path.isClosed(0);
+	const unclosedSubPaths = subPaths.filter(function (path) {
+		if (!path.isClosed(0)) {
+			return true;
+		}
+
+		// We follow Microsoft's behavior for PE and SE:
+		// zero-length lines (moveTo + lineTo to same point) are not treated as closed
+		if (isPresentation || isSpreadsheet) {
+			return path.ArrPathCommand.length === 2 &&
+				path.ArrPathCommand[1].id === AscFormat.lineTo;
+		}
 	});
+
+	return unclosedSubPaths;
 }
 
 function drawArrowsOnPath(drawer, geometryPath, arrowEnd, isHead, params) {
