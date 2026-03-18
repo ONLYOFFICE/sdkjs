@@ -34,6 +34,9 @@
 
 (function(window, undefined)
 {
+	/**
+	 * @constructor
+	 */
 	function CPdfTextMetafile() {
 		AscCommon.CGraphicsBase.apply(this, arguments);
 		
@@ -53,8 +56,9 @@
 		this._newLine = true;
 		this._charCountInLine = 0;
 		this._startX = 0;
-		this._endX   = 0;
-		this._prevX  = 0;
+		this._x = 0;
+		this._prevX = 0;
+		this._y = 0;
 		
 		this._ascent = 0;
 		this._descent = 0;
@@ -122,20 +126,32 @@
 	CPdfTextMetafile.prototype.tg = function(gid, x, y, codepoints, advX, advY) {
 		let unicode = (Array.isArray(codepoints)) ? codepoints[0] : codepoints;
 		
-		if (this._newLine || (this._x - x) > 0.001)
+		if (this._newLine || (this._x - x) > 0.001 || Math.abs(this._y - y) > 0.001)
 			this.startLine(x, y);
 		
 		this.updateFontMetrics();
 		
 		if (this._charCountInLine)
+		{
+			if ((x - this._x) > 0.1)
+			{
+				this.Memory.WriteLong((this._x - this._prevX) * 10000);
+				this.Memory.WriteLong(0xFFFF);
+				this.Memory.WriteLong((x - this._x) * 10000);
+				this._charCountInLine++;
+				this._prevX = this._x;
+				this._x = x;
+			}
+			
 			this.Memory.WriteLong((x - this._prevX) * 10000);
-
+		}
+		
 		this.Memory.WriteLong(unicode);
 		this.Memory.WriteLong(advX * 10000);
 		
-		this._curX  = x;
 		this._prevX = x;
-		this._endX  = x + advX;
+		this._x     = x + advX;
+		this._y     = y;
 		
 		this._charCountInLine++;
 	};
@@ -148,7 +164,7 @@
 		this.Memory.Seek(this._lineStartPos);
 		this.Memory.WriteLong(this._ascent * 10000);
 		this.Memory.WriteLong(this._descent * 10000);
-		this.Memory.WriteLong((this._endX - this._startX) * 10000);
+		this.Memory.WriteLong((this._x - this._startX) * 10000);
 		this.Memory.WriteLong(this._charCountInLine);
 		this.Memory.Seek(curPos);
 		
@@ -196,18 +212,7 @@
 		this._charCountInLine = 0;
 		this._newLine = false;
 	};
-	CPdfTextMetafile.prototype.Start_Command = function(commandId) {
-		if (AscFormat.DRAW_COMMAND_LINE_RANGE === commandId) {
-			this._newLine = true;
-			this._charCountInLine = 0;
-		}
-	};
-	CPdfTextMetafile.prototype.End_Command = function(commandId) {
-		if (AscFormat.DRAW_COMMAND_LINE_RANGE === commandId) {
-			this.endLine();
-		}
-	};
-	CPdfTextMetafile.prototype.updateFontMetrics = function(commandId) {
+	CPdfTextMetafile.prototype.updateFontMetrics = function() {
 		this._ascent = Math.max(this._ascent, this._curAscent);
 		this._descent = Math.max(this._descent, this._curDescent);
 	};

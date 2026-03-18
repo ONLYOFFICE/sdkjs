@@ -467,8 +467,10 @@ void main() {\n\
 		aDrawings.forEach(function(drawing) {
 			drawing.draw(oRenderer);
 		});
+		
+		oRenderer.m_arrayPages[oRenderer.m_arrayPages.length - 1].endLine();
 
-		return oRenderer.Memory.data.subarray(0, oRenderer.Memory.pos);
+		return oMemory.data.subarray(0, oMemory.pos);
 	};
     CFile.prototype.removeSelection = function() {
         this.Selection = {
