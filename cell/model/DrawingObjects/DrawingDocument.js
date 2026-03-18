@@ -171,7 +171,6 @@ function CDrawingDocument()
 
     this.MathTrack = new AscCommon.CMathTrack();
 
-    this.CurrentSearchNavi = null;
     this.SearchTransform = null;
 
     this.m_lTimerUpdateTargetID = -1;

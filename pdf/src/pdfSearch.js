@@ -121,6 +121,7 @@
 
 	CPdfSearch.prototype.Select = function(nId) {
 		let oViewer		= Asc.editor.getDocumentRenderer();
+		let oFile		= oViewer.file;
 		let oElm		= this.Elements[nId];
 
 		if (!oElm) {
@@ -144,6 +145,18 @@
 			oViewer.navigateToPage(oElm.GetAbsolutePage());
 		}
 		else if (oElm.pdfPageMatch == true) {
+			oFile.removeSelection();
+
+			oFile.Selection.Page1 = oElm[0].PageNum;
+			oFile.Selection.Line1 = oElm[0].LineNum;
+			oFile.Selection.Glyph1 = oElm[0].Char1;
+			
+			oFile.Selection.Page2 = oElm[oElm.length - 1].PageNum;
+			oFile.Selection.Line2 = oElm[oElm.length - 1].LineNum;
+			oFile.Selection.Glyph2 = oElm[oElm.length - 1].Char2;
+
+			oFile.Selection.IsSelection = true;
+
 			oViewer.CurrentSearchNavi = oElm;
 			oViewer.ToSearchResult();
 		}

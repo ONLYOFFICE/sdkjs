@@ -7913,6 +7913,8 @@ var CPresentation = CPresentation || function(){};
 
 			this.GetController().Load_DocumentStateAfterLoadChanges(oState);
 		}
+
+		this.GetFile().Selection = oState.fileSelection;
 	};
     CPDFDoc.prototype.Check_MergeData = function() {};
     CPDFDoc.prototype.Set_SelectionState2 = function() {};
@@ -8387,6 +8389,7 @@ var CPresentation = CPresentation || function(){};
         oSelectionState.activeObject        = this.GetActiveObject();
         oSelectionState.drawingSelection    = oController.getSelectionState();
         oSelectionState.HistoryIndex        = this.History.Index;
+		oSelectionState.fileSelection		= this.GetFile().getSelection();
 
         return oSelectionState;
     };
@@ -8405,6 +8408,8 @@ var CPresentation = CPresentation || function(){};
 		
 		if (oState.CurPage != -1 && oState.CurPage != this.Viewer.currentPage)
 			this.Viewer.navigateToPage(oState.CurPage);
+
+		this.GetFile().Selection = oState.fileSelection;
 	};
     CPDFDoc.prototype.IsSelectionLocked = function (nCheckType, oAdditionalData, isDontLockInFastMode, isIgnoreCanEditFlag) {
         return this.Document_Is_SelectionLocked(nCheckType, oAdditionalData, isIgnoreCanEditFlag, undefined, isDontLockInFastMode);

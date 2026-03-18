@@ -477,7 +477,7 @@
 	/**
 	 * Finds and selects the next occurrence of the text starting at the current position.
 	 * @memberof Api
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "PDFE"]
 	 * @alias SearchNext
 	 * @param {Object} oProperties - An object which contains the search string.
 	 * @param {string} oProperties.searchString - The search string.
@@ -496,6 +496,13 @@
 		searchProps.SetText(oProperties["searchString"]);
 		searchProps.SetMatchCase(undefined !== oProperties["matchCase"] ? oProperties["matchCase"] : true);
 		
+		if (this.isPdfEditor()) {
+			let oViewer = logicDocument.Viewer;
+			oViewer.findText(searchProps, isForward);
+			this._selectSearchingResults(true);
+			return 0 !== logicDocument.SearchEngine.Count;
+		}
+
 		logicDocument.Search(searchProps);
 		let elementId = logicDocument.GetSearchElementId(!(false === isForward || 0 === isForward));
 		if (null === elementId)
