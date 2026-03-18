@@ -3631,18 +3631,6 @@
 		if (0 !== this.m_lPagesCount)
 			this.m_arrayPages[this.m_lPagesCount - 1].ClearCacheProps();
 	};
-	
-	CDocumentRenderer.prototype.Start_Command = function(commandId)
-	{
-		if (0 !== this.m_lPagesCount)
-			this.m_arrayPages[this.m_lPagesCount - 1].Start_Command(commandId);
-	};
-	
-	CDocumentRenderer.prototype.End_Command = function(commandId)
-	{
-		if (0 !== this.m_lPagesCount)
-			this.m_arrayPages[this.m_lPagesCount - 1].End_Command(commandId);
-	};
 
 	function WriteHeadings(memory, headings)
 	{
