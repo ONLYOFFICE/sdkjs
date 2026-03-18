@@ -3351,6 +3351,17 @@
 		return oDoc.DoAction(function() {
 			oController.selectedObjects.forEach(function(annot) {
 				if (annot.IsAnnot()) {
+					if (annot.IsLink()) {
+						if (nComplexType == null) {
+							annot.SetBorderWidth(0);
+						}
+						else {
+							annot.SetBorderStyle(nComplexType);
+						}
+						
+						return;
+					}
+
 					switch (nComplexType) {
 						case AscPDF.ANNOT_COMPLEX_BORDER_TYPES.solid: {
 							annot.SetBorderStyle(AscPDF.BORDER_TYPES.solid);

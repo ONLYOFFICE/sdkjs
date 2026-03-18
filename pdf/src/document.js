@@ -5849,6 +5849,8 @@ var CPresentation = CPresentation || function(){};
             let nPage   = aSelQuads[nInfo].page;
             let aQuads  = aSelQuads[nInfo].quads;
 
+			let RD_VALUE = 2.8346;
+
             aQuads.forEach(function(quads) {
                 let aMinRect = getMinRect(quads);
                 let MinX = aMinRect[0];
@@ -5856,7 +5858,7 @@ var CPresentation = CPresentation || function(){};
                 let MaxX = aMinRect[2];
                 let MaxY = aMinRect[3];
 
-                let aRect = isTextSelection ? [MinX - 1, MinY - 1, MaxX + 1, MaxY + 1] : [MinX, MinY, MaxX, MaxY];
+                let aRect = isTextSelection ? [MinX - 1, MinY - 1, MaxX + 1, MaxY + 1] : [MinX - RD_VALUE, MinY - RD_VALUE, MaxX + RD_VALUE, MaxY + RD_VALUE];
 
                 let oProps = {
                     rect:           aRect,
@@ -5874,6 +5876,7 @@ var CPresentation = CPresentation || function(){};
                 oAnnot.SetOpacity(1);
                 oAnnot.SetBorderWidth(1);
                 oAnnot.SetHighlight(AscPDF.BUTTON_HIGHLIGHT_TYPES.none);
+				oAnnot.SetRectangleDiff([RD_VALUE, RD_VALUE, RD_VALUE, RD_VALUE]); // default value
 
                 if (isTextSelection) {
                     let dx = quads[2] - quads[0];
@@ -9925,13 +9928,19 @@ var CPresentation = CPresentation || function(){};
             }
             case AscPDF.ANNOTATIONS_TYPES.Polygon:
             case AscPDF.ANNOTATIONS_TYPES.Square:
-            case AscPDF.ANNOTATIONS_TYPES.Link:
             case AscPDF.ANNOTATIONS_TYPES.Circle: {
                 oAnnotProps = new Asc.asc_CClosedAnnotProperty();
                 oAnnotProps.asc_putBorderStyle(annot.GetComplexBorderType());
                 oAnnotProps.asc_putBorderWidth(annot.GetBorderWidth());
                 break;
             }
+			case AscPDF.ANNOTATIONS_TYPES.Link: {
+				oAnnotProps = new Asc.asc_CClosedAnnotProperty();
+				let nLineW = annot.GetBorderWidth();
+				oAnnotProps.asc_putBorderStyle(nLineW == 0 ? undefined : annot.GetBorderStyle());
+				oAnnotProps.asc_putBorderWidth(nLineW);
+				break;
+			}
         }
         
         oProps.asc_putAnnotProps(oAnnotProps);
