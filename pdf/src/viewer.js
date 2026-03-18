@@ -2513,7 +2513,6 @@
 			
 			if (this.IsSearch) {
 				this.drawSearchHighlights(ctx, oDoc, oDrDoc);
-				this.drawCurrentSearchHighlight(ctx, oDoc, oDrDoc);
 			}
 			
 			this.drawSelection(ctx, oDoc, oDrDoc);
@@ -2559,18 +2558,6 @@
 			}
 			ctx.fill();
 			ctx.globalAlpha = 0.2;
-		};
-		
-		this.drawCurrentSearchHighlight = function(ctx, oDoc, oDrDoc) {
-			if (this.CurrentSearchNavi && oDoc.SearchEngine.Show && !(this.CurrentSearchNavi instanceof AscWord.Paragraph)) {
-				const pageNum = this.CurrentSearchNavi[0].PageNum;
-				if (pageNum >= this.startVisiblePage && pageNum <= this.endVisiblePage) {
-					ctx.fillStyle = "rgba(51,102,204,255)";
-					oDrDoc.AutoShapesTrack.SetCurrentPage(pageNum, true);
-					ctx.globalAlpha = 0.2;
-					this.drawSearchCur(pageNum, this.CurrentSearchNavi);
-				}
-			}
 		};
 		
 		this.drawSelection = function(ctx, oDoc, oDrDoc) {
